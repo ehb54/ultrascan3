@@ -110,6 +110,7 @@ class US_PM
    double                                  buffer_e_density;
    double                                  ev;
 
+   double                                  org_cube_size;
    double                                  cube_size;
    double                                  bead_radius;
    double                                  bead_radius_over_2;
@@ -123,6 +124,8 @@ class US_PM
 
    // precomputed bead structure factors
    // these can come from rayleigh or compute_ff for an atom type
+   vector < double >                       org_F;
+   // F is rescaled with a set_grid_size
    vector < double >                       F;
 
    // ideas:
@@ -253,6 +256,8 @@ class US_PM
    double                                  last_best_rmsd2;
 
  public:
+   // note: F needs to be the factors for a volume of size grid_conversion_factor ^ 3
+
    US_PM               ( 
                         double grid_conversion_factor, 
                         int max_dimension, 
@@ -346,7 +351,7 @@ class US_PM
                                           set < pm_point >  & model, 
                                           double              finest_conversion      = 1e0,
                                           double              coarse_conversion      = 10e0,
-                                          double              refinement_range_pct   = 5,
+                                          double              refinement_range_pct   = 5e0,
                                           double              conversion_divisor     = 2e0
                                           );
    bool                best_md0          ( 

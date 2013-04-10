@@ -18,9 +18,13 @@ class US_Timer
    void clear_timer  ( QString );
    bool start_timer  ( QString );
    bool end_timer    ( QString );
+   bool stop_timer   ( QString );
    QString list_time ( QString );
    QString list_times( QString prepend = "" );
    void clear_timers ();
+   void end_all      ();
+   void stop_all     ();
+   void start_all    ();
 
  private:
 

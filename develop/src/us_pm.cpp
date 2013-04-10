@@ -18,6 +18,12 @@ void US_PM::set_grid_size( double grid_conversion_factor )
       .arg( cube_size )
       .arg( bead_radius )
       ;
+
+   double conv_F = cube_size / org_cube_size;
+   for ( int i = 0; i < (int)F.size(); ++i )
+   {
+      F[ i ] = org_F[ i ] * conv_F;
+   }
 }
 
 US_PM::US_PM( 
@@ -37,7 +43,6 @@ US_PM::US_PM(
              )
 {
    // this->grid_conversion_factor = grid_conversion_factor;
-   set_grid_size                ( grid_conversion_factor );
 
    this->max_dimension          = abs( max_dimension );
    this->drho                   = drho;
@@ -53,6 +58,10 @@ US_PM::US_PM(
    this->debug_level            = debug_level;
 
    this->max_dimension   = this->max_dimension < USPM_MAX_VAL ? this->max_dimension : USPM_MAX_VAL;
+
+   org_F                        = F;
+   org_cube_size                = grid_conversion_factor * grid_conversion_factor * grid_conversion_factor;
+   set_grid_size                ( grid_conversion_factor );
 
    if ( this->max_dimension != max_dimension )
    {

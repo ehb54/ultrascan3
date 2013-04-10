@@ -60,6 +60,20 @@ bool US_Timer::end_timer( QString qs )
    return true;
 }
 
+
+bool US_Timer::stop_timer( QString qs )
+{
+   if ( !timers.count( qs ) )
+   {
+      return false;
+   }
+
+   unsigned long ul = (unsigned long) timers[ qs ].elapsed();
+   times [ qs ] += ul;
+   times2[ qs ] += ul * ul;
+   return true;
+}
+
 QString US_Timer::list_time( QString qs )
 {
    if ( !timers.count( qs ) )
@@ -109,4 +123,34 @@ QString US_Timer::list_times( QString prepend )
       qs += prepend + list_time( it->first );
    }
    return qs;
+}
+
+void US_Timer::end_all()
+{
+   for ( map < QString, QTime >::iterator it = timers.begin();
+         it != timers.end();
+         it++ )
+   {
+      end_timer( it->first );
+   }
+}
+
+void US_Timer::stop_all()
+{
+   for ( map < QString, QTime >::iterator it = timers.begin();
+         it != timers.end();
+         it++ )
+   {
+      stop_timer( it->first );
+   }
+}
+
+void US_Timer::start_all()
+{
+   for ( map < QString, QTime >::iterator it = timers.begin();
+         it != timers.end();
+         it++ )
+   {
+      start_timer( it->first );
+   }
 }

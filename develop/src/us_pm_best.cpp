@@ -101,12 +101,12 @@ bool US_PM::best_vary_one_param(
 
             last_fitness_3_pos = last_fitness_2_pos;
             last_fitness_2_pos = last_fitness_1_pos;
-            last_fitness_1_pos = params[ 1 ];
+            last_fitness_1_pos = params[ param_to_vary ];
 
             if ( this_fit < prev_fit )
             {
                best_fit = this_fit;
-               best_size = params[ 1 ];
+               best_size = params[ param_to_vary ];
                model = this_model;
             }
             if ( this_fit > prev_fit )
@@ -114,7 +114,7 @@ bool US_PM::best_vary_one_param(
                break;
             }
             prev_fit = this_fit;
-            prev_size = params[ 1 ];
+            prev_size = params[ param_to_vary ];
             steps_without_change = 0;
          } else {
             QString qs = 
@@ -128,7 +128,7 @@ bool US_PM::best_vary_one_param(
                qs += QString( " %1" ).arg( params[ i ] );
             }
             cout << qs.ascii() << endl;
-            if ( steps_without_change > 10 )
+            if ( steps_without_change > 100 )
             {
                cout << "To many steps without model change, terminating inner loop\n";
                break;
@@ -254,37 +254,52 @@ bool US_PM::best_md0(
    {
       // need params[] from best model and ability to set limits for best model
       // have to add to best_*, maybe add general best_model( params )
+
+      cout << "----------------------------------------------------------------------\n";
+      cout << QString( "best_md0: grid cube side: %1\n" ).arg( grid_conversion_factor);
+      cout << "----------------------------------------------------------------------\n";
       
       clip_limits( next_low_fparams , low_fparams, high_fparams );
       clip_limits( next_high_fparams, low_fparams, high_fparams );
       low_fparams  = next_low_fparams;
       high_fparams = next_high_fparams;
 
+      US_Vector::printvector2( "param limits:", low_fparams, high_fparams );
+
       if ( !best_md0( params, low_fparams, high_fparams, model ) )
       {
          return false;
       }
 
-      for ( int i = 0; i < (int)low_fparams.size(); i++ )
-      {
-         next_low_fparams [ i ] = params[ i + 1 ] - grid_conversion_factor * refinement_range_pct;
-         next_high_fparams[ i ] = params[ i + 1 ] + grid_conversion_factor * refinement_range_pct;
-      }
-
       // convert limits to new factor
 
+      if ( grid_conversion_factor == finest_conversion )
+      {
+         break;
+      }
+
       new_grid_conversion_factor = grid_conversion_factor / conversion_divisor;
+      if ( new_grid_conversion_factor < finest_conversion )
+      {
+         new_grid_conversion_factor = finest_conversion;
+      }
+ 
+      US_Vector::printvector ( "result params:", params );
+      US_Vector::printvector2( "previous limits before rescaling:", low_fparams, high_fparams );
 
       for ( int i = 0; i < (int)low_fparams.size(); i++ )
       {
-         next_low_fparams [ i ] = params[ i + 1 ] - grid_conversion_factor * refinement_range_pct;
-         next_high_fparams[ i ] = params[ i + 1 ] + grid_conversion_factor * refinement_range_pct;
+         next_low_fparams [ i ] = params[ i + 1 ] - grid_conversion_factor * refinement_range_pct / 100e0;
+         next_high_fparams[ i ] = params[ i + 1 ] + grid_conversion_factor * refinement_range_pct / 100e0;
 
-         next_low_fparams [ i ] *= new_grid_conversion_factor / grid_conversion_factor;
-         next_high_fparams[ i ] *= new_grid_conversion_factor / grid_conversion_factor;
-         low_fparams      [ i ] *= new_grid_conversion_factor / grid_conversion_factor;
-         high_fparams     [ i ] *= new_grid_conversion_factor / grid_conversion_factor;
+         next_low_fparams [ i ] *= grid_conversion_factor / new_grid_conversion_factor;
+         next_high_fparams[ i ] *= grid_conversion_factor / new_grid_conversion_factor;
+         low_fparams      [ i ] *= grid_conversion_factor / new_grid_conversion_factor;
+         high_fparams     [ i ] *= grid_conversion_factor / new_grid_conversion_factor;
       }
+
+      US_Vector::printvector2( "previous limits after rescaling:", low_fparams, high_fparams );
+      US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
 
       set_grid_size( new_grid_conversion_factor );
    }
@@ -299,8 +314,154 @@ bool US_PM::best_vary_one_param(
                                 set < pm_point >  & model,
                                 double            & best_fitness )
 {
-   error_msg = "not yet";
-   return false;
+   // use compute_delta_I
+   double best_fit = 1e99;
+   double prev_fit = 1e99;
+   double this_fit;
+
+   double delta      = best_delta_start;
+   double prev_size;
+   double best_size;
+
+   double low_limit  = low_fparams [ param_to_vary - 1 ];
+   double high_limit = high_fparams[ param_to_vary - 1 ];
+
+   vector < double > I_result( q_points );
+
+   if ( high_limit - low_limit <= best_delta_min )
+   {
+      cout << QString( "best_vary_one_param: parameter range %1:%2 is smaller than minimum delta %3, returning average model\n" )
+         .arg( low_limit )
+         .arg( high_limit )
+         .arg( best_delta_min );
+      params[ param_to_vary ] = (high_limit + low_limit) / 2e0;
+      create_model( params, model );
+      compute_I   ( model, I_result );
+      best_fitness = fitness2( I_result );
+      return true;
+   }
+
+   if ( ( high_limit - low_limit ) / 10e0 < delta )
+   {
+      delta = ( high_limit - low_limit ) / 10e0;
+   }
+   if ( delta < best_delta_min )
+   {
+      delta = best_delta_min;
+   }
+
+   vector < double > best_params;
+
+   set < pm_point > this_model;
+   set < pm_point > prev_model;
+   vector < vector < complex < float > > > Av;
+
+   map < double, double > fitnesses;
+
+   while ( delta >= best_delta_min )
+   {
+      double last_fitness_1_pos = -1e0;
+      double last_fitness_2_pos = -1e0;
+      double last_fitness_3_pos = -1e0;
+      prev_fit = 1e99;
+
+      prev_model.clear();
+      Av.clear();
+
+      cout << QString( "best_vary_one_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+      unsigned int steps_without_change = 0;
+      for ( params[ param_to_vary ] = low_limit; params[ param_to_vary ] <= high_limit; params[ param_to_vary ] += delta )
+      {
+         bool skip = false;
+         create_model( params, this_model );
+         // cout << QString( "create model size %1 prev model size %2\n" ).arg( this_model.size() ).arg( prev_model.size() );
+         if ( this_model.size() &&  prev_model.size() != this_model.size() )
+         {
+            //             if ( USPM_USE_CA )
+            //             {
+            //                compute_I( this_model, I_result );
+            //             } else {
+            compute_delta_I( this_model, prev_model, Av, I_result );
+            //             }
+            this_fit = fitness2( I_result );
+            fitnesses[ params[ param_to_vary ] ] = this_fit;
+         } else {
+            skip = true;
+         }
+         if ( !skip )
+         {
+            // write_model( tmp_name( "", params ), this_model );
+            //             QString qs = 
+            //                QString( "%1 fitness^2 %2 beads %3 params:" )
+            //                .arg( object_names[ (int) params[ 0 ] ] )
+            //                .arg( this_fit, 0, 'g', 8 )
+            //                .arg( this_model.size() )
+            //                ;
+            //             for ( int i = 1; i <= (int)object_m0_parameters[ (int) params[ 0 ] ]; ++i )
+            //             {
+            //                qs += QString( " %1" ).arg( params[ i ] );
+            //             }
+            //             cout << qs.ascii() << endl;
+            US_Vector::printvector( QString( "best_vary_one_param: %1beads %2 fitness %3, params:" )
+                                    .arg( this_fit < prev_fit ? "**" : "  " )
+                                    .arg( this_model.size() )
+                                    .arg( this_fit ), 
+                                    params );
+
+            last_fitness_3_pos = last_fitness_2_pos;
+            last_fitness_2_pos = last_fitness_1_pos;
+            last_fitness_1_pos = params[ param_to_vary ];
+
+            if ( this_fit < prev_fit )
+            {
+               best_fit = this_fit;
+               best_size = params[ param_to_vary ];
+               model = this_model;
+               best_params = params;
+            }
+            if ( this_fit > prev_fit )
+            {
+               break;
+            }
+            prev_fit = this_fit;
+            prev_size = params[ param_to_vary ];
+            steps_without_change = 0;
+         } else {
+            //             QString qs = 
+            //                QString( "skipping %1 (empty or identical to previous) beads %2 prev %3 params:" )
+            //                .arg( object_names[ (int) params[ 0 ] ] )
+            //                .arg( this_model.size() )
+            //                .arg( prev_model.size() )
+            //                ;
+            //             for ( int i = 1; i <= (int)object_m0_parameters[ (int) params[ 0 ] ]; ++i )
+            //             {
+            //                qs += QString( " %1" ).arg( params[ i ] );
+            //             }
+            //             cout << qs.ascii() << endl;
+            if ( steps_without_change > 100 )
+            {
+               cout << "best_vary_one_param: Too many steps without model change, terminating inner loop\n";
+               break;
+            }
+            steps_without_change++;
+         }            
+         prev_model = this_model;
+      }
+      if ( last_fitness_3_pos < 0e0 ||
+           last_fitness_1_pos < 0e0 )
+      {
+         cout << "best_vary_one_param: found nothing to recenter on, terminating outer loop\n";
+         break;
+      }
+         
+      low_limit  = last_fitness_3_pos;
+      high_limit = last_fitness_1_pos;
+      delta /= best_delta_divisor;
+   }
+   best_fitness    = best_fit;
+   params          = best_params;
+   US_Vector::printvector( QString( "best_vary_one_param: ----end----- fitness %1, params:" ).arg( best_fitness ), params );
+   return true;
 }
 
 bool US_PM::best_vary_two_param( 
@@ -313,6 +474,101 @@ bool US_PM::best_vary_two_param(
                                 double            & best_fitness
                                 )
 {
-   error_msg = "not yet";
-   return false;
+   set < pm_point > this_model;
+   use_CYJ = false;
+
+   QString qs_timer = QString( "%1 2 params to vary" ).arg( object_names[ (int) params[ 0 ] ] );
+
+   us_timers.clear_timers();
+   us_timers.init_timer  ( qs_timer );
+   us_timers.start_timer ( qs_timer );
+
+   double delta      = best_delta_start;
+   double prev_size;
+   double best_size;
+
+   double low_limit  = low_fparams [ param_to_vary_2 - 1 ];
+   double high_limit = high_fparams[ param_to_vary_2 - 1 ];
+
+   double best_fit = 1e99;
+   double prev_fit = 1e99;
+   double this_fit;
+
+   if ( high_limit - low_limit <= best_delta_min )
+   {
+      cout << QString( "best_vary_two_param: parameter range %1:%2 is smaller than minimum delta %3, returning average model\n" )
+         .arg( low_limit )
+         .arg( high_limit )
+         .arg( best_delta_min );
+      params[ param_to_vary_2 ] = (high_limit + low_limit) / 2e0;
+      return best_vary_one_param( param_to_vary_1, params, low_fparams, high_fparams, model, best_fitness );
+   }
+
+   if ( ( high_limit - low_limit ) / 10e0 < delta )
+   {
+      delta = ( high_limit - low_limit ) / 10e0;
+   }
+   if ( delta < best_delta_min )
+   {
+      delta = best_delta_min;
+   }
+
+   vector < double > best_params;
+   map < double, double > fitnesses;
+
+   while ( delta > best_delta_min )
+   {
+      double last_fitness_1_pos = -1e0;
+      double last_fitness_2_pos = -1e0;
+      double last_fitness_3_pos = -1e0;
+      prev_fit = 1e99;
+
+      cout << QString( "best_vary_two_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+      for ( params[ param_to_vary_2 ] = low_limit; params[ param_to_vary_2 ] <= high_limit; params[ param_to_vary_2 ] += delta )
+      {
+         best_vary_one_param( param_to_vary_1, params, low_fparams, high_fparams, this_model, this_fit );
+         fitnesses[ params[ param_to_vary_2 ] ] = this_fit;
+
+         last_fitness_3_pos = last_fitness_2_pos;
+         last_fitness_2_pos = last_fitness_1_pos;
+         last_fitness_1_pos = params[ param_to_vary_2 ];
+
+         US_Vector::printvector( QString( "best_vary_two_param: %1beads %2 fitness %3, params:" )
+                                 .arg( this_fit < prev_fit ? "**" : "  " )
+                                 .arg( this_model.size() )
+                                 .arg( this_fit ), 
+                                 params );
+
+         if ( this_fit < prev_fit )
+         {
+            best_fit = this_fit;
+            best_size = params[ param_to_vary_2 ];
+            model = this_model;
+            best_params = params;
+         }
+         if ( this_fit > prev_fit )
+         {
+            break;
+         }
+         prev_fit = this_fit;
+         prev_size = params[ param_to_vary_2 ];
+
+      }
+      if ( last_fitness_3_pos < 0e0 ||
+           last_fitness_1_pos < 0e0 )
+      {
+         cout << "best_vary_two_param: found nothing to recenter on, terminating outer loop\n";
+         break;
+      }
+      low_limit  = last_fitness_3_pos;
+      high_limit = last_fitness_1_pos;
+      delta /= best_delta_divisor;
+   }
+   us_timers.end_timer( qs_timer );
+   cout << us_timers.list_times();
+
+   best_fitness   = best_fit;
+   params         = best_params;
+   US_Vector::printvector( QString( "best_vary_two_param: ----end----- fitness %1, params:" ).arg( best_fitness ), params );
+   return true;
 }

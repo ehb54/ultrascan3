@@ -11,10 +11,11 @@
 #define BEST_TORUS    0
 #define BEST          ( BEST_SPHERE || BEST_CYLINDER || BEST_SPHEROID || BEST_TORUS )
 
-#define BEST_MD0_SPHERE   1
-#define BEST_MD0_CYLINDER 1
+#define BEST_MD0_SPHERE   0
+#define BEST_MD0_CYLINDER 0
 #define BEST_MD0_SPHEROID 1
-#define BEST_MD0_TORUS    1
+#define SPHEROID_SPEC_TEST ( 1 && BEST_MD0_SPHEROID )
+#define BEST_MD0_TORUS    0
 #define BEST_MD0          ( BEST_MD0_SPHERE || BEST_MD0_CYLINDER || BEST_MD0_SPHEROID || BEST_MD0_TORUS )
 
 
@@ -219,6 +220,8 @@ QString US_PM::test( QString name, QString oname )
       {
          cout << "starting best sphere\n";
          sphere_pm.best_sphere( model );
+
+         us_timers.stop_all();
       
          // output bead model
          {
@@ -267,6 +270,8 @@ QString US_PM::test( QString name, QString oname )
             of.close();
          }
 
+         us_timers.start_all();
+
          cout << "ending best sphere\n";
       }
 
@@ -275,6 +280,7 @@ QString US_PM::test( QString name, QString oname )
          // sphere_pm.clear();
          cout << "starting best cylinder\n";
          sphere_pm.best_cylinder( model );
+         us_timers.stop_all();
       
          // output bead model
          {
@@ -324,6 +330,7 @@ QString US_PM::test( QString name, QString oname )
             }
             of.close();
          }
+         us_timers.start_all();
          cout << "ending best cylinder\n";
       }
 
@@ -332,6 +339,7 @@ QString US_PM::test( QString name, QString oname )
          // sphere_pm.clear();
          cout << "starting best spheroid\n";
          sphere_pm.best_spheroid( model );
+         us_timers.stop_all();
       
          // output bead model
          {
@@ -379,6 +387,7 @@ QString US_PM::test( QString name, QString oname )
             }
             of.close();
          }
+         us_timers.start_all();
          cout << "ending best spheroid\n";
       }
 
@@ -387,7 +396,8 @@ QString US_PM::test( QString name, QString oname )
          // sphere_pm.clear();
          cout << "starting best torus\n";
          sphere_pm.best_torus( model );
-      
+         us_timers.stop_all();
+
          // output bead model
          {
             QString outfile = QString( "%1_sh%2_best_torus" ).arg( oname ).arg( max_harmonics );
@@ -434,6 +444,7 @@ QString US_PM::test( QString name, QString oname )
             }
             of.close();
          }
+         us_timers.start_all();
          cout << "ending best torus\n";
       }
       us_timers.end_timer          ( "BEST" );
@@ -470,7 +481,8 @@ QString US_PM::test( QString name, QString oname )
       {
          cout << "starting best sphere\n";
          params[ 0 ] = 0e0;
-         sphere_pm.best_md0( params, model );
+         sphere_pm.best_md0( params, model, grid_conversion_factor );
+         us_timers.stop_all();
       
          // output bead model
          {
@@ -520,6 +532,7 @@ QString US_PM::test( QString name, QString oname )
             of.close();
          }
 
+         us_timers.start_all();
          cout << "ending best sphere\n";
       }
 
@@ -528,8 +541,9 @@ QString US_PM::test( QString name, QString oname )
          // sphere_pm.clear();
          cout << "starting best cylinder\n";
          params[ 0 ] = 1e0;
-         sphere_pm.best_md0( params, model );
-      
+         sphere_pm.best_md0( params, model, grid_conversion_factor );
+         us_timers.stop_all();
+
          // output bead model
          {
             QString outfile = QString( "%1_sh%2_best_MD0_cylinder" ).arg( oname ).arg( max_harmonics );
@@ -579,16 +593,35 @@ QString US_PM::test( QString name, QString oname )
             }
             of.close();
          }
+         us_timers.start_all();
          cout << "ending best cylinder\n";
       }
 
       if ( BEST_MD0_SPHEROID )
       {
          // sphere_pm.clear();
+      
+         us_timers.stop_all();
+         if ( SPHEROID_SPEC_TEST )
+         {
+            vector < double > I_result( q.size() );
+            vector < double > params( 3 );
+            params[ 0 ] = 2e0;
+            params[ 1 ] = 5.5e0;
+            params[ 2 ] = 5.5e0;
+            sphere_pm.create_model( params, model );
+            sphere_pm.compute_I( model, I_result );
+            double fit2 = sphere_pm.fitness2( I_result );
+            cout << QString( "SPEC TEST: size %1, fitness2 %2\n" ).arg( model.size() ).arg( fit2 );
+         }
+
+         us_timers.start_all();
          cout << "starting best spheroid\n";
          params[ 0 ] = 2e0;
-         sphere_pm.best_md0( params, model );
-      
+         sphere_pm.best_md0( params, model, grid_conversion_factor, 10e0, 15e0, 10e0 );
+         us_timers.stop_all();
+            
+
          // output bead model
          {
             QString outfile = QString( "%1_sh%2_best_MD0_spheroid" ).arg( oname ).arg( max_harmonics );
@@ -636,6 +669,7 @@ QString US_PM::test( QString name, QString oname )
             }
             of.close();
          }
+         us_timers.start_all();
          cout << "ending best spheroid\n";
       }
 
@@ -644,8 +678,9 @@ QString US_PM::test( QString name, QString oname )
          // sphere_pm.clear();
          cout << "starting best torus\n";
          params[ 0 ] = 4e0;
-         sphere_pm.best_md0( params, model );
-      
+         sphere_pm.best_md0( params, model, grid_conversion_factor );
+         us_timers.stop_all();
+
          // output bead model
          {
             QString outfile = QString( "%1_sh%2_best_MD0_torus" ).arg( oname ).arg( max_harmonics );
@@ -693,9 +728,10 @@ QString US_PM::test( QString name, QString oname )
             }
             of.close();
          }
+         us_timers.start_all();
          cout << "ending best torus\n";
       }
-      us_timers.end_timer          ( "BEST" );
+      us_timers.end_timer          ( "BEST_MD0" );
       cout << us_timers.list_times();
    }
 
