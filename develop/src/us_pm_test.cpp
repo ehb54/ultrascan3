@@ -11,7 +11,6 @@
 #define BEST_TORUS    0
 #define BEST          ( BEST_SPHERE || BEST_CYLINDER || BEST_SPHEROID || BEST_TORUS )
 
-#define SPHEROID_SPEC_TEST 0
 
 #define BEST_MD0_SPHERE   0
 #define BEST_MD0_CYLINDER 0
@@ -19,7 +18,10 @@
 #define BEST_MD0_TORUS    0
 #define BEST_MD0          ( BEST_MD0_SPHERE || BEST_MD0_CYLINDER || BEST_MD0_SPHEROID || BEST_MD0_TORUS )
 
-#define GRID_SEARCH_SPHEROID 1
+#define SPHEROID_SPEC_TEST 0
+#define GRID_SEARCH_SPHEROID 0
+
+#define MAKE_SPHERE_AND_SPHEROID 1
 
 #define LEAK_CHECK    0
 #define STD_MODEL     0
@@ -452,6 +454,89 @@ QString US_PM::test( QString name, QString oname )
       us_timers.end_timer          ( "BEST" );
       cout << us_timers.list_times();
    }
+
+   if ( MAKE_SPHERE_AND_SPHEROID )
+   {
+      // spheroid should be a sphere when a == b
+
+      US_PM sphere_pm( grid_conversion_factor, 
+                       max_dimension, 
+                       drho, 
+                       buffer_e_density, 
+                       ev, 
+                       max_harmonics, 
+                       // fibonacci_grid,
+                       F, 
+                       q, 
+                       I, 
+                       e, 
+                       2048,
+                       1 );
+
+      QString tag = "MAKE_SPHERE_AND_SPHEROID";
+      cout << "starting " << tag << endl;
+
+      set < pm_point >   model;
+
+      double radius = 5e0;
+
+      // sphere
+
+      vector < double > params(2);
+
+      params      [ 0 ] = 0e0;
+      params      [ 1 ] = radius;
+
+      sphere_pm.create_model( params, model );
+
+      QString outname = QString( "%1_sh%2_sphere_%3" ).arg( oname ).arg( max_harmonics ).arg( radius );
+      sphere_pm.write_model( outname, model, params );
+      sphere_pm.write_I    ( outname, model);
+      
+      params.resize( 3 );
+      params[ 0 ] = 2e0;
+      params[ 1 ] = params[ 1 ];
+      params[ 2 ] = params[ 1 ];
+
+      sphere_pm.create_model( params, model );
+      outname = QString( "%1_sh%2_spheroid_%3" ).arg( oname ).arg( max_harmonics ).arg( radius );
+      sphere_pm.write_model( outname, model, params );
+      sphere_pm.write_I    ( outname, model);
+
+      params.resize( 4 );
+      params[ 0 ] = 3e0;
+      params[ 1 ] = params[ 1 ];
+      params[ 2 ] = params[ 1 ];
+      params[ 3 ] = params[ 1 ];
+
+      sphere_pm.create_model( params, model );
+      outname = QString( "%1_sh%2_ellipsoid_%3" ).arg( oname ).arg( max_harmonics ).arg( radius );
+      sphere_pm.write_model( outname, model, params );
+      sphere_pm.write_I    ( outname, model);
+
+      params.resize( 3 );
+      params[ 0 ] = 4e0;
+      params[ 1 ] = 0e0;
+      params[ 2 ] = params[ 2 ];
+
+      sphere_pm.create_model( params, model );
+      outname = QString( "%1_sh%2_torus_%3" ).arg( oname ).arg( max_harmonics ).arg( radius );
+      sphere_pm.write_model( outname, model, params );
+      sphere_pm.write_I    ( outname, model);
+
+      params.resize( 3 );
+      params[ 0 ] = 4e0;
+      params[ 1 ] = 7e0;
+      params[ 2 ] = 2e0;
+
+      sphere_pm.create_model( params, model );
+      outname = QString( "%1_sh%2_torus_2_%3" ).arg( oname ).arg( max_harmonics ).arg( radius );
+      sphere_pm.write_model( outname, model, params );
+      sphere_pm.write_I    ( outname, model);
+
+      cout << "ending best grid search spheroid\n";
+   }
+
 
    if ( GRID_SEARCH_SPHEROID )
    {

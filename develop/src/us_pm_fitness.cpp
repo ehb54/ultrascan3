@@ -7,6 +7,11 @@
 
 bool US_PM::compute_I( set < pm_point > & model, vector < double > & I_result )
 {
+   if ( !model.size() )
+   {
+      error_msg = "empty model";
+      return false;
+   }
    if ( use_CYJ )
    {
       return compute_CYJ_I( model, I_result );

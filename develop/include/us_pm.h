@@ -114,6 +114,7 @@ class US_PM
    double                                  cube_size;
    double                                  bead_radius;
    double                                  bead_radius_over_2;
+   double                                  one_p_bead_radius_over_2;
 
    // active grid:
    vector < double >                       q;
@@ -409,6 +410,9 @@ class US_PM
   #pragma warning ( default: 4251 )
 #endif
    bool                write_model       ( QString filename, set < pm_point > & model );
+   bool                write_model       ( QString filename, set < pm_point > & model, vector < double > &params );
+   bool                write_I           ( QString filename, set < pm_point > & model );
+
    QString             tmp_name          ( QString basename, vector < double > & params );
 
    void                clear             ();

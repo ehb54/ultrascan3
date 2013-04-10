@@ -1197,6 +1197,8 @@ bool US_PM::sphere( int model_pos, vector < double > & params, vector < double >
 
    // make a bounding box
 
+   double one_over_radius2 = 1e0 / ( ( radius + bead_radius_over_2 ) * ( radius + bead_radius_over_2 ) );
+
    debug( 2, QString( "sphere @ %1 %2 %3 radius %4" ).arg( centerx ).arg( centery ).arg( centerz ).arg( radius ) );
 
    int minx = (int) ( centerx - radius - 1 );
@@ -1214,9 +1216,9 @@ bool US_PM::sphere( int model_pos, vector < double > & params, vector < double >
       {
          for ( int z = minz; z <= maxz; ++z )
          {
-            if ( sqrt( (double)( ( x - centerx ) * ( x - centerx ) +
-                                 ( y - centery ) * ( y - centery ) +
-                                 ( z - centerz ) * ( z - centerz ) ) ) < radius ) 
+            if ( one_over_radius2 * (double)( ( x - centerx ) * ( x - centerx ) +
+                                              ( y - centery ) * ( y - centery ) +
+                                              ( z - centerz ) * ( z - centerz ) ) < 1e0 )
             {
                pmp.x[ 0 ] = ( int16_t )x;
                pmp.x[ 1 ] = ( int16_t )y;
@@ -1334,7 +1336,7 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
    int minz = (int) ( basez - radius - 1 );
    int maxz = (int) ( endz  + radius + 1 );
 
-   debug( 1, QString( "cylinder:bounding box %1,%2,%3 %4,%5,%6" )
+   debug( 2, QString( "cylinder:bounding box %1,%2,%3 %4,%5,%6" )
           .arg( minx )
           .arg( miny )
           .arg( minz )
@@ -1532,7 +1534,7 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
    int minz = (int) ( centerz - 2 * radiusmax - 2 );
    int maxz = (int) ( centerz + 2 * radiusmax + 2 );
 
-   debug( 1, QString( "ellispoid:bounding box %1,%2,%3 %4,%5,%6\n" )
+   debug( 2, QString( "ellispoid:bounding box %1,%2,%3 %4,%5,%6\n" )
           .arg( minx )
           .arg( miny )
           .arg( minz )
@@ -1543,13 +1545,13 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
 
    pm_point pmp;
 
-   double radiusa2   = radiusa * radiusa;
-   double radiusb2   = radiusb * radiusb;
-   double radiusc2   = radiusc * radiusc;
+   //    double radiusa2   = radiusa * radiusa;
+   //    double radiusb2   = radiusb * radiusb;
+   //    double radiusc2   = radiusc * radiusc;
 
-   double one_over_radiusa2 = 1e0 / radiusa2;
-   double one_over_radiusb2 = 1e0 / radiusb2;
-   double one_over_radiusc2 = 1e0 / radiusc2;
+   double one_over_radiusa2 = 1e0 / ( ( radiusa + bead_radius_over_2 ) * ( radiusa + bead_radius_over_2 ) );
+   double one_over_radiusb2 = 1e0 / ( ( radiusb + bead_radius_over_2 ) * ( radiusb + bead_radius_over_2 ) );
+   double one_over_radiusc2 = 1e0 / ( ( radiusc + bead_radius_over_2 ) * ( radiusc + bead_radius_over_2 ) );
 
    if ( model_pos && theta )
    {
@@ -1576,7 +1578,7 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
                if ( 
                    one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] ) +
                    one_over_radiusb2 * ( v_p_c[ 1 ] * v_p_c[ 1 ] ) +
-                   one_over_radiusc2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+                   one_over_radiusc2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 )
                {
                   pmp.x[ 0 ] = ( int16_t )x;
                   pmp.x[ 1 ] = ( int16_t )y;
@@ -1603,7 +1605,7 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
                if ( 
                    one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] ) +
                    one_over_radiusb2 * ( v_p_c[ 1 ] * v_p_c[ 1 ] ) +
-                   one_over_radiusc2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+                   one_over_radiusc2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 )
                {
                   pmp.x[ 0 ] = ( int16_t )x;
                   pmp.x[ 1 ] = ( int16_t )y;
@@ -1697,11 +1699,11 @@ bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double
 
    pm_point pmp;
 
-   double radiusa2   = radiusa * radiusa;
-   double radiusb2   = radiusb * radiusb;
+   // double radiusa2   = radiusa * radiusa;
+   // double radiusb2   = radiusb * radiusb;
 
-   double one_over_radiusa2 = 1e0 / radiusa2;
-   double one_over_radiusb2 = 1e0 / radiusb2;
+   double one_over_radiusa2 = 1e0 / ( ( radiusa + bead_radius_over_2 ) * ( radiusa + bead_radius_over_2 ) );
+   double one_over_radiusb2 = 1e0 / ( ( radiusb + bead_radius_over_2 ) * ( radiusb + bead_radius_over_2 ) );
 
    if ( model_pos && theta )
    {
@@ -1726,7 +1728,7 @@ bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double
                   };
                if ( 
                    one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] + v_p_c[ 1 ] * v_p_c[ 1 ] ) +
-                   one_over_radiusb2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+                   one_over_radiusb2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 )
                {
                   pmp.x[ 0 ] = ( int16_t )x;
                   pmp.x[ 1 ] = ( int16_t )y;
@@ -1752,7 +1754,7 @@ bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double
                          
                if ( 
                    one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] + v_p_c[ 1 ] * v_p_c[ 1 ] ) +
-                   one_over_radiusb2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+                   one_over_radiusb2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 )
                {
                   pmp.x[ 0 ] = ( int16_t )x;
                   pmp.x[ 1 ] = ( int16_t )y;
@@ -1865,7 +1867,7 @@ bool US_PM::torus_segment( int model_pos, vector < double > & params, vector < d
                          
             if ( 
                 one_over_radiusa2 * ( v_p_c[ 0 ] * v_p_c[ 0 ] + v_p_c[ 1 ] * v_p_c[ 1 ] ) +
-                one_over_radiusb2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 + bead_radius_over_2 )
+                one_over_radiusb2 * ( v_p_c[ 2 ] * v_p_c[ 2 ] ) < 1e0 )
             {
                pmp.x[ 0 ] = ( int16_t )x;
                pmp.x[ 1 ] = ( int16_t )y;
@@ -1954,7 +1956,9 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
 
    pm_point pmp;
 
-   double radiusb2pb = ( radiusb + bead_radius_over_2 ) * ( radiusb + bead_radius_over_2 );
+   double radiusa2 = ( radiusa + bead_radius_over_2 ) * ( radiusa + bead_radius_over_2 );
+   // double oneoverradiusa2 = 1e0 / ( ( radiusa + bead_radius_over_2 ) * ( radiusa + bead_radius_over_2 ) );
+   double oneoverradiusb2 = 1e0 / ( ( radiusb + bead_radius_over_2 ) * ( radiusb + bead_radius_over_2 ) );
 
    if ( model_pos && theta )
    {
@@ -1965,46 +1969,6 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
       double newy;
       double newz;
 
-      /*
-
-      for ( int x = minx; x <= maxx; ++x )
-      {
-         for ( int y = miny; y <= maxy; ++y )
-         {
-            for ( int z = minz; z <= maxz; ++z )
-            {
-               apply_rotation_matrix( rm, x, y, z, newx, newy, newz );
-               double dx = newx; // - centerx;
-               double dx2 = dx * dx;
-               double dy = newy; // - centery;
-               double dx2pdy2 = dx2 + dy * dy;
-
-               // find the x-y plane center
-               if ( dx2pdy2 > 0 ) // exclude translated 0,0,0 from torus
-               {
-                  double lenscale = radiusa / sqrt( dx2pdy2 );
-
-                  double c[ 3 ] =
-                     {
-                        dx * lenscale,
-                        dy * lenscale,
-                        0e0
-                     };
-
-                  if ( ( newx - c[ 0 ] ) * ( newx - c[ 0 ] ) +
-                       ( newy - c[ 1 ] ) * ( newy - c[ 1 ] ) +
-                       ( newz - c[ 2 ] ) * ( newz - c[ 2 ] ) < radiusb2pb ) 
-                  {
-                     pmp.x[ 0 ] = ( int16_t )( (double) x + centerx );
-                     pmp.x[ 1 ] = ( int16_t )( (double) y + centery );
-                     pmp.x[ 2 ] = ( int16_t )( (double) z + centerz );
-                     model.insert( pmp );
-                  }
-               }
-            }
-         }
-      }
-      */
       double ofsx = 1;
       for ( double x = (double) minx; x <= (double) maxx; x += ofsx )
       {
@@ -2029,9 +1993,9 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
                for ( double z = (double) minz; z <= (double) maxz; z += ofsx )
                {
 
-                  if ( ( (double) x - c[ 0 ] ) * ( (double) x - c[ 0 ] ) +
-                       ( (double) y - c[ 1 ] ) * ( (double) y - c[ 1 ] ) +
-                       ( (double) z - c[ 2 ] ) * ( (double) z - c[ 2 ] ) < radiusb2pb ) 
+                  if ( oneoverradiusb2 * ( ( (double) x - c[ 0 ] ) * ( (double) x - c[ 0 ] ) +
+                                           ( (double) y - c[ 1 ] ) * ( (double) y - c[ 1 ] ) +
+                                           ( (double) z - c[ 2 ] ) * ( (double) z - c[ 2 ] ) ) < 1e0 )
                   {
                      apply_rotation_matrix( rm, x, y, z, newx, newy, newz );
                      pmp.x[ 0 ] = ( int16_t )( newx + centerx + 5e-1 );
@@ -2040,7 +2004,19 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
                      model.insert( pmp );
                   }
                }
-            }
+            } else {
+               for ( int z = minz; z <= maxz; ++z )
+               {
+                  if ( oneoverradiusb2 * ( radiusa2 + z * z ) < 1e0 )
+                  {
+                     apply_rotation_matrix( rm, x, y, z, newx, newy, newz );
+                     pmp.x[ 0 ] = ( int16_t )( newx + centerx + 5e-1 );
+                     pmp.x[ 1 ] = ( int16_t )( newy + centery + 5e-1 );
+                     pmp.x[ 2 ] = ( int16_t )( newz + centerz + 5e-1 );
+                     model.insert( pmp );
+                  }
+               }
+            }               
          }
       }
    } else {
@@ -2053,7 +2029,8 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
             // find the x-y plane center
             double dy = (double)y; // - centery;
             double dx2pdy2 = dx2 + dy * dy;
-            if ( dx2pdy2 > 0 ) // exclude translated 0,0,0 from torus
+
+            if ( dx2pdy2 > 0 )
             {
                double lenscale = radiusa / sqrt( dx2pdy2 );
 
@@ -2067,9 +2044,9 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
                for ( int z = minz; z <= maxz; ++z )
                {
 
-                  if ( ( (double) x - c[ 0 ] ) * ( (double) x - c[ 0 ] ) +
-                       ( (double) y - c[ 1 ] ) * ( (double) y - c[ 1 ] ) +
-                       ( (double) z - c[ 2 ] ) * ( (double) z - c[ 2 ] ) < radiusb2pb ) 
+                  if ( oneoverradiusb2 * ( ( (double) x - c[ 0 ] ) * ( (double) x - c[ 0 ] ) +
+                                           ( (double) y - c[ 1 ] ) * ( (double) y - c[ 1 ] ) +
+                                           ( (double) z - c[ 2 ] ) * ( (double) z - c[ 2 ] ) ) < 1e0 )
                   {
                      pmp.x[ 0 ] = ( int16_t )( (double) x + centerx );
                      pmp.x[ 1 ] = ( int16_t )( (double) y + centery );
@@ -2077,7 +2054,18 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
                      model.insert( pmp );
                   }
                }
-            }
+            } else {
+               for ( int z = minz; z <= maxz; ++z )
+               {
+                  if ( oneoverradiusb2 * ( radiusa2 + z * z ) < 1e0 )
+                  {
+                     pmp.x[ 0 ] = ( int16_t )( (double) x + centerx );
+                     pmp.x[ 1 ] = ( int16_t )( (double) y + centery );
+                     pmp.x[ 2 ] = ( int16_t )( (double) z + centerz );
+                     model.insert( pmp );
+                  }
+               }
+            }               
          }
       }
    }

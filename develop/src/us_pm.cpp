@@ -10,8 +10,9 @@ void US_PM::set_grid_size( double grid_conversion_factor )
    cube_size   = grid_conversion_factor * grid_conversion_factor * grid_conversion_factor;
 
    // radius gives a sphere with equal size to the cube:
-   bead_radius        = pow( cube_size / M_PI, 1e0/3e0 );
-   bead_radius_over_2 = bead_radius * 5e-1;
+   bead_radius              = pow( cube_size / M_PI, 1e0/3e0 );
+   bead_radius_over_2       = bead_radius * 5e-1;
+   one_p_bead_radius_over_2 = 1e0 + bead_radius_over_2;
 
    cout << QString( "US_PM:cube size   %1\n"
                     "US_PM:bead radius %2\n" )
@@ -437,7 +438,8 @@ bool US_PM::write_model( QString filename, set < pm_point > & model )
       filename += ".bead_model";
    }
 
-   cout << "Creating:" << filename << "\n";
+   cout << QString( "Creating (%1 beads): %2\n" ).arg( model.size() ).arg( filename );
+
    QFile of( filename );
    if ( !of.open( IO_WriteOnly ) )
    {
@@ -446,6 +448,59 @@ bool US_PM::write_model( QString filename, set < pm_point > & model )
    
    QTextStream ts( &of );
    ts << qs_bead_model( model );
+   of.close();
+   return true;
+}
+
+bool US_PM::write_model( QString filename, set < pm_point > & model, vector < double > &params )
+{
+   if ( !filename.contains( QRegExp( "\\.bead_model$" ) ) )
+   {
+      filename += ".bead_model";
+   }
+
+   cout << QString( "Creating (%1 beads): %2\n" ).arg( model.size() ).arg( filename );
+
+   QFile of( filename );
+   if ( !of.open( IO_WriteOnly ) )
+   {
+      return false;
+   }
+   
+   QTextStream ts( &of );
+   ts << qs_bead_model( model );
+   ts << list_params( params );
+   of.close();
+   return true;
+}
+
+bool US_PM::write_I( QString filename, set < pm_point > & model )
+{
+   if ( !filename.contains( QRegExp( "\\.dat$" ) ) )
+   {
+      filename += ".dat";
+   }
+
+   vector < double >   I_result( q.size() );
+   if ( !compute_I( model, I_result ) )
+   {
+      cerr << "write_I:" + error_msg << endl;
+   }
+
+   cout << "Creating:" << filename << "\n";
+   QFile of( filename );
+   if ( !of.open( IO_WriteOnly ) )
+   {
+      return false;
+   }
+   
+   QTextStream ts( &of );
+   ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
+   for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
+   {
+      ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
+   }
+
    of.close();
    return true;
 }
