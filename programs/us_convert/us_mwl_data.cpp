@@ -31,10 +31,13 @@ DbgLv(1) << "MwDa: cur_dir" << cur_dir;
    ddir.makeAbsolute();
    if ( cur_dir.right( 1 ) != "/" )  cur_dir += "/";
 
-   QString old_runID  = cur_dir.section( "/", -2, -2 );
-   runID              = old_runID;
+   read_runxml( ddir, cur_dir );
 
-   old_runID.replace( QRegExp( "![A-Za-z0-9_-]" ), "_" );
+   int kcelchn  = cellchans.count();
+   cellchans.clear();
+   QString old_runID  = runID;
+
+   runID.replace( QRegExp( "![A-Za-z0-9_-]" ), "_" );
 
    if ( runID != old_runID )
    {
@@ -82,6 +85,10 @@ DbgLv(1) << "MwDa: nfile" << nfile;
    nchan       = chans.size();
 DbgLv(1) << "MwDa: nscan ncell nchan" << nscan << ncell << nchan;
    ncelchn     = ncell * nchan;
+   if ( ncelchn != kcelchn )
+   {
+      qDebug() << "kcelchn ncelchn" << kcelchn << ncelchn;
+   }
    cells    .sort();
    chans    .sort();
    cellchans.clear();
@@ -131,7 +138,10 @@ DbgLv(1) << "MwDa: nscan ncell nchan" << nscan << ncell << nchan;
 DbgLv(1) << "MwDa: npoint nlambda" << npoint << nlambda;
 
          read_lambdas( ds, iraw_wvlns, nlamb_i );
-//DbgLv(1) << "MwDa:   read_lambdas COMPLETE";
+DbgLv(1) << "MwDa:   read_lambdas COMPLETE";
+int ww=nlamb_i-1;
+DbgLv(1) << "MwDa:    w0 w1 w3 wi wj wk" << iraw_wvlns[0] << iraw_wvlns[1]
+ << iraw_wvlns[2] << iraw_wvlns[ww-2] << iraw_wvlns[ww-1] << iraw_wvlns[ww];
          avgd_wvlns  = iraw_wvlns;
          le_status->setText( QString( "%1 wavelengths ..." )
              .arg( nlamb_i ) );
@@ -139,15 +149,21 @@ DbgLv(1) << "MwDa: npoint nlambda" << npoint << nlambda;
 
          // And initialize the data vector
          QVector< double > wave_reads( npointt, 0.0 );
+         iraw_reads.clear  ();
+         avgd_reads.clear  ();
          iraw_reads.reserve( ntrip_i );
+         avgd_reads.reserve( ntrip_i );
 
          for ( int tx = 0; tx < ntrip_i; tx++ )
+         {
             iraw_reads << wave_reads;
+            avgd_reads << wave_reads;
+         }
 //DbgLv(1) << "MwDa:   iraw_reads CREATED size" << iraw_reads.size();
       }
       else
       {  // Otherwise, skip past wavelengths
-         ds.skipRawData( nlamb_i * 4 );
+         ds.skipRawData( nlamb_i * 2 );
       }
 
       int ccx    = hd.icell * nchan + hd.ichan;
@@ -173,9 +189,12 @@ DbgLv(1) << "MwDa: wv0 wvm wvn" << iraw_wvlns[0]
  << iraw_wvlns[nlamb_i/2] << iraw_wvlns[nlamb_i-1];
 DbgLv(1) << "MwDa: da20 40 m+40 n-40" << iraw_reads[20][40]
  << iraw_reads[20][npointt/2+40] << iraw_reads[20][npointt-41];
-   le_status->setText( QString( "Initial MWL import from %1 files is complete." )
-       .arg( nfile ) );
+   le_status->setText(
+      QString( "Initial MWL import from %1 files is complete." )
+      .arg( nfile ) );
    qApp->processEvents();
+   avgd_wvlns = iraw_wvlns;
+   avgd_reads = iraw_reads;
 
    return status;
 }
@@ -213,15 +232,18 @@ int US_MwlData::rvalues_raw( int& tripx, int& scanx, QVector< double >& rvs )
 // Return the lambdas vector for the data
 int US_MwlData::lambdas( QVector< double >& wls )
 {
+#if 0
    wls.clear();
    wls.reserve( nlambda );
 
    for ( int ii = 0; ii < nlambda; ii++ )
    {
-      wls << avgd_wvlns[ ii ];
+      wls << iraw_wvlns[ ii ];
    }
 
    return nlambda;
+#endif
+   return lambdas_raw( wls );
 }
 
 // Return the input raw lambdas vector for the data
@@ -381,9 +403,10 @@ int US_MwlData::set_lambdas(  double delta, double start, double end )
 qDebug() << "SetLamb  d/s/e" << delta << start << end;
    avgd_wvlns.clear();
    // Get delta,start,end or default them
-   dlambda       = ( delta > 0 ) ? delta : 1.0;
    slambda       = ( start > 0 ) ? start : iraw_wvlns[ 0 ];
    elambda       = ( end   > 0 ) ? end   : iraw_wvlns[ nlamb_i - 1 ];
+   dlambda       = ( elambda - slambda ) / (double)( nlamb_i - 1 );
+   dlambda       = ( delta > 0 ) ? delta : dlambda;
    // Insure lambdas are integral and range is a multiple of delta
    dlambda       = (double)qRound( dlambda );
    slambda       = (double)qRound( slambda );
@@ -393,10 +416,11 @@ qDebug() << "SetLamb  d/s/e" << delta << start << end;
    elambda       = qMax( elambda, slambda );
    double rangel = elambda - slambda;
    nlambda       = qRound( rangel / dlambda ) + 1;
-   elambda       = slambda + (double)( nlambda - 1 );
+   elambda       = slambda + (double)( nlambda - 1 ) * dlambda;
 
-   if ( dlambda == 1.0 )
-   { // For auto set to delta=1, insure no more averages than raws
+   if ( delta == 0.0 )
+   { // For initial auto set, insure no more averages than raws
+qDebug() << "SetLamb   auto nlambda nlamb_i" << nlambda << nlamb_i;
       if ( nlambda > nlamb_i )
       { // Delta too small, so adjust it
          dlambda       = qRound( rangel / (double)( nlamb_i - 1 ) );
@@ -404,6 +428,7 @@ qDebug() << "SetLamb  d/s/e" << delta << start << end;
          elambda       = slambda + (double)( nlambda - 1 );
       }
    }
+qDebug() << "SetLamb    (2)d/s/e" << dlambda << slambda << elambda;
 
    nlambda       = 0;
    double wval   = slambda;
@@ -555,6 +580,7 @@ qDebug() << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint;
       xout << US_DataIO2::XValue( rad_val );
       rad_val  += rad_inc;
    }
+qDebug() << "BldRawD   xout size" << xout.size() << npoint;
 
    // Set up the interpolated byte array (all zeroes)
    int    nbytei   = ( npoint + 7 ) / 8;
@@ -580,6 +606,11 @@ qDebug() << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint;
       rdata.x           = xout;
       int jhx           = hdx; 
       int rdx           = 0;
+//      QString celchn    = QString::number( rdata.cell ) + " / "
+//                          + QString( rdata.channel );
+//      int ccx           = cellchans.indexOf( celchn );
+      rdata.description = ccdescs.at( ccx );
+qDebug() << "BldRawD     trx" << trx << " building scans...";
 
       for ( int scx = 0; scx < nscan; scx++ )
       {  // Set scan values
@@ -603,6 +634,7 @@ qDebug() << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint;
          rdata.scanData << scan;      // Append a scan to a triple
       } // END: scan loop
 
+qDebug() << "BldRawD     trx" << trx << " saving allData...";
       allData << rdata;               // Append triple data to the array
       le_status->setText( QString( "Of %1 raw AUCs, built %2" )
           .arg( ntriple ).arg( trx + 1 ) );
@@ -616,6 +648,7 @@ qDebug() << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint;
          wvx  = 0;
          hdx  = ccx * ncelchn;
       }
+qDebug() << "BldRawD   ccx wvx hdx" << ccx << wvx << hdx;
    } // END: triple loop
 
    le_status->setText( QString( "All %1 raw AUCs have been build." )
@@ -631,6 +664,19 @@ int US_MwlData::countOf( QString key )
    mapCounts();
 
    return counts[ key ];
+}
+
+// Return a count of a specified type
+QString US_MwlData::cc_description( QString celchn )
+{
+   int ccx = cellchans.indexOf( celchn );
+   return ( ccx < 0 ? "" : ccdescs.at( ccx ) );
+}
+
+void US_MwlData::run_values( QString& arunid, QString& aruntype )
+{
+   arunid   = runID;
+   aruntype = intensity ? "RI" : "RA";
 }
 
 // Private slot to map counts and sizes
@@ -650,5 +696,72 @@ void US_MwlData::mapCounts( void )
    counts[ "dlambda"   ]  = (int)dlambda;
    counts[ "slambda"   ]  = (int)slambda;
    counts[ "elambda"   ]  = (int)elambda;
+}
+
+// Read the run XML file and return its values
+void US_MwlData::read_runxml( QDir ddir, QString curdir )
+{
+   QStringList mwrfs = ddir.entryList( QStringList( "*.mwrs.xml" ),
+         QDir::Files, QDir::Name );
+   int nxfile    = mwrfs.count();
+
+   if ( nxfile > 1 )
+   {
+      qDebug() << "*ERROR* '*.mwrs.xml' count > 1" << nxfile << curdir;
+      return;
+   }
+
+   QString fname = mwrfs.at( 0 );
+   QString fpath = cur_dir + fname;
+   QFile xfi( fpath );
+
+   if ( ! xfi.open( QIODevice::ReadOnly ) )
+   {
+      qDebug() << "*ERROR* Unable to open" << fname;
+      qDebug() << fpath;
+      return;
+   }
+
+   QXmlStreamReader xml( &xfi );
+   QString celi;
+   QString chni;
+   QString cech;
+   cellchans.clear();
+
+   while( ! xml.atEnd() )
+   {
+      xml.readNext();
+      if ( xml.isStartElement() )
+      {
+         QXmlStreamAttributes att = xml.attributes();
+         if ( xml.name() == "runID" )
+         {
+            runID           = att.value( "name"           ).toString();
+            QString speed   = att.value( "speed_mode"     ).toString();
+            QString intens  = att.value( "take_intensity" ).toString();
+            speed_mode      = ( speed  == "Y" );
+            intensity       = ( intens == "Y" );
+         }
+         else if ( xml.name() == "cell" )
+         {
+            celi            = att.value( "id"             ).toString();
+            celi            = QString::number( celi.toInt() );
+         }
+         else if ( xml.name() == "channel" )
+         {
+            chni            = att.value( "id"             ).toString();
+            cech            = celi + " / " + chni;
+            QString desc    = att.value( "sample"         ).toString();
+
+            if ( ! cellchans.contains( cech ) )
+            {
+               cellchans << cech;
+               ccdescs << desc;
+            }
+         }
+      }
+   }
+
+   xfi.close();
 }
 

@@ -38,30 +38,43 @@ class US_MwlData : public QObject
             QChar    channel;       // Channel character (e.g., 'A')
       };
 
+      class RunHdr
+      {
+         public:
+            QString  runID;
+            bool     speed_mode;
+            bool     intensity;
+            QMap< QString, QString > descriptions;
+      };
+
       //! Import data from a specified directory
-      bool   import_data   ( QString&, QLineEdit* );
+      bool    import_data   ( QString&, QLineEdit* );
       //! Return reading values for given triple, scan
-      int    rvalues       ( int&, int&, QVector< double >& );
+      int     rvalues       ( int&, int&, QVector< double >& );
       //! Return raw input reading values for triple,scan
-      int    rvalues_raw   ( int&, int&, QVector< double >& );
+      int     rvalues_raw   ( int&, int&, QVector< double >& );
       //! Return lambda values
-      int    lambdas       ( QVector< double >& );
+      int     lambdas       ( QVector< double >& );
       //! Return lambda values for raw original
-      int    lambdas_raw   ( QVector< double >& );
+      int     lambdas_raw   ( QVector< double >& );
       //! Update output lambda range
-      int    set_lambdas   ( double = 0.0, double = 0.0, double = 0.0 );
+      int     set_lambdas   ( double = 0.0, double = 0.0, double = 0.0 );
       //! Do lambda averaging 
-      int    average_lambda( void );
+      int     average_lambda( void );
       //! Match lambda in original list
-      int    indexOfLambda ( double );
+      int     indexOfLambda ( double );
       //! Return list of cells/channels
-      int    cellchannels  ( QStringList& );
+      int     cellchannels  ( QStringList& );
       //! Build RawData vector
-      int    build_rawData ( QVector< US_DataIO2::RawData >& );
+      int     build_rawData ( QVector< US_DataIO2::RawData >& );
       //! A count of specified type
-      int    countOf       ( QString );
+      int     countOf       ( QString );
+      //! Return cell/channel description string
+      QString cc_description( QString );
+      //! Return runID string
+      void    run_values    ( QString&, QString& );
       //! Clear all the data structures
-      void   clear         ( void  );
+      void    clear         ( void  );
 
    private:
       QVector< QVector< double > >   iraw_reads;  // Raw readings
@@ -100,7 +113,7 @@ class US_MwlData : public QObject
       int       curccx;                // Current cell/chan index
       int       dbg_level;             // Debug level
 
-      QMap< QString, int > counts;     // Map of counts ('File','Scan',...)
+      QMap< QString, int >     counts; // Map of counts ('File','Scan',...)
 
       double    dlambda;               // Delta for output lambdas
       double    slambda;               // Starting output lambda
@@ -109,6 +122,9 @@ class US_MwlData : public QObject
       QString   cur_dir;               // Currently selected i/p data directory
       QString   runID;                 // Run ID
       QString   runType;               // Run Type (e.g., "RI")
+
+      bool      speed_mode;            // Speed_mode from run XML
+      bool      intensity;             // Intensity flag from run XML
 
    private slots:
 
@@ -119,6 +135,7 @@ class US_MwlData : public QObject
       void   read_header ( QDataStream&, DataHdr& );
       void   read_lambdas( QDataStream&, QVector< double >&, int& );
       void   read_rdata  ( QDataStream&, QVector< double >&, int&, int& );
+      void   read_runxml ( QDir, QString );
       void   mapCounts   ( void );
 
 };

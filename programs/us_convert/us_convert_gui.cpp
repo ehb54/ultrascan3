@@ -742,6 +742,7 @@ qDebug() << "impMW: runID" << runID << "cDir" << currentDir;
    mwl_data.import_data( currentDir, le_description );
    isMwl       = true;
    runType     = "RI";
+   mwl_data.run_values( runID, runType );
 
    // if runType has changed, let's clear out xml data too
    QApplication::restoreOverrideCursor();
@@ -754,8 +755,8 @@ qDebug() << "impMW: runID" << runID << "cDir" << currentDir;
    ct_tolerance->setValue( scanTolerance );
 
    // Set initial lambda range; do 1st averaging; build the output data
-qDebug() << "impMW: set_lambdas";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+#if 0
    le_description->setText( QString( "Averaging over wavelengths ..." ) );
    qApp->processEvents();
    mwl_data.set_lambdas   ( );
@@ -765,9 +766,10 @@ timer.start();
    slambda = mwl_data.countOf( "slambda" );
    dlambda = mwl_data.countOf( "dlambda" );
    elambda = mwl_data.countOf( "elambda" );
+   QApplication::restoreOverrideCursor();
+#endif
 qDebug() << "impMW: build_rawData  (avglam time ms)" << timer.elapsed();
 timer.start();
-   QApplication::restoreOverrideCursor();
    le_description->setText( QString( "Building raw data AUCs ..." ) );
    qApp->processEvents();
    mwl_data.build_rawData ( allData );
@@ -843,6 +845,7 @@ qDebug() << "impMW:  lambdas      count" << nlambda << "ncelchn" << ncelchn;
    mwl_connect( true );
 
    setTripleInfo();
+   le_description -> setText( allData[ 0 ].description );
 
    checkTemperature();          // Check to see if temperature varied too much
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
@@ -867,7 +870,6 @@ qDebug() << "impMW:  lambdas      count" << nlambda << "ncelchn" << ncelchn;
    QString lambmsg = tr( "%1 raw:  WL %2 to %3" )
       .arg( nlamb_i ).arg( rlamb_s ).arg( rlamb_e );
    le_lambraw->setText( lambmsg );
-   le_description->clear();
    qApp->processEvents();
    adjustSize();
 }
@@ -3398,8 +3400,10 @@ void US_ConvertGui::mwl_connect( bool connect_on )
 void US_ConvertGui::reset_lambdas()
 {
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+#if 0
    mwl_data.set_lambdas   ( dlambda, slambda, elambda );
    mwl_data.average_lambda( );
+#endif
    mwl_data.build_rawData ( allData );
    mwl_connect( false );
 
