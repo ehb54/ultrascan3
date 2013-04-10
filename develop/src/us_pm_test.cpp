@@ -11,13 +11,15 @@
 #define BEST_TORUS    0
 #define BEST          ( BEST_SPHERE || BEST_CYLINDER || BEST_SPHEROID || BEST_TORUS )
 
+#define SPHEROID_SPEC_TEST 0
+
 #define BEST_MD0_SPHERE   0
 #define BEST_MD0_CYLINDER 0
-#define BEST_MD0_SPHEROID 1
-#define SPHEROID_SPEC_TEST ( 1 && BEST_MD0_SPHEROID )
+#define BEST_MD0_SPHEROID 0
 #define BEST_MD0_TORUS    0
 #define BEST_MD0          ( BEST_MD0_SPHERE || BEST_MD0_CYLINDER || BEST_MD0_SPHEROID || BEST_MD0_TORUS )
 
+#define GRID_SEARCH_SPHEROID 1
 
 #define LEAK_CHECK    0
 #define STD_MODEL     0
@@ -449,6 +451,99 @@ QString US_PM::test( QString name, QString oname )
       }
       us_timers.end_timer          ( "BEST" );
       cout << us_timers.list_times();
+   }
+
+   if ( GRID_SEARCH_SPHEROID )
+   {
+      US_PM sphere_pm( grid_conversion_factor, 
+                       max_dimension, 
+                       drho, 
+                       buffer_e_density, 
+                       ev, 
+                       max_harmonics, 
+                       // fibonacci_grid,
+                       F, 
+                       q, 
+                       I, 
+                       e, 
+                       2048,
+                       0 );
+
+      cout << "starting best grid search spheroid\n";
+
+      set < pm_point >   model;
+
+      US_Timer           us_timers;
+      us_timers         .clear_timers();
+      us_timers         .init_timer( "SPHEROID_GRID_SEARCH" );
+      us_timers         .start_all();
+
+      vector < double > params(3);
+      vector < double > delta(2);
+      vector < double > low_fparams(2);
+      vector < double > high_fparams(2);
+
+      params      [ 0 ] = 2e0;
+      delta       [ 0 ] = 1e-1;
+      delta       [ 1 ] = 1e-1;
+      low_fparams [ 0 ] = 4e0;
+      low_fparams [ 1 ] = 4e0;
+      high_fparams[ 0 ] = 11e0;
+      high_fparams[ 1 ] = 11e0;
+
+      sphere_pm.grid_search( params, delta, low_fparams, high_fparams, model );
+      
+      us_timers        .end_all();
+      cout << us_timers.list_times();
+
+      // output bead model
+      {
+         QString outfile = QString( "%1_sh%2_best_grid_search_spheroid" ).arg( oname ).arg( max_harmonics );
+      
+         if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
+         {
+            outfile += ".bead_model";
+         }
+
+         cout << "Creating:" << outfile << "\n";
+         QFile of( outfile );
+         if ( !of.open( IO_WriteOnly ) )
+         {
+            return "could not create output file";
+         }
+   
+         QTextStream ts( &of );
+         ts << sphere_pm.qs_bead_model( model );
+         ts << sphere_pm.list_params( params );
+         of.close();
+      }
+         
+      {
+         vector < double >   I_result( q.size() );
+         sphere_pm.compute_I( model, I_result );
+         QString outfile = QString( "%1_sh%2_best_grid_search_spheroid" ).arg( oname ).arg( max_harmonics );
+      
+         if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
+         {
+            outfile += ".dat";
+         }
+
+         cout << "Creating:" << outfile << "\n";
+         QFile of( outfile );
+         if ( !of.open( IO_WriteOnly ) )
+         {
+            return "could not create output file";
+         }
+   
+         QTextStream ts( &of );
+         ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
+         for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
+         {
+            ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
+         }
+         of.close();
+      }
+      cout << "ending best grid search spheroid\n";
    }
 
    if ( BEST_MD0 )

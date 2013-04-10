@@ -572,3 +572,115 @@ bool US_PM::best_vary_two_param(
    US_Vector::printvector( QString( "best_vary_two_param: ----end----- fitness %1, params:" ).arg( best_fitness ), params );
    return true;
 }
+
+bool US_PM::grid_search(
+                        vector < double > & params,
+                        vector < double > & delta,
+                        vector < double > & low_fparams,
+                        vector < double > & high_fparams,
+                        set < pm_point >  & model
+                        )
+{
+   QString gp;
+
+   if ( !zero_md0_params( params ) )
+   {
+      error_msg = "grid_search: " + error_msg;
+      return false;
+   }
+   
+   if ( delta.size() != low_fparams.size() ||
+        delta.size() != high_fparams.size() )
+   {
+      error_msg = "grid_search: delta, low & high must all be set and equally sized";
+      return false;
+   }
+
+   if ( delta.size() != params.size() - 1 )
+   {
+      error_msg = "grid_search: incorrect # of params";
+      return false;
+   }
+
+   if ( delta.size() > 4 )
+   {
+      error_msg = "grid_search: max of 4 params currently supported";
+      return false;
+   }
+
+   // compute # of points
+   US_Vector::printvector2( "grid_search: low, high: ", low_fparams, high_fparams );
+   US_Vector::printvector ( "grid_search: delta: "    , delta );
+
+   int points = 1;
+   for ( int i = 0; i < (int)low_fparams.size(); i++ )
+   {
+      points *= 1 + ( high_fparams[ i ] - low_fparams[ i ] ) / delta[ i ];
+   }
+   cout << QString( "grid_search: points %1\n" ).arg( points );
+
+   for ( int i = 0; i < (int)low_fparams.size(); i++ )
+   {
+      params[ i + 1 ] = low_fparams[ i ];
+   }
+
+   double best_fit = 1e99;
+   vector < double > best_params;
+   set < pm_point >  best_model;
+   vector < double > I_result;
+
+   while ( params.back() <= high_fparams.back() )
+   {
+      create_model( params, model );
+      compute_I( model, I_result );
+      double this_fit = fitness2( I_result );
+      US_Vector::printvector( QString( "grid_search: %1fitness2 %2, beads %3 params" )
+                              .arg( this_fit < best_fit ? "**" : "  " )
+                              .arg( this_fit, 0, 'g', 8 )
+                              .arg( model.size() ),
+                              params );
+      for ( int i = 1; i < (int) params.size(); i++ )
+      {
+         gp += QString( "%1 " ).arg( params[ i ] );
+      }
+      gp += QString( "%1\n" ).arg( this_fit );
+
+      if ( this_fit < best_fit )
+      {
+         best_params = params;
+         best_model  = model;
+         best_fit    = this_fit;
+      }
+      params[ 1 ] += delta[ 0 ];
+      if ( params[ 1 ] > high_fparams[ 0 ] &&
+           high_fparams.size() > 1 )
+      {
+         gp += "\n";
+         params[ 1 ] = low_fparams[ 0 ];
+         params[ 2 ] += delta[ 1 ];
+         if ( params[ 2 ] > high_fparams[ 1 ] &&
+              high_fparams.size() > 2 )
+         {
+            params[ 2 ] = low_fparams[ 1 ];
+            params[ 3 ] += delta[ 2 ];
+            if ( params[ 3 ] > high_fparams[ 2 ] &&
+                 high_fparams.size() > 3 )
+            {
+               params[ 3 ] = low_fparams[ 2 ];
+               params[ 4 ] += delta[ 3 ];
+            }
+         }
+      }
+   }
+   model  = best_model;
+   params = best_params;
+   US_Vector::printvector( QString( "grid_search: ++fitness2 %1, beads %2 params" )
+                           .arg( best_fit, 0, 'g', 8 )
+                           .arg( model.size() ),
+                           params );
+
+   cout << QString( "gnuplot.txt:\n%1" ).arg( gp );
+
+   return true;
+}
+   

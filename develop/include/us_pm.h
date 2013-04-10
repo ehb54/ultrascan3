@@ -418,7 +418,13 @@ class US_PM
    QString             list_params       ( vector < double > & params );
    void                set_grid_size     ( double grid_conversion_factor );
 
-   
+   bool                grid_search       (
+                                          vector < double > & params,
+                                          vector < double > & delta,
+                                          vector < double > & low_fparams,
+                                          vector < double > & high_fparams,
+                                          set < pm_point >  & model
+                                          );
 };
 
 #endif

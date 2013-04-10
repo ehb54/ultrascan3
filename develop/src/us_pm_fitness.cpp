@@ -11,6 +11,7 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > & I_result )
    {
       return compute_CYJ_I( model, I_result );
    } else {
+      // really need to check in comparison with previously cached
       if ( model.size() > max_beads_CA )
       {
          cout << QString( "switching to CYJ mode\n" ).ascii();
