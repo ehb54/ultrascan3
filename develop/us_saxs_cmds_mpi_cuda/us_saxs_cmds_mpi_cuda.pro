@@ -35,6 +35,7 @@ SOURCES		+= ../src/us_pm_best_ellipsoid.cpp
 SOURCES		+= ../src/us_pm_best_torus.cpp
 SOURCES		+= ../src/us_pm_best_torus_segment.cpp
 SOURCES		+= ../src/us_pm_fitness.cpp
+SOURCES		+= ../src/us_pm_ga.cpp
 SOURCES		+= ../src/us_pm_objects.cpp
 SOURCES		+= ../src/us_pm_test.cpp
 SOURCES		+= ../src/us_sh.cpp

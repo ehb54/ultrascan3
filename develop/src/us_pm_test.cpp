@@ -5,14 +5,14 @@
 
 #define TEST_CYLINDER 0
 
-#define BEST_SPHERE   1
+#define BEST_SPHERE   0
 #define BEST_CYLINDER 0
 #define BEST_SPHEROID 0
 #define BEST_TORUS    0
 #define BEST          ( BEST_SPHERE || BEST_CYLINDER || BEST_SPHEROID || BEST_TORUS )
 
 
-#define BEST_MD0_SPHERE   1
+#define BEST_MD0_SPHERE   0
 #define BEST_MD0_CYLINDER 0
 #define BEST_MD0_SPHEROID 0
 #define BEST_MD0_TORUS    0
@@ -21,7 +21,7 @@
 #define SPHEROID_SPEC_TEST 0
 #define GRID_SEARCH_SPHEROID 0
 
-#define MAKE_SPHERE_AND_SPHEROID 0
+#define MAKE_SPHERE_AND_SPHEROID 1
 
 #define LEAK_CHECK    0
 #define STD_MODEL     0
@@ -243,54 +243,10 @@ QString US_PM::test( QString name, QString oname )
          sphere_pm.best_cylinder( model );
          us_timers.stop_all();
       
-         // output bead model
-         {
-            QString outfile = QString( "%1_sh%2_best_cylinder" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
-            {
-               outfile += ".bead_model";
-            }
+         QString outname = QString( "%1_sh%2_best_cylinder" ).arg( oname ).arg( max_harmonics );
+         sphere_pm.write_model( outname, model );
+         sphere_pm.write_I    ( outname, model );
 
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << sphere_pm.qs_bead_model( model );
-            of.close();
-         }
-         
-         {
-            vector < double >   I_result( q.size() );
-            cout << "compute_I\n";
-            sphere_pm.compute_I( model, I_result );
-            cout << "compute_I done\n";
-            QString outfile = QString( "%1_sh%2_best_cylinder" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
-            {
-               outfile += ".dat";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
-            for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
-            {
-               ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
-            }
-            of.close();
-         }
          us_timers.start_all();
          cout << "ending best cylinder\n";
       }
@@ -302,52 +258,10 @@ QString US_PM::test( QString name, QString oname )
          sphere_pm.best_spheroid( model );
          us_timers.stop_all();
       
-         // output bead model
-         {
-            QString outfile = QString( "%1_sh%2_best_spheroid" ).arg( oname ).arg( max_harmonics );
+         QString outname = QString( "%1_sh%2_best_spheroid" ).arg( oname ).arg( max_harmonics );
+         sphere_pm.write_model( outname, model );
+         sphere_pm.write_I    ( outname, model );
       
-            if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
-            {
-               outfile += ".bead_model";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << sphere_pm.qs_bead_model( model );
-            of.close();
-         }
-         
-         {
-            vector < double >   I_result( q.size() );
-            sphere_pm.compute_I( model, I_result );
-            QString outfile = QString( "%1_sh%2_best_spheroid" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
-            {
-               outfile += ".dat";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
-            for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
-            {
-               ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
-            }
-            of.close();
-         }
          us_timers.start_all();
          cout << "ending best spheroid\n";
       }
@@ -359,52 +273,10 @@ QString US_PM::test( QString name, QString oname )
          sphere_pm.best_torus( model );
          us_timers.stop_all();
 
-         // output bead model
-         {
-            QString outfile = QString( "%1_sh%2_best_torus" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
-            {
-               outfile += ".bead_model";
-            }
+         QString outname = QString( "%1_sh%2_best_torus" ).arg( oname ).arg( max_harmonics );
+         sphere_pm.write_model( outname, model );
+         sphere_pm.write_I    ( outname, model );
 
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << sphere_pm.qs_bead_model( model );
-            of.close();
-         }
-         
-         {
-            vector < double >   I_result( q.size() );
-            sphere_pm.compute_I( model, I_result );
-            QString outfile = QString( "%1_sh%2_best_torus" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
-            {
-               outfile += ".dat";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
-            for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
-            {
-               ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
-            }
-            of.close();
-         }
          us_timers.start_all();
          cout << "ending best torus\n";
       }
@@ -538,53 +410,10 @@ QString US_PM::test( QString name, QString oname )
       us_timers        .end_all();
       cout << us_timers.list_times();
 
-      // output bead model
-      {
-         QString outfile = QString( "%1_sh%2_best_grid_search_spheroid" ).arg( oname ).arg( max_harmonics );
-      
-         if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
-         {
-            outfile += ".bead_model";
-         }
+      QString outname = QString( "%1_sh%2_best_grid_search_spheroid" ).arg( oname ).arg( max_harmonics );
+      sphere_pm.write_model( outname, model, params );
+      sphere_pm.write_I    ( outname, model );
 
-         cout << "Creating:" << outfile << "\n";
-         QFile of( outfile );
-         if ( !of.open( IO_WriteOnly ) )
-         {
-            return "could not create output file";
-         }
-   
-         QTextStream ts( &of );
-         ts << sphere_pm.qs_bead_model( model );
-         ts << sphere_pm.list_params( params );
-         of.close();
-      }
-         
-      {
-         vector < double >   I_result( q.size() );
-         sphere_pm.compute_I( model, I_result );
-         QString outfile = QString( "%1_sh%2_best_grid_search_spheroid" ).arg( oname ).arg( max_harmonics );
-      
-         if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
-         {
-            outfile += ".dat";
-         }
-
-         cout << "Creating:" << outfile << "\n";
-         QFile of( outfile );
-         if ( !of.open( IO_WriteOnly ) )
-         {
-            return "could not create output file";
-         }
-   
-         QTextStream ts( &of );
-         ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
-         for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
-         {
-            ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
-         }
-         of.close();
-      }
       cout << "ending best grid search spheroid\n";
    }
 
@@ -618,57 +447,13 @@ QString US_PM::test( QString name, QString oname )
       {
          cout << "starting best sphere\n";
          params[ 0 ] = 0e0;
-         sphere_pm.best_md0( params, model, grid_conversion_factor );
+         sphere_pm.best_md0( params, model, grid_conversion_factor, 10e0, 5e0, 5e0 );
          us_timers.stop_all();
       
-         // output bead model
-         {
-            QString outfile = QString( "%1_sh%2_best_MD0_sphere" ).arg( oname ).arg( max_harmonics );
+         QString outname = QString( "%1_sh%2_best_MD0_sphere" ).arg( oname ).arg( max_harmonics );
+         sphere_pm.write_model( outname, model, params );
+         sphere_pm.write_I    ( outname, model );
       
-            if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
-            {
-               outfile += ".bead_model";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << sphere_pm.qs_bead_model( model );
-            ts << sphere_pm.list_params( params );
-            of.close();
-         }
-         
-         {
-            vector < double >   I_result( q.size() );
-            sphere_pm.compute_I( model, I_result );
-            QString outfile = QString( "%1_sh%2_best_MD0_sphere" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
-            {
-               outfile += ".dat";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
-            for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
-            {
-               ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
-            }
-            of.close();
-         }
-
          us_timers.start_all();
          cout << "ending best sphere\n";
       }
@@ -681,55 +466,10 @@ QString US_PM::test( QString name, QString oname )
          sphere_pm.best_md0( params, model, grid_conversion_factor );
          us_timers.stop_all();
 
-         // output bead model
-         {
-            QString outfile = QString( "%1_sh%2_best_MD0_cylinder" ).arg( oname ).arg( max_harmonics );
+         QString outname = QString( "%1_sh%2_best_MD0_cylinder" ).arg( oname ).arg( max_harmonics );
+         sphere_pm.write_model( outname, model, params );
+         sphere_pm.write_I    ( outname, model );
       
-            if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
-            {
-               outfile += ".bead_model";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << sphere_pm.qs_bead_model( model );
-            ts << sphere_pm.list_params( params );
-            of.close();
-         }
-         
-         {
-            vector < double >   I_result( q.size() );
-            cout << "compute_I\n";
-            sphere_pm.compute_I( model, I_result );
-            cout << "compute_I done\n";
-            QString outfile = QString( "%1_sh%2_best_MD0_cylinder" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
-            {
-               outfile += ".dat";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
-            for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
-            {
-               ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
-            }
-            of.close();
-         }
          us_timers.start_all();
          cout << "ending best cylinder\n";
       }
@@ -740,6 +480,7 @@ QString US_PM::test( QString name, QString oname )
       
          us_timers.stop_all();
          if ( SPHEROID_SPEC_TEST )
+
          {
             vector < double > I_result( q.size() );
             vector < double > params( 3 );
@@ -755,57 +496,13 @@ QString US_PM::test( QString name, QString oname )
          us_timers.start_all();
          cout << "starting best spheroid\n";
          params[ 0 ] = 2e0;
-         sphere_pm.best_md0( params, model, grid_conversion_factor, 10e0, 15e0, 10e0 );
+         sphere_pm.best_md0( params, model, grid_conversion_factor );
          us_timers.stop_all();
             
+         QString outname = QString( "%1_sh%2_best_MD0_spheroid" ).arg( oname ).arg( max_harmonics );
+         sphere_pm.write_model( outname, model, params );
+         sphere_pm.write_I    ( outname, model );
 
-         // output bead model
-         {
-            QString outfile = QString( "%1_sh%2_best_MD0_spheroid" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
-            {
-               outfile += ".bead_model";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << sphere_pm.qs_bead_model( model );
-            ts << sphere_pm.list_params( params );
-            of.close();
-         }
-         
-         {
-            vector < double >   I_result( q.size() );
-            sphere_pm.compute_I( model, I_result );
-            QString outfile = QString( "%1_sh%2_best_MD0_spheroid" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
-            {
-               outfile += ".dat";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
-            for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
-            {
-               ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
-            }
-            of.close();
-         }
          us_timers.start_all();
          cout << "ending best spheroid\n";
       }
@@ -818,53 +515,10 @@ QString US_PM::test( QString name, QString oname )
          sphere_pm.best_md0( params, model, grid_conversion_factor );
          us_timers.stop_all();
 
-         // output bead model
-         {
-            QString outfile = QString( "%1_sh%2_best_MD0_torus" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
-            {
-               outfile += ".bead_model";
-            }
+         QString outname = QString( "%1_sh%2_best_MD0_torus" ).arg( oname ).arg( max_harmonics );
+         sphere_pm.write_model( outname, model, params );
+         sphere_pm.write_I    ( outname, model );
 
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << sphere_pm.qs_bead_model( model );
-            ts << sphere_pm.list_params( params );
-            of.close();
-         }
-         
-         {
-            vector < double >   I_result( q.size() );
-            sphere_pm.compute_I( model, I_result );
-            QString outfile = QString( "%1_sh%2_best_MD0_torus" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
-            {
-               outfile += ".dat";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
-            for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
-            {
-               ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
-            }
-            of.close();
-         }
          us_timers.start_all();
          cout << "ending best torus\n";
       }
@@ -1524,65 +1178,9 @@ QString US_PM::test( QString name, QString oname )
       oname += "_recentered";
 
       model = test_pm.recenter( model );
-      output = test_pm.qs_bead_model( model );
-
-      // output bead model
-      {
-         QString outfile = oname;
-      
-         if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
-         {
-            outfile += ".bead_model";
-         }
-
-         cout << "Creating:" << outfile << "\n";
-         QFile of( outfile );
-         if ( !of.open( IO_WriteOnly ) )
-         {
-            return "could not create output file";
-         }
-   
-         QTextStream ts( &of );
-         ts << output;
-         of.close();
-      }
-
-      // compute I(q)
-      if ( q.size() )
-      {
-         cout << "compute_CYJ_I\n";
-         vector < double > I_result( q.size() );
-         if ( !test_pm.compute_CYJ_I( model, I_result ) )
-         {
-            return "compute_CYJ_I error:" + test_pm.error_msg;
-         }
-         if ( !test_pm.compute_CYJ_I( model, I_result ) )
-         {
-            return "compute_CYJ_I error:" + test_pm.error_msg;
-         }
-
-         QString outfile = QString( "%1_sh%2" ).arg( oname ).arg( max_harmonics );
-      
-         if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
-         {
-            outfile += ".dat";
-         }
-
-         cout << "Creating:" << outfile << "\n";
-         QFile of( outfile );
-         if ( !of.open( IO_WriteOnly ) )
-         {
-            return "could not create output file";
-         }
-   
-         QTextStream ts( &of );
-         ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
-         for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
-         {
-            ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
-         }
-         of.close();
-      }
+      QString outname = QString( "%1_sh%2" ).arg( oname ).arg( max_harmonics );
+      test_pm.write_model( outname, model );
+      test_pm.write_I( outname, model );
    }
 
    return "ok";

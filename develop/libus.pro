@@ -304,6 +304,7 @@ SOURCES += \
   src/us_pm_best_torus.cpp \
   src/us_pm_best_torus_segment.cpp \
   src/us_pm_fitness.cpp \
+  src/us_pm_ga.cpp \
   src/us_pm_objects.cpp \
   src/us_pm_test.cpp \
   src/us_pixmap.cpp \

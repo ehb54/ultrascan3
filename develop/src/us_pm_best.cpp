@@ -217,7 +217,7 @@ bool US_PM::best_vary_two_param(
       double last_fitness_3_pos = -1e0;
       prev_fit = 1e99;
 
-      cout << QString( "this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+      cout << QString( "best_vary_two_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
       for ( params[ param_to_vary_2 ] = low_limit; params[ param_to_vary_2 ] <= high_limit; params[ param_to_vary_2 ] += delta )
       {
          best_vary_one_param( param_to_vary_1, params, this_model, this_fit );
@@ -226,6 +226,12 @@ bool US_PM::best_vary_two_param(
          last_fitness_3_pos = last_fitness_2_pos;
          last_fitness_2_pos = last_fitness_1_pos;
          last_fitness_1_pos = params[ param_to_vary_2 ];
+
+         US_Vector::printvector( QString( "best_vary_two_param: %1beads %2 fitness %3, params:" )
+                                 .arg( this_fit < prev_fit ? "**" : "  " )
+                                 .arg( this_model.size() )
+                                 .arg( this_fit ), 
+                                 params );
 
          if ( this_fit < prev_fit )
          {
@@ -240,6 +246,12 @@ bool US_PM::best_vary_two_param(
          prev_fit = this_fit;
          prev_size = params[ param_to_vary_2 ];
 
+      }
+      if ( last_fitness_3_pos < 0e0 ||
+           last_fitness_1_pos < 0e0 )
+      {
+         cout << "best_vary_two_param: found nothing to recenter on, terminating outer loop\n";
+         break;
       }
       low_limit  = last_fitness_3_pos;
       high_limit = last_fitness_1_pos;
@@ -501,9 +513,9 @@ bool US_PM::best_vary_one_param(
       high_limit = last_fitness_1_pos;
       if ( best_size == high_limit )
       {
-         cout << "best_vary_one_param: best found at end, extending interval by 5 delta\n";
+         cout << "best_vary_one_param: best found at end, extending interval by 20 delta\n";
          low_limit = best_size;
-         high_limit += 5e0 * delta;
+         high_limit += 20e0 * delta;
       } else {
          prev_model.clear();
          Av.clear();

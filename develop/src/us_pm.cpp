@@ -287,6 +287,24 @@ vector < PDB_atom > US_PM::bead_model( set < pm_point > & model )
    return result;
 }
 
+vector < point > US_PM::point_model( set < pm_point > & model )
+{
+   vector < point > result;
+
+   for ( set < pm_point >::iterator it = model.begin();
+         it != model.end();
+         it++ )
+   {
+      point tmp_point;
+      tmp_point.axis[0]      = it->x[ 0 ] * grid_conversion_factor;
+      tmp_point.axis[1]      = it->x[ 1 ] * grid_conversion_factor;
+      tmp_point.axis[2]      = it->x[ 2 ] * grid_conversion_factor;
+      result.push_back( tmp_point );
+   }
+
+   return result;
+}
+
 bool US_PM::create_model( vector < double > params, set < pm_point > & model, bool only_last_model )
 {
    debug( 1, QString( "create_model%1" ).arg( only_last_model ? ". Note: only last model saved" : "" ) );
@@ -438,7 +456,9 @@ bool US_PM::write_model( QString filename, set < pm_point > & model )
       filename += ".bead_model";
    }
 
-   cout << QString( "Creating (%1 beads): %2\n" ).arg( model.size() ).arg( filename );
+   double rg = Rg( model );
+
+   cout << QString( "Creating (%1 beads, Rg %2): %3\n" ).arg( model.size() ).arg( rg ).arg( filename );
 
    QFile of( filename );
    if ( !of.open( IO_WriteOnly ) )
@@ -448,6 +468,7 @@ bool US_PM::write_model( QString filename, set < pm_point > & model )
    
    QTextStream ts( &of );
    ts << qs_bead_model( model );
+   ts << QString( "Rg: %1\n" ).arg( rg );
    of.close();
    return true;
 }
@@ -459,7 +480,9 @@ bool US_PM::write_model( QString filename, set < pm_point > & model, vector < do
       filename += ".bead_model";
    }
 
-   cout << QString( "Creating (%1 beads): %2\n" ).arg( model.size() ).arg( filename );
+   double rg = Rg( model );
+
+   cout << QString( "Creating (%1 beads, Rg %2): %3\n" ).arg( model.size() ).arg( rg ).arg( filename );
 
    QFile of( filename );
    if ( !of.open( IO_WriteOnly ) )
@@ -469,6 +492,7 @@ bool US_PM::write_model( QString filename, set < pm_point > & model, vector < do
    
    QTextStream ts( &of );
    ts << qs_bead_model( model );
+   ts << QString( "Rg: %1\n" ).arg( rg );
    ts << list_params( params );
    of.close();
    return true;
@@ -796,3 +820,47 @@ void US_PM::random_md0_params( vector < double > & params, double max_d )
       params[ i + 1 ] = drand48() * ( high_fparams[ i ] - low_fparams[ i ] ) + low_fparams[ i ];
    }
 }      
+
+double US_PM::Rg( set < pm_point > & model )
+{
+   if ( !model.size() )
+   {
+      return 0e0;
+   }
+         
+   vector < point > pmodel = point_model( model );
+
+   double Rg2 = 0e0;
+
+   point cm;
+   cm.axis[ 0 ] = 0.0f;
+   cm.axis[ 1 ] = 0.0f;
+   cm.axis[ 2 ] = 0.0f;
+
+   for ( int i = 0; i < (int) pmodel.size(); i++ )
+   {
+      cm.axis[ 0 ] += pmodel[ i ].axis[ 0 ];
+      cm.axis[ 1 ] += pmodel[ i ].axis[ 1 ];
+      cm.axis[ 2 ] += pmodel[ i ].axis[ 2 ];
+   }
+
+   cm.axis[ 0 ] /= ( float ) pmodel.size();
+   cm.axis[ 1 ] /= ( float ) pmodel.size();
+   cm.axis[ 2 ] /= ( float ) pmodel.size();
+
+
+   for ( int i = 0; i < (int) pmodel.size(); i++ )
+   {
+      Rg2 +=  
+         ( 
+          ( pmodel[ i ].axis[ 0 ] - cm.axis[ 0 ]) *
+          ( pmodel[ i ].axis[ 0 ] - cm.axis[ 0 ] ) +
+          ( pmodel[ i ].axis[ 1 ] - cm.axis[ 1 ] ) *
+          ( pmodel[ i ].axis[ 1 ] - cm.axis[ 1 ] ) +
+          ( pmodel[ i ].axis[ 2 ] - cm.axis[ 2 ] ) *
+          ( pmodel[ i ].axis[ 2 ] - cm.axis[ 2 ] ) 
+          );
+   }
+
+   return sqrt( Rg2 / (double) pmodel.size() );
+}

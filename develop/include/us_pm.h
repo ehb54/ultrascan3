@@ -311,6 +311,8 @@ class US_PM
    // output a bead model
    vector < PDB_atom > bead_model        ( set < pm_point > & model );
    QString             qs_bead_model     ( set < pm_point > & model );
+   // just a vector of class point
+   vector < point >    point_model       ( set < pm_point > & model );
 
    // compute I of model 
    //      using spherical harmonics cached upon the grid
@@ -432,6 +434,8 @@ class US_PM
                                           vector < double > & high_fparams,
                                           set < pm_point >  & model
                                           );
+
+   double              Rg                ( set < pm_point >  & model );
 };
 
 #endif
