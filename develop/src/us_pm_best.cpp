@@ -44,7 +44,7 @@ bool US_PM::best_vary_one_param(
 
    double delta      = best_delta_start;
    double prev_size;
-   double best_size;
+   double best_size  = 1e-99;
 
    double low_limit  = best_delta_size_min;
    double high_limit = best_delta_size_max;
@@ -61,9 +61,9 @@ bool US_PM::best_vary_one_param(
 
    while ( delta >= best_delta_min )
    {
-      double last_fitness_1_pos = -1e0;
-      double last_fitness_2_pos = -1e0;
-      double last_fitness_3_pos = -1e0;
+      double last_fitness_1_pos = -1e99;
+      double last_fitness_2_pos = -1e99;
+      double last_fitness_3_pos = -1e99;
       prev_fit = 1e99;
 
       prev_model.clear();
@@ -148,16 +148,33 @@ bool US_PM::best_vary_one_param(
          }            
          prev_model = this_model;
       }
-      if ( last_fitness_3_pos < 0e0 ||
-           last_fitness_1_pos < 0e0 )
+      if ( last_fitness_3_pos == -1e99 ||
+           last_fitness_1_pos == -1e99 )
       {
-         cout << "best_vary_one_param: found nothing to recenter on, terminating outer loop\n";
-         break;
+         if ( best_size != -1e99 )
+         {
+            cout << "best_vary_one_param: found nothing to recenter on, centering on best +/- delta\n";
+            last_fitness_3_pos =  best_size - delta;
+            if ( last_fitness_3_pos < delta_min )
+            {
+               last_fitness_3_pos  = delta_min;
+            }
+            last_fitness_1_pos =  best_size + delta;
+         } else {
+            cout << "best_vary_one_param: found nothing to recenter on, terminating outer loop\n";
+            break;
+         }
       }
          
       low_limit  = last_fitness_3_pos;
       high_limit = last_fitness_1_pos;
-      delta /= best_delta_divisor;
+      if ( best_size == high_limit )
+      {
+         cout << "best_vary_one_param: best found at end, extending interval by 5 delta\n";
+         high_limit += 5e0 * delta;
+      } else {
+         delta /= best_delta_divisor;
+      }
    }
    best_fitness    = best_fit;
    US_Vector::printvector( QString( "best_vary_one_param: ----end----- fitness %1, params:" ).arg( best_fitness ), best_params );
@@ -254,9 +271,13 @@ bool US_PM::best_md0(
 
    set_grid_size( coarse_conversion );
 
-   vector < double > low_fparams;
-   vector < double > high_fparams;
-   set_limits( params, low_fparams, high_fparams );
+   vector < double > org_low_fparams;
+   vector < double > org_high_fparams;
+   set_limits( params, org_low_fparams, org_high_fparams );
+
+   vector < double > low_fparams  = org_low_fparams;
+   vector < double > high_fparams = org_high_fparams;;
+   
    vector < double > next_low_fparams  = low_fparams;
    vector < double > next_high_fparams = high_fparams;
 
@@ -271,8 +292,10 @@ bool US_PM::best_md0(
       cout << QString( "best_md0: grid cube side: %1\n" ).arg( grid_conversion_factor);
       cout << "----------------------------------------------------------------------\n";
       
-      clip_limits( next_low_fparams , low_fparams, high_fparams );
-      clip_limits( next_high_fparams, low_fparams, high_fparams );
+      US_Vector::printvector2( "param limits before clipping:", next_low_fparams, next_high_fparams );
+
+      clip_limits( next_low_fparams , org_low_fparams, org_high_fparams );
+      clip_limits( next_high_fparams, org_low_fparams, org_high_fparams );
       low_fparams  = next_low_fparams;
       high_fparams = next_high_fparams;
 
@@ -333,7 +356,7 @@ bool US_PM::best_vary_one_param(
 
    double delta      = best_delta_start;
    double prev_size;
-   double best_size;
+   double best_size  = -1e99;
 
    double low_limit  = low_fparams [ param_to_vary - 1 ];
    double high_limit = high_fparams[ param_to_vary - 1 ];
@@ -372,13 +395,10 @@ bool US_PM::best_vary_one_param(
 
    while ( delta >= best_delta_min )
    {
-      double last_fitness_1_pos = -1e0;
-      double last_fitness_2_pos = -1e0;
-      double last_fitness_3_pos = -1e0;
+      double last_fitness_1_pos = -1e99;
+      double last_fitness_2_pos = -1e99;
+      double last_fitness_3_pos = -1e99;
       prev_fit = 1e99;
-
-      prev_model.clear();
-      Av.clear();
 
       cout << QString( "best_vary_one_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
       unsigned int steps_without_change = 0;
@@ -459,16 +479,36 @@ bool US_PM::best_vary_one_param(
          }            
          prev_model = this_model;
       }
-      if ( last_fitness_3_pos < 0e0 ||
-           last_fitness_1_pos < 0e0 )
+      if ( last_fitness_3_pos == -1e99 ||
+           last_fitness_1_pos == -1e99 )
       {
-         cout << "best_vary_one_param: found nothing to recenter on, terminating outer loop\n";
-         break;
+         if ( best_size != -1e99 )
+         {
+            cout << "best_vary_one_param: found nothing to recenter on, centering on best +/- delta\n";
+            last_fitness_3_pos =  best_size - delta;
+            if ( last_fitness_3_pos < delta_min )
+            {
+               last_fitness_3_pos  = delta_min;
+            }
+            last_fitness_1_pos =  best_size + delta;
+         } else {
+            cout << "best_vary_one_param: found nothing to recenter on, terminating outer loop\n";
+            break;
+         }
       }
          
       low_limit  = last_fitness_3_pos;
       high_limit = last_fitness_1_pos;
-      delta /= best_delta_divisor;
+      if ( best_size == high_limit )
+      {
+         cout << "best_vary_one_param: best found at end, extending interval by 5 delta\n";
+         low_limit = best_size;
+         high_limit += 5e0 * delta;
+      } else {
+         prev_model.clear();
+         Av.clear();
+         delta /= best_delta_divisor;
+      }
    }
    best_fitness    = best_fit;
    params          = best_params;

@@ -355,7 +355,7 @@ class US_PM
                                           set < pm_point >  & model, 
                                           double              finest_conversion      = 1e0,
                                           double              coarse_conversion      = 10e0,
-                                          double              refinement_range_pct   = 10e0,
+                                          double              refinement_range_pct   = 5e0,
                                           double              conversion_divisor     = 2e0
                                           );
    bool                best_md0          ( 
