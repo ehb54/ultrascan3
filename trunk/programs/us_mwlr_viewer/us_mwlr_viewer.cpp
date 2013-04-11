@@ -910,7 +910,7 @@ qDebug() << "RD:     nradpt ntripls" << nradpt << ntripls;
       }
       else
       { // Otherwise, skip over wavelengths
-         ds.skipRawData( hd.nwaveln * 4 );
+         ds.skipRawData( hd.nwaveln * 2 );
       }
 
       int ccx   = hd.icell * nchan + hd.ichann;
