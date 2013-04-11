@@ -418,6 +418,8 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
          scan.delta_r      = rad_inc;
          scan.readings.reserve( npoint );
          scan.interpolated = interpo;
+//qDebug() << "BldRawD      scx" << scx << "jhx" << jhx
+// << "seconds" << scan.seconds;
          jhx++;
 
          for ( int kk = 0; kk < npoint; kk++ )
@@ -440,7 +442,7 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
       {  // After final wavelength, reset at next cell/channel
          ccx++;
          wvx  = 0;
-         hdx  = ccx * ncelchn;
+         hdx  = ccx * nscan;
       }
 //qDebug() << "BldRawD   ccx wvx hdx" << ccx << wvx << hdx;
    } // END: triple loop
