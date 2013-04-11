@@ -24,10 +24,6 @@ US_ExperimentGui::US_ExperimentGui(
    setWindowTitle( tr( "Experiment Information" ) );
    setAttribute( Qt::WA_DeleteOnClose );
 
-   // Very light gray, for read-only line edits
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-
    // Set up left panel with experiment information
    QGridLayout* experiment = new QGridLayout;
    int row = 0;
@@ -39,9 +35,7 @@ US_ExperimentGui::US_ExperimentGui(
    // Show current runID
    QLabel* lb_runID = us_label( tr( "Run ID " ) );
    experiment->addWidget( lb_runID, row++, 0, 1, 2 );
-   le_runID = us_lineedit();
-   le_runID->setPalette ( gray );
-   le_runID->setReadOnly( true );
+   le_runID = us_lineedit( "", 0, true );
 
    experiment->addWidget( le_runID, row++, 0, 1, 2 );
  
@@ -61,9 +55,7 @@ US_ExperimentGui::US_ExperimentGui(
    pb_project->setEnabled( true );
    experiment->addWidget( pb_project, row++, 1 );
 
-   le_project = us_lineedit();
-   le_project->setPalette ( gray );
-   le_project->setReadOnly( true );
+   le_project = us_lineedit( "", 0, true );
    experiment->addWidget( le_project, row++, 0, 1, 2 );
 
    // Experiment type
@@ -75,9 +67,7 @@ US_ExperimentGui::US_ExperimentGui(
    // Optical system
    QLabel* lb_opticalSystem = us_label( tr( "Optical System:" ) );
    experiment->addWidget( lb_opticalSystem, row, 0 );
-   QLineEdit* le_opticalSystem = us_lineedit();
-   le_opticalSystem->setPalette ( gray );
-   le_opticalSystem->setReadOnly( true );
+   QLineEdit* le_opticalSystem = us_lineedit( "", 0, true );
    experiment->addWidget( le_opticalSystem, row++, 1 );
 
    // The optical system won't change
@@ -111,9 +101,7 @@ US_ExperimentGui::US_ExperimentGui(
    pb_rotor->setEnabled( true );
    hardware->addWidget( pb_rotor, row++, 0, 1, 2 );
 
-   le_rotorDesc = us_lineedit(); 
-   le_rotorDesc->setPalette ( gray );
-   le_rotorDesc->setReadOnly( true );
+   le_rotorDesc = us_lineedit( "", 0, true ); 
    hardware->addWidget( le_rotorDesc, row++, 0, 1, 2 );
 
    // Rotor speeds
@@ -121,7 +109,7 @@ US_ExperimentGui::US_ExperimentGui(
    hardware->addWidget( lb_rotorSpeeds, row++, 0, 1, 2 );
    lw_rotorSpeeds = us_listwidget();
    lw_rotorSpeeds ->setMaximumHeight( 50 );
-   lw_rotorSpeeds ->setPalette( gray );
+   lw_rotorSpeeds ->setPalette( vlgray );
    hardware->addWidget( lw_rotorSpeeds, row, 0, 2, 2 );
    row += 2;
 
@@ -146,10 +134,8 @@ US_ExperimentGui::US_ExperimentGui(
    // Run Temperature
    QLabel* lb_runTemp = us_label( tr( "Average Run Temperature:" ) );
    hardware->addWidget( lb_runTemp, row, 0 );
-   le_runTemp = us_lineedit();
+   le_runTemp = us_lineedit( "", 0, true );
    hardware->addWidget( le_runTemp, row++, 1 );
-   le_runTemp->setPalette ( gray );
-   le_runTemp->setReadOnly( true );
 
    // Run temperature won't change
    le_runTemp           ->setText( expInfo.runTemp );
