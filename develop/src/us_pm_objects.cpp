@@ -412,7 +412,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
          return false;
       }
 
-      low_fparams .push_back( 1e0 );
+      low_fparams .push_back( delta_min );
       high_fparams.push_back( max_d );
       ofs += 1;
 
@@ -473,7 +473,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( -max_d );
+               low_fparams .push_back( delta_min );
                high_fparams.push_back( max_d );
                ofs += 1;
                break;
@@ -526,7 +526,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( 1e0 );
+               low_fparams .push_back( delta_min );
                high_fparams.push_back( max_d );
                ofs += 1;
                break;
@@ -536,7 +536,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( 1e0 );
+               low_fparams .push_back( delta_min );
                high_fparams.push_back( max_d );
                low_fparams .push_back( -max_d );
                high_fparams.push_back( max_d );
@@ -567,9 +567,9 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( 1e0 );
+               low_fparams .push_back( delta_min );
                high_fparams.push_back( max_d );
-               low_fparams .push_back( 1e0 );
+               low_fparams .push_back( delta_min );
                high_fparams.push_back( max_d );
                ofs += 2;
                break;
@@ -579,9 +579,9 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( 1e0 );
+               low_fparams .push_back( delta_min );
                high_fparams.push_back( max_d );
-               low_fparams .push_back( 1e0 );
+               low_fparams .push_back( delta_min );
                high_fparams.push_back( max_d );
                low_fparams .push_back( -max_d );
                high_fparams.push_back( max_d );
@@ -612,7 +612,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( 1e0 );
+               low_fparams .push_back( delta_min );
                high_fparams.push_back( max_d );
                ofs += 1;
                break;
@@ -622,7 +622,7 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( 1e0 );
+               low_fparams .push_back( delta_min );
                high_fparams.push_back( max_d );
                low_fparams .push_back( -max_d );
                high_fparams.push_back( max_d );
@@ -653,9 +653,9 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( 1e0 );
+               low_fparams .push_back( delta_min );
                high_fparams.push_back( max_d );
-               low_fparams .push_back( 1e-1 );
+               low_fparams .push_back( theta_min );
                high_fparams.push_back( M_PI * 1.9999e0 );
                ofs += 2;
                break;
@@ -665,9 +665,9 @@ bool US_PM::set_limits( vector < double > & params, vector < double > & low_fpar
                   error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
                   return false;
                }
-               low_fparams .push_back( 1e0 );
+               low_fparams .push_back( delta_min );
                high_fparams.push_back( max_d );
-               low_fparams .push_back( 1e-1 );
+               low_fparams .push_back( theta_min );
                high_fparams.push_back( M_PI * 1.9999e0 );
                low_fparams .push_back( -max_d );
                high_fparams.push_back( max_d );

@@ -5,14 +5,14 @@
 
 #define TEST_CYLINDER 0
 
-#define BEST_SPHERE   0
+#define BEST_SPHERE   1
 #define BEST_CYLINDER 0
 #define BEST_SPHEROID 0
 #define BEST_TORUS    0
 #define BEST          ( BEST_SPHERE || BEST_CYLINDER || BEST_SPHEROID || BEST_TORUS )
 
 
-#define BEST_MD0_SPHERE   0
+#define BEST_MD0_SPHERE   1
 #define BEST_MD0_CYLINDER 0
 #define BEST_MD0_SPHEROID 0
 #define BEST_MD0_TORUS    0
@@ -21,7 +21,7 @@
 #define SPHEROID_SPEC_TEST 0
 #define GRID_SEARCH_SPHEROID 0
 
-#define MAKE_SPHERE_AND_SPHEROID 1
+#define MAKE_SPHERE_AND_SPHEROID 0
 
 #define LEAK_CHECK    0
 #define STD_MODEL     0
@@ -227,53 +227,10 @@ QString US_PM::test( QString name, QString oname )
 
          us_timers.stop_all();
       
-         // output bead model
-         {
-            QString outfile = QString( "%1_sh%2_best_sphere" ).arg( oname ).arg( max_harmonics );
+         QString outname = QString( "%1_sh%2_best_sphere" ).arg( oname ).arg( max_harmonics );
+         sphere_pm.write_model( outname, model );
+         sphere_pm.write_I    ( outname, model );
       
-            if ( !outfile.contains( QRegExp( "\\.bead_model$" ) ) )
-            {
-               outfile += ".bead_model";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << sphere_pm.qs_bead_model( model );
-            of.close();
-         }
-         
-         {
-            vector < double >   I_result( q.size() );
-            sphere_pm.compute_I( model, I_result );
-            QString outfile = QString( "%1_sh%2_best_sphere" ).arg( oname ).arg( max_harmonics );
-      
-            if ( !outfile.contains( QRegExp( "\\.dat$" ) ) )
-            {
-               outfile += ".dat";
-            }
-
-            cout << "Creating:" << outfile << "\n";
-            QFile of( outfile );
-            if ( !of.open( IO_WriteOnly ) )
-            {
-               return "could not create output file";
-            }
-   
-            QTextStream ts( &of );
-            ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
-            for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
-            {
-               ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
-            }
-            of.close();
-         }
-
          us_timers.start_all();
 
          cout << "ending best sphere\n";

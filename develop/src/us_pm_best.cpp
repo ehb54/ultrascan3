@@ -25,6 +25,9 @@ void US_PM::set_best_delta(
    }
    best_delta_size_min = 5e-1;
    best_delta_size_max = max_dimension_d;
+
+   delta_min = best_delta_size_min;
+   theta_min = M_PI * 1e-3;
 }
 
 bool US_PM::best_vary_one_param(
@@ -52,6 +55,8 @@ bool US_PM::best_vary_one_param(
    set < pm_point > prev_model;
    vector < vector < complex < float > > > Av;
 
+   vector < double > best_params;
+
    map < double, double > fitnesses;
 
    while ( delta >= best_delta_min )
@@ -64,13 +69,13 @@ bool US_PM::best_vary_one_param(
       prev_model.clear();
       Av.clear();
 
-      cout << QString( "this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+      cout << QString( "best_vary_one_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
       unsigned int steps_without_change = 0;
       for ( params[ param_to_vary ] = low_limit; params[ param_to_vary ] <= high_limit; params[ param_to_vary ] += delta )
       {
          bool skip = false;
          create_model( params, this_model );
-         cout << QString( "create model size %1 prev model size %2\n" ).arg( this_model.size() ).arg( prev_model.size() );
+         // cout << QString( "create model size %1 prev model size %2\n" ).arg( this_model.size() ).arg( prev_model.size() );
          if ( this_model.size() &&  prev_model.size() != this_model.size() )
          {
             //             if ( USPM_USE_CA )
@@ -87,17 +92,22 @@ bool US_PM::best_vary_one_param(
          if ( !skip )
          {
             // write_model( tmp_name( "", params ), this_model );
-            QString qs = 
-               QString( "%1 fitness^2 %2 beads %3 params:" )
-               .arg( object_names[ (int) params[ 0 ] ] )
-               .arg( this_fit, 0, 'g', 8 )
-               .arg( this_model.size() )
-               ;
-            for ( int i = 1; i <= (int)object_m0_parameters[ (int) params[ 0 ] ]; ++i )
-            {
-               qs += QString( " %1" ).arg( params[ i ] );
-            }
-            cout << qs.ascii() << endl;
+            //             QString qs = 
+            //                QString( "%1 fitness^2 %2 beads %3 params:" )
+            //                .arg( object_names[ (int) params[ 0 ] ] )
+            //                .arg( this_fit, 0, 'g', 8 )
+            //                .arg( this_model.size() )
+            //                ;
+            //             for ( int i = 1; i <= (int)object_m0_parameters[ (int) params[ 0 ] ]; ++i )
+            //             {
+            //                qs += QString( " %1" ).arg( params[ i ] );
+            //             }
+            //             cout << qs.ascii() << endl;
+            US_Vector::printvector( QString( "best_vary_one_param: %1beads %2 fitness %3, params:" )
+                                    .arg( this_fit < prev_fit ? "**" : "  " )
+                                    .arg( this_model.size() )
+                                    .arg( this_fit ), 
+                                    params );
 
             last_fitness_3_pos = last_fitness_2_pos;
             last_fitness_2_pos = last_fitness_1_pos;
@@ -107,6 +117,7 @@ bool US_PM::best_vary_one_param(
             {
                best_fit = this_fit;
                best_size = params[ param_to_vary ];
+               best_params = params;
                model = this_model;
             }
             if ( this_fit > prev_fit )
@@ -117,20 +128,20 @@ bool US_PM::best_vary_one_param(
             prev_size = params[ param_to_vary ];
             steps_without_change = 0;
          } else {
-            QString qs = 
-               QString( "skipping %1 (empty or identical to previous) beads %2 prev %3 params:" )
-               .arg( object_names[ (int) params[ 0 ] ] )
-               .arg( this_model.size() )
-               .arg( prev_model.size() )
-               ;
-            for ( int i = 1; i <= (int)object_m0_parameters[ (int) params[ 0 ] ]; ++i )
-            {
-               qs += QString( " %1" ).arg( params[ i ] );
-            }
-            cout << qs.ascii() << endl;
+            //             QString qs = 
+            //                QString( "skipping %1 (empty or identical to previous) beads %2 prev %3 params:" )
+            //                .arg( object_names[ (int) params[ 0 ] ] )
+            //                .arg( this_model.size() )
+            //                .arg( prev_model.size() )
+            //                ;
+            //             for ( int i = 1; i <= (int)object_m0_parameters[ (int) params[ 0 ] ]; ++i )
+            //             {
+            //                qs += QString( " %1" ).arg( params[ i ] );
+            //             }
+            //             cout << qs.ascii() << endl;
             if ( steps_without_change > 100 )
             {
-               cout << "To many steps without model change, terminating inner loop\n";
+               cout << "best_vary_one_param: Too many steps without model change, terminating inner loop\n";
                break;
             }
             steps_without_change++;
@@ -140,7 +151,7 @@ bool US_PM::best_vary_one_param(
       if ( last_fitness_3_pos < 0e0 ||
            last_fitness_1_pos < 0e0 )
       {
-         cout << "Best found nothing to recenter on, terminating outer loop\n";
+         cout << "best_vary_one_param: found nothing to recenter on, terminating outer loop\n";
          break;
       }
          
@@ -149,6 +160,7 @@ bool US_PM::best_vary_one_param(
       delta /= best_delta_divisor;
    }
    best_fitness    = best_fit;
+   US_Vector::printvector( QString( "best_vary_one_param: ----end----- fitness %1, params:" ).arg( best_fitness ), best_params );
    return true;
 }
 

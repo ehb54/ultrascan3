@@ -244,6 +244,9 @@ class US_PM
    double                                  best_delta_size_min;
    double                                  best_delta_size_max;
 
+   double                                  theta_min;
+   double                                  delta_min;
+
    vector < QString >                      object_names;
    vector < int >                          object_m0_parameters;  // # of params for model_pos = 0
    // doens't seem to work: vector < bool (*)( set < pm_point > & ) >  object_best_f;
@@ -352,7 +355,7 @@ class US_PM
                                           set < pm_point >  & model, 
                                           double              finest_conversion      = 1e0,
                                           double              coarse_conversion      = 10e0,
-                                          double              refinement_range_pct   = 5e0,
+                                          double              refinement_range_pct   = 10e0,
                                           double              conversion_divisor     = 2e0
                                           );
    bool                best_md0          ( 
