@@ -62,10 +62,6 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    setWindowTitle( tr( "Convert Legacy Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   // Very light gray, for read-only line edits
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-
    isMwl   = false;
 
    QGridLayout* settings = new QGridLayout;
@@ -92,8 +88,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
       settings->addWidget( lb_investigator, row, 0, 1, 2 );
    }
       
-   le_investigator = us_lineedit( tr( "Not Selected" ) );
-   le_investigator->setReadOnly( true );
+   le_investigator = us_lineedit( tr( "Not Selected" ), 0, true );
    settings->addWidget( le_investigator, row++, 2, 1, 2 );
 
    // Radio buttons
@@ -108,11 +103,9 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    // Add this later, after tabs:settings->addWidget( lb_runID, row, 0 );
    lb_runID->setVisible( false ); // for now
 
-   le_runID = us_lineedit( "", 1 );
+   le_runID = us_lineedit( "", 1, true );
    le_runID ->setMinimumWidth( 225 );
    // Add this later, after tabs: settings->addWidget( le_runID, row++, 1 );
-   le_runID ->setPalette ( gray );                // This one is read-only
-   le_runID ->setReadOnly( true );
    le_runID ->setVisible ( false );  // for now
 
    // Load the run
@@ -191,10 +184,8 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    QLabel* lb_dir = us_label( tr( "Directory:" ) );
    textBoxes->addWidget( lb_dir, row, 0 );
 
-   le_dir = us_lineedit( "", 1 );
+   le_dir = us_lineedit( "", 1, true );
    textBoxes->addWidget( le_dir, row++, 1, 1, 3 );
-   le_dir ->setPalette ( gray );
-   le_dir ->setReadOnly( true );
 
    // Description
    lb_description = us_label( tr( "Description:" ), -1 );
@@ -228,7 +219,9 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    cb_centerpiece = new US_SelectBox( this );
    centerpieceInfo();
    cb_centerpiece -> load();
-   connect( cb_centerpiece, SIGNAL( currentIndexChanged( int ) ), 
+//   connect( cb_centerpiece, SIGNAL( currentIndexChanged( int ) ), 
+//                            SLOT  ( getCenterpieceIndex( int ) ) );
+   connect( cb_centerpiece, SIGNAL( activated          ( int ) ), 
                             SLOT  ( getCenterpieceIndex( int ) ) );
    ccw->addWidget( cb_centerpiece, row++, 1, 1, 3 );
 
@@ -272,9 +265,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    QLabel* lb_solution = us_label( tr( "Solution:" ) );
    ccw->addWidget( lb_solution, row, 0 );
 
-   le_solutionDesc = us_lineedit( "", 1 );
-   le_solutionDesc ->setPalette ( gray );
-   le_solutionDesc ->setReadOnly( true );
+   le_solutionDesc = us_lineedit( "", 1, true );
    ccw->addWidget( le_solutionDesc, row++, 1, 1, 3 );
 
    settings->addLayout( ccw, row++, 0, 1, 4 );
@@ -726,7 +717,9 @@ void US_ConvertGui::importMWL( void )
    // if runType has changed, let's clear out xml data too
 //   if ( oldRunType != runType ) ExpData.clear();
    le_runID2->setText( runID );
+   le_runID ->setText( runID );
    le_dir   ->setText( currentDir );
+   ExpData.runID = runID;
 
    // Define default tolerances before converting
    scanTolerance = ( runType == "WA" ) ? 0.1 : 5.0;
@@ -889,13 +882,9 @@ void US_ConvertGui::enableControls( void )
 // Enable or disable the runID control
 void US_ConvertGui::enableRunIDControl( bool setEnable )
 {
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-
    if ( setEnable )
    {
-      le_runID2->setPalette ( US_GuiSettings::normalColor() );
-      le_runID2->setReadOnly( false );
+      us_setReadOnly( le_runID2, false );
       connect( le_runID2, SIGNAL( textEdited( QString ) ),
                           SLOT  ( runIDChanged(  )      ) );
    }
@@ -903,8 +892,7 @@ void US_ConvertGui::enableRunIDControl( bool setEnable )
    else
    {
       le_runID2->disconnect();
-      le_runID2->setPalette ( gray );
-      le_runID2->setReadOnly( true );
+      us_setReadOnly( le_runID2, true );
    }
          
 }
@@ -1088,7 +1076,6 @@ void US_ConvertGui::runIDChanged( void )
       triple.clear();
    le_runID2->setText( runID );
    le_runID ->setText( runID );
-   ExpData.runID = runID;
 
    saveStatus = NOT_SAVED;
 
@@ -1746,6 +1733,7 @@ void US_ConvertGui::checkTemperature( void )
 void US_ConvertGui::getCenterpieceIndex( int )
 {
    triples[ tripListx ].centerpiece = cb_centerpiece->getLogicalID();
+qDebug() << "getCenterpieceIndex " << triples[tripListx].centerpiece;
 
    enableSaveBtn();
 }
@@ -2026,7 +2014,7 @@ void US_ConvertGui::cClick( const QwtDoublePoint& p )
 
 void US_ConvertGui::PseudoCalcAvg( void )
 {
-   if ( referenceDefined ) return;             // Average calculation has already been done
+   if ( referenceDefined ) return;  // Average calculation has already been done
 
    US_DataIO2::RawData referenceData = allData[ tripDatax ];
    int ref_size = referenceData.scanData[ 0 ].readings.size();
@@ -2057,7 +2045,13 @@ void US_ConvertGui::PseudoCalcAvg( void )
          ExpData.RIProfile << 1.0;    // See the log10 function, later
 
    }
-   
+ 
+   if ( isMwl )
+   {
+      PseudoCalcAvgMWL();
+      return;
+   }
+
    // Now average around excluded values
    int lastGood  = 0;
    int countBad  = 0;
@@ -2193,12 +2187,18 @@ void US_ConvertGui::drop_reference( void )
 // Function to save US3 data
 void US_ConvertGui::saveUS3( void )
 {
+   QList< US_Convert::TripleInfo > tripsave;
+   if ( isMwl )
+      tripsave   = triples;
+
    if ( disk_controls->db() )
       saveUS3DB();
 
    else
       saveUS3Disk();
 
+   if ( isMwl )
+      triples    = tripsave;
 }
 
 int US_ConvertGui::saveUS3Disk( void )
@@ -2231,11 +2231,10 @@ int US_ConvertGui::saveUS3Disk( void )
 
    int status;
 
-   QList< US_Convert::TripleInfo > tripsave;
 
    if ( isMwl )
    {  // For MWL, save old triples and expand cell/channel to triples
-      tripsave   = triples;
+      QList< US_Convert::TripleInfo > tripsave = triples;
       triples.clear();
       QVector< double > wavelens;
       int nlambda = mwl_data.lambdas( wavelens );
@@ -2405,9 +2404,7 @@ int US_ConvertGui::saveUS3Disk( void )
    enableRunIDControl( false );
 
    if ( isMwl )
-   {  // Where triples were expanded for MWL, restore original (cell/channel)
-      //  and skip plot save
-      triples  = tripsave;
+   {  // Where triples were expanded for MWL, skip plot save
       return( US_Convert::OK );
    }
 
@@ -2491,6 +2488,7 @@ void US_ConvertGui::saveUS3DB( void )
 
       return;
    }
+qDebug() << "DBSv:  (1)trip0tripFilename" << triples[0].tripleFilename;
 
    // Ok, let's make sure they know what'll happen
    if ( saveStatus == BOTH )
@@ -2519,13 +2517,14 @@ void US_ConvertGui::saveUS3DB( void )
 
    // First check some of the data with the DB
    int status = US_ConvertIO::checkDiskData( ExpData, triples, &db );
+qDebug() << "DBSv:  (2)trip0tripFilename" << triples[0].tripleFilename;
 
-   if ( status == US_DB2::NO_PERSON )    // Investigator or operator doesn't exist
+   if ( status == US_DB2::NO_PERSON )  // Investigator or operator doesn't exist
    {
       QMessageBox::information( this,
             tr( "Error" ),
-            tr( "This investigator or instrument operator was not found \n" ) +
-            tr( "in the database.\n") );
+            tr( "This investigator or instrument operator was not found\n"
+                "in the database.\n" ) );
       return;
    }
 
@@ -2533,8 +2532,9 @@ void US_ConvertGui::saveUS3DB( void )
    {
       QMessageBox::information( this,
             tr( "Error" ),
-            tr( "Bad GUID format.\n" ) +
-            tr( "Please click on Edit Run Information and re-select hardware.\n") );
+            tr( "Bad GUID format.\n"
+                "Please click on Edit Run Information"
+                " and re-select hardware.\n" ) );
       return;
    }
 
@@ -2542,8 +2542,9 @@ void US_ConvertGui::saveUS3DB( void )
    {
       QMessageBox::information( this,
             tr( "Error" ),
-            tr( "Don't recognize the rotor configuration.\n" ) +
-            tr( "Please click on Edit Run Information and re-select hardware.\n") );
+            tr( "Don't recognize the rotor configuration.\n"
+                "Please click on Edit Run Information"
+                " and re-select hardware.\n") );
       return;
    }
 
@@ -2557,9 +2558,12 @@ void US_ConvertGui::saveUS3DB( void )
    }
 
    // Save updated files and prepare to transfer to DB
+qDebug() << "DBSv:  (3)trip0tripFilename" << triples[0].tripleFilename;
    status = saveUS3Disk();
    if ( status != US_Convert::OK )
       return;
+qDebug() << "DBSv:  (4)trip0tripFilename" << triples[0].tripleFilename;
+qDebug() << "DBSv:  local files saved";
 
    QString error = QString( "" );
 
@@ -2581,6 +2585,7 @@ void US_ConvertGui::saveUS3DB( void )
 
    QStringList files =  readDir.entryList( nameFilters, 
          QDir::Files | QDir::Readable, QDir::Name );
+qDebug() << "DBSv:  files count" << files.size();
 
    if ( files.size() == 0 )
    {
@@ -2605,7 +2610,9 @@ void US_ConvertGui::saveUS3DB( void )
    // and it should be updated. Otherwise, there shouldn't be any database
    // records with this runID found
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+qDebug() << "DBSv: call ExpData.saveToDB";
    status = ExpData.saveToDB( ( saveStatus == BOTH ), &db );
+qDebug() << "DBSv:  retn fr ExpData.saveToDB";
    QApplication::restoreOverrideCursor();
 
    if ( status == US_DB2::NO_PROJECT )
@@ -2629,15 +2636,17 @@ void US_ConvertGui::saveUS3DB( void )
    {
       // This is what happens in the case of RI data, and the xml is bad
       QMessageBox::warning( this,
-            tr( "Bad RI XML" ),
-            tr( "There was a problem with the xml data read from the database.\n" ) );
+         tr( "Bad RI XML" ),
+         tr( "There was a problem with the xml data"
+             " read from the database.\n" ) );
    }
 
    else if ( status != US_DB2::OK )
    {
       QMessageBox::warning( this,
-            tr( "Problem saving experiment information" ),
-            tr( "MySQL Error : " ) + db.lastError() + " (" + QString::number( status ) + ")" );
+         tr( "Problem saving experiment information" ),
+         tr( "MySQL Error : " ) + db.lastError() + " ("
+         + QString::number( status ) + ")" );
       return;
    }
 
@@ -2647,7 +2656,11 @@ void US_ConvertGui::saveUS3DB( void )
    // changes most of the things here ( solution, rotor, etc. )
    // it would invalidate the data anyway.
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData, triples, dir, &db );
+qDebug() << "DBSv:  trip0tripFilename" << triples[0].tripleFilename;
+qDebug() << "DBSv: call writeRawDataToDB";
+   QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData,
+                                                         triples, dir, &db );
+qDebug() << "DBSv:  retn fr writeRawDataToDB";
    QApplication::restoreOverrideCursor();
 
    if ( ! writeStatus.isEmpty() )
@@ -2659,7 +2672,7 @@ void US_ConvertGui::saveUS3DB( void )
    }
 
    QMessageBox::information( this, tr( "Record saved" ),
-         tr( "The run information has been saved to the DB successfully \n" ) );
+      tr( "The run information has been saved to the DB successfully \n" ) );
 
    saveStatus = BOTH;
    enableRunIDControl( false );
@@ -2669,6 +2682,9 @@ void US_ConvertGui::saveUS3DB( void )
 
 void US_ConvertGui::saveReportsToDB( void )
 {
+   if ( isMwl )
+      return;
+
    // Verify connectivity
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -3250,5 +3266,89 @@ void US_ConvertGui::mwl_connect( bool connect_on )
    {
       cmb_lambplot->disconnect();
    }
+}
+
+// Do pseudo-absorbance calculation and apply for MultiWaveLength case
+void US_ConvertGui::PseudoCalcAvgMWL( void )
+{
+   QVector< double >  ripprof;      // RIP profile for a single wavelength
+
+   if ( referenceDefined ) return;  // Average calculation has already been done
+
+   US_DataIO2::RawData* refData = &allData[ tripDatax ];
+   int ref_size = refData->scanData[ 0 ].readings.size();
+   int ccx      = tripDatax / nlambda;
+   int tripx    = ccx * nlambda;
+
+   // Loop to calculate reference data for each wavelength,
+   //  then apply it to all triples with that same wavelength.
+   for ( int wvx = 0; wvx < nlambda; wvx++ )
+   {
+      refData      = &allData[ tripx ];
+      ref_size     = refData->x.size();
+      int nscan    = refData->scanData.size();
+      ripprof.clear();
+
+      // Get the reference profile for the current wavelength
+      for ( int scx = 0; scx < nscan; scx++ )
+      {
+         US_DataIO2::Scan* scn = &refData->scanData[ scx ];
+
+         int    jj    = 0;
+         int    count = 0;
+         double sum   = 0.0;
+
+         while ( refData->radius( jj ) < reference_start  &&  jj < ref_size )
+            jj++;
+
+         while ( refData->radius( jj ) < reference_end  &&  jj < ref_size )
+         {
+            sum         += scn->readings[ jj ].value;
+            count++;
+            jj++;
+         }
+
+         if ( count > 0 )
+            ripprof << sum / (double)count;
+         else
+            ripprof << 1.0;
+      } // END: scan loop for reference triple
+
+      int rip_size = ripprof.size();
+
+      // Now calculate the pseudo-absorbance for all cell/channel/this-lambda
+      for ( int ii = wvx; ii < allData.size(); ii += nlambda )
+      {
+         US_DataIO2::RawData* currentData = &allData[ ii ];
+
+         for ( int jj = 0; jj < currentData->scanData.size(); jj++ )
+         {
+            US_DataIO2::Scan* scn = &currentData->scanData[ jj ];
+
+            for ( int kk = 0; kk < scn->readings.size(); kk++ )
+            {
+               US_DataIO2::Reading* rr = &scn->readings[ kk ];
+
+               // Protect against possible inf's and nan's, if a reading 
+               // evaluates to 0 or wherever log function is undefined or -inf
+               if ( rr->value < 1.0 ) rr->value = 1.0;
+
+               // Check for boundary condition
+               int ndx   = ( jj < rip_size ) ? jj : rip_size - 1;
+               rr->value = log10( ripprof[ ndx ] / rr->value );
+            } // END: readings loop for a scan
+
+         } // END: scan loop for a specific triple
+
+      } // END: cell-channel apply loop for one wavelength
+
+      tripx++;
+   } // END: WaveLength loop
+
+   isPseudo         = true;
+   referenceDefined = true;
+   pb_intensity->setEnabled( true );
+   pb_reference->setEnabled( false );
+   pb_cancelref->setEnabled( true );
 }
 

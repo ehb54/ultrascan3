@@ -405,7 +405,7 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
       int jhx           = hdx; 
       int rdx           = 0;
       rdata.description = ccdescs.at( ccx );
-qDebug() << "BldRawD     trx" << trx << " building scans...";
+//qDebug() << "BldRawD     trx" << trx << " building scans...";
 
       for ( int scx = 0; scx < nscan; scx++ )
       {  // Set scan values
@@ -429,7 +429,7 @@ qDebug() << "BldRawD     trx" << trx << " building scans...";
          rdata.scanData << scan;      // Append a scan to a triple
       } // END: scan loop
 
-qDebug() << "BldRawD     trx" << trx << " saving allData...";
+//qDebug() << "BldRawD     trx" << trx << " saving allData...";
       allData << rdata;               // Append triple data to the array
       le_status->setText( QString( "Of %1 raw AUCs, built %2" )
           .arg( ntriple ).arg( trx + 1 ) );
@@ -442,7 +442,7 @@ qDebug() << "BldRawD     trx" << trx << " saving allData...";
          wvx  = 0;
          hdx  = ccx * ncelchn;
       }
-qDebug() << "BldRawD   ccx wvx hdx" << ccx << wvx << hdx;
+//qDebug() << "BldRawD   ccx wvx hdx" << ccx << wvx << hdx;
    } // END: triple loop
 
    le_status->setText( QString( "All %1 raw AUCs have been build." )
