@@ -43,6 +43,7 @@ class US_Dcdt : public US_AnalysisBase2
       void    save          ( void );
       void    set_graph     ( int  );
       void    reset         ( void );
+      void    smooth10      ( void );
       void    sMaxChanged   ( double );
       void    exclude       ( void );
       void    reset_excludes( void );
