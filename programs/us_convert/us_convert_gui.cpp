@@ -158,32 +158,12 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
                           SLOT  ( toleranceValueChanged( double ) ) );
 
    // Set Lambda Average if MWL
-#ifdef MWL_OLD
-   lb_mwlctrl   = us_banner  ( tr( "Multi-Wavelength Lambda Controls" ) );
-   lb_lambdelt  = us_label   ( tr( "Lambda Delta:" ) );
-   lb_lambstrt  = us_label   ( tr( "Lambda Start:" ) );
-   lb_lambstop  = us_label   ( tr( "Lambda End:" ) );
-   ct_lambdelt  = us_counter ( 2, 1, 100, 1 );
-   ct_lambdelt->setStep( 1 );
-   ct_lambdelt->setMinimumWidth( 80 );
-   cmb_lambstrt = us_comboBox();
-   cmb_lambstop = us_comboBox();
-#endif
    lb_lambplot  = us_label   ( tr( "Plot Lambda:" ) );
    cmb_lambplot = us_comboBox();
    pb_lambprev  = us_pushbutton( "previous", true, -2 );
    pb_lambnext  = us_pushbutton( "next",     true, -2 );
    pb_lambprev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
    pb_lambnext->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
-#ifdef MWL_OLD
-   settings->addWidget( lb_mwlctrl,   row++, 0, 1, 4 );
-   settings->addWidget( lb_lambdelt,  row,   0, 1, 2 );
-   settings->addWidget( ct_lambdelt,  row++, 2, 1, 2 );
-   settings->addWidget( lb_lambstrt,  row,   0, 1, 1 );
-   settings->addWidget( cmb_lambstrt, row,   1, 1, 1 );
-   settings->addWidget( lb_lambstop,  row,   2, 1, 1 );
-   settings->addWidget( cmb_lambstop, row++, 3, 1, 1 );
-#endif
    settings->addWidget( lb_lambplot,  row,   0, 1, 1 );
    settings->addWidget( cmb_lambplot, row,   1, 1, 1 );
    settings->addWidget( pb_lambprev,  row,   2, 1, 1 );
@@ -670,6 +650,7 @@ void US_ConvertGui::import( QString dir )
 // Legacy data is already supposed to be present
 void US_ConvertGui::reimport( void )
 {
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    if ( toleranceChanged )
    {
       // If the tolerance has changed, we need to reconvert the data
@@ -718,8 +699,6 @@ void US_ConvertGui::reimport( void )
 // User pressed the import MWL data button
 void US_ConvertGui::importMWL( void )
 {
-qDebug() << "importMWL";
-QTime timer;
    // Ask for data directory
    QString dir = QFileDialog::getExistingDirectory( this, 
          tr( "Raw MWL Data Directory" ),
@@ -735,7 +714,6 @@ QTime timer;
 
    currentDir  = QString( dir );
    runID       = currentDir.section( "/", -1, -1 );
-qDebug() << "impMW: runID" << runID << "cDir" << currentDir;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Read the data
@@ -743,9 +721,9 @@ qDebug() << "impMW: runID" << runID << "cDir" << currentDir;
    isMwl       = true;
    runType     = "RI";
    mwl_data.run_values( runID, runType );
+   QApplication::restoreOverrideCursor();
 
    // if runType has changed, let's clear out xml data too
-   QApplication::restoreOverrideCursor();
 //   if ( oldRunType != runType ) ExpData.clear();
    le_runID2->setText( runID );
    le_dir   ->setText( currentDir );
@@ -754,27 +732,11 @@ qDebug() << "impMW: runID" << runID << "cDir" << currentDir;
    scanTolerance = ( runType == "WA" ) ? 0.1 : 5.0;
    ct_tolerance->setValue( scanTolerance );
 
-   // Set initial lambda range; do 1st averaging; build the output data
+   // Build the output data
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-#if 0
-   le_description->setText( QString( "Averaging over wavelengths ..." ) );
-   qApp->processEvents();
-   mwl_data.set_lambdas   ( );
-qDebug() << "impMW: average_lambda";
-timer.start();
-   mwl_data.average_lambda( );
-   slambda = mwl_data.countOf( "slambda" );
-   dlambda = mwl_data.countOf( "dlambda" );
-   elambda = mwl_data.countOf( "elambda" );
-   QApplication::restoreOverrideCursor();
-#endif
-qDebug() << "impMW: build_rawData  (avglam time ms)" << timer.elapsed();
-timer.start();
    le_description->setText( QString( "Building raw data AUCs ..." ) );
    qApp->processEvents();
    mwl_data.build_rawData ( allData );
-qDebug() << "impMW:  size allData" << allData.size() << "time(ms)"
- << timer.elapsed();
 
    mwl_connect( false );
    le_description->setText( QString( "Building Lambda list ..." ) );
@@ -782,33 +744,10 @@ qDebug() << "impMW:  size allData" << allData.size() << "time(ms)"
 
    // Propagate initial lists of Lambdas
    QVector< double > lambdas;
-   int    nlamb_i  = mwl_data.lambdas_raw( lambdas );
+   int    nlamb_i  = mwl_data.lambdas( lambdas );
+   nlambda         = nlamb_i;
    double rlamb_s  = lambdas[ 0 ];
    double rlamb_e  = lambdas[ nlamb_i  - 1 ];
-#ifdef MWL_OLD
-   int    klamb    = 0;
-   double prvalu   = 0.0;
-   cmb_lambstrt->clear();
-   cmb_lambstop->clear();
-
-   for ( int ii = 0; ii < nlamb_i; ii++ )
-   {
-      double wvalu  = lambdas[ ii ];
-      wvalu         = (double)qRound( wvalu );
-      if ( wvalu == prvalu )  continue;
-      prvalu        = wvalu;
-      QString clamb = QString::number( wvalu );
-      cmb_lambstrt->addItem( clamb );
-      cmb_lambstop->addItem( clamb );
-      klamb++;
-   }
-
-   cmb_lambstrt->setCurrentIndex( 0 );
-   cmb_lambstop->setCurrentIndex( klamb - 1 );
-#endif
-
-   nlambda       = mwl_data.lambdas( lambdas );
-qDebug() << "impMW:  lambdas size,count" << lambdas.size() << nlambda;
    cmb_lambplot->clear();
 
    for ( int ii = 0; ii < nlambda; ii++ )
@@ -827,7 +766,6 @@ qDebug() << "impMW:  lambdas size,count" << lambdas.size() << nlambda;
 
    int ncelchn   = mwl_data.cellchannels( celchns );
    nlambda       = mwl_data.countOf( "lambda" );
-qDebug() << "impMW:  lambdas      count" << nlambda << "ncelchn" << ncelchn;
    le_description->setText( QString( "Building Triples list ..." ) );
    qApp->processEvents();
 
@@ -841,6 +779,7 @@ qDebug() << "impMW:  lambdas      count" << nlambda << "ncelchn" << ncelchn;
       triples << triple;
    }
 
+   QApplication::restoreOverrideCursor();
    show_mwl_control( true );
    mwl_connect( true );
 
@@ -2999,27 +2938,22 @@ void US_ConvertGui::plot_current( void )
 {
    triple_index();
 
-qDebug() << "pl_cur: tDx" << tripDatax << "aDa size" << allData.size();
    US_DataIO2::RawData currentData = allData[ tripDatax ];
 
    if ( currentData.scanData.empty() ) return;
 
-qDebug() << "pl_cur:   call plot_titles";
    plot_titles();
 
-qDebug() << "pl_cur:   call plot_all";
    // Plot current data for cell / channel / wavelength triple
    plot_all();
    
    // Set the Scan spin boxes
    if ( ! isMwl )
       enableScanControls();
-qDebug() << "pl_cur:   RETURN";
 }
 
 void US_ConvertGui::plot_titles( void )
 {
-qDebug() << "pl_tit: tDx aDsize" << tripDatax << allData.size();
    US_DataIO2::RawData currentData = allData[ tripDatax ];
 
    QString triple      = triples[ tripListx ].tripleDesc;
@@ -3029,7 +2963,6 @@ qDebug() << "pl_tit: tDx aDsize" << tripDatax << allData.size();
    QString  channel    = parts[ 1 ];
    QString  wl         = isMwl ? cmb_lambplot->currentText() : parts[ 2 ];
    QString  wavel      = QString::number( qRound( wl.toDouble() ) );
-qDebug() << "pl_tit: cell chn wl" << cell << channel << wl;
 
    // Plot Title and legends
    QString title;
@@ -3092,7 +3025,6 @@ qDebug() << "pl_tit: cell chn wl" << cell << channel << wl;
 
 void US_ConvertGui::plot_all( void )
 {
-qDebug() << "pl_all: trdx aDsize" << tripDatax << allData.size();
    US_DataIO2::RawData currentData = allData[ tripDatax ];
 
    data_plot->detachItems();
@@ -3110,8 +3042,6 @@ qDebug() << "pl_all: trdx aDsize" << tripDatax << allData.size();
    double minR =  1.0e99;
    double maxV = -1.0e99;
    double minV =  1.0e99;
-qDebug() << "pl_all:   cscD size" << currentData.scanData.size()
- << "allExc size" << allExcludes.size() << "tDx" << tripDatax;
 
    for ( int i = 0; i < currentData.scanData.size(); i++ )
    {
@@ -3119,21 +3049,18 @@ qDebug() << "pl_all:   cscD size" << currentData.scanData.size()
       if ( currentExcludes.contains( i ) ) continue;
       US_DataIO2::Scan* s = &currentData.scanData[ i ];
 
-//qDebug() << "readings.size = " << size;
       for ( int j = 0; j < size; j++ )
       {
          r[ j ] = currentData.radius( j );
          v[ j ] = s->readings  [ j ].value;
 
-//if( (j<3) || ((j+3)>size) )
-//qDebug() << "(r, v) = ( " << r[j] << ", " << v[j] << ")";
          if ( v[ j ] > 1.0e99 || isnan( v[ j ] ) )
          {
             // For some reason v[j] is going off the scale
             // Don't know why, but filter out for now
             qDebug() << "(r, v) = ( " << r[j] << ", " << v[j] << ")"
-                     << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
-                     << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
+               << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
+               << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
             continue;
          }
 
@@ -3150,7 +3077,6 @@ qDebug() << "pl_all:   cscD size" << currentData.scanData.size()
       c->setData( r, v, size );
 
    }
-qDebug() << "plt_all-End r:v loop";
 
    // Reset the scan curves within the new limits
    double padR = ( maxR - minR ) / 30.0;
@@ -3161,7 +3087,6 @@ qDebug() << "plt_all-End r:v loop";
    
    show_plot_progress = false;
    data_plot->replot();
-qDebug() << "plt_all-RETURN";
 }
 
 void US_ConvertGui::replot( void )
@@ -3234,54 +3159,11 @@ void US_ConvertGui::db_error( const QString& error )
          tr( "Database returned the following error: \n" ) + error );
 }
 
-#ifdef MWL_OLD
-// User changed the Lambda Delta value
-void US_ConvertGui::lambdaDeltaChanged( double value )
-{
-qDebug() << "lambdaDeltaChanged" << value;
-   dlambda = value;
-   slambda = mwl_data.countOf( "slambda" );
-   elambda = mwl_data.countOf( "elambda" );
-
-   reset_lambdas();
-      connect( ct_lambdelt,   SIGNAL( valueChanged       ( double ) ),
-                              SLOT  ( lambdaDeltaChanged ( double ) ) );
-      connect( cmb_lambstrt,  SIGNAL( currentIndexChanged( int    ) ),
-                              SLOT  ( lambdaStartChanged ( int    ) ) );
-      connect( cmb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
-                              SLOT  ( lambdaEndChanged   ( int    ) ) );
-}
-
-// User changed the Lambda Start value
-void US_ConvertGui::lambdaStartChanged( int value )
-{
-qDebug() << "lambdaStartChanged" << value;
-   slambda = cmb_lambstrt->itemText( value ).toDouble();
-   dlambda = mwl_data.countOf( "dlambda" );
-   elambda = mwl_data.countOf( "elambda" );
-
-   reset_lambdas();
-}
-
-// User changed the Lambda End value
-void US_ConvertGui::lambdaEndChanged( int value )
-{
-qDebug() << "lambdaEndChanged" << value;
-   elambda = cmb_lambstrt->itemText( value ).toDouble();
-   dlambda = mwl_data.countOf( "dlambda" );
-   slambda = mwl_data.countOf( "slambda" );
-
-   reset_lambdas();
-}
-#endif
-
 // User changed the Lambda Plot value
 void US_ConvertGui::lambdaPlotChanged( int value )
 {
-qDebug() << "lambdaPlotChanged" << value;
    triple_index( value );
 
-qDebug() << " lPC tripDatax tripListx" << tripDatax << tripListx;
    plot_current();
    pb_lambprev ->setEnabled( value > 0 );
    pb_lambnext ->setEnabled( ( value + 1 ) < cmb_lambplot->count() );
@@ -3290,7 +3172,6 @@ qDebug() << " lPC tripDatax tripListx" << tripDatax << tripListx;
 // User clicked the Previous Lambda Plot button
 void US_ConvertGui::lambdaPrevClicked( )
 {
-qDebug() << "lambdaPrevClicked";
    int wvx     = cmb_lambplot->currentIndex() - 1;
 
    if ( wvx < 0 )
@@ -3306,7 +3187,6 @@ qDebug() << "lambdaPrevClicked";
 // User clicked the Next Lambda Plot button
 void US_ConvertGui::lambdaNextClicked( )
 {
-qDebug() << "lambdaNextClicked";
    int wvx     = cmb_lambplot->currentIndex() + 1;
    int nlamb   = cmb_lambplot->count();
 
@@ -3323,15 +3203,6 @@ qDebug() << "lambdaNextClicked";
 // Show or hide MWL controls
 void US_ConvertGui::show_mwl_control( bool show )
 {
-#ifdef MWL_OLD
-   lb_mwlctrl  ->setVisible( show );
-   lb_lambdelt ->setVisible( show );
-   ct_lambdelt ->setVisible( show );
-   lb_lambstrt ->setVisible( show );
-   cmb_lambstrt->setVisible( show );
-   lb_lambstop ->setVisible( show );
-   cmb_lambstop->setVisible( show );
-#endif
    lb_lambplot ->setVisible( show );
    cmb_lambplot->setVisible( show );
    pb_lambprev ->setVisible( show );
@@ -3352,14 +3223,12 @@ void US_ConvertGui::show_mwl_control( bool show )
 void US_ConvertGui::triple_index( int wavx, int lstx )
 {
    tripListx     = ( lstx < 0 ) ? lw_triple->currentRow() : lstx;
-qDebug() << "TX: wx lx tlx" << wavx << lstx << tripListx << "mwl" << isMwl;
 
    if ( isMwl )
    {  // For multi-wavelength, triple list,data indexes are different
       int wvx       = ( wavx < 0 ) ? cmb_lambplot->currentIndex() : wavx;
       int nwvlen    = mwl_data.countOf( "lambda" );
       tripDatax     = tripListx * nwvlen + wvx;
-qDebug() << "TX:  wx nwl tdx" << wvx << nwvlen << tripDatax;
    }
 
    else
@@ -3373,78 +3242,13 @@ void US_ConvertGui::mwl_connect( bool connect_on )
 {
    if ( connect_on )
    {
-#ifdef MWL_OLD
-      connect( ct_lambdelt,   SIGNAL( valueChanged       ( double ) ),
-                              SLOT  ( lambdaDeltaChanged ( double ) ) );
-      connect( cmb_lambstrt,  SIGNAL( currentIndexChanged( int    ) ),
-                              SLOT  ( lambdaStartChanged ( int    ) ) );
-      connect( cmb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
-                              SLOT  ( lambdaEndChanged   ( int    ) ) );
-#endif
       connect( cmb_lambplot,  SIGNAL( currentIndexChanged( int    ) ),
                               SLOT  ( lambdaPlotChanged  ( int    ) ) );
    }
 
    else
    {
-#ifdef MWL_OLD
-      ct_lambdelt ->disconnect();
-      cmb_lambstrt->disconnect();
-      cmb_lambstop->disconnect();
-#endif
       cmb_lambplot->disconnect();
    }
-}
-
-// Reset when lambda delta,range changes
-void US_ConvertGui::reset_lambdas()
-{
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-#if 0
-   mwl_data.set_lambdas   ( dlambda, slambda, elambda );
-   mwl_data.average_lambda( );
-#endif
-   mwl_data.build_rawData ( allData );
-   mwl_connect( false );
-
-   QVector< double > lambdas;
-   nlambda       = mwl_data.lambdas( lambdas );
-   cmb_lambplot->clear();
-
-   for ( int ii = 0; ii < nlambda; ii++ )
-   {
-      QString clamb = QString::number( lambdas[ ii ] );
-      cmb_lambplot->addItem( clamb );
-   }
-
-   cmb_lambplot->setCurrentIndex( nlambda / 2 );
-
-   // Build list of triples
-   QStringList celchns;
-   triples.clear();
-   QString     pwvln = " / " + QString::number( lambdas[ 0           ] )
-                       + ":" + QString::number( lambdas[ nlambda - 1 ] );
-
-   int ncelchn   = mwl_data.cellchannels( celchns );
-   nlambda       = mwl_data.countOf( "lambda" );
-
-   for ( int ii = 0; ii < ncelchn; ii++ )
-   {
-      US_Convert::TripleInfo triple;
-      triple.tripleID    = ii;
-      triple.tripleDesc  = celchns[ ii ] + pwvln;
-      triple.excluded    = false;
-
-      triples << triple;
-   }
-
-   mwl_connect( true );
-   QApplication::restoreOverrideCursor();
-
-   setTripleInfo();
-
-   init_excludes();
-   
-   plot_current();
 }
 

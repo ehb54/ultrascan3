@@ -75,16 +75,8 @@ class US_ConvertGui : public US_Widgets
 
       QwtCounter*   ct_tolerance;
 
-      //QLabel*       lb_mwlctrl;
-      //QLabel*       lb_mwlctre;
-      //QLabel*       lb_lambdelt;
       QLineEdit*    le_lambraw;
-      //QLabel*       lb_lambstrt;
-      //QLabel*       lb_lambstop;
       QLabel*       lb_lambplot;
-      //QwtCounter*   ct_lambdelt;
-      //QComboBox*    cmb_lambstrt;
-      //QComboBox*    cmb_lambstop;
       QComboBox*    cmb_lambplot;
       QPushButton*  pb_lambprev;
       QPushButton*  pb_lambnext;
@@ -109,33 +101,29 @@ class US_ConvertGui : public US_Widgets
       US_SelectBox*  cb_centerpiece;
 
       QList< US_DataIO2::BeckmanRawScan > legacyData; // legacy data from file
-      QVector< US_DataIO2::RawData >      allData;    // all the data, separated by c/c/w
+      QVector< US_DataIO2::RawData >  allData;      // All ccw-separated data
       QString       currentDir;
       QString       saveDescription;
 
-      QVector< US_Convert::Excludes > allExcludes;    // excludes for all triples
+      QVector< US_Convert::Excludes > allExcludes;  // All excludes for triples
 
       US_MwlData    mwl_data;
 
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
 
-      double        reference_start;                  // boundary of reference scans
+      double        reference_start;           // Boundary of reference scans
       double        reference_end;
-      bool          referenceDefined;                 // true if RI averages have been done
-      int           Pseudo_reference_triple;          // number of the triple that is the reference
-      bool          isPseudo;                         // Is this RI data pseudo-absorbance?
-      bool          toleranceChanged;                 // keep track of whether the tolerance has changed
-      double        scanTolerance;                    // remember the scan tolerance value
-      int           countSubsets;                     // number of subsets maximum = 4
-      bool          isMwl;                            // Is Multi-Wavelength?
-      int           tripDatax;                        // Triple data index
-      int           tripListx;                        // Triple list index
-
-      double        dlambda;
-      double        slambda;
-      double        elambda;
-      int           nlambda;
+      bool          referenceDefined;          // True if RI averages done
+      int           Pseudo_reference_triple;   // Number of reference triple
+      bool          isPseudo;                  // Is RI data pseudo-absorbance?
+      bool          toleranceChanged;          // Has the tolerance changed?
+      double        scanTolerance;             // Remember scan tolerance value
+      int           countSubsets;              // Number of subsets maximum = 4
+      bool          isMwl;                     // Is Multi-Wavelength?
+      int           tripDatax;                 // Triple data index
+      int           tripListx;                 // Triple list index
+      int           nlambda;                   // Lambda (wavelength) count
 
       bool show_plot_progress;
       US_Experiment      ExpData; 
@@ -185,9 +173,6 @@ class US_ConvertGui : public US_Widgets
       void enableControls    ( void );
       void runIDChanged      ( void );
       void toleranceValueChanged( double );     // signal to notify of change
-      //void lambdaDeltaChanged( double );
-      //void lambdaStartChanged( int );
-      //void lambdaEndChanged  ( int );
       void lambdaPlotChanged ( int );
       void lambdaPrevClicked ( void );
       void lambdaNextClicked ( void );
@@ -226,7 +211,6 @@ class US_ConvertGui : public US_Widgets
       void update_disk_db    ( bool );
       void show_mwl_control  ( bool );
       void mwl_connect       ( bool );
-      void reset_lambdas     ( void );
       void help              ( void )
         { showHelp.show_help( "convert.html" ); };
 };

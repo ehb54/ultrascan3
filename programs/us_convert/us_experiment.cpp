@@ -336,19 +336,19 @@ int US_Experiment::saveToDisk(
       // loop through the following for c/c/w combinations
       for ( int i = 0; i < triples.size(); i++ )
       {
-         US_Convert::TripleInfo t = triples[ i ];
-         if ( t.excluded ) continue;
+         US_Convert::TripleInfo* t = &triples[ i ];
+         if ( t->excluded ) continue;
 
-         QString triple         = t.tripleDesc;
+         QString triple         = t->tripleDesc;
          QStringList parts      = triple.split(" / ");
 
          QString     cell       = parts[ 0 ];
          QString     channel    = parts[ 1 ];
          QString     wl         = parts[ 2 ];
 
-         QString uuidc = US_Util::uuid_unparse( (unsigned char*)t.tripleGUID );
+         QString uuidc = US_Util::uuid_unparse( (unsigned char*)t->tripleGUID );
          xml.writeStartElement( "dataset" );
-         xml.writeAttribute   ( "id", QString::number( t.tripleID ) );
+         xml.writeAttribute   ( "id", QString::number( t->tripleID ) );
          xml.writeAttribute   ( "guid", uuidc );
          xml.writeAttribute   ( "cell", cell );
          xml.writeAttribute   ( "channel", channel );
@@ -360,13 +360,13 @@ int US_Experiment::saveToDisk(
             xml.writeAttribute( "wavelength", wl );
 
             xml.writeStartElement( "centerpiece" );
-            xml.writeAttribute   ( "id", QString::number( t.centerpiece ) );
+            xml.writeAttribute   ( "id", QString::number( t->centerpiece ) );
             xml.writeEndElement  ();
 
             xml.writeStartElement( "solution" );
-            xml.writeAttribute   ( "id",   QString::number( t.solution.solutionID ) );
-            xml.writeAttribute   ( "guid", t.solution.solutionGUID );
-            xml.writeAttribute   ( "desc", t.solution.solutionDesc );
+            xml.writeAttribute   ( "id",   QString::number( t->solution.solutionID ) );
+            xml.writeAttribute   ( "guid", t->solution.solutionGUID );
+            xml.writeAttribute   ( "desc", t->solution.solutionDesc );
             xml.writeEndElement  ();
 
          xml.writeEndElement   ();
