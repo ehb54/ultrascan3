@@ -260,7 +260,7 @@ bool US_PM::compute_CYJ_I( set < pm_point > & model, vector < double > &I_result
    us_timers.end_timer( "sumA" );
    us_timers.end_timer( "combined" );
    cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
-   log += us_timers.list_times( QString( "CI %1 beads : " ).arg( model.size() ) );
+   msg_log += us_timers.list_times( QString( "CI %1 beads : " ).arg( model.size() ) );
 #endif   
    return true;
 }
@@ -548,7 +548,7 @@ bool US_PM::compute_delta_I(
    us_timers.end_timer( "dI:sumA" );
    us_timers.end_timer( "dI:combined" );
    cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
-   log += us_timers.list_times( QString( "DI %1 beads : " ).arg( model.size() ) );
+   msg_log += us_timers.list_times( QString( "DI %1 beads : " ).arg( model.size() ) );
 #endif
    return true;
 }
@@ -732,7 +732,7 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
    us_timers.end_timer( "CA:combined" );
 
    cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
-   log += us_timers.list_times( QString( "FCI %1 beads : " ).arg( model.size() ) );
+   msg_log += us_timers.list_times( QString( "FCI %1 beads : " ).arg( model.size() ) );
 #endif
    return true;
 }

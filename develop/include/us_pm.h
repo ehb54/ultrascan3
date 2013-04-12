@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <iterator>
 #include <set>
+#include <list>
 #include <vector>
 #include <complex>
 #include "us_hydrodyn_pdbdefs.h"
@@ -53,6 +54,14 @@ class pm_point
            x[ 1 ] == objIn.x[ 1 ] &&
            x[ 2 ] <  objIn.x[ 2 ] );
    }
+
+   bool operator == ( const pm_point & objIn ) const
+   {
+      return
+         x[ 0 ] == objIn.x[ 0 ] &&
+         x[ 1 ] == objIn.x[ 1 ] &&
+         x[ 2 ] == objIn.x[ 2 ];
+   }
 };
 
 class pm_point_f
@@ -94,6 +103,27 @@ struct pmc_data
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
+
+class pm_ga_individual
+{
+ public:
+   vector < int >          v;
+   set < pm_point >        model;
+   double                  fitness;
+   bool operator < (const pm_ga_individual & objIn) const
+   {
+      return fitness < objIn.fitness;
+   }
+
+   bool operator == (const pm_ga_individual & objIn) const
+   {
+      return v == objIn.v || model == objIn.model;
+   }
+   bool operator != (const pm_ga_individual & objIn) const
+   {
+      return v != objIn.v;
+   }
+};
 
 class US_PM
 {
@@ -259,6 +289,43 @@ class US_PM
    bool                                    last_best_rmsd_ok;
    double                                  last_best_rmsd2;
 
+   list < pm_ga_individual >               ga_pop;
+   vector < int >                          ga_types;
+   vector < double >                       ga_delta;
+   vector < double >                       ga_low_fparams;
+   vector < double >                       ga_high_fparams;
+   vector < double >                       ga_min_low_fparams;
+   vector < double >                       ga_max_high_fparams;
+   vector < double >                       ga_I_result;
+   vector < double >                       ga_params;
+   vector < double >                       ga_fparams;
+   unsigned int                            ga_points; // for now, single # of points in each dimension
+   unsigned int                            ga_fparams_size;
+
+   bool                                    ga_state_ok();
+   bool                                    ga_compute_delta( unsigned int points );
+
+   // refine the low_fparams, high_fparams based upon top_count population members
+   bool                                    ga_refine_limits    ( 
+                                                               unsigned int top_count, 
+                                                               bool         needs_sort_unique = true,
+                                                               unsigned int extend_deltas = 1
+                                                               );
+
+   bool                                    ga_delta_to_fparams( vector < int >     & delta, 
+                                                                vector < double >  & fparams );
+   unsigned int                            ga_pop_selection   ( unsigned int size );
+   bool                                    ga_fitness         ( pm_ga_individual & individual );
+
+   bool                                    ga                 ( pm_ga_individual & best_individual );
+
+   unsigned int                            ga_population;
+   unsigned int                            ga_generations;
+   double                                  ga_mutate;
+   double                                  ga_crossover;
+   unsigned int                            ga_elitism;
+   unsigned int                            ga_early_termination;
+
  public:
    // note: F needs to be the factors for a volume of size grid_conversion_factor ^ 3
 
@@ -281,7 +348,7 @@ class US_PM
    ~US_PM              ();
 
    QString             error_msg;
-   QString             log;
+   QString             msg_log;
 
    int                 debug_level;
 
@@ -411,9 +478,6 @@ class US_PM
                                           set < pm_point >  & model
                                           );
 
-#ifdef WIN32
-  #pragma warning ( default: 4251 )
-#endif
    bool                write_model       ( QString filename, set < pm_point > & model );
    bool                write_model       ( QString filename, set < pm_point > & model, vector < double > &params );
    bool                write_I           ( QString filename, set < pm_point > & model );
@@ -424,6 +488,7 @@ class US_PM
 
    void                random_md0_params ( vector < double > & params, double max_d = 0e0 );
    bool                zero_md0_params   ( vector < double > & params, double max_d = 0e0 );
+   bool                zero_params       ( vector < double > & params, vector < int > & types );
    QString             list_params       ( vector < double > & params );
    void                set_grid_size     ( double grid_conversion_factor );
 
@@ -436,6 +501,53 @@ class US_PM
                                           );
 
    double              Rg                ( set < pm_point >  & model );
+
+   // ga
+
+   map < QString, QString > control_parameters;
+
+
+   bool                    ga_run            ( 
+                                              vector < int >    & types, 
+                                              pm_ga_individual  & best_individual,
+                                              unsigned int        points,
+                                              vector < double > & low_fparams,
+                                              vector < double > & high_fparams
+                                              );
+                                          
+   bool                    ga_run            ( 
+                                              vector < int >    & types, 
+                                              pm_ga_individual  & best_individual,
+                                              unsigned int        points  = 100
+                                              );
+
+   void                    ga_set_params     (
+                                              unsigned int        ga_population        = 100,
+                                              unsigned int        ga_generations       = 100,
+                                              double              ga_mutate            = 0.3e0,
+                                              double              ga_crossover         = 0.3e0,
+                                              unsigned int        ga_elitism           = 2,
+                                              unsigned int        ga_early_termination = 50
+                                              );
+   void                    ga_set_params     ( map < QString, QString > control_parameters );
+
+   bool                    best_md0_ga       ( 
+                                              vector < double > & params, 
+                                              set < pm_point >  & model, 
+                                              unsigned int        steps_to_ga            = 1,
+                                              unsigned int        points                 = 100,
+                                              double              finest_conversion      = 1e0,
+                                              double              coarse_conversion      = 10e0,
+                                              double              refinement_range_pct   = 5e0,
+                                              double              conversion_divisor     = 2e0
+                                              );
+
+   QString                 ga_info           ();
+
 };
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
 #endif

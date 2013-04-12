@@ -18,10 +18,16 @@
 #define BEST_MD0_TORUS    0
 #define BEST_MD0          ( BEST_MD0_SPHERE || BEST_MD0_CYLINDER || BEST_MD0_SPHEROID || BEST_MD0_TORUS )
 
+#define BEST_MD0_GA_SPHERE   1
+#define BEST_MD0_GA_CYLINDER 0
+#define BEST_MD0_GA_SPHEROID 0
+#define BEST_MD0_GA_TORUS    0
+#define BEST_MD0_GA          ( BEST_MD0_GA_SPHERE || BEST_MD0_GA_CYLINDER || BEST_MD0_GA_SPHEROID || BEST_MD0_GA_TORUS )
+
 #define SPHEROID_SPEC_TEST 0
 #define GRID_SEARCH_SPHEROID 0
 
-#define MAKE_SPHERE_AND_SPHEROID 1
+#define MAKE_SPHERE_AND_SPHEROID 0
 
 #define LEAK_CHECK    0
 #define STD_MODEL     0
@@ -417,7 +423,7 @@ QString US_PM::test( QString name, QString oname )
       cout << "ending best grid search spheroid\n";
    }
 
-   if ( BEST_MD0 )
+   if ( BEST_MD0_GA )
    {
       US_PM sphere_pm( grid_conversion_factor, 
                        max_dimension, 
@@ -437,20 +443,20 @@ QString US_PM::test( QString name, QString oname )
 
       US_Timer           us_timers;
       us_timers          .clear_timers();
-      us_timers.init_timer( "BEST_MD0" );
-      us_timers.start_timer( "BEST_MD0" );
+      us_timers.init_timer( "BEST_MD0_GA" );
+      us_timers.start_timer( "BEST_MD0_GA" );
 
       vector < double > params(1);
 
 
-      if ( BEST_MD0_SPHERE )
+      if ( BEST_MD0_GA_SPHERE )
       {
          cout << "starting best sphere\n";
          params[ 0 ] = 0e0;
-         sphere_pm.best_md0( params, model, grid_conversion_factor, 10e0, 5e0, 5e0 );
+         sphere_pm.best_md0_ga( params, model, 1, 100, grid_conversion_factor, 10e0, 40e0, 2.5e0 );
          us_timers.stop_all();
       
-         QString outname = QString( "%1_sh%2_best_MD0_sphere" ).arg( oname ).arg( max_harmonics );
+         QString outname = QString( "%1_sh%2_best_MD0_GA_sphere" ).arg( oname ).arg( max_harmonics );
          sphere_pm.write_model( outname, model, params );
          sphere_pm.write_I    ( outname, model );
       
@@ -458,15 +464,15 @@ QString US_PM::test( QString name, QString oname )
          cout << "ending best sphere\n";
       }
 
-      if ( BEST_MD0_CYLINDER )
+      if ( BEST_MD0_GA_CYLINDER )
       {
          // sphere_pm.clear();
          cout << "starting best cylinder\n";
          params[ 0 ] = 1e0;
-         sphere_pm.best_md0( params, model, grid_conversion_factor );
+         sphere_pm.best_md0_ga( params, model, 1, 100, grid_conversion_factor, 10e0, 5e0, 5e0 );
          us_timers.stop_all();
 
-         QString outname = QString( "%1_sh%2_best_MD0_cylinder" ).arg( oname ).arg( max_harmonics );
+         QString outname = QString( "%1_sh%2_best_MD0_GA_cylinder" ).arg( oname ).arg( max_harmonics );
          sphere_pm.write_model( outname, model, params );
          sphere_pm.write_I    ( outname, model );
       
@@ -474,32 +480,15 @@ QString US_PM::test( QString name, QString oname )
          cout << "ending best cylinder\n";
       }
 
-      if ( BEST_MD0_SPHEROID )
+      if ( BEST_MD0_GA_SPHEROID )
       {
          // sphere_pm.clear();
-      
-         us_timers.stop_all();
-         if ( SPHEROID_SPEC_TEST )
-
-         {
-            vector < double > I_result( q.size() );
-            vector < double > params( 3 );
-            params[ 0 ] = 2e0;
-            params[ 1 ] = 5.5e0;
-            params[ 2 ] = 5.5e0;
-            sphere_pm.create_model( params, model );
-            sphere_pm.compute_I( model, I_result );
-            double fit2 = sphere_pm.fitness2( I_result );
-            cout << QString( "SPEC TEST: size %1, fitness2 %2\n" ).arg( model.size() ).arg( fit2 );
-         }
-
-         us_timers.start_all();
          cout << "starting best spheroid\n";
          params[ 0 ] = 2e0;
-         sphere_pm.best_md0( params, model, grid_conversion_factor );
+         sphere_pm.best_md0_ga( params, model, 1, 100, grid_conversion_factor, 10e0, 5e0, 5e0 );
          us_timers.stop_all();
             
-         QString outname = QString( "%1_sh%2_best_MD0_spheroid" ).arg( oname ).arg( max_harmonics );
+         QString outname = QString( "%1_sh%2_best_MD0_GA_spheroid" ).arg( oname ).arg( max_harmonics );
          sphere_pm.write_model( outname, model, params );
          sphere_pm.write_I    ( outname, model );
 
@@ -507,22 +496,22 @@ QString US_PM::test( QString name, QString oname )
          cout << "ending best spheroid\n";
       }
 
-      if ( BEST_MD0_TORUS )
+      if ( BEST_MD0_GA_TORUS )
       {
          // sphere_pm.clear();
          cout << "starting best torus\n";
          params[ 0 ] = 4e0;
-         sphere_pm.best_md0( params, model, grid_conversion_factor );
+         sphere_pm.best_md0_ga( params, model, 1, 100, grid_conversion_factor, 10e0, 5e0, 5e0 );
          us_timers.stop_all();
 
-         QString outname = QString( "%1_sh%2_best_MD0_torus" ).arg( oname ).arg( max_harmonics );
+         QString outname = QString( "%1_sh%2_best_MD0_GA_torus" ).arg( oname ).arg( max_harmonics );
          sphere_pm.write_model( outname, model, params );
          sphere_pm.write_I    ( outname, model );
 
          us_timers.start_all();
          cout << "ending best torus\n";
       }
-      us_timers.end_timer          ( "BEST_MD0" );
+      us_timers.end_timer          ( "BEST_MD0_GA" );
       cout << us_timers.list_times();
    }
 
@@ -565,7 +554,7 @@ QString US_PM::test( QString name, QString oname )
             }
             for ( params[ 1 ] = spheretest_min; params[ 1 ] <= spheretest_max; ++params[ 1 ] )
             {
-               sphere_pm.log = "";
+               sphere_pm.msg_log = "";
                model.clear();
                sphere_pm.create_model( params, model );
                sphere_pm.compute_CA_I( model, I_result );
@@ -610,7 +599,7 @@ QString US_PM::test( QString name, QString oname )
             }
             for ( params[ 1 ] = spheretest_min; params[ 1 ] <= spheretest_max; ++params[ 1 ] )
             {
-               sphere_pm.log = "";
+               sphere_pm.msg_log = "";
                model.clear();
                sphere_pm.create_model( params, model );
                sphere_pm.compute_delta_I( model, prev_model, Av, I_result );
@@ -654,7 +643,7 @@ QString US_PM::test( QString name, QString oname )
             }
             for ( params[ 1 ] = spheretest_min; params[ 1 ] <= spheretest_max; ++params[ 1 ] )
             {
-               sphere_pm.log = "";
+               sphere_pm.msg_log = "";
                model.clear();
                sphere_pm.create_model( params, model );
                sphere_pm.compute_CYJ_I( model, I_result );
@@ -769,7 +758,7 @@ QString US_PM::test( QString name, QString oname )
                }
             }
          }
-         log += sphere_pm.log;
+         log += sphere_pm.msg_log;
       }
 
       if ( 0 ) { // ascending sphere delta test
@@ -850,7 +839,7 @@ QString US_PM::test( QString name, QString oname )
                of.close();
             }
          }
-         log += sphere_pm.log;
+         log += sphere_pm.msg_log;
       }
 
       if ( 1 ) 
@@ -932,7 +921,7 @@ QString US_PM::test( QString name, QString oname )
                }
             }
          }
-         log += sphere_pm.log;
+         log += sphere_pm.msg_log;
       }
 
       if ( 0 ) { // descending sphere delta test
@@ -1012,7 +1001,7 @@ QString US_PM::test( QString name, QString oname )
                of.close();
             }
          }
-         log += sphere_pm.log;
+         log += sphere_pm.msg_log;
       }
       cout << log.ascii();
    }

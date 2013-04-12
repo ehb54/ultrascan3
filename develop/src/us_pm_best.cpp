@@ -748,3 +748,121 @@ bool US_PM::grid_search(
    return true;
 }
    
+
+bool US_PM::best_md0_ga( 
+                        vector < double > & params, 
+                        set < pm_point >  & model, 
+                        unsigned int        steps_to_ga,
+                        unsigned int        points,
+                        double              finest_conversion,
+                        double              coarse_conversion,
+                        double              refinement_range_pct,
+                        double              conversion_divisor
+                        )
+{
+   if ( !steps_to_ga )
+   {
+      error_msg = "best_md0_ga: minimum steps is 1";
+      return false;
+   }
+
+   if ( !zero_md0_params( params ) )
+   {
+      error_msg = "best_md0_ga: " + error_msg;
+      return false;
+   }
+
+   set_grid_size( coarse_conversion );
+
+   vector < double > org_low_fparams;
+   vector < double > org_high_fparams;
+   set_limits( params, org_low_fparams, org_high_fparams );
+
+   vector < double > low_fparams  = org_low_fparams;
+   vector < double > high_fparams = org_high_fparams;;
+   
+   vector < double > next_low_fparams  = low_fparams;
+   vector < double > next_high_fparams = high_fparams;
+
+   double new_grid_conversion_factor = grid_conversion_factor;
+   
+   unsigned int steps = 0;
+
+   vector < int >    types;
+   vector < double > fparams;
+   split( params, types, fparams );
+
+   for (; grid_conversion_factor >= finest_conversion; ++steps )
+   {
+      // need params[] from best model and ability to set limits for best model
+      // have to add to best_*, maybe add general best_model( params )
+
+      cout << "-------------------------------------------------------------------------\n";
+      cout << QString( "best_md0_ga: grid cube side: %1\n" ).arg( grid_conversion_factor);
+      cout << "-------------------------------------------------------------------------\n";
+      
+      US_Vector::printvector2( "param limits before clipping:", next_low_fparams, next_high_fparams );
+
+      clip_limits( next_low_fparams , org_low_fparams, org_high_fparams );
+      clip_limits( next_high_fparams, org_low_fparams, org_high_fparams );
+      low_fparams  = next_low_fparams;
+      high_fparams = next_high_fparams;
+
+      US_Vector::printvector2( "param limits:", low_fparams, high_fparams );
+
+      if ( steps >= steps_to_ga )
+      {
+         pm_ga_individual best_individual;
+         ga_population = 25;
+         ga_generations = 10;
+         ga_elitism = 1;
+         ga_early_termination = 3;
+
+         if ( !ga_run( types, best_individual, points, low_fparams, high_fparams ) )
+         {
+            return false;
+         }
+         model = best_individual.model;
+         ga_delta_to_fparams( best_individual.v, ga_fparams );
+         join( params, types, ga_fparams );
+      } else {
+         if ( !best_md0( params, low_fparams, high_fparams, model ) )
+         {
+            return false;
+         }
+      }
+
+      // convert limits to new factor
+
+      if ( grid_conversion_factor == finest_conversion )
+      {
+         break;
+      }
+
+      new_grid_conversion_factor = grid_conversion_factor / conversion_divisor;
+      if ( new_grid_conversion_factor < finest_conversion )
+      {
+         new_grid_conversion_factor = finest_conversion;
+      }
+ 
+      US_Vector::printvector ( "result params:", params );
+      US_Vector::printvector2( "previous limits before rescaling:", low_fparams, high_fparams );
+
+      for ( int i = 0; i < (int)low_fparams.size(); i++ )
+      {
+         next_low_fparams [ i ] = params[ i + 1 ] - grid_conversion_factor * refinement_range_pct / 100e0;
+         next_high_fparams[ i ] = params[ i + 1 ] + grid_conversion_factor * refinement_range_pct / 100e0;
+
+         next_low_fparams [ i ] *= grid_conversion_factor / new_grid_conversion_factor;
+         next_high_fparams[ i ] *= grid_conversion_factor / new_grid_conversion_factor;
+         low_fparams      [ i ] *= grid_conversion_factor / new_grid_conversion_factor;
+         high_fparams     [ i ] *= grid_conversion_factor / new_grid_conversion_factor;
+      }
+
+      US_Vector::printvector2( "previous limits after rescaling:", low_fparams, high_fparams );
+      US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
+
+      set_grid_size( new_grid_conversion_factor );
+   }
+   return true;
+}

@@ -9,6 +9,7 @@
 //   create_1_model()
 //   split()
 //   join()
+//   zero_params()
 //   list_params()
 //   also: best_(object name)()
 
@@ -1146,6 +1147,156 @@ bool US_PM::join( vector < double > & params, vector < int > & types, vector < d
          break;
       default:
          error_msg = QString( "join: object type %1 not defined" ).arg( types[ i ] );
+         return false;
+         break;
+      }
+   }
+   return true;
+}
+
+bool US_PM::zero_params( vector < double > & params, vector < int > & types )
+{
+   params.clear();
+
+   int ofs = 0;
+
+   for ( int i = 0; i < ( int ) types.size(); i++ )
+   {
+      params.push_back( ( double ) types[ i ] );
+      params.push_back( 0e0 );
+      switch( types[ i ] )
+      {
+      case 0 : // sphere
+         {
+            switch( i )
+            {
+            case 0 :
+               break;
+            case 1 :
+               params.push_back( 0e0 );
+               break;
+            case 2 :
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               break;
+            default:
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               break;
+            }
+         }
+         break;
+      case 1 : // cylinder
+         {
+            switch( i )
+            {
+            case 0 :
+               params.push_back( 0e0 );
+               break;
+            case 1 :
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               break;
+            default:
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               break;
+            }
+         }
+         break;
+      case 2 : // spheroid
+         {
+            switch( i )
+            {
+            case 0 :
+               params.push_back( 0e0 );
+               break;
+            default:
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               break;
+            }
+         }
+         break;
+      case 3 : // ellispoid
+         {
+            switch( i )
+            {
+            case 0 :
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               break;
+            default:
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               break;
+            }
+         }
+         break;
+      case 4 : // torus
+         {
+            switch( i )
+            {
+            case 0 :
+               params.push_back( 0e0 );
+               break;
+            default:
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               break;
+            }
+         }
+         break;
+      case 5 : // torus_segment
+         {
+            switch( i )
+            {
+            case 0 :
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               break;
+            default:
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               params.push_back( 0e0 );
+               break;
+            }
+         }
+         break;
+      default:
+         error_msg = QString( "zero_params: object type %1 not defined" ).arg( types[ i ] );
          return false;
          break;
       }

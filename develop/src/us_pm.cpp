@@ -202,6 +202,9 @@ US_PM::US_PM(
    set_best_delta();
    init_objects();
    last_best_rmsd_ok = false;
+
+   ga_I_result.resize( q_points );
+   ga_set_params();
 }
 
 US_PM::~US_PM()

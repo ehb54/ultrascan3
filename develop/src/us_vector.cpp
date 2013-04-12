@@ -145,3 +145,66 @@ vector < double > US_Vector::vunion( vector < vector < double > > &x )
    }
    return result;
 }
+
+QString US_Vector::qs_vector( QString qs, vector < unsigned int > x )
+{
+   QString result;
+   result += QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      result += QString( " %1" ).arg( x[ i ] );
+   }
+   result += "\n";
+   return result;
+}
+
+QString US_Vector::qs_vector( QString qs, vector < int > x )
+{
+   QString result;
+   result += QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      result += QString( " %1" ).arg( x[ i ] );
+   }
+   result += "\n";
+   return result;
+}
+
+QString US_Vector::qs_vector( QString qs, vector < double > x, int digits )
+{
+   QString result;
+   result += QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      result += QString( " %1" ).arg( x[ i ], 0, 'g', digits );
+   }
+   result += "\n";
+   return result;
+}
+
+QString US_Vector::qs_vector2( QString qs, vector < double > x, vector < double > y, int digits )
+{
+   QString result;
+   result += QString( "%1: size %2 %3:\n" ).arg( qs ).arg( x.size() ).arg( y.size() );
+   unsigned int max_size = ( unsigned int )( x.size() > y.size() ? x.size() : y.size() );
+   for ( unsigned int i = 0; i < max_size; i++ )
+   {
+      result += QString( "\t%1 %2\n" )
+         .arg( ( x.size() > i ) ? QString( "%1" ).arg( x[ i ], 0, 'g', digits ) : QString( "n/a" ) )
+         .arg( ( y.size() > i ) ? QString( "%1" ).arg( y[ i ], 0, 'g', digits ) : QString( "n/a" ) )
+         ;
+   }
+   return result;
+}
+
+QString US_Vector::qs_vector( QString qs, vector < bool > x )
+{
+   QString result;
+   result += QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      result += QString( " %1" ).arg( x[ i ] ? "true" : "false" );
+   }
+   result += "\n";
+   return result;
+}
