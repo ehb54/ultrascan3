@@ -191,7 +191,7 @@ DbgLv(1) << "   CR:BF STYPE" << stype;
    if ( stype == 0 )
    {  // Normal case of varying f/f0 with constant vbar
 DataSet* dset=data_sets[0];
-DbgLv(0) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
+DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
  << dset->D20w_correction << dset->solution_rec.buffer.manual;
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
