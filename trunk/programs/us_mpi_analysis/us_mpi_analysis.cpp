@@ -88,6 +88,7 @@ DbgLv(1) << "  jfiles size" << jfiles.size() << "jxmlfile" << jxmlfile;
 mgroup_count=job_params["mgroupcount"].toInt();
 DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
  << mgroup_count;
+      printf( "Us_Mpi_Analysis %s has started.\n", REVISION );
    }
 
    startTime      = QDateTime::currentDateTime();
@@ -444,6 +445,8 @@ void US_MPI_Analysis::start( void )
       // Remove the files we just put into the tar archive
       QString file;
       foreach( file, files ) d.remove( file );
+
+      printf( "Us_Mpi_Analysis has finished successfully.\n" );
    }
 
    MPI_Finalize();
@@ -495,6 +498,9 @@ long int US_MPI_Analysis::max_rss( void )
 
 void US_MPI_Analysis::abort( const QString& message, int error )
 {
+    if ( my_rank == 0 )
+       printf( "*ABORTED*: %s\n", message.toAscii().data() );
+
     send_udp( message );
     DbgLv(0) << message;
     MPI_Abort( MPI_COMM_WORLD, error );
