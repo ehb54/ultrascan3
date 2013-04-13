@@ -7,6 +7,7 @@
 
 #include <mpi.h>
 #include <sys/user.h>
+#include <cstdio>
 
 int main( int argc, char* argv[] )
 {
@@ -442,11 +443,12 @@ void US_MPI_Analysis::start( void )
       US_Tar tar;
       tar.create( "analysis-results.tar", files );
 
+      printf( "Us_Mpi_Analysis has finished successfully.\n" );
+      fflush( stdout );
+
       // Remove the files we just put into the tar archive
       QString file;
       foreach( file, files ) d.remove( file );
-
-      printf( "Us_Mpi_Analysis has finished successfully.\n" );
    }
 
    MPI_Finalize();
@@ -502,6 +504,7 @@ void US_MPI_Analysis::abort( const QString& message, int error )
    { // Send abort message to both stdout and udp
       US_Sleep::msleep( 1100 );       // Delay a bit so rank 0 completes first
       printf( "\n  ***ABORTED***:  %s\n\n", message.toAscii().data() );
+      fflush( stdout );
       send_udp( message );
    }
 
