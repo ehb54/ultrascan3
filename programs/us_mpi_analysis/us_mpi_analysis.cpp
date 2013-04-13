@@ -498,13 +498,17 @@ long int US_MPI_Analysis::max_rss( void )
 
 void US_MPI_Analysis::abort( const QString& message, int error )
 {
-    if ( my_rank == 0 )
-       printf( "*ABORTED*: %s\n", message.toAscii().data() );
+   if ( my_rank == 0 )
+   { // Send abort message to both stdout and udp
+      US_Sleep::msleep( 1100 );       // Delay a bit so rank 0 completes first
+      printf( "\n  ***ABORTED***:  %s\n\n", message.toAscii().data() );
+      send_udp( message );
+   }
 
-    send_udp( message );
-    DbgLv(0) << message;
-    MPI_Abort( MPI_COMM_WORLD, error );
-    exit( error );
+   MPI_Barrier( MPI_COMM_WORLD );     // Sync everybody up so stdout msg first
+   DbgLv(0) << my_rank << ": " << message;
+   MPI_Abort( MPI_COMM_WORLD, error );
+   exit( error );
 }
 
 // Create output statistics file
