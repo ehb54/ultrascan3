@@ -144,7 +144,6 @@ class US_PM
    double                                  cube_size;
    double                                  bead_radius;
    double                                  bead_radius_over_2;
-   double                                  one_p_bead_radius_over_2;
 
    // active grid:
    vector < double >                       q;
@@ -279,9 +278,31 @@ class US_PM
 
    vector < QString >                      object_names;
    vector < int >                          object_m0_parameters;  // # of params for model_pos = 0
-   // doens't seem to work: vector < bool (*)( set < pm_point > & ) >  object_best_f;
+
+   enum                                    objects
+      {
+         SPHERE,
+         CYLINDER,
+         SPHEROID,
+         ELLIPSOID,
+         TORUS
+         // TOURS_SEGMENT
+      };
+                                                            
+   enum                                    parameter_type 
+      { 
+         COORD, 
+         NORM, 
+         RADIUS, 
+         ANGLE 
+      };
+
+   vector < vector < vector < parameter_type > > >
+                                           object_parameter_types; // i.e. distance 
+   map < parameter_type, QString >         object_type_name;
 
    void                                    init_objects();
+   QString                                 list_object_info();
    
    map < QString, QString >                last_physical_stats;
    QString                                 physical_stats( set < pm_point > & model );
@@ -325,6 +346,16 @@ class US_PM
    double                                  ga_crossover;
    unsigned int                            ga_elitism;
    unsigned int                            ga_early_termination;
+
+   bool                                    rescale_params( vector < int >    & types, 
+                                                           vector < double > & fparams, 
+                                                           double              new_conversion_factor );
+
+   bool                                    rescale_params( vector < double > & params,
+                                                           vector < double > & low_fparams, 
+                                                           vector < double > & high_fparams, 
+                                                           double              new_conversion_factor,
+                                                           double              refinement_range_pct = 0e0 );
 
  public:
    // note: F needs to be the factors for a volume of size grid_conversion_factor ^ 3
@@ -489,6 +520,7 @@ class US_PM
    void                random_md0_params ( vector < double > & params, double max_d = 0e0 );
    bool                zero_md0_params   ( vector < double > & params, double max_d = 0e0 );
    bool                zero_params       ( vector < double > & params, vector < int > & types );
+   bool                random_params     ( vector < double > & params, vector < int > & types, double max_d = 0e0 );
    QString             list_params       ( vector < double > & params );
    void                set_grid_size     ( double grid_conversion_factor );
 

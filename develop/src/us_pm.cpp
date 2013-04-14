@@ -11,8 +11,7 @@ void US_PM::set_grid_size( double grid_conversion_factor )
 
    // radius gives a sphere with equal size to the cube:
    bead_radius              = pow( cube_size / M_PI, 1e0/3e0 );
-   bead_radius_over_2       = bead_radius * 5e-1;
-   one_p_bead_radius_over_2 = 1e0 + bead_radius_over_2;
+   bead_radius_over_2       = 0e0; // bead_radius * 5e-1;
 
    cout << QString( "US_PM:cube size   %1\n"
                     "US_PM:bead radius %2\n" )
@@ -201,6 +200,7 @@ US_PM::US_PM(
 
    set_best_delta();
    init_objects();
+   cout << list_object_info();
    last_best_rmsd_ok = false;
 
    ga_I_result.resize( q_points );
@@ -866,4 +866,309 @@ double US_PM::Rg( set < pm_point > & model )
    }
 
    return sqrt( Rg2 / (double) pmodel.size() );
+}
+
+bool US_PM::rescale_params( vector < int >    & types, 
+                            vector < double > & fparams, 
+                            double              new_conversion_factor )
+{
+   double scale_factor = grid_conversion_factor / new_conversion_factor;
+   int fpos = 0;
+   for ( int i = 0; i < (int)types.size(); ++i )
+   {
+      int pos = i < (int)object_parameter_types[ types[ i ] ].size() ? i : object_parameter_types[ types[ i ] ].size() - 1;
+      for ( int k = 0; k < (int)object_parameter_types[ types[ i ] ][ pos ].size(); ++k, ++fpos )
+      {
+         switch( object_parameter_types[ types[ i ] ][ pos ][ k ] )
+         {
+         case COORD:
+         case RADIUS:
+            fparams [ fpos ] *= scale_factor;
+            break;
+         default:
+            // no conversion on NORM or ANGLE
+            break;
+         }
+      }
+   }
+   return true;
+}
+
+bool US_PM::rescale_params( vector < double > & params,
+                            vector < double > & low_fparams, 
+                            vector < double > & high_fparams, 
+                            double              new_conversion_factor,
+                            double              refinement_range_pct )
+{
+   vector < int >    types;
+   vector < double > fparams;
+   if ( !split( params, types, fparams ) )
+   {
+      return false;
+   }
+
+   double scale_factor = grid_conversion_factor / new_conversion_factor;
+   int fpos = 0;
+   for ( int i = 0; i < (int)types.size(); ++i )
+   {
+      int pos = i < (int)object_parameter_types[ types[ i ] ].size() ? i : object_parameter_types[ types[ i ] ].size() - 1;
+      for ( int k = 0; k < (int)object_parameter_types[ types[ i ] ][ pos ].size(); ++k, ++fpos )
+      {
+         switch( object_parameter_types[ types[ i ] ][ pos ][ k ] )
+         {
+         case COORD:
+         case RADIUS:
+            low_fparams [ fpos ] = fparams[ fpos ] - grid_conversion_factor * refinement_range_pct / 100e0;
+            high_fparams[ fpos ] = fparams[ fpos ] + grid_conversion_factor * refinement_range_pct / 100e0;
+
+            break;
+         default:
+            // no conversion on NORM or ANGLE
+            break;
+         }
+      }
+   }
+   return true;
+}
+
+bool US_PM::zero_params( vector < double > & params, vector < int > & types )
+{
+   params.clear();
+   for ( int i = 0; i < (int)types.size(); ++i )
+   {
+      params.push_back( types[ i ] );
+      int pos = i < (int)object_parameter_types[ types[ i ] ].size() ? i : object_parameter_types[ types[ i ] ].size() - 1;
+      for ( int k = 0; k < (int)object_parameter_types[ types[ i ] ][ pos ].size(); ++k )
+      {
+         switch( object_parameter_types[ types[ i ] ][ pos ][ k ] )
+         {
+         case COORD :
+            params .push_back( 0e0 );
+            break;
+
+         case NORM :
+            params .push_back( 0e0 );
+            break;
+
+         case RADIUS :
+            params .push_back( delta_min );
+            break;
+
+         case ANGLE :
+            params .push_back( 0e0 );
+            break;
+         default :
+            error_msg = "zero_params: unknown object parameter type";
+            return false;
+            break;
+         }
+         params.push_back( 0e0 );
+      }
+   }
+   return true;
+}
+
+bool US_PM::random_params( vector < double > & params, vector < int > & types, double max_d )
+{
+   params.clear();
+   if ( !max_d )
+   {
+      max_d = max_dimension_d;
+   }
+
+   for ( int i = 0; i < (int)types.size(); ++i )
+   {
+      params.push_back( types[ i ] );
+      int pos = i < (int)object_parameter_types[ types[ i ] ].size() ? i : object_parameter_types[ types[ i ] ].size() - 1;
+      for ( int k = 0; k < (int)object_parameter_types[ types[ i ] ][ pos ].size(); ++k )
+      {
+         switch( object_parameter_types[ types[ i ] ][ pos ][ k ] )
+         {
+         case COORD :
+            params .push_back( drand48() * max_d - max_d / 2e0 );
+            break;
+
+         case NORM :
+            params .push_back( drand48() * 2e0 - 1e0 );
+            break;
+
+         case RADIUS :
+            params .push_back( drand48() * max_d + delta_min );
+            break;
+
+         case ANGLE :
+            params .push_back( drand48() * 1.9999e0 * M_PI );
+            break;
+
+         default :
+            error_msg = "random_params: unknown object parameter type";
+            return false;
+            break;
+         }
+      }
+   }
+   return true;
+}
+
+
+QString US_PM::list_params( vector < double > & params )
+{
+   QString qs = QString( "model: grid conversion factor %1 " ).arg( grid_conversion_factor );
+   vector < int >    types;
+   vector < double > fparams;
+   if ( !split( params, types, fparams ) )
+   {
+      return error_msg;
+   }
+
+   int fpos = 0;
+   for ( int i = 0; i < (int)types.size(); ++i )
+   {
+      int pos = i < (int)object_parameter_types[ types[ i ] ].size() ? i : object_parameter_types[ types[ i ] ].size() - 1;
+      qs += QString( "\n\t%1 (%2) : " ).arg( object_names[ types[ i ] ] ).arg( (int)object_parameter_types[ types[ i ] ][ pos ].size() );
+      for ( int k = 0; k < (int)object_parameter_types[ types[ i ] ][ pos ].size(); ++k, ++fpos )
+      {
+         qs += QString( "%1 " ).arg( fparams[ fpos ] );
+      }
+   }
+   qs += QString( "\n\ttotal types %1 fparams %2 total %3 \n" ).arg( types.size() ).arg( fpos ).arg( params.size() );
+   return qs;
+}
+
+QString US_PM::list_object_info()
+{
+   QString qs;
+
+   for ( int i = 0; i < (int)object_parameter_types.size(); ++i )
+   {
+      qs += QString( "object: %1 model positions %2\n" ).arg( object_names[ i ] ).arg( object_parameter_types[ i ].size() );
+      for ( int j = 0; j < (int)object_parameter_types[ i ].size(); ++j )
+      {
+         qs += QString( "\tmodel position %1 parameters %2: " ).arg( j ).arg( object_parameter_types[ i ][ j ].size() );
+         for ( int k = 0; k < (int)object_parameter_types[ i ][ j ].size(); ++k )
+         {
+            qs += QString( " %1" ).arg( object_type_name[ object_parameter_types[ i ][ j ][ k ] ] );
+         }
+         qs += "\n";
+      }
+   }
+   return qs;
+}
+
+
+bool US_PM::set_limits( vector < double > & params, 
+                        vector < double > & low_fparams, 
+                        vector < double > & high_fparams, 
+                        double max_d )
+{
+   vector < int > types;
+   {
+      vector < double > fparams;
+      if ( !split( params, types, fparams ) )
+      {
+         return false;
+      }
+   }
+
+   if ( !max_d )
+   {
+      max_d = max_dimension_d;
+   }
+
+   low_fparams.clear();
+   high_fparams.clear();
+
+   for ( int i = 0; i < (int)types.size(); ++i )
+   {
+      int pos = i < (int)object_parameter_types[ types[ i ] ].size() ? i : object_parameter_types[ types[ i ] ].size() - 1;
+      for ( int k = 0; k < (int)object_parameter_types[ types[ i ] ][ pos ].size(); ++k )
+      {
+         switch( object_parameter_types[ types[ i ] ][ pos ][ k ] )
+         {
+         case COORD :
+            low_fparams .push_back( -max_d );
+            high_fparams.push_back( max_d );
+            break;
+
+         case NORM :
+            low_fparams .push_back( -max_d );
+            high_fparams.push_back( max_d );
+            break;
+
+         case RADIUS :
+            low_fparams .push_back( delta_min );
+            high_fparams.push_back( max_d );
+            break;
+
+         case ANGLE :
+            low_fparams .push_back( 0e0 );
+            high_fparams.push_back( M_PI * 1.9999e0 );
+            break;
+         default :
+            error_msg = "set_limits: unknown object parameter type";
+            return false;
+            break;
+         }
+      }
+   }
+   return true;
+}
+
+bool US_PM::split( vector < double > & params, vector < int > & types, vector < double > & fparams )
+{
+   types  .clear();
+   fparams.clear();
+
+   for ( int i = 0; i < (int) params.size(); )
+   {
+      types.push_back( params[ i++ ] );
+      if ( (int) params.size() <= i )
+      {
+         error_msg = QString( "split: no params for type %2" ).arg( types.back() );
+         return false;
+      }
+      if ( (int)object_parameter_types.size() < types.back() )
+      {
+         error_msg = QString( "split: unknown object type %2" ).arg( types.back() );
+         return false;
+      }
+      int pos = (int)types.size() - 1 < (int)object_parameter_types[ types.back() ].size() ? types.size() - 1 : object_parameter_types[ types.back() ].size() - 1;
+      if ( params.size() < object_parameter_types[ types.back() ][ pos ].size() )
+      {
+         error_msg = QString( "split: error insufficient params for type %2" ).arg( types.back() );
+         return false;
+      }
+      for ( int k = 0; k < (int)object_parameter_types[ types.back() ][ pos ].size(); ++k )
+      {
+         fparams.push_back( params[ i++ ] );
+      }
+   }
+   return true;
+}
+
+bool US_PM::join( vector < double > & params, vector < int > & types, vector < double > & fparams )
+{
+   params.clear();
+
+   int fpos = 0;
+   for ( int i = 0; i < (int)types.size(); ++i )
+   {
+      params.push_back( types[ i ] );
+      if ( (int)object_parameter_types.size() < types[ i ] )
+      {
+         error_msg = QString( "split: unknown object type %2" ).arg( types[ i ] );
+         return false;
+      }
+      int pos = i < (int)object_parameter_types[ types[ i ] ].size() ? i : object_parameter_types[ types[ i ] ].size() - 1;
+      if ( (int)fparams.size() < fpos + (int)object_parameter_types[ types[ i ] ][ pos ].size() )
+      {
+         error_msg = QString( "join: error insufficient params for type %2" ).arg( types[ i ] );
+         return false;
+      }
+      for ( int k = 0; k < (int)object_parameter_types[ types[ i ] ][ pos ].size(); ++k, ++fpos )
+      {
+         params.push_back( fparams[ fpos ] );
+      }
+   }
+   return true;
 }

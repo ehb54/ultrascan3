@@ -23,12 +23,14 @@ class US_Vector
    static void printvector( QString qs, vector < int > x );
    static void printvector( QString qs, vector < double > x, int digits = 8 );
    static void printvector2( QString qs, vector < double > x, vector < double > y, int digits = 8 );
+   static void printvector2( QString qs, vector < int > x, vector < int > y );
    static void printvector( QString qs, vector < bool > x );
 
    static QString qs_vector( QString qs, vector < unsigned int > x );
    static QString qs_vector( QString qs, vector < int > x );
    static QString qs_vector( QString qs, vector < double > x, int digits = 8 );
    static QString qs_vector2( QString qs, vector < double > x, vector < double > y, int digits = 8 );
+   static QString qs_vector2( QString qs, vector < int > x, vector < int > y );
    static QString qs_vector( QString qs, vector < bool > x );
 
    static vector < double > intersection( vector < double > &x, vector < double > &y );

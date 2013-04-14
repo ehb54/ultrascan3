@@ -43,6 +43,19 @@ void US_Vector::printvector2( QString qs, vector < double > x, vector < double >
    }
 }
 
+void US_Vector::printvector2( QString qs, vector < int > x, vector < int > y )
+{
+   cout << QString( "%1: size %2 %3:\n" ).arg( qs ).arg( x.size() ).arg( y.size() );
+   unsigned int max_size = ( unsigned int )( x.size() > y.size() ? x.size() : y.size() );
+   for ( unsigned int i = 0; i < max_size; i++ )
+   {
+      cout << QString( "\t%1 %2\n" )
+         .arg( ( x.size() > i ) ? QString( "%1" ).arg( x[ i ] ) : QString( "n/a" ) )
+         .arg( ( y.size() > i ) ? QString( "%1" ).arg( y[ i ] ) : QString( "n/a" ) )
+         ;
+   }
+}
+
 void US_Vector::printvector( QString qs, vector < bool > x )
 {
    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
@@ -192,6 +205,21 @@ QString US_Vector::qs_vector2( QString qs, vector < double > x, vector < double 
       result += QString( "\t%1 %2\n" )
          .arg( ( x.size() > i ) ? QString( "%1" ).arg( x[ i ], 0, 'g', digits ) : QString( "n/a" ) )
          .arg( ( y.size() > i ) ? QString( "%1" ).arg( y[ i ], 0, 'g', digits ) : QString( "n/a" ) )
+         ;
+   }
+   return result;
+}
+
+QString US_Vector::qs_vector2( QString qs, vector < int > x, vector < int > y )
+{
+   QString result;
+   result += QString( "%1: size %2 %3:\n" ).arg( qs ).arg( x.size() ).arg( y.size() );
+   unsigned int max_size = ( unsigned int )( x.size() > y.size() ? x.size() : y.size() );
+   for ( unsigned int i = 0; i < max_size; i++ )
+   {
+      result += QString( "\t%1 %2\n" )
+         .arg( ( x.size() > i ) ? QString( "%1" ).arg( x[ i ] ) : QString( "n/a" ) )
+         .arg( ( y.size() > i ) ? QString( "%1" ).arg( y[ i ] ) : QString( "n/a" ) )
          ;
    }
    return result;

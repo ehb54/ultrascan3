@@ -33,6 +33,8 @@
 #define STD_MODEL     0
 #define PERF_TEST     0
 
+#define NEW_TEST      1
+
 QString US_PM::test( QString name, QString oname )
 {
    vector < double > q;
@@ -122,6 +124,75 @@ QString US_PM::test( QString name, QString oname )
    US_Vector::printvector( "rayleigh structure factors", F );
 
    US_Vector::printvector( "read params", params );
+
+   if ( NEW_TEST )
+   {
+      US_PM sphere_pm( grid_conversion_factor, 
+                       max_dimension, 
+                       drho, 
+                       buffer_e_density, 
+                       ev, 
+                       max_harmonics, 
+                       // fibonacci_grid,
+                       F, 
+                       q, 
+                       I, 
+                       e, 
+                       1024,
+                       0 );
+
+      vector < int > types;
+      types.push_back( 0 );
+      types.push_back( 1 );
+      types.push_back( 2 );
+      types.push_back( 3 );
+      types.push_back( 4 );
+      types.push_back( 0 );
+      types.push_back( 1 );
+      types.push_back( 2 );
+      types.push_back( 3 );
+      types.push_back( 4 );
+      types.push_back( 0 );
+      types.push_back( 1 );
+      types.push_back( 2 );
+      types.push_back( 3 );
+      types.push_back( 4 );
+
+      vector < double > org_params;
+      vector < double > params;
+      sphere_pm.random_params    ( params    , types );
+
+      US_Vector::printvector( "params", params );
+      US_Vector::printvector( "types", types );
+
+      cout << sphere_pm.list_params( params );
+
+      vector < int >    types_new;
+      vector < double > fparams_new;
+
+      if ( !sphere_pm.split    ( params, types_new, fparams_new ) )
+      {
+         cout << sphere_pm.error_msg << endl;
+      }
+
+      vector < double > jparams;
+
+      if ( !sphere_pm.join    ( jparams    , types_new, fparams_new ) )
+      {
+         cout << sphere_pm.error_msg << endl;
+      }         
+
+      if ( params == jparams )
+      {
+         cout << "join exact match\n";
+      } else {
+         cout << "join ERROR\n";
+         US_Vector::printvector2( "params original after join", params, jparams );
+      }
+
+
+      return "";
+   }         
 
    if ( RANDOM_TEST )
    {
@@ -453,7 +524,7 @@ QString US_PM::test( QString name, QString oname )
       {
          cout << "starting best sphere\n";
          params[ 0 ] = 0e0;
-         sphere_pm.best_md0_ga( params, model, 1, 100, grid_conversion_factor, 10e0, 40e0, 2.5e0 );
+         sphere_pm.best_md0_ga( params, model, 10, 100, grid_conversion_factor, 10e0, 0e0, 2.5e0 );
          us_timers.stop_all();
       
          QString outname = QString( "%1_sh%2_best_MD0_GA_sphere" ).arg( oname ).arg( max_harmonics );
