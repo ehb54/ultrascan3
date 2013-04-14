@@ -313,7 +313,39 @@ if ( my_rank == 0 )
          for ( int j = i + 1; j < bucket_rects.size(); j++ )
          {
             if ( bucket_rects[ i ].intersects( bucket_rects[ j ] ) )
+            {
+               QRectF bukov = bucket_rects[i].intersected( bucket_rects[j] );
+               double sdif  = bukov.width();
+               double fdif  = bukov.height();
+
+               if ( my_rank == 0 )
+               {
+                  DbgLv(0) << "Bucket" << i << "overlaps bucket" << j;
+                  DbgLv(0) << " Overlap: st w h" << bukov.topLeft()
+                    << sdif << fdif;
+                  DbgLv(0) << "  Bucket i" << bucket_rects[i].topLeft()
+                    << bucket_rects[i].bottomRight();
+                  DbgLv(0) << "  Bucket j" << bucket_rects[j].topLeft()
+                    << bucket_rects[j].bottomRight();
+                  DbgLv(0) << "  Bucket i right "
+                    << QString().sprintf( "%22.18f", bucket_rects[i].right() );
+                  DbgLv(0) << "  Bucket j left  "
+                    << QString().sprintf( "%22.18f", bucket_rects[j].left() );
+                  DbgLv(0) << "  Bucket i bottom"
+                    << QString().sprintf( "%22.18f", bucket_rects[i].bottom() );
+                  DbgLv(0) << "  Bucket j top   "
+                    << QString().sprintf( "%22.18f", bucket_rects[j].top() );
+               }
+
+               if ( qMin( sdif, fdif ) < 1.e-6 )
+               { // Ignore the overlap if it is trivial
+                  if ( my_rank == 0 )
+                     DbgLv(0) << "Trivial overlap is ignored.";
+                  continue;
+               }
+
                abort( "Buckets overlap" );
+            }
          }
       }
    }
