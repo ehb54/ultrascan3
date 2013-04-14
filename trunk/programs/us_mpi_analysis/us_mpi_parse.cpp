@@ -114,12 +114,16 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
                a       = xml.attributes();
 
                if ( name == "bucket" )
-               {
-                  Bucket               b;
-                  b.s_min       = a.value( "s_min"   ).toString().toDouble();
-                  b.s_max       = a.value( "s_max"   ).toString().toDouble();
-                  b.ff0_min     = a.value( "ff0_min" ).toString().toDouble();
-                  b.ff0_max     = a.value( "ff0_max" ).toString().toDouble();
+               { // Get bucket coordinates; try to forestall round-off problems
+                  Bucket b;
+                  double smin   = a.value( "s_min"   ).toString().toDouble();
+                  double smax   = a.value( "s_max"   ).toString().toDouble();
+                  double fmin   = a.value( "ff0_min" ).toString().toDouble();
+                  double fmax   = a.value( "ff0_max" ).toString().toDouble();
+                  b.s_min       = (double)qRound( smin * 1e+6 ) * 1e-6;
+                  b.s_max       = (double)qRound( smax * 1e+6 ) * 1e-6;
+                  b.ff0_min     = (double)qRound( fmin * 1e+6 ) * 1e-6;
+                  b.ff0_max     = (double)qRound( fmax * 1e+6 ) * 1e-6;
 
                   buckets << b;
                }
