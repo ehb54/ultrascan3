@@ -714,7 +714,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
       if ( isnan(Rg) ||
            b >= 0e0 )
       {
-         plotted_guinier_valid[i] = false;
+         plotted_cs_guinier_valid[i] = false;
          report =
             QString(
                     "CS Guinier analysis of %1:\n"
@@ -759,20 +759,20 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                      , chi2
                      );
          
-         plotted_guinier_valid[i] = true;
-         plotted_guinier_lowq2[i] = smin * smin;
-         plotted_guinier_highq2[i] = smax * smax;
-         plotted_guinier_a[i] = a;
-         plotted_guinier_b[i] = b;
-         plotted_guinier_plotted[i] = false;
+         plotted_cs_guinier_valid[i] = true;
+         plotted_cs_guinier_lowq2[i] = smin * smin;
+         plotted_cs_guinier_highq2[i] = smax * smax;
+         plotted_cs_guinier_a[i] = a;
+         plotted_cs_guinier_b[i] = b;
+         plotted_cs_guinier_plotted[i] = false;
          
-         plotted_guinier_x[i].clear();
-         plotted_guinier_x[i].push_back(plotted_guinier_lowq2[i]);
-         plotted_guinier_x[i].push_back(plotted_guinier_highq2[i]);
+         plotted_cs_guinier_x[i].clear();
+         plotted_cs_guinier_x[i].push_back(plotted_cs_guinier_lowq2[i]);
+         plotted_cs_guinier_x[i].push_back(plotted_cs_guinier_highq2[i]);
          
-         plotted_guinier_y[i].clear();
-         plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_lowq2[i]));
-         plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_highq2[i]));
+         plotted_cs_guinier_y[i].clear();
+         plotted_cs_guinier_y[i].push_back(exp(plotted_cs_guinier_a[i] + plotted_cs_guinier_b[i] * plotted_cs_guinier_lowq2[i]));
+         plotted_cs_guinier_y[i].push_back(exp(plotted_cs_guinier_a[i] + plotted_cs_guinier_b[i] * plotted_cs_guinier_highq2[i]));
 
          csvlog += 
             QString(

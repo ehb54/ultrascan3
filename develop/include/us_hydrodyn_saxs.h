@@ -356,8 +356,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
 #ifndef QT4
       map    < unsigned int, long >                   plotted_Gp;  // guinier points
+      map    < unsigned int, long >                   plotted_cs_Gp;  // cs guinier points
 #else
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_curves;  // guinier points
+      map    < unsigned int, QwtPlotCurve * >         plotted_Gp_cs_curves;  // cs guinier points
 #endif
       map    < unsigned int, bool >                   plotted_guinier_valid;
       map    < unsigned int, bool >                   plotted_guinier_plotted;
@@ -367,6 +369,15 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map    < unsigned int, double >                 plotted_guinier_b;
       map    < unsigned int, vector < double > >      plotted_guinier_x;
       map    < unsigned int, vector < double > >      plotted_guinier_y;
+
+      map    < unsigned int, bool >                   plotted_cs_guinier_valid;
+      map    < unsigned int, bool >                   plotted_cs_guinier_plotted;
+      map    < unsigned int, double >                 plotted_cs_guinier_lowq2;
+      map    < unsigned int, double >                 plotted_cs_guinier_highq2;
+      map    < unsigned int, double >                 plotted_cs_guinier_a;           // y = a + b*x
+      map    < unsigned int, double >                 plotted_cs_guinier_b;
+      map    < unsigned int, vector < double > >      plotted_cs_guinier_x;
+      map    < unsigned int, vector < double > >      plotted_cs_guinier_y;
 
       vector < vector < double > >                    plotted_pr;
       vector < vector < double > >                    plotted_pr_not_normalized;

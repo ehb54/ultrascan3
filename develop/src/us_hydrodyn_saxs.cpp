@@ -1270,7 +1270,10 @@ void US_Hydrodyn_Saxs::setupGUI()
    grid_saxs->attach( plot_saxs );
 #endif
    plot_saxs->setAxisTitle( QwtPlot::xBottom, cb_guinier->isChecked() ? tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
-   plot_saxs->setAxisTitle( QwtPlot::yLeft,   cb_kratky ->isChecked() ? tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
+   plot_saxs->setAxisTitle( QwtPlot::yLeft,   cb_kratky ->isChecked() ? tr( " q^2 * I(q)"        ) : 
+                            ( cb_cs_guinier->isChecked() ?
+                              tr( "Log q*I(q)" ) : tr( "Log I(q)" ) )
+                            );
 #ifndef QT4
    plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_saxs->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -1286,6 +1289,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_saxs->setMargin(USglobal->config_list.margin);
    plot_saxs->setTitle("");
+
 #ifndef QT4
    plot_saxs->setAxisOptions(QwtPlot::yLeft, 
                              cb_kratky->isChecked() ? 
@@ -4178,8 +4182,10 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plot_saxs->replot();
 #ifndef QT4
    plotted_Gp.clear();
+   plotted_cs_Gp.clear();
 #else
    plotted_Gp_curves.clear();
+   plotted_cs_Gp_curves.clear();
 #endif
    plotted_guinier_valid.clear();
    plotted_guinier_plotted.clear();
@@ -4189,6 +4195,14 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plotted_guinier_b.clear();
    plotted_guinier_x.clear();
    plotted_guinier_y.clear();
+   plotted_cs_guinier_valid.clear();
+   plotted_cs_guinier_plotted.clear();
+   plotted_cs_guinier_lowq2.clear();
+   plotted_cs_guinier_highq2.clear();
+   plotted_cs_guinier_a.clear();
+   plotted_cs_guinier_b.clear();
+   plotted_cs_guinier_x.clear();
+   plotted_cs_guinier_y.clear();
 }
 
 void US_Hydrodyn_Saxs::clear_plot_saxs_and_replot_experimental()
@@ -4362,7 +4376,10 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
       pb_plot_saxs_sans->setText(tr("Compute SANS Curve"));
       pb_load_saxs_sans->setText(tr("Load SANS Curve"));
       pb_clear_plot_saxs->setText(tr("Clear SANS Curve"));
-      plot_saxs->setTitle((cb_guinier->isChecked() ? "Guinier " : "") + tr("SANS Curve"));
+      plot_saxs->setTitle((cb_guinier->isChecked() ? 
+                           ( cb_cs_guinier->isChecked() ?
+                             "CS Guinier " : "Guinier " )
+                           : "") + tr("SANS Curve"));
 
       rb_saxs_iq_native_debye->setEnabled(false);
       rb_saxs_iq_native_sh   ->setEnabled(false);
@@ -4387,7 +4404,10 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
       pb_plot_saxs_sans->setText(tr("Compute SAXS Curve"));
       pb_load_saxs_sans->setText(tr("Load SAXS Curve"));
       pb_clear_plot_saxs->setText(tr("Clear SAXS Curve"));
-      plot_saxs->setTitle((cb_guinier->isChecked() ? "Guinier " : "") + tr("SAXS Curve"));
+      plot_saxs->setTitle((cb_guinier->isChecked() ? 
+                           ( cb_cs_guinier->isChecked() ?
+                             "CS Guinier " : "Guinier " )
+                           : "") + tr("SAXS Curve"));
 
       rb_saxs_iq_native_debye->setEnabled(true);
       rb_saxs_iq_native_sh   ->setEnabled(true);
@@ -5828,7 +5848,10 @@ void US_Hydrodyn_Saxs::set_user_range()
    } else {
       plot_saxs->setAxisTitle  ( QwtPlot::yLeft,   
                                  cb_kratky ->isChecked() ?
-                                 tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
+                                 tr( " q^2 * I(q)"        ) : 
+                                 ( cb_cs_guinier->isChecked() ?                                 
+                                   tr( "Log q*I(q)" ) : tr( "Log I(q)" ) )
+                                 );
 #ifndef QT4
       plot_saxs->setAxisOptions( QwtPlot::yLeft, 
                                  cb_kratky->isChecked()  ? 
@@ -5846,15 +5869,22 @@ void US_Hydrodyn_Saxs::set_user_range()
       
 void US_Hydrodyn_Saxs::set_cs_guinier()
 {
+   set_guinier();
 }
 
 void US_Hydrodyn_Saxs::set_guinier()
 {
    if ( rb_sans->isChecked() ) 
    {
-      plot_saxs->setTitle((cb_guinier->isChecked() ? "Guinier " : "") + tr("SANS Curve"));
+      plot_saxs->setTitle((cb_guinier->isChecked() ? 
+                           ( cb_cs_guinier->isChecked() ?
+                             "CS Guinier " : "Guinier " )
+                           : "") + tr("SANS Curve"));
    } else {
-      plot_saxs->setTitle((cb_guinier->isChecked() ? "Guinier " : "") + tr("SAXS Curve"));
+      plot_saxs->setTitle((cb_guinier->isChecked() ? 
+                           ( cb_cs_guinier->isChecked() ?
+                             "CS Guinier " : "Guinier " )
+                           : "") + tr("SAXS Curve"));
    }
 
    if ( cb_guinier->isChecked() )
@@ -5875,7 +5905,7 @@ void US_Hydrodyn_Saxs::set_guinier()
 
    rescale_plot();
 
-   // clear the plot and replot the curves in correct mode ( kratky or guniner )
+   // clear the plot and replot the curves in correct mode ( kratky or guniner or cs-guinier )
    plot_saxs->clear();
    for ( unsigned int p = 0;
 #ifndef QT4
@@ -5895,6 +5925,16 @@ void US_Hydrodyn_Saxs::set_guinier()
             q2I.push_back( plotted_q2[ p ][ i ] * plotted_I[ p ][ i ] );
          }
       }
+
+      vector < double > pI;
+      if ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() )
+      {
+         for ( unsigned int i = 0; i < plotted_q[ p ].size(); i++ )
+         {
+            pI.push_back( plotted_q[ p ][ i ] * plotted_I[ p ][ i ] );
+         }
+      }
+
 #ifndef QT4
       long Iq = plot_saxs->insertCurve( qsl_plotted_iq_names[ p ] );
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
@@ -5905,13 +5945,14 @@ void US_Hydrodyn_Saxs::set_guinier()
       plotted_Iq_curves[ p ] = curve;
 #endif
       
-      
 #ifndef QT4
       plot_saxs->setCurveData(plotted_Iq[ p ],
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[p][0])  : (double *)&(plotted_q[p][0]), 
                               cb_kratky ->isChecked() ?
-                              (double *)&(q2I[0])            : (double *)&(plotted_I[p][0]),
+                              (double *)&(q2I[0])            : // (double *)&(plotted_I[p][0]),
+                              ( cb_guinier->isChecked() &&
+                                cb_cs_guinier->isChecked() ? (double *)&(pI[ 0 ]) : (double *)&(plotted_I[p][0]) ),
                               q_points);
       plot_saxs->setCurvePen( plotted_Iq[ p ], QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
 #else
@@ -5919,7 +5960,9 @@ void US_Hydrodyn_Saxs::set_guinier()
                                       cb_guinier->isChecked() ?
                                       (double *)&(plotted_q2[p][0])  : (double *)&(plotted_q[p][0]), 
                                       cb_kratky ->isChecked() ?
-                                      (double *)&(q2I[0])            : (double *)&(plotted_I[p][0]),
+                                      (double *)&(q2I[0])            : // (double *)&(plotted_I[p][0]),
+                                      ( cb_guinier->isChecked() &&
+                                        cb_cs_guinier->isChecked() ? (double *)&(pI[ 0 ]) : (double *)&(plotted_I[p][0]) ),
                                       q_points
                                       );
       plotted_Iq_curves[ p ]->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
@@ -5936,46 +5979,89 @@ void US_Hydrodyn_Saxs::set_guinier()
    {
       if ( cb_guinier->isChecked() )
       {
-         // replot the guinier bits
-         if ( plotted_guinier_valid.count(i) &&
-              plotted_guinier_valid[i] == true )
+         if ( cb_cs_guinier->isChecked() )
          {
+            // replot the cs guinier bits
+            if ( plotted_cs_guinier_valid.count(i) &&
+                 plotted_cs_guinier_valid[i] == true )
+            {
 #ifndef QT4
-            plotted_Gp[i] = plot_saxs->insertCurve(QString("Guinier points %1").arg(i));
-            plot_saxs->setCurveStyle(plotted_Gp[i], QwtCurve::Lines);
-            plot_saxs->setCurveData(plotted_Gp[i], (double *)&(plotted_guinier_x[i][0]), (double *)&(plotted_guinier_y[i][0]), 2);
+               plotted_cs_Gp[i] = plot_saxs->insertCurve(QString("CS Guinier points %1").arg(i));
+               plot_saxs->setCurveStyle(plotted_cs_Gp[i], QwtCurve::Lines);
+               plot_saxs->setCurveData(plotted_cs_Gp[i], (double *)&(plotted_cs_guinier_x[i][0]), (double *)&(plotted_cs_guinier_y[i][0]), 2);
 
-            plot_saxs->setCurvePen(plotted_Gp[i], QPen("dark red", pen_width, SolidLine));
+               plot_saxs->setCurvePen(plotted_cs_Gp[i], QPen("dark red", pen_width, SolidLine));
 #else
-            plotted_Gp_curves[i] = new QwtPlotCurve(
-                  QString( "Guinier points %1" ).arg( i ) );
-            plotted_Gp_curves[i]->setStyle( QwtPlotCurve::Lines );
-            plotted_Gp_curves[i]->setData(
-                           (double *)&(plotted_guinier_x[i][0]), 
-                           (double *)&(plotted_guinier_y[i][0]), 
-                           2
-                           );
-            plotted_Gp_curves[i]->setPen( QPen( QColor( "dark red" ), pen_width, Qt::SolidLine ) );
-            plotted_Gp_curves[i]->attach( plot_saxs );
+               plotted_cs_Gp_curves[i] = new QwtPlotCurve(
+                                                          QString( "CS Guinier points %1" ).arg( i ) );
+               plotted_cs_Gp_curves[i]->setStyle( QwtPlotCurve::Lines );
+               plotted_cs_Gp_curves[i]->setData(
+                                                (double *)&(plotted_cs_guinier_x[i][0]), 
+                                                (double *)&(plotted_cs_guinier_y[i][0]), 
+                                                2
+                                                );
+               plotted_cs_Gp_curves[i]->setPen( QPen( QColor( "dark red" ), pen_width, Qt::SolidLine ) );
+               plotted_cs_Gp_curves[i]->attach( plot_saxs );
 #endif            
-            plotted_guinier_plotted[i] = true;
-         }
+               plotted_guinier_plotted[i] = true;
+            }
 
-         // turn regular iqq curves into points
+            // turn regular iqq curves into points
 
-         QwtSymbol sym;
-         sym.setStyle(QwtSymbol::Cross);
-         sym.setSize(12);
-         sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
-         sym.setBrush(Qt::white);
+            QwtSymbol sym;
+            sym.setStyle(QwtSymbol::Cross);
+            sym.setSize(12);
+            sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
+            sym.setBrush(Qt::white);
 #ifndef QT4
-         plot_saxs->setCurveStyle(plotted_Iq[i], QwtCurve::NoCurve);
-         plot_saxs->setCurveSymbol(plotted_Iq[i], QwtSymbol(sym));
+            plot_saxs->setCurveStyle(plotted_Iq[i], QwtCurve::NoCurve);
+            plot_saxs->setCurveSymbol(plotted_Iq[i], QwtSymbol(sym));
 #else
-         plotted_Iq_curves[i]->setStyle( QwtPlotCurve::NoCurve );
-         plotted_Iq_curves[i]->setSymbol( QwtSymbol( sym ) );
+            plotted_Iq_curves[i]->setStyle( QwtPlotCurve::NoCurve );
+            plotted_Iq_curves[i]->setSymbol( QwtSymbol( sym ) );
 #endif
          
+         } else {
+            // replot the guinier bits
+            if ( plotted_guinier_valid.count(i) &&
+                 plotted_guinier_valid[i] == true )
+            {
+#ifndef QT4
+               plotted_Gp[i] = plot_saxs->insertCurve(QString("Guinier points %1").arg(i));
+               plot_saxs->setCurveStyle(plotted_Gp[i], QwtCurve::Lines);
+               plot_saxs->setCurveData(plotted_Gp[i], (double *)&(plotted_guinier_x[i][0]), (double *)&(plotted_guinier_y[i][0]), 2);
+
+               plot_saxs->setCurvePen(plotted_Gp[i], QPen("dark red", pen_width, SolidLine));
+#else
+               plotted_Gp_curves[i] = new QwtPlotCurve(
+                                                       QString( "Guinier points %1" ).arg( i ) );
+               plotted_Gp_curves[i]->setStyle( QwtPlotCurve::Lines );
+               plotted_Gp_curves[i]->setData(
+                                             (double *)&(plotted_guinier_x[i][0]), 
+                                             (double *)&(plotted_guinier_y[i][0]), 
+                                             2
+                                             );
+               plotted_Gp_curves[i]->setPen( QPen( QColor( "dark red" ), pen_width, Qt::SolidLine ) );
+               plotted_Gp_curves[i]->attach( plot_saxs );
+#endif            
+               plotted_guinier_plotted[i] = true;
+            }
+
+            // turn regular iqq curves into points
+
+            QwtSymbol sym;
+            sym.setStyle(QwtSymbol::Cross);
+            sym.setSize(12);
+            sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
+            sym.setBrush(Qt::white);
+#ifndef QT4
+            plot_saxs->setCurveStyle(plotted_Iq[i], QwtCurve::NoCurve);
+            plot_saxs->setCurveSymbol(plotted_Iq[i], QwtSymbol(sym));
+#else
+            plotted_Iq_curves[i]->setStyle( QwtPlotCurve::NoCurve );
+            plotted_Iq_curves[i]->setSymbol( QwtSymbol( sym ) );
+#endif
+         }            
       } else {
          // remove any Guinier lines
          if ( plotted_guinier_plotted.count(i) &&
@@ -5986,6 +6072,17 @@ void US_Hydrodyn_Saxs::set_guinier()
             plot_saxs->removeCurve(plotted_Gp[i]);
 #else
             plotted_Gp_curves[i]->detach();
+#endif
+         }
+         
+         if ( plotted_cs_guinier_plotted.count(i) &&
+              plotted_cs_guinier_plotted[i] == true )
+         {
+            plotted_cs_guinier_plotted[i] = false;
+#ifndef QT4
+            plot_saxs->removeCurve(plotted_cs_Gp[i]);
+#else
+            plotted_cs_Gp_curves[i]->detach();
 #endif
          }
          
@@ -6013,13 +6110,24 @@ void US_Hydrodyn_Saxs::set_guinier()
          }
       }
 
+      vector < double > pI;
+      if ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() )
+      {
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+         {
+            pI.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
+         }
+      }
+
 #ifndef QT4
       plot_saxs->setCurveData(
                               plotted_Iq[i], 
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[i][0]) : (double *)&(plotted_q[i][0]), 
                               cb_kratky ->isChecked() ?
-                              (double *)&(q2I[0])           : (double *)&(plotted_I[i][0]),
+                              (double *)&(q2I[0])           : // (double *)&(plotted_I[i][0]),
+                              ( cb_guinier->isChecked() &&
+                                cb_cs_guinier->isChecked() ? (double *)&(pI[ 0 ]) : (double *)&(plotted_I[i][0]) ),
                               plotted_q[i].size()
                               );
 #else
@@ -6027,7 +6135,9 @@ void US_Hydrodyn_Saxs::set_guinier()
                                     cb_guinier->isChecked() ?
                                     (double *)&(plotted_q2[i][0]) : (double *)&(plotted_q[i][0]), 
                                     cb_kratky ->isChecked() ?
-                                    (double *)&(q2I[0])           : (double *)&(plotted_I[i][0]),
+                                    (double *)&(q2I[0])           : // (double *)&(plotted_I[i][0]),
+                                    ( cb_guinier->isChecked() &&
+                                      cb_cs_guinier->isChecked() ? (double *)&(pI[ 0 ]) : (double *)&(plotted_I[i][0]) ),
                                     plotted_q[i].size()
                                     );
 #endif
@@ -6038,18 +6148,20 @@ void US_Hydrodyn_Saxs::set_guinier()
                               tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
    plot_saxs->setAxisTitle  ( QwtPlot::yLeft,   
                               cb_kratky ->isChecked() ? 
-                              tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
+                              tr( " q^2 * I(q)"        ) : 
+                              ( cb_cs_guinier->isChecked() ?
+                                tr( "Log q*I(q)" ) : tr( "Log I(q)" ) )
+                                );
 #ifndef QT4
    plot_saxs->setAxisOptions( QwtPlot::yLeft, 
                               cb_kratky->isChecked()  ? 
                               QwtAutoScale::None         : QwtAutoScale::Logarithmic );
 #else
-      plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
-                                    cb_kratky->isChecked() ?
-                                    new QwtLog10ScaleEngine :  // fix this
-                                    new QwtLog10ScaleEngine);
+   plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
+                                 cb_kratky->isChecked() ?
+                                 new QwtLog10ScaleEngine :  // fix this
+                                 new QwtLog10ScaleEngine);
 #endif
-
    if ( plot_saxs_zoomer )
    {
       delete plot_saxs_zoomer;
@@ -6084,10 +6196,28 @@ void US_Hydrodyn_Saxs::clear_guinier()
       plotted_Gp_curves[g]->detach();
 #endif
    }
+
+   for ( unsigned int g = 0;
+#ifndef QT4
+         g < plotted_cs_Gp.size();
+#else
+         g < plotted_cs_Gp_curves.size();
+#endif
+         g++ )
+   {
+#ifndef QT4
+      plot_saxs->removeCurve(plotted_cs_Gp[g]);
+#else
+      plotted_cs_Gp_curves[g]->detach();
+#endif
+   }
+
 #ifndef QT4
    plotted_Gp.clear();
+   plotted_cs_Gp.clear();
 #else
    plotted_Gp_curves.clear();
+   plotted_cs_Gp_curves.clear();
 #endif
    plotted_guinier_valid.clear();
    plotted_guinier_lowq2.clear();
@@ -6096,6 +6226,13 @@ void US_Hydrodyn_Saxs::clear_guinier()
    plotted_guinier_b.clear();
    plotted_guinier_x.clear();
    plotted_guinier_y.clear();
+   plotted_cs_guinier_valid.clear();
+   plotted_cs_guinier_lowq2.clear();
+   plotted_cs_guinier_highq2.clear();
+   plotted_cs_guinier_a.clear();
+   plotted_cs_guinier_b.clear();
+   plotted_cs_guinier_x.clear();
+   plotted_cs_guinier_y.clear();
 }
 
 // sets lowq & highq based upon current, plot settings (could be q^2 if in guinier)
@@ -6236,34 +6373,71 @@ void US_Hydrodyn_Saxs::plot_range(
    // for each plot, 
    if ( cb_guinier->isChecked() )
    {
-      // for each plot
-      for ( unsigned int i = 0;
-#ifndef QT4
-            i < plotted_Iq.size();
-#else
-            i < plotted_Iq_curves.size();
-#endif
-            i++ )      
+      if ( cb_cs_guinier->isChecked() )
       {
-         // scan the q range
-         for ( unsigned int j = 0; j < plotted_q2[i].size(); j++ )
+         // for each plot
+         for ( unsigned int i = 0;
+#ifndef QT4
+               i < plotted_Iq.size();
+#else
+               i < plotted_Iq_curves.size();
+#endif
+               i++ )      
          {
-            if ( plotted_q2[i][j] >= lowq &&
-                 plotted_q2[i][j] <= highq )
+            // scan the q range
+            for ( unsigned int j = 0; j < plotted_q2[i].size(); j++ )
             {
-               if ( !any_plots )
+               if ( plotted_q2[i][j] >= lowq &&
+                    plotted_q2[i][j] <= highq )
                {
-                  lowI = plotted_I[i][j];
-                  highI = plotted_I[i][j];
-                  any_plots = true;
-               } else {
-                  if ( lowI > plotted_I[i][j] )
+                  if ( !any_plots )
+                  {
+                     lowI = plotted_q[i][j] * plotted_I[i][j];
+                     highI = plotted_q[i][j] * plotted_I[i][j];
+                     any_plots = true;
+                  } else {
+                     if ( lowI > plotted_q[i][j] * plotted_I[i][j] )
+                     {
+                        lowI = plotted_q[i][j] * plotted_I[i][j];
+                     }
+                     if ( highI < plotted_q[i][j] * plotted_I[i][j] )
+                     {
+                        highI = plotted_q[i][j] * plotted_I[i][j];
+                     }
+                  }
+               }
+            }
+         }
+      } else {
+         // for each plot
+         for ( unsigned int i = 0;
+#ifndef QT4
+               i < plotted_Iq.size();
+#else
+               i < plotted_Iq_curves.size();
+#endif
+               i++ )      
+         {
+            // scan the q range
+            for ( unsigned int j = 0; j < plotted_q2[i].size(); j++ )
+            {
+               if ( plotted_q2[i][j] >= lowq &&
+                    plotted_q2[i][j] <= highq )
+               {
+                  if ( !any_plots )
                   {
                      lowI = plotted_I[i][j];
-                  }
-                  if ( highI < plotted_I[i][j] )
-                  {
                      highI = plotted_I[i][j];
+                     any_plots = true;
+                  } else {
+                     if ( lowI > plotted_I[i][j] )
+                     {
+                        lowI = plotted_I[i][j];
+                     }
+                     if ( highI < plotted_I[i][j] )
+                     {
+                        highI = plotted_I[i][j];
+                     }
                   }
                }
             }
