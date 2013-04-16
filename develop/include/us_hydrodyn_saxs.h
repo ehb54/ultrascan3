@@ -315,10 +315,16 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       ScrollZoomer  *plot_pr_zoomer;
       QwtPlot       *plot_saxs;
       ScrollZoomer  *plot_saxs_zoomer;
+      QwtPlot       *plot_resid;
+      ScrollZoomer  *plot_resid_zoomer;
 #ifdef QT4
       QwtPlotGrid  *grid_pr;
       QwtPlotGrid  *grid_saxs;
+      QwtPlotGrid  *grid_resid;
 #endif
+      QCheckBox   *cb_resid_pct;
+      QCheckBox   *cb_resid_sd;
+      QCheckBox   *cb_resid_show;
 
       QProgressBar *progress_pr;
       QProgressBar *progress_saxs;
@@ -357,9 +363,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #ifndef QT4
       map    < unsigned int, long >                   plotted_Gp;  // guinier points
       map    < unsigned int, long >                   plotted_cs_Gp;  // cs guinier points
+      map    < unsigned int, long >                   plotted_Gp_full;  // guinier points
+      map    < unsigned int, long >                   plotted_cs_Gp_full;  // cs guinier points
 #else
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_curves;  // guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_cs_curves;  // cs guinier points
+      map    < unsigned int, QwtPlotCurve * >         plotted_Gp_curves_full;  // guinier points
+      map    < unsigned int, QwtPlotCurve * >         plotted_Gp_cs_curves_full;  // cs guinier points
 #endif
       map    < unsigned int, bool >                   plotted_guinier_valid;
       map    < unsigned int, bool >                   plotted_guinier_plotted;
@@ -427,6 +437,16 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       
 
    private:
+
+      void do_plot_resid();
+      void do_plot_resid( vector < double > & x, 
+                          vector < double > & y, 
+                          vector < double > & e, 
+                          QColor qc );
+
+      void do_plot_resid( vector < double > & x_d, 
+                          vector < double > & e_d, 
+                          QColor qc );
 
       void set_plot_pr_range( double &minx, 
                               double &maxx,
@@ -700,6 +720,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < QWidget * > iq_widgets;
       vector < QWidget * > pr_widgets;
       vector < QWidget * > settings_widgets;
+      vector < QWidget * > resid_widgets;
 
       void hide_widgets( vector < QWidget * >, bool do_hide = true );
 
@@ -707,7 +728,21 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
      #pragma warning ( default: 4251 )
 #endif      
 
+#ifdef WIN32
+     #pragma warning ( disable: 4251 )
+#endif      
+      map < QString, vector < point > >                                   hybrid_coords;
+      map < QString, map < unsigned int, map < unsigned int, double > > > hybrid_r;
+
+#ifdef WIN32
+     #pragma warning ( default: 4251 )
+#endif      
+
    private slots:
+
+      void set_resid_pct();
+      void set_resid_sd();
+      void set_resid_show();
 
       void hide_pr();
       void hide_iq();
@@ -750,17 +785,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
           double   q_o_4pi2 
           );
 
-#ifdef WIN32
-     #pragma warning ( disable: 4251 )
-#endif      
-      map < QString, vector < point > >                                   hybrid_coords;
-      map < QString, map < unsigned int, map < unsigned int, double > > > hybrid_r;
-
-#ifdef WIN32
-     #pragma warning ( default: 4251 )
-#endif      
       
       void fix_sas_options();
+
+      void clear_guinier();
+      void clear_cs_guinier();
 
    public slots:
       void show_plot_saxs_sans();
@@ -768,7 +797,6 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
    private slots:
 
-      void clear_guinier();
       void setupGUI();
       void set_saxs_sans(int);
       void set_saxs_iq(int);

@@ -110,8 +110,9 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
 
    pen_width = 1;
 
-   plot_pr_zoomer   = (ScrollZoomer *)0;
-   plot_saxs_zoomer = (ScrollZoomer *)0;
+   plot_pr_zoomer    = (ScrollZoomer *)0;
+   plot_saxs_zoomer  = (ScrollZoomer *)0;
+   plot_resid_zoomer = (ScrollZoomer *)0;
 
    saxs_residuals_widget = false;
 
@@ -1275,16 +1276,16 @@ void US_Hydrodyn_Saxs::setupGUI()
                               tr( "q*I(q) (log scale)" ) : tr( "I(q) (log scale)" ) )
                             );
 #ifndef QT4
-   plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+   plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
    plot_saxs->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_saxs->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 #ifndef QT4
-   plot_saxs->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+   plot_saxs->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 #endif
    plot_saxs->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 #ifndef QT4
-   plot_saxs->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+   plot_saxs->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 #endif
    plot_saxs->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_saxs->setMargin(USglobal->config_list.margin);
@@ -1343,16 +1344,16 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_pr->setAxisTitle(QwtPlot::xBottom, tr("Distance (Angstrom)"));
    plot_pr->setAxisTitle(QwtPlot::yLeft, tr("Frequency"));
 #ifndef QT4
-   plot_pr->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+   plot_pr->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
    plot_pr->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_pr->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 #ifndef QT4
-   plot_pr->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+   plot_pr->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 #endif
    plot_pr->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 #ifndef QT4
-   plot_pr->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+   plot_pr->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 #endif
    plot_pr->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_pr->setMargin(USglobal->config_list.margin);
@@ -1371,6 +1372,89 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect( plot_pr, SIGNAL( legendClicked( QwtPlotItem* ) ),
                 SLOT( plot_pr_item_clicked( QwtPlotItem* ) ) );
 #endif
+
+
+
+   plot_resid = new QwtPlot(this);
+#ifndef QT4
+   // plot_resid->enableOutline(true);
+   // plot_resid->setOutlinePen(Qt::white);
+   // plot_resid->setOutlineStyle(Qwt::VLine);
+   plot_resid->enableGridXMin();
+   plot_resid->enableGridYMin();
+#else
+   grid_errors = new QwtPlotGrid;
+   grid_errors->enableXMin( true );
+   grid_errors->enableYMin( true );
+#endif
+   plot_resid->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
+#ifndef QT4
+   plot_resid->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
+   plot_resid->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#else
+   grid_errors->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_errors->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_errors->attach( plot_resid );
+#endif
+   // plot_resid->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q (1/Angstrom) or Frame"));
+   // plot_resid->setAxisTitle(QwtPlot::yLeft, tr("I(q) (log scale)"));
+#ifndef QT4
+   // plot_resid->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
+   plot_resid->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+#endif
+   plot_resid->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   plot_resid->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+#endif
+   plot_resid->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   plot_resid->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+#endif
+   plot_resid->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_resid->setMargin(USglobal->config_list.margin);
+   plot_resid->setTitle("");
+   plot_resid->setCanvasBackground(USglobal->global_colors.plot);
+
+   plot_resid_zoomer = new ScrollZoomer(plot_resid->canvas());
+   plot_resid_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
+   plot_resid_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+   plot_resid->hide();
+   resid_widgets.push_back( plot_resid );
+
+   cb_resid_show = new QCheckBox(this);
+   cb_resid_show->setText(tr(" Show residuals "));
+   cb_resid_show->setEnabled(true);
+   cb_resid_show->setChecked( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_cb_resid_show" ) &&
+                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_show" ] == "1" );
+   cb_resid_show->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_resid_show->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_resid_show, SIGNAL(clicked()), SLOT(set_resid_show()));
+   resid_widgets.push_back( cb_resid_show );
+   cb_resid_show->hide();
+
+   cb_resid_pct = new QCheckBox(this);
+   cb_resid_pct->setText(tr(" By percent"));
+   cb_resid_pct->setEnabled(true);
+   cb_resid_pct->setChecked( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_cb_resid_pct" ) &&
+                             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_pct" ] == "1" );
+   cb_resid_pct->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_resid_pct->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_resid_pct, SIGNAL(clicked()), SLOT(set_resid_pct()));
+   resid_widgets.push_back( cb_resid_pct );
+   cb_resid_pct->hide();
+
+   cb_resid_sd = new QCheckBox(this);
+   cb_resid_sd->setText(tr(" Use standard deviations "));
+   cb_resid_sd->setEnabled(true);
+   cb_resid_sd->setChecked( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_cb_resid_sd" ) &&
+                            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_sd" ] == "1" );
+   cb_resid_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_resid_sd->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_resid_sd, SIGNAL(clicked()), SLOT(set_resid_sd()));
+   resid_widgets.push_back( cb_resid_sd );
+   cb_resid_sd->hide();
 
    progress_saxs = new QProgressBar(this, "SAXS Progress");
    progress_saxs->setMinimumHeight(minHeight1);
@@ -1619,10 +1703,21 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(pb_cancel, j, 1);
    // background->addWidget(lbl_core_progress, j, 2);
 
+   QHBoxLayout *hbl_plot_resid_buttons = new QHBoxLayout( 0 );
+   hbl_plot_resid_buttons->addWidget( cb_resid_show );
+   hbl_plot_resid_buttons->addWidget( cb_resid_sd );
+   hbl_plot_resid_buttons->addWidget( cb_resid_pct );
+
+   QBoxLayout * l_plot_resid = new QVBoxLayout( 0 );
+   l_plot_resid->addWidget( plot_resid );
+   l_plot_resid->addLayout( hbl_plot_resid_buttons );
+
    QVBoxLayout *vbl = new QVBoxLayout(0);
    vbl->addWidget(plot_saxs);
-   vbl->addSpacing(4);
+   // vbl->addSpacing(4);
    vbl->addWidget(plot_pr);
+   // vbl->addSpacing(4);
+   vbl->addLayout(l_plot_resid);
    vbl->addWidget(lbl_core_progress);
    background->addMultiCellLayout(vbl, 0, j, 2, 2);
 
@@ -5870,369 +5965,6 @@ void US_Hydrodyn_Saxs::set_user_range()
 void US_Hydrodyn_Saxs::set_cs_guinier()
 {
    set_guinier();
-}
-
-void US_Hydrodyn_Saxs::set_guinier()
-{
-   if ( rb_sans->isChecked() ) 
-   {
-      plot_saxs->setTitle((cb_guinier->isChecked() ? 
-                           ( cb_cs_guinier->isChecked() ?
-                             "CS Guinier " : "Guinier " )
-                           : "") + tr("SANS Curve"));
-   } else {
-      plot_saxs->setTitle((cb_guinier->isChecked() ? 
-                           ( cb_cs_guinier->isChecked() ?
-                             "CS Guinier " : "Guinier " )
-                           : "") + tr("SAXS Curve"));
-   }
-
-   if ( cb_guinier->isChecked() )
-   {
-      cb_user_range->setChecked(false);
-      cb_kratky    ->setChecked(false);
-   }
-
-   if ( cb_kratky->isChecked() )
-   {
-      if ( rb_sans->isChecked() ) 
-      {
-         plot_saxs->setTitle( "Kratky " + tr("SANS Curve"));
-      } else {
-         plot_saxs->setTitle( "Kratky " + tr("SAXS Curve"));
-      }
-   }      
-
-   rescale_plot();
-
-   // clear the plot and replot the curves in correct mode ( kratky or guniner or cs-guinier )
-   plot_saxs->clear();
-   for ( unsigned int p = 0;
-#ifndef QT4
-         p < plotted_Iq.size();
-#else
-         p < plotted_Iq_curves.size();
-#endif
-         p++ )
-   {
-      unsigned int q_points = plotted_q[ p ].size();
-      
-      vector < double > q2I;
-      if ( cb_kratky->isChecked() )
-      {
-         for ( unsigned int i = 0; i < plotted_q[ p ].size(); i++ )
-         {
-            q2I.push_back( plotted_q2[ p ][ i ] * plotted_I[ p ][ i ] );
-         }
-      }
-
-      vector < double > pI;
-      if ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() )
-      {
-         for ( unsigned int i = 0; i < plotted_q[ p ].size(); i++ )
-         {
-            pI.push_back( plotted_q[ p ][ i ] * plotted_I[ p ][ i ] );
-         }
-      }
-
-#ifndef QT4
-      long Iq = plot_saxs->insertCurve( qsl_plotted_iq_names[ p ] );
-      plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
-      plotted_Iq[ p ] = Iq;
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( qsl_plotted_iq_names[ p ] );
-      curve->setStyle( QwtPlotCurve::Lines );
-      plotted_Iq_curves[ p ] = curve;
-#endif
-      
-#ifndef QT4
-      plot_saxs->setCurveData(plotted_Iq[ p ],
-                              cb_guinier->isChecked() ?
-                              (double *)&(plotted_q2[p][0])  : (double *)&(plotted_q[p][0]), 
-                              cb_kratky ->isChecked() ?
-                              (double *)&(q2I[0])            : // (double *)&(plotted_I[p][0]),
-                              ( cb_guinier->isChecked() &&
-                                cb_cs_guinier->isChecked() ? (double *)&(pI[ 0 ]) : (double *)&(plotted_I[p][0]) ),
-                              q_points);
-      plot_saxs->setCurvePen( plotted_Iq[ p ], QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
-#else
-      plotted_Iq_curves[ p ]->setData(
-                                      cb_guinier->isChecked() ?
-                                      (double *)&(plotted_q2[p][0])  : (double *)&(plotted_q[p][0]), 
-                                      cb_kratky ->isChecked() ?
-                                      (double *)&(q2I[0])            : // (double *)&(plotted_I[p][0]),
-                                      ( cb_guinier->isChecked() &&
-                                        cb_cs_guinier->isChecked() ? (double *)&(pI[ 0 ]) : (double *)&(plotted_I[p][0]) ),
-                                      q_points
-                                      );
-      plotted_Iq_curves[ p ]->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
-      plotted_Iq_curves[ p ]->attach( plot_saxs );
-#endif
-   }
-
-#ifndef QT4
-   int niqsize = (int)plotted_Iq.size();
-#else
-   int niqsize = (int)plotted_Iq_curves.size();
-#endif
-   for ( int i = 0; i < niqsize; i++ )
-   {
-      if ( cb_guinier->isChecked() )
-      {
-         if ( cb_cs_guinier->isChecked() )
-         {
-            // replot the cs guinier bits
-            if ( plotted_cs_guinier_valid.count(i) &&
-                 plotted_cs_guinier_valid[i] == true )
-            {
-#ifndef QT4
-               plotted_cs_Gp[i] = plot_saxs->insertCurve(QString("CS Guinier points %1").arg(i));
-               plot_saxs->setCurveStyle(plotted_cs_Gp[i], QwtCurve::Lines);
-               plot_saxs->setCurveData(plotted_cs_Gp[i], (double *)&(plotted_cs_guinier_x[i][0]), (double *)&(plotted_cs_guinier_y[i][0]), 2);
-
-               plot_saxs->setCurvePen(plotted_cs_Gp[i], QPen("dark red", pen_width, SolidLine));
-#else
-               plotted_cs_Gp_curves[i] = new QwtPlotCurve(
-                                                          QString( "CS Guinier points %1" ).arg( i ) );
-               plotted_cs_Gp_curves[i]->setStyle( QwtPlotCurve::Lines );
-               plotted_cs_Gp_curves[i]->setData(
-                                                (double *)&(plotted_cs_guinier_x[i][0]), 
-                                                (double *)&(plotted_cs_guinier_y[i][0]), 
-                                                2
-                                                );
-               plotted_cs_Gp_curves[i]->setPen( QPen( QColor( "dark red" ), pen_width, Qt::SolidLine ) );
-               plotted_cs_Gp_curves[i]->attach( plot_saxs );
-#endif            
-               plotted_guinier_plotted[i] = true;
-            }
-
-            // turn regular iqq curves into points
-
-            QwtSymbol sym;
-            sym.setStyle(QwtSymbol::Cross);
-            sym.setSize(12);
-            sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
-            sym.setBrush(Qt::white);
-#ifndef QT4
-            plot_saxs->setCurveStyle(plotted_Iq[i], QwtCurve::NoCurve);
-            plot_saxs->setCurveSymbol(plotted_Iq[i], QwtSymbol(sym));
-#else
-            plotted_Iq_curves[i]->setStyle( QwtPlotCurve::NoCurve );
-            plotted_Iq_curves[i]->setSymbol( QwtSymbol( sym ) );
-#endif
-         
-         } else {
-            // replot the guinier bits
-            if ( plotted_guinier_valid.count(i) &&
-                 plotted_guinier_valid[i] == true )
-            {
-#ifndef QT4
-               plotted_Gp[i] = plot_saxs->insertCurve(QString("Guinier points %1").arg(i));
-               plot_saxs->setCurveStyle(plotted_Gp[i], QwtCurve::Lines);
-               plot_saxs->setCurveData(plotted_Gp[i], (double *)&(plotted_guinier_x[i][0]), (double *)&(plotted_guinier_y[i][0]), 2);
-
-               plot_saxs->setCurvePen(plotted_Gp[i], QPen("dark red", pen_width, SolidLine));
-#else
-               plotted_Gp_curves[i] = new QwtPlotCurve(
-                                                       QString( "Guinier points %1" ).arg( i ) );
-               plotted_Gp_curves[i]->setStyle( QwtPlotCurve::Lines );
-               plotted_Gp_curves[i]->setData(
-                                             (double *)&(plotted_guinier_x[i][0]), 
-                                             (double *)&(plotted_guinier_y[i][0]), 
-                                             2
-                                             );
-               plotted_Gp_curves[i]->setPen( QPen( QColor( "dark red" ), pen_width, Qt::SolidLine ) );
-               plotted_Gp_curves[i]->attach( plot_saxs );
-#endif            
-               plotted_guinier_plotted[i] = true;
-            }
-
-            // turn regular iqq curves into points
-
-            QwtSymbol sym;
-            sym.setStyle(QwtSymbol::Cross);
-            sym.setSize(12);
-            sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
-            sym.setBrush(Qt::white);
-#ifndef QT4
-            plot_saxs->setCurveStyle(plotted_Iq[i], QwtCurve::NoCurve);
-            plot_saxs->setCurveSymbol(plotted_Iq[i], QwtSymbol(sym));
-#else
-            plotted_Iq_curves[i]->setStyle( QwtPlotCurve::NoCurve );
-            plotted_Iq_curves[i]->setSymbol( QwtSymbol( sym ) );
-#endif
-         }            
-      } else {
-         // remove any Guinier lines
-         if ( plotted_guinier_plotted.count(i) &&
-              plotted_guinier_plotted[i] == true )
-         {
-            plotted_guinier_plotted[i] = false;
-#ifndef QT4
-            plot_saxs->removeCurve(plotted_Gp[i]);
-#else
-            plotted_Gp_curves[i]->detach();
-#endif
-         }
-         
-         if ( plotted_cs_guinier_plotted.count(i) &&
-              plotted_cs_guinier_plotted[i] == true )
-         {
-            plotted_cs_guinier_plotted[i] = false;
-#ifndef QT4
-            plot_saxs->removeCurve(plotted_cs_Gp[i]);
-#else
-            plotted_cs_Gp_curves[i]->detach();
-#endif
-         }
-         
-         // remove the symbols & redraw the line
-         QwtSymbol sym;
-#ifndef QT4
-         sym.setStyle(QwtSymbol::None);
-         plot_saxs->setCurveSymbol(plotted_Iq[i], sym);
-         plot_saxs->setCurveStyle(plotted_Iq[i], QwtCurve::Lines);
-         plot_saxs->setCurvePen(plotted_Iq[i], QPen(plot_colors[i % plot_colors.size()], pen_width, SolidLine));
-#else
-         sym.setStyle(QwtSymbol::NoSymbol);
-         plotted_Iq_curves[i]->setSymbol( QwtSymbol( sym ) );
-         plotted_Iq_curves[i]->setStyle( QwtPlotCurve::Lines );
-         plotted_Iq_curves[i]->setPen( QPen( plot_colors[ i % plot_colors.size() ], pen_width, Qt::SolidLine ) );
-#endif
-      }
-
-      vector < double > q2I;
-      if ( cb_kratky->isChecked() )
-      {
-         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
-         {
-            q2I.push_back( plotted_q2[ i ][ j ] * plotted_I[ i ][ j ] );
-         }
-      }
-
-      vector < double > pI;
-      if ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() )
-      {
-         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
-         {
-            pI.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
-         }
-      }
-
-#ifndef QT4
-      plot_saxs->setCurveData(
-                              plotted_Iq[i], 
-                              cb_guinier->isChecked() ?
-                              (double *)&(plotted_q2[i][0]) : (double *)&(plotted_q[i][0]), 
-                              cb_kratky ->isChecked() ?
-                              (double *)&(q2I[0])           : // (double *)&(plotted_I[i][0]),
-                              ( cb_guinier->isChecked() &&
-                                cb_cs_guinier->isChecked() ? (double *)&(pI[ 0 ]) : (double *)&(plotted_I[i][0]) ),
-                              plotted_q[i].size()
-                              );
-#else
-      plotted_Iq_curves[i]->setData(
-                                    cb_guinier->isChecked() ?
-                                    (double *)&(plotted_q2[i][0]) : (double *)&(plotted_q[i][0]), 
-                                    cb_kratky ->isChecked() ?
-                                    (double *)&(q2I[0])           : // (double *)&(plotted_I[i][0]),
-                                    ( cb_guinier->isChecked() &&
-                                      cb_cs_guinier->isChecked() ? (double *)&(pI[ 0 ]) : (double *)&(plotted_I[i][0]) ),
-                                    plotted_q[i].size()
-                                    );
-#endif
-   }
-
-   plot_saxs->setAxisTitle  ( QwtPlot::xBottom, 
-                              cb_guinier->isChecked() ? 
-                              tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
-   plot_saxs->setAxisTitle  ( QwtPlot::yLeft,   
-                              cb_kratky ->isChecked() ? 
-                              tr( " q^2 * I(q)"        ) : 
-                              ( cb_cs_guinier->isChecked() ?
-                                tr( "q*I(q) (log scale)" ) : tr( "I(q) (log scale)" ) )
-                                );
-#ifndef QT4
-   plot_saxs->setAxisOptions( QwtPlot::yLeft, 
-                              cb_kratky->isChecked()  ? 
-                              QwtAutoScale::None         : QwtAutoScale::Logarithmic );
-#else
-   plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
-                                 cb_kratky->isChecked() ?
-                                 new QwtLog10ScaleEngine :  // fix this
-                                 new QwtLog10ScaleEngine);
-#endif
-   if ( plot_saxs_zoomer )
-   {
-      delete plot_saxs_zoomer;
-   }
-   plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
-#ifndef QT4
-   plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-   plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#else
-   plot_saxs_zoomer->setRubberBandPen( QPen( Qt::red, 1, Qt::DotLine ) );
-   plot_saxs_zoomer->setTrackerPen( QPen( Qt::red ) );
-#endif
-
-   plot_saxs->replot();
-}
-
-void US_Hydrodyn_Saxs::clear_guinier()
-{
-   // remove any existing Guinier curves
-
-   for ( unsigned int g = 0;
-#ifndef QT4
-         g < plotted_Gp.size();
-#else
-         g < plotted_Gp_curves.size();
-#endif
-         g++ )
-   {
-#ifndef QT4
-      plot_saxs->removeCurve(plotted_Gp[g]);
-#else
-      plotted_Gp_curves[g]->detach();
-#endif
-   }
-
-   for ( unsigned int g = 0;
-#ifndef QT4
-         g < plotted_cs_Gp.size();
-#else
-         g < plotted_cs_Gp_curves.size();
-#endif
-         g++ )
-   {
-#ifndef QT4
-      plot_saxs->removeCurve(plotted_cs_Gp[g]);
-#else
-      plotted_cs_Gp_curves[g]->detach();
-#endif
-   }
-
-#ifndef QT4
-   plotted_Gp.clear();
-   plotted_cs_Gp.clear();
-#else
-   plotted_Gp_curves.clear();
-   plotted_cs_Gp_curves.clear();
-#endif
-   plotted_guinier_valid.clear();
-   plotted_guinier_lowq2.clear();
-   plotted_guinier_highq2.clear();
-   plotted_guinier_a.clear();
-   plotted_guinier_b.clear();
-   plotted_guinier_x.clear();
-   plotted_guinier_y.clear();
-   plotted_cs_guinier_valid.clear();
-   plotted_cs_guinier_lowq2.clear();
-   plotted_cs_guinier_highq2.clear();
-   plotted_cs_guinier_a.clear();
-   plotted_cs_guinier_b.clear();
-   plotted_cs_guinier_x.clear();
-   plotted_cs_guinier_y.clear();
 }
 
 // sets lowq & highq based upon current, plot settings (could be q^2 if in guinier)
