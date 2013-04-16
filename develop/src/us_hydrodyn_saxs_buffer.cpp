@@ -648,7 +648,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    grid_saxs->attach( plot_dist );
 #endif
    plot_dist->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q (1/Angstrom)"));
-   plot_dist->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)"));
+   plot_dist->setAxisTitle(QwtPlot::yLeft, tr("I(q) (log scale)"));
 #ifndef QT4
    plot_dist->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_dist->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -5922,7 +5922,7 @@ void US_Hydrodyn_Saxs_Buffer::axis_y()
 
    if ( axis_y_log )
    {
-      plot_dist->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)") );
+      plot_dist->setAxisTitle(QwtPlot::yLeft, tr("I(q) (log scale)") );
 #ifndef QT4
       plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 #else
@@ -5945,7 +5945,7 @@ void US_Hydrodyn_Saxs_Buffer::axis_x()
    axis_x_log = !axis_x_log;
    if ( axis_x_log )
    {
-      plot_dist->setAxisTitle(QwtPlot::xBottom,  tr("Log10 q (1/Angstrom)") );
+      plot_dist->setAxisTitle(QwtPlot::xBottom,  tr("q (1/Angstrom) (log scale)") );
 #ifndef QT4
       plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
 #else

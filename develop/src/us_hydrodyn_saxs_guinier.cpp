@@ -82,6 +82,7 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
    {
       cs_guinier_analysis(i, csvlog);
    }
+   cb_guinier->setChecked(true);
    cb_cs_guinier->setChecked(true);
    set_guinier();
 
@@ -163,6 +164,7 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
    }
    editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
    cb_guinier->setChecked(true);
+   cb_cs_guinier->setChecked(false);
    set_guinier();
 
    if ( our_saxs_options->guinier_csv )
@@ -454,6 +456,17 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_lowq2[i]));
          plotted_guinier_y[i].push_back(exp(plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_guinier_highq2[i]));
 
+         /*
+         cout << QString( "guinier line range q %1 %2 q^2 %3 %4 a %5 b %6\n" )
+            .arg( smin  )
+            .arg( smax )
+            .arg( plotted_guinier_lowq2[i] )
+            .arg( plotted_guinier_highq2[i] )
+            .arg( a )
+            .arg( b )
+            ;
+         */
+            
          csvlog += 
             QString(
                     "\"%1\","
@@ -773,6 +786,17 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          plotted_cs_guinier_y[i].clear();
          plotted_cs_guinier_y[i].push_back(exp(plotted_cs_guinier_a[i] + plotted_cs_guinier_b[i] * plotted_cs_guinier_lowq2[i]));
          plotted_cs_guinier_y[i].push_back(exp(plotted_cs_guinier_a[i] + plotted_cs_guinier_b[i] * plotted_cs_guinier_highq2[i]));
+
+         /*
+         cout << QString( "cs guinier line range q %1 %2 q^2 %3 %4 a %5 b %6\n" )
+            .arg( smin  )
+            .arg( smax )
+            .arg( plotted_cs_guinier_lowq2[i] )
+            .arg( plotted_cs_guinier_highq2[i] )
+            .arg( a )
+            .arg( b )
+            ;
+         */ 
 
          csvlog += 
             QString(

@@ -1272,7 +1272,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setAxisTitle( QwtPlot::xBottom, cb_guinier->isChecked() ? tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
    plot_saxs->setAxisTitle( QwtPlot::yLeft,   cb_kratky ->isChecked() ? tr( " q^2 * I(q)"        ) : 
                             ( cb_cs_guinier->isChecked() ?
-                              tr( "Log q*I(q)" ) : tr( "Log I(q)" ) )
+                              tr( "q*I(q) (log scale)" ) : tr( "I(q) (log scale)" ) )
                             );
 #ifndef QT4
    plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
@@ -5850,7 +5850,7 @@ void US_Hydrodyn_Saxs::set_user_range()
                                  cb_kratky ->isChecked() ?
                                  tr( " q^2 * I(q)"        ) : 
                                  ( cb_cs_guinier->isChecked() ?                                 
-                                   tr( "Log q*I(q)" ) : tr( "Log I(q)" ) )
+                                   tr( "q*I(q) (log scale)" ) : tr( "I(q) (log scale)" ) )
                                  );
 #ifndef QT4
       plot_saxs->setAxisOptions( QwtPlot::yLeft, 
@@ -6150,7 +6150,7 @@ void US_Hydrodyn_Saxs::set_guinier()
                               cb_kratky ->isChecked() ? 
                               tr( " q^2 * I(q)"        ) : 
                               ( cb_cs_guinier->isChecked() ?
-                                tr( "Log q*I(q)" ) : tr( "Log I(q)" ) )
+                                tr( "q*I(q) (log scale)" ) : tr( "I(q) (log scale)" ) )
                                 );
 #ifndef QT4
    plot_saxs->setAxisOptions( QwtPlot::yLeft, 
@@ -6247,58 +6247,112 @@ void US_Hydrodyn_Saxs::plot_domain(
 
       double lowq2 = 1e-4;
       double highq2 = 1e-1;
-
-      // first compute available guinier range
-      // this could be calculated once upon adding curves
-
+      
       bool any_guinier = false;
 
-      for ( unsigned int i = 0; 
-#ifndef QT4
-            i < plotted_Iq.size();
-#else
-            i < plotted_Iq_curves.size();
-#endif
-            i++ )
+      if ( cb_cs_guinier->isChecked() )
       {
-         if ( plotted_guinier_valid.count(i) &&
-              plotted_guinier_valid[i] == true )
+
+         // first compute available guinier range
+         // this could be calculated once upon adding curves
+
+         for ( unsigned int i = 0; 
+#ifndef QT4
+               i < plotted_Iq.size();
+#else
+               i < plotted_Iq_curves.size();
+#endif
+               i++ )
          {
-            if ( !any_guinier )
+            if ( plotted_cs_guinier_valid.count(i) &&
+                 plotted_cs_guinier_valid[i] == true )
             {
-               lowq2 = plotted_guinier_lowq2[i];
-               highq2 = plotted_guinier_highq2[i];
-               any_guinier = true;
-            } else {
-               if ( lowq2 > plotted_guinier_lowq2[i] )
+               if ( !any_guinier )
+               {
+                  lowq2 = plotted_cs_guinier_lowq2[i];
+                  highq2 = plotted_cs_guinier_highq2[i];
+                  any_guinier = true;
+               } else {
+                  if ( lowq2 > plotted_cs_guinier_lowq2[i] )
+                  {
+                     lowq2 = plotted_cs_guinier_lowq2[i];
+                  }
+                  if ( highq2 < plotted_cs_guinier_highq2[i] )
+                  {
+                     highq2 = plotted_cs_guinier_highq2[i];
+                  }
+               }
+            }
+            if ( any_guinier )
+            {
+               lowq2 *= .75;
+               highq2 *= 1.2;
+            }
+      
+            // override with user settings
+
+            lowq = 
+               le_guinier_lowq2->text().toDouble() ?
+               le_guinier_lowq2->text().toDouble() :
+               lowq2;
+
+            highq = 
+               le_guinier_highq2->text().toDouble() ?
+               le_guinier_highq2->text().toDouble() :
+               highq2;
+            // cout << "guinier domain " << lowq << ":" << highq << endl;
+         }
+      } else {
+         // first compute available guinier range
+         // this could be calculated once upon adding curves
+
+         for ( unsigned int i = 0; 
+#ifndef QT4
+               i < plotted_Iq.size();
+#else
+               i < plotted_Iq_curves.size();
+#endif
+               i++ )
+         {
+            if ( plotted_guinier_valid.count(i) &&
+                 plotted_guinier_valid[i] == true )
+            {
+               if ( !any_guinier )
                {
                   lowq2 = plotted_guinier_lowq2[i];
-               }
-               if ( highq2 < plotted_guinier_highq2[i] )
-               {
                   highq2 = plotted_guinier_highq2[i];
+                  any_guinier = true;
+               } else {
+                  if ( lowq2 > plotted_guinier_lowq2[i] )
+                  {
+                     lowq2 = plotted_guinier_lowq2[i];
+                  }
+                  if ( highq2 < plotted_guinier_highq2[i] )
+                  {
+                     highq2 = plotted_guinier_highq2[i];
+                  }
                }
             }
          }
-      }
-      if ( any_guinier )
-      {
-         lowq2 *= .75;
-         highq2 *= 1.2;
-      }
+         if ( any_guinier )
+         {
+            lowq2 *= .75;
+            highq2 *= 1.2;
+         }
       
-      // override with user settings
+         // override with user settings
 
-      lowq = 
-         le_guinier_lowq2->text().toDouble() ?
-         le_guinier_lowq2->text().toDouble() :
-         lowq2;
+         lowq = 
+            le_guinier_lowq2->text().toDouble() ?
+            le_guinier_lowq2->text().toDouble() :
+            lowq2;
 
-      highq = 
-         le_guinier_highq2->text().toDouble() ?
-         le_guinier_highq2->text().toDouble() :
-         highq2;
-      // cout << "guinier domain " << lowq << ":" << highq << endl;
+         highq = 
+            le_guinier_highq2->text().toDouble() ?
+            le_guinier_highq2->text().toDouble() :
+            highq2;
+         // cout << "guinier domain " << lowq << ":" << highq << endl;
+      }
       return;
    }
 
