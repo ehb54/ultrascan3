@@ -1171,9 +1171,9 @@ void US_Hydrodyn_Saxs::do_plot_resid()
 
       if ( cb_resid_pct->isChecked() )
       {
-         if ( maxabse < 2e0 )
+         if ( maxabse < 5e-1 )
          {
-            maxabse = 2e0;
+            maxabse = 5e-1;
          }
          if ( maxabse > 10e0 )
          {
