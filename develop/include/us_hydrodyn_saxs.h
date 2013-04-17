@@ -373,12 +373,14 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map    < unsigned int, long >                   plotted_Gp_full;  // guinier points
       map    < unsigned int, long >                   plotted_cs_Gp_full;  // cs guinier points
       vector < long >                                 plotted_manual_guinier_fit;
+      vector < long >                                 plotted_guinier_error_bars;
 #else
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_curves;  // guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_cs_curves;  // cs guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_curves_full;  // guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_cs_curves_full;  // cs guinier points
       vector < QwtPlotCurve * >                       plotted_manual_guinier_fit;
+      vector < QwtPlotCurve * >                       plotted_guinier_error_bars; 
 #endif
       map    < unsigned int, bool >                   plotted_guinier_valid;
       map    < unsigned int, bool >                   plotted_guinier_plotted;
@@ -446,6 +448,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       
 
    private:
+
+      void plot_guinier_error_bars( int i, bool cs = false );
+      void clear_guinier_error_bars();
 
       void do_plot_resid();
       void do_plot_resid( vector < double > & x, 

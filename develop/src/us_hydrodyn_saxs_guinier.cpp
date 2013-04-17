@@ -1013,12 +1013,14 @@ void US_Hydrodyn_Saxs::set_guinier()
 #else
    int niqsize = (int)plotted_Iq_curves.size();
 #endif
+   clear_guinier_error_bars();
    for ( int i = 0; i < niqsize; i++ )
    {
       if ( cb_guinier->isChecked() )
       {
          if ( cb_cs_guinier->isChecked() )
          {
+            plot_guinier_error_bars( i, true );
             // replot the cs guinier bits
             if ( plotted_cs_guinier_valid.count(i) &&
                  plotted_cs_guinier_valid[i] == true )
@@ -1090,6 +1092,7 @@ void US_Hydrodyn_Saxs::set_guinier()
          
          } else {
             // replot the guinier bits
+            plot_guinier_error_bars( i, false );
             if ( plotted_guinier_valid.count(i) &&
                  plotted_guinier_valid[i] == true )
             {
@@ -1423,4 +1426,99 @@ void US_Hydrodyn_Saxs::manual_guinier_fit_end_focus( bool hasFocus )
       qwtw_wheel->setValue( le_manual_guinier_fit_end->text().toDouble() );
       qwtw_wheel->setEnabled( true );
    }
+}
+
+void US_Hydrodyn_Saxs::plot_guinier_error_bars( int i, bool cs )
+{
+   // take the curve and if sd's exist, plot a little line
+   if ( plotted_I[ i ].size() != plotted_I_error[ i ].size() )
+   {
+      return;
+   }
+
+   vector < double > x(2);
+   vector < double > y(2);
+
+   double I;
+   double e;
+      
+   if ( cs )
+   {
+      for ( int q = 0; q < ( int ) plotted_q[ i ].size(); ++q )
+      {
+         e = plotted_q[ i ][ q ] * plotted_I_error[ i ][ q ];
+         if ( e )
+         {
+            x[ 0 ] = x[ 1 ] = plotted_q2[ i ][ q ];
+            I = plotted_q[ i ][ q ] * plotted_I[ i ][ q ];
+            y[ 0 ] = I - e;
+            y[ 1 ] = I + e;
+
+#ifndef QT4
+            plotted_guinier_error_bars.push_back( plot_saxs->insertCurve( qsl_plotted_iq_names[ i ] ) );
+            plot_saxs->setCurveStyle( plotted_guinier_error_bars.back(), QwtCurve::Lines);
+            plot_saxs->setCurveData( plotted_guinier_error_bars.back(),
+                                     (double *)&(x[0]),
+                                     (double *)&(y[0]),
+                                     2 );
+            plot_saxs->setCurvePen( plotted_guinier_error_bars.back(), QPen(plot_colors[i % plot_colors.size()], pen_width, SolidLine));
+#else
+            plotted_guinier_error_bars.push_back( new QwtPlotCurve( qsl_plotted_iq_names[ i ] ) );
+            plotted_guinier_error_bars.back()->setStyle( QwtPlotCurve::Lines );
+            plotted_guinier_error_bars.back()->setData(
+                                                       (double *)&(x[0]),
+                                                       (double *)&(y[0]),
+                                                       2 );
+            plotted_guinier_error_bars.back()->setPen( QPen( plot_colors[ i % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+            plotted_guinier_error_bars.back()->attach( plot_saxs );
+#endif
+         }
+      }
+   } else {
+      for ( int q = 0; q < ( int ) plotted_q[ i ].size(); ++q )
+      {
+         e = plotted_I_error[ i ][ q ];
+         if ( e )
+         {
+            I = plotted_I[ i ][ q ];
+            x[ 0 ] = x[ 1 ] = plotted_q2[ i ][ q ];
+            y[ 0 ] = I - e;
+            y[ 1 ] = I + e;
+
+#ifndef QT4
+            plotted_guinier_error_bars.push_back( plot_saxs->insertCurve( qsl_plotted_iq_names[ i ] ) );
+            plot_saxs->setCurveStyle( plotted_guinier_error_bars.back(), QwtCurve::Lines);
+            plot_saxs->setCurveData( plotted_guinier_error_bars.back(),
+                                     (double *)&(x[0]),
+                                     (double *)&(y[0]),
+                                     2 );
+            plot_saxs->setCurvePen( plotted_guinier_error_bars.back(), QPen(plot_colors[i % plot_colors.size()], pen_width, SolidLine));
+#else
+            plotted_guinier_error_bars.push_back( new QwtPlotCurve( qsl_plotted_iq_names[ i ] ) );
+            plotted_guinier_error_bars.back()->setStyle( QwtPlotCurve::Lines );
+            plotted_guinier_error_bars.back()->setData(
+                                                       (double *)&(x[0]),
+                                                       (double *)&(y[0]),
+                                                       2 );
+            plotted_guinier_error_bars.back()->setPen( QPen( plot_colors[ i % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+            plotted_guinier_error_bars.back()->attach( plot_saxs );
+#endif
+         }
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs::clear_guinier_error_bars()
+{
+   for ( unsigned int g = 0;
+         g < plotted_guinier_error_bars.size();
+         g++ )
+   {
+#ifndef QT4
+      plot_saxs->removeCurve(plotted_guinier_error_bars[g]);
+#else
+      plotted_guinier_error_bars[g]->detach();
+#endif
+   }
+   plotted_guinier_error_bars.clear();
 }
