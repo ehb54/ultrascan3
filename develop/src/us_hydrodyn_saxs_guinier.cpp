@@ -1542,3 +1542,7 @@ void US_Hydrodyn_Saxs::clear_guinier_error_bars()
    }
    plotted_guinier_error_bars.clear();
 }
+
+void US_Hydrodyn_Saxs::manual_guinier_process()
+{
+}

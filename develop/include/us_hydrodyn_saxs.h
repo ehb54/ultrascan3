@@ -755,6 +755,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
    private slots:
 
+      void manual_guinier_process();
       void set_manual_guinier();
       void adjust_wheel( double );
       void manual_guinier_fit_start_text ( const QString & );
