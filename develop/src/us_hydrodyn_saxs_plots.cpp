@@ -809,11 +809,10 @@ QString US_Hydrodyn_Saxs::Iq_plotted_summary()
 
 void US_Hydrodyn_Saxs::do_plot_resid()
 {
-   cout << "do_replot_resid\n";
-      
    if ( !cb_guinier->isChecked() )
    {
-      plot_resid->hide();
+      hide_widgets( resid_widgets );
+      hide_widgets( manual_guinier_widgets );
       return;
    }
 
@@ -1231,8 +1230,18 @@ void US_Hydrodyn_Saxs::do_plot_resid()
 
       plot_resid->replot();
       set_resid_show();
+      if ( started_in_expert_mode &&
+           plotted_q.size() == 1 )
+      {
+         cb_manual_guinier->show();
+         set_manual_guinier();
+      } else {
+         hide_widgets( manual_guinier_widgets );
+         cb_manual_guinier->hide();
+      }
    } else {
       hide_widgets( resid_widgets );
+      hide_widgets( manual_guinier_widgets );
    }
 }
 
@@ -1260,14 +1269,35 @@ void US_Hydrodyn_Saxs::set_resid_sd()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_sd" ] = cb_resid_sd->isChecked() ? "1" : "0"; 
 }
 
+void US_Hydrodyn_Saxs::set_manual_guinier()
+{
+   if ( cb_manual_guinier->isChecked() )
+   {
+      hide_widgets( manual_guinier_widgets, false );
+   } else {
+      hide_widgets( manual_guinier_widgets );
+   }
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_manual_guinier" ] = cb_resid_sd->isChecked() ? "1" : "0"; 
+}
+
 void US_Hydrodyn_Saxs::set_resid_show()
 {
    if ( cb_resid_show->isChecked() )
    {
       hide_widgets( resid_widgets, false );
+      if ( !started_in_expert_mode ||
+           plotted_q.size() != 1 )
+      {
+         cb_manual_guinier->hide();
+      }
    } else {
       hide_widgets( resid_widgets );
       cb_resid_show->show();
+      if ( started_in_expert_mode &&
+           plotted_q.size() == 1 )
+      {
+         cb_manual_guinier->show();
+      }
    }
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_show" ] = cb_resid_show->isChecked() ? "1" : "0";
 }

@@ -1434,6 +1434,17 @@ void US_Hydrodyn_Saxs::setupGUI()
    resid_widgets.push_back( cb_resid_show );
    cb_resid_show->hide();
 
+   cb_manual_guinier = new QCheckBox(this);
+   cb_manual_guinier->setText(tr(" Manual Guinier "));
+   cb_manual_guinier->setEnabled(true);
+   cb_manual_guinier->setChecked( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_cb_manual_guinier" ) &&
+                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_manual_guinier" ] == "1" );
+   cb_manual_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_manual_guinier->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_manual_guinier, SIGNAL(clicked()), SLOT(set_manual_guinier()));
+   resid_widgets.push_back( cb_manual_guinier );
+   cb_manual_guinier->hide();
+
    cb_resid_pct = new QCheckBox(this);
    cb_resid_pct->setText(tr(" By percent"));
    cb_resid_pct->setEnabled(true);
@@ -1455,6 +1466,49 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(cb_resid_sd, SIGNAL(clicked()), SLOT(set_resid_sd()));
    resid_widgets.push_back( cb_resid_sd );
    cb_resid_sd->hide();
+
+   le_manual_guinier_fit_start = new mQLineEdit(this, "manual_guinier_fit_start Line Edit");
+   le_manual_guinier_fit_start->setText(tr(""));
+   le_manual_guinier_fit_start->setMinimumHeight(minHeight1);
+   le_manual_guinier_fit_start->setMaximumWidth( maxWidth * 6 );
+   le_manual_guinier_fit_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_manual_guinier_fit_start->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_manual_guinier_fit_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_manual_guinier_fit_start->setReadOnly(true);
+   manual_guinier_widgets.push_back( le_manual_guinier_fit_start );
+   connect( le_manual_guinier_fit_start, SIGNAL( textChanged( const QString & ) ), SLOT( manual_guinier_fit_start_text( const QString & ) ) );
+   connect( le_manual_guinier_fit_start, SIGNAL( focussed ( bool ) )             , SLOT( manual_guinier_fit_start_focus( bool ) ) );
+
+   le_manual_guinier_fit_end = new mQLineEdit(this, "manual_guinier_fit_end Line Edit");
+   le_manual_guinier_fit_end->setText(tr(""));
+   le_manual_guinier_fit_end->setMinimumHeight(minHeight1);
+   le_manual_guinier_fit_end->setMaximumWidth( maxWidth * 6 );
+   le_manual_guinier_fit_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_manual_guinier_fit_end->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_manual_guinier_fit_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_manual_guinier_fit_end->setReadOnly(true);
+   manual_guinier_widgets.push_back( le_manual_guinier_fit_end );
+   connect( le_manual_guinier_fit_end, SIGNAL( textChanged( const QString & ) ), SLOT( manual_guinier_fit_end_text( const QString & ) ) );
+   connect( le_manual_guinier_fit_end, SIGNAL( focussed ( bool ) )             , SLOT( manual_guinier_fit_end_focus( bool ) ) );
+
+   qwtw_wheel = new QwtWheel( this );
+   qwtw_wheel->setMass         ( 0.5 );
+   // qwtw_wheel->setRange        ( -1000, 1000, 1 );
+   qwtw_wheel->setMinimumHeight( minHeight1 );
+   // qwtw_wheel->setTotalAngle( 3600.0 );
+   qwtw_wheel->setEnabled      ( false );
+   connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+   manual_guinier_widgets.push_back( qwtw_wheel );
+   qwtw_wheel->setMinimumWidth ( 350 );
+   
+   pb_manual_guinier_process = new QPushButton(tr("Process"), this);
+   pb_manual_guinier_process->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_manual_guinier_process->setMinimumHeight(minHeight1);
+   pb_manual_guinier_process->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_manual_guinier_process, SIGNAL(clicked()), SLOT(manual_guinier_process()));
+   manual_guinier_widgets.push_back( pb_manual_guinier_process );
+
+   hide_widgets( manual_guinier_widgets );
 
    progress_saxs = new QProgressBar(this, "SAXS Progress");
    progress_saxs->setMinimumHeight(minHeight1);
@@ -1705,12 +1759,24 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    QHBoxLayout *hbl_plot_resid_buttons = new QHBoxLayout( 0 );
    hbl_plot_resid_buttons->addWidget( cb_resid_show );
+   hbl_plot_resid_buttons->addWidget( cb_manual_guinier );
    hbl_plot_resid_buttons->addWidget( cb_resid_sd );
    hbl_plot_resid_buttons->addWidget( cb_resid_pct );
+
+   QGridLayout *gl_manual_guinier = new QGridLayout( 0 );
+   gl_manual_guinier->addWidget( le_manual_guinier_fit_start, 0, 0 );
+   gl_manual_guinier->addWidget( le_manual_guinier_fit_end  , 0, 1 );
+   gl_manual_guinier->addWidget( qwtw_wheel, 0, 2 );
+   gl_manual_guinier->addWidget( pb_manual_guinier_process, 0, 3 );
+   gl_manual_guinier->setColStretch( 0, 1 );
+   gl_manual_guinier->setColStretch( 1, 1 );
+   gl_manual_guinier->setColStretch( 2, 2 );
+   gl_manual_guinier->setColStretch( 3, 0 );
 
    QBoxLayout * l_plot_resid = new QVBoxLayout( 0 );
    l_plot_resid->addWidget( plot_resid );
    l_plot_resid->addLayout( hbl_plot_resid_buttons );
+   l_plot_resid->addLayout( gl_manual_guinier );
 
    QVBoxLayout *vbl = new QVBoxLayout(0);
    vbl->addWidget(plot_saxs);
@@ -4454,12 +4520,16 @@ void US_Hydrodyn_Saxs::show_plot_sans()
 
 void US_Hydrodyn_Saxs::show_plot_saxs_sans()
 {
+   cb_guinier->setChecked( false );
+   set_guinier();
    rb_sans->isChecked() ? show_plot_sans() : show_plot_saxs();
    saxs_search_update_enables();
 }
 
 void US_Hydrodyn_Saxs::load_saxs_sans()
 {
+   cb_guinier->setChecked( false );
+   set_guinier();
    rb_sans->isChecked() ? load_sans() : load_saxs();
 }
       
@@ -5460,6 +5530,8 @@ void US_Hydrodyn_Saxs::reset_hplc_csv()
 
 void US_Hydrodyn_Saxs::load_gnom()
 {
+   cb_guinier->setChecked( false );
+   set_guinier();
    // map < QString, QString > params;
    // params[ "wild" ] = "10.7";
    // US_SAS_Dammin * usd = new US_SAS_Dammin( (US_Hydrodyn *)us_hydrodyn, 41e0, params );

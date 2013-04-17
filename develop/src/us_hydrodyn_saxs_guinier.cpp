@@ -1345,3 +1345,51 @@ void US_Hydrodyn_Saxs::clear_cs_guinier()
    plotted_cs_guinier_x.clear();
    plotted_cs_guinier_y.clear();
 }
+
+void US_Hydrodyn_Saxs::adjust_wheel( double pos )
+{
+   cout << QString("pos is now %1\n").arg(pos);
+}
+
+
+void US_Hydrodyn_Saxs::manual_guinier_fit_start_text( const QString & text )
+{
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+}
+
+void US_Hydrodyn_Saxs::manual_guinier_fit_end_text( const QString & text )
+{
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+}
+
+void US_Hydrodyn_Saxs::manual_guinier_fit_start_focus( bool hasFocus )
+{
+   cout << QString( "fit_start_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      // disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      // qwtw_wheel->setRange( join_offset_start, join_offset_end, join_offset_delta );
+      // connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_manual_guinier_fit_start->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs::manual_guinier_fit_end_focus( bool hasFocus )
+{
+   cout << QString( "fit_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
+   if ( hasFocus )
+   {
+      // disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      // qwtw_wheel->setRange( join_offset_start, join_offset_end, join_offset_delta );
+      // connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_manual_guinier_fit_end->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}

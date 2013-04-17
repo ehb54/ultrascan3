@@ -18,6 +18,7 @@
 #include <qfileinfo.h>
 #include <qprinter.h>
 #include <qregexp.h>
+#include <qwt_wheel.h>
 
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
@@ -323,8 +324,14 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QwtPlotGrid  *grid_resid;
 #endif
       QCheckBox   *cb_resid_pct;
+      QCheckBox   *cb_manual_guinier;
       QCheckBox   *cb_resid_sd;
       QCheckBox   *cb_resid_show;
+
+      mQLineEdit  * le_manual_guinier_fit_start;
+      mQLineEdit  * le_manual_guinier_fit_end;
+      QwtWheel    * qwtw_wheel;
+      QPushButton * pb_manual_guinier_process;
 
       QProgressBar *progress_pr;
       QProgressBar *progress_saxs;
@@ -365,11 +372,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map    < unsigned int, long >                   plotted_cs_Gp;  // cs guinier points
       map    < unsigned int, long >                   plotted_Gp_full;  // guinier points
       map    < unsigned int, long >                   plotted_cs_Gp_full;  // cs guinier points
+      vector < long >                                 plotted_manual_guinier_fit;
 #else
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_curves;  // guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_cs_curves;  // cs guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_curves_full;  // guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_cs_curves_full;  // cs guinier points
+      vector < QwtPlotCurve * >                       plotted_manual_guinier_fit;
 #endif
       map    < unsigned int, bool >                   plotted_guinier_valid;
       map    < unsigned int, bool >                   plotted_guinier_plotted;
@@ -721,6 +730,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < QWidget * > pr_widgets;
       vector < QWidget * > settings_widgets;
       vector < QWidget * > resid_widgets;
+      vector < QWidget * > manual_guinier_widgets;
 
       void hide_widgets( vector < QWidget * >, bool do_hide = true );
 
@@ -739,6 +749,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #endif      
 
    private slots:
+
+      void set_manual_guinier();
+      void adjust_wheel( double );
+      void manual_guinier_fit_start_text ( const QString & );
+      void manual_guinier_fit_end_text   ( const QString & );
+      void manual_guinier_fit_start_focus( bool );
+      void manual_guinier_fit_end_focus  ( bool );
 
       void set_resid_pct();
       void set_resid_sd();
