@@ -109,8 +109,8 @@ US_Edit::US_Edit() : US_Widgets()
    specs->addWidget( pb_details, s_row++, 2, 1, 2 );
 
    // Row 3
-   QLabel* lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
-   specs->addWidget( lb_triple, s_row, 0, 1, 2 );
+   lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
+   specs->addWidget( lb_triple, s_row,   0, 1, 2 );
 
    cb_triple = us_comboBox();
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
@@ -140,16 +140,17 @@ US_Edit::US_Edit() : US_Widgets()
    int rhgt = ct_gaps->height();
    int lwid = fwid * 4;
    int swid = lwid + fwid;
-   QString clambda   = QString( QChar( 955 ) );
+   const QChar charla( 955 );
+   const QChar charmu( 956 );
    lb_mwlctl = us_banner( tr( "Wavelength Controls" ) );
-   lb_ldelta = us_label( clambda + tr( " Delta:" ), -1 );
+   lb_ldelta = us_label( tr( "%1 Delta:" ).arg( charla ), -1 );
    ct_ldelta = us_counter( 1, 1, 100, 1 );
    ct_ldelta->setFont( font );
    ct_ldelta->setStep( 1 );
    ct_ldelta->setMinimumWidth( lwid );
    ct_ldelta->resize( rhgt, swid );
-   lb_lstart = us_label( clambda + tr( " Start:" ), -1 );
-   lb_lend   = us_label( clambda + tr( " End:" ),   -1 );
+   lb_lstart = us_label( tr( "%1 Start:" ).arg( charla ), -1 );
+   lb_lend   = us_label( tr( "%1 End:"   ).arg( charla ), -1 );
    lb_lplot  = us_label( tr( "Plot (W nm):" ), -1 );
    lb_lexclf = us_label( tr( "Exclude from:" ), -1 );
    lb_lexclt = us_label( tr( "Exclude to:" ), -1 );
@@ -160,11 +161,11 @@ US_Edit::US_Edit() : US_Widgets()
    ct_odlim ->setMinimumWidth( lwid );
    ct_odlim ->resize( rhgt, swid );
 
-   int     nlmbd  = 1118;
+   int     nlmbd  = 448;
    double  lmbdlo = 250.0;
-   double  lmbdhi = 650.1;
-   QString lrsmry = tr( "%1 raw: " ).arg( nlmbd ) + clambda
-                  + tr( " %1 to %2" ).arg( lmbdlo ).arg( lmbdhi );
+   double  lmbdhi = 650.0;
+   QString lrsmry = tr( "%1 raw: %2 %3 to %4" )
+      .arg( nlmbd ).arg( charla ).arg( lmbdlo ).arg( lmbdhi );
    le_ltrng  = us_lineedit( lrsmry, -2, true );
    cb_lplot  = us_comboBox();
    cb_lstart = us_comboBox();
@@ -185,10 +186,10 @@ US_Edit::US_Edit() : US_Widgets()
 
    pb_excrng = us_pushbutton( tr( "Exclude Range" ), true, -1 );
    pb_incall = us_pushbutton( tr( "Include All" ),   true, -1 );
-   lo_radius = us_checkbox( tr( "x axis Radius" ),     ck_radius, true  );
-   lo_waveln = us_checkbox( tr( "x axis Wavelength" ), ck_waveln, false );
-   ck_radius->setFont( font );
-   ck_waveln->setFont( font );
+   lo_radius = us_radiobutton( tr( "x axis Radius" ),     rb_radius, true  );
+   lo_waveln = us_radiobutton( tr( "x axis Wavelength" ), rb_waveln, false );
+   rb_radius->setFont( font );
+   rb_waveln->setFont( font );
 
    QStringList lambdas;
 lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
@@ -226,6 +227,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    specs->addWidget( pb_incall, s_row++, 2, 1, 2 );
    specs->addWidget( lb_odlim,  s_row,   0, 1, 2 );
    specs->addWidget( ct_odlim,  s_row++, 2, 1, 2 );
+
+   connect_mwl_ctrls( true );
 
    // Row 5
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
@@ -444,6 +447,7 @@ void US_Edit::reset( void )
    invert        = 1.0;  // Multiplier = 1.0 or -1.0
    noise_order   = 0;
    triple_index  = 0;
+   isMwl         = false;
 
    le_info     ->setText( "" );
    le_meniscus ->setText( "" );
@@ -528,8 +532,22 @@ void US_Edit::reset( void )
    cb_rpms      ->clear();
    editGUIDs     .clear();
    editIDs       .clear();
+   wl_excludes   .clear();
+   plot_radii    .clear();
+   plot_wvlns    .clear();
+   celchns       .clear();
+   slist_wvlns   .clear();
+   slist_radii   .clear();
+   connect_mwl_ctrls( false );
+   cb_lplot     ->clear();
+   cb_lstart    ->clear();
+   cb_lend      ->clear();
+   cb_lexclf    ->clear();
+   cb_lexclt    ->clear();
+   connect_mwl_ctrls( true );
 
    set_pbColors( NULL );
+   lb_triple->setText( tr( "Cell / Channel / Wavelength" ) );
 
    show_mwl_controls( false );
 }
@@ -768,9 +786,9 @@ void US_Edit::load( void )
    if ( dialog->exec() == QDialog::Rejected )  return;
 
    runID = workingDir.section( "/", -1, -1 );
-   sData  .clear();
-   sd_offs.clear();
-   sd_knts.clear();
+   sData     .clear();
+   sd_offs   .clear();
+   sd_knts   .clear();
    cb_triple->clear();
    delete dialog;
 
@@ -816,8 +834,8 @@ void US_Edit::load( void )
    }
 
    QString runtype = runID + "." + dataType;
-   int     nwavln  = 0;
-   QStringList wavelns;
+   nwaveln         = 0;
+   ncelchn         = 0;
 
    for ( int ii = 0; ii < triples.size(); ii++ )
    {  // Generate file names
@@ -825,13 +843,26 @@ void US_Edit::load( void )
       QString file   = runtype + "." + triple + ".auc";
       files << file;
 
-      QString waveln = triple.section( ".", -1, -1 ).simplified();
-      if ( ! wavelns.contains( waveln ) )
-      {
-         nwavln++;
-         wavelns << waveln;
+      QString scell  = triple.section( ".", 0, 0 ).simplified();
+      QString schan  = triple.section( ".", 1, 1 ).simplified();
+      QString waveln = triple.section( ".", 2, 2 ).simplified();
+
+      if ( ! slist_wvlns.contains( waveln ) )
+      {  // Accumulate wavelengths in case this is MWL
+         nwaveln++;
+         slist_wvlns << waveln;
+      }
+
+      QString celchn = scell + " / " + schan;
+
+      if ( ! celchns.contains( celchn ) )
+      {  // Accumulate cell/channel values in case this is MWL
+         ncelchn++;
+         celchns << celchn;
       }
    }
+DbgLv(1) << "slist_wvlns size" << slist_wvlns.size() << nwaveln;
+DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
 
    workingDir   = workingDir + "/";
    QString file = workingDir + runtype + ".xml";
@@ -857,6 +888,7 @@ void US_Edit::load( void )
       xf.close();
    }
 
+DbgLv(1) << "LD(): AA";
    if ( expType.isEmpty()  &&  disk_controls->db() )
    {  // no experiment type yet and data read from DB:  try for DB exp type
       US_Passwd pw;
@@ -893,6 +925,7 @@ void US_Edit::load( void )
    expIsOther = ( !expIsVelo  &&  !expIsEquil  &&  !expIsDiff );
    expType    = expIsOther ? "Other" : expType;
 
+DbgLv(1) << "LD(): CC";
    if ( expIsEquil )
    {  // Equilibrium
       lb_rpms    ->setVisible( true  );
@@ -981,10 +1014,12 @@ void US_Edit::load( void )
 
       connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
                           SLOT  ( new_rpmval         ( int ) ) );
+DbgLv(1) << "LD(): DD";
    }
 
    else
    {  // non-Equilibrium
+DbgLv(1) << "LD(): EE";
       lb_rpms    ->setVisible( false );
       cb_rpms    ->setVisible( false );
       pb_plateau ->setVisible( true  );
@@ -1000,7 +1035,10 @@ void US_Edit::load( void )
 
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
-      plot_current( 0 );
+DbgLv(1) << "LD(): FF  triples size" << triples.size();
+      if ( nwaveln < 3 )
+         plot_current( 0 );
+DbgLv(1) << "LD(): GG";
    }
 
    // Enable pushbuttons
@@ -1028,7 +1066,7 @@ void US_Edit::load( void )
    step = MENISCUS;
    set_pbColors( pb_meniscus );
 
-   // Tempeerature check
+   // Temperature check
    double              dt = 0.0;
    US_DataIO2::RawData triple;
 
@@ -1050,17 +1088,125 @@ void US_Edit::load( void )
                 "results may be affected significantly." ) );
    }
 
-   int ntriples = triples.size();
-   editGUIDs.fill( "", ntriples );
-   editIDs  .fill( "", ntriples );
+DbgLv(1) << "LD(): MM";
+   ntriple      = triples.size();
+DbgLv(1) << " triples    size" << ntriple;
+   editGUIDs.fill( "", ntriple );
+   editIDs  .fill( "", ntriple );
 
-   if ( nwavln > 2 )
-   {
-      show_mwl_controls( true );
-   }
+   isMwl        = ( nwaveln > 2 );
+DbgLv(1) << "LD(): NN  nwaveln isMwl" << nwaveln << isMwl;
 
-   else
-      show_mwl_controls( false );
+   if ( isMwl )
+   {  // Set values related to MultiWaveLength
+      const QChar charla( 955 );
+      connect_mwl_ctrls( false );
+DbgLv(1) << "IS-MWL: wvlns size" << slist_wvlns.size();
+      slist_wvlns.sort();
+      int lambd1   = slist_wvlns[ 0 ].toInt();
+      int lambd2   = slist_wvlns[ nwaveln - 1 ].toInt();
+      le_ltrng ->setText( tr( "%1 raw: %2 %3 to %4" )
+         .arg( nwaveln ).arg( charla ).arg( lambd1 ).arg( lambd2 ) );
+
+      // Update wavelength lists in GUI elements
+      cb_lplot ->clear();
+      cb_lstart->clear();
+      cb_lend  ->clear();
+      cb_lexclf->clear();
+      cb_lexclt->clear();
+      cb_lplot ->addItems( slist_wvlns );
+      cb_lstart->addItems( slist_wvlns );
+      cb_lend  ->addItems( slist_wvlns );
+      cb_lexclf->addItems( slist_wvlns );
+      cb_lexclt->addItems( slist_wvlns );
+      int lastx    = nwaveln - 1;
+      plotndx      = nwaveln / 2;
+      cb_lplot ->setCurrentIndex( plotndx );
+      cb_lstart->setCurrentIndex( 0 );
+      cb_lend  ->setCurrentIndex( lastx );
+      cb_lexclf->setCurrentIndex( lastx );
+      cb_lexclt->setCurrentIndex( lastx );
+
+      wl_excludes.clear();
+      plot_radii .clear();
+      plot_wvlns .clear();
+
+      for ( int ii = 0; ii < nwaveln; ii++ )
+      {  // Update the list of wavelengths that may be plotted
+         plot_wvlns << slist_wvlns[ ii ].toInt();
+      }
+DbgLv(1) << "IS-MWL:  plot_wvlns size" << plot_wvlns.size() << nwaveln;
+
+      data          = allData[ 0 ];
+      nrpoint       = data.x.size();
+      int nscan     = data.scanData.size();
+      int ndset     = ncelchn * nrpoint;
+      int ndpoint   = nscan * nwaveln;
+DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
+ << ndset << ndpoint;
+
+      for ( int ii = 0; ii < nrpoint; ii++ )
+      {  // Update the list of radii that may be plotted
+         plot_radii  << data.x[ ii ].radius;
+         slist_radii << QString().sprintf( "%.3f", data.x[ ii ].radius );
+      }
+DbgLv(1) << "IS-MWL:  plot_radii size" << plot_radii.size() << nrpoint;
+
+      QVector< double > wrdata;
+      wrdata.fill( 0.0, ndpoint );
+DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
+
+      for ( int ii = 0; ii < ndset; ii++ )
+      {  // Initialize the data vector that has wavelength as the x-axis
+         rdata << wrdata;
+      }
+DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
+
+      US_DataIO2::RawData* edata;
+
+      // Update wavelength-x-axis data vector with amplitude data points
+      // The input has (ncelchn * nwaveln) data sets, each of which
+      //   contains (nscan * nrpoint) data points.
+      // The output has (ncelchn * nrpoint) data sets, each of which
+      //   contains (nscan * nwaveln) data points.
+      for ( int trx = 0; trx < ntriple; trx++ )
+      {  // Handle each triple of AUC data
+         edata         = &allData[ trx ];
+         int ccx       = trx / nwaveln;
+         int wvx       = trx - ccx * nwaveln;
+DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
+
+         for ( int scx = 0; scx < nscan; scx++ )
+         {  // Handle each scan of a triple
+            US_DataIO2::Scan* scn  = &edata->scanData[ scx ];
+            int    odx    = ccx * nrpoint;         // Output dataset index
+            int    opx    = scx * nwaveln + wvx;   // Output point index
+//DbgLv(1) << "IS-MWL:    scx odx opx" << scx << odx << opx;
+            for ( int rax = 0; rax < nrpoint; rax++ )
+            {  // Store each radius data point as a wavelength point in a scan
+               double rval   = scn->readings[ rax ].value;
+               rdata[ odx++ ][ opx ] = rval;
+            } // END: radius points loop
+         } // END: scans loop
+      } // END: input triples loop
+DbgLv(1) << "IS-MWL:    Triples loop complete";
+
+DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
+      lb_triple->setText( tr( "Cell / Channel" ) );
+DbgLv(1) << "IS-MWL: celchns (2)";
+      cb_triple->disconnect();
+      cb_triple->clear();
+DbgLv(1) << "IS-MWL: celchns (3)";
+      cb_triple->addItems( celchns );
+DbgLv(1) << "IS-MWL: celchns (4)";
+      connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                          SLOT  ( new_triple         ( int ) ) );
+
+      connect_mwl_ctrls( true );
+      plot_mwl();
+   } // END: isMwl=true
+
+   show_mwl_controls( isMwl );
 }
 
 // Set pushbutton colors
@@ -1084,6 +1230,12 @@ void US_Edit::set_pbColors( QPushButton* pb )
 // Plot the current data set
 void US_Edit::plot_current( int index )
 {
+   if ( isMwl )
+   {
+      plot_mwl();
+      return;
+   }
+
    // Read the data
    QString     triple  = triples.at( index );
    QStringList parts   = triple.split( " / " );
@@ -1104,28 +1256,27 @@ void US_Edit::plot_current( int index )
       desc = sl.join( "," ).trimmed();
    }
 
-   QString s = le_info->text() + " (" + desc  + ")";
-   le_info->setText( s );
+   le_info->setText( runID + "  (" + desc + ")" );
 
    // Plot Title
+   QString title23 = tr( "Run ID: %1\n"
+                         "Cell: %2  Channel: %3  Wavelength: %4" )
+      .arg( runID ).arg( cell ).arg( channel ).arg( wl );
    QString title;
 
    if ( dataType == "RA" )
    {
-      title = "Radial Absorbance Data\nRun ID: "
-            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      title = "Radial Absorbance Data\n" + title23;
    }
    else if ( dataType == "RI" )
    {
-      title = "Radial Intensity Data\nRun ID: "
-            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      title = "Radial Intensity Data\n" + title23;
       data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Intensity " ) );
    }
    else if ( dataType == "IP" )
    {
 
-      title = "Radial Interference Data\nRun ID: " + runID + 
-            + "\nCell: " + cell + " Wavelength: " + wl;
+      title = "Radial Interference Data\n" + title23;
       data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Fringes " ) );
 
       // Enable Air Gap
@@ -1134,8 +1285,7 @@ void US_Edit::plot_current( int index )
    }
    else if ( dataType == "FI" )
    {
-      title = "Fluorescence Intensity Data\nRun ID: "
-            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      title = "Fluorescence Intensity Data\n" + title23;
       data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Fluorescence Intensity " ) );
    }
    else 
@@ -1810,6 +1960,12 @@ void US_Edit::set_baseline( void )
 // Plot all curves
 void US_Edit::plot_all( void )
 {
+   if ( isMwl )
+   {
+      plot_mwl();
+      return;
+   }
+
    if ( plot->btnZoom->isChecked() )
       plot->btnZoom->setChecked( false );
 
@@ -1885,6 +2041,14 @@ void US_Edit::plot_range( void )
    double maxV = -1.0e99;
    double minV =  1.0e99;
    int indext  = cb_triple->currentIndex();
+
+   if ( isMwl )
+   {
+      int ccx     = indext;
+      int wvx     = cb_lplot->currentIndex();
+      indext      = ccx * nwaveln + wvx;
+DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
+   }
 
    // For each scan
    for ( int i = 0; i < data.scanData.size(); i++ )
@@ -2104,6 +2268,159 @@ void US_Edit::plot_scan( void )
    }
 
    data_plot->replot();
+}
+
+// Plot MWL curves
+void US_Edit::plot_mwl( void )
+{
+   if ( ! isMwl )  return;
+
+   QString     rectype = tr( "Wavelength" );
+   double      recvalu = 250;
+   int         index   = cb_triple->currentIndex();
+   int         ccx     = index;
+   int         recndx  = cb_lplot ->currentIndex();
+   QString     celchn  = celchns.at( ccx );
+   QString     scell   = celchn.section( "/", 0, 0 ).simplified();
+   QString     schan   = celchn.section( "/", 1, 1 ).simplified();
+   QString     svalu;
+DbgLv(1) << "PlMwl:  index celchn" << index << celchn;
+
+   if ( xaxis_radius )
+   {
+      index               = ccx * nwaveln + recndx;
+DbgLv(1) << "PlMwl:   x-r index cc nw rx" << index << ccx << nwaveln << recndx;
+DbgLv(1) << "PlMwl:    allData size" << allData.size();
+DbgLv(1) << "PlMwl:    plot_wvlns size" << plot_wvlns.size();
+      data                = allData[ index ];
+      recvalu             = plot_wvlns.at( recndx );
+      svalu               = slist_wvlns.at( recndx );
+   }
+
+   else
+   {
+      index               = ccx * nrpoint + recndx;
+DbgLv(1) << "PlMwl:   x-w index cc nr rx" << index << ccx << nrpoint << recndx;
+      data                = allData[ 0 ];
+      rectype             = tr( "Radius" );
+      recvalu             = plot_radii.at( recndx );
+      svalu               = slist_radii.at( recndx );
+   }
+DbgLv(1) << "PlMwl: ccx index rtype rval" << ccx << index << rectype << recvalu;
+
+   // Read the data description
+   QString     desc    = data.description;
+
+   dataType            = QString( QChar( data.type[ 0 ] ) ) 
+                       + QString( QChar( data.type[ 1 ] ) );
+
+   le_info->setText( runID + "  (" + desc + ")" );
+
+   // Plot Title
+   QString     title   = tr( "Radial Intensity Data\n"
+                             "Run ID: %1\n"
+                             "Cell: %2  Channel: %3  %4: %5" )
+                         .arg( runID ).arg( scell ).arg( schan )
+                         .arg( rectype ).arg( svalu );
+DbgLv(1) << "PlMwl:  title" << title;
+
+   data_plot->setTitle    ( title );
+   data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Intensity " ) );
+
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); 
+   v_line = NULL;
+
+   int     nscan  = data.scanData.size();
+   int     npoint = xaxis_radius ? nrpoint : nwaveln;
+DbgLv(1) << "PlMwl:   xa_rad" << xaxis_radius << "nsc npt" << nscan << npoint;
+
+   QVector< double > rvec( npoint );
+   QVector< double > vvec( npoint );
+   double* rr     = rvec.data();
+   double* vv     = vvec.data();
+
+   double  maxR   = -1.0e99;
+   double  minR   =  1.0e99;
+   double  maxV   = -1.0e99;
+   double  minV   =  1.0e99;
+
+   if ( xaxis_radius )
+   {  // Build normal AUC data plot
+      data_plot->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
+DbgLv(1) << "PlMwl:    START xa_RAD";
+
+      for ( int ii = 0; ii < nscan; ii++ )
+      {
+         US_DataIO2::Scan* scn = &data.scanData[ ii ];
+
+         for ( int jj = 0; jj < npoint; jj++ )
+         {
+            rr[ jj ] = data.x[ jj ].radius;
+            vv[ jj ] = scn->readings[ jj ].value * invert;
+
+            maxR     = qMax( maxR, rr[ jj ] );
+            minR     = qMin( minR, rr[ jj ] );
+            maxV     = qMax( maxV, vv[ jj ] );
+            minV     = qMin( minV, vv[ jj ] );
+         }
+
+         QString ctitle = tr( "Raw Data at " )
+            + QString::number( scn->seconds ) + tr( " seconds" )
+            + " #" + QString::number( ii );
+
+         QwtPlotCurve* cc = us_curve( data_plot, ctitle );
+         cc->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
+         cc->setData( rr, vv, npoint );
+      }
+      pick     ->disconnect();
+      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+      init_includes();
+DbgLv(1) << "PlMwl:      END xa_RAD";
+   }
+
+   else
+   {  // Build plot of radius record with wavelength points
+DbgLv(1) << "PlMwl:    START xa_WAV";
+      data_plot->setAxisTitle( QwtPlot::xBottom, tr( "Wavelength (nm)" ) );
+      QVector< double > wrdata = rdata[ index ];
+      int     dpx    = 0;
+
+      for ( int ii = 0; ii < nscan; ii++ )
+      {
+         for ( int jj = 0; jj < npoint; jj++ )
+         {
+            rr[ jj ] = plot_wvlns[ jj ];
+            vv[ jj ] = wrdata[ dpx++ ];
+
+            maxR     = qMax( maxR, rr[ jj ] );
+            minR     = qMin( minR, rr[ jj ] );
+            maxV     = qMax( maxV, vv[ jj ] );
+            minV     = qMin( minV, vv[ jj ] );
+         }
+
+         US_DataIO2::Scan* scn = &data.scanData[ ii ];
+         QString ctitle = tr( "Raw Data at " )
+            + QString::number( scn->seconds ) + tr( " seconds" )
+            + " #" + QString::number( ii );
+
+         QwtPlotCurve* cc = us_curve( data_plot, ctitle );
+         cc->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
+         cc->setData( rr, vv, npoint );
+      }
+DbgLv(1) << "PlMwl:      END xa_WAV";
+   }
+
+   // Reset the scan curves within the new limits
+   double padR = ( maxR - minR ) / 30.0;
+   double padV = ( maxV - minV ) / 30.0;
+
+   data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
+   data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
+
+DbgLv(1) << "PlMwl: call replot()";
+   data_plot->replot();
+DbgLv(1) << "PlMwl:  retn fr replot()";
 }
 
 // Set focus FROM scan value
@@ -2657,7 +2974,15 @@ void US_Edit::floating( void )
 
 // Save edit profile(s)
 void US_Edit::write( void )
-{
+{ 
+   if ( isMwl )
+   {
+      QMessageBox::information( this,
+            tr( "Temporarily Disabled" ),
+            tr( "In the current EDIT version,\n"
+                "Save is temporarily disabled for MWL data." ) );
+      return;
+   }
    if ( !expIsEquil )
    {  // non-Equilibrium:  write single current edit
       triple_index = cb_triple->currentIndex();
@@ -3761,5 +4086,195 @@ void US_Edit::show_mwl_controls( bool show )
    lo_waveln->itemAtPosition( 0, 1 )->widget()->setVisible( show );
 
    adjustSize();
+}
+
+// Connect or disconnect MWL Controls
+void US_Edit::connect_mwl_ctrls( bool conn )
+{
+   if ( conn )
+   {
+      connect( ct_ldelta, SIGNAL( valueChanged       ( double ) ),
+               this,      SLOT  ( ldelta_value       ( double ) ) );
+      connect( cb_lstart, SIGNAL( currentIndexChanged( int    ) ),
+               this,      SLOT  ( lambda_start_value ( int    ) ) );
+      connect( cb_lend,   SIGNAL( currentIndexChanged( int    ) ),
+               this,      SLOT  ( lambda_end_value   ( int    ) ) );
+      connect( rb_radius, SIGNAL( toggled            ( bool   ) ),
+               this,      SLOT  ( xaxis_radius_on    ( bool   ) ) );
+      connect( rb_waveln, SIGNAL( toggled            ( bool   ) ),
+               this,      SLOT  ( xaxis_waveln_on    ( bool   ) ) );
+      connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
+               this,      SLOT  ( lambda_plot_value  ( int    ) ) );
+      connect( pb_larrow, SIGNAL( clicked            (        ) ),
+               this,      SLOT  ( lambda_plot_prev   (        ) ) );
+      connect( pb_rarrow, SIGNAL( clicked            (        ) ),
+               this,      SLOT  ( lambda_plot_next   (        ) ) );
+      connect( cb_lexclf, SIGNAL( currentIndexChanged( int    ) ),
+               this,      SLOT  ( lambda_excl_from   ( int    ) ) );
+      connect( cb_lexclt, SIGNAL( currentIndexChanged( int    ) ),
+               this,      SLOT  ( lambda_excl_to     ( int    ) ) );
+      connect( pb_excrng, SIGNAL( clicked            (        ) ),
+               this,      SLOT  ( lambda_excl_range  (        ) ) );
+      connect( pb_incall, SIGNAL( clicked            (        ) ),
+               this,      SLOT  ( lambda_include_all (        ) ) );
+      connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
+               this,      SLOT  ( od_radius_limit    ( double ) ) );
+   }
+
+   else
+   {
+      ct_ldelta->disconnect();
+      cb_lstart->disconnect();
+      cb_lend  ->disconnect();
+      rb_radius->disconnect();
+      rb_waveln->disconnect();
+      cb_lplot ->disconnect();
+      pb_larrow->disconnect();
+      pb_rarrow->disconnect();
+      cb_lexclf->disconnect();
+      cb_lexclt->disconnect();
+      pb_excrng->disconnect();
+      pb_incall->disconnect();
+      ct_odlim ->disconnect();
+   }
+}
+
+// Lambda Delta has changed
+void US_Edit::ldelta_value( double value )
+{
+DbgLv(1) << "ldelta_value  value" << value;
+   dlambda     = value;
+}
+
+// Lambda Start has changed
+void US_Edit::lambda_start_value( int value )
+{
+   slambda     = cb_lstart->itemText( value ).toDouble();
+DbgLv(1) << "lambda_start_value  value" << value << slambda;
+}
+
+// Lambda End has changed
+void US_Edit::lambda_end_value( int value )
+{
+   elambda     = cb_lend  ->itemText( value ).toDouble();
+DbgLv(1) << "lambda_end_value  value" << value << elambda;
+}
+
+// X-axis has been changed to Radius or Wavelength
+void US_Edit::xaxis_radius_on( bool checked )
+{
+DbgLv(1) << "xaxis_radius_on  checked" << checked;
+   if ( checked )
+   {
+      xaxis_radius = true;
+      lb_lplot->setText( tr( "Plot (W nm):" ) );
+
+      cb_lplot->disconnect();
+      cb_lplot->clear();
+      cb_lplot->addItems( slist_wvlns );
+      connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
+               this,      SLOT  ( lambda_plot_value  ( int    ) ) );
+      cb_lplot->setCurrentIndex( slist_wvlns.size() / 2 );
+   }
+}
+
+// X-axis has been changed to Radius or Wavelength
+void US_Edit::xaxis_waveln_on( bool checked )
+{
+DbgLv(1) << "xaxis_waveln_on  checked" << checked;
+   if ( checked )
+   {
+      xaxis_radius = false;
+      lb_lplot->setText( tr( "Plot (R cm):" ) );
+
+      cb_lplot->disconnect();
+      cb_lplot->clear();
+      cb_lplot->addItems( slist_radii );
+      connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
+               this,      SLOT  ( lambda_plot_value  ( int    ) ) );
+      cb_lplot->setCurrentIndex( slist_radii.size() / 2 );
+   }
+}
+
+// Plot Lambda/Radius value has changed
+void US_Edit::lambda_plot_value( int value )
+{
+   if ( value < 0 )  return;
+
+   plotndx     = value;
+   plotrec     = cb_lplot ->itemText( plotndx ).toDouble();
+DbgLv(1) << "lambda_plot_value  value" << value << plotrec;
+
+   plot_mwl();
+}
+
+// Plot-previous has been clicked
+void US_Edit::lambda_plot_prev()
+{
+DbgLv(1) << "lambda_plot_prev  clicked";
+   plotndx--;
+
+   if ( plotndx <= 0 )
+   {
+      plotndx = 0;
+      pb_larrow->setEnabled( false );
+   }
+   pb_rarrow->setEnabled( true );
+
+   cb_lplot->setCurrentIndex( plotndx );
+}
+
+// Plot-next has been clicked
+void US_Edit::lambda_plot_next()
+{
+DbgLv(1) << "lambda_plot_next  clicked";
+   plotndx++;
+
+   int lstx = rb_radius->isChecked() ? ( plot_wvlns.size() - 1 )
+                                     : ( plot_radii.size() - 1 );
+
+   if ( plotndx >= lstx )
+   {
+      plotndx = lstx;
+      pb_rarrow->setEnabled( false );
+   }
+   pb_larrow->setEnabled( true );
+
+   cb_lplot->setCurrentIndex( plotndx );
+}
+
+// Lambda exclude-from has changed
+void US_Edit::lambda_excl_from( int value )
+{
+   exclfrx     = value;
+   excllfr     = cb_lexclf->itemText( exclfrx ).toDouble();
+DbgLv(1) << "lambda_excl_from  value" << value << excllfr;
+}
+
+// Lambda exclude-to has changed
+void US_Edit::lambda_excl_to( int value )
+{
+   excltox     = value;
+   excllto     = cb_lexclt->itemText( excltox ).toDouble();
+DbgLv(1) << "lambda_excl_to  value" << value << excllto;
+}
+
+// Exclude-lambda-range has been clicked
+void US_Edit::lambda_excl_range()
+{
+DbgLv(1) << "lambda_excl_range  clicked";
+}
+
+// Include-all-lambda has been clicked
+void US_Edit::lambda_include_all()
+{
+DbgLv(1) << "lambda_include_all  clicked";
+}
+
+// OD-limit-on-radii has changed
+void US_Edit::od_radius_limit( double value )
+{
+DbgLv(1) << "od_radius_limit  value" << value;
+   odlimit     = value;
 }
 

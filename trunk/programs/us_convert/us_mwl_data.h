@@ -42,8 +42,16 @@ class US_MwlData : public QObject
       bool    import_data   ( QString&, QLineEdit* );
       //! Return reading values for given triple, scan
       int     rvalues       ( int&, int&, QVector< double >& );
+      //! Return raw input reading values for given triple, scan
+      int     rvalues_raw   ( int&, int&, QVector< double >& );
       //! Return lambda values
       int     lambdas       ( QVector< double >& );
+      //! Return lambda values for raw original
+      int     lambdas_raw   ( QVector< double >& );
+      //! Update output lambda range
+      int     set_lambdas   ( double = 0.0, double = 0.0, double = 0.0 );
+      //! Do lambda averaging
+      int     average_lambda( void );
       //! Match lambda in original list
       int     indexOfLambda ( double );
       //! Return list of cells/channels
@@ -61,8 +69,12 @@ class US_MwlData : public QObject
 
    private:
       QVector< QVector< double > >   ri_readings; // Raw input readings
+      QVector< QVector< double > >   av_readings; // Averaged readings
 
       QVector< double >              ri_wavelns;  // Raw input wavelengths
+      QVector< double >              av_wavelns;  // Averaged wavelengths
+
+      QVector< int >                 av_counts;   // Averaging counts per triple
 
       QList< DataHdr >    headers;     // Mwl input file headers
 
@@ -82,14 +94,20 @@ class US_MwlData : public QObject
       int       ncell;                 // Number of cells
       int       nchan;                 // Number of channels
       int       ncelchn;               // Number of Cell/Channels
-      int       nlambda;               // Number of wavelengths
-      int       ntriple;               // Number of triples
+      int       nlambda;               // Number of wavelengths (output)
+      int       nlamb_i;               // Number of wavelengths (raw input)
+      int       ntriple;               // Number of triples (output)
+      int       ntrip_i;               // Number of triples (raw input)
       int       npoint;                // Number radius points per scan
       int       npointt;               // Number points per triple
       int       curccx;                // Current cell/chan index
       int       dbg_level;             // Debug level
 
       QMap< QString, int >  counts;    // Map of counts ('File','Scan',...)
+
+      double    dlambda;               // Delta for output lambdas
+      double    slambda;               // Starting output lambda
+      double    elambda;               // Ending output lambda
 
       QString   cur_dir;               // Currently selected i/p data directory
       QString   runID;                 // Run ID

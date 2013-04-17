@@ -79,6 +79,9 @@ class US_Edit : public US_Widgets
       QStringList        files;
       QStringList        triples;
       QStringList        trip_rpms;
+      QStringList        celchns;
+      QStringList        slist_wvlns;
+      QStringList        slist_radii;
                       
       QwtPlot*           data_plot;
       QwtPlotCurve*      raw_curve;
@@ -93,6 +96,7 @@ class US_Edit : public US_Widgets
       QLabel*            lb_edtrsp;
       QLabel*            lb_gaps;
       QLabel*            lb_rpms;
+      QLabel*            lb_triple;
 
       QLineEdit*         le_investigator;
       QLineEdit*         le_info;
@@ -161,11 +165,36 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_excrng;
       QPushButton*       pb_incall;
 
-      QCheckBox*         ck_radius;
-      QCheckBox*         ck_waveln;
+      QRadioButton*      rb_radius;
+      QRadioButton*      rb_waveln;
 
       QGridLayout*       lo_radius;
       QGridLayout*       lo_waveln;
+
+      bool               isMwl;
+      bool               xaxis_radius;
+
+      double             dlambda;
+      double             slambda;
+      double             elambda;
+      double             plotrec;
+      double             odlimit;
+      double             excllfr;
+      double             excllto;
+
+      int                plotndx;
+      int                exclfrx;
+      int                excltox;
+      int                nwaveln;
+      int                nrpoint;
+      int                ncelchn;
+      int                ntriple;
+
+      QList< double >    wl_excludes;
+      QList< double >    plot_radii;
+      QList< int >       plot_wvlns;
+
+      QVector< QVector< double > >  rdata;
 
       // Private slots
       void set_pbColors      ( QPushButton* );
@@ -180,6 +209,7 @@ class US_Edit : public US_Widgets
       void plot_last         ( void );
       void plot_current      ( int  );
       void plot_scan         ( void );
+      void plot_mwl          ( void );
       void init_includes     ( void );
       
       void reset_excludes    ( void );
@@ -228,6 +258,20 @@ class US_Edit : public US_Widgets
       bool all_edits_done    ( void );
       void update_disk_db    ( bool );
       void show_mwl_controls ( bool );
+      void connect_mwl_ctrls ( bool );
+      void ldelta_value      ( double );
+      void lambda_start_value( int    );
+      void lambda_end_value  ( int    );
+      void xaxis_radius_on   ( bool   );
+      void xaxis_waveln_on   ( bool   );
+      void lambda_plot_value ( int    );
+      void lambda_plot_prev  (        );
+      void lambda_plot_next  (        );
+      void lambda_excl_from  ( int    );
+      void lambda_excl_to    ( int    );
+      void lambda_excl_range (        );
+      void lambda_include_all(        );
+      void od_radius_limit   ( double );
                              
       void reset             ( void );
       void reset_triple      ( void );
