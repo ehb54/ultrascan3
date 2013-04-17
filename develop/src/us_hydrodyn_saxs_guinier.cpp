@@ -40,6 +40,8 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
    QString csvlog = 
       "\"Source file\","
       "\"Notes\","
+      "\"Rc^2\","
+      "\"Rc^2 sd\","
       "\"Rc\","
       "\"Rc sd\","
       "\"I(0)\","
@@ -120,6 +122,8 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
    QString csvlog = 
       "\"Source file\","
       "\"Notes\","
+      "\"Rg^2\","
+      "\"Rg^2 sd\","
       "\"Rg\","
       "\"Rg sd\","
       "\"I(0)\","
@@ -485,7 +489,13 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          csvlog += 
             QString(
                     "\"%1\","
-                    "\"Ok\","
+                    "\"Ok\"," )
+            .arg( qsl_plotted_iq_names[i] )
+            ;
+
+         csvlog += 
+            QString(
+                    "%1,"
                     "%2,"
                     "%3,"
                     "%4,"
@@ -493,8 +503,10 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                     "%6,"
                     "%7,"
                     "%8,"
+                    "%9,"
                     )
-            .arg( qsl_plotted_iq_names[i] )
+            .arg( Rg * Rg )
+            .arg( Rg * Rg * ( sigb / Rg ) )
             .arg( Rg )
             .arg( sigb )
             .arg( Io )
@@ -832,7 +844,13 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          csvlog += 
             QString(
                     "\"%1\","
-                    "\"Ok\","
+                    "\"Ok\"," )
+            .arg( qsl_plotted_iq_names[i] )
+            ;
+
+         csvlog += 
+            QString(
+                    "%1,"
                     "%2,"
                     "%3,"
                     "%4,"
@@ -840,12 +858,14 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                     "%6,"
                     "%7,"
                     "%8,"
+                    "%9,"
                     )
-            .arg(qsl_plotted_iq_names[i])
-            .arg(Rg)
+            .arg( Rg * Rg )
+            .arg( Rg * Rg * ( sigb / Rg ) )
+            .arg( Rg )
             .arg( sigb )
-            .arg(Io)
-            .arg(siga)
+            .arg( Io )
+            .arg( siga )
             .arg( ML )
             .arg( ML_sd )
             .arg( ICL )
