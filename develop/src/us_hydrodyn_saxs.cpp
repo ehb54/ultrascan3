@@ -1434,6 +1434,17 @@ void US_Hydrodyn_Saxs::setupGUI()
    resid_widgets.push_back( cb_resid_show );
    cb_resid_show->hide();
 
+   cb_resid_show_errorbars = new QCheckBox(this);
+   cb_resid_show_errorbars->setText(tr(" SD error bars "));
+   cb_resid_show_errorbars->setEnabled(true);
+   cb_resid_show_errorbars->setChecked( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_cb_resid_show_errorbars" ) &&
+                                        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_show_errorbars" ] == "1" );
+   cb_resid_show_errorbars->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_resid_show_errorbars->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_resid_show_errorbars, SIGNAL(clicked()), SLOT(set_resid_show_errorbars()));
+   resid_widgets.push_back( cb_resid_show_errorbars );
+   cb_resid_show_errorbars->hide();
+
    cb_manual_guinier = new QCheckBox(this);
    cb_manual_guinier->setText(tr(" Manual Guinier "));
    cb_manual_guinier->setEnabled(true);
@@ -1760,6 +1771,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    QHBoxLayout *hbl_plot_resid_buttons = new QHBoxLayout( 0 );
    hbl_plot_resid_buttons->addWidget( cb_resid_show );
    hbl_plot_resid_buttons->addWidget( cb_manual_guinier );
+   hbl_plot_resid_buttons->addWidget( cb_resid_show_errorbars );
    hbl_plot_resid_buttons->addWidget( cb_resid_sd );
    hbl_plot_resid_buttons->addWidget( cb_resid_pct );
 

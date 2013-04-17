@@ -134,7 +134,8 @@ bool US_Saxs_Util::guinier_fit(
                                double &smax,
                                double &smin,
                                double &sRgmin,
-                               double &sRgmax
+                               double &sRgmax,
+                               bool   compute_Rc
                                )
 {
    vector < double > x;
@@ -191,7 +192,7 @@ bool US_Saxs_Util::guinier_fit(
       ;
    */
 
-   Rg = sqrt( -3e0 * b );
+   Rg = sqrt( ( compute_Rc ? -2e0 : -3e0 ) * b );
    sigb = fabs( Rg * sigb / b );
    Io = exp(a);
    siga = fabs( Io * siga / a );
@@ -261,7 +262,8 @@ bool US_Saxs_Util::guinier_fit2(
                                 double &sRgmin,
                                 double &sRgmax,
                                 unsigned int &beststart,
-                                unsigned int &bestend
+                                unsigned int &bestend,
+                                bool   compute_Rc
                        )
 {
    errormsg = "";
@@ -295,7 +297,8 @@ bool US_Saxs_Util::guinier_fit2(
                            smin,
                            smax,
                            sRgmin,
-                           sRgmax
+                           sRgmax,
+                           compute_Rc
                            ) )
          {
             log += mylog;
@@ -338,7 +341,8 @@ bool US_Saxs_Util::guinier_fit2(
                      smin,
                      smax,
                      sRgmin,
-                     sRgmax
+                     sRgmax,
+                     compute_Rc
                      ) )
    {
       return false;

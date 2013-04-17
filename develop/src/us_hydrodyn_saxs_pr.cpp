@@ -497,7 +497,7 @@ void US_Hydrodyn_Saxs::sync_conc_csv() // removes deleted curves, adds non-extan
       conc_csv.header.push_back("File");
       conc_csv.header.push_back("Concentration (mg/ml)");
       conc_csv.header.push_back("PSV (ml/g)");
-      conc_csv.header.push_back("I0 standard expt. (ml/g)");
+      conc_csv.header.push_back("I0 standard expt. (a.u.)");
    }
 
    // delete any non-plotted ones

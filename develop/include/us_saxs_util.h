@@ -248,7 +248,8 @@ class US_EXTERN US_Saxs_Util
                        double &smaX,
                        double &smin,
                        double &sRgmin,
-                       double &sRgmax
+                       double &sRgmax,
+                       bool   compute_Rc = false
                        );
 
 
@@ -273,7 +274,8 @@ class US_EXTERN US_Saxs_Util
                        double &sRgmin,
                        double &sRgmax,
                        unsigned int &beststart,
-                       unsigned int &bestend
+                       unsigned int &bestend,
+                       bool   compute_Rc = false
                        );
 
       int debug;

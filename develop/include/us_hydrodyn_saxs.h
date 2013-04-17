@@ -326,6 +326,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QCheckBox   *cb_resid_pct;
       QCheckBox   *cb_manual_guinier;
       QCheckBox   *cb_resid_sd;
+      QCheckBox   *cb_resid_show_errorbars;
       QCheckBox   *cb_resid_show;
 
       mQLineEdit  * le_manual_guinier_fit_start;
@@ -765,6 +766,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void set_resid_pct();
       void set_resid_sd();
+      void set_resid_show_errorbars();
       void set_resid_show();
 
       void hide_pr();

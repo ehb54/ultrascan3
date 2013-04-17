@@ -1293,6 +1293,7 @@ void US_Hydrodyn_Saxs::set_resid_show()
    } else {
       hide_widgets( resid_widgets );
       cb_resid_show->show();
+      cb_resid_show_errorbars->show();
       if ( started_in_expert_mode &&
            plotted_q.size() == 1 )
       {
@@ -1300,6 +1301,12 @@ void US_Hydrodyn_Saxs::set_resid_show()
       }
    }
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_show" ] = cb_resid_show->isChecked() ? "1" : "0";
+}
+
+void US_Hydrodyn_Saxs::set_resid_show_errorbars()
+{
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_show_errorbars" ] = cb_resid_show_errorbars->isChecked() ? "1" : "0";
+   set_guinier();
 }
 
 

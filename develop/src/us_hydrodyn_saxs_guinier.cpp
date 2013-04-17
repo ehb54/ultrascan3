@@ -671,7 +671,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                                sRgmin,
                                sRgmax,
                                beststart,
-                               bestend
+                               bestend,
+                               true
                                ) )
          {
             editor_msg( "red",
@@ -732,7 +733,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                               smax, // don't know why these are flipped
                               smin,
                               sRgmin,
-                              sRgmax
+                              sRgmax,
+                              true
                               ) )
          {
             editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
@@ -1034,26 +1036,65 @@ void US_Hydrodyn_Saxs::set_guinier()
    int niqsize = (int)plotted_Iq_curves.size();
 #endif
    clear_guinier_error_bars();
+   unsigned int total_points = 0;
+   bool do_errorbars = 
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_cb_resid_show_errorbars" ) &&
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_show_errorbars" ] == "1" ;
+
+   if ( cb_guinier->isChecked() )
+   {
+      if ( do_errorbars )
+      {
+         for ( int i = 0; i < niqsize; i++ )
+         {
+            total_points += (unsigned int )plotted_q[ i ].size();
+         }
+         if ( total_points > 100000 )
+         {
+            editor_msg( "dark red", "Notice: error bars are turned off due to too many curve-points" );
+            do_errorbars = false;
+         }
+      }
+
+      if ( do_errorbars )
+      {
+         pb_saxs_legend->setEnabled( false );
+#ifndef QT4
+         plot_saxs->setAutoLegend( false );
+         plot_saxs->enableLegend ( false, -1 );
+#else 
+         plot_saxs->legend()->setVisible( false );
+#endif
+      } else {
+         pb_saxs_legend->setEnabled( true );
+      }
+   } else {
+      pb_saxs_legend->setEnabled( true );
+   }
+
    for ( int i = 0; i < niqsize; i++ )
    {
       if ( cb_guinier->isChecked() )
       {
          if ( cb_cs_guinier->isChecked() )
          {
-            plot_guinier_error_bars( i, true );
+            if ( do_errorbars )
+            {
+               plot_guinier_error_bars( i, true );
+            }
             // replot the cs guinier bits
             if ( plotted_cs_guinier_valid.count(i) &&
                  plotted_cs_guinier_valid[i] == true )
             {
 #ifndef QT4
-               plotted_cs_Gp[i] = plot_saxs->insertCurve(QString("CS Guinier points %1").arg(i));
+               plotted_cs_Gp[i] = plot_saxs->insertCurve(QString("CS Gn. %1").arg( qsl_plotted_iq_names[ i ] ) );
                plot_saxs->setCurveStyle(plotted_cs_Gp[i], QwtCurve::Lines);
                plot_saxs->setCurveData(plotted_cs_Gp[i], (double *)&(plotted_cs_guinier_x[i][0]), (double *)&(plotted_cs_guinier_y[i][0]), 2);
 
                plot_saxs->setCurvePen(plotted_cs_Gp[i], QPen("dark red", pen_width, SolidLine));
 #else
                plotted_cs_Gp_curves[i] = new QwtPlotCurve(
-                                                          QString( "CS Guinier points %1" ).arg( i ) );
+                                                          QString( "CS Gp. %1" ).arg( qsl_plotted_iq_names[ i ] ) );
                plotted_cs_Gp_curves[i]->setStyle( QwtPlotCurve::Lines );
                plotted_cs_Gp_curves[i]->setData(
                                                 (double *)&(plotted_cs_guinier_x[i][0]), 
@@ -1074,14 +1115,13 @@ void US_Hydrodyn_Saxs::set_guinier()
                   y[ 0 ] = exp( plotted_cs_guinier_a[ i ] + plotted_cs_guinier_b[ i ] * x[ 0 ] );
                   y[ 1 ] = exp( plotted_cs_guinier_a[ i ] + plotted_cs_guinier_b[ i ] * x[ 1 ] );
 #ifndef QT4
-                  plotted_Gp_full[i] = plot_saxs->insertCurve(QString("Guinier points %1").arg(i));
+                  plotted_cs_Gp_full[i] = plot_saxs->insertCurve(QString(QString("CS Gn. %1").arg( qsl_plotted_iq_names[ i ] ) ) );
                   plot_saxs->setCurveStyle(plotted_cs_Gp_full[i], QwtCurve::Lines);
-                  plot_saxs->setCurveData(plotted_cs_Gp_full[i], (double *)&(x[0]), (double *)&(y[0]), 2);
-
-                  plot_saxs->setCurvePen(plotted_Gp_full[i], QPen("dark red", pen_width, DotLine));
+                  plot_saxs->setCurveData (plotted_cs_Gp_full[i], (double *)&(x[0]), (double *)&(y[0]), 2);
+                  plot_saxs->setCurvePen  (plotted_cs_Gp_full[i], QPen("dark red", pen_width, DotLine));
 #else
                   plotted_cs_Gp_curves_full[i] = new QwtPlotCurve(
-                                                          QString( "Guinier points %1" ).arg( i ) );
+                                                                  QString(QString("CS Gn. %1").arg( qsl_plotted_iq_names[ i ] ) ) );
                   plotted_cs_Gp_curves_full[i]->setStyle( QwtPlotCurve::Lines );
                   plotted_cs_Gp_curves_full[i]->setData(
                                                 (double *)&(x[0]), 
@@ -1112,19 +1152,22 @@ void US_Hydrodyn_Saxs::set_guinier()
          
          } else {
             // replot the guinier bits
-            plot_guinier_error_bars( i, false );
+            if ( do_errorbars )
+            {
+               plot_guinier_error_bars( i, false );
+            }
             if ( plotted_guinier_valid.count(i) &&
                  plotted_guinier_valid[i] == true )
             {
 #ifndef QT4
-               plotted_Gp[i] = plot_saxs->insertCurve(QString("Guinier points %1").arg(i));
+               plotted_Gp[i] = plot_saxs->insertCurve(QString("Gn. %1").arg( qsl_plotted_iq_names[ i ] ) );
                plot_saxs->setCurveStyle(plotted_Gp[i], QwtCurve::Lines);
                plot_saxs->setCurveData(plotted_Gp[i], (double *)&(plotted_guinier_x[i][0]), (double *)&(plotted_guinier_y[i][0]), 2);
 
                plot_saxs->setCurvePen(plotted_Gp[i], QPen("dark red", pen_width, SolidLine));
 #else
                plotted_Gp_curves[i] = new QwtPlotCurve(
-                                                       QString( "Guinier points %1" ).arg( i ) );
+                                                       QString("Gn. %1").arg( qsl_plotted_iq_names[ i ] ) );
                plotted_Gp_curves[i]->setStyle( QwtPlotCurve::Lines );
                plotted_Gp_curves[i]->setData(
                                              (double *)&(plotted_guinier_x[i][0]), 
@@ -1144,14 +1187,13 @@ void US_Hydrodyn_Saxs::set_guinier()
                   y[ 0 ] = exp( plotted_guinier_a[ i ] + plotted_guinier_b[ i ] * x[ 0 ] );
                   y[ 1 ] = exp( plotted_guinier_a[ i ] + plotted_guinier_b[ i ] * x[ 1 ] );
 #ifndef QT4
-                  plotted_Gp_full[i] = plot_saxs->insertCurve(QString("Guinier points %1").arg(i));
+                  plotted_Gp_full[i] = plot_saxs->insertCurve(QString("Gn. %1").arg( qsl_plotted_iq_names[ i ] ) );
                   plot_saxs->setCurveStyle(plotted_Gp_full[i], QwtCurve::Lines);
-                  plot_saxs->setCurveData(plotted_Gp_full[i], (double *)&(x[0]), (double *)&(y[0]), 2);
-
-                  plot_saxs->setCurvePen(plotted_Gp_full[i], QPen("dark red", pen_width, DotLine));
+                  plot_saxs->setCurveData (plotted_Gp_full[i], (double *)&(x[0]), (double *)&(y[0]), 2);
+                  plot_saxs->setCurvePen  (plotted_Gp_full[i], QPen("dark red", pen_width, DotLine));
 #else
                   plotted_Gp_curves_full[i] = new QwtPlotCurve(
-                                                          QString( "Guinier points %1" ).arg( i ) );
+                                                               QString("Gn. %1").arg( qsl_plotted_iq_names[ i ] ) );
                   plotted_Gp_curves_full[i]->setStyle( QwtPlotCurve::Lines );
                   plotted_Gp_curves_full[i]->setData(
                                                 (double *)&(x[0]), 
