@@ -310,6 +310,21 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             return false;
          }
       } else {
+         usu.wave["data"].q.clear();
+         usu.wave["data"].r.clear();
+         usu.wave["data"].s.clear();
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+         {
+            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart )
+            {
+               usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+               usu.wave["data"].r.push_back( plotted_I[ i ][ j ] );
+               if ( use_SD_weighting )
+               {
+                  usu.wave["data"].s.push_back( plotted_I_error[ i ][ j ] );
+               }
+            }
+         }
          unsigned int pstart = 0;
          unsigned int pend   = 0;
          {
@@ -425,7 +440,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             QString("")
             .sprintf(
                      "Guinier analysis of %s:\n"
-                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) MW %.2e (%.2e) qmin %.5f qmax %.5f qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
+                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) MW %.2e (%.2e) q^2 [ %.5f:%.5f] qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
                      , sigb
@@ -433,8 +448,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                      , siga
                      , MW
                      , MW_sd
-                     , smin
-                     , smax
+                     , smin * smin
+                     , smax * smax
                      , sRgmin
                      , sRgmax
                      , bestend - beststart + 1
@@ -593,6 +608,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
    double pointweightpower = 3e0;
    double p_guinier_minq = our_saxs_options->qstart;
    double p_guinier_maxq = our_saxs_options->qend;
+
+   cout << QString( "qstart %1 qend %2\n" ).arg( p_guinier_minq ).arg( p_guinier_maxq );
    
    // these are function output values
    double a;
@@ -651,6 +668,18 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             return false;
          }
       } else {
+         usu.wave["data"].q.clear();
+         usu.wave["data"].r.clear();
+         usu.wave["data"].s.clear();
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+         {
+            usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+            usu.wave["data"].r.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
+            if ( use_SD_weighting )
+            {
+               usu.wave["data"].s.push_back( plotted_q[ i ][ j ] * plotted_I_error[ i ][ j ] );
+            }
+         }
          unsigned int pstart = 0;
          unsigned int pend   = 0;
          {
@@ -757,7 +786,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             QString("")
             .sprintf(
                      "CS Guinier analysis of %s:\n"
-                     "Rc %.1f (%.1f) (A) I(0) %.2e (%.2e) M/L %.2e (%.2e) qRcmin %.3f qRcmax %.3f points used %u chi^2 %.2e\n"
+                     "Rc %.1f (%.1f) (A) I(0) %.2e (%.2e) M/L %.2e (%.2e) q^2 [%.5f:%.5f] qRcmin %.3f qRcmax %.3f points used %u chi^2 %.2e\n"
                      
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
@@ -766,6 +795,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                      , siga
                      , ML
                      , ML_sd
+                     , smin * smin
+                     , smax * smax
                      , sRgmin
                      , sRgmax
                      , bestend - beststart + 1
