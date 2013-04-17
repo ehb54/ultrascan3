@@ -125,46 +125,51 @@ DbgLv(1) << "MwDa: nscan ncell nchan" << nscan << ncell << nchan;
 
       if ( ii == 0 )
       {  // At the first file, read in the wavelengths
-         nlambda     = hd.nlambda;
-         ntriple     = nlambda * ncelchn;
+         nlamb_i     = hd.nlambda;
+         ntrip_i     = nlamb_i * ncelchn;
+         nlambda     = nlamb_i;
+         ntriple     = ntrip_i;
          npoint      = hd.npoint;
          npointt     = npoint  * nscan;
 DbgLv(1) << "MwDa: npoint nlambda" << npoint << nlambda;
 
-         read_lambdas( ds, ri_wavelns, nlambda );
+         read_lambdas( ds, ri_wavelns, nlamb_i );
 DbgLv(1) << "MwDa:   read_lambdas COMPLETE";
-int ww=nlambda-1;
+         av_wavelns  = ri_wavelns;
+         slambda     = ri_wavelns[ 0 ];
+         elambda     = ri_wavelns[ nlamb_i - 1 ];
+int ww=nlamb_i-1;
 DbgLv(1) << "MwDa:    w0 w1 w3 wi wj wk" << ri_wavelns[0] << ri_wavelns[1]
  << ri_wavelns[2] << ri_wavelns[ww-2] << ri_wavelns[ww-1] << ri_wavelns[ww];
          le_status->setText( QString( "%1 wavelengths ..." )
-             .arg( nlambda ) );
+             .arg( nlamb_i ) );
          qApp->processEvents();
 
          // And initialize the data vector
          QVector< double > wave_reads( npointt, 0.0 );
          ri_readings.clear  ();
-         ri_readings.reserve( ntriple );
+         ri_readings.reserve( ntrip_i );
 
-         for ( int tx = 0; tx < ntriple; tx++ )
+         for ( int tx = 0; tx < ntrip_i; tx++ )
          {
             ri_readings << wave_reads;
          }
-//DbgLv(1) << "MwDa:   ri_readings CREATED size" << ri_readings.size();
+DbgLv(1) << "MwDa:   ri_readings CREATED size" << ri_readings.size();
       }
       else
       {  // Otherwise, skip past wavelengths
-         ds.skipRawData( nlambda * 2 );
+         ds.skipRawData( nlamb_i * 2 );
       }
 
       int ccx    = hd.icell * nchan + hd.ichan;
-      int tripx  = ccx * nlambda;
+      int tripx  = ccx * nlamb_i;
       int scnx   = fname.section( ".", -2, -2 ).toInt() * npoint;
 //DbgLv(1) << "MwDa:  PREPARE rdata ccx tripx scnx" << ccx << tripx << scnx;
 //DbgLv(1) << "MwDa:  PREPARE   icell ichan nchan" << hd.icell << hd.ichan
 // << nchan << "channel" << hd.channel;
 
       // Read in the radius point data
-      for ( int wavx = 0; wavx < nlambda; wavx++ )
+      for ( int wavx = 0; wavx < nlamb_i; wavx++ )
       {
          read_rdata( ds, ri_readings[ tripx++ ], scnx, npoint );
       }
@@ -176,8 +181,8 @@ DbgLv(1) << "MwDa:    w0 w1 w3 wi wj wk" << ri_wavelns[0] << ri_wavelns[1]
    } // END: header read loop
 
 DbgLv(1) << "MwDa: wv0 wvm wvn" << ri_wavelns[0]
- << ri_wavelns[nlambda/2] << ri_wavelns[nlambda-1];
-DbgLv(1) << "MwDa: da20 40 m+40 n-40" << ri_readings[20][40]
+ << ri_wavelns[nlamb_i/2] << ri_wavelns[nlamb_i-1];
+DbgLv(1) << "MwDa: da20,40" << ri_readings[20][40] << "m+40 n-40"
  << ri_readings[20][npointt/2+40] << ri_readings[20][npointt-41];
    le_status->setText(
       QString( "Initial MWL import from %1 files is complete." )
@@ -189,6 +194,21 @@ DbgLv(1) << "MwDa: da20 40 m+40 n-40" << ri_readings[20][40]
 
 // Return a readings values vector for a given triple, scan
 int US_MwlData::rvalues( int& tripx, int& scanx, QVector< double >& rvs )
+{
+   int jj = scanx * npoint;
+   rvs.clear();
+   rvs.reserve( npoint );
+
+   for ( int ii = 0; ii < npoint; ii++ )
+   {
+      rvs << av_readings[ tripx ][ jj++ ];
+   }
+
+   return jj;
+}
+
+// Return a raw input readings values vector for a given triple, scan
+int US_MwlData::rvalues_raw( int& tripx, int& scanx, QVector< double >& rvs )
 {
    int jj = scanx * npoint;
    rvs.clear();
@@ -210,10 +230,24 @@ int US_MwlData::lambdas( QVector< double >& wls )
 
    for ( int ii = 0; ii < nlambda; ii++ )
    {
-      wls << ri_wavelns[ ii ];
+      wls << av_wavelns[ ii ];
    }
 
    return nlambda;
+}
+
+// Return the input raw lambdas vector for the data
+int US_MwlData::lambdas_raw( QVector< double >& wls )
+{
+   wls.clear();
+   wls.reserve( nlamb_i );
+
+   for ( int ii = 0; ii < nlamb_i; ii++ )
+   {
+      wls << ri_wavelns[ ii ];
+   }
+
+   return nlamb_i;
 }
 
 // Private slot to clear arrays
@@ -221,25 +255,33 @@ void US_MwlData::clear()
 {
    ri_readings.clear();     // Input raw readings
    ri_wavelns .clear();     // Input raw wavelengths
-   headers   .clear();     // MWL file headers
+   av_readings.clear();     // Averaged readings
+   av_wavelns .clear();     // Averaged wavelengths
+   av_counts  .clear();     // Counts of averaged points per triple
+   headers    .clear();     // MWL file headers
 
-   fpaths    .clear();
-   fnames    .clear();
-   cells     .clear();
-   cellchans .clear();
-   ccdescs   .clear();
-   triples   .clear();
-   trnodes   .clear();
+   fpaths     .clear();
+   fnames     .clear();
+   cells      .clear();
+   cellchans  .clear();
+   ccdescs    .clear();
+   triples    .clear();
+   trnodes    .clear();
 
    nfile      = 0;
    nscan      = 0;
    ncell      = 0;
    nchan      = 0;
    ncelchn    = 0;
+   nlamb_i    = 0;
+   ntrip_i    = 0;
    nlambda    = 0;
    ntriple    = 0;
    npoint     = 0;
    npointt    = 0;
+   dlambda    = 0.0;
+   slambda    = 0.0;
+   elambda    = 0.0;
 
    mapCounts();
 }
@@ -301,13 +343,13 @@ void US_MwlData::read_header( QDataStream& ds, DataHdr& hd )
 
 // Utility to read the lambdas from a data stream
 void US_MwlData::read_lambdas( QDataStream& ds, QVector< double >& wvs,
-      int& nlambda )
+      int& klambda )
 {
    char cbuf[ 4 ];
 
-   wvs.reserve( nlambda );
+   wvs.reserve( klambda );
 
-   for ( int ii = 0; ii < nlambda; ii++ )
+   for ( int ii = 0; ii < klambda; ii++ )
    { // Pick up each 2-byte value and convert to double
       ds.readRawData( cbuf, 2 );
       double wvv   = (double)hword( cbuf );
@@ -331,6 +373,166 @@ void US_MwlData::read_rdata( QDataStream& ds, QVector< double >& rvs,
    }
 }
 
+// Set Lambda ranges and points for output
+int US_MwlData::set_lambdas( double delta, double start, double end )
+{
+qDebug() << "SetLamb  d/s/e" << delta << start << end;
+   av_wavelns.clear();
+
+   slambda       = ri_wavelns[ 0 ];
+   elambda       = ri_wavelns[ nlamb_i - 1 ];
+   dlambda       = qRound( ( elambda - slambda ) / (double)( nlamb_i - 1 ) );
+
+   dlambda       = ( delta > 0.0 ) ? delta : dlambda;
+   slambda       = ( start > 0.0 ) ? start : slambda;
+   elambda       = ( end   > 0.0 ) ? end   : elambda;
+
+   dlambda       = qMax( dlambda, 1.0 );
+
+   if ( delta != 1.0 )
+   {  // Set up averaged lambdas
+      nlambda       = 0;
+      double wvalue = slambda;
+
+      while ( wvalue <= elambda )
+      {
+         av_wavelns << wvalue;
+         wvalue       += dlambda;
+         nlambda++;
+      }
+   }
+
+   else
+   {  // Set up non-averaged lambdas
+      nlambda       = 0;
+      int    wvxs   = indexOfLambda( slambda );
+      int    wvx    = wvxs;
+
+      while ( wvx < nlamb_i )
+      {  // Duplicate lambdas from the range of raw lambdas
+         av_wavelns << ri_wavelns[ wvx++ ];
+         nlambda++;
+      }
+
+      ntriple       = nlambda * ncelchn;
+      av_readings.fill( QVector< double >(), ntriple );
+
+      int    trxo   = 0;
+      int    trx    = wvxs;
+      int    ccx    = 0;
+      wvx           = wvxs;
+
+      while ( trxo < ntriple )
+      {  // Duplicate readings from the range of raw lambdas
+         av_readings[ trxo++ ] = ri_readings[ trx++ ];
+
+         if ( (++wvx) >= nlambda )
+         {
+            ccx++;
+            wvx        = wvxs;
+            trx        = ccx * nlamb_i + wvx;
+         }
+      }
+   }
+
+   elambda       = av_wavelns[ nlambda - 1 ];
+   ntriple       = nlambda * ncelchn;
+qDebug() << "SetLamb    d/s/e/n" << dlambda << slambda << elambda << nlambda;
+   return nlambda;
+}
+
+// Do lambda averaging
+int US_MwlData::average_lambda()
+{
+   if ( dlambda == 1.0 )
+      return ntriple;
+
+   int    wvx    = 0;
+   int    trx    = 0;
+   int    lrx    = ntriple;
+   int    ccx    = 0;
+   double dlambl = dlambda / 2.0;
+   double dlambu = dlambl - 0.1;
+DbgLv(1) << "AvLa: ntriple nlambda" << ntriple << nlambda;
+DbgLv(1) << "AvLa: av_read size" << av_readings.size();
+
+   if ( av_readings.size() == 0 )
+      av_readings.fill( QVector< double >(), ntriple );
+DbgLv(1) << "AvLa: av_read size" << av_readings.size();
+DbgLv(1) << "AvLa: ri_read size" << ri_readings.size();
+DbgLv(1) << "AvLa: av_wvln size" << av_wavelns.size() << nlambda;
+DbgLv(1) << "AvLa: ri_wvln size" << ri_wavelns.size() << nlamb_i;
+
+   while ( trx < lrx )
+   { // Loop to average over triples
+      av_readings[ trx ].clear();
+
+      double wavl   = av_wavelns[ wvx ];
+      double wavllo = wavl - dlambl;
+      double wavlup = wavl + dlambu;
+      double wvtest = wavl;
+      int    wvlo   = indexOfLambda( wavl );
+      int    wvup   = wvlo;
+//if ( wvx<3 || (wvx+4)> nlambda )
+//DbgLv(1) << "AvLa:  wvx trx" << wvx << trx << "wavl wvlo" << wavl << wvlo;
+
+      while ( wvlo >= 0 )
+      {
+         wvtest        = ri_wavelns[ wvlo ];
+         if ( wvtest < wavllo )
+         {
+            wvlo++;
+            break;
+         }
+         wvlo--;
+      }
+
+      while ( wvup < nlamb_i )
+      {
+         wvtest        = ri_wavelns[ wvup ];
+         if ( wvtest > wavlup )
+         {
+            break;
+         }
+         wvup++;
+      }
+
+      wvlo          = qMax( wvlo, 0 );
+      int    strxi  = ccx * nlamb_i + wvlo;
+      double wcsum  = (double)( wvup - wvlo );
+//if ( wvx<3 || (wvx+4)> nlambda )
+//DbgLv(1) << "AvLa:   wvlo wvup" << wvlo << wvup;
+
+      for ( int ii = 0; ii < npointt; ii++ )
+      {  // Average the total points (nscan * npoint) in a triple
+         int    trxi   = strxi;
+         double wvsum  = 0.0;
+
+         for ( int jj = wvlo; jj < wvup; jj++ )
+         {  // Sum over the averaging window of lambdas at this triple
+            wvsum        += ri_readings[ trxi++ ][ ii ];
+         }
+
+         av_readings[ trx ] << wvsum / wcsum;  // Store the averaged value
+      }
+
+      trx++;                                   // Bump the triple index
+      wvx++;                                   // Bump the lambda index
+
+      if ( wvx >= nlambda )
+      {  // End of lambdas for a cell/channel
+         ccx++;                                // Bump the cell/channel index
+         wvx           = 0;                    // And restart the lambda index
+      }
+
+      le_status->setText( tr( "Of %1 triples, have averaged %2" )
+         .arg( ntriple ).arg( trx ) );
+      qApp->processEvents();
+   }
+
+   return ntriple;
+}
+
 // Find the index of a lambda value in the input raw list of lambdas
 int US_MwlData::indexOfLambda( double lambda )
 {
@@ -340,7 +542,7 @@ int US_MwlData::indexOfLambda( double lambda )
    {  // If lambda in not in the list, find the nearest to a match
       double diflow  = 1e+99;
 
-      for ( int ii = 0; ii < nlambda; ii++ )
+      for ( int ii = 0; ii < nlamb_i; ii++ )
       {
          double difval  = qAbs( lambda - ri_wavelns[ ii ] );
 
@@ -386,7 +588,7 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
 
    // Build a raw data set for each triple
    char   dtype0   = 'R';
-   char   dtype1   = 'I';
+   char   dtype1   = intensity ? 'I' : 'A';
    int    ccx      = 0;
    int    wvx      = 0;
    int    hdx      = 0;
@@ -414,7 +616,7 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
          scan.rpm          = headers[ jhx ].rotor_speed;
          scan.seconds      = headers[ jhx ].elaps_time;
          scan.omega2t      = headers[ jhx ].omega2t;
-         scan.wavelength   = ri_wavelns[ wvx ];
+         scan.wavelength   = av_wavelns[ wvx ];
          scan.delta_r      = rad_inc;
          scan.readings.reserve( npoint );
          scan.interpolated = interpo;
@@ -424,7 +626,7 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
 
          for ( int kk = 0; kk < npoint; kk++ )
          {  // Set readings values
-            double dvalue     = ri_readings[ trx ][ rdx++ ];
+            double dvalue     = av_readings[ trx ][ rdx++ ];
             scan.readings << US_DataIO2::Reading( dvalue );
          } // END: radius points loop
 
@@ -433,11 +635,12 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
 
 //qDebug() << "BldRawD     trx" << trx << " saving allData...";
       allData << rdata;               // Append triple data to the array
-      le_status->setText( QString( "Of %1 raw AUCs, built %2" )
+      le_status->setText( tr( "Of %1 raw AUCs, built %2" )
           .arg( ntriple ).arg( trx + 1 ) );
       qApp->processEvents();
-
+      av_readings[ trx ].clear();
       wvx++;
+
       if ( wvx >= nlambda )
       {  // After final wavelength, reset at next cell/channel
          ccx++;
@@ -447,7 +650,7 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
 //qDebug() << "BldRawD   ccx wvx hdx" << ccx << wvx << hdx;
    } // END: triple loop
 
-   le_status->setText( QString( "All %1 raw AUCs have been build." )
+   le_status->setText( tr( "All %1 raw AUCs have been build." )
        .arg( ntriple ) );
    qApp->processEvents();
 
@@ -485,8 +688,13 @@ void US_MwlData::mapCounts( void )
    counts[ "cellchann" ]  = ncelchn;
    counts[ "lambda"    ]  = nlambda;
    counts[ "triple"    ]  = ntriple;
+   counts[ "lamb_i"    ]  = nlamb_i;
+   counts[ "trip_i"    ]  = ntrip_i;
    counts[ "point"     ]  = npoint;
    counts[ "point_all" ]  = npointt;
+   counts[ "dlambda"   ]  = dlambda;
+   counts[ "slambda"   ]  = slambda;
+   counts[ "elambda"   ]  = elambda;
 }
 
 // Read the run XML file and return its values

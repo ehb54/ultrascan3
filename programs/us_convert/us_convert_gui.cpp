@@ -104,7 +104,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    lb_runID->setVisible( false ); // for now
 
    le_runID = us_lineedit( "", 1, true );
-   le_runID ->setMinimumWidth( 225 );
+   le_runID ->setMinimumWidth( 280 );
    // Add this later, after tabs: settings->addWidget( le_runID, row++, 1 );
    le_runID ->setVisible ( false );  // for now
 
@@ -150,23 +150,53 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    connect( ct_tolerance, SIGNAL( valueChanged         ( double ) ),
                           SLOT  ( toleranceValueChanged( double ) ) );
 
-   // Set Lambda Average if MWL
-   lb_lambplot  = us_label   ( tr( "Plot Lambda:" ) );
-   cmb_lambplot = us_comboBox();
+   // Set up MWL controls
+   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( font );
+   ct_tolerance->adjustSize();
+   int   fwid    = fmet.maxWidth();
+   int   rhgt    = ct_tolerance->height();
+   int   lwid    = fwid * 4;
+   int   swid    = fwid * 5;
+   static QChar clambda( 955 );   // Lambda character
+
+   lb_mwlctrl   = us_banner  ( tr( "Multi-Wavelength Lambda Controls" ) );
+   lb_lambdelt  = us_label   ( tr( "%1 Delta:"    ).arg( clambda ) );
+   lo_average   = us_checkbox( tr( "Average Lambdas" ), ck_average, false );
+   ck_average ->setText      ( tr( "Average %1's" ).arg( clambda ) );
+   lb_lambstrt  = us_label   ( tr( "%1 Start:"    ).arg( clambda ) );
+   lb_lambstop  = us_label   ( tr( "%1 End:"      ).arg( clambda ) );
+   lb_lambplot  = us_label   ( tr( "Plot %1:"     ).arg( clambda ) );
+   ct_lambdelt  = us_counter ( 2, 0, 0, 0 );
+   ct_lambdelt->setFont( font );
+   ct_lambdelt->setRange( 1, 80, 1 );
+   ct_lambdelt->resize( swid, rhgt );
+   cb_lambstrt  = us_comboBox();
+   cb_lambstop  = us_comboBox();
+   cb_lambplot  = us_comboBox();
    pb_lambprev  = us_pushbutton( "previous", true, -2 );
    pb_lambnext  = us_pushbutton( "next",     true, -2 );
    pb_lambprev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
    pb_lambnext->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+   lb_lambstrt->setMinimumWidth( swid );
+   cb_lambstrt->setMinimumWidth( swid );
+   lb_lambstop->setMinimumWidth( swid );
+   cb_lambstop->setMinimumWidth( swid );
+   ct_lambdelt->setMinimumWidth( lwid );
+   settings->addWidget( lb_mwlctrl,   row++, 0, 1, 4 );
+   settings->addWidget( lb_lambdelt,  row,   0, 1, 1 );
+   settings->addWidget( ct_lambdelt,  row,   1, 1, 1 );
+   settings->addLayout( lo_average,   row++, 2, 1, 2 );
+   settings->addWidget( lb_lambstrt,  row,   0, 1, 1 );
+   settings->addWidget( cb_lambstrt,  row,   1, 1, 1 );
+   settings->addWidget( lb_lambstop,  row,   2, 1, 1 );
+   settings->addWidget( cb_lambstop,  row++, 3, 1, 1 );
    settings->addWidget( lb_lambplot,  row,   0, 1, 1 );
-   settings->addWidget( cmb_lambplot, row,   1, 1, 1 );
+   settings->addWidget( cb_lambplot,  row,   1, 1, 1 );
    settings->addWidget( pb_lambprev,  row,   2, 1, 1 );
    settings->addWidget( pb_lambnext,  row++, 3, 1, 1 );
 
    mwl_connect( true );
-   connect( pb_lambprev,   SIGNAL( clicked            (        ) ),
-                           SLOT  ( lambdaPrevClicked  (        ) ) );
-   connect( pb_lambnext,   SIGNAL( clicked            (        ) ),
-                           SLOT  ( lambdaNextClicked  (        ) ) );
 
    QLabel* lb_runinfo   = us_banner( tr( "Run Information" ) );
    settings->addWidget( lb_runinfo,   row++, 0, 1, 4 );
@@ -369,7 +399,8 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    main->addLayout( right );
 
    main->setStretch( 0, 2 );
-   main->setStretch( 1, 4 );
+   main->setStretch( 1, 3 );
+   adjustSize();
 
    reset();
 }
@@ -655,7 +686,11 @@ void US_ConvertGui::reimport( void )
       // Figure out all the triple combinations and convert data
       success = convert();
    
-      if ( ! success ) return;
+      if ( ! success )
+      {
+         QApplication::restoreOverrideCursor();
+         return;
+      }
    
       setTripleInfo();
    }
@@ -709,6 +744,7 @@ void US_ConvertGui::importMWL( void )
 
    // Read the data
    mwl_data.import_data( currentDir, le_description );
+//qDebug() << "MD.import_data DONE";
    isMwl       = true;
    runType     = "RI";
    mwl_data.run_values( runID, runType );
@@ -725,31 +761,75 @@ void US_ConvertGui::importMWL( void )
    scanTolerance = ( runType == "WA" ) ? 0.1 : 5.0;
    ct_tolerance->setValue( scanTolerance );
 
-   // Build the output data
+   show_mwl_control( true );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   le_description->setText( QString( "Building raw data AUCs ..." ) );
-   qApp->processEvents();
+
+   // Set initial lambda range; do 1st averaging; build the output data
+   if ( ck_average->isChecked() )
+   {  // Average lambdas
+      le_description->setText( tr( "Averaging over wavelengths ..." ) );
+      mwl_data.set_lambdas   ( );
+//qDebug() << "MD.set_lambdas DONE";
+      mwl_data.average_lambda( );
+//qDebug() << "MD.average_lambda DONE";
+   }
+
+   else
+   {  // Copy lambdas
+      le_description->setText( tr( "Duplicating wavelengths ..." ) );
+      slambda       = mwl_data.countOf( "slambda" );
+      elambda       = mwl_data.countOf( "elambda" );
+      mwl_data.set_lambdas   ( 1.0, slambda, elambda );
+      ct_lambdelt->setEnabled( false );
+//qDebug() << "MD.set_lambdas DONE  slambda elambda" << slambda << elambda;
+   }
+
+   ct_lambdelt   ->setValue( mwl_data.countOf( "dlambda" ) );
+   le_description->setText( tr( "Building raw data AUCs ..." ) );
    mwl_data.build_rawData ( allData );
+//qDebug() << "MD.build_rawData DONE";
 
    mwl_connect( false );
-   le_description->setText( QString( "Building Lambda list ..." ) );
+   le_description->setText( tr( "Building Lambda list ..." ) );
    qApp->processEvents();
 
    // Propagate initial lists of Lambdas
    QVector< double > lambdas;
-   int    nlamb_i  = mwl_data.lambdas( lambdas );
-   nlambda         = nlamb_i;
+   int    nlamb_i  = mwl_data.lambdas_raw( lambdas );
+//qDebug() << "MD.lambdas_raw DONE  nlamb_i" << nlamb_i << lambdas.size();
+   int    klamb    = 0;
    double rlamb_s  = lambdas[ 0 ];
-   double rlamb_e  = lambdas[ nlamb_i  - 1 ];
-   cmb_lambplot->clear();
+   double rlamb_e  = lambdas[ nlamb_i - 1 ];
+   double prvalu   = 0.0;
+//qDebug() << "MD.lambdas_raw DONE   rlamb_s rlamb_e" << rlamb_s << rlamb_e;
+   cb_lambstrt->clear();
+   cb_lambstop->clear();
+
+   for ( int ii = 0; ii < nlamb_i; ii++ )
+   {
+      double wvalu  = (double)qRound( lambdas[ ii ] );
+      if ( wvalu == prvalu )  continue;
+      prvalu        = wvalu;
+      QString clamb = QString::number( wvalu );
+      cb_lambstrt->addItem( clamb );
+      cb_lambstop->addItem( clamb );
+      klamb++;
+   }
+//qDebug() << "MD.lambdas_raw  nlamb_i klamb" << nlamb_i << klamb
+//   << "w0 wn" << lambdas[0] << lambdas[nlamb_i-1];
+
+   cb_lambstrt->setCurrentIndex( 0 );
+   cb_lambstop->setCurrentIndex( klamb - 1 );
+   nlambda         = mwl_data.lambdas( lambdas );
+   cb_lambplot->clear();
 
    for ( int ii = 0; ii < nlambda; ii++ )
    {
       QString clamb = QString::number( lambdas[ ii ] );
-      cmb_lambplot->addItem( clamb );
+      cb_lambplot->addItem( clamb );
    }
 
-   cmb_lambplot->setCurrentIndex( nlambda / 2 );
+   cb_lambplot->setCurrentIndex( nlambda / 2 );
 
    // Build list of triples
    QStringList celchns;
@@ -799,11 +879,13 @@ void US_ConvertGui::importMWL( void )
       pb_reference->setEnabled( true );
    }
 
-   QString lambmsg = tr( "%1 raw:  WL %2 to %3" )
-      .arg( nlamb_i ).arg( rlamb_s ).arg( rlamb_e );
+   static QChar clambda( 955 );   // Lambda character
+   QString lambmsg = tr( "%1 raw:  %2 %3 to %4" )
+      .arg( nlamb_i ).arg( clambda ).arg( rlamb_s ).arg( rlamb_e );
    le_lambraw->setText( lambmsg );
    qApp->processEvents();
    adjustSize();
+//qDebug() << "TE:" << lambmsg;
 }
 
 // Enable the common dialog controls when there is data
@@ -1636,13 +1718,25 @@ void US_ConvertGui::runDetails( void )
    // Create data structures for US_RunDetails2
    QStringList tripleDescriptions;
    QVector< US_DataIO2::RawData >  currentData;
-   for (int i = 0; i < triples.size(); i++ )
+   if ( isMwl )
    {
-      if ( triples[ i ].excluded ) continue;
+      for ( int ii = 0; ii < triples.size(); ii++ )
+      {
+         currentData << allData[ ii * nlambda ];
+         tripleDescriptions << triples[ ii ].tripleDesc;
+      }
+   }
 
-      // Only pass non-excluded triples
-      currentData << allData[ i ];
-      tripleDescriptions << triples[ i ].tripleDesc;
+   else
+   {
+      for ( int ii = 0; ii < triples.size(); ii++ )
+      {
+         if ( triples[ ii ].excluded ) continue;
+
+         // Only pass non-excluded triples
+         currentData << allData[ ii ];
+         tripleDescriptions << triples[ ii ].tripleDesc;
+      }
    }
 
    US_RunDetails2* dialog
@@ -2558,11 +2652,9 @@ qDebug() << "DBSv:  (2)trip0tripFilename" << triples[0].tripleFilename;
    }
 
    // Save updated files and prepare to transfer to DB
-qDebug() << "DBSv:  (3)trip0tripFilename" << triples[0].tripleFilename;
    status = saveUS3Disk();
    if ( status != US_Convert::OK )
       return;
-qDebug() << "DBSv:  (4)trip0tripFilename" << triples[0].tripleFilename;
 qDebug() << "DBSv:  local files saved";
 
    QString error = QString( "" );
@@ -2610,9 +2702,7 @@ qDebug() << "DBSv:  files count" << files.size();
    // and it should be updated. Otherwise, there shouldn't be any database
    // records with this runID found
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-qDebug() << "DBSv: call ExpData.saveToDB";
    status = ExpData.saveToDB( ( saveStatus == BOTH ), &db );
-qDebug() << "DBSv:  retn fr ExpData.saveToDB";
    QApplication::restoreOverrideCursor();
 
    if ( status == US_DB2::NO_PROJECT )
@@ -2656,11 +2746,8 @@ qDebug() << "DBSv:  retn fr ExpData.saveToDB";
    // changes most of the things here ( solution, rotor, etc. )
    // it would invalidate the data anyway.
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-qDebug() << "DBSv:  trip0tripFilename" << triples[0].tripleFilename;
-qDebug() << "DBSv: call writeRawDataToDB";
    QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData,
                                                          triples, dir, &db );
-qDebug() << "DBSv:  retn fr writeRawDataToDB";
    QApplication::restoreOverrideCursor();
 
    if ( ! writeStatus.isEmpty() )
@@ -2740,7 +2827,8 @@ void US_ConvertGui::saveReportsToDB( void )
 
       // Edit data ID is not known yet, so use 1. It goes in the report document
       //   table itself, so we're not overwriting anything.
-      US_Report::Status status = myReport.saveDocumentFromFile( dir, file, &db, 1, description );
+      US_Report::Status status = myReport.saveDocumentFromFile(
+            dir, file, &db, 1, description );
       if ( status != US_Report::REPORT_OK )
       {
          errorMsg += file + " was not saved to report database; error code: "
@@ -2977,7 +3065,7 @@ void US_ConvertGui::plot_titles( void )
 
    QString  cell       = parts[ 0 ];
    QString  channel    = parts[ 1 ];
-   QString  wl         = isMwl ? cmb_lambplot->currentText() : parts[ 2 ];
+   QString  wl         = isMwl ? cb_lambplot->currentText() : parts[ 2 ];
    QString  wavel      = QString::number( qRound( wl.toDouble() ) );
 
    // Plot Title and legends
@@ -3175,20 +3263,70 @@ void US_ConvertGui::db_error( const QString& error )
          tr( "Database returned the following error: \n" ) + error );
 }
 
+// User checked or unchecked average flag
+void US_ConvertGui::lambdaAverageCheck( bool checked )
+{
+   dlambda = checked ? qMax( dlambda, 2.0 ) : 1.0;
+   slambda = 0.0;
+   elambda = 0.0;
+
+   reset_lambdas();
+
+   dlambda = mwl_data.countOf( "dlambda" );
+   ct_lambdelt->setValue  ( dlambda );
+   ct_lambdelt->setEnabled( checked );
+}
+
+// User changed the Lambda Delta value
+void US_ConvertGui::lambdaDeltaChanged( double value )
+{
+qDebug() << "lambdaDeltaChanged" << value;
+   dlambda       = value;
+
+   slambda       = cb_lambstrt->currentText().toDouble();
+   elambda       = cb_lambstop->currentText().toDouble();
+
+   reset_lambdas();
+}
+
+// User changed the Lambda Start value
+void US_ConvertGui::lambdaStartChanged( int value )
+{
+qDebug() << "lambdaStartChanged" << value;
+   slambda       = cb_lambstrt->itemText( value ).toDouble();
+
+   dlambda       = ct_lambdelt->value();
+   elambda       = cb_lambstop->currentText().toDouble();
+
+   reset_lambdas();
+}
+
+// User changed the Lambda End value
+void US_ConvertGui::lambdaEndChanged( int value )
+{
+qDebug() << "lambdaEndChanged" << value;
+   elambda       = cb_lambstrt->itemText( value ).toDouble();
+
+   dlambda       = ct_lambdelt->value();
+   slambda       = cb_lambstrt->currentText().toDouble();
+
+   reset_lambdas();
+}
+
 // User changed the Lambda Plot value
 void US_ConvertGui::lambdaPlotChanged( int value )
 {
    triple_index( value );
 
    plot_current();
-   pb_lambprev ->setEnabled( value > 0 );
-   pb_lambnext ->setEnabled( ( value + 1 ) < cmb_lambplot->count() );
+   pb_lambprev->setEnabled( value > 0 );
+   pb_lambnext->setEnabled( ( value + 1 ) < cb_lambplot->count() );
 }
 
 // User clicked the Previous Lambda Plot button
 void US_ConvertGui::lambdaPrevClicked( )
 {
-   int wvx     = cmb_lambplot->currentIndex() - 1;
+   int wvx     = cb_lambplot->currentIndex() - 1;
 
    if ( wvx < 0 )
    {
@@ -3196,15 +3334,15 @@ void US_ConvertGui::lambdaPrevClicked( )
       pb_lambprev->setEnabled( false );
    }
 
-   pb_lambnext ->setEnabled( ( wvx + 1 ) < cmb_lambplot->count() );
-   cmb_lambplot->setCurrentIndex( wvx );
+   pb_lambnext->setEnabled( ( wvx + 1 ) < cb_lambplot->count() );
+   cb_lambplot->setCurrentIndex( wvx );
 }
 
 // User clicked the Next Lambda Plot button
 void US_ConvertGui::lambdaNextClicked( )
 {
-   int wvx     = cmb_lambplot->currentIndex() + 1;
-   int nlamb   = cmb_lambplot->count();
+   int wvx     = cb_lambplot->currentIndex() + 1;
+   int nlamb   = cb_lambplot->count();
 
    if ( ( wvx + 2 ) > nlamb )
    {
@@ -3212,25 +3350,34 @@ void US_ConvertGui::lambdaNextClicked( )
       pb_lambnext->setEnabled( false );
    }
 
-   pb_lambprev ->setEnabled( wvx > 0 );
-   cmb_lambplot->setCurrentIndex( wvx );
+   pb_lambprev->setEnabled( wvx > 0 );
+   cb_lambplot->setCurrentIndex( wvx );
 }
 
 // Show or hide MWL controls
 void US_ConvertGui::show_mwl_control( bool show )
 {
-   lb_lambplot ->setVisible( show );
-   cmb_lambplot->setVisible( show );
-   pb_lambprev ->setVisible( show );
-   pb_lambnext ->setVisible( show );
+   lb_mwlctrl ->setVisible( show );
+   lb_lambdelt->setVisible( show );
+   ct_lambdelt->setVisible( show );
+   lb_lambstrt->setVisible( show );
+   cb_lambstrt->setVisible( show );
+   lb_lambstop->setVisible( show );
+   cb_lambstop->setVisible( show );
+   lb_lambplot->setVisible( show );
+   cb_lambplot->setVisible( show );
+   pb_lambprev->setVisible( show );
+   pb_lambnext->setVisible( show );
+   lo_average ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+   lo_average ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
 
-   lb_scan     ->setVisible( !show );
-   lb_from     ->setVisible( !show );
-   ct_from     ->setVisible( !show );
-   lb_to       ->setVisible( !show );
-   ct_to       ->setVisible( !show );
-   pb_exclude  ->setVisible( !show );
-   pb_include  ->setVisible( !show );
+   lb_scan    ->setVisible( !show );
+   lb_from    ->setVisible( !show );
+   ct_from    ->setVisible( !show );
+   lb_to      ->setVisible( !show );
+   ct_to      ->setVisible( !show );
+   pb_exclude ->setVisible( !show );
+   pb_include ->setVisible( !show );
 
    adjustSize();
 }
@@ -3242,7 +3389,7 @@ void US_ConvertGui::triple_index( int wavx, int lstx )
 
    if ( isMwl )
    {  // For multi-wavelength, triple list,data indexes are different
-      int wvx       = ( wavx < 0 ) ? cmb_lambplot->currentIndex() : wavx;
+      int wvx       = ( wavx < 0 ) ? cb_lambplot->currentIndex() : wavx;
       int nwvlen    = mwl_data.countOf( "lambda" );
       tripDatax     = tripListx * nwvlen + wvx;
    }
@@ -3258,14 +3405,95 @@ void US_ConvertGui::mwl_connect( bool connect_on )
 {
    if ( connect_on )
    {
-      connect( cmb_lambplot,  SIGNAL( currentIndexChanged( int    ) ),
-                              SLOT  ( lambdaPlotChanged  ( int    ) ) );
+      connect( ck_average,   SIGNAL( toggled            ( bool   ) ),
+               this,         SLOT  ( lambdaAverageCheck ( bool   ) ) );
+      connect( ct_lambdelt,  SIGNAL( valueChanged       ( double ) ),
+               this,         SLOT  ( lambdaDeltaChanged ( double ) ) );
+      connect( cb_lambstrt,  SIGNAL( currentIndexChanged( int    ) ),
+               this,         SLOT  ( lambdaStartChanged ( int    ) ) );
+      connect( cb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
+               this,         SLOT  ( lambdaEndChanged   ( int    ) ) );
+      connect( cb_lambplot,  SIGNAL( currentIndexChanged( int    ) ),
+               this,         SLOT  ( lambdaPlotChanged  ( int    ) ) );
+      connect( pb_lambprev,  SIGNAL( clicked            (        ) ),
+               this,         SLOT  ( lambdaPrevClicked  (        ) ) );
+      connect( pb_lambnext,  SIGNAL( clicked            (        ) ),
+               this,         SLOT  ( lambdaNextClicked  (        ) ) );
    }
 
    else
    {
-      cmb_lambplot->disconnect();
+      ck_average ->disconnect();
+      ct_lambdelt->disconnect();
+      cb_lambstrt->disconnect();
+      cb_lambstop->disconnect();
+      cb_lambplot->disconnect();
+      pb_lambprev->disconnect();
+      pb_lambnext->disconnect();
    }
+}
+
+// Reset with lambda delta,range changes
+void US_ConvertGui::reset_lambdas()
+{
+   if ( ck_average->isChecked() )
+   {
+      dlambda       = ct_lambdelt->value();
+   }
+
+   else
+   {
+      dlambda       = 1.0;
+   }
+
+   slambda       = cb_lambstrt->currentText().toDouble();
+   elambda       = cb_lambstop->currentText().toDouble();
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+   mwl_data.set_lambdas   ( dlambda, slambda, elambda );
+   mwl_data.average_lambda( );
+   mwl_data.build_rawData ( allData );
+   mwl_connect( false );
+
+   QVector< double > lambdas;
+   nlambda       = mwl_data.lambdas( lambdas );
+   cb_lambplot->clear();
+
+   for ( int ii = 0; ii < nlambda; ii++ )
+   {
+      QString clamb = QString::number( lambdas[ ii ] );
+      cb_lambplot->addItem( clamb );
+   }
+
+   cb_lambplot->setCurrentIndex( nlambda / 2 );
+
+   // Build list of triples
+   QStringList celchns;
+   triples.clear();
+   QString     pwvln = " / " + QString::number( lambdas[ 0           ] )
+                       + ":" + QString::number( lambdas[ nlambda - 1 ] );
+
+   int ncelchn   = mwl_data.cellchannels( celchns );
+   nlambda       = mwl_data.countOf( "lambda" );
+
+   for ( int ii = 0; ii < ncelchn; ii++ )
+   {
+      US_Convert::TripleInfo triple;
+      triple.tripleID    = ii;
+      triple.tripleDesc  = celchns[ ii ] + pwvln;
+      triple.excluded    = false;
+
+      triples << triple;
+   }
+
+   mwl_connect( true );
+   QApplication::restoreOverrideCursor();
+
+   setTripleInfo();
+
+   init_excludes();
+
+   plot_current();
 }
 
 // Do pseudo-absorbance calculation and apply for MultiWaveLength case

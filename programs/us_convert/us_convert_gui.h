@@ -75,11 +75,21 @@ class US_ConvertGui : public US_Widgets
 
       QwtCounter*   ct_tolerance;
 
-      QLineEdit*    le_lambraw;
+      QLabel*       lb_mwlctrl;
+      QLabel*       lb_mwlctre;
+      QLabel*       lb_lambdelt;
+      QLabel*       lb_lambstrt;
+      QLabel*       lb_lambstop;
       QLabel*       lb_lambplot;
-      QComboBox*    cmb_lambplot;
+      QLineEdit*    le_lambraw;
+      QwtCounter*   ct_lambdelt;
+      QComboBox*    cb_lambstrt;
+      QComboBox*    cb_lambstop;
+      QComboBox*    cb_lambplot;
+      QCheckBox*    ck_average;
       QPushButton*  pb_lambprev;
       QPushButton*  pb_lambnext;
+      QGridLayout*  lo_average;
 
       QPushButton*  pb_editRuninfo;
       QPushButton*  pb_import;
@@ -124,6 +134,9 @@ class US_ConvertGui : public US_Widgets
       int           tripDatax;                 // Triple data index
       int           tripListx;                 // Triple list index
       int           nlambda;                   // Lambda (wavelength) count
+      double        dlambda;                   // Delta Lambda on output
+      double        slambda;                   // Start Lambda on output
+      double        elambda;                   // End Lambda on output
 
       bool show_plot_progress;
       US_Experiment      ExpData; 
@@ -174,6 +187,10 @@ class US_ConvertGui : public US_Widgets
       void enableControls    ( void );
       void runIDChanged      ( void );
       void toleranceValueChanged( double );     // signal to notify of change
+      void lambdaAverageCheck( bool );
+      void lambdaDeltaChanged( double );
+      void lambdaStartChanged( int );
+      void lambdaEndChanged  ( int );
       void lambdaPlotChanged ( int );
       void lambdaPrevClicked ( void );
       void lambdaNextClicked ( void );
@@ -212,6 +229,7 @@ class US_ConvertGui : public US_Widgets
       void update_disk_db    ( bool );
       void show_mwl_control  ( bool );
       void mwl_connect       ( bool );
+      void reset_lambdas     ( void );
       void help              ( void )
         { showHelp.show_help( "convert.html" ); };
 };
