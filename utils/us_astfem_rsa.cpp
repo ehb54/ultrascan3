@@ -3362,6 +3362,7 @@ void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData&     edata,
 {
    int  nscan  = edata.scanData.size();
    int  nconc  = edata.x.size();
+DbgLv(2) << "RSA:f nscan nconc" << nscan << nconc;
 
    fdata.id    = edata.description;
    fdata.cell  = edata.cell;
@@ -3380,7 +3381,7 @@ void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData&     edata,
 
       for ( int jj = 0; jj < nconc; jj++ )
       {
-         fscan->conc[ ii ] = edata.value( ii, jj );
+         fscan->conc[ jj ] = edata.value( ii, jj );
       }
    }
 
