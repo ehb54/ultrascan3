@@ -41,6 +41,7 @@
 
 //standard C and C++ defs:
 
+#include <set>
 #include <map>
 #include <vector>
 #include <string.h>
@@ -391,6 +392,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map    < unsigned int, double >                 plotted_guinier_b;
       map    < unsigned int, vector < double > >      plotted_guinier_x;
       map    < unsigned int, vector < double > >      plotted_guinier_y;
+      map    < unsigned int, map < double, double > > plotted_guinier_pts_removed;
 
       map    < unsigned int, bool >                   plotted_cs_guinier_valid;
       map    < unsigned int, bool >                   plotted_cs_guinier_plotted;
@@ -400,6 +402,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map    < unsigned int, double >                 plotted_cs_guinier_b;
       map    < unsigned int, vector < double > >      plotted_cs_guinier_x;
       map    < unsigned int, vector < double > >      plotted_cs_guinier_y;
+      map    < unsigned int, map < double, double > > plotted_cs_guinier_pts_removed;
 
       vector < vector < double > >                    plotted_pr;
       vector < vector < double > >                    plotted_pr_not_normalized;
@@ -446,10 +449,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void set_current_method_buttons();
       void update_iqq_suffix();
 
-      
-
    private:
 
+      void plot_guinier_pts_removed( int i, bool cs = false );
       void plot_guinier_error_bars( int i, bool cs = false );
       void clear_guinier_error_bars();
 
@@ -457,6 +459,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void do_plot_resid( vector < double > & x, 
                           vector < double > & y, 
                           vector < double > & e, 
+                          QColor qc );
+
+      void do_plot_resid( vector < double > & x, 
+                          vector < double > & y, 
+                          vector < double > & e, 
+                          map < double, double > & pts_removed,
                           QColor qc );
 
       void do_plot_resid( vector < double > & x_d, 

@@ -215,16 +215,39 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    usu.wave["data"].r.clear();
    usu.wave["data"].s.clear();
 
-
    bool use_SD_weighting = our_saxs_options->guinier_use_sd;
-   if ( use_SD_weighting &&
-        ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
-          !is_nonzero_vector( plotted_I_error[ i ] ) ) )
+   bool use_guinier_outlier_reject = our_saxs_options->guinier_outlier_reject;
+
+   if ( use_SD_weighting )
    {
-      editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or zero" ) )
-                  .arg( qsl_plotted_iq_names[ i ] ) );
-      use_SD_weighting = false;
+      if ( use_guinier_outlier_reject )
+      {
+         if ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
+              is_zero_vector( plotted_I_error[ i ] ) )
+         {
+            editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or all zeros" ) )
+                        .arg( qsl_plotted_iq_names[ i ] ) );
+            use_SD_weighting = false;
+         } 
+      } else {
+         if ( ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
+                !is_nonzero_vector( plotted_I_error[ i ] ) ) )
+         {
+            editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or zero" ) )
+                        .arg( qsl_plotted_iq_names[ i ] ) );
+            use_SD_weighting = false;
+         }
+      }
    }
+      
+   if ( use_guinier_outlier_reject && !use_SD_weighting )
+   {
+      editor_msg( "dark red", QString( tr( "Notice: Turning off outlier rejection for Guinier fit of %1 since SD weighting is off" ) )
+                  .arg( qsl_plotted_iq_names[ i ] ) );
+
+      use_guinier_outlier_reject = false;
+   }
+
 
    //    if ( use_SD_weighting )
    //    {
@@ -233,11 +256,13 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    //       cout << "uhsg: not using sd weighting\n";
    //    }
 
+   // vector < double > q2;
    for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
    {
       if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart )
       {
          usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+         // q2.push_back(  plotted_q2[ i ][ j ] );
          usu.wave["data"].r.push_back( plotted_I[ i ][ j ] );
          if ( use_SD_weighting )
          {
@@ -245,9 +270,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          }
       }
    }
-   // US_Vector::printvector( "q", usu.wave["data"].q );
-   // US_Vector::printvector( "I", usu.wave["data"].r );
-   // US_Vector::printvector( "e", usu.wave["data"].s );
+   
+   // US_Vector::printvector3( "q2 I e", q2 /* usu.wave["data"].q */, usu.wave["data"].r, usu.wave["data"].s );
 
    QString log;
 
@@ -275,6 +299,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    unsigned int bestend;
 
    bool too_few_points = plotted_q[i].size() <= 5;
+
+   unsigned int pts_removed = 0;
 
    if ( !too_few_points )
    {
@@ -349,32 +375,78 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          bestend = pend;
          beststart = pstart;
 
-         if ( 
-             !usu.guinier_plot(
-                               "guinier",
-                               "data"
-                               )   ||
-             !usu.guinier_fit(
-                              log,
-                              "guinier", 
-                              pstart,
-                              pend,
-                              a,
-                              b,
-                              siga,
-                              sigb,
-                              chi2,
-                              Rg,
-                              Io,
-                              smax, // don't know why these are flipped
-                              smin,
-                              sRgmin,
-                              sRgmax
-                              ) )
+         if ( use_guinier_outlier_reject )
          {
-            editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
-                           .arg(qsl_plotted_iq_names[i]));
-            return false;
+            // puts( "outlier reject" );
+            map < double, double > removed;
+            if ( 
+                !usu.guinier_plot(
+                                  "guinier",
+                                  "data"
+                                  )   ||
+                !usu.guinier_fit_with_removal(
+                                              log,
+                                              "guinier", 
+                                              pstart,
+                                              pend,
+                                              a,
+                                              b,
+                                              siga,
+                                              sigb,
+                                              chi2,
+                                              Rg,
+                                              Io,
+                                              smax, // don't know why these are flipped
+                                              smin,
+                                              sRgmin,
+                                              sRgmax,
+                                              our_saxs_options->guinier_outlier_reject_dist,
+                                              removed,
+                                              pts_removed
+                                              ) )
+            {
+               editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
+                              .arg(qsl_plotted_iq_names[i]));
+               return false;
+            }
+            // cout << QString( "removed size: %1 pts_removed %2\n" ).arg( removed.size() ).arg( pts_removed );
+            if ( removed.size() )
+            {
+               plotted_guinier_pts_removed[ i ] = removed;
+            } else {
+               plotted_guinier_pts_removed.erase( i );
+            }
+            // cout << QString( "after gor: smin^2 %1 smax^2 %2\n" ).arg( smin * smin ).arg( smax * smax );
+         } else {
+            plotted_guinier_pts_removed.erase( i );
+            if ( 
+                !usu.guinier_plot(
+                                  "guinier",
+                                  "data"
+                                  )   ||
+                !usu.guinier_fit(
+                                 log,
+                                 "guinier", 
+                                 pstart,
+                                 pend,
+                                 a,
+                                 b,
+                                 siga,
+                                 sigb,
+                                 chi2,
+                                 Rg,
+                                 Io,
+                                 smax, // don't know why these are flipped
+                                 smin,
+                                 sRgmin,
+                                 sRgmax
+                                 ) )
+            {
+               editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
+                              .arg(qsl_plotted_iq_names[i]));
+               return false;
+            }
+            // cout << QString( "after g: smin^2 %1 smax^2 %2\n" ).arg( smin * smin ).arg( smax * smax );
          }
       }         
 
@@ -425,12 +497,12 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          double MW_sd;
          double ICL;
 
-         if ( mw_from_I0( qsl_plotted_iq_names[ i ], siga, MW_sd, ICL ) )
-         {
-            // cout << QString( "siga %1 MW_sd %2 ICL %3\n" ).arg( siga ).arg( MW_sd ).arg( ICL );
-         } else {
-            // cout << errormsg << endl;
-         }
+         //          if ( mw_from_I0( qsl_plotted_iq_names[ i ], siga, MW_sd, ICL ) )
+         //          {
+         //             // cout << QString( "siga %1 MW_sd %2 ICL %3\n" ).arg( siga ).arg( MW_sd ).arg( ICL );
+         //          } else {
+         //             // cout << errormsg << endl;
+         //          }
 
          if ( !mw_from_I0( qsl_plotted_iq_names[ i ], Io, MW, ICL ) )
          {
@@ -439,6 +511,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          } else {
             // cout << QString( "I0 %1 MW %2 ICL %3\n" ).arg( Io ).arg( MW ).arg( ICL );
          }
+
+         MW_sd = Io ? MW * siga / Io : 0e0;
 
          report = 
             QString("")
@@ -456,7 +530,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                      , smax * smax
                      , sRgmin
                      , sRgmax
-                     , bestend - beststart + 1
+                     , bestend - beststart + 1 - pts_removed
                      , chi2
                      );
          
@@ -586,25 +660,44 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
       return false;
    }
 
-   bool use_SD_weighting = our_saxs_options->guinier_use_sd;
-   if ( use_SD_weighting &&
-        ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
-          !is_nonzero_vector( plotted_I_error[ i ] ) ) )
-   {
-      editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or zero" ) )
-                  .arg( qsl_plotted_iq_names[ i ] ) );
-      use_SD_weighting = false;
-   }
-
    US_Saxs_Util usu;
    usu.wave["data"].q.clear();
    usu.wave["data"].r.clear();
    usu.wave["data"].s.clear();
+
+   bool use_SD_weighting = our_saxs_options->guinier_use_sd;
+   bool use_guinier_outlier_reject = our_saxs_options->guinier_outlier_reject;
+
+   if ( use_SD_weighting )
+   {
+      if ( use_guinier_outlier_reject )
+      {
+         if ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
+              is_zero_vector( plotted_I_error[ i ] ) )
+         {
+            editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or all zeros" ) )
+                        .arg( qsl_plotted_iq_names[ i ] ) );
+            use_SD_weighting = false;
+         } 
+      } else {
+         if ( ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
+                !is_nonzero_vector( plotted_I_error[ i ] ) ) )
+         {
+            editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or zero" ) )
+                        .arg( qsl_plotted_iq_names[ i ] ) );
+            use_SD_weighting = false;
+         }
+      }
+   }
+
+   // vector < double > q2;
+
    for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
    {
       if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart )
       {
          usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+         // q2.push_back(  plotted_q2[ i ][ j ] );
          usu.wave["data"].r.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
          if ( use_SD_weighting )
          {
@@ -612,6 +705,9 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          }
       }
    }
+
+   // US_Vector::printvector3( "q2 I e", q2 /* usu.wave["data"].q */, usu.wave["data"].r, usu.wave["data"].s );
+
    QString log;
 
    int pointsmin = our_saxs_options->pointsmin;
@@ -621,7 +717,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
    double p_guinier_minq = our_saxs_options->qstart;
    double p_guinier_maxq = our_saxs_options->qend;
 
-   cout << QString( "qstart %1 qend %2\n" ).arg( p_guinier_minq ).arg( p_guinier_maxq );
+   // cout << QString( "qstart %1 qend %2\n" ).arg( p_guinier_minq ).arg( p_guinier_maxq );
    
    // these are function output values
    double a;
@@ -640,6 +736,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
    unsigned int bestend;
 
    bool too_few_points = plotted_q[i].size() <= 5;
+
+   unsigned int pts_removed = 0;
 
    if ( !too_few_points )
    {
@@ -713,36 +811,80 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          bestend = pend;
          beststart = pstart;
 
-         if ( 
-             !usu.guinier_plot(
-                               "guinier",
-                               "data"
-                               )   ||
-             !usu.guinier_fit(
-                              log,
-                              "guinier", 
-                              pstart,
-                              pend,
-                              a,
-                              b,
-                              siga,
-                              sigb,
-                              chi2,
-                              Rg,
-                              Io,
-                              smax, // don't know why these are flipped
-                              smin,
-                              sRgmin,
-                              sRgmax,
-                              true
-                              ) )
+         if ( use_guinier_outlier_reject )
          {
-            editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
-                           .arg(qsl_plotted_iq_names[i]));
-            return false;
+            // puts( "outlier reject" );
+            map < double, double > removed;
+            if ( 
+                !usu.guinier_plot(
+                                  "guinier",
+                                  "data"
+                                  )   ||
+                !usu.guinier_fit_with_removal(
+                                              log,
+                                              "guinier", 
+                                              pstart,
+                                              pend,
+                                              a,
+                                              b,
+                                              siga,
+                                              sigb,
+                                              chi2,
+                                              Rg,
+                                              Io,
+                                              smax, // don't know why these are flipped
+                                              smin,
+                                              sRgmin,
+                                              sRgmax,
+                                              our_saxs_options->guinier_outlier_reject_dist,
+                                              removed,
+                                              pts_removed
+                                              ) )
+            {
+               editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
+                              .arg(qsl_plotted_iq_names[i]));
+               return false;
+            }
+            // cout << QString( "removed size: %1 pts_removed %2\n" ).arg( removed.size() ).arg( pts_removed );
+            if ( removed.size() )
+            {
+               plotted_cs_guinier_pts_removed[ i ] = removed;
+            } else {
+               plotted_cs_guinier_pts_removed.erase( i );
+            }
+            // cout << QString( "after gor: smin^2 %1 smax^2 %2\n" ).arg( smin * smin ).arg( smax * smax );
+         } else {
+            plotted_cs_guinier_pts_removed.erase( i );
+            if ( 
+                !usu.guinier_plot(
+                                  "guinier",
+                                  "data"
+                                  )   ||
+                !usu.guinier_fit(
+                                 log,
+                                 "guinier", 
+                                 pstart,
+                                 pend,
+                                 a,
+                                 b,
+                                 siga,
+                                 sigb,
+                                 chi2,
+                                 Rg,
+                                 Io,
+                                 smax, // don't know why these are flipped
+                                 smin,
+                                 sRgmin,
+                                 sRgmax,
+                                 true
+                                 ) )
+            {
+               editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
+                              .arg(qsl_plotted_iq_names[i]));
+               return false;
+            }
          }
       }
-
       // cout << "guinier siga " << siga << endl;
       // cout << "guinier sigb " << sigb << endl;
    
@@ -790,18 +932,18 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          double ML_sd;
          double ICL;
 
-         ml_from_qI0( qsl_plotted_iq_names[ i ], siga, ML_sd, ICL );
+         // ml_from_qI0( qsl_plotted_iq_names[ i ], Io, ML_sd, ICL );
          if ( !mw_from_I0( qsl_plotted_iq_names[ i ], Io, ML, ICL ) )
          {
             editor_msg( "red", errormsg );
          }
+         ML_sd = Io ? ML * siga / Io : 0e0;
 
          report = 
             QString("")
             .sprintf(
                      "CS Guinier analysis of %s:\n"
                      "Rc %.1f (%.1f) (A) I(0) %.2e (%.2e) M/L %.2e (%.2e) q^2 [%.5f:%.5f] qRcmin %.3f qRcmax %.3f points used %u chi^2 %.2e\n"
-                     
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
                      , sigb 
@@ -813,7 +955,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                      , smax * smax
                      , sRgmin
                      , sRgmax
-                     , bestend - beststart + 1
+                     , bestend - beststart + 1 - pts_removed
                      , chi2
                      );
          
@@ -882,7 +1024,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                     "%5,"
                     "%6,"
                     "%7,"
-                    "%8"
+                    "%8,"
                     )
             .arg(smin)
             .arg(smax)
@@ -1049,7 +1191,7 @@ void US_Hydrodyn_Saxs::set_guinier()
          {
             total_points += (unsigned int )plotted_q[ i ].size();
          }
-         if ( total_points > 100000 )
+         if ( total_points > 20000 )
          {
             editor_msg( "dark red", "Notice: error bars are turned off due to too many curve-points" );
             do_errorbars = false;
@@ -1070,6 +1212,11 @@ void US_Hydrodyn_Saxs::set_guinier()
       }
    } else {
       pb_saxs_legend->setEnabled( true );
+#ifndef QT4
+      plot_saxs->removeMarkers();
+#else
+#warn check how to do this in qt4
+#endif
    }
 
    for ( int i = 0; i < niqsize; i++ )
@@ -1149,7 +1296,7 @@ void US_Hydrodyn_Saxs::set_guinier()
             plotted_Iq_curves[i]->setStyle( QwtPlotCurve::Lines );
             plotted_Iq_curves[i]->setSymbol( QwtSymbol( sym ) );
 #endif
-         
+            plot_guinier_pts_removed( i, true );
          } else {
             // replot the guinier bits
             if ( do_errorbars )
@@ -1221,6 +1368,7 @@ void US_Hydrodyn_Saxs::set_guinier()
             // plotted_Iq_curves[i]->setStyle( QwtPlotCurve::Lines );
             plotted_Iq_curves[i]->setSymbol( QwtSymbol( sym ) );
 #endif
+            plot_guinier_pts_removed( i, false );
          }            
       } else {
          // remove any Guinier lines
@@ -1390,6 +1538,7 @@ void US_Hydrodyn_Saxs::clear_guinier()
    plotted_guinier_b.clear();
    plotted_guinier_x.clear();
    plotted_guinier_y.clear();
+   plotted_guinier_pts_removed.clear();
 }
 
 void US_Hydrodyn_Saxs::clear_cs_guinier()
@@ -1440,6 +1589,7 @@ void US_Hydrodyn_Saxs::clear_cs_guinier()
    plotted_cs_guinier_b.clear();
    plotted_cs_guinier_x.clear();
    plotted_cs_guinier_y.clear();
+   plotted_cs_guinier_pts_removed.clear();
 }
 
 void US_Hydrodyn_Saxs::adjust_wheel( double pos )
@@ -1490,6 +1640,76 @@ void US_Hydrodyn_Saxs::manual_guinier_fit_end_focus( bool hasFocus )
    }
 }
 
+void US_Hydrodyn_Saxs::plot_guinier_pts_removed( int i, bool cs )
+{
+   // plot red X's for each removed pt
+   if ( cs )
+   {
+      // puts( "plot_guinier_pts_removed cs" );
+      if ( !plotted_cs_guinier_pts_removed.count( i ) ||
+           !plotted_cs_guinier_pts_removed[ i ].size() )
+      {
+         // puts( "no cs pts removed" );
+         return;
+      }
+      QwtSymbol sym;
+      sym.setStyle(QwtSymbol::XCross);
+      sym.setSize(12);
+      sym.setBrush(Qt::red);
+      sym.setPen  (Qt::red);
+      for ( map < double, double >::iterator it = plotted_cs_guinier_pts_removed[ i ].begin();
+            it != plotted_cs_guinier_pts_removed[ i ].end();
+            it++ )
+      {
+         
+#ifndef QT4
+         long marker = plot_saxs->insertMarker();
+         plot_saxs->setMarkerSymbol( marker, sym );
+         plot_saxs->setMarkerPos   ( marker, it->first, exp( it->second ) );
+#else
+         QwtPlotMarker* marker = new QwtPlotMarker;
+         marker->setSymbol( sym );
+         marker->setValue( it->first, exp( it->second ) );
+         marker->attach( plot_saxs );
+#endif
+      }
+   } else {
+      // puts( "plot_guinier_pts_removed" );
+      if ( !plotted_guinier_pts_removed.count( i ) ||
+           !plotted_guinier_pts_removed[ i ].size() )
+      {
+         // puts( "no pts removed" );
+         return;
+      }
+      // plot red X's 
+      QwtSymbol sym;
+      sym.setStyle(QwtSymbol::XCross);
+      sym.setSize(12);
+      sym.setBrush(Qt::red);
+      sym.setPen  (Qt::red);
+
+      for ( map < double, double >::iterator it = plotted_guinier_pts_removed[ i ].begin();
+            it != plotted_guinier_pts_removed[ i ].end();
+            it++ )
+      {
+
+         // cout << QString( "red marker %1 %2 %3\n" ).arg( it->first ).arg( it->second ).arg( exp( it->second ) );
+         
+#ifndef QT4
+         long marker = plot_saxs->insertMarker();
+         plot_saxs->setMarkerSymbol( marker, sym );
+         plot_saxs->setMarkerPos   ( marker, it->first, exp( it->second ) );
+#else
+         QwtPlotMarker* marker = new QwtPlotMarker;
+         marker->setSymbol( sym );
+         marker->setValue( it->first, exp( it->second ) );
+         marker->attach( plot_saxs );
+#endif
+      }
+   }
+}
+
+
 void US_Hydrodyn_Saxs::plot_guinier_error_bars( int i, bool cs )
 {
    // take the curve and if sd's exist, plot a little line
@@ -1515,7 +1735,7 @@ void US_Hydrodyn_Saxs::plot_guinier_error_bars( int i, bool cs )
             I = plotted_q[ i ][ q ] * plotted_I[ i ][ q ];
             y[ 0 ] = I - e;
             y[ 1 ] = I + e;
-
+            // cout << QString( "errorbar q2 %1 r %2 sd %3\n" ).arg(  plotted_q2[ i ][ q ] ).arg( I ).arg( e );
 #ifndef QT4
             plotted_guinier_error_bars.push_back( plot_saxs->insertCurve( qsl_plotted_iq_names[ i ] ) );
             plot_saxs->setCurveStyle( plotted_guinier_error_bars.back(), QwtCurve::Lines);
@@ -1546,6 +1766,7 @@ void US_Hydrodyn_Saxs::plot_guinier_error_bars( int i, bool cs )
             x[ 0 ] = x[ 1 ] = plotted_q2[ i ][ q ];
             y[ 0 ] = I - e;
             y[ 1 ] = I + e;
+            // cout << QString( "errorbar q2 %1 r %2 sd %3\n" ).arg(  plotted_q2[ i ][ q ] ).arg( I ).arg( e );
 
 #ifndef QT4
             plotted_guinier_error_bars.push_back( plot_saxs->insertCurve( qsl_plotted_iq_names[ i ] ) );
@@ -1588,3 +1809,4 @@ void US_Hydrodyn_Saxs::clear_guinier_error_bars()
 void US_Hydrodyn_Saxs::manual_guinier_process()
 {
 }
+

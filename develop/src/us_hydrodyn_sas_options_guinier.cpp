@@ -112,7 +112,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_cs_qstart->setEnabled(true);
    le_cs_qstart->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_cs_qstart->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(le_cs_qstart, SIGNAL( textChanged( const QString & )), SLOT(update_qstart( const QString & )));
+   connect(le_cs_qstart, SIGNAL( textChanged( const QString & )), SLOT(update_cs_qstart( const QString & )));
 
    lbl_cs_qend = new QLabel(tr(" Maximum q^2 value : "), this);
    lbl_cs_qend->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -126,7 +126,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_cs_qend->setEnabled(true);
    le_cs_qend->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_cs_qend->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(le_cs_qend, SIGNAL( textChanged( const QString & )), SLOT(update_qend( const QString & )));
+   connect(le_cs_qend, SIGNAL( textChanged( const QString & )), SLOT(update_cs_qend( const QString & )));
 
    lbl_guinier_and_cs_guinier = new QLabel(tr("Guinier and CS Guinier Options:"), this);
    lbl_guinier_and_cs_guinier->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -194,7 +194,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_guinier_outlier_reject_dist->setEnabled(true);
    le_guinier_outlier_reject_dist->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_guinier_outlier_reject_dist->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(le_guinier_outlier_reject_dist, SIGNAL( textChanged( const QString & )), SLOT(update_qstart( const QString & )));
+   connect(le_guinier_outlier_reject_dist, SIGNAL( textChanged( const QString & )), SLOT(update_guinier_outlier_reject_dist( const QString & )));
 
    cb_guinier_csv = new QCheckBox(this);
    cb_guinier_csv->setText(tr(" Save Guinier results to csv file: "));
@@ -588,12 +588,31 @@ void US_Hydrodyn_SasOptionsGuinier::update_psv( const QString & str )
 void US_Hydrodyn_SasOptionsGuinier::set_guinier_use_sd()
 {
    (*saxs_options).guinier_use_sd = cb_guinier_use_sd->isChecked();
+   if ( !cb_guinier_use_sd->isChecked() &&
+        cb_guinier_outlier_reject->isChecked() )
+   {
+      cb_guinier_outlier_reject->setChecked( false );
+      set_guinier_outlier_reject();
+   }
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SasOptionsGuinier::set_guinier_outlier_reject()
 {
    (*saxs_options).guinier_outlier_reject = cb_guinier_outlier_reject->isChecked();
+   if ( cb_guinier_outlier_reject->isChecked() &&
+        !cb_guinier_use_sd->isChecked() )
+   {
+      cb_guinier_use_sd->setChecked( true );
+      set_guinier_use_sd();
+   }
+   if ( cb_guinier_outlier_reject->isChecked() &&
+        cb_guinier_auto_fit->isChecked() )
+   {
+      cb_guinier_auto_fit->setChecked( false );
+      set_guinier_auto_fit();
+   }
+      
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -712,5 +731,10 @@ void US_Hydrodyn_SasOptionsGuinier::curve_conc()
 void US_Hydrodyn_SasOptionsGuinier::set_guinier_auto_fit()
 {
    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_auto_fit" ] = cb_guinier_auto_fit->isChecked() ? "1" : "0";
+   if ( cb_guinier_auto_fit->isChecked() )
+   {
+      cb_guinier_outlier_reject->setChecked( false );
+      set_guinier_outlier_reject();
+   }
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

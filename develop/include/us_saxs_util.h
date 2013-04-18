@@ -12,6 +12,7 @@
 #include <math.h>
 #include <time.h>
 #include <map>
+#include <set>
 #include <qregexp.h>
 #include "us_saxs_gp.h"
 #include "us_saxs_util_nsa.h"
@@ -252,6 +253,39 @@ class US_EXTERN US_Saxs_Util
                        bool   compute_Rc = false
                        );
 
+      bool guinier_remove_points(
+                                 QString          outtag,
+                                 QString          tag,
+                                 map < double, double > & removed,
+                                 unsigned int   & pts_removed,
+                                 unsigned int   & startpos,
+                                 unsigned int   & endpos,
+                                 double           a,
+                                 double           b,
+                                 double           sd_limit 
+                                 );
+
+      bool guinier_fit_with_removal( 
+                       QString &log,
+                       QString tag,  // tag needs to be preprocessed with guinierplot
+                       unsigned int startpos,
+                       unsigned int endpos,
+                       double &a,
+                       double &b,
+                       double &siga,
+                       double &sigb,
+                       double &chi2,
+                       double &Rg,
+                       double &Io,
+                       double &smax,
+                       double &smin,
+                       double &sRgmin,
+                       double &sRgmax,
+                       double sd_limit,
+                       map < double, double > & removed,
+                       unsigned int   & pts_removed,
+                       bool   compute_Rc = false
+                       );
 
       bool guinier_fit2( // find best guinier fit
                        QString &log,

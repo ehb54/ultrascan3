@@ -367,5 +367,190 @@ bool US_Saxs_Util::guinier_plot(QString outtag, QString tag)
                                 wave[ outtag ].r.back() * ( wave[ tag ].s[ i ] / wave[ tag ].r[ i ] ) : 0e0 );
    }
 
+   // US_Vector::printvector3( "after guinier_plot() q2 I e", wave[outtag].q, wave[outtag].r, wave[outtag].s );
+
+   return true;
+}
+
+bool US_Saxs_Util::guinier_remove_points(
+                                         QString outtag,
+                                         QString tag,
+                                         map < double, double > & removed,
+                                         unsigned int   & pts_removed,
+                                         unsigned int   & startpos,
+                                         unsigned int   & endpos,
+                                         double  a,
+                                         double  b,
+                                         double  sd_limit )
+{
+   // cout << QString( "remove pts: a %1 b %2 sd_limit %3\n" ).arg( a ).arg( b ).arg( sd_limit );
+   // check wave & see if there are any points outsize of sd from line
+   // if so, remove them
+   // also adjust start/end pos accordingly
+   pts_removed = 0;
+
+   errormsg = "";
+
+   if ( startpos > endpos - 4 )
+   {
+      errormsg = "Guinier fit needs at least 4 points";
+      return false;
+   }
+
+   if ( wave[tag].s.size() < wave[ tag ].q.size() )
+   {
+      errormsg = "Guinier_remove_points: insufficient S.D.'s";
+      return false;
+   }
+
+   if ( wave[tag].q.size() <= endpos )
+   {
+      errormsg = QString("end position %1 is past the end of the wave %2") 
+                         .arg(endpos)
+                         .arg(wave[tag].q.size());
+      return false;
+   }
+      
+   wave[outtag].clear();
+   wave[outtag].filename = QString("guinier_removed_%1").arg(tag);
+   wave[outtag].header = wave[tag].header;
+
+   for( unsigned int i = 0; i < startpos; i++ )
+   {
+      wave[ outtag ].q.push_back( wave[tag].q[i] );
+      wave[ outtag ].r.push_back( wave[tag].r[i] );
+      wave[ outtag ].s.push_back( wave[tag].s[i] );
+   }
+
+   unsigned new_endpos = endpos;
+
+   for( unsigned int i = startpos; i <= endpos; i++ )
+   {
+      
+      /*
+      cout << QString( "pos %1: " ).arg( i );
+      cout << QString( "q %1 r %2 s %3 fabs() %4 sdl*s %5\n" )
+         .arg( wave[tag].q[i] )
+         .arg( wave[tag].r[i] )
+         .arg( wave[tag].s[i] )
+         .arg( fabs( a + b * wave[tag].q[i] - wave[tag].r[i] ) )
+         .arg( sd_limit * wave[ tag ].s[ i ] );
+      */
+
+      if ( fabs( exp( a + b * wave[tag].q[i] ) - exp( wave[tag].r[i] ) ) <
+           sd_limit * fabs( exp( wave[tag].r[i] ) * wave[ tag ].s[ i ] / ( wave[ tag ].r[ i ] != 0e0 ? wave[ tag ].r[ i ] : 1e0 ) ) )
+      {
+         wave[ outtag ].q.push_back( wave[tag].q[i] );
+         wave[ outtag ].r.push_back( wave[tag].r[i] );
+         wave[ outtag ].s.push_back( wave[tag].s[i] );
+      } else {
+         removed[ wave[ tag ].q[ i ] ] = wave[ tag ].r[ i ];
+         pts_removed++ ;
+         if ( new_endpos >= startpos &&
+              new_endpos > 0 )
+         {
+            new_endpos--;
+         }
+         // cout << QString( "remove point %1 %2 pts removed %3 endpos %4\n" ).arg( wave[ tag ].q[ i ] ).arg( wave[ tag ].r[ i ] ).arg( pts_removed ).arg( new_endpos );
+      }
+   }
+
+   for( unsigned int i = endpos + 1; i < wave[tag].q.size(); i++ )
+   {
+      wave[ outtag ].q.push_back( wave[tag].q[i] );
+      wave[ outtag ].r.push_back( wave[tag].r[i] );
+      wave[ outtag ].s.push_back( wave[tag].s[i] );
+   }
+
+   endpos = new_endpos;
+
+   return true;
+}
+                                         
+
+bool US_Saxs_Util::guinier_fit_with_removal( 
+                                            QString &log,
+                                            QString tag,  // tag needs to be preprocessed with guinierplot
+                                            unsigned int startpos,
+                                            unsigned int endpos,
+                                            double &a,
+                                            double &b,
+                                            double &siga,
+                                            double &sigb,
+                                            double &chi2,
+                                            double &Rg,
+                                            double &Io,
+                                            double &smax,
+                                            double &smin,
+                                            double &sRgmin,
+                                            double &sRgmax,
+                                            double sd_limit,
+                                            map < double, double > & removed,
+                                            unsigned int   & pts_removed,
+                                            bool   compute_Rc
+                                            )
+{
+   // puts( "su: guinier_fit_with_removal" );
+   removed.clear();
+   pts_removed = 0;
+
+   QString outtag = "removed_" + tag;
+   
+   unsigned int this_pts_removed = 0;
+
+   do 
+   {
+      if ( !wave[ tag ].q.size() )
+      {
+         errormsg = pts_removed ? "No points left, they were all removed as outliers" : "No points in initial curve";
+         return false;
+      }
+
+      if ( endpos - startpos < 3 )
+      {
+         errormsg = pts_removed ? "Too few points for Guinier fit after removing outliers" : 
+            "Too few points for Guinier fit";
+         return false;
+      }
+
+      if ( !guinier_fit( log,
+                         tag,
+                         startpos,
+                         endpos,
+                         a,
+                         b,
+                         siga,
+                         sigb,
+                         chi2,
+                         Rg,
+                         Io,
+                         smax,
+                         smin,
+                         sRgmin,
+                         sRgmax,
+                         compute_Rc ) )
+      {
+         return false;
+      }
+
+
+      if ( !guinier_remove_points( outtag,
+                                   tag,
+                                   removed,
+                                   this_pts_removed,
+                                   startpos,
+                                   endpos,
+                                   a,
+                                   b,
+                                   sd_limit ) )
+      {
+         return false;
+      }
+
+      wave[ tag ] = wave[ outtag ];
+      pts_removed += this_pts_removed;
+
+   } while( this_pts_removed );
+   
    return true;
 }

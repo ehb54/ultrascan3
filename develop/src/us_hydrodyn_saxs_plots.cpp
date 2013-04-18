@@ -869,8 +869,8 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                                                   plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) - 
                                             ( plotted_cs_guinier_a[i] + plotted_cs_guinier_b[i] * plotted_q2[ i ][ q ] ) )
                                   /
-                                  log ( plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
-                                        plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 )
+                                  fabs( log ( plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
+                                              plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) )
                                   );
                   } else {
                      if ( cb_resid_sd->isChecked() )
@@ -929,8 +929,8 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                                                        plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) - 
                                                  ( plotted_cs_guinier_a[i] + plotted_cs_guinier_b[i] * plotted_q2[ i ][ q ] ) )
                                        /
-                                       log ( plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
-                                             plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 )
+                                       fabs( log ( plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
+                                                   plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) )
                                      );
                      } else {
                         if ( cb_resid_sd->isChecked() )
@@ -982,7 +982,13 @@ void US_Hydrodyn_Saxs::do_plot_resid()
             }
             if ( x.size() )
             {
-               do_plot_resid( x, y, e, plot_colors[i % plot_colors.size()] );
+               if ( plotted_cs_guinier_pts_removed.count( i ) &&
+                    plotted_cs_guinier_pts_removed[ i ].size() )
+               {
+                  do_plot_resid( x, y, e, plotted_cs_guinier_pts_removed[ i ], plot_colors[i % plot_colors.size()] );
+               } else {
+                  do_plot_resid( x, y, e, plot_colors[i % plot_colors.size()] );
+               }
             }
             if ( x_d.size() )
             {
@@ -1017,8 +1023,8 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                                                   plotted_I[ i ][ q ] : 1e-99 ) - 
                                             ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] ) )
                                   /
-                                  log ( plotted_I[ i ][ q ] > 0e0 ?
-                                        plotted_I[ i ][ q ] : 1e-99 )
+                                  fabs( log ( plotted_I[ i ][ q ] > 0e0 ?
+                                              plotted_I[ i ][ q ] : 1e-99 ) )
                                   );
                   } else {
                      if ( cb_resid_sd->isChecked() )
@@ -1077,8 +1083,8 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                                                        plotted_I[ i ][ q ] : 1e-99 ) - 
                                                  ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] ) )
                                        /
-                                       log ( plotted_I[ i ][ q ] > 0e0 ?
-                                             plotted_I[ i ][ q ] : 1e-99 )
+                                       fabs( log ( plotted_I[ i ][ q ] > 0e0 ?
+                                                   plotted_I[ i ][ q ] : 1e-99 ) )
                                        );
                      } else {
                         if ( cb_resid_sd->isChecked() )
@@ -1129,7 +1135,13 @@ void US_Hydrodyn_Saxs::do_plot_resid()
             }
             if ( x.size() )
             {
-               do_plot_resid( x, y, e, plot_colors[i % plot_colors.size()] );
+               if ( plotted_guinier_pts_removed.count( i ) &&
+                    plotted_guinier_pts_removed[ i ].size() )
+               {
+                  do_plot_resid( x, y, e, plotted_guinier_pts_removed[ i ], plot_colors[i % plot_colors.size()] );
+               } else {
+                  do_plot_resid( x, y, e, plot_colors[i % plot_colors.size()] );
+               }
             }
             if ( x_d.size() )
             {
@@ -1409,5 +1421,41 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x_d,
       curve->setStyle( QwtCurve::Sticks );
       curve->attach( plot_resid );
 #endif
+   }
+}   
+
+void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x, 
+                                      vector < double > & y, 
+                                      vector < double > & e,
+                                      map < double, double > & pts_removed,
+                                      QColor qc )
+{
+   do_plot_resid( x, y, e, qc );
+   // plot red X's 
+
+   // puts( "do plot resid errs" );
+
+   QwtSymbol sym;
+   sym.setStyle(QwtSymbol::XCross);
+   sym.setSize(10);
+   sym.setBrush(Qt::red);
+   sym.setPen  (Qt::red);
+
+   for ( int i = 0; i < (int)x.size(); i++ )
+   {
+      if ( pts_removed.count( x[ i ] ) )
+      {
+         // cout << QString( "do plot resid errs: %1 %2\n"  ).arg( x[ i ] ).arg( e[ i ] );
+#ifndef QT4
+         long marker = plot_resid->insertMarker();
+         plot_resid->setMarkerSymbol( marker, sym );
+         plot_resid->setMarkerPos   ( marker, x[ i ], e[ i ] );
+#else
+         QwtPlotMarker* marker = new QwtPlotMarker;
+         marker->setSymbol( sym );
+         marker->setValue( x[ i ], e[ i ] );
+         marker->attach( plot_resid );
+#endif
+      }
    }
 }   
