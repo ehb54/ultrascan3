@@ -1,7 +1,8 @@
 #include "shd.h"
 
-#define SHOW_TIMING
+#define SHOW_MPI_TIMING
 
+// #define SHOW_TIMING
 #if defined( SHOW_TIMING )
 #  include <sys/time.h>
    static struct timeval start_tv;
@@ -15,7 +16,6 @@ int main( int argc, char **argv )
 {
    shd_input_data               id;
 
-   vector < shd_point >         model;
    vector < double >            q;
    vector < vector < double > > F;
    vector < double >            I;
@@ -39,6 +39,7 @@ int main( int argc, char **argv )
 
    if ( !world_rank )
    {
+      vector < shd_point >         model;
 #if defined( SHOW_TIMING )
       gettimeofday( &start_tv, NULL );
 #endif
@@ -214,7 +215,9 @@ int main( int argc, char **argv )
       }
       errorno--;
 
-      if ( MPI_SUCCESS != MPI_Scatter( &(model[ 0 ]),    id.model_size * sizeof( struct shd_point ), MPI_CHAR,
+      char * null;
+
+      if ( MPI_SUCCESS != MPI_Scatter( null,            id.model_size * sizeof( struct shd_point ), MPI_CHAR,
                                        &(my_model[ 0 ]), id.model_size * sizeof( struct shd_point ), MPI_CHAR,
                                        0, MPI_COMM_WORLD ) )
       {
@@ -228,21 +231,49 @@ int main( int argc, char **argv )
 
    vector < complex < float > > Avp;
 
+   // cout << world_rank << " initial barrier\n" << endl << flush;
+   // MPI_Barrier( MPI_COMM_WORLD );
+   // cout << world_rank << " initial barrier exit\n" << endl << flush;
+
+
 #if defined( SHOW_TIMING )
    gettimeofday( &start_tv, NULL );
 #endif
+
+#if defined( SHOW_MPI_TIMING )
+   double time_start;
+   if ( !world_rank )
+   {
+      time_start = MPI_Wtime();
+   }
+#endif
+
    SHD tSHD( ( unsigned int ) id.max_harmonics, my_model, F, q, I, 0 );
    tSHD.compute_amplitudes( Avp );
 #if defined( SHOW_TIMING )
    gettimeofday( &end_tv, NULL );
-   printf( "%d: compute amplitudes %lums\n",
+   printf( "%d: compute amplitudes %lums model size %d\n",
            world_rank,
            ( 1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
-             start_tv.tv_usec ) / 1000l );
+             start_tv.tv_usec ) / 1000l,
+           my_model.size()
+           );
    fflush(stdout);
    gettimeofday( &start_tv, NULL );
 #endif
-   cout << world_rank << " done" << endl << flush;
+#if defined( SHOW_MPI_TIMING )
+   if ( !world_rank )
+   {
+      double time_end = MPI_Wtime();
+      printf( "%d: compute amplitudes %gs model size %d\n",
+              world_rank,
+              ( time_end - time_start ) * 1e3,
+              my_model.size()
+              );
+   }
+#endif
+
+   // cout << world_rank << " done" << endl << flush;
 
    // cout << world_rank << " final barrier\n" << endl << flush;
    // MPI_Barrier( MPI_COMM_WORLD );
