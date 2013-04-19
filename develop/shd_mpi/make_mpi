@@ -1,0 +1,26 @@
+CC      = mpicxx
+CFLAGS  = -O3
+LDFLAGS = 
+
+all: shd
+
+shd: main.o shd.o shd_compute.o shd_sh.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+main.o: main.cpp shd.h
+	$(CC) -c $(CFLAGS) $<
+
+shd.o: shd.cpp shd.h
+	$(CC) -c $(CFLAGS) $<
+
+shd_compute.o: shd_compute.cpp shd.h shd_sh.h
+	$(CC) -c $(CFLAGS) $<
+
+shd_sh.o: shd_sh.cpp shd_sh.h
+	$(CC) -c $(CFLAGS) $<
+
+clean:
+	rm *.o
+
+cleanest: clean
+	rm shd
