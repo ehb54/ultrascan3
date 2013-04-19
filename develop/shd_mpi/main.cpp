@@ -265,7 +265,7 @@ int main( int argc, char **argv )
    if ( !world_rank )
    {
       double time_end = MPI_Wtime();
-      printf( "%d: compute amplitudes %gs model size %d\n",
+      printf( "%d: compute amplitudes %gms model size %d\n",
               world_rank,
               ( time_end - time_start ) * 1e3,
               (int) my_model.size()
