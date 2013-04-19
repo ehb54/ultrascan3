@@ -1,3 +1,5 @@
+Stampede
+
 Ask: shared memory accessible on MIC(s) via ipc or other method(?)
 
 I am thinking we want to create 1 or 2 mpi's per MIC and thread them
@@ -39,3 +41,11 @@ mpicxx -O3 -xhost mpitest2.c -o mpitest_xhost
 
 mpicxx -O3 -mmic  mpitest2.c -o mpitest_mic; mpicxx -O3 -xhost mpitest2.c -o mpitest_xhost
 
+
+
+Process affinity:
+-> numactl
+numactl <options> ./a.out
+tacc_affinity
+see "hybrid batch script"
+ 

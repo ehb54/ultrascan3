@@ -402,7 +402,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                               sRgmax,
                                               our_saxs_options->guinier_outlier_reject_dist,
                                               removed,
-                                              pts_removed
+                                              pts_removed,
+                                              false
                                               ) )
             {
                editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
@@ -838,7 +839,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                                               sRgmax,
                                               our_saxs_options->guinier_outlier_reject_dist,
                                               removed,
-                                              pts_removed
+                                              pts_removed,
+                                              true
                                               ) )
             {
                editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")

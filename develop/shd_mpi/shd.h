@@ -1,6 +1,7 @@
 #ifndef SHD_H
 #define SHD_H
 
+#include <mpi.h>
 #include <math.h>
 #include <iostream>
 #include <algorithm>
@@ -128,8 +129,7 @@ class SHD
     * \param model is the vector of model points
     */
 
-   bool                compute_amplitudes( vector < shd_point > & model, 
-                                           vector < complex < float > > & Av );
+   bool                compute_amplitudes( vector < complex < float > > & Av );
 
 };
 
