@@ -215,7 +215,7 @@ int main( int argc, char **argv )
       }
       errorno--;
 
-      char * null;
+      void * null;
 
       if ( MPI_SUCCESS != MPI_Scatter( null,            id.model_size * sizeof( struct shd_point ), MPI_CHAR,
                                        &(my_model[ 0 ]), id.model_size * sizeof( struct shd_point ), MPI_CHAR,
