@@ -33,8 +33,8 @@ int main( int argc, char **argv )
 
    int is_mic = std::string::npos != std::string( processor_name ).find( "-mic" );
 
-   printf("Hello world from processor %s, rank %d"
-          " out of %d processors and I am %sa MIC\n",
+   printf("%s, rank %d"
+          " of %d a %sa MIC\n",
           processor_name, world_rank, world_size, is_mic ? "" : "NOT " );
 
    if ( !world_rank )
@@ -191,10 +191,10 @@ int main( int argc, char **argv )
          MPI_Abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
-      cout << "max harmonics:" << world_rank << " " << id.max_harmonics << endl;
-      cout << "F size       :" << world_rank << " " << id.F_size << endl;
-      cout << "q size       :" << world_rank << " " << id.q_size << endl;
-      cout << "model size   :" << world_rank << " " << id.model_size << endl;
+      // cout << "max harmonics:" << world_rank << " " << id.max_harmonics << endl;
+      // cout << "F size       :" << world_rank << " " << id.F_size << endl;
+      // cout << "q size       :" << world_rank << " " << id.q_size << endl;
+      // cout << "model size   :" << world_rank << " " << id.model_size << endl;
 
       F       .resize( id.F_size );
       q       .resize( id.q_size );
@@ -242,7 +242,7 @@ int main( int argc, char **argv )
    fflush(stdout);
    gettimeofday( &start_tv, NULL );
 #endif
-   cout << world_rank << " done\n" << endl << flush;
+   cout << world_rank << " done" << endl << flush;
 
    // cout << world_rank << " final barrier\n" << endl << flush;
    // MPI_Barrier( MPI_COMM_WORLD );
