@@ -106,4 +106,5 @@
     <report name="combo-listincl-vbar" label="Combo Vbar List of Included Sets" />
     <report name="combo-listincl-mwl" label="Combo Molec. Wt. Log List of Included Sets" />
     <report name="mlines" label="Model Lines Plot" />
+    <report name="mdistr_tab" label="Model Distributions Table" />
 </US_Reports>

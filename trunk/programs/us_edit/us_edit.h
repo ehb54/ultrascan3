@@ -80,8 +80,9 @@ class US_Edit : public US_Widgets
       QStringList        triples;
       QStringList        trip_rpms;
       QStringList        celchns;
-      QStringList        slist_wvlns;
-      QStringList        slist_radii;
+      QStringList        rlist_wvlns;
+      QStringList        plist_wvlns;
+      QStringList        plist_radii;
                       
       QwtPlot*           data_plot;
       QwtPlotCurve*      raw_curve;
@@ -152,6 +153,7 @@ class US_Edit : public US_Widgets
       QwtCounter*        ct_ldelta;
       QwtCounter*        ct_odlim;
 
+      QLineEdit*         le_lxrng;
       QLineEdit*         le_ltrng;
 
       QComboBox*         cb_lplot;
@@ -186,6 +188,7 @@ class US_Edit : public US_Widgets
       int                exclfrx;
       int                excltox;
       int                nwaveln;
+      int                nwavelo;
       int                nrpoint;
       int                ncelchn;
       int                ntriple;
@@ -262,6 +265,7 @@ class US_Edit : public US_Widgets
       void ldelta_value      ( double );
       void lambda_start_value( int    );
       void lambda_end_value  ( int    );
+      void reset_plot_lambdas( void   );
       void xaxis_radius_on   ( bool   );
       void xaxis_waveln_on   ( bool   );
       void lambda_plot_value ( int    );

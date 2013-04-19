@@ -945,7 +945,8 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
    {  // Compose an entry in the composite HTML for each component item
       DataDesc* idesc = (DataDesc*)&adescs.at( se_rptrows.at( ii ) );
       bool is_plot = ( idesc->type.contains( "Plot" ) );
-      bool is_data = ( idesc->type.contains( "text", Qt::CaseInsensitive ) );
+      bool is_data = ( idesc->type.contains( "text", Qt::CaseInsensitive ) )
+                  || ( idesc->type.contains( "comma", Qt::CaseInsensitive ) );
       phght = chght;
 
       // Possible set for page printing
@@ -1108,6 +1109,7 @@ DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
             }
 
             rptpage += "\n";
+//            rptpage += "\n    <p class=\"page parahead\"></p>\n";
             fi.close();
          }
       }
@@ -1196,6 +1198,7 @@ DbgLv(1) << "PG_LD: loaded OK" << ok;
       printer.setCreator( "UltraScan" );
       printer.setDocName( QString( "report_composite.html" ) );
       printer.setOrientation( QPrinter::Portrait );
+      printer.setPaperSize  ( QPrinter::Letter );
       prevwidg->print( &printer );
 
       QString ppdffold = ppdfpath;
@@ -1272,8 +1275,8 @@ DbgLv(1) << "cnt_rpt:  ns rpts,runs,htmls,plots" << nsrpts << nsruns
 // View an individual report file
 void US_Reporter::item_view()
 {
-   QString fileexts = tr( "HTML files (*.html);;PLOT files (*svg *png);;"
-                          "Report file (*.rpt);;Data files (*.dat);;"
+   QString fileexts = tr( "HTML files (*.html);;PLOT files (*.svg *.png);;"
+                          "Report file (*.rpt);;Data files (*.csv *.dat);;"
                           "All files (*.*)" );
    int row = tw_recs->currentItem()->type() - (int)QTreeWidgetItem::UserType;
    cdesc   = adescs.at( row );
