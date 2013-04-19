@@ -49,11 +49,11 @@ SHD::SHD(
       }
    }
 
-   if ( !world_rank )
-   {
-      printf( "q_Y_points %d\n", q_Y_points );
-      printf( "A1v0 size  %d\n", (int)A1v0.size() );
-   }
+   //    if ( !world_rank )
+   //    {
+   //       printf( "q_Y_points %d\n", q_Y_points );
+   //       printf( "A1v0 size  %d\n", (int)A1v0.size() );
+   //    }
 
    ccY.resize( Y_points );
    ccJ.resize( J_points );

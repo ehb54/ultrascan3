@@ -33,9 +33,9 @@ int main( int argc, char **argv )
 
    int is_mic = std::string::npos != std::string( processor_name ).find( "-mic" );
 
-   printf("%s, rank %d"
-          " of %d a %sa MIC\n",
-          processor_name, world_rank, world_size, is_mic ? "" : "NOT " );
+   //    printf("%s, rank %d"
+   //           " of %d a %sa MIC\n",
+   //           processor_name, world_rank, world_size, is_mic ? "" : "NOT " );
 
    if ( !world_rank )
    {
@@ -265,8 +265,9 @@ int main( int argc, char **argv )
    if ( !world_rank )
    {
       double time_end = MPI_Wtime();
-      printf( "%d: compute amplitudes %gms model size %d\n",
+      printf( "%d of %d: compute amplitudes %gms model size %d\n",
               world_rank,
+              world_size,
               ( time_end - time_start ) * 1e3,
               (int) my_model.size()
               );
