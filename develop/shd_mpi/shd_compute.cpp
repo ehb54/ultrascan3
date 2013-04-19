@@ -128,7 +128,7 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
          }
          ++Fp;
       }
-   } 
+   }
 
    return true;
 }

@@ -48,4 +48,26 @@ Process affinity:
 numactl <options> ./a.out
 tacc_affinity
 see "hybrid batch script"
+sched_set_affinity() (openmp or pthreads)
+taskset
+
+compiler options
+
+(not on mic) -xAVX -ipo
  
+-fast (not on MPI for mvapich2, maybe intel stack)
+
+-O3 may not be best
+
+-no-prec-div
+
+-O1 may be smaller
+
+MKL:
+http://software.intel.com/sites/products/documentation/doclib/mkl_sa/11/mklman/index.htm
+
+
+virtual topologies (in MPI) MPI_Cart_create
+
+todo:
+

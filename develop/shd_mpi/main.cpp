@@ -8,6 +8,9 @@
    static struct timeval end_tv;
 #endif
 
+int world_size;
+int world_rank;
+
 int main( int argc, char **argv )
 {
    shd_input_data               id;
@@ -20,8 +23,6 @@ int main( int argc, char **argv )
 
    MPI_Init( &argc, &argv);
 
-   int world_size;
-   int world_rank;
 
    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -123,6 +124,10 @@ int main( int argc, char **argv )
       uint32_t org_model_size  = id.model_size;
       id.model_size            = ( org_model_size % world_size ? 1 : 0 ) + org_model_size / world_size;
       uint32_t extd_model_size = id.model_size * world_size;
+
+      printf( "org model_size %d\n",  org_model_size );
+      printf( "new model size %d\n",  id.model_size );
+      printf( "extd model size %d\n", extd_model_size );
       
       // pad for scatter
       model.resize( extd_model_size );
@@ -157,16 +162,16 @@ int main( int argc, char **argv )
 
       my_model.resize( id.model_size );
 
-      if ( MPI_SUCCESS != MPI_Scatter( &(model[ 0 ]),    id.model_size * sizeof( struct shd_data ), MPI_CHAR,
-                                       &(my_model[ 0 ]), id.model_size * sizeof( struct shd_data ), MPI_CHAR,
+      if ( MPI_SUCCESS != MPI_Scatter( (void *)&(model[ 0 ]),    id.model_size * sizeof( struct shd_point ), MPI_CHAR,
+                                       (void *)&(my_model[ 0 ]), id.model_size * sizeof( struct shd_point ), MPI_CHAR,
                                        0, MPI_COMM_WORLD ) )
       {
          cerr << "Error: MPI_Scatter( model ) failed" << endl;
          MPI_Abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
-
       errorno--;
+
 #if defined( SHOW_TIMING )
       gettimeofday( &end_tv, NULL );
       printf( "0: broadcast, scatter %lums\n",
@@ -209,8 +214,8 @@ int main( int argc, char **argv )
       }
       errorno--;
 
-      if ( MPI_SUCCESS != MPI_Scatter( &(model[ 0 ]),    id.model_size * sizeof( struct shd_data ), MPI_CHAR,
-                                       &(my_model[ 0 ]), id.model_size * sizeof( struct shd_data ), MPI_CHAR,
+      if ( MPI_SUCCESS != MPI_Scatter( &(model[ 0 ]),    id.model_size * sizeof( struct shd_point ), MPI_CHAR,
+                                       &(my_model[ 0 ]), id.model_size * sizeof( struct shd_point ), MPI_CHAR,
                                        0, MPI_COMM_WORLD ) )
       {
          cerr << "Error: MPI_Scatter( model ) failed" << endl;
@@ -238,8 +243,12 @@ int main( int argc, char **argv )
    gettimeofday( &start_tv, NULL );
 #endif
    cout << world_rank << " done\n" << endl << flush;
+
+   // cout << world_rank << " final barrier\n" << endl << flush;
+   // MPI_Barrier( MPI_COMM_WORLD );
+   // cout << world_rank << " final barrier exit\n" << endl << flush;
    MPI_Finalize();
-   return 0;
+   exit(0);
 }
              
 

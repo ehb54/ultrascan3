@@ -15,6 +15,9 @@ using namespace std;
 
 #include "shd_sh.h"
 
+extern int world_rank;
+extern int world_size;
+
 #ifndef M_PI
 #  define M_PI       3.14159265358979323846
 #endif
@@ -35,7 +38,6 @@ struct shd_data
    vector < complex < float > > A1v;
 };
 
-
 struct shd_input_data
 {
    uint32_t max_harmonics;
@@ -43,6 +45,12 @@ struct shd_input_data
    uint32_t q_size;
    uint32_t F_size;
 };
+
+// binary file contains (in order)
+// struct shd_input_data
+// vector < double > F( q_size * max_f_types )
+// vector < double > q( q_size )
+// vector < shd_data > model_size
 
 /*!
  * \class SHD
