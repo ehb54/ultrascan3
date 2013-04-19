@@ -215,7 +215,7 @@ int main( int argc, char **argv )
       }
       errorno--;
 
-      void * null;
+      void * null = (void *)0;
 
       if ( MPI_SUCCESS != MPI_Scatter( null,            id.model_size * sizeof( struct shd_point ), MPI_CHAR,
                                        &(my_model[ 0 ]), id.model_size * sizeof( struct shd_point ), MPI_CHAR,
@@ -268,7 +268,7 @@ int main( int argc, char **argv )
       printf( "%d: compute amplitudes %gs model size %d\n",
               world_rank,
               ( time_end - time_start ) * 1e3,
-              my_model.size()
+              (int) my_model.size()
               );
    }
 #endif
