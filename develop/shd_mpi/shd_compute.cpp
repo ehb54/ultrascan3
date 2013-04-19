@@ -1,6 +1,6 @@
 #include "shd.h"
 
-bool SHD::compute_amplitudes( vector < shd_point > & model, vector < complex < float > > & Av )
+bool SHD::compute_amplitudes( vector < complex < float > > & Av )
 {
    // model should already be centered
 
@@ -24,11 +24,16 @@ bool SHD::compute_amplitudes( vector < shd_point > & model, vector < complex < f
 
    Av = A1v0;
 
-   shd_point * modelp = (shd_point *)(& model[ 0 ]);
-   int model_size = (int)model.size();
+   shd_point * modelp = (shd_point *)(&((*model)[ 0 ]));
+   int model_size = (int)model->size();
 
    for ( int m = 0; m < model_size; ++m, ++modelp )
    {
+      if ( modelp->ff_type == -1 )
+      {
+         break;
+      }
+
       datap->rtp[ 0 ] = sqrt ( (double) ( modelp->x[ 0 ] * modelp->x[ 0 ] +
                                              modelp->x[ 1 ] * modelp->x[ 1 ] +
                                              modelp->x[ 2 ] * modelp->x[ 2 ] ) );

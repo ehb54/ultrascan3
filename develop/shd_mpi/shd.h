@@ -4,10 +4,12 @@
 #include <mpi.h>
 #include <math.h>
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <vector>
 #include <complex>
 #include <string>
+#include <stdint.h>
 
 using namespace std;
 
@@ -21,29 +23,10 @@ using namespace std;
 #  define M_4PI       (4e0 * 3.14159265358979323846)
 #endif
 
-class shd_point
+struct shd_point
 {
- public:
-   float x[ 3 ];
-   int   ff_type;
-   bool operator < ( const shd_point & objIn ) const
-   {
-      return
-         x[ 0 ] < objIn.x[ 0 ] ||
-         ( x[ 0 ] == objIn.x[ 0 ] &&
-           x[ 1 ] <  objIn.x[ 1 ] ) ||
-         ( x[ 0 ] == objIn.x[ 0 ] &&
-           x[ 1 ] == objIn.x[ 1 ] &&
-           x[ 2 ] <  objIn.x[ 2 ] );
-   }
-
-   bool operator == ( const shd_point & objIn ) const
-   {
-      return
-         x[ 0 ] == objIn.x[ 0 ] &&
-         x[ 1 ] == objIn.x[ 1 ] &&
-         x[ 2 ] == objIn.x[ 2 ];
-   }
+   float   x[ 3 ];
+   int16_t ff_type;
 };
 
 struct shd_data
@@ -52,6 +35,14 @@ struct shd_data
    vector < complex < float > > A1v;
 };
 
+
+struct shd_input_data
+{
+   uint32_t max_harmonics;
+   uint32_t model_size;
+   uint32_t q_size;
+   uint32_t F_size;
+};
 
 /*!
  * \class SHD
@@ -66,7 +57,7 @@ class SHD
 {
  private:
 
-   vector < shd_point >                    model;
+   vector < shd_point >                    *model;
    vector < vector < double > >            F;
    vector < double >                       q;
    vector < double >                       I;

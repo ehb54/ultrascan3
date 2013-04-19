@@ -10,7 +10,7 @@ SHD::SHD(
          )
 {
    this->max_harmonics          = max_harmonics;
-   this->model                  = model;
+   this->model                  = &model;
    this->F                      = F;
    this->q                      = q;
    this->I                      = I;
