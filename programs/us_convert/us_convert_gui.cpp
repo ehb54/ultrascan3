@@ -1719,7 +1719,7 @@ void US_ConvertGui::runDetails( void )
    QStringList tripleDescriptions;
    QVector< US_DataIO2::RawData >  currentData;
    if ( isMwl )
-   {
+   {  // For MWL, only pass the 1st data set of each cell/channel
       for ( int ii = 0; ii < triples.size(); ii++ )
       {
          currentData << allData[ ii * nlambda ];
@@ -1728,7 +1728,7 @@ void US_ConvertGui::runDetails( void )
    }
 
    else
-   {
+   {  // For most data, pass all triples
       for ( int ii = 0; ii < triples.size(); ii++ )
       {
          if ( triples[ ii ].excluded ) continue;

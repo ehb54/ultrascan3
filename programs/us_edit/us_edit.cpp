@@ -141,7 +141,6 @@ US_Edit::US_Edit() : US_Widgets()
    int lwid = fwid * 4;
    int swid = lwid + fwid;
    const QChar charla( 955 );
-   const QChar charmu( 956 );
    lb_mwlctl = us_banner( tr( "Wavelength Controls" ) );
    lb_ldelta = us_label( tr( "%1 Delta:" ).arg( charla ), -1 );
    ct_ldelta = us_counter( 1, 1, 100, 1 );
@@ -155,18 +154,23 @@ US_Edit::US_Edit() : US_Widgets()
    lb_lexclf = us_label( tr( "Exclude from:" ), -1 );
    lb_lexclt = us_label( tr( "Exclude to:" ), -1 );
    lb_odlim  = us_label( tr( "OD Limit for radius range:" ), -1 );
-   ct_odlim  = us_counter( 3, 0.1, 20.5, 0.8 );
+   odlimit   = 0.8;
+   ct_odlim  = us_counter( 3, 0.1, 20.5, odlimit );
    ct_odlim ->setFont( font );
    ct_odlim ->setStep( 0.01 );
    ct_odlim ->setMinimumWidth( lwid );
    ct_odlim ->resize( rhgt, swid );
 
-   int     nlmbd  = 448;
-   double  lmbdlo = 250.0;
+   int     nlmbd  = 224;
+   double  lmbdlo = 251.0;
    double  lmbdhi = 650.0;
+   double  lmbddl = 1.0;
    QString lrsmry = tr( "%1 raw: %2 %3 to %4" )
       .arg( nlmbd ).arg( charla ).arg( lmbdlo ).arg( lmbdhi );
    le_ltrng  = us_lineedit( lrsmry, -2, true );
+   QString lxsmry = tr( "%1 MWL exports: %2 %3 to %4, average delta %5" )
+      .arg( nlmbd ).arg( charla ).arg( lmbdlo ).arg( lmbdhi ).arg( lmbddl );
+   le_lxrng  = us_lineedit( lxsmry, -1, true );
    cb_lplot  = us_comboBox();
    cb_lstart = us_comboBox();
    cb_lend   = us_comboBox();
@@ -205,6 +209,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    cb_lexclf->setCurrentIndex( 4 );
    cb_lexclt->setCurrentIndex( 5 );
 
+   specs->addWidget( le_lxrng,  s_row++, 0, 1, 4 );
    specs->addWidget( lb_mwlctl, s_row++, 0, 1, 4 );
    specs->addWidget( lb_ldelta, s_row,   0, 1, 1 );
    specs->addWidget( ct_ldelta, s_row,   1, 1, 1 );
@@ -213,12 +218,6 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    specs->addWidget( cb_lstart, s_row,   1, 1, 1 );
    specs->addWidget( lb_lend,   s_row,   2, 1, 1 );
    specs->addWidget( cb_lend,   s_row++, 3, 1, 1 );
-   specs->addLayout( lo_radius, s_row,   0, 1, 2 );
-   specs->addLayout( lo_waveln, s_row++, 2, 1, 2 );
-   specs->addWidget( lb_lplot,  s_row,   0, 1, 1 );
-   specs->addWidget( cb_lplot,  s_row,   1, 1, 1 );
-   specs->addWidget( pb_larrow, s_row,   2, 1, 1 );
-   specs->addWidget( pb_rarrow, s_row++, 3, 1, 1 );
    specs->addWidget( lb_lexclf, s_row,   0, 1, 1 );
    specs->addWidget( cb_lexclf, s_row,   1, 1, 1 );
    specs->addWidget( lb_lexclt, s_row,   2, 1, 1 );
@@ -227,6 +226,12 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    specs->addWidget( pb_incall, s_row++, 2, 1, 2 );
    specs->addWidget( lb_odlim,  s_row,   0, 1, 2 );
    specs->addWidget( ct_odlim,  s_row++, 2, 1, 2 );
+   specs->addLayout( lo_radius, s_row,   0, 1, 2 );
+   specs->addLayout( lo_waveln, s_row++, 2, 1, 2 );
+   specs->addWidget( lb_lplot,  s_row,   0, 1, 1 );
+   specs->addWidget( cb_lplot,  s_row,   1, 1, 1 );
+   specs->addWidget( pb_larrow, s_row,   2, 1, 1 );
+   specs->addWidget( pb_rarrow, s_row++, 3, 1, 1 );
 
    connect_mwl_ctrls( true );
 
@@ -536,8 +541,9 @@ void US_Edit::reset( void )
    plot_radii    .clear();
    plot_wvlns    .clear();
    celchns       .clear();
-   slist_wvlns   .clear();
-   slist_radii   .clear();
+   rlist_wvlns   .clear();
+   plist_wvlns   .clear();
+   plist_radii   .clear();
    connect_mwl_ctrls( false );
    cb_lplot     ->clear();
    cb_lstart    ->clear();
@@ -847,13 +853,14 @@ void US_Edit::load( void )
       QString schan  = triple.section( ".", 1, 1 ).simplified();
       QString waveln = triple.section( ".", 2, 2 ).simplified();
 
-      if ( ! slist_wvlns.contains( waveln ) )
+      if ( ! rlist_wvlns.contains( waveln ) )
       {  // Accumulate wavelengths in case this is MWL
          nwaveln++;
-         slist_wvlns << waveln;
+         rlist_wvlns << waveln;
       }
 
-      QString celchn = scell + " / " + schan;
+      nwavelo         = nwaveln;
+      QString celchn  = scell + " / " + schan;
 
       if ( ! celchns.contains( celchn ) )
       {  // Accumulate cell/channel values in case this is MWL
@@ -861,7 +868,7 @@ void US_Edit::load( void )
          celchns << celchn;
       }
    }
-DbgLv(1) << "slist_wvlns size" << slist_wvlns.size() << nwaveln;
+DbgLv(1) << "rlist_wvlns size" << rlist_wvlns.size() << nwaveln;
 DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
 
    workingDir   = workingDir + "/";
@@ -1101,24 +1108,31 @@ DbgLv(1) << "LD(): NN  nwaveln isMwl" << nwaveln << isMwl;
    {  // Set values related to MultiWaveLength
       const QChar charla( 955 );
       connect_mwl_ctrls( false );
-DbgLv(1) << "IS-MWL: wvlns size" << slist_wvlns.size();
-      slist_wvlns.sort();
-      int lambd1   = slist_wvlns[ 0 ].toInt();
-      int lambd2   = slist_wvlns[ nwaveln - 1 ].toInt();
+DbgLv(1) << "IS-MWL: wvlns size" << rlist_wvlns.size();
+      rlist_wvlns.sort();
+      nwavelo      = nwaveln;
+      int lambd1   = rlist_wvlns[ 0 ].toInt();
+      int lambd2   = rlist_wvlns[ nwaveln - 1 ].toInt();
+      int lambdi   = qRound( (double)( lambd2 - lambd1 )
+                            / double( nwavelo - 1 ) );
       le_ltrng ->setText( tr( "%1 raw: %2 %3 to %4" )
          .arg( nwaveln ).arg( charla ).arg( lambd1 ).arg( lambd2 ) );
+      le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
+                              " average delta %5" )
+         .arg( nwavelo ).arg( charla ).arg( lambd1 ).arg( lambd2 )
+         .arg( lambdi ) );
 
       // Update wavelength lists in GUI elements
-      cb_lplot ->clear();
       cb_lstart->clear();
       cb_lend  ->clear();
       cb_lexclf->clear();
       cb_lexclt->clear();
-      cb_lplot ->addItems( slist_wvlns );
-      cb_lstart->addItems( slist_wvlns );
-      cb_lend  ->addItems( slist_wvlns );
-      cb_lexclf->addItems( slist_wvlns );
-      cb_lexclt->addItems( slist_wvlns );
+      cb_lplot ->clear();
+      cb_lstart->addItems( rlist_wvlns );
+      cb_lend  ->addItems( rlist_wvlns );
+      cb_lexclf->addItems( rlist_wvlns );
+      cb_lexclt->addItems( rlist_wvlns );
+      cb_lplot ->addItems( rlist_wvlns );
       int lastx    = nwaveln - 1;
       plotndx      = nwaveln / 2;
       cb_lplot ->setCurrentIndex( plotndx );
@@ -1130,10 +1144,12 @@ DbgLv(1) << "IS-MWL: wvlns size" << slist_wvlns.size();
       wl_excludes.clear();
       plot_radii .clear();
       plot_wvlns .clear();
+      plist_wvlns.clear();
 
       for ( int ii = 0; ii < nwaveln; ii++ )
       {  // Update the list of wavelengths that may be plotted
-         plot_wvlns << slist_wvlns[ ii ].toInt();
+         plot_wvlns << rlist_wvlns[ ii ].toInt();
+         plist_wvlns << rlist_wvlns[ ii ];
       }
 DbgLv(1) << "IS-MWL:  plot_wvlns size" << plot_wvlns.size() << nwaveln;
 
@@ -1148,7 +1164,7 @@ DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
       for ( int ii = 0; ii < nrpoint; ii++ )
       {  // Update the list of radii that may be plotted
          plot_radii  << data.x[ ii ].radius;
-         slist_radii << QString().sprintf( "%.3f", data.x[ ii ].radius );
+         plist_radii << QString().sprintf( "%.3f", data.x[ ii ].radius );
       }
 DbgLv(1) << "IS-MWL:  plot_radii size" << plot_radii.size() << nrpoint;
 
@@ -2288,13 +2304,13 @@ DbgLv(1) << "PlMwl:  index celchn" << index << celchn;
 
    if ( xaxis_radius )
    {
-      index               = ccx * nwaveln + recndx;
-DbgLv(1) << "PlMwl:   x-r index cc nw rx" << index << ccx << nwaveln << recndx;
+      index               = ccx * nwavelo + recndx;
+DbgLv(1) << "PlMwl:   x-r index cc nw rx" << index << ccx << nwavelo << recndx;
 DbgLv(1) << "PlMwl:    allData size" << allData.size();
 DbgLv(1) << "PlMwl:    plot_wvlns size" << plot_wvlns.size();
       data                = allData[ index ];
       recvalu             = plot_wvlns.at( recndx );
-      svalu               = slist_wvlns.at( recndx );
+      svalu               = plist_wvlns.at( recndx );
    }
 
    else
@@ -2304,7 +2320,7 @@ DbgLv(1) << "PlMwl:   x-w index cc nr rx" << index << ccx << nrpoint << recndx;
       data                = allData[ 0 ];
       rectype             = tr( "Radius" );
       recvalu             = plot_radii.at( recndx );
-      svalu               = slist_radii.at( recndx );
+      svalu               = plist_radii.at( recndx );
    }
 DbgLv(1) << "PlMwl: ccx index rtype rval" << ccx << index << rectype << recvalu;
 
@@ -2325,13 +2341,13 @@ DbgLv(1) << "PlMwl: ccx index rtype rval" << ccx << index << rectype << recvalu;
 DbgLv(1) << "PlMwl:  title" << title;
 
    data_plot->setTitle    ( title );
-   data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Intensity " ) );
+   data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance (OD)" ) );
 
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); 
    v_line = NULL;
 
    int     nscan  = data.scanData.size();
-   int     npoint = xaxis_radius ? nrpoint : nwaveln;
+   int     npoint = xaxis_radius ? nrpoint : nwavelo;
 DbgLv(1) << "PlMwl:   xa_rad" << xaxis_radius << "nsc npt" << nscan << npoint;
 
    QVector< double > rvec( npoint );
@@ -2356,7 +2372,7 @@ DbgLv(1) << "PlMwl:    START xa_RAD";
          for ( int jj = 0; jj < npoint; jj++ )
          {
             rr[ jj ] = data.x[ jj ].radius;
-            vv[ jj ] = scn->readings[ jj ].value * invert;
+            vv[ jj ] = qMin( odlimit, scn->readings[ jj ].value * invert );
 
             maxR     = qMax( maxR, rr[ jj ] );
             minR     = qMin( minR, rr[ jj ] );
@@ -2391,7 +2407,7 @@ DbgLv(1) << "PlMwl:    START xa_WAV";
          for ( int jj = 0; jj < npoint; jj++ )
          {
             rr[ jj ] = plot_wvlns[ jj ];
-            vv[ jj ] = wrdata[ dpx++ ];
+            vv[ jj ] = qMin( odlimit, wrdata[ dpx++ ] );
 
             maxR     = qMax( maxR, rr[ jj ] );
             minR     = qMin( minR, rr[ jj ] );
@@ -2414,6 +2430,7 @@ DbgLv(1) << "PlMwl:      END xa_WAV";
    // Reset the scan curves within the new limits
    double padR = ( maxR - minR ) / 30.0;
    double padV = ( maxV - minV ) / 30.0;
+   padV        = qMax( padV, 0.005 );
 
    data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
    data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
@@ -2421,6 +2438,17 @@ DbgLv(1) << "PlMwl:      END xa_WAV";
 DbgLv(1) << "PlMwl: call replot()";
    data_plot->replot();
 DbgLv(1) << "PlMwl:  retn fr replot()";
+
+   // Set the Scan spin boxes
+   ct_from->setMinValue( 0.0 );
+   ct_from->setMaxValue(  data.scanData.size() );
+
+   ct_to  ->setMinValue( 0.0 );
+   ct_to  ->setMaxValue(  data.scanData.size() );
+
+   pick     ->disconnect();
+   connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+                  SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
 }
 
 // Set focus FROM scan value
@@ -4059,6 +4087,9 @@ void US_Edit::update_disk_db( bool isDB )
 // Show or hide MWL Controls
 void US_Edit::show_mwl_controls( bool show )
 {
+   lb_gaps  ->setVisible( !show );
+   ct_gaps  ->setVisible( !show );
+   le_lxrng ->setVisible( show );
    lb_mwlctl->setVisible( show );
    lb_ldelta->setVisible( show );
    ct_ldelta->setVisible( show );
@@ -4144,6 +4175,8 @@ void US_Edit::ldelta_value( double value )
 {
 DbgLv(1) << "ldelta_value  value" << value;
    dlambda     = value;
+
+   reset_plot_lambdas();
 }
 
 // Lambda Start has changed
@@ -4151,6 +4184,8 @@ void US_Edit::lambda_start_value( int value )
 {
    slambda     = cb_lstart->itemText( value ).toDouble();
 DbgLv(1) << "lambda_start_value  value" << value << slambda;
+
+   reset_plot_lambdas();
 }
 
 // Lambda End has changed
@@ -4158,6 +4193,65 @@ void US_Edit::lambda_end_value( int value )
 {
    elambda     = cb_lend  ->itemText( value ).toDouble();
 DbgLv(1) << "lambda_end_value  value" << value << elambda;
+
+   reset_plot_lambdas();
+}
+
+// Adjust the plot wavelengths list, after a lambda range change
+void US_Edit::reset_plot_lambdas()
+{
+   dlambda        = ct_ldelta->value();
+   slambda        = cb_lstart->currentText().toDouble();
+   elambda        = cb_lend  ->currentText().toDouble();
+   int     rsize  = rlist_wvlns.size();
+   int     lstx   = rsize - 1;
+   int     plotx  = cb_lplot ->currentIndex();
+   double  plam   = slambda;                // Initial plot(export) lambda
+DbgLv(1) << "rpl: dl sl el px" << dlambda << slambda << elambda << plotx;
+   plist_wvlns.clear();
+   plot_wvlns .clear();
+
+   for ( int ii = 0; ii < rsize; ii++ )
+   {  // Accumulate new list of export lambdas by looking at all raw lambas
+      QString clam   = rlist_wvlns[ ii ];
+      double  rlam   = clam.toDouble();      // Current raw input lambda
+      double  l_next = ( ii < lstx ) ? rlist_wvlns[ ii + 1 ].toDouble() : 9999.;
+DbgLv(1) << "rpl:  ii" << ii << "plam rlam l_next" << plam << rlam << l_next;
+
+      if ( plam == rlam   ||
+           ( plam > rlam  &&  plam < l_next ) )
+      {
+         plist_wvlns << clam;
+         plot_wvlns  << rlam;
+         plam          += dlambda;
+         while ( plam < l_next )
+            plam          += dlambda;
+
+         if ( plam > elambda )  break;
+      }
+   }
+
+   nwavelo        = plist_wvlns.size();
+   plotx          = ( plotx < nwavelo ) ? plotx : ( nwavelo / 2 );
+DbgLv(1) << "rpl:   nwavelo plotx" << nwavelo << plotx;
+DbgLv(1) << "rpl:    pl1 pln" << plist_wvlns[0] << plist_wvlns[nwavelo-1];
+
+   if ( xaxis_radius )
+   {  // If x-axis is radius, reset wavelength-to-plot list
+      cb_lplot->disconnect();
+      cb_lplot->clear();
+      cb_lplot->addItems( plist_wvlns );
+      connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
+               this,      SLOT  ( lambda_plot_value  ( int    ) ) );
+      cb_lplot->setCurrentIndex( plotx );
+   }
+
+   // Report export lambda range
+   const QChar charla( 955 );
+   le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
+                           " average delta %5" )
+      .arg( nwavelo ).arg( charla ).arg( slambda ).arg( elambda )
+      .arg( dlambda ) );
 }
 
 // X-axis has been changed to Radius or Wavelength
@@ -4171,10 +4265,10 @@ DbgLv(1) << "xaxis_radius_on  checked" << checked;
 
       cb_lplot->disconnect();
       cb_lplot->clear();
-      cb_lplot->addItems( slist_wvlns );
+      cb_lplot->addItems( plist_wvlns );
       connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
                this,      SLOT  ( lambda_plot_value  ( int    ) ) );
-      cb_lplot->setCurrentIndex( slist_wvlns.size() / 2 );
+      cb_lplot->setCurrentIndex( plist_wvlns.size() / 2 );
    }
 }
 
@@ -4189,10 +4283,10 @@ DbgLv(1) << "xaxis_waveln_on  checked" << checked;
 
       cb_lplot->disconnect();
       cb_lplot->clear();
-      cb_lplot->addItems( slist_radii );
+      cb_lplot->addItems( plist_radii );
       connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
                this,      SLOT  ( lambda_plot_value  ( int    ) ) );
-      cb_lplot->setCurrentIndex( slist_radii.size() / 2 );
+      cb_lplot->setCurrentIndex( plist_radii.size() / 2 );
    }
 }
 
@@ -4276,5 +4370,7 @@ void US_Edit::od_radius_limit( double value )
 {
 DbgLv(1) << "od_radius_limit  value" << value;
    odlimit     = value;
+
+   plot_mwl();
 }
 

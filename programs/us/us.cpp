@@ -325,7 +325,7 @@ void US_Win::launch( int index )
   statusBar()->showMessage( 
       tr( "Loading " ) + p[ index ].runningMsg + "..." );
 
-  QProcess* process = new QProcess( this );
+  QProcess* process = new QProcess( 0 );
   process->closeReadChannel( QProcess::StandardOutput );
   process->closeReadChannel( QProcess::StandardError );
   connect ( process, SIGNAL( finished  ( int, QProcess::ExitStatus ) ),
@@ -385,8 +385,8 @@ void US_Win::closeProcs( void )
                              .arg( isAre ).arg( names ).arg( itThem ) ) );
 
   QString killText  = tr( "&Kill" );
-  QString closeText = tr( "&Close Gracfully" );
-  QString leaveText = tr( "&Leave running" );
+  QString closeText = tr( "&Close Gracefully" );
+  QString leaveText = tr( "&Leave Running" );
 
   QPushButton* kill  = box.addButton( killText , QMessageBox::YesRole );
                        box.addButton( closeText, QMessageBox::YesRole );

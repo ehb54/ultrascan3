@@ -895,6 +895,7 @@ QDateTime time0=QDateTime::currentDateTime();
 
    const QString svgext( ".svg" );
    const QString pngext( ".png" );
+   const QString csvext( ".csv" );
    QString img01File = basename + "velocity"   + svgext;
    QString img02File = basename + "residuals"  + pngext;
    QString img03File = basename + "s_distrib"  + svgext;
@@ -908,6 +909,7 @@ QDateTime time0=QDateTime::currentDateTime();
    QString img11File = basename + "rbitmap"    + pngext;
    QString img12File = basename + "tinoise"    + svgext;
    QString img13File = basename + "rinoise"    + svgext;
+   QString mdistFile = basename + "mdistr_tab" + csvext;
 
    if ( !cnstvb )
    {
@@ -1039,6 +1041,10 @@ DbgLv(1) << "(9)p1type" << p1type;
       write_plot( img13File, nois_plot );
       files << img13File;
    }
+
+   // Create the model distributions table CSV
+   model_table( mdistFile );
+   files << mdistFile;
 
    // report the files created
    QString umsg     = tr( "In directory " )
@@ -2228,9 +2234,9 @@ double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
 void US_FeMatch::write_report( QTextStream& ts )
 {
    ts << html_header( "US_Fematch", text_model( model, 2 ), edata );
-   ts << data_details();
-   ts << hydrodynamics();
-   ts << scan_info();
+//   ts << data_details();
+//   ts << hydrodynamics();
+//   ts << scan_info();
    ts << distrib_info();
    ts << "  </body>\n</html>\n";
 }
@@ -3177,6 +3183,66 @@ DbgLv(1) << "THR COMPL thr" << thr << "thrdone" << thrdone;
 
       // Then show the results
       show_results();
+   }
+}
+
+// Write a file containing a model distributions table in CSV format
+void US_FeMatch::model_table( QString mdtFile )
+{
+   // Get the total concentration
+   int ncomp      = model_loaded.components.size();
+   if ( ncomp == 0 )
+      return;
+   QFile mdt_f( mdtFile );
+   if ( ! mdt_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      return;
+   double sum_c   = 0.0;
+
+   for ( int ii = 0; ii < ncomp; ii++ )
+   {
+      double conc = model_loaded.components[ ii ].signal_concentration;
+      sum_c      += conc;
+   }
+
+   // Write out the comma-separated-values text fields
+   QTextStream ts( &mdt_f );
+   const QString dquote( "\"" );
+   const QString comma( "," );
+   const QString endln( "\n" );
+
+   // Write the header line
+   ts << dquote + "Molec.Weight"   + dquote + comma
+       + dquote + "S_Apparent"     + dquote + comma
+       + dquote + "S_20_W"         + dquote + comma
+       + dquote + "D_Apparent"     + dquote + comma
+       + dquote + "D_20_W"         + dquote + comma
+       + dquote + "f/f0"           + dquote + comma
+       + dquote + "Vbar20"         + dquote + comma
+       + dquote + "Concentration"  + dquote + comma
+       + dquote + "Conc.Percent"   + dquote + endln;
+
+   for ( int ii = 0; ii < ncomp; ii++ )
+   {  // Write each component line
+      double conc = model_loaded.components[ ii ].signal_concentration;
+      double perc = 100.0 * conc / sum_c;
+      ts << dquote + QString().sprintf( "%10.4e",
+               model_loaded.components[ ii ].mw   )   + dquote + comma +
+            dquote + QString().sprintf( "%10.4e",
+               model       .components[ ii ].s    )   + dquote + comma +
+            dquote + QString().sprintf( "%10.4e",
+               model_loaded.components[ ii ].s    )   + dquote + comma +
+            dquote + QString().sprintf( "%10.4e",
+               model       .components[ ii ].D    )   + dquote + comma +
+            dquote + QString().sprintf( "%10.4e",
+               model_loaded.components[ ii ].D    )   + dquote + comma +
+            dquote + QString().sprintf( "%10.4e",
+               model_loaded.components[ ii ].f_f0 )   + dquote + comma +
+            dquote + QString().sprintf( "%10.4e",
+               model_loaded.components[ ii ].vbar20 ) + dquote + comma +
+            dquote + QString().sprintf( "%10.4e",
+               conc )                                 + dquote + comma +
+            dquote + QString().sprintf( "%5.2f %%",
+               perc )                                 + dquote + endln;
    }
 }
 
