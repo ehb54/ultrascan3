@@ -1,0 +1,41 @@
+Ask: shared memory accessible on MIC(s) via ipc or other method(?)
+
+I am thinking we want to create 1 or 2 mpi's per MIC and thread them
+Keep all sh data on mic
+
+mic sets up worker threads to compute_I
+
+forget commuincators
+master keeps track
+
+if mic: setup threads and wait for shutdown or computation request
+test if we can compute_I threaded with mutex
+
+module swap mvapich2 impi
+srun --pty -n 16 -t 00:30:00 -p development -A TG-TRA120007 /bin/bash -l
+
+mpicxx -O3 -mmic  mpitest.c -o mpitest_mic
+mpicxx -O3 -xhost mpitest.c -o mpitest_xhost
+
+mpiicpc -O3 -mmic  mpitest.c -o mpitest_mic
+mpiicpc -O3 -xhost mpitest.c -o mpitest_xhost
+
+mpic++ -O3 -mmic  mpitest.c -o mpitest_mic
+mpic++ -O3 -xhost mpitest.c -o mpitest_xhost
+
+mpicc -O3 -mmic  mpitest.c -o mpitest_mic
+mpicc -O3 -xhost mpitest.c -o mpitest_xhost
+
+env MIC_PPN=32 ibrun.symm -m ./mpitest_mic -c ./mpitest_xhost
+ibrun.symm -m ./mpitest_mic
+ibrun.symm -c ./mpitest_xhost
+
+Use the "$MIC_PPN" and "$MIC_OMP_NUM_THREADS" environment variables to set the number of tasks and threads for each MIC
+
+making libqt for mic will be a bear... have to create pure c++/mpi version
+
+mpicxx -O3 -mmic  mpitest2.c -o mpitest_mic
+mpicxx -O3 -xhost mpitest2.c -o mpitest_xhost
+
+mpicxx -O3 -mmic  mpitest2.c -o mpitest_mic; mpicxx -O3 -xhost mpitest2.c -o mpitest_xhost
+
