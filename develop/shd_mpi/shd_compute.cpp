@@ -1,8 +1,19 @@
 #include "shd.h"
 
+#define SHOW_MPI_TIMING
+
 bool SHD::compute_amplitudes( vector < complex < float > > & Av )
 {
    // model should already be centered
+#if defined( SHOW_MPI_TIMING )
+   double global_time_start = MPI_Wtime();
+   double time_start;
+   double time_end;
+   double rtp_time = 0e0;
+   double shbes_time = 0e0;
+   double legendre_time = 0e0;
+#endif
+
 
    shd_data tmp_data;
    shd_data *datap = &tmp_data;
@@ -34,6 +45,9 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
          break;
       }
 
+#if defined( SHOW_MPI_TIMING )
+      time_start = MPI_Wtime();
+#endif
       datap->rtp[ 0 ] = sqrt ( (double) ( modelp->x[ 0 ] * modelp->x[ 0 ] +
                                              modelp->x[ 1 ] * modelp->x[ 1 ] +
                                              modelp->x[ 2 ] * modelp->x[ 2 ] ) );
@@ -71,6 +85,10 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
             }
          }
       }
+#if defined( SHOW_MPI_TIMING )
+      time_end = MPI_Wtime();
+      rtp_time += time_end - time_start;
+#endif
          
       Yp = &( ccY[ 0 ] );
 
@@ -78,6 +96,9 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
       {
          for ( int m = - (int) l ; m <= (int) l; ++m )
          {
+#if defined( SHOW_MPI_TIMING )
+            time_start = MPI_Wtime();
+#endif
             if ( !sh::conj_spherical_harmonic( l, 
                                                m, 
                                                datap->rtp[ 1 ],
@@ -87,6 +108,11 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
                error_msg = "sh::spherical_harmonic failed";
                return false;
             }
+#if defined( SHOW_MPI_TIMING )
+            time_end = MPI_Wtime();
+            legendre_time += time_end - time_start;
+#endif
+
             (*Yp) = tmp_cd;
             ++Yp;
          }
@@ -108,11 +134,18 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
 
          for ( unsigned int l = 0; l <= max_harmonics; ++l )
          {
+#if defined( SHOW_MPI_TIMING )
+            time_start = MPI_Wtime();
+#endif
             if ( !nr::sphbes( l, qp_t_rtp0, *Jp ) )
             {
                error_msg = "nr::shbes failed";
                return false;
             }
+#if defined( SHOW_MPI_TIMING )
+            time_end = MPI_Wtime();
+            shbes_time += time_end - time_start;
+#endif
 
             tmp_cf = (float) *Jp * (float)(*Fp) * (*i_lp);
             for ( int m = - (int) l ; m <= (int) l; ++m )
@@ -129,6 +162,25 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
          ++Fp;
       }
    }
+#if defined( SHOW_MPI_TIMING )
+   time_end = MPI_Wtime();
+   double total_time = time_end - global_time_start;
+
+   printf( "%d of %d: compute amplitudes model size %d rtp %gms %.2f leg %gms %.2f shbes %gms %.2f other %gms %.2f tot %gms\n",
+           world_rank,
+           world_size,
+           (int) model->size(),
+           rtp_time * 1e3,
+           1e2 * ( rtp_time ) / total_time,
+           legendre_time * 1e3,
+           1e2 * ( legendre_time ) / total_time,
+           shbes_time * 1e3,
+           1e2 * ( shbes_time ) / total_time,
+           ( total_time - rtp_time - legendre_time - shbes_time ) * 1e3,
+           1e2 * ( total_time - rtp_time - legendre_time - shbes_time ) / total_time,
+           total_time * 1e3
+           );
+#endif
 
    return true;
 }

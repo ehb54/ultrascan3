@@ -249,7 +249,10 @@ int main( int argc, char **argv )
 #endif
 
    SHD tSHD( ( unsigned int ) id.max_harmonics, my_model, F, q, I, 0 );
-   tSHD.compute_amplitudes( Avp );
+   if ( world_rank )
+   {
+      tSHD.compute_amplitudes( Avp );
+   }
 #if defined( SHOW_TIMING )
    gettimeofday( &end_tv, NULL );
    printf( "%d: compute amplitudes %lums model size %d\n",
@@ -261,7 +264,13 @@ int main( int argc, char **argv )
    fflush(stdout);
    gettimeofday( &start_tv, NULL );
 #endif
+
+   // cout << world_rank << " done" << endl << flush;
+
 #if defined( SHOW_MPI_TIMING )
+   cout << world_rank << " final barrier\n" << endl << flush;
+   MPI_Barrier( MPI_COMM_WORLD );
+   cout << world_rank << " final barrier exit\n" << endl << flush;
    if ( !world_rank )
    {
       double time_end = MPI_Wtime();
@@ -272,14 +281,8 @@ int main( int argc, char **argv )
               (int) my_model.size()
               );
    }
-#endif
-
-   // cout << world_rank << " done" << endl << flush;
-
-   // cout << world_rank << " final barrier\n" << endl << flush;
-   // MPI_Barrier( MPI_COMM_WORLD );
-   // cout << world_rank << " final barrier exit\n" << endl << flush;
    MPI_Finalize();
+#endif
    exit(0);
 }
              
