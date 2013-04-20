@@ -268,9 +268,9 @@ int main( int argc, char **argv )
    // cout << world_rank << " done" << endl << flush;
 
 #if defined( SHOW_MPI_TIMING )
-   cout << world_rank << " final barrier\n" << endl << flush;
+   // cout << world_rank << " final barrier\n" << endl << flush;
    MPI_Barrier( MPI_COMM_WORLD );
-   cout << world_rank << " final barrier exit\n" << endl << flush;
+   //    cout << world_rank << " final barrier exit\n" << endl << flush;
    if ( !world_rank )
    {
       double time_end = MPI_Wtime();
