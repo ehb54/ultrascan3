@@ -163,6 +163,8 @@ int main( int argc, char **argv )
 
       my_model.resize( id.model_size );
 
+#if defined USE_SCATTER
+
       if ( MPI_SUCCESS != MPI_Scatter( (void *)&(model[ 0 ]),    id.model_size * sizeof( struct shd_point ), MPI_CHAR,
                                        (void *)&(my_model[ 0 ]), id.model_size * sizeof( struct shd_point ), MPI_CHAR,
                                        0, MPI_COMM_WORLD ) )
@@ -172,6 +174,28 @@ int main( int argc, char **argv )
          exit( errorno );
       }
       errorno--;
+
+#else
+
+      for ( int i = 1; i < world_size; ++i )
+      {
+         // cout << "0 sending to" << i << endl << flush;
+         if ( MPI_SUCCESS != MPI_Send( (void *)&(model[ id.model_size * i ]), 
+                                       id.model_size * sizeof( struct shd_point ), 
+                                       MPI_CHAR,
+                                       i,
+                                       i, 
+                                       MPI_COMM_WORLD ) )
+         {
+            cerr << "Error: MPI_send( model ) failed" << endl;
+            MPI_Abort( MPI_COMM_WORLD, errorno );
+            exit( errorno );
+         }
+         // cout << "0 sending to " << i << "done" << endl << flush;
+      }
+      errorno--;
+
+#endif
 
 #if defined( SHOW_TIMING )
       gettimeofday( &end_tv, NULL );
@@ -217,6 +241,8 @@ int main( int argc, char **argv )
 
       void * null = (void *)0;
 
+#if defined USE_SCATTER
+
       if ( MPI_SUCCESS != MPI_Scatter( null,            id.model_size * sizeof( struct shd_point ), MPI_CHAR,
                                        &(my_model[ 0 ]), id.model_size * sizeof( struct shd_point ), MPI_CHAR,
                                        0, MPI_COMM_WORLD ) )
@@ -227,6 +253,23 @@ int main( int argc, char **argv )
       }
 
       errorno--;
+#else
+      MPI_Status mpistat;
+      // cout << world_rank << ": waiting to receive\n" << flush;
+      if ( MPI_SUCCESS != MPI_Recv( (void *)&(my_model[ 0 ]),
+                                    id.model_size * sizeof( struct shd_point ), 
+                                    MPI_CHAR,
+                                    0,
+                                    world_rank, 
+                                    MPI_COMM_WORLD,
+                                    &mpistat ) )
+      {
+         cerr << "Error: MPI_recv( model ) failed" << endl;
+         MPI_Abort( MPI_COMM_WORLD, errorno );
+         exit( errorno );
+      }
+      // cout << world_rank << ": received\n" << flush;
+#endif
    }
 
    vector < complex < float > > Avp;
