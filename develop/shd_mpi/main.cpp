@@ -278,7 +278,7 @@ int main( int argc, char **argv )
       tSHD.compute_amplitudes( Avp );
    }
 
-   // cout << world_rank << " done" << endl << flush;
+   cout << world_rank << " done" << endl << flush;
 
 #if defined( SHOW_MPI_TIMING )
    // cout << world_rank << " final barrier\n" << endl << flush;
@@ -294,8 +294,8 @@ int main( int argc, char **argv )
               (int) my_model.size()
               );
    }
-   MPI_Finalize();
 #endif
+   MPI_Finalize();
    exit(0);
 }
              

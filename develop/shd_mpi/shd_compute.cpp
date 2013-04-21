@@ -1,6 +1,6 @@
 #include "shd.h"
 
-#define SHOW_MPI_TIMING
+// #define SHOW_MPI_TIMING
 
 bool SHD::compute_amplitudes( vector < complex < float > > & Av )
 {
