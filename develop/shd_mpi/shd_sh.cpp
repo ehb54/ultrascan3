@@ -28,13 +28,13 @@ namespace nr {
       {
          omx2 = ( 1e0 - x ) * ( 1e0 + x );
          fact = 1e0;
-         for ( i = 1; i <= m; i++ ) 
+         for ( i = 1; i <= m; ++i ) 
          {
             pmm *= omx2 * fact / ( fact + 1e0 );
             fact += 2e0;
          }
       }
-      pmm = sqrt( ( 2e0 * m + 1e0 ) * pmm / ( 4e0 * M_PI ) );
+      pmm = sqrt( ( 2e0 * m + 1e0 ) * pmm * M_ONE_OVER_4PI ); //  ( 4e0 * M_PI ) );
 
       if ( m & 1 )
       {
@@ -53,9 +53,10 @@ namespace nr {
             return true;
          } else {
             oldfact = sqrt( 2e0 * m + 3e0 );
-            for ( ll = m + 2; ll <= l; ll++ ) 
+            shd_double mm = m * m;
+            for ( ll = m + 2; ll <= l; ++ll ) 
             {
-               fact    = sqrt( ( 4e0 * ll * ll - 1e0 ) / ( ll * ll - m * m ));
+               fact    = sqrt( ( 4e0 * ll * ll - 1e0 ) / ( ll * ll - mm ));
                pll     = ( x * pmmp1 - pmm / oldfact ) * fact;
                oldfact = fact;
                pmm     = pmmp1;

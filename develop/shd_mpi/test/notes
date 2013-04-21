@@ -79,6 +79,15 @@ remove vector / other stl ?
 
 controlled scatter (non-blocking sends )
 
-wierdness with cpu 0
 
-i7 oddness..
+MPI_Wtime overhead really slows things down.
+
+maybe more with fully float?
+more optimization of legendre/sphbes code
+(inline ?)
+
+hetrogenous distribute with mic
+
+
+
+

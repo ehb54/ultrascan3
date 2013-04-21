@@ -18,6 +18,10 @@ typedef float shd_double;
 # define M_SQRT_PI_2 1.2533141373155001208
 #endif
 
+#ifndef M_ONE_OVER_4PI
+# define M_ONE_OVER_4PI 0.0795774715459477
+#endif
+
 namespace nr {
    bool plegendre( int l, int m, shd_double x, shd_double &result );
    bool sphbes( int n, 
