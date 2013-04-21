@@ -3,9 +3,9 @@
 SHD::SHD( 
          unsigned int max_harmonics,
          vector < shd_point > & model, 
-         vector < vector < double > > & F,
-         vector < double > & q,
-         vector < double > & I, 
+         vector < vector < shd_double > > & F,
+         vector < shd_double > & q,
+         vector < shd_double > & I, 
          int debug_level 
          )
 {

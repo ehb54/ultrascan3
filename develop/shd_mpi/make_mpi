@@ -1,5 +1,5 @@
 CC      = mpicxx
-CFLAGS  = -O3 -Og
+CFLAGS  = -O3
 LDFLAGS = 
 
 all: shd

@@ -21,12 +21,12 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
 
    complex < float > *Yp;
 
-   double            *Jp;
-   double            *qp;
-   double            *Fp;
-   double            qp_t_rtp0;
+   shd_double            *Jp;
+   shd_double            *qp;
+   shd_double            *Fp;
+   shd_double            qp_t_rtp0;
 
-   complex < double > tmp_cd;
+   complex < shd_double > tmp_cd;
 
    complex < float > *i_lp;
    complex < float > *Ap;
@@ -48,9 +48,9 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
 #if defined( SHOW_MPI_TIMING )
       time_start = MPI_Wtime();
 #endif
-      datap->rtp[ 0 ] = sqrt ( (double) ( modelp->x[ 0 ] * modelp->x[ 0 ] +
-                                             modelp->x[ 1 ] * modelp->x[ 1 ] +
-                                             modelp->x[ 2 ] * modelp->x[ 2 ] ) );
+      datap->rtp[ 0 ] = sqrt ( (shd_double) ( modelp->x[ 0 ] * modelp->x[ 0 ] +
+                                              modelp->x[ 1 ] * modelp->x[ 1 ] +
+                                              modelp->x[ 2 ] * modelp->x[ 2 ] ) );
       if ( datap->rtp[ 0 ] == 0e0 )
       {
          datap->rtp[ 1 ] = 0e0;
@@ -65,7 +65,7 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
          } else {               
             if ( modelp->x[ 0 ] < 0 )
             {
-               datap->rtp[ 2 ] = M_PI - asin( modelp->x[ 1 ] / sqrt( (double) ( modelp->x[ 0 ] * 
+               datap->rtp[ 2 ] = M_PI - asin( modelp->x[ 1 ] / sqrt( (shd_double) ( modelp->x[ 0 ] * 
                                                                                    modelp->x[ 0 ] +
                                                                                    modelp->x[ 1 ] * 
                                                                                    modelp->x[ 1 ] ) ) );

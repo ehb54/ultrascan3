@@ -71,3 +71,14 @@ virtual topologies (in MPI) MPI_Cart_create
 
 todo:
 
+
+
+more timing improvements
+try to go fully float
+remove vector / other stl ?
+
+controlled scatter (non-blocking sends )
+
+wierdness with cpu 0
+
+i7 oddness..

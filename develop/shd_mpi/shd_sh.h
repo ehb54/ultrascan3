@@ -6,6 +6,8 @@
 #include <vector>
 #include <complex>
 
+typedef float shd_double;
+
 #ifndef M_PI
 #define M_PI       3.14159265358979323846
 #endif
@@ -17,18 +19,18 @@
 #endif
 
 namespace nr {
-   bool plegendre( int l, int m, double x, double &result );
+   bool plegendre( int l, int m, shd_double x, shd_double &result );
    bool sphbes( int n, 
-                double x, 
-                double &sj
+                shd_double x, 
+                shd_double &sj
                 );
 }
 
 namespace sh {
-   bool spherical_harmonic( int l, int m, double theta, double phi, std::complex < double > &result );
-   bool conj_spherical_harmonic( int l, int m, double theta, double phi, std::complex < double > &result );
+   bool spherical_harmonic( int l, int m, shd_double theta, shd_double phi, std::complex < shd_double > &result );
+   bool conj_spherical_harmonic( int l, int m, shd_double theta, shd_double phi, std::complex < shd_double > &result );
    unsigned int fibonacci( unsigned int n );
-   void build_grid( std::vector < std::vector < double > > &fib_grid, unsigned int size );
+   void build_grid( std::vector < std::vector < shd_double > > &fib_grid, unsigned int size );
 }
 
 #endif // SHD_SH

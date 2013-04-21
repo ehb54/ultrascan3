@@ -1,16 +1,17 @@
-#include "../include/us_sh.h"
+#include "shd_sh.h"
+
 #include <iostream>
 // #include <iomanip>
 
 namespace nr {
-   bool plegendre( int l, int m, double x, double &result )
+   bool plegendre( int l, int m, shd_double x, shd_double &result )
    {
-      double fact;
-      double oldfact;
-      double pll = 0e0;
-      double pmm;
-      double pmmp1;
-      double omx2;
+      shd_double fact;
+      shd_double oldfact;
+      shd_double pll = 0e0;
+      shd_double pmm;
+      shd_double pmmp1;
+      shd_double omx2;
 
       int i;
       int ll;
@@ -68,13 +69,13 @@ namespace nr {
       return false;
    }
 
-   bool chebev( double a, double b, double c[], int m, double x, double &res )
+   bool chebev( shd_double a, shd_double b, shd_double c[], int m, shd_double x, shd_double &res )
    {
-      double d  = 0e0;
-      double dd = 0e0;
-      double sv;
-      double y;
-      double y2;
+      shd_double d  = 0e0;
+      shd_double dd = 0e0;
+      shd_double sv;
+      shd_double y;
+      shd_double y2;
 
       if ( ( x - a ) * ( x - b ) > 0e0 )
       {
@@ -96,14 +97,14 @@ namespace nr {
 #define NUSE1 5
 #define NUSE2 5
 
-   bool beschb( double x, double &gam1, double &gam2, double &gampl, double &gammi )
+   bool beschb( shd_double x, shd_double &gam1, shd_double &gam2, shd_double &gampl, shd_double &gammi )
    {
-      double xx;
-      static double c1[] = {
+      shd_double xx;
+      static shd_double c1[] = {
          -1.142022680371172e0,6.516511267076e-3,
          3.08709017308e-4,-3.470626964e-6,6.943764e-9,
          3.6780e-11,-1.36e-13};
-      static double c2[] = {
+      static shd_double c2[] = {
          1.843740587300906e0,-0.076852840844786e0,
          1.271927136655e-3,-4.971736704e-6,-3.3126120e-8,
          2.42310e-10,-1.70e-13,-1.0e-15};
@@ -129,62 +130,62 @@ namespace nr {
 #define FPMIN 1.0e-30
 #define MAXIT 10000
 
-   bool bessj( double x, double xnu, double *rj )
+   bool bessj( shd_double x, shd_double xnu, shd_double *rj )
    {
       int isign;
       int i;
       int l;
       int nl;
-      double a;
-      double b;
-      double br;
-      double bi;
-      double c;
-      double cr;
-      double ci;
-      double d;
-      double del;
-      double del1;
-      double den;
-      double di;
-      double dlr;
-      double dli;
-      double dr;
-      double e;
-      double f;
-      double fact;
-      double fact2;
-      double fact3;
-      double ff;
-      double gam;
-      double gam1;
-      double gam2;
-      double gammi;
-      double gampl;
-      double h;
-      double p;
-      double pimu;
-      double pimu2;
-      double q;
-      double r;
-      double rjl;
-      double rjl1;
-      double rjmu;
-      double rjp1;
-      double rjpl;
-      double rjtemp;
-      double ry1;
-      double rymu;
-      double rymup;
-      double sum;
-      double sum1;
-      double temp;
-      double w;
-      double x2;
-      double xi;
-      double xi2;
-      double xmu;
-      double xmu2;
+      shd_double a;
+      shd_double b;
+      shd_double br;
+      shd_double bi;
+      shd_double c;
+      shd_double cr;
+      shd_double ci;
+      shd_double d;
+      shd_double del;
+      shd_double del1;
+      shd_double den;
+      shd_double di;
+      shd_double dlr;
+      shd_double dli;
+      shd_double dr;
+      shd_double e;
+      shd_double f;
+      shd_double fact;
+      shd_double fact2;
+      shd_double fact3;
+      shd_double ff;
+      shd_double gam;
+      shd_double gam1;
+      shd_double gam2;
+      shd_double gammi;
+      shd_double gampl;
+      shd_double h;
+      shd_double p;
+      shd_double pimu;
+      shd_double pimu2;
+      shd_double q;
+      shd_double r;
+      shd_double rjl;
+      shd_double rjl1;
+      shd_double rjmu;
+      shd_double rjp1;
+      shd_double rjpl;
+      shd_double rjtemp;
+      shd_double ry1;
+      shd_double rymu;
+      shd_double rymup;
+      shd_double sum;
+      shd_double sum1;
+      shd_double temp;
+      shd_double w;
+      shd_double x2;
+      shd_double xi;
+      shd_double xi2;
+      shd_double xmu;
+      shd_double xmu2;
 
       if ( x <= 0.0 || xnu < 0.0 )
       {
@@ -378,12 +379,12 @@ namespace nr {
    }
 
    bool sphbes( int n, 
-                double x, 
-                double &sj
+                shd_double x, 
+                shd_double &sj
                 )
    {
-      double order;
-      double rj;
+      shd_double order;
+      shd_double rj;
 
       if ( n < 0 || x < 0e0 )
       {
@@ -414,7 +415,7 @@ namespace nr {
 }
 
 namespace sh {
-   bool spherical_harmonic( int l, int m, double theta, double phi, std::complex < double > &result )
+   bool spherical_harmonic( int l, int m, shd_double theta, shd_double phi, std::complex < shd_double > &result )
    {
       bool r_sign = false;
       bool i_sign = false;
@@ -429,7 +430,7 @@ namespace sh {
       if ( m & 1 )
       {
          // Check phase if theta is outside [0, PI]:
-         double mod = fmod( theta, M_2PI );
+         shd_double mod = fmod( theta, M_2PI );
          if ( mod < 0e0 )
          {
             mod += M_2PI;
@@ -441,7 +442,7 @@ namespace sh {
          }
       }
 
-      double p;
+      shd_double p;
 
       if ( !nr::plegendre( l, m, cos( theta ), p ) )
       {
@@ -449,9 +450,9 @@ namespace sh {
       }
 
       // printf( "sh pl l %d m %d theta %g p %g\n", l, m, theta, p );
-      double mphi = ( double ) m * phi;
-      double r    = p * cos( mphi );
-      double i    = p * sin( mphi );
+      shd_double mphi = ( shd_double ) m * phi;
+      shd_double r    = p * cos( mphi );
+      shd_double i    = p * sin( mphi );
       if ( r_sign )
       {
          r = -r;
@@ -461,7 +462,7 @@ namespace sh {
          i = -i;
       }
 
-      result = std::complex < double > ( r,  i );
+      result = std::complex < shd_double > ( r,  i );
 
       /* 
          printf( "sh pl l %d m %d theta %g p %g phi %g mphi %g cosmphi %g sinmphi %g p*cosmphi %g p*sinmphi %g\n", 
@@ -481,7 +482,7 @@ namespace sh {
       return true;
    }
 
-   bool conj_spherical_harmonic( int l, int m, double theta, double phi, std::complex < double > &result )
+   bool conj_spherical_harmonic( int l, int m, shd_double theta, shd_double phi, std::complex < shd_double > &result )
    {
       bool r_sign = false;
       bool i_sign = false;
@@ -496,7 +497,7 @@ namespace sh {
       if ( m & 1 )
       {
          // Check phase if theta is outside [0, PI]:
-         double mod = fmod( theta, M_2PI );
+         shd_double mod = fmod( theta, M_2PI );
          if ( mod < 0e0 )
          {
             mod += M_2PI;
@@ -508,7 +509,7 @@ namespace sh {
          }
       }
 
-      double p;
+      shd_double p;
 
       if ( !nr::plegendre( l, m, cos( theta ), p ) )
       {
@@ -516,9 +517,9 @@ namespace sh {
       }
 
       // printf( "sh pl l %d m %d theta %g p %g\n", l, m, theta, p );
-      double mphi = ( double ) m * phi;
-      double r    = p * cos( mphi );
-      double i    = p * sin( mphi );
+      shd_double mphi = ( shd_double ) m * phi;
+      shd_double r    = p * cos( mphi );
+      shd_double i    = p * sin( mphi );
       if ( r_sign )
       {
          r = -r;
@@ -528,7 +529,7 @@ namespace sh {
          i = -i;
       }
 
-      result = std::complex < double > ( r,  i );
+      result = std::complex < shd_double > ( r,  i );
 
       return true;
    }
@@ -548,18 +549,18 @@ namespace sh {
       }
    }
 
-   void build_grid( std::vector < std::vector < double > > &fib_grid, unsigned int size )
+   void build_grid( std::vector < std::vector < shd_double > > &fib_grid, unsigned int size )
    {
       unsigned int f   = fibonacci( size );
       unsigned int f_1 = fibonacci( size - 1 );
       fib_grid.resize( f );
 
-      std::vector < double > tmp_f( 2 );
+      std::vector < shd_double > tmp_f( 2 );
 
       for ( unsigned int i = 0; i < f; i++ )
       {
-         tmp_f[ 0 ] = acos( 1e0 - 2e0 * i / (double) f );
-         tmp_f[ 1 ] = M_2PI * ( double ) ( ( i * size ) % f_1 ) / (double) f_1;
+         tmp_f[ 0 ] = acos( 1e0 - 2e0 * i / (shd_double) f );
+         tmp_f[ 1 ] = M_2PI * ( shd_double ) ( ( i * size ) % f_1 ) / (shd_double) f_1;
          fib_grid[ i ] = tmp_f;
       }
    }

@@ -61,14 +61,17 @@ struct shd_input_data
  * \copyright BSD
  */
 
+typedef float shd_double;
+#define MPI_SHD_DOUBLE MPI_FLOAT
+
 class SHD
 {
  private:
 
    vector < shd_point >                    *model;
-   vector < vector < double > >            F;
-   vector < double >                       q;
-   vector < double >                       I;
+   vector < vector < shd_double > >            F;
+   vector < shd_double >                       q;
+   vector < shd_double >                       I;
 
    unsigned int                            q_points;
 
@@ -77,7 +80,7 @@ class SHD
 
    vector < complex < float > >            ccY;
    vector < complex < float > >            ccA1v;
-   vector < double >                       ccJ;
+   vector < shd_double >                       ccJ;
 
    complex < float >                       i_; // ( 0e0, 1e0 );
    vector < complex < float > >            i_l;
@@ -112,9 +115,9 @@ class SHD
    SHD                 ( 
                         unsigned int max_harmonics,
                         vector < shd_point > & model, 
-                        vector < vector < double > > & F,
-                        vector < double > & q,
-                        vector < double > & I, 
+                        vector < vector < shd_double > > & F,
+                        vector < shd_double > & q,
+                        vector < shd_double > & I, 
                         int debug_level = 0
                         );
 

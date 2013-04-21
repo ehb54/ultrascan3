@@ -2,13 +2,6 @@
 
 #define SHOW_MPI_TIMING
 
-// #define SHOW_TIMING
-#if defined( SHOW_TIMING )
-#  include <sys/time.h>
-   static struct timeval start_tv;
-   static struct timeval end_tv;
-#endif
-
 int world_size;
 int world_rank;
 
@@ -16,9 +9,9 @@ int main( int argc, char **argv )
 {
    shd_input_data               id;
 
-   vector < double >            q;
-   vector < vector < double > > F;
-   vector < double >            I;
+   vector < shd_double >            q;
+   vector < vector < shd_double > > F;
+   vector < shd_double >            I;
    vector < shd_point >         my_model;
 
    MPI_Init( &argc, &argv);
@@ -26,6 +19,7 @@ int main( int argc, char **argv )
 
    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
 
    char processor_name[MPI_MAX_PROCESSOR_NAME];
    int name_len;
@@ -37,19 +31,24 @@ int main( int argc, char **argv )
    //           " of %d a %sa MIC\n",
    //           processor_name, world_rank, world_size, is_mic ? "" : "NOT " );
 
+   vector < shd_point >         model;
    if ( !world_rank )
    {
-      vector < shd_point >         model;
-#if defined( SHOW_TIMING )
-      gettimeofday( &start_tv, NULL );
-#endif
       cout << "sizeof float :" << sizeof( float ) << endl;
-      cout << "sizeof double:" << sizeof( double ) << endl;
+      cout << "sizeof shd_double:" << sizeof( shd_double ) << endl;
 
       int errorno = -1;
       if ( argc < 2 )
       {
          cerr << "Error: usage: shd inputfile\n";         
+         MPI_Abort( MPI_COMM_WORLD, errorno );
+         exit( errorno );
+      }
+      errorno--;
+
+      if ( world_size < 2 )
+      {
+         cerr << "Error: np must be at least 2\n";
          MPI_Abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
@@ -79,22 +78,14 @@ int main( int argc, char **argv )
       cout << "q size       :" << id.q_size << endl;
       cout << "model size   :" << id.model_size << endl;
 
-#if defined( SHOW_TIMING )
-      gettimeofday( &end_tv, NULL );
-      printf( "0: init, file read %lums\n",
-              ( 1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
-                start_tv.tv_usec ) / 1000l );
-      fflush(stdout);
-      gettimeofday( &start_tv, NULL );
-#endif
-      vector < double > tmp_F( id.q_size );
+      vector < shd_double > tmp_F( id.q_size );
 
       q    .resize( id.q_size     );
       model.resize( id.model_size );
 
       for ( int32_t i = 0; i < id.F_size; ++i )
       {
-         if ( !ifs.read( (char *)(&tmp_F[ 0 ]), sizeof( double ) * id.q_size ) )
+         if ( !ifs.read( (char *)(&tmp_F[ 0 ]), sizeof( shd_double ) * id.q_size ) )
          {
             cerr << "Error: " << argv[ 1 ] << " can not read F data" << endl;
             MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -104,7 +95,7 @@ int main( int argc, char **argv )
       }
       errorno--;
 
-      if ( !ifs.read( (char*)(&q[ 0 ]), sizeof( double ) * id.q_size ) )
+      if ( !ifs.read( (char*)(&q[ 0 ]), sizeof( shd_double ) * id.q_size ) )
       {
          cerr << "Error: " << argv[ 1 ] << " can not read q data" << endl;
          MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -123,8 +114,8 @@ int main( int argc, char **argv )
       ifs.close();
 
       uint32_t org_model_size  = id.model_size;
-      id.model_size            = ( org_model_size % world_size ? 1 : 0 ) + org_model_size / world_size;
-      uint32_t extd_model_size = id.model_size * world_size;
+      id.model_size            = ( org_model_size % ( world_size - 1 ) ? 1 : 0 ) + org_model_size / (world_size - 1);
+      uint32_t extd_model_size = id.model_size * ( world_size - 1 );
 
       printf( "org model_size %d\n",  org_model_size );
       printf( "new model size %d\n",  id.model_size );
@@ -150,7 +141,7 @@ int main( int argc, char **argv )
       // broadcast F
       for ( int32_t i = 0; i < id.F_size; ++i )
       {
-         if ( MPI_SUCCESS != MPI_Bcast( &(F[ i ][ 0 ] ), id.q_size, MPI_DOUBLE, 0, MPI_COMM_WORLD ) )
+         if ( MPI_SUCCESS != MPI_Bcast( &(F[ i ][ 0 ] ), id.q_size, MPI_SHD_DOUBLE, 0, MPI_COMM_WORLD ) )
          {
             cerr << "Error: MPI_Bcast( id ) sender failed" << endl;
             MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -177,15 +168,17 @@ int main( int argc, char **argv )
 
 #else
 
+      MPI_Request mpi_req[ world_size - 1 ];
       for ( int i = 1; i < world_size; ++i )
       {
          // cout << "0 sending to" << i << endl << flush;
-         if ( MPI_SUCCESS != MPI_Send( (void *)&(model[ id.model_size * i ]), 
-                                       id.model_size * sizeof( struct shd_point ), 
-                                       MPI_CHAR,
-                                       i,
-                                       i, 
-                                       MPI_COMM_WORLD ) )
+         if ( MPI_SUCCESS != MPI_Isend( (void *)&(model[ id.model_size * ( i - 1 ) ]), 
+                                        id.model_size * sizeof( struct shd_point ), 
+                                        MPI_CHAR,
+                                        i,
+                                        i, 
+                                        MPI_COMM_WORLD,
+                                        &(mpi_req[ i - 1 ]) ) )
          {
             cerr << "Error: MPI_send( model ) failed" << endl;
             MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -195,14 +188,6 @@ int main( int argc, char **argv )
       }
       errorno--;
 
-#endif
-
-#if defined( SHOW_TIMING )
-      gettimeofday( &end_tv, NULL );
-      printf( "0: broadcast, scatter %lums\n",
-              ( 1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
-                start_tv.tv_usec ) / 1000l );
-      fflush(stdout);
 #endif
 
       // split model & distribute to processes
@@ -230,7 +215,7 @@ int main( int argc, char **argv )
       for ( int32_t i = 0; i < id.F_size; ++i )
       {
          F[ i ].resize( id.q_size );
-         if ( MPI_SUCCESS != MPI_Bcast( &(F[ i ][ 0 ] ), id.q_size, MPI_DOUBLE, 0, MPI_COMM_WORLD ) )
+         if ( MPI_SUCCESS != MPI_Bcast( &(F[ i ][ 0 ] ), id.q_size, MPI_SHD_DOUBLE, 0, MPI_COMM_WORLD ) )
          {
             cerr << "Error: MPI_Bcast( id ) sender failed" << endl;
             MPI_Abort( MPI_COMM_WORLD, errorno );
@@ -279,10 +264,6 @@ int main( int argc, char **argv )
    // cout << world_rank << " initial barrier exit\n" << endl << flush;
 
 
-#if defined( SHOW_TIMING )
-   gettimeofday( &start_tv, NULL );
-#endif
-
 #if defined( SHOW_MPI_TIMING )
    double time_start;
    if ( !world_rank )
@@ -291,22 +272,11 @@ int main( int argc, char **argv )
    }
 #endif
 
-   SHD tSHD( ( unsigned int ) id.max_harmonics, my_model, F, q, I, 0 );
    if ( world_rank )
    {
+      SHD tSHD( ( unsigned int ) id.max_harmonics, my_model, F, q, I, 0 );
       tSHD.compute_amplitudes( Avp );
    }
-#if defined( SHOW_TIMING )
-   gettimeofday( &end_tv, NULL );
-   printf( "%d: compute amplitudes %lums model size %d\n",
-           world_rank,
-           ( 1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
-             start_tv.tv_usec ) / 1000l,
-           my_model.size()
-           );
-   fflush(stdout);
-   gettimeofday( &start_tv, NULL );
-#endif
 
    // cout << world_rank << " done" << endl << flush;
 
