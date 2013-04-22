@@ -3994,7 +3994,12 @@ bool US_Hydrodyn_Saxs::create_somo_ff()
    return true;
 }
 
-#include "stdint.h"
+#ifdef WIN32
+typedef _int16 int16_t;
+#else
+#include <stdint.h>
+#endif
+
 #include <fstream>
 
 struct shd_point
