@@ -54,6 +54,14 @@ int main( int argc, char **argv )
       }
       errorno--;
 
+      if ( world_size != 2 )
+      {
+         cerr << "Error: np must be at exactly 2 for now\n";
+         MPI_Abort( MPI_COMM_WORLD, errorno );
+         exit( errorno );
+      }
+      errorno--;
+
       // read in data file
 
       ifstream ifs( argv[ 1 ], ios::in | ios::binary );
@@ -138,6 +146,7 @@ int main( int argc, char **argv )
       }
       errorno--;
          
+      cout << world_rank << ": bcast F" << endl << flush;
       // broadcast F
       for ( int32_t i = 0; i < id.F_size; ++i )
       {
@@ -150,9 +159,20 @@ int main( int argc, char **argv )
       }
       errorno--;
 
+      cout << world_rank << ": bcast q" << endl << flush;
+      // broadcast q
+      if ( MPI_SUCCESS != MPI_Bcast( &(q[ 0 ] ), id.q_size, MPI_SHD_DOUBLE, 0, MPI_COMM_WORLD ) )
+      {
+         cerr << "Error: MPI_Bcast( q ) sender failed" << endl;
+         MPI_Abort( MPI_COMM_WORLD, errorno );
+         exit( errorno );
+      }
+      errorno--;
+
       // Scatter model
 
       my_model.resize( id.model_size );
+      cout << world_rank << ": send model" << endl << flush;
 
 #if defined USE_SCATTER
 
@@ -201,10 +221,10 @@ int main( int argc, char **argv )
          MPI_Abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
-      // cout << "max harmonics:" << world_rank << " " << id.max_harmonics << endl;
-      // cout << "F size       :" << world_rank << " " << id.F_size << endl;
-      // cout << "q size       :" << world_rank << " " << id.q_size << endl;
-      // cout << "model size   :" << world_rank << " " << id.model_size << endl;
+      cout << "max harmonics:" << world_rank << " " << id.max_harmonics << endl;
+      cout << "F size       :" << world_rank << " " << id.F_size << endl;
+      cout << "q size       :" << world_rank << " " << id.q_size << endl;
+      cout << "model size   :" << world_rank << " " << id.model_size << endl;
 
       F       .resize( id.F_size );
       q       .resize( id.q_size );
@@ -212,6 +232,8 @@ int main( int argc, char **argv )
 
       // broadcast (receive) F
 
+      
+      cout << world_rank << ": receive F" << endl << flush;
       for ( int32_t i = 0; i < id.F_size; ++i )
       {
          F[ i ].resize( id.q_size );
@@ -223,6 +245,17 @@ int main( int argc, char **argv )
          }
       }
       errorno--;
+
+      cout << world_rank << ": receive q" << endl << flush;
+      // broadcast (receive) q 
+      if ( MPI_SUCCESS != MPI_Bcast( &(q[ 0 ] ), id.q_size, MPI_SHD_DOUBLE, 0, MPI_COMM_WORLD ) )
+      {
+         cerr << "Error: MPI_Bcast( q ) sender failed" << endl;
+         MPI_Abort( MPI_COMM_WORLD, errorno );
+         exit( errorno );
+      }
+      errorno--;
+      cout << world_rank << ": q received" << endl << flush;
 
       void * null = (void *)0;
 
@@ -239,6 +272,7 @@ int main( int argc, char **argv )
 
       errorno--;
 #else
+      cout << world_rank << ": receive" << endl << flush;
       MPI_Status mpistat;
       // cout << world_rank << ": waiting to receive\n" << flush;
       if ( MPI_SUCCESS != MPI_Recv( (void *)&(my_model[ 0 ]),
@@ -253,15 +287,16 @@ int main( int argc, char **argv )
          MPI_Abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
+      cout << world_rank << ": model received" << endl << flush;
       // cout << world_rank << ": received\n" << flush;
 #endif
    }
 
    vector < complex < float > > Avp;
 
-   // cout << world_rank << " initial barrier\n" << endl << flush;
-   // MPI_Barrier( MPI_COMM_WORLD );
-   // cout << world_rank << " initial barrier exit\n" << endl << flush;
+   cout << world_rank << " initial barrier\n" << endl << flush;
+   MPI_Barrier( MPI_COMM_WORLD );
+   cout << world_rank << " initial barrier exit\n" << endl << flush;
 
 
 #if defined( SHOW_MPI_TIMING )
@@ -272,10 +307,61 @@ int main( int argc, char **argv )
    }
 #endif
 
+   SHD tSHD( ( unsigned int ) id.max_harmonics, my_model, F, q, I, 0 );
    if ( world_rank )
    {
-      SHD tSHD( ( unsigned int ) id.max_harmonics, my_model, F, q, I, 0 );
       tSHD.compute_amplitudes( Avp );
+   } else {
+      Avp = tSHD.A1v0;
+   }
+
+   vector < complex < float > > Avpsum = Avp;
+
+   /*
+   if ( MPI_SUCCESS != MPI_Reduce( (void *) &( Avp[ 0 ] ), 
+                                   (void *) &( Avpsum[ 0 ] ), 
+                                   tSHD.q_Y_points * 2,
+                                   MPI_FLOAT,
+                                   MPI_SUM,
+                                   0,
+                                   MPI_COMM_WORLD ) )
+   {
+      cerr << world_rank << "Error: MPI_reduce() failed" << endl;
+      MPI_Abort( MPI_COMM_WORLD, -1000 );
+      exit( -1000 );
+   }
+   */
+
+   // tSHD.printmodel();
+   // tSHD.printF();
+   // tSHD.printq();
+   if ( world_rank == 1 )
+   {
+      // tSHD.printA( Avp );
+      vector < double > I_result( tSHD.q_points );
+      // complex < float > *A1vp = &( Avpsum[ 0 ] );
+      complex < float > *A1vp = &( Avp[ 0 ] );
+      for ( unsigned int j = 0; j < tSHD.q_points; ++j )
+      {
+         I_result[ j ] = 0e0;
+         for ( unsigned int k = 0; k < tSHD.Y_points; ++k )
+         {
+            I_result[ j ] += norm( (*A1vp) );
+            ++A1vp;
+         }
+         I_result[ j ] *= M_4PI;
+      }
+      // write it out
+      string fname = string( argv[ 1 ] ) + "_I.dat";;
+      // fname.replace( fname.end() - 4, 4, "_I_out.dat" );
+      ofstream ofs( fname.c_str(), ios::out );
+
+      ofs << "# us-somo: shd I from " << argv[ 1 ] << endl;
+      for ( unsigned int j = 0; j < tSHD.q_points; ++j )
+      {
+         ofs << q[ j ] << "\t" << I_result[ j ] << endl;
+      }
+      ofs.close();
    }
 
    cout << world_rank << " done" << endl << flush;

@@ -63,3 +63,51 @@ SHD::SHD(
 SHD::~SHD()
 {
 }
+
+void SHD::printmodel()
+{
+   printf( "%d: model (%d):\n", world_rank, (int) model->size() );
+   for ( int i = 0; i < (int) model->size(); i++ )
+   {
+      printf( "%d: %f %f %f %d\n", 
+              world_rank,
+              (*model)[ i ].x[ 0 ],
+              (*model)[ i ].x[ 1 ],
+              (*model)[ i ].x[ 2 ],
+              (*model)[ i ].ff_type );
+   }
+}
+
+void SHD::printF()
+{
+   printf( "%d: F (%d):\n", world_rank, (int) F.size() );
+   for ( int i = 0; i < (int) F.size(); i++ )
+   {
+      printf( "%d: %d (%d):", world_rank, i, (int) F[ i ].size() );
+      for ( int j = 0; j < (int) F[ i ].size(); j++ )
+      {
+         printf( " %f ", F[ i ][ j ] );
+      }
+      printf( "\n" );
+   }
+}
+
+void SHD::printq()
+{
+   printf( "%d: q (%d):", world_rank, (int) q.size() );
+   for ( int i = 0; i < (int) q.size(); i++ )
+   {
+      printf( " %f", q[ i ] );
+   }
+   printf( "\n" );
+}
+
+void SHD::printA( vector < complex < float > > &A )
+{
+   printf( "amplitudes\n" );
+   for ( int i = 0; i < (int) A.size(); i++ )
+   {
+      cout << A[ i ] << endl;
+   }
+   printf( "\n" );
+}

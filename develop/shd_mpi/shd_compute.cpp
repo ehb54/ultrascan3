@@ -29,7 +29,7 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
    complex < shd_double > tmp_cd;
 
    complex < float > *i_lp;
-   complex < float > *Ap;
+   // complex < float > *Ap;
    complex < float > *A1vp;
    complex < float > tmp_cf;
 
@@ -95,7 +95,7 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
 #if defined( SHOW_MPI_TIMING )
       time_start = MPI_Wtime();
 #endif
-#define ALT_SH
+      // #define ALT_SH
 #if defined( ALT_SH )
       sh::alt_conj_sh( max_harmonics, 
                        datap->rtp[ 1 ],
@@ -130,7 +130,7 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
       qp  = &( q[ 0 ] );
       Fp  = &( F[ modelp->ff_type ][ 0 ] );
       A1vp = &( Av[ 0 ] );
-      Ap   = &( datap->A1v[ 0 ] );
+      // Ap   = &( datap->A1v[ 0 ] );
 
       for ( unsigned int j = 0; j < q_points; ++j )
       {
@@ -158,10 +158,10 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
             tmp_cf = (float) *Jp * (float)(*Fp) * (*i_lp);
             for ( int m = - (int) l ; m <= (int) l; ++m )
             {
-               (*Ap)  +=  (*Yp) * tmp_cf;
-               (*A1vp) +=  (*Ap);
+               // (*Ap)  += 
+               (*A1vp) += (*Yp) * tmp_cf; // (*Ap);
                ++Yp;
-               ++Ap;
+               // ++Ap;
                ++A1vp;
             }
             ++Jp;

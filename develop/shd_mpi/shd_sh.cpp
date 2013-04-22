@@ -401,6 +401,7 @@ namespace nr {
          } else {
             sj = 1e0;
          }
+         // printf( "sh: %d %.8g %.8g\n", n, x, sj );
          return true;
       }
 
@@ -408,6 +409,7 @@ namespace nr {
       if ( bessj( x, order, &rj ) )
       {
          sj = ( M_SQRT_PI_2 / sqrt( x ) ) * rj;
+         // printf( "sh: %d %.8g %.8g\n", n, x, sj );
          return true;
       }
       return false;
@@ -532,6 +534,7 @@ namespace sh {
 
       result = std::complex < shd_double > ( r,  i );
 
+      // printf( "csh: %d %d %f %f (%.8g,%.8g)\n", l, m, theta, phi, r, i );
       return true;
    }
 
@@ -546,29 +549,17 @@ namespace sh {
          mod += M_2PI;
       }
 
-      bool r_sign = false;
-      bool i_sign = false;
-      
       shd_double p;
       shd_double mphi;
       shd_double r;
       shd_double i;
 
-
-      for ( unsigned int l = 0; l <= max_harmonics; ++l )
+      if ( mod > M_PI )
       {
-         if ( mod > M_PI )
+         for ( unsigned int l = 0; l <= max_harmonics; ++l )
          {
             for ( int m = - (int) l ; m < 0; ++m )
             {
-               if ( m & 1 )
-               {
-                  i_sign = true;
-                  r_sign = false;
-               } else {
-                  r_sign = true;
-                  i_sign = false;
-               }
                mphi = ( shd_double ) m * phi;
 
                nr::plegendre( l, -m, cos( theta ), p );
@@ -577,103 +568,62 @@ namespace sh {
                r    = p * cos( mphi );
                i    = p * sin( mphi );
 
-               if ( r_sign )
-               {
-                  r = -r;
-               }
-               if ( !i_sign )
-               {
-                  i = -i;
-               }
                *Yp = std::complex < shd_double > ( r,  i );
                ++Yp;
             }
-         } else {
-            for ( int m = - (int) l ; m < 0; ++m )
+      
+            for ( int m = 0; m <= (int) l ;  ++m )
             {
-               if ( m & 1 )
-               {
-                  r_sign = true;
-                  i_sign = false;
-               } else {
-                  i_sign = true;
-                  r_sign = false;
-               }
                mphi = ( shd_double ) m * phi;
 
-               nr::plegendre( l, -m, cos( theta ), p );
+               nr::plegendre( l, m, cos( theta ), p );
                
+               mphi = ( shd_double ) m * phi;
                r    = p * cos( mphi );
                i    = p * sin( mphi );
-               if ( r_sign )
+
+               if ( m & 1 )
                {
                   r = -r;
-               }
-               if ( !i_sign )
-               {
+               } else {
                   i = -i;
                }
                *Yp = std::complex < shd_double > ( r,  i );
                ++Yp;
             }
          }
-
-         if ( mod > M_PI )
+      } else {
+         for ( unsigned int l = 0; l <= max_harmonics; ++l )
          {
-            for ( int m = 0; m <= (int) l ;  ++m )
+            for ( int m = - (int) l ; m < 0; ++m )
             {
-               if ( m & 1 )
-               {
-                  r_sign = true;
-                  i_sign = false;
-               } else {
-                  i_sign = true;
-                  r_sign = false;
-               }
                mphi = ( shd_double ) m * phi;
 
-               nr::plegendre( l, m, cos( theta ), p );
+               nr::plegendre( l, -m, cos( theta ), p );
                
                mphi = ( shd_double ) m * phi;
                r    = p * cos( mphi );
                i    = p * sin( mphi );
 
-               if ( r_sign )
+               if ( m & 1 )
                {
                   r = -r;
-               }
-               if ( !i_sign )
-               {
                   i = -i;
                }
                *Yp = std::complex < shd_double > ( r,  i );
                ++Yp;
             }
-         } else {
+      
             for ( int m = 0; m <= (int) l ;  ++m )
             {
-               if ( m & 1 )
-               {
-                  i_sign = true;
-                  r_sign = false;
-               } else {
-                  r_sign = true;
-                  i_sign = false;
-               }
                mphi = ( shd_double ) m * phi;
 
                nr::plegendre( l, m, cos( theta ), p );
                
+               mphi = ( shd_double ) m * phi;
                r    = p * cos( mphi );
-               i    = p * sin( mphi );
-               if ( r_sign )
-               {
-                  r = -r;
-               }
-               if ( !i_sign )
-               {
-                  i = -i;
-               }
+               i    = -p * sin( mphi );
+
                *Yp = std::complex < shd_double > ( r,  i );
                ++Yp;
             }

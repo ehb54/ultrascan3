@@ -61,8 +61,8 @@ struct shd_input_data
  * \copyright BSD
  */
 
-typedef float shd_double;
-#define MPI_SHD_DOUBLE MPI_FLOAT
+typedef double shd_double;
+#define MPI_SHD_DOUBLE MPI_DOUBLE
 
 class SHD
 {
@@ -72,8 +72,6 @@ class SHD
    vector < vector < shd_double > >            F;
    vector < shd_double >                       q;
    vector < shd_double >                       I;
-
-   unsigned int                            q_points;
 
    unsigned int                            max_harmonics;
    unsigned int                            no_harmonics;
@@ -87,10 +85,6 @@ class SHD
    vector < complex < float > >            i_k;
 
    unsigned int                            J_points;
-   unsigned int                            Y_points;
-   unsigned int                            q_Y_points;
-
-   vector <  complex < float > >           A1v0;
 
    string              error_msg;
 
@@ -133,6 +127,30 @@ class SHD
 
    bool                compute_amplitudes( vector < complex < float > > & Av );
 
+   /*!
+    * \brief A1v0 is the zero vector of complex floats
+    */
+   vector <  complex < float > >           A1v0;
+
+   /*!
+    * \brief q_points contains the number of q grid points
+    */
+   unsigned int                            q_points;
+
+   /*!
+    * \brief Y_points contains the number of harmonic points
+    */
+   unsigned int                            Y_points;
+
+   /*!
+    * \brief q_Y_points contains the number of complex points
+    */
+   unsigned int                            q_Y_points;
+
+   void                                    printmodel();
+   void                                    printF();
+   void                                    printq();
+   void                                    printA( vector < complex < float > > & Av );
 };
 
 #endif // SHD
