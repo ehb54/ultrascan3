@@ -69,6 +69,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
 
       QCheckBox   *cb_alt_sh1;
       QCheckBox   *cb_alt_sh2;
+      QCheckBox   *cb_create_shd;
 
       QPushButton *pb_create_somo_ff;
 
@@ -101,6 +102,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
 
       void set_alt_sh1();
       void set_alt_sh2();
+      void set_create_shd();
 
       void set_multiply_iq_by_atomic_volume();
       void create_somo_ff();

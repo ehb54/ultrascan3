@@ -212,7 +212,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QLabel *lbl_smooth;
       QLabel *lbl_guinier_cutoff;
 
-      QTextEdit *te_filename2;
+      QLineEdit *te_filename2;
 
       QPrinter printer;
 
@@ -450,6 +450,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_iqq_suffix();
 
    private:
+
+      void  create_shd( vector < saxs_atom > & atoms,
+                        vector < double >    & q,
+                        vector < double >    & q2,
+                        vector < double >    & q_over_4pi_2
+                        );
 
       void plot_guinier_pts_removed( int i, bool cs = false );
       void plot_guinier_error_bars( int i, bool cs = false );

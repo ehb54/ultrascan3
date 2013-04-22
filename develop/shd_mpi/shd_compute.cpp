@@ -92,13 +92,20 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
          
       Yp = &( ccY[ 0 ] );
 
+#if defined( SHOW_MPI_TIMING )
+      time_start = MPI_Wtime();
+#endif
+#define ALT_SH
+#if defined( ALT_SH )
+      sh::alt_conj_sh( max_harmonics, 
+                       datap->rtp[ 1 ],
+                       datap->rtp[ 2 ],
+                       Yp );
+#else
       for ( unsigned int l = 0; l <= max_harmonics; ++l )
       {
          for ( int m = - (int) l ; m <= (int) l; ++m )
          {
-#if defined( SHOW_MPI_TIMING )
-            time_start = MPI_Wtime();
-#endif
             if ( !sh::conj_spherical_harmonic( l, 
                                                m, 
                                                datap->rtp[ 1 ],
@@ -108,15 +115,16 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
                error_msg = "sh::spherical_harmonic failed";
                return false;
             }
-#if defined( SHOW_MPI_TIMING )
-            time_end = MPI_Wtime();
-            legendre_time += time_end - time_start;
-#endif
 
             (*Yp) = tmp_cd;
             ++Yp;
          }
       }
+#endif
+#if defined( SHOW_MPI_TIMING )
+            time_end = MPI_Wtime();
+            legendre_time += time_end - time_start;
+#endif
 
       Jp  = &( ccJ[ 0 ] );
       qp  = &( q[ 0 ] );

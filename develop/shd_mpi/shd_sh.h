@@ -35,6 +35,11 @@ namespace sh {
    bool conj_spherical_harmonic( int l, int m, shd_double theta, shd_double phi, std::complex < shd_double > &result );
    unsigned int fibonacci( unsigned int n );
    void build_grid( std::vector < std::vector < shd_double > > &fib_grid, unsigned int size );
+
+   bool alt_conj_sh( int max_harmonics, 
+                     shd_double theta,
+                     shd_double phi,
+                     std::complex < shd_double > * Yp );
 }
 
 #endif // SHD_SH

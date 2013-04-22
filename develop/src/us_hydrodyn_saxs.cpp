@@ -538,13 +538,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_filename1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_filename1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   te_filename2 = new QTextEdit(this, "");
+   te_filename2 = new QLineEdit(this, "");
    te_filename2->setMinimumHeight(minHeight1);
    te_filename2->setMaximumHeight(minHeight1);
    te_filename2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    te_filename2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   te_filename2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   te_filename2->setMinimumWidth(200);
+   te_filename2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   // te_filename2->setMinimumWidth(200);
+   // te_filename2->setReadOnly( true );
 
    // ************ settings ***********
 

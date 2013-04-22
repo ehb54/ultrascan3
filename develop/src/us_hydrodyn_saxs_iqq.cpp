@@ -2800,6 +2800,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       fc.resize(q_points);
       fp.resize(q_points);
 
+
       for ( unsigned int j = 0; j < q_points; j++ )
       {
          f[j].resize(atoms.size());
@@ -2815,6 +2816,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          }
          q2[j] = q[j] * q[j];
          q_over_4pi_2[j] = q[j] * q[j] * one_over_4pi_2;
+      }
+
+      if ( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "create_shd" ) &&
+           ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "create_shd" ] == "1" )
+      {
+         create_shd( atoms, q, q2, q_over_4pi_2 );
       }
 
       // double m_pi_vi23; // - pi * pow(v,2/3)
@@ -3987,3 +3994,204 @@ bool US_Hydrodyn_Saxs::create_somo_ff()
    return true;
 }
 
+#include "stdint.h"
+#include <fstream>
+
+struct shd_point
+{
+   float   x[ 3 ];
+   int16_t ff_type;
+};
+
+struct shd_input_data
+{
+   uint32_t max_harmonics;
+   uint32_t model_size;
+   uint32_t q_size;
+   uint32_t F_size;
+};
+
+void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & atoms,
+                                   vector < double >    & q,
+                                   vector < double >    & q2,
+                                   vector < double >    & q_over_4pi_2
+                                   )
+{
+   puts( "create_shd" );
+
+   shd_point tmp_shd;
+
+   vector < shd_point >         model;
+   vector < vector < double > > F;
+
+   map < QString, int16_t > types;
+
+   // build up the model
+
+   vector < double > Fa( q.size() );
+
+   double one_over_4pi = 1.0 / (4.0 * M_PI);
+   saxs saxsH = saxs_map["H"];
+
+   for ( int i = 0; i < (int)atoms.size(); i++ )
+   {
+      tmp_shd.x[ 0 ] = atoms[ i ].pos[ 0 ];
+      tmp_shd.x[ 1 ] = atoms[ i ].pos[ 1 ];
+      tmp_shd.x[ 2 ] = atoms[ i ].pos[ 2 ];
+
+      QString key = atoms[ i ].atom_name + QString( "%1" ).arg( atoms[ i ].hydrogens ? QString( "H%1" ).arg( atoms[ i ].hydrogens ) : QString( "" ) );
+      if ( !types.count( key ) )
+      {
+         {
+            int16_t pos = types.size();
+            types[ key ] = pos;
+         }
+
+         // build up F
+         saxs saxs = saxs_map[atoms[i].saxs_name];
+         double vi = atoms[ i ].excl_vol;
+         double vie = vi * our_saxs_options->water_e_density;
+         double vi_23_4pi = - pow((double)vi,2.0/3.0) * one_over_4pi;
+
+         for ( int j = 0; j < (int) q.size(); j++ )
+         {
+            Fa[ j ] = compute_ff( saxs,
+                                  saxsH,
+                                  atoms[ i ].residue_name,
+                                  atoms[ i ].saxs_name,
+                                  atoms[ i ].atom_name,
+                                  atoms[ i ].hydrogens,
+                                  q[ j ],
+                                  q_over_4pi_2[ j ] );
+
+            Fa[ j ] = vie * exp( vi_23_4pi * q2[ j ] * our_saxs_options->ev_exp_mult );
+         }
+         F.push_back( Fa );
+      }
+      tmp_shd.ff_type = types[ key ];
+      model.push_back( tmp_shd );
+   }
+
+   shd_input_data id;
+
+   id.max_harmonics = (int32_t) our_saxs_options->sh_max_harmonics;
+   id.model_size    = (int32_t) model.size();
+   id.q_size        = (int32_t) q.size();
+   id.F_size        = (int32_t) F.size();
+
+   // now write it all out
+   {
+      QString fname =  ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + "tmp" + SLASH + "shd.dat";
+      fname.replace( "//", "/" );
+      ofstream ofs( fname.ascii(), ios::out | ios::binary );
+
+      if ( !ofs.is_open() )
+      {
+         editor_msg( "red", QString( tr( "Error: could not open %1" ) ).arg( fname ) );
+         return;
+      }
+
+      if ( !ofs.write( (char *)&id, sizeof( id ) ) )
+      {
+         ofs.close();
+         editor_msg( "red", QString( tr( "Error: could not write id to %1" ) ).arg( fname ) );
+         return;
+      }
+
+      for ( uint32_t i = 0; i < id.F_size; ++i )
+      {
+         if ( !ofs.write( (char *)(&F[ i ][ 0 ]), sizeof( double ) * id.q_size ) )
+         {
+            ofs.close();
+            editor_msg( "red", QString( tr( "Error: could not write F to %1" ) ).arg( fname ) );
+            return;
+         }
+      }
+
+      if ( !ofs.write( (char*)(&q[ 0 ]), sizeof( double ) * id.q_size ) )
+      {
+         ofs.close();
+         editor_msg( "red", QString( tr( "Error: could not write q to %1" ) ).arg( fname ) );
+         return;
+      }
+
+      if ( !ofs.write( (char *)(&model[ 0 ]), sizeof( struct shd_point ) * id.model_size ) )
+      {
+         ofs.close();
+         editor_msg( "red", QString( tr( "Error: could not write model to %1" ) ).arg( fname ) );
+         return;
+      }
+
+      ofs.close();
+
+      editor_msg( "blue", QString( tr( "Created shd %1" ) ).arg( fname ) );
+   }
+   // and the float version
+   {
+      QString fname =  ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + "tmp" + SLASH + "shd_f.dat";
+      fname.replace( "//", "/" );
+      ofstream ofs( fname.ascii(), ios::out | ios::binary );
+
+      vector < vector < float > > F_f( F.size() );
+      vector < float >            q_f( q.size() );
+
+      for ( int i  = 0; i < (int)F.size(); ++i )
+      {
+         F_f[ i ].resize( F[ i ].size() );
+         for ( int j = 0; j < (int)F[ i ].size(); ++j )
+         {
+            F_f[ i ][ j ] = (float)F[ i ][ j ];
+         }
+      }
+
+      for ( int j = 0; j < (int)q.size(); ++j )
+      {
+         q_f[ j ] = (float) q[ j ];
+      }
+
+      if ( !ofs.is_open() )
+      {
+         editor_msg( "red", QString( tr( "Error: could not open %1" ) ).arg( fname ) );
+         return;
+      }
+
+      if ( !ofs.write( (char *)&id, sizeof( id ) ) )
+      {
+         ofs.close();
+         editor_msg( "red", QString( tr( "Error: could not write id to %1" ) ).arg( fname ) );
+         return;
+      }
+
+      for ( uint32_t i = 0; i < id.F_size; ++i )
+      {
+         if ( !ofs.write( (char *)(&F_f[ i ][ 0 ]), sizeof( float ) * id.q_size ) )
+         {
+            ofs.close();
+            editor_msg( "red", QString( tr( "Error: could not write F to %1" ) ).arg( fname ) );
+            return;
+         }
+      }
+
+      if ( !ofs.write( (char*)(&q_f[ 0 ]), sizeof( float ) * id.q_size ) )
+      {
+         ofs.close();
+         editor_msg( "red", QString( tr( "Error: could not write q to %1" ) ).arg( fname ) );
+         return;
+      }
+
+      if ( !ofs.write( (char *)(&model[ 0 ]), sizeof( struct shd_point ) * id.model_size ) )
+      {
+         ofs.close();
+         editor_msg( "red", QString( tr( "Error: could not write model to %1" ) ).arg( fname ) );
+         return;
+      }
+
+      ofs.close();
+
+      editor_msg( "blue", QString( tr( "Created shd %1" ) ).arg( fname ) );
+   }
+
+
+
+   return;
+}

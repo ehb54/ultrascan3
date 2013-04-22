@@ -197,6 +197,16 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    cb_alt_sh2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_alt_sh2, SIGNAL(clicked()), this, SLOT(set_alt_sh2()));
 
+   cb_create_shd = new QCheckBox(this);
+   cb_create_shd->setText(tr(" Create SHD file  on compute H3"));
+   cb_create_shd->setEnabled(true);
+   cb_create_shd->setChecked( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "create_shd" ) &&
+                              ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "create_shd" ] == "1" );
+
+   cb_create_shd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_create_shd->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_create_shd, SIGNAL(clicked()), this, SLOT(set_create_shd()));
+
    pb_create_somo_ff = new QPushButton(tr("Create somo.ff"), this);
    pb_create_somo_ff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_create_somo_ff->setMinimumHeight(minHeight1);
@@ -269,6 +279,7 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    QHBoxLayout *hbl_various_6 = new QHBoxLayout;
    hbl_various_6->addWidget(cb_alt_sh1);
    hbl_various_6->addWidget(cb_alt_sh2);
+   hbl_various_6->addWidget(cb_create_shd);
    background->addMultiCellLayout(hbl_various_6, j, j, 0, 1);
    j++;
 
@@ -407,6 +418,11 @@ void US_Hydrodyn_SasOptionsExperimental::set_alt_sh2()
 {
    (*saxs_options).alt_sh2 = cb_alt_sh2->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsExperimental::set_create_shd()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "create_shd" ] = cb_create_shd->isChecked() ? "1" : "0";
 }
 
 void US_Hydrodyn_SasOptionsExperimental::create_somo_ff()

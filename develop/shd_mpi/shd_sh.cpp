@@ -535,6 +535,153 @@ namespace sh {
       return true;
    }
 
+   bool alt_conj_sh( int max_harmonics, 
+                     shd_double theta,
+                     shd_double phi,
+                     std::complex < shd_double > *Yp )
+   {
+      shd_double mod = fmod( theta, M_2PI );
+      if ( mod < 0e0 )
+      {
+         mod += M_2PI;
+      }
+
+      bool r_sign = false;
+      bool i_sign = false;
+      
+      shd_double p;
+      shd_double mphi;
+      shd_double r;
+      shd_double i;
+
+
+      for ( unsigned int l = 0; l <= max_harmonics; ++l )
+      {
+         if ( mod > M_PI )
+         {
+            for ( int m = - (int) l ; m < 0; ++m )
+            {
+               if ( m & 1 )
+               {
+                  i_sign = true;
+                  r_sign = false;
+               } else {
+                  r_sign = true;
+                  i_sign = false;
+               }
+               mphi = ( shd_double ) m * phi;
+
+               nr::plegendre( l, -m, cos( theta ), p );
+               
+               mphi = ( shd_double ) m * phi;
+               r    = p * cos( mphi );
+               i    = p * sin( mphi );
+
+               if ( r_sign )
+               {
+                  r = -r;
+               }
+               if ( !i_sign )
+               {
+                  i = -i;
+               }
+               *Yp = std::complex < shd_double > ( r,  i );
+               ++Yp;
+            }
+         } else {
+            for ( int m = - (int) l ; m < 0; ++m )
+            {
+               if ( m & 1 )
+               {
+                  r_sign = true;
+                  i_sign = false;
+               } else {
+                  i_sign = true;
+                  r_sign = false;
+               }
+               mphi = ( shd_double ) m * phi;
+
+               nr::plegendre( l, -m, cos( theta ), p );
+               
+               r    = p * cos( mphi );
+               i    = p * sin( mphi );
+               if ( r_sign )
+               {
+                  r = -r;
+               }
+               if ( !i_sign )
+               {
+                  i = -i;
+               }
+               *Yp = std::complex < shd_double > ( r,  i );
+               ++Yp;
+            }
+         }
+
+         if ( mod > M_PI )
+         {
+            for ( int m = 0; m <= (int) l ;  ++m )
+            {
+               if ( m & 1 )
+               {
+                  r_sign = true;
+                  i_sign = false;
+               } else {
+                  i_sign = true;
+                  r_sign = false;
+               }
+               mphi = ( shd_double ) m * phi;
+
+               nr::plegendre( l, m, cos( theta ), p );
+               
+               mphi = ( shd_double ) m * phi;
+               r    = p * cos( mphi );
+               i    = p * sin( mphi );
+
+               if ( r_sign )
+               {
+                  r = -r;
+               }
+               if ( !i_sign )
+               {
+                  i = -i;
+               }
+               *Yp = std::complex < shd_double > ( r,  i );
+               ++Yp;
+            }
+         } else {
+            for ( int m = 0; m <= (int) l ;  ++m )
+            {
+               if ( m & 1 )
+               {
+                  i_sign = true;
+                  r_sign = false;
+               } else {
+                  r_sign = true;
+                  i_sign = false;
+               }
+               mphi = ( shd_double ) m * phi;
+
+               nr::plegendre( l, m, cos( theta ), p );
+               
+               r    = p * cos( mphi );
+               i    = p * sin( mphi );
+               if ( r_sign )
+               {
+                  r = -r;
+               }
+               if ( !i_sign )
+               {
+                  i = -i;
+               }
+               *Yp = std::complex < shd_double > ( r,  i );
+               ++Yp;
+            }
+         }
+      }
+      return true;
+   }
+
    unsigned int fibonacci( unsigned int n )
    {
       if ( n == 0 ) 
