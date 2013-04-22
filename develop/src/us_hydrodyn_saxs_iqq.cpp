@@ -3996,6 +3996,7 @@ bool US_Hydrodyn_Saxs::create_somo_ff()
 
 #ifdef WIN32
 typedef _int16 int16_t;
+typedef unsigned _int32 uint32_t;
 #else
 #include <stdint.h>
 #endif
@@ -4079,10 +4080,10 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & atoms,
 
    shd_input_data id;
 
-   id.max_harmonics = (int32_t) our_saxs_options->sh_max_harmonics;
-   id.model_size    = (int32_t) model.size();
-   id.q_size        = (int32_t) q.size();
-   id.F_size        = (int32_t) F.size();
+   id.max_harmonics = (uint32_t) our_saxs_options->sh_max_harmonics;
+   id.model_size    = (uint32_t) model.size();
+   id.q_size        = (uint32_t) q.size();
+   id.F_size        = (uint32_t) F.size();
 
    // now write it all out
    {
