@@ -1,4 +1,8 @@
 #include "shd_sh.h"
+#define USE_GSL
+// #if defined( USE_GSL )
+#include <gsl/gsl_sf_bessel.h>
+// #endif
 
 #include <iostream>
 // #include <iomanip>
@@ -376,8 +380,38 @@ namespace nr {
       }
       fact = rjmu / rjl;
       *rj  = rjl1 * fact;
+
+      // printf( "spj: %.8g %.8g = %.8g\n" , x, xnu, *rj );
+
       return true;
    }
+
+   bool alt_sphbes( int n, 
+                    shd_double x, 
+                    shd_double *sj
+                    )
+   {
+      if ( n < 0 || x < 0e0 )
+      {
+         std::cout << "nr::sphbes bad arguments n " << n << " x " << x << std::endl;
+         return false;
+      }
+
+      if ( x == 0e0 )
+      {
+         *sj = 1e0;
+         sj++;
+         for ( int i = 0; i <= n; ++i )
+         {
+            *sj = 0e0;
+         }
+         return true;
+      }
+
+      gsl_sf_bessel_il_scaled_array( n, x, sj );
+      return true;
+   }
+
 
    bool sphbes( int n, 
                 shd_double x, 
@@ -405,6 +439,17 @@ namespace nr {
          return true;
       }
 
+#if defined( USE_GSL )
+      shd_double sj2 = gsl_sf_bessel_il_scaled( n, x );
+      // shd_double sj2 = ( M_SQRT_PI_2 / sqrt( x ) ) * rj2;
+      order = n + 5e-1;
+      if ( bessj( x, order, &rj ) )
+      {
+         sj = ( M_SQRT_PI_2 / sqrt( x ) ) * rj;
+      }
+      printf( "sh: n %d order %f x %.8g bessj %.8g gsl %.8g\n", n, order, x, sj, sj2 );
+      return true;
+#else      
       order = n + 5e-1;
       if ( bessj( x, order, &rj ) )
       {
@@ -412,6 +457,7 @@ namespace nr {
          // printf( "sh: %d %.8g %.8g\n", n, x, sj );
          return true;
       }
+#endif
       return false;
    }
 

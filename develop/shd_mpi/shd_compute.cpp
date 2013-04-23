@@ -1,6 +1,6 @@
 #include "shd.h"
 
-#define SHOW_MPI_TIMING
+// #define SHOW_MPI_TIMING
 
 bool SHD::compute_amplitudes( vector < complex < float > > & Av )
 {
@@ -126,7 +126,6 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
             legendre_time += time_end - time_start;
 #endif
 
-      Jp  = &( ccJ[ 0 ] );
       qp  = &( q[ 0 ] );
       Fp  = &( F[ modelp->ff_type ][ 0 ] );
       A1vp = &( Av[ 0 ] );
@@ -139,7 +138,36 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
 
          i_lp = &( i_l[ 0 ] );
          Yp   = &( ccY[ 0 ] );
+         Jp   = &( ccJ[ 0 ] );
 
+#if defined( ALT_SPHBES )
+#if defined( SHOW_MPI_TIMING )
+         time_start = MPI_Wtime();
+#endif
+         if ( !nr::alt_sphbes( l, qp_t_rtp0, *Jp ) )
+         {
+            error_msg = "nr::alt_shbes failed";
+            return false;
+         }
+#if defined( SHOW_MPI_TIMING )
+         time_end = MPI_Wtime();
+         shbes_time += time_end - time_start;
+#endif
+
+         for ( unsigned int l = 0; l <= max_harmonics; ++l )
+         {
+
+            tmp_cf = (float) *Jp * (float)(*Fp) * (*i_lp);
+            for ( int m = - (int) l ; m <= (int) l; ++m )
+            {
+               (*A1vp) += (*Yp) * tmp_cf; // (*Ap);
+               ++Yp;
+               ++A1vp;
+            }
+            ++Jp;
+            ++i_lp;
+         }
+#else
          for ( unsigned int l = 0; l <= max_harmonics; ++l )
          {
 #if defined( SHOW_MPI_TIMING )
@@ -158,15 +186,14 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
             tmp_cf = (float) *Jp * (float)(*Fp) * (*i_lp);
             for ( int m = - (int) l ; m <= (int) l; ++m )
             {
-               // (*Ap)  += 
                (*A1vp) += (*Yp) * tmp_cf; // (*Ap);
                ++Yp;
-               // ++Ap;
                ++A1vp;
             }
-            ++Jp;
+            // ++Jp;
             ++i_lp;
          }
+#endif
          ++Fp;
       }
    }

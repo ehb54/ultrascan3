@@ -1,11 +1,11 @@
 CC      = mpicxx
-CFLAGS  = -O3
-LDFLAGS = 
+CFLAGS  = -g -pg 
+LDFLAGS = -lgsl -lgslcblas
 
 all: shd
 
 shd: main.o shd.o shd_compute.o shd_sh.o
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS)
 
 main.o: main.cpp shd.h
 	$(CC) -c $(CFLAGS) $<

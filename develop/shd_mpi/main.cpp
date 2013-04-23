@@ -1,9 +1,22 @@
 #include "shd.h"
 
 #define SHOW_MPI_TIMING
+#define RUN_SINGLE
+
+#if defined( RUN_SINGLE )
+#include <time.h>
+#endif
 
 int world_size;
 int world_rank;
+
+void our_abort( MPI_Comm comm, int errno )
+{
+#if !defined( RUN_SINGLE )
+   MPI_Abort( comm, errno );
+#endif
+   exit( errno );
+}
 
 int main( int argc, char **argv )
 {
@@ -14,18 +27,21 @@ int main( int argc, char **argv )
    vector < shd_double >            I;
    vector < shd_point >         my_model;
 
+#if defined( RUN_SINGLE )
+   world_rank = 0;
+   world_size = 1;
+#else
    MPI_Init( &argc, &argv);
-
 
    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-
-
    char processor_name[MPI_MAX_PROCESSOR_NAME];
    int name_len;
    MPI_Get_processor_name(processor_name, &name_len);
-
    int is_mic = std::string::npos != std::string( processor_name ).find( "-mic" );
+#endif
+
+
 
    //    printf("%s, rank %d"
    //           " of %d a %sa MIC\n",
@@ -41,23 +57,32 @@ int main( int argc, char **argv )
       if ( argc < 2 )
       {
          cerr << "Error: usage: shd inputfile\n";         
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
       errorno--;
 
+#if defined( RUN_SINGLE )
+      if ( world_size != 1 )
+      {
+         cerr << "Error: np must be exactly 1\n";
+         our_abort( MPI_COMM_WORLD, errorno );
+         exit( errorno );
+      }
+#else
       if ( world_size < 2 )
       {
          cerr << "Error: np must be at least 2\n";
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
+#endif
       errorno--;
 
       //       if ( world_size != 2 )
       //       {
       //          cerr << "Error: np must be at exactly 2 for now\n";
-      //          MPI_Abort( MPI_COMM_WORLD, errorno );
+      //          our_abort( MPI_COMM_WORLD, errorno );
       //          exit( errorno );
       //       }
       //       errorno--;
@@ -69,7 +94,7 @@ int main( int argc, char **argv )
       if ( !ifs.is_open() )
       {
          cerr << "Error: shd coult not open inputfile " << argv[ 1 ] << endl;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
       errorno--;
@@ -77,7 +102,7 @@ int main( int argc, char **argv )
       if ( !ifs.read( (char *)&id, sizeof( id ) ) )
       {
          cerr << "Error: " << argv[ 1 ] << " can not read input data" << endl;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
       errorno--;
@@ -96,7 +121,7 @@ int main( int argc, char **argv )
          if ( !ifs.read( (char *)(&tmp_F[ 0 ]), sizeof( shd_double ) * id.q_size ) )
          {
             cerr << "Error: " << argv[ 1 ] << " can not read F data" << endl;
-            MPI_Abort( MPI_COMM_WORLD, errorno );
+            our_abort( MPI_COMM_WORLD, errorno );
             exit( errorno );
          }
          F.push_back( tmp_F );
@@ -106,7 +131,7 @@ int main( int argc, char **argv )
       if ( !ifs.read( (char*)(&q[ 0 ]), sizeof( shd_double ) * id.q_size ) )
       {
          cerr << "Error: " << argv[ 1 ] << " can not read q data" << endl;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
       errorno--;
@@ -114,12 +139,55 @@ int main( int argc, char **argv )
       if ( !ifs.read( (char *)(&model[ 0 ]), sizeof( struct shd_point ) * id.model_size ) )
       {
          cerr << "Error: " << argv[ 1 ] << " can not read model data" << endl;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
       errorno--;
 
       ifs.close();
+
+#if defined( RUN_SINGLE )
+#if defined( SHOW_MPI_TIMING )
+      clock_t time_start;
+      time_start = clock();
+#endif
+      vector < complex < float > > Avp;
+      SHD tSHD( ( unsigned int ) id.max_harmonics, model, F, q, I, 0 );
+      tSHD.compute_amplitudes( Avp );
+      vector < double > I_result( tSHD.q_points );
+      complex < float > *A1vp = &( Avp[ 0 ] );
+      for ( unsigned int j = 0; j < tSHD.q_points; ++j )
+      {
+         I_result[ j ] = 0e0;
+         for ( unsigned int k = 0; k < tSHD.Y_points; ++k )
+         {
+            I_result[ j ] += norm( (*A1vp) );
+            ++A1vp;
+         }
+         I_result[ j ] *= M_4PI;
+      }
+      // write it out
+      string fname = string( argv[ 1 ] ) + "_I.dat";;
+      // fname.replace( fname.end() - 4, 4, "_I_out.dat" );
+      ofstream ofs( fname.c_str(), ios::out );
+
+      ofs << "# us-somo: shd I from " << argv[ 1 ] << endl;
+      for ( unsigned int j = 0; j < tSHD.q_points; ++j )
+      {
+         ofs << q[ j ] << "\t" << I_result[ j ] << endl;
+      }
+      ofs.close();
+#if defined( SHOW_MPI_TIMING )
+      clock_t time_end = clock();
+      printf( "%d of %d: compute amplitudes %gms model size %d\n",
+              world_rank,
+              world_size,
+              ( time_end - time_start ) * 1e3 / CLOCKS_PER_SEC,
+              (int) my_model.size()
+              );
+#endif
+      exit( 0 );
+#endif
 
       uint32_t org_model_size  = id.model_size;
       id.model_size            = ( org_model_size % ( world_size - 1 ) ? 1 : 0 ) + org_model_size / (world_size - 1);
@@ -141,7 +209,7 @@ int main( int argc, char **argv )
       if ( MPI_SUCCESS != MPI_Bcast( &id, sizeof( id ), MPI_CHAR, 0, MPI_COMM_WORLD ) )
       {
          cerr << "Error: MPI_Bcast( id ) sender failed" << endl;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
       errorno--;
@@ -153,7 +221,7 @@ int main( int argc, char **argv )
          if ( MPI_SUCCESS != MPI_Bcast( &(F[ i ][ 0 ] ), id.q_size, MPI_SHD_DOUBLE, 0, MPI_COMM_WORLD ) )
          {
             cerr << "Error: MPI_Bcast( id ) sender failed" << endl;
-            MPI_Abort( MPI_COMM_WORLD, errorno );
+            our_abort( MPI_COMM_WORLD, errorno );
             exit( errorno );
          }
       }
@@ -164,7 +232,7 @@ int main( int argc, char **argv )
       if ( MPI_SUCCESS != MPI_Bcast( &(q[ 0 ] ), id.q_size, MPI_SHD_DOUBLE, 0, MPI_COMM_WORLD ) )
       {
          cerr << "Error: MPI_Bcast( q ) sender failed" << endl;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
       errorno--;
@@ -181,7 +249,7 @@ int main( int argc, char **argv )
                                        0, MPI_COMM_WORLD ) )
       {
          cerr << "Error: MPI_Scatter( model ) failed" << endl;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
       errorno--;
@@ -201,7 +269,7 @@ int main( int argc, char **argv )
                                         &(mpi_req[ i - 1 ]) ) )
          {
             cerr << "Error: MPI_send( model ) failed" << endl;
-            MPI_Abort( MPI_COMM_WORLD, errorno );
+            our_abort( MPI_COMM_WORLD, errorno );
             exit( errorno );
          }
          // cout << "0 sending to " << i << "done" << endl << flush;
@@ -218,7 +286,7 @@ int main( int argc, char **argv )
       if ( MPI_SUCCESS != MPI_Bcast( &id, sizeof( id ), MPI_CHAR, 0, MPI_COMM_WORLD ) )
       {
          cerr << "Error:" << world_rank << " MPI_Bcast( id ) failed" << endl;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
       cout << "max harmonics:" << world_rank << " " << id.max_harmonics << endl;
@@ -240,7 +308,7 @@ int main( int argc, char **argv )
          if ( MPI_SUCCESS != MPI_Bcast( &(F[ i ][ 0 ] ), id.q_size, MPI_SHD_DOUBLE, 0, MPI_COMM_WORLD ) )
          {
             cerr << "Error: MPI_Bcast( id ) sender failed" << endl;
-            MPI_Abort( MPI_COMM_WORLD, errorno );
+            our_abort( MPI_COMM_WORLD, errorno );
             exit( errorno );
          }
       }
@@ -251,7 +319,7 @@ int main( int argc, char **argv )
       if ( MPI_SUCCESS != MPI_Bcast( &(q[ 0 ] ), id.q_size, MPI_SHD_DOUBLE, 0, MPI_COMM_WORLD ) )
       {
          cerr << "Error: MPI_Bcast( q ) sender failed" << endl;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
       errorno--;
@@ -266,7 +334,7 @@ int main( int argc, char **argv )
                                        0, MPI_COMM_WORLD ) )
       {
          cerr << "Error: MPI_Scatter( model ) failed" << endl;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
 
@@ -284,7 +352,7 @@ int main( int argc, char **argv )
                                     &mpistat ) )
       {
          cerr << "Error: MPI_recv( model ) failed" << endl;
-         MPI_Abort( MPI_COMM_WORLD, errorno );
+         our_abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
       }
       cout << world_rank << ": model received" << endl << flush;
@@ -326,7 +394,7 @@ int main( int argc, char **argv )
                                    MPI_COMM_WORLD ) )
    {
       cerr << world_rank << "Error: MPI_reduce() failed" << endl;
-      MPI_Abort( MPI_COMM_WORLD, -1000 );
+      our_abort( MPI_COMM_WORLD, -1000 );
       exit( -1000 );
    }
 

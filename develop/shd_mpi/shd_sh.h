@@ -28,6 +28,10 @@ namespace nr {
                 shd_double x, 
                 shd_double &sj
                 );
+   bool alt_sphbes( int n, 
+                    shd_double x, 
+                    shd_double *sj
+                    );
 }
 
 namespace sh {
