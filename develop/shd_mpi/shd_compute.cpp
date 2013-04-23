@@ -95,7 +95,7 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
 #if defined( SHOW_MPI_TIMING )
       time_start = MPI_Wtime();
 #endif
-      // #define ALT_SH
+#define ALT_SH
 #if defined( ALT_SH )
       sh::alt_conj_sh( max_harmonics, 
                        datap->rtp[ 1 ],

@@ -54,13 +54,13 @@ int main( int argc, char **argv )
       }
       errorno--;
 
-      if ( world_size != 2 )
-      {
-         cerr << "Error: np must be at exactly 2 for now\n";
-         MPI_Abort( MPI_COMM_WORLD, errorno );
-         exit( errorno );
-      }
-      errorno--;
+      //       if ( world_size != 2 )
+      //       {
+      //          cerr << "Error: np must be at exactly 2 for now\n";
+      //          MPI_Abort( MPI_COMM_WORLD, errorno );
+      //          exit( errorno );
+      //       }
+      //       errorno--;
 
       // read in data file
 
@@ -317,7 +317,6 @@ int main( int argc, char **argv )
 
    vector < complex < float > > Avpsum = Avp;
 
-   /*
    if ( MPI_SUCCESS != MPI_Reduce( (void *) &( Avp[ 0 ] ), 
                                    (void *) &( Avpsum[ 0 ] ), 
                                    tSHD.q_Y_points * 2,
@@ -330,17 +329,20 @@ int main( int argc, char **argv )
       MPI_Abort( MPI_COMM_WORLD, -1000 );
       exit( -1000 );
    }
-   */
 
-   // tSHD.printmodel();
-   // tSHD.printF();
-   // tSHD.printq();
-   if ( world_rank == 1 )
+   //    if ( world_rank == 1 )
+   //    {
+   //       tSHD.printmodel();
+   //       tSHD.printF();
+   //       tSHD.printq();
+   //       tSHD.printA( Avpsum );
+   //    }
+
+   if ( !world_rank )
    {
-      // tSHD.printA( Avp );
+      // tSHD.printA( Avpsum );
       vector < double > I_result( tSHD.q_points );
-      // complex < float > *A1vp = &( Avpsum[ 0 ] );
-      complex < float > *A1vp = &( Avp[ 0 ] );
+      complex < float > *A1vp = &( Avpsum[ 0 ] );
       for ( unsigned int j = 0; j < tSHD.q_points; ++j )
       {
          I_result[ j ] = 0e0;

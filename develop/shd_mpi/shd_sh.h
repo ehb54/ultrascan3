@@ -37,9 +37,9 @@ namespace sh {
    void build_grid( std::vector < std::vector < shd_double > > &fib_grid, unsigned int size );
 
    bool alt_conj_sh( int max_harmonics, 
-                     shd_double theta,
-                     shd_double phi,
-                     std::complex < shd_double > * Yp );
+                     float theta,
+                     float phi,
+                     std::complex < float > * Yp );
 }
 
 #endif // SHD_SH

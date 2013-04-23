@@ -539,9 +539,9 @@ namespace sh {
    }
 
    bool alt_conj_sh( int max_harmonics, 
-                     shd_double theta,
-                     shd_double phi,
-                     std::complex < shd_double > *Yp )
+                     float theta,
+                     float phi,
+                     std::complex < float > *Yp )
    {
       shd_double mod = fmod( theta, M_2PI );
       if ( mod < 0e0 )
@@ -568,7 +568,7 @@ namespace sh {
                r    = p * cos( mphi );
                i    = p * sin( mphi );
 
-               *Yp = std::complex < shd_double > ( r,  i );
+               *Yp = std::complex < float > ( r,  i );
                ++Yp;
             }
       
@@ -588,7 +588,7 @@ namespace sh {
                } else {
                   i = -i;
                }
-               *Yp = std::complex < shd_double > ( r,  i );
+               *Yp = std::complex < float > ( r,  i );
                ++Yp;
             }
          }
@@ -610,7 +610,7 @@ namespace sh {
                   r = -r;
                   i = -i;
                }
-               *Yp = std::complex < shd_double > ( r,  i );
+               *Yp = std::complex < float > ( r,  i );
                ++Yp;
             }
       
@@ -624,7 +624,7 @@ namespace sh {
                r    = p * cos( mphi );
                i    = -p * sin( mphi );
 
-               *Yp = std::complex < shd_double > ( r,  i );
+               *Yp = std::complex < float > ( r,  i );
                ++Yp;
             }
          }
