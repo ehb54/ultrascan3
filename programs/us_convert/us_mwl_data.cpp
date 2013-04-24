@@ -565,13 +565,11 @@ int US_MwlData::cellchannels( QStringList& celchns )
 }
 
 // Populate the list of RawData objects from averaged MWL data
-//int US_MwlData::build_rawData( QVector< US_DataIO2::RawData >& allData )
 int US_MwlData::build_rawData( QVector< US_DataIO::RawData >& allData )
 {
    allData.clear();
 
    // Build the radius vector that is constant
-//   QVector< US_DataIO2::XValue > xout;
    QVector< double > xout;
    double rad_val  = headers[ 0 ].radius_start;
    double rad_inc  = headers[ 0 ].radius_step;
@@ -579,7 +577,6 @@ qDebug() << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint;
 
    for ( int ii = 0; ii < npoint; ii++ )
    {
-//      xout << US_DataIO2::XValue( rad_val );
       xout << rad_val;
       rad_val  += rad_inc;
    }
@@ -598,7 +595,6 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
 
    for ( int trx = 0; trx < ntriple; trx++ )
    {
-//      US_DataIO2::RawData rdata;
       US_DataIO::RawData rdata;
       QString uuid_str  = US_Util::new_guid();
       US_Util::uuid_parse( uuid_str, (unsigned char*)rdata.rawGUID );
@@ -616,7 +612,6 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
 
       for ( int scx = 0; scx < nscan; scx++ )
       {  // Set scan values
-//         US_DataIO2::Scan scan;
          US_DataIO::Scan scan;
          scan.temperature  = headers[ jhx ].temperature;
          scan.rpm          = headers[ jhx ].rotor_speed;
@@ -633,8 +628,6 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
 
          for ( int kk = 0; kk < npoint; kk++ )
          {  // Set readings values
-//            double dvalue     = av_readings[ trx ][ rdx++ ];
-//            scan.readings << US_DataIO2::Reading( dvalue );
             scan.rvalues << av_readings[ trx ][ rdx++ ];
          } // END: radius points loop
 

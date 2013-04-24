@@ -5,7 +5,6 @@
 #include "us_constants.h"
 #include "us_astfem_rsa.h"
 #include "us_settings.h"
-//#include "us_dataIO2.h"
 #include "us_dataIO.h"
 
 /////////////////////////
@@ -438,7 +437,6 @@ void US_LammAstfvm::Mesh::InitMesh( double s, double D, double w2 )
 // create salt data set by solving ideal astfem equations
 US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
                                    US_SimulationParameters asparms,
-//                                   US_DataIO2::RawData*    asim_data )
                                    US_DataIO::RawData*     asim_data )
 {
    int j;
@@ -478,7 +476,6 @@ DbgLv(1) << "SaltD: asim_data avg.temp." << asim_data->average_temperature();
 
    for ( int i = 0; i < Nt; i++ )
       for ( j = 0; j < Nx; j++ )
-//         sa_data.scanData[ i ].readings[ j ] = US_DataIO2::Reading( 0.0 );
          sa_data.setValue( i, j, 0.0 );
 
 DbgLv(1) << "SaltD: model comps" << model.components.size();
@@ -513,7 +510,6 @@ DbgLv(1) << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
 
       dir.mkpath( safile );
       safile       = safile + "/salt_data.RA.1.S.260.auc";
-//      US_DataIO2::writeRawData( safile, sa_data );
       US_DataIO::writeRawData( safile, sa_data );
    }
 
@@ -654,7 +650,6 @@ US_LammAstfvm::~US_LammAstfvm()
 }
 
 // primary method to calculate solutions for all species
-//int US_LammAstfvm::calculate( US_DataIO2::RawData& sim_data )
 int US_LammAstfvm::calculate( US_DataIO::RawData& sim_data )
 {
    auc_data = &sim_data;
@@ -1863,7 +1858,6 @@ void US_LammAstfvm::quadInterpolate( double* x0, double* u0, int N0,
 }
 
 // load MfemData object used internally from caller's RawData object
-//void US_LammAstfvm::load_mfem_data( US_DataIO2::RawData&     edata, 
 void US_LammAstfvm::load_mfem_data( US_DataIO::RawData&      edata, 
                                     US_AstfemMath::MfemData& fdata,
                                     bool zeroout ) 
@@ -1918,7 +1912,6 @@ void US_LammAstfvm::load_mfem_data( US_DataIO::RawData&      edata,
 }
 
 // store MfemData object used internally into caller's RawData object
-//void US_LammAstfvm::store_mfem_data( US_DataIO2::RawData&     edata, 
 void US_LammAstfvm::store_mfem_data( US_DataIO::RawData&      edata, 
                                      US_AstfemMath::MfemData& fdata ) 
 {
@@ -1933,7 +1926,6 @@ void US_LammAstfvm::store_mfem_data( US_DataIO::RawData&      edata,
    for ( int ii = 0; ii < nscan; ii++ )
    {  // copy over each scan
       US_AstfemMath::MfemScan* fscan = &fdata.scan    [ ii ];
-//      US_DataIO2::Scan*        escan = &edata.scanData[ ii ];
       US_DataIO::Scan*         escan = &edata.scanData[ ii ];
 
       escan->temperature = fscan->temperature;
@@ -1941,25 +1933,7 @@ void US_LammAstfvm::store_mfem_data( US_DataIO::RawData&      edata,
       escan->seconds     = fscan->time;
       escan->omega2t     = fscan->omega_s_t;
       escan->plateau     = fdata.radius[ nconc - 1 ];
-#if 0
-      escan->readings.resize( nconc );  // mirror number of concentrations
-
-      for ( int jj = 0; jj < nconc; jj++ )
-      {  // copy all readings concentrations for this scan
-         escan->readings[ jj ] = US_DataIO2::Reading( fscan->conc[ jj ] );
-      }
-   }
-
-   edata.x.resize( nconc );
-
-   for ( int jj = 0; jj < nconc; jj++ )
-   {  // copy radius values
-      edata.x[ jj ] = US_DataIO2::XValue( fdata.radius[ jj ] );
-   }
-#endif
-#if 1
       escan->rvalues     = fscan->conc;
    }
-#endif
 }
 

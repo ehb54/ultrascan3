@@ -5,7 +5,6 @@
 
 #include "us_math2.h"
 #include "us_constants.h"
-//#include "us_dataIO2.h"
 #include "us_dataIO.h"
 #include "us_matrix.h"
 
@@ -458,7 +457,6 @@ double US_Math2::normal_distribution( double sigma, double mean, double x )
    return exp( exponent ) / sqrt( 2.0 * M_PI * sq( sigma ) );
 }
 
-//double US_Math2::time_correction( const QVector< US_DataIO2::EditedData >& dataList )
 double US_Math2::time_correction( const QVector< US_DataIO::EditedData >& dataList )
 {
    int size  = dataList[ 0 ].scanData.size();
@@ -477,7 +475,6 @@ double US_Math2::time_correction( const QVector< US_DataIO::EditedData >& dataLi
 
    for ( int i = 0; i < dataList.size(); i++ )
    {
-//      const US_DataIO2::EditedData* e = &dataList[ i ];
       const US_DataIO::EditedData* e = &dataList[ i ];
 
       for ( int j = 0; j < e->scanData.size(); j++ )

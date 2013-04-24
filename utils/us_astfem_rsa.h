@@ -6,7 +6,6 @@
 #include "us_extern.h"
 #include "us_model.h"
 #include "us_simparms.h"
-//#include "us_dataIO2.h"
 #include "us_dataIO.h"
 #include "us_astfem_math.h"
 #include "us_stiffbase.h"
@@ -30,7 +29,6 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //! \brief Do the bulk of simulation calculations.
       //! \param exp_data  Reference to the artificial experimental object
       //!                  to be created and populated by simulation.
-//      int  calculate           ( US_DataIO2::RawData& );
       int  calculate           ( US_DataIO::RawData& );
 
       //! \brief Set a flag for whether to perform time correction.
@@ -160,8 +158,6 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       void   GlobalStiff      ( double*, double**, double**,
                                 double, double );
 
-//      void   load_mfem_data ( US_DataIO2::RawData&, US_AstfemMath::MfemData& );         
-//      void   store_mfem_data( US_DataIO2::RawData&, US_AstfemMath::MfemData& );         
       void   load_mfem_data ( US_DataIO::RawData&, US_AstfemMath::MfemData& );         
       void   store_mfem_data( US_DataIO::RawData&, US_AstfemMath::MfemData& );         
 

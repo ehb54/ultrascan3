@@ -7,7 +7,6 @@
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_widgets.h"
-#include "us_dataIO2.h"
 #include "us_db2.h"
 
 #ifndef DbgLv
