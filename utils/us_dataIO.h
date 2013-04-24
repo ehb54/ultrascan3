@@ -84,7 +84,7 @@ class US_UTIL_EXTERN US_DataIO
       };
 
       //! All data associated with a cell / channel / wavelength (CCW)
-      class RawData
+      class US_UTIL_EXTERN RawData
       {
          public:
          char    type[ 2 ];         //!< Data type: "RA"|"IP"|"RI"|"FI"|"WA"|"WI"
@@ -184,7 +184,7 @@ class US_UTIL_EXTERN US_DataIO
       };
 
       //! The CCW data after edits are applied
-      class EditedData
+      class US_UTIL_EXTERN EditedData
       {
          public:
          QString       expType;      //!< Experiment type:
