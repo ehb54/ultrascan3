@@ -1,7 +1,7 @@
 #ifndef US_VHW_ENHCD_H
 #define US_VHW_ENHCD_H
 
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_analysis_base2.h"
 #include "us_distrib_plot.h"
 #include "us_editor.h"
@@ -126,8 +126,8 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QList< double >              groupxy;    // Group select pick coordinates
       QList< GrpInfo >             groupdat;   // Selected group info structures
 
-      US_DataIO2::EditedData*      edata;      // Current triple edited data
-      US_DataIO2::Scan*            dscan;      // Current data scsan
+      US_DataIO::EditedData*       edata;      // Current triple edited data
+      US_DataIO::Scan*             dscan;      // Current data scsan
 
       US_Model                     model;      // Current loaded model
 
@@ -147,8 +147,8 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       void update_vbar(      double );
       void update_bdtoler(   double );
       void update_divis(     double );
-      int  first_gteq( double, QVector< US_DataIO2::Reading >&, int, int );
-      int  first_gteq( double, QVector< US_DataIO2::Reading >&, int );
+      int  first_gteq( double, QVector< double >&, int, int );
+      int  first_gteq( double, QVector< double >&, int );
       double sed_coeff( double, double, double* = NULL, int* = NULL );
       double avg_plateau(  void );
       double find_root( double );

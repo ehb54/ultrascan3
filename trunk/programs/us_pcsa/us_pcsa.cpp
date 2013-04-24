@@ -250,8 +250,8 @@ DbgLv(1) << "Data Plot from Base";
       return;
 
    // set up to plot simulation data and residuals
-   int nscans  = edata->scanData.size();
-   int npoints = edata->x.size();
+   int nscans  = edata->scanCount();
+   int npoints = edata->pointCount();
    int count   = ( npoints > nscans ) ? npoints : nscans;
 
    QVector< double > rvec( count, 0.0 );
@@ -664,7 +664,7 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
 }
 
 // Return pointer to main window edited data
-US_DataIO2::EditedData* US_pcsa::mw_editdata()
+US_DataIO::EditedData* US_pcsa::mw_editdata()
 {
    int drow = lw_triples->currentRow();
    edata    = ( drow >= 0 ) ? &dataList[ drow ] : 0;
@@ -674,8 +674,8 @@ US_DataIO2::EditedData* US_pcsa::mw_editdata()
 
 // Return pointers to main window data and GUI elements
 
-US_DataIO2::RawData*      US_pcsa::mw_simdata()      { return &sdata;    }
-US_DataIO2::RawData*      US_pcsa::mw_resdata()      { return &rdata;    }
+US_DataIO::RawData*       US_pcsa::mw_simdata()      { return &sdata;    }
+US_DataIO::RawData*       US_pcsa::mw_resdata()      { return &rdata;    }
 US_Model*                 US_pcsa::mw_model()        { return &model;    }
 US_Noise*                 US_pcsa::mw_ti_noise()     { return &ti_noise; }
 US_Noise*                 US_pcsa::mw_ri_noise()     { return &ri_noise; }
@@ -956,8 +956,8 @@ void US_pcsa::write_bmap( const QString plotFile )
    // Generate the residuals array
    bool have_ri = ri_noise.count > 0;
    bool have_ti = ti_noise.count > 0;
-   int  nscans  = edata->scanData.size();
-   int  npoints = edata->x.size();
+   int  nscans  = edata->scanCount();
+   int  npoints = edata->pointCount();
    QVector< double >            resscn( npoints );
    QVector< QVector< double > > resids( nscans  );
 

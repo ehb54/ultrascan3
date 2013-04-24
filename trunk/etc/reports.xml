@@ -41,6 +41,7 @@
     <application name="globeq" label="Global Equilibrium Fit" />
     <application name="cnvt" label="Convert Legacy Data" />
     <application name="rundetail" label="Run Detail Summary" />
+    <application name="dsinfo" label="Data Set Summary" />
     <extension name="html" label="HTML General Report" mimetype="text/html" />
     <extension name="rpt" label="Plain-text Report" mimetype="text/plain" />
     <extension name="svg" label="SVG Plot" mimetype="image/svg+xml" />
@@ -87,6 +88,7 @@
     <report name="raw" label="Raw Scan Data" />
     <report name="intensity" label="Intensity Profile Data" />
     <report name="rundetail" label="Run Detail Information" />
+    <report name="dataset_info" label="General Data Set Information" />
     <report name="combo-distrib-s" label="Combo Sedimentation Coefficient Bar Plot" />
     <report name="combo-distrib-mw" label="Combo Molecular Weight Bar Plot" />
     <report name="combo-distrib-d" label="Combo Diffusion Coefficient Bar Plot" />

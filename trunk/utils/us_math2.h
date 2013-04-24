@@ -4,7 +4,8 @@
 
 #include <QtCore>
 #include "us_extern.h"
-#include "us_dataIO2.h"
+//#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_solution.h"
 
 #define sq(x) ((x) * (x))
@@ -147,7 +148,8 @@ class US_UTIL_EXTERN US_Math2
       //!        of the rotor.
       //! \param dataList The list of editedData for the run
 
-      static double time_correction( const QVector< US_DataIO2::EditedData >& );
+//      static double time_correction( const QVector< US_DataIO2::EditedData >& );
+      static double time_correction( const QVector< US_DataIO::EditedData >& );
 
       //! \brief Set the sysem random sequence.
       //! \return The seed used to set the system time

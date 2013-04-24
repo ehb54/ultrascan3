@@ -180,9 +180,9 @@ DbgLv(1) << "WT:CRR nsolutes" << nsolutes;
       wmodel.components[ ii ].D   /= dset->D20w_correction;
    }
 
-   US_DataIO2::EditedData* edata = &dset->run_data;
-   int nscans    = edata->scanData.size();
-   int npoints   = edata->x.size();
+   US_DataIO::EditedData* edata = &dset->run_data;
+   int npoints   = edata->pointCount();
+   int nscans    = edata->scanCount();
    int ntotal    = nscans * npoints;
    QVector< double > nnls_a( ntotal, 0.0 );
    QVector< double > nnls_b( ntotal, 0.0 );

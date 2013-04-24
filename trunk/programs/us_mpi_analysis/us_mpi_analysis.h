@@ -6,7 +6,7 @@
 #include <mpi.h>
 
 #include "us_model.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_noise.h"
 #include "us_simparms.h"
 #include "us_solve_sim.h"
@@ -87,10 +87,10 @@ class US_MPI_Analysis : public QObject
     QVector< double >   sigmas;
     QVector< long >     work_rss;
 
-    US_DataIO2::RawData *res_data;       // Populated in calc_residuals
-    US_DataIO2::RawData *sim_data;       // Populated in calc_residuals
-    US_DataIO2::RawData sim_data1;       // Simulation for mc iteration 1
-    US_DataIO2::RawData scaled_data;     // Populated after global fit
+    US_DataIO::RawData* res_data;        // Populated in calc_residuals
+    US_DataIO::RawData* sim_data;        // Populated in calc_residuals
+    US_DataIO::RawData  sim_data1;       // Simulation for mc iteration 1
+    US_DataIO::RawData  scaled_data;     // Populated after global fit
 
     QHostAddress        server;
     quint16             port;

@@ -4,7 +4,7 @@
 #include <QtCore>
 #include "us_extern.h"
 #include "us_db2.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 
 //! \brief Noise Vector object
 
@@ -91,7 +91,7 @@ class US_UTIL_EXTERN US_Noise
       //!                    1  iff  null noise or noise count==0.
       //!                   -1  iff  noise count does not match readings count
       //!                   -2  iff  noise count does not match scan count
-      int apply_to_data( US_DataIO2::EditedData&, bool = true );
+      int apply_to_data( US_DataIO::EditedData&, bool = true );
 
       //! Static function to apply a noise vector to an EditedData set.
       //! \param editdata  Reference to EditedData set to apply to.
@@ -102,7 +102,7 @@ class US_UTIL_EXTERN US_Noise
       //!                    1  iff  null noise or noise count==0.
       //!                   -1  iff  noise count does not match readings count
       //!                   -2  iff  noise count does not match scan count
-      static int apply_noise( US_DataIO2::EditedData&, US_Noise* = 0,
+      static int apply_noise( US_DataIO::EditedData&, US_Noise* = 0,
             bool = true );
 
       //! Static function to find and, if need be, create noise directory path.

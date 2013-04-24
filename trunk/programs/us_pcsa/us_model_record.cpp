@@ -27,9 +27,9 @@ ModelRecord::~ModelRecord()
 void ModelRecord::clear_data( void )
 {
    sim_data .scanData.clear();
-   sim_data .x       .clear();
+   sim_data .xvalues .clear();
    residuals.scanData.clear();
-   residuals.x       .clear();
+   residuals.xvalues .clear();
    ti_noise          .clear();
    ri_noise          .clear();
 }

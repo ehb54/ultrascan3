@@ -590,26 +590,26 @@ void US_EquilTime::init_simparams( void )
 void US_EquilTime::init_astfem_data( void )
 {
    astfem_data.scanData.clear();
-   astfem_data.x       .clear();
+   astfem_data.xvalues .clear();
 
    // Assign radius data
    double r = simparams.meniscus;
 
    while  ( r <= simparams.bottom )
    {
-      astfem_data.x << US_DataIO2::XValue( r );
+      astfem_data.xvalues << r;
       r += simparams.radial_resolution;
    }
 
-   int radius_points = astfem_data.x.size();
+   int radius_points = astfem_data.pointCount();
 
    // Contant temperature for now.  A temperature counter could be added
    // the this program.
      
-   US_DataIO2::Scan scan;
+   US_DataIO::Scan scan;
    scan.temperature = 20.0;
    scan.wavelength  = 999; 
-   scan.readings.fill( 0.0, radius_points );
+   scan.rvalues.fill( 0.0, radius_points );
 
    astfem_data.scanData << scan;
 }
@@ -669,7 +669,7 @@ void US_EquilTime::simulate( void )
 
       // Copy last scan data to initial concentration
       for ( int i = 0; i < radius_points; i++ )
-         astfem_data.scanData[ 0 ].readings[ i ] = concentration[ i ];
+         astfem_data.scanData[ 0 ].rvalues[ i ] = concentration[ i ];
 
       concentration.clear();  // Force allocation of new plot data
       
@@ -704,7 +704,7 @@ void US_EquilTime::check_equil( QVector< double >* x, double* c )
    if ( concentration.isEmpty() )
    {
       radius_points = x->size();
-      sim_radius.resize( radius_points );
+      sim_radius   .resize( radius_points );
       concentration.resize( radius_points );
 
       for ( int i = 0; i < radius_points; i++ ) 

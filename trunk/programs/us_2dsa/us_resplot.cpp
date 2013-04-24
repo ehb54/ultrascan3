@@ -5,6 +5,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_math2.h"
+#include "us_constants.h"
 
 #include <qwt_legend.h>
 
@@ -381,7 +382,7 @@ void US_ResidPlot::plot_edata()
 
    if ( have_ed )
    {
-      points   = edata->x.size();
+      points   = edata->pointCount();
       rl       = edata->radius( 0 );
       //vh       = edata->value( 0, points - 1 );
       //vh      *= 1.05;
@@ -408,7 +409,7 @@ void US_ResidPlot::plot_edata()
    {  // set title and values count for experimental data
       data_plot1->setAxisTitle( QwtPlot::yLeft,
          tr( "Absorbance at " ) + edata->wavelength + tr( " nm" ) );
-      points   = edata->x.size();
+      points   = edata->pointCount();
    }
 
    if ( do_pltsda )
@@ -419,7 +420,7 @@ void US_ResidPlot::plot_edata()
       else
          data_plot1->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance" ) );
 
-      count    = sdata->x.size();
+      count    = sdata->pointCount();
    }
 
    count    = ( points > count ) ? points : count;  // maximum array count
@@ -437,8 +438,8 @@ void US_ResidPlot::plot_edata()
 
    if ( do_plteda )
    {  // plot experimental curves
-      points   = edata->x.size();
-      count    = edata->scanData.size();
+      points   = edata->pointCount();
+      count    = edata->scanCount();
       rinoi    = 0.0;
       tinoi    = 0.0;
 
@@ -470,8 +471,8 @@ void US_ResidPlot::plot_edata()
 
    if ( do_pltsda )
    {  // plot simulation curves
-      points   = sdata->x.size();
-      count    = sdata->scanData.size();
+      points   = sdata->pointCount();
+      count    = sdata->scanCount();
       rinoi    = 0.0;
       tinoi    = 0.0;
 
@@ -529,12 +530,14 @@ void US_ResidPlot::plot_rdata()
    bool   do_addrin = have_ri  &&  ck_addrin->isChecked();
    bool   do_subrin = have_ri  &&  ck_subrin->isChecked();
 
-   int    points    = edata->x.size();
-   int    count     = edata->scanData.size();
+   int    points    = edata->pointCount();
+   int    count     = edata->scanCount();
    double tinoi     = 0.0;
    double rinoi     = 0.0;
    double evalu     = 0.0;
    double rmsd      = 0.0;
+   double odlimit   = edata->ODlimit;
+   double pllimit   = odlimit * ODLIM_PLFAC;
 
    if ( !do_pltres  &&  !do_plttin  && !do_pltrin  &&
         !do_pltran  &&  !do_shorbm )
@@ -546,7 +549,7 @@ void US_ResidPlot::plot_rdata()
    us_grid( data_plot2 );
    data_plot2->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
 
-   int vsize = max( sdata->x.size(), max( points, count ) );
+   int vsize = qMax( sdata->pointCount(), qMax( points, count ) );
 
    QVector< double > rvec( vsize, 0.0 );
    QVector< double > vvec( vsize, 0.0 );
@@ -557,9 +560,6 @@ void US_ResidPlot::plot_rdata()
    QString       title;
    QwtPlotCurve* curv;
    QPen          pen_plot( Qt::green );
-
-   points     = edata->x.size();
-   count      = edata->scanData.size();
 
    // plot a zero line in red
    double xlo = edata->radius( 0 );
@@ -583,6 +583,8 @@ void US_ResidPlot::plot_rdata()
          rr[ jj ] = sdata->radius( jj );
       }
 
+      int    kntva     = 0;
+
       for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
          rinoi    = 0.0;
@@ -599,11 +601,32 @@ void US_ResidPlot::plot_rdata()
             if ( do_addtin )
                tinoi   += ti_noise->values[ jj ];
 
-            evalu    = edata->value( ii, jj )
-                     - sdata->value( ii, jj )
-                     - rinoi - tinoi;
-            vv[ jj ] = evalu;
-            rmsd    += sq( evalu );
+            evalu    = edata->value( ii, jj );
+#if 0
+
+            if ( evalu < odlimit )
+            {
+               evalu    = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+               vv[ jj ] = evalu;
+               rmsd    += sq( evalu );
+               kntva++;
+            }
+            else
+            {
+               vv[ jj ] = ODLIM_RVAL;
+            }
+#endif
+#if 1
+
+            if ( evalu < odlimit )
+            {
+               vv[ jj ] = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+               rmsd    += sq( vv[ jj ] );
+               kntva++;
+            }
+            else
+               vv[ jj ] = pllimit;
+#endif
          }
 
          title   = tr( "resids " ) + QString::number( ii );
@@ -611,11 +634,11 @@ void US_ResidPlot::plot_rdata()
 
          curv->setPen(   pen_plot );
          curv->setStyle( QwtPlotCurve::Dots );
-         curv->setData(   rr, vv, points );
+         curv->setData(  rr, vv, points );
       }
 
       // display variance and RMSD
-      rmsd   /= (double)( count * points );
+      rmsd   /= (double)( kntva );
       le_vari->setText( QString::number( rmsd ) );
       rmsd    = sqrt( rmsd );
       le_rmsd->setText( QString::number( rmsd ) );
@@ -684,6 +707,8 @@ void US_ResidPlot::plot_rdata()
          rr[ jj ] = sdata->radius( jj );
       }
 
+      int    kntva     = 0;
+
       for ( int ii = 0; ii < count; ii++ )
       {  // get random noise (y) for each scan
          rinoi    = have_ri ? ri_noise->values[ ii ] : 0.0;
@@ -691,11 +716,31 @@ void US_ResidPlot::plot_rdata()
          for ( int jj = 0; jj < points; jj++ )
          {  // each random value is e-value minus s-value with optional noise
             tinoi    = have_ti ? ti_noise->values[ jj ] : 0.0;
-            evalu    = edata->value( ii, jj )
-                     - sdata->value( ii, jj )
-                     - rinoi - tinoi;
-            vv[ jj ] = evalu;
-            rmsd    += sq( evalu );
+            evalu    = edata->value( ii, jj );
+
+#if 0
+            if ( evalu < odlimit )
+            {
+               evalu    = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+               vv[ jj ] = evalu;
+               rmsd    += sq( evalu );
+               kntva++;
+            }
+            else
+            {
+               vv[ jj ] = ODLIM_RVAL;
+            }
+#endif
+#if 1
+            if ( evalu < odlimit )
+            {
+               vv[ jj ] = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+               rmsd    += sq( vv[ jj ] );
+               kntva++;
+            }
+            else
+               vv[ jj ] = pllimit;
+#endif
          }
 
          title   = tr( "random noise " ) + QString::number( ii );
@@ -707,7 +752,7 @@ void US_ResidPlot::plot_rdata()
       }
 
       // display variance and RMSD
-      rmsd   /= (double)( count * points );
+      rmsd   /= (double)( kntva );
       le_vari->setText( QString::number( rmsd ) );
       rmsd    = sqrt( rmsd );
       le_rmsd->setText( QString::number( rmsd ) );
@@ -723,7 +768,8 @@ void US_ResidPlot::plot_rdata()
 
       resids .resize( count );
       resscan.resize( points );
-      rmsd     = 0.0;
+      rmsd      = 0.0;
+      int kntva = 0;
 
       for ( int ii = 0; ii < count; ii++ )
       {  // build a vector for each scan
@@ -741,17 +787,37 @@ void US_ResidPlot::plot_rdata()
             if ( do_addtin )
                tinoi   += ti_noise->values[ jj ];
 
-            evalu         = edata->value( ii, jj )
-                          - sdata->value( ii, jj )
-                          - rinoi - tinoi;
-            resscan[ jj ] = evalu;
-            rmsd         += sq( evalu );
+            evalu         = edata->value( ii, jj );
+
+#if 0
+            if ( evalu < odlimit )
+            {
+               evalu         = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+               resscan[ jj ] = evalu;
+               rmsd         += sq( evalu );
+               kntva++;
+            }
+            else
+            {
+               resscan[ jj ] = ODLIM_RVAL;
+            }
+#endif
+#if 1
+            if ( evalu < odlimit )
+            {
+               resscan[ jj ] = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+               rmsd         += sq( resscan[ jj ] );
+               kntva++;
+            }
+            else
+               resscan[ jj ] = pllimit;
+#endif
          }
 
          resids[ ii ] = resscan;
       }
 
-      rmsd   /= (double)( count * points );
+      rmsd   /= (double)( kntva );
       le_vari->setText( QString::number( rmsd ) );
       rmsd    = sqrt( rmsd );
       le_rmsd->setText( QString::number( rmsd ) );

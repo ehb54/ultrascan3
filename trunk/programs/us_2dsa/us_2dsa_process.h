@@ -5,7 +5,7 @@
 #include <QtCore>
 
 #include "us_extern.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_simparms.h"
 #include "us_model.h"
 #include "us_noise.h"
@@ -74,7 +74,7 @@ class US_2dsaProcess : public QObject
       //! \param da_tin  Time-invariant noise (or null)
       //! \param da_rin  Radially-invariant noise (or null)
       //! \returns       Success flag:  true if successful
-      bool get_results( US_DataIO2::RawData*, US_DataIO2::RawData*,
+      bool get_results( US_DataIO::RawData*, US_DataIO::RawData*,
                         US_Model*, US_Noise*, US_Noise* );
 
       void stop_fit(       void );
@@ -116,14 +116,14 @@ private:
       QList< QVector< US_Solute > > orig_sols;  // original solutes
       QList< QVector< US_Solute > > ical_sols;  // iteration calculated solutes
 
-      US_DataIO2::EditedData*    edata;      // experimental data (mc_iter)
-      US_DataIO2::EditedData*    bdata;      // base experimental data
-      US_DataIO2::EditedData     wdata;      // work experimental data
+      US_DataIO::EditedData*     edata;      // experimental data (mc_iter)
+      US_DataIO::EditedData*     bdata;      // base experimental data
+      US_DataIO::EditedData      wdata;      // work experimental data
 
-      US_DataIO2::RawData        sdata;      // simulation data
-      US_DataIO2::RawData        sdata1;     // simulation data (mc iter 1)
+      US_DataIO::RawData         sdata;      // simulation data
+      US_DataIO::RawData         sdata1;     // simulation data (mc iter 1)
 
-      US_DataIO2::RawData        rdata;      // residuals data
+      US_DataIO::RawData         rdata;      // residuals data
 
       US_Model                   model;      // constructed model
 

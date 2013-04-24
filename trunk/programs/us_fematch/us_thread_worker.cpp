@@ -14,7 +14,7 @@
 
 // Construct worker thread
 ThreadWorker::ThreadWorker( US_Model& a_model, US_SimulationParameters& params,
-    US_DataIO2::RawData& simda, US_Buffer& a_buff, int thr )
+    US_DataIO::RawData& simda, US_Buffer& a_buff, int thr )
    : QObject(), model( a_model ), simparams( params ),
    simdat( simda ), buffer( a_buff )
 {
@@ -29,7 +29,7 @@ void ThreadWorker::calc_simulation()
 {
 DbgLv(1) << "THRWRK:CLCRES threadid" << QThread::currentThreadId();
 DbgLv(1) << " THRWRK:" << thrn << "simdat scans radii"
-   << simdat.scanData.size() << simdat.x.size();
+   << simdat.scanData.size() << simdat.xvalues.size();
 DbgLv(1) << " THRWRK:" << thrn << "model components"
    << model.components.size();
 DbgLv(1) << " THRWRK:" << thrn << "model-0 s k" << model.components[0].s*1.e13

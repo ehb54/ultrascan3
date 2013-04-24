@@ -504,7 +504,7 @@ DbgLv(1) << " LD: update_limit";
    if ( edata->dataType != "RA" )
       le_mxfringe->setText( "0.0" );   // If not absorbance, change OD limit
 
-DbgLv(1) << "eData readings size" << edata->scanData[0].readings.size();
+DbgLv(1) << "eData rvalues size" << edata->scanData[0].rvalues.size();
    dataLoaded  = true;
    pb_details ->setEnabled( true );
    pb_unload  ->setEnabled( true );
@@ -977,7 +977,7 @@ void US_GlobalEquil::edata_plot()
       return;
    }
 
-   int     nrpts   = edata->x.size();
+   int     nrpts   = edata->pointCount();
    double  drpm    = spdata->speed;
    double  radl    = spdata->dataLeft;
    double  radr    = spdata->dataRight;
@@ -1247,7 +1247,7 @@ void US_GlobalEquil::assign_scanfit()
       double radlo = scedits[ jes ].rad_lo;
       double radhi = scedits[ jes ].rad_hi;
       edata        = &dataList[ jdx ];
-      US_DataIO2::Scan* dscan = &edata->scanData[ jsx ];
+      US_DataIO::Scan* dscan = &edata->scanData[ jsx ];
       QString trip = triples[ jdx ];
       QString chan = trip.section( "/", 1, 1 ).simplified();
 
@@ -1257,7 +1257,7 @@ void US_GlobalEquil::assign_scanfit()
       scanfit.scanFit    = false;
       scanfit.autoExcl   = false;
       scanfit.limsModd   = false;
-      scanfit.points     = edata->x.size();
+      scanfit.points     = edata->pointCount();
       scanfit.nbr_posr   = 0;
       scanfit.nbr_negr   = 0;
       scanfit.runs       = 0;
@@ -1405,9 +1405,9 @@ DbgLv(1) << " sRF: ncomps nassocs" << runfit.nbr_comps << runfit.nbr_assocs;
 }
 
 // Determine the index in the radius vector of a given radius
-int US_GlobalEquil::index_radius( US_DataIO2::EditedData* edat, double radius )
+int US_GlobalEquil::index_radius( US_DataIO::EditedData* edat, double radius )
 {
-   int l_index = edat->x.size() - 1;
+   int l_index = edat->pointCount() - 1;
    int r_index = -1;
 
    while ( ++r_index < l_index )

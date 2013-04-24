@@ -300,8 +300,8 @@ void US_Buoyancy::load( void )
    pb_details   ->setEnabled( true );
 
    // Temperature check
-   double              dt = 0.0;
-   US_DataIO2::RawData triple;
+   double             dt = 0.0;
+   US_DataIO::RawData triple;
 
    foreach( triple, allData )
    {
@@ -400,8 +400,8 @@ void US_Buoyancy::plot_scan( double scan_number )
 {
 		  // current scan is global
    current_scan = (int) scan_number;
-   int    rsize = data.scanData[ 0 ].readings.size();
-   int    ssize = data.scanData.size();
+   int    rsize = data.pointCount();
+   int    ssize = data.scanCount();
    int    count = 0;
    QVector< double > rvec( rsize );
    QVector< double > vvec( rsize );
@@ -422,9 +422,9 @@ void US_Buoyancy::plot_scan( double scan_number )
    //
    for ( int ii = 0; ii < ssize; ii++ )
    {
-      US_DataIO2::Scan* s = &data.scanData[ ii ];
+      US_DataIO::Scan* s = &data.scanData[ ii ];
 
-      QString arpm        = QString::number( s->rpm );
+      QString arpm       = QString::number( s->rpm );
 
 
       //how many scans are included in the current set of speeds? Increment maxscan...
@@ -440,8 +440,8 @@ void US_Buoyancy::plot_scan( double scan_number )
 
       for ( int jj = 0; jj < rsize; jj++ )
       {
-         r[ count ] = data.x[ jj ].radius;
-         v[ count ] = s->readings[ jj ].value;
+         r[ count ] = data.xvalues[ jj ];
+         v[ count ] = s->rvalues[ jj ];
 
          maxR = max( maxR, r[ count ] );
          minR = min( minR, r[ count ] );
@@ -475,12 +475,10 @@ void US_Buoyancy::plot_scan( double scan_number )
 
 
 // Handle a mouse click according to the current pick step
-void US_Buoyancy::mouse( const QwtDoublePoint& p )
+void US_Buoyancy::mouse( const QwtDoublePoint& /*p*/ )
 {
    double maximum = -1.0e99;
-	double xpoint;
-
-   xpoint = p.x();
+//   double xpoint  = p.x();
             // Un-zoom
             if ( plot->btnZoom->isChecked() )
                plot->btnZoom->setChecked( false );
@@ -557,7 +555,7 @@ void US_Buoyancy::set_meniscus( void )
 void US_Buoyancy::update_speedData( void )
 {
 	sData.clear();
-	US_DataIO2::SpeedData ssDat;
+	US_DataIO::SpeedData ssDat;
 	int ksd    = 0;
 	for ( int jd = 0; jd < allData.size(); jd++ )
 	{

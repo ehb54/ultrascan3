@@ -6,7 +6,7 @@
 #include "us_advanced.h"
 #include "us_noise_loader.h"
 #include "us_resplot.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_db2.h"
 #include "us_astfem_rsa.h"
 #include "us_model.h"
@@ -31,8 +31,8 @@ class US_FeMatch : public US_Widgets
    public:
       US_FeMatch();
 
-      US_DataIO2::EditedData*     fem_editdata();
-      US_DataIO2::RawData*        fem_simdata();
+      US_DataIO::EditedData*      fem_editdata();
+      US_DataIO::RawData*         fem_simdata();
       US_Model*                   fem_model();
       US_Noise*                   fem_ti_noise();
       US_Noise*                   fem_ri_noise();
@@ -113,12 +113,12 @@ class US_FeMatch : public US_Widgets
 
       QStringList   files;
 
-      US_DataIO2::EditedData*     edata;
-      US_DataIO2::Scan*           dscan;
-      US_DataIO2::RawData*        rdata;
-      US_DataIO2::RawData*        sdata;
+      US_DataIO::EditedData*      edata;
+      US_DataIO::Scan*            dscan;
+      US_DataIO::RawData*         rdata;
+      US_DataIO::RawData*         sdata;
 
-      US_DataIO2::RawData         wsdata;
+      US_DataIO::RawData          wsdata;
 
       US_Model                    model;
       US_Model                    model_loaded;
@@ -141,7 +141,7 @@ class US_FeMatch : public US_Widgets
 
       QVector< int >                kcomps;
 
-      QList< US_DataIO2::RawData >  tsimdats;
+      QList< US_DataIO::RawData >   tsimdats;
       QList< US_Model >             tmodels;
       US_SimulationParameters       simparams;
 
@@ -193,7 +193,7 @@ class US_FeMatch : public US_Widgets
                          const QString&, const QString&,
                          const QString&, const QString&,
                          const QString& )                 const;
-      QString html_header   ( QString, QString, US_DataIO2::EditedData* );
+      QString html_header   ( QString, QString, US_DataIO::EditedData* );
       QString data_details  ( void )                      const;
       QString hydrodynamics ( void )                      const;
       QString scan_info     ( void )                      const;
@@ -216,8 +216,8 @@ class US_FeMatch : public US_Widgets
    protected:
       QList< int >                      excludedScans;
       QStringList                       triples;
-      QVector< US_DataIO2::EditedData > dataList;
-      QVector< US_DataIO2::RawData    > rawList;
+      QVector< US_DataIO::EditedData >  dataList;
+      QVector< US_DataIO::RawData    >  rawList;
       QVector< QVector< double >      > resids;
       QVector< QList< int > >           allExcls;
       

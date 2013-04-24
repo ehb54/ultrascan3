@@ -4,7 +4,7 @@
 #include <QtCore>
 
 #include "us_extern.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_matrix.h"
 #include "us_math2.h"
 #include "us_globeq_data.h"
@@ -18,7 +18,7 @@ class US_EqMath : public QObject
 	Q_OBJECT
 
    public:
-      US_EqMath( QVector< US_DataIO2::EditedData >&, 
+      US_EqMath( QVector< US_DataIO::EditedData >&, 
             QVector< ScanEdit >&, QVector< EqScanFit >&, EqRunFit& );
 
       void   init_params          ( int, bool,
@@ -37,7 +37,7 @@ class US_EqMath : public QObject
       void   calc_integral        ( void    );
 
    private:
-      QVector< US_DataIO2::EditedData >&  dataList;
+      QVector< US_DataIO::EditedData >&   dataList;
       QVector< ScanEdit >&                scedits;
       QVector< EqScanFit >&               scanfits;
       EqRunFit&                           runfit;

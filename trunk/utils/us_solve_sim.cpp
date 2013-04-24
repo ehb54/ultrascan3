@@ -113,13 +113,13 @@ if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mfac"
  << zerothr << linethr << maxod << mfactor;
    }
 
-   US_DataIO2::EditedData wdata;
+   US_DataIO::EditedData wdata;
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {  // Count scan,point totals for all data sets
       DataSet* dset = data_sets[ ee ];
+      int npoints   = dset->run_data.xvalues.size();
       int nscans    = dset->run_data.scanData.size();
-      int npoints   = dset->run_data.x.size();
       ntotal       += ( nscans * npoints );
       ntinois      += npoints;
       nrinois      += nscans;
@@ -155,26 +155,39 @@ DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
 DebugTime("BEG:calcres");
    // Populate b array with experiment data concentrations
    int    kk   = 0;
+   int    kodl = 0;
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {
-      US_DataIO2::EditedData* edata = &data_sets[ ee ]->run_data;
+      US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
       edata       = banddthr ? &wdata : edata;
+      int npoints = edata->xvalues.size();
       int nscans  = edata->scanData.size();
-      int npoints = edata->x.size();
+      double odlim = edata->ODlimit;
 
       for ( int ss = 0; ss < nscans; ss++ )
       {
          for ( int rr = 0; rr < npoints; rr++ )
-         {
-            nnls_b[ kk++ ] = edata->value( ss, rr );
+         {  // Fill the B matrix with experiment data (or zero)
+            double evalue  = edata->value( ss, rr );
+
+#if 1
+            if ( evalue >= odlim )
+            {  // Where ODlimit is exceeded, substitute 0.0 and bump count
+               evalue         = 0.0;
+               kodl++;
+            }
+#endif
+
+            nnls_b[ kk++ ] = evalue;
          }
       }
    }
+DbgLv(1) << "   CR:B fill kodl" << kodl;
 
    if ( abort ) return;
 
-   QList< US_DataIO2::RawData > simulations;
+   QList< US_DataIO::RawData > simulations;
    simulations.reserve( nsolutes * dataset_count );
 
    // Simulate data using models, each with a single s,f/f0 component
@@ -196,14 +209,15 @@ DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
          if ( abort ) return;
+         int bx   = 0;
 
          for ( int ee = offset; ee < dataset_count; ee++ )
          {  // Solve for each data set
-            DataSet*                dset  = data_sets[ ee ];
-            US_DataIO2::EditedData* edata = banddthr ? &wdata : &dset->run_data;
-            US_DataIO2::RawData     simdat;
+            DataSet*               dset  = data_sets[ ee ];
+            US_DataIO::EditedData* edata = banddthr ? &wdata : &dset->run_data;
+            US_DataIO::RawData     simdat;
+            int npoints = edata->xvalues.size();
             int nscans  = edata->scanData.size();
-            int npoints = edata->x.size();
             zcomponent.vbar20          = dset->vbar20;
 
             // Set model with standard space s and k
@@ -241,9 +255,26 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
             simulations << simdat;   // Save simulation (each datset,solute)
 
             // Populate the A matrix for the NNLS routine with simulation
-            for ( int ss = 0; ss < nscans; ss++ )
-               for ( int rr = 0; rr < npoints; rr++ )
-                  nnls_a[ kk++ ] = simdat.value( ss, rr );
+DbgLv(1) << "   CR: A fill kodl" << kodl;
+            if ( kodl == 0 )
+            {  // Normal case of no ODlimit substitutions
+               for ( int ss = 0; ss < nscans; ss++ )
+                  for ( int rr = 0; rr < npoints; rr++ )
+                     nnls_a[ kk++ ] = simdat.value( ss, rr );
+            }
+            else
+            {  // Special case where ODlimit substitutions are in B matrix
+               for ( int ss = 0; ss < nscans; ss++ )
+               {
+                  for ( int rr = 0; rr < npoints; rr++ )
+                  {  // Fill A with simulations (or zero where B has zero)
+                     if ( nnls_b[ bx++ ] != 0.0 )
+                        nnls_a[ kk++ ] = simdat.value( ss, rr );
+                     else
+                        nnls_a[ kk++ ] = 0.0;
+                  }
+               }
+            }
 
          }  // Each data set
 
@@ -262,15 +293,16 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
          if ( abort ) return;
+         int bx   = 0;
 
          for ( int ee = offset; ee < dataset_count; ee++ )
          {  // Solve for each data set
-            DataSet*                dset  = data_sets[ ee ];
-            US_DataIO2::EditedData* edata = banddthr ? &wdata : &dset->run_data;
-            US_DataIO2::RawData     simdat;
             US_Math2::SolutionData  sd;
+            DataSet*               dset  = data_sets[ ee ];
+            US_DataIO::EditedData* edata = banddthr ? &wdata : &dset->run_data;
+            US_DataIO::RawData     simdat;
+            int npoints    = edata->xvalues.size();
             int nscans     = edata->scanData.size();
-            int npoints    = edata->x.size();
             double avtemp  = dset->temperature;
             sd.viscosity   = dset->viscosity;
             sd.density     = dset->density;
@@ -314,9 +346,25 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
             simulations << simdat;   // Save simulation (each datset,solute)
 
             // Populate the A matrix for the NNLS routine with simulation
-            for ( int ss = 0; ss < nscans; ss++ )
-               for ( int rr = 0; rr < npoints; rr++ )
-                  nnls_a[ kk++ ] = simdat.value( ss, rr );
+            if ( kodl == 0 )
+            {  // Normal case of no ODlimit substitutions
+               for ( int ss = 0; ss < nscans; ss++ )
+                  for ( int rr = 0; rr < npoints; rr++ )
+                     nnls_a[ kk++ ] = simdat.value( ss, rr );
+            }
+            else
+            {  // Special case where ODlimit substitutions are in B matrix
+               for ( int ss = 0; ss < nscans; ss++ )
+               {
+                  for ( int rr = 0; rr < npoints; rr++ )
+                  {  // Fill A with simulations (or zero where B has zero)
+                     if ( nnls_b[ bx++ ] != 0.0 )
+                        nnls_a[ kk++ ] = simdat.value( ss, rr );
+                     else
+                        nnls_a[ kk++ ] = 0.0;
+                  }
+               }
+            }
 
          }  // Each data set
 
@@ -334,15 +382,16 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
          if ( abort ) return;
+         int bx   = 0;
 
          for ( int ee = offset; ee < dataset_count; ee++ )
          {  // Solve for each data set
-            DataSet*                dset   = data_sets[ ee ];
-            US_DataIO2::EditedData* edata  = banddthr ? &wdata : &dset->run_data;
-            US_DataIO2::RawData     simdat;
             US_Math2::SolutionData  sd;
+            DataSet*               dset   = data_sets[ ee ];
+            US_DataIO::EditedData* edata  = banddthr ? &wdata : &dset->run_data;
+            US_DataIO::RawData     simdat;
+            int npoints    = edata->xvalues.size();
             int nscans     = edata->scanData.size();
-            int npoints    = edata->x.size();
             double avtemp  = dset->temperature;
             model.components[ 0 ]        = zcomponent;
             model.components[ 0 ].s      = sim_vals.solutes[ cc ].s;
@@ -386,9 +435,25 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
             simulations << simdat;   // Save simulation (each datset,solute)
 
             // Populate the A matrix for the NNLS routine with simulation
-            for ( int ss = 0; ss < nscans; ss++ )
-               for ( int rr = 0; rr < npoints; rr++ )
-                  nnls_a[ kk++ ] = simdat.value( ss, rr );
+            if ( kodl == 0 )
+            {  // Normal case of no ODlimit substitutions
+               for ( int ss = 0; ss < nscans; ss++ )
+                  for ( int rr = 0; rr < npoints; rr++ )
+                     nnls_a[ kk++ ] = simdat.value( ss, rr );
+            }
+            else
+            {  // Special case where ODlimit substitutions are in B matrix
+               for ( int ss = 0; ss < nscans; ss++ )
+               {
+                  for ( int rr = 0; rr < npoints; rr++ )
+                  {  // Fill A with simulations (or zero where B has zero)
+                     if ( nnls_b[ bx++ ] != 0.0 )
+                        nnls_a[ kk++ ] = simdat.value( ss, rr );
+                     else
+                        nnls_a[ kk++ ] = 0.0;
+                  }
+               }
+            }
 
          }  // Each data set
 
@@ -547,7 +612,7 @@ DbgLv(1) << "CR: kstodo" << kstodo;
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {
-      US_DataIO2::RawData tdata;      // Init temp sim data with edata's grid
+      US_DataIO::RawData tdata;      // Init temp sim data with edata's grid
       US_AstfemMath::initSimData( tdata, data_sets[ ee ]->run_data, 0.0 );
 
       int nscans  = tdata.scanData.size();
@@ -586,10 +651,10 @@ DbgLv(1) << "CR: cc soluval" << cc << soluval;
          {
             // Input sims (ea.dset, ea.solute); out sims (sum.solute, ea.dset)
             int sim_ix  = cc * dataset_count + ee - offset;
-            US_DataIO2::RawData*    idata = &simulations[ sim_ix ];
-            US_DataIO2::RawData*    sdata = &sim_vals.sim_data;
+            US_DataIO::RawData*     idata = &simulations[ sim_ix ];
+            US_DataIO::RawData*     sdata = &sim_vals.sim_data;
+            int npoints = sdata->xvalues.size();
             int nscans  = sdata->scanData.size();
-            int npoints = sdata->x.size();
 
             for ( int ss = 0; ss < nscans; ss++ )
             {
@@ -597,12 +662,13 @@ DbgLv(1) << "CR: cc soluval" << cc << soluval;
 
                for ( int rr = 0; rr < npoints; rr++ )
                {
-                  sdata->scanData[ scan ].readings[ rr ].value += 
-                     soluval * idata->value( ss, rr );
+                  sdata->scanData[ scan ].rvalues[ rr ] += 
+                     ( soluval * idata->value( ss, rr ) );
                }
             }
 
             scan_ix += nscans;
+//*DEBUG*
 int ss=nscans/2;
 int rr=npoints/2;
 DbgLv(1) << "CR:   scan_ix ss rr" << scan_ix << ss << rr;
@@ -614,29 +680,35 @@ if (soluval>100.0) {
  for ( int ss=0;ss<nscans;ss++ ) { for ( int rr=0; rr<npoints; rr++ ) {
   drval=idata->value(ss,rr); dmax=qMax(dmax,drval); dsum+=drval; }}
  DbgLv(1) << "CR:B s k" << sim_vals.solutes[cc].s*1.0e+13
-  << sim_vals.solutes[cc].k << "sval" << soluval << "amax asum" << dmax << dsum;
-}
+  << sim_vals.solutes[cc].k << "sval" << soluval << "amax asum" << dmax << dsum; }
+//*DEBUG*
          }
       }
    }
 
    double rmsds[ dataset_count ];
+   int    kntva[ dataset_count ];
    double variance   = 0.0;
    int    tinoffs    = 0;
    int    rinoffs    = 0;
    int    soffs      = 0;
+   int    ktotal     = 0;
 
    // Calculate residuals and rmsd values
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {
       DataSet*                dset  = data_sets[ ee ];
-      US_DataIO2::EditedData* edata = banddthr ? &wdata : &dset->run_data;
-      US_DataIO2::RawData*    sdata = &sim_vals.sim_data;
-      US_DataIO2::RawData*    resid = &sim_vals.residuals;
+      US_DataIO::EditedData*  edata = banddthr ? &wdata : &dset->run_data;
+      US_DataIO::RawData*     sdata = &sim_vals.sim_data;
+      US_DataIO::RawData*     resid = &sim_vals.residuals;
       US_AstfemMath::initSimData( sim_vals.residuals, *edata, 0.0 );
-      int nscans  = edata->scanData.size();
-      int npoints = edata->x.size();
-      int index   = ee - offset;
+      double odlimit   = edata->ODlimit;
+      double pllimit   = odlimit * ODLIM_PLFAC;
+      int    npoints   = edata->pointCount();
+      int    nscans    = edata->scanCount();
+      int    index     = ee - offset;
+      int    kntcs     = 0;
+      double varidset  = 0.0;
 
       for ( int ss = 0; ss < nscans; ss++ )
       {  // Create residuals dset:  exp - sim - noise(s)
@@ -644,36 +716,45 @@ if (soluval>100.0) {
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
-            double resval = edata->value( ss, rr )
-                          - sdata->value( s_index, rr )
-                          - tinvec[ rr + tinoffs ]
-                          - rinvec[ ss + rinoffs ];
+            double evalue = edata->value( ss, rr );
 
-            resid->scanData[ s_index ].readings[ rr ].value = resval;
+            if ( evalue < odlimit )
+            {
+               double resval = evalue
+                             - sdata->value( s_index, rr )
+                             - tinvec[ rr + tinoffs ]
+                             - rinvec[ ss + rinoffs ];
+               resid->setValue( s_index, rr, resval );
 
-            double r2    = sq( resval );
-            variance    += r2;
+               double r2    = sq( resval );
+               variance    += r2;
+               varidset    += r2;
+               kntcs++;
+            }
+            else
+            {
+               resid->setValue( s_index, rr, pllimit );
+            }
          }
       }
 
-      rmsds[ index ] = variance;          // Variance for a data set
+      rmsds[ index ] = varidset;          // Variance for a data set
+      kntva[ index ] = kntcs;
+      ktotal        += kntcs;
       soffs         += nscans;
       tinoffs       += npoints;
       rinoffs       += nscans;
-DbgLv(1) << "CR: index variance" << index << variance;
+DbgLv(1) << "CR: index variance" << index << varidset << variance;
    }
 
    sim_vals.variances.resize( dataset_count );
-   variance         /= (double)ntotal;    // Total sets variance
+   variance         /= (double)ktotal;    // Total sets variance
    sim_vals.variance = variance;
    kk        = 0;
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {  // Scale variances for each data set
-      int nscans  = data_sets[ ee ]->run_data.scanData.size();
-      int npoints = data_sets[ ee ]->run_data.x.size();
-
-      sim_vals.variances[ kk ] = rmsds[ kk ] / (double)( nscans * npoints );
+      sim_vals.variances[ kk ] = rmsds[ kk ] / (double)( kntva[ kk ] );
 DbgLv(1) << "CR:     kk variance" <<  sim_vals.variances[kk];
       kk++;
    }
@@ -718,9 +799,9 @@ void US_SolveSim::abort_work()
 // Compute a_tilde, the average experiment signal at each time
 void US_SolveSim::compute_a_tilde( QVector< double >& a_tilde )
 {
-   US_DataIO2::EditedData* edata = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
+   int    npoints  = edata->xvalues.size();
    int    nscans   = edata->scanData.size();
-   int    npoints  = edata->x.size();
    double avgscale = 1.0 / (double)npoints;
 
    for ( int ss = 0; ss < nscans; ss++ )
@@ -738,9 +819,9 @@ void US_SolveSim::compute_L_tildes( int                      nrinois,
                                     QVector< double >&       L_tildes,
                                     const QVector< double >& nnls_a )
 {
-   US_DataIO2::EditedData* edata = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
+   int    npoints  = edata->xvalues.size();
    int    nscans   = edata->scanData.size();
-   int    npoints  = edata->x.size();
    double avgscale = 1.0 / (double)npoints;
    int    a_index  = 0;
 
@@ -762,9 +843,9 @@ void US_SolveSim::compute_L_tildes( int                      nrinois,
 void US_SolveSim::compute_L_tilde( QVector< double >&       L_tilde,
                                    const QVector< double >& L )
 {
-   US_DataIO2::EditedData* edata = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
+   int    npoints  = edata->xvalues.size();
    int    nscans   = edata->scanData.size();
-   int    npoints  = edata->x.size();
    double avgscale = 1.0 / (double)npoints;
    int    index    = 0;
 
@@ -783,9 +864,9 @@ void US_SolveSim::compute_L( int                      ntotal,
                              const QVector< double >& nnls_a,
                              const QVector< double >& nnls_x )
 {
-   US_DataIO2::EditedData* edata = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
+   int npoints = edata->xvalues.size();
    int nscans  = edata->scanData.size();
-   int npoints = edata->x.size();
 
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
@@ -817,9 +898,9 @@ void US_SolveSim::ri_small_a_and_b( int                      nsolutes,
                                     const QVector< double >& nnls_a )
 {
 DebugTime("BEG:ri_smab");
-   US_DataIO2::EditedData* edata = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
+   int npoints = edata->xvalues.size();
    int nscans  = edata->scanData.size();
-   int npoints = edata->x.size();
    int kstodo  = sq( nsolutes ) / 10;   // progress steps to report
    int incprg  = nsolutes / 20;         // increment between reports
    incprg      = max( incprg,  1 );
@@ -914,9 +995,9 @@ void US_SolveSim::ti_small_a_and_b( int                      nsolutes,
                                     const QVector< double >& nnls_a )
 {
 DebugTime("BEG:ti-smab");
-   US_DataIO2::EditedData* edata = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
+   int npoints = edata->xvalues.size();
    int nscans  = edata->scanData.size();
-   int npoints = edata->x.size();
    int kstodo  = sq( nsolutes ) / 10;   // progress steps to report
    int incprg  = nsolutes / 20;         // increment between reports
    incprg      = max( incprg,  1 );
@@ -1003,9 +1084,9 @@ void US_SolveSim::compute_L_bar( QVector< double >&       L_bar,
                                  const QVector< double >& L,
                                  const QVector< double >& L_tilde )
 {
-   US_DataIO2::EditedData* edata = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
+   int npoints = edata->xvalues.size();
    int nscans  = edata->scanData.size();
-   int npoints = edata->x.size();
    double avgscale = 1.0 / (double)nscans;
 
    for ( int rr = 0; rr < npoints; rr++)
@@ -1022,9 +1103,9 @@ void US_SolveSim::compute_L_bar( QVector< double >&       L_bar,
 void US_SolveSim::compute_a_bar( QVector< double >&       a_bar,
                                  const QVector< double >& a_tilde )
 {
-   US_DataIO2::EditedData* edata = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
+   int npoints = edata->xvalues.size();
    int nscans  = edata->scanData.size();
-   int npoints = edata->x.size();
    double avgscale = 1.0 / (double)nscans;
 
    for ( int rr = 0; rr < npoints; rr++ )
@@ -1046,8 +1127,8 @@ void US_SolveSim::compute_L_bars( int                      nsolutes,
                                   const QVector< double >& nnls_a,
                                   const QVector< double >& L_tildes )
 {
-   US_DataIO2::EditedData* edata = &data_sets[ 0 ]->run_data;
-   int npoints = edata->x.size();
+   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
+   int npoints = edata->xvalues.size();
    int nscans  = edata->scanData.size();
    double avgscale = 1.0 / (double)nscans;
 
@@ -1086,15 +1167,15 @@ void US_SolveSim::DebugTime( QString mtext )
 }
 
 // Modify amplitude of data by thresholds and return flag if all-zero result
-bool US_SolveSim::data_threshold( US_DataIO2::RawData* sdata,
+bool US_SolveSim::data_threshold( US_DataIO::RawData* sdata,
       double zerothr, double linethr, double maxod, double mfactor )
 {
    int    nnzro   = 0;
    int    nzset   = 0;
    int    nntrp   = 0;
    int    nclip   = 0;
+   int    npoints = sdata->xvalues.size();
    int    nscans  = sdata->scanData.size();
-   int    npoints = sdata->x.size();
    double clipout = mfactor * maxod;
    double thrfact = mfactor / (double)( linethr - zerothr );
 double maxs=0.0;
@@ -1134,7 +1215,7 @@ maxsi=qMax(maxsi,avalue);
             nnzro++;
 maxs=qMax(maxs,avalue);
 
-         sdata->scanData[ ss ].readings[ rr ].value = avalue; 
+         sdata->setValue( ss, rr, avalue );
       }
    }
 
@@ -1148,12 +1229,12 @@ DbgLv(1) << "  CR:THR: nnzro zs nt cl" << nnzro << nzset << nntrp << nclip;
 }
 
 // Modify amplitude by thresholds and flag if all-zero (for experiment data)
-bool US_SolveSim::data_threshold( US_DataIO2::EditedData* edata,
+bool US_SolveSim::data_threshold( US_DataIO::EditedData* edata,
       double zerothr, double linethr, double maxod, double mfactor )
 {
    int    nnzro   = 0;
+   int    npoints = edata->xvalues.size();
    int    nscans  = edata->scanData.size();
-   int    npoints = edata->x.size();
    double clipout = mfactor * maxod;
    double thrfact = mfactor / (double)( linethr - zerothr );
 
@@ -1186,7 +1267,7 @@ bool US_SolveSim::data_threshold( US_DataIO2::EditedData* edata,
          if ( avalue != 0.0 )
             nnzro++;
 
-         edata->scanData[ ss ].readings[ rr ].value = avalue; 
+         edata->setValue( ss, rr, avalue );
       }
    }
 

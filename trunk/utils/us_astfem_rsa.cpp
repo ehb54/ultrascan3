@@ -22,7 +22,8 @@ US_Astfem_RSA::US_Astfem_RSA( US_Model&                model,
    dbg_level       = US_Settings::us_debug();
 }
 
-int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
+//int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
+int US_Astfem_RSA::calculate( US_DataIO::RawData& exp_data )
 {
    US_AstfemMath::MfemInitial* vC0 = NULL; // Initial concentration for
                                            //  multiple components
@@ -3357,17 +3358,20 @@ void US_Astfem_RSA::GlobalStiff( double* xb, double** ca,
    US_AstfemMath::clear_3d( N, 6, Stif );
 }
 
-void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData&     edata,
+//void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData&     edata,
+void US_Astfem_RSA::load_mfem_data( US_DataIO::RawData&      edata,
                                     US_AstfemMath::MfemData& fdata )
 {
-   int  nscan  = edata.scanData.size();
-   int  nconc  = edata.x.size();
+   int  nscan  = edata.scanCount();
+   int  nconc  = edata.pointCount();
 DbgLv(2) << "RSA:f nscan nconc" << nscan << nconc;
 
-   fdata.id    = edata.description;
-   fdata.cell  = edata.cell;
+   fdata.id       = edata.description;
+   fdata.cell     = edata.cell;
    fdata.scan  .resize( nscan );
-   fdata.radius.resize( nconc );
+//   fdata.radius.resize( nconc );
+   fdata.radius   = edata.xvalues;
+DbgLv(2) << "RSA:f  r0 rn" << fdata.radius[0] << fdata.radius[nconc-1];
 
    for ( int ii = 0; ii < nscan; ii++ )
    {
@@ -3377,6 +3381,14 @@ DbgLv(2) << "RSA:f nscan nconc" << nscan << nconc;
       fscan->rpm         = edata.scanData[ ii ].rpm;
       fscan->time        = edata.scanData[ ii ].seconds;
       fscan->omega_s_t   = edata.scanData[ ii ].omega2t;
+      fscan->conc        = edata.scanData[ ii ].rvalues;
+if(ii<3)
+DbgLv(2) << "RSA:f  ii c0 cn" << ii << fscan->conc[0] << fscan->conc[nconc-1]
+ << "d0 dn" << edata.scanData[ii].rvalues[0] << edata.scanData[ii].rvalues[nconc-1];
+#if 1
+   }
+#endif
+#if 0
       fscan->conc.resize( nconc );
 
       for ( int jj = 0; jj < nconc; jj++ )
@@ -3389,11 +3401,13 @@ DbgLv(2) << "RSA:f nscan nconc" << nscan << nconc;
    {
       fdata.radius[ jj ] = edata.radius( jj );
    }
+#endif
 DbgLv(2) << "RSA:f sc0 temp" << fdata.scan[0].temperature;
 DbgLv(2) << "RSA:e sc0 temp" << edata.scanData[0].temperature;
 }
 
-void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData&     edata,
+//void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData&     edata,
+void US_Astfem_RSA::store_mfem_data( US_DataIO::RawData&      edata,
                                      US_AstfemMath::MfemData& fdata )
 {
    int  nscan  = fdata.scan.size();
@@ -3401,32 +3415,33 @@ void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData&     edata,
 
    edata.description = fdata.id;
    edata.cell        = fdata.cell;
-   edata.scanData.resize( nscan );
+   edata.xvalues     = fdata.radius;
 
    for ( int ii = 0; ii < nscan; ii++ )
    {
       US_AstfemMath::MfemScan* fscan = &fdata.scan    [ ii ];
-      US_DataIO2::Scan*        escan = &edata.scanData[ ii ];
+      US_DataIO::Scan*         escan = &edata.scanData[ ii ];
 
       escan->temperature = fscan->temperature;
       escan->rpm         = fscan->rpm;
       escan->seconds     = fscan->time;
       escan->omega2t     = fscan->omega_s_t;
       escan->plateau     = fdata.radius[ nconc - 1 ];
-      escan->readings.resize( nconc );
-
-      for ( int jj = 0; jj < nconc; jj++ )
-      {
-         escan->readings[ jj ] = US_DataIO2::Reading( fscan->conc[ jj ] );
-      }
+//      escan->readings.resize( nconc );
+//
+//      for ( int jj = 0; jj < nconc; jj++ )
+//      {
+//         escan->readings[ jj ] = US_DataIO2::Reading( fscan->conc[ jj ] );
+//      }
+      escan->rvalues     = fscan->conc;
    }
 
-   edata.x.resize( nconc );
-
-   for ( int jj = 0; jj < nconc; jj++ )
-   {
-      edata.x[ jj ] = fdata.radius[ jj ];
-   }
+//   edata.x.resize( nconc );
+//
+//   for ( int jj = 0; jj < nconc; jj++ )
+//   {
+//      edata.x[ jj ] = fdata.radius[ jj ];
+//   }
 DbgLv(2) << "RSA:o-f sc0 temp" << fdata.scan[0].temperature;
 DbgLv(2) << "RSA:o-e sc0 temp" << edata.scanData[0].temperature;
 }

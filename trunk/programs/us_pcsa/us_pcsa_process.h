@@ -7,7 +7,7 @@
 
 #include "us_extern.h"
 #include "us_widgets.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_simparms.h"
 #include "us_model.h"
 #include "us_noise.h"
@@ -64,7 +64,7 @@ class US_pcsaProcess : public QObject
       //! \param report  Mrecs report stringlist
       //! \param mrecs   Model record vector
       //! \returns       Success flag:  true if successful
-      bool get_results( US_DataIO2::RawData*, US_DataIO2::RawData*,
+      bool get_results( US_DataIO::RawData*, US_DataIO::RawData*,
                         US_Model*, US_Noise*, US_Noise*, int&,
                         QStringList&, QVector< ModelRecord >& );
 
@@ -105,9 +105,9 @@ private:
 
       QList< QVector< US_Solute > > orig_sols;  // input solutes
 
-      US_DataIO2::EditedData*    edata;      // experimental data (mc_iter)
-      US_DataIO2::RawData        sdata;      // simulation data
-      US_DataIO2::RawData        rdata;      // residuals data
+      US_DataIO::EditedData*     edata;      // experimental data (mc_iter)
+      US_DataIO::RawData         sdata;      // simulation data
+      US_DataIO::RawData         rdata;      // residuals data
 
       US_Model                   model;      // constructed model
 

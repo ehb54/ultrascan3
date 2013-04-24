@@ -4,7 +4,7 @@
 #include "us_extern.h"
 #include "us_globeq_data.h"
 #include "us_widgets_dialog.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_analyte.h"
 #include "us_buffer.h"
 #include "us_help.h"
@@ -15,7 +15,7 @@ class US_EqModelControl : public US_WidgetsDialog
 	
 	public:
 		US_EqModelControl( QVector< EqScanFit >&, EqRunFit&,
-            US_DataIO2::EditedData*, int, QStringList, bool&, int& );
+            US_DataIO::EditedData*, int, QStringList, bool&, int& );
 
       void new_scan( int );
       void new_components( void );
@@ -27,7 +27,7 @@ class US_EqModelControl : public US_WidgetsDialog
 	private:
       QVector< EqScanFit >&   scanfits;  // Scan Fit vector
       EqRunFit&               runfit;    // Run Fit parameters structure
-      US_DataIO2::EditedData* edata;     // Edited Data pointer
+      US_DataIO::EditedData*  edata;     // Edited Data pointer
       int                     modelx;    // Selected model index
       QStringList             models;    // List of model titles
       bool&                   mWidget;   // Model Widget created flag

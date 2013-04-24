@@ -8,7 +8,7 @@
 #include "us_util.h"
 #include "us_editor.h"
 
-US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO2::RawData >& rData,
+US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    QStringList& trips, QString& wdir ) : US_WidgetsDialog( 0, 0 ),
    rawList( rData ), triples( trips ), workingDir( wdir )
 {
@@ -605,7 +605,7 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
 
    for ( int ii = 0; ii < sdescs.count(); ii++ )
    {  // Loop to load selected data from the database
-      US_DataIO2::RawData rdata;
+      US_DataIO::RawData rdata;
       DataDesc ddesc     = sdescs.at( ii );
       int      idRaw     = ddesc.DB_id;
       QString  filebase  = ddesc.filename;
@@ -645,9 +645,9 @@ qDebug() << "LdDB:     filename==tempname" << filename;
       }
 
       // Read the raw record to memory
-      stat = US_DataIO2::readRawData( filename, rdata );
+      stat = US_DataIO::readRawData( filename, rdata );
 
-      if ( stat != US_DataIO2::OK )
+      if ( stat != US_DataIO::OK )
       {
          nerr++;
          emsg += tr( "Error (%1) reading file %2\n" )
@@ -682,7 +682,7 @@ void US_LoadAUC::load_disk( QList< DataDesc >& sdescs )
 
    for ( int ii = 0; ii < sdescs.count(); ii++ )
    {
-      US_DataIO2::RawData rdata;
+      US_DataIO::RawData rdata;
       DataDesc ddesc     = sdescs.at( ii );
       QString  filebase  = ddesc.filename;
       QString  filename  = workingDir + "/" + filebase;
@@ -692,9 +692,9 @@ void US_LoadAUC::load_disk( QList< DataDesc >& sdescs )
       qApp->processEvents();
 
       // Read the raw data record from the file
-      int stat = US_DataIO2::readRawData( filename, rdata );
+      int stat = US_DataIO::readRawData( filename, rdata );
 
-      if ( stat != US_DataIO2::OK )
+      if ( stat != US_DataIO::OK )
       {
          nerr++;
          emsg += tr( "Error (%1) reading file %2\n" )

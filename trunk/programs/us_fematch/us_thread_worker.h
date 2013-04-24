@@ -5,7 +5,7 @@
 #include <QtCore>
 
 #include "us_extern.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_simparms.h"
 #include "us_model.h"
 #include "us_noise.h"
@@ -27,7 +27,7 @@ class ThreadWorker : public QObject
 
    public:
       ThreadWorker( US_Model&, US_SimulationParameters&,
-            US_DataIO2::RawData&, US_Buffer&, int );
+                    US_DataIO::RawData&, US_Buffer&, int );
 
    public slots:
       void calc_simulation();   // Where the real work is done
@@ -40,7 +40,7 @@ class ThreadWorker : public QObject
    private:
       US_Model&                 model;        // Model for thread
       US_SimulationParameters&  simparams;    // Simulation parameters
-      US_DataIO2::RawData&      simdat;       // Simulation data (pre-inited)
+      US_DataIO::RawData&       simdat;       // Simulation data (pre-inited)
       US_Buffer&                buffer;       // Buffer (density,compress)
       int                       thrn;         // thread number (0,...)
 

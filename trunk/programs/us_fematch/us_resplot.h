@@ -6,7 +6,7 @@
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_plot.h"
 #include "us_resids_bitmap.h"
 #include "us_noise.h"
@@ -54,9 +54,9 @@ class US_ResidPlot : public US_WidgetsDialog
       int           dbg_level;
 
    protected:
-      US_DataIO2::EditedData*     edata;
-      US_DataIO2::Scan*           escan;
-      US_DataIO2::RawData*        sdata;
+      US_DataIO::EditedData*      edata;
+      US_DataIO::Scan*            escan;
+      US_DataIO::RawData*         sdata;
       US_Noise*                   ri_noise;
       US_Noise*                   ti_noise;
       QPointer< US_ResidsBitmap > resbmap;

@@ -3,7 +3,8 @@
 #define US_CONVERT_H
 
 #include "us_extern.h"
-#include "us_dataIO2.h"
+//#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_solution.h"
 
 /*! \class US_Convert
@@ -89,7 +90,8 @@ class US_Convert
       */
       static void   readLegacyData( 
                     QString ,
-                    QList< US_DataIO2::BeckmanRawScan >& ,
+//                    QList< US_DataIO2::BeckmanRawScan >& ,
+                    QList< US_DataIO::BeckmanRawScan >& ,
                     QString& );
 
       /*! \brief Converts legacy raw data into US3 data. 
@@ -115,8 +117,10 @@ class US_Convert
                         where one dataset ends and the next one begins.
       */
       static void   convertLegacyData(
-                    QList  < US_DataIO2::BeckmanRawScan >& ,
-                    QVector< US_DataIO2::RawData        >& ,
+//                    QList  < US_DataIO2::BeckmanRawScan >& ,
+//                    QVector< US_DataIO2::RawData        >& ,
+                    QList  < US_DataIO::BeckmanRawScan >& ,
+                    QVector< US_DataIO::RawData        >& ,
                     QList< TripleInfo >& ,
                     QString ,
                     double );
@@ -141,7 +145,8 @@ class US_Convert
           \returns      One of the ioError status codes, above
       */
       static int    saveToDisk(
-                    QVector< US_DataIO2::RawData >& ,
+//                    QVector< US_DataIO2::RawData >& ,
+                    QVector< US_DataIO::RawData >& ,
                     QList< TripleInfo >& ,
                     QVector< Excludes >& ,
                     QString ,
@@ -166,7 +171,8 @@ class US_Convert
       */
       static int    readUS3Disk(
                     QString ,
-                    QVector< US_DataIO2::RawData        >& ,
+//                    QVector< US_DataIO2::RawData        >& ,
+                    QVector< US_DataIO::RawData        >& ,
                     QList< TripleInfo >& ,
                     QString& );
 
@@ -181,36 +187,47 @@ class US_Convert
           \param subsets A list of radius limits that define where a dataset 
                          begins and ends.
       */
-      static void splitRAData ( QVector< US_DataIO2::RawData >& ,
+//      static void splitRAData ( QVector< US_DataIO2::RawData >& ,
+      static void splitRAData ( QVector< US_DataIO::RawData >& ,
                                 QList< TripleInfo >& ,
                                 int ,
                                 QList< double >& );
 
    private:
-      static void convert( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
-                           US_DataIO2::RawData&          newRawData,
+//      static void convert( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+//                           US_DataIO2::RawData&          newRawData,
+      static void convert( QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
+                           US_DataIO::RawData&          newRawData,
                            QString                       triple, 
                            QString                       runType,
                            double                        tolerance );
 
-      static void setTriples ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+      static void setTriples (
+//                           QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+                           QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
                            QList< TripleInfo >& triples,
                            QString                              runType,
                            double                               tolerance );
       
-      static void setCcwTriples ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+      static void setCcwTriples (
+//                           QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+                           QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
                            QList< TripleInfo >& triples,
                            double                               tolerance );
       
-      static void setCcrTriples ( QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+      static void setCcrTriples (
+//                           QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+                           QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
                            QList< TripleInfo >& triples,
                            double                               tolerance );
       
       static void setInterpolated ( unsigned char*, int );
       
-      static US_DataIO2::Scan newScanSubset(
-                           US_DataIO2::Scan& oldScan,
-                           QVector< US_DataIO2::XValue >& radii, 
+//      static US_DataIO2::Scan newScanSubset(
+//                           US_DataIO2::Scan& oldScan,
+//                           QVector< US_DataIO2::XValue >& radii, 
+      static US_DataIO::Scan newScanSubset( US_DataIO::Scan& oldScan,
+                           QVector< double >& radii, 
                            double r_start,
                            double r_end );
 };

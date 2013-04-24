@@ -40,14 +40,13 @@ class US_pcsa : public US_AnalysisBase2
 
       void analysis_done( int );
 
-      US_DataIO2::EditedData*     mw_editdata();
-      US_DataIO2::RawData*        mw_simdata();
-      US_DataIO2::RawData*        mw_resdata();
+      US_DataIO::EditedData*      mw_editdata();
+      US_DataIO::RawData*         mw_simdata();
+      US_DataIO::RawData*         mw_resdata();
       US_Model*                   mw_model();
       US_Noise*                   mw_ti_noise();
       US_Noise*                   mw_ri_noise();
       QPointer< QTextEdit >       mw_status_text();
-//      QPointer< QStringList >     mw_model_stats();
       QStringList*                mw_model_stats();
       QVector< ModelRecord >*     mw_mrecs();
 
@@ -60,9 +59,9 @@ class US_pcsa : public US_AnalysisBase2
 
       QList< US_SolveSim::DataSet* >  dsets;
 
-      US_DataIO2::EditedData*         edata;
-      US_DataIO2::RawData             sdata;
-      US_DataIO2::RawData             rdata;
+      US_DataIO::EditedData*          edata;
+      US_DataIO::RawData              sdata;
+      US_DataIO::RawData              rdata;
 
       QPointer< US_ResidPlot >        resplotd;
       QPointer< US_PlotControl >      eplotcd;

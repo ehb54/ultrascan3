@@ -138,19 +138,19 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0];
 
                for ( int e = offset; e < offset + dataset_count; e++ )
                {
-                  US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+                  US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
 
-                  int scan_count    = data->scanData.size();
-                  int radius_points = data->x.size();
+                  int scan_count    = data->scanCount();
+                  int radius_points = data->pointCount();
 
 //int indxh=((scan_count/2)*radius_points)+(radius_points/2);
                   for ( int s = 0; s < scan_count; s++ )
                   {
-                     US_DataIO2::Scan* scan = &data->scanData[ s ];
+                     US_DataIO::Scan* scan = &data->scanData[ s ];
 
                      for ( int r = 0; r < radius_points; r++ )
                      {
-                        scan->readings[ r ].value = mc_data[ index ];
+                        scan->rvalues[ r ] = mc_data[ index ];
 //if ( index<5 || index>(job.length-6) || (index>(indxh-4)&&index<(indxh+3)) )
 //DbgLv(1) << "newD:" << my_rank << ":index" << index << "edat" << data->value(s,r);
                         index++;
@@ -183,16 +183,15 @@ simu_values.dbg_level=(dbglvsv>1?dbglvsv:0);
 
 simu_values.dbg_level=dbglvsv;
 if ( dbg_level > 0 && ( group_rank == 1 || group_rank == 11 ) ) {
- US_DataIO2::EditedData* data = &data_sets[0]->run_data;
- int nsc=data->scanData.size();
- int nrp=data->x.size();
- double d0 = data->scanData[0].readings[0].value;
- double d1 = data->scanData[0].readings[1].value;
- double dh = data->scanData[nsc/2].readings[nrp/2].value;
- double dm = data->scanData[nsc-1].readings[nrp-2].value;
- double dn = data->scanData[nsc-1].readings[nrp-1].value;
- DbgLv(1) << "w:" << my_rank << ":d(01hmn)" << d0 << d1 << dh << dm << dn;
-}
+ US_DataIO::EditedData* data = &data_sets[0]->run_data;
+ int nsc=data->scanCount();
+ int nrp=data->pointCount();
+ double d0 = data->scanData[0].rvalues[0];
+ double d1 = data->scanData[0].rvalues[1];
+ double dh = data->scanData[nsc/2].rvalues[nrp/2];
+ double dm = data->scanData[nsc-1].rvalues[nrp-2];
+ double dn = data->scanData[nsc-1].rvalues[nrp-1];
+ DbgLv(1) << "w:" << my_rank << ":d(01hmn)" << d0 << d1 << dh << dm << dn; }
  
 }
 

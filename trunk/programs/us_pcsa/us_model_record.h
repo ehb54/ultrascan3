@@ -6,7 +6,7 @@
 
 #include "us_extern.h"
 #include "us_solute.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_model.h"
 
 #ifndef DbgLv
@@ -42,8 +42,8 @@ class ModelRecord
       QVector< double >    ri_noise;   // Computed RI noise
 
       US_Model             model;      // Computed model
-      US_DataIO2::RawData  sim_data;   // Simulation data from this fit
-      US_DataIO2::RawData  residuals;  // Residuals data from this fit
+      US_DataIO::RawData   sim_data;   // Simulation data from this fit
+      US_DataIO::RawData   residuals;  // Residuals data from this fit
 
       //! A test for ordering model descriptions. Sort by variance.
       bool operator< ( const ModelRecord& mrec ) const

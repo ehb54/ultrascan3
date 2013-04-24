@@ -7,7 +7,7 @@
 #include "us_widgets_dialog.h"
 #include "us_widgets.h"
 #include "us_help.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_db2.h"
 
 //! \brief A dialog class to select and load raw data
@@ -23,7 +23,7 @@ class US_GUI_EXTERN US_LoadAUC : public US_WidgetsDialog
       //! \param rData  A reference for a returned vector of RawData objects
       //! \param trips  A reference for a returned list of triples
       //! \param wdir   A reference for the returned data working directory
-      US_LoadAUC( bool, QVector< US_DataIO2::RawData >&, QStringList&,
+      US_LoadAUC( bool, QVector< US_DataIO::RawData >&, QStringList&,
                   QString& );
 
    signals:
@@ -38,9 +38,9 @@ class US_GUI_EXTERN US_LoadAUC : public US_WidgetsDialog
       void progress( const QString message );
 
    private:
-      QVector< US_DataIO2::RawData >&   rawList;    // Raw data vector
-      QStringList&                      triples;    // Triples list
-      QString&                          workingDir; // Base working directory
+      QVector< US_DataIO::RawData >&   rawList;    // Raw data vector
+      QStringList&                     triples;    // Triples list
+      QString&                         workingDir; // Base working directory
 
       class DataDesc   // Description of each data set in the list presented
       {

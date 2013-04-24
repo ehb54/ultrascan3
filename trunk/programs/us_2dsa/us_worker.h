@@ -5,7 +5,7 @@
 #include <QtCore>
 
 #include "us_extern.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_simparms.h"
 #include "us_model.h"
 #include "us_noise.h"
@@ -93,9 +93,9 @@ class WorkerThread : public QThread
 
       bool    abort;         // should this thread be aborted?
 
-      US_DataIO2::EditedData* edata;       // experiment data (pointer)
-      US_DataIO2::RawData     sdata;       // simulation data
-      US_DataIO2::RawData     rdata;       // residuals
+      US_DataIO::EditedData*  edata;       // experiment data (pointer)
+      US_DataIO::RawData      sdata;       // simulation data
+      US_DataIO::RawData      rdata;       // residuals
       US_Model                model;       // output model
       US_Noise                ri_noise;    // computed radially-invariant noise
       US_Noise                ti_noise;    // computed time-invariant noise

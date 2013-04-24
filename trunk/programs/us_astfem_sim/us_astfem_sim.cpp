@@ -351,7 +351,7 @@ void US_Astfem_Sim::start_simulation( void )
    // The astfem/astfvm simulation routines expects a dataset structure that
    // is initialized with a time and radius grid, and all concentration points
    // need to be set to zero. Each speed is a separate mfem_data set.
-   sim_data.x       .clear();
+   sim_data.xvalues .clear();
    sim_data.scanData.clear();
 
    sim_data.type[0]    = 'R';
@@ -367,10 +367,11 @@ void US_Astfem_Sim::start_simulation( void )
    int points = qRound( ( simparams.bottom - simparams.meniscus ) / 
                           simparams.radial_resolution ) + 1;
 
-   sim_data.x.resize( points );
+   sim_data.xvalues.resize( points );
 
    for ( int i = 0; i < points; i++ ) 
-      sim_data.x[ i ] = simparams.meniscus + i * simparams.radial_resolution;
+      sim_data.xvalues[ i ] = simparams.meniscus
+                              + i * simparams.radial_resolution;
 
    int total_scans = 0;
 
@@ -378,10 +379,11 @@ void US_Astfem_Sim::start_simulation( void )
       total_scans += simparams.speed_step[ i ].scans;
 
    sim_data.scanData.resize( total_scans );
+   int terpsize    = ( points + 7 ) / 8;
 
    for ( int i = 0; i < total_scans; i++ ) 
    {
-      US_DataIO2::Scan* scan = &sim_data.scanData[ i ];
+      US_DataIO::Scan* scan = &sim_data.scanData[ i ];
 
       scan->temperature = simparams.temperature;
       scan->rpm         = rpm;
@@ -389,16 +391,9 @@ void US_Astfem_Sim::start_simulation( void )
       scan->wavelength  = system.wavelength;
       scan->plateau     = 0.0;
       scan->delta_r     = simparams.radial_resolution;
-      double rvalue     = 0.0;
 
-      scan->readings.resize( points );
-      for ( int j = 0; j < points; j++ ) 
-      {
-         scan->readings[ j ] = US_DataIO2::Reading( rvalue );
-      }
-
-      scan->interpolated.resize( ( points + 7 ) / 8 );
-      scan->interpolated.fill( 0 );
+      scan->rvalues     .fill( 0.0, points   );
+      scan->interpolated.fill( 0,   terpsize );
    }
 
    // Set the time for the scans
@@ -429,7 +424,7 @@ DbgLv(2) << "SIM curtime dur incr" << current_time << duration << increment;
 
       for ( int jj = 0; jj < sp->scans; jj++ )
       {
-         US_DataIO2::Scan* scan = &sim_data.scanData[ scan_number ];
+         US_DataIO::Scan* scan = &sim_data.scanData[ scan_number ];
          current_time += increment;
          scan->seconds = current_time;
          scan->omega2t = w2t_sum;
@@ -491,8 +486,8 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
          int ihi=0;
          int jlo=0;
          int jhi=0;
-         int nscn=sim_data.scanData.size();
-         int ncvl=sim_data.scanData[0].readings.size();
+         int nscn=sim_data.scanCount();
+         int ncvl=sim_data.pointCount();
          for ( int ii=0; ii<nscn; ii++ )
          {
             double t0=sim_data.scanData[ii].seconds;
@@ -572,8 +567,8 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       int ihi=0;
       int jlo=0;
       int jhi=0;
-      int nscn=sim_data.scanData.size();
-      int npts=sim_data.scanData[0].readings.size();
+      int nscn=sim_data.scanCount();
+      int npts=sim_data.pointCount();
       for ( int ii=0; ii<nscn; ii++ )
       {
          double t0=sim_data.scanData[ii].seconds;
@@ -644,8 +639,8 @@ void US_Astfem_Sim::ri_noise( void )
       double rinoise = 
          US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
 
-      for ( int k = 0; k < sim_data.x.size(); k++ )
-         sim_data.scanData[ j ].readings[ k ].value += rinoise;
+      for ( int k = 0; k < sim_data.pointCount(); k++ )
+         sim_data.scanData[ j ].rvalues[ k ] += rinoise;
    }
 }
 
@@ -656,9 +651,9 @@ void US_Astfem_Sim::random_noise( void )
 
    for ( int j = 0; j < sim_data.scanData.size(); j++ )
    {
-      for ( int k = 0; k < sim_data.x.size(); k++ )
+      for ( int k = 0; k < sim_data.pointCount(); k++ )
       {
-         sim_data.scanData[ j ].readings[ k ].value 
+         sim_data.scanData[ j ].rvalues[ k ] 
             += US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 );
       }
    }
@@ -669,7 +664,7 @@ void US_Astfem_Sim::ti_noise( void )
    if ( simparams.tinoise == 0.0 ) return;
 
    // Add time invariant noise
-   int points = sim_data.x.size();
+   int points = sim_data.pointCount();
    QVector< double > tinoise;
    tinoise.resize( points );
       
@@ -684,7 +679,7 @@ void US_Astfem_Sim::ti_noise( void )
    for ( int j = 0; j < sim_data.scanData.size(); j++ )
    {
       for ( int k = 0; k < points; k++ )
-         sim_data.scanData[ j ].readings[ k ].value += tinoise[ k ];
+         sim_data.scanData[ j ].rvalues[ k ] += tinoise[ k ];
    }
 }
 
@@ -714,8 +709,8 @@ void US_Astfem_Sim::plot( void )
    // Plot the simulation
    if ( ! stopFlag )
    {
-      int   scan_count = sim_data.scanData.size();
-      int   points     = sim_data.x.size();
+      int   scan_count = sim_data.scanCount();
+      int   points     = sim_data.pointCount();
       int*  curve      = new int[ scan_count ];
    
       double*  x;
@@ -725,7 +720,7 @@ void US_Astfem_Sim::plot( void )
       y = new double* [ scan_count ];
 
       for ( int j = 0; j < points; j++ )
-         x[ j ] = sim_data.x[ j ].radius;
+         x[ j ] = sim_data.xvalues[ j ];
 
       for ( int j = 0; j < scan_count; j++ )
          y[ j ] = new double [ points ];
@@ -733,7 +728,7 @@ void US_Astfem_Sim::plot( void )
       for ( int j = 0; j < scan_count; j++ )
       {
          for ( int k = 0; k < points; k++ )
-            y[ j ][ k ] = sim_data.scanData[ j ].readings[ k ].value;
+            y[ j ][ k ] = sim_data.value( j, k );
       }
 
       for ( int j = 0; j < scan_count; j++ )
@@ -778,8 +773,8 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
    int    points      = (int)( ( b - m ) / grid_res ) + 31; 
    
    double maxc        = 0.0;
-   int    total_scans = sim_data.scanData.size();
-   int    old_points  = sim_data.scanData[ 0 ].readings.size();
+   int    total_scans = sim_data.scanCount();
+   int    old_points  = sim_data.pointCount();
    int    kk          = old_points - 1;
 
    for ( int ii = 0; ii < total_scans; ii++ )
@@ -797,22 +792,22 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
    double  rad         = m - 30.0 * grid_res;
    double  conc        = 0.0;
    double  conc_res    = 0.0;
-   sim_data.x.resize( points );
+   sim_data.xvalues.resize( points );
    lb_progress->setText( "Writing..." );
    
    for ( int jj = 0; jj < points; jj++ )
    {
-      sim_data.x[ jj ].radius = rad;
+      sim_data.xvalues[ jj ] = rad;
       rad  += grid_res;
    }
 
    for ( int ii = 0; ii < total_scans; ii++ )
    {
-      US_DataIO2::Scan* scan = &sim_data.scanData[ ii ];
+      US_DataIO::Scan* scan = &sim_data.scanData[ ii ];
 
       for ( int jj = 30; jj < points; jj++ )
       {
-         temp_conc[ jj ] = scan->readings[ jj - 30 ].value;
+         temp_conc[ jj ] = scan->rvalues[ jj - 30 ];
       }
 
       conc     = 0.0;
@@ -824,21 +819,21 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
          conc  += conc_res;
       }
 
-      scan->readings.resize( points );
+      scan->rvalues.resize( points );
 
       for ( int jj = 0; jj < points; jj++ )
       {
-         scan->readings[ jj ].value = temp_conc[ jj ];
+         scan->rvalues[ jj ] = temp_conc[ jj ];
       }
 
       progress->setValue( ( ii + 1 ) );
 //DbgLv(2) << "WD:sc secs" << scan->seconds;
 //if ( ii == 0 || (ii+1) == total_scans ) {
-//DbgLv(2) << "WD:S0:c00" << scan->readings[0].value;
-//DbgLv(2) << "WD:S0:c01" << scan->readings[1].value;
-//DbgLv(2) << "WD:S0:c30" << scan->readings[30].value;
-//DbgLv(2) << "WD:S0:cn1" << scan->readings[points-2].value;
-//DbgLv(2) << "WD:S0:cnn" << scan->readings[points-1].value; }
+//DbgLv(2) << "WD:S0:c00" << scan->rvalues[0];
+//DbgLv(2) << "WD:S0:c01" << scan->rvalues[1];
+//DbgLv(2) << "WD:S0:c30" << scan->rvalues[30];
+//DbgLv(2) << "WD:S0:cn1" << scan->rvalues[points-2];
+//DbgLv(2) << "WD:S0:cnn" << scan->rvalues[points-1]; }
    }
 
    QString run_id    = dirname.section( "/", -1, -1 );
@@ -852,7 +847,7 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
       .arg( dirname ).arg( run_id ).arg( stype ).arg( cell )
       .arg( schann  ).arg( wvlen  );
    
-   US_DataIO2::writeRawData( ofname, sim_data );
+   US_DataIO::writeRawData( ofname, sim_data );
 
    progress->setValue( total_scans );
    lb_progress->setText( tr( "Completed" ) );
@@ -1076,7 +1071,7 @@ void US_Astfem_Sim::dump_astfem_data( void )
    */
 }
 
-void US_Astfem_Sim::dump_mfem_scan( US_DataIO2::Scan& /*ms*/ )
+void US_Astfem_Sim::dump_mfem_scan( US_DataIO::Scan& /*ms*/ )
 {
    /*
    qDebug() << "mfem_scan----";

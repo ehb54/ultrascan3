@@ -300,13 +300,13 @@ void US_RotorCalibration::loadDisk( void )
    {
       QString filename = workingDir + file;
       
-      int result = US_DataIO2::readRawData( filename, data );
-      if ( result != US_DataIO2::OK )
+      int result = US_DataIO::readRawData( filename, data );
+      if ( result != US_DataIO::OK )
       {
          QMessageBox::warning( this,
             tr( "UltraScan Error" ),
             tr( "Could not read data file.\n" ) 
-            + US_DataIO2::errorString( result ) + "\n" + filename );
+            + US_DataIO::errorString( result ) + "\n" + filename );
          return;
       }
 
@@ -455,13 +455,13 @@ void US_RotorCalibration::loadDB( void )
          return;
       }
 
-      int result = US_DataIO2::readRawData( filename, data );
-      if ( result != US_DataIO2::OK )
+      int result = US_DataIO::readRawData( filename, data );
+      if ( result != US_DataIO::OK )
       {
          QMessageBox::warning( this,
             tr( "Error" ),
             tr( "Could not read data file.\n" ) 
-            + US_DataIO2::errorString( result ) + "\n" + filename );
+            + US_DataIO::errorString( result ) + "\n" + filename );
          return;
       }
 
@@ -533,20 +533,20 @@ void US_RotorCalibration::plotAll( void )
       c2 = us_curve( data_plot, title );
       c1->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
       c2->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
-      int size = (int) (allData[current_triple].scanData[j].readings.size()/2)-1;
+      int size = (int) (allData[current_triple].pointCount()/2)-1;
       double *x1 = new double [size];
       double *y1 = new double [size];
       double *x2 = new double [size];
       double *y2 = new double [size];
       for (int k=0; k<size; k++)
       {
-         x1[k] = allData[current_triple].x[k].radius;
-         y1[k] = allData[current_triple].scanData[j].readings[k].value;
+         x1[k] = allData[current_triple].radius( k );
+         y1[k] = allData[current_triple].value( j, k );
       }
       for (int k=0; k<size; k++)
       {
-         x2[k] = allData[current_triple].x[size+k].radius;
-         y2[k] = allData[current_triple].scanData[j].readings[size+k].value;
+         x2[k] = allData[current_triple].radius( size+k );
+         y2[k] = allData[current_triple].value( j, size+k );
       }
       ct_channel->disconnect();
       if ((QString) allData[current_triple].channel == "A") ct_channel->setValue(1);
@@ -1152,19 +1152,20 @@ void US_RotorCalibration::calculate()
 }
 
 
-double US_RotorCalibration::findAverage(QwtDoubleRect rect, US_DataIO2::RawData data, int i)
+double US_RotorCalibration::findAverage( QwtDoubleRect rect,
+      US_DataIO::RawData data, int i )
 {
    double average = 0.0;
    int j = 0, k = 0;
-   while (data.x[j].radius < rect.right() && j < data.x.size()-1)
+   while (data.xvalues[j] < rect.right() && j < data.xvalues.size()-1)
    {
       // Note: rect.bottom() is actually the upper limit of the bounding rectangle,
       // and rect.top() is the lower limit of the bounding rectangle - weird screen coordinates?
-      if (data.x[j].radius > rect.left() &&
-          data.scanData[i].readings[j].value < rect.bottom() &&
-          data.scanData[i].readings[j].value > rect.top())
+      if ( data.xvalues[j] > rect.left() &&
+           data.scanData[i].rvalues[j] < rect.bottom() &&
+           data.scanData[i].rvalues[j] > rect.top() )
       {
-         average += data.x[j].radius;
+         average += data.xvalues[j];
          k++;
       }
       j++;

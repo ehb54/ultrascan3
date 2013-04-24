@@ -343,10 +343,10 @@ void US_MPI_Analysis::ga_global_fit( void )
    }
 
    // Point to current dataset
-   US_DataIO2::EditedData* data = &data_sets[ current_dataset ]->run_data;
+   US_DataIO::EditedData* data = &data_sets[ current_dataset ]->run_data;
 
-   int scan_count    = data->scanData.size();
-   int radius_points = data->x.size();
+   int scan_count    = data->scanCount();
+   int radius_points = data->pointCount();
    int index         = 0;
 
    QVector< double > scaled_data( scan_count * radius_points );
@@ -423,10 +423,10 @@ DbgLv(1) << "sgMC: gaussians set";
 
    for ( int e = 0; e < data_sets.size(); e++ )
    {
-      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+      US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
 
-      int scan_count    = data->scanData.size();
-      int radius_points = data->x.size();
+      int scan_count    = data->scanCount();
+      int radius_points = data->pointCount();
 
       total_points += scan_count * radius_points;
    }
@@ -438,10 +438,10 @@ DbgLv(1) << "sgMC: gaussians set";
    // Use a gaussian distribution with the residual as the standard deviation
    for ( int e = 0; e < data_sets.size(); e++ )
    {
-      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+      US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
 
-      int scan_count    = data->scanData.size();
-      int radius_points = data->x.size();
+      int scan_count    = data->scanCount();
+      int radius_points = data->pointCount();
 
       for ( int s = 0; s < scan_count; s++ )
       {
@@ -490,7 +490,7 @@ DbgLv(1) << "sgMC: MPI Bcast";
 void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim, 
                                    US_Model::AnalysisType         type )
 {
-   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* data = &data_sets[ 0 ]->run_data;
 
    // Fill in and write out the model file
    US_Model model;

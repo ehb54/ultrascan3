@@ -5,7 +5,7 @@
 #include <QtCore>
 
 #include "us_extern.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_db2.h"
 
 //! \brief Fetch solution/buffer values (vbar, density, viscosity,
@@ -38,7 +38,7 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  manual    Reference for returned manual string ("0"/"1")
       //! \param  errmsg    Reference for returned error message string
       //! \return           Flag for successful fetch of all values
-      static bool values( US_DB2* dbP, US_DataIO2::EditedData*, QString&,
+      static bool values( US_DB2* dbP, US_DataIO::EditedData*, QString&,
             QString&, QString&, QString&, QString&, QString&, QString& );
 
       //! \brief Get identification values for a data set from database
@@ -50,7 +50,7 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  bufGuid   Reference for returned buffer GUID value string
       //! \param  bufDesc   Reference for returned buffer description string
       //! \param  errmsg    Reference for returned error message string
-      static bool solinfo_db( US_DB2* dbP, US_DataIO2::EditedData*,
+      static bool solinfo_db( US_DB2* dbP, US_DataIO::EditedData*,
             QString&, QString&, QString&, QString&, QString&, QString& );
                                    
       //! \brief Get identification values for a data set from local disk
@@ -61,7 +61,7 @@ class US_UTIL_EXTERN US_SolutionVals
       //! \param  bufGuid   Reference for returned buffer GUID value string
       //! \param  bufDesc   Reference for returned buffer description string
       //! \param  errmsg    Reference for returned error message string
-      static bool solinfo_disk( US_DataIO2::EditedData*, QString&,
+      static bool solinfo_disk( US_DataIO::EditedData*, QString&,
             QString&, QString&, QString&, QString&, QString& );
                                    
       //! \brief Get buffer values for a data set from database

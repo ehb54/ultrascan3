@@ -5,7 +5,8 @@
 #include "us_constants.h"
 #include "us_astfem_rsa.h"
 #include "us_settings.h"
-#include "us_dataIO2.h"
+//#include "us_dataIO2.h"
+#include "us_dataIO.h"
 
 /////////////////////////
 //
@@ -437,7 +438,8 @@ void US_LammAstfvm::Mesh::InitMesh( double s, double D, double w2 )
 // create salt data set by solving ideal astfem equations
 US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
                                    US_SimulationParameters asparms,
-                                   US_DataIO2::RawData*    asim_data )
+//                                   US_DataIO2::RawData*    asim_data )
+                                   US_DataIO::RawData*     asim_data )
 {
    int j;
 
@@ -449,7 +451,8 @@ DbgLv(1) << "SaltD: sa_data avg.temp." << sa_data.average_temperature();
 DbgLv(1) << "SaltD: asim_data avg.temp." << asim_data->average_temperature();
 
    Nt         = sa_data.scanData.size();
-   Nx         = sa_data.x.size();
+//   Nx         = sa_data.x.size();
+   Nx         = sa_data.xvalues.size();
 
    model.components.resize( 1 );
    model.components[ 0 ] = amodel.components[ amodel.coSedSolute ];
@@ -475,7 +478,8 @@ DbgLv(1) << "SaltD: asim_data avg.temp." << asim_data->average_temperature();
 
    for ( int i = 0; i < Nt; i++ )
       for ( j = 0; j < Nx; j++ )
-         sa_data.scanData[ i ].readings[ j ] = US_DataIO2::Reading( 0.0 );
+//         sa_data.scanData[ i ].readings[ j ] = US_DataIO2::Reading( 0.0 );
+         sa_data.setValue( i, j, 0.0 );
 
 DbgLv(1) << "SaltD: model comps" << model.components.size();
 DbgLv(1) << "SaltD: amodel comps" << amodel.components.size();
@@ -491,7 +495,8 @@ DbgLv(1) << "SaltD: (0)Nt Nx" << Nt << Nx << "temp" << sa_data.scanData[0].tempe
    astfem->calculate( sa_data );            // solve equations to create data
 
    Nt         = sa_data.scanData.size();
-   Nx         = sa_data.x.size();
+//   Nx         = sa_data.x.size();
+   Nx         = sa_data.xvalues.size();
 
 DbgLv(1) << "SaltD: Nt Nx" << Nt << Nx << "temp" << sa_data.scanData[0].temperature;
 DbgLv(1) << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
@@ -508,7 +513,8 @@ DbgLv(1) << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
 
       dir.mkpath( safile );
       safile       = safile + "/salt_data.RA.1.S.260.auc";
-      US_DataIO2::writeRawData( safile, sa_data );
+//      US_DataIO2::writeRawData( safile, sa_data );
+      US_DataIO::writeRawData( safile, sa_data );
    }
 
    delete astfem;                           // astfem solver no longer needed
@@ -648,7 +654,8 @@ US_LammAstfvm::~US_LammAstfvm()
 }
 
 // primary method to calculate solutions for all species
-int US_LammAstfvm::calculate( US_DataIO2::RawData& sim_data )
+//int US_LammAstfvm::calculate( US_DataIO2::RawData& sim_data )
+int US_LammAstfvm::calculate( US_DataIO::RawData& sim_data )
 {
    auc_data = &sim_data;
 
@@ -1856,12 +1863,14 @@ void US_LammAstfvm::quadInterpolate( double* x0, double* u0, int N0,
 }
 
 // load MfemData object used internally from caller's RawData object
-void US_LammAstfvm::load_mfem_data( US_DataIO2::RawData&     edata, 
+//void US_LammAstfvm::load_mfem_data( US_DataIO2::RawData&     edata, 
+void US_LammAstfvm::load_mfem_data( US_DataIO::RawData&      edata, 
                                     US_AstfemMath::MfemData& fdata,
                                     bool zeroout ) 
 {
    int  nscan  = edata.scanData.size();  // scan count
-   int  nconc  = edata.x.size();         // concentrations count
+//   int  nconc  = edata.x.size();         // concentrations count
+   int  nconc  = edata.xvalues.size();   // concentrations count
    fdata.id    = edata.description;
    fdata.cell  = edata.cell;
    fdata.scan  .resize( nscan );         // mirror number of scans
@@ -1875,6 +1884,7 @@ void US_LammAstfvm::load_mfem_data( US_DataIO2::RawData&     edata,
       fscan->rpm         = edata.scanData[ ii ].rpm;
       fscan->time        = edata.scanData[ ii ].seconds;
       fscan->omega_s_t   = edata.scanData[ ii ].omega2t;
+#if 0
       fscan->conc.resize( nconc );        // mirror number of concentrations
 
       if ( zeroout )
@@ -1895,10 +1905,21 @@ void US_LammAstfvm::load_mfem_data( US_DataIO2::RawData&     edata,
    {  // copy all radius values
       fdata.radius[ jj ] = edata.radius( jj );
    }
+#endif
+#if 1
+      if ( zeroout )
+         fscan->conc.fill( 0.0 ); // if so specified, set concentrations to zero
+
+      else                        // Otherwise, copy concentrations
+         fscan->conc        = edata.scanData[ ii ].rvalues;
+   }
+   fdata.radius       = edata.xvalues;
+#endif
 }
 
 // store MfemData object used internally into caller's RawData object
-void US_LammAstfvm::store_mfem_data( US_DataIO2::RawData&     edata, 
+//void US_LammAstfvm::store_mfem_data( US_DataIO2::RawData&     edata, 
+void US_LammAstfvm::store_mfem_data( US_DataIO::RawData&      edata, 
                                      US_AstfemMath::MfemData& fdata ) 
 {
    int  nscan  = fdata.scan.size();     // scan count
@@ -1906,18 +1927,21 @@ void US_LammAstfvm::store_mfem_data( US_DataIO2::RawData&     edata,
 
    edata.description = fdata.id;
    edata.cell        = fdata.cell;
+   edata.xvalues     = fdata.radius;
    edata.scanData.resize( nscan );      // mirror number of scans
 
    for ( int ii = 0; ii < nscan; ii++ )
    {  // copy over each scan
       US_AstfemMath::MfemScan* fscan = &fdata.scan    [ ii ];
-      US_DataIO2::Scan*        escan = &edata.scanData[ ii ];
+//      US_DataIO2::Scan*        escan = &edata.scanData[ ii ];
+      US_DataIO::Scan*         escan = &edata.scanData[ ii ];
 
       escan->temperature = fscan->temperature;
       escan->rpm         = fscan->rpm;
       escan->seconds     = fscan->time;
       escan->omega2t     = fscan->omega_s_t;
       escan->plateau     = fdata.radius[ nconc - 1 ];
+#if 0
       escan->readings.resize( nconc );  // mirror number of concentrations
 
       for ( int jj = 0; jj < nconc; jj++ )
@@ -1932,5 +1956,10 @@ void US_LammAstfvm::store_mfem_data( US_DataIO2::RawData&     edata,
    {  // copy radius values
       edata.x[ jj ] = US_DataIO2::XValue( fdata.radius[ jj ] );
    }
+#endif
+#if 1
+      escan->rvalues     = fscan->conc;
+   }
+#endif
 }
 

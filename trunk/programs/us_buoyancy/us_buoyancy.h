@@ -9,7 +9,7 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 
 class US_Buoyancy : public US_Widgets
 {
@@ -20,9 +20,9 @@ class US_Buoyancy : public US_Widgets
 
 	private:
 
-      US_DataIO2::RawData            data;
-      QVector< US_DataIO2::RawData > allData;
-		QList< US_DataIO2::SpeedData > sData;
+      US_DataIO::RawData            data;
+      QVector< US_DataIO::RawData > allData;
+		QList< US_DataIO::SpeedData > sData;
 
       int                current_triple;
       int                current_scan;

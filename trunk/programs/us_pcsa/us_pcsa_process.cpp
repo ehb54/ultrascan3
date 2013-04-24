@@ -26,8 +26,8 @@ US_pcsaProcess::US_pcsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    mrecs    .clear();                 // computed model records
    simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
 
-   nscans           = edata->scanData.size();
-   npoints          = edata->x.size();
+   nscans           = edata->scanCount();
+   npoints          = edata->pointCount();
    cresolu          = 100;
    curvtype         = 0;
    nmtasks          = 100;
@@ -78,8 +78,8 @@ DbgLv(1) << "2P: sll sul" << slolim << suplim
    timer.start();              // start a timer to measure run time
 
    // experiment data dimensions
-   nscans      = edata->scanData.size();
-   npoints     = edata->x.size();
+   nscans      = edata->scanCount();
+   npoints     = edata->pointCount();
 
    if ( curvtype == 0 )
    { // Determine models for straight-line curves
@@ -242,29 +242,29 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
 DbgLv(1) << "FIN_FIN:    c0 cn" << mrec.csolutes[0].c
  << mrec.csolutes[qMax(0,nsolutes-1)].c << "  nsols" << nsolutes;
-   nscans           = edata->scanData.size();
-   npoints          = edata->x.size();
+   nscans           = edata->scanCount();
+   npoints          = edata->pointCount();
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
-   US_DataIO2::RawData* simdat = &mrec.sim_data;
-   US_DataIO2::RawData* resids = &mrec.residuals;
+   US_DataIO::RawData* simdat = &mrec.sim_data;
+   US_DataIO::RawData* resids = &mrec.residuals;
 DbgLv(1) << "FIN_FIN: nscans npoints" << nscans << npoints;
 DbgLv(1) << "FIN_FIN: simdat nsc npt"
- << simdat->scanData.size() << simdat->x.size();
+ << simdat->scanCount() << simdat->pointCount();
 DbgLv(1) << "FIN_FIN: resids nsc npt"
- << resids->scanData.size() << resids->x.size();
+ << resids->scanCount() << resids->pointCount();
 DbgLv(1) << "FIN_FIN: rdata  nsc npt"
- << rdata.scanData.size() << rdata.x.size();
+ << rdata.scanCount() << rdata.pointCount();
 DbgLv(1) << "FIN_FIN: sdata  nsc npt"
- << sdata.scanData.size() << sdata.x.size();
+ << sdata.scanCount() << sdata.pointCount();
 
    // build residuals data set (experiment minus simulation minus any noise)
    for ( int ss = 0; ss < nscans; ss++ )
    {
       for ( int rr = 0; rr < npoints; rr++ )
       {
-         sdata.scanData[ ss ].readings[ rr ].value = simdat->value( ss, rr );
-         rdata.scanData[ ss ].readings[ rr ].value = resids->value( ss, rr );
+         sdata.setValue( ss, rr, simdat->value( ss, rr ) );
+         rdata.setValue( ss, rr, resids->value( ss, rr ) );
       }
    }
 
@@ -356,8 +356,8 @@ DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
 }
 
 // Public slot to get results upon completion of all refinements
-bool US_pcsaProcess::get_results( US_DataIO2::RawData*    da_sim,
-                                  US_DataIO2::RawData*    da_res,
+bool US_pcsaProcess::get_results( US_DataIO::RawData*     da_sim,
+                                  US_DataIO::RawData*     da_res,
                                   US_Model*               da_mdl,
                                   US_Noise*               da_tin,
                                   US_Noise*               da_rin,
@@ -1322,8 +1322,8 @@ DbgLv(1) << "LMf:     s D mw" << model.components[ii].s
    }
 
    // Recalculate final refined simulation and residual
-   US_DataIO2::RawData* simdat = &mrec.sim_data;
-   US_DataIO2::RawData* resids = &mrec.residuals;
+   US_DataIO::RawData* simdat = &mrec.sim_data;
+   US_DataIO::RawData* resids = &mrec.residuals;
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
 DbgLv(1) << "LMf:simparms: spts meni bott temp bpos"
@@ -1382,13 +1382,13 @@ DbgLv(0) << "LMf: new01 s,k" << mrec.isolutes[0].s << mrec.isolutes[0].k
    // Re-compute simulation and residuals
 DbgLv(0) << "LMf: tino rino" << tino << rino;
 DbgLv(0) << "LMf: simdat nsc npt"
- << simdat->scanData.size() << simdat->x.size();
+ << simdat->scanCount() << simdat->pointCount();
 DbgLv(1) << "LMf: resids nsc npt"
- << resids->scanData.size() << resids->x.size();
+ << resids->scanCount() << resids->pointCount();
 DbgLv(1) << "LMf: rdata  nsc npt"
- << rdata.scanData.size() << rdata.x.size();
+ << rdata.scanCount() << rdata.pointCount();
 DbgLv(1) << "LMf: sdata  nsc npt"
- << sdata.scanData.size() << sdata.x.size();
+ << sdata.scanCount() << sdata.pointCount();
    spar->mesh_radius.clear();
    double cvari = 0.0;
    double crmsd = 0.0;
@@ -1402,10 +1402,10 @@ DbgLv(1) << "LMf: sdata  nsc npt"
          double tnois  = tino ? mrec.ti_noise[ rr ] : 0.0;
          double resval = edata->value( ss, rr )
                        - sdata. value( ss, rr ) - tnois - rnois;
-         rdata.  scanData[ ss ].readings[ rr ].value = resval;
+         rdata.  setValue( ss, rr, resval );
 
-         simdat->scanData[ ss ].readings[ rr ].value = sdata.value( ss, rr );
-         resids->scanData[ ss ].readings[ rr ].value = resval;
+         simdat->setValue( ss, rr, sdata.value( ss, rr ) );
+         resids->setValue( ss, rr, resval );
 if ((ss<3 && rr<3)||((ss+4)>nscans && (rr+4)>npoints)||(rr==(npoints/2)))
 DbgLv(1) << "LMf:  ss rr" << ss << rr << "edat sdat resv"
  << edata->value(ss,rr) << sdata.value(ss,rr) << resval;
