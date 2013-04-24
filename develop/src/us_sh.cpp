@@ -399,6 +399,7 @@ namespace nr {
          } else {
             sj = 1e0;
          }
+         // printf( "sh: %d %.8g %.8g\n", n, x, sj );
          return true;
       }
 
@@ -406,6 +407,7 @@ namespace nr {
       if ( bessj( x, order, &rj ) )
       {
          sj = ( M_SQRT_PI_2 / sqrt( x ) ) * rj;
+         // printf( "sh: %d %.8g %.8g\n", n, x, sj );
          return true;
       }
       return false;
@@ -530,6 +532,7 @@ namespace sh {
 
       result = std::complex < double > ( r,  i );
 
+      // printf( "csh: %d %d %f %f (%.8g,%.8g)\n", l, m, theta, phi, r, i );
       return true;
    }
 

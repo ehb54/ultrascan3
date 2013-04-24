@@ -2921,6 +2921,18 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       }
    }
 
+   if ( !q.size() )
+   {
+      editor_msg( "red", QString( tr( "Error: File %1 has no data" ) ).arg( filename ) );
+      return false;
+   }
+                  
+   if ( is_zero_vector( I ) )
+   {
+      editor_msg( "red", QString( tr( "Error: File %1 has only zero signal" ) ).arg( filename ) );
+      return false;
+   }
+
    cout << QString( "opened %1\n" ).arg( filename ) << flush;
    QString basename = QFileInfo( filename ).baseName( true );
    f_name      [ basename ] = filename;
@@ -7826,4 +7838,18 @@ QStringList US_Hydrodyn_Saxs_Buffer::all_selected_files()
       }
    }
    return files;
+}
+
+bool US_Hydrodyn_Saxs_Buffer::is_zero_vector( vector < double > &v )
+{
+   bool is_zero = true;
+   for ( int i = 0; i < (int)v.size(); i++ )
+   {
+      if ( v[ i ] != 0e0 )
+      {
+         is_zero = false;
+         break;
+      }
+   }
+   return is_zero;
 }

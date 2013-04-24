@@ -447,7 +447,7 @@ namespace nr {
       {
          sj = ( M_SQRT_PI_2 / sqrt( x ) ) * rj;
       }
-      printf( "sh: n %d order %f x %.8g bessj %.8g gsl %.8g\n", n, order, x, sj, sj2 );
+      printf( "sh: n %d order %f x %.8g bessj %.8g gsl %.8g ratio %.8g\n", n, order, x, sj, sj2, sj / sj2 );
       return true;
 #else      
       order = n + 5e-1;

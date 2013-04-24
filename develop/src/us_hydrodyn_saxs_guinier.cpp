@@ -259,7 +259,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    // vector < double > q2;
    for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
    {
-      if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart )
+      if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+           plotted_q[ i ][ j ] <= our_saxs_options->qend )
       {
          usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
          // q2.push_back(  plotted_q2[ i ][ j ] );
@@ -276,10 +277,14 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    QString log;
 
    int pointsmin = our_saxs_options->pointsmin;
+   if ( pointsmin < 2 )
+   {
+      pointsmin = 2;
+   }
    int pointsmax = our_saxs_options->pointsmax;
    double sRgmaxlimit = our_saxs_options->qRgmax;
    double pointweightpower = 3e0;
-   double p_guinier_minq = our_saxs_options->qstart;
+   // double p_guinier_minq = our_saxs_options->qstart;
    double p_guinier_maxq = our_saxs_options->qend;
    
    // these are function output values
@@ -305,7 +310,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    if ( !too_few_points )
    {
       if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
-           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" )
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" &&
+           (int) usu.wave[ "data" ].q.size() > pointsmin )
       {
          if ( 
              !usu.guinier_plot(
@@ -339,15 +345,19 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                            .arg(qsl_plotted_iq_names[i]));
             return false;
          }
+         // cout << QString( "after af: smin^2 %1 smax^2 %2\n" ).arg( smin * smin ).arg( smax * smax );
       } else {
          usu.wave["data"].q.clear();
          usu.wave["data"].r.clear();
          usu.wave["data"].s.clear();
+         // vector < double > q2;
          for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
          {
-            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart )
+            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
             {
                usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+               // q2.push_back(  plotted_q2[ i ][ j ] );
                usu.wave["data"].r.push_back( plotted_I[ i ][ j ] );
                if ( use_SD_weighting )
                {
@@ -355,23 +365,9 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                }
             }
          }
+         // US_Vector::printvector3( "q2 I e", q2 /* usu.wave["data"].q */, usu.wave["data"].r, usu.wave["data"].s );
          unsigned int pstart = 0;
-         unsigned int pend   = 0;
-         {
-            bool         pstart_found = false;
-            for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
-            {
-               if ( !pstart_found && plotted_q[ i ][ j ] >= p_guinier_minq )
-               {
-                  pstart = j;
-                  pstart_found = true;
-               }
-               if ( plotted_q[ i ][ j ] <= p_guinier_maxq )
-               {
-                  pend = j;
-               }
-            }
-         }
+         unsigned int pend   = usu.wave[ "data" ].q.size() - 1;
          bestend = pend;
          beststart = pstart;
 
@@ -478,6 +474,14 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
       if ( isnan(Rg) ||
            b >= 0e0 )
       {
+         //          if ( isnan( Rg ) )
+         //          {
+         //             cout << "rg isnan\n";
+         //          }
+         //          if ( b>= 0e0 )
+         //          {
+         //             cout << "b >= 0e0";
+         //          }
          plotted_guinier_valid[i] = false;
          report =
             QString(
@@ -695,7 +699,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
 
    for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
    {
-      if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart )
+      if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+           plotted_q[ i ][ j ] <= our_saxs_options->qend )
       {
          usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
          // q2.push_back(  plotted_q2[ i ][ j ] );
@@ -712,10 +717,14 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
    QString log;
 
    int pointsmin = our_saxs_options->pointsmin;
+   if ( pointsmin < 2 )
+   {
+      pointsmin = 2;
+   }
    int pointsmax = our_saxs_options->pointsmax;
    double sRgmaxlimit = our_saxs_options->cs_qRgmax;
    double pointweightpower = 3e0;
-   double p_guinier_minq = our_saxs_options->qstart;
+   // double p_guinier_minq = our_saxs_options->qstart;
    double p_guinier_maxq = our_saxs_options->qend;
 
    // cout << QString( "qstart %1 qend %2\n" ).arg( p_guinier_minq ).arg( p_guinier_maxq );
@@ -743,7 +752,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
    if ( !too_few_points )
    {
       if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_auto_fit" ) &&
-           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" )
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_auto_fit" ] == "1" &&
+           (int)usu.wave[ "data" ].q.size() > pointsmin )
       {
          if ( 
              !usu.guinier_plot(
@@ -785,30 +795,19 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          usu.wave["data"].s.clear();
          for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
          {
-            usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
-            usu.wave["data"].r.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
-            if ( use_SD_weighting )
+            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
             {
-               usu.wave["data"].s.push_back( plotted_q[ i ][ j ] * plotted_I_error[ i ][ j ] );
+               usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+               usu.wave["data"].r.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
+               if ( use_SD_weighting )
+               {
+                  usu.wave["data"].s.push_back( plotted_q[ i ][ j ] * plotted_I_error[ i ][ j ] );
+               }
             }
          }
          unsigned int pstart = 0;
-         unsigned int pend   = 0;
-         {
-            bool         pstart_found = false;
-            for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
-            {
-               if ( !pstart_found && plotted_q[ i ][ j ] >= p_guinier_minq )
-               {
-                  pstart = j;
-                  pstart_found = true;
-               }
-               if ( plotted_q[ i ][ j ] <= p_guinier_maxq )
-               {
-                  pend = j;
-               }
-            }
-         }
+         unsigned int pend   = usu.wave[ "data " ].q.size() - 1;
          bestend = pend;
          beststart = pstart;
 

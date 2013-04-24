@@ -1806,6 +1806,12 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          q_over_4pi_2[j] = q[j] * q[j] * one_over_4pi_2;
       }
 
+      if ( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "create_shd" ) &&
+           ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "create_shd" ] == "1" )
+      {
+         create_shd( atoms, q, q2, q_over_4pi_2 );
+      }
+
       // double m_pi_vi23; // - pi * pow(v,2/3)
       double vi_23_4pi;
       float vi; // excluded water vol
@@ -4017,7 +4023,7 @@ struct shd_input_data
    uint32_t F_size;
 };
 
-void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & atoms,
+void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
                                    vector < double >    & q,
                                    vector < double >    & q2,
                                    vector < double >    & q_over_4pi_2
@@ -4038,6 +4044,33 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & atoms,
 
    double one_over_4pi = 1.0 / (4.0 * M_PI);
    saxs saxsH = saxs_map["H"];
+
+   vector < saxs_atom > atoms = org_atoms;
+
+   point cx;
+   for ( unsigned int j = 0; j < 3; j++ )
+   {
+      cx.axis[ j ] = 0.0;
+   }
+
+   for ( unsigned int i = 0; i < (unsigned int)atoms.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < 3; j++ )
+      {
+         cx.axis[ j ] += atoms[ i ].pos[ j ];
+      }
+   }
+   for ( unsigned int j = 0; j < 3; j++ )
+   {
+      cx.axis[ j ] /= ( float ) atoms.size();
+   }
+   for ( unsigned int i = 1; i < (unsigned int)atoms.size(); i++ )
+   {
+      for ( unsigned int j = 0; j < 3; j++ )
+      {
+         atoms[ i ].pos[ j ] -= cx.axis[ j ];
+      }
+   }
 
    for ( int i = 0; i < (int)atoms.size(); i++ )
    {
@@ -4061,16 +4094,16 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & atoms,
 
          for ( int j = 0; j < (int) q.size(); j++ )
          {
-            Fa[ j ] = compute_ff( saxs,
-                                  saxsH,
-                                  atoms[ i ].residue_name,
-                                  atoms[ i ].saxs_name,
-                                  atoms[ i ].atom_name,
-                                  atoms[ i ].hydrogens,
-                                  q[ j ],
-                                  q_over_4pi_2[ j ] );
-
-            Fa[ j ] = vie * exp( vi_23_4pi * q2[ j ] * our_saxs_options->ev_exp_mult );
+            Fa[ j ] = 
+               compute_ff( saxs,
+                           saxsH,
+                           atoms[ i ].residue_name,
+                           atoms[ i ].saxs_name,
+                           atoms[ i ].atom_name,
+                           atoms[ i ].hydrogens,
+                           q[ j ],
+                           q_over_4pi_2[ j ] ) -
+               vie * exp( vi_23_4pi * q2[ j ] * our_saxs_options->ev_exp_mult );
          }
          F.push_back( Fa );
       }
@@ -4131,6 +4164,16 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & atoms,
       ofs.close();
 
       editor_msg( "blue", QString( tr( "Created shd %1" ) ).arg( fname ) );
+      printf( "0: F (%d):\n", (int) F.size() );
+      for ( int i = 0; i < (int) F.size(); i++ )
+      {
+         printf( "0: %d (%d):", i, (int) F[ i ].size() );
+         for ( int j = 0; j < (int) F[ i ].size(); j++ )
+         {
+            printf( " %f ", F[ i ][ j ] );
+         }
+         printf( "\n" );
+      }
    }
    // and the float version
    {
@@ -4192,12 +4235,21 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & atoms,
          return;
       }
 
+      //       printf( "0: F_f (%d):\n", (int) F_f.size() );
+      //       for ( int i = 0; i < (int) F_f.size(); i++ )
+      //       {
+      //          printf( "0: %d (%d):", i, (int) F_f[ i ].size() );
+      //          for ( int j = 0; j < (int) F_f[ i ].size(); j++ )
+      //          {
+      //             printf( " %f ", F_f[ i ][ j ] );
+      //          }
+      //          printf( "\n" );
+      //       }
+
       ofs.close();
 
       editor_msg( "blue", QString( tr( "Created shd %1" ) ).arg( fname ) );
    }
-
-
 
    return;
 }

@@ -274,7 +274,7 @@ bool US_Saxs_Util::guinier_fit2(
 
    for ( unsigned int i = 0; i < wave[tag].q.size() - pointsmin; i++ )
    {
-      for ( unsigned int j = i + pointsmin ; j < wave[tag].q.size() && j - i <= pointsmax; j++ )
+      for ( unsigned int j = i + pointsmin - 1; j < wave[tag].q.size() && j - i <= pointsmax; j++ )
       {
          QString mylog; // only keep the good ones
          if ( sqrt(wave[tag].q[j]) > guiniermaxq )
@@ -301,11 +301,14 @@ bool US_Saxs_Util::guinier_fit2(
                            compute_Rc
                            ) )
          {
-            log += mylog;
-            return false;
+            // log += mylog;
+            continue; // return false;
          }
          
+         // cout << QString( "guinier2: i %1 j %2 Rg %3\n").arg( i ).arg( j ).arg( Rg );
+
          if ( sRgmax > sRgmaxlimit ) {
+            // cout << "sRg violation\n";
             break;
          }
          if ( isnan(Rg) )  // positive slope

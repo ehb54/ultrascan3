@@ -243,6 +243,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       vector < crop_undo_data >           crop_undos;
 
       bool                                is_nonzero_vector( vector < double > &v );
+      bool                                is_zero_vector( vector < double > &v );
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )

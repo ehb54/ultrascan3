@@ -625,7 +625,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
                for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
                {
                   unsigned int m_size = 1 + l * 2;
-                  for ( unsigned int m = 0 ; m <= m_size; m++ )
+                  for ( unsigned int m = 0 ; m < m_size; m++ )
                   {
                      I[ j ] += norm( A[ l ][ m ] );
                   }
@@ -684,6 +684,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
 
             us_timers.end_timer( "legendre" );
 
+            // cout << "Amplitudes\n";
+
             for ( unsigned int j = 0; j < q_points; j++ )
             {
                progress_saxs->setProgress( j, q_points );
@@ -722,8 +724,9 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
                for ( unsigned int l = 0; l <= our_saxs_options->sh_max_harmonics; l++ )
                {
                   unsigned int m_size = 1 + l * 2;
-                  for ( unsigned int m = 0 ; m <= m_size; m++ )
+                  for ( unsigned int m = 0 ; m < m_size; m++ )
                   {
+                     // cout << A[ l ][ m ] << endl;
                      I[ j ] += norm( A[ l ][ m ] );
                   }
                }
