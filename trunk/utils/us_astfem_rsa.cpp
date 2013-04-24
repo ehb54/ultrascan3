@@ -22,7 +22,6 @@ US_Astfem_RSA::US_Astfem_RSA( US_Model&                model,
    dbg_level       = US_Settings::us_debug();
 }
 
-//int US_Astfem_RSA::calculate( US_DataIO2::RawData& exp_data )
 int US_Astfem_RSA::calculate( US_DataIO::RawData& exp_data )
 {
    US_AstfemMath::MfemInitial* vC0 = NULL; // Initial concentration for
@@ -3358,7 +3357,6 @@ void US_Astfem_RSA::GlobalStiff( double* xb, double** ca,
    US_AstfemMath::clear_3d( N, 6, Stif );
 }
 
-//void US_Astfem_RSA::load_mfem_data( US_DataIO2::RawData&     edata,
 void US_Astfem_RSA::load_mfem_data( US_DataIO::RawData&      edata,
                                     US_AstfemMath::MfemData& fdata )
 {
@@ -3406,7 +3404,6 @@ DbgLv(2) << "RSA:f sc0 temp" << fdata.scan[0].temperature;
 DbgLv(2) << "RSA:e sc0 temp" << edata.scanData[0].temperature;
 }
 
-//void US_Astfem_RSA::store_mfem_data( US_DataIO2::RawData&     edata,
 void US_Astfem_RSA::store_mfem_data( US_DataIO::RawData&      edata,
                                      US_AstfemMath::MfemData& fdata )
 {
@@ -3427,21 +3424,9 @@ void US_Astfem_RSA::store_mfem_data( US_DataIO::RawData&      edata,
       escan->seconds     = fscan->time;
       escan->omega2t     = fscan->omega_s_t;
       escan->plateau     = fdata.radius[ nconc - 1 ];
-//      escan->readings.resize( nconc );
-//
-//      for ( int jj = 0; jj < nconc; jj++ )
-//      {
-//         escan->readings[ jj ] = US_DataIO2::Reading( fscan->conc[ jj ] );
-//      }
       escan->rvalues     = fscan->conc;
    }
 
-//   edata.x.resize( nconc );
-//
-//   for ( int jj = 0; jj < nconc; jj++ )
-//   {
-//      edata.x[ jj ] = fdata.radius[ jj ];
-//   }
 DbgLv(2) << "RSA:o-f sc0 temp" << fdata.scan[0].temperature;
 DbgLv(2) << "RSA:o-e sc0 temp" << edata.scanData[0].temperature;
 }

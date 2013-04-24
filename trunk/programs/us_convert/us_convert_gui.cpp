@@ -249,8 +249,6 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    cb_centerpiece = new US_SelectBox( this );
    centerpieceInfo();
    cb_centerpiece -> load();
-//   connect( cb_centerpiece, SIGNAL( currentIndexChanged( int ) ), 
-//                            SLOT  ( getCenterpieceIndex( int ) ) );
    connect( cb_centerpiece, SIGNAL( activated          ( int ) ), 
                             SLOT  ( getCenterpieceIndex( int ) ) );
    ccw->addWidget( cb_centerpiece, row++, 1, 1, 3 );
@@ -713,7 +711,6 @@ void US_ConvertGui::importMWL( void )
 
    // Read the data
    mwl_data.import_data( currentDir, le_description );
-//qDebug() << "MD.import_data DONE";
    isMwl       = true;
    runType     = "RI";
    mwl_data.run_values( runID, runType );
@@ -738,9 +735,7 @@ void US_ConvertGui::importMWL( void )
    {  // Average lambdas
       le_description->setText( tr( "Averaging over wavelengths ..." ) );
       mwl_data.set_lambdas   ( );
-//qDebug() << "MD.set_lambdas DONE";
       mwl_data.average_lambda( );
-//qDebug() << "MD.average_lambda DONE";
    }
 
    else
@@ -750,13 +745,11 @@ void US_ConvertGui::importMWL( void )
       elambda       = mwl_data.countOf( "elambda" );
       mwl_data.set_lambdas   ( 1.0, slambda, elambda );
       ct_lambdelt->setEnabled( false );
-//qDebug() << "MD.set_lambdas DONE  slambda elambda" << slambda << elambda;
    }
 
    ct_lambdelt   ->setValue( mwl_data.countOf( "dlambda" ) );
    le_description->setText( tr( "Building raw data AUCs ..." ) );
    mwl_data.build_rawData ( allData );
-//qDebug() << "MD.build_rawData DONE";
 
    mwl_connect( false );
    le_description->setText( tr( "Building Lambda list ..." ) );
@@ -765,12 +758,10 @@ void US_ConvertGui::importMWL( void )
    // Propagate initial lists of Lambdas
    QVector< double > lambdas;
    int    nlamb_i  = mwl_data.lambdas_raw( lambdas );
-//qDebug() << "MD.lambdas_raw DONE  nlamb_i" << nlamb_i << lambdas.size();
    int    klamb    = 0;
    double rlamb_s  = lambdas[ 0 ];
    double rlamb_e  = lambdas[ nlamb_i - 1 ];
    double prvalu   = 0.0;
-//qDebug() << "MD.lambdas_raw DONE   rlamb_s rlamb_e" << rlamb_s << rlamb_e;
    cb_lambstrt->clear();
    cb_lambstop->clear();
 
@@ -854,7 +845,6 @@ void US_ConvertGui::importMWL( void )
    le_lambraw->setText( lambmsg );
    qApp->processEvents();
    adjustSize();
-//qDebug() << "TE:" << lambmsg;
 }
 
 // Enable the common dialog controls when there is data
@@ -1529,7 +1519,6 @@ void US_ConvertGui::getExpInfo( void )
    double count = 0.0;
    for ( int i = 0; i < allData.size(); i++ )
    {
-//      US_DataIO2::RawData raw = allData[ i ];
       US_DataIO::RawData raw = allData[ i ];
       for ( int j = 0; j < raw.scanData.size(); j++ )
          sum += raw.scanData[ j ].temperature;
@@ -1548,7 +1537,6 @@ void US_ConvertGui::getExpInfo( void )
    ExpData.rpms.clear();
    for ( int i = 0; i < allData.size(); i++ )
    {
-//      US_DataIO2::RawData raw = allData[ i ];
       US_DataIO::RawData raw = allData[ i ];
       for ( int j = 0; j < raw.scanData.size(); j++ )
       {
@@ -1689,7 +1677,6 @@ void US_ConvertGui::runDetails( void )
 {
    // Create data structures for US_RunDetails2
    QStringList tripleDescriptions;
-//   QVector< US_DataIO2::RawData >  currentData;
    QVector< US_DataIO::RawData >  currentData;
    if ( isMwl )
    {  // For MWL, only pass the 1st data set of each cell/channel
@@ -1778,7 +1765,6 @@ void US_ConvertGui::checkTemperature( void )
    // Temperature check 
    double dt = 0.0; 
   
-//   foreach( US_DataIO2::RawData triple, allData ) 
    foreach( US_DataIO::RawData triple, allData ) 
    { 
        double temp_spread = triple.temperature_spread(); 
@@ -2084,14 +2070,11 @@ void US_ConvertGui::PseudoCalcAvg( void )
 {
    if ( referenceDefined ) return;  // Average calculation has already been done
 
-//   US_DataIO2::RawData referenceData = allData[ tripDatax ];
-//   int ref_size = referenceData.scanData[ 0 ].readings.size();
    US_DataIO::RawData referenceData = allData[ tripDatax ];
    int ref_size = referenceData.xvalues.size();
 
    for ( int i = 0; i < referenceData.scanData.size(); i++ )
    {
-//      US_DataIO2::Scan s = referenceData.scanData[ i ];
       US_DataIO::Scan s = referenceData.scanData[ i ];
 
       int j      = 0;
@@ -2152,28 +2135,22 @@ void US_ConvertGui::PseudoCalcAvg( void )
    // Now calculate the pseudo-absorbance
    for ( int i = 0; i < allData.size(); i++ )
    {
-//      US_DataIO2::RawData* currentData = &allData[ i ];
       US_DataIO::RawData* currentData = &allData[ i ];
 
       for ( int j = 0; j < currentData->scanData.size(); j++ )
       {
-//         US_DataIO2::Scan* s = &currentData->scanData[ j ];
          US_DataIO::Scan* s = &currentData->scanData[ j ];
 
-//         for ( int k = 0; k < s->readings.size(); k++ )
          for ( int k = 0; k < s->rvalues.size(); k++ )
          {
-//            US_DataIO2::Reading* r = &s->readings[ k ];
             double rvalue = s->rvalues[ k ];
 
             // Protect against possible inf's and nan's, if a reading 
             // evaluates to 0 or wherever log function is undefined or -inf
-//            if ( r->value < 1.0 ) r->value = 1.0;
             if ( rvalue < 1.0 ) rvalue = 1.0;
 
             // Check for boundary condition
             int ndx = ( j < ExpData.RIProfile.size() ) ? j : ExpData.RIProfile.size() - 1;
-//            r->value = log10(ExpData.RIProfile[ ndx ] / r->value );
             s->rvalues[ k ] = log10( ExpData.RIProfile[ ndx ] / rvalue );
          }
       }
@@ -2205,18 +2182,14 @@ void US_ConvertGui::cancel_reference( void )
    // Do the inverse operation and retrieve raw intensity data
    for ( int i = 0; i < allData.size(); i++ )
    {
-//      US_DataIO2::RawData* currentData = &allData[ i ];
       US_DataIO::RawData* currentData = &allData[ i ];
 
       for ( int j = 0; j < currentData->scanData.size(); j++ )
       {
-//         US_DataIO2::Scan* s = &currentData->scanData[ j ];
          US_DataIO::Scan* s = &currentData->scanData[ j ];
 
-//         for ( int k = 0; k < s->readings.size(); k++ )
          for ( int k = 0; k < s->rvalues.size(); k++ )
          {
-//            US_DataIO2::Reading* r = &s->readings[ k ];
             double rvalue = s->rvalues[ k ];
 
 //            r->value = ExpData.RIProfile[ j ] / pow( 10, r->value );
@@ -3031,7 +3004,6 @@ void US_ConvertGui::plot_current( void )
 {
    triple_index();
 
-//   US_DataIO2::RawData currentData = allData[ tripDatax ];
    US_DataIO::RawData currentData = allData[ tripDatax ];
 
    if ( currentData.scanData.empty() ) return;
@@ -3048,7 +3020,6 @@ void US_ConvertGui::plot_current( void )
 
 void US_ConvertGui::plot_titles( void )
 {
-//   US_DataIO2::RawData currentData = allData[ tripDatax ];
    US_DataIO::RawData currentData = allData[ tripDatax ];
 
    QString triple      = triples[ tripListx ].tripleDesc;
@@ -3120,13 +3091,11 @@ void US_ConvertGui::plot_titles( void )
 
 void US_ConvertGui::plot_all( void )
 {
-//   US_DataIO2::RawData currentData = allData[ tripDatax ];
    US_DataIO::RawData currentData = allData[ tripDatax ];
 
    data_plot->detachItems();
    grid = us_grid( data_plot );
 
-//   int size = currentData.scanData[ 0 ].readings.size();
    int size = currentData.xvalues.size();
 
    QVector< double > rvec( size );
@@ -3144,7 +3113,6 @@ void US_ConvertGui::plot_all( void )
    {
       US_Convert::Excludes currentExcludes = allExcludes[ tripDatax ];
       if ( currentExcludes.contains( i ) ) continue;
-//      US_DataIO2::Scan* s = &currentData.scanData[ i ];
       US_DataIO::Scan* s = &currentData.scanData[ i ];
 
       for ( int j = 0; j < size; j++ )
@@ -3498,8 +3466,6 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
 
    if ( referenceDefined ) return;  // Average calculation has already been done
 
-//   US_DataIO2::RawData* refData = &allData[ tripDatax ];
-//   int ref_size = refData->scanData[ 0 ].readings.size();
    US_DataIO::RawData* refData = &allData[ tripDatax ];
    int ref_size = refData->xvalues.size();
    int ccx      = tripDatax / nlambda;
@@ -3510,7 +3476,6 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
    for ( int wvx = 0; wvx < nlambda; wvx++ )
    {
       refData      = &allData[ tripx ];
-//      ref_size     = refData->x.size();
       ref_size     = refData->xvalues.size();
       int nscan    = refData->scanData.size();
       ripprof.clear();
@@ -3518,7 +3483,6 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
       // Get the reference profile for the current wavelength
       for ( int scx = 0; scx < nscan; scx++ )
       {
-//         US_DataIO2::Scan* scn = &refData->scanData[ scx ];
          US_DataIO::Scan* scn = &refData->scanData[ scx ];
 
          int    jj    = 0;
@@ -3547,16 +3511,10 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
       // Now calculate the pseudo-absorbance for all cell/channel/this-lambda
       for ( int ii = wvx; ii < allData.size(); ii += nlambda )
       {
-//         US_DataIO2::RawData* currentData = &allData[ ii ];
          US_DataIO::RawData* currentData = &allData[ ii ];
 
          for ( int jj = 0; jj < currentData->scanData.size(); jj++ )
          {
-//            US_DataIO2::Scan* scn = &currentData->scanData[ jj ];
-//
-//            for ( int kk = 0; kk < scn->readings.size(); kk++ )
-//            {
-//               US_DataIO2::Reading* rr = &scn->readings[ kk ];
             US_DataIO::Scan* scn = &currentData->scanData[ jj ];
 
             for ( int kk = 0; kk < scn->rvalues.size(); kk++ )
@@ -3565,12 +3523,10 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
 
                // Protect against possible inf's and nan's, if a reading 
                // evaluates to 0 or wherever log function is undefined or -inf
-//               if ( rr->value < 1.0 ) rr->value = 1.0;
                if ( rvalue < 1.0 ) rvalue = 1.0;
 
                // Check for boundary condition
                int ndx   = ( jj < rip_size ) ? jj : rip_size - 1;
-//               rr->value = log10( ripprof[ ndx ] / rr->value );
                scn->rvalues[ kk ] = log10( ripprof[ ndx ] / rvalue );
             } // END: readings loop for a scan
 

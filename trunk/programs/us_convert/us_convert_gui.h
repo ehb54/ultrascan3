@@ -10,7 +10,6 @@
 #include "us_plot.h"
 #include "us_convert.h"
 #include "us_experiment.h"
-//#include "us_dataIO2.h"
 #include "us_dataIO.h"
 #include "us_solution.h"
 #include "us_selectbox.h"
@@ -111,14 +110,12 @@ class US_ConvertGui : public US_Widgets
 
       US_SelectBox*  cb_centerpiece;
 
-//      QList< US_DataIO2::BeckmanRawScan > legacyData; // legacy data from file
       QList< US_DataIO::BeckmanRawScan > legacyData; // legacy data from file
-//      QVector< US_DataIO2::RawData >  allData;      // All ccw-separated data
-      QVector< US_DataIO::RawData >  allData;      // All ccw-separated data
+      QVector< US_DataIO::RawData >      allData;    // All ccw-separated data
       QString       currentDir;
       QString       saveDescription;
 
-      QVector< US_Convert::Excludes > allExcludes;  // All excludes for triples
+      QVector< US_Convert::Excludes >   allExcludes; // All excludes for triples
 
       US_MwlData    mwl_data;
 

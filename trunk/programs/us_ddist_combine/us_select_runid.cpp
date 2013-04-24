@@ -7,7 +7,6 @@
 #include "us_investigator.h"
 #include "us_passwd.h"
 #include "us_db2.h"
-#include "us_dataIO2.h"
 #include "us_util.h"
 #include "us_editor.h"
 #include "us_constants.h"

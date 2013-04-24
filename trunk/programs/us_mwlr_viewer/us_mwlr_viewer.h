@@ -8,7 +8,6 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
-#include "us_dataIO2.h"
 
 class US_MwlRawViewer : public US_Widgets
 {

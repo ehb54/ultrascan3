@@ -54,7 +54,6 @@ US_SimulationParameters::SpeedProfile::SpeedProfile()
 
 // Set simulation parameter values from an experimental EditedData set.
 void US_SimulationParameters::initFromData( US_DB2* db,
-//   US_DataIO2::EditedData& editdata )
    US_DataIO::EditedData& editdata )
 {
    SpeedProfile sp;

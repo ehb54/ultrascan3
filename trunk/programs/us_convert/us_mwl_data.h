@@ -5,7 +5,6 @@
 #include <QtGui>
 
 #include "us_extern.h"
-//#include "us_dataIO2.h"
 #include "us_dataIO.h"
 
 #ifndef DbgLv
@@ -58,7 +57,6 @@ class US_MwlData : public QObject
       //! Return list of cells/channels
       int     cellchannels  ( QStringList& );
       //! Build RawData vector
-//      int     build_rawData ( QVector< US_DataIO2::RawData >& );
       int     build_rawData ( QVector< US_DataIO::RawData >& );
       //! A count of specified type
       int     countOf       ( QString );
