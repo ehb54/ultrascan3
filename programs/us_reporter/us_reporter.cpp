@@ -16,7 +16,7 @@
 #include "us_editor.h"
 #include "us_util.h"
 #include "us_sleep.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 
 // main program
 int main( int argc, char* argv[] )
@@ -406,9 +406,9 @@ DbgLv(1) << " BD:   nrptf" << nrptf << "trifil" << trifil[0];
       // Attempt to add a triple description to the label
       if ( ii < naucf )
       {
-         US_DataIO2::RawData rdata;
-         int rstat = US_DataIO2::readRawData( cdesc.filepath, rdata );
-         if ( rstat == US_DataIO2::OK )
+         US_DataIO::RawData rdata;
+         int rstat = US_DataIO::readRawData( cdesc.filepath, rdata );
+         if ( rstat == US_DataIO::OK )
          {
             trdesc = rdata.description;
          }

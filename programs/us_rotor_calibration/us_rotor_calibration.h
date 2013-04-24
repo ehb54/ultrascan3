@@ -11,7 +11,7 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_matrix.h"
 #include "us_editor.h"
 
@@ -108,8 +108,8 @@ class US_RotorCalibration : public US_Widgets
       QCheckBox*         cb_assigned;
       QComboBox*         cb_lab;
       
-      US_DataIO2::RawData            data;
-      QVector< US_DataIO2::RawData > allData;
+      US_DataIO::RawData             data;
+      QVector< US_DataIO::RawData >  allData;
       QVector< Average >             avg;
       QVector< QVector < double > >  reading;
       QVector< double >              stretch_factors, std_dev;
@@ -127,7 +127,7 @@ class US_RotorCalibration : public US_Widgets
       void       findTriple     ( void );
       void       next           ( void );
       void       calculate      ( void );
-      double     findAverage    ( QwtDoubleRect, US_DataIO2::RawData, int );
+      double     findAverage    ( QwtDoubleRect, US_DataIO::RawData, int );
       void       save           ( void );
       void       view           ( void );
       void       update_used    ( void );

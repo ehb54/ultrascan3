@@ -482,7 +482,7 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
       double menrng = ct_menisrng->value();
       double bmenis = edata->meniscus;
       double hmenis = bmenis + menrng * 0.5;
-      double lrdata = edata->x[ 0 ].radius;
+      double lrdata = edata->xvalues[ 0 ];
 
       if ( hmenis >= lrdata )
       {
@@ -676,12 +676,12 @@ void US_AnalysisControl::grid_change()
    int    ngstep = nsteps * nstepk;                   // # grid steps
    int    nsstep = ( nsteps / ngrrep + 1 )
                  * ( nstepk / ngrrep + 1 );           // # subgrid steps
-   int    nscan  = edata->scanData.size();            // # scans
-   int    nconc  = edata->x.size();                   // # concentrations
+   int    nscan  = edata->scanCount();                // # scans
+   int    nconc  = edata->pointCount();               // # concentrations
    int    ntconc = nconc * nscan;                     // # total readings
-   int    szread = sizeof( US_DataIO2::Reading ) * ntconc;
-   int    szscan = sizeof( US_DataIO2::Scan ) * nscan;
-   int    szedat = sizeof( US_DataIO2::EditedData );
+   int    szread = sizeof( QVector<double> ) * ntconc;
+   int    szscan = sizeof( US_DataIO::Scan ) * nscan;
+   int    szedat = sizeof( US_DataIO::EditedData );
    int    szsol  = sizeof( US_Solute );               // size Solute
    int    szval  = sizeof( double );                  // size vector value
    long   szgso  = ngstep * szsol;                    // size grid solutes
@@ -845,7 +845,7 @@ DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
 DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 
-   US_DataIO2::Scan* rscan0 = &rdata->scanData[ 0 ];
+   US_DataIO::Scan* rscan0 = &rdata->scanData[ 0 ];
    int    iternum  = (int)rscan0->rpm;
    int    mmitnum  = (int)rscan0->seconds;
    double varinew  = rscan0->delta_r;

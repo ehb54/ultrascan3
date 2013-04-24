@@ -286,10 +286,10 @@ void US_MPI_Analysis::global_fit( void )
    }
 
    // Point to current dataset
-   US_DataIO2::EditedData* data = &data_sets[ current_dataset ]->run_data;
+   US_DataIO::EditedData* data = &data_sets[ current_dataset ]->run_data;
 
-   int scan_count    = data->scanData.size();
-   int radius_points = data->x.size();
+   int scan_count    = data->scanCount();
+   int radius_points = data->pointCount();
    int index         = 0;
 
    QVector< double > scaled_data( scan_count * radius_points );
@@ -391,12 +391,12 @@ DbgLv(1) << "sMC: max_depth" << max_depth << "calcsols size" << calculated_solut
       set_gaussians();
 
       US_AstfemMath::initSimData( sim_data1, data_sets[ 0 ]->run_data, 0.0 );
-      int scan_count    = sim_data1.scanData.size();
-      int radius_points = sim_data1.x.size();
+      int scan_count    = sim_data1.scanCount();
+      int radius_points = sim_data1.pointCount();
 
       for ( int ss = 0; ss < scan_count; ss++ )
          for ( int rr = 0; rr < radius_points; rr++ )
-            sim_data1.scanData[ ss ].readings[ rr ].value = 
+            sim_data1.scanData[ ss ].rvalues[ rr ] = 
                simulation_values.sim_data.value( ss, rr );
 
       double fitrmsd = sqrt( simulation_values.variance );
@@ -408,10 +408,10 @@ DbgLv(1) << "sMC: max_depth" << max_depth << "calcsols size" << calculated_solut
 
    for ( int e = 0; e < data_sets.size(); e++ )
    {
-      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+      US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
 
-      int scan_count    = data->scanData.size();
-      int radius_points = data->x.size();
+      int scan_count    = data->scanCount();
+      int radius_points = data->pointCount();
 
       total_points += scan_count * radius_points;
    }
@@ -424,10 +424,10 @@ DbgLv(1) << "sMC: totpts" << total_points << "mc_iter" << mc_iteration;
    // Use a gaussian distribution with the residual as the standard deviation
    for ( int e = 0; e < data_sets.size(); e++ )
    {
-      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+      US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
 
-      int scan_count    = data->scanData.size();
-      int radius_points = data->x.size();
+      int scan_count    = data->scanCount();
+      int radius_points = data->pointCount();
       double varrmsd    = 0.0;
 
 double varisum=0.0;
@@ -518,21 +518,21 @@ DbgLv(1) << "sGA:   sol0.s solM.s" << simulation_values.solutes[0].s
  << simulation_values.solutes[mm].s << "  M=" << mm;;
 DbgLv(1) << "sGA:     solM.k" << simulation_values.solutes[mm].k;
 DbgLv(1) << "sGA:     solM.c" << simulation_values.solutes[mm].c;
-US_DataIO2::EditedData *edata = &data_sets[0]->run_data;
-DbgLv(1) << "sGA:    edata scans points" << edata->scanData.size() << edata->x.size();
+US_DataIO::EditedData *edata = &data_sets[0]->run_data;
+DbgLv(1) << "sGA:    edata scans points" << edata->scanCount() << edata->pointCount();
 
    calc_residuals( 0, data_sets.size(), simulation_values );
 
    sigmas.clear();
    res_data = &simulation_values.residuals;
-DbgLv(1) << "sGA:  resids scans points" << res_data->scanData.size() << res_data->x.size();
+DbgLv(1) << "sGA:  resids scans points" << res_data->scanCount() << res_data->pointCount();
 
    for ( int e = 0; e < data_sets.size(); e++ )
    {
-      US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+      US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
 
-      int scan_count    = data->scanData.size();
-      int radius_points = data->x.size();
+      int scan_count    = data->scanCount();
+      int radius_points = data->pointCount();
 
       // Smooth the data and place into a single vector for convenience
       for ( int s = 0; s < scan_count; s++ )
@@ -1011,7 +1011,7 @@ DbgLv(1) << "Mast:   WARNING: LAST depth and no worker ready!";
 void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type, 
                                    const QVector< double >& noise_data )
 {
-   US_DataIO2::EditedData* data = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* data = &data_sets[ 0 ]->run_data;
 
    QString  type_name;
    US_Noise noise;
@@ -1019,7 +1019,7 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    if ( type == US_Noise::TI ) 
    {
       type_name         = "ti";
-      int radii         = data->x.size();
+      int radii         = data->pointCount();
       noise.minradius   = data->radius( 0 );
       noise.maxradius   = data->radius( radii - 1 );
    }

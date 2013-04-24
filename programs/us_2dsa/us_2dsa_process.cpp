@@ -34,8 +34,8 @@ US_2dsaProcess::US_2dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    ical_sols.clear();                 // iteration final calculated solutes
    simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
 
-   nscans           = bdata->scanData.size();
-   npoints          = bdata->x.size();
+   nscans           = bdata->scanCount();
+   npoints          = bdata->pointCount();
 
    if ( ( nscans * npoints ) > 50000 )
       mintsols         = 80;
@@ -124,14 +124,16 @@ DbgLv(1) << "MENISC: mm_iter meniscus bmeniscus"
    }
 
    // experiment data dimensions
-   nscans      = edata->scanData.size();
-   npoints     = edata->x.size();
-   // subgrid deltas  (increments between subgrid points)
+   nscans      = edata->scanCount();
+   npoints     = edata->pointCount();
+
+   // SubGrid deltas  (increments between subgrid points)
    int nsubp_s = ( nssteps + ngrefine - 1 ) / ngrefine;
    int nsubp_k = ( nksteps + ngrefine - 1 ) / ngrefine;
    sdelta_s    = ( suplim - slolim ) / (double)( max( nsubp_s - 1, 1 ) );
    sdelta_k    = ( kuplim - klolim ) / (double)( max( nsubp_k - 1, 1 ) );
-   // grid deltas     (overall increment between grid points)
+
+   // Grid deltas     (overall increment between grid points)
    gdelta_s    = sdelta_s / (double)ngrefine;
    gdelta_k    = sdelta_k / (double)ngrefine;
    if ( jgrefine > 0 )
@@ -575,22 +577,22 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
 DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
  << c_solutes[maxdepth][qMax(0,nsolutes-1)].c << "  nsols" << nsolutes;
-   nscans           = edata->scanData.size();
-   npoints          = edata->x.size();
+   nscans           = edata->scanCount();
+   npoints          = edata->pointCount();
    double vari      = wresult.sim_vals.variances[ 0 ];
 DbgLv(1) << "FIN_FIN: vari" << vari;
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
-   US_DataIO2::RawData* simdat = &wresult.sim_vals.sim_data;
-   US_DataIO2::RawData* resids = &wresult.sim_vals.residuals;
+   US_DataIO::RawData* simdat = &wresult.sim_vals.sim_data;
+   US_DataIO::RawData* resids = &wresult.sim_vals.residuals;
 
    // build residuals data set (experiment minus simulation minus any noise)
    for ( int ss = 0; ss < nscans; ss++ )
    {
       for ( int rr = 0; rr < npoints; rr++ )
       {
-         sdata.scanData[ ss ].readings[ rr ].value = simdat->value( ss, rr );
-         rdata.scanData[ ss ].readings[ rr ].value = resids->value( ss, rr );
+         sdata.setValue( ss, rr, simdat->value( ss, rr ) );
+         rdata.setValue( ss, rr, resids->value( ss, rr ) );
       }
    }
 
@@ -602,7 +604,7 @@ DbgLv(1) << "FIN_FIN: edatm sdatm rdatm" << edata->value(mms,mmr)
    // set variance and communicate to control through residual's scan 0
    itvaris   << vari;
    ical_sols << c_solutes[ maxdepth ];
-   US_DataIO2::Scan* rscan0 = &rdata.scanData[ 0 ];
+   US_DataIO::Scan* rscan0 = &rdata.scanData[ 0 ];
    rscan0->delta_r    = vari;
    rscan0->rpm        = (double)( r_iter + 1 );
    rscan0->seconds    = ( mmtype == 0 ) ? 0.0 : (double)( mm_iter + 1 );
@@ -729,8 +731,8 @@ DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
 }
 
 // Public slot to get results upon completion of all refinements
-bool US_2dsaProcess::get_results( US_DataIO2::RawData* da_sim,
-                                  US_DataIO2::RawData* da_res,
+bool US_2dsaProcess::get_results( US_DataIO::RawData* da_sim,
+                                  US_DataIO::RawData* da_res,
                                   US_Model*            da_mdl,
                                   US_Noise*            da_tin,
                                   US_Noise*            da_rin )
@@ -1169,12 +1171,12 @@ DbgLv(1) << "ES:  D3ff n1task n1csol" << n1task << n1csol;
 
    // Return estimate of remaining steps
 DbgLv(1) << "ES: returned nsteps ntasks" << (ntasks*ktstep) << ntasks;
-int szscnd = sizeof(US_DataIO2::Scan);
-int szrdng = sizeof(US_DataIO2::Reading);
+int szscnd = sizeof(US_DataIO::Scan);
+int szrdng = sizeof(QVector<double>);
 int szsols = sizeof(US_Solute);
 int nscns  = dsets[0]->run_data.scanData.size();
-int nrpts  = dsets[0]->run_data.x.size();
-int szdata = sizeof(US_DataIO2::RawData)+(nscns*szscnd)+(nscns*nrpts*szrdng);
+int nrpts  = dsets[0]->run_data.xvalues.size();
+int szdata = sizeof(US_DataIO::RawData)+(nscns*szscnd)+(nscns*nrpts*szrdng);
 int szsimu = sizeof(US_SolveSim::Simulation)+(2*szdata)+(szsols*ktisol);
 int szdset = sizeof(US_SolveSim::DataSet);
 int szwrkp = sizeof(WorkPacket);
@@ -1260,8 +1262,7 @@ DbgLv(1) << "MCARLO: mm_iter" << mm_iter;
       for ( int rr = 0; rr < npoints; rr++ )
       {
          double variation = US_Math2::box_muller( 0.0, sigmas[ kk++ ] );
-         wdata.scanData[ ss ].readings[ rr ] =
-            US_DataIO2::Reading( sdata1.value( ss, rr ) + variation );
+         wdata.setValue( ss, rr, ( sdata1.value( ss, rr ) + variation ) );
       }
    }
 

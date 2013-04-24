@@ -26,7 +26,7 @@ class US_GUI_EXTERN US_NoiseLoader : public US_WidgetsDialog
       //! \param ri_noise Reference to a radius-independent noise object loaded.
       //! \param edata    Pointer to edited experiment data for range compare.
       US_NoiseLoader( US_DB2*, QStringList&, QStringList&,
-                      US_Noise&, US_Noise&, US_DataIO2::EditedData* = 0 );
+                      US_Noise&, US_Noise&, US_DataIO::EditedData* = 0 );
 
    private:
       US_DB2*       db;

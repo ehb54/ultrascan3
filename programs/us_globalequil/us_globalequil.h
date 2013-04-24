@@ -31,14 +31,14 @@ class US_GlobalEquil : public US_Widgets
       QVector< EqScanFit >              scanfits;
       EqRunFit                          runfit;
 
-      QVector< US_DataIO2::EditedData > dataList;
-      QVector< US_DataIO2::RawData >    rawList;
+      QVector< US_DataIO::EditedData >  dataList;
+      QVector< US_DataIO::RawData >     rawList;
       QList< int >                      excludedScans;
       QStringList                       triples;
       QStringList                       models;
 
-      US_DataIO2::EditedData*  edata;
-      US_DataIO2::SpeedData*   spdata;
+      US_DataIO::EditedData*   edata;
+      US_DataIO::SpeedData*    spdata;
 
       US_Disk_DB_Controls*     dkdb_cntrls;
 
@@ -161,7 +161,7 @@ class US_GlobalEquil : public US_Widgets
       void update_limit      ( double );
       void float_all         ( void );
       void fix_all           ( void );
-      int  index_radius      ( US_DataIO2::EditedData*, double );
+      int  index_radius      ( US_DataIO::EditedData*, double );
       int  index_od_limit    ( EqScanFit&, double );
 
       void help              ( void )

@@ -9,7 +9,7 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 
 class US_Edit : public US_Widgets
 {
@@ -29,10 +29,10 @@ class US_Edit : public US_Widgets
             QList< QPointF > changes;
       };
 
-      QList< Edits >                 changed_points;
-      US_DataIO2::RawData            data;
-      QList< US_DataIO2::SpeedData > sData;
-      QVector< US_DataIO2::RawData > allData;
+      QList< Edits >                changed_points;
+      US_DataIO::RawData            data;
+      QList< US_DataIO::SpeedData > sData;
+      QVector< US_DataIO::RawData > allData;
 
       bool               changes_made;
       bool               spikes;
@@ -80,9 +80,9 @@ class US_Edit : public US_Widgets
       QStringList        triples;
       QStringList        trip_rpms;
       QStringList        celchns;
-      QStringList        rlist_wvlns;
-      QStringList        plist_wvlns;
-      QStringList        plist_radii;
+      QStringList        rawc_wvlns;
+      QStringList        expc_wvlns;
+      QStringList        expc_radii;
                       
       QwtPlot*           data_plot;
       QwtPlotCurve*      raw_curve;
@@ -176,14 +176,12 @@ class US_Edit : public US_Widgets
       bool               isMwl;
       bool               xaxis_radius;
 
-      double             dlambda;
-      double             slambda;
-      double             elambda;
-      double             plotrec;
-      double             odlimit;
-      double             excllfr;
-      double             excllto;
-
+      int                dlambda;
+      int                slambda;
+      int                elambda;
+      int                plotrec;
+      int                excllfr;
+      int                excllto;
       int                plotndx;
       int                exclfrx;
       int                excltox;
@@ -193,9 +191,12 @@ class US_Edit : public US_Widgets
       int                ncelchn;
       int                ntriple;
 
-      QList< double >    wl_excludes;
-      QList< double >    plot_radii;
-      QList< int >       plot_wvlns;
+      double             odlimit;
+
+      QList< int >       wl_excludes;
+      QList< double >    expd_radii;
+      QList< int >       expi_wvlns;
+      QList< int >       rawi_wvlns;
 
       QVector< QVector< double > >  rdata;
 

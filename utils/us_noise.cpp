@@ -216,14 +216,14 @@ int US_Noise::write( const QString& filename )
 }
 
 // apply noise to EditedData by add/subtract noise values from readings
-int US_Noise::apply_to_data( US_DataIO2::EditedData& editdata, bool remove )
+int US_Noise::apply_to_data( US_DataIO::EditedData& editdata, bool remove )
 {
-   int    rCount = editdata.scanData[ 0 ].readings.size(); // readings count
-   int    sCount = editdata.scanData.size();               // scan count
+   int    rCount = editdata.pointCount();             // readings count
+   int    sCount = editdata.scanCount();              // scan count
    int    ii;
    int    jj;
    double vnoise;
-   double applyf = remove ? -1.0 : 1.0;                    // apply factor
+   double applyf = remove ? -1.0 : 1.0;               // apply factor
    count         = values.size();
 
    if ( count == 0 )
@@ -247,7 +247,7 @@ int US_Noise::apply_to_data( US_DataIO2::EditedData& editdata, bool remove )
 
          for ( ii = 0; ii < sCount; ii++ )
          {  // apply to all scans at reading position
-            editdata.scanData[ ii ].readings[ jj ].value += vnoise;
+            editdata.scanData[ ii ].rvalues[ jj ] += vnoise;
          }
       }
    }
@@ -267,7 +267,7 @@ int US_Noise::apply_to_data( US_DataIO2::EditedData& editdata, bool remove )
 
          for ( jj = 0; jj < rCount; jj++ )
          {  // apply to all readings at scan position
-            editdata.scanData[ ii ].readings[ jj ].value += vnoise;
+            editdata.scanData[ ii ].rvalues[ jj ] += vnoise;
          }
       }
    }
@@ -276,7 +276,7 @@ int US_Noise::apply_to_data( US_DataIO2::EditedData& editdata, bool remove )
 }
 
 // remove/add noise vector from/to edited data
-int US_Noise::apply_noise( US_DataIO2::EditedData& editdata,
+int US_Noise::apply_noise( US_DataIO::EditedData& editdata,
       US_Noise* noise, bool remove )
 {
    if ( noise != 0 )

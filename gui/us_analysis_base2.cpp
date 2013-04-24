@@ -282,18 +282,11 @@ void US_AnalysisBase2::load( void )
    for ( int ii=0; ii < triples.size(); ii++ )
       lw_triples->addItem( triples.at( ii ) );
 
-   for ( int i = 0; i < dataList[ 0 ].scanData.size(); i++ )
-   {
-      US_DataIO2::Scan* s = &dataList[ 0 ].scanData[ i ];
-      int points = s->readings.size();
+   int nscans  = dataList[ 0 ].scanCount();
 
-      QVector< double > v;
-      v.resize( points );
-
-      for ( int j = 0; j < points; j++ ) v[ j ] = s->readings[ j ].value;
-
-      savedValues << v;
-   }
+   // Save original readings values for each scan
+   for ( int ii = 0; ii < nscans; ii++ )
+      savedValues << dataList[ 0 ].scanData[ ii ].rvalues;
 
    noiflags.fill( -1,            dataList.size() );
    allExcls.fill( excludedScans, dataList.size() );
@@ -321,7 +314,7 @@ void US_AnalysisBase2::load( void )
 
 void US_AnalysisBase2::update( int selection )
 {
-   US_DataIO2::EditedData* d = &dataList[ selection ];
+   US_DataIO::EditedData* d = &dataList[ selection ];
    int scanCount = d->scanData.size();
    runID         = d->runID;
    le_id->setText( runID + " / " + d->editID );
@@ -333,25 +326,6 @@ void US_AnalysisBase2::update( int selection )
    te_desc->setText( d->description );
 
    excludedScans = allExcls[ selection ];
-
-/* // This should be done in the constructor so these settings
-   // can be overridden by the analysis program
-
-   ct_smoothing      ->disconnect();
-   ct_boundaryPercent->disconnect();
-   ct_boundaryPos    ->disconnect();
-
-   ct_smoothing      ->setValue( 1  );  // Signals?
-   ct_boundaryPercent->setValue( 90 );
-   ct_boundaryPos    ->setValue( 5  );
-
-   connect( ct_smoothing,       SIGNAL( valueChanged( double ) ),
-                                SLOT  ( smoothing   ( double ) ) );
-   connect( ct_boundaryPercent, SIGNAL( valueChanged( double ) ),
-                                SLOT  ( boundary_pct( double ) ) );
-   connect( ct_boundaryPos,     SIGNAL( valueChanged( double ) ),
-                                SLOT  ( boundary_pos( double ) ) );
-*/
 
    ct_from->setMaxValue( scanCount - excludedScans.size() );
    ct_from->setStep( 1.0 );
@@ -439,7 +413,7 @@ void US_AnalysisBase2::details( void )
 void US_AnalysisBase2::data_plot( void )
 {
    int                     row  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d    = &dataList[ row ];
+   US_DataIO::EditedData* d     = &dataList[ row ];
 
    QString                        dataType = tr( "Absorbance" );
    if ( d->dataType == "RI" )     dataType = tr( "Intensity" );
@@ -463,8 +437,8 @@ void US_AnalysisBase2::data_plot( void )
    int     from        = (int)ct_from->value();
    int     to          = (int)ct_to  ->value();
 
-   int     scanCount   = d->scanData.size();
-   int     points      = d->scanData[ 0 ].readings.size();
+   int     scanCount   = d->scanCount();
+   int     points      = d->pointCount();
    double  boundaryPct = ct_boundaryPercent->value() / 100.0;
    boundaryPct = ct_boundaryPercent->isEnabled() ? boundaryPct : 9.0;
    double  positionPct = ct_boundaryPos    ->value() / 100.0;
@@ -495,7 +469,7 @@ void US_AnalysisBase2::data_plot( void )
       scan_number++;
       bool highlight = scan_number >= from  &&  scan_number <= to;
 
-      US_DataIO2::Scan* s = &d->scanData[ i ];
+      US_DataIO::Scan*  s = &d->scanData[ i ];
 
       double range       = s->plateau - baseline;
       double lower_limit = baseline    + range * positionPct;
@@ -506,10 +480,10 @@ void US_AnalysisBase2::data_plot( void )
 
       // Plot each scan in (up to) three segments: below, in, and above
       // the specified boundaries
-      while (  j < points  &&  s->readings[ j ].value < lower_limit )
+      while (  j < points  &&  s->rvalues[ j ] < lower_limit )
       {
-         r[ count ] = d->x       [ j ].radius;
-         v[ count ] = s->readings[ j ].value;
+         r[ count ] = d->xvalues[ j ];
+         v[ count ] = s->rvalues[ j ];
          j++;
          count++;
       }
@@ -532,10 +506,10 @@ void US_AnalysisBase2::data_plot( void )
 
       count = 0;
 
-      while (   j < points && s->readings[ j ].value < upper_limit )
+      while (   j < points && s->rvalues[ j ] < upper_limit )
       {
-         r[ count ] = d->x       [ j ].radius;
-         v[ count ] = s->readings[ j ].value;
+         r[ count ] = d->xvalues[ j ];
+         v[ count ] = s->rvalues[ j ];
          j++;
          count++;
       }
@@ -557,8 +531,8 @@ void US_AnalysisBase2::data_plot( void )
 
       while ( j < points )
       {
-         r[ count ] = d->x       [ j ].radius;
-         v[ count ] = s->readings[ j ].value;
+         r[ count ] = d->xvalues[ j ];
+         v[ count ] = s->rvalues[ j ];
          j++;
          count++;
       }
@@ -643,7 +617,7 @@ void US_AnalysisBase2::exclude( void )
 
    int                     displayedScan = 1; 
    int                     index         = lw_triples->currentRow();
-   US_DataIO2::EditedData* d             = &dataList[ index ];
+   US_DataIO::EditedData*  d             = &dataList[ index ];
    int                     totalScans    = d->scanData.size();
    
    for( int i = 0; i < totalScans; i++ )
@@ -667,7 +641,7 @@ void US_AnalysisBase2::exclude( void )
 void US_AnalysisBase2::reset_excludes( void )
 {
    int                     index      = lw_triples->currentRow();
-   US_DataIO2::EditedData* d          = &dataList[ index ];
+   US_DataIO::EditedData*  d          = &dataList[ index ];
    int                     totalScans = d->scanData.size();
 
    excludedScans.clear();
@@ -693,67 +667,62 @@ void US_AnalysisBase2::smoothing( double smoothCount )
 
    // Restore saved data
    int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d      = &dataList[ index ];
+   US_DataIO::EditedData*  dat    = &dataList[ index ];
 
-   for ( int i = 0; i < d->scanData.size(); i++ )
-   {
-      US_DataIO2::Scan* s = &d->scanData[ i ];
-
-      for ( int j = 0; j < s->readings.size(); j++ )
-         s->readings[ j ].value = savedValues[ i ][ j ];
-   }
+   for ( int ii = 0; ii < dat->scanCount(); ii++ )
+      dat->scanData[ ii ].rvalues  = savedValues[ ii ];
    
    // Smooth the data
    if ( smoothPoints > 1 )
    {
-      x_weights = new double [ smoothPoints ];
-      y_weights = new double [ smoothPoints ];
+      QVector< double > xwvec( smoothPoints );
+      QVector< double > ywvec( smoothPoints );
+      x_weights = xwvec.data();
+      y_weights = ywvec.data();
                   
       // Divide the count into 2 standard deviations
-      double increment = 2.0 / smoothCount;
+      double increment  = 2.0 / smoothCount;
+      int    scanPoints = dat->pointCount();
 
       // Only calculate half a Gaussian curve, since the other side is symmetric
-      for ( int i = 0; i < smoothPoints; i++ ) 
+      for ( int jj = 0; jj < smoothPoints; jj++ ) 
       {
-         x_weights[ i ] = increment * i;
+         x_weights[ jj ] = increment * jj;
 
          // Use a standard deviation of 0.7 to narrow the spread and multiply
          // by 0.7 to scale the result as an empirical weighting factor
          
          // Standard deviation = 0.7, mean = 0.0, point = 0.0;
-         y_weights[ i ] = 
-            0.7 * US_Math2::normal_distribution( 0.7, 0.0, x_weights[ i ] );
+         y_weights[ jj ] = 
+            0.7 * US_Math2::normal_distribution( 0.7, 0.0, x_weights[ jj ] );
       }
 
       // For each scan
-      for ( int i = 0; i < d->scanData.size(); i++ )
+      for ( int ii = 0; ii < dat->scanData.size(); ii++ )
       {
-         US_DataIO2::Scan* s          = &d->scanData[ i ];
-         int              scanPoints = s->readings.size();
+         US_DataIO::Scan* scn  = &dat->scanData[ ii ];
          
          // Loop over all border point centers
-         for ( int j = 0; j < smoothPoints; j++ )
+         for ( int jj = 0; jj < smoothPoints; jj++ )
          {
-            s->readings[ j ].value = smooth_point( i, j, -1, smoothPoints );
+            scn->rvalues[ jj ] = smooth_point( ii, jj, -1, smoothPoints );
          }
       
          // Now deal with all non-border points
-         for ( int j = smoothPoints; j < scanPoints - smoothPoints - 1; j++ )
+         for ( int jj = smoothPoints; jj < scanPoints - smoothPoints - 1; jj++ )
          {
-            s->readings[ j ].value = smooth_point( i, j,  0, smoothPoints );
+            scn->rvalues[ jj ] = smooth_point( ii, jj,  0, smoothPoints );
          }
 
          // Finally the points on the right border
-         for ( int j = scanPoints - smoothPoints - 1; j < scanPoints; j++ )
+         for ( int jj = scanPoints - smoothPoints - 1; jj < scanPoints; jj++ )
          {
-            s->readings[ j ].value 
-               = smooth_point( i, j,  1, smoothPoints, scanPoints );
+            scn->rvalues[ jj ]
+               = smooth_point( ii, jj,  1, smoothPoints, scanPoints );
          }
-      }
+      } // END: scan loop
    
-      delete [] x_weights;
-      delete [] y_weights;
-   }
+   } // END: smoothPoints > 1
    
    data_plot();
 }
@@ -899,14 +868,11 @@ void US_AnalysisBase2::reset( void )
    // Restore saved data
    if ( dataList.size() > 0 )
    {
-      US_DataIO2::EditedData* d      = &dataList[ index ];
+      US_DataIO::EditedData*  dat    = &dataList[ index ];
    
-      for ( int i = 0; i < d->scanData.size(); i++ )
+      for ( int ii = 0; ii < dat->scanData.size(); ii++ )
       {
-         US_DataIO2::Scan* s = &d->scanData[ i ];
-
-         for ( int j = 0; j < s->readings.size(); j++ )
-            s->readings[ j ].value = savedValues[ i ][ j ];
+         dat->scanData[ ii ].rvalues = savedValues[ ii ];
       }
    }
 
@@ -945,31 +911,23 @@ void US_AnalysisBase2::reset( void )
 void US_AnalysisBase2::new_triple( int index )
 {
    // Save the data for the new triple
-   US_DataIO2::EditedData* d = &dataList[ index ];
+   US_DataIO::EditedData*  dat = &dataList[ index ];
  
    // Test for noise data to substract from the experiment; apply if any
    load_noise( index );
 
    savedValues.clear();
 
-   for ( int i = 0; i < d->scanData.size(); i++ )
+   for ( int ii = 0; ii < dat->scanCount(); ii++ )
    {
-      US_DataIO2::Scan* s = &d->scanData[ i ];
-      int points = s->readings.size();
-
-      QVector< double > v;
-      v.resize( points );
-
-      for ( int j = 0; j < points; j++ ) v[ j ] = s->readings[ j ].value;
-
-      savedValues << v;
+      savedValues << dat->scanData[ ii ].rvalues;
    }
 
    // Update GUI elements and plot for selected triple
    update( index );
 
    // Make sure we have a reports directory for this runID
-   QString repdir = US_Settings::reportDir() + "/" + d->runID;
+   QString repdir = US_Settings::reportDir() + "/" + dat->runID;
    QDir dir;
    if ( ! dir.exists( repdir ) )  dir.mkpath( repdir );
 }
@@ -977,15 +935,15 @@ void US_AnalysisBase2::new_triple( int index )
 double US_AnalysisBase2::calc_baseline( void ) const
 {
    int    row   = lw_triples->currentRow();
-   const US_DataIO2::Scan*
+   const US_DataIO::Scan*
           scan  = &dataList[ row ].scanData.last();
-   int    point = US_DataIO2::index( *scan, dataList[ row ].x, 
-                                      dataList[ row ].baseline );
+   int    point = US_DataIO::index( dataList[ row ].xvalues, 
+                                    dataList[ row ].baseline );
           point = ( point < 5 ) ? 5 : point;
    double sum   = 0.0;
    
    for ( int j = point - 5;  j < point + 6; j++ )
-      sum += scan->readings[ j ].value;
+      sum += scan->rvalues[ j ];
 
    return sum / 11.0;
 }
@@ -1032,7 +990,7 @@ QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
 
 // Compose HTML header string
 QString US_AnalysisBase2::html_header( const QString& title,
-      const QString& head1, US_DataIO2::EditedData* edata ) const
+      const QString& head1, US_DataIO::EditedData* edata ) const
 {
    QString ss = QString( "<?xml version=\"1.0\"?>\n" );
    ss  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
@@ -1063,8 +1021,9 @@ QString US_AnalysisBase2::html_header( const QString& title,
 QString US_AnalysisBase2::run_details( void ) const
 {
    int                           index  = lw_triples->currentRow();
-   const US_DataIO2::EditedData* d      = &dataList[ index ];
+   const US_DataIO::EditedData*  d      = &dataList[ index ];
 
+qDebug() << "  RD: index" << index << "directory" << directory;
    QString s = "\n" + indent( 4 )
         + tr( "<h3>Detailed Run Information:</h3>\n" )
         + indent( 4 ) + "<table>\n"
@@ -1078,6 +1037,7 @@ QString US_AnalysisBase2::run_details( void ) const
    double maxTemp = -1.0e99;
    double minTemp =  1.0e99;
 
+qDebug() << "  RD: scDa size" << d->scanData.size();
    for ( int i = 0; i < d->scanData.size(); i++ )
    {
       double t = d->scanData[ i ].temperature;
@@ -1087,6 +1047,7 @@ QString US_AnalysisBase2::run_details( void ) const
    }
 
    QString average = QString::number( sum / d->scanData.size(), 'f', 1 );
+qDebug() << "  RD: temp avg" << average;
 
    s += table_row( tr( "Average Temperature:" ), average + " " + MLDEGC );
 
@@ -1099,6 +1060,7 @@ QString US_AnalysisBase2::run_details( void ) const
    // Time data
    int minutes = (int)time_correction / 60;
    int seconds = (int)time_correction % 60;
+qDebug() << "  RD: mins secs" << minutes << seconds;
 
    QString m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
    QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
@@ -1107,7 +1069,9 @@ QString US_AnalysisBase2::run_details( void ) const
                    QString::number( minutes ) + m +
                    QString::number( seconds ) + sec );
 
+qDebug() << "  RD: rawList size" << rawList.size();
    double duration = rawList.last().scanData.last().seconds;
+qDebug() << "  RD: duration" << duration;
 
    int hours = (int) duration / 3600;
    minutes   = (int) duration / 60 - hours * 60;
@@ -1121,7 +1085,7 @@ QString US_AnalysisBase2::run_details( void ) const
    QString h;
    h   = ( hours   == 1 ) ? tr( " hour "   ) : tr( " hours " );
    m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
-   sec = ( seconds == 1 ) ? tr( " second" ) : tr( " seconds" );
+   sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds" );
 
    s += table_row( tr( "Run Duration:" ),
                    QString::number( hours   ) + h + 
@@ -1129,19 +1093,21 @@ QString US_AnalysisBase2::run_details( void ) const
                    QString::number( seconds ) + sec );
 
    // Wavelength, baseline, meniscus, range
+qDebug() << "  RD: calc_baseline()";
    s += table_row( tr( "Wavelength:" ), d->wavelength + " nm" )  +
         table_row( tr( "Baseline " ) + dataType,
                    QString::number( calc_baseline(), 'f', 6 ) + " OD" ) + 
-        table_row( tr( "Meniscus Position:     " ),           
+        table_row( tr( "Meniscus Position:" ),           
                    QString::number( d->meniscus, 'f', 3 ) + " cm" );
 
-   int    rrx   =  d->x.size() - 1;
-   double left  =  d->x[ 0   ].radius;
-   double right =  d->x[ rrx ].radius;
+   int    rrx   =  d->xvalues.size() - 1;
+qDebug() << "  RD: rrx" << rrx;
+   double left  =  d->xvalues[ 0   ];
+   double right =  d->xvalues[ rrx ];
 
-   s += table_row( tr( "Edited Data starts at: " ), 
+   s += table_row( tr( "Edited Data starts at:"  ), 
                    QString::number( left,  'f', 3 ) + " cm" ) +
-        table_row( tr( "Edited Data stops at:  " ), 
+        table_row( tr( "Edited Data stops at:"   ), 
                    QString::number( right, 'f', 3 ) + " cm" );
    s += indent( 4 ) + "</table>\n";
    return s;
@@ -1174,9 +1140,9 @@ QString US_AnalysisBase2::hydrodynamics( void ) const
                    QString::number( solution.vbar, 'f', 4 ) + " ccm/g" ) +
         table_row( tr( "Vbar corrected for 20 " ) + MLDEGC + ":",
                    QString::number( solution.vbar20, 'f', 4 ) + " ccm/g" ) +
-        table_row( tr( "Buoyancy (Water, 20 " ) + MLDEGC + "): ",
+        table_row( tr( "Buoyancy (Water, 20 " ) + MLDEGC + "):",
                    QString::number( solution.buoyancyw, 'f', 6 ) ) +
-        table_row( tr( "Buoyancy (absolute)" ),
+        table_row( tr( "Buoyancy (absolute):" ),
                    QString::number( solution.buoyancyb, 'f', 6 ) ) +
         table_row( tr( "Correction Factor (s):" ),
                    QString::number( solution.s20w_correction, 'f', 6 ) ) + 
@@ -1210,7 +1176,7 @@ QString US_AnalysisBase2::analysis( const QString& extra ) const
 QString US_AnalysisBase2::scan_info( void ) const
 {
    int                           index  = lw_triples->currentRow();
-   const US_DataIO2::EditedData* d      = &dataList[ index ];
+   const US_DataIO::EditedData*  d      = &dataList[ index ];
 
    QString s = "\n" + indent( 4 ) + tr( "<h3>Scan Information:</h3>\n" )
                + indent( 4 ) + "<table>\n"; 
@@ -1264,7 +1230,7 @@ void US_AnalysisBase2::set_progress( const QString message )
 // Load noise record(s) if there are any and user so chooses, then apply
 void US_AnalysisBase2::load_noise( int index )
 {
-   US_DataIO2::EditedData* edata = &dataList[ index ];
+   US_DataIO::EditedData*  edata = &dataList[ index ];
 //qDebug() << "AB2: load_noise index noif" << index << noiflags[index];
 
    if ( noiflags[ index ] >= 0 )
@@ -1328,8 +1294,8 @@ void US_AnalysisBase2::load_noise( int index )
       // noise loaded:  insure that counts jive with data
       int ntinois = ti_noise.values.size();
       int nrinois = ri_noise.values.size();
-      int nscans  = edata->scanData.size();
-      int npoints = edata->x.size();
+      int nscans  = edata->scanCount();
+      int npoints = edata->pointCount();
       int npadded = 0;
 
       if ( ntinois > 0  &&  ntinois < npoints )
@@ -1370,19 +1336,18 @@ void US_AnalysisBase2::load_noise( int index )
       {
          int    iin    = min( ii, ( nrinois - 1 ) );
          double rinoi  = ( nrinois > 0 ) ? ri_noise.values[ iin ] : 0.0;
-         US_DataIO2::Scan* escan = &edata->scanData[ ii ];
+         US_DataIO::Scan*  escan = &edata->scanData[ ii ];
 
          for ( int jj = 0; jj < npoints; jj++ )
          {
             int    jjn    = min( jj, ( ntinois - 1 ) );
             double tinoi  = ( ntinois > 0 ) ? ti_noise.values[ jjn ] : 0.0;
 
-            escan->readings[ jj ] =
-               US_DataIO2::Reading( edata->value( ii, jj ) - rinoi - tinoi );
+            escan->rvalues[ jj ] = edata->value( ii, jj ) - rinoi - tinoi;
          }
 
-         int plx        = US_DataIO2::index( edata->x, edata->plateau );
-         escan->plateau = escan->readings[ plx ].value;
+         int plx        = US_DataIO::index( edata->xvalues, edata->plateau );
+         escan->plateau = escan->rvalues[ plx ];
       }
 
       // Keep track of noise applied to this triple and save each
@@ -1522,7 +1487,7 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
    US_DB2      db( pw.getPasswd() );
    US_DB2*     dbP = &db;
    QStringList query;
-   US_DataIO2::EditedData* edata = &dataList[ lw_triples->currentRow() ];
+   US_DataIO::EditedData* edata = &dataList[ lw_triples->currentRow() ];
    QString tripdesc = edata->description;
 
    // Get the ID of the EditedData DB record associated with the report
@@ -1557,5 +1522,32 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
             << "filename" << fname;
       }
    }
+}
+
+// Write a general dataset information HTML report file
+bool US_AnalysisBase2::write_dset_report( QString& dsfname )
+{
+   QFile f_rep( dsfname );
+
+   bool is_ok = f_rep.open( QIODevice::WriteOnly | QIODevice::Truncate );
+
+   if ( ! is_ok )
+      return is_ok;
+
+   QTextStream ts( &f_rep );
+
+   int                    index  = lw_triples->currentRow();
+   US_DataIO::EditedData* edata  = &dataList[ index ];
+
+   QString title = "US_Analysis_Base";
+   QString head1 = tr( "General Data Set Information" );
+
+   ts << html_header( title, head1, edata );
+   ts << run_details();
+   ts << hydrodynamics();
+   ts << indent( 2 ) + "</body>\n</html>\n";
+
+   f_rep.close();
+   return is_ok;
 }
 

@@ -40,9 +40,9 @@ class US_AnalysisControl : public US_WidgetsDialog
 
       QList< US_SolveSim::DataSet* >&  dsets;
 
-      US_DataIO2::EditedData*          edata;
-      US_DataIO2::RawData*             sdata;
-      US_DataIO2::RawData*             rdata;
+      US_DataIO::EditedData*           edata;
+      US_DataIO::RawData*              sdata;
+      US_DataIO::RawData*              rdata;
       US_Model*                        model;
       US_Noise*                        ri_noise;
       US_Noise*                        ti_noise;

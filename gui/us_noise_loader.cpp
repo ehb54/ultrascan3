@@ -10,7 +10,7 @@
 // constructor:  load loader dialog
 US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
    QStringList& nieGUIDs, US_Noise& ti_noise, US_Noise& ri_noise,
-   US_DataIO2::EditedData* edata )
+   US_DataIO::EditedData* edata )
    : US_WidgetsDialog( 0, 0 ), db( db ), mieGUIDs( mieGUIDs ),
    nieGUIDs( nieGUIDs ), ti_noise( ti_noise ), ri_noise( ri_noise )
 {
@@ -120,8 +120,8 @@ US_NoiseLoader::US_NoiseLoader( US_DB2* db, QStringList& mieGUIDs,
    // Compute the OD range of the edited data
    if ( edata != NULL )
    {
-      int nscans    = edata->scanData.size();
-      int npoints   = edata->x.size();
+      int nscans    = edata->scanCount();
+      int npoints   = edata->pointCount();
       double datmin = edata->value( 0, 0 );
       double datmax = datmin;
 

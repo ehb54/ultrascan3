@@ -10,7 +10,7 @@
 
 // Main constructor
 US_EqReporter::US_EqReporter(
-      QVector< US_DataIO2::EditedData >& dataList,
+      QVector< US_DataIO::EditedData >&  dataList,
       QVector< ScanEdit >&               scedits,
       QVector< EqScanFit >&              scanfits,
       EqRunFit&                          runfit,
@@ -58,7 +58,7 @@ DbgLv(1) << "SCAN_DIAGS()";
    rs += tr( "equilibrium analysis tutorial for more information.\n\n" );
 
    bool scprobs  = false;
-   int  dimvs    = dataList[ 0 ].x.size() * 3 / 2;
+   int  dimvs    = dataList[ 0 ].pointCount() * 3 / 2;
    QVector< double > xvec( dimvs );
    QVector< double > yvec( dimvs );
    double* xx    = xvec.data();
@@ -75,7 +75,7 @@ DbgLv(1) << "SCAN_DIAGS()";
       rs += scanInfoHeader( jes, jdx );
 
       // Point to data, scan and this scan's data range
-      US_DataIO2::EditedData* sdata = &dataList[ jdx ];
+      US_DataIO::EditedData* sdata = &dataList[ jdx ];
       int ivstx = index_radius( sdata, radlo );
       int ivenx = index_radius( sdata, radhi );
       int endx  = scanfits[ jes ].stop_ndx;
@@ -94,7 +94,7 @@ DbgLv(1) << "SCAN_DIAGS()";
 DbgLv(1) << "SDiag: jes" << jes << "ivstx ivenx npts" << ivstx << ivenx << npts;
 DbgLv(1) << "SDiag:  radlo radhi" << radlo << radhi
    << " rs re" << sdata->radius(ivstx) << sdata->radius(ivenx)
-   << " r0 rn" << sdata->radius(0) << sdata->radius(sdata->x.size()-1);
+   << " r0 rn" << sdata->radius(0) << sdata->radius(sdata->pointCount()-1);
 
       int nwarns = 0;             // Initialize for scan analysis
 
@@ -821,9 +821,9 @@ DbgLv(1) << "  EqRep:FITREP: nfruns" << runfit.nbr_runs;
 }
 
 // Determine the index in the radius vector of a given radius
-int US_EqReporter::index_radius( US_DataIO2::EditedData* edat, double radius )
+int US_EqReporter::index_radius( US_DataIO::EditedData* edat, double radius )
 {
-   int l_index = edat->x.size() - 1;
+   int l_index = edat->pointCount() - 1;
    int r_index = -1;
 
    while ( ++r_index < l_index )

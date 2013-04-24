@@ -13,10 +13,10 @@
 //! Define a function especially for Windows
 #define round(x) floor( (x) + 0.5 )
 
-US_RunDetails2::US_RunDetails2( const QVector< US_DataIO2::RawData >& data, 
-                                const QString&                        runID, 
-                                const QString&                        dataDir, 
-                                const QStringList&                    cell_ch_wl )
+US_RunDetails2::US_RunDetails2( const QVector< US_DataIO::RawData >& data, 
+                                const QString&                       runID, 
+                                const QString&                       dataDir, 
+                                const QStringList&                   cell_ch_wl )
    : US_WidgetsDialog( 0, 0 ), dataList( data ), triples( cell_ch_wl )
 {
    setWindowTitle( tr( "Details for Raw Data" ) );
@@ -212,7 +212,7 @@ void US_RunDetails2::setup( void )
 {
    // Set length of run
    double              last = 0.0;
-   US_DataIO2::RawData data;
+   US_DataIO::RawData data;
 
    foreach( data, dataList )
       last = max( last, data.scanData.last().seconds );
@@ -231,7 +231,7 @@ void US_RunDetails2::setup( void )
    double correction = 0.0;
    int    scanCount  = 0;
 
-   US_DataIO2::Scan scan;
+   US_DataIO::Scan scan;
    
    foreach( data, dataList )
    {
@@ -293,11 +293,11 @@ void US_RunDetails2::show_all_data( void )
 {
    le_desc->setText( "" );
 
-   US_DataIO2::RawData triple;
-   US_DataIO2::Scan    scan;
-   double              temp      = 0.0;
-   double              rpm       = 0.0;
-   int                 scanCount = 0;
+   US_DataIO::RawData triple;
+   US_DataIO::Scan    scan;
+   double             temp      = 0.0;
+   double             rpm       = 0.0;
+   int                scanCount = 0;
 
    // Note that these are not weighted averages 
    foreach( triple, dataList )
@@ -348,6 +348,7 @@ void US_RunDetails2::show_all_data( void )
    QVector< double > t( scanCount );
    QVector< double > r( scanCount );
    QVector< double > m( scanCount );
+   double prior_seconds = 0.0;
 
    for ( int i = 0; i < scanCount; i++ )
    {
@@ -355,9 +356,9 @@ void US_RunDetails2::show_all_data( void )
       t[ i ] = values[ i ].temperature;
       r[ i ] = values[ i ].rpm / 1000.0;
 
-      double prior_seconds;
       
-      if ( i > 0 ) m[ i ] = ( values[ i ].seconds - prior_seconds ) / 60.0;
+      if ( i > 0 )
+         m[ i ] = ( values[ i ].seconds - prior_seconds ) / 60.0;
 
       prior_seconds = values[ i ].seconds;
    }
@@ -504,8 +505,8 @@ void US_RunDetails2::update( int index )
       return;
    }
 
-   const US_DataIO2::RawData* data      = &dataList[ index ];
-   int                        scanCount = data->scanData.size();
+   const US_DataIO::RawData* data      = &dataList[ index ];
+   int                       scanCount = data->scanData.size();
 
    le_desc->setText( data->description );
 
@@ -534,10 +535,11 @@ void US_RunDetails2::update( int index )
    QVector< double > t( scanCount );
    QVector< double > r( scanCount );
    QVector< double > m( scanCount );
+   double prior_seconds = 0.0;
 
    for ( int i = 0; i < scanCount; i++ )
    {
-      const US_DataIO2::Scan* s = &data->scanData[ i ];
+      const US_DataIO::Scan* s = &data->scanData[ i ];
 
       x[ i ] = i + 1;
       t[ i ] = s->temperature;
@@ -546,8 +548,6 @@ void US_RunDetails2::update( int index )
 
       r[ i ] = s->rpm / 1000.0;
 
-      double prior_seconds;
-      
       if ( i > 0 )  m[ i ] = ( s->seconds - prior_seconds ) / 60.0;
 
       prior_seconds = s->seconds;

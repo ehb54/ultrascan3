@@ -7,7 +7,8 @@
 #include "us_model.h"
 #include "us_simparms.h"
 #include "us_buffer.h"
-#include "us_dataIO2.h"
+//#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
 
@@ -83,7 +84,8 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             //! \param asparms   Simulation parameters for all components
             //! \param asim_data Simulation AUC data for all components
             SaltData( US_Model, US_SimulationParameters,
-                      US_DataIO2::RawData* );
+//                      US_DataIO2::RawData* );
+                      US_DataIO::RawData* );
 
             //! \brief Destroy salt data
             ~SaltData();
@@ -98,7 +100,8 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             //! \param Csalt Concentration of salt for current time
             void InterpolateCSalt( int, double*, double, double* );
 
-            US_DataIO2::RawData     sa_data;   //!< salt data 1-component
+//            US_DataIO2::RawData     sa_data;   //!< salt data 1-component
+            US_DataIO::RawData      sa_data;   //!< salt data 1-component
                                                //!<  simulation for co-sed
          private:
 
@@ -128,7 +131,8 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! \brief Main method to calculate FVM solution
       //! \param sim_data Reference to simulated AUC data to produce
       //! \returns        Non-zero if multiple non-ideal conditions
-      int  calculate( US_DataIO2::RawData& );
+//      int  calculate( US_DataIO2::RawData& );
+      int  calculate( US_DataIO::RawData& );
 
       //! \brief Set buffer parameters: density, compressibility
       //! \param buffer Buffer object to examine
@@ -168,7 +172,8 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
 
       US_Model&                 model;       // input model
       US_SimulationParameters&  simparams;   // input simulation parameters
-      US_DataIO2::RawData*      auc_data;    // input/output AUC data
+//      US_DataIO2::RawData*      auc_data;    // input/output AUC data
+      US_DataIO::RawData*       auc_data;    // input/output AUC data
 
       US_AstfemMath::MfemData   af_data;     // internal data
 
@@ -264,10 +269,12 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       void LsSolver53(   int, double**, double*, double* );
 
       // load internal data from caller's raw data
-      void load_mfem_data(  US_DataIO2::RawData&, US_AstfemMath::MfemData&,
+//      void load_mfem_data(  US_DataIO2::RawData&, US_AstfemMath::MfemData&,
+      void load_mfem_data(  US_DataIO::RawData&, US_AstfemMath::MfemData&,
                             bool = true );
 
       // store internal data to caller's raw data
-      void store_mfem_data( US_DataIO2::RawData&, US_AstfemMath::MfemData& );
+//      void store_mfem_data( US_DataIO2::RawData&, US_AstfemMath::MfemData& );
+      void store_mfem_data( US_DataIO::RawData&, US_AstfemMath::MfemData& );
 };
 #endif

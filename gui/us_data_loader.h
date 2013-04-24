@@ -8,7 +8,7 @@
 #include "us_widgets_dialog.h"
 #include "us_widgets.h"
 #include "us_help.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_db2.h"
 
 //! \brief A dialog class to select and load data (edited or raw)
@@ -29,8 +29,8 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       //! \param tfilt    Optional experiment type filter (default=Velocity).
 
       US_DataLoader( bool, int,
-                     QVector< US_DataIO2::RawData >&,
-                     QVector< US_DataIO2::EditedData >&,
+                     QVector< US_DataIO::RawData >&,
+                     QVector< US_DataIO::EditedData >&,
                      QStringList&,
                      QString&,
                      QString = "" );
@@ -87,11 +87,11 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
 
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
-      QVector< US_DataIO2::RawData    >& rawData;
-      QVector< US_DataIO2::EditedData >& editedData;
-      QStringList&                       triples;
-      QString&                           description;
-      QString                            etype_filt;
+      QVector< US_DataIO::RawData    >& rawData;
+      QVector< US_DataIO::EditedData >& editedData;
+      QStringList&                      triples;
+      QString&                          description;
+      QString                           etype_filt;
 
       bool load_edit      ( void );
       void describe       ( void );

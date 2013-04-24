@@ -259,8 +259,8 @@ DbgLv(1) << "Data Plot from Base";
       return;
 
    // set up to plot simulation data and residuals
-   int nscans  = edata->scanData.size();
-   int npoints = edata->x.size();
+   int npoints = edata->pointCount();
+   int nscans  = edata->scanCount();
    int count   = ( npoints > nscans ) ? npoints : nscans;
 
    QVector< double > rvec( count, 0.0 );
@@ -315,7 +315,10 @@ DbgLv(1) << "Data Plot from Base";
    us_grid( data_plot1 );
    data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   tr( "OD Difference" ) );
-   double vari  = 0.0;
+   double vari    = 0.0;
+   double odlim   = edata->ODlimit;
+   double pllim   = odlim * ODLIM_PLFAC;
+   int    kntva   = 0;
 
    // build vector of radius values
    for ( int jj = 0; jj < npoints; jj++ )
@@ -329,10 +332,33 @@ DbgLv(1) << "Data Plot from Base";
       for ( int jj = 0; jj < npoints; jj++ )
       {
          double tinoi = have_ti ? ti_noise.values[ jj ] : 0.0;
-         double evalu = edata->value( ii, jj )
-                      - sdata .value( ii, jj ) - tinoi - rinoi;
-         va[ jj ]     = evalu;
-         vari        += sq( evalu );
+         double edval = edata->value( ii, jj );
+#if 0
+
+         if ( edval < odlim )
+         {
+            double evalu = edval - sdata .value( ii, jj ) - tinoi - rinoi;
+            va[ jj ]     = evalu;
+            vari        += sq( evalu );
+            kntva++;
+         }
+         else
+         {
+            va[ jj ]     = ODLIM_RVAL;
+         }
+#endif
+#if 1
+         va[ jj ]     = edval - sdata .value( ii, jj ) - tinoi - rinoi;
+
+         if ( edval < odlim )
+         {
+            vari        += sq( va[ jj ] );
+            kntva++;
+         }
+         else
+            va[ jj ]     = pllim;
+
+#endif
       }
 
       // plot dots of residuals at current scan
@@ -364,7 +390,7 @@ DbgLv(1) << "Data Plot from Base";
    data_plot1->replot();
 
    // report on variance and rmsd
-   vari    /= (double)( nscans * npoints );
+   vari    /= (double)( kntva );
    rmsd     = sqrt( vari );
    le_vari->setText( QString::number( vari ) );
    le_rmsd->setText( QString::number( rmsd ) );
@@ -609,15 +635,20 @@ void US_2dsa::save( void )
 
    reppath           = reppath + "/" + runID + "/";
    respath           = respath + "/" + runID + "/";
-   QString filebase  = reppath
-                    + ( fitMeni ? "2DSA-FM" : ( montCar ? "2DSA-MC" : "2DSA" ) )
-                    + dext + ".";
+   QString analybase = fitMeni ? "2DSA-FM" : ( montCar ? "2DSA-MC" : "2DSA" );
+   QString analynode = "/" + analybase + ".";
+   QString filebase  = reppath  + analybase + dext + ".";
    QString htmlFile  = filebase + "report.html";
    QString plot1File = filebase + "velocity.svg";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString fitFile   = filebase + "fitmen.dat";
    QString fresFile  = respath  + "2dsa-fm" + dext2 + ".fitmen.dat";
+   QString dsinfFile = QString( filebase ).replace( analynode, "/dsinfo." )
+                                + "dataset_info.html";
+
+   // Write a general dataset information html file
+   write_dset_report( dsinfFile );
 
    // Write HTML report file
    QFile rep_f( htmlFile );
@@ -709,6 +740,9 @@ void US_2dsa::save( void )
       }
    }
 
+   wmsg = wmsg + dsinfFile + "\n";
+   repfiles << dsinfFile;
+
    if ( disk_controls->db() )
    {  // Write report files to the database
       reportFilesToDB( repfiles );
@@ -721,7 +755,7 @@ void US_2dsa::save( void )
 }
 
 // Return pointer to main window edited data
-US_DataIO2::EditedData* US_2dsa::mw_editdata()
+US_DataIO::EditedData* US_2dsa::mw_editdata()
 {
    int drow = lw_triples->currentRow();
    edata    = ( drow >= 0 ) ? &dataList[ drow ] : 0;
@@ -731,8 +765,8 @@ US_DataIO2::EditedData* US_2dsa::mw_editdata()
 
 // Return pointers to main window data and GUI elements
 
-US_DataIO2::RawData*        US_2dsa::mw_simdata()      { return &sdata;    }
-US_DataIO2::RawData*        US_2dsa::mw_resdata()      { return &rdata;    }
+US_DataIO::RawData*         US_2dsa::mw_simdata()      { return &sdata;    }
+US_DataIO::RawData*         US_2dsa::mw_resdata()      { return &rdata;    }
 US_Model*                   US_2dsa::mw_model()        { return &model;    }
 US_Noise*                   US_2dsa::mw_ti_noise()     { return &ti_noise; }
 US_Noise*                   US_2dsa::mw_ri_noise()     { return &ri_noise; }
@@ -1059,9 +1093,6 @@ void US_2dsa::write_report( QTextStream& ts )
    ts << html_header( QString( "US_2dsa" ),
                       tr( "2-Dimensional Spectrum Analysis" ),
                       edata );
-   ts << run_details();
-   ts << hydrodynamics();
-   ts << scan_info();
    ts << distrib_info();
    ts << iteration_info();
    ts << indent( 2 ) + "</body>\n</html>\n";
@@ -1073,8 +1104,14 @@ void US_2dsa::write_bmap( const QString plotFile )
    // Generate the residuals array
    bool have_ri = ri_noise.count > 0;
    bool have_ti = ti_noise.count > 0;
-   int  nscans  = edata->scanData.size();
-   int  npoints = edata->x.size();
+   int  npoints = edata->pointCount();
+   int  nscans  = edata->scanCount();
+#if 0
+   double odlm  = edata->ODlimit;
+#endif
+#if 1
+   double pllim = edata->ODlimit * ODLIM_PLFAC;
+#endif
    QVector< double >            resscn( npoints );
    QVector< QVector< double > > resids( nscans  );
 
@@ -1085,8 +1122,18 @@ void US_2dsa::write_bmap( const QString plotFile )
       for ( int jj = 0; jj < npoints; jj++ )
       {
          double tnoi  = have_ti ? ti_noise.values[ jj ] : 0.0;
-         resscn[ jj ] = edata->value( ii, jj )
-                      - sdata.value(  ii, jj ) - rnoi - tnoi;
+#if 0
+         double eval  = edata->value( ii, jj );
+         if ( eval < odlm )
+            resscn[ jj ] = eval - sdata.value(  ii, jj ) - rnoi - tnoi;
+         else
+            resscn[ jj ] = ODLIM_RVAL;
+#endif
+#if 1
+         resscn[ jj ] = qMin( pllim,
+                              edata->value( ii, jj ) - sdata.value(  ii, jj )
+                              - rnoi - tnoi );
+#endif
       }
 
       resids[ ii ] = resscn;

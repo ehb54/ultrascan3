@@ -128,9 +128,9 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
 
       try
       {
-         int result = US_DataIO2::loadData( ".", d->edit_file, d->run_data );
+         int result = US_DataIO::loadData( ".", d->edit_file, d->run_data );
 
-         if ( result != US_DataIO2::OK ) throw result;
+         if ( result != US_DataIO::OK ) throw result;
       }
       catch ( int error )
       {
@@ -138,7 +138,7 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
 DbgLv(0) << "BAD DATA. error" << error << "rank" << my_rank;
          abort( msg, error );
       }
-      catch ( US_DataIO2::ioError error )
+      catch ( US_DataIO::ioError error )
       {
          QString msg = "Abort.  Bad data file " + d->auc_file + " " + d->edit_file;
 DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;

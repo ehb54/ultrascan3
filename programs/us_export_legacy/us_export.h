@@ -5,7 +5,7 @@
 
 #include "us_widgets.h"
 #include "us_plot.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_db2.h"
 #include "us_editor.h"
 #include "us_math2.h"
@@ -60,11 +60,11 @@ class US_ExportLegacy : public US_Widgets
 
       QStringList   files;
 
-      US_DataIO2::EditedData*  edata;
-      US_DataIO2::RawData*     rdata;
-      US_DataIO2::Scan*        dscan;
+      US_DataIO::EditedData*  edata;
+      US_DataIO::RawData*     rdata;
+      US_DataIO::Scan*        dscan;
 
-      US_Disk_DB_Controls*     dkdb_cntrls;
+      US_Disk_DB_Controls*    dkdb_cntrls;
 
    private slots:
 
@@ -80,15 +80,15 @@ class US_ExportLegacy : public US_Widgets
       void    exp_interference( QStringList& );
       void    write_report    ( QTextStream& );
       void    update_disk_db  ( bool );
-      bool    mkdir           ( const QString&, const QString& );
+      bool    mkdir           ( QString&, QString& );
       void    new_triple      ( int );
       QString indent          ( int ) const;
       void    view_report     ( void );
       QString table_row       ( const QString&, const QString& ) const;
-      QString html_header     ( QString, QString, US_DataIO2::RawData* );
-      QString data_details    ( void )                      const;
-      double  time_correction ( void ) const;
-      void    rDataStrings    ( US_DataIO2::RawData*,
+      QString html_header     ( QString, QString, US_DataIO::RawData* );
+      QString data_details    ( void );
+      double  time_correction ( void );
+      void    rDataStrings    ( US_DataIO::RawData*,
                                 QString&, QString&, QString&, QString& );
 
       int     getRIProfile       ( QVector< double >& );
@@ -100,8 +100,8 @@ class US_ExportLegacy : public US_Widgets
 
    protected:
       QStringList                       triples;
-      QVector< US_DataIO2::EditedData > dataList;
-      QVector< US_DataIO2::RawData    > rawList;
+      QVector< US_DataIO::EditedData >  dataList;
+      QVector< US_DataIO::RawData    >  rawList;
       QVector< int >                    extrips;
 
       US_Help      showHelp;

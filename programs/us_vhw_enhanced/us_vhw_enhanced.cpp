@@ -248,8 +248,8 @@ DbgLv(1) << " data_plot: dataLoaded" << dataLoaded << "vbar" << vbar;
    data_plot2->detachItems();
    data_plot2->setAxisAutoScale( QwtPlot::yLeft );
    data_plot2->setAxisAutoScale( QwtPlot::xBottom );
-   scanCount  = edata->scanData.size();
-   valueCount = edata->x.size();
+   scanCount  = edata->scanCount();
+   valueCount = edata->pointCount();
    boundPct   = ct_boundaryPercent->value() / 100.0;
    positPct   = ct_boundaryPos    ->value() / 100.0;
    baseline   = calc_baseline();
@@ -493,8 +493,6 @@ void US_vHW_Enhanced::write_report( QTextStream& ts )
    edata      = &dataList[ lw_triples->currentRow() ];
    ts << html_header( "US_vHW_Enhanced",
          tr( "van Holde - Weischet Analysis" ), edata );
-   ts << run_details();
-   ts << hydrodynamics();
    ts << analysis( "" );
 
    ts << "\n" + indent( 4 ) + tr( "<h3>Selected Groups:</h3>\n" )
@@ -558,13 +556,13 @@ void US_vHW_Enhanced::write_report( QTextStream& ts )
    C0 = ( C0 == 0.0 ) ? ci : C0;
 
    ts << "\n" + indent( 4 ) + "<br/><table>\n";
-   ts << table_row( tr( "Initial Concentration:   " ),
+   ts << table_row( tr( "Initial Concentration:" ),
                     QString::number( ci ) + " OD" );
-   ts << table_row( tr( "Correlation Coefficient: " ),
+   ts << table_row( tr( "Correlation Coefficient:" ),
                     QString::number( cor ) );
-   ts << table_row( tr( "Standard Deviation:      " ),
+   ts << table_row( tr( "Standard Deviation:" ),
                     QString::number( sig ) );
-   ts << table_row( tr( "Initial Concentration from exponential fit: " ),
+   ts << table_row( tr( "Initial Concentration from exponential fit:" ),
                     QString::number( C0 ) + " OD" );
    ts << indent( 4 ) + "</table>\n";
 
@@ -608,6 +606,11 @@ QDateTime time0=QDateTime::currentDateTime();
    QString plot2File = basename + "extrap.svg";
    QString plot3File = basename + "s-c-distrib.svg";
    QString plot4File = basename + "s-c-histo.svg";
+   QString dsinfFile = QString( basename ).replace( "/vHW.", "/dsinfo." )
+                                + "dataset_info.html";
+
+   // Write a general dataset information file
+   write_dset_report( dsinfFile );
 
    // Write the main report file
    QFile rpt_f( htmlFile );
@@ -657,11 +660,13 @@ DbgLv(1) << "(T)PLOT ENV save: plot3File" << plot3File;
    files << plot2File;
    files << plot3File;
    files << plot4File;
+   files << dsinfFile;
    repfiles << htmlFile;
    repfiles << plot1File;
    repfiles << plot2File;
    repfiles << plot3File;
    repfiles << plot4File;
+   repfiles << dsinfFile;
    repfiles << data0File;
    repfiles << data1File;
    repfiles << data2File;
@@ -784,13 +789,13 @@ void US_vHW_Enhanced::update_divis(      double dval )
 
 // Index to first readings value greater than or equal to given concentration
 int US_vHW_Enhanced::first_gteq( double concenv,
-      QVector< US_DataIO2::Reading >& readings, int valueCount, int defndx )
+      QVector< double >& rvalues, int valueCount, int defndx )
 {
    int index = defndx;                           // Set return index to default
 
    for ( int jj = 0; jj < valueCount; jj++ )
    {  // Find index where readings value equals or exceeds given concentration
-      if ( readings[ jj ].value >= concenv )
+      if ( rvalues[ jj ] >= concenv )
       {
          index     = jj;                         // Set index to found point
          break;                                  // And return with it
@@ -801,9 +806,9 @@ int US_vHW_Enhanced::first_gteq( double concenv,
 
 // Index to first greater-or-equal value (with default of -1)
 int US_vHW_Enhanced::first_gteq( double concenv,
-      QVector< US_DataIO2::Reading >& readings, int valueCount )
+      QVector< double >& rvalues, int valueCount )
 {
-   return first_gteq( concenv, readings, valueCount, -1 );
+   return first_gteq( concenv, rvalues, valueCount, -1 );
 }
 
 // Get average scan plateau value for 41 points around user-specified value
@@ -813,12 +818,12 @@ double US_vHW_Enhanced::avg_plateau( )
 kcalls[7]+=1;QDateTime sttime=QDateTime::currentDateTime();
 //*TIMING
    double plato  = 0.0;
-   int j2  = US_DataIO2::index( edata->x, edata->plateau ); // Index plat radius
-   int j1  = max( 0, ( j2 - PA_POINTS ) );          // Point to 20 points before
-       j2  = min( valueCount, ( j2 + PA_POINTS + 1 ) ); // and 20 points after
-
-   for ( int jj = j1; jj < j2; jj++ )        // Sum 41 points centered at the
-      plato += dscan->readings[ jj ].value;  //  scan plateau radial position
+   int j2  = edata->xindex( edata->plateau );      // Index plateau radius
+   int j1  = max( 0, ( j2 - PA_POINTS ) );         // Point to 20 points before
+       j2  = min( valueCount, ( j2 + PA_POINTS + 1 ) );
+                                                   //  and 20 points after
+   for ( int jj = j1; jj < j2; jj++ )    // Sum 41 points centered at the
+      plato += dscan->rvalues[ jj ];     //  scan plateau radial position
 
    plato /= (double)( j2 - j1 );         // Find and return the average
 
@@ -835,7 +840,7 @@ double US_vHW_Enhanced::sed_coeff( double cconc, double oterm,
 //*TIMING
 kcalls[16]+=1;QDateTime sttime=QDateTime::currentDateTime();
 //*TIMING
-   int    j2   = first_gteq( cconc, dscan->readings, valueCount );
+   int    j2   = first_gteq( cconc, dscan->rvalues, valueCount );
    double rv0  = -1.0;          // Mark radius excluded
    double sedc = SEDC_NOVAL;
 
@@ -845,10 +850,10 @@ kcalls[16]+=1;QDateTime sttime=QDateTime::currentDateTime();
 
       if ( j2 > 0 )
       {  // Interpolate radius value
-         double av1  = dscan->readings[ j1 ].value;
-         double av2  = dscan->readings[ j2 ].value;
-         double rv1  = edata->x[ j1 ].radius;
-         double rv2  = edata->x[ j2 ].radius;
+         double av1  = dscan->rvalues[ j1 ];
+         double av2  = dscan->rvalues[ j2 ];
+         double rv1  = edata->xvalues[ j1 ];
+         double rv2  = edata->xvalues[ j2 ];
          double rra  = av2 - av1;
          rra         = ( rra == 0.0 ) ? 0.0 : ( ( rv2 - rv1 ) / rra );
          rv0         = rv1 + ( cconc - av1 ) * rra;
@@ -896,8 +901,8 @@ kcalls[1]+=1;QDateTime sttime=QDateTime::currentDateTime();
    double  pconc;
    double  mconc;
    bdtoler          = ct_tolerance->value();
-   valueCount       = edata->x.size();
-   double  bottom   = edata->x[ valueCount - 1 ].radius;
+   valueCount       = edata->pointCount();
+   double  bottom   = edata->radius( valueCount - 1 );
 
    // Do division-1 determination of base
 
@@ -943,14 +948,14 @@ DbgLv(1) << "  ii nscnu" << ii << nscnu << " js lscnCount" << js << lscnCount;
       // radD = bottom - ( 2 * find_root(left) * sqrt( diff * time ) )
 
       radD        = bottom - ( 2.0 * xbdleft * bdifcsqr * timesqr );
-      radD        = max( edata->x[ 0 ].radius, min( bottom, radD ) );
+      radD        = qMax( edata->xvalues[ 0 ], qMin( bottom, radD ) );
 
-      int mm      = US_DataIO2::index( edata->x, radD );  // Radius's index
+      int mm      = edata->xindex( radD );   // Radius's index
 
       // Accumulate for this scan of this division
       //  the back diffusion limit radius and corresponding concentration
-      xr[ nscnu ] = radD;                         // BD Radius
-      yr[ nscnu ] = dscan->readings[ mm ].value;  // BD Concentration
+      xr[ nscnu ] = radD;                    // BD Radius
+      yr[ nscnu ] = dscan->rvalues[ mm ];    // BD Concentration
 DbgLv(1) << "  bottom meniscus bdleft" << bottom << edata->meniscus << bdleft;
 DbgLv(1) << "  bdifsedc find_root toler" << bdiff_sedc << xbdleft << bdtoler;
 DbgLv(1) << "BD x,y " << nscnu+1 << radD << yr[nscnu] << "  mm" << mm;
@@ -1780,8 +1785,8 @@ DbgLv(1) << "FITTED_PLATEAUS";
    if ( !dataLoaded  ||  vbar <= 0.0 )
       return false;
 
-   valueCount = edata->x.size();
-   scanCount  = edata->scanData.size();
+   valueCount = edata->pointCount();
+   scanCount  = edata->scanCount();
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
    divfac     = 1.0 / (double)divsCount;
@@ -1982,8 +1987,8 @@ DbgLv(1) << "Cpl: MODEL_PLATEAUS: modelGUID" << modelGUID;
    double scorr = -2.0 / solution.s20w_correction;
 DbgLv(1) << "Cpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
    edata        = &dataList[ row ];
-   valueCount   = edata->x.size();
-   scanCount    = edata->scanData.size();
+   valueCount   = edata->pointCount();
+   scanCount    = edata->scanCount();
    scPlats.fill( 0.0, lscnCount );
 	C0           = 0.0;
 	Swavg        = 0.0;
@@ -2052,7 +2057,7 @@ kcalls[5]+=1;QDateTime sttime=QDateTime::currentDateTime();
 
    int     kk     = 0;                    // Index to sed. coeff. values
    int     kl     = 0;                    // Index/count of live scans
-   valueCount     = edata->x.size();
+   valueCount     = edata->pointCount();
 
    // Calculate the corrected sedimentation coefficients
 
@@ -2116,8 +2121,8 @@ kcalls[6]+=1;QDateTime sttime=QDateTime::currentDateTime();
    double  eterm;
    double  oterm;
 
-   scanCount  = edata->scanData.size();
-   valueCount = edata->x.size();
+   scanCount  = edata->scanCount();
+   valueCount = edata->pointCount();
    boundPct   = ct_boundaryPercent->value() / 100.0;
    positPct   = ct_boundaryPos    ->value() / 100.0;
    baseline   = calc_baseline();
@@ -2207,7 +2212,7 @@ DbgLv(1) << "   +++ avgdif < avdthr (" << avgdif << avdthr << ") +++";
 
    int     kk     = 0;                    // Index to sed. coeff. values
    int     kl     = 0;                    // Index/count of live scans
-   valueCount     = edata->x.size();
+   valueCount     = edata->pointCount();
 
    // Calculate the corrected sedimentation coefficients
 
@@ -2386,7 +2391,7 @@ kcalls[8]+=1;QDateTime sttime=QDateTime::currentDateTime();
 //*TIMING
    row        = lw_triples->currentRow();
    edata      = &dataList[ row ];
-   scanCount  = edata->scanData.size();
+   scanCount  = edata->scanCount();
    lscnCount  = 0;
    liveScans.clear();
 

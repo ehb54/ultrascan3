@@ -4,11 +4,9 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
-US_EditScan::US_EditScan( US_DataIO2::Scan& s, 
-                          const            QVector< US_DataIO2::XValue >& r,
-                          double           invertValue,
-                          double           left,
-                          double           right )
+US_EditScan::US_EditScan( US_DataIO::Scan&         s, 
+                          const QVector< double >& r,
+                          double invertValue, double left, double right )
    : US_WidgetsDialog( 0, 0 ), originalScan( s ), allRadii( r ), 
                                invert( invertValue ), 
                                range_left( left ), range_right( right )
@@ -37,7 +35,7 @@ US_EditScan::US_EditScan( US_DataIO2::Scan& s,
    pick = new US_PlotPicker( data_plot );
 
    // Draw the curve
-   int  size = originalScan.readings.size();
+   int  size = originalScan.rvalues.size();
    radii     = new double[ size ];
    values    = new double[ size ];
 
@@ -164,15 +162,15 @@ void US_EditScan::redraw( void )
    offset     = 0;
    int  count = 0;
 
-   int indexLeft  = US_DataIO2::index( allRadii, range_left );
-   int indexRight = US_DataIO2::index( allRadii, range_right );
+   int indexLeft  = US_DataIO::index( allRadii, range_left );
+   int indexRight = US_DataIO::index( allRadii, range_right );
    
    offset = indexLeft;
 
    for ( int j = indexLeft; j <= indexRight; j++ ) 
    { 
-      radii [ count ] = allRadii[ j ].radius;
-      values[ count ] = workingScan.readings[ j ].value * invert;
+      radii [ count ] = allRadii[ j ];
+      values[ count ] = workingScan.rvalues[ j ] * invert;
       count++;
    }
 

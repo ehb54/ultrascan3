@@ -12,10 +12,10 @@ const double dflt_max = (double)FLT_MAX;
 // Main constructor:  pass references to EditedData, ScanEdit, EqScanFit,
 //  and EqRunFit objects needed by methods of this EqMath object
 US_EqMath::US_EqMath(
-      QVector< US_DataIO2::EditedData >& dataList,
-      QVector< ScanEdit >&               scedits,
-      QVector< EqScanFit >&              scanfits,
-      EqRunFit&                          runfit )
+      QVector< US_DataIO::EditedData >& dataList,
+      QVector< ScanEdit >&              scedits,
+      QVector< EqScanFit >&             scanfits,
+      EqRunFit&                         runfit )
  : QObject(),
    dataList   ( dataList ),
    scedits    ( scedits  ),

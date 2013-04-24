@@ -6,7 +6,7 @@
 
 #include "us_extern.h"
 #include "us_widgets.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_plot.h"
 #include "us_math2.h"
 #include "us_help.h"
@@ -30,10 +30,10 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
 
    protected:
       //! A set of edited data for the analysis
-      QVector< US_DataIO2::EditedData > dataList;
+      QVector< US_DataIO::EditedData >  dataList;
 
       //! A set of raw data for the analysis
-      QVector< US_DataIO2::RawData    > rawList;
+      QVector< US_DataIO::RawData    >  rawList;
 
       //! The currently loaded triples in the form cell / channel / wavelength
       QStringList                       triples;
@@ -152,7 +152,7 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
 
       //! Return html header string
       QString      html_header  ( const QString&, const QString&,
-                                  US_DataIO2::EditedData* )        const;
+                                  US_DataIO::EditedData* )         const;
 
       //! Return run details in an html formatted string.
       QString      run_details  ( void )                           const;
@@ -191,6 +191,9 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
 
       //! Copy report files to the database
       void         reportFilesToDB( QStringList& );
+
+      //! Create a general dataset information report file
+      bool         write_dset_report( QString& );
 
       //! Exclude scans in the specified range
       virtual void exclude( void );

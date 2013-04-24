@@ -23,7 +23,7 @@ class US_EquilTime : public US_Widgets
 	private:
       US_Model                     model;
       US_SimulationParameters      simparams;
-      US_DataIO2::RawData          astfem_data;
+      US_DataIO::RawData           astfem_data;
 
       enum    { PROLATE, OBLATE, ROD, SPHERE };
       enum    { INNER, OUTER, CENTER, CUSTOM };

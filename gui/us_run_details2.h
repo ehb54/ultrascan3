@@ -6,7 +6,7 @@
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_plot.h"
 
 //! \brief A class to provide a window with the details of a run
@@ -22,7 +22,7 @@ class US_GUI_EXTERN US_RunDetails2 : public US_WidgetsDialog
       //! \param dataDir The data directory where the files were located
       //! \param cell_ch_wl A list of formatted cell/channel/wavelength
       //!                   strings that descripe each raw data structure
-      US_RunDetails2( const QVector< US_DataIO2::RawData >&, 
+      US_RunDetails2( const QVector< US_DataIO::RawData >&, 
                       const QString&, 
                       const QString&, 
                       const QStringList& );
@@ -31,8 +31,8 @@ class US_GUI_EXTERN US_RunDetails2 : public US_WidgetsDialog
       ~US_RunDetails2();
 
    private:
-      const QVector< US_DataIO2::RawData >& dataList;
-      const QStringList&                    triples;
+      const QVector< US_DataIO::RawData >& dataList;
+      const QStringList&                   triples;
       
       // key = rpm, value = triple + scan#
       QMultiMap< int, QString >          map; 

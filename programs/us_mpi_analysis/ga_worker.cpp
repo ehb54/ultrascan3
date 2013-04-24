@@ -98,18 +98,18 @@ DbgLv(0) << "Deme" << grp_nbr << deme_nbr
 
             for ( int e = dataset; e < dataset + count; e++ )
             {
-               US_DataIO2::EditedData* data = &data_sets[ e ]->run_data;
+               US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
 
-               int scan_count    = data->scanData.size();
-               int radius_points = data->x.size();
+               int scan_count    = data->scanCount();
+               int radius_points = data->pointCount();
 
                for ( int s = 0; s < scan_count; s++ )
                {
-                  US_DataIO2::Scan* scan = &data->scanData[ s ];
+                  US_DataIO::Scan* scan = &data->scanData[ s ];
 
                   for ( int r = 0; r < radius_points; r++ )
                   {
-                     scan->readings[ r ].value = mc_data[ index++ ];
+                     scan->rvalues[ r ] = mc_data[ index++ ];
                   }
                }
             }
@@ -987,10 +987,10 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
           QVector< double > nnls_x;
           QVector< double > nnls_c;
    US_SolveSim::DataSet*   dset  = data_sets[ 0 ];
-   US_DataIO2::EditedData* edata = &dset->run_data;
-   US_DataIO2::RawData     simdat;
-   int    nscans  = edata->scanData.size();
-   int    npoints = edata->x       .size();
+   US_DataIO::EditedData*  edata = &dset->run_data;
+   US_DataIO::RawData      simdat;
+   int    nscans  = edata->scanCount();
+   int    npoints = edata->pointCount();
    int    ntotal  = nscans * npoints;
    int    vsize   = v.size();
    int    nsols   = vsize / 2;

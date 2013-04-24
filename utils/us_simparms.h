@@ -4,7 +4,7 @@
 
 #include <QtCore>
 #include "us_extern.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_db2.h"
 
 //! A class to hold parameters of a run for simulation purposes.
@@ -27,7 +27,7 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! an experiment's edited data.
    //! \param db       Pointer to opened database connection or NULL
    //! \param editdata Data structure of edited data that contains run info.
-   void initFromData( US_DB2*, US_DataIO2::EditedData& );
+   void initFromData( US_DB2*, US_DataIO::EditedData& );
 
    //! \brief Read hardware files to update bottom and rotor coefficients array
    //! \param db     Pointer to opened database connection or NULL

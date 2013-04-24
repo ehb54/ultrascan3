@@ -15,7 +15,7 @@
 #include "us_astfem_rsa.h"
 #include "us_lamm_astfvm.h"
 #include "us_buffer.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -79,7 +79,7 @@ class US_Astfem_Sim : public US_Widgets
       US_Buffer               buffer;
       US_SimulationParameters simparams;
       US_SimulationParameters working_simparams;
-      US_DataIO2::RawData     sim_data;
+      US_DataIO::RawData      sim_data;
 
       void init_simparams  ( void );  
       void save_xla        ( const QString& );  
@@ -98,7 +98,7 @@ class US_Astfem_Sim : public US_Widgets
       void dump_association ( US_Model::Association& );
       void dump_mfem_initial( US_Model::MfemInitial& );
       void dump_ss          ( US_SimulationParameters::SpeedProfile& );
-      void dump_mfem_scan   ( US_DataIO2::Scan& );
+      void dump_mfem_scan   ( US_DataIO::Scan& );
 
    private slots:
       void new_model       ( void );

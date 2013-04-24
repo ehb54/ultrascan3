@@ -3,7 +3,7 @@
 #include "us_settings.h"
 
 // Get Solution/Buffer values for a data set
-bool US_SolutionVals::values( US_DB2* dbP, US_DataIO2::EditedData* edata,
+bool US_SolutionVals::values( US_DB2* dbP, US_DataIO::EditedData* edata,
       QString& soluID, QString& cvbar20, QString& density, QString& viscosity,
       QString& compress, QString& manual, QString& errmsg )
 {
@@ -43,7 +43,7 @@ bool US_SolutionVals::values( US_DB2* dbP, US_DataIO2::EditedData* edata,
 }
 
 // Get solution/buffer info from DB: ID, GUID, description
-bool US_SolutionVals::solinfo_db( US_DB2* dbP, US_DataIO2::EditedData* edata,
+bool US_SolutionVals::solinfo_db( US_DB2* dbP, US_DataIO::EditedData* edata,
       QString& cvbar20, QString& soluID, QString& bufId, QString& bufGuid,
       QString& bufDesc, QString& errmsg )
 {
@@ -125,7 +125,7 @@ bool US_SolutionVals::solinfo_db( US_DB2* dbP, US_DataIO2::EditedData* edata,
 }
 
 // Get solution/buffer info from local disk: ID, GUID, description
-bool US_SolutionVals::solinfo_disk( US_DataIO2::EditedData* edata,
+bool US_SolutionVals::solinfo_disk( US_DataIO::EditedData* edata,
       QString& cvbar20, QString& soluID, QString& bufId, QString& bufGuid,
       QString& bufDesc, QString& errmsg )
 {

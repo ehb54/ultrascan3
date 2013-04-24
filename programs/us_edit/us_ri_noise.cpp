@@ -5,13 +5,13 @@
 #include "us_gui_settings.h"
 #include "us_matrix.h"
 
-US_RiNoise::US_RiNoise( const US_DataIO2::RawData& raw, 
-                        const QList< int >&        Includes,
-                        double                     left,
-                        double                     right,
-                        const QString&             dataType,
-                        int&                       initial_order, 
-                        QList< double >&           r )
+US_RiNoise::US_RiNoise( const US_DataIO::RawData& raw, 
+                        const QList< int >&       Includes,
+                        double                    left,
+                        double                    right,
+                        const QString&            dataType,
+                        int&                      initial_order, 
+                        QList< double >&          r )
   : US_WidgetsDialog( 0, 0 ), 
     data( raw ), includes( Includes ), range_left( left ), 
     range_right( right ), order( initial_order ), residuals( r )
@@ -94,10 +94,10 @@ void US_RiNoise::draw_fit( double new_order )
    {
       if ( ! includes.contains( i ) ) continue;
 
-      const US_DataIO2::Scan* s = &data.scanData[ i ];
+      const US_DataIO::Scan* s = &data.scanData[ i ];
 
-      int indexLeft  = US_DataIO2::index( data.x, range_left );
-      int indexRight = US_DataIO2::index( data.x, range_right );
+      int indexLeft  = US_DataIO::index( data.xvalues, range_left  );
+      int indexRight = US_DataIO::index( data.xvalues, range_right );
 
       double delta_r  = ( range_right - range_left ) / 
                         ( indexRight - indexLeft );
@@ -107,8 +107,7 @@ void US_RiNoise::draw_fit( double new_order )
       // Integrate using trapezoid rule
       for ( int j = indexLeft + 1; j <= indexRight; j++ )
       {
-         double avg = 
-            ( s->readings[ j ].value + s->readings[ j - 1 ].value ) / 2.0;
+         double avg = ( s->rvalues[ j ] + s->rvalues[ j - 1 ] ) / 2.0;
          
          absorbance_integral[ scan ] += avg * delta_r;
       }
@@ -188,12 +187,12 @@ void US_RiNoise::draw_fit( double new_order )
 
 
 // We want to be able to call this function from other places.
-void US_RiNoise::calc_residuals( const US_DataIO2::RawData& data, 
-                                 const QList< int >&        includes,
-                                 double                     range_left,
-                                 double                     range_right,
-                                 int                        order, 
-                                 QList< double >&           residuals )
+void US_RiNoise::calc_residuals( const US_DataIO::RawData& data, 
+                                 const QList< int >&       includes,
+                                 double                    range_left,
+                                 double                    range_right,
+                                 int                       order, 
+                                 QList< double >&          residuals )
 {
    int scan_count = data.scanData.size();
 
@@ -212,10 +211,10 @@ void US_RiNoise::calc_residuals( const US_DataIO2::RawData& data,
    {
       if ( ! includes.contains( i ) ) continue;
 
-      const US_DataIO2::Scan* s = &data.scanData[ i ];
+      const US_DataIO::Scan* s = &data.scanData[ i ];
 
-      int indexLeft  = US_DataIO2::index( data.x, range_left );
-      int indexRight = US_DataIO2::index( data.x, range_right );
+      int indexLeft  = US_DataIO::index( data.xvalues, range_left  );
+      int indexRight = US_DataIO::index( data.xvalues, range_right );
 
       double delta_r  = ( range_right - range_left ) / 
                         ( indexRight - indexLeft );
@@ -225,8 +224,7 @@ void US_RiNoise::calc_residuals( const US_DataIO2::RawData& data,
       // Integrate using trapezoid rule
       for ( int j = indexLeft + 1; j <= indexRight; j++ )
       {
-         double avg = 
-            ( s->readings[ j ].value + s->readings[ j - 1 ].value ) / 2.0;
+         double avg = ( s->rvalues[ j ] + s->rvalues[ j - 1 ] ) / 2.0;
          
          absorbance_integral[ scan ] += avg * delta_r;
       }

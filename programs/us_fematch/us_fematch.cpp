@@ -347,10 +347,10 @@ us_setReadOnly( le_compress, true );
 }
 
 // public function to get pointer to edit data
-US_DataIO2::EditedData*     US_FeMatch::fem_editdata() { return edata;     }
+US_DataIO::EditedData*      US_FeMatch::fem_editdata() { return edata;     }
 
 // public function to get pointer to sim data
-US_DataIO2::RawData*        US_FeMatch::fem_simdata()  { return sdata;     }
+US_DataIO::RawData*         US_FeMatch::fem_simdata()  { return sdata;     }
 
 // public function to get pointer to load model
 US_Model*                   US_FeMatch::fem_model()    { return &model;    }
@@ -623,12 +623,12 @@ void US_FeMatch::data_plot( void )
    int     from      = (int)ct_from->value();
    int     to        = (int)ct_to  ->value();
 
-   int     points    = edata->scanData[ 0 ].readings.size();
+   int     points    = edata->pointCount();
    int     count     = points;
 
    if ( haveSim )
    {
-      count     = sdata->scanData[ 0 ].readings.size();
+      count     = sdata->pointCount();
       count     = points > count ? points : count;
    }
 
@@ -654,13 +654,13 @@ void US_FeMatch::data_plot( void )
    US_Math2::data_correction( avgTemp, solution );
 
    dscan           = &edata->scanData.last();
-   int    point    = US_DataIO2::index( *dscan, dataList[ drow ].x,
-                        dataList[ drow ].baseline );
+   int    point    = US_DataIO::index( dataList[ drow ].xvalues,
+                                       dataList[ drow ].baseline );
    point           = ( point < 5 ) ? 5 : point;
    double baseline = 0.0;
 
    for ( int jj = point - 5; jj < point + 6; jj++ )
-      baseline       += dscan->readings[ jj ].value;
+      baseline       += dscan->rvalues[ jj ];
 
    baseline       /= 11.0;
 
@@ -683,7 +683,7 @@ void US_FeMatch::data_plot( void )
       // Plot each scan in (up to) three segments: below, in, and above
       // the specified boundaries
 
-      while (  jj < points  &&  dscan->readings[ jj ].value < lower_limit )
+      while ( jj < points  &&  dscan->rvalues[ jj ] < lower_limit )
       {  // accumulate coordinates of below-baseline points
          r[ count   ] = edata->radius( jj );
          v[ count++ ] = edata->value( ii, jj++ );
@@ -704,7 +704,7 @@ void US_FeMatch::data_plot( void )
 
       count = 0;
 
-      while ( jj < points && dscan->readings[ jj ].value < upper_limit )
+      while ( jj < points  &&  dscan->rvalues[ jj ] < upper_limit )
       {  // accumulate coordinates of curve within baseline-to-plateau
          r[ count   ] = edata->radius( jj );
          v[ count++ ] = edata->value( ii, jj++ );
@@ -758,7 +758,7 @@ void US_FeMatch::data_plot( void )
       bool   have_ti = ti_noise.count > 0;
 DbgLv(1) << "  RL" << rl << "  VH" << vh;
 int nscan=scanCount;
-int nconc=sdata->scanData[0].readings.size();
+int nconc=sdata->pointCount();
 DbgLv(1) << "    sdata ns nc " << nscan << nconc;
 DbgLv(1) << "      sdata->x0" << sdata->radius(0);
 DbgLv(1) << "      sdata->xN" << sdata->radius(nconc-1);
@@ -773,12 +773,13 @@ DbgLv(1) << "      sdata->cMN" << sdata->value(nscan-1,nconc-1);
       {
          if ( excludedScans.contains( ii ) ) continue;
 
-         points    = sdata->scanData[ ii ].readings.size();
+         points    = sdata->pointCount();
 DbgLv(2) << "      II POINTS" << ii << points;
          count     = 0;
          double rr = 0.0;
          double vv = 0.0;
          double da = 0.0;
+         double ol = edata->ODlimit;
          rnoi      = have_ri ? ri_noise.values[ ii ] : 0.0;
 
          for ( int jj = 0; jj < points; jj++ )
@@ -787,8 +788,11 @@ DbgLv(2) << "      II POINTS" << ii << points;
             rr        = sdata->radius( jj );
             vv        = sdata->value( ii, jj ) + rnoi + tnoi;
             da        = edata->value( ii, jj );
-            rmsd     += sq( da - vv );
-            kpts++;
+            if ( da < ol )
+            {
+               rmsd     += sq( da - vv );
+               kpts++;
+            }
 DbgLv(3) << "       JJ rr vv" << jj << rr << vv;
 
             if ( rr > rl )
@@ -1453,7 +1457,7 @@ void US_FeMatch::distrib_plot_resids( )
    QwtPlotCurve* data_curv;
    QwtPlotCurve* line_curv = us_curve( data_plot1, "resids zline" );
 
-   int     dsize  = edata->scanData[ 0 ].readings.size();
+   int     dsize  = edata->pointCount();
    QVector< double > vecx( dsize );
    QVector< double > vecy( dsize );
    double* xx     = vecx.data();
@@ -1818,8 +1822,8 @@ for (int jj=0;jj<nenois;jj++)
       // noise loaded:  insure that counts jive with data
       int ntinois = ti_noise.values.size();
       int nrinois = ri_noise.values.size();
-      int nscans  = edata->scanData.size();
-      int npoints = edata->x.size();
+      int nscans  = edata->scanCount();
+      int npoints = edata->pointCount();
       int npadded = 0;
 
       if ( ntinois > 0  &&  ntinois < npoints )
@@ -1882,12 +1886,11 @@ void US_FeMatch::simulate_model( )
    }
 
    int    drow    = lw_triples->currentRow();
-   US_DataIO2::RawData*    rdata   = &rawList[  drow ];
-   US_DataIO2::EditedData* edata   = &dataList[ drow ];
-   US_DataIO2::Reading     reading;
-   int    kscan   = rdata->scanData.size();
-   int    nscan   = edata->scanData.size();
-   int    nconc   = edata->x.size();
+   US_DataIO::RawData*    rdata   = &rawList[  drow ];
+   US_DataIO::EditedData* edata   = &dataList[ drow ];
+   int    kscan   = rdata->scanCount();
+   int    nscan   = edata->scanCount();
+   int    nconc   = edata->pointCount();
    double radlo   = edata->radius( 0 );
    double radhi   = edata->radius( nconc - 1 );
 DbgLv(1) << " kscan nscan nconc" << kscan << nscan << nconc;
@@ -2042,7 +2045,7 @@ DbgLv(1) << " USING THREADING";
          {  // First time through per thread:  get initial model and sim data
             tmodels << model;
             tmodels[ ii ].components.clear();
-            US_DataIO2::RawData sdat = *sdata;
+            US_DataIO::RawData sdat = *sdata;
             tsimdats << sdat;
             kcomps   << 0;
          }
@@ -2092,8 +2095,8 @@ void US_FeMatch::show_results( )
 
    progress->setValue( progress->maximum() );
 
-   int nscan = sdata->scanData.size();
-   int nconc = sdata->x.size();
+   int nscan = sdata->scanCount();
+   int nconc = sdata->pointCount();
 DbgLv(1) << " afrsa done M N" << nscan << nconc;
 DbgLv(1) << "   sdata->x0" << sdata->radius(0);
 DbgLv(1) << "   sdata->xN" << sdata->radius(nconc-1);
@@ -2244,13 +2247,13 @@ void US_FeMatch::write_report( QTextStream& ts )
 // Calculate average baseline absorbance
 double US_FeMatch::calc_baseline( int drow ) const
 {
-   const US_DataIO2::EditedData* dd = &dataList[ drow ];
-   const US_DataIO2::Scan* ss = &dd->scanData.last();
-   int                     nn = US_DataIO2::index( *ss, dd->x, dd->baseline );
-   double                  bl = 0.0;
+   const US_DataIO::EditedData* dd = &dataList[ drow ];
+   const US_DataIO::Scan*       ss = &dd->scanData.last();
+   int     nn    = US_DataIO::index( dd->xvalues, dd->baseline );
+   double  bl    = 0.0;
 
    for ( int jj = nn - 5; jj < nn + 6; jj++ )
-      bl += ss->readings[ jj ].value;
+      bl += ss->rvalues[ jj ];
 
    return ( bl / 11.0 );
 }
@@ -2358,9 +2361,8 @@ QString US_FeMatch::text_model( US_Model model, int width )
 // Calculate residual absorbance values (data - sim - noise)
 void US_FeMatch::calc_residuals()
 {
-   int     dsize  = edata->scanData[ 0 ].readings.size();
-   int     ssize  = sdata->scanData[ 0 ].readings.size();
-   int     kscan  = scanCount - excludedScans.size();
+   int     dsize  = edata->pointCount();
+   int     ssize  = sdata->pointCount();
    QVector< double > vecxx( dsize );
    QVector< double > vecsx( ssize );
    QVector< double > vecsy( ssize );
@@ -2377,6 +2379,9 @@ void US_FeMatch::calc_residuals()
    bool    ftin   = ti_noise.count > 0;
    bool    frin   = ri_noise.count > 0;
    bool    matchd = ( dsize == ssize );
+   double  olim   = edata->ODlimit;
+   double  plim   = olim * ODLIM_PLFAC;
+   int     kpts   = 0;
 
    QVector< double > resscan;
 
@@ -2419,7 +2424,17 @@ void US_FeMatch::calc_residuals()
          //   yval          = 0.0;
 
          if ( usescan )
-            rmsd         += sq( yval );
+         {
+            if ( edata->value( ii, jj ) < olim )
+            {
+               rmsd         += sq( yval );
+               kpts++;
+            }
+            else
+            {
+               yval          = qMin( yval, plim );
+            }
+         }
 
          resscan[ jj ] = yval;
       }
@@ -2427,7 +2442,7 @@ void US_FeMatch::calc_residuals()
       resids.append( resscan );
    }
 
-   rmsd  /= (double)( kscan * dsize );
+   rmsd  /= (double)( kpts );
    le_variance->setText( QString::number( rmsd ) );
    rmsd   = sqrt( rmsd );
    le_rmsd    ->setText( QString::number( rmsd ) );
@@ -2487,7 +2502,7 @@ QString US_FeMatch::table_row( const QString& s1, const QString& s2,
 
 // Compose a report HTML header
 QString US_FeMatch::html_header( QString title, QString head1,
-      US_DataIO2::EditedData* edata )
+      US_DataIO::EditedData* edata )
 {
    QString s = QString( "<?xml version=\"1.0\"?>\n" );
    s  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
@@ -2519,7 +2534,7 @@ QString US_FeMatch::html_header( QString title, QString head1,
 QString US_FeMatch::data_details( void ) const
 {
    int    drow     = lw_triples->currentRow();
-   const US_DataIO2::EditedData* d      = &dataList[ drow ];
+   const US_DataIO::EditedData* d      = &dataList[ drow ];
    double baseline = calc_baseline( drow );
    QString                       dataType = tr( "Absorbance" );
    if ( d->dataType == "RI" )    dataType = tr( "Intensity" );
@@ -2592,9 +2607,9 @@ QString US_FeMatch::data_details( void ) const
         table_row( tr( "Meniscus Position:     " ),           
                    QString::number( d->meniscus, 'f', 3 ) + " cm" );
 
-   int    rrx   =  d->x.size() - 1;
-   double left  =  d->x[ 0   ].radius;
-   double right =  d->x[ rrx ].radius;
+   int    rrx   =  d->xvalues.size() - 1;
+   double left  =  d->xvalues[ 0   ];
+   double right =  d->xvalues[ rrx ];
 
    s += table_row( tr( "Edited Data starts at: " ), 
                    QString::number( left,  'f', 3 ) + " cm" ) +
@@ -2650,8 +2665,8 @@ QString US_FeMatch::hydrodynamics( void ) const
 // Compose scan information portion of report text
 QString US_FeMatch::scan_info( void ) const
 {
-   int                           drow   = lw_triples->currentRow();
-   const US_DataIO2::EditedData* d      = &dataList[ drow ];
+   int                          drow   = lw_triples->currentRow();
+   const US_DataIO::EditedData* d      = &dataList[ drow ];
    double time_correction  = US_Math2::time_correction( dataList );
 
    QString s = "\n" + indent( 4 ) + tr( "<h3>Scan Information:</h3>\n" )
@@ -2994,9 +3009,9 @@ void US_FeMatch::update_progress( int icomp )
 // Reset scan excludes
 void US_FeMatch::reset_excludes( void )
 {
-   int                     index      = lw_triples->currentRow();
-   US_DataIO2::EditedData* d          = &dataList[ index ];
-   int                     totalScans = d->scanData.size();
+   int                    index      = lw_triples->currentRow();
+   US_DataIO::EditedData* d          = &dataList[ index ];
+   int                    totalScans = d->scanData.size();
 
    excludedScans.clear();
 
@@ -3114,7 +3129,7 @@ void US_FeMatch::reportFilesToDB( QStringList& files )
    US_DB2      db( pw.getPasswd() );
    US_DB2*     dbP = &db;
    QStringList query;
-   US_DataIO2::EditedData* edata = &dataList[ lw_triples->currentRow() ];
+   US_DataIO::EditedData*  edata = &dataList[ lw_triples->currentRow() ];
    QString     tripdesc          = edata->description;
 
    // Get the ID of the EditedData DB record associated with the report
@@ -3170,14 +3185,14 @@ DbgLv(1) << "THR COMPL thr" << thr << "thrdone" << thrdone;
    {  // All threads are done, so sum thread simulation data
       for ( int ii = 0; ii < sdata->scanData.size(); ii++ )
       {
-         for ( int jj = 0; jj < sdata->x.size(); jj++ )
+         for ( int jj = 0; jj < sdata->xvalues.size(); jj++ )
          {
             double conc = 0.0;
 
             for ( int kk = 0; kk < nthread; kk++ )
                conc += tsimdats[ kk ].value( ii, jj );
 
-            sdata->scanData[ ii ].readings[ jj ] = US_DataIO2::Reading( conc );
+            sdata->setValue( ii, jj, conc );
          }
       }
 

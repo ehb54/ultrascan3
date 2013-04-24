@@ -7,7 +7,7 @@
 #include "us_investigator.h"
 #include "us_passwd.h"
 #include "us_db2.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_util.h"
 #include "us_editor.h"
 #include "us_constants.h"
@@ -15,13 +15,13 @@
 // Main constructor with flags for edit, latest-edit and local-data
 
 US_DataLoader::US_DataLoader(
-      bool                               late,
-      int                                local,
-      QVector< US_DataIO2::RawData    >& rData,
-      QVector< US_DataIO2::EditedData >& eData,
-      QStringList&                       trips,
-      QString&                           desc,
-      QString                            tfilt )
+      bool                              late,
+      int                               local,
+      QVector< US_DataIO::RawData    >& rData,
+      QVector< US_DataIO::EditedData >& eData,
+      QStringList&                      trips,
+      QString&                          desc,
+      QString                           tfilt )
  : US_WidgetsDialog( 0, 0 ),
    latest     ( late ),
    rawData    ( rData ),
@@ -222,14 +222,14 @@ bool US_DataLoader::load_edit( void )
 
          try
          {
-            US_DataIO2::loadData( filedir, filename, editedData, rawData );
+            US_DataIO::loadData( filedir, filename, editedData, rawData );
          }
-         catch ( US_DataIO2::ioError error )
+         catch ( US_DataIO::ioError error )
          {
             QApplication::restoreOverrideCursor();
             QMessageBox::warning( this,
                   tr( "Data Error" ),
-                  US_DataIO2::errorString( error ) );
+                  US_DataIO::errorString( error ) );
 
             return false;
          }
@@ -238,7 +238,7 @@ bool US_DataLoader::load_edit( void )
             QApplication::restoreOverrideCursor();
             QMessageBox::warning( this,
                   tr( "Data Error" ),
-                  US_DataIO2::errorString( err ) );
+                  US_DataIO::errorString( err ) );
 
             return false;
          }
@@ -299,7 +299,7 @@ bool US_DataLoader::load_edit( void )
          db.readBlobFromDB( efn, "download_editData", idRec );
          qApp->processEvents();
 
-         US_DataIO2::loadData( tempdir, filename, editedData, rawData );
+         US_DataIO::loadData( tempdir, filename, editedData, rawData );
 
          QFile( afn ).remove();
          QFile( efn ).remove();
@@ -309,7 +309,7 @@ bool US_DataLoader::load_edit( void )
    QApplication::restoreOverrideCursor();
 
    double                 dt = 0.0;
-   US_DataIO2::EditedData ed;
+   US_DataIO::EditedData ed;
 
    foreach( ed, editedData )
    {

@@ -4,7 +4,7 @@
 #include <QtCore>
 #include <QtGui>
 #include "us_extern.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_model.h"
 
 #ifndef DbgLv
@@ -38,7 +38,7 @@ class US_GUI_EXTERN US_LoadableNoise : public QObject
         \param nieGUIDs List of returned noise-in-edit NoiseGUID strings.
         \return         Count of noises available for given edit.
     */
-    int count_noise( bool, US_DataIO2::EditedData*, US_Model*,
+    int count_noise( bool, US_DataIO::EditedData*, US_Model*,
                      QStringList&, QStringList& );
 
   private:

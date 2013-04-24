@@ -243,16 +243,16 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param simdata  Reference to simulation Raw Data to initialize.
       //! \param editdata Reference to experimental Edited Data to mirror.
       //! \param concval1 Optional constant concentration value for first scan.
-      static void   initSimData   ( US_DataIO2::RawData&,
-                                    US_DataIO2::EditedData&, double );
+      static void   initSimData   ( US_DataIO::RawData&,
+                                    US_DataIO::EditedData&, double );
 
       //! \brief Calculate variance for Simulation-Experimental difference.
       //! \param simdata  Reference to simulation Raw Data.
       //! \param editdata Reference to experimental Edited Data.
       //! \returns        The variance (average of differences squared) between
       //!                 the simulated and experimental readings values.
-      static double variance      ( US_DataIO2::RawData&,
-                                    US_DataIO2::EditedData& );
+      static double variance      ( US_DataIO::RawData&,
+                                    US_DataIO::EditedData& );
 
       //! \brief Calculate variance for Simulation-Experimental difference.
       //! \param simdata   Reference to simulation Raw Data.
@@ -260,8 +260,8 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param exclScans List of excluded scans.
       //! \returns         The variance (average of differences squared) between
       //!                  the simulated and experimental readings values.
-      static double variance      ( US_DataIO2::RawData&,
-                                    US_DataIO2::EditedData&,
+      static double variance      ( US_DataIO::RawData&,
+                                    US_DataIO::EditedData&,
                                     QList< int > );
 
       //! \brief Calculate bottom radius from channel bottom

@@ -19,7 +19,7 @@ US_LoadableNoise::US_LoadableNoise( QObject* parent ) : QObject( parent ) { }
 
 
 // Determine if edit/model related noise available and build lists
-int US_LoadableNoise::count_noise( bool ondisk, US_DataIO2::EditedData* edata,
+int US_LoadableNoise::count_noise( bool ondisk, US_DataIO::EditedData* edata,
    US_Model* model, QStringList& mieGUIDs, QStringList& nieGUIDs )
 {
    dbg_level   = US_Settings::us_debug();
@@ -168,10 +168,11 @@ for (int jj=0;jj<nenois;jj++)
          double datmax  = datmin;
          double noimin  = 1.0e10;
          double noimax  = -noimin;
+         int    npoint  = edata->pointCount();
 
          for ( int ii = 0; ii < edata->scanData.size(); ii++ )
          {
-            for ( int jj = 0; jj < edata->x.size(); jj++ )
+            for ( int jj = 0; jj < npoint; jj++ )
             {
                double datval = edata->value( ii, jj );
                datmin        = qMin( datmin, datval );

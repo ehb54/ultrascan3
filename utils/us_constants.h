@@ -17,6 +17,7 @@
 #define WATER_PH     7.0          //!< pH of water
 #define TYPICAL_VBAR 0.7200       //!< Typical vbar for a protein
 #define NORMAL_TEMP  20.0         //!< Normal temperature for an experiment
+#define ODLIM_PLFAC  1.2          //!< ODlimit-exceeded plot scale factor
 
 
 //! Define constants for amino acids.

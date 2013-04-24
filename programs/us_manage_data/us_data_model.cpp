@@ -618,8 +618,8 @@ DbgLv(1) << "BrLoc:  nau nmo nno nst" << naucd << nmodf << nnoif << nstep;
       QStringList aucfiles = QDir( subdir )
          .entryList( aucfilt, QDir::Files, QDir::Name );
       int         naucf    = aucfiles.size();
-      US_DataIO2::RawData    rdata;
-      US_DataIO2::EditValues edval;
+      US_DataIO::RawData    rdata;
+      US_DataIO::EditValues edval;
 
       for ( int jj = 0; jj < naucf; jj++ )
       {  // loop thru .auc files found in a directory
@@ -632,7 +632,7 @@ DbgLv(1) << "BrLoc:  nau nmo nno nst" << naucd << nmodf << nnoif << nstep;
 DbgLv(2) << "BrLoc: ii jj file" << ii << jj << aucfile;
 
          // read in the raw data and build description record
-         US_DataIO2::readRawData( aucfile, rdata );
+         US_DataIO::readRawData( aucfile, rdata );
 
          contents         = US_Util::md5sum_file( aucfile );
 DbgLv(2) << "BrLoc:      contents" << contents;
@@ -681,7 +681,7 @@ DbgLv(2) << "BrLoc:  edtfilt" << edtfilt;
 //DbgLv(2) << "BrLoc:    kk file" << kk << edtfile;
 
             // read EditValues for the edit data and build description record
-            US_DataIO2::readEdits( edtfile, edval );
+            US_DataIO::readEdits( edtfile, edval );
 
             contents          = US_Util::md5sum_file( edtfile );
 //DbgLv(2) << "BrLoc:      (E)contents edtfile" << contents << edtfile;

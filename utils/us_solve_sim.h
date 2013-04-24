@@ -4,7 +4,7 @@
 #include <QtCore>
 
 #include "us_model.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_noise.h"
 #include "us_simparms.h"
 #include "us_solution.h"
@@ -34,7 +34,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
             QString                 edit_file;    //!< Edit file path
             QString                 model_file;   //!< Model file path
             QList< QString >        noise_files;  //!< Path(s) of noise file(s)
-            US_DataIO2::EditedData  run_data;     //!< Experiment data
+            US_DataIO::EditedData   run_data;     //!< Experiment data
             US_Model                model;        //!< Model input and output
             SIMPARAMS               simparams;    //!< Simulation parameters
             US_Solution             solution_rec; //!< Solution record
@@ -68,8 +68,8 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
          int                  noisflag;    //!< Calculated-noise flag: 0-3
          int                  dbg_level;   //!< Debug level
          bool                 dbg_timing;  //!< Debug-timing-prints flag
-         US_DataIO2::RawData  sim_data;    //!< Simulation data
-         US_DataIO2::RawData  residuals;   //!< Residuals data (run-sim-noi)
+         US_DataIO::RawData   sim_data;    //!< Simulation data
+         US_DataIO::RawData   residuals;   //!< Residuals data (run-sim-noi)
     };
 
     //! Constructor for the SolveSim class
@@ -161,11 +161,11 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
                                           const QVector< double >& );
 
     // Limit data to thresholds
-    bool data_threshold    ( US_DataIO2::RawData*,
+    bool data_threshold    ( US_DataIO::RawData*,
                              double, double, double, double );
 
     // Limit data to thresholds  (experiment data version)
-    bool data_threshold    ( US_DataIO2::EditedData*,
+    bool data_threshold    ( US_DataIO::EditedData*,
                              double, double, double, double );
 
     // Output a debug print of time for a labelled event

@@ -43,10 +43,11 @@ void US_SecondMoment::data_plot( void )
 
    //time_correction = US_Math::time_correction( dataList );
 
-   int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d      = &dataList[ index ];
+   int                    index  = lw_triples->currentRow();
+   US_DataIO::EditedData* d      = &dataList[ index ];
 
-   int     scanCount   = d->scanData.size();
+   int     scanCount   = d->scanCount();
+   int     points      = d->pointCount();
    int     exclude     = 0;
    double  boundaryPct = ct_boundaryPercent->value() / 100.0;
    double  positionPct = ct_boundaryPos    ->value() / 100.0;
@@ -59,7 +60,7 @@ void US_SecondMoment::data_plot( void )
       double range  = d->scanData[ i ].plateau - baseline;
       double test_y = baseline + range * positionPct;
       
-      if ( d->scanData[ i ].readings[ 0 ].value > test_y ) exclude++;
+      if ( d->scanData[ i ].rvalues[ 0 ] > test_y ) exclude++;
    }
 
    le_skipped->setText( QString::number( exclude ) );
@@ -94,21 +95,20 @@ void US_SecondMoment::data_plot( void )
       double range  = ( d->scanData[ i ].plateau - baseline ) * boundaryPct;
       double test_y = range * positionPct;
 
-      while ( d->scanData[ i ].readings[ count ].value - baseline < test_y ) 
+      while ( d->scanData[ i ].rvalues[ count ] - baseline < test_y ) 
          count++;
 
-      int points = d->scanData[ i ].readings.size();
 
       if ( count == 0 ) count = 1;
 
       while ( count < points )
       {   
-         double value  = d->scanData[ i ].readings[ count ].value - baseline;
-         double radius = d->x[ count ].radius;
+         double value  = d->scanData[ i ].rvalues[ count ] - baseline;
+         double radius = d->xvalues[ count ];
 
          if ( value >= test_y + range ) break;
       
-         double v0 = d->scanData[ i ].readings[ count - 1 ].value - baseline;
+         double v0 = d->scanData[ i ].rvalues[ count - 1 ] - baseline;
          double dC = value - v0;
 
          sum1 += dC * sq( radius );
@@ -238,8 +238,8 @@ void US_SecondMoment::exclude( void )
 
 void US_SecondMoment::write_report( QTextStream& ts )
 {
-   int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* edata  = &dataList[ index ];
+   int                    index  = lw_triples->currentRow();
+   US_DataIO::EditedData* edata  = &dataList[ index ];
 
    QString sm_results = 
         table_row( tr( "Average Second Moment S: " ),
@@ -248,10 +248,7 @@ void US_SecondMoment::write_report( QTextStream& ts )
    ts << html_header( QString( "US_Second_Moment" ),
                       QString( "Second Moment Analysis" ),
                       edata );
-   ts << run_details();
-   ts << hydrodynamics();
    ts << analysis( sm_results );
-   ts << scan_info();
    ts << indent( 2 ) + "</body>\n</html>\n";
 }
 
@@ -279,8 +276,8 @@ void US_SecondMoment::view( void )
 
 void US_SecondMoment::save( void )
 {
-   int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d      = &dataList[ index ];
+   int                    index  = lw_triples->currentRow();
+   US_DataIO::EditedData* d      = &dataList[ index ];
    QString                 dir    = US_Settings::reportDir();
 
    if ( ! mkdir( dir, d->runID ) ) return;
@@ -294,6 +291,11 @@ void US_SecondMoment::save( void )
    QString plot2File = filebase + "velocity.svg";
    QString textFile  = filebase + "2ndmoment.csv";
    QString htmlFile  = filebase + "report.html";
+   QString dsinfFile = QString( filebase ).replace( "/secmo.", "/dsinfo." )
+                                + "dataset_info.html";
+
+   // Write a general dataset information file
+   write_dset_report( dsinfFile );
 
    // Write main report
    QFile reportf( htmlFile );
@@ -356,16 +358,18 @@ void US_SecondMoment::save( void )
 
    sm_data.close();
    QStringList repfiles;
-   repfiles << htmlFile << plot1File << plot2File << textFile;
+   repfiles << htmlFile << plot1File << plot2File << textFile << dsinfFile;
 
    // Tell user
    htmlFile  = htmlFile .mid( htmlFile .lastIndexOf( "/" ) + 1 );
    plot1File = plot1File.mid( plot1File.lastIndexOf( "/" ) + 1 );
    plot2File = plot2File.mid( plot2File.lastIndexOf( "/" ) + 1 );
    textFile  = textFile .mid( textFile .lastIndexOf( "/" ) + 1 );
+   dsinfFile = dsinfFile.mid( dsinfFile.lastIndexOf( "/" ) + 1 );
 
    QString wmsg = tr( "Wrote:\n  " ) + htmlFile  + "\n  "
-      + plot1File + "\n  " + plot2File + "\n  " + textFile;
+      + plot1File + "\n  " + plot2File + "\n  " + textFile + "\n  "
+      + dsinfFile;
 
    if ( disk_controls->db() )
    {  // Write report files to the database

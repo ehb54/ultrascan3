@@ -13,7 +13,7 @@
 US_EqModelControl::US_EqModelControl(
       QVector< EqScanFit >&   a_scanfits,
       EqRunFit&               a_runfit,
-      US_DataIO2::EditedData* a_edata,
+      US_DataIO::EditedData*  a_edata,
       int                     a_modelx,
       QStringList             a_models,
       bool&                   a_mWidget,

@@ -8,7 +8,6 @@
 #include "us_gui_util.h"
 #include "us_constants.h"
 #include "us_passwd.h"
-//#include "us_data_loader.h"
 #include "us_load_auc.h"
 #include "us_util.h"
 #include "us_investigator.h"
@@ -202,7 +201,7 @@ void US_ExportLegacy::load( void )
       lw_triples->addItem( triples.at( ii ) );
 
    rdata            = &rawList [ 0 ];
-   scanCount        = rdata->scanData.size();
+   scanCount        = rdata->scanCount();
    double  avgTemp  = rdata->average_temperature();
    runID            = workingDir.section( "/", -1, -1 );
 
@@ -310,7 +309,7 @@ void US_ExportLegacy::details( void )
 void US_ExportLegacy::update( int drow )
 {
    rdata          = &rawList [ drow ];
-   scanCount      = rdata->scanData.size();
+   scanCount      = rdata->scanCount();
    double avgTemp = rdata->average_temperature();
 
    le_id  ->setText( runID );
@@ -350,7 +349,7 @@ void US_ExportLegacy::data_plot( void )
    data_plot2->clear();
    us_grid( data_plot2 );
 
-   valueCount        = rdata->x.size();
+   valueCount        = rdata->pointCount();
 
    QVector< double > vecr( valueCount );
    QVector< double > vecv( valueCount );
@@ -446,7 +445,7 @@ void US_ExportLegacy::exp_mosttypes( QStringList& files )
    int     ntriples = triples.size();
 
    // Determine data type
-   US_DataIO2::Scan* dscan = &rdata->scanData[ 0 ];
+   US_DataIO::Scan* dscan = &rdata->scanData[ 0 ];
    QString ddesc    = rdata->description + "\n";
    QString htype    = QString( "U" );
            htype    = ( rawDtype == "RA" ) ? "R" : htype;
@@ -467,8 +466,8 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
    int     hwavl    = qRound( dscan->wavelength );
    int     hcoun    = 3;
    QString oline;
-   int     nscan    = rdata->scanData.size();
-   int     nvalu    = rdata->x.size();
+   int     nscan    = rdata->scanCount();
+   int     nvalu    = rdata->pointCount();
    QString fext     = "." + rawDtype + QString::number( hcell );
    bool    channdir = false;
 
@@ -539,7 +538,7 @@ DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
          {  // Output a line for each data point
             double  radi  = rdata->radius( jj );
             double  valu  = rdata->value ( ii, jj );
-            double  stdd  = dscan->readings[ jj ].stdDev;
+            double  stdd  = dscan->stddevs[ jj ];
             // Format data line:  Radius Value StdDev
             QString oline = QString().sprintf( "%9.4f %12.5E %13.5E\n",
                radi, valu, stdd )
@@ -569,7 +568,7 @@ void US_ExportLegacy::exp_intensity( QStringList& files )
    int     ntriples = triples.size();
 
    // Get data type
-   US_DataIO2::Scan* dscan = &rdata->scanData[ 0 ];
+   US_DataIO::Scan* dscan = &rdata->scanData[ 0 ];
    QString ddesc    = rdata->description + "\n";
    QString htype    = QString( "U" );
            htype    = ( rawDtype == "RA" ) ? "R" : htype;
@@ -588,14 +587,14 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
    double  hradi    = dscan->wavelength;
    int     hwavl    = qRound( dscan->wavelength );
    int     hcoun    = 3;
-   int     nscan    = rdata->scanData.size();
-   int     nvalu    = rdata->x.size();
+   int     nscan    = rdata->scanCount();
+   int     nvalu    = rdata->pointCount();
    QString fext     = "." + rawDtype + QString::number( hcell );
    QString tripa;
    QString oline;
    bool    twofer;
    bool    bfirst;
-   US_DataIO2::RawData* rdat2 = rdata;
+   US_DataIO::RawData* rdat2 = rdata;
 
    for ( int drow = 0; drow < ntriples; drow++ )
    {  // Output a set of files for each input triple
@@ -694,7 +693,7 @@ void US_ExportLegacy::exp_interference( QStringList& files )
    int     ntriples = triples.size();
 
    // Get data type
-   US_DataIO2::Scan* dscan = &rdata->scanData[ 0 ];
+   US_DataIO::Scan* dscan = &rdata->scanData[ 0 ];
    QString ddesc    = rdata->description + "\n";
    QString htype    = QString( "U" );
            htype    = ( rawDtype == "RA" ) ? "R" : htype;
@@ -714,8 +713,8 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
    int     hwavl    = qRound( dscan->wavelength );
    int     hcoun    = 3;
    QString oline;
-   int     nscan    = rdata->scanData.size();
-   int     nvalu    = rdata->x.size();
+   int     nscan    = rdata->scanCount();
+   int     nvalu    = rdata->pointCount();
    QString fext     = "." + rawDtype + QString::number( hcell );
 
    for ( int drow = 0; drow < ntriples; drow++ )
@@ -806,13 +805,13 @@ void US_ExportLegacy::write_report( QTextStream& ts )
 }
 
 // String to accomplish line indentation
-QString US_ExportLegacy::indent( const int spaces ) const
+QString US_ExportLegacy::indent( int spaces ) const
 {
    return ( QString( " " ).leftJustified( spaces, ' ' ) );
 }
 
 // Compose data details text
-QString US_ExportLegacy::data_details( void ) const
+QString US_ExportLegacy::data_details( void )
 {
    QString                    dataType = tr( "Unknown" );
    if ( rawDtype == "RA" )    dataType = tr( "Radial Absorbance" );
@@ -837,7 +836,7 @@ QString US_ExportLegacy::data_details( void ) const
    double maxTemp = -1.0e99;
    double minTemp =  1.0e99;
 
-   for ( int i = 0; i < rdata->scanData.size(); i++ )
+   for ( int i = 0; i < rdata->scanCount(); i++ )
    {
       double t = rdata->scanData[ i ].temperature;
       sum += t;
@@ -845,7 +844,7 @@ QString US_ExportLegacy::data_details( void ) const
       minTemp = min( minTemp, t );
    }
 
-   QString average = QString::number( sum / rdata->scanData.size(), 'f', 1 );
+   QString average = QString::number( sum / rdata->scanCount(), 'f', 1 );
 
    s += table_row( tr( "Average Temperature:" ), average + " " + MLDEGC );
 
@@ -888,7 +887,7 @@ QString US_ExportLegacy::data_details( void ) const
 }
 
 // Create a subdirectory if need be
-bool US_ExportLegacy::mkdir( const QString& baseDir, const QString& subdir )
+bool US_ExportLegacy::mkdir( QString& baseDir, QString& subdir )
 {
    // Make sure */ultrascan/data/legacy exists
    QDir().mkpath( baseDir );
@@ -956,7 +955,7 @@ QString US_ExportLegacy::table_row( const QString& s1, const QString& s2 ) const
 
 // Compose a report HTML header
 QString US_ExportLegacy::html_header( QString title, QString head1,
-      US_DataIO2::RawData* rdata )
+      US_DataIO::RawData* rdata )
 {
    rDataStrings( rdata, rawDtype, rawCell, rawChann, rawWaveln );
 
@@ -985,7 +984,7 @@ QString US_ExportLegacy::html_header( QString title, QString head1,
 }
 
 // Compose some strings from RawData that exist for EditedData
-void US_ExportLegacy::rDataStrings( US_DataIO2::RawData* rdata,
+void US_ExportLegacy::rDataStrings( US_DataIO::RawData* rdata,
    QString& Dtype, QString& Cell, QString& Chann, QString& Waveln )
 {
    Dtype    = QString( QChar( rdata->type[ 0 ] ) )
@@ -996,12 +995,12 @@ void US_ExportLegacy::rDataStrings( US_DataIO2::RawData* rdata,
 }
 
 // Compute time correction
-double US_ExportLegacy::time_correction() const
+double US_ExportLegacy::time_correction()
 {
-   int size  = rawList[ 0 ].scanData.size();
+   int size  = rawList[ 0 ].scanCount();
 
    for ( int ii = 1; ii < rawList.size(); ii++ )
-      size += rawList[ ii ].scanData.size();
+      size += rawList[ ii ].scanCount();
 
    int count = 0;
 
@@ -1014,9 +1013,9 @@ double US_ExportLegacy::time_correction() const
 
    for ( int ii = 0; ii < rawList.size(); ii++ )
    {
-      const US_DataIO2::RawData* d = &rawList[ ii ];
+      US_DataIO::RawData* d = &rawList[ ii ];
 
-      for ( int jj = 0; jj < d->scanData.size(); jj++ )
+      for ( int jj = 0; jj < d->scanCount(); jj++ )
       {
          if ( d->scanData[ jj ].omega2t > 9.99999e10 ) break;
 
@@ -1086,24 +1085,24 @@ DbgLv(1) << "CnvPA: ntrip lrip" << ntriples << lrip;
    for ( int kk = 0; kk < ntriples; kk++ )
    { // Loop to convert each data set to Intensity
       rdata            = &rawList[ kk ];
-      scanCount        = rdata->scanData.size();
-      valueCount       = rdata->x.size();
+      scanCount        = rdata->scanCount();
+      valueCount       = rdata->pointCount();
 DbgLv(1) << "CnvPA:  kk scns vals" << kk << scanCount << valueCount;
 
       for ( int ii = 0; ii < scanCount; ii++ )
       { // Convert each scan using a RIProfile term
-         US_DataIO2::Scan* rscan = &rdata->scanData[ ii ];
+         US_DataIO::Scan* rscan = &rdata->scanData[ ii ];
          double rip    = RIProfile[ qMin( ii, lrip ) ];
 DbgLv(1) << "CnvPA:   ii rip" << ii << rip;
-DbgLv(1) << "CnvPA:    aval0" << rscan->readings[0].value
- << "pow" << pow(10.0,rscan->readings[0].value);
+DbgLv(1) << "CnvPA:    aval0" << rscan->rvalues[0]
+ << "pow" << pow(10.0,rscan->rvalues[0]);
 
          for ( int jj = 0; jj < valueCount; jj++ )
          {
-            double aval                 = rscan->readings[ jj ].value;
-            rscan->readings[ jj ].value = rip / pow( 10.0, aval );
+            double aval          = rscan->rvalues[ jj ];
+            rscan->rvalues[ jj ] = rip / pow( 10.0, aval );
          }
-DbgLv(1) << "CnvPA:    ival0" << rscan->readings[0].value;
+DbgLv(1) << "CnvPA:    ival0" << rscan->rvalues[0];
       }
    }
 }

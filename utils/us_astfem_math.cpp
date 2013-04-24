@@ -1875,13 +1875,12 @@ void US_AstfemMath::DefineGaussian( int nGauss, double** Gs2 )
 
 // initialize a simulation RawData object to have sizes,ranges,controls
 //   that mirror those of an experimental EditedData object
-void US_AstfemMath::initSimData( US_DataIO2::RawData& simdata,
-      US_DataIO2::EditedData& editdata, double concval1=0.0 )
+void US_AstfemMath::initSimData( US_DataIO::RawData& simdata,
+      US_DataIO::EditedData& editdata, double concval1=0.0 )
 {
-   US_DataIO2::Reading reading;
 
-   int    nconc = editdata.scanData[ 0 ].readings.size();
-   int    nscan = editdata.scanData.size();
+   int    nconc = editdata.pointCount();
+   int    nscan = editdata.scanCount();
 
    // copy general control variable values
    simdata.type[ 0 ]     = ' ';
@@ -1893,20 +1892,15 @@ void US_AstfemMath::initSimData( US_DataIO2::RawData& simdata,
    simdata.cell          = editdata.cell.toInt();
    simdata.channel       = editdata.channel.at( 0 ).toAscii();
    simdata.description   = editdata.description;
-
-   simdata.x.resize( nconc );
-
-   for ( int jj = 0; jj < nconc; jj++ )
-      simdata.x[ jj ]       = editdata.x[ jj ];  // copy radius values
+   simdata.xvalues       = editdata.xvalues;
 
    simdata.scanData.resize( nscan );
-   reading.value         = concval1;  // 1st scan constant concentration value
-   reading.stdDev        = 0.0;
+   double rvalue         = concval1;  // 1st scan constant concentration value
 
    for ( int ii = 0; ii < nscan; ii++ )
-   {  // loop to copy scans
-      US_DataIO2::Scan* escan = &editdata.scanData[ ii ];
-      US_DataIO2::Scan  sscan;
+   {  // Loop to copy scans
+      US_DataIO::Scan* escan = &editdata.scanData[ ii ];
+      US_DataIO::Scan  sscan;
 
       sscan.temperature      = escan->temperature;
       sscan.rpm              = escan->rpm;
@@ -1917,42 +1911,37 @@ void US_AstfemMath::initSimData( US_DataIO2::RawData& simdata,
       sscan.delta_r          = escan->delta_r;
       sscan.interpolated     = escan->interpolated;
 
-      sscan.readings.resize( nconc );
-
-      for ( int jj = 0; jj < nconc; jj++ )
-      {  // set constant concentration value (usually zero)
-         sscan.readings[ jj ]   = reading;
-      }
+      sscan.rvalues.fill( rvalue, nconc );
 
       simdata.scanData[ ii ] = sscan;
 
-      // set values to zero for 2nd and subsequent scans
-      reading.value          = 0.0;
+      // Set values to zero for 2nd and subsequent scans
+      rvalue                 = 0.0;
    }
 
    return;
 }
 
-// calculate variance (average difference squared) between simulated and
+// Calculate variance (average difference squared) between simulated and
 //  experimental data.
-double US_AstfemMath::variance( US_DataIO2::RawData&    simdata,
-                                US_DataIO2::EditedData& editdata )
+double US_AstfemMath::variance( US_DataIO::RawData&    simdata,
+                                US_DataIO::EditedData& editdata )
 {
    QList< int > escns;
 
    return variance( simdata, editdata, escns );
 }
 
-// calculate variance (average difference squared) between simulated and
+// Calculate variance (average difference squared) between simulated and
 //  experimental data.
-double US_AstfemMath::variance( US_DataIO2::RawData&    simdata,
-                                US_DataIO2::EditedData& editdata,
+double US_AstfemMath::variance( US_DataIO::RawData&    simdata,
+                                US_DataIO::EditedData& editdata,
                                 QList< int > exclScans )
 {
-   int    nscan = simdata .scanData.size();
-   int    kscan = editdata.scanData.size();
-   int    nconc = simdata .scanData[ 0 ].readings.size();
-   int    kconc = editdata.scanData[ 0 ].readings.size();
+   int    nscan = simdata .scanCount();
+   int    kscan = editdata.scanCount();
+   int    nconc = simdata .pointCount();
+   int    kconc = editdata.pointCount();
    double vari  = 0.0;
 
    if ( nscan != kscan )

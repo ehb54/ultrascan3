@@ -5,7 +5,7 @@
 #include <QtGui>
 
 #include "us_extern.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_globeq_data.h"
 
 #ifndef DbgLv
@@ -17,7 +17,7 @@ class US_EqReporter : public QObject
 	Q_OBJECT
 	
 	public:
-		US_EqReporter( QVector< US_DataIO2::EditedData >&,
+		US_EqReporter( QVector< US_DataIO::EditedData >&,
             QVector< ScanEdit >&, QVector< EqScanFit >&, EqRunFit&,
             QWidget* = 0 );
 
@@ -26,7 +26,7 @@ class US_EqReporter : public QObject
       QString fit_report( FitCtrlPar&, bool, bool, QString& );
 
 	private:
-      QVector< US_DataIO2::EditedData >&  dataList;
+      QVector< US_DataIO::EditedData >&   dataList;
       QVector< ScanEdit >&                scedits;
       QVector< EqScanFit >&               scanfits;
       EqRunFit&                           runfit;
@@ -37,7 +37,7 @@ class US_EqReporter : public QObject
       QString  asters;
 
    private slots:
-      int     index_radius(   US_DataIO2::EditedData*, double );
+      int     index_radius(   US_DataIO::EditedData*, double );
       QString centerInLine(   const QString&, int, bool, const QChar );
       QString scanInfoHeader( int, int );
       int     maxLineWidth  ( QFontMetrics& fm, const QString& );

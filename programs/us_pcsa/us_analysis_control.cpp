@@ -497,7 +497,7 @@ DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
 
    plot_lines();
 
-   US_DataIO2::Scan* rscan0 = &rdata->scanData[ 0 ];
+   US_DataIO::Scan* rscan0 = &rdata->scanData[ 0 ];
    int      mmitnum  = (int)rscan0->seconds;
    US_pcsa* mainw    = (US_pcsa*)parentw;
 

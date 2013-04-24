@@ -7,7 +7,7 @@
 #include "us_eqreporter.h"
 #include "us_fit_worker.h"
 #include "us_widgets_dialog.h"
-#include "us_dataIO2.h"
+#include "us_dataIO.h"
 #include "us_plot.h"
 #include "us_help.h"
 
@@ -17,7 +17,7 @@ class US_EqFitControl : public US_WidgetsDialog
 	
 	public:
 		US_EqFitControl( QVector< EqScanFit >&, EqRunFit&,
-         US_DataIO2::EditedData*, US_EqMath*, US_EqReporter*,
+         US_DataIO::EditedData*, US_EqMath*, US_EqReporter*,
          int, QStringList, bool&, int& );
 
       void new_scan( int );
@@ -30,7 +30,7 @@ class US_EqFitControl : public US_WidgetsDialog
 	private:
       QVector< EqScanFit >&   scanfits;  // Scan Fit vector
       EqRunFit&               runfit;    // Run Fit parameters structure
-      US_DataIO2::EditedData* edata;     // Edited Data pointer
+      US_DataIO::EditedData*  edata;     // Edited Data pointer
       US_EqMath*              emath;     // Equil-Math object pointer
       US_EqReporter*          ereporter; // Equil-Reporter object pointer
       int                     modelx;    // Selected model index

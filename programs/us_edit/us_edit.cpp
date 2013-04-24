@@ -76,14 +76,12 @@ US_Edit::US_Edit() : US_Widgets()
 
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
-   int s_row = 0;
 
    // Row 1
    // Investigator
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
-   specs->addWidget( pb_investigator, s_row, 0 );
 
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
@@ -92,84 +90,80 @@ US_Edit::US_Edit() : US_Widgets()
    QString number  = ( id > 0 ) ? 
       QString::number( US_Settings::us_inv_ID() ) + ": " 
       : "";
-   le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1, true );
-   specs->addWidget( le_investigator, s_row++, 1, 1, 3 );
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name(),
+                                  1, true );
 
    // Row 1A
    disk_controls = new US_Disk_DB_Controls;
-   specs->addLayout( disk_controls, s_row++, 0, 1, 4 );
 
    // Row 2
    QPushButton* pb_load = us_pushbutton( tr( "Load Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
-   specs->addWidget( pb_load, s_row, 0, 1, 2 );
-
    pb_details = us_pushbutton( tr( "Run Details" ), false );
    connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
-   specs->addWidget( pb_details, s_row++, 2, 1, 2 );
 
    // Row 3
    lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
-   specs->addWidget( lb_triple, s_row,   0, 1, 2 );
 
    cb_triple = us_comboBox();
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                        SLOT  ( new_triple         ( int ) ) );
-   specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
 
    lb_rpms   = us_label( tr( "Speed Step (RPM) of triple" ), -1 );
    cb_rpms   = us_comboBox();
-   specs->addWidget( lb_rpms,   s_row,   0, 1, 2 );
-   specs->addWidget( cb_rpms,   s_row++, 2, 1, 2 );
    lb_rpms->setVisible( false );
    cb_rpms->setVisible( false );
 
    // Row 4
+   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    lb_gaps = us_label( tr( "Threshold for Scan Gaps" ), -1 );
-   specs->addWidget( lb_gaps, s_row, 0, 1, 2 );
 
    ct_gaps = us_counter ( 1, 10.0, 100.0 );
    ct_gaps->setStep ( 10.0 );
    ct_gaps->setValue( 50.0 );
-   specs->addWidget( ct_gaps, s_row++, 2, 1, 2 );
+
+   int s_row = 0;
+   specs->addWidget( pb_investigator, s_row,   0, 1, 1 );
+   specs->addWidget( le_investigator, s_row++, 1, 1, 3 );
+   specs->addLayout( disk_controls,   s_row++, 0, 1, 4 );
+   specs->addWidget( pb_load,         s_row,   0, 1, 2 );
+   specs->addWidget( pb_details,      s_row++, 2, 1, 2 );
+   specs->addWidget( lb_triple,       s_row,   0, 1, 2 );
+   specs->addWidget( cb_triple,       s_row++, 2, 1, 2 );
+   specs->addWidget( lb_rpms,         s_row,   0, 1, 2 );
+   specs->addWidget( cb_rpms,         s_row++, 2, 1, 2 );
+   specs->addWidget( lb_gaps,         s_row,   0, 1, 2 );
+   specs->addWidget( ct_gaps,         s_row++, 2, 1, 2 );
 
    // MWL Control
-   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( font );
    int fwid = fmet.maxWidth();
    int rhgt = ct_gaps->height();
    int lwid = fwid * 4;
    int swid = lwid + fwid;
-   const QChar charla( 955 );
+   const QChar chlamb( 955 );
    lb_mwlctl = us_banner( tr( "Wavelength Controls" ) );
-   lb_ldelta = us_label( tr( "%1 Delta:" ).arg( charla ), -1 );
+   lb_ldelta = us_label( tr( "%1 Index Increment:" ).arg( chlamb ), -1 );
    ct_ldelta = us_counter( 1, 1, 100, 1 );
    ct_ldelta->setFont( font );
    ct_ldelta->setStep( 1 );
    ct_ldelta->setMinimumWidth( lwid );
    ct_ldelta->resize( rhgt, swid );
-   lb_lstart = us_label( tr( "%1 Start:" ).arg( charla ), -1 );
-   lb_lend   = us_label( tr( "%1 End:"   ).arg( charla ), -1 );
+   lb_lstart = us_label( tr( "%1 Start:" ).arg( chlamb ), -1 );
+   lb_lend   = us_label( tr( "%1 End:"   ).arg( chlamb ), -1 );
    lb_lplot  = us_label( tr( "Plot (W nm):" ), -1 );
    lb_lexclf = us_label( tr( "Exclude from:" ), -1 );
    lb_lexclt = us_label( tr( "Exclude to:" ), -1 );
-   lb_odlim  = us_label( tr( "OD Limit for radius range:" ), -1 );
-   odlimit   = 0.8;
-   ct_odlim  = us_counter( 3, 0.1, 20.5, odlimit );
-   ct_odlim ->setFont( font );
-   ct_odlim ->setStep( 0.01 );
-   ct_odlim ->setMinimumWidth( lwid );
-   ct_odlim ->resize( rhgt, swid );
 
    int     nlmbd  = 224;
-   double  lmbdlo = 251.0;
-   double  lmbdhi = 650.0;
-   double  lmbddl = 1.0;
+   int     lmbdlo = 251;
+   int     lmbdhi = 650;
+   int     lmbddl = 1;
    QString lrsmry = tr( "%1 raw: %2 %3 to %4" )
-      .arg( nlmbd ).arg( charla ).arg( lmbdlo ).arg( lmbdhi );
-   le_ltrng  = us_lineedit( lrsmry, -2, true );
-   QString lxsmry = tr( "%1 MWL exports: %2 %3 to %4, average delta %5" )
-      .arg( nlmbd ).arg( charla ).arg( lmbdlo ).arg( lmbdhi ).arg( lmbddl );
+      .arg( nlmbd ).arg( chlamb ).arg( lmbdlo ).arg( lmbdhi );
+   le_ltrng  = us_lineedit( lrsmry, -1, true );
+   QString lxsmry = tr( "%1 MWL exports: %2 %3 to %4, raw index increment %5" )
+      .arg( nlmbd ).arg( chlamb ).arg( lmbdlo ).arg( lmbdhi ).arg( lmbddl );
    le_lxrng  = us_lineedit( lxsmry, -1, true );
    cb_lplot  = us_comboBox();
    cb_lstart = us_comboBox();
@@ -224,8 +218,6 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    specs->addWidget( cb_lexclt, s_row++, 3, 1, 1 );
    specs->addWidget( pb_excrng, s_row,   0, 1, 2 );
    specs->addWidget( pb_incall, s_row++, 2, 1, 2 );
-   specs->addWidget( lb_odlim,  s_row,   0, 1, 2 );
-   specs->addWidget( ct_odlim,  s_row++, 2, 1, 2 );
    specs->addLayout( lo_radius, s_row,   0, 1, 2 );
    specs->addLayout( lo_waveln, s_row++, 2, 1, 2 );
    specs->addWidget( lb_lplot,  s_row,   0, 1, 1 );
@@ -330,6 +322,19 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    le_baseline = us_lineedit( "", 1, true );
    specs->addWidget( le_baseline, s_row++, 2, 1, 2 );
+
+   // OD Limit
+   lb_odlim  = us_label( tr( "OD Limit:" ), -1 );
+   odlimit   = 1.5;
+   ct_odlim  = us_counter( 3, 0.1, 50.0, odlimit );
+   ct_odlim ->setFont( font );
+   ct_odlim ->setStep( 0.01 );
+   ct_odlim ->setMinimumWidth( lwid );
+   ct_odlim ->resize( rhgt, swid );
+   specs->addWidget( lb_odlim,    s_row,   0, 1, 2 );
+   specs->addWidget( ct_odlim,    s_row++, 2, 1, 2 );
+   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
+            this,      SLOT  ( od_radius_limit    ( double ) ) );
 
    // Noise
    pb_noise = us_pushbutton( tr( "Determine RI Noise" ), false );
@@ -453,6 +458,7 @@ void US_Edit::reset( void )
    noise_order   = 0;
    triple_index  = 0;
    isMwl         = false;
+   xaxis_radius  = true;
 
    le_info     ->setText( "" );
    le_meniscus ->setText( "" );
@@ -538,18 +544,20 @@ void US_Edit::reset( void )
    editGUIDs     .clear();
    editIDs       .clear();
    wl_excludes   .clear();
-   plot_radii    .clear();
-   plot_wvlns    .clear();
+   expd_radii    .clear();
+   expi_wvlns    .clear();
+   rawi_wvlns    .clear();
    celchns       .clear();
-   rlist_wvlns   .clear();
-   plist_wvlns   .clear();
-   plist_radii   .clear();
+   rawc_wvlns    .clear();
+   expc_wvlns    .clear();
+   expc_radii    .clear();
    connect_mwl_ctrls( false );
    cb_lplot     ->clear();
    cb_lstart    ->clear();
    cb_lend      ->clear();
    cb_lexclf    ->clear();
    cb_lexclt    ->clear();
+   rb_radius    ->setChecked( true );
    connect_mwl_ctrls( true );
 
    set_pbColors( NULL );
@@ -620,7 +628,7 @@ void US_Edit::gap_check( void )
 {
    int threshold = (int)ct_gaps->value();
             
-   US_DataIO2::Scan s;
+   US_DataIO::Scan  s;
    QString          gaps;
 
    int              scanNumber    = 0;
@@ -633,12 +641,12 @@ void US_Edit::gap_check( void )
       // If scan has been deleted, skip to next
       if ( ! includes.contains( scanNumber ) ) continue;
 
-      int maxGap    = 0;
-      int gapLength = 0;
-      int location  = 0;
+      int maxGap     = 0;
+      int gapLength  = 0;
+      int location   = 0;
 
-      int leftPoint  = US_DataIO2::index( data.x, range_left  );
-      int rightPoint = US_DataIO2::index( data.x, range_right );
+      int leftPoint  = data.xindex( range_left  );
+      int rightPoint = data.xindex( range_right );
 
       for ( int i = leftPoint; i <= rightPoint; i++ )
       {
@@ -705,8 +713,7 @@ void US_Edit::gap_check( void )
 
             box.setWindowTitle( tr( "Excessive Scan Gaps Detected" ) );
             
-            double radius = data.x[ 0 ].radius + 
-               location * s.delta_r;
+            double radius = data.xvalues[ 0 ] + location * s.delta_r;
             
             gaps = tr( "Scan " ) 
                  + QString::number( rawScanNumber ) 
@@ -853,10 +860,10 @@ void US_Edit::load( void )
       QString schan  = triple.section( ".", 1, 1 ).simplified();
       QString waveln = triple.section( ".", 2, 2 ).simplified();
 
-      if ( ! rlist_wvlns.contains( waveln ) )
+      if ( ! rawc_wvlns.contains( waveln ) )
       {  // Accumulate wavelengths in case this is MWL
          nwaveln++;
-         rlist_wvlns << waveln;
+         rawc_wvlns << waveln;
       }
 
       nwavelo         = nwaveln;
@@ -868,8 +875,11 @@ void US_Edit::load( void )
          celchns << celchn;
       }
    }
-DbgLv(1) << "rlist_wvlns size" << rlist_wvlns.size() << nwaveln;
+DbgLv(1) << "rawc_wvlns size" << rawc_wvlns.size() << nwaveln;
 DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
+   rawc_wvlns.sort();
+   for ( int ii = 0; ii < nwaveln; ii++ )
+      rawi_wvlns << rawc_wvlns[ ii ].toInt();
 
    workingDir   = workingDir + "/";
    QString file = workingDir + runtype + ".xml";
@@ -931,6 +941,7 @@ DbgLv(1) << "LD(): AA";
    expIsDiff  = ( expType.compare( "Diffusion",   Qt::CaseInsensitive ) == 0 );
    expIsOther = ( !expIsVelo  &&  !expIsEquil  &&  !expIsDiff );
    expType    = expIsOther ? "Other" : expType;
+   odlimit    = 1.5;
 
 DbgLv(1) << "LD(): CC";
    if ( expIsEquil )
@@ -948,7 +959,7 @@ DbgLv(1) << "LD(): CC";
       pb_write   ->setText( tr( "Save Edit Profiles" ) );
 
       sData.clear();
-      US_DataIO2::SpeedData ssDat;
+      US_DataIO::SpeedData  ssDat;
       int ksd    = 0;
 
       for ( int jd = 0; jd < allData.size(); jd++ )
@@ -1075,7 +1086,7 @@ DbgLv(1) << "LD(): GG";
 
    // Temperature check
    double              dt = 0.0;
-   US_DataIO2::RawData triple;
+   US_DataIO::RawData  triple;
 
    foreach( triple, allData )
    {
@@ -1106,20 +1117,18 @@ DbgLv(1) << "LD(): NN  nwaveln isMwl" << nwaveln << isMwl;
 
    if ( isMwl )
    {  // Set values related to MultiWaveLength
-      const QChar charla( 955 );
+      const QChar chlamb( 955 );
       connect_mwl_ctrls( false );
-DbgLv(1) << "IS-MWL: wvlns size" << rlist_wvlns.size();
-      rlist_wvlns.sort();
+DbgLv(1) << "IS-MWL: wvlns size" << rawc_wvlns.size();
       nwavelo      = nwaveln;
-      int lambd1   = rlist_wvlns[ 0 ].toInt();
-      int lambd2   = rlist_wvlns[ nwaveln - 1 ].toInt();
-      int lambdi   = qRound( (double)( lambd2 - lambd1 )
-                            / double( nwavelo - 1 ) );
+      int lambd1   = rawi_wvlns[ 0 ];
+      int lambd2   = rawi_wvlns[ nwaveln - 1 ];
+      int lambdi   = 1;
       le_ltrng ->setText( tr( "%1 raw: %2 %3 to %4" )
-         .arg( nwaveln ).arg( charla ).arg( lambd1 ).arg( lambd2 ) );
+         .arg( nwaveln ).arg( chlamb ).arg( lambd1 ).arg( lambd2 ) );
       le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
-                              " average delta %5" )
-         .arg( nwavelo ).arg( charla ).arg( lambd1 ).arg( lambd2 )
+                              " raw index increment %5" )
+         .arg( nwavelo ).arg( chlamb ).arg( lambd1 ).arg( lambd2 )
          .arg( lambdi ) );
 
       // Update wavelength lists in GUI elements
@@ -1128,11 +1137,11 @@ DbgLv(1) << "IS-MWL: wvlns size" << rlist_wvlns.size();
       cb_lexclf->clear();
       cb_lexclt->clear();
       cb_lplot ->clear();
-      cb_lstart->addItems( rlist_wvlns );
-      cb_lend  ->addItems( rlist_wvlns );
-      cb_lexclf->addItems( rlist_wvlns );
-      cb_lexclt->addItems( rlist_wvlns );
-      cb_lplot ->addItems( rlist_wvlns );
+      cb_lstart->addItems( rawc_wvlns );
+      cb_lend  ->addItems( rawc_wvlns );
+      cb_lexclf->addItems( rawc_wvlns );
+      cb_lexclt->addItems( rawc_wvlns );
+      cb_lplot ->addItems( rawc_wvlns );
       int lastx    = nwaveln - 1;
       plotndx      = nwaveln / 2;
       cb_lplot ->setCurrentIndex( plotndx );
@@ -1142,20 +1151,20 @@ DbgLv(1) << "IS-MWL: wvlns size" << rlist_wvlns.size();
       cb_lexclt->setCurrentIndex( lastx );
 
       wl_excludes.clear();
-      plot_radii .clear();
-      plot_wvlns .clear();
-      plist_wvlns.clear();
+      expd_radii .clear();
+      expi_wvlns .clear();
+      expc_wvlns .clear();
 
       for ( int ii = 0; ii < nwaveln; ii++ )
       {  // Update the list of wavelengths that may be plotted
-         plot_wvlns << rlist_wvlns[ ii ].toInt();
-         plist_wvlns << rlist_wvlns[ ii ];
+         expi_wvlns << rawi_wvlns[ ii ];
+         expc_wvlns << rawc_wvlns[ ii ];
       }
-DbgLv(1) << "IS-MWL:  plot_wvlns size" << plot_wvlns.size() << nwaveln;
+DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
 
       data          = allData[ 0 ];
-      nrpoint       = data.x.size();
-      int nscan     = data.scanData.size();
+      nrpoint       = data.pointCount();
+      int nscan     = data.scanCount();
       int ndset     = ncelchn * nrpoint;
       int ndpoint   = nscan * nwaveln;
 DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
@@ -1163,10 +1172,10 @@ DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
 
       for ( int ii = 0; ii < nrpoint; ii++ )
       {  // Update the list of radii that may be plotted
-         plot_radii  << data.x[ ii ].radius;
-         plist_radii << QString().sprintf( "%.3f", data.x[ ii ].radius );
+         expd_radii << data.xvalues[ ii ];
+         expc_radii << QString().sprintf( "%.3f", data.xvalues[ ii ] );
       }
-DbgLv(1) << "IS-MWL:  plot_radii size" << plot_radii.size() << nrpoint;
+DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
       QVector< double > wrdata;
       wrdata.fill( 0.0, ndpoint );
@@ -1178,7 +1187,7 @@ DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
       }
 DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
 
-      US_DataIO2::RawData* edata;
+      US_DataIO::RawData*  edata;
 
       // Update wavelength-x-axis data vector with amplitude data points
       // The input has (ncelchn * nwaveln) data sets, each of which
@@ -1194,14 +1203,13 @@ DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
          for ( int scx = 0; scx < nscan; scx++ )
          {  // Handle each scan of a triple
-            US_DataIO2::Scan* scn  = &edata->scanData[ scx ];
+            US_DataIO::Scan* scn   = &edata->scanData[ scx ];
             int    odx    = ccx * nrpoint;         // Output dataset index
             int    opx    = scx * nwaveln + wvx;   // Output point index
 //DbgLv(1) << "IS-MWL:    scx odx opx" << scx << odx << opx;
             for ( int rax = 0; rax < nrpoint; rax++ )
             {  // Store each radius data point as a wavelength point in a scan
-               double rval   = scn->readings[ rax ].value;
-               rdata[ odx++ ][ opx ] = rval;
+               rdata[ odx++ ][ opx ]  = scn->rvalues[ rax ];
             } // END: radius points loop
          } // END: scans loop
       } // END: input triples loop
@@ -1218,9 +1226,17 @@ DbgLv(1) << "IS-MWL: celchns (4)";
       connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                           SLOT  ( new_triple         ( int ) ) );
 
+      odlimit   = 0.8;
+
       connect_mwl_ctrls( true );
+
       plot_mwl();
    } // END: isMwl=true
+
+   ct_odlim->disconnect();
+   ct_odlim->setValue( odlimit );
+   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
+            this,      SLOT  ( od_radius_limit    ( double ) ) );
 
    show_mwl_controls( isMwl );
 }
@@ -1368,9 +1384,9 @@ void US_Edit::mouse( const QwtDoublePoint& p )
          else if ( expIsEquil || men_1click )
          {  // Equilibrium
             meniscus_left = p.x();
-            int ii        = US_DataIO2::index( data.x, meniscus_left );
+            int ii        = data.xindex( meniscus_left );
             draw_vline( meniscus_left );
-            meniscus      = data.x[ ii ].radius;
+            meniscus      = data.radius( ii );
             le_meniscus->setText( QString::number( meniscus, 'f', 3 ) );
 
             data_plot->replot();
@@ -1402,22 +1418,22 @@ void US_Edit::mouse( const QwtDoublePoint& p )
 
             // Find the radius for the max value
             maximum = -1.0e99;
-            US_DataIO2::Scan* s;
+            US_DataIO::Scan* s;
 
             for ( int i = 0; i < data.scanData.size(); i++ )
             {
                if ( ! includes.contains( i ) ) continue;
 
                s         = &data.scanData[ i ];
-               int start = US_DataIO2::index( data.x, meniscus_left  );
-               int end   = US_DataIO2::index( data.x, meniscus_right );
+               int start = data.xindex( meniscus_left  );
+               int end   = data.xindex( meniscus_right );
 
                for ( int j = start; j <= end; j++ )
                {
-                  if ( maximum < s->readings[ j ].value )
+                  if ( maximum < s->rvalues[ j ] )
                   {
-                     maximum  = s->readings[ j ].value;
-                     meniscus = data.x[ j ].radius;
+                     maximum  = s->rvalues[ j ];
+                     meniscus = data.radius( j );
                   }
                }
             }
@@ -1479,7 +1495,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             if ( airGap_right < airGap_left ) 
                swap_double( airGap_left, airGap_right );
 
-            US_DataIO2::EditValues edits;
+            US_DataIO::EditValues  edits;
             edits.airGapLeft  = airGap_left;
             edits.airGapRight = airGap_right;
 
@@ -1488,7 +1504,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             for ( int i = 0; i < data.scanData.size(); i++ )
                if ( ! includes.contains( i ) ) edits.excludes << i;
          
-            US_DataIO2::adjust_interference( data, edits );
+            US_DataIO::adjust_interference( data, edits );
 
             // Un-zoom
             if ( plot->btnZoom->isChecked() )
@@ -1537,7 +1553,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
 
             if ( dataType == "IP" )
             {
-               US_DataIO2::EditValues edits;
+               US_DataIO::EditValues  edits;
                edits.rangeLeft    = range_left;
                edits.rangeRight   = range_right;
                edits.gapTolerance = ct_gaps->value();
@@ -1547,7 +1563,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
                for ( int i = 0; i < data.scanData.size(); i++ )
                   if ( ! includes.contains( i ) ) edits.excludes << i;
             
-               US_DataIO2::calc_integral( data, edits );
+               US_DataIO::calc_integral( data, edits );
             }
             
             // Display the data
@@ -1673,11 +1689,11 @@ void US_Edit::mouse( const QwtDoublePoint& p )
       case BASELINE:
          {
             // Use the last scan
-            US_DataIO2::Scan s = data.scanData.last();
+            US_DataIO::Scan  s = data.scanData.last();
             
-            int start = US_DataIO2::index( data.x, range_left );
-            int end   = US_DataIO2::index( data.x, range_right );
-            int pt    = US_DataIO2::index( data.x, p.x() );
+            int start = data.xindex( range_left );
+            int end   = data.xindex( range_right );
+            int pt    = data.xindex( p.x() );
 
             if ( pt - start < 5  ||  end - pt < 5 )
             {
@@ -1691,7 +1707,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
 
             // Average the value for +/- 5 points
             for ( int j = pt - 5; j <= pt + 5; j++ )
-               sum += s.readings[ j ].value;
+               sum += s.rvalues[ j ];
 
             double bl = sum / 11.0;
             baseline  = p.x();
@@ -1937,7 +1953,7 @@ void US_Edit::set_fringe_tolerance( double /* tolerance */)
    int index = cb_triple->currentIndex();
    data = allData[ index ];
 
-   US_DataIO2::EditValues edits;
+   US_DataIO::EditValues  edits;
    edits.airGapLeft  = airGap_left;
    edits.airGapRight = airGap_right;
 
@@ -1946,13 +1962,13 @@ void US_Edit::set_fringe_tolerance( double /* tolerance */)
    for ( int i = 0; i < data.scanData.size(); i++ )
       if ( ! includes.contains( i ) ) edits.excludes << i;
          
-   US_DataIO2::adjust_interference( data, edits );
+   US_DataIO::adjust_interference( data, edits );
 
    edits.rangeLeft    = range_left;
    edits.rangeRight   = range_right;
    edits.gapTolerance = ct_gaps->value();
 
-   US_DataIO2::calc_integral( data, edits );
+   US_DataIO::calc_integral( data, edits );
    replot();
 }
 
@@ -1988,7 +2004,7 @@ void US_Edit::plot_all( void )
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); 
    v_line = NULL;
 
-   int size = data.scanData[ 0 ].readings.size();
+   int size = data.pointCount();
 
    QVector< double > rvec( size );
    QVector< double > vvec( size );
@@ -2004,12 +2020,12 @@ void US_Edit::plot_all( void )
    {
       if ( ! includes.contains( i ) ) continue;
       
-      US_DataIO2::Scan* s = &data.scanData[ i ];
+      US_DataIO::Scan*  s = &data.scanData[ i ];
 
       for ( int j = 0; j < size; j++ )
       {
-         r[ j ] = data.x[ j ].radius;
-         v[ j ] = s->readings[ j ].value * invert;
+         r[ j ] = data.xvalues[ j ];
+         v[ j ] = s  ->rvalues[ j ] * invert;
 
          maxR = max( maxR, r[ j ] );
          minR = min( minR, r[ j ] );
@@ -2047,7 +2063,7 @@ void US_Edit::plot_range( void )
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    v_line = NULL;
 
-   int rsize   = data.scanData[ 0 ].readings.size();
+   int rsize   = data.pointCount();
    QVector< double > rvec( rsize );
    QVector< double > vvec( rsize );
    double* r   = rvec.data();
@@ -2071,10 +2087,10 @@ DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
    {
       if ( ! includes.contains( i ) ) continue;
       
-      US_DataIO2::Scan* s = &data.scanData[ i ];
+      US_DataIO::Scan*  s = &data.scanData[ i ];
       
-      int indexLeft  = US_DataIO2::index( data.x, range_left );
-      int indexRight = US_DataIO2::index( data.x, range_right );
+      int indexLeft  = data.xindex( range_left );
+      int indexRight = data.xindex( range_right );
       double menp    = 0.0;
 
       if ( expIsEquil )
@@ -2099,18 +2115,18 @@ DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
             break;
          }
 
-         indexLeft  = US_DataIO2::index( data.x, rngl );
-         indexRight = US_DataIO2::index( data.x, rngr );
+         indexLeft  = data.xindex( rngl );
+         indexRight = data.xindex( rngr );
 
-         int inxm   = US_DataIO2::index( data.x, menp );
+         int inxm   = data.xindex( menp );
 
          if ( inxm < 1 )
             return;
 
-         r[ 0 ]     = data.x[ inxm ].radius;
-         v[ 0 ]     = s->readings[ indexLeft ].value;
-         r[ 2 ]     = data.x[ inxm + 2 ].radius;
-         v[ 2 ]     = s->readings[ indexLeft + 4 ].value;
+         r[ 0 ]     = data.xvalues[ inxm          ];
+         v[ 0 ]     = s  ->rvalues[ indexLeft     ];
+         r[ 2 ]     = data.xvalues[ inxm + 2      ];
+         v[ 2 ]     = s  ->rvalues[ indexLeft + 4 ];
          r[ 1 ]     = r[ 0 ];
          v[ 1 ]     = v[ 2 ];
          r[ 3 ]     = r[ 2 ];
@@ -2131,8 +2147,8 @@ DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
       
       for ( int j = indexLeft; j <= indexRight; j++ )
       {
-         r[ count ] = data.x[ j ].radius;
-         v[ count ] = s->readings[ j ].value * invert;
+         r[ count ] = data.xvalues[ j ];
+         v[ count ] = s  ->rvalues[ j ] * invert;
 
          maxR = max( maxR, r[ count ] );
          minR = min( minR, r[ count ] );
@@ -2178,13 +2194,13 @@ void US_Edit::plot_last( void )
    double minV =  1.0e99;
 
    // Plot only the last scan
-   US_DataIO2::Scan* s = &data.scanData[ includes.last() ];;
+   US_DataIO::Scan*  s = &data.scanData[ includes.last() ];;
    
-   int indexLeft  = US_DataIO2::index( data.x, range_left );
-   int indexRight = US_DataIO2::index( data.x, range_right );
+   int indexLeft  = data.xindex( range_left );
+   int indexRight = data.xindex( range_right );
    
    int     count  = 0;
-   uint    size   = s->readings.size();
+   uint    size   = s->rvalues.size();
    QVector< double > rvec( size );
    QVector< double > vvec( size );
    double* r      = rvec.data();
@@ -2192,8 +2208,8 @@ void US_Edit::plot_last( void )
    
    for ( int j = indexLeft; j <= indexRight; j++ )
    {
-      r[ count ] = data.x[ j ].radius;
-      v[ count ] = s->readings[ j ].value * invert;
+      r[ count ] = data.xvalues[ j ];
+      v[ count ] = s  ->rvalues[ j ] * invert;
 
       maxR = max( maxR, r[ count ] );
       minR = min( minR, r[ count ] );
@@ -2225,8 +2241,8 @@ void US_Edit::plot_last( void )
 // Plot a single scan curve
 void US_Edit::plot_scan( void )
 {
-   int    rsize = data.scanData[ 0 ].readings.size();
-   int    ssize = data.scanData.size();
+   int    rsize = data.pointCount();
+   int    ssize = data.scanCount();
    int    count = 0;
    QVector< double > rvec( rsize );
    QVector< double > vvec( rsize );
@@ -2246,7 +2262,7 @@ void US_Edit::plot_scan( void )
    //
    for ( int ii = 0; ii < ssize; ii++ )
    {
-      US_DataIO2::Scan* s = &data.scanData[ ii ];
+      US_DataIO::Scan*  s = &data.scanData[ ii ];
 
       QString arpm        = QString::number( s->rpm );
 
@@ -2257,8 +2273,8 @@ void US_Edit::plot_scan( void )
 
       for ( int jj = 0; jj < rsize; jj++ )
       {
-         r[ count ] = data.x[ jj ].radius;
-         v[ count ] = s->readings[ jj ].value * invert;
+         r[ count ] = data.xvalues[ jj ];
+         v[ count ] = s  ->rvalues[ jj ] * invert;
 
          maxR = max( maxR, r[ count ] );
          minR = min( minR, r[ count ] );
@@ -2307,10 +2323,10 @@ DbgLv(1) << "PlMwl:  index celchn" << index << celchn;
       index               = ccx * nwavelo + recndx;
 DbgLv(1) << "PlMwl:   x-r index cc nw rx" << index << ccx << nwavelo << recndx;
 DbgLv(1) << "PlMwl:    allData size" << allData.size();
-DbgLv(1) << "PlMwl:    plot_wvlns size" << plot_wvlns.size();
+DbgLv(1) << "PlMwl:    expc_wvlns size" << expc_wvlns.size();
       data                = allData[ index ];
-      recvalu             = plot_wvlns.at( recndx );
-      svalu               = plist_wvlns.at( recndx );
+      recvalu             = expi_wvlns.at( recndx );
+      svalu               = expc_wvlns.at( recndx );
    }
 
    else
@@ -2319,8 +2335,8 @@ DbgLv(1) << "PlMwl:    plot_wvlns size" << plot_wvlns.size();
 DbgLv(1) << "PlMwl:   x-w index cc nr rx" << index << ccx << nrpoint << recndx;
       data                = allData[ 0 ];
       rectype             = tr( "Radius" );
-      recvalu             = plot_radii.at( recndx );
-      svalu               = plist_radii.at( recndx );
+      recvalu             = expd_radii.at( recndx );
+      svalu               = expc_radii.at( recndx );
    }
 DbgLv(1) << "PlMwl: ccx index rtype rval" << ccx << index << rectype << recvalu;
 
@@ -2359,6 +2375,7 @@ DbgLv(1) << "PlMwl:   xa_rad" << xaxis_radius << "nsc npt" << nscan << npoint;
    double  minR   =  1.0e99;
    double  maxV   = -1.0e99;
    double  minV   =  1.0e99;
+   double  maxOD  = odlimit * 2.0;
 
    if ( xaxis_radius )
    {  // Build normal AUC data plot
@@ -2367,12 +2384,12 @@ DbgLv(1) << "PlMwl:    START xa_RAD";
 
       for ( int ii = 0; ii < nscan; ii++ )
       {
-         US_DataIO2::Scan* scn = &data.scanData[ ii ];
+         US_DataIO::Scan*  scn = &data.scanData[ ii ];
 
          for ( int jj = 0; jj < npoint; jj++ )
          {
-            rr[ jj ] = data.x[ jj ].radius;
-            vv[ jj ] = qMin( odlimit, scn->readings[ jj ].value * invert );
+            rr[ jj ] = data.xvalues[ jj ];
+            vv[ jj ] = qMin( maxOD, scn->rvalues[ jj ] * invert );
 
             maxR     = qMax( maxR, rr[ jj ] );
             minR     = qMin( minR, rr[ jj ] );
@@ -2406,8 +2423,8 @@ DbgLv(1) << "PlMwl:    START xa_WAV";
       {
          for ( int jj = 0; jj < npoint; jj++ )
          {
-            rr[ jj ] = plot_wvlns[ jj ];
-            vv[ jj ] = qMin( odlimit, wrdata[ dpx++ ] );
+            rr[ jj ] = expi_wvlns[ jj ];
+            vv[ jj ] = qMin( maxOD, wrdata[ dpx++ ] );
 
             maxR     = qMax( maxR, rr[ jj ] );
             minR     = qMin( minR, rr[ jj ] );
@@ -2415,7 +2432,7 @@ DbgLv(1) << "PlMwl:    START xa_WAV";
             minV     = qMin( minV, vv[ jj ] );
          }
 
-         US_DataIO2::Scan* scn = &data.scanData[ ii ];
+         US_DataIO::Scan*  scn = &data.scanData[ ii ];
          QString ctitle = tr( "Raw Data at " )
             + QString::number( scn->seconds ) + tr( " seconds" )
             + " #" + QString::number( ii );
@@ -2645,7 +2662,7 @@ void US_Edit::edit_scan( void )
    int index1 = (int)ct_from->value();
    int scan  = includes[ index1 - 1 ];
 
-   US_EditScan* dialog = new US_EditScan( data.scanData[ scan ], data.x, 
+   US_EditScan* dialog = new US_EditScan( data.scanData[ scan ], data.xvalues, 
          invert, range_left, range_right );
    connect( dialog, SIGNAL( scan_updated( QList< QPointF > ) ),
                     SLOT  ( update_scan ( QList< QPointF > ) ) );
@@ -2660,14 +2677,14 @@ void US_Edit::update_scan( QList< QPointF > changes )
    // Handle excluded scans
    int              index1        = (int)ct_from->value();
    int              current_scan  = includes[ index1 - 1 ];
-   US_DataIO2::Scan* s             = &data.scanData[ current_scan ];
+   US_DataIO::Scan* s             = &data.scanData[ current_scan ];
 
    for ( int i = 0; i < changes.size(); i++ )
    {
       int    point = (int)changes[ i ].x();
       double value =      changes[ i ].y();
 
-      s->readings[ point ].value = value;
+      s->rvalues[ point ] = value;
    }
 
    // Save changes for writing output
@@ -2677,7 +2694,7 @@ void US_Edit::update_scan( QList< QPointF > changes )
    changed_points << e;
 
    // Set data for the curve
-   int     points = s->readings.size();
+   int     points = data.pointCount();
    QVector< double > rvec( points );
    QVector< double > vvec( points );
    double* r      = rvec.data();
@@ -2689,8 +2706,8 @@ void US_Edit::update_scan( QList< QPointF > changes )
 
    if ( range_left > 0 )
    {
-      left  = US_DataIO2::index( data.x, range_left  );
-      right = US_DataIO2::index( data.x, range_right );
+      left  = data.xindex( range_left  );
+      right = data.xindex( range_right );
    }
    else
    {
@@ -2700,8 +2717,8 @@ void US_Edit::update_scan( QList< QPointF > changes )
 
    for ( int i = left; i <= right; i++ )
    {
-      r[ count ] = data.x[ i ].radius;
-      v[ count ] = s->readings[ i ].value;
+      r[ count ] = data.xvalues[ i ];
+      v[ count ] = s  ->rvalues[ i ];
       count++;
    }
 
@@ -2767,17 +2784,17 @@ void US_Edit::remove_spikes( void )
    // For each scan
    for ( int i = 0; i < data.scanData.size(); i++ ) 
    {
-      US_DataIO2::Scan* s = &data.scanData [ i ];
+      US_DataIO::Scan* s = &data.scanData [ i ];
 
-      int start  = US_DataIO2::index( data.x, range_left  );
-      int end    = US_DataIO2::index( data.x, range_right );
+      int start  = data.xindex( range_left  );
+      int end    = data.xindex( range_right );
 
       for ( int j = start; j < end; j++ )
       {
-         if ( US_DataIO2::spike_check( *s, data.x, j, start, end, 
-                                       &smoothed_value ) )
+         if ( US_DataIO::spike_check( *s, data.xvalues, j, start, end, 
+                                      &smoothed_value ) )
          {
-            s->readings[ j ].value = smoothed_value;
+            s->rvalues[ j ]     = smoothed_value;
 
             // If previous consecututive points are interpolated, then 
             // redo them
@@ -2786,9 +2803,9 @@ void US_Edit::remove_spikes( void )
 
             while ( c & ( 1 << ( 7 - index % 8 ) ) )
             {
-               if ( US_DataIO2::spike_check( *s, data.x, index, start, end, 
-                                             &smoothed_value ) )
-                  s->readings[ index ].value = smoothed_value;
+               if ( US_DataIO::spike_check( *s, data.xvalues,
+                                            index, start, end, &smoothed_value ) )
+                  s->rvalues[ index ] = smoothed_value;
 
                index--;
                c = s->interpolated[ index / 8 ];
@@ -2814,7 +2831,7 @@ void US_Edit::undo( void )
    // Redo some things depending on type
    if ( dataType == "IP" )
    {
-      US_DataIO2::EditValues edits;
+      US_DataIO::EditValues edits;
       edits.airGapLeft  = airGap_left;
       edits.airGapRight = airGap_right;
 
@@ -2826,10 +2843,10 @@ void US_Edit::undo( void )
          if ( ! includes.contains( i ) ) edits.excludes << i;
 
       if ( step > AIRGAP )
-            US_DataIO2::adjust_interference( data, edits );
+            US_DataIO::adjust_interference( data, edits );
 
       if ( step >  RANGE )
-         US_DataIO2::calc_integral( data, edits );
+         US_DataIO::calc_integral( data, edits );
    }
 
    replot();
@@ -2880,10 +2897,10 @@ void US_Edit::noise( void )
 // Subtract residuals
 void US_Edit::subtract_residuals( void )
 {
-   for ( int i = 0; i < data.scanData.size(); i++ )
+   for ( int i = 0; i < data.scanCount(); i++ )
    {
-     for ( int j = 0; j <  data.scanData[ i ].readings.size(); j++ )
-         data.scanData[ i ].readings[ j ].value -= residuals[ i ];
+      for ( int j = 0; j <  data.pointCount(); j++ )
+         data.scanData[ i ].rvalues[ j ] -= residuals[ i ];
    }
 
    pb_residuals->setEnabled( false );
@@ -3003,6 +3020,7 @@ void US_Edit::floating( void )
 // Save edit profile(s)
 void US_Edit::write( void )
 { 
+#if 0
    if ( isMwl )
    {
       QMessageBox::information( this,
@@ -3011,6 +3029,7 @@ void US_Edit::write( void )
                 "Save is temporarily disabled for MWL data." ) );
       return;
    }
+#endif
    if ( !expIsEquil )
    {  // non-Equilibrium:  write single current edit
       triple_index = cb_triple->currentIndex();
@@ -3117,7 +3136,19 @@ void US_Edit::write_triple( void )
    QString filename = files[ triple_index ];
    int     index    = filename.indexOf( '.' ) + 1;
    filename.insert( index, editID + "." );
-   filename.replace( QRegExp( "auc$" ), "xml" );
+   QString wvpart   = "";
+
+   if ( isMwl )
+   {
+      int lwx   = expc_wvlns.size() - 1;
+      wvpart    = expc_wvlns[ 0 ] + ":" + expc_wvlns[ lwx ];
+      filename  = filename.section( ".", 0, -3 );
+      filename  = filename + "." + wvpart + ".xml";
+   }
+   else
+   {
+      filename.replace( QRegExp( "auc$" ), "xml" );
+   }
 
    QFile f( workingDir + filename );
 
@@ -3174,12 +3205,26 @@ void US_Edit::write_triple( void )
 
    QString     cell    = parts[ 0 ];
    QString     channel = parts[ 1 ];
-   QString     waveln  = parts[ 2 ];
+   QString     waveln  = isMwl ? wvpart : parts[ 2 ];
+
+DbgLv(1) << "write edit: isMwl" << isMwl << "waveln";
 
    xml.writeStartElement( "run" );
    xml.writeAttribute   ( "cell",       cell    );
    xml.writeAttribute   ( "channel",    channel );
    xml.writeAttribute   ( "wavelength", waveln  );
+
+   if ( isMwl )
+   {
+      xml.writeStartElement( "lambdas" );
+      for ( int ii = 0; ii < expc_wvlns.size(); ii++ )
+      {
+         xml.writeStartElement( "lambda" );
+         xml.writeAttribute   ( "value", expc_wvlns[ ii ] );
+         xml.writeEndElement  ();
+      }
+      xml.writeEndElement  ();
+   }
 
    // Write excluded scans
    if ( data.scanData.size() > includes.size() )
@@ -3223,7 +3268,7 @@ void US_Edit::write_triple( void )
       xml.writeEndElement  ();  // edited
    }
 
-   // Write meniscus, range, plataeu, baseline
+   // Write meniscus, range, plateau, baseline, odlimit
    xml.writeStartElement( "parameters" );
 
    if ( ! expIsEquil )
@@ -3260,6 +3305,11 @@ void US_Edit::write_triple( void )
       xml.writeStartElement( "baseline" );
       xml.writeAttribute   ( "radius",
          QString::number( baseline, 'f', 4 ) );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "od_limit" );
+      xml.writeAttribute   ( "value",
+         QString::number( odlimit, 'f', 4 ) );
       xml.writeEndElement  ();
    }
 
@@ -3526,16 +3576,16 @@ void US_Edit::apply_prior( void )
    if ( filename.isEmpty() ) return; 
 
    // Read the edits
-   US_DataIO2::EditValues parameters;
+   US_DataIO::EditValues parameters;
 
-   int result = US_DataIO2::readEdits( filename, parameters );
+   int result = US_DataIO::readEdits( filename, parameters );
 
-   if ( result != US_DataIO2::OK )
+   if ( result != US_DataIO::OK )
    {
       QMessageBox::warning( this,
             tr( "XML Error" ),
             tr( "An error occurred when reading edit file\n\n" ) 
-            +  US_DataIO2::errorString( result ) );
+            +  US_DataIO::errorString( result ) );
       return;
    }
 
@@ -3572,8 +3622,8 @@ void US_Edit::apply_prior( void )
 
    if ( dataType == "IP" )
    {
-      US_DataIO2::adjust_interference( data, parameters );
-      US_DataIO2::calc_integral      ( data, parameters );
+      US_DataIO::adjust_interference( data, parameters );
+      US_DataIO::calc_integral      ( data, parameters );
       le_airGap->setText( s.sprintf( "%.3f - %.3f", 
                airGap_left, airGap_right ) ); 
       pb_airGap->setIcon( check );
@@ -3589,13 +3639,13 @@ void US_Edit::apply_prior( void )
    pb_plateau->setIcon( check );
    pb_plateau->setEnabled( true );
 
-   US_DataIO2::Scan scan  = data.scanData.last();
-   int              pt    = US_DataIO2::index( data.x, baseline );
+   US_DataIO::Scan  scan  = data.scanData.last();
+   int              pt    = data.xindex( baseline );
    double           sum   = 0.0;
 
    // Average the value for +/- 5 points
    for ( int j = pt - 5; j <= pt + 5; j++ )
-      sum += scan.readings[ j ].value;
+      sum += scan.rvalues[ j ];
 
    le_baseline->setText( s.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
    pb_baseline->setIcon( check );
@@ -3630,7 +3680,7 @@ void US_Edit::apply_prior( void )
      
       changed_points << e;
       
-      data.scanData[ scan ].readings[ index1 ].value = value;
+      data.scanData[ scan ].rvalues[ index1 ] = value;
    }
 
    // Spikes
@@ -3833,16 +3883,16 @@ void US_Edit::prior_equil( void )
       filename = cefnames[ ii ];
 
       // Read the edits
-      US_DataIO2::EditValues parameters;
+      US_DataIO::EditValues parameters;
 
-      int result = US_DataIO2::readEdits( filename, parameters );
+      int result = US_DataIO::readEdits( filename, parameters );
 
-      if ( result != US_DataIO2::OK )
+      if ( result != US_DataIO::OK )
       {
          QMessageBox::warning( this,
                tr( "XML Error" ),
                tr( "An error occurred when reading edit file\n\n" ) 
-               +  US_DataIO2::errorString( result ) );
+               +  US_DataIO::errorString( result ) );
          continue;
       }
 
@@ -3888,8 +3938,8 @@ void US_Edit::prior_equil( void )
 
       if ( dataType == "IP" )
       {
-         US_DataIO2::adjust_interference( data, parameters );
-         US_DataIO2::calc_integral      ( data, parameters );
+         US_DataIO::adjust_interference( data, parameters );
+         US_DataIO::calc_integral      ( data, parameters );
          le_airGap->setText( s.sprintf( "%.3f - %.3f", 
                   airGap_left, airGap_right ) ); 
          pb_airGap->setIcon( check );
@@ -3930,7 +3980,7 @@ void US_Edit::prior_equil( void )
      
          changed_points << e;
       
-         data.scanData[ scan ].readings[ index1 ].value = value;
+         data.scanData[ scan ].rvalues[ index1 ] = value;
       }
 
       // Spikes
@@ -4043,7 +4093,7 @@ bool US_Edit::all_edits_done( void )
          int jsd = sd_offs[ jd ];
          int ksd = jsd + sd_knts[ jd ];
          QList< double > drpms;
-         US_DataIO2::RawData* rdata = &allData[ jd ];
+         US_DataIO::RawData* rdata = &allData[ jd ];
 
          // Count edits done on this data set
          for ( int js = jsd; js < ksd; js++ )
@@ -4108,8 +4158,6 @@ void US_Edit::show_mwl_controls( bool show )
    cb_lexclt->setVisible( show );
    pb_excrng->setVisible( show );
    pb_incall->setVisible( show );
-   lb_odlim ->setVisible( show );
-   ct_odlim ->setVisible( show );
 
    lo_radius->itemAtPosition( 0, 0 )->widget()->setVisible( show );
    lo_radius->itemAtPosition( 0, 1 )->widget()->setVisible( show );
@@ -4148,8 +4196,6 @@ void US_Edit::connect_mwl_ctrls( bool conn )
                this,      SLOT  ( lambda_excl_range  (        ) ) );
       connect( pb_incall, SIGNAL( clicked            (        ) ),
                this,      SLOT  ( lambda_include_all (        ) ) );
-      connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
-               this,      SLOT  ( od_radius_limit    ( double ) ) );
    }
 
    else
@@ -4166,7 +4212,6 @@ void US_Edit::connect_mwl_ctrls( bool conn )
       cb_lexclt->disconnect();
       pb_excrng->disconnect();
       pb_incall->disconnect();
-      ct_odlim ->disconnect();
    }
 }
 
@@ -4174,7 +4219,7 @@ void US_Edit::connect_mwl_ctrls( bool conn )
 void US_Edit::ldelta_value( double value )
 {
 DbgLv(1) << "ldelta_value  value" << value;
-   dlambda     = value;
+   dlambda     = (int)value;
 
    reset_plot_lambdas();
 }
@@ -4182,7 +4227,7 @@ DbgLv(1) << "ldelta_value  value" << value;
 // Lambda Start has changed
 void US_Edit::lambda_start_value( int value )
 {
-   slambda     = cb_lstart->itemText( value ).toDouble();
+   slambda     = cb_lstart->itemText( value ).toInt();
 DbgLv(1) << "lambda_start_value  value" << value << slambda;
 
    reset_plot_lambdas();
@@ -4191,7 +4236,7 @@ DbgLv(1) << "lambda_start_value  value" << value << slambda;
 // Lambda End has changed
 void US_Edit::lambda_end_value( int value )
 {
-   elambda     = cb_lend  ->itemText( value ).toDouble();
+   elambda     = cb_lend  ->itemText( value ).toInt();
 DbgLv(1) << "lambda_end_value  value" << value << elambda;
 
    reset_plot_lambdas();
@@ -4200,57 +4245,44 @@ DbgLv(1) << "lambda_end_value  value" << value << elambda;
 // Adjust the plot wavelengths list, after a lambda range change
 void US_Edit::reset_plot_lambdas()
 {
-   dlambda        = ct_ldelta->value();
-   slambda        = cb_lstart->currentText().toDouble();
-   elambda        = cb_lend  ->currentText().toDouble();
-   int     rsize  = rlist_wvlns.size();
-   int     lstx   = rsize - 1;
+   dlambda        = (int)ct_ldelta->value();
+   slambda        = cb_lstart->currentText().toInt();
+   elambda        = cb_lend  ->currentText().toInt();
+   int     strtx  = cb_lstart->currentIndex();
+   int     endx   = cb_lend  ->currentIndex() + 1;
    int     plotx  = cb_lplot ->currentIndex();
-   double  plam   = slambda;                // Initial plot(export) lambda
 DbgLv(1) << "rpl: dl sl el px" << dlambda << slambda << elambda << plotx;
-   plist_wvlns.clear();
-   plot_wvlns .clear();
+   expc_wvlns.clear();
+   expi_wvlns.clear();
 
-   for ( int ii = 0; ii < rsize; ii++ )
+   for ( int ii = strtx; ii < endx; ii += dlambda )
    {  // Accumulate new list of export lambdas by looking at all raw lambas
-      QString clam   = rlist_wvlns[ ii ];
-      double  rlam   = clam.toDouble();      // Current raw input lambda
-      double  l_next = ( ii < lstx ) ? rlist_wvlns[ ii + 1 ].toDouble() : 9999.;
-DbgLv(1) << "rpl:  ii" << ii << "plam rlam l_next" << plam << rlam << l_next;
-
-      if ( plam == rlam   ||
-           ( plam > rlam  &&  plam < l_next ) )
-      {
-         plist_wvlns << clam;
-         plot_wvlns  << rlam;
-         plam          += dlambda;
-         while ( plam < l_next )
-            plam          += dlambda;
-
-         if ( plam > elambda )  break;
-      }
+      QString clam   = rawc_wvlns[ ii ];
+      int     rlam   = clam.toInt();      // Current raw input lambda
+      expc_wvlns << clam;
+      expi_wvlns << rlam;
    }
 
-   nwavelo        = plist_wvlns.size();
+   nwavelo        = expi_wvlns.size();
    plotx          = ( plotx < nwavelo ) ? plotx : ( nwavelo / 2 );
 DbgLv(1) << "rpl:   nwavelo plotx" << nwavelo << plotx;
-DbgLv(1) << "rpl:    pl1 pln" << plist_wvlns[0] << plist_wvlns[nwavelo-1];
+DbgLv(1) << "rpl:    pl1 pln" << expi_wvlns[0] << expi_wvlns[nwavelo-1];
 
    if ( xaxis_radius )
    {  // If x-axis is radius, reset wavelength-to-plot list
       cb_lplot->disconnect();
       cb_lplot->clear();
-      cb_lplot->addItems( plist_wvlns );
+      cb_lplot->addItems( expc_wvlns );
       connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
                this,      SLOT  ( lambda_plot_value  ( int    ) ) );
       cb_lplot->setCurrentIndex( plotx );
    }
 
    // Report export lambda range
-   const QChar charla( 955 );
+   const QChar chlamb( 955 );
    le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
-                           " average delta %5" )
-      .arg( nwavelo ).arg( charla ).arg( slambda ).arg( elambda )
+                           " raw index increment %5" )
+      .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda )
       .arg( dlambda ) );
 }
 
@@ -4265,10 +4297,10 @@ DbgLv(1) << "xaxis_radius_on  checked" << checked;
 
       cb_lplot->disconnect();
       cb_lplot->clear();
-      cb_lplot->addItems( plist_wvlns );
+      cb_lplot->addItems( expc_wvlns );
       connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
                this,      SLOT  ( lambda_plot_value  ( int    ) ) );
-      cb_lplot->setCurrentIndex( plist_wvlns.size() / 2 );
+      cb_lplot->setCurrentIndex( expc_wvlns.size() / 2 );
    }
 }
 
@@ -4283,10 +4315,10 @@ DbgLv(1) << "xaxis_waveln_on  checked" << checked;
 
       cb_lplot->disconnect();
       cb_lplot->clear();
-      cb_lplot->addItems( plist_radii );
+      cb_lplot->addItems( expc_radii );
       connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
                this,      SLOT  ( lambda_plot_value  ( int    ) ) );
-      cb_lplot->setCurrentIndex( plist_radii.size() / 2 );
+      cb_lplot->setCurrentIndex( expc_radii.size() / 2 );
    }
 }
 
@@ -4324,8 +4356,8 @@ void US_Edit::lambda_plot_next()
 DbgLv(1) << "lambda_plot_next  clicked";
    plotndx++;
 
-   int lstx = rb_radius->isChecked() ? ( plot_wvlns.size() - 1 )
-                                     : ( plot_radii.size() - 1 );
+   int lstx = rb_radius->isChecked() ? ( expc_wvlns.size() - 1 )
+                                     : ( expc_radii.size() - 1 );
 
    if ( plotndx >= lstx )
    {
@@ -4341,7 +4373,7 @@ DbgLv(1) << "lambda_plot_next  clicked";
 void US_Edit::lambda_excl_from( int value )
 {
    exclfrx     = value;
-   excllfr     = cb_lexclf->itemText( exclfrx ).toDouble();
+   excllfr     = cb_lexclf->itemText( exclfrx ).toInt();
 DbgLv(1) << "lambda_excl_from  value" << value << excllfr;
 }
 

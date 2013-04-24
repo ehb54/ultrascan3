@@ -9,3 +9,5 @@ do
 done
 
 rm -f *~
+rm -f utils/obj/us_dataIO2.o
+

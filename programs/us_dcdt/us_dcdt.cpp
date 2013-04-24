@@ -141,24 +141,13 @@ void US_Dcdt::data_plot( void )
 {
    US_AnalysisBase2::data_plot();
 
-   int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d      = &dataList[ index ];
+   int                    index  = lw_triples->currentRow();
+   US_DataIO::EditedData* d      = &dataList[ index ];
 
    int     scanCount   = d->scanData.size();
    int     skipped     = 0;
    double  positionPct = ct_boundaryPos    ->value() / 100.0;
    double  baseline    = calc_baseline();
-/*
-   for ( int i = 0; i < scanCount; i++ )
-   {
-      if ( excludedScans.contains( i ) ) continue;
-      
-      double range  = d->scanData[ i ].plateau - baseline;
-      double test_y = baseline + range * positionPct;
-      
-      if ( d->scanData[ i ].readings[ 0 ].value > test_y ) skipped++;
-   }
-*/
 
    le_skipped->setText( QString::number( skipped ) );
 
@@ -171,7 +160,7 @@ void US_Dcdt::data_plot( void )
       return;
    }
 
-   int points = d->scanData[ 0 ].readings.size();
+   int points = d->pointCount();
 
    // Create the new arrays
    dcdt   .clear();
@@ -201,8 +190,8 @@ void US_Dcdt::data_plot( void )
    {
       if ( excludedScans.contains( i ) ) continue;
 
-      US_DataIO2::Scan* thisScan = &d->scanData[ i ];
-      US_DataIO2::Scan* prevScan = &d->scanData[ previous ];
+      US_DataIO::Scan* thisScan = &d->scanData[ i ];
+      US_DataIO::Scan* prevScan = &d->scanData[ previous ];
 
       // These limits are for thisScan only:
       double range       = thisScan->plateau - baseline;
@@ -219,8 +208,8 @@ void US_Dcdt::data_plot( void )
 
       for ( int j = 0; j < points; j++ )
       {
-         double currentV  = thisScan->readings[ j ].value;
-         double previousV = prevScan->readings[ j ].value;
+         double currentV  = thisScan->rvalues[ j ];
+         double previousV = prevScan->rvalues[ j ];
 
          if ( currentV < lower_limit ) continue;
 
@@ -344,7 +333,7 @@ next: avgDcdt[ j ] /= ( count - 1 );
             int end  = arraySizes[ i ] + arrayStart[ i ];
 
             for ( int j = arrayStart[ i ]; j < end; j++ ) 
-               x[ size++ ] = d->x[ j ].radius;
+               x[ size++ ] = d->xvalues[ j ];
 
             curve = us_curve( data_plot1, 
                   tr( "Scan " ) + QString::number( i + 1 ) );
@@ -386,15 +375,13 @@ next: avgDcdt[ j ] /= ( count - 1 );
 // Write report html to stream
 void US_Dcdt::write_report( QTextStream& ts )
 {
-   int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* edata  = &dataList[ index ];
+   int                    index  = lw_triples->currentRow();
+   US_DataIO::EditedData* edata  = &dataList[ index ];
 
    QString title = "US_dCdt";
    QString head1 = tr( "Time - Derivative (dC/dt) Analysis" );
 
    ts << html_header( title, head1, edata );
-   ts << run_details();
-   ts << hydrodynamics();
    ts << analysis( "" );
    ts << scan_info();
    ts << indent( 2 ) + "</body>\n</html>\n";
@@ -425,9 +412,9 @@ void US_Dcdt::view( void )
 
 void US_Dcdt::save( void )
 {
-   int                     index  = lw_triples->currentRow();
-   US_DataIO2::EditedData* d      = &dataList[ index ];
-   QString                 dir    = US_Settings::reportDir();
+   int                    index  = lw_triples->currentRow();
+   US_DataIO::EditedData* d      = &dataList[ index ];
+   QString                dir    = US_Settings::reportDir();
 
    if ( ! mkdir( dir, d->runID ) ) return;
 
@@ -442,6 +429,11 @@ void US_Dcdt::save( void )
    QString plot3File = filebase + "x-to-S.svg";
    QString plot4File = filebase + "average-S.svg";
    QString textFile  = filebase + "average-S.csv";
+   QString dsinfFile = QString( filebase ).replace( "/dcdt.", "/dsinfo." )
+                                + "dataset_info.html";
+
+   // Write a general dataset information file
+   write_dset_report( dsinfFile );
 
    // Write main report file
    // Write report
@@ -515,8 +507,8 @@ void US_Dcdt::save( void )
    dcdt_data.close();
 
    QStringList repfiles;
-   repfiles << htmlFile << plot1File << plot2File << plot3File 
-            << plot4File << textFile;
+   repfiles << htmlFile  << plot1File << plot2File << plot3File 
+            << plot4File << textFile  << dsinfFile;
 
    // Tell user
    htmlFile  = htmlFile .mid( htmlFile .lastIndexOf( "/" ) + 1 );
@@ -525,10 +517,12 @@ void US_Dcdt::save( void )
    plot3File = plot3File.mid( plot3File.lastIndexOf( "/" ) + 1 );
    plot4File = plot4File.mid( plot4File.lastIndexOf( "/" ) + 1 );
    textFile  = textFile .mid( textFile .lastIndexOf( "/" ) + 1 );
+   dsinfFile = dsinfFile.mid( dsinfFile.lastIndexOf( "/" ) + 1 );
 
    QString     wmsg = tr( "Wrote:\n  " )
       + htmlFile  + "\n  " + plot1File + "\n  " + plot2File + "\n  "
-      + plot3File + "\n  " + plot4File + "\n  " + textFile;
+      + plot3File + "\n  " + plot4File + "\n  " + textFile  + "\n  "
+      + dsinfFile;
 
    if ( disk_controls->db() )
    {  // Write report files also to the database

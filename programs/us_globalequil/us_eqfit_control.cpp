@@ -12,7 +12,7 @@
 US_EqFitControl::US_EqFitControl(
       QVector< EqScanFit >&   a_scanfits,
       EqRunFit&               a_runfit,
-      US_DataIO2::EditedData* a_edata,
+      US_DataIO::EditedData*  a_edata,
       US_EqMath*              a_emath,
       US_EqReporter*          a_ereporter,
       int                     a_modelx,
