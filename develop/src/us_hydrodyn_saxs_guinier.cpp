@@ -712,7 +712,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
       }
    }
 
-   // US_Vector::printvector3( "q2 I e", q2 /* usu.wave["data"].q */, usu.wave["data"].r, usu.wave["data"].s );
+   // US_Vector::printvector3( "cs1 q2 I e", q2 /* usu.wave["data"].q */, usu.wave["data"].r, usu.wave["data"].s );
 
    QString log;
 
@@ -793,12 +793,16 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          usu.wave["data"].q.clear();
          usu.wave["data"].r.clear();
          usu.wave["data"].s.clear();
+
+         // vector < double > q2;
+
          for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
          {
             if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
                  plotted_q[ i ][ j ] <= our_saxs_options->qend )
             {
                usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+               // q2.push_back(  plotted_q2[ i ][ j ] );
                usu.wave["data"].r.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
                if ( use_SD_weighting )
                {
@@ -806,8 +810,11 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                }
             }
          }
+
+         // US_Vector::printvector3( "cs2 q2 I e", q2 /* usu.wave["data"].q */, usu.wave["data"].r, usu.wave["data"].s );
+
          unsigned int pstart = 0;
-         unsigned int pend   = usu.wave[ "data " ].q.size() - 1;
+         unsigned int pend   = usu.wave[ "data" ].q.size() - 1;
          bestend = pend;
          beststart = pstart;
 

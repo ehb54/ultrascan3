@@ -1,4 +1,5 @@
-// #define DEBUG_MW
+// #define DEBUG_MW2 // for testing "preset values on guinier_window()"
+#define DEBUG_MW
 
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_mw.h"
@@ -271,7 +272,7 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
    double psv;
    double I0_std_exp;
 
-#if defined( DEBUG_MW )
+#if defined( DEBUG_MW2 )
    conc = our_saxs_options->conc;
    psv = our_saxs_options->psv;
    I0_std_exp = our_saxs_options->I0_exp;
@@ -357,7 +358,7 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
    double psv;
    double I0_std_exp;
 
-#if defined( DEBUG_MW )
+#if defined( DEBUG_MW2 )
    conc = our_saxs_options->conc;
    psv = our_saxs_options->psv;
    I0_std_exp = our_saxs_options->I0_exp;
@@ -399,15 +400,19 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
       our_saxs_options->diffusion_len * 
       ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - use_psv * ( 1e24 * our_saxs_options->water_e_density ) );
    
-   ML = I0_prot_theo * AVOGADRO / ( our_saxs_options->conc * 1e-3 ) / ( internal_contrast * internal_contrast ) / M_PI;
+   ML = I0_prot_theo * AVOGADRO / ( conc * 1e-3 ) / ( internal_contrast * internal_contrast ) / M_PI;
 
 #if defined( DEBUG_MW )
    cout << QString( 
                    "I0_std_theo         %1\n"
                    "I0_std_exp          %2\n"
+                   "I0                  %3\n"
+                   "ML                  %4\n"
                    )
       .arg( our_saxs_options->I0_theo, 0, 'e', 8  )
       .arg( I0_std_exp, 0, 'e', 8  )
+      .arg( I0_exp, 0, 'e', 8  )
+      .arg( ML, 0, 'e', 8  )
       ;
                    
    cout << QString( 
@@ -439,7 +444,7 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
 
 void US_Hydrodyn_Saxs::guinier_window()
 {
-#if defined( DEBUG_MW )
+#if defined( DEBUG_MW2 )
    saxs_options sav_saxs_options = *our_saxs_options;
 
    double I0;
