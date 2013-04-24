@@ -1721,6 +1721,7 @@ void US_ConvertGui::changeTriple( QListWidgetItem* )
 {
    // Match the description to find the correct triple in memory
    QString triple = lw_triple->currentItem()->text();
+qDebug() << "chgTrp: triple" << triple;
    int tLx = 0;
    for ( int i = 0; i < triples.size(); i++ )
    {
@@ -1729,6 +1730,7 @@ void US_ConvertGui::changeTriple( QListWidgetItem* )
    }
 
    triple_index( -1, tLx );
+qDebug() << "chgTrp: tLx trDx trLx" << tLx << tripDatax << tripListx;
    
    le_dir         -> setText( currentDir );
    le_description -> setText( allData[ tripDatax ].description );
@@ -2833,7 +2835,7 @@ bool US_ConvertGui::read( QString dir )
    // Get legacy file names
    QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
    d.makeAbsolute();
-   if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
+   if ( dir.right( 1 ) != "/" ) dir += "/";  // Ensure trailing /
 
    // See if we need to fix the runID
    QStringList components = dir.split( "/", QString::SkipEmptyParts );
@@ -2844,7 +2846,7 @@ bool US_ConvertGui::read( QString dir )
    bool runID_changed = false;
    while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
    {
-      new_runID.replace( pos, 1, "_" );         // Replace 1 char at position pos
+      new_runID.replace( pos, 1, "_" );      // Replace 1 char at position pos
       runID_changed = true;
    }
 
@@ -2853,8 +2855,10 @@ bool US_ConvertGui::read( QString dir )
    {
       QMessageBox::warning( this,
             tr( "RunID Name Changed" ),
-            tr( "The runID name has been changed. It may consist only of alphanumeric \n" 
-                "characters, the underscore, and the hyphen. New runID: " ) + new_runID );
+            tr( "The runID name has been changed. It may consist only"
+                "of alphanumeric \n" 
+                " characters, the underscore, and the hyphen. New runID: " )
+            + new_runID );
    }
 
    // Set the runID and directory
@@ -3118,7 +3122,6 @@ void US_ConvertGui::plot_all( void )
       for ( int j = 0; j < size; j++ )
       {
          r[ j ] = currentData.radius( j );
-//         v[ j ] = s->readings  [ j ].value;
          v[ j ] = s->rvalues[ j ];
 
          if ( v[ j ] > 1.0e99 || isnan( v[ j ] ) )

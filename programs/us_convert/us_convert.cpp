@@ -68,12 +68,12 @@ void US_Convert::readLegacyData(
 
       data.channel = ( c.isDigit() ) ? 'A' : c.toAscii();
 
-      if ( runType == "RI" )                // Split out the two readings in RI data
+      if ( runType == "RI" )          // Split out the two readings in RI data
       {
-         US_DataIO::BeckmanRawScan data2 = data;  // Alter to store second dataset
+         US_DataIO::BeckmanRawScan data2 = data;  // Alter to store 2nd dataset
          for ( int j = 0; j < data.rvalues.size(); j++ )
          {
-            data2.rvalues[ j ]  = data2.stddevs[ j ]; // Reading 2 in here for RI
+            data2.rvalues[ j ] = data2.stddevs[ j ]; // Reading 2 here for RI
             data .stddevs[ j ] = 0.0;
             data2.stddevs[ j ] = 0.0;
          }
@@ -373,9 +373,9 @@ void US_Convert::convert(
    // Calculate mins and maxes for proper scaling
    for ( int i = 0; i < rawLegacyData.size(); i++ )
    {
-      double first = rawLegacyData[ i ].rvalues[ 0 ];
-      int    size  = rawLegacyData[ i ].rvalues.size();
-      double last  = rawLegacyData[ i ].rvalues[ size - 1 ]; 
+      double first = rawLegacyData[ i ].xvalues[ 0 ];
+      int    size  = rawLegacyData[ i ].xvalues.size();
+      double last  = rawLegacyData[ i ].xvalues[ size - 1 ]; 
 
       min_radius = qMin( min_radius, first );
       max_radius = qMax( max_radius, last  );
@@ -384,10 +384,12 @@ void US_Convert::convert(
 
    // Set the distance between readings
    double delta_r;
+qDebug() << "Cvt:  runType" << runType;
    if ( runType == "IP" )
    {
       // Get the actual delta out of the header lines
-      QStringList descriptionParts = rawLegacyData[ 0 ].description.split( " ", QString::SkipEmptyParts );
+      QStringList descriptionParts = rawLegacyData[ 0 ]
+            .description.split( " ", QString::SkipEmptyParts );
       QString proto = descriptionParts[ 1 ].toAscii();
       proto.remove( "," );
    
@@ -397,6 +399,7 @@ void US_Convert::convert(
 
       else
          delta_r = proto.toDouble();
+qDebug() << "Cvt:  proto" << proto << "delta_r" << delta_r;
 
    }
 
@@ -404,7 +407,10 @@ void US_Convert::convert(
       delta_r = 0.001;
 
    // Calculate the radius vector
+   newRawData.xvalues .clear();
+   newRawData.scanData.clear();
    int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
+qDebug() << "Cvt:  rad_cnt delta_r" << radius_count << delta_r;
    double radius = min_radius;
    for ( int j = 0; j < radius_count; j++ )
    {
@@ -429,6 +435,7 @@ void US_Convert::convert(
       uchar* interpolated = new uchar[ bitmap_size ];
       //bzero( interpolated, bitmap_size );
       memset( interpolated, 0, bitmap_size );
+qDebug() << "Cvt:   sc i" << i << "interp set";
 
       /*
       There are two indexes needed here.  The new radius as iterated
@@ -466,11 +473,12 @@ void US_Convert::convert(
       */
 
       radius = min_radius;
-      double r0     = ccwLegacyData[ i ].rvalues[ 0 ];
-      int    rCount = ccwLegacyData[ i ].rvalues.size();       
-      double rLast  = ccwLegacyData[ i ].rvalues[ rCount - 1 ];
+      double r0     = ccwLegacyData[ i ].xvalues[ 0 ];
+      int    rCount = ccwLegacyData[ i ].xvalues.size();       
+      double rLast  = ccwLegacyData[ i ].xvalues[ rCount - 1 ];
       
       int    k      = 0;
+qDebug() << "Cvt:  rad" << radius << "rCount" << rCount << radius_count;
 
       for ( int j = 0; j < radius_count; j++ )
       {
@@ -479,7 +487,7 @@ void US_Convert::convert(
          double             dr = 0.0;
 
          if ( k < rCount )
-            dr = radius - ccwLegacyData[ i ].rvalues[ k ];
+            dr = radius - ccwLegacyData[ i ].xvalues[ k ];
 
          if ( runType == "IP" )
          {
@@ -530,7 +538,7 @@ void US_Convert::convert(
             double dR = ccwLegacyData[ i ].rvalues[ k     ] -
                         ccwLegacyData[ i ].rvalues[ k - 1 ];
 
-            dr        = radius - ccwLegacyData[ i ].rvalues[ k - 1 ];
+            dr        = radius - ccwLegacyData[ i ].xvalues[ k - 1 ];
 
             rvalue    = ccwLegacyData[ i ].rvalues[ k ] + dr * dv / dR;
             rstdev    =  0.0;
@@ -542,6 +550,7 @@ void US_Convert::convert(
          s.stddevs << rstdev;
          radius += delta_r;
       }
+qDebug() << "Cvt:   rCount loop complete";
       s.interpolated = QByteArray( (char*)interpolated, bitmap_size );
       delete [] interpolated;
 
@@ -598,7 +607,7 @@ void US_Convert::splitRAData(
             // Now copy the parent scan information
             newRawData.scanData.clear();
             for ( int k = 0; k < oldRawData[ i ].scanData.size(); k++ )
-               newRawData.scanData << newScanSubset( oldRawData[ i ].scanData[ k ] ,
+               newRawData.scanData << newScanSubset( oldRawData[ i ].scanData[ k ],
                                                      oldRawData[ i ].xvalues,
                                                      subsets[ j - 1 ],
                                                      subsets[ j ] );
