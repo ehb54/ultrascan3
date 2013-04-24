@@ -934,7 +934,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          double ICL;
 
          // ml_from_qI0( qsl_plotted_iq_names[ i ], Io, ML_sd, ICL );
-         if ( !mw_from_I0( qsl_plotted_iq_names[ i ], Io, ML, ICL ) )
+         if ( !ml_from_qI0( qsl_plotted_iq_names[ i ], Io, ML, ICL ) )
          {
             editor_msg( "red", errormsg );
          }

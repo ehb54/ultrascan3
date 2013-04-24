@@ -1,3 +1,4 @@
+// #define DEBUG_MW
 
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_mw.h"
@@ -270,7 +271,14 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
    double psv;
    double I0_std_exp;
 
+#if defined( DEBUG_MW )
+   conc = our_saxs_options->conc;
+   psv = our_saxs_options->psv;
+   I0_std_exp = our_saxs_options->I0_exp;
+#else
    get_conc_csv_values( name, conc, psv, I0_std_exp );
+#endif
+
    double I0_exp_to_theo_mult = 1e0;
    if ( our_saxs_options->guinier_use_standards )
    {
@@ -428,6 +436,7 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
    return true;
 }
 
+
 void US_Hydrodyn_Saxs::guinier_window()
 {
 #if defined( DEBUG_MW )
@@ -435,20 +444,29 @@ void US_Hydrodyn_Saxs::guinier_window()
 
    double I0;
    double MW;
+   double ML;
    double ICL;
 
+   I0 = 3.6e-4;
    our_saxs_options->psv = 0.73;
    our_saxs_options->water_e_density = 0.3365;
-   our_saxs_options->conc = 3.5e-1;
-   our_saxs_options->I0_exp = 4.65e-5;
+   our_saxs_options->conc = 4.47e-1;
+   our_saxs_options->I0_exp = 5.4e-5;
+
+   if ( mw_from_I0( "n/a", I0, MW, ICL ) )
+   {
+      cout << QString( "I0 %1 MW %2 ICL %3\n" ).arg( I0 ).arg( MW ).arg( ICL );
+   } else {
+      cout << errormsg << endl;
+   }
 
    I0 = 1.4174e-6;
    our_saxs_options->psv = 7.458756e-1;
    our_saxs_options->conc = 0.35;
    our_saxs_options->I0_exp = 4.65e-5;
-   if ( ml_from_qI0( "n/a", I0, MW, ICL ) )
+   if ( ml_from_qI0( "n/a", I0, ML, ICL ) )
    {
-      cout << QString( "I0 %1 ML %2 ICL %3\n" ).arg( I0 ).arg( MW ).arg( ICL );
+      cout << QString( "I0 %1 ML %2 ICL %3\n" ).arg( I0 ).arg( ML ).arg( ICL );
    } else {
       cout << errormsg << endl;
    }
