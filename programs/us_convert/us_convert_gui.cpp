@@ -30,10 +30,6 @@
 #endif
 #endif
 
-#if 0
-#define MWL_OLD
-#endif
-
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
@@ -1537,11 +1533,11 @@ void US_ConvertGui::getExpInfo( void )
    ExpData.rpms.clear();
    for ( int i = 0; i < allData.size(); i++ )
    {
-      US_DataIO::RawData raw = allData[ i ];
-      for ( int j = 0; j < raw.scanData.size(); j++ )
+      US_DataIO::RawData* raw = &allData[ i ];
+      for ( int j = 0; j < raw->scanData.size(); j++ )
       {
-         if ( ! ExpData.rpms.contains( raw.scanData[ j ].rpm ) )
-            ExpData.rpms << raw.scanData[ j ].rpm;
+         if ( ! ExpData.rpms.contains( raw->scanData[ j ].rpm ) )
+            ExpData.rpms << raw->scanData[ j ].rpm;
       }
    }
 
@@ -2082,14 +2078,11 @@ void US_ConvertGui::PseudoCalcAvg( void )
       int j      = 0;
       int count  = 0;
       double sum = 0.0;
-      //while ( referenceData.x[ j ].radius < reference_start && j < ref_size )
       while ( referenceData.radius( j ) < reference_start && j < ref_size )
          j++;
 
-      //while ( referenceData.x[ j ].radius < reference_end && j < ref_size )
       while ( referenceData.radius( j ) < reference_end && j < ref_size )
       {
-//         sum += s.readings[ j ].value;
          sum += s.rvalues[ j ];
          count++;
          j++;
@@ -3497,7 +3490,6 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
 
          while ( refData->radius( jj ) < reference_end  &&  jj < ref_size )
          {
-//            sum         += scn->readings[ jj ].value;
             sum         += scn->rvalues[ jj ];
             count++;
             jj++;

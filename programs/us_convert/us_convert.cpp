@@ -17,7 +17,7 @@ US_Convert::US_Convert( void )
 
 void US_Convert::readLegacyData( 
      QString                              dir,
-     QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
+     QList< US_DataIO::BeckmanRawScan >&  rawLegacyData,
      QString&                             runType ) 
 {
    if ( dir.isEmpty() ) return; 
@@ -318,8 +318,8 @@ int  US_Convert::readUS3Disk(
 }
 
 void US_Convert::convert( 
-     QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
-     US_DataIO::RawData&                 newRawData,
+     QList< US_DataIO::BeckmanRawScan >&  rawLegacyData,
+     US_DataIO::RawData&                  newRawData,
      QString                              triple,
      QString                              runType,
      double                               tolerance )
@@ -472,22 +472,23 @@ qDebug() << "Cvt:   sc i" << i << "interp set";
       Append the new reading and continue.
       */
 
-      radius = min_radius;
-      double r0     = ccwLegacyData[ i ].xvalues[ 0 ];
+      radius        = min_radius;
       int    rCount = ccwLegacyData[ i ].xvalues.size();       
+      double r0     = ccwLegacyData[ i ].xvalues[ 0 ];
       double rLast  = ccwLegacyData[ i ].xvalues[ rCount - 1 ];
       
       int    k      = 0;
+      int    nnz    = 0;
 qDebug() << "Cvt:  rad" << radius << "rCount" << rCount << radius_count;
 
       for ( int j = 0; j < radius_count; j++ )
       {
          double  rvalue;
          double  rstdev;
-         double             dr = 0.0;
+         double  dr    = 0.0;
 
          if ( k < rCount )
-            dr = radius - ccwLegacyData[ i ].xvalues[ k ];
+            dr      = radius - ccwLegacyData[ i ].xvalues[ k ];
 
          if ( runType == "IP" )
          {
@@ -515,8 +516,11 @@ qDebug() << "Cvt:  rad" << radius << "rCount" << rCount << radius_count;
          else if ( dr > -3.0e-4   &&  k < rCount ) // A value
          {
             rvalue = ccwLegacyData[ i ].rvalues[ k ];
-            rstdev = ccwLegacyData[ i ].stddevs[ k ];
+            rstdev = ccwLegacyData[ i ].nz_stddev ?
+                     ccwLegacyData[ i ].stddevs[ k ] : 0.0;
             k++;
+            if ( rstdev != 0.0 )
+               nnz++;
          }
          else if ( radius < r0 ) // Before the first
          {
@@ -548,11 +552,15 @@ qDebug() << "Cvt:  rad" << radius << "rCount" << rCount << radius_count;
 
          s.rvalues << rvalue;
          s.stddevs << rstdev;
-         radius += delta_r;
+         radius   += delta_r;
       }
 qDebug() << "Cvt:   rCount loop complete";
       s.interpolated = QByteArray( (char*)interpolated, bitmap_size );
       delete [] interpolated;
+
+      s.nz_stddev    = ( nnz > 0 );
+      if ( nnz == 0 )
+         s.stddevs.clear();
 
       newRawData.scanData <<  s ;
    }

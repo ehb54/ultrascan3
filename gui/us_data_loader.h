@@ -60,6 +60,7 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
          QString aucGUID;         // AUC GUID (same as dataGUID for raw)
          QString date;            // date/time last updated
          int     DB_id;           // database ID number
+         int     auc_id;          // AUC database ID number
          int     tripknt;         // count of triples per run
          int     tripndx;         // index of triple in run
          int     editknt;         // count of edits per triple

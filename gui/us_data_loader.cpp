@@ -172,7 +172,7 @@ bool US_DataLoader::load_edit( void )
    foreach ( index, indexes )
    {
       QString key    = dlabels[ index ];
-      QString triple = datamap[ key ].tripID.replace( ".", " / " );
+      QString triple = QString( datamap[ key ].tripID ).replace( ".", " / " );
 
       if ( triples.contains( triple ) )
       {
@@ -210,12 +210,23 @@ bool US_DataLoader::load_edit( void )
          QString  key      = dlabels[ indexes[ ii ] ];
          ddesc             = datamap[ key ];
          QString  filename = ddesc.filename;
-         QString  triple   = ddesc.tripID.replace( ".", " / " );
+         QString  dtriple  = ddesc.tripID;
+         QString  triple   = QString( dtriple ).replace( ".", " / " );
+
          triples << triple;
 
+         QString  clambda  = dtriple .section( ".", -1, -1 );
          QString  filedir  = filename.section( "/",  0, -2 );
          filename          = filename.section( "/", -1, -1 );
+         QString  ftriple  = filename.section( ".", -4, -2 );
          QString  message  = tr( "Loading triple " ) + triple;
+
+         if ( triple != ftriple   &&  ftriple.contains( ":" ) )
+         {  // Modify filename to signal MWL
+            QString  ftrnode  = "." + ftriple + ".";
+            QString  utrnode  = "." + ftriple  + "@" + clambda + ".";
+            filename          = filename.replace( ftrnode, utrnode );
+         }
 
          emit progress( message );
          qApp->processEvents();
@@ -261,53 +272,80 @@ bool US_DataLoader::load_edit( void )
       }
 
       QStringList query;
+      QString  prvfname = "";
+      QString  efn      = "";
+      QString  tempdir  = US_Settings::tmpDir() + "/";
+      QDir dir;
+      if ( ! dir.exists( tempdir ) )
+         dir.mkpath( tempdir );
+      // Read first selection from DB, then generate a map of AUCfile::idAUC
+      ddesc             = datamap[ dlabels[ indexes[ 0 ] ] ];
+      QString  recID    = QString::number( ddesc.DB_id );
+      QString message = tr( "Browsing AUC data..." );
+      emit progress( message );
+      qApp->processEvents();
 
       for ( int ii = 0; ii < indexes.size(); ii++ )
-      {
+      {  // Read in each of the edits that was selected
          QString  key      = dlabels[ indexes[ ii ] ];
          ddesc             = datamap[ key ];
          int      idRec    = ddesc.DB_id;
-         QString  triple   = ddesc.tripID.replace( ".", " / " );
+         QString  dtriple  = ddesc.tripID;
+         QString  triple   = QString( dtriple ).replace( ".", " / " );
+
          triples << triple;
 
-         QString  filename = ddesc.filename;
+         QString  dscfname = ddesc.filename;
+         QString  filename = dscfname;
+         QString  clambda  = dtriple .section( ".", -1, -1 );
+         QString  filedir  = filename.section( "/",  0, -2 );
+         filename          = filename.section( "/", -1, -1 );
+         QString  ftriple  = filename.section( ".", -4, -2 );
+
+         if ( triple != ftriple   &&  ftriple.contains( ":" ) )
+         {  // Modify filename to signal MWL
+            QString  ftrnode  = "." + ftriple + ".";
+            QString  utrnode  = "." + ftriple  + "@" + clambda + ".";
+            filename          = filename.replace( ftrnode, utrnode );
+         }
+
          QString  recID    = QString::number( idRec );
          QString  invID    = QString::number( US_Settings::us_inv_ID() );
          QString  aucfn    = ddesc.runID + "."
-                             + filename.section( ".", -5, -2 ) + ".auc";
-         QString  tempdir  = US_Settings::tmpDir() + "/";
+                             + filename.section( ".", -5, -3 )
+                             + "." + clambda + ".auc";
          QString  afn      = tempdir + aucfn;
-         QString  efn      = tempdir + filename;
+         int      idAUC    = ddesc.auc_id;
 
-         QDir dir;
-         if ( ! dir.exists( tempdir ) ) dir.mkpath( tempdir );
-
-         query.clear();
-         query << "get_editedData" << recID;
-         db.query( query );
-         db.next();
-         
          QString message = tr( "Loading triple " ) + triple;
          emit progress( message );
          qApp->processEvents();
 
-         int idAUC = db.value( 0 ).toString().toInt();
-
          db.readBlobFromDB( afn, "download_aucData", idAUC );
          qApp->processEvents();
 
-         db.readBlobFromDB( efn, "download_editData", idRec );
-         qApp->processEvents();
+         if ( dscfname != prvfname )
+         {
+            efn      = tempdir + prvfname;
+            QFile( efn ).remove();
+            prvfname = dscfname;
+            efn      = tempdir + dscfname;
+            db.readBlobFromDB( efn, "download_editData", idRec );
+            qApp->processEvents();
+         }
 
          US_DataIO::loadData( tempdir, filename, editedData, rawData );
 
          QFile( afn ).remove();
-         QFile( efn ).remove();
       }
+
+      QFile efile( efn );
+
+      if ( efile.exists() )
+         efile.remove();
    }
 
    QApplication::restoreOverrideCursor();
-
    double                 dt = 0.0;
    US_DataIO::EditedData ed;
 
@@ -341,20 +379,8 @@ void US_DataLoader::describe( )
    QString filename = ddesc.filename;
    QString dataGUID = ddesc.dataGUID;
    QString aucGUID  = ddesc.aucGUID;
-
-   if ( disk_controls->db()  &&  aucGUID.length() < 36 )
-   {
-      US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
-      QStringList query;
-      query << "get_rawData" << aucGUID;
-      db.query( query );
-      db.next();
-      aucGUID          = db.value( 0 ).toString();
-   }
-
+   QString aucID    = QString::number( ddesc.auc_id );
    QString cdesc    = label + descript + filename + dataGUID + aucGUID + dbID;
-
    QString sep      = ";";     // Use semi-colon as separator
 
    if ( cdesc.contains( sep ) )
@@ -366,6 +392,7 @@ void US_DataLoader::describe( )
                     + sep + dbID
                     + sep + filename
                     + sep + dataGUID
+                    + sep + aucID
                     + sep + aucGUID;
 }
 
@@ -566,13 +593,32 @@ void US_DataLoader::scan_dbase_edit()
       return;
    }
 
-   bool tfilter = ( etype_filt != "none" );
+   bool     tfilter  = ( etype_filt != "none" );
+   QString  tempdir  = US_Settings::tmpDir() + "/";
+   QDir dir;
+   if ( ! dir.exists( tempdir ) )
+      dir.mkpath( tempdir );
    QStringList query;
    QStringList edtIDs;
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
 
    setWindowTitle( tr( "Load Edited Data from DB" ) );
 
+   // Accumulate a map of AUC filenames and IDs
+   QMap< QString, QString > aucIDs;
+   query.clear();
+   query << "all_rawDataIDs" << invID;
+   db.query( query );
+
+   while( db.next() )
+   {  // Accumulate a mapping of AUC Filename to DB ID
+      QString  aucID    = db.value( 0 ).toString();
+      QString  aFname   = db.value( 2 ).toString();
+      QString  aucGUID  = db.value( 9 ).toString();
+      aucIDs[ aFname ]  = aucID + ":" + aucGUID;
+   }
+
+   query.clear();
    query << "all_editedDataIDs" << invID;
 
 //qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -600,7 +646,13 @@ void US_DataLoader::scan_dbase_edit()
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
                          : descrip;
       QString editID   = filebase.section( ".", -6, -6 );
+      QString dataType = filebase.section( ".", -5, -5 );
       QString tripID   = filebase.section( ".", -4, -2 );
+      QString edtlamb  = tripID  .section( ".",  2,  2 );
+      QString aucfname = runID + "." + dataType + "." + tripID + ".auc";
+      bool    isMwl    = edtlamb.contains( ":" );
+      int     idAUC    = isMwl ? 0
+                         : aucIDs[ aucfname ].section( ":", 0, 0 ).toInt();
 
 //qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       QString label    = runID;
@@ -616,6 +668,7 @@ void US_DataLoader::scan_dbase_edit()
       ddesc.dataGUID   = recGUID;
       ddesc.aucGUID    = parID;
       ddesc.DB_id      = idRec;
+      ddesc.auc_id     = idAUC;
       ddesc.date       = date;
       ddesc.tripknt    = 1;
       ddesc.tripndx    = 1;
@@ -624,7 +677,72 @@ void US_DataLoader::scan_dbase_edit()
       ddesc.isEdit     = true;
       ddesc.isLatest   = latest;
 
-      datamap[ descrip ] = ddesc;
+      if ( isMwl )
+      {  // For MWL we must generate multiple entries for a Cell/Channel edit
+         QString edtfname = runID + "." + dataType + "." + tripID + ".xml";
+         QString edtpath  =  tempdir + "/" + edtfname;
+
+         // Read the XML contents from the edit DB record
+         db.readBlobFromDB( edtpath, "download_editData", idRec );
+         qApp->processEvents();
+         QString elambda;
+
+         // Open the temporary file and parse Lambdas from the XML
+         QFile filei( edtpath );
+
+         if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            continue;
+         QStringList mwlambds;
+         QXmlStreamReader xml( &filei );
+         QXmlStreamAttributes attr;
+         QString recGUID;
+         QString parGUID;
+         QString expType;
+
+         while( ! xml.atEnd() )
+         {  // Build up a string list of Lambdas
+            xml.readNext();
+
+            if ( xml.isStartElement()  &&  xml.name() == "lambda" )
+            {
+               attr      = xml.attributes();
+               elambda   = attr.value( "value" ).toString();
+               mwlambds << elambda;
+            }
+
+            else if ( xml.isEndElement()  &&  xml.name() == "lambdas" )
+               break;
+         }
+
+         filei.close();
+
+         QString otripID  = tripID;
+         QString odescrip = descrip;
+         QString aucEntr;
+         int     tripknt  = mwlambds.size();
+
+         for ( int ii = 0; ii < tripknt; ii++ )
+         {  // Add an entry for each Lambda in the edit
+            elambda       = mwlambds[ ii ];
+            tripID        = QString( otripID  ).replace( edtlamb, elambda );
+            descrip       = QString( odescrip ).replace( otripID, tripID  );
+            aucfname      = runID + "." + dataType + "." + tripID + ".auc";
+            aucEntr       = aucIDs[ aucfname ];
+            idAUC         = aucEntr.section( ":", 0, 0 ).toInt();
+            parGUID       = aucEntr.section( ":", 1, 1 );
+            ddesc.tripID       = tripID;
+            ddesc.editID       = editID + "@" + elambda;
+            ddesc.descript     = descrip;
+            ddesc.aucGUID      = parGUID;
+            ddesc.auc_id       = idAUC;
+            ddesc.tripknt      = tripknt;
+            ddesc.tripndx      = ii + 1;
+            datamap[ descrip ] = ddesc;
+         }
+      } // END: isMWL=true
+
+      else
+         datamap[ descrip ] = ddesc;
 //qDebug() << "ScDB:TM:06: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    }
 //qDebug() << "ScDB:TM:88: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -661,6 +779,7 @@ void US_DataLoader::scan_local_edit( void )
       QString runID     = aucfbase.section( ".",  0, -6 );
       QString subType   = aucfbase.section( ".", -5, -5 );
       QString tripl     = aucfbase.section( ".", -4, -2 );
+      QString auclamb   = tripl   .section( ".",  2,  2 );
 
       edtfilt.clear();
       //edtfilt <<  runID + ".*."  + subType + "." + tripl + ".xml";
@@ -668,6 +787,7 @@ void US_DataLoader::scan_local_edit( void )
       QStringList edtfiles = QDir( subdir ).entryList( 
             edtfilt, QDir::Files, QDir::Name );
       edtfiles.sort();
+      QStringList mwlambds;
 
       if ( edtfiles.size() < 1 )
          continue;
@@ -681,6 +801,7 @@ void US_DataLoader::scan_local_edit( void )
          editID  = ( editID.length() == 12  &&  editID.startsWith( "20" ) ) ?
                    editID.mid( 2 ) : editID;
          QString tripID   = filebase.section( ".", -4, -2 );
+         QString edtlamb  = tripID  .section( ".",  2,  2 );
          QString label    = runID;
          QString descrip  = runID + "." + tripID + "." + editID;
          QString baselabl = label;
@@ -698,6 +819,8 @@ void US_DataLoader::scan_local_edit( void )
          QString recGUID;
          QString parGUID;
          QString expType;
+         QString elambda;
+         bool    isMwl   = edtlamb.contains( ":" );
 
          while( ! xml.atEnd() )
          {
@@ -722,6 +845,14 @@ void US_DataLoader::scan_local_edit( void )
                   a         = xml.attributes();
                   expType   = a.value( "type" ).toString().toLower();
                }
+
+               if ( isMwl   &&  xml.name() == "lambda" )
+               {
+                  a         = xml.attributes();
+                  elambda   = a.value( "value" ).toString();
+                  mwlambds << elambda;
+//qDebug() << "DLdr:    elambda" << elambda;
+               }
             }
          }
 
@@ -740,6 +871,7 @@ void US_DataLoader::scan_local_edit( void )
          ddesc.dataGUID   = recGUID;
          ddesc.aucGUID    = parGUID;
          ddesc.DB_id      = -1;
+         ddesc.auc_id     = -1;
          ddesc.date       = date;
          ddesc.tripknt    = 1;
          ddesc.tripndx    = 1;
@@ -748,7 +880,28 @@ void US_DataLoader::scan_local_edit( void )
          ddesc.isEdit     = true;
          ddesc.isLatest   = latest;
 
-         datamap[ descrip ] = ddesc;
+         if ( isMwl )
+         {
+            QString otripID  = tripID;
+            QString odescrip = descrip;
+            int     tripknt  = mwlambds.size();
+
+            for ( int ii = 0; ii < tripknt; ii++ )
+            {
+               elambda       = mwlambds[ ii ];
+               tripID        = QString( otripID  ).replace( edtlamb, elambda );
+               descrip       = QString( odescrip ).replace( otripID, tripID  );
+               ddesc.tripID       = tripID;
+               ddesc.editID       = editID + "@" + elambda;
+               ddesc.descript     = descrip;
+               ddesc.tripknt      = tripknt;
+               ddesc.tripndx      = ii + 1;
+               datamap[ descrip ] = ddesc;
+            }
+         }
+
+         else
+            datamap[ descrip ] = ddesc;
       }
    }
 
@@ -838,6 +991,7 @@ void US_DataLoader::show_data_info( QPoint pos )
    QString label    = ddesc.label;
    QString descript = ddesc.descript;
    QString dbID     = QString::number( ddesc.DB_id );
+   QString aucID    = QString::number( ddesc.auc_id );
    QString filename = ddesc.filename;
    QString filespec = filename;
 
@@ -848,17 +1002,6 @@ void US_DataLoader::show_data_info( QPoint pos )
                       + filename.section( "/", 0, -2 );
    }
 
-   else if ( disk_controls->db()  &&  ddesc.aucGUID.length() < 36 )
-   {
-      US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
-      QStringList query;
-      query << "get_rawData" << ddesc.aucGUID;
-      db.query( query );
-      db.next();
-      ddesc.aucGUID    = db.value( 0 ).toString();
-   }
-
    QString dtext    = tr( "Data Information:" )
       + tr( "\n  Label:                 " ) + label
       + tr( "\n  Description:           " ) + descript
@@ -867,6 +1010,7 @@ void US_DataLoader::show_data_info( QPoint pos )
       + tr( "\n  Last Updated:          " ) + ddesc.date
       + tr( "\n  Data Global ID:        " ) + ddesc.dataGUID
       + tr( "\n  AUC Global ID:         " ) + ddesc.aucGUID
+      + tr( "\n  AUC DB ID:             " ) + aucID
       + tr( "\n  Run ID:                " ) + ddesc.runID
       + tr( "\n  Triple ID:             " ) + ddesc.tripID
       + tr( "\n  Edit ID:               " ) + ddesc.editID
