@@ -1,5 +1,5 @@
 CC      = mpicxx
-CFLAGS  = -O3 -xhost
+CFLAGS  = -O2 -xhost -ipo -xAVX
 LDFLAGS = 
 
 all: shd
