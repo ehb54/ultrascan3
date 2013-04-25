@@ -122,17 +122,16 @@ compute via natural_spline (full vectoring): 50ms
 
 done->have shs build c tables
 done->write code to work off c tables for external usage
+done->integrate new shs_use to shd
 
 todo->
-integrate new shs_use to shd
+-> put in us_pm
+-> put in us_hydrodyn_saxs_iqq_sh
 
 verify correct values
 .1 -> interpolate to .01 vs sphbes & .01
 
 time again!
 
-put in us_pm
-
-put in us_hydrodyn_saxs_iqq_sh
 
 

@@ -76,19 +76,19 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
                   asinc = -1e0;
                }
             }
-
-            int last_case = -1;
+            
+            // int last_case = -1;
             if ( modelp->x[ 0 ] < 0 )
             {
-               last_case = 1;
+               // last_case = 1;
                datap->rtp[ 2 ] = M_PI - asin( asinc );
             } else {
                if ( modelp->x[ 1 ] < 0 )
                {
-                  last_case = 2;
+                  // last_case = 2;
                   datap->rtp[ 2 ] = M_2PI + asin( asinc );
                } else {
-                  last_case = 3;
+                  // last_case = 3;
                   datap->rtp[ 2 ] = asin( asinc );
                }               
             }
