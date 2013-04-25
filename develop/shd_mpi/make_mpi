@@ -1,5 +1,5 @@
 CC      = mpicxx
-CFLAGS  = -O3
+CFLAGS  = -O2 -march=native  -ffast-math -ftree-vectorize
 LDFLAGS = 
 
 all: shd

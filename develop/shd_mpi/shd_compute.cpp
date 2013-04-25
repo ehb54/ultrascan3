@@ -63,26 +63,84 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
          {
             datap->rtp[ 2 ] = 0e0;
          } else {               
+            int last_case = -1;
             if ( modelp->x[ 0 ] < 0 )
             {
-               datap->rtp[ 2 ] = M_PI - asin( modelp->x[ 1 ] / sqrt( (shd_double) ( modelp->x[ 0 ] * 
-                                                                                   modelp->x[ 0 ] +
-                                                                                   modelp->x[ 1 ] * 
-                                                                                   modelp->x[ 1 ] ) ) );
+               last_case = 1;
+               datap->rtp[ 2 ] = M_PI - asin( modelp->x[ 1 ] / sqrt( ( modelp->x[ 0 ] * 
+                                                                       modelp->x[ 0 ] +
+                                                                       modelp->x[ 1 ] * 
+                                                                       modelp->x[ 1 ] ) ) );
             } else {
                if ( modelp->x[ 1 ] < 0 )
                {
-                  datap->rtp[ 2 ] = M_2PI + asin( modelp->x[ 1 ] / sqrt( modelp->x[ 0 ] * 
-                                                                            modelp->x[ 0 ] +
-                                                                            modelp->x[ 1 ] * 
-                                                                            modelp->x[ 1 ] ) );
+                  last_case = 2;
+                  datap->rtp[ 2 ] = M_2PI + asin( modelp->x[ 1 ] / sqrt( (modelp->x[ 0 ] * 
+                                                                          modelp->x[ 0 ] +
+                                                                          modelp->x[ 1 ] * 
+                                                                          modelp->x[ 1 ] ) ) );
                } else {
-                  datap->rtp[ 2 ] = asin( modelp->x[ 1 ] / sqrt( modelp->x[ 0 ] * 
-                                                                    modelp->x[ 0 ] +
-                                                                    modelp->x[ 1 ] * 
-                                                                    modelp->x[ 1 ] ) );
+                  last_case = 3;
+                  datap->rtp[ 2 ] = asin( modelp->x[ 1 ] / sqrt( (modelp->x[ 0 ] * 
+                                                                  modelp->x[ 0 ] +
+                                                                  modelp->x[ 1 ] * 
+                                                                  modelp->x[ 1 ] ) ) );
                }               
             }
+
+            // if ( isnan( datap->rtp[ 2 ] ) )
+            // {
+            //    error_msg = "SHD::compute_amplitudes: error phi isnan";
+            //    cout << "last case: " << last_case << endl;
+            //    cout << "rtp   " << datap->rtp[ 0 ] << " " << datap->rtp[ 1 ] << " " << datap->rtp[ 2 ] << endl;
+            //    cout << "coord " << modelp->x[ 0 ] << " " << modelp->x[ 1 ] << " " << modelp->x[ 2 ] << endl;
+            //    cout << "x^2 + y^2 " << ( modelp->x[ 0 ] * 
+            //                              modelp->x[ 0 ] +
+            //                              modelp->x[ 1 ] * 
+            //                              modelp->x[ 1 ] ) << endl;
+               
+            //    cout << "y / x^2 + y^2 " << ( modelp->x[ 1 ] / sqrt( modelp->x[ 0 ] * 
+            //                                                         modelp->x[ 0 ] +
+            //                                                         modelp->x[ 1 ] * 
+            //                                                         modelp->x[ 1 ] ) ) << endl;
+
+            //    cout << "y / x^2 + y^2 " << ( modelp->x[ 1 ] / sqrt( (shd_double) ( modelp->x[ 0 ] * 
+            //                                                                        modelp->x[ 0 ] +
+            //                                                                        modelp->x[ 1 ] * 
+            //                                                                        modelp->x[ 1 ] ) ) ) << endl;
+                                             
+            //    cout << "asin( y / x^2 + y^2 ) " << asin( ( modelp->x[ 1 ] / sqrt( modelp->x[ 0 ] * 
+            //                                                                       modelp->x[ 0 ] +
+            //                                                                       modelp->x[ 1 ] * 
+            //                                                                       modelp->x[ 1 ] ) ) ) << endl;
+
+            //    double tmp1 = asin( ( modelp->x[ 1 ] / sqrt( modelp->x[ 0 ] * 
+            //                                                modelp->x[ 0 ] +
+            //                                                modelp->x[ 1 ] * 
+            //                                                 modelp->x[ 1 ] ) ) );
+            //    double tmp2 = asin( ( modelp->x[ 1 ] / sqrt( (shd_double) ( modelp->x[ 0 ] * 
+            //                                                                modelp->x[ 0 ] +
+            //                                                                modelp->x[ 1 ] * 
+            //                                                                modelp->x[ 1 ] ) ) ) );
+            //    cout << "tmp1 " << tmp1 << endl;
+            //    cout << "tmp2 " << tmp2 << endl;
+            //    cout << "M_PI - tmp1 " << M_PI - tmp1 << endl;
+            //    cout << "M_PI - tmp2 " << M_PI - tmp2 << endl;
+
+
+            //    cout << "M_PI " << M_PI << endl;
+               
+            //    cout << "direct recompute: " << (M_PI - asin( ( modelp->x[ 1 ] / sqrt( (shd_double) ( modelp->x[ 0 ] * 
+            //                                                                                            modelp->x[ 0 ] +
+            //                                                                                            modelp->x[ 1 ] * 
+            //                                                                                            modelp->x[ 1 ] ) ) ) ) ) << endl;
+
+            //    cout << "direct recompute 2: " << ((shd_double)M_PI - (shd_double)asin( ( modelp->x[ 1 ] / sqrt( (shd_double) ( modelp->x[ 0 ] * 
+            //                                                                                                                    modelp->x[ 0 ] +
+            //                                                                                                                    modelp->x[ 1 ] * 
+            //                                                                                                                    modelp->x[ 1 ] ) ) ) ) ) << endl;
+            //    return false;
+            // }
          }
       }
 #if defined( SHOW_MPI_TIMING )
@@ -101,6 +159,17 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
                        datap->rtp[ 1 ],
                        datap->rtp[ 2 ],
                        Yp );
+      // for ( unsigned int l = 0; l <= max_harmonics; ++l )
+      // {
+      //    if ( isnan( real( Yp[ l ] ) ) || 
+      //         isnan( imag( Yp[ l ] ) ) )
+      //    {
+      //       error_msg = "SHD::compute_amplitudes: error Y isnan";
+      //       cout << "rtp   " << datap->rtp[ 0 ] << " " << datap->rtp[ 1 ] << " " << datap->rtp[ 2 ] << endl;
+      //       cout << "coord " << modelp->x[ 0 ] << " " << modelp->x[ 1 ] << " " << modelp->x[ 2 ] << endl;
+      //       return false;
+      //    }
+      // }
 #else
       for ( unsigned int l = 0; l <= max_harmonics; ++l )
       {

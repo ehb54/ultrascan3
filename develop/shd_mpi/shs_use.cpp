@@ -15,6 +15,12 @@ SHS_USE::SHS_USE( int max_harmonics )
 bool SHS_USE::shs_compute_sphbes( shd_double   x,
                                   shd_double * yv )
 {
+   if ( x > shd_max_x )
+   {
+      error_msg = "SHS_USE::x too large";
+      return false;
+   }
+
    shd_double *xp;
    shd_double *yp;
 
@@ -38,13 +44,13 @@ bool SHS_USE::shs_compute_sphbes( shd_double   x,
 
    if ( h <= 0e0 )
    {
-      error_msg = "US_Saxs_Util::apply_natural_spline zero or negative interval";
+      error_msg = "SHS_USE::apply_natural_spline zero or negative interval";
       return false;
    }
 
    if ( khi == klo )
    {
-      error_msg = "US_Saxs_Util::apply_natural_spline error finding point";
+      error_msg = "SHS_USE::apply_natural_spline error finding point";
       return false;
    }
 
@@ -64,6 +70,11 @@ bool SHS_USE::shs_compute_sphbes( shd_double   x,
          a * ya[ klo ] +
          b * ya[ khi ] + ( aaama * y2a[ klo ] + 
                            bbbmb * y2a[ khi ] ) * hho6;
+      // if ( isnan( yv[ i ] ) )
+      // {
+      //    error_msg = "SHS_USE::is nan";
+      //    return false;
+      // }
    }             
    return true;
 }

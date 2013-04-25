@@ -2,7 +2,7 @@
 
 // #define SH_TEST
 #define SHOW_MPI_TIMING
-// #define RUN_SINGLE
+#define RUN_SINGLE
 
 #if defined( SH_TEST )
 #include <sstream>
@@ -188,9 +188,18 @@ int main( int argc, char **argv )
 #endif
       vector < complex < float > > Avp;
       SHD tSHD( ( unsigned int ) id.max_harmonics, model, F, q, I, 0 );
-      tSHD.compute_amplitudes( Avp );
+      // tSHD.printF();
+      // tSHD.printmodel();
+      if ( !tSHD.compute_amplitudes( Avp ) )
+      {
+         cout << tSHD.error_msg << endl << flush;
+         cerr << tSHD.error_msg << endl << flush;
+         exit( -1 );
+      }
+
       vector < double > I_result( tSHD.q_points );
       complex < float > *A1vp = &( Avp[ 0 ] );
+      // tSHD.printA( Avp );
       for ( unsigned int j = 0; j < tSHD.q_points; ++j )
       {
          I_result[ j ] = 0e0;
@@ -413,7 +422,13 @@ int main( int argc, char **argv )
    SHD tSHD( ( unsigned int ) id.max_harmonics, my_model, F, q, I, 0 );
    if ( world_rank )
    {
-      tSHD.compute_amplitudes( Avp );
+      if ( !tSHD.compute_amplitudes( Avp ) )
+      {
+         cout << tSHD.error_msg << endl << flush;
+         cerr << tSHD.error_msg << endl << flush;
+         MPI_Abort( MPI_COMM_WORLD, -2000 );
+         exit( -1 );
+      }
    } else {
       Avp = tSHD.A1v0;
    }

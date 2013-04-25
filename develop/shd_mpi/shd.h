@@ -86,7 +86,6 @@ class SHD
 
    unsigned int                            J_points;
 
-   string              error_msg;
 
    int                 debug_level;
 
@@ -96,6 +95,7 @@ class SHD
 
  public:
    // 
+   string              error_msg;
 
    /*!
     * \brief SHD constructor
