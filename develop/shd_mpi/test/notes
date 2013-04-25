@@ -101,3 +101,43 @@ possible compare A ?
 A difference (esp. 0th order! harms = 1)
 
 compare Y, J ?
+
+ cublic spline: pull from us_saxs_util to build for 
+max harmonics
+grid resolution
+max x
+store relevant data (c arrays)
+apply spline to grid and compare with original function
+run as replacement for shbes
+time!
+
+
+compute via sphbes: 5400ms
+compute via natural_spline (full vectoring): 10ms
+
+compute via sphbes: 40830ms
+compute via natural_spline (full vectoring): 50ms
+
+:)
+
+done->have shs build c tables
+
+todo->
+write code to work off c tables for external usage
+
+verify correct values
+.1 -> interpolate to .01 vs sphbes & .01
+
+x[pts] = {};
+y[max_harmonics + 1][pts] = {{}..{}}
+y2[max_harmonics + 1][pts] = {{}..{}}
+& code to work off tables
+put in shd
+
+time again!
+
+put in us_pm
+
+put in us_hydrodyn_saxs_iqq_sh
+
+

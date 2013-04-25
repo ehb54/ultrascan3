@@ -1,19 +1,16 @@
-CC      = mpicxx
+CC      = g++
 CFLAGS  = -O3
 LDFLAGS = -lgsl -lgslcblas
 
-all: shd
+all: shs
 
-shd: main.o shd.o shd_compute.o shd_sh.o
+shs: shs_main.o shs.o shd_sh.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS)
 
-main.o: main.cpp shd.h
+shs_main.o: shs_main.cpp shs.h
 	$(CC) -c $(CFLAGS) $<
 
-shd.o: shd.cpp shd.h
-	$(CC) -c $(CFLAGS) $<
-
-shd_compute.o: shd_compute.cpp shd.h shd_sh.h
+shs.o: shs.cpp shs.h
 	$(CC) -c $(CFLAGS) $<
 
 shd_sh.o: shd_sh.cpp shd_sh.h
@@ -23,4 +20,4 @@ clean:
 	rm *.o
 
 cleanest: clean
-	rm shd
+	rm shs

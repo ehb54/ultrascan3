@@ -1,8 +1,7 @@
 #include "shd_sh.h"
-#define USE_GSL
-// #if defined( USE_GSL )
+// #define USE_GSL
+
 #include <gsl/gsl_sf_bessel.h>
-// #endif
 
 #include <iostream>
 // #include <iomanip>
@@ -440,14 +439,14 @@ namespace nr {
       }
 
 #if defined( USE_GSL )
-      shd_double sj2 = gsl_sf_bessel_il_scaled( n, x );
-      // shd_double sj2 = ( M_SQRT_PI_2 / sqrt( x ) ) * rj2;
-      order = n + 5e-1;
-      if ( bessj( x, order, &rj ) )
-      {
-         sj = ( M_SQRT_PI_2 / sqrt( x ) ) * rj;
-      }
-      printf( "sh: n %d order %f x %.8g bessj %.8g gsl %.8g ratio %.8g\n", n, order, x, sj, sj2, sj / sj2 );
+      shd_double rj2 = gsl_sf_bessel_il_scaled( n, x );
+      sj = ( M_SQRT_PI_2 / sqrt( x ) ) * rj2;
+      // order = n + 5e-1;
+      // if ( bessj( x, order, &rj ) )
+      // {
+      // sj = ( M_SQRT_PI_2 / sqrt( x ) ) * rj;
+      // }
+      // printf( "sh: n %d order %f x %.8g bessj %.8g gsl %.8g ratio %.8g\n", n, order, x, sj, sj2, sj / sj2 );
       return true;
 #else      
       order = n + 5e-1;

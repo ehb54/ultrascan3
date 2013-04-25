@@ -1,7 +1,12 @@
 #include "shd.h"
 
+#define SH_TEST
 #define SHOW_MPI_TIMING
 #define RUN_SINGLE
+
+#if defined( SH_TEST )
+#include <sstream>
+#endif
 
 #if defined( RUN_SINGLE )
 #include <time.h>
@@ -18,8 +23,38 @@ void our_abort( MPI_Comm comm, int errno )
    exit( errno );
 }
 
+// #define USE_GSL
+
 int main( int argc, char **argv )
 {
+#if defined( SH_TEST )
+   shd_double delta = .5;
+   for ( int i = 0; i < 50; i++ )
+   {
+      ostringstream fname;
+      fname << "shbes_";
+#if defined( USE_GSL )
+      fname << "gsl";
+#else
+      fname << "nr";
+#endif
+      fname << delta;
+      fname << "_" << i << ".dat";
+      cout << ">" << fname.str() << endl;
+      ofstream ofs( fname.str().c_str(), ios::out );
+      ofs << "# us-somo: shbes l from nr::shbes" << endl;
+      for ( shd_double x = 0; x < 1000; x += delta )
+      {
+         shd_double res;
+         nr::sphbes( i, x, res );
+         ofs << x << "\t" << res << endl;
+         // cout << x << "\t" << res << endl;
+      }
+      ofs.close();
+   }
+   exit(0);
+#endif
+
    shd_input_data               id;
 
    vector < shd_double >            q;

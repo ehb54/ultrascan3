@@ -111,3 +111,4 @@ void SHD::printA( vector < complex < float > > &A )
    }
    printf( "\n" );
 }
+
