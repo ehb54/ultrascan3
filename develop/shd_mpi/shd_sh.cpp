@@ -1,7 +1,7 @@
 #include "shd_sh.h"
 // #define USE_GSL
 
-#include <gsl/gsl_sf_bessel.h>
+// #include <gsl/gsl_sf_bessel.h>
 
 #include <iostream>
 // #include <iomanip>
@@ -385,31 +385,31 @@ namespace nr {
       return true;
    }
 
-   bool alt_sphbes( int n, 
-                    shd_double x, 
-                    shd_double *sj
-                    )
-   {
-      if ( n < 0 || x < 0e0 )
-      {
-         std::cout << "nr::sphbes bad arguments n " << n << " x " << x << std::endl;
-         return false;
-      }
+   //    bool alt_sphbes( int n, 
+   //                     shd_double x, 
+   //                     shd_double *sj
+   //                     )
+   //    {
+   //       if ( n < 0 || x < 0e0 )
+   //       {
+   //          std::cout << "nr::sphbes bad arguments n " << n << " x " << x << std::endl;
+   //          return false;
+   //       }
 
-      if ( x == 0e0 )
-      {
-         *sj = 1e0;
-         sj++;
-         for ( int i = 0; i <= n; ++i )
-         {
-            *sj = 0e0;
-         }
-         return true;
-      }
+   //       if ( x == 0e0 )
+   //       {
+   //          *sj = 1e0;
+   //          sj++;
+   //          for ( int i = 0; i <= n; ++i )
+   //          {
+   //             *sj = 0e0;
+   //          }
+   //          return true;
+   //       }
 
-      gsl_sf_bessel_il_scaled_array( n, x, sj );
-      return true;
-   }
+   //       gsl_sf_bessel_il_scaled_array( n, x, sj );
+   //       return true;
+   //    }
 
 
    bool sphbes( int n, 

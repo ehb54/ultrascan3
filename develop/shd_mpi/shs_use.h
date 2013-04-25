@@ -2,7 +2,7 @@
 #define SHS_USE_H
 
 #include <math.h>
-typedef double shd_double;
+typedef float shd_double;
 
 #include "shd_global.h"
 #include <vector>
@@ -21,8 +21,8 @@ class SHS_USE
 
    SHS_USE( int max_harmonics );
 
-   bool shs_compute_sphbes( shd_double              x,
-                            vector < shd_double > & yv );
+   bool shs_compute_sphbes( shd_double   x,
+                            shd_double * yv );
 };
 
 #endif

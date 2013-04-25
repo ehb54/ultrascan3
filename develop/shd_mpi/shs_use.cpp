@@ -12,8 +12,8 @@ SHS_USE::SHS_USE( int max_harmonics )
    }
 }
 
-bool SHS_USE::shs_compute_sphbes( shd_double              x,
-                                  vector < shd_double > & yv )
+bool SHS_USE::shs_compute_sphbes( shd_double   x,
+                                  shd_double * yv )
 {
    shd_double *xp;
    shd_double *yp;

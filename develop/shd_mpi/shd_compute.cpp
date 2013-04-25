@@ -140,11 +140,12 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
          Yp   = &( ccY[ 0 ] );
          Jp   = &( ccJ[ 0 ] );
 
+#define ALT_SPHBES
 #if defined( ALT_SPHBES )
 #if defined( SHOW_MPI_TIMING )
          time_start = MPI_Wtime();
 #endif
-         if ( !nr::alt_sphbes( l, qp_t_rtp0, *Jp ) )
+         if ( !shs->shs_compute_sphbes( qp_t_rtp0, Jp ) )
          {
             error_msg = "nr::alt_shbes failed";
             return false;

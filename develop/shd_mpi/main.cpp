@@ -1,8 +1,8 @@
 #include "shd.h"
 
-#define SH_TEST
+// #define SH_TEST
 #define SHOW_MPI_TIMING
-#define RUN_SINGLE
+// #define RUN_SINGLE
 
 #if defined( SH_TEST )
 #include <sstream>

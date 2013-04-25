@@ -58,6 +58,8 @@ SHD::SHD(
    ccY.resize( Y_points );
    ccJ.resize( J_points );
    ccA1v = A1v0;
+
+   shs = new SHS_USE( max_harmonics );
 }
 
 SHD::~SHD()

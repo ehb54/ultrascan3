@@ -15,6 +15,7 @@ using namespace std;
 
 #include "shd_sh.h"
 #include "shd_global.h"
+#include "shs_use.h"
 
 extern int world_rank;
 extern int world_size;
@@ -62,7 +63,6 @@ struct shd_input_data
  * \copyright BSD
  */
 
-#define MPI_SHD_DOUBLE MPI_DOUBLE
 
 class SHD
 {
@@ -91,6 +91,8 @@ class SHD
    int                 debug_level;
 
    // void                debug             ( int level, string str );
+
+   SHS_USE                *shs;
 
  public:
    // 
