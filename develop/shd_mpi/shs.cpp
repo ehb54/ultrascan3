@@ -252,6 +252,11 @@ bool SHS::write_c_table( string oname )
    cout << ">" << oname << endl;
 
    ofs << "// tables for sphbes" << endl;
+
+   ofs << "static int        shd_max_harmonics = " << ( y_t.size() - 1 ) << ";" << endl;
+   ofs << "static int        shd_x_size        = " << ( x_t.size() ) << ";" << endl;
+   ofs << "static shd_double shd_max_x         = " << ( x_t.back() ) << ";" << endl;
+
    ofs << "static shd_double shbes_x[ " << x_t.size() << " ] =" << endl;
    ofs << "  {" << endl;
    for ( int i = 0; i < x_t.size() - 1; ++i )

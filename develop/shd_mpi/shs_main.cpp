@@ -4,6 +4,6 @@ int main( int argc, char **argv )
 {
    SHS shs;
    shs.build( 50, .1, 1000 );
-   shs.write_c_table( string( "testtable.c" ) );
+   shs.write_c_table( string( "shd_data.h" ) );
    exit( 0 );
 }
