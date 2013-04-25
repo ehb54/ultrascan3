@@ -1,5 +1,5 @@
 #include "shs_use.h"
-#include "shd_data.h"
+#include "shs_data.h"
 
 
 SHS_USE::SHS_USE( int max_harmonics )
