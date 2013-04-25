@@ -63,28 +63,33 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
          {
             datap->rtp[ 2 ] = 0e0;
          } else {               
+            shd_double asinc = modelp->x[ 1 ] / sqrt( ( modelp->x[ 0 ] * 
+                                                        modelp->x[ 0 ] +
+                                                        modelp->x[ 1 ] * 
+                                                        modelp->x[ 1 ] ) );
+            if ( asinc > 1e0 )
+            {
+               asinc = 1e0;
+            } else {
+               if ( asinc < -1e0 )
+               {
+                  asinc = -1e0;
+               }
+            }
+
             int last_case = -1;
             if ( modelp->x[ 0 ] < 0 )
             {
                last_case = 1;
-               datap->rtp[ 2 ] = M_PI - asin( modelp->x[ 1 ] / sqrt( ( modelp->x[ 0 ] * 
-                                                                       modelp->x[ 0 ] +
-                                                                       modelp->x[ 1 ] * 
-                                                                       modelp->x[ 1 ] ) ) );
+               datap->rtp[ 2 ] = M_PI - asin( asinc );
             } else {
                if ( modelp->x[ 1 ] < 0 )
                {
                   last_case = 2;
-                  datap->rtp[ 2 ] = M_2PI + asin( modelp->x[ 1 ] / sqrt( (modelp->x[ 0 ] * 
-                                                                          modelp->x[ 0 ] +
-                                                                          modelp->x[ 1 ] * 
-                                                                          modelp->x[ 1 ] ) ) );
+                  datap->rtp[ 2 ] = M_2PI + asin( asinc );
                } else {
                   last_case = 3;
-                  datap->rtp[ 2 ] = asin( modelp->x[ 1 ] / sqrt( (modelp->x[ 0 ] * 
-                                                                  modelp->x[ 0 ] +
-                                                                  modelp->x[ 1 ] * 
-                                                                  modelp->x[ 1 ] ) ) );
+                  datap->rtp[ 2 ] = asin( asinc );
                }               
             }
 
@@ -115,8 +120,8 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
             //                                                                       modelp->x[ 1 ] ) ) ) << endl;
 
             //    double tmp1 = asin( ( modelp->x[ 1 ] / sqrt( modelp->x[ 0 ] * 
-            //                                                modelp->x[ 0 ] +
-            //                                                modelp->x[ 1 ] * 
+            //                                                 modelp->x[ 0 ] +
+            //                                                 modelp->x[ 1 ] * 
             //                                                 modelp->x[ 1 ] ) ) );
             //    double tmp2 = asin( ( modelp->x[ 1 ] / sqrt( (shd_double) ( modelp->x[ 0 ] * 
             //                                                                modelp->x[ 0 ] +
@@ -131,9 +136,9 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
             //    cout << "M_PI " << M_PI << endl;
                
             //    cout << "direct recompute: " << (M_PI - asin( ( modelp->x[ 1 ] / sqrt( (shd_double) ( modelp->x[ 0 ] * 
-            //                                                                                            modelp->x[ 0 ] +
-            //                                                                                            modelp->x[ 1 ] * 
-            //                                                                                            modelp->x[ 1 ] ) ) ) ) ) << endl;
+            //                                                                                          modelp->x[ 0 ] +
+            //                                                                                          modelp->x[ 1 ] * 
+            //                                                                                          modelp->x[ 1 ] ) ) ) ) ) << endl;
 
             //    cout << "direct recompute 2: " << ((shd_double)M_PI - (shd_double)asin( ( modelp->x[ 1 ] / sqrt( (shd_double) ( modelp->x[ 0 ] * 
             //                                                                                                                    modelp->x[ 0 ] +
