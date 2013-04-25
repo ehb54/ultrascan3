@@ -165,8 +165,8 @@ void US_Dcdt::data_plot( void )
    // Create the new arrays
    dcdt   .clear();
    sValues.clear();
-   avgDcdt.resize( points );
-   avgS   .resize( points );
+   avgDcdt.fill( 0.0, arrayLength );
+   avgS   .fill( 0.0, arrayLength );
 
    previousScanCount = scanCount;
 

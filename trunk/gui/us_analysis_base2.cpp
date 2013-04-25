@@ -1023,7 +1023,6 @@ QString US_AnalysisBase2::run_details( void ) const
    int                           index  = lw_triples->currentRow();
    const US_DataIO::EditedData*  d      = &dataList[ index ];
 
-qDebug() << "  RD: index" << index << "directory" << directory;
    QString s = "\n" + indent( 4 )
         + tr( "<h3>Detailed Run Information:</h3>\n" )
         + indent( 4 ) + "<table>\n"
@@ -1037,7 +1036,6 @@ qDebug() << "  RD: index" << index << "directory" << directory;
    double maxTemp = -1.0e99;
    double minTemp =  1.0e99;
 
-qDebug() << "  RD: scDa size" << d->scanData.size();
    for ( int i = 0; i < d->scanData.size(); i++ )
    {
       double t = d->scanData[ i ].temperature;
@@ -1047,7 +1045,6 @@ qDebug() << "  RD: scDa size" << d->scanData.size();
    }
 
    QString average = QString::number( sum / d->scanData.size(), 'f', 1 );
-qDebug() << "  RD: temp avg" << average;
 
    s += table_row( tr( "Average Temperature:" ), average + " " + MLDEGC );
 
@@ -1060,7 +1057,6 @@ qDebug() << "  RD: temp avg" << average;
    // Time data
    int minutes = (int)time_correction / 60;
    int seconds = (int)time_correction % 60;
-qDebug() << "  RD: mins secs" << minutes << seconds;
 
    QString m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
    QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
@@ -1069,9 +1065,7 @@ qDebug() << "  RD: mins secs" << minutes << seconds;
                    QString::number( minutes ) + m +
                    QString::number( seconds ) + sec );
 
-qDebug() << "  RD: rawList size" << rawList.size();
    double duration = rawList.last().scanData.last().seconds;
-qDebug() << "  RD: duration" << duration;
 
    int hours = (int) duration / 3600;
    minutes   = (int) duration / 60 - hours * 60;
@@ -1093,7 +1087,6 @@ qDebug() << "  RD: duration" << duration;
                    QString::number( seconds ) + sec );
 
    // Wavelength, baseline, meniscus, range
-qDebug() << "  RD: calc_baseline()";
    s += table_row( tr( "Wavelength:" ), d->wavelength + " nm" )  +
         table_row( tr( "Baseline " ) + dataType,
                    QString::number( calc_baseline(), 'f', 6 ) + " OD" ) + 
@@ -1101,7 +1094,6 @@ qDebug() << "  RD: calc_baseline()";
                    QString::number( d->meniscus, 'f', 3 ) + " cm" );
 
    int    rrx   =  d->xvalues.size() - 1;
-qDebug() << "  RD: rrx" << rrx;
    double left  =  d->xvalues[ 0   ];
    double right =  d->xvalues[ rrx ];
 

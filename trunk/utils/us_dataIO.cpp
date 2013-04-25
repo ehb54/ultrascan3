@@ -235,7 +235,7 @@ bool US_DataIO::readLegacyFile( const QString&  file,
       double rval = pp[ 1 ].toDouble();
       double sval = 0.0;
 
-      if ( ! interference_data && pp.size() > 2 ) 
+      if ( ! interference_data  &&  pp.size() > 2 ) 
       {
          sval        = pp[ 2 ].toDouble();
          if ( sval != 0.0 )
@@ -298,10 +298,10 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
    double min_radius =  1.0e99;
    double max_radius = -1.0e99;
 
-   for ( int i = 0; i < data.xvalues.size(); i++ )
+   for ( int ii = 0; ii < data.xvalues.size(); ii++ )
    {
-      min_radius = qMin( min_radius, data.xvalues[ i ] );
-      max_radius = qMax( max_radius, data.xvalues[ i ] );
+      min_radius = qMin( min_radius, data.xvalues[ ii ] );
+      max_radius = qMax( max_radius, data.xvalues[ ii ] );
    }
 
    // Now the data and SD
@@ -313,21 +313,24 @@ int US_DataIO::writeRawData( const QString& file, RawData& data )
    pp.max_data2      = -1.0e99;
 
    bool    allz_stdd = true;
+   int     scCount   = data.scanCount();
+   int     ptCount   = data.pointCount();
 
-   for ( int ii = 0; ii < data.scanData.size(); ii++ )
+   for ( int ii = 0; ii < scCount; ii++ )
    {
-      Scan* sc       = &data.scanData[ ii ];
+      Scan* sc          = &data.scanData[ ii ];
+      bool  nz_stddev   = ( sc->nz_stddev  &&  sc->stddevs.size() > 0 );
 
-      for ( int jj = 0; jj << sc->rvalues.size(); jj++ )
+      for ( int jj = 0; jj < ptCount; jj++ )
       {
-         pp.min_data1 = qMin( pp.min_data1, sc->rvalues[ jj ] );
-         pp.max_data1 = qMax( pp.max_data1, sc->rvalues[ jj ] );
+         pp.min_data1      = qMin( pp.min_data1, sc->rvalues[ jj ] );
+         pp.max_data1      = qMax( pp.max_data1, sc->rvalues[ jj ] );
 
-         if ( sc->nz_stddev )
+         if ( nz_stddev  )
          {
-            pp.min_data2 = qMin( pp.min_data2, sc->stddevs[ jj ] );
-            pp.max_data2 = qMax( pp.max_data2, sc->stddevs[ jj ] );
-            allz_stdd    = false;
+            pp.min_data2      = qMin( pp.min_data2, sc->stddevs[ jj ] );
+            pp.max_data2      = qMax( pp.max_data2, sc->stddevs[ jj ] );
+            allz_stdd         = false;
          }
       }
    }
@@ -455,7 +458,8 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
    double  delta2 = ( pp.max_data2 - pp.min_data2 ) / 65535;
    quint16 si;  
 
-   bool    stdDev = ( pp.min_data2 != 0.0  ||  pp.max_data2 != 0.0 );
+   bool    stdDev = ( ( pp.min_data2 != 0.0  ||  pp.max_data2 != 0.0 )
+                  &&  ( data.stddevs.size() == data.rvalues.size()   ) );
 
    for ( int ii = 0; ii < data.rvalues.size(); ii++ )
    {
@@ -598,7 +602,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
       // Read each scan
       int valueCount = 0;
-      for ( int i = 0 ; i < scan_count; i ++ )
+      for ( int ii = 0 ; ii < scan_count; ii ++ )
       {
          read( ds, u1.c, 4, crc );
          if ( strncmp( u1.c, "DATA", 4 ) != 0 ) throw NOT_USDATA;
@@ -999,13 +1003,30 @@ int US_DataIO::loadData( const QString&         directory,
                          QVector< EditedData >& data,
                          QVector< RawData    >& raw )
 {
+   QString ftriple     = editFilename.section( ".", -2, -2 );
    // Determine raw file name by removing editID
    QString rawDataFile = editFilename;
-   int index1 = editFilename.indexOf( "." );  
-   int index2 = editFilename.indexOf( ".", index1 + 1 );
-   rawDataFile.remove( index1, index2 - index1 );
-   rawDataFile.replace( "xml", "auc" );
-   
+   QString edtFileRead = editFilename;
+   QString filepart1   = editFilename.section( ".",  0, -7 );
+   QString filepart2   = editFilename.section( ".", -5, -3 );
+   rawDataFile         = filepart1 + "." + filepart2 + ".";
+   QString clambda     = ftriple     .section( ".", -1, -1 );
+   bool    isMwl       = clambda.contains( ":" );
+
+   if ( isMwl )
+   {
+      QString elambda     = clambda     .section( "@", -2, -2 );
+      clambda             = clambda     .section( "@", -1, -1 );
+      edtFileRead         = editFilename.section( ".",  0, -3 )
+                            + "." + elambda + ".xml";
+   }
+
+   rawDataFile         = rawDataFile + clambda + ".auc";
+
+//qDebug() << "dIO:ldEd: editFilename" << editFilename;
+//qDebug() << "dIO:ldEd: rawDataFile" << rawDataFile;
+//qDebug() << "dIO:ldEd: edtFileRead" << edtFileRead;
+
    // Get the raw data
    RawData dd;
    ioError result = (ioError)readRawData( directory + "/" + rawDataFile, dd );
@@ -1015,12 +1036,20 @@ int US_DataIO::loadData( const QString&         directory,
 
    // Get the edit data
    EditValues ev;
-   result = (ioError)readEdits( directory + "/" + editFilename, ev );
+   result = (ioError)readEdits( directory + "/" + edtFileRead, ev );
    if ( result != OK ) throw result;
 
    // Check for uuid match
    QString rawGuid = US_Util::uuid_unparse( (uchar*)dd.rawGUID );
-   if ( rawGuid != ev.dataGUID ) throw NO_GUID_MATCH;
+
+   if ( rawGuid != ev.dataGUID )
+   {
+      QString clambda = edtFileRead.section( ".", -2, -2 );
+      if ( clambda.contains( ":" ) )
+         ev.dataGUID = rawGuid;
+      else
+         throw NO_GUID_MATCH;
+   }
 
    // Apply the edits
    EditedData ed;
@@ -1032,7 +1061,7 @@ int US_DataIO::loadData( const QString&         directory,
    ed.dataType    = sl[ 2 ];
    ed.cell        = sl[ 3 ];
    ed.channel     = sl[ 4 ];
-   ed.wavelength  = sl[ 5 ];
+   ed.wavelength  = clambda;
    ed.description = dd.description;
    ed.expType     = ev.expType;
    ed.dataGUID    = ev.dataGUID;
@@ -1042,6 +1071,8 @@ int US_DataIO::loadData( const QString&         directory,
    ed.baseline    = ev.baseline;
    ed.ODlimit     = ev.ODlimit;
    ed.floatingData= ev.floatingData;
+qDebug() << "dIO:ldEd: ed.descr" << ed.description
+ << "ed.wavelength" << ed.wavelength;
 
    if ( ed.expType == "Equilibrium" )
       ed.speedData << ev.speedData;
@@ -1115,8 +1146,8 @@ int US_DataIO::loadData( const QString&         directory,
             {
                sc->rvalues[ jj ] = smoothed_value;
 
-               // If previous consecututive points are interpolated, then
-               // redo them
+               // If previous consecutive points are interpolated, then
+               //  redo them
                int           index = jj - 1;
                unsigned char cc    = sc->interpolated[ index / 8 ];
 
@@ -1319,6 +1350,7 @@ void US_DataIO::copyRange ( double left, double right, const Scan& orig,
    dest.omega2t     = orig.omega2t;
    dest.wavelength  = orig.wavelength;
    dest.delta_r     = orig.delta_r;
+   dest.nz_stddev   = orig.nz_stddev;
 
    int index_L      = index( origx, left );
    int index_R      = index( origx, right );
@@ -1331,7 +1363,11 @@ void US_DataIO::copyRange ( double left, double right, const Scan& orig,
    {
       // Copy the concentration readings
       dest.rvalues << orig.rvalues[ ii ];
-      
+
+      // Copy the standard deviations if any are non-zero
+      if ( orig.nz_stddev )
+         dest.stddevs << orig.stddevs[ ii ];
+
       // Set the interpolated bits as needed
       unsigned char old_bit = (unsigned char)( 1 << ( 7 - ii % 8 ) );
 
