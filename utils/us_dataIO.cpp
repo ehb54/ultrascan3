@@ -1069,10 +1069,12 @@ int US_DataIO::loadData( const QString&         directory,
    ed.meniscus    = ev.meniscus;
    ed.plateau     = ev.plateau;
    ed.baseline    = ev.baseline;
-   ed.ODlimit     = ev.ODlimit;
-   ed.floatingData= ev.floatingData;
+   ed.ODlimit     = ( ed.dataType == "RA"  ||  ed.dataType == "RI" ) ?
+                    ev.ODlimit : 1e+99;
+   ed.floatingData = ev.floatingData;
 qDebug() << "dIO:ldEd: ed.descr" << ed.description
- << "ed.wavelength" << ed.wavelength;
+ << "ed.wavelength" << ed.wavelength << "ed.dataType ed.ODlimit"
+ << ed.dataType << ed.ODlimit;
 
    if ( ed.expType == "Equilibrium" )
       ed.speedData << ev.speedData;
