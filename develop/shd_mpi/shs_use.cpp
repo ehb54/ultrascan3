@@ -1,5 +1,5 @@
-#include "shs_use.h"
-#include "shs_data.h"
+#include "../shd_mpi/shs_use.h"
+#include "../shd_mpi/shs_data.h"
 
 
 SHS_USE::SHS_USE( int max_harmonics )
@@ -21,8 +21,8 @@ bool SHS_USE::shs_compute_sphbes( shd_double   x,
       return false;
    }
 
-   shd_double *xp;
-   shd_double *yp;
+   // shd_double *xp;
+   // shd_double *yp;
 
    shd_double *ya;
    shd_double *y2a;

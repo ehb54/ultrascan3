@@ -6848,9 +6848,8 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
             if ( our_saxs_options->saxs_iq_native_sh )
             {
                qs += "sh";
-               qs += QString( "_h%1_g%2" )
+               qs += QString( "_h%1" )
                   .arg( our_saxs_options->sh_max_harmonics )
-                  .arg( our_saxs_options->sh_fibonacci_grid_order )
                   ;
             }
             if ( ( our_saxs_options->saxs_iq_native_hybrid ||
@@ -6911,9 +6910,8 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
       if ( our_saxs_options->sans_iq_native_sh )
       {
          qs += "sh";
-         qs += QString( "_h%1_g%2" )
+         qs += QString( "_h%1" )
             .arg( our_saxs_options->sh_max_harmonics )
-            .arg( our_saxs_options->sh_fibonacci_grid_order )
             ;
       }
       if ( ( our_saxs_options->sans_iq_native_hybrid ||

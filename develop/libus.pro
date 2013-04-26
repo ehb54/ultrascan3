@@ -376,8 +376,8 @@ SOURCES += \
   src/us_win.cpp \
   src/us_write_config.cpp \
   src/qwt/scrollbar.cpp \
-  src/qwt/scrollzoomer.cpp
-
+  src/qwt/scrollzoomer.cpp \
+  shd_mpi/shs_use.cpp
 #  src/us_db_rst_channel.cpp \
 #  src/us_db_rst_equil.cpp \
 #  src/us_db_rst_veloc.cpp \
@@ -656,7 +656,8 @@ HEADERS += \
   include/us_write_config.h \
   include/us3_defines.h \
   include/qwt/scrollbar.h \
-  include/qwt/scrollzoomer.h
+  include/qwt/scrollzoomer.h \
+  shd_mpi/shs_data.h
 
 #  include/us_db_rst_channel.h \
 #  include/us_db_rst_equil.h \

@@ -536,6 +536,100 @@ namespace sh {
       return true;
    }
 
+   bool alt_conj_sh( int max_harmonics, 
+                     double theta,
+                     double phi,
+                     std::complex < float > *Yp )
+   {
+      double mod = fmod( theta, M_2PI );
+      if ( mod < 0e0 )
+      {
+         mod += M_2PI;
+      }
+
+      double p;
+      double mphi;
+      double r;
+      double i;
+
+      if ( mod > M_PI )
+      {
+         for ( int l = 0; l <= max_harmonics; ++l )
+         {
+            for ( int m = - (int) l ; m < 0; ++m )
+            {
+               mphi = ( double ) m * phi;
+
+               nr::plegendre( l, -m, cos( theta ), p );
+               
+               mphi = ( double ) m * phi;
+               r    = p * cos( mphi );
+               i    = p * sin( mphi );
+
+               *Yp = std::complex < float > ( r,  i );
+               ++Yp;
+            }
+      
+            for ( int m = 0; m <= (int) l ;  ++m )
+            {
+               mphi = ( double ) m * phi;
+
+               nr::plegendre( l, m, cos( theta ), p );
+               
+               mphi = ( double ) m * phi;
+               r    = p * cos( mphi );
+               i    = p * sin( mphi );
+
+               if ( m & 1 )
+               {
+                  r = -r;
+               } else {
+                  i = -i;
+               }
+               *Yp = std::complex < float > ( r,  i );
+               ++Yp;
+            }
+         }
+      } else {
+         for ( int l = 0; l <= max_harmonics; ++l )
+         {
+            for ( int m = - (int) l ; m < 0; ++m )
+            {
+               mphi = ( double ) m * phi;
+
+               nr::plegendre( l, -m, cos( theta ), p );
+               
+               mphi = ( double ) m * phi;
+               r    = p * cos( mphi );
+               i    = p * sin( mphi );
+
+               if ( m & 1 )
+               {
+                  r = -r;
+                  i = -i;
+               }
+               *Yp = std::complex < float > ( r,  i );
+               ++Yp;
+            }
+      
+            for ( int m = 0; m <= (int) l ;  ++m )
+            {
+               mphi = ( double ) m * phi;
+
+               nr::plegendre( l, m, cos( theta ), p );
+               
+               mphi = ( double ) m * phi;
+               r    = p * cos( mphi );
+               i    = -p * sin( mphi );
+
+               *Yp = std::complex < float > ( r,  i );
+               ++Yp;
+            }
+         }
+      }
+      return true;
+   }
+
    unsigned int fibonacci( unsigned int n )
    {
       if ( n == 0 ) 

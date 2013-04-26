@@ -4000,29 +4000,6 @@ bool US_Hydrodyn_Saxs::create_somo_ff()
    return true;
 }
 
-#ifdef WIN32
-typedef _int16 int16_t;
-typedef unsigned _int32 uint32_t;
-#else
-#include <stdint.h>
-#endif
-
-#include <fstream>
-
-struct shd_point
-{
-   float   x[ 3 ];
-   int16_t ff_type;
-};
-
-struct shd_input_data
-{
-   uint32_t max_harmonics;
-   uint32_t model_size;
-   uint32_t q_size;
-   uint32_t F_size;
-};
-
 void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
                                    vector < double >    & q,
                                    vector < double >    & q2,

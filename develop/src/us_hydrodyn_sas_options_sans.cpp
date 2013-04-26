@@ -254,9 +254,9 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    connect(cnt_cryson_sh_max_harmonics, SIGNAL(valueChanged(double)), SLOT(update_cryson_sh_max_harmonics(double)));
 
    lbl_cryson_sh_fibonacci_grid_order = new QLabel( started_in_expert_mode ? 
-                                             tr(" SH/Cryson: Order of Fibonacci grid")
+                                             tr(" Cryson: Order of Fibonacci grid")
                                              :
-                                             tr(" SH/Cryson: Order of Fibonacci grid")
+                                             tr(" Cryson: Order of Fibonacci grid")
                                              , this);
    lbl_cryson_sh_fibonacci_grid_order->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_cryson_sh_fibonacci_grid_order->setMinimumHeight(minHeight1);

@@ -2,7 +2,7 @@
 #define SHS_USE_H
 
 #include <math.h>
-typedef float shd_double;
+typedef double shd_double;
 
 #include "shd_global.h"
 #include <vector>
@@ -12,6 +12,14 @@ typedef float shd_double;
 #include <stdlib.h>
 
 using namespace std;
+
+#ifndef M_PI
+#  define M_PI       3.14159265358979323846
+#endif
+
+#ifndef M_4PI
+#  define M_4PI       (4e0 * 3.14159265358979323846)
+#endif
 
 class SHS_USE
 {

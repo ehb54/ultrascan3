@@ -232,9 +232,9 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cnt_sh_max_harmonics, SIGNAL(valueChanged(double)), SLOT(update_sh_max_harmonics(double)));
 
    lbl_sh_fibonacci_grid_order = new QLabel( started_in_expert_mode ? 
-                                             tr(" SH/Crysol/Sastbx: Order of Fibonacci grid")
+                                             tr(" Crysol/Sastbx: Order of Fibonacci grid")
                                              :
-                                             tr(" SH/Crysol: Order of Fibonacci grid")
+                                             tr(" Crysol: Order of Fibonacci grid")
                                              , this);
    lbl_sh_fibonacci_grid_order->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_sh_fibonacci_grid_order->setMinimumHeight(minHeight1);
