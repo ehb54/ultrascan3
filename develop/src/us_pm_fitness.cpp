@@ -1,3 +1,6 @@
+#define ALT_SH
+#define ALT_SPHBES
+
 #include "../include/us_pm.h"
 
 // this will have fitness routines
@@ -152,7 +155,16 @@ bool US_PM::compute_CYJ_I( set < pm_point > & model, vector < double > &I_result
            .ascii();
          */
          complex < float > *Yp = &( tmp_pm_data->Y[ 0 ] );
-
+#if defined( ALT_SH )
+         if ( !sh::alt_conj_sh( max_harmonics, 
+                                tmp_pm_data->rtp[ 1 ],
+                                tmp_pm_data->rtp[ 2 ],
+                                Yp ) )
+         {
+            error_msg = "sh::spherical_harmonic failed";
+            return false;
+         }
+#else
          for ( unsigned int l = 0; l <= max_harmonics; ++l )
          {
             for ( int m = - (int) l ; m <= (int) l; ++m )
@@ -171,6 +183,7 @@ bool US_PM::compute_CYJ_I( set < pm_point > & model, vector < double > &I_result
                ++Yp;
             }
          }
+#endif
          tmp_pm_data->no_Y = false;
       }
    }
@@ -196,6 +209,13 @@ bool US_PM::compute_CYJ_I( set < pm_point > & model, vector < double > &I_result
             {
                // J_ofs = j * ( 1 + max_harmonics );
                qp_t_rtp0 = q[ j ] * v_pdata[ i ]->rtp[ 0 ];
+#if defined( ALT_SPHBES )
+               if ( !shs->shs_compute_sphbes( qp_t_rtp0, &( v_pdata[ i ]->J[ 0 ] ) ) )
+               {
+                  error_msg = "nr::alt_shbes failed";
+                  return false;
+               }
+#else
                for ( unsigned int l = 0; l <= max_harmonics; ++l )
                {
                   if ( !nr::sphbes( l, qp_t_rtp0, v_pdata[ i ]->J[ J_ofs ] ) )
@@ -206,6 +226,7 @@ bool US_PM::compute_CYJ_I( set < pm_point > & model, vector < double > &I_result
                   // ++Jp;
                   ++J_ofs;
                }
+#endif
             }
          }
       }
@@ -428,6 +449,16 @@ bool US_PM::compute_delta_I(
          */
          complex < float > *Yp = &( tmp_pm_data->Y[ 0 ] );
 
+#if defined( ALT_SH )
+         if ( !sh::alt_conj_sh( max_harmonics, 
+                                tmp_pm_data->rtp[ 1 ],
+                                tmp_pm_data->rtp[ 2 ],
+                                Yp ) )
+         {
+            error_msg = "sh::spherical_harmonic failed";
+            return false;
+         }
+#else
          for ( unsigned int l = 0; l <= max_harmonics; ++l )
          {
             for ( int m = - (int) l ; m <= (int) l; ++m )
@@ -446,6 +477,7 @@ bool US_PM::compute_delta_I(
                ++Yp;
             }
          }
+#endif
          tmp_pm_data->no_Y = false;
       }
    }
@@ -465,6 +497,14 @@ bool US_PM::compute_delta_I(
          for ( unsigned int j = 0; j < q_points; ++j )
          {
             J_ofs = j * ( 1 + max_harmonics );
+            
+#if defined( ALT_SPHBES )
+            if ( !shs->shs_compute_sphbes( q[ j ] * v_pdata[ i ]->rtp[ 0 ], &(v_pdata[ i ]->J[ J_ofs ] ) ) )
+            {
+               error_msg = "nr::alt_shbes failed";
+               return false;
+            }
+#else
             for ( unsigned int l = 0; l <= max_harmonics; ++l )
             {
                if ( !nr::sphbes( l, q[ j ] * v_pdata[ i ]->rtp[ 0 ], v_pdata[ i ]->J[ J_ofs + l ] ) )
@@ -472,9 +512,10 @@ bool US_PM::compute_delta_I(
                   error_msg = "nr::shbes failed";
                   return false;
                }
-               v_pdata[ i ]->no_J = false;
             }
+#endif
          }
+         v_pdata[ i ]->no_J = false;
       }
    }
 #if defined( USE_TIMERS )
@@ -642,6 +683,16 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
          
          Yp = &( ccY[ 0 ] );
 
+#if defined( ALT_SH )
+         if ( !sh::alt_conj_sh( max_harmonics, 
+                                pm_datap->rtp[ 1 ],
+                                pm_datap->rtp[ 2 ],
+                                Yp ) )
+         {
+            error_msg = "sh::spherical_harmonic failed";
+            return false;
+         }
+#else
          for ( unsigned int l = 0; l <= max_harmonics; ++l )
          {
             for ( int m = - (int) l ; m <= (int) l; ++m )
@@ -659,6 +710,7 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
                ++Yp;
             }
          }
+#endif
 
          Jp  = &( ccJ[ 0 ] );
          qp  = &( q[ 0 ] );
@@ -673,7 +725,27 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
 
             i_lp = &( i_l[ 0 ] );
             Yp   = &( ccY[ 0 ] );
-
+#if defined( ALT_SPHBES )
+            if ( !shs->shs_compute_sphbes( qp_t_rtp0, Jp ) )
+            {
+               error_msg = "nr::alt_shbes failed";
+               return false;
+            }
+            for ( unsigned int l = 0; l <= max_harmonics; ++l )
+            {
+               tmp_cf = (float) *Jp * (float)(*Fp) * (*i_lp);
+               for ( int m = - (int) l ; m <= (int) l; ++m )
+               {
+                  (*Ap)  +=  (*Yp) * tmp_cf;
+                  (*A1vp) +=  (*Ap);
+                  ++Yp;
+                  ++Ap;
+                  ++A1vp;
+               }
+               ++Jp;
+               ++i_lp;
+            }
+#else
             for ( unsigned int l = 0; l <= max_harmonics; ++l )
             {
                if ( !nr::sphbes( l, qp_t_rtp0, *Jp ) )
@@ -694,6 +766,7 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
                ++Jp;
                ++i_lp;
             }
+#endif
             ++Fp;
          }
       } else {

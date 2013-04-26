@@ -51,6 +51,7 @@ SOURCES		+= ../src/us_saxs_util_iqq_1d_mpi.cpp
 SOURCES		+= ../src/us_json.cpp
 SOURCES		+= ../src/us_lm.cpp
 SOURCES		+= ../src/us_vector.cpp
+SOURCES		+= ../shd_mpi/shs_use.cpp
 
 HEADERS         += ../include/us.h
 HEADERS         += ../include/us_pm.h
@@ -69,6 +70,8 @@ HEADERS         += ../include/us_cmdline_app.h
 HEADERS         += ../include/us_json.h
 HEADERS         += ../include/us_lm.h
 HEADERS         += ../include/us_vector.h
+HEADERS		+= ../shd_mpi/shs_use.h
+HEADERS		+= ../shd_mpi/shs_data.h
 
 TARGET = us_saxs_cmds_mpi
 

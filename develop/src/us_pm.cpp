@@ -205,10 +205,16 @@ US_PM::US_PM(
 
    ga_I_result.resize( q_points );
    ga_set_params();
+   shs = (SHS_USE *)0;
+   shs = new SHS_USE( max_harmonics );
 }
 
 US_PM::~US_PM()
 {
+   if ( shs )
+   {
+      delete shs;
+   }
 }
 
 void US_PM::clear()

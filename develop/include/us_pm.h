@@ -19,6 +19,7 @@
 #include "us_sh.h"
 #include "us_saxs_util.h"
 #include "us_hydrodyn_pat.h"
+#include "../shd_mpi/shs_use.h"
 
 #ifdef WIN32
 typedef _int16 int16_t;
@@ -356,6 +357,8 @@ class US_PM
                                                            vector < double > & high_fparams, 
                                                            double              new_conversion_factor,
                                                            double              refinement_range_pct = 0e0 );
+
+   SHS_USE                               * shs;
 
  public:
    // note: F needs to be the factors for a volume of size grid_conversion_factor ^ 3
