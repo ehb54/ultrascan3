@@ -421,6 +421,7 @@ void US_DataLoader::update_person( int ID )
 // List data choices (from db or disk)
 void US_DataLoader::list_data()
 {
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    datamap.clear();
 
    if ( disk_controls->db() ) // Scan database data
@@ -546,6 +547,7 @@ void US_DataLoader::list_data()
          datamap[ cdescr ] = ddesc;
       }
    }
+   QApplication::restoreOverrideCursor();
 }
 
 // Cancel button:  no models returned
@@ -618,30 +620,49 @@ void US_DataLoader::scan_dbase_edit()
       aucIDs[ aFname ]  = aucID + ":" + aucGUID;
    }
 
+//qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   QStringList editpars;
    query.clear();
    query << "all_editedDataIDs" << invID;
-
-//qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    db.query( query );
+qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
 
+   // Edit record parameters from the DB are first accumulated,
+   //  since we may need to download the content blob for some entries (MWL)
    while ( db.next() )
-   {
+   {  // Accumulate edit record parameters from DB
       QString recID    = db.value( 0 ).toString();
-      int     idRec    = recID.toInt();
       QString etype    = db.value( 8 ).toString().toLower();
-
-      // If type filtering, ignore runIDs that do not match experiment type
       if ( tfilter  &&  etype != etype_filt )
          continue;
-
-      edtIDs << recID;
-//qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       QString descrip  = db.value( 1 ).toString();
       QString filename = db.value( 2 ).toString().replace( "\\", "/" );
       QString parID    = db.value( 3 ).toString();
       QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
                          .toDateTime().toString( Qt::ISODate ), true );
       QString recGUID  = db.value( 9 ).toString();
+      edtIDs << recID;
+      editpars << descrip;
+      editpars << filename;
+      editpars << parID;
+      editpars << date;
+      editpars << recGUID;
+   }
+
+   // Now loop through the list of edit entries, building description records
+   int nedit = edtIDs.size();
+   int kp    = 0;
+   for ( int ii = 0; ii < nedit; ii++ )
+   {
+      QString recID    = edtIDs[ ii ];
+      int     idRec    = recID.toInt();
+//qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+      QString descrip  = editpars[ kp++ ];
+      QString filename = editpars[ kp++ ];
+      QString parID    = editpars[ kp++ ];
+      QString date     = editpars[ kp++ ];
+      QString recGUID  = editpars[ kp++ ];
+
       QString filebase = filename.section( "/", -1, -1 );
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
                          : descrip;
@@ -653,6 +674,7 @@ void US_DataLoader::scan_dbase_edit()
       bool    isMwl    = edtlamb.contains( ":" );
       int     idAUC    = isMwl ? 0
                          : aucIDs[ aucfname ].section( ":", 0, 0 ).toInt();
+//qDebug() << "ScDB:   isMwl idAUC" << isMwl << idAUC << "aucfname" << aucfname;
 
 //qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       QString label    = runID;
@@ -744,7 +766,8 @@ void US_DataLoader::scan_dbase_edit()
       else
          datamap[ descrip ] = ddesc;
 //qDebug() << "ScDB:TM:06: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   }
+//qDebug() << "ScDB:   descrip" << descrip;
+   } // END: loop to read DB edit records
 //qDebug() << "ScDB:TM:88: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    if ( latest )

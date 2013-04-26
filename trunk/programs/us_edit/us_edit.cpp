@@ -1032,12 +1032,10 @@ DbgLv(1) << "LD(): CC";
 
       connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ), 
                           SLOT  ( new_rpmval         ( int ) ) );
-DbgLv(1) << "LD(): DD";
    }
 
    else
    {  // non-Equilibrium
-DbgLv(1) << "LD(): EE";
       lb_rpms    ->setVisible( false );
       cb_rpms    ->setVisible( false );
       pb_plateau ->setVisible( true  );
@@ -1056,7 +1054,6 @@ DbgLv(1) << "LD(): EE";
 DbgLv(1) << "LD(): FF  triples size" << triples.size();
       if ( nwaveln < 3 )
          plot_current( 0 );
-DbgLv(1) << "LD(): GG";
    }
 
    // Enable pushbuttons
@@ -1106,7 +1103,6 @@ DbgLv(1) << "LD(): GG";
                 "results may be affected significantly." ) );
    }
 
-DbgLv(1) << "LD(): MM";
    ntriple      = triples.size();
 DbgLv(1) << " triples    size" << ntriple;
    editGUIDs.fill( "", ntriple );
@@ -1217,12 +1213,9 @@ DbgLv(1) << "IS-MWL:    Triples loop complete";
 
 DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       lb_triple->setText( tr( "Cell / Channel" ) );
-DbgLv(1) << "IS-MWL: celchns (2)";
       cb_triple->disconnect();
       cb_triple->clear();
-DbgLv(1) << "IS-MWL: celchns (3)";
       cb_triple->addItems( celchns );
-DbgLv(1) << "IS-MWL: celchns (4)";
       connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                           SLOT  ( new_triple         ( int ) ) );
 
@@ -3020,16 +3013,6 @@ void US_Edit::floating( void )
 // Save edit profile(s)
 void US_Edit::write( void )
 { 
-#if 0
-   if ( isMwl )
-   {
-      QMessageBox::information( this,
-            tr( "Temporarily Disabled" ),
-            tr( "In the current EDIT version,\n"
-                "Save is temporarily disabled for MWL data." ) );
-      return;
-   }
-#endif
    if ( !expIsEquil )
    {  // non-Equilibrium:  write single current edit
       triple_index = cb_triple->currentIndex();
@@ -3134,6 +3117,7 @@ void US_Edit::write_triple( void )
    //            + ".xml"
 
    QString filename = files[ triple_index ];
+DbgLv(1) << "EDT:WrTripl: tripindex" << triple_index << "filename" << filename;
    int     index    = filename.indexOf( '.' ) + 1;
    filename.insert( index, editID + "." );
    QString wvpart   = "";
@@ -3142,13 +3126,15 @@ void US_Edit::write_triple( void )
    {
       int lwx   = expc_wvlns.size() - 1;
       wvpart    = expc_wvlns[ 0 ] + ":" + expc_wvlns[ lwx ];
-      filename  = filename.section( ".", 0, -3 );
-      filename  = filename + "." + wvpart + ".xml";
+      filename  = filename.section( ".",  0, -5 ) + "." +
+                  QString( celchns[ triple_index ] ).replace( " / ", "." ) +
+                  "." + wvpart + ".xml";
    }
    else
    {
       filename.replace( QRegExp( "auc$" ), "xml" );
    }
+DbgLv(1) << "EDT:WrTripl:  filename" << filename;
 
    QFile f( workingDir + filename );
 
@@ -3200,6 +3186,7 @@ void US_Edit::write_triple( void )
    xml.writeEndElement  ();  // identification
 
    QString     triple  = triples.at( triple_index );
+DbgLv(1) << "EDT:WrTripl:   triple" << triple;
 
    QStringList parts   = triple.split( " / " );
 
