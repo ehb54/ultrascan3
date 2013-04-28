@@ -74,134 +74,137 @@ bool US_PM::ga( pm_ga_individual & best_individual )
    double       last_best_fitness        = 1e99;
    unsigned int gens_with_no_improvement = 0;
 
-   for ( unsigned int g = 0; g < ga_p.generations; g++ )
+   if ( !ga_p.full_grid )
    {
-      ga_pop.sort();
-      ga_pop.unique();
-      
-      map < unsigned int, bool > has_been_duplicated;
-
-      if ( !g )
+      for ( unsigned int g = 0; g < ga_p.generations; g++ )
       {
-         last_best_fitness = ga_pop.front().fitness;
-      } else {
-         if ( last_best_fitness > ga_pop.front().fitness )
+         ga_pop.sort();
+         ga_pop.unique();
+      
+         map < unsigned int, bool > has_been_duplicated;
+
+         if ( !g )
          {
             last_best_fitness = ga_pop.front().fitness;
-            gens_with_no_improvement = 0;
          } else {
-            gens_with_no_improvement++;
-            if ( gens_with_no_improvement >= ga_p.early_termination )
+            if ( last_best_fitness > ga_pop.front().fitness )
             {
-               cout << "early termination\n";
-               break;
+               last_best_fitness = ga_pop.front().fitness;
+               gens_with_no_improvement = 0;
+            } else {
+               gens_with_no_improvement++;
+               if ( gens_with_no_improvement >= ga_p.early_termination )
+               {
+                  cout << "early termination\n";
+                  break;
+               }
             }
          }
-      }
             
-      cout << QString( "ga_: gen %1 best individual fitness %2 beads %3\n" )
-         .arg( g )
-         .arg( ga_pop.front().fitness )
-         .arg( ga_pop.front().model.size() );
+         cout << QString( "ga_: gen %1 best individual fitness %2 beads %3\n" )
+            .arg( g )
+            .arg( ga_pop.front().fitness )
+            .arg( ga_pop.front().model.size() );
 
-      {
-         ga_delta_to_fparams( ga_pop.front().v, ga_fparams );
-         join( ga_params, ga_types, ga_fparams );
-         cout << US_Vector::qs_vector( "ga_fitness: v", ga_pop.front().v );
-         cout << US_Vector::qs_vector( "ga_fitness: params", ga_params );
-      }
-
-      unsigned int elitism_count   = 0;
-      unsigned int crossover_count = 0;
-      unsigned int mutate_count    = 0;
-      unsigned int duplicate_count = 0;
-      unsigned int random_count    = 0;
-
-      vector < pm_ga_individual > last_pop;
-      for ( list < pm_ga_individual >::iterator it = ga_pop.begin();
-            it != ga_pop.end();
-            it++ )
-      {
-         last_pop.push_back( *it );
-      }
-
-      cout << QString( "start: ga_pop.size() %1\n" ).arg( last_pop.size() );
-
-      ga_pop.clear();
-
-      for ( unsigned int i = 0; i < ga_p.population; i++ )
-      {
-         if ( i < ga_p.elitism )
          {
-            // cout << "elitism\n";
-            ga_fitness( last_pop[ i ] );
-            ga_pop.push_back( last_pop[ i ] );
-            elitism_count++;
-            continue;
+            ga_delta_to_fparams( ga_pop.front().v, ga_fparams );
+            join( ga_params, ga_types, ga_fparams );
+            cout << US_Vector::qs_vector( "ga_fitness: v", ga_pop.front().v );
+            cout << US_Vector::qs_vector( "ga_fitness: params", ga_params );
          }
 
-         if ( drand48() < ga_p.mutate )
+         unsigned int elitism_count   = 0;
+         unsigned int crossover_count = 0;
+         unsigned int mutate_count    = 0;
+         unsigned int duplicate_count = 0;
+         unsigned int random_count    = 0;
+
+         vector < pm_ga_individual > last_pop;
+         for ( list < pm_ga_individual >::iterator it = ga_pop.begin();
+               it != ga_pop.end();
+               it++ )
          {
-            // cout << "mutate\n";
-            individual = last_pop[ ga_pop_selection( last_pop.size() ) ];
-            unsigned int pos = ( unsigned int )( drand48() * ga_fparams_size );
-            individual.v[ pos ] = int( ((double)ga_points[ pos ] * drand48() ) );
-            ga_fitness( individual );
-            ga_pop.push_back( individual );
-            mutate_count++;
-            continue;
+            last_pop.push_back( *it );
          }
+
+         cout << QString( "start: ga_pop.size() %1\n" ).arg( last_pop.size() );
+
+         ga_pop.clear();
+
+         for ( unsigned int i = 0; i < ga_p.population; i++ )
+         {
+            if ( i < ga_p.elitism )
+            {
+               // cout << "elitism\n";
+               ga_fitness( last_pop[ i ] );
+               ga_pop.push_back( last_pop[ i ] );
+               elitism_count++;
+               continue;
+            }
+
+            if ( drand48() < ga_p.mutate )
+            {
+               // cout << "mutate\n";
+               individual = last_pop[ ga_pop_selection( last_pop.size() ) ];
+               unsigned int pos = ( unsigned int )( drand48() * ga_fparams_size );
+               individual.v[ pos ] = int( ((double)ga_points[ pos ] * drand48() ) );
+               ga_fitness( individual );
+               ga_pop.push_back( individual );
+               mutate_count++;
+               continue;
+            }
       
-         if ( drand48() < ga_p.crossover )
-         {
-            // cout << "crossover\n";
-            individual                   = last_pop[ ga_pop_selection( last_pop.size() ) ];
-            pm_ga_individual individual2 = last_pop[ ga_pop_selection( last_pop.size() ) ];
-            unsigned int pos = ( unsigned int )( drand48() * ga_fparams_size );
-            for ( unsigned int j = pos; j < ga_fparams_size ; j++ )
+            if ( drand48() < ga_p.crossover )
             {
-               individual.v[ j ] = individual2.v[ j ];
+               // cout << "crossover\n";
+               individual                   = last_pop[ ga_pop_selection( last_pop.size() ) ];
+               pm_ga_individual individual2 = last_pop[ ga_pop_selection( last_pop.size() ) ];
+               unsigned int pos = ( unsigned int )( drand48() * ga_fparams_size );
+               for ( unsigned int j = pos; j < ga_fparams_size ; j++ )
+               {
+                  individual.v[ j ] = individual2.v[ j ];
+               }
+               ga_fitness( individual );
+               ga_pop.push_back( individual );
+               crossover_count++;
+               continue;
             }
-            ga_fitness( individual );
-            ga_pop.push_back( individual );
-            crossover_count++;
-            continue;
+
+            unsigned int pos = ga_pop_selection( last_pop.size() );
+            if ( has_been_duplicated.count( pos ) )
+            {
+               for ( unsigned int j = 0; j < ga_fparams_size; j++ )
+               {
+                  individual.v[ j ] = int( ((double)ga_points[ j ] * drand48() ) );
+               }
+               ga_fitness( individual );
+               ga_pop.push_back( individual );
+               random_count++;
+            } else {
+               has_been_duplicated[ pos ] = true;
+               individual = last_pop[ ga_pop_selection( last_pop.size() ) ];
+               ga_fitness( individual );
+               ga_pop.push_back( individual );
+               duplicate_count++;
+            }
          }
 
-         unsigned int pos = ga_pop_selection( last_pop.size() );
-         if ( has_been_duplicated.count( pos ) )
-         {
-            for ( unsigned int j = 0; j < ga_fparams_size; j++ )
-            {
-               individual.v[ j ] = int( ((double)ga_points[ j ] * drand48() ) );
-            }
-            ga_fitness( individual );
-            ga_pop.push_back( individual );
-            random_count++;
-         } else {
-            has_been_duplicated[ pos ] = true;
-            individual = last_pop[ ga_pop_selection( last_pop.size() ) ];
-            ga_fitness( individual );
-            ga_pop.push_back( individual );
-            duplicate_count++;
-         }
+         cout << QString( 
+                         "summary counts:\n"
+                         " elitism   %1\n"
+                         " mutate    %2\n"
+                         " crossover %3\n"
+                         " duplicate %4\n" 
+                         " random    %5\n" 
+                         " total     %6\n" 
+                          )
+            .arg( elitism_count )
+            .arg( mutate_count )
+            .arg( crossover_count )
+            .arg( duplicate_count )
+            .arg( random_count )
+            .arg( elitism_count + mutate_count + crossover_count + duplicate_count + random_count );
       }
-
-      cout << QString( 
-                      "summary counts:\n"
-                      " elitism   %1\n"
-                      " mutate    %2\n"
-                      " crossover %3\n"
-                      " duplicate %4\n" 
-                      " random    %5\n" 
-                      " total     %6\n" 
-                      )
-         .arg( elitism_count )
-         .arg( mutate_count )
-         .arg( crossover_count )
-         .arg( duplicate_count )
-         .arg( random_count )
-         .arg( elitism_count + mutate_count + crossover_count + duplicate_count + random_count );
    }
 
    ga_pop.sort();
