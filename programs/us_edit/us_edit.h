@@ -146,8 +146,6 @@ class US_Edit : public US_Widgets
       QLabel*            lb_lstart;
       QLabel*            lb_lend;
       QLabel*            lb_lplot;
-      QLabel*            lb_lexclf;
-      QLabel*            lb_lexclt;
       QLabel*            lb_odlim;
 
       QwtCounter*        ct_ldelta;
@@ -159,32 +157,31 @@ class US_Edit : public US_Widgets
       QComboBox*         cb_lplot;
       QComboBox*         cb_lstart;
       QComboBox*         cb_lend;
-      QComboBox*         cb_lexclf;
-      QComboBox*         cb_lexclt;
 
       QPushButton*       pb_larrow;
       QPushButton*       pb_rarrow;
-      QPushButton*       pb_excrng;
+      QPushButton*       pb_custom;
       QPushButton*       pb_incall;
 
+      QRadioButton*      rb_lrange;
+      QRadioButton*      rb_custom;
       QRadioButton*      rb_radius;
       QRadioButton*      rb_waveln;
 
+      QGridLayout*       lo_lrange;
+      QGridLayout*       lo_custom;
       QGridLayout*       lo_radius;
       QGridLayout*       lo_waveln;
 
       bool               isMwl;
       bool               xaxis_radius;
+      bool               lsel_range;
 
       int                dlambda;
       int                slambda;
       int                elambda;
       int                plotrec;
-      int                excllfr;
-      int                excllto;
       int                plotndx;
-      int                exclfrx;
-      int                excltox;
       int                nwaveln;
       int                nwavelo;
       int                nrpoint;
@@ -193,7 +190,6 @@ class US_Edit : public US_Widgets
 
       double             odlimit;
 
-      QList< int >       wl_excludes;
       QList< double >    expd_radii;
       QList< int >       expi_wvlns;
       QList< int >       rawi_wvlns;
@@ -267,14 +263,15 @@ class US_Edit : public US_Widgets
       void lambda_start_value( int    );
       void lambda_end_value  ( int    );
       void reset_plot_lambdas( void   );
+      void lambda_plot_value ( int    );
+      void lselect_range_on  ( bool   );
+      void lselect_custom_on ( bool   );
       void xaxis_radius_on   ( bool   );
       void xaxis_waveln_on   ( bool   );
-      void lambda_plot_value ( int    );
       void lambda_plot_prev  (        );
       void lambda_plot_next  (        );
-      void lambda_excl_from  ( int    );
-      void lambda_excl_to    ( int    );
-      void lambda_excl_range (        );
+      void lambda_custom_list(        );
+      void lambda_new_list   ( QList< int >  );
       void lambda_include_all(        );
       void od_radius_limit   ( double );
                              

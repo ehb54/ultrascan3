@@ -33,10 +33,10 @@ class US_ConvertGui : public US_Widgets
       //! \brief  Generic constructor for the US_ConvertGui() program.
       US_ConvertGui();
 
-      US_Disk_DB_Controls* disk_controls;     //!< Radiobuttons for disk/db choice
-      bool            save_diskDB;            //!< To keep track of changes
+      US_Disk_DB_Controls* disk_controls;  //!< Radiobuttons for disk/db choice
+      bool                 save_diskDB;    //!< To keep track of changes
 
-      QList< double > subsets;                //!< A list of subset boundaries
+      QList< double >      subsets;        //!< A list of subset boundaries
 
   signals:
 
@@ -77,12 +77,10 @@ class US_ConvertGui : public US_Widgets
 
       QLabel*       lb_mwlctrl;
       QLabel*       lb_mwlctre;
-      QLabel*       lb_lambdelt;
       QLabel*       lb_lambstrt;
       QLabel*       lb_lambstop;
       QLabel*       lb_lambplot;
       QLineEdit*    le_lambraw;
-      QwtCounter*   ct_lambdelt;
       QComboBox*    cb_lambstrt;
       QComboBox*    cb_lambstop;
       QComboBox*    cb_lambplot;
@@ -90,6 +88,8 @@ class US_ConvertGui : public US_Widgets
       QPushButton*  pb_lambprev;
       QPushButton*  pb_lambnext;
       QGridLayout*  lo_average;
+      QVector< int >  all_lambdas;
+      QVector< int >  exp_lambdas;
 
       QPushButton*  pb_editRuninfo;
       QPushButton*  pb_import;
@@ -134,9 +134,9 @@ class US_ConvertGui : public US_Widgets
       int           tripDatax;                 // Triple data index
       int           tripListx;                 // Triple list index
       int           nlambda;                   // Lambda (wavelength) count
-      double        dlambda;                   // Delta Lambda on output
-      double        slambda;                   // Start Lambda on output
-      double        elambda;                   // End Lambda on output
+      int           slambda;                   // Start Lambda on output
+      int           elambda;                   // End Lambda on output
+      int           nlamb_i;                   // Lambda count for raw input
 
       bool show_plot_progress;
       US_Experiment      ExpData; 
@@ -170,7 +170,7 @@ class US_ConvertGui : public US_Widgets
       void set_colors      ( const QList< int >& );
       void draw_vline      ( double );
       void db_error        ( const QString& );
-      void triple_index    ( int = -1, int = -1 );
+      void triple_index    ( void );
 
   private slots:
       //! \brief Select the current investigator
@@ -187,8 +187,6 @@ class US_ConvertGui : public US_Widgets
       void enableControls    ( void );
       void runIDChanged      ( void );
       void toleranceValueChanged( double );     // signal to notify of change
-      void lambdaAverageCheck( bool );
-      void lambdaDeltaChanged( double );
       void lambdaStartChanged( int );
       void lambdaEndChanged  ( int );
       void lambdaPlotChanged ( int );

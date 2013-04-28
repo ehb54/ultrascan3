@@ -810,13 +810,13 @@ void US_DataLoader::scan_local_edit( void )
       QStringList edtfiles = QDir( subdir ).entryList( 
             edtfilt, QDir::Files, QDir::Name );
       edtfiles.sort();
-      QStringList mwlambds;
 
       if ( edtfiles.size() < 1 )
          continue;
 
       for ( int jj = 0; jj < edtfiles.size(); jj++ )
       {
+         QStringList mwlambds;
          QString filebase = edtfiles.at( jj );
          QString filename = subdir + "/" + filebase;
          QString runID    = filebase.section( ".",  0, -7 );
@@ -935,6 +935,8 @@ void US_DataLoader::scan_local_edit( void )
 // Pare down data description map to only latest edit
 void US_DataLoader::pare_to_latest( void )
 {
+   int kmwl = 0;
+
    for ( int kk = 0; kk < 2; kk++ )  // May need two passes to pare down
    {
       QStringList       keys = datamap.keys();
@@ -952,7 +954,15 @@ void US_DataLoader::pare_to_latest( void )
          QString frunid = flabel.section( ".", 0, -2 );
 
          if ( crunid != frunid )
+         {  // Likely difference in runid, but check for MWL
+            QString cruncc = clabel.section( ".", 0, -3 );
+            QString fruncc = flabel.section( ".", 0, -3 );
+
+            if ( cruncc == fruncc )
+               kmwl++;                 // Mark possible MWL case
+
             continue;
+         }
 
          // This record's label differs from next only by edit code: remove it
          QString   cdtxt = vals.at( ii ).date;
@@ -979,6 +989,80 @@ void US_DataLoader::pare_to_latest( void )
       if ( kchg == 0 )   break;        // We're done
 
       // Need to repeat above when any removed was later in list
+   }
+
+   if ( kmwl > 0 )
+      pare_latest_mwl();               // More possible paring for MWL
+}
+
+// Pare down data description map to only latest edit of MWL RunIDs
+void US_DataLoader::pare_latest_mwl( void )
+{
+   QStringList       keys = datamap.keys();
+   QList< DataDesc > vals = datamap.values();
+   QStringList       mwruns;
+   QStringList       mwedts;
+   QStringList       mwrmvs;
+
+   // First accumulate Runs and Edits for any MWL entries
+   for ( int ii = 0; ii < keys.size(); ii++ )
+   {
+      QString fname  = vals.at( ii ).filename;
+      QString cwavln = fname.section( ".", -2, -2 );
+
+      if ( ! cwavln.contains( ":" ) )
+         continue;                             // Skip if not MWL
+
+      QString cedit  = fname.section( ".",  0, -6 );
+      QString crunid = cedit.section( ".",  0, -2 );
+
+      if ( ! mwruns.contains( crunid ) )
+         mwruns << crunid;
+
+      if ( ! mwedts.contains( cedit  ) )
+         mwedts << cedit;
+   }
+
+   // Go no further if there were less than 2 MWL edits
+   //  or if the MWL edits count equals the MWL run count
+   if ( mwedts.count() < 2  ||  mwedts.count() == mwruns.count() )
+      return;
+
+   // Now accumulate a list of earlier edits to remove
+   mwruns.sort();                              // Insure sorted list
+   QString prevedt = mwedts[ 0 ];
+   QString prevrun = prevedt.section( ".",  0, -2 );
+
+   for ( int ii = 1; ii < mwedts.count(); ii++ )
+   {
+      QString curredt = mwedts[ ii ];
+      QString currrun = curredt.section( ".",  0, -2 );
+
+      if ( currrun == prevrun )
+      {  // If runs are the same, list the earlier edit
+         mwrmvs << curredt;
+      }
+
+      prevedt         = curredt;
+      prevrun         = currrun;
+   }
+
+   // Finally, remove any in overall list that are marked for delete
+   for ( int ii = 0; ii < keys.size(); ii++ )
+   {
+      QString fname  = vals.at( ii ).filename;
+      QString cwavln = fname.section( ".", -2, -2 );
+
+      if ( ! cwavln.contains( ":" ) )
+         continue;                             // Skip if not MWL
+
+      QString cedit  = fname.section( ".",  0, -6 );
+
+      if ( mwrmvs.contains( cedit ) )
+      {  // Remove an entry found in remove list
+         QString clabel = keys.at( ii );
+         datamap.remove( clabel );
+      }
    }
 }
 

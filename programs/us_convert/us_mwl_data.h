@@ -45,15 +45,13 @@ class US_MwlData : public QObject
       //! Return raw input reading values for given triple, scan
       int     rvalues_raw   ( int&, int&, QVector< double >& );
       //! Return lambda values
-      int     lambdas       ( QVector< double >& );
+      int     lambdas       ( QVector< int >& );
       //! Return lambda values for raw original
-      int     lambdas_raw   ( QVector< double >& );
+      int     lambdas_raw   ( QVector< int >& );
       //! Update output lambda range
-      int     set_lambdas   ( double = 0.0, double = 0.0, double = 0.0 );
-      //! Do lambda averaging
-      int     average_lambda( void );
+      int     set_lambdas   ( int = 0, int = 0 );
       //! Match lambda in original list
-      int     indexOfLambda ( double );
+      int     indexOfLambda ( int );
       //! Return list of cells/channels
       int     cellchannels  ( QStringList& );
       //! Build RawData vector
@@ -69,10 +67,9 @@ class US_MwlData : public QObject
 
    private:
       QVector< QVector< double > >   ri_readings; // Raw input readings
-      QVector< QVector< double > >   av_readings; // Averaged readings
 
-      QVector< double >              ri_wavelns;  // Raw input wavelengths
-      QVector< double >              av_wavelns;  // Averaged wavelengths
+      QVector< int >                 ri_wavelns;  // Raw input wavelengths
+      QVector< int >                 ex_wavelns;  // Export wavelengths
 
       QVector< int >                 av_counts;   // Averaging counts per triple
 
@@ -101,13 +98,11 @@ class US_MwlData : public QObject
       int       npoint;                // Number radius points per scan
       int       npointt;               // Number points per triple
       int       curccx;                // Current cell/chan index
+      int       slambda;               // Starting output lambda
+      int       elambda;               // Ending output lambda
       int       dbg_level;             // Debug level
 
       QMap< QString, int >  counts;    // Map of counts ('File','Scan',...)
-
-      double    dlambda;               // Delta for output lambdas
-      double    slambda;               // Starting output lambda
-      double    elambda;               // Ending output lambda
 
       QString   cur_dir;               // Currently selected i/p data directory
       QString   runID;                 // Run ID
@@ -123,7 +118,7 @@ class US_MwlData : public QObject
       float  fword   ( char* );
       double dword   ( char* );
       void   read_header ( QDataStream&, DataHdr& );
-      void   read_lambdas( QDataStream&, QVector< double >&, int& );
+      void   read_lambdas( QDataStream&, QVector< int >&, int& );
       void   read_rdata  ( QDataStream&, QVector< double >&, int&, int& );
       void   read_runxml ( QDir, QString );
       void   mapCounts   ( void );
