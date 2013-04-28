@@ -206,9 +206,19 @@ bool US_PM::ga( pm_ga_individual & best_individual )
             .arg( elitism_count + mutate_count + crossover_count + duplicate_count + random_count );
       }
    }
-
    ga_pop.sort();
    best_individual = ga_pop.front();
+
+   cout << QString( "ga_: gen final best individual fitness %1 beads %2\n" )
+      .arg( ga_pop.front().fitness )
+      .arg( ga_pop.front().model.size() );
+
+   {
+      ga_delta_to_fparams( ga_pop.front().v, ga_fparams );
+      join( ga_params, ga_types, ga_fparams );
+      cout << US_Vector::qs_vector( "ga_fitness: v", ga_pop.front().v );
+      cout << US_Vector::qs_vector( "ga_fitness: params", ga_params );
+   }
 
    return true;
 }
