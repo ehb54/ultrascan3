@@ -11,7 +11,7 @@ void US_PM::set_grid_size( double grid_conversion_factor )
 
    // radius gives a sphere with equal size to the cube:
    bead_radius              = pow( cube_size / M_PI, 1e0/3e0 );
-   bead_radius_over_2       = 0e0; // bead_radius * 5e-1;
+   bead_radius_over_2gcf     = ( bead_radius * 5e-1 ) / grid_conversion_factor;
 
    cout << QString( "US_PM:cube size   %1\n"
                     "US_PM:bead radius %2\n" )
@@ -888,7 +888,10 @@ bool US_PM::rescale_params( vector < int >    & types,
          switch( object_parameter_types[ types[ i ] ][ pos ][ k ] )
          {
          case COORD:
+            fparams [ fpos ] *= scale_factor;
+            break;
          case RADIUS:
+            fparams [ fpos ] += bead_radius_over_2gcf;
             fparams [ fpos ] *= scale_factor;
             break;
          default:
@@ -906,6 +909,16 @@ bool US_PM::rescale_params( vector < double > & params,
                             double              new_conversion_factor,
                             double              refinement_range_pct )
 {
+   cout << QString( "rescale_params: bead_radius            %1\n"
+                    "                bead_radius_over_2gcf   %2\n"
+                    "                grid_conversion_factor %3\n"
+                    "                new_conversion_factor  %4\n" )
+      .arg( bead_radius )
+      .arg( bead_radius_over_2gcf )
+      .arg( grid_conversion_factor )
+      .arg( new_conversion_factor )
+      ;
+
    vector < int >    types;
    vector < double > fparams;
    if ( !split( params, types, fparams ) )
@@ -923,9 +936,14 @@ bool US_PM::rescale_params( vector < double > & params,
          switch( object_parameter_types[ types[ i ] ][ pos ][ k ] )
          {
          case COORD:
+            low_fparams [ fpos ] = scale_factor * ( fparams[ fpos ] - grid_conversion_factor * refinement_range_pct / 100e0 );
+            high_fparams[ fpos ] = scale_factor * ( fparams[ fpos ] + grid_conversion_factor * refinement_range_pct / 100e0 );
+
+            break;
+
          case RADIUS:
-            low_fparams [ fpos ] = fparams[ fpos ] - grid_conversion_factor * refinement_range_pct / 100e0;
-            high_fparams[ fpos ] = fparams[ fpos ] + grid_conversion_factor * refinement_range_pct / 100e0;
+            low_fparams [ fpos ] = scale_factor * ( ( bead_radius_over_2gcf + fparams[ fpos ] ) - grid_conversion_factor * refinement_range_pct / 100e0 );
+            high_fparams[ fpos ] = scale_factor * ( ( bead_radius_over_2gcf + fparams[ fpos ] ) + grid_conversion_factor * refinement_range_pct / 100e0 );
 
             break;
          default:

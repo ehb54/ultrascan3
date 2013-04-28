@@ -853,19 +853,22 @@ bool US_PM::best_md0_ga(
  
       US_Vector::printvector ( "result params:", params );
       US_Vector::printvector2( "previous limits before rescaling:", low_fparams, high_fparams );
+      cout << "grid_conversion_factor:" << new_grid_conversion_factor << endl;
 
-      for ( int i = 0; i < (int)low_fparams.size(); i++ )
+      if ( !rescale_params( params,
+                            next_low_fparams,
+                            next_high_fparams,
+                            new_grid_conversion_factor,
+                            refinement_range_pct ) )
       {
-         next_low_fparams [ i ] = params[ i + 1 ] - grid_conversion_factor * refinement_range_pct / 100e0;
-         next_high_fparams[ i ] = params[ i + 1 ] + grid_conversion_factor * refinement_range_pct / 100e0;
-
-         next_low_fparams [ i ] *= grid_conversion_factor / new_grid_conversion_factor;
-         next_high_fparams[ i ] *= grid_conversion_factor / new_grid_conversion_factor;
-         low_fparams      [ i ] *= grid_conversion_factor / new_grid_conversion_factor;
-         high_fparams     [ i ] *= grid_conversion_factor / new_grid_conversion_factor;
+         return false;
       }
 
-      US_Vector::printvector2( "previous limits after rescaling:", low_fparams, high_fparams );
+      //       rescale_params( types, low_fparams , new_grid_conversion_factor );
+      //       rescale_params( types, high_fparams, new_grid_conversion_factor );
+
+      //       US_Vector::printvector2( "previous limits after rescaling:", low_fparams, high_fparams );
+
       US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
 
       set_grid_size( new_grid_conversion_factor );

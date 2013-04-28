@@ -316,7 +316,7 @@ bool US_PM::sphere( int model_pos, vector < double > & params, vector < double >
 
    // make a bounding box
 
-   double one_over_radius2 = 1e0 / ( ( radius + bead_radius_over_2 ) * ( radius + bead_radius_over_2 ) );
+   double one_over_radius2 = 1e0 / ( ( radius + bead_radius_over_2gcf ) * ( radius + bead_radius_over_2gcf ) );
 
    debug( 2, QString( "sphere @ %1 %2 %3 radius %4" ).arg( centerx ).arg( centery ).arg( centerz ).arg( radius ) );
 
@@ -543,12 +543,12 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
                p_b_minus_d_dot_p_b_d[ 1 ] * p_b_minus_d_dot_p_b_d[ 1 ] +
                p_b_minus_d_dot_p_b_d[ 2 ] * p_b_minus_d_dot_p_b_d[ 2 ];
 
-            if ( r2 LE_OR_LT radius2 + bead_radius_over_2 )
+            if ( r2 LE_OR_LT radius2 + bead_radius_over_2gcf )
             {
                if ( 
                    p_b[ 0 ] * p_b[ 0 ] +
                    p_b[ 1 ] * p_b[ 1 ] +
-                   p_b[ 2 ] * p_b[ 2 ] LE_OR_LT h2 + r2 + bead_radius_over_2 
+                   p_b[ 2 ] * p_b[ 2 ] LE_OR_LT h2 + r2 + bead_radius_over_2gcf 
                    )
                {
                   double p_e[ 3 ] = 
@@ -561,7 +561,7 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
                   if ( 
                       p_e[ 0 ] * p_e[ 0 ] +
                       p_e[ 1 ] * p_e[ 1 ] +
-                      p_e[ 2 ] * p_e[ 2 ] LE_OR_LT h2 + r2 + bead_radius_over_2 
+                      p_e[ 2 ] * p_e[ 2 ] LE_OR_LT h2 + r2 + bead_radius_over_2gcf 
                       )
                   {
                      pmp.x[ 0 ] = ( int16_t )x;
@@ -668,9 +668,9 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
    //    double radiusb2   = radiusb * radiusb;
    //    double radiusc2   = radiusc * radiusc;
 
-   double one_over_radiusa2 = 1e0 / ( ( radiusa + bead_radius_over_2 ) * ( radiusa + bead_radius_over_2 ) );
-   double one_over_radiusb2 = 1e0 / ( ( radiusb + bead_radius_over_2 ) * ( radiusb + bead_radius_over_2 ) );
-   double one_over_radiusc2 = 1e0 / ( ( radiusc + bead_radius_over_2 ) * ( radiusc + bead_radius_over_2 ) );
+   double one_over_radiusa2 = 1e0 / ( ( radiusa + bead_radius_over_2gcf ) * ( radiusa + bead_radius_over_2gcf ) );
+   double one_over_radiusb2 = 1e0 / ( ( radiusb + bead_radius_over_2gcf ) * ( radiusb + bead_radius_over_2gcf ) );
+   double one_over_radiusc2 = 1e0 / ( ( radiusc + bead_radius_over_2gcf ) * ( radiusc + bead_radius_over_2gcf ) );
 
    if ( model_pos && theta )
    {
@@ -821,8 +821,8 @@ bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double
    // double radiusa2   = radiusa * radiusa;
    // double radiusb2   = radiusb * radiusb;
 
-   double one_over_radiusa2 = 1e0 / ( ( radiusa + bead_radius_over_2 ) * ( radiusa + bead_radius_over_2 ) );
-   double one_over_radiusb2 = 1e0 / ( ( radiusb + bead_radius_over_2 ) * ( radiusb + bead_radius_over_2 ) );
+   double one_over_radiusa2 = 1e0 / ( ( radiusa + bead_radius_over_2gcf ) * ( radiusa + bead_radius_over_2gcf ) );
+   double one_over_radiusb2 = 1e0 / ( ( radiusb + bead_radius_over_2gcf ) * ( radiusb + bead_radius_over_2gcf ) );
 
    if ( model_pos && theta )
    {
@@ -1075,9 +1075,9 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
 
    pm_point pmp;
 
-   double radiusa2 = ( radiusa + bead_radius_over_2 ) * ( radiusa + bead_radius_over_2 );
-   // double oneoverradiusa2 = 1e0 / ( ( radiusa + bead_radius_over_2 ) * ( radiusa + bead_radius_over_2 ) );
-   double oneoverradiusb2 = 1e0 / ( ( radiusb + bead_radius_over_2 ) * ( radiusb + bead_radius_over_2 ) );
+   double radiusa2 = ( radiusa + bead_radius_over_2gcf ) * ( radiusa + bead_radius_over_2gcf );
+   // double oneoverradiusa2 = 1e0 / ( ( radiusa + bead_radius_over_2gcf ) * ( radiusa + bead_radius_over_2gcf ) );
+   double oneoverradiusb2 = 1e0 / ( ( radiusb + bead_radius_over_2gcf ) * ( radiusb + bead_radius_over_2gcf ) );
 
    if ( model_pos && theta )
    {
