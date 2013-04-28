@@ -151,22 +151,13 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    QFontMetrics fmet( font );
    ct_tolerance->adjustSize();
    int   fwid    = fmet.maxWidth();
-   int   rhgt    = ct_tolerance->height();
-   int   lwid    = fwid * 4;
    int   swid    = fwid * 5;
    static QChar clambda( 955 );   // Lambda character
 
    lb_mwlctrl   = us_banner  ( tr( "Multi-Wavelength Lambda Controls" ) );
-   lb_lambdelt  = us_label   ( tr( "%1 Delta:"    ).arg( clambda ) );
-   lo_average   = us_checkbox( tr( "Average Lambdas" ), ck_average, false );
-   ck_average ->setText      ( tr( "Average %1's" ).arg( clambda ) );
    lb_lambstrt  = us_label   ( tr( "%1 Start:"    ).arg( clambda ) );
    lb_lambstop  = us_label   ( tr( "%1 End:"      ).arg( clambda ) );
    lb_lambplot  = us_label   ( tr( "Plot %1:"     ).arg( clambda ) );
-   ct_lambdelt  = us_counter ( 2, 0, 0, 0 );
-   ct_lambdelt->setFont( font );
-   ct_lambdelt->setRange( 1, 80, 1 );
-   ct_lambdelt->resize( swid, rhgt );
    cb_lambstrt  = us_comboBox();
    cb_lambstop  = us_comboBox();
    cb_lambplot  = us_comboBox();
@@ -178,11 +169,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    cb_lambstrt->setMinimumWidth( swid );
    lb_lambstop->setMinimumWidth( swid );
    cb_lambstop->setMinimumWidth( swid );
-   ct_lambdelt->setMinimumWidth( lwid );
    settings->addWidget( lb_mwlctrl,   row++, 0, 1, 4 );
-   settings->addWidget( lb_lambdelt,  row,   0, 1, 1 );
-   settings->addWidget( ct_lambdelt,  row,   1, 1, 1 );
-   settings->addLayout( lo_average,   row++, 2, 1, 2 );
    settings->addWidget( lb_lambstrt,  row,   0, 1, 1 );
    settings->addWidget( cb_lambstrt,  row,   1, 1, 1 );
    settings->addWidget( lb_lambstop,  row,   2, 1, 1 );
@@ -726,24 +713,14 @@ void US_ConvertGui::importMWL( void )
    show_mwl_control( true );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
-   // Set initial lambda range; do 1st averaging; build the output data
-   if ( ck_average->isChecked() )
-   {  // Average lambdas
-      le_description->setText( tr( "Averaging over wavelengths ..." ) );
-      mwl_data.set_lambdas   ( );
-      mwl_data.average_lambda( );
-   }
-
-   else
+   // Set initial lambda range; build the output data
    {  // Copy lambdas
       le_description->setText( tr( "Duplicating wavelengths ..." ) );
       slambda       = mwl_data.countOf( "slambda" );
       elambda       = mwl_data.countOf( "elambda" );
-      mwl_data.set_lambdas   ( 1.0, slambda, elambda );
-      ct_lambdelt->setEnabled( false );
+      mwl_data.set_lambdas   ( slambda, elambda );
    }
 
-   ct_lambdelt   ->setValue( mwl_data.countOf( "dlambda" ) );
    le_description->setText( tr( "Building raw data AUCs ..." ) );
    mwl_data.build_rawData ( allData );
 
@@ -752,21 +729,16 @@ void US_ConvertGui::importMWL( void )
    qApp->processEvents();
 
    // Propagate initial lists of Lambdas
-   QVector< double > lambdas;
-   int    nlamb_i  = mwl_data.lambdas_raw( lambdas );
+   nlamb_i         = mwl_data.lambdas_raw( all_lambdas );
    int    klamb    = 0;
-   double rlamb_s  = lambdas[ 0 ];
-   double rlamb_e  = lambdas[ nlamb_i - 1 ];
-   double prvalu   = 0.0;
+   int    rlamb_s  = all_lambdas[ 0 ];
+   int    rlamb_e  = all_lambdas[ nlamb_i - 1 ];
    cb_lambstrt->clear();
    cb_lambstop->clear();
 
    for ( int ii = 0; ii < nlamb_i; ii++ )
    {
-      double wvalu  = (double)qRound( lambdas[ ii ] );
-      if ( wvalu == prvalu )  continue;
-      prvalu        = wvalu;
-      QString clamb = QString::number( wvalu );
+      QString clamb = QString::number( all_lambdas[ ii ] );
       cb_lambstrt->addItem( clamb );
       cb_lambstop->addItem( clamb );
       klamb++;
@@ -776,12 +748,12 @@ void US_ConvertGui::importMWL( void )
 
    cb_lambstrt->setCurrentIndex( 0 );
    cb_lambstop->setCurrentIndex( klamb - 1 );
-   nlambda         = mwl_data.lambdas( lambdas );
+   nlambda         = mwl_data.lambdas( exp_lambdas );
    cb_lambplot->clear();
 
    for ( int ii = 0; ii < nlambda; ii++ )
    {
-      QString clamb = QString::number( lambdas[ ii ] );
+      QString clamb = QString::number( exp_lambdas[ ii ] );
       cb_lambplot->addItem( clamb );
    }
 
@@ -789,9 +761,9 @@ void US_ConvertGui::importMWL( void )
 
    // Build list of triples
    QStringList celchns;
-   triples   .clear();
-   QString     pwvln = " / " + QString::number( lambdas[ 0           ] )
-                       + ":" + QString::number( lambdas[ nlambda - 1 ] );
+   triples.clear();
+   QString     pwvln = " / " + QString::number( exp_lambdas[ 0           ] )
+                       + ":" + QString::number( exp_lambdas[ nlambda - 1 ] );
 
    int ncelchn   = mwl_data.cellchannels( celchns );
    nlambda       = mwl_data.countOf( "lambda" );
@@ -1275,7 +1247,8 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    // Now the solutions
    for ( int i = 0; i < triples.size(); i++ )
    {
-      status = triples[ i ].solution.readFromDisk( triples[ i ].solution.solutionGUID );
+      status = triples[ i ].solution.readFromDisk(
+                                        triples[ i ].solution.solutionGUID );
 
       // Error reporting
       if ( status == US_DB2::NO_SOLUTION )
@@ -1502,8 +1475,9 @@ void US_ConvertGui::getExpInfo( void )
       {
          QMessageBox::information( this,
                 tr( "Error" ),
-                tr( "The current runID already exists in the database. To edit that "
-                    "information, load it from the database to start with.\n" ) );
+                tr( "The current runID already exists in the database."
+                    "To edit that information, load it from the database"
+                    "to start with.\n" ) );
          return;
       }
    }
@@ -1715,18 +1689,8 @@ void US_ConvertGui::changeDescription( void )
 
 void US_ConvertGui::changeTriple( QListWidgetItem* )
 {
-   // Match the description to find the correct triple in memory
-   QString triple = lw_triple->currentItem()->text();
-qDebug() << "chgTrp: triple" << triple;
-   int tLx = 0;
-   for ( int i = 0; i < triples.size(); i++ )
-   {
-      if ( triple == triples[ i ].tripleDesc )
-         tLx = i;
-   }
-
-   triple_index( -1, tLx );
-qDebug() << "chgTrp: tLx trDx trLx" << tLx << tripDatax << tripListx;
+   triple_index( );
+qDebug() << "chgTrp: trDx trLx" << tripDatax << tripListx;
    
    le_dir         -> setText( currentDir );
    le_description -> setText( allData[ tripDatax ].description );
@@ -2239,16 +2203,16 @@ void US_ConvertGui::drop_reference( void )
 void US_ConvertGui::saveUS3( void )
 {
    QList< US_Convert::TripleInfo > tripsave;
-   if ( isMwl )
-      tripsave   = triples;
+   if ( isMwl )               // Save "triples" that, for MWL, are cell/channel
+      tripsave   = triples;   //  "saveUS3*" routines expand them to C/C/W
 
    if ( disk_controls->db() )
-      saveUS3DB();
+      saveUS3DB();            // Save AUCs to disk then DB
 
    else
-      saveUS3Disk();
+      saveUS3Disk();          // Save AUCs to disk
 
-   if ( isMwl )
+   if ( isMwl )               // Restore "triples" that, for MWL, are cell/chann
       triples    = tripsave;
 }
 
@@ -2287,16 +2251,12 @@ int US_ConvertGui::saveUS3Disk( void )
    {  // For MWL, save old triples and expand cell/channel to triples
       QList< US_Convert::TripleInfo > tripsave = triples;
       triples.clear();
-      QVector< double > wavelens;
-      int nlambda = mwl_data.lambdas( wavelens );
       QStringList wvls;
-      QStringList iwls;
       QString ccbase = tripsave[ 0 ].tripleFilename.section( ".", 0, -5 ) + ".";
 
-      for ( int ii = 0; ii < nlambda; ii++ )
-      {  // Build string lists of wavelengths and integral-wavelengths
-         wvls << QString::number( wavelens[ ii ] );
-         iwls << QString::number( qRound( wavelens[ ii ] ) );
+      for ( int ii = 0; ii < nlamb_i; ii++ )
+      {  // Build string lists of wavelengths
+         wvls << QString::number( all_lambdas[ ii ] );
       }
 
       int tripid      = 0;
@@ -2309,11 +2269,14 @@ int US_ConvertGui::saveUS3Disk( void )
          QString celchn = acell + " / " + achan + " / ";
          QString ccfile = ccbase + acell + "." + achan + ".";
 
-         for ( int jj = 0; jj < nlambda; jj++ )
+         for ( int jj = 0; jj < nlamb_i; jj++ )
          {  // Build triple for a wavelength and append to expanded list
             triple.tripleDesc      = celchn + wvls[ jj ];
-            triple.tripleFilename  = ccfile + iwls[ jj ] + ".auc";
+            triple.tripleFilename  = ccfile + wvls[ jj ] + ".auc";
             triple.tripleID        = tripid++;
+            int clambda            = all_lambdas[ jj ];
+            if ( clambda < slambda  ||  clambda > elambda )
+               triple.excluded        = true;
 
             if ( jj > 0 )
             {  // Beyond the first, generate a unique GUID
@@ -3222,39 +3185,11 @@ void US_ConvertGui::db_error( const QString& error )
          tr( "Database returned the following error: \n" ) + error );
 }
 
-// User checked or unchecked average flag
-void US_ConvertGui::lambdaAverageCheck( bool checked )
-{
-   dlambda = checked ? qMax( dlambda, 2.0 ) : 1.0;
-   slambda = 0.0;
-   elambda = 0.0;
-
-   reset_lambdas();
-
-   dlambda = mwl_data.countOf( "dlambda" );
-   ct_lambdelt->setValue  ( dlambda );
-   ct_lambdelt->setEnabled( checked );
-}
-
-// User changed the Lambda Delta value
-void US_ConvertGui::lambdaDeltaChanged( double value )
-{
-qDebug() << "lambdaDeltaChanged" << value;
-   dlambda       = value;
-
-   slambda       = cb_lambstrt->currentText().toDouble();
-   elambda       = cb_lambstop->currentText().toDouble();
-
-   reset_lambdas();
-}
-
 // User changed the Lambda Start value
 void US_ConvertGui::lambdaStartChanged( int value )
 {
 qDebug() << "lambdaStartChanged" << value;
    slambda       = cb_lambstrt->itemText( value ).toDouble();
-
-   dlambda       = ct_lambdelt->value();
    elambda       = cb_lambstop->currentText().toDouble();
 
    reset_lambdas();
@@ -3265,8 +3200,6 @@ void US_ConvertGui::lambdaEndChanged( int value )
 {
 qDebug() << "lambdaEndChanged" << value;
    elambda       = cb_lambstrt->itemText( value ).toDouble();
-
-   dlambda       = ct_lambdelt->value();
    slambda       = cb_lambstrt->currentText().toDouble();
 
    reset_lambdas();
@@ -3275,7 +3208,7 @@ qDebug() << "lambdaEndChanged" << value;
 // User changed the Lambda Plot value
 void US_ConvertGui::lambdaPlotChanged( int value )
 {
-   triple_index( value );
+   triple_index( );
 
    plot_current();
    pb_lambprev->setEnabled( value > 0 );
@@ -3317,8 +3250,6 @@ void US_ConvertGui::lambdaNextClicked( )
 void US_ConvertGui::show_mwl_control( bool show )
 {
    lb_mwlctrl ->setVisible( show );
-   lb_lambdelt->setVisible( show );
-   ct_lambdelt->setVisible( show );
    lb_lambstrt->setVisible( show );
    cb_lambstrt->setVisible( show );
    lb_lambstop->setVisible( show );
@@ -3327,8 +3258,6 @@ void US_ConvertGui::show_mwl_control( bool show )
    cb_lambplot->setVisible( show );
    pb_lambprev->setVisible( show );
    pb_lambnext->setVisible( show );
-   lo_average ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
-   lo_average ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
 
    lb_scan    ->setVisible( !show );
    lb_from    ->setVisible( !show );
@@ -3342,14 +3271,23 @@ void US_ConvertGui::show_mwl_control( bool show )
 }
 
 // Determine triple index (separate list,data for MWL)
-void US_ConvertGui::triple_index( int wavx, int lstx )
+void US_ConvertGui::triple_index( )
 {
-   tripListx     = ( lstx < 0 ) ? lw_triple->currentRow() : lstx;
+   QString triple = lw_triple->currentItem()->text();
+qDebug() << "chgTrp: triple" << triple;
+
+   for ( int ii = 0; ii < triples.size(); ii++ )
+   {
+      if ( triple == triples[ ii ].tripleDesc )
+         tripListx = ii;
+   }
 
    if ( isMwl )
    {  // For multi-wavelength, triple list,data indexes are different
-      int wvx       = ( wavx < 0 ) ? cb_lambplot->currentIndex() : wavx;
-      int nwvlen    = mwl_data.countOf( "lambda" );
+      slambda       = cb_lambstrt->currentText().toInt();
+      int slx       = mwl_data.indexOfLambda( slambda );
+      int wvx       = cb_lambplot->currentIndex() + slx;
+      int nwvlen    = mwl_data.countOf( "lamb_i" );
       tripDatax     = tripListx * nwvlen + wvx;
    }
 
@@ -3364,10 +3302,6 @@ void US_ConvertGui::mwl_connect( bool connect_on )
 {
    if ( connect_on )
    {
-      connect( ck_average,   SIGNAL( toggled            ( bool   ) ),
-               this,         SLOT  ( lambdaAverageCheck ( bool   ) ) );
-      connect( ct_lambdelt,  SIGNAL( valueChanged       ( double ) ),
-               this,         SLOT  ( lambdaDeltaChanged ( double ) ) );
       connect( cb_lambstrt,  SIGNAL( currentIndexChanged( int    ) ),
                this,         SLOT  ( lambdaStartChanged ( int    ) ) );
       connect( cb_lambstop,  SIGNAL( currentIndexChanged( int    ) ),
@@ -3382,8 +3316,6 @@ void US_ConvertGui::mwl_connect( bool connect_on )
 
    else
    {
-      ck_average ->disconnect();
-      ct_lambdelt->disconnect();
       cb_lambstrt->disconnect();
       cb_lambstop->disconnect();
       cb_lambplot->disconnect();
@@ -3395,54 +3327,42 @@ void US_ConvertGui::mwl_connect( bool connect_on )
 // Reset with lambda delta,range changes
 void US_ConvertGui::reset_lambdas()
 {
-   if ( ck_average->isChecked() )
-   {
-      dlambda       = ct_lambdelt->value();
-   }
-
-   else
-   {
-      dlambda       = 1.0;
-   }
-
-   slambda       = cb_lambstrt->currentText().toDouble();
-   elambda       = cb_lambstop->currentText().toDouble();
+   slambda       = cb_lambstrt->currentText().toInt();
+   elambda       = cb_lambstop->currentText().toInt();
+   int plambda   = cb_lambplot->currentText().toInt();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
-   mwl_data.set_lambdas   ( dlambda, slambda, elambda );
-   mwl_data.average_lambda( );
-   mwl_data.build_rawData ( allData );
+   mwl_data.set_lambdas   ( slambda, elambda );
    mwl_connect( false );
 
-   QVector< double > lambdas;
-   nlambda       = mwl_data.lambdas( lambdas );
+   nlambda       = mwl_data.lambdas( exp_lambdas );
    cb_lambplot->clear();
 
    for ( int ii = 0; ii < nlambda; ii++ )
    {
-      QString clamb = QString::number( lambdas[ ii ] );
+      QString clamb = QString::number( exp_lambdas[ ii ] );
       cb_lambplot->addItem( clamb );
    }
 
-   cb_lambplot->setCurrentIndex( nlambda / 2 );
+   int slx       = mwl_data.indexOfLambda( slambda );
+   int plx       = ( plambda >= slambda  &&  plambda <= elambda )
+                   ?  mwl_data.indexOfLambda( plambda ) - slx
+                   : ( nlambda / 2 );
 
-   // Build list of triples
+   cb_lambplot->setCurrentIndex( plx );
+
+   // Rebuild list of triples
    QStringList celchns;
-   triples.clear();
-   QString     pwvln = " / " + QString::number( lambdas[ 0           ] )
-                       + ":" + QString::number( lambdas[ nlambda - 1 ] );
+   QString     pwvln = " / " + QString::number( exp_lambdas[ 0           ] )
+                       + ":" + QString::number( exp_lambdas[ nlambda - 1 ] );
 
    int ncelchn   = mwl_data.cellchannels( celchns );
    nlambda       = mwl_data.countOf( "lambda" );
 
    for ( int ii = 0; ii < ncelchn; ii++ )
    {
-      US_Convert::TripleInfo triple;
-      triple.tripleID    = ii;
-      triple.tripleDesc  = celchns[ ii ] + pwvln;
-      triple.excluded    = false;
-
-      triples << triple;
+      triples[ ii ].tripleID    = ii;
+      triples[ ii ].tripleDesc  = celchns[ ii ] + pwvln;
    }
 
    mwl_connect( true );
@@ -3464,12 +3384,12 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
 
    US_DataIO::RawData* refData = &allData[ tripDatax ];
    int ref_size = refData->xvalues.size();
-   int ccx      = tripDatax / nlambda;
-   int tripx    = ccx * nlambda;
+   int ccx      = tripDatax / nlamb_i;
+   int tripx    = ccx * nlamb_i;
 
    // Loop to calculate reference data for each wavelength,
    //  then apply it to all triples with that same wavelength.
-   for ( int wvx = 0; wvx < nlambda; wvx++ )
+   for ( int wvx = 0; wvx < nlamb_i; wvx++ )
    {
       refData      = &allData[ tripx ];
       ref_size     = refData->xvalues.size();
@@ -3504,25 +3424,25 @@ void US_ConvertGui::PseudoCalcAvgMWL( void )
       int rip_size = ripprof.size();
 
       // Now calculate the pseudo-absorbance for all cell/channel/this-lambda
-      for ( int ii = wvx; ii < allData.size(); ii += nlambda )
+      for ( int kk = wvx; kk < allData.size(); kk += nlamb_i )
       {
-         US_DataIO::RawData* currentData = &allData[ ii ];
+         US_DataIO::RawData* currentData = &allData[ kk ];
 
-         for ( int jj = 0; jj < currentData->scanData.size(); jj++ )
+         for ( int ii = 0; ii < currentData->scanData.size(); ii++ )
          {
-            US_DataIO::Scan* scn = &currentData->scanData[ jj ];
+            US_DataIO::Scan* scn = &currentData->scanData[ ii ];
 
-            for ( int kk = 0; kk < scn->rvalues.size(); kk++ )
+            for ( int jj = 0; jj < scn->rvalues.size(); jj++ )
             {
-               double rvalue = scn->rvalues[ kk ];
+               double rvalue = scn->rvalues[ jj ];
 
                // Protect against possible inf's and nan's, if a reading 
                // evaluates to 0 or wherever log function is undefined or -inf
                if ( rvalue < 1.0 ) rvalue = 1.0;
 
                // Check for boundary condition
-               int ndx   = ( jj < rip_size ) ? jj : rip_size - 1;
-               scn->rvalues[ kk ] = log10( ripprof[ ndx ] / rvalue );
+               int ndx   = ( ii < rip_size ) ? ii : rip_size - 1;
+               scn->rvalues[ jj ] = log10( ripprof[ ndx ] / rvalue );
             } // END: readings loop for a scan
 
          } // END: scan loop for a specific triple

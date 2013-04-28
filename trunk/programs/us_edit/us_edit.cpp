@@ -11,6 +11,7 @@
 #include "us_investigator.h"
 #include "us_run_details2.h"
 #include "us_exclude_profile.h"
+#include "us_select_lambdas.h"
 #include "us_ri_noise.h"
 #include "us_edit_scan.h"
 #include "us_math2.h"
@@ -143,6 +144,14 @@ US_Edit::US_Edit() : US_Widgets()
    int swid = lwid + fwid;
    const QChar chlamb( 955 );
    lb_mwlctl = us_banner( tr( "Wavelength Controls" ) );
+   QButtonGroup* r_group = new QButtonGroup( this );
+   QButtonGroup* x_group = new QButtonGroup( this );
+   lo_lrange = us_radiobutton( tr( "Lambda Range" ),       rb_lrange, true  );
+   lo_custom = us_radiobutton( tr( "Custom Lambda List" ), rb_custom, false );
+   rb_lrange->setFont( font );
+   rb_custom->setFont( font );
+   r_group->addButton( rb_lrange, 0 );
+   r_group->addButton( rb_custom, 1 );
    lb_ldelta = us_label( tr( "%1 Index Increment:" ).arg( chlamb ), -1 );
    ct_ldelta = us_counter( 1, 1, 100, 1 );
    ct_ldelta->setFont( font );
@@ -152,8 +161,6 @@ US_Edit::US_Edit() : US_Widgets()
    lb_lstart = us_label( tr( "%1 Start:" ).arg( chlamb ), -1 );
    lb_lend   = us_label( tr( "%1 End:"   ).arg( chlamb ), -1 );
    lb_lplot  = us_label( tr( "Plot (W nm):" ), -1 );
-   lb_lexclf = us_label( tr( "Exclude from:" ), -1 );
-   lb_lexclt = us_label( tr( "Exclude to:" ), -1 );
 
    int     nlmbd  = 224;
    int     lmbdlo = 251;
@@ -168,43 +175,39 @@ US_Edit::US_Edit() : US_Widgets()
    cb_lplot  = us_comboBox();
    cb_lstart = us_comboBox();
    cb_lend   = us_comboBox();
-   cb_lexclf = us_comboBox();
-   cb_lexclt = us_comboBox();
 
    cb_lplot ->setFont( font );
    cb_lstart->setFont( font );
    cb_lend  ->setFont( font );
-   cb_lexclf->setFont( font );
-   cb_lexclt->setFont( font );
 
+   pb_custom = us_pushbutton( tr( "Custom Lambdas" ),      false, -1 );
+   pb_incall = us_pushbutton( tr( "Include All Lambdas" ), true,  -1 );
    pb_larrow = us_pushbutton( tr( "previous" ), true, -2 );
    pb_rarrow = us_pushbutton( tr( "next"     ), true, -2 );
    pb_larrow->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT ) );
    pb_rarrow->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
 
-   pb_excrng = us_pushbutton( tr( "Exclude Range" ), true, -1 );
-   pb_incall = us_pushbutton( tr( "Include All" ),   true, -1 );
    lo_radius = us_radiobutton( tr( "x axis Radius" ),     rb_radius, true  );
    lo_waveln = us_radiobutton( tr( "x axis Wavelength" ), rb_waveln, false );
    rb_radius->setFont( font );
    rb_waveln->setFont( font );
+   x_group->addButton( rb_radius, 0 );
+   x_group->addButton( rb_waveln, 1 );
 
    QStringList lambdas;
 lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    cb_lplot ->addItems( lambdas );
    cb_lstart->addItems( lambdas );
    cb_lend  ->addItems( lambdas );
-   cb_lexclf->addItems( lambdas );
-   cb_lexclt->addItems( lambdas );
 
    cb_lplot ->setCurrentIndex( 2 );
    cb_lstart->setCurrentIndex( 0 );
    cb_lend  ->setCurrentIndex( 6 );
-   cb_lexclf->setCurrentIndex( 4 );
-   cb_lexclt->setCurrentIndex( 5 );
 
    specs->addWidget( le_lxrng,  s_row++, 0, 1, 4 );
    specs->addWidget( lb_mwlctl, s_row++, 0, 1, 4 );
+   specs->addLayout( lo_lrange, s_row,   0, 1, 2 );
+   specs->addLayout( lo_custom, s_row++, 2, 1, 2 );
    specs->addWidget( lb_ldelta, s_row,   0, 1, 1 );
    specs->addWidget( ct_ldelta, s_row,   1, 1, 1 );
    specs->addWidget( le_ltrng,  s_row++, 2, 1, 2 );
@@ -212,11 +215,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    specs->addWidget( cb_lstart, s_row,   1, 1, 1 );
    specs->addWidget( lb_lend,   s_row,   2, 1, 1 );
    specs->addWidget( cb_lend,   s_row++, 3, 1, 1 );
-   specs->addWidget( lb_lexclf, s_row,   0, 1, 1 );
-   specs->addWidget( cb_lexclf, s_row,   1, 1, 1 );
-   specs->addWidget( lb_lexclt, s_row,   2, 1, 1 );
-   specs->addWidget( cb_lexclt, s_row++, 3, 1, 1 );
-   specs->addWidget( pb_excrng, s_row,   0, 1, 2 );
+   specs->addWidget( pb_custom, s_row,   0, 1, 2 );
    specs->addWidget( pb_incall, s_row++, 2, 1, 2 );
    specs->addLayout( lo_radius, s_row,   0, 1, 2 );
    specs->addLayout( lo_waveln, s_row++, 2, 1, 2 );
@@ -459,6 +458,7 @@ void US_Edit::reset( void )
    triple_index  = 0;
    isMwl         = false;
    xaxis_radius  = true;
+   lsel_range    = true;
 
    le_info     ->setText( "" );
    le_meniscus ->setText( "" );
@@ -543,7 +543,6 @@ void US_Edit::reset( void )
    cb_rpms      ->clear();
    editGUIDs     .clear();
    editIDs       .clear();
-   wl_excludes   .clear();
    expd_radii    .clear();
    expi_wvlns    .clear();
    rawi_wvlns    .clear();
@@ -552,12 +551,16 @@ void US_Edit::reset( void )
    expc_wvlns    .clear();
    expc_radii    .clear();
    connect_mwl_ctrls( false );
+   rb_lrange    ->setChecked( true );
+   rb_custom    ->setChecked( false );
    cb_lplot     ->clear();
    cb_lstart    ->clear();
    cb_lend      ->clear();
-   cb_lexclf    ->clear();
-   cb_lexclt    ->clear();
+   ct_ldelta    ->setEnabled( true );
+   cb_lend      ->setEnabled( true );
    rb_radius    ->setChecked( true );
+   rb_waveln    ->setChecked( false );
+   pb_custom    ->setEnabled( false );
    connect_mwl_ctrls( true );
 
    set_pbColors( NULL );
@@ -1117,36 +1120,29 @@ DbgLv(1) << "LD(): NN  nwaveln isMwl" << nwaveln << isMwl;
       connect_mwl_ctrls( false );
 DbgLv(1) << "IS-MWL: wvlns size" << rawc_wvlns.size();
       nwavelo      = nwaveln;
-      int lambd1   = rawi_wvlns[ 0 ];
-      int lambd2   = rawi_wvlns[ nwaveln - 1 ];
-      int lambdi   = 1;
+      slambda      = rawi_wvlns[ 0 ];
+      elambda      = rawi_wvlns[ nwaveln - 1 ];
+      dlambda      = 1;
       le_ltrng ->setText( tr( "%1 raw: %2 %3 to %4" )
-         .arg( nwaveln ).arg( chlamb ).arg( lambd1 ).arg( lambd2 ) );
+         .arg( nwaveln ).arg( chlamb ).arg( slambda ).arg( elambda ) );
       le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
                               " raw index increment %5" )
-         .arg( nwavelo ).arg( chlamb ).arg( lambd1 ).arg( lambd2 )
-         .arg( lambdi ) );
+         .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda )
+         .arg( dlambda ) );
 
       // Update wavelength lists in GUI elements
       cb_lstart->clear();
       cb_lend  ->clear();
-      cb_lexclf->clear();
-      cb_lexclt->clear();
       cb_lplot ->clear();
       cb_lstart->addItems( rawc_wvlns );
       cb_lend  ->addItems( rawc_wvlns );
-      cb_lexclf->addItems( rawc_wvlns );
-      cb_lexclt->addItems( rawc_wvlns );
       cb_lplot ->addItems( rawc_wvlns );
       int lastx    = nwaveln - 1;
       plotndx      = nwaveln / 2;
       cb_lplot ->setCurrentIndex( plotndx );
       cb_lstart->setCurrentIndex( 0 );
       cb_lend  ->setCurrentIndex( lastx );
-      cb_lexclf->setCurrentIndex( lastx );
-      cb_lexclt->setCurrentIndex( lastx );
 
-      wl_excludes.clear();
       expd_radii .clear();
       expi_wvlns .clear();
       expc_wvlns .clear();
@@ -2357,6 +2353,13 @@ DbgLv(1) << "PlMwl:  title" << title;
 
    int     nscan  = data.scanData.size();
    int     npoint = xaxis_radius ? nrpoint : nwavelo;
+   int     ptxs   = 0;
+
+   if ( step != MENISCUS  &&  xaxis_radius )
+   {
+      ptxs           = data.xindex( range_left );
+      npoint         = data.xindex( range_right ) - ptxs + 1;
+   }
 DbgLv(1) << "PlMwl:   xa_rad" << xaxis_radius << "nsc npt" << nscan << npoint;
 
    QVector< double > rvec( npoint );
@@ -2378,11 +2381,12 @@ DbgLv(1) << "PlMwl:    START xa_RAD";
       for ( int ii = 0; ii < nscan; ii++ )
       {
          US_DataIO::Scan*  scn = &data.scanData[ ii ];
+         int     kk     = ptxs;
 
          for ( int jj = 0; jj < npoint; jj++ )
          {
             rr[ jj ] = data.xvalues[ jj ];
-            vv[ jj ] = qMin( maxOD, scn->rvalues[ jj ] * invert );
+            vv[ jj ] = qMin( maxOD, scn->rvalues[ kk++ ] * invert );
 
             maxR     = qMax( maxR, rr[ jj ] );
             minR     = qMin( minR, rr[ jj ] );
@@ -4139,13 +4143,13 @@ void US_Edit::show_mwl_controls( bool show )
    cb_lplot ->setVisible( show );
    pb_larrow->setVisible( show );
    pb_rarrow->setVisible( show );
-   lb_lexclf->setVisible( show );
-   cb_lexclf->setVisible( show );
-   lb_lexclt->setVisible( show );
-   cb_lexclt->setVisible( show );
-   pb_excrng->setVisible( show );
+   pb_custom->setVisible( show );
    pb_incall->setVisible( show );
 
+   lo_lrange->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+   lo_lrange->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+   lo_custom->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+   lo_custom->itemAtPosition( 0, 1 )->widget()->setVisible( show );
    lo_radius->itemAtPosition( 0, 0 )->widget()->setVisible( show );
    lo_radius->itemAtPosition( 0, 1 )->widget()->setVisible( show );
    lo_waveln->itemAtPosition( 0, 0 )->widget()->setVisible( show );
@@ -4159,6 +4163,10 @@ void US_Edit::connect_mwl_ctrls( bool conn )
 {
    if ( conn )
    {
+      connect( rb_lrange, SIGNAL( toggled            ( bool   ) ),
+               this,      SLOT  ( lselect_range_on   ( bool   ) ) );
+      connect( rb_custom, SIGNAL( toggled            ( bool   ) ),
+               this,      SLOT  ( lselect_custom_on  ( bool   ) ) );
       connect( ct_ldelta, SIGNAL( valueChanged       ( double ) ),
                this,      SLOT  ( ldelta_value       ( double ) ) );
       connect( cb_lstart, SIGNAL( currentIndexChanged( int    ) ),
@@ -4169,37 +4177,77 @@ void US_Edit::connect_mwl_ctrls( bool conn )
                this,      SLOT  ( xaxis_radius_on    ( bool   ) ) );
       connect( rb_waveln, SIGNAL( toggled            ( bool   ) ),
                this,      SLOT  ( xaxis_waveln_on    ( bool   ) ) );
+      connect( pb_custom, SIGNAL( clicked            (        ) ),
+               this,      SLOT  ( lambda_custom_list (        ) ) );
+      connect( pb_incall, SIGNAL( clicked            (        ) ),
+               this,      SLOT  ( lambda_include_all (        ) ) );
       connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
                this,      SLOT  ( lambda_plot_value  ( int    ) ) );
       connect( pb_larrow, SIGNAL( clicked            (        ) ),
                this,      SLOT  ( lambda_plot_prev   (        ) ) );
       connect( pb_rarrow, SIGNAL( clicked            (        ) ),
                this,      SLOT  ( lambda_plot_next   (        ) ) );
-      connect( cb_lexclf, SIGNAL( currentIndexChanged( int    ) ),
-               this,      SLOT  ( lambda_excl_from   ( int    ) ) );
-      connect( cb_lexclt, SIGNAL( currentIndexChanged( int    ) ),
-               this,      SLOT  ( lambda_excl_to     ( int    ) ) );
-      connect( pb_excrng, SIGNAL( clicked            (        ) ),
-               this,      SLOT  ( lambda_excl_range  (        ) ) );
-      connect( pb_incall, SIGNAL( clicked            (        ) ),
-               this,      SLOT  ( lambda_include_all (        ) ) );
    }
 
    else
    {
+      rb_lrange->disconnect();
+      rb_custom->disconnect();
       ct_ldelta->disconnect();
       cb_lstart->disconnect();
       cb_lend  ->disconnect();
       rb_radius->disconnect();
       rb_waveln->disconnect();
+      pb_custom->disconnect();
+      pb_incall->disconnect();
       cb_lplot ->disconnect();
       pb_larrow->disconnect();
       pb_rarrow->disconnect();
-      cb_lexclf->disconnect();
-      cb_lexclt->disconnect();
-      pb_excrng->disconnect();
-      pb_incall->disconnect();
    }
+}
+
+// Lambda selection has been changed to Range or Custom
+void US_Edit::lselect_range_on( bool checked )
+{
+DbgLv(1) << "lselect range checked" << checked;
+   if ( checked )
+   {
+      connect_mwl_ctrls( false );
+      ct_ldelta->setValue( 1 );
+      cb_lstart->setCurrentIndex( 0 );
+      cb_lend  ->setCurrentIndex( nwaveln - 1 );
+      connect_mwl_ctrls( true );
+
+      reset_plot_lambdas();
+   }
+
+   ct_ldelta    ->setEnabled( checked );
+   cb_lstart    ->setEnabled( checked );
+   cb_lend      ->setEnabled( checked );
+   pb_custom    ->setEnabled( !checked );
+   lsel_range = checked;
+}
+
+// Lambda selection has been changed to Range or Custom
+void US_Edit::lselect_custom_on( bool checked )
+{
+DbgLv(1) << "lselect custom checked" << checked;
+   if ( checked )
+   {
+      connect_mwl_ctrls( false );
+      ct_ldelta->setValue( 1 );
+      cb_lstart->setCurrentIndex( 0 );
+      cb_lend  ->setCurrentIndex( nwaveln - 1 );
+      connect_mwl_ctrls( true );
+
+      reset_plot_lambdas();
+   }
+
+   ct_ldelta    ->setEnabled( !checked );
+   cb_lstart    ->setEnabled( !checked );
+   cb_lend      ->setEnabled( !checked );
+   pb_custom    ->setEnabled( checked );
+   lsel_range = !checked;
 }
 
 // Lambda Delta has changed
@@ -4267,10 +4315,10 @@ DbgLv(1) << "rpl:    pl1 pln" << expi_wvlns[0] << expi_wvlns[nwavelo-1];
 
    // Report export lambda range
    const QChar chlamb( 955 );
-   le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
-                           " raw index increment %5" )
+   le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4," )
       .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda )
-      .arg( dlambda ) );
+      + ( lsel_range ? tr( " raw index increment %1." ).arg( dlambda )
+                     : tr( " from custom selections." ) ) );
 }
 
 // X-axis has been changed to Radius or Wavelength
@@ -4356,32 +4404,66 @@ DbgLv(1) << "lambda_plot_next  clicked";
    cb_lplot->setCurrentIndex( plotndx );
 }
 
-// Lambda exclude-from has changed
-void US_Edit::lambda_excl_from( int value )
+// Custom Lambdas has been clicked
+void US_Edit::lambda_custom_list()
 {
-   exclfrx     = value;
-   excllfr     = cb_lexclf->itemText( exclfrx ).toInt();
-DbgLv(1) << "lambda_excl_from  value" << value << excllfr;
+DbgLv(1) << "lambda_custom_list  clicked";
+   US_SelectLambdas* sel_lambd = new US_SelectLambdas( rawi_wvlns );
+
+   connect( sel_lambd, SIGNAL( new_lambda_list( QList< int > ) ),
+            this,      SLOT  ( lambda_new_list( QList< int > ) ) );
+
+   if ( sel_lambd->exec() == QDialog::Accepted )
+   {
+DbgLv(1) << "  lambda_custom_list  ACCEPTED";
+      int  plotx  = cb_lplot ->currentIndex();
+      plotx       = ( plotx < nwavelo ) ? plotx : ( nwavelo / 2 );
+
+      if ( xaxis_radius )
+      {  // If x-axis is radius, reset wavelength-to-plot list
+         cb_lplot->disconnect();
+         cb_lplot->clear();
+         cb_lplot->addItems( expc_wvlns );
+         connect( cb_lplot,  SIGNAL( currentIndexChanged( int    ) ),
+                  this,      SLOT  ( lambda_plot_value  ( int    ) ) );
+         cb_lplot->setCurrentIndex( plotx );
+      }
+
+      // Report export lambda range
+      const QChar chlamb( 955 );
+      le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
+                              " from custom selections." )
+         .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda ) );
+   }
 }
 
-// Lambda exclude-to has changed
-void US_Edit::lambda_excl_to( int value )
+// Custom Lambdas have been specified
+void US_Edit::lambda_new_list( QList< int > newlams )
 {
-   excltox     = value;
-   excllto     = cb_lexclt->itemText( excltox ).toDouble();
-DbgLv(1) << "lambda_excl_to  value" << value << excllto;
-}
+   nwavelo     = newlams.count();
+   expi_wvlns  = newlams;
+   slambda     = expi_wvlns[ 0 ];
+   elambda     = expi_wvlns[ nwavelo - 1 ];
+   expc_wvlns.clear();
 
-// Exclude-lambda-range has been clicked
-void US_Edit::lambda_excl_range()
-{
-DbgLv(1) << "lambda_excl_range  clicked";
+   for ( int ii = 0; ii < nwavelo; ii++ )
+      expc_wvlns << QString::number( expi_wvlns[ ii ] );
 }
 
 // Include-all-lambda has been clicked
 void US_Edit::lambda_include_all()
 {
 DbgLv(1) << "lambda_include_all  clicked";
+   nwavelo     = nwaveln;
+   expc_wvlns  = rawc_wvlns;
+   expi_wvlns  = rawi_wvlns;
+   connect_mwl_ctrls( false );
+   ct_ldelta->setValue( 1 );
+   cb_lstart->setCurrentIndex( 0 );
+   cb_lend  ->setCurrentIndex( nwaveln - 1 );
+   connect_mwl_ctrls( true );
+
+   reset_plot_lambdas();
 }
 
 // OD-limit-on-radii has changed

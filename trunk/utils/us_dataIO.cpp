@@ -211,6 +211,7 @@ bool US_DataIO::readLegacyFile( const QString&  file,
    data.cell          = pp[ 1 ].toInt();
    data.temperature   = pp[ 2 ].toDouble();
    data.rpm           = pp[ 3 ].toDouble();
+//data.rpm = qRound( data.rpm / 50.0 ) * 50.0;
    data.seconds       = pp[ 4 ].toDouble();
    data.omega2t       = pp[ 5 ].toDouble();
    data.rpoint        = pp[ 6 ].toDouble();
@@ -618,6 +619,7 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
          read( ds, u1.c, 4, crc );
          u2.I = qFromLittleEndian( u1.I );
          sc.rpm = u2.f;
+//sc.rpm = qRound( sc.rpm / 50.0 ) * 50.0;
 
          // Seconds
          read( ds, u1.c, 4, crc );
@@ -1072,9 +1074,9 @@ int US_DataIO::loadData( const QString&         directory,
    ed.ODlimit     = ( ed.dataType == "RA"  ||  ed.dataType == "RI" ) ?
                     ev.ODlimit : 1e+99;
    ed.floatingData = ev.floatingData;
-qDebug() << "dIO:ldEd: ed.descr" << ed.description
- << "ed.wavelength" << ed.wavelength << "ed.dataType ed.ODlimit"
- << ed.dataType << ed.ODlimit;
+//qDebug() << "dIO:ldEd: ed.descr" << ed.description
+// << "ed.wavelength" << ed.wavelength << "ed.dataType ed.ODlimit"
+// << ed.dataType << ed.ODlimit;
 
    if ( ed.expType == "Equilibrium" )
       ed.speedData << ev.speedData;

@@ -99,6 +99,7 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       void scan_dbase_edit( void );
       void scan_local_edit( void );
       void pare_to_latest ( void );
+      void pare_latest_mwl( void );
       void show_data_info ( QPoint );
 
    private slots:
