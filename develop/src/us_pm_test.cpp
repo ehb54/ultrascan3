@@ -18,9 +18,9 @@
 #define BEST_MD0_TORUS    0
 #define BEST_MD0          ( BEST_MD0_SPHERE || BEST_MD0_CYLINDER || BEST_MD0_SPHEROID || BEST_MD0_TORUS )
 
-#define BEST_MD0_GA_SPHERE   1
+#define BEST_MD0_GA_SPHERE   0
 #define BEST_MD0_GA_CYLINDER 0
-#define BEST_MD0_GA_SPHEROID 0
+#define BEST_MD0_GA_SPHEROID 1
 #define BEST_MD0_GA_TORUS    0
 #define BEST_MD0_GA          ( BEST_MD0_GA_SPHERE || BEST_MD0_GA_CYLINDER || BEST_MD0_GA_SPHEROID || BEST_MD0_GA_TORUS )
 
@@ -519,18 +519,31 @@ QString US_PM::test( QString name, QString oname )
 
       vector < double > params(1);
 
-      unsigned int steps    = 10;
-      unsigned int pts      = 100;
+      unsigned int steps    = 1;
+      unsigned int pts_max  = 100;
       double       finest   = grid_conversion_factor;
       double       coarse   = 10e0;
       double       ref_pct  = 2.5e0;
       double       conv_div = 2.5e0;
 
+      unsigned int pop      = 50;
+      unsigned int gen      = 25;
+      double       mutate   = .45;
+      double       cross    = .45;
+      unsigned int elitism  = 2;
+      unsigned int early_term = 3;
+
+      double       best_delta_start   = 1e0;
+      double       best_delta_divisor = 10e0;
+      double       best_delta_min     = 1e-2;
+
+      sphere_pm.ga_set_params( pop, gen, mutate, cross, elitism, early_term );
+      sphere_pm.set_best_delta( best_delta_start, best_delta_divisor, best_delta_min );
       if ( BEST_MD0_GA_SPHERE )
       {
          cout << "starting best sphere\n";
          params[ 0 ] = 0e0;
-         sphere_pm.best_md0_ga( params, model, steps, pts, grid_conversion_factor, coarse, ref_pct, conv_div );
+         sphere_pm.best_md0_ga( params, model, steps, pts_max, grid_conversion_factor, coarse, ref_pct, conv_div );
          us_timers.stop_all();
       
          QString outname = QString( "%1_sh%2_best_MD0_GA_sphere" ).arg( oname ).arg( max_harmonics );
@@ -546,7 +559,7 @@ QString US_PM::test( QString name, QString oname )
          // sphere_pm.clear();
          cout << "starting best cylinder\n";
          params[ 0 ] = 1e0;
-         sphere_pm.best_md0_ga( params, model, steps, pts, grid_conversion_factor, coarse, ref_pct, conv_div );
+         sphere_pm.best_md0_ga( params, model, steps, pts_max, grid_conversion_factor, coarse, ref_pct, conv_div );
          us_timers.stop_all();
 
          QString outname = QString( "%1_sh%2_best_MD0_GA_cylinder" ).arg( oname ).arg( max_harmonics );
@@ -562,7 +575,7 @@ QString US_PM::test( QString name, QString oname )
          // sphere_pm.clear();
          cout << "starting best spheroid\n";
          params[ 0 ] = 2e0;
-         sphere_pm.best_md0_ga( params, model, steps, pts, grid_conversion_factor, coarse, ref_pct, conv_div );
+         sphere_pm.best_md0_ga( params, model, steps, pts_max, grid_conversion_factor, coarse, ref_pct, conv_div );
 
          us_timers.stop_all();
             
@@ -579,7 +592,7 @@ QString US_PM::test( QString name, QString oname )
          // sphere_pm.clear();
          cout << "starting best torus\n";
          params[ 0 ] = 4e0;
-         sphere_pm.best_md0_ga( params, model, steps, pts, grid_conversion_factor, coarse, ref_pct, conv_div );
+         sphere_pm.best_md0_ga( params, model, steps, pts_max, grid_conversion_factor, coarse, ref_pct, conv_div );
          us_timers.stop_all();
 
          QString outname = QString( "%1_sh%2_best_MD0_GA_torus" ).arg( oname ).arg( max_harmonics );

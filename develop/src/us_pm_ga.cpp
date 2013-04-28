@@ -45,21 +45,36 @@ bool US_PM::ga( pm_ga_individual & best_individual )
    individual.v.resize( ga_fparams_size );
 
    // init population
-   for ( unsigned int i = 0; i < ga_population; i++ )
+   if ( ga_p.full_grid )
    {
-      for ( unsigned int j = 0; j < ga_fparams_size; j++ )
+      for ( unsigned int i = 0; i < ga_p.population; i++ )
       {
-         individual.v[ j ] = int( ((double)ga_points * drand48() + 0.5e0 ) );
+         unsigned int r = i;
+         for ( unsigned int j = 0; j < ga_fparams_size; j++ )
+         {
+            individual.v[ j ] = r % ga_points[ j ];
+            r = r / ga_points[ j ];
+         }
+         ga_fitness( individual );
+         ga_pop.push_back( individual );
       }
-      ga_fitness( individual );
-      ga_pop.push_back( individual );
+   } else {
+      for ( unsigned int i = 0; i < ga_p.population; i++ )
+      {
+         for ( unsigned int j = 0; j < ga_fparams_size; j++ )
+         {
+            individual.v[ j ] = int( ((double)ga_points[ j ] * drand48() ) );
+         }
+         ga_fitness( individual );
+         ga_pop.push_back( individual );
+      }
    }
 
    // sort by fitness
    double       last_best_fitness        = 1e99;
    unsigned int gens_with_no_improvement = 0;
 
-   for ( unsigned int g = 0; g < ga_generations; g++ )
+   for ( unsigned int g = 0; g < ga_p.generations; g++ )
    {
       ga_pop.sort();
       ga_pop.unique();
@@ -76,7 +91,7 @@ bool US_PM::ga( pm_ga_individual & best_individual )
             gens_with_no_improvement = 0;
          } else {
             gens_with_no_improvement++;
-            if ( gens_with_no_improvement >= ga_early_termination )
+            if ( gens_with_no_improvement >= ga_p.early_termination )
             {
                cout << "early termination\n";
                break;
@@ -114,9 +129,9 @@ bool US_PM::ga( pm_ga_individual & best_individual )
 
       ga_pop.clear();
 
-      for ( unsigned int i = 0; i < ga_population; i++ )
+      for ( unsigned int i = 0; i < ga_p.population; i++ )
       {
-         if ( i < ga_elitism )
+         if ( i < ga_p.elitism )
          {
             // cout << "elitism\n";
             ga_fitness( last_pop[ i ] );
@@ -125,19 +140,19 @@ bool US_PM::ga( pm_ga_individual & best_individual )
             continue;
          }
 
-         if ( drand48() < ga_mutate )
+         if ( drand48() < ga_p.mutate )
          {
             // cout << "mutate\n";
             individual = last_pop[ ga_pop_selection( last_pop.size() ) ];
             unsigned int pos = ( unsigned int )( drand48() * ga_fparams_size );
-            individual.v[ pos ] = int( ((double)ga_points * drand48() ) + 0.5e0 );
+            individual.v[ pos ] = int( ((double)ga_points[ pos ] * drand48() ) );
             ga_fitness( individual );
             ga_pop.push_back( individual );
             mutate_count++;
             continue;
          }
       
-         if ( drand48() < ga_crossover )
+         if ( drand48() < ga_p.crossover )
          {
             // cout << "crossover\n";
             individual                   = last_pop[ ga_pop_selection( last_pop.size() ) ];
@@ -158,7 +173,7 @@ bool US_PM::ga( pm_ga_individual & best_individual )
          {
             for ( unsigned int j = 0; j < ga_fparams_size; j++ )
             {
-               individual.v[ j ] = int( ((double)ga_points * drand48() + 0.5e0 ) );
+               individual.v[ j ] = int( ((double)ga_points[ j ] * drand48() ) );
             }
             ga_fitness( individual );
             ga_pop.push_back( individual );
@@ -214,28 +229,63 @@ bool US_PM::ga_state_ok()
    return true;
 }
 
-bool US_PM::ga_compute_delta( unsigned int points )
+bool US_PM::ga_compute_delta( unsigned int points_max )
 {
    if ( !ga_state_ok() )
    {
       return false;
    }
-   if ( points < 2 )
+   if ( points_max < 2 )
    {
       error_msg = "ga_compute_delta: too few points";
       return false;
    }
-   ga_delta.resize( ga_low_fparams.size() );
+   ga_delta .resize( ga_low_fparams.size() );
+   ga_points.resize( ga_low_fparams.size() );
+
+   printf( "ga_compute_delta points max %u\n", points_max );
+
+   unsigned int total_pts = 1;
+
    for ( int i = 0; i < (int) ga_low_fparams.size(); i++ )
    {
       if ( ga_low_fparams[ i ] == ga_high_fparams[ i ] )
       {
-         ga_delta[ i ] = 0e0;
+         ga_delta [ i ] = 0e0;
+         ga_points[ i ] = 1;
       } else {
-         ga_delta[ i ] = ( ga_high_fparams[ i ] - ga_low_fparams[ i ] ) / (double) ( points - 1 );
+         ga_delta[ i ] = ( ga_high_fparams[ i ] - ga_low_fparams[ i ] ) / (double) ( points_max - 1 );
+         printf( "ga_compute_delta: ga_delta[ %d ] = %g\n", i, ga_delta[ i ] );
+         if ( ga_delta[ i ] < best_delta_min )
+         {
+            printf( "ga_compute_delta: ga_delta[ %d ] < best_delta_min %g\n", i, best_delta_min );
+            ga_delta [ i ] = best_delta_min;
+            ga_points[ i ] = ( unsigned int )( 0.5 + ( ga_high_fparams[ i ] - ga_low_fparams[ i ] ) / best_delta_min );
+         } else {
+            ga_points[ i ] = points_max;
+         }
       }
+      total_pts *= ga_points[ i ];
    }
+
+   cout << "ga_compute_delta: total pts " << total_pts << endl;
    US_Vector::printvector( "ga_compute_delta: deltas", ga_delta );
+   US_Vector::printvector( "ga_compute_delta: points", ga_points );
+
+   if ( total_pts <= ga_p.population * ( ga_p.generations > 2 ? ga_p.generations / 2 : ga_p.generations ) )
+   {
+      cout << "ga_compute_delta: points <= population * generations / 2, switching to full grid search\n";
+      ga_p.population        = total_pts;
+      ga_p.generations       = 1;
+      ga_p.mutate            = 0e0;
+      ga_p.crossover         = 0e0;
+      ga_p.elitism           = 0;
+      ga_p.early_termination = 1;
+      ga_p.full_grid         = true;
+   } else {
+      ga_p.full_grid         = false;
+   }
+
    return true;
 }
 
@@ -302,7 +352,7 @@ bool US_PM::ga_refine_limits( unsigned int top_count,
 
    ga_pop.clear(); // or recompute deltas for those that fall within (?)
 
-   return ga_compute_delta( ga_points );
+   return ga_compute_delta( ga_points_max );
 }
    
 bool US_PM::ga_delta_to_fparams( vector < int >    & delta, 
@@ -318,27 +368,36 @@ bool US_PM::ga_delta_to_fparams( vector < int >    & delta,
 bool US_PM::ga_run( 
                    vector < int >    & types, 
                    pm_ga_individual  & best_individual,
-                   unsigned int        points,
+                   unsigned int        points_max,
                    vector < double > & low_fparams,
                    vector < double > & high_fparams
                    )
 {
    ga_types        = types;
-   ga_points       = points;
+   ga_points_max   = points_max;
    ga_low_fparams  = low_fparams;
    ga_high_fparams = high_fparams;
    ga_fparams_size = low_fparams.size();
    ga_fparams      .resize( ga_fparams_size ); 
+   ga_points       .resize( ga_fparams_size ); 
 
    zero_params( ga_params, types );
    set_limits ( ga_params, ga_min_low_fparams, ga_max_high_fparams );
    clip_limits( ga_params, ga_min_low_fparams, ga_max_high_fparams );
 
-   if ( !ga_compute_delta( ga_points ) )
+   ga_p_save       = ga_p;
+   if ( !ga_compute_delta( ga_points_max ) )
    {
       return false;
    }
-   return ga( best_individual );
+
+   ga_pop.clear();
+
+   // possibly seed with best individual (from previous grid) matched to delta
+
+   bool ret_stat = ga( best_individual );
+   ga_p = ga_p_save;
+   return ret_stat;
 }
 
 bool US_PM::ga_run( 
@@ -347,7 +406,7 @@ bool US_PM::ga_run(
                    unsigned int        points
                    )
 {
-   cerr << "Warning: ga_run() without limits can create huge models\n";
+   cerr << "Warning: ga_run() without limits can create unnecessarrily huge models (i.e. slow!)\n";
    vector < double > low_fparams;
    vector < double > high_fparams;
    zero_params( ga_params, types );
@@ -364,12 +423,12 @@ void US_PM::ga_set_params(
                           unsigned int        ga_early_termination
                           )
 {
-   this->ga_population        = ga_population;
-   this->ga_generations       = ga_generations;
-   this->ga_mutate            = ga_mutate;
-   this->ga_crossover         = ga_crossover;
-   this->ga_elitism           = ga_elitism;
-   this->ga_early_termination = ga_early_termination;
+   this->ga_p.population        = ga_population;
+   this->ga_p.generations       = ga_generations;
+   this->ga_p.mutate            = ga_mutate;
+   this->ga_p.crossover         = ga_crossover;
+   this->ga_p.elitism           = ga_elitism;
+   this->ga_p.early_termination = ga_early_termination;
 }
 
 void US_PM::ga_set_params( map < QString, QString > control_parameters )
@@ -377,27 +436,27 @@ void US_PM::ga_set_params( map < QString, QString > control_parameters )
    ga_set_params();
    if ( control_parameters.count( "ga_population" ) )
    {
-      ga_population = control_parameters[ "ga_population" ].toUInt();
+      ga_p.population = control_parameters[ "ga_population" ].toUInt();
    }
    if ( control_parameters.count( "ga_generations" ) )
    {
-      ga_generations = control_parameters[ "ga_generations" ].toUInt();
+      ga_p.generations = control_parameters[ "ga_generations" ].toUInt();
    }
-   if ( control_parameters.count( "ga_mutate" ) )
+   if ( control_parameters.count( "ga_p.mutate" ) )
    {
-      ga_mutate = control_parameters[ "ga_mutate" ].toDouble();
+      ga_p.mutate = control_parameters[ "ga_mutate" ].toDouble();
    }
    if ( control_parameters.count( "ga_crossover" ) )
    {
-      ga_crossover = control_parameters[ "ga_crossover" ].toDouble();
+      ga_p.crossover = control_parameters[ "ga_crossover" ].toDouble();
    }
    if ( control_parameters.count( "ga_elitism" ) )
    {
-      ga_elitism = control_parameters[ "ga_elitism" ].toUInt();
+      ga_p.elitism = control_parameters[ "ga_elitism" ].toUInt();
    }
    if ( control_parameters.count( "ga_early_termination" ) )
    {
-      ga_early_termination = control_parameters[ "ga_early_termination" ].toUInt();
+      ga_p.early_termination = control_parameters[ "ga_early_termination" ].toUInt();
    }
 }
 
@@ -405,15 +464,14 @@ QString US_PM::ga_info()
 {
    QString qs;
 
-   qs += QString( "ga_population %1\n" ).arg( ga_population );
-   qs += QString( "ga_generations %1\n" ).arg( ga_generations );
-   qs += QString( "ga_mutate %1\n" ).arg( ga_mutate );
-   qs += QString( "ga_crossover %1\n" ).arg( ga_crossover );
-   qs += QString( "ga_elitism %1\n" ).arg( ga_elitism );
-   qs += QString( "ga_early_termination %1\n" ).arg( ga_early_termination );
+   qs += QString( "ga_p.population %1\n" ).arg( ga_p.population );
+   qs += QString( "ga_p.generations %1\n" ).arg( ga_p.generations );
+   qs += QString( "ga_p.mutate %1\n" ).arg( ga_p.mutate );
+   qs += QString( "ga_p.crossover %1\n" ).arg( ga_p.crossover );
+   qs += QString( "ga_p.elitism %1\n" ).arg( ga_p.elitism );
+   qs += QString( "ga_p.early_termination %1\n" ).arg( ga_p.early_termination );
 
-   qs += QString( "ga_points %1\n" ).arg( ga_points );
-
+   qs += US_Vector::qs_vector( "ga_points", ga_points );
    qs += US_Vector::qs_vector( "ga_types", ga_types );
    qs += US_Vector::qs_vector( "ga_delta", ga_delta );
    qs += US_Vector::qs_vector2( "ga_(low/high)_fparams", ga_low_fparams, ga_high_fparams );

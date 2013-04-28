@@ -126,6 +126,17 @@ class pm_ga_individual
    }
 };
 
+struct ga_ctl_param
+{
+   unsigned int population;
+   unsigned int generations;
+   double       mutate;
+   double       crossover;
+   unsigned int elitism;
+   unsigned int early_termination;
+   bool         full_grid;
+};
+
 class US_PM
 {
  private:
@@ -321,7 +332,8 @@ class US_PM
    vector < double >                       ga_I_result;
    vector < double >                       ga_params;
    vector < double >                       ga_fparams;
-   unsigned int                            ga_points; // for now, single # of points in each dimension
+   vector < unsigned int >                 ga_points;
+   unsigned int                            ga_points_max;
    unsigned int                            ga_fparams_size;
 
    bool                                    ga_state_ok();
@@ -341,12 +353,8 @@ class US_PM
 
    bool                                    ga                 ( pm_ga_individual & best_individual );
 
-   unsigned int                            ga_population;
-   unsigned int                            ga_generations;
-   double                                  ga_mutate;
-   double                                  ga_crossover;
-   unsigned int                            ga_elitism;
-   unsigned int                            ga_early_termination;
+   ga_ctl_param                            ga_p;
+   ga_ctl_param                            ga_p_save;
 
    bool                                    rescale_params( vector < int >    & types, 
                                                            vector < double > & fparams, 
@@ -359,6 +367,7 @@ class US_PM
                                                            double              refinement_range_pct = 0e0 );
 
    SHS_USE                               * shs;
+
 
  public:
    // note: F needs to be the factors for a volume of size grid_conversion_factor ^ 3
@@ -545,7 +554,7 @@ class US_PM
    bool                    ga_run            ( 
                                               vector < int >    & types, 
                                               pm_ga_individual  & best_individual,
-                                              unsigned int        points,
+                                              unsigned int        points_max,
                                               vector < double > & low_fparams,
                                               vector < double > & high_fparams
                                               );
@@ -553,7 +562,7 @@ class US_PM
    bool                    ga_run            ( 
                                               vector < int >    & types, 
                                               pm_ga_individual  & best_individual,
-                                              unsigned int        points  = 100
+                                              unsigned int        points_max  = 100
                                               );
 
    void                    ga_set_params     (
@@ -570,7 +579,7 @@ class US_PM
                                               vector < double > & params, 
                                               set < pm_point >  & model, 
                                               unsigned int        steps_to_ga            = 1,
-                                              unsigned int        points                 = 100,
+                                              unsigned int        points_max             = 100,
                                               double              finest_conversion      = 1e0,
                                               double              coarse_conversion      = 10e0,
                                               double              refinement_range_pct   = 5e0,

@@ -753,7 +753,7 @@ bool US_PM::best_md0_ga(
                         vector < double > & params, 
                         set < pm_point >  & model, 
                         unsigned int        steps_to_ga,
-                        unsigned int        points,
+                        unsigned int        points_max,
                         double              finest_conversion,
                         double              coarse_conversion,
                         double              refinement_range_pct,
@@ -813,12 +813,12 @@ bool US_PM::best_md0_ga(
       if ( steps >= steps_to_ga )
       {
          pm_ga_individual best_individual;
-         ga_population = 25;
-         ga_generations = 10;
-         ga_elitism = 1;
-         ga_early_termination = 3;
+         //          ga_population = 25;
+         //          ga_generations = 10;
+         //          ga_elitism = 1;
+         //          ga_early_termination = 3;
 
-         if ( !ga_run( types, best_individual, points, low_fparams, high_fparams ) )
+         if ( !ga_run( types, best_individual, points_max, low_fparams, high_fparams ) )
          {
             return false;
          }
