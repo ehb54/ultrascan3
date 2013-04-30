@@ -791,7 +791,7 @@ void US_DataIO::run( QXmlStreamReader& xml, EditValues& parameters )
    parameters.channel    = a.value( "channel"    ).toString();
    parameters.wavelength = a.value( "wavelength" ).toString();
 
-   if ( parameters.wavelength.contains( ":" ) )
+   if ( parameters.wavelength.contains( "-" ) )
       all_lambdas( xml, parameters );
 
    while ( ! xml.atEnd() )
@@ -1013,7 +1013,7 @@ int US_DataIO::loadData( const QString&         directory,
    QString filepart2   = editFilename.section( ".", -5, -3 );
    rawDataFile         = filepart1 + "." + filepart2 + ".";
    QString clambda     = ftriple     .section( ".", -1, -1 );
-   bool    isMwl       = clambda.contains( ":" );
+   bool    isMwl       = clambda.contains( "-" );
 
    if ( isMwl )
    {
@@ -1047,7 +1047,7 @@ int US_DataIO::loadData( const QString&         directory,
    if ( rawGuid != ev.dataGUID )
    {
       QString clambda = edtFileRead.section( ".", -2, -2 );
-      if ( clambda.contains( ":" ) )
+      if ( clambda.contains( "-" ) )
          ev.dataGUID = rawGuid;
       else
          throw NO_GUID_MATCH;

@@ -3129,7 +3129,7 @@ DbgLv(1) << "EDT:WrTripl: tripindex" << triple_index << "filename" << filename;
    if ( isMwl )
    {
       int lwx   = expc_wvlns.size() - 1;
-      wvpart    = expc_wvlns[ 0 ] + ":" + expc_wvlns[ lwx ];
+      wvpart    = expc_wvlns[ 0 ] + "-" + expc_wvlns[ lwx ];
       filename  = filename.section( ".",  0, -5 ) + "." +
                   QString( celchns[ triple_index ] ).replace( " / ", "." ) +
                   "." + wvpart + ".xml";

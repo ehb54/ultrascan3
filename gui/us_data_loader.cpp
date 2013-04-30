@@ -221,7 +221,7 @@ bool US_DataLoader::load_edit( void )
          QString  ftriple  = filename.section( ".", -4, -2 );
          QString  message  = tr( "Loading triple " ) + triple;
 
-         if ( triple != ftriple   &&  ftriple.contains( ":" ) )
+         if ( triple != ftriple   &&  ftriple.contains( "-" ) )
          {  // Modify filename to signal MWL
             QString  ftrnode  = "." + ftriple + ".";
             QString  utrnode  = "." + ftriple  + "@" + clambda + ".";
@@ -302,7 +302,7 @@ bool US_DataLoader::load_edit( void )
          filename          = filename.section( "/", -1, -1 );
          QString  ftriple  = filename.section( ".", -4, -2 );
 
-         if ( triple != ftriple   &&  ftriple.contains( ":" ) )
+         if ( triple != ftriple   &&  ftriple.contains( "-" ) )
          {  // Modify filename to signal MWL
             QString  ftrnode  = "." + ftriple + ".";
             QString  utrnode  = "." + ftriple  + "@" + clambda + ".";
@@ -617,7 +617,7 @@ void US_DataLoader::scan_dbase_edit()
       QString  aucID    = db.value( 0 ).toString();
       QString  aFname   = db.value( 2 ).toString();
       QString  aucGUID  = db.value( 9 ).toString();
-      aucIDs[ aFname ]  = aucID + ":" + aucGUID;
+      aucIDs[ aFname ]  = aucID + "^" + aucGUID;
    }
 
 //qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -671,9 +671,9 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       QString tripID   = filebase.section( ".", -4, -2 );
       QString edtlamb  = tripID  .section( ".",  2,  2 );
       QString aucfname = runID + "." + dataType + "." + tripID + ".auc";
-      bool    isMwl    = edtlamb.contains( ":" );
+      bool    isMwl    = edtlamb.contains( "-" );
       int     idAUC    = isMwl ? 0
-                         : aucIDs[ aucfname ].section( ":", 0, 0 ).toInt();
+                         : aucIDs[ aucfname ].section( "^", 0, 0 ).toInt();
 //qDebug() << "ScDB:   isMwl idAUC" << isMwl << idAUC << "aucfname" << aucfname;
 
 //qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -750,8 +750,8 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
             descrip       = QString( odescrip ).replace( otripID, tripID  );
             aucfname      = runID + "." + dataType + "." + tripID + ".auc";
             aucEntr       = aucIDs[ aucfname ];
-            idAUC         = aucEntr.section( ":", 0, 0 ).toInt();
-            parGUID       = aucEntr.section( ":", 1, 1 );
+            idAUC         = aucEntr.section( "^", 0, 0 ).toInt();
+            parGUID       = aucEntr.section( "^", 1, 1 );
             ddesc.tripID       = tripID;
             ddesc.editID       = editID + "@" + elambda;
             ddesc.descript     = descrip;
@@ -843,7 +843,7 @@ void US_DataLoader::scan_local_edit( void )
          QString parGUID;
          QString expType;
          QString elambda;
-         bool    isMwl   = edtlamb.contains( ":" );
+         bool    isMwl   = edtlamb.contains( "-" );
 
          while( ! xml.atEnd() )
          {
@@ -1010,7 +1010,7 @@ void US_DataLoader::pare_latest_mwl( void )
       QString fname  = vals.at( ii ).filename;
       QString cwavln = fname.section( ".", -2, -2 );
 
-      if ( ! cwavln.contains( ":" ) )
+      if ( ! cwavln.contains( "-" ) )
          continue;                             // Skip if not MWL
 
       QString cedit  = fname.section( ".",  0, -6 );
@@ -1053,7 +1053,7 @@ void US_DataLoader::pare_latest_mwl( void )
       QString fname  = vals.at( ii ).filename;
       QString cwavln = fname.section( ".", -2, -2 );
 
-      if ( ! cwavln.contains( ":" ) )
+      if ( ! cwavln.contains( "-" ) )
          continue;                             // Skip if not MWL
 
       QString cedit  = fname.section( ".",  0, -6 );
