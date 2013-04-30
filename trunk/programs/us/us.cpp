@@ -151,12 +151,12 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_FEMA     , tr( "&FE Model Viewer" ),                 velocity );
   addMenu(  P_PSEUDO3D , tr( "&Combine Pseudo-3D Distributions" ), velocity );
   
-  QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
-  addMenu(  P_EQGLOBFIT, tr( "&Global Fit" ),                 equilibrium );
+//  QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
+//  addMenu(  P_EQGLOBFIT, tr( "&Global Fit" ),                 equilibrium );
   //addMenu(  P_EQTIMEEST, tr( "Estimate Equilibrium &Times",   equilibrium );
 
-  QMenu* fit         = new QMenu( tr( "&Global Fit" ),  this );
-  addMenu(  P_GLOBFITEQ, tr( "Global &Equilibrium Fit" ),     fit );
+//  QMenu* fit         = new QMenu( tr( "&Global Fit" ),  this );
+//  addMenu(  P_GLOBFITEQ, tr( "Global &Equilibrium Fit" ),     fit );
   //addMenu(  P_GLOBFITEX, tr( "Global E&xtinction Fit" ),      fit );
   //addMenu(  P_GLOBFITSP, tr( "Global &Spectrum Fit" ),        fit );
   
@@ -213,8 +213,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   menuBar()->addMenu( file        );
   menuBar()->addMenu( edit        );
   menuBar()->addMenu( velocity    );
-  menuBar()->addMenu( equilibrium );
-  menuBar()->addMenu( fit         );
+//  menuBar()->addMenu( equilibrium );
+//  menuBar()->addMenu( fit         );
   menuBar()->addMenu( utilities   );
   menuBar()->addMenu( simulation  );
   menuBar()->addMenu( database    );
@@ -227,8 +227,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   file       ->setFont( mfont );
   edit       ->setFont( mfont );
   velocity   ->setFont( mfont );
-  equilibrium->setFont( mfont );
-  fit        ->setFont( mfont );
+//  equilibrium->setFont( mfont );
+//  fit        ->setFont( mfont );
   utilities  ->setFont( mfont );
   simulation ->setFont( mfont );
   database   ->setFont( mfont );
