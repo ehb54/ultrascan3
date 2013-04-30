@@ -763,7 +763,7 @@ void US_ConvertGui::importMWL( void )
    QStringList celchns;
    triples.clear();
    QString     pwvln = " / " + QString::number( exp_lambdas[ 0           ] )
-                       + ":" + QString::number( exp_lambdas[ nlambda - 1 ] );
+                       + "-" + QString::number( exp_lambdas[ nlambda - 1 ] );
 
    int ncelchn   = mwl_data.cellchannels( celchns );
    nlambda       = mwl_data.countOf( "lambda" );
@@ -3354,7 +3354,7 @@ void US_ConvertGui::reset_lambdas()
    // Rebuild list of triples
    QStringList celchns;
    QString     pwvln = " / " + QString::number( exp_lambdas[ 0           ] )
-                       + ":" + QString::number( exp_lambdas[ nlambda - 1 ] );
+                       + "-" + QString::number( exp_lambdas[ nlambda - 1 ] );
 
    int ncelchn   = mwl_data.cellchannels( celchns );
    nlambda       = mwl_data.countOf( "lambda" );
