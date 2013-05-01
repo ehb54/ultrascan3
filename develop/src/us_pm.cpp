@@ -29,9 +29,9 @@ void US_PM::set_grid_size( double grid_conversion_factor )
 US_PM::US_PM( 
              double grid_conversion_factor, 
              int max_dimension, 
-             double drho, 
-             double buffer_e_density, 
-             double ev, 
+             //              double drho, 
+             //              double buffer_e_density, 
+             //              double ev, 
              unsigned int max_harmonics,
              // unsigned int fibonacci_grid, this is for hydration!
              vector < double > F, 
@@ -45,9 +45,9 @@ US_PM::US_PM(
    // this->grid_conversion_factor = grid_conversion_factor;
 
    this->max_dimension          = abs( max_dimension );
-   this->drho                   = drho;
-   this->buffer_e_density       = buffer_e_density;
-   this->ev                     = ev;
+   //    this->drho                   = drho;
+   //    this->buffer_e_density       = buffer_e_density;
+   //    this->ev                     = ev;
    this->max_harmonics          = max_harmonics;
    // this->fibonacci_grid         = fibonacci_grid;
    this->F                      = F;
@@ -458,8 +458,19 @@ bool US_PM::clip_limits( vector < double > & fparams, vector < double > & low_fp
    return clipped;
 }
 
-bool US_PM::write_model( QString filename, set < pm_point > & model )
+bool US_PM::write_model( QString & filename, set < pm_point > & model, bool overwrite )
 {
+   if ( !overwrite )
+   {
+      int ext = 0;
+      QString use_filename = QString( "%1.bead_model" ).arg( filename );
+      while( QFile::exists( use_filename ) )
+      {
+         use_filename = QString( "%1-%2.bead_model" ).arg( filename ).arg( ++ext );
+      }
+      filename = use_filename;
+   }
+
    if ( !filename.contains( QRegExp( "\\.bead_model$" ) ) )
    {
       filename += ".bead_model";
@@ -472,6 +483,7 @@ bool US_PM::write_model( QString filename, set < pm_point > & model )
    QFile of( filename );
    if ( !of.open( IO_WriteOnly ) )
    {
+      filename.replace( QRegExp( "\\.bead_model$" ), "" );
       return false;
    }
    
@@ -479,11 +491,23 @@ bool US_PM::write_model( QString filename, set < pm_point > & model )
    ts << qs_bead_model( model );
    ts << QString( "Rg: %1\n" ).arg( rg );
    of.close();
+   filename.replace( QRegExp( "\\.bead_model$" ), "" );
    return true;
 }
 
-bool US_PM::write_model( QString filename, set < pm_point > & model, vector < double > &params )
+bool US_PM::write_model( QString & filename, set < pm_point > & model, vector < double > &params, bool overwrite )
 {
+   if ( !overwrite )
+   {
+      int ext = 0;
+      QString use_filename = QString( "%1.bead_model" ).arg( filename );
+      while( QFile::exists( use_filename ) )
+      {
+         use_filename = QString( "%1-%2.bead_model" ).arg( filename ).arg( ++ext );
+      }
+      filename = use_filename;
+   }
+
    if ( !filename.contains( QRegExp( "\\.bead_model$" ) ) )
    {
       filename += ".bead_model";
@@ -496,6 +520,7 @@ bool US_PM::write_model( QString filename, set < pm_point > & model, vector < do
    QFile of( filename );
    if ( !of.open( IO_WriteOnly ) )
    {
+      filename.replace( QRegExp( "\\.bead_model$" ), "" );
       return false;
    }
    
@@ -504,26 +529,42 @@ bool US_PM::write_model( QString filename, set < pm_point > & model, vector < do
    ts << QString( "Rg: %1\n" ).arg( rg );
    ts << list_params( params );
    of.close();
+   filename.replace( QRegExp( "\\.bead_model$" ), "" );
    return true;
 }
 
-bool US_PM::write_I( QString filename, set < pm_point > & model )
+bool US_PM::write_I( QString & filename, set < pm_point > & model, bool overwrite )
 {
-   if ( !filename.contains( QRegExp( "\\.dat$" ) ) )
-   {
-      filename += ".dat";
-   }
 
    vector < double >   I_result( q.size() );
    if ( !compute_I( model, I_result ) )
    {
       cerr << "write_I:" + error_msg << endl;
+      return false;
+   }
+
+   if ( !overwrite )
+   {
+      int ext = 0;
+      QString use_filename = QString( "%1.dat" ).arg( filename );
+      while( QFile::exists( use_filename ) )
+      {
+         use_filename = QString( "%1-%2.dat" ).arg( filename ).arg( ++ext );
+      }
+      filename = use_filename;
+   }
+
+   if ( !filename.contains( QRegExp( "\\.dat$" ) ) )
+   {
+      filename += ".dat";
    }
 
    cout << "Creating:" << filename << "\n";
    QFile of( filename );
+
    if ( !of.open( IO_WriteOnly ) )
    {
+      filename.replace( QRegExp( "\\.dat$" ), "" );
       return false;
    }
    
@@ -535,6 +576,7 @@ bool US_PM::write_I( QString filename, set < pm_point > & model )
    }
 
    of.close();
+   filename.replace( QRegExp( "\\.dat$" ), "" );
    return true;
 }
 

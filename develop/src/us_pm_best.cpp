@@ -760,6 +760,20 @@ bool US_PM::best_md0_ga(
                         double              conversion_divisor
                         )
 {
+   cout << QString( "best_md0_ga: steps_to_ga            %1\n"
+                    "             points_max             %2\n"
+                    "             finest_conversion      %3\n"
+                    "             coarse_conversion      %4\n"
+                    "             refinement_range_pct   %5\n"
+                    "             conversion_divisor     %6\n" )
+      .arg( steps_to_ga )
+      .arg( points_max )
+      .arg( finest_conversion )
+      .arg( coarse_conversion )
+      .arg( refinement_range_pct )
+      .arg( conversion_divisor )
+      ;
+
    if ( !steps_to_ga )
    {
       error_msg = "best_md0_ga: minimum steps is 1";

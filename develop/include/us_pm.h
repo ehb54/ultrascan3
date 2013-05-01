@@ -148,9 +148,9 @@ class US_PM
    double                                  max_dimension_d;
    double                                  one_over_grid_conversion_factor;
 
-   double                                  drho;
-   double                                  buffer_e_density;
-   double                                  ev;
+   //    double                                  drho;
+   //    double                                  buffer_e_density;
+   //    double                                  ev;
 
    double                                  org_cube_size;
    double                                  cube_size;
@@ -375,9 +375,9 @@ class US_PM
    US_PM               ( 
                         double grid_conversion_factor, 
                         int max_dimension, 
-                        double drho, 
-                        double buffer_e_density, 
-                        double ev, 
+                        //                         double drho, 
+                        //                         double buffer_e_density, 
+                        //                         double ev, 
                         unsigned int max_harmonics,
                         // unsigned int fibonacci_grid,
                         vector < double > F, 
@@ -521,9 +521,9 @@ class US_PM
                                           set < pm_point >  & model
                                           );
 
-   bool                write_model       ( QString filename, set < pm_point > & model );
-   bool                write_model       ( QString filename, set < pm_point > & model, vector < double > &params );
-   bool                write_I           ( QString filename, set < pm_point > & model );
+   bool                write_model       ( QString & filename, set < pm_point > & model, bool overwrite = true );
+   bool                write_model       ( QString & filename, set < pm_point > & model, vector < double > &params, bool overwrite = true );
+   bool                write_I           ( QString & filename, set < pm_point > & model, bool overwrite = true );
 
    QString             tmp_name          ( QString basename, vector < double > & params );
 

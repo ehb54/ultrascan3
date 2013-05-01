@@ -20,6 +20,7 @@ class US_EXTERN US_File_Util
       bool copy( QStringList from, QString toDir, bool overwrite = false );
       bool move( QString     from, QString to,    bool overwrite = false );
       bool move( QStringList from, QString toDir, bool overwrite = false );
+      bool read( QString     from, QStringList &qsl );
 
       QString errormsg;
 };

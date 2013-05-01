@@ -655,7 +655,11 @@ class US_EXTERN US_Saxs_Util
       bool run_iq_mpi  ( QString controlfile );
       bool run_nsa_mpi ( QString controlfile );
       bool run_1d_mpi  ( QString controlfile );
+      bool run_pm_mpi  ( QString controlfile );
 #endif
+      bool run_pm      ( QString controlfile );
+      bool run_pm      ( QStringList qsl );
+      bool run_pm_ok   ();
       QStringList      job_output_files;
 
 #ifdef WIN32
@@ -663,6 +667,7 @@ class US_EXTERN US_Saxs_Util
 #endif
 
       map < QString, QString > control_parameters;
+      map < QString, vector < double > > control_vectors;
 
       static map < QString, unsigned int >            get_atom_summary_counts( PDB_model *model,
                                                                                map < QString, QString > &residue_atom_hybrid_map,

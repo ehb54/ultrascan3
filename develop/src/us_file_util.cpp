@@ -150,3 +150,24 @@ bool US_File_Util::move( QStringList from, QString toDir, bool overwrite )
    }
    return true;
 }
+
+bool US_File_Util::read( QString from, QStringList &qsl )
+{
+   errormsg = "";
+   qsl.clear();
+   QFile f( from );
+   if ( !f.open(  IO_ReadOnly | IO_Translate ) )
+   {
+      errormsg = QString( "US_File_Util:read() can not open %1 for reading" ).arg( from );
+      return false;
+   }
+
+   QTextStream ts( &f );
+   while ( !ts.atEnd() )
+   {
+      QString qs = ts.readLine();
+      qsl << qs;
+   }
+   f.close();
+   return true;
+}

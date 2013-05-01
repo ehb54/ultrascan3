@@ -129,9 +129,9 @@ QString US_PM::test( QString name, QString oname )
    {
       US_PM sphere_pm( grid_conversion_factor, 
                        max_dimension, 
-                       drho, 
-                       buffer_e_density, 
-                       ev, 
+                       //                        drho, 
+                       //                        buffer_e_density, 
+                       //                        ev, 
                        max_harmonics, 
                        // fibonacci_grid,
                        F, 
@@ -198,9 +198,9 @@ QString US_PM::test( QString name, QString oname )
    {
       US_PM sphere_pm( grid_conversion_factor, 
                        max_dimension, 
-                       drho, 
-                       buffer_e_density, 
-                       ev, 
+                       //                        drho, 
+                       //                        buffer_e_density, 
+                       //                        ev, 
                        max_harmonics, 
                        // fibonacci_grid,
                        F, 
@@ -247,9 +247,9 @@ QString US_PM::test( QString name, QString oname )
    {
       US_PM sphere_pm( grid_conversion_factor, 
                        max_dimension, 
-                       drho, 
-                       buffer_e_density, 
-                       ev, 
+                       //                        drho, 
+                       //                        buffer_e_density, 
+                       //                        ev, 
                        max_harmonics, 
                        // fibonacci_grid,
                        F, 
@@ -270,7 +270,8 @@ QString US_PM::test( QString name, QString oname )
       for ( params[ 2 ] = 2e0; params[ 2 ] < 15e0; params[ 2 ] += 1e0 )
       {
          sphere_pm.create_model( params, model );
-         sphere_pm.write_model( sphere_pm.tmp_name( "", params ), model );
+         QString tmp_name = sphere_pm.tmp_name( "", params );
+         sphere_pm.write_model( tmp_name, model );
       }
    }
 
@@ -278,9 +279,9 @@ QString US_PM::test( QString name, QString oname )
    {
       US_PM sphere_pm( grid_conversion_factor, 
                        max_dimension, 
-                       drho, 
-                       buffer_e_density, 
-                       ev, 
+                       //                        drho, 
+                       //                        buffer_e_density, 
+                       //                        ev, 
                        max_harmonics, 
                        // fibonacci_grid,
                        F, 
@@ -367,9 +368,9 @@ QString US_PM::test( QString name, QString oname )
 
       US_PM sphere_pm( grid_conversion_factor, 
                        max_dimension, 
-                       drho, 
-                       buffer_e_density, 
-                       ev, 
+                       //                        drho, 
+                       //                        buffer_e_density, 
+                       //                        ev, 
                        max_harmonics, 
                        // fibonacci_grid,
                        F, 
@@ -448,9 +449,9 @@ QString US_PM::test( QString name, QString oname )
    {
       US_PM sphere_pm( grid_conversion_factor, 
                        max_dimension, 
-                       drho, 
-                       buffer_e_density, 
-                       ev, 
+                       //                        drho, 
+                       //                        buffer_e_density, 
+                       //                        ev, 
                        max_harmonics, 
                        // fibonacci_grid,
                        F, 
@@ -498,9 +499,9 @@ QString US_PM::test( QString name, QString oname )
    {
       US_PM sphere_pm( grid_conversion_factor, 
                        max_dimension, 
-                       drho, 
-                       buffer_e_density, 
-                       ev, 
+                       //                        drho, 
+                       //                        buffer_e_density, 
+                       //                        ev, 
                        max_harmonics, 
                        // fibonacci_grid,
                        F, 
@@ -521,7 +522,7 @@ QString US_PM::test( QString name, QString oname )
 
       unsigned int steps    = 1;
       unsigned int pts_max  = 100;
-      double       finest   = grid_conversion_factor;
+      // double       finest   = grid_conversion_factor;
       double       coarse   = 10e0;
       double       ref_pct  = 2.5e0;
       double       conv_div = 2.5e0;
@@ -616,9 +617,9 @@ QString US_PM::test( QString name, QString oname )
       { // fully cached
          US_PM sphere_pm( grid_conversion_factor, 
                           max_dimension, 
-                          drho, 
-                          buffer_e_density, 
-                          ev, 
+                          //                           drho, 
+                          //                           buffer_e_density, 
+                          //                           ev, 
                           max_harmonics, 
                           // fibonacci_grid,
                           F, 
@@ -659,9 +660,9 @@ QString US_PM::test( QString name, QString oname )
       { // delta 
          US_PM sphere_pm( grid_conversion_factor, 
                           max_dimension, 
-                          drho, 
-                          buffer_e_density, 
-                          ev, 
+                          //                           drho, 
+                          //                           buffer_e_density, 
+                          //                           ev, 
                           max_harmonics, 
                           // fibonacci_grid,
                           F, 
@@ -705,9 +706,9 @@ QString US_PM::test( QString name, QString oname )
       { // partially cached
          US_PM sphere_pm( grid_conversion_factor, 
                           max_dimension, 
-                          drho, 
-                          buffer_e_density, 
-                          ev, 
+                          //                           drho, 
+                          //                           buffer_e_density, 
+                          //                           ev, 
                           max_harmonics, 
                           // fibonacci_grid,
                           F, 
@@ -762,9 +763,9 @@ QString US_PM::test( QString name, QString oname )
 
          US_PM sphere_pm( grid_conversion_factor, 
                           max_dimension, 
-                          drho, 
-                          buffer_e_density, 
-                          ev, 
+                          //                           drho, 
+                          //                           buffer_e_density, 
+                          //                           ev, 
                           max_harmonics, 
                           // fibonacci_grid,
                           F, 
@@ -793,9 +794,9 @@ QString US_PM::test( QString name, QString oname )
                /*
                  US_PM sphere_pm( grid_conversion_factor, 
                  max_dimension, 
-                 drho, 
-                 buffer_e_density, 
-                 ev, 
+                 //                  drho, 
+                 //                  buffer_e_density, 
+                 //                  ev, 
                  max_harmonics, 
                  // fibonacci_grid,
                  F, 
@@ -826,9 +827,9 @@ QString US_PM::test( QString name, QString oname )
          log += QString( "delta ascending sphere test %1 to %2\n" ).arg( spheretest_min ).arg( spheretest_max );
          US_PM sphere_pm( grid_conversion_factor, 
                           max_dimension, 
-                          drho, 
-                          buffer_e_density, 
-                          ev, 
+                          //                           drho, 
+                          //                           buffer_e_density, 
+                          //                           ev, 
                           max_harmonics, 
                           // fibonacci_grid,
                           F, 
@@ -871,9 +872,9 @@ QString US_PM::test( QString name, QString oname )
          log += QString( "partially cached sphere test %1 to %2\n" ).arg( spheretest_min ).arg( spheretest_max );
          US_PM sphere_pm( grid_conversion_factor, 
                           max_dimension, 
-                          drho, 
-                          buffer_e_density, 
-                          ev, 
+                          //                           drho, 
+                          //                           buffer_e_density, 
+                          //                           ev, 
                           max_harmonics, 
                           // fibonacci_grid,
                           F, 
@@ -914,9 +915,9 @@ QString US_PM::test( QString name, QString oname )
       if ( 0 ) { // descending sphere delta test
          US_PM sphere_pm( grid_conversion_factor, 
                           max_dimension, 
-                          drho, 
-                          buffer_e_density, 
-                          ev, 
+                          //                           drho, 
+                          //                           buffer_e_density, 
+                          //                           ev, 
                           max_harmonics, 
                           // fibonacci_grid,
                           F, 
@@ -962,9 +963,9 @@ QString US_PM::test( QString name, QString oname )
 
       US_PM test_pm( grid_conversion_factor, 
                      max_dimension, 
-                     drho, 
-                     buffer_e_density, 
-                     ev, 
+                     //                      drho, 
+                     //                      buffer_e_density, 
+                     //                      ev, 
                      max_harmonics, 
                      // fibonacci_grid,
                      F, 

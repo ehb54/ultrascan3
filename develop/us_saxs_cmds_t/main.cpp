@@ -83,6 +83,8 @@ int main (int argc, char **argv)
              "              \treverses row order\n"
              "pmtest        \toutfile testfile\n"
              "              test parsimonious models write model to outfile\n"
+             "pm            \tcontrolfile\n"
+             "              \tperform pm (controlfile can be a .tar or .tgz\n"
              , argv[0]
              );
       exit(-1);
@@ -2140,6 +2142,33 @@ int main (int argc, char **argv)
       QString      infile          = cmds[ p++ ];
 
       cout << US_PM::test( infile, outfile ).ascii() << endl;
+      
+      exit( 0 );
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "pm" ) 
+   {
+      if ( cmds.size() != 2 ) 
+      {
+         printf(
+                "usage: %s %s controlfile\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString      controlfile         = cmds[ p++ ];
+
+      US_Saxs_Util usu;
+      if ( !usu.run_pm( controlfile ) )
+      {
+         cout << usu.errormsg << endl;
+         exit( errorbase );
+      }
       
       exit( 0 );
    }
