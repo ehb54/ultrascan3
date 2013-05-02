@@ -539,8 +539,8 @@ qDebug() << "Cvt:  rad" << radius << "rCount" << rCount << radius_count;
             double dv = ccwLegacyData[ i ].rvalues[ k     ] - 
                         ccwLegacyData[ i ].rvalues[ k - 1 ];
             
-            double dR = ccwLegacyData[ i ].rvalues[ k     ] -
-                        ccwLegacyData[ i ].rvalues[ k - 1 ];
+            double dR = ccwLegacyData[ i ].xvalues[ k     ] -
+                        ccwLegacyData[ i ].xvalues[ k - 1 ];
 
             dr        = radius - ccwLegacyData[ i ].xvalues[ k - 1 ];
 
