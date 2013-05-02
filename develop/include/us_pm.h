@@ -139,6 +139,8 @@ struct ga_ctl_param
 
 class US_PM
 {
+   friend class US_Saxs_Util;
+
  private:
 
    // stuff for spherical harmonics

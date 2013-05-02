@@ -220,6 +220,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmbestdeltadivisor|"
                       "pmbestdeltamin|"
 
+                      "pmtypes|"
                       "pmparams"
                       ")$" 
                       );
@@ -260,6 +261,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmbestdeltadivisor|"
                       "pmbestdeltamin|"
 
+                      "pmtypes|"
                       "pmparams"
                       ")$" 
                       );
@@ -271,6 +273,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmi|"
                       "pme|"
 
+                      "pmtypes|"
                       "pmparams"
                       ")$" 
                       );
@@ -366,20 +369,19 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
 
       if ( option == "pmbestmd0" )
       {
-         puts( "pmbest md0" );
          if ( !run_pm_ok() )
          {
             errormsg = QString( "Error controlfile line %1 : %2" ).arg( i + 1 ).arg( errormsg );
-            puts( "pmbest md0 error" );
             return false;
          }            
-         if ( control_vectors[ "pmparams" ].size() != 1 )
+
+         if ( control_vectors.count( "pmtypes" ) &&
+              control_vectors[ "pmtypes" ].size() != 1 )
          {
-            errormsg = QString( "Error controlfile line %1 : pmparams must have exactly one parameter" ).arg( i + 1 );
+            errormsg = QString( "Error controlfile line %1 : pmtypes must have exactly one parameter for pmbestmd0" ).arg( i + 1 );
             return false;
          }
 
-         puts( "pmbest md0" );
          US_PM pm(
                   control_parameters [ "pmgridsize"     ].toDouble(),
                   control_parameters [ "pmmaxdimension" ].toInt(),
@@ -392,7 +394,6 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                   control_parameters [ "pmdebug"        ].toInt()
                   );
 
-         puts( "pmbest md1" );
          pm.ga_set_params( 
                           control_parameters[ "pmgapopulation"       ].toUInt(),
                           control_parameters[ "pmgagenerations"      ].toUInt(),
@@ -402,15 +403,29 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                           control_parameters[ "pmgaearlytermination" ].toUInt()
                           );
 
-         puts( "pmbest md2" );
          pm.set_best_delta(
                            control_parameters[ "pmbestdeltastart"   ].toDouble(),
                            control_parameters[ "pmbestdeltadivisor" ].toDouble(),
                            control_parameters[ "pmbestdeltamin"     ].toDouble()
                            );
 
-         puts( "pmbest md3" );
-         params = control_vectors[ "pmparams" ];
+         if ( control_vectors.count( "pmparams" ) )
+         {
+            params = control_vectors[ "pmparams" ];
+         } else {
+            if ( control_vectors.count( "pmtypes" ) )
+            {
+               vector < int > types;
+               for ( int i = 0; i < (int) control_vectors[ "pmtypes" ].size(); i++ )
+               {
+                  types.push_back( (int) control_vectors[ "pmtypes" ][ i ] );
+               }
+               pm.zero_params( params, types );
+            } else {
+               errormsg = QString( "Error controlfile line %1 : pmparams or pmtypes must be defined" ).arg( i + 1 );
+               return false;
+            }
+         }
          if ( !pm.best_md0_ga( 
                               params,
                               model,
@@ -425,8 +440,6 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             errormsg = "Error:" + pm.error_msg;
             return false;
          }
-
-         puts( "pmbest md4" );
 
          QString outname = control_parameters[ "pmoutname" ];
          pm.write_model( outname, model, params, false );
@@ -535,7 +548,7 @@ bool US_Saxs_Util::run_pm_ok()
       }
    }
 
-   // the fixed length vectors
+   // the fixed common length vectors
    {
       QStringList qslv_required;
       qslv_required 
@@ -598,22 +611,33 @@ bool US_Saxs_Util::run_pm_ok()
       }
    }
 
-   // the variable length vectors
+   // the parameters/types
    {
+      // only one of these required
       QStringList qslv_required;
       qslv_required 
          << "pmparams"
+         << "pmtypes"
          ;
+
+      int number_of_params_found = 0;
       for ( int i = 0; i < (int) qslv_required.size(); i++ )
       {
-         if ( !control_vectors.count( qslv_required[ i ] ) )
+         if ( control_vectors.count( qslv_required[ i ] ) )
          {
-            errormsg = QString( "missing required vector %1" ).arg( qslv_required[ i ] );
-            return false;
+            number_of_params_found++;
          }
       }
+      if ( !number_of_params_found )
+      {
+         errormsg = QString( "missing required vector one of: %1" ).arg( qslv_required.join( "," ) );
+         return false;
+      }
+      if ( number_of_params_found > 1 )
+      {
+         cout << "Warning: pmparams superceded pmtypes (both were defined)\n"; 
+      }
    }
-
 
    for ( map < QString, QString >::iterator it = control_parameters.begin();
          it != control_parameters.end();

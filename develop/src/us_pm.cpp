@@ -145,7 +145,7 @@ US_PM::US_PM(
    ccJ.resize( J_points );
    ccA1v = A1v0;
 
-   bool use_errors = e.size() == q.size();
+   use_errors = e.size() == q.size();
 
    if ( use_errors )
    {
