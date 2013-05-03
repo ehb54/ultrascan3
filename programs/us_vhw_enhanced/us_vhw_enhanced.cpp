@@ -542,8 +542,6 @@ void US_vHW_Enhanced::write_report( QTextStream& ts )
    QString tscn;
    QString tpla;
 
-   ts << scan_info();
-
    for ( int ii = 0; ii < lscnCount; ii++ )
    {  // accumulate time,plateau pairs for line fit
       int js       = liveScans[ ii ];

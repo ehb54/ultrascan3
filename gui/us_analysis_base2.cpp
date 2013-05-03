@@ -1537,6 +1537,7 @@ bool US_AnalysisBase2::write_dset_report( QString& dsfname )
    ts << html_header( title, head1, edata );
    ts << run_details();
    ts << hydrodynamics();
+   ts << scan_info();
    ts << indent( 2 ) + "</body>\n</html>\n";
 
    f_rep.close();
