@@ -378,12 +378,52 @@ void US_Dcdt::write_report( QTextStream& ts )
    int                    index  = lw_triples->currentRow();
    US_DataIO::EditedData* edata  = &dataList[ index ];
 
+   double avgmax = 0.0;
+   int    asmxx  = 0;
+   int    aslox  = -1;
+   int    ashix  = 0;
+
+   for ( int ii = 0; ii < arrayLength; ii++ )
+   {  // Find maximum Y and its index
+      double  avgv  = avgDcdt[ ii ];
+
+      if ( avgv > avgmax )
+      {
+         avgmax     = avgv;
+         asmxx      = ii;
+      }
+   }
+
+   double avglcu = avgmax * 0.05;
+//qDebug() << "avgmax asmxx avglcu" << avgmax << asmxx << avglcu;
+
+   for ( int ii = 0; ii < arrayLength; ii++ )
+   {  // Find the start and end of zone where Y is 5% of maximum or more
+      double  avgv  = avgDcdt[ ii ];
+
+      if ( avgv > avglcu )
+      {
+         aslox      = aslox < 0 ? ii : aslox;
+         ashix      = ii;
+      }
+   }
+//qDebug() << "aslox ashix" << aslox << ashix;
+
+   // Compose the extra string to pass to the analysis composer
+   QString xastr = table_row( tr( "Average S at Maximum dCdt:" ),
+                              QString::number( avgS[ asmxx ], 'f', 3 ) );
+   xastr        += table_row( tr( "Average S at interest zone Start:" ),
+                              QString::number( avgS[ aslox ], 'f', 3 ) );
+   xastr        += table_row( tr( "Average S at interest zone End:" ),
+                              QString::number( avgS[ ashix ], 'f', 3 ) );
+   xastr        += table_row( tr( "Interest zone percent of maximum:" ),
+                              QString( "5% and above" ) );
+
    QString title = "US_dCdt";
    QString head1 = tr( "Time - Derivative (dC/dt) Analysis" );
 
    ts << html_header( title, head1, edata );
-   ts << analysis( "" );
-   ts << scan_info();
+   ts << analysis( xastr );
    ts << indent( 2 ) + "</body>\n</html>\n";
 }
 
