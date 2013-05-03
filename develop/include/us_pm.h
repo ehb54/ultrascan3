@@ -1,6 +1,12 @@
 #ifndef US_PM_H
 #define US_PM_H
 
+#if defined( USE_MPI )
+#  include <mpi.h>
+   extern int npes;
+   extern int myrank;
+#endif
+
 #include <iostream>
 #include <math.h>
 #include <qstring.h>
@@ -23,8 +29,15 @@
 
 #ifdef WIN32
 typedef _int16 int16_t;
+typedef _int32 int32_t;
+typedef unsigned _int16 uint16_t;
+typedef unsigned _int32 uint32_t;
 #else
 #include <stdint.h>
+#endif
+
+#if defined( USE_MPI )
+#  include "us_pm_mpi.h"
 #endif
 
 #ifndef M_PI
@@ -110,6 +123,7 @@ class pm_ga_individual
  public:
    vector < int >          v;
    set < pm_point >        model;
+   bool                    fitness_computed;
    double                  fitness;
    bool operator < (const pm_ga_individual & objIn) const
    {
@@ -352,6 +366,7 @@ class US_PM
                                                                 vector < double >  & fparams );
    unsigned int                            ga_pop_selection   ( unsigned int size );
    bool                                    ga_fitness         ( pm_ga_individual & individual );
+   void                                    ga_compute_fitness ();
 
    bool                                    ga                 ( pm_ga_individual & best_individual );
 
@@ -370,24 +385,34 @@ class US_PM
 
    SHS_USE                               * shs;
 
+#if defined( USE_MPI_XX )
+   bool                                    pm_master_test   ( double &nrmsd );
+   bool                                    pm_master        ( double &nrmsd );
+   bool                                    pm_worker        ();
+   bool                                    pm_process_queue ();
+   bool                                    pm_close_workers ();
+
+   list < pm_ga_individual >               queued_requests;
+   list < pm_ga_individual >               received_results;
+   map < int, bool >                       waiting_workers;
+   map < int, bool >                       busy_workers;
+   map < int, bool >                       registered_workers;
+#endif
 
  public:
    // note: F needs to be the factors for a volume of size grid_conversion_factor ^ 3
 
    US_PM               ( 
-                        double grid_conversion_factor, 
-                        int max_dimension, 
-                        //                         double drho, 
-                        //                         double buffer_e_density, 
-                        //                         double ev, 
-                        unsigned int max_harmonics,
-                        // unsigned int fibonacci_grid,
+                        double            grid_conversion_factor, 
+                        int               max_dimension, 
+                        unsigned int      max_harmonics,
                         vector < double > F, 
                         vector < double > q, 
                         vector < double > I, 
                         vector < double > e, 
-                        unsigned int max_mem_in_MB   = 2048,
-                        int debug_level = 0
+                        unsigned int      max_mem_in_MB   = 2048,
+                        int               debug_level = 0,
+                        bool              quiet = false
                         );
 
    ~US_PM              ();
@@ -536,7 +561,7 @@ class US_PM
    bool                zero_params       ( vector < double > & params, vector < int > & types );
    bool                random_params     ( vector < double > & params, vector < int > & types, double max_d = 0e0 );
    QString             list_params       ( vector < double > & params );
-   void                set_grid_size     ( double grid_conversion_factor );
+   void                set_grid_size     ( double grid_conversion_factor, bool quiet = false );
 
    bool                grid_search       (
                                           vector < double > & params,

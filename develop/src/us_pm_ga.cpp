@@ -27,7 +27,7 @@ bool US_PM::ga_fitness( pm_ga_individual & individual )
    ga_delta_to_fparams( individual.v, ga_fparams );
    join( ga_params, ga_types, ga_fparams );
    individual.fitness = model_fit( ga_params, individual.model, ga_I_result );
-   
+   individual.fitness_computed = true;
    //    cout << US_Vector::qs_vector( "ga_fitness: v", individual.v );
    //    cout << US_Vector::qs_vector( "ga_fitness: params", ga_params );
    //    cout << QString( "ga_fitness: fitness %1 beads %2\n" )
@@ -35,6 +35,39 @@ bool US_PM::ga_fitness( pm_ga_individual & individual )
    //       .arg( individual.model.size() );
 
    return true;
+}
+
+void US_PM::ga_compute_fitness()
+{
+   clock_t start_t = clock();
+#if defined( USE_MPI )
+   puts( "ga_compute_fitness not parallel yet" );
+   for ( list < pm_ga_individual >::iterator it = ga_pop.begin();
+         it != ga_pop.end();
+         it++ )
+   {
+      if ( !it->fitness_computed )
+      {
+         ga_fitness( *it );
+      }
+   }
+#else 
+   for ( list < pm_ga_individual >::iterator it = ga_pop.begin();
+         it != ga_pop.end();
+         it++ )
+   {
+      if ( !it->fitness_computed )
+      {
+         ga_fitness( *it );
+      }
+   }
+#endif
+   clock_t end_t = clock();
+   cout << QString( "ga fitness of %1 individuals computed in %2s or %2s per individual\n" )
+      .arg( ga_pop.size() )
+      .arg( (double)(end_t - start_t )/ CLOCKS_PER_SEC )
+      .arg( (double)( (end_t - start_t )/ CLOCKS_PER_SEC ) / ga_pop.size() );
+   ;
 }
 
 bool US_PM::ga( pm_ga_individual & best_individual )
@@ -55,7 +88,7 @@ bool US_PM::ga( pm_ga_individual & best_individual )
             individual.v[ j ] = r % ga_points[ j ];
             r = r / ga_points[ j ];
          }
-         ga_fitness( individual );
+         individual.fitness_computed = false;
          ga_pop.push_back( individual );
       }
    } else {
@@ -65,7 +98,8 @@ bool US_PM::ga( pm_ga_individual & best_individual )
          {
             individual.v[ j ] = int( ((double)ga_points[ j ] * drand48() ) );
          }
-         ga_fitness( individual );
+         // ga_fitness( individual );
+         individual.fitness_computed = false;
          ga_pop.push_back( individual );
       }
    }
@@ -78,6 +112,7 @@ bool US_PM::ga( pm_ga_individual & best_individual )
    {
       for ( unsigned int g = 0; g < ga_p.generations; g++ )
       {
+         ga_compute_fitness();
          ga_pop.sort();
          ga_pop.unique();
       
@@ -136,7 +171,7 @@ bool US_PM::ga( pm_ga_individual & best_individual )
             if ( i < ga_p.elitism )
             {
                // cout << "elitism\n";
-               ga_fitness( last_pop[ i ] );
+               // ga_fitness( last_pop[ i ] );
                ga_pop.push_back( last_pop[ i ] );
                elitism_count++;
                continue;
@@ -148,7 +183,8 @@ bool US_PM::ga( pm_ga_individual & best_individual )
                individual = last_pop[ ga_pop_selection( last_pop.size() ) ];
                unsigned int pos = ( unsigned int )( drand48() * ga_fparams_size );
                individual.v[ pos ] = int( ((double)ga_points[ pos ] * drand48() ) );
-               ga_fitness( individual );
+               // ga_fitness( individual );
+               individual.fitness_computed = false;
                ga_pop.push_back( individual );
                mutate_count++;
                continue;
@@ -164,7 +200,8 @@ bool US_PM::ga( pm_ga_individual & best_individual )
                {
                   individual.v[ j ] = individual2.v[ j ];
                }
-               ga_fitness( individual );
+               // ga_fitness( individual );
+               individual.fitness_computed = false;
                ga_pop.push_back( individual );
                crossover_count++;
                continue;
@@ -177,13 +214,15 @@ bool US_PM::ga( pm_ga_individual & best_individual )
                {
                   individual.v[ j ] = int( ((double)ga_points[ j ] * drand48() ) );
                }
-               ga_fitness( individual );
+               // ga_fitness( individual );
+               individual.fitness_computed = false;
                ga_pop.push_back( individual );
                random_count++;
             } else {
                has_been_duplicated[ pos ] = true;
                individual = last_pop[ ga_pop_selection( last_pop.size() ) ];
-               ga_fitness( individual );
+               // ga_fitness( individual );
+               individual.fitness_computed = false;
                ga_pop.push_back( individual );
                duplicate_count++;
             }
@@ -206,6 +245,7 @@ bool US_PM::ga( pm_ga_individual & best_individual )
             .arg( elitism_count + mutate_count + crossover_count + duplicate_count + random_count );
       }
    }
+   ga_compute_fitness();
    ga_pop.sort();
    best_individual = ga_pop.front();
 
@@ -394,8 +434,18 @@ bool US_PM::ga_run(
    ga_fparams      .resize( ga_fparams_size ); 
    ga_points       .resize( ga_fparams_size ); 
 
-   zero_params( ga_params, types );
-   set_limits ( ga_params, ga_min_low_fparams, ga_max_high_fparams );
+   if ( !zero_params( ga_params, types ) )
+   {
+      cout << error_msg << endl;
+      return false;
+   }
+      
+   if ( !set_limits ( ga_params, ga_min_low_fparams, ga_max_high_fparams ) )
+   {
+      cout << error_msg << endl;
+      return false;
+   }
+
    clip_limits( ga_params, ga_min_low_fparams, ga_max_high_fparams );
 
    ga_p_save       = ga_p;

@@ -1,6 +1,12 @@
 #ifndef US_SAXS_UTIL_H
 #define US_SAXS_UTIL_H
 
+#if defined( USE_MPI )
+#  include <mpi.h>
+   extern int npes;
+   extern int myrank;
+#endif
+
 // QT defs:
 
 #include "us_util.h"
@@ -18,6 +24,19 @@
 #include "us_saxs_util_nsa.h"
 #include "us_json.h"
 #include "us_timer.h"
+
+#ifdef WIN32
+typedef _int16 int16_t;
+typedef _int32 int32_t;
+typedef unsigned _int16 uint16_t;
+typedef unsigned _int32 uint32_t;
+#else
+#include <stdint.h>
+#endif
+
+#if defined( USE_MPI )
+#  include "us_pm_mpi.h"
+#endif
 
 #include <complex>
 
@@ -652,10 +671,16 @@ class US_EXTERN US_Saxs_Util
       bool read_control( QString controlfile );
 
 #if defined( USE_MPI )
-      bool run_iq_mpi  ( QString controlfile );
-      bool run_nsa_mpi ( QString controlfile );
-      bool run_1d_mpi  ( QString controlfile );
-      bool run_pm_mpi  ( QString controlfile );
+      bool               run_iq_mpi                        ( QString controlfile );
+      bool               run_nsa_mpi                       ( QString controlfile );
+      bool               run_1d_mpi                        ( QString controlfile );
+
+      bool               run_pm_mpi                        ( QString controlfile );
+      void               pm_mpi_worker                     ();
+      set < int >        pm_registered_workers;
+      set < int >        pm_waiting_workers;
+      set < int >        pm_busy_workers;
+
 #endif
       bool run_pm      ( QString controlfile );
       bool run_pm      ( QStringList qsl );

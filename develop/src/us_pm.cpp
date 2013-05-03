@@ -1,6 +1,6 @@
 #include "../include/us_pm.h"
 
-void US_PM::set_grid_size( double grid_conversion_factor )
+void US_PM::set_grid_size( double grid_conversion_factor, bool quiet )
 {
    // be careful with this routine!
    // have to clear because any rtp data is now invalid
@@ -13,11 +13,14 @@ void US_PM::set_grid_size( double grid_conversion_factor )
    bead_radius              = pow( cube_size / M_PI, 1e0/3e0 );
    bead_radius_over_2gcf     = ( bead_radius * 5e-1 ) / grid_conversion_factor;
 
-   cout << QString( "US_PM:cube size   %1\n"
-                    "US_PM:bead radius %2\n" )
-      .arg( cube_size )
-      .arg( bead_radius )
-      ;
+   if ( !quiet )
+   {
+      cout << QString( "US_PM:cube size   %1\n"
+                       "US_PM:bead radius %2\n" )
+         .arg( cube_size )
+         .arg( bead_radius )
+         ;
+   }
 
    double conv_F = cube_size / org_cube_size;
    for ( int i = 0; i < (int)F.size(); ++i )
@@ -27,19 +30,16 @@ void US_PM::set_grid_size( double grid_conversion_factor )
 }
 
 US_PM::US_PM( 
-             double grid_conversion_factor, 
-             int max_dimension, 
-             //              double drho, 
-             //              double buffer_e_density, 
-             //              double ev, 
-             unsigned int max_harmonics,
-             // unsigned int fibonacci_grid, this is for hydration!
+             double            grid_conversion_factor, 
+             int               max_dimension, 
+             unsigned int      max_harmonics,
              vector < double > F, 
              vector < double > q, 
              vector < double > I, 
              vector < double > e,
-             unsigned int max_mem_in_MB,
-             int debug_level 
+             unsigned int      max_mem_in_MB,
+             int               debug_level,
+             bool              quiet
              )
 {
    // this->grid_conversion_factor = grid_conversion_factor;
@@ -138,8 +138,11 @@ US_PM::US_PM(
    {
       A1v0.push_back( Z0 );
    }
-   cout << QString( "q_Y_points %1\n" ).arg( q_Y_points );
-   cout << QString( "A1v0 size  %1\n" ).arg( A1v0.size() );
+   if ( !quiet )
+   {
+      cout << QString( "q_Y_points %1\n" ).arg( q_Y_points );
+      cout << QString( "A1v0 size  %1\n" ).arg( A1v0.size() );
+   }
 
    ccY.resize( Y_points );
    ccJ.resize( J_points );
@@ -166,7 +169,7 @@ US_PM::US_PM(
             break;
          }
       }
-      if ( !use_errors && any_non_zero )
+      if ( !quiet && !use_errors && any_non_zero )
       {
          cout << "Notice: SD's provided but some were zero, so SD fitting is turned off\n";
       }
@@ -188,19 +191,25 @@ US_PM::US_PM(
    max_beads_CYJ =  ( 1024 * 1024 * ( max_mem_in_MB - base_mem ) ) / bytes_per_pm_data;
    max_beads_CA  =  ( 1024 * 1024 * ( max_mem_in_MB - base_mem ) ) / bytes_per_pmc_data;
 
-   cout << QString( "bytes per pm_data %1\n" ).arg( bytes_per_pm_data ).ascii();
-   cout << QString( "bytes per pmc data %1\n" ).arg( bytes_per_pmc_data ).ascii();
+   if ( !quiet )
+   {
+      cout << QString( "bytes per pm_data %1\n" ).arg( bytes_per_pm_data ).ascii();
+      cout << QString( "bytes per pmc data %1\n" ).arg( bytes_per_pmc_data ).ascii();
 
-   cout << QString( "Memory max %1 MB\n" ).arg( max_mem_in_MB ).ascii();
-   cout << QString( "Memory available %1 MB\n" ).arg( max_mem_in_MB - base_mem ).ascii();
-   cout << QString( "max beads CYJ %1\n" ).arg( max_beads_CYJ ).ascii();
-   cout << QString( "max beads CA %1\n" ).arg( max_beads_CA ).ascii();
+      cout << QString( "Memory max %1 MB\n" ).arg( max_mem_in_MB ).ascii();
+      cout << QString( "Memory available %1 MB\n" ).arg( max_mem_in_MB - base_mem ).ascii();
+      cout << QString( "max beads CYJ %1\n" ).arg( max_beads_CYJ ).ascii();
+      cout << QString( "max beads CA %1\n" ).arg( max_beads_CA ).ascii();
+   }
 
    use_CYJ = false;
 
    set_best_delta();
    init_objects();
-   cout << list_object_info();
+   if ( !quiet )
+   {
+      cout << list_object_info();
+   }
    last_best_rmsd_ok = false;
 
    ga_I_result.resize( q_points );
@@ -1023,12 +1032,12 @@ bool US_PM::zero_params( vector < double > & params, vector < int > & types )
          case ANGLE :
             params .push_back( 0e0 );
             break;
+
          default :
             error_msg = "zero_params: unknown object parameter type";
             return false;
             break;
          }
-         params.push_back( 0e0 );
       }
    }
    return true;

@@ -886,6 +886,29 @@ bool US_PM::best_md0_ga(
       US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
 
       set_grid_size( new_grid_conversion_factor );
+#if defined( USE_MPI )
+      {
+         int errorno = -29000;
+         pm_msg msg;
+         msg.type = PM_NEW_GRID_SIZE;
+         msg.model_fitness = new_grid_conversion_factor;
+
+         for ( int i = 1; i < npes; ++i )
+         {
+            if ( MPI_SUCCESS != MPI_Send( &msg,
+                                          sizeof( pm_msg ),
+                                          MPI_CHAR, 
+                                          i,
+                                          0, 
+                                          MPI_COMM_WORLD ) )
+            {
+               cout << QString( "%1: MPI send failed in best_md0_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+               MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+               exit( errorno - myrank );
+            }
+         }
+      }
+#endif
    }
    return true;
 }
