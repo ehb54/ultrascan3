@@ -899,7 +899,7 @@ bool US_PM::best_md0_ga(
                                           sizeof( pm_msg ),
                                           MPI_CHAR, 
                                           i,
-                                          0, 
+                                          PM_MSG, 
                                           MPI_COMM_WORLD ) )
             {
                cout << QString( "%1: MPI send failed in best_md0_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;

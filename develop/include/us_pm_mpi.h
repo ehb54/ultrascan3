@@ -5,8 +5,9 @@
 enum pm_types 
    {
       PM_SHUTDOWN              // sent to workers to shutdown       
-      ,PM_NEW_PM               // sent to workers to setup a new PM size: 
-      ,PM_NEW_GRID_SIZE        // sent to workers to setup a new PM size: 
+      ,PM_MSG                  // sent to workers as base message
+      ,PM_NEW_PM               // sent to workers as additional message info for NEW_PM
+      ,PM_NEW_GRID_SIZE        // sent to workers as additional message info for NEW_GRID_SIZE
       ,PM_CALC_FITNESS         // sent to workers to process fitness
       ,PM_REGISTER             // sent form workers to register to master
       ,PM_FITNESS_RESULT       // sent form workers to report results

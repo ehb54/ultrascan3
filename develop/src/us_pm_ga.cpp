@@ -42,14 +42,202 @@ void US_PM::ga_compute_fitness()
    clock_t start_t = clock();
 #if defined( USE_MPI )
    puts( "ga_compute_fitness not parallel yet" );
-   for ( list < pm_ga_individual >::iterator it = ga_pop.begin();
-         it != ga_pop.end();
-         it++ )
+
+   int errorno      = -31000;
+
+   list < pm_ga_individual >::iterator it_pop = ga_pop.begin();
+   while( it_pop != ga_pop.end() &&
+          it_pop->fitness_computed )
    {
-      if ( !it->fitness_computed )
+      it_pop++;
+   }
+   if ( it_pop == ga_pop.end() )
+   {
+      return;
+   }
+   
+   pm_msg msg;
+   msg.type         = PM_CALC_FITNESS;
+
+   map < int, list < pm_ga_individual >::iterator > worker_pop;
+
+   // send out initial requests
+
+
+   for ( set < int >::iterator it = pm_workers_registered.begin();
+         it !=  pm_workers_registered.end() && it_pop != ga_pop.end();
+         it++, it_pop++ )
+   {
+      cout << QString(
+                      "ga_compute_fitness initial requests for() loop:\n"
+                      "workers registered: %1\n"
+                      "workers waiting   : %2\n"
+                      "workers busy      : %3\n" )
+         .arg( pm_workers_registered.size() )
+         .arg( pm_workers_waiting.size() )
+         .arg( pm_workers_busy.size() )
+           << flush;
+
+      while( it_pop != ga_pop.end() &&
+             it_pop->fitness_computed )
       {
-         ga_fitness( *it );
+         it_pop++;
       }
+      if ( it_pop == ga_pop.end() )
+      {
+         break;
+      }
+
+      ga_delta_to_fparams( it_pop->v, ga_fparams );
+      join( ga_params, ga_types, ga_fparams );
+      msg.vsize = ga_fparams.size();
+
+      if ( MPI_SUCCESS != MPI_Send( &msg,
+                                    sizeof( msg ),
+                                    MPI_CHAR, 
+                                    *it, 
+                                    PM_MSG,
+                                    MPI_COMM_WORLD ) )
+      {
+         cout << QString( "%1: MPI PM_MSG Send failed ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+         exit( errorno - myrank );
+      }         
+
+      if ( MPI_SUCCESS != MPI_Send( &(ga_params[ 0 ]),
+                                    msg.vsize * sizeof( double ),
+                                    MPI_CHAR, 
+                                    *it, 
+                                    PM_CALC_FITNESS,
+                                    MPI_COMM_WORLD ) )
+      {
+         cout << QString( "%1: MPI PM_CALC_FITNESS Send failed ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+         exit( errorno - myrank );
+      }         
+      pm_workers_busy.insert( *it );
+      pm_workers_waiting.erase( *it );
+      worker_pop[ *it ] = it_pop;
+   }
+      
+   if ( !pm_workers_busy.size() )
+   {
+      if ( it_pop != ga_pop.end() )
+      {
+         cout << QString( "%1: error: ga_compute_fitness() no worker busy but we have more ga_pop?\n" ).arg( myrank ) << flush;
+         MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+         exit( errorno - myrank );
+      }
+      return;
+   }
+
+   // now wait for workers to become free, get results and send out a new job if any
+
+   MPI_Status mpi_status;
+   MPI_Status mpi_status2;
+   pm_msg msg_receive;
+
+   while ( pm_workers_busy.size() )
+   {
+      cout << QString(
+                      "ga_compute_fitness while() loop:\n"
+                      "workers registered: %1\n"
+                      "workers waiting   : %2\n"
+                      "workers busy      : %3\n" )
+         .arg( pm_workers_registered.size() )
+         .arg( pm_workers_waiting.size() )
+         .arg( pm_workers_busy.size() )
+           << flush;
+
+      while( it_pop != ga_pop.end() &&
+             it_pop->fitness_computed )
+      {
+         it_pop++;
+      }
+
+      if ( MPI_SUCCESS != MPI_Recv( &msg_receive,
+                                    sizeof( msg_receive ),
+                                    MPI_CHAR, 
+                                    MPI_ANY_SOURCE, 
+                                    PM_FITNESS_RESULT,
+                                    MPI_COMM_WORLD,
+                                    &mpi_status ) )
+      {
+         cout << QString( "%1: MPI PM_FITNESS_RESULT Receive failed in ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+         exit( errorno - myrank );
+      }         
+      
+      vector < int16_t > vmodel( 3 * msg_receive.vsize );
+
+      if ( MPI_SUCCESS != MPI_Recv( &(vmodel[ 0 ]),
+                                    3 * msg_receive.vsize * sizeof( int16_t ),
+                                    MPI_CHAR, 
+                                    mpi_status.MPI_SOURCE,
+                                    PM_FITNESS_RESULT_MODEL,
+                                    MPI_COMM_WORLD,
+                                    &mpi_status2 ) )
+      {
+         cout << QString( "%1: MPI PM_FITNESS_RESULT Receive failed in ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+         exit( errorno - myrank );
+      }         
+
+      (*worker_pop[ mpi_status.MPI_SOURCE ]).fitness = msg_receive.model_fitness;
+      (*worker_pop[ mpi_status.MPI_SOURCE ]).model.clear();
+
+      pm_point tmp_pmp;
+
+      for ( int i = 0; i < (int) msg_receive.vsize; ++i )
+      {
+         tmp_pmp.x[ 0 ] = vmodel[ i * 3 ];
+         tmp_pmp.x[ 1 ] = vmodel[ i * 3 + 1 ];
+         tmp_pmp.x[ 2 ] = vmodel[ i * 3 + 2 ];
+         (*worker_pop[ mpi_status.MPI_SOURCE ]).model.insert( tmp_pmp );
+      }
+
+      worker_pop[ mpi_status.MPI_SOURCE ]->fitness_computed = true;
+      
+      if ( it_pop == ga_pop.end() )
+      {
+         worker_pop.erase( mpi_status.MPI_SOURCE );
+         pm_workers_busy.erase( mpi_status.MPI_SOURCE );
+         pm_workers_waiting.insert( mpi_status.MPI_SOURCE );
+         continue;
+      }
+
+      // we still have more jobs
+
+      ga_delta_to_fparams( it_pop->v, ga_fparams );
+      join( ga_params, ga_types, ga_fparams );
+      msg.vsize = ga_fparams.size();
+
+      if ( MPI_SUCCESS != MPI_Send( &msg,
+                                    sizeof( msg ),
+                                    MPI_CHAR, 
+                                    mpi_status.MPI_SOURCE, 
+                                    PM_MSG,
+                                    MPI_COMM_WORLD ) )
+      {
+         cout << QString( "%1: MPI PM_MSG Send failed ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+         exit( errorno - myrank );
+      }         
+
+      if ( MPI_SUCCESS != MPI_Send( &(ga_params[ 0 ]),
+                                    msg.vsize * sizeof( double ),
+                                    MPI_CHAR, 
+                                    mpi_status.MPI_SOURCE, 
+                                    PM_CALC_FITNESS,
+                                    MPI_COMM_WORLD ) )
+      {
+         cout << QString( "%1: MPI PM_CALC_FITNESS Send failed ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+         exit( errorno - myrank );
+      }         
+
+      worker_pop[ mpi_status.MPI_SOURCE ] = it_pop;
+      it_pop++;
    }
 #else 
    for ( list < pm_ga_individual >::iterator it = ga_pop.begin();

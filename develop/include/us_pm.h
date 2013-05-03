@@ -385,18 +385,10 @@ class US_PM
 
    SHS_USE                               * shs;
 
-#if defined( USE_MPI_XX )
-   bool                                    pm_master_test   ( double &nrmsd );
-   bool                                    pm_master        ( double &nrmsd );
-   bool                                    pm_worker        ();
-   bool                                    pm_process_queue ();
-   bool                                    pm_close_workers ();
-
-   list < pm_ga_individual >               queued_requests;
-   list < pm_ga_individual >               received_results;
-   map < int, bool >                       waiting_workers;
-   map < int, bool >                       busy_workers;
-   map < int, bool >                       registered_workers;
+#if defined( USE_MPI )
+   set < int >                             pm_workers_registered;
+   set < int >                             pm_workers_waiting;
+   set < int >                             pm_workers_busy;
 #endif
 
  public:

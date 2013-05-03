@@ -677,9 +677,9 @@ class US_EXTERN US_Saxs_Util
 
       bool               run_pm_mpi                        ( QString controlfile );
       void               pm_mpi_worker                     ();
-      set < int >        pm_registered_workers;
-      set < int >        pm_waiting_workers;
-      set < int >        pm_busy_workers;
+      set < int >        pm_workers_registered;
+      set < int >        pm_workers_waiting;
+      set < int >        pm_workers_busy;
 
 #endif
       bool run_pm      ( QString controlfile );

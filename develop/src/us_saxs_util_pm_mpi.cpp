@@ -91,7 +91,7 @@ void US_Saxs_Util::pm_mpi_worker()
                                     sizeof( pm_msg ),
                                     MPI_CHAR, 
                                     0, 
-                                    0, 
+                                    PM_MSG, 
                                     MPI_COMM_WORLD, 
                                     &mpi_status ) )
       {
@@ -165,6 +165,7 @@ void US_Saxs_Util::pm_mpi_worker()
                             I,
                             e,
                             msg.max_mem_in_MB,
+                            0,
                             true );
          }
          break;
@@ -174,7 +175,7 @@ void US_Saxs_Util::pm_mpi_worker()
             cout << QString( "%1: worker PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
             if ( !pm )
             {
-               cout << QString( "%1: MPI PM_CALC_FITNESS Receive called before PM_NEW_PM  pm_mpi_worker()\n" ).arg( myrank ) << flush;
+               cout << QString( "%1: MPI PM_NEW_GRID_SIZE Receive called before PM_NEW_PM  pm_mpi_worker()\n" ).arg( myrank ) << flush;
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }

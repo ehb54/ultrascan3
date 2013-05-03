@@ -396,8 +396,19 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
 
 #if defined( USE_MPI )
          {
-            int errorno                = -28000;
+
+            pm.pm_workers_registered.clear();
+            pm.pm_workers_busy      .clear();
+            pm.pm_workers_waiting   .clear();
+   
+            for ( int i = 1; i < npes; ++i )
+            {
+               pm.pm_workers_registered.insert( i );
+               pm.pm_workers_waiting   .insert( i );
+            }
+
             pm_msg msg;
+            int errorno                = -28000;
             msg.type                   = PM_NEW_PM;
             msg.flags                  = pm.use_errors ? PM_USE_ERRORS : 0;
             msg.vsize                  = (uint32_t) control_vectors[ "pmq" ].size();
@@ -433,7 +444,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                                              sizeof( pm_msg ),
                                              MPI_CHAR, 
                                              i,
-                                             0, 
+                                             PM_MSG, 
                                              MPI_COMM_WORLD ) )
                {
                   cout << QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM\n" ).arg( myrank ) << flush;
