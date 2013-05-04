@@ -90,7 +90,9 @@ void US_PM::ga_compute_fitness()
 
       ga_delta_to_fparams( it_pop->v, ga_fparams );
       join( ga_params, ga_types, ga_fparams );
-      msg.vsize = ga_fparams.size();
+      msg.vsize = ga_params.size();
+
+      US_Vector::printvector( "ga_compute_fitness: (for) params to send", ga_params );
 
       if ( MPI_SUCCESS != MPI_Send( &msg,
                                     sizeof( msg ),
@@ -210,7 +212,8 @@ void US_PM::ga_compute_fitness()
 
       ga_delta_to_fparams( it_pop->v, ga_fparams );
       join( ga_params, ga_types, ga_fparams );
-      msg.vsize = ga_fparams.size();
+      msg.vsize = ga_params.size();
+      US_Vector::printvector( "ga_compute_fitness: (while) params to send", ga_params );
 
       if ( MPI_SUCCESS != MPI_Send( &msg,
                                     sizeof( msg ),

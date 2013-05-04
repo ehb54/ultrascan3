@@ -18,8 +18,9 @@ enum pm_types
 
 #define PM_USE_ERRORS         1
 
-struct pm_msg
+class pm_msg
 {
+ public:
    int16_t  type;
    uint16_t flags;                  // optional flags: flags && PM_USE_ERRORS etc
    uint32_t vsize;                  // size of included vectors
@@ -30,7 +31,8 @@ struct pm_msg
    uint32_t max_dimension;          // only used for PM_NEW_PM
    uint16_t max_harmonics;          // only used for PM_NEW_PM
    uint16_t max_mem_in_MB;          // only used for PM_NEW_PM
-};
 
+   friend ostream & operator << ( ostream&, const pm_msg&);
+};
 
 #endif

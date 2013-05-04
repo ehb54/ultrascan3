@@ -414,7 +414,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             msg.vsize                  = (uint32_t) control_vectors[ "pmq" ].size();
             msg.grid_conversion_factor = control_parameters[ "pmgridsize" ].toDouble();
             msg.max_dimension          = (uint32_t) control_parameters[ "pmmaxdimension" ].toUInt();
-            msg.max_harmonics          = (uint32_t) control_parameters[ "pmmaxharmonics" ].toUInt();
+            msg.max_harmonics          = (uint32_t) control_parameters[ "pmharmonics" ].toUInt();
             msg.max_mem_in_MB          = (uint32_t) control_parameters[ "pmmemory" ].toUInt();
 
             unsigned int tot_vsize = msg.vsize * ( pm.use_errors ? 4 : 3 );

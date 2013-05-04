@@ -3,6 +3,60 @@
 
 // note: this program uses cout and/or cerr and this should be replaced
 
+ostream & operator << ( ostream& out, const pm_msg& c )
+{
+   QString type_msg = QString( "Unknown: %1" ).arg( c.type );
+   switch( c.type )
+   {
+   case PM_SHUTDOWN:
+      type_msg = "PM_SHUTDOWN";
+      break;
+   case PM_MSG:
+      type_msg = "PM_MSG";
+      break;
+   case PM_NEW_PM:
+      type_msg = "PM_NEW_PM";
+      break;
+   case PM_NEW_GRID_SIZE:
+      type_msg = "PM_NEW_GRID_SIZE";
+      break;
+   case PM_CALC_FITNESS:
+      type_msg = "PM_CALC_FITNESS";
+      break;
+   case PM_REGISTER:
+      type_msg = "PM_REGISTER";
+      break;
+   case PM_FITNESS_RESULT:
+      type_msg = "PM_FITNESS_RESULT";
+      break;
+   case PM_FITNESS_RESULT_MODEL:
+      type_msg = "PM_FITNESS_RESULT_MODEL";
+      break;
+   default:
+      break;
+   }
+
+   out << QString( 
+                  "pm_msg:\n"
+                  "type         : %1\n"
+                  "flags        : %2\n"
+                  "vsize        : %3\n"
+                  "gcf or fit   : %4\n"
+                  "max_dimension: %5\n"
+                  "max_harmonics: %6\n"
+                  "max_mem_in_MB: %7\n" 
+                  )
+      .arg( type_msg )
+      .arg( c.flags )
+      .arg( c.vsize )
+      .arg( c.grid_conversion_factor )
+      .arg( c.max_dimension )
+      .arg( c.max_harmonics )
+      .arg( c.max_mem_in_MB )
+      ;
+   return out;
+}                   
+
 bool US_Saxs_Util::run_pm_mpi( QString controlfile )
 {
 
@@ -100,6 +154,8 @@ void US_Saxs_Util::pm_mpi_worker()
          exit( errorno - myrank );
       }         
       
+      cout << msg;
+
       switch( msg.type )
       {
       case PM_SHUTDOWN :
@@ -207,6 +263,11 @@ void US_Saxs_Util::pm_mpi_worker()
                exit( errorno - myrank );
             }         
 
+
+            US_Vector::printvector( QString( "%1: PM_CALC_FITNESS params:" ).arg( myrank ), params );
+            cout << flush;
+
+
             if ( !pm->create_model( params, model ) ||
                  !pm->compute_I( model, I_result ) )
             {
@@ -214,10 +275,16 @@ void US_Saxs_Util::pm_mpi_worker()
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }
+
             
             msg.type  = PM_FITNESS_RESULT;
             msg.vsize = model.size();
             msg.model_fitness = pm->fitness2( I_result );
+
+            cout << QString( "%1: created model with %2 beads fit %3\n" )
+               .arg( myrank )
+               .arg( model.size() )
+               .arg( msg.model_fitness ) << flush;
 
             vector < int16_t > vmodel;
             for ( set < pm_point >::iterator it = model.begin();
