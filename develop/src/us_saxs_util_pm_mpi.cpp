@@ -86,7 +86,7 @@ bool US_Saxs_Util::run_pm_mpi( QString controlfile )
                                        sizeof( pm_msg ),
                                        MPI_CHAR, 
                                        i,
-                                       0, 
+                                       PM_MSG, 
                                        MPI_COMM_WORLD ) )
          {
             cout << QString( "%1: MPI PM_SHUTDOWN failed\n" ).arg( myrank ) << flush;
@@ -140,7 +140,7 @@ void US_Saxs_Util::pm_mpi_worker()
 
    do 
    {
-      cout << QString( "%1: worker listening\n" ).arg( myrank ) << flush;
+      // cout << QString( "%1: worker listening\n" ).arg( myrank ) << flush;
       if ( MPI_SUCCESS != MPI_Recv( &msg,
                                     sizeof( pm_msg ),
                                     MPI_CHAR, 
@@ -154,7 +154,7 @@ void US_Saxs_Util::pm_mpi_worker()
          exit( errorno - myrank );
       }         
       
-      cout << msg;
+      // cout << msg;
 
       switch( msg.type )
       {
@@ -168,7 +168,7 @@ void US_Saxs_Util::pm_mpi_worker()
 
       case PM_NEW_PM :
          {
-            cout << QString( "%1: worker PM_NEW_PM\n" ).arg( myrank ) << flush;
+            // cout << QString( "%1: worker PM_NEW_PM\n" ).arg( myrank ) << flush;
             if ( pm )
             {
                delete pm;
@@ -228,7 +228,7 @@ void US_Saxs_Util::pm_mpi_worker()
 
       case PM_NEW_GRID_SIZE:
          {
-            cout << QString( "%1: worker PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+            // cout << QString( "%1: worker PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
             if ( !pm )
             {
                cout << QString( "%1: MPI PM_NEW_GRID_SIZE Receive called before PM_NEW_PM  pm_mpi_worker()\n" ).arg( myrank ) << flush;
@@ -241,7 +241,7 @@ void US_Saxs_Util::pm_mpi_worker()
 
       case PM_CALC_FITNESS:
          {
-            cout << QString( "%1: worker PM_CALC_FITNESS\n" ).arg( myrank ) << flush;
+            // cout << QString( "%1: worker PM_CALC_FITNESS\n" ).arg( myrank ) << flush;
             if ( !pm )
             {
                cout << QString( "%1: MPI PM_CALC_FITNESS Receive called before PM_NEW_PM  pm_mpi_worker()\n" ).arg( myrank ) << flush;
@@ -264,9 +264,8 @@ void US_Saxs_Util::pm_mpi_worker()
             }         
 
 
-            US_Vector::printvector( QString( "%1: PM_CALC_FITNESS params:" ).arg( myrank ), params );
-            cout << flush;
-
+            // US_Vector::printvector( QString( "%1: PM_CALC_FITNESS params:" ).arg( myrank ), params );
+            // cout << flush;
 
             if ( !pm->create_model( params, model ) ||
                  !pm->compute_I( model, I_result ) )
@@ -281,10 +280,10 @@ void US_Saxs_Util::pm_mpi_worker()
             msg.vsize = model.size();
             msg.model_fitness = pm->fitness2( I_result );
 
-            cout << QString( "%1: created model with %2 beads fit %3\n" )
-               .arg( myrank )
-               .arg( model.size() )
-               .arg( msg.model_fitness ) << flush;
+            // cout << QString( "%1: created model with %2 beads fit %3\n" )
+            //                .arg( myrank )
+            //                .arg( model.size() )
+            //                .arg( msg.model_fitness ) << flush;
 
             vector < int16_t > vmodel;
             for ( set < pm_point >::iterator it = model.begin();
