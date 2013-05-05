@@ -63,7 +63,7 @@ bool US_DataIO::RawData::setValue( int scnx, int radx, double value )
 double US_DataIO::RawData::std_dev( int scnx, int radx )
 {
    US_DataIO::Scan* scn = &scanData[ scnx ];
-   bool use_stddev = ( scn->nz_stddev  &&  scn->stddevs.size() > 0 );
+   bool use_stddev = ( scn->nz_stddev  &&  scn->stddevs.size() > radx );
    return ( use_stddev ? scn->stddevs[ radx ] : 0.0 );
 }
 
@@ -1194,8 +1194,8 @@ void US_DataIO::adjust_interference( RawData& data, const EditValues& ev )
 
       US_DataIO::Scan* sc;
 
-      int r_left  = index( data.xvalues, ev.rangeLeft );
-      int r_right = index( data.xvalues, ev.rangeRight );
+      int r_left  = index( data.xvalues, ev.airGapLeft );
+      int r_right = index( data.xvalues, ev.airGapRight );
       double sum  = 0.0;
 
       for ( int kk = r_left; kk <= r_right; kk++ )

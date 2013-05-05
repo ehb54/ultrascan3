@@ -6,7 +6,7 @@
 
 // The supercomputer does not use the DB
 #ifndef NO_DB
-   #include "mysql.h"
+#include "mysql.h"
 #endif
 
 #include "us_extern.h"
@@ -379,6 +379,8 @@ class US_UTIL_EXTERN US_DB2
     QString    guid;
 
     QString    certFile;
+    QString    keyFile;
+    QString    caFile;
     QString    error;
     int        db_errno;
 
