@@ -488,6 +488,7 @@ DbgLv(1) << " drow chann" << drow << chann;
    for ( int drow = 0; drow < ntriples; drow++ )
    {  // Output a set of files for each input triple
       rdata  = &rawList [ drow ];               // Current data
+      ddesc  = rdata->description + "\n";
       hcell  = rdata->cell;
       fext   = "." + rawDtype + QString::number( hcell );
 
@@ -536,9 +537,9 @@ DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
 
          for ( int jj = 0; jj < nvalu; jj++ )
          {  // Output a line for each data point
-            double  radi  = rdata->radius( jj );
-            double  valu  = rdata->value ( ii, jj );
-            double  stdd  = dscan->stddevs[ jj ];
+            double  radi  = rdata->radius ( jj );
+            double  valu  = rdata->value  ( ii, jj );
+            double  stdd  = rdata->std_dev( ii, jj );
             // Format data line:  Radius Value StdDev
             QString oline = QString().sprintf( "%9.4f %12.5E %13.5E\n",
                radi, valu, stdd )
@@ -599,6 +600,7 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
    for ( int drow = 0; drow < ntriples; drow++ )
    {  // Output a set of files for each input triple
       rdata  = &rawList [ drow ];
+      ddesc  = rdata->description + "\n";
       hcell  = rdata->cell;
       fext   = "." + rawDtype + QString::number( hcell );
       tripa  = triples[ drow ];
@@ -720,6 +722,7 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
    for ( int drow = 0; drow < ntriples; drow++ )
    {  // Output a set of files for each input triple
       rdata  = &rawList [ drow ];
+      ddesc  = rdata->description + "\n";
       hcell  = rdata->cell;
       fext   = "." + rawDtype + QString::number( hcell );
 

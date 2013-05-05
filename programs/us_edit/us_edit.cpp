@@ -1492,7 +1492,8 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             
             for ( int i = 0; i < data.scanData.size(); i++ )
                if ( ! includes.contains( i ) ) edits.excludes << i;
-         
+
+DbgLv(1) << "AGap: L R" << airGap_left << airGap_right << " AdjIntf";
             US_DataIO::adjust_interference( data, edits );
 
             // Un-zoom
@@ -1505,6 +1506,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
                      airGap_left, airGap_right ) );
 
             step = RANGE;
+DbgLv(1) << "AGap:  plot_range()";
             plot_range();
 
             qApp->processEvents();

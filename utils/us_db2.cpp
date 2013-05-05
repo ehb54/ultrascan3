@@ -8,7 +8,10 @@
 US_DB2::US_DB2()
 {
 #ifndef NO_DB
-   certFile = US_Settings::appBaseDir() + QString( "/etc/ca-cert.pem" );
+   QString certPath = US_Settings::appBaseDir() + QString( "/etc/mysql/" );
+   keyFile    = certPath + QString( "server-key.pem" );
+   certFile   = certPath + QString( "server-cert.pem" );
+   caFile     = certPath + QString( "ca-cert.pem" );
 
    connected  = false;
    result     = NULL;
@@ -21,7 +24,10 @@ US_DB2::US_DB2( const QString& ){}
 #else
 US_DB2::US_DB2( const QString& masterPW )
 {
-   certFile = US_Settings::appBaseDir() + QString( "/etc/ca-cert.pem" );
+   QString certPath = US_Settings::appBaseDir() + QString( "/etc/mysql/" );
+   keyFile    = certPath + QString( "server-key.pem" );
+   certFile   = certPath + QString( "server-cert.pem" );
+   caFile     = certPath + QString( "ca-cert.pem" );
 
    connected  = false;
    result     = NULL;
@@ -110,11 +116,11 @@ bool US_DB2::test_secure_connection(
 
    // Set connection to use ssl encryption
    mysql_ssl_set( db,
-                  NULL,
-                  NULL,
+                  keyFile .toAscii(),
                   certFile.toAscii(),
+                  caFile  .toAscii(),
                   NULL,
-                  "AES128-SHA");
+                  "AES128-SHA" );
 
    bool status = mysql_real_connect( 
                  db,
@@ -176,11 +182,11 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
    {
       // Set connection to use ssl encryption
       mysql_ssl_set( db,
-                     NULL,
-                     NULL,
+                     keyFile .toAscii(),
                      certFile.toAscii(),
+                     caFile  .toAscii(),
                      NULL,
-                     "AES128-SHA");
+                     "AES128-SHA" );
 
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and multiple
       //   result sets from a single stored procedure. It is required for any 
@@ -275,11 +281,11 @@ bool US_DB2::connect(
    {
       // Set connection to use ssl encryption
       mysql_ssl_set( db,
-                     NULL,
-                     NULL,
+                     keyFile .toAscii(),
                      certFile.toAscii(),
+                     caFile  .toAscii(),
                      NULL,
-                     "AES128-SHA");
+                     "AES128-SHA" );
 
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and multiple
       //   result sets from a single stored procedure. It is required for any 
@@ -659,7 +665,6 @@ int US_DB2::readBlobFromDB( const QString& filename,
    {
       error = QString( "MySQL error: " ) + mysql_error( db );
       db_errno = ERROR;
-qDebug() << error;
       return ERROR;
    }
 
