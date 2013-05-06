@@ -134,7 +134,19 @@ bool US_Saxs_Util::run_pm( QString controlfile )
       .arg( controlfile )
         << flush;
 
-   QFile f( "runinfo" );
+   QString runinfo_base = "runinfo";
+#if defined( USE_MPI )
+   runinfo_base = QString( "%1-n%2" ).arg( runinfo_base ).arg( npes );
+#endif
+
+   QString runinfo = runinfo_base;
+   int ext = 0;
+   while ( QFile::exists( runinfo ) )
+   {
+      runinfo = QString( "%1-%2" ).arg( runinfo_base ).arg( ++ext );
+   }
+
+   QFile f( runinfo );
    if ( f.open( IO_WriteOnly ) )
    {
       QTextStream ts( &f );
@@ -154,7 +166,7 @@ bool US_Saxs_Util::run_pm( QString controlfile )
          fc.close();
       }
       f.close();
-      output_files << "runinfo";
+      output_files << runinfo;
    } else {
       cout << "Warning: could not create timings\n" << flush;
    }
