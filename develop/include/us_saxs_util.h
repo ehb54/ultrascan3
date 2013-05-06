@@ -686,6 +686,8 @@ class US_EXTERN US_Saxs_Util
       bool run_pm      ( QStringList qsl );
       bool run_pm_ok   ();
       QStringList      job_output_files;
+      double             pm_ga_fitness_secs;
+      unsigned int       pm_ga_fitness_calls;
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )

@@ -216,6 +216,8 @@ US_PM::US_PM(
    ga_set_params();
    shs = (SHS_USE *)0;
    shs = new SHS_USE( max_harmonics );
+   pm_ga_fitness_secs = 0e0;
+   pm_ga_fitness_calls = 0;
 }
 
 US_PM::~US_PM()

@@ -391,6 +391,9 @@ class US_PM
    set < int >                             pm_workers_busy;
 #endif
 
+   double                                  pm_ga_fitness_secs;
+   unsigned int                            pm_ga_fitness_calls;
+
  public:
    // note: F needs to be the factors for a volume of size grid_conversion_factor ^ 3
 

@@ -15,6 +15,9 @@ bool US_Saxs_Util::run_pm( QString controlfile )
    usupm_timer.init_timer ( "pm_run" );
    usupm_timer.start_timer ( "pm_init" );
 
+   pm_ga_fitness_secs = 0e0;
+   pm_ga_fitness_calls = 0;
+
    QString qs_base_dir = QDir::currentDirPath();
 
    QString outputData = QString( "%1" ).arg( getenv( "outputData" ) );
@@ -152,6 +155,19 @@ bool US_Saxs_Util::run_pm( QString controlfile )
       QTextStream ts( &f );
       ts << "timings:\n";
       ts << usupm_timer.list_times();;
+      ts << QString( "ga fit calls %1 time %2 sec_per_fit %3 fit_per_sec %4 fit_per_sec_per_worker_proc %5\n" )
+         .arg( pm_ga_fitness_calls )
+         .arg( pm_ga_fitness_secs )
+         .arg( pm_ga_fitness_calls != 0 ? pm_ga_fitness_secs / (double)pm_ga_fitness_calls : 0e0 )
+         .arg( pm_ga_fitness_secs != 0e0 ? (double)pm_ga_fitness_calls / pm_ga_fitness_secs : 0e0 )
+#if defined( USE_MPI )
+         .arg( (pm_ga_fitness_secs != 0e0 ? (double)pm_ga_fitness_calls / pm_ga_fitness_secs : 0e0 ) / (double)( npes - 1 ) )
+#else 
+         .arg( pm_ga_fitness_secs != 0e0 ? (double)pm_ga_fitness_calls / pm_ga_fitness_secs : 0e0 )
+#endif
+         ;
+      ts << QString( "ga % fitness %1\n" )
+         .arg( 100e0 * pm_ga_fitness_secs / ( (double) usupm_timer.times[ "pm_run" ] / 1000e0 ) );
       ts << "end-timings\n";
       QFile fc( controlfile );
       if ( fc.open( IO_ReadOnly ) )
@@ -524,6 +540,9 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             errormsg = "Error:" + pm.error_msg;
             return false;
          }
+
+         pm_ga_fitness_secs  += pm.pm_ga_fitness_secs;
+         pm_ga_fitness_calls += pm.pm_ga_fitness_calls;
 
          QString outname = control_parameters[ "pmoutname" ];
          pm.write_model( outname, model, params, false );

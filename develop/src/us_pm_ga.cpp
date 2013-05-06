@@ -40,6 +40,7 @@ bool US_PM::ga_fitness( pm_ga_individual & individual )
 void US_PM::ga_compute_fitness()
 {
    clock_t start_t = clock();
+   unsigned int fit_calls = 0;
 #if defined( USE_MPI )
    int errorno      = -31000;
 
@@ -60,7 +61,6 @@ void US_PM::ga_compute_fitness()
    map < int, list < pm_ga_individual >::iterator > worker_pop;
 
    // send out initial requests
-
 
    for ( set < int >::iterator it = pm_workers_registered.begin();
          it !=  pm_workers_registered.end() && it_pop != ga_pop.end();
@@ -91,6 +91,7 @@ void US_PM::ga_compute_fitness()
       msg.vsize = ga_params.size();
 
       // US_Vector::printvector( "ga_compute_fitness: (for) params to send", ga_params );
+      fit_calls++;
 
       if ( MPI_SUCCESS != MPI_Send( &msg,
                                     sizeof( msg ),
@@ -213,6 +214,8 @@ void US_PM::ga_compute_fitness()
       msg.vsize = ga_params.size();
       // US_Vector::printvector( "ga_compute_fitness: (while) params to send", ga_params );
 
+      fit_calls++;
+
       if ( MPI_SUCCESS != MPI_Send( &msg,
                                     sizeof( msg ),
                                     MPI_CHAR, 
@@ -247,16 +250,19 @@ void US_PM::ga_compute_fitness()
    {
       if ( !it->fitness_computed )
       {
+         fit_calls++;
          ga_fitness( *it );
       }
    }
 #endif
    clock_t end_t = clock();
-   cout << QString( "ga fitness of %1 individuals computed in %2s or %2s per individual\n" )
-      .arg( ga_pop.size() )
-      .arg( (double)(end_t - start_t )/ CLOCKS_PER_SEC )
-      .arg( (double)( (end_t - start_t )/ CLOCKS_PER_SEC ) / ga_pop.size() );
-   ;
+   //    cout << QString( "ga fitness of %1 individuals computed in %2s or %2s per individual\n" )
+   //       .arg( ga_pop.size() )
+   //       .arg( (double)(end_t - start_t )/ CLOCKS_PER_SEC, 0, 'f', 8 )
+   //       .arg( (double)( (end_t - start_t )/ CLOCKS_PER_SEC ) / ga_pop.size(), 0, 'f', 8 );
+   //    ;
+   pm_ga_fitness_calls += fit_calls;
+   pm_ga_fitness_secs  += (double)( (end_t - start_t )/ CLOCKS_PER_SEC );
 }
 
 bool US_PM::ga( pm_ga_individual & best_individual )

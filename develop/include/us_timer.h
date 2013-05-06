@@ -26,11 +26,9 @@ class US_Timer
    void stop_all     ();
    void start_all    ();
 
- private:
-
+   map < QString, unsigned long > times;
    map < QString, QTime         > timers;
    map < QString, unsigned int  > counts;
-   map < QString, unsigned long > times;
    map < QString, unsigned long > times2;
 };
 
