@@ -684,7 +684,7 @@ class US_EXTERN US_Saxs_Util
 #endif
       bool run_pm      ( QString controlfile );
       bool run_pm      ( QStringList qsl );
-      bool run_pm_ok   ();
+      bool run_pm_ok   ( QString option );
       QStringList      job_output_files;
       double             pm_ga_fitness_secs;
       unsigned int       pm_ga_fitness_calls;

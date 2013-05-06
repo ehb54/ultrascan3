@@ -169,6 +169,7 @@ class US_PM
    //    double                                  ev;
 
    double                                  org_cube_size;
+   double                                  org_conversion_factor;
    double                                  cube_size;
    double                                  bead_radius;
    double                                  bead_radius_over_2gcf;
@@ -499,6 +500,13 @@ class US_PM
                                           set < pm_point >  & model 
                                           );
 
+   // quick "approximate" max_d
+   bool                approx_max_dimension( 
+                                          vector < double > & params, 
+                                          double              coarse_conversion,
+                                          unsigned int      & approx_max_d
+                                          );
+
    bool                best_sphere       ( set < pm_point > & model );
    bool                best_cylinder     ( set < pm_point > & model );
    bool                best_spheroid     ( set < pm_point > & model );
@@ -556,6 +564,7 @@ class US_PM
    bool                zero_params       ( vector < double > & params, vector < int > & types );
    bool                random_params     ( vector < double > & params, vector < int > & types, double max_d = 0e0 );
    QString             list_params       ( vector < double > & params );
+   void                reset_grid_size   ( bool quiet = false );
    void                set_grid_size     ( double grid_conversion_factor, bool quiet = false );
 
    bool                grid_search       (
@@ -601,6 +610,16 @@ class US_PM
                                               vector < double > & params, 
                                               set < pm_point >  & model, 
                                               unsigned int        steps_to_ga            = 1,
+                                              unsigned int        points_max             = 100,
+                                              double              finest_conversion      = 1e0,
+                                              double              coarse_conversion      = 10e0,
+                                              double              refinement_range_pct   = 5e0,
+                                              double              conversion_divisor     = 2e0
+                                              );
+
+   bool                    best_ga           ( 
+                                              vector < double > & params, 
+                                              set < pm_point >  & model, 
                                               unsigned int        points_max             = 100,
                                               double              finest_conversion      = 1e0,
                                               double              coarse_conversion      = 10e0,

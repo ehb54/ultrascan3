@@ -234,8 +234,12 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmgaearlytermination|"
                       "pmgapointsmax|"
 
+                      "pmapproxmaxdimension|"
+
                       "pmbestmd0stepstoga|"
                       "pmbestmd0|"
+
+                      "pmbestga|"
 
                       // these are for grid size range
                       "pmbestfinestconversion|"
@@ -277,6 +281,8 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmgaelitism|"
                       "pmgaearlytermination|"
                       "pmgapointsmax|"
+
+                      "pmapproxmaxdimension|"
 
                       "pmbestmd0stepstoga|"
 
@@ -395,9 +401,67 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          continue;
       }                                                  
 
+      if ( option == "pmapproxmaxdimension" )
+      {
+            control_parameters.erase( "approx_max_d" );
+
+         if ( !run_pm_ok( option ) )
+         {
+            errormsg = QString( "Error controlfile line %1 : %2" ).arg( i + 1 ).arg( errormsg );
+            return false;
+         }            
+
+         if ( control_vectors.count( "pmtypes" ) &&
+              control_vectors[ "pmtypes" ].size() != 1 )
+         {
+            errormsg = QString( "Error controlfile line %1 : pmtypes must have exactly one parameter for pmbestmd0" ).arg( i + 1 );
+            return false;
+         }
+
+         US_PM pm(
+                  control_parameters [ "pmgridsize"     ].toDouble(),
+                  control_parameters [ "pmmaxdimension" ].toInt(),
+                  control_parameters [ "pmharmonics"    ].toUInt(),
+                  control_vectors    [ "pmf"            ],
+                  control_vectors    [ "pmq"            ],
+                  control_vectors    [ "pmi"            ],
+                  control_vectors    [ "pme"            ],
+                  control_parameters [ "pmmemory"       ].toUInt(),
+                  control_parameters [ "pmdebug"        ].toInt()
+                  );
+
+         if ( control_vectors.count( "pmparams" ) )
+         {
+            params = control_vectors[ "pmparams" ];
+         } else {
+            if ( control_vectors.count( "pmtypes" ) )
+            {
+               vector < int > types;
+               for ( int i = 0; i < (int) control_vectors[ "pmtypes" ].size(); i++ )
+               {
+                  types.push_back( (int) control_vectors[ "pmtypes" ][ i ] );
+               }
+               pm.zero_params( params, types );
+            } else {
+               errormsg = QString( "Error controlfile line %1 : pmparams or pmtypes must be defined" ).arg( i + 1 );
+               return false;
+            }
+         }
+
+         unsigned int approx_max_d;
+         if ( !pm.approx_max_dimension( params, 
+                                        control_parameters[ "pmapproxmaxdimension" ].toDouble(),
+                                        approx_max_d ) )
+         {
+            return false;
+         }
+         control_parameters[ "approx_max_d" ] = QString( "%1" ).arg( approx_max_d );
+         cout << QString( "best maxd %1\n" ).arg( control_parameters[ "approx_max_d" ] );
+      }
+
       if ( option == "pmbestmd0" )
       {
-         if ( !run_pm_ok() )
+         if ( !run_pm_ok( option ) )
          {
             errormsg = QString( "Error controlfile line %1 : %2" ).arg( i + 1 ).arg( errormsg );
             return false;
@@ -551,12 +615,168 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          output_files << QString( outname + ".dat" );
          continue;
       }         
+
+      if ( option == "pmbestga" )
+      {
+         if ( !run_pm_ok( option ) )
+         {
+            errormsg = QString( "Error controlfile line %1 : %2" ).arg( i + 1 ).arg( errormsg );
+            return false;
+         }            
+
+         if ( !control_parameters.count( "approx_max_d" ) &&
+              control_parameters[ "approx_max_d" ].toUInt() == 0 )
+         {
+            errormsg = QString( "Error controlfile line %1 : pmappromxmaxdimension option must be selected prior to pmbestga" ).arg( i + 1 );
+            return false;
+         }
+
+         US_PM pm(
+                  control_parameters [ "pmgridsize"     ].toDouble(),
+                  control_parameters [ "approx_max_d"   ].toUInt(),
+                  control_parameters [ "pmharmonics"    ].toUInt(),
+                  control_vectors    [ "pmf"            ],
+                  control_vectors    [ "pmq"            ],
+                  control_vectors    [ "pmi"            ],
+                  control_vectors    [ "pme"            ],
+                  control_parameters [ "pmmemory"       ].toUInt(),
+                  control_parameters [ "pmdebug"        ].toInt()
+                  );
+
+#if defined( USE_MPI )
+         {
+
+            pm.pm_workers_registered.clear();
+            pm.pm_workers_busy      .clear();
+            pm.pm_workers_waiting   .clear();
+   
+            for ( int i = 1; i < npes; ++i )
+            {
+               pm.pm_workers_registered.insert( i );
+               pm.pm_workers_waiting   .insert( i );
+            }
+
+            pm_msg msg;
+            int errorno                = -28000;
+            msg.type                   = PM_NEW_PM;
+            msg.flags                  = pm.use_errors ? PM_USE_ERRORS : 0;
+            msg.vsize                  = (uint32_t) control_vectors[ "pmq" ].size();
+            msg.grid_conversion_factor = control_parameters[ "pmgridsize" ].toDouble();
+            msg.max_dimension          = (uint32_t) control_parameters[ "pmmaxdimension" ].toUInt();
+            msg.max_harmonics          = (uint32_t) control_parameters[ "pmharmonics" ].toUInt();
+            msg.max_mem_in_MB          = (uint32_t) control_parameters[ "pmmemory" ].toUInt();
+
+            unsigned int tot_vsize = msg.vsize * ( pm.use_errors ? 4 : 3 );
+            vector < double > d( tot_vsize );
+
+            if ( pm.use_errors )
+            {
+               for ( int i = 0; i < msg.vsize; i++ )
+               {
+                  d[ i ]                 = control_vectors[ "pmf" ][ i ];
+                  d[ msg.vsize + i ]     = control_vectors[ "pmq" ][ i ];
+                  d[ 2 * msg.vsize + i ] = control_vectors[ "pmi" ][ i ];
+                  d[ 3 * msg.vsize + i ] = control_vectors[ "pme" ][ i ];
+               }
+            } else {
+               for ( int i = 0; i < msg.vsize; i++ )
+               {
+                  d[ i ]                 = control_vectors[ "pmf" ][ i ];
+                  d[ msg.vsize + i ]     = control_vectors[ "pmq" ][ i ];
+                  d[ 2 * msg.vsize + i ] = control_vectors[ "pmi" ][ i ];
+               }
+            }
+
+            for ( int i = 1; i < npes; ++i )
+            {
+               if ( MPI_SUCCESS != MPI_Send( &msg,
+                                             sizeof( pm_msg ),
+                                             MPI_CHAR, 
+                                             i,
+                                             PM_MSG, 
+                                             MPI_COMM_WORLD ) )
+               {
+                  cout << QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM\n" ).arg( myrank ) << flush;
+                  MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+                  exit( errorno - myrank );
+               }
+
+               if ( MPI_SUCCESS != MPI_Send( &(d[0]),
+                                             tot_vsize * sizeof( double ),
+                                             MPI_CHAR, 
+                                             i,
+                                             PM_NEW_PM, 
+                                             MPI_COMM_WORLD ) )
+               {
+                  cout << QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM_DATA\n" ).arg( myrank ) << flush;
+                  MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+                  exit( errorno - myrank );
+               }
+            }
+         }
+#endif
+         pm.ga_set_params( 
+                          control_parameters[ "pmgapopulation"       ].toUInt(),
+                          control_parameters[ "pmgagenerations"      ].toUInt(),
+                          control_parameters[ "pmgamutate"           ].toDouble(),
+                          control_parameters[ "pmgacrossover"        ].toDouble(),
+                          control_parameters[ "pmgaelitism"          ].toUInt(),
+                          control_parameters[ "pmgaearlytermination" ].toUInt()
+                          );
+
+         pm.set_best_delta(
+                           control_parameters[ "pmbestdeltastart"   ].toDouble(),
+                           control_parameters[ "pmbestdeltadivisor" ].toDouble(),
+                           control_parameters[ "pmbestdeltamin"     ].toDouble()
+                           );
+
+         if ( control_vectors.count( "pmparams" ) )
+         {
+            params = control_vectors[ "pmparams" ];
+         } else {
+            if ( control_vectors.count( "pmtypes" ) )
+            {
+               vector < int > types;
+               for ( int i = 0; i < (int) control_vectors[ "pmtypes" ].size(); i++ )
+               {
+                  types.push_back( (int) control_vectors[ "pmtypes" ][ i ] );
+               }
+               pm.zero_params( params, types );
+            } else {
+               errormsg = QString( "Error controlfile line %1 : pmparams or pmtypes must be defined" ).arg( i + 1 );
+               return false;
+            }
+         }
+         if ( !pm.best_ga( 
+                          params,
+                          model,
+                          control_parameters[ "pmgapointsmax"            ].toUInt(),
+                          control_parameters[ "pmbestfinestconversion"   ].toDouble(),
+                          control_parameters[ "pmbestcoarseconversion"   ].toDouble(),
+                          control_parameters[ "pmbestrefinementrangepct" ].toDouble(),
+                          control_parameters[ "pmbestconversiondivisor"  ].toDouble()
+                          ) )
+         {
+            errormsg = "Error:" + pm.error_msg;
+            return false;
+         }
+
+         pm_ga_fitness_secs  += pm.pm_ga_fitness_secs;
+         pm_ga_fitness_calls += pm.pm_ga_fitness_calls;
+
+         QString outname = control_parameters[ "pmoutname" ];
+         pm.write_model( outname, model, params, false );
+         output_files << QString( outname + ".bead_model" );
+         pm.write_I    ( outname, model, false );
+         output_files << QString( outname + ".dat" );
+         continue;
+      }         
    }
 
    return true;
 }
 
-bool US_Saxs_Util::run_pm_ok() 
+bool US_Saxs_Util::run_pm_ok( QString option ) 
 {
    // required params
    {
@@ -596,8 +816,6 @@ bool US_Saxs_Util::run_pm_ok()
          << "pmgaearlytermination"
          << "pmgapointsmax"
 
-         << "pmbestmd0stepstoga"
-
          << "pmbestfinestconversion"
          << "pmbestcoarseconversion"
          << "pmbestrefinementrangepct"
@@ -608,6 +826,13 @@ bool US_Saxs_Util::run_pm_ok()
          << "pmbestdeltamin"
 
          ;
+
+      if ( option == "pmbestmd0" )
+      {
+         default_params
+            << "pmbestmd0stepstoga"
+            ;
+      }
 
       map < QString, QString > defaults;
       defaults[ "pmharmonics"              ] = "15";
@@ -702,11 +927,12 @@ bool US_Saxs_Util::run_pm_ok()
       for ( int i = 0; i < (int) qslv_optional.size(); i++ )
       {
          if ( control_vectors.count( qslv_optional[ i ] ) &&
+              control_vectors[ qslv_optional[ i ] ].size() &&
               vector_size != (int)control_vectors[ qslv_optional[ i ] ].size() )
          {
             errormsg = QString( "optional vector %1 incompatible size %2 vs %3" )
                .arg( qslv_optional[ i ] )
-               .arg( (int)control_vectors[ qslv_required[ 0 ] ].size() )
+               .arg( (int)control_vectors[ qslv_optional[ i ] ].size() )
                .arg( vector_size )
                ;
             return false;
