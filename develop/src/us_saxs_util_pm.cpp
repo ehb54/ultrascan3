@@ -205,6 +205,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
    job_output_files      .clear();
    write_output_count    = 0;
    timings               = "";
+   bool srand48_done     = false;
 
    QRegExp rx_blank  ( "^\\s*$" );
    QRegExp rx_comment( "#.*$" );
@@ -229,6 +230,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmgapopulation|"
                       "pmgagenerations|"
                       "pmgamutate|"
+                      "pmgasamutate|"
                       "pmgacrossover|"
                       "pmgaelitism|"
                       "pmgaearlytermination|"
@@ -240,6 +242,8 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmbestmd0|"
 
                       "pmbestga|"
+
+                      "pmseed|"
 
                       // these are for grid size range
                       "pmbestfinestconversion|"
@@ -277,6 +281,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmgapopulation|"
                       "pmgagenerations|"
                       "pmgamutate|"
+                      "pmgasamutate|"
                       "pmgacrossover|"
                       "pmgaelitism|"
                       "pmgaearlytermination|"
@@ -285,6 +290,8 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmapproxmaxdimension|"
 
                       "pmbestmd0stepstoga|"
+
+                      "pmseed|"
 
                       "pmbestfinestconversion|"
                       "pmbestcoarseconversion|"
@@ -403,7 +410,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
 
       if ( option == "pmapproxmaxdimension" )
       {
-            control_parameters.erase( "approx_max_d" );
+         control_parameters.erase( "approx_max_d" );
 
          if ( !run_pm_ok( option ) )
          {
@@ -472,6 +479,21 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          {
             errormsg = QString( "Error controlfile line %1 : pmtypes must have exactly one parameter for pmbestmd0" ).arg( i + 1 );
             return false;
+         }
+
+         if ( control_parameters.count( "pmseed" ) &&
+              control_parameters[ "pmseed" ].toLong() != 0L )
+         {
+            srand48( control_parameters[ "pmseed" ].toLong() );
+            srand48_done = true;
+         } else {
+            if ( !srand48_done )
+            {
+               long int li = ( long int )QTime::currentTime().msec();
+               cout << QString( "to reproduce use random seed %1\n" ).arg( li );
+               srand48( li );
+            }
+            srand48_done = true;
          }
 
          US_PM pm(
@@ -562,6 +584,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                           control_parameters[ "pmgapopulation"       ].toUInt(),
                           control_parameters[ "pmgagenerations"      ].toUInt(),
                           control_parameters[ "pmgamutate"           ].toDouble(),
+                          control_parameters[ "pmgasamutate"         ].toDouble(),
                           control_parameters[ "pmgacrossover"        ].toDouble(),
                           control_parameters[ "pmgaelitism"          ].toUInt(),
                           control_parameters[ "pmgaearlytermination" ].toUInt()
@@ -629,6 +652,21 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          {
             errormsg = QString( "Error controlfile line %1 : pmappromxmaxdimension option must be selected prior to pmbestga" ).arg( i + 1 );
             return false;
+         }
+
+         if ( control_parameters.count( "pmseed" ) &&
+              control_parameters[ "pmseed" ].toLong() != 0L )
+         {
+            srand48( control_parameters[ "pmseed" ].toLong() );
+            srand48_done = true;
+         } else {
+            if ( !srand48_done )
+            {
+               long int li = ( long int )QTime::currentTime().msec();
+               cout << QString( "to reproduce use random seed %1\n" ).arg( li );
+               srand48( li );
+            }
+            srand48_done = true;
          }
 
          US_PM pm(
@@ -719,6 +757,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                           control_parameters[ "pmgapopulation"       ].toUInt(),
                           control_parameters[ "pmgagenerations"      ].toUInt(),
                           control_parameters[ "pmgamutate"           ].toDouble(),
+                          control_parameters[ "pmgasamutate"         ].toDouble(),
                           control_parameters[ "pmgacrossover"        ].toDouble(),
                           control_parameters[ "pmgaelitism"          ].toUInt(),
                           control_parameters[ "pmgaearlytermination" ].toUInt()
@@ -811,6 +850,7 @@ bool US_Saxs_Util::run_pm_ok( QString option )
          << "pmgapopulation"
          << "pmgagenerations"
          << "pmgamutate"
+         << "pmgasamutate"
          << "pmgacrossover"
          << "pmgaelitism"
          << "pmgaearlytermination"
@@ -847,6 +887,7 @@ bool US_Saxs_Util::run_pm_ok( QString option )
       defaults[ "pmgapopulation"           ] = "100";
       defaults[ "pmgagenerations"          ] = "100";
       defaults[ "pmgamutate"               ] = "0.4e0";
+      defaults[ "pmgasamutate"             ] = "0.4e0";
       defaults[ "pmgacrossover"            ] = "0.4e0";
       defaults[ "pmgaelitism"              ] = "1";
       defaults[ "pmgaearlytermination"     ] = "5";

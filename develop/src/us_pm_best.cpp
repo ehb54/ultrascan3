@@ -3,6 +3,7 @@
 #define USPM_BEST_DELTA_MIN 1e-3
 
 // #define USPM_USE_CA 0
+#define USPM_SEQ_PEGGED_LIMIT 3
 
 void US_PM::set_best_delta( 
                            double best_delta_start,
@@ -282,13 +283,36 @@ bool US_PM::best_md0(
    }
 
    set_grid_size( coarse_conversion );
+#if defined( USE_MPI )
+   {
+      int errorno = -29000;
+      pm_msg msg;
+      msg.type = PM_NEW_GRID_SIZE;
+      msg.grid_conversion_factor = coarse_conversion;
+
+      for ( int i = 1; i < npes; ++i )
+      {
+         if ( MPI_SUCCESS != MPI_Send( &msg,
+                                       sizeof( pm_msg ),
+                                       MPI_CHAR, 
+                                       i,
+                                       PM_MSG, 
+                                       MPI_COMM_WORLD ) )
+         {
+            cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+            MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+            exit( errorno - myrank );
+         }
+      }
+   }
+#endif
 
    vector < double > org_low_fparams;
    vector < double > org_high_fparams;
    set_limits( params, org_low_fparams, org_high_fparams );
 
    vector < double > low_fparams  = org_low_fparams;
-   vector < double > high_fparams = org_high_fparams;;
+   vector < double > high_fparams = org_high_fparams;
    
    vector < double > next_low_fparams  = low_fparams;
    vector < double > next_high_fparams = high_fparams;
@@ -349,6 +373,29 @@ bool US_PM::best_md0(
       US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
 
       set_grid_size( new_grid_conversion_factor );
+#if defined( USE_MPI )
+      {
+         int errorno = -29000;
+         pm_msg msg;
+         msg.type = PM_NEW_GRID_SIZE;
+         msg.grid_conversion_factor = new_grid_conversion_factor;
+
+         for ( int i = 1; i < npes; ++i )
+         {
+            if ( MPI_SUCCESS != MPI_Send( &msg,
+                                          sizeof( pm_msg ),
+                                          MPI_CHAR, 
+                                          i,
+                                          PM_MSG, 
+                                          MPI_COMM_WORLD ) )
+            {
+               cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+               MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+               exit( errorno - myrank );
+            }
+         }
+      }
+#endif
    }
    return true;
 }
@@ -787,13 +834,36 @@ bool US_PM::best_md0_ga(
    }
 
    set_grid_size( coarse_conversion );
+#if defined( USE_MPI )
+   {
+      int errorno = -29000;
+      pm_msg msg;
+      msg.type = PM_NEW_GRID_SIZE;
+      msg.grid_conversion_factor = coarse_conversion;
+
+      for ( int i = 1; i < npes; ++i )
+      {
+         if ( MPI_SUCCESS != MPI_Send( &msg,
+                                       sizeof( pm_msg ),
+                                       MPI_CHAR, 
+                                       i,
+                                       PM_MSG, 
+                                       MPI_COMM_WORLD ) )
+         {
+            cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+            MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+            exit( errorno - myrank );
+         }
+      }
+   }
+#endif
 
    vector < double > org_low_fparams;
    vector < double > org_high_fparams;
    set_limits( params, org_low_fparams, org_high_fparams );
 
    vector < double > low_fparams  = org_low_fparams;
-   vector < double > high_fparams = org_high_fparams;;
+   vector < double > high_fparams = org_high_fparams;
    
    vector < double > next_low_fparams  = low_fparams;
    vector < double > next_high_fparams = high_fparams;
@@ -891,7 +961,7 @@ bool US_PM::best_md0_ga(
          int errorno = -29000;
          pm_msg msg;
          msg.type = PM_NEW_GRID_SIZE;
-         msg.model_fitness = new_grid_conversion_factor;
+         msg.grid_conversion_factor = new_grid_conversion_factor;
 
          for ( int i = 1; i < npes; ++i )
          {
@@ -921,6 +991,31 @@ bool US_PM::approx_max_dimension(
 {
    // run a coarse spheroid & use to determine maxd
    set_grid_size( coarse_conversion );
+   /* approx_max_dimension runs solely on master
+#if defined( USE_MPI )
+   {
+      int errorno = -29000;
+      pm_msg msg;
+      msg.type = PM_NEW_GRID_SIZE;
+      msg.grid_conversion_factor = coarse_conversion;
+
+      for ( int i = 1; i < npes; ++i )
+      {
+         if ( MPI_SUCCESS != MPI_Send( &msg,
+                                       sizeof( pm_msg ),
+                                       MPI_CHAR, 
+                                       i,
+                                       PM_MSG, 
+                                       MPI_COMM_WORLD ) )
+         {
+            cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+            MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+            exit( errorno - myrank );
+         }
+      }
+   }
+#endif
+   */
 
    params.resize( 3 );
    params[ 0 ] = 2e0;
@@ -954,6 +1049,31 @@ bool US_PM::approx_max_dimension(
    }
 
    reset_grid_size();
+   /* approx_max_dimension runs solely on master
+#if defined( USE_MPI )
+   {
+      int errorno = -29000;
+      pm_msg msg;
+      msg.type = PM_NEW_GRID_SIZE;
+      msg.grid_conversion_factor = org_conversion_factor;
+
+      for ( int i = 1; i < npes; ++i )
+      {
+         if ( MPI_SUCCESS != MPI_Send( &msg,
+                                       sizeof( pm_msg ),
+                                       MPI_CHAR, 
+                                       i,
+                                       PM_MSG, 
+                                       MPI_COMM_WORLD ) )
+         {
+            cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+            MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+            exit( errorno - myrank );
+         }
+      }
+   }
+#endif
+   */
 
    double d_approx_max_d = fparams[ 0 ] > fparams[ 1 ] ? fparams[ 0 ] : fparams[ 1 ];
    d_approx_max_d *= 1.314e0;
@@ -963,8 +1083,6 @@ bool US_PM::approx_max_dimension(
 
    return true;
 }
-
-
                 
 bool US_PM::best_ga( 
                     vector < double > & params, 
@@ -988,7 +1106,6 @@ bool US_PM::best_ga(
       .arg( refinement_range_pct )
       .arg( conversion_divisor )
       ;
-
    
    vector < int >    types;
    vector < double > fparams;
@@ -1002,13 +1119,45 @@ bool US_PM::best_ga(
    split( params, types, fparams );
 
    set_grid_size( coarse_conversion );
+#if defined( USE_MPI )
+   {
+      int errorno = -29000;
+      pm_msg msg;
+      msg.type = PM_NEW_GRID_SIZE;
+      msg.grid_conversion_factor = coarse_conversion;
+
+      for ( int i = 1; i < npes; ++i )
+      {
+         if ( MPI_SUCCESS != MPI_Send( &msg,
+                                       sizeof( pm_msg ),
+                                       MPI_CHAR, 
+                                       i,
+                                       PM_MSG, 
+                                       MPI_COMM_WORLD ) )
+         {
+            cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+            MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+            exit( errorno - myrank );
+         }
+      }
+   }
+#endif
+   vector < double > max_low_fparams;
+   vector < double > max_high_fparams;
+   set_limits( params, max_low_fparams, max_high_fparams );
 
    vector < double > org_low_fparams;
    vector < double > org_high_fparams;
-   set_limits( params, org_low_fparams, org_high_fparams );
+   set_limits( params, org_low_fparams, org_high_fparams, (double) org_max_dimension / coarse_conversion );
+   cout << QString( "org_max_dimension %1 org_conversion_factor %2 coarse_conversion %3 use_max_d %4\n" )
+      .arg( org_max_dimension )
+      .arg( org_conversion_factor )
+      .arg( coarse_conversion )
+      .arg( (double) org_max_dimension / coarse_conversion )
+      ;
 
    vector < double > low_fparams  = org_low_fparams;
-   vector < double > high_fparams = org_high_fparams;;
+   vector < double > high_fparams = org_high_fparams;
    
    vector < double > next_low_fparams  = low_fparams;
    vector < double > next_high_fparams = high_fparams;
@@ -1016,10 +1165,11 @@ bool US_PM::best_ga(
    double new_grid_conversion_factor = grid_conversion_factor;
    
    unsigned int steps = 0;
-
    
    US_Vector::printvector( "best_ga fparams", fparams );
    US_Vector::printvector( "best_ga types", types );
+
+   unsigned int ga_sequential_pegged = 0;
 
    for (; grid_conversion_factor >= finest_conversion; ++steps )
    {
@@ -1032,8 +1182,8 @@ bool US_PM::best_ga(
       
       US_Vector::printvector2( "param limits before clipping:", next_low_fparams, next_high_fparams );
 
-      clip_limits( next_low_fparams , org_low_fparams, org_high_fparams );
-      clip_limits( next_high_fparams, org_low_fparams, org_high_fparams );
+      clip_limits( next_low_fparams , max_low_fparams, max_high_fparams );
+      clip_limits( next_high_fparams, max_low_fparams, max_high_fparams );
       low_fparams  = next_low_fparams;
       high_fparams = next_high_fparams;
 
@@ -1047,7 +1197,6 @@ bool US_PM::best_ga(
       model = best_individual.model;
       ga_delta_to_fparams( best_individual.v, ga_fparams );
       join( params, types, ga_fparams );
-
       {
          QString oname =  QString( "/root/ultrascan/somo/saxs/tmp/last_best_gc_%1" ).arg( grid_conversion_factor ).replace( ".", "_" );
          write_model( oname, model, params );
@@ -1055,9 +1204,21 @@ bool US_PM::best_ga(
       }
 
       // convert limits to new factor
-
-      if ( grid_conversion_factor == finest_conversion )
+      if ( pm_ga_pegged )
       {
+         ga_sequential_pegged++;
+      } else {
+         ga_sequential_pegged = 0;
+      }
+
+      if ( grid_conversion_factor == finest_conversion &&
+           pm_ga_last_max_best_delta_min <= best_delta_min &&
+           ( !pm_ga_pegged || ga_sequential_pegged > USPM_SEQ_PEGGED_LIMIT ) )
+      {
+         if ( ga_sequential_pegged > USPM_SEQ_PEGGED_LIMIT )
+         {
+            cout << QString( "Warning: sequential pegged limit %1 reached\n" ).arg( USPM_SEQ_PEGGED_LIMIT );
+         }
          break;
       }
 
@@ -1080,32 +1241,59 @@ bool US_PM::best_ga(
          return false;
       }
 
-      US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
-
-      set_grid_size( new_grid_conversion_factor );
-#if defined( USE_MPI )
+      if ( !rescale_params( types,
+                            fparams,
+                            new_grid_conversion_factor ) )
       {
-         int errorno = -29000;
-         pm_msg msg;
-         msg.type = PM_NEW_GRID_SIZE;
-         msg.model_fitness = new_grid_conversion_factor;
+         return false;
+      }
+      join( params, types, fparams );
+      ga_seed_params.push_back( params );
 
-         for ( int i = 1; i < npes; ++i )
+      if ( grid_conversion_factor == finest_conversion &&
+           pm_ga_last_max_best_delta_min <= best_delta_min &&
+           pm_ga_pegged )
+      {
+         // leave non-pegged alone
+         for ( int i = 0; i < (int) pm_ga_peggedv.size(); ++i )
          {
-            if ( MPI_SUCCESS != MPI_Send( &msg,
-                                          sizeof( pm_msg ),
-                                          MPI_CHAR, 
-                                          i,
-                                          PM_MSG, 
-                                          MPI_COMM_WORLD ) )
+            if ( !pm_ga_peggedv[ i ] )
             {
-               cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
-               MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
-               exit( errorno - myrank );
+               next_low_fparams [ i ] = low_fparams [ i ];
+               next_high_fparams[ i ] = high_fparams[ i ];
             }
          }
       }
+
+      US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
+
+      if ( new_grid_conversion_factor != grid_conversion_factor )
+      {
+         set_grid_size( new_grid_conversion_factor );
+#if defined( USE_MPI )
+         {
+            int errorno = -29000;
+            pm_msg msg;
+            msg.type = PM_NEW_GRID_SIZE;
+            msg.grid_conversion_factor = new_grid_conversion_factor;
+
+            for ( int i = 1; i < npes; ++i )
+            {
+               if ( MPI_SUCCESS != MPI_Send( &msg,
+                                             sizeof( pm_msg ),
+                                             MPI_CHAR, 
+                                             i,
+                                             PM_MSG, 
+                                             MPI_COMM_WORLD ) )
+               {
+                  cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+                  MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+                  exit( errorno - myrank );
+               }
+            }
+         }
 #endif
+      }
    }
    return true;
 }

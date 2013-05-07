@@ -145,6 +145,7 @@ struct ga_ctl_param
    unsigned int population;
    unsigned int generations;
    double       mutate;
+   double       sa_mutate;
    double       crossover;
    unsigned int elitism;
    unsigned int early_termination;
@@ -396,6 +397,25 @@ class US_PM
    double                                  pm_ga_fitness_secs;
    unsigned int                            pm_ga_fitness_calls;
 
+   void                                    random_normal( 
+                                                         double   mean1, 
+                                                         double   sd1, 
+                                                         double   mean2, 
+                                                         double   sd2,
+                                                         double & x,
+                                                         double & y
+                                                         );
+
+   double                                  pm_ga_last_max_best_delta_min;
+   bool                                    pm_ga_pegged;
+   vector < bool >                         pm_ga_peggedv;
+   bool                                    ga_delta_ok;
+
+   bool                                    ga_fparams_to_individual( vector < double > & fparams, pm_ga_individual & individual );
+   bool                                    ga_params_to_individual( vector < double > & params, pm_ga_individual & individual );
+
+   vector < vector < double > >            ga_seed_params;
+
  public:
    // note: F needs to be the factors for a volume of size grid_conversion_factor ^ 3
 
@@ -600,10 +620,11 @@ class US_PM
    void                    ga_set_params     (
                                               unsigned int        ga_population        = 100,
                                               unsigned int        ga_generations       = 100,
-                                              double              ga_mutate            = 0.3e0,
-                                              double              ga_crossover         = 0.3e0,
+                                              double              ga_mutate            = 0.1e0,
+                                              double              ga_sa_mutate         = 0.5e0,
+                                              double              ga_crossover         = 0.4e0,
                                               unsigned int        ga_elitism           = 2,
-                                              unsigned int        ga_early_termination = 50
+                                              unsigned int        ga_early_termination = 10
                                               );
    void                    ga_set_params     ( map < QString, QString > control_parameters );
 

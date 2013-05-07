@@ -2,6 +2,12 @@
 
 void US_PM::set_grid_size( double grid_conversion_factor, bool quiet )
 {
+   /*
+#if defined( USE_MPI )
+   cout << QString( "%1: Set grid size: %2\n" ).arg( myrank ).arg( grid_conversion_factor );
+#endif
+   */
+
    // be careful with this routine!
    // have to clear because any rtp data is now invalid
    clear();
@@ -76,9 +82,7 @@ US_PM::US_PM(
    org_conversion_factor        = grid_conversion_factor;
    org_cube_size                = grid_conversion_factor * grid_conversion_factor * grid_conversion_factor;
    org_max_dimension            = max_dimension;
-   set_grid_size                ( grid_conversion_factor );
-
-
+   set_grid_size                ( grid_conversion_factor, quiet );
 
    max_dimension_d = ( double ) this->max_dimension;
 
@@ -227,6 +231,7 @@ US_PM::US_PM(
    shs = new SHS_USE( max_harmonics );
    pm_ga_fitness_secs = 0e0;
    pm_ga_fitness_calls = 0;
+   ga_delta_ok = false;
 }
 
 US_PM::~US_PM()
@@ -1004,12 +1009,14 @@ bool US_PM::rescale_params( vector < double > & params,
             break;
 
          case RADIUS:
-            low_fparams [ fpos ] = scale_factor * ( ( bead_radius_over_2gcf + fparams[ fpos ] ) - grid_conversion_factor * refinement_range_pct / 100e0 );
-            high_fparams[ fpos ] = scale_factor * ( ( bead_radius_over_2gcf + fparams[ fpos ] ) + grid_conversion_factor * refinement_range_pct / 100e0 );
+            low_fparams [ fpos ] = scale_factor * ( ( fparams[ fpos ] - bead_radius_over_2gcf ) - grid_conversion_factor * refinement_range_pct / 100e0 );
+            high_fparams[ fpos ] = scale_factor * ( ( fparams[ fpos ] + bead_radius_over_2gcf ) + grid_conversion_factor * refinement_range_pct / 100e0 );
 
             break;
          default:
-            // no conversion on NORM or ANGLE
+            // no scale conversion on NORM or ANGLE
+            low_fparams [ fpos ] = fparams[ fpos ] * ( 1e0 - refinement_range_pct / 100e0 );
+            high_fparams[ fpos ] = fparams[ fpos ] * ( 1e0 + refinement_range_pct / 100e0 );
             break;
          }
       }
