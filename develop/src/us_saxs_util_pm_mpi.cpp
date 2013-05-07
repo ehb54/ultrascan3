@@ -2,6 +2,10 @@
 #include "../include/us_pm.h"
 
 // note: this program uses cout and/or cerr and this should be replaced
+#define USE_AFFINITY
+#if defined( USE_AFFINITY )
+#include <sched.h>
+#endif
 
 ostream & operator << ( ostream& out, const pm_msg& c )
 {
@@ -59,6 +63,18 @@ ostream & operator << ( ostream& out, const pm_msg& c )
 
 bool US_Saxs_Util::run_pm_mpi( QString controlfile )
 {
+
+#if defined( USE_AFFINITY )
+   {
+      cpu_set_t  mask;
+      CPU_ZERO( & mask);
+      CPU_SET( myrank, &mask);
+      if ( sched_setaffinity(0, sizeof( mask ), &mask) < 0 ) 
+      {
+         perror("sched_setaffinity");
+      }
+   }
+#endif
 
    if ( myrank )
    {
