@@ -27,35 +27,12 @@ void US_PM::set_grid_size( double grid_conversion_factor, bool quiet )
    {
       F[ i ] = org_F[ i ] * conv_F;
    }
+   max_dimension = org_max_dimension / grid_conversion_factor;
 }
 
 void US_PM::reset_grid_size( bool quiet )
 {
-   // be careful with this routine!
-   // have to clear because any rtp data is now invalid
-   clear();
-   this->grid_conversion_factor = org_conversion_factor;
-   one_over_grid_conversion_factor = 1e0 / grid_conversion_factor;
-   cube_size   = grid_conversion_factor * grid_conversion_factor * grid_conversion_factor;
-
-   // radius gives a sphere with equal size to the cube:
-   bead_radius              = pow( cube_size / M_PI, 1e0/3e0 );
-   bead_radius_over_2gcf     = ( bead_radius * 5e-1 ) / grid_conversion_factor;
-
-   if ( !quiet )
-   {
-      cout << QString( "US_PM:cube size   %1\n"
-                       "US_PM:bead radius %2\n" )
-         .arg( cube_size )
-         .arg( bead_radius )
-         ;
-   }
-
-   double conv_F = cube_size / org_cube_size;
-   for ( int i = 0; i < (int)F.size(); ++i )
-   {
-      F[ i ] = org_F[ i ] * conv_F;
-   }
+   set_grid_size( org_conversion_factor, quiet );
 }
 
 US_PM::US_PM( 
@@ -87,12 +64,6 @@ US_PM::US_PM(
    this->debug_level            = debug_level;
 
    this->max_dimension   = this->max_dimension < USPM_MAX_VAL ? this->max_dimension : USPM_MAX_VAL;
-
-   org_F                        = F;
-   org_conversion_factor        = grid_conversion_factor;
-   org_cube_size                = grid_conversion_factor * grid_conversion_factor * grid_conversion_factor;
-   set_grid_size                ( grid_conversion_factor );
-
    if ( this->max_dimension != max_dimension )
    {
       cerr << QString( "Warning: maximum dimension requested %1 exceedes maximum allowed %2, reset to maximum allowed\n" )
@@ -100,6 +71,14 @@ US_PM::US_PM(
          .arg( this->max_dimension )
          .ascii();
    }
+
+   org_F                        = F;
+   org_conversion_factor        = grid_conversion_factor;
+   org_cube_size                = grid_conversion_factor * grid_conversion_factor * grid_conversion_factor;
+   org_max_dimension            = max_dimension;
+   set_grid_size                ( grid_conversion_factor );
+
+
 
    max_dimension_d = ( double ) this->max_dimension;
 

@@ -173,6 +173,7 @@ class US_PM
    double                                  cube_size;
    double                                  bead_radius;
    double                                  bead_radius_over_2gcf;
+   int                                     org_max_dimension;
 
    // active grid:
    vector < double >                       q;

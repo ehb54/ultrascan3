@@ -976,6 +976,7 @@ bool US_PM::best_ga(
                     double              conversion_divisor
                     )
 {
+   US_Vector::printvector( "best_ga: params", params );
    cout << QString( "best_ga:     points_max             %1\n"
                     "             finest_conversion      %2\n"
                     "             coarse_conversion      %3\n"
@@ -988,11 +989,17 @@ bool US_PM::best_ga(
       .arg( conversion_divisor )
       ;
 
-   if ( !zero_md0_params( params ) )
+   
+   vector < int >    types;
+   vector < double > fparams;
+   split( params, types, fparams );
+
+   if ( !zero_params( params, types ) )
    {
       error_msg = "best_ga: " + error_msg;
       return false;
    }
+   split( params, types, fparams );
 
    set_grid_size( coarse_conversion );
 
@@ -1010,9 +1017,9 @@ bool US_PM::best_ga(
    
    unsigned int steps = 0;
 
-   vector < int >    types;
-   vector < double > fparams;
-   split( params, types, fparams );
+   
+   US_Vector::printvector( "best_ga fparams", fparams );
+   US_Vector::printvector( "best_ga types", types );
 
    for (; grid_conversion_factor >= finest_conversion; ++steps )
    {
