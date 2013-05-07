@@ -1,4 +1,4 @@
-#include "../include/us_pm.h"
+#include "pm_worker.h"
 
 // to add a new type
 //  define model generation routine: 
@@ -14,63 +14,8 @@
 // handling routines:
 
 // finds best one model
-bool US_PM::best_md0( 
-                     vector < double > & params, 
-                     vector < double > & low_fparams, 
-                     vector < double > & high_fparams, 
-                     set < pm_point >  & model 
-                     )
-{
-   if ( params.size() < 1 )
-   {
-      error_msg = "best_md0: params[0] must be set";
-      return false;
-   }
-   int this_type = (int) params[ 0 ];
-   if ( this_type >= (int) object_names.size() ||
-        this_type < 0 )
-   {
-      error_msg = "best_md0: params[0] invalid param";
-      return false;
-   }
 
-   if ( !low_fparams.size() )
-   {
-      cerr << "best_md0: notice, setting default range\n";
-      zero_md0_params( params );
-      set_limits( params, low_fparams, high_fparams );
-   }
-
-   if ( (int)low_fparams.size() != object_m0_parameters[ this_type ] ||
-        (int)high_fparams.size() != object_m0_parameters[ this_type ] )
-   {
-      error_msg = "best_md0: low_fparams and/or high_fparams incorrect size";
-      return false;
-   }
-
-   for ( int i = 0; i < (int)low_fparams.size(); ++i )
-   {
-      if ( low_fparams[ i ] > high_fparams[ i ] )
-      {
-         error_msg = "best_md0: fparams low > high";
-         return false;
-      }
-   }
-
-   switch( this_type )
-   {
-   case SPHERE        : return best_sphere       ( params, low_fparams, high_fparams, model ); break;
-   case CYLINDER      : return best_cylinder     ( params, low_fparams, high_fparams, model ); break;
-   case SPHEROID      : return best_spheroid     ( params, low_fparams, high_fparams, model ); break;
-   case ELLIPSOID     : return best_ellipsoid    ( params, low_fparams, high_fparams, model ); break;
-   case TORUS         : return best_torus        ( params, low_fparams, high_fparams, model ); break;
-      // case TORUS_SEGMENT : return best_torus_segment( params, low_fparams, high_fparams, model ); break;
-   default: error_msg = "best_md0: invalid type"; return false; break;
-   }
-   return false;
-}
-
-void US_PM::init_objects()
+void PM_WORKER::init_objects()
 {
    object_names          .clear();
    object_m0_parameters  .clear();
@@ -100,7 +45,6 @@ void US_PM::init_objects()
       }
       object_parameter_types.push_back( tmp_ptv );
    }
-
 
    object_names        .push_back( "cylinder" );
    object_m0_parameters.push_back( 2 ); // height length
@@ -198,7 +142,7 @@ void US_PM::init_objects()
    /* later turn on torus_segment
    object_names        .push_back( "torus_segment" );
    object_m0_parameters.push_back( 3 ); // radius1, radius2, end theta
-   object_best_f       .push_back( &US_PM::best_torus_segment );
+   object_best_f       .push_back( &PM_WORKER::best_torus_segment );
    {
       tmp_pt .clear();
       tmp_ptv.clear();
@@ -229,10 +173,8 @@ void US_PM::init_objects()
    object_type_name[ ANGLE  ] = "Angle";
 }
 
-bool US_PM::create_1_model( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
+bool PM_WORKER::create_1_model( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
 {
-   debug( 1, "create_1_model" );
-
    if ( !params.size() )
    {
       error_msg = "create_1_model called with no params!";
@@ -263,7 +205,7 @@ bool US_PM::create_1_model( int model_pos, vector < double > & params, vector < 
       */
 
    default:
-      error_msg = QString( "US_PM::create_1_model: object type %1 not defined" ).arg( ( int )params[ 0 ] );
+      error_msg = "PM_WORKER::create_1_model: object type not defined";
       return false;
       break;
    }
@@ -272,9 +214,8 @@ bool US_PM::create_1_model( int model_pos, vector < double > & params, vector < 
 
 // objects themselves:
 
-bool US_PM::sphere( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
+bool PM_WORKER::sphere( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
 {
-   debug( 1, "sphere" );
    int ofs = 1;
    double radius = params[ ofs++ ];
 
@@ -316,8 +257,6 @@ bool US_PM::sphere( int model_pos, vector < double > & params, vector < double >
 
    double one_over_radius2 = 1e0 / ( ( radius + bead_radius_over_2gcf ) * ( radius + bead_radius_over_2gcf ) );
 
-   debug( 2, QString( "sphere @ %1 %2 %3 radius %4" ).arg( centerx ).arg( centery ).arg( centerz ).arg( radius ) );
-
    int minx = (int) ( centerx - radius - 1 );
    int maxx = (int) ( centerx + radius + 1 );
    int miny = (int) ( centery - radius - 1 );
@@ -348,9 +287,8 @@ bool US_PM::sphere( int model_pos, vector < double > & params, vector < double >
    return true;
 }
 
-bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
+bool PM_WORKER::cylinder( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
 {
-   debug( 1, "cylinder----------------------------------------" );
    int ofs = 1;
    double radius = params[ ofs++ ];
 
@@ -434,16 +372,6 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
       params_left.push_back( params[ i ] );
    }
 
-   debug( 1, QString( "cylinder radius %1 start %2,%3,%4 end %5,%6,%7" )
-          .arg( radius )
-          .arg( basex )
-          .arg( basey )
-          .arg( basez )
-          .arg( endx )
-          .arg( endy )
-          .arg( endz ) 
-          );
-
    // make a bounding box
 
    int minx = (int) ( basex - radius - 1 );
@@ -452,15 +380,6 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
    int maxy = (int) ( endy  + radius + 1 );
    int minz = (int) ( basez - radius - 1 );
    int maxz = (int) ( endz  + radius + 1 );
-
-   debug( 2, QString( "cylinder:bounding box %1,%2,%3 %4,%5,%6" )
-          .arg( minx )
-          .arg( miny )
-          .arg( minz )
-          .arg( maxx )
-          .arg( maxy )
-          .arg( maxz )
-          );
 
    pm_point pmp;
 
@@ -493,12 +412,6 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
       };
 
    double radius2 = radius * radius;
-   debug( 1, QString( "cylinder: normal %1,%2,%3 length^2 %4 radius^2 %5" )
-          .arg( nvh[ 0 ] )
-          .arg( nvh[ 1 ] )
-          .arg( nvh[ 2 ] )
-          .arg( h2 )
-          .arg( radius2 ) );
 
    double r2;
 
@@ -575,9 +488,8 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
    return true;
 }
 
-bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
+bool PM_WORKER::ellipsoid( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
 {
-   debug( 1, "ellipsoid" );
    int ofs = 1;
    double radiusa = params[ ofs++ ];
    double radiusb = params[ ofs++ ];
@@ -626,39 +538,16 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
 
    // make a bounding box
 
-   debug( 1, QString( "ellipsoid: center %1,%2,%3 norm vector %4,%5,%6" )
-          .arg( centerx )
-          .arg( centery )
-          .arg( centerz )
-          .arg( normx )
-          .arg( normy )
-          .arg( normz )
-          );
 
    double radiusmax = radiusa > radiusb ? radiusa : radiusb;
    radiusmax = radiusmax > radiusc ? radiusmax : radiusc;
    
-   debug( 1, QString( "ellipsoid: radiusa %1 radiusb %2 radiusmax %3" )
-          .arg( radiusa )
-          .arg( radiusb )
-          .arg( radiusmax )
-          );
-
    int minx = (int) ( centerx - 2 * radiusmax - 2 );
    int maxx = (int) ( centerx + 2 * radiusmax + 2 );
    int miny = (int) ( centery - 2 * radiusmax - 2 );
    int maxy = (int) ( centery + 2 * radiusmax + 2 );
    int minz = (int) ( centerz - 2 * radiusmax - 2 );
    int maxz = (int) ( centerz + 2 * radiusmax + 2 );
-
-   debug( 2, QString( "ellispoid:bounding box %1,%2,%3 %4,%5,%6\n" )
-          .arg( minx )
-          .arg( miny )
-          .arg( minz )
-          .arg( maxx )
-          .arg( maxy )
-          .arg( maxz )
-          );
 
    pm_point pmp;
 
@@ -737,9 +626,8 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
    return true;
 }
 
-bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
+bool PM_WORKER::spheroid( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
 {
-   debug( 1, "spheroid" );
    int ofs = 1;
    double radiusa = params[ ofs++ ];
    double radiusb = params[ ofs++ ];
@@ -790,23 +678,8 @@ bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double
 
    // make a bounding box
 
-   debug( 1, QString( "spheroid: center %1,%2,%3 norm vector %4,%5,%6" )
-          .arg( centerx )
-          .arg( centery )
-          .arg( centerz )
-          .arg( normx )
-          .arg( normy )
-          .arg( normz )
-          );
-
    double radiusmax = radiusa > radiusb ? radiusa : radiusb;
    
-   debug( 1, QString( "spheroid: radiusa %1 radiusb %2 radiusmax %3" )
-          .arg( radiusa )
-          .arg( radiusb )
-          .arg( radiusmax )
-          );
-
    int minx = (int) ( centerx - 2 * radiusmax - 2 );
    int maxx = (int) ( centerx + 2 * radiusmax + 2 );
    int miny = (int) ( centery - 2 * radiusmax - 2 );
@@ -886,9 +759,8 @@ bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double
    return true;
 }
 
-bool US_PM::torus_segment( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
+bool PM_WORKER::torus_segment( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
 {
-   debug( 1, "torus_segment" );
    int ofs = 1;
    double radiusa = params[ ofs++ ];
    double radiusb = params[ ofs++ ];
@@ -937,23 +809,8 @@ bool US_PM::torus_segment( int model_pos, vector < double > & params, vector < d
 
    // make a bounding box
 
-   debug( 1, QString( "spheroid: center %1,%2,%3 norm vector %4,%5,%6" )
-          .arg( centerx )
-          .arg( centery )
-          .arg( centerz )
-          .arg( normx )
-          .arg( normy )
-          .arg( normz )
-          );
-
    double radiusmax = radiusa > radiusb ? radiusa : radiusb;
    
-   debug( 1, QString( "spheroid: radiusa %1 radiusb %2 radiusmax %3" )
-          .arg( radiusa )
-          .arg( radiusb )
-          .arg( radiusmax )
-          );
-
    int minx = (int) ( centerx - radiusmax - 1 );
    int maxx = (int) ( centerx + radiusmax + 1 );
    int miny = (int) ( centery - radiusmax - 1 );
@@ -997,9 +854,8 @@ bool US_PM::torus_segment( int model_pos, vector < double > & params, vector < d
    return true;
 }
 
-bool US_PM::torus( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
+bool PM_WORKER::torus( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )
 {
-   debug( 1, "torus" );
    int ofs = 1;
    double radiusa = params[ ofs++ ];
    double radiusb = params[ ofs++ ];
@@ -1047,23 +903,8 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
 
    // make a bounding box
 
-   debug( 1, QString( "torus: center %1,%2,%3 norm vector %4,%5,%6" )
-          .arg( centerx )
-          .arg( centery )
-          .arg( centerz )
-          .arg( normx )
-          .arg( normy )
-          .arg( normz )
-          );
-
    double radiusmax = radiusa > radiusb ? radiusa : radiusb;
    
-   debug( 1, QString( "torus: radiusa %1 radiusb %2 radiusmax %3" )
-          .arg( radiusa )
-          .arg( radiusb )
-          .arg( radiusmax )
-          );
-
    int minx = (int) ( - 1 * ( radiusa + radiusb + 1 ) );
    int maxx = (int) ( 1 * ( radiusa + radiusb + 1 ) );
    int miny = (int) ( - 1 * ( radiusa + radiusb + 1 ) );

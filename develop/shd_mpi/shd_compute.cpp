@@ -14,7 +14,6 @@ bool SHD::compute_amplitudes( vector < complex < float > > & Av )
    double legendre_time = 0e0;
 #endif
 
-
    shd_data tmp_data;
    shd_data *datap = &tmp_data;
    tmp_data.A1v    = A1v0;
