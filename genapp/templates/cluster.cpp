@@ -54,6 +54,8 @@ ___finalize_gui___
 
    background->addLayout ( hbl_bottom );
    background->addSpacing( 4 );
+   qApp->processEvents();
+   resize( 0, 0 );
 }
 
 void ___classname___::cancel()

@@ -36,6 +36,8 @@ map     string  s - - pmbestdeltamin "pmbestdeltamin" "Delta minimum (default .0
 map     string  s - - pmdebug "pmdebug" "Debug level 1,2 or 3 (default: 0)"
 _end
 _elements
+showhidelabel main_label "Main model type controls"
+row
 variable pmtypes
 row
 checkbox pmincrementally
@@ -48,6 +50,10 @@ row
 variable pmgridsize
 row
 checkbox pmapproxmaxdimension
+row
+endshowhidelabel main_label
+showhidelabel supp_label "Supplementary controls"
+hide supp_label
 row
 variable pmharmonics
 row
@@ -65,6 +71,10 @@ variable pmbestrefinementrangepct
 row
 variable pmmaxdimension
 row
+endshowhidelabel supp_label
+showhidelabel ga_label "Genetic algorithm controls"
+hide ga_label
+row
 variable pmgapopulation
 row
 variable pmgagenerations
@@ -81,6 +91,10 @@ variable pmgaearlytermination
 row
 variable pmgapointsmax
 row
+endshowhidelabel ga_label
+showhidelabel misc_label "Miscellenaous controls"
+hide misc_label
+row
 variable pmbestdeltastart
 row
 variable pmbestdeltadivisor
@@ -89,6 +103,7 @@ variable pmbestdeltamin
 row
 variable pmdebug
 row
+endshowhidelabel misc_label
 button      save
 button      load
 row

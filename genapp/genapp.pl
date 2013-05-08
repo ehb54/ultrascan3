@@ -118,6 +118,10 @@ for ( $i = 0; $i < @required_token_array; $i++ )
 @known_element_token_array = (
                               "editor",
                               "row",
+                              "label",
+                              "showhidelabel",
+                              "endshowhidelabel",
+                              "hide",
                               "variable",
                               "button",
                               "checkbox",
@@ -604,6 +608,8 @@ add_includes( "qlayout.h" );
     my $cpp_functions;
     my $cpp_functions_update_fields;
     my $cpp_clean_parameters;
+    my $used_show_hide;
+    my %show_hide_active;
 
     $private .= 
         "      QLabel *                                lbl_title;\n";
@@ -677,9 +683,14 @@ add_includes( "qlayout.h" );
                 "   hbl->addSpacing( 4 );\n" 
                 ;
         }
-            
 
-        if ( $name &&  $tok !~ /^(variable|checkbox)$/ && $existing_names{ $name } )
+        if ( $name &&  $tok =~ /^(endshowhidelabel|hide)$/ && !$existing_names{ $name } )
+        {
+            $errors .= "$0: $fin: $tok must be after showhidelabel $name\n";
+            next;
+        }
+
+        if ( $name &&  $tok !~ /^(variable|checkbox|endshowhidelabel|hide)$/ && $existing_names{ $name } )
         {
             $errors .= "$0: $fin: duplicate variable name $name\n";
             next;
@@ -687,6 +698,127 @@ add_includes( "qlayout.h" );
         $existing_names{ $name }++;
 
         print "for element $i tok <$tok> name <$name> desc <$desc>\n" if $debug > 1;
+
+        if ( $tok =~ /^label$/ )
+        {
+            add_includes( "qlabel.h" );
+            add_includes( "qwidget.h" );
+            add_includes( "vector" );
+
+            my $label = "lbl_$name";
+            $private .= 
+                "      QLabel *                                $label;\n" .
+                "";
+
+            $setup_gui .= 
+                "\n" .
+                "   $label =  new QLabel      ( tr( $desc ), this );\n" .
+                "   $label -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );\n" .
+                "   $label -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );\n" .
+                "   $label -> setMinimumHeight( minHeight1 );\n" .
+                "   $label -> setPalette      ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );\n" .
+                "   $label -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );\n" .
+                "\n";
+                ;
+
+            {
+                my $key;
+                foreach $key ( keys %show_hide_active )
+                {
+                    $setup_gui .= "   widgets_${key}.push_back( $label );\n";
+                }
+            }
+
+            $finalize_gui .= 
+                "   hbl->addWidget( $label );\n" 
+                ;
+        }
+
+        if ( $tok =~ /^showhidelabel$/ )
+        {
+            add_includes( "qlabel.h" );
+            add_includes( "us_mqlabel.h" );
+
+            my $label = "lbl_$name";
+            $private .= 
+                "      QLabel *                                $label;\n" .
+                "      vector < QWidget * >                    widgets_$name;\n" .
+                "";
+
+            $setup_gui .= 
+                "\n" .
+                "   $label =  new mQLabel     ( tr( $desc ), this );\n" .
+                "   $label -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );\n" .
+                "   $label -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );\n" .
+                "   $label -> setMinimumHeight( minHeight1 );\n" .
+                "   $label -> setPalette      ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );\n" .
+                "   $label -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );\n" .
+                "   connect( $label, SIGNAL( pressed() ), SLOT( hide_$name() ) );\n" .
+                "\n";
+                ;
+
+            {
+                my $key;
+                foreach $key ( keys %show_hide_active )
+                {
+                    $setup_gui .= "   widgets_${key}.push_back( $label );\n";
+                }
+            }
+
+            $finalize_gui .= 
+                "   hbl->addWidget( $label );\n" 
+                ;
+
+            $private_slots .=
+                "      void                                    hide_$name();\n";
+
+            $cpp_functions .= <<__END
+void $subs{ "___classname___" }::hide_$name()
+{
+   hide_widgets( widgets_$name, widgets_${name}.size() && widgets_${name}[ 0 ]->isVisible() );
+}
+__END
+            ;
+
+            if ( !$used_show_hide )
+            {
+                $used_show_hide = true;
+
+                $private .= 
+                    "      void                                    hide_widgets( vector < QWidget * >, bool do_hide = true, bool do_resize = true );\n" .
+                    "";
+
+                $cpp_functions .= <<__END
+
+void $subs{ "___classname___" }::hide_widgets( vector < QWidget * > w, bool do_hide, bool do_resize )
+{
+   for ( unsigned int i = 0; i < ( unsigned int )w.size(); i++ )
+   {
+       do_hide ? w[ i ]->hide() : w[ i ]->show();
+   }
+   if ( do_resize )
+   {
+       qApp->processEvents();
+       resize( 0, 0 );
+   }
+}
+__END
+                ;
+            }                
+            $show_hide_active{ $name } = true;
+        }
+
+        if ( $tok =~ /^endshowhidelabel$/ )
+        {
+            delete( $show_hide_active{ $name } );
+        }
+
+        if ( $tok =~ /^hide$/ )
+        {
+            $finalize_gui .= 
+                "   hide_widgets( widgets_$name, true, false );\n"
+                ;
+        }
 
         if ( $tok =~ /^button/ )
         {
@@ -712,6 +844,14 @@ add_includes( "qlayout.h" );
                 "   $button -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );\n" .
                 "   connect( $button, SIGNAL( clicked() ), SLOT( $name() ) );\n" 
                 ;
+
+            {
+                my $key;
+                foreach $key ( keys %show_hide_active )
+                {
+                    $setup_gui .= "   widgets_${key}.push_back( $button );\n";
+                }
+            }
 
             my $function_code;
 
@@ -849,6 +989,14 @@ __END
                 "   $name -> reset           ();\n"
                 ;
 
+            {
+                my $key;
+                foreach $key ( keys %show_hide_active )
+                {
+                    $setup_gui .= "   widgets_${key}.push_back( $name );\n";
+                }
+            }
+
             $finalize_gui .= 
                 "   hbl->addWidget( $name );\n" 
                 ;
@@ -897,6 +1045,19 @@ __END
                 "   $name -> setMinimumHeight(300);\n" 
                 ;
 
+
+            {
+                my $key;
+                foreach $key ( keys %show_hide_active )
+                {
+                    $setup_gui .=
+                        "   widgets_${key}.push_back( $name );\n" .
+                        "   widgets_${key}.push_back( ${name}_menubar );\n" .
+                        "   widgets_${key}.push_back( ${name}_file );\n" .
+                            "";
+                }
+            }
+
             $finalize_gui .= 
                 "   {\n" .
                 "      QBoxLayout *vbl_editor_group = new QVBoxLayout( 0 );\n" .
@@ -935,6 +1096,17 @@ __END
                 "   lbl_${name} ->setMinimumWidth ( QFontMetrics( lbl_${name}->font() ).maxWidth() * $maximum_desc_length );\n" .
                 "\n" .
                 "   le_${name} = new QLineEdit     ( this, \"${name} Line Edit\" );\n";
+
+            {
+                my $key;
+                foreach $key ( keys %show_hide_active )
+                {
+                    $setup_gui .= 
+                        "   widgets_${key}.push_back( lbl_${name} );\n" .
+                        "   widgets_${key}.push_back( le_${name} );\n" .
+                        "";
+                }
+            }
 
             if ( $variable_method{ $name } =~ /^input$/ )
             {
@@ -1072,6 +1244,14 @@ __END
                 "   cb_${name} ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );\n" .
                 "   cb_${name} ->setMinimumWidth ( QFontMetrics( cb_${name}->font() ).maxWidth() * $maximum_desc_length );\n" .
                 "\n";
+
+            {
+                my $key;
+                foreach $key ( keys %show_hide_active )
+                {
+                    $setup_gui .= "   widgets_${key}.push_back( cb_${name} );\n";
+                }
+            }
 
             if ( $variable_method{ $name } =~ /^input$/ )
             {

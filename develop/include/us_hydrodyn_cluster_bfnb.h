@@ -11,6 +11,7 @@
 #include "qlabel.h"
 #include "qstring.h"
 #include "qlayout.h"
+#include "us_mqlabel.h"
 #include "qlineedit.h"
 #include "qfontmetrics.h"
 #include "qcheckbox.h"
@@ -42,6 +43,9 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
 
       QLabel *                                lbl_title;
       QLabel *                                lbl_credits_1;
+      QLabel *                                lbl_main_label;
+      vector < QWidget * >                    widgets_main_label;
+      void                                    hide_widgets( vector < QWidget * >, bool do_hide = true, bool do_resize = true );
       QLabel *                                lbl_pmtypes;
       QLineEdit *                             le_pmtypes;
       QCheckBox *                             cb_pmincrementally;
@@ -53,6 +57,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       QLabel *                                lbl_pmgridsize;
       QLineEdit *                             le_pmgridsize;
       QCheckBox *                             cb_pmapproxmaxdimension;
+      QLabel *                                lbl_supp_label;
+      vector < QWidget * >                    widgets_supp_label;
       QLabel *                                lbl_pmharmonics;
       QLineEdit *                             le_pmharmonics;
       QLabel *                                lbl_pmseed;
@@ -69,6 +75,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       QLineEdit *                             le_pmbestrefinementrangepct;
       QLabel *                                lbl_pmmaxdimension;
       QLineEdit *                             le_pmmaxdimension;
+      QLabel *                                lbl_ga_label;
+      vector < QWidget * >                    widgets_ga_label;
       QLabel *                                lbl_pmgapopulation;
       QLineEdit *                             le_pmgapopulation;
       QLabel *                                lbl_pmgagenerations;
@@ -85,6 +93,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       QLineEdit *                             le_pmgaearlytermination;
       QLabel *                                lbl_pmgapointsmax;
       QLineEdit *                             le_pmgapointsmax;
+      QLabel *                                lbl_misc_label;
+      vector < QWidget * >                    widgets_misc_label;
       QLabel *                                lbl_pmbestdeltastart;
       QLineEdit *                             le_pmbestdeltastart;
       QLabel *                                lbl_pmbestdeltadivisor;
@@ -107,6 +117,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
 
    private slots:
 
+      void                                    hide_main_label();
       void                                    update_pmtypes( const QString & );
       void                                    set_pmincrementally();
       void                                    set_pmallcombinations();
@@ -114,6 +125,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       void                                    update_pmoutname( const QString & );
       void                                    update_pmgridsize( const QString & );
       void                                    set_pmapproxmaxdimension();
+      void                                    hide_supp_label();
       void                                    update_pmharmonics( const QString & );
       void                                    update_pmseed( const QString & );
       void                                    update_pmmemory( const QString & );
@@ -122,6 +134,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       void                                    update_pmbestconversiondivisor( const QString & );
       void                                    update_pmbestrefinementrangepct( const QString & );
       void                                    update_pmmaxdimension( const QString & );
+      void                                    hide_ga_label();
       void                                    update_pmgapopulation( const QString & );
       void                                    update_pmgagenerations( const QString & );
       void                                    update_pmgamutate( const QString & );
@@ -130,6 +143,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       void                                    update_pmgaelitism( const QString & );
       void                                    update_pmgaearlytermination( const QString & );
       void                                    update_pmgapointsmax( const QString & );
+      void                                    hide_misc_label();
       void                                    update_pmbestdeltastart( const QString & );
       void                                    update_pmbestdeltadivisor( const QString & );
       void                                    update_pmbestdeltamin( const QString & );

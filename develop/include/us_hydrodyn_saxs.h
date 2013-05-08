@@ -103,22 +103,8 @@ class mQLineEdit : public QLineEdit
       virtual void focusOutEvent ( QFocusEvent *e );
 };
 
-class mQLabel : public QLabel
-{
-   Q_OBJECT
+#include "us_mqlabel.h"
 
-   public:
-
-      mQLabel ( QWidget *parent = 0 , const char * name = 0 );
-      mQLabel ( const QString & text, QWidget *parent = 0 , const char * name = 0 );
-      ~mQLabel();
-
-   signals:
-      void pressed();
-
-   protected:
-      virtual void mousePressEvent ( QMouseEvent *e );
-};
 
 class mQPushButton : public QPushButton
 {

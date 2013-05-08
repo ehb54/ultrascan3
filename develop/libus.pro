@@ -589,6 +589,7 @@ HEADERS += \
   include/us_imgviewer.h \
   include/us_infopanel.h \
   include/us_json.h \
+  include/us_mqlabel.h \
   include/us_license.h \
   include/us_lm.h \
   include/us_lncr2.h \
