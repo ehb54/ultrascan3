@@ -1,3 +1,8 @@
+
+#if defined( USE_MPI )
+#  include <mpi.h>
+#endif
+
 #define  PI 3.141592654
 #define  SMAX 20
 

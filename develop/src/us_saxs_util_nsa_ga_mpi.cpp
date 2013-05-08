@@ -1,6 +1,7 @@
+#include <mpi.h>
+
 #include "../include/us_saxs_util.h"
 
-#include <mpi.h>
 extern int npes;
 extern int myrank;
 

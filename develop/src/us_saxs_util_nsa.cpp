@@ -1,3 +1,8 @@
+#if defined( USE_MPI )
+#   include <mpi.h>
+    extern int myrank;
+#endif
+
 #include "../include/us_saxs_util.h"
 #include "../include/us_saxs_gp.h"
 #include "../include/us_hydrodyn_pat.h"

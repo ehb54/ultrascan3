@@ -1,6 +1,10 @@
 #ifndef US_SAXS_UTIL_ASAB1_H
 #define US_SAXS_UTIL_ASAB1_H
 
+#if defined( USE_MPI )
+#  include <mpi.h>
+#endif
+
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_hydro.h"
 #include "../include/us_hydrodyn_pdbdefs.h"

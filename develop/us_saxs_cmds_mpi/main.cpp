@@ -1,6 +1,6 @@
+#include <mpi.h>
 #include "../include/us_saxs_cmds_t.h"
 #include "../include/us_revision.h"
-#include <mpi.h>
 
 // note: this program uses cout and/or cerr and this should be replaced
 

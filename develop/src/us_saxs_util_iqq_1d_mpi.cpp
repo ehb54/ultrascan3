@@ -1,7 +1,7 @@
+#include <mpi.h>
 #include "../include/us_saxs_util.h"
 #include "../include/us_file_util.h"
 #include "../include/us_timer.h"
-#include <mpi.h>
 #include <sys/time.h>
 extern int npes;
 extern int myrank;

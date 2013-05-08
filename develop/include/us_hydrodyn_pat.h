@@ -1,6 +1,10 @@
 #ifndef US_HYDRODYN_PAT_H
 #define US_HYDRODYN_PAT_H
 
+#if defined( USE_MPI )
+#  include <mpi.h>
+#endif
+
 #include "../include/us_hydrodyn_supc.h"
 
 struct dati1_pat
