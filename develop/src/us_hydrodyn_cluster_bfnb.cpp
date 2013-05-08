@@ -80,7 +80,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    cb_pmincrementally ->setMinimumHeight ( minHeight1 );
    cb_pmincrementally ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
    cb_pmincrementally ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_pmincrementally ->setMinimumWidth ( QFontMetrics( cb_pmincrementally->font() ).maxWidth() * 19 );
+   cb_pmincrementally ->setMinimumWidth  ( QFontMetrics( cb_pmincrementally->font() ).maxWidth() * 19 );
 
    widgets_main_label.push_back( cb_pmincrementally );
    cb_pmincrementally ->setChecked        ( parameters->count( "pmincrementally" ) && ( *parameters )[ "pmincrementally" ] == "true" ? true : false );
@@ -90,7 +90,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    cb_pmallcombinations ->setMinimumHeight ( minHeight1 );
    cb_pmallcombinations ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
    cb_pmallcombinations ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_pmallcombinations ->setMinimumWidth ( QFontMetrics( cb_pmallcombinations->font() ).maxWidth() * 19 );
+   cb_pmallcombinations ->setMinimumWidth  ( QFontMetrics( cb_pmallcombinations->font() ).maxWidth() * 19 );
 
    widgets_main_label.push_back( cb_pmallcombinations );
    cb_pmallcombinations ->setChecked        ( parameters->count( "pmallcombinations" ) && ( *parameters )[ "pmallcombinations" ] == "true" ? true : false );
@@ -114,7 +114,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmrayleighdrho ->setMinimumWidth   ( 150 );
    connect( le_pmrayleighdrho, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmrayleighdrho( const QString & ) ) );
 
-   lbl_pmoutname = new QLabel      ( tr( "Output name prefix (default: blank)" ), this );
+   lbl_pmoutname = new QLabel      ( tr( "Output name prefix (default: no prefix)" ), this );
    lbl_pmoutname ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmoutname ->setMinimumHeight( minHeight1 );
    lbl_pmoutname ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
@@ -154,9 +154,13 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    cb_pmapproxmaxdimension ->setMinimumHeight ( minHeight1 );
    cb_pmapproxmaxdimension ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
    cb_pmapproxmaxdimension ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_pmapproxmaxdimension ->setMinimumWidth ( QFontMetrics( cb_pmapproxmaxdimension->font() ).maxWidth() * 19 );
+   cb_pmapproxmaxdimension ->setMinimumWidth  ( QFontMetrics( cb_pmapproxmaxdimension->font() ).maxWidth() * 19 );
 
    widgets_main_label.push_back( cb_pmapproxmaxdimension );
+   if ( !parameters->count( "pmapproxmaxdimension" ) )
+   {
+      ( *parameters )[ "pmapproxmaxdimension" ] = "true";
+   }
    cb_pmapproxmaxdimension ->setChecked        ( parameters->count( "pmapproxmaxdimension" ) && ( *parameters )[ "pmapproxmaxdimension" ] == "true" ? true : false );
    connect( cb_pmapproxmaxdimension, SIGNAL( clicked() ), SLOT( set_pmapproxmaxdimension() ) );
 
@@ -823,12 +827,6 @@ void US_Hydrodyn_Cluster_Bfnb::closeEvent( QCloseEvent *e )
         (*parameters)[ "pmgridsize" ].isEmpty() )
    {
       parameters->erase( "pmgridsize" );
-   }
-   if ( parameters->count( "pmapproxmaxdimension" ) &&
-        ( (*parameters)[ "pmapproxmaxdimension" ].isEmpty() ||
-          (*parameters)[ "pmapproxmaxdimension" ] == "false" ) )
-   {
-      parameters->erase( "pmapproxmaxdimension" );
    }
    if ( parameters->count( "pmharmonics" ) &&
         (*parameters)[ "pmharmonics" ].isEmpty() )

@@ -669,6 +669,9 @@ add_includes( "qlayout.h" );
         my $name = $1;
         s/^$name\s*//;
         my $desc = $_;
+        my $default = $desc;
+        $default =~ s/\s+(.*|)$//;
+
         if ( !$desc )
         {
             $desc = '"' . uc( substr( $name, 0, 1 )  ) . substr( $name, 1, length( $name ) - 1 ) . '"';
@@ -1242,7 +1245,7 @@ __END
                 "   cb_${name} ->setMinimumHeight ( minHeight1 " . ( $variable_desc_lines{ $name } > 1 ? "*  $variable_desc_lines{ $name } " : "" ) . ");\n" .
                 "   cb_${name} ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );\n" .
                 "   cb_${name} ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );\n" .
-                "   cb_${name} ->setMinimumWidth ( QFontMetrics( cb_${name}->font() ).maxWidth() * $maximum_desc_length );\n" .
+                "   cb_${name} ->setMinimumWidth  ( QFontMetrics( cb_${name}->font() ).maxWidth() * $maximum_desc_length );\n" .
                 "\n";
 
             {
@@ -1280,11 +1283,22 @@ __END
 __END
                         ;
                  } else {
-                    $setup_gui .= 
-                    "   cb_${name} ->setChecked        ( parameters->count( \"$name\" ) && ( *parameters )[ \"$name\" ] == \"true\" ? true : false );\n" 
-                        ;
+                     if ( $default eq "true" )
+                     {
+                         $setup_gui .= 
+                             "   if ( !parameters->count( \"$name\" ) )\n" .
+                             "   {\n" .
+                             "      ( *parameters )[ \"$name\" ] = \"true\";\n" .
+                             "   }\n" .
+                             "";
+                     } 
+                     $setup_gui .= 
+                         "   cb_${name} ->setChecked        ( parameters->count( \"$name\" ) && ( *parameters )[ \"$name\" ] == \"true\" ? true : false );\n" 
+                         ;
 
-                    $cpp_clean_parameters .= <<__END
+                     if ( $default ne "true" )
+                     {
+                         $cpp_clean_parameters .= <<__END
    if ( parameters->count( "$name" ) &&
         ( (*parameters)[ "$name" ].isEmpty() ||
           (*parameters)[ "$name" ] == \"false\" ) )
@@ -1292,7 +1306,8 @@ __END
       parameters->erase( "$name" );
    }
 __END
-                   ;
+                         ;
+                     }
                 }
             }
 

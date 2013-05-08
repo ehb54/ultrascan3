@@ -11,7 +11,7 @@ map     string  s - - pmtypes "pmtypes" "Model type list\n(0=sphere,1=cylinder,2
 map     string  s - - pmincrementally "pmincrementally" "Compute models for all lengths upto above"
 map     string  s - - pmallcombinations "pmallcombinations" "Compute models for all unique combinations"
 map     string  s - - pmrayleighdrho "pmrayleighdrho" "Delta rho (sample - buffer):"
-map     string  s - - pmoutname "pmoutname" "Output name prefix (default: blank)"
+map     string  s - - pmoutname "pmoutname" "Output name prefix (default: no prefix)"
 map     string  s - - pmgridsize "pmgridsize" "Grid size (A)"
 map     string  s - - pmapproxmaxdimension "pmapproxmaxdimension" "Automatically compute maximum dimension"
 map     string  s - - pmharmonics "pmharmonics" "Maximum harmonics (default: 15)"
@@ -49,7 +49,7 @@ variable pmoutname
 row
 variable pmgridsize
 row
-checkbox pmapproxmaxdimension
+checkbox pmapproxmaxdimension true
 row
 endshowhidelabel main_label
 showhidelabel supp_label "Supplementary controls"
