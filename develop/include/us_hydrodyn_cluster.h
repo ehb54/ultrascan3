@@ -182,6 +182,8 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
                                                              QString common_prefix,
                                                              bool    use_extension );
 
+      void          create_additional_methods_parallel_pkg_bfnb ( QString filename );
+
    private slots:
 
       void setupGUI();

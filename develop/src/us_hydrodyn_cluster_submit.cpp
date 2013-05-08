@@ -559,7 +559,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
    unsigned int job_count = ( unsigned int ) tar_list.size() - common_count - 1;
    
    {
-      QRegExp rx( "^(bfnb|oned)_p(\\d+)_" );
+      QRegExp rx( "^(bfnb|bfnbpm|oned)_p(\\d+)_" );
       if ( rx.search( file ) != -1 )
       {
          job_count = rx.cap( 2 ).toUInt();
@@ -593,6 +593,10 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
    if ( file.contains( QRegExp( "^bfnb_" ) ) )
    {
       job_type = "nsa";
+   }
+   if ( file.contains( QRegExp( "^bfnbpm_" ) ) )
+   {
+      job_type = "pm";
    }
    if ( file.contains( QRegExp( "^oned_" ) ) )
    {

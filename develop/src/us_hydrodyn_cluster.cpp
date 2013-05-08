@@ -22,17 +22,22 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    cluster_additional_methods_options_active   = &( ( US_Hydrodyn * ) us_hydrodyn )->cluster_additional_methods_options_active;
    cluster_additional_methods_options_selected = &( ( US_Hydrodyn * ) us_hydrodyn )->cluster_additional_methods_options_selected;
 
+   cluster_additional_methods_use_experimental_data    [ "bfnb"     ] = true;
+   cluster_additional_methods_require_experimental_data[ "bfnb"     ] = true;
    cluster_additional_methods_use_experimental_data    [ "bfnb_nsa" ] = true;
    cluster_additional_methods_require_experimental_data[ "bfnb_nsa" ] = true;
    cluster_additional_methods_require_sleep            [ "dammin"   ] = true;
    cluster_additional_methods_require_sleep            [ "dammif"   ] = true;
    cluster_additional_methods_require_sleep            [ "gasbor"   ] = true;
+   cluster_additional_methods_parallel_mpi             [ "bfnb"     ] = true;
    cluster_additional_methods_parallel_mpi             [ "bfnb_nsa" ] = true;
    cluster_additional_methods_parallel_mpi             [ "oned"     ] = true;
+   cluster_additional_methods_prepend                  [ "bfnb"     ] = "bfnbpm_";
    cluster_additional_methods_prepend                  [ "bfnb_nsa" ] = "bfnb_";
    cluster_additional_methods_prepend                  [ "oned"     ] = "oned_";
    cluster_additional_methods_one_pdb_exactly          [ "oned"     ] = true;
    cluster_additional_methods_no_tgz_output            [ "oned"     ] = true;
+   cluster_additional_methods_must_run_alone           [ "bfnb"     ] = true;
    cluster_additional_methods_must_run_alone           [ "oned"     ] = true;
    cluster_additional_methods_add_selected_files       [ "oned"     ] = true;
 
@@ -1497,6 +1502,12 @@ void US_Hydrodyn_Cluster::update_output_name( const QString &cqs )
       qs.replace( QRegExp( "^bfnb_" ), "" );
       le_output_name->setText( qs );
    }
+   if ( cqs.contains( QRegExp( "^bfnbpm_" ) ) )
+   {
+      QString qs = cqs;
+      qs.replace( QRegExp( "^bfnbpm_" ), "" );
+      le_output_name->setText( qs );
+   }
    if ( cqs.contains( QRegExp( "^oned_" ) ) )
    {
       QString qs = cqs;
@@ -2888,7 +2899,6 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
       }
    }
             
-
    if ( cluster_additional_methods_parallel_mpi.count( methods[ 0 ] ) )
    {
       return create_additional_methods_parallel_pkg ( base_dir,
@@ -3330,6 +3340,11 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
 {
    QStringList methods = active_additional_methods();
 
+   if ( methods.size() && methods[ 0 ] == "bfnb" )
+   {
+      return create_additional_methods_parallel_pkg_bfnb( filename );
+   }
+
    QString     unimplemented;
    QStringList base_source_files;
 
@@ -3698,4 +3713,19 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
                .join( "\n" ) );
    // }
    editor_msg( "black", tr( "Package complete" ) );
+}
+
+void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /* filename */ )
+{
+   // we are going to have to take each experimental file, produce pmi, pmq, pme lines and pmbest
+   // when "pmincrementally", run for subsets of pmtypes
+   // when "pmallcombinations", run for each possible combo
+   // suffix pmoutname appropriately (source data, model type)
+   QStringList methods = active_additional_methods();
+   
+   for ( map < QString, QString >::iterator it = (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].begin();
+         it != (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].end();
+         it++ )
+   {
+   }
 }
