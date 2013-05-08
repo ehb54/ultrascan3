@@ -3716,6 +3716,34 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
    editor_msg( "black", tr( "Package complete" ) );
 }
 
+static void combo_with_replacement(
+                                   vector < int >            & elems,
+                                   unsigned int                req_len,
+                                   vector < int >            & pos,
+                                   vector < vector < int > > & results,
+                                   unsigned int                depth = 0,
+                                   unsigned int                margin = 0
+                                   )
+{
+   if ( depth >= req_len ) 
+   {
+      vector < int > result( pos.size() );
+      for ( unsigned int ii = 0; ii < (unsigned int)pos.size(); ++ii )
+      {
+         result[ ii ] = elems[ pos[ ii ] ];
+      }
+      results.push_back( result );
+      return;
+   }
+
+   for ( unsigned int ii = margin; ii < (unsigned int) elems.size(); ++ii ) 
+   {
+      pos[ depth ] = ii;
+      combo_with_replacement( elems, req_len, pos, results, depth + 1, ii );
+   }
+   return;
+}
+
 void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /* filename */ )
 {
    QStringList methods = active_additional_methods();
@@ -3850,31 +3878,114 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
 
    if ( (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmincrementally" ) )
    {
-      for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
+      if ( (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmallcombinations" ) )
       {
-         out_per_experimental_dataset += QString( "pmoutname %1___EXPERIMENT_NAME___-" ).arg( pmoutprefix );
-         for ( int j = 0; j <= i; ++j )
+         set < int > types;
+
+         for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
          {
-            out_per_experimental_dataset += QString( "%1" ).arg( qsl_pmtypes[ j ] );
+            types.insert( qsl_pmtypes[ i ].toInt() );
          }
-         out_per_experimental_dataset += "\n";
-         out_per_experimental_dataset += "pmtypes ";
-         for ( int j = 0; j <= i; ++j )
+
+         vector < int > typesv;
+         for ( set < int >::iterator it = types.begin();
+               it != types.end();
+               it++ )
          {
-            out_per_experimental_dataset += QString( "%1%2" ).arg( j ? "," : "" ).arg( qsl_pmtypes[ j ] );
+            typesv.push_back( *it );
          }
-         out_per_experimental_dataset += "\n";
-         out_per_experimental_dataset += "pmbestga\n";
+
+         for ( int i = 1; i <= (int) qsl_pmtypes.size(); ++i )
+         {
+            vector < vector < int > > results;
+            vector < int >            pos( i );
+            combo_with_replacement( typesv,
+                                    (int)pos.size(),
+                                    pos,
+                                    results );
+            for ( int j = 0; j < (int) results.size(); ++j )
+            {
+               out_per_experimental_dataset += QString( "pmoutname %1___EXPERIMENT_NAME___-" ).arg( pmoutprefix );
+               for ( int k = 0; k < (int) results[ j ].size(); ++k )
+               {
+                  out_per_experimental_dataset += QString( "%1" ).arg( results[ j ][ k ] );
+               }
+               out_per_experimental_dataset += "\n";
+               out_per_experimental_dataset += "pmtypes ";
+               for ( int k = 0; k < (int) results[ j ].size(); ++k )
+               {
+                  out_per_experimental_dataset += QString( "%1%2" ).arg( k ? "," : "" ).arg( results[ j ][ k ] );
+               }
+               out_per_experimental_dataset += "\n";
+               out_per_experimental_dataset += "pmbestga\n";
+            }
+         }
+      } else {
+         for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
+         {
+            out_per_experimental_dataset += QString( "pmoutname %1___EXPERIMENT_NAME___-" ).arg( pmoutprefix );
+            for ( int j = 0; j <= i; ++j )
+            {
+               out_per_experimental_dataset += QString( "%1" ).arg( qsl_pmtypes[ j ] );
+            }
+            out_per_experimental_dataset += "\n";
+            out_per_experimental_dataset += "pmtypes ";
+            for ( int j = 0; j <= i; ++j )
+            {
+               out_per_experimental_dataset += QString( "%1%2" ).arg( j ? "," : "" ).arg( qsl_pmtypes[ j ] );
+            }
+            out_per_experimental_dataset += "\n";
+            out_per_experimental_dataset += "pmbestga\n";
+         }
       }
    } else {
-      out_per_experimental_dataset += QString( "pmoutname %1___EXPERIMENT_NAME___-" ).arg( pmoutprefix );
-      for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
+      if ( (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmallcombinations" ) )
       {
-         out_per_experimental_dataset += QString( "%1" ).arg( qsl_pmtypes[ i ] );
+         set < int > types;
+
+         for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
+         {
+            types.insert( qsl_pmtypes[ i ].toInt() );
+         }
+         vector < int > typesv;
+         for ( set < int >::iterator it = types.begin();
+               it != types.end();
+               it++ )
+         {
+            typesv.push_back( *it );
+         }
+         vector < vector < int > > results;
+         vector < int >            pos( qsl_pmtypes.size() );
+         combo_with_replacement( typesv,
+                                 (int)pos.size(),
+                                 pos,
+                                 results );
+         for ( int j = 0; j < (int) results.size(); ++j )
+         {
+            out_per_experimental_dataset += QString( "pmoutname %1___EXPERIMENT_NAME___-" ).arg( pmoutprefix );
+            for ( int k = 0; k < (int) results[ j ].size(); ++k )
+            {
+               out_per_experimental_dataset += QString( "%1" ).arg( results[ j ][ k ] );
+            }
+            out_per_experimental_dataset += "\n";
+            out_per_experimental_dataset += "pmtypes ";
+            for ( int k = 0; k < (int) results[ j ].size(); ++k )
+            {
+               out_per_experimental_dataset += QString( "%1%2" ).arg( k ? "," : "" ).arg( results[ j ][ k ] );
+            }
+            out_per_experimental_dataset += "\n";
+            out_per_experimental_dataset += "pmbestga\n";
+         }
+      } else {
+         out_per_experimental_dataset += QString( "pmoutname %1___EXPERIMENT_NAME___-" ).arg( pmoutprefix );
+         for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
+         {
+            out_per_experimental_dataset += QString( "%1" ).arg( qsl_pmtypes[ i ] );
+         }
+         out_per_experimental_dataset += "\n";
+         out_per_experimental_dataset += QString( "pmtypes\t%1\n" ).arg( pmtypes );
+         out_per_experimental_dataset += "pmbestga\n";
       }
-      out_per_experimental_dataset += "\n";
-      out_per_experimental_dataset += QString( "pmtypes\t%1\n" ).arg( pmtypes );
-      out_per_experimental_dataset += "pmbestga\n";
    }
 
    cout << out_per_experimental_dataset;
@@ -3897,6 +4008,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
       QString target_file_name = QFileInfo( target_file ).baseName( true ).replace( ".", "_" );
 
       // read file and extract q,I,e... add  pmq, pmi, and possibly pme with 0, 'g', 8
+      // later add pmf via "pmusedummyatomff" option
 
       QString out_this_experimental_dataset = out_per_experimental_dataset;
       out_this_experimental_dataset.replace( "___EXPERIMENT_NAME___", target_file_name );
