@@ -1,6 +1,8 @@
 #ifndef US_PM_H
 #define US_PM_H
 
+#define US_PM_MAX_PMTYPE 4
+
 #if defined( USE_MPI )
 #  include <mpi.h>
    extern int npes;

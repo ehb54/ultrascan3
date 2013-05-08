@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
+#include "../include/us_pm_global.h"
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -3717,15 +3718,198 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
 
 void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /* filename */ )
 {
+   QStringList methods = active_additional_methods();
+
+   QString errors;
+
+   if ( le_no_of_jobs->text().toUInt() < 1 )
+   {
+      errors += QString( tr( "Error: method %1 requires a minimum of 2 parallel jobs\n" ) );
+   }
+
+   if ( !lb_target_files->numRows() )
+   {
+      if ( cluster_additional_methods_require_experimental_data.count( methods[ 0 ] ) )
+      {
+         errors += 
+            QString( tr( "Selected other method %1 requires experimental data and none are listed\n" ) )
+            .arg( methods[ 0 ].upper() );
+      }
+   } 
+
+   QString base = 
+      "# us_saxs_cmds_t pm controlfile\n"
+      "# blank lines ok, format token <params>\n"
+      "\n";
+   
    // we are going to have to take each experimental file, produce pmi, pmq, pme lines and pmbest
    // when "pmincrementally", run for subsets of pmtypes
    // when "pmallcombinations", run for each possible combo
    // suffix pmoutname appropriately (source data, model type)
-   QStringList methods = active_additional_methods();
    
+   QStringList qsl_skip;
+   qsl_skip 
+      << "pmtypes"
+      << "pmincrementally"
+      << "pmallcombinations"
+      ;
+
+   map < QString, bool > skip;
+   for ( int i = 0; i < (int) qsl_skip.size(); ++i )
+   {
+      skip[ qsl_skip[ i ] ] = true;
+   }
+
+   QStringList qsl_noargs;
+   qsl_noargs 
+      << "pmapproxmaxdimension"
+      ;
+
+   map < QString, bool > noargs;
+   for ( int i = 0; i < (int) qsl_noargs.size(); ++i )
+   {
+      noargs[ qsl_noargs[ i ] ] = true;
+   }
+
+   QStringList qsl_req;
+   qsl_req 
+      << "pmtypes"
+      << "pmrayleighdrho"
+      ;
+
+   map < QString, bool > req;
+   for ( int i = 0; i < (int) qsl_req.size(); ++i )
+   {
+      req[ qsl_req[ i ] ] = true;
+   }
+
    for ( map < QString, QString >::iterator it = (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].begin();
          it != (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].end();
          it++ )
    {
+      if ( req.count( it->first ) )
+      {
+         req.erase( it->first );
+      }
+      if ( !skip.count( it->first ) && !it->second.stripWhiteSpace().isEmpty() )
+      {
+         if ( noargs.count( it->first ) )
+         {
+            base += QString( "%1\n" ).arg( it->first );
+         } else {
+            base += QString( "%1\t%2\n" ).arg( it->first ).arg( it->second );            
+         }
+      }
+   }
+      
+   if ( (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmrayleighdrho" ].toDouble() == 0e0 )
+   {
+      errors += QString( tr( "Method %1 pmrayleighdrho must not be zero" ) ).arg( methods[ 0 ] );
+   }
+
+   if ( req.size() )
+   {
+      for ( map < QString, bool >::iterator it = req.begin();
+            it != req.end();
+            it++ )
+      {
+         errors += QString( tr( "Method %1 requires parameter %2" ) ).arg( methods[ 0 ] ).arg( it->first );
+      }
+   }
+
+   cout << "------------------------------------------------------------\n";
+   cout << base;
+   cout << "------------------------------------------------------------\n";
+
+   QString pmtypes = (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmtypes" ];
+   QStringList qsl_pmtypes = QStringList::split( QRegExp( "(\\s+|(\\s*(,|:)\\s*))" ), pmtypes );
+   for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
+   {
+      if ( qsl_pmtypes[ i ].toInt() < 0 || 
+           qsl_pmtypes[ i ].toInt() > US_PM_MAX_PMTYPE )
+      {
+         errors += QString( tr( "Method %1 pmtype out of range %2" ) ).arg( methods[ 0 ] ).arg( qsl_pmtypes[ i ] );
+      }
+   }
+
+   if ( !errors.isEmpty() )
+   {
+      editor_msg( "red", errors );
+      return;
+   }
+
+   QString pmoutprefix =
+      (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmoutname" ) &&
+      !(*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmoutname" ].isEmpty() 
+      ?
+      (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmoutname" ] : QString( "" ) ;
+
+   pmoutprefix += pmoutprefix.isEmpty() ? "" : "-";
+
+   QString out_per_experimental_dataset;
+
+   if ( (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmincrementally" ) )
+   {
+      for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
+      {
+         out_per_experimental_dataset += QString( "pmoutname %1___EXPERIMENT_NAME___-" ).arg( pmoutprefix );
+         for ( int j = 0; j <= i; ++j )
+         {
+            out_per_experimental_dataset += QString( "%1" ).arg( qsl_pmtypes[ j ] );
+         }
+         out_per_experimental_dataset += "\n";
+         out_per_experimental_dataset += "pmtypes ";
+         for ( int j = 0; j <= i; ++j )
+         {
+            out_per_experimental_dataset += QString( "%1%2" ).arg( j ? "," : "" ).arg( qsl_pmtypes[ j ] );
+         }
+         out_per_experimental_dataset += "\n";
+         out_per_experimental_dataset += "pmbestga\n";
+      }
+   } else {
+      out_per_experimental_dataset += QString( "pmoutname %1___EXPERIMENT_NAME___-" ).arg( pmoutprefix );
+      for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
+      {
+         out_per_experimental_dataset += QString( "%1" ).arg( qsl_pmtypes[ i ] );
+      }
+      out_per_experimental_dataset += "\n";
+      out_per_experimental_dataset += QString( "pmtypes\t%1\n" ).arg( pmtypes );
+      out_per_experimental_dataset += "pmbestga\n";
+   }
+
+   cout << out_per_experimental_dataset;
+   cout << "------------------------------------------------------------\n";
+
+   QString out = base;
+
+   for ( int i = 0; i < lb_target_files->numRows(); i++ )
+   {
+      QString target_file      = lb_target_files->text( i );
+      if ( !QFileInfo( target_file ).exists() )
+      {
+         errors += QString( tr( "Method %1 experimental data file %2 does not exist" ) ).arg( methods[ 0 ] ).arg( target_file );
+      } else {
+         if ( !QFileInfo( target_file ).isReadable() )
+         {
+            errors += QString( tr( "Method %1 experimental data file %2 exists, but it not readable (check permissions)" ) ).arg( methods[ 0 ] ).arg( target_file );
+         }
+      }
+      QString target_file_name = QFileInfo( target_file ).baseName( true ).replace( ".", "_" );
+
+      // read file and extract q,I,e... add  pmq, pmi, and possibly pme with 0, 'g', 8
+
+      QString out_this_experimental_dataset = out_per_experimental_dataset;
+      out_this_experimental_dataset.replace( "___EXPERIMENT_NAME___", target_file_name );
+
+      out += out_this_experimental_dataset;
+   }
+
+   cout << out;
+   cout << "------------------------------------------------------------\n";
+
+   if ( !errors.isEmpty() )
+   {
+      editor_msg( "red", errors );
+      return;
    }
 }

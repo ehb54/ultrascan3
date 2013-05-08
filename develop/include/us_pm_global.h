@@ -1,6 +1,8 @@
 #ifndef US_PM_GLOBAL_H
 #define US_PM_GLOBAL_H
 
+#define US_PM_MAX_PMTYPE 4
+
 #ifndef M_PI
 #  define M_PI       3.14159265358979323846
 #endif
