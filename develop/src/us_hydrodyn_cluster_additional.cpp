@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_additional.h"
+#include "../include/us_hydrodyn_cluster_bfnb.h"
 #include "../include/us_hydrodyn_cluster_bfnb_nsa.h"
 #include "../include/us_hydrodyn_cluster_oned.h"
 #include "../include/us_hydrodyn_cluster_dammin.h"
@@ -265,7 +266,7 @@ void US_Hydrodyn_Cluster_Additional::update_enables()
    pb_gasbor    ->setEnabled( cb_gasbor    ->isChecked() );
    
    // disabled for now:
-   cb_bfnb      ->setEnabled( false );
+   // cb_bfnb      ->setEnabled( false );
    // cb_bfnb_nsa  ->setEnabled( false );
    cb_csa       ->setEnabled( false );
    // cb_dammin    ->setEnabled( false );
@@ -281,6 +282,23 @@ void US_Hydrodyn_Cluster_Additional::set_bfnb()
 
 void US_Hydrodyn_Cluster_Additional::bfnb()
 {
+   cout << QString( "current load save path %1\n" ).arg( load_save_path );
+   map < QString, QString > parameters;
+   if ( options_selected.count( "bfnb" ) )
+   {
+      parameters = options_selected[ "bfnb" ];
+   }
+   QDir::setCurrent( load_save_path );
+   US_Hydrodyn_Cluster_Bfnb *hc = 
+      new US_Hydrodyn_Cluster_Bfnb(
+                                   us_hydrodyn,
+                                   &parameters,
+                                   this 
+                                   );
+   US_Hydrodyn::fixWinButtons( hc );
+   hc->exec();
+   delete hc;
+   options_selected[ "bfnb" ] = parameters;
 }
 
 void US_Hydrodyn_Cluster_Additional::set_bfnb_nsa()

@@ -886,8 +886,8 @@ bool US_Saxs_Util::run_pm_ok( QString option )
 
       defaults[ "pmgapopulation"           ] = "100";
       defaults[ "pmgagenerations"          ] = "100";
-      defaults[ "pmgamutate"               ] = "0.4e0";
-      defaults[ "pmgasamutate"             ] = "0.4e0";
+      defaults[ "pmgamutate"               ] = "0.1e0";
+      defaults[ "pmgasamutate"             ] = "0.5e0";
       defaults[ "pmgacrossover"            ] = "0.4e0";
       defaults[ "pmgaelitism"              ] = "1";
       defaults[ "pmgaearlytermination"     ] = "5";
@@ -897,7 +897,7 @@ bool US_Saxs_Util::run_pm_ok( QString option )
 
       defaults[ "pmbestfinestconversion"   ] = control_parameters[ "pmgridsize" ];
       defaults[ "pmbestcoarseconversion"   ] = "10e0";
-      defaults[ "pmbestrefinementrangepct" ] = "5e0";
+      defaults[ "pmbestrefinementrangepct" ] = "2.5e0";
       defaults[ "pmbestconversiondivisor"  ] = "2.5e0";
 
       defaults[ "pmbestdeltastart"         ] = "1e0";
