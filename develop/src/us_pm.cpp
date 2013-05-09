@@ -188,6 +188,17 @@ US_PM::US_PM(
       }
    }
 
+   if ( use_errors )
+   {
+      oneoversd2.resize( q_points );
+      for ( unsigned int i = 0; i < q_points; ++i )
+      {
+         oneoversd2[ i ] = 1e0 / ( e[ i ] * e[ i ] );
+      }
+   } else {
+      oneoversd2.clear();
+   }
+
    // memory computations
 
    bytes_per_pm_data =

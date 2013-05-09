@@ -1,8 +1,6 @@
 #ifndef US_PM_H
 #define US_PM_H
 
-#define US_PM_MAX_PMTYPE 4
-
 #if defined( USE_MPI )
 #  include <mpi.h>
    extern int npes;
@@ -79,6 +77,7 @@ class US_PM
    vector < double >                       q;
    vector < double >                       I;
    vector < double >                       e;
+   vector < double >                       oneoversd2;
 
    unsigned int                            q_points;
 

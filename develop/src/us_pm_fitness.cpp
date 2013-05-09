@@ -815,6 +815,7 @@ double US_PM::fitness2( vector < double > & I_result )
    double chi2 = 0e0;
    double tmp;
 
+   /* non-scaling fit obsolete
    if ( use_errors )
    {
       for ( unsigned int i = 0; i < q_points; i++ )
@@ -829,6 +830,49 @@ double US_PM::fitness2( vector < double > & I_result )
          chi2 += tmp * tmp;
       }
    }
+   */
+
+   double k = 0e0;
+   double Sxx = 0e0;
+   double Sxy = 0e0;
+
+   if ( use_errors )
+   {
+      for ( unsigned int i = 0; i < q_points; ++i )
+      {
+         Sxx += I_result[i] * I_result[i] * oneoversd2[ i ];
+         Sxy += I_result[i] * I[i] * oneoversd2[ i ];
+      }
+      if ( Sxx != 0e0 )
+      {
+         k = Sxy / Sxx;
+      } else {
+         k = 1e0;
+      }
+      for ( unsigned int i = 0; i < q_points; ++i )
+      {
+         tmp =  k * I_result[i] - I[i];
+         chi2 += tmp * tmp * oneoversd2[ i ];
+      }
+   } else {
+      for ( unsigned int i = 0; i < q_points; ++i )
+      {
+         Sxx += I_result[i] * I_result[i];
+         Sxy += I_result[i] * I[i];
+      }
+      if ( Sxx != 0e0 )
+      {
+         k = Sxy / Sxx;
+      } else {
+         k = 1e0;
+      }
+      for ( unsigned int i = 0; i < q_points; ++i )
+      {
+         tmp =  k * I_result[i] - I[i];
+         chi2 += tmp * tmp;
+      }
+   }
+
    return chi2;
 }
 

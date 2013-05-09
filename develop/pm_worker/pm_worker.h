@@ -69,6 +69,7 @@ class PM_WORKER
    vector < double >                       q;
    vector < double >                       I;
    vector < double >                       e;
+   vector < double >                       oneoversd2;
 
    unsigned int                            q_points;
 
