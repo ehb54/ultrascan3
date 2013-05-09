@@ -279,7 +279,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    
    lb_target_files->setMinimumHeight( minHeight1 * 2 );
 
-   lbl_no_of_jobs = new QLabel( QString(tr( "Number of jobs (maximum %1):" )).arg( selected_files.size() ), this);
+   lbl_no_of_jobs = new QLabel( QString(tr( "Number of jobs (cores) (maximum %1):" )).arg( selected_files.size() ), this);
    lbl_no_of_jobs->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_no_of_jobs->setMinimumHeight(minHeight1);
    lbl_no_of_jobs->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -3744,15 +3744,15 @@ static void combo_with_replacement(
    return;
 }
 
-void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /* filename */ )
+void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString filename )
 {
    QStringList methods = active_additional_methods();
 
    QString errors;
 
-   if ( le_no_of_jobs->text().toUInt() < 1 )
+   if ( le_no_of_jobs->text().toUInt() < 2 )
    {
-      errors += QString( tr( "Error: method %1 requires a minimum of 2 parallel jobs\n" ) );
+      errors += QString( tr( "Error: method %1 requires a minimum of 2 cores\n" ) ).arg( methods[ 0 ] );
    }
 
    if ( !lb_target_files->numRows() )
@@ -3780,6 +3780,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
       << "pmtypes"
       << "pmincrementally"
       << "pmallcombinations"
+      << "pmapproxmaxdimension"
       ;
 
    map < QString, bool > skip;
@@ -3788,10 +3789,22 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
       skip[ qsl_skip[ i ] ] = true;
    }
 
-   QStringList qsl_noargs;
-   qsl_noargs 
-      << "pmapproxmaxdimension"
+   QString out_per_file;
+   QStringList qsl_per_file;
+   qsl_per_file 
+      << "pmrayleighdrho"
       ;
+
+   map < QString, bool > per_file;
+   for ( int i = 0; i < (int) qsl_per_file.size(); ++i )
+   {
+      per_file[ qsl_per_file[ i ] ] = true;
+   }
+
+   QStringList qsl_noargs;
+   //    qsl_noargs 
+   //       << "pmapproxmaxdimension"
+   //       ;
 
    map < QString, bool > noargs;
    for ( int i = 0; i < (int) qsl_noargs.size(); ++i )
@@ -3819,13 +3832,23 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
       {
          req.erase( it->first );
       }
-      if ( !skip.count( it->first ) && !it->second.stripWhiteSpace().isEmpty() )
+      if ( per_file.count( it->first ) )
       {
          if ( noargs.count( it->first ) )
          {
-            base += QString( "%1\n" ).arg( it->first );
+            out_per_file += QString( "%1\n" ).arg( it->first );
          } else {
-            base += QString( "%1\t%2\n" ).arg( it->first ).arg( it->second );            
+            out_per_file += QString( "%1\t%2\n" ).arg( it->first ).arg( it->second );            
+         }
+      } else {
+         if ( !skip.count( it->first ) && !it->second.stripWhiteSpace().isEmpty() )
+         {
+            if ( noargs.count( it->first ) )
+            {
+               base += QString( "%1\n" ).arg( it->first );
+            } else {
+               base += QString( "%1\t%2\n" ).arg( it->first ).arg( it->second );            
+            }
          }
       }
    }
@@ -3848,6 +3871,21 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
    cout << "------------------------------------------------------------\n";
    cout << base;
    cout << "------------------------------------------------------------\n";
+
+   QString pmapproxmaxdimension = 
+      (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmapproxmaxdimension" ) ?
+      (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmapproxmaxdimension" ] : "";
+
+   if ( !pmapproxmaxdimension.isEmpty() )
+   {
+      if ( (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmbestcoarseconversion" ) &&
+           !(*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmbestcoarseconversion" ].isEmpty() )
+      {
+         pmapproxmaxdimension = "pmapproxmaxdimension\t" + (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmbestcoarseconversion" ] + "\n";
+      } else {
+         pmapproxmaxdimension = "pmapproxmaxdimension\t10\n";
+      }
+   }
 
    QString pmtypes = (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmtypes" ];
    QStringList qsl_pmtypes = QStringList::split( QRegExp( "(\\s+|(\\s*(,|:)\\s*))" ), pmtypes );
@@ -3875,6 +3913,8 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
    pmoutprefix += pmoutprefix.isEmpty() ? "" : "-";
 
    QString out_per_experimental_dataset;
+
+   unsigned int tot_runs = 0;
 
    if ( (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmincrementally" ) )
    {
@@ -3918,6 +3958,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
                }
                out_per_experimental_dataset += "\n";
                out_per_experimental_dataset += "pmbestga\n";
+               tot_runs++;
             }
          }
       } else {
@@ -3936,6 +3977,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
             }
             out_per_experimental_dataset += "\n";
             out_per_experimental_dataset += "pmbestga\n";
+            tot_runs++;
          }
       }
    } else {
@@ -3975,6 +4017,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
             }
             out_per_experimental_dataset += "\n";
             out_per_experimental_dataset += "pmbestga\n";
+            tot_runs++;
          }
       } else {
          out_per_experimental_dataset += QString( "pmoutname %1___EXPERIMENT_NAME___-" ).arg( pmoutprefix );
@@ -3985,6 +4028,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
          out_per_experimental_dataset += "\n";
          out_per_experimental_dataset += QString( "pmtypes\t%1\n" ).arg( pmtypes );
          out_per_experimental_dataset += "pmbestga\n";
+         tot_runs++;
       }
    }
 
@@ -3996,19 +4040,44 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
    for ( int i = 0; i < lb_target_files->numRows(); i++ )
    {
       QString target_file      = lb_target_files->text( i );
-      if ( !QFileInfo( target_file ).exists() )
-      {
-         errors += QString( tr( "Method %1 experimental data file %2 does not exist" ) ).arg( methods[ 0 ] ).arg( target_file );
-      } else {
-         if ( !QFileInfo( target_file ).isReadable() )
-         {
-            errors += QString( tr( "Method %1 experimental data file %2 exists, but it not readable (check permissions)" ) ).arg( methods[ 0 ] ).arg( target_file );
-         }
-      }
       QString target_file_name = QFileInfo( target_file ).baseName( true ).replace( ".", "_" );
 
       // read file and extract q,I,e... add  pmq, pmi, and possibly pme with 0, 'g', 8
       // later add pmf via "pmusedummyatomff" option
+      // and possible q editing (log binning), qmax, max pts ?
+      vector < double > q;
+      vector < double > I;
+      vector < double > e;
+      QString error_msg;
+
+      if ( !US_Saxs_Util::read_sas_data( target_file, q, I, e, error_msg ) )
+      {
+         errors += error_msg + "\n";
+      } else {
+         out += "pmq ";
+         for ( int j = 0; j < (int) q.size(); ++j )
+         {
+            out += QString( "%1%2" ).arg( j ? "," : "" ).arg( q[ j ], 0, 'g', 8 );
+         }
+         out += "\n";
+         out += "pmi ";
+         for ( int j = 0; j < (int) I.size(); ++j )
+         {
+            out += QString( "%1%2" ).arg( j ? "," : "" ).arg( I[ j ], 0, 'g', 8 );
+         }
+         out += "\n";
+         if ( e.size() )
+         {
+            out += "pme ";
+            for ( int j = 0; j < (int) e.size(); ++j )
+            {
+               out += QString( "%1%2" ).arg( j ? "," : "" ).arg( e[ j ], 0, 'g', 8 );
+            }
+            out += "\n";
+         }
+         out += out_per_file;
+         out += pmapproxmaxdimension;
+      }
 
       QString out_this_experimental_dataset = out_per_experimental_dataset;
       out_this_experimental_dataset.replace( "___EXPERIMENT_NAME___", target_file_name );
@@ -4024,4 +4093,83 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString /
       editor_msg( "red", errors );
       return;
    }
+
+   editor_msg( "dark blue", QString( "Notice: the total number of models to be computed is %1\n" ).arg( tot_runs ) );
+
+   QString use_file = QString( "%1" ).arg( filename );
+
+   cout << use_file << endl;
+
+   {
+      QFile f( use_file );
+      if ( !f.open( IO_WriteOnly ) )
+      {
+         editor_msg( "red", QString( tr( "Error: could not create file %1" ) ).arg( use_file ) );
+         return;
+      }
+
+      {
+         QTextStream ts( &f );
+         ts << out;
+         f.close();
+         editor_msg( "dark gray", QString( tr( "Created: %1" ) ).arg( use_file ) );
+      }
+   }
+
+   // write it, tar it, package it
+   QStringList to_tar_list;
+
+   to_tar_list << QFileInfo( use_file ).fileName();
+
+   QStringList  dest_files;
+
+   {
+      US_Tar       ust;
+      US_Gzip      usg;
+      QDir qd;
+
+      QStringList list;
+      QString tar_name = use_file + ".tar";
+      int result = ust.create( QFileInfo( tar_name ).filePath(), to_tar_list, &list );
+      cout << "tar_name:" << tar_name << endl;
+      cout << "to tar:\n" << to_tar_list.join("\n") << endl;
+
+      qd.remove( use_file );
+
+      if ( result != TAR_OK )
+      {
+         editor_msg( "red" , QString( tr( "Error: Problem creating tar archive %1: %2") ).arg( filename ).arg( ust.explain( result ) ) );
+         return;
+      }
+      editor_msg( "dark gray", QString("Created: %1").arg( tar_name ) );
+
+      result = usg.gzip( tar_name );
+      if ( result != GZIP_OK )
+      {
+         editor_msg( "red" , QString( tr( "Error: Problem gzipping tar archive %1: %2") ).arg( tar_name ).arg( usg.explain( result ) ) );
+         return;
+      }
+
+      QString use_targz_filename = tar_name;
+      use_targz_filename.replace(QRegExp("\\.tar$"), ".tgz" );
+      qd.remove( use_targz_filename );
+      if ( !qd.rename( QFileInfo( tar_name + ".gz" ).fileName(), QFileInfo( use_targz_filename ).fileName() ) )
+      {
+         editor_msg( "red", QString("Error renaming %1 to %2")
+                     .arg( QFileInfo( tar_name + ".gz" ).fileName() )
+                     .arg( QFileInfo( use_targz_filename ).fileName() ) );
+      }
+         
+      dest_files << use_targz_filename;
+      editor_msg( "dark gray", QString("Gzipped: %1").arg( use_targz_filename ) );
+   }
+
+   editor_msg( "blue", 
+               dest_files
+               .gres( QRegExp( "^" ), tr( "Package: " ) )
+               .gres( QRegExp( "$" ), tr( " created" ) )
+               .join( "\n" ) );
+
+   editor_msg( "black", tr( "Package complete" ) );
+
 }

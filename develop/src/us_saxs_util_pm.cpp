@@ -418,13 +418,6 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             return false;
          }            
 
-         if ( control_vectors.count( "pmtypes" ) &&
-              control_vectors[ "pmtypes" ].size() != 1 )
-         {
-            errormsg = QString( "Error controlfile line %1 : pmtypes must have exactly one parameter for pmbestmd0" ).arg( i + 1 );
-            return false;
-         }
-
          US_PM pm(
                   control_parameters [ "pmgridsize"     ].toDouble(),
                   control_parameters [ "pmmaxdimension" ].toInt(),
@@ -436,24 +429,6 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                   control_parameters [ "pmmemory"       ].toUInt(),
                   control_parameters [ "pmdebug"        ].toInt()
                   );
-
-         if ( control_vectors.count( "pmparams" ) )
-         {
-            params = control_vectors[ "pmparams" ];
-         } else {
-            if ( control_vectors.count( "pmtypes" ) )
-            {
-               vector < int > types;
-               for ( int i = 0; i < (int) control_vectors[ "pmtypes" ].size(); i++ )
-               {
-                  types.push_back( (int) control_vectors[ "pmtypes" ][ i ] );
-               }
-               pm.zero_params( params, types );
-            } else {
-               errormsg = QString( "Error controlfile line %1 : pmparams or pmtypes must be defined" ).arg( i + 1 );
-               return false;
-            }
-         }
 
          unsigned int approx_max_d;
          if ( !pm.approx_max_dimension( params, 
@@ -982,6 +957,7 @@ bool US_Saxs_Util::run_pm_ok( QString option )
    }
 
    // the parameters/types
+   if ( option != "pmapproxmaxdimension" )
    {
       // only one of these required
       QStringList qslv_required;

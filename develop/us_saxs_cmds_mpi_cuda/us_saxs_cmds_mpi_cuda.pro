@@ -25,6 +25,7 @@ SOURCES		+= ../src/us_saxs_util_nsa_gsm.cpp
 SOURCES		+= ../src/us_saxs_util_nsa_sga.cpp
 SOURCES		+= ../src/us_saxs_util_sgp.cpp
 SOURCES		+= ../src/us_saxs_util_sgp_phys.cpp
+SOURCES		+= ../src/us_saxs_util_static.cpp
 SOURCES		+= ../src/us_saxs_util_mpi.cpp
 SOURCES		+= ../src/us_pm.cpp
 SOURCES		+= ../src/us_pm_best.cpp

@@ -348,6 +348,7 @@ SOURCES += \
   src/us_saxs_util_pm.cpp \
   src/us_saxs_util_sgp.cpp \
   src/us_saxs_util_sgp_phys.cpp \
+  src/us_saxs_util_static.cpp \
   src/us_select_channel.cpp \
   src/us_selectmodel.cpp \
   src/us_selectmodel10.cpp \

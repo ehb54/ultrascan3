@@ -754,6 +754,13 @@ class US_EXTERN US_Saxs_Util
 
       bool         align_test();
 
+      static bool  read_sas_data( 
+                                 QString             filename,
+                                 vector < double > & q,
+                                 vector < double > & I,
+                                 vector < double > & e,
+                                 QString           & error_msg 
+                                 );
    private:
 
       // double       minusoneoverfourpisq;
