@@ -39,6 +39,7 @@ map     string  s - - pmbestdeltastart "pmbestdeltastart" "Initial param delta s
 map     string  s - - pmbestdeltadivisor "pmbestdeltadivisor" "Initial param delta divisor (default 10)"
 map     string  s - - pmbestdeltamin "pmbestdeltamin" "Delta minimum (default .01)"
 map     string  s - - pmdebug "pmdebug" "Debug level 1,2 or 3 (default: 0)"
+map     string  s - - pmcsv "pmcsv" "Produce csv containing result curves"
 _end
 _elements
 showhidelabel main_label "Main model type controls"
@@ -66,13 +67,11 @@ variable pmminq
 row
 variable pmmaxq
 row
-disable
 checkbox pmlogqbin
 row
 variable pmqpoints
 row
 endshowhidelabel q_label
-enable
 showhidelabel supp_label "Supplementary controls"
 hide supp_label
 row
@@ -121,6 +120,8 @@ row
 variable pmbestdeltadivisor
 row
 variable pmbestdeltamin
+row
+checkbox pmcsv true
 row
 variable pmdebug
 row

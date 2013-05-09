@@ -8,6 +8,61 @@
 
 static US_Timer usupm_timer;
 
+bool US_Saxs_Util::flush_pm_csv( 
+                                vector < QString >           & csv_name,
+                                vector < double >            & csv_q,
+                                vector < vector < double > > & csv_I 
+                                )
+{
+   if ( !csv_name.size() )
+   {
+      return true;
+   }
+
+   QString filename = csv_name[ 0 ];
+   {
+      int ext = 0;
+      QString use_filename = QString( "%1.csv" ).arg( filename );
+      while( QFile::exists( use_filename ) )
+      {
+         use_filename = QString( "%1-%2.csv" ).arg( filename ).arg( ++ext );
+      }
+      filename = use_filename;
+   }
+   
+   cout << "Creating:" << filename << "\n";
+   QFile of( filename );
+   if ( !of.open( IO_WriteOnly ) )
+   {
+      errormsg = QString( "Error: can not open %1 for writing" ).arg( filename );
+      return false;
+   }
+
+   QTextStream ts( &of );
+
+   ts << QString( "\"Name\",\"Type; q:\",%1,\"PM models %2\"\n" )
+      .arg( vector_double_to_csv( csv_q ) )
+      .arg( csv_name[ 0 ] )
+      ;
+
+   for ( int i = 0; i < (int) csv_I.size(); ++i )
+   {
+      ts << QString( "\"%1\",\"%2\",%3\n" )
+         .arg( csv_name[ i ] )
+         .arg( "I(q)" )
+         .arg( vector_double_to_csv( csv_I[ i ] ) )
+         ;
+   }
+
+   of.close();
+   output_files << filename;
+   csv_name.clear();
+   csv_q   .clear();
+   csv_I   .clear();
+   return true;
+}
+
+
 bool US_Saxs_Util::run_pm( QString controlfile )
 {
    // for now, everyone reads the control file & sets things up to the point of nsa run
@@ -246,6 +301,11 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
    write_output_count    = 0;
    timings               = "";
    bool srand48_done     = false;
+   bool make_csv         = false;
+
+   vector < QString >           csv_name;
+   vector < double >            csv_q;
+   vector < vector < double > > csv_I;
 
    QRegExp rx_blank  ( "^\\s*$" );
    QRegExp rx_comment( "#.*$" );
@@ -262,6 +322,8 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmmemory|"
                       "pmdebug|"
                       "pmoutname|"
+
+                      "pmcsv|"
 
                       "pmf|"
                       "pmq|"
@@ -422,6 +484,23 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          US_Vector::printvector( option, control_vectors[ option ] );
       }
 
+
+      if ( option == "pmq" && make_csv && csv_name.size() )
+      {
+         if ( !flush_pm_csv( csv_name,
+                             csv_q,
+                             csv_I ) )
+         {
+            return false;
+         }
+      }
+
+      if ( option == "pmcsv" )
+      {
+         make_csv = true;
+         continue;
+      }
+
       if ( option == "pmrayleighdrho" )
       {
          if ( !control_vectors.count( "pmq" ) )
@@ -499,6 +578,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          }
          control_parameters[ "approx_max_d" ] = QString( "%1" ).arg( approx_max_d );
          cout << QString( "best maxd %1\n" ).arg( control_parameters[ "approx_max_d" ] );
+         continue;
       }
 
       if ( option == "pmbestmd0" )
@@ -667,10 +747,24 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          pm_ga_fitness_calls += pm.pm_ga_fitness_calls;
 
          QString outname = control_parameters[ "pmoutname" ];
-         pm.write_model( outname, model, params, false );
+         if ( !pm.write_model( outname, model, params, false ) )
+         {
+            errormsg = QString( "Error writing model %1" ).arg( outname );
+            return false;
+         }
          output_files << QString( outname + ".bead_model" );
-         pm.write_I    ( outname, model, false );
+         if ( !pm.write_I    ( outname, model, false ) )
+         {
+            errormsg = QString( "Error writing I data %1" ).arg( outname );
+            return false;
+         }
          output_files << QString( outname + ".dat" );
+         if ( make_csv )
+         {
+            csv_q   = control_vectors[ "pmq" ];
+            csv_name.push_back( outname );
+            csv_I   .push_back( pm.last_written_I );
+         }
          continue;
       }         
 
@@ -839,12 +933,36 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          pm_ga_fitness_calls += pm.pm_ga_fitness_calls;
 
          QString outname = control_parameters[ "pmoutname" ];
-         pm.write_model( outname, model, params, false );
+         if ( !pm.write_model( outname, model, params, false ) )
+         {
+            errormsg = QString( "Error writing model %1" ).arg( outname );
+            return false;
+         }
          output_files << QString( outname + ".bead_model" );
-         pm.write_I    ( outname, model, false );
+         if ( !pm.write_I    ( outname, model, false ) )
+         {
+            errormsg = QString( "Error writing I data %1" ).arg( outname );
+            return false;
+         }
          output_files << QString( outname + ".dat" );
+         if ( make_csv )
+         {
+            csv_q   = control_vectors[ "pmq" ];
+            csv_name.push_back( outname );
+            csv_I   .push_back( pm.last_written_I );
+         }
          continue;
       }         
+   }
+
+   if ( make_csv && csv_name.size() )
+   {
+      if ( !flush_pm_csv( csv_name,
+                          csv_q,
+                          csv_I ) )
+      {
+         return false;
+      }
    }
 
    return true;

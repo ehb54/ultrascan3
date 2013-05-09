@@ -314,6 +314,8 @@ class US_PM
 
    vector < vector < double > >            ga_seed_params;
 
+   vector < double >                       last_written_I;
+
  public:
    // note: F needs to be the factors for a volume of size grid_conversion_factor ^ 3
 

@@ -148,21 +148,68 @@ void US_Saxs_Util::clip_data(
    e = e_new;
 }
 
-void US_Saxs_Util::bin_data( 
-                            int                 /* bins */,
-                            bool                /* log_bin */,
+bool US_Saxs_Util::bin_data( 
+                            int                 bins,
+                            bool                log_bin,
                             vector < double > & q,
                             vector < double > & I,
-                            vector < double > & e
+                            vector < double > & e,
+                            QString           & error_msg,
+                            QString           & notice_msg
                             )
 {
+   error_msg = "";
+   notice_msg = "";
+
    vector < double >  q_new = q;
    vector < double >  I_new = I;
    vector < double >  e_new = e;
 
-   // divide into bins and compute weighted average value or take sample point ?
+   if ( (int) q.size() <= bins )
+   {
+      notice_msg = "Notice: requested bins greater or equal to available q points, returning full set";
+      return true;
+   }
 
+   if ( !log_bin )
+   {
+      double step = (double) q.size() / (double) bins;
+      for ( double i = 0; (int)( .5 + i ) < (int)q.size(); i += step )
+      {
+         int idx = (int)( .5 + i );
+         q_new.push_back( q[ idx ] );
+         I_new.push_back( I[ idx ] );
+         if ( e.size() )
+         {
+            e_new.push_back( e[ idx ] );
+         }
+      }
+   } else {
+      map < int, bool > used;
+            
+      double lp = log( (double) q.size() );
+      double step = lp / (double) bins;
+      for ( double i = 0; i <= lp; i += step )
+      {
+         int idx = int( exp( i ) - .5 );
+         if ( !used.count( idx ) )
+         {
+            q_new.push_back( q[ idx ] );
+            I_new.push_back( I[ idx ] );
+            if ( e.size() )
+            {
+               e_new.push_back( e[ idx ] );
+            }
+            used[ idx ] = true;
+         }
+      }
+      if ( (int)q_new.size() < bins )
+      {
+         notice_msg = QString( "Notice: log bins produced fewer points (%1) than requested (%2)" ).arg( q_new.size() ).arg( bins );
+      }
+   }
    q = q_new;
    I = I_new;
    e = e_new;
+   return true;
 }

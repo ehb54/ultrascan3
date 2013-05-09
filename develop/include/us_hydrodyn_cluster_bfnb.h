@@ -112,6 +112,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       QLineEdit *                             le_pmbestdeltadivisor;
       QLabel *                                lbl_pmbestdeltamin;
       QLineEdit *                             le_pmbestdeltamin;
+      QCheckBox *                             cb_pmcsv;
       QLabel *                                lbl_pmdebug;
       QLineEdit *                             le_pmdebug;
       QPushButton *                           pb_save;
@@ -164,6 +165,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       void                                    update_pmbestdeltastart( const QString & );
       void                                    update_pmbestdeltadivisor( const QString & );
       void                                    update_pmbestdeltamin( const QString & );
+      void                                    set_pmcsv();
       void                                    update_pmdebug( const QString & );
       void                                    save();
       void                                    load();

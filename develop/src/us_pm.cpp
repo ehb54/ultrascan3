@@ -613,6 +613,8 @@ bool US_PM::write_I( QString & filename, set < pm_point > & model, bool overwrit
       ts << QString( "%1\t%2\n" ).arg( q[ i ], 0, 'e', 6 ).arg( I_result[ i ], 0, 'e', 6 );
    }
 
+   last_written_I = I_result;
+
    of.close();
    filename.replace( QRegExp( "\\.dat$" ), "" );
    return true;

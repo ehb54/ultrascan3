@@ -775,6 +775,22 @@ class US_EXTERN US_Saxs_Util
                            vector < double > & I,
                            vector < double > & e
                            );
+      static bool bin_data( 
+                           int                 bins,
+                           bool                log_bin,
+                           vector < double > & q,
+                           vector < double > & I,
+                           vector < double > & e,
+                           QString           & error_msg,
+                           QString           & notice_msg
+                           );
+
+      bool  flush_pm_csv( 
+                         vector < QString >           & csv_name,
+                         vector < double >            & csv_q,
+                         vector < vector < double > > & csv_I 
+                         );
+
    private:
 
       // double       minusoneoverfourpisq;

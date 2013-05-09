@@ -3816,9 +3816,9 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
    }
 
    QStringList qsl_noargs;
-   //    qsl_noargs 
-   //       << "pmapproxmaxdimension"
-   //       ;
+   qsl_noargs 
+      << "pmcsv"
+      ;
 
    map < QString, bool > noargs;
    for ( int i = 0; i < (int) qsl_noargs.size(); ++i )
@@ -4088,7 +4088,19 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
          {
             errors += "Error: log binning was selected with zero q points";
          }
-         US_Saxs_Util::bin_data( pmqpoints, pmlogbin, q, I, e );
+         QString error_msg;
+         QString notice_msg;
+         
+         US_Saxs_Util::bin_data( pmqpoints, pmlogbin, q, I, e, error_msg, notice_msg );
+         if ( !notice_msg.isEmpty() )
+         {
+            editor_msg( "dark red", tr( notice_msg ) );
+         }
+         if ( !error_msg.isEmpty() )
+         {
+            errors += tr( error_msg ) + "\n";
+            continue;
+         }
 
          if ( q.size() < 3 )
          {
