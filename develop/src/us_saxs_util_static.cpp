@@ -156,9 +156,9 @@ void US_Saxs_Util::bin_data(
                             vector < double > & e
                             )
 {
-   vector < double >  q_new;
-   vector < double >  I_new;
-   vector < double >  e_new;
+   vector < double >  q_new = q;
+   vector < double >  I_new = I;
+   vector < double >  e_new = e;
 
    // divide into bins and compute weighted average value or take sample point ?
 

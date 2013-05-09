@@ -4069,6 +4069,32 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
       {
          errors += error_msg + "\n";
       } else {
+         if ( q.size() < 3 )
+         {
+            errors +=  QString( "Error: Too few q points read from data (%1)" ).arg( q.size() );
+            continue;
+         }            
+
+         double pmminq = (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmminq" ) ?
+            (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmminq" ].toDouble() : 0e0;
+         double pmmaxq = (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmmaxq" ) ?
+            (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmmaxq" ].toDouble() : 7e0;
+         int pmqpoints = (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmqpoints" ) ?
+            (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmqpoints" ].toInt() : 10000;
+         bool pmlogbin = (*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmlogbin" );
+         US_Saxs_Util::clip_data( pmminq, pmmaxq, q, I, e );
+
+         if ( pmlogbin && !pmqpoints )
+         {
+            errors += "Error: log binning was selected with zero q points";
+         }
+         US_Saxs_Util::bin_data( pmqpoints, pmlogbin, q, I, e );
+
+         if ( q.size() < 3 )
+         {
+            errors +=  QString( "Error: After cropping and binning, there are too few q points left (%1)" ).arg( q.size() );
+         }            
+
          out += "pmq ";
          for ( int j = 0; j < (int) q.size(); ++j )
          {
