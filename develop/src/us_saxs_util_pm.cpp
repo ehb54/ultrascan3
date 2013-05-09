@@ -190,9 +190,49 @@ bool US_Saxs_Util::run_pm( QString controlfile )
    if ( use_tar )
    {
       // package output
-      if ( !create_tgz_output( controlfile + "_out.tgz" ) )
+      QString results_file = controlfile;
+      results_file.replace( QRegExp( "\\.(tgz|TGZ|tar|TGZ)$" ), "" );
+      results_file += "_out.tgz";
+
+      if ( !create_tgz_output( results_file ) )
       {
          return false;
+      }
+
+      QDir dod( outputData );
+      if ( !dod.exists() )
+      {
+         QDir current = QDir::current();
+            
+         QString newdir = outputData;
+         while ( newdir.left( 3 ) == "../" )
+         {
+            current.cdUp();
+            newdir.replace( "../", "" );
+         }
+         QDir::setCurrent( current.path() );
+         QDir ndod;
+         if ( !ndod.mkdir( newdir, true ) )
+         {
+            cout << QString("Warning: could not create outputData \"%1\" directory\n" ).arg( ndod.path() );
+         }
+         QDir::setCurrent( qs_base_dir );
+      }
+      if ( dod.exists() )
+      {
+         QString dest = outputData + QDir::separator() + QFileInfo( results_file ).fileName();
+         QDir qd;
+         cout << QString("renaming: %1 to %2\n" )
+               .arg( results_file )
+               .arg( dest );
+         if ( !qd.rename( results_file, dest ) )
+         {
+            cout << QString("Warning: could not rename outputData %1 to %2\n" )
+               .arg( results_file )
+               .arg( dest );
+         }
+      } else {
+         cout << QString( "Error: %1 does not exist\n" ).arg( outputData );
       }
    }
 

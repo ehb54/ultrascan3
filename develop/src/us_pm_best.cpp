@@ -916,6 +916,7 @@ bool US_PM::best_md0_ga(
          }
       }
 
+      if ( 0 )
       {
          QString oname =  QString( "/root/ultrascan/somo/saxs/tmp/last_md0_best_gc_%1" ).arg( grid_conversion_factor ).replace( ".", "_" );
          write_model( oname, model, params );
