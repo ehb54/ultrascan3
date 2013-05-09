@@ -50,8 +50,6 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       QLineEdit *                             le_pmtypes;
       QCheckBox *                             cb_pmincrementally;
       QCheckBox *                             cb_pmallcombinations;
-      QLabel *                                lbl_pmrayleighdrho;
-      QLineEdit *                             le_pmrayleighdrho;
       QLabel *                                lbl_pmoutname;
       QLineEdit *                             le_pmoutname;
       QLabel *                                lbl_pmgridsize;
@@ -121,7 +119,6 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       void                                    update_pmtypes( const QString & );
       void                                    set_pmincrementally();
       void                                    set_pmallcombinations();
-      void                                    update_pmrayleighdrho( const QString & );
       void                                    update_pmoutname( const QString & );
       void                                    update_pmgridsize( const QString & );
       void                                    set_pmapproxmaxdimension();

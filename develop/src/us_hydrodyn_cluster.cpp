@@ -3765,6 +3765,8 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
       }
    } 
 
+   (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmrayleighdrho" ] = ".1";
+
    QString base = 
       "# us_saxs_cmds_t pm controlfile\n"
       "# blank lines ok, format token <params>\n"

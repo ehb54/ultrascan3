@@ -96,24 +96,6 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    cb_pmallcombinations ->setChecked        ( parameters->count( "pmallcombinations" ) && ( *parameters )[ "pmallcombinations" ] == "true" ? true : false );
    connect( cb_pmallcombinations, SIGNAL( clicked() ), SLOT( set_pmallcombinations() ) );
 
-   lbl_pmrayleighdrho = new QLabel      ( tr( "Delta rho (sample - buffer):" ), this );
-   lbl_pmrayleighdrho ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_pmrayleighdrho ->setMinimumHeight( minHeight1 );
-   lbl_pmrayleighdrho ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
-   lbl_pmrayleighdrho ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_pmrayleighdrho ->setMinimumWidth ( QFontMetrics( lbl_pmrayleighdrho->font() ).maxWidth() * 19 );
-
-   le_pmrayleighdrho = new QLineEdit     ( this, "pmrayleighdrho Line Edit" );
-   widgets_main_label.push_back( lbl_pmrayleighdrho );
-   widgets_main_label.push_back( le_pmrayleighdrho );
-   le_pmrayleighdrho ->setText           ( parameters->count( "pmrayleighdrho" ) ? ( *parameters )[ "pmrayleighdrho" ] : "" );
-   le_pmrayleighdrho ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_pmrayleighdrho ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   le_pmrayleighdrho ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_pmrayleighdrho ->setMinimumHeight  ( minHeight1 );
-   le_pmrayleighdrho ->setMinimumWidth   ( 150 );
-   connect( le_pmrayleighdrho, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmrayleighdrho( const QString & ) ) );
-
    lbl_pmoutname = new QLabel      ( tr( "Output name prefix (default: no prefix)" ), this );
    lbl_pmoutname ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmoutname ->setMinimumHeight( minHeight1 );
@@ -600,12 +582,6 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( lbl_pmrayleighdrho );
-   hbl->addWidget( le_pmrayleighdrho );
-   hbl->addSpacing( 4 );
-   background->addLayout( hbl );
-   hbl = new QHBoxLayout( 0 );
-   hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmoutname );
    hbl->addWidget( le_pmoutname );
    hbl->addSpacing( 4 );
@@ -813,11 +789,6 @@ void US_Hydrodyn_Cluster_Bfnb::closeEvent( QCloseEvent *e )
    {
       parameters->erase( "pmallcombinations" );
    }
-   if ( parameters->count( "pmrayleighdrho" ) &&
-        (*parameters)[ "pmrayleighdrho" ].isEmpty() )
-   {
-      parameters->erase( "pmrayleighdrho" );
-   }
    if ( parameters->count( "pmoutname" ) &&
         (*parameters)[ "pmoutname" ].isEmpty() )
    {
@@ -964,11 +935,6 @@ void US_Hydrodyn_Cluster_Bfnb::set_pmincrementally()
 void US_Hydrodyn_Cluster_Bfnb::set_pmallcombinations()
 {
    ( *parameters )[ "pmallcombinations" ] = cb_pmallcombinations->isChecked() ? "true" : "false";
-}
-
-void US_Hydrodyn_Cluster_Bfnb::update_pmrayleighdrho( const QString & )
-{
-   ( *parameters )[ "pmrayleighdrho" ] = le_pmrayleighdrho->text();
 }
 
 void US_Hydrodyn_Cluster_Bfnb::update_pmoutname( const QString & )
@@ -1169,7 +1135,6 @@ void US_Hydrodyn_Cluster_Bfnb::update_fields()
    le_pmtypes                                      ->setText( parameters->count( "pmtypes" ) ? ( *parameters )[ "pmtypes" ] : "" );
    cb_pmincrementally                              ->setChecked( parameters->count( "pmincrementally" ) && ( *parameters )[ "pmincrementally" ] == "true" ? true : false );
    cb_pmallcombinations                            ->setChecked( parameters->count( "pmallcombinations" ) && ( *parameters )[ "pmallcombinations" ] == "true" ? true : false );
-   le_pmrayleighdrho                               ->setText( parameters->count( "pmrayleighdrho" ) ? ( *parameters )[ "pmrayleighdrho" ] : "" );
    le_pmoutname                                    ->setText( parameters->count( "pmoutname" ) ? ( *parameters )[ "pmoutname" ] : "" );
    le_pmgridsize                                   ->setText( parameters->count( "pmgridsize" ) ? ( *parameters )[ "pmgridsize" ] : "" );
    cb_pmapproxmaxdimension                         ->setChecked( parameters->count( "pmapproxmaxdimension" ) && ( *parameters )[ "pmapproxmaxdimension" ] == "true" ? true : false );
