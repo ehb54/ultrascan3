@@ -122,6 +122,8 @@ for ( $i = 0; $i < @required_token_array; $i++ )
                               "showhidelabel",
                               "endshowhidelabel",
                               "hide",
+                              "disable",
+                              "enable",
                               "variable",
                               "button",
                               "checkbox",
@@ -610,6 +612,7 @@ add_includes( "qlayout.h" );
     my $cpp_clean_parameters;
     my $used_show_hide;
     my %show_hide_active;
+    my $enabled = 1;
 
     $private .= 
         "      QLabel *                                lbl_title;\n";
@@ -685,6 +688,18 @@ add_includes( "qlayout.h" );
                 "   hbl = new QHBoxLayout( 0 );\n" .
                 "   hbl->addSpacing( 4 );\n" 
                 ;
+        }
+
+        if ( $tok =~ /^enable$/ )
+        {
+            $enabled = 1;
+            next;
+        }
+
+        if ( $tok =~ /^disable$/ )
+        {
+            $enabled = 0;
+            next;
         }
 
         if ( $name &&  $tok =~ /^(endshowhidelabel|hide)$/ && !$existing_names{ $name } )
@@ -847,6 +862,11 @@ __END
                 "   $button -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );\n" .
                 "   connect( $button, SIGNAL( clicked() ), SLOT( $name() ) );\n" 
                 ;
+
+            if ( !$enabled )
+            {
+                $setup_gui .= "   $button ->setEnabled( false );\n";
+            }
 
             {
                 my $key;
@@ -1100,6 +1120,11 @@ __END
                 "\n" .
                 "   le_${name} = new QLineEdit     ( this, \"${name} Line Edit\" );\n";
 
+            if ( !$enabled )
+            {
+                $setup_gui .= "   le_${name} ->setEnabled( false );\n";
+            }
+
             {
                 my $key;
                 foreach $key ( keys %show_hide_active )
@@ -1247,6 +1272,11 @@ __END
                 "   cb_${name} ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );\n" .
                 "   cb_${name} ->setMinimumWidth  ( QFontMetrics( cb_${name}->font() ).maxWidth() * $maximum_desc_length );\n" .
                 "\n";
+
+            if ( !$enabled )
+            {
+                $setup_gui .= "   cb_${name} ->setEnabled( false );\n";
+            }
 
             {
                 my $key;

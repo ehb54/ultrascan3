@@ -3765,7 +3765,18 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
       }
    } 
 
-   (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmrayleighdrho" ] = ".1";
+   // (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmrayleighdrho" ] = ".1";
+   if ( !(*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmrayleighdrho" ) )
+   {
+      (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmrayleighdrho" ] = ".425";
+      editor_msg( "dark red", tr( "Notice: setting sample e density to protein average of .425" ) );
+   }
+
+   if ( !(*cluster_additional_methods_options_selected)[ methods[ 0 ] ].count( "pmbufferedensity" ) )
+   {
+      (*cluster_additional_methods_options_selected)[ methods[ 0 ] ][ "pmbufferedensity" ] = QString( "%1" ).arg( our_saxs_options->water_e_density );
+      editor_msg( "dark red", QString( tr( "Notice: setting buffer e density to SAS Options value of %1" ) ).arg( our_saxs_options->water_e_density ) );
+   }
 
    QString base = 
       "# us_saxs_cmds_t pm controlfile\n"
@@ -3795,6 +3806,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
    QStringList qsl_per_file;
    qsl_per_file 
       << "pmrayleighdrho"
+      << "pmbufferedensity"
       ;
 
    map < QString, bool > per_file;
@@ -3818,6 +3830,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
    qsl_req 
       << "pmtypes"
       << "pmrayleighdrho"
+      << "pmbufferedensity"
       ;
 
    map < QString, bool > req;

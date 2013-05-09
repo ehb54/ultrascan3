@@ -761,6 +761,20 @@ class US_EXTERN US_Saxs_Util
                                  vector < double > & e,
                                  QString           & error_msg 
                                  );
+      static void  clip_data( 
+                             double              minq,
+                             double              maxq,
+                             vector < double > & q,
+                             vector < double > & I,
+                             vector < double > & e
+                             );
+      static void bin_data( 
+                           int                 bins,
+                           bool                log_bin,
+                           vector < double > & q,
+                           vector < double > & I,
+                           vector < double > & e
+                           );
    private:
 
       // double       minusoneoverfourpisq;

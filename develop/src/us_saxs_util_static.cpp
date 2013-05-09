@@ -119,3 +119,50 @@ bool US_Saxs_Util::read_sas_data(
    return true;
 }
 
+void US_Saxs_Util::clip_data( 
+                             double              minq,
+                             double              maxq,
+                             vector < double > & q,
+                             vector < double > & I,
+                             vector < double > & e
+                             )
+{
+   vector < double >  q_new;
+   vector < double >  I_new;
+   vector < double >  e_new;
+   for ( int i = 0; i < (int) q.size(); ++i )
+   {
+      if ( q[ i ] >= minq && q[ i ] <= maxq )
+      {
+         q_new.push_back( q[ i ] );
+         I_new.push_back( I[ i ] );
+         if ( e.size() )
+         {
+            e_new.push_back( e[ i ] );
+         }
+      }
+   }
+   
+   q = q_new;
+   I = I_new;
+   e = e_new;
+}
+
+void US_Saxs_Util::bin_data( 
+                            int                 /* bins */,
+                            bool                /* log_bin */,
+                            vector < double > & q,
+                            vector < double > & I,
+                            vector < double > & e
+                            )
+{
+   vector < double >  q_new;
+   vector < double >  I_new;
+   vector < double >  e_new;
+
+   // divide into bins and compute weighted average value or take sample point ?
+
+   q = q_new;
+   I = I_new;
+   e = e_new;
+}

@@ -11,6 +11,10 @@
 #  define M_4PI       (4e0 * 3.14159265358979323846)
 #endif
 
+#ifndef M_ONE_OVER_4PI
+#  define M_ONE_OVER_4PI      (1e0 / (4e0 * 3.14159265358979323846))
+#endif
+
 // based upon int16 right now
 #define USPM_MAX_VAL   32767
 #define USPM_MAX_VAL_D ( ( double ) USPM_MAX_VAL )

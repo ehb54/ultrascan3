@@ -257,6 +257,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmmaxdimension|"
 
                       "pmrayleighdrho|"
+                      "pmbufferedensity|"
 
                       "pmmemory|"
                       "pmdebug|"
@@ -308,6 +309,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                       "pmmaxdimension|"
 
                       "pmrayleighdrho|"
+                      "pmbufferedensity|"
 
                       "pmmemory|"
                       "pmdebug|"
@@ -432,6 +434,11 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             errormsg = "pmgridsize must be defined before pmrayleighdro";
             return false;
          }
+         if ( !control_parameters.count( "pmbufferedensity" ) )
+         {
+            errormsg = "pmbufferedensity must be defined before pmrayleighdro";
+            return false;
+         }
 
          if ( !compute_rayleigh_structure_factors( 
                                                   pow( pow( control_parameters[ "pmgridsize" ].toDouble(), 3e0 ) / M_PI, 1e0/3e0 ),
@@ -442,6 +449,19 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             errormsg = QString( "Error controlfile line %1 : %2" ).arg( i + 1 ).arg( errormsg );
             return false;
          }
+         double bed = control_parameters[ "pmbufferedensity" ].toDouble();
+         if ( bed )
+         {
+            double vi = pow( control_parameters[ "pmgridsize" ].toDouble(), 3e0 );
+            double vie = vi * bed;
+            double vi_23_4pi = - pow((double)vi,2.0/3.0) * M_ONE_OVER_4PI;
+            for ( int i = 0; i < (int) control_vectors[ "pmf" ].size(); ++i )
+            {
+               double q = control_vectors[ "pmq" ][ i ];
+               control_vectors[ "pmf" ][ i ] -= vie * exp( vi_23_4pi * q * q );
+            }
+         }
+
          cout << "Rayleigh structure factors computed\n";
          
          US_Vector::printvector2( "pmq pmf", control_vectors[ "pmq" ], control_vectors[ "pmf" ] );

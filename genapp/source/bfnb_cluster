@@ -10,10 +10,15 @@ _variables
 map     string  s - - pmtypes "pmtypes" "Model type list\n(0=sphere,1=cylinder,2=spheroid,\n3=ellipsoid,4=torus)"
 map     string  s - - pmincrementally "pmincrementally" "Compute models for all lengths upto above"
 map     string  s - - pmallcombinations "pmallcombinations" "Compute models for all unique combinations"
-# map     string  s - - pmrayleighdrho "pmrayleighdrho" "Delta rho (sample - buffer):"
+map     string  s - - pmrayleighdrho "pmrayleighdrho" "Sample electron density e/A^3\n(default: protenn average .425)\nProteins: .41-.44, DNA:.59, RNA:.6, Carbs:.49"
+map     string  s - - pmbufferedensity "pmbufferedensity" "Buffer electron density e/A^3\n(default: SAS Options->Water e density)\nH2O .334"
 map     string  s - - pmoutname "pmoutname" "Output name prefix (default: no prefix)"
 map     string  s - - pmgridsize "pmgridsize" "Grid size (A)"
 map     string  s - - pmapproxmaxdimension "pmapproxmaxdimension" "Automatically compute maximum dimension"
+map     string  s - - pmminq "pmminq" "Minimum q value (default: 0)"
+map     string  s - - pmmaxq "pmmaxq" "Maximum q value (default: .25)"
+map     string  s - - pmlogqbin "pmlogqbin" "Create log q bins"
+map     string  s - - pmqpoints "pmqpoints" "q points (default: all points)"
 map     string  s - - pmharmonics "pmharmonics" "Maximum harmonics (default: 15)"
 map     string  s - - pmseed "pmseed" "Random seed (default: use time)"
 map     string  s - - pmmemory "pmmemory" "Maximum memory per core in MB (default: 1024)"
@@ -43,8 +48,10 @@ row
 checkbox pmincrementally
 checkbox pmallcombinations
 row
-# variable pmrayleighdrho
-# row
+variable pmrayleighdrho
+row
+variable pmbufferedensity
+row
 variable pmoutname
 row
 variable pmgridsize
@@ -52,6 +59,20 @@ row
 checkbox pmapproxmaxdimension true
 row
 endshowhidelabel main_label
+disable
+showhidelabel q_label "q range editing controls"
+hide q_label
+row
+variable pmminq
+row
+variable pmmaxq
+row
+checkbox pmlogqbin
+row
+variable pmqpoints
+row
+endshowhidelabel q_label
+enable
 showhidelabel supp_label "Supplementary controls"
 hide supp_label
 row

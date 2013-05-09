@@ -525,6 +525,7 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, bool over
    
    QTextStream ts( &of );
    ts << qs_bead_model( model );
+   ts << "Model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : 10\n";
    ts << QString( "Rg: %1\n" ).arg( rg );
    of.close();
    filename.replace( QRegExp( "\\.bead_model$" ), "" );
@@ -562,6 +563,7 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, vector < 
    
    QTextStream ts( &of );
    ts << qs_bead_model( model );
+   ts << "Model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : 10\n";
    ts << QString( "Rg: %1\n" ).arg( rg );
    ts << list_params( params );
    of.close();

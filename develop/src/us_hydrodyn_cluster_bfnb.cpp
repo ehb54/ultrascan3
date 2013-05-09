@@ -96,6 +96,42 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    cb_pmallcombinations ->setChecked        ( parameters->count( "pmallcombinations" ) && ( *parameters )[ "pmallcombinations" ] == "true" ? true : false );
    connect( cb_pmallcombinations, SIGNAL( clicked() ), SLOT( set_pmallcombinations() ) );
 
+   lbl_pmrayleighdrho = new QLabel      ( tr( "Sample electron density e/A^3\n(default: protenn average .425)\nProteins: .41-.44, DNA:.59, RNA:.6, Carbs:.49" ), this );
+   lbl_pmrayleighdrho ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_pmrayleighdrho ->setMinimumHeight( minHeight1 *  3 );
+   lbl_pmrayleighdrho ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_pmrayleighdrho ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_pmrayleighdrho ->setMinimumWidth ( QFontMetrics( lbl_pmrayleighdrho->font() ).maxWidth() * 19 );
+
+   le_pmrayleighdrho = new QLineEdit     ( this, "pmrayleighdrho Line Edit" );
+   widgets_main_label.push_back( lbl_pmrayleighdrho );
+   widgets_main_label.push_back( le_pmrayleighdrho );
+   le_pmrayleighdrho ->setText           ( parameters->count( "pmrayleighdrho" ) ? ( *parameters )[ "pmrayleighdrho" ] : "" );
+   le_pmrayleighdrho ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_pmrayleighdrho ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_pmrayleighdrho ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pmrayleighdrho ->setMinimumHeight  ( minHeight1 *  3 );
+   le_pmrayleighdrho ->setMinimumWidth   ( 150 );
+   connect( le_pmrayleighdrho, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmrayleighdrho( const QString & ) ) );
+
+   lbl_pmbufferedensity = new QLabel      ( tr( "Buffer electron density e/A^3\n(default: SAS Options->Water e density)\nH2O .334" ), this );
+   lbl_pmbufferedensity ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_pmbufferedensity ->setMinimumHeight( minHeight1 *  3 );
+   lbl_pmbufferedensity ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_pmbufferedensity ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_pmbufferedensity ->setMinimumWidth ( QFontMetrics( lbl_pmbufferedensity->font() ).maxWidth() * 19 );
+
+   le_pmbufferedensity = new QLineEdit     ( this, "pmbufferedensity Line Edit" );
+   widgets_main_label.push_back( lbl_pmbufferedensity );
+   widgets_main_label.push_back( le_pmbufferedensity );
+   le_pmbufferedensity ->setText           ( parameters->count( "pmbufferedensity" ) ? ( *parameters )[ "pmbufferedensity" ] : "" );
+   le_pmbufferedensity ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_pmbufferedensity ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_pmbufferedensity ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pmbufferedensity ->setMinimumHeight  ( minHeight1 *  3 );
+   le_pmbufferedensity ->setMinimumWidth   ( 150 );
+   connect( le_pmbufferedensity, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmbufferedensity( const QString & ) ) );
+
    lbl_pmoutname = new QLabel      ( tr( "Output name prefix (default: no prefix)" ), this );
    lbl_pmoutname ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmoutname ->setMinimumHeight( minHeight1 );
@@ -145,6 +181,83 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    }
    cb_pmapproxmaxdimension ->setChecked        ( parameters->count( "pmapproxmaxdimension" ) && ( *parameters )[ "pmapproxmaxdimension" ] == "true" ? true : false );
    connect( cb_pmapproxmaxdimension, SIGNAL( clicked() ), SLOT( set_pmapproxmaxdimension() ) );
+
+   lbl_q_label =  new mQLabel     ( tr( "q range editing controls" ), this );
+   lbl_q_label -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
+   lbl_q_label -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
+   lbl_q_label -> setMinimumHeight( minHeight1 );
+   lbl_q_label -> setPalette      ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
+   lbl_q_label -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+   connect( lbl_q_label, SIGNAL( pressed() ), SLOT( hide_q_label() ) );
+
+
+   lbl_pmminq = new QLabel      ( tr( "Minimum q value (default: 0)" ), this );
+   lbl_pmminq ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_pmminq ->setMinimumHeight( minHeight1 );
+   lbl_pmminq ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_pmminq ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_pmminq ->setMinimumWidth ( QFontMetrics( lbl_pmminq->font() ).maxWidth() * 19 );
+
+   le_pmminq = new QLineEdit     ( this, "pmminq Line Edit" );
+   le_pmminq ->setEnabled( false );
+   widgets_q_label.push_back( lbl_pmminq );
+   widgets_q_label.push_back( le_pmminq );
+   le_pmminq ->setText           ( parameters->count( "pmminq" ) ? ( *parameters )[ "pmminq" ] : "" );
+   le_pmminq ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_pmminq ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_pmminq ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pmminq ->setMinimumHeight  ( minHeight1 );
+   le_pmminq ->setMinimumWidth   ( 150 );
+   connect( le_pmminq, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmminq( const QString & ) ) );
+
+   lbl_pmmaxq = new QLabel      ( tr( "Maximum q value (default: .25)" ), this );
+   lbl_pmmaxq ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_pmmaxq ->setMinimumHeight( minHeight1 );
+   lbl_pmmaxq ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_pmmaxq ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_pmmaxq ->setMinimumWidth ( QFontMetrics( lbl_pmmaxq->font() ).maxWidth() * 19 );
+
+   le_pmmaxq = new QLineEdit     ( this, "pmmaxq Line Edit" );
+   le_pmmaxq ->setEnabled( false );
+   widgets_q_label.push_back( lbl_pmmaxq );
+   widgets_q_label.push_back( le_pmmaxq );
+   le_pmmaxq ->setText           ( parameters->count( "pmmaxq" ) ? ( *parameters )[ "pmmaxq" ] : "" );
+   le_pmmaxq ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_pmmaxq ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_pmmaxq ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pmmaxq ->setMinimumHeight  ( minHeight1 );
+   le_pmmaxq ->setMinimumWidth   ( 150 );
+   connect( le_pmmaxq, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmmaxq( const QString & ) ) );
+
+   cb_pmlogqbin = new QCheckBox    ( tr( "Create log q bins" ), this );
+   cb_pmlogqbin ->setMinimumHeight ( minHeight1 );
+   cb_pmlogqbin ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   cb_pmlogqbin ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   cb_pmlogqbin ->setMinimumWidth  ( QFontMetrics( cb_pmlogqbin->font() ).maxWidth() * 19 );
+
+   cb_pmlogqbin ->setEnabled( false );
+   widgets_q_label.push_back( cb_pmlogqbin );
+   cb_pmlogqbin ->setChecked        ( parameters->count( "pmlogqbin" ) && ( *parameters )[ "pmlogqbin" ] == "true" ? true : false );
+   connect( cb_pmlogqbin, SIGNAL( clicked() ), SLOT( set_pmlogqbin() ) );
+
+   lbl_pmqpoints = new QLabel      ( tr( "q points (default: all points)" ), this );
+   lbl_pmqpoints ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_pmqpoints ->setMinimumHeight( minHeight1 );
+   lbl_pmqpoints ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_pmqpoints ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_pmqpoints ->setMinimumWidth ( QFontMetrics( lbl_pmqpoints->font() ).maxWidth() * 19 );
+
+   le_pmqpoints = new QLineEdit     ( this, "pmqpoints Line Edit" );
+   le_pmqpoints ->setEnabled( false );
+   widgets_q_label.push_back( lbl_pmqpoints );
+   widgets_q_label.push_back( le_pmqpoints );
+   le_pmqpoints ->setText           ( parameters->count( "pmqpoints" ) ? ( *parameters )[ "pmqpoints" ] : "" );
+   le_pmqpoints ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_pmqpoints ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_pmqpoints ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pmqpoints ->setMinimumHeight  ( minHeight1 );
+   le_pmqpoints ->setMinimumWidth   ( 150 );
+   connect( le_pmqpoints, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmqpoints( const QString & ) ) );
 
    lbl_supp_label =  new mQLabel     ( tr( "Supplementary controls" ), this );
    lbl_supp_label -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
@@ -582,6 +695,18 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_pmrayleighdrho );
+   hbl->addWidget( le_pmrayleighdrho );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_pmbufferedensity );
+   hbl->addWidget( le_pmbufferedensity );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmoutname );
    hbl->addWidget( le_pmoutname );
    hbl->addSpacing( 4 );
@@ -595,6 +720,35 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
    hbl->addWidget( cb_pmapproxmaxdimension );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_q_label );
+   hide_widgets( widgets_q_label, true, false );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_pmminq );
+   hbl->addWidget( le_pmminq );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_pmmaxq );
+   hbl->addWidget( le_pmmaxq );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( cb_pmlogqbin );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_pmqpoints );
+   hbl->addWidget( le_pmqpoints );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
@@ -789,6 +943,16 @@ void US_Hydrodyn_Cluster_Bfnb::closeEvent( QCloseEvent *e )
    {
       parameters->erase( "pmallcombinations" );
    }
+   if ( parameters->count( "pmrayleighdrho" ) &&
+        (*parameters)[ "pmrayleighdrho" ].isEmpty() )
+   {
+      parameters->erase( "pmrayleighdrho" );
+   }
+   if ( parameters->count( "pmbufferedensity" ) &&
+        (*parameters)[ "pmbufferedensity" ].isEmpty() )
+   {
+      parameters->erase( "pmbufferedensity" );
+   }
    if ( parameters->count( "pmoutname" ) &&
         (*parameters)[ "pmoutname" ].isEmpty() )
    {
@@ -798,6 +962,27 @@ void US_Hydrodyn_Cluster_Bfnb::closeEvent( QCloseEvent *e )
         (*parameters)[ "pmgridsize" ].isEmpty() )
    {
       parameters->erase( "pmgridsize" );
+   }
+   if ( parameters->count( "pmminq" ) &&
+        (*parameters)[ "pmminq" ].isEmpty() )
+   {
+      parameters->erase( "pmminq" );
+   }
+   if ( parameters->count( "pmmaxq" ) &&
+        (*parameters)[ "pmmaxq" ].isEmpty() )
+   {
+      parameters->erase( "pmmaxq" );
+   }
+   if ( parameters->count( "pmlogqbin" ) &&
+        ( (*parameters)[ "pmlogqbin" ].isEmpty() ||
+          (*parameters)[ "pmlogqbin" ] == "false" ) )
+   {
+      parameters->erase( "pmlogqbin" );
+   }
+   if ( parameters->count( "pmqpoints" ) &&
+        (*parameters)[ "pmqpoints" ].isEmpty() )
+   {
+      parameters->erase( "pmqpoints" );
    }
    if ( parameters->count( "pmharmonics" ) &&
         (*parameters)[ "pmharmonics" ].isEmpty() )
@@ -937,6 +1122,16 @@ void US_Hydrodyn_Cluster_Bfnb::set_pmallcombinations()
    ( *parameters )[ "pmallcombinations" ] = cb_pmallcombinations->isChecked() ? "true" : "false";
 }
 
+void US_Hydrodyn_Cluster_Bfnb::update_pmrayleighdrho( const QString & )
+{
+   ( *parameters )[ "pmrayleighdrho" ] = le_pmrayleighdrho->text();
+}
+
+void US_Hydrodyn_Cluster_Bfnb::update_pmbufferedensity( const QString & )
+{
+   ( *parameters )[ "pmbufferedensity" ] = le_pmbufferedensity->text();
+}
+
 void US_Hydrodyn_Cluster_Bfnb::update_pmoutname( const QString & )
 {
    ( *parameters )[ "pmoutname" ] = le_pmoutname->text();
@@ -950,6 +1145,30 @@ void US_Hydrodyn_Cluster_Bfnb::update_pmgridsize( const QString & )
 void US_Hydrodyn_Cluster_Bfnb::set_pmapproxmaxdimension()
 {
    ( *parameters )[ "pmapproxmaxdimension" ] = cb_pmapproxmaxdimension->isChecked() ? "true" : "false";
+}
+void US_Hydrodyn_Cluster_Bfnb::hide_q_label()
+{
+   hide_widgets( widgets_q_label, widgets_q_label.size() && widgets_q_label[ 0 ]->isVisible() );
+}
+
+void US_Hydrodyn_Cluster_Bfnb::update_pmminq( const QString & )
+{
+   ( *parameters )[ "pmminq" ] = le_pmminq->text();
+}
+
+void US_Hydrodyn_Cluster_Bfnb::update_pmmaxq( const QString & )
+{
+   ( *parameters )[ "pmmaxq" ] = le_pmmaxq->text();
+}
+
+void US_Hydrodyn_Cluster_Bfnb::set_pmlogqbin()
+{
+   ( *parameters )[ "pmlogqbin" ] = cb_pmlogqbin->isChecked() ? "true" : "false";
+}
+
+void US_Hydrodyn_Cluster_Bfnb::update_pmqpoints( const QString & )
+{
+   ( *parameters )[ "pmqpoints" ] = le_pmqpoints->text();
 }
 void US_Hydrodyn_Cluster_Bfnb::hide_supp_label()
 {
@@ -1135,9 +1354,15 @@ void US_Hydrodyn_Cluster_Bfnb::update_fields()
    le_pmtypes                                      ->setText( parameters->count( "pmtypes" ) ? ( *parameters )[ "pmtypes" ] : "" );
    cb_pmincrementally                              ->setChecked( parameters->count( "pmincrementally" ) && ( *parameters )[ "pmincrementally" ] == "true" ? true : false );
    cb_pmallcombinations                            ->setChecked( parameters->count( "pmallcombinations" ) && ( *parameters )[ "pmallcombinations" ] == "true" ? true : false );
+   le_pmrayleighdrho                               ->setText( parameters->count( "pmrayleighdrho" ) ? ( *parameters )[ "pmrayleighdrho" ] : "" );
+   le_pmbufferedensity                             ->setText( parameters->count( "pmbufferedensity" ) ? ( *parameters )[ "pmbufferedensity" ] : "" );
    le_pmoutname                                    ->setText( parameters->count( "pmoutname" ) ? ( *parameters )[ "pmoutname" ] : "" );
    le_pmgridsize                                   ->setText( parameters->count( "pmgridsize" ) ? ( *parameters )[ "pmgridsize" ] : "" );
    cb_pmapproxmaxdimension                         ->setChecked( parameters->count( "pmapproxmaxdimension" ) && ( *parameters )[ "pmapproxmaxdimension" ] == "true" ? true : false );
+   le_pmminq                                       ->setText( parameters->count( "pmminq" ) ? ( *parameters )[ "pmminq" ] : "" );
+   le_pmmaxq                                       ->setText( parameters->count( "pmmaxq" ) ? ( *parameters )[ "pmmaxq" ] : "" );
+   cb_pmlogqbin                                    ->setChecked( parameters->count( "pmlogqbin" ) && ( *parameters )[ "pmlogqbin" ] == "true" ? true : false );
+   le_pmqpoints                                    ->setText( parameters->count( "pmqpoints" ) ? ( *parameters )[ "pmqpoints" ] : "" );
    le_pmharmonics                                  ->setText( parameters->count( "pmharmonics" ) ? ( *parameters )[ "pmharmonics" ] : "" );
    le_pmseed                                       ->setText( parameters->count( "pmseed" ) ? ( *parameters )[ "pmseed" ] : "" );
    le_pmmemory                                     ->setText( parameters->count( "pmmemory" ) ? ( *parameters )[ "pmmemory" ] : "" );
