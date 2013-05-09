@@ -199,7 +199,6 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmminq ->setMinimumWidth ( QFontMetrics( lbl_pmminq->font() ).maxWidth() * 19 );
 
    le_pmminq = new QLineEdit     ( this, "pmminq Line Edit" );
-   le_pmminq ->setEnabled( false );
    widgets_q_label.push_back( lbl_pmminq );
    widgets_q_label.push_back( le_pmminq );
    le_pmminq ->setText           ( parameters->count( "pmminq" ) ? ( *parameters )[ "pmminq" ] : "" );
@@ -218,7 +217,6 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmmaxq ->setMinimumWidth ( QFontMetrics( lbl_pmmaxq->font() ).maxWidth() * 19 );
 
    le_pmmaxq = new QLineEdit     ( this, "pmmaxq Line Edit" );
-   le_pmmaxq ->setEnabled( false );
    widgets_q_label.push_back( lbl_pmmaxq );
    widgets_q_label.push_back( le_pmmaxq );
    le_pmmaxq ->setText           ( parameters->count( "pmmaxq" ) ? ( *parameters )[ "pmmaxq" ] : "" );
