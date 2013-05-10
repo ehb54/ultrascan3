@@ -1798,6 +1798,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
 
    pb_add_files          ->setEnabled( true );
    pb_regex_load         ->setEnabled( true );
+   pb_options            ->setEnabled( true );
 
    lb_files              ->setEnabled( true );
    lb_created_files      ->setEnabled( true );
