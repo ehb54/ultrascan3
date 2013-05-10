@@ -7734,7 +7734,6 @@ vector < double > US_Hydrodyn_Saxs_Hplc::gaussian( double *g ) // height, double
    if ( use_gt == EMGGMG && dist2 == 0e0 )
    {
       use_gt = EMG;
-      dist1;
    }
    if ( use_gt == GMG && dist1 == 0e0 )
    {
