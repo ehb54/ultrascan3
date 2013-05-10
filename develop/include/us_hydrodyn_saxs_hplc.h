@@ -107,6 +107,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       friend class US_Hydrodyn_Saxs_Hplc_Conc;
       friend class US_Hydrodyn_Saxs_Hplc_Fit;
       friend class US_Hydrodyn_Saxs_Hplc_Fit_Global;
+      friend class US_Hydrodyn_Saxs_Hplc_Options;
 
    public:
       US_Hydrodyn_Saxs_Hplc(
@@ -225,6 +226,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QMenuBar      *m;
 
       QPushButton   *pb_help;
+      QPushButton   *pb_options;
       QPushButton   *pb_cancel;
 
       QwtPlot       *plot_dist;
@@ -264,6 +266,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit    *le_gauss_pos;
       mQLineEdit    *le_gauss_pos_width;
       mQLineEdit    *le_gauss_pos_height;
+      mQLineEdit    *le_gauss_pos_dist1;
+      mQLineEdit    *le_gauss_pos_dist2;
       QCheckBox     *cb_sd_weight;
       QCheckBox     *cb_fix_width;
       QPushButton   *pb_gauss_fit;
@@ -578,6 +582,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool                         adjacent_select( QListBox *lb, QString match_pattern );
 
+      enum                         gaussian_types
+         {
+            GAUSS,
+            EMG,
+            GMG,
+            EMGGMG
+         };
+      gaussian_types               gaussian_type;
+      void                         update_gauss_mode();
+
    private slots:
 
       void setupGUI();
@@ -647,8 +661,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void update_font();
       void save();
 
-      void cancel();
       void help();
+      void options();
+      void cancel();
 
       void plot_zoomed( const QwtDoubleRect &rect );
       void plot_mouse ( const QMouseEvent &me );
@@ -668,12 +683,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void gauss_pos_text              ( const QString & );
       void gauss_pos_width_text        ( const QString & );
       void gauss_pos_height_text       ( const QString & );
+      void gauss_pos_dist1_text        ( const QString & );
+      void gauss_pos_dist2_text        ( const QString & );
       void gauss_fit_start_text        ( const QString & );
       void gauss_fit_end_text          ( const QString & );
 
       void gauss_pos_focus             ( bool );
       void gauss_pos_width_focus       ( bool );
       void gauss_pos_height_focus      ( bool );
+      void gauss_pos_dist1_focus       ( bool );
+      void gauss_pos_dist2_focus       ( bool );
       void gauss_fit_start_focus       ( bool );
       void gauss_fit_end_focus         ( bool );
 
