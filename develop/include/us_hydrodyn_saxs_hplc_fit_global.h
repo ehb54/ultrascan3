@@ -68,6 +68,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       QLineEdit     *le_pct_amplitude;
       QCheckBox     *cb_pct_amplitude_from_init;
       
+      QCheckBox     *cb_fix_dist1;
+      QCheckBox     *cb_pct_dist1;
+      QLineEdit     *le_pct_dist1;
+      QCheckBox     *cb_pct_dist1_from_init;
+
+      QCheckBox     *cb_fix_dist2;
+      QCheckBox     *cb_pct_dist2;
+      QLineEdit     *le_pct_dist2;
+      QCheckBox     *cb_pct_dist2_from_init;
+      
       QLabel        *lbl_fix_curves;
       // QLineEdit     *le_fix_curves;
 #ifdef WIN32
@@ -166,6 +176,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       bool          ga_run           ( double & nrmsd );
 
       bool          use_errors;
+
+      bool          dist1_active;
+      bool          dist2_active;
 
    private slots:
 

@@ -48,6 +48,17 @@ using namespace std;
 # define M_SQRT2PI 2.50662827463e0
 #endif
 
+#ifndef M_ONE_OVER_SQRT2PI
+# define M_ONE_OVER_SQRT2PI 3.398942280402e-1
+#endif
+
+#ifndef M_SQRT2
+# define M_SQRT2   1.41421356237e0
+#endif
+#ifndef M_ONE_OVER_SQRT2
+# define M_ONE_OVER_SQRT2   7.07106781188e-1
+#endif
+
 class ga_individual
 {
  public:
@@ -270,6 +281,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit    *le_gauss_pos_dist2;
       QCheckBox     *cb_sd_weight;
       QCheckBox     *cb_fix_width;
+      QCheckBox     *cb_fix_dist1;
+      QCheckBox     *cb_fix_dist2;
       QPushButton   *pb_gauss_fit;
       QLabel        *lbl_gauss_fit;
       mQLineEdit    *le_gauss_fit_start;
@@ -379,7 +392,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       // a & c must be > 0
       vector < double >                   gaussians;  
       vector < double >                   org_gaussians;  
-      vector < double >                   gaussian( double center, double height, double width );
+      vector < double >                   gaussian( double * g );
       vector < double >                   compute_gaussian_sum( vector < double > t, vector < double > g );
       double                              compute_gaussian_peak( QString file, vector < double > g );
 
@@ -527,7 +540,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         gauss_init_markers();
       void                         gauss_delete_markers();
 
-      void                         gauss_add_gaussian( double height, double center, double width, QColor color );
+      void                         gauss_add_gaussian( double * g, QColor color );
       void                         gauss_init_gaussians();
       void                         gauss_delete_gaussians();
       void                         gauss_replot_gaussian();
@@ -589,8 +602,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
             GMG,
             EMGGMG
          };
+
       gaussian_types               gaussian_type;
+      int                          gaussian_type_size;
+      QString                      gaussian_type_tag;
+
       void                         update_gauss_mode();
+
+      bool                         dist1_active;
+      bool                         dist2_active;
 
    private slots:
 
@@ -702,6 +722,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void set_sd_weight();
       void set_fix_width();
+      void set_fix_dist1();
+      void set_fix_dist2();
 
       void gauss_as_curves();
 

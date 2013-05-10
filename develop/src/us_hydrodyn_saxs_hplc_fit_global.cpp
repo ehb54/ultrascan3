@@ -18,6 +18,23 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
 
    update_hplc = true;
    running = false;
+   switch ( hplc_win->gaussian_type )
+   {
+   case US_Hydrodyn_Saxs_Hplc::EMGGMG :
+      dist1_active = true;
+      dist2_active = true;
+      break;
+   case US_Hydrodyn_Saxs_Hplc::EMG :
+   case US_Hydrodyn_Saxs_Hplc::GMG :
+      dist1_active = true;
+      dist2_active = false;
+      break;
+   case US_Hydrodyn_Saxs_Hplc::GAUSS :
+      dist1_active = false;
+      dist2_active = false;
+      break;
+   }
+
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -208,6 +225,74 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    cb_pct_amplitude_from_init->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_pct_amplitude_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
+   cb_fix_dist1 = new QCheckBox(this);
+   cb_fix_dist1->setText(tr(" Fix distortion 1" ) );
+   cb_fix_dist1->setEnabled(true);
+   cb_fix_dist1->setChecked( false );
+   cb_fix_dist1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_fix_dist1->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_fix_dist1, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   cb_pct_dist1 = new QCheckBox(this);
+   cb_pct_dist1->setText(tr(" % variation" ) );
+   cb_pct_dist1->setEnabled(true);
+   cb_pct_dist1->setChecked( false );
+   cb_pct_dist1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pct_dist1->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_pct_dist1, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   le_pct_dist1 = new mQLineEdit(this, "le_pct_dist1 Line Edit");
+   le_pct_dist1->setText( "5" );
+   le_pct_dist1->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_pct_dist1->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pct_dist1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   le_pct_dist1->setEnabled( false );
+   le_pct_dist1->setMinimumWidth( 50 );
+   le_pct_dist1->setValidator( new QDoubleValidator( le_pct_dist1 ) );
+   ( (QDoubleValidator *)le_pct_dist1->validator() )->setRange( 0, 100, 1 );
+
+   cb_pct_dist1_from_init = new QCheckBox(this);
+   cb_pct_dist1_from_init->setText(tr(" From initial value" ) );
+   cb_pct_dist1_from_init->setEnabled(true);
+   cb_pct_dist1_from_init->setChecked( false );
+   cb_pct_dist1_from_init->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pct_dist1_from_init->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_pct_dist1_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   cb_fix_dist2 = new QCheckBox(this);
+   cb_fix_dist2->setText(tr(" Fix distortion 2" ) );
+   cb_fix_dist2->setEnabled(true);
+   cb_fix_dist2->setChecked( false );
+   cb_fix_dist2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_fix_dist2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_fix_dist2, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   cb_pct_dist2 = new QCheckBox(this);
+   cb_pct_dist2->setText(tr(" % variation" ) );
+   cb_pct_dist2->setEnabled(true);
+   cb_pct_dist2->setChecked( false );
+   cb_pct_dist2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pct_dist2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_pct_dist2, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   le_pct_dist2 = new mQLineEdit(this, "le_pct_dist2 Line Edit");
+   le_pct_dist2->setText( "5" );
+   le_pct_dist2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_pct_dist2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pct_dist2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   le_pct_dist2->setEnabled( false );
+   le_pct_dist2->setMinimumWidth( 50 );
+   le_pct_dist2->setValidator( new QDoubleValidator( le_pct_dist2 ) );
+   ( (QDoubleValidator *)le_pct_dist2->validator() )->setRange( 0, 100, 1 );
+
+   cb_pct_dist2_from_init = new QCheckBox(this);
+   cb_pct_dist2_from_init->setText(tr(" From initial value" ) );
+   cb_pct_dist2_from_init->setEnabled(true);
+   cb_pct_dist2_from_init->setChecked( false );
+   cb_pct_dist2_from_init->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pct_dist2_from_init->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_pct_dist2_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
    lbl_fix_curves = new QLabel(tr(" Fix Gaussians: "), this);
    lbl_fix_curves->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    // lbl_fix_curves->setMinimumHeight(minHeight1);
@@ -384,6 +469,18 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    gl_main->addWidget( cb_pct_amplitude_from_init , row, 3 );
    row++;
 
+   gl_main->addWidget( cb_fix_dist1           , row, 0 );
+   gl_main->addWidget( cb_pct_dist1           , row, 1 );
+   gl_main->addWidget( le_pct_dist1           , row, 2 );
+   gl_main->addWidget( cb_pct_dist1_from_init , row, 3 );
+   row++;
+
+   gl_main->addWidget( cb_fix_dist2           , row, 0 );
+   gl_main->addWidget( cb_pct_dist2           , row, 1 );
+   gl_main->addWidget( le_pct_dist2           , row, 2 );
+   gl_main->addWidget( cb_pct_dist2_from_init , row, 3 );
+   row++;
+
    gl_main->addWidget         ( lbl_fix_curves, row, 0 );
    // gl_main->addMultiCellWidget( le_fix_curves , row, row, 1, 3 );
    QHBoxLayout *hbl_fix_curves = new QHBoxLayout;
@@ -449,6 +546,22 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
       pb_grid  ->hide();
       lbl_population->setText( tr( "Maximum calls" ) );
    }
+
+   if ( !dist1_active )
+   {
+      cb_fix_dist1->hide();
+      cb_pct_dist1->hide();
+      le_pct_dist1->hide();
+      cb_pct_dist1_from_init->hide();
+   }      
+   if ( !dist2_active )
+   {
+      cb_fix_dist2->hide();
+      cb_pct_dist2->hide();
+      le_pct_dist2->hide();
+      cb_pct_dist2->hide();
+      cb_pct_dist2_from_init->hide();
+   }      
 }
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::cancel()
@@ -490,6 +603,16 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_enables()
    le_pct_amplitude             ->setEnabled( !running && !cb_fix_amplitude->isChecked() && cb_pct_amplitude->isChecked() );
    cb_pct_amplitude_from_init   ->setEnabled( !running && !cb_fix_amplitude->isChecked() );
 
+   cb_fix_dist1                 ->setEnabled( !running );
+   cb_pct_dist1                 ->setEnabled( !running && !cb_fix_dist1->isChecked() );
+   le_pct_dist1                 ->setEnabled( !running && !cb_fix_dist1->isChecked() && cb_pct_dist1->isChecked() );
+   cb_pct_dist1_from_init       ->setEnabled( !running && !cb_fix_dist1->isChecked() );
+
+   cb_fix_dist2                 ->setEnabled( !running );
+   cb_pct_dist2                 ->setEnabled( !running && !cb_fix_dist2->isChecked() );
+   le_pct_dist2                 ->setEnabled( !running && !cb_fix_dist2->isChecked() && cb_pct_dist2->isChecked() );
+   cb_pct_dist2_from_init       ->setEnabled( !running && !cb_fix_dist2->isChecked() );
+
    for ( unsigned int i = 0; i < ( unsigned int ) cb_fix_curves.size(); i++ )
    {
       cb_fix_curves[ i ]      ->setEnabled( !running );
@@ -503,7 +626,9 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_enables()
    // bool variations_set      = 
    //    ( cb_fix_center   ->isChecked() || cb_pct_center   ->isChecked() ) &&
    //    ( cb_fix_width    ->isChecked() || cb_pct_width    ->isChecked() ) &&
-   //    ( cb_fix_amplitude->isChecked() || cb_pct_amplitude->isChecked() )
+   //    ( cb_fix_amplitude->isChecked() || cb_pct_amplitude->isChecked() ) &&
+   //    ( !dist1_active || cb_fix_dist1->isChecked() || cb_pct_dist1->isChecked() ) &&
+   //    ( !dist2_active || cb_fix_dist2->isChecked() || cb_pct_dist2->isChecked() )
    //    ;
 
    pb_restore               ->setEnabled( !running && gaussians_undo.size() > 1 );
