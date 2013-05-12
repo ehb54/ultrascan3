@@ -59,8 +59,6 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
    }
 
    file.close();
-   if ( analysis_type == "2DSA_CG" )
-      analysis_type = "2DSA";
 }
 
 void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )

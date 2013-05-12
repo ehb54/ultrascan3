@@ -81,6 +81,9 @@ class US_ManageData : public US_Widgets
       QPushButton*  pb_help;
       QPushButton*  pb_close;
 
+      QComboBox*    cb_runid;
+      QComboBox*    cb_triple;
+
       int           personID;
       int           ntrows;
       int           ntcols;
@@ -107,6 +110,10 @@ class US_ManageData : public US_Widgets
       QString       run_name;
       QString       investig;
 
+      QStringList   editIDs;
+      QStringList   triples;
+      QStringList   runIDs;
+
    private slots:
 
       void toggle_edits (  void );
@@ -122,6 +129,7 @@ class US_ManageData : public US_Widgets
       void    action_result( int,     QString );
       void reset_hsbuttons( bool, bool, bool, bool );
       void reportDataStatus( void    );
+      void selected_runID  ( QString );
 
       void help     ( void )
       { showHelp.show_help( "manage_data.html" ); };

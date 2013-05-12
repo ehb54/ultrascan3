@@ -24,6 +24,9 @@ const QColor colorGreen(   0, 150,   0 );
 const QColor colorGray(  110, 110, 110 );
 const QColor colorWhite( 255, 255, 240 );
 
+#define timeFmt QString("hh:mm:ss")
+#define nowTime() "T="+QDateTime::currentDateTime().toString(timeFmt)
+
 // main program
 int main( int argc, char* argv[] )
 {
@@ -124,6 +127,20 @@ DbgLv(1) << "GUI setup begun";
    connect( pb_close,   SIGNAL( clicked() ),
             this,       SLOT(   close()   ) );
 
+   QLabel* lb_runid  = us_label( tr( "RunID:" ) );
+   cb_runid      = us_comboBox();
+   cb_runid  ->addItem( "ALL" );
+   dctlLayout->addWidget( lb_runid,  row,   0, 1, 2 );
+   dctlLayout->addWidget( cb_runid,  row++, 2, 1, 6 );
+   connect( cb_runid,   SIGNAL( currentIndexChanged( QString ) ),
+            this,       SLOT(   selected_runID     ( QString ) ) );
+
+   QLabel* lb_triple = us_label( tr( "Triple:" ) );
+   cb_triple     = us_comboBox();
+   cb_triple ->addItem( "ALL" );
+   dctlLayout->addWidget( lb_triple, row,   0, 1, 2 );
+   dctlLayout->addWidget( cb_triple, row++, 2, 1, 6 );
+
    pb_invtor->setToolTip( 
       tr( "Use an Investigator dialog to set the database person ID" ) );
    pb_scanda->setToolTip(
@@ -136,6 +153,10 @@ DbgLv(1) << "GUI setup begun";
       tr( "Display detailed US_ManageData documentation text and images" ) );
    pb_close ->setToolTip(
       tr( "Close the US_ManageData window and exit" ) );
+   cb_runid ->setToolTip(
+      tr( "Select a single run ID with which to populate the data tree " ) );
+   cb_triple->setToolTip(
+      tr( "Select a single triple of the run to populate the data tree " ) );
 
    QLabel* lb_info2 = us_banner( tr( "User Data Sets Summary:" ) );
    dctlLayout->addWidget( lb_info2,  row++, 0, 1, 8 );
@@ -182,6 +203,9 @@ DbgLv(1) << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
       minsw  = ( maxsw * 4 ) / 5;
       minsh  = ( maxsh * 4 ) / 5;
    }
+
+   cb_runid ->setMaximumSize( ( maxsw * 3 ) / 4, fonth * 2 );
+   cb_triple->setMaximumSize( ( maxsw * 3 ) / 4, fonth * 2 );
 
    te_status->setMinimumSize( minsw, minsh );
    te_status->setMaximumSize( maxsw, maxsh );
@@ -234,7 +258,6 @@ DbgLv(1) << "te_status size" << te_status->size();
    mainLayout->addLayout( rghtLayout );
    mainLayout->setStretchFactor( leftLayout, 2 );
    mainLayout->setStretchFactor( rghtLayout, 8 );
-   setMinimumWidth( (int)(maxsw * 2.6) );
 
    setMinimumWidth( (int)( maxsw * 2.6 ) );
 
@@ -260,37 +283,46 @@ DbgLv(1) << "db passwd complete";
             this,       SLOT(   sel_investigator() ) );
 DbgLv(1) << "GUI setup complete";
 
-   // create a class to handle the data itself
+   // Create an object to handle the data itself
    da_model       = new US_DataModel(                      this );
 
-   // set needed pointers for class interaction in model object
+   // Set needed pointers for class interaction in model object
    da_model->setDatabase( db );
    da_model->setProgress( progress,   lb_status );
 
-   // create a class to handle processing the data (upload,download,remove)
+   // Create an object to handle processing the data (upload,download,remove)
    da_process     = new US_DataProcess( da_model,          this );
 
-   // create a class to handle the data tree display
+   // Create an object to handle the data tree display
    da_tree        = new US_DataTree(    da_model, tw_recs, this );
 
-   // set needed pointers to sibling classes in model object
+   // Set needed pointers to sibling classes in model object
    da_model->setSiblings( (QObject*)da_process, (QObject*)da_tree   );
 DbgLv(1) << "classes setup complete";
 
-   // set up initial state of GUI
+   // Set up initial state of GUI
    connect( pb_helpdt,  SIGNAL( clicked()     ),
             da_tree,    SLOT( dtree_help() ) );
 
    reset();
 }
 
-// reset the GUI
+// Reset the GUI
 void US_ManageData::reset( void )
 {
-   da_model->dummy_data();
-   da_tree->build_dtree();
+   da_model->dummy_data ();
+   da_tree ->build_dtree();
 
    reportDataStatus();
+
+   da_model->getRunIDs( runIDs );
+
+   cb_runid ->clear();
+   cb_runid ->addItem ( "ALL" );
+   cb_runid ->addItems( runIDs );
+   cb_triple->clear();
+   cb_triple->addItem ( "ALL" );
+
 }
 
 // filter events to catch right-mouse-button-click on tree widget
@@ -431,15 +463,22 @@ void US_ManageData::reset_hsbuttons( bool show,
    }
 }
 
-// scan the database and local disk for R/E/M/N data sets
+// Scan the database and local disk for R/E/M/N data sets
 void US_ManageData::scan_data()
 {
-   da_model->scan_data();          // scan the data
+   QString rF = cb_runid ->currentText();
+   QString tF = cb_triple->currentText();
+DbgLv(1) << "ScnDM:  Start          " << nowTime();
+   da_model->setFilters( rF, tF ); // Set any run and triple filters
+
+   da_model->scan_data();          // Scan the data
+DbgLv(1) << "ScnDM:  Scan Done      " << nowTime();
 
    lb_status->setText( tr( "Building Data Tree..." ) );
    qApp->processEvents();
 
-   da_tree ->build_dtree();        // rebuild the data tree with present data
+   da_tree ->build_dtree();        // Rebuild the data tree with present data
+DbgLv(1) << "ScnDM:  Tree Built     " << nowTime();
 
    lb_status->setText( tr( "Data Tree Build Complete" ) );
    qApp->processEvents();
@@ -462,6 +501,7 @@ void US_ManageData::scan_data()
    reportDataStatus();
 
    pb_reset->setEnabled( true );
+DbgLv(1) << "ScnDM:  Scan All Done  " << nowTime();
 }
 
 
@@ -626,5 +666,34 @@ void US_ManageData::reportDataStatus()
       tr( " Local    Model      records;\n  " ) +
       QString().sprintf( "%5d", nlnois ) +
       tr( " Local    Noise      records.\n"   ) );
+}
+
+// Slot to handle a newly select runID filter
+void US_ManageData::selected_runID( QString selrunID )
+{
+DbgLv(0) << "selected_runID: selrunID" << selrunID;
+   if ( selrunID.isEmpty()  ||  selrunID == "ALL" )
+   {
+      cb_triple->clear();
+      cb_triple->addItem( "ALL" );
+      return;
+   }
+
+   lb_status->setText( tr( "Scanning triples for a run..." ) );
+   qApp->processEvents();
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   da_model->getTriples( triples, selrunID );
+DbgLv(0) << "selected_runID: da_m getTriples size" << triples.size();
+
+   cb_triple->clear();
+   cb_triple->addItem( "ALL" );
+   cb_triple->addItems( triples );
+   QApplication::restoreOverrideCursor();
+   int ntriple = triples.size();
+
+   lb_status->setText(
+         ( ntriple == 1 ) ? tr( "The run has a single triple" )
+         : tr( "%1 triples are available to select" ).arg( ntriple ) );
+
 }
 

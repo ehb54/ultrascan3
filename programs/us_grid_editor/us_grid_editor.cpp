@@ -367,6 +367,10 @@ void US_Grid_Editor::save( void )
 	model.subGrids    = subGrids;
    model.modelGUID   = modelGuid;
    model.global      = US_Model::NONE;
+   double vbmin      = 1e99;
+   double vbmax      = -1e99;
+   double ffmin      = 1e99;
+   double ffmax      = -1e99;
 	sc.signal_concentration = 1.0;
 	for (int i=0; i<final_grid.size(); i++)
 	{
@@ -390,6 +394,12 @@ void US_Grid_Editor::save( void )
 
 		for (int j=0; j<model.components.size(); j++)
 		{
+         vbmin     = qMin( vbmin, sc.vbar20 );  // Accumulate vbar,f/f0 extents
+         vbmax     = qMax( vbmax, sc.vbar20 );
+         ffmin     = qMin( ffmin, sc.f_f0   );
+         ffmax     = qMax( ffmax, sc.f_f0   );
+
+		   sc.mw     = final_grid[i].mw;
 			if (sc.s      == model.components[j].s    &&
 		 	 	 sc.f_f0   == model.components[j].f_f0 &&
 		 		 sc.vbar20 == model.components[j].vbar20 )
@@ -401,6 +411,18 @@ void US_Grid_Editor::save( void )
 
 		if (flag) model.components.push_back(sc);
 	}
+
+   // Test for, report, and abort when both vbar and f/f0 vary
+   if ( ffmin != ffmax  &&  vbmin != vbmax )
+   {
+      QMessageBox::critical( this, tr( "Invalid Model" ),
+         tr( "The final grid contains solute points where both\n"
+             "vbar and f/f0 vary. This is not allowed.\n"
+             "Please re-create a final grid where only one of\n"
+             "these varies. Perhaps the problem is in component\n"
+             "subgrids that are incompatible." ) );
+      return;
+   }
 
    // Open a dialog that reports and allows modification of description
    QMessageBox mbox;
@@ -608,6 +630,10 @@ void US_Grid_Editor::update_subGrids( double dval )
 // update density
 void US_Grid_Editor::update_density( const QString & str )
 {
+   // Skip updating if not likely done entering
+   if ( str.toDouble() == 0.0 )   return;
+
+   // Update density value and re-plot
    density = str.toDouble();
 	update_plot();
 }
@@ -615,6 +641,10 @@ void US_Grid_Editor::update_density( const QString & str )
 // update viscosity
 void US_Grid_Editor::update_viscosity( const QString & str )
 {
+   // Skip updating if not likely done entering
+   if ( str.toDouble() == 0.0 )   return;
+
+   // Update viscosity value and re-plot
    viscosity = str.toDouble();
 	update_plot();
 }

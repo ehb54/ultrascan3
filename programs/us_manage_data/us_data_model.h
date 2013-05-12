@@ -45,9 +45,12 @@ class US_DataModel : public QObject
          QString   lastmodDate;       // last modification date/time (DB/file)
       };
 
-      void      setDatabase( US_DB2*                   );
-      void      setProgress( QProgressBar*,   QLabel*  );
-      void      setSiblings( QObject*,        QObject* );
+      void      setDatabase( US_DB2*                 );
+      void      setProgress( QProgressBar*, QLabel*  );
+      void      setSiblings( QObject*,      QObject* );
+      void      getRunIDs  ( QStringList&            );
+      void      getTriples ( QStringList&,  QString  );
+      void      setFilters ( QString,       QString  );
       US_DB2*       dbase   (      void );
       QString       invtext (      void );
       QProgressBar* progrBar(      void );
@@ -97,6 +100,8 @@ class US_DataModel : public QObject
       QString       invID;
       QString       run_name;
       QString       cell;
+      QString       filt_run;
+      QString       filt_triple;
 
       QPoint        cur_pos;
 

@@ -1047,6 +1047,8 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    QString tripleID   = data->cell + data->channel + data->wavelength;
    QString dates      = "e" + data->editID + "_a" + analysisDate;
    QString anType     = "_" + data_sets[ 0 ]->model.typeText() + "_";
+   if ( analysis_type.contains( "CG" ) )
+      anType             = anType.replace( "2DSA", "2DSACG" );
 
    QString iterID;
 
