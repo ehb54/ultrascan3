@@ -127,7 +127,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect( ct_yRes,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_yRes( double ) ) );
 
-   lbl_xMin     = us_label( tr( "s-value Mininmum:" ) );
+   lbl_xMin     = us_label( tr( "s-value Minimum:" ) );
    lbl_xMin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    left->addWidget( lbl_xMin, s_row, 0 );
 
@@ -1258,10 +1258,10 @@ DbgLv(1) << "vbar:" << tmp_point.vbar << "s:" << tmp_point.s << "buoyancy:" << (
 				{
 					tmp_point.mw   = tmp_point.s * 1.0e-13 * R * K20
 							  			/ (tmp_point.D * (1.0 - tmp_point.vbar * density ));
+				   tmp_point.ff0  = ff0;
 					tmp_point.f0   = viscosity * 0.01 * pow((162 * tmp_point.mw * M_PI * M_PI
 								   * vbar/AVOGADRO), (1.0/3.0));
-					tmp_point.f    = R * K20 / (AVOGADRO * tmp_point.D);
-					tmp_point.ff0  = tmp_point.f / tmp_point.f0;
+				   tmp_point.f    = tmp_point.ff0 * tmp_point.f0;
 				}
 				if ((tmp_point.s < -0.1 || tmp_point.s > 0.1) && tmp_point.mw > 0)
 				{
