@@ -1367,7 +1367,7 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
       w2t_integral += ( simscan.time - last_time ) *
                       sq( rpm_current * M_PI / 30.0 );
 if(ii<2||ii>af_params.time_steps-1) {
-DbgLv(1) << "TMS:RSA:ni: sc" << ii << "time ltime omg"
+DbgLv(1) << "TMS:RSA:ni: step" << ii << "time ltime omg"
  << simscan.time << last_time << w2t_integral << "rpm" << rpm_current
  << "st_omg" << af_params.start_om2t << "N" << N;}
 

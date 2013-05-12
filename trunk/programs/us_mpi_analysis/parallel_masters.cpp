@@ -396,12 +396,12 @@ DbgLv(1) << "  MASTER:   Recv'd from super. (g r m)" << my_group << group_rank
  << my_rank << "analysisDate" << analysisDate << "atype" << analysis_type;
 
    // Do the master loop for MC 2DSA or GA
-   if ( analysis_type == "2DSA" )
+   if ( analysis_type.startsWith( "2DSA" ) )
    {
       pm_2dsa_master();
    }
 
-   else if ( analysis_type == "GA" )
+   else if ( analysis_type.startsWith( "GA" ) )
    {
       pm_ga_master();
    }
@@ -410,12 +410,12 @@ DbgLv(1) << "  MASTER:   Recv'd from super. (g r m)" << my_group << group_rank
 // Parallel-masters worker within a group
 void US_MPI_Analysis::pmasters_worker()
 {
-   if ( analysis_type == "2DSA" )
+   if ( analysis_type.startsWith( "2DSA" ) )
    {  // Standard 2DSA worker
       _2dsa_worker();
    }
 
-   else if ( analysis_type == "GA" )
+   else if ( analysis_type.startsWith( "GA" ) )
    {  // Standard GA worker
       ga_worker();
    }

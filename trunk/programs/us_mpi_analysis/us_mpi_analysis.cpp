@@ -398,7 +398,7 @@ void US_MPI_Analysis::start( void )
    group_rank              = my_rank;
 
    // Real processing goes here
-   if ( analysis_type == "2DSA" )
+   if ( analysis_type.startsWith( "2DSA" ) )
    {
       iterations = parameters[ "montecarlo_value" ].toInt();
 
@@ -410,7 +410,7 @@ void US_MPI_Analysis::start( void )
           _2dsa_worker();
    }
 
-   else if ( analysis_type == "GA" )
+   else if ( analysis_type.startsWith( "GA" ) )
    {
       if ( my_rank == 0 ) 
           ga_master();

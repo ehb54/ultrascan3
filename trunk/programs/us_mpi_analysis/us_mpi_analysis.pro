@@ -31,7 +31,7 @@ HEADERS      += us_mpi_analysis.h
 
 INCLUDEPATH  += ../../utils /usr/include/mysql
 DEPENDPATH   += ../../utils
-LIBS         += -lus_utils -L../../lib
+LIBS         += -lus_utils -L../../lib -L$$(QTDIR)/lib
 
 # mpi references
 DEFINES      += OMPI_SKIP_MPICXX
