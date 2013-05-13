@@ -122,9 +122,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
-      vector < double > gsm_t;
-      vector < double > gsm_y;
-      vector < double > gsm_yp;
+      static vector < double > gsm_t;
+      static vector < double > gsm_y;
+      static vector < double > gsm_yp;
 
       vector < vector < double > > gaussians_undo;
 
@@ -163,7 +163,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 
       double        gsm_delta;
       double        gsm_delta2_r;
-      double        gsm_f            ( our_vector *v );
+      double        (*gsm_f)         ( our_vector *v );
+      static double        gsm_f_dist0      ( our_vector *v );
+      static double        gsm_f_dist1      ( our_vector *v );
+      static double        gsm_f_dist2      ( our_vector *v );
+
       void          gsm_df           ( our_vector *vd, our_vector *v );
       long          min_gsm_5_1      ( our_vector *i, double epsilon, long max_iter );
       long          min_fr_pr_cgd    ( our_vector *i, double epsilon, long max_iter );
@@ -177,6 +181,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       bool          use_errors;
 
       void          redo_settings();
+
+      US_Hydrodyn_Saxs_Hplc::gaussian_types   gaussian_type;
+      int                                     gaussian_type_size;
 
       bool          dist1_active;
       bool          dist2_active;
@@ -227,7 +234,7 @@ namespace HFIT
    extern vector < unsigned int > errors_index;
 
 
-   double compute_gaussian_f( double t, const double *par );
+   extern double (*compute_gaussian_f)( double t, const double *par );
 
    void printvector( QString qs, vector < double > x );
    void printvector( QString qs, vector < unsigned int > x );

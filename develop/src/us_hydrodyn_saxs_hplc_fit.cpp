@@ -18,7 +18,10 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
 
    update_hplc = true;
    running = false;
-   switch ( hplc_win->gaussian_type )
+   gaussian_type      = hplc_win->gaussian_type;
+   gaussian_type_size = hplc_win->gaussian_type_size;
+
+   switch ( gaussian_type )
    {
    case US_Hydrodyn_Saxs_Hplc::EMGGMG :
       dist1_active = true;
@@ -335,7 +338,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect( le_fix_curves, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    */
 
-   for ( unsigned int i = 0; i < ( unsigned int ) hplc_win->gaussians.size() / 3; i++ )
+   for ( unsigned int i = 0; i < ( unsigned int ) hplc_win->gaussians.size() / gaussian_type_size; i++ )
    {
       QCheckBox *cb_tmp;
       cb_tmp = new QCheckBox(this);
@@ -597,7 +600,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::help()
 
 void US_Hydrodyn_Saxs_Hplc_Fit::closeEvent(QCloseEvent *e)
 {
-   global_Xpos -= 30;
+   global_Xpos -= 3;
    global_Ypos -= 30;
    e->accept();
 }
@@ -681,7 +684,9 @@ namespace HFIT
 
    bool                    use_errors;
 
-   double compute_gaussian_f( double t, const double *par )
+   double (*compute_gaussian_f)( double, const double * );
+
+   double compute_gaussian_f_GAUSS( double t, const double *par )
    {
       double result = 0e0;
       double height;
@@ -734,6 +739,343 @@ namespace HFIT
 
          double tmp = ( t - center ) / width;
          result += height * exp( - tmp * tmp / 2 );
+      }
+      
+      if ( use_errors )
+      {
+         result /= errors[ errors_index[ (unsigned int) t ] ];
+      }
+      
+      return result;
+   }
+
+   double compute_gaussian_f_GMG( double t, const double *par )
+   {
+      double result = 0e0;
+      double height;
+      double center;
+      double width;
+      double dist1;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) param_fixed.size(); )
+      {
+         if ( param_fixed[ i ] )
+         {
+            height = fixed_params[ param_pos[ i ] ];
+         } else {
+            height = par         [ param_pos[ i ] ];
+            if ( height < param_min[ param_pos[ i ] ] ||
+                 height > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            center = fixed_params[ param_pos[ i ] ];
+         } else {
+            center = par         [ param_pos[ i ] ];
+            if ( center < param_min[ param_pos[ i ] ] ||
+                 center > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            width = fixed_params[ param_pos[ i ] ];
+         } else {
+            width = par         [ param_pos[ i ] ];
+            if ( width < param_min[ param_pos[ i ] ] ||
+                 width > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            dist1 = fixed_params[ param_pos[ i ] ];
+         } else {
+            dist1 = par         [ param_pos[ i ] ];
+            if ( dist1 < param_min[ param_pos[ i ] ] ||
+                 dist1 > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( !dist1 )
+         {
+            double tmp = ( t - center ) / width;
+            result += height * exp( - tmp * tmp / 2 );
+         } else {
+            double area                         = height * width * M_SQRT2PI;
+            double one_over_width               = 1e0 / width;
+            double one_over_a2sq_plus_a3sq      = one_over_width * one_over_width * 1e0 / ( dist1 * dist1 );
+            double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
+            double gmg_coeff                    = area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
+            double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
+            double gmg_erf_m1                   = dist1 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
+            double tmp = t - center;
+            result += 
+               gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+               ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+         }            
+      }
+      
+      if ( use_errors )
+      {
+         result /= errors[ errors_index[ (unsigned int) t ] ];
+      }
+      
+      return result;
+   }
+
+   double compute_gaussian_f_EMG( double t, const double *par )
+   {
+      double result = 0e0;
+      double height;
+      double center;
+      double width;
+      double dist1;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) param_fixed.size(); )
+      {
+         if ( param_fixed[ i ] )
+         {
+            height = fixed_params[ param_pos[ i ] ];
+         } else {
+            height = par         [ param_pos[ i ] ];
+            if ( height < param_min[ param_pos[ i ] ] ||
+                 height > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            center = fixed_params[ param_pos[ i ] ];
+         } else {
+            center = par         [ param_pos[ i ] ];
+            if ( center < param_min[ param_pos[ i ] ] ||
+                 center > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            width = fixed_params[ param_pos[ i ] ];
+         } else {
+            width = par         [ param_pos[ i ] ];
+            if ( width < param_min[ param_pos[ i ] ] ||
+                 width > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            dist1 = fixed_params[ param_pos[ i ] ];
+         } else {
+            dist1 = par         [ param_pos[ i ] ];
+            if ( dist1 < param_min[ param_pos[ i ] ] ||
+                 dist1 > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( !dist1 )
+         {
+            double tmp = ( t - center ) / width;
+            result += height * exp( - tmp * tmp / 2 );
+         } else {
+            double area              = height * width * M_SQRT2PI;
+            double one_over_a3       = 1e0 / dist1;
+            double emg_coeff         = area * one_over_a3 * 5e-1;
+            double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+            double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+            double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
+            double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+            double tmp = t - center;
+            result += 
+               emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+               ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+         }
+      }
+      
+      if ( use_errors )
+      {
+         result /= errors[ errors_index[ (unsigned int) t ] ];
+      }
+      
+      return result;
+   }
+
+   double compute_gaussian_f_EMGGMG( double t, const double *par )
+   {
+      double result = 0e0;
+      double height;
+      double center;
+      double width;
+      double dist1;
+      double dist2;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) param_fixed.size(); )
+      {
+         if ( param_fixed[ i ] )
+         {
+            height = fixed_params[ param_pos[ i ] ];
+         } else {
+            height = par         [ param_pos[ i ] ];
+            if ( height < param_min[ param_pos[ i ] ] ||
+                 height > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            center = fixed_params[ param_pos[ i ] ];
+         } else {
+            center = par         [ param_pos[ i ] ];
+            if ( center < param_min[ param_pos[ i ] ] ||
+                 center > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            width = fixed_params[ param_pos[ i ] ];
+         } else {
+            width = par         [ param_pos[ i ] ];
+            if ( width < param_min[ param_pos[ i ] ] ||
+                 width > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            dist1 = fixed_params[ param_pos[ i ] ];
+         } else {
+            dist1 = par         [ param_pos[ i ] ];
+            if ( dist1 < param_min[ param_pos[ i ] ] ||
+                 dist1 > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            dist2 = fixed_params[ param_pos[ i ] ];
+         } else {
+            dist2 = par         [ param_pos[ i ] ];
+            if ( dist2 < param_min[ param_pos[ i ] ] ||
+                 dist2 > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( !dist1 && !dist2 )
+         {
+            double tmp = ( t - center ) / width;
+            result += height * exp( - tmp * tmp / 2 );
+         } else {
+            if ( !dist1 )
+            {
+               double area                         = height * width * M_SQRT2PI;
+               double one_over_width               = 1e0 / width;
+               double one_over_a2sq_plus_a3sq      = one_over_width * one_over_width * 1e0 / ( dist2 * dist2 );
+               double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
+               double gmg_coeff                    = area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
+               double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
+               double gmg_erf_m1                   = dist2 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
+               double tmp                          = t - center;
+               result += 
+                  gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+                  ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+            } else {
+               if ( !dist2 )
+               {
+                  double area              = height * width * M_SQRT2PI;
+                  double one_over_a3       = 1e0 / dist1;
+                  double emg_coeff         = area * one_over_a3 * 5e-1;
+                  double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+                  double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+                  double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
+                  double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+                  double tmp               = t - center;
+                  result += 
+                     emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                     ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+               } else {
+                  double area = height * width * M_SQRT2PI;
+                  // EMG
+                  double one_over_a3       = 1e0 / dist1;
+                  double emg_coeff         = 5e-1 * area * one_over_a3 * 5e-1;
+                  double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+                  double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+                  double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
+                  double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+
+                  // GMG
+                  double one_over_width               = 1e0 / width;
+                  double one_over_a2sq_plus_a3sq      = one_over_width * one_over_width * 1e0 / ( dist2 * dist2 );
+                  double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
+                  double gmg_coeff                    = 5e-1 * area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
+                  double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
+                  double gmg_erf_m1                   = dist2 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
+
+                  double tmp               = t - center;
+
+                  result += 
+                        emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                        ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                        gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+                        ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+               }
+            }
+         }
       }
       
       if ( use_errors )
@@ -797,6 +1139,22 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 
    map < unsigned int, bool > fixed_curves;
 
+   switch ( gaussian_type )
+   {
+   case US_Hydrodyn_Saxs_Hplc::EMGGMG :
+      HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_EMGGMG;
+      break;
+   case US_Hydrodyn_Saxs_Hplc::EMG :
+      HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_EMG;
+      break;
+   case US_Hydrodyn_Saxs_Hplc::GMG :
+      HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_GMG;
+      break;
+   case US_Hydrodyn_Saxs_Hplc::GAUSS :
+      HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_GAUSS;
+      break;
+   }
+
    HFIT::use_errors = use_errors;
 
    //    QStringList qsl = QStringList::split( ",", le_fix_curves->text() );
@@ -825,9 +1183,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 
    double base_val;
 
-   for ( unsigned int i = 0; i < ( unsigned int ) hplc_win->gaussians.size(); i+= 3 )
+   for ( unsigned int i = 0; i < ( unsigned int ) hplc_win->gaussians.size(); i+= gaussian_type_size )
    {
-      unsigned int pos = i / 3;
+      unsigned int pos = i / gaussian_type_size;
 
       if ( cb_fix_amplitude->isChecked() ||
            fixed_curves.count( pos + 1 ) )
@@ -951,6 +1309,108 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          HFIT::param_min   .push_back( min );
          HFIT::param_max   .push_back( max );
       }
+
+
+      if ( dist1_active )
+      {
+         if ( cb_fix_width->isChecked() ||
+              fixed_curves.count( pos + 1 ) )
+         {
+            HFIT::param_pos   .push_back( HFIT::fixed_params.size() );
+            HFIT::fixed_params.push_back( hplc_win->gaussians[ 3 + i ] );
+            HFIT::param_fixed .push_back( true );
+         } else {
+            HFIT::param_pos   .push_back( HFIT::init_params.size() );
+
+            if ( cb_pct_width_from_init->isChecked() )
+            {
+               base_val = gaussians_undo[ 0 ][ 3 + i ];
+            } else {
+               base_val = hplc_win->gaussians[ 3 + i ];
+            }            
+
+            HFIT::init_params .push_back( base_val );
+            HFIT::base_params .push_back( hplc_win->gaussians[ 3 + i ] );
+            HFIT::param_fixed .push_back( false );
+
+            double ofs;
+            double min = -50e0;
+            double max = 50e0;
+            if ( cb_pct_width->isChecked() )
+            {
+               ofs = base_val * le_pct_width->text().toDouble() / 100.0;
+               min = base_val - ofs;
+               max = base_val + ofs;
+            }
+            if ( min < -50e0 )
+            {
+               min = -50e0;
+            }
+            if ( max > 50e0 )
+            {
+               max = 50e0;
+            }
+            if ( max < min )
+            {
+               double avg = 5e-1 * ( max + min );
+               min = avg - 1e-1;
+               max = avg + 1e-1;
+            }
+
+            HFIT::param_min   .push_back( min );
+            HFIT::param_max   .push_back( max );
+         }
+
+         if ( dist2_active )
+         {
+            if ( cb_fix_width->isChecked() ||
+                 fixed_curves.count( pos + 1 ) )
+            {
+               HFIT::param_pos   .push_back( HFIT::fixed_params.size() );
+               HFIT::fixed_params.push_back( hplc_win->gaussians[ 4 + i ] );
+               HFIT::param_fixed .push_back( true );
+            } else {
+               HFIT::param_pos   .push_back( HFIT::init_params.size() );
+
+               if ( cb_pct_width_from_init->isChecked() )
+               {
+                  base_val = gaussians_undo[ 0 ][ 4 + i ];
+               } else {
+                  base_val = hplc_win->gaussians[ 4 + i ];
+               }            
+
+               HFIT::init_params .push_back( base_val );
+               HFIT::base_params .push_back( hplc_win->gaussians[ 4 + i ] );
+               HFIT::param_fixed .push_back( false );
+
+               double ofs;
+               double min = -50e0;
+               double max = 50e0;
+               if ( cb_pct_width->isChecked() )
+               {
+                  ofs = base_val * le_pct_width->text().toDouble() / 100.0;
+                  min = base_val - ofs;
+                  max = base_val + ofs;
+               }
+               if ( min < -50e0 )
+               {
+                  min = -50e0;
+               }
+               if ( max > 50e0 )
+               {
+                  max = 50e0;
+               }
+               if ( max < min )
+               {
+                  double avg = 5e-1 * ( max + min );
+                  min = avg - 1e-1;
+                  max = avg + 1e-1;
+               }
+               HFIT::param_min   .push_back( min );
+               HFIT::param_max   .push_back( max );
+            }
+         }
+      }
    }
 
    // HFIT::list_params();
@@ -1016,13 +1476,15 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
    vector < double >    org_params = HFIT::init_params;
    double org_rmsd = 0e0;
 
+
+
    if ( use_errors ) 
    {
       vector < double >    yp( x.size() );
 
       for ( unsigned int j = 0; j < t.size(); j++ )
       {
-         yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) ) / HFIT::errors[ j ] ;
+         yp[ j ]  = (*HFIT::compute_gaussian_f)( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) ) / HFIT::errors[ j ] ;
          org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
       }
       org_rmsd = sqrt( org_rmsd );
@@ -1031,7 +1493,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
 
       for ( unsigned int j = 0; j < t.size(); j++ )
       {
-         yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) );
+         yp[ j ]  = (*HFIT::compute_gaussian_f)( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) );
          org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
       }
       org_rmsd = sqrt( org_rmsd );
@@ -1095,7 +1557,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_sd()
    double org_rmsd = 0e0;
    for ( unsigned int j = 0; j < gsm_t.size(); j++ )
    {
-      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
+      gsm_yp[ j ]  = (*HFIT::compute_gaussian_f)( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
       org_rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
    
@@ -1155,7 +1617,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_ih()
    double org_rmsd = 0e0;
    for ( unsigned int j = 0; j < gsm_t.size(); j++ )
    {
-      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
+      gsm_yp[ j ]  = (*HFIT::compute_gaussian_f)( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
       org_rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
    
@@ -1215,7 +1677,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_cg()
    double org_rmsd = 0e0;
    for ( unsigned int j = 0; j < gsm_t.size(); j++ )
    {
-      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
+      gsm_yp[ j ]  = (*HFIT::compute_gaussian_f)( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
       org_rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
    
@@ -1274,7 +1736,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
    double org_rmsd = 0e0;
    for ( unsigned int j = 0; j < gsm_t.size(); j++ )
    {
-      gsm_yp[ j ]  = HFIT::compute_gaussian_f( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
+      gsm_yp[ j ]  = (*HFIT::compute_gaussian_f)( gsm_t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
       org_rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
    
@@ -1374,7 +1836,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
    double org_rmsd = 0e0;
    for ( unsigned int j = 0; j < t.size(); j++ )
    {
-      yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
+      yp[ j ]  = (*HFIT::compute_gaussian_f)( t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
       org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
    }
    
@@ -1401,7 +1863,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
 
       for ( unsigned int j = 0; j < t.size(); j++ )
       {
-         yp[ j ]  = HFIT::compute_gaussian_f( t[ j ], (double *)(&use_par[ 0 ]) );
+         yp[ j ]  = (*HFIT::compute_gaussian_f)( t[ j ], (double *)(&use_par[ 0 ]) );
          rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
       }
 
