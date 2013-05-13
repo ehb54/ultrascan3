@@ -10058,6 +10058,15 @@ void US_Hydrodyn_Saxs_Hplc::set_fix_width()
 {
 }
 
+
+void US_Hydrodyn_Saxs_Hplc::set_fix_dist1()
+{
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_fix_dist2()
+{
+}
+
 bool US_Hydrodyn_Saxs_Hplc::check_fit_range()
 {
    if ( !gaussians.size() )
