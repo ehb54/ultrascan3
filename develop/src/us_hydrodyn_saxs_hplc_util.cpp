@@ -514,6 +514,8 @@ bool US_Hydrodyn_Saxs_Hplc::opt_repeak_gaussians( QString file )
    
    double scale = peak / gmax;   
 
+   printf( "opt_repeak gmax %g filepeak %g\n" , gmax , peak );
+
    if ( scale < .5 || scale > 1.5 )
    {
       switch ( QMessageBox::warning(this, 

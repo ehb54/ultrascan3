@@ -9416,7 +9416,6 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
                   emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
                   ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                   gauss_coeff * exp( - tmp2 * tmp2 / 2 );
-                  ;
             }
          } else {
             double area              = height * width * M_SQRT2PI;
@@ -9441,13 +9440,6 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
       {
          cout << "gaussian as: EMGGMG\n";
          double area = height * width * M_SQRT2PI;
-         // EMG
-         double one_over_a3       = 1e0 / dist1;
-         double emg_coeff         = 5e-1 * area * one_over_a3 * 5e-1;
-         double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
-         double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
-         double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
-         double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
 
          // GMG
          double one_over_width               = 1e0 / width;
@@ -9457,15 +9449,57 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
          double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
          double gmg_erf_m1                   = dist2 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
 
-         for ( unsigned int i = 0; i < q_size; ++i )
+         double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
+         if ( fabs( dist1 ) < dist1_thresh )
          {
-            double tmp = q[ i ] - center;
-            result[ i ] = 
-               emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-               ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
-               gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-               ( 1e0 + erf( gmg_erf_m1 * tmp ) );
-         }               
+            double frac_gauss = ( dist1_thresh - fabs( dist1 ) ) / dist1_thresh;
+            if ( dist1 < 0 )
+            {
+               dist1_thresh *= -1e0;
+            }
+
+            double one_over_a3       = 1e0 / dist1_thresh;
+            double emg_coeff         = 5e-1 * area * one_over_a3 * 5e-1 * (1e0 - frac_gauss );
+            double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+            double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+            double sign_a3           = dist1_thresh < 0e0 ? -1e0 : 1e0;
+            double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+            double gauss_coeff       = 5e-1 * frac_gauss * height;
+
+            printf( "EMG t0 %g thresh %g frac gauss %g\n", dist1, dist1_thresh, frac_gauss );
+
+            for ( unsigned int i = 0; i < q_size; ++i )
+            {
+               double tmp = q[ i ] - center;
+               double tmp2 =  tmp / width;
+               
+               result[ i ] = 
+                  emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                  gauss_coeff * exp( - tmp2 * tmp2 / 2 ) +
+                  gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+                  ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+                  ;
+            }
+         } else {
+            // EMG
+            double one_over_a3       = 1e0 / dist1;
+            double emg_coeff         = 5e-1 * area * one_over_a3 * 5e-1;
+            double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+            double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+            double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
+            double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+
+            for ( unsigned int i = 0; i < q_size; ++i )
+            {
+               double tmp = q[ i ] - center;
+               result[ i ] = 
+                  emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                  gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+                  ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+            }
+         }
       }
       break;
    }
@@ -9475,7 +9509,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
 
 double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < double > g )
 {
-   cout << QString( "gaussian peak file %1\n" ).arg( file );
+   cout << QString( "gaussian peak file %1 current type %2\n" ).arg( file ).arg( gaussian_type );
    vector < double > gs = compute_gaussian_sum( f_qs[ file ], g );
    double gmax = gs[ 0 ];
    for ( unsigned int i = 1; i < ( unsigned int ) gs.size(); i++ )
