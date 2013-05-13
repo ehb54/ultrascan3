@@ -822,7 +822,7 @@ namespace HFIT
          } else {
             double area                         = height * width * M_SQRT2PI;
             double one_over_width               = 1e0 / width;
-            double one_over_a2sq_plus_a3sq      = one_over_width * one_over_width * 1e0 / ( dist1 * dist1 );
+            double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width +  dist1 * dist1 );
             double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
             double gmg_coeff                    = area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
             double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
@@ -913,17 +913,45 @@ namespace HFIT
             double tmp = ( t - center ) / width;
             result += height * exp( - tmp * tmp / 2 );
          } else {
-            double area              = height * width * M_SQRT2PI;
-            double one_over_a3       = 1e0 / dist1;
-            double emg_coeff         = area * one_over_a3 * 5e-1;
-            double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
-            double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
-            double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
-            double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
-            double tmp = t - center;
-            result += 
-               emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-               ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+            double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
+            if ( fabs( dist1 ) < dist1_thresh )
+            {
+               double frac_gauss = ( dist1_thresh - fabs( dist1 ) ) / dist1_thresh;
+               if ( dist1 < 0 )
+               {
+                  dist1_thresh *= -1e0;
+               }
+
+               double area              = height * width * M_SQRT2PI;
+               double one_over_a3       = 1e0 / dist1_thresh;
+               double emg_coeff         = area * one_over_a3 * 5e-1 * ( 1e0 - frac_gauss );
+               double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+               double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+               double sign_a3           = dist1_thresh < 0e0 ? -1e0 : 1e0;
+               double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+               double gauss_coeff       = frac_gauss * height;
+
+               double tmp               = t - center;
+               double tmp2              = tmp / width;
+               
+               result +=
+                  emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                  gauss_coeff * exp( - tmp2 * tmp2 / 2 );
+               ;
+            } else {
+               double area              = height * width * M_SQRT2PI;
+               double one_over_a3       = 1e0 / dist1;
+               double emg_coeff         = area * one_over_a3 * 5e-1;
+               double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+               double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+               double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
+               double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+               double tmp               = t - center;
+               result += 
+                  emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+            }
          }
       }
       
@@ -1025,7 +1053,7 @@ namespace HFIT
             {
                double area                         = height * width * M_SQRT2PI;
                double one_over_width               = 1e0 / width;
-               double one_over_a2sq_plus_a3sq      = one_over_width * one_over_width * 1e0 / ( dist2 * dist2 );
+               double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width +  dist2 * dist2 );
                double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
                double gmg_coeff                    = area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
                double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
@@ -1060,7 +1088,7 @@ namespace HFIT
 
                   // GMG
                   double one_over_width               = 1e0 / width;
-                  double one_over_a2sq_plus_a3sq      = one_over_width * one_over_width * 1e0 / ( dist2 * dist2 );
+                  double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width +  dist2 * dist2 );
                   double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
                   double gmg_coeff                    = 5e-1 * area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
                   double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;

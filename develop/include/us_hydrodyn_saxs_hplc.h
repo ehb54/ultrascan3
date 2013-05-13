@@ -49,7 +49,7 @@ using namespace std;
 #endif
 
 #ifndef M_ONE_OVER_SQRT2PI
-# define M_ONE_OVER_SQRT2PI 3.398942280402e-1
+# define M_ONE_OVER_SQRT2PI 3.98942280402e-1
 #endif
 
 #ifndef M_SQRT2

@@ -11,6 +11,8 @@
 #include <qwt_scale_engine.h>
 #endif
 
+// check // fix for gauss dist
+
 // note: this program uses cout and/or cerr and this should be replaced
 
 #define SLASH QDir::separator()
@@ -249,7 +251,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             .arg( files.size() );
       }
 
-      parameters[ "gaussians" ] = QString( "%1" ).arg( f_gaussians[ files[ 0 ] ].size() / 3 );
+      parameters[ "gaussians" ] = QString( "%1" ).arg( f_gaussians[ files[ 0 ] ].size() / gaussian_type_size );
 
       bool any_detector = false;
       if ( detector_uv )
@@ -274,12 +276,12 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             parameters[ "error" ] = QString( tr( "Concentration controls disabled: no Gaussians defined for concentration file" ) );
             no_conc = true;
          } else {
-            if ( f_gaussians[ lbl_conc_file->text() ].size() / 3  != f_gaussians[ files[ 0 ] ].size() / 3 )
+            if ( f_gaussians[ lbl_conc_file->text() ].size() / gaussian_type_size  != f_gaussians[ files[ 0 ] ].size() / gaussian_type_size )
             {
                parameters[ "error" ] = 
                   QString( tr( "Concentration controls disabled: Concentration file Gaussian count (%1)\n does not match global curves Gaussian count (%2)" ) )
                   .arg( f_gaussians[ lbl_conc_file->text() ].size() )
-                  .arg( f_gaussians[ files[ 0 ] ].size() / 3 )
+                  .arg( f_gaussians[ files[ 0 ] ].size() / gaussian_type_size )
                   ;
                no_conc = true;
             }
@@ -385,7 +387,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
       if ( !no_conc )
       {
-         for ( unsigned int i = 0; i < ( unsigned int ) f_gaussians[ files[ 0 ] ].size() / 3; i++ )
+         for ( unsigned int i = 0; i < ( unsigned int ) f_gaussians[ files[ 0 ] ].size() / gaussian_type_size; i++ )
          {
             conv.push_back( parameters.count( QString( "conv %1" ).arg( i ) ) ?
                             parameters[ QString( "conv %1" ).arg( i ) ].toDouble() : 0e0 );
@@ -470,12 +472,19 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             {
                detector_conv = detector_ri_conv;
             }
-            vector < double > tmp_g(3);
+            vector < double > tmp_g( gaussian_type_size );
             QString conc_file = lbl_conc_file->text();
-            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + i * 3 ] * detector_conv / ( conc_repeak * conv[ i ] );
-            tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + i * 3 ];
-            tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + i * 3 ];
-
+            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + i * gaussian_type_size ] * detector_conv / ( conc_repeak * conv[ i ] );
+            tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + i * gaussian_type_size ];
+            tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + i * gaussian_type_size ];
+            if ( dist1_active )
+            {
+               tmp_g[ 3 ] = f_gaussians[ files[ i ] ][ 3 + i * gaussian_type_size ];
+               if ( dist2_active )
+               {
+                  tmp_g[ 4 ] = f_gaussians[ files[ i ] ][ 4 + i * gaussian_type_size ];
+               }
+            }
             concs.push_back( compute_gaussian( tv, tmp_g ) );
             add_plot( QString( "conc_g_per_ml_peak%1" ).arg( i + 1 ), tv, concs.back(), true, false );
          }
@@ -502,12 +511,20 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       vector < double >            tmp_area;
       double                       tmp_area_sum = 0e0;
 
-      for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += 3 )
+      for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += gaussian_type_size )
       {
-         vector < double > tmp_g(3);
+         vector < double > tmp_g( gaussian_type_size );
          tmp_g[ 0 ] = f_gaussians[ files[ i ] ][ 0 + j ];
          tmp_g[ 1 ] = f_gaussians[ files[ i ] ][ 1 + j ];
          tmp_g[ 2 ] = f_gaussians[ files[ i ] ][ 2 + j ];
+         if ( dist1_active )
+         {
+            tmp_g[ 3 ] = f_gaussians[ files[ i ] ][ 3 + j ];
+            if ( dist2_active )
+            {
+               tmp_g[ 4 ] = f_gaussians[ files[ i ] ][ 4 + j ];
+            }
+         }
 
          vector < double > tmp = compute_gaussian( tv, tmp_g );
          tmp_v.push_back( tmp );
@@ -524,7 +541,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          tmp_area.push_back( tmp_g[ 0 ] * tmp_g[ 2 ] * M_SQRT2PI );
          tmp_area_sum += tmp_area.back();
 
-         // add_plot( QString( "fg_%1_g%2" ).arg( i ).arg( j / 3 ), tv, tmp, true, false );
+         // add_plot( QString( "fg_%1_g%2" ).arg( i ).arg( j / gaussian_type_size ), tv, tmp, true, false );
 
       }
       fg.push_back( tmp_v );
@@ -543,7 +560,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    US_Vector::printvector( "area sums", g_area_sum );
 
-   unsigned int num_of_gauss = ( unsigned int ) gaussians.size() / 3;
+   unsigned int num_of_gauss = ( unsigned int ) gaussians.size() / gaussian_type_size;
 
    {
       QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs" + QDir::separator() + "tmp" +  QDir::separator() + "hplc_frac.csv" );
@@ -626,11 +643,19 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
                detector_conv = detector_ri_conv;
             }
 
-            vector < double > tmp_g(3);
+            vector < double > tmp_g( gaussian_type_size );
             QString conc_file = lbl_conc_file->text();
-            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + g * 3 ] * detector_conv / ( conc_repeak * conv[ g ] );
-            tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + g * 3 ];
-            tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + g * 3 ];
+            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + g * gaussian_type_size ] * detector_conv / ( conc_repeak * conv[ g ] );
+            tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + g * gaussian_type_size ];
+            tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + g * gaussian_type_size ];
+            if ( dist1_active )
+            {
+               tmp_g[ 3 ] = f_gaussians[ conc_file ][ 3 + g * gaussian_type_size ];
+               if ( dist2_active )
+               {
+                  tmp_g[ 4 ] = f_gaussians[ conc_file ][ 4 + g * gaussian_type_size ];
+               }
+            }
 
             double center = tmp_g[ 1 ];
             double width  = tmp_g[ 2 ];
@@ -1108,7 +1133,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    // for testing
    // unified_ggaussian_use_errors      = false;
 
-   unified_ggaussian_gaussians_size  = ( unsigned int ) gaussians.size() / 3;
+   unified_ggaussian_gaussians_size  = ( unsigned int ) gaussians.size() / gaussian_type_size;
 
    if ( do_init )
    {
@@ -1121,7 +1146,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    }
 
    // push back centers first
-   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
+   // fix for gauss_dist
+   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += gaussian_type_size )
    {
       unified_ggaussian_params.push_back( gaussians[ 1 + i ] );
       if ( cb_fix_width->isChecked() )
@@ -1150,7 +1176,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
          return false;
       }
       
-      for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += 3 )
+      // fix for gauss dist
+      for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += gaussian_type_size )
       {
          unified_ggaussian_params.push_back( f_gaussians[ files[ i ] ][ 0 + j ] ); // height
          if ( !cb_fix_width->isChecked() )
@@ -1446,7 +1473,7 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
 
    // printvector( "cfg: org_gauss 2", org_gaussians );
    gaussians = org_gaussians;
-   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
+   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += gaussian_type_size )
    {
       gaussians[ 0 + i ] *= scale;
    }
