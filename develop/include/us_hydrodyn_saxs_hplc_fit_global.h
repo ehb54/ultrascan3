@@ -228,9 +228,6 @@ namespace HFIT_GLOBAL
    double compute_gaussian_f         ( double t, const double *par );
    double compute_gaussian_f_eq_width( double t, const double *par );
 
-   void printvector( QString qs, vector < double > x );
-   void printvector( QString qs, vector < unsigned int > x );
-   void printvector( QString qs, vector < bool > x );
    void list_params();
 };
 

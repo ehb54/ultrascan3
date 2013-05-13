@@ -1086,44 +1086,14 @@ namespace HFIT
       return result;
    }
 
-   void printvector( QString qs, vector < double > x )
-   {
-      cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-      for ( unsigned int i = 0; i < x.size(); i++ )
-      {
-         cout << QString( " %1" ).arg( x[ i ] );
-      }
-      cout << endl;
-   }
-
-   void printvector( QString qs, vector < unsigned int > x )
-   {
-      cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-      for ( unsigned int i = 0; i < x.size(); i++ )
-      {
-         cout << QString( " %1" ).arg( x[ i ] );
-      }
-      cout << endl;
-   }
-
-   void printvector( QString qs, vector < bool > x )
-   {
-      cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-      for ( unsigned int i = 0; i < x.size(); i++ )
-      {
-         cout << QString( " %1" ).arg( x[ i ] ? "true" : "false" );
-      }
-      cout << endl;
-   }
-
    void list_params()
    {
-      printvector( "init_params ", init_params  );
-      printvector( "fixed_params", fixed_params );
-      printvector( "param_pos   ", param_pos    );
-      printvector( "param_fixed ", param_fixed  );
-      printvector( "param_min   ", param_min    );
-      printvector( "param_max   ", param_max    );
+      US_Vector::printvector( "init_params ", init_params  );
+      US_Vector::printvector( "fixed_params", fixed_params );
+      US_Vector::printvector( "param_pos   ", param_pos    );
+      US_Vector::printvector( "param_fixed ", param_fixed  );
+      US_Vector::printvector( "param_min   ", param_min    );
+      US_Vector::printvector( "param_max   ", param_max    );
    }
 };
 
@@ -1313,7 +1283,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 
       if ( dist1_active )
       {
-         if ( cb_fix_width->isChecked() ||
+         if ( cb_fix_dist1->isChecked() ||
               fixed_curves.count( pos + 1 ) )
          {
             HFIT::param_pos   .push_back( HFIT::fixed_params.size() );
@@ -1322,7 +1292,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          } else {
             HFIT::param_pos   .push_back( HFIT::init_params.size() );
 
-            if ( cb_pct_width_from_init->isChecked() )
+            if ( cb_pct_dist1_from_init->isChecked() )
             {
                base_val = gaussians_undo[ 0 ][ 3 + i ];
             } else {
@@ -1336,9 +1306,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             double ofs;
             double min = -50e0;
             double max = 50e0;
-            if ( cb_pct_width->isChecked() )
+            if ( cb_pct_dist1->isChecked() )
             {
-               ofs = base_val * le_pct_width->text().toDouble() / 100.0;
+               ofs = base_val * le_pct_dist1->text().toDouble() / 100.0;
                min = base_val - ofs;
                max = base_val + ofs;
             }
@@ -1363,7 +1333,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 
          if ( dist2_active )
          {
-            if ( cb_fix_width->isChecked() ||
+            if ( cb_fix_dist2->isChecked() ||
                  fixed_curves.count( pos + 1 ) )
             {
                HFIT::param_pos   .push_back( HFIT::fixed_params.size() );
@@ -1372,7 +1342,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             } else {
                HFIT::param_pos   .push_back( HFIT::init_params.size() );
 
-               if ( cb_pct_width_from_init->isChecked() )
+               if ( cb_pct_dist2_from_init->isChecked() )
                {
                   base_val = gaussians_undo[ 0 ][ 4 + i ];
                } else {
@@ -1386,9 +1356,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
                double ofs;
                double min = -50e0;
                double max = 50e0;
-               if ( cb_pct_width->isChecked() )
+               if ( cb_pct_dist2->isChecked() )
                {
-                  ofs = base_val * le_pct_width->text().toDouble() / 100.0;
+                  ofs = base_val * le_pct_dist2->text().toDouble() / 100.0;
                   min = base_val - ofs;
                   max = base_val + ofs;
                }
@@ -1413,7 +1383,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
       }
    }
 
-   // HFIT::list_params();
+   HFIT::list_params();
 
    if ( !HFIT::init_params.size() )
    {
@@ -1500,7 +1470,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
    } 
 
    vector < double > par = HFIT::init_params;
-   // HFIT::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
+   US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
    cout << QString( "par start (rmsd %1)" ).arg( org_rmsd ).ascii();
 
    // LM::qpb  = ( QProgressBar * )0;
@@ -1521,7 +1491,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
       cout << "WARNING: lm() returned negative rmsd\n";
    }
 
-   // HFIT::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
+   US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
    cout << QString( "par fit (rmsd %1)" ).arg( status.fnorm ).ascii();
 
    if ( org_rmsd > status.fnorm )
@@ -1757,7 +1727,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
       vector < double > par = HFIT::init_params;
 
       cout << QString( "ga rmsd %1\n" ).arg( rmsd );
-      HFIT::printvector( "after ga par is", par );
+      US_Vector::printvector( "after ga par is", par );
 
       for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
       {
@@ -1812,7 +1782,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
 
    vector < double > par = HFIT::init_params;
 
-   HFIT::printvector( QString( "par start" ), par );
+   US_Vector::printvector( QString( "par start" ), par );
 
    // determine total count
 
@@ -1886,7 +1856,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
 
       par = best_params;
 
-      HFIT::printvector( "after grid par is", par );
+      US_Vector::printvector( "after grid par is", par );
 
       for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
       {

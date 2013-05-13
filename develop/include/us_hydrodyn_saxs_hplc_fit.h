@@ -233,12 +233,8 @@ namespace HFIT
    extern vector < double       > errors;
    extern vector < unsigned int > errors_index;
 
-
    extern double (*compute_gaussian_f)( double t, const double *par );
 
-   void printvector( QString qs, vector < double > x );
-   void printvector( QString qs, vector < unsigned int > x );
-   void printvector( QString qs, vector < bool > x );
    void list_params();
 };
 

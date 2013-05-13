@@ -5888,6 +5888,13 @@ void US_Hydrodyn_Saxs_Hplc::rename_created( QListBoxItem *lbi, const QPoint & )
    {
       f_errors   [ text ] = f_errors   [ lbi->text() ];
    }
+   if ( f_gaussians.count( lbi->text() ) )
+   {
+      f_gaussians[ text ] = f_gaussians[ lbi->text() ];
+   }
+   f_is_time  [ text ] = f_is_time  [ lbi->text() ];
+   f_psv       [ text ] = f_psv.count( lbi->text() ) ? f_psv[ lbi->text() ] : 0e0;
+   f_conc      [ text ] = f_conc.count( lbi->text() ) ? f_conc[ lbi->text() ] : 0e0;
 
    update_csv_conc();
    map < QString, double > concs = current_concs();
@@ -7119,11 +7126,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       connect( le_gauss_fit_end, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_fit_end_text( const QString & ) ) );
    }
 
-   if ( gaussian_pos >= gaussians.size() / gaussian_type_size )
+   if ( gaussians.size() && gaussian_pos >= gaussians.size() / gaussian_type_size )
    {
       gaussian_pos = ( gaussians.size() / gaussian_type_size ) - 1;
    }
-   printf( "gaussian pos %d type size %d\n", (int)gaussian_pos, (int) gaussian_type_size );
+   printf( "gaussian pos %d type size %d gaussians_size() %d\n", (int)gaussian_pos, (int) gaussian_type_size, (int)gaussians.size() );
    puts( "gs7" );
 
    disable_all();
@@ -7358,181 +7365,196 @@ void US_Hydrodyn_Saxs_Hplc::gauss_save()
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
 {
-   if ( gaussian_mode )
+   if ( gaussians.size() )
    {
-      cout << QString( "gauss_pos_text <%1>\n" ).arg( text );
-      gaussians[ 1 + gaussian_type_size * gaussian_pos ] = text.toDouble();
-   } else {
-      if ( cb_fix_width->isChecked() )
+      if ( gaussian_mode )
       {
-         unified_ggaussian_params[ 0 + 2 * gaussian_pos ] = text.toDouble();
-
-         if ( plotted_hlines.size() > gaussian_pos )
-         {
-            puts( "gg pos text do adjust" );
-
-            double center = unified_ggaussian_params[ 2 * gaussian_pos + 0 ];
-            double width  = unified_ggaussian_params[ 2 * gaussian_pos + 1 ];
-            double fwhm   = 2.354820045e0 * width;
-
-            vector < double > x( 2 );
-            vector < double > y( 2 );
-
-            x[ 0 ] = center - fwhm / 2e0;
-            x[ 1 ] = center + fwhm / 2e0;
-            y[ 0 ] = gauss_max_height / 3e0 + ( gauss_max_height * (double) gaussian_pos / 100e0 );
-            y[ 1 ] = y[ 0 ];
-
-            cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
-               .arg( center )
-               .arg( width )
-               .arg( x[0] )
-               .arg( y[0] )
-               .arg( x[1] )
-               .arg( y[1] )
-               ;
-#ifndef QT4
-            plot_dist->setCurveData( plotted_hlines[ gaussian_pos ],
-                                     (double *)&x[ 0 ],
-                                     (double *)&y[ 0 ],
-                                     2
-                                     );
-#else
-            plotted_hlines[ gaussian_pos ]->setData(
-                                                    (double *)&x[ 0 ],
-                                                    (double *)&y[ 0 ],
-                                                    2
-                                                    );
-#endif
-         }
+         cout << QString( "gauss_pos_text <%1>, pos %2 size %3\n" ).arg( text ).arg( gaussian_pos ).arg( gaussians.size() );
+         gaussians[ 1 + gaussian_type_size * gaussian_pos ] = text.toDouble();
       } else {
-         unified_ggaussian_params[ gaussian_pos ] = text.toDouble();
+         if ( cb_fix_width->isChecked() )
+         {
+            unified_ggaussian_params[ 0 + 2 * gaussian_pos ] = text.toDouble();
+
+            if ( plotted_hlines.size() > gaussian_pos )
+            {
+               puts( "gg pos text do adjust" );
+
+               double center = unified_ggaussian_params[ 2 * gaussian_pos + 0 ];
+               double width  = unified_ggaussian_params[ 2 * gaussian_pos + 1 ];
+               double fwhm   = 2.354820045e0 * width;
+
+               vector < double > x( 2 );
+               vector < double > y( 2 );
+
+               x[ 0 ] = center - fwhm / 2e0;
+               x[ 1 ] = center + fwhm / 2e0;
+               y[ 0 ] = gauss_max_height / 3e0 + ( gauss_max_height * (double) gaussian_pos / 100e0 );
+               y[ 1 ] = y[ 0 ];
+
+               cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
+                  .arg( center )
+                  .arg( width )
+                  .arg( x[0] )
+                  .arg( y[0] )
+                  .arg( x[1] )
+                  .arg( y[1] )
+                  ;
+#ifndef QT4
+               plot_dist->setCurveData( plotted_hlines[ gaussian_pos ],
+                                        (double *)&x[ 0 ],
+                                        (double *)&y[ 0 ],
+                                        2
+                                        );
+#else
+               plotted_hlines[ gaussian_pos ]->setData(
+                                                       (double *)&x[ 0 ],
+                                                       (double *)&y[ 0 ],
+                                                       2
+                                                       );
+#endif
+            }
+         } else {
+            unified_ggaussian_params[ gaussian_pos ] = text.toDouble();
+         }
       }
-   }
       
 #ifndef QT4
-   plot_dist->setMarkerPos( plotted_markers[ 2 + gaussian_pos ], text.toDouble(), 0e0 );
+      plot_dist->setMarkerPos( plotted_markers[ 2 + gaussian_pos ], text.toDouble(), 0e0 );
 #else
 #warn check how to do this in qt4 needs ymark
-   plotted_markers[ 2 + gaussian_pos ]->setValue( pos, ymark );
+      plotted_markers[ 2 + gaussian_pos ]->setValue( pos, ymark );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
-   {
-      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setValue( text.toDouble() );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-   }
+      if ( qwtw_wheel->value() != text.toDouble() )
+      {
+         disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+         qwtw_wheel->setValue( text.toDouble() );
+         connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      }
 
-   if ( gaussian_mode )
-   {
-      gauss_replot_gaussian();
+      if ( gaussian_mode )
+      {
+         gauss_replot_gaussian();
+      }
+      plot_dist->replot();
    }
-   plot_dist->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_text( const QString & text )
 {
-   if ( gaussian_mode )
+   if ( gaussians.size() )
    {
-      gaussians[ 2 + gaussian_type_size * gaussian_pos ] = text.toDouble();
-   } else {
-      if ( ggaussian_mode && 
-           cb_fix_width->isChecked() )
+      if ( gaussian_mode )
       {
-         unified_ggaussian_params[ 1 + 2 * gaussian_pos ] = text.toDouble();
-
-         if ( plotted_hlines.size() > gaussian_pos )
+         gaussians[ 2 + gaussian_type_size * gaussian_pos ] = text.toDouble();
+      } else {
+         if ( ggaussian_mode && 
+              cb_fix_width->isChecked() )
          {
-            puts( "gg width text do adjust" );
+            unified_ggaussian_params[ 1 + 2 * gaussian_pos ] = text.toDouble();
 
-            double center = unified_ggaussian_params[ 2 * gaussian_pos + 0 ];
-            double width  = unified_ggaussian_params[ 2 * gaussian_pos + 1 ];
-            double fwhm   = 2.354820045e0 * width;
+            if ( plotted_hlines.size() > gaussian_pos )
+            {
+               puts( "gg width text do adjust" );
 
-            vector < double > x( 2 );
-            vector < double > y( 2 );
+               double center = unified_ggaussian_params[ 2 * gaussian_pos + 0 ];
+               double width  = unified_ggaussian_params[ 2 * gaussian_pos + 1 ];
+               double fwhm   = 2.354820045e0 * width;
 
-            x[ 0 ] = center - fwhm / 2e0;
-            x[ 1 ] = center + fwhm / 2e0;
-            y[ 0 ] = gauss_max_height / 3e0 + ( gauss_max_height * (double) gaussian_pos / 100e0 );
-            y[ 1 ] = y[ 0 ];
+               vector < double > x( 2 );
+               vector < double > y( 2 );
 
-            cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
-               .arg( center )
-               .arg( width )
-               .arg( x[0] )
-               .arg( y[0] )
-               .arg( x[1] )
-               .arg( y[1] )
-               ;
+               x[ 0 ] = center - fwhm / 2e0;
+               x[ 1 ] = center + fwhm / 2e0;
+               y[ 0 ] = gauss_max_height / 3e0 + ( gauss_max_height * (double) gaussian_pos / 100e0 );
+               y[ 1 ] = y[ 0 ];
+
+               cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
+                  .arg( center )
+                  .arg( width )
+                  .arg( x[0] )
+                  .arg( y[0] )
+                  .arg( x[1] )
+                  .arg( y[1] )
+                  ;
 #ifndef QT4
-            plot_dist->setCurveData( plotted_hlines[ gaussian_pos ],
-                                     (double *)&x[ 0 ],
-                                     (double *)&y[ 0 ],
-                                     2
-                                     );
+               plot_dist->setCurveData( plotted_hlines[ gaussian_pos ],
+                                        (double *)&x[ 0 ],
+                                        (double *)&y[ 0 ],
+                                        2
+                                        );
 #else
-            plotted_hlines[ gaussian_pos ]->setData(
-                                                    (double *)&x[ 0 ],
-                                                    (double *)&y[ 0 ],
-                                                    2
-                                                    );
+               plotted_hlines[ gaussian_pos ]->setData(
+                                                       (double *)&x[ 0 ],
+                                                       (double *)&y[ 0 ],
+                                                       2
+                                                       );
 #endif
+            }
          }
       }
-   }
 
-   if ( qwtw_wheel->value() != text.toDouble() )
-   {
-      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setValue( text.toDouble() );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-   }
+      if ( qwtw_wheel->value() != text.toDouble() )
+      {
+         disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+         qwtw_wheel->setValue( text.toDouble() );
+         connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      }
 
-   if ( gaussian_mode )
-   {
-      gauss_replot_gaussian();
+      if ( gaussian_mode )
+      {
+         gauss_replot_gaussian();
+      }
+      plot_dist->replot();
    }
-   plot_dist->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_height_text( const QString & text )
 {
-   gaussians[ 0 + gaussian_type_size * gaussian_pos ] = text.toDouble();
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( gaussians.size() )
    {
-      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setValue( text.toDouble() );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      gaussians[ 0 + gaussian_type_size * gaussian_pos ] = text.toDouble();
+      if ( qwtw_wheel->value() != text.toDouble() )
+      {
+         disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+         qwtw_wheel->setValue( text.toDouble() );
+         connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      }
+      gauss_replot_gaussian();
    }
-   gauss_replot_gaussian();
    plot_dist->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist1_text( const QString & text )
 {
-   gaussians[ 3 + gaussian_type_size * gaussian_pos ] = text.toDouble();
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( gaussians.size() )
    {
-      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setValue( text.toDouble() );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      gaussians[ 3 + gaussian_type_size * gaussian_pos ] = text.toDouble();
+      if ( qwtw_wheel->value() != text.toDouble() )
+      {
+         disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+         qwtw_wheel->setValue( text.toDouble() );
+         connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      }
+      gauss_replot_gaussian();
+      plot_dist->replot();
    }
-   gauss_replot_gaussian();
-   plot_dist->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist2_text( const QString & text )
 {
-   gaussians[ 4 + gaussian_type_size * gaussian_pos ] = text.toDouble();
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( gaussians.size() )
    {
-      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setValue( text.toDouble() );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      gaussians[ 4 + gaussian_type_size * gaussian_pos ] = text.toDouble();
+      if ( qwtw_wheel->value() != text.toDouble() )
+      {
+         disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+         qwtw_wheel->setValue( text.toDouble() );
+         connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      }
+      gauss_replot_gaussian();
+      plot_dist->replot();
    }
-   gauss_replot_gaussian();
-   plot_dist->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_text( const QString & text )

@@ -808,44 +808,14 @@ namespace HFIT_GLOBAL
       return result;
    }
 
-   void printvector( QString qs, vector < double > x )
-   {
-      cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-      for ( unsigned int i = 0; i < x.size(); i++ )
-      {
-         cout << QString( " %1" ).arg( x[ i ] );
-      }
-      cout << endl;
-   }
-
-   void printvector( QString qs, vector < unsigned int > x )
-   {
-      cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-      for ( unsigned int i = 0; i < x.size(); i++ )
-      {
-         cout << QString( " %1" ).arg( x[ i ] );
-      }
-      cout << endl;
-   }
-
-   void printvector( QString qs, vector < bool > x )
-   {
-      cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
-      for ( unsigned int i = 0; i < x.size(); i++ )
-      {
-         cout << QString( " %1" ).arg( x[ i ] ? "true" : "false" );
-      }
-      cout << endl;
-   }
-
    void list_params()
    {
-      printvector( "init_params ", init_params  );
-      printvector( "fixed_params", fixed_params );
-      printvector( "param_pos   ", param_pos    );
-      printvector( "param_fixed ", param_fixed  );
-      printvector( "param_min   ", param_min    );
-      printvector( "param_max   ", param_max    );
+      US_Vector::printvector( "init_params ", init_params  );
+      US_Vector::printvector( "fixed_params", fixed_params );
+      US_Vector::printvector( "param_pos   ", param_pos    );
+      US_Vector::printvector( "param_fixed ", param_fixed  );
+      US_Vector::printvector( "param_min   ", param_min    );
+      US_Vector::printvector( "param_max   ", param_max    );
    }
 };
 
@@ -1243,8 +1213,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 
    if ( gsum != gsumf )
    {
-      // HFIT_GLOBAL::printvector( "gsum", gsum );
-      // HFIT_GLOBAL::printvector( "gsumf", gsumf );
+      // US_Vector::printvector( "gsum", gsum );
+      // US_Vector::printvector( "gsumf", gsumf );
       cout << "WARNING: gsums don't match\n";
    } else {
       cout << "gsums match\n";
@@ -1254,7 +1224,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 
 
    vector < double > par = HFIT_GLOBAL::init_params;
-   // HFIT_GLOBAL::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
+   // US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
    cout << QString( "par start (rmsd %1)" ).arg( org_rmsd ).ascii();
 
    progress->setProgress( 1, 2 );
@@ -1282,7 +1252,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
       cout << "WARNING: lm() returned negative rmsd\n";
    }
 
-   // HFIT_GLOBAL::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
+   // US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
    cout << QString( "par fit (rmsd %1)" ).arg( status.fnorm ).ascii();
 
    if ( org_rmsd > status.fnorm )
@@ -1532,7 +1502,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::ga()
       vector < double > par = HFIT_GLOBAL::init_params;
 
       cout << QString( "ga rmsd %1\n" ).arg( rmsd );
-      HFIT_GLOBAL::printvector( "after ga par is", par );
+      US_Vector::printvector( "after ga par is", par );
 
       for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
       {
@@ -1588,7 +1558,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::grid()
 
    vector < double > par = HFIT_GLOBAL::init_params;
 
-   HFIT_GLOBAL::printvector( QString( "par start" ), par );
+   US_Vector::printvector( QString( "par start" ), par );
 
    // determine total count
 
@@ -1662,7 +1632,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::grid()
 
       par = best_params;
 
-      HFIT_GLOBAL::printvector( "after grid par is", par );
+      US_Vector::printvector( "after grid par is", par );
 
       for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
       {
