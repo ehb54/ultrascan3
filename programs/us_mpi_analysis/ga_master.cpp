@@ -543,7 +543,7 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
 
    QString id        = model.typeText();
    if ( analysis_type.contains( "CG" ) )
-      id                = id.replace( "2DSA", "2DSACG" );
+      id                = id.replace( "2DSA", "2DSA-CG" );
    QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
    int     stype     = data_sets[ 0 ]->solute_type;
    double  vbar20    = data_sets[ 0 ]->vbar20;

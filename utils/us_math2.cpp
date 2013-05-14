@@ -441,12 +441,12 @@ void US_Math2::data_correction( double t, SolutionData& d )
 
    d.D20w_correction = ( K20 / K ) * ( d.viscosity / VISC_20W );
 //if ( qAbs(d.vbar-0.72) > 0.001 ) {
-//qDebug() << "M2:dacor:  denstb denswt" << d.density_tb << d.density_wt;
+//qDebug() << "M2:dacor:  denstb denswt" << d.density_tb << d.density_wt << "manual" << d.manual;
 //qDebug() << "M2:dacor:  visctb viscwt" << d.viscosity_tb << d.viscosity_wt;
 //qDebug() << "M2:dacor:  buoyb buoyw" << d.buoyancyb << d.buoyancyw;
 //qDebug() << "M2:dacor:    vbtb vb20" << d.vbar << d.vbar20;
-//qDebug() << "M2:dacor:    dentb den20" << d.density_tb << DENS_20W;
-//qDebug() << "M2:dacor:    vistb vis20" << d.viscosity_tb << VISC_20W;
+//qDebug() << "M2:dacor:    dentb den20 den" << d.density_tb << DENS_20W << d.density;
+//qDebug() << "M2:dacor:    vistb vis20 vis" << d.viscosity_tb << VISC_20W << d.viscosity;
 //qDebug() << "M2:dacor:   scorr dcorr" << d.s20w_correction << d.D20w_correction; }
 
 }

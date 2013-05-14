@@ -322,6 +322,7 @@ void US_AnalysisControl::checkUniGrid(  bool checked )
       nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
       ct_thrdcnt ->setValue  ( nthr );
       ck_varvbar ->setEnabled( true );
+      ct_constff0->setEnabled( true );
    }
 
    ck_custgr ->disconnect();
@@ -339,9 +340,10 @@ void US_AnalysisControl::checkCusGrid(  bool checked )
 
    if ( checked )
    {
-      ct_thrdcnt->setEnabled( true  );
-      ck_tinoise->setEnabled( true );
-      ck_rinoise->setEnabled( true );
+      ct_thrdcnt ->setEnabled( true  );
+      ck_tinoise ->setEnabled( true );
+      ck_rinoise ->setEnabled( true );
+      ct_constff0->setEnabled( false );
    }
 }
 
@@ -642,7 +644,11 @@ void US_AnalysisControl::load_model()
 
       dsets[ 0 ]->model = cusmodel;
       grtype            = -1;
-      ck_varvbar ->setChecked( ! cusmodel.constant_vbar() );
+      bool cnst_ff0     = ! cusmodel.constant_vbar();
+      ck_varvbar ->setChecked( cnst_ff0 );
+
+      if ( cnst_ff0 )
+         ct_constff0->setValue( cusmodel.components[ 0 ].f_f0 );
    }
 }
 
@@ -882,6 +888,9 @@ DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
                              QString::number( mmitnum ) + " )" );
    }
 
+   if ( ck_custgr->isChecked() )
+      model->description = model->description + QString( " CUSTOMGRID" );
+
    US_2dsa* mainw = (US_2dsa*)parentw;
 
    if ( alldone )
@@ -968,6 +977,7 @@ DbgLv(1) << "Adv BANDVOL"  << sparms->band_volume << " MUL" << sparms->cp_width;
             ct_thrdcnt ->setEnabled( true  );
             ck_varvbar ->setEnabled( false );
             ck_varvbar ->setChecked( ! model->constant_vbar() );
+            ct_constff0->setEnabled( false );
          }
 
          else

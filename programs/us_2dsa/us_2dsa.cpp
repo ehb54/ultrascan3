@@ -431,10 +431,13 @@ void US_2dsa::save( void )
                           edata->editID.mid( 2 ) :
                           edata->editID;
    QString dates        = "e" + editID + "_a" + analysisDate;
+   bool    cusGrid      = model.description.contains( "CUSTOMGRID" );
+DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    bool    fitMeni      = ( model.global == US_Model::MENISCUS );
    bool    montCar      = model.monteCarlo;
-   QString analysisType = fitMeni ?  "2DSA-FM" :
-                          ( montCar ? "2DSA-MC" : "2DSA" );
+   QString analysisType = QString( cusGrid ? "2DSA-CG" : "2DSA" )
+                        + QString( fitMeni ? "-FM" : "" )
+                        + QString( montCar ? "-MC" : "" );
    QString requestID    = "local";
    QString tripleID     = edata->cell + edata->channel + edata->wavelength; 
    QString analysisID   = dates + "_" + analysisType + "_" + requestID + "_";
