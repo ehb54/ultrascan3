@@ -57,6 +57,7 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
       "\"ending point\","
       "\"points used\","
       "\"chi^2\","
+      "\"reduced chi\","
       "\"Conc. (mg/ml)\","
       "\"PSV (ml/g)\","
       "\"I0 std. expt. (ml/g)\","
@@ -139,6 +140,7 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
       "\"ending point\","
       "\"points used\","
       "\"chi^2\","
+      "\"reduced chi\","
       "\"Conc. (mg/ml)\","
       "\"PSV (ml/g)\","
       "\"I0 std. expt. (ml/g)\","
@@ -523,7 +525,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             QString("")
             .sprintf(
                      "Guinier analysis of %s:\n"
-                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) MW %.2e (%.2e) q^2 [ %.5f:%.5f] qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
+                     "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) MW %.2e (%.2e) q^2 [ %.5f:%.5f] qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e reduced-chi %.2e\n"
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
                      , sigb
@@ -537,6 +539,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                      , sRgmax
                      , bestend - beststart + 1 - pts_removed
                      , chi2
+                     , sqrt( chi2 / (bestend - beststart - 1) )
                      );
          
          plotted_guinier_valid[i] = true;
@@ -605,6 +608,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                     "%6,"
                     "%7,"
                     "%8,"
+                    "%9,"
                     )
             .arg(smin)
             .arg(smax)
@@ -614,6 +618,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             .arg(bestend)
             .arg(bestend - beststart + 1)
             .arg(chi2)
+            .arg(sqrt( chi2 / (bestend - beststart - 1) ) )
             ;
 
          {
@@ -951,7 +956,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             QString("")
             .sprintf(
                      "CS Guinier analysis of %s:\n"
-                     "Rc %.1f (%.1f) (A) I(0) %.2e (%.2e) M/L %.2e (%.2e) q^2 [%.5f:%.5f] qRcmin %.3f qRcmax %.3f points used %u chi^2 %.2e\n"
+                     "Rc %.1f (%.1f) (A) I(0) %.2e (%.2e) M/L %.2e (%.2e) q^2 [%.5f:%.5f] qRcmin %.3f qRcmax %.3f points used %u chi^2 %.2e reduced-chi %.2e\n"
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
                      , sigb 
@@ -965,6 +970,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                      , sRgmax
                      , bestend - beststart + 1 - pts_removed
                      , chi2
+                     , sqrt( chi2 / (bestend - beststart - 1) )
                      );
          
          plotted_cs_guinier_valid[i] = true;
@@ -1033,6 +1039,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                     "%6,"
                     "%7,"
                     "%8,"
+                    "%9,"
                     )
             .arg(smin)
             .arg(smax)
@@ -1042,6 +1049,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             .arg(bestend)
             .arg(bestend - beststart + 1)
             .arg(chi2)
+            .arg(sqrt( chi2 / (bestend - beststart - 1) ) )
             ;
 
          {

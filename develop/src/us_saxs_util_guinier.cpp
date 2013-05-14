@@ -78,6 +78,7 @@ void US_Saxs_Util::linear_fit(
    double sy = 0e0;
    double st2 = 0e0;
    double ss = 0e0;
+   double ssd = 0e0;
    double sigdat;
    unsigned int ndata = x.size();
    b = 0e0;
@@ -91,6 +92,7 @@ void US_Saxs_Util::linear_fit(
    for ( i = 0; i < ndata; i++ )
    {
       double wt = 1e0 / ( e[ i ] * e[ i ] );
+      ssd += e[ i ];
       ss += wt;
       sx += x[i] * wt;
       sy += y[i] * wt;
@@ -114,9 +116,10 @@ void US_Saxs_Util::linear_fit(
    {
       chi2 += ( ( y[i] - a - b * x[i] ) / e[ i ] ) * ( ( y[i] - a - b * x[i] ) / e[ i ] );
    }
-   sigdat = sqrt( chi2/ ( ndata - 2 ) );
+   sigdat = sqrt( chi2 / ( ndata - 2 ) );
    siga *= sigdat;
    sigb *= sigdat;
+   chi2 *= ( ssd / ndata ) * ( ssd / ndata );
 }
 
 bool US_Saxs_Util::guinier_fit( 
