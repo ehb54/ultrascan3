@@ -204,8 +204,8 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
       US_Model model;
       QString fn = "../" + model_filename;
       model.load( fn );
-      int nsubgrid = model.subGrids;
-      int ncomps   = model.components.size();
+      int    nsubgrid = model.subGrids;
+      int    ncomps   = model.components.size();
 DbgLv(1) << "InSol: fn" << fn;
 DbgLv(1) << "Insol:  nsubgrid ncomps" << nsubgrid << ncomps;
 
@@ -219,6 +219,10 @@ DbgLv(1) << "Insol:  nsubgrid ncomps" << nsubgrid << ncomps;
 DbgLv(1) << "Insol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
       }
 
+      double ffmin    = model.components[ 0 ].f_f0;
+      double ffmax    = ffmin;
+      double vbmin    = model.components[ 0 ].vbar20;
+      double vbmax    = vbmin;
       QVector< US_Solute > solvec;
 
       for ( int ii = 0; ii < nsubgrid; ii++ )
@@ -227,16 +231,30 @@ DbgLv(1) << "Insol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
 
          for ( int jj = ii; jj < ncomps; jj += nsubgrid )
          {
+            double ffval    = model.components[ jj ].f_f0;
+            double vbval    = model.components[ jj ].vbar20;
+
+            // Save each solute contained in the custom grid model
             US_Solute soli( model.components[ jj ].s,
-                            model.components[ jj ].f_f0,
+                            ffval,
                             0.0,
-                            model.components[ jj ].vbar20,
+                            vbval,
                             model.components[ jj ].D );
             solvec << soli;
+
+            // Accumumlate vbar,f/f0 min,max to test which varies
+            ffmin           = qMin( ffmin, ffval );
+            ffmax           = qMax( ffmax, ffval );
+            vbmin           = qMin( vbmin, vbval );
+            vbmax           = qMax( vbmax, vbval );
          }
 
          orig_solutes << solvec;
       }
+
+      // Abort if both vbar and f/f0 vary
+      if ( ( ffmin != ffmax ) && ( vbmin != vbmax ) )
+         abort( "Custom grid model varies in both vbar and f/f0", -1 );
    }
 }
 
@@ -1048,7 +1066,7 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    QString dates      = "e" + data->editID + "_a" + analysisDate;
    QString anType     = "_" + data_sets[ 0 ]->model.typeText() + "_";
    if ( analysis_type.contains( "CG" ) )
-      anType             = anType.replace( "2DSA", "2DSACG" );
+      anType             = anType.replace( "2DSA", "2DSA-CG" );
 
    QString iterID;
 

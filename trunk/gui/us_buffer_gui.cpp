@@ -76,7 +76,7 @@ US_BufferGui::US_BufferGui(
                           SLOT  ( select_buffer    ( QListWidgetItem* ) ) );
 
    main->addWidget( lw_buffer_db, row, 0, 6, 1 );
-   row += 7;
+   row += 8;
 
    // Labels
    QHBoxLayout* desc = new QHBoxLayout;
@@ -778,7 +778,16 @@ void US_BufferGui::update_buffer( void )
 //hardwire compressibility to zero, for now
 buffer.compressibility = 0.0;
    buffer.manual          = ( cb_manual->isChecked() );
+   int manx               = buffer.description.indexOf( "  [M]" );
 
+   if ( buffer.manual )
+      buffer.description     = manx > 0
+                             ? buffer.description
+                             : buffer.description + "  [M]";
+   else
+      buffer.description     = manx > 0
+                             ? buffer.description.left( manx ).simplified()
+                             : buffer.description;
 
    // These are updated in other places
    //buffer.component

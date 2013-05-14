@@ -294,7 +294,8 @@ bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
       density       = ddens.isEmpty() ? density   : ddens;
       viscosity     = dvisc.isEmpty() ? viscosity : dvisc;
       compress      = dcomp.isEmpty() ? compress  : dcomp;
-      manual        = ddesc.isEmpty() ? false  : ( ddesc.contains( "  [M]" ) );
+      manual        = ( ! ddesc.isEmpty()  &&  ddesc.contains( "  [M]" ) )
+                      ? "1" : "0";
       bufvals       = true;
    }
    else
@@ -345,7 +346,8 @@ bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
          density       = ddens.isEmpty() ? density   : ddens;
          viscosity     = dvisc.isEmpty() ? viscosity : dvisc;
          compress      = dcomp.isEmpty() ? compress  : dcomp;
-         manual        = ddesc.isEmpty() ? false  : ( ddesc.contains( "  [M]" ) );
+         manual        = ( ! ddesc.isEmpty()  &&  ddesc.contains( "  [M]" ) )
+                         ? "1" : "0";
          bufvals       = true;
       }
    }
