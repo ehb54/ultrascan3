@@ -9225,7 +9225,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum( vector < double >
    {
       for ( int i = 0; i < (int) gaussian_type_size; ++i )
       {
-         g_use[ i ] = g[ i ];
+         g_use[ i ] = g[ i + j ];
       }
       result_partial = compute_gaussian( t, g_use );
       for ( unsigned int i = 0; i < ( unsigned int ) t.size(); i++ )
@@ -9233,6 +9233,8 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum( vector < double >
          result[ i ] += result_partial[ i ];
       }
    }
+   // US_Vector::printvector( QString( "gaussian sum: g" ), g );
+   // US_Vector::printvector2( QString( "gaussian sum: type %1 g.size() %2" ).arg( gaussian_type_size ).arg( g.size() ), t, result );
    return result;
 }
 
@@ -9521,7 +9523,6 @@ double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < doub
    }
    return gmax;
 }
-
 
 QString US_Hydrodyn_Saxs_Hplc::pad_zeros( int val, int max )
 {

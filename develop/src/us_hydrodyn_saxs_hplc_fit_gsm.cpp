@@ -1589,7 +1589,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_setup()
    gsm_yp.resize( gsm_t.size() );
 }
 
-double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_dist0( our_vector *v )
+double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GAUSS( our_vector *v )
 {
    for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
    {
@@ -1660,7 +1660,7 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_dist0( our_vector *v )
    return sqrt( rmsd );
 }
 
-double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_dist1( our_vector *v )
+double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMG( our_vector *v )
 {
    for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
    {
@@ -1731,7 +1731,78 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_dist1( our_vector *v )
    return sqrt( rmsd );
 }
 
-double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_dist2( our_vector *v )
+double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GMG( our_vector *v )
+{
+   for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+   {
+      gsm_yp[ j ] = 0e0;
+   }
+
+   double height;
+   double center;
+   double width;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) HFIT::param_fixed.size(); )
+   {
+      if ( HFIT::param_fixed[ i ] )
+      {
+         height = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+      } else {
+         height = v->d[ HFIT::param_pos[ i ] ];
+         if ( height < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
+              height > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         {
+            return 1e99;
+         }
+      }
+
+      i++;
+
+      if ( HFIT::param_fixed[ i ] )
+      {
+         center = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+      } else {
+         center = v->d[ HFIT::param_pos[ i ] ];
+         if ( center < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
+              center > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         {
+            return 1e99;
+         }
+      }
+
+      i++;
+
+      if ( HFIT::param_fixed[ i ] )
+      {
+         width = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+      } else {
+         width = v->d[ HFIT::param_pos[ i ] ];
+         if ( width < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
+              width > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         {
+            return 1e99;
+         }
+      }
+
+      i++;
+
+      for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+      {
+         double tmp = ( gsm_t[ j ] - center ) / width;
+         gsm_yp[ j ] += height * exp( - tmp * tmp / 2 );
+      }
+   }
+
+   double rmsd = 0e0;
+
+   for ( unsigned int j = 0; j < gsm_y.size(); j++ )
+   {
+      rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
+   }
+   return sqrt( rmsd );
+}
+
+double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
 {
    for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
    {

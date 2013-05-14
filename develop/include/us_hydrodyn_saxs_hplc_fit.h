@@ -164,9 +164,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       double        gsm_delta;
       double        gsm_delta2_r;
       double        (*gsm_f)         ( our_vector *v );
-      static double        gsm_f_dist0      ( our_vector *v );
-      static double        gsm_f_dist1      ( our_vector *v );
-      static double        gsm_f_dist2      ( our_vector *v );
+      static double        gsm_f_GAUSS    ( our_vector *v );
+      static double        gsm_f_EMG      ( our_vector *v );
+      static double        gsm_f_GMG      ( our_vector *v );
+      static double        gsm_f_EMGGMG   ( our_vector *v );
 
       void          gsm_df           ( our_vector *vd, our_vector *v );
       long          min_gsm_5_1      ( our_vector *i, double epsilon, long max_iter );

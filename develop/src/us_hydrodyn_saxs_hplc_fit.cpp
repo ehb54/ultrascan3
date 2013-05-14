@@ -1197,15 +1197,19 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
    {
    case US_Hydrodyn_Saxs_Hplc::EMGGMG :
       HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_EMGGMG;
+      gsm_f = &gsm_f_EMGGMG;
       break;
    case US_Hydrodyn_Saxs_Hplc::EMG :
       HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_EMG;
+      gsm_f = &gsm_f_EMG;
       break;
    case US_Hydrodyn_Saxs_Hplc::GMG :
       HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_GMG;
+      gsm_f = &gsm_f_GMG;
       break;
    case US_Hydrodyn_Saxs_Hplc::GAUSS :
       HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_GAUSS;
+      gsm_f = &gsm_f_GAUSS;
       break;
    }
 
@@ -1467,7 +1471,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
       }
    }
 
-   HFIT::list_params();
+   // HFIT::list_params();
 
    if ( !HFIT::init_params.size() )
    {
@@ -1554,8 +1558,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
    } 
 
    vector < double > par = HFIT::init_params;
-   US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
-   cout << QString( "par start (rmsd %1)" ).arg( org_rmsd ).ascii();
+   // US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
+   // cout << QString( "par start (rmsd %1)" ).arg( org_rmsd ).ascii();
 
    // LM::qpb  = ( QProgressBar * )0;
    // LM::qApp = ( QApplication * )0;
@@ -1575,8 +1579,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
       cout << "WARNING: lm() returned negative rmsd\n";
    }
 
-   US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
-   cout << QString( "par fit (rmsd %1)" ).arg( status.fnorm ).ascii();
+   // US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
+   // cout << QString( "par fit (rmsd %1)" ).arg( status.fnorm ).ascii();
 
    if ( org_rmsd > status.fnorm )
    {
@@ -1811,7 +1815,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
       vector < double > par = HFIT::init_params;
 
       cout << QString( "ga rmsd %1\n" ).arg( rmsd );
-      US_Vector::printvector( "after ga par is", par );
+      // US_Vector::printvector( "after ga par is", par );
 
       for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
       {
@@ -1866,7 +1870,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
 
    vector < double > par = HFIT::init_params;
 
-   US_Vector::printvector( QString( "par start" ), par );
+   // US_Vector::printvector( QString( "par start" ), par );
 
    // determine total count
 
@@ -1940,7 +1944,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
 
       par = best_params;
 
-      US_Vector::printvector( "after grid par is", par );
+      // US_Vector::printvector( "after grid par is", par );
 
       for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
       {
