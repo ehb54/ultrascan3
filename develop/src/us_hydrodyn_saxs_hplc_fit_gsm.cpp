@@ -1670,6 +1670,7 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMG( our_vector *v )
    double height;
    double center;
    double width;
+   double dist1;
 
    for ( unsigned int i = 0; i < ( unsigned int ) HFIT::param_fixed.size(); )
    {
@@ -1715,10 +1716,73 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMG( our_vector *v )
 
       i++;
 
-      for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+      if ( HFIT::param_fixed[ i ] )
       {
-         double tmp = ( gsm_t[ j ] - center ) / width;
-         gsm_yp[ j ] += height * exp( - tmp * tmp / 2 );
+         dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+      } else {
+         dist1 = v->d         [ HFIT::param_pos[ i ] ];
+         if ( dist1 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
+              dist1 > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         {
+            return 1e99;
+         }
+      }
+
+      i++;
+
+      if ( dist1 )
+      {
+         double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
+         if ( fabs( dist1 ) < dist1_thresh )
+         {
+            double frac_gauss = ( dist1_thresh - fabs( dist1 ) ) / dist1_thresh;
+            if ( dist1 < 0 )
+            {
+               dist1_thresh *= -1e0;
+            }
+
+            double area              = height * width * M_SQRT2PI;
+            double one_over_a3       = 1e0 / dist1_thresh;
+            double emg_coeff         = area * one_over_a3 * 5e-1 * (1e0 - frac_gauss );
+            double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+            double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+            double sign_a3           = dist1_thresh < 0e0 ? -1e0 : 1e0;
+            double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+            double gauss_coeff       = frac_gauss * height;
+
+            for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+            {
+               double tmp = gsm_t[ j ] - center;
+               double tmp2 =  tmp / width;
+               
+               gsm_yp[ j ] += 
+                  emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                  gauss_coeff * exp( - tmp2 * tmp2 / 2 );
+            }
+         } else {
+            double area              = height * width * M_SQRT2PI;
+            double one_over_a3       = 1e0 / dist1;
+            double emg_coeff         = area * one_over_a3 * 5e-1;
+            double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+            double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+            double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
+            double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+
+            for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+            {
+               double tmp = gsm_t[ j ] - center;
+               gsm_yp[ j ] += 
+                  emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+            }
+         }
+      } else {
+         for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+         {
+            double tmp = ( gsm_t[ j ] - center ) / width;
+            gsm_yp[ j ] += height * exp( - tmp * tmp / 2 );
+         }
       }
    }
 
@@ -1741,6 +1805,7 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GMG( our_vector *v )
    double height;
    double center;
    double width;
+   double dist1;
 
    for ( unsigned int i = 0; i < ( unsigned int ) HFIT::param_fixed.size(); )
    {
@@ -1786,10 +1851,44 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GMG( our_vector *v )
 
       i++;
 
-      for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+      if ( HFIT::param_fixed[ i ] )
       {
-         double tmp = ( gsm_t[ j ] - center ) / width;
-         gsm_yp[ j ] += height * exp( - tmp * tmp / 2 );
+         dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+      } else {
+         dist1 = v->d         [ HFIT::param_pos[ i ] ];
+         if ( dist1 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
+              dist1 > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         {
+            return 1e99;
+         }
+      }
+
+      i++;
+
+
+      if ( dist1 )
+      {
+         double area                         = height * width * M_SQRT2PI;
+         double one_over_width               = 1e0 / width;
+         double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width + dist1 * dist1 );
+         double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
+         double gmg_coeff                    = area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
+         double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
+         double gmg_erf_m1                   = dist1 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
+            
+         for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+         {
+            double tmp = gsm_t[ j ] - center;
+            gsm_yp[ j ] += 
+               gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+               ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+         }
+      } else {
+         for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+         {
+            double tmp = ( gsm_t[ j ] - center ) / width;
+            gsm_yp[ j ] += height * exp( - tmp * tmp / 2 );
+         }
       }
    }
 
@@ -1812,6 +1911,8 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
    double height;
    double center;
    double width;
+   double dist1;
+   double dist2;
 
    for ( unsigned int i = 0; i < ( unsigned int ) HFIT::param_fixed.size(); )
    {
@@ -1857,10 +1958,151 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
 
       i++;
 
-      for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+      if ( HFIT::param_fixed[ i ] )
       {
-         double tmp = ( gsm_t[ j ] - center ) / width;
-         gsm_yp[ j ] += height * exp( - tmp * tmp / 2 );
+         dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+      } else {
+         dist1 = v->d         [ HFIT::param_pos[ i ] ];
+         if ( dist1 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
+              dist1 > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         {
+            return 1e99;
+         }
+      }
+
+      i++;
+
+
+      if ( HFIT::param_fixed[ i ] )
+      {
+         dist2 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+      } else {
+         dist2 = v->d         [ HFIT::param_pos[ i ] ];
+         if ( dist2 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
+              dist2 > HFIT::param_max[ HFIT::param_pos[ i ] ] )
+         {
+            return 1e99;
+         }
+      }
+
+      i++;
+
+      if ( !dist1 && !dist2 )
+      {
+         for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+         {
+            double tmp = ( gsm_t[ j ] - center ) / width;
+            gsm_yp[ j ] += height * exp( - tmp * tmp / 2 );
+         }
+      } else {
+         if ( !dist2 )
+         {
+            double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
+            if ( fabs( dist1 ) < dist1_thresh )
+            {
+               double frac_gauss = ( dist1_thresh - fabs( dist1 ) ) / dist1_thresh;
+               if ( dist1 < 0 )
+               {
+                  dist1_thresh *= -1e0;
+               }
+
+               double area              = height * width * M_SQRT2PI;
+               double one_over_a3       = 1e0 / dist1_thresh;
+               double emg_coeff         = area * one_over_a3 * 5e-1 * (1e0 - frac_gauss );
+               double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+               double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+               double sign_a3           = dist1_thresh < 0e0 ? -1e0 : 1e0;
+               double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+               double gauss_coeff       = frac_gauss * height;
+
+               printf( "EMG t0 %g thresh %g frac gauss %g\n", dist1, dist1_thresh, frac_gauss );
+
+               for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+               {
+                  double tmp = gsm_t[ j ] - center;
+                  double tmp2 =  tmp / width;
+               
+                  gsm_yp[ j ] += 
+                     emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                     ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                     gauss_coeff * exp( - tmp2 * tmp2 / 2 );
+               }
+            } else {
+               double area              = height * width * M_SQRT2PI;
+               double one_over_a3       = 1e0 / dist1;
+               double emg_coeff         = area * one_over_a3 * 5e-1;
+               double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+               double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+               double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
+               double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+               for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+               {
+                  double tmp               = gsm_t[ j ] - center;
+                  gsm_yp[ j ] += 
+                     emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                     ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+               }
+            }
+         } else {
+            double area = height * width * M_SQRT2PI;
+            // GMG
+            double one_over_width               = 1e0 / width;
+            double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width +  dist2 * dist2 );
+            double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
+            double gmg_coeff                    = 5e-1 * area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
+            double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
+            double gmg_erf_m1                   = dist2 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
+
+
+            double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
+            if ( fabs( dist1 ) < dist1_thresh )
+            {
+               double frac_gauss = ( dist1_thresh - fabs( dist1 ) ) / dist1_thresh;
+               if ( dist1 < 0 )
+               {
+                  dist1_thresh *= -1e0;
+               }
+
+               double one_over_a3       = 1e0 / dist1_thresh;
+               double emg_coeff         = 5e-1 * area * one_over_a3 * 5e-1 * (1e0 - frac_gauss );
+               double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+               double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+               double sign_a3           = dist1_thresh < 0e0 ? -1e0 : 1e0;
+               double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+               double gauss_coeff       = 5e-1 * frac_gauss * height;
+
+               for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+               {
+                  double tmp               = gsm_yp[ j ] - center;
+                  double tmp2 =  tmp / width;
+               
+                  gsm_yp[ j ] +=
+                     emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                     ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                     gauss_coeff * exp( - tmp2 * tmp2 / 2 ) +
+                     gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+                     ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+               }
+            } else {
+               // EMG
+               double one_over_a3       = 1e0 / dist1;
+               double emg_coeff         = 5e-1 * area * one_over_a3 * 5e-1;
+               double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+               double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+               double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
+               double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+
+               for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
+               {
+                  double tmp               = gsm_yp[ j ] - center;
+                  gsm_yp[ j ] += 
+                     emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                     ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                     gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+                     ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+               }
+            }
+         }
       }
    }
 

@@ -749,99 +749,6 @@ namespace HFIT
       return result;
    }
 
-   double compute_gaussian_f_GMG( double t, const double *par )
-   {
-      double result = 0e0;
-      double height;
-      double center;
-      double width;
-      double dist1;
-
-      for ( unsigned int i = 0; i < ( unsigned int ) param_fixed.size(); )
-      {
-         if ( param_fixed[ i ] )
-         {
-            height = fixed_params[ param_pos[ i ] ];
-         } else {
-            height = par         [ param_pos[ i ] ];
-            if ( height < param_min[ param_pos[ i ] ] ||
-                 height > param_max[ param_pos[ i ] ] )
-            {
-               return 1e99;
-            }
-         }
-
-         i++;
-
-         if ( param_fixed[ i ] )
-         {
-            center = fixed_params[ param_pos[ i ] ];
-         } else {
-            center = par         [ param_pos[ i ] ];
-            if ( center < param_min[ param_pos[ i ] ] ||
-                 center > param_max[ param_pos[ i ] ] )
-            {
-               return 1e99;
-            }
-         }
-
-         i++;
-
-         if ( param_fixed[ i ] )
-         {
-            width = fixed_params[ param_pos[ i ] ];
-         } else {
-            width = par         [ param_pos[ i ] ];
-            if ( width < param_min[ param_pos[ i ] ] ||
-                 width > param_max[ param_pos[ i ] ] )
-            {
-               return 1e99;
-            }
-         }
-
-         i++;
-
-         if ( param_fixed[ i ] )
-         {
-            dist1 = fixed_params[ param_pos[ i ] ];
-         } else {
-            dist1 = par         [ param_pos[ i ] ];
-            if ( dist1 < param_min[ param_pos[ i ] ] ||
-                 dist1 > param_max[ param_pos[ i ] ] )
-            {
-               return 1e99;
-            }
-         }
-
-         i++;
-
-         if ( !dist1 )
-         {
-            double tmp = ( t - center ) / width;
-            result += height * exp( - tmp * tmp / 2 );
-         } else {
-            double area                         = height * width * M_SQRT2PI;
-            double one_over_width               = 1e0 / width;
-            double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width +  dist1 * dist1 );
-            double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
-            double gmg_coeff                    = area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
-            double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
-            double gmg_erf_m1                   = dist1 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
-            double tmp = t - center;
-            result += 
-               gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-               ( 1e0 + erf( gmg_erf_m1 * tmp ) );
-         }            
-      }
-      
-      if ( use_errors )
-      {
-         result /= errors[ errors_index[ (unsigned int) t ] ];
-      }
-      
-      return result;
-   }
-
    double compute_gaussian_f_EMG( double t, const double *par )
    {
       double result = 0e0;
@@ -953,6 +860,99 @@ namespace HFIT
                   ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
             }
          }
+      }
+      
+      if ( use_errors )
+      {
+         result /= errors[ errors_index[ (unsigned int) t ] ];
+      }
+      
+      return result;
+   }
+
+   double compute_gaussian_f_GMG( double t, const double *par )
+   {
+      double result = 0e0;
+      double height;
+      double center;
+      double width;
+      double dist1;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) param_fixed.size(); )
+      {
+         if ( param_fixed[ i ] )
+         {
+            height = fixed_params[ param_pos[ i ] ];
+         } else {
+            height = par         [ param_pos[ i ] ];
+            if ( height < param_min[ param_pos[ i ] ] ||
+                 height > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            center = fixed_params[ param_pos[ i ] ];
+         } else {
+            center = par         [ param_pos[ i ] ];
+            if ( center < param_min[ param_pos[ i ] ] ||
+                 center > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            width = fixed_params[ param_pos[ i ] ];
+         } else {
+            width = par         [ param_pos[ i ] ];
+            if ( width < param_min[ param_pos[ i ] ] ||
+                 width > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( param_fixed[ i ] )
+         {
+            dist1 = fixed_params[ param_pos[ i ] ];
+         } else {
+            dist1 = par         [ param_pos[ i ] ];
+            if ( dist1 < param_min[ param_pos[ i ] ] ||
+                 dist1 > param_max[ param_pos[ i ] ] )
+            {
+               return 1e99;
+            }
+         }
+
+         i++;
+
+         if ( !dist1 )
+         {
+            double tmp = ( t - center ) / width;
+            result += height * exp( - tmp * tmp / 2 );
+         } else {
+            double area                         = height * width * M_SQRT2PI;
+            double one_over_width               = 1e0 / width;
+            double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width +  dist1 * dist1 );
+            double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
+            double gmg_coeff                    = area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
+            double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
+            double gmg_erf_m1                   = dist1 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
+            double tmp = t - center;
+            result += 
+               gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+               ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+         }            
       }
       
       if ( use_errors )
