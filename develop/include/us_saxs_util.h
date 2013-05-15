@@ -791,6 +791,10 @@ class US_EXTERN US_Saxs_Util
                          vector < vector < double > > & csv_I 
                          );
 
+      static double                                   alt_erf( double );
+      static double                                   sun_erf( double );
+      static double                                   sun_erfc( double );
+
    private:
 
       // double       minusoneoverfourpisq;
@@ -1488,10 +1492,6 @@ class US_EXTERN US_Saxs_Util
 
       double                                          probe_radius;
       double                                          threshold;
-
-      static double                                   alt_erf( double );
-      static double                                   sun_erf( double );
-      static double                                   sun_erfc( double );
 };
 
 # if defined( USE_MPI )
