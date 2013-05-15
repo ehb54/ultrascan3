@@ -843,7 +843,7 @@ namespace HFIT
                
                result +=
                   emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                  ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                   gauss_coeff * exp( - tmp2 * tmp2 / 2 );
                ;
             } else {
@@ -857,7 +857,7 @@ namespace HFIT
                double tmp               = t - center;
                result += 
                   emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+                  ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
             }
          }
       }
@@ -951,7 +951,7 @@ namespace HFIT
             double tmp = t - center;
             result += 
                gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-               ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+               ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
          }            
       }
       
@@ -1061,7 +1061,7 @@ namespace HFIT
                double tmp                          = t - center;
                result += 
                   gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-                  ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+                  ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
             } else {
                if ( !dist2 )
                {
@@ -1090,7 +1090,7 @@ namespace HFIT
                
                      result += 
                         emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                        ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                        ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                         gauss_coeff * exp( - tmp2 * tmp2 / 2 );
                   } else {
                      double area              = height * width * M_SQRT2PI;
@@ -1103,7 +1103,7 @@ namespace HFIT
                      double tmp               = t - center;
                      result += 
                         emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                        ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+                        ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
                   }
                } else {
                   double area = height * width * M_SQRT2PI;
@@ -1138,10 +1138,10 @@ namespace HFIT
                
                      result +=
                         emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                        ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                        ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                         gauss_coeff * exp( - tmp2 * tmp2 / 2 ) +
                         gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-                        ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+                        ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
                   } else {
                      // EMG
                      double one_over_a3       = 1e0 / dist1;
@@ -1153,9 +1153,9 @@ namespace HFIT
 
                      result += 
                         emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                        ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                        ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                         gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-                        ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+                        ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
                   }
                }
             }

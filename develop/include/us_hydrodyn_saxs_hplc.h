@@ -45,7 +45,9 @@
 using namespace std;
 
 #ifdef WIN32
-# define erf(x) US_Saxs_Util::sun_erf(x)
+# define use_erf(x) US_Saxs_Util::spline_erf(x)
+#else
+# define use_erf(x) erf(x)
 #endif
 
 #ifndef M_SQRT2PI

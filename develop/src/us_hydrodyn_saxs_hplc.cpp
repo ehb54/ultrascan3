@@ -7014,7 +7014,6 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
 
 void US_Hydrodyn_Saxs_Hplc::gauss_start()
 {
-   puts( "gs0" );
    plot_errors->clear();
    if ( plot_errors_zoomer )
    {
@@ -7022,7 +7021,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       plot_errors_zoomer = (ScrollZoomer *) 0;
    }
 
-   puts( "gs1" );
    le_last_focus = (mQLineEdit *) 0;
    pb_gauss_fit->setText( tr( "Fit" ) );
 
@@ -7035,7 +7033,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       }
    }
 
-   puts( "gs2" );
    if ( !f_qs.count( wheel_file ) )
    {
       editor_msg( "red", QString( tr( "Internal error: %1 not found in data" ) ).arg( wheel_file ) );
@@ -7065,7 +7062,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       f_errors[ wheel_file ].size() == f_qs[ wheel_file ].size() &&
       is_nonzero_vector( f_errors[ wheel_file ] );
 
-   puts( "gs3" );
    get_peak( wheel_file, gauss_max_height );
    gauss_max_height *= 1.2;
    if ( gaussian_type != GAUSS )
@@ -7079,7 +7075,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       return;
    }
 
-   puts( "gs4" );
 #ifndef QT4
    plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, 1, SolidLine));
 #else
@@ -7088,7 +7083,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
 
    org_gaussians = gaussians;
 
-   puts( "gs5" );
    if ( f_gaussians.count( wheel_file ) &&
         f_gaussians[ wheel_file ].size() )
    {
@@ -7097,7 +7091,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
    }
 
    opt_repeak_gaussians( wheel_file );
-   puts( "gs6" );
 
    gaussian_mode = true;
 
@@ -7131,14 +7124,11 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
       gaussian_pos = ( gaussians.size() / gaussian_type_size ) - 1;
    }
    printf( "gaussian pos %d type size %d gaussians_size() %d\n", (int)gaussian_pos, (int) gaussian_type_size, (int)gaussians.size() );
-   puts( "gs7" );
 
    disable_all();
    gauss_init_markers();
    gauss_init_gaussians();
-   puts( "gs8" );
    update_gauss_pos();
-   puts( "gs9" );
    if ( errors_were_on )
    {
       hide_widgets( plot_errors_widgets, false );
@@ -7151,9 +7141,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
          cb_plot_errors_sd->hide();
       }
    }
-   puts( "gs10" );
    gaussian_enables();
-   puts( "gs11" );
 }
       
 void US_Hydrodyn_Saxs_Hplc::gauss_clear()
@@ -7186,31 +7174,20 @@ void US_Hydrodyn_Saxs_Hplc::gauss_new()
       }
    }
       
-   puts( "gn 0" );
    gaussian_pos = ( gaussians.size() / gaussian_type_size ) - 1;
-   puts( "gn 1" );
    gauss_add_marker( 0e0, Qt::blue, QString( "%1" ).arg( gaussian_pos + 1 ) );
-   puts( "gn 2" );
    gauss_add_gaussian( &(gaussians[ gaussian_pos * gaussian_type_size ]), Qt::green );
-   puts( "gn 3" );
    disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-   puts( "gn 4" );
    update_gauss_pos();
-   puts( "gn 5" );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-   puts( "gn 6" );
    plot_dist->replot();
-   puts( "gn 7" );
    gaussian_enables();
-   puts( "gn 8" );
    if ( ggaussian_mode )
    {
       ggaussian_enables();
    } else {
-      puts( "gn 9" );
       gaussian_enables();
    }
-   puts( "gn 10" );
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_prev()
@@ -7378,8 +7355,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
 
             if ( plotted_hlines.size() > gaussian_pos )
             {
-               puts( "gg pos text do adjust" );
-
                double center = unified_ggaussian_params[ 2 * gaussian_pos + 0 ];
                double width  = unified_ggaussian_params[ 2 * gaussian_pos + 1 ];
                double fwhm   = 2.354820045e0 * width;
@@ -7455,8 +7430,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_text( const QString & text )
 
             if ( plotted_hlines.size() > gaussian_pos )
             {
-               puts( "gg width text do adjust" );
-
                double center = unified_ggaussian_params[ 2 * gaussian_pos + 0 ];
                double width  = unified_ggaussian_params[ 2 * gaussian_pos + 1 ];
                double fwhm   = 2.354820045e0 * width;
@@ -9344,7 +9317,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
 #endif
                result[ i ] = 
                   gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-                  ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+                  ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
             }
          }
 
@@ -9375,7 +9348,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
 
                result[ i ] = 
                   ( area / ( sqrt( 2e0 * M_PI ) * sqrt( width * width + dist1 * dist1 ) ) )
-                  * exp( exparg ) * ( 1 + erf( erfarg ) );
+                  * exp( exparg ) * ( 1 + use_erf( erfarg ) );
             }
          }
 
@@ -9416,7 +9389,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
                
                result[ i ] = 
                   emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                  ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                   gauss_coeff * exp( - tmp2 * tmp2 / 2 );
             }
          } else {
@@ -9433,7 +9406,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
                double tmp = q[ i ] - center;
                result[ i ] = 
                   emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+                  ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
             }
          }
       }
@@ -9477,10 +9450,10 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
                
                result[ i ] = 
                   emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                  ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                   gauss_coeff * exp( - tmp2 * tmp2 / 2 ) +
                   gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-                  ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+                  ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
                   ;
             }
          } else {
@@ -9497,9 +9470,9 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
                double tmp = q[ i ] - center;
                result[ i ] = 
                   emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                  ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                   gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-                  ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+                  ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
             }
          }
       }

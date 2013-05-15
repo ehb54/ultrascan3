@@ -46,25 +46,59 @@ void natural_spline( vector < double > &x,
 int main( int, char** )
 {
 
-   int pts = 601;
+   vector < double > x;
+   vector < double > y;
 
-   vector < double > x(pts);
-   vector < double > y(pts);
-
-   for ( int i = 0; i < pts; i++ )
+   for ( double p = -6e0; p <= 6.01e0; )
    {
-      double p = -6e0 + (12e0 * i / ((double)pts - 1e0) );
-      x[ i ] = p;
-      y[ i ] = erf( x[ i ] );
+      x.push_back( p );
+      y.push_back( erf( x.back() ) );
+      if ( fabs( y.back() ) > .9 )
+      {
+         p += 0.01;
+      } else {
+         if ( fabs( y.back() ) > .8 )
+         {
+            p += 0.005;
+         } else {
+            if ( fabs( y.back() ) > .6 )
+            {
+               p += 0.002;
+            } else {
+               if ( fabs( y.back() ) > .3 )
+               {
+                  p += 0.001;
+               } else {
+                  if ( fabs( y.back() ) > .1 )
+                  {
+                     p += 0.0005;
+                  } else {
+                     p += 0.00025;
+                  }
+               }
+            }
+         }
+      }
    }
 
-   vector < double > y2(pts);
+
+   vector < double > y2;
    natural_spline( x, y, y2 );
 
-   printf( "static double erf_x[ %d] = {\n", pts );
+   int pts = (int) x.size();
+
+   printf( "#define USUS_ERF_MAX_PT %d\n\n", pts - 1 );
+
+   printf( "static double erf_x[ %d ] = {\n", pts );
    for ( int i = 0; i < pts; i++ )
    {
-      printf( "   %.20g,\n", x[ i ] );
+      if ( i )
+      {
+         printf( "   ," );
+      } else {
+         printf( "   " );
+      }
+      printf( "%.20g\n", x[ i ] );
    }
 
    printf( "};\n" );
@@ -72,7 +106,13 @@ int main( int, char** )
    printf( "static double erf_y[ %d ] = {\n", pts );
    for ( int i = 0; i < pts; i++ )
    {
-      printf( "   %.20g,\n", y[ i ] );
+      if ( i )
+      {
+         printf( "   ," );
+      } else {
+         printf( "   " );
+      }
+      printf( "%.20g\n", y[ i ] );
    }
 
    printf( "};\n" );
@@ -80,7 +120,14 @@ int main( int, char** )
    printf( "static double erf_y2[ %d ] = {\n", pts );
    for ( int i = 0; i < pts; i++ )
    {
-      printf( "   %.20g,\n", y2[ i ] );
+      if ( i )
+      {
+         printf( "   ," );
+      } else {
+         printf( "   " );
+      }
+      printf( "%.20g\n", y2[ i ] );
+
    }
 
    printf( "};\n" );

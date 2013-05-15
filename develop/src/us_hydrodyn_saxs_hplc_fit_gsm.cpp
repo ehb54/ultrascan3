@@ -1757,7 +1757,7 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMG( our_vector *v )
                
                gsm_yp[ j ] += 
                   emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                  ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                   gauss_coeff * exp( - tmp2 * tmp2 / 2 );
             }
          } else {
@@ -1774,7 +1774,7 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMG( our_vector *v )
                double tmp = gsm_t[ j ] - center;
                gsm_yp[ j ] += 
                   emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                  ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+                  ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
             }
          }
       } else {
@@ -1881,7 +1881,7 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GMG( our_vector *v )
             double tmp = gsm_t[ j ] - center;
             gsm_yp[ j ] += 
                gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-               ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+               ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
          }
       } else {
          for ( unsigned int j = 0; j < gsm_yp.size(); j++ )
@@ -2024,7 +2024,7 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
                
                   gsm_yp[ j ] += 
                      emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                     ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                     ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                      gauss_coeff * exp( - tmp2 * tmp2 / 2 );
                }
             } else {
@@ -2040,7 +2040,7 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
                   double tmp               = gsm_t[ j ] - center;
                   gsm_yp[ j ] += 
                      emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                     ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+                     ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
                }
             }
          } else {
@@ -2078,10 +2078,10 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
                
                   gsm_yp[ j ] +=
                      emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                     ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                     ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                      gauss_coeff * exp( - tmp2 * tmp2 / 2 ) +
                      gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-                     ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+                     ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
                }
             } else {
                // EMG
@@ -2097,9 +2097,9 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
                   double tmp               = gsm_yp[ j ] - center;
                   gsm_yp[ j ] += 
                      emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
-                     ( erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                     ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
                      gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
-                     ( 1e0 + erf( gmg_erf_m1 * tmp ) );
+                     ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
                }
             }
          }
