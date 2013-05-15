@@ -6194,49 +6194,49 @@ bool US_Hydrodyn_Saxs_Hplc::type_files( QStringList files )
 
 void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
 {
-   cout << QString("pos is now %1 wheel step is %2\n").arg(pos, 0, 'f', 8 ).arg( qwtw_wheel->step() );
+   // cout << QString("pos is now %1 wheel step is %2\n").arg(pos, 0, 'f', 8 ).arg( qwtw_wheel->step() );
    if ( gaussian_mode )
    {
       if ( le_gauss_pos->hasFocus() )
       {
-         cout << "aw: pos focus\n";
+         // cout << "aw: pos focus\n";
          le_last_focus = le_gauss_pos;
       }
       if ( le_gauss_pos_width->hasFocus() )
       {
-         cout << "aw: pos width focus\n";
+         // cout << "aw: pos width focus\n";
          le_last_focus = le_gauss_pos_width;
       }
       if ( le_gauss_pos_height->hasFocus() )
       {
-         cout << "aw: pos height focus\n";
+         // cout << "aw: pos height focus\n";
          le_last_focus = le_gauss_pos_height;
       }
       if ( le_gauss_pos_dist1->hasFocus() )
       {
-         cout << "aw: pos dist1 focus\n";
+         // cout << "aw: pos dist1 focus\n";
          le_last_focus = le_gauss_pos_dist1;
       }
       if ( le_gauss_pos_dist2->hasFocus() )
       {
-         cout << "aw: pos dist2 focus\n";
+         // cout << "aw: pos dist2 focus\n";
          le_last_focus = le_gauss_pos_dist2;
       }
       if ( le_gauss_fit_start->hasFocus() )
       {
-         cout << "aw: fit start focus\n";
+         // cout << "aw: fit start focus\n";
          le_last_focus = le_gauss_fit_start;
       }
       if ( le_gauss_fit_end->hasFocus() )
       {
-         cout << "aw: fit end focus\n";
+         // cout << "aw: fit end focus\n";
          le_last_focus = le_gauss_fit_end;
       }
 
       if ( !le_last_focus )
       {
          le_last_focus = le_gauss_pos;
-         cout << "aw: pos focus, since no last\n";
+         // cout << "aw: pos focus, since no last\n";
          disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
          qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
                                f_qs[ wheel_file ].back(), 
@@ -6254,33 +6254,33 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
       {
          if ( le_baseline_start_s->hasFocus() )
          {
-            cout << "aw: baseline start_s focus\n";
+            // cout << "aw: baseline start_s focus\n";
             le_last_focus = le_baseline_start_s;
          }
          if ( le_baseline_start->hasFocus() )
          {
-            cout << "aw: baseline start focus\n";
+            // cout << "aw: baseline start focus\n";
             le_last_focus = le_baseline_start;
          }
          if ( le_baseline_start_e->hasFocus() )
          {
-            cout << "aw: baseline start_e focus\n";
+            // cout << "aw: baseline start_e focus\n";
             le_last_focus = le_baseline_start_e;
          }
 
          if ( le_baseline_end_s->hasFocus() )
          {
-            cout << "aw: baseline end_s focus\n";
+            // cout << "aw: baseline end_s focus\n";
             le_last_focus = le_baseline_end_s;
          }
          if ( le_baseline_end->hasFocus() )
          {
-            cout << "aw: baseline end focus\n";
+            // cout << "aw: baseline end focus\n";
             le_last_focus = le_baseline_end;
          }
          if ( le_baseline_end_e->hasFocus() )
          {
-            cout << "aw: baseline end_e focus\n";
+            // cout << "aw: baseline end_e focus\n";
             le_last_focus = le_baseline_end_e;
          }
 
@@ -6307,41 +6307,41 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
 
             if ( le_gauss_pos->hasFocus() )
             {
-               cout << "aw: pos focus\n";
+               // cout << "aw: pos focus\n";
                le_last_focus = le_gauss_pos;
             }
             if ( cb_fix_width->isChecked() &&
                  le_gauss_pos_width->hasFocus() )
             {
-               cout << "aw: pos width focus\n";
+               // cout << "aw: pos width focus\n";
                le_last_focus = le_gauss_pos_width;
             }
             if ( cb_fix_dist1->isChecked() &&
                  le_gauss_pos_dist1->hasFocus() )
             {
-               cout << "aw: pos dist1 focus\n";
+               // cout << "aw: pos dist1 focus\n";
                le_last_focus = le_gauss_pos_dist1;
             }
             if ( cb_fix_dist2->isChecked() &&
                  le_gauss_pos_dist2->hasFocus() )
             {
-               cout << "aw: pos dist2 focus\n";
+               // cout << "aw: pos dist2 focus\n";
                le_last_focus = le_gauss_pos_dist2;
             }
             if ( le_gauss_fit_start->hasFocus() )
             {
-               cout << "aw: fit start focus\n";
+               // cout << "aw: fit start focus\n";
                le_last_focus = le_gauss_fit_start;
             }
             if ( le_gauss_fit_end->hasFocus() )
             {
-               cout << "aw: fit end focus\n";
+               // cout << "aw: fit end focus\n";
                le_last_focus = le_gauss_fit_end;
             }
 
             if ( !le_last_focus )
             {
-               cout << "aw: pos focus, since no last\n";
+               // cout << "aw: pos focus, since no last\n";
                le_last_focus = le_gauss_pos;
             }
 
