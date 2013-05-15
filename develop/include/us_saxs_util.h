@@ -1490,6 +1490,8 @@ class US_EXTERN US_Saxs_Util
       double                                          threshold;
 
       static double                                   alt_erf( double );
+      static double                                   sun_erf( double );
+      static double                                   sun_erfc( double );
 };
 
 # if defined( USE_MPI )
