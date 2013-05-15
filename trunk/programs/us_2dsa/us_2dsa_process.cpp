@@ -704,12 +704,32 @@ DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
    }
 
    // Convert model components s,D back to 20,w form for output
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
+   if ( dset->solute_type == 0 )
+   {  // Constant vbar
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
 DbgLv(1) << "cc comp D" << model.components[ cc ].D;
-      model.components[ cc ].s *= dset->s20w_correction;
-      model.components[ cc ].D *= dset->D20w_correction;
+         model.components[ cc ].s *= dset->s20w_correction;
+         model.components[ cc ].D *= dset->D20w_correction;
 DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
+      }
+   }
+   else
+   {  // Varying vbar or custom
+      US_Math2::SolutionData sd;
+      sd.viscosity  = dset->viscosity;
+      sd.density    = dset->density;
+      double avtemp = dset->temperature;
+
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
+         sd.vbar20    = model.components[ cc ].vbar20;
+         sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+         US_Math2::data_correction( avtemp, sd );
+
+         model.components[ cc ].s *= sd.s20w_correction;
+         model.components[ cc ].D *= sd.D20w_correction;
+      }
    }
 
    // Done with refinement iterations:   check for meniscus or MC iteration
