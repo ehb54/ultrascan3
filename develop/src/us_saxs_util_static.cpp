@@ -213,3 +213,20 @@ bool US_Saxs_Util::bin_data(
    e = e_new;
    return true;
 }
+
+double US_Saxs_Util::alt_erf( double x )
+{
+   /* erf(z) = 2/sqrt(pi) * Integral(0..x) exp( -t^2) dt
+      erf(0.01) = 0.0112834772 erf(3.7) = 0.9999998325
+      Abramowitz/Stegun: p299, |erf(z)-erf| <= 1.5*10^(-7)
+   */
+
+   double y = 1.0e0 / ( 1.0e0 + 0.3275911e0 * x);
+   return 1 - (((((
+                   + 1.061405429e0 * y
+                   - 1.453152027e0) * y
+                  + 1.421413741e0) * y
+                 - 0.284496736e0) * y
+                + 0.254829592e0) * y)
+      * exp (-x * x);
+}

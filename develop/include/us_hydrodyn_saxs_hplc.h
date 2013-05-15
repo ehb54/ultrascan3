@@ -44,6 +44,10 @@
 
 using namespace std;
 
+#ifdef WIN32
+# define erf(x) US_Saxs_Util::alt_erf(x)
+#endif
+
 #ifndef M_SQRT2PI
 # define M_SQRT2PI 2.50662827463e0
 #endif

@@ -1489,7 +1489,7 @@ class US_EXTERN US_Saxs_Util
       double                                          probe_radius;
       double                                          threshold;
 
-
+      static double                                   alt_erf( double );
 };
 
 # if defined( USE_MPI )
