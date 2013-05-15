@@ -2,7 +2,11 @@
 #include "../include/us_file_util.h"
 #include "../include/us_pm.h"
 #include "../include/us_timer.h"
-#include <sys/time.h>
+#ifdef WIN32
+# include <sys/timeb.h>
+#else
+# include <sys/time.h>
+#endif
 
 // note: this program uses cout and/or cerr and this should be replaced
 
