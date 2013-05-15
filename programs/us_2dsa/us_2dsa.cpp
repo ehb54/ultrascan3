@@ -892,10 +892,33 @@ QString US_2dsa::distrib_info()
    if ( ncomp == 0 )
       return "";
 
+   QString maDesc    = model.description;
+   QString runID     = edata->runID;
+
+   if ( maDesc.startsWith( runID ) )
+   {  // Saved model:  get analysis description from model description
+      maDesc            = maDesc.section( ".", -2, -2 ).section( "_", 1, -1 );
+   }
+
+   else
+   {  // No saved model yet:  composite analysis description
+      QString adate     = "a" + QDateTime::currentDateTime().toUTC()
+                          .toString( "yyMMddhhmm" );
+      bool    cusGrid   = model.description.contains( "CUSTOMGRID" );
+      bool    fitMeni   = ( model.global == US_Model::MENISCUS );
+      bool    montCar   = model.monteCarlo;
+      QString anType    = QString( cusGrid ? "2DSA-CG" : "2DSA" )
+                        + QString( fitMeni ? "-FM" : "" )
+                        + QString( montCar ? "-MC" : "" );
+      maDesc            = adate + "_" + anType + "_local_i01";
+   }
+
    QString mstr = "\n" + indent( 4 )
       + tr( "<h3>Data Analysis Settings:</h3>\n" )
       + indent( 4 ) + "<table>\n";
 
+   mstr += table_row( tr( "Model Analysis:" ),
+                      maDesc );
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),

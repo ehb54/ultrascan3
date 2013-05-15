@@ -570,6 +570,7 @@ bcomp="0.0";
    pb_plot3d   ->setEnabled( false );
    pb_plotres  ->setEnabled( false );
    pb_distrib  ->setText   ( tr( "s20,W Distribution" ) );
+DbgLv(1) << "Fem:Upd: manual" << manual << solution_rec.buffer.manual;
 
    if ( eplotcd != 0 )
    {
@@ -1635,38 +1636,39 @@ void US_FeMatch::adjust_model()
    solution.manual    = manual;
    solution.vbar20    = vbar20;
    solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+DbgLv(1) << "Fem:Adj: manual" << manual << solution.manual << solution_rec.buffer.manual;
 
    US_Math2::data_correction( avgTemp, solution );
 
-   double scorrec  = 1.0 / solution.s20w_correction;
-   double dcorrec  = 1.0 / solution.D20w_correction;
-   double mink     = 1e+99;
-   double maxk     = -1e+99;
-   double minv     = 1e+99;
-   double maxv     = -1e+99;
+   double scorrec  = solution.s20w_correction;
+   double dcorrec  = solution.D20w_correction;
+   // Set constant-vbar flag
+   cnstvb         = model.constant_vbar();
+
+   US_Math2::SolutionData sd;
+   sd.density      = solution.density;
+   sd.viscosity    = solution.viscosity;
+   sd.vbar20       = solution.vbar20;
+   sd.vbar         = solution.vbar;
+   sd.manual       = solution.manual;
 
    // fill out components values and adjust s,D based on buffer
 
    for ( int jj = 0; jj < model.components.size(); jj++ )
    {
       US_Model::SimulationComponent* sc = &model.components[ jj ];
-      double s0_k = sc->f_f0;
-double s0_s = sc->s;
-double s0_D = sc->D;
-double s0_w = sc->mw;
 
       if ( sc->vbar20 == 0.0 )
          sc->vbar20  = vbar20;
+ double s0_k = sc->f_f0;
+ double s0_s = sc->s;
+ double s0_D = sc->D;
+ double s0_w = sc->mw;
+ double s0_b = sc->vbar20;
 
-      double s0_b = sc->vbar20;
       sc->mw      = 0.0;
       sc->f       = 0.0;
       sc->D       = 0.0;
-
-      mink        = qMin( mink, s0_k );
-      maxk        = qMax( maxk, s0_k );
-      minv        = qMin( minv, s0_b );
-      maxv        = qMax( maxv, s0_b );
 
       model.calc_coefficients( *sc );
 if ( dbg_level > 0 && jj < 2 ) {
@@ -1694,16 +1696,22 @@ double s2_b = sc->vbar20;
   << "mw" << s2_w << "vbar20" << s2_b;
 }
 
-      sc->s      *= scorrec;
-      sc->D      *= dcorrec;
+      if ( ! cnstvb )
+      {
+         sd.vbar20   = sc->vbar20;
+         sd.vbar     = US_Math2::adjust_vbar( sd.vbar20, avgTemp );
+         US_Math2::data_correction( avgTemp, sd );
+         scorrec     = sd.s20w_correction;
+         dcorrec     = sd.D20w_correction;
+      }
+
+      sc->s      /= scorrec;
+      sc->D      /= dcorrec;
 
       if ( sc->extinction > 0.0 )
          sc->molar_concentration = sc->signal_concentration / sc->extinction;
    }
 
-   // Set constant-vbar flag
-   cnstvb         = ( ( maxk - mink ) / qAbs( maxk )
-                    > ( maxv - minv ) / qAbs( maxv ) );
 }
 
 // Compress and average monte carlo model components
@@ -2708,6 +2716,9 @@ QString US_FeMatch::distrib_info() const
                   + tr( "<h3>Data Analysis Settings:</h3>\n" )
                   + indent( 4 ) + "<table>\n";
 
+   mstr += table_row( tr( "Model Analysis:" ),
+                      model_loaded.description
+                      .section( ".", -2, -2 ).section( "_", 1, -1 ) );
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),
