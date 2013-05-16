@@ -1222,7 +1222,7 @@ DbgLv(1) << " ++ Load Wait ++";
       QMessageBox::information( this, tr( "UltraScan Error" ),
             tr( "Unable to (over-)write the file:\n\n" ) + ppdfpath );
    }
-   load_ok   = ok;
+   load_ok   = true;
 #endif
 }
 
