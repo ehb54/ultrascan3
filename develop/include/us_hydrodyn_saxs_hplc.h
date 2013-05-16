@@ -618,6 +618,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       bool                         dist1_active;
       bool                         dist2_active;
 
+      bool                         unified_ggaussian_to_f_gaussians();
+
    private slots:
 
       void setupGUI();

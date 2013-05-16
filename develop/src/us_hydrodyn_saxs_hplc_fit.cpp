@@ -48,7 +48,6 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
    redo_settings();
 
    setGeometry(global_Xpos, global_Ypos, 0, 0 );
-   
 
    update_enables();
 }
@@ -609,6 +608,17 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_enables()
 {
    puts( "hf: ue()" );
    bool run_ok = setup_run();
+   cout << QString( "fit::fix center %1\n"
+                    "fit::fix width  %2\n"
+                    "fit::fix height %3\n"
+                    "fit::fix dist1  %4\n"
+                    "fit::fix dist2  %5\n" )
+      .arg( cb_fix_center->isChecked() ? "true" : "false" )
+      .arg( cb_fix_width->isChecked() ? "true" : "false" )
+      .arg( cb_fix_amplitude->isChecked() ? "true" : "false" )
+      .arg( cb_fix_dist1->isChecked() ? "true" : "false" )
+      .arg( cb_fix_dist2->isChecked() ? "true" : "false" )
+      ;
 
    cb_fix_center                ->setEnabled( !running );
    cb_pct_center                ->setEnabled( !running && !cb_fix_center->isChecked() );
@@ -1471,7 +1481,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
       }
    }
 
-   // HFIT::list_params();
+   HFIT::list_params();
 
    if ( !HFIT::init_params.size() )
    {
@@ -1558,8 +1568,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
    } 
 
    vector < double > par = HFIT::init_params;
-   // US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
-   // cout << QString( "par start (rmsd %1)" ).arg( org_rmsd ).ascii();
+   US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
+   cout << QString( "par start (rmsd %1)\n" ).arg( org_rmsd ).ascii();
 
    // LM::qpb  = ( QProgressBar * )0;
    // LM::qApp = ( QApplication * )0;
@@ -1579,8 +1589,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
       cout << "WARNING: lm() returned negative rmsd\n";
    }
 
-   // US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
-   // cout << QString( "par fit (rmsd %1)" ).arg( status.fnorm ).ascii();
+   US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
+   cout << QString( "par fit (rmsd %1)\n" ).arg( status.fnorm ).ascii();
 
    if ( org_rmsd > status.fnorm )
    {

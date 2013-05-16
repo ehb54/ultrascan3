@@ -2908,6 +2908,9 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
 
       clear_files( all_files() );
 
+      gaussian_types default_gaussian_type = GAUSS;
+      bool           defined_gaussian_type = false;
+
       cb_lock_dir->setChecked( false );
       for ( int i = 1; i < (int) qv.size(); i++ )
       {
@@ -2941,8 +2944,30 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
                update_gauss_mode();
                ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
             }
+            defined_gaussian_type = true;
             continue;
          }
+
+         if ( !defined_gaussian_type &&
+              ( rx_gaussians.search( qv[ i ] ) != -1 ||
+                rx_f_gaussians.search( qv[ i ] ) != -1 ) )
+         {
+            editor_msg( "dark red", tr( "Notice: this state file does not have a specific Gaussian type defined, defaulting to standard Gaussians" ) );
+            gaussian_types new_g = default_gaussian_type;
+            if ( gaussian_type != new_g )
+            {
+               gaussian_type = new_g;
+               unified_ggaussian_ok = false;
+               f_gaussians.clear();
+               gaussians.clear();
+               org_gaussians.clear();
+               org_f_gaussians.clear();
+               update_gauss_mode();
+               ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
+            }
+            defined_gaussian_type = true;
+         }            
+
          if ( rx_uv.search( qv[ i ] ) != -1 )
          {
             detector_uv_conv = rx_uv.cap( 1 ).toDouble();
@@ -6649,6 +6674,8 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
       // ? f_gaussians[ wheel_file ] = gaussians;
       if ( unified_ggaussian_ok )
       {
+         unified_ggaussian_to_f_gaussians();
+         /*
          if ( cb_fix_width->isChecked() )
          {
             for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
@@ -6678,7 +6705,8 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
                }
                f_gaussians[ unified_ggaussian_files[ i ] ] = g;
             }
-         }            
+         } 
+         */           
 
          org_f_gaussians = f_gaussians;
          org_gaussians   = f_gaussians[ wheel_file ];
@@ -10371,4 +10399,5 @@ void US_Hydrodyn_Saxs_Hplc::options()
       update_gauss_mode();
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
    }
+   update_enables();
 }

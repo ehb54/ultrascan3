@@ -1149,14 +1149,22 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    // fix for gauss_dist
    for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += gaussian_type_size )
    {
-      unified_ggaussian_params.push_back( gaussians[ 1 + i ] );
+      unified_ggaussian_params.push_back( gaussians[ 1 + i ] ); // center
       if ( cb_fix_width->isChecked() )
       {
          unified_ggaussian_params.push_back( gaussians[ 2 + i ] );
       }
+      if ( dist1_active && cb_fix_dist1->isChecked() )
+      {
+         unified_ggaussian_params.push_back( gaussians[ 3 + i ] );
+      }
+      if ( dist2_active && cb_fix_dist2->isChecked() )
+      {
+         unified_ggaussian_params.push_back( gaussians[ 4 + i ] );
+      }
    }
 
-   // now push back all the file specific amplitude & widths
+   // now push back all the file specific amplitude & widths (& dist1, dist2 )
 
    map < QString, bool >    no_errors;
    map < QString, QString > zero_points;
@@ -1183,6 +1191,14 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
          if ( !cb_fix_width->isChecked() )
          {
             unified_ggaussian_params.push_back( f_gaussians[ files[ i ] ][ 2 + j ] ); // width
+         }
+         if ( dist1_active && !cb_fix_dist1->isChecked() )
+         {
+            unified_ggaussian_params.push_back( f_gaussians[ files[ i ] ][ 3 + j ] ); // dist1
+         }
+         if ( dist2_active && !cb_fix_dist2->isChecked() )
+         {
+            unified_ggaussian_params.push_back( f_gaussians[ files[ i ] ][ 4 + j ] ); // dist2
          }
       }
 
@@ -1306,8 +1322,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    //    US_Vector::printvector( "unified q:", unified_ggaussian_q );
    //    US_Vector::printvector( "unified t:", unified_ggaussian_t );
    //    US_Vector::printvector( "unified I:", unified_ggaussian_I );
-   // US_Vector::printvector( "unified params:", unified_ggaussian_params );
-   // US_Vector::printvector( "unified param index:", unified_ggaussian_param_index );
+   US_Vector::printvector( "unified params:", unified_ggaussian_params );
+   US_Vector::printvector( "unified param index:", unified_ggaussian_param_index );
 
    unified_ggaussian_ok = true;
    progress->setProgress( 1, 1 );
@@ -1331,6 +1347,24 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
    unified_ggaussian_jumps  .push_back( 0e0 );
 
    bool error_msg = false;
+
+   unsigned int common_size   = 1; // center always fixed 
+   
+   if ( cb_fix_width->isChecked() )
+   {
+      common_size++;
+   }
+   if ( dist1_active && cb_fix_dist1->isChecked() )
+   {
+      common_size++;
+   }
+   if ( dist2_active && cb_fix_dist2->isChecked() )
+   {
+      common_size++;
+   }
+
+   unsigned int per_file_size = gaussian_type_size - common_size;
+   cout << QString( "ggauss_recompute: common_size: %1 per_file_size %2\n" ).arg( common_size ).arg( per_file_size );
 
    for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
    {
@@ -1368,12 +1402,21 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
             }
                  
             unified_ggaussian_t           .push_back( unified_ggaussian_t.size() );
-            if ( cb_fix_width->isChecked() )
-            {
-               unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 2 + i ) );
-            } else {
-               unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 1 + i * 2 ) );
-            }               
+
+            // fix for gauss dist
+
+            // unified_gguassian_param_index is the base of the variable parameters
+            // for this curve
+
+            unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( common_size + i * per_file_size ) );
+            /* old way
+              if ( cb_fix_width->isChecked() )
+              {
+              unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 2 + i ) );
+              } else {
+              unified_ggaussian_param_index .push_back( unified_ggaussian_gaussians_size * ( 1 + i * 2 ) );
+              } 
+            */              
             unified_ggaussian_q           .push_back( f_qs[ unified_ggaussian_files[ i ] ][ j ] );
             unified_ggaussian_I           .push_back( f_Is[ unified_ggaussian_files[ i ] ][ j ] );
             if ( unified_ggaussian_use_errors )
@@ -1470,6 +1513,11 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
    double scale = peak / gmax;   
 
    gauss_max_height = peak * 1.2;
+   if ( gaussian_type != GAUSS )
+   {
+      gauss_max_height *= 20e0;
+   }
+   cout << QString( "compute_f_gaussians():gauss_max_height for %1 is %2\n" ).arg( file ).arg( gauss_max_height );
 
    // printvector( "cfg: org_gauss 2", org_gaussians );
    gaussians = org_gaussians;
@@ -1478,7 +1526,7 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       gaussians[ 0 + i ] *= scale;
    }
 
-   // printvector( "cfg: gaussians", gaussians );
+   US_Vector::printvector( "cfg: gaussians", gaussians );
 
    double gmax2 = compute_gaussian_peak( file, gaussians );
 
@@ -1501,13 +1549,21 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
    fit->cb_fix_center    ->setChecked( true );
    fit->cb_fix_width     ->setChecked( true );
    fit->cb_fix_amplitude ->setChecked( false );
-
+   fit->cb_fix_dist1     ->setChecked( true );
+   fit->cb_fix_dist2     ->setChecked( true );
+   // fit initial amplitudes
    fit->lm();
    // printvector( "cfg: after fit gaussians", gaussians );
 
-   if ( !cb_fix_width->isChecked() )
+   // now run "open"
+
+   if ( !cb_fix_width->isChecked() ||
+        ( dist1_active && !cb_fix_dist1->isChecked() ) ||
+        ( dist2_active && !cb_fix_dist2->isChecked() ) )
    {
-      fit->cb_fix_width     ->setChecked( false );
+      fit->cb_fix_width     ->setChecked( cb_fix_width->isChecked() );
+      fit->cb_fix_dist1     ->setChecked( cb_fix_dist1->isChecked() );
+      fit->cb_fix_dist2     ->setChecked( cb_fix_dist2->isChecked() );
       fit->lm();
       // printvector( "cfg: after fit2 gaussians", gaussians );
    }

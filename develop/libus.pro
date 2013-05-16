@@ -264,6 +264,7 @@ SOURCES += \
   src/us_hydrodyn_saxs_hplc_plots.cpp \
   src/us_hydrodyn_saxs_hplc_ciq.cpp \
   src/us_hydrodyn_saxs_hplc_dctr.cpp \
+  src/us_hydrodyn_saxs_hplc_gg.cpp \
   src/us_hydrodyn_saxs_hplc_p3d.cpp \
   src/us_hydrodyn_saxs_hplc_util.cpp \
   src/us_hydrodyn_saxs_hplc_conc.cpp \
