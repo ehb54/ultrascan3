@@ -287,6 +287,8 @@ void US_Reporter::build_runids()
 
 void US_Reporter::new_runid( int row )
 {
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   qApp->processEvents();
    QString runID = sl_runids.at( row );
 DbgLv(1) << "  new runID row runid" << row << runID;
 
@@ -314,6 +316,8 @@ DbgLv(1) << "  new runID row runid" << row << runID;
    // Rebuild the tree widget
    build_tree();
    changed = true;
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
 }
 
 // Build data description records for a specified Run
@@ -807,6 +811,7 @@ bool US_Reporter::write_report()
       return true;
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   qApp->processEvents();
    load_ok    = false;
 
    // Count checked items:  reports, runs, triples, htmls, plots
@@ -817,6 +822,7 @@ bool US_Reporter::write_report()
       QMessageBox::warning( this, tr( "Select Error" ),
             tr( "No reports have been selected" ) );
       QApplication::restoreOverrideCursor();
+      qApp->processEvents();
       return false;
    }
 
@@ -840,6 +846,7 @@ bool US_Reporter::write_report()
          QMessageBox::warning( this, tr( "File Error" ),
                tr( "Could not create the directory:\n" ) + pagepath );
          QApplication::restoreOverrideCursor();
+         qApp->processEvents();
          return false;
       }
    }
@@ -1138,6 +1145,7 @@ DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
 
    changed = false;
    QApplication::restoreOverrideCursor();
+   qApp->processEvents();
 
    return load_ok;
 }
@@ -1147,10 +1155,15 @@ void US_Reporter::write_pdf()
 {
    ppdfpath = QString( pagepath ).replace( ".html", ".pdf" );
    QPrinter printer( QPrinter::HighResolution );
+//   QPrinter printer( QPrinter::ScreenResolution );
    printer.setOutputFileName( ppdfpath );
+//   printer.setFullPage( true );
    printer.setCreator( "UltraScan" );
    printer.setDocName( QString( "report_composite.html" ) );
    printer.setOrientation( QPrinter::Portrait );
+//   printer.setPaperSize( QPrinter::A4 );
+   printer.setPaperSize( QPrinter::A2 );
+   printer.setOutputFormat( QPrinter::PdfFormat );
 
    QString       rpttext;
    QFile         fili( pagepath );
@@ -1160,6 +1173,7 @@ void US_Reporter::write_pdf()
       rpttext = ts.readAll();
       fili.close();
    }
+#ifndef Q_WS_MAC  // Use WebView to produce PDF on Linux,Windows
    prevwidg = new QWebView( this );
 
    if ( websetting == NULL )
@@ -1183,6 +1197,33 @@ DbgLv(1) << " ++ Load Wait ++";
       US_Sleep::msleep( 500 );
       qApp->processEvents();
    }
+#else             // Use TextDocument to produce PDF on Mac
+   QString rptpath = US_Settings::reportDir();
+   QString cmppath = QString( pagepath ).section( "/", 0, -2 );
+   QDir::setCurrent( cmppath );
+   QTextDocument document;
+   document.setDefaultFont( QFont( "serif", 14 ) );
+   document.setHtml( rpttext );
+   document.print( &printer );
+
+   QString ppdffold = ppdfpath;
+   ppdfpath         = ppdfpath.section( "/", 0, -3 );
+   ppdfpath         = ppdfpath + "/report_composite.pdf";
+   QFile pdff( ppdfpath );
+
+   // Overwrite the PDF in the composite folder with the one
+   //  in the subdirectory where the HTML and components exist
+
+   if ( pdff.exists() )
+      pdff.remove();
+
+   if ( ! QFile::copy( ppdffold , ppdfpath  ) )
+   {
+      QMessageBox::information( this, tr( "UltraScan Error" ),
+            tr( "Unable to (over-)write the file:\n\n" ) + ppdfpath );
+   }
+   load_ok   = ok;
+#endif
 }
 
 // Handle loading complete in web view:  create the PDF
@@ -1202,8 +1243,7 @@ DbgLv(1) << "PG_LD: loaded OK" << ok;
       prevwidg->print( &printer );
 
       QString ppdffold = ppdfpath;
-      ppdfpath         = ppdfpath.left( ppdfpath.lastIndexOf( "/" ) );
-      ppdfpath         = ppdfpath.left( ppdfpath.lastIndexOf( "/" ) );
+      ppdfpath         = ppdfpath.section( "/", 0, -3 );
       ppdfpath         = ppdfpath + "/report_composite.pdf";
       QFile pdff( ppdfpath );
 

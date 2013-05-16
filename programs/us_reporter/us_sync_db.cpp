@@ -147,18 +147,31 @@ void US_SyncWithDB::scan_db_reports()
    QStringList query;
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
 
-   setWindowTitle( tr( "Load Edited Data from DB" ) );
+   setWindowTitle( tr( "Download Report Data from the Database" ) );
 
    query.clear();
    query << "count_reports" << invID;
    int nreports = db.functionQuery( query );
 qDebug() << "Reports count" << nreports;
+   desc         = desc + "<br/>&nbsp;&nbsp;&nbsp;";
+   int nbdchr   = desc.length();
+   desc         = desc.left( nbdchr )
+                  + tr( "Total DB run reports is %1" ).arg( nreports );
+   te_desc->setHtml( desc );
+   qApp->processEvents();
+
+   // Determine runIDs of existing local results
+   QString resdir = US_Settings::resultDir() + "/";
+   QDir dirres( resdir );
+   QStringList resruns = dirres.entryList(
+         QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
 
    query.clear();
    query << "get_report_desc" << invID;
    db.query( query );
    QStringList runids;
    int kreports = 0;
+   int jreports = 0;
    nrunrpl = nrunadd = ndocrpl = ndocadd = 0;
    QString rptdir = US_Settings::reportDir() + "/";
    QDir dirrpt( rptdir );
@@ -166,13 +179,22 @@ qDebug() << "Reports count" << nreports;
    while ( db.next() )
    {
       QString runid    = db.value( 4 ).toString();
-      runids   << runid;
+      jreports++;
+      if ( resruns.contains( runid ) )
+      {
+         runids   << runid;
 qDebug() << "  report id" << db.value(0).toString() << "runID" << runid;
-      kreports++;
+         kreports++;
+      }
    }
 qDebug() << "Report descs count" << kreports;
 
-   for ( int ii = 0; ii < nreports; ii++ )
+   desc         = desc.left( nbdchr )
+                  + tr( "DB reports for local runIDs is %1" ).arg( kreports );
+   te_desc->setHtml( desc );
+   qApp->processEvents();
+
+   for ( int ii = 0; ii < kreports; ii++ )
    {
       QString runid    = runids[ ii ];
       QString rundir   = rptdir + runid;
@@ -205,6 +227,13 @@ qDebug() << "  Report" << ii << "triples count" << ntriples << "runID" << runid;
          US_Report::ReportTriple* tripl = &freport.triples[ jj ];
          int ndocs        = tripl->docs.count();
 qDebug() << "    Triple" << jj << "docs count" << ndocs;
+
+         desc         = desc.left( nbdchr )
+                        + tr( "Run %1, Triple %2: comparing %3 documents...")
+                        .arg( ii + 1 ).arg( jj + 1 ).arg( ndocs );
+         te_desc->setHtml( desc );
+         qApp->processEvents();
+
          for ( int kk = 0; kk < ndocs; kk++ )
          {
             US_Report::ReportDocument* doc = &tripl->docs[ kk ];
