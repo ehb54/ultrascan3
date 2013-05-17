@@ -189,7 +189,7 @@ void US_Hydrodyn_Saxs_Hplc::p3d()
 
    {
       map < QString, QString > parameters;
-      parameters[ "gaussians" ] = QString( "%1" ).arg( f_gaussians[ files[ 0 ] ].size() / 3 );
+      parameters[ "gaussians" ] = QString( "%1" ).arg( f_gaussians[ files[ 0 ] ].size() / gaussian_type_size );
 
       US_Hydrodyn_Saxs_Hplc_P3d *hplc_p3d = 
          new US_Hydrodyn_Saxs_Hplc_P3d(
@@ -241,14 +241,22 @@ void US_Hydrodyn_Saxs_Hplc::p3d()
 
       bool any_accumulated        = false;
 
-      for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += 3 )
+      for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += gaussian_type_size )
       {
-         if ( g_to_plot.count( j / 3 ) )
+         if ( g_to_plot.count( j / gaussian_type_size ) )
          {
-            vector < double > tmp_g(3);
+            vector < double > tmp_g( gaussian_type_size );
             tmp_g[ 0 ] = f_gaussians[ files[ i ] ][ 0 + j ];
             tmp_g[ 1 ] = f_gaussians[ files[ i ] ][ 1 + j ];
             tmp_g[ 2 ] = f_gaussians[ files[ i ] ][ 2 + j ];
+            if ( dist1_active )
+            {
+               tmp_g[ 3 ] = f_gaussians[ files[ i ] ][ 3 + j ];
+               if ( dist2_active )
+               {
+                  tmp_g[ 4 ] = f_gaussians[ files[ i ] ][ 4 + j ];
+               }
+            }
 
             vector < double > tmp = compute_gaussian( f_qs[ files[ i ] ], tmp_g );
             tmp_v.push_back( tmp );
@@ -531,7 +539,7 @@ bool US_Hydrodyn_Saxs_Hplc::opt_repeak_gaussians( QString file )
                                     ) )
       {
       case 0 : // rescale the Gaussians
-         for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += 3 )
+         for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += gaussian_type_size )
          {
             gaussians[ 0 + i ] *= scale;
          }
@@ -565,11 +573,11 @@ vector < double > US_Hydrodyn_Saxs_Hplc::conc_curve( vector < double > &t,
       }
    }
 
-   if ( peak >= ( unsigned int ) f_gaussians[ conc_file ].size() / 3 )
+   if ( peak >= ( unsigned int ) f_gaussians[ conc_file ].size() / gaussian_type_size )
    {
       editor_msg( "red", QString( tr( "Internal error: conc_curve(): Gaussian requested (%1) exceedes available (%2)" ) )
                   .arg( peak + 1 )
-                  .arg( f_gaussians[ conc_file ].size() / 3 ) );
+                  .arg( f_gaussians[ conc_file ].size() / gaussian_type_size ) );
       return result;
    }
 
@@ -590,10 +598,18 @@ vector < double > US_Hydrodyn_Saxs_Hplc::conc_curve( vector < double > &t,
    }
    // US_Vector::printvector( QString( "conc_curve peak %1 conv %2 detector_conv %3" ).arg( peak + 1 ).arg( conv ).arg( detector_conv ), t );
 
-   vector < double > tmp_g(3);
-   tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + peak * 3 ];
-   tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + peak * 3 ];
-   tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + peak * 3 ];
+   vector < double > tmp_g( gaussian_type_size );
+   tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + peak * gaussian_type_size ];
+   tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + peak * gaussian_type_size ];
+   tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + peak * gaussian_type_size ];
+   if ( dist1_active )
+   {
+      tmp_g[ 3 ] = f_gaussians[ conc_file ][ 3 + peak * gaussian_type_size ];
+      if ( dist2_active )
+      {
+         tmp_g[ 4 ] = f_gaussians[ conc_file ][ 4 + peak * gaussian_type_size ];
+      }
+   }
 
    result = compute_gaussian( t, tmp_g );
    // US_Vector::printvector( "conc curve gaussians", tmp_g );
