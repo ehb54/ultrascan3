@@ -76,6 +76,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       QCheckBox  *cb_guinier_csv;
       QLineEdit  *le_guinier_csv_filename;
 
+      QCheckBox  *cb_guinier_csv_save_data;
+
       QLabel     *lbl_conc_header;
 
       QPushButton *pb_curve_conc;
@@ -119,6 +121,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       void setupGUI                             ();
 
       void set_guinier_csv                      ();
+      void set_guinier_csv_save_data            ();
 
       void update_qRgmax                        ( const QString & );
       void update_qstart                        ( const QString & );

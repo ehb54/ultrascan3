@@ -1441,6 +1441,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // hbl_file_buttons_2->addWidget ( pb_color_rotate );
    // hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
+   hbl_file_buttons_2->addWidget ( pb_axis_x );
+   hbl_file_buttons_2->addWidget ( pb_axis_y );
    hbl_file_buttons_2->addWidget ( pb_rescale );
 
    QBoxLayout *hbl_file_buttons_2b = new QHBoxLayout( 0 );
@@ -1593,8 +1595,6 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_plot_buttons->addWidget( pb_crop_undo );
    hbl_plot_buttons->addWidget( pb_crop_right );
    hbl_plot_buttons->addWidget( pb_legend );
-   hbl_plot_buttons->addWidget( pb_axis_x );
-   hbl_plot_buttons->addWidget( pb_axis_y );
 
    QGridLayout *gl_wheel = new QGridLayout(0);
    gl_wheel->addMultiCellWidget( pb_wheel_start , 0, 0, 0, 1 );

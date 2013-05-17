@@ -582,6 +582,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
          {
             progress_saxs->setProgress( m + 1, model_size + 1 );
             qApp->processEvents();
+            if ( stopFlag ) 
+            {
+               editor->append(tr("Terminated by user request.\n"));
+               progress_saxs->reset();
+               lbl_core_progress->setText("");
+               pb_plot_saxs_sans->setEnabled(true);
+               pb_plot_pr->setEnabled(true);
+               return;
+            }
          }
 
          datap->rtp[ 0 ] = sqrt ( (double) ( modelp->x[ 0 ] * modelp->x[ 0 ] +

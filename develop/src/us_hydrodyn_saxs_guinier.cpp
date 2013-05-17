@@ -32,8 +32,84 @@
 
 // note: this program uses cout and/or cerr and this should be replaced
 
+static vector < QString >                    guinier_names;
+static vector < vector  < double > >         guinier_q2;
+static vector < vector  < double > >         guinier_lnI;
+static vector < vector  < double > >         guinier_sd;
+static vector < map     < double, double > > guinier_removed;
+
+static void clear_csv_data()
+{
+   guinier_names  .clear();
+   guinier_q2     .clear();
+   guinier_lnI    .clear();
+   guinier_sd     .clear();
+   guinier_removed.clear();
+}
+
+static void write_csv_data( QFile * f, QString I_tag )
+{
+   int maxlen = 0;
+   for ( int i = 0; i < (int)guinier_q2.size(); ++i )
+   {
+      if ( maxlen < (int)guinier_q2[ i ].size() )
+      {
+         maxlen = (int)guinier_q2[ i ].size();
+      }
+   }
+
+   vector < QStringList > out( maxlen + 1 ); // +1 for header
+
+   // output a column at a time
+
+   for ( int i = 0; i < (int)guinier_names.size(); ++i )
+   {
+      out[ 0 ] << QString( "\"%1 q^2\"" ).arg( guinier_names[ i ] );
+      for ( int j = 0; j < maxlen; ++j )
+      {
+         out[ j + 1 ] << ( j < (int) guinier_q2[ i ].size() ? QString( "%1" ).arg( guinier_q2[ i ][ j ], 0, 'g', 8 ) : QString( "" ) );
+      }
+
+      out[ 0 ] << QString( "\"%1 %2\"" ).arg( guinier_names[ i ] ).arg( I_tag );
+
+      for ( int j = 0; j < maxlen; ++j )
+      {
+         out[ j + 1 ] << ( j < (int) guinier_lnI[ i ].size() ? QString( "%1" ).arg( guinier_lnI[ i ][ j ], 0, 'g', 8 ) : QString( "" ) );
+      }
+
+      if ( guinier_sd[ i ].size() )
+      {
+         out[ 0 ] << QString( "\"%1 S.D.\"" ).arg( guinier_names[ i ] );
+         for ( int j = 0; j < maxlen; ++j )
+         {
+            out[ j + 1 ] << ( j < (int) guinier_sd[ i ].size() ? QString( "%1" ).arg( guinier_sd[ i ][ j ], 0, 'g', 8 ) : QString( "" ) );
+         }
+         if ( guinier_removed[ i ].size() )
+         {
+            out[ 0 ] << QString( "\"%1 removed\"" ).arg( guinier_names[ i ] );
+            for ( int j = 0; j < maxlen; ++j )
+            {
+               out[ j + 1 ] <<
+                  ( j < (int) guinier_q2[ i ].size() && guinier_removed[ i ].count( guinier_q2[ i ][ j ] ) ? "\"X\"" : "" );
+            }
+         }
+      }
+   }
+
+   QTextStream ts( f );
+
+   for ( int i = 0; i <= maxlen; ++i )
+   {
+      ts << out[ i ].join(",") << endl;
+   }
+
+   f->close();
+   clear_csv_data();
+}
+
 void US_Hydrodyn_Saxs::run_guinier_cs()
 {
+   clear_csv_data();
    editor->append("CS Guinier analysis:\n");
    clear_cs_guinier();
 
@@ -106,16 +182,41 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
       if ( !f.open(IO_WriteOnly) )
       {
          editor_msg( "red", QString(tr("Can not create file %1\n")).arg(f.name()));
+      } else {
+         QTextStream ts(&f);
+         ts << csvlog;
+         f.close();
+         editor->append(QString(tr("Created file %1\n")).arg(f.name()));
       }
-      QTextStream ts(&f);
-      ts << csvlog;
-      f.close();
-      editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_csv_save_data" ) &&
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_csv_save_data" ] == "1" )
+      {
+         QString filename = 
+            USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" + SLASH + 
+            our_saxs_options->guinier_csv_filename + "_cs_data.csv";
+
+         QString fname = filename;
+         if ( QFile::exists(fname) )
+         {
+            fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
+         }
+
+         QFile f( fname );
+
+         if ( !f.open(IO_WriteOnly) )
+         {
+            editor_msg( "red", QString(tr("Can not create file %1\n")).arg(f.name()));
+         } else {
+            write_csv_data( & f, "ln q*I" );
+            editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+         }
+      }
    }
 }
 
 void US_Hydrodyn_Saxs::run_guinier_analysis()
 {
+   clear_csv_data();
    editor->append("Guinier analysis:\n");
    editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, plot_saxs->canvasBackground() );
    clear_guinier();
@@ -190,11 +291,36 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
       if ( !f.open(IO_WriteOnly) )
       {
          editor->append(QString(tr("Can not create file %1\n")).arg(f.name()));
+      } else {
+         QTextStream ts(&f);
+         ts << csvlog;
+         f.close();
+         editor->append(QString(tr("Created file %1\n")).arg(f.name()));
       }
-      QTextStream ts(&f);
-      ts << csvlog;
-      f.close();
-      editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+
+      if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_csv_save_data" ) &&
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_csv_save_data" ] == "1" )
+      {
+         QString filename = 
+            USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" + SLASH + 
+            our_saxs_options->guinier_csv_filename + "_data.csv";
+
+         QString fname = filename;
+         if ( QFile::exists(fname) )
+         {
+            fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
+         }
+
+         QFile f( fname );
+
+         if ( !f.open(IO_WriteOnly) )
+         {
+            editor_msg( "red", QString(tr("Can not create file %1\n")).arg(f.name()));
+         } else {
+            write_csv_data( & f, "ln I" );
+            editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+         }
+      }
    }
 }
 
@@ -250,7 +376,6 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
       use_guinier_outlier_reject = false;
    }
 
-
    //    if ( use_SD_weighting )
    //    {
    //       cout << "uhsg: using sd weighting\n";
@@ -276,7 +401,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    
    // US_Vector::printvector3( "q2 I e", q2 /* usu.wave["data"].q */, usu.wave["data"].r, usu.wave["data"].s );
 
-   QString log;
+   QString this_log;
 
    int pointsmin = our_saxs_options->pointsmin;
    if ( pointsmin < 2 )
@@ -321,7 +446,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                "data"
                                )   ||
              !usu.guinier_fit2(
-                               log,
+                               this_log,
                                "guinier", 
                                pointsmin,
                                pointsmax,
@@ -383,7 +508,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                   "data"
                                   )   ||
                 !usu.guinier_fit_with_removal(
-                                              log,
+                                              this_log,
                                               "guinier", 
                                               pstart,
                                               pend,
@@ -424,7 +549,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                   "data"
                                   )   ||
                 !usu.guinier_fit(
-                                 log,
+                                 this_log,
                                  "guinier", 
                                  pstart,
                                  pend,
@@ -539,7 +664,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                      , sRgmax
                      , bestend - beststart + 1 - pts_removed
                      , chi2
-                     , sqrt( chi2 / (bestend - beststart - 1) )
+                     , sqrt( chi2 / (bestend - beststart - 1 - pts_removed ) )
                      );
          
          plotted_guinier_valid[i] = true;
@@ -616,9 +741,9 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             .arg(sRgmax)
             .arg(beststart)
             .arg(bestend)
-            .arg(bestend - beststart + 1)
+            .arg(bestend - beststart + 1 - pts_removed )
             .arg(chi2)
-            .arg(sqrt( chi2 / (bestend - beststart - 1) ) )
+            .arg(sqrt( chi2 / (bestend - beststart - 1 - pts_removed ) ) )
             ;
 
          {
@@ -649,6 +774,37 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
 
          csvlog += "\n";
       }
+   }
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_csv_save_data" ) &&
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_csv_save_data" ] == "1" )
+   {
+      guinier_names.push_back( qsl_plotted_iq_names[ i ] );
+      vector < double > q2;
+      vector < double > lnI;
+      vector < double > sd;
+      map < double, double > empty_removed;
+      for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+      {
+         q2 .push_back( plotted_q[ i ][ j ] * plotted_q[ i ][ j ] );
+         lnI.push_back( plotted_I[ i ][ j ] > 0e0 ? log( plotted_I[ i ][ j ] ) : 0e0 );
+         if ( use_SD_weighting )
+         {
+            sd.push_back( plotted_I[ i ][ j ] > 0e0 ? 
+                          fabs( lnI.back() ) * ( plotted_I_error[ i ][ j ] / plotted_I[ i ][ j ] ) : 0e0 );
+         }
+      }
+      
+      guinier_q2 .push_back( q2  );
+      guinier_lnI.push_back( lnI );
+      guinier_sd .push_back( sd  );
+      if ( use_guinier_outlier_reject )
+      {
+         guinier_removed.push_back( plotted_guinier_pts_removed.count( i ) ?
+                                    plotted_guinier_pts_removed[ i ] : empty_removed 
+                                    );
+      } else {
+         guinier_removed.push_back( empty_removed );
+      }         
    }
    editor_msg( plot_colors[i % plot_colors.size()], report );
 
@@ -700,6 +856,14 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
       }
    }
 
+   if ( use_guinier_outlier_reject && !use_SD_weighting )
+   {
+      editor_msg( "dark red", QString( tr( "Notice: Turning off outlier rejection for Guinier fit of %1 since SD weighting is off" ) )
+                  .arg( qsl_plotted_iq_names[ i ] ) );
+
+      use_guinier_outlier_reject = false;
+   }
+
    // vector < double > q2;
 
    for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
@@ -719,7 +883,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
 
    // US_Vector::printvector3( "cs1 q2 I e", q2 /* usu.wave["data"].q */, usu.wave["data"].r, usu.wave["data"].s );
 
-   QString log;
+   QString this_log;
 
    int pointsmin = our_saxs_options->pointsmin;
    if ( pointsmin < 2 )
@@ -766,7 +930,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                                "data"
                                )   ||
              !usu.guinier_fit2(
-                               log,
+                               this_log,
                                "cs_guinier", 
                                pointsmin,
                                pointsmax,
@@ -833,7 +997,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                                   "data"
                                   )   ||
                 !usu.guinier_fit_with_removal(
-                                              log,
+                                              this_log,
                                               "guinier", 
                                               pstart,
                                               pend,
@@ -874,7 +1038,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                                   "data"
                                   )   ||
                 !usu.guinier_fit(
-                                 log,
+                                 this_log,
                                  "guinier", 
                                  pstart,
                                  pend,
@@ -970,7 +1134,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                      , sRgmax
                      , bestend - beststart + 1 - pts_removed
                      , chi2
-                     , sqrt( chi2 / (bestend - beststart - 1) )
+                     , sqrt( chi2 / (bestend - beststart - 1 - pts_removed ) )
                      );
          
          plotted_cs_guinier_valid[i] = true;
@@ -1047,9 +1211,9 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             .arg(sRgmax)
             .arg(beststart)
             .arg(bestend)
-            .arg(bestend - beststart + 1)
+            .arg(bestend - beststart + 1 - pts_removed )
             .arg(chi2)
-            .arg(sqrt( chi2 / (bestend - beststart - 1) ) )
+            .arg(sqrt( chi2 / (bestend - beststart - 1 - pts_removed ) ) )
             ;
 
          {
@@ -1080,6 +1244,37 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
 
          csvlog += "\n";
       }
+   }
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_csv_save_data" ) &&
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_csv_save_data" ] == "1" )
+   {
+      guinier_names.push_back( qsl_plotted_iq_names[ i ] );
+      vector < double > q2;
+      vector < double > lnI;
+      vector < double > sd;
+      map < double, double > empty_removed;
+      for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
+      {
+         q2 .push_back( plotted_q[ i ][ j ] * plotted_q[ i ][ j ] );
+         lnI.push_back( plotted_I[ i ][ j ] > 0e0 ? log(  plotted_q[ i ][ j ] * plotted_I[ i ][ j ] ) : 0e0 );
+         if ( use_SD_weighting )
+         {
+            sd.push_back( plotted_I[ i ][ j ] > 0e0 ? 
+                          fabs( lnI.back() ) * ( plotted_I_error[ i ][ j ] / plotted_I[ i ][ j ] ) : 0e0 );
+         }
+      }
+      
+      guinier_q2 .push_back( q2  );
+      guinier_lnI.push_back( lnI );
+      guinier_sd .push_back( sd  );
+      if ( use_guinier_outlier_reject )
+      {
+         guinier_removed.push_back( plotted_cs_guinier_pts_removed.count( i ) ?
+                                    plotted_cs_guinier_pts_removed[ i ] : empty_removed 
+                                    );
+      } else {
+         guinier_removed.push_back( empty_removed );
+      }         
    }
    editor_msg( plot_colors[i % plot_colors.size()], plot_saxs->canvasBackground(), report );
 

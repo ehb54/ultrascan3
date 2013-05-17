@@ -211,6 +211,15 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_guinier_csv_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_guinier_csv_filename, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_csv_filename(const QString &)));
 
+   cb_guinier_csv_save_data = new QCheckBox(this);
+   cb_guinier_csv_save_data->setText(tr("Save processed q, I(q) data to csv file"));
+   cb_guinier_csv_save_data->setEnabled(true);
+   cb_guinier_csv_save_data->setChecked( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "guinier_csv_save_data" ) &&
+                                         ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "guinier_csv_save_data" ] == "1" );
+   cb_guinier_csv_save_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_guinier_csv_save_data->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_guinier_csv_save_data, SIGNAL(clicked()), this, SLOT(set_guinier_csv_save_data()));
+
    lbl_conc_header = new QLabel(tr("MW and M/L computation options:"), this);
    lbl_conc_header->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_conc_header->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -385,6 +394,9 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    j++;
    background->addWidget(cb_guinier_csv, j, 0);
    background->addWidget(le_guinier_csv_filename, j, 1);
+   j++;
+
+   background->addMultiCellWidget(cb_guinier_csv_save_data, j, j, 0, 1);
    j++;
 
    background->addMultiCellWidget(cb_guinier_auto_fit, j, j, 0, 1);
@@ -736,5 +748,11 @@ void US_Hydrodyn_SasOptionsGuinier::set_guinier_auto_fit()
       cb_guinier_outlier_reject->setChecked( false );
       set_guinier_outlier_reject();
    }
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::set_guinier_csv_save_data()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_csv_save_data" ] = cb_guinier_csv_save_data->isChecked() ? "1" : "0";
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

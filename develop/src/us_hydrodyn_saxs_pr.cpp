@@ -1,5 +1,5 @@
 // #define DEBUG_MW2 // for testing "preset values on guinier_window()"
-#define DEBUG_MW
+// #define DEBUG_MW
 
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn_saxs_mw.h"
