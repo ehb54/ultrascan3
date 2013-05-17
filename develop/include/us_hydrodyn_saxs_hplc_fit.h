@@ -139,10 +139,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 
       void set_our_matrix(our_matrix *m, double s);
       void identity_our_matrix(our_matrix *m);
-      void print_our_matrix(our_matrix *m);
+      static void print_our_matrix(our_matrix *m);
       our_vector *new_our_vector(int len);
       void free_our_vector(our_vector *v);
-      void print_our_vector(our_vector *v);
+      static void print_our_vector(our_vector *v);
       double l2norm_our_vector(our_vector *v1, our_vector *v2);
       void copy_our_vector(our_vector *v1, our_vector *v2);
       void set_our_vector(our_vector *v1, double s);

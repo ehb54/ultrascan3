@@ -10382,7 +10382,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    
    parameters[ "gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
    US_Hydrodyn_Saxs_Hplc_Options *sho = 
-      new US_Hydrodyn_Saxs_Hplc_Options( & parameters );
+      new US_Hydrodyn_Saxs_Hplc_Options( & parameters, this );
    US_Hydrodyn::fixWinButtons( sho );
    sho->exec();
    delete sho;

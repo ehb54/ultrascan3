@@ -4,6 +4,7 @@
     extern int myrank;
 #endif
 
+#define UHSHFG_DEBUG_F
 #define USUNG_DEBUG
 
 vector < double > US_Hydrodyn_Saxs_Hplc_Fit::gsm_t;
@@ -1657,6 +1658,10 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GAUSS( our_vector *v )
    {
       rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
+#if defined( UHSHFG_DEBUG_F )
+   printf( "GAUSS: rmsd %g: ", sqrt( rmsd ) );
+   print_our_vector( v );
+#endif
    return sqrt( rmsd );
 }
 
@@ -1792,6 +1797,10 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMG( our_vector *v )
    {
       rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
+#if defined( UHSHFG_DEBUG_F )
+   printf( "EMG: rmsd %g: ", sqrt( rmsd ) );
+   print_our_vector( v );
+#endif
    return sqrt( rmsd );
 }
 
@@ -1898,6 +1907,10 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GMG( our_vector *v )
    {
       rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
+#if defined( UHSHFG_DEBUG_F )
+   printf( "GMG: rmsd %g: ", sqrt( rmsd ) );
+   print_our_vector( v );
+#endif
    return sqrt( rmsd );
 }
 
@@ -2112,6 +2125,10 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
    {
       rmsd += ( gsm_y[ j ] - gsm_yp[ j ] ) * ( gsm_y[ j ] - gsm_yp[ j ] );
    }
+#if defined( UHSHFG_DEBUG_F )
+   printf( "EMGGMG: rmsd %g: ", sqrt( rmsd ) );
+   print_our_vector( v );
+#endif
    return sqrt( rmsd );
 }
 
@@ -2134,5 +2151,3 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_df( our_vector *vd, our_vector *v )
       v ->d[ i ]  = sav_ve;
    }
 }
-
-
