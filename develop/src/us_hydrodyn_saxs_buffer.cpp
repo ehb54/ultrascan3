@@ -1021,6 +1021,8 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_color_rotate );
    hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
+   hbl_file_buttons_2->addWidget ( pb_axis_x );
+   hbl_file_buttons_2->addWidget ( pb_axis_y );
    hbl_file_buttons_2->addWidget ( pb_rescale );
 
    QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout( 0 );
@@ -1112,8 +1114,6 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_plot_buttons->addWidget( pb_crop_undo );
    hbl_plot_buttons->addWidget( pb_crop_right );
    hbl_plot_buttons->addWidget( pb_legend );
-   hbl_plot_buttons->addWidget( pb_axis_x );
-   hbl_plot_buttons->addWidget( pb_axis_y );
 
    QBoxLayout *hbl_plot_buttons_2 = new QHBoxLayout(0);
    hbl_plot_buttons_2->addWidget( cb_guinier );
