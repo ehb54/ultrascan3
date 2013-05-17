@@ -421,7 +421,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    double sigb;
    double chi2;
    double Rg;
-   double Io;
+   double I0;
    double smin;
    double smax;
    double sRgmin;
@@ -459,7 +459,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                sigb,
                                chi2,
                                Rg,
-                               Io,
+                               I0,
                                smax, // don't know why these are flipped
                                smin,
                                sRgmin,
@@ -518,7 +518,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                               sigb,
                                               chi2,
                                               Rg,
-                                              Io,
+                                              I0,
                                               smax, // don't know why these are flipped
                                               smin,
                                               sRgmin,
@@ -559,7 +559,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                  sigb,
                                  chi2,
                                  Rg,
-                                 Io,
+                                 I0,
                                  smax, // don't know why these are flipped
                                  smin,
                                  sRgmin,
@@ -636,15 +636,15 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          //             // cout << errormsg << endl;
          //          }
 
-         if ( !mw_from_I0( qsl_plotted_iq_names[ i ], Io, MW, ICL ) )
+         if ( !mw_from_I0( qsl_plotted_iq_names[ i ], I0, MW, ICL ) )
          {
             editor_msg( "red", errormsg );
             // cout << errormsg;
          } else {
-            // cout << QString( "I0 %1 MW %2 ICL %3\n" ).arg( Io ).arg( MW ).arg( ICL );
+            // cout << QString( "I0 %1 MW %2 ICL %3\n" ).arg( I0 ).arg( MW ).arg( ICL );
          }
 
-         MW_sd = Io ? MW * siga / Io : 0e0;
+         MW_sd = I0 ? MW * siga / I0 : 0e0;
 
          report = 
             QString("")
@@ -654,7 +654,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
                      , sigb
-                     , Io
+                     , I0
                      , siga
                      , MW
                      , MW_sd
@@ -716,7 +716,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             .arg( Rg * Rg * ( sigb / Rg ) )
             .arg( Rg )
             .arg( sigb )
-            .arg( Io )
+            .arg( I0 )
             .arg( siga )
             .arg( MW )
             .arg( MW_sd )
@@ -783,10 +783,17 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
       vector < double > lnI;
       vector < double > sd;
       map < double, double > empty_removed;
+      double mw;
+      double ICL;
       for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
       {
          q2 .push_back( plotted_q[ i ][ j ] * plotted_q[ i ][ j ] );
          lnI.push_back( plotted_I[ i ][ j ] > 0e0 ? log( plotted_I[ i ][ j ] ) : 0e0 );
+         if ( !mw_from_I0( qsl_plotted_iq_names[ i ], exp( lnI.back() ), mw, ICL ) )
+         {
+            cout << QString( "mw from i0 issue %1 %2 %3\n" ).arg( qsl_plotted_iq_names[ i ] ).arg( lnI.back() ).arg( mw );
+         }
+         lnI.back() = log( mw );
          if ( use_SD_weighting )
          {
             sd.push_back( plotted_I[ i ][ j ] > 0e0 ? 
@@ -905,7 +912,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
    double sigb;
    double chi2;
    double Rg;
-   double Io;
+   double I0;
    double smin;
    double smax;
    double sRgmin;
@@ -943,7 +950,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                                sigb,
                                chi2,
                                Rg,
-                               Io,
+                               I0,
                                smax, // don't know why these are flipped
                                smin,
                                sRgmin,
@@ -1007,7 +1014,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                                               sigb,
                                               chi2,
                                               Rg,
-                                              Io,
+                                              I0,
                                               smax, // don't know why these are flipped
                                               smin,
                                               sRgmin,
@@ -1048,7 +1055,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                                  sigb,
                                  chi2,
                                  Rg,
-                                 Io,
+                                 I0,
                                  smax, // don't know why these are flipped
                                  smin,
                                  sRgmin,
@@ -1109,12 +1116,12 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          double ML_sd;
          double ICL;
 
-         // ml_from_qI0( qsl_plotted_iq_names[ i ], Io, ML_sd, ICL );
-         if ( !ml_from_qI0( qsl_plotted_iq_names[ i ], Io, ML, ICL ) )
+         // ml_from_qI0( qsl_plotted_iq_names[ i ], I0, ML_sd, ICL );
+         if ( !ml_from_qI0( qsl_plotted_iq_names[ i ], I0, ML, ICL ) )
          {
             editor_msg( "red", errormsg );
          }
-         ML_sd = Io ? ML * siga / Io : 0e0;
+         ML_sd = I0 ? ML * siga / I0 : 0e0;
 
          report = 
             QString("")
@@ -1124,7 +1131,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                      , qsl_plotted_iq_names[i].ascii()
                      , Rg
                      , sigb 
-                     , Io
+                     , I0
                      , siga
                      , ML
                      , ML_sd
@@ -1186,7 +1193,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             .arg( Rg * Rg * ( sigb / Rg ) )
             .arg( Rg )
             .arg( sigb )
-            .arg( Io )
+            .arg( I0 )
             .arg( siga )
             .arg( ML )
             .arg( ML_sd )
@@ -1253,10 +1260,17 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
       vector < double > lnI;
       vector < double > sd;
       map < double, double > empty_removed;
+      double ml;
+      double ICL;
       for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
       {
          q2 .push_back( plotted_q[ i ][ j ] * plotted_q[ i ][ j ] );
          lnI.push_back( plotted_I[ i ][ j ] > 0e0 ? log(  plotted_q[ i ][ j ] * plotted_I[ i ][ j ] ) : 0e0 );
+         if ( !ml_from_qI0( qsl_plotted_iq_names[ i ], exp( lnI.back() ), ml, ICL ) )
+         {
+            cout << QString( "ml from i0 issue %1 %2 %3\n" ).arg( qsl_plotted_iq_names[ i ] ).arg( lnI.back() ).arg( ml );
+         }
+         lnI.back() = log( ml );
          if ( use_SD_weighting )
          {
             sd.push_back( plotted_I[ i ][ j ] > 0e0 ? 

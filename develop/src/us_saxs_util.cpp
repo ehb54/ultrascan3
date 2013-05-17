@@ -2470,7 +2470,7 @@ void US_Saxs_Util::clear_project()
    wave_empty_names.clear();
    wave_comments.clear();
    wave_Rgs.clear();
-   wave_Ios.clear();
+   wave_I0s.clear();
    wave_smins.clear();
    wave_smaxs.clear();
    wave_sRgmins.clear();
@@ -3916,20 +3916,20 @@ bool US_Saxs_Util::wiki(QString &result)
       }
    }
 
-   // saxs Rg/Io series
+   // saxs Rg/I0 series
 
-   result += "== SAXS Rg/Io computations ==\n";
+   result += "== SAXS Rg/I0 computations ==\n";
 
    QString guinier_summary = 
       "=== SAXS Guinier Summary ===\n"
-      "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
+      "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || Rg || I0 || I0/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
       ;
 
    for ( unsigned int i = 0; i < saxs_conc_names.size(); i++ )
    {
       QString outfile = get_file_name(saxs_conc_names[i],"bsub");
 
-      // compute Rg/Io
+      // compute Rg/I0
       QString guinier = get_file_name(outfile, "guinier");
 
       // these should be parameterized
@@ -3945,7 +3945,7 @@ bool US_Saxs_Util::wiki(QString &result)
       double sigb;
       double chi2;
       double Rg;
-      double Io;
+      double I0;
       double smin;
       double smax;
       double sRgmin;
@@ -3971,7 +3971,7 @@ bool US_Saxs_Util::wiki(QString &result)
                         sigb,
                         chi2,
                         Rg,
-                        Io,
+                        I0,
                         smax, // don't know why these are flipped
                         smin,
                         sRgmin,
@@ -3984,7 +3984,7 @@ bool US_Saxs_Util::wiki(QString &result)
          return false;
       }
       wave_Rgs[saxs_conc_names[i]] = Rg;
-      wave_Ios[saxs_conc_names[i]] = Io;
+      wave_I0s[saxs_conc_names[i]] = I0;
       wave_smins[saxs_conc_names[i]] = smin;
       wave_smaxs[saxs_conc_names[i]] = smax;
       wave_sRgmins[saxs_conc_names[i]] = sRgmin;
@@ -4025,8 +4025,8 @@ bool US_Saxs_Util::wiki(QString &result)
          .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
          .arg(wave_comments[saxs_conc_names[i]])
          .arg(Rg)
-         .arg(Io)
-         .arg(Io/wave_concs[saxs_conc_names[i]])
+         .arg(I0)
+         .arg(I0/wave_concs[saxs_conc_names[i]])
          .arg(sRgmin)
          .arg(sRgmax)
          .arg(smin)
@@ -4039,7 +4039,7 @@ bool US_Saxs_Util::wiki(QString &result)
 
       result +=
          QString("=== Sample %1 ===\n"
-                 "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
+                 "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || Rg || I0 || I0/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
                  "%2"
                  "[[Image(htdocs:%3)]]\n"
                  )
@@ -4631,13 +4631,13 @@ bool US_Saxs_Util::wiki(QString &result)
       cout << cmdz << endl;
       system(cmdz.ascii());
       
-      // wgsbs Rg/Io series
+      // wgsbs Rg/I0 series
       
-      result += "== WAXS guided SAXS buffer subtraction Rg/Io computations ==\n";
+      result += "== WAXS guided SAXS buffer subtraction Rg/I0 computations ==\n";
       
       QString wgsbs_guinier_summary = 
          "=== WGSBS SAXS Guinier Summary ===\n"
-         "|| name || saxs or waxs || conc (mg/ml) || exposure_time (s) || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
+         "|| name || saxs or waxs || conc (mg/ml) || exposure_time (s) || alpha || source file || comments || Rg || I0 || I0/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
          ;
       
       for ( unsigned int i = 0; i < saxs_conc_names.size(); i++ )
@@ -4649,7 +4649,7 @@ bool US_Saxs_Util::wiki(QString &result)
          {
             QString outfile = wave_join[saxs_conc_names[i]];
             
-            // compute Rg/Io
+            // compute Rg/I0
             QString guinier = get_file_name(outfile, "wgsbs_guinier");
             
             // these should be parameterized
@@ -4665,7 +4665,7 @@ bool US_Saxs_Util::wiki(QString &result)
             double sigb;
             double chi2;
             double Rg;
-            double Io;
+            double I0;
             double smin;
             double smax;
             double sRgmin;
@@ -4691,7 +4691,7 @@ bool US_Saxs_Util::wiki(QString &result)
                                sigb,
                                chi2,
                                Rg,
-                               Io,
+                               I0,
                                smax, // don't know why these are flipped
                                smin,
                                sRgmin,
@@ -4704,7 +4704,7 @@ bool US_Saxs_Util::wiki(QString &result)
                return false;
             }
             wave_Rgs[saxs_conc_names[i]] = Rg;
-            wave_Ios[saxs_conc_names[i]] = Io;
+            wave_I0s[saxs_conc_names[i]] = I0;
             wave_smins[saxs_conc_names[i]] = smin;
             wave_smaxs[saxs_conc_names[i]] = smax;
             wave_sRgmins[saxs_conc_names[i]] = sRgmin;
@@ -4745,8 +4745,8 @@ bool US_Saxs_Util::wiki(QString &result)
                .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
                .arg(wave_comments[saxs_conc_names[i]])
                .arg(Rg)
-               .arg(Io)
-               .arg(Io/wave_concs[saxs_conc_names[i]])
+               .arg(I0)
+               .arg(I0/wave_concs[saxs_conc_names[i]])
                .arg(sRgmin)
                .arg(sRgmax)
                .arg(smin)
@@ -4759,7 +4759,7 @@ bool US_Saxs_Util::wiki(QString &result)
             
             result +=
                QString("=== Sample %1 ===\n"
-                       "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
+                       "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || Rg || I0 || I0/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
                        "%2"
                        "[[Image(htdocs:%3)]]\n"
                        )
@@ -4817,13 +4817,13 @@ bool US_Saxs_Util::wiki(QString &result)
       cout << cmd << endl;
       system(cmd.ascii());
       
-      // wgsbs Rg/Io series
+      // wgsbs Rg/I0 series
       
-      result += "== WAXS guided SAXS buffer subtraction unscaled Rg/Io computations ==\n";
+      result += "== WAXS guided SAXS buffer subtraction unscaled Rg/I0 computations ==\n";
       
       QString wgsbs_unscaled_guinier_summary = 
          "=== WGSBS SAXS Unscaled Guinier Summary ===\n"
-         "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
+         "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || Rg || I0 || I0/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
          ;
       
       for ( unsigned int i = 0; i < saxs_conc_names.size(); i++ )
@@ -4835,7 +4835,7 @@ bool US_Saxs_Util::wiki(QString &result)
          {
             QString outfile = wave_wgsbs_unscaled[saxs_conc_names[i]];
             
-            // compute Rg/Io
+            // compute Rg/I0
             QString guinier = get_file_name(outfile, "wgsbs_unscaled_guinier");
             
             // these should be parameterized
@@ -4851,7 +4851,7 @@ bool US_Saxs_Util::wiki(QString &result)
             double sigb;
             double chi2;
             double Rg;
-            double Io;
+            double I0;
             double smin;
             double smax;
             double sRgmin;
@@ -4877,7 +4877,7 @@ bool US_Saxs_Util::wiki(QString &result)
                                sigb,
                                chi2,
                                Rg,
-                               Io,
+                               I0,
                                smax, // don't know why these are flipped
                                smin,
                                sRgmin,
@@ -4890,7 +4890,7 @@ bool US_Saxs_Util::wiki(QString &result)
                return false;
             }
             wave_Rgs[saxs_conc_names[i]] = Rg;
-            wave_Ios[saxs_conc_names[i]] = Io;
+            wave_I0s[saxs_conc_names[i]] = I0;
             wave_smins[saxs_conc_names[i]] = smin;
             wave_smaxs[saxs_conc_names[i]] = smax;
             wave_sRgmins[saxs_conc_names[i]] = sRgmin;
@@ -4931,8 +4931,8 @@ bool US_Saxs_Util::wiki(QString &result)
                .arg(QString("%1").arg(outfile).replace(QRegExp("^cwave."),""))
                .arg(wave_comments[saxs_conc_names[i]])
                .arg(Rg)
-               .arg(Io)
-               .arg(Io/wave_concs[saxs_conc_names[i]])
+               .arg(I0)
+               .arg(I0/wave_concs[saxs_conc_names[i]])
                .arg(sRgmin)
                .arg(sRgmax)
                .arg(smin)
@@ -4945,7 +4945,7 @@ bool US_Saxs_Util::wiki(QString &result)
             
             result +=
                QString("=== Sample %1 ===\n"
-                       "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || Rg || Io || Io/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
+                       "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || Rg || I0 || I0/conc || qRg min || qRg max || q min || q max || chi2 || start point || end point || points used ||\n"
                        "%2"
                        "[[Image(htdocs:%3)]]\n"
                        )

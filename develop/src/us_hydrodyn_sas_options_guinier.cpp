@@ -212,7 +212,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_guinier_csv_filename, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_csv_filename(const QString &)));
 
    cb_guinier_csv_save_data = new QCheckBox(this);
-   cb_guinier_csv_save_data->setText(tr("Save processed q, I(q) data to csv file"));
+   cb_guinier_csv_save_data->setText(tr(" Save processed q, I(q) data to csv file"));
    cb_guinier_csv_save_data->setEnabled(true);
    cb_guinier_csv_save_data->setChecked( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "guinier_csv_save_data" ) &&
                                          ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "guinier_csv_save_data" ] == "1" );

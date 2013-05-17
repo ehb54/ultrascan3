@@ -264,7 +264,7 @@ class US_EXTERN US_Saxs_Util
                        double &sigb,
                        double &chi2,
                        double &Rg,
-                       double &Io,
+                       double &I0,
                        double &smaX,
                        double &smin,
                        double &sRgmin,
@@ -295,7 +295,7 @@ class US_EXTERN US_Saxs_Util
                        double &sigb,
                        double &chi2,
                        double &Rg,
-                       double &Io,
+                       double &I0,
                        double &smax,
                        double &smin,
                        double &sRgmin,
@@ -321,7 +321,7 @@ class US_EXTERN US_Saxs_Util
                        double &sigb,
                        double &chi2,
                        double &Rg,
-                       double &Io,
+                       double &I0,
                        double &smaX,
                        double &smin,
                        double &sRgmin,
@@ -886,7 +886,7 @@ class US_EXTERN US_Saxs_Util
       map < QString, QString >            wave_join;              // maps saxs wave to waxs guided saxs background subtraction join
 
       map < QString, double >             wave_Rgs;               // maps names to Rg
-      map < QString, double >             wave_Ios;               // maps names to Io
+      map < QString, double >             wave_I0s;               // maps names to I0
       map < QString, double >             wave_smins;             // maps names to smins
       map < QString, double >             wave_smaxs;             // maps names to smaxs
       map < QString, double >             wave_sRgmins;           // maps names to sRg min

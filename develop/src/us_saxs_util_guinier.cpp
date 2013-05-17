@@ -133,7 +133,7 @@ bool US_Saxs_Util::guinier_fit(
                                double &sigb,
                                double &chi2,
                                double &Rg,
-                               double &Io,
+                               double &I0,
                                double &smax,
                                double &smin,
                                double &sRgmin,
@@ -197,8 +197,8 @@ bool US_Saxs_Util::guinier_fit(
 
    Rg = sqrt( ( compute_Rc ? -2e0 : -3e0 ) * b );
    sigb = fabs( Rg * sigb / b );
-   Io = exp(a);
-   siga = fabs( Io * siga / a );
+   I0 = exp(a);
+   siga = fabs( I0 * siga / a );
    smin = sqrt(wave[tag].q[startpos]);
    smax = sqrt(wave[tag].q[endpos]);
    sRgmin = Rg * smin;
@@ -212,7 +212,7 @@ bool US_Saxs_Util::guinier_fit(
                               sRgmin,
                               sRgmax,
                               Rg,
-                              Io,
+                              I0,
                               a,
                               b,
                               siga,
@@ -259,7 +259,7 @@ bool US_Saxs_Util::guinier_fit2(
                                 double &sigb,
                                 double &chi2,
                                 double &Rg,
-                                double &Io,
+                                double &I0,
                                 double &smin,
                                 double &smax,
                                 double &sRgmin,
@@ -296,7 +296,7 @@ bool US_Saxs_Util::guinier_fit2(
                            sigb,
                            chi2,
                            Rg,
-                           Io,
+                           I0,
                            smin,
                            smax,
                            sRgmin,
@@ -343,7 +343,7 @@ bool US_Saxs_Util::guinier_fit2(
                      sigb,
                      chi2,
                      Rg,
-                     Io,
+                     I0,
                      smin,
                      smax,
                      sRgmin,
@@ -485,7 +485,7 @@ bool US_Saxs_Util::guinier_fit_with_removal(
                                             double &sigb,
                                             double &chi2,
                                             double &Rg,
-                                            double &Io,
+                                            double &I0,
                                             double &smax,
                                             double &smin,
                                             double &sRgmin,
@@ -529,7 +529,7 @@ bool US_Saxs_Util::guinier_fit_with_removal(
                          sigb,
                          chi2,
                          Rg,
-                         Io,
+                         I0,
                          smax,
                          smin,
                          sRgmin,

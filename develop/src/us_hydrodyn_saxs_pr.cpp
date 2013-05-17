@@ -283,7 +283,7 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
    double I0_exp_to_theo_mult = 1e0;
    if ( our_saxs_options->guinier_use_standards )
    {
-      cout << "mw_from_I0: using standards\n";
+      // cout << "mw_from_I0: using standards\n";
       if ( I0_std_exp == 0e0 )
       {
          errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
@@ -292,7 +292,7 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
       }
       I0_exp_to_theo_mult = our_saxs_options->I0_theo / I0_std_exp;
    } else {
-      cout << "mw_from_I0: standards not used\n";
+      // cout << "mw_from_I0: standards not used\n";
    }
 
    double I0_prot_theo = I0_exp * I0_exp_to_theo_mult;
