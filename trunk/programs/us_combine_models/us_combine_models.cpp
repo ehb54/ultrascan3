@@ -162,9 +162,11 @@ void US_CombineModels::add_models()
 // View
 void US_CombineModels::reset()
 {
+   models    .clear();
+   mdescs    .clear();
    lw_models->clear();
-   pb_reset->setEnabled( false );
-   pb_save ->setEnabled( false );
+   pb_reset ->setEnabled( false );
+   pb_save  ->setEnabled( false );
 }
 
 // Save
@@ -217,11 +219,20 @@ qDebug() << "SAVE:    ncomps" << ncomps << cmodel.components.size();
 qDebug() << "SAVE:    nrunIDs" << runIDs.size();
 
    // Default output name derives from the name of the first input
-   cmodel_name = "global-" + mdescs[ 0 ];
+   cmodel_name        = "global-" + mdescs[ 0 ];
+   QString mdlbnam    = cmodel_name.section( ".",  0, -3 ) + ".";
+   QString mdlanno    = cmodel_name.section( ".", -2, -2 );
+   QString mdlaedt    = mdlanno.section( "_",  0,  0 ) + "_";
+   QString mdlaanl    = "a" + QDateTime::currentDateTime().toString( "yyMMddhhmm" ) + "_";
+   QString mdlatyp    = mdlanno.section( "_",  2,  2 ).section( "-", 0, 0 );
+   QString mdliter    = "_local_i01.model";
+   cmodel_name        = mdlbnam + mdlaedt + mdlaanl + mdlatyp + mdliter;
 qDebug() << "SAVE:     cmodel_name" << cmodel_name;
    QString mdlguid    = US_Util::new_guid();
    cmodel.modelGUID   = mdlguid;
+   cmodel.requestGUID = mdlguid;
    cmodel.global      = US_Model::GLOBAL;
+   cmodel.monteCarlo  = false;
 
    // Open a dialog that reports and allows modification of description
    runID           = cmodel_name.section( ".",  0, -4 );
