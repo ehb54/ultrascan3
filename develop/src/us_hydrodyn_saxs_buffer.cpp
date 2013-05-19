@@ -2668,23 +2668,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
       return false;
    }
 
-   minx = f_qs[ file ][ 0 ];
-   maxx = f_qs[ file ][ f_qs[ file ].size() - 1 ];
-
-   miny = f_Is[ file ][ 0 ];
-   maxy = f_Is[ file ][ 0 ];
-   for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
-   {
-      if ( miny > f_Is[ file ][ i ] )
-      {
-         miny = f_Is[ file ][ i ];
-      }
-      if ( maxy < f_Is[ file ][ i ] )
-      {
-         maxy = f_Is[ file ][ i ];
-      }
-   }
-
+   get_min_max( file, minx, maxx, miny, maxy );
 
 #ifndef QT4
    long Iq = plot_dist->insertCurve( file );
@@ -2698,26 +2682,61 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
 
    unsigned int q_points = f_qs[ file ].size();
 
+   if ( !axis_y_log )
+   {
 #ifndef QT4
-   plot_dist->setCurveData( Iq, 
-                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                            (double *)&( f_qs[ file ][ 0 ] ),
-                            (double *)&( f_Is[ file ][ 0 ] ),
-                            q_points
-                            );
-   plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
+      plot_dist->setCurveData( Iq, 
+                               /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                               (double *)&( f_qs[ file ][ 0 ] ),
+                               (double *)&( f_Is[ file ][ 0 ] ),
+                               q_points
+                               );
+      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
 #else
-   curve->setData(
-                  /* cb_guinier->isChecked() ?
-                     (double *)&(plotted_q2[p][0]) : */
-                  (double *)&( f_qs[ file ][ 0 ] ),
-                  (double *)&( f_Is[ file ][ 0 ] ),
-                  q_points
-                  );
+      curve->setData(
+                     /* cb_guinier->isChecked() ?
+                        (double *)&(plotted_q2[p][0]) : */
+                     (double *)&( f_qs[ file ][ 0 ] ),
+                     (double *)&( f_Is[ file ][ 0 ] ),
+                     q_points
+                     );
 
-   curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
-   curve->attach( plot_dist );
+      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+      curve->attach( plot_dist );
 #endif
+   } else {
+      vector < double > q;
+      vector < double > I;
+      for ( unsigned int i = 0; i < q_points; i++ )
+      {
+         if ( f_Is[ file ][ i ] > 0e0 )
+         {
+            q.push_back( f_qs[ file ][ i ] );
+            I.push_back( f_Is[ file ][ i ] );
+         }
+      }
+      q_points = ( unsigned int )q.size();
+#ifndef QT4
+      plot_dist->setCurveData( Iq, 
+                               /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                               (double *)&( q[ 0 ] ),
+                               (double *)&( I[ 0 ] ),
+                               q_points
+                               );
+      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
+#else
+      curve->setData(
+                     /* cb_guinier->isChecked() ?
+                        (double *)&(plotted_q2[p][0]) : */
+                     (double *)&( q[ 0 ] ),
+                     (double *)&( I[ 0 ] ),
+                     q_points
+                     );
+
+      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+      curve->attach( plot_dist );
+#endif
+   }
    return true;
 }
 
@@ -2751,15 +2770,43 @@ bool US_Hydrodyn_Saxs_Buffer::get_min_max( QString file,
 
    miny = f_Is[ file ][ 0 ];
    maxy = f_Is[ file ][ 0 ];
-   for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
+   if ( axis_y_log )
    {
-      if ( miny > f_Is[ file ][ i ] )
+      unsigned int i = 0;
+      while ( miny <= 0e0 && i < f_Is[ file ].size() )
       {
          miny = f_Is[ file ][ i ];
-      }
-      if ( maxy < f_Is[ file ][ i ] )
-      {
          maxy = f_Is[ file ][ i ];
+         minx = f_qs[ file ][ i ];
+         maxx = f_qs[ file ][ i ];
+         i++;
+      }
+      for ( ; i < f_Is[ file ].size(); i++ )
+      {
+         if ( miny > f_Is[ file ][ i ] && f_Is[ file ][ i ] > 0e0 )
+         {
+            miny = f_Is[ file ][ i ];
+         }
+         if ( maxy < f_Is[ file ][ i ] )
+         {
+            maxy = f_Is[ file ][ i ];
+         }
+         if ( maxx < f_qs[ file ][ i ] )
+         {
+            maxx = f_qs[ file ][ i ];
+         }
+      }
+   } else {
+      for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
+      {
+         if ( miny > f_Is[ file ][ i ] )
+         {
+            miny = f_Is[ file ][ i ];
+         }
+         if ( maxy < f_Is[ file ][ i ] )
+         {
+            maxy = f_Is[ file ][ i ];
+         }
       }
    }
    return true;
@@ -5949,6 +5996,13 @@ void US_Hydrodyn_Saxs_Buffer::axis_y()
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
 #endif
    }
+   if ( plot_dist_zoomer )
+   {
+      plot_dist_zoomer->zoom ( 0 );
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+   }
+   plot_files();
    plot_dist->replot();
 }
 
@@ -6594,6 +6648,21 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
 void US_Hydrodyn_Saxs_Buffer::crop_zero()
 {
    // delete points < zero of selected curves
+
+   if ( QMessageBox::Ok != 
+        QMessageBox::warning(
+                             this,
+                             this->caption() + tr(": Crop zeros" ),
+                             tr(
+                                "Noisy intensity data that sometimes get negative values are physically meaningful.\n"
+                                "The curves are a subtraction between two positive and very close intensity curves." ),
+                             QMessageBox::Ok,
+                             QMessageBox::Cancel | QMessageBox::Default
+                             ) )
+   {
+      return;
+   }
+
    map < QString, bool > selected_files;
 
    for ( int i = 0; i < lb_files->numRows(); i++ )

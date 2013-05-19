@@ -9,6 +9,7 @@
 #ifdef QT4
 #include <qwt_scale_engine.h>
 #endif
+#include <qpalette.h>
 
 // check // fix for gauss dist
 
@@ -420,6 +421,28 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 {
    int minHeight1 = 24;
    int minHeight3 = 25;
+
+   QColorGroup cg_magenta = USglobal->global_colors.cg_normal;
+   cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "magenta" ), QBrush::HorPattern ) );
+
+   /*
+   cg_magenta.setBrush( QColorGroup::Foreground, QBrush( QColor( "magenta" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Button, QBrush( QColor( "blue" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Light, QBrush( QColor( "darkcyan" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Midlight, QBrush( QColor( "darkblue" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Dark, QBrush( QColor( "yellow" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Mid, QBrush( QColor( "darkred" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Text, QBrush( QColor( "green" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::BrightText, QBrush( QColor( "darkgreen" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::ButtonText, QBrush( QColor( "cyan" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "gray" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Shadow, QBrush( QColor( "magenta" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Highlight, QBrush( QColor( "darkyellow" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::HighlightedText, QBrush( QColor( "darkred" ), QBrush::DiagCrossPattern ) );
+   */
+
+   QColorGroup cg_red = cg_magenta;
+   cg_red.setBrush( QColorGroup::Base, QBrush( QColor( "red" ), QBrush::DiagCrossPattern ) );
 
    lbl_files = new QLabel("Data files", this);
    lbl_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1212,7 +1235,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_gauss_fit_start = new mQLineEdit(this, "le_gauss_fit_start Line Edit");
    le_gauss_fit_start->setText( "" );
    le_gauss_fit_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_gauss_fit_start->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_gauss_fit_start->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_gauss_fit_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_gauss_fit_start->setEnabled( false );
    le_gauss_fit_start->setValidator( new QDoubleValidator( le_gauss_fit_start ) );
@@ -1222,7 +1245,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_gauss_fit_end = new mQLineEdit(this, "le_gauss_fit_end Line Edit");
    le_gauss_fit_end->setText( "" );
    le_gauss_fit_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_gauss_fit_end->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_gauss_fit_end->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_gauss_fit_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_gauss_fit_end->setEnabled( false );
    le_gauss_fit_end->setValidator( new QDoubleValidator( le_gauss_fit_end ) );
@@ -1257,7 +1280,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect(pb_ggauss_results, SIGNAL(clicked()), SLOT(ggauss_results()));
    // pb_ggauss_results->hide();
 
-   pb_gauss_as_curves = new QPushButton(tr("As curves"), this);
+   pb_gauss_as_curves = new QPushButton(tr("To produced data"), this);
    pb_gauss_as_curves->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_gauss_as_curves->setMinimumHeight(minHeight1);
    pb_gauss_as_curves->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -1267,7 +1290,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_baseline_start_s = new mQLineEdit(this, "le_baseline_start_s Line Edit");
    le_baseline_start_s->setText( "" );
    le_baseline_start_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_baseline_start_s->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_baseline_start_s->setPalette(QPalette( cg_magenta, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_baseline_start_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_baseline_start_s->setEnabled( false );
    le_baseline_start_s->setValidator( new QDoubleValidator( le_baseline_start_s ) );
@@ -1277,7 +1300,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_baseline_start = new mQLineEdit(this, "le_baseline_start Line Edit");
    le_baseline_start->setText( "" );
    le_baseline_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_baseline_start->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_baseline_start->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_baseline_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_baseline_start->setEnabled( false );
    le_baseline_start->setValidator( new QDoubleValidator( le_baseline_start ) );
@@ -1287,7 +1310,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_baseline_start_e = new mQLineEdit(this, "le_baseline_start_e Line Edit");
    le_baseline_start_e->setText( "" );
    le_baseline_start_e->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_baseline_start_e->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_baseline_start_e->setPalette(QPalette( cg_magenta, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_baseline_start_e->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_baseline_start_e->setEnabled( false );
    le_baseline_start_e->setValidator( new QDoubleValidator( le_baseline_start_e ) );
@@ -1297,7 +1320,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_baseline_end_s = new mQLineEdit(this, "le_baseline_end_s Line Edit");
    le_baseline_end_s->setText( "" );
    le_baseline_end_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_baseline_end_s->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_baseline_end_s->setPalette(QPalette( cg_magenta, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_baseline_end_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_baseline_end_s->setEnabled( false );
    le_baseline_end_s->setValidator( new QDoubleValidator( le_baseline_end_s ) );
@@ -1307,7 +1330,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_baseline_end = new mQLineEdit(this, "le_baseline_end Line Edit");
    le_baseline_end->setText( "" );
    le_baseline_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_baseline_end->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_baseline_end->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_baseline_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_baseline_end->setEnabled( false );
    le_baseline_end->setValidator( new QDoubleValidator( le_baseline_end ) );
@@ -1317,7 +1340,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_baseline_end_e = new mQLineEdit(this, "le_baseline_end_e Line Edit");
    le_baseline_end_e->setText( "" );
    le_baseline_end_e->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_baseline_end_e->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_baseline_end_e->setPalette(QPalette( cg_magenta, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_baseline_end_e->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_baseline_end_e->setEnabled( false );
    le_baseline_end_e->setValidator( new QDoubleValidator( le_baseline_end_e ) );
@@ -1811,7 +1834,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       cout << "update_enables return (running)\n";
       return;
    }
-   cout << "update_enables\n";
+   // cout << "update_enables\n";
 
    // cout << "US_Hydrodyn_Saxs_Hplc::update_enables()\n";
    // cout << QString("saxs_window->qsl_plotted_iq_names.size() %1\n").arg(saxs_window->qsl_plotted_iq_names.size());
@@ -2455,6 +2478,7 @@ void US_Hydrodyn_Saxs_Hplc::add_files( QStringList filenames )
 
 void US_Hydrodyn_Saxs_Hplc::plot_files()
 {
+   // puts( "plot_files" );
    plot_dist->clear();
    //bool any_selected = false;
    double minx = 0e0;
@@ -2553,6 +2577,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
    
    if ( !plot_dist_zoomer )
    {
+      // puts( "redoing zoomer" );
       plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
@@ -2568,10 +2593,10 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
 }
 
 bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
-                                         double &minx,
-                                         double &maxx,
-                                         double &miny,
-                                         double &maxy )
+                                       double &minx,
+                                       double &maxx,
+                                       double &miny,
+                                       double &maxy )
 {
    if ( !f_qs_string .count( file ) ||
         !f_qs        .count( file ) ||
@@ -2582,23 +2607,7 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
       return false;
    }
 
-   minx = f_qs[ file ][ 0 ];
-   maxx = f_qs[ file ][ f_qs[ file ].size() - 1 ];
-
-   miny = f_Is[ file ][ 0 ];
-   maxy = f_Is[ file ][ 0 ];
-   for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
-   {
-      if ( miny > f_Is[ file ][ i ] )
-      {
-         miny = f_Is[ file ][ i ];
-      }
-      if ( maxy < f_Is[ file ][ i ] )
-      {
-         maxy = f_Is[ file ][ i ];
-      }
-   }
-
+   get_min_max( file, minx, maxx, miny, maxy );
 
 #ifndef QT4
    long Iq = plot_dist->insertCurve( file );
@@ -2612,29 +2621,64 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
 
    unsigned int q_points = f_qs[ file ].size();
 
+   if ( !axis_y_log )
+   {
 #ifndef QT4
-   plot_dist->setCurveData( Iq, 
-                            /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                            (double *)&( f_qs[ file ][ 0 ] ),
-                            (double *)&( f_Is[ file ][ 0 ] ),
-                            q_points
-                            );
-   plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
+      plot_dist->setCurveData( Iq, 
+                               /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                               (double *)&( f_qs[ file ][ 0 ] ),
+                               (double *)&( f_Is[ file ][ 0 ] ),
+                               q_points
+                               );
+      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
 #else
-   curve->setData(
-                  /* cb_guinier->isChecked() ?
-                     (double *)&(plotted_q2[p][0]) : */
-                  (double *)&( f_qs[ file ][ 0 ] ),
-                  (double *)&( f_Is[ file ][ 0 ] ),
-                  q_points
-                  );
+      curve->setData(
+                     /* cb_guinier->isChecked() ?
+                        (double *)&(plotted_q2[p][0]) : */
+                     (double *)&( f_qs[ file ][ 0 ] ),
+                     (double *)&( f_Is[ file ][ 0 ] ),
+                     q_points
+                     );
 
-   curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
-   curve->attach( plot_dist );
+      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+      curve->attach( plot_dist );
 #endif
+   } else {
+      vector < double > q;
+      vector < double > I;
+      for ( unsigned int i = 0; i < q_points; i++ )
+      {
+         if ( f_Is[ file ][ i ] > 0e0 )
+         {
+            q.push_back( f_qs[ file ][ i ] );
+            I.push_back( f_Is[ file ][ i ] );
+         }
+      }
+      q_points = ( unsigned int )q.size();
+#ifndef QT4
+      plot_dist->setCurveData( Iq, 
+                               /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                               (double *)&( q[ 0 ] ),
+                               (double *)&( I[ 0 ] ),
+                               q_points
+                               );
+      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
+#else
+      curve->setData(
+                     /* cb_guinier->isChecked() ?
+                        (double *)&(plotted_q2[p][0]) : */
+                     (double *)&( q[ 0 ] ),
+                     (double *)&( I[ 0 ] ),
+                     q_points
+                     );
+
+      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+      curve->attach( plot_dist );
+#endif
+   }
+            
    return true;
 }
-
 
 void US_Hydrodyn_Saxs_Hplc::update_files()
 {
@@ -2646,10 +2690,10 @@ void US_Hydrodyn_Saxs_Hplc::update_files()
 }
 
 bool US_Hydrodyn_Saxs_Hplc::get_min_max( QString file,
-                                           double &minx,
-                                           double &maxx,
-                                           double &miny,
-                                           double &maxy )
+                                         double &minx,
+                                         double &maxx,
+                                         double &miny,
+                                         double &maxy )
 {
    if ( !f_qs_string .count( file ) ||
         !f_qs        .count( file ) ||
@@ -2665,15 +2709,44 @@ bool US_Hydrodyn_Saxs_Hplc::get_min_max( QString file,
 
    miny = f_Is[ file ][ 0 ];
    maxy = f_Is[ file ][ 0 ];
-   for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
+   if ( axis_y_log )
    {
-      if ( miny > f_Is[ file ][ i ] )
+      unsigned int i = 0;
+      while ( miny <= 0e0 && i < f_Is[ file ].size() )
       {
          miny = f_Is[ file ][ i ];
-      }
-      if ( maxy < f_Is[ file ][ i ] )
-      {
          maxy = f_Is[ file ][ i ];
+         minx = f_qs[ file ][ i ];
+         maxx = f_qs[ file ][ i ];
+         i++;
+      }
+      for ( ; i < f_Is[ file ].size(); i++ )
+      {
+         if ( miny > f_Is[ file ][ i ] && f_Is[ file ][ i ] > 0e0 )
+         {
+            miny = f_Is[ file ][ i ];
+         }
+         if ( maxy < f_Is[ file ][ i ] )
+         {
+            maxy = f_Is[ file ][ i ];
+         }
+         if ( maxx < f_qs[ file ][ i ] )
+         {
+            maxx = f_qs[ file ][ i ];
+         }
+      }
+      // printf( "miny %g\n", miny );
+   } else {
+      for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
+      {
+         if ( miny > f_Is[ file ][ i ] )
+         {
+            miny = f_Is[ file ][ i ];
+         }
+         if ( maxy < f_Is[ file ][ i ] )
+         {
+            maxy = f_Is[ file ][ i ];
+         }
       }
    }
    return true;
@@ -2917,19 +2990,19 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          if ( rx_gaussian_type.search( qv[ i ] ) != -1 )
          {
             gaussian_types new_g = gaussian_type;
-            if ( rx_uv.cap( 1 ) == "Gauss" )
+            if ( rx_gaussian_type.cap( 1 ) == "Gauss" )
             {
                new_g = GAUSS;
             }
-            if ( rx_uv.cap( 1 ) == "EMG" )
+            if ( rx_gaussian_type.cap( 1 ) == "EMG" )
             {
                new_g = EMG;
             }
-            if ( rx_uv.cap( 1 ) == "GMG" )
+            if ( rx_gaussian_type.cap( 1 ) == "GMG" )
             {
                new_g = EMG;
             }
-            if ( rx_uv.cap( 1 ) == "EMG+GMG" )
+            if ( rx_gaussian_type.cap( 1 ) == "EMG+GMG" )
             {
                new_g = EMGGMG;
             }
@@ -5740,6 +5813,13 @@ void US_Hydrodyn_Saxs_Hplc::axis_y()
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
 #endif
    }
+   if ( plot_dist_zoomer )
+   {
+      plot_dist_zoomer->zoom ( 0 );
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+   }
+   plot_files();
    plot_dist->replot();
 }
 
@@ -6125,6 +6205,21 @@ void US_Hydrodyn_Saxs_Hplc::add_plot( QString           name,
 void US_Hydrodyn_Saxs_Hplc::crop_zero()
 {
    // delete points < zero of selected curves
+
+   if ( QMessageBox::Ok != 
+        QMessageBox::warning(
+                             this,
+                             this->caption() + tr(": Crop zeros" ),
+                             tr(
+                                "Noisy intensity data that sometimes get negative values are physically meaningful.\n"
+                                "The curves are a subtraction between two positive and very close intensity curves." ),
+                             QMessageBox::Ok,
+                             QMessageBox::Cancel | QMessageBox::Default
+                             ) )
+   {
+      return;
+   }
+
    map < QString, bool > selected_files;
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -6663,6 +6758,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
 
    running               = false;
 
+   disable_all();
    update_enables();
 }
 
@@ -6830,6 +6926,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
    timeshift_mode        = false;
    running               = false;
 
+   disable_all();
    update_enables();
 
 }
@@ -8364,7 +8461,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start()
         le_baseline_start->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
    {
       disconnect( le_baseline_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] /* + q_len_delta */ ) );
+      le_baseline_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] + q_len_delta ) );
       connect( le_baseline_start, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_start_text( const QString & ) ) );
    }
 
@@ -8391,7 +8488,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start()
         le_baseline_end->text().toDouble() > f_qs[ wheel_file ].back() )
    {
       disconnect( le_baseline_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() /* - q_len_delta */ ) );
+      le_baseline_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() - q_len_delta ) );
       connect( le_baseline_end, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_text( const QString & ) ) );
    }
 
