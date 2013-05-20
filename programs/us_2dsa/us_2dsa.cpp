@@ -901,7 +901,7 @@ QString US_2dsa::distrib_info()
    }
 
    else
-   {  // No saved model yet:  composite analysis description
+   {  // No saved model yet:  compose analysis description
       QString adate     = "a" + QDateTime::currentDateTime().toUTC()
                           .toString( "yyMMddhhmm" );
       bool    cusGrid   = model.description.contains( "CUSTOMGRID" );
