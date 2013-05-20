@@ -798,15 +798,29 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
 // Distribution information HTML string
 QString US_pcsa::distrib_info()
 {
-   int ncomp     = model.components.size();
+   int     ncomp   = model.components.size();
+   QString maDesc  = model.description;
+   QString runID   = edata->runID;
    
    if ( ncomp == 0 )
       return "";
+
+   if ( maDesc.startsWith( runID ) )
+   {  // Saved model:  get analysis description from model description
+      maDesc          = maDesc.section( ".", -2, -2 ).section( "_", 1, -1 );
+   }
+   else
+   {  // No saved model yet:  compose analysis description
+      maDesc          = "a" + QDateTime::currentDateTime().toUTC()
+         .toString( "yyMMddhhmm" ) + "_PCSA_local_01";
+   }
 
    QString mstr = "\n" + indent( 4 )
       + tr( "<h3>Data Analysis Settings:</h3>\n" )
       + indent( 4 ) + "<table>\n";
 
+   mstr += table_row( tr( "Model Analysis:" ),
+                      maDesc );
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),
