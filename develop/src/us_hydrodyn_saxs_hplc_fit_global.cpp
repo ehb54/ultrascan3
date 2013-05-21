@@ -3,6 +3,7 @@
 #include "../include/us_hydrodyn_saxs_hplc.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_lm.h"
+#include <assert.h>
 
 US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
                                                                    US_Hydrodyn_Saxs_Hplc *hplc_win,
@@ -10,15 +11,21 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
                                                                    const char *name
                                                                    ) : QDialog(p, name)
 {
+   puts( "hfg 0" );
    this->hplc_win = hplc_win;
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption( tr( "US-SOMO: SAXS Hplc: Global Gaussian Fit" ) );
+   puts( "hfg 0a" );
 
    update_hplc = true;
    running = false;
-   switch ( hplc_win->gaussian_type )
+
+   gaussian_type      = hplc_win->gaussian_type;
+   gaussian_type_size = hplc_win->gaussian_type_size;
+
+   switch ( gaussian_type )
    {
    case US_Hydrodyn_Saxs_Hplc::EMGGMG :
       dist1_active = true;
@@ -35,9 +42,64 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
       break;
    }
 
+   puts( "hfg 0b" );
+   common_size   = 0;
+   per_file_size = 0;
+
+   is_common.clear(); // is common maps the offsets to layout of the regular file specific gaussians
+   offset.clear();
+   puts( "hfg 0c" );
+
+   // height:
+   is_common.push_back( false           );  // height always variable
+   offset   .push_back( per_file_size++ );  // first variable entry
+
+   // center
+   is_common.push_back( true            );  // center always common
+   offset   .push_back( common_size++   );  // first common entry
+
+   puts( "hfg 0d" );
+   // width
+   if ( hplc_win->cb_fix_width->isChecked() )
+   {
+      is_common.push_back( true );
+      offset   .push_back( common_size++   );  // first common entry
+   } else {
+      is_common.push_back( false );
+      offset   .push_back( per_file_size++ );  // first variable entry
+   }
+
+   puts( "hfg 0d" );
+   if ( dist1_active )
+   {
+      if ( hplc_win->cb_fix_dist1->isChecked() )
+      {
+         is_common.push_back( true );
+         offset   .push_back( common_size++   );  // first common entry
+      } else {
+         is_common.push_back( false );
+         offset   .push_back( per_file_size++ );  // first variable entry
+      }
+      if ( dist2_active )
+      {
+         if ( hplc_win->cb_fix_dist2->isChecked() )
+         {
+            is_common.push_back( true );
+            offset   .push_back( common_size++   );  // first common entry
+         } else {
+            is_common.push_back( false );
+            offset   .push_back( per_file_size++ );  // first variable entry
+         }
+      }
+   }
+
+   cout << QString( "hfg:common size %1 per file per gaussian size %2\n" ).arg( common_size ).arg( per_file_size );
+
+   puts( "hfg 1" );
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
+   puts( "hfg 2" );
 
    gaussians_undo.clear();
    gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
@@ -77,7 +139,9 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
       }
    }
 
+   puts( "hfg 3" );
    update_enables();
+   puts( "hfg 4" );
 }
 
 US_Hydrodyn_Saxs_Hplc_Fit_Global::~US_Hydrodyn_Saxs_Hplc_Fit_Global()
@@ -315,7 +379,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
       connect( le_fix_curves, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    */
 
-   for ( unsigned int i = 0; i < ( unsigned int ) hplc_win->gaussians.size() / 3; i++ )
+   for ( unsigned int i = 0; i < ( unsigned int ) hplc_win->gaussians.size() / gaussian_type_size; i++ )
    {
       QCheckBox *cb_tmp;
       cb_tmp = new QCheckBox(this);
@@ -661,58 +725,90 @@ namespace HFIT_GLOBAL
    unsigned int            unified_ggaussian_gaussians_size; // copy from hplc win
    unsigned int            unified_ggaussian_curves;         // copy from hplc win
 
+   unsigned int            per_file_size;
+   unsigned int            common_size;
+   vector < bool >         is_common;
+
    bool                    use_errors;
 
    vector < double       > errors;
    vector < unsigned int > errors_index;
 
-   double compute_gaussian_f( double t, const double *par )
+   double (*compute_gaussian_f)( double, const double * );
+
+   double compute_gaussian_f_GAUSS( double t, const double *par )
    {
       double result = 0e0;
       double height;
       double center;
       double width;
       unsigned int index = unified_ggaussian_param_index[ ( unsigned int ) t ];
-      unsigned int base;
+      unsigned int var_base;
+      unsigned int fix_base;
+
+      // for each gaussian
 
       for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
       {
-         if ( param_fixed[ i ] )
+         var_base = index + per_file_size * i;
+         fix_base = common_size * i;
+
+         // height is always variable
+         if ( param_fixed[ var_base ] )
          {
-            center = fixed_params[ param_pos[ i ] ];
+            height = fixed_params[ param_pos[ var_base ] ];
          } else {
-            center = par         [ param_pos[ i ] ];
-            if ( center < param_min[ param_pos[ i ] ] ||
-                 center > param_max[ param_pos[ i ] ] )
+            height = par         [ param_pos[ var_base ] ];
+            if ( height < param_min[ param_pos[ var_base ] ] ||
+                 height > param_max[ param_pos[ var_base ] ] )
             {
                return 1e99;
             }
          }
+         var_base++;
 
-         base = index + 2 * i;
-
-         if ( param_fixed[ base + 0 ] )
+         // center is always common
+         if ( param_fixed[ fix_base ] )
          {
-            height = fixed_params[ param_pos[ base + 0 ] ];
+            center = fixed_params[ param_pos[ fix_base ] ];
          } else {
-            height = par         [ param_pos[ base + 0 ] ];
-            if ( height < param_min[ param_pos[ base + 0 ] ] ||
-                 height > param_max[ param_pos[ base + 0 ] ] )
+            center = par         [ param_pos[ fix_base ] ];
+            if ( center < param_min[ param_pos[ fix_base ] ] ||
+                 center > param_max[ param_pos[ fix_base ] ] )
             {
                return 1e99;
             }
          }
+         fix_base++;
 
-         if ( param_fixed[ base + 1 ] )
+         // width
+         if ( is_common[ 2 ] )
          {
-            width = fixed_params[ param_pos[ base + 1 ] ];
-         } else {
-            width = par         [ param_pos[ base + 1 ] ];
-            if ( width < param_min[ param_pos[ base + 1 ] ] ||
-                 width > param_max[ param_pos[ base + 1 ] ] )
+            if ( param_fixed[ fix_base ] )
             {
-               return 1e99;
+               width = fixed_params[ param_pos[ fix_base ] ];
+            } else {
+               width = par         [ param_pos[ fix_base ] ];
+               if ( width < param_min[ param_pos[ fix_base ] ] ||
+                    width > param_max[ param_pos[ fix_base ] ] )
+               {
+                  return 1e99;
+               }
             }
+            // fix_base++;
+         } else {
+            if ( param_fixed[ var_base ] )
+            {
+               width = fixed_params[ param_pos[ var_base ] ];
+            } else {
+               width = par         [ param_pos[ var_base ] ];
+               if ( width < param_min[ param_pos[ var_base ] ] ||
+                    width > param_max[ param_pos[ var_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            // var_base++;
          }
 
          //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
@@ -726,7 +822,7 @@ namespace HFIT_GLOBAL
          //             ;
 
          double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
-         result += height * exp( - tmp * tmp / 2 );
+         result += height * exp( - tmp * tmp * 5e-1 );
       }
       
       if ( use_errors )
@@ -737,53 +833,110 @@ namespace HFIT_GLOBAL
       return result;
    }
 
-   double compute_gaussian_f_eq_width( double t, const double *par )
+   double compute_gaussian_f_EMG( double t, const double *par )
    {
       double result = 0e0;
       double height;
       double center;
       double width;
+      double dist1;
       unsigned int index = unified_ggaussian_param_index[ ( unsigned int ) t ];
-      unsigned int base;
+      unsigned int var_base;
+      unsigned int fix_base;
+
+      // for each gaussian
 
       for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
       {
-         if ( param_fixed[ 2 * i + 0 ] )
+         var_base = index + per_file_size * i;
+         fix_base = common_size * i;
+
+         // height is always variable
+         if ( param_fixed[ var_base ] )
          {
-            center = fixed_params[ param_pos[ 2 * i ] ];
+            height = fixed_params[ param_pos[ var_base ] ];
          } else {
-            center = par         [ param_pos[ 2 * i ] ];
-            if ( center < param_min[ param_pos[ 2 * i ] ] ||
-                 center > param_max[ param_pos[ 2 * i ] ] )
+            height = par         [ param_pos[ var_base ] ];
+            if ( height < param_min[ param_pos[ var_base ] ] ||
+                 height > param_max[ param_pos[ var_base ] ] )
             {
                return 1e99;
             }
          }
+         var_base++;
 
-         if ( param_fixed[ 2 * i + 1 ] )
+         // center is always common
+         if ( param_fixed[ fix_base ] )
          {
-            width = fixed_params[ param_pos[ 2 * i + 1 ] ];
+            center = fixed_params[ param_pos[ fix_base ] ];
          } else {
-            width = par         [ param_pos[ 2 * i + 1 ] ];
-            if ( width < param_min[ param_pos[ 2 * i + 1 ] ] ||
-                 width > param_max[ param_pos[ 2 * i + 1 ] ] )
+            center = par         [ param_pos[ fix_base ] ];
+            if ( center < param_min[ param_pos[ fix_base ] ] ||
+                 center > param_max[ param_pos[ fix_base ] ] )
             {
                return 1e99;
             }
          }
+         fix_base++;
 
-         base = index + i;
-
-         if ( param_fixed[ base + 0 ] )
+         // width
+         if ( is_common[ 2] )
          {
-            height = fixed_params[ param_pos[ base + 0 ] ];
-         } else {
-            height = par         [ param_pos[ base + 0 ] ];
-            if ( height < param_min[ param_pos[ base + 0 ] ] ||
-                 height > param_max[ param_pos[ base + 0 ] ] )
+            if ( param_fixed[ fix_base ] )
             {
-               return 1e99;
+               width = fixed_params[ param_pos[ fix_base ] ];
+            } else {
+               width = par         [ param_pos[ fix_base ] ];
+               if ( width < param_min[ param_pos[ fix_base ] ] ||
+                    width > param_max[ param_pos[ fix_base ] ] )
+               {
+                  return 1e99;
+               }
             }
+            fix_base++;
+         } else {
+            if ( param_fixed[ var_base ] )
+            {
+               width = fixed_params[ param_pos[ var_base ] ];
+            } else {
+               width = par         [ param_pos[ var_base ] ];
+               if ( width < param_min[ param_pos[ var_base ] ] ||
+                    width > param_max[ param_pos[ var_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            var_base++;
+         }
+
+         // dist1
+         if ( is_common[ 3 ] )
+         {
+            if ( param_fixed[ fix_base ] )
+            {
+               dist1 = fixed_params[ param_pos[ fix_base ] ];
+            } else {
+               dist1 = par         [ param_pos[ fix_base ] ];
+               if ( dist1 < param_min[ param_pos[ fix_base ] ] ||
+                    dist1 > param_max[ param_pos[ fix_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            // fix_base++;
+         } else {
+            if ( param_fixed[ var_base ] )
+            {
+               dist1 = fixed_params[ param_pos[ var_base ] ];
+            } else {
+               dist1 = par         [ param_pos[ var_base ] ];
+               if ( dist1 < param_min[ param_pos[ var_base ] ] ||
+                    dist1 > param_max[ param_pos[ var_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            // var_base++;
          }
 
          //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
@@ -796,8 +949,51 @@ namespace HFIT_GLOBAL
          //             .arg( width )
          //             ;
 
-         double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
-         result += height * exp( - tmp * tmp / 2 );
+         if ( !dist1 )
+         {
+            double tmp = ( t - center ) / width;
+            result += height * exp( - tmp * tmp * 5e-1 );
+         } else {
+            double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
+            if ( fabs( dist1 ) < dist1_thresh )
+            {
+               double frac_gauss = ( dist1_thresh - fabs( dist1 ) ) / dist1_thresh;
+               if ( dist1 < 0 )
+               {
+                  dist1_thresh *= -1e0;
+               }
+
+               double area              = height * width * M_SQRT2PI;
+               double one_over_a3       = 1e0 / dist1_thresh;
+               double emg_coeff         = area * one_over_a3 * 5e-1 * ( 1e0 - frac_gauss );
+               double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+               double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+               double sign_a3           = dist1_thresh < 0e0 ? -1e0 : 1e0;
+               double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+               double gauss_coeff       = frac_gauss * height;
+
+               double tmp               = t - center;
+               double tmp2              = tmp / width;
+               
+               result +=
+                  emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                  ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                  gauss_coeff * exp( - tmp2 * tmp2 * 5e-1 );
+               ;
+            } else {
+               double area              = height * width * M_SQRT2PI;
+               double one_over_a3       = 1e0 / dist1;
+               double emg_coeff         = area * one_over_a3 * 5e-1;
+               double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+               double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+               double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
+               double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+               double tmp               = t - center;
+               result += 
+                  emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                  ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+            }
+         }
       }
       
       if ( use_errors )
@@ -807,6 +1003,574 @@ namespace HFIT_GLOBAL
 
       return result;
    }
+
+   double compute_gaussian_f_GMG( double t, const double *par )
+   {
+      double result = 0e0;
+      double height;
+      double center;
+      double width;
+      double dist1;
+      unsigned int index = unified_ggaussian_param_index[ ( unsigned int ) t ];
+      unsigned int var_base;
+      unsigned int fix_base;
+
+      // for each gaussian
+
+      for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
+      {
+         var_base = index + per_file_size * i;
+         fix_base = common_size * i;
+
+         // height is always variable
+         if ( param_fixed[ var_base ] )
+         {
+            height = fixed_params[ param_pos[ var_base ] ];
+         } else {
+            height = par         [ param_pos[ var_base ] ];
+            if ( height < param_min[ param_pos[ var_base ] ] ||
+                 height > param_max[ param_pos[ var_base ] ] )
+            {
+               return 1e99;
+            }
+         }
+         var_base++;
+
+         // center is always common
+         if ( param_fixed[ fix_base ] )
+         {
+            center = fixed_params[ param_pos[ fix_base ] ];
+         } else {
+            center = par         [ param_pos[ fix_base ] ];
+            if ( center < param_min[ param_pos[ fix_base ] ] ||
+                 center > param_max[ param_pos[ fix_base ] ] )
+            {
+               return 1e99;
+            }
+         }
+         fix_base++;
+
+         // width
+         if ( is_common[ 2 ] )
+         {
+            if ( param_fixed[ fix_base ] )
+            {
+               width = fixed_params[ param_pos[ fix_base ] ];
+            } else {
+               width = par         [ param_pos[ fix_base ] ];
+               if ( width < param_min[ param_pos[ fix_base ] ] ||
+                    width > param_max[ param_pos[ fix_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            fix_base++;
+         } else {
+            if ( param_fixed[ var_base ] )
+            {
+               width = fixed_params[ param_pos[ var_base ] ];
+            } else {
+               width = par         [ param_pos[ var_base ] ];
+               if ( width < param_min[ param_pos[ var_base ] ] ||
+                    width > param_max[ param_pos[ var_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            var_base++;
+         }
+
+         // dist1
+         if ( is_common[ 3 ] )
+         {
+            if ( param_fixed[ fix_base ] )
+            {
+               dist1 = fixed_params[ param_pos[ fix_base ] ];
+            } else {
+               dist1 = par         [ param_pos[ fix_base ] ];
+               if ( dist1 < param_min[ param_pos[ fix_base ] ] ||
+                    dist1 > param_max[ param_pos[ fix_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            // fix_base++;
+         } else {
+            if ( param_fixed[ var_base ] )
+            {
+               dist1 = fixed_params[ param_pos[ var_base ] ];
+            } else {
+               dist1 = par         [ param_pos[ var_base ] ];
+               if ( dist1 < param_min[ param_pos[ var_base ] ] ||
+                    dist1 > param_max[ param_pos[ var_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            // var_base++;
+         }
+
+         //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
+         //             .arg( t )
+         //             .arg( unified_q[ ( unsigned int ) t ] )
+         //             .arg( index )
+         //             .arg( i )
+         //             .arg( center )
+         //             .arg( height )
+         //             .arg( width )
+         //             ;
+
+         if ( !dist1 )
+         {
+            double tmp = ( t - center ) / width;
+            result += height * exp( - tmp * tmp * 5e-1 );
+         } else {
+            double area                         = height * width * M_SQRT2PI;
+            double one_over_width               = 1e0 / width;
+            double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width +  dist1 * dist1 );
+            double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
+            double gmg_coeff                    = area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
+            double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
+            double gmg_erf_m1                   = dist1 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
+            double tmp = t - center;
+            result += 
+               gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+               ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
+         }            
+      }
+      
+      if ( use_errors )
+      {
+         result /= errors[ errors_index[ (unsigned int) t ] ];
+      }
+
+      return result;
+   }
+
+   double compute_gaussian_f_EMGGMG( double t, const double *par )
+   {
+      double result = 0e0;
+      double height;
+      double center;
+      double width;
+      double dist1;
+      double dist2;
+      unsigned int index = unified_ggaussian_param_index[ ( unsigned int ) t ];
+      unsigned int var_base;
+      unsigned int fix_base;
+
+      // for each gaussian
+
+      for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
+      {
+         var_base = index + per_file_size * i;
+         fix_base = common_size * i;
+
+         // height is always variable
+         if ( param_fixed[ var_base ] )
+         {
+            height = fixed_params[ param_pos[ var_base ] ];
+         } else {
+            height = par         [ param_pos[ var_base ] ];
+            if ( height < param_min[ param_pos[ var_base ] ] ||
+                 height > param_max[ param_pos[ var_base ] ] )
+            {
+               return 1e99;
+            }
+         }
+         var_base++;
+
+         // center is always common
+         if ( param_fixed[ fix_base ] )
+         {
+            center = fixed_params[ param_pos[ fix_base ] ];
+         } else {
+            center = par         [ param_pos[ fix_base ] ];
+            if ( center < param_min[ param_pos[ fix_base ] ] ||
+                 center > param_max[ param_pos[ fix_base ] ] )
+            {
+               return 1e99;
+            }
+         }
+         fix_base++;
+
+         // width
+         if ( is_common[ 2 ] )
+         {
+            if ( param_fixed[ fix_base ] )
+            {
+               width = fixed_params[ param_pos[ fix_base ] ];
+            } else {
+               width = par         [ param_pos[ fix_base ] ];
+               if ( width < param_min[ param_pos[ fix_base ] ] ||
+                    width > param_max[ param_pos[ fix_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            fix_base++;
+         } else {
+            if ( param_fixed[ var_base ] )
+            {
+               width = fixed_params[ param_pos[ var_base ] ];
+            } else {
+               width = par         [ param_pos[ var_base ] ];
+               if ( width < param_min[ param_pos[ var_base ] ] ||
+                    width > param_max[ param_pos[ var_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            var_base++;
+         }
+
+         // dist1
+         if ( is_common[ 3 ] )
+         {
+            if ( param_fixed[ fix_base ] )
+            {
+               dist1 = fixed_params[ param_pos[ fix_base ] ];
+            } else {
+               dist1 = par         [ param_pos[ fix_base ] ];
+               if ( dist1 < param_min[ param_pos[ fix_base ] ] ||
+                    dist1 > param_max[ param_pos[ fix_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            fix_base++;
+         } else {
+            if ( param_fixed[ var_base ] )
+            {
+               dist1 = fixed_params[ param_pos[ var_base ] ];
+            } else {
+               dist1 = par         [ param_pos[ var_base ] ];
+               if ( dist1 < param_min[ param_pos[ var_base ] ] ||
+                    dist1 > param_max[ param_pos[ var_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            var_base++;
+         }
+
+         // dist2
+         if ( is_common[ 4 ] )
+         {
+            if ( param_fixed[ fix_base ] )
+            {
+               dist2 = fixed_params[ param_pos[ fix_base ] ];
+            } else {
+               dist2 = par         [ param_pos[ fix_base ] ];
+               if ( dist2 < param_min[ param_pos[ fix_base ] ] ||
+                    dist2 > param_max[ param_pos[ fix_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            // fix_base++;
+         } else {
+            if ( param_fixed[ var_base ] )
+            {
+               dist2 = fixed_params[ param_pos[ var_base ] ];
+            } else {
+               dist2 = par         [ param_pos[ var_base ] ];
+               if ( dist2 < param_min[ param_pos[ var_base ] ] ||
+                    dist2 > param_max[ param_pos[ var_base ] ] )
+               {
+                  return 1e99;
+               }
+            }
+            // var_base++;
+         }
+
+         //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
+         //             .arg( t )
+         //             .arg( unified_q[ ( unsigned int ) t ] )
+         //             .arg( index )
+         //             .arg( i )
+         //             .arg( center )
+         //             .arg( height )
+         //             .arg( width )
+         //             ;
+
+         if ( !dist1 && !dist2 )
+         {
+            // just a gaussian
+            double tmp = ( t - center ) / width;
+            result += height * exp( - tmp * tmp * 5e-1 );
+         } else {
+            if ( !dist1 )
+            {
+               // GMG
+               double area                         = height * width * M_SQRT2PI;
+               double one_over_width               = 1e0 / width;
+               double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width + dist2 * dist2 );
+               double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
+               double gmg_coeff                    = area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
+               double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
+               double gmg_erf_m1                   = dist2 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
+               double tmp                          = t - center;
+               result += 
+                  gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+                  ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
+            } else {
+               if ( !dist2 )
+               {
+                  // same as EMG here
+                  double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
+                  if ( fabs( dist1 ) < dist1_thresh )
+                  {
+                     // EMG averaged with gauss
+                     double frac_gauss = ( dist1_thresh - fabs( dist1 ) ) / dist1_thresh;
+                     if ( dist1 < 0 )
+                     {
+                        dist1_thresh *= -1e0;
+                     }
+
+                     double area              = height * width * M_SQRT2PI;
+                     double one_over_a3       = 1e0 / dist1_thresh;
+                     double emg_coeff         = area * one_over_a3 * 5e-1 * (1e0 - frac_gauss );
+                     double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+                     double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+                     double sign_a3           = dist1_thresh < 0e0 ? -1e0 : 1e0;
+                     double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+                     double gauss_coeff       = frac_gauss * height;
+
+                     // printf( "EMG t0 %g thresh %g frac gauss %g\n", dist1, dist1_thresh, frac_gauss );
+
+                     double tmp = t - center;
+                     double tmp2 =  tmp / width;
+               
+                     result += 
+                        emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                        ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                        gauss_coeff * exp( - tmp2 * tmp2 * 5e-1 );
+                  } else {
+                     // pure EMG
+                     double area              = height * width * M_SQRT2PI;
+                     double one_over_a3       = 1e0 / dist1;
+                     double emg_coeff         = area * one_over_a3 * 5e-1;
+                     double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+                     double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+                     double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
+                     double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+                     double tmp               = t - center;
+                     result += 
+                        emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                        ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
+                  }
+               } else {
+                  // real EMGGMG
+                  double area                         = height * width * M_SQRT2PI;
+                  double one_over_width               = 1e0 / width;
+                  double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width + dist2 * dist2 );
+                  double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
+                  double gmg_coeff                    = 5e-1 * area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
+                  double gmg_exp_m1                   = -5e-1 * one_over_a2sq_plus_a3sq;
+                  double gmg_erf_m1                   = dist2 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
+
+                  double tmp                          = t - center;
+
+                  double dist1_thresh                 = width / ( 5e0 * sqrt(2e0) - 2e0 );
+
+                  if ( fabs( dist1 ) < dist1_thresh )
+                  {
+                     double frac_gauss = ( dist1_thresh - fabs( dist1 ) ) / dist1_thresh;
+                     if ( dist1 < 0 )
+                     {
+                        dist1_thresh *= -1e0;
+                     }
+
+                     double one_over_a3       = 1e0 / dist1_thresh;
+                     double emg_coeff         = 5e-1 * area * one_over_a3 * 5e-1 * (1e0 - frac_gauss );
+                     double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+                     double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+
+                     double sign_a3           = dist1_thresh < 0e0 ? -1e0 : 1e0;
+                     double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+                     double gauss_coeff       = 5e-1 * frac_gauss * height;
+
+                     double tmp2              = tmp / width;
+               
+                     result +=
+                        emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                        ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                        gauss_coeff * exp( - tmp2 * tmp2 * 5e-1 ) +
+                        gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+                        ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
+                  } else {
+                     // EMG
+                     double one_over_a3       = 1e0 / dist1;
+                     double emg_coeff         = 5e-1 * area * one_over_a3 * 5e-1;
+                     double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
+                     double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+                     double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
+                     double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
+
+                     result += 
+                        emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
+                        ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
+                        gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
+                        ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
+                  }
+               }
+            }
+         }
+      }
+      
+      if ( use_errors )
+      {
+         result /= errors[ errors_index[ (unsigned int) t ] ];
+      }
+
+      return result;
+   }
+
+
+   /* old way
+     double compute_gaussian_f_GAUSS_old( double t, const double *par )
+     {
+     double result = 0e0;
+     double height;
+     double center;
+     double width;
+     unsigned int index = unified_ggaussian_param_index[ ( unsigned int ) t ];
+     unsigned int base;
+
+     for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
+     {
+     if ( param_fixed[ i ] )
+     {
+     center = fixed_params[ param_pos[ i ] ];
+     } else {
+     center = par         [ param_pos[ i ] ];
+     if ( center < param_min[ param_pos[ i ] ] ||
+     center > param_max[ param_pos[ i ] ] )
+     {
+     return 1e99;
+     }
+     }
+
+     base = index + 2 * i;
+
+     if ( param_fixed[ base + 0 ] )
+     {
+     height = fixed_params[ param_pos[ base + 0 ] ];
+     } else {
+     height = par         [ param_pos[ base + 0 ] ];
+     if ( height < param_min[ param_pos[ base + 0 ] ] ||
+     height > param_max[ param_pos[ base + 0 ] ] )
+     {
+     return 1e99;
+     }
+     }
+
+     if ( param_fixed[ base + 1 ] )
+     {
+     width = fixed_params[ param_pos[ base + 1 ] ];
+     } else {
+     width = par         [ param_pos[ base + 1 ] ];
+     if ( width < param_min[ param_pos[ base + 1 ] ] ||
+     width > param_max[ param_pos[ base + 1 ] ] )
+     {
+     return 1e99;
+     }
+     }
+
+     //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
+     //             .arg( t )
+     //             .arg( unified_q[ ( unsigned int ) t ] )
+     //             .arg( index )
+     //             .arg( i )
+     //             .arg( center )
+     //             .arg( height )
+     //             .arg( width )
+     //             ;
+
+     double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
+     result += height * exp( - tmp * tmp * 5e-1 );
+     }
+      
+     if ( use_errors )
+     {
+     result /= errors[ errors_index[ (unsigned int) t ] ];
+     }
+
+     return result;
+     }
+
+     double compute_gaussian_f_eq_width_GAUSS_old( double t, const double *par )
+     {
+     double result = 0e0;
+     double height;
+     double center;
+     double width;
+     unsigned int index = unified_ggaussian_param_index[ ( unsigned int ) t ];
+     unsigned int base;
+
+     for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
+     {
+     if ( param_fixed[ 2 * i + 0 ] )
+     {
+     center = fixed_params[ param_pos[ 2 * i ] ];
+     } else {
+     center = par         [ param_pos[ 2 * i ] ];
+     if ( center < param_min[ param_pos[ 2 * i ] ] ||
+     center > param_max[ param_pos[ 2 * i ] ] )
+     {
+     return 1e99;
+     }
+     }
+
+     if ( param_fixed[ 2 * i + 1 ] )
+     {
+     width = fixed_params[ param_pos[ 2 * i + 1 ] ];
+     } else {
+     width = par         [ param_pos[ 2 * i + 1 ] ];
+     if ( width < param_min[ param_pos[ 2 * i + 1 ] ] ||
+     width > param_max[ param_pos[ 2 * i + 1 ] ] )
+     {
+     return 1e99;
+     }
+     }
+
+     base = index + i;
+
+     if ( param_fixed[ base + 0 ] )
+     {
+     height = fixed_params[ param_pos[ base + 0 ] ];
+     } else {
+     height = par         [ param_pos[ base + 0 ] ];
+     if ( height < param_min[ param_pos[ base + 0 ] ] ||
+     height > param_max[ param_pos[ base + 0 ] ] )
+     {
+     return 1e99;
+     }
+     }
+
+     //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
+     //             .arg( t )
+     //             .arg( unified_q[ ( unsigned int ) t ] )
+     //             .arg( index )
+     //             .arg( i )
+     //             .arg( center )
+     //             .arg( height )
+     //             .arg( width )
+     //             ;
+
+     double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
+     result += height * exp( - tmp * tmp * 5e-1 );
+     }
+      
+     if ( use_errors )
+     {
+     result /= errors[ errors_index[ (unsigned int) t ] ];
+     }
+
+     return result;
+     }
+   */
 
    void list_params()
    {
@@ -834,7 +1598,31 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
    HFIT_GLOBAL::unified_ggaussian_gaussians_size  = hplc_win->unified_ggaussian_gaussians_size;
    HFIT_GLOBAL::unified_ggaussian_curves          = hplc_win->unified_ggaussian_curves;
 
+   HFIT_GLOBAL::per_file_size                     = per_file_size;
+   HFIT_GLOBAL::common_size                       = common_size;
+   HFIT_GLOBAL::is_common                         = is_common;
+
    map < unsigned int, bool > fixed_curves;
+
+   switch ( gaussian_type )
+   {
+   case US_Hydrodyn_Saxs_Hplc::EMGGMG :
+      HFIT_GLOBAL::compute_gaussian_f = &HFIT_GLOBAL::compute_gaussian_f_EMGGMG;
+      // gsm_f = &gsm_f_EMGGMG;
+      break;
+   case US_Hydrodyn_Saxs_Hplc::EMG :
+      HFIT_GLOBAL::compute_gaussian_f = &HFIT_GLOBAL::compute_gaussian_f_EMG;
+      // gsm_f = &gsm_f_EMG;
+      break;
+   case US_Hydrodyn_Saxs_Hplc::GMG :
+      HFIT_GLOBAL::compute_gaussian_f = &HFIT_GLOBAL::compute_gaussian_f_GMG;
+      // gsm_f = &gsm_f_GMG;
+      break;
+   case US_Hydrodyn_Saxs_Hplc::GAUSS :
+      HFIT_GLOBAL::compute_gaussian_f = &HFIT_GLOBAL::compute_gaussian_f_GAUSS;
+      // gsm_f = &gsm_f_GAUSS;
+      break;
+   }
 
    HFIT_GLOBAL::use_errors = use_errors;
 
@@ -863,6 +1651,437 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
    }
 
    double base_val;
+
+   // layout of unified gaussian_params
+   // common portion (shared by all): f=center{,width}{,dist1}{,dist2}
+   // f1,f2,...,fn
+   // variable portion (per file per gaussian): v=height{,width}{,dist1}{,dist2}
+   // v1,v2,...,vn
+
+   // layout of fitting params
+   // param_pos   : the index into either fixed_params (non-changing) or init_params (variable during search)
+   // fixed_params: all the "non-changing during search params"
+   // init_params : all the "variable during search params" // this will be the search vector
+   // param_fixed : boolean as to whether or not the specific param is fixed(true) or variable(false)
+   // base_params : these are a copy of the init_params without replacement from the hplc_win unified_ggaussians
+   //                used for comparing initial rmsds?
+
+   // param_min: minimum value init_params
+   // param_max: maximum value init_params
+
+   // example:
+
+   // say we have g gaussians and k files
+   // unified ggaussians: f1,f2,..fg,file=1{v1,v2,..,vg},file=2{v1,v2,..,vg},...,file=k{v1,v2,..,vg}
+   // variable access for element i of above is ( param_fixed[ i ] ? fixed_params[ param_pos[ i ] ] : init_params[ param_pos[ i ] ] )
+   
+
+   // unified_ggaussians have in "fix_width" mode first "unified_ggaussian_gaussians_size*common_size" elements as common centers and common widths
+   // and the next unified_ggaussian_gaussians_size * per_file_size * unified_ggaussian_curves elements as the curve specific variables
+   // the fixed_params are those that are fixed globally
+   // thie 
+
+   // the common params first, since they are not per file
+
+   for ( unsigned int i = 0; i < hplc_win->unified_ggaussian_gaussians_size; i++ )
+   {
+      // centers always first, always common
+
+      unsigned int ofs = common_size * i;
+
+      if ( cb_fix_center->isChecked() ||
+           fixed_curves.count( i ) )
+      {
+         HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
+         HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+         HFIT_GLOBAL::param_fixed .push_back( true );
+      } else {
+         HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
+
+         if ( cb_pct_center_from_init->isChecked() )
+         {
+            base_val = gaussians_undo[ 0 ][ ofs ];
+         } else {
+            base_val = hplc_win->unified_ggaussian_params[ ofs ];
+         }            
+
+         HFIT_GLOBAL::init_params .push_back( base_val );
+         HFIT_GLOBAL::base_params .push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+         HFIT_GLOBAL::param_fixed .push_back( false );
+
+         double ofs;
+         double min = -1e99;
+         double max = 1e99;
+         if ( cb_pct_center->isChecked() )
+         {
+            ofs = base_val * le_pct_center->text().toDouble() / 100.0;
+            min = base_val - ofs;
+            max = base_val + ofs;
+         }
+
+         HFIT_GLOBAL::param_min   .push_back( min );
+         HFIT_GLOBAL::param_max   .push_back( max );
+      }
+      ofs++;
+
+      if ( hplc_win->cb_fix_width->isChecked() ) // if widths are common
+      {
+         if ( cb_fix_width->isChecked() ||
+              fixed_curves.count( i ) )
+         {
+            HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
+            HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+            HFIT_GLOBAL::param_fixed .push_back( true );
+         } else {
+            HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
+
+            if ( cb_pct_width_from_init->isChecked() )
+            {
+               base_val = gaussians_undo[ 0 ][ ofs ];
+            } else {
+               base_val = hplc_win->unified_ggaussian_params[ ofs ];
+            }            
+
+            HFIT_GLOBAL::init_params .push_back( base_val );
+            HFIT_GLOBAL::base_params .push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+            HFIT_GLOBAL::param_fixed .push_back( false );
+
+            double ofs;
+            double min = 1e-10;
+            double max = 1e99;
+            if ( cb_pct_width->isChecked() )
+            {
+               ofs = base_val * le_pct_width->text().toDouble() / 100.0;
+               min = base_val - ofs;
+               max = base_val + ofs;
+            }
+            if ( min < 1e-10 )
+            {
+               min = 1e-10;
+            }
+            if ( min > max )
+            {
+               min = max * 1e-15;
+            }
+
+            HFIT_GLOBAL::param_min   .push_back( min );
+            HFIT_GLOBAL::param_max   .push_back( max );
+         }
+         ofs++;
+      }
+
+      if ( dist1_active && hplc_win->cb_fix_dist1->isChecked() ) // if dist1s are common
+      {
+         if ( cb_fix_dist1->isChecked() ||
+              fixed_curves.count( i ) )
+         {
+            HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
+            HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+            HFIT_GLOBAL::param_fixed .push_back( true );
+         } else {
+            HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
+
+            if ( cb_pct_dist1_from_init->isChecked() )
+            {
+               base_val = gaussians_undo[ 0 ][ ofs ];
+            } else {
+               base_val = hplc_win->unified_ggaussian_params[ ofs ];
+            }            
+
+            HFIT_GLOBAL::init_params .push_back( base_val );
+            HFIT_GLOBAL::base_params .push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+            HFIT_GLOBAL::param_fixed .push_back( false );
+
+            double ofs;
+            double min = -50e0;
+            double max = 50e0;
+            if ( cb_pct_dist1->isChecked() )
+            {
+               ofs = base_val * le_pct_dist1->text().toDouble() / 100.0;
+               min = base_val - ofs;
+               max = base_val + ofs;
+            }
+            if ( min < -50e0 )
+            {
+               min = -50e0;
+            }
+            if ( max > 50e0 )
+            {
+               max = 50e0;
+            }
+            if ( max < min )
+            {
+               double avg = 5e-1 * ( max + min );
+               min = avg - 1e-1;
+               max = avg + 1e-1;
+            }
+
+            HFIT_GLOBAL::param_min   .push_back( min );
+            HFIT_GLOBAL::param_max   .push_back( max );
+         }
+         ofs++;
+
+         if ( dist2_active && hplc_win->cb_fix_dist2->isChecked() ) // if dist2s are common
+         {
+            if ( cb_fix_dist2->isChecked() ||
+                 fixed_curves.count( i ) )
+            {
+               HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
+               HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+               HFIT_GLOBAL::param_fixed .push_back( true );
+            } else {
+               HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
+
+               if ( cb_pct_dist2_from_init->isChecked() )
+               {
+                  base_val = gaussians_undo[ 0 ][ ofs ];
+               } else {
+                  base_val = hplc_win->unified_ggaussian_params[ ofs ];
+               }            
+
+               HFIT_GLOBAL::init_params .push_back( base_val );
+               HFIT_GLOBAL::base_params .push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+               HFIT_GLOBAL::param_fixed .push_back( false );
+
+               double ofs;
+               double min = -50e0;
+               double max = 50e0;
+               if ( cb_pct_dist2->isChecked() )
+               {
+                  ofs = base_val * le_pct_dist2->text().toDouble() / 100.0;
+                  min = base_val - ofs;
+                  max = base_val + ofs;
+               }
+               if ( min < -50e0 )
+               {
+                  min = -50e0;
+               }
+               if ( max > 50e0 )
+               {
+                  max = 50e0;
+               }
+               if ( max < min )
+               {
+                  double avg = 5e-1 * ( max + min );
+                  min = avg - 1e-1;
+                  max = avg + 1e-1;
+               }
+
+               HFIT_GLOBAL::param_min   .push_back( min );
+               HFIT_GLOBAL::param_max   .push_back( max );
+            }
+            ofs++;
+         }
+      }
+   }
+   // end of common portion
+   // start of variable portion
+
+   unsigned int base_ofs = hplc_win->unified_ggaussian_gaussians_size * common_size;
+   assert( (unsigned int)HFIT_GLOBAL::param_pos.size() == base_ofs && "common_size*number of gaussians should equal param_pos.size()" );
+
+   for ( unsigned int f = 0; f < hplc_win->unified_ggaussian_curves; f++ )
+   {
+      unsigned int ofs = base_ofs + f * per_file_size;
+
+      for ( unsigned int i = 0; i < hplc_win->unified_ggaussian_gaussians_size; i++ )
+      {
+         // heights are always per file
+
+         if ( cb_fix_amplitude->isChecked() ||
+              fixed_curves.count( i ) )
+         {
+            HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
+            HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+            HFIT_GLOBAL::param_fixed .push_back( true );
+         } else {
+            HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
+
+            if ( cb_pct_amplitude_from_init->isChecked() )
+            {
+               base_val = gaussians_undo[ 0 ][ ofs ];
+            } else {
+               base_val = hplc_win->unified_ggaussian_params[ ofs ];
+            }            
+
+            HFIT_GLOBAL::init_params .push_back( base_val );
+            HFIT_GLOBAL::base_params .push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+            HFIT_GLOBAL::param_fixed .push_back( false );
+
+            double ofs;
+            double min = 1e-10;
+            double max = hplc_win->gauss_max_height;
+            if ( cb_pct_amplitude->isChecked() )
+            {
+               ofs = base_val * le_pct_amplitude->text().toDouble() / 100.0;
+               min = base_val - ofs;
+               max = base_val + ofs;
+            }
+            if ( min < 1e-10 )
+            {
+               min = 1e-10;
+            }
+            if ( max > hplc_win->gauss_max_height )
+            {
+               max = hplc_win->gauss_max_height;
+            }
+            if ( min > max )
+            {
+               min = max * 1e-15;
+            }
+
+            HFIT_GLOBAL::param_min   .push_back( min );
+            HFIT_GLOBAL::param_max   .push_back( max );
+         }
+         ofs++;
+
+         if ( !hplc_win->cb_fix_width->isChecked() ) // if widths are not common
+         {
+            if ( cb_fix_width->isChecked() ||
+                 fixed_curves.count( i ) )
+            {
+               HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
+               HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+               HFIT_GLOBAL::param_fixed .push_back( true );
+            } else {
+               HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
+
+               if ( cb_pct_width_from_init->isChecked() )
+               {
+                  base_val = gaussians_undo[ 0 ][ ofs ];
+               } else {
+                  base_val = hplc_win->unified_ggaussian_params[ ofs ];
+               }            
+
+               HFIT_GLOBAL::init_params .push_back( base_val );
+               HFIT_GLOBAL::base_params .push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+               HFIT_GLOBAL::param_fixed .push_back( false );
+
+               double ofs;
+               double min = 1e-10;
+               double max = 1e99;
+               if ( cb_pct_width->isChecked() )
+               {
+                  ofs = base_val * le_pct_width->text().toDouble() / 100.0;
+                  min = base_val - ofs;
+                  max = base_val + ofs;
+               }
+               if ( min < 1e-10 )
+               {
+                  min = 1e-10;
+               }
+               if ( min > max )
+               {
+                  min = max * 1e-15;
+               }
+
+               HFIT_GLOBAL::param_min   .push_back( min );
+               HFIT_GLOBAL::param_max   .push_back( max );
+            }
+            ofs++;
+         }
+
+         if ( dist1_active && !hplc_win->cb_fix_dist1->isChecked() ) // if dist1s are not common
+         {
+            if ( cb_fix_dist1->isChecked() ||
+                 fixed_curves.count( i ) )
+            {
+               HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
+               HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+               HFIT_GLOBAL::param_fixed .push_back( true );
+            } else {
+               HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
+
+               if ( cb_pct_dist1_from_init->isChecked() )
+               {
+                  base_val = gaussians_undo[ 0 ][ ofs ];
+               } else {
+                  base_val = hplc_win->unified_ggaussian_params[ ofs ];
+               }            
+
+               HFIT_GLOBAL::init_params .push_back( base_val );
+               HFIT_GLOBAL::base_params .push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+               HFIT_GLOBAL::param_fixed .push_back( false );
+
+               double ofs;
+               double min = 1e-10;
+               double max = 1e99;
+               if ( cb_pct_dist1->isChecked() )
+               {
+                  ofs = base_val * le_pct_dist1->text().toDouble() / 100.0;
+                  min = base_val - ofs;
+                  max = base_val + ofs;
+               }
+               if ( min < 1e-10 )
+               {
+                  min = 1e-10;
+               }
+               if ( min > max )
+               {
+                  min = max * 1e-15;
+               }
+
+               HFIT_GLOBAL::param_min   .push_back( min );
+               HFIT_GLOBAL::param_max   .push_back( max );
+            }
+            ofs++;
+            if ( dist2_active && !hplc_win->cb_fix_dist2->isChecked() ) // if dist2s are common
+            {
+               if ( cb_fix_dist2->isChecked() ||
+                    fixed_curves.count( i ) )
+               {
+                  HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
+                  HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+                  HFIT_GLOBAL::param_fixed .push_back( true );
+               } else {
+                  HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
+
+                  if ( cb_pct_dist2_from_init->isChecked() )
+                  {
+                     base_val = gaussians_undo[ 0 ][ ofs ];
+                  } else {
+                     base_val = hplc_win->unified_ggaussian_params[ ofs ];
+                  }            
+
+                  HFIT_GLOBAL::init_params .push_back( base_val );
+                  HFIT_GLOBAL::base_params .push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+                  HFIT_GLOBAL::param_fixed .push_back( false );
+
+                  double ofs;
+                  double min = -50e0;
+                  double max = 50e0;
+                  if ( cb_pct_dist2->isChecked() )
+                  {
+                     ofs = base_val * le_pct_dist2->text().toDouble() / 100.0;
+                     min = base_val - ofs;
+                     max = base_val + ofs;
+                  }
+                  if ( min < -50e0 )
+                  {
+                     min = -50e0;
+                  }
+                  if ( max > 50e0 )
+                  {
+                     max = 50e0;
+                  }
+                  if ( max < min )
+                  {
+                     double avg = 5e-1 * ( max + min );
+                     min = avg - 1e-1;
+                     max = avg + 1e-1;
+                  }
+
+                  HFIT_GLOBAL::param_min   .push_back( min );
+                  HFIT_GLOBAL::param_max   .push_back( max );
+               }
+               ofs++;
+            }
+         }
+      } // each gaussian i
+   } // each file f
+   
+
+   /* old way
 
    if ( hplc_win->cb_fix_width->isChecked() )
    {
@@ -1146,8 +2365,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
          }
       }
    }
+   */
 
-   // HFIT_GLOBAL::list_params();
+   HFIT_GLOBAL::list_params();
 
    if ( !HFIT_GLOBAL::init_params.size() )
    {
@@ -1198,17 +2418,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 
    vector < double > gsum  = hplc_win->compute_ggaussian_gaussian_sum();
    vector < double > gsumf( t.size() );
-   if ( hplc_win->cb_fix_width->isChecked() )
+
+   for ( unsigned int i = 0; i < ( unsigned int ) t.size(); i++ )
    {
-      for ( unsigned int i = 0; i < ( unsigned int ) t.size(); i++ )
-      {
-         gsumf[ i ] = HFIT_GLOBAL::compute_gaussian_f_eq_width( t[ i ], &HFIT_GLOBAL::init_params[ 0 ] );
-      }
-   } else {
-      for ( unsigned int i = 0; i < ( unsigned int ) t.size(); i++ )
-      {
-         gsumf[ i ] = HFIT_GLOBAL::compute_gaussian_f( t[ i ], &HFIT_GLOBAL::init_params[ 0 ] );
-      }
+      gsumf[ i ] = (*HFIT_GLOBAL::compute_gaussian_f)( t[ i ], &HFIT_GLOBAL::init_params[ 0 ] );
    }
 
    if ( gsum != gsumf )
@@ -1237,10 +2450,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
                          ( int )      t.size(),
                          ( double * ) &( t[ 0 ] ),
                          ( double * ) &( y[ 0 ] ),
-                         hplc_win->cb_fix_width->isChecked() ?
-                         HFIT_GLOBAL::compute_gaussian_f_eq_width :
-                         HFIT_GLOBAL::compute_gaussian_f
-                         ,
+                         HFIT_GLOBAL::compute_gaussian_f,
                          (const LM::lm_control_struct *)&control,
                          &status );
    

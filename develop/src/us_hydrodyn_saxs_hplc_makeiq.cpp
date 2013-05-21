@@ -11,8 +11,6 @@
 #include <qwt_scale_engine.h>
 #endif
 
-// check // fix for gauss dist
-
 // note: this program uses cout and/or cerr and this should be replaced
 
 #define SLASH QDir::separator()
@@ -1145,8 +1143,54 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
       }
    }
 
+   common_size   = 0;
+   per_file_size = 0;
+   is_common.clear();
+   offset.clear();
+
+   // height:
+   is_common.push_back( false           );  // height always variable
+   offset   .push_back( per_file_size++ );  // first variable entry
+
+   // center
+   is_common.push_back( true            );  // center always common
+   offset   .push_back( common_size++   );  // first common entry
+
+   // width
+   if ( cb_fix_width->isChecked() )
+   {
+      is_common.push_back( true );
+      offset   .push_back( common_size++   );  // first common entry
+   } else {
+      is_common.push_back( false );
+      offset   .push_back( per_file_size++ );  // first variable entry
+   }
+
+   if ( dist1_active )
+   {
+      if ( cb_fix_dist1->isChecked() )
+      {
+         is_common.push_back( true );
+         offset   .push_back( common_size++   );  // first common entry
+      } else {
+         is_common.push_back( false );
+         offset   .push_back( per_file_size++ );  // first variable entry
+      }
+      if ( dist2_active )
+      {
+         if ( cb_fix_dist2->isChecked() )
+         {
+            is_common.push_back( true );
+            offset   .push_back( common_size++   );  // first common entry
+         } else {
+            is_common.push_back( false );
+            offset   .push_back( per_file_size++ );  // first variable entry
+         }
+      }
+   }
+
    // push back centers first
-   // fix for gauss_dist
+
    for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += gaussian_type_size )
    {
       unified_ggaussian_params.push_back( gaussians[ 1 + i ] ); // center
@@ -1184,7 +1228,6 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
          return false;
       }
       
-      // fix for gauss dist
       for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += gaussian_type_size )
       {
          unified_ggaussian_params.push_back( f_gaussians[ files[ i ] ][ 0 + j ] ); // height
@@ -1402,8 +1445,6 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
             }
                  
             unified_ggaussian_t           .push_back( unified_ggaussian_t.size() );
-
-            // fix for gauss dist
 
             // unified_gguassian_param_index is the base of the variable parameters
             // for this curve

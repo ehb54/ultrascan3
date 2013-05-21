@@ -4,6 +4,8 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_lm.h"
 
+#define UHHSF_DEBUG_PLOT
+
 US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
                                                      US_Hydrodyn_Saxs_Hplc *hplc_win,
                                                      QWidget *p, 
@@ -748,7 +750,7 @@ namespace HFIT
          i++;
 
          double tmp = ( t - center ) / width;
-         result += height * exp( - tmp * tmp / 2 );
+         result += height * exp( - tmp * tmp * 5e-1 );
       }
       
       if ( use_errors )
@@ -828,7 +830,7 @@ namespace HFIT
          if ( !dist1 )
          {
             double tmp = ( t - center ) / width;
-            result += height * exp( - tmp * tmp / 2 );
+            result += height * exp( - tmp * tmp * 5e-1 );
          } else {
             double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
             if ( fabs( dist1 ) < dist1_thresh )
@@ -854,7 +856,7 @@ namespace HFIT
                result +=
                   emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
                   ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
-                  gauss_coeff * exp( - tmp2 * tmp2 / 2 );
+                  gauss_coeff * exp( - tmp2 * tmp2 * 5e-1 );
                ;
             } else {
                double area              = height * width * M_SQRT2PI;
@@ -949,7 +951,7 @@ namespace HFIT
          if ( !dist1 )
          {
             double tmp = ( t - center ) / width;
-            result += height * exp( - tmp * tmp / 2 );
+            result += height * exp( - tmp * tmp * 5e-1 );
          } else {
             double area                         = height * width * M_SQRT2PI;
             double one_over_width               = 1e0 / width;
@@ -1056,11 +1058,13 @@ namespace HFIT
 
          if ( !dist1 && !dist2 )
          {
+            // just a gaussian
             double tmp = ( t - center ) / width;
-            result += height * exp( - tmp * tmp / 2 );
+            result += height * exp( - tmp * tmp * 5e-1 );
          } else {
             if ( !dist1 )
             {
+               // GMG
                double area                         = height * width * M_SQRT2PI;
                double one_over_width               = 1e0 / width;
                double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width + dist2 * dist2 );
@@ -1075,9 +1079,11 @@ namespace HFIT
             } else {
                if ( !dist2 )
                {
+                  // same as EMG here
                   double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
                   if ( fabs( dist1 ) < dist1_thresh )
                   {
+                     // EMG averaged with gauss
                      double frac_gauss = ( dist1_thresh - fabs( dist1 ) ) / dist1_thresh;
                      if ( dist1 < 0 )
                      {
@@ -1093,7 +1099,7 @@ namespace HFIT
                      double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
                      double gauss_coeff       = frac_gauss * height;
 
-                     printf( "EMG t0 %g thresh %g frac gauss %g\n", dist1, dist1_thresh, frac_gauss );
+                     // printf( "EMG t0 %g thresh %g frac gauss %g\n", dist1, dist1_thresh, frac_gauss );
 
                      double tmp = t - center;
                      double tmp2 =  tmp / width;
@@ -1101,8 +1107,9 @@ namespace HFIT
                      result += 
                         emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
                         ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
-                        gauss_coeff * exp( - tmp2 * tmp2 / 2 );
+                        gauss_coeff * exp( - tmp2 * tmp2 * 5e-1 );
                   } else {
+                     // pure EMG
                      double area              = height * width * M_SQRT2PI;
                      double one_over_a3       = 1e0 / dist1;
                      double emg_coeff         = area * one_over_a3 * 5e-1;
@@ -1116,18 +1123,19 @@ namespace HFIT
                         ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
                   }
                } else {
-                  double area = height * width * M_SQRT2PI;
-                  // GMG
+                  // real EMGGMG
+                  double area                         = height * width * M_SQRT2PI;
                   double one_over_width               = 1e0 / width;
-                  double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width +  dist2 * dist2 );
+                  double one_over_a2sq_plus_a3sq      = 1e0 / ( width * width + dist2 * dist2 );
                   double sqrt_one_over_a2sq_plus_a3sq = sqrt( one_over_a2sq_plus_a3sq );
                   double gmg_coeff                    = 5e-1 * area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
-                  double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
+                  double gmg_exp_m1                   = -5e-1 * one_over_a2sq_plus_a3sq;
                   double gmg_erf_m1                   = dist2 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
 
-                  double tmp               = t - center;
+                  double tmp                          = t - center;
 
-                  double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
+                  double dist1_thresh                 = width / ( 5e0 * sqrt(2e0) - 2e0 );
+
                   if ( fabs( dist1 ) < dist1_thresh )
                   {
                      double frac_gauss = ( dist1_thresh - fabs( dist1 ) ) / dist1_thresh;
@@ -1140,16 +1148,17 @@ namespace HFIT
                      double emg_coeff         = 5e-1 * area * one_over_a3 * 5e-1 * (1e0 - frac_gauss );
                      double emg_exp_1         = width * width * one_over_a3 * one_over_a3 * 5e-1;
                      double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
+
                      double sign_a3           = dist1_thresh < 0e0 ? -1e0 : 1e0;
                      double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
                      double gauss_coeff       = 5e-1 * frac_gauss * height;
 
-                     double tmp2 =  tmp / width;
+                     double tmp2              = tmp / width;
                
                      result +=
                         emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
                         ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 ) +
-                        gauss_coeff * exp( - tmp2 * tmp2 / 2 ) +
+                        gauss_coeff * exp( - tmp2 * tmp2 * 5e-1 ) +
                         gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
                         ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
                   } else {
@@ -1795,6 +1804,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_cg()
    update_enables();
 }
 
+#if !defined( UHSHF_FALSE_GA )
 void US_Hydrodyn_Saxs_Hplc_Fit::ga()
 {
    puts( "ga" );
@@ -1848,7 +1858,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
    progress->reset();
    update_enables();
 }
-
+#endif
 
 void US_Hydrodyn_Saxs_Hplc_Fit::stop()
 {
@@ -1936,6 +1946,21 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
       }
 
       rmsd = sqrt( rmsd );
+
+#if defined( UHHSF_DEBUG_PLOT )
+      if ( use_par.size() == 1 )
+      {
+         cout << QString( "%1 %2\n" ).arg( use_par[ 0 ] ).arg( rmsd );
+      }
+      if ( use_par.size() == 2 )
+      {
+         if ( !( i % pop_size ) )
+         {
+            puts( "" );
+         }
+         cout << QString( "%1 %2 %3\n" ).arg( use_par[ 0 ] ).arg( use_par[ 1 ] ).arg( rmsd );
+      }
+#endif
       if ( rmsd < best_rmsd )
       {
          best_rmsd = rmsd;
@@ -1977,3 +2002,142 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
    progress->reset();
    update_enables();
 }
+
+#if defined( UHSHF_FALSE_GA )
+void US_Hydrodyn_Saxs_Hplc_Fit::ga()
+{
+   setup_run();
+   puts( "grid" );
+   cout << "gauss fit start\n";
+
+   vector < double > x = hplc_win->f_qs[ hplc_win->wheel_file ];
+   vector < double > t;
+   vector < double > y;
+   vector < double > yp( x.size() );
+
+   double start = hplc_win->le_gauss_fit_start->text().toDouble();
+   double end   = hplc_win->le_gauss_fit_end  ->text().toDouble();
+
+   for ( unsigned int j = 0; j < x.size(); j++ )
+   {
+      if ( x[ j ] >= start && x[ j ] <= end )
+      {
+         t.push_back( x[ j ] );
+         y.push_back( hplc_win->f_Is[ hplc_win->wheel_file ][ j ] );
+      }
+   }
+
+   gsm_setup();
+
+   vector < double > par = HFIT::init_params;
+
+   // US_Vector::printvector( QString( "par start" ), par );
+
+   // determine total count
+
+   unsigned int pop_size    = le_population->text().toUInt();
+   unsigned int total_count = ( unsigned int ) pow( (double) pop_size, (int) HFIT::init_params.size() );
+
+   cout << QString( "total points %1\n" ).arg( total_count );
+
+   vector < double > use_par( par.size() );
+   vector < double > ofs_per( par.size() );
+
+   for ( unsigned int j = 0; j < ( unsigned int ) HFIT::init_params.size(); j++ )
+   {
+      ofs_per[ j ] = ( HFIT::param_max[ j ] - HFIT::param_min[ j ] ) / ( pop_size - 1 );
+   }
+      
+   double best_rmsd     = 1e99;
+   vector < double >    best_params;
+
+   vector < double >    org_params = HFIT::init_params;
+   double org_rmsd = 0e0;
+   for ( unsigned int j = 0; j < t.size(); j++ )
+   {
+      yp[ j ]  = (*HFIT::compute_gaussian_f)( t[ j ], (double *)(&HFIT::base_params[ 0 ]) );
+      org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
+   }
+   
+   org_rmsd = sqrt( org_rmsd );
+
+   running = true;
+   update_enables();
+
+   for ( unsigned int i = 0; i < total_count; i++ )
+   {
+      unsigned int remainder = i;
+      progress->setProgress( i, total_count );
+      qApp->processEvents();
+
+      for ( unsigned int j = 0; j < ( unsigned int ) HFIT::init_params.size(); j++ )
+      {
+         unsigned int pos = remainder % pop_size;
+         use_par[ j ] = HFIT::param_min[ j ] + pos * ofs_per[ j ];
+         remainder /= pop_size;
+      }
+
+      // compute new y
+      double rmsd = 0e0;
+
+      our_vector *v = new_our_vector( HFIT::init_params.size() );
+      for ( int j = 0; j < v->len; j++ )
+      {
+         v->d[ j ] = use_par[ j ];
+      }
+      rmsd  = (*gsm_f)( v );
+
+      if ( use_par.size() == 1 )
+      {
+         cout << QString( "%1 %2\n" ).arg( use_par[ 0 ] ).arg( rmsd );
+      }
+      if ( use_par.size() == 2 )
+      {
+         if ( !( i % pop_size ) )
+         {
+            puts( "" );
+         }
+         cout << QString( "%1 %2 %3\n" ).arg( use_par[ 0 ] ).arg( use_par[ 1 ] ).arg( rmsd );
+      }
+      if ( rmsd < best_rmsd )
+      {
+         best_rmsd = rmsd;
+         best_params = use_par;
+      }
+      if ( !running )
+      {
+         break;
+      }
+   } 
+
+   running = false;
+
+   if ( org_rmsd > best_rmsd )
+   {
+
+      par = best_params;
+
+      // US_Vector::printvector( "after grid par is", par );
+
+      for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
+      {
+         if ( !HFIT::param_fixed[ i ] )
+         {
+            hplc_win->gaussians[ i ] = par[ HFIT::param_pos[ i ] ];
+         }
+      }
+      gaussians_undo.push_back( hplc_win->gaussians );
+   } else {
+      cout << "no improvement, reverting to original values\n";
+   }
+
+   if ( update_hplc )
+   {
+      hplc_win->gauss_init_markers();
+      hplc_win->gauss_init_gaussians();
+      hplc_win->update_gauss_pos();
+   }
+   progress->reset();
+   update_enables();
+}
+#endif

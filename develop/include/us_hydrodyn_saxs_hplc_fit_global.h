@@ -177,8 +177,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
 
       bool          use_errors;
 
+      US_Hydrodyn_Saxs_Hplc::gaussian_types   gaussian_type;
+      int                                     gaussian_type_size;
+
       bool          dist1_active;
       bool          dist2_active;
+
+      unsigned int            common_size;
+      unsigned int            per_file_size;
+      vector < bool >         is_common; // is common maps the offsets to layout of the regular file specific gaussians
+      vector < unsigned int > offset;
 
    private slots:
 
@@ -225,9 +233,11 @@ namespace HFIT_GLOBAL
    extern vector < double       > errors;
    extern vector < unsigned int > errors_index;
 
-   double compute_gaussian_f         ( double t, const double *par );
-   double compute_gaussian_f_eq_width( double t, const double *par );
+   extern double (*compute_gaussian_f)( double t, const double *par );
 
+   extern unsigned int            per_file_size;
+   extern unsigned int            common_size;
+   extern vector < bool >         is_common;
    void list_params();
 };
 

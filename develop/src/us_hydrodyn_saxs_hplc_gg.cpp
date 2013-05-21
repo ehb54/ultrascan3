@@ -27,6 +27,7 @@ bool US_Hydrodyn_Saxs_Hplc::unified_ggaussian_to_f_gaussians()
    // v1,v2,...,vn
 
    // these are both per gaussian:
+   /* now handled in create_unified_ggaussian_target 
    unsigned int common_size   = 0;
    unsigned int per_file_size = 0;
 
@@ -73,6 +74,7 @@ bool US_Hydrodyn_Saxs_Hplc::unified_ggaussian_to_f_gaussians()
          }
       }
    }
+   */
 
    US_Vector::printvector( "unified_ggaussian_to_f_gaussians is_common", is_common );
    US_Vector::printvector( "unified_ggaussian_to_f_gaussians offset"   , offset    );
@@ -108,37 +110,5 @@ bool US_Hydrodyn_Saxs_Hplc::unified_ggaussian_to_f_gaussians()
       f_gaussians[ unified_ggaussian_files[ i ] ] = g;
    }
 
-   /* old way
-      if ( cb_fix_width->isChecked() )
-      {
-      for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
-      {
-      vector < double > g;
-      unsigned int  index = 2 * unified_ggaussian_gaussians_size + i * unified_ggaussian_gaussians_size;
-
-      for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
-      {
-      g.push_back( unified_ggaussian_params[ index + j + 0 ] );
-      g.push_back( unified_ggaussian_params[ 2 * j + 0 ] );
-      g.push_back( unified_ggaussian_params[ 2 * j + 1 ] );
-      }
-      f_gaussians[ unified_ggaussian_files[ i ] ] = g;
-      }
-      } else {
-      for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
-      {
-      vector < double > g;
-      unsigned int  index = unified_ggaussian_gaussians_size + i * 2 * unified_ggaussian_gaussians_size;
-
-      for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
-      {
-      g.push_back( unified_ggaussian_params[ index + 2 * j + 0 ] );
-      g.push_back( unified_ggaussian_params[ j ] );
-      g.push_back( unified_ggaussian_params[ index + 2 * j + 1 ] );
-      }
-      f_gaussians[ unified_ggaussian_files[ i ] ] = g;
-      }
-      }            
-   */
    return true;
 }

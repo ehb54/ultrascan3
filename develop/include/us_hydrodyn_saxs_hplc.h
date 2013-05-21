@@ -620,6 +620,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool                         unified_ggaussian_to_f_gaussians();
 
+      unsigned int                 common_size;
+      unsigned int                 per_file_size;
+      vector < bool >              is_common; // is common maps the offsets to layout of the regular file specific gaussians
+      vector < unsigned int >      offset;
+
    private slots:
 
       void setupGUI();
