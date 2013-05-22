@@ -901,7 +901,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    iq_widgets.push_back( cb_guinier );
 
    cb_cs_guinier = new QCheckBox(this);
-   cb_cs_guinier->setText(tr(" CS plot    q^2 range:"));
+   cb_cs_guinier->setText(tr("CS"));
    // cb_cs_guinier->setMinimumHeight(minHeight1);
    cb_cs_guinier->setEnabled(true);
    cb_cs_guinier->setChecked(false);
@@ -909,6 +909,16 @@ void US_Hydrodyn_Saxs::setupGUI()
    cb_cs_guinier->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_cs_guinier, SIGNAL(clicked()), SLOT(set_cs_guinier()));
    iq_widgets.push_back( cb_cs_guinier );
+
+   cb_Rt_guinier = new QCheckBox(this);
+   cb_Rt_guinier->setText(tr("TV    q^2 range:"));
+   // cb_Rt_guinier->setMinimumHeight(minHeight1);
+   cb_Rt_guinier->setEnabled(true);
+   cb_Rt_guinier->setChecked(false);
+   cb_Rt_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_Rt_guinier->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_Rt_guinier, SIGNAL(clicked()), SLOT(set_Rt_guinier()));
+   iq_widgets.push_back( cb_Rt_guinier );
 
    le_guinier_lowq2 = new QLineEdit(this, "guinier_lowq2 Line Edit");
    le_guinier_lowq2->setText("");
@@ -939,7 +949,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    iq_widgets.push_back( cb_user_range );
 
    cb_kratky = new QCheckBox(this);
-   cb_kratky->setText(tr(" Kratky plot  q range:"));
+   cb_kratky->setText(tr("Kratky plot     q range:"));
    // cb_kratky->setMinimumHeight(minHeight1);
    cb_kratky->setEnabled(true);
    cb_kratky->setChecked(false);
@@ -1272,9 +1282,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    grid_saxs->attach( plot_saxs );
 #endif
    plot_saxs->setAxisTitle( QwtPlot::xBottom, cb_guinier->isChecked() ? tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
-   plot_saxs->setAxisTitle( QwtPlot::yLeft,   cb_kratky ->isChecked() ? tr( " q^2 * I(q)"        ) : 
-                            ( cb_cs_guinier->isChecked() ?
-                              tr( "q*I(q) (log scale)" ) : tr( "I(q) (log scale)" ) )
+   plot_saxs->setAxisTitle( QwtPlot::yLeft,   
+                            cb_kratky ->isChecked() ? 
+                            tr( " q^2 * I(q)"        ) : 
+                            ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() ? tr( "q*I(q) (log scale)" ) : 
+                              ( cb_guinier->isChecked() && cb_Rt_guinier->isChecked() ? tr( "q^2*I(q) (log scale)" ) : tr( "I(q) (log scale)" ) ) )
                             );
 #ifndef QT4
    plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
@@ -1627,8 +1639,9 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    gl_plot_ctls->addWidget( cb_guinier    , 0, 0 );
    gl_plot_ctls->addWidget( cb_cs_guinier , 0, 1 );
+   gl_plot_ctls->addWidget( cb_Rt_guinier , 0, 2 );
    gl_plot_ctls->addWidget( cb_user_range , 1, 0 );
-   gl_plot_ctls->addWidget( cb_kratky     , 1, 1 );
+   gl_plot_ctls->addMultiCellWidget( cb_kratky, 1, 1, 1, 2 );
 
    //    QHBoxLayout *hbl_guinier = new QHBoxLayout;
    //    hbl_guinier->addWidget( cb_guinier );
@@ -4357,9 +4370,11 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
 #ifndef QT4
    plotted_Gp.clear();
    plotted_cs_Gp.clear();
+   plotted_Rt_Gp.clear();
 #else
    plotted_Gp_curves.clear();
    plotted_cs_Gp_curves.clear();
+   plotted_Rt_Gp_curves.clear();
 #endif
    plotted_guinier_valid.clear();
    plotted_guinier_plotted.clear();
@@ -4377,6 +4392,14 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plotted_cs_guinier_b.clear();
    plotted_cs_guinier_x.clear();
    plotted_cs_guinier_y.clear();
+   plotted_Rt_guinier_valid.clear();
+   plotted_Rt_guinier_plotted.clear();
+   plotted_Rt_guinier_lowq2.clear();
+   plotted_Rt_guinier_highq2.clear();
+   plotted_Rt_guinier_a.clear();
+   plotted_Rt_guinier_b.clear();
+   plotted_Rt_guinier_x.clear();
+   plotted_Rt_guinier_y.clear();
 }
 
 void US_Hydrodyn_Saxs::clear_plot_saxs_and_replot_experimental()
@@ -4556,7 +4579,8 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
       pb_clear_plot_saxs->setText(tr("Clear SANS Curve"));
       plot_saxs->setTitle((cb_guinier->isChecked() ? 
                            ( cb_cs_guinier->isChecked() ?
-                             "CS Guinier " : "Guinier " )
+                             "CS Guinier " : 
+                             ( cb_Rt_guinier->isChecked() ? "Transverse Guinier " : "Guinier " ) )
                            : "") + tr("SANS Curve"));
 
       rb_saxs_iq_native_debye->setEnabled(false);
@@ -4584,7 +4608,8 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
       pb_clear_plot_saxs->setText(tr("Clear SAXS Curve"));
       plot_saxs->setTitle((cb_guinier->isChecked() ? 
                            ( cb_cs_guinier->isChecked() ?
-                             "CS Guinier " : "Guinier " )
+                             "CS Guinier " : 
+                             ( cb_Rt_guinier->isChecked() ? "Transverse Guinier " : "Guinier " ) )
                            : "") + tr("SAXS Curve"));
 
       rb_saxs_iq_native_debye->setEnabled(true);
@@ -5946,9 +5971,11 @@ void US_Hydrodyn_Saxs::rescale_plot()
    plot_domain( lowq, highq );
    plot_range ( lowq, highq, lowI, highI );
 
+   /*
    cout << "rescale plot "
            << lowq << ":" << highq << "  "
            << lowI << ":" << highI << endl;
+   */
 
    plot_saxs->setAxisScale( QwtPlot::xBottom, lowq, highq );
    plot_saxs->setAxisScale( QwtPlot::yLeft,   lowI, highI );
@@ -6030,7 +6057,10 @@ void US_Hydrodyn_Saxs::set_user_range()
                                  cb_kratky ->isChecked() ?
                                  tr( " q^2 * I(q)"        ) : 
                                  ( cb_cs_guinier->isChecked() ?                                 
-                                   tr( "q*I(q) (log scale)" ) : tr( "I(q) (log scale)" ) )
+                                   tr( "q*I(q) (log scale)" ) : 
+                                   ( cb_Rt_guinier->isChecked() ?
+                                     tr( "q^2*I(q) (log scale)" ) :
+                                     tr( "I(q) (log scale)" ) ) )
                                  );
 #ifndef QT4
       plot_saxs->setAxisOptions( QwtPlot::yLeft, 
@@ -6049,6 +6079,23 @@ void US_Hydrodyn_Saxs::set_user_range()
       
 void US_Hydrodyn_Saxs::set_cs_guinier()
 {
+   if ( cb_cs_guinier->isChecked() )
+   {
+      disconnect(cb_Rt_guinier, SIGNAL(clicked()) );
+      cb_Rt_guinier->setChecked( false );
+      connect(cb_Rt_guinier, SIGNAL(clicked()), SLOT(set_Rt_guinier()));
+   }
+   set_guinier();
+}
+
+void US_Hydrodyn_Saxs::set_Rt_guinier()
+{
+   if ( cb_Rt_guinier->isChecked() )
+   {
+      disconnect(cb_cs_guinier, SIGNAL(clicked()) );
+      cb_cs_guinier->setChecked( false );
+      connect(cb_cs_guinier, SIGNAL(clicked()), SLOT(set_cs_guinier()));
+   }
    set_guinier();
 }
 
@@ -6120,55 +6167,109 @@ void US_Hydrodyn_Saxs::plot_domain(
             // cout << "guinier domain " << lowq << ":" << highq << endl;
          }
       } else {
-         // first compute available guinier range
-         // this could be calculated once upon adding curves
-
-         for ( unsigned int i = 0; 
-#ifndef QT4
-               i < plotted_Iq.size();
-#else
-               i < plotted_Iq_curves.size();
-#endif
-               i++ )
+         if ( cb_Rt_guinier->isChecked() )
          {
-            if ( plotted_guinier_valid.count(i) &&
-                 plotted_guinier_valid[i] == true )
+
+            // first compute available guinier range
+            // this could be calculated once upon adding curves
+
+            for ( unsigned int i = 0; 
+#ifndef QT4
+                  i < plotted_Iq.size();
+#else
+                  i < plotted_Iq_curves.size();
+#endif
+                  i++ )
             {
-               if ( !any_guinier )
+               if ( plotted_Rt_guinier_valid.count(i) &&
+                    plotted_Rt_guinier_valid[i] == true )
                {
-                  lowq2 = plotted_guinier_lowq2[i];
-                  highq2 = plotted_guinier_highq2[i];
-                  any_guinier = true;
-               } else {
-                  if ( lowq2 > plotted_guinier_lowq2[i] )
+                  if ( !any_guinier )
+                  {
+                     lowq2 = plotted_Rt_guinier_lowq2[i];
+                     highq2 = plotted_Rt_guinier_highq2[i];
+                     any_guinier = true;
+                  } else {
+                     if ( lowq2 > plotted_Rt_guinier_lowq2[i] )
+                     {
+                        lowq2 = plotted_Rt_guinier_lowq2[i];
+                     }
+                     if ( highq2 < plotted_Rt_guinier_highq2[i] )
+                     {
+                        highq2 = plotted_Rt_guinier_highq2[i];
+                     }
+                  }
+               }
+               if ( any_guinier )
+               {
+                  lowq2 *= .75;
+                  highq2 *= 1.2;
+               }
+      
+               // override with user settings
+
+               lowq = 
+                  le_guinier_lowq2->text().toDouble() ?
+                  le_guinier_lowq2->text().toDouble() :
+                  lowq2;
+
+               highq = 
+                  le_guinier_highq2->text().toDouble() ?
+                  le_guinier_highq2->text().toDouble() :
+                  highq2;
+               // cout << "guinier domain " << lowq << ":" << highq << endl;
+            }
+         } else {
+            // first compute available guinier range
+            // this could be calculated once upon adding curves
+
+            for ( unsigned int i = 0; 
+#ifndef QT4
+                  i < plotted_Iq.size();
+#else
+                  i < plotted_Iq_curves.size();
+#endif
+                  i++ )
+            {
+               if ( plotted_guinier_valid.count(i) &&
+                    plotted_guinier_valid[i] == true )
+               {
+                  if ( !any_guinier )
                   {
                      lowq2 = plotted_guinier_lowq2[i];
-                  }
-                  if ( highq2 < plotted_guinier_highq2[i] )
-                  {
                      highq2 = plotted_guinier_highq2[i];
+                     any_guinier = true;
+                  } else {
+                     if ( lowq2 > plotted_guinier_lowq2[i] )
+                     {
+                        lowq2 = plotted_guinier_lowq2[i];
+                     }
+                     if ( highq2 < plotted_guinier_highq2[i] )
+                     {
+                        highq2 = plotted_guinier_highq2[i];
+                     }
                   }
                }
             }
-         }
-         if ( any_guinier )
-         {
-            lowq2 *= .75;
-            highq2 *= 1.2;
-         }
+            if ( any_guinier )
+            {
+               lowq2 *= .75;
+               highq2 *= 1.2;
+            }
       
-         // override with user settings
+            // override with user settings
 
-         lowq = 
-            le_guinier_lowq2->text().toDouble() ?
-            le_guinier_lowq2->text().toDouble() :
-            lowq2;
+            lowq = 
+               le_guinier_lowq2->text().toDouble() ?
+               le_guinier_lowq2->text().toDouble() :
+               lowq2;
 
-         highq = 
-            le_guinier_highq2->text().toDouble() ?
-            le_guinier_highq2->text().toDouble() :
-            highq2;
-         // cout << "guinier domain " << lowq << ":" << highq << endl;
+            highq = 
+               le_guinier_highq2->text().toDouble() ?
+               le_guinier_highq2->text().toDouble() :
+               highq2;
+            // cout << "guinier domain " << lowq << ":" << highq << endl;
+         }
       }
       return;
    }
@@ -6280,34 +6381,71 @@ void US_Hydrodyn_Saxs::plot_range(
             }
          }
       } else {
-         // for each plot
-         for ( unsigned int i = 0;
-#ifndef QT4
-               i < plotted_Iq.size();
-#else
-               i < plotted_Iq_curves.size();
-#endif
-               i++ )      
+         if ( cb_Rt_guinier->isChecked() )
          {
-            // scan the q range
-            for ( unsigned int j = 0; j < plotted_q2[i].size(); j++ )
+            // for each plot
+            for ( unsigned int i = 0;
+#ifndef QT4
+                  i < plotted_Iq.size();
+#else
+                  i < plotted_Iq_curves.size();
+#endif
+                  i++ )      
             {
-               if ( plotted_q2[i][j] >= lowq &&
-                    plotted_q2[i][j] <= highq )
+               // scan the q range
+               for ( unsigned int j = 0; j < plotted_q2[i].size(); j++ )
                {
-                  if ( !any_plots )
+                  if ( plotted_q2[i][j] >= lowq &&
+                       plotted_q2[i][j] <= highq )
                   {
-                     lowI = plotted_I[i][j];
-                     highI = plotted_I[i][j];
-                     any_plots = true;
-                  } else {
-                     if ( lowI > plotted_I[i][j] )
+                     if ( !any_plots )
+                     {
+                        lowI = plotted_q[i][j] * plotted_q[i][j] * plotted_I[i][j];
+                        highI = plotted_q[i][j] * plotted_q[i][j] * plotted_I[i][j];
+                        any_plots = true;
+                     } else {
+                        if ( lowI > plotted_q[i][j] * plotted_q[i][j] * plotted_I[i][j] )
+                        {
+                           lowI = plotted_q[i][j] * plotted_q[i][j] * plotted_I[i][j];
+                        }
+                        if ( highI < plotted_q[i][j] * plotted_q[i][j] * plotted_I[i][j] )
+                        {
+                           highI = plotted_q[i][j] * plotted_q[i][j] * plotted_I[i][j];
+                        }
+                     }
+                  }
+               }
+            }
+         } else {
+            // for each plot
+            for ( unsigned int i = 0;
+#ifndef QT4
+                  i < plotted_Iq.size();
+#else
+                  i < plotted_Iq_curves.size();
+#endif
+                  i++ )      
+            {
+               // scan the q range
+               for ( unsigned int j = 0; j < plotted_q2[i].size(); j++ )
+               {
+                  if ( plotted_q2[i][j] >= lowq &&
+                       plotted_q2[i][j] <= highq )
+                  {
+                     if ( !any_plots )
                      {
                         lowI = plotted_I[i][j];
-                     }
-                     if ( highI < plotted_I[i][j] )
-                     {
                         highI = plotted_I[i][j];
+                        any_plots = true;
+                     } else {
+                        if ( lowI > plotted_I[i][j] )
+                        {
+                           lowI = plotted_I[i][j];
+                        }
+                        if ( highI < plotted_I[i][j] )
+                        {
+                           highI = plotted_I[i][j];
+                        }
                      }
                   }
                }

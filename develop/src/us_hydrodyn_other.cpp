@@ -5274,6 +5274,7 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams                                         .clear();
    gparams[ "guinier_auto_fit" ]                   = "1";
    gparams[ "perdeuteration" ]                     = "0";
+   gparams[ "guinier_qRtmax" ]                     = "1";
 }
 
 void US_Hydrodyn::set_default()

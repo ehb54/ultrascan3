@@ -38,7 +38,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    lbl_guinier->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_qRgmax = new QLabel(tr(" Maximum q * Rg : "), this);
+   lbl_qRgmax = new QLabel(tr(" Guinier: Maximum q * Rg : "), this);
    lbl_qRgmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_qRgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -52,41 +52,13 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_qRgmax, SIGNAL( textChanged( const QString & )), SLOT(update_qRgmax( const QString & )));
 
-   lbl_qstart = new QLabel(tr(" Minimum q value : "), this);
-   lbl_qstart->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_qstart->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_qstart->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   //    lbl_cs_guinier = new QLabel(tr("CS and Transverse Guinier Options:"), this);
+   //    lbl_cs_guinier->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   //    lbl_cs_guinier->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   //    lbl_cs_guinier->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   //    lbl_cs_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   le_qstart = new QLineEdit(this);
-   le_qstart->setValidator( new QDoubleValidator( le_qstart ) );
-   ( (QDoubleValidator *)le_qstart->validator() )->setRange( 0, 1, 3 );
-   le_qstart->setText( QString( "%1" ).arg( (*saxs_options).qstart ) );
-   le_qstart->setEnabled(true);
-   le_qstart->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_qstart->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(le_qstart, SIGNAL( textChanged( const QString & )), SLOT(update_qstart( const QString & )));
-
-   lbl_qend = new QLabel(tr(" Maximum q value : "), this);
-   lbl_qend->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_qend->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_qend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   le_qend = new QLineEdit(this);
-   le_qend->setValidator( new QDoubleValidator( le_qend ) );
-   ( (QDoubleValidator *)le_qend->validator() )->setRange( 0, 1, 3 );
-   le_qend->setText( QString( "%1" ).arg( (*saxs_options).qend ) );
-   le_qend->setEnabled(true);
-   le_qend->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_qend->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(le_qend, SIGNAL( textChanged( const QString & )), SLOT(update_qend( const QString & )));
-
-   lbl_cs_guinier = new QLabel(tr("CS Guinier Options:"), this);
-   lbl_cs_guinier->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_cs_guinier->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_cs_guinier->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_cs_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
-
-   lbl_cs_qRgmax = new QLabel(tr(" Maximum q * Rc : "), this);
+   lbl_cs_qRgmax = new QLabel(tr(" CS Guinier: Maximum q * Rc : "), this);
    lbl_cs_qRgmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_cs_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_cs_qRgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -99,6 +71,20 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_cs_qRgmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_cs_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_cs_qRgmax, SIGNAL( textChanged( const QString & )), SLOT(update_cs_qRgmax( const QString & )));
+
+   lbl_Rt_qRtmax = new QLabel(tr(" Transverse Guinier: Maximum q * Rt : "), this);
+   lbl_Rt_qRtmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_Rt_qRtmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_Rt_qRtmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_Rt_qRtmax = new QLineEdit(this);
+   le_Rt_qRtmax->setValidator( new QDoubleValidator( le_Rt_qRtmax) );
+   ( (QDoubleValidator *)le_Rt_qRtmax->validator() )->setRange( 0.5, 3, 3 );
+   le_Rt_qRtmax->setText( ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "guinier_qRtmax" ) ? ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_qRtmax" ] : "" );
+   le_Rt_qRtmax->setEnabled(true);
+   le_Rt_qRtmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_Rt_qRtmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_Rt_qRtmax, SIGNAL( textChanged( const QString & )), SLOT(update_Rt_qRtmax( const QString & )));
 
    lbl_cs_qstart = new QLabel(tr(" Minimum q^2 value : "), this);
    lbl_cs_qstart->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -128,11 +114,39 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_cs_qend->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_cs_qend, SIGNAL( textChanged( const QString & )), SLOT(update_cs_qend( const QString & )));
 
-   lbl_guinier_and_cs_guinier = new QLabel(tr("Guinier and CS Guinier Options:"), this);
+   lbl_guinier_and_cs_guinier = new QLabel(tr("Guinier, CS Guinier and Transverse Guinier Options:"), this);
    lbl_guinier_and_cs_guinier->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_guinier_and_cs_guinier->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_guinier_and_cs_guinier->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_guinier_and_cs_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_qstart = new QLabel(tr(" Minimum q value : "), this);
+   lbl_qstart->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_qstart->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_qstart->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_qstart = new QLineEdit(this);
+   le_qstart->setValidator( new QDoubleValidator( le_qstart ) );
+   ( (QDoubleValidator *)le_qstart->validator() )->setRange( 0, 1, 3 );
+   le_qstart->setText( QString( "%1" ).arg( (*saxs_options).qstart ) );
+   le_qstart->setEnabled(true);
+   le_qstart->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_qstart->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_qstart, SIGNAL( textChanged( const QString & )), SLOT(update_qstart( const QString & )));
+
+   lbl_qend = new QLabel(tr(" Maximum q value : "), this);
+   lbl_qend->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_qend->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_qend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_qend = new QLineEdit(this);
+   le_qend->setValidator( new QDoubleValidator( le_qend ) );
+   ( (QDoubleValidator *)le_qend->validator() )->setRange( 0, 1, 3 );
+   le_qend->setText( QString( "%1" ).arg( (*saxs_options).qend ) );
+   le_qend->setEnabled(true);
+   le_qend->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_qend->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_qend, SIGNAL( textChanged( const QString & )), SLOT(update_qend( const QString & )));
 
    cb_guinier_auto_fit = new QCheckBox(this);
    cb_guinier_auto_fit->setText(tr(" Search for best Guinier range "));
@@ -346,6 +360,12 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    pb_cs_guinier->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cs_guinier, SIGNAL(clicked()), SLOT(cs_guinier()));
 
+   pb_Rt_guinier = new QPushButton(tr("Process Transverse Guinier"), this);
+   pb_Rt_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_Rt_guinier->setMinimumHeight(minHeight1);
+   pb_Rt_guinier->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_Rt_guinier, SIGNAL(clicked()), SLOT(Rt_guinier()));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -367,10 +387,14 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(le_qRgmax, j, 1);
    j++;
 
-   background->addMultiCellWidget(lbl_cs_guinier, j, j, 0, 1);
-   j++;
+   // background->addMultiCellWidget(lbl_cs_guinier, j, j, 0, 1);
+   // j++;
    background->addWidget(lbl_cs_qRgmax, j, 0);
    background->addWidget(le_cs_qRgmax, j, 1);
+   j++;
+
+   background->addWidget(lbl_Rt_qRtmax, j, 0);
+   background->addWidget(le_Rt_qRtmax, j, 1);
    j++;
 
    background->addMultiCellWidget(lbl_guinier_and_cs_guinier, j, j, 0, 1);
@@ -445,11 +469,16 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(le_I0_theo, j, 1);
    j++;
 
+
+
    {
       QGridLayout * gl2 = new QGridLayout( 0 );
       
-      gl2->addWidget( pb_guinier    , 0, 0 );
-      gl2->addWidget( pb_cs_guinier , 0, 1 );
+      QHBoxLayout *hbl = new QHBoxLayout;
+      hbl->addWidget( pb_guinier );
+      hbl->addWidget( pb_cs_guinier );
+      hbl->addWidget( pb_Rt_guinier );
+      gl2->addMultiCellLayout( hbl, 0, 0, 0, 1 );
 
       gl2->addWidget( pb_help       , 1, 0 );
       gl2->addWidget( pb_cancel     , 1, 1 );
@@ -523,6 +552,11 @@ void US_Hydrodyn_SasOptionsGuinier::update_cs_qRgmax( const QString & str )
    double val = str.toDouble();
    (*saxs_options).cs_qRgmax = val;
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::update_Rt_qRtmax( const QString & str )
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_qRtmax" ] = str;
 }
 
 void US_Hydrodyn_SasOptionsGuinier::update_cs_qstart( const QString & str )
@@ -714,6 +748,25 @@ void US_Hydrodyn_SasOptionsGuinier::cs_guinier()
          ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->show();
       }
       ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->run_guinier_cs();
+   } else {
+      QMessageBox::message( caption() + ": Process Guinier",
+                            tr( "The main SAS window is not active" ) );
+   }
+}
+
+void US_Hydrodyn_SasOptionsGuinier::Rt_guinier()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_widget )
+   {
+      if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->isVisible() )
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->raise();
+      }
+      else
+      {
+         ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->show();
+      }
+      ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->run_guinier_Rt();
    } else {
       QMessageBox::message( caption() + ": Process Guinier",
                             tr( "The main SAS window is not active" ) );

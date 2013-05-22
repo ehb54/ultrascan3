@@ -301,6 +301,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QCheckBox *cb_guinier;
       QCheckBox *cb_cs_guinier;
+      QCheckBox *cb_Rt_guinier;
       QLineEdit *le_guinier_lowq2;
       QLineEdit *le_guinier_highq2;
 
@@ -389,15 +390,19 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #ifndef QT4
       map    < unsigned int, long >                   plotted_Gp;  // guinier points
       map    < unsigned int, long >                   plotted_cs_Gp;  // cs guinier points
+      map    < unsigned int, long >                   plotted_Rt_Gp;  // Rt guinier points
       map    < unsigned int, long >                   plotted_Gp_full;  // guinier points
       map    < unsigned int, long >                   plotted_cs_Gp_full;  // cs guinier points
+      map    < unsigned int, long >                   plotted_Rt_Gp_full;  // Rt guinier points
       vector < long >                                 plotted_manual_guinier_fit;
       vector < long >                                 plotted_guinier_error_bars;
 #else
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_curves;  // guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_cs_curves;  // cs guinier points
+      map    < unsigned int, QwtPlotCurve * >         plotted_Gp_Rt_curves;  // Rt guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_curves_full;  // guinier points
       map    < unsigned int, QwtPlotCurve * >         plotted_Gp_cs_curves_full;  // cs guinier points
+      map    < unsigned int, QwtPlotCurve * >         plotted_Gp_Rt_curves_full;  // Rt guinier points
       vector < QwtPlotCurve * >                       plotted_manual_guinier_fit;
       vector < QwtPlotCurve * >                       plotted_guinier_error_bars; 
 #endif
@@ -420,6 +425,16 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       map    < unsigned int, vector < double > >      plotted_cs_guinier_x;
       map    < unsigned int, vector < double > >      plotted_cs_guinier_y;
       map    < unsigned int, map < double, double > > plotted_cs_guinier_pts_removed;
+
+      map    < unsigned int, bool >                   plotted_Rt_guinier_valid;
+      map    < unsigned int, bool >                   plotted_Rt_guinier_plotted;
+      map    < unsigned int, double >                 plotted_Rt_guinier_lowq2;
+      map    < unsigned int, double >                 plotted_Rt_guinier_highq2;
+      map    < unsigned int, double >                 plotted_Rt_guinier_a;           // y = a + b*x
+      map    < unsigned int, double >                 plotted_Rt_guinier_b;
+      map    < unsigned int, vector < double > >      plotted_Rt_guinier_x;
+      map    < unsigned int, vector < double > >      plotted_Rt_guinier_y;
+      map    < unsigned int, map < double, double > > plotted_Rt_guinier_pts_removed;
 
       vector < vector < double > >                    plotted_pr;
       vector < vector < double > >                    plotted_pr_not_normalized;
@@ -474,8 +489,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                         vector < double >    & q_over_4pi_2
                         );
 
-      void plot_guinier_pts_removed( int i, bool cs = false );
-      void plot_guinier_error_bars( int i, bool cs = false );
+      void plot_guinier_pts_removed( int i, bool cs = false, bool Rt = false );
+      void plot_guinier_error_bars( int i, bool cs = false, bool Rt = false );
       void clear_guinier_error_bars();
 
       void do_plot_resid();
@@ -589,6 +604,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       bool guinier_analysis( unsigned int i, QString &csvlog );
       bool cs_guinier_analysis( unsigned int i, QString &csvlog );
+      bool Rt_guinier_analysis( unsigned int i, QString &csvlog );
       void crop_iq_data( vector < double > &q,
                          vector < double > &I );
 
@@ -758,7 +774,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       bool mw_from_I0 ( QString name, double I0_exp, double &MW, double &internal_contrast );
       bool ml_from_qI0( QString name, double I0_exp, double &ML, double &internal_contrast );
-
+      bool ma_from_q2I0( QString name, double I0_exp, double &MA, double &internal_contrast );
       
 #ifdef WIN32
      #pragma warning ( disable: 4251 )
@@ -846,6 +862,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void clear_guinier();
       void clear_cs_guinier();
+      void clear_Rt_guinier();
 
    public slots:
       void show_plot_saxs_sans();
@@ -897,11 +914,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void guinier_window();
       void run_guinier_analysis();
       void run_guinier_cs();
+      void run_guinier_Rt();
       QString saxs_filestring();
       QString sprr_filestring();
       void set_create_native_saxs();
       void set_guinier();
       void set_cs_guinier();
+      void set_Rt_guinier();
       void set_pr_contrib();
       void set_user_range();
       void set_kratky();

@@ -57,6 +57,9 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       QLabel     *lbl_cs_qRgmax;
       QLineEdit  *le_cs_qRgmax;
 
+      QLabel     *lbl_Rt_qRtmax;
+      QLineEdit  *le_Rt_qRtmax;
+
       QLabel     *lbl_cs_qstart;
       QLineEdit  *le_cs_qstart;
 
@@ -112,6 +115,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
 
       QPushButton *pb_guinier;
       QPushButton *pb_cs_guinier;
+      QPushButton *pb_Rt_guinier;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
@@ -130,6 +134,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       void update_cs_qRgmax                     ( const QString & );
       void update_cs_qstart                     ( const QString & );
       void update_cs_qend                       ( const QString & );
+
+      void update_Rt_qRtmax                     ( const QString & );
 
       void set_guinier_auto_fit                 ();
       void update_pointsmin                     ( const QString & );
@@ -155,6 +161,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
 
       void guinier                              ();
       void cs_guinier                           ();
+      void Rt_guinier                           ();
 
       void cancel                               ();
       void help                                 ();

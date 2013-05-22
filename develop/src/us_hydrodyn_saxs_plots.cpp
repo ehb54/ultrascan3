@@ -999,158 +999,316 @@ void US_Hydrodyn_Saxs::do_plot_resid()
          }
       }
    } else {
-      for ( int i = 0; i < niqsize; i++ )
+      if ( cb_Rt_guinier->isChecked() )
       {
-         if ( plotted_guinier_valid.count(i) &&
-              plotted_guinier_valid[i] == true )
+         for ( int i = 0; i < niqsize; i++ )
          {
-            vector < double > x;
-            vector < double > y;
-            vector < double > e;
-            vector < double > x_d;
-            vector < double > e_d;
-
-            for ( int q = 0; q < (int)plotted_q2[ i ].size(); ++q )
+            if ( plotted_Rt_guinier_valid.count(i) &&
+                 plotted_Rt_guinier_valid[i] == true )
             {
-               if ( plotted_q2[ i ][ q ] >= plotted_guinier_lowq2[ i ] &&
-                    plotted_q2[ i ][ q ] <= plotted_guinier_highq2[ i ] )
+               vector < double > x;
+               vector < double > y;
+               vector < double > e;
+               vector < double > x_d;
+               vector < double > e_d;
+            
+               for ( int q = 0; q < (int)plotted_q2[ i ].size(); ++q )
                {
-                  x.push_back( plotted_q2[ i ][ q ] );
-                  y.push_back( 0e0 );
-                  if ( cb_resid_pct->isChecked() )
+                  if ( plotted_q2[ i ][ q ] >= plotted_Rt_guinier_lowq2[ i ] &&
+                       plotted_q2[ i ][ q ] <= plotted_Rt_guinier_highq2[ i ] )
                   {
-                     e.push_back( 100e0 * ( log ( plotted_I[ i ][ q ] > 0e0 ?
-                                                  plotted_I[ i ][ q ] : 1e-99 ) - 
-                                            ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] ) )
-                                  /
-                                  fabs( log ( plotted_I[ i ][ q ] > 0e0 ?
-                                              plotted_I[ i ][ q ] : 1e-99 ) )
-                                  );
-                  } else {
-                     if ( cb_resid_sd->isChecked() )
-                     {
-                        if (
-                            (int)plotted_I_error.size() > i &&
-                            (int)plotted_I_error[ i ].size() > q &&
-                             plotted_I_error[ i ][ q ] != 0e0 &&
-                             plotted_I[ i ][ q ] != 0e0 )
-                        {
-                           e.push_back( ( log ( plotted_I[ i ][ q ] > 0e0 ?
-                                                plotted_I[ i ][ q ] : 1e-99 ) - 
-                                          ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] ) )
-                                        / 
-                                        ( plotted_I_error[ i ][ q ] / plotted_I[ i ][ q ] )
-                                     );
-                        } else {
-                           e.push_back( 0e0 );
-                           some_pts_skipped = true;
-                        }
-                     } else {
-                        e.push_back( log ( plotted_I[ i ][ q ] > 0e0 ?
-                                           plotted_I[ i ][ q ] : 1e-99 ) - 
-                                     ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] )
-                                     );
-                     }
-                  }
-                  if ( first )
-                  {
-                     first = false;
-                     minq2 = x.back();
-                     maxq2 = x.back();
-                     maxabse = fabs( e.back() );
-                  } else {
-                     if ( minq2 > x.back() )
-                     {
-                        minq2 = x.back();
-                     }
-                     if ( maxq2 < x.back() )
-                     {
-                        maxq2 = x.back();
-                     }
-                     if ( maxabse < fabs( e.back() ) )
-                     {
-                        maxabse = fabs( e.back() );
-                     }
-                  }
-               } else {
-                  if ( plotted_q2[ i ][ q ] >= plot_minx &&
-                       plotted_q2[ i ][ q ] <= plot_maxx )
-                  {
-                     x_d.push_back( plotted_q2[ i ][ q ] );
+                     x.push_back( plotted_q2[ i ][ q ] );
+                     y.push_back( 0e0 );
+                  
                      if ( cb_resid_pct->isChecked() )
                      {
-                        e_d.push_back( 100e0 * ( log ( plotted_I[ i ][ q ] > 0e0 ?
-                                                       plotted_I[ i ][ q ] : 1e-99 ) - 
-                                                 ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] ) )
-                                       /
-                                       fabs( log ( plotted_I[ i ][ q ] > 0e0 ?
-                                                   plotted_I[ i ][ q ] : 1e-99 ) )
-                                       );
+                        e.push_back( 100e0 * ( log ( plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
+                                                     plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) - 
+                                               ( plotted_Rt_guinier_a[i] + plotted_Rt_guinier_b[i] * plotted_q2[ i ][ q ] ) )
+                                     /
+                                     fabs( log ( plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
+                                                 plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) )
+                                     );
                      } else {
                         if ( cb_resid_sd->isChecked() )
                         {
-                           if ( (int)plotted_I_error[ i ].size() > q &&
+                           if ( (int)plotted_I_error.size() > i &&
+                                (int)plotted_I_error[ i ].size() > q &&
                                 plotted_I_error[ i ][ q ] != 0e0 &&
                                 plotted_I[ i ][ q ] != 0e0 )
                            {
-                              e_d.push_back( ( log ( plotted_I[ i ][ q ] > 0e0 ?
-                                                     plotted_I[ i ][ q ] : 1e-99 ) - 
-                                               ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] ) )
-                                             / 
-                                             ( plotted_I_error[ i ][ q ] / plotted_I[ i ][ q ] )
+                              e.push_back( ( log ( plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
+                                                   plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) - 
+                                             ( plotted_Rt_guinier_a[i] + plotted_Rt_guinier_b[i] * plotted_q2[ i ][ q ] ) )
+                                           / 
+                                           ( plotted_I_error[ i ][ q ] / plotted_I[ i ][ q ] )
                                            );
                            } else {
-                              e_d.push_back( 0e0 );
+                              e.push_back( 0e0 );
                               some_pts_skipped = true;
                            }
                         } else {
-                           e_d.push_back( log ( plotted_I[ i ][ q ] > 0e0 ?
-                                                plotted_I[ i ][ q ] : 1e-99 ) - 
-                                          ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] )
+                           e.push_back( log ( plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
+                                              plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) - 
+                                        ( plotted_Rt_guinier_a[i] + plotted_Rt_guinier_b[i] * plotted_q2[ i ][ q ] )
+                                        );
+                        }
+                     }
+
+                     if ( first )
+                     {
+                        first = false;
+                        minq2 = x.back();
+                        maxq2 = x.back();
+                        maxabse = fabs( e.back() );
+                     } else {
+                        if ( minq2 > x.back() )
+                        {
+                           minq2 = x.back();
+                        }
+                        if ( maxq2 < x.back() )
+                        {
+                           maxq2 = x.back();
+                        }
+                        if ( maxabse < fabs( e.back() ) )
+                        {
+                           maxabse = fabs( e.back() );
+                        }
+                     }
+                  } else {
+                     if ( plotted_q2[ i ][ q ] >= plot_minx &&
+                          plotted_q2[ i ][ q ] <= plot_maxx )
+                     {
+                        x_d.push_back( plotted_q2[ i ][ q ] );
+                        if ( cb_resid_pct->isChecked() )
+                        {
+                           e_d.push_back( 100e0 * ( log ( plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
+                                                          plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) - 
+                                                    ( plotted_Rt_guinier_a[i] + plotted_Rt_guinier_b[i] * plotted_q2[ i ][ q ] ) )
+                                          /
+                                          fabs( log ( plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
+                                                      plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) )
                                           );
+                        } else {
+                           if ( cb_resid_sd->isChecked() )
+                           {
+                              if ( (int)plotted_I_error[ i ].size() > q &&
+                                   plotted_I_error[ i ][ q ] != 0e0 &&
+                                   plotted_I[ i ][ q ] != 0e0 )
+                              {
+                                 e_d.push_back( ( log ( plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
+                                                        plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) - 
+                                                  ( plotted_Rt_guinier_a[i] + plotted_Rt_guinier_b[i] * plotted_q2[ i ][ q ] ) )
+                                                / 
+                                                ( plotted_I_error[ i ][ q ] / plotted_I[ i ][ q ] )
+                                                );
+                              } else {
+                                 e_d.push_back( 0e0 );
+                                 some_pts_skipped = true;
+                              }
+                           } else {
+                              e_d.push_back( log ( plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] > 0e0 ?
+                                                   plotted_q[ i ][ q ] * plotted_q[ i ][ q ] * plotted_I[ i ][ q ] : 1e-99 ) - 
+                                             ( plotted_Rt_guinier_a[i] + plotted_Rt_guinier_b[i] * plotted_q2[ i ][ q ] )
+                                             );
+                           }
+                        }
+
+                        if ( first )
+                        {
+                           first = false;
+                           minq2 = x_d.back();
+                           maxq2 = x_d.back();
+                           maxabse = fabs( e_d.back() );
+                        } else {
+                           if ( minq2 > x_d.back() )
+                           {
+                              minq2 = x_d.back();
+                           }
+                           if ( maxq2 < x_d.back() )
+                           {
+                              maxq2 = x_d.back();
+                           }
+                           if ( maxabse < fabs( e_d.back() ) )
+                           {
+                              maxabse = fabs( e_d.back() );
+                           }
+                        }
+                     }
+                  }
+               }
+               if ( x.size() )
+               {
+                  if ( plotted_Rt_guinier_pts_removed.count( i ) &&
+                       plotted_Rt_guinier_pts_removed[ i ].size() )
+                  {
+                     do_plot_resid( x, y, e, plotted_Rt_guinier_pts_removed[ i ], plot_colors[i % plot_colors.size()] );
+                  } else {
+                     do_plot_resid( x, y, e, plot_colors[i % plot_colors.size()] );
+                  }
+               }
+               if ( x_d.size() )
+               {
+                  do_plot_resid( x_d, e_d, plot_colors[i % plot_colors.size()] );
+               }
+
+               any_plotted = true;
+            }
+         }
+      } else {
+         for ( int i = 0; i < niqsize; i++ )
+         {
+            if ( plotted_guinier_valid.count(i) &&
+                 plotted_guinier_valid[i] == true )
+            {
+               vector < double > x;
+               vector < double > y;
+               vector < double > e;
+               vector < double > x_d;
+               vector < double > e_d;
+
+               for ( int q = 0; q < (int)plotted_q2[ i ].size(); ++q )
+               {
+                  if ( plotted_q2[ i ][ q ] >= plotted_guinier_lowq2[ i ] &&
+                       plotted_q2[ i ][ q ] <= plotted_guinier_highq2[ i ] )
+                  {
+                     x.push_back( plotted_q2[ i ][ q ] );
+                     y.push_back( 0e0 );
+                     if ( cb_resid_pct->isChecked() )
+                     {
+                        e.push_back( 100e0 * ( log ( plotted_I[ i ][ q ] > 0e0 ?
+                                                     plotted_I[ i ][ q ] : 1e-99 ) - 
+                                               ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] ) )
+                                     /
+                                     fabs( log ( plotted_I[ i ][ q ] > 0e0 ?
+                                                 plotted_I[ i ][ q ] : 1e-99 ) )
+                                     );
+                     } else {
+                        if ( cb_resid_sd->isChecked() )
+                        {
+                           if (
+                               (int)plotted_I_error.size() > i &&
+                               (int)plotted_I_error[ i ].size() > q &&
+                               plotted_I_error[ i ][ q ] != 0e0 &&
+                               plotted_I[ i ][ q ] != 0e0 )
+                           {
+                              e.push_back( ( log ( plotted_I[ i ][ q ] > 0e0 ?
+                                                   plotted_I[ i ][ q ] : 1e-99 ) - 
+                                             ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] ) )
+                                           / 
+                                           ( plotted_I_error[ i ][ q ] / plotted_I[ i ][ q ] )
+                                           );
+                           } else {
+                              e.push_back( 0e0 );
+                              some_pts_skipped = true;
+                           }
+                        } else {
+                           e.push_back( log ( plotted_I[ i ][ q ] > 0e0 ?
+                                              plotted_I[ i ][ q ] : 1e-99 ) - 
+                                        ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] )
+                                        );
                         }
                      }
                      if ( first )
                      {
                         first = false;
-                        minq2 = x_d.back();
-                        maxq2 = x_d.back();
-                        maxabse = fabs( e_d.back() );
+                        minq2 = x.back();
+                        maxq2 = x.back();
+                        maxabse = fabs( e.back() );
                      } else {
-                        if ( minq2 > x_d.back() )
+                        if ( minq2 > x.back() )
                         {
+                           minq2 = x.back();
+                        }
+                        if ( maxq2 < x.back() )
+                        {
+                           maxq2 = x.back();
+                        }
+                        if ( maxabse < fabs( e.back() ) )
+                        {
+                           maxabse = fabs( e.back() );
+                        }
+                     }
+                  } else {
+                     if ( plotted_q2[ i ][ q ] >= plot_minx &&
+                          plotted_q2[ i ][ q ] <= plot_maxx )
+                     {
+                        x_d.push_back( plotted_q2[ i ][ q ] );
+                        if ( cb_resid_pct->isChecked() )
+                        {
+                           e_d.push_back( 100e0 * ( log ( plotted_I[ i ][ q ] > 0e0 ?
+                                                          plotted_I[ i ][ q ] : 1e-99 ) - 
+                                                    ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] ) )
+                                          /
+                                          fabs( log ( plotted_I[ i ][ q ] > 0e0 ?
+                                                      plotted_I[ i ][ q ] : 1e-99 ) )
+                                          );
+                        } else {
+                           if ( cb_resid_sd->isChecked() )
+                           {
+                              if ( (int)plotted_I_error[ i ].size() > q &&
+                                   plotted_I_error[ i ][ q ] != 0e0 &&
+                                   plotted_I[ i ][ q ] != 0e0 )
+                              {
+                                 e_d.push_back( ( log ( plotted_I[ i ][ q ] > 0e0 ?
+                                                        plotted_I[ i ][ q ] : 1e-99 ) - 
+                                                  ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] ) )
+                                                / 
+                                                ( plotted_I_error[ i ][ q ] / plotted_I[ i ][ q ] )
+                                                );
+                              } else {
+                                 e_d.push_back( 0e0 );
+                                 some_pts_skipped = true;
+                              }
+                           } else {
+                              e_d.push_back( log ( plotted_I[ i ][ q ] > 0e0 ?
+                                                   plotted_I[ i ][ q ] : 1e-99 ) - 
+                                             ( plotted_guinier_a[i] + plotted_guinier_b[i] * plotted_q2[ i ][ q ] )
+                                             );
+                           }
+                        }
+                        if ( first )
+                        {
+                           first = false;
                            minq2 = x_d.back();
-                        }
-                        if ( maxq2 < x_d.back() )
-                        {
                            maxq2 = x_d.back();
-                        }
-                        if ( maxabse < fabs( e_d.back() ) )
-                        {
                            maxabse = fabs( e_d.back() );
+                        } else {
+                           if ( minq2 > x_d.back() )
+                           {
+                              minq2 = x_d.back();
+                           }
+                           if ( maxq2 < x_d.back() )
+                           {
+                              maxq2 = x_d.back();
+                           }
+                           if ( maxabse < fabs( e_d.back() ) )
+                           {
+                              maxabse = fabs( e_d.back() );
+                           }
                         }
                      }
                   }
                }
-            }
-            if ( x.size() )
-            {
-               if ( plotted_guinier_pts_removed.count( i ) &&
-                    plotted_guinier_pts_removed[ i ].size() )
+               if ( x.size() )
                {
-                  do_plot_resid( x, y, e, plotted_guinier_pts_removed[ i ], plot_colors[i % plot_colors.size()] );
-               } else {
-                  do_plot_resid( x, y, e, plot_colors[i % plot_colors.size()] );
+                  if ( plotted_guinier_pts_removed.count( i ) &&
+                       plotted_guinier_pts_removed[ i ].size() )
+                  {
+                     do_plot_resid( x, y, e, plotted_guinier_pts_removed[ i ], plot_colors[i % plot_colors.size()] );
+                  } else {
+                     do_plot_resid( x, y, e, plot_colors[i % plot_colors.size()] );
+                  }
                }
+               if ( x_d.size() )
+               {
+                  do_plot_resid( x_d, e_d, plot_colors[i % plot_colors.size()] );
+               }
+               any_plotted = true;
             }
-            if ( x_d.size() )
-            {
-               do_plot_resid( x_d, e_d, plot_colors[i % plot_colors.size()] );
-            }
-            any_plotted = true;
          }
-      }
-   }         
+      }         
+   }
 
    if ( some_pts_skipped )
    {
@@ -1170,13 +1328,23 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                                        ) 
                                      ) 
                                   :
-                                  (  cb_resid_pct->isChecked() ?
-                                     "% difference [100*(ln(I(q)) - Guinier)/ln(I(q))]" :
-                                     ( cb_resid_sd->isChecked() ?
-                                       "(ln(I(q)) - Guinier line) / S.D." :
-                                       "ln(I(q)) - Guinier line" 
+                                  ( cb_Rt_guinier->isChecked() ?
+                                    (  cb_resid_pct->isChecked() ?
+                                       "% difference [100*(ln(q^2*I(q)) - Guinier)/ln(q^2*I(q))]" :
+                                       ( cb_resid_sd->isChecked() ?
+                                         "(ln(q^2*I(q)) - Guinier line) / S.D." : 
+                                         "ln(q^2*I(q)) - Guinier line" 
+                                         ) 
                                        ) 
-                                     ) 
+                                    :
+                                    (  cb_resid_pct->isChecked() ?
+                                       "% difference [100*(ln(I(q)) - Guinier)/ln(I(q))]" :
+                                       ( cb_resid_sd->isChecked() ?
+                                         "(ln(I(q)) - Guinier line) / S.D." :
+                                         "ln(I(q)) - Guinier line" 
+                                         ) 
+                                       ) 
+                                    )
                                   )
                                  );
 

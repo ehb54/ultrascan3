@@ -138,7 +138,8 @@ bool US_Saxs_Util::guinier_fit(
                                double &smin,
                                double &sRgmin,
                                double &sRgmax,
-                               bool   compute_Rc
+                               bool   compute_Rc,
+                               bool   compute_Rt
                                )
 {
    vector < double > x;
@@ -195,7 +196,7 @@ bool US_Saxs_Util::guinier_fit(
       ;
    */
 
-   Rg = sqrt( ( compute_Rc ? -2e0 : -3e0 ) * b );
+   Rg = sqrt( ( compute_Rc ? -2e0 : (compute_Rt ? -1e0 : -3e0 ) ) * b );
    sigb = fabs( Rg * sigb / b );
    I0 = exp(a);
    siga = fabs( I0 * siga / a );
@@ -266,7 +267,8 @@ bool US_Saxs_Util::guinier_fit2(
                                 double &sRgmax,
                                 unsigned int &beststart,
                                 unsigned int &bestend,
-                                bool   compute_Rc
+                                bool   compute_Rc,
+                                bool   compute_Rt
                        )
 {
    errormsg = "";
@@ -301,7 +303,8 @@ bool US_Saxs_Util::guinier_fit2(
                            smax,
                            sRgmin,
                            sRgmax,
-                           compute_Rc
+                           compute_Rc,
+                           compute_Rt
                            ) )
          {
             // log += mylog;
@@ -348,7 +351,8 @@ bool US_Saxs_Util::guinier_fit2(
                      smax,
                      sRgmin,
                      sRgmax,
-                     compute_Rc
+                     compute_Rc,
+                     compute_Rt
                      ) )
    {
       return false;
@@ -493,7 +497,8 @@ bool US_Saxs_Util::guinier_fit_with_removal(
                                             double sd_limit,
                                             map < double, double > & removed,
                                             unsigned int   & pts_removed,
-                                            bool   compute_Rc
+                                            bool   compute_Rc,
+                                            bool   compute_Rt
                                             )
 {
    // puts( "su: guinier_fit_with_removal" );
@@ -534,7 +539,9 @@ bool US_Saxs_Util::guinier_fit_with_removal(
                          smin,
                          sRgmin,
                          sRgmax,
-                         compute_Rc ) )
+                         compute_Rc,
+                         compute_Rt
+                         ) )
       {
          return false;
       }

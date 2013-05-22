@@ -441,6 +441,95 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
    return true;
 }
 
+bool US_Hydrodyn_Saxs::ma_from_q2I0( QString name, double I0_exp, double &MA, double &internal_contrast )
+{
+   double conc;
+   double psv;
+   double I0_std_exp;
+
+#if defined( DEBUG_MW2 )
+   conc = our_saxs_options->conc;
+   psv = our_saxs_options->psv;
+   I0_std_exp = our_saxs_options->I0_exp;
+#else
+   get_conc_csv_values( name, conc, psv, I0_std_exp );
+#endif
+
+   double I0_exp_to_theo_mult = 1e0;
+   if ( our_saxs_options->guinier_use_standards )
+   {
+      if ( I0_std_exp == 0e0 )
+      {
+         errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         MA = 0e0;
+         return false;
+      }
+      I0_exp_to_theo_mult = our_saxs_options->I0_theo / I0_std_exp;
+   }
+
+   double I0_prot_theo = I0_exp * I0_exp_to_theo_mult;
+
+   if ( our_saxs_options->nucleon_mass == 0e0 )
+   {
+      errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
+      MA = 0e0;
+      return false;
+   }
+
+   if ( conc == 0e0 )
+   {
+      errormsg = tr( "Error: Concentration is 0, can not compute MW" );
+      MA = 0e0;
+      return false;
+   }
+
+   double use_psv = our_saxs_options->use_cs_psv ? our_saxs_options->cs_psv : psv;
+
+   internal_contrast = 
+      our_saxs_options->diffusion_len * 
+      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - use_psv * ( 1e24 * our_saxs_options->water_e_density ) );
+   
+   MA = I0_prot_theo * AVOGADRO / ( conc * 1e-3 ) / ( internal_contrast * internal_contrast ) / (2e0 * M_PI);
+
+#if defined( DEBUG_MW )
+   cout << QString( 
+                   "I0_std_theo         %1\n"
+                   "I0_std_exp          %2\n"
+                   "I0                  %3\n"
+                   "MA                  %4\n"
+                   )
+      .arg( our_saxs_options->I0_theo, 0, 'e', 8  )
+      .arg( I0_std_exp, 0, 'e', 8  )
+      .arg( I0_exp, 0, 'e', 8  )
+      .arg( MA, 0, 'e', 8  )
+      ;
+                   
+   cout << QString( 
+                   "I0_exp_to_theo_mult %1\n"
+                   "diffusion len       %2\n"
+                   "psv                 %3\n"
+                   "water_e_density     %4\n"
+                   "I0_prot_theo        %5\n"
+                   "Avogadro            %6\n"
+                   "conc                %7\n"
+                   "internal contrast   %8\n"
+                   "nucleon mass        %9\n"
+                   )
+
+      .arg( I0_exp_to_theo_mult, 0, 'e', 8 )
+      .arg( our_saxs_options->diffusion_len, 0, 'e', 8  )
+      .arg( use_psv, 0, 'e', 8  )
+      .arg( our_saxs_options->water_e_density * 1e24, 0, 'e', 8  )
+      .arg( I0_prot_theo, 0, 'e', 8  )
+      .arg( AVOGADRO, 0, 'e', 8  )
+      .arg( conc, 0, 'e', 8  )
+      .arg( internal_contrast, 0, 'e', 8  )
+      .arg( our_saxs_options->nucleon_mass, 0, 'e', 8  );
+#endif
+
+   return true;
+}
+
 
 void US_Hydrodyn_Saxs::guinier_window()
 {

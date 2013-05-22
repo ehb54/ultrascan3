@@ -269,7 +269,8 @@ class US_EXTERN US_Saxs_Util
                        double &smin,
                        double &sRgmin,
                        double &sRgmax,
-                       bool   compute_Rc = false
+                       bool   compute_Rc = false,
+                       bool   compute_Rt = false
                        );
 
       bool guinier_remove_points(
@@ -303,7 +304,8 @@ class US_EXTERN US_Saxs_Util
                        double sd_limit,
                        map < double, double > & removed,
                        unsigned int   & pts_removed,
-                       bool   compute_Rc = false
+                       bool   compute_Rc = false,
+                       bool   compute_Rt = false
                        );
 
       bool guinier_fit2( // find best guinier fit
@@ -328,7 +330,8 @@ class US_EXTERN US_Saxs_Util
                        double &sRgmax,
                        unsigned int &beststart,
                        unsigned int &bestend,
-                       bool   compute_Rc = false
+                       bool   compute_Rc = false,
+                       bool   compute_Rt = false
                        );
 
       int debug;
