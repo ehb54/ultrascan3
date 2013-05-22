@@ -623,8 +623,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       unsigned int                 common_size;
       unsigned int                 per_file_size;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
       vector < bool >              is_common; // is common maps the offsets to layout of the regular file specific gaussians
       vector < unsigned int >      offset;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
    private slots:
 
