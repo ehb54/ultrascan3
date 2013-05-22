@@ -811,6 +811,7 @@ namespace HFIT_GLOBAL
             // var_base++;
          }
 
+
          /*
          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
             .arg( t )
@@ -822,6 +823,7 @@ namespace HFIT_GLOBAL
             .arg( width )
             ;
          */
+
          double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
          result += height * exp( - tmp * tmp * 5e-1 );
       }
@@ -1892,7 +1894,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
 
    for ( unsigned int f = 0; f < hplc_win->unified_ggaussian_curves; f++ )
    {
-      unsigned int ofs = base_ofs + f * per_file_size;
+      unsigned int ofs = base_ofs + f * per_file_size * hplc_win->unified_ggaussian_gaussians_size;
 
       for ( unsigned int i = 0; i < hplc_win->unified_ggaussian_gaussians_size; i++ )
       {
