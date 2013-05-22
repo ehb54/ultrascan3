@@ -2016,21 +2016,19 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                HFIT_GLOBAL::param_fixed .push_back( false );
 
                double ofs;
-               double min = 1e-10;
-               double max = 1e99;
+               double min = -50e0;
+               double max = 50e0;
                if ( cb_pct_dist1->isChecked() )
                {
                   ofs = base_val * le_pct_dist1->text().toDouble() / 100.0;
                   min = base_val - ofs;
                   max = base_val + ofs;
                }
-               if ( min < 1e-10 )
+               if ( max < min )
                {
-                  min = 1e-10;
-               }
-               if ( min > max )
-               {
-                  min = max * 1e-15;
+                  double avg = 5e-1 * ( max + min );
+                  min = avg - 1e-1;
+                  max = avg + 1e-1;
                }
 
                HFIT_GLOBAL::param_min   .push_back( min );
