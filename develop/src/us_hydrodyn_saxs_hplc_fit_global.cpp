@@ -811,15 +811,17 @@ namespace HFIT_GLOBAL
             // var_base++;
          }
 
-         //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
-         //             .arg( t )
-         //             .arg( unified_q[ ( unsigned int ) t ] )
-         //             .arg( index )
-         //             .arg( i )
-         //             .arg( center )
-         //             .arg( height )
-         //             .arg( width )
-         //             ;
+         /*
+         cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
+            .arg( t )
+            .arg( unified_q[ ( unsigned int ) t ] )
+            .arg( index )
+            .arg( i )
+            .arg( center )
+            .arg( height )
+            .arg( width )
+            ;
+         */
 
          double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
          result += height * exp( - tmp * tmp * 5e-1 );
@@ -939,19 +941,9 @@ namespace HFIT_GLOBAL
             // var_base++;
          }
 
-         //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
-         //             .arg( t )
-         //             .arg( unified_q[ ( unsigned int ) t ] )
-         //             .arg( index )
-         //             .arg( i )
-         //             .arg( center )
-         //             .arg( height )
-         //             .arg( width )
-         //             ;
-
          if ( !dist1 )
          {
-            double tmp = ( t - center ) / width;
+            double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
             result += height * exp( - tmp * tmp * 5e-1 );
          } else {
             double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
@@ -972,7 +964,7 @@ namespace HFIT_GLOBAL
                double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
                double gauss_coeff       = frac_gauss * height;
 
-               double tmp               = t - center;
+               double tmp               = unified_q[ ( unsigned int ) t ] - center;
                double tmp2              = tmp / width;
                
                result +=
@@ -988,7 +980,7 @@ namespace HFIT_GLOBAL
                double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
                double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
                double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
-               double tmp               = t - center;
+               double tmp               = unified_q[ ( unsigned int ) t ] - center;
                result += 
                   emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
                   ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
@@ -1110,19 +1102,22 @@ namespace HFIT_GLOBAL
             // var_base++;
          }
 
-         //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
-         //             .arg( t )
-         //             .arg( unified_q[ ( unsigned int ) t ] )
-         //             .arg( index )
-         //             .arg( i )
-         //             .arg( center )
-         //             .arg( height )
-         //             .arg( width )
-         //             ;
+         /*
+         cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7 dist1 %8\n" )
+            .arg( t )
+            .arg( unified_q[ ( unsigned int ) t ] )
+            .arg( index )
+            .arg( i )
+            .arg( center )
+            .arg( height )
+            .arg( width )
+            .arg( dist1 )
+                     ;
+         */
 
          if ( !dist1 )
          {
-            double tmp = ( t - center ) / width;
+            double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
             result += height * exp( - tmp * tmp * 5e-1 );
          } else {
             double area                         = height * width * M_SQRT2PI;
@@ -1132,7 +1127,7 @@ namespace HFIT_GLOBAL
             double gmg_coeff                    = area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
             double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
             double gmg_erf_m1                   = dist1 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
-            double tmp = t - center;
+            double tmp = unified_q[ ( unsigned int ) t ] - center;
             result += 
                gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
                ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
@@ -1297,7 +1292,7 @@ namespace HFIT_GLOBAL
          if ( !dist1 && !dist2 )
          {
             // just a gaussian
-            double tmp = ( t - center ) / width;
+            double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
             result += height * exp( - tmp * tmp * 5e-1 );
          } else {
             if ( !dist1 )
@@ -1310,7 +1305,7 @@ namespace HFIT_GLOBAL
                double gmg_coeff                    = area * M_ONE_OVER_SQRT2PI * sqrt_one_over_a2sq_plus_a3sq;
                double gmg_exp_m1                   = -5e-1 *  one_over_a2sq_plus_a3sq;
                double gmg_erf_m1                   = dist2 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
-               double tmp                          = t - center;
+               double tmp                          = unified_q[ ( unsigned int ) t ] - center;
                result += 
                   gmg_coeff * exp( gmg_exp_m1 * tmp * tmp ) *
                   ( 1e0 + use_erf( gmg_erf_m1 * tmp ) );
@@ -1339,7 +1334,7 @@ namespace HFIT_GLOBAL
 
                      // printf( "EMG t0 %g thresh %g frac gauss %g\n", dist1, dist1_thresh, frac_gauss );
 
-                     double tmp = t - center;
+                     double tmp = unified_q[ ( unsigned int ) t ] - center;
                      double tmp2 =  tmp / width;
                
                      result += 
@@ -1355,7 +1350,7 @@ namespace HFIT_GLOBAL
                      double emg_erf_2         = width * M_ONE_OVER_SQRT2 * one_over_a3;
                      double sign_a3           = dist1 < 0e0 ? -1e0 : 1e0;
                      double one_over_sqrt2_a2 = M_ONE_OVER_SQRT2 / width;
-                     double tmp               = t - center;
+                     double tmp               = unified_q[ ( unsigned int ) t ] - center;
                      result += 
                         emg_coeff * exp( emg_exp_1 - one_over_a3 * tmp ) *
                         ( use_erf( tmp * one_over_sqrt2_a2 - emg_erf_2 ) + sign_a3 );
@@ -1370,7 +1365,7 @@ namespace HFIT_GLOBAL
                   double gmg_exp_m1                   = -5e-1 * one_over_a2sq_plus_a3sq;
                   double gmg_erf_m1                   = dist2 * sqrt_one_over_a2sq_plus_a3sq * M_ONE_OVER_SQRT2 * one_over_width;
 
-                  double tmp                          = t - center;
+                  double tmp                          = unified_q[ ( unsigned int ) t ] - center;
 
                   double dist1_thresh                 = width / ( 5e0 * sqrt(2e0) - 2e0 );
 
@@ -2369,6 +2364,8 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
 
    HFIT_GLOBAL::list_params();
 
+   US_Vector::printvector( "is_common", is_common );
+
    if ( !HFIT_GLOBAL::init_params.size() )
    {
       return false;
@@ -2430,11 +2427,11 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
       // US_Vector::printvector( "gsumf", gsumf );
       cout << "WARNING: gsums don't match\n";
    } else {
+      // US_Vector::printvector( "gsum", gsum );
       cout << "gsums match\n";
    }
 
    // hplc_win->add_ggaussian_curve( "lm_start", gsumf );
-
 
    vector < double > par = HFIT_GLOBAL::init_params;
    // US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );

@@ -10,6 +10,7 @@
 #include <qwt_scale_engine.h>
 #endif
 #include <qpalette.h>
+#include <assert.h>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -2998,7 +2999,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
             }
             if ( rx_gaussian_type.cap( 1 ) == "GMG" )
             {
-               new_g = EMG;
+               new_g = GMG;
             }
             if ( rx_gaussian_type.cap( 1 ) == "EMG+GMG" )
             {
@@ -9377,7 +9378,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
    {
    case GAUSS:
       {
-         cout << "gaussian as: GAUSS\n";
+         // cout << "gaussian as: GAUSS\n";
          double tmp;
          for ( unsigned int i = 0; i < q_size; ++i )
          {
@@ -9388,7 +9389,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
       break;
    case GMG:
       {
-         cout << "gaussian as: GMG\n";
+         // cout << "gaussian as: GMG\n";
 
 #if defined( DEBUG_GMG )
          vector < double > q_exparg_org;
@@ -9476,7 +9477,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
       break;
    case EMG:
       {
-         cout << "gaussian as: EMG\n";
+         // cout << "gaussian as: EMG\n";
          double dist1_thresh      = width / ( 5e0 * sqrt(2e0) - 2e0 );
          if ( fabs( dist1 ) < dist1_thresh )
          {
@@ -9528,7 +9529,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
       break;
    case EMGGMG:
       {
-         cout << "gaussian as: EMGGMG\n";
+         // cout << "gaussian as: EMGGMG\n";
          double area = height * width * M_SQRT2PI;
 
          // GMG
@@ -9599,7 +9600,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian( vector < double > t, 
 
 double US_Hydrodyn_Saxs_Hplc::compute_gaussian_peak( QString file, vector < double > g )
 {
-   cout << QString( "gaussian peak file %1 current type %2\n" ).arg( file ).arg( gaussian_type );
+   // cout << QString( "gaussian peak file %1 current type %2\n" ).arg( file ).arg( gaussian_type );
    vector < double > gs = compute_gaussian_sum( f_qs[ file ], g );
    double gmax = gs[ 0 ];
    for ( unsigned int i = 1; i < ( unsigned int ) gs.size(); i++ )
@@ -9907,16 +9908,8 @@ bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files, bool chec
    return true;
 }
 
-vector < double > US_Hydrodyn_Saxs_Hplc::compute_ggaussian_gaussian_sum()
-{
-   vector < double > result;
-   if ( !unified_ggaussian_ok )
-   {
-      editor_msg( "red", tr( "Internal error: gaussian rmsd called but unified gaussians not ok" ) );
-      return result;
-   }
-   result.resize( unified_ggaussian_I.size() );
 
+/* old way
    for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_q.size(); i++ )
    {
       double        t     = unified_ggaussian_q          [ i ];
@@ -9973,41 +9966,8 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_ggaussian_gaussian_sum()
 
    return result;
 }
+*/
 
-double US_Hydrodyn_Saxs_Hplc::ggaussian_rmsd()
-{
-   if ( !unified_ggaussian_ok )
-   {
-      editor_msg( "red", tr( "Internal error: gaussian rmsd called but unified gaussians not ok" ) );
-      return 1e99;
-   }
-
-   vector < double > result = compute_ggaussian_gaussian_sum();
-
-   double rmsd = 0e0;
-
-   if ( unified_ggaussian_use_errors && cb_sd_weight->isChecked() )
-   {
-      for ( unsigned int i = 0; i < ( unsigned int ) result.size(); i++ )
-      {
-         double tmp = ( result[ i ] - unified_ggaussian_I[ i ] ) / unified_ggaussian_e[ i ];
-         rmsd += tmp * tmp;
-      }
-   } else {
-      for ( unsigned int i = 0; i < ( unsigned int ) result.size(); i++ )
-      {
-         double tmp = result[ i ] - unified_ggaussian_I[ i ];
-         rmsd += tmp * tmp;
-      }
-   }
-
-   //    printvector( "rmsd, ugq", unified_ggaussian_q );
-
-   update_plot_errors( unified_ggaussian_t, unified_ggaussian_I, result, unified_ggaussian_e );
-   plot_errors_jump_markers();
-
-   return sqrt( rmsd );
-}
 
 void US_Hydrodyn_Saxs_Hplc::ggauss_rmsd()
 {

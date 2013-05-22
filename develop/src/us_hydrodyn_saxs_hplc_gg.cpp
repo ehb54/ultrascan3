@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
+#include <assert.h>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -111,4 +112,104 @@ bool US_Hydrodyn_Saxs_Hplc::unified_ggaussian_to_f_gaussians()
    }
 
    return true;
+}
+
+vector < double > US_Hydrodyn_Saxs_Hplc::compute_ggaussian_gaussian_sum()
+{
+   vector < double > result;
+   if ( !unified_ggaussian_ok )
+   {
+      editor_msg( "red", tr( "Internal error: gaussian rmsd called but unified gaussians not ok" ) );
+      return result;
+   }
+
+   assert( unified_ggaussian_curves > 1 && "unified_ggaussian_curves > 1" );
+
+   result.resize( unified_ggaussian_I.size() );
+
+   // cout << QString( "cggs: unified_ggaussian_I.size() %1\n" ).arg( result.size() );
+
+   vector < double > this_t;
+   unsigned int      t_size;
+
+   for ( unsigned int i = 0; i < unified_ggaussian_curves; ++i )
+   {
+      t_size = unified_ggaussian_q_end[ i ] - unified_ggaussian_q_start[ i ];
+      this_t.resize( t_size );
+      /*
+      cout << QString( "cggs: curve %1 q start %2 q end %3 t_size %4\n" )
+         .arg( i )
+         .arg( unified_ggaussian_q_start[ i ] )
+         .arg( unified_ggaussian_q_end[ i ] )
+         .arg( t_size )
+         ;         
+      */
+      for ( unsigned int t = 0; t < t_size; ++t )
+      {
+         this_t[ t ] = unified_ggaussian_q[ unified_ggaussian_q_start[ i ] + t ];
+      }
+
+      // build up g
+
+      vector < double > g;
+      unsigned int  index = common_size * unified_ggaussian_gaussians_size + i * per_file_size * unified_ggaussian_gaussians_size;
+
+      for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; ++j )
+      {
+         for ( int k = 0; k < gaussian_type_size; ++k )
+         {
+            if ( is_common[ k ] )
+            {
+               g.push_back( unified_ggaussian_params[ offset[ k ] + common_size * j           ] );
+            } else {
+               g.push_back( unified_ggaussian_params[ offset[ k ] + per_file_size * j + index ] );
+            }
+         }               
+      }
+      
+      // US_Vector::printvector( QString( "cggs: file %1, this_t" ).arg( i ), this_t );
+      // US_Vector::printvector( QString( "cggs: file %1, g" ).arg( i ), g );
+      vector < double > this_result = compute_gaussian_sum( this_t, g );
+
+      for ( unsigned int t = 0; t < t_size; ++t )
+      {
+         result[ unified_ggaussian_q_start[ i ] + t ] = this_result[ t ];
+      }
+   }
+   return result;
+}
+
+double US_Hydrodyn_Saxs_Hplc::ggaussian_rmsd()
+{
+   if ( !unified_ggaussian_ok )
+   {
+      editor_msg( "red", tr( "Internal error: gaussian rmsd called but unified gaussians not ok" ) );
+      return 1e99;
+   }
+
+   vector < double > result = compute_ggaussian_gaussian_sum();
+
+   double rmsd = 0e0;
+
+   if ( unified_ggaussian_use_errors && cb_sd_weight->isChecked() )
+   {
+      for ( unsigned int i = 0; i < ( unsigned int ) result.size(); i++ )
+      {
+         double tmp = ( result[ i ] - unified_ggaussian_I[ i ] ) / unified_ggaussian_e[ i ];
+         rmsd += tmp * tmp;
+      }
+   } else {
+      for ( unsigned int i = 0; i < ( unsigned int ) result.size(); i++ )
+      {
+         double tmp = result[ i ] - unified_ggaussian_I[ i ];
+         rmsd += tmp * tmp;
+      }
+   }
+
+   //    printvector( "rmsd, ugq", unified_ggaussian_q );
+
+   update_plot_errors( unified_ggaussian_t, unified_ggaussian_I, result, unified_ggaussian_e );
+   plot_errors_jump_markers();
+
+   return sqrt( rmsd );
 }
