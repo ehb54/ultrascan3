@@ -10,7 +10,6 @@
 #include <qwt_scale_engine.h>
 #endif
 #include <qpalette.h>
-#include <assert.h>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -2859,6 +2858,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
                          "dat|"
                          "int|"
                          "txt|"
+                         "csv|"
                          // "out|"
                          "ssaxs)$" );
 
@@ -2961,6 +2961,84 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       return false;
    }
 
+   // load csv columns as time curves
+   if ( ext == "csv" )
+   {
+      // first column is time
+      qv[ 0 ].replace( "(", "" ).replace( ")", "" ).replace( "/", "_per_" ).replace( QRegExp( "\\s+" ), "_" );
+
+      QStringList headers = QStringList::split( ",", qv[ 0 ] );
+      
+      if ( !headers.size() ||
+           !headers[ 0 ].lower().contains( "time" ) )
+      {
+         errormsg = tr( "The first line, first column of the .csv file must contain 'time'" );
+         return false;
+      }
+
+      vector < vector < double > > csv_data;
+      vector < double > q;
+      vector < QString > q_string;
+      for ( int i = 1; i < (int) qv.size(); i++ )
+      {
+         QStringList data = QStringList::split( ",", qv[ i ] );
+         vector < double > this_csv_data;
+         if ( data.size() )
+         {
+            q.push_back( data[ 0 ].toDouble() );
+            q_string.push_back( data[ 0 ] );
+         }
+         for ( int j = 1; j < (int) data.size(); j++ )
+         {
+            this_csv_data.push_back( data[ j ].toDouble() );
+         }
+         csv_data.push_back( this_csv_data );
+      }
+
+      map < QString, bool > current_files = all_files_map();
+
+      for ( int i = 1; i < (int) headers.size(); i++ )
+      {
+         QString name = headers[ i ];
+         unsigned int ext = 0;
+         while ( current_files.count( name ) )
+         {
+            name = headers[ i ] + QString( "-%1" ).arg( ++ext );
+         }
+         vector < double > I;
+         for ( int j = 0; j < (int) csv_data.size(); j++ )
+         {
+            if ( (int) csv_data[ j ].size() < i )
+            {
+               editor_msg( "red", QString( tr( "csv file %1 column %2 doesn't seem to be complete, skipped" ) ).arg( filename ).arg( i + 1 ) );
+               break;
+            }
+            I.push_back( csv_data[ j ][ i ] );
+         }
+
+         lb_created_files->insertItem( name );
+         lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+         lb_files->insertItem( name );
+         lb_files->setBottomItem( lb_files->numRows() - 1 );
+         // created_files_not_saved[ name ] = false;
+
+         f_pos       [ name ] = f_qs.size();
+         f_qs_string [ name ] = q_string;
+         f_qs        [ name ] = q;
+         f_Is        [ name ] = I;
+         f_is_time   [ name ] = true;
+         f_psv       [ name ] = 0e0;
+         f_conc      [ name ] = 0e0;
+         {
+            vector < double > tmp;
+            f_gaussians  [ name ] = tmp;
+         }
+      }
+
+      errormsg = "";
+      return false;
+   }
+      
    if ( ext == "dat" && qv[ 0 ].contains( " Global State file" ) )
    {
       QRegExp rx_dir             ( "^# __dir: (\\S+)\\s*$" );
@@ -10107,11 +10185,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
                    true,
                    false );
       }
-      add_plot( wheel_file + QString( "_pksum" ),
-                f_qs[ wheel_file ],
-                compute_gaussian_sum( f_qs[ wheel_file ], gaussians ),
-                true,
-                false );
+      if ( ( unsigned int ) gaussians.size() / gaussian_type_size > 1 )
+      {
+         add_plot( wheel_file + QString( "_pksum" ),
+                   f_qs[ wheel_file ],
+                   compute_gaussian_sum( f_qs[ wheel_file ], gaussians ),
+                   true,
+                   false );
+      }
    } else {
       // ggaussian mode
       for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
@@ -10143,11 +10224,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
                          true,
                          false );
             }
-            add_plot( unified_ggaussian_files[ i ] + QString( "_pksum" ),
-                      f_qs[ unified_ggaussian_files[ i ] ],
-                      compute_gaussian_sum( f_qs[ unified_ggaussian_files[ i ] ], g ),
-                      true,
-                      false );
+            if ( ( unsigned int ) gaussians.size() / gaussian_type_size > 1 )
+            {
+               add_plot( unified_ggaussian_files[ i ] + QString( "_pksum" ),
+                         f_qs[ unified_ggaussian_files[ i ] ],
+                         compute_gaussian_sum( f_qs[ unified_ggaussian_files[ i ] ], g ),
+                         true,
+                         false );
+            }
          }
          
          /* old way

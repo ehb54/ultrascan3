@@ -3,7 +3,7 @@
 #include "../include/us_hydrodyn_saxs_hplc.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_lm.h"
-#include <assert.h>
+// #include <assert.h>
 
 US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
                                                                    US_Hydrodyn_Saxs_Hplc *hplc_win,
@@ -1890,7 +1890,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
    // start of variable portion
 
    unsigned int base_ofs = hplc_win->unified_ggaussian_gaussians_size * common_size;
-   assert( (unsigned int)HFIT_GLOBAL::param_pos.size() == base_ofs && "common_size*number of gaussians should equal param_pos.size()" );
+   // assert( (unsigned int)HFIT_GLOBAL::param_pos.size() == base_ofs && "common_size*number of gaussians should equal param_pos.size()" );
 
    for ( unsigned int f = 0; f < hplc_win->unified_ggaussian_curves; f++ )
    {

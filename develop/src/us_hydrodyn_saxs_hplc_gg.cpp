@@ -1,6 +1,6 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
-#include <assert.h>
+// #include <assert.h>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -123,7 +123,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_ggaussian_gaussian_sum()
       return result;
    }
 
-   assert( unified_ggaussian_curves > 1 && "unified_ggaussian_curves > 1" );
+   // assert( unified_ggaussian_curves > 1 && "unified_ggaussian_curves > 1" );
 
    result.resize( unified_ggaussian_I.size() );
 
