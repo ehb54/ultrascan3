@@ -7498,9 +7498,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
                vector < double > x( 2 );
                vector < double > y( 2 );
 
+               double use_max_height = gauss_max_height;
+               if ( gaussian_type != GAUSS )
+               {
+                  use_max_height /= 20e0;
+               }
+
                x[ 0 ] = center - fwhm * 5e-1;
                x[ 1 ] = center + fwhm * 5e-1;
-               y[ 0 ] = gauss_max_height / 3e0 + ( gauss_max_height * (double) gaussian_pos / 100e0 );
+               y[ 0 ] = use_max_height / 3e0 + ( use_max_height * (double) gaussian_pos / 100e0 );
                y[ 1 ] = y[ 0 ];
 
                cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
@@ -7570,12 +7576,18 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_text( const QString & text )
                double width  = unified_ggaussian_params[ 2 * gaussian_pos + 1 ];
                double fwhm   = 2.354820045e0 * width;
 
+               double use_max_height = gauss_max_height;
+               if ( gaussian_type != GAUSS )
+               {
+                  use_max_height /= 20e0;
+               }
+
                vector < double > x( 2 );
                vector < double > y( 2 );
 
                x[ 0 ] = center - fwhm * 5e-1;
                x[ 1 ] = center + fwhm * 5e-1;
-               y[ 0 ] = gauss_max_height / 3e0 + ( gauss_max_height * (double) gaussian_pos / 100e0 );
+               y[ 0 ] = use_max_height / 3e0 + ( use_max_height * (double) gaussian_pos / 100e0 );
                y[ 1 ] = y[ 0 ];
 
                cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
@@ -7735,9 +7747,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_hline( double center, double width )
    vector < double > x( 2 );
    vector < double > y( 2 );
 
+   double use_max_height = gauss_max_height;
+   if ( gaussian_type != GAUSS )
+   {
+      use_max_height /= 20e0;
+   }
+
    x[ 0 ] = center - fwhm * 5e-1;
    x[ 1 ] = center + fwhm * 5e-1;
-   y[ 0 ] = gauss_max_height / 3e0 + ( gauss_max_height * (double) plotted_hlines.size() / 100e0 );
+   y[ 0 ] = use_max_height / 3e0 + ( use_max_height * (double) plotted_hlines.size() / 100e0 );
    y[ 1 ] = y[ 0 ];
 
    cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
@@ -8255,6 +8273,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
       double peak;
       get_peak( wheel_file, peak );
       gauss_max_height = peak * 1.2;
+      if ( gaussian_type != GAUSS )
+      {
+         gauss_max_height *= 20e0;
+      }
 
       qwtw_wheel->setEnabled( false );
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
@@ -9675,6 +9697,10 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
 
    get_peak( wheel_file, gauss_max_height );
    gauss_max_height *= 1.2;
+   if ( gaussian_type != GAUSS )
+   {
+      gauss_max_height *= 20e0;
+   }
       
    org_f_gaussians = f_gaussians;
 

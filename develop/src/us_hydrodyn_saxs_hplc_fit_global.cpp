@@ -822,7 +822,6 @@ namespace HFIT_GLOBAL
             .arg( width )
             ;
          */
-
          double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
          result += height * exp( - tmp * tmp * 5e-1 );
       }
@@ -882,7 +881,7 @@ namespace HFIT_GLOBAL
          fix_base++;
 
          // width
-         if ( is_common[ 2] )
+         if ( is_common[ 2 ] )
          {
             if ( param_fixed[ fix_base ] )
             {
@@ -941,6 +940,18 @@ namespace HFIT_GLOBAL
             // var_base++;
          }
 
+         /*
+         cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7 dist1 %8\n" )
+            .arg( t )
+            .arg( unified_q[ ( unsigned int ) t ] )
+            .arg( index )
+            .arg( i )
+            .arg( center )
+            .arg( height )
+            .arg( width )
+            .arg( dist1 )
+         */
+                     ;
          if ( !dist1 )
          {
             double tmp = ( unified_q[ ( unsigned int ) t ] - center ) / width;
@@ -1279,15 +1290,19 @@ namespace HFIT_GLOBAL
             // var_base++;
          }
 
-         //          cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7\n" )
-         //             .arg( t )
-         //             .arg( unified_q[ ( unsigned int ) t ] )
-         //             .arg( index )
-         //             .arg( i )
-         //             .arg( center )
-         //             .arg( height )
-         //             .arg( width )
-         //             ;
+         /*
+         cout << QString( "for pos %1 t is %2 index %3 gaussian %4 center %5 height %6 width %7 dist1 %8 dist2 %9\n" )
+            .arg( t )
+            .arg( unified_q[ ( unsigned int ) t ] )
+            .arg( index )
+            .arg( i )
+            .arg( center )
+            .arg( height )
+            .arg( width )
+            .arg( dist1 )
+            .arg( dist2 )
+            ;
+         */
 
          if ( !dist1 && !dist2 )
          {
@@ -2423,11 +2438,28 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 
    if ( gsum != gsumf )
    {
-      // US_Vector::printvector( "gsum", gsum );
-      // US_Vector::printvector( "gsumf", gsumf );
+      US_Vector::printvector( "gsum", gsum );
+      US_Vector::printvector( "gsumf", gsumf );
       cout << "WARNING: gsums don't match\n";
+      bool tol_ok = true;
+#define TOL 1e-5
+      for ( unsigned int i = 0; i < (unsigned int)gsum.size(); ++i )
+      {
+         if ( fabs( gsum[ i ] - gsumf[ i ] ) > TOL )
+         {
+            tol_ok = false;
+            break;
+         }
+      }
+      if ( tol_ok )
+      {
+         cout << QString( "WARNING: gsums within tolernace %1\n" ).arg( TOL );
+      } else {
+         cout << QString( "WARNING: gsums OUTSIDE tolernace %1\n" ).arg( TOL );
+      }
+#undef TOL
    } else {
-      // US_Vector::printvector( "gsum", gsum );
+      US_Vector::printvector( "gsum", gsum );
       cout << "gsums match\n";
    }
 
@@ -2435,7 +2467,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 
    vector < double > par = HFIT_GLOBAL::init_params;
    // US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
-   cout << QString( "par start (rmsd %1)" ).arg( org_rmsd ).ascii();
+   cout << QString( "par start (rmsd %1)\n" ).arg( org_rmsd ).ascii();
 
    progress->setProgress( 1, 2 );
    qApp->processEvents();
@@ -2460,7 +2492,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
    }
 
    // US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
-   cout << QString( "par fit (rmsd %1)" ).arg( status.fnorm ).ascii();
+   cout << QString( "par fit (rmsd %1)\n" ).arg( status.fnorm ).ascii();
 
    if ( org_rmsd > status.fnorm )
    {
