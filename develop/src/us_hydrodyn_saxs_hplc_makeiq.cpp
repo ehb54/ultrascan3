@@ -18,6 +18,300 @@
 #define UHSH_VAL_DEC 8
 #define UHSH_UV_CONC_FACTOR 1e0
 
+// no gaussians version
+void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
+{
+   // for each selected file
+   // extract q grid from file names
+   editor_msg( "dark blue", tr( "Starting: Make I(q)" ) );
+
+   QString head = qstring_common_head( files, true );
+   head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
+   head = head.replace( QRegExp( "_q\\d*_$" ), "" );
+
+   QRegExp rx_q     ( "_q(\\d+_\\d+)" );
+   QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+
+   vector < QString > q_string;
+   vector < double  > q;
+
+   bool         any_bl = false;
+
+   // get q 
+
+   // map: [ timestamp ][ q_value ] = intensity
+
+   map < double, map < double , double > > I_values;
+   map < double, map < double , double > > e_values;
+
+   map < double, bool > used_t;
+   list < double >      tl;
+
+   map < double, bool > used_q;
+   list < double >      ql;
+
+   bool                 use_errors = true;
+
+   disable_all();
+
+   map < QString, bool >    no_errors;
+   map < QString, QString > zero_points;
+   QStringList              qsl_no_errors;
+   QStringList              qsl_zero_points;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+   {
+      progress->setProgress( i, files.size() * 2 );
+      qApp->processEvents();
+      if ( rx_q.search( files[ i ] ) == -1 )
+      {
+         editor_msg( "red", QString( tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
+         progress->reset();
+         update_enables();
+         return;
+      }
+      ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+      if ( used_q.count( ql.back() ) )
+      {
+         editor_msg( "red", QString( tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] ) );
+         progress->reset();
+         update_enables();
+         return;
+      }
+      used_q[ ql.back() ] = true;
+         
+      if ( rx_bl.search( files[ i ] ) != -1 )
+      {
+         any_bl = true;
+      }
+
+      if ( !f_qs.count( files[ i ] ) )
+      {
+         editor_msg( "red", QString( tr( "Internal error: request to use %1, but not found in data" ) ).arg( files[ i ] ) );
+      } else {
+         for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ files[ i ] ].size(); j++ )
+         {
+            I_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_Is[ files[ i ] ][ j ];
+            if ( use_errors && f_errors[ files[ i ] ].size() == f_qs[ files[ i ] ].size() )
+            {
+               e_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_errors[ files[ i ] ][ j ];
+            } else {
+               if ( use_errors )
+               {
+                  use_errors = false;
+                  editor_msg( "dark red", QString( tr( "Notice: missing errors, first noticed in %1, so no errors at all" ) )
+                              .arg( files[ i ] ) );
+               }
+            }
+            if ( !used_t.count( f_qs[ files[ i ] ][ j ] ) )
+            {
+               tl.push_back( f_qs[ files[ i ] ][ j ] );
+               used_t[ f_qs[ files[ i ] ][ j ] ] = true;
+            }
+         }
+
+         if ( !f_errors.count( files[ i ] ) ||
+              f_errors[ files[ i ] ].size() != f_Is[ files[ i ] ].size() )
+         {
+            no_errors[ files[ i ] ] = true;
+            qsl_no_errors           << files[ i ];
+         } else {
+            if ( !is_nonzero_vector( f_errors[ files[ i ] ] ) )
+            {
+               unsigned int zero_pts = 0;
+               for ( unsigned int j = 0; j < ( unsigned int ) f_errors[ files[ i ] ].size(); j++ )
+               {
+                  if ( isnan( f_errors[ files[ i ] ][ j ] ) || f_errors[ files[ i ] ][ j ] == 0e0 )
+                  {
+                     zero_pts++;
+                  }
+               }
+               zero_points[ files[ i ] ] = QString( "%1: %2 of %3 points" ).arg( files[ i ] ).arg( zero_pts ).arg( f_errors[ files[ i ] ].size() );
+               qsl_zero_points           << zero_points[ files[ i ] ];
+            }
+         }
+
+      }
+   }
+
+   tl.sort();
+
+   vector < double > tv;
+   for ( list < double >::iterator it = tl.begin();
+         it != tl.end();
+         it++ )
+   {
+      tv.push_back( *it );
+   }
+
+
+   ql.sort();
+
+   vector < double  > qv;
+   vector < QString > qv_string;
+   for ( list < double >::iterator it = ql.begin();
+         it != ql.end();
+         it++ )
+   {
+      qv.push_back( *it );
+      qv_string.push_back( QString( "%1" ).arg( *it ) );
+   }
+
+
+   QString qs_no_errors;
+   QString qs_zero_points;
+
+   if ( zero_points.size() || no_errors.size() )
+   {
+      unsigned int used = 0;
+
+      QStringList qsl_list_no_errors;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_no_errors.size() && i < 12; i++ )
+      {
+         qsl_list_no_errors << qsl_no_errors[ i ];
+         used++;
+      }
+      if ( qsl_list_no_errors.size() < qsl_no_errors.size() )
+      {
+         qsl_list_no_errors << QString( tr( "... and %1 more not listed" ) ).arg( qsl_no_errors.size() - qsl_list_no_errors.size() );
+      }
+      qs_no_errors = qsl_list_no_errors.join( "\n" );
+      
+      QStringList qsl_list_zero_points;
+      for ( unsigned int i = 0; i < ( unsigned int ) qsl_zero_points.size() && i < 24 - used; i++ )
+      {
+         qsl_list_zero_points << qsl_zero_points[ i ];
+      }
+      if ( qsl_list_zero_points.size() < qsl_zero_points.size() )
+      {
+         qsl_list_zero_points << QString( tr( "... and %1 more not listed" ) ).arg( qsl_zero_points.size() - qsl_list_zero_points.size() );
+      }
+      qs_zero_points = qsl_list_zero_points.join( "\n" );
+   }
+
+   running = true;
+
+   // now for each I(t) distribute the I for each frame 
+
+   // build up resulting curves
+
+   // for each time, tv[ t ] 
+
+   map < QString, bool > current_files;
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      current_files[ lb_files->text( i ) ] = true;
+   }
+
+   for ( unsigned int t = 0; t < tv.size(); t++ )
+   {
+      progress->setProgress( files.size() + t, files.size() + tv.size() );
+
+      // build up an I(q)
+
+      QString name = head + QString( "%1%2" )
+         .arg( any_bl ? "_bs" : "" )
+         .arg( pad_zeros( tv[ t ], (int) tv.size() ) )
+         .replace( ".", "_" )
+         ;
+
+      {
+         int ext = 0;
+         QString use_name = name;
+         while ( current_files.count( use_name ) )
+         {
+            use_name = name + QString( "-%1" ).arg( ++ext );
+         }
+         name = use_name;
+      }
+         
+      // cout << QString( "name %1\n" ).arg( name );
+
+      // now go through all the files to pick out the I values and errors and distribute amoungst the various gaussian peaks
+      // we could also reassemble the original sum of gaussians curves as a comparative
+
+      vector < double > I;
+      vector < double > e;
+      vector < double > G;
+
+      vector < double > I_recon;
+      vector < double > G_recon;
+
+      vector < double > this_used_pcts;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+      {
+         if ( !I_values.count( tv[ t ] ) )
+         {
+            editor_msg( "dark red", QString( tr( "Notice: I values missing frame/time = %1" ) ).arg( tv[ t ] ) );
+         }
+
+         if ( !I_values[ tv[ t ] ].count( qv[ i ] ) )
+         {
+            editor_msg( "red", QString( tr( "Notice: I values missing q = %1" ) ).arg( qv[ i ] ) );
+            continue;
+         }
+
+         double tmp_I       = I_values[ tv[ t ] ][ qv[ i ] ];
+         double tmp_e       = 0e0;
+
+         if ( use_errors )
+         {
+            if ( !e_values.count( tv[ t ] ) )
+            {
+               editor_msg( "red", QString( tr( "Internal error: error values missing t %1" ) ).arg( tv[ t ] ) );
+               running = false;
+               update_enables();
+               progress->reset();
+               return;
+            }
+
+            if ( !e_values[ tv[ t ] ].count( qv[ i ] ) )
+            {
+               editor_msg( "red", QString( tr( "Internal error: error values missing q %1" ) ).arg( qv[ i ] ) );
+               running = false;
+               update_enables();
+               progress->reset();
+               return;
+            }
+
+            tmp_e = e_values[ tv[ t ] ][ qv[ i ] ];
+         }
+            
+         I      .push_back( tmp_I );
+         e      .push_back( tmp_e );
+      } // for each file
+         
+      lb_created_files->insertItem( name );
+      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+      lb_files->insertItem( name );
+      lb_files->setBottomItem( lb_files->numRows() - 1 );
+      created_files_not_saved[ name ] = true;
+   
+      vector < QString > use_qv_string = qv_string;
+      vector < double  > use_qv        = qv;
+      vector < double  > use_I         = I;
+      vector < double  > use_e         = e;
+
+      f_pos       [ name ] = f_qs.size();
+      f_qs_string [ name ] = qv_string;
+      f_qs        [ name ] = qv;
+      f_Is        [ name ] = I;
+      f_errors    [ name ] = e;
+      f_is_time   [ name ] = false;
+      f_conc      [ name ] = 0e0;
+      f_psv       [ name ] = 0e0;
+
+   } // for each q value
+
+   editor_msg( "dark blue", tr( "Finished: Make I(q)" ) );
+   progress->setProgress( 1, 1 );
+   running = false;
+   update_enables();
+}
+
+
 void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 {
    // for each selected file
@@ -381,6 +675,13 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          progress->reset();
          update_enables();
          return;
+      }
+
+      if ( parameters.count( "make_ng" ) &&
+           parameters[ "make_ng" ] == "true" )
+      {
+         progress->reset();
+         return create_i_of_q_ng( files );
       }
 
       if ( !no_conc )

@@ -515,6 +515,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         repeak( QStringList files );
       void                         create_i_of_t( QStringList files );
       void                         create_i_of_q( QStringList files );
+      void                         create_i_of_q_ng( QStringList files );
       QString                      last_created_file;
       void                         zoom_info();
       void                         clear_files( QStringList files );

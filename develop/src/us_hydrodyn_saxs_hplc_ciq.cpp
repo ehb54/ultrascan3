@@ -237,6 +237,12 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    pb_quit -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
    connect( pb_quit, SIGNAL( clicked() ), SLOT( quit() ) );
 
+   pb_create_ng =  new QPushButton ( tr( "Make I(q) without Gaussians" ), this );
+   pb_create_ng -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
+   pb_create_ng -> setMinimumHeight( minHeight1 );
+   pb_create_ng -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   connect( pb_create_ng, SIGNAL( clicked() ), SLOT( create_ng() ) );
+
    pb_go =  new QPushButton ( tr( "Continue" ), this );
    pb_go -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_go -> setMinimumHeight( minHeight1 );
@@ -320,6 +326,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addWidget ( pb_quit );
+   hbl_bottom->addWidget ( pb_create_ng );
    hbl_bottom->addWidget ( pb_go );
 
    background->addLayout ( vbl );
@@ -332,6 +339,13 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::quit()
 {
+   close();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::create_ng()
+{
+   (*parameters)[ "go" ]      = "true";
+   (*parameters)[ "make_ng" ] = "true";
    close();
 }
 

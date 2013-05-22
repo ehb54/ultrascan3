@@ -68,6 +68,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
 
       QPushButton *                           pb_help;
       QPushButton *                           pb_quit;
+      QPushButton *                           pb_create_ng;
       QPushButton *                           pb_go;
 
       void                     *              us_hydrodyn_saxs_hplc;
@@ -109,6 +110,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
 
       void                                    help();
       void                                    quit();
+      void                                    create_ng();
       void                                    go();
 
    protected slots:

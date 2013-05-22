@@ -1941,7 +1941,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
-   pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time && gaussians.size() );
+   pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
    pb_conc_file          ->setEnabled( files_selected_count == 1 );
    pb_detector           ->setEnabled( true );
 
@@ -9314,7 +9314,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q()
    }
               
    QStringList files = all_selected_files();
-   create_i_of_q( files );
+   gaussians.size() ? create_i_of_q( files ) : create_i_of_q_ng( files );
 
    update_enables();
 }
