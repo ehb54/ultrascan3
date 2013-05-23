@@ -3006,14 +3006,23 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
             name = headers[ i ] + QString( "-%1" ).arg( ++ext );
          }
          vector < double > I;
+         vector < double > use_q;
+         vector < QString > use_q_string;
          for ( int j = 0; j < (int) csv_data.size(); j++ )
          {
             if ( (int) csv_data[ j ].size() <= i )
             {
-               editor_msg( "red", QString( tr( "csv file %1 column %2 \"%3\" doesn't seem to be complete, skipped" ) ).arg( filename ).arg( i + 1 ).arg( headers[ i ] ) );
+               if ( !j )
+               {
+                  editor_msg( "red", QString( tr( "csv file %1 column %2 \"%3\" doesn't seem to be complete, skipped" ) ).arg( filename ).arg( i + 1 ).arg( headers[ i ] ) );
+                  break;
+               } 
                break;
+            } else {
+               I.push_back( csv_data[ j ][ i ] );
+               use_q.push_back( q[ j ] );
+               use_q_string.push_back( q_string[ j ] );
             }
-            I.push_back( csv_data[ j ][ i ] );
          }
 
          lb_created_files->insertItem( name );
@@ -3023,8 +3032,8 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          // created_files_not_saved[ name ] = false;
 
          f_pos       [ name ] = f_qs.size();
-         f_qs_string [ name ] = q_string;
-         f_qs        [ name ] = q;
+         f_qs_string [ name ] = use_q_string;
+         f_qs        [ name ] = use_q;
          f_Is        [ name ] = I;
          f_is_time   [ name ] = true;
          f_psv       [ name ] = 0e0;
