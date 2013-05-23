@@ -3010,38 +3010,39 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          vector < QString > use_q_string;
          for ( int j = 0; j < (int) csv_data.size(); j++ )
          {
-            if ( (int) csv_data[ j ].size() <= i )
+            if ( i - 1 < (int) csv_data[ j ].size() )
             {
-               if ( !j )
-               {
-                  editor_msg( "red", QString( tr( "csv file %1 column %2 \"%3\" doesn't seem to be complete, skipped" ) ).arg( filename ).arg( i + 1 ).arg( headers[ i ] ) );
-                  break;
-               } 
-               break;
-            } else {
-               I.push_back( csv_data[ j ][ i ] );
+               I.push_back( csv_data[ j ][ i - 1 ] );
                use_q.push_back( q[ j ] );
                use_q_string.push_back( q_string[ j ] );
             }
          }
 
-         lb_created_files->insertItem( name );
-         lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-         lb_files->insertItem( name );
-         lb_files->setBottomItem( lb_files->numRows() - 1 );
-         // created_files_not_saved[ name ] = false;
+         // cout << QString( "curve %1 sizes: I %2 q %3 qs %4\n" ).arg( name ).arg( I.size() ).arg( use_q.size() ).arg( use_q_string.size() );
+         // US_Vector::printvector2( "q, I", use_q, I );
 
-         f_pos       [ name ] = f_qs.size();
-         f_qs_string [ name ] = use_q_string;
-         f_qs        [ name ] = use_q;
-         f_Is        [ name ] = I;
-         f_is_time   [ name ] = true;
-         f_psv       [ name ] = 0e0;
-         f_conc      [ name ] = 0e0;
+         if ( I.size() )
          {
-            vector < double > tmp;
-            f_gaussians  [ name ] = tmp;
-         }
+            lb_created_files->insertItem( name );
+            lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+            lb_files->insertItem( name );
+            lb_files->setBottomItem( lb_files->numRows() - 1 );
+            // created_files_not_saved[ name ] = false;
+
+            f_pos       [ name ] = f_qs.size();
+            f_qs_string [ name ] = use_q_string;
+            f_qs        [ name ] = use_q;
+            f_Is        [ name ] = I;
+            f_is_time   [ name ] = true;
+            f_psv       [ name ] = 0e0;
+            f_conc      [ name ] = 0e0;
+            {
+               vector < double > tmp;
+               f_gaussians  [ name ] = tmp;
+            }
+         } else {
+            editor_msg( "red", QString( tr( "csv file %1 column %2 \"%3\" doesn't seem to be complete, skipped" ) ).arg( filename ).arg( i + 1 ).arg( name ) );
+         } 
       }
 
       errormsg = "";
