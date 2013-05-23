@@ -371,10 +371,11 @@ bool US_Saxs_Util::guinier_plot(QString outtag, QString tag)
    bool use_errors = wave[ tag ].s.size() == wave[ tag ].q.size();
    for( unsigned int i = 0; i < wave[tag].q.size(); i++ )
    {
-      wave[outtag].q.push_back(wave[tag].q[i] * wave[tag].q[i]);
-      wave[outtag].r.push_back(wave[tag].r[i] > 0e0 ? log(wave[tag].r[i]) : 0e0);
-      wave[outtag].s.push_back( use_errors && wave[tag].r[i] > 0e0 ? 
-                                wave[ outtag ].r.back() * ( wave[ tag ].s[ i ] / wave[ tag ].r[ i ] ) : 0e0 );
+      wave[ outtag ].q.push_back(wave[tag].q[i] * wave[tag].q[i]);
+      wave[ outtag ].r.push_back(wave[tag].r[i] > 0e0 ? log(wave[tag].r[i]) : 0e0);
+      wave[ outtag ].s.push_back( use_errors && wave[tag].r[i] > 0e0 ? 
+                                  // wave[ outtag ].r.back() * ( wave[ tag ].s[ i ] / wave[ tag ].r[ i ] ) : 0e0 );
+                                  fabs( wave[ tag ].s[ i ] / wave[ tag ].r[ i ] ) : 0e0 );
    }
 
    // US_Vector::printvector3( "after guinier_plot() q2 I e", wave[outtag].q, wave[outtag].r, wave[outtag].s );

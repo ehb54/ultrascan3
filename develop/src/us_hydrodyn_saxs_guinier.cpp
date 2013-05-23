@@ -907,7 +907,8 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          if ( use_SD_weighting )
          {
             sd.push_back( plotted_I[ i ][ j ] > 0e0 ? 
-                          fabs( lnI.back() ) * ( plotted_I_error[ i ][ j ] / plotted_I[ i ][ j ] ) : 0e0 );
+                          ( lnI.back() / log( plotted_I[ i ][ j ] ) ) * fabs( plotted_I_error[ i ][ j ] / plotted_I[ i ][ j ] ) : 0e0 );
+                          // fabs( lnI.back() ) * ( plotted_I_error[ i ][ j ] / plotted_I[ i ][ j ] ) : 0e0 );
          }
       }
       
@@ -1384,7 +1385,8 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          if ( use_SD_weighting )
          {
             sd.push_back( plotted_I[ i ][ j ] > 0e0 ? 
-                          fabs( lnI.back() ) * ( plotted_I_error[ i ][ j ] / plotted_I[ i ][ j ] ) : 0e0 );
+                          ( lnI.back() / log( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] ) ) * fabs( plotted_I_error[ i ][ j ] / plotted_I[ i ][ j ] ) : 0e0 );
+            // fabs( lnI.back() ) * ( plotted_I_error[ i ][ j ] / plotted_I[ i ][ j ] ) : 0e0 );
          }
       }
       
@@ -1864,7 +1866,8 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
          if ( use_SD_weighting )
          {
             sd.push_back( plotted_I[ i ][ j ] > 0e0 ? 
-                          fabs( lnI.back() ) * ( plotted_I_error[ i ][ j ] / plotted_I[ i ][ j ] ) : 0e0 );
+                          ( lnI.back() / log( plotted_q[ i ][ j ] * plotted_q[ i ][ j ] * plotted_I[ i ][ j ] ) ) * fabs( plotted_I_error[ i ][ j ] / plotted_I[ i ][ j ] ) : 0e0 );
+            //fabs( lnI.back() ) * ( plotted_I_error[ i ][ j ] / plotted_I[ i ][ j ] ) : 0e0 );
          }
       }
       
@@ -2738,7 +2741,7 @@ void US_Hydrodyn_Saxs::plot_guinier_error_bars( int i, bool cs, bool Rt )
    {
       for ( int q = 0; q < ( int ) plotted_q[ i ].size(); ++q )
       {
-         e = plotted_q[ i ][ q ] * plotted_I_error[ i ][ q ];
+         e = plotted_I[ i ][ q ] == 0e0 ? 0e0 : fabs( plotted_I_error[ i ][ q ] /  plotted_I[ i ][ q ] );
          if ( e )
          {
             x[ 0 ] = x[ 1 ] = plotted_q2[ i ][ q ];
