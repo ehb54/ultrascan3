@@ -3008,9 +3008,9 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          vector < double > I;
          for ( int j = 0; j < (int) csv_data.size(); j++ )
          {
-            if ( (int) csv_data[ j ].size() < i )
+            if ( (int) csv_data[ j ].size() <= i )
             {
-               editor_msg( "red", QString( tr( "csv file %1 column %2 doesn't seem to be complete, skipped" ) ).arg( filename ).arg( i + 1 ) );
+               editor_msg( "red", QString( tr( "csv file %1 column %2 \"%3\" doesn't seem to be complete, skipped" ) ).arg( filename ).arg( i + 1 ).arg( headers[ i ] ) );
                break;
             }
             I.push_back( csv_data[ j ][ i ] );
