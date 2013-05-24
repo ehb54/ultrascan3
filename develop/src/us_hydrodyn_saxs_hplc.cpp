@@ -2967,7 +2967,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       editor_msg( "black", QString( tr( "%1" ) ).arg( filename ) );
 
       // first column is time
-      qv[ 0 ].replace( "(", "" ).replace( ")", "" ).replace( "/", "_per_" ).replace( QRegExp( "\\s+" ), "_" );
+      qv[ 0 ].replace( "(", "" ).replace( ")", "" ).replace( "/", "_per_" ).replace( QRegExp( "\\s+" ), "_" ).replace( ":", "_" ).replace( QRegExp( "\\_+" ), "_" ) ;
 
       QStringList headers = QStringList::split( ",", qv[ 0 ] );
       
