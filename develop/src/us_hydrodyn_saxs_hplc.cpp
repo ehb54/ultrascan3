@@ -2964,6 +2964,8 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
    // load csv columns as time curves
    if ( ext == "csv" )
    {
+      editor_msg( "black", QString( tr( "%1" ) ).arg( filename ) );
+
       // first column is time
       qv[ 0 ].replace( "(", "" ).replace( ")", "" ).replace( "/", "_per_" ).replace( QRegExp( "\\s+" ), "_" );
 
@@ -3023,8 +3025,6 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
 
          if ( I.size() )
          {
-            lb_created_files->insertItem( name );
-            lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
             lb_files->insertItem( name );
             lb_files->setBottomItem( lb_files->numRows() - 1 );
             // created_files_not_saved[ name ] = false;
@@ -3736,8 +3736,8 @@ void US_Hydrodyn_Saxs_Hplc::save_created_csv()
 
    for ( int i = 0; i < lb_created_files->numRows(); i++ )
    {
-      if ( lb_created_files->isSelected( i ) && 
-           created_files_not_saved.count( lb_created_files->text( i ) ) )
+      if ( lb_created_files->isSelected( i ) ) // && 
+         // created_files_not_saved.count( lb_created_files->text( i ) ) )
       {
          created_not_saved_list << lb_created_files->text( i );
       }
@@ -3772,6 +3772,8 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
       editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
       return false;
    }
+
+   editor_msg( "black", QString( tr( "Current directory is %1" ) ).arg( QDir::current().canonicalPath() ) );
 
    for ( int i = 0; i < (int)files.size(); i++ )
    {
@@ -4006,7 +4008,10 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
    QFile f( use_filename );
    if ( !f.open( IO_WriteOnly ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not open %1 for writing" ) ).arg( use_filename ) );
+      editor_msg( "red", QString( tr( "Error: can not open %1 in directory %2 for writing" ) )
+                  .arg( use_filename )
+                  .arg( QDir::current().canonicalPath() )
+                  );
       return false;
    }
 

@@ -3455,8 +3455,8 @@ void US_Hydrodyn_Saxs_Buffer::save_created_csv()
 
    for ( int i = 0; i < lb_created_files->numRows(); i++ )
    {
-      if ( lb_created_files->isSelected( i ) && 
-           created_files_not_saved.count( lb_created_files->text( i ) ) )
+      if ( lb_created_files->isSelected( i ) ) // &&
+           // created_files_not_saved.count( lb_created_files->text( i ) ) )
       {
          created_not_saved_list << lb_created_files->text( i );
       }
@@ -3504,6 +3504,8 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    QString head = qstring_common_head( files, true );
 
    QString use_filename = head + ".csv";
+
+   editor_msg( "black", QString( tr( "Current directory is %1" ) ).arg( QDir::current().canonicalPath() ) );
 
    if ( QFile::exists( use_filename ) )
    {
