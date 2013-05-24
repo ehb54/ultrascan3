@@ -41,6 +41,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QRadioButton * rb_emg;
       QRadioButton * rb_emggmg;
       
+      QLabel       * lbl_other_options;
+      QCheckBox    * cb_csv_transposed;
+
       QPushButton  * pb_quit;
       QPushButton  * pb_help;
       QPushButton  * pb_ok;

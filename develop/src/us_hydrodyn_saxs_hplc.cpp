@@ -805,7 +805,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_remove_created->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_remove_created, SIGNAL(clicked()), SLOT(remove_created()));
 
-   pb_save_created_csv = new QPushButton(tr("Save CSV"), this);
+   pb_save_created_csv = new QPushButton( "", this);
+   pb_save_created_csv->setText( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) &&
+                                 (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] == "true" ?
+                                 tr( "Save CSV Tr" ) : tr( " Save CSV " ) );
    pb_save_created_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_save_created_csv->setMinimumHeight(minHeight1);
    pb_save_created_csv->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -3895,38 +3898,84 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
       return false;
    }
 
-   QStringList qline;
-   for ( unsigned int i = 0; i < t_qs_string[ files[ 0 ] ].size(); i++ )
+   if ( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) &&
+        (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] == "true" )
    {
-      qline << t_qs_string[ files[ 0 ] ][ i ];
-   }
+      // transpose output
 
-   ts << 
-      QString( "\"Name\",\"Type; q:\",%1,\"%2%3\"\n" )
-      .arg( qline.join( "," ) )
-      .arg( tr( "US-SOMO Hplc output" ) )
-      .arg( crop ? tr( " cropped" ) : "" );
+      // header
+      ts << "\"q/Time/Frame\",";
 
-   for ( int i = 0; i < (int)files.size(); i++ )
-   {
-      if ( !t_qs.count( files[ i ] ) )
+      for ( int i = 0; i < (int)files.size(); i++ )
       {
-         editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( files[ i ] ) );
-         f.close();
-         return false;
+         ts << QString ( "\"%1\"," ).arg( QString( "%1" ).arg( files[ i ] ).replace( "\"", "\'" ) );
+         if ( t_errors.count( files[ i ] ) && t_errors[ files[ i ] ].size() && !is_zero_vector( t_errors[ files[ i ] ] ) )
+         {
+            ts << QString ( "\"S.D. %1\"," ).arg( QString( "%1" ).arg( files[ i ] ).replace( "\"", "\'" ) );
+         }
+            
       }
-      ts << 
-         QString( "\"%1\",\"%2\",%3\n" )
-         .arg( files[ i ] )
-         .arg( "I(q)" )
-         .arg( vector_double_to_csv( t_Is[ files[ i ] ] ) );
-      if ( t_errors.count( files[ i ] ) && t_errors[ files[ i ] ].size() && !is_zero_vector( t_errors[ files[ i ] ] ) )
+      ts << endl;
+
+      // lines
+
+      for ( unsigned int i = 0; i < (unsigned int)t_qs_string[ files[ 0 ] ].size(); i++ )
       {
+         ts << QString( "%1," ).arg( t_qs_string[ files[ 0 ] ][ i ] );
+         
+         for ( int j = 0; j < (int)files.size(); j++ )
+         {
+            if ( i < t_Is[ files[ j ] ].size() )
+            {
+               ts << QString( "%1," ).arg( t_Is[ files[ j ] ][ i ] );
+               if ( t_errors.count( files[ j ] ) && t_errors[ files[ j ] ].size() && !is_zero_vector( t_errors[ files[ j ] ] ) )
+               {
+                  ts << QString( "%1," ).arg( t_errors[ files[ j ] ][ i ] );
+               }
+            } else {
+               ts << ",";
+               if ( t_errors.count( files[ j ] ) && t_errors[ files[ j ] ].size() && !is_zero_vector( t_errors[ files[ j ] ] ) )
+               {
+                  ts << ",";
+               }
+            }               
+         }
+         ts << endl;
+      }
+   } else {
+      QStringList qline;
+      for ( unsigned int i = 0; i < t_qs_string[ files[ 0 ] ].size(); i++ )
+      {
+         qline << t_qs_string[ files[ 0 ] ][ i ];
+      }
+
+      ts << 
+         QString( "\"Name\",\"Type; q:\",%1,\"%2%3\"\n" )
+         .arg( qline.join( "," ) )
+         .arg( tr( "US-SOMO Hplc output" ) )
+         .arg( crop ? tr( " cropped" ) : "" );
+
+      for ( int i = 0; i < (int)files.size(); i++ )
+      {
+         if ( !t_qs.count( files[ i ] ) )
+         {
+            editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( files[ i ] ) );
+            f.close();
+            return false;
+         }
          ts << 
             QString( "\"%1\",\"%2\",%3\n" )
             .arg( files[ i ] )
-            .arg( "I(q) sd" )
-            .arg( vector_double_to_csv( t_errors[ files[ i ] ] ) );
+            .arg( "I(q)" )
+            .arg( vector_double_to_csv( t_Is[ files[ i ] ] ) );
+         if ( t_errors.count( files[ i ] ) && t_errors[ files[ i ] ].size() && !is_zero_vector( t_errors[ files[ i ] ] ) )
+         {
+            ts << 
+               QString( "\"%1\",\"%2\",%3\n" )
+               .arg( files[ i ] )
+               .arg( "I(q) sd" )
+               .arg( vector_double_to_csv( t_errors[ files[ i ] ] ) );
+         }
       }
    }
 
@@ -10636,6 +10685,10 @@ void US_Hydrodyn_Saxs_Hplc::options()
 {
    map < QString, QString > parameters;
    
+   parameters[ "hplc_csv_transposed" ] = 
+      (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) ?
+      (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] : "false";
+   
    parameters[ "gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
    US_Hydrodyn_Saxs_Hplc_Options *sho = 
       new US_Hydrodyn_Saxs_Hplc_Options( & parameters, this );
@@ -10645,6 +10698,23 @@ void US_Hydrodyn_Saxs_Hplc::options()
    // maybe ask (warn) here if gaussian data structures have data
 
    if ( gaussian_type != (gaussian_types)( parameters[ "gaussian_type" ].toInt() ) )
+   {
+      gaussian_type = (gaussian_types)( parameters[ "gaussian_type" ].toInt() );
+      unified_ggaussian_ok = false;
+      f_gaussians.clear();
+      gaussians.clear();
+      org_gaussians.clear();
+      org_f_gaussians.clear();
+      update_gauss_mode();
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
+   }
+
+   (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] = parameters[ "hplc_csv_transposed" ];
+
+   pb_save_created_csv->setText( (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] == "true" ?
+                                 tr( "Save CSV Tr" ) : tr( " Save CSV " ) );
+
+   if ( gaussian_type != (gaussian_types)( parameters[ "hplc_csv_transposed" ].toInt() ) )
    {
       gaussian_type = (gaussian_types)( parameters[ "gaussian_type" ].toInt() );
       unified_ggaussian_ok = false;

@@ -11,13 +11,11 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
                                                                    const char *name
                                                                    ) : QDialog(p, name)
 {
-   puts( "hfg 0" );
    this->hplc_win = hplc_win;
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption( tr( "US-SOMO: SAXS Hplc: Global Gaussian Fit" ) );
-   puts( "hfg 0a" );
 
    update_hplc = true;
    running = false;
@@ -42,13 +40,11 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
       break;
    }
 
-   puts( "hfg 0b" );
    common_size   = 0;
    per_file_size = 0;
 
    is_common.clear(); // is common maps the offsets to layout of the regular file specific gaussians
    offset.clear();
-   puts( "hfg 0c" );
 
    // height:
    is_common.push_back( false           );  // height always variable
@@ -58,7 +54,6 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
    is_common.push_back( true            );  // center always common
    offset   .push_back( common_size++   );  // first common entry
 
-   puts( "hfg 0d" );
    // width
    if ( hplc_win->cb_fix_width->isChecked() )
    {
@@ -69,7 +64,6 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
       offset   .push_back( per_file_size++ );  // first variable entry
    }
 
-   puts( "hfg 0d" );
    if ( dist1_active )
    {
       if ( hplc_win->cb_fix_dist1->isChecked() )
@@ -95,11 +89,9 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
 
    cout << QString( "hfg:common size %1 per file per gaussian size %2\n" ).arg( common_size ).arg( per_file_size );
 
-   puts( "hfg 1" );
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
-   puts( "hfg 2" );
 
    gaussians_undo.clear();
    gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
@@ -139,9 +131,7 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
       }
    }
 
-   puts( "hfg 3" );
    update_enables();
-   puts( "hfg 4" );
 }
 
 US_Hydrodyn_Saxs_Hplc_Fit_Global::~US_Hydrodyn_Saxs_Hplc_Fit_Global()
@@ -649,7 +639,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_enables()
 {
-   puts( "hf: ue()" );
    bool run_ok = setup_run();
 
    cb_fix_center                ->setEnabled( !running );
@@ -2438,9 +2427,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 
    if ( gsum != gsumf )
    {
-      US_Vector::printvector( "gsum", gsum );
-      US_Vector::printvector( "gsumf", gsumf );
-      cout << "WARNING: gsums don't match\n";
       bool tol_ok = true;
 #define TOL 1e-5
       for ( unsigned int i = 0; i < (unsigned int)gsum.size(); ++i )
@@ -2453,8 +2439,11 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
       }
       if ( tol_ok )
       {
-         cout << QString( "WARNING: gsums within tolernace %1\n" ).arg( TOL );
+         cout << QString( "NOTICE: gsums within tolernace %1\n" ).arg( TOL );
       } else {
+         US_Vector::printvector( "gsum", gsum );
+         US_Vector::printvector( "gsumf", gsumf );
+         cout << "WARNING: gsums don't match\n";
          cout << QString( "WARNING: gsums OUTSIDE tolernace %1\n" ).arg( TOL );
       }
 #undef TOL
@@ -2587,7 +2576,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_sd()
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_ih()
 {
-   puts( "gsm_ih" );
    return; // have to rewrite this 
 
    /*
@@ -2649,7 +2637,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_ih()
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_cg()
 {
-   puts( "gsm_cg" );
    return; // have to rewrite this 
 
    /*
@@ -2712,7 +2699,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_cg()
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::ga()
 {
-   puts( "ga" );
    /*
    gsm_setup();
 
@@ -2775,7 +2761,6 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::grid()
 {
    return; // have to rewrite this 
    setup_run();
-   puts( "grid" );
    cout << "gauss fit start\n";
 
    vector < double > x = hplc_win->f_qs[ hplc_win->wheel_file ];

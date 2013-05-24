@@ -67,6 +67,18 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    bg_gaussian_type->insert( rb_emg );
    bg_gaussian_type->insert( rb_emggmg );
 
+   lbl_other_options = new QLabel ( tr( "Miscellaneous options" ), this);
+   lbl_other_options->setAlignment( Qt::AlignCenter | Qt::AlignVCenter);
+   lbl_other_options->setPalette  ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
+   lbl_other_options->setFont     ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   cb_csv_transposed = new QCheckBox(this);
+   cb_csv_transposed->setText(tr( "Save CSV transposed"));
+   cb_csv_transposed->setEnabled( true );
+   cb_csv_transposed->setChecked( (*parameters)[ "hplc_csv_transposed" ] == "true" );
+   cb_csv_transposed->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_csv_transposed->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    pb_quit =  new QPushButton ( tr( "Quit" ), this );
    pb_quit -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_quit -> setMinimumHeight( minHeight1 );
@@ -92,6 +104,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    background->addWidget( rb_gmg );
    background->addWidget( rb_emg );
    background->addWidget( rb_emggmg );
+   background->addWidget( lbl_other_options );
+   background->addWidget( cb_csv_transposed );
 
    if ( !parameters->count( "gaussian_type" ) )
    {
@@ -146,6 +160,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    {
       (*parameters)[ "gaussian_type" ] = QString( "%1" ).arg( US_Hydrodyn_Saxs_Hplc::EMGGMG );
    }
+
+   (*parameters)[ "hplc_csv_transposed" ] = cb_csv_transposed->isChecked() ? "true" : "false";
    close();
 }
 
