@@ -12,6 +12,13 @@
 #include "us_sleep.h"
 #include "us_images.h"
 
+#if 1
+#define EQUI_MENU
+#endif
+#if 1
+#define PCSA_MENU
+#endif
+
 using namespace US_WinData;
 
 /*! \brief Main program for UltraScan
@@ -143,17 +150,21 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_VHWE     , tr( "&Enhanced van Holde - Weischet" ),   velocity );
   addMenu(  P_GRIDEDIT , tr( "C&ustom 2-D Grid Editor" ),          velocity );
   addMenu(  P_2DSA     , tr( "&2-D Spectrum Analysis" ),           velocity );
-//  addMenu(  P_PCSA     , tr( "&Parametrically Constrained Spectrum Analysis" ),
-//                                                                   velocity );
+#ifdef PCSA_MENU
+  addMenu(  P_PCSA     , tr( "&Parametrically Constrained Spectrum Analysis" ),
+                                                                   velocity );
+#endif
   addMenu(  P_GAINIT   , tr( "&Initialize Genetic Algorithm" ),    velocity );
   addMenu(  P_SECOND   , tr( "&Second Moment" ),                   velocity );
   addMenu(  P_DCDT     , tr( "&Time Derivative" ),                 velocity );
   addMenu(  P_FEMA     , tr( "&FE Model Viewer" ),                 velocity );
   addMenu(  P_PSEUDO3D , tr( "&Combine Pseudo-3D Distributions" ), velocity );
   
-//  QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
-//  addMenu(  P_EQGLOBFIT, tr( "&Global Fit" ),                 equilibrium );
+#ifdef EQUI_MENU
+  QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
+  addMenu(  P_EQGLOBFIT, tr( "&Global Fit" ),                 equilibrium );
   //addMenu(  P_EQTIMEEST, tr( "Estimate Equilibrium &Times",   equilibrium );
+#endif
 
 //  QMenu* fit         = new QMenu( tr( "&Global Fit" ),  this );
 //  addMenu(  P_GLOBFITEQ, tr( "Global &Equilibrium Fit" ),     fit );
@@ -213,7 +224,9 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   menuBar()->addMenu( file        );
   menuBar()->addMenu( edit        );
   menuBar()->addMenu( velocity    );
-//  menuBar()->addMenu( equilibrium );
+#ifdef EQUI_MENU
+  menuBar()->addMenu( equilibrium );
+#endif
 //  menuBar()->addMenu( fit         );
   menuBar()->addMenu( utilities   );
   menuBar()->addMenu( simulation  );
@@ -227,7 +240,9 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   file       ->setFont( mfont );
   edit       ->setFont( mfont );
   velocity   ->setFont( mfont );
-//  equilibrium->setFont( mfont );
+#ifdef EQUI_MENU
+  equilibrium->setFont( mfont );
+#endif
 //  fit        ->setFont( mfont );
   utilities  ->setFont( mfont );
   simulation ->setFont( mfont );
