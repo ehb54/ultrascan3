@@ -198,6 +198,7 @@ qDebug() << "Report descs count" << kreports;
    {
       QString runid    = runids[ ii ];
       QString rundir   = rptdir + runid;
+      QString runresd  = resdir + runid;
 
       US_Report freport;
       freport.readDB( runid, &db );
@@ -240,6 +241,9 @@ qDebug() << "    Triple" << jj << "docs count" << ndocs;
             QString fname = doc->filename;
 qDebug() << "      Doc" << kk << "filename" << fname << "ID" << doc->documentID;
             QString fpath = rundir + "/" + fname;
+            if ( fname.endsWith( ".csv" ) )
+               fpath         = runresd + "/" + fname;
+
             QFile dfile( fpath );
 
             if ( dfile.exists() )
