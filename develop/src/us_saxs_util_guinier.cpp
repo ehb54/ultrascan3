@@ -153,9 +153,9 @@ bool US_Saxs_Util::guinier_fit(
 
    if ( wave[tag].q.size() <= endpos )
    {
-      errormsg = QString("end position %1 is past the end of the wave %2") 
-                         .arg(endpos)
-                         .arg(wave[tag].q.size());
+      errormsg = QString("selected end point %1 is more than the number of points available (%2)") 
+                         .arg( endpos + 1 )
+                         .arg( wave[tag].q.size() );
       return false;
    }
       
@@ -416,9 +416,9 @@ bool US_Saxs_Util::guinier_remove_points(
 
    if ( wave[tag].q.size() <= endpos )
    {
-      errormsg = QString("end position %1 is past the end of the wave %2") 
-                         .arg(endpos)
-                         .arg(wave[tag].q.size());
+      errormsg = QString("selected end point %1 is more than the number of points available (%2)") 
+                         .arg( endpos + 1 )
+                         .arg( wave[tag].q.size() );
       return false;
    }
       
@@ -448,8 +448,9 @@ bool US_Saxs_Util::guinier_remove_points(
          .arg( sd_limit * wave[ tag ].s[ i ] );
       */
 
-      if ( fabs( exp( a + b * wave[tag].q[i] ) - exp( wave[tag].r[i] ) ) <
-           sd_limit * fabs( exp( wave[tag].r[i] ) * wave[ tag ].s[ i ] / ( wave[ tag ].r[ i ] != 0e0 ? wave[ tag ].r[ i ] : 1e0 ) ) )
+      //       if ( fabs( exp( a + b * wave[tag].q[i] ) - exp( wave[tag].r[i] ) ) <
+      //            sd_limit * fabs( exp( wave[tag].r[i] ) * wave[ tag ].s[ i ] / ( wave[ tag ].r[ i ] != 0e0 ? wave[ tag ].r[ i ] : 1e0 ) ) )
+      if ( fabs( a + b * wave[tag].q[i] - wave[tag].r[i] ) < sd_limit * fabs( wave[ tag ].s[ i ] ) )
       {
          wave[ outtag ].q.push_back( wave[tag].q[i] );
          wave[ outtag ].r.push_back( wave[tag].r[i] );

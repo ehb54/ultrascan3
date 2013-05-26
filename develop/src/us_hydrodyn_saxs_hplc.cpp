@@ -11,6 +11,8 @@
 #endif
 #include <qpalette.h>
 
+#define JAC_VERSION
+
 // note: this program uses cout and/or cerr and this should be replaced
 
 #define SLASH QDir::separator()
@@ -46,6 +48,11 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 {
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
+
+#if defined( JAC_VERSION )
+   gaussian_type = GAUSS;
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
+#endif
 
    gaussian_type = 
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gaussian_type" ) ?
@@ -1507,6 +1514,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       // pb_normalize->hide();
    }
    pb_conc_avg->hide();
+
+#if defined( JAC_VERSION )
+   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   {
+      pb_options->hide();
+   }
+#endif
 
    QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
