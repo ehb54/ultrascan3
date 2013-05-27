@@ -790,6 +790,10 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             .arg(qsl_plotted_iq_names[ i ]);
 
       } else {
+         double slope = Rg * Rg / -3e0;
+         double slopesd = Rg != 0e0 ? -2e0 * slope * sigb / Rg : 0e0;
+         // cout << QString( "slope %1 slope sd %2\n" ).arg( slope ).arg( slopesd );
+
          double MW;
          double MW_sd;
          double ICL;
@@ -878,7 +882,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                     "%9,"
                     )
             .arg( Rg * Rg )
-            .arg( Rg * Rg * ( sigb / Rg ) )
+            .arg( 3e0 * slopesd )
             .arg( Rg )
             .arg( sigb )
             .arg( I0 )
@@ -922,8 +926,6 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             double conc;
             double psv;
             double I0_std_exp;
-            double slope = Rg * Rg / -3e0;
-            double slopesd = Rg != 0e0 ? fabs( sigb / Rg ) : 0e0;
             
             get_conc_csv_values( qsl_plotted_iq_names[ i ], conc, psv, I0_std_exp );
             csvlog += 
@@ -1325,6 +1327,10 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             .arg(qsl_plotted_iq_names[ i ]);
 
       } else {
+         double slope = Rg * Rg / -2e0;
+         double slopesd = Rg != 0e0 ? -2e0 * slope * sigb / Rg : 0e0;
+         // cout << QString( "slope %1 slope sd %2\n" ).arg( slope ).arg( slopesd );
+
          double ML;
          double ML_sd;
          double ICL;
@@ -1403,7 +1409,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                     "%9,"
                     )
             .arg( Rg * Rg )
-            .arg( Rg * Rg * ( sigb / Rg ) )
+            .arg( 2e0 * slopesd )
             .arg( Rg )
             .arg( sigb )
             .arg( I0 )
@@ -1447,8 +1453,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             double conc;
             double psv;
             double I0_std_exp;
-            double slope = Rg * Rg / -3e0;
-            double slopesd = Rg != 0e0 ? fabs( sigb / Rg ) : 0e0;
+
             
             get_conc_csv_values( qsl_plotted_iq_names[ i ], conc, psv, I0_std_exp );
             csvlog += 
@@ -1854,6 +1859,10 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
             .arg(qsl_plotted_iq_names[ i ]);
 
       } else {
+         double slope = Rg * Rg / -1e0;
+         double slopesd = Rg != 0e0 ? -2e0 * slope * sigb / Rg : 0e0;
+         // cout << QString( "slope %1 slope sd %2\n" ).arg( slope ).arg( slopesd );
+
          double MA;
          double MA_sd;
          double ICL;
@@ -1931,7 +1940,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
                     "%9,"
                     )
             .arg( Rg * Rg )
-            .arg( Rg * Rg * ( sigb / Rg ) )
+            .arg( slopesd )
             .arg( Rg )
             .arg( sigb )
             .arg( I0 )
@@ -1975,8 +1984,6 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
             double conc;
             double psv;
             double I0_std_exp;
-            double slope = Rg * Rg / -3e0;
-            double slopesd = Rg != 0e0 ? fabs( sigb / Rg ) : 0e0;
             
             get_conc_csv_values( qsl_plotted_iq_names[ i ], conc, psv, I0_std_exp );
             csvlog += 
@@ -2897,7 +2904,7 @@ void US_Hydrodyn_Saxs::plot_guinier_error_bars( int i, bool cs, bool Rt )
    {
       for ( int q = 0; q < ( int ) plotted_q[ i ].size(); ++q )
       {
-         e = plotted_I[ i ][ q ] == 0e0 ? 0e0 : fabs( plotted_I_error[ i ][ q ] /  plotted_I[ i ][ q ] );
+         e = plotted_q[ i ][ q ] * plotted_I_error[ i ][ q ];
          if ( e )
          {
             x[ 0 ] = x[ 1 ] = plotted_q2[ i ][ q ];

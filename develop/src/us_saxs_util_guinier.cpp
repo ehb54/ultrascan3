@@ -196,10 +196,15 @@ bool US_Saxs_Util::guinier_fit(
       ;
    */
 
-   Rg = sqrt( ( compute_Rc ? -2e0 : (compute_Rt ? -1e0 : -3e0 ) ) * b );
-   sigb = fabs( Rg * sigb / b );
+   // cout << QString( "Org slope %1 slope sd %2\n" ).arg( b ).arg( sigb );
+
+   double mult = ( compute_Rc ? -2e0 : (compute_Rt ? -1e0 : -3e0 ) );
+   Rg = sqrt( mult * b );
+   // sigb = fabs( Rg * sigb / b );
+   sigb = b != 0e0 ? fabs( Rg * 5e-1 * sigb / b ) : 0e0;
    I0 = exp(a);
-   siga = fabs( I0 * siga / a );
+   // siga = fabs( I0 * siga / a );
+   siga = fabs( I0 * siga );
    smin = sqrt(wave[tag].q[startpos]);
    smax = sqrt(wave[tag].q[endpos]);
    sRgmin = Rg * smin;
