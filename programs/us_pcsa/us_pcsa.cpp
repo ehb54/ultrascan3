@@ -1020,7 +1020,9 @@ void US_pcsa::new_triple( int index )
 // Remove any temporary plot file and close all opened windows
 void US_pcsa::close( void )
 {
-   QString tripleID  = edata->cell + edata->channel + edata->wavelength; 
+   QString tripleID  = ( edata != 0 )
+                       ?  edata->cell + edata->channel + edata->wavelength
+                       : ""; 
    QString ptmp4File = US_Settings::tmpDir() + "/PCSA." + tripleID
       + ".mlines." + QString::number( getpid() ) + ".png";
 

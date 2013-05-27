@@ -393,7 +393,7 @@ void US_ExportLegacy::export_data( void )
    mkdir( legadir, runID );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
-   if ( QString( rawDtype ).mid( 1 ) == "I" )
+   if ( rawDtype == "RI"  ||  rawDtype == "WI" )
    {  // Export intensity
       exp_intensity( files );
    }
@@ -491,10 +491,10 @@ DbgLv(1) << " drow chann" << drow << chann;
       ddesc  = rdata->description + "\n";
       hcell  = rdata->cell;
       fext   = "." + rawDtype + QString::number( hcell );
+      QString chann    = triples[ drow ].section( "/", 1, 1 ).simplified();
 
       if ( channdir )
       { // For pseudo absorbance, output to channel subdirectory
-         QString chann    = triples[ drow ].section( "/", 1, 1 ).simplified();
          QString odirchan = runID + "_channel" + chann;
          odirname         = legadir + "/" + odirchan + "/";
          mkdir( legadir, odirchan );
@@ -502,7 +502,7 @@ DbgLv(1) << " drow chann" << drow << chann;
 
       for ( int ii = 0; ii < nscan; ii++ )
       {  // Output a file for each scan
-         ofname = QString().sprintf( "%05i", ( ii + 1 ) ) + fext;
+         ofname = chann + QString().sprintf( "%05i", ( ii + 1 ) ) + fext;
          ofpath = odirname + ofname;            // Full path file name for scan
          dscan  = &rdata->scanData[ ii ];       // Scan pointer
          htemp  = dscan->temperature;           // Temperature

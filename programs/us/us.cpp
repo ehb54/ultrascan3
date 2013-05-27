@@ -226,8 +226,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   menuBar()->addMenu( velocity    );
 #ifdef EQUI_MENU
   menuBar()->addMenu( equilibrium );
-#endif
 //  menuBar()->addMenu( fit         );
+#endif
   menuBar()->addMenu( utilities   );
   menuBar()->addMenu( simulation  );
   menuBar()->addMenu( database    );
@@ -242,8 +242,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   velocity   ->setFont( mfont );
 #ifdef EQUI_MENU
   equilibrium->setFont( mfont );
-#endif
 //  fit        ->setFont( mfont );
+#endif
   utilities  ->setFont( mfont );
   simulation ->setFont( mfont );
   database   ->setFont( mfont );
