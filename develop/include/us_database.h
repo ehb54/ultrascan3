@@ -91,12 +91,16 @@ class US_EXTERN US_Database : public QFrame
       struct US_LoginData login_list;   /*!< A struct LoginData for storing DB login information */
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning( disable: 4251 )
+# endif
 #endif
       vector <struct US_LoginData> dblist;
       
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning( default: 4251 )
+# endif
 #endif
     
     int count, selected_item;

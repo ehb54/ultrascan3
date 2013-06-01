@@ -22,7 +22,9 @@
 #define USPM_MIN_VAL_D ( ( double ) USPM_MIN_VAL )
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
 class pm_point
@@ -118,7 +120,9 @@ struct ga_ctl_param
 
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
 #define LE_OR_LT <

@@ -53,13 +53,17 @@ class US_EXTERN US_Hydrodyn_OR : public QFrame
       bool *replicate_o_r_method;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #  pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector < void * > *other_ORs;  // this is to reference all _OR's when replication is used
 
 #ifdef WIN32
+# if !defined( QT4 )
 #  pragma warning ( default: 4251 )
+# endif
 #endif
 
       void *us_hydrodyn;

@@ -119,7 +119,9 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       bool          dup_in_submitted_or_completed();
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       map < QString, QString >                  cluster_config;
       map < QString, map < QString, QString > > cluster_systems;
@@ -143,7 +145,9 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       map < QString, QString >                    cluster_additional_methods_add_selected_files;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       csv           csv_advanced;
       bool          any_advanced();

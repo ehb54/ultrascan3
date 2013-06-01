@@ -81,7 +81,9 @@ class US_EXTERN US_Extinction : public QFrame
       int investigatorID;
       
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( disable: 4251 )
+# endif
 #endif
 
     vector <struct WavelengthScan> wavelengthScan_vector;
@@ -91,7 +93,9 @@ class US_EXTERN US_Extinction : public QFrame
       vector <float> extinction;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( default: 4251 )
+# endif
 #endif
 
       float  xmin, xmax, lambda_min, lambda_max;

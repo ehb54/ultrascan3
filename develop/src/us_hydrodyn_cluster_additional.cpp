@@ -6,6 +6,8 @@
 #include "../include/us_hydrodyn_cluster_dammin.h"
 #include "../include/us_hydrodyn.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define SLASH QDir::separator()
 
 US_Hydrodyn_Cluster_Additional::US_Hydrodyn_Cluster_Additional(

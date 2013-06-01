@@ -29,7 +29,9 @@ struct currentRun
    unsigned int scans[8][3];
 
 #ifdef WIN32
+# if !defined( QT4 )
     #pragma warning( disable: 4251 )
+# endif
 #endif
 
    vector < vector < vector <float> > > temperature;   // temperature of each scan
@@ -39,7 +41,9 @@ struct currentRun
    vector < vector < vector <unsigned int> > > rpm;   // Rotor speed in rotation per minute
 
 #ifdef WIN32
+# if !defined( QT4 )
     #pragma warning( default: 4251 )
+# endif
 #endif
 };
 
@@ -63,14 +67,18 @@ class US_EXTERN Data_Control_W : public QFrame
       int run_type;      // 0 = no run, 1 = Velocity Run, 2 = Equilibrium Run, 3 = Light Scattering Run
 
 #ifdef WIN32
+# if !defined( QT4 )
     #pragma warning( disable: 4251 )
+# endif
 #endif
       
     vector <struct rotorInfo> rotor_list;
       vector <struct centerpieceInfo> cp_list;
 
 #ifdef WIN32
+# if !defined( QT4 )
     #pragma warning( default: 4251 )
+# endif
 #endif
       struct runinfo run_inf;
       struct currentRun temp_run;

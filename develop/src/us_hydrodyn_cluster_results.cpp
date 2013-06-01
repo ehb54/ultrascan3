@@ -384,7 +384,7 @@ bool US_Hydrodyn_Cluster_Results::clean_dir( QString dir )
    // clean up tmp_dir first
    QDir qd;
    QStringList tmp_files = qd.entryList( "*" );
-   for ( unsigned int i = 0; i < tmp_files.size() ; i++ )
+   for ( unsigned int i = 0; i < (unsigned int)tmp_files.size() ; i++ )
    {
       if ( tmp_files[ i ] != "." &&
            tmp_files[ i ] != ".." )
@@ -558,7 +558,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
    }
 
    QStringList mkdirs;
-   for ( unsigned int i = 0; i < tar_list.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)tar_list.size(); i++ )
    {
       if ( QFileInfo( tar_list[ i ] ).dirPath().length() )
       {
@@ -597,7 +597,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
    QStringList final_results;
    QStringList further_extraction;
 
-   for ( unsigned int i = 0; i < tar_list.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)tar_list.size(); i++ )
    {
       if ( tar_list[ i ].contains( QRegExp( "\\.(tgz|TGZ|tar|TAR)$" ) ) )
       {
@@ -610,7 +610,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    if ( further_extraction.size() )
    {
-      for ( unsigned int i = 0; i < further_extraction.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)further_extraction.size(); i++ )
       {
          QString file = QFileInfo( further_extraction[ i ] ).fileName();
          QString subDirPath = QFileInfo( further_extraction[ i ] ).dirPath();
@@ -684,7 +684,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
          }
          
          QStringList mkdirs;
-         for ( unsigned int i = 0; i < tar_list.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int)tar_list.size(); i++ )
          {
             if ( QFileInfo( tar_list[ i ] ).dirPath().length() &&
                  QFileInfo( tar_list[ i ] ).dirPath() != "." )
@@ -746,7 +746,7 @@ bool US_Hydrodyn_Cluster_Results::merge_csvs( QStringList &final_results )
 
    map < QString, vector < QString > > dup_csvs;
 
-   for ( unsigned int i = 0; i < csvs.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csvs.size(); i++ )
    {
       dup_csvs[ QFileInfo( csvs[ i ] ).fileName() ].push_back( csvs[ i ] );
    }
@@ -771,7 +771,7 @@ bool US_Hydrodyn_Cluster_Results::merge_csvs( QStringList &final_results )
 
    QStringList new_results;
 
-   for ( unsigned int i = 0; i < final_results.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)final_results.size(); i++ )
    {
       if ( !csvs_merged.count( QFileInfo( final_results[ i ] ).fileName() ) )
       {
@@ -814,7 +814,7 @@ bool US_Hydrodyn_Cluster_Results::merge_this_csv( QString dest, vector < QString
       
    QTextStream tso( &fo );
 
-   for ( unsigned int i = 0; i < csvs.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csvs.size(); i++ )
    {
       if ( !QFile::exists( csvs[ i ] ) )
       {
@@ -901,7 +901,7 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
 
    map < QString, bool > written_dest_files;
 
-   for ( unsigned int i = 0; i < final_results.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)final_results.size(); i++ )
    {
       QString from_dir = tmp_dir;
       if ( QFileInfo( final_results[ i ] ).dirPath().length() )
@@ -964,7 +964,7 @@ unsigned int US_Hydrodyn_Cluster_Results::update_files( bool set_lv_files )
    if ( set_lv_files )
    {
       lv_files->clear();
-      for ( unsigned int i = 0; i < files.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
       {
          new QListViewItem( lv_files, 
                             files[ i ], 

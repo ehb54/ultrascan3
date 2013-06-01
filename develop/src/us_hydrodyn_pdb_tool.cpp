@@ -204,7 +204,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    lv_csv->setMinimumWidth( 175 );
 
    lv_csv->addColumn( "Models" );
-   for ( unsigned int i = 6; i < csv1.header.size() - 1; i++ )
+   for ( unsigned int i = 6; i < (unsigned int)csv1.header.size() - 1; i++ )
    {
       lv_csv->addColumn( csv1.header[i] );
    }
@@ -376,7 +376,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    lv_csv2->setMinimumWidth( 175 );
 
    lv_csv2->addColumn( "Models" );
-   for ( unsigned int i = 6; i < csv1.header.size() - 1; i++ )
+   for ( unsigned int i = 6; i < (unsigned int)csv1.header.size() - 1; i++ )
    {
       lv_csv2->addColumn( csv1.header[i] );
    }
@@ -1507,7 +1507,7 @@ void US_Hydrodyn_Pdb_Tool::csv_setup_keys( csv &csv1 )
 {
    csv1.key.clear();
 
-   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csv1.data.size(); i++ )
    {
       // cout << QString("csv setup keys %1 data size %2\n").arg( i ).arg( csv1.data[ i ].size() );
       
@@ -1540,7 +1540,7 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QListView *lv )
 
    QListViewItem *current = ( QListViewItem * )0;
 
-   for ( int i = csv1.data.size() - 1; i >= 0; i-- )
+   for ( int i = (int)csv1.data.size() - 1; i >= 0; i-- )
    {
       if ( csv1.data[ i ].size() < 6 )
       {
@@ -1682,15 +1682,15 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QListView *lv )
       if ( csv1.key.count( model_chain_residue_atom ) )
       {
          model_chain_residue_atoms[ model_chain_residue_atom ]->setVisible ( 
-                                                                            csv1.visible.size() > csv1.key[ model_chain_residue_atom ]  ?
+                                                                            (unsigned int)csv1.visible.size() > csv1.key[ model_chain_residue_atom ]  ?
                                                                             csv1.visible [ csv1.key[ model_chain_residue_atom ] ] : false 
                                                                              );
          model_chain_residue_atoms[ model_chain_residue_atom ]->setSelected( 
-                                                                            csv1.selected.size() > csv1.key[ model_chain_residue_atom ] ?
+                                                                            (unsigned int)csv1.selected.size() > csv1.key[ model_chain_residue_atom ] ?
                                                                             csv1.selected[ csv1.key[ model_chain_residue_atom ] ] : false
                                                                              );
          model_chain_residue_atoms[ model_chain_residue_atom ]->setOpen    ( 
-                                                                            csv1.open.size() > csv1.key[ model_chain_residue_atom ] ?
+                                                                            (unsigned int)csv1.open.size() > csv1.key[ model_chain_residue_atom ] ?
                                                                             csv1.open    [ csv1.key[ model_chain_residue_atom ] ] : false
                                                                              );
       } else {
@@ -1704,7 +1704,7 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QListView *lv )
       lbl_csv->setText( csv1.name );
       selection_since_count_csv1 = true;
    } else {
-      lbl_csv2->setText( csv2.size() > csv2_pos ? csv2[ csv2_pos ].name : "unknown" );
+      lbl_csv2->setText( (unsigned int)csv2.size() > csv2_pos ? csv2[ csv2_pos ].name : "unknown" );
       selection_since_count_csv2 = true;
    }
 }
@@ -1739,13 +1739,13 @@ QString US_Hydrodyn_Pdb_Tool::csv_to_pdb( csv &csv1, bool only_atoms )
 
    if ( !only_atoms )
    {
-      for ( unsigned int i = 0; i < csv1.header_text.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)csv1.header_text.size(); i++ )
       {
          s += QString( "HEADER   %1" + csv1.header_text[ i ] + "\n" )
             .arg( i ? QString("%1").arg(i + 1) : " " );
       }
       
-      for ( unsigned int i = 0; i < csv1.title_text.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)csv1.title_text.size(); i++ )
       {
          s += QString( "TITLE    %1" + csv1.title_text[ i ] + "\n" )
             .arg( i ? QString("%1").arg(i + 1) : " " );
@@ -1754,7 +1754,7 @@ QString US_Hydrodyn_Pdb_Tool::csv_to_pdb( csv &csv1, bool only_atoms )
 
    QString last_model = "none";
 
-   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csv1.data.size(); i++ )
    {
       QString model      = csv1.data[ i ][ 0 ];
       
@@ -1802,13 +1802,13 @@ QStringList US_Hydrodyn_Pdb_Tool::csv_to_pdb_qsl( csv &csv1, bool only_atoms )
 
    if ( !only_atoms )
    {
-      for ( unsigned int i = 0; i < csv1.header_text.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)csv1.header_text.size(); i++ )
       {
          qsl << QString( "HEADER   %1" + csv1.header_text[ i ] + "\n" )
             .arg( i ? QString("%1").arg(i + 1) : " " );
       }
       
-      for ( unsigned int i = 0; i < csv1.title_text.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)csv1.title_text.size(); i++ )
       {
          qsl << QString( "TITLE    %1" + csv1.title_text[ i ] + "\n" )
             .arg( i ? QString("%1").arg(i + 1) : " " );
@@ -1817,7 +1817,7 @@ QStringList US_Hydrodyn_Pdb_Tool::csv_to_pdb_qsl( csv &csv1, bool only_atoms )
 
    QString last_model = "none";
 
-   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csv1.data.size(); i++ )
    {
       QString model      = csv1.data[ i ][ 0 ];
       
@@ -2135,7 +2135,7 @@ void US_Hydrodyn_Pdb_Tool::load_from_qsl( QListView *lv, QStringList &pdb_text, 
    unsigned int line_count      = 0;
    bool         last_was_ENDMDL = true;
 
-   for ( unsigned int i = 0; i < pdb_text.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)pdb_text.size(); i++ )
    {
       QString qs = pdb_text[ i ];
       line_count++;
@@ -2420,7 +2420,7 @@ void US_Hydrodyn_Pdb_Tool::select_chain( QListView *lv, QStringList chains )
    }
 
    map < QString, bool > chains_to_select;
-   for ( unsigned int i = 0; i < chains.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)chains.size(); i++ )
    {
       chains_to_select[ chains[ i ] ] = true;
    }
@@ -2473,7 +2473,7 @@ void US_Hydrodyn_Pdb_Tool::select_chain( QListView *lv )
          chains_to_select[ chain ] = true;
       }
       QStringList new_list;
-      for ( unsigned int i = 0; i < chains.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)chains.size(); i++ )
       {
          if ( !chains_to_select.count( chains[ i ] ) )
          {
@@ -2562,7 +2562,7 @@ void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
       int use_pos = 0;
       if ( !previous_selection.isEmpty() )
       {
-         for ( unsigned int pos = 0; pos < qsl.size(); pos++ )
+         for ( unsigned int pos = 0; pos < (unsigned int)qsl.size(); pos++ )
          {
             if ( qsl[ pos ] == previous_selection )
             {
@@ -2602,7 +2602,7 @@ void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
       map < QListViewItem *, bool > selected_items;
       list < sortable_qlipair_double > global_lsqd;
          
-      for ( unsigned int i = 0; i < models.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)models.size(); i++ )
       {
          editor_msg( "black", QString( tr( "Selecting model %1\n" ) ).arg( models[ i ] ) );
          qApp->processEvents();
@@ -3265,7 +3265,7 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
    {
       // paste at end
       // cout << "paste at end\n";
-      for ( unsigned int i = 0; i < csv2.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)csv2.data.size(); i++ )
       {
          if ( merged.key.count( data_to_key( csv2.data[ i ] ) ) )
          {
@@ -3273,7 +3273,7 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
                QString( tr( "Warning: duplicate atoms not pasted <%1>\n") )
                .arg( data_to_key( csv2.data[ i ] ) );
          } else {
-            merged.key[ data_to_key( csv2.data[ i ] ) ] = merged.data.size();
+            merged.key[ data_to_key( csv2.data[ i ] ) ] = (unsigned int)merged.data.size();
             
             merged.data    .push_back  ( csv2.data    [ i ] );
             merged.visible .push_back  ( csv2.visible [ i ] );
@@ -3288,7 +3288,7 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
       merged.visible .resize( insert_after );
       merged.selected.resize( insert_after );
       merged.open    .resize( insert_after );
-      for ( unsigned int i = 0; i < csv2.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)csv2.data.size(); i++ )
       {
          if ( csv1.key.count( data_to_key( csv2.data[ i ] ) ) )
          {
@@ -3296,16 +3296,16 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
                QString( tr( "Warning: duplicate atom not pasted <%1>\n") )
                .arg( data_to_key( csv2.data[ i ] ) );
          } else {
-            merged.key[ data_to_key( csv2.data[ i ] ) ] = merged.data.size();
+            merged.key[ data_to_key( csv2.data[ i ] ) ] = (unsigned int)merged.data.size();
             merged.data    .push_back  ( csv2.data    [ i ] );
             merged.visible .push_back  ( csv2.visible [ i ] );
             merged.selected.push_back  ( csv2.selected[ i ] );
             merged.open    .push_back  ( csv2.open    [ i ] );
          }
       }
-      for ( unsigned int i = insert_after; i < csv1.data.size(); i++ )
+      for ( unsigned int i = insert_after; i < (unsigned int)csv1.data.size(); i++ )
       {
-         merged.key[ data_to_key( csv1.data[ i ] ) ] = merged.data.size();
+         merged.key[ data_to_key( csv1.data[ i ] ) ] = (unsigned int)merged.data.size();
          merged.data    .push_back  ( csv1.data    [ i ] );
          merged.visible .push_back  ( csv1.visible [ i ] );
          merged.selected.push_back  ( csv1.selected[ i ] );
@@ -3321,7 +3321,7 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
    {
       if ( !merged.nd_key.count( it->first ) )
       {
-         merged.nd_key[ it->first ] = merged.nd_visible.size();
+         merged.nd_key[ it->first ] = (unsigned int)merged.nd_visible.size();
          
          merged.nd_visible .push_back( csv2.nd_visible [ it->second ] );
          merged.nd_selected.push_back( csv2.nd_selected[ it->second ] );
@@ -3950,12 +3950,12 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
 
       QString            remark;
 
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)it->second.size(); i++ )
       {
          QStringList lines = QStringList::split( "\n", it->second[ i ] );
          vector < QString > names;
          vector < point   > p;
-         for ( unsigned int j = 0; j < lines.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int)lines.size(); j++ )
          {
             names.push_back( lines[ j ].mid( 12, 4 ).stripWhiteSpace().left( 1 ) );
             point this_p;
@@ -3985,7 +3985,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
          // compute distances
          count++;
 
-         for ( unsigned int j = 1; j < names.size(); j++ )
+         for ( unsigned int j = 1; j < (unsigned int)names.size(); j++ )
          {
             double distance = 
                sqrt( ( p[ 0 ].axis[ 0 ] - p[ j ].axis[ 0 ] ) * ( p[ 0 ].axis[ 0 ] - p[ j ].axis[ 0 ] ) +
@@ -4009,7 +4009,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
          {
             // angle H1-X-H2
             angle_count++;
-            for ( unsigned int j = 0; j < names.size() - 2; j++ )
+            for ( unsigned int j = 0; j < (unsigned int)names.size() - 2; j++ )
             {
                double angle =
                   acos( ((US_Hydrodyn *)us_hydrodyn)->dot( ((US_Hydrodyn *)us_hydrodyn)->normal( ((US_Hydrodyn *)us_hydrodyn)->minus( p[ 1 ], p[ 0 ] ) ),
@@ -4029,7 +4029,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
          }  
       }
       
-      for ( unsigned int i = 1; i < atom_names.size(); i++ )
+      for ( unsigned int i = 1; i < (unsigned int)atom_names.size(); i++ )
       {
          remark += 
             QString( "REMARK     distance %1-%2%3 average of %4 pairs %5 A" )
@@ -4073,7 +4073,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
          remark += "\n";
       }
 
-      for ( unsigned int i = 0; i < atom_names.size() - 2; i++ )
+      for ( unsigned int i = 0; i < (unsigned int)atom_names.size() - 2; i++ )
       {
          remark += 
             QString( "REMARK     angle H1-%1-H%2 average of %3 pairs %4 degrees" )
@@ -4119,7 +4119,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
       QTextStream ts_out( &f_out );
       ts_out << QString( "HEADER    US-SOMO PDB Editor hybrid extract from %1\n" ).arg( filename );
       ts_out << remark;
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)it->second.size(); i++ )
       {
          ts_out <<
             QString( "MODEL     %1\n%2\nENDMDL\n" )
@@ -4215,7 +4215,7 @@ void US_Hydrodyn_Pdb_Tool::h_to_chainX()
          {
             // flush out hydrogens into this chain
             out += "TER\n";
-            for ( unsigned int i = 0; i < hydrogens.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int)hydrogens.size(); i++ )
             {
                hydrogens[ i ]
                   .replace( 12, 4, " XH " )
@@ -4237,7 +4237,7 @@ void US_Hydrodyn_Pdb_Tool::h_to_chainX()
    {
       // flush out hydrogens into this chain
       out += "TER\n";
-      for ( unsigned int i = 0; i < hydrogens.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)hydrogens.size(); i++ )
       {
          hydrogens[ i ]
             .replace( 12, 4, " XH " )
@@ -4286,7 +4286,7 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
                                             , tr( "US-SOMO: PDB editor : Select PDBs to join" ) 
                                             , tr( "Select PDB files to join, Cancel when done" )
                                             );
-      for ( unsigned int i = 0; i < files.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
       {
          if ( !already_listed.count( files[ i ] ) )
          {
@@ -4369,7 +4369,7 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
    map < QString, bool > used_model;
    unsigned int actual_model_count = 0;
 
-   for ( unsigned int i = 0; i < join_files.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)join_files.size(); i++ )
    {
       editor_msg( "dark gray", QString( tr( "Processing %1" ) ).arg( join_files[ i ] ) );
       qApp->processEvents();
@@ -4828,7 +4828,7 @@ void US_Hydrodyn_Pdb_Tool::select_these( QListView *lv, vector < QString > &erro
 {
    lv->selectAll( false );
    map < QString, bool > error_map;
-   for ( unsigned int i = 0; i < error_keys.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)error_keys.size(); i++ )
    {
       error_map[ error_keys[ i ] ] = true;
       // cout << QString( "error map <%1>\n" ).arg( error_keys[ i ] );
@@ -4882,7 +4882,7 @@ void US_Hydrodyn_Pdb_Tool::csv_find_alt()
    unsigned int self_pos;
 
    QStringList alt_residues_no_self;
-   for ( unsigned int i = 0; i < alt_residues.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)alt_residues.size(); i++ )
    {
       if ( tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() == alt_residues[ i ] )
       {
@@ -4986,7 +4986,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_find_alt()
    unsigned int self_pos;
 
    QStringList alt_residues_no_self;
-   for ( unsigned int i = 0; i < alt_residues.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)alt_residues.size(); i++ )
    {
       if ( tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() == alt_residues[ i ] )
       {
@@ -5148,7 +5148,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_res
                    
 
    map < QString, bool > residue_names;
-   for ( unsigned int i = 0; i < usu->residue_list.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)usu->residue_list.size(); i++ )
    {
       if ( rx_skip.search( usu->residue_list[ i ].name ) == -1 )
       {
@@ -5157,7 +5157,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_res
       }
    }
 
-   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csv1.data.size(); i++ )
    {
       if ( csv1.data[ i ].size() < 3 )
       {
@@ -5177,7 +5177,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_res
    {
       csv tmp_csv = csv1;
       // cout << QString( "trying residue %1\n" ).arg( it->first );
-      for ( unsigned int i = 0; i < tmp_csv.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)tmp_csv.data.size(); i++ )
       {
          tmp_csv.data[ i ][ 2 ] = it->first;
       }
@@ -5198,7 +5198,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_res
 
       error_keys.clear();
       
-      for ( unsigned int i = 0; i < usu->model_vector.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)usu->model_vector.size(); i++ )
       {
          usu->errormsg = "";
          if ( usu->check_for_missing_atoms( &usu->model_vector[ i ], qsl ) 
@@ -5242,7 +5242,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv( csv & csv1, vector < QString > &error_k
 
    error_keys.clear();
 
-   for ( unsigned int i = 0; i < usu->model_vector.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)usu->model_vector.size(); i++ )
    {
       if ( !usu->check_for_missing_atoms( &usu->model_vector[ i ], qsl ) )
       {
@@ -5260,7 +5260,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv( csv & csv1, vector < QString > &error_k
       }
    }
 
-   // for ( unsigned int i = 0; i < error_keys.size(); i++ )
+   // for ( unsigned int i = 0; i < (unsigned int)error_keys.size(); i++ )
    // {
    // cout << "error key:" << error_keys[ i ] << endl;
    // }
@@ -5328,9 +5328,9 @@ double US_Hydrodyn_Pdb_Tool::minimum_pair_distance  ( QListView *lv,
    lvipair min_lvp;
    double  min_distance = 9e99;
 
-   for ( unsigned int i = 0; i < items_chain_1.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)items_chain_1.size(); i++ )
    {
-      for ( unsigned int j = 0; j < items_chain_2.size(); j++ )
+      for ( unsigned int j = 0; j < (unsigned int)items_chain_2.size(); j++ )
       {
          lvipair lvp;
          lvp.lvi1 = items_chain_1[ i ];
@@ -5472,9 +5472,9 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
                      if ( residues.size() )
                      {
                         chain_residues.push_back( residues );
-                        if ( max_chain_length < residues.size() )
+                        if ( max_chain_length < (unsigned int)residues.size() )
                         {
-                           max_chain_length = residues.size();
+                           max_chain_length = (unsigned int)residues.size();
                         }
                         residues.clear();
                      }
@@ -5489,9 +5489,9 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
       {
          residues.push_back( residue_atoms );
          chain_residues.push_back( residues );
-         if ( max_chain_length < residues.size() )
+         if ( max_chain_length < (unsigned int)residues.size() )
          {
-            max_chain_length = residues.size();
+            max_chain_length = (unsigned int)residues.size();
          }
          residues.clear();
          residue_atoms.clear();

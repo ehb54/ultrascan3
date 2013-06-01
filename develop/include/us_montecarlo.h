@@ -48,7 +48,9 @@ class US_MonteCarlo : public QFrame
       unsigned int bins, entries;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <float> amplitude, mw;
@@ -56,7 +58,9 @@ class US_MonteCarlo : public QFrame
       vector <unsigned int> parameter_bin;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
     
     int border, spacing, plot_start, column1, column2, current_item;

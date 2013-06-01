@@ -35,6 +35,8 @@
 
 #define NEW_TEST      0
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 QString US_PM::test( QString name, QString oname )
 {
    vector < double > q;

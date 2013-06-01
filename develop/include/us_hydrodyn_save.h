@@ -136,7 +136,9 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
       QPushButton                   *pb_remove;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QListBox * >         lb_possible;
 
@@ -165,7 +167,9 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
 #define DT_DOUBLE_NA                7
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       QPushButton   *pb_help;

@@ -58,7 +58,9 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
       bool ti_noise_avail;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector <struct ModelSystem> msv;
       vector <struct mfem_data> simdata;
@@ -76,7 +78,9 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
       vector <double> fv;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       struct mfem_data residuals, fem_model;
@@ -155,7 +159,9 @@ class fematch_thr_t : public QThread
   struct runinfo *run_inf;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
   vector <double> *s_distribution;
@@ -163,7 +169,9 @@ class fematch_thr_t : public QThread
   vector <double> *partial_concentration;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
   unsigned int selected_cell;
@@ -208,14 +216,18 @@ class fematch_ra_thr_t : public QThread
   US_Astfem_RSA *astfem_rsa;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
   vector < mfem_data > *simdata;
   vector < rotorInfo > *rotor_list;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
   int thread;

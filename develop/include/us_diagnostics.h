@@ -24,13 +24,17 @@ class US_EXTERN US_Diagnostics : public QFrame
       bool converted;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <float> rad, abs;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       QwtPlot *delta_plot;

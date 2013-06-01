@@ -45,11 +45,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       QLabel *                                lbl_credits_1;
       QLabel *                                lbl_main_label;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QWidget * >                    widgets_main_label;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       void                                    hide_widgets( vector < QWidget * >, bool do_hide = true, bool do_resize = true );
       QLabel *                                lbl_pmtypes;
@@ -67,11 +71,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       QCheckBox *                             cb_pmapproxmaxdimension;
       QLabel *                                lbl_q_label;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QWidget * >                    widgets_q_label;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       QLabel *                                lbl_pmminq;
       QLineEdit *                             le_pmminq;
@@ -82,11 +90,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       QLineEdit *                             le_pmqpoints;
       QLabel *                                lbl_supp_label;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QWidget * >                    widgets_supp_label;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       QLabel *                                lbl_pmharmonics;
       QLineEdit *                             le_pmharmonics;
@@ -106,11 +118,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       QLineEdit *                             le_pmmaxdimension;
       QLabel *                                lbl_ga_label;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QWidget * >                    widgets_ga_label;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       QLabel *                                lbl_pmgapopulation;
       QLineEdit *                             le_pmgapopulation;
@@ -130,11 +146,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Bfnb : public QDialog
       QLineEdit *                             le_pmgapointsmax;
       QLabel *                                lbl_misc_label;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QWidget * >                    widgets_misc_label;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       QLabel *                                lbl_pmbestdeltastart;
       QLineEdit *                             le_pmbestdeltastart;

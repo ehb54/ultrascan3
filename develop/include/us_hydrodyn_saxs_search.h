@@ -105,7 +105,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
       QString saxs_header_iqq;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < vector < double > > qs;
       vector < vector < double > > Is;
@@ -116,7 +118,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
       vector < double >            saxs_q;
       vector < vector < double > > saxs_iqq;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       void save_csv_saxs_iqq();
 

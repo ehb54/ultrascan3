@@ -21,27 +21,35 @@ struct ComponentRole
 {
    unsigned int comp_index;      // index of this component
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( disable: 4251 )
+# endif
 #endif
    vector <unsigned int> assoc;   // assoc vector index where this component occurs
    vector <int> react;            // role of component in each association, = 1: if as reactant; =-1, if as product
    vector <unsigned int> st;      // stoichiometry of each component in each assoc., index is linked to assoc.
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( disable: 4251 )
+# endif
 #endif
 };
 
 struct ReactionGroup
 {
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( disable: 4251 )
+# endif
 #endif
 
    vector <unsigned int> association;
    vector <unsigned int> GroupComponent;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( default: 4251 )
+# endif
 #endif
 };
 
@@ -50,7 +58,9 @@ struct AstFemParameters
    unsigned int simpoints;
 
 #ifdef WIN32
+# if !defined( QT4 )
      #pragma warning ( disable: 4251 )
+# endif
 #endif
 
    vector <double> s;         // sedimentation coefficient
@@ -59,7 +69,9 @@ struct AstFemParameters
    vector <struct ComponentRole> role; // role of each component in various reactions
 
 #ifdef WIN32
+# if !defined( QT4 )
      #pragma warning ( default: 4251 )
+# endif
 #endif
 
    double pathlength;         // path length of centerpiece;

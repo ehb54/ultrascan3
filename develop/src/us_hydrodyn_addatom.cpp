@@ -2,6 +2,8 @@
 #include <list>
 #include <qregexp.h>
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 US_AddAtom::US_AddAtom(bool *widget_flag, QWidget *p, const char *name) : QWidget( p, name)
 {
    this->widget_flag = widget_flag;

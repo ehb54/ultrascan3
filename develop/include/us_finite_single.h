@@ -37,7 +37,9 @@ class US_EXTERN US_Finite_single : public Data_Control_W
       fefit_run *runData;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
     
     vector <struct fefit_component> component_vector;
@@ -47,7 +49,9 @@ class US_EXTERN US_Finite_single : public Data_Control_W
       vector <float> vbar_model;   // vbar array containing all vbar20's for a 
                                 //current cell and current channel
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
     

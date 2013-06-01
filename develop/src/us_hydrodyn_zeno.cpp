@@ -3,6 +3,8 @@
 static US_Hydrodyn  * zeno_us_hydrodyn;
 static QProgressBar * zeno_progress;
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 namespace zeno {
    /*
      Original translation from Fortran:

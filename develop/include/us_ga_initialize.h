@@ -94,7 +94,9 @@ class US_EXTERN US_GA_Initialize : public QFrame
       ~US_GA_Initialize();
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <bucket> GA_Solute;
@@ -106,7 +108,9 @@ class US_EXTERN US_GA_Initialize : public QFrame
       list <Solute> distro_solute;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( default: 4251 )
+# endif
 #endif
 
       US_Config *USglobal;    /*!< A US_Config reference. */

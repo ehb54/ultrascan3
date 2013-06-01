@@ -76,7 +76,9 @@ class US_EXTERN US_RadialCorrection : public QFrame
       QProgressBar *pgb_progress;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <QString> filenames;
@@ -84,7 +86,9 @@ class US_EXTERN US_RadialCorrection : public QFrame
       vector <struct centerpieceInfo> cp_list;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( default: 4251 )
+# endif
 #endif
 
    public slots:

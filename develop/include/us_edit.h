@@ -70,7 +70,9 @@ class US_EXTERN EditData_Win : public QFrame
       RunDetails_F *edit_details;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <struct rotorInfo> rotor_list;
@@ -78,7 +80,9 @@ class US_EXTERN EditData_Win : public QFrame
       vector <struct absscan> oldscan;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       struct rotorInfo rotor;
@@ -167,14 +171,18 @@ class US_EXTERN EditData_Win : public QFrame
       void update_centerpiece(int);
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       void update_exclude_profile(vector <bool>);
       void final_exclude_profile(vector <bool>);
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
    protected slots:

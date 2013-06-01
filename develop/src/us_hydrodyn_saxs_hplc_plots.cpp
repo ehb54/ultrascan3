@@ -508,7 +508,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_errors_jump_markers()
       plot_errors->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold) );
       plot_errors->setMarkerLabelText ( marker, QString( "%1" ).arg( i + 1 ) ); // unified_ggaussian_files[ i ] );
 #else
-#warn check how to do this in qt4 needs ymark symsize
+#warning check how to do this in qt4 needs ymark symsize
       QwtPlotMarker* marker = new QwtPlotMarker;
       marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
                                     QBrush( Qt::white ), QPen( Qt::cyan, 2, Qt::DashLine ),

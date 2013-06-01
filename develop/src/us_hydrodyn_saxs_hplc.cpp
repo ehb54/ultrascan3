@@ -8004,14 +8004,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_markers()
 #ifndef QT4
    plot_dist->removeMarkers();
 #else
-#warn check how to do this in qt4
+#warning check how to do this in qt4
 #endif
    for ( unsigned int i = 0; i < ( unsigned int )plotted_hlines.size(); i++ )
    {
 #ifndef QT4
       plot_dist->removeCurve( plotted_hlines[ i ] );
 #else
-#warn check how to do this in qt4
+#warning check how to do this in qt4
 #endif
       
    }
@@ -8156,7 +8156,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians()
 #ifndef QT4
       plot_dist->removeCurve( plotted_gaussians[ i ] );
 #else
-#warn check how to do this in qt4
+#warning check how to do this in qt4
 #endif
    }
    for ( unsigned int i = 0; i < ( unsigned int ) plotted_gaussian_sum.size(); i++ )
@@ -8164,7 +8164,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians()
 #ifndef QT4
       plot_dist->removeCurve( plotted_gaussian_sum[ i ] );
 #else
-#warn check how to do this in qt4
+#warning check how to do this in qt4
 #endif
    }
 }
@@ -8287,7 +8287,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_gaussian_sum()
 #ifndef QT4
          y[ j ] = plot_dist->curve( plotted_gaussians[ 0 ] )->y( j );
 #else
-#warn check how to do this in qt4
+#warning check how to do this in qt4
 #endif
       }
 
@@ -8298,7 +8298,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_gaussian_sum()
 #ifndef QT4
             y[ j ] += plot_dist->curve( plotted_gaussians[ i ] )->y( j );
 #else
-#warn check how to do this in qt4
+#warning check how to do this in qt4
 #endif
          }
       }
@@ -8360,7 +8360,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_gaussian_sum()
 #ifndef QT4
          y[ j ] = plot_dist->curve( plotted_gaussians[ 0 ] )->y( j );
 #else
-#warn check how to do this in qt4
+#warning check how to do this in qt4
 #endif
       }
    } else {
@@ -8377,7 +8377,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_gaussian_sum()
 #ifndef QT4
          y[ j ] += plot_dist->curve( plotted_gaussians[ i ] )->y( j );
 #else
-#warn check how to do this in qt4
+#warning check how to do this in qt4
 #endif
       }
    }
@@ -9134,7 +9134,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
 #ifndef QT4
       plot_dist->removeCurve( plotted_baseline[ i ] );
 #else
-#warn check how to do this in qt4
+#warning check how to do this in qt4
 #endif
    }
    plotted_baseline.clear();
@@ -9260,7 +9260,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_s_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
 #else
-#warn check how to do this in qt4 needs ymark
+#warning check how to do this in qt4 needs ymark
    plotted_markers[ 0 ]->setValue( pos, ymark );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
@@ -9277,7 +9277,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
 #else
-#warn check how to do this in qt4 needs ymark
+#warning check how to do this in qt4 needs ymark
    plotted_markers[ 1 ]->setValue( pos, ymark );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
@@ -9294,7 +9294,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_e_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 2 ], text.toDouble(), 0e0 );
 #else
-#warn check how to do this in qt4 needs ymark
+#warning check how to do this in qt4 needs ymark
    plotted_markers[ 2 ]->setValue( pos, ymark );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
@@ -9311,7 +9311,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_s_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 3 ], text.toDouble(), 0e0 );
 #else
-#warn check how to do this in qt4 needs ymark
+#warning check how to do this in qt4 needs ymark
    plotted_markers[ 3 ]->setValue( pos, ymark );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
@@ -9328,7 +9328,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 4 ], text.toDouble(), 0e0 );
 #else
-#warn check how to do this in qt4 needs ymark
+#warning check how to do this in qt4 needs ymark
    plotted_markers[ 4 ]->setValue( pos, ymark );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )

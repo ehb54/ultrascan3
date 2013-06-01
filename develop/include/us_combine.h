@@ -15,14 +15,18 @@ struct distribution
 {
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
    vector <double> sval;
    vector <double> fraction;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
    QString id;
@@ -46,7 +50,9 @@ class US_EXTERN US_Combine : public QFrame
       int first_cell;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <struct centerpieceInfo> cp_list;
@@ -55,7 +61,9 @@ class US_EXTERN US_Combine : public QFrame
       vector <bool> is_integral;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
     
     float ff0;

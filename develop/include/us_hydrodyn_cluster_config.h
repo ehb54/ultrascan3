@@ -75,11 +75,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       void          *cluster_window;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       map < QString, map < QString, QString > > cluster_systems;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       bool          comm_active;

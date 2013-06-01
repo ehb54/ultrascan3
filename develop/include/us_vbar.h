@@ -51,7 +51,9 @@ class US_EXTERN US_Vbar : public US_DB_T
       float temperature;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning( disable: 4251 )
+# endif
 #endif
 
       vector <int> item_PepID;                     /*!< A Integer Array to store Peptide ID.*/
@@ -59,7 +61,9 @@ class US_EXTERN US_Vbar : public US_DB_T
       vector <QString> display_Str;         /*!< A String Array to store peptide name dispaly.*/
 
 #ifdef WIN32
+# if !defined( QT4 )
       #pragma warning( default: 4251 )
+# endif
 #endif
 
    public slots:

@@ -21,13 +21,17 @@ struct single_distro
    QString name;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
    vector <QString> line;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( default: 4251 )
+# endif
 #endif
 };
 
@@ -42,13 +46,17 @@ class US_EXTERN US_CreateGlobal : public QFrame
    private:
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <struct single_distro> distro;
       
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( default: 4251 )
+# endif
 #endif
 
     QLabel *lbl_info;

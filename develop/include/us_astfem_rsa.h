@@ -29,12 +29,16 @@ class US_EXTERN US_Astfem_RSA : public QObject
       unsigned int N;         // number of points used in radial direction in ASTFEM
       struct AstFemParameters af_params;
 #ifdef WIN32
+# if !defined( QT4 )
       #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector <double> x;       // radii of grid points; x[0...N-1]
       vector <struct ReactionGroup> rg;
 #ifdef WIN32
+# if !defined( QT4 )
      #pragma warning ( default: 4251 )
+# endif
 #endif
       int thread;
       vector < rotorInfo > *rotor_list;

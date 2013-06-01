@@ -13,14 +13,18 @@ struct opticalProfile
 {
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
    vector <float> absorbance;
    vector <float> residual;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 };
 
@@ -40,7 +44,9 @@ class US_EXTERN US_EqFitter : public US_Minimize
       struct opticalProfile profile_208, profile_205, profile_260, profile_262;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <struct EquilScan_FitProfile> *scanfit_vector;
@@ -52,7 +58,9 @@ class US_EXTERN US_EqFitter : public US_Minimize
       vector <QString> *scan_info;
       
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
     
     struct EquilRun_FitProfile *runfit;

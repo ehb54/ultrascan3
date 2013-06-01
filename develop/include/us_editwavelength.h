@@ -37,7 +37,9 @@ struct EditScan
    QString header2;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
   vector <QString> line;
@@ -45,7 +47,9 @@ struct EditScan
    vector <float> wavelength;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( default: 4251 )
+# endif
 #endif
 
    unsigned int startLineIndex;
@@ -71,13 +75,17 @@ class US_EXTERN US_EditWavelengthScan : public QFrame
       US_Config *USglobal;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <struct EditScan> WavelengthFile;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( default: 4251 )
+# endif
 #endif
     
     QwtPlot *wavelength_plot;

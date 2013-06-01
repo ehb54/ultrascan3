@@ -312,7 +312,9 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
 
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       map < QString, csv >          csvs;      // all csvs loaded?
       csv                           csv_read( QString filename );               // sets csv_error, csv_warn
@@ -398,7 +400,9 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       map < QString, comparative_entry * >  ce_map;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
    private slots:

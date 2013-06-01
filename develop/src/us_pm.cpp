@@ -1,5 +1,7 @@
 #include "../include/us_pm.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 void US_PM::set_grid_size( double grid_conversion_factor, bool quiet )
 {
    /*

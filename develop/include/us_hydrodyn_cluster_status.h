@@ -101,12 +101,16 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       QString       current_http_response;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       map < QListViewItem *, QString > jobs;
       map < QString, QString >         job_hostname;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       QListViewItem *next_to_process;
       void          get_status();

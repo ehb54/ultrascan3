@@ -88,7 +88,9 @@ class ga_individual
 struct hplc_stack_data
 {
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
    map < QString, vector < QString > > f_qs_string;
    map < QString, vector < double > >  f_qs;
@@ -111,7 +113,9 @@ struct hplc_stack_data
    vector < double >                   gaussians;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 };
 
@@ -342,7 +346,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QString          errormsg;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < double >                  plot_errors_grid;
       vector < double >                  plot_errors_target;
@@ -436,7 +442,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
                                                       unsigned int peak,
                                                       double conv );
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       unsigned int                        unified_ggaussian_curves;
       unsigned int                        unified_ggaussian_gaussians_size;
@@ -625,12 +633,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       unsigned int                 per_file_size;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < bool >              is_common; // is common maps the offsets to layout of the regular file specific gaussians
       vector < unsigned int >      offset;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
    private slots:

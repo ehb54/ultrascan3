@@ -6942,7 +6942,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
 #else
-#warn check how to do this in qt4 needs ymark
+#warning check how to do this in qt4 needs ymark
    plotted_markers[ 0 ]->setValue( pos, ymark );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
@@ -6958,7 +6958,7 @@ void US_Hydrodyn_Saxs_Buffer::join_point_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
 #else
-#warn check how to do this in qt4 needs ymark
+#warning check how to do this in qt4 needs ymark
    plotted_markers[ 0 ]->setValue( pos, ymark );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
@@ -6974,7 +6974,7 @@ void US_Hydrodyn_Saxs_Buffer::join_end_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 2 ], text.toDouble(), 0e0 );
 #else
-#warn check how to do this in qt4 needs ymark
+#warning check how to do this in qt4 needs ymark
    plotted_markers[ 0 ]->setValue( pos, ymark );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
@@ -7510,7 +7510,7 @@ void US_Hydrodyn_Saxs_Buffer::join_delete_markers()
 #ifndef QT4
    plot_dist->removeMarkers();
 #else
-#warn check how to do this in qt4
+#warning check how to do this in qt4
 #endif
 }
 
@@ -7538,7 +7538,7 @@ void US_Hydrodyn_Saxs_Buffer::join_add_marker( double pos, QColor color, QString
    plot_dist->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold));
    plot_dist->setMarkerLabelText ( marker, text );
 #else
-#warn check how to do this in qt4 needs ymark symsize
+#warning check how to do this in qt4 needs ymark symsize
    QwtPlotMarker* marker = new QwtPlotMarker;
    marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
                                  QBrush( Qt::white ), QPen( color, 2, Qt::DashLine ),

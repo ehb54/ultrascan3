@@ -81,11 +81,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       QLabel        *lbl_fix_curves;
       // QLineEdit     *le_fix_curves;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QCheckBox * > cb_fix_curves;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       QLabel        *lbl_epsilon;
@@ -121,7 +125,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
 
       bool          update_hplc;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < double > gsm_t;
       vector < double > gsm_y;
@@ -130,7 +136,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       vector < vector < double > > gaussians_undo;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       void gsm_setup();
       long global_iter;
@@ -186,12 +194,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       unsigned int            common_size;
       unsigned int            per_file_size;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < bool >         is_common; // is common maps the offsets to layout of the regular file specific gaussians
       vector < unsigned int > offset;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
    private slots:
@@ -220,7 +232,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
 };
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
 namespace HFIT_GLOBAL 
@@ -248,7 +262,9 @@ namespace HFIT_GLOBAL
 };
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
 #endif

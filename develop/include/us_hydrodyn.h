@@ -181,7 +181,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Saxs_Util *saxs_util;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QString > movie_text;
       QString last_saxs_header;
@@ -201,7 +203,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       map < QString, saxs > extra_saxs_coefficients;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       bool is_dammin_dammif(QString filename);
 
@@ -412,7 +416,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString getExtendedSuffix(bool prerun = true, bool somo = true); 
       
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QString >              batch_file;
       vector < PDB_atom >             bead_model;
@@ -548,7 +554,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, map < QString, QString > > cluster_additional_methods_options_selected;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       void calc_mw();             // after pdb (bead_model?) loaded, go through and compute PDB_model.mw (& later PDB_chain.mw?)
@@ -563,7 +571,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString validate_pointmap();
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       map < QString, vector < vector < QString > > > dihedral_atoms;
 
@@ -599,7 +609,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, unsigned int >                  hydrate_count;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       unsigned int hydrate_max_waters_no_asa;
       unsigned int count_waters;
@@ -670,7 +682,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // state copies
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < PDB_atom >                                 state_bead_model;
       vector < vector < PDB_atom > >                      state_bead_models;
@@ -1018,7 +1032,9 @@ class radial_reduction_thr_t : public QThread
   int methodk;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
   vector <PDB_atom> *p_bead_model;
@@ -1027,7 +1043,9 @@ class radial_reduction_thr_t : public QThread
   vector <BPair> *p_my_pairs;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
   unsigned int threads;
 

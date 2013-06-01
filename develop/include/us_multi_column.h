@@ -32,12 +32,16 @@ class US_Multi_Column
 
    QString filename;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
    vector < QString >           header;
    vector < vector < double > > data;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
    QString info() 
       {
@@ -285,7 +289,9 @@ class US_Multi_Column
       }         
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
    bool avg( vector < double > &result,
              vector < double > &a, 
@@ -307,7 +313,9 @@ class US_Multi_Column
          return true;
       }
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
    bool join( US_Multi_Column &part1, 
@@ -1185,11 +1193,15 @@ class US_Multi_Column
       }
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
    vector < double > getnormal( unsigned int points )
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       {
          vector < double > result;

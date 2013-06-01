@@ -55,13 +55,17 @@ class US_EXTERN US_Cell_DB : public US_DB
       int *item_CellID;                  /*!< An integer array stores tblCell id.*/
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <struct centerpieceInfo> cp_info_vector;   /*!<centerpiece information */
 
 #ifdef WIN32
+# if !defined( QT4 )
         #pragma warning ( default: 4251 )
+# endif
 #endif
 
       QString *item_Description;         /*!< A string array stores cell description.*/

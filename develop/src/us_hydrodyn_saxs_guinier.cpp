@@ -2210,7 +2210,7 @@ void US_Hydrodyn_Saxs::set_guinier()
 #ifndef QT4
       plot_saxs->removeMarkers();
 #else
-#warn check how to do this in qt4
+#warning check how to do this in qt4
 #endif
    }
 

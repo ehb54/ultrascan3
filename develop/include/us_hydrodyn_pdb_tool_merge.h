@@ -143,7 +143,9 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
                                          bool just_selected = true );
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       map < QString, unsigned int > csv_chain_map;
@@ -156,7 +158,9 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       map < QString, bool >         cache_use_start;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       bool         cache_range_ok;

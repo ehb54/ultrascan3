@@ -98,7 +98,9 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
 
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       map < QString, QString >                 full_filenames;
@@ -111,7 +113,9 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       map < QString, vector < unsigned int > > residues_range_chain_pos;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       bool          setup_residues      ( QString filename );
       void          residue_summary     ( QString filename );

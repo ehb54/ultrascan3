@@ -80,11 +80,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       QLabel        *lbl_fix_curves;
       // QLineEdit     *le_fix_curves;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QCheckBox * > cb_fix_curves;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       QLabel        *lbl_epsilon;
@@ -120,7 +124,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 
       bool          update_hplc;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       static vector < double > gsm_t;
       static vector < double > gsm_y;
@@ -129,7 +135,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       vector < vector < double > > gaussians_undo;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       void gsm_setup();
       long global_iter;
@@ -215,7 +223,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 };
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
 namespace HFIT 
@@ -240,7 +250,9 @@ namespace HFIT
 };
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
 #endif

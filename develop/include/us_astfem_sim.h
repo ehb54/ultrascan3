@@ -51,13 +51,17 @@ class US_EXTERN US_Astfem_Sim : public QFrame
       QString imagedir;
 
 #ifdef WIN32
+# if !defined( QT4 )
      #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <struct mfem_data> astfem_data;
       
 #ifdef WIN32
+# if !defined( QT4 )
      #pragma warning ( default: 4251 )
+# endif
 #endif
       
       QwtPlot *movie_plot, *scan_plot;

@@ -5315,7 +5315,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
                if(bead_mc_asa.size() < this_atom->resSeq + 1) {
                   bead_mc_asa.resize(this_atom->resSeq + 32);
                }
-#warn broken by resSeq->QString
+#warning broken by resSeq->QString
                bead_mc_asa[this_atom->resSeq] += this_atom->asa;
             }
          }

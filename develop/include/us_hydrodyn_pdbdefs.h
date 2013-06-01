@@ -52,11 +52,15 @@ struct saxs
    float               c5;                   // c coefficient  5 term gaussian
    float               volume;               // atomic volume
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
    vector < double >   vcoeff;               // variable length coefficients, c,a0b0 etc
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
    float               si;                   // q == 0 scattering intensity
 };

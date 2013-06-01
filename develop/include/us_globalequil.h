@@ -39,7 +39,9 @@ class US_EXTERN US_GlobalEquil : public QFrame
       ~US_GlobalEquil();
       
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
     vector <struct rotorInfo> rotor_list;
@@ -70,7 +72,9 @@ class US_EXTERN US_GlobalEquil : public QFrame
       vector <float> residuals, original_data, yfit;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       US_MonteCarlo *monte_carlo_window;

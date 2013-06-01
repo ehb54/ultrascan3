@@ -51,14 +51,18 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
       ~US_Pseudo3D_Combine();
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <struct distro_system> system;
       vector <QColor> current_gradient;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( default: 4251 )
+# endif
 #endif
 
     US_Config *USglobal;    /*!< A US_Config reference. */

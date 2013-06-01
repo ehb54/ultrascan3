@@ -49,7 +49,9 @@ class US_EXTERN US_DB_TblInvestigator : public US_DB
       struct US_InvestigatorData info_list;   /*!< A struct US_InvestigatorData for storing Inverstigator register information. */
 //      struct US_LoginData login_list;         /*!< A struct US_LoginData for storing DB login information. */
 #ifdef WIN32
+# if !defined( QT4 )
         #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <QString> nameString;          /*!< A String Array stores name dispaly.*/
@@ -58,7 +60,9 @@ class US_EXTERN US_DB_TblInvestigator : public US_DB
       vector <int> item_InvID;               /*!< A Integer Array stores investigator ID.*/
 
 #ifdef WIN32
+# if !defined( QT4 )
         #pragma warning ( default: 4251 )
+# endif
 #endif
 
       int newInvID,                  /*!< A Integer variable for new investigator ID.*/

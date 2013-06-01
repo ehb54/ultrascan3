@@ -4,6 +4,8 @@
 
 #define SLASH QDir::separator()
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
                                                csv &csv1,
                                                void *us_hydrodyn, 
@@ -113,7 +115,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
       << 200
       << 200;
       
-   for ( unsigned int i = 0; i < csv1.header.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csv1.header.size(); i++ )
    {
       t_csv->horizontalHeader()->setLabel(i, csv1.header[i]);
       t_csv->setColumnWidth( i, column_widths[ i ] );
@@ -376,9 +378,9 @@ csv US_Hydrodyn_Cluster_Dmd::current_csv()
 {
    csv tmp_csv = csv1;
    
-   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csv1.data.size(); i++ )
    {
-      for ( unsigned int j = 0; j < csv1.data[i].size(); j++ )
+      for ( unsigned int j = 0; j < (unsigned int)csv1.data[i].size(); j++ )
       {
          if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
          {
@@ -480,7 +482,7 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
    residues_range_chain    .clear();
    residues_range_chain_pos.clear();
 
-   for ( unsigned int i = 0; i < ((US_Hydrodyn_Cluster *)cluster_window)->selected_files.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)((US_Hydrodyn_Cluster *)cluster_window)->selected_files.size(); i++ )
    {
       vector < QString > tmp_data;
 
@@ -528,10 +530,10 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
       csv1.data.push_back(tmp_data);
    }
 
-   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csv1.data.size(); i++ )
    {
       vector < double > tmp_num_data;
-      for ( unsigned int j = 0; j < csv1.data[i].size(); j++ )
+      for ( unsigned int j = 0; j < (unsigned int)csv1.data[i].size(); j++ )
       {
          tmp_num_data.push_back(csv1.data[i][j].toDouble());
       }
@@ -575,7 +577,7 @@ void US_Hydrodyn_Cluster_Dmd::paste()
       if ( t_csv->isRowSelected( i ) )
       {
          // editor_msg( "black", QString( "pasting into row %1" ).arg( i ) );
-         for ( unsigned int j = 1; j < csv_copy.data[ pos % csv_copy.data.size() ].size(); j++ )
+         for ( unsigned int j = 1; j < (unsigned int)csv_copy.data[ pos % csv_copy.data.size() ].size(); j++ )
          {
             // editor_msg( "black", QString( "setting data to row %1 from pos %2 %3 val %4 j %5" )
             // .arg( i )
@@ -665,7 +667,7 @@ void US_Hydrodyn_Cluster_Dmd::load()
    
    map < QString, list < unsigned int > > our_files;
    QStringList                            qsl_our_files;
-   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csv1.data.size(); i++ )
    {
       if ( !our_files.count( csv1.data[ i ][ 0 ] ) )
       {
@@ -688,7 +690,7 @@ void US_Hydrodyn_Cluster_Dmd::load()
       
    map < QString, bool > names_not_present;
 
-   for ( unsigned int i = 0; i < qsl_lines.size(); i++ ) 
+   for ( unsigned int i = 0; i < (unsigned int)qsl_lines.size(); i++ ) 
    {
       QString     qs  = qsl_lines[ i ];
       QStringList qsl = csv_parse_line( qs );
@@ -724,7 +726,7 @@ void US_Hydrodyn_Cluster_Dmd::load()
    // merge with current data
    csv csv_new = csv1;
 
-   for ( unsigned int i = 0; i < qsl_lines.size(); i++ ) 
+   for ( unsigned int i = 0; i < (unsigned int)qsl_lines.size(); i++ ) 
    {
       QString     qs  = qsl_lines[ i ];
       QStringList qsl = csv_parse_line( qs );
@@ -738,7 +740,7 @@ void US_Hydrodyn_Cluster_Dmd::load()
          }
          if ( our_files.count( qsl[ 0 ] ) && our_files[ qsl[ 0 ] ].size() )
          {
-            for ( unsigned int j = 1; j < qsl.size(); j++ )
+            for ( unsigned int j = 1; j < (unsigned int)qsl.size(); j++ )
             {
                csv_new.data    [ our_files[ qsl[ 0 ] ].front() ][ j ] = qsl[ j ];
                csv_new.num_data[ our_files[ qsl[ 0 ] ].front() ][ j ] = qsl[ j ].toDouble();
@@ -746,14 +748,14 @@ void US_Hydrodyn_Cluster_Dmd::load()
             our_files[ qsl[ 0 ] ].pop_front();
          } else {
             vector < QString > tmp_data;
-            for ( unsigned int j = 0; j < qsl.size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int)qsl.size(); j++ )
             {
                tmp_data.push_back( qsl[ j ] );
             }
             csv_new.prepended_names.push_back( tmp_data[ 0 ] );
             csv_new.data.push_back( tmp_data );
             vector < double > tmp_num_data;
-            for ( unsigned int i = 0; i < tmp_data.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int)tmp_data.size(); i++ )
             {
                tmp_num_data.push_back( tmp_data[ i ].toDouble() );
             }
@@ -833,7 +835,7 @@ void US_Hydrodyn_Cluster_Dmd::update_enables()
       }
 
       // t_csv->clearSelection();
-      // for ( unsigned int i = 0; i < selected_rows.size(); i++ )
+      // for ( unsigned int i = 0; i < (unsigned int)selected_rows.size(); i++ )
       // {
       // t_csv->selectRow( selected_rows[ i ] );
       // }
@@ -852,13 +854,13 @@ void US_Hydrodyn_Cluster_Dmd::reload_csv()
 {
    interval_starting_row = 0;
    t_csv->setNumRows( csv1.data.size() );
-   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csv1.data.size(); i++ )
    {
       if ( csv1.data[ i ].size() < 3 || csv1.data[ i ][ 2 ].isEmpty() )
       {
          interval_starting_row = i + 1;
       }
-      for ( unsigned int j = 0; j < csv1.data[i].size(); j++ )
+      for ( unsigned int j = 0; j < (unsigned int)csv1.data[i].size(); j++ )
       {
          if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
          {
@@ -927,14 +929,14 @@ QString US_Hydrodyn_Cluster_Dmd::csv_to_qstring( csv &from_csv )
 {
    QString qs;
 
-   for ( unsigned int i = 0; i < from_csv.header.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)from_csv.header.size(); i++ )
    {
       qs += QString("%1\"%2\"").arg(i ? "," : "").arg(from_csv.header[i]).replace("\n", " ");
    }
    qs += "\n";
-   for ( unsigned int i = 0; i < from_csv.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)from_csv.data.size(); i++ )
    {
-      for ( unsigned int j = 0; j < from_csv.data[i].size(); j++ )
+      for ( unsigned int j = 0; j < (unsigned int)from_csv.data[i].size(); j++ )
       {
          qs += 
             QString("%1%2")
@@ -980,7 +982,7 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
    residues_range_chain    .clear();
    residues_range_chain_pos.clear();
 
-   for ( unsigned int i = 0; i < ((US_Hydrodyn_Cluster *)cluster_window)->selected_files.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)((US_Hydrodyn_Cluster *)cluster_window)->selected_files.size(); i++ )
    {
       selected_map[ QFileInfo( ((US_Hydrodyn_Cluster *)cluster_window)->selected_files[ i ] ).fileName() ] = true;
 
@@ -1005,7 +1007,7 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
    }
 
    // add existing ones that are selected
-   for ( unsigned int i = 0; i < csv1.prepended_names.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)csv1.prepended_names.size(); i++ )
    {
       if ( selected_map.count( csv1.prepended_names[ i ] ) )
       {
@@ -1048,7 +1050,7 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
          csv_new.data.push_back( tmp_data );
          
          vector < double > tmp_num_data;
-         for ( unsigned int i = 0; i < tmp_data.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int)tmp_data.size(); i++ )
          {
             tmp_num_data.push_back( tmp_data[ i ].toDouble() );
          }
@@ -1222,7 +1224,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
    unsigned int pos              = 0;
    QString      last_chain       = "";
 
-   for ( unsigned int i = 0; i < residues_chain[ filename ].size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)residues_chain[ filename ].size(); i++ )
    {
       QString key           = filename + ":" + residues_chain[ filename ][ i ];
       // cout << "in residues_chain: " << key << endl;
@@ -1267,7 +1269,7 @@ void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
    }
       
    unsigned int pos = 0;
-   for ( unsigned int i = 0; i < residues_range_chain[ filename ].size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)residues_range_chain[ filename ].size(); i++ )
    {
       QString key = residues_range_chain[ filename ][ i ];
       QString chain_id = key.right( 1 );
@@ -1330,7 +1332,7 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
    QString native_range = "";
 
    bool has_errors = false;
-   for ( unsigned int i = 0; i < qsl.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)qsl.size(); i++ )
    {
       qsl[ i ] = qsl[ i ].stripWhiteSpace();
       if ( qsl[ i ].isEmpty() )
@@ -1393,7 +1395,7 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
          used_bits[ j ] = 0;
       }
       unsigned int pos = 0;
-      for ( unsigned int j = 0; j < residues_range_chain[ filename ].size(); j++ )
+      for ( unsigned int j = 0; j < (unsigned int)residues_range_chain[ filename ].size(); j++ )
       {
          QString key = residues_range_chain[ filename ][ j ];
          pos++;

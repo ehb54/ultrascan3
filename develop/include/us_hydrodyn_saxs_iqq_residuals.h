@@ -76,7 +76,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
       bool *saxs_iqq_residuals_widget;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < vector < double > > qs;
 
@@ -98,7 +100,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
       vector < double >            std_dev_frac;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       double            avg_std_dev_frac;
 
@@ -127,7 +131,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
       QCheckBox         *cb_plot_mult_sd_frac;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       QPushButton        *pb_help;

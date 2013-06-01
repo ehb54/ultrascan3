@@ -5,6 +5,8 @@
 #include "../include/us_lm.h"
 // #include <assert.h>
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
                                                                    US_Hydrodyn_Saxs_Hplc *hplc_win,
                                                                    QWidget *p, 

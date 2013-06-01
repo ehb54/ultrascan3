@@ -32,11 +32,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_P3d : public QDialog
       QPushButton *                           pb_plot_all;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QCheckBox * >                  cb_plot_curves;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       QPushButton *                           pb_help;
       QPushButton *                           pb_quit;

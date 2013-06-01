@@ -46,7 +46,9 @@ typedef unsigned _int32 uint32_t;
 // typedef double us_pm_real;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
 class US_PM
@@ -554,7 +556,9 @@ class US_PM
 };
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
 #endif

@@ -1,5 +1,7 @@
 #include "../include/us_pm.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define USPM_BEST_DELTA_MIN 1e-3
 
 // #define USPM_USE_CA 0

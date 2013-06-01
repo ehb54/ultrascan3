@@ -73,13 +73,17 @@ class US_EXTERN US_ColorGradient : public QWidget
       unsigned int current_step;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <QColor> color_array;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       US_Config *USglobal;

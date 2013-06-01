@@ -44,13 +44,17 @@ class US_EXTERN US_GlobalLaser : public US_GlobalEquil
       QPushButton *pb_load_data;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <struct LaserData> ls_info;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       struct LaserData currentData;

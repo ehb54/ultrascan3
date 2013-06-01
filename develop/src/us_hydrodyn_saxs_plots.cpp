@@ -2,6 +2,8 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_lm.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QString name)
 {
    if ( r.size() < pr.size() )

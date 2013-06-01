@@ -29,7 +29,9 @@ extern int global_Xpos;
 extern int global_Ypos;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
 struct intensity_scan
@@ -123,7 +125,9 @@ class US_EXTERN US_PseudoAbs : public QFrame
 };
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
 #endif

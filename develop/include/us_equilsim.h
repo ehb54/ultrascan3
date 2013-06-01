@@ -31,13 +31,17 @@
 struct xlaScan
 {
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
   vector <float> radius, absorbance, sigma;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
   QString mode;
@@ -59,7 +63,9 @@ class US_EXTERN US_EquilSim : public QFrame
       int model;
       
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
     vector <struct xlaScan> scans;
@@ -68,7 +74,9 @@ class US_EXTERN US_EquilSim : public QFrame
       vector <unsigned int> speeds;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       unsigned int species, current_species, conc_steps, speed_start;

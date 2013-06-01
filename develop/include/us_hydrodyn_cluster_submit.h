@@ -121,13 +121,17 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       // any_to_process checks the map and updates status
       // system() commands run with signals, using emit()
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       map < QListViewItem *, QString > jobs;
 
       map < QString, QString >         selected_system;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       QString       selected_system_name;
 

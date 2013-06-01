@@ -77,7 +77,9 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
       float band_volume;
       
 #ifdef WIN32
+# if !defined( QT4 )
         #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <double> ri_noise, ti_noise;
@@ -86,7 +88,9 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
       vector <ModelSystem> msv;
 
 #ifdef WIN32
+# if !defined( QT4 )
         #pragma warning ( default: 4251 )
+# endif
 #endif
 
       QString analysis_type;

@@ -48,7 +48,9 @@ class  US_EXTERN US_CofS_W : public Data_Control_W
       unsigned int resolution;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <double> s_distribution;
@@ -59,7 +61,9 @@ class  US_EXTERN US_CofS_W : public Data_Control_W
       vector <double> mw;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       struct mfem_data residuals;

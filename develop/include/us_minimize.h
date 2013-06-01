@@ -46,13 +46,17 @@ class US_EXTERN US_Minimize : public QFrame
 // plotgroup = 0 means plot all scans, plotGroup=1 means plot 1 scan, plotGroup=5 means plot 5
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <unsigned int> points_per_dataset;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( default: 4251 )
+# endif
 #endif
 
       bool *fitting_widget, plotResiduals, showGuiFit, GUI, constrained;

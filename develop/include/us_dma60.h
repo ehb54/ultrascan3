@@ -130,14 +130,18 @@ class US_EXTERN US_DMA60 : public QWidget
       bool k_changed, density_changed; // keep track of it if need to be saved
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <struct dma_constant> dma;
       vector <struct measurement> recording;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       QString description, units;

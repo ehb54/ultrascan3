@@ -12,13 +12,17 @@
 //  all sphere sizes discretize to this
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
 extern  map < QString, double > sgp_params;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
 class sgp_sphere
@@ -72,7 +76,9 @@ class sgp_node
    point                           checksum    ();
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
    vector < sgp_sphere >           sgp_spheres ();  // minimal structure for now
@@ -80,7 +86,9 @@ class sgp_node
    QString                         qs_bead_model ();
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
    point                           get_coordinate();

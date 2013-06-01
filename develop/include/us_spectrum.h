@@ -32,13 +32,17 @@ struct WavelengthProfile
 {
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
    vector <struct Gaussian> gaussian;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
    float scale;
@@ -69,7 +73,9 @@ class US_EXTERN US_Spectrum : public QFrame
       struct WavelengthProfile target;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector <struct WavelengthProfile> basis;
@@ -78,7 +84,9 @@ class US_EXTERN US_Spectrum : public QFrame
       vector <unsigned int> lambda_max;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       unsigned int min, max, lambda_scale;

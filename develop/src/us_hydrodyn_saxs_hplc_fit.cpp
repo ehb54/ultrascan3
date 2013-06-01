@@ -4,6 +4,8 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_lm.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #define UHHSF_DEBUG_PLOT
 
 US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(

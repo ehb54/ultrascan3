@@ -1,5 +1,7 @@
 #include "../include/us_hydrodyn_grid_atob.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #include <stdlib.h>
 #ifdef OSX
 #  include <sys/malloc.h>
@@ -763,7 +765,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    puts("grid_atob 2"); fflush(stdout);
    fflush(stdout);
 #endif
-   for (unsigned int i = 0; i < pdb.size() - 1; i++)
+   for (unsigned int i = 0; i < (unsigned int)pdb.size() - 1; i++)
    {
       pdb[i].next = (PDB *) & pdb[i + 1];
       prop[i].next = (PHYSPROP *) & prop[i + 1];
@@ -1226,7 +1228,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
 
    vector < double > q( qslq.size() );
 
-   for ( unsigned int i = 0; i < qslq.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)qslq.size(); i++ )
    {
       q[ i ] = qslq[ i ].toDouble();
    }
@@ -1256,7 +1258,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
 
       vector < double > I( qslI.size() );
 
-      for ( unsigned int ii = 0; ii < qslI.size(); ii++ )
+      for ( unsigned int ii = 0; ii < (unsigned int) qslI.size(); ii++ )
       {
          I[ ii ] = qslI[ ii ].toDouble();
       }

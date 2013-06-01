@@ -48,14 +48,18 @@ class US_EXTERN US_RotorStretch : public QFrame
       QwtCounter *cnt_speed;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector < rotorInfo > rotor_list;
       vector <struct centerpieceInfo> cp_list;
 
 #ifdef WIN32
+# if !defined( QT4 )
 #pragma warning ( default: 4251 )
+# endif
 #endif
 
    public slots:

@@ -223,7 +223,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QString          errormsg;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < QColor >                  plot_colors;
 
@@ -246,7 +248,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       bool                                is_zero_vector( vector < double > &v );
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       void save_csv_saxs_iqq();
 
@@ -320,7 +324,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       double                       join_mult_delta;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 #ifdef QT4
       map < QString, QwtPlotCurve * >     plotted_curves;
@@ -334,7 +340,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       long                                join_curve;
 #endif
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       mQLineEdit                   *le_last_focus;

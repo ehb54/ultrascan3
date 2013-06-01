@@ -103,7 +103,7 @@ bool US_File_Util::copy( QStringList from, QString toDir, bool overwrite )
       return false;
    }
 
-   for ( unsigned int i = 0; i < from.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)from.size(); i++ )
    {
       if ( !copy( from[ i ], toDir, overwrite ) )
       {
@@ -137,7 +137,7 @@ bool US_File_Util::move( QStringList from, QString toDir, bool overwrite )
       return false;
    }
 
-   for ( unsigned int i = 0; i < from.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)from.size(); i++ )
    {
       if ( !QFile::remove( from[ i ] ) )
       {

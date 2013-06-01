@@ -79,7 +79,9 @@ class US_Saxs_Scan
    QString header;
    QString filename;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
    vector < QString > header_cols;
 
@@ -87,7 +89,9 @@ class US_Saxs_Scan
    vector < double > r;
    vector < double > s;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
    void clear();
 };
@@ -339,11 +343,15 @@ class US_EXTERN US_Saxs_Util
       QString noticemsg;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       map < QString, US_Saxs_Scan > wave;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       // project utilities
@@ -474,7 +482,9 @@ class US_EXTERN US_Saxs_Util
                                );
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < atom >                atom_list;
       vector < hybridization >       hybrid_list;
@@ -485,7 +495,9 @@ class US_EXTERN US_Saxs_Util
       map < QString, vector <int> >  multi_residue_map;
       map < QString, QString >       residue_atom_hybrid_map;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       bool iqq_sphere( 
@@ -693,7 +705,9 @@ class US_EXTERN US_Saxs_Util
       unsigned int       pm_ga_fitness_calls;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       map < QString, QString > control_parameters;
@@ -752,7 +766,9 @@ class US_EXTERN US_Saxs_Util
                                                              );
                                                              
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       bool         align_test();
@@ -860,7 +876,9 @@ class US_EXTERN US_Saxs_Util
       bool any_saxs;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector < QString >                  wave_names_vector;      // simple vector of names
@@ -897,7 +915,9 @@ class US_EXTERN US_Saxs_Util
       map < QString, double >             wave_chi2s;             // maps names to chi^2
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       QString gsm_outtag;
@@ -930,12 +950,16 @@ class US_EXTERN US_Saxs_Util
    private:
       // exponential gsm:
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < double > compute_gsm_exponentials_mtto4pi2;
       vector < double > compute_gsm_exponentials_y;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       double compute_gsm_exponentials_norm;
@@ -1022,7 +1046,9 @@ class US_EXTERN US_Saxs_Util
       void setup_saxs_options();
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       // residue fields
@@ -1098,7 +1124,9 @@ class US_EXTERN US_Saxs_Util
       vector < vector < double > >        saxs_I_for_csv;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       QStringList  output_files;
       QString      last_pdb_filename;
@@ -1132,7 +1160,9 @@ class US_EXTERN US_Saxs_Util
       QString      scale_excl_vol_msgs;
       // hydration routines
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       map < QString, vector < vector < QString > > > dihedral_atoms;
 
@@ -1161,7 +1191,9 @@ class US_EXTERN US_Saxs_Util
 
       map < QString, unsigned int >                  hydrate_count;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       bool         atom_align( vector < point > transform_from, 
@@ -1245,7 +1277,9 @@ class US_EXTERN US_Saxs_Util
       // gp stuff
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       vector < sgp_node * >          population;
@@ -1278,7 +1312,9 @@ class US_EXTERN US_Saxs_Util
 
       sgp_node              sgp;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       bool                  sgp_use_e;
 
@@ -1361,12 +1397,16 @@ class US_EXTERN US_Saxs_Util
       bool                  check_overlap        ( vector < PDB_atom > &bm, bool quiet = true );
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       map < QString, QString >                    nsa_physical_stats_map;
       map < unsigned int, vector < nsa_ga_individual > > nsa_ga_inits;
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       // a2sb:
@@ -1401,7 +1441,9 @@ class US_EXTERN US_Saxs_Util
 
       // compute_ff
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
 
       map < QString, unsigned int >   ff_table;
@@ -1414,7 +1456,9 @@ class US_EXTERN US_Saxs_Util
       map < QString, map < unsigned int, map < unsigned int, double > > > hybrid_r;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       double compute_ff(
                         saxs     &sa,     // gaussian decomposition for the main atom
@@ -1446,7 +1490,9 @@ class US_EXTERN US_Saxs_Util
       // 1dsamplerotations
       // 1d
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < complex < double > >                   s1d_data;
       vector < double >                               total_modulii;
@@ -1454,7 +1500,9 @@ class US_EXTERN US_Saxs_Util
       bool                                            load_rotations( unsigned int number,
                                                                       vector < vector < double > > &rotations );
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
       bool                                            compute_1d();
 

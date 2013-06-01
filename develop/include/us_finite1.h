@@ -38,7 +38,9 @@ class US_EXTERN US_Finite_W : public Data_Control_W
       US_Pixmap *pm;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
     
       vector <struct fefit_component> component_vector;
@@ -73,7 +75,9 @@ class US_EXTERN US_Finite_W : public Data_Control_W
                                 //cell and current channel
                                 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       float *sim_radius;         // radius positions used in the simulation

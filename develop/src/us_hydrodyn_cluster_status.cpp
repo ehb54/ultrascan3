@@ -101,7 +101,7 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
                                                ( tgz_files.size() ? "\n" : "" ) +
                                                tar_files.join("\n") );
 
-   for ( unsigned int i = 0; i < all_files.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)all_files.size(); i++ )
    {
       if ( !all_files[ i ].contains( "_out", false ) )
       {
@@ -112,7 +112,7 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
    if ( set_lv_files )
    {
       lv_files->clear();
-      for ( unsigned int i = 0; i < files.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
       {
          new QListViewItem( lv_files, files[ i ], "unknown", "", QFileInfo( files[ i ] ).created().toString() );
       }
@@ -804,7 +804,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
                do 
                {
                   any_exist = false;
-                  for ( unsigned int i = 0; i < previously_retrieved.size(); i++ )
+                  for ( unsigned int i = 0; i < (unsigned int)previously_retrieved.size(); i++ )
                   {
                      QString test_base = previously_retrieved[ i ];
                      QString test_ext  = test_base;
@@ -824,7 +824,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
                   }
                } while ( any_exist );
                // now rename them
-               for ( unsigned int i = 0; i < previously_retrieved.size(); i++ )
+               for ( unsigned int i = 0; i < (unsigned int)previously_retrieved.size(); i++ )
                {
                   QString test_base = previously_retrieved[ i ];
                   QString test_ext  = test_base;
@@ -848,7 +848,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
          case 1:
             {
                // delete previous results
-               for ( unsigned int i = 0; i < previously_retrieved.size(); i++ )
+               for ( unsigned int i = 0; i < (unsigned int)previously_retrieved.size(); i++ )
                {
                   if ( !QFile::remove( previously_retrieved[ i ] ) )
                   {

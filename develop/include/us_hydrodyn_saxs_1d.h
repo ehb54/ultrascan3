@@ -150,7 +150,9 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       int           unit;
 
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( disable: 4251 )
+# endif
 #endif
       vector < complex < double > >                   data;
 
@@ -176,7 +178,9 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       bool                                            load_rotations( int number, 
                                                                       vector < vector < double > > &rotations );
 #ifdef WIN32
+# if !defined( QT4 )
   #pragma warning ( default: 4251 )
+# endif
 #endif
 
       void                                            compute_variables();
