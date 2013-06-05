@@ -780,7 +780,6 @@ DbgLv(2) << "      II POINTS" << ii << points;
          double rr = 0.0;
          double vv = 0.0;
          double da = 0.0;
-         double ol = edata->ODlimit;
          rnoi      = have_ri ? ri_noise.values[ ii ] : 0.0;
 
          for ( int jj = 0; jj < points; jj++ )
@@ -789,11 +788,8 @@ DbgLv(2) << "      II POINTS" << ii << points;
             rr        = sdata->radius( jj );
             vv        = sdata->value( ii, jj ) + rnoi + tnoi;
             da        = edata->value( ii, jj );
-            if ( da < ol )
-            {
-               rmsd     += sq( da - vv );
-               kpts++;
-            }
+            rmsd     += sq( da - vv );
+            kpts++;
 DbgLv(3) << "       JJ rr vv" << jj << rr << vv;
 
             if ( rr > rl )
@@ -2387,8 +2383,6 @@ void US_FeMatch::calc_residuals()
    bool    ftin   = ti_noise.count > 0;
    bool    frin   = ri_noise.count > 0;
    bool    matchd = ( dsize == ssize );
-   double  olim   = edata->ODlimit;
-   double  plim   = olim * ODLIM_PLFAC;
    int     kpts   = 0;
 
    QVector< double > resscan;
@@ -2433,15 +2427,8 @@ void US_FeMatch::calc_residuals()
 
          if ( usescan )
          {
-            if ( edata->value( ii, jj ) < olim )
-            {
-               rmsd         += sq( yval );
-               kpts++;
-            }
-            else
-            {
-               yval          = qMin( yval, plim );
-            }
+            rmsd         += sq( yval );
+            kpts++;
          }
 
          resscan[ jj ] = yval;

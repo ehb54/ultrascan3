@@ -537,11 +537,8 @@ void US_ResidPlot::plot_rdata()
    int    count     = edata->scanCount();
    double tinoi     = 0.0;
    double rinoi     = 0.0;
-   double evalu     = 0.0;
    double rvalu     = 0.0;
    double rmsd      = 0.0;
-   double odlimit   = edata->ODlimit;
-   double pllimit   = odlimit * ODLIM_PLFAC;
 
    if ( !do_pltres  &&  !do_plttin  && !do_pltrin  &&
         !do_pltran  &&  !do_shorbm )
@@ -608,18 +605,11 @@ void US_ResidPlot::plot_rdata()
             if ( do_addtin )
                tinoi   += ti_noise->values[ jj ];
 
-            evalu    = edata->value( ii, jj );
-            rvalu    = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+            rvalu    = edata->value( ii, jj ) - sdata->value( ii, jj )
+                       - rinoi - tinoi;
 
-            if ( evalu < odlimit )
-            {
-               rmsd    += sq( rvalu );
-               kntva++;
-            }
-            else
-            {
-               rvalu    = qMin( rvalu, pllimit );
-            }
+            rmsd    += sq( rvalu );
+            kntva++;
 
             vv[ jj ] = rvalu;
          }
@@ -711,18 +701,11 @@ void US_ResidPlot::plot_rdata()
          for ( int jj = 0; jj < points; jj++ )
          {  // each random value is e-value minus s-value with optional noise
             tinoi    = have_ti ? ti_noise->values[ jj ] : 0.0;
-            evalu    = edata->value( ii, jj );
-            rvalu    = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+            rvalu    = edata->value( ii, jj ) - sdata->value( ii, jj )
+                       - rinoi - tinoi;
 
-            if ( evalu < odlimit )
-            {
-               rmsd    += sq( rvalu );
-               kntva++;
-            }
-            else
-            {
-               rvalu    = qMin( rvalu, pllimit );
-            }
+            rmsd    += sq( rvalu );
+            kntva++;
 
             vv[ jj ] = rvalu;
          }
@@ -771,18 +754,11 @@ void US_ResidPlot::plot_rdata()
             if ( do_addtin )
                tinoi   += ti_noise->values[ jj ];
 
-            evalu         = edata->value( ii, jj );
-            rvalu         = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+            rvalu         = edata->value( ii, jj ) - sdata->value( ii, jj )
+                            - rinoi - tinoi;
 
-            if ( evalu < odlimit )
-            {
-               rmsd         += sq( rvalu );
-               kntva++;
-            }
-            else
-            {
-               rvalu         = qMin( rvalu, pllimit );
-            }
+            rmsd         += sq( rvalu );
+            kntva++;
 
             resscan[ jj ] = rvalu;
          }

@@ -171,13 +171,11 @@ DebugTime("BEG:calcres");
          {  // Fill the B matrix with experiment data (or zero)
             double evalue  = edata->value( ss, rr );
 
-#if 1
             if ( evalue >= odlim )
             {  // Where ODlimit is exceeded, substitute 0.0 and bump count
                evalue         = 0.0;
                kodl++;
             }
-#endif
 
             nnls_b[ kk++ ] = evalue;
          }
@@ -702,8 +700,6 @@ if (soluval>100.0) {
       US_DataIO::RawData*     sdata = &sim_vals.sim_data;
       US_DataIO::RawData*     resid = &sim_vals.residuals;
       US_AstfemMath::initSimData( sim_vals.residuals, *edata, 0.0 );
-      double odlimit   = edata->ODlimit;
-      double pllimit   = odlimit * ODLIM_PLFAC;
       int    npoints   = edata->pointCount();
       int    nscans    = edata->scanCount();
       int    index     = ee - offset;
@@ -716,25 +712,17 @@ if (soluval>100.0) {
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
-            double evalue = edata->value( ss, rr );
 
-            if ( evalue < odlimit )
-            {
-               double resval = evalue
-                             - sdata->value( s_index, rr )
-                             - tinvec[ rr + tinoffs ]
-                             - rinvec[ ss + rinoffs ];
-               resid->setValue( s_index, rr, resval );
+            double resval = edata->value( ss, rr )
+                          - sdata->value( s_index, rr )
+                          - tinvec[ rr + tinoffs ]
+                          - rinvec[ ss + rinoffs ];
+            resid->setValue( s_index, rr, resval );
 
-               double r2    = sq( resval );
-               variance    += r2;
-               varidset    += r2;
-               kntcs++;
-            }
-            else
-            {
-               resid->setValue( s_index, rr, pllimit );
-            }
+            double r2    = sq( resval );
+            variance    += r2;
+            varidset    += r2;
+            kntcs++;
          }
       }
 

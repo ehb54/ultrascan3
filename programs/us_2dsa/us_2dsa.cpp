@@ -316,8 +316,6 @@ DbgLv(1) << "Data Plot from Base";
    data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   tr( "OD Difference" ) );
    double vari    = 0.0;
-   double odlim   = edata->ODlimit;
-   double pllim   = odlim * ODLIM_PLFAC;
    int    kntva   = 0;
 
    // build vector of radius values
@@ -332,33 +330,10 @@ DbgLv(1) << "Data Plot from Base";
       for ( int jj = 0; jj < npoints; jj++ )
       {
          double tinoi = have_ti ? ti_noise.values[ jj ] : 0.0;
-         double edval = edata->value( ii, jj );
-#if 0
-
-         if ( edval < odlim )
-         {
-            double evalu = edval - sdata .value( ii, jj ) - tinoi - rinoi;
-            va[ jj ]     = evalu;
-            vari        += sq( evalu );
-            kntva++;
-         }
-         else
-         {
-            va[ jj ]     = ODLIM_RVAL;
-         }
-#endif
-#if 1
-         va[ jj ]     = edval - sdata .value( ii, jj ) - tinoi - rinoi;
-
-         if ( edval < odlim )
-         {
-            vari        += sq( va[ jj ] );
-            kntva++;
-         }
-         else
-            va[ jj ]     = pllim;
-
-#endif
+         va[ jj ]     = edata->value( ii, jj ) - sdata.value( ii, jj )
+                        - tinoi - rinoi;
+         vari        += sq( va[ jj ] );
+         kntva++;
       }
 
       // plot dots of residuals at current scan
@@ -1132,12 +1107,6 @@ void US_2dsa::write_bmap( const QString plotFile )
    bool have_ti = ti_noise.count > 0;
    int  npoints = edata->pointCount();
    int  nscans  = edata->scanCount();
-#if 0
-   double odlm  = edata->ODlimit;
-#endif
-#if 1
-   double pllim = edata->ODlimit * ODLIM_PLFAC;
-#endif
    QVector< double >            resscn( npoints );
    QVector< QVector< double > > resids( nscans  );
 
@@ -1148,18 +1117,8 @@ void US_2dsa::write_bmap( const QString plotFile )
       for ( int jj = 0; jj < npoints; jj++ )
       {
          double tnoi  = have_ti ? ti_noise.values[ jj ] : 0.0;
-#if 0
-         double eval  = edata->value( ii, jj );
-         if ( eval < odlm )
-            resscn[ jj ] = eval - sdata.value(  ii, jj ) - rnoi - tnoi;
-         else
-            resscn[ jj ] = ODLIM_RVAL;
-#endif
-#if 1
-         resscn[ jj ] = qMin( pllim,
-                              edata->value( ii, jj ) - sdata.value(  ii, jj )
-                              - rnoi - tnoi );
-#endif
+         resscn[ jj ] = edata->value( ii, jj ) - sdata.value(  ii, jj )
+                        - rnoi - tnoi;
       }
 
       resids[ ii ] = resscn;

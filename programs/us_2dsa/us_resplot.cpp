@@ -534,10 +534,7 @@ void US_ResidPlot::plot_rdata()
    int    count     = edata->scanCount();
    double tinoi     = 0.0;
    double rinoi     = 0.0;
-   double evalu     = 0.0;
    double rmsd      = 0.0;
-   double odlimit   = edata->ODlimit;
-   double pllimit   = odlimit * ODLIM_PLFAC;
 
    if ( !do_pltres  &&  !do_plttin  && !do_pltrin  &&
         !do_pltran  &&  !do_shorbm )
@@ -601,32 +598,10 @@ void US_ResidPlot::plot_rdata()
             if ( do_addtin )
                tinoi   += ti_noise->values[ jj ];
 
-            evalu    = edata->value( ii, jj );
-#if 0
-
-            if ( evalu < odlimit )
-            {
-               evalu    = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
-               vv[ jj ] = evalu;
-               rmsd    += sq( evalu );
-               kntva++;
-            }
-            else
-            {
-               vv[ jj ] = ODLIM_RVAL;
-            }
-#endif
-#if 1
-
-            if ( evalu < odlimit )
-            {
-               vv[ jj ] = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
-               rmsd    += sq( vv[ jj ] );
-               kntva++;
-            }
-            else
-               vv[ jj ] = pllimit;
-#endif
+            vv[ jj ] = edata->value( ii, jj ) - sdata->value( ii, jj )
+                       - rinoi - tinoi;
+            rmsd    += sq( vv[ jj ] );
+            kntva++;
          }
 
          title   = tr( "resids " ) + QString::number( ii );
@@ -716,31 +691,11 @@ void US_ResidPlot::plot_rdata()
          for ( int jj = 0; jj < points; jj++ )
          {  // each random value is e-value minus s-value with optional noise
             tinoi    = have_ti ? ti_noise->values[ jj ] : 0.0;
-            evalu    = edata->value( ii, jj );
 
-#if 0
-            if ( evalu < odlimit )
-            {
-               evalu    = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
-               vv[ jj ] = evalu;
-               rmsd    += sq( evalu );
-               kntva++;
-            }
-            else
-            {
-               vv[ jj ] = ODLIM_RVAL;
-            }
-#endif
-#if 1
-            if ( evalu < odlimit )
-            {
-               vv[ jj ] = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
-               rmsd    += sq( vv[ jj ] );
-               kntva++;
-            }
-            else
-               vv[ jj ] = pllimit;
-#endif
+            vv[ jj ] = edata->value( ii, jj ) - sdata->value( ii, jj )
+                       - rinoi - tinoi;
+            rmsd    += sq( vv[ jj ] );
+            kntva++;
          }
 
          title   = tr( "random noise " ) + QString::number( ii );
@@ -787,31 +742,11 @@ void US_ResidPlot::plot_rdata()
             if ( do_addtin )
                tinoi   += ti_noise->values[ jj ];
 
-            evalu         = edata->value( ii, jj );
 
-#if 0
-            if ( evalu < odlimit )
-            {
-               evalu         = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
-               resscan[ jj ] = evalu;
-               rmsd         += sq( evalu );
-               kntva++;
-            }
-            else
-            {
-               resscan[ jj ] = ODLIM_RVAL;
-            }
-#endif
-#if 1
-            if ( evalu < odlimit )
-            {
-               resscan[ jj ] = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
-               rmsd         += sq( resscan[ jj ] );
-               kntva++;
-            }
-            else
-               resscan[ jj ] = pllimit;
-#endif
+            resscan[ jj ] = edata->value( ii, jj ) - sdata->value( ii, jj )
+                            - rinoi - tinoi;
+            rmsd         += sq( resscan[ jj ] );
+            kntva++;
          }
 
          resids[ ii ] = resscan;
