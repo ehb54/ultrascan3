@@ -2374,6 +2374,8 @@ DbgLv(1) << "PlMwl:   xa_rad" << xaxis_radius << "nsc npt" << nscan << npoint;
    double  maxV   = -1.0e99;
    double  minV   =  1.0e99;
    double  maxOD  = odlimit * 2.0;
+   double  valueV;
+   int     kodlim = 0;
 
    if ( xaxis_radius )
    {  // Build normal AUC data plot
@@ -2388,12 +2390,16 @@ DbgLv(1) << "PlMwl:    START xa_RAD";
          for ( int jj = 0; jj < npoint; jj++ )
          {
             rr[ jj ] = data.xvalues[ jj ];
-            vv[ jj ] = qMin( maxOD, scn->rvalues[ kk++ ] * invert );
+            valueV   = qMin( maxOD, scn->rvalues[ kk++ ] * invert );
+            vv[ jj ] = valueV;
 
             maxR     = qMax( maxR, rr[ jj ] );
             minR     = qMin( minR, rr[ jj ] );
-            maxV     = qMax( maxV, vv[ jj ] );
-            minV     = qMin( minV, vv[ jj ] );
+            maxV     = qMax( maxV, valueV );
+            minV     = qMin( minV, valueV );
+
+            if ( valueV > odlimit )
+               kodlim++;
          }
 
          QString ctitle = tr( "Raw Data at " )
@@ -2408,7 +2414,7 @@ DbgLv(1) << "PlMwl:    START xa_RAD";
       connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                      SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
       init_includes();
-DbgLv(1) << "PlMwl:      END xa_RAD";
+DbgLv(1) << "PlMwl:      END xa_RAD  kodlim odlimit" << kodlim << odlimit;
    }
 
    else
@@ -2423,12 +2429,16 @@ DbgLv(1) << "PlMwl:    START xa_WAV";
          for ( int jj = 0; jj < npoint; jj++ )
          {
             rr[ jj ] = expi_wvlns[ jj ];
-            vv[ jj ] = qMin( maxOD, wrdata[ dpx++ ] );
+            valueV   = qMin( maxOD, wrdata[ dpx++ ] );
+            vv[ jj ] = valueV;
 
             maxR     = qMax( maxR, rr[ jj ] );
             minR     = qMin( minR, rr[ jj ] );
-            maxV     = qMax( maxV, vv[ jj ] );
-            minV     = qMin( minV, vv[ jj ] );
+            maxV     = qMax( maxV, valueV );
+            minV     = qMin( minV, valueV );
+
+            if ( valueV > odlimit )
+               kodlim++;
          }
 
          US_DataIO::Scan*  scn = &data.scanData[ ii ];
@@ -2440,7 +2450,7 @@ DbgLv(1) << "PlMwl:    START xa_WAV";
          cc->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
          cc->setData( rr, vv, npoint );
       }
-DbgLv(1) << "PlMwl:      END xa_WAV";
+DbgLv(1) << "PlMwl:      END xa_WAV  kodlim odlimit" << kodlim << odlimit;
    }
 
    // Reset the scan curves within the new limits

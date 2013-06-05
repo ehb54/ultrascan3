@@ -555,7 +555,6 @@ void US_ResidPlot::plot_rdata()
    int    count     = edata->scanCount();
    double tinoi     = 0.0;
    double rinoi     = 0.0;
-   double evalu     = 0.0;
    double rvalu     = 0.0;
    double rmsd      = 0.0;
 
@@ -600,8 +599,6 @@ void US_ResidPlot::plot_rdata()
          rr[ jj ] = sdata->radius( jj );
       }
 
-      double odlim = edata->ODlimit;
-      double pllim = odlim * ODLIM_PLFAC;
       int    kpts  = 0;
 
       for ( int ii = 0; ii < count; ii++ )
@@ -620,18 +617,11 @@ void US_ResidPlot::plot_rdata()
             if ( do_addtin )
                tinoi   += ti_noise->values[ jj ];
 
-            evalu    = edata->value( ii, jj );
-            rvalu    = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+            rvalu    = edata->value( ii, jj ) - sdata->value( ii, jj )
+                       - rinoi - tinoi;
 
-            if ( evalu < odlim )
-            {
-               rmsd    += sq( rvalu );
-               kpts++;
-            }
-            else
-            {
-               rvalu    = qMin( rvalu, pllim );
-            }
+            rmsd    += sq( rvalu );
+            kpts++;
 
             vv[ jj ] = rvalu;
          }
@@ -715,8 +705,6 @@ void US_ResidPlot::plot_rdata()
          rr[ jj ] = sdata->radius( jj );
       }
 
-      double odlim = edata->ODlimit;
-      double pllim = odlim * ODLIM_PLFAC;
       int    kpts  = 0;
 
       for ( int ii = 0; ii < count; ii++ )
@@ -726,18 +714,11 @@ void US_ResidPlot::plot_rdata()
          for ( int jj = 0; jj < points; jj++ )
          {  // each random value is e-value minus s-value with optional noise
             tinoi    = have_ti ? ti_noise->values[ jj ] : 0.0;
-            evalu    = edata->value( ii, jj );
-            rvalu    = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+            rvalu    = edata->value( ii, jj ) - sdata->value( ii, jj )
+                       - rinoi - tinoi;
 
-            if ( evalu < odlim )
-            {
-               rmsd    += sq( rvalu );
-               kpts++;
-            }
-            else
-            {
-               rvalu    = qMin( rvalu, pllim );
-            }
+            rmsd    += sq( rvalu );
+            kpts++;
 
             vv[ jj ] = rvalu;
          }
@@ -767,8 +748,6 @@ void US_ResidPlot::plot_rdata()
       resids .resize( count );
       resscan.resize( points );
       rmsd         = 0.0;
-      double odlim = edata->ODlimit;
-      double pllim = odlim * ODLIM_PLFAC;
       int    kpts  = 0;
 
       for ( int ii = 0; ii < count; ii++ )
@@ -787,18 +766,11 @@ void US_ResidPlot::plot_rdata()
             if ( do_addtin )
                tinoi   += ti_noise->values[ jj ];
 
-            evalu         = edata->value( ii, jj );
-            rvalu         = evalu - sdata->value( ii, jj ) - rinoi - tinoi;
+            rvalu         = edata->value( ii, jj ) - sdata->value( ii, jj )
+                            - rinoi - tinoi;
 
-            if ( evalu < odlim )
-            {
-               rmsd         += sq( rvalu );
-               kpts++;
-            }
-            else
-            {
-               rvalu         = qMin( rvalu, pllim );
-            }
+            rmsd         += sq( rvalu );
+            kpts++;
 
             resscan[ jj ] = rvalu;
          }
