@@ -3615,6 +3615,7 @@ void US_Edit::apply_prior( void )
    range_right = parameters.rangeRight;
    plateau     = parameters.plateau;
    baseline    = parameters.baseline;
+   odlimit     = parameters.ODlimit;
 
    le_meniscus->setText( s.sprintf( "%.3f", meniscus ) );
    pb_meniscus->setIcon( check );
@@ -3716,6 +3717,10 @@ void US_Edit::apply_prior( void )
    else
       pb_float->setIcon( QIcon() );
 
+   ct_odlim->disconnect();
+   ct_odlim->setValue( odlimit );
+   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
+            this,      SLOT  ( od_radius_limit    ( double ) ) );
 
    step        = FINISHED;
    set_pbColors( NULL );
