@@ -112,7 +112,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
 
   private slots:
     // Compute "a~", the average experiment signal at each time
-    void compute_a_tilde   ( QVector< double >& );
+    void compute_a_tilde   ( QVector< double >&, const QVector< double >& );
 
     // Compute "L~s", the average signal at each radius
     void compute_L_tildes  ( int, int,
@@ -135,12 +135,14 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
                                           QVector< double >&,
                                           const QVector< double >&,
                                           const QVector< double >&,
+                                          const QVector< double >&,
                                           const QVector< double >& );
 
     // Compute "small_a" and "small_b" matrices for TI noise
     void ti_small_a_and_b  ( int, int, int,
                                           QVector< double >&,
                                           QVector< double >&,
+                                          const QVector< double >&,
                                           const QVector< double >&,
                                           const QVector< double >&,
                                           const QVector< double >& );
@@ -152,6 +154,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
 
     // Compute "a_bar"
     void compute_a_bar     ( QVector< double >&,
+                                          const QVector< double >&,
                                           const QVector< double >& );
 
     // Compute "L_bar-s"
