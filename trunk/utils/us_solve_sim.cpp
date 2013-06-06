@@ -482,11 +482,11 @@ DebugTime("BEG:clcr-nn");
       QVector< double > a_tilde( nrinois, 0.0 );
 
       if ( calc_ri )
-         compute_a_tilde( a_tilde );
+         compute_a_tilde( a_tilde, nnls_b );
 
       // Compute a_bar, the average experiment signal at each radius
       QVector< double > a_bar( ntinois, 0.0 );
-      compute_a_bar( a_bar, a_tilde );
+      compute_a_bar( a_bar, a_tilde, nnls_b );
 
       // Compute L_tildes, the average signal at each radius (if RI noise)
       QVector< double > L_tildes( nrinois * nsolutes, 0.0 );
@@ -505,7 +505,7 @@ DbgLv(1) << "  set SMALL_A+B";
       QVector< double > small_b( nsolutes,       0.0 );
 
       ti_small_a_and_b( nsolutes, ntotal, ntinois,
-                        small_a, small_b, a_bar, L_bars, nnls_a );
+                        small_a, small_b, a_bar, L_bars, nnls_a, nnls_b );
       if ( abort ) return;
 
       // Do NNLS to compute concentrations (nnls_x)
@@ -548,7 +548,7 @@ DbgLv(1) << "  noise small NNLS";
       if ( abort ) return;
       // Compute a_tilde, the average experiment signal at each time
       QVector< double > a_tilde( nrinois, 0.0 );
-      compute_a_tilde( a_tilde );
+      compute_a_tilde( a_tilde, nnls_b );
 
       // Compute L_tildes, the average signal at each radius
       QVector< double > L_tildes( nrinois * nsolutes, 0.0 );
@@ -560,7 +560,7 @@ DbgLv(1) << "  noise small NNLS";
       if ( abort ) return;
 
       ri_small_a_and_b( nsolutes, ntotal, nrinois,
-                        small_a, small_b, a_tilde, L_tildes, nnls_a );
+                        small_a, small_b, a_tilde, L_tildes, nnls_a, nnls_b );
       if ( abort ) return;
 
       US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes,
@@ -785,17 +785,19 @@ void US_SolveSim::abort_work()
 }
 
 // Compute a_tilde, the average experiment signal at each time
-void US_SolveSim::compute_a_tilde( QVector< double >& a_tilde )
+void US_SolveSim::compute_a_tilde( QVector< double >& a_tilde,
+                                   const QVector< double >& nnls_b )
 {
    US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
    int    npoints  = edata->xvalues.size();
    int    nscans   = edata->scanData.size();
+   int    jb       = 0;
    double avgscale = 1.0 / (double)npoints;
 
    for ( int ss = 0; ss < nscans; ss++ )
    {
       for ( int rr = 0; rr < npoints; rr++ )
-        a_tilde[ ss ] += edata->value( ss, rr );
+        a_tilde[ ss ] += nnls_b[ jb++ ];
 
       a_tilde[ ss ] *= avgscale;
    }
@@ -883,7 +885,8 @@ void US_SolveSim::ri_small_a_and_b( int                      nsolutes,
                                     QVector< double >&       small_b,
                                     const QVector< double >& a_tilde,
                                     const QVector< double >& L_tildes,
-                                    const QVector< double >& nnls_a )
+                                    const QVector< double >& nnls_a, 
+                                    const QVector< double >& nnls_b )
 {
 DebugTime("BEG:ri_smab");
    US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
@@ -901,6 +904,7 @@ DebugTime("BEG:ri_smab");
       int    jsa2  = cc * ntotal;
       int    jst2  = cc * nrinois;
       int    jjna  = jsa2;
+      int    jjnb  = 0;
       int    jjlt  = jst2;
       double sum_b = small_b[ cc ];
 
@@ -917,8 +921,8 @@ DebugTime("BEG:ri_smab");
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
-            sum_b += ( ( edata->value( ss, rr ) - atil )
-                     * ( nnls_a[ jjna++ ]       - Ltil ) );
+            sum_b += ( ( nnls_b[ jjnb++ ] - atil )
+                     * ( nnls_a[ jjna++ ] - Ltil ) );
          }
 
       }
@@ -980,7 +984,8 @@ void US_SolveSim::ti_small_a_and_b( int                      nsolutes,
                                     QVector< double >&       small_b,
                                     const QVector< double >& a_bar,
                                     const QVector< double >& L_bars,
-                                    const QVector< double >& nnls_a )
+                                    const QVector< double >& nnls_a,
+                                    const QVector< double >& nnls_b )
 {
 DebugTime("BEG:ti-smab");
    US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
@@ -999,6 +1004,7 @@ DebugTime("BEG:ti-smab");
       int jssa  = cc * ntotal;
       int jssb  = cc * ntinois;
       int jjna  = jssa;
+      int jjnb  = 0;
 
       //small_b[ cc ] += 
       //   ( edata->value( ss, rr ) - a_bar[ rr ] )
@@ -1014,8 +1020,8 @@ DebugTime("BEG:ti-smab");
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
-            sum_b  += ( ( edata->value( ss, rr ) - a_bar [ rr ]     )
-                      * ( nnls_a[ jjna++ ]       - L_bars[ jjlb++ ] ) );
+            sum_b  += ( ( nnls_b[ jjnb++ ] - a_bar [ rr ]     )
+                      * ( nnls_a[ jjna++ ] - L_bars[ jjlb++ ] ) );
          }
       }
 
@@ -1089,7 +1095,8 @@ void US_SolveSim::compute_L_bar( QVector< double >&       L_bar,
 
 // Calculate the average measured concentration at each radius point
 void US_SolveSim::compute_a_bar( QVector< double >&       a_bar,
-                                 const QVector< double >& a_tilde )
+                                 const QVector< double >& a_tilde,
+                                 const QVector< double >& nnls_b )
 {
    US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
    int npoints = edata->xvalues.size();
@@ -1098,9 +1105,14 @@ void US_SolveSim::compute_a_bar( QVector< double >&       a_bar,
 
    for ( int rr = 0; rr < npoints; rr++ )
    {
+      int jb      = rr;
+
       // Note: a_tilde is always zero when rinoise has not been requested
       for ( int ss = 0; ss < nscans; ss++ )
-         a_bar[ rr ] += ( edata->value( ss, rr ) - a_tilde[ ss ] );
+      {
+         a_bar[ rr ] += ( nnls_b[ jb ] - a_tilde[ ss ] );
+         jb          += npoints;
+      }
 
       a_bar[ rr ] *= avgscale;
    }
