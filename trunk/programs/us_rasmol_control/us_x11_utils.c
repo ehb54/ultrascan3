@@ -59,6 +59,7 @@ int ShowInterpNames( char* inames, int mxchar )
    return nchar;
 }
 
+#ifndef MAC
 int digittoint( char dchr )
 {
    int intout = 0;
@@ -72,6 +73,7 @@ int digittoint( char dchr )
 
    return intout;
 }
+#endif
 
 int CheckInterpName( char *name, unsigned long *interpid )
 {

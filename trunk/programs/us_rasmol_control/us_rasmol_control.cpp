@@ -10,6 +10,16 @@ extern "C" {
 #include "us_x11_utils.h"
 }
 #endif
+#ifdef Q_WS_MAC
+extern "C" {
+#include "us_x11_utils.h"
+}
+#endif
+#ifdef Q_WS_WIN
+extern "C" {
+#include "us_win_utils.h"
+}
+#endif
 
 //! \brief Main program for US_RasmolControl. Loads translators and starts
 //         the class US_RasmolControl.
