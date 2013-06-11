@@ -439,8 +439,12 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
    int     ncomp    = component.size();
    int     status   = db->lastErrno();
    QString descrip  = description;
-   if ( manual )
-      descrip          = description + "  [M]";
+   int     manx     = descrip.indexOf( "  [M]" );
+
+   if ( manual  &&  manx < 0 )
+      descrip          = descrip + "  [M]";
+   else if ( ! manual  &&  manx > 0 )
+      descrip          = descrip.left( manx ).simplified();
 //qDebug() << "get_bufferID-stat" << status;
 
    if ( status != US_DB2::OK  &&  status != US_DB2::NOROWS )

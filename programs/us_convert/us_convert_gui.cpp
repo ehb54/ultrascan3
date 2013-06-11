@@ -2275,8 +2275,7 @@ int US_ConvertGui::saveUS3Disk( void )
             triple.tripleFilename  = ccfile + wvls[ jj ] + ".auc";
             triple.tripleID        = tripid++;
             int clambda            = all_lambdas[ jj ];
-            if ( clambda < slambda  ||  clambda > elambda )
-               triple.excluded        = true;
+            triple.excluded        = ( clambda < slambda || clambda > elambda );
 
             if ( jj > 0 )
             {  // Beyond the first, generate a unique GUID
@@ -2319,6 +2318,7 @@ int US_ConvertGui::saveUS3Disk( void )
    int fileCount = 0;
    for ( int i = 0; i < triples.size(); i++ )
       if ( ! triples[ i ].excluded ) fileCount++;
+qDebug() << "SV:   fileCount" << fileCount;
 
    // Now try to communicate status
    if ( status == US_Convert::CANTOPEN )
