@@ -134,13 +134,13 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
       }
       catch ( int error )
       {
-         QString msg = "Abort.  Bad data file " + d->auc_file + " " + d->edit_file;
+         QString msg = "Bad data file " + d->auc_file + " " + d->edit_file;
 DbgLv(0) << "BAD DATA. error" << error << "rank" << my_rank;
          abort( msg, error );
       }
       catch ( US_DataIO::ioError error )
       {
-         QString msg = "Abort.  Bad data file " + d->auc_file + " " + d->edit_file;
+         QString msg = "Bad data file " + d->auc_file + " " + d->edit_file;
 DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 //if(proc_count!=16)
          abort( msg, error );
@@ -155,13 +155,13 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 
           if ( err != 0 )
           {
-             QString msg = "Abort.  Bad noise file " + d->noise_files[ j ];
+             QString msg = "Bad noise file " + d->noise_files[ j ];
              abort( msg );
           }
 
           if ( noise.apply_to_data( d->run_data  ) != 0 )
           {
-             QString msg = "Abort.  Bad noise file " + d->noise_files[ j ];
+             QString msg = "Bad noise file " + d->noise_files[ j ];
              abort( msg );
           }
       }
@@ -537,7 +537,7 @@ void US_MPI_Analysis::abort( const QString& message, int error )
       US_Sleep::msleep( 1100 );       // Delay a bit so rank 0 completes first
       printf( "\n  ***ABORTED***:  %s\n\n", message.toAscii().data() );
       fflush( stdout );
-      send_udp( message );
+      send_udp( "Abort.  " + message );
    }
 
    MPI_Barrier( MPI_COMM_WORLD );     // Sync everybody up so stdout msg first

@@ -37,7 +37,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    right->setSpacing        ( 0 );
    right->setContentsMargins( 0, 1, 0, 1 );
 	viscosity = VISC_20W;
-	density = DENS_20W;
+	density   = DENS_20W;
+   vbar      = TYPICAL_VBAR;
 
    int s_row = 0;
    dbg_level = US_Settings::us_debug();
@@ -412,6 +413,7 @@ void US_Grid_Editor::save( void )
 		if (flag) model.components.push_back(sc);
 	}
 
+#if 0
    // Test for, report, and abort when both vbar and f/f0 vary
    if ( ffmin != ffmax  &&  vbmin != vbmax )
    {
@@ -423,6 +425,7 @@ void US_Grid_Editor::save( void )
              "subgrids that are incompatible." ) );
       return;
    }
+#endif
 
    // Open a dialog that reports and allows modification of description
    QMessageBox mbox;
@@ -1158,6 +1161,8 @@ void US_Grid_Editor::calc_gridpoints( void )
 	mingridpoint.f0   =  9.9e99;
 	mingridpoint.f    =  9.9e99;
 	struct gridpoint tmp_point;
+   tmp_point.vbar    = vbar;
+
 	if (plot_x == 0 && plot_y == 0) //grid over s and f/f0
 	{
 		double s_inc = (xMax - xMin)/(xRes-1);
