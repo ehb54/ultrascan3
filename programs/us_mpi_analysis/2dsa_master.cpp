@@ -219,10 +219,6 @@ DbgLv(1) << "Insol:  nsubgrid ncomps" << nsubgrid << ncomps;
 DbgLv(1) << "Insol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
       }
 
-      double ffmin    = model.components[ 0 ].f_f0;
-      double ffmax    = ffmin;
-      double vbmin    = model.components[ 0 ].vbar20;
-      double vbmax    = vbmin;
       QVector< US_Solute > solvec;
 
       for ( int ii = 0; ii < nsubgrid; ii++ )
@@ -241,20 +237,10 @@ DbgLv(1) << "Insol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
                             vbval,
                             model.components[ jj ].D );
             solvec << soli;
-
-            // Accumumlate vbar,f/f0 min,max to test which varies
-            ffmin           = qMin( ffmin, ffval );
-            ffmax           = qMax( ffmax, ffval );
-            vbmin           = qMin( vbmin, vbval );
-            vbmax           = qMax( vbmax, vbval );
          }
 
          orig_solutes << solvec;
       }
-
-      // Abort if both vbar and f/f0 vary
-      if ( ( ffmin != ffmax ) && ( vbmin != vbmax ) )
-         abort( "Custom grid model varies in both vbar and f/f0", -1 );
    }
 }
 
