@@ -202,6 +202,7 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
                                0.0,
                                model.components[ jj ].vbar20,
                                model.components[ jj ].D );
+DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c << soli.v;
                solvec << soli;
             }
 

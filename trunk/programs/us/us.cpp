@@ -12,7 +12,7 @@
 #include "us_sleep.h"
 #include "us_images.h"
 
-#if 1
+#if 0
 #define EQUI_MENU
 #endif
 #if 1

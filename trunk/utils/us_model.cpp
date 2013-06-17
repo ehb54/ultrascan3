@@ -571,14 +571,16 @@ int US_Model::load_stream( QXmlStreamReader& xml )
             sc.analyteGUID  = a.value( "analyteGUID" ).toString();
 
             sc.name         = a.value( "name"       ).toString();
-            sc.vbar20       = a.value( "vbar20"     ).toString().toDouble();
+            QString avbar   = a.value( "vbar20"     ).toString();
+            sc.vbar20       = avbar.isEmpty() ? TYPICAL_VBAR : avbar.toDouble();
             sc.mw           = a.value( "mw"         ).toString().toDouble();
             sc.s            = a.value( "s"          ).toString().toDouble();
             sc.D            = a.value( "D"          ).toString().toDouble();
             sc.f            = a.value( "f"          ).toString().toDouble();
             sc.f_f0         = a.value( "f_f0"       ).toString().toDouble();
             sc.extinction   = a.value( "extinction" ).toString().toDouble();
-            sc.axial_ratio  = a.value( "axial"      ).toString().toDouble();
+            QString aaxia   = a.value( "axial"      ).toString();
+            sc.axial_ratio  = aaxia.isEmpty() ? 10.0 : aaxia.toDouble();
             sc.sigma        = a.value( "sigma"      ).toString().toDouble();
             sc.delta        = a.value( "delta"      ).toString().toDouble();
 
