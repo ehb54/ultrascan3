@@ -1500,7 +1500,7 @@ void US_Grid_Editor::select_y_axis( int ival )
 		case 1: // Y axis = vbar, z-value is frictional ratio
 		{
 			vbar = 0.72;
-			data_plot1->setAxisTitle( QwtPlot::yLeft, tr("Partial Specific Volume (ml/mg)"));
+			data_plot1->setAxisTitle( QwtPlot::yLeft, tr("Partial Specific Volume (ml/g)"));
 			lbl_yRes->setText(tr("vbar Resolution:"));
 			lbl_yMin->setText(tr("vbar Minimum:"));
 			lbl_yMax->setText(tr("vbar Maximum:"));
