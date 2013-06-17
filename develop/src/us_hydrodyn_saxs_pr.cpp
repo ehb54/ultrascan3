@@ -311,9 +311,13 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
       return false;
    }
 
+   double guinier_electron_nucleon_ratio =
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_electron_nucleon_ratio" ) ?
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_electron_nucleon_ratio" ].toDouble() : 1.87e0;
+
    internal_contrast = 
       our_saxs_options->diffusion_len * 
-      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - psv * ( 1e24 * our_saxs_options->water_e_density ) );
+      ( 1e0 / ( guinier_electron_nucleon_ratio * our_saxs_options->nucleon_mass ) - psv * ( 1e24 * our_saxs_options->water_e_density ) );
 
    MW = I0_prot_theo * AVOGADRO / ( conc * 1e-3 ) / ( internal_contrast * internal_contrast );
 
@@ -396,9 +400,13 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
 
    double use_psv = our_saxs_options->use_cs_psv ? our_saxs_options->cs_psv : psv;
 
+   double guinier_electron_nucleon_ratio =
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_electron_nucleon_ratio" ) ?
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_electron_nucleon_ratio" ].toDouble() : 1.87e0;
+
    internal_contrast = 
       our_saxs_options->diffusion_len * 
-      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - use_psv * ( 1e24 * our_saxs_options->water_e_density ) );
+      ( 1e0 / ( guinier_electron_nucleon_ratio * our_saxs_options->nucleon_mass ) - use_psv * ( 1e24 * our_saxs_options->water_e_density ) );
    
    ML = I0_prot_theo * AVOGADRO / ( conc * 1e-3 ) / ( internal_contrast * internal_contrast ) / M_PI;
 
@@ -485,9 +493,13 @@ bool US_Hydrodyn_Saxs::ma_from_q2I0( QString name, double I0_exp, double &MA, do
 
    double use_psv = our_saxs_options->use_cs_psv ? our_saxs_options->cs_psv : psv;
 
+   double guinier_electron_nucleon_ratio =
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_electron_nucleon_ratio" ) ?
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_electron_nucleon_ratio" ].toDouble() : 1.87e0;
+
    internal_contrast = 
       our_saxs_options->diffusion_len * 
-      ( 1e0 / ( 1.87e0 * our_saxs_options->nucleon_mass ) - use_psv * ( 1e24 * our_saxs_options->water_e_density ) );
+      ( 1e0 / ( guinier_electron_nucleon_ratio * our_saxs_options->nucleon_mass ) - use_psv * ( 1e24 * our_saxs_options->water_e_density ) );
    
    MA = I0_prot_theo * AVOGADRO / ( conc * 1e-3 ) / ( internal_contrast * internal_contrast ) / (2e0 * M_PI);
 

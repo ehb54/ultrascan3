@@ -4371,6 +4371,18 @@ bool US_Hydrodyn::load_config_json ( QString &json )
          ( 1e0 - saxs_options.d2o_conc ) * ( saxs_options.h2o_scat_len_dens );
    }
 
+   if ( !gparams.count( "guinier_qRtmax" ) ||
+        gparams[ "guinier_qRtmax" ].toDouble() == 0e0 )
+   {
+      gparams[ "guinier_qRtmax" ]                     = "1";
+   }
+
+   if ( !gparams.count( "guinier_electron_nucleon_ratio" ) ||
+        gparams[ "guinier_electron_nucleon_ratio" ].toDouble() == 0e0 )
+   {
+      gparams[ "guinier_electron_nucleon_ratio" ]     = "1.87e0";
+   }
+
    return true;
 }
 
@@ -5275,6 +5287,8 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "guinier_auto_fit" ]                   = "1";
    gparams[ "perdeuteration" ]                     = "0";
    gparams[ "guinier_qRtmax" ]                     = "1";
+   gparams[ "guinier_electron_nucleon_ratio" ]     = "1.87e0";
+
 }
 
 void US_Hydrodyn::set_default()

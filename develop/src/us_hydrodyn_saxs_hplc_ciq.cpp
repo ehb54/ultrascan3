@@ -30,6 +30,7 @@ US_Hydrodyn_Saxs_Hplc_Ciq::~US_Hydrodyn_Saxs_Hplc_Ciq()
 void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 {
    int minHeight1  = 30;
+   int minHeight2  = 25;
 
    lbl_title =  new QLabel      ( tr( "US-SOMO: SAXS HPLC : Make I(q)" ), this );
    // lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
@@ -154,6 +155,29 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_normalize->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   cb_I0_std = new QCheckBox(this);
+   cb_I0_std->setText( tr( "I0 standard experimental value (a.u.) : " ) );
+   cb_I0_std->setEnabled( true );
+   connect( cb_I0_std, SIGNAL( clicked() ), SLOT( set_I0_std() ) );
+   cb_I0_std->setChecked( false );
+   cb_I0_std->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_I0_std->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_I0_std-> setMinimumHeight( minHeight2 );
+
+   le_I0_std = new QLineEdit(this, "le_I0_std Line Edit");
+   le_I0_std->setText( "1" );
+   le_I0_std->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_I0_std->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_I0_std->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( le_I0_std );
+      qdv->setDecimals( 8 );
+      le_I0_std->setValidator( qdv );
+   }
+   connect( le_I0_std, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_I0_std->setMinimumWidth( 60 );
+   le_I0_std->setMinimumHeight( minHeight2 );
+
    lbl_error = new QLabel( parameters->count( "error" ) ? (*parameters)[ "error" ] : "", this );
    lbl_error->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_error->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -277,6 +301,12 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    vbl->addLayout( hbl_zeros );
 
    vbl->addWidget( cb_normalize );
+
+   QHBoxLayout * hbl_I0_std =  new QHBoxLayout( 0 );
+   hbl_I0_std->addWidget( cb_I0_std );
+   hbl_I0_std->addWidget( le_I0_std );
+
+   vbl->addLayout( hbl_I0_std );
    
    QGridLayout * gl = new QGridLayout( 0 );
 
@@ -369,6 +399,11 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::go()
       (*parameters)[ QString( "conv %1" ).arg( i ) ] = le_conv[ i ]->text();
       (*parameters)[ QString( "psv %1" ) .arg( i ) ] = le_psv [ i ]->text();
    }
+
+   if ( cb_I0_std->isChecked() )
+   {
+      (*parameters)[ "I0_std_experimental" ] = le_I0_std->text();
+   }
    close();
 }
 
@@ -398,6 +433,11 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_sd_source()
 }
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::set_normalize()
+{
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_I0_std()
 {
    update_enables();
 }
@@ -512,6 +552,8 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
          }
       }
    }
+
+   le_I0_std->setEnabled( cb_I0_std->isChecked() );
 
    pb_go->setEnabled( !no_go );
 }

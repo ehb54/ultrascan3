@@ -110,7 +110,7 @@ static void write_csv_data( QFile * f, QString I_tag )
 void US_Hydrodyn_Saxs::run_guinier_Rt()
 {
    clear_csv_data();
-   editor->append("Transverse Guinier analysis:\n");
+   editor->append("TV Guinier analysis:\n");
    clear_Rt_guinier();
 
    QString csvlog = 
@@ -1669,7 +1669,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
                                ) )
          {
             editor_msg( "red",
-                        QString("Error performing Transverse Guinier analysis on %1\n" + usu.errormsg + "\n")
+                        QString("Error performing TV Guinier analysis on %1\n" + usu.errormsg + "\n")
                         .arg(qsl_plotted_iq_names[ i ]));
             return false;
          }
@@ -1732,7 +1732,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
                                               true
                                               ) )
             {
-               editor->append(QString("Error performing Transverse Guinier analysis on %1\n" + usu.errormsg + "\n")
+               editor->append(QString("Error performing TV Guinier analysis on %1\n" + usu.errormsg + "\n")
                               .arg(qsl_plotted_iq_names[ i ]));
                return false;
             }
@@ -1787,7 +1787,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
                                  true
                                  ) )
             {
-               editor->append(QString("Error performing Transverse Guinier analysis on %1\n" + usu.errormsg + "\n")
+               editor->append(QString("Error performing TV Guinier analysis on %1\n" + usu.errormsg + "\n")
                               .arg(qsl_plotted_iq_names[ i ]));
                return false;
             }
@@ -1807,7 +1807,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
       {
          report =
             QString(
-                    "Transverse Guinier analysis of %1:\n"
+                    "TV Guinier analysis of %1:\n"
                     "**** Could not compute Rt, too few data points %2 after removal ****\n"
                     )
             .arg( qsl_plotted_iq_names[ i ] )
@@ -1824,7 +1824,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
       } else {
          report =
             QString(
-                    "Transverse Guinier analysis of %1:\n"
+                    "TV Guinier analysis of %1:\n"
                     "**** Could not compute Rt, too few data points %2 ****\n"
                     )
             .arg( qsl_plotted_iq_names[ i ] )
@@ -1846,7 +1846,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
          plotted_Rt_guinier_valid[ i ] = false;
          report =
             QString(
-                    "Transverse Guinier analysis of %1:\n"
+                    "TV Guinier analysis of %1:\n"
                     "**** Could not compute Rt ****\n"
                     )
             .arg(qsl_plotted_iq_names[ i ]);
@@ -1876,7 +1876,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
          report = 
             QString("")
             .sprintf(
-                     "Transverse Guinier analysis of %s:\n"
+                     "TV Guinier analysis of %s:\n"
                      "Rt %.1f (%.1f) (A) I(0) %.2e (%.2e) M/A %.2e (%.2e) q^2 [%.5f:%.5f] qRcmin %.3f qRcmax %.3f points used %u chi^2 %.2e reduced-chi %.2e\n"
                      , qsl_plotted_iq_names[ i ].ascii()
                      , Rg
@@ -2061,14 +2061,14 @@ void US_Hydrodyn_Saxs::set_guinier()
                            ( cb_cs_guinier->isChecked() ?
                              "CS Guinier " : 
                              ( cb_Rt_guinier->isChecked() ?
-                               "Transverse Guinier " : "Guinier " ) )
+                               "TV Guinier " : "Guinier " ) )
                            : "") + tr("SANS Curve"));
    } else {
       plot_saxs->setTitle((cb_guinier->isChecked() ? 
                            ( cb_cs_guinier->isChecked() ?
                              "CS Guinier " : 
                              ( cb_Rt_guinier->isChecked() ?
-                               "Transverse Guinier " : "Guinier " ) )
+                               "TV Guinier " : "Guinier " ) )
                            : "") + tr("SAXS Curve"));
    }
 

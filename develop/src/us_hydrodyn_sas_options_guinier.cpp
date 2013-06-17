@@ -52,7 +52,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_qRgmax, SIGNAL( textChanged( const QString & )), SLOT(update_qRgmax( const QString & )));
 
-   //    lbl_cs_guinier = new QLabel(tr("CS and Transverse Guinier Options:"), this);
+   //    lbl_cs_guinier = new QLabel(tr("CS and TV Guinier Options:"), this);
    //    lbl_cs_guinier->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    //    lbl_cs_guinier->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    //    lbl_cs_guinier->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -72,7 +72,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_cs_qRgmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_cs_qRgmax, SIGNAL( textChanged( const QString & )), SLOT(update_cs_qRgmax( const QString & )));
 
-   lbl_Rt_qRtmax = new QLabel(tr(" Transverse Guinier: Maximum q * Rt : "), this);
+   lbl_Rt_qRtmax = new QLabel(tr(" TV Guinier: Maximum q * Rt : "), this);
    lbl_Rt_qRtmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_Rt_qRtmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_Rt_qRtmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -114,7 +114,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_cs_qend->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_cs_qend, SIGNAL( textChanged( const QString & )), SLOT(update_cs_qend( const QString & )));
 
-   lbl_guinier_and_cs_guinier = new QLabel(tr("Guinier, CS Guinier and Transverse Guinier Options:"), this);
+   lbl_guinier_and_cs_guinier = new QLabel(tr("Guinier, CS Guinier and TV Guinier Options:"), this);
    lbl_guinier_and_cs_guinier->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_guinier_and_cs_guinier->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_guinier_and_cs_guinier->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -301,6 +301,21 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_diffusion_len->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_diffusion_len, SIGNAL( textChanged( const QString & )), SLOT(update_diffusion_len( const QString &)));
 
+   lbl_electron_nucleon_ratio = new QLabel(tr(" Electron/nucleon ratio Z/A : "), this);
+   lbl_electron_nucleon_ratio->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_electron_nucleon_ratio->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_electron_nucleon_ratio->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_electron_nucleon_ratio = new QLineEdit(this);
+   le_electron_nucleon_ratio->setValidator( new QDoubleValidator( le_electron_nucleon_ratio ) );
+   le_electron_nucleon_ratio->setText( QString( "%1" ).arg( 
+                                                           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_electron_nucleon_ratio" ) ?
+                                                           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_electron_nucleon_ratio" ].toDouble() : 1.87e0 ) );
+   le_electron_nucleon_ratio->setEnabled(true);
+   le_electron_nucleon_ratio->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_electron_nucleon_ratio->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_electron_nucleon_ratio, SIGNAL( textChanged( const QString & )), SLOT(update_electron_nucleon_ratio( const QString &)));
+
    lbl_nucleon_mass = new QLabel(tr(" Nucleon mass (g) : "), this);
    lbl_nucleon_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_nucleon_mass->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -360,7 +375,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    pb_cs_guinier->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cs_guinier, SIGNAL(clicked()), SLOT(cs_guinier()));
 
-   pb_Rt_guinier = new QPushButton(tr("Process Transverse Guinier"), this);
+   pb_Rt_guinier = new QPushButton(tr("Process TV Guinier"), this);
    pb_Rt_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_Rt_guinier->setMinimumHeight(minHeight1);
    pb_Rt_guinier->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -452,6 +467,10 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
 
    background->addWidget(lbl_diffusion_len, j, 0);
    background->addWidget(le_diffusion_len, j, 1);
+   j++;
+
+   background->addWidget(lbl_electron_nucleon_ratio, j, 0);
+   background->addWidget(le_electron_nucleon_ratio, j, 1);
    j++;
 
    background->addWidget(lbl_nucleon_mass, j, 0);
@@ -706,6 +725,12 @@ void US_Hydrodyn_SasOptionsGuinier::update_diffusion_len( const QString & str )
 {
    double val = str.toDouble();
    (*saxs_options).diffusion_len = val;
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SasOptionsGuinier::update_electron_nucleon_ratio( const QString & str )
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_electron_nucleon_ratio" ] = QString( "%1" ).arg( str.toDouble(), 0, 'g', 8 );
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

@@ -21,6 +21,12 @@
 // no gaussians version
 void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
 {
+   
+   QMessageBox::information( this,
+                             caption() + tr( ": Make I(q)" ),
+                             tr( "I(q) will be made without Gaussians" )
+                             );
+
    // for each selected file
    // extract q grid from file names
    editor_msg( "dark blue", tr( "Starting: Make I(q)" ) );
