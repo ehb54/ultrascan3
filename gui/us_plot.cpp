@@ -743,6 +743,11 @@ void US_PlotConfig::updateCurve( void )
    qApp->processEvents();
    delete curveWidget;
    curveWidget = NULL;
+#ifdef Q_WS_MAC
+   QMessageBox::information( this, tr( "Curve Config" ),
+      tr( "Curve Update Complete" ) );
+#endif
+   qApp->processEvents();
 }
 
 void US_PlotConfig::updateGrid( void )
