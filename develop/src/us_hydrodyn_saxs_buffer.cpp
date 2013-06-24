@@ -2319,6 +2319,10 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
          f_errors   .erase( lb_files->text( i ) );
          f_pos      .erase( lb_files->text( i ) );
          f_name     .erase( lb_files->text( i ) );
+         f_psv      .erase( lb_files->text( i ) );
+         f_I0se     .erase( lb_files->text( i ) );
+         f_conc     .erase( lb_files->text( i ) );
+         f_extc     .erase( lb_files->text( i ) );
          lb_files->removeItem( i );
       }
    }
@@ -2911,6 +2915,30 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       return false;
    }
 
+   double this_conc = 0e0;
+   double this_psv  = 0e0;
+   double this_I0se = 0e0;
+
+   if ( ext == "dat" )
+   {
+      QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
+      if ( rx_conc.search( qv[ 0 ] ) )
+      {
+         this_conc = rx_conc.cap( 1 ).toDouble();
+         // cout << QString( "found conc %1\n" ).arg( this_conc );
+      }
+      if ( rx_psv.search( qv[ 0 ] ) )
+      {
+         this_psv = rx_psv.cap( 1 ).toDouble();
+      }
+      if ( rx_I0se.search( qv[ 0 ] ) )
+      {
+         this_I0se = rx_I0se.cap( 1 ).toDouble();
+      }
+   }
+
    // we should make some configuration for matches & offsets or column mapping
    // just an ad-hoc fix for APS 5IDD
    int offset = 0;
@@ -2987,6 +3015,21 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    f_qs_string [ basename ] = q_string;
    f_qs        [ basename ] = q;
    f_Is        [ basename ] = I;
+
+   if ( this_conc )
+   {
+      f_conc[ basename ] = this_conc;
+      update_csv_conc();
+   }
+   if ( this_psv )
+   {
+      f_psv [ basename ] = this_psv;
+   }
+   if ( this_I0se )
+   {
+      f_I0se[ basename ] = this_I0se;
+   }
+      
    if ( e.size() == q.size() )
    {
       f_errors        [ basename ] = e;
@@ -3088,6 +3131,8 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    update_csv_conc();
    map < QString, double > concs = current_concs();
    double avg_conc = 0e0;
+   double avg_psv  = 0e0;
+   double avg_I0se = 0e0;
 
    // copies for potential cropping:
 
@@ -3220,6 +3265,8 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
+         avg_psv  = f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
+         avg_I0se = f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
          {
@@ -3244,6 +3291,8 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
+         avg_psv  += f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
+         avg_I0se += f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       }            
    }
 
@@ -3271,6 +3320,8 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    }
 
    avg_conc /= files.size();
+   avg_psv  /= files.size();
+   avg_I0se /= files.size();
 
    // determine name
    // find common header & tail substrings
@@ -3316,6 +3367,15 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    f_Is        [ avg_name ] = avg_Is;
    f_errors    [ avg_name ] = avg_sd;
    
+   if ( avg_psv )
+   {
+      f_psv       [ avg_name ] = avg_psv;
+   }
+   if ( avg_I0se )
+   {
+      f_I0se      [ avg_name ] = avg_I0se;
+   }
+
    // we could check if it has changed and then delete
    // if ( plot_dist_zoomer )
    // {
@@ -3732,7 +3792,25 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
 
    QTextStream ts( &f );
 
-   ts << QString( title + tr( " output: %1\n" ) ).arg( file );
+   map < QString, double > concs = current_concs();
+
+   QString use_conc;
+   if ( concs.count( file ) && concs[ file ] != 0e0 )
+   {
+      use_conc = QString( " Conc:%1" ).arg( concs[ file ] );
+   } else {
+      if ( f_conc.count( file ) && f_conc[ file ] != 0e0 ) 
+      {
+         use_conc = QString( " Conc:%1" ).arg( f_conc[ file ] );
+      }
+   }
+
+   ts << QString( title + tr( " output: %1%2%3%4\n" ) )
+      .arg( file )
+      .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
+      .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
+      .arg( use_conc )
+      ;
 
    bool use_errors = ( f_errors.count( file ) && 
                        f_errors[ file ].size() > 0 );
@@ -4764,6 +4842,10 @@ void US_Hydrodyn_Saxs_Buffer::join()
       q_join = q0_max;
    }
 
+   double avg_conc = 0e0;
+   double avg_psv  = 0e0;
+   double avg_I0se = 0e0;
+
    // join them
    vector < QString > q_string;
    vector < double >  q;
@@ -4807,6 +4889,20 @@ void US_Hydrodyn_Saxs_Buffer::join()
       }
    }
 
+   map < QString, double > concs = current_concs( true );
+
+   avg_conc = concs.count( selected[ 0 ] ) ? concs[ selected[ 0 ] ] : 0e0;
+   avg_conc += concs.count( selected[ 1 ] ) ? concs[ selected[ 1 ] ] : 0e0;
+   avg_conc /= 2e0;
+
+   avg_psv = f_psv.count( selected[ 0 ] ) ? f_psv[ selected[ 0 ] ] : 0e0;
+   avg_psv += f_psv.count( selected[ 1 ] ) ? f_psv[ selected[ 1 ] ] : 0e0;
+   avg_psv /= 2e0;
+
+   avg_I0se = f_I0se.count( selected[ 0 ] ) ? f_I0se[ selected[ 0 ] ] : 0e0;
+   avg_I0se += f_I0se.count( selected[ 1 ] ) ? f_I0se[ selected[ 1 ] ] : 0e0;
+   avg_I0se /= 2e0;
+
    QString basename = 
       QString( "%1-%2-join%3" )
       .arg( selected[ 0 ] )
@@ -4836,6 +4932,18 @@ void US_Hydrodyn_Saxs_Buffer::join()
    if ( use_errors )
    {
       f_errors    [ use_basename ] = e;
+   }
+   if ( avg_conc )
+   {
+      f_conc      [ use_basename ] = avg_conc;
+   }
+   if ( avg_psv )
+   {
+      f_psv       [ use_basename ] = avg_psv;
+   }
+   if ( avg_I0se )
+   {
+      f_I0se      [ use_basename ] = avg_I0se;
    }
 
    lb_files        ->clearSelection();

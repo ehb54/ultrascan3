@@ -1492,7 +1492,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
       }
    }
 
-   HFIT::list_params();
+   // HFIT::list_params();
 
    if ( !HFIT::init_params.size() )
    {
@@ -1579,7 +1579,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
    } 
 
    vector < double > par = HFIT::init_params;
-   US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
+   // US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
    cout << QString( "par start (rmsd %1)\n" ).arg( org_rmsd ).ascii();
 
    // LM::qpb  = ( QProgressBar * )0;
@@ -1600,7 +1600,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
       cout << "WARNING: lm() returned negative rmsd\n";
    }
 
-   US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
+   // US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
    cout << QString( "par fit (rmsd %1)\n" ).arg( status.fnorm ).ascii();
 
    if ( org_rmsd > status.fnorm )

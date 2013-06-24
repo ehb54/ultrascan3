@@ -46,6 +46,7 @@ hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )
          tmp_stack.f_is_time               [ files[ i ] ] = f_is_time[ files[ i ] ];
          tmp_stack.f_conc                  [ files[ i ] ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
          tmp_stack.f_psv                   [ files[ i ] ] = f_psv .count( files[ i ] ) ? f_psv [ files[ i ] ] : 0e0;
+         tmp_stack.f_I0se                  [ files[ i ] ] = f_I0se .count( files[ i ] ) ? f_I0se [ files[ i ] ] : 0e0;
          if ( f_extc.count( files[ i ] ) )
          {
             tmp_stack.f_extc                   [ files[ i ] ] = f_extc[ files[ i ] ];
@@ -83,6 +84,7 @@ hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )
       tmp_stack.f_name                  = f_name;
       tmp_stack.f_is_time               = f_is_time;
       tmp_stack.f_psv                   = f_psv;
+      tmp_stack.f_I0se                  = f_I0se;
       tmp_stack.f_extc                  = f_extc;
       tmp_stack.f_conc                  = f_conc;
       tmp_stack.created_files_not_saved = created_files_not_saved;
@@ -137,6 +139,7 @@ void US_Hydrodyn_Saxs_Hplc::set_current_data( hplc_stack_data & tmp_stack )
    f_name                  = tmp_stack.f_name;
    f_is_time               = tmp_stack.f_is_time;
    f_psv                   = tmp_stack.f_psv;
+   f_I0se                  = tmp_stack.f_I0se;
    f_extc                  = tmp_stack.f_extc;
    f_conc                  = tmp_stack.f_conc;
    created_files_not_saved = tmp_stack.created_files_not_saved;
@@ -320,6 +323,9 @@ void US_Hydrodyn_Saxs_Hplc::stack_join( hplc_stack_data & tmp_stack )
          f_psv[ name ] = 
             tmp_stack.f_psv.count( name ) ?
             tmp_stack.f_psv[ name ] : 0e0;
+         f_I0se[ name ] = 
+            tmp_stack.f_I0se.count( name ) ?
+            tmp_stack.f_I0se[ name ] : 0e0;
          f_conc[ name ] = 
             tmp_stack.f_conc.count( name ) ?
             tmp_stack.f_conc[ name ] : 0e0;
@@ -393,6 +399,9 @@ void US_Hydrodyn_Saxs_Hplc::stack_pcopy()
          clipboard.f_psv[ name ] = 
             adds.f_psv.count( name ) ?
             adds.f_psv[ name ] : 0e0;
+         clipboard.f_I0se[ name ] = 
+            adds.f_I0se.count( name ) ?
+            adds.f_I0se[ name ] : 0e0;
          clipboard.f_conc[ name ] = 
             adds.f_conc.count( name ) ?
             adds.f_conc[ name ] : 0e0;

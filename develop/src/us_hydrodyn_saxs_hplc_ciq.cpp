@@ -155,28 +155,28 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_normalize->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-   cb_I0_std = new QCheckBox(this);
-   cb_I0_std->setText( tr( "I0 standard experimental value (a.u.) : " ) );
-   cb_I0_std->setEnabled( true );
-   connect( cb_I0_std, SIGNAL( clicked() ), SLOT( set_I0_std() ) );
-   cb_I0_std->setChecked( false );
-   cb_I0_std->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   cb_I0_std->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   cb_I0_std-> setMinimumHeight( minHeight2 );
+   cb_I0se = new QCheckBox(this);
+   cb_I0se->setText( tr( "I0 standard experimental value (a.u.) : " ) );
+   cb_I0se->setEnabled( true );
+   connect( cb_I0se, SIGNAL( clicked() ), SLOT( set_I0se() ) );
+   cb_I0se->setChecked( false );
+   cb_I0se->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_I0se->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_I0se-> setMinimumHeight( minHeight2 );
 
-   le_I0_std = new QLineEdit(this, "le_I0_std Line Edit");
-   le_I0_std->setText( "1" );
-   le_I0_std->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_I0_std->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_I0_std->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   le_I0se = new QLineEdit(this, "le_I0se Line Edit");
+   le_I0se->setText( "1" );
+   le_I0se->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_I0se->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_I0se->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    {
-      QDoubleValidator *qdv = new QDoubleValidator( le_I0_std );
+      QDoubleValidator *qdv = new QDoubleValidator( le_I0se );
       qdv->setDecimals( 8 );
-      le_I0_std->setValidator( qdv );
+      le_I0se->setValidator( qdv );
    }
-   connect( le_I0_std, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
-   le_I0_std->setMinimumWidth( 60 );
-   le_I0_std->setMinimumHeight( minHeight2 );
+   connect( le_I0se, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_I0se->setMinimumWidth( 60 );
+   le_I0se->setMinimumHeight( minHeight2 );
 
    lbl_error = new QLabel( parameters->count( "error" ) ? (*parameters)[ "error" ] : "", this );
    lbl_error->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -302,11 +302,11 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 
    vbl->addWidget( cb_normalize );
 
-   QHBoxLayout * hbl_I0_std =  new QHBoxLayout( 0 );
-   hbl_I0_std->addWidget( cb_I0_std );
-   hbl_I0_std->addWidget( le_I0_std );
+   QHBoxLayout * hbl_I0se =  new QHBoxLayout( 0 );
+   hbl_I0se->addWidget( cb_I0se );
+   hbl_I0se->addWidget( le_I0se );
 
-   vbl->addLayout( hbl_I0_std );
+   vbl->addLayout( hbl_I0se );
    
    QGridLayout * gl = new QGridLayout( 0 );
 
@@ -400,9 +400,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::go()
       (*parameters)[ QString( "psv %1" ) .arg( i ) ] = le_psv [ i ]->text();
    }
 
-   if ( cb_I0_std->isChecked() )
+   if ( cb_I0se->isChecked() )
    {
-      (*parameters)[ "I0_std_experimental" ] = le_I0_std->text();
+      (*parameters)[ "I0se" ] = le_I0se->text();
    }
    close();
 }
@@ -437,7 +437,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::set_normalize()
    update_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc_Ciq::set_I0_std()
+void US_Hydrodyn_Saxs_Hplc_Ciq::set_I0se()
 {
    update_enables();
 }
@@ -553,7 +553,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::update_enables()
       }
    }
 
-   le_I0_std->setEnabled( cb_I0_std->isChecked() );
+   le_I0se->setEnabled( cb_I0se->isChecked() );
 
    pb_go->setEnabled( !no_go );
 }

@@ -2368,9 +2368,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
    }
    */
 
-   HFIT_GLOBAL::list_params();
+   // HFIT_GLOBAL::list_params();
 
-   US_Vector::printvector( "is_common", is_common );
+   // US_Vector::printvector( "is_common", is_common );
 
    if ( !HFIT_GLOBAL::init_params.size() )
    {
@@ -2443,14 +2443,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
       {
          cout << QString( "NOTICE: gsums within tolernace %1\n" ).arg( TOL );
       } else {
-         US_Vector::printvector( "gsum", gsum );
-         US_Vector::printvector( "gsumf", gsumf );
+         // US_Vector::printvector( "gsum", gsum );
+         // US_Vector::printvector( "gsumf", gsumf );
          cout << "WARNING: gsums don't match\n";
          cout << QString( "WARNING: gsums OUTSIDE tolernace %1\n" ).arg( TOL );
       }
 #undef TOL
    } else {
-      US_Vector::printvector( "gsum", gsum );
+      // US_Vector::printvector( "gsum", gsum );
       cout << "gsums match\n";
    }
 
@@ -2729,7 +2729,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::ga()
       vector < double > par = HFIT_GLOBAL::init_params;
 
       cout << QString( "ga rmsd %1\n" ).arg( rmsd );
-      US_Vector::printvector( "after ga par is", par );
+      // US_Vector::printvector( "after ga par is", par );
 
       for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
       {
@@ -2784,7 +2784,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::grid()
 
    vector < double > par = HFIT_GLOBAL::init_params;
 
-   US_Vector::printvector( QString( "par start" ), par );
+   // US_Vector::printvector( QString( "par start" ), par );
 
    // determine total count
 
@@ -2858,7 +2858,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::grid()
 
       par = best_params;
 
-      US_Vector::printvector( "after grid par is", par );
+      // US_Vector::printvector( "after grid par is", par );
 
       for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
       {

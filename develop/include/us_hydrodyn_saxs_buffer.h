@@ -236,6 +236,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       map < QString, unsigned int >       f_pos;
 
       map < QString, QString >            f_name;
+      map < QString, double >             f_psv;
+      map < QString, double >             f_I0se;
+      map < QString, double >             f_conc;
+      map < QString, double >             f_extc;
 
       map < QString, bool >               created_files_not_saved;
 

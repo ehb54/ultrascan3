@@ -461,22 +461,25 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
 
    if ( use_SD_weighting )
    {
-      if ( use_guinier_outlier_reject )
+      if ( plotted_I_error[ i ].size() != plotted_q[ i ].size() )
       {
-         if ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
-              is_zero_vector( plotted_I_error[ i ] ) )
-         {
-            editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or all zeros" ) )
-                        .arg( qsl_plotted_iq_names[ i ] ) );
-            use_SD_weighting = false;
-         } 
+         editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are not fully present" ) )
+                     .arg( qsl_plotted_iq_names[ i ] ) );
+         use_SD_weighting = false;
       } else {
-         if ( ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
-                !is_nonzero_vector( plotted_I_error[ i ] ) ) )
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
          {
-            editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or zero" ) )
-                        .arg( qsl_plotted_iq_names[ i ] ) );
-            use_SD_weighting = false;
+            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
+            {
+               if ( plotted_I_error[ i ][ j ] <= 0e0 )
+               {
+                  editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since at least one SD is zero or negative in the selected q range" ) )
+                              .arg( qsl_plotted_iq_names[ i ] ) );
+                  use_SD_weighting = false;
+                  break;
+               }
+            }
          }
       }
    }
@@ -1018,22 +1021,25 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
 
    if ( use_SD_weighting )
    {
-      if ( use_guinier_outlier_reject )
+      if ( plotted_I_error[ i ].size() != plotted_q[ i ].size() )
       {
-         if ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
-              is_zero_vector( plotted_I_error[ i ] ) )
-         {
-            editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or all zeros" ) )
-                        .arg( qsl_plotted_iq_names[ i ] ) );
-            use_SD_weighting = false;
-         } 
+         editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are not fully present" ) )
+                     .arg( qsl_plotted_iq_names[ i ] ) );
+         use_SD_weighting = false;
       } else {
-         if ( ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
-                !is_nonzero_vector( plotted_I_error[ i ] ) ) )
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
          {
-            editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or zero" ) )
-                        .arg( qsl_plotted_iq_names[ i ] ) );
-            use_SD_weighting = false;
+            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
+            {
+               if ( plotted_I_error[ i ][ j ] <= 0e0 )
+               {
+                  editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since at least one SD is zero or negative in the selected q range" ) )
+                              .arg( qsl_plotted_iq_names[ i ] ) );
+                  use_SD_weighting = false;
+                  break;
+               }
+            }
          }
       }
    }
@@ -1546,22 +1552,25 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
 
    if ( use_SD_weighting )
    {
-      if ( use_guinier_outlier_reject )
+      if ( plotted_I_error[ i ].size() != plotted_q[ i ].size() )
       {
-         if ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
-              is_zero_vector( plotted_I_error[ i ] ) )
-         {
-            editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or all zeros" ) )
-                        .arg( qsl_plotted_iq_names[ i ] ) );
-            use_SD_weighting = false;
-         } 
+         editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are not fully present" ) )
+                     .arg( qsl_plotted_iq_names[ i ] ) );
+         use_SD_weighting = false;
       } else {
-         if ( ( plotted_I_error[ i ].size() != plotted_q[ i ].size() ||
-                !is_nonzero_vector( plotted_I_error[ i ] ) ) )
+         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
          {
-            editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are missing or zero" ) )
-                        .arg( qsl_plotted_iq_names[ i ] ) );
-            use_SD_weighting = false;
+            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
+            {
+               if ( plotted_I_error[ i ][ j ] <= 0e0 )
+               {
+                  editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since at least one SD is zero or negative in the selected q range" ) )
+                              .arg( qsl_plotted_iq_names[ i ] ) );
+                  use_SD_weighting = false;
+                  break;
+               }
+            }
          }
       }
    }

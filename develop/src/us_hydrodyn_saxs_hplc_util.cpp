@@ -1106,6 +1106,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
       f_is_time   [ repeak_name ] = f_is_time  [ files[ i ] ];
       f_conc      [ repeak_name ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
       f_psv       [ repeak_name ] = f_psv .count( files[ i ] ) ? f_psv [ files[ i ] ] : 0e0;
+      f_I0se      [ repeak_name ] = f_I0se .count( files[ i ] ) ? f_I0se [ files[ i ] ] : 0e0;
       {
          vector < double > tmp;
          f_gaussians  [ repeak_name ] = tmp;
@@ -1283,7 +1284,8 @@ void US_Hydrodyn_Saxs_Hplc::to_saxs()
             saxs_window->update_conc_csv( 
                                          saxs_window->qsl_plotted_iq_names.back(), 
                                          use_conc,
-                                         ( f_psv .count( this_file ) && f_psv [ this_file ] != 0e0 ) ? f_psv [ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv
+                                         ( f_psv .count( this_file ) && f_psv [ this_file ] != 0e0 ) ? f_psv [ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.psv,
+                                         ( f_I0se.count( this_file ) && f_I0se[ this_file ] != 0e0 ) ? f_I0se[ this_file ] : ((US_Hydrodyn *)us_hydrodyn)->saxs_options.I0_exp
                                          );
          } else {
             editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( this_file ) );
@@ -1309,6 +1311,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
    map < QString, double > concs = current_concs();
    double avg_conc = 0e0;
    double avg_psv  = 0e0;
+   double avg_I0se = 0e0;
 
    // copies for potential cropping:
 
@@ -1441,7 +1444,8 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
-         avg_psv = f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
+         avg_psv  = f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
+         avg_I0se = f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
          {
@@ -1466,7 +1470,8 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
-         avg_psv += f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
+         avg_psv  += f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
+         avg_I0se += f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       }            
    }
 
@@ -1495,6 +1500,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
 
    avg_conc /= files.size();
    avg_psv  /= files.size();
+   avg_I0se /= files.size();
 
    // determine name
    // find common header & tail substrings
@@ -1542,6 +1548,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
    f_is_time   [ avg_name ] = false;
    f_conc      [ avg_name ] = avg_conc;
    f_psv       [ avg_name ] = avg_psv;
+   f_I0se      [ avg_name ] = avg_I0se;
 
    {
       vector < double > tmp;
@@ -1599,6 +1606,7 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
 
    double avg_conc = 0e0;
    double avg_psv  = 0e0;
+   double avg_I0se = 0e0;
 
    vector < double > nIs;
 
@@ -1749,7 +1757,8 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
-         avg_psv = f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
+         avg_psv  = f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
+         avg_I0se = f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
          {
@@ -1778,7 +1787,8 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
             concs.count( this_file ) ?
             concs[ this_file ] :
             0e0;
-         avg_psv += f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
+         avg_psv  += f_psv.count( this_file ) ? f_psv[ this_file ] : 0e0;
+         avg_I0se += f_I0se.count( this_file ) ? f_I0se[ this_file ] : 0e0;
       }            
    }
 
@@ -1792,6 +1802,7 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
 
    avg_conc /= files.size();
    avg_psv  /= files.size();
+   avg_I0se /= files.size();
 
    for ( int i = 0; i < (int)avg_qs.size(); i++ )
    {
@@ -1859,6 +1870,7 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
    f_is_time   [ avg_name ] = false;
    f_conc      [ avg_name ] = avg_conc;
    f_psv       [ avg_name ] = avg_psv;
+   f_I0se      [ avg_name ] = avg_I0se;
    {
       vector < double > tmp;
       f_gaussians  [ avg_name ] = tmp;

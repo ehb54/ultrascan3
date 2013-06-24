@@ -308,6 +308,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
       f_is_time   [ name ] = false;
       f_conc      [ name ] = 0e0;
       f_psv       [ name ] = 0e0;
+      f_I0se      [ name ] = 0e0;
 
    } // for each q value
 
@@ -525,6 +526,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    vector < double > conv;
    vector < double > psv ;
+   double            I0se = 0e0;
    
    double conc_repeak = 1e0;
    
@@ -706,6 +708,11 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          }
       }
 
+      if ( parameters.count( "I0se" ) )
+      {
+         I0se = parameters[ "I0se" ].toDouble();
+      }
+
       if ( sd_from_difference )
       {
          sd_avg_local  = parameters[ "sd_zero_avg_local_sd"  ] == "true";
@@ -859,11 +866,11 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          
       g_area    .push_back( tmp_area );
       g_area_sum.push_back( tmp_area_sum );
-      US_Vector::printvector( QString( "areas file %1 (sum %2)" ).arg( i ).arg( tmp_area_sum, 0, 'g', 8 ), tmp_area );
+      // US_Vector::printvector( QString( "areas file %1 (sum %2)" ).arg( i ).arg( tmp_area_sum, 0, 'g', 8 ), tmp_area );
       // add_plot( QString( "fg_%1_gsum" ).arg( i ), tv, tmp_sum, true, false );
    }
 
-   US_Vector::printvector( "area sums", g_area_sum );
+   // US_Vector::printvector( "area sums", g_area_sum );
 
    unsigned int num_of_gauss = ( unsigned int ) gaussians.size() / gaussian_type_size;
 
@@ -1262,6 +1269,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          f_is_time   [ name ] = false;
          f_conc      [ name ] = conc_factor;
          f_psv       [ name ] = psv.size() > g ? psv[ g ] : 0e0;
+         f_I0se      [ name ] = I0se;
          if ( conv.size() > g )
          {
             f_extc      [ name ] = conv[ g ];
@@ -1672,8 +1680,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    //    US_Vector::printvector( "unified q:", unified_ggaussian_q );
    //    US_Vector::printvector( "unified t:", unified_ggaussian_t );
    //    US_Vector::printvector( "unified I:", unified_ggaussian_I );
-   US_Vector::printvector( "unified params:", unified_ggaussian_params );
-   US_Vector::printvector( "unified param index:", unified_ggaussian_param_index );
+   // US_Vector::printvector( "unified params:", unified_ggaussian_params );
+   // US_Vector::printvector( "unified param index:", unified_ggaussian_param_index );
 
    unified_ggaussian_ok = true;
    progress->setProgress( 1, 1 );
