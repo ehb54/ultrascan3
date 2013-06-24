@@ -51,8 +51,9 @@ class US_pcsaProcess : public QObject
       //! \param typ     curve type (0->straight lines)
       //! \param nth     number of threads
       //! \param noi     noise flag: 0-3 for none|ti|ri|both
+      //! \param alf     regularization alpha factor
       void start_fit( double, double, double, double, double,
-                      int, int, int, int );
+                      int, int, int, int, double = 0.0 );
 
       //! \brief Get results upon completion of all refinements
       //! \param da_sim  Calculated simulation data
@@ -67,6 +68,14 @@ class US_pcsaProcess : public QObject
       bool get_results( US_DataIO::RawData*, US_DataIO::RawData*,
                         US_Model*, US_Noise*, US_Noise*, int&,
                         QStringList&, QVector< ModelRecord >& );
+
+      //! \brief Get best mrec result need for an alpha scan
+      //! \param mrec    Model record
+      void get_mrec( ModelRecord& );
+
+      //! \brief Get alpha result after a scan
+      //! \returns       Alpha value determined from scan
+      double get_alpha( void );
 
       void stop_fit(       void );
       int  estimate_steps( int  );
@@ -145,6 +154,7 @@ private:
       double     kincr;        // k increment
       double     cparam;       // additional curve parameter
       double     varimin;      // variance minimum
+      double     alpha;        // Tikhonov regularization factor
 
       QTime      timer;        // timer for elapsed time measure
 

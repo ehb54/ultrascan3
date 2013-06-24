@@ -46,7 +46,7 @@ long int US_pcsaProcess::max_rss( void )
 // Start a specified PCSA fit run
 void US_pcsaProcess::start_fit( double sll, double sul, double kll, double kul,
                                 double kin, int    res, int    typ, int    nth,
-                                int    noi )
+                                int    noi, double alf )
 {
 DbgLv(1) << "2P(pcsaProc): start_fit()";
    abort       = false;
@@ -59,6 +59,7 @@ DbgLv(1) << "2P(pcsaProc): start_fit()";
    curvtype    = typ;
    nthreads    = nth;
    noisflag    = noi;
+   alpha       = alf;
    errMsg      = tr( "NO ERROR: start" );
    maxrss      = 0;
    varimin     = 9.e+9;
@@ -336,6 +337,36 @@ DbgLv(1) << "FIN_FIN: Run Time: hr min sec" << ktimeh << ktimem << ktimes;
 DbgLv(1) << "FIN_FIN: maxrss memmb nthr" << maxrss << memmb << nthreads
  << " nsubg noisf" << nmtasks << noisflag;
 DbgLv(1) << "FIN_FIN:   kcsteps nctotal" << kcsteps << nctotal;
+
+   if ( alpha < 0.0 )
+   {  // Signal analysis control that an alpha scan may begin
+#if 0
+   // Test a scan of alpha values
+   QVector<double> alphas;
+   double alpha = 0.0;
+   double alinc = 0.01;
+   while ( alpha <= 1.01 ) { alphas << alpha; alpha += alinc; }
+   int nalpha = alphas.size();
+DbgLv(0) << "TReg: nalpha" << nalpha << "alpha0" << alphas[0];
+DbgLv(0) << "TReg:  x-normsq  variance  alpha";
+   for ( int jj=0; jj<nalpha; jj++ )
+   {
+      US_SolveSim::Simulation sim_vals;
+      alpha = alphas[ jj ];
+      sim_vals.alpha     = alpha;
+      sim_vals.noisflag  = 0;
+      sim_vals.dbg_level = 0;
+      sim_vals.solutes   = mrecs[0].isolutes;
+
+      US_SolveSim* solvesim = new US_SolveSim( dsets, 0, false );
+      solvesim->calc_residuals( 0, 1, sim_vals );
+DbgLv(0) << "TReg:" << sim_vals.xnormsq << sim_vals.variances[0] << alpha;
+   }
+#endif
+      emit process_complete( 7 );
+      return;
+   }
+
    emit process_complete( 8 );     // signal that L-M is starting
 
    // Compute a best model using Levenberg-Marquardt
@@ -383,11 +414,24 @@ bool US_pcsaProcess::get_results( US_DataIO::RawData*     da_sim,
    bm_ndx      = mrecs[ 0 ].taskx;
 DbgLv(0) << " GET_RES:   ti,ri counts" << ti_noise.count << ri_noise.count;
 DbgLv(0) << " GET_RES:    VARI,RMSD" << mrecs[0].variance << mrecs[0].rmsd
- << "BM_NDX" << bm_ndx;
+ << "BM_NDX" << bm_ndx << "ALPHA" << alpha;
 
    model_statistics( mrecs, modstats );
 
    return all_ok;
+}
+
+// Public slot to get best model record in preparation for an alpha scan
+void US_pcsaProcess::get_mrec( ModelRecord& p_mrec )
+{
+   p_mrec      = mrecs[ 0 ];              // Copy best model record
+}
+
+// Public slot to get alpha result from scan
+double US_pcsaProcess::get_alpha()
+{
+alpha=0.247;
+   return alpha;
 }
 
 // Submit a job
@@ -774,6 +818,8 @@ void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
             << QString().sprintf( "%12.8f  %12.8f", brmsmin, brmsmax );
    modstats << tr( "%1 Best Average, Median rmsd:" ).arg( nbmods )
             << QString().sprintf( "%12.8f  %12.8f", brmsavg, brmsmed );
+   modstats << tr( "Tikhonov regularization parameter:" )
+            << QString().sprintf( "%12.3f", alpha );
 
 }
 
@@ -781,7 +827,7 @@ void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
 double US_pcsaProcess::fit_function_SL( double t, double* par )
 {
    static int ffcall=0;          // Fit function call counter
-   static double epar[ 13 ];     // Static array for holding parameters
+   static double epar[ 14 ];     // Static array for holding parameters
 
    if ( t > 0.0 )
    { // If not t[0], return immediately
@@ -804,7 +850,7 @@ double US_pcsaProcess::fit_function_SL( double t, double* par )
    int    px     = ( sizeof( double ) / sizeof( void* ) ) * 2;
    if ( ffcall == 0 )
    { // On 1st call, copy par array to internal static one
-      for ( int ii = 0; ii < 12; ii++ )
+      for ( int ii = 0; ii < 13; ii++ )
          epar[ ii ]    = par[ ii + 2 ];
       parP[ 0 ]     = iparP[ px ];
    }
@@ -822,6 +868,7 @@ double US_pcsaProcess::fit_function_SL( double t, double* par )
    double p2hi   = epar[ 9 ];
    int    noisfl = (int)epar[ 10 ];
    int    dbg_lv = (int)epar[ 11 ];
+   double alpha  = epar[ 12 ];
    double ystart = par1;
    double slope  = par2;
    double yend   = ystart + slope * ( xend - xstart );
@@ -858,6 +905,7 @@ qDebug() << "ffSL: call" << ffcall << "par1 par2" << par1 << par2
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisfl;
    sim_vals.dbg_level = dbg_lv;
+   sim_vals.alpha     = alpha;
 
    for ( int ii = 0; ii < nlpts; ii++ )
    { // Fill the input solutes vector
@@ -869,7 +917,7 @@ qDebug() << "ffSL: call" << ffcall << "par1 par2" << par1 << par2
    // Evaluate the model
    double rmsd   = evaluate_model( dsets, sim_vals );
 
-   epar[ 12 ]    = rmsd;
+   epar[ 13 ]    = rmsd;
    int    ktimms = ftimer.elapsed();
 qDebug() << "ffSL: call" << ffcall << "par1 par2" << par1 << par2
  << "rmsd" << rmsd << "eval time" << ktimms << "ms.";
@@ -888,7 +936,7 @@ qDebug() << "ffSL:    ys ye sl yl yh" << ystart << yend << slope
 double US_pcsaProcess::fit_function_IS( double t, double* par )
 {
    static int ffcall=0;          // Fit function call counter
-   static double epar[ 13 ];     // Static array for holding parameters
+   static double epar[ 14 ];     // Static array for holding parameters
 
    if ( t > 0.0 )
    { // If not t[0], return immediately
@@ -911,7 +959,7 @@ double US_pcsaProcess::fit_function_IS( double t, double* par )
    int    px     = ( sizeof( double ) / sizeof( void* ) ) * 2;
    if ( ffcall == 0 )
    { // On 1st call, copy par array to internal static one
-      for ( int ii = 0; ii < 12; ii++ )
+      for ( int ii = 0; ii < 13; ii++ )
          epar[ ii ]    = par[ ii + 2 ];
       parP[ 0 ]     = iparP[ px ];
    }
@@ -929,6 +977,7 @@ double US_pcsaProcess::fit_function_IS( double t, double* par )
    double p2hi   = epar[ 9 ];
    int    noisfl = (int)epar[ 10 ];
    int    dbg_lv = (int)epar[ 11 ];
+   double alpha  = epar[ 12 ];
    double kstr   = ylow;
    double kdif   = yhigh - ylow;
    double srange = xend - xstart;
@@ -967,6 +1016,7 @@ qDebug() << "ffIS: call" << ffcall << "par1 par2" << par1 << par2
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisfl;
    sim_vals.dbg_level = dbg_lv;
+   sim_vals.alpha     = alpha;
 
    double xval   = 0.0;
 
@@ -982,7 +1032,7 @@ qDebug() << "ffIS: call" << ffcall << "par1 par2" << par1 << par2
    // Evaluate the model
    double rmsd   = evaluate_model( dsets, sim_vals );
 
-   epar[ 12 ]    = rmsd;
+   epar[ 13 ]    = rmsd;
    int    ktimms = ftimer.elapsed();
 qDebug() << "ffIS: call" << ffcall << "par1 par2" << par1 << par2
  << "rmsd" << rmsd << "eval time" << ktimms << "ms.";
@@ -997,7 +1047,7 @@ qDebug() << "ffIS:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
 double US_pcsaProcess::fit_function_DS( double t, double* par )
 {
    static int ffcall=0;          // Fit function call counter
-   static double epar[ 13 ];     // Static array for holding parameters
+   static double epar[ 14 ];     // Static array for holding parameters
 
    if ( t > 0.0 )
    { // If not t[0], return immediately
@@ -1037,6 +1087,7 @@ double US_pcsaProcess::fit_function_DS( double t, double* par )
    double p2hi   = epar[ 9 ];
    int    noisfl = (int)epar[ 10 ];
    int    dbg_lv = (int)epar[ 11 ];
+   double alpha  = epar[ 12 ];
    double kstr   = yhigh;
    double kdif   = ylow - yhigh;
    double srange = xend - xstart;
@@ -1075,6 +1126,7 @@ qDebug() << "ffDS: call" << ffcall << "par1 par2" << par1 << par2
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisfl;
    sim_vals.dbg_level = dbg_lv;
+   sim_vals.alpha     = alpha;
 
    double xval   = 0.0;
 
@@ -1090,7 +1142,7 @@ qDebug() << "ffDS: call" << ffcall << "par1 par2" << par1 << par2
    // Evaluate the model
    double rmsd   = evaluate_model( dsets, sim_vals );
 
-   epar[ 12 ]    = rmsd;
+   epar[ 13 ]    = rmsd;
    int    ktimms = ftimer.elapsed();
 qDebug() << "ffDS: call" << ffcall << "par1 par2" << par1 << par2
  << "rmsd" << rmsd << "eval time" << ktimms << "ms.";
@@ -1165,6 +1217,7 @@ DbgLv(0) << "LMf:  par1 par2" << par[0] << par[1];
    par[ 11 ]     = maxp2;
    par[ 12 ]     = noisflag;
    par[ 13 ]     = dbg_level;
+   par[ 14 ]     = alpha;
 DbgLv(1) << "LMf:  ppar2" << ppar[4] << dsets[0] << curvtype << ppar[5];
    timer.start();              // start a timer to measure run time
 
@@ -1268,6 +1321,9 @@ DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
    else
       fmsg      = fmsg + tr( "(%1 hr., %2 min., %3 sec.)" )
                          .arg( ktimeh ).arg( ktimem ).arg( ktimes );
+   if ( alpha != 0.0 )
+      fmsg      = fmsg + tr( "\nA Tikhonov regularization parameter of %1"
+                             " was used." ).arg( alpha );
    emit message_update( fmsg, true );
 
    // Replace best model in vector and build out model more completely
@@ -1416,6 +1472,7 @@ DbgLv(1) << "LMf:  ss rr" << ss << rr << "edat sdat resv"
    crmsd          = sqrt( cvari );
    emit progress_update( cvari );     // Pass progress on to control window
 DbgLv(0) << "LMf: recomputed variance rmsd" << cvari << crmsd;
+
 }
 
 void US_pcsaProcess::elite_limits( QVector< ModelRecord >& mrecs,

@@ -83,10 +83,12 @@ class US_AnalysisControl : public US_WidgetsDialog
       QwtCounter*   ct_incremk;
       QwtCounter*   ct_varcount;
       QwtCounter*   ct_cresolu;
+      QwtCounter*   ct_tralpha;
       QwtCounter*   ct_thrdcnt;
 
       QComboBox*    cmb_curvtype;
 
+      QCheckBox*    ck_rparscan;
       QCheckBox*    ck_tinoise;
       QCheckBox*    ck_rinoise;
 
@@ -96,6 +98,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QTextEdit*    te_status;
 
       QPushButton*  pb_pltlines;
+      QPushButton*  pb_strtscan;
       QPushButton*  pb_strtfit;
       QPushButton*  pb_stopfit;
       QPushButton*  pb_plot;
@@ -112,8 +115,10 @@ class US_AnalysisControl : public US_WidgetsDialog
       void uncheck_optimize( int  );
       void slim_change( void );
       void klim_change( void );
+      void set_alpha  ( void );
       void start      ( void );
       void stop_fit   ( void );
+      void rscan_check( bool );
       void plot       ( void );
       void save       ( void );
       void close_all  ( void );

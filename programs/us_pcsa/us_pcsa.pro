@@ -13,6 +13,7 @@ HEADERS       = us_pcsa.h                \
                 us_analysis_control.h    \
                 us_pcsa_process.h        \
                 us_model_record.h        \
+                us_rpscan.h              \
                 us_worker.h
 
 SOURCES       = us_pcsa.cpp              \
@@ -22,5 +23,6 @@ SOURCES       = us_pcsa.cpp              \
                 us_analysis_control.cpp  \
                 us_pcsa_process.cpp      \
                 us_model_record.cpp      \
+                us_rpscan.cpp            \
                 us_worker.cpp
 
