@@ -72,6 +72,8 @@ if(thrnrank==1) DbgLv(0) << "CR:zthr lthr mxod mnzc mfac mfex bthr"
 US_SolveSim::Simulation::Simulation()
 {
    variance      = 0.0;
+   xnormsq       = 0.0;
+   alpha         = 0.0;
    variances.clear();
    ti_noise .clear();
    ri_noise .clear();
@@ -125,11 +127,14 @@ if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mfac"
       nrinois      += nscans;
    }
 
+   bool tikreg      = ( sim_vals.alpha != 0.0 );
+   int  narows      = tikreg ? ( ntotal + nsolutes ) : ntotal;
+
    // Set up and clear work vectors
-   int navals    = ntotal * nsolutes;   // Size of "A" matrix
+   int  navals      = narows * nsolutes;   // Size of "A" matrix
 DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
    QVector< double > nnls_a( navals,   0.0 );
-   QVector< double > nnls_b( ntotal,   0.0 );
+   QVector< double > nnls_b( narows,   0.0 );
    QVector< double > nnls_x( nsolutes, 0.0 );
    QVector< double > tinvec( ntinois,  0.0 );
    QVector< double > rinvec( nrinois,  0.0 );
@@ -274,6 +279,14 @@ DbgLv(1) << "   CR: A fill kodl" << kodl;
                }
             }
 
+            if ( tikreg )
+            {  // For Tikhonov Regularization append to each column
+               for ( int aa = 0; aa < nsolutes; aa++ )
+               {
+                  nnls_a[ kk++ ] = ( aa == cc ) ? sim_vals.alpha : 0.0;
+               }
+            }
+
          }  // Each data set
 
          if ( signal_wanted  &&  ++kstep == increp )
@@ -361,6 +374,14 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
                      else
                         nnls_a[ kk++ ] = 0.0;
                   }
+               }
+            }
+
+            if ( tikreg )
+            {  // For Tikhonov Regularization append to each column
+               for ( int aa = 0; aa < nsolutes; aa++ )
+               {
+                  nnls_a[ kk++ ] = ( aa == cc ) ? sim_vals.alpha : 0.0;
                }
             }
 
@@ -453,6 +474,13 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
                }
             }
 
+            if ( tikreg )
+            {  // For Tikhonov Regularization append to each column
+               for ( int aa = 0; aa < nsolutes; aa++ )
+               {
+                  nnls_a[ kk++ ] = ( aa == cc ) ? sim_vals.alpha : 0.0;
+               }
+            }
          }  // Each data set
 
          if ( signal_wanted  &&  ++kstep == increp )
@@ -588,7 +616,7 @@ DbgLv(1) << "  noise small NNLS";
    {  // No TI or RI noise
       if ( abort ) return;
 
-      US_Math2::nnls( nnls_a.data(), ntotal, ntotal, nsolutes,
+      US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
                       nnls_b.data(), nnls_x.data() );
 
       if ( abort ) return;
@@ -775,6 +803,16 @@ DbgLv(1) << "CR:   jj solute-c" << kk-1 << (kk>0?sim_vals.solutes[kk-1].c:0.0);
    if ( calc_ri )
       sim_vals.ri_noise << rinvec;
 
+   nsolutes = sim_vals.solutes.size();
+DbgLv(1) << "CR:     nsolutes" << nsolutes;
+   double xnorm = 0.0;
+   for ( int jj = 0; jj < nsolutes; jj++ )
+   {
+      xnorm += sq( sim_vals.solutes[ jj ].c );
+   }
+
+   sim_vals.xnormsq = xnorm;
+DbgLv(1) << "CR:       xnormsq" << xnorm;
 DebugTime("END:calcres");
 }
 

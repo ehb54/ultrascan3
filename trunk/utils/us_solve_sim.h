@@ -61,6 +61,8 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
          Simulation();
 
          double               variance;    //!< Total variance
+         double               xnormsq;     //!< X-norm squared
+         double               alpha;       //!< Tikhonov regularization factor
          QVector< double >    variances;   //!< Variances for data sets
          QVector< double >    ti_noise;    //!< Time-invariant noise 
          QVector< double >    ri_noise;    //!< Radially-invariant noise
