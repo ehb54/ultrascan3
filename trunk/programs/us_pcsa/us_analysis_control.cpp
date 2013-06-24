@@ -2,6 +2,7 @@
 
 #include "us_pcsa.h"
 #include "us_analysis_control.h"
+#include "us_rpscan.h"
 #include "us_settings.h"
 #include "us_passwd.h"
 #include "us_db2.h"
@@ -50,6 +51,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
            lb_incremk      = us_label(  tr( "Increment   (f/f0):" ) );
            lb_varcount     = us_label(  tr( "Variations Count:" ) );
    QLabel* lb_cresolu      = us_label(  tr( "Curve Resolution Points:" ) );
+   QLabel* lb_tralpha      = us_label(  tr( "Regularization Parameter:"  ) );
    QLabel* lb_thrdcnt      = us_label(  tr( "Thread Count:" ) );
    QLabel* lb_minvari      = us_label(  tr( "Minimum Variance:" ) );
    QLabel* lb_minrmsd      = us_label(  tr( "Minimum RMSD:" ) );
@@ -58,6 +60,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
 
    pb_pltlines             = us_pushbutton( tr( "Plot Model Lines" ), true  );
+   pb_strtscan             = us_pushbutton( tr( "Start Scan" ),       false );
    pb_strtfit              = us_pushbutton( tr( "Start Fit" ),        true  );
    pb_stopfit              = us_pushbutton( tr( "Stop Fit" ),         false );
    pb_plot                 = us_pushbutton( tr( "Plot Results" ),     false );
@@ -67,10 +70,12 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    te_status               = us_textedit();
    us_setReadOnly( te_status, true );
 
+   QLayout* lo_rparscan    =
+      us_checkbox( tr( "Regularization Parameter Scan" ), ck_rparscan );
    QLayout* lo_tinois      =
-      us_checkbox( tr( "Fit Time-Invariant Noise"     ), ck_tinoise );
+      us_checkbox( tr( "Fit Time-Invariant Noise"      ), ck_tinoise  );
    QLayout* lo_rinois      =
-      us_checkbox( tr( "Fit Radially-Invariant Noise" ), ck_rinoise );
+      us_checkbox( tr( "Fit Radially-Invariant Noise"  ), ck_rinoise  );
 
    int nthr     = US_Settings::threads();
    nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
@@ -81,8 +86,9 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimitk  = us_counter( 3,      1,   100,    5 );
    ct_incremk   = us_counter( 3,   0.01,    10, 0.50 );
    ct_varcount  = us_counter( 2,      3,   200,   11 );
-   ct_cresolu   = us_counter( 2,     20,   401,  101 );
+   ct_cresolu   = us_counter( 2,     20,   501,  101 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
+   ct_tralpha   = us_counter( 3,      0,     1,    0 );
    ct_lolimits->setStep(  0.1 );
    ct_uplimits->setStep(  0.1 );
    ct_lolimitk->setStep( 0.01 );
@@ -90,6 +96,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_incremk ->setStep( 0.01 );
    ct_varcount->setStep(    1 );
    ct_cresolu ->setStep(    1 );
+   ct_tralpha ->setStep( 0.001 );
    ct_thrdcnt ->setStep(    1 );
    cmb_curvtype = us_comboBox();
    cmb_curvtype->addItem( "Straight Line" );
@@ -121,8 +128,12 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( ct_varcount,   row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_cresolu,    row,   0, 1, 2 );
    controlsLayout->addWidget( ct_cresolu,    row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_tralpha,    row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_tralpha,    row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_thrdcnt,    row,   0, 1, 2 );
    controlsLayout->addWidget( ct_thrdcnt,    row++, 2, 1, 2 );
+   controlsLayout->addLayout( lo_rparscan,   row,   0, 1, 3 );
+   controlsLayout->addWidget( pb_strtscan,   row++, 3, 1, 1 );
    controlsLayout->addLayout( lo_tinois,     row,   0, 1, 3 );
    controlsLayout->addWidget( pb_strtfit,    row++, 3, 1, 1 );
    controlsLayout->addLayout( lo_rinois,     row,   0, 1, 3 );
@@ -171,9 +182,16 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,        SLOT(   compute()              ) );
    connect( ct_cresolu,  SIGNAL( valueChanged( double ) ),
             this,        SLOT(   compute()              ) );
+   connect( ct_tralpha,  SIGNAL( valueChanged( double ) ),
+            this,        SLOT(   set_alpha()            ) );
+
+   connect( ck_rparscan, SIGNAL( toggled    ( bool )    ),
+            this,        SLOT(   rscan_check( bool )    ) );
 
    connect( pb_pltlines, SIGNAL( clicked()    ),
             this,        SLOT(   plot_lines() ) );
+   connect( pb_strtscan, SIGNAL( clicked()    ),
+            this,        SLOT(   start()      ) );
    connect( pb_strtfit,  SIGNAL( clicked()    ),
             this,        SLOT(   start()      ) );
    connect( pb_stopfit,  SIGNAL( clicked()    ),
@@ -225,8 +243,9 @@ DbgLv(1) << "idealThrCout" << nthr;
 // enable/disable optimize counters based on chosen method
 void US_AnalysisControl::optimize_options()
 {
-   ck_tinoise ->setEnabled( true );
-   ck_rinoise ->setEnabled( true );
+   bool use_noise = ( ct_tralpha->value() == 0.0 );
+   ck_tinoise ->setEnabled( use_noise );
+   ck_rinoise ->setEnabled( use_noise );
 
    adjustSize();
 }
@@ -293,6 +312,8 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
                    ( ck_rinoise->isChecked() ? 2 : 0 );
    int    res    = (int)ct_cresolu ->value();
    kin           = ( typ == 0 ) ? kin : (double)nvar;
+   double alpha  = ct_tralpha  ->value();
+   alpha         = ck_rparscan->isChecked() ? -1.0 : alpha;
    ti_noise->values.clear();
    ri_noise->values.clear();
    ti_noise->count = 0;
@@ -311,8 +332,9 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
 
    // Begin the fit
 
-   processor->start_fit( slo, sup, klo, kup, kin, res, typ, nthr, noif );
+   processor->start_fit( slo, sup, klo, kup, kin, res, typ, nthr, noif, alpha );
 
+   pb_strtscan->setEnabled( false );
    pb_strtfit ->setEnabled( false );
    pb_stopfit ->setEnabled( true  );
    pb_plot    ->setEnabled( false );
@@ -418,6 +440,35 @@ void US_AnalysisControl::klim_change()
    compute();
 }
 
+// Set regularization factor alpha
+void US_AnalysisControl::set_alpha()
+{
+   bool use_noise = ( ct_tralpha->value() == 0.0 );
+   ck_tinoise ->setEnabled( use_noise );
+   ck_rinoise ->setEnabled( use_noise );
+
+   if ( ! use_noise )
+   {
+      ck_tinoise ->setChecked( false );
+      ck_rinoise ->setChecked( false );
+   }
+}
+
+// Slot to respond to change in regularization parameter scan check
+void US_AnalysisControl::rscan_check( bool chkd )
+{
+   pb_strtscan->setEnabled( chkd );
+   pb_strtfit ->setEnabled( !chkd );
+   ck_tinoise ->setEnabled( !chkd );
+   ck_rinoise ->setEnabled( !chkd );
+
+   if ( chkd )
+   {
+      ck_tinoise ->setChecked( false );
+      ck_rinoise ->setChecked( false );
+   }
+}
+
 // slot to handle progress update
 void US_AnalysisControl::update_progress( double variance )
 {
@@ -478,6 +529,33 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
 void US_AnalysisControl::completed_process( int stage )
 {
 DbgLv(1) << "AC:cp: stage" << stage;
+
+   if ( stage == 7 )
+   { // If an alpha scan is required, do it and get the alpha determined
+      double alpha    = 0.0;
+      ModelRecord mrec;
+      processor->get_mrec( mrec );
+DbgLv(1) << "AC:cp: mrec fetched";
+
+      US_RpScan* rpscand = new US_RpScan( dsets, mrec );
+DbgLv(1) << "AC:cp: RpScan created";
+
+      if ( rpscand->exec() == QDialog::Accepted )
+      {
+         alpha           = rpscand->get_alpha();
+DbgLv(1) << "AC:cp: alpha fetched" << alpha;
+//alpha=0.427;
+      }
+      ct_tralpha ->setValue( alpha );
+      pb_strtfit ->setEnabled( true  );
+      pb_strtscan->setEnabled( false );
+      ck_rparscan->setChecked( false );
+DbgLv(1) << "AC:cp: RpScan deleting";
+      delete rpscand;
+      rpscand   = NULL;
+DbgLv(1) << "AC:cp: RpScan deleted";
+      return;
+   }
 
    if ( stage == 8 )
    { // If starting L-M, turn off Stop Fit
