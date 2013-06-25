@@ -74,6 +74,11 @@
           and distributions. Report text files and graphics plot files can
           also be generated.
        </li>
+
+       <li>
+         <b>Start RP Scan:</b> If you wish to perform Tikhonov Regularization,
+         you can preceed the fitness run by checking "Regularization
+         Parameter Scan" and then clicking "Start Scan".
     </ul>
           
     <h3> Sample Control Dialogs:</h3>
@@ -138,11 +143,30 @@
        </li>
 
        <li>
+          <b>Curve Resolution Points:</b> Specify the number of points to
+          generate for each test line. This is the number of solute points
+          that each model will have.
+       </li>
+
+       <li>
           <b>Thread Count:</b> Specify by counter the number of threads
           to use for computations. This value is the total number of worker
           threads used at one time. The master thread generally has little
           work to do during computations, so the value may be set to your
           machine's total processors or cores.
+       </li>
+
+       <li>
+          <b>Regularization Parameter Scan</b> Check this box if you want to
+          preceed the fit analysis by a scan to analytically determine the
+          best Regularization Parameter (Alpha).
+       </li>
+
+       <li>
+          <b>Start Scan</b> Click to begin the regularization parameter scan
+          by bringing up a
+          <a href="pcsa_rpscan.html">Regularization Parameter Scan</a> dialog
+          that sets the best value for Regularization Parameter.
        </li>
 
        <li>
