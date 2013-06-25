@@ -247,6 +247,7 @@
             <file>pcsa.html</file>
             <file>pcsa_analys.html</file>
             <file>pcsa_mlines.html</file>
+            <file>pcsa_rpscan.html</file>
             <file>images/pcsa_main-c.png</file>
             <file>images/pcsa_analys-line.png</file>
             <file>images/pcsa_analys-sigm.png</file>
@@ -256,6 +257,8 @@
             <file>images/pcsa_mlines-sigm2.png</file>
             <file>images/pcsa_3dplot.png</file>
             <file>images/pcsa_resplot.png</file>
+            <file>images/pcsa_rpscan-auto.png</file>
+            <file>images/pcsa_rpscan-select.png</file>
 
             <file>model_editor.html</file>
             <file>associations.html</file>
