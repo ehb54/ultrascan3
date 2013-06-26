@@ -35,8 +35,8 @@
     point on the curve nearest to it. That nearest point is taken as the
     "elbow" of the curve; and its associated Alpha is the automatically
     determined best value. In the second image below, the user uses the
-    Ctrl key and left mouse button to display a vertical line that is
-    then positioned at an overriding point.</p>
+    Ctrl key and left mouse button to select an overriding elbow point
+    and its associated Alpha value.</p>
 
     <img src="images/pcsa_rpscan-auto.png" alt="Reg. Par. Auto Select"/>
     <p/>

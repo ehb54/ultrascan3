@@ -21,6 +21,8 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    varimin        = 9e+99;
    bmndx          = -1;
    mlnplotd       = 0;
+   resume         = false;
+   fitpars        = QString();
 
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -237,6 +239,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_thrdcnt ->resize( csizw, rheight );
 
    resize( 710, 440 );
+   qApp->processEvents();
 //DbgLv(2) << "Post-resize AC size" << size();
 }
 
@@ -248,6 +251,7 @@ void US_AnalysisControl::optimize_options()
    ck_rinoise ->setEnabled( use_noise );
 
    adjustSize();
+   qApp->processEvents();
 }
 
 // uncheck optimize options other than one just checked
@@ -289,7 +293,11 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
 
    // Start a processing object if need be
    if ( processor == 0 )
+   {
+      resume      = false;
       processor   = new US_pcsaProcess( dsets, this );
+      pb_strtfit ->setText( tr( "Start Fit" ) );
+   }
 
    else
       processor->disconnect();
@@ -313,7 +321,19 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    int    res    = (int)ct_cresolu ->value();
    kin           = ( typ == 0 ) ? kin : (double)nvar;
    double alpha  = ct_tralpha  ->value();
-   alpha         = ck_rparscan->isChecked() ? -1.0 : alpha;
+   bool   scnck  = ck_rparscan->isChecked();
+
+   if ( resume )
+   { // Alpha-scan completed:  test if we can resume fit at start
+      QString newfpars = QString().sprintf(
+            "%d %.5f %.5f %.5f %.5f %.5f %d %d %d",
+            typ, slo, sup, klo, kup, kin, nvar, noif, res );
+      resume        = ( newfpars == fitpars  &&  !scnck );
+   }
+
+   if ( ! resume )
+      alpha         = scnck ? -1.0 : alpha;
+
    ti_noise->values.clear();
    ri_noise->values.clear();
    ti_noise->count = 0;
@@ -330,16 +350,23 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    connect( processor, SIGNAL( process_complete(  int  ) ),
             this,      SLOT(   completed_process( int  ) ) );
 
-   // Begin the fit
-
-   processor->start_fit( slo, sup, klo, kup, kin, res, typ, nthr, noif, alpha );
-
+   // Begin or resume the fit
    pb_strtscan->setEnabled( false );
    pb_strtfit ->setEnabled( false );
    pb_stopfit ->setEnabled( true  );
    pb_plot    ->setEnabled( false );
+DbgLv(1) << "(2)pb_plot-Enabled" << pb_plot->isEnabled();
    pb_save    ->setEnabled( false );
-   pb_pltlines->setEnabled( false );
+   qApp->processEvents();
+
+   if ( ! resume )
+      processor->start_fit( slo, sup, klo, kup, kin,
+                            res, typ, nthr, noif, alpha );
+
+   else
+      processor->resume_fit( alpha );
+
+   qApp->processEvents();
 }
 
 // stop fit button clicked
@@ -364,7 +391,9 @@ DbgLv(1) << "AC:SF: processor deleted";
    pb_stopfit->setEnabled( false );
    pb_plot   ->setEnabled( false );
    pb_save   ->setEnabled( false );
+   pb_strtfit->setText( tr( "Start Fit" ) );
    qApp->processEvents();
+DbgLv(1) << "(3)pb_plot-Enabled" << pb_plot->isEnabled();
 
    if ( parentw )
    {
@@ -554,6 +583,24 @@ DbgLv(1) << "AC:cp: RpScan deleting";
       delete rpscand;
       rpscand   = NULL;
 DbgLv(1) << "AC:cp: RpScan deleted";
+
+      // Assume we can resume the fit and save current fit parameters
+      resume        = true;
+      pb_strtfit ->setText( tr( "Resume Fit" ) );
+      int    typ    = cmb_curvtype->currentIndex();
+      double slo    = ct_lolimits->value();
+      double sup    = ct_uplimits->value();
+      double klo    = ct_lolimitk->value();
+      double kup    = ct_uplimitk->value();
+      double kin    = ct_incremk ->value();
+      int    nvar   = (int)ct_varcount->value();
+      int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
+                      ( ck_rinoise->isChecked() ? 2 : 0 );
+      int    res    = (int)ct_cresolu ->value();
+      kin           = ( typ == 0 ) ? kin : (double)nvar;
+      fitpars       = QString().sprintf(
+            "%d %.5f %.5f %.5f %.5f %.5f %d %d %d",
+            typ, slo, sup, klo, kup, kin, nvar, noif, res );
       return;
    }
 
@@ -594,6 +641,10 @@ DbgLv(1) << "AC:cp: main done 0";
       pb_plot    ->setEnabled( true  );
       pb_save    ->setEnabled( true  );
       pb_pltlines->setEnabled( true  );
+DbgLv(1) << "(1)pb_plot-Enabled" << pb_plot->isEnabled();
+      resume        = false;
+      fitpars       = QString();
+      pb_strtfit ->setText( tr( "Start Fit" ) );
    }
 
    else if ( mmitnum > 0  &&  stage > 0 )
@@ -647,7 +698,9 @@ void US_AnalysisControl::compute()
    te_status  ->setText( amsg );
 
    bmndx          = -1;
+   resume         = false;
    pb_pltlines->setEnabled( true );
+   pb_strtfit ->setText( tr( "Start Fit" ) );
 }
 
 // slot to launch a plot dialog showing model lines
