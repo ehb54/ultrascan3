@@ -118,6 +118,7 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
       double endk = orig_sols[ ktask ][ mm ].k;
       wtask.par1  = mrecs[ ktask ].par1;
       wtask.par2  = mrecs[ ktask ].par2;
+//wtask.sim_vals.alpha = alpha;
 
       queue_task( wtask, strk, endk, ktask, noisflag, orig_sols[ ktask ] );
    }
@@ -173,6 +174,31 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
 
    emit message_update( pmessage_head() +
       tr( "All computations have been aborted." ), false );
+}
+
+// Resume a specified PCSA fit run at the L-M stage
+void US_pcsaProcess::resume_fit( double alf )
+{
+DbgLv(1) << "2P(pcsaProc): resume_fit()";
+   abort       = false;
+   alpha       = alf;
+
+   // Compute a best model using Levenberg-Marquardt
+   LevMarq_fit();
+
+   int nsolutes       = model.components.size();
+   US_SolveSim::DataSet* dset = dsets[ 0 ];
+
+   // Convert model components s,D back to 20,w form for output
+   for ( int cc = 0; cc < nsolutes; cc++ )
+   {
+DbgLv(1) << "cc comp D" << model.components[ cc ].D;
+      model.components[ cc ].s *= dset->s20w_correction;
+      model.components[ cc ].D *= dset->D20w_correction;
+DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
+   }
+
+   emit process_complete( 9 );     // signal that all processing is complete
 }
 
 // Slot to handle the low-variance record of calculated solutes
@@ -340,29 +366,6 @@ DbgLv(1) << "FIN_FIN:   kcsteps nctotal" << kcsteps << nctotal;
 
    if ( alpha < 0.0 )
    {  // Signal analysis control that an alpha scan may begin
-#if 0
-   // Test a scan of alpha values
-   QVector<double> alphas;
-   double alpha = 0.0;
-   double alinc = 0.01;
-   while ( alpha <= 1.01 ) { alphas << alpha; alpha += alinc; }
-   int nalpha = alphas.size();
-DbgLv(0) << "TReg: nalpha" << nalpha << "alpha0" << alphas[0];
-DbgLv(0) << "TReg:  x-normsq  variance  alpha";
-   for ( int jj=0; jj<nalpha; jj++ )
-   {
-      US_SolveSim::Simulation sim_vals;
-      alpha = alphas[ jj ];
-      sim_vals.alpha     = alpha;
-      sim_vals.noisflag  = 0;
-      sim_vals.dbg_level = 0;
-      sim_vals.solutes   = mrecs[0].isolutes;
-
-      US_SolveSim* solvesim = new US_SolveSim( dsets, 0, false );
-      solvesim->calc_residuals( 0, 1, sim_vals );
-DbgLv(0) << "TReg:" << sim_vals.xnormsq << sim_vals.variances[0] << alpha;
-   }
-#endif
       emit process_complete( 7 );
       return;
    }
@@ -425,13 +428,6 @@ DbgLv(0) << " GET_RES:    VARI,RMSD" << mrecs[0].variance << mrecs[0].rmsd
 void US_pcsaProcess::get_mrec( ModelRecord& p_mrec )
 {
    p_mrec      = mrecs[ 0 ];              // Copy best model record
-}
-
-// Public slot to get alpha result from scan
-double US_pcsaProcess::get_alpha()
-{
-alpha=0.247;
-   return alpha;
 }
 
 // Submit a job

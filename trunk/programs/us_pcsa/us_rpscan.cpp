@@ -140,9 +140,9 @@ DbgLv(1) << "TRP:  csizw cminw" << csizw << cminw;
    data_plot1->enableAxis( QwtPlot::yLeft,   true );
 
    pick          = new US_PlotPicker( data_plot1 );
-   pick->setRubberBand  ( QwtPicker::VLineRubberBand );
+   pick->setRubberBand  ( QwtPicker::CrossRubberBand );
    pick->setMousePattern( QwtEventPattern::MouseSelect1,
-                          Qt::LeftButton, Qt::ControlModifier );
+                          Qt::LeftButton );
 
    rightLayout->addLayout( plotLayout1    );
 
@@ -220,8 +220,6 @@ void US_RpScan::scan()
 
    while( calpha <= ealpha )
    {
-      alphas << calpha;
-
       US_SolveSim::Simulation sim_vals;
       sim_vals.alpha     = calpha;
       sim_vals.noisflag  = 0;
@@ -232,13 +230,14 @@ void US_RpScan::scan()
 
       solvesim->calc_residuals( 0, 1, sim_vals );
 
+      alphas << calpha;
       varias << sim_vals.variances[ 0 ] * 1e5;
       xnorms << sim_vals.xnormsq;
 
       b_progress->setValue( ++jalpha );
 
-      QString astat      = tr( "Alpha %1  --  of %2 alphas, number %3" )
-         .arg( calpha ).arg( nalpha ).arg( jalpha );
+      QString astat      = tr( "Of %1 models, computed %2 (Alpha %3)" )
+         .arg( nalpha ).arg( jalpha ).arg( calpha );
       le_stattext->setText( astat );
 
       calpha += dalpha;
@@ -255,9 +254,7 @@ for(int jj=0; jj<nalpha; jj++ )
 // Plot the data
 void US_RpScan::plot_data()
 {
-DbgLv(1) << "TRP:  plot_data IN";
    data_plot1->detachItems();
-DbgLv(1) << "TRP:  plot_data items detached";
 
    grid          = us_grid( data_plot1 );
 
@@ -284,7 +281,7 @@ DbgLv(1) << "TRP:  plot_data items detached";
    curvpt->setSymbol( sym );
    curvpt->setData( xx, yy, nalpha );
 
-   // Compute and show lines that hint at elbow point of line
+   // Compute and show lines that hint at the elbow point of the curve
    if ( nalpha > 6 )
    {
       double  xh[ 2 ];
@@ -305,21 +302,16 @@ DbgLv(1) << "TRP:  plot_data items detached";
       QPen    pen_red ( Qt::red,  0, Qt::DashLine );
       QPen    pen_cyan( Qt::cyan, 0, Qt::DashLine );
 
-      // Compute and plot a line fitted to the first few main curve points
+      // Compute a line fitted to the first few main curve points
       US_Math2::linefit( &xx, &yy, &slope, &intcp, &sigma, &corre, 5 );
-      xl1p1     = xx[ 0 ];
+DbgLv(1) << "TRP:H1:  intcp slope" << intcp << slope;
       yl1p1     = yy[ 0 ];
+      xl1p1     = ( slope == 0.0 ) ? xx[ 0 ] : ( yl1p1 - intcp ) / slope;
       yl1p2     = yy[ nalpha - 5 ];
-      xl1p2     = xl1p1 + ( yl1p2 - yl1p1 ) / slope;
-      curvh1        = us_curve( data_plot1, tr( "Curve Hint 1" ) );
-      curvh1->setPen( pen_red );
-      xh[ 0 ]   = xl1p1;    // Line fitted to first few points
-      xh[ 1 ]   = xl1p2;
-      yh[ 0 ]   = yl1p1;
-      yh[ 1 ]   = yl1p2;
-      curvh1->setData( xh, yh, 2 );
+      xl1p2     = ( slope == 0.0 ) ? xl1p1 : ( yl1p2 - intcp ) / slope;
+DbgLv(1) << "TRP:H1:   l1: x1,y1,x2,y2" << xl1p1 << yl1p1 << xl1p2 << yl1p2;
 
-      // Compute and plot a line fitted to the last few main curve points
+      // Compute a line fitted to the last few main curve points
       int je    = nalpha - 1;
       for ( int jj = 0; jj < 5; jj++, je-- )
       {
@@ -330,31 +322,24 @@ DbgLv(1) << "TRP:H2: jj x y" << jj << xe[jj] << ye[jj] << "je" << je;
       US_Math2::linefit( &xe, &ye, &slop2, &intc2, &sigma, &corre, 5 );
 DbgLv(1) << "TRP:H2:  intcp slope" << intc2 << slop2;
       xl2p1     = xe[ 0 ];
-      yl2p1     = ye[ 0 ];
+      yl2p1     = slop2 * xl2p1 + intc2;
       xl2p2     = xx[ 4 ];
-      yl2p2     = yl2p1 + ( xl2p2 - xl2p1 ) * slop2;
+      yl2p2     = slop2 * xl2p2 + intc2;
 DbgLv(1) << "TRP:H2:   l2: x1,y1,x2,y2" << xl2p1 << yl2p1 << xl2p2 << yl2p2;
-      curvh2        = us_curve( data_plot1, tr( "Curve Hint 2" ) );
-      curvh2->setPen( pen_red );
-      xh[ 0 ]   = xl2p1;    // Line fitted to last few points
-      xh[ 1 ]   = xl2p2;
-      yh[ 0 ]   = yl2p1;
-      yh[ 1 ]   = yl2p2;
-      curvh2->setData( xh, yh, 2 );
 
-      // Find the intersection point for 2 fitted lines
+      // Find the intersection point for the 2 fitted lines
       xl3p1     = ( intc2 - intcp ) / ( slope - slop2 );
       yl3p1     = xl3p1 * slope + intcp;
 DbgLv(1) << "TRP:H3:   l3: x1,y1" << xl3p1 << yl3p1;
 
-      // Find the curve point nearest to intersection point
-      //  then draw a line from intersection to nearest point.
+      // Find the curve point nearest to the intersection point;
+      //  then compute a line from intersection to nearest curve point.
       double xrng = qAbs( xx[ 0 ] - xx[ nalpha - 1 ] );
       double yrng = qAbs( yy[ 0 ] - yy[ nalpha - 1 ] );
       double xdif = ( xx[ 0 ] - xl3p1 ) / xrng;
       double ydif = ( yy[ 0 ] - yl3p1 ) / yrng;
       double dmin = sqrt( sq( xdif ) + sq( ydif ) );
-DbgLv(1) << "TRP:H2: x1,x2,y1,y2" << xl1p1 << xl2p1 << yl2p1 << yl1p1
+DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl1p1 << yl1p1 << yl3p1 << yl3p1
    << "init.dmin" << dmin;
       int    jmin = nalpha / 2;
       for ( int jj = 3; jj < nalpha - 3; jj++ )
@@ -366,17 +351,37 @@ DbgLv(1) << "TRP:H2: x1,x2,y1,y2" << xl1p1 << xl2p1 << yl2p1 << yl1p1
          {
             jmin     = jj;
             dmin     = dval;
-DbgLv(1) << "TRP:H2:    dval dmin jmin" << dval << dmin << jmin;
+DbgLv(1) << "TRP:H3:    dval dmin jmin" << dval << dmin << jmin;
          }
       }
       xl3p2     = xx[ jmin ];
       yl3p2     = yy[ jmin ];
+
+      // Plot the alpha hint lines
+      curvh1        = us_curve( data_plot1, tr( "Curve Hint 1" ) );
+      curvh1->setPen( pen_red );
+      xh[ 0 ]   = xl1p1;    // Line fitted to first few points
+      yh[ 0 ]   = yl1p1;
+      xh[ 1 ]   = xl3p1;
+      yh[ 1 ]   = yl3p1;
+      curvh1->setData( xh, yh, 2 );
+
+      curvh2        = us_curve( data_plot1, tr( "Curve Hint 2" ) );
+      curvh2->setPen( pen_red );
+      xh[ 0 ]   = xl2p1;    // Line fitted to last few points
+      yh[ 0 ]   = yl2p1;
+      xh[ 1 ]   = xl3p1;
+      yh[ 1 ]   = yl3p1;
+      curvh2->setData( xh, yh, 2 );
+
       curvh3        = us_curve( data_plot1, tr( "Curve Hint 3" ) );
       curvh3->setPen( pen_cyan );
       xh[ 0 ]   = xl3p1;    // Line between hint intersection and main curve
-      xh[ 1 ]   = xl3p2;
       yh[ 0 ]   = yl3p1;
+      xh[ 1 ]   = xl3p2;
       yh[ 1 ]   = yl3p2;
+DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl3p1 << yl3p1 << yl3p2 << yl3p2
+   << " dmin" << dmin;
       curvh3->setData( xh, yh, 2 );
 
       // Use nearest curve point for default alpha
@@ -390,64 +395,79 @@ DbgLv(1) << "TRP:H2:    dval dmin jmin" << dval << dmin << jmin;
    data_plot1->replot();
 }
 
-// Handle a mouse click at a horizontal location
+// Handle a mouse click near to a curve point location
 void US_RpScan::mouse( const QwtDoublePoint& p )
 {
-   double xloc = p.x();
-   double xmin = xloc;
-
-   if ( v_line != NULL )
-   {
-      v_line->detach();
-      delete v_line;
-      v_line = NULL;
-   }
+   int    jmin1   = nalpha / 2;
+   int    jmin2   = jmin1 + 1;
+   double xloc    = p.x();
+   double yloc    = p.y();
+   double xrng    = qAbs( varias[ 0 ] - varias[ nalpha - 1 ] );
+   double yrng    = qAbs( xnorms[ 0 ] - xnorms[ nalpha - 1 ] );
+DbgLv(1) << "TRP:MO: xl,yl,xr,yr" << xloc << yloc << xrng << yrng;
+   double dmin1   = sqrt( 2.0 );
+   double dmin2   = dmin1;
+   double xdif;
+   double ydif;
+   double dval;
 
    for ( int jj = 0; jj < nalpha; jj++ )
-   {
-      double xdif = qAbs( xloc - varias[ jj ] );
+   {  // Find the 2 curve points nearest to clicked point
+      xdif           = ( varias[ jj ] - xloc ) / xrng;
+      ydif           = ( xnorms[ jj ] - yloc ) / yrng;
+      dval           = sqrt( sq( xdif ) + sq( ydif ) ); 
 
-      if ( xdif < xmin )
+      if ( dval < dmin1 )
       {
-         xmin        = xdif;
-         alpha       = alphas[ jj ];
+         dmin2          = dmin1;
+         dmin1          = dval;
+         jmin2          = jmin1;
+         jmin1          = jj;
+      }
+
+      else if ( dval < dmin2 )
+      {
+         dmin2          = dval;
+         jmin2          = jj;
       }
    }
+DbgLv(1) << "TRP:MO: jm1,jm2,dm1,dm2" << jmin1 << jmin2 << dmin1 << dmin2;
+
+   // Interpolate actual point on curve and actual alpha (nearest 0.001)
+
+   double xlo1    = varias[ jmin1 ];
+   double ylo1    = xnorms[ jmin1 ];
+   double xlo2    = varias[ jmin2 ];
+   double ylo2    = xnorms[ jmin2 ];
+   dval           = dmin1 / ( dmin1 + dmin2 );
+   xdif           = dval * ( xlo2 - xlo1 );
+   ydif           = dval * ( ylo2 - ylo1 );
+   xloc           = xlo1 + xdif;
+   yloc           = ylo1 + ydif;
+   alpha          = alphas[ jmin1 ];
+   alpha          = alpha + ( alphas[ jmin2 ] - alpha ) * dval;
+   alpha          = (double)qRound( alpha * 1000.0 ) / 1000.0;
 
    QString salpha = QString().sprintf( "%.3f", alpha );
    le_selalpha->setText( salpha );
 
-   draw_vline( xloc, salpha );
-}
-
-// Draw a vertical pick line
-void US_RpScan::draw_vline( double xval, QString salpha )
-{
-   QwtScaleDiv* y_axis = data_plot1->axisScaleDiv( QwtPlot::yLeft );
-   double ymin    = y_axis->lowerBound();
-   double ymax    = y_axis->upperBound();
-   double padding = ( ymax - ymin ) / 10.0;
-   double ymark   = ymin + padding / 2.0;
-   double xx[ 2 ];
-   double yy[ 2 ];
-
-   xx[ 0 ] = xval;
-   xx[ 1 ] = xval;
-   yy[ 0 ] = ymax - padding;
-   yy[ 1 ] = ymin + padding;
-
-   v_line  = us_curve( data_plot1, "V-Line" );
-   v_line->setData( xx, yy, 2 );
-
-   QPen pen = QPen( QBrush( Qt::white ), 2.0 );
-   v_line->setPen( pen );
+   // Mark selected curve point and give it a label
+   xlo2           = xloc + xrng / 10.0;
+   ylo2           = yloc + yrng / 10.0;
 
    data_plot1->detachItems( QwtPlotItem::Rtti_PlotMarker );
+   QwtPlotMarker* msymbo = new QwtPlotMarker;
+   QBrush sbrush( Qt::cyan );
+   QPen   spen  ( sbrush, 2.0 );
+   msymbo->setValue( xloc, yloc );
+   msymbo->setSymbol(
+         QwtSymbol( QwtSymbol::Cross, sbrush, spen, QSize( 8, 8 ) ) );
+   msymbo->attach  ( data_plot1 );
    QwtPlotMarker* marker = new QwtPlotMarker;
    QwtText label;
    label.setText ( salpha );
    label.setColor( Qt::cyan );
-   marker->setValue( xval, ymark );
+   marker->setValue( xlo2, ylo2 );
    marker->setLabel( label );
    marker->setLabelAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
    marker->attach  ( data_plot1 );

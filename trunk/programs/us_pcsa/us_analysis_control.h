@@ -47,6 +47,8 @@ class US_AnalysisControl : public US_WidgetsDialog
       double        fmax;
       double        finc;
       double        varimin;
+      bool          resume;
+      QString       fitpars;
 
       QHBoxLayout*  mainLayout;
       QGridLayout*  controlsLayout;

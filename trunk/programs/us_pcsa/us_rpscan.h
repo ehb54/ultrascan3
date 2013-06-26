@@ -75,7 +75,6 @@ class US_RpScan : public US_WidgetsDialog
       void scan       ( void   );
       void plot_data  ( void   );
       void mouse      ( const QwtDoublePoint& );
-      void draw_vline ( double, QString );
 
       void help       ( void )
       { showHelp.show_help( "pcsa_rpscan.html" ); };

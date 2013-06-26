@@ -55,6 +55,10 @@ class US_pcsaProcess : public QObject
       void start_fit( double, double, double, double, double,
                       int, int, int, int, double = 0.0 );
 
+      //! \brief Resume the fit calculations at L-M after alpha scan
+      //! \param alf     regularization alpha factor
+      void resume_fit( double );
+
       //! \brief Get results upon completion of all refinements
       //! \param da_sim  Calculated simulation data
       //! \param da_res  Residuals data (exper - simul)
@@ -72,10 +76,6 @@ class US_pcsaProcess : public QObject
       //! \brief Get best mrec result need for an alpha scan
       //! \param mrec    Model record
       void get_mrec( ModelRecord& );
-
-      //! \brief Get alpha result after a scan
-      //! \returns       Alpha value determined from scan
-      double get_alpha( void );
 
       void stop_fit(       void );
       int  estimate_steps( int  );
