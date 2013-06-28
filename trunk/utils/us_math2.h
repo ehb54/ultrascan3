@@ -107,6 +107,53 @@ class US_UTIL_EXTERN US_Math2
       static double linefit   ( double**, double**, double*, double*, double*, 
                                 double* , int );
 
+      //! \brief Given a set of curve points and a given outside point, return
+      //!        the curve point nearest the given point. Return either a point
+      //!        in the curve array or one interpolated based on distance.
+      //!        Optionally also return a value in a third dimension that
+      //!        corresponds to the nearest point.
+      //!       
+      //! \param xs       An array of x values of the curve
+      //! \param ys       An array of y values of the curve
+      //! \param npoints  The number of curve points
+      //! \param interp   Flag to interpolate curve point (false->exact point)
+      //! \param xgiven   The x value of the given point
+      //! \param ygiven   The y value of the given point
+      //! \param xnear    Pointer for return of x of the nearest curve point
+      //! \param ynear    Pointer for return of y of the nearest curve point
+      //! \param zs       Optional third dimension values array (if non-NULL)
+      //! \param znear    Optional pointer for return of z for nearest point
+      //! \return         Index in arrays of nearest curve point
+      static int nearest_curve_point( double*, double*, const int, bool,
+                                      double&, double&, double*, double*,
+                                      double*, double* );
+
+      //! \brief Given the slopes and intercepts of two lines, return the
+      //!        intersection point of the two lines, if it exists.
+      //! \param slope1   The slope of the first line
+      //! \param intcp1   The intercept of the first line
+      //! \param slope2   The slope of the second line
+      //! \param intcp2   The intercept of the second line
+      //! \param xisec    Pointer for return of x of the intersection point
+      //! \param yisec    Pointer for return of y of the intersection point
+      //! \return         Boolean flag if intersection exists (false->parallel)
+      static bool intersect( double&, double&, double&, double&,
+                             double*, double* );
+
+      //! \brief Given arrays representing two curves, return the intersection
+      //!        point of two lines fitted to them, if it exists.
+      //! \param x1s      An array of x values of the first curve
+      //! \param y1s      An array of y values of the first curve
+      //! \param npoint1  The number of points for the first curve
+      //! \param x2s      An array of x values of the second curve
+      //! \param y2s      An array of y values of the second curve
+      //! \param npoint2  The number of points for the second curve
+      //! \param xisec    Pointer for return of x of the intersection point
+      //! \param yisec    Pointer for return of y of the intersection point
+      //! \return         Boolean flag if intersection exists (false=>parallel)
+
+      static bool intersect( double*, double*, int, double*, double*, int,
+                             double*, double* );
       //! \brief A routine to calculate the vbar and MW of a peptide sequence
       //! \param pep      The structure to be populated
       //! \param sequence The secuence used for the calculations

@@ -91,6 +91,8 @@ class US_AnalysisControl : public US_WidgetsDialog
       QComboBox*    cmb_curvtype;
 
       QCheckBox*    ck_rparscan;
+      QCheckBox*    ck_lmalpha;
+      QCheckBox*    ck_fxalpha;
       QCheckBox*    ck_tinoise;
       QCheckBox*    ck_rinoise;
 
