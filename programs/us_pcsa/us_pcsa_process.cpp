@@ -48,7 +48,7 @@ void US_pcsaProcess::start_fit( double sll, double sul, double kll, double kul,
                                 double kin, int    res, int    typ, int    nth,
                                 int    noi, double alf )
 {
-DbgLv(1) << "2P(pcsaProc): start_fit()";
+DbgLv(1) << "PC(pcsaProc): start_fit()";
    abort       = false;
    slolim      = sll;
    suplim      = sul;
@@ -59,7 +59,34 @@ DbgLv(1) << "2P(pcsaProc): start_fit()";
    curvtype    = typ;
    nthreads    = nth;
    noisflag    = noi;
+   alpha_scn   = false;
    alpha       = alf;
+   alpha_fx    = 0.0;
+   alpha_lm    = 0.0;
+
+   if ( alpha < 0.0 )
+   {  // Negative alpha acts as flag
+      if ( alpha == (-99.0) )
+      {  // This is an alpha scan run
+         alpha_scn   = true;
+         alpha       = 0.0;
+      }
+
+      else
+      {  // This is a run with regularize in earlier stage(s)
+         alpha       = -alpha;
+         alpha_lm    = alpha;       // In L-M stage for sure
+
+         if ( alpha > 1.0 )
+         {
+            alpha      -= 1.0;
+            alpha_fx    = alpha;   // Also in Fixed stage
+            alpha_lm    = alpha;
+         }
+      }
+   }
+DbgLv(1) << "PC: alf alpha lm fx scn"
+   << alf << alpha << alpha_lm << alpha_fx << alpha_scn;
    errMsg      = tr( "NO ERROR: start" );
    maxrss      = 0;
    varimin     = 9.e+9;
@@ -118,7 +145,8 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
       double endk = orig_sols[ ktask ][ mm ].k;
       wtask.par1  = mrecs[ ktask ].par1;
       wtask.par2  = mrecs[ ktask ].par2;
-//wtask.sim_vals.alpha = alpha;
+
+      wtask.sim_vals.alpha = alpha_fx;
 
       queue_task( wtask, strk, endk, ktask, noisflag, orig_sols[ ktask ] );
    }
@@ -183,26 +211,26 @@ DbgLv(1) << "2P(pcsaProc): resume_fit()";
    abort       = false;
    alpha       = alf;
 
-   // Compute a best model using Levenberg-Marquardt
-   LevMarq_fit();
+   compute_final();
 
-   int nsolutes       = model.components.size();
-   US_SolveSim::DataSet* dset = dsets[ 0 ];
+   int    nsol     = model.components.size();
+   double s20wcorr = dsets[ 0 ]->s20w_correction;
+   double D20wcorr = dsets[ 0 ]->D20w_correction;
 
    // Convert model components s,D back to 20,w form for output
-   for ( int cc = 0; cc < nsolutes; cc++ )
+   for ( int cc = 0; cc < nsol; cc++ )
    {
 DbgLv(1) << "cc comp D" << model.components[ cc ].D;
-      model.components[ cc ].s *= dset->s20w_correction;
-      model.components[ cc ].D *= dset->D20w_correction;
+      model.components[ cc ].s *= s20wcorr;
+      model.components[ cc ].D *= D20wcorr;
 DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
    }
 
    emit process_complete( 9 );     // signal that all processing is complete
 }
 
-// Slot to handle the low-variance record of calculated solutes
-void US_pcsaProcess::process_final( ModelRecord& mrec )
+// Slot to handle the low-variance record of fixed final calculated solutes
+void US_pcsaProcess::process_fxfinal( ModelRecord& mrec )
 {
    if ( abort ) return;
 
@@ -363,17 +391,23 @@ DbgLv(1) << "FIN_FIN: Run Time: hr min sec" << ktimeh << ktimem << ktimes;
 DbgLv(1) << "FIN_FIN: maxrss memmb nthr" << maxrss << memmb << nthreads
  << " nsubg noisf" << nmtasks << noisflag;
 DbgLv(1) << "FIN_FIN:   kcsteps nctotal" << kcsteps << nctotal;
-
-   if ( alpha < 0.0 )
-   {  // Signal analysis control that an alpha scan may begin
-      emit process_complete( 7 );
-      return;
-   }
+DbgLv(1) << "FIN_FIN:    alpha_fx" << alpha_fx;
 
    emit process_complete( 8 );     // signal that L-M is starting
 
    // Compute a best model using Levenberg-Marquardt
    LevMarq_fit();
+
+   if ( alpha_scn )
+   {  // Signal analysis control that an alpha scan may begin
+      emit process_complete( 7 );
+      return;
+   }
+
+   if ( alpha_lm == 0.0  &&  alpha != 0.0 )
+   {  // L-M nonregularized, but need to do a final regularized computation
+      compute_final();
+   }
 
    nsolutes           = model.components.size();
 
@@ -550,7 +584,7 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx orecx" << taskx << orecx
 
       qSort( mrecs );                    // Sort model records by variance
 
-      process_final( mrecs[ 0 ] );
+      process_fxfinal( mrecs[ 0 ] );
 //*DBG*
 if (dbg_level>0) {
  for (int ii=0;ii<mrecs.size();ii++)
@@ -1213,8 +1247,9 @@ DbgLv(0) << "LMf:  par1 par2" << par[0] << par[1];
    par[ 11 ]     = maxp2;
    par[ 12 ]     = noisflag;
    par[ 13 ]     = dbg_level;
-   par[ 14 ]     = alpha;
+   par[ 14 ]     = alpha_lm;
 DbgLv(1) << "LMf:  ppar2" << ppar[4] << dsets[0] << curvtype << ppar[5];
+DbgLv(1) << "LMf:  alpha" << alpha_lm << par[14];
    timer.start();              // start a timer to measure run time
 
    if ( curvtype == 0 )
@@ -1317,9 +1352,9 @@ DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
    else
       fmsg      = fmsg + tr( "(%1 hr., %2 min., %3 sec.)" )
                          .arg( ktimeh ).arg( ktimem ).arg( ktimes );
-   if ( alpha != 0.0 )
+   if ( alpha_lm != 0.0 )
       fmsg      = fmsg + tr( "\nA Tikhonov regularization parameter of %1"
-                             " was used." ).arg( alpha );
+                             " was used." ).arg( alpha_lm );
    emit message_update( fmsg, true );
 
    // Replace best model in vector and build out model more completely
@@ -1590,5 +1625,71 @@ void US_pcsaProcess::timerEvent( QTimerEvent *event )
    }
 
    return;
+}
+
+// Perform one final regularization computation when L-M was non-regularized
+void US_pcsaProcess::compute_final()
+{
+DbgLv(1) << "CFin: alpha" << alpha;
+   ModelRecord mrec   = mrecs[ 0 ];
+   model              = mrec.model;
+   US_SolveSim::Simulation sim_vals;
+   sim_vals.noisflag  = noisflag;
+   sim_vals.dbg_level = dbg_level;
+   sim_vals.alpha     = alpha;
+   sim_vals.solutes   = mrec.isolutes;
+
+   // Evaluate the model
+   double rmsd   = evaluate_model( dsets, sim_vals );
+
+   US_SolveSim::DataSet* dset = dsets[ 0 ];
+   QString fmsg  = tr( "\nThe final best model (RMSD=%1) used a Tikhonov\n"
+                       "  regularization parameter of %2 .\n" )
+                       .arg( rmsd ).arg( alpha );
+   emit message_update( fmsg, true );
+
+   // Replace best model in vector and build out model more completely
+   mrec.variance  = dset->model.variance;
+   mrec.rmsd      = rmsd;
+
+   mrec.csolutes.clear();
+   model          = dset->model;
+   double sfactor = 1.0 / dset->s20w_correction;
+   double dfactor = 1.0 / dset->D20w_correction;
+   int    nsol    = dset->model.components.size();
+
+   for ( int ii = 0; ii < nsol; ii++ )
+   {
+      // Insert calculated solutes into top model record
+      US_Solute solute;
+      solute.s   = model.components[ ii ].s;
+      solute.k   = model.components[ ii ].f_f0;
+      solute.c   = model.components[ ii ].signal_concentration;
+      solute.v   = model.components[ ii ].vbar20;
+      mrec.csolutes << solute;
+DbgLv(1) << "CFin:  ii" << ii << "s k c" << solute.s << solute.k << solute.c;
+
+      // Calculate the remainder of component values
+      model.components[ ii ].D   = 0.0;
+      model.components[ ii ].mw  = 0.0;
+      model.components[ ii ].f   = 0.0;
+      model.calc_coefficients( model.components[ ii ] );
+
+      // Convert to experiment-space for simulation below
+      model.components[ ii ].s  *= sfactor;
+      model.components[ ii ].D  *= dfactor;
+DbgLv(1) << "CFin:     s D mw" << model.components[ii].s
+ << model.components[ii].D << model.components[ii].mw;
+   }
+
+DbgLv(1) << "CFin:model: desc analys vari" << model.description
+ << model.analysis << model.variance;
+
+   // Replace the top model with the new regularized best model
+   mrecs[ 0 ]     = mrec;
+
+   // Report new variance
+   emit progress_update( mrec.variance ); 
+DbgLv(0) << "LMf: recomputed variance rmsd" << mrec.variance << rmsd;
 }
 

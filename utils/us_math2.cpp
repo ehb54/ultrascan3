@@ -141,6 +141,139 @@ float US_Math2::linefit( float** x        , float** y    , float* slope,
 }
 */
 
+// This function determines the point on a curve that is nearest to
+// a given point. The returned point may be an exact curve point or one
+// interpolated between the two nearest curve points. An optional value
+// may be returned which is the exact or interpolated value in a third
+// dimension or associated array.
+
+int US_Math2::nearest_curve_point( double* xs, double* ys, const int npoints,
+      bool interp,   double& xgiven, double& ygiven,
+      double* xnear, double* ynear,  double* zs, double* znear )
+{
+   int    jmin   = npoints / 2;
+   int    jend   = npoints - 1;
+   double xnorm  = qAbs( xs[ 0 ] - xs[ jend ] );  // X normalizing factor
+   double ynorm  = qAbs( ys[ 0 ] - ys[ jend ] );  // Y normalizing factor
+          xnorm  = ( xnorm == 0.0 ) ? 1.0 : ( 1.0 / xnorm );
+          ynorm  = ( ynorm == 0.0 ) ? 1.0 : ( 1.0 / ynorm );
+   double xdif   = ( xs[ 0 ] - xgiven ) * xnorm;
+   double ydif   = ( ys[ 0 ] - ygiven ) * ynorm;
+   double dmin   = sqrt( sq( xdif ) + sq( ydif ) );
+
+   if ( interp )
+   {  // Interpolate a curve point nearest to the given point
+      int    jmin2  = jmin;
+      double dmin2  = dmin;
+
+      for ( int jj = 0; jj < npoints; jj++ )
+      {  // Find the 2 curve points nearest to the given point
+         xdif          = ( xs[ jj ] - xgiven ) * xnorm;
+         ydif          = ( ys[ jj ] - ygiven ) * ynorm;
+         double dval   = sqrt( sq( xdif ) + sq( ydif ) );
+
+         if ( dval < dmin )
+         {  // This curve point is the nearest yet
+            dmin2          = dmin;    // Old nearest is now second nearest
+            jmin2          = jmin;
+            dmin           = dval;    // Save nearest
+            jmin           = jj;
+         }
+
+         else if ( dval < dmin2 )
+         {  // This curve point is the second nearest yet
+            dmin2          = dval;    // Save second nearest
+            jmin2          = jj;
+         }
+      }
+
+      // Determine ratio values based on relative distances of the two nearest
+      double ratio  = dmin2 / ( dmin + dmin2 );
+      double ratio2 = 1.0 - ratio;
+
+      if ( xnear != NULL  &&  ynear != NULL )
+      {  // Interpolate the curve point nearest to the given point
+         *xnear        = xs[ jmin ] * ratio + xs[ jmin2 ] * ratio2;
+         *ynear        = ys[ jmin ] * ratio + ys[ jmin2 ] * ratio2;
+      }
+
+      if ( zs != NULL  &&  znear != NULL )
+      {  // Interpolate the additional value associated with the nearest point
+         *znear        = zs[ jmin ] * ratio + zs[ jmin2 ] * ratio2;
+      }
+   }
+
+   else
+   {  // Find the nearest point to the given point
+      for ( int jj = 0; jj < npoints; jj++ )
+      {
+         xdif          = ( xs[ jj ] - xgiven ) * xnorm;
+         ydif          = ( ys[ jj ] - ygiven ) * ynorm;
+         double dval   = sqrt( sq( xdif ) + sq( ydif ) );
+
+         if ( dval < dmin )
+         {
+            dmin          = dval;
+            jmin          = jj;
+         }
+      }
+ 
+      if ( xnear != NULL  &&  ynear != NULL )
+      {  // Return the curve point nearest to the given point
+         *xnear        = xs[ jmin ];
+         *ynear        = ys[ jmin ];
+      }
+
+      if ( zs != NULL  &&  znear != NULL )
+      {  // If desired, return the additional value associated with the point
+         *znear        = zs[ jmin ];
+      }
+   }
+
+   return jmin;
+}
+
+// This function determines the intersection point of two lines.
+//   This version takes as input the slopes and intercepts of the two lines.
+bool US_Math2::intersect( double& slope1, double& intcp1,
+      double& slope2, double& intcp2, double* xisec, double* yisec )
+{
+   bool isect    = ( slope1 != slope2 );  // Parallel lines do not intersect!
+
+   if ( isect )
+   {  // Return intersection point of non-parallel lines
+      *xisec        = ( intcp2 - intcp1 ) / ( slope1 - slope2 );
+      *yisec        = *xisec * slope1 + intcp1;
+   }
+
+   return isect;
+}
+
+// This function determines the intersection point of two fitted lines.
+//   This version takes as input the x and y arrays of two curves
+//   and returns the intersection of straight lines fitted to them.
+bool US_Math2::intersect( double* x1s, double* y1s, int npoint1,
+      double* x2s, double* y2s, int npoint2, double* xisec, double* yisec )
+{
+   double slope1;
+   double intcp1;
+   double slope2;
+   double intcp2;
+   double sigma;
+   double corre;
+
+   // Compute the slope and intercept of a line fitted to the first curve
+   US_Math2::linefit( &x1s, &y1s, &slope1, &intcp1, &sigma, &corre, npoint1 );
+
+   // Compute the slope and intercept of a line fitted to the second curve
+   US_Math2::linefit( &x2s, &y2s, &slope2, &intcp2, &sigma, &corre, npoint2 );
+
+   // Use slopes and intercepts to compute and return the intersection point
+   bool isect = intersect( slope1, intcp1, slope2, intcp2, xisec, yisec );
+
+   return isect;
+}
+
 void US_Math2::calc_vbar( Peptide& pep, const QString& sequence, 
       double temperature )
 {

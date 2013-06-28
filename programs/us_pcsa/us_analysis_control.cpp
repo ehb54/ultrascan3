@@ -55,8 +55,8 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    QLabel* lb_cresolu      = us_label(  tr( "Curve Resolution Points:" ) );
    QLabel* lb_tralpha      = us_label(  tr( "Regularization Parameter:"  ) );
    QLabel* lb_thrdcnt      = us_label(  tr( "Thread Count:" ) );
-   QLabel* lb_minvari      = us_label(  tr( "Minimum Variance:" ) );
-   QLabel* lb_minrmsd      = us_label(  tr( "Minimum RMSD:" ) );
+   QLabel* lb_minvari      = us_label(  tr( "Best Model Variance:" ) );
+   QLabel* lb_minrmsd      = us_label(  tr( "Best Model RMSD:" ) );
    QLabel* lb_status       = us_label(  tr( "Status:" ) );
 
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
@@ -74,10 +74,16 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
 
    QLayout* lo_rparscan    =
       us_checkbox( tr( "Regularization Parameter Scan" ), ck_rparscan );
+   QLayout* lo_lmalpha     =
+      us_checkbox( tr( "Regularize in L-M Fits"        ), ck_lmalpha  );
+   QLayout* lo_fxalpha     =
+      us_checkbox( tr( "Regularize in Fixed Fits"      ), ck_fxalpha  );
    QLayout* lo_tinois      =
       us_checkbox( tr( "Fit Time-Invariant Noise"      ), ck_tinoise  );
    QLayout* lo_rinois      =
       us_checkbox( tr( "Fit Radially-Invariant Noise"  ), ck_rinoise  );
+   ck_fxalpha ->setEnabled( false );
+   ck_lmalpha ->setEnabled( false );
 
    int nthr     = US_Settings::threads();
    nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
@@ -136,6 +142,8 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( ct_thrdcnt,    row++, 2, 1, 2 );
    controlsLayout->addLayout( lo_rparscan,   row,   0, 1, 3 );
    controlsLayout->addWidget( pb_strtscan,   row++, 3, 1, 1 );
+   controlsLayout->addLayout( lo_lmalpha,    row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_fxalpha,    row++, 2, 1, 2 );
    controlsLayout->addLayout( lo_tinois,     row,   0, 1, 3 );
    controlsLayout->addWidget( pb_strtfit,    row++, 3, 1, 1 );
    controlsLayout->addLayout( lo_rinois,     row,   0, 1, 3 );
@@ -332,7 +340,15 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    }
 
    if ( ! resume )
-      alpha         = scnck ? -1.0 : alpha;
+   {  // Not resuming after an Alpha scan
+      if ( scnck )
+         alpha         = -99.0;             // Flag Alpha scan
+      else if ( ck_fxalpha->isChecked() )
+         alpha         = -alpha - 1.0;      // Flag use-alpha-for-fixed-fits
+      else if ( ck_lmalpha->isChecked() )
+         alpha         = -alpha;            // Flag use-alpha-for-LM-fits
+   }
+DbgLv(1) << "AnaC: resume scnck alpha" << resume << scnck << alpha;
 
    ti_noise->values.clear();
    ri_noise->values.clear();
@@ -472,11 +488,13 @@ void US_AnalysisControl::klim_change()
 // Set regularization factor alpha
 void US_AnalysisControl::set_alpha()
 {
-   bool use_noise = ( ct_tralpha->value() == 0.0 );
-   ck_tinoise ->setEnabled( use_noise );
-   ck_rinoise ->setEnabled( use_noise );
+   bool regular   = ( ct_tralpha->value() != 0.0 );
+   ck_tinoise ->setEnabled( !regular );
+   ck_rinoise ->setEnabled( !regular );
+   ck_lmalpha ->setEnabled( regular );
+   ck_fxalpha ->setEnabled( regular );
 
-   if ( ! use_noise )
+   if ( ! regular )
    {
       ck_tinoise ->setChecked( false );
       ck_rinoise ->setChecked( false );
@@ -488,13 +506,22 @@ void US_AnalysisControl::rscan_check( bool chkd )
 {
    pb_strtscan->setEnabled( chkd );
    pb_strtfit ->setEnabled( !chkd );
-   ck_tinoise ->setEnabled( !chkd );
-   ck_rinoise ->setEnabled( !chkd );
 
    if ( chkd )
    {
+      ck_tinoise ->setEnabled( !chkd );
+      ck_rinoise ->setEnabled( !chkd );
       ck_tinoise ->setChecked( false );
       ck_rinoise ->setChecked( false );
+      ck_lmalpha ->setChecked( false );
+      ck_fxalpha ->setChecked( false );
+   }
+
+   else
+   {
+      bool unregu    = ( ct_tralpha->value() == 0.0 );
+      ck_tinoise ->setEnabled( unregu );
+      ck_rinoise ->setEnabled( unregu );
    }
 }
 
@@ -564,6 +591,10 @@ DbgLv(1) << "AC:cp: stage" << stage;
       double alpha    = 0.0;
       ModelRecord mrec;
       processor->get_mrec( mrec );
+      double vari   = mrec.variance;
+      double rmsd   = mrec.rmsd;
+      le_minvari->setText( QString::number( vari ) );
+      le_minrmsd->setText( QString::number( rmsd ) );
 DbgLv(1) << "AC:cp: mrec fetched";
 
       US_RpScan* rpscand = new US_RpScan( dsets, mrec );
@@ -586,7 +617,7 @@ DbgLv(1) << "AC:cp: RpScan deleted";
 
       // Assume we can resume the fit and save current fit parameters
       resume        = true;
-      pb_strtfit ->setText( tr( "Resume Fit" ) );
+      pb_strtfit ->setText( tr( "Final Fit" ) );
       int    typ    = cmb_curvtype->currentIndex();
       double slo    = ct_lolimits->value();
       double sup    = ct_uplimits->value();
@@ -645,6 +676,11 @@ DbgLv(1) << "(1)pb_plot-Enabled" << pb_plot->isEnabled();
       resume        = false;
       fitpars       = QString();
       pb_strtfit ->setText( tr( "Start Fit" ) );
+
+      double vari   = mrecs[ 0 ].variance;
+      double rmsd   = mrecs[ 0 ].rmsd;
+      le_minvari->setText( QString::number( vari ) );
+      le_minrmsd->setText( QString::number( rmsd ) );
    }
 
    else if ( mmitnum > 0  &&  stage > 0 )

@@ -328,34 +328,13 @@ DbgLv(1) << "TRP:H2:  intcp slope" << intc2 << slop2;
 DbgLv(1) << "TRP:H2:   l2: x1,y1,x2,y2" << xl2p1 << yl2p1 << xl2p2 << yl2p2;
 
       // Find the intersection point for the 2 fitted lines
-      xl3p1     = ( intc2 - intcp ) / ( slope - slop2 );
-      yl3p1     = xl3p1 * slope + intcp;
+      US_Math2::intersect( slope, intcp, slop2, intc2, &xl3p1, &yl3p1 );
 DbgLv(1) << "TRP:H3:   l3: x1,y1" << xl3p1 << yl3p1;
 
       // Find the curve point nearest to the intersection point;
       //  then compute a line from intersection to nearest curve point.
-      double xrng = qAbs( xx[ 0 ] - xx[ nalpha - 1 ] );
-      double yrng = qAbs( yy[ 0 ] - yy[ nalpha - 1 ] );
-      double xdif = ( xx[ 0 ] - xl3p1 ) / xrng;
-      double ydif = ( yy[ 0 ] - yl3p1 ) / yrng;
-      double dmin = sqrt( sq( xdif ) + sq( ydif ) );
-DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl1p1 << yl1p1 << yl3p1 << yl3p1
-   << "init.dmin" << dmin;
-      int    jmin = nalpha / 2;
-      for ( int jj = 3; jj < nalpha - 3; jj++ )
-      {  // Find the curve point nearest to intersection point
-         xdif        = ( xx[ jj ] - xl3p1 ) / xrng;
-         ydif        = ( yy[ jj ] - yl3p1 ) / yrng;
-         double dval = sqrt( sq( xdif ) + sq( ydif ) );
-         if ( dval < dmin )
-         {
-            jmin     = jj;
-            dmin     = dval;
-DbgLv(1) << "TRP:H3:    dval dmin jmin" << dval << dmin << jmin;
-         }
-      }
-      xl3p2     = xx[ jmin ];
-      yl3p2     = yy[ jmin ];
+      US_Math2::nearest_curve_point( xx, yy, nalpha, true, xl3p1, yl3p1,
+            &xl3p2, &yl3p2, alphas.data(), &alpha );
 
       // Plot the alpha hint lines
       curvh1        = us_curve( data_plot1, tr( "Curve Hint 1" ) );
@@ -380,12 +359,10 @@ DbgLv(1) << "TRP:H3:    dval dmin jmin" << dval << dmin << jmin;
       yh[ 0 ]   = yl3p1;
       xh[ 1 ]   = xl3p2;
       yh[ 1 ]   = yl3p2;
-DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl3p1 << yl3p1 << yl3p2 << yl3p2
-   << " dmin" << dmin;
+DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl3p1 << yl3p1 << yl3p2 << yl3p2;
       curvh3->setData( xh, yh, 2 );
 
       // Use nearest curve point for default alpha
-      alpha     = alphas[ jmin ];
       le_selalpha->setText( QString().sprintf( "%.3f", alpha ) );
    }
 
@@ -398,68 +375,29 @@ DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl3p1 << yl3p1 << yl3p2 << yl3p2
 // Handle a mouse click near to a curve point location
 void US_RpScan::mouse( const QwtDoublePoint& p )
 {
-   int    jmin1   = nalpha / 2;
-   int    jmin2   = jmin1 + 1;
    double xloc    = p.x();
    double yloc    = p.y();
-   double xrng    = qAbs( varias[ 0 ] - varias[ nalpha - 1 ] );
-   double yrng    = qAbs( xnorms[ 0 ] - xnorms[ nalpha - 1 ] );
-DbgLv(1) << "TRP:MO: xl,yl,xr,yr" << xloc << yloc << xrng << yrng;
-   double dmin1   = sqrt( 2.0 );
-   double dmin2   = dmin1;
-   double xdif;
-   double ydif;
-   double dval;
+   double xcurv;
+   double ycurv;
+   double xlabl;
+   double ylabl;
 
-   for ( int jj = 0; jj < nalpha; jj++ )
-   {  // Find the 2 curve points nearest to clicked point
-      xdif           = ( varias[ jj ] - xloc ) / xrng;
-      ydif           = ( xnorms[ jj ] - yloc ) / yrng;
-      dval           = sqrt( sq( xdif ) + sq( ydif ) ); 
+   US_Math2::nearest_curve_point( varias.data(), xnorms.data(), nalpha, true,
+         xloc, yloc, &xcurv, &ycurv, alphas.data(), &alpha );
 
-      if ( dval < dmin1 )
-      {
-         dmin2          = dmin1;
-         dmin1          = dval;
-         jmin2          = jmin1;
-         jmin1          = jj;
-      }
-
-      else if ( dval < dmin2 )
-      {
-         dmin2          = dval;
-         jmin2          = jj;
-      }
-   }
-DbgLv(1) << "TRP:MO: jm1,jm2,dm1,dm2" << jmin1 << jmin2 << dmin1 << dmin2;
-
-   // Interpolate actual point on curve and actual alpha (nearest 0.001)
-
-   double xlo1    = varias[ jmin1 ];
-   double ylo1    = xnorms[ jmin1 ];
-   double xlo2    = varias[ jmin2 ];
-   double ylo2    = xnorms[ jmin2 ];
-   dval           = dmin1 / ( dmin1 + dmin2 );
-   xdif           = dval * ( xlo2 - xlo1 );
-   ydif           = dval * ( ylo2 - ylo1 );
-   xloc           = xlo1 + xdif;
-   yloc           = ylo1 + ydif;
-   alpha          = alphas[ jmin1 ];
-   alpha          = alpha + ( alphas[ jmin2 ] - alpha ) * dval;
    alpha          = (double)qRound( alpha * 1000.0 ) / 1000.0;
-
    QString salpha = QString().sprintf( "%.3f", alpha );
    le_selalpha->setText( salpha );
 
    // Mark selected curve point and give it a label
-   xlo2           = xloc + xrng / 10.0;
-   ylo2           = yloc + yrng / 10.0;
+   xlabl          = xcurv + qAbs( varias[ 0 ] - varias[ nalpha - 1 ] ) / 10.0;
+   ylabl          = ycurv + qAbs( xnorms[ 0 ] - xnorms[ nalpha - 1 ] ) / 10.0;
 
    data_plot1->detachItems( QwtPlotItem::Rtti_PlotMarker );
    QwtPlotMarker* msymbo = new QwtPlotMarker;
    QBrush sbrush( Qt::cyan );
    QPen   spen  ( sbrush, 2.0 );
-   msymbo->setValue( xloc, yloc );
+   msymbo->setValue( xcurv, ycurv );
    msymbo->setSymbol(
          QwtSymbol( QwtSymbol::Cross, sbrush, spen, QSize( 8, 8 ) ) );
    msymbo->attach  ( data_plot1 );
@@ -467,7 +405,7 @@ DbgLv(1) << "TRP:MO: jm1,jm2,dm1,dm2" << jmin1 << jmin2 << dmin1 << dmin2;
    QwtText label;
    label.setText ( salpha );
    label.setColor( Qt::cyan );
-   marker->setValue( xlo2, ylo2 );
+   marker->setValue( xlabl, ylabl );
    marker->setLabel( label );
    marker->setLabelAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
    marker->attach  ( data_plot1 );

@@ -73,16 +73,17 @@ class US_pcsaProcess : public QObject
                         US_Model*, US_Noise*, US_Noise*, int&,
                         QStringList&, QVector< ModelRecord >& );
 
-      //! \brief Get best mrec result need for an alpha scan
+      //! \brief Get best mrec result needed for an alpha scan
       //! \param mrec    Model record
       void get_mrec( ModelRecord& );
 
+      //! \brief Stop a fit that is in progress
       void stop_fit(       void );
-      int  estimate_steps( int  );
+//      int  estimate_steps( int  );
 
       //! \brief Get message for last error
       //! \returns       Message about last error
-      QString lastError( void ) { return errMsg; }
+//      QString lastError( void ) { return errMsg; }
 
       static const int solute_doubles = sizeof( US_Solute ) / sizeof( double );
 
@@ -146,6 +147,7 @@ private:
 
       bool       abort;        // flag used with stop_fit clicked
       bool       lm_done;      // flag for L-M completion
+      bool       alpha_scn;    // flag for alpha-scan only
 
       double     slolim;       // s lower limit
       double     suplim;       // s upper limit
@@ -155,22 +157,25 @@ private:
       double     cparam;       // additional curve parameter
       double     varimin;      // variance minimum
       double     alpha;        // Tikhonov regularization factor
+      double     alpha_fx;     // Alpha for fixed curves fits
+      double     alpha_lm;     // Alpha for L-M fits
 
       QTime      timer;        // timer for elapsed time measure
 
    private slots:
-      void queue_task   ( WorkPacket&, double, double,
-                          int, int, QVector< US_Solute > );
-      int  slmodels     ( double, double, double, double, double, int );
-      int  sigmodels    ( int, double, double, double, double, int, int );
-      void process_job  ( WorkerThread* );
-      void process_final( ModelRecord&  );
-      void submit_job   ( WorkPacket&, int );
-      void free_worker  ( int  );
+      void queue_task      ( WorkPacket&, double, double,
+                             int, int, QVector< US_Solute > );
+      int  slmodels        ( double, double, double, double, double, int );
+      int  sigmodels       ( int, double, double, double, double, int, int );
+      void process_job     ( WorkerThread* );
+      void process_fxfinal ( ModelRecord&  );
+      void submit_job      ( WorkPacket&, int );
+      void free_worker     ( int  );
       void model_statistics( QVector< ModelRecord >&, QStringList& );
       QString pmessage_head( void );
       WorkPacket next_job  ( void );
       void LevMarq_fit     ( void );
+      void compute_final   ( void );
       void elite_limits    ( QVector< ModelRecord >&, double&, double&,
                              double&, double&, double&, double& );
       static double evaluate_model( QList< US_SolveSim::DataSet* >&,
