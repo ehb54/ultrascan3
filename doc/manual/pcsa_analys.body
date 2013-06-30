@@ -65,7 +65,8 @@
           
        <li>
           <b>Start the Fit:</b> Begin the fit analysis by clicking
-          "Start Fit".
+          "Start Fit". If you have just completed a Regularization Parameter
+          Scan, this button will have been relabeled "Final Fit".
        </li>
           
        <li>
@@ -79,6 +80,7 @@
          <b>Start RP Scan:</b> If you wish to perform Tikhonov Regularization,
          you can preceed the fitness run by checking "Regularization
          Parameter Scan" and then clicking "Start Scan".
+       </li>
     </ul>
           
     <h3> Sample Control Dialogs:</h3>
@@ -170,6 +172,18 @@
        </li>
 
        <li>
+          <b>Regularize in L-M Fits</b> This box should normally remain
+          unchecked, but you may check it in order to test regularization
+          during the Levenberg-Marquardt stage of model fitting.
+       </li>
+
+       <li>
+          <b>Regularize in Fixed Fits</b> This box should normally remain
+          unchecked, but you may check it in order to test regularization
+          during both the fixed-curves and L-M stages of model fitting.
+       </li>
+
+       <li>
           <b>Fit Time-Invariant Noise</b> Check this box if you want to
           calculate time-invariant noise.
        </li>
@@ -180,7 +194,10 @@
        </li>
 
        <li>
-          <b>Start Fit</b> Click to begin the fit analysis.
+          <b>Start Fit</b> Click to begin the fit analysis. If you have just
+          completed a Regularization Parameter Scan, this button will have been
+          relabeled "Final Fit"; and clicking it initiates a final model
+          computation using the Regularization Parameter.
        </li>
 
        <li>
@@ -224,13 +241,16 @@
        </li>
 
        <li>
-          <b>Minimum Variance:</b> The minimum variance value for models
+          <b>Best Model Variance:</b> The minimum variance value for models
           thus far computed is continually updated.
        </li>
 
        <li>
-          <b>Minimum Variance:</b> Simularly, the minimum RMSD value for models
-          thus far computed is continually updated.
+          <b>Best Model RMSD:</b> Simularly, the minimum RMSD value for
+          models thus far computed is continually updated. Note that at
+          completion of all model computations, this box and the one above
+          will hold values for the final best model, which might not be a
+          minimum (when regularizing, for example).
        </li>
 
        <li>
@@ -239,5 +259,75 @@
        </li>
 
     </ul>
+
+    <h3> Notes on Fit Stages and Regularization:</h3>
+
+    <ul>
+       <li>
+          During all model fitting runs, at least two fit stages occur:
+          <ul>
+             <li>
+                <b>Fixed</b> Stage: The models following fixed curves that were
+                defined are evaluated and results ordered by best fitness
+                (least RMSD).
+             </li>
+             <li>
+                <b>LM</b> Stage: The best model from the previous stage forms
+                the starting point for a Levenberg-Marquardt fit sequence that
+                results in a refined model being found. This refined model gets
+                inserted at the top of the ordered models list.
+             </li>
+          </ul>
+       </li>
+       <li>
+          If you wish to apply Tikhonov regularization in order to smooth
+          concentration peaks in the final model, up to two additional stages
+          may occur:
+          <ul>
+             <li>
+                <b>Scan</b> Stage: Starting with the best model from the LM
+                stage, a range of Regularization Parameter (Alpha) values is
+                tested in a separate dialog to derive an optimal Alpha.
+             </li>
+             <li>
+                <b>Final</b> Stage: The result of the LM stage is used as a
+                starting point for one final model computation, this time using
+                a given Alpha.
+             </li>
+          </ul>
+       </li>
+       <li>
+          Where regularization is to be employed, then, the two most common
+          run sequences are:
+          <ul>
+             <li>
+                <b>Fixed+LM+Scan+Final</b> -- where the optimal Alpha is
+                unknown and needs to be determined, then applied.
+             </li>
+             <li>
+                <b>Fixed+LM+Final</b> -- where the optimal Alpha is already
+                known or was determined in a previous sequence. This sequence
+                may be employed after a ...Scan... sequence that used moderate
+                Variations Count and Curve Resolution Points for speed. Those
+                Count and Points values may now be increased for accuracy
+                and this Fixed+LM+Final sequence performed.
+             </li>
+          </ul>
+       </li>
+       <li>
+          Note that clicking the <b>Start Scan</b> button really initiates
+          a Fixed+LM+Scan sequence. When it completes, clicking on the
+          <b>Final Fit</b> button results in the Final stage being performed.
+       </li>
+       <li>
+          Note that where regularization is <b>not</b> to be employed (Alpha=0),
+          the only run sequences that will be used is:
+          <ul>
+             <b>Fixed+LM</b> -- where the final LM model is the desired
+             overall final model.
+          </ul>
+       </li>
+    </li>
+
 
 [% INCLUDE footer.us3 %]

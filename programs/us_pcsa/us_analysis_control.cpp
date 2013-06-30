@@ -62,7 +62,8 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
 
    pb_pltlines             = us_pushbutton( tr( "Plot Model Lines" ), true  );
-   pb_strtscan             = us_pushbutton( tr( "Start Scan" ),       false );
+//   pb_strtscan             = us_pushbutton( tr( "Start Scan" ),       false );
+   pb_strtscan             = us_pushbutton( tr( "Fits + RP Scan" ),   false );
    pb_strtfit              = us_pushbutton( tr( "Start Fit" ),        true  );
    pb_stopfit              = us_pushbutton( tr( "Stop Fit" ),         false );
    pb_plot                 = us_pushbutton( tr( "Plot Results" ),     false );
@@ -593,20 +594,19 @@ DbgLv(1) << "AC:cp: stage" << stage;
       processor->get_mrec( mrec );
       double vari   = mrec.variance;
       double rmsd   = mrec.rmsd;
+      int    nthr   = (int)ct_thrdcnt ->value();
       le_minvari->setText( QString::number( vari ) );
       le_minrmsd->setText( QString::number( rmsd ) );
 DbgLv(1) << "AC:cp: mrec fetched";
 
-      US_RpScan* rpscand = new US_RpScan( dsets, mrec );
+      US_RpScan* rpscand = new US_RpScan( dsets, mrec, nthr, alpha );
 DbgLv(1) << "AC:cp: RpScan created";
 
       if ( rpscand->exec() == QDialog::Accepted )
       {
-         alpha           = rpscand->get_alpha();
 DbgLv(1) << "AC:cp: alpha fetched" << alpha;
-//alpha=0.427;
+         ct_tralpha ->setValue( alpha );
       }
-      ct_tralpha ->setValue( alpha );
       pb_strtfit ->setEnabled( true  );
       pb_strtscan->setEnabled( false );
       ck_rparscan->setChecked( false );
@@ -641,8 +641,7 @@ DbgLv(1) << "AC:cp: RpScan deleted";
       return;
    }
 
-   b_progress->setValue( nctotal );
-   qApp->processEvents();
+   reset_steps( nctotal, nctotal );
    QStringList modelstats;
    mrecs.clear();
 

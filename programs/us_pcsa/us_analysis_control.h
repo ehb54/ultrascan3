@@ -41,13 +41,16 @@ class US_AnalysisControl : public US_WidgetsDialog
       int           nlpts;
       int           ctype;
       int           nlmodl;
+
       double        smin;
       double        smax;
       double        fmin;
       double        fmax;
       double        finc;
       double        varimin;
+
       bool          resume;
+
       QString       fitpars;
 
       QHBoxLayout*  mainLayout;

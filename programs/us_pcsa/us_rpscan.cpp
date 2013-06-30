@@ -5,6 +5,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_math2.h"
+#include "us_sleep.h"
 
 #include <qwt_double_interval.h>
 #include <qwt_scale_widget.h>
@@ -12,8 +13,9 @@
 
 // Constructor:  Regularization Parameter Scan widget
 US_RpScan::US_RpScan( QList< US_SolveSim::DataSet* >&dsets,
-      ModelRecord& mr, QWidget* p )
-   : US_WidgetsDialog( p, 0 ), dsets( dsets ), mrec( mr )
+      ModelRecord& mr, int& thr, double& alf, QWidget* p )
+   : US_WidgetsDialog( p, 0 ), dsets( dsets ), mrec( mr ), nthr( thr ),
+   alpha( alf )
 {
    alpha           = 0.0;
 
@@ -180,6 +182,7 @@ DbgLv(1) << "TRP:  mrec.vari " << mrec.variance;
 DbgLv(1) << "TRP:  mrec.rmsd " << mrec.rmsd;
 DbgLv(1) << "TRP:  mrec.isolutes.size" << mrec.isolutes.size();
 DbgLv(1) << "TRP:  mrec.csolutes.size" << mrec.csolutes.size();
+   qApp->processEvents();
 }
 
 // Cancel button clicked
@@ -206,6 +209,8 @@ double US_RpScan::get_alpha()
 // Scan alphas
 void US_RpScan::scan()
 {
+   QTime  timer;
+   int    time_sc;
    double calpha = ct_stralpha->value();
    double ealpha = ct_endalpha->value();
    double dalpha = ct_incalpha->value();
@@ -216,36 +221,156 @@ void US_RpScan::scan()
    b_progress->reset();
    nalpha        = qRound( ( ealpha - calpha ) / dalpha ) + 1;
    b_progress->setMaximum( nalpha );
-   int jalpha    = 0;
+   double varmx  = 0.0;
+   double xnomx  = 0.0;
+   double v_vari = 0.0;
+   double v_xnsq = 0.0;
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   le_stattext->setText( tr( "Beginning Alpha Scan ..." ) );
+   timer.start();              // Start a timer to measure run time
+   qApp->processEvents();
 
    while( calpha <= ealpha )
-   {
-      US_SolveSim::Simulation sim_vals;
-      sim_vals.alpha     = calpha;
-      sim_vals.noisflag  = 0;
-      sim_vals.dbg_level = dbg_level;
-      sim_vals.solutes   = mrec.isolutes;
-
-      US_SolveSim* solvesim = new US_SolveSim( dsets, 0, false );
-
-      solvesim->calc_residuals( 0, 1, sim_vals );
-
+   {  // Loop to populate alpha scan arrays with preliminary values
       alphas << calpha;
-      varias << sim_vals.variances[ 0 ] * 1e5;
-      xnorms << sim_vals.xnormsq;
-
-      b_progress->setValue( ++jalpha );
-
-      QString astat      = tr( "Of %1 models, computed %2 (Alpha %3)" )
-         .arg( nalpha ).arg( jalpha ).arg( calpha );
-      le_stattext->setText( astat );
-
+      varias << v_vari;
+      xnorms << v_xnsq;
       calpha += dalpha;
    }
 
    nalpha        = alphas.size();
-for(int jj=0; jj<nalpha; jj++ )
- DbgLv(1) << "a v x" << alphas[jj] << varias[jj] << xnorms[jj];
+DbgLv(1) << "ASC:  nalpha" << nalpha << "nthr" << nthr;
+
+   if ( nthr == 1 )
+   {
+      le_stattext->setText( tr( "Beginning Single-Thread Alpha Scan ..." ) );
+      for ( int ja = 0; ja < nalpha; ja++ )
+      {  // Loop to evaluate each alpha in the specified range
+         calpha             = alphas[ ja ];
+         US_SolveSim::Simulation sim_vals;
+         sim_vals.alpha     = calpha;
+         sim_vals.noisflag  = 0;
+         sim_vals.dbg_level = dbg_level;
+         sim_vals.solutes   = mrec.isolutes;
+
+         US_SolveSim* solvesim = new US_SolveSim( dsets, 0, false );
+
+         solvesim->calc_residuals( 0, 1, sim_vals );
+
+         v_vari             = sim_vals.variances[ 0 ];
+         v_xnsq             = sim_vals.xnormsq;
+         varias[ ja ]       = v_vari;
+         xnorms[ ja ]       = v_xnsq;
+         int kalf           = ja + 1;
+
+         b_progress->setValue( kalf );
+
+         varmx              = qMax( varmx, v_vari );
+         xnomx              = qMax( xnomx, v_xnsq );
+         QString astat      = tr( "Of %1 models, computed %2 (Alpha %3)" )
+            .arg( nalpha ).arg( kalf ).arg( calpha );
+         le_stattext->setText( astat );
+DbgLv(1) << "a v x" << calpha << v_vari << v_xnsq;
+         qApp->processEvents();
+      }
+   }
+
+   else
+   {
+      le_stattext->setText( tr( "Beginning %1-Thread Alpha Scan ..." )
+                            .arg( nthr ) );
+      qApp->processEvents();
+      nasubm        = 0;
+      nacomp        = 0;
+
+      for ( int jt = 0; jt < nthr; jt++ )
+      {  // Submit the first tasks using available threads
+         WorkPacket wtask;
+         calpha               = alphas[ jt ];
+         US_SolveSim::Simulation sim_vals;
+         sim_vals.alpha       = calpha;
+         sim_vals.noisflag    = 0;
+         sim_vals.dbg_level   = qMax( 0, ( dbg_level - 1 ) );
+         sim_vals.solutes     = mrec.isolutes;
+         wtask.thrn           = jt + 1;
+         wtask.taskx          = nasubm;
+         wtask.str_k          = mrec.str_k;
+         wtask.end_k          = mrec.end_k;
+         wtask.par1           = mrec.par1;
+         wtask.par2           = mrec.par2;
+         wtask.sim_vals       = sim_vals;
+         wtask.isolutes       = sim_vals.solutes;
+         wtask.dsets          = dsets;
+         wtask.depth          = 0;
+         wtask.iter           = 0;
+         wtask.menmcx         = 0;
+         wtask.typeref        = 0;
+         wtask.state          = 0;
+         wtask.noisf          = sim_vals.noisflag;
+         wtask.csolutes.clear();
+DbgLv(1) << "ASC:   jt" << jt << "alpha" << calpha;
+
+         WorkerThread* wthr   = new WorkerThread( this );
+
+         wthr->define_work( wtask );
+         connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
+                  this, SLOT(   process_job(   WorkerThread* ) ) );
+         wthr->start();
+         nasubm++;
+DbgLv(1) << "ASC:      defined: nasubm" << nasubm;
+         qApp->processEvents();
+      }
+
+      // Keep testing to see if all tasks are complete
+      while( nacomp < nalpha )
+      {
+         US_Sleep::msleep( 500 );
+         qApp->processEvents();
+      }
+
+      // Once all threads are done, determine max variance,norm
+      for ( int ja = 0; ja < nalpha; ja++ )
+      {
+         varmx              = qMax( varmx, varias[ ja ] );
+         xnomx              = qMax( xnomx, xnorms[ ja ] );
+      }
+   }
+
+   lgv           = 0  -(int)qFloor( log10( varmx ) );
+   lgx           = -1 -(int)qFloor( log10( xnomx ) );
+   vscl          = qPow( 10.0, lgv );
+   xscl          = qPow( 10.0, lgx );
+DbgLv(1) << "Log-varia Log-xnorm" << lgv << lgx << "vscl xscl" << vscl << xscl;
+
+   for ( int jj = 0; jj < nalpha; jj++ )
+   {  // Scale the variance,normsq points
+      varias[ jj ] *= vscl;
+      xnorms[ jj ] *= xscl;
+   }
+
+   b_progress->setValue( nalpha );
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
+   // Determine elapsed time
+   time_sc    = timer.elapsed();
+   int ktimes = ( time_sc + 500 ) / 1000;
+   int ktimeh = ktimes / 3600;
+   int ktimem = ( ktimes - ktimeh * 3600 ) / 60;
+   ktimes     = ktimes - ktimeh * 3600 - ktimem * 60;
+
+   // Compose and display completed-scan status message
+   QString astat = tr( "%1 alphas evaluated in" ).arg( nalpha );
+
+   if ( ktimeh > 0 )
+      astat     += tr( " %1 hr., %2 min., %3 sec." )
+         .arg( ktimeh ).arg( ktimem ).arg( ktimes );
+
+   else
+      astat     += tr( " %1 min., %2 sec." ).arg( ktimem ).arg( ktimes );
+
+   astat     += tr( ", in %1 threads" ).arg( nthr );
+   le_stattext->setText( astat );
+   qApp->processEvents();
 
    plot_data();
 
@@ -255,6 +380,12 @@ for(int jj=0; jj<nalpha; jj++ )
 void US_RpScan::plot_data()
 {
    data_plot1->detachItems();
+   data_plot1->setAxisTitle( QwtPlot::xBottom,
+         tr( "Variance (x 1e%1)" ).arg( lgv ) ),
+   data_plot1->setAxisTitle( QwtPlot::yLeft,
+         ( lgx == 0 ) ?
+         tr( "Norm of X (solute concentrations)" ) :
+         tr( "Norm of X (solute concentrations x 1e%1)" ).arg( lgx ) );
 
    grid          = us_grid( data_plot1 );
 
@@ -303,7 +434,21 @@ void US_RpScan::plot_data()
       QPen    pen_cyan( Qt::cyan, 0, Qt::DashLine );
 
       // Compute a line fitted to the first few main curve points
-      US_Math2::linefit( &xx, &yy, &slope, &intcp, &sigma, &corre, 5 );
+      int  nlp  = 5;
+
+      while ( nlp < nalpha )
+      {
+         double avg  = US_Math2::linefit( &xx, &yy, &slope, &intcp,
+                                          &sigma, &corre, nlp );
+DbgLv(1) << "TRP:H1:  avg" << avg << "nlp" << nlp;
+DbgLv(1) << "TRP:H1:   sl" << slope << "in" << intcp << "sg" << sigma
+   << "co" << corre;
+         if ( slope < 1e99  &&  slope > (-1e99) )
+            break;
+
+         nlp      += 2;
+      }
+
 DbgLv(1) << "TRP:H1:  intcp slope" << intcp << slope;
       yl1p1     = yy[ 0 ];
       xl1p1     = ( slope == 0.0 ) ? xx[ 0 ] : ( yl1p1 - intcp ) / slope;
@@ -411,5 +556,64 @@ void US_RpScan::mouse( const QwtDoublePoint& p )
    marker->attach  ( data_plot1 );
 
    data_plot1->replot();
+}
+
+void US_RpScan::process_job( WorkerThread* wthrd )
+{
+   WorkPacket wresult;
+DbgLv(1) << "PJ: IN";
+
+   nacomp++;                            // Bump alphas-complete count
+   b_progress->setValue( nacomp );
+   wthrd->get_result( wresult );        // Get results of thread task
+   int    thrn     = wresult.thrn;      // Thread number of task
+   int    taskx    = wresult.taskx;     // Task index of task
+DbgLv(1) << "PJ:  thrn" << thrn << "taskx" << taskx;
+   double variance = wresult.sim_vals.variances[ 0 ];
+   double xnormsq  = wresult.sim_vals.xnormsq;
+   varias[ taskx ] = variance;
+DbgLv(1) << "PJ:    vari" << varias[taskx];
+   xnorms[ taskx ] = xnormsq;
+DbgLv(1) << "PJ:    xnrm" << xnorms[taskx];
+   delete wthrd;
+   QString astat      =
+      tr( "Of %1 models, %2 done (Alpha %3, thread %4)" )
+      .arg( nalpha ).arg( nacomp ).arg( alphas[ taskx ] ).arg( thrn );
+   le_stattext->setText( astat );
+DbgLv(1) << "PJ:    astat" << astat;
+
+   if ( nacomp == nalpha )
+   {  // We are done with all tasks
+      qApp->processEvents();
+DbgLv(1) << "PJ:    ALL-DONE";
+      return;
+   }
+
+   if ( nasubm < nalpha )
+   {  // We need to set up to submit another task
+      WorkPacket wtask     = wresult;
+      wtask.taskx          = nasubm;
+      wtask.sim_vals.alpha = alphas[ nasubm ];
+      wtask.dsets          = dsets;
+      wtask.depth          = 0;
+      wtask.iter           = 0;
+      wtask.menmcx         = 0;
+      wtask.typeref        = 0;
+      wtask.state          = 0;
+      wtask.csolutes.clear();
+DbgLv(1) << "PJ:     new subm taskx alpha" << nasubm << wtask.sim_vals.alpha;
+
+      WorkerThread* wthr   = new WorkerThread( this );
+DbgLv(1) << "PJ:     new subm   thr created";
+
+      wthr->define_work( wtask );
+DbgLv(1) << "PJ:     new subm   work defined";
+      connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
+               this, SLOT(   process_job(   WorkerThread* ) ) );
+      wthr->start();
+DbgLv(1) << "PJ:     new subm   thr started" << nasubm;
+      nasubm++;
+   }
+   qApp->processEvents();
 }
 
