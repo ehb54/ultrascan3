@@ -3,6 +3,7 @@
 #define US_RP_SCAN_H
 
 #include <QtGui>
+#include <QTimer>
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
@@ -10,6 +11,7 @@
 #include "us_solve_sim.h"
 #include "us_plot.h"
 #include "us_model_record.h"
+#include "us_worker.h"
 #include "us_help.h"
 #include "qwt_plot_marker.h"
 
@@ -21,14 +23,16 @@ class US_RpScan : public US_WidgetsDialog
 
    public:
       //! \param mr The best model record from initial scan
-      US_RpScan( QList< US_SolveSim::DataSet* >&, ModelRecord&,
-                 QWidget* p = 0 );
+      US_RpScan( QList< US_SolveSim::DataSet* >&, ModelRecord&, int&,
+                 double&, QWidget* p = 0 );
 
       double get_alpha( void );
 
    private:
       QList< US_SolveSim::DataSet* >&  dsets;
       ModelRecord&                     mrec;
+      int&                             nthr;
+      double&                          alpha;
 
       US_Plot*           plotLayout1;
 
@@ -58,8 +62,13 @@ class US_RpScan : public US_WidgetsDialog
 
       int                dbg_level;
       int                nalpha;
+      int                nasubm;
+      int                nacomp;
+      int                lgv;
+      int                lgx;
 
-      double             alpha;
+      double             vscl;
+      double             xscl;
 
       QVector< double >  alphas;
       QVector< double >  varias;
@@ -75,6 +84,7 @@ class US_RpScan : public US_WidgetsDialog
       void scan       ( void   );
       void plot_data  ( void   );
       void mouse      ( const QwtDoublePoint& );
+      void process_job( WorkerThread* );
 
       void help       ( void )
       { showHelp.show_help( "pcsa_rpscan.html" ); };

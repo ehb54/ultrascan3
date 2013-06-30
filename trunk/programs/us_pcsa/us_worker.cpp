@@ -15,7 +15,7 @@
 WorkerThread::WorkerThread( QObject* parent )
    : QThread( parent )
 {
-   dbg_level  = US_Settings::us_debug();
+//   dbg_level  = US_Settings::us_debug();
    abort      = false;
    solvesim   = NULL;
    thrn       = -1;
@@ -123,7 +123,7 @@ void WorkerThread::calc_residuals()
    sim_vals.solutes    = solutes_i;
 
    sim_vals.noisflag   = noisflag;
-   sim_vals.dbg_level  = dbg_level;
+//   sim_vals.dbg_level  = dbg_level;
    sim_vals.dbg_timing = US_Settings::debug_match( "pcsaTiming" );
 
    solvesim->calc_residuals( 0, 1, sim_vals );
