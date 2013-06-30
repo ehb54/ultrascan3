@@ -803,6 +803,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       saxs sf_factors;
       vector < saxs > sf_bead_factors;
 
+      static QString fix_file_name( QString ); // remove spaces etc
+
    public slots:
       void show_zeno_options();
       void display_default_differences();

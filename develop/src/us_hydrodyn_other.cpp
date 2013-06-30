@@ -1575,12 +1575,15 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
       model_count = 0;
       model_names.clear();
 
+      unsigned int unit_mult = 1;
+
       if (f.open(IO_ReadOnly))
       {
 
          QRegExp rx_psv( "^REMARK\\s+PSV(\\s*:|)\\s+(\\S+)", false );
          QRegExp rx_mw ( "^REMARK\\s+MW(\\s*:|)\\s+(\\S+)", false );
-         QRegExp rx_unit( "^REMARK\\s+Units conversion factor(\\s*:|)\\s+(\\S+)", false );
+         QRegExp rx_unit( "^REMARK\\s+Units exponent(\\s*:|)\\s+(\\S+)", false );
+         QRegExp rx_mult( "^REMARK\\s+Units conversion factor(\\s*:|)\\s+(\\S+)", false );
          double loaded_psv = 0e0;
          double loaded_mw  = 0e0;
          unsigned int loaded_unit = 0;
@@ -1609,7 +1612,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                if ( rx_unit.search( qs ) != -1 )
                {
                   loaded_unit = rx_unit.cap( 2 ).toUInt();
-                  editor_msg( "blue", QString( tr( "Found Units %1 in PDB" ) ).arg( loaded_unit ) );
+                  editor_msg( "blue", QString( tr( "Found Units exponent %1 in PDB" ) ).arg( loaded_unit ) );
                   if ( loaded_unit == 10 )
                   {
                      saxs_options.dummy_atom_pdbs_in_nm = true;
@@ -1618,6 +1621,11 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                   {
                      saxs_options.dummy_atom_pdbs_in_nm = false;
                   }
+               }
+               if ( rx_mult.search( qs ) != -1 )
+               {
+                  unit_mult = rx_mult.cap( 2 ).toUInt();
+                  editor_msg( "blue", QString( tr( "Found Units conversion %1 in PDB" ) ).arg( unit_mult ) );
                }
             } while (!ts.atEnd());
          }
@@ -1832,6 +1840,8 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             radius *= 10.0;
          }
 
+         radius *= (float) unit_mult;
+
          editor->append(QString("DAMMIN/DAMMIF/DAMAVER/DAMFILT model atom radius %1 Angstrom\n").arg(radius));
          
          // enter MW and PSV
@@ -1995,6 +2005,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                   {
                      tmp_atom.bead_coordinate.axis[i] *= 10.0;
                   }
+                  tmp_atom.bead_coordinate.axis[i] *= (float) unit_mult;
                }
 
                tmp_atom.bead_computed_radius = radius;
@@ -2103,9 +2114,9 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             {
                setSomoGridFile(false);
             }
-            write_bead_model(somo_dir + SLASH + project + QString("_%1").arg( model_name( current_model ) ) +
-                             QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
-                             , &bead_model);
+            write_bead_model( somo_dir + SLASH + project + fix_file_name( QString("_%1").arg( model_name( current_model ) ) ) +
+                              QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
+                              , &bead_model);
          }
          editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
          int overlap_check_results = 0;
@@ -5900,6 +5911,12 @@ bool US_Hydrodyn::read_corr(QString fname, vector<PDB_atom> *model) {
    }
    f.close();
    return result;
+}
+
+QString US_Hydrodyn::fix_file_name( QString f )
+{
+   f.replace( " " , "_" ).replace( "(", "" ).replace( ")", "" );
+   return f;
 }
 
 void US_Hydrodyn::write_bead_model( QString fname, 
