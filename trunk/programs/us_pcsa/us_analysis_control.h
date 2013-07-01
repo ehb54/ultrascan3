@@ -49,6 +49,8 @@ class US_AnalysisControl : public US_WidgetsDialog
       double        finc;
       double        varimin;
 
+      bool          need_fit;
+      bool          need_final;
       bool          resume;
 
       QString       fitpars;
@@ -93,7 +95,7 @@ class US_AnalysisControl : public US_WidgetsDialog
 
       QComboBox*    cmb_curvtype;
 
-      QCheckBox*    ck_rparscan;
+//      QCheckBox*    ck_rparscan;
       QCheckBox*    ck_lmalpha;
       QCheckBox*    ck_fxalpha;
       QCheckBox*    ck_tinoise;
@@ -105,8 +107,10 @@ class US_AnalysisControl : public US_WidgetsDialog
       QTextEdit*    te_status;
 
       QPushButton*  pb_pltlines;
-      QPushButton*  pb_strtscan;
-      QPushButton*  pb_strtfit;
+      QPushButton*  pb_startfit;
+//      QPushButton*  pb_fitregop;
+      QPushButton*  pb_scanregp;
+      QPushButton*  pb_finalmdl;
       QPushButton*  pb_stopfit;
       QPushButton*  pb_plot;
       QPushButton*  pb_save;
@@ -124,14 +128,17 @@ class US_AnalysisControl : public US_WidgetsDialog
       void klim_change( void );
       void set_alpha  ( void );
       void start      ( void );
+      void fit_final  ( void );
+      void scan_alpha ( void );
+      void final_only ( void );
       void stop_fit   ( void );
-      void rscan_check( bool );
       void plot       ( void );
       void save       ( void );
       void close_all  ( void );
       void compute    ( void );
       void plot_lines ( void );
       void closed     ( QObject* );
+      QString fitpars_string( void );
 
       void help       ( void )
       { showHelp.show_help( "pcsa_analys.html" ); };
