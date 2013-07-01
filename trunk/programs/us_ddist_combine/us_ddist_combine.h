@@ -139,6 +139,7 @@ class US_DDistr_Combine : public US_Widgets
       void list_distributions( void );
       void changedPlotX      ( bool );
       void scale_montecarlo  ( US_Model&, int );
+      bool equivalent        ( double, double, double );
 
       void help(      void )
       { showHelp.show_help( "ddist_combine.html" ); };

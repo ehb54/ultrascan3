@@ -31,6 +31,8 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
+const double epsilon = 0.0005;    // Equivalence magnitude ratio radius
+
 // US_DDistr_Combine class constructor
 US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 {
@@ -937,47 +939,53 @@ DbgLv(1) << "FID:  (3)ncomps" << ncomps;
       mxvals << xval;
    }
 
-   ddesc.xtype     = xtype;
+   ddesc.xtype       = xtype;
 DbgLv(1) << "FID:   xtype" << xtype << "mxval.size" << mxvals.size();
+   ddesc.xvals.fill( 0.0, ncomps );
+   ddesc.yvals.fill( 0.0, ncomps );
+   int    nn         = 1;
+   double xval       = mxvals[ 0 ];
+   double yval       = myvals[ 0 ];
+   ddesc.xvals[ 0 ]  = xval;
+   ddesc.yvals[ 0 ]  = yval;
 
-   // Now build the plot vectors:  composite values at every 2% point
-   double xmin     = mxvals[ 0 ];
-   double xmax     = xmin;
-
+   // Sum y values where x values are effectively equivalent
    for ( int jj = 1; jj < ncomps; jj++ )
-   {  // Scan for X limits
-      xmin = qMin( xmin, mxvals[ jj ] );
-      xmax = qMax( xmax, mxvals[ jj ] );
+   {
+      int    kk         = nn - 1;
+      double xvpr       = xval;
+      double yvpr       = yval;
+      xval              = mxvals[ jj ];
+      yval              = myvals[ jj ];
+
+      if ( equivalent( xval, xvpr, epsilon ) )
+      {  // Effectively equal x values:  sum y values
+         yval               += yvpr;
+         ddesc.xvals[ kk ]   = ( xvpr + xval ) * 0.5;
+         ddesc.yvals[ kk ]   = yval;
+      }
+
+      else
+      {  // New x value:  save y value and bump count
+         ddesc.xvals[ nn   ] = xval;
+         ddesc.yvals[ nn++ ] = yval;
+      }
    }
 
-   double xinc  = ( xmax - xmin ) / 49.0;
-          xmin -= ( xinc * 0.01 );
-          xmax += ( xinc * 0.01 );
-          xinc  = ( xmax - xmin ) / 49.0;
-   double xval  = xmin;
-DbgLv(1) << "FID:    xmin xmax xinc" << xmin << xmax << xinc;
-   ddesc.xvals.fill( 0.0, 50 );
-   ddesc.yvals.fill( 0.0, 50 );
+   nn                = 0;
 
-   for ( int jj = 0; jj < 50; jj++ )
-   {  // Fill in the X values at each 2% point
-DbgLv(1) << "FID:      X-fill jj xval" << jj << xval;
-      ddesc.xvals[ jj ]  = xval;
-      xval              += xinc;
-   }
-
+   // Compress the vectors down to only non-zero-Y points
    for ( int jj = 0; jj < ncomps; jj++ )
-   {  // Sum in Y values around each X point
-      xval               = mxvals[ jj ];
-      int kk             = qRound( ( xval - xmin ) / xinc );
-DbgLv(1) << "FID:      jj xval kk" << jj << xval << kk;
-      double yval        = myvals[ jj ];
-      ddesc.yvals[ kk ] += yval;
+   {
+      if ( ddesc.yvals[ jj ] != 0.0 )
+      {  // Move point to next non-zero output location
+         ddesc.xvals[ nn   ] = ddesc.xvals[ jj ];
+         ddesc.yvals[ nn++ ] = ddesc.yvals[ jj ];
+      }
    }
-int kk = ddesc.xvals.size()-1;
-DbgLv(1) << "FID:Distro runid" << ddesc.runID;
-DbgLv(1) << "FID:  0 X Y" << ddesc.xvals[0] << ddesc.yvals[0];
-DbgLv(1) << "FID:  kk X Y" << ddesc.xvals[kk] << ddesc.yvals[kk];
+
+   ddesc.xvals.resize( nn );     // Resize to just the non-zero points
+   ddesc.yvals.resize( nn );
 
    setColor( ddesc, distx );
 }
@@ -1396,5 +1404,12 @@ DbgLv(1) << "scMC: niters ncomps nlist nuniq"
       // Store this adjusted component in the new vector
       model.components << comps[ kk ];
    }
+}
+
+// Determine if two values are functionally equivalent within a given epsilon
+bool US_DDistr_Combine::equivalent( double aa, double bb, double eps )
+{
+   double dd       = ( aa != 0.0 ) ? aa : ( bb != 0.0 ? bb : 1.0 );
+   return ( ( qAbs( aa - bb ) / dd ) <= eps );
 }
 
