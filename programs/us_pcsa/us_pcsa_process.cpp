@@ -1631,6 +1631,7 @@ void US_pcsaProcess::timerEvent( QTimerEvent *event )
 void US_pcsaProcess::compute_final()
 {
 DbgLv(1) << "CFin: alpha" << alpha;
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    ModelRecord mrec   = mrecs[ 0 ];
    model              = mrec.model;
    US_SolveSim::Simulation sim_vals;
@@ -1690,6 +1691,7 @@ DbgLv(1) << "CFin:model: desc analys vari" << model.description
 
    // Report new variance
    emit progress_update( mrec.variance ); 
+   QApplication::restoreOverrideCursor();
 DbgLv(0) << "LMf: recomputed variance rmsd" << mrec.variance << rmsd;
 }
 

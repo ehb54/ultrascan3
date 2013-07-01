@@ -21,7 +21,6 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    varimin        = 9e+99;
    bmndx          = -1;
    mlnplotd       = 0;
-   resume         = false;
    fitpars        = QString();
 
    setObjectName( "US_AnalysisControl" );
@@ -61,20 +60,18 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
 
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
 
-   pb_pltlines             = us_pushbutton( tr( "Plot Model Lines" ), true  );
-//   pb_strtscan             = us_pushbutton( tr( "Start Scan" ),       false );
-   pb_strtscan             = us_pushbutton( tr( "Fits + RP Scan" ),   false );
-   pb_strtfit              = us_pushbutton( tr( "Start Fit" ),        true  );
-   pb_stopfit              = us_pushbutton( tr( "Stop Fit" ),         false );
-   pb_plot                 = us_pushbutton( tr( "Plot Results" ),     false );
-   pb_save                 = us_pushbutton( tr( "Save Results" ),     false );
-   pb_help                 = us_pushbutton( tr( "Help" ) );
-   pb_close                = us_pushbutton( tr( "Close" ) );
-   te_status               = us_textedit();
+   pb_pltlines = us_pushbutton( tr( "Plot Model Lines"              ), true );
+   pb_startfit = us_pushbutton( tr( "Start Fit"                     ), true );
+   pb_scanregp = us_pushbutton( tr( "Perform Regularization Scan"   ), false );
+   pb_finalmdl = us_pushbutton( tr( "Regularize Current Model"      ), false );
+   pb_stopfit  = us_pushbutton( tr( "Stop Fit"                      ), false );
+   pb_plot     = us_pushbutton( tr( "Plot Results"                  ), false );
+   pb_save     = us_pushbutton( tr( "Save Results"                  ), false );
+   pb_help     = us_pushbutton( tr( "Help" ) );
+   pb_close    = us_pushbutton( tr( "Close" ) );
+   te_status   = us_textedit();
    us_setReadOnly( te_status, true );
 
-   QLayout* lo_rparscan    =
-      us_checkbox( tr( "Regularization Parameter Scan" ), ck_rparscan );
    QLayout* lo_lmalpha     =
       us_checkbox( tr( "Regularize in L-M Fits"        ), ck_lmalpha  );
    QLayout* lo_fxalpha     =
@@ -141,14 +138,14 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( ct_tralpha,    row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_thrdcnt,    row,   0, 1, 2 );
    controlsLayout->addWidget( ct_thrdcnt,    row++, 2, 1, 2 );
-   controlsLayout->addLayout( lo_rparscan,   row,   0, 1, 3 );
-   controlsLayout->addWidget( pb_strtscan,   row++, 3, 1, 1 );
    controlsLayout->addLayout( lo_lmalpha,    row,   0, 1, 2 );
-   controlsLayout->addLayout( lo_fxalpha,    row++, 2, 1, 2 );
-   controlsLayout->addLayout( lo_tinois,     row,   0, 1, 3 );
-   controlsLayout->addWidget( pb_strtfit,    row++, 3, 1, 1 );
-   controlsLayout->addLayout( lo_rinois,     row,   0, 1, 3 );
-   controlsLayout->addWidget( pb_stopfit,    row++, 3, 1, 1 );
+   controlsLayout->addWidget( pb_startfit,   row++, 2, 1, 2 );
+   controlsLayout->addLayout( lo_fxalpha,    row,   0, 1, 2 );
+   controlsLayout->addWidget( pb_stopfit,    row++, 2, 1, 2 );
+   controlsLayout->addLayout( lo_tinois,     row,   0, 1, 2 );
+   controlsLayout->addWidget( pb_scanregp,   row++, 2, 1, 2 );
+   controlsLayout->addLayout( lo_rinois,     row,   0, 1, 2 );
+   controlsLayout->addWidget( pb_finalmdl,   row++, 2, 1, 2 );
    controlsLayout->addWidget( pb_plot,       row,   0, 1, 2 );
    controlsLayout->addWidget( pb_save,       row++, 2, 1, 2 );
    controlsLayout->addWidget( pb_pltlines,   row,   0, 1, 2 );
@@ -166,14 +163,13 @@ DbgLv(1) << "idealThrCout" << nthr;
    optimizeLayout->addWidget( lb_minrmsd,    row,   0, 1, 2 );
    optimizeLayout->addWidget( le_minrmsd,    row++, 2, 1, 2 );
    optimizeLayout->addWidget( lb_statinfo,   row++, 0, 1, 4 );
-   optimizeLayout->addWidget( te_status,     row,   0, 2, 4 );
+   optimizeLayout->addWidget( te_status,     row,   0, 8, 4 );
    le_minrmsd->setMinimumWidth( lb_minrmsd->width() );
    te_status ->setMinimumWidth( lb_minrmsd->width()*4 );
-   row    += 6;
+   row    += 8;
 
    QLabel* lb_optspace     = us_banner( "" );
    optimizeLayout->addWidget( lb_optspace,   row,   0, 1, 4 );
-   optimizeLayout->setRowStretch( row, 2 );
 
    optimize_options();
 
@@ -196,15 +192,14 @@ DbgLv(1) << "idealThrCout" << nthr;
    connect( ct_tralpha,  SIGNAL( valueChanged( double ) ),
             this,        SLOT(   set_alpha()            ) );
 
-   connect( ck_rparscan, SIGNAL( toggled    ( bool )    ),
-            this,        SLOT(   rscan_check( bool )    ) );
-
    connect( pb_pltlines, SIGNAL( clicked()    ),
             this,        SLOT(   plot_lines() ) );
-   connect( pb_strtscan, SIGNAL( clicked()    ),
-            this,        SLOT(   start()      ) );
-   connect( pb_strtfit,  SIGNAL( clicked()    ),
-            this,        SLOT(   start()      ) );
+   connect( pb_startfit, SIGNAL( clicked()    ),
+            this,        SLOT(   fit_final()  ) );
+   connect( pb_scanregp, SIGNAL( clicked()    ),
+            this,        SLOT(   scan_alpha() ) );
+   connect( pb_finalmdl, SIGNAL( clicked()    ),
+            this,        SLOT(   final_only() ) );
    connect( pb_stopfit,  SIGNAL( clicked()    ),
             this,        SLOT(   stop_fit()   ) );
    connect( pb_plot,     SIGNAL( clicked()    ),
@@ -303,9 +298,9 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    // Start a processing object if need be
    if ( processor == 0 )
    {
-      resume      = false;
+      need_fit    = true;
+      need_final  = true;
       processor   = new US_pcsaProcess( dsets, this );
-      pb_strtfit ->setText( tr( "Start Fit" ) );
    }
 
    else
@@ -330,26 +325,23 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    int    res    = (int)ct_cresolu ->value();
    kin           = ( typ == 0 ) ? kin : (double)nvar;
    double alpha  = ct_tralpha  ->value();
-   bool   scnck  = ck_rparscan->isChecked();
 
-   if ( resume )
-   { // Alpha-scan completed:  test if we can resume fit at start
-      QString newfpars = QString().sprintf(
-            "%d %.5f %.5f %.5f %.5f %.5f %d %d %d",
-            typ, slo, sup, klo, kup, kin, nvar, noif, res );
-      resume        = ( newfpars == fitpars  &&  !scnck );
-   }
+   // Alpha-scan completed:  test if we need to re-fit
+   QString newfpars = fitpars_string();
+DbgLv(1) << "AnaC: (1)need_fit" << need_fit;
+   need_fit      = ( newfpars != fitpars );
+DbgLv(1) << "AnaC: (2)need_fit" << need_fit;
 
-   if ( ! resume )
+   if ( need_fit )
    {  // Not resuming after an Alpha scan
-      if ( scnck )
+      if ( ! need_final )
          alpha         = -99.0;             // Flag Alpha scan
-      else if ( ck_fxalpha->isChecked() )
+      else if ( ck_fxalpha->isChecked()  &&  alpha != 0.0 )
          alpha         = -alpha - 1.0;      // Flag use-alpha-for-fixed-fits
-      else if ( ck_lmalpha->isChecked() )
+      else if ( ck_lmalpha->isChecked()  &&  alpha != 0.0 )
          alpha         = -alpha;            // Flag use-alpha-for-LM-fits
    }
-DbgLv(1) << "AnaC: resume scnck alpha" << resume << scnck << alpha;
+DbgLv(1) << "AnaC: need_fit need_fnl alpha" << need_fit << need_final << alpha;
 
    ti_noise->values.clear();
    ri_noise->values.clear();
@@ -368,19 +360,20 @@ DbgLv(1) << "AnaC: resume scnck alpha" << resume << scnck << alpha;
             this,      SLOT(   completed_process( int  ) ) );
 
    // Begin or resume the fit
-   pb_strtscan->setEnabled( false );
-   pb_strtfit ->setEnabled( false );
+   pb_startfit->setEnabled( false );
+   pb_scanregp->setEnabled( false );
+   pb_finalmdl->setEnabled( false );
    pb_stopfit ->setEnabled( true  );
    pb_plot    ->setEnabled( false );
 DbgLv(1) << "(2)pb_plot-Enabled" << pb_plot->isEnabled();
    pb_save    ->setEnabled( false );
    qApp->processEvents();
 
-   if ( ! resume )
+   if ( need_fit )
       processor->start_fit( slo, sup, klo, kup, kin,
                             res, typ, nthr, noif, alpha );
 
-   else
+   else if ( need_final )
       processor->resume_fit( alpha );
 
    qApp->processEvents();
@@ -404,11 +397,12 @@ DbgLv(1) << "AC:SF: processor deleted";
    qApp->processEvents();
    b_progress->reset();
 
-   pb_strtfit->setEnabled( true  );
-   pb_stopfit->setEnabled( false );
-   pb_plot   ->setEnabled( false );
-   pb_save   ->setEnabled( false );
-   pb_strtfit->setText( tr( "Start Fit" ) );
+   pb_startfit->setEnabled( true );
+   pb_scanregp->setEnabled( true );
+   pb_finalmdl->setEnabled( true );
+   pb_stopfit ->setEnabled( false );
+   pb_plot    ->setEnabled( false );
+   pb_save    ->setEnabled( false );
    qApp->processEvents();
 DbgLv(1) << "(3)pb_plot-Enabled" << pb_plot->isEnabled();
 
@@ -495,38 +489,20 @@ void US_AnalysisControl::set_alpha()
    ck_lmalpha ->setEnabled( regular );
    ck_fxalpha ->setEnabled( regular );
 
-   if ( ! regular )
+   if ( regular )
    {
-      ck_tinoise ->setChecked( false );
-      ck_rinoise ->setChecked( false );
-   }
-}
-
-// Slot to respond to change in regularization parameter scan check
-void US_AnalysisControl::rscan_check( bool chkd )
-{
-   pb_strtscan->setEnabled( chkd );
-   pb_strtfit ->setEnabled( !chkd );
-
-   if ( chkd )
-   {
-      ck_tinoise ->setEnabled( !chkd );
-      ck_rinoise ->setEnabled( !chkd );
-      ck_tinoise ->setChecked( false );
-      ck_rinoise ->setChecked( false );
-      ck_lmalpha ->setChecked( false );
-      ck_fxalpha ->setChecked( false );
+      pb_finalmdl->setText( tr( "Regularize Current Model" ) );
    }
 
    else
    {
-      bool unregu    = ( ct_tralpha->value() == 0.0 );
-      ck_tinoise ->setEnabled( unregu );
-      ck_rinoise ->setEnabled( unregu );
+      pb_finalmdl->setText( tr( "Unregularize Current Model" ) );
+      ck_tinoise ->setChecked( false );
+      ck_rinoise ->setChecked( false );
    }
 }
 
-// slot to handle progress update
+// Slot to handle progress update
 void US_AnalysisControl::update_progress( double variance )
 {
    ncsteps ++;
@@ -588,17 +564,18 @@ void US_AnalysisControl::completed_process( int stage )
 DbgLv(1) << "AC:cp: stage" << stage;
 
    if ( stage == 7 )
-   { // If an alpha scan is required, do it and get the alpha determined
-      double alpha    = 0.0;
+   { // If an alpha scan can now be done, report L-M info and mark scan-ready
       ModelRecord mrec;
       processor->get_mrec( mrec );
       double vari   = mrec.variance;
       double rmsd   = mrec.rmsd;
-      int    nthr   = (int)ct_thrdcnt ->value();
       le_minvari->setText( QString::number( vari ) );
       le_minrmsd->setText( QString::number( rmsd ) );
 DbgLv(1) << "AC:cp: mrec fetched";
 
+#if 0
+      double alpha    = 0.0;
+      int    nthr   = (int)ct_thrdcnt ->value();
       US_RpScan* rpscand = new US_RpScan( dsets, mrec, nthr, alpha );
 DbgLv(1) << "AC:cp: RpScan created";
 
@@ -607,31 +584,18 @@ DbgLv(1) << "AC:cp: RpScan created";
 DbgLv(1) << "AC:cp: alpha fetched" << alpha;
          ct_tralpha ->setValue( alpha );
       }
-      pb_strtfit ->setEnabled( true  );
-      pb_strtscan->setEnabled( false );
-      ck_rparscan->setChecked( false );
+//      pb_strtfit ->setEnabled( true  );
+//      pb_strtscan->setEnabled( false );
+//      ck_rparscan->setChecked( false );
 DbgLv(1) << "AC:cp: RpScan deleting";
       delete rpscand;
       rpscand   = NULL;
 DbgLv(1) << "AC:cp: RpScan deleted";
+#endif
 
-      // Assume we can resume the fit and save current fit parameters
-      resume        = true;
-      pb_strtfit ->setText( tr( "Final Fit" ) );
-      int    typ    = cmb_curvtype->currentIndex();
-      double slo    = ct_lolimits->value();
-      double sup    = ct_uplimits->value();
-      double klo    = ct_lolimitk->value();
-      double kup    = ct_uplimitk->value();
-      double kin    = ct_incremk ->value();
-      int    nvar   = (int)ct_varcount->value();
-      int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
-                      ( ck_rinoise->isChecked() ? 2 : 0 );
-      int    res    = (int)ct_cresolu ->value();
-      kin           = ( typ == 0 ) ? kin : (double)nvar;
-      fitpars       = QString().sprintf(
-            "%d %.5f %.5f %.5f %.5f %.5f %d %d %d",
-            typ, slo, sup, klo, kup, kin, nvar, noif, res );
+      // Assume we can compute the final and save current fit parameters
+      need_final    = true;
+      fitpars       = fitpars_string();
       return;
    }
 
@@ -666,15 +630,16 @@ DbgLv(1) << "AC:cp: main done -2";
 DbgLv(1) << "AC:cp: main done 0";
       mainw->analysis_done(  0 );
 
-      pb_strtfit ->setEnabled( true  );
+      pb_startfit->setEnabled( true  );
+      pb_scanregp->setEnabled( true  );
+      pb_finalmdl->setEnabled( true  );
       pb_stopfit ->setEnabled( false );
       pb_plot    ->setEnabled( true  );
       pb_save    ->setEnabled( true  );
       pb_pltlines->setEnabled( true  );
 DbgLv(1) << "(1)pb_plot-Enabled" << pb_plot->isEnabled();
-      resume        = false;
-      fitpars       = QString();
-      pb_strtfit ->setText( tr( "Start Fit" ) );
+      need_final    = false;
+      fitpars       = fitpars_string();
 
       double vari   = mrecs[ 0 ].variance;
       double rmsd   = mrecs[ 0 ].rmsd;
@@ -733,9 +698,11 @@ void US_AnalysisControl::compute()
    te_status  ->setText( amsg );
 
    bmndx          = -1;
-   resume         = false;
+   need_fit       = ( fitpars != fitpars_string() );
+DbgLv(1) << "CM: need_fit" << need_fit;
    pb_pltlines->setEnabled( true );
-   pb_strtfit ->setText( tr( "Start Fit" ) );
+   pb_scanregp->setEnabled( !need_fit );
+   pb_finalmdl->setEnabled( !need_fit );
 }
 
 // slot to launch a plot dialog showing model lines
@@ -795,5 +762,72 @@ void US_AnalysisControl::closed( QObject* o )
 
    if ( oname.contains( "MLinesPlot" ) )
       mlnplotd    = 0;
+}
+
+// Set flags and start fit where fits and final computation are needed
+void US_AnalysisControl::fit_final( void )
+{
+   need_fit    = true;
+   need_final  = true;
+
+   start();
+}
+
+// Set flags and open the dialog to do an Alpha scan
+void US_AnalysisControl::scan_alpha( void )
+{
+   ModelRecord mrec;
+   need_fit        = false;
+   need_final      = false;
+
+   int    nthr     = (int)ct_thrdcnt ->value();
+   double alpha    = 0.0;
+   if ( processor != 0 )
+      processor->get_mrec( mrec );
+
+   US_RpScan* rpscand = new US_RpScan( dsets, mrec, nthr, alpha );
+DbgLv(1) << "AC:cp: RpScan created";
+
+   if ( rpscand->exec() == QDialog::Accepted )
+   {
+DbgLv(1) << "AC:cp: alpha fetched" << alpha;
+      ct_tralpha ->setValue( alpha );
+   }
+
+   pb_finalmdl->setEnabled( true  );
+DbgLv(1) << "AC:cp: RpScan deleting";
+   delete rpscand;
+   rpscand   = NULL;
+DbgLv(1) << "AC:cp: RpScan deleted";
+
+   // Assume we can compute the final and save current fit parameters
+   fitpars       = fitpars_string();
+}
+
+// Set flags and start fit where only final computation is needed
+void US_AnalysisControl::final_only( void )
+{
+   need_fit    = false;
+   need_final  = true;
+
+   start();
+}
+
+// Compose a string showing the current settings for fit parameters
+QString US_AnalysisControl::fitpars_string()
+{
+   int    typ    = cmb_curvtype->currentIndex();
+   double slo    = ct_lolimits->value();
+   double sup    = ct_uplimits->value();
+   double klo    = ct_lolimitk->value();
+   double kup    = ct_uplimitk->value();
+   double kin    = ct_incremk ->value();
+   int    nvar   = (int)ct_varcount->value();
+   int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
+                   ( ck_rinoise->isChecked() ? 2 : 0 );
+   int    res    = (int)ct_cresolu ->value();
+   kin           = ( typ == 0 ) ? kin : (double)nvar;
+   return QString().sprintf( "%d %.5f %.5f %.5f %.5f %.5f %d %d %d",
+            typ, slo, sup, klo, kup, kin, nvar, noif, res );
 }
 
