@@ -32,6 +32,7 @@ class US_UTIL_EXTERN US_Model
       double       wavelength;  //!< Wavelength of the data acquisition
       double       variance;    //!< Variance of model fit
       double       meniscus;    //!< Meniscus value for model meniscus fit
+      double       alphaRP;     //!< Alpha (Regularization Parameter) value
       QString      description; //!< Text description of the model
       QString      modelGUID;   //!< Identifier of the model
       QString      editGUID;    //!< Identifier of the edit data

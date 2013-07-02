@@ -434,6 +434,7 @@ bool US_pcsaProcess::get_results( US_DataIO::RawData*     da_sim,
                                   QVector< ModelRecord >& p_mrecs )
 {
    bool all_ok = true;
+   model.alphaRP = alpha;
 
    if ( abort ) return false;
 
@@ -1380,7 +1381,8 @@ DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
    }
 
    mrec.csolutes.clear();
-   model      = dset->model;
+   model          = dset->model;
+   model.alphaRP  = alpha;
    double sfactor = 1.0 / dset->s20w_correction;
    double dfactor = 1.0 / dset->D20w_correction;
 

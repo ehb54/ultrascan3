@@ -94,7 +94,8 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_varcount  = us_counter( 2,      3,   200,   11 );
    ct_cresolu   = us_counter( 2,     20,   501,  101 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
-   ct_tralpha   = us_counter( 3,      0,     1,    0 );
+//   ct_tralpha   = us_counter( 3,      0,     1,    0 );
+   ct_tralpha   = us_counter( 3,      0,   100,    0 );
    ct_lolimits->setStep(  0.1 );
    ct_uplimits->setStep(  0.1 );
    ct_lolimitk->setStep( 0.01 );
@@ -103,7 +104,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_varcount->setStep(    1 );
    ct_cresolu ->setStep(    1 );
    ct_tralpha ->setStep( 0.001 );
-   ct_thrdcnt ->setStep(    1 );
    cmb_curvtype = us_comboBox();
    cmb_curvtype->addItem( "Straight Line" );
    cmb_curvtype->addItem( "Increasing Sigmoid" );
@@ -500,6 +500,11 @@ void US_AnalysisControl::set_alpha()
       ck_tinoise ->setChecked( false );
       ck_rinoise ->setChecked( false );
    }
+
+   if ( ct_tralpha->value() >= 10.0 )
+      ct_tralpha->setStep( 0.01 );
+   else
+      ct_tralpha->setStep( 0.001 );
 }
 
 // Slot to handle progress update

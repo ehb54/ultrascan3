@@ -161,33 +161,79 @@ int US_Math2::nearest_curve_point( double* xs, double* ys, const int npoints,
    double ydif   = ( ys[ 0 ] - ygiven ) * ynorm;
    double dmin   = sqrt( sq( xdif ) + sq( ydif ) );
 
+   // Find the nearest point to the given point
+   for ( int jj = 0; jj < npoints; jj++ )
+   {
+      xdif          = ( xs[ jj ] - xgiven ) * xnorm;
+      ydif          = ( ys[ jj ] - ygiven ) * ynorm;
+      double dval   = sqrt( sq( xdif ) + sq( ydif ) );
+
+      if ( dval < dmin )
+      {
+         dmin          = dval;
+         jmin          = jj;
+      }
+   }
+
    if ( interp )
-   {  // Interpolate a curve point nearest to the given point
-      int    jmin2  = jmin;
+   {  // Interpolate a curve point between nearest point and an adjacent one
+      int    jmin1  = jmin - 1;   // Index to point preceding the nearest
+      int    jmin2  = jmin + 1;   // Index to point following the nearest
+      double dmin1  = dmin;
       double dmin2  = dmin;
 
-      for ( int jj = 0; jj < npoints; jj++ )
-      {  // Find the 2 curve points nearest to the given point
-         xdif          = ( xs[ jj ] - xgiven ) * xnorm;
-         ydif          = ( ys[ jj ] - ygiven ) * ynorm;
-         double dval   = sqrt( sq( xdif ) + sq( ydif ) );
+      if ( jmin == 0 )
+      {  // If nearest is first on curve, use the following point
+         xdif          = ( xs[ jmin2 ] - xgiven ) * xnorm;
+         ydif          = ( ys[ jmin2 ] - ygiven ) * ynorm;
+         dmin2         = sqrt( sq( xdif ) + sq( ydif ) );
+      }
 
-         if ( dval < dmin )
-         {  // This curve point is the nearest yet
-            dmin2          = dmin;    // Old nearest is now second nearest
-            jmin2          = jmin;
-            dmin           = dval;    // Save nearest
-            jmin           = jj;
-         }
+      else if ( jmin2 == npoints )
+      {  // If nearest is last on curve, use the preceding point
+         jmin2         = jmin1;
+         xdif          = ( xs[ jmin2 ] - xgiven ) * xnorm;
+         ydif          = ( ys[ jmin2 ] - ygiven ) * ynorm;
+         dmin2         = sqrt( sq( xdif ) + sq( ydif ) );
+      }
 
-         else if ( dval < dmin2 )
-         {  // This curve point is the second nearest yet
-            dmin2          = dval;    // Save second nearest
-            jmin2          = jj;
+      else
+      {  // If the nearest point is somewhere in the middle of the curve,
+         // determine whether to pick the adjacent point from the one
+         // following or the one preceding. Do this by finding which of the
+         // two gives the closest path to the curve.
+         xdif          = ( xs[ jmin1 ] - xgiven ) * xnorm;
+         ydif          = ( ys[ jmin1 ] - ygiven ) * ynorm;
+         dmin1         = sqrt( sq( xdif ) + sq( ydif ) );  // Dist of preceding
+         xdif          = ( xs[ jmin2 ] - xgiven ) * xnorm;
+         ydif          = ( ys[ jmin2 ] - ygiven ) * ynorm;
+         dmin2         = sqrt( sq( xdif ) + sq( ydif ) );  // Dist of following
+         double ratio  = dmin1 / ( dmin + dmin1 );
+         double ratio2 = 1.0 - ratio;
+         double x1     = xs[ jmin ] * ratio + xs[ jmin1 ] * ratio2;
+         double y1     = ys[ jmin ] * ratio + ys[ jmin1 ] * ratio2;
+         ratio         = dmin2 / ( dmin + dmin2 );
+         ratio2        = 1.0 - ratio;
+         double x2     = xs[ jmin ] * ratio + xs[ jmin2 ] * ratio2;
+         double y2     = ys[ jmin ] * ratio + ys[ jmin2 ] * ratio2;
+         xdif          = ( x1 - xgiven ) * xnorm;
+         ydif          = ( y1 - ygiven ) * ynorm;
+         double dmin1g = sqrt( sq( xdif ) + sq( ydif ) );
+         xdif          = ( x2 - xgiven ) * xnorm;
+         ydif          = ( y2 - ygiven ) * ynorm;
+         double dmin2g = sqrt( sq( xdif ) + sq( ydif ) );
+
+         if ( dmin2g > dmin1g )
+         {  // Where the test perpendicular towards the preceding point is
+            // closer to the given point, choose that preceding point to
+            // use as adjacent. Otherwise, default to the point following.
+            dmin2         = dmin1;
+            jmin2         = jmin1;
          }
       }
 
-      // Determine ratio values based on relative distances of the two nearest
+      // Determine ratio values based on relative distances of the nearest
+      // curve point and a curve point adjacent to it.
       double ratio  = dmin2 / ( dmin + dmin2 );
       double ratio2 = 1.0 - ratio;
 
@@ -204,20 +250,7 @@ int US_Math2::nearest_curve_point( double* xs, double* ys, const int npoints,
    }
 
    else
-   {  // Find the nearest point to the given point
-      for ( int jj = 0; jj < npoints; jj++ )
-      {
-         xdif          = ( xs[ jj ] - xgiven ) * xnorm;
-         ydif          = ( ys[ jj ] - ygiven ) * ynorm;
-         double dval   = sqrt( sq( xdif ) + sq( ydif ) );
-
-         if ( dval < dmin )
-         {
-            dmin          = dval;
-            jmin          = jj;
-         }
-      }
- 
+   {  // Return the exact point found to be the nearest
       if ( xnear != NULL  &&  ynear != NULL )
       {  // Return the curve point nearest to the given point
          *xnear        = xs[ jmin ];
