@@ -1036,7 +1036,6 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          rescale_iqq_curve( scaling_target, this_q, I );
       }
       
-      plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average");
       
       vector < double > iq_std_dev;
       vector < double > iq_avg_minus_std_dev;
@@ -1079,6 +1078,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          }
 
          iq_std_dev = std_dev;
+         plot_one_iqq(this_q, iq_avg, iq_std_dev, QFileInfo(filename).fileName() + " Average");
          
          I = sum_iq;
 
@@ -1128,8 +1128,9 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          {
             rescale_iqq_curve_using_last_rescaling( I );
          }
-
          plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average plus 1 standard deviation");
+      } else {
+         plot_one_iqq(this_q, I, QFileInfo(filename).fileName() + " Average");
       }
       if ( plotted )
       {
@@ -1164,6 +1165,10 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                     vector_double_to_csv(iq_avg).ascii());
             if ( iq_std_dev.size() )
             {
+               fprintf(of, "\"%s\",\"%s\",%s\n", 
+                       "Average",
+                       "I(q) sd",
+                       vector_double_to_csv(iq_std_dev).ascii());
                fprintf(of, "\"%s\",\"%s\",%s\n", 
                        "Standard deviation",
                        "I(q)",

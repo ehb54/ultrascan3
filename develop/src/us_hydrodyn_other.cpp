@@ -1587,6 +1587,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          double loaded_psv = 0e0;
          double loaded_mw  = 0e0;
          unsigned int loaded_unit = 0;
+         bool loaded_mult = false;
 
          QStringList qsl;
          {
@@ -1624,12 +1625,22 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                }
                if ( rx_mult.search( qs ) != -1 )
                {
+                  loaded_mult = true;
                   unit_mult = rx_mult.cap( 2 ).toUInt();
                   editor_msg( "blue", QString( tr( "Found Units conversion %1 in PDB" ) ).arg( unit_mult ) );
                }
             } while (!ts.atEnd());
          }
          f.close();
+
+
+         if ( loaded_mult &&
+              !loaded_unit &&
+              saxs_options.dummy_atom_pdbs_in_nm )
+         {
+            editor_msg( "blue", tr( "Notice: Unit conversion factor in PDB forces Angstrom units" ) );
+            saxs_options.dummy_atom_pdbs_in_nm = false;
+         }
 
          if ( saxs_options.dummy_atom_pdbs_in_nm )
          {

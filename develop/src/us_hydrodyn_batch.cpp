@@ -492,17 +492,18 @@ void US_Hydrodyn_Batch::setupGUI()
    progress->setMinimumWidth(70);
    progress->reset();
 
-   ws_progress2 = new QWidgetStack( this, "progress2" );
+   // ws_progress2 = new QWidgetStack( this, "progress2" );
 
-   lbl_progress2 = new QLabel( "", this);
+   // lbl_progress2 = new QLabel( "", this);
 
    progress2 = new QProgressBar(this, "Loading Progress2");
    progress2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    progress2->reset();
+   progress2->hide();
 
-   ws_progress2->addWidget( lbl_progress2, 0 );
-   ws_progress2->addWidget( progress2, 1 );
-   ws_progress2->raiseWidget( 0 );
+   // ws_progress2->addWidget( lbl_progress2, 0 );
+   // ws_progress2->addWidget( progress2, 1 );
+   // ws_progress2->raiseWidget( 0 );
 
    pb_stop = new QPushButton(tr("Stop"), this);
    Q_CHECK_PTR(pb_stop);
@@ -625,7 +626,7 @@ void US_Hydrodyn_Batch::setupGUI()
    QHBoxLayout *hbl_process = new QHBoxLayout;
    hbl_process->addWidget(pb_start);
    hbl_process->addWidget(progress);
-   hbl_process->addWidget(ws_progress2);
+   hbl_process->addWidget(progress2);
    hbl_process->addWidget(pb_stop);
    
    // 4th section - help & cancel
@@ -1663,7 +1664,8 @@ void US_Hydrodyn_Batch::start( bool quiet )
                   // loop through them:
                   unsigned int lb_model_rows = (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows();
                   progress2->reset();
-                  ws_progress2->raiseWidget( 1 );
+                  // ws_progress2->raiseWidget( 1 );
+                  progress2->show();
 #if defined(USE_H)
                   // save everything if hydrate on
                   QString hydrated_pdb_nmr_text;
@@ -1830,7 +1832,8 @@ void US_Hydrodyn_Batch::start( bool quiet )
                      ((US_Hydrodyn *)us_hydrodyn)->clear_state();
                   }
 #endif
-                  ws_progress2->raiseWidget( 0 );
+                  // ws_progress2->raiseWidget( 0 );
+                  progress2->hide();
                } else {
 #if defined(USE_H)
                   if ( batch->hydrate )
@@ -1966,7 +1969,8 @@ void US_Hydrodyn_Batch::start( bool quiet )
                   // loop through them:
                   unsigned int lb_model_rows = (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows();
                   progress2->reset();
-                  ws_progress2->raiseWidget( 1 );
+                  progress2->show();
+                  // ws_progress2->raiseWidget( 1 );
 #if defined(USE_H)
                   // save everything if hydrate on
                   QString hydrated_pdb_nmr_text;
@@ -2087,7 +2091,8 @@ void US_Hydrodyn_Batch::start( bool quiet )
                      ((US_Hydrodyn *)us_hydrodyn)->clear_state();
                   }
 #endif
-                  ws_progress2->raiseWidget( 0 );
+                  progress2->hide();
+                  // ws_progress2->raiseWidget( 0 );
                } else {
 #if defined(USE_H)
                   if ( batch->hydrate )
@@ -2923,6 +2928,10 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
                  vector_double_to_csv(iq_avg).ascii());
          if ( batch->compute_iq_std_dev && sum_count > 2 )
          {
+            fprintf(of, "\"%s\",\"%s\",%s\n", 
+                    "Average",
+                    "I(q) sd",
+                    vector_double_to_csv(iq_std_dev).ascii());
             fprintf(of, "\"%s\",\"%s\",%s\n", 
                     "Standard deviation",
                     "I(q)",
