@@ -97,6 +97,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    int ntotal    = 0;                             // Total points count
    int ntinois   = 0;                             // TI noise value count
    int nrinois   = 0;                             // RI noise value count
+   double alphad = sim_vals.alpha;                // Alpha for diagonal
 #ifdef NO_DB
    US_Settings::set_us_debug( dbg_level );
 #endif
@@ -159,8 +160,11 @@ DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
 
 DebugTime("BEG:calcres");
    // Populate b array with experiment data concentrations
-   int    kk   = 0;
-   int    kodl = 0;
+   int    kk     = 0;
+   int    kodl   = 0;
+   double s0max  = 0.0;
+//   double s0sum  = 0.0;
+//   int    s0knt  = 0;
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {
@@ -182,11 +186,29 @@ DebugTime("BEG:calcres");
                kodl++;
             }
 
+            else if ( ss == 0 )
+            {  // Find max of scan 0 values
+               s0max          = qMax( s0max, evalue );
+            }
+//            else if ( ss == 0  &&  evalue != 0.0 )
+//            {  // Accumulate sum and count of scan 0 non-zero values
+//               s0sum         += evalue;
+//               s0knt++;
+//            }
+
             nnls_b[ kk++ ] = evalue;
          }
       }
    }
 DbgLv(1) << "   CR:B fill kodl" << kodl;
+
+   // If needed, scale the alpha used in A-matrix appendix diagonals
+//   if ( tikreg )
+//      alphad         = sim_vals.alpha * s0max;
+//   if ( tikreg  &&  s0knt > 0 )
+//      alphad         = sim_vals.alpha * s0sum / (double)s0knt;
+   if ( tikreg )
+      alphad         = sim_vals.alpha * sqrt( s0max );
 
    if ( abort ) return;
 
@@ -283,7 +305,7 @@ DbgLv(1) << "   CR: A fill kodl" << kodl;
             {  // For Tikhonov Regularization append to each column
                for ( int aa = 0; aa < nsolutes; aa++ )
                {
-                  nnls_a[ kk++ ] = ( aa == cc ) ? sim_vals.alpha : 0.0;
+                  nnls_a[ kk++ ] = ( aa == cc ) ? alphad : 0.0;
                }
             }
 
@@ -381,7 +403,7 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
             {  // For Tikhonov Regularization append to each column
                for ( int aa = 0; aa < nsolutes; aa++ )
                {
-                  nnls_a[ kk++ ] = ( aa == cc ) ? sim_vals.alpha : 0.0;
+                  nnls_a[ kk++ ] = ( aa == cc ) ? alphad : 0.0;
                }
             }
 
@@ -478,7 +500,7 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
             {  // For Tikhonov Regularization append to each column
                for ( int aa = 0; aa < nsolutes; aa++ )
                {
-                  nnls_a[ kk++ ] = ( aa == cc ) ? sim_vals.alpha : 0.0;
+                  nnls_a[ kk++ ] = ( aa == cc ) ? alphad : 0.0;
                }
             }
          }  // Each data set
