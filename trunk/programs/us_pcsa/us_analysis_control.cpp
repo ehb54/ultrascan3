@@ -426,6 +426,7 @@ void US_AnalysisControl::plot()
 // save button clicked
 void US_AnalysisControl::save()
 {
+DbgLv(1) << "AC:save: model components size" << model->components.size();
    US_pcsa* mainw = (US_pcsa*)parentw;
    mainw->analysis_done( 2 );
 }

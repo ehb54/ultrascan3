@@ -780,6 +780,14 @@ DbgLv(1) << "ModelSel: model" << distrID << "mdx" << mdx;
       pdisIDs << distrID;    // Add to list of IDs of plotted distros
    }
 
+   if ( ddesc->model.components.size() == 0 )
+   {
+      QMessageBox::critical( this, tr( "Zero-Components Model" ),
+            tr( "*ERROR* The selected model has zero components.\n"
+                "This selection is ignored" ) );
+      return;
+   }
+
    plot_data();
 
    pb_saveda->setEnabled( true );
@@ -940,6 +948,8 @@ DbgLv(1) << "FID:  (3)ncomps" << ncomps;
    }
 
    ddesc.xtype       = xtype;
+   if ( ncomps == 0 )
+      return;
 DbgLv(1) << "FID:   xtype" << xtype << "mxval.size" << mxvals.size();
    ddesc.xvals.fill( 0.0, ncomps );
    ddesc.yvals.fill( 0.0, ncomps );
