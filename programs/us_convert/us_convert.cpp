@@ -55,6 +55,35 @@ void US_Convert::readLegacyData(
       }
    }
 
+   if ( runType == "FI" )
+   {  // For flourescence data, resort the file list by cell, then channel
+      QStringList oldfList = fileList;
+      fileList.clear();
+      QStringList fexts;   // List of possible flourescence extensions
+      fexts << "FI1" << "FI2" << "FI3" << "FI4"
+            << "FI5" << "FI6" << "FI7" << "FI8"
+            << "fi1" << "fi2" << "fi3" << "fi4"
+            << "fi5" << "fi6" << "fi7" << "fi8";
+      int         ntotf    = oldfList.size();
+      int         ktotf    = 0;
+      QString     fext;
+      QString     fname;
+
+      foreach ( fext, fexts )
+      {  // Sort by file extension so cell is the first order
+         foreach( fname, oldfList )
+         {
+            if ( fname.endsWith( fext ) )
+            {
+               fileList << fname;
+               ktotf++;
+            }
+         }
+
+         if ( ktotf >= ntotf )  break;
+      }
+   }
+
    if ( channels.isEmpty() ) channels << "A";
 
    // Now read the data.
