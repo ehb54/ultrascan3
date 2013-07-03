@@ -163,8 +163,6 @@ DebugTime("BEG:calcres");
    int    kk     = 0;
    int    kodl   = 0;
    double s0max  = 0.0;
-//   double s0sum  = 0.0;
-//   int    s0knt  = 0;
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {
@@ -190,11 +188,6 @@ DebugTime("BEG:calcres");
             {  // Find max of scan 0 values
                s0max          = qMax( s0max, evalue );
             }
-//            else if ( ss == 0  &&  evalue != 0.0 )
-//            {  // Accumulate sum and count of scan 0 non-zero values
-//               s0sum         += evalue;
-//               s0knt++;
-//            }
 
             nnls_b[ kk++ ] = evalue;
          }
@@ -203,12 +196,11 @@ DebugTime("BEG:calcres");
 DbgLv(1) << "   CR:B fill kodl" << kodl;
 
    // If needed, scale the alpha used in A-matrix appendix diagonals
-//   if ( tikreg )
-//      alphad         = sim_vals.alpha * s0max;
-//   if ( tikreg  &&  s0knt > 0 )
-//      alphad         = sim_vals.alpha * s0sum / (double)s0knt;
    if ( tikreg )
-      alphad         = sim_vals.alpha * sqrt( s0max );
+   {
+      alphad         = ( s0max == 0.0 ) ? sim_vals.alpha
+                       : ( sim_vals.alpha * sqrt( s0max ) );
+   }
 
    if ( abort ) return;
 

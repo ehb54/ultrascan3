@@ -65,8 +65,7 @@
           
        <li>
           <b>Start the Fit:</b> Begin the fit analysis by clicking
-          "Start Fit". If you have just completed a Regularization Parameter
-          Scan, this button will have been relabeled "Final Fit".
+          "Start Fit".
        </li>
           
        <li>
@@ -77,9 +76,10 @@
        </li>
 
        <li>
-         <b>Start RP Scan:</b> If you wish to perform Tikhonov Regularization,
-         you can preceed the fitness run by checking "Regularization
-         Parameter Scan" and then clicking "Start Scan".
+         <b>Regularize:</b> If you wish to perform Tikhonov Regularization,
+         you can set a Regularization Parameter (Alpha) or determine a good
+         parameter value by clicking "Perform Regularization Scan". When you
+         have a reasonable Alpha, click on Regularize Current Model.
        </li>
     </ul>
           
@@ -159,17 +159,32 @@
        </li>
 
        <li>
-          <b>Regularization Parameter Scan</b> Check this box if you want to
-          preceed the fit analysis by a scan to analytically determine the
-          best Regularization Parameter (Alpha).
+          <b>Start Fit</b> Click to begin the fit analysis. The analysis will
+          proceed through fixed curve analysis followed by Levenberg-Marquardt
+          refinement, resulting in either a final model or the base model
+          from which regularization may proceed.
        </li>
 
        <li>
-          <b>Start Scan</b> Click to begin the regularization parameter scan
-          by bringing up a
+          <b>Stop Fit</b> If something seems wrong with the progress of
+          analysis or if you realize you have parameterized incorrectly,
+          click this button to abort the fit run.
+       </li>
+
+       <li>
+          <b>Perform Regularization Scan</b> Once fit analysis is complete,
+          you may optionally click here to bring up a
           <a href="pcsa_rpscan.html">Regularization Parameter Scan</a> dialog
           that sets the best value for Regularization Parameter.
        </li>
+
+       <li>
+          <b>Regularize Current Model</b> Any time you set the Regularization
+          Parameter, either manually or through scan, you may then compute a
+          final model, using that parameter, by clicking here. Note that if
+          the parameter is set to zero, the button here is relabeled to
+          "Unregularize Current Model".
+       </li> 
 
        <li>
           <b>Regularize in L-M Fits</b> This box should normally remain
@@ -191,19 +206,6 @@
        <li>
           <b>Fit Radially-Invariant Noise</b> Check this box if you want to
           calculate radially-invariant noise.
-       </li>
-
-       <li>
-          <b>Start Fit</b> Click to begin the fit analysis. If you have just
-          completed a Regularization Parameter Scan, this button will have been
-          relabeled "Final Fit"; and clicking it initiates a final model
-          computation using the Regularization Parameter.
-       </li>
-
-       <li>
-          <b>Stop Fit</b> If something seems wrong with the progress of
-          analysis or if you realize you have parameterized incorrectly,
-          click this button to abort the fit run.
        </li>
 
        <li>
