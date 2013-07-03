@@ -536,10 +536,10 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
 
       // output the model
-      model.write( mname );
-
       if ( dbP != NULL )
          model.write( dbP );
+      else
+         model.write( mname );
 
       int kk  = jj * knois;
 

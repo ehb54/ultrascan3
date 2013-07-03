@@ -711,7 +711,7 @@ int US_Model::write( bool db_access, const QString& filename, US_DB2* db )
 
 int US_Model::write( US_DB2* db )
 {
-      // Create the model xml file in a string
+      // Create the model xml file in a stream
       QByteArray temporary;
       QByteArray contents;
       
@@ -730,12 +730,12 @@ qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.si
       
       db->query( q );
       
-      q.clear();
       QString meni = QString::number( meniscus );
       QString vari = QString::number( variance );
      
       if ( db->lastErrno() != US_DB2::OK )
       {
+         q.clear();
          q << "new_model" << modelGUID << description << contents
            << vari << meni << editGUID
            << QString::number( US_Settings::us_inv_ID() );
@@ -745,6 +745,7 @@ qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.si
       {
          db->next();
          QString id = db->value( 0 ).toString();
+         q.clear();
          q << "update_model" << id << description << contents
            << vari << meni << editGUID;
          message = QObject::tr( "updated" );
@@ -797,7 +798,6 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
       xml.writeAttribute( "meniscus",    QString::number( meniscus     ) );
    if ( alphaRP  != 0.0 )
       xml.writeAttribute( "alphaRP",     QString::number( alphaRP      ) );
-   xml.writeAttribute   ( "coSedSolute", QString::number( coSedSolute  ) );
    xml.writeAttribute   ( "coSedSolute", QString::number( coSedSolute  ) );
    if ( subGrids != 0.0 )
       xml.writeAttribute( "subGrids",    QString::number( subGrids     ) );

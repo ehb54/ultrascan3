@@ -442,6 +442,14 @@ void US_pcsa::save( void )
       return;
    }
 
+   if ( model.components.size() == 0 )
+   {
+      QMessageBox::critical( this, tr( "Zero-Component Model" ),
+         tr( "*ERROR* The model you are attempting to save\n"
+             "has no components. No data was saved." ) );
+      return;
+   }
+
    // Save the model and any noise file(s)
 
    US_Passwd   pw;
@@ -508,10 +516,10 @@ void US_pcsa::save( void )
       model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
 
    // output the model
-   model.write( mname );
-
    if ( dbP != NULL )
       model.write( dbP );
+   else
+      model.write( mname );
 
    int kk  = 0;
    int err = 0;

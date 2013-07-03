@@ -1382,7 +1382,6 @@ DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
 
    mrec.csolutes.clear();
    model          = dset->model;
-   model.alphaRP  = alpha;
    double sfactor = 1.0 / dset->s20w_correction;
    double dfactor = 1.0 / dset->D20w_correction;
 
