@@ -55,9 +55,9 @@ class US_pcsaProcess : public QObject
       void start_fit( double, double, double, double, double,
                       int, int, int, int, double = 0.0 );
 
-      //! \brief Resume the fit calculations at L-M after alpha scan
+      //! \brief Complete the final fit for alpha scan or alpha change
       //! \param alf     regularization alpha factor
-      void resume_fit( double );
+      void final_fit( double );
 
       //! \brief Get results upon completion of all refinements
       //! \param da_sim  Calculated simulation data
