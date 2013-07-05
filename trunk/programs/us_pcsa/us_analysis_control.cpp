@@ -188,7 +188,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    connect( ct_varcount, SIGNAL( valueChanged( double ) ),
             this,        SLOT(   compute()              ) );
    connect( ct_cresolu,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   compute()              ) );
+            this,        SLOT(   reso_change()          ) );
    connect( ct_tralpha,  SIGNAL( valueChanged( double ) ),
             this,        SLOT(   set_alpha()            ) );
 
@@ -339,8 +339,11 @@ DbgLv(1) << "AnaC: (2)need_fit" << need_fit;
          alpha         = -alpha - 1.0;      // Flag use-alpha-for-fixed-fits
       else if ( ck_lmalpha->isChecked()  &&  alpha != 0.0 )
          alpha         = -alpha;            // Flag use-alpha-for-LM-fits
+
+      mrecs.clear();
    }
-DbgLv(1) << "AnaC: need_fit need_fnl alpha" << need_fit << need_final << alpha;
+DbgLv(1) << "AnaC: need_fit need_fnl" << need_fit << need_final
+ << "alpha" << alpha;
 
    ti_noise->values.clear();
    ri_noise->values.clear();
@@ -480,6 +483,15 @@ void US_AnalysisControl::klim_change()
    compute();
 }
 
+// Handle change in resolution count
+void US_AnalysisControl::reso_change()
+{
+DbgLv(1) << "RESO_CHANGE: need_fit" << need_fit
+ << "reso" << ct_cresolu ->value();
+   if ( need_fit )
+      compute();
+}
+
 // Set regularization factor alpha
 void US_AnalysisControl::set_alpha()
 {
@@ -579,6 +591,7 @@ DbgLv(1) << "AC:cp: stage" << stage;
 DbgLv(1) << "AC:cp: mrec fetched";
 
       // Assume we can compute the final and save current fit parameters
+      need_fit      = false;
       need_final    = true;
       fitpars       = fitpars_string();
       return;
@@ -623,6 +636,7 @@ DbgLv(1) << "AC:cp: main done 0";
       pb_save    ->setEnabled( true  );
       pb_pltlines->setEnabled( true  );
 DbgLv(1) << "(1)pb_plot-Enabled" << pb_plot->isEnabled();
+      need_fit      = false;
       need_final    = false;
       fitpars       = fitpars_string();
 
@@ -636,6 +650,7 @@ DbgLv(1) << "(1)pb_plot-Enabled" << pb_plot->isEnabled();
    {  // signal main to update lists of models,noises
 DbgLv(1) << "AC:cp: main done -2 upd lists";
       mainw->analysis_done( -2 );
+      need_fit      = false;
    }
 }
 
@@ -754,6 +769,7 @@ void US_AnalysisControl::fit_final( void )
 {
    need_fit    = true;
    need_final  = true;
+   fitpars     = QString();
 
    start();
 }
@@ -766,28 +782,38 @@ void US_AnalysisControl::scan_alpha( void )
    need_final      = false;
 
    int    nthr     = (int)ct_thrdcnt ->value();
+   int    klpts    = (int)ct_cresolu ->value();
    double alpha    = 0.0;
-   if ( processor != 0 )
+DbgLv(1) << "AC:sa: nthr klp nlp" << nthr << klpts << nlpts;
+
+   if ( klpts != nlpts )
+   {  // Must recompute final LM model since resol. points value has changed
+      recompute_mrec();
+      mrec            = mrecs[ 0 ];
+      nlpts           = klpts;
+   }
+
+   else if ( processor != 0 )
       processor->get_mrec( mrec );
 
    US_RpScan* rpscand = new US_RpScan( dsets, mrec, nthr, alpha );
-DbgLv(1) << "AC:cp: RpScan created";
+DbgLv(1) << "AC:sa: RpScan created";
 
    if ( rpscand->exec() == QDialog::Accepted )
    {
-DbgLv(1) << "AC:cp: alpha fetched" << alpha;
+DbgLv(1) << "AC:sa: alpha fetched" << alpha;
       ct_tralpha ->setValue( alpha );
    }
 
    pb_finalmdl->setEnabled( true  );
-DbgLv(1) << "AC:cp: RpScan deleting";
+DbgLv(1) << "AC:sa: RpScan deleting";
    delete rpscand;
    rpscand   = NULL;
-DbgLv(1) << "AC:cp: RpScan deleted";
+DbgLv(1) << "AC:sa: RpScan deleted";
 
    // Assume we can compute the final and save current fit parameters
-   fitpars       = fitpars_string();
-   nlpts         = (int)ct_cresolu ->value();
+   fitpars     = fitpars_string();
+   nlpts       = (int)ct_cresolu ->value();
 }
 
 // Set flags and start fit where only final computation is needed
@@ -795,6 +821,14 @@ void US_AnalysisControl::final_only( void )
 {
    need_fit    = false;
    need_final  = true;
+   int klpts   = (int)ct_cresolu ->value();
+DbgLv(1) << "AC:fo: klp nlp" << klpts << nlpts;
+
+   if ( klpts != nlpts )
+   {  // Must recompute final LM model since resol. points value has changed
+      recompute_mrec();
+      nlpts           = klpts;
+   }
 
    start();
 }
@@ -812,8 +846,89 @@ QString US_AnalysisControl::fitpars_string()
    kin           = ( typ == 0 ) ? kin : (double)nvar;
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
-   int    res    = (int)ct_cresolu ->value();
-   return QString().sprintf( "%d %.5f %.5f %.5f %.5f %.5f %d %d %d",
-            typ, slo, sup, klo, kup, kin, nvar, noif, res );
+
+   return QString().sprintf( "%d %.5f %.5f %.5f %.5f %.5f %d %d",
+            typ, slo, sup, klo, kup, kin, nvar, noif );
+}
+
+// Recompute the top model record after change to resolution points
+void US_AnalysisControl::recompute_mrec()
+{
+   ModelRecord mrec  = mrecs[ 0 ];
+int nn=mrec.isolutes.size()-1;
+int mm=mrec.isolutes.size()/2;
+DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
+ << "s0 s,k" << mrec.isolutes[0].s << mrec.isolutes[0].k
+ << "sm s,k" << mrec.isolutes[mm].s << mrec.isolutes[mm].k
+ << "sn s,k" << mrec.isolutes[nn].s << mrec.isolutes[nn].k;
+   mrec.isolutes.clear();
+   US_Solute isol;
+   smin          = ct_lolimits->value();
+   smax          = ct_uplimits->value();
+   fmin          = ct_lolimitk->value();
+   fmax          = ct_uplimitk->value();
+   finc          = ct_incremk ->value();
+   nlpts         = (int)ct_cresolu ->value();
+   ctype         = cmb_curvtype->currentIndex();
+   double str_k  = mrec.str_k;
+   double end_k  = mrec.end_k;
+   double par1   = mrec.par1;
+   double par2   = mrec.par2;
+   double prng   = (double)( nlpts - 1 );
+   double xrng   = smax - smin;
+
+   if ( ctype == 0 )
+   {
+      double xval   = smin;
+      double xinc   = xrng / prng;
+      double kval   = str_k;
+      double kinc   = ( end_k - str_k ) / prng;
+
+      for ( int kk = 0; kk < nlpts; kk++ )
+      { // Loop over points on a line
+         isol.s      = xval * 1.e-13;
+         isol.k      = kval;
+         mrec.isolutes << isol;
+         xval       += xinc;
+         kval       += kinc;
+      } // END: points-per-line loop
+   }
+
+   else if ( ctype == 1  ||  ctype == 2 )
+   {
+      double xrng   = smax - smin;
+      double kstr   = fmin;
+      double kdif   = fmax - fmin;
+      if ( ctype == 2 )
+      {
+         kstr          = fmax;
+         kdif          = -kdif;
+      }
+
+      double xval   = 0.0;
+      double xinc   = 1.0 / prng;
+      double p1rt   = sqrt( 2.0 * par1 );
+
+      for ( int kk = 0; kk < nlpts; kk++ )
+      { // Loop over points on a sigmoid curve
+         double sval  = smin + xval * xrng;
+         double efac  = 0.5 * erf( ( xval - par2 ) / p1rt ) + 0.5;
+         double kval  = kstr + kdif * efac;
+         isol.s       = sval * 1.e-13;
+         isol.k       = kval;
+         mrec.isolutes << isol;
+         xval        += xinc;
+      } // END: points-on-curve loop
+   }
+
+   mrecs[ 0 ] = mrec;
+nn=mrec.isolutes.size()-1;
+mm=mrec.isolutes.size()/2;
+DbgLv(1) << "AC:RM: NEW mrec0 solsize" << mrec.isolutes.size()
+ << "s0 s,k" << mrec.isolutes[0].s << mrec.isolutes[0].k
+ << "sm s,k" << mrec.isolutes[mm].s << mrec.isolutes[mm].k
+ << "sn s,k" << mrec.isolutes[nn].s << mrec.isolutes[nn].k;
+   if ( processor != 0 )
+      processor->put_mrec( mrec );
 }
 

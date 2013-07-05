@@ -95,7 +95,6 @@ class US_AnalysisControl : public US_WidgetsDialog
 
       QComboBox*    cmb_curvtype;
 
-//      QCheckBox*    ck_rparscan;
       QCheckBox*    ck_lmalpha;
       QCheckBox*    ck_fxalpha;
       QCheckBox*    ck_tinoise;
@@ -108,7 +107,6 @@ class US_AnalysisControl : public US_WidgetsDialog
 
       QPushButton*  pb_pltlines;
       QPushButton*  pb_startfit;
-//      QPushButton*  pb_fitregop;
       QPushButton*  pb_scanregp;
       QPushButton*  pb_finalmdl;
       QPushButton*  pb_stopfit;
@@ -126,6 +124,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       void uncheck_optimize( int  );
       void slim_change( void );
       void klim_change( void );
+      void reso_change( void );
       void set_alpha  ( void );
       void start      ( void );
       void fit_final  ( void );
@@ -137,6 +136,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       void close_all  ( void );
       void compute    ( void );
       void plot_lines ( void );
+      void recompute_mrec( void );
       void closed     ( QObject* );
       QString fitpars_string( void );
 
