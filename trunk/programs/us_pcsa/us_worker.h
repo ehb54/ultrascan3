@@ -21,10 +21,7 @@ typedef struct work_packet_s
 {
    int     thrn;       // thread number (1,...)
    int     taskx;      // task index (0,...)
-   int     depth;      // depth index (0,...)
-   int     iter;       // iteration index (0,...)
-   int     menmcx;     // meniscus/monte-carlo index (0,...)
-   int     typeref;    // refinement-type flag (0,... for UGRID,...)
+   int     depth;      // depth (0->fit, 1->alpha-scan)
    int     state;      // state flag (0-3 for READY,RUNNING,COMPLETE,ABORTED)
    int     noisf;      // noise flag (0-3 for NONE,TI,RI,BOTH)
 
@@ -75,6 +72,9 @@ class WorkerThread : public QThread
       void calc_residuals   ( void );
       void calc_resids_ratio( void );
       long int max_rss      ( void );
+      void apply_alpha      ( const double,
+            QVector< double >&, QVector< double >&,
+            const int, const int, const int, double&, double& );
 
       long int maxrss;
 
@@ -113,6 +113,9 @@ class WorkerThread : public QThread
 
       QVector< US_Solute >    solutes_i;   // solutes input
       QVector< US_Solute >    solutes_c;   // solutes computed
+
+      QVector< double >       sv_nnls_a;   // saved nnls_a (A matrix)
+      QVector< double >       sv_nnls_b;   // saved nnls_b (B matrix)
 };
 
 #endif

@@ -88,7 +88,11 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \param offset         Starting data-sets offset
     //! \param dataset_count  Number of data sets for which to solve
     //! \param sim_vals       Simulation parameters object
-    void calc_residuals( int, int, Simulation& );
+    //! \param padAB          Optional flag to pad saved A and B
+    //! \param ASave          Optional pointer for saving A matrix
+    //! \param BSave          Optional pointer for saving B matrix
+    void calc_residuals( int, int, Simulation&, bool = false,
+                         QVector< double >* = 0, QVector< double >*  = 0 );
 
     //! \brief Set a flag so that the worker aborts at the earliest opportunity
     void abort_work    ( void );

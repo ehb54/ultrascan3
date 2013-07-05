@@ -26,8 +26,6 @@ class US_RpScan : public US_WidgetsDialog
       US_RpScan( QList< US_SolveSim::DataSet* >&, ModelRecord&, int&,
                  double&, QWidget* p = 0 );
 
-      double get_alpha( void );
-
    private:
       QList< US_SolveSim::DataSet* >&  dsets;
       ModelRecord&                     mrec;
@@ -85,6 +83,9 @@ class US_RpScan : public US_WidgetsDialog
       void plot_data  ( void   );
       void mouse      ( const QwtDoublePoint& );
       void process_job( WorkerThread* );
+      void apply_alpha( const double,
+                        QVector< double >&, QVector< double >&,
+                        const int, const int, const int, double&, double& );
 
       void help       ( void )
       { showHelp.show_help( "pcsa_rpscan.html" ); };

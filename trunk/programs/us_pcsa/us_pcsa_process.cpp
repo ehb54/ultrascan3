@@ -145,6 +145,7 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
       double endk = orig_sols[ ktask ][ mm ].k;
       wtask.par1  = mrecs[ ktask ].par1;
       wtask.par2  = mrecs[ ktask ].par2;
+      wtask.depth = 0;
 
       wtask.sim_vals.alpha = alpha_fx;
 
@@ -204,10 +205,10 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
       tr( "All computations have been aborted." ), false );
 }
 
-// Resume a specified PCSA fit run at the L-M stage
-void US_pcsaProcess::resume_fit( double alf )
+// Complete a specified PCSA fit run after alpha scan or alpha change
+void US_pcsaProcess::final_fit( double alf )
 {
-DbgLv(1) << "2P(pcsaProc): resume_fit()";
+DbgLv(1) << "2P(pcsaProc): final_fit()";
    abort       = false;
    alpha       = alf;
 

@@ -104,6 +104,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_varcount->setStep(    1 );
    ct_cresolu ->setStep(    1 );
    ct_tralpha ->setStep( 0.001 );
+   ct_thrdcnt ->setStep(    1 );
    cmb_curvtype = us_comboBox();
    cmb_curvtype->addItem( "Straight Line" );
    cmb_curvtype->addItem( "Increasing Sigmoid" );
@@ -114,7 +115,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    le_minrmsd   = us_lineedit( "0.009000" , -1, true );
 
    b_progress   = us_progressBar( 0, 100, 0 );
-
 
    int row       = 0;
    controlsLayout->addWidget( lb_fitting,    row++, 0, 1, 4 );
@@ -327,9 +327,8 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    double alpha  = ct_tralpha  ->value();
 
    // Alpha-scan completed:  test if we need to re-fit
-   QString newfpars = fitpars_string();
 DbgLv(1) << "AnaC: (1)need_fit" << need_fit;
-   need_fit      = ( newfpars != fitpars );
+   need_fit      = ( fitpars_string() != fitpars );
 DbgLv(1) << "AnaC: (2)need_fit" << need_fit;
 
    if ( need_fit )
@@ -374,7 +373,7 @@ DbgLv(1) << "(2)pb_plot-Enabled" << pb_plot->isEnabled();
                             res, typ, nthr, noif, alpha );
 
    else if ( need_final )
-      processor->resume_fit( alpha );
+      processor->final_fit( alpha );
 
    qApp->processEvents();
 }
@@ -578,26 +577,6 @@ DbgLv(1) << "AC:cp: stage" << stage;
       le_minvari->setText( QString::number( vari ) );
       le_minrmsd->setText( QString::number( rmsd ) );
 DbgLv(1) << "AC:cp: mrec fetched";
-
-#if 0
-      double alpha    = 0.0;
-      int    nthr   = (int)ct_thrdcnt ->value();
-      US_RpScan* rpscand = new US_RpScan( dsets, mrec, nthr, alpha );
-DbgLv(1) << "AC:cp: RpScan created";
-
-      if ( rpscand->exec() == QDialog::Accepted )
-      {
-DbgLv(1) << "AC:cp: alpha fetched" << alpha;
-         ct_tralpha ->setValue( alpha );
-      }
-//      pb_strtfit ->setEnabled( true  );
-//      pb_strtscan->setEnabled( false );
-//      ck_rparscan->setChecked( false );
-DbgLv(1) << "AC:cp: RpScan deleting";
-      delete rpscand;
-      rpscand   = NULL;
-DbgLv(1) << "AC:cp: RpScan deleted";
-#endif
 
       // Assume we can compute the final and save current fit parameters
       need_final    = true;
@@ -808,6 +787,7 @@ DbgLv(1) << "AC:cp: RpScan deleted";
 
    // Assume we can compute the final and save current fit parameters
    fitpars       = fitpars_string();
+   nlpts         = (int)ct_cresolu ->value();
 }
 
 // Set flags and start fit where only final computation is needed
@@ -829,10 +809,10 @@ QString US_AnalysisControl::fitpars_string()
    double kup    = ct_uplimitk->value();
    double kin    = ct_incremk ->value();
    int    nvar   = (int)ct_varcount->value();
+   kin           = ( typ == 0 ) ? kin : (double)nvar;
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
    int    res    = (int)ct_cresolu ->value();
-   kin           = ( typ == 0 ) ? kin : (double)nvar;
    return QString().sprintf( "%d %.5f %.5f %.5f %.5f %.5f %d %d %d",
             typ, slo, sup, klo, kup, kin, nvar, noif, res );
 }

@@ -85,8 +85,11 @@ US_SolveSim::Simulation::Simulation()
 
 // Do the real work of a 2dsa/ga thread/processor:  simulation from solutes set
 void US_SolveSim::calc_residuals( int offset, int dataset_count,
-      Simulation& sim_vals )
+      Simulation& sim_vals, bool padAB,
+      QVector< double >* ASave, QVector< double >* BSave )
 {
+   QVector< double > sv_nnls_a;
+   QVector< double > sv_nnls_b;
    dbg_level     = sim_vals.dbg_level;            // Debug level
    dbg_timing    = sim_vals.dbg_timing;           // Debug-timing flag
    noisflag      = sim_vals.noisflag;             // Noise-calculation flag
@@ -630,6 +633,12 @@ DbgLv(1) << "  noise small NNLS";
    {  // No TI or RI noise
       if ( abort ) return;
 
+      if ( ASave != NULL  &&  BSave != NULL )
+      {
+         sv_nnls_a = nnls_a;
+         sv_nnls_b = nnls_b;
+      }
+
       US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
                       nnls_b.data(), nnls_x.data() );
 
@@ -817,6 +826,7 @@ DbgLv(1) << "CR:   jj solute-c" << kk-1 << (kk>0?sim_vals.solutes[kk-1].c:0.0);
    if ( calc_ri )
       sim_vals.ri_noise << rinvec;
 
+   // Compute and return the xnorm-squared value of concentrations
    nsolutes = sim_vals.solutes.size();
 DbgLv(1) << "CR:     nsolutes" << nsolutes;
    double xnorm = 0.0;
@@ -827,6 +837,103 @@ DbgLv(1) << "CR:     nsolutes" << nsolutes;
 
    sim_vals.xnormsq = xnorm;
 DbgLv(1) << "CR:       xnormsq" << xnorm;
+
+   // If specified, return the A and B matrices (with or without padding)
+   if ( ASave != NULL  &&  BSave != NULL )
+   {
+      if ( padAB )
+      {  // Return A and B with padding for regularization
+         if ( tikreg )
+         {  // If regularization was used, return A and B with padding intact
+            (*ASave)     = sv_nnls_a;
+            (*BSave)     = sv_nnls_b;
+         }
+
+         else
+         {  // If no regularization, return A and B with padding added
+            ASave->clear();
+            BSave->clear();
+            int    kk    = 0;
+
+            for ( int cc = 0; cc < nsolutes; cc++ )
+            {
+               for ( int jj = 0; jj < ntotal; jj++ )
+               {  // Save an A column
+                  (*ASave) << sv_nnls_a[ kk++ ];
+               }
+
+               for ( int jj = 0; jj < nsolutes; jj++ )
+               {
+                  (*ASave) << 0.0;   // Pad an A column (zeroes for now)
+               }
+            }
+
+            for ( int jj = 0; jj < ntotal; jj++ )
+            {  // Save the B matrix (vector)
+               (*BSave) << sv_nnls_b[ jj ];
+            }
+
+            for ( int cc = 0; cc < nsolutes; cc++ )
+            {
+               (*BSave) << 0.0;      // Pad the B vector with zeroes
+            }
+         }
+
+         // If we are doing padding, it is in preparation for regularization.
+         // So, if any noise was calculated, it should be added to the
+         // B vector.
+         if ( calc_ri || calc_ti )
+         {
+            int nscans   = data_sets[ 0 ]->run_data.scanCount();
+            int npoints  = data_sets[ 0 ]->run_data.pointCount();
+            int kk       = 0;
+
+            for ( int ss = 0; ss < nscans; ss++ )
+            {
+               double rinoi = calc_ri ? rinvec[ ss ] : 0.0;
+
+               for ( int rr = 0; rr <  npoints; rr++ )
+               {
+                  double tinoi = calc_ti ? tinvec[ rr ] : 0.0;
+                  (*BSave)[ kk++ ] += ( tinoi + rinoi );
+               }
+            }
+         }
+
+      }
+
+      else
+      {  // Return A and B without any regularization padding
+         if ( tikreg )
+         {  // If regularization was used, remove padding
+            ASave->clear();
+            BSave->clear();
+            int    kk    = 0;
+
+            for ( int cc = 0; cc < nsolutes; cc++ )
+            {
+               for ( int jj = 0; jj < ntotal; jj++ )
+               {  // Save an A column
+                  (*ASave) << sv_nnls_a[ kk++ ];
+               }
+
+               kk  += nsolutes;    // Bump past regularization padding
+            }
+
+            for ( int jj = 0; jj < ntotal; jj++ )
+            {  // Save the B matrix (vector)
+               (*BSave) << sv_nnls_b[ jj ];
+            }
+         }
+               
+         else
+         {  // If no regularization, return A and B as they are
+            (*ASave)     = sv_nnls_a;
+            (*BSave)     = sv_nnls_b;
+         }
+      }
+   }
+         
 DebugTime("END:calcres");
 }
 
