@@ -466,6 +466,12 @@ void US_pcsaProcess::get_mrec( ModelRecord& p_mrec )
    p_mrec      = mrecs[ 0 ];              // Copy best model record
 }
 
+// Replace the top-spot model record
+void US_pcsaProcess::put_mrec( ModelRecord& p_mrec )
+{
+   mrecs[ 0 ]  = p_mrec;                  // Copy best model record
+}
+
 // Submit a job
 void US_pcsaProcess::submit_job( WorkPacket& wtask, int thrx )
 {
@@ -1634,6 +1640,8 @@ void US_pcsaProcess::compute_final()
 {
 DbgLv(1) << "CFin: alpha" << alpha;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   QTime ftimer;
+   ftimer.start();
    ModelRecord mrec   = mrecs[ 0 ];
    model              = mrec.model;
    US_SolveSim::Simulation sim_vals;
@@ -1643,12 +1651,16 @@ DbgLv(1) << "CFin: alpha" << alpha;
    sim_vals.solutes   = mrec.isolutes;
 
    // Evaluate the model
-   double rmsd   = evaluate_model( dsets, sim_vals );
-
    US_SolveSim::DataSet* dset = dsets[ 0 ];
-   QString fmsg  = tr( "\nThe final best model (RMSD=%1) used a Tikhonov\n"
-                       "  regularization parameter of %2 .\n" )
-                       .arg( rmsd ).arg( alpha );
+   double rmsd    = evaluate_model( dsets, sim_vals );
+   int    nsol    = dset->model.components.size();
+   int    nisol   = mrec.isolutes.size();
+   int    ktimsc = ( ftimer.elapsed() + 500 ) / 1000;
+
+   QString fmsg   = tr(
+      "\nA final best model (RMSD=%1; %2-solute, %3 out; %4 sec.)\n"
+      " used a Tikhonov regularization parameter of %5 .\n" )
+      .arg( rmsd ).arg( nisol ).arg( nsol ).arg( ktimsc ).arg( alpha );
    emit message_update( fmsg, true );
 
    // Replace best model in vector and build out model more completely
@@ -1659,7 +1671,6 @@ DbgLv(1) << "CFin: alpha" << alpha;
    model          = dset->model;
    double sfactor = 1.0 / dset->s20w_correction;
    double dfactor = 1.0 / dset->D20w_correction;
-   int    nsol    = dset->model.components.size();
 
    for ( int ii = 0; ii < nsol; ii++ )
    {

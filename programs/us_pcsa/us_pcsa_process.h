@@ -77,16 +77,16 @@ class US_pcsaProcess : public QObject
       //! \param mrec    Model record
       void get_mrec( ModelRecord& );
 
+      //! \brief Replace best mrec in internal mrecs list
+      //! \param mrec    Model record
+      void put_mrec( ModelRecord& );
+
       //! \brief Stop a fit that is in progress
       void stop_fit(       void );
-//      int  estimate_steps( int  );
-
-      //! \brief Get message for last error
-      //! \returns       Message about last error
-//      QString lastError( void ) { return errMsg; }
 
       static const int solute_doubles = sizeof( US_Solute ) / sizeof( double );
 
+      // Static routines needed for Levenberg-Marquardt
       static double fit_function_SL( double, double* );
       static double fit_function_IS( double, double* );
       static double fit_function_DS( double, double* );

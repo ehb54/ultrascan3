@@ -48,7 +48,7 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    QLabel* lb_datctrls    = us_banner( tr( "PCSA Model Parameters" ) );
    QLabel* lb_mtype       = us_label(  tr( "Model Type:" ) );
    QLabel* lb_nlines      = us_label(  tr( "Lines (Models):" ) );
-   QLabel* lb_npoints     = us_label(  tr( "Points per Line:" ) );
+   QLabel* lb_npoints     = us_label(  tr( "Max Points per Line:" ) );
    QLabel* lb_kincr       = us_label(  tr( "f/f0 Increment:" ) );
            lb_rmsdhd      = us_label(  tr( "RMSD Cuts" ) );
            lb_ltypeh      = us_label(  tr( "Line Type" ) );
@@ -316,7 +316,7 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
             curv->setPen( pen_gray );
          }
 
-         int klpts   = nlpts;
+         int klpts   = mrecs[ ii ].isolutes.size();
 
          if ( ctype == 0 )
          { // For straight line, just draw from start to end
@@ -331,7 +331,7 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
          { // Otherwise, set each point on the curve
 //DbgLv(1) << "RP:PD nlpts" << nlpts;
 //DbgLv(1) << "RP:PD   isol size" << mrecs[ii].isolutes.size();
-            for ( int kk = 0; kk < nlpts; kk++ )
+            for ( int kk = 0; kk < klpts; kk++ )
             {
                xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].s * 1.e+13;
                yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].k;
