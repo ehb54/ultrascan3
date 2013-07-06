@@ -512,7 +512,7 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
     << " s,ff0" << wresult.csolutes[mm].s*1.0e+13
     << wresult.csolutes[mm].k; } }
 //DBG-CONC
-   double variance = wresult.sim_vals.variances[ 0 ];
+   double variance = wresult.sim_vals.variance;
 
    // Save variance and model record for this task result
    ModelRecord mrec;
@@ -1254,7 +1254,8 @@ DbgLv(0) << "LMf:  par1 par2" << par[0] << par[1];
    par[ 10 ]     = minp2;
    par[ 11 ]     = maxp2;
    par[ 12 ]     = noisflag;
-   par[ 13 ]     = dbg_level;
+//   par[ 13 ]     = dbg_level;
+   par[ 13 ]     = 0;
    par[ 14 ]     = alpha_lm;
 DbgLv(1) << "LMf:  ppar2" << ppar[4] << dsets[0] << curvtype << ppar[5];
 DbgLv(1) << "LMf:  alpha" << alpha_lm << par[14];
@@ -1342,6 +1343,7 @@ DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol;
    US_SolveSim::DataSet* dset = dsets[ 0 ];
    double rmsd   = sqrt( dset->model.variance );
    int    nsol   = dset->model.components.size();
+   int    nfev   = status.nfev;
    time_lm       = timer.elapsed();
    int    ktimes = ( time_lm + 500 ) / 1000;
    int    ktimeh = ktimes / 3600;
@@ -1352,8 +1354,8 @@ DbgLv(0) << "     lmcfit time: " << ktimeh << "h" << ktimem
 DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
  << "actual" << time_lm;
    QString fmsg = tr( "The new best model has par1 %1,  par2 %2,\n"
-                      "  RMSD %3,  %4 solutes  " )
-       .arg( par[ 0 ] ).arg( par[ 1 ] ).arg( rmsd ).arg( nsol );
+                      "  RMSD %3,  %4 solutes,  %5 LM iters.  " )
+       .arg( par[ 0 ] ).arg( par[ 1 ] ).arg( rmsd ).arg( nsol ).arg( nfev );
    if ( ktimeh == 0 )
       fmsg      = fmsg + tr( "(%1 min., %2 sec.)" )
                          .arg( ktimem ).arg( ktimes );
@@ -1566,7 +1568,7 @@ double US_pcsaProcess::evaluate_model( QList< US_SolveSim::DataSet* >& dsets,
 
    // Construct a rudimentary model from computed solutes and save it
    dset->model          = US_Model();
-   dset->model.variance = sim_vals.variances[ 0 ];
+   dset->model.variance = sim_vals.variance;
    dset->model.components.clear();
 
    for ( int ii = 0; ii < sim_vals.solutes.size(); ii++ )
@@ -1596,7 +1598,7 @@ double US_pcsaProcess::evaluate_model( QList< US_SolveSim::DataSet* >& dsets,
    }
 
    // Compute the RMSD and return it
-   double rmsd   = sqrt( sim_vals.variances[ 0 ] );
+   double rmsd   = sqrt( sim_vals.variance );
    return rmsd;
 }
 

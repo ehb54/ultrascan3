@@ -41,7 +41,6 @@ DbgLv(1) << "2P(WT):    Thread destroyed" << thrn;
 // define work for a worker thread
 void WorkerThread::define_work( WorkPacket& workin )
 {
-
    str_k       = workin.str_k;
    end_k       = workin.end_k;
    par1        = workin.par1;
@@ -50,6 +49,11 @@ void WorkerThread::define_work( WorkPacket& workin )
    taskx       = workin.taskx;
    noisflag    = workin.noisf;
    depth       = workin.depth;
+   psv_nnls_a  = workin.psv_nnls_a;
+   psv_nnls_b  = workin.psv_nnls_b;
+QString phdr = QString( "2P(WT)dw:%1:%2:" ).arg(taskx).arg(thrn);
+if(depth>0)
+DbgLv(1) << phdr << "depth1 psv_nnlsab" << psv_nnls_a << psv_nnls_b;
 
    solutes_i   = workin.isolutes;
 
@@ -63,15 +67,16 @@ void WorkerThread::define_work( WorkPacket& workin )
    dsets << &dset_wk;                        // save its pointer
 
    sim_vals             = workin.sim_vals;
-   sim_vals.variances   = workin.sim_vals.variances;
+   sim_vals.variance    = workin.sim_vals.variance;
    sim_vals.ti_noise    = workin.sim_vals.ti_noise;
    sim_vals.ri_noise    = workin.sim_vals.ti_noise;
-   sim_vals.solutes     = workin.sim_vals.solutes;
+   sim_vals.solutes     = solutes_i;
 }
 
 // get results of a completed worker thread
 void WorkerThread::get_result( WorkPacket& workout )
 {
+DbgLv(1) << "2P(WT): get_result IN";
    workout.str_k    = str_k;
    workout.end_k    = end_k;
    workout.par1     = par1;
@@ -86,24 +91,33 @@ void WorkerThread::get_result( WorkPacket& workout )
    workout.ti_noise = ti_noise.values;
    workout.ri_noise = ri_noise.values;
    workout.sim_vals = sim_vals;
+//*DEBUG*
 int nn=workout.csolutes.size();
 int kk=nn/2;
 int ni=solutes_i.size();
+if(depth==0) {
 DbgLv(1) << "2P(WT): thr nn" << thrn << nn << "out sol0 solk soln"
  << workout.csolutes[0].c << workout.csolutes[kk].c << workout.csolutes[nn-1].c
  << "in sol0 soln" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
- << solutes_i[0].c << solutes_i[ni-1].c;
+ << solutes_i[0].c << solutes_i[ni-1].c; }
+else {
+DbgLv(1) << "2P(WT): thr nn" << thrn << nn 
+ << "in sol0 soln" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
+ << solutes_i[0].c << solutes_i[ni-1].c; }
+//*DEBUG*
 }
 
 // run the worker thread
 void WorkerThread::run()
 {
-
+QString phdr = QString( "WT:RUN:%1:%2:" ).arg(taskx).arg(thrn);
    calc_residuals();              // do all the work here
 
+DbgLv(1) << phdr << " c_r return";
    quit();
    exec();
 
+DbgLv(1) << phdr << "   sig w_c";
    emit work_complete( this );    // signal that a thread's work is done
 }
 
@@ -116,9 +130,11 @@ void WorkerThread::flag_abort()
 // Do the real work of a thread:  solution from solutes set
 void WorkerThread::calc_residuals()
 {
+QString phdr = QString( "2P(WT):CR:%1:%2:" ).arg(taskx).arg(thrn);
+DbgLv(1) << phdr << "depth" << depth;
 
-   if ( depth == 0  ||  taskx == ( thrn - 1 ) )
-   {  // Fit task or 1st few scan tasks:  do full compute of model
+   if ( depth == 0 )
+   {  // Fit task:  do full compute of model
       solvesim            = new US_SolveSim( dsets, thrn, true );
 
       sim_vals.solutes    = solutes_i;
@@ -126,12 +142,7 @@ void WorkerThread::calc_residuals()
 //      sim_vals.dbg_level  = dbg_level;
       sim_vals.dbg_timing = US_Settings::debug_match( "pcsaTiming" );
 
-      if ( depth == 0 )    // Normal (fit) calc
-         solvesim->calc_residuals( 0, 1, sim_vals );
-
-      else                 // Calc for scan and save A,B matrices
-         solvesim->calc_residuals( 0, 1, sim_vals, true,
-                                   &sv_nnls_a, &sv_nnls_b );
+      solvesim->calc_residuals( 0, 1, sim_vals );
 
       solutes_c           = sim_vals.solutes;
       ti_noise.values     = sim_vals.ti_noise;
@@ -139,7 +150,7 @@ void WorkerThread::calc_residuals()
    }
 
    else
-   {  // Alpha scan beyond first few:  apply alpha using saved A,B matrices
+   {  // Alpha scan task:  apply alpha using saved A,B matrices
       int    nscans       = dsets[ 0 ]->run_data.scanCount();
       int    npoints      = dsets[ 0 ]->run_data.pointCount();
       int    nisols       = solutes_i.size();
@@ -147,11 +158,15 @@ void WorkerThread::calc_residuals()
       double xnormsq      = 0.0;
       double alpha        = sim_vals.alpha;
 
-      apply_alpha( alpha, sv_nnls_a, sv_nnls_b,
+DbgLv(1) << phdr << "   call apply_alpha" << alpha;
+      apply_alpha( alpha, psv_nnls_a, psv_nnls_b,
             nscans, npoints, nisols, variance, xnormsq );
+DbgLv(1) << phdr << "     get apply_alpha: vari xnsq" << variance << xnormsq;
+qApp->processEvents();
 
-      sim_vals.variances[ 0 ] = variance;
-      sim_vals.xnormsq        = xnormsq;
+      sim_vals.variance   = variance;
+      sim_vals.xnormsq    = xnormsq;
+DbgLv(1) << phdr << "      sv.xnormsq" << sim_vals.xnormsq;
    }
 
    return;
@@ -164,32 +179,34 @@ void WorkerThread::forward_progress( int steps )
 }
 
 void WorkerThread::apply_alpha( const double alpha,
-      QVector< double >&sv_nnls_a, QVector< double >& sv_nnls_b,
+      QVector< double >* psv_nnls_a, QVector< double >* psv_nnls_b,
       const int nscans, const int npoints, const int nisols,
       double& variance, double& xnormsq )
 {
+QString phdr = QString( "wAA:%1:%2:" ).arg(taskx).arg(thrn);
    int    ntotal   = nscans * npoints;
    int    narows   = ntotal + nisols;
           variance = 0.0;
           xnormsq  = 0.0;
+   int    ncsols   = 0;
    double alphad   = 0.0;
-   QVector< double > nnls_a = sv_nnls_a;
-   QVector< double > nnls_b = sv_nnls_b;
+   QVector< double > nnls_a = *psv_nnls_a;   // Local copy of A matrix
+   QVector< double > nnls_b = *psv_nnls_b;   // Local copy of B matrix
    QVector< double > nnls_x;
    QVector< double > simdat;
    nnls_x  .fill( 0.0, nisols );
    simdat  .fill( 0.0, ntotal );
-qDebug() << "AA: ns np ni na" << nscans << npoints << nisols << narows;
+qDebug() << phdr << " ns np ni na" << nscans << npoints << nisols << narows;
 
    // Determine scaling factor for alpha
    for ( int rr = 0; rr < npoints; rr++ )
-      alphad          = qMax( alphad, sv_nnls_b[ rr ] );
+      alphad          = qMax( alphad, (*psv_nnls_b)[ rr ] );
 
    // Replace alpha in the diagonal of the lower square of A
    alphad          = ( alphad == 0.0 ) ? alpha : ( sqrt( alphad ) * alpha );
    int    dx       = ntotal;
    int    dinc     = ntotal + nisols + 1;
-qDebug() << "AA:  alf alfd" << alpha << alphad << "dx dinc" << dx << dinc;
+qDebug() << phdr << " alf alfd" << alpha << alphad << "dx dinc" << dx << dinc;
 
    for ( int cc = 0; cc < nisols; cc++ )
    {
@@ -213,23 +230,27 @@ qDebug() << "AA:  alf alfd" << alpha << alphad << "dx dinc" << dx << dinc;
 
          for ( int kk = 0; kk < ntotal; kk++ )
          {
-            simdat[ kk ]   += ( soluval * sv_nnls_a[ aa++ ] );
+            simdat[ kk ]   += ( soluval * (*psv_nnls_a)[ aa++ ] );
          }
+
+         ncsols++;
       }
    }
 
    // Calculate the sum for the variance computation
    for ( int kk = 0; kk < ntotal; kk++ )
    {
-      variance       += sq( ( sv_nnls_b[ kk ] - simdat[ kk ] ) );
+      variance       += sq( ( (*psv_nnls_b)[ kk ] - simdat[ kk ] ) );
    }
-qDebug() << "AA:    ntotal" << ntotal << "varisum" << variance;
+qDebug() << phdr << "    ntot ncsols" << ntotal << ncsols
+ << "varisum" << variance;
 
    // Return computed variance and xnorm-sq
-   variance         /= (double)( ntotal );
-qDebug() << "AA: alpha" << alpha << "vari xnsq" << variance << xnormsq;
+   variance         /= (double)ntotal;
+qDebug() << phdr << " alpha" << alpha << "vari xnsq" << variance << xnormsq;
 int mm = npoints / 2;
-qDebug() << "AA: mm=" << mm << "a[m] b[m] s[m]" << sv_nnls_a[mm]
-   << sv_nnls_b[mm] << simdat[mm];
+qDebug() << phdr << " mm=" << mm << "a[m] b[m] s[m]"
+ << (*psv_nnls_a)[mm] << (*psv_nnls_b)[mm] << simdat[mm];
+qApp->processEvents();
 }
 

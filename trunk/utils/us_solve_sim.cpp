@@ -101,8 +101,10 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    int ntinois   = 0;                             // TI noise value count
    int nrinois   = 0;                             // RI noise value count
    double alphad = sim_vals.alpha;                // Alpha for diagonal
+#if 0
 #ifdef NO_DB
    US_Settings::set_us_debug( dbg_level );
+#endif
 #endif
 
    if ( banddthr )
@@ -260,8 +262,9 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
             // Calculate Astfem_RSA solution (Lamm equations)
             US_Astfem_RSA astfem_rsa( model, dset->simparams );
 
-            astfem_rsa.calculate( simdat );
+            astfem_rsa.set_debug_flag( dbg_level );
 
+            astfem_rsa.calculate( simdat );
             if ( abort ) return;
 
             if ( banddthr )
@@ -360,6 +363,8 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
             // Calculate Astfem_RSA solution (Lamm equations)
             US_Astfem_RSA astfem_rsa( model, dset->simparams );
 
+            astfem_rsa.set_debug_flag( dbg_level );
+
             astfem_rsa.calculate( simdat );
             if ( abort ) return;
 
@@ -456,6 +461,8 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
 
             // Calculate Astfem_RSA solution (Lamm equations)
             US_Astfem_RSA astfem_rsa( model, dset->simparams );
+
+            astfem_rsa.set_debug_flag( dbg_level );
 
             astfem_rsa.calculate( simdat );
             if ( abort ) return;
@@ -856,7 +863,7 @@ DbgLv(1) << "CR:       xnormsq" << xnorm;
             int    kk    = 0;
 
             for ( int cc = 0; cc < nsolutes; cc++ )
-            {
+            {  // Save and pad A matrix, a column at a time
                for ( int jj = 0; jj < ntotal; jj++ )
                {  // Save an A column
                   (*ASave) << sv_nnls_a[ kk++ ];

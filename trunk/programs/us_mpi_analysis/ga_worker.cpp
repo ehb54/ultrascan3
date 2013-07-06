@@ -1025,6 +1025,7 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 
          US_AstfemMath::initSimData( simdat, *edata, 0.0 );
          US_Astfem_RSA astfem_rsa( model, dset->simparams );
+         astfem_rsa.set_debug_flag( dbg_level );
          astfem_rsa.calculate( simdat );
 
          for ( int ss = 0; ss < nscans; ss++ )
@@ -1060,6 +1061,7 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 
       US_AstfemMath::initSimData( simdat, *edata, 0.0 );
       US_Astfem_RSA astfem_rsa( model, dset->simparams );
+      astfem_rsa.set_debug_flag( dbg_level );
       astfem_rsa.calculate( simdat );
 
       int kk = index * ntotal;
@@ -1117,6 +1119,7 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
       // Calculate the simulation using a model of all live solutes
       US_AstfemMath::initSimData( simdat, *edata, 0.0 );
       US_Astfem_RSA astfem_rsa2( model, dset->simparams );
+      astfem_rsa2.set_debug_flag( dbg_level );
       astfem_rsa2.calculate( simdat );
 
       // Calculate the fitness (variance) == average of residuals-squared

@@ -237,9 +237,9 @@ DbgLv(1) << "ASC:  nalpha" << nalpha << "nthr" << nthr;
 
    if ( nthr == 1 )
    {  // Non-multi-threaded scan
-      QVector< double > sv_nnls_a;
-      QVector< double > sv_nnls_b;
       QVector< double > csolutes;
+      sv_nnls_a.clear();
+      sv_nnls_b.clear();
       int    nscans      = dsets[ 0 ]->run_data.scanCount();
       int    npoints     = dsets[ 0 ]->run_data.pointCount();
       int    nisols      = mrec.isolutes.size();
@@ -254,7 +254,7 @@ DbgLv(1) << "ASC:  nalpha" << nalpha << "nthr" << nthr;
             US_SolveSim::Simulation sim_vals;
             sim_vals.alpha     = calpha;
             sim_vals.noisflag  = 0;
-            sim_vals.dbg_level = dbg_level;
+            sim_vals.dbg_level = 0;
             sim_vals.solutes   = mrec.isolutes;
 
             US_SolveSim* solvesim = new US_SolveSim( dsets, 0, false );
@@ -262,13 +262,14 @@ DbgLv(1) << "ASC:  nalpha" << nalpha << "nthr" << nthr;
             solvesim->calc_residuals( 0, 1, sim_vals, true,
                   &sv_nnls_a, &sv_nnls_b );
 
-            v_vari             = sim_vals.variances[ 0 ];
+            v_vari             = sim_vals.variance;
             v_xnsq             = sim_vals.xnormsq;
+//            v_xnsq            /= (double)sim_vals.solutes.size();
          }
 
          else
          {  // After 1st, regularize by modifying A matrix diagonal, then NNLS
-            apply_alpha( calpha, sv_nnls_a, sv_nnls_b,
+            apply_alpha( calpha, &sv_nnls_a, &sv_nnls_b,
                          nscans, npoints, nisols, v_vari, v_xnsq );
          }
 
@@ -286,6 +287,9 @@ DbgLv(1) << "ASC:  nalpha" << nalpha << "nthr" << nthr;
 DbgLv(1) << "a v x" << calpha << v_vari << v_xnsq;
          qApp->processEvents();
       }
+
+      sv_nnls_a.clear();
+      sv_nnls_b.clear();
    }
 
    else
@@ -293,13 +297,41 @@ DbgLv(1) << "a v x" << calpha << v_vari << v_xnsq;
       le_stattext->setText( tr( "Beginning %1-Thread Alpha Scan ..." )
                             .arg( nthr ) );
       qApp->processEvents();
-      nasubm        = 0;
-      nacomp        = 0;
+      wthreads .clear();
+      sv_nnls_a.clear();
+      sv_nnls_b.clear();
+
+      // Run a complete model computation to get the A,B matrices
+      US_SolveSim::Simulation sim_vals;
+      calpha             = alphas[ 0 ];
+      sim_vals.alpha     = calpha;
+      sim_vals.noisflag  = 0;
+      sim_vals.dbg_level = 0;
+      sim_vals.solutes   = mrec.isolutes;
+
+      US_SolveSim* solvesim = new US_SolveSim( dsets, 0, false );
+
+      solvesim->calc_residuals( 0, 1, sim_vals, true, &sv_nnls_a, &sv_nnls_b );
+
+      v_vari        = sim_vals.variance;
+      v_xnsq        = sim_vals.xnormsq;
+qDebug() << "A0: alpha" << calpha << "vari xnsq" << v_vari << v_xnsq
+ << "ncsols" << sim_vals.solutes.size();;
+      varias[ 0 ]   = v_vari;
+      xnorms[ 0 ]   = v_xnsq;
+      nasubm        = 1;
+      nacomp        = 1;
+
+      QString astat =
+         tr( "Of %1 models, %2 done (Alpha %3, thread %4)" )
+         .arg( nalpha ).arg( nacomp ).arg( alphas[ 0 ] ).arg( 0 );
+      le_stattext->setText( astat );
+      b_progress->setValue( 1 );
 
       for ( int jt = 0; jt < nthr; jt++ )
       {  // Submit the first tasks using available threads
          WorkPacket wtask;
-         calpha               = alphas[ jt ];
+         calpha               = alphas[ jt + 1 ];
          US_SolveSim::Simulation sim_vals;
          sim_vals.alpha       = calpha;
          sim_vals.noisflag    = 0;
@@ -317,12 +349,15 @@ DbgLv(1) << "a v x" << calpha << v_vari << v_xnsq;
          wtask.depth          = 1;
          wtask.state          = 0;
          wtask.noisf          = sim_vals.noisflag;
+         wtask.psv_nnls_a     = &sv_nnls_a;
+         wtask.psv_nnls_b     = &sv_nnls_b;
          wtask.csolutes.clear();
 DbgLv(1) << "ASC:   jt" << jt << "alpha" << calpha;
 
          WorkerThread* wthr   = new WorkerThread( this );
 
          wthr->define_work( wtask );
+         wthreads << wthr;
          connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
                   this, SLOT(   process_job(   WorkerThread* ) ) );
          wthr->start();
@@ -344,6 +379,15 @@ DbgLv(1) << "ASC:      defined: nasubm" << nasubm;
          varmx              = qMax( varmx, varias[ ja ] );
          xnomx              = qMax( xnomx, xnorms[ ja ] );
       }
+
+      // Delete worker threads
+#if 1
+      for ( int jt = 0; jt < nthr; jt++ )
+         delete wthreads[ jt ];
+#endif
+
+      sv_nnls_a.clear();
+      sv_nnls_b.clear();
    }
 
    lgv           = 0  -(int)qFloor( log10( varmx ) );
@@ -570,16 +614,17 @@ void US_RpScan::mouse( const QwtDoublePoint& p )
 
 void US_RpScan::process_job( WorkerThread* wthrd )
 {
+DbgLv(1) << "SCPJ: IN";
    WorkPacket wresult;
    nacomp++;                            // Bump alphas-complete count
    b_progress->setValue( nacomp );
    wthrd->get_result( wresult );        // Get results of thread task
    int    thrn     = wresult.thrn;      // Thread number of task
    int    taskx    = wresult.taskx;     // Task index of task
-DbgLv(1) << "PJ:  thrn" << thrn << "taskx" << taskx;
-   double variance = wresult.sim_vals.variances[ 0 ];
+DbgLv(1) << "SCPJ:  thrn" << thrn << "taskx" << taskx;
+   double variance = wresult.sim_vals.variance;
    double xnormsq  = wresult.sim_vals.xnormsq;
-DbgLv(1) << "PJ:  a v x" << alphas[taskx] << variance << xnormsq;
+DbgLv(1) << "SCPJ:  a v x" << alphas[taskx] << variance << xnormsq;
    varias[ taskx ] = variance;
    xnorms[ taskx ] = xnormsq;
 //   delete wthrd;
@@ -587,12 +632,12 @@ DbgLv(1) << "PJ:  a v x" << alphas[taskx] << variance << xnormsq;
       tr( "Of %1 models, %2 done (Alpha %3, thread %4)" )
       .arg( nalpha ).arg( nacomp ).arg( alphas[ taskx ] ).arg( thrn );
    le_stattext->setText( astat );
-DbgLv(1) << "PJ:    astat" << astat;
+DbgLv(1) << "SCPJ:    astat" << astat;
 
    if ( nacomp == nalpha )
    {  // We are done with all tasks
       qApp->processEvents();
-DbgLv(1) << "PJ:    ALL-DONE";
+DbgLv(1) << "SCPJ:    ALL-DONE";
       return;
    }
 
@@ -604,36 +649,40 @@ DbgLv(1) << "PJ:    ALL-DONE";
       wtask.dsets          = dsets;
       wtask.depth          = 1;
       wtask.state          = 0;
+      wtask.psv_nnls_a     = &sv_nnls_a;
+      wtask.psv_nnls_b     = &sv_nnls_b;
+DbgLv(1) << "SCPJ:     new subm nnls_a nnls_b" << wtask.psv_nnls_a
+ << wtask.psv_nnls_b << "b size" << sv_nnls_b.size();
       wtask.csolutes.clear();
-DbgLv(1) << "PJ:     new subm taskx alpha" << nasubm << wtask.sim_vals.alpha;
+DbgLv(1) << "SCPJ:     new subm taskx alpha" << nasubm << wtask.sim_vals.alpha;
 
 //      WorkerThread* wthr   = new WorkerThread( this );
       WorkerThread* wthr   = wthrd;
-DbgLv(1) << "PJ:     new subm   thr created";
 
       wthr->define_work( wtask );
-DbgLv(1) << "PJ:     new subm   work defined";
+DbgLv(1) << "SCPJ:     new subm   work defined  sv_nnls_a" << wtask.psv_nnls_b;
       wthr->disconnect();
       connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
                this, SLOT(   process_job(   WorkerThread* ) ) );
       wthr->start();
-DbgLv(1) << "PJ:     new subm   thr started" << nasubm;
       nasubm++;
+DbgLv(1) << "SCPJ:     new subm   tsk started" << nasubm;
    }
    qApp->processEvents();
 }
 
-void US_RpScan::apply_alpha( const double alpha, QVector< double >&sv_nnls_a,
-      QVector< double >& sv_nnls_b, const int nscans, const int npoints,
+void US_RpScan::apply_alpha( const double alpha, QVector< double >* psv_nnls_a,
+      QVector< double >* psv_nnls_b, const int nscans, const int npoints,
       const int nisols, double& variance, double& xnormsq )
 {
    int    ntotal   = nscans * npoints;
    int    narows   = ntotal + nisols;
+   int    ncsols   = 0;
           variance = 0.0;
           xnormsq  = 0.0;
    double alphad   = 0.0;
-   QVector< double > nnls_a = sv_nnls_a;
-   QVector< double > nnls_b = sv_nnls_b;
+   QVector< double > nnls_a = *psv_nnls_a;
+   QVector< double > nnls_b = *psv_nnls_b;
    QVector< double > nnls_x;
    QVector< double > simdat;
    nnls_x  .fill( 0.0, nisols );
@@ -642,7 +691,7 @@ qDebug() << "AA: ns np ni na" << nscans << npoints << nisols << narows;
 
    // Determine scaling factor for alpha
    for ( int rr = 0; rr < npoints; rr++ )
-      alphad          = qMax( alphad, sv_nnls_b[ rr ] );
+      alphad          = qMax( alphad, (*psv_nnls_b)[ rr ] );
 
    // Replace alpha in the diagonal of the lower square of A
    alphad          = ( alphad == 0.0 ) ? alpha : ( sqrt( alphad ) * alpha );
@@ -668,11 +717,12 @@ qDebug() << "AA:  alf alfd" << alpha << alphad << "dx dinc" << dx << dinc;
       if ( soluval > 0.0 )
       {
          xnormsq        += sq( soluval );
+         ncsols++;
          int    aa       = cc * narows;
 
          for ( int kk = 0; kk < ntotal; kk++ )
          {
-            simdat[ kk ]   += ( soluval * sv_nnls_a[ aa++ ] );
+            simdat[ kk ]   += ( soluval * (*psv_nnls_a)[ aa++ ] );
          }
       }
    }
@@ -680,15 +730,16 @@ qDebug() << "AA:  alf alfd" << alpha << alphad << "dx dinc" << dx << dinc;
    // Calculate the sum for the variance computation
    for ( int kk = 0; kk < ntotal; kk++ )
    {
-      variance       += sq( ( sv_nnls_b[ kk ] - simdat[ kk ] ) );
+      variance       += sq( ( (*psv_nnls_b)[ kk ] - simdat[ kk ] ) );
    }
 qDebug() << "AA:    ntotal" << ntotal << "varisum" << variance;
 
    // Return computed variance and xnorm-sq
-   variance         /= (double)( ntotal );
-qDebug() << "AA: alpha" << alpha << "vari xnsq" << variance << xnormsq;
+   variance         /= (double)ntotal;
+qDebug() << "AA: alpha" << alpha << "vari xnsq" << variance << xnormsq
+ << "ncsols" << ncsols;
 int mm = npoints / 2;
-qDebug() << "AA: mm=" << mm << "a[m] b[m] s[m]" << sv_nnls_a[mm]
-   << sv_nnls_b[mm] << simdat[mm];
+qDebug() << "AA: mm=" << mm << "a[m] b[m] s[m]" << (*psv_nnls_a)[mm]
+   << (*psv_nnls_b)[mm] << simdat[mm];
 }
 

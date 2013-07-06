@@ -18,8 +18,7 @@ US_Astfem_RSA::US_Astfem_RSA( US_Model&                model,
    time_correction = true;
    simout_flag     = false;
    show_movie      = false;
-
-   dbg_level       = US_Settings::us_debug();
+   dbg_level       = 0;
 }
 
 int US_Astfem_RSA::calculate( US_DataIO::RawData& exp_data )
