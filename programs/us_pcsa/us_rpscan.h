@@ -32,6 +32,8 @@ class US_RpScan : public US_WidgetsDialog
       int&                             nthr;
       double&                          alpha;
 
+      QList< WorkerThread* >           wthreads;
+
       US_Plot*           plotLayout1;
 
       QwtPlot*           data_plot1;
@@ -71,6 +73,8 @@ class US_RpScan : public US_WidgetsDialog
       QVector< double >  alphas;
       QVector< double >  varias;
       QVector< double >  xnorms;
+      QVector< double >  sv_nnls_a;
+      QVector< double >  sv_nnls_b;
 
    protected:
       US_Help       showHelp;
@@ -84,7 +88,7 @@ class US_RpScan : public US_WidgetsDialog
       void mouse      ( const QwtDoublePoint& );
       void process_job( WorkerThread* );
       void apply_alpha( const double,
-                        QVector< double >&, QVector< double >&,
+                        QVector< double >*, QVector< double >*,
                         const int, const int, const int, double&, double& );
 
       void help       ( void )

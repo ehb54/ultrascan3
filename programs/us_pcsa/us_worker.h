@@ -30,23 +30,24 @@ typedef struct work_packet_s
    double  par1;       // sigmoid model par1 value
    double  par2;       // sigmoid model par2 value
 
-   QVector< US_Solute >     isolutes;  // input solutes
-   QVector< US_Solute >     csolutes;  // computed solutes
-   QVector< double >        ti_noise;  // computed ti noise
-   QVector< double >        ri_noise;  // computed ri noise
+   QVector< US_Solute >     isolutes;    // input solutes
+   QVector< US_Solute >     csolutes;    // computed solutes
+   QVector< double >        ti_noise;    // computed ti noise
+   QVector< double >        ri_noise;    // computed ri noise
+   QVector< double >*       psv_nnls_a;  // pointer to nnls A matrix
+   QVector< double >*       psv_nnls_b;  // pointer to nnls B matrix
 
    QList< US_SolveSim::DataSet* > dsets;     // list of data set object pointers
    US_SolveSim::Simulation        sim_vals;  // simulation values
 
-
 } WorkPacket;
 
-//! \brief Worker thread to do actual work of 2DSA analysis
+//! \brief Worker thread to do actual work of PCSA analysis
 
 /*! \class WorkerThread
  *
     This class is for each of the individual worker threads that do the
-    actual work of 2DSA analysis.
+    actual work of PCSA analysis.
 */
 class WorkerThread : public QThread
 {
@@ -73,7 +74,7 @@ class WorkerThread : public QThread
       void calc_resids_ratio( void );
       long int max_rss      ( void );
       void apply_alpha      ( const double,
-            QVector< double >&, QVector< double >&,
+            QVector< double >*, QVector< double >*,
             const int, const int, const int, double&, double& );
 
       long int maxrss;
@@ -114,8 +115,8 @@ class WorkerThread : public QThread
       QVector< US_Solute >    solutes_i;   // solutes input
       QVector< US_Solute >    solutes_c;   // solutes computed
 
-      QVector< double >       sv_nnls_a;   // saved nnls_a (A matrix)
-      QVector< double >       sv_nnls_b;   // saved nnls_b (B matrix)
+      QVector< double >*      psv_nnls_a;  // pointer to saved nnls A matrix
+      QVector< double >*      psv_nnls_b;  // pointer to saved nnls B matrix
 };
 
 #endif

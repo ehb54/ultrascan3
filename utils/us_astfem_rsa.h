@@ -53,6 +53,10 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //!              input experiment grid.
       void set_simout_flag     ( bool flag ){ simout_flag     = flag; };
 
+      //! \brief Set a flag for the debug print level
+      //! \param flag  Integer debug print level (dbg_level).
+      void set_debug_flag      ( int  flag ){ dbg_level       = flag; };
+
    signals:
       //! \brief Signal that a calculate_ni()/calculate_ra2() step is complete.
       //!
