@@ -189,7 +189,6 @@ QString phdr = QString( "wAA:%1:%2:" ).arg(taskx).arg(thrn);
           variance = 0.0;
           xnormsq  = 0.0;
    int    ncsols   = 0;
-   double alphad   = 0.0;
    QVector< double > nnls_a = *psv_nnls_a;   // Local copy of A matrix
    QVector< double > nnls_b = *psv_nnls_b;   // Local copy of B matrix
    QVector< double > nnls_x;
@@ -197,20 +196,26 @@ QString phdr = QString( "wAA:%1:%2:" ).arg(taskx).arg(thrn);
    nnls_x  .fill( 0.0, nisols );
    simdat  .fill( 0.0, ntotal );
 qDebug() << phdr << " ns np ni na" << nscans << npoints << nisols << narows;
+#if 0
+   double alphad   = 0.0;
 
    // Determine scaling factor for alpha
    for ( int rr = 0; rr < npoints; rr++ )
       alphad          = qMax( alphad, (*psv_nnls_b)[ rr ] );
 
-   // Replace alpha in the diagonal of the lower square of A
    alphad          = ( alphad == 0.0 ) ? alpha : ( sqrt( alphad ) * alpha );
+#endif
+
+   // Replace alpha in the diagonal of the lower square of A
    int    dx       = ntotal;
    int    dinc     = ntotal + nisols + 1;
-qDebug() << phdr << " alf alfd" << alpha << alphad << "dx dinc" << dx << dinc;
+//qDebug() << phdr << " alf alfd" << alpha << alphad << "dx dinc" << dx << dinc;
+qDebug() << phdr << " alpha" << alpha << "dx dinc" << dx << dinc;
 
    for ( int cc = 0; cc < nisols; cc++ )
    {
-      nnls_a[ dx ]    = alphad;
+//      nnls_a[ dx ]    = alphad;
+      nnls_a[ dx ]    = alpha;
       dx             += dinc;
    }
 

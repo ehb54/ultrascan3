@@ -66,9 +66,9 @@ DbgLv(1) << "TRP:  nppln" << nppln;
    le_npoints   = us_lineedit( QString::number( nppln ), -1, true );
    le_mdlpar1   = us_lineedit( QString::number( par1  ), -1, true );
    le_mdlpar2   = us_lineedit( QString::number( par2  ), -1, true );
-   ct_stralpha  = us_counter( 3, 0.000, 100.0, 0.020 );
-   ct_endalpha  = us_counter( 3, 0.000, 100.0, 0.800 );
-   ct_incalpha  = us_counter( 3, 0.000, 100.0, 0.020 );
+   ct_stralpha  = us_counter( 3, 0.000, 1000.0, 0.020 );
+   ct_endalpha  = us_counter( 3, 0.000, 1000.0, 0.800 );
+   ct_incalpha  = us_counter( 3, 0.000, 1000.0, 0.020 );
    le_selalpha  = us_lineedit( QString::number( alpha ), -1, false );
    ct_stralpha->setStep( 0.001 );
    ct_endalpha->setStep( 0.001 );
@@ -264,7 +264,6 @@ DbgLv(1) << "ASC:  nalpha" << nalpha << "nthr" << nthr;
 
             v_vari             = sim_vals.variance;
             v_xnsq             = sim_vals.xnormsq;
-//            v_xnsq            /= (double)sim_vals.solutes.size();
          }
 
          else
@@ -380,11 +379,9 @@ DbgLv(1) << "ASC:      defined: nasubm" << nasubm;
          xnomx              = qMax( xnomx, xnorms[ ja ] );
       }
 
-      // Delete worker threads
-#if 1
+      // Delete worker threads and free saved A,B matrices
       for ( int jt = 0; jt < nthr; jt++ )
          delete wthreads[ jt ];
-#endif
 
       sv_nnls_a.clear();
       sv_nnls_b.clear();
@@ -427,13 +424,26 @@ DbgLv(1) << "Log-varia Log-xnorm" << lgv << lgx << "vscl xscl" << vscl << xscl;
    qApp->processEvents();
 
    plot_data();
-
 }
 
 // Plot the data
 void US_RpScan::plot_data()
 {
    data_plot1->detachItems();
+
+   if ( nalpha > 1 )
+   {
+      int    je     = nalpha - 1;
+      double ainc   = alphas[ 1 ] - alphas[ 0 ];
+      data_plot1->setTitle(
+            tr( "Alpha Scan Points\nAlphas from %1 to %2 by %3" )
+            .arg( alphas[ 0 ] ).arg( alphas[ je ] ).arg( ainc ) );
+   }
+   else
+   {
+      data_plot1->setTitle( tr( "Alpha Scan Points" ) );
+   }
+
    data_plot1->setAxisTitle( QwtPlot::xBottom,
          tr( "Variance (x 1e%1)" ).arg( lgv ) ),
    data_plot1->setAxisTitle( QwtPlot::yLeft,
@@ -535,31 +545,49 @@ DbgLv(1) << "TRP:H3:   l3: x1,y1" << xl3p1 << yl3p1;
       US_Math2::nearest_curve_point( xx, yy, nalpha, true, xl3p1, yl3p1,
             &xl3p2, &yl3p2, alphas.data(), &alpha );
 
-      // Plot the alpha hint lines
-      curvh1        = us_curve( data_plot1, tr( "Curve Hint 1" ) );
-      curvh1->setPen( pen_red );
-      xh[ 0 ]   = xl1p1;    // Line fitted to first few points
-      yh[ 0 ]   = yl1p1;
-      xh[ 1 ]   = xl3p1;
-      yh[ 1 ]   = yl3p1;
-      curvh1->setData( xh, yh, 2 );
+      // Do a sanity check. If the intersection point is outside the
+      // rectangle that encloses the curve, we likely have an aberrant curve.
+      // So, skip plotting hint lines that are probably just confusing.
+      double xcvp1  = xx[ 0 ];
+      double ycvp1  = yy[ 0 ];
+      double xcvp2  = xx[ je ];
+      double ycvp2  = yy[ je ];
+      bool do_plot  = ( xl3p1 >= xcvp1  &&  yl3p1 <= ycvp1  &&
+                        xl3p1 <= xcvp2  &&  yl3p1 >= ycvp2 );
+DbgLv(1) << "TRP:T4:   cv: x1,y1" << xcvp1 << ycvp1
+ << "x2,y2" << xcvp2 << ycvp2 << " do_plot" << do_plot;
 
-      curvh2        = us_curve( data_plot1, tr( "Curve Hint 2" ) );
-      curvh2->setPen( pen_red );
-      xh[ 0 ]   = xl2p1;    // Line fitted to last few points
-      yh[ 0 ]   = yl2p1;
-      xh[ 1 ]   = xl3p1;
-      yh[ 1 ]   = yl3p1;
-      curvh2->setData( xh, yh, 2 );
+      if ( do_plot )
+      {
+         // Plot the alpha hint lines
+         curvh1        = us_curve( data_plot1, tr( "Curve Hint 1" ) );
+         curvh1->setPen( pen_red );
+         xh[ 0 ]   = xl1p1;    // Line fitted to first few points
+         yh[ 0 ]   = yl1p1;
+         xh[ 1 ]   = xl3p1;
+         yh[ 1 ]   = yl3p1;
+         curvh1->setData( xh, yh, 2 );
 
-      curvh3        = us_curve( data_plot1, tr( "Curve Hint 3" ) );
-      curvh3->setPen( pen_cyan );
-      xh[ 0 ]   = xl3p1;    // Line between hint intersection and main curve
-      yh[ 0 ]   = yl3p1;
-      xh[ 1 ]   = xl3p2;
-      yh[ 1 ]   = yl3p2;
+         curvh2        = us_curve( data_plot1, tr( "Curve Hint 2" ) );
+         curvh2->setPen( pen_red );
+         xh[ 0 ]   = xl2p1;    // Line fitted to last few points
+         yh[ 0 ]   = yl2p1;
+         xh[ 1 ]   = xl3p1;
+         yh[ 1 ]   = yl3p1;
+         curvh2->setData( xh, yh, 2 );
+
+         curvh3        = us_curve( data_plot1, tr( "Curve Hint 3" ) );
+         curvh3->setPen( pen_cyan );
+         xh[ 0 ]   = xl3p1;    // Line between hint intersection and main curve
+         yh[ 0 ]   = yl3p1;
+         xh[ 1 ]   = xl3p2;
+         yh[ 1 ]   = yl3p2;
 DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl3p1 << yl3p1 << yl3p2 << yl3p2;
-      curvh3->setData( xh, yh, 2 );
+         curvh3->setData( xh, yh, 2 );
+      }
+
+      else   // If no good intersection point, default the half-way alpha
+         alpha     = alphas[ nalpha / 2 ];
 
       // Use nearest curve point for default alpha
       le_selalpha->setText( QString().sprintf( "%.3f", alpha ) );
@@ -680,7 +708,6 @@ void US_RpScan::apply_alpha( const double alpha, QVector< double >* psv_nnls_a,
    int    ncsols   = 0;
           variance = 0.0;
           xnormsq  = 0.0;
-   double alphad   = 0.0;
    QVector< double > nnls_a = *psv_nnls_a;
    QVector< double > nnls_b = *psv_nnls_b;
    QVector< double > nnls_x;
@@ -689,19 +716,25 @@ void US_RpScan::apply_alpha( const double alpha, QVector< double >* psv_nnls_a,
    simdat  .fill( 0.0, ntotal );
 qDebug() << "AA: ns np ni na" << nscans << npoints << nisols << narows;
 
+#if 0
+   double alphad   = 0.0;
+
    // Determine scaling factor for alpha
    for ( int rr = 0; rr < npoints; rr++ )
       alphad          = qMax( alphad, (*psv_nnls_b)[ rr ] );
 
-   // Replace alpha in the diagonal of the lower square of A
    alphad          = ( alphad == 0.0 ) ? alpha : ( sqrt( alphad ) * alpha );
+#endif
+   // Replace alpha in the diagonal of the lower square of A
    int    dx       = ntotal;
    int    dinc     = ntotal + nisols + 1;
-qDebug() << "AA:  alf alfd" << alpha << alphad << "dx dinc" << dx << dinc;
+//qDebug() << "AA:  alf alfd" << alpha << alphad << "dx dinc" << dx << dinc;
+qDebug() << "AA:  alf" << alpha << "dx dinc" << dx << dinc;
 
    for ( int cc = 0; cc < nisols; cc++ )
    {
-      nnls_a[ dx ]    = alphad;
+//      nnls_a[ dx ]    = alphad;
+      nnls_a[ dx ]    = alpha;
       dx             += dinc;
    }
 
