@@ -167,7 +167,9 @@ DebugTime("BEG:calcres");
    // Populate b array with experiment data concentrations
    int    kk     = 0;
    int    kodl   = 0;
+#if 0
    double s0max  = 0.0;
+#endif
 
    for ( int ee = offset; ee < offset + dataset_count; ee++ )
    {
@@ -189,10 +191,12 @@ DebugTime("BEG:calcres");
                kodl++;
             }
 
+#if 0
             else if ( ss == 0 )
             {  // Find max of scan 0 values
                s0max          = qMax( s0max, evalue );
             }
+#endif
 
             nnls_b[ kk++ ] = evalue;
          }
@@ -200,12 +204,14 @@ DebugTime("BEG:calcres");
    }
 DbgLv(1) << "   CR:B fill kodl" << kodl;
 
+#if 0
    // If needed, scale the alpha used in A-matrix appendix diagonals
    if ( tikreg )
    {
       alphad         = ( s0max == 0.0 ) ? sim_vals.alpha
                        : ( sim_vals.alpha * sqrt( s0max ) );
    }
+#endif
 
    if ( abort ) return;
 
