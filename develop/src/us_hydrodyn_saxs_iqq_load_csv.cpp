@@ -596,8 +596,8 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
 {
    // find selected one & name it that
 
-
-   bool save_qIq =
+   bool save_qIq = 0;
+   /*
       QMessageBox::question(this, 
                             tr( "US-SOMO: Save .DAT" ),
                             tr( "How do you want to save as a q*I(q) file?" ),
@@ -608,6 +608,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
                             1
                             ) 
       == 1;
+   */
 
    QString sel_name;
 

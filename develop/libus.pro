@@ -262,6 +262,7 @@ SOURCES += \
   src/us_hydrodyn_saxs_hplc_stack.cpp \
   src/us_hydrodyn_saxs_hplc_makeiq.cpp \
   src/us_hydrodyn_saxs_hplc_plots.cpp \
+  src/us_hydrodyn_saxs_hplc_bl.cpp \
   src/us_hydrodyn_saxs_hplc_ciq.cpp \
   src/us_hydrodyn_saxs_hplc_dctr.cpp \
   src/us_hydrodyn_saxs_hplc_gg.cpp \
@@ -576,6 +577,7 @@ HEADERS += \
   include/us_hydrodyn_saxs_buffer_conc.h \
   include/us_hydrodyn_saxs_buffer_conc_load.h \
   include/us_hydrodyn_saxs_hplc.h \
+  include/us_hydrodyn_saxs_hplc_bl.h \
   include/us_hydrodyn_saxs_hplc_ciq.h \
   include/us_hydrodyn_saxs_hplc_dctr.h \
   include/us_hydrodyn_saxs_hplc_p3d.h \

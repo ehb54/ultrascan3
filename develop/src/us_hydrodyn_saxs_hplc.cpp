@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
+#include "../include/us_hydrodyn_saxs_hplc_bl.h"
 #include "../include/us_hydrodyn_saxs_hplc_ciq.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
@@ -8704,6 +8705,23 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start()
 
 void US_Hydrodyn_Saxs_Hplc::baseline_apply()
 {
+   map < QString, QString > parameters;
+   US_Hydrodyn_Saxs_Hplc_Bl *hplc_bl = 
+      new US_Hydrodyn_Saxs_Hplc_Bl(
+                                   this,
+                                   & parameters,
+                                   this );
+   US_Hydrodyn::fixWinButtons( hplc_bl );
+   hplc_bl->exec();
+   delete hplc_bl;
+
+   int smoothing = 0;
+   bool integral = parameters.count( "integral" );
+   if ( integral && parameters.count( "smoothing" ) )
+   {
+      smoothing = parameters[ "smoothing" ].toInt();
+   }
+   
    //    QStringList files;
    //    for ( int i = 0; i < lb_files->numRows(); i++ )
    //    {
@@ -8714,11 +8732,17 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply()
    //          files << lb_files->text( i );
    //       }
    //    }
-   baseline_apply( all_selected_files() );
+   baseline_apply( all_selected_files(), integral, smoothing );
 }
 
-void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files )
+void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, int /* smoothing */ )
 {
+   if ( integral )
+   {
+      editor_msg( "red", tr( "Integral baseline removal not yet supported" ) );
+      return;
+   }
+
    map < QString, bool > current_files;
    for ( int i = 0; i < (int)lb_files->numRows(); i++ )
    {

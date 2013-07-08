@@ -1717,6 +1717,8 @@ bool US_Saxs_Util::smooth(
       {
          low++;
          high--;
+         result[ 0 ] = x[ 0 ];
+         result[ high ] = x[ high ];
       }
       for( unsigned int i = low; i < high; i++ )
       {
