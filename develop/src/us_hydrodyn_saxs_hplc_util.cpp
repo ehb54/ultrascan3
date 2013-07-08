@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
+#include "../include/us_hydrodyn_saxs_hplc_bl.h"
 #include "../include/us_hydrodyn_saxs_hplc_ciq.h"
 #include "../include/us_hydrodyn_saxs_hplc_dctr.h"
 #include "../include/us_hydrodyn_saxs_hplc_p3d.h"
@@ -1898,5 +1899,390 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
    {
       conc_window->refresh( csv_conc );
    }
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::baseline_apply()
+{
+   map < QString, QString > parameters;
+   US_Hydrodyn_Saxs_Hplc_Bl *hplc_bl = 
+      new US_Hydrodyn_Saxs_Hplc_Bl(
+                                   this,
+                                   & parameters,
+                                   this );
+   US_Hydrodyn::fixWinButtons( hplc_bl );
+   hplc_bl->exec();
+   delete hplc_bl;
+
+   if ( !parameters.count( "go" ) )
+   {
+      return;
+   }
+
+   int smoothing = 0;
+   bool integral = parameters.count( "integral" );
+   if ( integral && parameters.count( "smoothing" ) )
+   {
+      smoothing = parameters[ "smoothing" ].toInt();
+   }
+   bool save_bl = parameters.count( "save_bl" );
+   unsigned int reps = 0;
+   if ( integral && parameters.count( "reps" ) )
+   {
+      reps = parameters[ "reps" ].toInt();
+   }
+   
+   //    QStringList files;
+   //    for ( int i = 0; i < lb_files->numRows(); i++ )
+   //    {
+   //       if ( lb_files->isSelected( i ) && 
+   //            lb_files->text( i ) != lbl_hplc->text() &&
+   //            lb_files->text( i ) != lbl_empty->text() )
+   //       {
+   //          files << lb_files->text( i );
+   //       }
+   //    }
+   baseline_apply( all_selected_files(), integral, smoothing, save_bl, reps );
+}
+
+void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, int smoothing, bool save_bl, unsigned int reps )
+{
+   map < QString, bool > current_files;
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      current_files[ lb_files->text( i ) ] = true;
+   }
+
+   map < QString, bool > select_files;
+
+   double start_s = le_baseline_start_s->text().toDouble();
+   double start   = le_baseline_start  ->text().toDouble();
+   double start_e = le_baseline_start_e->text().toDouble();
+   double end_s   = le_baseline_end_s  ->text().toDouble();
+   double end     = le_baseline_end    ->text().toDouble();
+   double end_e   = le_baseline_end_e  ->text().toDouble();
+
+   // redo this to compute from best linear fit over ranges
+
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+   {
+
+      unsigned int before_start = 0;
+      unsigned int after_start  = 1;
+      unsigned int before_end   = 0;
+      unsigned int after_end    = 1;
+
+      vector < double > start_q;
+      vector < double > start_I;
+
+      vector < double > end_q;
+      vector < double > end_I;
+
+      {
+         unsigned int j = 0;
+         if ( f_qs[ files[ i ] ][ j ] >= start_s &&
+              f_qs[ files[ i ] ][ j ] <= start_e )
+         {
+            start_q.push_back( f_qs[ files[ i ] ][ j ] );
+            start_I.push_back( f_Is[ files[ i ] ][ j ] );
+         }
+         if ( f_qs[ files[ i ] ][ j ] >= end_s &&
+              f_qs[ files[ i ] ][ j ] <= end_e )
+         {
+            end_q.push_back( f_qs[ files[ i ] ][ j ] );
+            end_I.push_back( f_Is[ files[ i ] ][ j ] );
+         }
+      }
+
+      for ( unsigned int j = 1; j < f_qs[ files[ i ] ].size(); j++ )
+      {
+         if ( f_qs[ files[ i ] ][ j ] >= start_s &&
+              f_qs[ files[ i ] ][ j ] <= start_e )
+         {
+            start_q.push_back( f_qs[ files[ i ] ][ j ] );
+            start_I.push_back( f_Is[ files[ i ] ][ j ] );
+         }
+         if ( f_qs[ files[ i ] ][ j ] >= end_s &&
+              f_qs[ files[ i ] ][ j ] <= end_e )
+         {
+            end_q.push_back( f_qs[ files[ i ] ][ j ] );
+            end_I.push_back( f_Is[ files[ i ] ][ j ] );
+         }
+
+         if ( f_qs[ files[ i ] ][ j - 1 ] <= start &&
+              f_qs[ files[ i ] ][ j     ] >= start )
+         {
+            before_start = j - 1;
+            after_start  = j;
+         }
+         if ( f_qs[ files[ i ] ][ j - 1 ] <= end &&
+              f_qs[ files[ i ] ][ j     ] >= end )
+         {
+            before_end = j - 1;
+            after_end  = j;
+         }
+      }
+
+      bool   set_start = ( start_q.size() > 1 );
+      bool   set_end   = ( end_q  .size() > 1 );
+      double start_intercept = 0e0;
+      double start_slope     = 0e0;
+      double end_intercept   = 0e0;
+      double end_slope       = 0e0;
+
+      double start_y;
+      double end_y;
+
+      double siga;
+      double sigb;
+      double chi2;
+
+      if ( set_start && set_end )
+      {
+         // linear fit on each
+         usu->linear_fit( start_q, start_I, start_intercept, start_slope, siga, sigb, chi2 );
+         usu->linear_fit( end_q  , end_I  , end_intercept  , end_slope  , siga, sigb, chi2 );
+
+         // find intercepts for baseline
+
+         start_y = start_intercept + start_slope * start;
+         end_y   = end_intercept   + end_slope   * end;
+      } else {
+         if ( set_start )
+         {
+            usu->linear_fit( start_q, start_I, start_intercept, start_slope, siga, sigb, chi2 );
+
+            start_y = start_intercept + start_slope * start;
+
+            double end_t;
+
+            if ( f_qs[ files[ i ] ][ after_end  ] != f_qs[ files[ i ] ][ before_end ] )
+            {
+               end_t = ( f_qs[ files[ i ] ][ after_end ] - end )
+                  / ( f_qs[ files[ i ] ][ after_end  ] -
+                      f_qs[ files[ i ] ][ before_end ] );
+            } else {
+               end_t = 0.5e0;
+            }
+
+            end_y = 
+               ( end_t ) * f_Is[ files[ i ] ][ before_end ] +
+               ( 1e0 - end_t ) * f_Is[ files[ i ] ][ after_end ];
+         } else {
+            if ( set_end )
+            {
+               usu->linear_fit( end_q, end_I, end_intercept, end_slope, siga, sigb, chi2 );
+
+               end_y = end_intercept + end_slope * end;
+
+               double start_t;
+               if ( f_qs[ files[ i ] ][ after_start  ] != f_qs[ files[ i ] ][ before_start ] )
+               {
+                  start_t = 
+                     ( f_qs[ files[ i ] ][ after_start ] - start )
+                     / ( f_qs[ files[ i ] ][ after_start  ] -
+                         f_qs[ files[ i ] ][ before_start ] );
+               } else {
+                  start_t = 0.5e0;
+               }
+
+               start_y = 
+                  ( start_t ) * f_Is[ files[ i ] ][ before_start ] +
+                  ( 1e0 - start_t ) * f_Is[ files[ i ] ][ after_start ];
+            
+            } else {
+               // for now, we are going to do this way for all conditions
+
+               double start_t;
+               double end_t;
+
+               if ( f_qs[ files[ i ] ][ after_start  ] != f_qs[ files[ i ] ][ before_start ] )
+               {
+                  start_t = 
+                     ( f_qs[ files[ i ] ][ after_start ] - start )
+                     / ( f_qs[ files[ i ] ][ after_start  ] -
+                         f_qs[ files[ i ] ][ before_start ] );
+               } else {
+                  start_t = 0.5e0;
+               }
+      
+               if ( f_qs[ files[ i ] ][ after_end  ] != f_qs[ files[ i ] ][ before_end ] )
+               {
+                  end_t = ( f_qs[ files[ i ] ][ after_end ] - end )
+                     / ( f_qs[ files[ i ] ][ after_end  ] -
+                         f_qs[ files[ i ] ][ before_end ] );
+               } else {
+                  end_t = 0.5e0;
+               }
+
+               start_y = 
+                  ( start_t ) * f_Is[ files[ i ] ][ before_start ] +
+                  ( 1e0 - start_t ) * f_Is[ files[ i ] ][ after_start ];
+
+               end_y = 
+                  ( end_t ) * f_Is[ files[ i ] ][ before_end ] +
+                  ( 1e0 - end_t ) * f_Is[ files[ i ] ][ after_end ];
+            }
+         }
+      }
+
+      vector < double > bl_I = f_Is[ files[ i ] ];
+      int ext = 0;
+      QString bl_name = files[ i ];
+
+      if ( integral )
+      {
+         double delta_bl = end_y - start_y;
+
+         if ( smoothing )
+         {
+            US_Saxs_Util usu;
+            if ( !usu.smooth( f_Is[ files[ i ] ], bl_I, smoothing ) )
+            {
+               bl_I = f_Is[ files[ i ] ];
+               editor_msg( "red", QString( tr( "Error: smoothing error on %1" ) ).arg( files[ i ] ) );
+            }
+         }
+         vector < double > new_I = f_Is[ files[ i ] ];
+         vector < double > last_bl( new_I.size() );
+         for ( unsigned int j = 0; j < ( unsigned int ) bl_I.size(); j++ )
+         {
+            last_bl[ j ] = start_y;
+         }
+
+         unsigned int this_reps = 0;
+         double ssd = 0e0;
+         double integral_I;
+
+         do {
+            this_reps++;
+            integral_I = 0e0;
+            vector < double > bl( bl_I.size() );
+
+            // note: this "if" could be separated into 2 loops
+            // removing one of the condition checks
+
+            for ( unsigned int j = 0; j < ( unsigned int ) bl_I.size(); j++ )
+            {
+               bl[ j ] = start_y;
+               if ( f_qs[ files[ i ] ][ j ] >= start &&
+                    f_qs[ files[ i ] ][ j ] <= end &&
+                    bl_I[ j ] - last_bl[ j ] > 0e0 )
+               {
+                  integral_I += bl_I[ j ] - last_bl[ j ];
+               }
+            }
+
+            if ( integral_I > 0e0 )
+            {
+               double delta_bl_over_integral_I = delta_bl / integral_I;
+
+               double integral_0_j_I = 0e0;
+
+               for ( unsigned int j = 0; j < bl_I.size(); j++ )
+               {
+                  if ( f_qs[ files[ i ] ][ j ] >= start &&
+                       f_qs[ files[ i ] ][ j ] <= end &&
+                       bl_I[ j ] - last_bl[ j ] > 0e0 )
+                  {
+                     integral_0_j_I += bl_I[ j ] - last_bl[ j ];
+                  }
+                  bl[ j ] = start_y + integral_0_j_I * delta_bl_over_integral_I;
+                  new_I[ j ] = f_Is[ files[ i ] ][ j ] - bl[ j ];
+               }
+            } else {
+               for ( unsigned int j = 0; j < bl_I.size(); j++ )
+               {
+                  new_I[ j ] = f_Is[ files[ i ] ][ j ] - bl[ j ];
+               }
+               editor_msg( "dark red", QString( tr( "Warning: the integral of %1 was zero => constant baseline" ) ).arg( files[ i ] ) );
+            }
+
+            if ( save_bl )
+            {
+               add_plot( QString( "BI_%1-%2" ).arg( files[ i ] ).arg( reps ), f_qs[ files[ i ] ], bl, true, false );
+            }
+
+            ssd = 0e0;
+            for ( unsigned int j = 0; j < bl_I.size(); j++ )
+            {
+               double tmp = bl[ j ] - last_bl[ j ];
+               ssd += tmp * tmp;
+            }
+            last_bl = bl;
+         } while ( this_reps < reps && ssd > 1e0 );
+
+         bl_I = new_I;
+
+         //          cout << QString( 
+         //                          "delta_bl   %1\n"
+         //                          "integral_I %2\n"
+         //                           )
+         //             .arg( delta_bl )
+         //             .arg( integral_I )
+         //             ;
+
+         bl_name += QString( "-bi%1-%2s" ).arg( delta_bl, 0, 'g', 6 ).arg( integral_I, 0, 'g', 6 ).replace( ".", "_" );
+         while ( current_files.count( bl_name ) )
+         {
+            bl_name = files[ i ] + QString( "-bi%1-%2s-%3" ).arg( delta_bl, 0, 'g', 6 ).arg( integral_I, 0, 'g', 6 ).arg( ++ext ).replace( ".", "_" );
+         }
+
+      } else {
+
+         baseline_slope     = ( end_y - start_y ) / ( end - start );
+         baseline_intercept = 
+            ( ( start_y + end_y ) -
+              baseline_slope * ( start + end ) ) * 5e-1;
+
+         for ( unsigned int j = 0; j < bl_I.size(); j++ )
+         {
+            bl_I[ j ] -= baseline_slope * f_qs[ files[ i ] ][ j ] + baseline_intercept;
+         }
+         bl_name += QString( "-bl%1-%2s" ).arg( baseline_slope, 0, 'g', 8 ).arg( baseline_intercept, 0, 'g', 8 ).replace( ".", "_" );
+         while ( current_files.count( bl_name ) )
+         {
+            bl_name = files[ i ] + QString( "-bl%1-%2s-%3" ).arg( baseline_slope, 0, 'g', 8 ).arg( baseline_intercept, 0, 'g', 8 ).arg( ++ext ).replace( ".", "_" );
+         }
+      }
+
+      select_files[ bl_name ] = true;
+
+      lb_created_files->insertItem( bl_name );
+      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+      lb_files->insertItem( bl_name );
+      lb_files->setBottomItem( lb_files->numRows() - 1 );
+      created_files_not_saved[ bl_name ] = true;
+   
+      f_pos       [ bl_name ] = f_qs.size();
+      f_qs_string [ bl_name ] = f_qs_string[ files[ i ] ];
+      f_qs        [ bl_name ] = f_qs       [ files[ i ] ];
+      f_Is        [ bl_name ] = bl_I;
+      f_errors    [ bl_name ] = f_errors   [ files[ i ] ];
+      f_is_time   [ bl_name ] = f_is_time  [ files[ i ] ];
+      f_psv       [ bl_name ] = f_psv.count( files[ i ] ) ? f_psv[ files[ i ] ] : 0e0;
+      f_I0se      [ bl_name ] = f_I0se.count( files[ i ] ) ? f_I0se[ files[ i ] ] : 0e0;
+      f_conc      [ bl_name ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
+      {
+         vector < double > tmp;
+         f_gaussians  [ bl_name ] = tmp;
+      }
+      editor_msg( "gray", QString( "Created %1\n" ).arg( bl_name ) );
+   }
+
+   disable_updates = true;
+
+   lb_files->clearSelection();
+
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      if ( select_files.count( lb_files->text( i ) ) )
+      {
+         lb_files->setSelected( i, true );
+      }
+   }
+
+   disable_updates = false;
+   plot_files();
    update_enables();
 }

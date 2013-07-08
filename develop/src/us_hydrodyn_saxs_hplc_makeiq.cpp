@@ -643,14 +643,14 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       hplc_ciq->exec();
       delete hplc_ciq;
       
-             cout << "parameters:\n";
-             for ( map < QString, QString >::iterator it = parameters.begin();
-                   it != parameters.end();
-                   it++ )
-             {
-                cout << QString( "%1:%2\n" ).arg( it->first ).arg( it->second );
-             }
-             cout << "end parameters:\n";
+      //       cout << "parameters:\n";
+      //       for ( map < QString, QString >::iterator it = parameters.begin();
+      //             it != parameters.end();
+      //             it++ )
+      //       {
+      //          cout << QString( "%1:%2\n" ).arg( it->first ).arg( it->second );
+      //       }
+      //       cout << "end parameters:\n";
 
       if ( bl_count && ( !parameters.count( "add_baseline" ) || parameters[ "add_baseline" ] == "false" ) )
       {

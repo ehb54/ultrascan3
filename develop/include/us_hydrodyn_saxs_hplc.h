@@ -578,7 +578,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       double                       org_baseline_end_s;
       double                       org_baseline_end;
       double                       org_baseline_end_e;
-      void                         baseline_apply( QStringList files, bool integral = false, int smoothing = 0 );
+      void                         baseline_apply( QStringList files, 
+                                                   bool integral = false, 
+                                                   int smoothing = 0,
+                                                   bool save_bl = false,
+                                                   unsigned int reps = 1 );
 
       bool                         compute_f_gaussians( QString file, QWidget *hplc_fit_widget );
 
