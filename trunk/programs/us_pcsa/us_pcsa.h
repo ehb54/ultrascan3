@@ -12,7 +12,7 @@
 #include "us_astfem_rsa.h"
 #include "us_model.h"
 #include "us_noise.h"
-#include "us_model_loader.h"
+//#include "us_model_loader.h"
 #include "us_editor.h"
 #include "us_math2.h"
 #include "us_run_details2.h"
@@ -48,6 +48,7 @@ class US_pcsa : public US_AnalysisBase2
       QPointer< QTextEdit >       mw_status_text();
       QStringList*                mw_model_stats();
       QVector< ModelRecord >*     mw_mrecs();
+      QVector< ModelRecord >*     mw_mrecs_mc();
 
    private:
       QGridLayout*         progressLayout;
@@ -68,6 +69,7 @@ class US_pcsa : public US_AnalysisBase2
       QPointer< US_MLinesPlot >       mlplotd;
 
       QVector< ModelRecord >          mrecs;
+      QVector< ModelRecord >          mrecs_mc;
 
       US_Model             model;
       US_Noise             ri_noise_in;
@@ -95,6 +97,7 @@ class US_pcsa : public US_AnalysisBase2
       double               rmsd;
 
       int                  dbg_level;
+      int                  mc_iters;
 
    private slots:
       void open_resplot( void );

@@ -682,14 +682,15 @@ US_DataIO::EditedData* US_pcsa::mw_editdata()
 
 // Return pointers to main window data and GUI elements
 
-US_DataIO::RawData*       US_pcsa::mw_simdata()      { return &sdata;    }
-US_DataIO::RawData*       US_pcsa::mw_resdata()      { return &rdata;    }
-US_Model*                 US_pcsa::mw_model()        { return &model;    }
-US_Noise*                 US_pcsa::mw_ti_noise()     { return &ti_noise; }
-US_Noise*                 US_pcsa::mw_ri_noise()     { return &ri_noise; }
+US_DataIO::RawData*       US_pcsa::mw_simdata()      { return &sdata;       }
+US_DataIO::RawData*       US_pcsa::mw_resdata()      { return &rdata;       }
+US_Model*                 US_pcsa::mw_model()        { return &model;       }
+US_Noise*                 US_pcsa::mw_ti_noise()     { return &ti_noise;    }
+US_Noise*                 US_pcsa::mw_ri_noise()     { return &ri_noise;    }
 QPointer< QTextEdit   >   US_pcsa::mw_status_text()  { return te_status;    }
 QStringList*              US_pcsa::mw_model_stats()  { return &model_stats; }
 QVector< ModelRecord >*   US_pcsa::mw_mrecs()        { return &mrecs;       }
+QVector< ModelRecord >*   US_pcsa::mw_mrecs_mc()     { return &mrecs_mc;    }
 
 // Open residuals plot window
 void US_pcsa::open_resplot()
@@ -807,6 +808,7 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
 QString US_pcsa::distrib_info()
 {
    int     ncomp   = model.components.size();
+DbgLv(1) << "distrinfo: ncomp" << ncomp;
    QString maDesc  = model.description;
    QString runID   = edata->runID;
    
