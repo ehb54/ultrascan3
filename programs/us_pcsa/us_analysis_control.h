@@ -62,6 +62,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QList< US_SolveSim::DataSet* >&  dsets;
 
       QVector< ModelRecord >           mrecs;
+      QVector< ModelRecord >           mrecs_mc;
 
       US_DataIO::EditedData*           edata;
       US_DataIO::RawData*              sdata;
@@ -73,6 +74,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QPointer< QTextEdit    >         mw_stattext;
       QStringList*                     mw_modstats;
       QVector< ModelRecord >*          mw_mrecs;
+      QVector< ModelRecord >*          mw_mrecs_mc;
 
       QWidget*                         parentw;
       US_pcsaProcess*                  processor;
@@ -110,6 +112,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QPushButton*  pb_scanregp;
       QPushButton*  pb_finalmdl;
       QPushButton*  pb_stopfit;
+      QPushButton*  pb_advanaly;
       QPushButton*  pb_plot;
       QPushButton*  pb_save;
       QPushButton*  pb_help;
@@ -132,6 +135,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       void final_only ( void );
       void stop_fit   ( void );
       void plot       ( void );
+      void advanced   ( void );
       void save       ( void );
       void close_all  ( void );
       void compute    ( void );

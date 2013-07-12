@@ -91,6 +91,7 @@ DbgLv(1) << "2P(WT): get_result IN";
    workout.ti_noise = ti_noise.values;
    workout.ri_noise = ri_noise.values;
    workout.sim_vals = sim_vals;
+   workout.dsets    = dsets;
 //*DEBUG*
 int nn=workout.csolutes.size();
 int kk=nn/2;
@@ -98,12 +99,12 @@ int ni=solutes_i.size();
 if(depth==0) {
 DbgLv(1) << "2P(WT): thr nn" << thrn << nn << "out sol0 solk soln"
  << workout.csolutes[0].c << workout.csolutes[kk].c << workout.csolutes[nn-1].c
- << "in sol0 soln" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
- << solutes_i[0].c << solutes_i[ni-1].c; }
+ << "ni sol0 soln s" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
+ << "c" << solutes_i[0].c << solutes_i[ni-1].c; }
 else {
 DbgLv(1) << "2P(WT): thr nn" << thrn << nn 
- << "in sol0 soln" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
- << solutes_i[0].c << solutes_i[ni-1].c; }
+ << "ni sol0 soln s" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
+ << "c" << solutes_i[0].c << solutes_i[ni-1].c; }
 //*DEBUG*
 }
 

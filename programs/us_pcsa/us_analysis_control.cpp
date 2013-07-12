@@ -2,14 +2,14 @@
 
 #include "us_pcsa.h"
 #include "us_analysis_control.h"
+#include "us_adv_analysis.h"
+#include "us_simparms.h"
 #include "us_rpscan.h"
 #include "us_settings.h"
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_gui_settings.h"
 #include "us_memory.h"
-
-#include <qwt_legend.h>
 
 // constructor:  pcsa analysis controls widget
 US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
@@ -67,6 +67,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    pb_stopfit  = us_pushbutton( tr( "Stop Fit"                      ), false );
    pb_plot     = us_pushbutton( tr( "Plot Results"                  ), false );
    pb_save     = us_pushbutton( tr( "Save Results"                  ), false );
+   pb_advanaly = us_pushbutton( tr( "Advanced Controls"             ), true );
    pb_help     = us_pushbutton( tr( "Help" ) );
    pb_close    = us_pushbutton( tr( "Close" ) );
    te_status   = us_textedit();
@@ -94,7 +95,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_varcount  = us_counter( 2,      3,   200,   11 );
    ct_cresolu   = us_counter( 2,     20,   501,  101 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
-//   ct_tralpha   = us_counter( 3,      0,     1,    0 );
    ct_tralpha   = us_counter( 3,      0,   100,    0 );
    ct_lolimits->setStep(  0.1 );
    ct_uplimits->setStep(  0.1 );
@@ -148,6 +148,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( pb_finalmdl,   row++, 2, 1, 2 );
    controlsLayout->addWidget( pb_plot,       row,   0, 1, 2 );
    controlsLayout->addWidget( pb_save,       row++, 2, 1, 2 );
+   controlsLayout->addWidget( pb_advanaly,   row++, 0, 1, 4 );
    controlsLayout->addWidget( pb_pltlines,   row,   0, 1, 2 );
    controlsLayout->addWidget( pb_help,       row,   2, 1, 1 );
    controlsLayout->addWidget( pb_close,      row++, 3, 1, 1 );
@@ -206,6 +207,8 @@ DbgLv(1) << "idealThrCout" << nthr;
             this,        SLOT(   plot()       ) );
    connect( pb_save,     SIGNAL( clicked()    ),
             this,        SLOT(   save()       ) );
+   connect( pb_advanaly, SIGNAL( clicked()    ),
+            this,        SLOT(   advanced()   ) );
    connect( pb_help,     SIGNAL( clicked()    ),
             this,        SLOT(   help()       ) );
    connect( pb_close,    SIGNAL( clicked()    ),
@@ -277,6 +280,8 @@ void US_AnalysisControl::start()
       ri_noise       = mainw->mw_ri_noise();
       mw_stattext    = mainw->mw_status_text();
       mw_modstats    = mainw->mw_model_stats();
+      mw_mrecs       = mainw->mw_mrecs();
+      mw_mrecs_mc    = mainw->mw_mrecs_mc();
 
       mainw->analysis_done( -1 );   // reset counters to zero
 DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
@@ -425,6 +430,57 @@ void US_AnalysisControl::plot()
    mainw->analysis_done( 1 );
 }
 
+// advanced controls button clicked
+void US_AnalysisControl::advanced()
+{
+DbgLv(1) << "AC:advanced";
+DbgLv(1) << "AC:advanced  mrecs.size" << mrecs.size();
+if(mrecs.size()>0)
+ DbgLv(1) << "AC:advanced mrecs0 p1 p2" << mrecs[0].par1 << mrecs[0].par2;
+   int    nthr   = (int)ct_thrdcnt ->value();
+
+   US_AdvAnalysis* aadiag = new US_AdvAnalysis( &mrecs, nthr, dsets[ 0 ],
+                                                this );
+
+   if ( aadiag->exec() == QDialog::Accepted )
+   {
+DbgLv(1) << "AC:advanced dialog exec() return - ACCEPTED";
+      int      state  = aadiag->advanced_results( &mrecs_mc );
+      US_pcsa* mainw  = (US_pcsa*)parentw;
+DbgLv(1) << "AC:advanced dialog state=" << state << "mainw" << mainw;
+
+      if ( mainw != 0 )
+      {  // Update model recs where possible and appropriate
+         mw_mrecs        = mainw->mw_mrecs();
+         mw_mrecs_mc     = mainw->mw_mrecs_mc();
+         model           = mainw->mw_model();
+         sdata           = mainw->mw_simdata();
+
+         if ( ( state & 3 ) != 0  &&  mw_mrecs != 0 )
+         {
+            *mw_mrecs       = mrecs;
+
+            if ( model != 0 )
+               *model          = mrecs[ 0 ].model;
+
+            if ( sdata != 0 )
+               *sdata          = mrecs[ 0 ].sim_data;
+         }
+
+         if ( ( state & 4 ) != 0  &&  mw_mrecs_mc != 0 )
+         {
+            *mw_mrecs_mc    = mrecs_mc;
+         }
+      }
+DbgLv(1) << "AC:advanced: mrec0 sols" << mrecs[0].csolutes.size()
+ << "mrecs size" << mrecs.size() << "mrecs_mc size" << mrecs_mc.size()
+ << "model compsize" << model->components.size();
+   }
+else
+DbgLv(1) << "AC:advanced dialog exec() return - CANCELED";
+   delete aadiag;
+}
+
 // save button clicked
 void US_AnalysisControl::save()
 {
@@ -437,7 +493,7 @@ DbgLv(1) << "AC:save: model components size" << model->components.size();
 void US_AnalysisControl::close_all()
 {
 DbgLv(1) << "AC:close: mlnplotd" << mlnplotd;
-   if ( mlnplotd != 0 )
+   if ( (QObject*)mlnplotd != (QObject*)0 )
       mlnplotd->close();
 
    accept();
