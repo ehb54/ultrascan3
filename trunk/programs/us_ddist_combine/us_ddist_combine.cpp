@@ -88,6 +88,9 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QLayout* lo_pcsasl   = us_checkbox( tr( "PCSA-SL" ),    ck_pcsasl,   false );
    QLayout* lo_pcsais   = us_checkbox( tr( "PCSA-IS" ),    ck_pcsais,   false );
    QLayout* lo_pcsads   = us_checkbox( tr( "PCSA-DS" ),    ck_pcsads,   false );
+   QLayout* lo_pcsaslmc = us_checkbox( tr( "PCSA-SL-MC" ), ck_pcsaslmc, false );
+   QLayout* lo_pcsaismc = us_checkbox( tr( "PCSA-IS-MC" ), ck_pcsaismc, false );
+   QLayout* lo_pcsadsmc = us_checkbox( tr( "PCSA-DS-MC" ), ck_pcsadsmc, false );
 
    QButtonGroup* sel_plt  = new QButtonGroup( this );
    QGridLayout* lo_pltsw  = us_radiobutton( tr( "s20,W" ), rb_pltsw,    true  );
@@ -130,11 +133,14 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_gamcmw,    row++, 6, 1, 2 );
    leftLayout->addLayout( lo_pcsasl,    row,   0, 1, 2 );
    leftLayout->addLayout( lo_pcsais,    row,   2, 1, 2 );
-   leftLayout->addLayout( lo_pcsads,    row++, 4, 1, 4 );
-   leftLayout->addLayout( lo_2dsafm,    row,   0, 1, 2 );
-   leftLayout->addLayout( lo_2dsagl,    row,   2, 1, 2 );
-   leftLayout->addLayout( lo_gagl,      row,   4, 1, 2 );
-   leftLayout->addLayout( lo_dtall,     row++, 6, 1, 2 );
+   leftLayout->addLayout( lo_pcsads,    row,   4, 1, 2 );
+   leftLayout->addLayout( lo_pcsaslmc,  row++, 6, 1, 2 );
+   leftLayout->addLayout( lo_pcsaismc,  row,   0, 1, 2 );
+   leftLayout->addLayout( lo_pcsadsmc,  row,   2, 1, 2 );
+   leftLayout->addLayout( lo_2dsafm,    row,   4, 1, 2 );
+   leftLayout->addLayout( lo_2dsagl,    row++, 6, 1, 2 );
+   leftLayout->addLayout( lo_gagl,      row,   0, 1, 2 );
+   leftLayout->addLayout( lo_dtall,     row++, 2, 1, 6 );
    leftLayout->addWidget( lb_plottype,  row++, 0, 1, 8 );
    leftLayout->addLayout( lo_pltsw,     row,   0, 1, 2 );
    leftLayout->addLayout( lo_pltMW,     row,   2, 1, 2 );
@@ -196,6 +202,12 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    connect( ck_pcsais,   SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_pcsads,   SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_pcsaslmc, SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_pcsaismc, SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_pcsadsmc, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_dtall,    SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   allMethodChanged( int ) ) );
@@ -295,7 +307,7 @@ if(dbg_level>0)
   QString mrun=aDescrs[ii].section("\t",0,0);
   QString mgid=aDescrs[ii].section("\t",1,1).left(9)+"...";
   QString mdes=aDescrs[ii].section("\t",2,2);
-  bool iter=mdes.contains("-MC_0");
+  bool iter=mdes.contains("-MC_");
   if(iter&&!mdes.contains("_mc0001")) continue;
   mdes="..."+mdes.section(".",1,-1);
   DbgLv(1) << "  ii" << ii << "mrun" << mrun << "mgid" << mgid
@@ -348,6 +360,9 @@ if(dbg_level>0)
    bool hv_pcsasl   = methods.contains( "PCSA-SL"    );
    bool hv_pcsais   = methods.contains( "PCSA-IS"    );
    bool hv_pcsads   = methods.contains( "PCSA-DS"    );
+   bool hv_pcsaslmc = methods.contains( "PCSA-SL-MC" );
+   bool hv_pcsaismc = methods.contains( "PCSA-IS-MC" );
+   bool hv_pcsadsmc = methods.contains( "PCSA-DS-MC" );
    bool hv_dtall    = methods.size() > 0;
 
    ck_2dsa    ->setEnabled( hv_2dsa     );
@@ -364,6 +379,9 @@ if(dbg_level>0)
    ck_pcsasl  ->setEnabled( hv_pcsasl   );
    ck_pcsais  ->setEnabled( hv_pcsais   );
    ck_pcsads  ->setEnabled( hv_pcsads   );
+   ck_pcsaslmc->setEnabled( hv_pcsaslmc );
+   ck_pcsaismc->setEnabled( hv_pcsaismc );
+   ck_pcsadsmc->setEnabled( hv_pcsadsmc );
    ck_dtall   ->setEnabled( hv_dtall    );
 
    ck_2dsa    ->setChecked( hv_2dsa     );
@@ -380,6 +398,9 @@ if(dbg_level>0)
    ck_pcsasl  ->setChecked( hv_pcsasl   );
    ck_pcsais  ->setChecked( hv_pcsais   );
    ck_pcsads  ->setChecked( hv_pcsads   );
+   ck_pcsaslmc->setChecked( hv_pcsaslmc );
+   ck_pcsaismc->setChecked( hv_pcsaismc );
+   ck_pcsadsmc->setChecked( hv_pcsadsmc );
    ck_dtall   ->setChecked( hv_dtall    );
 }
 
@@ -733,6 +754,9 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
       if ( ck_pcsasl  ->isChecked() )  methods << "PCSA-SL";
       if ( ck_pcsais  ->isChecked() )  methods << "PCSA-IS";
       if ( ck_pcsads  ->isChecked() )  methods << "PCSA-DS";
+      if ( ck_pcsaslmc->isChecked() )  methods << "PCSA-SL-MC";
+      if ( ck_pcsaismc->isChecked() )  methods << "PCSA-IS-MC";
+      if ( ck_pcsadsmc->isChecked() )  methods << "PCSA-DS-MC";
    }
 
    lw_models ->clear();
@@ -883,7 +907,7 @@ void US_DDistr_Combine::fill_in_desc( DistrDesc& ddesc, int distx )
    QVector< double > mxvals;
    QVector< double > myvals;
    QString mdescr = ddesc.mdescr;
-   ddesc.iters    = mdescr.contains( "-MC_0" ) ? 1 : 0;
+   ddesc.iters    = mdescr.contains( "-MC_" ) ? 1 : 0;
 DbgLv(1) << "FID: mdescr" << mdescr << "iters" << ddesc.iters;
    bool    isDB   = dkdb_cntrls->db();
    US_Passwd pw;
@@ -1227,7 +1251,7 @@ void US_DDistr_Combine::update_distros()
       dd.runID     = mrun;
       dd.mGUID     = mgid;
       dd.mdescr    = mdes;
-      dd.iters     = mdes.contains( "-MC_0" ) ? 1 : 0;
+      dd.iters     = mdes.contains( "-MC_" ) ? 1 : 0;
       if ( dd.iters != 0  &&  ! mdes.contains( "_mc0001" ) )  continue;
       if ( distro_by_mguid( mgid ) >= 0 )                     continue;
 
@@ -1268,6 +1292,9 @@ void US_DDistr_Combine::allMethodChanged( int state )
       ck_pcsasl  ->setChecked( ck_pcsasl  ->isEnabled() );
       ck_pcsais  ->setChecked( ck_pcsais  ->isEnabled() );
       ck_pcsads  ->setChecked( ck_pcsads  ->isEnabled() );
+      ck_pcsaslmc->setChecked( ck_pcsaslmc->isEnabled() );
+      ck_pcsaismc->setChecked( ck_pcsaismc->isEnabled() );
+      ck_pcsadsmc->setChecked( ck_pcsadsmc->isEnabled() );
    }
 
    list_distributions();
