@@ -288,7 +288,7 @@ DbgLv(1) << "ScDB:     runid" << runid << "expid" << expid;
          mRunIDs << runid;    // Save run ID
          mDescrs << odesc;    // Save model description string
          nmodel++;
-if((dbg_level>0) && (!mdesc.contains("-MC_0")||mdesc.contains("_mc0001")))
+if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
  DbgLv(1) << "ScDB: odesc" << odesc;
       }
 
@@ -353,7 +353,7 @@ void US_SelectRunid::scan_local_runs( void )
                QString odesc  = runid + "\t" + mGUID + "\t" + mdesc;
                mRunIDs << runid;
                mDescrs << odesc;
-if((dbg_level>0) && (!mdesc.contains("-MC_0")||mdesc.contains("_mc0001")))
+if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
  DbgLv(1) << "ScLo: odesc" << odesc;
             }
 
