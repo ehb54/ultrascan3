@@ -396,6 +396,7 @@ void US_pcsa::save( void )
                           edata->editID.mid( 2 ) :
                           edata->editID;
    QString dates        = "e" + editID + "_a" + analysisDate;
+   int     mciters      = mrecs_mc.size();
    QString analysisType = "PCSA";
    QString curvType     = model_stats[ 1 ];
    if ( curvType.contains( "Straight L" ) )
@@ -404,6 +405,9 @@ void US_pcsa::save( void )
       analysisType      = "PCSA-IS";
    else if ( curvType.contains( "Decreasing Sig" ) )
       analysisType      = "PCSA-DS";
+
+   if ( mciters > 1 )
+      analysisType      = analysisType + "-MC";
 
    QString requestID    = "local";
    QString tripleID     = edata->cell + edata->channel + edata->wavelength; 
@@ -460,10 +464,13 @@ void US_pcsa::save( void )
    QStringList nfilt( "N*.xml" );
    QStringList mdnams   =  dirm.entryList( mfilt, QDir::Files, QDir::Name );
    QStringList ndnams   =  dirn.entryList( nfilt, QDir::Files, QDir::Name );
+   QStringList mnames;
    QStringList nnames;
    QString     mname    = "M0000000.xml";
+   QString     mname1   = "M0000000.xml";
    QString     nname    = "N0000000.xml";
    int         indx     = 1;
+   int         kmodels  = 0;
    int         knoises  = 0;
    bool        have_ti  = ( ti_noise.count > 0 );
    bool        have_ri  = ( ri_noise.count > 0 );
@@ -472,8 +479,12 @@ void US_pcsa::save( void )
    {  // build a list of available model file names
       mname = "M" + QString().sprintf( "%07i", indx++ ) + ".xml";
       if ( ! mdnams.contains( mname ) )
-      {  // no name with this index exists, so add it new-name list
-         break;
+      {  // Add to the list of new-name models
+         mnames << mname;
+DbgLv(1) << "SV: kmodels mciters" << kmodels << mciters << "mname" << mname;
+
+         if ( ++kmodels >= mciters )
+            break;
       }
    }
 
@@ -496,30 +507,57 @@ void US_pcsa::save( void )
 //DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
 
    // Output model and noises
-   QString mdesc     = model.description;    // description from processor
-   double  variance  = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 )
-                       .section( ' ', 0, 0 ).toDouble();
+DbgLv(1) << "SV: mrecs size" << mrecs.size();
+   double  variance  = mrecs[ 0 ].variance;
    QString iterID    = "i01";
+DbgLv(1) << "SV: variance" << variance;
 
-   // fill in actual model parameters needed for output
-   model.description = descbase + iterID + ".model";
-   mname             = mdlpath + "/" + mname;
-   model.modelGUID   = US_Util::new_guid();
-   model.editGUID    = edata->editGUID;
-   model.requestGUID = reqGUID;
-   model.analysis    = US_Model::PCSA;
-   model.variance    = variance;
-   model.meniscus    = meniscus;
-   model.wavelength  = dwavelen;
+   if ( mciters < 2 )
+   {  // Output the single non-MC model
+DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
+      model.description = descbase + iterID + ".model";
+      mname             = mdlpath + "/" + mname;
+      model.modelGUID   = US_Util::new_guid();
+      model.editGUID    = edata->editGUID;
+      model.requestGUID = reqGUID;
+      model.analysis    = US_Model::PCSA;
+      model.variance    = variance;
+      model.meniscus    = meniscus;
+      model.wavelength  = dwavelen;
 
-   for ( int cc = 0; cc < model.components.size(); cc++ )
-      model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
+      for ( int cc = 0; cc < model.components.size(); cc++ )
+         model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
 
-   // output the model
-   if ( dbP != NULL )
-      model.write( dbP );
+      // output the model
+      if ( dbP != NULL )
+         model.write( dbP );
+      else
+         model.write( mname );
+   }
+
    else
-      model.write( mname );
+   {  // Output the individual models of a MonteCarlo set
+      for ( int jmc = 0; jmc < mciters; jmc++ )
+      {
+         iterID            = QString().sprintf( "mc%04d", jmc + 1 );
+         model             = mrecs_mc[ jmc ].model;
+         model.description = descbase + iterID + ".model";
+         mname             = mdlpath + "/" + mnames[ jmc ];
+         model.modelGUID   = US_Util::new_guid();
+         model.editGUID    = edata->editGUID;
+         model.requestGUID = reqGUID;
+         model.analysis    = US_Model::PCSA;
+
+         // output the model
+         if ( dbP != NULL )
+            model.write( dbP );
+         else
+            model.write( mname );
+
+         if ( jmc == 0 )
+            mname1            = mname;
+      }
+   }
 
    int kk  = 0;
    int err = 0;
@@ -609,8 +647,6 @@ void US_pcsa::save( void )
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString plot4File = filebase + "mlines.png";
-   QString fitFile   = filebase + "fitmen.dat";
-   QString fresFile  = respath  + "pcsa-fm" + dext2 + ".fitmen.dat";
    QString ptmp4File = tmppath  + "/PCSA" + dext + ".mlines."
                        + QString::number( getpid() ) + ".png";
 DbgLv(1) << "mlines ptmp4File" << ptmp4File;
@@ -637,7 +673,13 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
    // use a dialog to tell the user what we've output
    QString wmsg = tr( "Wrote:\n" );
 
-   wmsg  = wmsg + mname + "\n";                // list 1st (only?) model file
+   if ( mciters < 2 )
+      wmsg  = wmsg + mname + "\n";             // list only model file
+
+   else                                        // list 1st and last model files
+      wmsg   = wmsg + mname1 + "\n" + " ... ( "
+               + QString::number( mciters - 2 ) + tr( " files unshown )\n" )
+               + mname + "\n";
 
    if ( knois > 0 )
    {

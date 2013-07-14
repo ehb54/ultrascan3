@@ -23,6 +23,30 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    mlnplotd       = 0;
    fitpars        = QString();
 
+   if ( parentw )
+   {  // Get pointers to needed objects from the main
+      US_pcsa* mainw = (US_pcsa*)parentw;
+      edata          = mainw->mw_editdata();
+      sdata          = mainw->mw_simdata();
+      rdata          = mainw->mw_resdata();
+      model          = mainw->mw_model();
+      ti_noise       = mainw->mw_ti_noise();
+      ri_noise       = mainw->mw_ri_noise();
+      mw_stattext    = mainw->mw_status_text();
+      mw_modstats    = mainw->mw_model_stats();
+      mw_mrecs       = mainw->mw_mrecs();
+      mw_mrecs_mc    = mainw->mw_mrecs_mc();
+DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
+   }
+   else
+   {  // Aarrggg! No pointer back to parent!!!
+      DbgLv(0) << "*ERROR* AnalysisControl has no pointer back to Main PCSA";
+      QMessageBox::critical( this, tr( "Parent Pointer NULL!" ),
+         tr( "*ERROR* AnalysisControl has no pointer back to Main PCSA" ) );
+      close();
+      return;
+   }
+
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
    setPalette( US_GuiSettings::frameColor() );
@@ -247,6 +271,7 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    resize( 710, 440 );
    qApp->processEvents();
+
 //DbgLv(2) << "Post-resize AC size" << size();
 }
 
@@ -269,23 +294,8 @@ void US_AnalysisControl::uncheck_optimize( int /*ckflag*/ )
 // start fit button clicked
 void US_AnalysisControl::start()
 {
-   if ( parentw )
-   {  // Get pointers to needed objects from the main
-      US_pcsa* mainw = (US_pcsa*)parentw;
-      edata          = mainw->mw_editdata();
-      sdata          = mainw->mw_simdata();
-      rdata          = mainw->mw_resdata();
-      model          = mainw->mw_model();
-      ti_noise       = mainw->mw_ti_noise();
-      ri_noise       = mainw->mw_ri_noise();
-      mw_stattext    = mainw->mw_status_text();
-      mw_modstats    = mainw->mw_model_stats();
-      mw_mrecs       = mainw->mw_mrecs();
-      mw_mrecs_mc    = mainw->mw_mrecs_mc();
-
-      mainw->analysis_done( -1 );   // reset counters to zero
-DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
-   }
+   US_pcsa* mainw = (US_pcsa*)parentw;
+   mainw->analysis_done( -1 );   // Reset counters to zero
 
    // Make sure that ranges are reasonable
    if ( ( ct_uplimits->value() - ct_lolimits->value() ) < 0.0  ||
@@ -413,12 +423,8 @@ DbgLv(1) << "AC:SF: processor deleted";
    qApp->processEvents();
 DbgLv(1) << "(3)pb_plot-Enabled" << pb_plot->isEnabled();
 
-   if ( parentw )
-   {
-      US_pcsa* mainw = (US_pcsa*)parentw;
-      mainw->analysis_done( -1 );
-   }
-DbgLv(1) << "AC:SF: analysis done";
+   US_pcsa* mainw = (US_pcsa*)parentw;
+   mainw->analysis_done( -1 );   // Reset counters to zero
 
    qApp->processEvents();
 }
@@ -426,6 +432,8 @@ DbgLv(1) << "AC:SF: analysis done";
 // plot button clicked
 void US_AnalysisControl::plot()
 {
+   *mw_mrecs       = mrecs;
+   *model          = mrecs[ 0 ].model;
    US_pcsa* mainw = (US_pcsa*)parentw;
    mainw->analysis_done( 1 );
 }
@@ -433,6 +441,7 @@ void US_AnalysisControl::plot()
 // advanced controls button clicked
 void US_AnalysisControl::advanced()
 {
+   US_pcsa* mainw = (US_pcsa*)parentw;
 DbgLv(1) << "AC:advanced";
 DbgLv(1) << "AC:advanced  mrecs.size" << mrecs.size();
 if(mrecs.size()>0)
@@ -446,35 +455,53 @@ if(mrecs.size()>0)
    {
 DbgLv(1) << "AC:advanced dialog exec() return - ACCEPTED";
       int      state  = aadiag->advanced_results( &mrecs_mc );
-      US_pcsa* mainw  = (US_pcsa*)parentw;
+      bool     mrsupd = ( ( state & 3 ) != 0 );
+      bool     mmcupd = ( ( state & 4 ) != 0 );
+      int      ncsols = mrsupd ? mrecs[ 0 ].csolutes.size() : 0;
+      double   rmsdf  = mrsupd ? mrecs[ 0 ].rmsd : 0.0;
+      double   varif  = mrsupd ? mrecs[ 0 ].variance : 0.0;
+      int      mciter = mmcupd ? mrecs_mc.size() : 0;
 DbgLv(1) << "AC:advanced dialog state=" << state << "mainw" << mainw;
 
-      if ( mainw != 0 )
-      {  // Update model recs where possible and appropriate
-         mw_mrecs        = mainw->mw_mrecs();
-         mw_mrecs_mc     = mainw->mw_mrecs_mc();
-         model           = mainw->mw_model();
-         sdata           = mainw->mw_simdata();
+      // Update model recs where possible and appropriate
+      if ( mrsupd  &&  mw_mrecs != 0 )
+      {
+         *mw_mrecs       = mrecs;
+         *model          = mrecs[ 0 ].model;
+         *sdata          = mrecs[ 0 ].sim_data;
+      }
 
-         if ( ( state & 3 ) != 0  &&  mw_mrecs != 0 )
-         {
-            *mw_mrecs       = mrecs;
-
-            if ( model != 0 )
-               *model          = mrecs[ 0 ].model;
-
-            if ( sdata != 0 )
-               *sdata          = mrecs[ 0 ].sim_data;
-         }
-
-         if ( ( state & 4 ) != 0  &&  mw_mrecs_mc != 0 )
-         {
-            *mw_mrecs_mc    = mrecs_mc;
-         }
+      if ( mmcupd  &&  mw_mrecs_mc != 0 )
+      {
+         *mw_mrecs_mc    = mrecs_mc;
       }
 DbgLv(1) << "AC:advanced: mrec0 sols" << mrecs[0].csolutes.size()
  << "mrecs size" << mrecs.size() << "mrecs_mc size" << mrecs_mc.size()
  << "model compsize" << model->components.size();
+
+      if ( mmcupd )
+      {  // Report new BFM from MonteCarlo
+         QString fmsg = tr(
+            "\n\nA newer best model has been created by %1 Monte Carlo\n"
+            "  iterations  ( %2-solute, with RMSD = %3 )" )
+            .arg( mciter ).arg( ncsols ).arg( rmsdf );
+
+         progress_message( fmsg, true );
+         le_minvari->setText( QString::number( varif ) );
+         le_minrmsd->setText( QString::number( rmsdf ) );
+      }
+
+      else if ( mrsupd )
+      {  // Report new BFM from other advanced controls action
+         QString fmsg = tr(
+            "\n\nA newer best model has been created from Advanced Controls\n"
+            "  action  ( %1-solute, with RMSD = %2 )" )
+            .arg( ncsols ).arg( rmsdf );
+
+         progress_message( fmsg, true );
+         le_minvari->setText( QString::number( varif ) );
+         le_minrmsd->setText( QString::number( rmsdf ) );
+      }
    }
 else
 DbgLv(1) << "AC:advanced dialog exec() return - CANCELED";
@@ -484,8 +511,10 @@ DbgLv(1) << "AC:advanced dialog exec() return - CANCELED";
 // save button clicked
 void US_AnalysisControl::save()
 {
-DbgLv(1) << "AC:save: model components size" << model->components.size();
    US_pcsa* mainw = (US_pcsa*)parentw;
+DbgLv(1) << "AC:save: model components size" << model->components.size();
+   *mw_mrecs       = mrecs;
+   *model          = mrecs[ 0 ].model;
    mainw->analysis_done( 2 );
 }
 
@@ -634,6 +663,7 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
 // slot to handle completed processing
 void US_AnalysisControl::completed_process( int stage )
 {
+   US_pcsa* mainw = (US_pcsa*)parentw;
 DbgLv(1) << "AC:cp: stage" << stage;
 
    if ( stage == 7 )
@@ -670,13 +700,10 @@ DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
 
    plot_lines();
 
-   US_DataIO::Scan* rscan0 = &rdata->scanData[ 0 ];
-   int      mmitnum  = (int)rscan0->seconds;
-   US_pcsa* mainw    = (US_pcsa*)parentw;
-
    if ( stage == 9 )
    {
       *mw_modstats    = modelstats;
+      *mw_mrecs       = mrecs;
 
 DbgLv(1) << "AC:cp: main done -2";
       mainw->analysis_done( -2 );
@@ -700,13 +727,6 @@ DbgLv(1) << "(1)pb_plot-Enabled" << pb_plot->isEnabled();
       double rmsd   = mrecs[ 0 ].rmsd;
       le_minvari->setText( QString::number( vari ) );
       le_minrmsd->setText( QString::number( rmsd ) );
-   }
-
-   else if ( mmitnum > 0  &&  stage > 0 )
-   {  // signal main to update lists of models,noises
-DbgLv(1) << "AC:cp: main done -2 upd lists";
-      mainw->analysis_done( -2 );
-      need_fit      = false;
    }
 }
 

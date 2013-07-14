@@ -214,19 +214,6 @@ DbgLv(1) << "2P(pcsaProc): final_fit()";
 
    compute_final();
 
-   int    nsol     = model.components.size();
-   double s20wcorr = dsets[ 0 ]->s20w_correction;
-   double D20wcorr = dsets[ 0 ]->D20w_correction;
-
-   // Convert model components s,D back to 20,w form for output
-   for ( int cc = 0; cc < nsol; cc++ )
-   {
-DbgLv(1) << "cc comp D" << model.components[ cc ].D;
-      model.components[ cc ].s *= s20wcorr;
-      model.components[ cc ].D *= D20wcorr;
-DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
-   }
-
    emit process_complete( 9 );     // signal that all processing is complete
 }
 
@@ -262,13 +249,9 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
 
    US_SolveSim::DataSet* dset = dsets[ 0 ];
    int    nsolutes    = mrec.csolutes.size();
-   double sfactor     = 1.0 / dset->s20w_correction;
-   double dfactor     = 1.0 / dset->D20w_correction;
    double vbar20      = dset->vbar20;
    model.components.resize( nsolutes );
    qSort( mrec.csolutes );
-DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
- << dset->D20w_correction << "sfac dfac" << sfactor << dfactor;
 
    // build the final model
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -287,11 +270,6 @@ DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
       // Complete other coefficients in standard-space
       model.calc_coefficients( mcomp );
 DbgLv(1) << " Bcc comp D" << mcomp.D;
-
-      // Convert to experiment-space for simulation below
-      mcomp.s     *= sfactor;
-      mcomp.D     *= dfactor;
-DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
       model.components[ cc ]  = mcomp;
    }
@@ -412,15 +390,6 @@ DbgLv(1) << "FIN_FIN:    alpha_fx" << alpha_fx;
 
    nsolutes           = model.components.size();
 
-   // Convert model components s,D back to 20,w form for output
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-DbgLv(1) << "cc comp D" << model.components[ cc ].D;
-      model.components[ cc ].s *= dset->s20w_correction;
-      model.components[ cc ].D *= dset->D20w_correction;
-DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
-   }
-
    emit process_complete( 9 );     // signal that all processing is complete
 }
 
@@ -434,8 +403,9 @@ bool US_pcsaProcess::get_results( US_DataIO::RawData*     da_sim,
                                   QStringList&            modstats,
                                   QVector< ModelRecord >& p_mrecs )
 {
-   bool all_ok = true;
-   model.alphaRP = alpha;
+   bool all_ok      = true;
+   model.alphaRP    = alpha;
+   mrecs[ 0 ].model = model;
 
    if ( abort ) return false;
 
@@ -1435,6 +1405,17 @@ DbgLv(1) << "LMf:model: desc analys vari" << model.description
    US_Astfem_RSA astfem_rsa( model, dset->simparams );
    astfem_rsa.calculate( sdata );
 
+   // Convert model back to standard space and save in model record
+   for ( int ii = 0; ii < nsol; ii++ )
+   {
+      model.components[ ii ].s  /= sfactor;
+      model.components[ ii ].D  /= dfactor;
+DbgLv(1) << "LMf:     s D mw" << model.components[ii].s
+ << model.components[ii].D << model.components[ii].mw;
+   }
+
+   mrec.model      = model;
+
    // Fetch any noise saved in dset
    bool tino       = ( ( noisflag & 1 ) != 0 );
    bool rino       = ( ( noisflag & 2 ) != 0 );
@@ -1445,6 +1426,7 @@ DbgLv(1) << "LMf:model: desc analys vari" << model.description
    mrec.ti_noise.clear();
    mrec.ri_noise.clear();
 
+   // Compose any noise records
    if ( tino )
    {
       for ( int ii = 0; ii < npoints; ii++ )
@@ -1654,15 +1636,19 @@ DbgLv(1) << "CFin: alpha" << alpha;
 
    // Evaluate the model
    US_SolveSim::DataSet* dset = dsets[ 0 ];
+
    double rmsd    = evaluate_model( dsets, sim_vals );
-   int    nsol    = dset->model.components.size();
+
+   sdata          = sim_vals.sim_data;
+   rdata          = sim_vals.residuals;
+   int    nmsol   = dset->model.components.size();
    int    nisol   = mrec.isolutes.size();
    int    ktimsc = ( ftimer.elapsed() + 500 ) / 1000;
 
    QString fmsg   = tr(
       "\nA final best model (RMSD=%1; %2-solute, %3 out; %4 sec.)\n"
       " used a Tikhonov regularization parameter of %5 .\n" )
-      .arg( rmsd ).arg( nisol ).arg( nsol ).arg( ktimsc ).arg( alpha );
+      .arg( rmsd ).arg( nisol ).arg( nmsol ).arg( ktimsc ).arg( alpha );
    emit message_update( fmsg, true );
 
    // Replace best model in vector and build out model more completely
@@ -1671,10 +1657,8 @@ DbgLv(1) << "CFin: alpha" << alpha;
 
    mrec.csolutes.clear();
    model          = dset->model;
-   double sfactor = 1.0 / dset->s20w_correction;
-   double dfactor = 1.0 / dset->D20w_correction;
 
-   for ( int ii = 0; ii < nsol; ii++ )
+   for ( int ii = 0; ii < nmsol; ii++ )
    {
       // Insert calculated solutes into top model record
       US_Solute solute;
@@ -1691,9 +1675,6 @@ DbgLv(1) << "CFin:  ii" << ii << "s k c" << solute.s << solute.k << solute.c;
       model.components[ ii ].f   = 0.0;
       model.calc_coefficients( model.components[ ii ] );
 
-      // Convert to experiment-space for simulation below
-      model.components[ ii ].s  *= sfactor;
-      model.components[ ii ].D  *= dfactor;
 DbgLv(1) << "CFin:     s D mw" << model.components[ii].s
  << model.components[ii].D << model.components[ii].mw;
    }
@@ -1702,6 +1683,7 @@ DbgLv(1) << "CFin:model: desc analys vari" << model.description
  << model.analysis << model.variance;
 
    // Replace the top model with the new regularized best model
+   mrec.model     = model;
    mrecs[ 0 ]     = mrec;
 
    // Report new variance
