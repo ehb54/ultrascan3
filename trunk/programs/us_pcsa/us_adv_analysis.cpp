@@ -262,15 +262,9 @@ DbgLv(1) << "AA: connect buttons";
             this,        SLOT(   select()  ) );
 
    curvtypeChanged( ctype );
-#if 0
-DbgLv(1) << "Pre-adjust size" << size();
-   adjustSize();
-DbgLv(1) << "Post-adjust size" << size();
-#endif
    resize( 780, 400 );
 DbgLv(1) << "Post-resize size" << size();
    qApp->processEvents();
-DbgLv(1) << "Post-processEvents";
 }
 
 // Return state flag from advanced actions and, possibly, MC models
@@ -434,6 +428,7 @@ DbgLv(1) << "start_montecarlo";
                     .arg( mciters );
    ksiters        = 0;
    kciters        = 0;
+   mrecs_mc.clear();
    ModelRecord          mrec_mc = mrec;
    US_SolveSim::DataSet dset    = *dset0;
    QList< US_SolveSim::DataSet* > dsets;
@@ -581,26 +576,51 @@ DbgLv(1) << "    ksiters" << ksiters << "dsets[0]" << wtask.dsets[0];
 // Set gaussian distribution: sigmas and iteration 1 simulation data
 void US_AdvAnalysis::set_gaussians( US_SolveSim::Simulation& sim_vals )
 {
-   int nscans   = edata->scanCount();
-   int npoints  = edata->pointCount();
+   bool gausmoo  = US_Settings::debug_match( "MC-GaussianSmooth" );
+   int  nscans   = edata->scanCount();
+   int  npoints  = edata->pointCount();
+DbgLv(1) << "AA: set_gaus: gausmoo" << gausmoo;
    US_DataIO::RawData*   sdata = &sim_vals.sim_data;
    US_DataIO::RawData*   rdata = &sim_vals.residuals;
 
    sigmas.clear();
 
    for ( int ss = 0; ss < nscans; ss++ )
-   {
+   {  // Loop to accumulate the residuals from iteration 1
       QVector< double > vv( npoints );
 
       for ( int rr = 0; rr < npoints; rr++ )
-      {
+      {  // Get all residuals points from a scan
          vv[ rr ]   = qAbs( rdata->value( ss, rr ) );
       }
 
-//      US_Math2::gaussian_smoothing( vv, 5 );
+      if ( gausmoo )
+      {  // Do a 5-point gaussian smooth of each scan's residuals
+         US_Math2::gaussian_smoothing( vv, 5 );
+      }
+
+      // Append residuals to build total sigmas array
       sigmas << vv;
    }
 
+   if ( gausmoo )
+   {  // Scale the sigmas so they are at the same level as original residuals
+      double rmsdi    = mrecs_mc[ 0 ].rmsd;
+      double rmsds    = 0.0;
+      int    ntpoints = nscans * npoints;
+
+      for ( int rr = 0; rr < ntpoints; rr++ )
+         rmsds          += sq( sigmas[ rr ] );            // Sum of squares
+
+      rmsds           = sqrt( rmsds / (double)ntpoints ); // Sigmas RMSD
+      double sigscl   = rmsdi / rmsds;                    // Sigma scale factor
+
+      for ( int rr = 0; rr < ntpoints; rr++ )
+         sigmas[ rr ]   *= sigscl;                        // Scaled sigmas
+DbgLv(1) << "AA: gausmoo: rmsd-i rmsc-s sigscl" << rmsdi << rmsds << sigscl;
+   }
+
+   // Save the simulation data set from iteration 1
    sdata1       = *sdata;
 }
 
@@ -611,6 +631,7 @@ void US_AdvAnalysis::apply_gaussians()
    int npoints  = edata->pointCount();
    int kk       = 0;
 
+   // Add box-muller portion of each sigma to the base simulation
    for ( int ss = 0; ss < nscans; ss++ )
    {
       for ( int rr = 0; rr < npoints; rr++ )

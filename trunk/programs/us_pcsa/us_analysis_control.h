@@ -77,6 +77,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QVector< ModelRecord >*          mw_mrecs_mc;
 
       QWidget*                         parentw;
+      QWidget*                         main_widg;
       US_pcsaProcess*                  processor;
       US_MLinesPlot*                   mlnplotd;
 
