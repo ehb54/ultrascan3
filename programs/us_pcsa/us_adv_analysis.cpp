@@ -186,6 +186,7 @@ DbgLv(1) << "AA: populate mreclistLayout";
       ct_k_upper ->setValue( mrec.end_k );
       ct_sigmpar1->setValue( mrec.par1  );
       ct_sigmpar2->setValue( mrec.par2  );
+      ct_crpoints->setValue( nisols );
 DbgLv(1) << "AA: mr p1 p2  m0 p1 p2" << mrec.par1 << mrec.par2 << mrecs[0].par1
  << mrecs[0].par2 << "  typ ni nc" << ctype << nisols << ncsols;
 

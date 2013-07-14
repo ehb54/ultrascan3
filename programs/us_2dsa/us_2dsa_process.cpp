@@ -1274,7 +1274,7 @@ DbgLv(1) << "MCARLO: mm_iter" << mm_iter;
       sdata1 = sdata;               // save mc iteration 1 simulation
    }
 
-   // Get a randomized variation of the cencentrations
+   // Get a randomized variation of the concentrations
    // Use a gaussian distribution with the residual as the standard deviation
    int kk = 0;
 
@@ -1342,23 +1342,52 @@ void US_2dsaProcess::requeue_tasks()
 
 void US_2dsaProcess::set_gaussians()
 {
+   bool gausmoo     = US_Settings::debug_match( "MC-GaussianSmooth" );
    sigmas.clear();
-DbgLv(1) << "MCARLO:setgau ns np" << nscans << npoints;
+DbgLv(1) << "MCARLO:setgau ns np" << nscans << npoints << "gausmoo" << gausmoo;
 
-   for ( int ss = 0; ss < nscans; ss++ )
-   {
-      QVector< double > vv( npoints );
+   if ( ! gausmoo )
+   {  // Construct sigmas from iteration 1 residuals
+      for ( int ss = 0; ss < nscans; ss++ )
+         for ( int rr = 0; rr < npoints; rr++ )
+            sigmas << qAbs( rdata.value( ss, rr ) );
+   }
 
-      for ( int rr = 0; rr < npoints; rr++ )
+   else
+   {  // Construct sigmas from residuals smoothed for each scan
+      int    ntpoints = nscans * npoints;
+      double rmsdr    = 0.0;
+      double rmsds    = 0.0;
+
+      for ( int ss = 0; ss < nscans; ss++ )
       {
-         vv[ rr ] = qAbs( rdata.value( ss, rr ) );
+         QVector< double > vv( npoints );
+
+         for ( int rr = 0; rr < npoints; rr++ )
+         {
+            double rval     = rdata.value( ss, rr );
+            rmsdr          += sq( rval );
+            vv[ rr ]        = qAbs( rval );
+         }
+
+if ( ss < 2 ) DbgLv(1) << "MCARLO:setgau:gausmoo vv9" << vv[9] << "ss" << ss;
+         // Smooth using 5 points to the left and right of each point
+         US_Math2::gaussian_smoothing( vv, 5 );
+if ( ss < 2 ) DbgLv(1) << "MCARLO:setgau: smoothd vv9" << vv[9];
+
+         sigmas << vv;
       }
 
-      // Smooth using 5 points to the left and right of each point
-if ( ss < 2 ) DbgLv(1) << "MCARLO:setgau:gausmoo vv9" << vv[9] << "ss" << ss;
-      US_Math2::gaussian_smoothing( vv, 5 );
-if ( ss < 2 ) DbgLv(1) << "MCARLO:setgau:smoothd vv9" << vv[9];
-      sigmas << vv;
+      // Determine sigmas rmsd, then scale to match residuals rmsd
+      for ( int rr = 0; rr < ntpoints; rr++ )
+         rmsds          += sq( sigmas[ rr ] );
+
+      rmsdr           = sqrt( rmsdr / (double)ntpoints );  // Residuals RMSD
+      rmsds           = sqrt( rmsds / (double)ntpoints );  // Sigmas RMSD
+      double sigscl   = rmsdr / rmsds;                     // Sigma scale factor
+
+      for ( int rr = 0; rr < ntpoints; rr++ )
+         sigmas[ rr ]   *= sigscl;                         // Scaled sigmas
    }
 }
 
