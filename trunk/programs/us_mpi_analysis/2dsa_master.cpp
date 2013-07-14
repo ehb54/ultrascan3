@@ -513,6 +513,7 @@ DbgLv(1) << "sMC: MPI Bcast";
 //  data in Monte Carlo iterations
 void US_MPI_Analysis::set_gaussians( void )
 {
+   US_DataIO::EditedData* edata;
 DbgLv(1) << "sGA: calcsols size mxdpth" << calculated_solutes.size() << max_depth;
 
    simulation_values.solutes = calculated_solutes[ max_depth ];
@@ -522,7 +523,7 @@ DbgLv(1) << "sGA:   sol0.s solM.s" << simulation_values.solutes[0].s
  << simulation_values.solutes[mm].s << "  M=" << mm;;
 DbgLv(1) << "sGA:     solM.k" << simulation_values.solutes[mm].k;
 DbgLv(1) << "sGA:     solM.c" << simulation_values.solutes[mm].c;
-US_DataIO::EditedData *edata = &data_sets[0]->run_data;
+edata = &data_sets[0]->run_data;
 DbgLv(1) << "sGA:    edata scans points" << edata->scanCount() << edata->pointCount();
 
    calc_residuals( 0, data_sets.size(), simulation_values );
@@ -533,25 +534,14 @@ DbgLv(1) << "sGA:  resids scans points" << res_data->scanCount() << res_data->po
 
    for ( int e = 0; e < data_sets.size(); e++ )
    {
-      US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
+      edata             = &data_sets[ e ]->run_data;
+      int scan_count    = edata->scanCount();
+      int radius_points = edata->pointCount();
 
-      int scan_count    = data->scanCount();
-      int radius_points = data->pointCount();
-
-      // Smooth the data and place into a single vector for convenience
-      for ( int s = 0; s < scan_count; s++ )
-      {
-         QVector< double > v( radius_points );
-
-         for ( int r = 0; r < radius_points; r++ )
-         {
-            v[ r ] = fabs( res_data->value( s, r ) );
-         }
-
-         // Smooth using 5 points to the left and right of each point
-         US_Math2::gaussian_smoothing( v, 5 );
-         sigmas << v;
-      }
+      // Place the residuals magnitudes into a single vector for convenience
+      for ( int ss = 0; ss < scan_count; ss++ )
+         for ( int rr = 0; rr < radius_points; rr++ )
+            sigmas << qAbs( res_data->value( ss, rr ) );
    }
 }
 
