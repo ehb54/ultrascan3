@@ -9,11 +9,12 @@ SOURCES       = us_rasmol_control.cpp
 unix {
 HEADERS      += us_x11_utils.h
 SOURCES      += us_x11_utils.c
+LIBS         += $$X11LIB
 }
 
 macx {
 INCLUDES     += /usr/X11/include
-LIBS         += -L/usr/X11/lib -lXau -lX11
+LIBS         += $$X11LIB
 }
 
 win32 {
