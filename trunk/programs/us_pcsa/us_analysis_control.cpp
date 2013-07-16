@@ -469,6 +469,7 @@ DbgLv(1) << "AC:advanced dialog state=" << state << "mainw" << mainw;
          *mw_mrecs       = mrecs;
          *model          = mrecs[ 0 ].model;
          *sdata          = mrecs[ 0 ].sim_data;
+         *rdata          = mrecs[ 0 ].residuals;
       }
 
       if ( mmcupd  &&  mw_mrecs_mc != 0 )
@@ -501,6 +502,29 @@ DbgLv(1) << "AC:advanced: mrec0 sols" << mrecs[0].csolutes.size()
          progress_message( fmsg, true );
          le_minvari->setText( QString::number( varif ) );
          le_minrmsd->setText( QString::number( rmsdf ) );
+      }
+
+      if ( state != 0 )
+      {  // Where advanced controls have made changes, copy them
+         pb_startfit->setEnabled( true  );
+         pb_scanregp->setEnabled( true  );
+         pb_finalmdl->setEnabled( true  );
+         pb_stopfit ->setEnabled( false );
+         pb_plot    ->setEnabled( true  );
+         pb_save    ->setEnabled( true  );
+         pb_pltlines->setEnabled( true  );
+         need_fit      = false;
+         need_final    = true;
+         bmndx         = mrecs[ 0 ].taskx;
+
+         if ( processor == 0 )
+         {
+            processor   = new US_pcsaProcess( dsets, this );
+         }
+
+         processor->put_mrecs( mrecs );
+         processor->get_results( sdata, rdata, model, ti_noise, ri_noise,
+               bmndx, *mw_modstats, mrecs );
       }
    }
 else

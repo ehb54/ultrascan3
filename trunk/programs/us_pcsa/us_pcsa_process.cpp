@@ -30,7 +30,7 @@ US_pcsaProcess::US_pcsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    npoints          = edata->pointCount();
    cresolu          = 100;
    curvtype         = 0;
-   nmtasks          = 100;
+   nmtasks          = 0;
    kctask           = 0;
    kstask           = 0;
    varimin          = 9.e+9;
@@ -440,6 +440,24 @@ void US_pcsaProcess::get_mrec( ModelRecord& p_mrec )
 void US_pcsaProcess::put_mrec( ModelRecord& p_mrec )
 {
    mrecs[ 0 ]  = p_mrec;                  // Copy best model record
+
+   model       = p_mrec.model;
+   alpha       = 0.0;
+   sdata       = p_mrec.sim_data;
+   rdata       = p_mrec.residuals;
+}
+
+// Replace the model records list and related variables after file load
+void US_pcsaProcess::put_mrecs( QVector< ModelRecord >& p_mrecs )
+{
+   mrecs       = p_mrecs;                 // Copy model records list
+
+   nmtasks     = (int)qFloor( sqrt( (double)mrecs.size() ) );
+   nmtasks     = sq( nmtasks );
+   model       = mrecs[ 0 ].model;
+   sdata       = mrecs[ 0 ].sim_data;
+   rdata       = mrecs[ 0 ].residuals;
+   alpha       = 0.0;
 }
 
 // Submit a job
@@ -835,7 +853,8 @@ void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
 double US_pcsaProcess::fit_function_SL( double t, double* par )
 {
    static int ffcall=0;          // Fit function call counter
-   static double epar[ 14 ];     // Static array for holding parameters
+   static double epar[ 18 ];     // Static array for holding parameters
+   static const int nepar = sizeof( epar ) / sizeof( epar[ 0 ] );
 
    if ( t > 0.0 )
    { // If not t[0], return immediately
@@ -858,7 +877,7 @@ double US_pcsaProcess::fit_function_SL( double t, double* par )
    int    px     = ( sizeof( double ) / sizeof( void* ) ) * 2;
    if ( ffcall == 0 )
    { // On 1st call, copy par array to internal static one
-      for ( int ii = 0; ii < 13; ii++ )
+      for ( int ii = 0; ii < nepar - 2; ii++ )
          epar[ ii ]    = par[ ii + 2 ];
       parP[ 0 ]     = iparP[ px ];
    }
@@ -866,27 +885,28 @@ double US_pcsaProcess::fit_function_SL( double t, double* par )
    ffcall++;                                    // Bump function call counter
    dsets << (US_SolveSim::DataSet*)parP[ 0 ];
    int    nlpts  = (int)epar[ 1 ];              // Get limit parameters
-   double xstart = epar[ 2 ];
-   double xend   = epar[ 3 ];
-   double ylow   = epar[ 4 ];
-   double yhigh  = epar[ 5 ];
-   double p1lo   = epar[ 6 ];
-   double p1hi   = epar[ 7 ];
-   double p2lo   = epar[ 8 ];
-   double p2hi   = epar[ 9 ];
-   int    noisfl = (int)epar[ 10 ];
-   int    dbg_lv = (int)epar[ 11 ];
-   double alpha  = epar[ 12 ];
-   double ystart = par1;
-   double slope  = par2;
-   double yend   = ystart + slope * ( xend - xstart );
+   double smin   = epar[ 2 ];
+   double smax   = epar[ 3 ];
+   double kmin   = epar[ 4 ];
+   double kmax   = epar[ 5 ];
+   double klow   = epar[ 6 ];
+   double khigh  = epar[ 7 ];
+   double p1lo   = epar[ 8 ];
+   double p1hi   = epar[ 9 ];
+   double p2lo   = epar[ 10 ];
+   double p2hi   = epar[ 11 ];
+   int    noisfl = (int)epar[ 12 ];
+   int    dbg_lv = (int)epar[ 13 ];
+   double alpha  = epar[ 14 ];
+   double kstart = kmin;
+   double kend   = kmax;
 
    // After 1st few calls, test if parameters are within limits
    if ( ffcall > 3 )
    {
       // Leave a little wiggle room on limits
-      ylow         -= 0.1;
-      yhigh        += 0.1;
+      klow         -= 0.1;
+      khigh        += 0.1;
       p1lo         -= 0.1;
       p1hi         += 0.1;
       p2lo         -= 0.01;
@@ -895,21 +915,21 @@ double US_pcsaProcess::fit_function_SL( double t, double* par )
       // If this record is beyond any limit, return now with it marked as bad
       if ( par1   < p1lo   ||  par2   < p2lo  ||
            par1   > p1hi   ||  par2   > p2hi  ||
-           ystart < ylow   ||  yend   < ylow  ||
-           ystart > yhigh  ||  yend   > yhigh )
+           kstart < klow   ||  kend   < klow  ||
+           kstart > khigh  ||  kend   > khigh )
       {
 qDebug() << "ffSL: call" << ffcall << "par1 par2" << par1 << par2
- << "ys ye" << ystart << yend << "*OUT-OF-LIMITS*";
+ << "ks ke" << kstart << kend << "*OUT-OF-LIMITS*";
          return 1e+99;
       }
    }
 
    double prange = (double)( nlpts - 1 );
-   double xinc   = ( xend - xstart ) / prange;
-   double yinc   = ( yend - ystart ) / prange;
+   double sinc   = ( smax - smin ) / prange;
+   double kinc   = ( kmax - kmin ) / prange;
    double vbar20 = dsets[ 0 ]->vbar20;
-   double xcurr  = xstart;
-   double ycurr  = ystart;
+   double scurr  = smin;
+   double kcurr  = kmin;
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisfl;
    sim_vals.dbg_level = dbg_lv;
@@ -917,15 +937,15 @@ qDebug() << "ffSL: call" << ffcall << "par1 par2" << par1 << par2
 
    for ( int ii = 0; ii < nlpts; ii++ )
    { // Fill the input solutes vector
-      sim_vals.solutes << US_Solute( xcurr * 1e-13, ycurr, 0.0, vbar20 );
-      xcurr        += xinc;
-      ycurr        += yinc;
+      sim_vals.solutes << US_Solute( scurr * 1e-13, kcurr, 0.0, vbar20 );
+      scurr        += sinc;
+      kcurr        += kinc;
    }
 
    // Evaluate the model
    double rmsd   = evaluate_model( dsets, sim_vals );
 
-   epar[ 13 ]    = rmsd;
+   epar[ 15 ]    = rmsd;
    int    ktimms = ftimer.elapsed();
 qDebug() << "ffSL: call" << ffcall << "par1 par2" << par1 << par2
  << "rmsd" << rmsd << "eval time" << ktimms << "ms.";
@@ -934,8 +954,7 @@ qDebug() << "ffSL:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
  << epar[4] << epar[5] << epar[6] << epar[7] << epar[8] << epar[9];
 //qDebug() << "ffSL:  dsets[0]" << dsets[0] << parP[0]
 // << "dsets[0]->vbar20" << dsets[0]->vbar20;
-qDebug() << "ffSL:    ys ye sl yl yh" << ystart << yend << slope
- << ylow << yhigh;
+qDebug() << "ffSL:    ks ke kl kh" << kstart << kend << klow << khigh;
 
    return rmsd;
 }
@@ -944,7 +963,8 @@ qDebug() << "ffSL:    ys ye sl yl yh" << ystart << yend << slope
 double US_pcsaProcess::fit_function_IS( double t, double* par )
 {
    static int ffcall=0;          // Fit function call counter
-   static double epar[ 14 ];     // Static array for holding parameters
+   static double epar[ 18 ];     // Static array for holding parameters
+   static const int nepar = sizeof( epar ) / sizeof( epar[ 0 ] );
 
    if ( t > 0.0 )
    { // If not t[0], return immediately
@@ -967,7 +987,7 @@ double US_pcsaProcess::fit_function_IS( double t, double* par )
    int    px     = ( sizeof( double ) / sizeof( void* ) ) * 2;
    if ( ffcall == 0 )
    { // On 1st call, copy par array to internal static one
-      for ( int ii = 0; ii < 13; ii++ )
+      for ( int ii = 0; ii < nepar - 2; ii++ )
          epar[ ii ]    = par[ ii + 2 ];
       parP[ 0 ]     = iparP[ px ];
    }
@@ -975,30 +995,32 @@ double US_pcsaProcess::fit_function_IS( double t, double* par )
    ffcall++;                                    // Bump function call counter
    dsets << (US_SolveSim::DataSet*)parP[ 0 ];
    int    nlpts  = (int)epar[ 1 ];              // Get limit parameters
-   double xstart = epar[ 2 ];
-   double xend   = epar[ 3 ];
-   double ylow   = epar[ 4 ];
-   double yhigh  = epar[ 5 ];
-   double p1lo   = epar[ 6 ];
-   double p1hi   = epar[ 7 ];
-   double p2lo   = epar[ 8 ];
-   double p2hi   = epar[ 9 ];
-   int    noisfl = (int)epar[ 10 ];
-   int    dbg_lv = (int)epar[ 11 ];
-   double alpha  = epar[ 12 ];
-   double kstr   = ylow;
-   double kdif   = yhigh - ylow;
-   double srange = xend - xstart;
+   double smin   = epar[ 2 ];
+   double smax   = epar[ 3 ];
+   double kmin   = epar[ 4 ];
+   double kmax   = epar[ 5 ];
+   double klow   = epar[ 6 ];
+   double khigh  = epar[ 7 ];
+   double p1lo   = epar[ 8 ];
+   double p1hi   = epar[ 9 ];
+   double p2lo   = epar[ 10 ];
+   double p2hi   = epar[ 11 ];
+   int    noisfl = (int)epar[ 12 ];
+   int    dbg_lv = (int)epar[ 13 ];
+   double alpha  = epar[ 14 ];
+   double kstr   = kmin;
+   double kdif   = kmax - kmin;
+   double srange = smax - smin;
    double p1fac  = sqrt( 2.0 * qMax( par1, p1lo ) );
-   double ystart = kstr + kdif * ( 0.5 * erf( ( 0.0 - par2 ) / p1fac ) + 0.5 );
-   double yend   = kstr + kdif * ( 0.5 * erf( ( 1.0 - par2 ) / p1fac ) + 0.5 );
+   double kstart = kstr + kdif * ( 0.5 * erf( ( 0.0 - par2 ) / p1fac ) + 0.5 );
+   double kend   = kstr + kdif * ( 0.5 * erf( ( 1.0 - par2 ) / p1fac ) + 0.5 );
 
    // After 1st few calls, test if parameters are within limits
    if ( ffcall > 3 )
    {
       // Leave a little wiggle room on limits
-      ylow         -= 0.1;
-      yhigh        += 0.1;
+      klow         -= 0.1;
+      khigh        += 0.1;
       p1lo         -= 0.00001;
       p1hi         += 0.00001;
       p2lo         -= 0.01;
@@ -1007,11 +1029,11 @@ double US_pcsaProcess::fit_function_IS( double t, double* par )
       // If this record is beyond any limit, return now with it marked as bad
       if ( par1   < p1lo   ||  par2   < p2lo  ||
            par1   > p1hi   ||  par2   > p2hi  ||
-           ystart < ylow   ||  yend   < ylow  ||
-           ystart > yhigh  ||  yend   > yhigh )
+           kstart < klow   ||  kend   < klow  ||
+           kstart > khigh  ||  kend   > khigh )
       {
 qDebug() << "ffIS: call" << ffcall << "par1 par2" << par1 << par2
- << "ys ye" << ystart << yend << "*OUT-OF-LIMITS*";
+ << "ks ke" << kstart << kend << "*OUT-OF-LIMITS*";
          return 1e+99;
       }
    }
@@ -1019,8 +1041,8 @@ qDebug() << "ffIS: call" << ffcall << "par1 par2" << par1 << par2
    double prange = (double)( nlpts - 1 );
    double xinc   = 1.0 / prange;
    double vbar20 = dsets[ 0 ]->vbar20;
-   double xcurr  = xstart;
-   double ycurr  = ystart;
+   double scurr  = smin;
+   double kcurr  = kmin;
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisfl;
    sim_vals.dbg_level = dbg_lv;
@@ -1031,16 +1053,16 @@ qDebug() << "ffIS: call" << ffcall << "par1 par2" << par1 << par2
    for ( int ii = 0; ii < nlpts; ii++ )
    { // Fill the input solutes vector
       double efac   = 0.5 * erf( ( xval - par2 ) / p1fac ) + 0.5;
-      xcurr         = xstart + xval * srange;
-      ycurr         = kstr   + kdif * efac;
-      sim_vals.solutes << US_Solute( xcurr * 1e-13, ycurr, 0.0, vbar20 );
+      scurr         = smin + xval * srange;
+      kcurr         = kmin + kdif * efac;
+      sim_vals.solutes << US_Solute( scurr * 1e-13, kcurr, 0.0, vbar20 );
       xval         += xinc;
    }
 
    // Evaluate the model
    double rmsd   = evaluate_model( dsets, sim_vals );
 
-   epar[ 13 ]    = rmsd;
+   epar[ 15 ]    = rmsd;
    int    ktimms = ftimer.elapsed();
 qDebug() << "ffIS: call" << ffcall << "par1 par2" << par1 << par2
  << "rmsd" << rmsd << "eval time" << ktimms << "ms.";
@@ -1055,7 +1077,8 @@ qDebug() << "ffIS:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
 double US_pcsaProcess::fit_function_DS( double t, double* par )
 {
    static int ffcall=0;          // Fit function call counter
-   static double epar[ 14 ];     // Static array for holding parameters
+   static double epar[ 18 ];     // Static array for holding parameters
+   static const int nepar = sizeof( epar ) / sizeof( epar[ 0 ] );
 
    if ( t > 0.0 )
    { // If not t[0], return immediately
@@ -1077,7 +1100,7 @@ double US_pcsaProcess::fit_function_DS( double t, double* par )
    int    px     = ( sizeof( double ) / sizeof( void* ) ) * 2;
    if ( ffcall == 0 )
    { // On 1st call, copy par array to internal static one
-      for ( int ii = 0; ii < 12; ii++ )
+      for ( int ii = 0; ii < nepar - 2; ii++ )
          epar[ ii ]    = par[ ii + 2 ];
       parP[ 0 ]     = iparP[ px ];
    }
@@ -1085,30 +1108,32 @@ double US_pcsaProcess::fit_function_DS( double t, double* par )
    ffcall++;                                    // Bump function call counter
    dsets << (US_SolveSim::DataSet*)parP[ 0 ];
    int    nlpts  = (int)epar[ 1 ];              // Get limit parameters
-   double xstart = epar[ 2 ];
-   double xend   = epar[ 3 ];
-   double ylow   = epar[ 4 ];
-   double yhigh  = epar[ 5 ];
-   double p1lo   = epar[ 6 ];
-   double p1hi   = epar[ 7 ];
-   double p2lo   = epar[ 8 ];
-   double p2hi   = epar[ 9 ];
-   int    noisfl = (int)epar[ 10 ];
-   int    dbg_lv = (int)epar[ 11 ];
-   double alpha  = epar[ 12 ];
-   double kstr   = yhigh;
-   double kdif   = ylow - yhigh;
-   double srange = xend - xstart;
+   double smin   = epar[ 2 ];
+   double smax   = epar[ 3 ];
+   double kmin   = epar[ 4 ];
+   double kmax   = epar[ 5 ];
+   double klow   = epar[ 6 ];
+   double khigh  = epar[ 7 ];
+   double p1lo   = epar[ 8 ];
+   double p1hi   = epar[ 9 ];
+   double p2lo   = epar[ 10 ];
+   double p2hi   = epar[ 11 ];
+   int    noisfl = (int)epar[ 12 ];
+   int    dbg_lv = (int)epar[ 13 ];
+   double alpha  = epar[ 14 ];
+   double kstr   = kmax;
+   double kdif   = kmin - kmax;
+   double srange = smax - smin;
    double p1fac  = sqrt( 2.0 * qMax( par1, p1lo ) );
-   double ystart = kstr + kdif * ( 0.5 * erf( ( 0.0 - par2 ) / p1fac ) + 0.5 );
-   double yend   = kstr + kdif * ( 0.5 * erf( ( 1.0 - par2 ) / p1fac ) + 0.5 );
+   double kstart = kstr + kdif * ( 0.5 * erf( ( 0.0 - par2 ) / p1fac ) + 0.5 );
+   double kend   = kstr + kdif * ( 0.5 * erf( ( 1.0 - par2 ) / p1fac ) + 0.5 );
 
    // After 1st few calls, test if parameters are within limits
    if ( ffcall > 3 )
    {
       // Leave a little wiggle room on limits
-      ylow         -= 0.1;
-      yhigh        += 0.1;
+      klow         -= 0.1;
+      khigh        += 0.1;
       p1lo         -= 0.00001;
       p1hi         += 0.00001;
       p2lo         -= 0.01;
@@ -1117,11 +1142,11 @@ double US_pcsaProcess::fit_function_DS( double t, double* par )
       // If this record is beyond any limit, return now with it marked as bad
       if ( par1   < p1lo   ||  par2   < p2lo  ||
            par1   > p1hi   ||  par2   > p2hi  ||
-           ystart < ylow   ||  yend   < ylow  ||
-           ystart > yhigh  ||  yend   > yhigh )
+           kstart < klow   ||  kend   < klow  ||
+           kstart > khigh  ||  kend   > khigh )
       {
 qDebug() << "ffDS: call" << ffcall << "par1 par2" << par1 << par2
- << "ys ye" << ystart << yend << "*OUT-OF-LIMITS*";
+ << "ks ke" << kstart << kend << "*OUT-OF-LIMITS*";
          return 1e+99;
       }
    }
@@ -1129,8 +1154,8 @@ qDebug() << "ffDS: call" << ffcall << "par1 par2" << par1 << par2
    double prange = (double)( nlpts - 1 );
    double xinc   = 1.0 / prange;
    double vbar20 = dsets[ 0 ]->vbar20;
-   double xcurr  = xstart;
-   double ycurr  = ystart;
+   double scurr  = smin;
+   double kcurr  = kmin;
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisfl;
    sim_vals.dbg_level = dbg_lv;
@@ -1141,16 +1166,16 @@ qDebug() << "ffDS: call" << ffcall << "par1 par2" << par1 << par2
    for ( int ii = 0; ii < nlpts; ii++ )
    { // Fill the input solutes vector
       double efac   = 0.5 * erf( ( xval - par2 ) / p1fac ) + 0.5;
-      xcurr         = xstart + xval * srange;
-      ycurr         = kstr   + kdif * efac;
-      sim_vals.solutes << US_Solute( xcurr * 1e-13, ycurr, 0.0, vbar20 );
+      scurr         = smin + xval * srange;
+      kcurr         = kstr + kdif * efac;
+      sim_vals.solutes << US_Solute( scurr * 1e-13, kcurr, 0.0, vbar20 );
       xval         += xinc;
    }
 
    // Evaluate the model
    double rmsd   = evaluate_model( dsets, sim_vals );
 
-   epar[ 13 ]    = rmsd;
+   epar[ 15 ]    = rmsd;
    int    ktimms = ftimer.elapsed();
 qDebug() << "ffDS: call" << ffcall << "par1 par2" << par1 << par2
  << "rmsd" << rmsd << "eval time" << ktimms << "ms.";
@@ -1217,16 +1242,18 @@ DbgLv(0) << "LMf:  par1 par2" << par[0] << par[1];
    par[ 3 ]      = (double)cresolu;
    par[ 4 ]      = slolim;
    par[ 5 ]      = suplim;
-   par[ 6 ]      = minkv;
-   par[ 7 ]      = maxkv;
-   par[ 8 ]      = minp1;
-   par[ 9 ]      = maxp1;
-   par[ 10 ]     = minp2;
-   par[ 11 ]     = maxp2;
-   par[ 12 ]     = noisflag;
+   par[ 6 ]      = klolim;
+   par[ 7 ]      = kuplim;
+   par[ 8 ]      = minkv;
+   par[ 9 ]      = maxkv;
+   par[ 10 ]     = minp1;
+   par[ 11 ]     = maxp1;
+   par[ 12 ]     = minp2;
+   par[ 13 ]     = maxp2;
+   par[ 14 ]     = noisflag;
 //   par[ 13 ]     = dbg_level;
-   par[ 13 ]     = 0;
-   par[ 14 ]     = alpha_lm;
+   par[ 15 ]     = 0;
+   par[ 16 ]     = alpha_lm;
 DbgLv(1) << "LMf:  ppar2" << ppar[4] << dsets[0] << curvtype << ppar[5];
 DbgLv(1) << "LMf:  alpha" << alpha_lm << par[14];
    timer.start();              // start a timer to measure run time

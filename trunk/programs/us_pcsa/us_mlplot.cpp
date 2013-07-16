@@ -291,8 +291,7 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
          // Skip line processing if beyond visible count
          if ( ii >= nvline )
             continue;
-
-//DbgLv(1) << "RP:PD    ii" << ii << "rmsd_rec" << rmsd_rec;
+//DbgLv(1) << "RP:PD    ii" << ii << "rmsd_rec" << mrecs[ii].rmsd;
 
          if ( ii == 0 )
          { // Best:  color with top color and use wider line

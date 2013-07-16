@@ -74,12 +74,16 @@ class US_pcsaProcess : public QObject
                         QStringList&, QVector< ModelRecord >& );
 
       //! \brief Get best mrec result needed for an alpha scan
-      //! \param mrec    Model record
+      //! \param p_mrec  Model record
       void get_mrec( ModelRecord& );
 
       //! \brief Replace best mrec in internal mrecs list
-      //! \param mrec    Model record
+      //! \param p_mrec  Model record
       void put_mrec( ModelRecord& );
+
+      //! \brief Replace internal mrecs list
+      //! \param p_mrecs Model records list
+      void put_mrecs( QVector< ModelRecord >& );
 
       //! \brief Stop a fit that is in progress
       void stop_fit(       void );
