@@ -67,6 +67,14 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
       QLabel      *lbl_ev_exp_mult;
       QLineEdit   *le_ev_exp_mult;
 
+      QCheckBox   *cb_compute_chi2shannon;
+
+      QLabel      *lbl_chi2shannon_dmax;
+      QLineEdit   *le_chi2shannon_dmax;
+
+      QLabel      *lbl_chi2shannon_k;
+      QLineEdit   *le_chi2shannon_k;
+
       QCheckBox   *cb_alt_sh1;
       QCheckBox   *cb_alt_sh2;
       QCheckBox   *cb_create_shd;
@@ -99,6 +107,10 @@ class US_EXTERN US_Hydrodyn_SasOptionsExperimental : public QFrame
       void set_compute_exponentials();
       void update_compute_exponential_terms( double );
       void update_ev_exp_mult (const QString & );
+
+      void set_compute_chi2shannon();
+      void update_chi2shannon_dmax (const QString & );
+      void update_chi2shannon_k (const QString & );
 
       void set_alt_sh1();
       void set_alt_sh2();

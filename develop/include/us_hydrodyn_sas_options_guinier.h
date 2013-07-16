@@ -91,6 +91,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       QLabel     *lbl_psv;
       QLineEdit  *le_psv;
 
+      QCheckBox  *cb_guinier_use_qRlimit;
+
       QCheckBox  *cb_guinier_use_sd;
 
       QCheckBox  *cb_guinier_outlier_reject;
@@ -161,6 +163,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public QFrame
       void set_guinier_outlier_reject           ();
       void update_guinier_outlier_reject_dist   ( const QString & );
       void set_guinier_use_sd                   ();
+      void set_guinier_use_qRlimit              ();
       void set_guinier_use_standards            ();
 
       void guinier                              ();

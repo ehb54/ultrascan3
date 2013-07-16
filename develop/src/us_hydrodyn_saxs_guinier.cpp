@@ -591,131 +591,173 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          }
          // cout << QString( "after af: smin^2 %1 smax^2 %2\n" ).arg( smin * smin ).arg( smax * smax );
       } else {
-         usu.wave["data"].q.clear();
-         usu.wave["data"].r.clear();
-         usu.wave["data"].s.clear();
-         // vector < double > q2;
-         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
-         {
-            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
-                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
+         bool do_decrease = 
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_use_qRlimit" ) &&
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_use_qRlimit" ] == "1";
+         unsigned int pts_decrease = 0;
+         //          if ( do_decrease )
+         //          {
+         //             printf( "do decrease, pts_decrease %u\n", pts_decrease );
+         //          }
+         do {
+            usu.wave["data"].q.clear();
+            usu.wave["data"].r.clear();
+            usu.wave["data"].s.clear();
+            // vector < double > q2;
+            for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
             {
-               usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
-               // q2.push_back(  plotted_q2[ i ][ j ] );
-               usu.wave["data"].r.push_back( plotted_I[ i ][ j ] );
-               if ( use_SD_weighting )
+               if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                    plotted_q[ i ][ j ] <= our_saxs_options->qend )
                {
-                  usu.wave["data"].s.push_back( plotted_I_error[ i ][ j ] );
-               }
-            }
-         }
-         // US_Vector::printvector3( "q2 I e", q2 /* usu.wave["data"].q */, usu.wave["data"].r, usu.wave["data"].s );
-         unsigned int pstart = 0;
-         unsigned int pend   = usu.wave[ "data" ].q.size() ? usu.wave[ "data" ].q.size() - 1 : 0;
-         bestend = pend;
-         beststart = pstart;
-
-         if ( use_guinier_outlier_reject )
-         {
-            // puts( "outlier reject" );
-            US_Vector::printvector( "'data'.q orig", usu.wave[ "data" ].q ); 
-            map < double, double > removed;
-            if ( 
-                !usu.guinier_plot(
-                                  "guinier",
-                                  "data"
-                                  )   ||
-                !usu.guinier_fit_with_removal(
-                                              this_log,
-                                              "guinier", 
-                                              pstart,
-                                              pend,
-                                              a,
-                                              b,
-                                              siga,
-                                              sigb,
-                                              chi2,
-                                              Rg,
-                                              I0,
-                                              smax, // don't know why these are flipped
-                                              smin,
-                                              sRgmin,
-                                              sRgmax,
-                                              our_saxs_options->guinier_outlier_reject_dist,
-                                              removed,
-                                              pts_removed,
-                                              false
-                                              ) )
-            {
-               editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
-                              .arg(qsl_plotted_iq_names[i]));
-               return false;
-            }
-            // cout << QString( "removed size: %1 pts_removed %2\n" ).arg( removed.size() ).arg( pts_removed );
-            if ( removed.size() )
-            {
-               plotted_guinier_pts_removed[ i ] = removed;
-               // US_Vector::printvector( "'data'.q", usu.wave[ "data" ].q ); 
-               // US_Vector::printvector( "'guinier'.q", usu.wave[ "guinier" ].q ); 
-               // vector < double > f;
-               // vector < double > q2;
-
-               map < QString, bool > removed_match;
-               for ( map < double, double >::iterator it = removed.begin();
-                     it != removed.end();
-                     it++ )
-               {
-                  // f.push_back( it->first );
-                  removed_match[ QString( "%1" ).arg( it->first ) ] = true;
-               }
-               // US_Vector::printvector( "removed first value", f ); 
-
-               for ( int j = 0; j < (int)usu.wave[ "data" ].q.size(); ++j )
-               {
-                  // q2.push_back( usu.wave[ "data" ].q[ j ] * usu.wave[ "data" ].q[ j ] );
-                  if ( removed_match.count( QString( "%1" ).arg( usu.wave[ "data" ].q[ j ] * usu.wave[ "data" ].q[ j ] ) ) )
+                  usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+                  // q2.push_back(  plotted_q2[ i ][ j ] );
+                  usu.wave["data"].r.push_back( plotted_I[ i ][ j ] );
+                  if ( use_SD_weighting )
                   {
-                     qs_removed += QString( "%1%2" ).arg( qs_removed.isEmpty() ? "" : "_" ).arg( j + 1 );
+                     usu.wave["data"].s.push_back( plotted_I_error[ i ][ j ] );
                   }
                }
-               // cout << "qs_removed:" << qs_removed << endl;
-               // US_Vector::printvector( "q2 computed from wave['data']", q2 ); 
+            }
+
+            if ( pts_decrease )
+            {
+               if ( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease < 5 )
+               {
+                  editor->append( QString( "Error performing Guinier analysis on %1: too few points left after decreasing for qRgmax limit\n" ).arg( qsl_plotted_iq_names[ i ] ) );
+                  return false;
+               }
+
+               usu.wave[ "data" ].q.resize( usu.wave[ "data" ].q.size() - pts_decrease );
+               usu.wave[ "data" ].r.resize( usu.wave[ "data" ].q.size() );
+               if ( use_SD_weighting )
+               {
+                  usu.wave[ "data" ].s.resize( usu.wave[ "data" ].q.size() );
+               }
+            }
+
+            //             if ( do_decrease )
+            //             {
+            //                US_Vector::printvector3( "q I e", usu.wave["data"].q, usu.wave["data"].r, usu.wave["data"].s );
+            //             }
+
+            unsigned int pstart = 0;
+            unsigned int pend   = usu.wave[ "data" ].q.size() ? usu.wave[ "data" ].q.size() - 1 : 0;
+            bestend = pend;
+            beststart = pstart;
+
+            if ( use_guinier_outlier_reject )
+            {
+               // puts( "outlier reject" );
+               US_Vector::printvector( "'data'.q orig", usu.wave[ "data" ].q ); 
+               map < double, double > removed;
+               if ( 
+                   !usu.guinier_plot(
+                                     "guinier",
+                                     "data"
+                                     )   ||
+                   !usu.guinier_fit_with_removal(
+                                                 this_log,
+                                                 "guinier", 
+                                                 pstart,
+                                                 pend,
+                                                 a,
+                                                 b,
+                                                 siga,
+                                                 sigb,
+                                                 chi2,
+                                                 Rg,
+                                                 I0,
+                                                 smax, // don't know why these are flipped
+                                                 smin,
+                                                 sRgmin,
+                                                 sRgmax,
+                                                 our_saxs_options->guinier_outlier_reject_dist,
+                                                 removed,
+                                                 pts_removed,
+                                                 false
+                                                 ) )
+               {
+                  editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
+                                 .arg(qsl_plotted_iq_names[i]));
+                  return false;
+               }
+               // cout << QString( "removed size: %1 pts_removed %2\n" ).arg( removed.size() ).arg( pts_removed );
+               if ( removed.size() )
+               {
+                  plotted_guinier_pts_removed[ i ] = removed;
+                  // US_Vector::printvector( "'data'.q", usu.wave[ "data" ].q ); 
+                  // US_Vector::printvector( "'guinier'.q", usu.wave[ "guinier" ].q ); 
+                  // vector < double > f;
+                  // vector < double > q2;
+
+                  map < QString, bool > removed_match;
+                  for ( map < double, double >::iterator it = removed.begin();
+                        it != removed.end();
+                        it++ )
+                  {
+                     // f.push_back( it->first );
+                     removed_match[ QString( "%1" ).arg( it->first ) ] = true;
+                  }
+                  // US_Vector::printvector( "removed first value", f ); 
+
+                  for ( int j = 0; j < (int)usu.wave[ "data" ].q.size(); ++j )
+                  {
+                     // q2.push_back( usu.wave[ "data" ].q[ j ] * usu.wave[ "data" ].q[ j ] );
+                     if ( removed_match.count( QString( "%1" ).arg( usu.wave[ "data" ].q[ j ] * usu.wave[ "data" ].q[ j ] ) ) )
+                     {
+                        qs_removed += QString( "%1%2" ).arg( qs_removed.isEmpty() ? "" : "_" ).arg( j + 1 );
+                     }
+                  }
+                  // cout << "qs_removed:" << qs_removed << endl;
+                  // US_Vector::printvector( "q2 computed from wave['data']", q2 ); 
+               } else {
+                  plotted_guinier_pts_removed.erase( i );
+               }
+               // cout << QString( "after gor: smin^2 %1 smax^2 %2\n" ).arg( smin * smin ).arg( smax * smax );
             } else {
                plotted_guinier_pts_removed.erase( i );
+               if ( 
+                   !usu.guinier_plot(
+                                     "guinier",
+                                     "data"
+                                     )   ||
+                   !usu.guinier_fit(
+                                    this_log,
+                                    "guinier", 
+                                    pstart,
+                                    pend,
+                                    a,
+                                    b,
+                                    siga,
+                                    sigb,
+                                    chi2,
+                                    Rg,
+                                    I0,
+                                    smax, // don't know why these are flipped
+                                    smin,
+                                    sRgmin,
+                                    sRgmax
+                                    ) )
+               {
+                  editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
+                                 .arg(qsl_plotted_iq_names[i]));
+                  return false;
+               }
+               // cout << QString( "after g: smin^2 %1 smax^2 %2\n" ).arg( smin * smin ).arg( smax * smax );
             }
-            // cout << QString( "after gor: smin^2 %1 smax^2 %2\n" ).arg( smin * smin ).arg( smax * smax );
-         } else {
-            plotted_guinier_pts_removed.erase( i );
-            if ( 
-                !usu.guinier_plot(
-                                  "guinier",
-                                  "data"
-                                  )   ||
-                !usu.guinier_fit(
-                                 this_log,
-                                 "guinier", 
-                                 pstart,
-                                 pend,
-                                 a,
-                                 b,
-                                 siga,
-                                 sigb,
-                                 chi2,
-                                 Rg,
-                                 I0,
-                                 smax, // don't know why these are flipped
-                                 smin,
-                                 sRgmin,
-                                 sRgmax
-                                 ) )
+            //             if ( do_decrease )
+            //             {
+            //                printf( "do decrease, sRgmax %g sRgmaxlimit %g\n", sRgmax, sRgmaxlimit );
+            //             }
+               
+            do_decrease = do_decrease && ( sRgmax > sRgmaxlimit );
+            if ( do_decrease )
             {
-               editor->append(QString("Error performing Guinier analysis on %1\n" + usu.errormsg + "\n")
-                              .arg(qsl_plotted_iq_names[i]));
-               return false;
+               // puts( "decreasing one point" );
+               pts_decrease++;
             }
-            // cout << QString( "after g: smin^2 %1 smax^2 %2\n" ).arg( smin * smin ).arg( smax * smax );
-         }
-      }         
+         } while ( do_decrease );
+      }
 
       // cout << "guinier siga " << siga << endl;
       // cout << "guinier sigb " << sigb << endl;
@@ -1148,124 +1190,156 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             return false;
          }
       } else {
-         usu.wave["data"].q.clear();
-         usu.wave["data"].r.clear();
-         usu.wave["data"].s.clear();
+         bool do_decrease = 
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_use_qRlimit" ) &&
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_use_qRlimit" ] == "1";
+         unsigned int pts_decrease = 0;
+         //          if ( do_decrease )
+         //          {
+         //             printf( "do decrease, pts_decrease %u\n", pts_decrease );
+         //          }
+         do {
+            usu.wave["data"].q.clear();
+            usu.wave["data"].r.clear();
+            usu.wave["data"].s.clear();
 
-         // vector < double > q2;
+            // vector < double > q2;
 
-         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
-         {
-            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
-                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
+            for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
             {
-               usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
-               // q2.push_back(  plotted_q2[ i ][ j ] );
-               usu.wave["data"].r.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
-               if ( use_SD_weighting )
+               if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                    plotted_q[ i ][ j ] <= our_saxs_options->qend )
                {
-                  usu.wave["data"].s.push_back( plotted_q[ i ][ j ] * plotted_I_error[ i ][ j ] );
-               }
-            }
-         }
-
-         // US_Vector::printvector3( "cs2 q2 I e", q2 /* usu.wave["data"].q */, usu.wave["data"].r, usu.wave["data"].s );
-
-         unsigned int pstart = 0;
-         unsigned int pend   = usu.wave[ "data" ].q.size() ? usu.wave[ "data" ].q.size() - 1 : 0;
-         bestend = pend;
-         beststart = pstart;
-
-         if ( use_guinier_outlier_reject )
-         {
-            // puts( "outlier reject" );
-            map < double, double > removed;
-            if ( 
-                !usu.guinier_plot(
-                                  "guinier",
-                                  "data"
-                                  )   ||
-                !usu.guinier_fit_with_removal(
-                                              this_log,
-                                              "guinier", 
-                                              pstart,
-                                              pend,
-                                              a,
-                                              b,
-                                              siga,
-                                              sigb,
-                                              chi2,
-                                              Rg,
-                                              I0,
-                                              smax, // don't know why these are flipped
-                                              smin,
-                                              sRgmin,
-                                              sRgmax,
-                                              our_saxs_options->guinier_outlier_reject_dist,
-                                              removed,
-                                              pts_removed,
-                                              true
-                                              ) )
-            {
-               editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
-                              .arg(qsl_plotted_iq_names[ i ]));
-               return false;
-            }
-            // cout << QString( "removed size: %1 pts_removed %2\n" ).arg( removed.size() ).arg( pts_removed );
-            if ( removed.size() )
-            {
-               plotted_cs_guinier_pts_removed[ i ] = removed;
-
-               map < QString, bool > removed_match;
-               for ( map < double, double >::iterator it = removed.begin();
-                     it != removed.end();
-                     it++ )
-               {
-                  removed_match[ QString( "%1" ).arg( it->first ) ] = true;
-               }
-
-               for ( int j = 0; j < (int)usu.wave[ "data" ].q.size(); ++j )
-               {
-                  if ( removed_match.count( QString( "%1" ).arg( usu.wave[ "data" ].q[ j ] * usu.wave[ "data" ].q[ j ] ) ) )
+                  usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+                  // q2.push_back(  plotted_q2[ i ][ j ] );
+                  usu.wave["data"].r.push_back( plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
+                  if ( use_SD_weighting )
                   {
-                     qs_removed += QString( "%1%2" ).arg( qs_removed.isEmpty() ? "" : "_" ).arg( j + 1 );
+                     usu.wave["data"].s.push_back( plotted_q[ i ][ j ] * plotted_I_error[ i ][ j ] );
                   }
                }
+            }
+
+            if ( pts_decrease )
+            {
+               if ( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease < 5 )
+               {
+                  editor->append( QString( "Error performing CS Guinier analysis on %1: too few points left after decreasing for qRgmax limit\n" ).arg( qsl_plotted_iq_names[ i ] ) );
+                  return false;
+               }
+
+               usu.wave[ "data" ].q.resize( usu.wave[ "data" ].q.size() - pts_decrease );
+               usu.wave[ "data" ].r.resize( usu.wave[ "data" ].q.size() );
+               if ( use_SD_weighting )
+               {
+                  usu.wave[ "data" ].s.resize( usu.wave[ "data" ].q.size() );
+               }
+            }
+
+            // US_Vector::printvector3( "cs2 q2 I e", q2 /* usu.wave["data"].q */, usu.wave["data"].r, usu.wave["data"].s );
+
+            unsigned int pstart = 0;
+            unsigned int pend   = usu.wave[ "data" ].q.size() ? usu.wave[ "data" ].q.size() - 1 : 0;
+            bestend = pend;
+            beststart = pstart;
+
+            if ( use_guinier_outlier_reject )
+            {
+               // puts( "outlier reject" );
+               map < double, double > removed;
+               if ( 
+                   !usu.guinier_plot(
+                                     "guinier",
+                                     "data"
+                                     )   ||
+                   !usu.guinier_fit_with_removal(
+                                                 this_log,
+                                                 "guinier", 
+                                                 pstart,
+                                                 pend,
+                                                 a,
+                                                 b,
+                                                 siga,
+                                                 sigb,
+                                                 chi2,
+                                                 Rg,
+                                                 I0,
+                                                 smax, // don't know why these are flipped
+                                                 smin,
+                                                 sRgmin,
+                                                 sRgmax,
+                                                 our_saxs_options->guinier_outlier_reject_dist,
+                                                 removed,
+                                                 pts_removed,
+                                                 true
+                                                 ) )
+               {
+                  editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
+                                 .arg(qsl_plotted_iq_names[ i ]));
+                  return false;
+               }
+               // cout << QString( "removed size: %1 pts_removed %2\n" ).arg( removed.size() ).arg( pts_removed );
+               if ( removed.size() )
+               {
+                  plotted_cs_guinier_pts_removed[ i ] = removed;
+
+                  map < QString, bool > removed_match;
+                  for ( map < double, double >::iterator it = removed.begin();
+                        it != removed.end();
+                        it++ )
+                  {
+                     removed_match[ QString( "%1" ).arg( it->first ) ] = true;
+                  }
+
+                  for ( int j = 0; j < (int)usu.wave[ "data" ].q.size(); ++j )
+                  {
+                     if ( removed_match.count( QString( "%1" ).arg( usu.wave[ "data" ].q[ j ] * usu.wave[ "data" ].q[ j ] ) ) )
+                     {
+                        qs_removed += QString( "%1%2" ).arg( qs_removed.isEmpty() ? "" : "_" ).arg( j + 1 );
+                     }
+                  }
+               } else {
+                  plotted_cs_guinier_pts_removed.erase( i );
+               }
+               // cout << QString( "after gor: smin^2 %1 smax^2 %2\n" ).arg( smin * smin ).arg( smax * smax );
             } else {
                plotted_cs_guinier_pts_removed.erase( i );
+               if ( 
+                   !usu.guinier_plot(
+                                     "guinier",
+                                     "data"
+                                     )   ||
+                   !usu.guinier_fit(
+                                    this_log,
+                                    "guinier", 
+                                    pstart,
+                                    pend,
+                                    a,
+                                    b,
+                                    siga,
+                                    sigb,
+                                    chi2,
+                                    Rg,
+                                    I0,
+                                    smax, // don't know why these are flipped
+                                    smin,
+                                    sRgmin,
+                                    sRgmax,
+                                    true
+                                    ) )
+               {
+                  editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
+                                 .arg(qsl_plotted_iq_names[ i ]));
+                  return false;
+               }
             }
-            // cout << QString( "after gor: smin^2 %1 smax^2 %2\n" ).arg( smin * smin ).arg( smax * smax );
-         } else {
-            plotted_cs_guinier_pts_removed.erase( i );
-            if ( 
-                !usu.guinier_plot(
-                                  "guinier",
-                                  "data"
-                                  )   ||
-                !usu.guinier_fit(
-                                 this_log,
-                                 "guinier", 
-                                 pstart,
-                                 pend,
-                                 a,
-                                 b,
-                                 siga,
-                                 sigb,
-                                 chi2,
-                                 Rg,
-                                 I0,
-                                 smax, // don't know why these are flipped
-                                 smin,
-                                 sRgmin,
-                                 sRgmax,
-                                 true
-                                 ) )
+            do_decrease = do_decrease && ( sRgmax > sRgmaxlimit );
+            if ( do_decrease )
             {
-               editor->append(QString("Error performing CS Guinier analysis on %1\n" + usu.errormsg + "\n")
-                              .arg(qsl_plotted_iq_names[ i ]));
-               return false;
+               // puts( "decreasing one point" );
+               pts_decrease++;
             }
-         }
+         } while ( do_decrease );
       }
       // cout << "guinier siga " << siga << endl;
       // cout << "guinier sigb " << sigb << endl;
@@ -1683,80 +1757,105 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
             return false;
          }
       } else {
-         usu.wave["data"].q.clear();
-         usu.wave["data"].r.clear();
-         usu.wave["data"].s.clear();
+         bool do_decrease = 
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_use_qRlimit" ) &&
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_use_qRlimit" ] == "1";
+         unsigned int pts_decrease = 0;
+         //          if ( do_decrease )
+         //          {
+         //             printf( "do decrease, pts_decrease %u\n", pts_decrease );
+         //          }
+         do {
+            usu.wave["data"].q.clear();
+            usu.wave["data"].r.clear();
+            usu.wave["data"].s.clear();
 
-         // vector < double > q2;
+            // vector < double > q2;
 
-         for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
-         {
-            if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
-                 plotted_q[ i ][ j ] <= our_saxs_options->qend )
+            for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
             {
-               usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
-               // q2.push_back(  plotted_q2[ i ][ j ] );
-               usu.wave["data"].r.push_back( plotted_q[ i ][ j ] * plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
+               if ( plotted_q[ i ][ j ] >= our_saxs_options->qstart &&
+                    plotted_q[ i ][ j ] <= our_saxs_options->qend )
+               {
+                  usu.wave["data"].q.push_back( plotted_q[ i ][ j ] );
+                  // q2.push_back(  plotted_q2[ i ][ j ] );
+                  usu.wave["data"].r.push_back( plotted_q[ i ][ j ] * plotted_q[ i ][ j ] * plotted_I[ i ][ j ] );
+                  if ( use_SD_weighting )
+                  {
+                     usu.wave["data"].s.push_back( plotted_q[ i ][ j ] * plotted_q[ i ][ j ] * plotted_I_error[ i ][ j ] );
+                  }
+               }
+            }
+
+            if ( pts_decrease )
+            {
+               if ( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease < 5 )
+               {
+                  editor->append( QString( "Error performing TV Guinier analysis on %1: too few points left after decreasing for qRgmax limit\n" ).arg( qsl_plotted_iq_names[ i ] ) );
+                  return false;
+               }
+
+               usu.wave[ "data" ].q.resize( usu.wave[ "data" ].q.size() - pts_decrease );
+               usu.wave[ "data" ].r.resize( usu.wave[ "data" ].q.size() );
                if ( use_SD_weighting )
                {
-                  usu.wave["data"].s.push_back( plotted_q[ i ][ j ] * plotted_q[ i ][ j ] * plotted_I_error[ i ][ j ] );
+                  usu.wave[ "data" ].s.resize( usu.wave[ "data" ].q.size() );
                }
             }
-         }
 
-         unsigned int pstart = 0;
-         unsigned int pend   = usu.wave[ "data" ].q.size() ? usu.wave[ "data" ].q.size() - 1 : 0;
-         bestend = pend;
-         beststart = pstart;
+            unsigned int pstart = 0;
+            unsigned int pend   = usu.wave[ "data" ].q.size() ? usu.wave[ "data" ].q.size() - 1 : 0;
+            bestend = pend;
+            beststart = pstart;
 
-         if ( use_guinier_outlier_reject )
-         {
-            // puts( "outlier reject" );
-            map < double, double > removed;
-            if ( 
-                !usu.guinier_plot(
-                                  "guinier",
-                                  "data"
-                                  )   ||
-                !usu.guinier_fit_with_removal(
-                                              this_log,
-                                              "guinier", 
-                                              pstart,
-                                              pend,
-                                              a,
-                                              b,
-                                              siga,
-                                              sigb,
-                                              chi2,
-                                              Rg,
-                                              I0,
-                                              smax, // don't know why these are flipped
-                                              smin,
-                                              sRgmin,
-                                              sRgmax,
-                                              our_saxs_options->guinier_outlier_reject_dist,
-                                              removed,
-                                              pts_removed,
-                                              false,
-                                              true
-                                              ) )
+            if ( use_guinier_outlier_reject )
             {
-               editor->append(QString("Error performing TV Guinier analysis on %1\n" + usu.errormsg + "\n")
-                              .arg(qsl_plotted_iq_names[ i ]));
-               return false;
-            }
-            // cout << QString( "removed size: %1 pts_removed %2\n" ).arg( removed.size() ).arg( pts_removed );
-            if ( removed.size() )
-            {
-               plotted_Rt_guinier_pts_removed[ i ] = removed;
-
-               map < QString, bool > removed_match;
-               for ( map < double, double >::iterator it = removed.begin();
-                     it != removed.end();
-                     it++ )
+               // puts( "outlier reject" );
+               map < double, double > removed;
+               if ( 
+                   !usu.guinier_plot(
+                                     "guinier",
+                                     "data"
+                                     )   ||
+                   !usu.guinier_fit_with_removal(
+                                                 this_log,
+                                                 "guinier", 
+                                                 pstart,
+                                                 pend,
+                                                 a,
+                                                 b,
+                                                 siga,
+                                                 sigb,
+                                                 chi2,
+                                                 Rg,
+                                                 I0,
+                                                 smax, // don't know why these are flipped
+                                                 smin,
+                                                 sRgmin,
+                                                 sRgmax,
+                                                 our_saxs_options->guinier_outlier_reject_dist,
+                                                 removed,
+                                                 pts_removed,
+                                                 false,
+                                                 true
+                                                 ) )
                {
-                  removed_match[ QString( "%1" ).arg( it->first ) ] = true;
+                  editor->append(QString("Error performing TV Guinier analysis on %1\n" + usu.errormsg + "\n")
+                                 .arg(qsl_plotted_iq_names[ i ]));
+                  return false;
                }
+               // cout << QString( "removed size: %1 pts_removed %2\n" ).arg( removed.size() ).arg( pts_removed );
+               if ( removed.size() )
+               {
+                  plotted_Rt_guinier_pts_removed[ i ] = removed;
+
+                  map < QString, bool > removed_match;
+                  for ( map < double, double >::iterator it = removed.begin();
+                        it != removed.end();
+                        it++ )
+                  {
+                     removed_match[ QString( "%1" ).arg( it->first ) ] = true;
+                  }
 
                for ( int j = 0; j < (int)usu.wave[ "data" ].q.size(); ++j )
                {
@@ -1801,6 +1900,13 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
                return false;
             }
          }
+            do_decrease = do_decrease && ( sRgmax > sRgmaxlimit );
+            if ( do_decrease )
+            {
+               // puts( "decreasing one point" );
+               pts_decrease++;
+            }
+         } while ( do_decrease );
       }
       // cout << "guinier siga " << siga << endl;
       // cout << "guinier sigb " << sigb << endl;

@@ -1,4 +1,5 @@
 #include "../include/us_saxs_util.h"
+#include "../include/us_vector.h"
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -10677,4 +10678,204 @@ double US_Saxs_Util::spline_erf( double x )
       a * erf_y[ klo ] +
       b * erf_y[ khi ] + ( ( a * a * a - a ) * erf_y2[ klo ] + 
                         ( b * b * b - b ) * erf_y2[ khi ] ) * ( h * h ) / 6e0;
+}
+
+bool US_Saxs_Util::calc_chisqshannon( 
+                                     vector < double > &q,
+                                     vector < double > &Iexp,
+                                     vector < double > &sexp,
+                                     vector < double > &Icalc,
+                                     double            dmax,
+                                     unsigned int      k,
+                                     QString           &errors,
+                                     double            &ns,
+                                     double            &chi2shannon
+                                     )
+{
+   // calc chisqfree as pre Tainer et al
+   errors = "";
+   chi2shannon = 1e99;
+
+   if ( q.size() != Iexp.size() ||
+        q.size() != sexp.size() ||
+        q.size() != Icalc.size() )
+   {
+      errors = QString( "incompatible vector sizes q %1 Iexp %2 sexp %3 Icalc %4" )
+      .arg( q.size() )
+      .arg( Iexp.size() )
+      .arg( sexp.size() )
+      .arg( Icalc.size() )
+      ;
+      return false;
+   }
+            
+   // compute ns number of shannon channels
+
+   double q_range = q.back() - q[ 0 ];
+
+   ns = dmax * q_range / M_PI;
+
+   unsigned int Ins = ( unsigned int )( 5e-1 + ns );
+
+   cout << QString( "shannon channels %1 integer %2\n" ).arg( ns ).arg( Ins );
+
+   if ( Ins < 1 )
+   {
+      errors = "zero shannon channels";
+      return false;
+   }
+
+   // compute bin parameters (allow for alternatives, such as log or signal size binning )
+
+   vector < unsigned int > bin_base( Ins );
+   vector < unsigned int > bin_size( Ins );
+
+   double delta_q = q_range / (double) Ins;
+
+   unsigned int j = 0;
+
+   for ( unsigned int i = 0; i < Ins; i++ )
+   {
+      bin_base[ i ] = j;
+      while ( j < q.size() && q[ j ] < delta_q * ( i + 1 ) )
+      {
+         j++;
+      }
+      bin_size[ i ] = j - bin_base[ i ];
+   }
+
+
+   unsigned int p = 1; // for scaling fit
+   unsigned int v = Ins + 1 - p;
+
+   US_Vector::printvector( "bin base", bin_base );
+   US_Vector::printvector( "bin size", bin_size );
+
+   // list of chi2s to determine median
+
+   list < double > chi2s;
+
+   vector < unsigned int > pos( Ins );
+   vector < double > tmp_q ( Ins );
+   vector < double > tmp_Iexp( Ins );
+   vector < double > tmp_sexp( Ins );
+   vector < double > tmp_Icalc( Ins );
+
+   for ( unsigned int i = 0; i < k; i++ )
+   {
+      if ( i && !( i % 101 ) )
+      {
+         list < double > tmp = chi2s;
+         tmp.sort();
+         unsigned int t = 0;
+         for ( list < double >::iterator it = tmp.begin();
+               it != tmp.end();
+               it++, t++ )
+         {
+            if ( t >= ( i - 1 ) / 2 )
+            {
+               cout << QString( "median after %1 iterations %2\n" ).arg( i ).arg( *it );
+               break;
+            }
+         }
+      }
+
+      // select random values from each bin, build up a mini-vector for fitting
+
+      for ( unsigned int j = 0; j < (unsigned int) pos.size(); j++ )
+      {
+         pos[ j ] = bin_base[ j ] + (unsigned int )( drand48() * bin_size[ j ] );
+         tmp_q[ j ] = q[ pos[ j ] ];
+         tmp_Iexp[ j ] = Iexp[ pos[ j ] ];
+         tmp_sexp[ j ] = sexp[ pos[ j ] ];
+         tmp_Icalc[ j ] = Icalc[ pos[ j ] ];
+      }
+
+
+      double chi2;
+      double scale;
+
+      if ( !sscaling_fit( tmp_Icalc, tmp_Iexp, tmp_sexp, scale, chi2 ) )
+      {
+         errors = "scaling failed";
+         return false;
+      }
+
+      chi2s.push_back( chi2 / (double) v );
+   }
+
+   // return median
+
+   chi2s.sort();
+   unsigned int t = 0;
+   for ( list < double >::iterator it = chi2s.begin();
+         it != chi2s.end();
+         it++, t++ )
+   {
+      if ( t >= ( (unsigned int)chi2s.size() - 1 ) / 2 )
+      {
+         chi2shannon = *it;
+         if ( !( chi2s.size() % 2 ) )
+         {
+            // even size
+            it--;
+            chi2shannon += *it;
+            chi2shannon /= 2e0;
+               
+         }
+         break;
+      }
+   }
+   return true;
+}
+
+
+bool US_Saxs_Util::sscaling_fit( 
+                                vector < double > x, 
+                                vector < double > y, 
+                                vector < double > sd, 
+                                double &k,
+                                double &chi2
+                                )
+{
+   if ( x.size() != y.size() ||
+        x.size() != sd.size() )
+   {
+      cerr << 
+         QString( "US_Saxs_Util::scaling_fit() incompatible vector sizes %1 %2 %3\n" )
+         .arg( x.size() )
+         .arg( y.size() )
+         .arg( sd.size() );
+      k = 1e0;
+      chi2 = 9e99;
+      return false;
+   }
+
+   k = 0e0;
+
+   double Sxx = 0e0;
+   double Sxy = 0e0;
+
+   vector < double > oneoversd2( sd.size() );
+
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      oneoversd2[ i ] =  1.0 / (sd[ i ] * sd[ i ]);
+      Sxx += x[i] * x[i] * oneoversd2[ i ];
+      Sxy += x[i] * y[i] * oneoversd2[ i ];
+   }
+
+   if ( Sxx != 0 )
+   {
+      k = Sxy / Sxx;
+   } else {
+      k = 1e0;
+   }
+
+   chi2 = 0e0;
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      chi2 += ( k * x[i] - y[i] ) * ( k * x[i] - y[i] ) * oneoversd2[ i ];
+   }
+   return true;
 }

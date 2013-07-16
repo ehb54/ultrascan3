@@ -185,6 +185,15 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    le_pointsmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(le_pointsmax, SIGNAL( textChanged( const QString & ) ), SLOT(update_pointsmax( const QString & )));
 
+   cb_guinier_use_qRlimit = new QCheckBox(this);
+   cb_guinier_use_qRlimit->setText(tr(" Limit maximum q to maximum q*Rg, q*Rc or q*Rg (not active in Search mode)"));
+   cb_guinier_use_qRlimit->setEnabled(true);
+   cb_guinier_use_qRlimit->setChecked( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "guinier_use_qRlimit" ) &&
+                                       ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "guinier_use_qRlimit" ] == "1" );
+   cb_guinier_use_qRlimit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_guinier_use_qRlimit->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_guinier_use_qRlimit, SIGNAL(clicked()), this, SLOT(set_guinier_use_qRlimit()));
+
    cb_guinier_use_sd = new QCheckBox(this);
    cb_guinier_use_sd->setText(tr(" Use SDs for fitting "));
    cb_guinier_use_sd->setEnabled(true);
@@ -426,6 +435,8 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(lbl_cs_qend, j, 0);
    background->addWidget(le_cs_qend, j, 1);
    j++;
+   background->addMultiCellWidget(cb_guinier_use_qRlimit, j, j, 0, 1);
+   j++;
    background->addMultiCellWidget(cb_guinier_use_sd, j, j, 0, 1);
    j++;
    background->addWidget(cb_guinier_outlier_reject, j, 0);
@@ -650,6 +661,18 @@ void US_Hydrodyn_SasOptionsGuinier::update_psv( const QString & str )
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_SasOptionsGuinier::set_guinier_use_qRlimit()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_use_qRlimit" ] = cb_guinier_use_qRlimit->isChecked() ? "1" : "0";
+   if ( cb_guinier_use_qRlimit->isChecked() &&
+        cb_guinier_auto_fit->isChecked() )
+   {
+      cb_guinier_auto_fit->setChecked( false );
+      set_guinier_auto_fit();
+   }
+   //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_SasOptionsGuinier::set_guinier_use_sd()
 {
    (*saxs_options).guinier_use_sd = cb_guinier_use_sd->isChecked();
@@ -823,8 +846,16 @@ void US_Hydrodyn_SasOptionsGuinier::set_guinier_auto_fit()
    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_auto_fit" ] = cb_guinier_auto_fit->isChecked() ? "1" : "0";
    if ( cb_guinier_auto_fit->isChecked() )
    {
-      cb_guinier_outlier_reject->setChecked( false );
-      set_guinier_outlier_reject();
+      if ( cb_guinier_outlier_reject->isChecked() )
+      {
+         cb_guinier_outlier_reject->setChecked( false );
+         set_guinier_outlier_reject();
+      }
+      if ( cb_guinier_use_qRlimit->isChecked() )
+      {
+         cb_guinier_use_qRlimit->setChecked( false );
+         set_guinier_use_qRlimit();
+      }
    }
    //   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

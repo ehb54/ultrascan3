@@ -406,6 +406,13 @@ class US_EXTERN US_Saxs_Util
                        double &chi2
                        );
 
+      static bool sscaling_fit( 
+                               vector < double > x, 
+                               vector < double > y, 
+                               vector < double > sd, 
+                               double &a,
+                               double &chi2
+                               );
       void nnls_fit( 
                     vector < double > x, 
                     vector < double > y, 
@@ -444,6 +451,18 @@ class US_EXTERN US_Saxs_Util
                                vector < double > y,
                                double            &rmsd );
 
+      static bool calc_chisqshannon( 
+                                    vector < double > &q,
+                                    vector < double > &Iexp,
+                                    vector < double > &sexp,
+                                    vector < double > &Icalc,
+                                    double            dmax,
+                                    unsigned int      k,
+                                    QString           &errors,
+                                    double            &ns,
+                                    double            &chi2shannon
+                                    );
+                                 
 
       bool setup_saxs_maps( QString atom_file, QString hybrid_file, QString saxs_file );
 

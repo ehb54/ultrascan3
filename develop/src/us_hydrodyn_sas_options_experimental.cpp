@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_asa.h"
 #include "../include/us_hydrodyn.h"
+#include "qvalidator.h"
 
 #define SLASH "/"
 #if defined(WIN32)
@@ -181,6 +182,47 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    le_ev_exp_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_ev_exp_mult, SIGNAL(textChanged(const QString &)), SLOT(update_ev_exp_mult(const QString &)));
 
+   cb_compute_chi2shannon = new QCheckBox(this);
+   cb_compute_chi2shannon->setText(tr(" Compute Chi^2 Shannon"));
+   cb_compute_chi2shannon->setEnabled(true);
+   cb_compute_chi2shannon->setChecked( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "compute_chi2shannon" ) &&
+                                       ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "compute_chi2shannon" ] == "1" );
+   cb_compute_chi2shannon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_compute_chi2shannon->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_compute_chi2shannon, SIGNAL(clicked()), this, SLOT(set_compute_chi2shannon()));
+
+   lbl_chi2shannon_dmax = new QLabel(tr(" Chi^2_Shannon Dmax : "), this);
+   lbl_chi2shannon_dmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_chi2shannon_dmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chi2shannon_dmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_chi2shannon_dmax = new QLineEdit(this);
+   le_chi2shannon_dmax->setValidator( new QDoubleValidator( le_chi2shannon_dmax ) );
+   ( (QDoubleValidator *)le_chi2shannon_dmax->validator() )->setRange( 1e0, 10000e0 );
+   le_chi2shannon_dmax->setText( QString( "%1" ).arg( 
+                                                     ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "chi2shannon_dmax" ) ?
+                                                     ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "chi2shannon_dmax" ].toDouble() : 50e0 ) );
+   le_chi2shannon_dmax->setEnabled(true);
+   le_chi2shannon_dmax->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chi2shannon_dmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_chi2shannon_dmax, SIGNAL( textChanged( const QString & ) ), SLOT(update_chi2shannon_dmax( const QString & )));
+
+   lbl_chi2shannon_k = new QLabel(tr(" Chi^2_Shannon Iterations : "), this);
+   lbl_chi2shannon_k->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_chi2shannon_k->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_chi2shannon_k->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_chi2shannon_k = new QLineEdit(this);
+   le_chi2shannon_k->setValidator( new QIntValidator( le_chi2shannon_k ) );
+   ( (QIntValidator *)le_chi2shannon_k->validator() )->setRange( 5, 100000 );
+   le_chi2shannon_k->setText( QString( "%1" ).arg( 
+                                                  ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "chi2shannon_k" ) ?
+                                                  ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "chi2shannon_k" ].toInt() : 1000 ) );
+   le_chi2shannon_k->setEnabled(true);
+   le_chi2shannon_k->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_chi2shannon_k->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(le_chi2shannon_k, SIGNAL( textChanged( const QString & ) ), SLOT(update_chi2shannon_k( const QString & )));
+
    cb_alt_sh1 = new QCheckBox(this);
    cb_alt_sh1->setText(tr(" SH Alt 1"));
    cb_alt_sh1->setEnabled(true);
@@ -274,6 +316,15 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
    hbl_various_5->addWidget( lbl_ev_exp_mult );
    hbl_various_5->addWidget( le_ev_exp_mult );
    background->addMultiCellLayout(hbl_various_5, j, j, 0, 1);
+   j++;
+
+   QHBoxLayout *hbl_chi2shannon = new QHBoxLayout;
+   hbl_chi2shannon->addWidget( cb_compute_chi2shannon );
+   hbl_chi2shannon->addWidget( lbl_chi2shannon_dmax );
+   hbl_chi2shannon->addWidget( le_chi2shannon_dmax );
+   hbl_chi2shannon->addWidget( lbl_chi2shannon_k );
+   hbl_chi2shannon->addWidget( le_chi2shannon_k );
+   background->addMultiCellLayout(hbl_chi2shannon, j, j, 0, 1);
    j++;
 
    QHBoxLayout *hbl_various_6 = new QHBoxLayout;
@@ -452,4 +503,19 @@ void US_Hydrodyn_SasOptionsExperimental::create_somo_ff()
 void US_Hydrodyn_SasOptionsExperimental::update_ev_exp_mult( const QString &str )
 {
    (*saxs_options).ev_exp_mult = str.toDouble();
+}
+
+void US_Hydrodyn_SasOptionsExperimental::set_compute_chi2shannon()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "compute_chi2shannon" ] = cb_compute_chi2shannon->isChecked() ? "1" : "0";
+}
+
+void US_Hydrodyn_SasOptionsExperimental::update_chi2shannon_dmax( const QString &str )
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "chi2shannon_dmax" ] = str;
+}
+
+void US_Hydrodyn_SasOptionsExperimental::update_chi2shannon_k( const QString &str )
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "chi2shannon_k" ] = str;
 }
