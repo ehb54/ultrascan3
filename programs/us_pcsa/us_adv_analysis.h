@@ -75,6 +75,8 @@ class US_AdvAnalysis : public US_WidgetsDialog
       bool          mc_done;
       bool          mc_running;
 
+      QString       store_dir;
+
       QHBoxLayout*  mainLayout;
       QGridLayout*  finmodelLayout;
       QGridLayout*  mreclistLayout;
@@ -95,12 +97,12 @@ class US_AdvAnalysis : public US_WidgetsDialog
       QwtCounter*   ct_mciters;
       QwtCounter*   ct_crpoints;
 
-      QPushButton*  pb_loadmrl;
-      QPushButton*  pb_storemrl;
+      QPushButton*  pb_loadmrs;
+      QPushButton*  pb_storemrs;
       QPushButton*  pb_loadbfm;
       QPushButton*  pb_storebfm;
       QPushButton*  pb_resetbfm;
-      QPushButton*  pb_resetmrl;
+      QPushButton*  pb_resetmrs;
       QPushButton*  pb_buildbfm;
       QPushButton*  pb_mciters;
       QPushButton*  pb_help;
@@ -139,6 +141,9 @@ class US_AdvAnalysis : public US_WidgetsDialog
       void process_job     ( WorkerThread* );
       void montecarlo_done ( void );
       void under_construct ( QString );
+      void curve_points    ( int, double, double, double, double,
+                             ModelRecord& );
+      void bfm_model       ( void );
 
       void select          ( void );
       void cancel          ( void );
