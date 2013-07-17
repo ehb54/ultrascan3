@@ -550,6 +550,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
 
    unsigned int pts_removed = 0;
    QString      qs_removed  = "";
+   QString      internal_error = "";
 
    if ( !too_few_points )
    {
@@ -595,6 +596,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_use_qRlimit" ) &&
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_use_qRlimit" ] == "1";
          unsigned int pts_decrease = 0;
+         qs_removed = "";
          //          if ( do_decrease )
          //          {
          //             printf( "do decrease, pts_decrease %u\n", pts_decrease );
@@ -623,8 +625,10 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             {
                if ( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease < 5 )
                {
-                  editor->append( QString( "Error performing Guinier analysis on %1: too few points left after decreasing for qRgmax limit\n" ).arg( qsl_plotted_iq_names[ i ] ) );
-                  return false;
+                  internal_error = QString( tr( "Too few points left (%1) after %2 points removed for qRgmax limit" ) )
+                     .arg( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease ).arg( pts_decrease ); 
+                  // editor->append( QString( "Error performing Guinier analysis on %1: %2\n" ).arg( qsl_plotted_iq_names[ i ] ).arg( internal_error ) );
+                  break;
                }
 
                usu.wave[ "data" ].q.resize( usu.wave[ "data" ].q.size() - pts_decrease );
@@ -768,45 +772,66 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    QString report;
 
    if ( too_few_points ||
-        ( bestend - beststart + 1 - pts_removed < pointsmin ) )
+        ( bestend - beststart + 1 - pts_removed < pointsmin ) ||
+        !internal_error.isEmpty() )
    {
-      if ( pts_removed )
+      if ( !internal_error.isEmpty() )
       {
          report =
             QString(
                     "Guinier analysis of %1:\n"
-                    "**** Could not compute Rg, too few data points %2 after removal ****\n"
+                    "**** %2 ****\n"
                     )
             .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 - pts_removed )
+            .arg( internal_error )
             ;
          csvlog += 
             QString(
                     "\"%1\","
-                    "\"Too few data points (%2) after removal\"\n"
+                    "\"%2\"\n"
                     )
             .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 - pts_removed )
+            .arg( internal_error )
             ;
-      } else {
-         report =
-            QString(
-                    "Guinier analysis of %1:\n"
-                    "**** Could not compute Rg, too few data points %2 ****\n"
-                    )
-            .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 )
-            ;
+      } else {        
+         if ( pts_removed )
+         {
+            report =
+               QString(
+                       "Guinier analysis of %1:\n"
+                       "**** Could not compute Rg, too few data points %2 after removal ****\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 - pts_removed )
+               ;
+            csvlog += 
+               QString(
+                       "\"%1\","
+                       "\"Too few data points (%2) after removal\"\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 - pts_removed )
+               ;
+         } else {
+            report =
+               QString(
+                       "Guinier analysis of %1:\n"
+                       "**** Could not compute Rg, too few data points %2 ****\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 )
+               ;
 
-         csvlog += 
-            QString(
-                    "\"%1\","
-                    "\"Too few data points (%2)\"\n"
-                    )
-            .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 )
-            ;
-      }         
+            csvlog += 
+               QString(
+                       "\"%1\","
+                       "\"Too few data points (%2)\"\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 )
+               ;
+         }
+      }
    } else {
       if ( isnan(Rg) ||
            b >= 0e0 )
@@ -1148,6 +1173,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
 
    unsigned int pts_removed = 0;
    QString      qs_removed  = "";
+   QString      internal_error = "";
 
    if ( !too_few_points )
    {
@@ -1194,6 +1220,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_use_qRlimit" ) &&
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_use_qRlimit" ] == "1";
          unsigned int pts_decrease = 0;
+         qs_removed = "";
          //          if ( do_decrease )
          //          {
          //             printf( "do decrease, pts_decrease %u\n", pts_decrease );
@@ -1224,8 +1251,10 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             {
                if ( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease < 5 )
                {
-                  editor->append( QString( "Error performing CS Guinier analysis on %1: too few points left after decreasing for qRgmax limit\n" ).arg( qsl_plotted_iq_names[ i ] ) );
-                  return false;
+                  internal_error = QString( tr( "Too few points left (%1) after %2 points removed for qRgmax limit" ) )
+                     .arg( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease ).arg( pts_decrease ); 
+                  // editor->append( QString( "Error performing CS Guinier analysis on %1: %2\n" ).arg( qsl_plotted_iq_names[ i ] ).arg( internal_error ) );
+                  break;
                }
 
                usu.wave[ "data" ].q.resize( usu.wave[ "data" ].q.size() - pts_decrease );
@@ -1349,44 +1378,65 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
 
    QString report;
    if ( too_few_points ||
-        ( bestend - beststart + 1 - pts_removed < pointsmin ) )
+        ( bestend - beststart + 1 - pts_removed < pointsmin ) ||
+        !internal_error.isEmpty() )
    {
-      if ( pts_removed )
+      if ( !internal_error.isEmpty() )
       {
          report =
             QString(
                     "CS Guinier analysis of %1:\n"
-                    "**** Could not compute Rc, too few data points %2 after removal ****\n"
+                    "**** %2 ****\n"
                     )
             .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 - pts_removed )
+            .arg( internal_error )
             ;
          csvlog += 
             QString(
                     "\"%1\","
-                    "\"Too few data points (%2) after removal\"\n"
+                    "\"%2\"\n"
                     )
             .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 - pts_removed )
+            .arg( internal_error )
             ;
-      } else {
-         report =
-            QString(
-                    "CS Guinier analysis of %1:\n"
-                    "**** Could not compute Rc, too few data points %2 ****\n"
-                    )
-            .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 )
-            ;
-         csvlog += 
-            QString(
-                    "\"%1\","
-                    "\"Too few data points (%2)\"\n"
-                    )
-            .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 )
-            ;
-      }         
+      } else {        
+         if ( pts_removed )
+         {
+            report =
+               QString(
+                       "CS Guinier analysis of %1:\n"
+                       "**** Could not compute Rc, too few data points %2 after removal ****\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 - pts_removed )
+               ;
+            csvlog += 
+               QString(
+                       "\"%1\","
+                       "\"Too few data points (%2) after removal\"\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 - pts_removed )
+               ;
+         } else {
+            report =
+               QString(
+                       "CS Guinier analysis of %1:\n"
+                       "**** Could not compute Rc, too few data points %2 ****\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 )
+               ;
+            csvlog += 
+               QString(
+                       "\"%1\","
+                       "\"Too few data points (%2)\"\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 )
+               ;
+         }
+      }
    } else {
       if ( isnan(Rg) ||
            b >= 0e0 )
@@ -1714,6 +1764,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
 
    unsigned int pts_removed = 0;
    QString      qs_removed  = "";
+   QString      internal_error = "";
 
    if ( !too_few_points )
    {
@@ -1761,6 +1812,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_use_qRlimit" ) &&
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_use_qRlimit" ] == "1";
          unsigned int pts_decrease = 0;
+         qs_removed = "";
          //          if ( do_decrease )
          //          {
          //             printf( "do decrease, pts_decrease %u\n", pts_decrease );
@@ -1791,8 +1843,10 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
             {
                if ( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease < 5 )
                {
-                  editor->append( QString( "Error performing TV Guinier analysis on %1: too few points left after decreasing for qRgmax limit\n" ).arg( qsl_plotted_iq_names[ i ] ) );
-                  return false;
+                  internal_error = QString( tr( "Too few points left (%1) after %2 points removed for qRgmax limit" ) )
+                     .arg( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease ).arg( pts_decrease ); 
+                  // editor->append( QString( "Error performing TV Guinier analysis on %1: %2\n" ).arg( qsl_plotted_iq_names[ i ] ).arg( internal_error ) );
+                  break;
                }
 
                usu.wave[ "data" ].q.resize( usu.wave[ "data" ].q.size() - pts_decrease );
@@ -1916,43 +1970,64 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
 
    QString report;
    if ( too_few_points ||
-        ( bestend - beststart + 1 - pts_removed < pointsmin ) )
+        ( bestend - beststart + 1 - pts_removed < pointsmin )  ||
+        !internal_error.isEmpty() )
    {
-      if ( pts_removed )
+      if ( !internal_error.isEmpty() )
       {
-         report =
+         report = 
             QString(
                     "TV Guinier analysis of %1:\n"
-                    "**** Could not compute Rt, too few data points %2 after removal ****\n"
+                    "**** %2 ****\n"
                     )
             .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 - pts_removed )
+            .arg( internal_error )
             ;
          csvlog += 
             QString(
                     "\"%1\","
-                    "\"Too few data points (%2) after removal\"\n"
+                    "\"%2\"\n"
                     )
             .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 - pts_removed )
+            .arg( internal_error )
             ;
-      } else {
-         report =
-            QString(
-                    "TV Guinier analysis of %1:\n"
-                    "**** Could not compute Rt, too few data points %2 ****\n"
-                    )
-            .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 )
-            ;
-         csvlog += 
-            QString(
-                    "\"%1\","
-                    "\"Too few data points (%2)\"\n"
-                    )
-            .arg( qsl_plotted_iq_names[ i ] )
-            .arg( bestend - beststart + 1 )
-            ;
+      } else {        
+         if ( pts_removed )
+         {
+            report =
+               QString(
+                       "TV Guinier analysis of %1:\n"
+                       "**** Could not compute Rt, too few data points %2 after removal ****\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 - pts_removed )
+               ;
+            csvlog += 
+               QString(
+                       "\"%1\","
+                       "\"Too few data points (%2) after removal\"\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 - pts_removed )
+               ;
+         } else {
+            report =
+               QString(
+                       "TV Guinier analysis of %1:\n"
+                       "**** Could not compute Rt, too few data points %2 ****\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 )
+               ;
+            csvlog += 
+               QString(
+                       "\"%1\","
+                       "\"Too few data points (%2)\"\n"
+                       )
+               .arg( qsl_plotted_iq_names[ i ] )
+               .arg( bestend - beststart + 1 )
+               ;
+         }
       }
    } else {
       if ( isnan(Rg) ||
