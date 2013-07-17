@@ -21,6 +21,7 @@ DbgLv(1) << "AA: IN";
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
    setAttribute( Qt::WA_DeleteOnClose, false );
+   QFontMetrics fmet( font() );
 
    // lay out the GUI
    setWindowTitle( tr( "PCSA Advanced Controls" ) );
@@ -45,12 +46,12 @@ DbgLv(1) << "AA: define GUI elements";
    QLabel* lb_mrecctrl  = us_banner( tr( "Final & Model Records Controls:" ) );
    QLabel* lb_mrecstat  = us_banner( tr( "Model Records Status:" ) );
    QLabel* lb_curvtype  = us_label ( tr( "Curve Type:" ) );
-   QLabel* lb_s_lower   = us_label ( tr( "Lower Limit (s x 1e-13):" ) );
-   QLabel* lb_s_upper   = us_label ( tr( "Upper Limit (s x 1e-13):" ) );
+   QLabel* lb_s_range   = us_label ( tr( "s Range (x 1e-13):" ) );
+   QLabel* lb_k_range   = us_label ( tr( "f/f0 Range:" ) );
            lb_sigmpar1  = us_label ( tr( "Sigmoid Par 1:" ) );
            lb_sigmpar2  = us_label ( tr( "Sigmoid Par 2:" ) );
-           lb_k_lower   = us_label ( tr( "Lower Limit (f/f0):" ) );
-           lb_k_upper   = us_label ( tr( "Upper Limit (f/f0):" ) );
+           lb_k_strpt   = us_label ( tr( "Line f/f0 Start Point:" ) );
+           lb_k_endpt   = us_label ( tr( "Line f/f0 End Point:" ) );
    QLabel* lb_crpoints  = us_label ( tr( "Curve Resolution Points:" ) );
    QLabel* lb_mciters   = us_label ( tr( "Monte Carlo Iterations:" ) );
    QLabel* lb_progress  = us_label ( tr( "Progress:" ) );
@@ -68,17 +69,19 @@ DbgLv(1) << "AA: define GUI elements";
    pb_mciters   = us_pushbutton( tr( "Start Monte Carlo"   ) );
    pb_help      = us_pushbutton( tr( "Help"   ) );
    pb_cancel    = us_pushbutton( tr( "Cancel" ) );
-   pb_accept    = us_pushbutton( tr( "Accept" ) );
+   pb_accept    = us_pushbutton( tr( "Accept" ), false );
 
    // Define counters
    double smin  = 1.0;
    double smax  = 10.0;
    double kmin  = 1.0;
    double kmax  = 5.0;
-   ct_s_lower   = us_counter( 3, -10000, 10000, smin );
-   ct_s_upper   = us_counter( 3, -10000, 10000, smax );
-   ct_k_lower   = us_counter( 3,      1,     8, kmin );
-   ct_k_upper   = us_counter( 3,      1,   100, kmax );
+   ct_s_lower   = us_counter( 1, -1, 10, smin );
+   ct_s_upper   = us_counter( 1, -1, 10, smax );
+   ct_k_lower   = us_counter( 1,      1,     8, kmin );
+   ct_k_upper   = us_counter( 1,      1,   100, kmax );
+   ct_k_strpt   = us_counter( 3,      1,     8, kmin );
+   ct_k_endpt   = us_counter( 3,      1,   100, kmax );
    ct_sigmpar1  = us_counter( 3,  0.001,   0.5,  0.2 );
    ct_sigmpar2  = us_counter( 3,    0.0,   1.0,  0.1 );
    ct_crpoints  = us_counter( 2,     20,   501,  101 );
@@ -106,6 +109,8 @@ DbgLv(1) << "AA: define GUI elements";
    b_progress   = us_progressBar( 0, 100, 0 );
    us_setReadOnly( te_bfmstat,  true );
    us_setReadOnly( te_mrecstat, true );
+   te_bfmstat ->setTextColor( Qt::blue );
+   te_mrecstat->setTextColor( Qt::blue );
 
    // Lay out the left side, of BFM controls and status
 DbgLv(1) << "AA: populate finmodelLayout";
@@ -113,18 +118,20 @@ DbgLv(1) << "AA: populate finmodelLayout";
    finmodelLayout->addWidget( lb_fitctrl,    row++, 0, 1, 6 );
    finmodelLayout->addWidget( lb_curvtype,   row,   0, 1, 3 );
    finmodelLayout->addWidget( cb_curvtype,   row++, 3, 1, 3 );
-   finmodelLayout->addWidget( lb_s_lower,    row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_s_lower,    row++, 3, 1, 3 );
-   finmodelLayout->addWidget( lb_s_upper,    row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_s_upper,    row++, 3, 1, 3 );
-   finmodelLayout->addWidget( lb_k_lower,    row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_k_lower,    row++, 3, 1, 3 );
-   finmodelLayout->addWidget( lb_k_upper,    row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_k_upper,    row++, 3, 1, 3 );
+   finmodelLayout->addWidget( lb_s_range,    row,   0, 1, 3 );
+   finmodelLayout->addWidget( ct_s_lower,    row,   3, 1, 1 );
+   finmodelLayout->addWidget( ct_s_upper,    row++, 4, 1, 1 );
+   finmodelLayout->addWidget( lb_k_range,    row,   0, 1, 3 );
+   finmodelLayout->addWidget( ct_k_lower,    row,   3, 1, 1 );
+   finmodelLayout->addWidget( ct_k_upper,    row++, 4, 1, 1 );
    finmodelLayout->addWidget( lb_sigmpar1,   row,   0, 1, 3 );
    finmodelLayout->addWidget( ct_sigmpar1,   row++, 3, 1, 3 );
    finmodelLayout->addWidget( lb_sigmpar2,   row,   0, 1, 3 );
    finmodelLayout->addWidget( ct_sigmpar2,   row++, 3, 1, 3 );
+   finmodelLayout->addWidget( lb_k_strpt,    row,   0, 1, 3 );
+   finmodelLayout->addWidget( ct_k_strpt,    row++, 3, 1, 3 );
+   finmodelLayout->addWidget( lb_k_endpt,    row,   0, 1, 3 );
+   finmodelLayout->addWidget( ct_k_endpt,    row++, 3, 1, 3 );
    finmodelLayout->addWidget( lb_crpoints,   row,   0, 1, 3 );
    finmodelLayout->addWidget( ct_crpoints,   row++, 3, 1, 3 );
    finmodelLayout->addWidget( lb_mciters,    row,   0, 1, 3 );
@@ -159,7 +166,26 @@ DbgLv(1) << "AA: populate mreclistLayout";
    mreclistLayout->addWidget( pb_accept,     row++, 4, 1, 2 );
    mreclistLayout->addWidget( lb_space2,     row,   0, 1, 6 );
 
+   cb_curvtype->setEnabled( false );
+   ct_s_lower ->setEnabled( false );
+   ct_s_upper ->setEnabled( false );
+   ct_k_lower ->setEnabled( false );
+   ct_k_upper ->setEnabled( false );
+   int fwidth   = fmet.maxWidth();
+   int rheight  = ct_s_lower->height();
+   int cminw    = fwidth * 4;
+   int csizw    = cminw + fwidth;
+   ct_s_lower->setMinimumWidth( cminw );
+   ct_s_upper->setMinimumWidth( cminw );
+   ct_k_lower->setMinimumWidth( cminw );
+   ct_k_upper->setMinimumWidth( cminw );
+   ct_s_lower->resize( csizw, rheight );
+   ct_s_upper->resize( csizw, rheight );
+   ct_k_lower->resize( csizw, rheight );
+   ct_k_upper->resize( csizw, rheight );
+
    // Set defaults and status values based on the initial model records
+   mrecs_mc.clear();
    mrecs        = *p_mrecs;
    nmrecs       = mrecs.size();
    mciters      = 0;
@@ -169,7 +195,6 @@ DbgLv(1) << "AA: populate mreclistLayout";
    bfm_new      = false;
    mrs_new      = false;
    mc_done      = false;
-   mc_running   = false;
    ctype        = 1;
    nisols       = 0;
    ncsols       = ( nmrecs > 0 ) ? mrecs[ 0 ].csolutes.size() : 0;
@@ -177,35 +202,17 @@ DbgLv(1) << "AA: populate mreclistLayout";
    if ( ncsols > 0 )
    {  // We are starting with models already computed
       mrec         = mrecs[ 0 ];
-      nisols       = mrec.isolutes.size();
-      ncsols       = mrec.csolutes.size();
 
-      for ( int js = 0; js < nisols; js++ )
-      {
-         smin         = qMin( smin, mrec.isolutes[ js ].s * 1.e13 );
-         smax         = qMax( smax, mrec.isolutes[ js ].s * 1.e13 );
-         kmin         = qMin( kmin, mrec.isolutes[ js ].k );
-         kmax         = qMax( kmax, mrec.isolutes[ js ].k );
-      }
+      set_fittings( mrecs );
 
-      ctype        = ( mrec.par1 == mrec.str_k ) ? 0 :
-                     ( ( mrec.str_k < mrec.end_k ) ? 1 : 2 );
-
-      ct_s_lower ->setValue( smin );
-      ct_s_upper ->setValue( smax );
-      ct_k_lower ->setValue( kmin );
-      ct_k_upper ->setValue( kmax );
-      ct_sigmpar1->setValue( mrec.par1  );
-      ct_sigmpar2->setValue( mrec.par2  );
-      ct_crpoints->setValue( nisols );
 DbgLv(1) << "AA: mr p1 p2  m0 p1 p2" << mrec.par1 << mrec.par2 << mrecs[0].par1
  << mrecs[0].par2 << "  typ ni nc" << ctype << nisols << ncsols;
 
-      te_bfmstat ->setText(
+      stat_bfm(
          tr( "An initial best final model, with RMSD of %1,\n"
-             "  has been read.\n" ).arg( mrec.rmsd ) );
+             "  has been read." ).arg( mrec.rmsd ) );
 
-      te_mrecstat->setText(
+      stat_mrecs(
          tr( "An initial model records list, with %1 fits,\n"
              "  has been read." ).arg( nmrecs ) );
 
@@ -221,9 +228,9 @@ DbgLv(1) << "AA: mr p1 p2  m0 p1 p2" << mrec.par1 << mrec.par2 << mrecs[0].par1
       mrec0        = mrec;          // Save initial model records
       mrecs0       = mrecs;
 DbgLv(1) << "AA: nmrecs" << nmrecs << "ncsols" << ncsols;
-      te_bfmstat ->setText(
+      stat_bfm(
          tr( "No initial best final model has been read" ) );
-      te_mrecstat->setText(
+      stat_mrecs(
          tr( "No initial model records list has been read" ) );
    }
 
@@ -288,9 +295,16 @@ int US_AdvAnalysis::advanced_results( QVector< ModelRecord >* p_mrecsmc )
    state        = mc_done ? ( state | msk_mcarl ) : state;
 DbgLv(1) << "advanced_results - state=" << state;
 
-   if ( mc_done  &&  p_mrecsmc != 0 )
-   {  // If MonteCarlo was done, return its model records
-      *p_mrecsmc   = mrecs_mc;
+   if ( p_mrecsmc != 0 )
+   {
+      if ( mc_done )
+      {  // If MonteCarlo was done, return its model records
+         *p_mrecsmc   = mrecs_mc;
+      }
+      else
+      {  // If MonteCarlo not done or overridden, make sure to clear it
+         p_mrecsmc->clear();
+      }
    }
 
    return state;
@@ -304,6 +318,11 @@ void US_AdvAnalysis::select()
       *p_mrecs     = mrecs;
    }
 
+   if ( ! mc_done )
+   {  // Insure there is no montecarlo left over if there shouldn't be
+      mrecs_mc.clear();
+   }
+
    accept();
    close();
 }
@@ -311,6 +330,10 @@ void US_AdvAnalysis::select()
 // Cancel button clicked
 void US_AdvAnalysis::cancel()
 {
+   bfm_new      = false;
+   mrs_new      = false;
+   mc_done      = false;
+
    reject();
    close();
 }
@@ -321,11 +344,16 @@ void US_AdvAnalysis::curvtypeChanged( int ivalue )
 DbgLv(1) << "curvtypeChanged" << ivalue;
    ctype          = ivalue;
    bool is_sigm   = ( ctype != 0 );
+   bool is_line   = ! is_sigm;
 
    lb_sigmpar1->setVisible( is_sigm );
    ct_sigmpar1->setVisible( is_sigm );
    lb_sigmpar2->setVisible( is_sigm );
    ct_sigmpar2->setVisible( is_sigm );
+   lb_k_strpt ->setVisible( is_line );
+   ct_k_strpt ->setVisible( is_line );
+   lb_k_endpt ->setVisible( is_line );
+   ct_k_endpt ->setVisible( is_line );
 }
 
 // Slot to handle a change in S lower bound
@@ -381,7 +409,6 @@ DbgLv(1) << "mciterChanged" << value;
 void US_AdvAnalysis::load_mrecs()
 {
 DbgLv(1) << "load_mrecs";
-//under_construct( "Load Model Records" );
    // Query and get the file for loading
    QString load_file  = store_dir + "/pcsa-mrs-old_mrecs.xml";
    load_file        = QFileDialog::getOpenFileName( this,
@@ -460,7 +487,12 @@ DbgLv(1) << "load_mrecs";
             kmax             = xattrs.value( "kmax" ).toString().toDouble();
             nisols           = xattrs.value( "curve_points" )
                                .toString().toInt();
-//DbgLv(1) << "LM:xml:   nisols" << nisols;
+            mrec.ctype       = ctype;
+            mrec.smin        = smin;
+            mrec.smax        = smax;
+            mrec.kmin        = kmin;
+            mrec.kmax        = kmax;
+//DbgLv(1) << "LM:xml:   nisols" << nisols << "kmin kmax" << kmin << kmax;
          }
 
          else if ( xmlname == "modelrecord" )
@@ -478,7 +510,8 @@ DbgLv(1) << "load_mrecs";
             ncsols           = 0;
             kmin             = qMin( kmin, mrec.str_k );
             kmax             = qMax( kmax, mrec.end_k );
-//DbgLv(1) << "LM:xml:    nmrecs" << nmrecs << "kisols" << kisols;
+//DbgLv(1) << "LM:xml:    nmrecs" << nmrecs << "kisols" << kisols
+// << "kmin kmax" << kmin << kmax;
          }
 
          else if ( xmlname == "c_solute" )
@@ -525,20 +558,20 @@ DbgLv(1) << "LM:xml: End ALL: nmrecs" << nmrecs << "last ncsols" << ncsols;
    filei.close();
 
    // Report on loaded file
-   te_mrecstat->setText(
+   stat_mrecs(
       tr( "Model Records have been loaded from file\n"
           "  \"%1\", of directory\n  \"%2\".\n"
-          "There are %3  %4-solute records.\n" )
+          "There are %3  %4-solute records." )
       .arg( fname ).arg( fdir).arg( nmrecs ).arg( nisols ) );
 
    // Re-generate curve points for every model record
    for ( int mr = 0; mr < nmrecs; mr++ )
    {
-      curve_points( ctype, smin, smax, kmin, kmax, mrecs[ mr ] );
+      curve_isolutes( mrecs[ mr ] );
    }
 
    mrec             = mrecs[ 0 ];
-   ncsols           = mrec.isolutes.size();
+   ncsols           = mrec.csolutes.size();
    QString sctype   = ( ctype == 1 ) ? "Increasing Sigmoid" :
                     ( ( ctype == 0 ) ? "Straight Line" :
                                        "Decreasing Sigmoid" );
@@ -546,15 +579,19 @@ DbgLv(1) << "LM:xml: End ALL: nmrecs" << nmrecs << "last ncsols" << ncsols;
    // Build the model that goes along with the BFM
    bfm_model();
 
-   te_bfmstat->setText(
+   stat_bfm(
       tr( "A new Best Final Model derives from the top spot\n"
           "  of the just-loaded Model Records list.\n"
           "The %1 model has %2 computed solutes\n"
           "  and an RMSD of %3" )
       .arg( sctype ).arg( ncsols ).arg( mrec.rmsd ) );
 
+   set_fittings( mrecs );
+
    bfm_new          = true;
    mrs_new          = true;
+   mc_done          = false;
+   pb_accept->setEnabled( true );
 }
 
 // Slot to store a model records list to disk
@@ -562,6 +599,10 @@ void US_AdvAnalysis::store_mrecs()
 {
 DbgLv(1) << "store_mrecs";
 //under_construct( "Store Model Records" );
+   // Test and return immediately if valid mrecs still required
+   if ( mrecs_required( "Store Model Records" ) )
+      return;
+
    // Query and get the file for storing
    QString store_file = store_dir + "/pcsa-mrs-new_mrecs.xml";
    store_file       = QFileDialog::getSaveFileName( this,
@@ -614,13 +655,13 @@ else DbgLv(1) << "store_mrecs - FILE NAME *NOT* EMPTY" << store_file;
    }
 
    // Write out the XML file
-   int    ctype     = cb_curvtype->currentIndex();
+   int    ctype     = mrecs[ 0 ].ctype;
    int    nisols    = (int)ct_crpoints->value();
    int    nmrecs    = mrecs.size();
-   double smin      = ct_s_lower ->value();
-   double smax      = ct_s_upper ->value();
-   double kmin      = ct_k_lower ->value();
-   double kmax      = ct_k_upper ->value();
+   double smin      = mrecs[ 0 ].smin;
+   double smax      = mrecs[ 0 ].smax;
+   double kmin      = mrecs[ 0 ].kmin;
+   double kmax      = mrecs[ 0 ].kmax;
    QXmlStreamWriter xmlo( &fileo );
    xmlo.setAutoFormatting( true );
    xmlo.writeStartDocument( "1.0" );
@@ -670,11 +711,10 @@ else DbgLv(1) << "store_mrecs - FILE NAME *NOT* EMPTY" << store_file;
    // Report on saved file
    fdir             = store_file.section( "/",  0, -2 ) + "/";
    fname            = store_file.section( "/", -1, -1 );
-   QString sttext   = te_mrecstat->toPlainText();
-   te_mrecstat->setText( sttext +
-      tr( "\nModel Records have been stored in file\n"
-          "  \"%1\", of directory\n  \"%2\".\n" )
-      .arg( fname ).arg( fdir) );
+   stat_mrecs(
+      tr( "Model Records have been stored in file\n"
+          "  \"%1\", of directory\n  \"%2\"." )
+      .arg( fname ).arg( fdir), true );
 }
 
 // Slot to load a best final model from disk
@@ -682,6 +722,10 @@ void US_AdvAnalysis::load_bfm()
 {
 DbgLv(1) << "load_bfm";
 //under_construct( "Load Final Model" );
+   // Test and return immediately if valid mrecs still required
+   if ( mrecs_required( "Load Final Model" ) )
+      return;
+
    // Query and get the file for loading
    QString load_file  = store_dir + "/pcsa-bfm-old_mrecs.xml";
    load_file        = QFileDialog::getOpenFileName( this,
@@ -709,12 +753,7 @@ DbgLv(1) << "load_bfm";
    }
 
    // Read in and parse the XML file to generate a new BFM
-   int    ctype     = cb_curvtype->currentIndex();
    int    nisols    = 0;
-   double smin      = 1e99;
-   double smax      = -1e99;
-   double kmin      = 1e99;
-   double kmax      = -1e99;
    bool   is_bfmf   = false;
    QString xmlname  = "";
    QXmlStreamReader xmli( &filei );
@@ -750,11 +789,6 @@ DbgLv(1) << "load_bfm";
 
          if ( xmlname == "modelrecord" )
          {
-            ctype            = xattrs.value( "type" ).toString().toInt();
-            smin             = xattrs.value( "smin" ).toString().toDouble();
-            smax             = xattrs.value( "smax" ).toString().toDouble();
-            kmin             = xattrs.value( "kmin" ).toString().toDouble();
-            kmax             = xattrs.value( "kmax" ).toString().toDouble();
             nisols           = xattrs.value( "curve_points" )
                                .toString().toInt();
             mrec.taskx       = xattrs.value( "taskx"   ).toString().toInt();
@@ -763,11 +797,14 @@ DbgLv(1) << "load_bfm";
             mrec.par1        = xattrs.value( "par1"    ).toString().toDouble();
             mrec.par2        = xattrs.value( "par2"    ).toString().toDouble();
             mrec.rmsd        = xattrs.value( "rmsd"    ).toString().toDouble();
+            mrec.ctype       = xattrs.value( "type" ).toString().toInt();
+            mrec.smin        = xattrs.value( "smin" ).toString().toDouble();
+            mrec.smax        = xattrs.value( "smax" ).toString().toDouble();
+            mrec.kmin        = xattrs.value( "kmin" ).toString().toDouble();
+            mrec.kmax        = xattrs.value( "kmax" ).toString().toDouble();
             mrec.isolutes.resize( nisols );
             mrec.csolutes.clear();
             ncsols           = 0;
-            kmin             = qMin( kmin, mrec.str_k );
-            kmax             = qMax( kmax, mrec.end_k );
 //DbgLv(1) << "LM:xml:    nmrecs" << nmrecs << "kisols" << kisols;
          }
 
@@ -777,10 +814,6 @@ DbgLv(1) << "load_bfm";
             csolute.s        = xattrs.value( "s" ).toString().toDouble();
             csolute.k        = xattrs.value( "k" ).toString().toDouble();
             csolute.c        = xattrs.value( "c" ).toString().toDouble();
-            smin             = qMin( smin, csolute.s );
-            smax             = qMax( smax, csolute.s );
-            kmin             = qMin( kmin, csolute.k );
-            kmax             = qMax( kmax, csolute.k );
             csolute.s       *= 1.e-13;
 
             mrec.csolutes << csolute;
@@ -806,26 +839,34 @@ DbgLv(1) << "LM:xml: End ALL: nmrecs" << nmrecs << "last ncsols" << ncsols;
       return;
    }
 
-   // Re-generate curve points for the model
-   curve_points( ctype, smin, smax, kmin, kmax, mrec );
+   // Test if new final model is compatible with model records
+   if ( bfm_incompat( fname ) )
+      return;
 
-   QString sctype   = ( ctype == 1 ) ? "Increasing Sigmoid" :
-                    ( ( ctype == 0 ) ? "Straight Line" :
-                                       "Decreasing Sigmoid" );
+   // Re-generate curve points for the model
+   curve_isolutes( mrec );
+
+   QString sctype   = ( mrec.ctype == 1 ) ? "Increasing Sigmoid" :
+                    ( ( mrec.ctype == 0 ) ? "Straight Line" :
+                                            "Decreasing Sigmoid" );
 
    // Build the model that goes along with the BFM
    bfm_model();
 
    // Report on loaded file
-   te_bfmstat->setText(
+   stat_bfm(
       tr( "A new Best Final Model has been loaded from file\n"
           "  \"%1\", of directory\n  \"%2\".\n"
           "The %3 model has %4 computed solutes\n"
           "  and an RMSD of %5" )
       .arg( fname ).arg( fdir).arg( sctype ).arg( ncsols ).arg( mrec.rmsd ) );
 
+
    bfm_new          = true;
+   mc_done          = false;
    mrecs[ 0 ]       = mrec;
+   set_fittings( mrecs );
+   pb_accept->setEnabled( true );
 }
 
 // Slot to store a best final model to disk
@@ -882,14 +923,14 @@ DbgLv(1) << "store_bfm";
    }
 
    // Write out the XML file
-   int    ctype     = cb_curvtype->currentIndex();
+   int    ctype     = mrec.ctype;
 //   int    nisols    = (int)ct_crpoints->value();
    int    kisols    = mrec.isolutes.size();
    int    ncsols    = mrec.csolutes.size();
-   double smin      = ct_s_lower ->value();
-   double smax      = ct_s_upper ->value();
-   double kmin      = ct_k_lower ->value();
-   double kmax      = ct_k_upper ->value();
+   double smin      = mrec.smin;
+   double smax      = mrec.smax;
+   double kmin      = mrec.kmin;
+   double kmax      = mrec.kmax;
    QXmlStreamWriter xmlo;
    xmlo.setDevice( &fileo );
    xmlo.setAutoFormatting( true );
@@ -928,42 +969,165 @@ DbgLv(1) << "store_bfm";
    // Report on the saved file
    fdir             = store_file.section( "/",  0, -2 ) + "/";
    fname            = store_file.section( "/", -1, -1 );
-   QString sttext   = te_bfmstat->toPlainText();
 
-   te_bfmstat->setText( sttext +
-      tr( "\nBest Final Model has been stored in file\n"
-          "  \"%1\", of directory\n  \"%2\".\n" )
-      .arg( fname ).arg( fdir) );
+   stat_bfm(
+      tr( "The Best Final Model has been stored in file\n"
+          "  \"%1\", of directory\n  \"%2\"." )
+      .arg( fname ).arg( fdir), true );
 }
 
 // Slot to reset the best final model to its initial state
 void US_AdvAnalysis::reset_bfm()
 {
 DbgLv(1) << "reset_bfm";
+   mrec         = mrec0;
+   mrecs[ 0 ]   = mrec0;
+
+   stat_bfm( tr( "Best Final Model has been reset to original state." ) );
+
+   if ( bfm0_exists )
+   {
+      set_fittings( mrecs );
+
+      stat_bfm( tr( "An initial best final model, with RMSD of %1,"
+                    "  has been restored." ).arg( mrec.rmsd ), true );
+   }
+
+   else
+   {
+      stat_bfm( tr( "The initial empty best final model\n"
+                    "  has been restored." ), true );
+   }
+
+   bfm_new      = false;
+   mc_done      = false;
 }
 
 // Slot to reset the list of model records to its initial state
 void US_AdvAnalysis::reset_mrecs()
 {
 DbgLv(1) << "reset_mrecs";
+   mrecs        = mrecs0;
+   mrec         = mrec0;
+   nmrecs       = mrecs.size();
+
+   stat_mrecs( tr( "Model Records have been reset to original state." ) );
+
+   if ( mrs0_exists )
+   {
+      stat_mrecs( tr( "An initial model records list, with %1 fits,\n"
+                      "  has been restored." ).arg( nmrecs ), true );
+   }
+
+   else
+   {  // We are starting with models not yet computed
+      stat_mrecs( tr( "The initial empty model records list\n"
+                      "  has been restored." ), true );
+   }
+
+   mrs_new      = false;
+   reset_bfm();
+   pb_accept->setEnabled( false );
 }
 
 // Slot to build a new best final model from specified fitting controls
 void US_AdvAnalysis::build_bfm()
 {
 DbgLv(1) << "build_bfm";
-under_construct( "Build Final Model" );
+//under_construct( "Build Final Model" );
+   // Test and return immediately if valid mrecs still required
+   if ( mrecs_required( "Build Final Model" ) )
+      return;
+
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   stat_bfm( tr( "A new Best Final Model is being built ..." ) );
+
+   ctype          = cb_curvtype->currentIndex();
+   QString sctype = cb_curvtype->currentText();
+   double smin    = ct_s_lower ->value();
+   double smax    = ct_s_upper ->value();
+   double kmin    = ct_k_lower ->value();
+   double kmax    = ct_k_upper ->value();
+   mrec.ctype     = ctype;
+   mrec.smin      = smin;
+   mrec.smax      = smax;
+   mrec.kmin      = kmin;
+   mrec.kmax      = kmax;
+
+   // Set parameters for the specific curve to use
+   if ( ctype == 0 )
+   {
+      mrec.str_k     = ct_k_strpt ->value();
+      mrec.end_k     = ct_k_endpt ->value();
+      mrec.par1      = mrec.str_k;
+      mrec.par2      = ( mrec.str_k - mrec.end_k ) / ( smax - smin );
+   }
+   else
+   {
+      mrec.str_k     = kmin;
+      mrec.end_k     = kmax;
+      mrec.par1      = ct_sigmpar1->value();
+      mrec.par2      = ct_sigmpar2->value();
+   }
+
+   // Generate the solute points on the curve
+   curve_isolutes( mrec );
+
+   // Compute the simulation and computed-solutes
+   QList< US_SolveSim::DataSet* > dsets;
+   dsets << dset0;
+   US_SolveSim::Simulation sim_vals;
+   sim_vals.solutes       = mrec.isolutes;
+
+   US_SolveSim* solvesim  = new US_SolveSim( dsets, 0, false );
+
+   solvesim->calc_residuals( 0, 1, sim_vals );
+
+   mrec.variance  = sim_vals.variance;
+   mrec.rmsd      = sqrt( sim_vals.variance );
+   mrec.csolutes  = sim_vals.solutes;
+
+   ncsols         = mrec.csolutes.size();
+   ctype          = cb_curvtype->currentIndex();
+
+   // Build the model that goes along with the BFM
+   bfm_model();
+
+   // Report on built file
+   stat_bfm(
+      tr( "A new Best Final Model has been built\n"
+          "  from the specified fitting controls.\n"
+          "The %1 model has %2 computed solutes\n"
+          "  and an RMSD of %3" )
+      .arg( sctype ).arg( ncsols ).arg( mrec.rmsd ), true );
+
+   stat_mrecs(
+      tr( "A new best final %1-solute model ( RMSD = %2 )\n"
+          "  now occupies the top curve model records list spot." )
+      .arg( ncsols ).arg( mrec.rmsd ), true );
+
+   mrecs[ 0 ]     = mrec;
+   bfm_new        = true;
+   mrs_new        = true;
+   mc_done        = false;
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
+   pb_accept->setEnabled( true );
 }
 
 // Slot to start and process monte carlo iterations
 void US_AdvAnalysis::start_montecarlo()
 {
+   // Test and return immediately if valid mrecs still required
+   if ( mrecs_required( "Start Monte Carlo" ) )
+      return;
+
 DbgLv(1) << "start_montecarlo";
    wdata          = dset0->run_data;
    edata          = &wdata;
    mciters        = (int)ct_mciters->value();
-   QString sline1 = tr( "%1 Monte Carlo iterations are being computed...\n" )
-                    .arg( mciters );
+   stat_bfm( tr( "%1 Monte Carlo iterations are being computed..." )
+             .arg( mciters ) );
    ksiters        = 0;
    kciters        = 0;
    mrecs_mc.clear();
@@ -1010,9 +1174,9 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
             apply_gaussians();
          }
 
-         te_bfmstat ->setText( sline1 +
+         stat_bfm(
             tr( "%1 are completed ( last:  %2-solute,  RMSD=%3 )" )
-            .arg( kciters ).arg( ncsols ).arg( mrec_mc.rmsd ) );
+            .arg( kciters ).arg( ncsols ).arg( mrec_mc.rmsd ), true, 1 );
          b_progress->setValue( kciters );
          qApp->processEvents();
       }
@@ -1029,9 +1193,9 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
 
    else
    {  // Monte Carlo in threads
-      sline1 = tr( "%1 Monte Carlo iterations are being"
-                   " computed in %2 threads...\n" )
-                    .arg( mciters ).arg( nthr );
+      stat_bfm(
+         tr( "%1 Monte Carlo iterations are being"
+             " computed in %2 threads..." ).arg( mciters ).arg( nthr ) );
 
       // Do the first iteration computation and set gaussians
       US_SolveSim::Simulation sim_vals;
@@ -1050,9 +1214,9 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
       ncsols           = mrec_mc.csolutes.size();
 DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
  << "ncsols" << ncsols;
-      te_bfmstat ->setText( sline1 +
+      stat_bfm(
          tr( "%1 are completed ( last:  %2-solute,  RMSD=%3 )" )
-         .arg( kciters ).arg( ncsols ).arg( mrec_mc.rmsd ) );
+         .arg( kciters ).arg( ncsols ).arg( mrec_mc.rmsd ), true, 1 );
       b_progress->setValue( kciters );
       qApp->processEvents();
 
@@ -1194,12 +1358,10 @@ void US_AdvAnalysis::process_job( WorkerThread* wthr )
    ncsols           = mrec_mc.csolutes.size();
 DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
  << "ncsols" << ncsols;
-   QString sline1 = tr( "%1 Monte Carlo iterations are being"
-                         " computed in %2 threads...\n" )
-                    .arg( mciters ).arg( nthr );
-   te_bfmstat ->setText( sline1 +
+
+   stat_bfm(
       tr( "%1 are completed ( last:  %2-solute,  RMSD=%3 )" )
-      .arg( kciters ).arg( ncsols ).arg( mrec_mc.rmsd ) );
+      .arg( kciters ).arg( ncsols ).arg( mrec_mc.rmsd ), true, 1 );
    b_progress->setValue( kciters );
    qApp->processEvents();
 
@@ -1243,8 +1405,7 @@ DbgLv(1) << "    ksiters" << ksiters << "dsets[0]" << wtask.dsets[0];
 void US_AdvAnalysis::montecarlo_done( void )
 {
 DbgLv(1) << "==montecarlo_done()==";
-   te_bfmstat ->setText( te_bfmstat->toPlainText() +
-      tr( "\nBuilding MC models and final composite..." ) );
+   stat_bfm( tr( "Building MC models and final composite..." ), true );
    int     nccsol   = 0;
    QVector< US_Solute > compsols;
    QStringList sortlst;
@@ -1378,18 +1539,19 @@ DbgLv(1) << "MCD: cc ccin ncsols" << cc << ccin << ncsols;
    mrecs[ 0 ]     = mrec;
 
    // Report MC completion status
-   te_bfmstat ->setText( te_bfmstat->toPlainText() +
-      tr( "\nMC models and final %1-solute composite model are built." )
-      .arg( ncsols ) );
+   stat_bfm(
+      tr( "MC models and final %1-solute composite model are built." )
+      .arg( ncsols ), true );
 
-   te_mrecstat->setText(
-      tr( "A best final %1-solute model ( RMSD = %2 )\n"
+   stat_mrecs(
+      tr( "A new best final %1-solute model ( RMSD = %2 )\n"
           "  now occupies the top curve model records list spot." )
-      .arg( ncsols ).arg( mrec.rmsd ) );
+      .arg( ncsols ).arg( mrec.rmsd ), true );
 
    bfm_new        = true;
    mrs_new        = true;
    mc_done        = true;
+   pb_accept->setEnabled( true );
 }
 
 // Pop up an under-construction message dialog
@@ -1399,13 +1561,17 @@ void US_AdvAnalysis::under_construct( QString proc )
       tr( "Implementation of <b>%1</b> is not yet complete." ).arg( proc ) );
 }
 
-// Re-generate the curve points for a model record
-void US_AdvAnalysis::curve_points( int ctype, double str_s, double end_s,
-      double str_k, double end_k, ModelRecord& mrec )
+// Re-generate the input solute curve points for a model record
+void US_AdvAnalysis::curve_isolutes( ModelRecord& mrec )
 {
    int    nisols  = mrec.isolutes.size();
+   int    ctype   = mrec.ctype;
+   double smin    = mrec.smin;
+   double smax    = mrec.smax;
+   double kmin    = mrec.kmin;
+   double kmax    = mrec.kmax;
    double prng    = (double)( nisols - 1 );
-   double srng    = end_s - str_s;
+   double srng    = smax - smin;
    double sinc    = srng / prng;
    double par1    = mrec.par1;
    double par2    = mrec.par2;
@@ -1415,14 +1581,14 @@ DbgLv(1) << "AA:CP: xinc" << xinc << "ctype" << ctype;
 
    if ( ctype == 1 )       // Increasing Sigmoid
    {
-      double kdif    = end_k - str_k;
+      double kdif    = kmax - kmin;
       double p1rt    = sqrt( 2.0 * par1 );
 
       for ( int kk = 0; kk < nisols; kk++ )
       {
-         double sval    = str_s + xval * srng;
+         double sval    = smin + xval * srng;
          double efac    = 0.5 * erf( ( xval - par2 ) / p1rt ) + 0.5;
-         double kval    = str_k + kdif * efac;
+         double kval    = kmin + kdif * efac;
          mrec.isolutes[ kk ].s = sval * 1.e-13;
          mrec.isolutes[ kk ].k = kval;
          xval          += xinc;
@@ -1433,7 +1599,7 @@ DbgLv(1) << "AA:CP: xinc" << xinc << "ctype" << ctype;
    {
       double kval    = mrec.str_k;
       double kinc    = ( mrec.end_k - mrec.str_k ) / prng;
-      double sval    = str_s;
+      double sval    = smin;
 
       for ( int kk = 0; kk < nisols; kk++ )
       {
@@ -1442,24 +1608,27 @@ DbgLv(1) << "AA:CP: xinc" << xinc << "ctype" << ctype;
          sval          += sinc;
          kval          += kinc;
       }
+DbgLv(1) << "AA:CP:  ni" << nisols << "last kv" << kval;
    }
 
    else if ( ctype == 2 )  // Decreasing Sigmoid
    {
-      double kdif    = str_k - end_k;
+      double kdif    = kmin - kmax;
       double p1rt    = sqrt( 2.0 * par1 );
 
       for ( int kk = 0; kk < nisols; kk++ )
       {
-         double sval    = str_s + xval * srng;
+         double sval    = smin + xval * srng;
          double efac    = 0.5 * erf( ( xval - par2 ) / p1rt ) + 0.5;
-         double kval    = end_k + kdif * efac;
+         double kval    = kmax + kdif * efac;
          mrec.isolutes[ kk ].s = sval * 1.e-13;
          mrec.isolutes[ kk ].k = kval;
          xval          += xinc;
       }
    }
 DbgLv(1) << "AA:CP: sol0 s,k" << mrec.isolutes[0].s << mrec.isolutes[0].k;
+int nn=nisols-1;
+DbgLv(1) << "AA:CP: soln s,k" << mrec.isolutes[nn].s << mrec.isolutes[nn].k;
 }
 
 // Generate the model that goes with the BFM record
@@ -1523,5 +1692,162 @@ void US_AdvAnalysis::bfm_model( void )
    mrec.rmsd      = sqrt( varia );
    mrec.model     = model;
    mrecs[ 0 ]     = mrec;
+}
+
+// Display status message for model records
+void US_AdvAnalysis::stat_mrecs( const QString msg, bool append, int line )
+{
+   show_stat( te_mrecstat, msg, append, line );
+}
+
+// Display status message for best final model
+void US_AdvAnalysis::stat_bfm( const QString msg, bool append, int line )
+{
+   show_stat( te_bfmstat, msg, append, line );
+}
+
+// Display status message to a text edit with append and line options
+void US_AdvAnalysis::show_stat( QTextEdit* tedit, const QString msg,
+      bool append, int aft_line )
+{
+   if ( append )
+   {  // Message gets appended
+      QString sttext   = tedit->toPlainText();
+
+      if ( aft_line > 0 )
+      {  // Append after the specified line
+         QStringList stlines = sttext.split( "\n" );    // Get the lines
+         sttext.clear();
+
+         for ( int ii = 0; ii < qMin( aft_line, stlines.size() ); ii++ )
+         {  // Rebuild lines before the specified one
+            sttext          += stlines[ ii ] + "\n";
+         }
+      }
+
+      else
+      {  // Append to full current text
+         sttext          += "\n";
+      }
+
+      tedit->setText( sttext + msg );
+   }
+
+   else
+   {  // Message fully replaces content
+      tedit->setText( msg );
+   }
+}
+
+// Set the fitting control counters from model records
+void US_AdvAnalysis::set_fittings( QVector< ModelRecord >& s_mrecs )
+{
+   ModelRecord s_mrec = s_mrecs[ 0 ];
+   nisols       = s_mrec.isolutes.size();
+   nmrecs       = s_mrecs.size();
+   double smin  = 1.e99;
+   double smax  = -1.e-99;
+   double kmin  = s_mrec.str_k;
+   double kmax  = s_mrec.end_k;
+   ctype        = ( s_mrec.par1 == s_mrec.str_k ) ? 0 :
+                  ( ( s_mrec.str_k < s_mrec.end_k ) ? 1 : 2 );
+   ct_sigmpar1->setValue( s_mrec.par1 );
+   ct_sigmpar2->setValue( s_mrec.par2 );
+
+   for ( int ii = 0; ii < nmrecs; ii++ )
+   {
+      s_mrec       = s_mrecs[ ii ];
+      kmin         = qMin( kmin, s_mrec.str_k );
+      kmax         = qMax( kmax, s_mrec.end_k );
+      nisols       = s_mrec.isolutes.size();
+
+      for ( int jj = 0; jj < nisols; jj++ )
+      {
+         smin         = qMin( smin, s_mrec.isolutes[ jj ].s * 1.e13 );
+         smax         = qMax( smax, s_mrec.isolutes[ jj ].s * 1.e13 );
+         kmin         = qMin( kmin, s_mrec.isolutes[ jj ].k );
+         kmax         = qMax( kmax, s_mrec.isolutes[ jj ].k );
+      }
+   }
+
+   cb_curvtype->setCurrentIndex( ctype );
+   ct_s_lower ->setValue( smin );
+   ct_s_upper ->setValue( smax );
+   ct_k_lower ->setValue( kmin );
+   ct_k_upper ->setValue( kmax );
+   ct_crpoints->setValue( nisols );
+}
+
+// Return a flag and possibly warn if operation requires valid mrecs
+bool US_AdvAnalysis::mrecs_required( QString oper )
+{
+   // Test the mrecs list for validity
+   bool needMrs   = ( mrecs.size() < 2  ||  mrecs[ 1 ].csolutes.size() < 1 );
+
+   // Output a warning dialog if not
+   if ( needMrs )
+   {
+      QMessageBox::critical( this, tr( "Invalid Operation" ),
+         tr( "<b>%1</b> is not a valid operation<br/>"
+             "&nbsp;&nbsp;when no Model Records have been computed.<br/>"
+             "Your options at this point are:"
+             "<ul><li>Go back to the main analysis controls window and do"
+             " a fit with <b>Start Fit</b>, then return here to retry; or"
+             "</li><li>Do a <b>Load Model Records</b> here, and then\n"
+             "  retry this operation.</li></ul>" ).arg( oper ) );
+   }
+
+   return needMrs;
+}
+
+// Return a flag and possibly warn if operation incompatible
+bool US_AdvAnalysis::bfm_incompat( QString fname )
+{
+   // Test the compatibility of a new BFM with existing mrecs
+   bool   inCompat  = false;
+
+   int    ftype     = mrec.ctype;
+   double fsmin     = mrec.smin;
+   double fsmax     = mrec.smax;
+   double fkmin     = mrec.kmin;
+   double fkmax     = mrec.kmax;
+   int    rtype     = mrecs[ 1 ].ctype;
+   double rsmin     = mrecs[ 1 ].smin;
+   double rsmax     = mrecs[ 1 ].smax;
+   double rkmin     = mrecs[ 1 ].kmin;
+   double rkmax     = mrecs[ 1 ].kmax;
+DbgLv(1) << "AA:BI: ftype rtype" << ftype << rtype << "fname" << fname;
+
+   inCompat         = ( inCompat  ||  ( ftype != rtype ) );
+DbgLv(1) << "AA:BI:  (1)inCompat" << inCompat;
+   inCompat         = ( inCompat  ||  ( fsmin >  rsmax ) );
+   inCompat         = ( inCompat  ||  ( fsmax <  rsmin ) );
+   inCompat         = ( inCompat  ||  ( fkmin >  rkmax ) );
+   inCompat         = ( inCompat  ||  ( fkmax <  rkmin ) );
+DbgLv(1) << "AA:BI:  (5)inCompat" << inCompat;
+
+   if ( inCompat )
+   {
+      const char* ctps[] = { "Straight Line",
+                             "Increasing Sigmoid",
+                             "Decreasing Sigmoid" };
+      QString fpars    = QString( ctps[ ftype ] )
+         + tr( " ; s %1 to %2 ; f/f0 %3 to %4" )
+         .arg( fsmin ).arg( fsmax ).arg( fkmin ).arg( fkmax );
+      QString rpars    = QString( ctps[ rtype ] )
+         + tr( " ; s %1 to %2 ; f/f0 %3 to %4" )
+         .arg( rsmin ).arg( rsmax ).arg( rkmin ).arg( rkmax );
+
+      QMessageBox::critical( this, tr( "Incompatible Final Model" ),
+         tr( "File <b>%1</b> has fitting controls incompatible<br/>"
+             "&nbsp;&nbsp;with the existing model records."
+             "<ul><li>File:&nbsp;&nbsp;%2.</li>"
+             "<li>Records:&nbsp;&nbsp;%3.</li></ul>" )
+         .arg( fname ).arg( fpars ).arg( rpars ) );
+
+      mrec           = mrecs[ 0 ];
+   }
+
+   return inCompat;
 }
 

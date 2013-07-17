@@ -52,7 +52,7 @@ int ModelRecord::compute_slines( double& smin, double& smax,
    double  xinc  = xrng / prng;
    double  ystr  = fmin;
    int     mndx  = 0;
-   int     nkpts = (int)( ( fmax - fmin ) / finc ) + 1;
+   int     nkpts = qRound( ( fmax - fmin ) / finc ) + 1;
    int     nmodl = nkpts * nkpts;
    mrecs.reserve( nmodl );
 

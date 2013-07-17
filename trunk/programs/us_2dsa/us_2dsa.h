@@ -78,6 +78,8 @@ class US_2dsa : public US_AnalysisBase2
       QPushButton*         pb_plt3d;
       QPushButton*         pb_pltres;
 
+      bool                 loadDB;
+
       double               rmsd;
 
       int                  dbg_level;

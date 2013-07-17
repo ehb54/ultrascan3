@@ -13,7 +13,8 @@
 
 // constructor:  2dsa analysis controls widget
 US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
-    QWidget* p ) : US_WidgetsDialog( p, 0 ), dsets( dsets )
+   bool& loadDB, QWidget* p ) : US_WidgetsDialog( p, 0 ),
+   dsets( dsets ), loadDB( loadDB )
 {
    parentw        = p;
    processor      = 0;
@@ -599,7 +600,6 @@ void US_AnalysisControl::load_model()
 {
    QString  mdesc( "" );
    QString  mfilter( "" );
-   bool     loadDB = false;
    US_Model cusmodel;
    US_2dsa* mainw  = NULL;
 
@@ -607,7 +607,6 @@ void US_AnalysisControl::load_model()
    {
       mainw          = (US_2dsa*)parentw;
       mfilter        = QString( "CustomGrid" );
-      loadDB         = mainw->mw_editdata()->description.contains( "(DB)" );
       mainw->analysis_done( -1 );
    }
 
@@ -917,7 +916,7 @@ void US_AnalysisControl::advanced()
    US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
 DbgLv(1) << "Adv sparms.bf sect" << sparms->band_forming << sparms->cp_sector;
 
-   US_AdvAnalysis* aadiag = new US_AdvAnalysis( sparms, this );
+   US_AdvAnalysis* aadiag = new US_AdvAnalysis( sparms, loadDB, this );
    if ( aadiag->exec() == QDialog::Accepted )
    {
              grtype = US_2dsaProcess::UGRID;

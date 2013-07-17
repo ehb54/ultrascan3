@@ -30,12 +30,17 @@ class ModelRecord
       ~ModelRecord();
 
       int                  taskx;      // Task index (submit order)
+      int                  ctype;      // Curve type flag (0-2=>SL,IS,DS)
       double               str_k;      // Start k value
       double               end_k;      // End k value
       double               par1;       // Sigmoid par1 value
       double               par2;       // Sigmoid par2 value
       double               variance;   // Variance value
       double               rmsd;       // RMSD value
+      double               smin;       // Minimum s value
+      double               smax;       // Minimum s value
+      double               kmin;       // Minimum k value
+      double               kmax;       // Minimum k value
       QVector< US_Solute > isolutes;   // Input solutes
       QVector< US_Solute > csolutes;   // Computed solutes
       QVector< double >    ti_noise;   // Computed TI noise

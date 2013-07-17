@@ -437,27 +437,47 @@ void US_pcsaProcess::get_mrec( ModelRecord& p_mrec )
 }
 
 // Replace the top-spot model record
-void US_pcsaProcess::put_mrec( ModelRecord& p_mrec )
+void US_pcsaProcess::put_mrec( ModelRecord& a_mrec )
 {
-   mrecs[ 0 ]  = p_mrec;                  // Copy best model record
+   mrecs[ 0 ]  = a_mrec;                  // Copy best model record
 
-   model       = p_mrec.model;
+   model       = a_mrec.model;
    alpha       = 0.0;
-   sdata       = p_mrec.sim_data;
-   rdata       = p_mrec.residuals;
+   sdata       = a_mrec.sim_data;
+   rdata       = a_mrec.residuals;
 }
 
 // Replace the model records list and related variables after file load
-void US_pcsaProcess::put_mrecs( QVector< ModelRecord >& p_mrecs )
+void US_pcsaProcess::put_mrecs( QVector< ModelRecord >& a_mrecs )
 {
-   mrecs       = p_mrecs;                 // Copy model records list
+   mrecs       = a_mrecs;                 // Copy model records list
+   int nmrecs  = mrecs.size();
+DbgLv(1) << "PC:putMRs: nmrecs" << nmrecs;
 
-   nmtasks     = (int)qFloor( sqrt( (double)mrecs.size() ) );
-   nmtasks     = sq( nmtasks );
+   if ( nmrecs < 1 )
+      return;
+
+   kincr       = qFloor( sqrt( (double)nmrecs ) );
+   int nkpts   = (int)kincr;
+   nmtasks     = sq( nkpts );
+DbgLv(1) << "PC:putMRs:  nkpts nmtasks" << nkpts << nmtasks;
    model       = mrecs[ 0 ].model;
    sdata       = mrecs[ 0 ].sim_data;
    rdata       = mrecs[ 0 ].residuals;
+   slolim      = mrecs[ 0 ].smin;
+   suplim      = mrecs[ 0 ].smax;
+   klolim      = mrecs[ 0 ].kmin;
+   kuplim      = mrecs[ 0 ].kmax;
+   curvtype    = mrecs[ 0 ].ctype;
    alpha       = 0.0;
+
+   for ( int ii = 0; ii < nmrecs; ii++ )
+   {
+      varimin     = qMin( varimin, mrecs[ ii ].variance );
+   }
+
+   kincr       = curvtype != 0 ? kincr : ( kuplim - klolim ) / ( kincr - 1.0 );
+DbgLv(1) << "PC:putMRs:  curvtype" << curvtype << "kincr" << kincr;
 }
 
 // Submit a job
@@ -513,6 +533,11 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
    mrec.rmsd       = ( variance > 0.0 ) ? sqrt( variance ) : 99.9;
    mrec.isolutes   = wresult.isolutes;
    mrec.csolutes   = wresult.csolutes;
+   mrec.ctype      = curvtype;
+   mrec.smin       = slolim;
+   mrec.smax       = suplim;
+   mrec.kmin       = klolim;
+   mrec.kmax       = kuplim;
 
    if ( variance < varimin )
    { // Handle a new minimum variance record
@@ -887,8 +912,6 @@ double US_pcsaProcess::fit_function_SL( double t, double* par )
    int    nlpts  = (int)epar[ 1 ];              // Get limit parameters
    double smin   = epar[ 2 ];
    double smax   = epar[ 3 ];
-   double kmin   = epar[ 4 ];
-   double kmax   = epar[ 5 ];
    double klow   = epar[ 6 ];
    double khigh  = epar[ 7 ];
    double p1lo   = epar[ 8 ];
@@ -898,8 +921,8 @@ double US_pcsaProcess::fit_function_SL( double t, double* par )
    int    noisfl = (int)epar[ 12 ];
    int    dbg_lv = (int)epar[ 13 ];
    double alpha  = epar[ 14 ];
-   double kstart = kmin;
-   double kend   = kmax;
+   double kstart = par1;
+   double kend   = kstart + par2 * ( smax - smin );
 
    // After 1st few calls, test if parameters are within limits
    if ( ffcall > 3 )
@@ -926,10 +949,10 @@ qDebug() << "ffSL: call" << ffcall << "par1 par2" << par1 << par2
 
    double prange = (double)( nlpts - 1 );
    double sinc   = ( smax - smin ) / prange;
-   double kinc   = ( kmax - kmin ) / prange;
+   double kinc   = ( kend - kstart ) / prange;
    double vbar20 = dsets[ 0 ]->vbar20;
    double scurr  = smin;
-   double kcurr  = kmin;
+   double kcurr  = kstart;
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisfl;
    sim_vals.dbg_level = dbg_lv;
@@ -1379,6 +1402,11 @@ DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
    mrec.par2      = par[ 1 ];
    mrec.variance  = dset->model.variance;
    mrec.rmsd      = rmsd;
+   mrec.ctype     = curvtype;
+   mrec.smin      = slolim;
+   mrec.smax      = suplim;
+   mrec.kmin      = klolim;
+   mrec.kmax      = kuplim;
 
    for ( int ii = 0; ii < mrec.isolutes.size(); ii++ )
    { // Replace s and k in top model input solutes

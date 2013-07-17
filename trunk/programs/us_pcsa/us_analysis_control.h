@@ -96,7 +96,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QwtCounter*   ct_tralpha;
       QwtCounter*   ct_thrdcnt;
 
-      QComboBox*    cmb_curvtype;
+      QComboBox*    cb_curvtype;
 
       QCheckBox*    ck_lmalpha;
       QCheckBox*    ck_fxalpha;
@@ -143,7 +143,8 @@ class US_AnalysisControl : public US_WidgetsDialog
       void plot_lines ( void );
       void recompute_mrec( void );
       void closed     ( QObject* );
-      QString fitpars_string( void );
+      void    fitpars_connect( bool );
+      QString fitpars_string ( void );
 
       void help       ( void )
       { showHelp.show_help( "pcsa_analys.html" ); };

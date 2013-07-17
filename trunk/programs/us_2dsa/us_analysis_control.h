@@ -19,8 +19,9 @@ class US_AnalysisControl : public US_WidgetsDialog
    public:
       //! \brief US_AnalysisControl constructor
       //! \param dat_exp Pointer to the experiment data
+      //! \param loadDb  Flag for whether loads are from DB
       //! \param         Pointer to the parent of this widget
-      US_AnalysisControl( QList< US_SolveSim::DataSet* >&, QWidget* p = 0 );
+      US_AnalysisControl( QList< US_SolveSim::DataSet* >&, bool&, QWidget* p = 0 );
 
    public slots:
       void update_progress (  int  );
@@ -29,6 +30,10 @@ class US_AnalysisControl : public US_WidgetsDialog
       void reset_steps(       int,     int );
 
    private:
+      QList< US_SolveSim::DataSet* >&  dsets;
+
+      bool&         loadDB;
+
       int           dbg_level;
       int           ncsteps;
       int           nctotal;
@@ -37,8 +42,6 @@ class US_AnalysisControl : public US_WidgetsDialog
       QHBoxLayout*  mainLayout;
       QGridLayout*  controlsLayout;
       QGridLayout*  optimizeLayout;
-
-      QList< US_SolveSim::DataSet* >&  dsets;
 
       US_DataIO::EditedData*           edata;
       US_DataIO::RawData*              sdata;

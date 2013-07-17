@@ -9,7 +9,7 @@
 
 // constructor:  enhanced plot control widget
 US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
-    QWidget* p ) : US_WidgetsDialog( p, 0 )
+    bool& loadDB, QWidget* p ) : US_WidgetsDialog( p, 0 ), loadDB( loadDB )
 {
    sparms         = sim_par;
    parentw        = p;
@@ -479,14 +479,8 @@ void US_AdvAnalysis::load_model()
 {
    QString  mdesc  ( "" );
    QString  mfilter( "" );
-   bool     loadDB = false;
 
-   if ( parentw != NULL )
-   {  // If possible, get DB/Local flag and set to filter for "CustomGrid"
-      US_2dsa* mainw = (US_2dsa*)parentw->parent();
-      mfilter        = QString( "CustomGrid" );
-      loadDB         = mainw->mw_editdata()->description.contains( "(DB)" );
-   }
+   mfilter        = QString( "CustomGrid" );
 
    US_ModelLoader dialog( loadDB, mfilter, model, mdesc, "" );
 
