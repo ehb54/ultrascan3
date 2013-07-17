@@ -825,7 +825,6 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
 
    if ( dbP != NULL )
    {
-      dataList[ drow ].description += "  (DB)";
       delete dbP;
       dbP    = NULL;
    }

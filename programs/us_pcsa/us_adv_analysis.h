@@ -85,15 +85,17 @@ class US_AdvAnalysis : public US_WidgetsDialog
 
       QLabel*       lb_sigmpar1;
       QLabel*       lb_sigmpar2;
-      QLabel*       lb_k_lower;
-      QLabel*       lb_k_upper;
+      QLabel*       lb_k_strpt;
+      QLabel*       lb_k_endpt;
 
       QwtCounter*   ct_s_lower;
       QwtCounter*   ct_s_upper;
-      QwtCounter*   ct_sigmpar1;
-      QwtCounter*   ct_sigmpar2;
       QwtCounter*   ct_k_lower;
       QwtCounter*   ct_k_upper;
+      QwtCounter*   ct_sigmpar1;
+      QwtCounter*   ct_sigmpar2;
+      QwtCounter*   ct_k_strpt;
+      QwtCounter*   ct_k_endpt;
       QwtCounter*   ct_mciters;
       QwtCounter*   ct_crpoints;
 
@@ -141,9 +143,14 @@ class US_AdvAnalysis : public US_WidgetsDialog
       void process_job     ( WorkerThread* );
       void montecarlo_done ( void );
       void under_construct ( QString );
-      void curve_points    ( int, double, double, double, double,
-                             ModelRecord& );
+      void curve_isolutes  ( ModelRecord& );
       void bfm_model       ( void );
+      void stat_mrecs      ( const QString, bool = false, int = 0 );
+      void stat_bfm        ( const QString, bool = false, int = 0 );
+      void show_stat       ( QTextEdit*, const QString, bool = false, int = 0 );
+      void set_fittings    ( QVector< ModelRecord >& );
+      bool mrecs_required  ( const QString );
+      bool bfm_incompat    ( const QString );
 
       void select          ( void );
       void cancel          ( void );

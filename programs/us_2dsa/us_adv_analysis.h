@@ -19,8 +19,9 @@ class US_AdvAnalysis : public US_WidgetsDialog
    public:
       //! \brief US_AdvAnalysis constructor
       //! \param sim_par Pointer to simulation parameters
+      //! \param loadDb  Flag for whether loads are from DB
       //! \param         Pointer to the parent of this widget
-      US_AdvAnalysis( US_SimulationParameters*, QWidget* p = 0 );
+      US_AdvAnalysis( US_SimulationParameters*, bool&, QWidget* p = 0 );
 
    public slots:
       void get_parameters( int&,  double&, double&, double&,
@@ -28,6 +29,7 @@ class US_AdvAnalysis : public US_WidgetsDialog
 
    private:
       US_SimulationParameters* sparms;
+      bool&                    loadDB;
       US_Model                 model;
 
       int           ncsteps;

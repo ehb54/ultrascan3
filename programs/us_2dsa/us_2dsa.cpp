@@ -228,7 +228,7 @@ void US_2dsa::load( void )
    pb_view->setEnabled( false );   // disable view,save buttons for now
    pb_save->setEnabled( false );
 
-   def_local  = ! disk_controls->db();
+   loadDB     = disk_controls->db();
    edata      = &dataList[ 0 ];    // point to first loaded data
 
    // Move any loaded noise vectors to the "in" versions
@@ -454,7 +454,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    // Save the model and any noise file(s)
 
    US_Passwd   pw;
-   US_DB2*     dbP      = def_local ? NULL : new US_DB2( pw.getPasswd() );
+   US_DB2*     dbP      = loadDB ? new US_DB2( pw.getPasswd() ): NULL;
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
    QStringList mfilt( "M*.xml" );
@@ -820,9 +820,8 @@ DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
  << sd.viscosity_tb << sd.density << sd.density_wt << sd.density_tb;
 
    US_Passwd pw;
-   US_DB2* dbP             = disk_controls->db()
-                             ? new US_DB2( pw.getPasswd() )
-                             : NULL;
+   loadDB                  = disk_controls->db();
+   US_DB2* dbP             = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
    dset.simparams.initFromData( dbP, dataList[ drow ] );
 
    dset.run_data           = dataList[ drow ];
@@ -840,7 +839,6 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
 
    if ( dbP != NULL )
    {
-      dataList[ drow ].description += "  (DB)";
       delete dbP;
       dbP    = NULL;
    }
@@ -853,7 +851,7 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
    else
       acd_pos  = this->pos() + QPoint(  500,  50 );
 
-   analcd  = new US_AnalysisControl( dsets, this );
+   analcd  = new US_AnalysisControl( dsets, loadDB, this );
    analcd->move( acd_pos );
    analcd->show();
    qApp->processEvents();

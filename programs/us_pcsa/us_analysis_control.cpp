@@ -129,11 +129,11 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_cresolu ->setStep(    1 );
    ct_tralpha ->setStep( 0.001 );
    ct_thrdcnt ->setStep(    1 );
-   cmb_curvtype = us_comboBox();
-   cmb_curvtype->addItem( "Straight Line" );
-   cmb_curvtype->addItem( "Increasing Sigmoid" );
-   cmb_curvtype->addItem( "Decreasing Sigmoid" );
-   cmb_curvtype->setCurrentIndex( 1 );
+   cb_curvtype = us_comboBox();
+   cb_curvtype->addItem( "Straight Line" );
+   cb_curvtype->addItem( "Increasing Sigmoid" );
+   cb_curvtype->addItem( "Decreasing Sigmoid" );
+   cb_curvtype->setCurrentIndex( 1 );
 
    le_minvari   = us_lineedit( "0.000e-05", -1, true );
    le_minrmsd   = us_lineedit( "0.009000" , -1, true );
@@ -143,7 +143,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    int row       = 0;
    controlsLayout->addWidget( lb_fitting,    row++, 0, 1, 4 );
    controlsLayout->addWidget( lb_curvtype,   row,   0, 1, 2 );
-   controlsLayout->addWidget( cmb_curvtype,  row++, 2, 1, 2 );
+   controlsLayout->addWidget( cb_curvtype,   row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_lolimits,   row,   0, 1, 2 );
    controlsLayout->addWidget( ct_lolimits,   row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_uplimits,   row,   0, 1, 2 );
@@ -198,8 +198,8 @@ DbgLv(1) << "idealThrCout" << nthr;
 
    optimize_options();
 
-   connect( cmb_curvtype, SIGNAL( activated  ( int )    ),
-            this,         SLOT(   compute()             ) );
+   connect( cb_curvtype, SIGNAL( activated   ( int )    ),
+            this,        SLOT(   compute()              ) );
    connect( ct_lolimits, SIGNAL( valueChanged( double ) ),
             this,        SLOT(   slim_change()          ) );
    connect( ct_uplimits, SIGNAL( valueChanged( double ) ),
@@ -295,7 +295,7 @@ void US_AnalysisControl::uncheck_optimize( int /*ckflag*/ )
 void US_AnalysisControl::start()
 {
    US_pcsa* mainw = (US_pcsa*)parentw;
-   mainw->analysis_done( -1 );   // Reset counters to zero
+   mainw->analysis_done( -1 );        // Reset counters to zero
 
    // Make sure that ranges are reasonable
    if ( ( ct_uplimits->value() - ct_lolimits->value() ) < 0.0  ||
@@ -327,7 +327,7 @@ void US_AnalysisControl::start()
    le_minvari  ->setText( "0.000e-05" );
    le_minrmsd  ->setText( "0.0000" );
 
-   int    typ    = cmb_curvtype->currentIndex();
+   int    typ    = cb_curvtype->currentIndex();
    double slo    = ct_lolimits->value();
    double sup    = ct_uplimits->value();
    double klo    = ct_lolimitk->value();
@@ -435,7 +435,7 @@ void US_AnalysisControl::plot()
    *mw_mrecs       = mrecs;
    *model          = mrecs[ 0 ].model;
    US_pcsa* mainw = (US_pcsa*)parentw;
-   mainw->analysis_done( 1 );
+   mainw->analysis_done( 1 );     // Plot in main
 }
 
 // advanced controls button clicked
@@ -464,15 +464,16 @@ DbgLv(1) << "AC:advanced dialog exec() return - ACCEPTED";
 DbgLv(1) << "AC:advanced dialog state=" << state << "mainw" << mainw;
 
       // Update model recs where possible and appropriate
-      if ( mrsupd  &&  mw_mrecs != 0 )
+      if ( mrsupd )
       {
          *mw_mrecs       = mrecs;
          *model          = mrecs[ 0 ].model;
          *sdata          = mrecs[ 0 ].sim_data;
          *rdata          = mrecs[ 0 ].residuals;
+         *mw_mrecs_mc    = mrecs_mc;
       }
 
-      if ( mmcupd  &&  mw_mrecs_mc != 0 )
+      if ( mmcupd )
       {
          *mw_mrecs_mc    = mrecs_mc;
       }
@@ -483,8 +484,8 @@ DbgLv(1) << "AC:advanced: mrec0 sols" << mrecs[0].csolutes.size()
       if ( mmcupd )
       {  // Report new BFM from MonteCarlo
          QString fmsg = tr(
-            "\n\nA newer best model has been created by %1 Monte Carlo\n"
-            "  iterations  ( %2-solute, with RMSD = %3 )" )
+            "\nA newer best model has been created by %1 Monte Carlo\n"
+            "     iterations  ( %2-solute, with RMSD = %3 )" )
             .arg( mciter ).arg( ncsols ).arg( rmsdf );
 
          progress_message( fmsg, true );
@@ -495,8 +496,8 @@ DbgLv(1) << "AC:advanced: mrec0 sols" << mrecs[0].csolutes.size()
       else if ( mrsupd )
       {  // Report new BFM from other advanced controls action
          QString fmsg = tr(
-            "\n\nA newer best model has been created from Advanced Controls\n"
-            "  action  ( %1-solute, with RMSD = %2 )" )
+            "\nA newer best model has been created from Advanced Controls\n"
+            "    action  ( %1-solute, with RMSD = %2 )" )
             .arg( ncsols ).arg( rmsdf );
 
          progress_message( fmsg, true );
@@ -522,9 +523,60 @@ DbgLv(1) << "AC:advanced: mrec0 sols" << mrecs[0].csolutes.size()
             processor   = new US_pcsaProcess( dsets, this );
          }
 
+DbgLv(1) << "AC:advanced: put_mrecs";
          processor->put_mrecs( mrecs );
+DbgLv(1) << "AC:advanced: get_results";
          processor->get_results( sdata, rdata, model, ti_noise, ri_noise,
                bmndx, *mw_modstats, mrecs );
+
+         int    nmrecs = mrecs.size();
+         finc          = qFloor( sqrt( (double)nmrecs ) );
+         nkpts         = (int)finc;
+         int    nmtsks = sq( nkpts );
+         int    strec  = nmrecs - nmtsks;
+         nlpts         = mrecs[ strec ].isolutes.size();
+         smin          = mrecs[ strec ].smin;
+         smax          = mrecs[ strec ].smax;
+         fmin          = mrecs[ strec ].kmin;
+         fmax          = mrecs[ strec ].kmax;
+         finc          = ( fmax - fmin ) / ( finc - 1.0 );
+         ctype         = mrecs[ strec ].ctype;
+
+         for ( int ii = strec; ii < nmrecs; ii++ )
+         {
+            QVector< US_Solute >* isolutes = &mrecs[ ii ].isolutes;
+            nlpts         = isolutes->size();
+            fmin          = qMin( fmin, mrecs[ ii ].str_k );
+            fmax          = qMax( fmax, mrecs[ ii ].end_k );
+
+            for ( int jj = 0; jj < nlpts; jj++ )
+            {
+               double sval   = (*isolutes)[ jj ].s * 1.e13;
+               double kval   = (*isolutes)[ jj ].k;
+               smin          = qMin( smin, sval );
+               smax          = qMax( smax, sval );
+               fmin          = qMin( fmin, kval );
+               fmax          = qMax( fmax, kval );
+            }
+         }
+
+         fitpars_connect( false );
+
+         cb_curvtype->setCurrentIndex( ctype );
+         ct_lolimits->setValue( smin  );
+         ct_uplimits->setValue( smax  );
+         ct_lolimitk->setValue( fmin  );
+         ct_uplimitk->setValue( fmax  );
+         ct_incremk ->setValue( finc  );
+         ct_cresolu ->setValue( nlpts );
+
+         lb_incremk ->setVisible( ctype == 0 );
+         ct_incremk ->setVisible( ctype == 0 );
+
+         fitpars       = fitpars_string();
+         fitpars_connect( true );
+
+         mainw->analysis_done( 0 );   // Tell main that new records are done
       }
    }
 else
@@ -539,7 +591,7 @@ void US_AnalysisControl::save()
 DbgLv(1) << "AC:save: model components size" << model->components.size();
    *mw_mrecs       = mrecs;
    *model          = mrecs[ 0 ].model;
-   mainw->analysis_done( 2 );
+   mainw->analysis_done( 2 );         // Save in main
 }
 
 // Close all windows
@@ -730,10 +782,10 @@ DbgLv(1) << "AC:cp: RES: bmndx" << bmndx;
       *mw_mrecs       = mrecs;
 
 DbgLv(1) << "AC:cp: main done -2";
-      mainw->analysis_done( -2 );
+      mainw->analysis_done( -2 );     // Update RMSD in main
 
 DbgLv(1) << "AC:cp: main done 0";
-      mainw->analysis_done(  0 );
+      mainw->analysis_done(  0 );     // Tell main that records are done
 
       pb_startfit->setEnabled( true  );
       pb_scanregp->setEnabled( true  );
@@ -757,7 +809,7 @@ DbgLv(1) << "(1)pb_plot-Enabled" << pb_plot->isEnabled();
 // slot to compute model lines
 void US_AnalysisControl::compute()
 {
-   ctype   = cmb_curvtype->currentIndex();
+   ctype   = cb_curvtype->currentIndex();
    smin    = ct_lolimits->value();
    smax    = ct_uplimits->value();
    fmin    = ct_lolimitk->value();
@@ -808,7 +860,7 @@ DbgLv(1) << "CM: need_fit" << need_fit;
 // slot to launch a plot dialog showing model lines
 void US_AnalysisControl::plot_lines()
 {
-   ctype   = cmb_curvtype->currentIndex();
+   ctype   = cb_curvtype->currentIndex();
    smin    = ct_lolimits->value();
    smax    = ct_uplimits->value();
    fmin    = ct_lolimitk->value();
@@ -936,7 +988,7 @@ DbgLv(1) << "AC:fo: klp nlp" << klpts << nlpts;
 // Compose a string showing the current settings for fit parameters
 QString US_AnalysisControl::fitpars_string()
 {
-   int    typ    = cmb_curvtype->currentIndex();
+   int    typ    = cb_curvtype->currentIndex();
    double slo    = ct_lolimits->value();
    double sup    = ct_uplimits->value();
    double klo    = ct_lolimitk->value();
@@ -949,6 +1001,42 @@ QString US_AnalysisControl::fitpars_string()
 
    return QString().sprintf( "%d %.5f %.5f %.5f %.5f %.5f %d %d",
             typ, slo, sup, klo, kup, kin, nvar, noif );
+}
+
+// Re-Connect or disconnect fit parameters controls
+void US_AnalysisControl::fitpars_connect( bool reconn )
+{
+   if ( reconn )
+   {  // Reconnect controls
+      connect( cb_curvtype, SIGNAL( activated  ( int )    ),
+               this,         SLOT(   compute()             ) );
+      connect( ct_lolimits, SIGNAL( valueChanged( double ) ),
+               this,        SLOT(   slim_change()          ) );
+      connect( ct_uplimits, SIGNAL( valueChanged( double ) ),
+               this,        SLOT(   slim_change()          ) );
+      connect( ct_lolimitk, SIGNAL( valueChanged( double ) ),
+               this,        SLOT(   klim_change()          ) );
+      connect( ct_uplimitk, SIGNAL( valueChanged( double ) ),
+               this,        SLOT(   klim_change()          ) );
+      connect( ct_incremk,  SIGNAL( valueChanged( double ) ),
+               this,        SLOT(   klim_change()          ) );
+      connect( ct_varcount, SIGNAL( valueChanged( double ) ),
+               this,        SLOT(   compute()              ) );
+      connect( ct_cresolu,  SIGNAL( valueChanged( double ) ),
+               this,        SLOT(   reso_change()          ) );
+   }
+
+   else
+   {  // Disconnect controls
+      cb_curvtype->disconnect();
+      ct_lolimits->disconnect();
+      ct_uplimits->disconnect();
+      ct_lolimitk->disconnect();
+      ct_uplimitk->disconnect();
+      ct_incremk ->disconnect();
+      ct_varcount->disconnect();
+      ct_cresolu ->disconnect();
+   }
 }
 
 // Recompute the top model record after change to resolution points
@@ -969,7 +1057,12 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
    fmax          = ct_uplimitk->value();
    finc          = ct_incremk ->value();
    nlpts         = (int)ct_cresolu ->value();
-   ctype         = cmb_curvtype->currentIndex();
+   ctype         = cb_curvtype->currentIndex();
+   mrec.ctype    = ctype;
+   mrec.smin     = smin;
+   mrec.smax     = smax;
+   mrec.kmin     = fmin;
+   mrec.kmax     = fmax;
    double str_k  = mrec.str_k;
    double end_k  = mrec.end_k;
    double par1   = mrec.par1;
