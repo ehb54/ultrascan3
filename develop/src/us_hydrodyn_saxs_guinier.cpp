@@ -596,7 +596,6 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_use_qRlimit" ) &&
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_use_qRlimit" ] == "1";
          unsigned int pts_decrease = 0;
-         qs_removed = "";
          //          if ( do_decrease )
          //          {
          //             printf( "do decrease, pts_decrease %u\n", pts_decrease );
@@ -605,6 +604,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             usu.wave["data"].q.clear();
             usu.wave["data"].r.clear();
             usu.wave["data"].s.clear();
+            qs_removed = "";
             // vector < double > q2;
             for ( unsigned int j = 0; j < plotted_q[ i ].size(); j++ )
             {
@@ -1220,7 +1220,6 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_use_qRlimit" ) &&
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_use_qRlimit" ] == "1";
          unsigned int pts_decrease = 0;
-         qs_removed = "";
          //          if ( do_decrease )
          //          {
          //             printf( "do decrease, pts_decrease %u\n", pts_decrease );
@@ -1229,6 +1228,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             usu.wave["data"].q.clear();
             usu.wave["data"].r.clear();
             usu.wave["data"].s.clear();
+            qs_removed = "";
 
             // vector < double > q2;
 
@@ -1812,7 +1812,6 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_use_qRlimit" ) &&
             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_use_qRlimit" ] == "1";
          unsigned int pts_decrease = 0;
-         qs_removed = "";
          //          if ( do_decrease )
          //          {
          //             printf( "do decrease, pts_decrease %u\n", pts_decrease );
@@ -1821,6 +1820,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
             usu.wave["data"].q.clear();
             usu.wave["data"].r.clear();
             usu.wave["data"].s.clear();
+            qs_removed = "";
 
             // vector < double > q2;
 
