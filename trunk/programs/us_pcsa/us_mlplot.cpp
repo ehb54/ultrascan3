@@ -521,7 +521,7 @@ void US_MLinesPlot::selectColorMap( void )
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
        tr( "Load Color Map File" ),
-       US_Settings::appBaseDir() + "/etc",
+       US_Settings::baseDataDir() + "/etc",
        filter, 0, 0 );
 
    if ( fname.isEmpty() )

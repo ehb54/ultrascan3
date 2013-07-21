@@ -65,6 +65,9 @@ class US_UTIL_EXTERN US_Settings
     //! \brief Get the base directory in which ./bin apps reside
     static QString     appBaseDir();
 
+    //! \brief Get the base work directory in which ./data resides
+    static QString     baseDataDir();
+
     // License
     
     //! \brief Get the current license

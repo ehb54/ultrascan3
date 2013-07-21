@@ -6,6 +6,7 @@
 #include "us_gui_util.h"
 #include "us_settings.h"
 #include "us_images.h"
+#include "us_util.h"
 
 US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
 {
@@ -480,6 +481,209 @@ QTabWidget* US_Widgets::us_tabwidget(  int fontAdjust,
 void US_Widgets::write_plot( const QString& fname, const QwtPlot* plot )
 {
    US_GuiUtil::save_plot( fname, plot );
+}
+
+// Clean up install and work ./etc directories
+int US_Widgets::clean_etc_dir( bool report )
+{
+   int nfmove         = 0;
+   int nfcopy         = 0;
+   int nfdele         = 0;
+   QString ietc_dname = US_Settings::appBaseDir() + "/etc";  // Install etc
+   QString wetc_dname = US_Settings::baseDataDir() + "/etc"; // Work etc
+   QString list_fname = "etc_belongs_list.txt";  // Files that belong in etc
+   QDir ietc_dir( ietc_dname );
+   QDir wetc_dir( wetc_dname );
+   ietc_dname        += "/";
+   wetc_dname        += "/";
+   QDir::Filters ffilt = QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot;
+   QList< QFileInfo > ie_files = ietc_dir.entryInfoList( ffilt );
+   QList< QFileInfo > we_files = wetc_dir.entryInfoList( ffilt );
+   QStringList keep_files;        // Files to keep in install etc
+   QStringList copy_files;        // Files to copy to work etc
+   QStringList link_files;        // Symbolic links in install etc
+   QStringList dir_names;         // Subdirectories in install etc
+   QStringList ietc_files;        // All files in install etc
+   QStringList wetc_files;        // All files initially in work etc
+   int niefs = ie_files.size();   // Count of install etc files
+   int nwefs = we_files.size();   // Count of work etc files
+
+   QDir().mkpath( wetc_dname );   // Make sure work etc directory exists
+
+   for ( int ii = 0; ii < niefs; ii++ )     // Build list of install etc files
+      ietc_files << ie_files[ ii ].fileName();
+
+   for ( int ii = 0; ii < nwefs; ii++ )     // Build list of work etc files
+      wetc_files << we_files[ ii ].fileName();
+
+   QFile lfile( ietc_dname + list_fname );  // Belong in install etc
+
+   if ( lfile.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      bool keep_file = false;
+      bool copy_file = false;
+      bool link_file = false;
+      bool dir_file  = false;
+
+      QTextStream ts( &lfile );
+      while( ! ts.atEnd() )
+      {  // Read the list of files that belong in install etc
+         QString fline = ts.readLine();
+
+         if ( fline.startsWith( "#" ) )
+         {  // Handle comment line
+            keep_file = copy_file = link_file = dir_file = false;
+            if ( fline.contains( "List of files" ) )
+               keep_file = true;            // Keep files follow
+            else if ( fline.contains( "List of directories" ) )
+               dir_file  = true;            // Subdirectories follow
+            else if ( fline.contains( "COPY" ) )
+               copy_file = true;            // Copy files follow
+            else if ( fline.contains( "LINK" ) )
+               link_file = true;            // Symbolic links follow
+         }
+
+         else
+         {  // Actual file name:  move it to appropriate list
+            QString filename = fline.section( " ", 0, 0 ).simplified();
+            if ( keep_file )
+               keep_files << filename;
+            else if ( copy_file )
+               copy_files << filename;
+            else if ( link_file )
+               link_files << filename.replace( "@", "" );
+            else if ( dir_file )
+               dir_names << filename.replace( "/", "" );
+         }
+
+      }
+   }
+
+   int nkeepf   = keep_files.size();
+   int ncopyf   = copy_files.size();
+   int nlinkf   = link_files.size();
+   int nsdir    = dir_names .size();
+qDebug() << "niefs nwefs" << niefs << nwefs << "nkeep/copy/link/dirf"
+ << nkeepf << ncopyf << nlinkf << nsdir;
+
+   // Examine each file in */ultrascan3/etc and operate on it
+   for ( int ii = 0; ii < niefs; ii++ )
+   {
+      QString filename = ietc_files[ ii ];
+
+      if ( filename.contains( "somo" ) )    // Leave SOMO files alone for now
+         continue;
+
+      bool    in_wetc  = wetc_files.contains( filename );
+
+      if ( keep_files.contains( filename ) )
+      {  // This file is to be kept in the install-etc directory
+         qDebug() << "KEEP " << filename;
+      }
+
+      else if ( copy_files.contains( filename ) )
+      {  // This file is to be copied to the work-etc directory
+         qDebug() << "COPY " << filename;
+         if ( in_wetc )
+         {  // But only copy if it is not already copied
+            QString icksum = US_Util::md5sum_file( ietc_dname + filename );
+            QString wcksum = US_Util::md5sum_file( wetc_dname + filename );
+            qDebug() << "   ietc cksum+size " << icksum;
+            qDebug() << "   wetc cksum+size " << wcksum;
+
+            if ( icksum != wcksum )
+            {  // They do not match in cksum+size, so copy
+               nfcopy++;
+               qDebug() << "       FILE COPY" << nfcopy;
+               QFile( wetc_dname + filename ).remove();
+
+               QFile( ietc_dname + filename ).copy(
+                      wetc_dname + filename );
+            }
+         }
+         else
+         {  // Not present in work-etc, so copy
+            qDebug() << "   not present in */ultrascan/etc";
+            nfcopy++;
+            qDebug() << "       FILE COPY" << nfcopy;
+            QFile( ietc_dname + filename ).copy(
+                   wetc_dname + filename );
+         }
+      }
+
+      else if ( link_files.contains( filename ) )
+      {  // This is a link, so copy the target file
+         qDebug() << "LINK " << filename;
+         QString sltarg = ie_files[ ii ].symLinkTarget();
+         qDebug() << "   ietc sltarg " << sltarg;
+
+         if ( in_wetc )
+         {  // But only copy if not already copied
+            QString icksum = US_Util::md5sum_file( sltarg );
+            QString wcksum = US_Util::md5sum_file( wetc_dname + filename );
+            qDebug() << "   ietc cksum+size " << icksum;
+            qDebug() << "   wetc cksum+size " << wcksum;
+
+            if ( icksum != wcksum )
+            {  // They do not match in cksum+size, so copy
+               nfcopy++;
+               qDebug() << "       FILE COPY" << nfcopy;
+               QFile( wetc_dname + filename ).remove();        // Remove first
+
+               QFile( sltarg ).copy( wetc_dname + filename );  // Then copy
+            }
+         }
+         else
+         {  // Not present in work-etc, so copy
+            qDebug() << "   not present in */ultrascan/etc";
+            nfcopy++;
+            qDebug() << "       FILE COPY" << nfcopy;
+            QFile( sltarg ).copy( wetc_dname + filename );
+         }
+      }
+
+      else if ( dir_names.contains( filename ) )
+      {  // This is a directory, so ignore it
+         qDebug() << "SDIR " << filename;
+      }
+
+      else if ( filename.contains( "~" ) )
+      {  // If name ends in tilde, delete it
+         qDebug() << "DELE " << filename;
+         nfdele++;
+         qDebug() << "       FILE DELE" << nfdele;
+         QFile( ietc_dname + filename ).remove();
+      }
+
+      else
+      {  // File not in "belongs" list:  move it to work-etc
+         qDebug() << "MOVE " << filename;
+         nfmove++;
+         qDebug() << "       FILE MOVE" << nfmove;
+
+         if ( in_wetc )
+         {  // First delete any version in work-etc
+            QFile( wetc_dname + filename ).remove();
+         }
+
+         QFile( ietc_dname + filename ).rename(
+                wetc_dname + filename );
+      }
+   }
+
+   int nfmods         = nfmove + nfcopy + nfdele;
+
+   if ( nfmods > 0  &&  report )
+   {  // If so flagged and any exist, pop up a message on modified files
+      QString msg        = tr( "%1 files were moved, copied, or deleted from"
+                               "<br/>&nbsp;&nbsp; <b>%2</b>.<br/>"
+                               "Examine possible new or replaced files in"
+                               "<br/>&nbsp;&nbsp; <b>%3</b>." )
+                           .arg( nfmods ).arg( ietc_dname ).arg( wetc_dname );
+      QMessageBox::information( this, tr( "Etc Directory Cleaned" ), msg );
+   }
+
+   return nfmods;
 }
 
 //////////////////  New class

@@ -61,6 +61,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    rght->setContentsMargins( 0, 1, 0, 1 );
 
    dbg_level = US_Settings::us_debug();
+   clean_etc_dir( true );
+
 
    // series of rows: most of them label on left, counter/box on right
    lb_info1      = us_banner( tr( "Genetic Algorithm Controls" ) );
@@ -1542,7 +1544,7 @@ void US_GA_Initialize::load_color()
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::appBaseDir() + "/etc",
+      US_Settings::baseDataDir() + "/etc",
       filter,
       0, 0 );
 

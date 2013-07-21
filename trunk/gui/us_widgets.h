@@ -166,6 +166,11 @@ class US_GUI_EXTERN US_Widgets : public QFrame
     //! \param fname Full path name of the plot file to create
     //! \param plot  Pointer to plot
     void write_plot( const QString&, const QwtPlot* );
+
+    //! \brief Clean install and work ./etc directories
+    //! \param report Optional flag to report any file mods
+    //! \return       Number of install-etc files modified
+    int  clean_etc_dir( bool = false );
 };
 
 //! \brief Set a custom list widget that can override the default size

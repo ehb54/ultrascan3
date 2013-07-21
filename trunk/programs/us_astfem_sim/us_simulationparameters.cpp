@@ -685,7 +685,7 @@ void US_SimulationParametersGui::save( void )
 {
    QString fn = QFileDialog::getSaveFileName( this,
          tr( "Save Simulation Parameters in:" ),
-         US_Settings::appBaseDir() + "/etc", 
+         US_Settings::baseDataDir() + "/etc", 
          tr( "SimParams files (sp_*.xml);;"
              "All XML files (*.xml);;"
              "All files (*)" ) );
@@ -758,7 +758,7 @@ void US_SimulationParametersGui::load( void )
 {
    QString fn = QFileDialog::getOpenFileName( this,
          tr( "Load Simulation Parameters from:" ),
-         US_Settings::appBaseDir() + "/etc", 
+         US_Settings::baseDataDir() + "/etc", 
          tr( "SimParams files (sp_*.xml);;"
              "All XML files (*.xml);;"
              "All files (*)" ) );

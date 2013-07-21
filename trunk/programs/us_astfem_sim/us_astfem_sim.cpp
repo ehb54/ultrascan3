@@ -47,6 +47,8 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    astfem_rsa          = NULL;
    astfvm              = NULL;
 
+   clean_etc_dir();
+
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );

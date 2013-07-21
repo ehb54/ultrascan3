@@ -1980,7 +1980,7 @@ DbgLv(1) << "   sdata->cM0" << sdata->value(nscan-1,0);
 DbgLv(1) << "   sdata->cMN" << sdata->value(nscan-1,nconc-1);
 DbgLv(1) << " afrsa init";
 if ( dbg_level > 1 )
- simparams.save_simparms( US_Settings::appBaseDir() + "/etc/sp_fematch.xml" );
+ simparams.save_simparms( US_Settings::baseDataDir() + "/etc/sp_fematch.xml" );
 
    start_time = QDateTime::currentDateTime();
    int ncomp  = model.components.size();

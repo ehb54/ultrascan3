@@ -44,6 +44,7 @@ US_pcsa::US_pcsa() : US_AnalysisBase2()
    setWindowTitle( tr( "Parametrically Constrained Spectrum Analysis" ) );
    setObjectName( "US_pcsa" );
    dbg_level  = US_Settings::us_debug();
+   clean_etc_dir();
 
    // Build local and pcsa-specific GUI elements
    te_results = NULL;

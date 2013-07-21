@@ -7,6 +7,7 @@
 #include "us_license_t.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_util.h"
 
 //const qreal lgndfrac=0.33333;   // legend 1/3th of width (1 x 2)
 const qreal lgndfrac=0.20;      // legend 1/5th of width (1 x 4)
@@ -46,7 +47,12 @@ US_ColorGradient::US_ColorGradient( QWidget* parent, Qt::WindowFlags flags )
    // Give initial values for run time variables
    have_save   = false;
    new_mods    = false;
-   grad_dir    = US_Settings::appBaseDir() + "/etc";
+   //grad_dir    = US_Settings::appBaseDir() + "/etc";
+   grad_dir    = US_Settings::dataDir().replace( "/data", "/etc" );
+
+   // Clean up the ./etc directories
+   int nefmods = clean_etc_dir( true );
+qDebug() << "CG: nefmods" << nefmods;
 
    setWindowTitle( tr( "Color Gradient Generator" ) );
    setPalette( US_GuiSettings::frameColor() );
