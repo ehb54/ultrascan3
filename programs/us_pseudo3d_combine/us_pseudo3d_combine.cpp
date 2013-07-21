@@ -62,6 +62,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    int s_row = 0;
    dbg_level = US_Settings::us_debug();
+   clean_etc_dir();
 
    // Top banner
    QLabel* lb_info1      = us_banner( tr( "Pseudo-3D Plotting Controls" ) );
@@ -1046,7 +1047,7 @@ void US_Pseudo3D_Combine::load_color()
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::appBaseDir() + "/etc",
+      US_Settings::baseDataDir() + "/etc",
       filter,
       0, 0 );
 

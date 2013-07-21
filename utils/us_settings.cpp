@@ -145,6 +145,12 @@ QString US_Settings::appBaseDir( void )
    return base;
 }
 
+// Base to data directory
+QString US_Settings::baseDataDir( void )
+{
+   return dataDir().remove( QRegExp( "/data$" ) );
+}
+
 
 // License
 QStringList US_Settings::license( void )

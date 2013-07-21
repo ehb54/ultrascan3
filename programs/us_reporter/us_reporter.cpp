@@ -41,6 +41,7 @@ US_Reporter::US_Reporter() : US_Widgets()
    dbg_level   = US_Settings::us_debug();
    websetting  = NULL;
    archdir     = US_Settings::archiveDir() + "/";
+   clean_etc_dir();
 
    hsclogo .clear();
    becklogo.clear();
@@ -1429,7 +1430,7 @@ void US_Reporter::load_profile()
    // Open a file dialog to get the profile file name
    QString fn = QFileDialog::getOpenFileName( this,
          tr( "Load Report-Select Parameters in:" ),
-         US_Settings::appBaseDir() + "/etc",
+         US_Settings::baseDataDir() + "/etc",
          tr( "ReportSelect files (rs_*.xml);;"
              "All XML files (*.xml);;"
              "All files (*)" ) );
@@ -1487,7 +1488,7 @@ void US_Reporter::save_profile()
    // Open a file dialog to get a name for the profile save file
    QString fn = QFileDialog::getSaveFileName( this,
          tr( "Save Report-Selection Parameters in:" ),
-         US_Settings::appBaseDir() + "/etc",
+         US_Settings::baseDataDir() + "/etc",
          tr( "ReportSelect files (rs_*.xml);;"
              "All XML files (*.xml);;"
              "All files (*)" ) );
