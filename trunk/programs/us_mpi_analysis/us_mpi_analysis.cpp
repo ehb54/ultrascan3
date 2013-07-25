@@ -288,6 +288,9 @@ if ( my_rank == 0 )
       ds->simparams.bottom_position   = ds->centerpiece_bottom;
       ds->simparams.bottom            = ds->centerpiece_bottom;
       ds->simparams.band_forming      = ds->simparams.band_volume != 0.0;
+
+      // Initialize concentrations vector in case of global fit
+      concentrations << 1.0;
    }
 
    // Check GA buckets

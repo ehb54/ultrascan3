@@ -490,7 +490,7 @@ DbgLv(1) << "sgMC: MPI Bcast";
 void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim, 
                                    US_Model::AnalysisType         type )
 {
-   US_DataIO::EditedData* data = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* data = &data_sets[ current_dataset ]->run_data;
 
    // Fill in and write out the model file
    US_Model model;
@@ -510,7 +510,7 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    else
        model.global = US_Model::NONE; 
 
-   model.meniscus    = meniscus_values[ meniscus_run ];
+   model.meniscus    = meniscus_value;
    model.variance    = sim.variance;
 
    // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .model
@@ -528,6 +528,7 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
 
    QString tripleID = data->cell + data->channel + data->wavelength;
    QString dates    = "e" + data->editID + "_a" + analysisDate;
+DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
 
    QString iterID;
    int mc_iter      = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
@@ -537,7 +538,7 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    else if (  meniscus_points > 1 )
       iterID.sprintf( "i%02d-m%05d", 
               meniscus_run + 1,
-              (int)(meniscus_values[ meniscus_run ] * 10000 ) );
+              (int)(meniscus_value * 10000 ) );
    else
       iterID = "i01";
 
@@ -549,6 +550,7 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    double  vbar20    = data_sets[ 0 ]->vbar20;
 
    model.description = data->runID + "." + tripleID + "." + analyID + ".model";
+DbgLv(1) << "wrMo: model descr" << model.description;
 
    // Save as class variable for later reference
    modelGUID = model.modelGUID;
@@ -579,7 +581,7 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
 
    model.write( fn );                // Output the model to a file
 
-   data_sets[ 0 ]->model = model;    // Save the model in case needed for noise
+   data_sets[ current_dataset ]->model = model;    // Save the model in case needed for noise
 
    // Add the file name of the model file to the output list
    QFile f( "analysis_files.txt" );

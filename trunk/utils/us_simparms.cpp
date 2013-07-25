@@ -128,7 +128,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    meniscus            = editdata.meniscus;
 
    speed_step.clear();
-DbgLv(1) << "SP:iFD: scan" << 1 << "rpm time omega2t"
+DbgLv(2) << "SP:iFD: scan" << 1 << "rpm time omega2t"
  << rpm << time1 << editdata.scanData[0].omega2t;
 
    for ( int ii = 1; ii < scanCount; ii++ )
@@ -182,7 +182,7 @@ DbgLv(1) << "SP:iFD:   speedstep" << speed_step.size() << "scans" << sp.scans
    sp.scans            = scanCount - lscx;
    sp.rotorspeed       = (int)rpm;
    speed_step.append( sp );
-DbgLv(1) << "SP:iFD:   speedstep" << speed_step.size() << "scans" << sp.scans
+DbgLv(2) << "SP:iFD:   speedstep" << speed_step.size() << "scans" << sp.scans
  << "duration h m" << sp.duration_hours << sp.duration_minutes
  << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
 

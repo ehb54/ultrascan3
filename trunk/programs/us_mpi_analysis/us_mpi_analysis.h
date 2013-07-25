@@ -83,6 +83,7 @@ class US_MPI_Analysis : public QObject
     double              meniscus_value;   // Only used by worker
     QVector< double >   meniscus_values;
 
+    QVector< double >   concentrations;
     QVector< double >   mc_data;
     QVector< double >   sigmas;
     QVector< long >     work_rss;
@@ -157,6 +158,7 @@ class US_MPI_Analysis : public QObject
     static const double LARGE          = 9.9e99;
     static const int    solute_doubles = sizeof( US_Solute ) / sizeof( double );
     QList< QVector< US_Solute > > calculated_solutes;
+    QVector< US_Solute >          dset_calc_solutes;
 
     SIMULATION simulation_values;
     SIMULATION previous_values;
@@ -267,6 +269,7 @@ class US_MPI_Analysis : public QObject
     void     set_meniscus      ( void );
     void     set_monteCarlo    ( void );
     void     write_output      ( void );
+    void     write_global      ( void );
     void     set_gaussians     ( void );
     void     global_fit        ( void );
     void     write_model       ( const SIMULATION&, US_Model::AnalysisType );

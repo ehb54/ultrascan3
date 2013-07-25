@@ -63,7 +63,7 @@ US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,
 
          banddthr    = true;
       }
-if(thrnrank==1) DbgLv(0) << "CR:zthr lthr mxod mnzc mfac mfex bthr"
+if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mnzc mfac mfex bthr"
  << zerothr << linethr << maxod << minnzsc << mfactor << mfactex << banddthr;
    }
 }
@@ -101,6 +101,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    int ntinois   = 0;                             // TI noise value count
    int nrinois   = 0;                             // RI noise value count
    double alphad = sim_vals.alpha;                // Alpha for diagonal
+   int lim_offs  = offset + dataset_count;        // Offset limit
 #if 0
 #ifdef NO_DB
    US_Settings::set_us_debug( dbg_level );
@@ -123,7 +124,7 @@ if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mfac"
 
    US_DataIO::EditedData wdata;
 
-   for ( int ee = offset; ee < offset + dataset_count; ee++ )
+   for ( int ee = offset; ee < lim_offs; ee++ )
    {  // Count scan,point totals for all data sets
       DataSet* dset = data_sets[ ee ];
       int npoints   = dset->run_data.xvalues.size();
@@ -171,7 +172,7 @@ DebugTime("BEG:calcres");
    double s0max  = 0.0;
 #endif
 
-   for ( int ee = offset; ee < offset + dataset_count; ee++ )
+   for ( int ee = offset; ee < lim_offs; ee++ )
    {
       US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
       edata       = banddthr ? &wdata : edata;
@@ -239,7 +240,7 @@ DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
          if ( abort ) return;
          int bx   = 0;
 
-         for ( int ee = offset; ee < dataset_count; ee++ )
+         for ( int ee = offset; ee < lim_offs; ee++ )
          {  // Solve for each data set
             DataSet*               dset  = data_sets[ ee ];
             US_DataIO::EditedData* edata = banddthr ? &wdata : &dset->run_data;
@@ -332,7 +333,7 @@ DbgLv(1) << "   CR: A fill kodl" << kodl;
          if ( abort ) return;
          int bx   = 0;
 
-         for ( int ee = offset; ee < dataset_count; ee++ )
+         for ( int ee = offset; ee < lim_offs; ee++ )
          {  // Solve for each data set
             US_Math2::SolutionData  sd;
             DataSet*               dset  = data_sets[ ee ];
@@ -431,7 +432,7 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
          if ( abort ) return;
          int bx   = 0;
 
-         for ( int ee = offset; ee < dataset_count; ee++ )
+         for ( int ee = offset; ee < lim_offs; ee++ )
          {  // Solve for each data set
             US_Math2::SolutionData  sd;
             DataSet*               dset   = data_sets[ ee ];
@@ -672,7 +673,7 @@ DbgLv(1) << "CR: kstodo" << kstodo;
    int kscans = 0;
    int jscan  = 0;
 
-   for ( int ee = offset; ee < offset + dataset_count; ee++ )
+   for ( int ee = offset; ee < lim_offs; ee++ )
    {
       US_DataIO::RawData tdata;      // Init temp sim data with edata's grid
       US_AstfemMath::initSimData( tdata, data_sets[ ee ]->run_data, 0.0 );
@@ -690,50 +691,55 @@ DbgLv(1) << "CR: kstodo" << kstodo;
       {
          for ( int ss = 0; ss < nscans; ss++ )
          {  // Append zeroed-scans sim_data for multiple data sets
+DbgLv(1) << "CR:     ss jscan" << ss << jscan << "ee kscans nscans" << ee << kscans << nscans;
             sim_vals.sim_data.scanData[ jscan++ ] = tdata.scanData[ ss ];
          }
       }
    }
+if(lim_offs>1)
+DbgLv(1) << "CR:       jscan kscans" << jscan << kscans;
 
    // This is a little tricky.  The simulations structure was created above
    // in a loop that alternates experiments with each solute.  In the loop
    // below, the simulation structure alters that order to group all solutes
    // for each experiment together
 
+if(thrnrank==1) DbgLv(1) << "CR: nsolutes" << nsolutes;
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
       double soluval = nnls_x[ cc ];  // Computed concentration, this solute
-DbgLv(1) << "CR: cc soluval" << cc << soluval;
+if(thrnrank==1) DbgLv(1) << "CR: cc soluval" << cc << soluval;
 
       if ( soluval > 0.0 )
       {  // If concentration non-zero, need to sum in simulation data
-         int scan_ix = 0;
+if(lim_offs>1)
+DbgLv(1) << "CR: cc soluval" << cc << soluval;
+         int scnx    = 0;
 
-         for ( int ee = offset; ee < offset + dataset_count; ee++ )
+         for ( int ee = offset; ee < lim_offs; ee++ )
          {
             // Input sims (ea.dset, ea.solute); out sims (sum.solute, ea.dset)
             int sim_ix  = cc * dataset_count + ee - offset;
             US_DataIO::RawData*     idata = &simulations[ sim_ix ];
             US_DataIO::RawData*     sdata = &sim_vals.sim_data;
-            int npoints = sdata->xvalues.size();
-            int nscans  = sdata->scanData.size();
+            int npoints = idata->pointCount();
+            int nscans  = idata->scanCount();
+if(lim_offs>1)
+DbgLv(1) << "CR:    ee sim_ix np ns scnx" << ee << sim_ix << npoints << nscans << scnx;
 
-            for ( int ss = 0; ss < nscans; ss++ )
+            for ( int ss = 0; ss < nscans; ss++, scnx++ )
             {
-               int scan = scan_ix + ss;
-
                for ( int rr = 0; rr < npoints; rr++ )
                {
-                  sdata->scanData[ scan ].rvalues[ rr ] += 
+                  sdata->scanData[ scnx ].rvalues[ rr ] += 
                      ( soluval * idata->value( ss, rr ) );
                }
             }
-
-            scan_ix += nscans;
 //*DEBUG*
 int ss=nscans/2;
 int rr=npoints/2;
-DbgLv(1) << "CR:   scan_ix ss rr" << scan_ix << ss << rr;
+if( thrnrank==1 ) {
+DbgLv(1) << "CR:   scnx ss rr" << scnx << ss << rr;
 DbgLv(1) << "CR:     s k v" << sim_vals.solutes[cc].s*1.0e+13
  << sim_vals.solutes[cc].k << sim_vals.solutes[cc].v << "sval" << soluval
  << "idat sdat" << idata->value(ss,rr) << sdata->value(ss,rr);
@@ -743,6 +749,7 @@ if (soluval>100.0) {
   drval=idata->value(ss,rr); dmax=qMax(dmax,drval); dsum+=drval; }}
  DbgLv(1) << "CR:B s k" << sim_vals.solutes[cc].s*1.0e+13
   << sim_vals.solutes[cc].k << "sval" << soluval << "amax asum" << dmax << dsum; }
+}
 //*DEBUG*
          }
       }
@@ -753,35 +760,35 @@ if (soluval>100.0) {
    double variance   = 0.0;
    int    tinoffs    = 0;
    int    rinoffs    = 0;
-   int    soffs      = 0;
    int    ktotal     = 0;
+   int    scnx       = 0;
+   int    kdsx       = 0;
+   US_DataIO::RawData*     sdata = &sim_vals.sim_data;
+   US_DataIO::RawData*     resid = &sim_vals.residuals;
+   sim_vals.residuals            = *sdata;
 
    // Calculate residuals and rmsd values
-   for ( int ee = offset; ee < offset + dataset_count; ee++ )
+   for ( int ee = offset; ee < lim_offs; ee++, kdsx++ )
    {
       DataSet*                dset  = data_sets[ ee ];
       US_DataIO::EditedData*  edata = banddthr ? &wdata : &dset->run_data;
-      US_DataIO::RawData*     sdata = &sim_vals.sim_data;
-      US_DataIO::RawData*     resid = &sim_vals.residuals;
-      US_AstfemMath::initSimData( sim_vals.residuals, *edata, 0.0 );
+//      US_AstfemMath::initSimData( sim_vals.residuals, *edata, 0.0 );
       int    npoints   = edata->pointCount();
       int    nscans    = edata->scanCount();
-      int    index     = ee - offset;
       int    kntcs     = 0;
       double varidset  = 0.0;
 
-      for ( int ss = 0; ss < nscans; ss++ )
+      for ( int ss = 0; ss < nscans; ss++, scnx++ )
       {  // Create residuals dset:  exp - sim - noise(s)
-         int s_index = ss + soffs;
 
          for ( int rr = 0; rr < npoints; rr++ )
          {
 
             double resval = edata->value( ss, rr )
-                          - sdata->value( s_index, rr )
+                          - sdata->value( scnx, rr )
                           - tinvec[ rr + tinoffs ]
                           - rinvec[ ss + rinoffs ];
-            resid->setValue( s_index, rr, resval );
+            resid->setValue( scnx, rr, resval );
 
             double r2    = sq( resval );
             variance    += r2;
@@ -790,13 +797,12 @@ if (soluval>100.0) {
          }
       }
 
-      rmsds[ index ] = varidset;          // Variance for a data set
-      kntva[ index ] = kntcs;
+      rmsds[ kdsx ]  = varidset;          // Variance for a data set
+      kntva[ kdsx ]  = kntcs;
       ktotal        += kntcs;
-      soffs         += nscans;
       tinoffs       += npoints;
       rinoffs       += nscans;
-DbgLv(1) << "CR: index variance" << index << varidset << variance;
+DbgLv(1) << "CR: kdsx variance" << kdsx << varidset << variance;
    }
 
    sim_vals.variances.resize( dataset_count );
@@ -804,7 +810,7 @@ DbgLv(1) << "CR: index variance" << index << varidset << variance;
    sim_vals.variance = variance;
    kk        = 0;
 
-   for ( int ee = offset; ee < offset + dataset_count; ee++ )
+   for ( int ee = offset; ee < lim_offs; ee++ )
    {  // Scale variances for each data set
       sim_vals.variances[ kk ] = rmsds[ kk ] / (double)( kntva[ kk ] );
 DbgLv(1) << "CR:     kk variance" <<  sim_vals.variances[kk];

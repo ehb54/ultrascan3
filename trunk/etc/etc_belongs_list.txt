@@ -1,0 +1,41 @@
+# List of files that belong in $ULTRASCAN/etc/
+abstractCenterpieces.xml
+beckman_logo.png
+bufferComponents.xml
+check.png
+cluster.config
+etc_belongs_list.txt
+labs.xml
+logo_hsc.png
+nobandform.config
+reports.lengths.txt
+reports.xml
+ultrascan3.png
+us3-flash.png
+us3-icon-32x32.png
+us3-icon-32x32.xpm
+us3-icon-48x48.ico
+us3-icon-48x48.png
+us3-icon-48x48.xpm
+us3-splash.png
+# List of directories that belong in $ULTRASCAN/etc
+dmd/
+mysql/
+rotors/
+somo/
+#COPY  - files that should be copied to ~/ultrascan/etc/
+cm-b-cyan-magenta-red-white.xml
+cm-b-cyan-magenta-red-yellow.xml
+cm-b-cyan-white.xml
+cm-g-cyan-magenta-red-blue.xml
+cm-g-cyan-magenta-red-white.xml
+cm-rainbow.xml
+cm-w-cyan-magenta-red-black.xml
+cm-w-green-blue-magenta-red.xml
+cm-w-green-blue-red-black.xml
+cm-w-green-blue-red-magenta.xml
+cm-w-green-magenta-red-black.xml
+cm-y-cyan-magenta-red-black.xml
+cm-y-green-blue-red.xml
+#LINK   - soft links to be duplicated in ~/ultrascan/etc/
+cm-default.xml  ->  cm-w-cyan-magenta-red-black.xml
