@@ -15,7 +15,7 @@
 WorkerThread::WorkerThread( QObject* parent )
    : QThread( parent )
 {
-//   dbg_level  = US_Settings::us_debug();
+   dbg_level  = US_Settings::us_debug();
    abort      = false;
    solvesim   = NULL;
    thrn       = -1;
@@ -51,12 +51,14 @@ void WorkerThread::define_work( WorkPacket& workin )
    depth       = workin.depth;
    psv_nnls_a  = workin.psv_nnls_a;
    psv_nnls_b  = workin.psv_nnls_b;
-QString phdr = QString( "2P(WT)dw:%1:%2:" ).arg(taskx).arg(thrn);
-if(depth>0)
-DbgLv(1) << phdr << "depth1 psv_nnlsab" << psv_nnls_a << psv_nnls_b;
 
    solutes_i   = workin.isolutes;
 
+QString phdr = QString( "2P(WT)dw:%1:%2:" ).arg(taskx).arg(thrn);
+if(depth>0) {
+DbgLv(1) << phdr << "depth1 psv_nnlsab" << psv_nnls_a << psv_nnls_b; }
+else { 
+DbgLv(1) << phdr << "DefWk: sols size" << solutes_i.size(); }
    dset_wk              = *(workin.dsets[ 0 ]);  // local copy of data set
    dset_wk.noise_files  = workin.dsets[ 0 ]->noise_files;
    dset_wk.run_data     = workin.dsets[ 0 ]->run_data;
@@ -177,6 +179,7 @@ DbgLv(1) << phdr << "      sv.xnormsq" << sim_vals.xnormsq;
 void WorkerThread::forward_progress( int steps )
 {
    emit work_progress( steps );
+   qApp->processEvents();
 }
 
 void WorkerThread::apply_alpha( const double alpha,
