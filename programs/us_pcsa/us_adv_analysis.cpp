@@ -1213,7 +1213,7 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
       mrec_mc.csolutes = sim_vals.solutes;
       ncsols           = mrec_mc.csolutes.size();
 DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
- << "ncsols" << ncsols;
+ << "ncsols" << ncsols << "res tskx,thrn" << 1 << 0;
       stat_bfm(
          tr( "%1 are completed ( last:  %2-solute,  RMSD=%3 )" )
          .arg( kciters ).arg( ncsols ).arg( mrec_mc.rmsd ), true, 1 );
@@ -1347,9 +1347,9 @@ void US_AdvAnalysis::apply_gaussians()
 // Process the completion of an MC worker thread
 void US_AdvAnalysis::process_job( WorkerThread* wthr )
 {
+   kciters++;
    WorkPacket wresult;
    wthr->get_result( wresult );
-   kciters++;
 
    ModelRecord mrec_mc = mrecs_mc[ 0 ];
    mrec_mc.variance = wresult.sim_vals.variance;
@@ -1357,7 +1357,7 @@ void US_AdvAnalysis::process_job( WorkerThread* wthr )
    mrec_mc.csolutes = wresult.sim_vals.solutes;
    ncsols           = mrec_mc.csolutes.size();
 DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
- << "ncsols" << ncsols;
+ << "ncsols" << ncsols << "res tskx,thrn" << wresult.taskx << wresult.thrn;
 
    stat_bfm(
       tr( "%1 are completed ( last:  %2-solute,  RMSD=%3 )" )
@@ -1379,25 +1379,27 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
 
    else if ( ksiters < mciters )
    {  // Submit a new task
-//DbgLv(1) << "    ksiters" << ksiters << "   apply_gaussians";
-      apply_gaussians();
-//DbgLv(1) << "    ksiters" << ksiters << "    retn: apply_gaussians";
+      ksiters++;
+DbgLv(1) << "    ksiters" << ksiters << "   apply_gaussians";
 
-      WorkerThread* wthrd        = wthr;
+      apply_gaussians();
+
       WorkPacket    wtask        = wresult;
+      wtask.dsets[ 0 ]           = &wkdsets[ wresult.thrn - 1 ];
       wtask.dsets[ 0 ]->run_data = wdata;
       wtask.taskx                = ksiters;
+DbgLv(1) << "    ksiters" << ksiters << "     wt tskx,thrn"
+ << wtask.taskx << wtask.thrn;
 
-      wthrd->disconnect();
+      delete wthr;
+
+      WorkerThread* wthrd    = new WorkerThread( this );
       connect( wthrd, SIGNAL( work_complete( WorkerThread* ) ),
                this,  SLOT  ( process_job  ( WorkerThread* ) ) );
 
-//DbgLv(1) << "    ksiters" << ksiters << "     define,start";
       wthrd->define_work( wtask );
       wthrd->start();
-
-      ksiters++;
-DbgLv(1) << "    ksiters" << ksiters << "dsets[0]" << wtask.dsets[0];
+DbgLv(1) << "    ksiters" << ksiters << "      dsets[0]" << wtask.dsets[0];
    }
 }
 
