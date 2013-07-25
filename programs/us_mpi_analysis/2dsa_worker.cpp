@@ -36,8 +36,8 @@ void US_MPI_Analysis::_2dsa_worker( void )
       int offset         = job.dataset_offset;
       int dataset_count  = job.dataset_count;
 
-      data_sets[ 0 ]->run_data.meniscus  = meniscus_value;
-      data_sets[ 0 ]->simparams.meniscus = meniscus_value;
+      data_sets[ offset ]->run_data.meniscus  = meniscus_value;
+      data_sets[ offset ]->simparams.meniscus = meniscus_value;
 
       switch( job.command )
       {
@@ -65,6 +65,21 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
                          &status );
 
                max_rss();
+//*DEBUG*
+if(dbg_level>0 && my_rank==1) {
+ int nn = simulation_values.solutes.size() - 1;
+ int mm = nn/2;
+ DbgLv(1) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count
+  << "vbar s20wc bott"
+  << data_sets[offset]->vbar20
+  << data_sets[offset]->s20w_correction
+  << data_sets[offset]->centerpiece_bottom;
+ DbgLv(1) << "w:" << my_rank << ": sol0 solm soln"
+  << simulation_values.solutes[0].s << simulation_values.solutes[0].k
+  << simulation_values.solutes[mm].s << simulation_values.solutes[mm].k
+  << simulation_values.solutes[nn].s << simulation_values.solutes[nn].k;
+}
+//*DEBUG*
 
                calc_residuals( offset, dataset_count, simulation_values );
 
@@ -98,7 +113,7 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0];
                          my_communicator );
 
                MPI_Send( simulation_values.variances.data(),
-                         data_sets.size(),
+                         dataset_count,
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
@@ -127,6 +142,9 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0];
 
                MPI_Barrier( my_communicator );
 
+if(my_rank==1 || my_rank==11)
+DbgLv(1) << "newD:" << my_rank << " scld/newdat rcv : offs dsknt"
+ << offset << dataset_count;
                // This is a receive
                MPI_Bcast( mc_data.data(),
                           job.length,
@@ -136,27 +154,27 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0];
 
                int index = 0;
 
-               for ( int e = offset; e < offset + dataset_count; e++ )
+               for ( int ee = offset; ee < offset + dataset_count; ee++ )
                {
-                  US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
+                  US_DataIO::EditedData* data = &data_sets[ ee ]->run_data;
 
                   int scan_count    = data->scanCount();
                   int radius_points = data->pointCount();
 
-//int indxh=((scan_count/2)*radius_points)+(radius_points/2);
-                  for ( int s = 0; s < scan_count; s++ )
+int indxh=((scan_count/2)*radius_points)+(radius_points/2);
+                  for ( int ss = 0; ss < scan_count; ss++ )
                   {
-                     US_DataIO::Scan* scan = &data->scanData[ s ];
-
-                     for ( int r = 0; r < radius_points; r++ )
+                     for ( int rr = 0; rr < radius_points; rr++, index++ )
                      {
-                        scan->rvalues[ r ] = mc_data[ index ];
-//if ( index<5 || index>(job.length-6) || (index>(indxh-4)&&index<(indxh+3)) )
-//DbgLv(1) << "newD:" << my_rank << ":index" << index << "edat" << data->value(s,r);
-                        index++;
+                        data->setValue( ss, rr, mc_data[ index ] );
+if( (my_rank==1||my_rank==11)
+ && (index<5 || index>(job.length-6) || (index>(indxh-4)&&index<(indxh+3))) )
+DbgLv(1) << "newD:" << my_rank << ":index" << index << "edat" << data->value(ss,rr);
                      }
                   }
                }
+if(my_rank==1 || my_rank==11)
+DbgLv(1) << "newD:" << my_rank << "  length index" << job.length << index;
             }
 
             break;
@@ -176,14 +194,22 @@ void US_MPI_Analysis::calc_residuals( int         offset,
 
    US_SolveSim solvesim( data_sets, my_rank, false );
 
+//*DEBUG*
 int dbglvsv=simu_values.dbg_level;
-simu_values.dbg_level=(dbglvsv>1?dbglvsv:0);
+//simu_values.dbg_level=(dbglvsv>1||my_rank==1)?dbglvsv:0;
+simu_values.dbg_level=(dbglvsv>1)?dbglvsv:0;
+int nsoli=simu_values.solutes.size();
+//*DEBUG*
 
    solvesim.calc_residuals( offset, dataset_count, simu_values );
 
+//*DEBUG*
 simu_values.dbg_level=dbglvsv;
 if ( dbg_level > 0 && ( group_rank == 1 || group_rank == 11 ) ) {
- US_DataIO::EditedData* data = &data_sets[0]->run_data;
+ int nsolo=simu_values.solutes.size();
+ US_DataIO::EditedData* data = &data_sets[offset]->run_data;
+ US_SolveSim::DataSet*  dset = data_sets[offset];
+ US_DataIO::RawData*    sdat = &simu_values.sim_data;
  int nsc=data->scanCount();
  int nrp=data->pointCount();
  double d0 = data->scanData[0].rvalues[0];
@@ -191,7 +217,25 @@ if ( dbg_level > 0 && ( group_rank == 1 || group_rank == 11 ) ) {
  double dh = data->scanData[nsc/2].rvalues[nrp/2];
  double dm = data->scanData[nsc-1].rvalues[nrp-2];
  double dn = data->scanData[nsc-1].rvalues[nrp-1];
- DbgLv(1) << "w:" << my_rank << ":d(01hmn)" << d0 << d1 << dh << dm << dn; }
+ DbgLv(1) << "w:" << my_rank << ":d(01hmn)" << d0 << d1 << dh << dm << dn;
+ double s0 = sdat->value(0,0);
+ double s1 = sdat->value(0,1);
+ double sh = sdat->value(nsc/2,nrp/2);
+ double sm = sdat->value(nsc-1,nrp-2);
+ double sn = sdat->value(nsc-1,nrp-1);
+ DbgLv(1) << "w:" << my_rank << ": s(01hmn)" << s0 << s1 << sh << sm << sn;
+ DbgLv(1) << "w:" << my_rank << ":  nsoli nsolo" << nsoli << nsolo;
+ DbgLv(1) << "w:" << my_rank << ":  simpt men bott temp coef1"
+  << dset->simparams.simpoints
+  << dset->simparams.meniscus
+  << dset->simparams.bottom
+  << dset->simparams.temperature
+  << dset->simparams.rotorcoeffs[ 0 ];
+ DbgLv(1) << "w:" << my_rank << ":  vbar soltype manual visc dens"
+  << dset->vbar20 << dset->solute_type << dset->manual
+  << dset->viscosity << dset->density;
+}
+//*DEBUG*
  
 }
 
