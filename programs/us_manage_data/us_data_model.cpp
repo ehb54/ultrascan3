@@ -614,6 +614,9 @@ DbgLv(1) << "BrDb:  Last  Model " << nowTime();
       else
          query << "get_noise_desc" << invID;
 
+DbgLv(1) << "BrDb:  Query Noises" << nowTime();
+      db->query( query );
+
       while ( db->next() )
       {  // Get noise information from DB
          recID             = db->value( 0 ).toString();
@@ -686,6 +689,7 @@ DbgLv(2) << "BrDb:       noi id nGID dsc typ noityp"
          progress->setValue( ++istep );
          qApp->processEvents();
       }
+DbgLv(1) << "BrDb:  Noise IDs" << nowTime() << "size" << noiIDs.size();
    }
 
    for ( int ii = 0; ii < tmodels.size(); ii++ )

@@ -77,20 +77,22 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QLayout* lo_2dsamc   = us_checkbox( tr( "2DSA-MC" ),    ck_2dsamc,   false );
    QLayout* lo_2dsamw   = us_checkbox( tr( "2DSA-MW" ),    ck_2dsamw,   false );
    QLayout* lo_2dsamcmw = us_checkbox( tr( "2DSA-MC-MW" ), ck_2dsamcmw, false );
+   QLayout* lo_2dsagl   = us_checkbox( tr( "2DSA-GL" ),    ck_2dsagl,   false );
+   QLayout* lo_2dsaglmc = us_checkbox( tr( "2DSA-GL-MC" ), ck_2dsaglmc, false );
+   QLayout* lo_2dsafm   = us_checkbox( tr( "2DSA-FM" ),    ck_2dsafm,   false );
    QLayout* lo_ga       = us_checkbox( tr( "GA" ),         ck_ga,       false );
    QLayout* lo_gamc     = us_checkbox( tr( "GA-MC" ),      ck_gamc,     false );
    QLayout* lo_gamw     = us_checkbox( tr( "GA-MW" ),      ck_gamw,     false );
    QLayout* lo_gamcmw   = us_checkbox( tr( "GA-MC-MW" ),   ck_gamcmw,   false );
-   QLayout* lo_2dsafm   = us_checkbox( tr( "2DSA-FM" ),    ck_2dsafm,   false );
-   QLayout* lo_2dsagl   = us_checkbox( tr( "2DSA-GL" ),    ck_2dsagl,   false );
    QLayout* lo_gagl     = us_checkbox( tr( "GA-GL" ),      ck_gagl,     false );
-   QLayout* lo_dtall    = us_checkbox( tr( "All" ),        ck_dtall,    false );
-   QLayout* lo_pcsasl   = us_checkbox( tr( "PCSA-SL" ),    ck_pcsasl,   false );
+   QLayout* lo_gaglmc   = us_checkbox( tr( "GA-GL-MC" ),   ck_gaglmc,   false );
    QLayout* lo_pcsais   = us_checkbox( tr( "PCSA-IS" ),    ck_pcsais,   false );
+   QLayout* lo_pcsasl   = us_checkbox( tr( "PCSA-SL" ),    ck_pcsasl,   false );
    QLayout* lo_pcsads   = us_checkbox( tr( "PCSA-DS" ),    ck_pcsads,   false );
-   QLayout* lo_pcsaslmc = us_checkbox( tr( "PCSA-SL-MC" ), ck_pcsaslmc, false );
    QLayout* lo_pcsaismc = us_checkbox( tr( "PCSA-IS-MC" ), ck_pcsaismc, false );
+   QLayout* lo_pcsaslmc = us_checkbox( tr( "PCSA-SL-MC" ), ck_pcsaslmc, false );
    QLayout* lo_pcsadsmc = us_checkbox( tr( "PCSA-DS-MC" ), ck_pcsadsmc, false );
+   QLayout* lo_dtall    = us_checkbox( tr( "All" ),        ck_dtall,    false );
 
    QButtonGroup* sel_plt  = new QButtonGroup( this );
    QGridLayout* lo_pltsw  = us_radiobutton( tr( "s20,W" ), rb_pltsw,    true  );
@@ -127,20 +129,23 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_2dsamc,    row,   2, 1, 2 );
    leftLayout->addLayout( lo_2dsamw,    row,   4, 1, 2 );
    leftLayout->addLayout( lo_2dsamcmw,  row++, 6, 1, 2 );
+   leftLayout->addLayout( lo_2dsagl,    row,   0, 1, 2 );
+   leftLayout->addLayout( lo_2dsaglmc,  row,   2, 1, 2 );
+   leftLayout->addLayout( lo_2dsafm,    row++, 4, 1, 4 );
    leftLayout->addLayout( lo_ga,        row,   0, 1, 2 );
    leftLayout->addLayout( lo_gamc,      row,   2, 1, 2 );
    leftLayout->addLayout( lo_gamw,      row,   4, 1, 2 );
    leftLayout->addLayout( lo_gamcmw,    row++, 6, 1, 2 );
-   leftLayout->addLayout( lo_pcsasl,    row,   0, 1, 2 );
-   leftLayout->addLayout( lo_pcsais,    row,   2, 1, 2 );
-   leftLayout->addLayout( lo_pcsads,    row,   4, 1, 2 );
-   leftLayout->addLayout( lo_pcsaslmc,  row++, 6, 1, 2 );
-   leftLayout->addLayout( lo_pcsaismc,  row,   0, 1, 2 );
-   leftLayout->addLayout( lo_pcsadsmc,  row,   2, 1, 2 );
-   leftLayout->addLayout( lo_2dsafm,    row,   4, 1, 2 );
-   leftLayout->addLayout( lo_2dsagl,    row++, 6, 1, 2 );
    leftLayout->addLayout( lo_gagl,      row,   0, 1, 2 );
-   leftLayout->addLayout( lo_dtall,     row++, 2, 1, 6 );
+   leftLayout->addLayout( lo_gaglmc,    row++, 2, 1, 6 );
+   leftLayout->addLayout( lo_pcsais,    row,   0, 1, 2 );
+   leftLayout->addLayout( lo_pcsasl,    row,   2, 1, 2 );
+   leftLayout->addLayout( lo_pcsads,    row++, 4, 1, 4 );
+   leftLayout->addLayout( lo_pcsaismc,  row,   0, 1, 2 );
+   leftLayout->addLayout( lo_pcsaslmc,  row,   2, 1, 2 );
+   leftLayout->addLayout( lo_pcsadsmc,  row,   4, 1, 2 );
+   leftLayout->addLayout( lo_dtall,     row++, 6, 1, 2 );
+
    leftLayout->addWidget( lb_plottype,  row++, 0, 1, 8 );
    leftLayout->addLayout( lo_pltsw,     row,   0, 1, 2 );
    leftLayout->addLayout( lo_pltMW,     row,   2, 1, 2 );
@@ -187,6 +192,10 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_2dsamcmw, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_2dsagl,   SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_2dsaglmc, SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_2dsafm,   SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_ga,       SIGNAL( stateChanged    ( int ) ),
@@ -197,15 +206,19 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_gamcmw,   SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsasl,   SIGNAL( stateChanged    ( int ) ),
+   connect( ck_gagl,     SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_gaglmc,   SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_pcsais,   SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_pcsasl,   SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_pcsads,   SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
-   connect( ck_pcsaslmc, SIGNAL( stateChanged    ( int ) ),
-            this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_pcsaismc, SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_pcsaslmc, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_pcsadsmc, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
@@ -350,18 +363,20 @@ if(dbg_level>0)
    bool hv_2dsamc   = methods.contains( "2DSA-MC"    );
    bool hv_2dsamw   = methods.contains( "2DSA-MW"    );
    bool hv_2dsamcmw = methods.contains( "2DSA-MC-MW" );
+   bool hv_2dsagl   = methods.contains( "2DSA-GL"    );
+   bool hv_2dsaglmc = methods.contains( "2DSA-GL-MC" );
+   bool hv_2dsafm   = methods.contains( "2DSA-FM"    );
    bool hv_ga       = methods.contains( "GA"         );
    bool hv_gamc     = methods.contains( "GA-MC"      );
    bool hv_gamw     = methods.contains( "GA-MW"      );
    bool hv_gamcmw   = methods.contains( "GA-MC-MW"   );
-   bool hv_2dsafm   = methods.contains( "2DSA-FM"    );
-   bool hv_2dsagl   = methods.contains( "2DSA-GL"    );
    bool hv_gagl     = methods.contains( "GA-GL"      );
-   bool hv_pcsasl   = methods.contains( "PCSA-SL"    );
+   bool hv_gaglmc   = methods.contains( "GA-GL-MC"   );
    bool hv_pcsais   = methods.contains( "PCSA-IS"    );
+   bool hv_pcsasl   = methods.contains( "PCSA-SL"    );
    bool hv_pcsads   = methods.contains( "PCSA-DS"    );
-   bool hv_pcsaslmc = methods.contains( "PCSA-SL-MC" );
    bool hv_pcsaismc = methods.contains( "PCSA-IS-MC" );
+   bool hv_pcsaslmc = methods.contains( "PCSA-SL-MC" );
    bool hv_pcsadsmc = methods.contains( "PCSA-DS-MC" );
    bool hv_dtall    = methods.size() > 0;
 
@@ -369,18 +384,20 @@ if(dbg_level>0)
    ck_2dsamc  ->setEnabled( hv_2dsamc   );
    ck_2dsamw  ->setEnabled( hv_2dsamw   );
    ck_2dsamcmw->setEnabled( hv_2dsamcmw );
+   ck_2dsagl  ->setEnabled( hv_2dsagl   );
+   ck_2dsaglmc->setEnabled( hv_2dsaglmc );
+   ck_2dsafm  ->setEnabled( hv_2dsafm   );
    ck_ga      ->setEnabled( hv_ga       );
    ck_gamc    ->setEnabled( hv_gamc     );
    ck_gamw    ->setEnabled( hv_gamw     );
    ck_gamcmw  ->setEnabled( hv_gamcmw   );
-   ck_2dsafm  ->setEnabled( hv_2dsafm   );
-   ck_2dsagl  ->setEnabled( hv_2dsagl   );
    ck_gagl    ->setEnabled( hv_gagl     );
-   ck_pcsasl  ->setEnabled( hv_pcsasl   );
+   ck_gaglmc  ->setEnabled( hv_gaglmc   );
    ck_pcsais  ->setEnabled( hv_pcsais   );
+   ck_pcsasl  ->setEnabled( hv_pcsasl   );
    ck_pcsads  ->setEnabled( hv_pcsads   );
-   ck_pcsaslmc->setEnabled( hv_pcsaslmc );
    ck_pcsaismc->setEnabled( hv_pcsaismc );
+   ck_pcsaslmc->setEnabled( hv_pcsaslmc );
    ck_pcsadsmc->setEnabled( hv_pcsadsmc );
    ck_dtall   ->setEnabled( hv_dtall    );
 
@@ -388,18 +405,20 @@ if(dbg_level>0)
    ck_2dsamc  ->setChecked( hv_2dsamc   );
    ck_2dsamw  ->setChecked( hv_2dsamw   );
    ck_2dsamcmw->setChecked( hv_2dsamcmw );
+   ck_2dsagl  ->setChecked( hv_2dsagl   );
+   ck_2dsaglmc->setChecked( hv_2dsaglmc );
+   ck_2dsafm  ->setChecked( hv_2dsafm   );
    ck_ga      ->setChecked( hv_ga       );
    ck_gamc    ->setChecked( hv_gamc     );
    ck_gamw    ->setChecked( hv_gamw     );
    ck_gamcmw  ->setChecked( hv_gamcmw   );
-   ck_2dsafm  ->setChecked( hv_2dsafm   );
-   ck_2dsagl  ->setChecked( hv_2dsagl   );
    ck_gagl    ->setChecked( hv_gagl     );
-   ck_pcsasl  ->setChecked( hv_pcsasl   );
+   ck_gaglmc  ->setChecked( hv_gaglmc   );
    ck_pcsais  ->setChecked( hv_pcsais   );
+   ck_pcsasl  ->setChecked( hv_pcsasl   );
    ck_pcsads  ->setChecked( hv_pcsads   );
-   ck_pcsaslmc->setChecked( hv_pcsaslmc );
    ck_pcsaismc->setChecked( hv_pcsaismc );
+   ck_pcsaslmc->setChecked( hv_pcsaslmc );
    ck_pcsadsmc->setChecked( hv_pcsadsmc );
    ck_dtall   ->setChecked( hv_dtall    );
 }
@@ -744,18 +763,20 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
       if ( ck_2dsamc  ->isChecked() )  methods << "2DSA-MC";
       if ( ck_2dsamw  ->isChecked() )  methods << "2DSA-MW";
       if ( ck_2dsamcmw->isChecked() )  methods << "2DSA-MC-MW";
+      if ( ck_2dsagl  ->isChecked() )  methods << "2DSA-GL";
+      if ( ck_2dsaglmc->isChecked() )  methods << "2DSA-GL-MC";
+      if ( ck_2dsafm  ->isChecked() )  methods << "2DSA-FM";
       if ( ck_ga      ->isChecked() )  methods << "GA";
       if ( ck_gamc    ->isChecked() )  methods << "GA-MC";
       if ( ck_gamw    ->isChecked() )  methods << "GA-MW";
       if ( ck_gamcmw  ->isChecked() )  methods << "GA-MC-MW";
-      if ( ck_2dsafm  ->isChecked() )  methods << "2DSA-FM";
-      if ( ck_2dsagl  ->isChecked() )  methods << "2DSA-GL";
       if ( ck_gagl    ->isChecked() )  methods << "GA-GL";
-      if ( ck_pcsasl  ->isChecked() )  methods << "PCSA-SL";
+      if ( ck_gaglmc  ->isChecked() )  methods << "GA-GL-MC";
       if ( ck_pcsais  ->isChecked() )  methods << "PCSA-IS";
+      if ( ck_pcsasl  ->isChecked() )  methods << "PCSA-SL";
       if ( ck_pcsads  ->isChecked() )  methods << "PCSA-DS";
-      if ( ck_pcsaslmc->isChecked() )  methods << "PCSA-SL-MC";
       if ( ck_pcsaismc->isChecked() )  methods << "PCSA-IS-MC";
+      if ( ck_pcsaslmc->isChecked() )  methods << "PCSA-SL-MC";
       if ( ck_pcsadsmc->isChecked() )  methods << "PCSA-DS-MC";
    }
 
@@ -1284,16 +1305,20 @@ void US_DDistr_Combine::allMethodChanged( int state )
       ck_2dsamc  ->setChecked( ck_2dsamc  ->isEnabled() );
       ck_2dsamw  ->setChecked( ck_2dsamw  ->isEnabled() );
       ck_2dsamcmw->setChecked( ck_2dsamcmw->isEnabled() );
+      ck_2dsagl  ->setChecked( ck_2dsagl  ->isEnabled() );
+      ck_2dsaglmc->setChecked( ck_2dsaglmc->isEnabled() );
       ck_2dsafm  ->setChecked( ck_2dsafm  ->isEnabled() );
       ck_ga      ->setChecked( ck_ga      ->isEnabled() );
       ck_gamc    ->setChecked( ck_gamc    ->isEnabled() );
       ck_gamw    ->setChecked( ck_gamw    ->isEnabled() );
       ck_gamcmw  ->setChecked( ck_gamcmw  ->isEnabled() );
-      ck_pcsasl  ->setChecked( ck_pcsasl  ->isEnabled() );
+      ck_gagl    ->setChecked( ck_gagl    ->isEnabled() );
+      ck_gaglmc  ->setChecked( ck_gaglmc  ->isEnabled() );
       ck_pcsais  ->setChecked( ck_pcsais  ->isEnabled() );
+      ck_pcsasl  ->setChecked( ck_pcsasl  ->isEnabled() );
       ck_pcsads  ->setChecked( ck_pcsads  ->isEnabled() );
-      ck_pcsaslmc->setChecked( ck_pcsaslmc->isEnabled() );
       ck_pcsaismc->setChecked( ck_pcsaismc->isEnabled() );
+      ck_pcsaslmc->setChecked( ck_pcsaslmc->isEnabled() );
       ck_pcsadsmc->setChecked( ck_pcsadsmc->isEnabled() );
    }
 

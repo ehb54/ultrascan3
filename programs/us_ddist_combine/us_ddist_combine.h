@@ -78,13 +78,15 @@ class US_DDistr_Combine : public US_Widgets
       QCheckBox*     ck_2dsamc;
       QCheckBox*     ck_2dsamw;
       QCheckBox*     ck_2dsamcmw;
-      QCheckBox*     ck_2dsafm;
       QCheckBox*     ck_2dsagl;
+      QCheckBox*     ck_2dsaglmc;
+      QCheckBox*     ck_2dsafm;
       QCheckBox*     ck_ga;
       QCheckBox*     ck_gamc;
       QCheckBox*     ck_gamw;
       QCheckBox*     ck_gamcmw;
       QCheckBox*     ck_gagl;
+      QCheckBox*     ck_gaglmc;
       QCheckBox*     ck_pcsasl;
       QCheckBox*     ck_pcsais;
       QCheckBox*     ck_pcsads;
