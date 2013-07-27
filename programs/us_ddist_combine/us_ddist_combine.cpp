@@ -892,8 +892,10 @@ void US_DDistr_Combine::possibleColors()
 // Return a distribution ID string that is a shortened model description
 QString US_DDistr_Combine::distribID( QString mdescr )
 {
+   const int mxrch = 30;
    QString runID   = mdescr.section( ".",  0, -3 );
-           runID   = runID.length() < 13 ? runID : runID.left( 12 ) + "(++)";
+           runID   = runID.length() <= mxrch ?
+                     runID : runID.left( mxrch ) + "(++)";
    QString triple  = mdescr.section( ".", -2, -2 );
    QString iterID  = mdescr.section( ".", -1, -1 );
    QString andate  = iterID.section( "_",  1,  1 );
