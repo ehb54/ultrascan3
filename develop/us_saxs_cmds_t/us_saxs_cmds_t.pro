@@ -1,6 +1,5 @@
 !include ( ../cmdline.pri ) error( "../cmdline.pri missing.  Aborting..." )
 
-
 # DEFINES         += _GLIBCXX_DEBUG
 SOURCES		+= ../src/us_saxs_gp.cpp
 SOURCES		+= ../src/us_saxs_util.cpp
