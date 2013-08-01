@@ -267,677 +267,6 @@ bool US_Saxs_Util::pdb_hydrate()
    return true;
 }
 
-bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
-{
-   if ( !control_parameters.count( "inputfile" ) )
-   {
-      errormsg = "No input file found";
-      return false;
-   }
-
-   cout << QString( "Hydrating the pdb for %1 model %2\n" )
-      .arg( control_parameters[ "inputfile "] )
-      .arg( current_model + 1 );
-   cout << "Checking the pdb structure\n";
-
-   if ( !check_for_missing_atoms( &model_vector[current_model] ) ) 
-   {
-      errormsg = "Encountered errors with your PDB structure" + errormsg;
-      return false;
-   }
-
-   reset_chain_residues( &model_vector[ current_model ] );
-
-   // probably don't need this:
-   hydro_results results;
-   results.asa_rg_pos = 0.0;
-   results.asa_rg_neg = 0.0;
-   cout << "PDB structure ok\n";
-
-   {
-      int no_of_atoms = 0;
-      int no_of_molecules = model_vector[ current_model ].molecule.size();
-      int i;
-      for ( i = 0; i < no_of_molecules; i++ ) 
-      {
-         no_of_atoms += model_vector[ current_model ].molecule[ i ].atom.size();
-      }
-
-      cout << QString( "There are %1 atoms in %2 chain(s) in this model\n" )
-         .arg( no_of_atoms ).arg( no_of_molecules );
-   }
-
-   if ( !create_beads() )
-   {
-      return false;
-   }
-
-   if( errormsg.length() ) 
-   {
-      errormsg = "Encountered unknown atom(s) error:\n" + errormsg;
-      return false;
-   }
-
-   if( control_parameters[ "asamethod" ].toUInt() == 0 ) 
-   {
-      // surfracer
-      errormsg = "Vornoi tesselation not currently implemented";
-      return false;
-#if defined( NOT_IMPLEMENTED )
-      editor->append("Computing ASA via SurfRacer\n");
-      int retval = surfracer_main( asa.hydrate_probe_radius,
-                                   active_atoms,
-                                   false,
-                                   progress,
-                                   editor
-                                   );
-
-      editor->append("Return from Computing ASA\n");
-      if ( retval )
-      {
-         editor->append("Errors found during ASA calculation\n");
-         switch ( retval )
-         {
-         case US_SURFRACER_ERR_MISSING_RESIDUE:
-            {
-               errormsg = "US_SURFRACER encountered an unknown residue:" + errormsg;
-               return false;
-               break;
-            }
-         case US_SURFRACER_ERR_MISSING_ATOM:
-            {
-               errormsg = "US_SURFRACER encountered a unknown atom:\n" + errormsg;
-               return false;
-               break;
-            }
-         case US_SURFRACER_ERR_MEMORY_ALLOC:
-            {
-               errormsg = "US_SURFRACER encountered a memory allocation error";
-               return false;
-               break;
-            }
-         default:
-            {
-               errormsg = "US_SURFRACER encountered an unknown error";
-               // unknown error
-               return false;
-               break;
-            }
-         }
-      }
-      if(errormsg.length()) {
-         printError("US_SURFRACER encountered unknown atom(s) error:\n" +
-                    errormsg);
-         return US_SURFRACER_ERR_MISSING_ATOM;
-      }
-#endif
-   }
-
-   if( control_parameters[ "asamethod" ].toUInt() == 1 ) 
-   {
-      cout << "Computing ASA via ASAB1\n";
-
-      float save_radius = asa.probe_radius;
-      asa.probe_radius  = asa.hydrate_probe_radius; 
-      cout << QString(
-                      "asa.hydrate_probe_radius %1\n"
-                      "asa.probe_radius         %2\n"
-                      "asa.asab1_step           %3\n"
-                      "asa.threshold_percent    %4\n"
-                      "misc.pb_rule_on          %5\n"
-                      )
-         .arg( asa.hydrate_probe_radius )
-         .arg( asa.probe_radius )
-         .arg( asa.asab1_step )
-         .arg( asa.threshold_percent )
-         .arg( misc_pb_rule_on ? "yes" : "no" )
-         ;
-      int retval = us_saxs_util_asab1_main( active_atoms,
-                                            &asa,
-                                            &results,
-                                            false );
-      asa.probe_radius  = save_radius;
-
-      cout << "Return from Computing ASA\n";
-      if ( retval )
-      {
-         cout << "Errors found during ASA calculation\n";
-         switch ( retval )
-         {
-         case US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC:
-            {
-               errormsg = "US_HYDRODYN_ASAB1 encountered a memory allocation error";
-               return false;
-               break;
-            }
-         default:
-            {
-               errormsg = "US_HYDRODYN_ASAB1 encountered an unknown error";
-               return false;
-               break;
-            }
-         }
-      }
-   }
-
-   // pass 1 assign bead #'s, chain #'s, initialize data
-
-   // for (unsigned int i = 0; i < model_vector.size (); i++)
-   {
-      unsigned int i = current_model;
-
-      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
-            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            // printf("p1 i j k %d %d %d %lx %s\n", i, j, k, (long unsigned int)this_atom->p_atom, this_atom->active ? "active" : "not active"); fflush(stdout);
-
-            this_atom->normalized_ot_is_valid = false;
-            for (unsigned int m = 0; m < 3; m++) {
-               this_atom->bead_cog_coordinate.axis[m] = 0;
-               this_atom->bead_position_coordinate.axis[m] = 0;
-               this_atom->bead_coordinate.axis[m] = 0;
-            }
-         }
-      }
-   }
-
-
-   // #define DEBUG
-   // pass 2 determine beads, cog_position, fixed_position, molecular cog phase 1.
-
-   int count_actives;
-   float molecular_cog[3] = { 0, 0, 0 };
-   float molecular_mw = 0;
-   QString cog_msg = "COG calc summary information\n";
-
-   // for (unsigned int i = 0; i < model_vector.size (); i++)
-   {
-      unsigned int i = current_model;
-
-      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-         int last_bead_assignment = -1;
-         int last_chain = -1;
-         QString last_resName = "not a residue";
-         QString last_resSeq = "";
-         PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
-         PDB_atom *last_main_bead = (PDB_atom *) 0;
-         PDB_atom *sidechain_N = (PDB_atom *) 0;
-
-         count_actives = 0;
-         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
-            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            // printf("p2 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
-            // this_atom->bead_positioner = false;
-            if (this_atom->active) {
-#if defined( USUH_DEBUG_ASA )
-               cout << QString( "active atom asa %1 %2 %3 %4\n" )
-                  .arg( this_atom->name )
-                  .arg( this_atom->resName )
-                  .arg( this_atom->serial )
-                  .arg( this_atom->asa )
-                  ;
-#endif
-               molecular_mw += this_atom->mw;
-               for (unsigned int m = 0; m < 3; m++) {
-                  molecular_cog[m] += this_atom->coordinate.axis[m] * this_atom->mw;
-               }
-
-               this_atom->bead_mw = 0;
-               this_atom->bead_asa = 0;
-               this_atom->bead_recheck_asa = 0;
-
-               // do we have a new bead?
-               // we want to put the N on a previous bead unless it is the first one of the molecule
-               // ONLY FOR residue type = 0! (amino acid)
-               // AND ONLY for residues not part of the 'auto bead builder'
-
-               if (!create_beads_normally ||
-                   (
-                    (this_atom->bead_assignment != last_bead_assignment ||
-                     this_atom->chain != last_chain ||
-                     this_atom->resName != last_resName ||
-                     this_atom->resSeq != last_resSeq) &&
-                    !(misc_pb_rule_on &&
-                      this_atom->chain == 0 &&
-                      this_atom->name == "N" &&
-                      count_actives &&
-                      !broken_chain_head.count(QString("%1|%2")
-                                               .arg(this_atom->resSeq)
-                                               .arg(this_atom->resName))
-                      ) ) ) {
-
-                  // this_atom->bead_positioner = true;
-                  this_atom->is_bead = true;
-                  last_main_bead = this_atom;
-                  last_bead_assignment = this_atom->bead_assignment;
-                  last_chain = this_atom->chain;
-                  last_resName = this_atom->resName;
-                  last_resSeq = this_atom->resSeq;
-                  if (create_beads_normally && 
-                      misc_pb_rule_on &&
-                      !this_atom->type) {
-                     if(sidechain_N &&
-                        this_atom->chain == 1) {
-                        if(this_atom->name == "N") {
-                           printf("ERROR double N on sequential sidechains! PRO PRO?\n");
-                        }
-                        this_atom->bead_asa += sidechain_N->bead_asa;
-                        this_atom->bead_mw += sidechain_N->bead_mw;
-                        sidechain_N->bead_mw = 0;
-                        sidechain_N->bead_asa = 0;
-                        sidechain_N = (PDB_atom *) 0;
-                     }
-                     if(this_atom->name == "N" &&
-                        this_atom->chain == 1) {
-                        sidechain_N = this_atom;
-                        this_atom->is_bead = false;
-                     }
-                  }
-               }
-               else 
-               {
-                  if (this_atom->bead_positioner) {
-
-                     if (last_main_bead->bead_positioner &&
-                         this_atom->placing_method == 1) {
-                        fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
-                                last_main_bead->name.ascii(),
-                                last_main_bead->resName.ascii(),
-                                last_main_bead->serial);
-                     }
-                     last_main_bead->bead_positioner = true;
-                     last_main_bead->bead_position_coordinate = this_atom->coordinate;
-                  }
-
-                  this_atom->is_bead = false;
-                  // this_atom->bead_cog_mw = 0;
-               }
-
-               this_atom->bead_cog_mw = 0;
-
-               // special nitrogen asa handling
-               PDB_atom *use_atom;
-               if (misc_pb_rule_on &&
-                   create_beads_normally &&
-                   this_atom->chain == 0 &&
-                   this_atom->name == "N" &&
-                   !broken_chain_head.count(QString("%1|%2")
-                                           .arg(this_atom->resSeq)
-                                           .arg(this_atom->resName)) &&
-                   last_main_chain_bead) {
-                  use_atom = last_main_chain_bead;
-               }
-               else 
-               {
-                  use_atom = last_main_bead;
-               }
-
-               use_atom->bead_asa += this_atom->asa;
-               use_atom->bead_mw += this_atom->mw;
-               // accum
-               if (!create_beads_normally ||
-                   this_atom->bead_positioner) {
-                  cog_msg += QString("adding %1 to %2\n").arg(this_atom->serial).arg(use_atom->serial);
-                  use_atom->bead_cog_mw += this_atom->mw;
-                  for (unsigned int m = 0; m < 3; m++) {
-                     use_atom->bead_cog_coordinate.axis[m] +=
-                        this_atom->coordinate.axis[m] * this_atom->mw;
-                  }
-               }
-               else 
-               {
-               }
-
-               if (!create_beads_normally ||
-                   this_atom->bead_positioner) {
-                  if (use_atom->bead_positioner &&
-                      this_atom->placing_method == 1) {
-                     fprintf(stderr, "warning: 2 or more positioners in bead %s %s %d\n",
-                             use_atom->name.ascii(),
-                             use_atom->resName.ascii(),
-                             use_atom->serial);
-                  }
-                  use_atom->bead_positioner = true;
-                  use_atom->bead_position_coordinate = this_atom->coordinate;
-               }
-
-               if (this_atom->chain == 0 &&
-                   misc_pb_rule_on &&
-                   this_atom->name == "N" &&
-                   !broken_chain_head.count(QString("%1|%2")
-                                            .arg(this_atom->resSeq)
-                                            .arg(this_atom->resName)) && 
-                   !count_actives)
-               {
-                  last_resName = "first N";
-               }
-
-               if (this_atom->chain == 0 &&
-                   this_atom->name == "CA") {
-                  last_main_chain_bead = this_atom;
-               }
-               count_actives++;
-            }
-            else 
-            {
-               this_atom->is_bead = false;
-            }
-         }
-      }
-   }
-
-   if (molecular_mw) {
-      for (unsigned int m = 0; m < 3; m++) {
-         molecular_cog[m] /= molecular_mw;
-      }
-   }
-   else 
-   {
-      printf("ERROR: this molecule has zero mw!\n");
-   }
-
-   for (unsigned int m = 0; m < 3; m++) {
-      last_molecular_cog.axis[m] = molecular_cog[m];
-   }
-
-   // pass 2b move bead_ref_volume, ref_mw, computed_radius from
-   // next main chain back one including adjustments for GLY, PRO, OXT
-
-   // for (unsigned int i = 0; i < model_vector.size (); i++)   {
-   {
-      unsigned int i = current_model;
-      bool placed_N1 = false;
-      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-         bool first_is_pro = false;
-         unsigned int main_chain_beads = 0;
-         PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
-         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
-            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            if ( this_atom->active &&
-                 this_atom->is_bead &&
-                 this_atom->chain == 0 )
-            {
-               main_chain_beads++;
-            }
-            if ( 
-                misc_pb_rule_on &&
-                !k &&
-                this_atom->resName == "PRO" 
-                )
-            {
-               first_is_pro = true;
-            }
-            if ( placed_N1 &&
-                 broken_chain_end.count(QString("%1|%2")
-                                        .arg(this_atom->resSeq)
-                                        .arg(this_atom->resName))
-                 )
-            {
-               placed_N1 = false;
-            }
-
-            if ( 
-                misc_pb_rule_on &&
-                !k &&
-                this_atom->resName != "PRO" &&
-                this_atom->name == "N" &&
-                !broken_chain_head.count(QString("%1|%2")
-                                         .arg(this_atom->resSeq)
-                                         .arg(this_atom->resName))
-                )
-            {
-               placed_N1 = true;
-            }
-            if ( 
-                first_is_pro &&
-                this_atom->active &&
-                this_atom->is_bead &&
-                this_atom->chain == 1 &&
-                this_atom->resName == "PRO"
-                )
-            {
-               this_atom->bead_ref_mw += 1.0;
-               // what about a volume adjustment?
-               first_is_pro = false;
-            }
-                 
-            if (this_atom->name == "OXT" &&
-                last_main_chain_bead) {
-               this_atom->is_bead = false;
-               // override broken head OXT residue
-               if ( misc_pb_rule_on &&
-                    this_atom->resName != "PRO" &&
-                    broken_chain_head.count(QString("%1|%2")
-                                            .arg(this_atom->resSeq)
-                                            .arg(this_atom->resName)) &&
-                    multi_residue_map.count("NPBR-OXT") )
-               {
-                  int posNPBR_OXT = multi_residue_map["NPBR-OXT"][0];
-                  this_atom->bead_ref_volume = residue_list[posNPBR_OXT].r_bead[0].volume;
-                  this_atom->bead_ref_mw = residue_list[posNPBR_OXT].r_bead[0].mw;
-               }
-                  
-               last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
-               last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
-               if (last_main_chain_bead->resName == "GLY") 
-               {
-                  last_main_chain_bead->bead_ref_mw += 1.01f;
-               }
-               if ( !misc_pb_rule_on &&
-                    main_chain_beads == 1 &&
-                    this_atom->resName != "PRO" )
-               {
-                  last_main_chain_bead->bead_ref_mw += 1.0;
-               }
-               last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
-            } // OXT
-
-            if (this_atom->active &&
-                this_atom->is_bead &&
-                this_atom->chain == 0) {
-
-               if (misc_pb_rule_on &&
-                   last_main_chain_bead &&
-                   !broken_chain_head.count(QString("%1|%2")
-                                            .arg(this_atom->resSeq)
-                                            .arg(this_atom->resName)) &&
-                   (this_atom->resName == "PRO" ||
-                    last_main_chain_bead->resName == "PRO")
-                   ) {
-
-                  last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
-                  last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
-                  last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
-                  if (this_atom->resName == "GLY") {
-                     last_main_chain_bead->bead_ref_mw -= 1.01f;
-                  }
-                  if (last_main_chain_bead->resName == "GLY") {
-                     last_main_chain_bead->bead_ref_mw += 1.01f;
-                  }
-               } // PRO
-               last_main_chain_bead = this_atom;
-            }
-
-            // fix up mw, vol at end for broken end when PBR rule is on
-            if ( misc_pb_rule_on &&
-                 this_atom->p_residue->type == 0 &&
-                 this_atom->is_bead &&
-                 this_atom->chain == 0 &&
-                 broken_chain_end.count(QString("%1|%2")
-                                        .arg(this_atom->resSeq)
-                                        .arg(this_atom->resName)) &&
-                 !broken_chain_head.count(QString("%1|%2")
-                                        .arg(this_atom->resSeq)
-                                        .arg(this_atom->resName)) &&
-                 this_atom->resName != "PRO" &&
-                 (k || this_atom->name != "N")
-                 )
-            {
-               if ( multi_residue_map["PBR-NO-OXT"].size() == 1 )
-               {
-                  int pos = multi_residue_map["PBR-NO-OXT"][0];
-                  this_atom->bead_ref_volume = residue_list[pos].r_bead[0].volume;
-                  this_atom->bead_ref_mw = residue_list[pos].r_bead[0].mw;
-                  this_atom->bead_computed_radius = pow(3 * last_main_chain_bead->bead_ref_volume / (4.0*M_PI), 1.0/3);
-                  if (this_atom->resName == "GLY") {
-                     this_atom->bead_ref_mw += 1.01f;
-                  }
-               }
-               else
-               {
-                  cout << "Chain has broken end and PBR-NO-OXT isn't uniquely defined in the residue file.\n";
-               }
-            }
-         } // for k < atom.size()
-         // fix up mw, vol at end for no OXT when PBR rule is on
-         if ( misc_pb_rule_on &&
-              last_main_chain_bead &&
-              last_main_chain_bead->p_residue->type == 0 &&
-              last_main_chain_bead->name != "PRO" &&
-              !has_OXT[QString("%1|%2|%3")
-               .arg(j)
-               .arg(last_main_chain_bead->resName)
-               .arg(last_main_chain_bead->resSeq)]  &&
-              !broken_chain_head.count(QString("%1|%2")
-                                       .arg(last_main_chain_bead->resSeq)
-                                       .arg(last_main_chain_bead->resName)) )
-         {
-            if ( multi_residue_map["PBR-NO-OXT"].size() == 1 )
-            {
-               int pos = multi_residue_map["PBR-NO-OXT"][0];
-               last_main_chain_bead->bead_ref_volume = residue_list[pos].r_bead[0].volume;
-               last_main_chain_bead->bead_ref_mw = residue_list[pos].r_bead[0].mw;
-               last_main_chain_bead->bead_computed_radius = pow(3 * last_main_chain_bead->bead_ref_volume / (4.0*M_PI), 1.0/3);
-               if (last_main_chain_bead->resName == "GLY") {
-                  last_main_chain_bead->bead_ref_mw += 1.01f;
-               }
-            }
-            else
-            {
-               noticemsg += "Chain has no terminating OXT and PBR-NO-OXT isn't uniquely defined in the residue file.";
-            }
-         }
-      } // for j < molecule.size()
-   }
-
-
-   // pass 2c hydration
-
-   // for (unsigned int i = 0; i < model_vector.size (); i++)   {
-   {
-      unsigned int i = current_model;
-      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
-            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-
-            if (this_atom->active &&
-                this_atom->is_bead) {
-               this_atom->bead_ref_volume_unhydrated = this_atom->bead_ref_volume;
-               this_atom->bead_ref_volume += misc_hydrovol * this_atom->bead_hydration;
-               this_atom->bead_computed_radius = pow(3 * this_atom->bead_ref_volume / (4.0*M_PI), 1.0/3);
-            }
-         }
-      }
-   }
-
-   // pass 3 determine visibility, exposed code, normalize cog position, final position determination
-   // compute com of entire molecule
-
-   // for (unsigned int i = 0; i < model_vector.size (); i++) {
-   {
-      unsigned int i = current_model;
-
-      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-
-         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
-
-
-            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            // printf("p3 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
-            this_atom->exposed_code = -1;
-            if (this_atom->active &&
-                this_atom->is_bead) {
-
-               for (unsigned int m = 0; m < 3; m++) {
-                  if (this_atom->bead_cog_mw) {
-                     this_atom->bead_cog_coordinate.axis[m] /= this_atom->bead_cog_mw;
-                  }
-                  else 
-                  {
-                     this_atom->bead_cog_coordinate.axis[m] = 0;
-                  }
-               }
-
-               if (this_atom->p_residue && this_atom->p_atom) {
-
-                  switch (this_atom->placing_method) {
-
-                  case 0 : // cog
-                     this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
-                     // if (this_atom->bead_positioner) {
-                     // fprintf(stderr, "warning: this bead had a atom claiming position & a bead placing method of cog! %s %s %d\n",
-                     //   this_atom->name.ascii(),
-                     //   this_atom->resName.ascii(),
-                     //   this_atom->serial);
-                     // }
-                     break;
-                  case 1 : // positioner
-                     this_atom->bead_coordinate = this_atom->bead_position_coordinate;
-                     break;
-                  case 2 : // no positioning necessary
-                     this_atom->bead_coordinate = this_atom->coordinate;
-                     break;
-                  default :
-                     this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
-                     fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
-                             this_atom->placing_method,
-                             this_atom->name.ascii(),
-                             this_atom->resName.ascii(),
-                             this_atom->serial);
-                     break;
-                  }
-               }
-               else 
-               {
-                  errormsg = QString("").sprintf( "serious internal error 1 on %s %s %d, quitting\n",
-                                                  this_atom->name.ascii(),
-                                                  this_atom->resName.ascii(),
-                                                  this_atom->serial );
-                  return false;
-                  break;
-               }
-               this_atom->visibility = 
-                  ( this_atom->bead_asa >= control_parameters[ "asahydratethresh" ].toDouble() );
-
-#if defined( USUH_DEBUG_ASA )
-               cout << QString( "bead_asa %1 %2 %3 %4 %5\n" ).arg( this_atom->name ).arg( this_atom->resName ).arg( this_atom->serial ).arg( this_atom->bead_asa ).arg( control_parameters[ "asahydratethresh" ].toDouble() ) ;
-#endif
-
-               if (!create_beads_normally ||
-                   this_atom->visibility ||
-                   !control_parameters[ "asacalculation" ].toUInt() ) {
-                  this_atom->exposed_code = 1;  // exposed
-               }
-               else 
-               {
-                  if (this_atom->chain == 0) {
-                     this_atom->exposed_code = 10;  // main chain, buried
-                  }
-                  if (this_atom->chain == 1) {
-                     this_atom->exposed_code = 6;   // side chain, buried
-                  }
-               }
-            }
-            else 
-            {
-               this_atom->placing_method = -1;
-            }
-         }
-      }
-   }
-
-   return true;
-}
 
 void US_Saxs_Util::build_to_hydrate()
 {
@@ -3168,6 +2497,678 @@ bool US_Saxs_Util::validate_pointmap()
 }
 
 #endif // CMDLINE
+
+bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
+{
+   if ( !control_parameters.count( "inputfile" ) )
+   {
+      errormsg = "No input file found";
+      return false;
+   }
+
+   cout << QString( "Hydrating the pdb for %1 model %2\n" )
+      .arg( control_parameters[ "inputfile "] )
+      .arg( current_model + 1 );
+   cout << "Checking the pdb structure\n";
+
+   if ( !check_for_missing_atoms( &model_vector[current_model] ) ) 
+   {
+      errormsg = "Encountered errors with your PDB structure" + errormsg;
+      return false;
+   }
+
+   reset_chain_residues( &model_vector[ current_model ] );
+
+   // probably don't need this:
+   hydro_results results;
+   results.asa_rg_pos = 0.0;
+   results.asa_rg_neg = 0.0;
+   cout << "PDB structure ok\n";
+
+   {
+      int no_of_atoms = 0;
+      int no_of_molecules = model_vector[ current_model ].molecule.size();
+      int i;
+      for ( i = 0; i < no_of_molecules; i++ ) 
+      {
+         no_of_atoms += model_vector[ current_model ].molecule[ i ].atom.size();
+      }
+
+      cout << QString( "There are %1 atoms in %2 chain(s) in this model\n" )
+         .arg( no_of_atoms ).arg( no_of_molecules );
+   }
+
+   if ( !create_beads() )
+   {
+      return false;
+   }
+
+   if( errormsg.length() ) 
+   {
+      errormsg = "Encountered unknown atom(s) error:\n" + errormsg;
+      return false;
+   }
+
+   if( control_parameters[ "asamethod" ].toUInt() == 0 ) 
+   {
+      // surfracer
+      errormsg = "Vornoi tesselation not currently implemented";
+      return false;
+#if defined( NOT_IMPLEMENTED )
+      editor->append("Computing ASA via SurfRacer\n");
+      int retval = surfracer_main( asa.hydrate_probe_radius,
+                                   active_atoms,
+                                   false,
+                                   progress,
+                                   editor
+                                   );
+
+      editor->append("Return from Computing ASA\n");
+      if ( retval )
+      {
+         editor->append("Errors found during ASA calculation\n");
+         switch ( retval )
+         {
+         case US_SURFRACER_ERR_MISSING_RESIDUE:
+            {
+               errormsg = "US_SURFRACER encountered an unknown residue:" + errormsg;
+               return false;
+               break;
+            }
+         case US_SURFRACER_ERR_MISSING_ATOM:
+            {
+               errormsg = "US_SURFRACER encountered a unknown atom:\n" + errormsg;
+               return false;
+               break;
+            }
+         case US_SURFRACER_ERR_MEMORY_ALLOC:
+            {
+               errormsg = "US_SURFRACER encountered a memory allocation error";
+               return false;
+               break;
+            }
+         default:
+            {
+               errormsg = "US_SURFRACER encountered an unknown error";
+               // unknown error
+               return false;
+               break;
+            }
+         }
+      }
+      if(errormsg.length()) {
+         printError("US_SURFRACER encountered unknown atom(s) error:\n" +
+                    errormsg);
+         return US_SURFRACER_ERR_MISSING_ATOM;
+      }
+#endif
+   }
+
+   if( control_parameters[ "asamethod" ].toUInt() == 1 ) 
+   {
+      cout << "Computing ASA via ASAB1\n";
+
+      float save_radius = asa.probe_radius;
+      asa.probe_radius  = asa.hydrate_probe_radius; 
+      cout << QString(
+                      "asa.hydrate_probe_radius %1\n"
+                      "asa.probe_radius         %2\n"
+                      "asa.asab1_step           %3\n"
+                      "asa.threshold_percent    %4\n"
+                      "misc.pb_rule_on          %5\n"
+                      )
+         .arg( asa.hydrate_probe_radius )
+         .arg( asa.probe_radius )
+         .arg( asa.asab1_step )
+         .arg( asa.threshold_percent )
+         .arg( misc_pb_rule_on ? "yes" : "no" )
+         ;
+      int retval = us_saxs_util_asab1_main( active_atoms,
+                                            &asa,
+                                            &results,
+                                            false );
+      asa.probe_radius  = save_radius;
+
+      cout << "Return from Computing ASA\n";
+      if ( retval )
+      {
+         cout << "Errors found during ASA calculation\n";
+         switch ( retval )
+         {
+         case US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC:
+            {
+               errormsg = "US_HYDRODYN_ASAB1 encountered a memory allocation error";
+               return false;
+               break;
+            }
+         default:
+            {
+               errormsg = "US_HYDRODYN_ASAB1 encountered an unknown error";
+               return false;
+               break;
+            }
+         }
+      }
+   }
+
+   // pass 1 assign bead #'s, chain #'s, initialize data
+
+   // for (unsigned int i = 0; i < model_vector.size (); i++)
+   {
+      unsigned int i = current_model;
+
+      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+            // printf("p1 i j k %d %d %d %lx %s\n", i, j, k, (long unsigned int)this_atom->p_atom, this_atom->active ? "active" : "not active"); fflush(stdout);
+
+            this_atom->normalized_ot_is_valid = false;
+            for (unsigned int m = 0; m < 3; m++) {
+               this_atom->bead_cog_coordinate.axis[m] = 0;
+               this_atom->bead_position_coordinate.axis[m] = 0;
+               this_atom->bead_coordinate.axis[m] = 0;
+            }
+         }
+      }
+   }
+
+
+   // #define DEBUG
+   // pass 2 determine beads, cog_position, fixed_position, molecular cog phase 1.
+
+   int count_actives;
+   float molecular_cog[3] = { 0, 0, 0 };
+   float molecular_mw = 0;
+   QString cog_msg = "COG calc summary information\n";
+
+   // for (unsigned int i = 0; i < model_vector.size (); i++)
+   {
+      unsigned int i = current_model;
+
+      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+         int last_bead_assignment = -1;
+         int last_chain = -1;
+         QString last_resName = "not a residue";
+         QString last_resSeq = "";
+         PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
+         PDB_atom *last_main_bead = (PDB_atom *) 0;
+         PDB_atom *sidechain_N = (PDB_atom *) 0;
+
+         count_actives = 0;
+         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+            // printf("p2 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
+            // this_atom->bead_positioner = false;
+            if (this_atom->active) {
+#if defined( USUH_DEBUG_ASA )
+               cout << QString( "active atom asa %1 %2 %3 %4\n" )
+                  .arg( this_atom->name )
+                  .arg( this_atom->resName )
+                  .arg( this_atom->serial )
+                  .arg( this_atom->asa )
+                  ;
+#endif
+               molecular_mw += this_atom->mw;
+               for (unsigned int m = 0; m < 3; m++) {
+                  molecular_cog[m] += this_atom->coordinate.axis[m] * this_atom->mw;
+               }
+
+               this_atom->bead_mw = 0;
+               this_atom->bead_asa = 0;
+               this_atom->bead_recheck_asa = 0;
+
+               // do we have a new bead?
+               // we want to put the N on a previous bead unless it is the first one of the molecule
+               // ONLY FOR residue type = 0! (amino acid)
+               // AND ONLY for residues not part of the 'auto bead builder'
+
+               if (!create_beads_normally ||
+                   (
+                    (this_atom->bead_assignment != last_bead_assignment ||
+                     this_atom->chain != last_chain ||
+                     this_atom->resName != last_resName ||
+                     this_atom->resSeq != last_resSeq) &&
+                    !(misc_pb_rule_on &&
+                      this_atom->chain == 0 &&
+                      this_atom->name == "N" &&
+                      count_actives &&
+                      !broken_chain_head.count(QString("%1|%2")
+                                               .arg(this_atom->resSeq)
+                                               .arg(this_atom->resName))
+                      ) ) ) {
+
+                  // this_atom->bead_positioner = true;
+                  this_atom->is_bead = true;
+                  last_main_bead = this_atom;
+                  last_bead_assignment = this_atom->bead_assignment;
+                  last_chain = this_atom->chain;
+                  last_resName = this_atom->resName;
+                  last_resSeq = this_atom->resSeq;
+                  if (create_beads_normally && 
+                      misc_pb_rule_on &&
+                      !this_atom->type) {
+                     if(sidechain_N &&
+                        this_atom->chain == 1) {
+                        if(this_atom->name == "N") {
+                           printf("ERROR double N on sequential sidechains! PRO PRO?\n");
+                        }
+                        this_atom->bead_asa += sidechain_N->bead_asa;
+                        this_atom->bead_mw += sidechain_N->bead_mw;
+                        sidechain_N->bead_mw = 0;
+                        sidechain_N->bead_asa = 0;
+                        sidechain_N = (PDB_atom *) 0;
+                     }
+                     if(this_atom->name == "N" &&
+                        this_atom->chain == 1) {
+                        sidechain_N = this_atom;
+                        this_atom->is_bead = false;
+                     }
+                  }
+               }
+               else 
+               {
+                  if (this_atom->bead_positioner) {
+
+                     if (last_main_bead->bead_positioner &&
+                         this_atom->placing_method == 1) {
+                        fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
+                                last_main_bead->name.ascii(),
+                                last_main_bead->resName.ascii(),
+                                last_main_bead->serial);
+                     }
+                     last_main_bead->bead_positioner = true;
+                     last_main_bead->bead_position_coordinate = this_atom->coordinate;
+                  }
+
+                  this_atom->is_bead = false;
+                  // this_atom->bead_cog_mw = 0;
+               }
+
+               this_atom->bead_cog_mw = 0;
+
+               // special nitrogen asa handling
+               PDB_atom *use_atom;
+               if (misc_pb_rule_on &&
+                   create_beads_normally &&
+                   this_atom->chain == 0 &&
+                   this_atom->name == "N" &&
+                   !broken_chain_head.count(QString("%1|%2")
+                                           .arg(this_atom->resSeq)
+                                           .arg(this_atom->resName)) &&
+                   last_main_chain_bead) {
+                  use_atom = last_main_chain_bead;
+               }
+               else 
+               {
+                  use_atom = last_main_bead;
+               }
+
+               use_atom->bead_asa += this_atom->asa;
+               use_atom->bead_mw += this_atom->mw;
+               // accum
+               if (!create_beads_normally ||
+                   this_atom->bead_positioner) {
+                  cog_msg += QString("adding %1 to %2\n").arg(this_atom->serial).arg(use_atom->serial);
+                  use_atom->bead_cog_mw += this_atom->mw;
+                  for (unsigned int m = 0; m < 3; m++) {
+                     use_atom->bead_cog_coordinate.axis[m] +=
+                        this_atom->coordinate.axis[m] * this_atom->mw;
+                  }
+               }
+               else 
+               {
+               }
+
+               if (!create_beads_normally ||
+                   this_atom->bead_positioner) {
+                  if (use_atom->bead_positioner &&
+                      this_atom->placing_method == 1) {
+                     fprintf(stderr, "warning: 2 or more positioners in bead %s %s %d\n",
+                             use_atom->name.ascii(),
+                             use_atom->resName.ascii(),
+                             use_atom->serial);
+                  }
+                  use_atom->bead_positioner = true;
+                  use_atom->bead_position_coordinate = this_atom->coordinate;
+               }
+
+               if (this_atom->chain == 0 &&
+                   misc_pb_rule_on &&
+                   this_atom->name == "N" &&
+                   !broken_chain_head.count(QString("%1|%2")
+                                            .arg(this_atom->resSeq)
+                                            .arg(this_atom->resName)) && 
+                   !count_actives)
+               {
+                  last_resName = "first N";
+               }
+
+               if (this_atom->chain == 0 &&
+                   this_atom->name == "CA") {
+                  last_main_chain_bead = this_atom;
+               }
+               count_actives++;
+            }
+            else 
+            {
+               this_atom->is_bead = false;
+            }
+         }
+      }
+   }
+
+   if (molecular_mw) {
+      for (unsigned int m = 0; m < 3; m++) {
+         molecular_cog[m] /= molecular_mw;
+      }
+   }
+   else 
+   {
+      printf("ERROR: this molecule has zero mw!\n");
+   }
+
+   for (unsigned int m = 0; m < 3; m++) {
+      last_molecular_cog.axis[m] = molecular_cog[m];
+   }
+
+   // pass 2b move bead_ref_volume, ref_mw, computed_radius from
+   // next main chain back one including adjustments for GLY, PRO, OXT
+
+   // for (unsigned int i = 0; i < model_vector.size (); i++)   {
+   {
+      unsigned int i = current_model;
+      bool placed_N1 = false;
+      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+         bool first_is_pro = false;
+         unsigned int main_chain_beads = 0;
+         PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
+         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+            if ( this_atom->active &&
+                 this_atom->is_bead &&
+                 this_atom->chain == 0 )
+            {
+               main_chain_beads++;
+            }
+            if ( 
+                misc_pb_rule_on &&
+                !k &&
+                this_atom->resName == "PRO" 
+                )
+            {
+               first_is_pro = true;
+            }
+            if ( placed_N1 &&
+                 broken_chain_end.count(QString("%1|%2")
+                                        .arg(this_atom->resSeq)
+                                        .arg(this_atom->resName))
+                 )
+            {
+               placed_N1 = false;
+            }
+
+            if ( 
+                misc_pb_rule_on &&
+                !k &&
+                this_atom->resName != "PRO" &&
+                this_atom->name == "N" &&
+                !broken_chain_head.count(QString("%1|%2")
+                                         .arg(this_atom->resSeq)
+                                         .arg(this_atom->resName))
+                )
+            {
+               placed_N1 = true;
+            }
+            if ( 
+                first_is_pro &&
+                this_atom->active &&
+                this_atom->is_bead &&
+                this_atom->chain == 1 &&
+                this_atom->resName == "PRO"
+                )
+            {
+               this_atom->bead_ref_mw += 1.0;
+               // what about a volume adjustment?
+               first_is_pro = false;
+            }
+                 
+            if (this_atom->name == "OXT" &&
+                last_main_chain_bead) {
+               this_atom->is_bead = false;
+               // override broken head OXT residue
+               if ( misc_pb_rule_on &&
+                    this_atom->resName != "PRO" &&
+                    broken_chain_head.count(QString("%1|%2")
+                                            .arg(this_atom->resSeq)
+                                            .arg(this_atom->resName)) &&
+                    multi_residue_map.count("NPBR-OXT") )
+               {
+                  int posNPBR_OXT = multi_residue_map["NPBR-OXT"][0];
+                  this_atom->bead_ref_volume = residue_list[posNPBR_OXT].r_bead[0].volume;
+                  this_atom->bead_ref_mw = residue_list[posNPBR_OXT].r_bead[0].mw;
+               }
+                  
+               last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
+               last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
+               if (last_main_chain_bead->resName == "GLY") 
+               {
+                  last_main_chain_bead->bead_ref_mw += 1.01f;
+               }
+               if ( !misc_pb_rule_on &&
+                    main_chain_beads == 1 &&
+                    this_atom->resName != "PRO" )
+               {
+                  last_main_chain_bead->bead_ref_mw += 1.0;
+               }
+               last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
+            } // OXT
+
+            if (this_atom->active &&
+                this_atom->is_bead &&
+                this_atom->chain == 0) {
+
+               if (misc_pb_rule_on &&
+                   last_main_chain_bead &&
+                   !broken_chain_head.count(QString("%1|%2")
+                                            .arg(this_atom->resSeq)
+                                            .arg(this_atom->resName)) &&
+                   (this_atom->resName == "PRO" ||
+                    last_main_chain_bead->resName == "PRO")
+                   ) {
+
+                  last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
+                  last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
+                  last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
+                  if (this_atom->resName == "GLY") {
+                     last_main_chain_bead->bead_ref_mw -= 1.01f;
+                  }
+                  if (last_main_chain_bead->resName == "GLY") {
+                     last_main_chain_bead->bead_ref_mw += 1.01f;
+                  }
+               } // PRO
+               last_main_chain_bead = this_atom;
+            }
+
+            // fix up mw, vol at end for broken end when PBR rule is on
+            if ( misc_pb_rule_on &&
+                 this_atom->p_residue->type == 0 &&
+                 this_atom->is_bead &&
+                 this_atom->chain == 0 &&
+                 broken_chain_end.count(QString("%1|%2")
+                                        .arg(this_atom->resSeq)
+                                        .arg(this_atom->resName)) &&
+                 !broken_chain_head.count(QString("%1|%2")
+                                        .arg(this_atom->resSeq)
+                                        .arg(this_atom->resName)) &&
+                 this_atom->resName != "PRO" &&
+                 (k || this_atom->name != "N")
+                 )
+            {
+               if ( multi_residue_map["PBR-NO-OXT"].size() == 1 )
+               {
+                  int pos = multi_residue_map["PBR-NO-OXT"][0];
+                  this_atom->bead_ref_volume = residue_list[pos].r_bead[0].volume;
+                  this_atom->bead_ref_mw = residue_list[pos].r_bead[0].mw;
+                  this_atom->bead_computed_radius = pow(3 * last_main_chain_bead->bead_ref_volume / (4.0*M_PI), 1.0/3);
+                  if (this_atom->resName == "GLY") {
+                     this_atom->bead_ref_mw += 1.01f;
+                  }
+               }
+               else
+               {
+                  cout << "Chain has broken end and PBR-NO-OXT isn't uniquely defined in the residue file.\n";
+               }
+            }
+         } // for k < atom.size()
+         // fix up mw, vol at end for no OXT when PBR rule is on
+         if ( misc_pb_rule_on &&
+              last_main_chain_bead &&
+              last_main_chain_bead->p_residue->type == 0 &&
+              last_main_chain_bead->name != "PRO" &&
+              !has_OXT[QString("%1|%2|%3")
+               .arg(j)
+               .arg(last_main_chain_bead->resName)
+               .arg(last_main_chain_bead->resSeq)]  &&
+              !broken_chain_head.count(QString("%1|%2")
+                                       .arg(last_main_chain_bead->resSeq)
+                                       .arg(last_main_chain_bead->resName)) )
+         {
+            if ( multi_residue_map["PBR-NO-OXT"].size() == 1 )
+            {
+               int pos = multi_residue_map["PBR-NO-OXT"][0];
+               last_main_chain_bead->bead_ref_volume = residue_list[pos].r_bead[0].volume;
+               last_main_chain_bead->bead_ref_mw = residue_list[pos].r_bead[0].mw;
+               last_main_chain_bead->bead_computed_radius = pow(3 * last_main_chain_bead->bead_ref_volume / (4.0*M_PI), 1.0/3);
+               if (last_main_chain_bead->resName == "GLY") {
+                  last_main_chain_bead->bead_ref_mw += 1.01f;
+               }
+            }
+            else
+            {
+               noticemsg += "Chain has no terminating OXT and PBR-NO-OXT isn't uniquely defined in the residue file.";
+            }
+         }
+      } // for j < molecule.size()
+   }
+
+
+   // pass 2c hydration
+
+   // for (unsigned int i = 0; i < model_vector.size (); i++)   {
+   {
+      unsigned int i = current_model;
+      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+
+            if (this_atom->active &&
+                this_atom->is_bead) {
+               this_atom->bead_ref_volume_unhydrated = this_atom->bead_ref_volume;
+               this_atom->bead_ref_volume += misc_hydrovol * this_atom->bead_hydration;
+               this_atom->bead_computed_radius = pow(3 * this_atom->bead_ref_volume / (4.0*M_PI), 1.0/3);
+            }
+         }
+      }
+   }
+
+   // pass 3 determine visibility, exposed code, normalize cog position, final position determination
+   // compute com of entire molecule
+
+   // for (unsigned int i = 0; i < model_vector.size (); i++) {
+   {
+      unsigned int i = current_model;
+
+      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+
+         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+
+
+            PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+            // printf("p3 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
+            this_atom->exposed_code = -1;
+            if (this_atom->active &&
+                this_atom->is_bead) {
+
+               for (unsigned int m = 0; m < 3; m++) {
+                  if (this_atom->bead_cog_mw) {
+                     this_atom->bead_cog_coordinate.axis[m] /= this_atom->bead_cog_mw;
+                  }
+                  else 
+                  {
+                     this_atom->bead_cog_coordinate.axis[m] = 0;
+                  }
+               }
+
+               if (this_atom->p_residue && this_atom->p_atom) {
+
+                  switch (this_atom->placing_method) {
+
+                  case 0 : // cog
+                     this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
+                     // if (this_atom->bead_positioner) {
+                     // fprintf(stderr, "warning: this bead had a atom claiming position & a bead placing method of cog! %s %s %d\n",
+                     //   this_atom->name.ascii(),
+                     //   this_atom->resName.ascii(),
+                     //   this_atom->serial);
+                     // }
+                     break;
+                  case 1 : // positioner
+                     this_atom->bead_coordinate = this_atom->bead_position_coordinate;
+                     break;
+                  case 2 : // no positioning necessary
+                     this_atom->bead_coordinate = this_atom->coordinate;
+                     break;
+                  default :
+                     this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
+                     fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
+                             this_atom->placing_method,
+                             this_atom->name.ascii(),
+                             this_atom->resName.ascii(),
+                             this_atom->serial);
+                     break;
+                  }
+               }
+               else 
+               {
+                  errormsg = QString("").sprintf( "serious internal error 1 on %s %s %d, quitting\n",
+                                                  this_atom->name.ascii(),
+                                                  this_atom->resName.ascii(),
+                                                  this_atom->serial );
+                  return false;
+                  break;
+               }
+               this_atom->visibility = 
+                  ( this_atom->bead_asa >= control_parameters[ "asahydratethresh" ].toDouble() );
+
+#if defined( USUH_DEBUG_ASA )
+               cout << QString( "bead_asa %1 %2 %3 %4 %5\n" ).arg( this_atom->name ).arg( this_atom->resName ).arg( this_atom->serial ).arg( this_atom->bead_asa ).arg( control_parameters[ "asahydratethresh" ].toDouble() ) ;
+#endif
+
+               if (!create_beads_normally ||
+                   this_atom->visibility ||
+                   !control_parameters[ "asacalculation" ].toUInt() ) {
+                  this_atom->exposed_code = 1;  // exposed
+               }
+               else 
+               {
+                  if (this_atom->chain == 0) {
+                     this_atom->exposed_code = 10;  // main chain, buried
+                  }
+                  if (this_atom->chain == 1) {
+                     this_atom->exposed_code = 6;   // side chain, buried
+                  }
+               }
+            }
+            else 
+            {
+               this_atom->placing_method = -1;
+            }
+         }
+      }
+   }
+
+   return true;
+}
 
 class sortable_PDB_atom {
 public:

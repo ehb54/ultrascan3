@@ -1882,6 +1882,16 @@ void US_Hydrodyn_Pdb_Tool::visualize( QListView *lv )
 
    QFile f( filename );
 
+   pos = 0;
+   QString spt_filename;
+
+   do {
+      spt_filename = QString("%1temp%2.spt").arg( use_dir ).arg( pos );
+      pos++;
+   } while( QFile::exists( spt_filename ) );
+
+   QFile f_spt( spt_filename );
+
    if ( !f.open( IO_WriteOnly ) )
    {
       QMessageBox::warning( this, "UltraScan",
@@ -1889,9 +1899,37 @@ void US_Hydrodyn_Pdb_Tool::visualize( QListView *lv )
       return;
    }
 
-   QTextStream t( &f );
-   t << csv_to_pdb( tmp_csv );
-   f.close();
+   {
+      QTextStream t( &f );
+      t << csv_to_pdb( tmp_csv );
+      f.close();
+   }
+
+   if ( !f_spt.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, "UltraScan",
+                            QString(tr("Could not open %1 for writing!")).arg(spt_filename) );
+      return;
+   }
+
+   {
+      QTextStream t( &f_spt );
+      t << QString( 
+                   "load %1\n" 
+                   "spacefill\n"
+                   "select all\n"
+                   "color white\n"
+                   )
+         .arg( filename )
+         ;
+      QStringList qsl = atom_sel_rasmol( lv );
+      for ( int i = 0; i < (int) qsl.size(); i++ )
+      {
+         t << qsl[ i ];
+         t << "color red\n";
+      }
+      f_spt.close();
+   }
 
    QProcess *rasmol = new QProcess( this );
 
@@ -1905,7 +1943,8 @@ void US_Hydrodyn_Pdb_Tool::visualize( QListView *lv )
 #else
    argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
 #endif
-   argument.append( QFileInfo( filename ).fileName() );
+   argument.append( "-script" );
+   argument.append( QFileInfo( spt_filename ).fileName() );
    rasmol->setWorkingDirectory(QFileInfo( filename ).dirPath());
    rasmol->setArguments(argument);
    if ( !rasmol->start() )
@@ -1913,6 +1952,15 @@ void US_Hydrodyn_Pdb_Tool::visualize( QListView *lv )
       QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
                                                   "Please check to make sure RASMOL is properly installed..."));
    }
+
+   //    QStringList qsl = atom_sel_rasmol( lv );
+   //    cout << QString( "atom set %1\n" ).arg( qsl.size() );
+   //    for ( int i = 0; i < (int) qsl.size(); i++ )
+   //    {
+   //       cout << QString( "%1: %2\n" ).arg( i ).arg( qsl[ i ] );
+   //    }
+   //    cout << "after atom set\n";
+   //    cout << flush;
 }
 
 void US_Hydrodyn_Pdb_Tool::load( QListView *lv, QString &filename, bool only_first_nmr )
@@ -2925,7 +2973,17 @@ QString US_Hydrodyn_Pdb_Tool::get_atom_name( QListViewItem *lvi )
       .replace( QRegExp( "^\\S+" ), "" )
       .replace( QRegExp( "\\S+$" ), "" )
       .stripWhiteSpace();
-   // for some reason the qregexp's aren't working correctly, thus the stripwhitespace at the end
+   // cout << QString( "text0 is <%1> atom is <%2>\n" ).arg( lvi->text( 0 ) ).arg( atom );
+   return atom;
+}
+
+QString US_Hydrodyn_Pdb_Tool::get_atom_number( QListViewItem *lvi )
+{
+   QString atom = 
+      QString( "%1" ).arg( lvi->text( 0 ) )
+      .stripWhiteSpace()
+      .replace( QRegExp( "^\\S+" ), "" )
+      .stripWhiteSpace();
    // cout << QString( "text0 is <%1> atom is <%2>\n" ).arg( lvi->text( 0 ) ).arg( atom );
    return atom;
 }
@@ -2941,6 +2999,41 @@ QString US_Hydrodyn_Pdb_Tool::get_chain_id( QListViewItem *lvi )
       lvi = lvi->parent();
    }
    return lvi->text( 0 );
+}
+
+QString US_Hydrodyn_Pdb_Tool::get_model_id( QListViewItem *lvi )
+{
+   while( lvi->depth() > 0 )
+   {
+      lvi = lvi->parent();
+   }
+   return lvi->text( 0 );
+}
+
+QString US_Hydrodyn_Pdb_Tool::get_residue_name( QListViewItem *lvi )
+{
+   if ( lvi->depth() < 2 )
+   {
+      return "unknown";
+   }
+   while( lvi->depth() > 2 )
+   {
+      lvi = lvi->parent();
+   }
+   return QString( "%1" ).arg( lvi->text( 0 ) ).stripWhiteSpace().replace( QRegExp( "\\s*\\d+$" ), "" );
+}
+
+QString US_Hydrodyn_Pdb_Tool::get_residue_number( QListViewItem *lvi )
+{
+   if ( lvi->depth() < 2 )
+   {
+      return "unknown";
+   }
+   while( lvi->depth() > 2 )
+   {
+      lvi = lvi->parent();
+   }
+   return QString( "%1" ).arg( lvi->text( 0 ) ).stripWhiteSpace().replace( QRegExp( "^\\S+\\s*" ), "" ).stripWhiteSpace();
 }
 
 QStringList US_Hydrodyn_Pdb_Tool::atom_set( QListView *lv )
@@ -2966,6 +3059,29 @@ QStringList US_Hydrodyn_Pdb_Tool::atom_set( QListView *lv )
       qsl << it->first;
    }
    qsl.sort();
+   return qsl;
+}
+
+QStringList US_Hydrodyn_Pdb_Tool::atom_sel_rasmol( QListView *lv )
+{
+   map < QString, bool > atoms;
+
+   QListViewItemIterator it1( lv );
+   QStringList qsl;
+
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( !item1->childCount() && is_selected( item1 ) )
+      {
+         qsl << QString( "select :%1 and atomno=%2\n" )
+            .arg( get_chain_id( item1 ) )
+            .arg( get_atom_number( item1 ) )
+            ;
+      }
+      ++it1;
+   }
+   
    return qsl;
 }
 
@@ -3023,8 +3139,9 @@ QStringList US_Hydrodyn_Pdb_Tool::chain_set( QListView *lv )
 
 void US_Hydrodyn_Pdb_Tool::csv_sel_nearest_residues()
 {
-   editor_msg( "red", "not yet implemented" );
+   sel_nearest_residues( lv_csv );
 }
+
 
 void US_Hydrodyn_Pdb_Tool::csv_clash_report()
 {
@@ -3073,7 +3190,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_sel_nearest_atoms()
 
 void US_Hydrodyn_Pdb_Tool::csv2_sel_nearest_residues()
 {
-   editor_msg( "red", "not yet implemented" );
+   sel_nearest_residues( lv_csv2 );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_clash_report()
@@ -5168,6 +5285,9 @@ QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_res
 
    usu->control_parameters[ "pdbmissingatoms" ] = "0";
    usu->control_parameters[ "pdbmissingresidues" ] = "0";
+   usu->control_parameters[ "saxsfile"   ] =  ((US_Hydrodyn *)us_hydrodyn)->saxs_options.default_saxs_filename;
+   usu->control_parameters[ "hybridfile" ] =  ((US_Hydrodyn *)us_hydrodyn)->saxs_options.default_hybrid_filename;
+   usu->control_parameters[ "atomfile"   ] =  ((US_Hydrodyn *)us_hydrodyn)->saxs_options.default_atom_filename;
 
    vector < QString > error_keys;
 
@@ -5217,6 +5337,21 @@ QString US_Hydrodyn_Pdb_Tool::check_csv( csv & csv1, vector < QString > &error_k
    errormsg = "";
    QString qs;
    if ( !usu->select_residue_file( ((US_Hydrodyn *)us_hydrodyn)->residue_filename ) )
+   {
+      errormsg = usu->errormsg;
+      return "";
+   }
+   if ( !usu->select_atom_file( ((US_Hydrodyn *)us_hydrodyn)->saxs_options.default_atom_filename ) )
+   {
+      errormsg = usu->errormsg;
+      return "";
+   }
+   if ( !usu->select_hybrid_file( ((US_Hydrodyn *)us_hydrodyn)->saxs_options.default_hybrid_filename ) )
+   {
+      errormsg = usu->errormsg;
+      return "";
+   }
+   if ( !usu->select_saxs_file( ((US_Hydrodyn *)us_hydrodyn)->saxs_options.default_saxs_filename ) )
    {
       errormsg = usu->errormsg;
       return "";
@@ -5678,3 +5813,4 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
 
    return;
 }
+

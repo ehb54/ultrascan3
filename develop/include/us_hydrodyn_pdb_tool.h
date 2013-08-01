@@ -203,6 +203,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          csv2_sel_msg           ();
 
       void          sel_nearest_atoms      ( QListView *lv );
+      void          sel_nearest_residues   ( QListView *lv );
       double        pair_dist              ( QListViewItem *item1, QListViewItem *item2 );
 
       // compute minimum pair distance between chains return respective keys in key_1, key_2
@@ -225,10 +226,15 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void          replace_selected_residues ( QListView *lv, csv &csv_use, QString from, QString to );
       void          distances              ( QListView *lv );
       QString       get_atom_name          ( QListViewItem *lvi );
+      QString       get_atom_number        ( QListViewItem *lvi );
       QString       get_chain_id           ( QListViewItem *lvi );
+      QString       get_model_id           ( QListViewItem *lvi );
+      QString       get_residue_name       ( QListViewItem *lvi );
+      QString       get_residue_number     ( QListViewItem *lvi );
       QStringList   atom_set               ( QListView *lv ); // returns a list of selected atoms
       QStringList   chain_set              ( QListView *lv ); // returns a list of selected chains
       QStringList   model_set              ( QListView *lv ); // returns a list of selected models
+      QStringList   atom_sel_rasmol        ( QListView *lv ); // returns a list of selected atoms with chain and atom
       void          select_model           ( QListView *lv, QString model ); // selects just that model
       void          select_chain           ( QListView *lv ); // selected a set of chains
       void          select_chain           ( QListView *lv, QStringList chains ); // selected a set of chains
@@ -238,6 +244,36 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       csv           reseq_csv              ( QListView *lv, csv &ref_csv, bool only_selected = false );
 
       void          split_pdb_by_residue   ( QFile &f );
+
+      void          select_residues_with_atoms_selected( QListView *lv );
+
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+      set    < QListViewItem * >            get_exposed_set         ( QListView *lv, 
+                                                                      double max_asa, 
+                                                                      bool only_selected = false );
+      set    < QListViewItem * >            get_exposed_set_naccess ( QListView *lv, 
+                                                                      double max_asa, 
+                                                                      bool only_selected = false );
+      
+      vector < QString >                    get_models              ( QListView *lv );
+      vector < vector < QListViewItem * > > separate_models         ( QListView *lv );
+      vector < QStringList >                separate_models         ( csv &ref_csv );
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
+
+      QProcess  * naccess;
+      QString     naccess_last_pdb;
+      QStringList naccess_result_data;
+      bool        naccess_running;
+      bool        naccess_run                    ( QString pdb );
+
    private slots:
       
       void setupGUI();
@@ -303,6 +339,11 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_sel_nearest_residues();
 
       void adjust_wheel( double );
+
+      void        naccess_readFromStdout         ();
+      void        naccess_readFromStderr         ();
+      void        naccess_launchFinished         ();
+      void        naccess_processExited          ();
 
       void cancel();
       void help();

@@ -223,6 +223,8 @@ SOURCES += \
   src/us_hydrodyn_pdb_tool.cpp \
   src/us_hydrodyn_pdb_tool_merge.cpp \
   src/us_hydrodyn_pdb_tool_renum.cpp \
+  src/us_hydrodyn_pdb_tool_selres.cpp \
+  src/us_hydrodyn_pdb_tool_util.cpp \
   src/us_hydrodyn_pdb_visualization.cpp \
   src/us_hydrodyn_results.cpp \
   src/us_hydrodyn_sas_options_saxs.cpp \
@@ -329,6 +331,7 @@ SOURCES += \
   src/us_sassoc.cpp \
   src/us_saxs_gp.cpp \
   src/us_saxs_util.cpp \
+  src/us_saxs_util_asab1.cpp \
   src/us_saxs_util_a2sb.cpp \
   src/us_saxs_util_crysol.cpp \
   src/us_saxs_util_cuda.cpp \
@@ -551,6 +554,7 @@ HEADERS += \
   include/us_hydrodyn_pdb_tool.h \
   include/us_hydrodyn_pdb_tool_merge.h \
   include/us_hydrodyn_pdb_tool_renum.h \
+  include/us_hydrodyn_pdb_tool_selres.h \
   include/us_hydrodyn_pdb_visualization.h \
   include/us_hydrodyn_results.h \
   include/us_hydrodyn_sas_options_saxs.h \

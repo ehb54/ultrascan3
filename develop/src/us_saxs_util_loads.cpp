@@ -1072,7 +1072,7 @@ bool US_Saxs_Util::calc_mw()
         !control_parameters.count( "hybridfile" ) ||
         !control_parameters.count( "atomfile" ) )
    {
-      errormsg = "calc_mw(): requires saxfile, hybridfile & atomfile defined";
+      errormsg = "calc_mw(): requires saxsfile, hybridfile & atomfile defined";
       do_excl_vol = false;
       return false;
    }
