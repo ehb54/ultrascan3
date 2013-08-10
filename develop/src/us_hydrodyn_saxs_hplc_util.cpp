@@ -7,6 +7,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_p3d.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
+#include "../include/us_hydrodyn_saxs_hplc_nth.h"
 #include "../include/us_lm.h"
 #ifdef QT4
 #include <qwt_scale_engine.h>
@@ -2285,4 +2286,392 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
    disable_updates = false;
    plot_files();
    update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::select_nth()
+{
+   map < QString, QString > parameters;
+   US_Hydrodyn_Saxs_Hplc_Nth *hplc_nth = 
+      new US_Hydrodyn_Saxs_Hplc_Nth(
+                                   this,
+                                   & parameters,
+                                   this );
+   US_Hydrodyn::fixWinButtons( hplc_nth );
+   hplc_nth->exec();
+   delete hplc_nth;
+
+   if ( !parameters.count( "go" ) )
+   {
+      return;
+   }
+
+   disable_updates = true;
+   lb_files->clearSelection();
+   for ( int i = 0; i < lb_files->numRows(); ++i )
+   {
+      if ( parameters.count( QString( "%1" ).arg( i ) ) )
+      {
+         lb_files->setSelected( i, true );
+      }
+   }
+   disable_updates = false;
+   plot_files();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::update_enables()
+{
+   if ( running )
+   {
+      cout << "update_enables return (running)\n";
+      return;
+   }
+   // cout << "update_enables\n";
+
+   // cout << "US_Hydrodyn_Saxs_Hplc::update_enables()\n";
+   // cout << QString("saxs_window->qsl_plotted_iq_names.size() %1\n").arg(saxs_window->qsl_plotted_iq_names.size());
+
+   pb_add_files          ->setEnabled( true );
+   pb_regex_load         ->setEnabled( true );
+   pb_options            ->setEnabled( true );
+
+   lb_files              ->setEnabled( true );
+   lb_created_files      ->setEnabled( true );
+
+   unsigned int files_selected_count                      = 0;
+   // unsigned int non_hplc_non_empty_files_selected_count = 0;
+   unsigned int last_selected_pos                         = 0;
+
+   map < QString, bool > selected_map;
+
+   QString last_selected_file;
+
+   QStringList selected_files;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         selected_files << lb_files->text( i );
+         selected_map[ lb_files->text( i ) ] = true;
+         last_selected_pos = i;
+         last_selected_file = lb_files->text( i );
+         files_selected_count++;
+         //          if ( lb_files->text( i ) != lbl_hplc->text() &&
+         //               lb_files->text( i ) != lbl_empty->text() )
+         //          {
+         //             non_hplc_non_empty_files_selected_count++;
+         //          }
+      }
+   }
+
+   bool files_compatible = compatible_files( selected_files );
+   bool files_are_time   = type_files      ( selected_files );
+
+   lbl_selected->setText( QString( tr( "%1 of %2 files selected" ) )
+                          .arg( files_selected_count )
+                          .arg( lb_files->numRows() ) );
+
+   unsigned int files_created_selected_not_saved_count = 0;
+   unsigned int files_created_selected_count           = 0;
+   unsigned int files_created_selected_not_shown_count = 0;
+   map < QString, bool > created_selected_map;
+
+   QString last_created_selected_file;
+
+   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   {
+      if ( lb_created_files->isSelected( i ) )
+      {
+         last_created_selected_file = lb_created_files->text( i );
+         created_selected_map[ lb_created_files->text( i ) ] = true;
+         files_created_selected_count++;
+         if ( !selected_map.count( lb_created_files->text( i ) ) )
+         {
+            files_created_selected_not_shown_count++;
+         } 
+         if ( created_files_not_saved.count( lb_created_files->text( i ) ) )
+         {
+            files_created_selected_not_saved_count++;
+         }
+      }
+   }
+
+   lbl_selected_created->setText( QString( tr( "%1 of %2 files selected" ) )
+                                  .arg( files_created_selected_count )
+                                  .arg( lb_created_files->numRows() ) );
+
+   unsigned int files_selected_not_created           = 0;
+   for ( map < QString, bool >::iterator it = selected_map.begin();
+         it != selected_map.end();
+         it++ )
+   {
+      if ( !created_selected_map.count( it->first ) )
+      {
+         files_selected_not_created++;
+      }
+   }
+
+   pb_wheel_start        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
+   pb_gauss_start        ->setEnabled( files_selected_count == 1 && files_are_time );
+   pb_ggauss_start       ->setEnabled( files_selected_count > 1 && files_are_time && gaussians.size() );
+   cb_sd_weight          ->setEnabled( files_selected_count && files_are_time && gaussians.size() );
+   cb_fix_width          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode );
+   cb_fix_dist1          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode );
+   cb_fix_dist2          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode );
+   pb_baseline_start     ->setEnabled( files_selected_count == 1 && files_are_time );
+   pb_baseline_apply     ->setEnabled( files_selected_count && 
+                                       files_are_time && 
+                                       le_baseline_start->text().toDouble() < le_baseline_end->text().toDouble() );
+
+   pb_similar_files      ->setEnabled( files_selected_count == 1 );
+   pb_conc               ->setEnabled( lb_files->numRows() > 0 );
+   pb_clear_files        ->setEnabled( files_selected_count > 0 );
+   pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
+   pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
+   pb_add                ->setEnabled( files_selected_count > 1 && files_compatible );
+   pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
+   pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
+   pb_smooth             ->setEnabled( files_selected_count );
+   pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
+   pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
+   pb_conc_file          ->setEnabled( files_selected_count == 1 );
+   pb_detector           ->setEnabled( true );
+
+   //                                        );
+   //    pb_set_hplc           ->setEnabled( files_selected_count == 1 && 
+   //                                        lb_files->text( last_selected_pos ) != lbl_hplc->text() &&
+   //                                        lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
+   //                                        lb_files->text( last_selected_pos ) != lbl_signal->text()
+   //                                        );
+   //    pb_set_signal         ->setEnabled( files_selected_count == 1 && 
+   //                                        lb_files->text( last_selected_pos ) != lbl_hplc->text() &&
+   //                                        lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
+   //                                        lb_files->text( last_selected_pos ) != lbl_signal->text() );
+   //    pb_set_empty          ->setEnabled( files_selected_count == 1 && 
+   //                                        lb_files->text( last_selected_pos ) != lbl_hplc->text() &&
+   //                                        lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
+   //                                        lb_files->text( last_selected_pos ) != lbl_signal->text() );
+   pb_select_all         ->setEnabled( lb_files->numRows() > 0 );
+   pb_select_nth         ->setEnabled( lb_files->numRows() > 2 );
+   pb_invert             ->setEnabled( lb_files->numRows() > 0 );
+   pb_color_rotate       ->setEnabled( files_selected_count );
+   //    pb_join               ->setEnabled( files_selected_count == 2 && files_compatible && !files_are_time );
+   pb_adjacent           ->setEnabled( lb_files->numRows() > 1 );
+   pb_to_saxs            ->setEnabled( files_selected_count && files_compatible && !files_are_time );
+   pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
+   pb_rescale            ->setEnabled( files_selected_count > 0 );
+
+   pb_select_all_created ->setEnabled( lb_created_files->numRows() > 0 );
+   pb_invert_all_created ->setEnabled( lb_created_files->numRows() > 0 );
+   pb_adjacent_created   ->setEnabled( lb_created_files->numRows() > 1 );
+   pb_remove_created     ->setEnabled( files_created_selected_count > 0 );
+   pb_save_created_csv   ->setEnabled( files_created_selected_count > 0 && files_compatible );
+   pb_save_created       ->setEnabled( files_created_selected_not_saved_count > 0 );
+
+   pb_show_created       ->setEnabled( files_created_selected_not_shown_count > 0 );
+   pb_show_only_created  ->setEnabled( files_created_selected_count > 0 &&
+                                       files_selected_not_created > 0 );
+
+   pb_select_vis       ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase() 
+                                    );
+   pb_remove_vis       ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase() 
+                                    );
+   pb_crop_common      ->setEnabled( files_selected_count && files_compatible );
+
+   pb_crop_vis         ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
+                                    );
+   pb_crop_zero         ->setEnabled( 
+                                    files_selected_count
+                                    );
+   pb_crop_left        ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
+                                    );
+   pb_crop_undo        ->setEnabled( crop_undos.size() );
+   pb_crop_right       ->setEnabled( 
+                                    files_selected_count &&
+                                    plot_dist_zoomer && 
+                                    plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
+                                    );
+   pb_legend           ->setEnabled( lb_files->numRows() && files_selected_count <= 20 );
+   pb_axis_x           ->setEnabled( lb_files->numRows() );
+   pb_axis_y           ->setEnabled( lb_files->numRows() );
+   // cb_guinier          ->setEnabled( files_selected_count );
+   legend_set();
+
+   pb_stack_push_all   ->setEnabled( lb_files->numRows() );
+   pb_stack_push_sel   ->setEnabled( files_selected_count );
+   pb_stack_pcopy      ->setEnabled( files_selected_count  && clipboard.files.size() );
+   pb_stack_copy       ->setEnabled( files_selected_count );
+   pb_stack_paste      ->setEnabled( clipboard.files.size() );
+   pb_stack_drop       ->setEnabled( stack_data.size() );
+   pb_stack_join       ->setEnabled( stack_data.size() );
+   pb_stack_rot_up     ->setEnabled( stack_data.size() > 1 );
+   pb_stack_rot_down   ->setEnabled( stack_data.size() > 1 );
+   pb_stack_swap       ->setEnabled( stack_data.size() );
+
+   if ( files_selected_count == 2 && files_compatible )
+   {
+      pb_errors           ->setEnabled( true );
+   } else {
+      pb_errors           ->setEnabled( false );
+      hide_widgets( plot_errors_widgets, true );
+   }
+
+   pb_save_state       ->setEnabled( ( lb_files->numRows() || stack_data.size() ) && !files_created_selected_not_saved_count );
+
+   pb_p3d              ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
+
+   {
+      QString title;
+      if ( !files_compatible )
+      {
+         title = tr( "q [1/Angstrom] or Time [a.u.]" );
+      } else {
+         if ( type_files( selected_files ) )
+         {
+            title = tr( "Time [a.u.]" );
+         } else {
+            title = tr( "q [1/Angstrom]" );
+         }
+      }
+      if ( axis_x_log )
+      {
+         plot_dist->setAxisTitle(QwtPlot::xBottom,  title + tr(" (log scale)") );
+      } else {
+         plot_dist->setAxisTitle(QwtPlot::xBottom,  title );
+      }
+   }
+   {
+      QString title;
+      if ( !files_compatible )
+      {
+         title = tr( "Intensity [a.u.]" );
+      } else {
+         if ( type_files( selected_files ) )
+         {
+            title = tr( "I(t) [a.u.]" );
+         } else {
+            title = tr( "I(q) [a.u.]" );
+         }
+      }
+
+      if ( axis_y_log )
+      {
+         plot_dist->setAxisTitle(QwtPlot::yLeft, title + tr( " (log scale)") );
+      } else {
+         plot_dist->setAxisTitle(QwtPlot::yLeft, title );
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::axis_y()
+{
+   QStringList selected_files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         selected_files << lb_files->text( i );
+      }
+   }
+
+   bool files_compatible = compatible_files( selected_files );
+   QString title;
+   if ( !files_compatible )
+   {
+      title = tr( "Intensity [a.u.]" );
+   } else {
+      if ( type_files( selected_files ) )
+      {
+         title = tr( "I(t) [a.u.]" );
+      } else {
+         title = tr( "I(q) [a.u.]" );
+      }
+   }
+
+   axis_y_log = !axis_y_log;
+
+   if ( axis_y_log )
+   {
+      plot_dist->setAxisTitle(QwtPlot::yLeft, title + tr( " (log scale)") );
+#ifndef QT4
+      plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
+#else
+      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+#endif
+   } else {
+      plot_dist->setAxisTitle(QwtPlot::yLeft, title );
+#ifndef QT4
+      plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
+#else
+      // actually need to test this, not sure what the correct version is
+      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
+#endif
+   }
+   if ( plot_dist_zoomer )
+   {
+      plot_dist_zoomer->zoom ( 0 );
+      delete plot_dist_zoomer;
+      plot_dist_zoomer = (ScrollZoomer *) 0;
+   }
+   plot_files();
+   plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc::axis_x()
+{
+   QStringList selected_files;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         selected_files << lb_files->text( i );
+      }
+   }
+
+   bool files_compatible = compatible_files( selected_files );
+   QString title;
+   if ( !files_compatible )
+   {
+      title = tr( "q [1/Angstrom] or Time [a.u.]" );
+   } else {
+      if ( type_files( selected_files ) )
+      {
+         title = tr( "Time [a.u.]" );
+      } else {
+         title = tr( "q [1/Angstrom]" );
+      }
+   }
+
+   axis_x_log = !axis_x_log;
+   if ( axis_x_log )
+   {
+      plot_dist->setAxisTitle(QwtPlot::xBottom,  title + tr(" (log scale)") );
+#ifndef QT4
+      plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
+#else
+      plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
+#endif
+   } else {
+      plot_dist->setAxisTitle(QwtPlot::xBottom,  title );
+#ifndef QT4
+      plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
+#else
+      // actually need to test this, not sure what the correct version is
+      plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtScaleEngine );
+#endif
+   }
+   plot_dist->replot();
 }

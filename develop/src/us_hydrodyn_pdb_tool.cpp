@@ -1928,6 +1928,8 @@ void US_Hydrodyn_Pdb_Tool::visualize( QListView *lv )
          t << qsl[ i ];
          t << "color red\n";
       }
+      t << "background white\n";
+      t << "select all\n";
       f_spt.close();
    }
 
@@ -4793,13 +4795,13 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
             if ( chainrestartatom )
             {
                atomno = startatom;
+               last_chain_id   = chain_id;
             }
             if ( chainrestartresidue )
             {
                residueno = startresidue;
+               last_residue_id = residue_id;
             }
-            last_chain_id   = chain_id;
-            last_residue_id = residue_id;
          }
          if ( !usechainlist.length() || use_chain_map.count( chain_id ) )
          {

@@ -21,7 +21,6 @@ US_Hydrodyn_Saxs_Hplc_Bl::US_Hydrodyn_Saxs_Hplc_Bl(
    global_Ypos += 30;
 
    setGeometry( global_Xpos, global_Ypos, 0, 0 );
-   update_enables();
 }
 
 US_Hydrodyn_Saxs_Hplc_Bl::~US_Hydrodyn_Saxs_Hplc_Bl()
