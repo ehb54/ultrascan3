@@ -229,12 +229,12 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    pb_options      ->setMinimumWidth( csv_width / 6 );
    pb_cancel       ->setMinimumWidth( csv_width / 3 );
 
-#if defined( JAC_VERSION )
-   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
-   {
-      pb_help         ->setMinimumWidth( csv_width / 3 );
-   }
-#endif
+   // #if defined( JAC_VERSION )
+   //    if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   //    {
+   //       pb_help         ->setMinimumWidth( csv_width / 3 );
+   //    }
+   // #endif
 
    setGeometry(global_Xpos, global_Ypos, csv_width, 100 + csv_height );
    // pb_set_conc_file->setMaximumWidth ( pb_select_all->width() + 10 );
