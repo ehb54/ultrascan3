@@ -32,8 +32,74 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    lbl_title =  new QLabel      ( tr( "US-SOMO: SAXS HPLC : Options" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
-   lbl_title -> setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_title -> setPalette      (QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
+
+   lbl_baseline = new QLabel ( tr( "Baseline removal" ), this);
+   lbl_baseline->setAlignment( Qt::AlignCenter | Qt::AlignVCenter);
+   lbl_baseline->setPalette  ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
+   lbl_baseline->setFont     ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   rb_linear = new QRadioButton( tr("Linear baseline removal"), this);
+   rb_linear->setEnabled(true);
+   rb_linear->setChecked( parameters->count( "hplc_bl_linear" ) && (*parameters)[ "hplc_bl_linear" ] == "true" );
+   rb_linear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_linear->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( rb_linear, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   rb_integral = new QRadioButton( tr("Integral of I(t) baseline removal"), this);
+   rb_integral->setEnabled(true);
+   rb_integral->setChecked( parameters->count( "hplc_bl_integral" ) && (*parameters)[ "hplc_bl_integral" ] == "true" );
+   rb_integral->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_integral->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( rb_integral, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   bg_bl_type = new QButtonGroup(1, Qt::Horizontal, 0);
+   bg_bl_type->setRadioButtonExclusive(true);
+   bg_bl_type->insert( rb_linear );
+   bg_bl_type->insert( rb_integral );
+   // connect( bg_bl_type, SIGNAL( clicked( int id ) ), SLOT( update_enables() ) );
+
+   cb_save_bl = new QCheckBox(this);
+   cb_save_bl->setText( tr( "Produce separate baseline curves " ) );
+   cb_save_bl->setEnabled( true );
+   cb_save_bl->setChecked( parameters->count( "hplc_bl_save" ) && (*parameters)[ "hplc_bl_save" ] == "true" );
+   cb_save_bl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_save_bl->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   lbl_smooth =  new QLabel      ( tr( "Smoothing:" ), this );
+   lbl_smooth -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_smooth -> setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_smooth -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_smooth = new QLineEdit(this, "le_smooth Line Edit");
+   le_smooth->setText( parameters->count( "hplc_bl_smooth" ) ? (*parameters)[ "hplc_bl_smooth" ] : "10" );
+   le_smooth->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_smooth->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QIntValidator *qdv = new QIntValidator( 0, 99, le_smooth );
+      le_smooth->setValidator( qdv );
+   }
+   connect( le_smooth, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_smooth->setMinimumWidth( 60 );
+
+   lbl_reps =  new QLabel      ( tr( "Maximum iterations:" ), this );
+   lbl_reps -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_reps -> setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_reps -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_reps = new QLineEdit(this, "le_reps Line Edit");
+   le_reps->setText( parameters->count( "hplc_bl_reps" ) ? (*parameters)[ "hplc_bl_reps" ] : "1" );
+   le_reps->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_reps->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_reps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QIntValidator *qdv = new QIntValidator( 1, 20, le_reps );
+      le_reps->setValidator( qdv );
+   }
+   connect( le_reps, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_reps->setMinimumWidth( 60 );
 
    lbl_gaussian_type = new QLabel ( tr( "Gaussian Mode" ), this);
    lbl_gaussian_type->setAlignment( Qt::AlignCenter | Qt::AlignVCenter);
@@ -99,6 +165,22 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 
    QVBoxLayout *background = new QVBoxLayout( this );
    background->addWidget( lbl_title );
+
+   background->addWidget( lbl_baseline );
+
+   background->addWidget( rb_linear );
+   background->addWidget( rb_integral );
+
+   QGridLayout *gl_bl = new QGridLayout( 0 );
+
+   gl_bl->addWidget         ( lbl_smooth , 0, 0 );
+   gl_bl->addWidget         ( le_smooth  , 0, 1 );
+   gl_bl->addWidget         ( lbl_reps   , 1, 0 );
+   gl_bl->addWidget         ( le_reps    , 1, 1 );
+
+   background->addLayout( gl_bl );
+   background->addWidget( cb_save_bl );
+
    background->addWidget( lbl_gaussian_type );
    background->addWidget( rb_gauss );
    background->addWidget( rb_gmg );
@@ -135,6 +217,15 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    hbl_bottom->addWidget ( pb_ok );
 
    background->addLayout ( hbl_bottom );
+
+   if ( !parameters->count( "expert_mode" ) )
+   {
+      lbl_gaussian_type->hide();
+      rb_gauss         ->hide();
+      rb_gmg           ->hide();
+      rb_emg           ->hide();
+      rb_emggmg        ->hide();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc_Options::quit()
@@ -144,6 +235,14 @@ void US_Hydrodyn_Saxs_Hplc_Options::quit()
 
 void US_Hydrodyn_Saxs_Hplc_Options::ok()
 {
+   (*parameters)[ "ok" ] = "true";
+
+   (*parameters)[ "hplc_bl_linear"   ]   = rb_linear  ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_bl_integral" ]   = rb_integral->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_bl_save"     ]   = cb_save_bl ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_bl_smooth"   ]   = le_smooth  ->text();
+   (*parameters)[ "hplc_bl_reps"     ]   = le_reps    ->text();
+
    if ( rb_gauss->isChecked() )
    {
       (*parameters)[ "gaussian_type" ] = QString( "%1" ).arg( US_Hydrodyn_Saxs_Hplc::GAUSS );
@@ -162,6 +261,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    }
 
    (*parameters)[ "hplc_csv_transposed" ] = cb_csv_transposed->isChecked() ? "true" : "false";
+   
    close();
 }
 
@@ -178,5 +278,12 @@ void US_Hydrodyn_Saxs_Hplc_Options::closeEvent( QCloseEvent *e )
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Options::update_enables()
+{
+   le_smooth ->setEnabled( rb_integral->isChecked() );
+   le_reps   ->setEnabled( rb_integral->isChecked() );
+   cb_save_bl->setEnabled( rb_integral->isChecked() );
 }
 

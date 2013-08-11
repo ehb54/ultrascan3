@@ -37,6 +37,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Nth : public QDialog
       QListBox *                              lb_files_sel;
       QLabel *                                lbl_files_selected;
 
+      QLabel *                                lbl_select_nth;
+
       QLabel *                                lbl_n;
       QLineEdit *                             le_n;
 
@@ -48,17 +50,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Nth : public QDialog
       QLineEdit *                             le_end;
       QLabel *                                lbl_end_name;
 
-   //       QLabel *                                lbl_starts_with;
-   //       QLineEdit *                             le_starts_with;
+      QPushButton *                           pb_nth_only;
+      QPushButton *                           pb_nth_add;
 
-   //       QLabel *                                lbl_contains;
-   //       QLineEdit *                             le_contains;
+      QLabel *                                lbl_contain;
 
-   //       QLabel *                                lbl_ends_with;
-   //       QLineEdit *                             le_ends_with;
+   // QLabel *                                lbl_starts_with;
+   // QLineEdit *                             le_starts_with;
 
-      QPushButton *                           pb_select_only;
-      QPushButton *                           pb_select_add;
+      QLabel *                                lbl_contains;
+      QLineEdit *                             le_contains;
+
+   // QLabel *                                lbl_ends_with;
+   // QLineEdit *                             le_ends_with;
+
+      QPushButton *                           pb_contains_only;
+      QPushButton *                           pb_contains_add;
 
       QPushButton *                           pb_help;
       QPushButton *                           pb_quit;
@@ -71,8 +78,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Nth : public QDialog
 
    private slots:
 
-      void                                    select_only();
-      void                                    select_add();
+      void                                    nth_only();
+      void                                    nth_add();
+
+      void                                    contains_only();
+      void                                    contains_add();
+
       void                                    update_files_selected();
 
       void                                    go();

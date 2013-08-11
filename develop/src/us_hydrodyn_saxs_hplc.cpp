@@ -4,7 +4,6 @@
 #include "../include/us_hydrodyn_saxs_hplc_ciq.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
-#include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include "../include/us_lm.h"
 #ifdef QT4
 #include <qwt_scale_engine.h>
@@ -53,6 +52,34 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    gaussian_type = GAUSS;
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
 #endif
+
+   // fix up possible unconfigured or bad configuration
+
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_linear" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear" ] = "true";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_integral" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] = "false";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_save" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save" ] = "false";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_smooth" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ] = "10";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_reps" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps" ] = "1";
+   }
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear" ] == "true" &&
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] == "true" )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] = "false";
+   }
 
    gaussian_type = 
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gaussian_type" ) ?
@@ -1522,12 +1549,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    }
    pb_conc_avg->hide();
 
-#if defined( JAC_VERSION )
-   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
-   {
-      pb_options->hide();
-   }
-#endif
+   // #if defined( JAC_VERSION )
+   // if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   // {
+   //   pb_options->hide();
+   // }
+   // #endif
 
    QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
@@ -10159,49 +10186,3 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_mode()
    pb_gauss_start->setMaximumWidth( percharwidth * ( pb_gauss_start->text().length() + 3 ) );
 }
 
-void US_Hydrodyn_Saxs_Hplc::options()
-{
-   map < QString, QString > parameters;
-   
-   parameters[ "hplc_csv_transposed" ] = 
-      (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) ?
-      (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] : "false";
-   
-   parameters[ "gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
-   US_Hydrodyn_Saxs_Hplc_Options *sho = 
-      new US_Hydrodyn_Saxs_Hplc_Options( & parameters, this );
-   US_Hydrodyn::fixWinButtons( sho );
-   sho->exec();
-   delete sho;
-   // maybe ask (warn) here if gaussian data structures have data
-
-   if ( gaussian_type != (gaussian_types)( parameters[ "gaussian_type" ].toInt() ) )
-   {
-      gaussian_type = (gaussian_types)( parameters[ "gaussian_type" ].toInt() );
-      unified_ggaussian_ok = false;
-      f_gaussians.clear();
-      gaussians.clear();
-      org_gaussians.clear();
-      org_f_gaussians.clear();
-      update_gauss_mode();
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
-   }
-
-   (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] = parameters[ "hplc_csv_transposed" ];
-
-   pb_save_created_csv->setText( (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] == "true" ?
-                                 tr( "Save CSV Tr" ) : tr( " Save CSV " ) );
-
-   if ( gaussian_type != (gaussian_types)( parameters[ "hplc_csv_transposed" ].toInt() ) )
-   {
-      gaussian_type = (gaussian_types)( parameters[ "gaussian_type" ].toInt() );
-      unified_ggaussian_ok = false;
-      f_gaussians.clear();
-      gaussians.clear();
-      org_gaussians.clear();
-      org_f_gaussians.clear();
-      update_gauss_mode();
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
-   }
-   update_enables();
-}

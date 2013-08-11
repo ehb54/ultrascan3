@@ -1,13 +1,13 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
-#include "../include/us_hydrodyn_saxs_hplc_bl.h"
 #include "../include/us_hydrodyn_saxs_hplc_ciq.h"
 #include "../include/us_hydrodyn_saxs_hplc_dctr.h"
 #include "../include/us_hydrodyn_saxs_hplc_p3d.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_hydrodyn_saxs_hplc_nth.h"
+#include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include "../include/us_lm.h"
 #ifdef QT4
 #include <qwt_scale_engine.h>
@@ -1905,44 +1905,19 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
 
 void US_Hydrodyn_Saxs_Hplc::baseline_apply()
 {
-   map < QString, QString > parameters;
-   US_Hydrodyn_Saxs_Hplc_Bl *hplc_bl = 
-      new US_Hydrodyn_Saxs_Hplc_Bl(
-                                   this,
-                                   & parameters,
-                                   this );
-   US_Hydrodyn::fixWinButtons( hplc_bl );
-   hplc_bl->exec();
-   delete hplc_bl;
-
-   if ( !parameters.count( "go" ) )
-   {
-      return;
-   }
-
    int smoothing = 0;
-   bool integral = parameters.count( "integral" );
-   if ( integral && parameters.count( "smoothing" ) )
+   bool integral = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] == "true";
+   if ( integral )
    {
-      smoothing = parameters[ "smoothing" ].toInt();
+      smoothing = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ].toInt();
    }
-   bool save_bl = parameters.count( "save_bl" );
+   bool save_bl = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save" ] == "true";
    unsigned int reps = 0;
-   if ( integral && parameters.count( "reps" ) )
+   if ( integral )
    {
-      reps = parameters[ "reps" ].toInt();
+      reps = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps" ].toInt();
    }
    
-   //    QStringList files;
-   //    for ( int i = 0; i < lb_files->numRows(); i++ )
-   //    {
-   //       if ( lb_files->isSelected( i ) && 
-   //            lb_files->text( i ) != lbl_hplc->text() &&
-   //            lb_files->text( i ) != lbl_empty->text() )
-   //       {
-   //          files << lb_files->text( i );
-   //       }
-   //    }
    baseline_apply( all_selected_files(), integral, smoothing, save_bl, reps );
 }
 
@@ -2291,6 +2266,11 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
 void US_Hydrodyn_Saxs_Hplc::select_nth()
 {
    map < QString, QString > parameters;
+
+   parameters[ "hplc_nth_contains"   ] = 
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_nth_contains" ) ?
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_nth_contains" ] : "";
+
    US_Hydrodyn_Saxs_Hplc_Nth *hplc_nth = 
       new US_Hydrodyn_Saxs_Hplc_Nth(
                                    this,
@@ -2304,6 +2284,9 @@ void US_Hydrodyn_Saxs_Hplc::select_nth()
    {
       return;
    }
+
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_nth_contains" ] =
+      parameters.count( "hplc_nth_contains" ) ? parameters[ "hplc_nth_contains" ] : "";
 
    disable_updates = true;
    lb_files->clearSelection();
@@ -2674,4 +2657,74 @@ void US_Hydrodyn_Saxs_Hplc::axis_x()
 #endif
    }
    plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc::options()
+{
+   map < QString, QString > parameters;
+
+   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   {
+      parameters[ "expert_mode" ] = "true";
+   }
+   
+   parameters[ "hplc_bl_linear"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear"   ];
+   parameters[ "hplc_bl_integral" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ];
+   parameters[ "hplc_bl_save"     ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save"     ];
+   parameters[ "hplc_bl_smooth"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"   ];
+   parameters[ "hplc_bl_reps"     ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"     ];
+
+   parameters[ "hplc_csv_transposed" ] = 
+      (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) ?
+      (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] : "false";
+   
+   parameters[ "gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
+   US_Hydrodyn_Saxs_Hplc_Options *sho = 
+      new US_Hydrodyn_Saxs_Hplc_Options( & parameters, this );
+   US_Hydrodyn::fixWinButtons( sho );
+   sho->exec();
+   delete sho;
+
+   if ( !parameters.count( "ok" ) )
+   {
+      return;
+   }
+
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear"   ] = parameters[ "hplc_bl_linear"   ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] = parameters[ "hplc_bl_integral" ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save"     ] = parameters[ "hplc_bl_save"     ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"   ] = parameters[ "hplc_bl_smooth"   ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"     ] = parameters[ "hplc_bl_reps"     ];
+
+   // maybe ask (warn) here if gaussian data structures have data
+
+   if ( gaussian_type != (gaussian_types)( parameters[ "gaussian_type" ].toInt() ) )
+   {
+      gaussian_type = (gaussian_types)( parameters[ "gaussian_type" ].toInt() );
+      unified_ggaussian_ok = false;
+      f_gaussians.clear();
+      gaussians.clear();
+      org_gaussians.clear();
+      org_f_gaussians.clear();
+      update_gauss_mode();
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
+   }
+
+   (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] = parameters[ "hplc_csv_transposed" ];
+
+   pb_save_created_csv->setText( (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ] == "true" ?
+                                 tr( "Save CSV Tr" ) : tr( " Save CSV " ) );
+
+   if ( gaussian_type != (gaussian_types)( parameters[ "hplc_csv_transposed" ].toInt() ) )
+   {
+      gaussian_type = (gaussian_types)( parameters[ "gaussian_type" ].toInt() );
+      unified_ggaussian_ok = false;
+      f_gaussians.clear();
+      gaussians.clear();
+      org_gaussians.clear();
+      org_f_gaussians.clear();
+      update_gauss_mode();
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
+   }
+   update_enables();
 }

@@ -33,32 +33,49 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
 # endif
 #endif
 
-      US_Config    * USglobal;
+      US_Config *                             USglobal;
 
-      QLabel       * lbl_title;
+      QLabel *                                lbl_title;
 
-      QLabel       * lbl_gaussian_type;
+      QLabel *                                lbl_baseline;
 
-      QButtonGroup * bg_gaussian_type;
-      QRadioButton * rb_gauss;
-      QRadioButton * rb_gmg;
-      QRadioButton * rb_emg;
-      QRadioButton * rb_emggmg;
+      QButtonGroup *                          bg_bl_type;
+
+      QRadioButton *                          rb_linear;
+      QRadioButton *                          rb_integral;
+
+      QLabel *                                lbl_smooth;
+      QLineEdit *                             le_smooth;
+
+      QLabel *                                lbl_reps;
+      QLineEdit *                             le_reps;
+
+      QCheckBox *                             cb_save_bl;
+
+      QLabel *                                lbl_gaussian_type;
+
+      QButtonGroup *                          bg_gaussian_type;
+      QRadioButton *                          rb_gauss;
+      QRadioButton *                          rb_gmg;
+      QRadioButton *                          rb_emg;
+      QRadioButton *                          rb_emggmg;
       
-      QLabel       * lbl_other_options;
-      QCheckBox    * cb_csv_transposed;
+      QLabel       *                          lbl_other_options;
+      QCheckBox    *                          cb_csv_transposed;
 
-      QPushButton  * pb_quit;
-      QPushButton  * pb_help;
-      QPushButton  * pb_ok;
+      QPushButton  *                          pb_quit;
+      QPushButton  *                          pb_help;
+      QPushButton  *                          pb_ok;
 
-      void           setupGUI();
+      void                                    setupGUI();
 
    private slots:
 
-      void quit();
-      void help();
-      void ok();
+      void                                    quit();
+      void                                    help();
+      void                                    ok();
+
+      void                                    update_enables();
 
    protected slots:
 
