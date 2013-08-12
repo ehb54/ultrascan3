@@ -5,22 +5,6 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 
-#ifdef Q_WS_X11
-extern "C" {
-#include "us_x11_utils.h"
-}
-#endif
-#ifdef Q_WS_MAC
-extern "C" {
-#include "us_x11_utils.h"
-}
-#endif
-#ifdef Q_WS_WIN
-extern "C" {
-#include "us_win_utils.h"
-}
-#endif
-
 //! \brief Main program for US_RasmolControl. Loads translators and starts
 //         the class US_RasmolControl.
 
@@ -38,6 +22,7 @@ US_RasmolControl::US_RasmolControl() : US_Widgets()
    setWindowTitle( tr( "Interface with RasMol Instances" ) );
    setPalette( US_GuiSettings::frameColor() );
    dbg_level = US_Settings::us_debug();
+   winmsgs   = new US_WindowMessage( );
 
    // Main layout
    QGridLayout* mainLayout   = new QGridLayout( this );
@@ -45,44 +30,65 @@ US_RasmolControl::US_RasmolControl() : US_Widgets()
    mainLayout->setContentsMargins ( 2, 2, 2, 2 );
 
    // Lay out the controls
-   pb_listints        = us_pushbutton( tr( "List Interps" ) );
-   pb_close           = us_pushbutton( tr( "Close" ) );
-   QLabel* lb_results = us_label( tr( "Command Results:" ) );
-   
-   te_status          = us_textedit();
-   us_setReadOnly( te_status, true );
-
    QLabel* lb_intname = us_label( tr( "Interp Name:" ) );
    cb_intname         = us_comboBox();
    cb_intname->addItem( "rasmol-pdb" );
    cb_intname->addItem( "rasmol-bead" );
    cb_intname->addItem( "(other)" );
 
-   pb_sendcmd         = us_pushbutton( tr( "Exec Send Command" ) );
-   le_sendcmd         = us_lineedit( "set background yellow", -1, false );
+   pb_sendcmd         = us_pushbutton( tr( "Send Command:" ) );
+   le_sendcmd         = us_lineedit( "reset", -1, false );
+   QLabel* lb_commcmd = us_label( tr( "Send Common Command:" ) );
+   cb_commcmd         = us_comboBox();
+   cb_commcmd->addItem( "reset" );
+   cb_commcmd->addItem( "background black" );
+   cb_commcmd->addItem( "wireframe on" );
+   cb_commcmd->addItem( "wireframe off" );
+   cb_commcmd->addItem( "backbone on" );
+   cb_commcmd->addItem( "backbone off" );
+   cb_commcmd->addItem( "spacefill on" );
+   cb_commcmd->addItem( "spacefill off" );
+   cb_commcmd->addItem( "ribbons on" );
+   cb_commcmd->addItem( "ribbons off" );
+   cb_commcmd->addItem( "strands on" );
+   cb_commcmd->addItem( "strands off" );
+   cb_commcmd->addItem( "cartoons on" );
+   cb_commcmd->addItem( "cartoons off" );
+   cb_commcmd->addItem( "set shadow on" );
+   cb_commcmd->addItem( "set shadow off" );
 
-   pb_genlcmd         = us_pushbutton( tr( "Exec General Command" ) );
-   le_genlcmd         = us_lineedit( "winfo interps", -1, false );
+   QLabel* lb_results = us_label( tr( "Command Results:" ) );
+   te_status          = us_textedit();
+   us_setReadOnly( te_status, true );
 
-   connect( pb_listints, SIGNAL( clicked() ), SLOT( list_interps()    ) );
-   connect( pb_close,    SIGNAL( clicked() ), SLOT( close()           ) );
-   connect( pb_sendcmd,  SIGNAL( clicked() ), SLOT( send_command()    ) );
-   connect( pb_genlcmd,  SIGNAL( clicked() ), SLOT( general_command() ) );
+   pb_listints        = us_pushbutton( tr( "List Interps" ) );
+   pb_close           = us_pushbutton( tr( "Close" ) );
+   
+   connect( cb_commcmd,  SIGNAL( activated     ( const QString& ) ),
+            this,        SLOT(   choose_command( const QString& ) ) );
+   connect( pb_sendcmd,  SIGNAL( clicked()      ),
+            this,        SLOT  ( send_command() ) );
+   connect( pb_listints, SIGNAL( clicked()      ),
+            this,        SLOT  ( list_interps() ) );
+   connect( pb_close,    SIGNAL( clicked()      ),
+            this,        SLOT  ( close()        ) );
 
    // Do detailed layout of the controls
    int row = 0;
-   mainLayout->addWidget( pb_listints,  row,    0, 1,  2 );
-   mainLayout->addWidget( pb_close,     row++,  2, 1,  2 );
-   mainLayout->addWidget( lb_results,   row++,  0, 1,  4 );
-   mainLayout->addWidget( te_status,    row++,  0, 1,  4 );
    mainLayout->addWidget( lb_intname,   row,    0, 1,  2 );
    mainLayout->addWidget( cb_intname,   row++,  2, 1,  2 );
-   mainLayout->addWidget( pb_sendcmd,   row,    0, 1,  2 );
-   mainLayout->addWidget( le_sendcmd,   row++,  2, 1,  2 );
-   mainLayout->addWidget( pb_genlcmd,   row,    0, 1,  2 );
-   mainLayout->addWidget( le_genlcmd,   row++,  2, 1,  2 );
+   mainLayout->addWidget( lb_commcmd,   row,    0, 1,  2 );
+   mainLayout->addWidget( cb_commcmd,   row++,  2, 1,  2 );
+   mainLayout->addWidget( pb_sendcmd,   row,    0, 1,  1 );
+   mainLayout->addWidget( le_sendcmd,   row++,  1, 1,  3 );
+   mainLayout->addWidget( lb_results,   row++,  0, 1,  4 );
+   mainLayout->addWidget( te_status,    row++,  0, 1,  4 );
+   mainLayout->addWidget( pb_listints,  row,    0, 1,  2 );
+   mainLayout->addWidget( pb_close,     row++,  2, 1,  2 );
 
-   resize( 400, 200 );
+   resize( 400, 300 );
+
+   list_interps();               // Get the initial list of live interpreters
 }
 
 // Execute a Send command
@@ -92,80 +98,82 @@ void US_RasmolControl::send_command( void )
    QString     iname  = cb_intname->currentText();
 DbgLv(1) << "SCMD: command" << scmnd << "iname" << iname;
 
-   SendCommand( iname.toAscii().data(), scmnd.toAscii().data() );
+#if 1
+   int errcd = winmsgs->sendMessage( iname, scmnd );
 
-   return;
+   te_status->setPlainText( errcd == 0 ?
+      tr( "Successful Send to \"%1\"\n  of command \"%2\"." )
+      .arg( iname ).arg( scmnd ) :
+      winmsgs->lastSendResult() );
+#endif
+#if 0
+   QString resp = winmsgs->sendQuery( iname, scmnd );
+   te_status->setPlainText( resp );
+#endif
 }
 
-// Execute a General command
-void US_RasmolControl::general_command( void )
+// Execute a chosen Send command
+void US_RasmolControl::choose_command( const QString& scmnd )
 {
-   QString     gcmnd  = le_genlcmd->text();
-DbgLv(1) << "GCMD: command" << gcmnd;
-
-   if ( gcmnd.contains( "winfo interps" ) )
-   {
-DbgLv(1) << "GCMD: call list_interps";
-      list_interps();
-   }
-
-   return;
+DbgLv(1) << "CHCMD: command" << scmnd;
+   le_sendcmd->setText( scmnd );
+   send_command();
 }
-
 
 // Get and list interp names
 void US_RasmolControl::list_interps( void )
 {
-   char nameints[ 512 ];
-   strcpy( nameints, "" );
+   winmsgs   ->findLiveInterps();
+   cb_intname->clear();
 
-   int nchar = ShowInterpNames( nameints, 511 );
-DbgLv(1) << "LSTI: nchar=" << nchar << "names:" << QString(nameints);
+   QList< ulong > w_ids;
+   QStringList    w_inames;
 
-   if ( nchar == 0 )
+   int nids   = winmsgs->interpIDs  ( w_ids );
+   int nnames = winmsgs->interpNames( w_inames );
+
+   if ( nids != nnames )
    {
-      strcpy( nameints, "(none)" );
-      nchar    = (int)strlen( nameints ) + 1;
+      qDebug() << "*ERROR* Number of IDs does not match number of Names"
+         << nids << nnames;
+      return;
    }
 
-   fill_interps( nchar, nameints );
-
-   return;
-}
-
-// Fill command result and interp name list from Interp Names return
-void US_RasmolControl::fill_interps( int nchar, char* inresult )
-{
-   QStringList intress;
-   QStringList intnams;
-   QString     intres;
-   QString     intnam;
-   QString     namtext;
-
-   char* ptr1  = inresult;
-   int   kchar = nchar;
-
-   while ( kchar > 0 )
-   {  // Get individual result strings and individual interp names
-      int   jchar = (int)strlen( ptr1 );   // Get string length
-      if ( jchar == 0 )  break;            // If NULL, we're done
-
-      intres    = QString( ptr1 );         // Result string
-      ptr1     += ( ++jchar );             // Bump to next
-      kchar    -= jchar;                   // Decrement total count
-      intress << intres;                   // Add result to list
-                                           // Get name part of string
-      intnam    = intres.section( " ", 1, -1 ).simplified();
-      intnams << intnam;                   // Add to names list
-
-      namtext  += intres;                  // Add result to status string
-      namtext  += "\n";
+   else if ( nids == 0 )
+   {
+      te_status->setPlainText( QString( "(none)" ) );
+      return;
    }
 
-   // Populate command result list and names combo box
+   QString namtext;
+
+   for ( int ii = 0; ii < nids; ii++ )
+   {
+      if ( ii != 0 )
+         namtext       += "\n";
+
+      QString iname  = w_inames[ ii ];
+      QString ientry = QString().sprintf( "%lx : ", w_ids[ ii ] ) + iname;
+
+      cb_intname->addItem( iname );        // Add name to combo box list
+      namtext       += ientry;             // Add line to status text
+   }
+
+   QStringList zombies;
+   int nzomb  = winmsgs->zombieList( zombies );
+
+   if ( nzomb > 0 )
+   {  // If zombies exist, list them in the status box
+      namtext       += tr( "\n\nZombie Interpreters:" );
+
+      for ( int ii = 0; ii < nzomb; ii++ )
+      {
+         namtext       += "\n" + zombies[ ii ];
+      }
+   }
+
+   // Populate command result list
    te_status->setPlainText( namtext );     // Pure results in status box
 
-   cb_intname->clear();
-   cb_intname->addItems( intnams );        // Names in interps combo box
 }
 

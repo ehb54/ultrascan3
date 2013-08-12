@@ -57,7 +57,8 @@ HEADERS      = \
                us_solution_gui.h        \
                us_table.h               \
                us_widgets.h             \
-               us_widgets_dialog.h
+               us_widgets_dialog.h      \
+               us_window_message.h
 
 SOURCES      = \
                us_abstractrotor_gui.cpp   \
@@ -95,6 +96,21 @@ SOURCES      = \
                us_solution_gui.cpp        \
                us_table.cpp               \
                us_widgets.cpp             \
-               us_widgets_dialog.cpp
+               us_widgets_dialog.cpp      \
+               us_window_message.cpp
 
 RESOURCES     = images.qrc
+
+unix  {
+        HEADERS += us_x11_utils.h
+        SOURCES += us_x11_utils.c
+}
+mac   {
+        HEADERS += us_mac_utils.h
+        SOURCES += us_mac_utils.c
+}
+win32 {
+        HEADERS += us_win_utils.h
+        SOURCES += us_win_utils.c
+}
+
