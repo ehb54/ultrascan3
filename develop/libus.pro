@@ -368,6 +368,7 @@ SOURCES += \
   src/us_spectrum.cpp \
   src/us_stiffbase.cpp \
   src/us_surfracer.cpp \
+  src/us_svd.cpp \
   src/us_tar.cpp \
   src/us_timer.cpp \
   src/us_thread.cpp \
@@ -650,6 +651,7 @@ HEADERS += \
   include/us_spectrum.h \
   include/us_stiffbase.h \
   include/us_surfracer.h \
+  include/us_svd.h \
   include/us_tar.h \
   include/us_timer.h \
   include/us_thread.h \

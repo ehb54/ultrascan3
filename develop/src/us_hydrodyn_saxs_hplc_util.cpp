@@ -9,6 +9,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_nth.h"
 #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include "../include/us_lm.h"
+#include "../include/us_svd.h"
 #ifdef QT4
 #include <qwt_scale_engine.h>
 #endif
@@ -2414,8 +2415,9 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
    pb_add                ->setEnabled( files_selected_count > 1 && files_compatible );
    pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
-   pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
    pb_smooth             ->setEnabled( files_selected_count );
+   pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
+   pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
    pb_conc_file          ->setEnabled( files_selected_count == 1 );
@@ -2728,3 +2730,80 @@ void US_Hydrodyn_Saxs_Hplc::options()
    }
    update_enables();
 }
+
+void US_Hydrodyn_Saxs_Hplc::hide_files()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   {
+      hide_widgets( files_expert_widgets, files_widgets[ 0 ]->isVisible() );
+   }
+   hide_widgets( files_widgets, files_widgets[ 0 ]->isVisible() );
+      
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_files_widgets" ]         = files_widgets        [ 0 ]->isVisible() ? "visible" : "hidden";
+}
+
+void US_Hydrodyn_Saxs_Hplc::hide_created_files()
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   {
+      hide_widgets( created_files_expert_widgets, created_files_widgets[ 0 ]->isVisible() );
+   }
+   hide_widgets( created_files_widgets, created_files_widgets[ 0 ]->isVisible() );
+
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_created_files_widgets" ] = created_files_widgets[ 0 ]->isVisible() ? "visible" : "hidden";
+}
+
+void US_Hydrodyn_Saxs_Hplc::svd()
+{
+   disable_all();
+
+   map < QString, int > selected_files;
+
+   {
+      vector < vector < double > > grids;
+
+      for ( int i = 0; i < lb_files->numRows(); i++ )
+      {
+         if ( lb_files->isSelected( i ) )
+         {
+            QString this_file = lb_files->text( i );
+            if ( f_qs.count( this_file ) &&
+                 f_Is.count( this_file ) &&
+                 f_qs[ this_file ].size() &&
+                 f_Is[ this_file ].size() )
+            {
+               selected_files[ this_file ] = i;
+               grids.push_back( f_qs[ lb_files->text( i ) ] );
+            }
+         }
+      }
+
+      vector < double > v_union = US_Vector::vunion( grids );
+      vector < double > v_int   = US_Vector::intersection( grids );
+
+      bool any_differences = v_union != v_int;
+
+      if ( any_differences )
+      {
+         editor_msg( "red", tr( "SVD: curves must be on the same grid, try 'Crop Common' first." ) );
+         update_enables();
+         return;
+      }
+   }
+   // make matrix
+
+   vector < vector < double > > F;
+
+   F.resize( selected_files.size() );
+
+   for ( int i = 0; i < (int) selected_files.size(); ++i )
+   {
+      F[ i ] = f_Is[ lb_files->text( i ) ];
+   }
+      
+   editor_msg( "gray", tr( "SVD: matrix F created" ) );
+
+   editor_msg( "dark red", tr( "SVD: not implemented." ) );
+   update_enables();
+}
+

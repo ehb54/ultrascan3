@@ -168,7 +168,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QProgressBar  *progress;
 
-      QLabel        *lbl_files;
+      mQLabel       *lbl_files;
       QCheckBox     *cb_lock_dir;
       mQLabel       *lbl_dir;
       QPushButton   *pb_add_files;
@@ -212,6 +212,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_avg;
       QPushButton   *pb_smooth;
       QPushButton   *pb_repeak;
+      QPushButton   *pb_svd;
       QPushButton   *pb_create_i_of_t;
       QPushButton   *pb_create_i_of_q;
 
@@ -440,6 +441,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                                hide_widgets( vector < QWidget *> widgets, bool hide );
 
       vector < QWidget * >                plot_errors_widgets;
+      vector < QWidget * >                files_widgets;
+      vector < QWidget * >                files_expert_widgets;
+      vector < QWidget * >                created_files_widgets;
+      vector < QWidget * >                created_files_expert_widgets;
 
       vector < double >                   conc_curve( vector < double > &t,
                                                       unsigned int peak,
@@ -657,8 +662,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void setupGUI();
 
       void color_rotate();
+      void line_width();
       void dir_pressed();
       void created_dir_pressed();
+
+      void hide_files();
+      void hide_created_files();
 
       void update_enables();
       void update_files();
@@ -682,6 +691,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void add();
       void avg();
       void smooth();
+      void svd();
       void repeak();
       void create_i_of_t();
       void create_i_of_q();
