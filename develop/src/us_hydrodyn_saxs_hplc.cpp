@@ -87,7 +87,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption(tr("US-SOMO: SAXS Hplc"));
+   setCaption(tr("US-SOMO: SAXS HPLC"));
    order_ascending = false;
    conc_widget     = false;
 #ifdef QT4
