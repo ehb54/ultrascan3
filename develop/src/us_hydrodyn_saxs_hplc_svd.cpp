@@ -39,6 +39,7 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
    {
       QString this_name = it->first;
       
+      f_pos      [ this_name ] = f_pos.size();
       f_qs_string[ this_name ] = hplc_win->f_qs_string[ this_name ];
       f_qs       [ this_name ] = hplc_win->f_qs       [ this_name ];
       f_Is       [ this_name ] = hplc_win->f_Is       [ this_name ];
@@ -55,19 +56,15 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    setupGUI();
 
-   puts( "m5" );
    axis_y_log = false;
    axis_x_log = false;
 
-   puts( "m6" );
    update_enables();
-   puts( "m7" );
 
    global_Xpos += 30;
    global_Ypos += 30;
 
    setGeometry(global_Xpos, global_Ypos, 0, 0 );
-   puts( "m8" );
 }
 
 US_Hydrodyn_Saxs_Hplc_Svd::~US_Hydrodyn_Saxs_Hplc_Svd()
@@ -93,11 +90,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    lv_data->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lv_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lv_data->setEnabled(true);
-   lv_data->setMinimumWidth( 175 );
+   // lv_data->setMinimumWidth(  );
 
    lv_data->addColumn( "Source" );
-   lv_data->addColumn( "Type" );
-   lv_data->addColumn( "Curves" );
 
    lv_data->setSorting        ( -1 );
    lv_data->setRootIsDecorated( true );
@@ -119,12 +114,26 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
    data_widgets.push_back( lv_data );
    
-   pb_to_hplc = new QPushButton(tr("Copy selected to HPLC produced data"), this);
+   pb_clear = new QPushButton(tr("Clear"), this);
+   pb_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_clear->setMinimumHeight(minHeight3);
+   pb_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_clear, SIGNAL(clicked()), SLOT(clear()));
+   data_widgets.push_back( pb_clear );
+
+   pb_to_hplc = new QPushButton(tr("To HPLC window"), this);
    pb_to_hplc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_to_hplc->setMinimumHeight(minHeight3);
    pb_to_hplc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_to_hplc, SIGNAL(clicked()), SLOT(to_hplc()));
    data_widgets.push_back( pb_to_hplc );
+
+   pb_replot = new QPushButton(tr("Replot"), this);
+   pb_replot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_replot->setMinimumHeight(minHeight3);
+   pb_replot->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_replot, SIGNAL(clicked()), SLOT(replot()));
+   data_widgets.push_back( pb_replot );
 
    // ------ editor section 
 
@@ -200,15 +209,16 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    plot_data->setMargin(USglobal->config_list.margin);
    plot_data->setTitle("");
 #ifndef QT4
-   plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
+   plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
-   plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+   plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
 #endif
    plot_data->setCanvasBackground(USglobal->global_colors.plot);
 
    // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
 
-   pb_iq_it = new QPushButton( tr("I(q)/I(t) toggle"), this);
+   iq_it_state = false;
+   pb_iq_it = new QPushButton( tr("Show I(t)"), this);
    pb_iq_it->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_iq_it->setMinimumHeight(minHeight1);
    pb_iq_it->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -288,22 +298,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect( le_t_end, SIGNAL( textChanged( const QString & ) ), SLOT( t_end_text( const QString & ) ) );
    process_widgets.push_back( le_t_end );
 
-   lbl_ev_count = new QLabel( tr( "Number of Eigenvalues to use for reconstruction:" ), this );
-   lbl_ev_count->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_ev_count->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_ev_count->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   process_widgets.push_back( lbl_ev_count );
-
-   le_ev_count = new mQLineEdit(this, "le_ev_count Line Edit");
-   le_ev_count->setText( "" );
-   le_ev_count->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_ev_count->setPalette(QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_ev_count->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   le_ev_count->setEnabled( false );
-   le_ev_count->setValidator( new QIntValidator( 1, 100, le_ev_count ) );
-   connect( le_ev_count, SIGNAL( textChanged( const QString & ) ), SLOT( ev_count_text( const QString & ) ) );
-   process_widgets.push_back( le_ev_count );
-
    lbl_ev = new QLabel( tr( "Eigenvalue list:" ), this );
    lbl_ev->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_ev->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -314,7 +308,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    lb_ev->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lb_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lb_ev->setEnabled(true);
-   lb_ev->setSelectionMode( QListBox::Single );
+   lb_ev->setSelectionMode( QListBox::Multi );
    lb_ev->setColumnMode   ( QListBox::FitToWidth );
    connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( ev_selection_changed() ) );
    process_widgets.push_back( lb_ev );
@@ -357,7 +351,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
 
    QVBoxLayout *background = new QVBoxLayout(this);
-   QHBoxLayout *top        = new QHBoxLayout(this);
+   QHBoxLayout *top        = new QHBoxLayout( 0 );
 
    // ----- left side
    {
@@ -367,28 +361,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
       {
          QBoxLayout *bl_buttons = new QHBoxLayout( 0 );
+         bl_buttons->addWidget( pb_clear );
          bl_buttons->addWidget( pb_to_hplc );
-         bl->addLayout( bl_buttons );
-      }
-
-      bl->addWidget( lbl_editor );
-      bl->addWidget( frame );
-      bl->addWidget( editor );
-
-      top->addLayout ( bl );
-   }      
-
-
-   // ----- right side
-   {
-      QBoxLayout *bl = new QVBoxLayout( 0 );
-      bl->addWidget( plot_data );
-
-      {
-         QBoxLayout *bl_buttons = new QHBoxLayout( 0 );
-         bl_buttons->addWidget( pb_iq_it );
-         bl_buttons->addWidget( pb_axis_x );
-         bl_buttons->addWidget( pb_axis_y );
+         bl_buttons->addWidget( pb_replot );
          bl->addLayout( bl_buttons );
       }
 
@@ -404,14 +379,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
          gl->addWidget( le_t_start   , 1, 1 );
          gl->addWidget( le_t_end     , 1, 2 );
 
-         gl->addWidget( lbl_ev_count , 2, 0 );
-         gl->addMultiCellWidget( le_ev_count  , 2, 2, 1, 2 );
-
-         gl->addWidget( lbl_ev       , 3, 0 );
-         gl->addMultiCellWidget( lb_ev        , 3, 3, 1, 2 );
+         // gl->addWidget( lbl_ev       , 3, 0 );
+         // gl->addMultiCellWidget( lb_ev        , 3, 3, 1, 2 );
 
          bl->addLayout( gl );
       }
+      bl->addWidget( lbl_ev );
+      bl->addWidget( lb_ev );
 
       {
          QBoxLayout *bl_buttons = new QHBoxLayout( 0 );
@@ -420,10 +394,29 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
          bl->addLayout( bl_buttons );
       }
 
+      bl->addWidget( lbl_editor );
+      bl->addWidget( frame );
+      bl->addWidget( editor );
+
+      top->addLayout ( bl );
+   }      
+
+   // ----- right side
+   {
+      QBoxLayout *bl = new QVBoxLayout( 0 );
+      bl->addWidget( plot_data );
+
+      {
+         QBoxLayout *bl_buttons = new QHBoxLayout( 0 );
+         bl_buttons->addWidget( pb_iq_it );
+         bl_buttons->addWidget( pb_axis_x );
+         bl_buttons->addWidget( pb_axis_y );
+         bl->addLayout( bl_buttons );
+      }
+
       top->addLayout( bl );
    }
    
-
    background->addLayout( top );
 
    {
@@ -510,7 +503,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::editor_msg( QString color, QString msg )
 
 void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
 {
-#if defined( WORKING )
    // puts( "plot_files" );
    plot_data->clear();
    //bool any_selected = false;
@@ -528,32 +520,20 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
 
    plotted_curves.clear();
 
-   if ( all_selected_files().size() > 20 &&
-#ifndef QT4
-        plot_data->autoLegend() 
-#else
-        legend_vis
-#endif
-        )
-   {
-      legend();
-   }
+   QStringList files = selected_files_list();
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < (int) files.size(); ++i )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( plot_file( files[ i ], file_minx, file_maxx, file_miny, file_maxy ) )
       {
-         //any_selected = true;
-         if ( plot_file( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
+         if ( first )
          {
-            if ( first )
-            {
-               minx = file_minx;
-               maxx = file_maxx;
-               miny = file_miny;
-               maxy = file_maxy;
-               first = false;
-            } else {
+            minx = file_minx;
+            maxx = file_maxx;
+            miny = file_miny;
+            maxy = file_maxy;
+            first = false;
+         } else {
                if ( file_minx < minx )
                {
                   minx = file_minx;
@@ -570,36 +550,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
                {
                   maxy = file_maxy;
                }
-            }
-         }
-      } else {
-         if ( get_min_max( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
-         {
-            if ( first )
-            {
-               minx = file_minx;
-               maxx = file_maxx;
-               miny = file_miny;
-               maxy = file_maxy;
-               first = false;
-            } else {
-               if ( file_minx < minx )
-               {
-                  minx = file_minx;
-               }
-               if ( file_maxx > maxx )
-               {
-                  maxx = file_maxx;
-               }
-               if ( file_miny < miny )
-               {
-                  miny = file_miny;
-               }
-               if ( file_maxy > maxy )
-               {
-                  maxy = file_maxy;
-               }
-            }
          }
       }
    }
@@ -618,11 +568,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
 #ifndef QT4
       plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-      connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
+      connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
    }
    
    plot_data->replot();
-#endif
 }
 
 bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
@@ -631,7 +580,6 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
                                            double &miny,
                                            double &maxy )
 {
-#if defined( WORKING )
    if ( !f_qs_string .count( file ) ||
         !f_qs        .count( file ) ||
         !f_Is        .count( file ) ||
@@ -707,8 +655,6 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
       curve->attach( plot_data );
 #endif
    }
-#endif
-            
    return true;
 }
 
@@ -718,7 +664,6 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_min_max( QString file,
                                              double &miny,
                                              double &maxy )
 {
-#if defined( WORKING )
    if ( 
         !f_Is        .count( file ) ||
         !f_pos       .count( file ) )
@@ -727,8 +672,8 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_min_max( QString file,
       return false;
    }
 
-   minx = f_qs[ 0 ];
-   maxx = f_qs.back();
+   minx = f_qs[ file ][ 0 ];
+   maxx = f_qs[ file ].back();
 
    miny = f_Is[ file ][ 0 ];
    maxy = f_Is[ file ][ 0 ];
@@ -740,8 +685,8 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_min_max( QString file,
       {
          miny = f_Is[ file ][ i ];
          maxy = f_Is[ file ][ i ];
-         minx = f_qs[ i ];
-         maxx = f_qs[ i ];
+         minx = f_qs[ file ][ i ];
+         maxx = f_qs[ file ][ i ];
          i++;
       }
       for ( ; i < f_Is[ file ].size(); i++ )
@@ -773,7 +718,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_min_max( QString file,
          }
       }
    }
-#endif
+
    return true;
 }
 
@@ -789,15 +734,16 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_data_zoomed( const QwtDoubleRect & /* rect 
 void US_Hydrodyn_Saxs_Hplc_Svd::disable_all()
 {
    lv_data    ->setEnabled( false );
+   pb_clear   ->setEnabled( false );
    pb_to_hplc ->setEnabled( false );
+   pb_replot  ->setEnabled( false );
    pb_iq_it   ->setEnabled( false );
-   pb_axis_x  ->setEnabled( false );
-   pb_axis_y  ->setEnabled( false );
+   pb_axis_x  ->setEnabled( true );
+   pb_axis_y  ->setEnabled( true );
    le_q_start ->setEnabled( false );
    le_q_end   ->setEnabled( false );
    le_t_start ->setEnabled( false );
    le_t_end   ->setEnabled( false );
-   le_ev_count->setEnabled( false );
    pb_svd     ->setEnabled( false );
    pb_recon   ->setEnabled( false );
 }
@@ -818,29 +764,34 @@ void US_Hydrodyn_Saxs_Hplc_Svd::t_end_text( const QString & )
 {
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::ev_count_text( const QString & )
-{
-}
-
-int US_Hydrodyn_Saxs_Hplc_Svd::count_selected()
-{
-   return 0;
-}
-
-void US_Hydrodyn_Saxs_Hplc_Svd::clean_selected()
-{
-}
-
 void US_Hydrodyn_Saxs_Hplc_Svd::svd()
 {
 }
 
+void US_Hydrodyn_Saxs_Hplc_Svd::replot()
+{
+   plot_files();
+   update_enables();
+}
+
 void US_Hydrodyn_Saxs_Hplc_Svd::iq_it()
 {
+   iq_it_state = !iq_it_state;
+   pb_iq_it->setText( tr( iq_it_state ? "Show I(q)" : "Show I(t)" ) );
+   axis_x_title();
+   axis_y_title();
+   replot();
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::to_hplc()
 {
+   QStringList files = selected_files_list();
+   
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      cout << files[ i ] << endl;
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::recon()
@@ -849,10 +800,27 @@ void US_Hydrodyn_Saxs_Hplc_Svd::recon()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::axis_x()
 {
+   axis_x_log = !axis_x_log;
+
+   axis_x_title();
+
+   plot_data->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::axis_y()
 {
+   axis_y_log = !axis_y_log;
+
+   axis_y_title();
+
+   if ( plot_data_zoomer )
+   {
+      plot_data_zoomer->zoom ( 0 );
+      delete plot_data_zoomer;
+      plot_data_zoomer = (ScrollZoomer *) 0;
+   }
+   replot();
+   plot_data->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::hide_data()
@@ -896,26 +864,227 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
       return;
    }
 
+   int ev_items = 0;
+   for ( int i = 0; i < (int) lb_ev->count(); ++i )
+   {
+      if ( lb_ev->isSelected( i ) )
+      {
+         ev_items++;
+      }
+   }
+
+   QStringList files = selected_files_list();
+   int sources = selected_sources();
+
    lv_data    ->setEnabled( true );
-   pb_to_hplc ->setEnabled( false );
-   pb_iq_it   ->setEnabled( false );
-   pb_axis_x  ->setEnabled( false );
-   pb_axis_y  ->setEnabled( false );
+   pb_clear   ->setEnabled( true );
+   pb_to_hplc ->setEnabled( files.size() );
+   pb_replot  ->setEnabled( !plotted_matches_selected() );
+   pb_iq_it   ->setEnabled( true );
+   pb_axis_x  ->setEnabled( true );
+   pb_axis_y  ->setEnabled( true );
    le_q_start ->setEnabled( false );
    le_q_end   ->setEnabled( false );
    le_t_start ->setEnabled( false );
    le_t_end   ->setEnabled( false );
-   le_ev_count->setEnabled( false );
-   pb_svd     ->setEnabled( false );
-   pb_recon   ->setEnabled( lb_ev->count() > 0 && le_ev_count->text().toInt() <= (int) lb_ev->count() );
+
+   pb_svd     ->setEnabled( files.size() && !iq_it_state && sources == 1 );
+   pb_recon   ->setEnabled( ev_items );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::data_selection_changed()
 {
+   update_enables();
 }
-
 
 void US_Hydrodyn_Saxs_Hplc_Svd::ev_selection_changed()
 {
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::clear()
+{
+   lv_data->clearSelection();
+   update_enables();
+}
+
+QStringList US_Hydrodyn_Saxs_Hplc_Svd::selected_files_list()
+{
+   QStringList result;
+
+   QString iq_or_it = iq_it_state ? "I(t)" : "I(q)";
+
+   QListViewItemIterator it( lv_data );
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( is_selected( item ) &&
+           item->depth() == 2 &&
+           item->parent()->text( 0 ) == iq_or_it )
+      {
+         result << item->text( 0 );
+      }
+      ++it;
+   }
+   return result;
+}
+
+int US_Hydrodyn_Saxs_Hplc_Svd::selected_sources()
+{
+   QString iq_or_it = iq_it_state ? "I(t)" : "I(q)";
+
+   set < QString > sources;
+
+   QListViewItemIterator it( lv_data );
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( is_selected( item ) &&
+           item->depth() == 2 &&
+           item->parent()->text( 0 ) == iq_or_it )
+      {
+         sources.insert( item->parent()->parent()->text( 0 ) );
+      }
+      ++it;
+   }
+   return (int) sources.size();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::clean_selected()
+{
+   // if a parent is selected, set selected on all children
+   // & if all children are selected, set parents selected
+
+   QListViewItemIterator it( lv_data );
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( !item->isSelected() )
+      {
+         if ( is_selected( item ) || all_children_selected( item ) )
+         {
+            item->setSelected( true );
+         } 
+      }
+      ++it;
+   }
+
+   lv_data->triggerUpdate();
+}
+
+bool US_Hydrodyn_Saxs_Hplc_Svd::all_children_selected( QListViewItem *lvi )
+{
+   if ( lvi->childCount() )
+   {
+      QListViewItem *myChild = lvi->firstChild();
+      while( myChild ) 
+      {
+         if ( myChild->childCount() )
+         {
+            if ( !all_children_selected( myChild ) )
+            {
+               return false;
+            }
+         } else {
+            if ( !is_selected( myChild ) )
+            {
+               return false;
+            }
+         }
+         myChild = myChild->nextSibling();
+      }
+   } else {
+      return lvi->isSelected();
+   }
+
+   return true;
+}
+
+bool US_Hydrodyn_Saxs_Hplc_Svd::is_selected( QListViewItem *lvi )
+{
+   if ( lvi->isSelected() )
+   {
+      return true;
+   }
+   while ( lvi->parent() )
+   {
+      lvi = lvi->parent();
+      if ( lvi->isSelected() )
+      {
+         return true;
+      } 
+   }
+   return false;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::axis_x_title()
+{
+   QString title = tr( iq_it_state ? "Time [a.u.]" : "q [1/Angstrom]" );
+
+   if ( axis_x_log )
+   {
+      plot_data->setAxisTitle(QwtPlot::xBottom,  title + tr(" (log scale)") );
+#ifndef QT4
+      plot_data->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
+#else
+      plot_data->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
+#endif
+   } else {
+      plot_data->setAxisTitle(QwtPlot::xBottom,  title );
+#ifndef QT4
+      plot_data->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
+#else
+      // actually need to test this, not sure what the correct version is
+      plot_data->setAxisScaleEngine(QwtPlot::xBottom, new QwtScaleEngine );
+#endif
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::axis_y_title()
+{
+   QString title = tr( iq_it_state ? "I(t) [a.u.]" : "I(q) [a.u.]" );
+
+   if ( axis_y_log )
+   {
+      plot_data->setAxisTitle(QwtPlot::yLeft, title + tr( " (log scale)") );
+#ifndef QT4
+      plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
+#else
+      plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+#endif
+   } else {
+      plot_data->setAxisTitle(QwtPlot::yLeft, title );
+#ifndef QT4
+      plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
+#else
+      // actually need to test this, not sure what the correct version is
+      plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
+#endif
+   }
+}
+
+bool US_Hydrodyn_Saxs_Hplc_Svd::plotted_matches_selected()
+{
+   set < QString > plotted; 
+   set < QString > selected;
+
+   QStringList files = selected_files_list();
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      selected.insert( files[ i ] );
+   }
+
+   for ( 
+#ifdef QT4
+        map < QString, QwtPlotCurve * >::iterator it = plotted_curves.begin();
+#else
+        map < QString, long >          ::iterator it = plotted_curves.begin();
+#endif
+        it != plotted_curves.end();
+        ++it )
+   {
+      plotted.insert( it->first );
+   }
+
+   return plotted == selected;
 }
 

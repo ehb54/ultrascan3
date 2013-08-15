@@ -2864,6 +2864,7 @@ void US_Hydrodyn_Saxs_Hplc::svd()
       cout << QString( "%1 " ).arg( *it );
       svs += QString( " %1" ).arg( *it );
    }
+   cout << endl;
    add_plot( QString( "svd" ), q_sv, I_sv, false, false );
 
    editor_msg( "blue", tr( "SVD: done, singular values:" ) + svs );

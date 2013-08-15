@@ -38,6 +38,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       mQLabel               * lbl_data;
       QListView             * lv_data;
+      QPushButton           * pb_clear;
       QPushButton           * pb_to_hplc;
       QPushButton           * pb_replot;
 
@@ -73,11 +74,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       mQLineEdit            * le_t_start;
       mQLineEdit            * le_t_end;
 
-      QCheckBox             * cb_random;
-      QLineEdit             * le_random;
+      // QCheckBox             * cb_random;
+      // QLineEdit             * le_random;
 
-      QLabel                * lbl_ev_count;
-      QLineEdit             * le_ev_count;
       QLabel                * lbl_ev;
       QListBox              * lb_ev;
 
@@ -97,6 +96,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QString                 errormsg;
 
       map < QString, int >    selected_files;
+
+      map < QString, unsigned int >       f_pos;
 
       map < QString, vector < QString > > f_qs_string;
       map < QString, vector < double > >  f_qs;
@@ -133,8 +134,23 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       mQLineEdit                   *le_last_focus;
 
-      int                          count_selected();
+      QStringList                  selected_files_list();
+      int                          selected_sources();
       void                         clean_selected();
+      bool                         is_selected( QListViewItem *lvi );
+      bool                         all_children_selected( QListViewItem *lvi );
+      bool                         plotted_matches_selected();
+
+      bool                         iq_it_state;
+
+      void                         axis_x_title();
+      void                         axis_y_title();
+
+#ifdef QT4
+      map < QString, QwtPlotCurve * >     plotted_curves;
+#else
+      map < QString, long >               plotted_curves;
+#endif
 
    private slots:
 
@@ -142,7 +158,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       // ------ data section 
 
       void data_selection_changed();
+      void clear();
       void to_hplc();
+      void replot();
 
       void hide_data();
 
@@ -170,7 +188,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void t_start_text ( const QString & );
       void t_end_text   ( const QString & );
 
-      void ev_count_text( const QString & );
       void ev_selection_changed();
 
       void svd();
