@@ -103,6 +103,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       friend class US_Hydrodyn_Saxs_Search;
       friend class US_Hydrodyn_Saxs_Buffer;
       friend class US_Hydrodyn_Saxs_Hplc;
+      friend class US_Hydrodyn_Saxs_Hplc_Svd;
       friend class US_Hydrodyn_Saxs_1d;
       friend class US_Hydrodyn_Saxs_2d;
       friend class US_Hydrodyn_Misc;

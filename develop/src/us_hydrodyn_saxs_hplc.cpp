@@ -2011,7 +2011,7 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files )
       }
 
       switch ( QMessageBox::warning(this, 
-                                    tr( "US-SOMO: SAXS Hplc Remove Files" ),
+                                    caption() + tr( " Remove Files" ),
                                     QString( tr( "Please note:\n\n"
                                                  "These files were created but not saved as .dat files:\n"
                                                  "%1\n\n"
@@ -4128,12 +4128,12 @@ map < QString, double > US_Hydrodyn_Saxs_Hplc::current_concs( bool quiet )
       if ( !quiet && any_different )
       {
          QMessageBox::warning( this, 
-                              tr( "US-SOMO: SAXS Hplc" ),
-                              tr( "There are unsaved updates in the open Solution Concentration window\n"
-                                  "This will cause the concentration values used by the current calculation\n"
-                                  "to differ from those shown in the Solution Concentration window\n"
-                                  "You probably want to save the values in the Solution Concentration window and repeat the computation."
-                                  ) );
+                               caption(),
+                               tr( "There are unsaved updates in the open Solution Concentration window\n"
+                                   "This will cause the concentration values used by the current calculation\n"
+                                   "to differ from those shown in the Solution Concentration window\n"
+                                   "You probably want to save the values in the Solution Concentration window and repeat the computation."
+                                   ) );
       }
    }
    return concs;

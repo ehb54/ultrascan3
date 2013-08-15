@@ -8,6 +8,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_hydrodyn_saxs_hplc_nth.h"
 #include "../include/us_hydrodyn_saxs_hplc_options.h"
+#include "../include/us_hydrodyn_saxs_hplc_svd.h"
 #include "../include/us_lm.h"
 #include "../include/us_svd.h"
 #ifdef QT4
@@ -2868,4 +2869,14 @@ void US_Hydrodyn_Saxs_Hplc::svd()
    editor_msg( "blue", tr( "SVD: done, singular values:" ) + svs );
    
    update_enables();
+
+   US_Hydrodyn_Saxs_Hplc_Svd * uhshs = new US_Hydrodyn_Saxs_Hplc_Svd(
+                                                                     this,
+                                                                     selected_files
+                                                                     );
+   uhshs->show();
+}
+
+void US_Hydrodyn_Saxs_Hplc::line_width()
+{
 }
