@@ -2189,7 +2189,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
 
    progress->reset();
 
+   lb_ev->clearSelection();
+   for ( int i = 0; i < (int) evs_selected.size(); ++i )
+   {
+         lb_ev->setSelected( evs_selected[ i ], true );
+   }
+
    connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( ev_selection_changed() ) );
+
 
    update_enables();
    editor_msg( "blue", tr( "Done TSVD reconstruction" ) );
