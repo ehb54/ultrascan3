@@ -279,7 +279,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    lbl_q_range->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_q_range->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_q_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   process_widgets.push_back( lbl_q_range );
+   // process_widgets.push_back( lbl_q_range );
+   lbl_q_range->hide();
 
    le_q_start = new mQLineEdit(this, "le_q_start Line Edit");
    le_q_start->setText( "" );
@@ -289,7 +290,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    le_q_start->setEnabled( false );
    le_q_start->setValidator( new QDoubleValidator( le_q_start ) );
    connect( le_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( q_start_text( const QString & ) ) );
-   process_widgets.push_back( le_q_start );
+   // process_widgets.push_back( le_q_start );
+   le_q_start->hide();
 
    le_q_end = new mQLineEdit(this, "le_q_end Line Edit");
    le_q_end->setText( "" );
@@ -299,7 +301,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    le_q_end->setEnabled( false );
    le_q_end->setValidator( new QDoubleValidator( le_q_end ) );
    connect( le_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( q_end_text( const QString & ) ) );
-   process_widgets.push_back( le_q_end );
+   // process_widgets.push_back( le_q_end );
+   le_q_end->hide();
 
    //    lbl_t_range = new QLabel( tr( "Active Time range:" ), this );
    //    lbl_t_range->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
