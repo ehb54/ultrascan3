@@ -881,11 +881,23 @@ void US_Hydrodyn_Saxs_Hplc_Svd::replot()
    {
       axis_x_log = last_axis_x_log;
       axis_y_log = last_axis_y_log;
+      ev_plot   = false;
+      rmsd_plot = false;
+      chi_plot  = false;
+      axis_x_title();
+      axis_y_title();
+      if ( plot_data_zoomer )
+      {
+         // cout << QString( "plot zoomer stack size %1\n" ).arg( plot_data_zoomer->zoomRectIndex() );
+         if ( !plot_data_zoomer->zoomRectIndex() )
+         {
+            plot_data_zoomer->zoom ( 0 );
+            delete plot_data_zoomer;
+            plot_data_zoomer = (ScrollZoomer *) 0;
+         }
+      }
    }
 
-   ev_plot   = false;
-   rmsd_plot = false;
-   chi_plot  = false;
    plot_files();
    update_enables();
 }
