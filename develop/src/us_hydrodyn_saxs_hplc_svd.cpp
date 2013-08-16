@@ -378,7 +378,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    pb_inc_chi_plot->setMinimumHeight(minHeight3);
    pb_inc_chi_plot->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_inc_chi_plot, SIGNAL(clicked()), SLOT(inc_chi_plot()));
-   process_widgets.push_back( pb_inc_chi_plot );
+   // process_widgets.push_back( pb_inc_chi_plot );
+   pb_inc_chi_plot->hide();
 
    pb_inc_rmsd_plot = new QPushButton(tr("Plot RMSD"), this);
    pb_inc_rmsd_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -2109,7 +2110,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
    {
       lvinext = new QListViewItem( lvi, evs, QString( "RMSD %1" ).arg( last_recon_rmsd ) );
       last_recon_chi = sqrt( chi2 ) / ( n * m - 1e0 );
-      new QListViewItem( lvi, lvinext, QString( "Chi %1" ).arg( last_recon_chi ) );
+      // new QListViewItem( lvi, lvinext, QString( "Chi %1" ).arg( last_recon_chi ) );
    }      
 
    add_i_of_t( name, final_files, false );
