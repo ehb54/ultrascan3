@@ -162,7 +162,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 #else
       map < QString, long >               plotted_curves;
 #endif
-      void                         add_i_of_t( QString source, QStringList files );
+      void                         add_i_of_t( QString source, QStringList files, bool do_update_enables = true );
       void                         rescale();
 
       bool                         svd_has_errors;

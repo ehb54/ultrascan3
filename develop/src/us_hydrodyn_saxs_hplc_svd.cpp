@@ -1294,7 +1294,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plotted_matches_selected()
    return plotted == selected;
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_t( QString source, QStringList files )
+void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_t( QString source, QStringList files, bool do_update_enables )
 {
    editor_msg( "blue", QString( tr(  "Making I(t) for source %1" ) ).arg( source ) );
 
@@ -1451,7 +1451,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_t( QString source, QStringList files )
       f_errors    [ fname ] = e;
       f_is_time   [ fname ] = true;
    }      
-   update_enables();
+   if ( do_update_enables )
+   {
+      update_enables();
+   }
    editor_msg( "blue", QString( tr(  "Done making I(t) for source %1" ) ).arg( source ) );
 }
 
@@ -2010,16 +2013,16 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
       f_is_time  [ this_name ] = false;  // must all be I(q)
    }
 
-   last_recon_rmsd = sqrt( rmsd2 ) / ( n * m - 1e0 );
+   last_recon_rmsd = sqrt( rmsd2 ); //  / ( n * m - 1e0 );
 
    if ( svd_has_errors )
    {
       lvinext = new QListViewItem( lvi, evs, QString( "RMSD %1" ).arg( last_recon_rmsd ) );
-      last_recon_chi = sqrt( chi2 ) / ( n * m - 1e0 );
+      last_recon_chi = sqrt( chi2 ); //  / ( n * m - 1e0 );
       new QListViewItem( lvi, lvinext, QString( "Chi %1" ).arg( last_recon_chi ) );
    }      
 
-   add_i_of_t( name, final_files );
+   add_i_of_t( name, final_files, false );
 }
 
 double US_Hydrodyn_Saxs_Hplc_Svd::vmin( vector < double > &x )
