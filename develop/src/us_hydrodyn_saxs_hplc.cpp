@@ -55,6 +55,12 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
    // fix up possible unconfigured or bad configuration
 
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_line_width" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_line_width" ] = "1";
+   }
+   use_line_width = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_line_width" ].toUInt();
+
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_linear" ) )
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear" ] = "true";
@@ -163,7 +169,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       pbs.push_back( pb_regex_load );
       pbs.push_back( pb_save_state );
       pbs.push_back( pb_invert );
-      pbs.push_back( pb_adjacent );
+      // pbs.push_back( pb_adjacent );
       pbs.push_back( pb_select_nth );
       // pbs.push_back( pb_color_rotate );
       // pbs.push_back( pb_to_saxs );
@@ -576,7 +582,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_invert, SIGNAL(clicked()), SLOT(invert()));
 
-   pb_select_nth = new mQPushButton(tr("Nth"), this);
+   pb_select_nth = new mQPushButton(tr("Select"), this);
    pb_select_nth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_select_nth->setMinimumHeight(minHeight1);
    pb_select_nth->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -596,11 +602,11 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    //    pb_join->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //    connect(pb_join, SIGNAL(clicked()), SLOT(join()));
 
-   pb_adjacent = new QPushButton(tr("Similar"), this);
-   pb_adjacent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_adjacent->setMinimumHeight(minHeight1);
-   pb_adjacent->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_adjacent, SIGNAL(clicked()), SLOT(adjacent()));
+   //    pb_adjacent = new QPushButton(tr("Similar"), this);
+   //    pb_adjacent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   //    pb_adjacent->setMinimumHeight(minHeight1);
+   //    pb_adjacent->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //    connect(pb_adjacent, SIGNAL(clicked()), SLOT(adjacent()));
 
    pb_to_saxs = new QPushButton(tr("To SOMO/SAS"), this);
    pb_to_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -693,7 +699,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // pb_plot_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    // connect(pb_plot_files, SIGNAL(clicked()), SLOT(plot_files()));
 
-   pb_conc_avg = new QPushButton(tr("Concentration normalized average"), this);
+   pb_conc_avg = new QPushButton(tr("Conc. norm. avg."), this);
    pb_conc_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_conc_avg->setMinimumHeight(minHeight1);
    pb_conc_avg->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -1520,7 +1526,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    QBoxLayout *hbl_file_buttons_2 = new QHBoxLayout( 0 );
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
-   hbl_file_buttons_2->addWidget ( pb_adjacent );
+   // hbl_file_buttons_2->addWidget ( pb_adjacent );
    hbl_file_buttons_2->addWidget ( pb_select_nth );
    // hbl_file_buttons_2->addWidget ( pb_color_rotate );
    // hbl_file_buttons_2->addWidget ( pb_to_saxs );
@@ -1531,7 +1537,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    files_widgets.push_back ( pb_select_all );
    files_widgets.push_back ( pb_invert );
-   files_widgets.push_back ( pb_adjacent );
+   // files_widgets.push_back ( pb_adjacent );
    files_widgets.push_back ( pb_select_nth );
    files_widgets.push_back ( pb_view );
    files_widgets.push_back ( pb_axis_x );
@@ -1602,6 +1608,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_3->addWidget ( pb_avg );
    hbl_file_buttons_3->addWidget ( pb_add );
    hbl_file_buttons_3->addWidget ( pb_to_saxs );
+   hbl_file_buttons_3->addWidget ( pb_line_width );
    hbl_file_buttons_3->addWidget ( pb_color_rotate );
 
    files_widgets.push_back ( pb_conc_avg );
@@ -1609,6 +1616,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_widgets.push_back ( pb_avg );
    files_expert_widgets.push_back ( pb_add );
    files_widgets.push_back ( pb_to_saxs );
+   files_widgets.push_back ( pb_line_width );
    files_widgets.push_back ( pb_color_rotate );
 
    QBoxLayout *hbl_file_buttons_4 = new QHBoxLayout( 0 );
@@ -2520,7 +2528,7 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
                                (double *)&( f_Is[ file ][ 0 ] ),
                                q_points
                                );
-      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
+      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
 #else
       curve->setData(
                      /* cb_guinier->isChecked() ?
@@ -2530,7 +2538,7 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
                      q_points
                      );
 
-      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
       curve->attach( plot_dist );
 #endif
    } else {
@@ -2552,7 +2560,7 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
                                (double *)&( I[ 0 ] ),
                                q_points
                                );
-      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
+      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
 #else
       curve->setData(
                      /* cb_guinier->isChecked() ?
@@ -2562,7 +2570,7 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
                      q_points
                      );
 
-      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
       curve->attach( plot_dist );
 #endif
    }
@@ -6530,9 +6538,10 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_select_all         ->setEnabled( false );
    pb_invert             ->setEnabled( false );
    pb_select_nth         ->setEnabled( false );
+   pb_line_width         ->setEnabled( false );
    pb_color_rotate       ->setEnabled( false );
    //    pb_join               ->setEnabled( false );
-   pb_adjacent           ->setEnabled( false );
+   // pb_adjacent           ->setEnabled( false );
    pb_to_saxs            ->setEnabled( false );
    pb_view               ->setEnabled( false );
    pb_rescale            ->setEnabled( false );
@@ -6648,9 +6657,9 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
               f_pos.count( wheel_file ) )
          {
 #ifndef QT4
-            plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], 1, SolidLine));
+            plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], use_line_width, SolidLine));
 #else
-            plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+            plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
 #endif
          }
       } else {
@@ -6676,9 +6685,9 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
                  f_pos.count( wheel_file ) )
             {
 #ifndef QT4
-               plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], 1, SolidLine));
+               plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], use_line_width, SolidLine));
 #else
-               plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+               plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
 #endif
             }
          } else {
@@ -7172,9 +7181,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
    }
 
 #ifndef QT4
-   plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, 1, SolidLine));
+   plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, use_line_width, SolidLine));
 #else
-   plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ Qt::cyan, 1, Qt::SolidLine ) ) );
+   plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ Qt::cyan, use_line_width, Qt::SolidLine ) ) );
 #endif
 
    org_gaussians = gaussians;
@@ -7740,14 +7749,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_hline( double center, double width )
    plotted_hlines.push_back( curve );
 
 #ifndef QT4
-   plot_dist->setCurvePen( curve, QPen( Qt::green, 1, Qt::SolidLine ) );
+   plot_dist->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
    plot_dist->setCurveData( curve,
                             (double *)&x[ 0 ],
                             (double *)&y[ 0 ],
                             2
                             );
 #else
-   curve->setPen( QPen( Qt::green, 1, Qt::SolidLine ) );
+   curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
    curve->setData(
                   (double *)&x[ 0 ],
                   (double *)&y[ 0 ],
@@ -7918,7 +7927,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_gaussian( double *g, QColor color )
                             (double *)&y[ 0 ],
                             x.size()
                             );
-   plot_dist->setCurvePen( curve, QPen( color , 1, Qt::DashLine ) );
+   plot_dist->setCurvePen( curve, QPen( color , use_line_width, Qt::DashLine ) );
 #else
    curve->setData(
                   (double *)&x[ 0 ],
@@ -7926,7 +7935,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_gaussian( double *g, QColor color )
                   x.size()
                   );
 
-   curve->setPen( QPen( color, 1, Qt::DashLine ) );
+   curve->setPen( QPen( color, use_line_width, Qt::DashLine ) );
    curve->attach( plot_dist );
 #endif
 }
@@ -8124,7 +8133,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_gaussian_sum()
                             (double *)&y[ 0 ],
                             x.size()
                             );
-   plot_dist->setCurvePen( curve, QPen( Qt::yellow , 1, Qt::DashLine ) );
+   plot_dist->setCurvePen( curve, QPen( Qt::yellow , use_line_width, Qt::DashLine ) );
 #else
    curve->setData(
                   (double *)&x[ 0 ],
@@ -8132,7 +8141,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_gaussian_sum()
                   x.size()
                   );
 
-   curve->setPen( QPen( Qt::yellow, 1, Qt::DashLine ) );
+   curve->setPen( QPen( Qt::yellow, use_line_width, Qt::DashLine ) );
    curve->attach( plot_dist );
 #endif
    replot_gaussian_sum();
@@ -8404,9 +8413,9 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start()
    }
 
 #ifndef QT4
-   plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, 1, SolidLine));
+   plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, use_line_width, SolidLine));
 #else
-   plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ Qt::cyan, 1, Qt::SolidLine ) ) );
+   plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ Qt::cyan, use_line_width, Qt::SolidLine ) ) );
 #endif
 
    baseline_mode = true;
@@ -8700,14 +8709,14 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
       plotted_baseline.push_back( curve );
 
 #ifndef QT4
-      plot_dist->setCurvePen( curve, QPen( Qt::green , 1, Qt::DashLine ) );
+      plot_dist->setCurvePen( curve, QPen( Qt::green , use_line_width, Qt::DashLine ) );
       plot_dist->setCurveData( plotted_baseline[ 0 ],
                                (double *)&x[ 0 ],
                                (double *)&y[ 0 ],
                                2
                                );
 #else
-      curve->setPen( QPen( Qt:green, 1, Qt::DashLine ) );
+      curve->setPen( QPen( Qt:green, use_line_width, Qt::DashLine ) );
       plotted_baseline[ 0 ]->setData(
                                      (double *)&x[ 0 ],
                                      (double *)&y[ 0 ],
@@ -8738,14 +8747,14 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
       plotted_baseline.push_back( curve );
 
 #ifndef QT4
-      plot_dist->setCurvePen( curve, QPen( start_color, 1, Qt::DashLine ) );
+      plot_dist->setCurvePen( curve, QPen( start_color, use_line_width, Qt::DashLine ) );
       plot_dist->setCurveData( plotted_baseline.back(),
                                (double *)&x[ 0 ],
                                (double *)&y[ 0 ],
                                2
                                );
 #else
-      curve->setPen( QPen( QColor( start_color, 1, Qt::DashLine ) );
+      curve->setPen( QPen( QColor( start_color, use_line_width, Qt::DashLine ) );
       plotted_baseline.back()->setData(
                                        (double *)&x[ 0 ],
                                        (double *)&y[ 0 ],
@@ -8777,14 +8786,14 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
       plotted_baseline.push_back( curve );
 
 #ifndef QT4
-      plot_dist->setCurvePen( curve, QPen( end_color, 1, Qt::DashLine ) );
+      plot_dist->setCurvePen( curve, QPen( end_color, use_line_width, Qt::DashLine ) );
       plot_dist->setCurveData( plotted_baseline.back(),
                                (double *)&x[ 0 ],
                                (double *)&y[ 0 ],
                                2
                                );
 #else
-      curve->setPen( QPen( end_color, 1, Qt::DashLine ) );
+      curve->setPen( QPen( end_color, use_line_width, Qt::DashLine ) );
       plotted_baseline.back()->setData(
                                        (double *)&x[ 0 ],
                                        (double *)&y[ 0 ],

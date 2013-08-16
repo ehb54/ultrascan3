@@ -86,9 +86,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QPushButton           * pb_svd_plot;
       QPushButton           * pb_recon;
 
-      QPushButton           * pb_inc_plot;
+      QPushButton           * pb_inc_rmsd_plot;
+      QPushButton           * pb_inc_chi_plot;
       QPushButton           * pb_inc_recon;
-
+      QPushButton           * pb_indiv_recon;
 
       // ------- bottom section
 
@@ -165,7 +166,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void                         add_i_of_t( QString source, QStringList files, bool do_update_enables = true );
       void                         rescale();
 
-      bool                         svd_has_errors;
+      bool                         svd_F_nonzero;
       vector < vector < double > > svd_F;
       vector < vector < double > > svd_F_errors;
       vector < vector < double > > svd_U;
@@ -178,9 +179,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       vector < double >            rmsd_x;
       vector < double >            rmsd_y;
+      vector < double >            chi_x;
+      vector < double >            chi_y;
       
       bool                         ev_plot;
       bool                         rmsd_plot;
+      bool                         chi_plot;
 
       QStringList                  last_svd_data;
       QListViewItem *              lvi_last_depth( int d );
@@ -193,6 +197,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       double                       last_recon_chi;
       double                       vmin( vector < double > &x );
       double                       vmax( vector < double > &x );
+
+      unsigned int                 use_line_width;
 
    private slots:
 
@@ -238,8 +244,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void svd_plot();
       void recon();
 
-      void inc_plot();
+      void inc_rmsd_plot();
+      void inc_chi_plot();
       void inc_recon();
+      void indiv_recon();
       
       void hide_process();
 

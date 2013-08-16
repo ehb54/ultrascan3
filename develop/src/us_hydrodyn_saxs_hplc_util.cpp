@@ -2441,9 +2441,10 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_select_all         ->setEnabled( lb_files->numRows() > 0 );
    pb_select_nth         ->setEnabled( lb_files->numRows() > 2 );
    pb_invert             ->setEnabled( lb_files->numRows() > 0 );
+   pb_line_width         ->setEnabled( files_selected_count );
    pb_color_rotate       ->setEnabled( files_selected_count );
    //    pb_join               ->setEnabled( files_selected_count == 2 && files_compatible && !files_are_time );
-   pb_adjacent           ->setEnabled( lb_files->numRows() > 1 );
+   // pb_adjacent           ->setEnabled( lb_files->numRows() > 1 );
    pb_to_saxs            ->setEnabled( files_selected_count && files_compatible && !files_are_time );
    pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
@@ -2878,4 +2879,11 @@ void US_Hydrodyn_Saxs_Hplc::svd()
 
 void US_Hydrodyn_Saxs_Hplc::line_width()
 {
+   use_line_width++;
+   if ( use_line_width > 5 )
+   {
+      use_line_width = 1;
+   }
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_line_width" ] = QString( "%1" ).arg( use_line_width );
+   plot_files();
 }

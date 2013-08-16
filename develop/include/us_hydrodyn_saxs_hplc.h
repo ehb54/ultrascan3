@@ -318,6 +318,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       mQLineEdit    *le_baseline_end_e;
       QPushButton   *pb_baseline_apply;
 
+      QPushButton   *pb_line_width;
       QPushButton   *pb_color_rotate;
 
       QPushButton   *pb_select_vis;
@@ -657,6 +658,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
   #pragma warning ( default: 4251 )
 # endif
 #endif
+      unsigned int                 use_line_width;
 
    private slots:
 

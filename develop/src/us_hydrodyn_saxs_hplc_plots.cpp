@@ -128,14 +128,14 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
 #endif
 
 #ifndef QT4
-         plot_errors->setCurvePen( curve, QPen( Qt::green, 1, Qt::SolidLine ) );
+         plot_errors->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
          plot_errors->setCurveData( curve,
                                     (double *)&x[ 0 ],
                                     (double *)&y[ 0 ],
                                     x.size()
                                     );
 #else
-         curve->setPen( QPen( Qt::green, 1, Qt::SolidLine ) );
+         curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
          curve->setData(
                         (double *)&x[ 0 ],
                         (double *)&y[ 0 ],
@@ -157,7 +157,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
 #endif
 
 #ifndef QT4
-         plot_errors->setCurvePen( curve, QPen( plot_colors[ f_pos[ unified_ggaussian_files[ j ] ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+         plot_errors->setCurvePen( curve, QPen( plot_colors[ f_pos[ unified_ggaussian_files[ j ] ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          plot_errors->setCurveData( curve,
                                     (double *)&x[ 0 ],
                                     (double *)&e[ 0 ],
@@ -165,7 +165,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
                                     );
          plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
-         curve->setPen( QPen( plot_colors[ f_pos[ unified_ggaussian_files[ j ] ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+         curve->setPen( QPen( plot_colors[ f_pos[ unified_ggaussian_files[ j ] ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          curre->setData(
                         (double *)&x[ 0 ],
                         (double *)&e[ 0 ],
@@ -347,14 +347,14 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
 #endif
 
 #ifndef QT4
-      plot_errors->setCurvePen( curve, QPen( Qt::green, 1, Qt::SolidLine ) );
+      plot_errors->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
       plot_errors->setCurveData( curve,
                                  (double *)&x[ 0 ],
                                  (double *)&y[ 0 ],
                                  x.size()
                                  );
 #else
-      curve->setPen( QPen( Qt::red, 1, Qt::SolidLine ) );
+      curve->setPen( QPen( Qt::red, use_line_width, Qt::SolidLine ) );
       curve->setData(
                      (double *)&x[ 0 ],
                      (double *)&y[ 0 ],
@@ -376,7 +376,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
 #endif
 
 #ifndef QT4
-      plot_errors->setCurvePen( curve, QPen( Qt::red, 1, Qt::SolidLine ) );
+      plot_errors->setCurvePen( curve, QPen( Qt::red, use_line_width, Qt::SolidLine ) );
       plot_errors->setCurveData( curve,
                                  (double *)&x[ 0 ],
                                  (double *)&e[ 0 ],
@@ -384,7 +384,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
                                  );
       plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
-      curve->setPen( QPen( Qt::red, 1, Qt::SolidLine ) );
+      curve->setPen( QPen( Qt::red, use_line_width, Qt::SolidLine ) );
       curre->setData(
                      (double *)&x[ 0 ],
                      (double *)&e[ 0 ],
