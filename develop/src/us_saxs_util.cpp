@@ -7808,19 +7808,6 @@ bool US_Saxs_Util::compute_rayleigh_structure_factors(
    return true;
 }   
 
-bool US_Saxs_Util::is_nonzero_vector( vector < double > &v )
-{
-   bool non_zero = v.size() > 0;
-   for ( unsigned int i = 0; i < v.size(); i++ )
-   {
-      if ( v[ i ] == 0e0 )
-      {
-         non_zero = false;
-         break;
-      }
-   }
-   return non_zero;
-}
 
 // takes from_data with from_errors and places on to_grid resulting in to_data & to_errors
 // for systems without errors, these are assumed to be computed iq curves so a natural spline interpolation

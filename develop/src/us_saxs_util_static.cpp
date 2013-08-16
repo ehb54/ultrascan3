@@ -10879,3 +10879,17 @@ bool US_Saxs_Util::sscaling_fit(
    }
    return true;
 }
+
+bool US_Saxs_Util::is_nonzero_vector( vector < double > &v )
+{
+   bool non_zero = v.size() > 0;
+   for ( unsigned int i = 0; i < v.size(); i++ )
+   {
+      if ( v[ i ] == 0e0 )
+      {
+         non_zero = false;
+         break;
+      }
+   }
+   return non_zero;
+}

@@ -165,7 +165,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void                         add_i_of_t( QString source, QStringList files );
       void                         rescale();
 
+      bool                         svd_has_errors;
       vector < vector < double > > svd_F;
+      vector < vector < double > > svd_F_errors;
       vector < vector < double > > svd_U;
       vector < vector < double > > svd_V;
       vector < double >            svd_D;
@@ -188,6 +190,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       void                         do_recon();
       double                       last_recon_rmsd;
+      double                       last_recon_chi;
 
    private slots:
 

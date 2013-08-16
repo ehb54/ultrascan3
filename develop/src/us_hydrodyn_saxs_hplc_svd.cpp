@@ -357,7 +357,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect(pb_recon, SIGNAL(clicked()), SLOT(recon()));
    process_widgets.push_back( pb_recon );
 
-   pb_inc_plot = new QPushButton(tr("Plot RMSD's"), this);
+   pb_inc_plot = new QPushButton(tr("Plot fit"), this);
    pb_inc_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_inc_plot->setMinimumHeight(minHeight3);
    pb_inc_plot->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -1246,7 +1246,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_y_title()
 
    if ( rmsd_plot )
    {
-      title = tr( "RMSD" );
+      title = svd_has_errors ? "Chi" : "RMSD";
    }
 
    if ( axis_y_log )
@@ -1612,21 +1612,51 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd()
    int m = (int) f_qs[ files[ 0 ] ].size();
    int n = (int) files.size();
 
-   vector < vector < double > > F( m );
+   vector < vector < double > > F       ( m );
+   vector < vector < double > > F_errors;
    vector < double * > a( m );
 
-   for ( int i = 0; i < m; ++i )
+   svd_has_errors = true;
+
+   for ( int j = 0; j < n; ++j )
    {
-      F[ i ].resize( n );
-      for ( int j = 0; j < n; ++j )
+      if ( f_errors[ files[ j ] ].size() != f_qs[ files[ j ] ].size() ||
+           !US_Saxs_Util::is_nonzero_vector( f_errors[ files[ j ] ] ) )
       {
-         F[ i ][ j ] = f_Is[ files[ j ] ][ i ];
+         svd_has_errors = false;
+         editor_msg( "dark red", tr( "SVD: NOTICE: zero or missing S.D.'s for dataset" ) );
+         break;
       }
-      a[ i ] = &(F[ i ][ 0 ]);
    }
 
-   svd_F = F;
+   if ( svd_has_errors )
+   {
+      F_errors.resize( m );
+      for ( int i = 0; i < m; ++i )
+      {
+         F       [ i ].resize( n );
+         F_errors[ i ].resize( n );
+         for ( int j = 0; j < n; ++j )
+         {
+            F       [ i ][ j ] = f_Is[ files[ j ] ][ i ];
+            F_errors[ i ][ j ] = f_Is[ files[ j ] ][ i ];
+         }
+         a[ i ] = &(F[ i ][ 0 ]);
+      }
+   } else {
+      for ( int i = 0; i < m; ++i )
+      {
+         F[ i ].resize( n );
+         for ( int j = 0; j < n; ++j )
+         {
+            F[ i ][ j ] = f_Is[ files[ j ] ][ i ];
+         }
+         a[ i ] = &(F[ i ][ 0 ]);
+      }
+   }
 
+   svd_F        = F;
+   svd_F_errors = F_errors;
    vector < double > W( n );
    double *w = &(W[ 0 ]);
    vector < double * > v( n );
@@ -1814,7 +1844,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
       qApp->processEvents();
       do_recon();
       rmsd_x.push_back( i + 1e0 );
-      rmsd_y.push_back( last_recon_rmsd );
+      rmsd_y.push_back( svd_has_errors ? last_recon_chi : last_recon_rmsd );
    }
 
    progress->reset();
@@ -1938,20 +1968,35 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
 
    lvinext = iqs;
 
-   // compute rmsd
+   // compute rmsd, chi2
    double rmsd2    = 0e0;
    last_recon_rmsd = 0e0;
+   double chi2     = 0e0;
+   last_recon_chi  = 0e0;
    double tmp;
+   double tmp2;
 
    for ( int i = 0; i < n; ++i )
    {
       vector < double > I( m );
-      for ( int j = 0; j < m; ++j )
+      if ( svd_has_errors )
       {
-         I[ j ] = F[ j ][ i ];
-         tmp = F[ j ][ i ] - svd_F[ j ][ i ];
-         rmsd2 += tmp * tmp;
-      }
+         for ( int j = 0; j < m; ++j )
+         {
+            I[ j ] = F[ j ][ i ];
+            tmp = F[ j ][ i ] - svd_F[ j ][ i ];
+            rmsd2 += tmp * tmp;
+         }
+      } else {
+         for ( int j = 0; j < m; ++j )
+         {
+            I[ j ] = F[ j ][ i ];
+            tmp = F[ j ][ i ] - svd_F[ j ][ i ];
+            tmp2 = tmp * tmp;
+            rmsd2 += tmp2;
+            chi2  += tmp2 / ( svd_F_errors[ j ][ i ] * svd_F_errors[ j ][ i ] );
+         }
+      }         
 
       QString this_name = tag + ( ext ? QString( "%1_" ).arg( ext ) : QString( "" ) ) + last_svd_data[ i ];
       lvinext = new QListViewItem( iqs, lvinext, this_name );
@@ -1965,8 +2010,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
       f_is_time  [ this_name ] = false;  // must all be I(q)
    }
 
-   last_recon_rmsd = sqrt( rmsd2 );
-   new QListViewItem( lvi, evs, QString( "RMSD %1" ).arg( last_recon_rmsd ) );
+   last_recon_rmsd = sqrt( rmsd2 ) / ( n * m - 1e0 );
+
+   if ( svd_has_errors )
+   {
+      lvinext = new QListViewItem( lvi, evs, QString( "RMSD %1" ).arg( last_recon_rmsd ) );
+      last_recon_chi = sqrt( chi2 ) / ( n * m - 1e0 );
+      new QListViewItem( lvi, lvinext, QString( "Chi %1" ).arg( last_recon_chi ) );
+   }      
 
    add_i_of_t( name, final_files );
 }
