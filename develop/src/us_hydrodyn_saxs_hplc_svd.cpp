@@ -65,11 +65,15 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    setupGUI();
 
+
    axis_y_log = false;
    axis_x_log = false;
    ev_plot    = false;
    rmsd_plot  = false;
    chi_plot   = false;
+
+   last_axis_x_log = axis_x_log;
+   last_axis_y_log = axis_y_log;
 
    update_enables();
 
@@ -872,6 +876,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::replot()
          plot_data_zoomer = (ScrollZoomer *) 0;
       }
    }
+
+   if ( ev_plot || chi_plot || rmsd_plot )
+   {
+      axis_x_log = last_axis_x_log;
+      axis_y_log = last_axis_y_log;
+   }
+
    ev_plot   = false;
    rmsd_plot = false;
    chi_plot  = false;
@@ -886,6 +897,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::iq_it()
       plot_data_zoomer->zoom ( 0 );
       delete plot_data_zoomer;
       plot_data_zoomer = (ScrollZoomer *) 0;
+   }
+
+   if ( ev_plot || chi_plot || rmsd_plot )
+   {
+      axis_x_log = last_axis_x_log;
+      axis_y_log = last_axis_y_log;
    }
 
    ev_plot   = false;
@@ -1595,7 +1612,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot()
       plot_data_zoomer = (ScrollZoomer *) 0;
    }
 
-   ev_plot = true;
+   ev_plot    = true;
+   rmsd_plot = false;
+   chi_plot  = false;
+
+   last_axis_x_log = axis_x_log;
+   last_axis_y_log = axis_y_log;
+
+   axis_x_log = true;
+   axis_y_log = false;
 
    axis_x_title();
    axis_y_title();
@@ -1787,6 +1812,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot()
    rmsd_plot = true;
    chi_plot  = false;
 
+   last_axis_x_log = axis_x_log;
+   last_axis_y_log = axis_y_log;
+
    axis_x_log = true;
    axis_y_log = false;
 
@@ -1849,6 +1877,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot()
    ev_plot   = false;
    rmsd_plot = false;
    chi_plot  = true;
+
+   last_axis_x_log = axis_x_log;
+   last_axis_y_log = axis_y_log;
 
    axis_x_log = true;
    axis_y_log = false;

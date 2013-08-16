@@ -136,6 +136,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       bool                         axis_x_log;
       bool                         axis_y_log;
+      bool                         last_axis_x_log;
+      bool                         last_axis_y_log;
 
       void                         disable_all();
 
