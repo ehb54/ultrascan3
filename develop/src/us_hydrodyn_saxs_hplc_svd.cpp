@@ -1787,6 +1787,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot()
    rmsd_plot = true;
    chi_plot  = false;
 
+   axis_x_log = true;
+   axis_y_log = false;
+
    axis_x_title();
    axis_y_title();
 
@@ -1846,6 +1849,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot()
    ev_plot   = false;
    rmsd_plot = false;
    chi_plot  = true;
+
+   axis_x_log = true;
+   axis_y_log = false;
 
    axis_x_title();
    axis_y_title();
