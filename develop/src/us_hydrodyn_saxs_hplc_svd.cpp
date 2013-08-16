@@ -1798,7 +1798,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_plot()
 #endif
 
    plot_data->setAxisScale( QwtPlot::xBottom, 1, rmsd_x.size() );
-   plot_data->setAxisScale( QwtPlot::yLeft  , rmsd_y[ 0 ] * 0.9e0 , rmsd_y.back() * 1.1e0 );
+   plot_data->setAxisScale( QwtPlot::yLeft  , vmin( rmsd_y ) * 0.9e0 , vmax( rmsd_y ) * 1.1e0 );
 
    plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
    plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
@@ -1985,16 +1985,16 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
          {
             I[ j ] = F[ j ][ i ];
             tmp = F[ j ][ i ] - svd_F[ j ][ i ];
-            rmsd2 += tmp * tmp;
+            tmp2 = tmp * tmp;
+            rmsd2 += tmp2;
+            chi2  += tmp2 / ( svd_F_errors[ j ][ i ] * svd_F_errors[ j ][ i ] );
          }
       } else {
          for ( int j = 0; j < m; ++j )
          {
             I[ j ] = F[ j ][ i ];
             tmp = F[ j ][ i ] - svd_F[ j ][ i ];
-            tmp2 = tmp * tmp;
-            rmsd2 += tmp2;
-            chi2  += tmp2 / ( svd_F_errors[ j ][ i ] * svd_F_errors[ j ][ i ] );
+            rmsd2 += tmp * tmp;
          }
       }         
 
@@ -2020,4 +2020,30 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
    }      
 
    add_i_of_t( name, final_files );
+}
+
+double US_Hydrodyn_Saxs_Hplc_Svd::vmin( vector < double > &x )
+{
+   double min = x[ 0 ];
+   for ( int i = 1; i < (int) x.size(); ++i )
+   {
+      if ( min > x[ i ] )
+      {
+         min = x[ i ];
+      }
+   }
+   return min;
+}
+
+double US_Hydrodyn_Saxs_Hplc_Svd::vmax( vector < double > &x )
+{
+   double max = x[ 0 ];
+   for ( int i = 1; i < (int) x.size(); ++i )
+   {
+      if ( max < x[ i ] )
+      {
+         max = x[ i ];
+      }
+   }
+   return max;
 }

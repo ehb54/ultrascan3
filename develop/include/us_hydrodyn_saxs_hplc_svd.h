@@ -191,6 +191,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void                         do_recon();
       double                       last_recon_rmsd;
       double                       last_recon_chi;
+      double                       vmin( vector < double > &x );
+      double                       vmax( vector < double > &x );
 
    private slots:
 
