@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_saxs_hplc_svd.h"
+#include "../include/us_svd.h"
 
 #ifdef QT4
 #include <qwt_scale_engine.h>
@@ -11,20 +12,24 @@
 
 US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
                                                      US_Hydrodyn_Saxs_Hplc *hplc_win,
-                                                     map < QString, int >  &selected_files,
+                                                     map < QString, int >  &hplc_selected_files,
                                                      QWidget *p, 
                                                      const char *name
                                                      ) : QFrame(p, name)
 {
-   this->hplc_win       = hplc_win;
-   this->selected_files = selected_files;
-   this->ush_win        = (US_Hydrodyn *)(hplc_win->us_hydrodyn);
+   this->hplc_win            = hplc_win;
+   this->hplc_selected_files = hplc_selected_files;
+   this->ush_win             = (US_Hydrodyn *)(hplc_win->us_hydrodyn);
+   this->plot_colors         = hplc_win->plot_colors;
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("US-SOMO: SAXS HPLC SVD"));
 
-   if ( !selected_files.size() )
+   cg_red = USglobal->global_colors.cg_label;
+   cg_red.setBrush( QColorGroup::Foreground, QBrush( QColor( "red" ),  QBrush::SolidPattern ) );
+
+   if ( !hplc_selected_files.size() )
    {
       QMessageBox::warning( this, 
                             caption(),
@@ -33,11 +38,14 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
       return;
    }
 
-   for ( map < QString, int >::iterator it = selected_files.begin();
-         it != selected_files.end();
+   QStringList original_data;
+
+   for ( map < QString, int >::iterator it = hplc_selected_files.begin();
+         it != hplc_selected_files.end();
          ++it )
    {
       QString this_name = it->first;
+      original_data.push_back( this_name );
       
       f_pos      [ this_name ] = f_pos.size();
       f_qs_string[ this_name ] = hplc_win->f_qs_string[ this_name ];
@@ -56,8 +64,11 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    setupGUI();
 
+   show();
+
    axis_y_log = false;
    axis_x_log = false;
+   ev_plot    = false;
 
    update_enables();
 
@@ -65,6 +76,8 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
    global_Ypos += 30;
 
    setGeometry(global_Xpos, global_Ypos, 0, 0 );
+
+   add_i_of_t( tr( "Original data" ), original_data );
 }
 
 US_Hydrodyn_Saxs_Hplc_Svd::~US_Hydrodyn_Saxs_Hplc_Svd()
@@ -101,13 +114,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
    QListViewItem *element = new QListViewItem( lv_data, QString( tr( "Original data" ) ) );
    QListViewItem *iq = new QListViewItem( element, "I(q)" );
-   QListViewItem *it = new QListViewItem( element, "I(t)" );
+   /* QListViewItem *it = */ new QListViewItem( element, "I(t)" );
 
-   for ( map < QString, int >::iterator it = selected_files.begin();
-         it != selected_files.end();
+   QListViewItem *lvi = iq;
+
+   for ( map < QString, int >::iterator it = hplc_selected_files.begin();
+         it != hplc_selected_files.end();
          ++it )
    {
-      new QListViewItem( iq, it->first );
+      lvi = new QListViewItem( iq, lvi, it->first );
    }
 
    // make i(t), add also
@@ -127,6 +142,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    pb_to_hplc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_to_hplc, SIGNAL(clicked()), SLOT(to_hplc()));
    data_widgets.push_back( pb_to_hplc );
+
+   pb_color_rotate = new QPushButton(tr("Color"), this);
+   pb_color_rotate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_color_rotate->setMinimumHeight(minHeight3);
+   pb_color_rotate->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_color_rotate, SIGNAL(clicked()), SLOT(color_rotate()));
+   data_widgets.push_back( pb_color_rotate );
 
    pb_replot = new QPushButton(tr("Replot"), this);
    pb_replot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -154,12 +176,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    frame->setMinimumHeight(minHeight3);
    editor_widgets.push_back( frame );
 
-   m = new QMenuBar(frame, "menu" );
-   m->setMinimumHeight(minHeight1 - 5);
-   m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   mb_editor = new QMenuBar(frame, "menu" );
+   mb_editor->setMinimumHeight(minHeight1 - 5);
+   mb_editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    QPopupMenu * file = new QPopupMenu(editor);
-   m->insertItem( tr("&File"), file );
+   mb_editor->insertItem( tr("&File"), file );
    file->insertItem( tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
    file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
    file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
@@ -272,31 +294,31 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect( le_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( q_end_text( const QString & ) ) );
    process_widgets.push_back( le_q_end );
 
-   lbl_t_range = new QLabel( tr( "Active Time range:" ), this );
-   lbl_t_range->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_t_range->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   lbl_t_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   process_widgets.push_back( lbl_t_range );
+   //    lbl_t_range = new QLabel( tr( "Active Time range:" ), this );
+   //    lbl_t_range->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   //    lbl_t_range->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   //    lbl_t_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   //    process_widgets.push_back( lbl_t_range );
 
-   le_t_start = new mQLineEdit(this, "le_t_start Line Edit");
-   le_t_start->setText( "" );
-   le_t_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_t_start->setPalette(QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_t_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   le_t_start->setEnabled( false );
-   le_t_start->setValidator( new QDoubleValidator( le_t_start ) );
-   connect( le_t_start, SIGNAL( textChanged( const QString & ) ), SLOT( t_start_text( const QString & ) ) );
-   process_widgets.push_back( le_t_start );
+   //    le_t_start = new mQLineEdit(this, "le_t_start Line Edit");
+   //    le_t_start->setText( "" );
+   //    le_t_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   //    le_t_start->setPalette(QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   //    le_t_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   //    le_t_start->setEnabled( false );
+   //    le_t_start->setValidator( new QDoubleValidator( le_t_start ) );
+   //    connect( le_t_start, SIGNAL( textChanged( const QString & ) ), SLOT( t_start_text( const QString & ) ) );
+   //    process_widgets.push_back( le_t_start );
 
-   le_t_end = new mQLineEdit(this, "le_t_end Line Edit");
-   le_t_end->setText( "" );
-   le_t_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_t_end->setPalette(QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_t_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   le_t_end->setEnabled( false );
-   le_t_end->setValidator( new QDoubleValidator( le_t_end ) );
-   connect( le_t_end, SIGNAL( textChanged( const QString & ) ), SLOT( t_end_text( const QString & ) ) );
-   process_widgets.push_back( le_t_end );
+   //    le_t_end = new mQLineEdit(this, "le_t_end Line Edit");
+   //    le_t_end->setText( "" );
+   //    le_t_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   //    le_t_end->setPalette(QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   //    le_t_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   //    le_t_end->setEnabled( false );
+   //    le_t_end->setValidator( new QDoubleValidator( le_t_end ) );
+   //    connect( le_t_end, SIGNAL( textChanged( const QString & ) ), SLOT( t_end_text( const QString & ) ) );
+   //    process_widgets.push_back( le_t_end );
 
    lbl_ev = new QLabel( tr( "Eigenvalue list:" ), this );
    lbl_ev->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -308,7 +330,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    lb_ev->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lb_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lb_ev->setEnabled(true);
-   lb_ev->setSelectionMode( QListBox::Multi );
+   lb_ev->setSelectionMode( QListBox::Extended );
    lb_ev->setColumnMode   ( QListBox::FitToWidth );
    connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( ev_selection_changed() ) );
    process_widgets.push_back( lb_ev );
@@ -319,6 +341,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    pb_svd->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_svd, SIGNAL(clicked()), SLOT(svd()));
    process_widgets.push_back( pb_svd );
+
+   pb_svd_plot = new QPushButton(tr("Plot EV's"), this);
+   pb_svd_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_svd_plot->setMinimumHeight(minHeight3);
+   pb_svd_plot->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_svd_plot, SIGNAL(clicked()), SLOT(svd_plot()));
+   process_widgets.push_back( pb_svd_plot );
 
    pb_recon = new QPushButton(tr("TSVD reconstruction"), this);
    pb_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -362,8 +391,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       {
          QBoxLayout *bl_buttons = new QHBoxLayout( 0 );
          bl_buttons->addWidget( pb_clear );
-         bl_buttons->addWidget( pb_to_hplc );
          bl_buttons->addWidget( pb_replot );
+         bl->addLayout( bl_buttons );
+      }
+      {
+         QBoxLayout *bl_buttons = new QHBoxLayout( 0 );
+         bl_buttons->addWidget( pb_to_hplc );
+         bl_buttons->addWidget( pb_color_rotate );
          bl->addLayout( bl_buttons );
       }
 
@@ -375,21 +409,22 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
          gl->addWidget( le_q_start   , 0, 1 );
          gl->addWidget( le_q_end     , 0, 2 );
 
-         gl->addWidget( lbl_t_range  , 1, 0 );
-         gl->addWidget( le_t_start   , 1, 1 );
-         gl->addWidget( le_t_end     , 1, 2 );
+         // gl->addWidget( lbl_t_range  , 1, 0 );
+         // gl->addWidget( le_t_start   , 1, 1 );
+         // gl->addWidget( le_t_end     , 1, 2 );
 
          // gl->addWidget( lbl_ev       , 3, 0 );
          // gl->addMultiCellWidget( lb_ev        , 3, 3, 1, 2 );
 
          bl->addLayout( gl );
       }
+      bl->addWidget( pb_svd );
       bl->addWidget( lbl_ev );
       bl->addWidget( lb_ev );
 
       {
          QBoxLayout *bl_buttons = new QHBoxLayout( 0 );
-         bl_buttons->addWidget( pb_svd );
+         bl_buttons->addWidget( pb_svd_plot );
          bl_buttons->addWidget( pb_recon );
          bl->addLayout( bl_buttons );
       }
@@ -492,13 +527,17 @@ void US_Hydrodyn_Saxs_Hplc_Svd::save()
    }
 }
 
-
 void US_Hydrodyn_Saxs_Hplc_Svd::editor_msg( QString color, QString msg )
 {
    QColor save_color = editor->color();
    editor->setColor(color);
    editor->append(msg);
    editor->setColor(save_color);
+
+   if ( !editor_widgets[ 0 ]->isVisible() )
+   {
+      lbl_editor->setPalette(QPalette(cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
@@ -520,7 +559,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
 
    plotted_curves.clear();
 
-   QStringList files = selected_files_list();
+   QStringList files = selected_files();
 
    for ( int i = 0; i < (int) files.size(); ++i )
    {
@@ -554,7 +593,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
       }
    }
 
-   // cout << QString( "plot range x [%1:%2] y [%3:%4]\n" ).arg(minx).arg(maxx).arg(miny).arg(maxy);
+   // cout << QString( "org plot range x [%1:%2] y [%3:%4]\n" ).arg(minx).arg(maxx).arg(miny).arg(maxy);
 
    // enable zooming
    
@@ -571,7 +610,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
       connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
    }
    
-   plot_data->replot();
+   // plot_data->replot();
+   rescale();
 }
 
 bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
@@ -611,7 +651,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
                                (double *)&( f_Is[ file ][ 0 ] ),
                                q_points
                                );
-      plot_data->setCurvePen( Iq, QPen( hplc_win->plot_colors[ f_pos[ file ] % hplc_win->plot_colors.size()], 1, SolidLine));
+      plot_data->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
 #else
       curve->setData(
                      (double *)&( f_qs[ file ][ 0 ] ),
@@ -619,7 +659,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
                      q_points
                      );
 
-      curve->setPen( QPen( hplc_win->plot_colors[ f_pos[ file ] % hplc_win->plot_colors.size() ], 1, Qt::SolidLine ) );
+      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
       curve->attach( plot_data );
 #endif
    } else {
@@ -641,7 +681,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
                                (double *)&( I[ 0 ] ),
                                q_points
                                );
-      plot_data->setCurvePen( Iq, QPen( hplc_win->plot_colors[ f_pos[ file ] % hplc_win->plot_colors.size()], 1, SolidLine));
+      plot_data->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
 #else
       curve->setData(
                      /* cb_guinier->isChecked() ?
@@ -651,7 +691,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
                      q_points
                      );
 
-      curve->setPen( QPen( hplc_win->plot_colors[ f_pos[ file ] % hplc_win->plot_colors.size() ], 1, Qt::SolidLine ) );
+      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
       curve->attach( plot_data );
 #endif
    }
@@ -704,7 +744,10 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_min_max( QString file,
             maxx = f_qs[ file ][ i ];
          }
       }
-      // printf( "miny %g\n", miny );
+      if ( miny <= 0e0 )
+      {
+         miny = 1e0;
+      }
    } else {
       for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
       {
@@ -733,19 +776,22 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_data_zoomed( const QwtDoubleRect & /* rect 
 
 void US_Hydrodyn_Saxs_Hplc_Svd::disable_all()
 {
-   lv_data    ->setEnabled( false );
-   pb_clear   ->setEnabled( false );
-   pb_to_hplc ->setEnabled( false );
-   pb_replot  ->setEnabled( false );
-   pb_iq_it   ->setEnabled( false );
-   pb_axis_x  ->setEnabled( true );
-   pb_axis_y  ->setEnabled( true );
-   le_q_start ->setEnabled( false );
-   le_q_end   ->setEnabled( false );
-   le_t_start ->setEnabled( false );
-   le_t_end   ->setEnabled( false );
-   pb_svd     ->setEnabled( false );
-   pb_recon   ->setEnabled( false );
+   lv_data        ->setEnabled( false );
+   pb_clear       ->setEnabled( false );
+   pb_to_hplc     ->setEnabled( false );
+   pb_color_rotate->setEnabled( false );
+   pb_replot      ->setEnabled( false );
+   pb_iq_it       ->setEnabled( false );
+   pb_axis_x      ->setEnabled( true );
+   pb_axis_y      ->setEnabled( true );
+   le_q_start     ->setEnabled( false );
+   le_q_end       ->setEnabled( false );
+   // le_t_start     ->setEnabled( false );
+   // le_t_end       ->setEnabled( false );
+   lb_ev          ->setEnabled( false );
+   pb_svd         ->setEnabled( false );
+   pb_svd_plot    ->setEnabled( false );
+   pb_recon       ->setEnabled( false );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::q_start_text( const QString & )
@@ -756,46 +802,71 @@ void US_Hydrodyn_Saxs_Hplc_Svd::q_end_text( const QString & )
 {
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::t_start_text( const QString & )
-{
-}
+// void US_Hydrodyn_Saxs_Hplc_Svd::t_start_text( const QString & )
+// {
+// }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::t_end_text( const QString & )
-{
-}
-
-void US_Hydrodyn_Saxs_Hplc_Svd::svd()
-{
-}
+// void US_Hydrodyn_Saxs_Hplc_Svd::t_end_text( const QString & )
+// {
+// }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::replot()
 {
+   if ( plot_data_zoomer )
+   {
+      // cout << QString( "plot zoomer stack size %1\n" ).arg( plot_data_zoomer->zoomRectIndex() );
+      if ( !plot_data_zoomer->zoomRectIndex() )
+      {
+         plot_data_zoomer->zoom ( 0 );
+         delete plot_data_zoomer;
+         plot_data_zoomer = (ScrollZoomer *) 0;
+      }
+   }
+   ev_plot = false;
    plot_files();
    update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::iq_it()
 {
+   if ( plot_data_zoomer )
+   {
+      plot_data_zoomer->zoom ( 0 );
+      delete plot_data_zoomer;
+      plot_data_zoomer = (ScrollZoomer *) 0;
+   }
+
+   ev_plot = false;
    iq_it_state = !iq_it_state;
    pb_iq_it->setText( tr( iq_it_state ? "Show I(q)" : "Show I(t)" ) );
    axis_x_title();
    axis_y_title();
+   
    replot();
    update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::to_hplc()
 {
-   QStringList files = selected_files_list();
-   
+   if ( !ush_win->saxs_hplc_widget )
+   {
+      editor_msg( "red", tr( "US-SOMO SAXS HPLC window has been closed" ) );
+      return;
+   }
+
+   QStringList files = selected_files();
+
+   disable_all();
    for ( int i = 0; i < (int) files.size(); ++i )
    {
-      cout << files[ i ] << endl;
+      hplc_win->add_plot( files[ i ],
+                          f_qs[ files[ i ] ],
+                          f_Is[ files[ i ] ],
+                          f_errors[ files[ i ] ],
+                          iq_it_state,
+                          false );
    }
-}
-
-void US_Hydrodyn_Saxs_Hplc_Svd::recon()
-{
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::axis_x()
@@ -819,7 +890,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_y()
       delete plot_data_zoomer;
       plot_data_zoomer = (ScrollZoomer *) 0;
    }
-   replot();
+   ev_plot ? svd_plot() : replot();
    plot_data->replot();
 }
 
@@ -833,9 +904,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::hide_data()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::hide_editor()
 {
-   cout << QString( "hide editor size %1\n" ).arg( editor_widgets.size() );
    hide_widgets( editor_widgets, editor_widgets[ 0 ]->isVisible() );
-      
+   if ( editor_widgets[ 0 ]->isVisible() )
+   {
+      cout << "resetting editor palette\n";
+      lbl_editor->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   }
+
    ush_win->gparams[ "hplc_svd_editor_widgets" ] = editor_widgets[ 0 ]->isVisible() ? "visible" : "hidden";
 }
 
@@ -873,23 +948,26 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
       }
    }
 
-   QStringList files = selected_files_list();
-   int sources = selected_sources();
+   QStringList files = selected_files();
+   set < QString > sources = get_selected_sources();
 
-   lv_data    ->setEnabled( true );
-   pb_clear   ->setEnabled( true );
-   pb_to_hplc ->setEnabled( files.size() );
-   pb_replot  ->setEnabled( !plotted_matches_selected() );
-   pb_iq_it   ->setEnabled( true );
-   pb_axis_x  ->setEnabled( true );
-   pb_axis_y  ->setEnabled( true );
-   le_q_start ->setEnabled( false );
-   le_q_end   ->setEnabled( false );
-   le_t_start ->setEnabled( false );
-   le_t_end   ->setEnabled( false );
+   lv_data        ->setEnabled( true );
+   pb_clear       ->setEnabled( true );
+   pb_to_hplc     ->setEnabled( files.size() && !sources.count( tr( "Original data" ) ) && ush_win->saxs_hplc_widget );
+   pb_color_rotate->setEnabled( true );
+   pb_replot      ->setEnabled( !plotted_matches_selected() );
+   pb_iq_it       ->setEnabled( true );
+   pb_axis_x      ->setEnabled( true );
+   pb_axis_y      ->setEnabled( true );
+   le_q_start     ->setEnabled( false );
+   le_q_end       ->setEnabled( false );
+   // le_t_start     ->setEnabled( false );
+   // le_t_end       ->setEnabled( false );
+   lb_ev          ->setEnabled( lb_ev->count() );
 
-   pb_svd     ->setEnabled( files.size() && !iq_it_state && sources == 1 );
-   pb_recon   ->setEnabled( ev_items );
+   pb_svd         ->setEnabled( files.size() && !iq_it_state && sources.size() == 1 );
+   pb_svd_plot    ->setEnabled( lb_ev->count() );
+   pb_recon       ->setEnabled( ev_items );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::data_selection_changed()
@@ -899,6 +977,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::data_selection_changed()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::ev_selection_changed()
 {
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::clear()
@@ -907,7 +986,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::clear()
    update_enables();
 }
 
-QStringList US_Hydrodyn_Saxs_Hplc_Svd::selected_files_list()
+QStringList US_Hydrodyn_Saxs_Hplc_Svd::selected_files()
 {
    QStringList result;
 
@@ -926,6 +1005,80 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::selected_files_list()
       ++it;
    }
    return result;
+}
+
+set < QString > US_Hydrodyn_Saxs_Hplc_Svd::get_current_files()
+{
+   set < QString > result;
+
+   QListViewItemIterator it( lv_data );
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( is_selected( item ) &&
+           item->depth() == 2 && 
+           ( item->parent()->text( 0 ) == "I(q)" ||
+             item->parent()->text( 0 ) == "I(t)" ) 
+           )
+      {
+         result.insert( item->text( 0 ) );
+      }
+      ++it;
+   }
+   return result;
+}
+
+set < QString > US_Hydrodyn_Saxs_Hplc_Svd::get_sources()
+{
+   set < QString > result;
+
+   QListViewItemIterator it( lv_data );
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( item->depth() == 0 )
+      {
+         result.insert( item->text( 0 ) );
+      }
+      ++it;
+   }
+   return result;
+}
+
+set < QString > US_Hydrodyn_Saxs_Hplc_Svd::get_selected_sources()
+{
+   set < QString > result;
+   QString iq_or_it = iq_it_state ? "I(t)" : "I(q)";
+
+   QListViewItemIterator it( lv_data );
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( is_selected( item ) &&
+           item->depth() == 2 &&
+           item->parent()->text( 0 ) == iq_or_it )
+      {
+         result.insert( item->parent()->parent()->text( 0 ) );
+      }
+      ++it;
+   }
+   return result;
+}
+
+QListViewItem * US_Hydrodyn_Saxs_Hplc_Svd::get_source_item( QString source )
+{
+   QListViewItemIterator it( lv_data );
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( item->depth() == 0 &&
+           item->text( 0 ) == source )
+      {
+         return item;
+      }
+      ++it;
+   }
+   return (QListViewItem *) 0;
 }
 
 int US_Hydrodyn_Saxs_Hplc_Svd::selected_sources()
@@ -1019,6 +1172,10 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::is_selected( QListViewItem *lvi )
 void US_Hydrodyn_Saxs_Hplc_Svd::axis_x_title()
 {
    QString title = tr( iq_it_state ? "Time [a.u.]" : "q [1/Angstrom]" );
+   if ( ev_plot )
+   {
+      title = tr( "Number" );
+   }
 
    if ( axis_x_log )
    {
@@ -1042,6 +1199,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_x_title()
 void US_Hydrodyn_Saxs_Hplc_Svd::axis_y_title()
 {
    QString title = tr( iq_it_state ? "I(t) [a.u.]" : "I(q) [a.u.]" );
+   if ( ev_plot )
+   {
+      title = tr( "Singular values" );
+   }
 
    if ( axis_y_log )
    {
@@ -1067,7 +1228,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plotted_matches_selected()
    set < QString > plotted; 
    set < QString > selected;
 
-   QStringList files = selected_files_list();
+   QStringList files = selected_files();
    for ( int i = 0; i < (int) files.size(); ++i )
    {
       selected.insert( files[ i ] );
@@ -1088,3 +1249,558 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plotted_matches_selected()
    return plotted == selected;
 }
 
+void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_t( QString source, QStringList files )
+{
+   editor_msg( "blue", QString( tr(  "Making I(t) for source %1" ) ).arg( source ) );
+
+   QListViewItem * source_item = get_source_item( source );
+
+   if ( !source_item )
+   {
+      editor_msg( "red", QString( tr( "Internal error: source item not defined %1" ) ).arg( source ) );
+      return;
+   }
+
+   QListViewItem * i_t_child = (QListViewItem *) 0;
+   QListViewItem * i_q_child = (QListViewItem *) 0;
+      
+   disable_all();
+
+   if ( source_item->childCount() )
+   {
+      QListViewItem * myChild = source_item->firstChild();
+      while ( myChild )
+      {
+         if ( myChild->text( 0 ) == "I(t)" )
+         {
+            i_t_child = myChild;
+         }
+         if ( myChild->text( 0 ) == "I(q)" )
+         {
+            i_q_child = myChild;
+         }
+         if ( i_q_child &&
+              i_t_child )
+         {
+            break;
+         }
+         myChild = myChild->nextSibling();
+      }
+   }
+
+   if ( !i_t_child )
+   {
+      if ( i_q_child )
+      {
+         i_t_child = new QListViewItem( source_item, i_q_child,  "I(t)" );
+      } else {
+         i_t_child = new QListViewItem( source_item, i_q_child,  "I(t)" );
+      }
+   }
+
+   // find common q 
+   QString head = hplc_win->qstring_common_head( files, true );
+   QString tail = hplc_win->qstring_common_tail( files, true );
+
+   // map: [ timestamp ][ q value ] = intensity
+
+   map < double, map < double , double > > I_values;
+   map < double, map < double , double > > e_values;
+
+   map < double, bool > used_q;
+   list < double >      ql;
+
+   QRegExp rx_cap( "(\\d+)_(\\d+)" );
+
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+   {
+      if ( !f_qs.count( files[ i ] ) )
+      {
+         editor_msg( "red", QString( tr( "Internal error: request to use %1, but not found in data" ) ).arg( files[ i ] ) );
+      } else {
+         QString tmp = files[ i ].mid( head.length() );
+         tmp = tmp.mid( 0, tmp.length() - tail.length() );
+         if ( rx_cap.search( tmp ) != -1 )
+         {
+            tmp = rx_cap.cap( 2 );
+         }
+         double timestamp = tmp.toDouble();
+         
+         for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ files[ i ] ].size(); j++ )
+         {
+            I_values[ timestamp ][ f_qs[ files[ i ] ][ j ] ] = f_Is[ files[ i ] ][ j ];
+            if ( f_errors[ files[ i ] ].size() )
+            {
+               e_values[ timestamp ][ f_qs[ files[ i ] ][ j ] ] = f_errors[ files[ i ] ][ j ];
+            }
+            if ( !used_q.count( f_qs[ files[ i ] ][ j ] ) )
+            {
+               ql.push_back( f_qs[ files[ i ] ][ j ] );
+               used_q[ f_qs[ files[ i ] ][ j ] ] = true;
+            }
+         }
+      }
+   }
+
+   ql.sort();
+
+   vector < double > q;
+   vector < QString > q_qs;
+   for ( list < double >::iterator it = ql.begin();
+         it != ql.end();
+         it++ )
+   {
+      q.push_back( *it );
+   }
+
+   set < QString > current_files = get_current_files();
+
+   QListViewItem * lvi = i_t_child;
+
+   for ( unsigned int i = 0; i < ( unsigned int )q.size(); i++ )
+   {
+      QString basename = QString( "%1_It_q%2" ).arg( head ).arg( q[ i ] );
+      basename.replace( ".", "_" );
+      
+      unsigned int ext = 0;
+      QString fname = basename + tail;
+      while ( current_files.count( fname ) )
+      {
+         fname = basename + QString( "-%1" ).arg( ++ext ) + tail;
+      }
+      // editor_msg( "gray", fname );
+      current_files.insert( fname );
+
+      vector < double  > t;
+      vector < QString > t_qs;
+      vector < double  > I;
+      vector < double  > e;
+
+      for ( map < double, map < double , double > >::iterator it = I_values.begin();
+            it != I_values.end();
+            it++ )
+      {
+         t   .push_back( it->first );
+         t_qs.push_back( QString( "" ).sprintf( "%.8f", it->first ) );
+         if ( it->second.count( q[ i ] ) )
+         {
+            I.push_back( it->second[ q[ i ] ] );
+         } else {
+            I.push_back( 0e0 );
+         }
+         if ( e_values.count( it->first ) &&
+              e_values[ it->first ].count( q[ i ] ) )
+         {
+            e.push_back( e_values[ it->first ][ q[ i ] ] );
+         } else {
+            e.push_back( 0e0 );
+         }
+      }
+
+      lvi = new QListViewItem( i_t_child, lvi, fname );
+   
+      f_pos       [ fname ] = f_qs.size();
+      f_qs_string [ fname ] = t_qs;
+      f_qs        [ fname ] = t;
+      f_Is        [ fname ] = I;
+      f_errors    [ fname ] = e;
+      f_is_time   [ fname ] = true;
+   }      
+   update_enables();
+   editor_msg( "blue", QString( tr(  "Done making I(t) for source %1" ) ).arg( source ) );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::rescale()
+{
+   //bool any_selected = false;
+   double minx = 0e0;
+   double maxx = 1e0;
+   double miny = 0e0;
+   double maxy = 1e0;
+
+   double file_minx;
+   double file_maxx;
+   double file_miny;
+   double file_maxy;
+   
+   bool first = true;
+   QStringList files = selected_files();
+
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      if ( 1 )
+      {
+         //any_selected = true;
+         if ( get_min_max( files[ i ], file_minx, file_maxx, file_miny, file_maxy ) )
+         {
+            if ( first )
+            {
+               minx = file_minx;
+               maxx = file_maxx;
+               miny = file_miny;
+               maxy = file_maxy;
+               first = false;
+            } else {
+               if ( file_minx < minx )
+               {
+                  minx = file_minx;
+               }
+               if ( file_maxx > maxx )
+               {
+                  maxx = file_maxx;
+               }
+               if ( file_miny < miny )
+               {
+                  miny = file_miny;
+               }
+               if ( file_maxy > maxy )
+               {
+                  maxy = file_maxy;
+               }
+            }
+         }
+      }
+   }
+   
+   //    if ( plot_data_zoomer )
+   //    {
+   //       plot_data_zoomer->zoom ( 0 );
+   //       delete plot_data_zoomer;
+   //    }
+
+   // cout << QString( "rescale plot range x [%1:%2] y [%3:%4]\n" ).arg(minx).arg(maxx).arg(miny).arg(maxy);
+
+   if ( !plot_data_zoomer )
+   {
+      plot_data->setAxisScale( QwtPlot::xBottom, minx, maxx );
+      plot_data->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
+      plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
+      plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
+      plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+      connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
+   }
+   
+   plot_data->replot();
+   update_enables();
+}
+
+class svd_sortable_double {
+public:
+   double       x;
+   int          index;
+   bool operator < (const svd_sortable_double& objIn) const
+   {
+      return x < objIn.x;
+   }
+};
+
+void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot()
+{
+   plot_data->clear();
+   plotted_curves.clear();
+   if ( plot_data_zoomer )
+   {
+      plot_data_zoomer->zoom ( 0 );
+      delete plot_data_zoomer;
+      plot_data_zoomer = (ScrollZoomer *) 0;
+   }
+
+   ev_plot = true;
+
+   axis_x_title();
+   axis_y_title();
+
+#ifndef QT4
+   long Iq = plot_data->insertCurve( "svd" );
+   plotted_curves[ "svd" ] = Iq;
+   plot_data->setCurveStyle( Iq, QwtCurve::Lines );
+#else
+   QwtPlotCurve *curve = new QwtPlotCurve( "svd" );
+   plotted_curves[ "svd" ] = curve;
+   curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+#ifndef QT4
+   plot_data->setCurveData( Iq, 
+                            (double *)&( svd_x[ 0 ] ),
+                            (double *)&( svd_y[ 0 ] ),
+                            svd_x.size()
+                            );
+   plot_data->setCurvePen( Iq, QPen( plot_colors[ 0 ], 1, SolidLine));
+#else
+   curve->setData(
+                  (double *)&( svd_x[ 0 ] ),
+                  (double *)&( svd_y[ 0 ] ),
+                  svd_x.size()
+                  );
+
+   curve->setPen( QPen( plot_colors[ 0 ], 1, Qt::SolidLine ) );
+   curve->attach( plot_data );
+#endif
+
+   plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
+   plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
+   plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+   connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
+
+   plot_data->setAxisScale( QwtPlot::xBottom, 1, svd_x.size() );
+   plot_data->setAxisScale( QwtPlot::yLeft  , svd_y[ 0 ] * 0.9e0 , svd_y.back() * 1.1e0 );
+
+   plot_data->replot();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::svd()
+{
+   disable_all();
+
+   QStringList files = selected_files();
+
+   lb_ev->clear();
+
+   last_svd_data = files;
+
+   int m = (int) f_qs[ files[ 0 ] ].size();
+   int n = (int) files.size();
+
+   vector < vector < double > > F( m );
+   vector < double * > a( m );
+
+   for ( int i = 0; i < m; ++i )
+   {
+      F[ i ].resize( n );
+      for ( int j = 0; j < n; ++j )
+      {
+         F[ i ][ j ] = f_Is[ files[ j ] ][ i ];
+      }
+      a[ i ] = &(F[ i ][ 0 ]);
+   }
+
+   vector < double > W( n );
+   double *w = &(W[ 0 ]);
+   vector < double * > v( n );
+
+   vector < vector < double > > V( n );
+   for ( int j = 0; j < n; ++j )
+   {
+      V[ j ].resize( n );
+      v[ j ] = &(V[ j ][ 0 ]);
+   }
+      
+   editor_msg( "blue", tr( "SVD: matrix F created, computing SVD" ) );
+   if ( !SVD::dsvd( &(a[ 0 ]), m, n, &(w[ 0 ]), &(v[ 0 ]) ) )
+   {
+      editor_msg( "red", tr( SVD::errormsg ) );
+      update_enables();
+      return;
+   }
+
+   list < svd_sortable_double > svals;
+
+   svd_sortable_double sval;
+   for ( int i = 0; i < n; i++ )
+   {
+      sval.x     = w[ i ];
+      sval.index = i;
+      svals.push_back( sval );
+   }
+   svals.sort();
+   svals.reverse();
+
+   svd_x.clear();
+   svd_y.clear();
+
+   svd_U = F;
+   svd_D = W;
+   svd_V = V;
+   svd_index.resize( svals.size() );
+
+   for ( list < svd_sortable_double >::iterator it = svals.begin();
+         it != svals.end();
+         ++it )
+   {
+      svd_index[ (int) svd_x.size() ] = it->index;
+      svd_x.push_back( (double) svd_x.size() + 1e0 );
+      svd_y.push_back( it->x );
+      lb_ev->insertItem( QString( "%1 " ).arg( it->x ) );
+   }
+
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::recon()
+{
+   editor_msg( "blue", tr( "Start TSVD reconstruction" ) );
+   disable_all();
+   
+   // build new data set I(q) & then make I(t) from selected SV's
+   // F = U*D*V^T
+   int n = (int) svd_D.size();
+   int m = (int) svd_U.size();
+
+   cout << QString( "svd recon: m %1 n %2\n" ).arg( m ).arg( n ) << flush;
+
+   vector < double > D = svd_D;
+
+   int ev_count = 0;
+   for ( int i = 0; i < (int) lb_ev->count(); ++i )
+   {
+      if ( !lb_ev->isSelected( i ) )
+      {
+         D[ svd_index[ i ] ] = 0e0;
+      } else {
+         ev_count++;
+      }
+   }
+   
+   US_Vector::printvector( "SVD D zeroed", D );
+
+   // multiply D 
+   
+   vector < vector < double > > DV = svd_V;
+
+   for ( int i = 0; i < n; ++i )
+   {
+      for ( int j = 0; j < n; ++j )
+      {
+         DV[ i ][ j ] = D[ i ] * svd_V[ j ][ i ];
+      }
+   }
+
+   vector < vector < double > > F( m );
+
+   for ( int i = 0; i < m; ++i )
+   {
+      F[ i ].resize( n );
+      for ( int j = 0; j < n; ++j )
+      {
+         F[ i ][ j ] = 0;
+         for ( int k = 0; k < n; ++k )
+         {
+            F[ i ][ j ] += svd_U[ i ][ k ] * DV[ k ][ j ];
+         }
+      }
+   }
+
+   // make 
+   set < QString > sources = get_sources();
+
+   QString name = QString( "TSVD reconstruction %1 EV's" ).arg( ev_count );
+
+   {
+      int ext = 0;
+      while ( sources.count( name ) )
+      {
+         name = QString( "TSVD reconstruction %1 EV's Trial %2" ).arg( ev_count ).arg( ++ext );
+      }
+   }
+
+   QListViewItem * lvi = new QListViewItem( lv_data, lvi_last_depth( 0 ), name );
+   QListViewItem * evs = new QListViewItem( lvi, lvi, "EV's" );
+   QListViewItem * lvinext = evs;
+   for ( int i = 0; i < (int) lb_ev->count(); ++i )
+   {
+      if ( lb_ev->isSelected( i ) )
+      {
+         lvinext = new QListViewItem( evs, lvinext, lb_ev->text( i ) );
+      }
+   }
+
+   QListViewItem * iqs = new QListViewItem( lvi, lv_data->lastItem(), "I(q)" );
+
+   QString tag = QString( "TSVD%1_" ).arg( ev_count );
+
+   // add I(q)
+   // contained in columns of F, reference file names from last_svd_data
+
+   vector < double >  q        = f_qs       [ last_svd_data[ 0 ] ];
+   vector < QString > q_string = f_qs_string[ last_svd_data[ 0 ] ];
+   vector < double >  e;
+
+   set < QString > current_files = get_current_files();
+
+   int ext = 0;
+
+   // find consistent ext
+   
+   bool any_found;
+
+   do {
+      any_found = false;
+      for ( int i = 0; i < n; ++i )
+      {
+         QString this_name = tag + ( ext ? QString( "%1_" ).arg( ext ) : QString( "" ) ) + last_svd_data[ i ];
+         if ( current_files.count( this_name ) )
+         {
+            ext++;
+            any_found = true;
+            break;
+         }
+      }
+   } while( any_found );
+
+   QStringList final_files;
+
+   lvinext = iqs;
+
+   for ( int i = 0; i < n; ++i )
+   {
+      vector < double > I( m );
+      for ( int j = 0; j < m; ++j )
+      {
+         I[ j ] = F[ j ][ i ];
+      }
+
+      QString this_name = tag + ( ext ? QString( "%1_" ).arg( ext ) : QString( "" ) ) + last_svd_data[ i ];
+      lvinext = new QListViewItem( iqs, lvinext, this_name );
+      final_files << this_name;
+
+      f_pos      [ this_name ] = f_pos.size();
+      f_qs_string[ this_name ] = q_string;
+      f_qs       [ this_name ] = q;
+      f_Is       [ this_name ] = I;
+      f_errors   [ this_name ] = e;
+      f_is_time  [ this_name ] = false;  // must all be I(q)
+   }
+
+   add_i_of_t( name, final_files );
+
+   update_enables();
+   editor_msg( "blue", tr( "Done TSVD reconstruction" ) );
+}
+
+QListViewItem * US_Hydrodyn_Saxs_Hplc_Svd::lvi_last_depth( int d )
+{
+   QListViewItem * result = (QListViewItem *) 0;
+
+   QListViewItemIterator it( lv_data );
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( item->depth() == d )
+      {
+         result = item;
+      }
+      
+      ++it;
+   }
+
+   return result;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::color_rotate()
+{
+   vector < QColor >  new_plot_colors;
+
+   for ( int i = 1; i < (int) plot_colors.size(); i++ )
+   {
+      new_plot_colors.push_back( plot_colors[ i ] );
+   }
+   new_plot_colors.push_back( plot_colors[ 0 ] );
+   plot_colors = new_plot_colors;
+   replot();
+}

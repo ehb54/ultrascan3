@@ -2625,6 +2625,10 @@ bool US_Hydrodyn_Saxs_Hplc::get_min_max( QString file,
             maxx = f_qs[ file ][ i ];
          }
       }
+      if ( miny <= 0e0 )
+      {
+         miny = 1e0;
+      }
       // printf( "miny %g\n", miny );
    } else {
       for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )

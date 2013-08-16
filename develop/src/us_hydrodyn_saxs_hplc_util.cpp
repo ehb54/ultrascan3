@@ -10,7 +10,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include "../include/us_hydrodyn_saxs_hplc_svd.h"
 #include "../include/us_lm.h"
-#include "../include/us_svd.h"
+// #include "../include/us_svd.h"
 #ifdef QT4
 #include <qwt_scale_engine.h>
 #endif
@@ -2759,7 +2759,7 @@ void US_Hydrodyn_Saxs_Hplc::svd()
    disable_all();
 
    map < QString, int > selected_files;
-   vector < QString >   selected_files_v;
+   //   vector < QString >   selected_files_v;
 
    int m = 0; // rows
    int n = 0; // cols
@@ -2778,7 +2778,7 @@ void US_Hydrodyn_Saxs_Hplc::svd()
                  f_Is[ this_file ].size() )
             {
                selected_files[ this_file ] = i;
-               selected_files_v.push_back( this_file );
+               // selected_files_v.push_back( this_file );
                grids.push_back( f_qs[ this_file ] );
                if ( !n )
                {
@@ -2801,14 +2801,15 @@ void US_Hydrodyn_Saxs_Hplc::svd()
          return;
       }
    }
-   // make matrix
 
-   puts( "1" );
+   update_enables();
+
+#if defined( OLD_WAY )   
+
+   // make matrix
 
    vector < vector < double > > F( m );
    vector < double * > a( m );
-
-   puts( "2" );
 
    for ( int i = 0; i < m; ++i )
    {
@@ -2820,7 +2821,6 @@ void US_Hydrodyn_Saxs_Hplc::svd()
       a[ i ] = &(F[ i ][ 0 ]);
    }
 
-   puts( "3" );
    vector < double > W( n );
    double *w = &(W[ 0 ]);
    vector < double * > v( n );
@@ -2832,13 +2832,11 @@ void US_Hydrodyn_Saxs_Hplc::svd()
       v[ j ] = &(V[ j ][ 0 ]);
    }
       
-   puts( "4" );
    editor_msg( "blue", tr( "SVD: matrix F created, computing SVD" ) );
    if ( !SVD::dsvd( &(a[ 0 ]), m, n, &(w[ 0 ]), &(v[ 0 ]) ) )
    {
       editor_msg( "red", tr( SVD::errormsg ) );
    }
-   puts( "5" );
 
    list < double > svals;
 
@@ -2868,14 +2866,14 @@ void US_Hydrodyn_Saxs_Hplc::svd()
    add_plot( QString( "svd" ), q_sv, I_sv, false, false );
 
    editor_msg( "blue", tr( "SVD: done, singular values:" ) + svs );
+#endif
    
    update_enables();
 
-   US_Hydrodyn_Saxs_Hplc_Svd * uhshs = new US_Hydrodyn_Saxs_Hplc_Svd(
-                                                                     this,
-                                                                     selected_files
-                                                                     );
-   uhshs->show();
+   new US_Hydrodyn_Saxs_Hplc_Svd(
+                                 this,
+                                 selected_files
+                                 );
 }
 
 void US_Hydrodyn_Saxs_Hplc::line_width()

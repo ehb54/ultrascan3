@@ -21,7 +21,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
    public:
       US_Hydrodyn_Saxs_Hplc_Svd(
                                 US_Hydrodyn_Saxs_Hplc *hplc_win, 
-                                map < QString, int >  &selected_files,
+                                map < QString, int >  &hplc_selected_files,
                                 QWidget *p = 0, 
                                 const char *name = 0
                                 );
@@ -40,6 +40,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QListView             * lv_data;
       QPushButton           * pb_clear;
       QPushButton           * pb_to_hplc;
+      QPushButton           * pb_color_rotate;
       QPushButton           * pb_replot;
 
       // ------ editor section 
@@ -47,7 +48,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       mQLabel               * lbl_editor;
       QFont                   ft;
       QTextEdit             * editor;
-      QMenuBar              * m;
+      QMenuBar              * mb_editor;
 
       // ------ plot section
 
@@ -70,9 +71,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       mQLineEdit            * le_q_start;
       mQLineEdit            * le_q_end;
 
-      QLabel                * lbl_t_range;
-      mQLineEdit            * le_t_start;
-      mQLineEdit            * le_t_end;
+      // QLabel                * lbl_t_range;
+      // mQLineEdit            * le_t_start;
+      // mQLineEdit            * le_t_end;
 
       // QCheckBox             * cb_random;
       // QLineEdit             * le_random;
@@ -81,6 +82,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QListBox              * lb_ev;
 
       QPushButton           * pb_svd;
+      QPushButton           * pb_svd_plot;
       QPushButton           * pb_recon;
 
 
@@ -95,7 +97,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       QString                 errormsg;
 
-      map < QString, int >    selected_files;
+      map < QString, int >    hplc_selected_files;
 
       map < QString, unsigned int >       f_pos;
 
@@ -134,7 +136,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       mQLineEdit                   *le_last_focus;
 
-      QStringList                  selected_files_list();
+      QStringList                  selected_files();
+      set < QString >              get_current_files();
+      set < QString >              get_sources();
+      set < QString >              get_selected_sources();
+      QListViewItem *              get_source_item( QString source );
+
       int                          selected_sources();
       void                         clean_selected();
       bool                         is_selected( QListViewItem *lvi );
@@ -151,6 +158,23 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 #else
       map < QString, long >               plotted_curves;
 #endif
+      void                         add_i_of_t( QString source, QStringList files );
+      void                         rescale();
+
+      vector < vector < double > > svd_U;
+      vector < vector < double > > svd_V;
+      vector < double >            svd_D;
+      vector < int >               svd_index;
+
+      vector < double >            svd_x;
+      vector < double >            svd_y;
+      
+      bool                         ev_plot;
+      QStringList                  last_svd_data;
+      QListViewItem *              lvi_last_depth( int d );
+
+      vector < QColor >            plot_colors;
+      QColorGroup                  cg_red;
 
    private slots:
 
@@ -160,6 +184,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void data_selection_changed();
       void clear();
       void to_hplc();
+      void color_rotate();
       void replot();
 
       void hide_data();
@@ -185,12 +210,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void q_start_text ( const QString & );
       void q_end_text   ( const QString & );
 
-      void t_start_text ( const QString & );
-      void t_end_text   ( const QString & );
+      // void t_start_text ( const QString & );
+      // void t_end_text   ( const QString & );
 
       void ev_selection_changed();
 
       void svd();
+      void svd_plot();
       void recon();
       
       void hide_process();
