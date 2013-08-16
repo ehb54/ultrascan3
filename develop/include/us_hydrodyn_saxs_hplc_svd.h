@@ -78,12 +78,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       // QCheckBox             * cb_random;
       // QLineEdit             * le_random;
 
+      QPushButton           * pb_svd;
+
       QLabel                * lbl_ev;
       QListBox              * lb_ev;
 
-      QPushButton           * pb_svd;
       QPushButton           * pb_svd_plot;
       QPushButton           * pb_recon;
+
+      QPushButton           * pb_inc_plot;
+      QPushButton           * pb_inc_recon;
 
 
       // ------- bottom section
@@ -161,6 +165,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void                         add_i_of_t( QString source, QStringList files );
       void                         rescale();
 
+      vector < vector < double > > svd_F;
       vector < vector < double > > svd_U;
       vector < vector < double > > svd_V;
       vector < double >            svd_D;
@@ -168,13 +173,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       vector < double >            svd_x;
       vector < double >            svd_y;
+
+      vector < double >            rmsd_x;
+      vector < double >            rmsd_y;
       
       bool                         ev_plot;
+      bool                         rmsd_plot;
+
       QStringList                  last_svd_data;
       QListViewItem *              lvi_last_depth( int d );
 
       vector < QColor >            plot_colors;
       QColorGroup                  cg_red;
+
+      void                         do_recon();
+      double                       last_recon_rmsd;
 
    private slots:
 
@@ -216,8 +229,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void ev_selection_changed();
 
       void svd();
+
       void svd_plot();
       void recon();
+
+      void inc_plot();
+      void inc_recon();
       
       void hide_process();
 
