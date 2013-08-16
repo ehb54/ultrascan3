@@ -243,11 +243,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       void svd();
 
-      void svd_plot();
+      void svd_plot( bool axis_change = true );
       void recon();
 
-      void inc_rmsd_plot();
-      void inc_chi_plot();
+      void inc_rmsd_plot( bool axis_change = true );
+      void inc_chi_plot ( bool axis_change = true );
       void inc_recon();
       void indiv_recon();
       

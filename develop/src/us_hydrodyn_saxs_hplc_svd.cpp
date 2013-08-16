@@ -975,15 +975,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_y()
    }
    if ( ev_plot )
    {
-      svd_plot();
+      svd_plot( false );
    } else {
       if ( rmsd_plot )
       {
-         inc_rmsd_plot();
+         inc_rmsd_plot( false );
       } else {
          if ( chi_plot )
          {
-            inc_chi_plot();
+            inc_chi_plot( false );
          } else {
             replot();
          }
@@ -1613,7 +1613,7 @@ public:
    }
 };
 
-void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot()
+void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot( bool axis_change )
 {
    plot_data->clear();
    plotted_curves.clear();
@@ -1624,18 +1624,22 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot()
       plot_data_zoomer = (ScrollZoomer *) 0;
    }
 
-   ev_plot    = true;
+   ev_plot   = true;
    rmsd_plot = false;
    chi_plot  = false;
 
-   last_axis_x_log = axis_x_log;
-   last_axis_y_log = axis_y_log;
+   if ( axis_change )
+   {
+      last_axis_x_log = axis_x_log;
+      last_axis_y_log = axis_y_log;
 
-   axis_x_log = true;
-   axis_y_log = false;
+      axis_x_log = true;
+      axis_y_log = false;
 
-   axis_x_title();
-   axis_y_title();
+      axis_x_title();
+      axis_y_title();
+   }
+
 
 #ifndef QT4
    long Iq = plot_data->insertCurve( "svd" );
@@ -1809,7 +1813,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::color_rotate()
    replot();
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot()
+void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change )
 {
    plot_data->clear();
    plotted_curves.clear();
@@ -1824,14 +1828,17 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot()
    rmsd_plot = true;
    chi_plot  = false;
 
-   last_axis_x_log = axis_x_log;
-   last_axis_y_log = axis_y_log;
+   if ( axis_change )
+   {
+      last_axis_x_log = axis_x_log;
+      last_axis_y_log = axis_y_log;
 
-   axis_x_log = true;
-   axis_y_log = false;
+      axis_x_log = true;
+      axis_y_log = false;
 
-   axis_x_title();
-   axis_y_title();
+      axis_x_title();
+      axis_y_title();
+   }
 
 #ifndef QT4
    long Iq = plot_data->insertCurve( "rmsd" );
@@ -1875,7 +1882,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot()
    update_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot()
+void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot( bool axis_change )
 {
    plot_data->clear();
    plotted_curves.clear();
@@ -1890,14 +1897,17 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot()
    rmsd_plot = false;
    chi_plot  = true;
 
-   last_axis_x_log = axis_x_log;
-   last_axis_y_log = axis_y_log;
+   if ( axis_change )
+   {
+      last_axis_x_log = axis_x_log;
+      last_axis_y_log = axis_y_log;
 
-   axis_x_log = true;
-   axis_y_log = false;
+      axis_x_log = true;
+      axis_y_log = false;
 
-   axis_x_title();
-   axis_y_title();
+      axis_x_title();
+      axis_y_title();
+   }
 
 #ifndef QT4
    long Iq = plot_data->insertCurve( "chi" );
