@@ -588,6 +588,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_select_nth->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_nth, SIGNAL(clicked()), SLOT(select_nth()));
 
+   pb_line_width = new QPushButton(tr("Width"), this);
+   pb_line_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_line_width->setMinimumHeight(minHeight1);
+   pb_line_width->setMaximumWidth ( minHeight1 * 2 );
+   pb_line_width->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_line_width, SIGNAL(clicked()), SLOT(line_width()));
+
    pb_color_rotate = new QPushButton(tr("Color"), this);
    pb_color_rotate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_color_rotate->setMinimumHeight(minHeight1);
