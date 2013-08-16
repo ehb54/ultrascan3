@@ -359,14 +359,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect(pb_recon, SIGNAL(clicked()), SLOT(recon()));
    process_widgets.push_back( pb_recon );
 
-   pb_indiv_recon = new QPushButton(tr("Incremental TVSD"), this);
+   pb_indiv_recon = new QPushButton(tr("Individual TVSD recon."), this);
    pb_indiv_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_indiv_recon->setMinimumHeight(minHeight3);
    pb_indiv_recon->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_indiv_recon, SIGNAL(clicked()), SLOT(indiv_recon()));
    process_widgets.push_back( pb_indiv_recon );
 
-   pb_inc_recon = new QPushButton(tr("Incremental TVSD"), this);
+   pb_inc_recon = new QPushButton(tr("Incremental TVSD recon."), this);
    pb_inc_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_inc_recon->setMinimumHeight(minHeight3);
    pb_inc_recon->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -1965,9 +1965,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
       if ( !lb_ev->isSelected( i ) )
       {
          D[ svd_index[ i ] ] = 0e0;
-         last_ev = lb_ev->text( i );
       } else {
          ev_count++;
+         last_ev = lb_ev->text( i );
       }
    }
    
@@ -2026,7 +2026,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
 
    QListViewItem * iqs = new QListViewItem( lvi, lv_data->lastItem(), "I(q)" );
 
-   QString tag = QString( "TSVD%1_" ).arg( ev_count );
+   QString tag = QString( "TSVD%1_%2" ).arg( ev_count ).arg( ev_count == 1 ? QString( "%1_").arg( last_ev ).replace( ".","_" ) : QString( "" ) );
 
    // add I(q)
    // contained in columns of F, reference file names from last_svd_data
