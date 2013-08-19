@@ -518,11 +518,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    }
    
    hide_widgets( data_widgets, 
-                 !ush_win->gparams.count( "hplc_svd_data_widgets" ) || ush_win->gparams[ "hpld_svd_data_widgets" ] == "false" ? false : true );
+                 !ush_win->gparams.count( "hplc_svd_data_widgets" ) || ush_win->gparams[ "hplc_svd_data_widgets" ] == "false" ? false : true );
    hide_widgets( editor_widgets, 
-                 !ush_win->gparams.count( "hplc_svd_editor_widgets" ) || ush_win->gparams[ "hpld_svd_editor_widgets" ] == "false" ? false : true );
+                 !ush_win->gparams.count( "hplc_svd_editor_widgets" ) || ush_win->gparams[ "hplc_svd_editor_widgets" ] == "false" ? false : true );
    hide_widgets( process_widgets,
-                 !ush_win->gparams.count( "hplc_svd_process_widgets" ) || ush_win->gparams[ "hpld_svd_process_widgets" ] == "false" ? false : true );
+                 !ush_win->gparams.count( "hplc_svd_process_widgets" ) || ush_win->gparams[ "hplc_svd_process_widgets" ] == "false" ? false : true );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::cancel()

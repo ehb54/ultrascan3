@@ -246,6 +246,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_show_created;
       QPushButton   *pb_show_only_created;
 
+      mQLabel     * lbl_editor;
       QFont         ft;
       QTextEdit     *editor;
       QMenuBar      *m;
@@ -447,6 +448,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < QWidget * >                files_expert_widgets;
       vector < QWidget * >                created_files_widgets;
       vector < QWidget * >                created_files_expert_widgets;
+      vector < QWidget * >                editor_widgets;
 
       vector < double >                   conc_curve( vector < double > &t,
                                                       unsigned int peak,
@@ -660,6 +662,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #endif
       unsigned int                 use_line_width;
 
+      QColorGroup                  cg_red;
+
    private slots:
 
       void setupGUI();
@@ -733,6 +737,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void clear_display();
       void update_font();
       void save();
+      void hide_editor();
 
       void help();
       void options();

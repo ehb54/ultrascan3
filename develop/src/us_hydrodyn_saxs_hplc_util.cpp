@@ -2755,6 +2755,18 @@ void US_Hydrodyn_Saxs_Hplc::hide_created_files()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_created_files_widgets" ] = created_files_widgets[ 0 ]->isVisible() ? "visible" : "hidden";
 }
 
+void US_Hydrodyn_Saxs_Hplc::hide_editor()
+{
+   hide_widgets( editor_widgets, editor_widgets[ 0 ]->isVisible() );
+
+   if ( editor_widgets[ 0 ]->isVisible() )
+   {
+      lbl_editor->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   }
+
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_editor_widgets" ] = editor_widgets[ 0 ]->isVisible() ? "visible" : "hidden";
+}
+
 void US_Hydrodyn_Saxs_Hplc::svd()
 {
    disable_all();

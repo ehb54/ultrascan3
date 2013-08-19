@@ -117,6 +117,9 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    disable_updates = false;
    plot3d_flag     = false;
 
+   cg_red = USglobal->global_colors.cg_label;
+   cg_red.setBrush( QColorGroup::Foreground, QBrush( QColor( "red" ),  QBrush::SolidPattern ) );
+
    setupGUI();
    update_gauss_mode();
    running = false;
@@ -900,6 +903,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    progress->reset();
 
+   lbl_editor = new mQLabel("Messages", this);
+   lbl_editor->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_editor->setMinimumHeight(minHeight1);
+   lbl_editor->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   connect( lbl_editor, SIGNAL( pressed() ), SLOT( hide_editor() ) );
+
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    editor->setReadOnly(true);
@@ -908,6 +918,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
+   editor_widgets.push_back( frame );
 
    m = new QMenuBar(frame, "menu" );
    m->setMinimumHeight(minHeight1 - 5);
@@ -919,6 +930,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
    editor->setWordWrap (QTextEdit::WidgetWidth);
    editor->setMinimumHeight( minHeight1 * 3 );
+   editor_widgets.push_back( editor );
 
    plot_dist = new QwtPlot(this);
 #ifndef QT4
@@ -1681,8 +1693,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    created_files_widgets.push_back ( pb_show_only_created );
 
    QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
-   vbl_editor_group->addWidget (frame);
-   vbl_editor_group->addWidget (editor);
+   vbl_editor_group->addWidget ( lbl_editor );
+   vbl_editor_group->addWidget ( frame );
+   vbl_editor_group->addWidget ( editor );
 
    QHBoxLayout *hbl_dir = new QHBoxLayout( 0 );
    hbl_dir->addWidget( cb_lock_dir );
@@ -1827,6 +1840,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    background->addSpacing( 1 );
    background->addLayout ( gl_bottom );
    background->addSpacing( 1 );
+
+   //   hide_widgets( files_widgets, 
+   //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_files_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_files_widgets" ] == "false" ? false : true );
+   //   hide_widgets( editor_widgets, 
+   //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_editor_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_editor_widgets" ] == "false" ? false : true );
+   //   hide_widgets( created_files_widgets,
+   //                 !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_created_files_widgets" ) || ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_creaded_files_widgets" ] == "false" ? false : true );
 }
 
 void US_Hydrodyn_Saxs_Hplc::cancel()
@@ -1945,13 +1965,16 @@ void US_Hydrodyn_Saxs_Hplc::save()
    }
 }
 
-
 void US_Hydrodyn_Saxs_Hplc::editor_msg( QString color, QString msg )
 {
    QColor save_color = editor->color();
    editor->setColor(color);
    editor->append(msg);
    editor->setColor(save_color);
+   if ( !editor_widgets[ 0 ]->isVisible() && color == "red" )
+   {
+      lbl_editor->setPalette(QPalette(cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::editor_msg_qc( QColor qcolor, QString msg )
@@ -1960,6 +1983,10 @@ void US_Hydrodyn_Saxs_Hplc::editor_msg_qc( QColor qcolor, QString msg )
    editor->setColor(qcolor);
    editor->append(msg);
    editor->setColor(save_color);
+   if ( !editor_widgets[ 0 ]->isVisible() && qcolor == QColor( "red" ) )
+   {
+      lbl_editor->setPalette(QPalette(cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   }
 }
 
 bool US_Hydrodyn_Saxs_Hplc::activate_saxs_window()
@@ -2122,6 +2149,16 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files )
    }
 }
 
+class hplc_sortable_qstring {
+public:
+   double       x;
+   QString      name;
+   bool operator < (const hplc_sortable_qstring& objIn) const
+   {
+      return x < objIn.x;
+   }
+};
+
 void US_Hydrodyn_Saxs_Hplc::add_files()
 {
    disable_all();
@@ -2184,6 +2221,40 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
    }
 
    QString errors;
+
+   if ( filenames.size() > 1 )
+   {
+      QRegExp rx_cap( "(\\d+)_(\\d+)" );
+
+      list < hplc_sortable_qstring > svals;
+
+      QString head = qstring_common_head( filenames, true );
+      QString tail = qstring_common_tail( filenames, true );
+
+      for ( int i = 0; i < (int) filenames.size(); ++i )
+      {
+         QString tmp = filenames[ i ].mid( head.length() );
+         tmp = tmp.mid( 0, tmp.length() - tail.length() );
+         if ( rx_cap.search( tmp ) != -1 )
+         {
+            tmp = rx_cap.cap( 2 );
+         }
+
+         hplc_sortable_qstring sval;
+         sval.x     = tmp.toDouble();
+         sval.name  = filenames[ i ];
+         svals      .push_back( sval );
+      }
+      svals.sort();
+
+      filenames.clear();
+      for ( list < hplc_sortable_qstring >::iterator it = svals.begin();
+            it != svals.end();
+            ++it )
+      {
+         filenames << it->name;
+      }
+   }
 
    for ( int i = 0; i < (int)filenames.size(); i++ )
    {
