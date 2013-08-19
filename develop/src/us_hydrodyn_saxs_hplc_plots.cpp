@@ -555,6 +555,10 @@ void US_Hydrodyn_Saxs_Hplc::errors()
          } else {
             // compare 2 files
             QStringList files = all_selected_files();
+            if ( files.size() > 2 )
+            {
+               errors_multi_file( files );
+            }
             if ( files.size() != 2 )
             {
                editor_msg( "red", tr( "Internal error: plot residuals, not 2 selected files" ) );
@@ -562,7 +566,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
             }
             if ( f_qs[ files[ 0 ] ] != f_qs[ files[ 1 ] ] )
             {
-               editor_msg( "red", tr( "Error: Residuals incompatible grids" ) );
+               editor_msg( "red", tr( "Error: Residuals incompatible grids, you could try 'crop common'" ) );
                return;
             }
             vector < double > errors;
@@ -590,3 +594,32 @@ void US_Hydrodyn_Saxs_Hplc::errors()
    }
 }
 
+bool US_Hydrodyn_Saxs_Hplc::compatible_grids( QStringList files )
+{
+   vector < vector < double > > grids;
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      QString this_file = files[ i ];
+      if ( f_qs.count( this_file ) &&
+           f_Is.count( this_file ) &&
+           f_qs[ this_file ].size() &&
+           f_Is[ this_file ].size() )
+      {
+         grids.push_back( f_qs[ this_file ] );
+      }
+   }
+   vector < double > v_union = US_Vector::vunion( grids );
+   vector < double > v_int   = US_Vector::intersection( grids );
+
+   return v_union == v_int;
+}
+   
+void US_Hydrodyn_Saxs_Hplc::errors_multi_file( QStringList files )
+{
+   // check 
+   if ( !compatible_grids( files ) )
+   {
+      editor_msg( "red", tr( "Residuals: curves must be on the same grid, try 'Crop Common' first." ) );
+      return;
+   }
+}

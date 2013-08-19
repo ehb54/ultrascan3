@@ -664,6 +664,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QColorGroup                  cg_red;
 
+      void                         errors_multi_file( QStringList files );
+
+      bool                         compatible_grids( QStringList files );
+
    private slots:
 
       void setupGUI();

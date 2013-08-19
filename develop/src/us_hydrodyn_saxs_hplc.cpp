@@ -909,6 +909,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lbl_editor->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    connect( lbl_editor, SIGNAL( pressed() ), SLOT( hide_editor() ) );
+   lbl_editor->hide();
 
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));

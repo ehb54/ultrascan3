@@ -57,6 +57,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 #ifdef QT4
       QwtPlotGrid           * grid_data;
 #endif
+
+      QwtPlot               * plot_errors;
+      ScrollZoomer          * plot_errors_zoomer;
+#ifdef QT4
+      QwtPlotGrid           * grid_sd;
+#endif
+
+      QCheckBox             * cb_plot_errors;
+      QCheckBox             * cb_plot_errors_rev;
+      QCheckBox             * cb_plot_errors_sd;
+      QCheckBox             * cb_plot_errors_pct;
+      QCheckBox             * cb_plot_errors_ref;
+      QCheckBox             * cb_plot_errors_group;
+
       QPushButton           * pb_iq_it;
       QPushButton           * pb_axis_x;
       QPushButton           * pb_axis_y;
@@ -116,10 +130,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       vector < QWidget * >                data_widgets;
       vector < QWidget * >                editor_widgets;
       vector < QWidget * >                process_widgets;
+      vector < QWidget * >                errors_widgets;
 
       void                                hide_widgets( vector < QWidget *> widgets, bool hide );
 
       void plot_files();
+      void plot_files( QStringList files );
       bool plot_file( QString file,
                       double &minx,
                       double &maxx,
@@ -188,7 +204,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       bool                         rmsd_plot;
       bool                         chi_plot;
 
+      set < QString >              subset_data;
       QStringList                  last_svd_data;
+      QString                      last_svd_name;
+      map < QString, QStringList > svd_data_map;
       QListViewItem *              lvi_last_depth( int d );
 
       vector < QColor >            plot_colors;
@@ -201,9 +220,18 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       double                       vmax( vector < double > &x );
 
       unsigned int                 use_line_width;
+      QString                      recon_mode;
+
+      void                         update_plot_errors();
+      void                         do_plot_errors();
+      void                         do_plot_errors_group();
+
+      QStringList                  add_subset_data( QStringList files );
+      QString                      get_related_source_name( QString name );
+      QStringList                  get_files_by_name( QString name );
+      bool                         get_plot_files( QStringList &use_list, QStringList &use_ref_list );
 
    private slots:
-
 
       // ------ data section 
 
@@ -225,7 +253,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       // ------ plot section 
 
-      void plot_data_zoomed( const QwtDoubleRect &rect );
+      // void plot_data_zoomed( const QwtDoubleRect &rect );
+      // void plot_errors_zoomed( const QwtDoubleRect &rect );
+
+      void set_plot_errors();
+      void set_plot_errors_rev();
+      void set_plot_errors_sd();
+      void set_plot_errors_pct();
+      void set_plot_errors_ref();
+      void set_plot_errors_group();
 
       void axis_x();
       void axis_y();
