@@ -24,12 +24,13 @@ done
 echo "Enter Admin password --"
 sudo chown -R $ME:admin ${PDIRS}
 
+DDIR=${PKGDIR}/ultrascan3
 for D in Developer etc bin lib; do
   SDIR=${SRCDIR}/${D}
-  DDIR=${PKGDIR}/ultrascan3
   echo "${RSYNC} ${SDIR} ${DDIR}"
   ${RSYNC} ${SDIR} ${DDIR}
 done
+chmod g+w ${DDIR}/etc
 
 for F in ${PKGDIR}/ultrascan3/etc/somo*; do
   if [ `echo ${F}|grep -ic 'new$'` -eq 0 ]; then

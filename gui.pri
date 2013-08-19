@@ -47,7 +47,7 @@ win32 {
 }
 
 macx {
-  CONFIG     += x86 x86_64
+  CONFIG     += x86_64
   LIBS       += -L../../lib -lus_gui -lus_utils
   LIBS       += $$QWTLIB 
   LIBS       += -L../../lib -lmysqlclient -framework QtOpenGL
