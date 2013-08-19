@@ -1118,6 +1118,17 @@ void US_Hydrodyn_Saxs_Hplc_Svd::replot()
       }
    }
 
+   if ( plot_errors_zoomer )
+   {
+      // cout << QString( "plot zoomer stack size %1\n" ).arg( plot_errors_zoomer->zoomRectIndex() );
+      if ( !plot_errors_zoomer->zoomRectIndex() )
+      {
+         plot_errors_zoomer->zoom ( 0 );
+         delete plot_errors_zoomer;
+         plot_errors_zoomer = (ScrollZoomer *) 0;
+      }
+   }
+
    if ( ev_plot || chi_plot || rmsd_plot )
    {
       axis_x_log = last_axis_x_log;
@@ -2598,7 +2609,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::set_plot_errors_group()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::set_plot_errors_ref()
 {
-   update_plot_errors();
+   if ( !cb_plot_errors_ref->isChecked() )
+   {
+      plot_files();
+   } else {
+      update_plot_errors();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::update_plot_errors()
