@@ -3021,7 +3021,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
 #ifndef QT4
       plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-      connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_errors_zoomed( const QwtDoubleRect & ) ) );
+      // connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_errors_zoomed( const QwtDoubleRect & ) ) );
    }
 
    plot_errors->replot();
