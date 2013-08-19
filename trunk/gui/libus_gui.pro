@@ -14,7 +14,8 @@ win32 {
 }
 
 macx {
-        LIBS   += -L../lib/ -lus_utils 
+        LIBS   += -L../lib/ -lus_utils $${X11LIB}
+        INCLUDES += -I/usr/X11R6/include
 }
 
 QT          += network svg

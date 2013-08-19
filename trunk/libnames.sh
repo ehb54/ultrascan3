@@ -13,7 +13,7 @@ cd ${BDIR}/lib
 
 LIBS="utils gui"
 FILES="\
- libqwt.5.2.2.dylib \
+ libqwt.5.2.3.dylib \
  libqwtplot3d-qt4.0.2.7.dylib \
  libus_gui.10.0.0.dylib \
  libus_utils.10.0.0.dylib \

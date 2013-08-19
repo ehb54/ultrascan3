@@ -16,7 +16,7 @@
 //! This class provides a connection to external windows, such as those created
 //! by Rasmol, so that control messages may be sent to a specific window.
 
-class US_UTIL_EXTERN US_WindowMessage : public QObject
+class US_GUI_EXTERN US_WindowMessage : public QObject
 {
    Q_OBJECT
 
@@ -26,7 +26,7 @@ class US_UTIL_EXTERN US_WindowMessage : public QObject
       //!
       //! Object that holds id, name and file information for a
       //! specific interpreter (external window).
-      class US_UTIL_EXTERN Interpreter
+      class US_GUI_EXTERN Interpreter
       {
          public:
             //! \brief US_WindowMessageTypes constructor to create mappings.

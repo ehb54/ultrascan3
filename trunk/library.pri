@@ -53,7 +53,7 @@ win32 {
 }
 
 macx {
-  CONFIG       += x86 x86_64
+  CONFIG       += x86_64
   DEPENDPATH   += ../gui ../utils $$QWTPATH/include
   INCLUDEPATH  += ../gui ../utils $$QWTPATH/include ../mysql/include
   DEFINES      += MAC OSX

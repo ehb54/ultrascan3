@@ -39,7 +39,8 @@ do
   if [ $ISMAC -eq 0 ]; then
     qmake *.pro
   else
-    qmake -spec /usr/local/Qt4.7/mkspecs/macx-g++ *.pro
+    qmake *.pro
+##    qmake -spec /usr/local/Qt4.7/mkspecs/macx-g++ *.pro
     if [ "$d" = "gui" ]; then
       ${FIXMAC}
     fi
