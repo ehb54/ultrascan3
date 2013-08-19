@@ -587,7 +587,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::editor_msg( QString color, QString msg )
    editor->append(msg);
    editor->setColor(save_color);
 
-   if ( !editor_widgets[ 0 ]->isVisible() && color == "red" )
+   if ( !editor_widgets[ 0 ]->isVisible() && color == "red" && !msg.stripWhiteSpace().isEmpty() )
    {
       lbl_editor->setPalette(QPalette(cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    }

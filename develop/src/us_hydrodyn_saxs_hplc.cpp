@@ -1971,7 +1971,7 @@ void US_Hydrodyn_Saxs_Hplc::editor_msg( QString color, QString msg )
    editor->setColor(color);
    editor->append(msg);
    editor->setColor(save_color);
-   if ( !editor_widgets[ 0 ]->isVisible() && color == "red" )
+   if ( !editor_widgets[ 0 ]->isVisible() && color == "red" && !msg.stripWhiteSpace().isEmpty() )
    {
       lbl_editor->setPalette(QPalette(cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    }
@@ -1983,7 +1983,7 @@ void US_Hydrodyn_Saxs_Hplc::editor_msg_qc( QColor qcolor, QString msg )
    editor->setColor(qcolor);
    editor->append(msg);
    editor->setColor(save_color);
-   if ( !editor_widgets[ 0 ]->isVisible() && qcolor == QColor( "red" ) )
+   if ( !editor_widgets[ 0 ]->isVisible() && qcolor == QColor( "red" ) && !msg.stripWhiteSpace().isEmpty() )
    {
       lbl_editor->setPalette(QPalette(cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    }
