@@ -458,12 +458,19 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
    process_widgets.push_back( pb_stop );
 
-   pb_svd_plot = new QPushButton(tr("Plot EV's"), this);
+   pb_svd_plot = new QPushButton(tr("Plot EVs"), this);
    pb_svd_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_svd_plot->setMinimumHeight(minHeight3);
    pb_svd_plot->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_svd_plot, SIGNAL(clicked()), SLOT(svd_plot()));
    process_widgets.push_back( pb_svd_plot );
+
+   pb_svd_save = new QPushButton(tr("Save EVs"), this);
+   pb_svd_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_svd_save->setMinimumHeight(minHeight3);
+   pb_svd_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_svd_save, SIGNAL(clicked()), SLOT(svd_save()));
+   process_widgets.push_back( pb_svd_save );
 
    pb_recon = new QPushButton(tr("TSVD reconstruction"), this);
    pb_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -494,12 +501,19 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    // process_widgets.push_back( pb_inc_chi_plot );
    pb_inc_chi_plot->hide();
 
-   pb_inc_rmsd_plot = new QPushButton(tr("Plot RMSD"), this);
+   pb_inc_rmsd_plot = new QPushButton(tr("Plot RMSDs"), this);
    pb_inc_rmsd_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_inc_rmsd_plot->setMinimumHeight(minHeight3);
    pb_inc_rmsd_plot->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_inc_rmsd_plot, SIGNAL(clicked()), SLOT(inc_rmsd_plot()));
    process_widgets.push_back( pb_inc_rmsd_plot );
+
+   pb_rmsd_save = new QPushButton(tr("Save RMSDs"), this);
+   pb_rmsd_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_rmsd_save->setMinimumHeight(minHeight3);
+   pb_rmsd_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_rmsd_save, SIGNAL(clicked()), SLOT(rmsd_save()));
+   process_widgets.push_back( pb_rmsd_save );
 
    // -------- bottom section
 
@@ -577,6 +591,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       {
          QBoxLayout *bl_buttons = new QHBoxLayout( 0 );
          bl_buttons->addWidget( pb_svd_plot );
+         bl_buttons->addWidget( pb_svd_save );
          bl_buttons->addWidget( pb_recon );
          bl->addLayout( bl_buttons );
       }
@@ -592,6 +607,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
          QBoxLayout *bl_buttons = new QHBoxLayout( 0 );
          bl_buttons->addWidget( pb_inc_chi_plot );
          bl_buttons->addWidget( pb_inc_rmsd_plot );
+         bl_buttons->addWidget( pb_rmsd_save );
          bl->addLayout( bl_buttons );
       }
 
@@ -1105,8 +1121,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::disable_all()
    pb_svd             ->setEnabled( false );
    pb_stop            ->setEnabled( running );
    pb_svd_plot        ->setEnabled( false );
+   pb_svd_save        ->setEnabled( false );
    pb_recon           ->setEnabled( false );
    pb_inc_rmsd_plot   ->setEnabled( false );
+   pb_rmsd_save       ->setEnabled( false );
    pb_inc_chi_plot    ->setEnabled( false );
    pb_inc_recon       ->setEnabled( false );
    pb_indiv_recon     ->setEnabled( false );
@@ -1357,9 +1375,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
    pb_svd             ->setEnabled( files.size() && !iq_it_state && sources.size() == 1 );
    pb_stop            ->setEnabled( false );
    pb_svd_plot        ->setEnabled( lb_ev->count() );
+   pb_svd_save        ->setEnabled( lb_ev->count() );
    pb_recon           ->setEnabled( ev_items );
 
    pb_inc_rmsd_plot   ->setEnabled( rmsd_x.size() );
+   pb_rmsd_save       ->setEnabled( rmsd_x.size() );
    pb_inc_chi_plot    ->setEnabled( chi_x.size() );
    pb_inc_recon       ->setEnabled( ev_items );
    pb_indiv_recon     ->setEnabled( ev_items );
@@ -3401,4 +3421,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
       }
       plot_files( use_ref_list );
    }
+}
+
+
+void US_Hydrodyn_Saxs_Hplc_Svd::rmsd_save()
+{
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::svd_save()
+{
 }

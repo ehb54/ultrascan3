@@ -99,9 +99,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QListBox              * lb_ev;
 
       QPushButton           * pb_svd_plot;
+      QPushButton           * pb_svd_save;
       QPushButton           * pb_recon;
 
       QPushButton           * pb_inc_rmsd_plot;
+      QPushButton           * pb_rmsd_save;
       QPushButton           * pb_inc_chi_plot;
       QPushButton           * pb_inc_recon;
       QPushButton           * pb_indiv_recon;
@@ -286,9 +288,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void stop();
 
       void svd_plot( bool axis_change = true );
+      void svd_save();
       void recon();
 
       void inc_rmsd_plot( bool axis_change = true );
+      void rmsd_save();
       void inc_chi_plot ( bool axis_change = true );
       void inc_recon();
       void indiv_recon();
