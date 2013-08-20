@@ -2771,8 +2771,7 @@ void US_Hydrodyn_Saxs_Hplc::svd()
 {
    disable_all();
 
-   map < QString, int > selected_files;
-   //   vector < QString >   selected_files_v;
+   vector < QString > selected_files;
 
    int m = 0; // rows
    int n = 0; // cols
@@ -2790,8 +2789,7 @@ void US_Hydrodyn_Saxs_Hplc::svd()
                  f_qs[ this_file ].size() &&
                  f_Is[ this_file ].size() )
             {
-               selected_files[ this_file ] = i;
-               // selected_files_v.push_back( this_file );
+               selected_files    .push_back( this_file );
                grids.push_back( f_qs[ this_file ] );
                if ( !n )
                {
@@ -2815,72 +2813,6 @@ void US_Hydrodyn_Saxs_Hplc::svd()
       }
    }
 
-   update_enables();
-
-#if defined( OLD_WAY )   
-
-   // make matrix
-
-   vector < vector < double > > F( m );
-   vector < double * > a( m );
-
-   for ( int i = 0; i < m; ++i )
-   {
-      F[ i ].resize( n );
-      for ( int j = 0; j < n; ++j )
-      {
-         F[ i ][ j ] = f_Is[ selected_files_v[ j ] ][ i ];
-      }
-      a[ i ] = &(F[ i ][ 0 ]);
-   }
-
-   vector < double > W( n );
-   double *w = &(W[ 0 ]);
-   vector < double * > v( n );
-
-   vector < vector < double > > V( n );
-   for ( int j = 0; j < n; ++j )
-   {
-      V[ j ].resize( n );
-      v[ j ] = &(V[ j ][ 0 ]);
-   }
-      
-   editor_msg( "blue", tr( "SVD: matrix F created, computing SVD" ) );
-   if ( !SVD::dsvd( &(a[ 0 ]), m, n, &(w[ 0 ]), &(v[ 0 ]) ) )
-   {
-      editor_msg( "red", tr( SVD::errormsg ) );
-   }
-
-   list < double > svals;
-
-   cout << "Singular values:\n";
-   for ( int i = 0; i < n; i++ )
-   {
-      svals.push_back( w[ i ] );
-   }
-   svals.sort();
-   svals.reverse();
-
-   QString svs;
-
-   vector < double > q_sv;
-   vector < double > I_sv;
-
-   for ( list < double >::iterator it = svals.begin();
-         it != svals.end();
-         ++it )
-   {
-      q_sv.push_back( (double) q_sv.size() + 1e0 );
-      I_sv.push_back( *it );
-      cout << QString( "%1 " ).arg( *it );
-      svs += QString( " %1" ).arg( *it );
-   }
-   cout << endl;
-   add_plot( QString( "svd" ), q_sv, I_sv, false, false );
-
-   editor_msg( "blue", tr( "SVD: done, singular values:" ) + svs );
-#endif
-   
    update_enables();
 
    new US_Hydrodyn_Saxs_Hplc_Svd(

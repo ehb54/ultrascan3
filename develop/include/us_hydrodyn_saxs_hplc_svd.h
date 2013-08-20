@@ -21,7 +21,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
    public:
       US_Hydrodyn_Saxs_Hplc_Svd(
                                 US_Hydrodyn_Saxs_Hplc *hplc_win, 
-                                map < QString, int >  &hplc_selected_files,
+                                vector < QString > hplc_selected_files,
                                 QWidget *p = 0, 
                                 const char *name = 0
                                 );
@@ -93,6 +93,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       // QLineEdit             * le_random;
 
       QPushButton           * pb_svd;
+      QPushButton           * pb_stop;
 
       QLabel                * lbl_ev;
       QListBox              * lb_ev;
@@ -116,7 +117,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       QString                 errormsg;
 
-      map < QString, int >    hplc_selected_files;
+      vector < QString >      hplc_selected_files;
 
       map < QString, unsigned int >       f_pos;
 
@@ -148,7 +149,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
                         double &miny,
                         double &maxy );
 
-      bool disable_updates;
+      bool                         running;
 
       bool                         axis_x_log;
       bool                         axis_y_log;
@@ -182,7 +183,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       map < QString, long >               plotted_curves;
 #endif
       void                         add_i_of_t( QString source, QStringList files, bool do_update_enables = true );
-      void                         rescale();
+      void                         rescale( bool do_update_enables = true );
 
       bool                         svd_F_nonzero;
       vector < vector < double > > svd_F;
@@ -222,7 +223,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       unsigned int                 use_line_width;
       QString                      recon_mode;
 
-      void                         update_plot_errors();
+      void                         update_plot_errors( bool do_update_enables = true );
       void                         do_plot_errors();
       void                         do_plot_errors_group();
 
@@ -230,6 +231,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QString                      get_related_source_name( QString name );
       QStringList                  get_files_by_name( QString name );
       bool                         get_plot_files( QStringList &use_list, QStringList &use_ref_list );
+
+      vector < double >            plot_errors_jumps;
+      void                         plot_errors_jump_markers();
 
    private slots:
 
@@ -278,6 +282,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void ev_selection_changed();
 
       void svd();
+      void stop();
 
       void svd_plot( bool axis_change = true );
       void recon();

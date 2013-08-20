@@ -12,16 +12,16 @@
 
 US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
                                                      US_Hydrodyn_Saxs_Hplc *hplc_win,
-                                                     map < QString, int >  &hplc_selected_files,
+                                                     vector < QString > hplc_selected_files,
                                                      QWidget *p, 
                                                      const char *name
                                                      ) : QFrame(p, name)
 {
-   this->hplc_win            = hplc_win;
-   this->hplc_selected_files = hplc_selected_files;
-   this->ush_win             = (US_Hydrodyn *)(hplc_win->us_hydrodyn);
-   this->plot_colors         = hplc_win->plot_colors;
-   this->use_line_width      = hplc_win->use_line_width;
+   this->hplc_win                = hplc_win;
+   this->hplc_selected_files     = hplc_selected_files;
+   this->ush_win                 = (US_Hydrodyn *)(hplc_win->us_hydrodyn);
+   this->plot_colors             = hplc_win->plot_colors;
+   this->use_line_width          = hplc_win->use_line_width;
 
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -41,11 +41,9 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    QStringList original_data;
 
-   for ( map < QString, int >::iterator it = hplc_selected_files.begin();
-         it != hplc_selected_files.end();
-         ++it )
+   for ( int i = 0; i < (int) hplc_selected_files.size(); ++i )
    {
-      QString this_name = it->first;
+      QString this_name = hplc_selected_files[ i ];
       original_data.push_back( this_name );
       
       f_pos      [ this_name ] = f_pos.size();
@@ -63,7 +61,7 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    le_last_focus      = (mQLineEdit *) 0;
    
-   disable_updates = false;
+   running            = false;
 
    setupGUI();
 
@@ -126,11 +124,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
    QListViewItem *lvi = iq;
 
-   for ( map < QString, int >::iterator it = hplc_selected_files.begin();
-         it != hplc_selected_files.end();
-         ++it )
+   for ( int i = 0; i < (int) hplc_selected_files.size(); ++i )
    {
-      lvi = new QListViewItem( iq, lvi, it->first );
+      lvi = new QListViewItem( iq, lvi, hplc_selected_files[ i ] );
    }
 
    // make i(t), add also
@@ -314,7 +310,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    errors_widgets.push_back( cb_plot_errors_rev );
 
    cb_plot_errors_sd = new QCheckBox(this);
-   cb_plot_errors_sd->setText(tr("Use standard deviations "));
+   cb_plot_errors_sd->setText(tr("Use S.D.'s "));
    cb_plot_errors_sd->setEnabled( true );
    cb_plot_errors_sd->setChecked( false );
    cb_plot_errors_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -455,6 +451,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect(pb_svd, SIGNAL(clicked()), SLOT(svd()));
    process_widgets.push_back( pb_svd );
 
+   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_stop->setMinimumHeight(minHeight3);
+   pb_stop->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
+   process_widgets.push_back( pb_stop );
+
    pb_svd_plot = new QPushButton(tr("Plot EV's"), this);
    pb_svd_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_svd_plot->setMinimumHeight(minHeight3);
@@ -560,7 +563,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
          bl->addLayout( gl );
       }
-      bl->addWidget( pb_svd );
+
+      {
+         QBoxLayout *bl_buttons = new QHBoxLayout( 0 );
+         bl_buttons->addWidget( pb_svd );
+         bl_buttons->addWidget( pb_stop );
+         bl->addLayout( bl_buttons );
+      }
+
       bl->addWidget( lbl_ev );
       bl->addWidget( lb_ev );
 
@@ -597,6 +607,18 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       QBoxLayout *bl = new QVBoxLayout( 0 );
       bl->addWidget( plot_data );
       bl->addWidget( plot_errors );
+
+      //       {
+      //          QGridLayout * gl = new QGridLayout( 0 );
+      //          gl -> addWidget( cb_plot_errors       , 0, 0 );
+      //          gl -> addWidget( cb_plot_errors_sd    , 0, 1 );
+      //          gl -> addWidget( cb_plot_errors_pct   , 0, 2 );
+      //          gl -> addWidget( cb_plot_errors_rev   , 1, 0 );
+      //          gl -> addWidget( cb_plot_errors_ref   , 1, 1 );
+      //          gl -> addWidget( cb_plot_errors_group , 1, 2 );
+
+      //          bl -> addLayout( gl );
+      //       }
 
       {
          QBoxLayout *bl_buttons = new QHBoxLayout( 0 );
@@ -785,7 +807,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
    }
    
    // plot_data->replot();
-   rescale();
+   rescale( false );
    update_plot_errors();
 }
 
@@ -1073,20 +1095,25 @@ void US_Hydrodyn_Saxs_Hplc_Svd::disable_all()
    pb_color_rotate    ->setEnabled( false );
    pb_replot          ->setEnabled( false );
    pb_iq_it           ->setEnabled( false );
-   pb_axis_x          ->setEnabled( true );
-   pb_axis_y          ->setEnabled( true );
+   pb_axis_x          ->setEnabled( false );
+   pb_axis_y          ->setEnabled( false );
    le_q_start         ->setEnabled( false );
    le_q_end           ->setEnabled( false );
-   // le_t_start     ->setEnabled( false );
-   // le_t_end       ->setEnabled( false );
+   // le_t_start       ->setEnabled( false );
+   // le_t_end         ->setEnabled( false );
    lb_ev              ->setEnabled( false );
    pb_svd             ->setEnabled( false );
+   pb_stop            ->setEnabled( running );
    pb_svd_plot        ->setEnabled( false );
    pb_recon           ->setEnabled( false );
    pb_inc_rmsd_plot   ->setEnabled( false );
    pb_inc_chi_plot    ->setEnabled( false );
    pb_inc_recon       ->setEnabled( false );
    pb_indiv_recon     ->setEnabled( false );
+
+
+   qApp               ->processEvents();
+   
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::q_start_text( const QString & )
@@ -1107,6 +1134,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::q_end_text( const QString & )
 
 void US_Hydrodyn_Saxs_Hplc_Svd::replot()
 {
+   disable_all();
+
    if ( plot_data_zoomer )
    {
       // cout << QString( "plot zoomer stack size %1\n" ).arg( plot_data_zoomer->zoomRectIndex() );
@@ -1156,6 +1185,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::replot()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::iq_it()
 {
+   disable_all();
+
    if ( plot_data_zoomer )
    {
       plot_data_zoomer->zoom ( 0 );
@@ -1292,7 +1323,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::hide_widgets( vector < QWidget *> widgets, bool 
 void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
 {
    // count selections
-   if ( disable_updates )
+   if ( running )
    {
       return;
    }
@@ -1324,6 +1355,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
    lb_ev              ->setEnabled( lb_ev->count() );
 
    pb_svd             ->setEnabled( files.size() && !iq_it_state && sources.size() == 1 );
+   pb_stop            ->setEnabled( false );
    pb_svd_plot        ->setEnabled( lb_ev->count() );
    pb_recon           ->setEnabled( ev_items );
 
@@ -1805,7 +1837,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_t( QString source, QStringList files, b
    editor_msg( "blue", QString( tr(  "Done making I(t) for source %1" ) ).arg( source ) );
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::rescale()
+void US_Hydrodyn_Saxs_Hplc_Svd::rescale( bool do_update_enables )
 {
    //bool any_selected = false;
    double minx = 0e0;
@@ -1878,7 +1910,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::rescale()
    }
    
    plot_data->replot();
-   update_enables();
+   if ( do_update_enables )
+   {
+      update_enables();
+   }
 }
 
 class svd_sortable_double {
@@ -2241,6 +2276,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
    editor_msg( "blue", tr( "Start incremental TSVD" ) );
    recon_mode = "Inc. ";
    disable_all();
+   pb_stop->setEnabled( true );
+   running = true;
 
    rmsd_x.clear();
    rmsd_y.clear();
@@ -2262,6 +2299,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
 
    for ( int i = 0; i < (int) evs_selected.size(); ++i )
    {
+      if ( !running )
+      {
+         editor_msg( "red", tr( "Processing stopped" ) );
+         update_enables();
+         return;
+      }
+
       progress->setProgress( i, evs_selected.size() );
 
       lb_ev->clearSelection();
@@ -2288,6 +2332,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
 
    connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( ev_selection_changed() ) );
 
+   running = false;
    update_enables();
    editor_msg( "blue", tr( "Done TSVD reconstruction" ) );
 }
@@ -2491,11 +2536,21 @@ double US_Hydrodyn_Saxs_Hplc_Svd::vmax( vector < double > &x )
    return max;
 }
 
+void US_Hydrodyn_Saxs_Hplc_Svd::stop()
+{
+   pb_stop->setEnabled( false );
+   running = false;
+   editor_msg( "red", tr( "Processing stop requested" ) );
+   qApp->processEvents();
+}
+
 void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
 {
    recon_mode = "Indiv. ";
    editor_msg( "blue", tr( "Start individual TSVD" ) );
    disable_all();
+   pb_stop->setEnabled( true );
+   running = true;
 
    rmsd_x.clear();
    rmsd_y.clear();
@@ -2517,6 +2572,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
 
    for ( int i = 0; i < (int) evs_selected.size(); ++i )
    {
+      if ( !running )
+      {
+         editor_msg( "red", tr( "Processing stopped" ) );
+         update_enables();
+         return;
+      }
+
       progress->setProgress( i, evs_selected.size() );
 
       lb_ev->clearSelection();
@@ -2542,12 +2604,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
    lb_ev->clearSelection();
    for ( int i = 0; i < (int) evs_selected.size(); ++i )
    {
-         lb_ev->setSelected( evs_selected[ i ], true );
+      lb_ev->setSelected( evs_selected[ i ], true );
    }
 
    connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( ev_selection_changed() ) );
 
-
+   running = false;
    update_enables();
    editor_msg( "blue", tr( "Done TSVD reconstruction" ) );
 }
@@ -2604,6 +2666,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::set_plot_errors_pct()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::set_plot_errors_group()
 {
+   if ( plot_errors_zoomer )
+   {
+      plot_errors_zoomer->zoom ( 0 );
+      delete plot_errors_zoomer;
+      plot_errors_zoomer = (ScrollZoomer *) 0;
+   }
+   
    update_plot_errors();
 }
 
@@ -2617,12 +2686,17 @@ void US_Hydrodyn_Saxs_Hplc_Svd::set_plot_errors_ref()
    }
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::update_plot_errors()
+void US_Hydrodyn_Saxs_Hplc_Svd::update_plot_errors( bool do_update_enables )
 {
+   disable_all();
    if ( cb_plot_errors->isChecked() )
    {
-      cout << "update plot errors\n";
+      // cout << "update plot errors\n";
       cb_plot_errors_group->isChecked() ? do_plot_errors_group() : do_plot_errors();
+   }
+   if ( do_update_enables )
+   {
+      update_enables();
    }
 }
 
@@ -2748,7 +2822,11 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::get_files_by_name( QString name )
 bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringList &use_ref_list )
 {
    set < QString > sources = get_selected_sources();
-   if ( sources.size() != 1 )
+   if ( !sources.size() )
+   {
+      return false;
+   }
+   if ( sources.size() > 1 )
    {
       editor_msg( "red", QString( tr( "Internal error: get_plot_files() with more than one source (%1)" ) ).arg( sources.size() ) );
       return false;
@@ -2763,7 +2841,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringLi
       return false;
    }
 
-   cout << QString( "ref source <%1>\n" ).arg( ref_source );
+   // cout << QString( "ref source <%1>\n" ).arg( ref_source );
 
    // find related curves
 
@@ -2800,22 +2878,10 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringLi
    return use_list.size() > 0;
 }
    
-void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
-{
-   cout << "do plot errors group\n";
-
-   QStringList use_list;
-   QStringList use_ref_list;
-   if ( !get_plot_files( use_list, use_ref_list ) )
-   {
-      return;
-   }
-}
-
 void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
 {
-   cout << "do plot errors\n";
-
+   // cout << "do plot errors\n";
+   
    QStringList use_list;
    QStringList use_ref_list;
    if ( !get_plot_files( use_list, use_ref_list ) )
@@ -2831,16 +2897,21 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
    vector < double > fit;
 
    double grid_ofs = f_qs[ use_list[ 0 ] ][ 0 ];
+   plot_errors_jumps.clear();
+   plot_errors_jumps.push_back( grid_ofs );
 
    bool use_errors = true;
 
    for ( int i = 0; i < (int) use_list.size(); ++i )
    {
-      if ( f_errors[ use_ref_list[ i ] ].size() !=
-           f_qs    [ use_ref_list[ i ] ].size() ||
-           !US_Saxs_Util::is_nonzero_vector( f_errors[ use_ref_list[ i ] ] ) )
+      if ( use_errors &&
+           ( f_errors[ use_ref_list[ i ] ].size() !=
+             f_qs    [ use_ref_list[ i ] ].size() ||
+             !US_Saxs_Util::is_nonzero_vector( f_errors[ use_ref_list[ i ] ] ) ) )
       {
          use_errors = false;
+         cb_plot_errors_sd->setChecked( false );
+         cb_plot_errors_sd->hide();
       }
       
       if ( f_qs_string[ use_ref_list[ i ] ] != 
@@ -2861,6 +2932,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
          }
       }
       grid_ofs += f_qs[ use_list[ i ] ].back() - f_qs[ use_list[ i ] ][ 0 ];
+      plot_errors_jumps.push_back( grid_ofs );
+   }
+   plot_errors_jumps.pop_back();
+
+   if ( cb_plot_errors_rev->isChecked() )
+   {
+      vector < double > tmp = fit;
+      fit = target;
+      target = tmp;
    }
 
    vector < double > x;
@@ -3024,6 +3104,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       // connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_errors_zoomed( const QwtDoubleRect & ) ) );
    }
 
+   plot_errors_jump_markers();
+
    plot_errors->replot();
 
    if ( cb_plot_errors_ref->isChecked() )
@@ -3031,3 +3113,271 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       plot_files( use_ref_list );
    }
 }
+
+void US_Hydrodyn_Saxs_Hplc_Svd::plot_errors_jump_markers()
+{
+   if ( cb_plot_errors_group->isChecked() ||
+        plot_errors_jumps.size() > 25 )
+   {
+      return;
+   }
+
+   for ( int i = 0; i < (int) plot_errors_jumps.size(); i++ )
+   {
+#ifndef QT4
+      long marker = plot_errors->insertMarker();
+      plot_errors->setMarkerLineStyle ( marker, QwtMarker::VLine );
+      plot_errors->setMarkerPos       ( marker, plot_errors_jumps[ i ], 0e0 );
+      plot_errors->setMarkerLabelAlign( marker, Qt::AlignRight | Qt::AlignTop );
+      plot_errors->setMarkerPen       ( marker, QPen( Qt::cyan, 1, DashDotDotLine));
+      plot_errors->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold) );
+      plot_errors->setMarkerLabelText ( marker, QString( "%1" ).arg( i + 1 ) );
+#else
+#warning check how to do this in qt4 needs ymark symsize
+      QwtPlotMarker* marker = new QwtPlotMarker;
+      marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
+                                    QBrush( Qt::white ), QPen( Qt::cyan, 1, Qt::DashLine ),
+                                    QSize( 8, sizeym ) ) );
+      marker->setValue( plot_errors_jumps[ i ] );
+      marker->setLabelAlignment( Qt::AlignRight | Qt::AlignTop );
+      marker->setLabel( QString( "%1" ).arg( i + 1 ) ); 
+      marker->attach( plot_errors );
+#endif
+   }
+   plot_errors->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
+{
+   // cout << "do plot errors group\n";
+
+   QStringList use_list;
+   QStringList use_ref_list;
+   if ( !get_plot_files( use_list, use_ref_list ) )
+   {
+      return;
+   }
+
+   plot_errors->clear();
+
+   bool use_errors = true;
+
+   double maxy = 0e0;
+   double minx = 0e0;
+   double maxx = 0e0;
+
+   for ( int i = 0; i < (int) use_list.size(); ++i )
+   {
+      if ( use_errors &&
+           ( f_errors[ use_ref_list[ i ] ].size() !=
+             f_qs    [ use_ref_list[ i ] ].size() ||
+             !US_Saxs_Util::is_nonzero_vector( f_errors[ use_ref_list[ i ] ] ) ) )
+      {
+         use_errors = false;
+         cb_plot_errors_sd->setChecked( false );
+         cb_plot_errors_sd->hide();
+      }
+   }
+
+   for ( int j = 0; j < (int) use_list.size(); ++j )
+   {
+      vector < double > x;
+      vector < double > y;
+      vector < double > e;
+
+      QString this_color_file = use_list    [ j ];
+      QString this_file       = use_list    [ j ];
+      QString this_ref_file   = use_ref_list[ j ];
+      QString this_ref_errors = use_ref_list[ j ];
+
+      if ( cb_plot_errors_rev->isChecked() )
+      {
+         this_file       = use_ref_list[ j ];
+         this_ref_file   = use_list    [ j ];
+         this_ref_errors = use_ref_list[ j ];
+      }
+
+      if ( cb_plot_errors_pct->isChecked() )
+      {
+         if ( cb_plot_errors_sd->isChecked() )
+         {
+            // does % and errors make sense?, I am excluding this for now
+            // cout << "pct mode with errors, not acceptable\n";
+            for ( int i = 0; i < (int) f_qs[ this_file ].size(); ++i )
+            {
+               if ( f_Is[ this_ref_file ][ i ] != 0e0 )
+               {
+                  x.push_back( f_qs[ this_file ][ i ] );
+                  y.push_back( 0e0 );
+                  e.push_back( 100.0 * ( f_Is[ this_ref_file ][ i ] - f_Is[ this_file ][ i ] ) / f_Is[ this_ref_file ][ i ] );
+               }
+            }
+         } else {
+            // cout << "pct mode, not using errors\n";
+
+            for ( int i = 0; i < (int) f_qs[ this_file ].size(); ++i )
+            {
+               if ( f_Is[ this_ref_file ][ i ] != 0e0 )
+               {
+                  x.push_back( f_qs[ this_file ][ i ] );
+                  y.push_back( 0e0 );
+                  e.push_back( 100.0 * ( f_Is[ this_ref_file ][ i ] - f_Is[ this_file ][ i ] ) / f_Is[ this_ref_file ][ i ] );
+               } else {
+                  cout << QString( "target at pos %1 is zero\n" ).arg( i );
+               }
+            }
+         }         
+      } else {
+         if ( cb_plot_errors_sd->isChecked() && use_errors )
+         {
+            // cout << "errors ok & used\n";
+            for ( int i = 0; i < (int) f_qs[ this_file ].size(); ++i )
+            {
+               x.push_back( f_qs[ this_file ][ i ] );
+               y.push_back( 0e0 );
+               e.push_back( ( f_Is[ this_ref_file ][ i ] - f_Is[ this_file ][ i ] ) / f_errors[ this_ref_errors ][ i ] );
+            }
+         } else {
+            // cout << "errors not ok & not used\n";
+            for ( int i = 0; i < (int) f_qs[ this_file ].size(); ++i )
+            {
+               x.push_back( f_qs[ this_file ][ i ] );
+               y.push_back( 0e0 );
+               e.push_back( f_Is[ this_ref_file ][ i ] - f_Is[ this_file ][ i ] );
+            }
+         }
+      }
+
+      for ( unsigned int i = 0; i < ( unsigned int ) e.size(); i++ )
+      {
+         if ( e[ i ] < -50e0 )
+         {
+            e[ i ] = -50e0;
+         } else {
+            if ( e[ i ] > 50e0 )
+            {
+               e[ i ] = 50e0;
+            }
+         }
+      }
+
+      //       printvector( QString( "x for curve %1" ).arg( j ), x );
+      //       printvector( QString( "e for curve %1" ).arg( j ), e );
+
+      // only need the bar once
+
+      if ( !j ) 
+      {
+#ifndef QT4
+         long curve;
+         curve = plot_errors->insertCurve( "base" );
+         plot_errors->setCurveStyle( curve, QwtCurve::Lines );
+#else
+         QwtPlotCurve *curve;
+         QwtPlotCurve *curve = new QwtPlotCurve( file );
+         curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+#ifndef QT4
+         plot_errors->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
+         plot_errors->setCurveData( curve,
+                                    (double *)&x[ 0 ],
+                                    (double *)&y[ 0 ],
+                                    x.size()
+                                    );
+#else
+         curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
+         curve->setData(
+                        (double *)&x[ 0 ],
+                        (double *)&y[ 0 ],
+                        x.size()
+                        );
+         curve->attach( plot_errors );
+#endif
+      }
+
+      {
+#ifndef QT4
+         long curve;
+         curve = plot_errors->insertCurve( "errors" );
+         plot_errors->setCurveStyle( curve, QwtCurve::Lines );
+#else
+         QwtPlotCurve *curve;
+         QwtPlotCurve *curve = new QwtPlotCurve( file );
+         curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+#ifndef QT4
+         plot_errors->setCurvePen( curve, QPen( plot_colors[ f_pos[ this_color_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         plot_errors->setCurveData( curve,
+                                    (double *)&x[ 0 ],
+                                    (double *)&e[ 0 ],
+                                    x.size()
+                                    );
+         plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
+#else
+         curve->setPen( QPen( plot_colors[ f_pos[ this_color_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         curre->setData(
+                        (double *)&x[ 0 ],
+                        (double *)&e[ 0 ],
+                        x.size()
+                        );
+         curve->setStyle( QwtCurve::Sticks );
+         curve->attach( plot_errors );
+#endif
+      }
+
+      if ( !j )
+      {
+         maxy = fabs( e[ 0 ] );
+         minx = x[ 0 ];
+         maxx = x[ 0 ];
+      }
+
+      for ( unsigned int i = 0; i < ( unsigned int )e.size(); i++ )
+      {
+         if ( maxy < fabs( e[ i ] ) )
+         {
+            maxy = fabs( e[ i ] );
+         }
+         if ( minx > x[ i ] )
+         {
+            minx = x[ i ];
+         }
+         if ( maxx < x[ i ] )
+         {
+            maxx = x[ i ];
+         }
+      }            
+   } // for each curve
+
+   if ( !plot_errors_zoomer )
+   {
+      // cout << "upeg: recreating axis\n";
+      plot_errors->setAxisTitle(QwtPlot::yLeft, QString(
+                                                        tr( cb_plot_errors_pct->isChecked() ?
+                                                            "% difference %1" :
+                                                            ( cb_plot_errors_sd->isChecked() ?
+                                                              "delta I%1/sd" : "delta I%1" 
+                                                              ) ) ).arg( iq_it_state ? "I(t)" : "I(q)" ) );
+
+      plot_errors->setAxisScale( QwtPlot::xBottom, minx, maxx );
+      plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
+
+      plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
+      plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
+      plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+      // connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
+   }
+
+   plot_errors->replot();
+
+   if ( cb_plot_errors_ref->isChecked() )
+   {
+      plot_files( use_ref_list );
+   }
+}
+
+
