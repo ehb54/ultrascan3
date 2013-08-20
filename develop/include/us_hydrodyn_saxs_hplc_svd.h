@@ -234,6 +234,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       vector < double >            plot_errors_jumps;
       void                         plot_errors_jump_markers();
+      set < QString >              plot_errors_reference;
 
    private slots:
 

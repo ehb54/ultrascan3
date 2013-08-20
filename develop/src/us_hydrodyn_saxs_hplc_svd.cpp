@@ -1670,6 +1670,18 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plotted_matches_selected()
       plotted.insert( it->first );
    }
 
+   if ( cb_plot_errors->isChecked() &&
+        cb_plot_errors_ref->isChecked() &&
+        plot_errors->isVisible() )
+   {
+      for ( set < QString >::iterator it = plot_errors_reference.begin();
+            it != plot_errors_reference.end();
+            ++it )
+      {
+         selected.insert( *it );
+      }
+   }
+
    return plotted == selected;
 }
 
@@ -2623,6 +2635,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::set_plot_errors()
    } else {
       hide_widgets( errors_widgets, true );
    }
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::set_plot_errors_rev()
@@ -2890,6 +2903,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
    }
    
    plot_errors->clear();
+   plot_errors_reference.clear();
 
    vector < double > grid;
    vector < double > target;
@@ -3110,6 +3124,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
 
    if ( cb_plot_errors_ref->isChecked() )
    {
+      for ( int i = 0; i < (int) use_ref_list.size(); ++i )
+      {
+         plot_errors_reference.insert( use_ref_list[ i ] );
+      }
       plot_files( use_ref_list );
    }
 }
@@ -3159,6 +3177,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
    }
 
    plot_errors->clear();
+   plot_errors_reference.clear();
 
    bool use_errors = true;
 
@@ -3376,8 +3395,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
 
    if ( cb_plot_errors_ref->isChecked() )
    {
+      for ( int i = 0; i < (int) use_ref_list.size(); ++i )
+      {
+         plot_errors_reference.insert( use_ref_list[ i ] );
+      }
       plot_files( use_ref_list );
    }
 }
-
-
