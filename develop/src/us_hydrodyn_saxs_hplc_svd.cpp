@@ -2355,7 +2355,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
 
       do_recon();
 
-      last_recon_evs << QString( "%1" ).arg( evs_used );
+      last_recon_evs << QString( "\"%1\"" ).arg( evs_used );
       rmsd_x.push_back( i + 1e0 );
       rmsd_y.push_back( last_recon_rmsd );
 
@@ -2590,7 +2590,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
    pb_stop->setEnabled( true );
    running = true;
 
-   last_recon_tag = QString( tr( "\"Individual TSVD on SVD of %1\",\"RMSD of fit\",\"EigenValues\"" ) ).arg( last_svd_name );
+   last_recon_tag = QString( tr( "\"Individual TSVD on SVD of %1\",\"RMSD of fit\",\"EigenValue\"" ) ).arg( last_svd_name );
    last_recon_evs.clear();
                             
 
@@ -3487,7 +3487,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::rmsd_save()
    QString out = last_recon_tag + "\n";
    for ( int i = 0; i < (int) rmsd_x.size(); ++i )
    {
-      out += QString( "%1,%2,\"%3\"" ).arg( rmsd_x[ i ] ).arg( rmsd_y[ i ] ).arg( last_recon_evs[ i ] ) + "\n";
+      out += QString( "%1,%2,%3" ).arg( rmsd_x[ i ] ).arg( rmsd_y[ i ] ).arg( last_recon_evs[ i ] ) + "\n";
    }
 
    if ( fname.lower().contains( QRegExp( "\\.txt$" ) ) )
