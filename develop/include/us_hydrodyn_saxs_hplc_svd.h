@@ -217,6 +217,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QColorGroup                  cg_red;
 
       void                         do_recon();
+      QString                      last_recon_tag;
+      QStringList                  last_recon_evs;
       double                       last_recon_rmsd;
       double                       last_recon_chi;
       double                       vmin( vector < double > &x );
@@ -237,6 +239,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       vector < double >            plot_errors_jumps;
       void                         plot_errors_jump_markers();
       set < QString >              plot_errors_reference;
+
+      bool                         setup_save( QString tag, QString & fname );
 
    private slots:
 

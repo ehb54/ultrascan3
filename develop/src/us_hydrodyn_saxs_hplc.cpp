@@ -2225,6 +2225,8 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
 
    if ( filenames.size() > 1 )
    {
+      bool reorder = true;
+
       QRegExp rx_cap( "(\\d+)_(\\d+)" );
 
       list < hplc_sortable_qstring > svals;
@@ -2239,6 +2241,8 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
          if ( rx_cap.search( tmp ) != -1 )
          {
             tmp = rx_cap.cap( 2 );
+         } else {
+            reorder = false;
          }
 
          hplc_sortable_qstring sval;
@@ -2246,14 +2250,17 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
          sval.name  = filenames[ i ];
          svals      .push_back( sval );
       }
-      svals.sort();
-
-      filenames.clear();
-      for ( list < hplc_sortable_qstring >::iterator it = svals.begin();
-            it != svals.end();
-            ++it )
+      if ( reorder )
       {
-         filenames << it->name;
+         svals.sort();
+
+         filenames.clear();
+         for ( list < hplc_sortable_qstring >::iterator it = svals.begin();
+               it != svals.end();
+               ++it )
+         {
+            filenames << it->name;
+         }
       }
    }
 

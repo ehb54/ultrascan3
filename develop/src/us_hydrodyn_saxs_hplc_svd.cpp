@@ -2311,6 +2311,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
    pb_stop->setEnabled( true );
    running = true;
 
+   last_recon_tag = QString( tr( "\"Incremental TSVD on SVD of %1\",\"RMSD of fit\",\"EigenValues\"" ) ).arg( last_svd_name );
+   last_recon_evs.clear();
+
    rmsd_x.clear();
    rmsd_y.clear();
 
@@ -2342,14 +2345,17 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
 
       lb_ev->clearSelection();
 
+      QString evs_used;
       for ( int j = 0; j <= i; ++j )
       {
          lb_ev->setSelected( evs_selected[ j ], true );
+         evs_used += QString( "%1 ").arg( evs_selected[ j ] );
       }
       qApp->processEvents();
 
       do_recon();
 
+      last_recon_evs << QString( "%1" ).arg( evs_used );
       rmsd_x.push_back( i + 1e0 );
       rmsd_y.push_back( last_recon_rmsd );
 
@@ -2584,6 +2590,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
    pb_stop->setEnabled( true );
    running = true;
 
+   last_recon_tag = QString( tr( "\"Individual TSVD on SVD of %1\",\"RMSD of fit\",\"EigenValues\"" ) ).arg( last_svd_name );
+   last_recon_evs.clear();
+                            
+
    rmsd_x.clear();
    rmsd_y.clear();
 
@@ -2621,6 +2631,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
 
       do_recon();
 
+      last_recon_evs << QString( "%1" ).arg( evs_selected[ i ] );
       rmsd_x.push_back( i + 1e0 );
       rmsd_y.push_back( last_recon_rmsd );
 
@@ -3423,11 +3434,102 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
    }
 }
 
+bool US_Hydrodyn_Saxs_Hplc_Svd::setup_save( QString tag, QString & fname )
+{
+   QString use_dir = QDir::currentDirPath();
+
+   if ( ush_win->saxs_widget )
+   {
+      ush_win->saxs_plot_window->select_from_directory_history( use_dir, this );
+      raise();
+   }
+   fname = QFileDialog::getSaveFileName(
+                                        use_dir,
+                                        "Text files (*.txt *.TXT);;"
+                                        "CSV files (*.csv *.CSV);;"
+                                        "All Files (*)",
+                                        this,
+                                        caption() + " " + tag,
+                                        tr( "Select a file name to " ) + tag );
+   if ( fname.isEmpty() )
+   {
+      return false;
+   }
+
+   if ( QFile::exists( fname ) )
+   {
+      fname = ush_win->fileNameCheck( fname, 0, this );
+      raise();
+   }
+   if ( ush_win->saxs_widget )
+   {
+      ush_win->saxs_plot_window->add_to_directory_history( fname );
+   }
+   return true;
+}
 
 void US_Hydrodyn_Saxs_Hplc_Svd::rmsd_save()
 {
+   QString fname;
+   if ( !setup_save( tr( "save last RMSD values" ), fname ) )
+   {
+      return;
+   }
+
+   QFile f( fname );
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      editor_msg( "red", QString( tr( "Error: can not open %1 for writing" ) ).arg( fname ) );
+      return;
+   }
+
+   QString out = last_recon_tag + "\n";
+   for ( int i = 0; i < (int) rmsd_x.size(); ++i )
+   {
+      out += QString( "%1,%2,\"%3\"" ).arg( rmsd_x[ i ] ).arg( rmsd_y[ i ] ).arg( last_recon_evs[ i ] ) + "\n";
+   }
+
+   if ( fname.lower().contains( QRegExp( "\\.txt$" ) ) )
+   {
+      out.replace( "\"", "" ).replace( ",", "\t" );
+   }
+
+   QTextStream ts( &f );
+   ts << out;
+   f.close();
+   editor_msg( "blue", QString( tr( "RMSDs saved in %1" ) ).arg( fname ) );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::svd_save()
 {
+   QString fname;
+   if ( !setup_save( tr( "save last SVD values" ), fname ) )
+   {
+      return;
+   }
+
+   QFile f( fname );
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      editor_msg( "red", QString( tr( "Error: can not open %1 for writing" ) ).arg( fname ) );
+      return;
+   }
+
+   QString out = QString( tr( "\"SVD of %1\",\"EigenValue\"" ) ).arg( last_svd_name ) + "\n";
+   for ( int i = 0; i < (int) lb_ev->count(); ++i )
+   {
+      out += QString( "%1,%2" ).arg( i + 1 ).arg( lb_ev->text( i ) ) + "\n";
+   }
+
+   if ( fname.lower().contains( QRegExp( "\\.txt$" ) ) )
+   {
+      out.replace( "\"", "" ).replace( ",", "\t" );
+   }
+
+   QTextStream ts( &f );
+   ts << out;
+   f.close();
+   editor_msg( "blue", QString( tr( "RMSDs saved in %1" ) ).arg( fname ) );
 }
