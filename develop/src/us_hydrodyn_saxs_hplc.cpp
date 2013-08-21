@@ -2228,11 +2228,16 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
       bool reorder = true;
 
       QRegExp rx_cap( "(\\d+)_(\\d+)" );
+      rx_cap.setMinimal( true );
 
       list < hplc_sortable_qstring > svals;
 
       QString head = qstring_common_head( filenames, true );
       QString tail = qstring_common_tail( filenames, true );
+
+      // cout << QString( "sort head <%1> tail <%2>\n" ).arg( head ).arg( tail );
+      
+      set < QString > used;
 
       for ( int i = 0; i < (int) filenames.size(); ++i )
       {
@@ -2241,9 +2246,15 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
          if ( rx_cap.search( tmp ) != -1 )
          {
             tmp = rx_cap.cap( 2 );
-         } else {
-            reorder = false;
          }
+         // cout << QString( "sort tmp <%1>\n" ).arg( tmp );
+
+         if ( used.count( tmp ) )
+         {
+            reorder = false;
+            break;
+         }
+         used.insert( tmp );
 
          hplc_sortable_qstring sval;
          sval.x     = tmp.toDouble();
