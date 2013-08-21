@@ -2349,7 +2349,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
       for ( int j = 0; j <= i; ++j )
       {
          lb_ev->setSelected( evs_selected[ j ], true );
-         evs_used += QString( "%1 ").arg( evs_selected[ j ] );
+         evs_used += QString( "%1 ").arg( lb_ev->text( evs_selected[ j ] ) );
       }
       qApp->processEvents();
 
@@ -2631,7 +2631,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
 
       do_recon();
 
-      last_recon_evs << QString( "%1" ).arg( evs_selected[ i ] );
+      last_recon_evs << QString( "%1" ).arg( lb_ev->text( evs_selected[ i ] ) );
       rmsd_x.push_back( i + 1e0 );
       rmsd_y.push_back( last_recon_rmsd );
 
