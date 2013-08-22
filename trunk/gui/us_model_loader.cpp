@@ -1027,6 +1027,9 @@ void US_ModelLoader::compress_list( void )
                 QString::number( ii ) : cReqID;
       cEdiID  = ( cEdiID.length() < 36  ||  cEdiID.startsWith( "000" ) ) ?
                 QString::number( ii ) : cEdiID;
+      // Protect against global mc Global/nonGlobal pairs
+      cReqID  = desc.description.startsWith( "Global" ) ?
+                ( cReqID + "-G" ) : cReqID;
 //qDebug() << " c_l ii desc" << ii << desc.description << " kiter" << kiter;
 
       if ( kiter > 0  && ( cReqID != pReqID || cEdiID != pEdiID ) )

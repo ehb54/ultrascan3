@@ -28,7 +28,7 @@ DIR=$(pwd)
 rm -f build.log
 NBERR=0
 
-for d in utils gui qwtplot3d-qt4 programs/*
+for d in qwtplot3d-qt4 utils gui programs/*
 do
   if [ ! -d $d                          ]; then continue; fi
   if [ $d == "programs/config2"         ]; then continue; fi

@@ -282,15 +282,19 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
                ksols++;
             }
 
-            simulations << simdat;   // Save simulation (each datset,solute)
+            simulations << simdat;   // Save simulation (each dataset,solute)
 
             // Populate the A matrix for the NNLS routine with simulation
 DbgLv(1) << "   CR: A fill kodl" << kodl;
+int ks=kk;
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
                for ( int ss = 0; ss < nscans; ss++ )
                   for ( int rr = 0; rr < npoints; rr++ )
                      nnls_a[ kk++ ] = simdat.value( ss, rr );
+if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR: ks kk" << ks << kk
+ << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[kk-2] << nnls_a[kk-1]
+ << "cc ee" << cc << ee;
             }
             else
             {  // Special case where ODlimit substitutions are in B matrix
@@ -651,10 +655,14 @@ DbgLv(1) << "  noise small NNLS";
       {
          sv_nnls_a = nnls_a;
          sv_nnls_b = nnls_b;
+DbgLv(1) << "CR: sv_nnls_a size" << sv_nnls_a.size() << nnls_a.size();
       }
 
       US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
                       nnls_b.data(), nnls_x.data() );
+if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR: narows nsolutes" << narows << nsolutes;
+if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR:  a0 a1 b0 b1"
+ << nnls_a[0] << nnls_a[1] << nnls_b[0] << nnls_b[1];
 
       if ( abort ) return;
 
@@ -696,7 +704,7 @@ DbgLv(1) << "CR:     ss jscan" << ss << jscan << "ee kscans nscans" << ee << ksc
          }
       }
    }
-if(lim_offs>1)
+if(lim_offs>1&&(thrnrank==1||thrnrank==11))
 DbgLv(1) << "CR:       jscan kscans" << jscan << kscans;
 
    // This is a little tricky.  The simulations structure was created above
@@ -705,14 +713,16 @@ DbgLv(1) << "CR:       jscan kscans" << jscan << kscans;
    // for each experiment together
 
 if(thrnrank==1) DbgLv(1) << "CR: nsolutes" << nsolutes;
+if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR: nsolutes" << nsolutes;
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
       double soluval = nnls_x[ cc ];  // Computed concentration, this solute
 if(thrnrank==1) DbgLv(1) << "CR: cc soluval" << cc << soluval;
+if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR: cc soluval" << cc << soluval;
 
       if ( soluval > 0.0 )
       {  // If concentration non-zero, need to sum in simulation data
-if(lim_offs>1)
+if(lim_offs>1&&(thrnrank==1||thrnrank==11))
 DbgLv(1) << "CR: cc soluval" << cc << soluval;
          int scnx    = 0;
 
@@ -724,7 +734,7 @@ DbgLv(1) << "CR: cc soluval" << cc << soluval;
             US_DataIO::RawData*     sdata = &sim_vals.sim_data;
             int npoints = idata->pointCount();
             int nscans  = idata->scanCount();
-if(lim_offs>1)
+if(lim_offs>1&&(thrnrank==1||thrnrank==11))
 DbgLv(1) << "CR:    ee sim_ix np ns scnx" << ee << sim_ix << npoints << nscans << scnx;
 
             for ( int ss = 0; ss < nscans; ss++, scnx++ )
@@ -949,6 +959,7 @@ DbgLv(1) << "CR:       xnormsq" << xnorm;
          {  // If no regularization, return A and B as they are
             (*ASave)     = sv_nnls_a;
             (*BSave)     = sv_nnls_b;
+DbgLv(1) << "CR: ASv: sv_nnls_a size" << sv_nnls_a.size() << ASave->size();
          }
       }
    }

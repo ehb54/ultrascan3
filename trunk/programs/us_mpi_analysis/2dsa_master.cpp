@@ -45,11 +45,14 @@ void US_MPI_Analysis::_2dsa_master( void )
       // All done with the pass if no jobs are ready or running
       if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
       {
-         int     dsnum    = datasets_to_process > 1 ? datasets_to_process
-                                                    : current_dataset + 1;
          QString progress = 
-            "Iteration: "    + QString::number( iterations ) +
-            "; Dataset: "    + QString::number( dsnum );
+            "Iteration: "    + QString::number( iterations );
+
+         if ( datasets_to_process > 1 )
+            progress     += "; Datasets: " + QString::number( datasets_to_process );
+         else
+            progress     += "; Dataset: " + QString::number( current_dataset + 1 );
+
          if ( mc_iterations > 1 )
             progress     +=
                "; MonteCarlo: " + QString::number( mc_iteration + 1 );
@@ -66,8 +69,18 @@ void US_MPI_Analysis::_2dsa_master( void )
          if ( max_iterations > 1 )
          {
             if ( data_sets.size() > 1  &&  iterations == 1 )
-               qDebug() << "   == Refinement Iterations for Dataset"
-                  << current_dataset + 1 << "==";
+            {
+               if ( datasets_to_process == 1 )
+               {
+                  qDebug() << "   == Refinement Iterations for Dataset"
+                     << current_dataset + 1 << "==";
+               }
+               else
+               {
+                  qDebug() << "   == Refinement Iterations for Datasets 1 to"
+                     << datasets_to_process << "==";
+               }
+            }
             qDebug() << "Iteration:" << iterations << " Variance:"
                << simulation_values.variance << "RMSD:"
                << sqrt( simulation_values.variance );
@@ -99,11 +112,12 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
 
          if ( data_sets.size() == 1 )
             write_output();
+
          else
             write_global();
 
          // Fit meniscus 
-         if ( meniscus_run + 1 < meniscus_values.size() )
+         if ( ( meniscus_run + 1 ) < meniscus_values.size() )
          {
             set_meniscus(); 
          }
@@ -114,15 +128,27 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
          mc_iteration++;
 
          if ( mc_iterations > 1 )
-         {
-            US_SolveSim::Simulation sim = simulation_values;
-            sim.solutes                 = calculated_solutes[ max_depth ]; 
-            calc_residuals( 0, data_sets.size(), sim );
+         {  // Recompute final fit to get simulation and residual
+            wksim_vals           = simulation_values;
+            wksim_vals.solutes   = calculated_solutes[ max_depth ]; 
+
+//            if ( data_sets.size() == 1 )
+//            {  // For non-global, do normal calculation
+               calc_residuals( 0, data_sets.size(), wksim_vals );
+//            }
+
+//            else
+//            {  // For global, also capture NNLS A and b matrices
+//               US_SolveSim solvesim( data_sets, my_rank, false );
+//               solvesim.calc_residuals( 0, data_sets.size(), wksim_vals,
+//                     false, &gl_nnls_a, &gl_nnls_b );
+//            }
+
             qDebug() << "Base-Sim RMSD" << sqrt( simulation_values.variance )
-                     << "  Exp-Sim RMSD" << sqrt( sim.variance )
+                     << "  Exp-Sim RMSD" << sqrt( wksim_vals.variance )
                      << "  of MC_Iteration" << mc_iteration;
             max_iterations              = max_iters_all;
-            simulation_values           = sim;
+            simulation_values           = wksim_vals;
 
             if ( mc_iteration < mc_iterations )
             {
@@ -298,13 +324,13 @@ void US_MPI_Analysis::fill_queue( void )
 void US_MPI_Analysis::global_fit( void )
 {
    // To do a global fit across multiple data sets:
-   //  1. Each individual data set must be run through MC iteration 1
+   //  1. Each individual data set must be run
    //  2. Sum the total concentration of all returned solutes
    //  3. Divide all experiment concentrations by the total concentration
-   //  4. Do an additional simulation against the combined datasets
-   //     for the baseline
-   // Any additional Monte Carlo iterations will use the adjusted data for all
-   // data sets.
+   //  4. Send the concentration-equalized data to the workers
+   //  5. Do an additional run against the combined datasets for the baseline
+   // Any additional Monte Carlo iterations will use the adjusted data for
+   // all data sets.
    
    double concentration = 0.0;
 
@@ -313,29 +339,40 @@ void US_MPI_Analysis::global_fit( void )
    {
       concentration += simulation_values.solutes[ solute ].c;
    }
-DbgLv(1) << "  globfit: ds conc" << current_dataset << concentration;
+
+   qDebug() << "   == Dataset" << current_dataset + 1
+            << "Total Concentration" << concentration << "==";
 
    // Point to current dataset
-   US_DataIO::EditedData* data = &data_sets[ current_dataset ]->run_data;
+   US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
 
    concentrations[ current_dataset ] = concentration;
-   int scan_count    = data->scanCount();
-   int radius_points = data->pointCount();
+   int scan_count    = edata->scanCount();
+   int radius_points = edata->pointCount();
+   int index         = 0;
+   QVector< double > scaled_data( scan_count * radius_points );
+double isum=0.0;
+double dsum=0.0;
 
    // Scale the data
    for ( int ss = 0; ss < scan_count; ss++ )
    {
       for ( int rr = 0; rr < radius_points; rr++ )
       {
-         data->setValue( ss, rr, data->value( ss, rr ) / concentration );
+double ival=edata->value(ss,rr);
+isum+=ival;
+         double scaled_value    = edata->value( ss, rr ) / concentration;
+         scaled_data[ index++ ] = scaled_value;
+         edata->setValue( ss, rr, scaled_value );
+dsum+=scaled_value;
       }
    }
+DbgLv(1) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentration;
 
-   // Go to the next dataset
-   job_queue.clear();
+#if 0
    dset_calc_solutes << calculated_solutes[ max_depth ];
    current_dataset++;
-   
+
    if ( current_dataset >= data_sets.size() )
    {  // If all datasets have been scaled, do all datasets from now on
       datasets_to_process = data_sets.size();
@@ -349,23 +386,27 @@ DbgLv(1) << "  globfit:  dset_calc_solutes size" << dset_calc_solutes.size();
 
       for ( int cc = 0; cc < dset_calc_solutes.size(); cc++ )
       {
-         US_Solute csolu     = dset_calc_solutes[ cc ];
+         US_Solute csolu  = dset_calc_solutes[ cc ];
 
          if ( csolu.s != psolu.s  ||  csolu.k != psolu.k )
          {
-            csolu.c             = 0.0;
+            csolu.c       = 0.0;
             simulation_values.solutes << csolu;
-            psolu               = csolu;
+            psolu         = csolu;
 DbgLv(1) << "  globfit:    cc" << cc << "csolu s k" << csolu.s << csolu.k;
          }
       }
-DbgLv(1) << "  globfit:  sim solutes size" << simulation_values.solutes.size();
 
       // Compute the simulation and residual for all datasets
-      calc_residuals( 0, data_sets.size(), simulation_values );
-DbgLv(1) << "  globfit:  sim calc solutes size" << simulation_values.solutes.size();
+      int nsolsf    = simulation_values.solutes.size();
 
-      max_depth               = 0;
+      calc_residuals( 0, data_sets.size(), simulation_values );
+
+      int nsolsc    = simulation_values.solutes.size();
+      qDebug() << " == Final composite solutes count" << nsolsf << ";";
+      qDebug() << "    Computed global solutes count" << nsolsc << "==";
+
+      max_depth     = 0;
       calculated_solutes[ 0 ] = simulation_values.solutes;
    }
 
@@ -379,6 +420,63 @@ DbgLv(1) << "  globfit:  sim calc solutes size" << simulation_values.solutes.siz
       for ( int ii = 1; ii < gcores_count; ii++ )
          worker_status[ ii ] = READY;
    }
+#endif
+#if 1
+   // Send the scaled version of current data to the workers
+   MPI_Job job;
+   job.command         = MPI_Job::NEWDATA;
+   job.length          = scaled_data.size();
+   job.solution        = 1;
+   job.meniscus_value  = data_sets[ current_dataset ]->run_data.meniscus;
+   job.dataset_offset  = current_dataset;
+   job.dataset_count   = 1;
+
+   // Tell each worker that new data is coming.
+   // Cannot use a broadcast, since the worker is expecting a Send.
+   for ( int worker = 1; worker <= my_workers; worker++ )
+   {
+      MPI_Send( &job,
+                sizeof( MPI_Job ),
+                MPI_BYTE,
+                worker,
+                MPI_Job::MASTER,
+                my_communicator );
+   }
+
+   // Get everybody synced up
+   MPI_Barrier( my_communicator );
+
+   MPI_Bcast( scaled_data.data(),
+              scaled_data.size(),
+              MPI_DOUBLE,
+              MPI_Job::MASTER,
+              my_communicator );
+
+   // Go to the next dataset
+   job_queue.clear();
+   dset_calc_solutes << calculated_solutes[ max_depth ];
+   current_dataset++;
+   
+   if ( current_dataset >= data_sets.size() )
+   {  // If all datasets have been scaled, do all datasets from now on
+      datasets_to_process = data_sets.size();
+      current_dataset     = 0;
+   }
+
+   else
+   {
+      for ( int ii = 1; ii < gcores_count; ii++ )
+         worker_status[ ii ] = READY;
+   }
+
+   fill_queue();
+
+   for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
+      calculated_solutes[ ii ].clear();
+
+//   for ( int ii = 1; ii < gcores_count; ii++ )
+//      worker_status[ ii ] = READY;
+#endif
 }
 
 // Reset for a fit-meniscus iteration
@@ -419,15 +517,7 @@ DbgLv(1) << "sMC: max_depth" << max_depth << "calcsols size" << calculated_solut
                << QString::number( fitrmsd, 'f', 7 );
    }
 
-   int total_points = 0;
-
-   for ( int ee = 0; ee < data_sets.size(); ee++ )
-   {
-      US_DataIO::EditedData* data = &data_sets[ ee ]->run_data;
-      total_points += ( data->scanCount() * data->pointCount() );
-   }
 DbgLv(1) << "sMC: totpts" << total_points << "mc_iter" << mc_iteration;
-
    mc_data.resize( total_points );
    int    index      = 0;
    int    scnx       = 0;
@@ -467,6 +557,7 @@ DbgLv(1) << "sMC:  index" << index << "sdat" << sim_data1.value(ss,rr)
          }
       }
    }
+DbgLv(1) << "sMC:   mcdata sum" << datasum;
 
    varrmsd          = sqrt( varrmsd / (double)( total_points ) );
    qDebug() << "  Box_Muller Variation RMSD"
@@ -480,6 +571,8 @@ DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
    MPI_Job newdata;
    newdata.command        = MPI_Job::NEWDATA;
    newdata.length         = total_points;
+   newdata.solution       = mc_iteration + 1;
+   newdata.meniscus_value = data_sets[ 0 ]->run_data.meniscus;
    newdata.dataset_offset = 0;
    newdata.dataset_count  = data_sets.size();
 
@@ -609,10 +702,10 @@ DbgLv(1) << "WrO: mciter mxdepth" << mc_iteration+1 << max_depth << "calcsols si
 // Write global model outputs at the end of an iteration
 void US_MPI_Analysis::write_global( void )
 {
-   US_SolveSim::Simulation sim = simulation_values;
+   US_SolveSim::Simulation  sim  = simulation_values;
+   US_SolveSim::Simulation* gsim = &simulation_values;
 
    int nsolutes = sim.solutes.size();
-DbgLv(1) << " WrGlob: nsolutes" << nsolutes;
 
    if ( nsolutes == 0 )
    { // Handle the case of a zero-solute final model
@@ -620,23 +713,72 @@ DbgLv(1) << " WrGlob: nsolutes" << nsolutes;
       return;
    }
 
-   qSort( sim.solutes );
-DbgLv(1) << "WrGlob: mciter mxdepth" << mc_iteration+1 << max_depth << "calcsols size"
- << calculated_solutes[max_depth].size() << "simvsols size" << sim.solutes.size();
+DbgLv(1) << "WrGlob: mciter mxdepth" << mc_iteration+1 << max_depth
+ << "calcsols size" << calculated_solutes[max_depth].size()
+ << "simvsols size" << nsolutes;
 
-   for ( current_dataset = 0; current_dataset < data_sets.size(); current_dataset++ )
+   // Recompute the global fit and save A and b matrices for later use
+   wksim_vals           = simulation_values;
+   US_SolveSim solvesim( data_sets, my_rank, false );
+   solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
+                            &gl_nnls_a, &gl_nnls_b );
+DbgLv(1) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
+ << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
+
+   for ( int ee = 0; ee < data_sets.size(); ee++ )
    {
-      meniscus_value       = data_sets[ current_dataset ]->run_data.meniscus;
-      double concentration = concentrations[ current_dataset ];
-DbgLv(1) << "WrGlob:   currds" << current_dataset << "concen" << concentration;
+      US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
+      current_dataset      = ee;
+      meniscus_value       = edata->meniscus;
+      double concentration = concentrations[ ee ];
+DbgLv(1) << "WrGlob:   currds" << ee << "concen" << concentration;
 
       for ( int cc = 0; cc < nsolutes; cc++ )
       {
-         sim.solutes[ cc ].c = simulation_values.solutes[ cc ].c * concentration;
+         sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * concentration;
       }
 
-DbgLv(1) << "WrGlob:    call write_model";
+DbgLv(1) << "WrGlob:    call write_model(1)";
+      // Output the model from global solute points
+      sim.xnormsq          = -1.0;
       write_model( sim, US_Model::TWODSA );
+
+      // Grab dataset portion of A and b, then re-fit
+      wksim_vals           = sim;
+      wksim_vals.solutes.clear();
+      int kscans           = edata->scanCount();
+      int kpoints          = edata->pointCount();
+      int narows           = kscans * kpoints;
+      int navals           = narows * nsolutes;
+      int ksolutes         = 0;
+      QVector< double > nnls_a( navals,   0.0 );
+      QVector< double > nnls_b( narows,   0.0 );
+      QVector< double > nnls_x( nsolutes, 0.0 );
+DbgLv(1) << "WrGlob:    ks kp nar nav" << kscans << kpoints << narows << navals;
+
+      dset_matrices( ee, nsolutes, nnls_a, nnls_b );
+
+DbgLv(1) << "WrGlob:    mats built; calling NNLS";
+      US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
+                      nnls_b.data(), nnls_x.data() );
+
+DbgLv(1) << "WrGlob:     building solutes from nnls_x";
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
+         double soluval       = nnls_x[ cc ];
+         if ( soluval > 0.0 )
+         {
+            US_Solute solu       = sim.solutes[ cc ];
+            solu.c               = soluval;
+            wksim_vals.solutes << solu;
+            ksolutes++;
+         }
+      }
+DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
+
+      // Output the model refitted to individual dataset
+      wksim_vals.xnormsq   = 0.0;
+      write_model( wksim_vals, US_Model::TWODSA );
    }
 
    current_dataset      = 0;
@@ -1028,6 +1170,7 @@ DbgLv(1) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth+1
 
       if ( worker > 0 )
       { // Submit what should be the last job of this iteration
+         ljob_solutes            = job.solutes;
          submit( job, worker );
          worker_depth [ worker ] = job.mpi_job.depth;
          worker_status[ worker ] = WORKING;
