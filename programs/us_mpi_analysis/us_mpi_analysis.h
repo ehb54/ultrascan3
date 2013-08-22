@@ -43,8 +43,10 @@ class US_MPI_Analysis : public QObject
     int                 mc_iterations;        // Monte Carlo
     int                 mc_iteration;         // Monte Carlo current iteration
     int                 max_experiment_size;
+    int                 total_points;
     int                 dbg_level;
     bool                dbg_timing;
+    bool                glob_runid;
     MPI_Comm            my_communicator;
 
     int                 current_dataset;      // For global fit
@@ -71,6 +73,10 @@ class US_MPI_Analysis : public QObject
                         
     QVector< int >      worker_status;
     QVector< int >      worker_depth;
+    QList< int >        ds_startx;
+    QList< int >        ds_points;
+    QVector< double >   gl_nnls_a;
+    QVector< double >   gl_nnls_b;
     int                 max_depth;
     int                 worknext;
     enum                WorkerStatus { INIT, READY, WORKING };
@@ -144,7 +150,8 @@ class US_MPI_Analysis : public QObject
             };
     };
 
-    QList< QVector< US_Solute > > orig_solutes;
+    QList< QVector< US_Solute > >  orig_solutes;
+    QVector< US_Solute >           ljob_solutes;
 
     class _2dsa_Job
     {
@@ -158,9 +165,11 @@ class US_MPI_Analysis : public QObject
     static const double LARGE          = 9.9e99;
     static const int    solute_doubles = sizeof( US_Solute ) / sizeof( double );
     QList< QVector< US_Solute > > calculated_solutes;
+    QList< QVector< US_Solute > > ds_calc_solutes;
     QVector< US_Solute >          dset_calc_solutes;
 
     SIMULATION simulation_values;
+    SIMULATION wksim_vals;
     SIMULATION previous_values;
 
     // 2DSA class
@@ -280,6 +289,8 @@ class US_MPI_Analysis : public QObject
     int      low_working_depth ( void );
     void     cache_result      ( Result& );
     void     process_solutes   ( int&, int&, QVector< US_Solute >& );
+    void     dset_matrices     ( int, int,
+                                 QVector< double >&, QVector< double >& );
 
     // Worker
     void     _2dsa_worker      ( void );

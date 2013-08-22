@@ -419,18 +419,6 @@ DbgLv(1) << "sgMC:  sol0 s" << calculated_solutes[0][0].s;
 DbgLv(1) << "sgMC: gaussians set";
    }
 
-   int total_points = 0;
-
-   for ( int e = 0; e < data_sets.size(); e++ )
-   {
-      US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
-
-      int scan_count    = data->scanCount();
-      int radius_points = data->pointCount();
-
-      total_points += scan_count * radius_points;
-   }
-
    mc_data.resize( total_points );
    int index = 0;
 
@@ -502,13 +490,20 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    model.requestGUID = requestGUID;
    //model.optics      = ???  How to get this?  Is is needed?
    model.analysis    = type;
+   QString runID     = data->runID;
 
    if ( meniscus_points > 1 ) 
-       model.global = US_Model::MENISCUS;
+      model.global = US_Model::MENISCUS;
+
    else if ( data_sets.size() > 1 )
-       model.global = US_Model::GLOBAL;
+   {
+      model.global = US_Model::GLOBAL;
+      if ( sim.xnormsq < 0.0 )
+         runID        = "Global-" + runID;
+   }
+
    else
-       model.global = US_Model::NONE; 
+      model.global = US_Model::NONE; 
 
    model.meniscus    = meniscus_value;
    model.variance    = sim.variance;
@@ -549,7 +544,7 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    int     stype     = data_sets[ 0 ]->solute_type;
    double  vbar20    = data_sets[ 0 ]->vbar20;
 
-   model.description = data->runID + "." + tripleID + "." + analyID + ".model";
+   model.description = runID + "." + tripleID + "." + analyID + ".model";
 DbgLv(1) << "wrMo: model descr" << model.description;
 
    // Save as class variable for later reference

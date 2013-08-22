@@ -250,11 +250,13 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    regularization          = parameters[ "regularization" ].toDouble();
    concentration_threshold = parameters[ "conc_threshold" ].toDouble();
    beta                    = (double)population / 8.0;
+   total_points            = 0;
 
    // Calculate s, D corrections for calc_residuals; simulation parameters
    for ( int i = 0; i < data_sets.size(); i++ )
    {
-      US_SolveSim::DataSet* ds = data_sets[ i ];
+      US_SolveSim::DataSet*  ds    = data_sets[ i ];
+      US_DataIO::EditedData* edata = &ds->run_data;
 
       // Convert to a different structure and calulate the s and D corrections
       US_Math2::SolutionData sd;
@@ -281,7 +283,7 @@ if ( my_rank == 0 )
 
       // Set up simulation parameters for the data set
  
-      ds->simparams.initFromData( NULL, ds->run_data );
+      ds->simparams.initFromData( NULL, *edata );
  
       ds->simparams.rotorcoeffs[ 0 ]  = ds->rotor_stretch[ 0 ];
       ds->simparams.rotorcoeffs[ 1 ]  = ds->rotor_stretch[ 1 ];
@@ -289,8 +291,20 @@ if ( my_rank == 0 )
       ds->simparams.bottom            = ds->centerpiece_bottom;
       ds->simparams.band_forming      = ds->simparams.band_volume != 0.0;
 
+      // Accumulate total points and set dataset index,points
+      int npoints         = edata->scanCount() * edata->pointCount();
+      ds_startx << total_points;
+      ds_points << npoints;
+      total_points       += npoints;
+      
       // Initialize concentrations vector in case of global fit
       concentrations << 1.0;
+
+      // In the global case, effectively turn off ODlimit check
+      if ( data_sets.size() > 1 )
+      {
+         ds->run_data.ODlimit = 1e+99;
+      }
    }
 
    // Check GA buckets
@@ -637,5 +651,36 @@ void US_MPI_Analysis::limitBucket( Bucket& buk )
 
    buk.ff0_min = qMax(  1.0, buk.ff0_min );
    buk.ff0_max = qMax( ( buk.ff0_min + 0.0001 ), buk.ff0_max );
+}
+
+// Get the A,b matrices for a data set
+void US_MPI_Analysis::dset_matrices( int dsx, int nsolutes,
+      QVector< double >& nnls_a, QVector< double >& nnls_b )
+{
+   int colx        = ds_startx[ dsx ];
+   int ndspts      = ds_points[ dsx ];
+   double concen   = concentrations[ dsx ];
+   int kk          = 0;
+   int jj          = colx;
+   int inccx       = total_points - ndspts;
+
+   // Copy the data set portion of the global A matrix
+   for ( int cc = 0; cc < nsolutes; cc++ )
+   {
+      for ( int pp = 0; pp < ndspts; pp++, kk++, jj++ )
+      {
+         nnls_a[ kk ]    = gl_nnls_a[ jj ];
+      }
+
+      jj             += inccx;
+   }
+
+   // Copy and restore scaling for data set portion of the global b matrix
+   jj              = colx;
+
+   for ( kk = 0; kk < ndspts; kk++, jj++ )
+   {
+      nnls_b[ kk ]    = gl_nnls_b[ jj ] * concen;
+   }
 }
 
