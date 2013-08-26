@@ -228,26 +228,28 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
       double ff0_min = parameters[ "ff0_min"         ].toDouble();
       double ff0_max = parameters[ "ff0_max"         ].toDouble();
 
-      int grid_repetitions = parameters[ "uniform_grid" ].toInt();
-      if ( grid_repetitions < 1 ) grid_repetitions = 1;
+      int grid_reps  = qMax( parameters[ "uniform_grid" ].toInt(), 1 );
+      double s_pts   = 60.0;
+      double ff0_pts = 60.0;
 
-      double s_pts    = 60.0;
-      double ff0_pts  = 60.0;
       if ( parameters.contains( "s_grid_points"   ) )
          s_pts   = parameters[ "s_grid_points"   ].toDouble();
+ 
       else if ( parameters.contains( "s_resolution"    ) )
-         s_pts   = parameters[ "s_resolution"    ].toDouble() * grid_repetitions;
+         s_pts   = parameters[ "s_resolution"    ].toDouble() * grid_reps;
+ 
       if ( parameters.contains( "ff0_grid_points" ) )
          ff0_pts = parameters[ "ff0_grid_points" ].toDouble();
+ 
       else if ( parameters.contains( "ff0_resolution"  ) )
-         ff0_pts = parameters[ "ff0_resolution"  ].toDouble() * grid_repetitions;
+         ff0_pts = parameters[ "ff0_resolution"  ].toDouble() * grid_reps;
 
       int    nsstep   = (int)( s_pts );
       int    nkstep   = (int)( ff0_pts );
 
       US_Solute::init_solutes( s_min,   s_max,   nsstep,
                                ff0_min, ff0_max, nkstep,
-                               grid_repetitions, cnstff0, orig_solutes );
+                               grid_reps, cnstff0, orig_solutes );
    }
 
    else
@@ -347,10 +349,11 @@ void US_MPI_Analysis::global_fit( void )
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
 
    concentrations[ current_dataset ] = concentration;
+   edata->ODlimit   /= concentration;
    int scan_count    = edata->scanCount();
    int radius_points = edata->pointCount();
    int index         = 0;
-   QVector< double > scaled_data( scan_count * radius_points );
+   QVector< double > scaled_data( scan_count * radius_points  + 1 );
 double isum=0.0;
 double dsum=0.0;
 
@@ -367,6 +370,8 @@ isum+=ival;
 dsum+=scaled_value;
       }
    }
+
+   scaled_data[ index ] = edata->ODlimit;
 DbgLv(1) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentration;
 
 #if 0
@@ -660,6 +665,8 @@ void US_MPI_Analysis::write_output( void )
    double     save_meniscus = meniscus_value;
    sim.solutes  = calculated_solutes[ max_depth ]; 
    int mxdssz   = sim.solutes.size();
+   US_Model::AnalysisType mdl_type = analysis_type.startsWith( "2DSA" ) ?
+                                     US_Model::TWODSA : US_Model::GA;
 
    if ( mxdssz == 0 )
    { // Handle the case of a zero-solute final model
@@ -689,7 +696,7 @@ void US_MPI_Analysis::write_output( void )
 DbgLv(1) << "WrO: mciter mxdepth" << mc_iteration+1 << max_depth << "calcsols size"
  << calculated_solutes[max_depth].size() << "simvsols size" << sim.solutes.size();
 
-   write_model( sim, US_Model::TWODSA );
+   write_model( sim, mdl_type );
    meniscus_value  = save_meniscus;
 
    if (  parameters[ "tinoise_option" ].toInt() > 0 )
@@ -705,6 +712,8 @@ void US_MPI_Analysis::write_global( void )
    US_SolveSim::Simulation  sim  = simulation_values;
    US_SolveSim::Simulation* gsim = &simulation_values;
 
+   US_Model::AnalysisType mdl_type = analysis_type.startsWith( "2DSA" ) ?
+                                     US_Model::TWODSA : US_Model::GA;
    int nsolutes = sim.solutes.size();
 
    if ( nsolutes == 0 )
@@ -717,68 +726,89 @@ DbgLv(1) << "WrGlob: mciter mxdepth" << mc_iteration+1 << max_depth
  << "calcsols size" << calculated_solutes[max_depth].size()
  << "simvsols size" << nsolutes;
 
-   // Recompute the global fit and save A and b matrices for later use
-   wksim_vals           = simulation_values;
-   US_SolveSim solvesim( data_sets, my_rank, false );
-   solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
-                            &gl_nnls_a, &gl_nnls_b );
+   if ( mdl_type == US_Model::TWODSA )
+   {
+      // 2DSA: Recompute the global fit and save A and b matrices for later use
+      wksim_vals           = simulation_values;
+      US_SolveSim solvesim( data_sets, my_rank, false );
+      solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
+                               &gl_nnls_a, &gl_nnls_b );
 DbgLv(1) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
  << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
 
-   for ( int ee = 0; ee < data_sets.size(); ee++ )
-   {
-      US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
-      current_dataset      = ee;
-      meniscus_value       = edata->meniscus;
-      double concentration = concentrations[ ee ];
+      for ( int ee = 0; ee < data_sets.size(); ee++ )
+      {
+         US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
+         current_dataset      = ee;
+         meniscus_value       = edata->meniscus;
+         double concentration = concentrations[ ee ];
 DbgLv(1) << "WrGlob:   currds" << ee << "concen" << concentration;
 
-      for ( int cc = 0; cc < nsolutes; cc++ )
-      {
-         sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * concentration;
-      }
+         for ( int cc = 0; cc < nsolutes; cc++ )
+         {
+            sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * concentration;
+         }
 
 DbgLv(1) << "WrGlob:    call write_model(1)";
-      // Output the model from global solute points
-      sim.xnormsq          = -1.0;
-      write_model( sim, US_Model::TWODSA );
+         // Output the model from global solute points
+         write_model( sim, mdl_type, true );
 
-      // Grab dataset portion of A and b, then re-fit
-      wksim_vals           = sim;
-      wksim_vals.solutes.clear();
-      int kscans           = edata->scanCount();
-      int kpoints          = edata->pointCount();
-      int narows           = kscans * kpoints;
-      int navals           = narows * nsolutes;
-      int ksolutes         = 0;
-      QVector< double > nnls_a( navals,   0.0 );
-      QVector< double > nnls_b( narows,   0.0 );
-      QVector< double > nnls_x( nsolutes, 0.0 );
+         // Grab dataset portion of A and b, then re-fit
+         wksim_vals           = sim;
+         wksim_vals.solutes.clear();
+         int kscans           = edata->scanCount();
+         int kpoints          = edata->pointCount();
+         int narows           = kscans * kpoints;
+         int navals           = narows * nsolutes;
+         int ksolutes         = 0;
+         QVector< double > nnls_a( navals,   0.0 );
+         QVector< double > nnls_b( narows,   0.0 );
+         QVector< double > nnls_x( nsolutes, 0.0 );
 DbgLv(1) << "WrGlob:    ks kp nar nav" << kscans << kpoints << narows << navals;
 
-      dset_matrices( ee, nsolutes, nnls_a, nnls_b );
+         dset_matrices( ee, nsolutes, nnls_a, nnls_b );
 
 DbgLv(1) << "WrGlob:    mats built; calling NNLS";
-      US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
-                      nnls_b.data(), nnls_x.data() );
+         US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
+                         nnls_b.data(), nnls_x.data() );
 
 DbgLv(1) << "WrGlob:     building solutes from nnls_x";
-      for ( int cc = 0; cc < nsolutes; cc++ )
-      {
-         double soluval       = nnls_x[ cc ];
-         if ( soluval > 0.0 )
+         for ( int cc = 0; cc < nsolutes; cc++ )
          {
-            US_Solute solu       = sim.solutes[ cc ];
-            solu.c               = soluval;
-            wksim_vals.solutes << solu;
-            ksolutes++;
+            double soluval       = nnls_x[ cc ];
+            if ( soluval > 0.0 )
+            {
+               US_Solute solu       = sim.solutes[ cc ];
+               solu.c               = soluval;
+               wksim_vals.solutes << solu;
+               ksolutes++;
+            }
          }
-      }
 DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
 
-      // Output the model refitted to individual dataset
-      wksim_vals.xnormsq   = 0.0;
-      write_model( wksim_vals, US_Model::TWODSA );
+         // Output the model refitted to individual dataset
+         write_model( wksim_vals, mdl_type );
+      }
+   }
+
+   else
+   {  // GA:  Compute and output each dataset model
+      int ksolutes         = 0;
+
+      for ( int ee = 0; ee < data_sets.size(); ee++ )
+      {
+         wksim_vals           = simulation_values;
+         US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
+         current_dataset      = ee;
+         meniscus_value       = edata->meniscus;
+         US_SolveSim solvesim( data_sets, my_rank, false );
+         solvesim.calc_residuals( ee, 1, wksim_vals, false );
+         ksolutes             = wksim_vals.solutes.size();
+
+         // Output the model fitted to individual dataset
+         write_model( wksim_vals, mdl_type );
+DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
+      }
    }
 
    current_dataset      = 0;

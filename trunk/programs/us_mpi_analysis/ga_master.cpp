@@ -5,7 +5,8 @@
 
 void US_MPI_Analysis::ga_master( void )
 {
-   current_dataset = 0;
+   current_dataset     = 0;
+   datasets_to_process = data_sets.size();
 
    // Set noise and debug flags
    simulation_values.noisflag   = parameters[ "tinoise_option" ].toInt() > 0 ?
@@ -36,6 +37,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    QDateTime time = QDateTime::currentDateTime();
 
+#if 0
    // Handle global fit if needed
    if ( data_sets.size() > 1 )
    {
@@ -53,6 +55,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
          ga_global_fit();  // Normalize data and update workers
       }
    }
+#endif
 
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
@@ -74,7 +77,15 @@ DbgLv(1) << "GaMast:    calc_resids return";
 
       qSort( simulation_values.solutes );
 
-      write_model( simulation_values, US_Model::GA );
+//      write_model( simulation_values, US_Model::GA );
+      if ( data_sets.size() == 1 )
+      {
+         write_output();
+      }
+      else
+      {
+         write_global();
+      }
 
 DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
       mc_iteration++;
@@ -178,11 +189,23 @@ QString s;
             if ( avg > avg_generation )
             {
                avg_generation = avg;
-               int mc_iter    = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
-            
+               int mc_iter    = mgroup_count < 2 ? ( mc_iteration + 1 )
+                                                 : mc_iteration;
+
                QString progress =
-                  "Avg. Generation: "  + QString::number( avg_generation ) +
-                  "; MonteCarlo: " + QString::number( mc_iter );
+                  "Avg. Generation: "  + QString::number( avg_generation );
+
+               if ( data_sets.size() > 1 )
+               {
+                  if ( datasets_to_process == 1 )
+                     progress += "; Dataset: "
+                              + QString::number( current_dataset + 1 );
+                  else
+                     progress += "; Datasets: "
+                              + QString::number( datasets_to_process );
+               }
+
+               progress += "; MonteCarlo: " + QString::number( mc_iter );
 
                send_udp( progress );
             }
@@ -476,7 +499,8 @@ DbgLv(1) << "sgMC: MPI Bcast";
 }
 
 void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim, 
-                                   US_Model::AnalysisType         type )
+                                   US_Model::AnalysisType         type,
+                                   bool                           glob_sols )
 {
    US_DataIO::EditedData* data = &data_sets[ current_dataset ]->run_data;
 
@@ -498,7 +522,7 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    else if ( data_sets.size() > 1 )
    {
       model.global = US_Model::GLOBAL;
-      if ( sim.xnormsq < 0.0 )
+      if ( glob_sols )
          runID        = "Global-" + runID;
    }
 
