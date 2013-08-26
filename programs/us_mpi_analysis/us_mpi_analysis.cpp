@@ -103,6 +103,7 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
    data_sets .clear();
    parameters.clear();
    buckets   .clear();
+   maxods    .clear();
 
    parse( xmlfile );
 
@@ -253,9 +254,9 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    total_points            = 0;
 
    // Calculate s, D corrections for calc_residuals; simulation parameters
-   for ( int i = 0; i < data_sets.size(); i++ )
+   for ( int ee = 0; ee < data_sets.size(); ee++ )
    {
-      US_SolveSim::DataSet*  ds    = data_sets[ i ];
+      US_SolveSim::DataSet*  ds    = data_sets[ ee ];
       US_DataIO::EditedData* edata = &ds->run_data;
 
       // Convert to a different structure and calulate the s and D corrections
@@ -301,10 +302,24 @@ if ( my_rank == 0 )
       concentrations << 1.0;
 
       // In the global case, effectively turn off ODlimit check
+#if 0
       if ( data_sets.size() > 1 )
       {
          ds->run_data.ODlimit = 1e+99;
       }
+#endif
+      // Accumulate maximum OD for each dataset
+      double odlim      = edata->ODlimit;
+      double odmax      = 0.0;
+
+      for ( int ss = 0; ss < edata->scanCount(); ss++ )
+         for ( int rr = 0; rr < edata->pointCount(); rr++ )
+            odmax             = qMax( odmax, edata->value( ss, rr ) );
+
+      odmax             = qMin( odmax, odlim );
+DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
+
+      maxods << odmax;
    }
 
    // Check GA buckets

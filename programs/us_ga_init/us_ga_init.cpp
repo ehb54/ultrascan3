@@ -515,6 +515,8 @@ DbgLv(1) << "SAVE novlps" << novlps;
    }
 
    QString runid = run_name.section( ".", 0, -2 );
+   if ( runid.startsWith( "Global-" ) )
+      runid         = runid.mid( 7 );
    QString trpid = run_name.section( ".", -1, -1 );
    QString fdir  = US_Settings::resultDir() + "/" + runid;
    QString fndat = "gainit." + trpid + ".gadistro.dat";

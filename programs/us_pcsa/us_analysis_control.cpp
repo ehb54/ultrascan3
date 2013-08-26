@@ -610,32 +610,42 @@ void US_AnalysisControl::close()
    close_all();
 }
 
-// Reset s-limit step sizes when s-limit value changes
+// Adjust s-limit ranges when s-limit value changes
 void US_AnalysisControl::slim_change()
 {
-   double maglim = qAbs( ct_uplimits->value() - ct_lolimits->value() );
-   double lostep = ct_lolimits->step();
-   double upstep = ct_uplimits->step();
+   double loval  = ct_lolimits->value();
+   double upval  = ct_uplimits->value();
+   double limlo  = -1.e6;
+   double limup  = 1.e6;
+   if ( loval > upval )   // Insure lower value less than upper
+      ct_lolimits->setValue( upval );
 
-   if ( maglim > 50.0 )
-   {
-      if ( lostep != 10.0  ||  upstep != 10.0 )
+   if ( loval < -1.e5  ||  upval > 1.e5 )
+   {  // For larger magnitudes, adjust ranges
+      if ( loval < -1.e6  ||  upval > 1.e6 )
       {
-         ct_lolimits->setStep( 10.0 );
-         ct_uplimits->setStep( 10.0 );
+         if ( loval < -1.e7  ||  upval > 1.e7 )
+         {
+            limlo         = -1.e19;
+            limup         = 1.e19;
+         }
+         else
+         {
+            limlo         = -1.e8;
+            limup         = 1.e8;
+         }
+      }
+      else
+      {
+         limlo         = -1.e7;
+         limup         = 1.e7;
       }
    }
 
-   else
-   {
-      if ( lostep != 0.1  ||  upstep != 0.1 )
-      {
-         ct_lolimits->setStep( 0.1 );
-         ct_uplimits->setStep( 0.1 );
-      }
-   }
-
-   compute();
+   ct_lolimits->setRange( limlo, upval );
+   ct_uplimits->setRange( loval, limup );
+   ct_lolimits->setStep( 0.1 );
+   ct_uplimits->setStep( 0.1 );
 }
 
 // Set k-upper-limit to lower when k grid points == 1

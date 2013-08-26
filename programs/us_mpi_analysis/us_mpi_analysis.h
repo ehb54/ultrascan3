@@ -90,6 +90,7 @@ class US_MPI_Analysis : public QObject
     QVector< double >   meniscus_values;
 
     QVector< double >   concentrations;
+    QVector< double >   maxods;
     QVector< double >   mc_data;
     QVector< double >   sigmas;
     QVector< long >     work_rss;
@@ -281,7 +282,8 @@ class US_MPI_Analysis : public QObject
     void     write_global      ( void );
     void     set_gaussians     ( void );
     void     global_fit        ( void );
-    void     write_model       ( const SIMULATION&, US_Model::AnalysisType );
+    void     write_model       ( const SIMULATION&, US_Model::AnalysisType,
+                                 bool = false );
     void     stats_output      ( int, int, int, QDateTime, QDateTime, QDateTime );
     void     pm_2dsa_master    ( void );
     void     pm_ga_master      ( void );

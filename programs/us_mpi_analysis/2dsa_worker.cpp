@@ -162,8 +162,19 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
                {  // For global fits, check the memory requirements
                   long memused    = max_rss();
                   long memdata    = job_length * sizeof( double );
-                  int  nsstep     = parameters[ "s_resolution"   ].toInt();
-                  int  nkstep     = parameters[ "ff0_resolution" ].toInt();
+                  int grid_reps   = qMax( parameters[ "uniform_grid" ].toInt(), 1 );
+                  double s_pts    = 60.0;
+                  double ff0_pts  = 60.0;
+                  if ( parameters.contains( "s_grid_points"   ) )
+                     s_pts   = parameters[ "s_grid_points"   ].toDouble();
+                  else if ( parameters.contains( "s_resolution"    ) )
+                     s_pts   = parameters[ "s_resolution"    ].toDouble() * grid_reps;
+                  if ( parameters.contains( "ff0_grid_points" ) )
+                     ff0_pts = parameters[ "ff0_grid_points" ].toDouble();
+                  else if ( parameters.contains( "ff0_resolution"  ) )
+                     ff0_pts = parameters[ "ff0_resolution"  ].toDouble() * grid_reps;
+                  int  nsstep     = (int)( s_pts );
+                  int  nkstep     = (int)( ff0_pts );
                   int  maxsols    = nsstep * nkstep;
                   long memamatr   = memdata * maxsols;
                   long membmatr   = memdata;
@@ -199,6 +210,12 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
 
                mc_data.resize( job_length );
 
+               if ( mc_data.size() != job_length )
+               {
+                  DbgLv(0) << "*ERROR* mc_data.size() job_length"
+                     << mc_data.size() << job_length;
+               }
+
                MPI_Barrier( my_communicator );
 
 if(my_rank==1 || my_rank==11)
@@ -212,6 +229,15 @@ double dsum=0.0;
                           MPI_Job::MASTER,
                           my_communicator );
 
+
+               if ( data_sets.size() > 1  &&  dataset_count == 1 )
+               {  // For global update to scaled data, extra value is new ODlimit
+                  job_length--;
+                  data_sets[ offset ]->run_data.ODlimit = mc_data[ job_length ];
+if( (my_rank==1||my_rank==11) )
+DbgLv(1) << "newD:" << my_rank << ":offset ODlimit" << offset
+ << data_sets[ offset ]->run_data.ODlimit;
+               }
 
                int index = 0;
 

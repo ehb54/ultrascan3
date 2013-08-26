@@ -10,7 +10,7 @@ if [ "${SYSTYPE}" != "Linux" ]; then
   echo "  SYSTYPE=${SYSTYPE}"
   exit 1
 fi
-SURL="//bcf.uthscsa.edu/ultrascan3/trunk"
+SURL="//bcf2.uthscsa.edu/ultrascan3/trunk"
 REV=`svn info svn:${SURL}|grep Revision|awk '{print $2}'`
 RSYNC="rsync -av --exclude=.svn"
 REVL=`svn info ${SRCDIR}|grep Revision|awk '{print $2}'`

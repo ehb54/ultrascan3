@@ -13,7 +13,7 @@ QDateTime elapsed = QDateTime::currentDateTime();
 void US_MPI_Analysis::ga_worker( void )
 {
    current_dataset     = 0;
-   datasets_to_process = 1;
+   datasets_to_process = data_sets.size();
 
    // Initialize grid values
    QStringList keys = parameters.keys();
@@ -390,14 +390,46 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    double fitness      = sim.variance;
    int    solute_count = 0;
 
-   for ( int i = 0; i < sim.solutes.size(); i++ )
+   if ( data_sets.size() == 1 )
    {
-      if ( sim.solutes[ i ].c >= concentration_threshold ) solute_count++;
+      for ( int cc = 0; cc < sim.solutes.size(); cc++ )
+      {
+         if ( sim.solutes[ cc ].c >= concentration_threshold ) solute_count++;
+      }
+   }
+
+   else
+   {
+      double concen    = 0.0;
+      fitness          = 0.0;
+
+      for ( int ee = 0; ee < datasets_to_process; ee++ )
+      {
+         fitness         += ( sim.variances[ ee ] / maxods[ ee ] );
+      }
+
+      for ( int cc = 0; cc < sim.solutes.size(); cc++ )
+         concen          += sim.solutes[ cc ].c;
+
+      double cthresh   = concentration_threshold / concen;
+
+      for ( int cc = 0; cc < sim.solutes.size(); cc++ )
+      {
+         if ( sim.solutes[ cc ].c >= cthresh ) solute_count++;
+      }
    }
 
    fitness *= ( 1.0 + sq( regularization * solute_count ) );
    fitness_map.insert( key, fitness ); 
 
+//*DEBUG*
+//if(datasets_to_process>1 && generation<11 )
+if(dbg_level>0 && datasets_to_process>1 && generation<11 )
+{
+ DbgLv(2) << "rank generation" << my_rank << generation << "fitness" << fitness
+  << "vari0 vari1" << sim.variances[0] << sim.variances[1];
+}
+//*DEBUG*
    return fitness;
 }
 
