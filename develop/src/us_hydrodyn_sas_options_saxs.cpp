@@ -303,8 +303,30 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    cb_crysol_explicit_hydrogens->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_crysol_explicit_hydrogens, SIGNAL(clicked()), this, SLOT(set_crysol_explicit_hydrogens()));
 
+   pb_crysol_target = new QPushButton(tr("Crysol target experimental data"), this);
+   pb_crysol_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_crysol_target->setMinimumHeight(minHeight1);
+   pb_crysol_target->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_crysol_target, SIGNAL(clicked()), SLOT(crysol_target()));
+
+   le_crysol_target = new QLineEdit(this, "");
+   le_crysol_target->setMinimumHeight(minHeight1);
+   le_crysol_target->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   le_crysol_target->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   le_crysol_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_crysol_target->setText( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_crysol_target" ) ?
+                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] : QString( "" ) );
+   le_crysol_target->setReadOnly( true );
+
+   if ( !started_in_expert_mode )
+   {
+      pb_crysol_target->hide();
+      le_crysol_target->hide();
+   }
+
    if ( started_in_expert_mode )
    {
+
       lbl_sastbx_method = new QLabel(tr(" Sastbx: Method"), this);
       lbl_sastbx_method->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
       lbl_sastbx_method->setMinimumHeight(minHeight1);
@@ -410,6 +432,10 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    background->addWidget(cnt_crysol_hydration_shell_contrast, j, 1);
    j++;
 
+   background->addWidget(pb_crysol_target, j, 0);
+   background->addWidget(le_crysol_target, j, 1);
+   j++;
+
    QHBoxLayout *hbl_crysol = new QHBoxLayout;
    hbl_crysol->addWidget(lbl_crysol);
    hbl_crysol->addWidget(cb_crysol_default_load_difference_intensity);
@@ -417,6 +443,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    hbl_crysol->addWidget(cb_crysol_explicit_hydrogens);
    background->addMultiCellLayout(hbl_crysol, j, j, 0, 1);
    j++;
+
 
    if ( started_in_expert_mode )
    {
@@ -872,3 +899,27 @@ void US_Hydrodyn_SasOptionsSaxs::set_sastbx_method( int val )
    }
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
+
+void US_Hydrodyn_SasOptionsSaxs::crysol_target()
+{
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs";
+
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
+   QString filename = QFileDialog::getOpenFileName(use_dir, 
+                                                   "*.dat *.DAT", 
+                                                   this,
+                                                   caption() + tr( "Select a file for CRYSOL experimental data target" ),
+                                                   caption() + tr( "Select a file for CRYSOL experimental data target" )
+                                                   );
+
+
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] = filename;
+   le_crysol_target->setText( filename );
+   if ( !filename.isEmpty() )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+   }
+}
+
+   

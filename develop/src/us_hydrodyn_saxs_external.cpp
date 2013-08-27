@@ -288,7 +288,13 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    }
 
    crysol_last_pdb = pdb;
-   crysol_last_pdb_base = dir + SLASH + QFileInfo(crysol_last_pdb).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"").left(6) + ".pdb";
+   if ( our_saxs_options->crysol_version_26 )
+   {
+      crysol_last_pdb_base = dir + SLASH + QFileInfo(crysol_last_pdb).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"").left(6) + ".pdb";
+   } else {
+      crysol_last_pdb_base = dir + SLASH + QFileInfo(crysol_last_pdb).fileName().replace(QRegExp("\\.(pdb|PDB)$"),"") + ".pdb";
+   }
+      
    QString use_pdb = pdb;
    
    // copy pdb if the name is too long
@@ -343,6 +349,9 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 
       to_remove = base + "00.int";
       QFile::remove( to_remove );
+
+      to_remove = base + "00.fit";
+      QFile::remove( to_remove );
    }      
 
    pb_plot_saxs_sans->setEnabled(false);
@@ -373,6 +382,23 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    if ( our_saxs_options->crysol_explicit_hydrogens )
    {
       crysol->addArgument( "/eh" );
+   }
+
+   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode &&
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_crysol_target" ) &&
+        !( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ].isEmpty() )
+   {
+      US_File_Util ufu;
+      if ( !ufu.copy( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ], dir ) )
+      {
+         editor_msg( "red", ufu.errormsg );
+         if ( ufu.errormsg.contains( QRegExp( "exists$" ) ) )
+         {
+            crysol->addArgument( QFileInfo( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] ).fileName() );
+         }
+      } else {
+         crysol->addArgument( QFileInfo( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] ).fileName() );
+      }
    }
 
    connect( crysol, SIGNAL(readyReadStdout()), this, SLOT(crysol_readFromStdout()) );
@@ -424,7 +450,15 @@ void US_Hydrodyn_Saxs::crysol_processExited()
 
    // we just want the .int, the rest will be removed if needed
 
-   QString created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") +  "00.int";
+   QString type = ".int";
+   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode &&
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_crysol_target" ) &&
+        !( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ].isEmpty() )
+   {
+      type = ".fit";
+   }
+
+   QString created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") +  "00" + type;
 
    if ( !QFile::exists( created_dat ) )
    {
@@ -437,7 +471,7 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    // now move the file to the saxs directory
    QString new_created_dat = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-      QFileInfo( crysol_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),"") ).fileName() + iqq_suffix() + ".int";
+      QFileInfo( crysol_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),"") ).fileName() + iqq_suffix() + type;
 
    if ( QFile::exists(new_created_dat) )
    {
