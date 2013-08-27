@@ -7,6 +7,8 @@ void US_MPI_Analysis::ga_master( void )
 {
    current_dataset     = 0;
    datasets_to_process = data_sets.size();
+   max_depth           = 0;
+   calculated_solutes.clear();
 
    // Set noise and debug flags
    simulation_values.noisflag   = parameters[ "tinoise_option" ].toInt() > 0 ?
@@ -76,8 +78,9 @@ DbgLv(1) << "GaMast:   sol0.s" << simulation_values.solutes[0].s;
 DbgLv(1) << "GaMast:    calc_resids return";
 
       qSort( simulation_values.solutes );
+      calculated_solutes.clear();
+      calculated_solutes << simulation_values.solutes;
 
-//      write_model( simulation_values, US_Model::GA );
       if ( data_sets.size() == 1 )
       {
          write_output();

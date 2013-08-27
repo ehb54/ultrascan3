@@ -132,17 +132,7 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
             wksim_vals           = simulation_values;
             wksim_vals.solutes   = calculated_solutes[ max_depth ]; 
 
-//            if ( data_sets.size() == 1 )
-//            {  // For non-global, do normal calculation
-               calc_residuals( 0, data_sets.size(), wksim_vals );
-//            }
-
-//            else
-//            {  // For global, also capture NNLS A and b matrices
-//               US_SolveSim solvesim( data_sets, my_rank, false );
-//               solvesim.calc_residuals( 0, data_sets.size(), wksim_vals,
-//                     false, &gl_nnls_a, &gl_nnls_b );
-//            }
+            calc_residuals( 0, data_sets.size(), wksim_vals );
 
             qDebug() << "Base-Sim RMSD" << sqrt( simulation_values.variance )
                      << "  Exp-Sim RMSD" << sqrt( wksim_vals.variance )
@@ -374,59 +364,6 @@ dsum+=scaled_value;
    scaled_data[ index ] = edata->ODlimit;
 DbgLv(1) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentration;
 
-#if 0
-   dset_calc_solutes << calculated_solutes[ max_depth ];
-   current_dataset++;
-
-   if ( current_dataset >= data_sets.size() )
-   {  // If all datasets have been scaled, do all datasets from now on
-      datasets_to_process = data_sets.size();
-      current_dataset     = 0;
-
-      // Compose unique solutes from all datasets
-      qSort( dset_calc_solutes );
-      simulation_values.solutes.clear();
-      US_Solute psolu;
-DbgLv(1) << "  globfit:  dset_calc_solutes size" << dset_calc_solutes.size();
-
-      for ( int cc = 0; cc < dset_calc_solutes.size(); cc++ )
-      {
-         US_Solute csolu  = dset_calc_solutes[ cc ];
-
-         if ( csolu.s != psolu.s  ||  csolu.k != psolu.k )
-         {
-            csolu.c       = 0.0;
-            simulation_values.solutes << csolu;
-            psolu         = csolu;
-DbgLv(1) << "  globfit:    cc" << cc << "csolu s k" << csolu.s << csolu.k;
-         }
-      }
-
-      // Compute the simulation and residual for all datasets
-      int nsolsf    = simulation_values.solutes.size();
-
-      calc_residuals( 0, data_sets.size(), simulation_values );
-
-      int nsolsc    = simulation_values.solutes.size();
-      qDebug() << " == Final composite solutes count" << nsolsf << ";";
-      qDebug() << "    Computed global solutes count" << nsolsc << "==";
-
-      max_depth     = 0;
-      calculated_solutes[ 0 ] = simulation_values.solutes;
-   }
-
-   else
-   {  // If there are more datasets to do, prepare for next pass
-      fill_queue();
-
-      for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
-         calculated_solutes[ ii ].clear();
-
-      for ( int ii = 1; ii < gcores_count; ii++ )
-         worker_status[ ii ] = READY;
-   }
-#endif
-#if 1
    // Send the scaled version of current data to the workers
    MPI_Job job;
    job.command         = MPI_Job::NEWDATA;
@@ -478,10 +415,6 @@ DbgLv(1) << "  globfit:    cc" << cc << "csolu s k" << csolu.s << csolu.k;
 
    for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
       calculated_solutes[ ii ].clear();
-
-//   for ( int ii = 1; ii < gcores_count; ii++ )
-//      worker_status[ ii ] = READY;
-#endif
 }
 
 // Reset for a fit-meniscus iteration
@@ -671,7 +604,8 @@ void US_MPI_Analysis::write_output( void )
    if ( mxdssz == 0 )
    { // Handle the case of a zero-solute final model
       int simssz   = simulation_values.solutes.size();
-      int dm1ssz   = calculated_solutes[ max_depth - 1 ].size();
+      int dm1ssz   = max_depth > 0 ?
+                     calculated_solutes[ max_depth - 1 ].size() : 0;
       DbgLv( 0 ) << "*WARNING* Final solutes size" << mxdssz
          << "max_depth" << max_depth << "Sim and Depth-1 solutes size"
          << simssz << dm1ssz;
