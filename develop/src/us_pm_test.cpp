@@ -523,18 +523,18 @@ QString US_PM::test( QString name, QString oname )
       vector < double > params(1);
 
       unsigned int steps    = 1;
-      unsigned int pts_max  = 100;
+      unsigned int pts_max  = 150;
       // double       finest   = grid_conversion_factor;
       double       coarse   = 10e0;
-      double       ref_pct  = 2.5e0;
+      double       ref_pct  = 7.5e0;
       double       conv_div = 2.5e0;
 
-      unsigned int pop      = 50;
-      unsigned int gen      = 25;
+      unsigned int pop      = 500;
+      unsigned int gen      = 100;
       double       mutate   = .45;
       double       cross    = .45;
       unsigned int elitism  = 2;
-      unsigned int early_term = 3;
+      unsigned int early_term = 5;
 
       double       best_delta_start   = 1e0;
       double       best_delta_divisor = 10e0;

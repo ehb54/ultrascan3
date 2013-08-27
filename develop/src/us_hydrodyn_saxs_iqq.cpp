@@ -67,13 +67,13 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                                  .arg( swh_count )
                                  .arg( our_saxs_options->swh_excl_vol * swh_count ) );
                   } else {
-                     QString mapkey = "SWH|OW";
+                     QString mapkey = "WAT|OW";
                      QString hybrid_name = residue_atom_hybrid_map[mapkey];
                      if ( hybrid_name.isEmpty() || !hybrid_name.length() || !hybrid_map.count( hybrid_name ) 
                           || !atom_map.count( "OW~" + hybrid_name) )
                      {
-                        cout << "error: hybrid or map or atom name missing for SWH|OW" << endl; 
-                        editor_msg( "red",  QString("Molecule %1 Residue SWH OW Hybrid/map/atom name missing. Atom skipped.\n")
+                        cout << "error: hybrid or map or atom name missing for WAT|OW" << endl; 
+                        editor_msg( "red",  QString("Molecule %1 Residue WAT OW Hybrid/map/atom name missing. Atom skipped.\n")
                                     .arg( j + 1 ) );
                         continue;
                      }
@@ -88,7 +88,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                } else {
                   if ( swh_count )
                   {
-                     editor_msg( "red", tr( "Error: a chain with SWH/OW and other residues is currently unsupported\n" ) );
+                     editor_msg( "red", tr( "Error: a chain with WAT/OW and other residues is currently unsupported\n" ) );
                      return false;
                   }
                   
@@ -259,7 +259,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
       our_saxs_options->scale_excl_vol = 1e0;
    }
 
-   editor_msg( "blue", QString( tr( "Scaling excluded volume to match target (%1), default scattering center sum without SWH %2, total %3, new scaler = %4" ) )
+   editor_msg( "blue", QString( tr( "Scaling excluded volume to match target (%1), default scattering center sum without WAT %2, total %3, new scaler = %4" ) )
                .arg( our_saxs_options->iq_target_ev )
                .arg( tot_excl_vol_noh )
                .arg( tot_excl_vol )

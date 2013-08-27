@@ -3333,7 +3333,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 
    if ( our_saxs_options->swh_excl_vol )
    {
-      editor_msg("dark red", QString("SWH set to %1\n").arg( our_saxs_options->swh_excl_vol ));
+      editor_msg("dark red", QString("WAT set to %1\n").arg( our_saxs_options->swh_excl_vol ));
    }
 
    if ( !source && our_saxs_options->saxs_iq_foxs ) 
@@ -4533,7 +4533,7 @@ void US_Hydrodyn_Saxs::show_plot_sans()
 
    if ( our_saxs_options->swh_excl_vol )
    {
-      editor_msg("dark red", QString("SWH set to %1\n").arg( our_saxs_options->swh_excl_vol ));
+      editor_msg("dark red", QString("WAT set to %1\n").arg( our_saxs_options->swh_excl_vol ));
    }
 
    if ( !source && our_saxs_options->sans_iq_cryson ) 

@@ -467,7 +467,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.data.push_back(tmp_data);
 
    tmp_data.clear();
-   tmp_data.push_back("SWH excluded volume");
+   tmp_data.push_back("WAT excluded volume");
    tmp_data.push_back("N");
    tmp_data.push_back("15");
    tmp_data.push_back("30");

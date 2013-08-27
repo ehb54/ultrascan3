@@ -399,7 +399,7 @@ void US_Hydrodyn::calc_vbar(struct PDB_model *model)
    float mw;
    for (unsigned int i=0; i<(*model).residue.size(); i++)
    {
-      if ( model->residue[ i ].name != "SWH" )
+      if ( model->residue[ i ].name != "WAT" )
       {
          mw = 0.0;
          for (unsigned int j=0; j<(*model).residue[i].r_atom.size(); j++)

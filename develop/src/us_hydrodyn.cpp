@@ -266,7 +266,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_short_names["LYS"] = 'K';
    residue_short_names["ARG"] = 'R';
    residue_short_names["HIS"] = 'H';
-   residue_short_names["SWH"] = '~';
+   residue_short_names["WAT"] = '~';
 
    residue_short_names["G"] = 'g';
    residue_short_names["A"] = 'a';
@@ -2338,12 +2338,12 @@ void US_Hydrodyn::update_bead_model_prefix(const QString &str)
 
 int US_Hydrodyn::calc_somo()
 {
-   if ( selected_models_contain( "SWH" ) )
+   if ( selected_models_contain( "WAT" ) )
    {
       QMessageBox::warning( this,
-                            tr( "Selected model contains SWH residue" ),
+                            tr( "Selected model contains WAT residue" ),
                             tr( 
-                               "Can not process models that contain the SWH residue.\n"
+                               "Can not process models that contain the WAT residue.\n"
                                "These are currently generated only for SAXS/SANS computations\n"
                                )
                             );
@@ -2502,12 +2502,12 @@ int US_Hydrodyn::calc_somo()
 
 int US_Hydrodyn::calc_grid_pdb()
 {
-   //    if ( selected_models_contain( "SWH" ) )
+   //    if ( selected_models_contain( "WAT" ) )
    //    {
    //       QMessageBox::warning( this,
-   //                             tr( "Selected model contains SWH residue" ),
+   //                             tr( "Selected model contains WAT residue" ),
    //                             tr( 
-   //                                "Can not process models that contain the SWH residue.\n"
+   //                                "Can not process models that contain the WAT residue.\n"
    //                                "These are currently generated only for SAXS/SANS computations"
    //                                )
    //                             );

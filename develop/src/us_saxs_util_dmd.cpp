@@ -445,7 +445,7 @@ bool US_Saxs_Util::dmd_strip_pdb()
    QStringList exclude_residues_list;
    exclude_residues_list
       << "HOH"
-      << "SWH"
+      << "WAT"
       ;
    
    map < QString, bool > exclude_atoms;

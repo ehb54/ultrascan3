@@ -1,3 +1,4 @@
+#define TIGHTER_S_LIM
 // #define RUN_SHORT
 
 #define NO_US
@@ -1561,6 +1562,12 @@ US_fe_nnls_t::init_run(const QString & data_file,
             ds >> temp_bucket.ff0;
             ds >> temp_bucket.ff0_min;
             ds >> temp_bucket.ff0_max;
+#if defined( TIGHTER_S_LIM )
+            if (temp_bucket.s_min < 1e-13)
+            {
+               temp_bucket.s_min = 1e-13;
+            }
+#endif
             if (temp_bucket.s_min >= .999e-14)
             {
                if (!myrank)

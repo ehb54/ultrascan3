@@ -1863,7 +1863,7 @@ QStringList US_Hydrodyn_Cluster::advanced_addition()
             out += "ScaleExclVol    ";
             ok = true;
          }
-         if ( csv_advanced.data[ it->first ][ 0 ] == "SWH excluded volume" )
+         if ( csv_advanced.data[ it->first ][ 0 ] == "WAT excluded volume" )
          {
             tag += "swh";
             out += "SwhExclVol      ";

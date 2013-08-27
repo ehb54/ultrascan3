@@ -594,7 +594,7 @@ void US_Hydrodyn_Saxs_Search::run_one()
          {
             saxs_window->our_saxs_options->scale_excl_vol = t_csv->text(i, 6).toFloat();
          }
-         if ( t_csv->text( i, 0 ).contains("SWH excluded volume") )
+         if ( t_csv->text( i, 0 ).contains("WAT excluded volume") )
          {
             saxs_window->our_saxs_options->swh_excl_vol = t_csv->text(i, 6).toFloat();
          }
@@ -823,7 +823,7 @@ bool US_Hydrodyn_Saxs_Search::validate_saxs_window()
       {
          if ( 
              ( t_csv->text( i, 0 ).contains("Scaling excluded volume") ||
-               t_csv->text( i, 0 ).contains("SWH excluded volume") ) 
+               t_csv->text( i, 0 ).contains("WAT excluded volume") ) 
              )
          {
             if ( saxs_window->our_saxs_options->saxs_iq_crysol ||
@@ -831,7 +831,7 @@ bool US_Hydrodyn_Saxs_Search::validate_saxs_window()
             {
                QMessageBox::warning( this, 
                                      "US-SOMO Search",
-                                     "Scaling excluded volume and SWH excluded volume\n"
+                                     "Scaling excluded volume and WAT excluded volume\n"
                                      "are not supported by the FoXS and CRYSOL I(q) functions\n"
                                      );
                return false;
@@ -1169,13 +1169,13 @@ bool US_Hydrodyn_Saxs_Search::not_active_warning()
                break;
             }
          }
-         if ( t_csv->text( i, 0 ).contains("SWH excluded volume") &&
+         if ( t_csv->text( i, 0 ).contains("WAT excluded volume") &&
               saxs_window->our_saxs_options->swh_excl_vol != t_csv->text(i, 6).toFloat() )
          {
             switch ( QMessageBox::warning(this, 
                                           tr("US-SOMO: I(q) search"),
                                           QString(tr("Please note:\n\n"
-                                                     "\"SWH excluded volume\" is inactive, "
+                                                     "\"WAT excluded volume\" is inactive, "
                                                      "yet is has a current value of %1, "
                                                      "whereas the SAXS options value is set to %2\n"
                                                      "What would you like to do?\n"))

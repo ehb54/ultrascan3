@@ -3470,10 +3470,10 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
                   point p = new_waters[ 0 ];
                   unsigned int i = current_model;
                   double dist_threshold = 1e0 - ( saxs_options.steric_clash_distance / 100e0 );
-                  double water_radius   = multi_residue_map.count( "SWH" ) ?
-                     residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
+                  double water_radius   = multi_residue_map.count( "WAT" ) ?
+                     residue_list[ multi_residue_map[ "WAT" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
 
-                  // cout << QString( "using %1 for water radius %2\n" ).arg( water_radius ).arg(  multi_residue_map.count( "SWH" ) ? "has SWH" : "no SWH" );
+                  // cout << QString( "using %1 for water radius %2\n" ).arg( water_radius ).arg(  multi_residue_map.count( "WAT" ) ? "has WAT" : "no WAT" );
 
                   // check structure:
                   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
@@ -3560,8 +3560,8 @@ float US_Hydrodyn::min_dist_to_struct_and_waters( point p )
 {
    unsigned int i = current_model;
    double dist_threshold = 1e0 - ( saxs_options.steric_clash_distance / 100e0 );
-   double water_radius   = multi_residue_map.count( "SWH" ) ?
-      residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
+   double water_radius   = multi_residue_map.count( "WAT" ) ?
+      residue_list[ multi_residue_map[ "WAT" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
    
    float min_dist = (float)1e30;
    float this_dist;
@@ -3607,10 +3607,10 @@ bool US_Hydrodyn::has_steric_clash( point p, bool summary )
 {
    unsigned int i = current_model;
    double dist_threshold = 1e0 - ( saxs_options.steric_clash_distance / 100e0 );
-   double water_radius   = multi_residue_map.count( "SWH" ) ?
-      residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
+   double water_radius   = multi_residue_map.count( "WAT" ) ?
+      residue_list[ multi_residue_map[ "WAT" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
 
-   // cout << QString( "using %1 for water radius %2\n" ).arg( water_radius ).arg(  multi_residue_map.count( "SWH" ) ? "has SWH" : "no SWH" );
+   // cout << QString( "using %1 for water radius %2\n" ).arg( water_radius ).arg(  multi_residue_map.count( "WAT" ) ? "has WAT" : "no WAT" );
 
    // check structure:
    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
@@ -3687,8 +3687,8 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
 {
    unsigned int i = current_model;
    double dist_threshold = 1e0 - ( saxs_options.steric_clash_recheck_distance / 100e0 );
-   double water_radius   = multi_residue_map.count( "SWH" ) ?
-      residue_list[ multi_residue_map[ "SWH" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
+   double water_radius   = multi_residue_map.count( "WAT" ) ?
+      residue_list[ multi_residue_map[ "WAT" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
 
    map < QString, unsigned int > steric_clash_recheck_summary;
    hydrate_clash_log.clear();
@@ -4192,7 +4192,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
          last_hydrated_pdb_text +=
             QString("")
             .sprintf(     
-                     "ATOM  %5d  OW  SWH %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
+                     "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
                      ++atom_number,
                      chainID.ascii(),
                      ++residue_number,
@@ -5264,7 +5264,7 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
             last_hydrated_pdb_text +=
                QString("")
                .sprintf(     
-                        "ATOM  %5d  OW  SWH %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
+                        "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
                         ++atom_number,
                         chainID.ascii(),
                         ++residue_number,

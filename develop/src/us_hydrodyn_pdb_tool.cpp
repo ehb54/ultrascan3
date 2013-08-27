@@ -5579,7 +5579,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
          if ( qs.contains( rx_atom ) )
          {
             QString resName = qs.mid( 17 , 3 ).stripWhiteSpace();
-            bool is_water = ( resName == "HOH" || resName == "SWH" );
+            bool is_water = ( resName == "HOH" || resName == "WAT" );
             if ( !skip_waters || !is_water )
             {
                if ( is_water && waters_as_onezies )
@@ -5775,7 +5775,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
                   if ( waters_as_onezies )
                   {
                      QString resName = chain_residues[ i ][ k ][ l ].mid( 17 , 3 ).stripWhiteSpace();
-                     if ( resName == "HOH" || resName == "SWH" )
+                     if ( resName == "HOH" || resName == "WAT" )
                      {
                         if ( !water_done )
                         {

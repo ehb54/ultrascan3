@@ -7239,7 +7239,7 @@ void US_Hydrodyn::calc_mw()
 
                   // printf("model %u chain %u atom %u mw %g\n",
                   //       i, j, k, this_atom->mw);
-                  if ( this_atom->resName != "SWH" )
+                  if ( this_atom->resName != "WAT" )
                   {
                      model_vector[i].mw += this_atom->mw;
                      cm.axis[ 0 ] += this_atom->mw * this_atom->coordinate.axis[ 0 ];
@@ -7273,7 +7273,7 @@ void US_Hydrodyn::calc_mw()
                         chain_total_e_noh     += this_e_noh;
                         this_atom->si          = si;
                         model_vector_as_loaded[ i ].molecule[ j ].atom[ k ].si = si;
-                        if ( this_atom->resName != "SWH" )
+                        if ( this_atom->resName != "WAT" )
                         {
                            tot_excl_vol          += excl_vol;
                            tot_scaled_excl_vol   += scaled_excl_vol;
@@ -7328,7 +7328,7 @@ void US_Hydrodyn::calc_mw()
                if( this_atom->active ) 
                {
                   //       i, j, k, this_atom->mw);
-                  if ( this_atom->resName != "SWH" )
+                  if ( this_atom->resName != "WAT" )
                   {
                      Rg2 += this_atom->mw * 
                         ( 
