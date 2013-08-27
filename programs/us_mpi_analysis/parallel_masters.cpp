@@ -654,7 +654,10 @@ DbgLv(1) << "2dMast:      (2)do_write" << do_write << (do_write?"":files[0]);
 // Parallel-masters version of GA group master
 void US_MPI_Analysis::pm_ga_master( void )
 {
-   current_dataset = 0;
+   current_dataset     = 0;
+   datasets_to_process = data_sets.size();
+   max_depth           = 0;
+   calculated_solutes.clear();
 //DbgLv(1) << "master start GA" << startTime;
 
    // Set noise and debug flags
@@ -682,24 +685,6 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    }
 
    QDateTime time = QDateTime::currentDateTime();
-
-   // Handle global fit if needed
-   if ( data_sets.size() > 1 )
-   {
-      for ( int i = 0; i < data_sets.size(); i++ )
-      {
-         ga_master_loop();
-         qSort( best_fitness );
-         simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
-
-         for ( int g = 0; g < buckets.size(); g++ )
-            simulation_values.solutes[ g ].s *= 1.0e-13;
-
-         calc_residuals( current_dataset, 1, simulation_values );
-
-         ga_global_fit();  // Normalize data and update workers
-      }
-   }
 
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
@@ -765,7 +750,19 @@ DbgLv(1) << "GaMast:      (2)do_write" << do_write << (do_write?"":files[0]);
       qSort( simulation_values.solutes );
 
       if ( do_write )
-         write_model( simulation_values, US_Model::GA );
+      {
+         calculated_solutes.clear();
+         calculated_solutes << simulation_values.solutes;
+
+         if ( data_sets.size() == 1 )
+         {
+            write_output();
+         }
+         else
+         {
+            write_global();
+         }
+      }
 
       if ( mc_iteration < mc_iterations )
       {  // Before last iteration:  check if max is reset based on time limit
