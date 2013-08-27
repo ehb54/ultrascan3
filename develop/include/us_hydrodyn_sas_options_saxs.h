@@ -82,6 +82,9 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       QCheckBox  *cb_crysol_version_26;
       QCheckBox  *cb_crysol_explicit_hydrogens;
 
+      QPushButton *pb_crysol_target;
+      QLineEdit   *le_crysol_target;
+
       QLabel       *lbl_sastbx_method;
       QButtonGroup *bg_sastbx_method;
       QRadioButton *rb_sastbx_method_she;
@@ -123,6 +126,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       void set_crysol_default_load_difference_intensity();
       void set_crysol_version_26();
       void set_crysol_explicit_hydrogens();
+
+      void crysol_target();
 
       void set_sastbx_method( int );
 

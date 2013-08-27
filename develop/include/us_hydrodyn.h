@@ -225,6 +225,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Saxs *saxs_plot_window;
       bool saxs_plot_widget;
 
+      map < QString, QString >            gparams;
 
    private:
       US_Config *USglobal;
@@ -488,7 +489,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, bool  >              skip_residue;
       //                                  flags molecule "#|resSeq|residue_list entry" to be ignored
       
-      map < QString, QString >            gparams;
       map < QString, QString >            default_gparams;
 
       QString last_abb_msgs; // automatic bead builder message log
@@ -781,12 +781,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString     sf_4term_notes;
       QString     sf_5term_notes;
 
-      bool select_from_directory_history( QString &dir, QWidget *parent = (QWidget *)0 );
-      void add_to_directory_history( QString dir );
       bool load_config_json ( QString &json );
       void hard_coded_defaults();
 
    public:
+
+      bool select_from_directory_history( QString &dir, QWidget *parent = (QWidget *)0 );
+      void add_to_directory_history( QString dir );
 
       unsigned int current_model;
       QString project;   // name of the current project - derived from the prefix of the pdb filename
