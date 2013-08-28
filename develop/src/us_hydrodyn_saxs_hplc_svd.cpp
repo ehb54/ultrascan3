@@ -310,7 +310,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    errors_widgets.push_back( cb_plot_errors_rev );
 
    cb_plot_errors_sd = new QCheckBox(this);
-   cb_plot_errors_sd->setText(tr("Use S.D.'s "));
+   cb_plot_errors_sd->setText(tr("Use SDs "));
    cb_plot_errors_sd->setEnabled( true );
    cb_plot_errors_sd->setChecked( false );
    cb_plot_errors_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -2432,13 +2432,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
    // make 
    set < QString > sources = get_sources();
 
-   QString name = QString( "TSVD %1reconstruction %2 EV's%3" ).arg( recon_mode ).arg( ev_count ).arg( ev_count == 1 ? QString( " %1").arg( last_ev ) : QString( "" ) );
+   QString name = QString( "TSVD %1reconstruction %2 EVs%3" ).arg( recon_mode ).arg( ev_count ).arg( ev_count == 1 ? QString( " %1").arg( last_ev ) : QString( "" ) );
 
    {
       int ext = 0;
       while ( sources.count( name ) )
       {
-         name = QString( "TSVD %1reconstruction %2 EV's%3 Trial %4" ).arg( recon_mode ).arg( ev_count ).arg( ev_count == 1 ? QString( " %1").arg( last_ev ) : QString( "" ) ).arg( ++ext );
+         name = QString( "TSVD %1reconstruction %2 EVs%3 Trial %4" ).arg( recon_mode ).arg( ev_count ).arg( ev_count == 1 ? QString( " %1").arg( last_ev ) : QString( "" ) ).arg( ++ext );
       }
    }
 
@@ -2446,7 +2446,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
    svd_data_map[ name ] = last_svd_data;
 
    QListViewItem * lvn = new QListViewItem( lvi, lvi, "SVD of: " + last_svd_name );
-   QListViewItem * evs = new QListViewItem( lvi, lvn, "EV's used" );
+   QListViewItem * evs = new QListViewItem( lvi, lvn, "EVs used" );
    QListViewItem * lvinext = evs;
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
@@ -2769,7 +2769,7 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::add_subset_data( QStringList files )
 
    QListViewItem * lvi = new QListViewItem( lv_data, lvi_last_depth( 0 ), name );
 
-   // copy over I(q), ignore EV's, rmsd since these are not computed
+   // copy over I(q), ignore EVs, rmsd since these are not computed
 
    QListViewItem * iqs = new QListViewItem( lvi, lv_data->lastItem(), "I(q)" );
 
