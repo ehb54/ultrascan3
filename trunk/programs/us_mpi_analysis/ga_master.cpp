@@ -7,6 +7,8 @@ void US_MPI_Analysis::ga_master( void )
 {
    current_dataset     = 0;
    datasets_to_process = data_sets.size();
+   max_depth           = 0;
+   calculated_solutes.clear();
 
    // Set noise and debug flags
    simulation_values.noisflag   = parameters[ "tinoise_option" ].toInt() > 0 ?
@@ -37,26 +39,6 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
    QDateTime time = QDateTime::currentDateTime();
 
-#if 0
-   // Handle global fit if needed
-   if ( data_sets.size() > 1 )
-   {
-      for ( int i = 0; i < data_sets.size(); i++ )
-      {
-         ga_master_loop();
-         qSort( best_fitness );
-         simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
-
-         for ( int g = 0; g < buckets.size(); g++ )
-            simulation_values.solutes[ g ].s *= 1.0e-13;
-
-         calc_residuals( current_dataset, 1, simulation_values );
-
-         ga_global_fit();  // Normalize data and update workers
-      }
-   }
-#endif
-
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
    {
@@ -76,8 +58,9 @@ DbgLv(1) << "GaMast:   sol0.s" << simulation_values.solutes[0].s;
 DbgLv(1) << "GaMast:    calc_resids return";
 
       qSort( simulation_values.solutes );
+      calculated_solutes.clear();
+      calculated_solutes << simulation_values.solutes;
 
-//      write_model( simulation_values, US_Model::GA );
       if ( data_sets.size() == 1 )
       {
          write_output();
