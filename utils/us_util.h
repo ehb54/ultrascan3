@@ -6,6 +6,10 @@
 
 #include "us_extern.h"
 
+#ifndef DbgErr
+#define DbgErr(a) if(US_Util::ithTime(a))qDebug()
+#endif
+
 //! \brief General utilities for UltraScan
 //!
 //! This class provides a number of general utility functions.
@@ -103,6 +107,12 @@ class US_UTIL_EXTERN US_Util
       //! \param spaces Flag to insert spaces around slashes.
       //! \returns      Uncompressed triple string ("c/c/w" or "c / c / w")
       static QString expanded_triple( const QString&, bool = true );
+
+      //! \brief Return a flag if this is the i'th time an error occurs.
+      //!
+      //! \param ival Incidence increment to detect (default=10000).
+      //! returns     Boolean flag if this is i'th time.
+      static bool ithTime( int = 10000 );
 
    private:
       static unsigned char hex2int( unsigned char c );

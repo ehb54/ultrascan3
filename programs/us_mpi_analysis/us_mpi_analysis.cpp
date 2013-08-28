@@ -98,7 +98,7 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
    set_count      = 0;
    iterations     = 1;
 
-   previous_values.variance = 1.0e99;  // A large number
+   previous_values.variance = 1.0e39;  // A large number
 
    data_sets .clear();
    parameters.clear();
@@ -301,13 +301,6 @@ if ( my_rank == 0 )
       // Initialize concentrations vector in case of global fit
       concentrations << 1.0;
 
-      // In the global case, effectively turn off ODlimit check
-#if 0
-      if ( data_sets.size() > 1 )
-      {
-         ds->run_data.ODlimit = 1e+99;
-      }
-#endif
       // Accumulate maximum OD for each dataset
       double odlim      = edata->ODlimit;
       double odmax      = 0.0;

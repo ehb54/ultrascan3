@@ -163,7 +163,7 @@ class US_MPI_Analysis : public QObject
 
     QList< _2dsa_Job > job_queue;
 
-    static const double LARGE          = 9.9e99;
+    static const double LARGE          = 1.e39;
     static const int    solute_doubles = sizeof( US_Solute ) / sizeof( double );
     QList< QVector< US_Solute > > calculated_solutes;
     QList< QVector< US_Solute > > ds_calc_solutes;
