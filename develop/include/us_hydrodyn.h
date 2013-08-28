@@ -91,6 +91,12 @@
 #define START_RASMOL
 using namespace std;
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
 class US_EXTERN US_Hydrodyn : public QFrame
 {
    Q_OBJECT
@@ -181,11 +187,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void bd_anaflex_enables( bool flag ); // turns buttons on/off based upon current status
       US_Saxs_Util *saxs_util;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < QString > movie_text;
       QString last_saxs_header;
 
@@ -203,11 +204,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, QString > dammix_remember_mw_source;
 
       map < QString, saxs > extra_saxs_coefficients;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
       bool is_dammin_dammif(QString filename);
 
       QString saxs_sans_ext(); // returns correct extension based upon current saxs/sans mode
@@ -417,11 +413,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QString getExtendedSuffix(bool prerun = true, bool somo = true); 
       
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < QString >              batch_file;
       vector < PDB_atom >             bead_model;
       vector < vector < PDB_atom > >  bead_models;
@@ -554,12 +545,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, bool >                     cluster_additional_methods_options_active;
       map < QString, map < QString, QString > > cluster_additional_methods_options_selected;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
-
       void calc_mw();             // after pdb (bead_model?) loaded, go through and compute PDB_model.mw (& later PDB_chain.mw?)
       void calc_vol_for_saxs();   // run when there are errors
       void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
@@ -571,11 +556,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QString validate_pointmap();
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       map < QString, vector < vector < QString > > > dihedral_atoms;
 
       map < QString, vector < vector < QString > > > pointmap_atoms;
@@ -609,11 +589,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       map < QString, unsigned int >                  hydrate_count;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
       unsigned int hydrate_max_waters_no_asa;
       unsigned int count_waters;
       unsigned int count_waters_added;
@@ -682,11 +657,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       // state copies
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < PDB_atom >                                 state_bead_model;
       vector < vector < PDB_atom > >                      state_bead_models;
       vector < vector < PDB_atom > >                      state_bead_models_as_loaded;
@@ -1035,22 +1005,11 @@ class radial_reduction_thr_t : public QThread
 
   int methodk;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
-
   vector <PDB_atom> *p_bead_model;
   vector <bool> *p_last_reduced;
   vector <bool> *p_reduced;
   vector <BPair> *p_my_pairs;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
   unsigned int threads;
 
   double overlap_tolerance;
@@ -1064,5 +1023,11 @@ class radial_reduction_thr_t : public QThread
   int work_to_do_waiters;
   int work_done_waiters;
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif
