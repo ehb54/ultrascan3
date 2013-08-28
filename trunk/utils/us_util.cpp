@@ -208,3 +208,11 @@ void US_Util::uuid_parse( const QString& in, unsigned char* uu )
    }
 }
 
+// Return a flag true if this is the ith time an error occurred;
+// in truth, that a random number over the given range has hit 1.
+bool US_Util::ithTime( int timeinc )
+{
+   int rannum  = qrand() % timeinc;
+   return ( rannum == 1 );
+}
+

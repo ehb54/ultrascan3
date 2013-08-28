@@ -7,6 +7,7 @@
 #include "us_stiffbase.h"
 #include "us_settings.h"
 #include "us_sleep.h"
+#include "us_util.h"
 
 US_Astfem_RSA::US_Astfem_RSA( US_Model&                model,
                               US_SimulationParameters& params,
@@ -347,7 +348,7 @@ totT2+=(clcSt2.msecsTo(clcSt3));
 
             if ( accel_time > duration )
             {
-               qDebug() << "Attention: acceleration time exceeds duration - "
+               DbgErr() << "Attention: acceleration time exceeds duration - "
                            "please check initialization\n";
                return -1;
             }
@@ -610,7 +611,7 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
 
          if ( accel_time > duration )
          {
-            qDebug() << "Attention: acceleration time exceeds duration - "
+            DbgErr() << "Attention: acceleration time exceeds duration - "
                         "please check initialization\n";
             return -1;
          }
@@ -1619,20 +1620,20 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
                if ( fabs( xA[ 0 ] - m ) > 1.0e7 )
                {
-                  qDebug() << "The meniscus from the mesh file does not"
+                  DbgErr() << "The meniscus from the mesh file does not"
                      " match the set meniscus - using Claverie Mesh instead\n";
                }
 
                if ( fabs( xA[ x.size() - 1 ] - b ) > 1.0e7 )
                {
-                  qDebug() << "The cell bottom from the mesh file does not"
+                  DbgErr() << "The cell bottom from the mesh file does not"
                      " match the set cell bottom - using Claverie Mesh"
                      " instead\n";
                }
             }
             else
             {
-               qDebug() << "Could not read the mesh file - "
+               DbgErr() << "Could not read the mesh file - "
                            "using Claverie Mesh instead\n";
 
                for ( int i = 0; i < af_params.simpoints; i++ )
@@ -1911,6 +1912,7 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 
    yr .append( m );
 
+Nf=2;
    if ( b * ( pow( mbrat, ( NN - 3.5 ) / NNm1 )
             - pow( mbrat, ( NN - 2.5 ) / NNm1 ) ) < Hstar || Nf <= 2 )
    {
@@ -1924,7 +1926,8 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 
       xA           = x.data();
 
-      qDebug() << "Use exponential grid only!  NN Nf b m nu0" << NN << Nf << b << m << nu0;
+      DbgErr() << "Use exponential grid only!(1/10000 reported):  NN Nf b m nu0"
+         << NN << Nf << b << m << nu0;
    }
    else
    {
@@ -2028,7 +2031,7 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
          x .append( zA[ j ] );
    }
    else                  // Sedimentation and floating mixed up
-      qDebug() << "No refinement at ends since sedimentation "
+      DbgErr() << "No refinement at ends since sedimentation "
                   "and floating mixed ...\n" ;
 
    N  = x.size();
@@ -2041,7 +2044,7 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
       double D, double sw2, double** CA, double** CB )
 {
    if ( N != x.size()  ||  N < 1 )
-      qDebug() << "***FixedMesh ERROR*** N x.size" << N << x.size()
+      DbgErr() << "***FixedMesh ERROR*** N x.size" << N << x.size()
          << " params.s[0] D sw2" << af_params.s[0] << D << sw2;
 
 #ifdef NO_DB
@@ -2349,8 +2352,8 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
 
           else
           {
-             qDebug() << "Warning: invalid stoichiometry in decompose()";
-             qDebug() << "  st0 st1 c1" << st0 << st1 << c1;
+             DbgErr() << "Warning: invalid stoichiometry in decompose()"
+                      << "  st0 st1 c1" << st0 << st1 << c1;
              return;
           }
 
@@ -2516,7 +2519,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
 
           else
           {
-             qDebug() << "Warning: invalid stoichiometry in decompose()";
+             DbgErr() << "Warning: invalid stoichiometry in decompose()";
              return;
           }
 
@@ -2583,7 +2586,7 @@ DbgLv(1) << "RSA: newX3 num_comp" << num_comp;
 
          if ( US_AstfemMath::GaussElim( num_comp, A, b ) == -1 )
          {
-            qDebug() << "Matrix singular in Reaction_Euler_imp: model 12";
+            DbgErr() << "Matrix singular in Reaction_Euler_imp: model 12";
             break;
          }
          else
@@ -2825,7 +2828,7 @@ DbgLv(2) << "RSA:     cra2:  nu[N]" << nu[nu.size()-1];
       }
       else
       {
-         qDebug() << "Multicomponent system with sedimentation and "
+         DbgErr() << "Multicomponent system with sedimentation and "
                      "floating mixed, use uniform mesh";
       }
    }
@@ -2907,12 +2910,12 @@ DbgLv(2) << "RSA:     cra2:  nu[N]" << nu[nu.size()-1];
          }
          else if ( s_max < 0)    // all components floating
          {
-            qDebug() << "all components floating, not implemented yet";
+            DbgErr() << "all components floating, not implemented yet";
             return -1;
          }
          else     // sedmientation and floating mixed
          {
-            qDebug() << "sedimentation and floating mixed, suppose use "
+            DbgErr() << "sedimentation and floating mixed, suppose use "
                         "fixed grid!";
             return -1;
          }

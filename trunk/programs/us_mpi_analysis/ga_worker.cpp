@@ -408,10 +408,12 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
          fitness         += ( sim.variances[ ee ] / maxods[ ee ] );
       }
 
+      fitness         /= (double)datasets_to_process;
+
       for ( int cc = 0; cc < sim.solutes.size(); cc++ )
          concen          += sim.solutes[ cc ].c;
 
-      double cthresh   = concentration_threshold / concen;
+      double cthresh   = concentration_threshold * concen;
 
       for ( int cc = 0; cc < sim.solutes.size(); cc++ )
       {
@@ -424,9 +426,9 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
 
 //*DEBUG*
 //if(datasets_to_process>1 && generation<11 )
-if(dbg_level>0 && datasets_to_process>1 && generation<11 )
+if(dbg_level>1 && datasets_to_process>1 && generation<11 )
 {
- DbgLv(2) << "rank generation" << my_rank << generation << "fitness" << fitness
+ DbgLv(0) << "rank generation" << my_rank << generation << "fitness" << fitness
   << "vari0 vari1" << sim.variances[0] << sim.variances[1];
 }
 //*DEBUG*

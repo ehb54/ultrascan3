@@ -7,8 +7,6 @@ void US_MPI_Analysis::ga_master( void )
 {
    current_dataset     = 0;
    datasets_to_process = data_sets.size();
-   max_depth           = 0;
-   calculated_solutes.clear();
 
    // Set noise and debug flags
    simulation_values.noisflag   = parameters[ "tinoise_option" ].toInt() > 0 ?
@@ -78,9 +76,8 @@ DbgLv(1) << "GaMast:   sol0.s" << simulation_values.solutes[0].s;
 DbgLv(1) << "GaMast:    calc_resids return";
 
       qSort( simulation_values.solutes );
-      calculated_solutes.clear();
-      calculated_solutes << simulation_values.solutes;
 
+//      write_model( simulation_values, US_Model::GA );
       if ( data_sets.size() == 1 )
       {
          write_output();
@@ -137,12 +134,12 @@ void US_MPI_Analysis::ga_master_loop( void )
    int    avg_generation       = 0;
    bool   early_termination    = false;
    int    fitness_same_count   = 0;
-   double best_overall_fitness = 1.0e99;
+   double best_overall_fitness = LARGE;
    int    tag;
    int    workers              = my_workers;
-
 DbgLv(1) << "ga_master start loop:  gcores_count fitsize" << gcores_count
-   << best_fitness.size();
+   << best_fitness.size() << "best_overall" << best_overall_fitness;
+
    // Reset best fitness for each worker
    for ( int i = 0; i < gcores_count; i++ )
    {
@@ -222,6 +219,8 @@ QString s;
                       my_communicator,
                       MPI_STATUS_IGNORE );
 
+DbgLv(1) << "  MAST: work" << worker << "fit msg,bestw,besto"
+ << msg.fitness << best_fitness[worker].fitness << best_overall_fitness;
             if ( msg.fitness < best_fitness[ worker ].fitness )
                best_fitness[ worker ].fitness = msg.fitness;
 
@@ -240,7 +239,8 @@ DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
 
             if ( ! early_termination )
             {
-               double fitness_round = (double)qRound( msg.fitness * fit_mul ) * fit_div;
+               double fitness_round = (double)qRound64( msg.fitness * fit_mul ) * fit_div;
+DbgLv(1) << "  MAST: work" << worker << "fit besto,round" << best_overall_fitness << fitness_round;
 
                if ( fitness_round < best_overall_fitness )
                {
