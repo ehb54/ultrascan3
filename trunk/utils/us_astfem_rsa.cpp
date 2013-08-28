@@ -1912,7 +1912,6 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 
    yr .append( m );
 
-Nf=2;
    if ( b * ( pow( mbrat, ( NN - 3.5 ) / NNm1 )
             - pow( mbrat, ( NN - 2.5 ) / NNm1 ) ) < Hstar || Nf <= 2 )
    {
