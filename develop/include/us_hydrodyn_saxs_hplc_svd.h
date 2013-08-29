@@ -203,7 +203,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       vector < double >            chi_x;
       vector < double >            chi_y;
       
-      bool                         ev_plot;
+      bool                         sv_plot;
       bool                         rmsd_plot;
       bool                         chi_plot;
 
@@ -286,7 +286,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       // void t_start_text ( const QString & );
       // void t_end_text   ( const QString & );
 
-      void ev_selection_changed();
+      void sv_selection_changed();
 
       void svd();
       void stop();

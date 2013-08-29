@@ -67,7 +67,7 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    axis_y_log = false;
    axis_x_log = false;
-   ev_plot    = false;
+   sv_plot    = false;
    rmsd_plot  = false;
    chi_plot   = false;
 
@@ -429,7 +429,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    //    connect( le_t_end, SIGNAL( textChanged( const QString & ) ), SLOT( t_end_text( const QString & ) ) );
    //    process_widgets.push_back( le_t_end );
 
-   lbl_ev = new QLabel( tr( "Eigenvalue list:" ), this );
+   lbl_ev = new QLabel( tr( "Singular value list:" ), this );
    lbl_ev->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_ev->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -441,7 +441,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    lb_ev->setEnabled(true);
    lb_ev->setSelectionMode( QListBox::Extended );
    lb_ev->setColumnMode   ( QListBox::FitToWidth );
-   connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( ev_selection_changed() ) );
+   connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( sv_selection_changed() ) );
    process_widgets.push_back( lb_ev );
 
    pb_svd = new QPushButton(tr("Compute SVD"), this);
@@ -458,14 +458,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
    process_widgets.push_back( pb_stop );
 
-   pb_svd_plot = new QPushButton(tr("Plot EVs"), this);
+   pb_svd_plot = new QPushButton(tr("Plot SVs"), this);
    pb_svd_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_svd_plot->setMinimumHeight(minHeight3);
    pb_svd_plot->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_svd_plot, SIGNAL(clicked()), SLOT(svd_plot()));
    process_widgets.push_back( pb_svd_plot );
 
-   pb_svd_save = new QPushButton(tr("Save EVs"), this);
+   pb_svd_save = new QPushButton(tr("Save SVs"), this);
    pb_svd_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_svd_save->setMinimumHeight(minHeight3);
    pb_svd_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -1176,11 +1176,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::replot()
       }
    }
 
-   if ( ev_plot || chi_plot || rmsd_plot )
+   if ( sv_plot || chi_plot || rmsd_plot )
    {
       axis_x_log = last_axis_x_log;
       axis_y_log = last_axis_y_log;
-      ev_plot   = false;
+      sv_plot   = false;
       rmsd_plot = false;
       chi_plot  = false;
       axis_x_title();
@@ -1219,13 +1219,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::iq_it()
       plot_errors_zoomer = (ScrollZoomer *) 0;
    }
 
-   if ( ev_plot || chi_plot || rmsd_plot )
+   if ( sv_plot || chi_plot || rmsd_plot )
    {
       axis_x_log = last_axis_x_log;
       axis_y_log = last_axis_y_log;
    }
 
-   ev_plot   = false;
+   sv_plot   = false;
    rmsd_plot = false;
    chi_plot  = false;
    iq_it_state = !iq_it_state;
@@ -1281,7 +1281,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_y()
       delete plot_data_zoomer;
       plot_data_zoomer = (ScrollZoomer *) 0;
    }
-   if ( ev_plot )
+   if ( sv_plot )
    {
       svd_plot( false );
    } else {
@@ -1346,12 +1346,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
       return;
    }
 
-   int ev_items = 0;
+   int sv_items = 0;
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
       if ( lb_ev->isSelected( i ) )
       {
-         ev_items++;
+         sv_items++;
       }
    }
 
@@ -1376,13 +1376,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
    pb_stop            ->setEnabled( false );
    pb_svd_plot        ->setEnabled( lb_ev->count() );
    pb_svd_save        ->setEnabled( lb_ev->count() );
-   pb_recon           ->setEnabled( ev_items );
+   pb_recon           ->setEnabled( sv_items );
 
    pb_inc_rmsd_plot   ->setEnabled( rmsd_x.size() );
    pb_rmsd_save       ->setEnabled( rmsd_x.size() );
    pb_inc_chi_plot    ->setEnabled( chi_x.size() );
-   pb_inc_recon       ->setEnabled( ev_items );
-   pb_indiv_recon     ->setEnabled( ev_items );
+   pb_inc_recon       ->setEnabled( sv_items );
+   pb_indiv_recon     ->setEnabled( sv_items );
 
    if ( sources.size() == 1 &&
         sources.begin()->contains( "reconstruction" ) )
@@ -1407,7 +1407,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::data_selection_changed()
    update_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::ev_selection_changed()
+void US_Hydrodyn_Saxs_Hplc_Svd::sv_selection_changed()
 {
    update_enables();
 }
@@ -1606,7 +1606,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::is_selected( QListViewItem *lvi )
 void US_Hydrodyn_Saxs_Hplc_Svd::axis_x_title()
 {
    QString title = tr( iq_it_state ? "Time [a.u.]" : "q [1/Angstrom]" );
-   if ( ev_plot || rmsd_plot || chi_plot )
+   if ( sv_plot || rmsd_plot || chi_plot )
    {
       title = tr( "Number" );
    }
@@ -1633,7 +1633,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_x_title()
 void US_Hydrodyn_Saxs_Hplc_Svd::axis_y_title()
 {
    QString title = tr( iq_it_state ? "I(t) [a.u.]" : "I(q) [a.u.]" );
-   if ( ev_plot )
+   if ( sv_plot )
    {
       title = tr( "Singular values" );
    }
@@ -1969,7 +1969,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot( bool axis_change )
       plot_data_zoomer = (ScrollZoomer *) 0;
    }
 
-   ev_plot   = true;
+   sv_plot   = true;
    rmsd_plot = false;
    chi_plot  = false;
 
@@ -2176,7 +2176,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change )
       plot_data_zoomer = (ScrollZoomer *) 0;
    }
 
-   ev_plot   = false;
+   sv_plot   = false;
    rmsd_plot = true;
    chi_plot  = false;
 
@@ -2245,7 +2245,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot( bool axis_change )
       plot_data_zoomer = (ScrollZoomer *) 0;
    }
 
-   ev_plot   = false;
+   sv_plot   = false;
    rmsd_plot = false;
    chi_plot  = true;
 
@@ -2311,7 +2311,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
    pb_stop->setEnabled( true );
    running = true;
 
-   last_recon_tag = QString( tr( "\"Incremental TSVD on SVD of %1\",\"RMSD of fit\",\"EigenValues\"" ) ).arg( last_svd_name );
+   last_recon_tag = QString( tr( "\"Incremental TSVD on SVD of %1\",\"RMSD of fit\",\"Singular values\"" ) ).arg( last_svd_name );
    last_recon_evs.clear();
 
    rmsd_x.clear();
@@ -2368,7 +2368,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
 
    progress->reset();
 
-   connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( ev_selection_changed() ) );
+   connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( sv_selection_changed() ) );
 
    running = false;
    update_enables();
@@ -2387,7 +2387,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
 
    vector < double > D = svd_D;
 
-   int ev_count = 0;
+   int sv_count = 0;
    QString last_ev;
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
@@ -2395,7 +2395,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
       {
          D[ svd_index[ i ] ] = 0e0;
       } else {
-         ev_count++;
+         sv_count++;
          last_ev = lb_ev->text( i );
       }
    }
@@ -2432,13 +2432,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
    // make 
    set < QString > sources = get_sources();
 
-   QString name = QString( "TSVD %1reconstruction %2 EVs%3" ).arg( recon_mode ).arg( ev_count ).arg( ev_count == 1 ? QString( " %1").arg( last_ev ) : QString( "" ) );
+   QString name = QString( "TSVD %1reconstruction %2 SVs%3" ).arg( recon_mode ).arg( sv_count ).arg( sv_count == 1 ? QString( " %1").arg( last_ev ) : QString( "" ) );
 
    {
       int ext = 0;
       while ( sources.count( name ) )
       {
-         name = QString( "TSVD %1reconstruction %2 EVs%3 Trial %4" ).arg( recon_mode ).arg( ev_count ).arg( ev_count == 1 ? QString( " %1").arg( last_ev ) : QString( "" ) ).arg( ++ext );
+         name = QString( "TSVD %1reconstruction %2 SVs%3 Trial %4" ).arg( recon_mode ).arg( sv_count ).arg( sv_count == 1 ? QString( " %1").arg( last_ev ) : QString( "" ) ).arg( ++ext );
       }
    }
 
@@ -2446,7 +2446,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
    svd_data_map[ name ] = last_svd_data;
 
    QListViewItem * lvn = new QListViewItem( lvi, lvi, "SVD of: " + last_svd_name );
-   QListViewItem * evs = new QListViewItem( lvi, lvn, "EVs used" );
+   QListViewItem * evs = new QListViewItem( lvi, lvn, "SVs used" );
    QListViewItem * lvinext = evs;
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
@@ -2467,7 +2467,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
 
    set < QString > current_files = get_current_files();
 
-   QString tag = QString( "TSVD%1_%2" ).arg( ev_count ).arg( ev_count == 1 ? QString( "%1_").arg( last_ev ).replace( ".","_" ) : QString( "" ) );
+   QString tag = QString( "TSVD%1_%2" ).arg( sv_count ).arg( sv_count == 1 ? QString( "%1_").arg( last_ev ).replace( ".","_" ) : QString( "" ) );
    int ext = 0;
 
    // find consistent ext
@@ -2590,7 +2590,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
    pb_stop->setEnabled( true );
    running = true;
 
-   last_recon_tag = QString( tr( "\"Individual TSVD on SVD of %1\",\"RMSD of fit\",\"EigenValue\"" ) ).arg( last_svd_name );
+   last_recon_tag = QString( tr( "\"Individual TSVD on SVD of %1\",\"RMSD of fit\",\"Singular value\"" ) ).arg( last_svd_name );
    last_recon_evs.clear();
                             
 
@@ -2650,7 +2650,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
       lb_ev->setSelected( evs_selected[ i ], true );
    }
 
-   connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( ev_selection_changed() ) );
+   connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( sv_selection_changed() ) );
 
    running = false;
    update_enables();
@@ -2769,7 +2769,7 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::add_subset_data( QStringList files )
 
    QListViewItem * lvi = new QListViewItem( lv_data, lvi_last_depth( 0 ), name );
 
-   // copy over I(q), ignore EVs, rmsd since these are not computed
+   // copy over I(q), ignore SVs, rmsd since these are not computed
 
    QListViewItem * iqs = new QListViewItem( lvi, lv_data->lastItem(), "I(q)" );
 
@@ -3517,7 +3517,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_save()
       return;
    }
 
-   QString out = QString( tr( "\"SVD of %1\",\"EigenValue\"" ) ).arg( last_svd_name ) + "\n";
+   QString out = QString( tr( "\"SVD of %1\",\"Singular value\"" ) ).arg( last_svd_name ) + "\n";
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
       out += QString( "%1,%2" ).arg( i + 1 ).arg( lb_ev->text( i ) ) + "\n";
