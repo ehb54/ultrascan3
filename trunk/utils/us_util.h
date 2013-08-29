@@ -7,7 +7,7 @@
 #include "us_extern.h"
 
 #ifndef DbgErr
-#define DbgErr(a) if(US_Util::ithTime(a))qDebug()
+#define DbgErr(a) if(US_Util::ithTime(a))qDebug() //!< Ith time error qDebug()
 #endif
 
 //! \brief General utilities for UltraScan
@@ -110,8 +110,8 @@ class US_UTIL_EXTERN US_Util
 
       //! \brief Return a flag if this is the i'th time an error occurs.
       //!
-      //! \param ival Incidence increment to detect (default=10000).
-      //! returns     Boolean flag if this is i'th time.
+      //! \param timeinc Incidence increment to detect (default=10000).
+      //! returns        Boolean flag if this is i'th time.
       static bool ithTime( int = 10000 );
 
    private:
