@@ -2884,7 +2884,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
    int I_offset   = 1;
    int e_offset   = 2;
    int row_offset = 1;
-   if ( ext == "dat" && qv[ 0 ].contains( "Frame data" ) )
+   if ( ext == "dat" && qv[ 0 ].lower().contains( QRegExp( "frame\\s*data" ) ) )
    {
       is_time = true;
    }
