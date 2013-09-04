@@ -74,6 +74,7 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile,
    {
       QStringList jfilt;
       jfilt << "input/*jobxmlfile.xml";
+      jfilt << "*jobxmlfile.xml";
       jfilt << "us3.pbs";
       QStringList jfiles = d.entryList( jfilt, QDir::Files );
       jxmlfile           = jfiles.size() > 0 ? jfiles[ 0 ]
@@ -657,8 +658,11 @@ void US_MPI_Analysis::limitBucket( Bucket& buk )
       buk.s_max   = -0.1;
    }
 
-   buk.ff0_min = qMax(  1.0, buk.ff0_min );
-   buk.ff0_max = qMax( ( buk.ff0_min + 0.0001 ), buk.ff0_max );
+   if ( data_sets[ 0 ]->solute_type == 0 )
+   {  // If y-type is "ff0", insure minimum is at least 1.0
+      buk.ff0_min = qMax(  1.0, buk.ff0_min );
+      buk.ff0_max = qMax( ( buk.ff0_min + 0.0001 ), buk.ff0_max );
+   }
 }
 
 // Get the A,b matrices for a data set

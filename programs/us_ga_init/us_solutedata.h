@@ -105,7 +105,7 @@ class US_SoluteData : public QObject
     int      findNearestPoint( QPointF& );
     int      removeBucketAt( int );
     int      autoCalcBins( int, qreal, qreal );
-    int      saveGAdata( QString& );
+    int      saveGAdata( QString&, int = 1, int = 4, double = 0.0 );
     int      buildDataMC( bool, bool );
     int      reportDataMC( QString&, int );
     void     outputStats( QTextStream&, QList< qreal >&, QList< qreal >&,

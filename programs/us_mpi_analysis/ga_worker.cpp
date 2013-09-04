@@ -1029,14 +1029,24 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
    int    vsize   = v.size();
    int    nsols   = vsize / 2;
    int    navals  = nsols * ntotal;
+   bool   cnst_vb = ( dset->solute_type == 0 );
+   double fixval  = parameters[ "bucket_fixed" ].toDouble();
 //qDebug() << "UF: vsize nsols ntotal navals" << vsize << nsols << ntotal << navals;
    US_Model::SimulationComponent zcomponent;
    zcomponent.s      = 0.0;
    zcomponent.D      = 0.0;
    zcomponent.mw     = 0.0;
    zcomponent.f      = 0.0;
-   zcomponent.f_f0   = 0.0;
-   zcomponent.vbar20 = dset->vbar20;
+   if ( cnst_vb )
+   {
+      zcomponent.f_f0   = 0.0;
+      zcomponent.vbar20 = dset->vbar20;
+   }
+   else
+   {
+      zcomponent.f_f0   = fixval;
+      zcomponent.vbar20 = 0.0;
+   }
 
    if ( index < 0 )
    {  // Do the initial population of A and B matrices
@@ -1052,10 +1062,28 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
          model.components.resize( 1 );
          model.components[ 0 ]      = zcomponent;
          model.components[ 0 ].s    = v[ vv     ] * 1.0e-13;
-         model.components[ 0 ].f_f0 = v[ vv + 1 ];
-         US_Model::calc_coefficients( model.components[ 0 ] );
-         model.components[ 0 ].s   /= dset->s20w_correction;
-         model.components[ 0 ].D   /= dset->D20w_correction;
+         if ( cnst_vb )
+         {
+            model.components[ 0 ].f_f0 = v[ vv + 1 ];
+            US_Model::calc_coefficients( model.components[ 0 ] );
+            model.components[ 0 ].s   /= dset->s20w_correction;
+            model.components[ 0 ].D   /= dset->D20w_correction;
+         }
+         else
+         {
+            model.components[ 0 ].vbar20 = v[ vv + 1 ];
+            US_Model::calc_coefficients( model.components[ 0 ] );
+            US_Math2::SolutionData sd;
+            sd.density                 = dset->density;
+            sd.viscosity               = dset->viscosity;
+            sd.manual                  = dset->manual;
+            sd.vbar20                  = model.components[ 0 ].vbar20;
+            sd.vbar                    = US_Math2::adjust_vbar20(
+                                            sd.vbar20, dset->temperature );
+            US_Math2::data_correction( dset->temperature, sd );
+            model.components[ 0 ].s   /= sd.s20w_correction;
+            model.components[ 0 ].D   /= sd.D20w_correction;
+         }
 
          US_AstfemMath::initSimData( simdat, *edata, 0.0 );
          US_Astfem_RSA astfem_rsa( model, dset->simparams );
@@ -1086,10 +1114,29 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
       int vv = index * 2;
       model.components[ 0 ]      = zcomponent;
       model.components[ 0 ].s    = v[ vv     ] * 1.0e-13;
-      model.components[ 0 ].f_f0 = v[ vv + 1 ];
       US_Model::calc_coefficients( model.components[ 0 ] );
-      model.components[ 0 ].s   /= dset->s20w_correction;
-      model.components[ 0 ].D   /= dset->D20w_correction;
+      if ( cnst_vb )
+      {
+         model.components[ 0 ].f_f0 = v[ vv + 1 ];
+         US_Model::calc_coefficients( model.components[ 0 ] );
+         model.components[ 0 ].s   /= dset->s20w_correction;
+         model.components[ 0 ].D   /= dset->D20w_correction;
+      }
+      else
+      {
+         model.components[ 0 ].vbar20 = v[ vv + 1 ];
+         US_Model::calc_coefficients( model.components[ 0 ] );
+         US_Math2::SolutionData sd;
+         sd.density                 = dset->density;
+         sd.viscosity               = dset->viscosity;
+         sd.manual                  = dset->manual;
+         sd.vbar20                  = model.components[ 0 ].vbar20;
+         sd.vbar                    = US_Math2::adjust_vbar20(
+                                         sd.vbar20, dset->temperature );
+         US_Math2::data_correction( dset->temperature, sd );
+         model.components[ 0 ].s   /= sd.s20w_correction;
+         model.components[ 0 ].D   /= sd.D20w_correction;
+      }
 //qDebug() << "UF: index vv" << index << vv << "s,D"
 // << model.components[0].s << model.components[0].D;
 
@@ -1137,12 +1184,33 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 
             int vv = cc * 2;
             model.components[ kk ].s    = v[ vv     ] * 1.0e-13;
-            model.components[ kk ].f_f0 = v[ vv + 1 ];
+            if ( cnst_vb )
+            {
+               model.components[ kk ].f_f0 = v[ vv + 1 ];
 
-            US_Model::calc_coefficients( model.components[ kk ] );
+               US_Model::calc_coefficients( model.components[ kk ] );
 
-            model.components[ kk ].s   /= dset->s20w_correction;
-            model.components[ kk ].D   /= dset->D20w_correction;
+               model.components[ kk ].s   /= dset->s20w_correction;
+               model.components[ kk ].D   /= dset->D20w_correction;
+            }
+            else
+            {
+               model.components[ kk ].vbar20 = v[ vv + 1 ];
+
+               US_Model::calc_coefficients( model.components[ kk ] );
+
+               US_Math2::SolutionData sd;
+               sd.density                  = dset->density;
+               sd.viscosity                = dset->viscosity;
+               sd.manual                   = dset->manual;
+               sd.vbar20                   = model.components[ 0 ].vbar20;
+               sd.vbar                     = US_Math2::adjust_vbar20(
+                                                sd.vbar20, dset->temperature );
+               US_Math2::data_correction( dset->temperature, sd );
+               model.components[ kk ].s   /= sd.s20w_correction;
+               model.components[ kk ].D   /= sd.D20w_correction;
+            }
+
             model.components[ kk ].signal_concentration = soluval;
             kk++;
 

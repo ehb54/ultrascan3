@@ -645,19 +645,25 @@ else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 }
 
 // save bucket information to file for use by GA
-int US_SoluteData::saveGAdata( QString& fname )
+int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
+      double fixval )
 {
    int     rc   = 0;
    int     nsol = allbucks.size();
    QString line;
    bucket  buk;
+   const QString cts[] = { "mw", "s", "D", "f", "ff0", "vbar" };
 
    QFile fileo( fname );
 
    if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
    {
       QTextStream ts( &fileo );
-      ts << nsol << endl;
+
+      // Line 1 with count,xtype,ytype,fixed
+      line.sprintf( "%d %d %d %.5f", nsol, xtype, ytype, fixval );
+      line = line + " # " + cts[ xtype ] + " " + cts[ ytype ];
+      ts << line << endl;
 
       for ( int jj = 0; jj < nsol; jj++ )
       {
