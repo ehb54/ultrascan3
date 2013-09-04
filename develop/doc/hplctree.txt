@@ -1,11 +1,4 @@
 US-SOMO~(main window)
- Pull down menu~Lookup tables
-  Add/Edit Hybridization
-  Add/Edit Atoms
-  Add/Edit Residue
-  Add/Edit SAXS coefficients
- Pull down menu~Configuration
-  System configuration~(set default program paths, fonts, button and background colors)
  SAXS/SANS functions
   Search
   Data
@@ -21,3 +14,5 @@ US-SOMO~(main window)
    Bead model options
    Guinier options
    Miscellaneous options
+ Pull down menu~Configuration
+  System configuration~(set default program paths, fonts, button and background colors)
