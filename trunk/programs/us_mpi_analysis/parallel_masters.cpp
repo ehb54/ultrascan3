@@ -60,13 +60,19 @@ DbgLv(1) << "Final-my_rank" << my_rank << " msecs=" << startTime.msecsTo(QDateTi
 void US_MPI_Analysis::job_parse( const QString& xmlfile )
 {
    QFile file ( xmlfile );
-   job_params[ "walltime"    ] = "2880";
+   job_params[ "walltime"    ] = "1440";
    job_params[ "mgroupcount" ] = "1";
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
    {  // If no job xml or us3.pbs, return now
       if ( my_rank == 0 ) DbgLv(0) << "Cannot open file " << xmlfile;
 
+      if ( proc_count > 64 )
+      {
+         job_params[ "mgroupcount" ] = parameters[ "req_mgroupcount" ];
+         if ( my_rank == 0 ) DbgLv(0) << " Value of mgroupcount set to"
+            << parameters[ "req_mgroupcount" ];
+      }
       return;
    }
 

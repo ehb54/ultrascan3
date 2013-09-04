@@ -533,7 +533,15 @@ DbgLv(1) << "SAVE novlps" << novlps;
 
 DbgLv(1) << "SAVE plot_s" << plot_s;
    if ( plot_s )
-      soludata->saveGAdata( fname );
+   {
+      if ( plot_k )
+         soludata->saveGAdata( fname );
+      else
+      {
+         double fixval = sk_distro[ 0 ].k;
+         soludata->saveGAdata( fname, 1, 5, fixval );
+      }
+   }
 
    if ( manbuks )
    {  // if manual buckets, build up and analyze data, then report
@@ -2220,6 +2228,8 @@ void US_GA_Initialize::view( )
 {
 DbgLv(1) << "VIEW";
    QString runid = run_name.section( ".",  0, -2 );
+   if ( runid.startsWith( "Global-" ) )
+      runid         = runid.mid( 7 );
    QString trpid = run_name.section( ".", -1, -1 );
    QString fdir  = US_Settings::resultDir() + "/" + runid;
    QString fnsta = "gainit." + trpid + ".sol_integ.stats";
