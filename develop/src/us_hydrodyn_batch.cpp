@@ -1077,7 +1077,7 @@ void US_Hydrodyn_Batch::update_enables()
    }
 
    cb_hydro->setEnabled(lb_files->numRows() && ( batch->somo || batch->grid || all_selected_bead_models ) );
-   cb_zeno ->setEnabled(lb_files->numRows() && ( batch->somo || batch->grid ) );
+   cb_zeno ->setEnabled(lb_files->numRows() && ( batch->somo || batch->grid || all_selected_bead_models ) );
    cb_avg_hydro->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) );
    le_avg_hydro_name->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) && batch->avg_hydro);
    pb_select_save_params->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) );
