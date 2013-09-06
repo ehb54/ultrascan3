@@ -1664,11 +1664,15 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          bool dammif = (qsl.grep("Dummy atoms in output phase").count() > 0);
          bool damfilt = (qsl.grep("Number of atoms written").count() > 0 &&
                          qsl.grep("Atomic radius").count() );
+         bool damfilt5 = (qsl.grep("Filtered number of atoms").count() > 0 &&
+                          qsl.grep("Atomic Radius").count() );
 
          if ( !damaver &&
               !dammin &&
               !dammif &&
-              !damfilt)
+              !damfilt &&
+              !damfilt5
+              )
          {
             editor->append("Error in DAMMIN/DAMMIF file: couldn't find 'Dummy atoms in output phase' or 'Number of particle atoms' of 'Number of atoms written'\n");
             f.close();
@@ -1821,14 +1825,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             radius = rx.cap(1).toFloat();
          }
 
-         if ( damfilt ) {
+         if ( damfilt || damfilt5 ) {
             puts("damfilt");
             
             do {
                tmp = ts.readLine();
                ++linepos;
             } while ( !ts.atEnd() && 
-                      !tmp.contains("Atomic radius") );
+                      !tmp.lower().contains("atomic radius") );
                
             if ( ts.atEnd() )
             {
@@ -1836,9 +1840,9 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                return 1;
             }
             
-            rx.setPattern("Atomic radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
+            rx.setPattern("atomic radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
             
-            if ( rx.search(tmp) == -1 ) 
+            if ( rx.search(tmp.lower()) == -1 ) 
             {
                editor->append("Error in DAMFILT file: couldn't find radius in 'Atomic radius' line\n");
                return 1;
@@ -7389,10 +7393,16 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
       QString tmp;
       do {
          tmp = ts.readLine();
+         if ( tmp.contains(QRegExp("^ATOM ")) &&
+              !tmp.contains("CA  ASP ") ) {
+            f.close();
+            return false;
+         }
       } while ( !ts.atEnd() && 
                 !tmp.contains("Dummy atoms in output phase") &&
                 !tmp.contains("Number of particle atoms") &&
                 !tmp.contains("Number of atoms written") &&
+                !tmp.contains("Filtered number of atoms") &&
                 !tmp.contains("Dummy atom radius")
                 );
 
@@ -7400,6 +7410,7 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
            !tmp.contains("Dummy atoms in output phase") &&
            !tmp.contains("Number of particle atoms") &&
            !tmp.contains("Number of atoms written") &&
+           !tmp.contains("Filtered number of atoms") &&
            !tmp.contains("Dummy atom radius")
            )
       {
