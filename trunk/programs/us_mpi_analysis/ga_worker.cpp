@@ -1037,13 +1037,14 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
    zcomponent.D      = 0.0;
    zcomponent.mw     = 0.0;
    zcomponent.f      = 0.0;
+
    if ( cnst_vb )
-   {
+   {  // Fixed vbar
       zcomponent.f_f0   = 0.0;
       zcomponent.vbar20 = dset->vbar20;
    }
    else
-   {
+   {  // Fixed f/f0
       zcomponent.f_f0   = fixval;
       zcomponent.vbar20 = 0.0;
    }
@@ -1062,17 +1063,23 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
          model.components.resize( 1 );
          model.components[ 0 ]      = zcomponent;
          model.components[ 0 ].s    = v[ vv     ] * 1.0e-13;
+
          if ( cnst_vb )
-         {
+         {  // Normal constant-vbar case
             model.components[ 0 ].f_f0 = v[ vv + 1 ];
+
             US_Model::calc_coefficients( model.components[ 0 ] );
+
             model.components[ 0 ].s   /= dset->s20w_correction;
             model.components[ 0 ].D   /= dset->D20w_correction;
          }
+
          else
-         {
+         {  // Varying vbar, fixed f/f0
             model.components[ 0 ].vbar20 = v[ vv + 1 ];
+
             US_Model::calc_coefficients( model.components[ 0 ] );
+
             US_Math2::SolutionData sd;
             sd.density                 = dset->density;
             sd.viscosity               = dset->viscosity;
@@ -1114,18 +1121,23 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
       int vv = index * 2;
       model.components[ 0 ]      = zcomponent;
       model.components[ 0 ].s    = v[ vv     ] * 1.0e-13;
-      US_Model::calc_coefficients( model.components[ 0 ] );
+
       if ( cnst_vb )
-      {
+      {  // Normal constant-vbar case
          model.components[ 0 ].f_f0 = v[ vv + 1 ];
+
          US_Model::calc_coefficients( model.components[ 0 ] );
+
          model.components[ 0 ].s   /= dset->s20w_correction;
          model.components[ 0 ].D   /= dset->D20w_correction;
       }
+
       else
-      {
+      {  // Varying vbar, fixed f/f0
          model.components[ 0 ].vbar20 = v[ vv + 1 ];
+
          US_Model::calc_coefficients( model.components[ 0 ] );
+
          US_Math2::SolutionData sd;
          sd.density                 = dset->density;
          sd.viscosity               = dset->viscosity;
@@ -1184,8 +1196,9 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 
             int vv = cc * 2;
             model.components[ kk ].s    = v[ vv     ] * 1.0e-13;
+
             if ( cnst_vb )
-            {
+            {  // Normal constant-vbar case
                model.components[ kk ].f_f0 = v[ vv + 1 ];
 
                US_Model::calc_coefficients( model.components[ kk ] );
@@ -1193,8 +1206,9 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
                model.components[ kk ].s   /= dset->s20w_correction;
                model.components[ kk ].D   /= dset->D20w_correction;
             }
+
             else
-            {
+            {  // Varying vbar, fixed f/f0
                model.components[ kk ].vbar20 = v[ vv + 1 ];
 
                US_Model::calc_coefficients( model.components[ kk ] );

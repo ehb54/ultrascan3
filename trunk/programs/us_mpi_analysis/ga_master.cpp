@@ -48,8 +48,20 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
       simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
 
      for ( int g = 0; g < buckets.size(); g++ )
-         simulation_values.solutes[ g ].s *= 1.0e-13;
+        simulation_values.solutes[ g ].s *= 1.0e-13;
 
+     if ( data_sets[ 0 ]->solute_type == 1 )
+     {  // Set up final solute to be constant-ff0, varying-vbar
+        double fixed_k = parameters[ "bucket_fixed" ].toDouble();
+
+        for ( int g = 0; g < buckets.size(); g++ )
+        {
+           US_Solute solu = simulation_values.solutes[ g ];
+           solu.v         = solu.k;
+           solu.k         = fixed_k;
+           simulation_values.solutes[ g ] = solu;
+        }
+     }
 DbgLv(1) << "GaMast: sols size" << simulation_values.solutes.size()
  << "buck size" << buckets.size();
 DbgLv(1) << "GaMast:   dset size" << data_sets.size();
