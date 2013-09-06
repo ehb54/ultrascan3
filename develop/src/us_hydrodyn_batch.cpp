@@ -395,7 +395,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(le_csv_saxs_name, SIGNAL(textChanged(const QString &)), SLOT(update_csv_saxs_name(const QString &)));
 
    cb_create_native_saxs = new QCheckBox(this);
-   cb_create_native_saxs->setText(tr(" Create Individual Saxs Results Files"));
+   cb_create_native_saxs->setText(tr(" Create Individual SAXS Results Files"));
    cb_create_native_saxs->setChecked(batch->create_native_saxs);
    cb_create_native_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_create_native_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -526,7 +526,7 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_cluster->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cluster, SIGNAL(clicked()), SLOT(cluster()));
 
-   pb_open_saxs_options = new QPushButton(tr("Saxs Options"), this);
+   pb_open_saxs_options = new QPushButton(tr("SAXS/SANS Options"), this);
    pb_open_saxs_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_open_saxs_options->setMinimumHeight(minHeight1);
    pb_open_saxs_options->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -1023,15 +1023,22 @@ void US_Hydrodyn_Batch::update_enables()
    }
    int count_selected = 0;
    any_pdb_in_list = false;
+   bool all_selected_bead_models = true;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
       {
          count_selected++;
-      }
-      if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
-      {
-         any_pdb_in_list = true;
+         if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
+         {
+            any_pdb_in_list = true;
+            all_selected_bead_models = false;
+         }
+      } else {
+         if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
+         {
+            any_pdb_in_list = true;
+         }
       }
    }
    pb_select_all->setEnabled(lb_files->numRows());
@@ -1068,7 +1075,8 @@ void US_Hydrodyn_Batch::update_enables()
    {
       pb_make_movie->setEnabled(count_selected > 1);
    }
-   cb_hydro->setEnabled(lb_files->numRows() && ( batch->somo || batch->grid ) );
+
+   cb_hydro->setEnabled(lb_files->numRows() && ( batch->somo || batch->grid || all_selected_bead_models ) );
    cb_zeno ->setEnabled(lb_files->numRows() && ( batch->somo || batch->grid ) );
    cb_avg_hydro->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) );
    le_avg_hydro_name->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) && batch->avg_hydro);
@@ -2188,6 +2196,10 @@ void US_Hydrodyn_Batch::start( bool quiet )
                save_us_hydrodyn_settings();
                job_timer.init_timer  ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
                job_timer.start_timer ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
+               if ( batch->mm_all ) 
+               {
+                  ((US_Hydrodyn *)us_hydrodyn)->lb_model->selectAll(true);
+               }
                result = ((US_Hydrodyn *)us_hydrodyn)->calc_hydro() ? false : true;
                job_timer.end_timer   ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
                restore_us_hydrodyn_settings();
@@ -2214,6 +2226,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
       this->isVisible() ? this->raise() : this->show();
       qApp->processEvents();
    }
+   progress->setProgress(99,100);
    if ( batch->csv_saxs )
    {
       if ( batch->iqq && saxs_q.size() )
@@ -2247,6 +2260,12 @@ void US_Hydrodyn_Batch::start( bool quiet )
       }
 
       QString fname = batch->avg_hydro_name + ".hydro_res";
+
+      if ( QFile::exists(fname) )
+      {
+         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
+      }         
+
       FILE *of = fopen(fname, "wb");
       if ( of )
       {
@@ -2263,6 +2282,10 @@ void US_Hydrodyn_Batch::start( bool quiet )
       if ( ((US_Hydrodyn *)us_hydrodyn)->saveParams )
       {
          fname = batch->avg_hydro_name + ".csv";
+         if ( QFile::exists(fname) )
+         {
+            fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
+         }         
          FILE *of = fopen(fname, "wb");
          if ( of )
          {

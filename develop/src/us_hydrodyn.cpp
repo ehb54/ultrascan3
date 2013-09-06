@@ -426,7 +426,10 @@ void US_Hydrodyn::setupGUI()
    lookup_tables->insertItem(tr("Add/Edit &Atom"), this, SLOT(edit_atom()));
    lookup_tables->insertItem(tr("Add/Edit &Residue"), this, SLOT(residue()));
    lookup_tables->insertItem(tr("Add/Edit &SAXS coefficients"), this, SLOT(do_saxs()));
-   lookup_tables->insertItem(tr("Make test set"), this, SLOT( make_test_set() ) );
+   if ( advanced_config.expert_mode )
+   {
+      lookup_tables->insertItem(tr("Make test set"), this, SLOT( make_test_set() ) );
+   }
 
    somo_options = new QPopupMenu;
    somo_options->insertItem(tr("&ASA Calculation"), this, SLOT(show_asa()));
@@ -3674,7 +3677,7 @@ int US_Hydrodyn::calc_hydro()
 }
 
 int US_Hydrodyn::do_calc_hydro()
-   {
+{
    if ( !overwrite )
    {
       setHydroFile();
