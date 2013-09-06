@@ -44,7 +44,7 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
                d->model_file  = parameters[ "CG_model" ];
                d->solute_type = 2;
             }
-            else if ( parameters.contains( "vbar_min" ) )
+            else if ( parameters[ "ytype" ] == "vbar" )
             {
                d->solute_type = 1;
             }
@@ -112,16 +112,23 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
 
                if ( name == "bucket" )
                { // Get bucket coordinates; try to forestall round-off problems
+                  QString ytype = QString( "ff0" );
                   Bucket b;
                   double smin   = a.value( "s_min"   ).toString().toDouble();
                   double smax   = a.value( "s_max"   ).toString().toDouble();
                   double fmin   = a.value( "ff0_min" ).toString().toDouble();
                   double fmax   = a.value( "ff0_max" ).toString().toDouble();
+
                   if ( fmax == 0.0 )
                   {
                      fmin       = a.value( "vbar_min" ).toString().toDouble();
                      fmax       = a.value( "vbar_max" ).toString().toDouble();
+                     ytype      = QString( "vbar" );
                   }
+
+                  if ( buckets.size() == 0 )
+                     parameters[ "ytype" ]     = ytype;
+
                   b.s_min       = (double)qRound( smin * 1e+6 ) * 1e-6;
                   b.s_max       = (double)qRound( smax * 1e+6 ) * 1e-6;
                   b.ff0_min     = (double)qRound( fmin * 1e+6 ) * 1e-6;
