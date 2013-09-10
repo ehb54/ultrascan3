@@ -2472,18 +2472,28 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                if ( rb_curve_sans->isChecked() )
                {
                   QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+                  double solvent_b = 
+                     our_saxs_options->h2o_scat_len_dens * ( 1e0 - our_saxs_options->d2o_conc ) +
+                     our_saxs_options->d2o_scat_len_dens * our_saxs_options->d2o_conc
+                     ;
+                     
                   if ( this_atom->name == "OXT" )
                   {
                      mapkey = "OXT|OXT";
                   }
                   QString hybrid_name = residue_atom_hybrid_map[mapkey];
-                  if ( this_atom->name == "N" &&
-                       hybrid_name == "N3H1" &&
-                       this_atom->p_residue->type == 0 )
+                  if ( !atom_map.count( this_atom->name + "~" + hybrid_name ) )
                   {
-                     hybrid_name += "-aa";
+                     QMessageBox::message( tr("Missing Atom:"), 
+                                           QString( tr("Atom %1 not defined") ).arg( this_atom->name ) );
+                     progress_pr->reset();
+                     lbl_core_progress->setText("");
+                     pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
+                     // pb_plot_saxs_sans->setEnabled(true);
+                     pb_plot_pr->setEnabled(true);
+                     return;
                   }
-                  new_atom.b = b[hybrid_name];
+                  new_atom.b = b[hybrid_name] - solvent_b * atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
                   b_count++;
                   b_bar += new_atom.b;
 #if defined(BUG_DEBUG)
@@ -2531,6 +2541,11 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   {
                      QMessageBox::message( tr("Missing Atom:"), 
                                            QString( tr("Atom %1 not defined") ).arg( this_atom->name ) );
+                     progress_pr->reset();
+                     lbl_core_progress->setText("");
+                     pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
+                     // pb_plot_saxs_sans->setEnabled(true);
+                     pb_plot_pr->setEnabled(true);
                      return;
                   }
                   // cout << "atom " << this_atom->name 

@@ -318,7 +318,13 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_clash_report->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_clash_report, SIGNAL(clicked()), SLOT(csv_clash_report()));
 
-   pb_csv_sel_clear = new QPushButton(tr("Clear selection"), this);
+   pb_csv_sel = new QPushButton(tr("Select"), this);
+   pb_csv_sel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_csv_sel->setMinimumHeight(minHeight1);
+   pb_csv_sel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_sel, SIGNAL(clicked()), SLOT(csv_sel()));
+
+   pb_csv_sel_clear = new QPushButton(tr("Clear"), this);
    pb_csv_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sel_clear->setMinimumHeight(minHeight1);
    pb_csv_sel_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -493,7 +499,13 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_clash_report->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_clash_report, SIGNAL(clicked()), SLOT(csv2_clash_report()));
 
-   pb_csv2_sel_clear = new QPushButton(tr("Clear selection"), this);
+   pb_csv2_sel = new QPushButton(tr("Select"), this);
+   pb_csv2_sel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_csv2_sel->setMinimumHeight(minHeight1);
+   pb_csv2_sel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_sel, SIGNAL(clicked()), SLOT(csv2_sel()));
+
+   pb_csv2_sel_clear = new QPushButton(tr("Clear"), this);
    pb_csv2_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sel_clear->setMinimumHeight(minHeight1);
    pb_csv2_sel_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -629,6 +641,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_3->addWidget( pb_csv_clash_report );
 
    QBoxLayout *hbl_center_buttons_row_4 = new QHBoxLayout;
+   hbl_center_buttons_row_4->addWidget( pb_csv_sel );
+   hbl_center_buttons_row_4->addSpacing( 2 );
    hbl_center_buttons_row_4->addWidget( pb_csv_sel_clear );
    hbl_center_buttons_row_4->addSpacing( 2 );
    hbl_center_buttons_row_4->addWidget( pb_csv_sel_clean );
@@ -704,6 +718,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_3->addWidget( pb_csv2_clash_report );
 
    QBoxLayout *hbl_right_buttons_row_4 = new QHBoxLayout;
+   hbl_right_buttons_row_4->addWidget( pb_csv2_sel );
+   hbl_right_buttons_row_4->addSpacing( 2 );
    hbl_right_buttons_row_4->addWidget( pb_csv2_sel_clear );
    hbl_right_buttons_row_4->addSpacing( 2 );
    hbl_right_buttons_row_4->addWidget( pb_csv2_sel_clean );
@@ -820,6 +836,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    pb_csv_check                ->setEnabled( csv1.data.size() );
    pb_csv_find_alt             ->setEnabled( counts.residues == 1 );
    pb_csv_clash_report         ->setEnabled( any_csv_selected );
+   pb_csv_sel                  ->setEnabled( csv1.data.size() );
    pb_csv_sel_clear            ->setEnabled( any_csv_selected );
    pb_csv_sel_clean            ->setEnabled( selection_since_clean_csv1 && any_csv_selected );
    pb_csv_sel_invert           ->setEnabled( csv1.data.size() );
@@ -859,6 +876,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv2_check                ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_find_alt             ->setEnabled( counts.residues == 1 );
    pb_csv2_clash_report         ->setEnabled( any_csv2_selected );
+   pb_csv2_sel                  ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_sel_clear            ->setEnabled( any_csv2_selected );
    pb_csv2_sel_clean            ->setEnabled( selection_since_clean_csv2 && any_csv2_selected );
    pb_csv2_sel_invert           ->setEnabled( csv2[ csv2_pos ].data.size()  );
@@ -2300,6 +2318,11 @@ void US_Hydrodyn_Pdb_Tool::load_from_qsl( QListView *lv, QStringList &pdb_text, 
    update_enables();
 }
 
+void US_Hydrodyn_Pdb_Tool::csv_sel()
+{
+   sel( lv_csv );
+   update_enables_csv();
+}
 
 void US_Hydrodyn_Pdb_Tool::csv_sel_clear()
 {
@@ -3159,6 +3182,12 @@ void US_Hydrodyn_Pdb_Tool::csv_sel_msg()
 {
    pdb_sel_count counts = count_selected( lv_csv );
    lbl_csv_sel_msg->setText( pdb_sel_count_msg( counts ) );
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_sel()
+{
+   sel( lv_csv2 );
+   update_enables_csv();
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_sel_clear()
@@ -5816,3 +5845,60 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
    return;
 }
 
+void US_Hydrodyn_Pdb_Tool::sel( QListView *lv )
+{
+   // make sure atoms are selected
+   clean_selection( lv );
+
+   bool ok;
+
+   QString text = QInputDialog::getText(
+                                        caption() + tr( ": Select" ),
+                                        tr( "Enter comma seperated residue number selection list\n" ),
+                                        QLineEdit::Normal,
+                                        "",
+                                        &ok, 
+                                        this );
+   if ( !ok )
+   {
+      return;
+   }
+
+   // make list of selections
+
+   QStringList sels = QStringList::split( ",", text );
+   set < int > to_sel;
+   for ( int i = 0; i < (int) sels.size(); ++i )
+   {
+      to_sel.insert( sels[ i ].toInt() );
+   }
+
+   for ( set < int >::iterator it = to_sel.begin();
+         it != to_sel.end();
+         it++ )
+   {
+      cout << QString( "to sel: %1\n" ).arg( *it );
+   }
+
+   QListViewItemIterator it( lv );
+
+   while ( it.current() ) 
+   {
+      QListViewItem *item = it.current();
+      if ( to_sel.count( get_residue_number( item ).toInt() ) )
+      {
+         item->setSelected( true );
+      }
+      ++it;
+   }
+
+   lv->triggerUpdate();
+
+   clean_selection( lv );
+   if ( lv == lv_csv )
+   {
+      emit csv_selection_changed();
+   } else {
+      emit csv2_selection_changed();
+   }
+}

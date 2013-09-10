@@ -102,6 +102,13 @@ void US_Hydrodyn_Pdb_Tool_Selres::setupGUI()
    cb_naccess->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_naccess->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
+   cb_naccess_sc_or_mc = new QCheckBox(this);
+   cb_naccess_sc_or_mc->setText( tr( "Threshold for MC or SC" ) );
+   cb_naccess_sc_or_mc->setEnabled( true );
+   cb_naccess_sc_or_mc->setChecked( false );
+   cb_naccess_sc_or_mc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_naccess_sc_or_mc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    pb_help =  new QPushButton ( tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
@@ -135,6 +142,7 @@ void US_Hydrodyn_Pdb_Tool_Selres::setupGUI()
    background->addLayout( gl );
 
    background->addWidget( cb_naccess );
+   background->addWidget( cb_naccess_sc_or_mc );
    background->addWidget( cb_sel_only_new );
 
    QHBoxLayout *hbl_bottom = new QHBoxLayout( 0 );
@@ -159,6 +167,7 @@ void US_Hydrodyn_Pdb_Tool_Selres::setupGUI()
        )
    {
       cb_naccess->hide();
+      cb_naccess_sc_or_mc->hide();
    }
 }
 
@@ -184,6 +193,10 @@ void US_Hydrodyn_Pdb_Tool_Selres::go()
       if ( cb_naccess->isChecked() )
       {
          (*parameters)[ "naccess" ] = "true";
+         if ( cb_naccess_sc_or_mc->isChecked() )
+         {
+            (*parameters)[ "naccess_sc_or_mc" ] = "true";
+         }
       }
    }
    (*parameters)[ "max_dist" ] = le_max_dist->text();
@@ -210,9 +223,12 @@ void US_Hydrodyn_Pdb_Tool_Selres::update_enables()
    le_save_sel ->setEnabled( cb_save_sel->isChecked() );
    le_asa      ->setEnabled( cb_asa     ->isChecked() );
    if ( !cb_asa->isChecked() &&
-        cb_naccess->isChecked() )
+        ( cb_naccess         ->isChecked() ||
+          cb_naccess_sc_or_mc->isChecked() ) )
    {
-      cb_naccess->setChecked( false );
+      cb_naccess         ->setChecked( false );
+      cb_naccess_sc_or_mc->setChecked( false );
    }
-   cb_naccess  ->setEnabled( cb_asa     ->isChecked() );
+   cb_naccess         ->setEnabled( cb_asa     ->isChecked() );
+   cb_naccess_sc_or_mc->setEnabled( cb_asa     ->isChecked() );
 }

@@ -41,6 +41,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Selres : public QDialog
       QLineEdit *                             le_asa;
 
       QCheckBox *                             cb_naccess;
+      QCheckBox *                             cb_naccess_sc_or_mc;
 
       QPushButton *                           pb_help;
       QPushButton *                           pb_quit;

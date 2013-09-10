@@ -89,6 +89,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv_check;
       QPushButton   *pb_csv_find_alt;
       QPushButton   *pb_csv_clash_report;
+      QPushButton   *pb_csv_sel;
       QPushButton   *pb_csv_sel_clear;
       QPushButton   *pb_csv_sel_clean;
       QPushButton   *pb_csv_sel_invert;
@@ -119,6 +120,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv2_check;
       QPushButton   *pb_csv2_find_alt;
       QPushButton   *pb_csv2_clash_report;
+      QPushButton   *pb_csv2_sel;
       QPushButton   *pb_csv2_sel_clear;
       QPushButton   *pb_csv2_sel_clean;
       QPushButton   *pb_csv2_sel_invert;
@@ -168,6 +170,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       pdb_sel_count count_selected         ( QListView *lv );
       bool          any_selected           ( QListView *lv );
       void          clean_selection        ( QListView *lv );
+      void          sel                    ( QListView *lv );
       void          invert_selection       ( QListView *lv );
       QString       pdb_sel_count_msg      ( pdb_sel_count &counts );
       csv           to_csv                 ( QListView *lv, csv &ref_csv, bool only_selected = false );
@@ -253,10 +256,11 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 # endif
 #endif
       set    < QListViewItem * >            get_exposed_set         ( QListView *lv, 
-                                                                      double max_asa, 
+                                                                      double max_asa,
                                                                       bool only_selected = false );
       set    < QListViewItem * >            get_exposed_set_naccess ( QListView *lv, 
                                                                       double max_asa, 
+                                                                      bool either_sc_or_mc,
                                                                       bool only_selected = false );
       
       vector < QString >                    get_models              ( QListView *lv );
@@ -306,6 +310,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_find_alt();
       void csv_clash_report();
       void csv_visualize();
+      void csv_sel();
       void csv_sel_clear();
       void csv_sel_clean();
       void csv_sel_invert();
@@ -331,6 +336,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_find_alt();
       void csv2_clash_report();
       void csv2_visualize();
+      void csv2_sel();
       void csv2_sel_clear();
       void csv2_sel_clean();
       void csv2_sel_invert();

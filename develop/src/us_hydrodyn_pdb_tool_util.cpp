@@ -41,7 +41,7 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( QListView *lv )
    {
       exposed_set = 
          parameters.count( "naccess" ) ? 
-         get_exposed_set_naccess( lv, max_asa, false ) :
+         get_exposed_set_naccess( lv, max_asa, 1 == parameters.count( "naccess_sc_or_mc" ), false ) :
          get_exposed_set( lv, max_asa, false );
       if ( !errormsg.isEmpty() )
       {
@@ -145,7 +145,9 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( QListView *lv )
 
 set < QListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QListView * lv, 
                                                                        double max_asa, 
+                                                                       bool sc_or_mc,
                                                                        bool only_selected )
+
 {
    set < QListViewItem * > result;
    vector < vector < QListViewItem * > > lv_models  = separate_models( lv );
@@ -216,7 +218,13 @@ set < QListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QListView
                naccess_result_data[ j ].mid( 8, 1 ).stripWhiteSpace() + "~" +
                naccess_result_data[ j ].mid( 9, 4 ).stripWhiteSpace()
                ;
-            double this_asa = naccess_result_data[ j ].mid( 23, 5 ).stripWhiteSpace().toDouble();
+            double this_asa    = naccess_result_data[ j ].mid( 23, 5 ).stripWhiteSpace().toDouble();
+            double this_asa_sc = naccess_result_data[ j ].mid( 36, 5 ).stripWhiteSpace().toDouble();
+            double this_asa_mc = naccess_result_data[ j ].mid( 49, 5 ).stripWhiteSpace().toDouble();
+            if ( sc_or_mc )
+            {
+               this_asa = this_asa_sc > this_asa_mc ? this_asa_sc : this_asa_mc;
+            }
             if ( this_asa >= max_asa )
             {
                exposed.insert( residue );
@@ -592,10 +600,10 @@ void US_Hydrodyn_Pdb_Tool::naccess_processExited()
       naccess_result_data << ts.readLine();
    }
    f.close();
-   if ( !f.remove() )
-   {
-      editor_msg("dark red", QString(tr("Warning: could not remove Naccess result file %1")).arg( naccess_result_file ));
-   }
+   //    if ( !f.remove() )
+   //    {
+   //       editor_msg("dark red", QString(tr("Warning: could not remove Naccess result file %1")).arg( naccess_result_file ));
+   //    }
       
    naccess_running = false;
 }
