@@ -74,6 +74,7 @@ for ( $i = 0; $i < @l; ++$i )
 
     if ( $tok eq 'active' )
     {
+        next if $args eq 'nil';
         $active{ $last_selection } = [ map { $_ } @args ];
         next;
     }
@@ -126,6 +127,7 @@ for ( $m = 1; $m <= $last_selection; ++$m )
     $seg = ${$segid{ $m }}[ 0 ];
     for ( $i = 0; $i < @{$active{ $m }}; ++$i )
     {
+        undef $doneone;
         $res = ${$active{ $m }}[ $i ];
 #        print "\n" if $i;
         print
@@ -141,20 +143,22 @@ for ( $m = 1; $m <= $last_selection; ++$m )
             for ( $j = 0; $j < @{$active{ $pm }}; ++$j )
             {
                 $p_res = ${$active{ $pm }}[ $j ];
-                print "     or\n" if $j || $p;
+                print "     or\n" if $doneone;
                 print
 "        ( resid $p_res  and segid $p_seg)\n"
                 ;
+                $doneone = true;
             }
 # partner passives
             for ( $j = 0; $j < @{$passive{ $pm }}; ++$j )
             {
                 $p_res = ${$passive{ $pm }}[ $j ];
 
-                print "     or\n";
+                print "     or\n" if $doneone;
                 print
 "        ( resid $p_res  and segid $p_seg)\n"
                 ;
+                $doneone = true;
             }
         }            
         print "       )  2.0 2.0 0.0\n\n";
