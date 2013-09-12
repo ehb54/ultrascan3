@@ -132,6 +132,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       friend class US_Hydrodyn_Saxs_Hplc_Options;
       friend class US_Hydrodyn_Saxs_Hplc_Nth;
       friend class US_Hydrodyn_Saxs_Hplc_Svd;
+      friend class US_Hydrodyn_Saxs_Hplc_Movie;
 
    public:
       US_Hydrodyn_Saxs_Hplc(
@@ -189,6 +190,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       // QPushButton   *pb_join;
       QPushButton   *pb_to_saxs;
       QPushButton   *pb_view;
+      QPushButton   *pb_movie;
       QPushButton   *pb_rescale;
 
       QPushButton   *pb_stack_push_all;
@@ -668,6 +670,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool                         compatible_grids( QStringList files );
 
+      bool                         suppress_replot;
+
    private slots:
 
       void setupGUI();
@@ -696,6 +700,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void adjacent();
       void to_saxs();
       void view();
+      void movie();
       void rescale();
       void conc_avg();
       void normalize();

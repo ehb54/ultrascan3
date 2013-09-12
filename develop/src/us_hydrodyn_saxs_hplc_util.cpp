@@ -9,6 +9,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_nth.h"
 #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include "../include/us_hydrodyn_saxs_hplc_svd.h"
+#include "../include/us_hydrodyn_saxs_hplc_movie.h"
 #include "../include/us_lm.h"
 // #include "../include/us_svd.h"
 #ifdef QT4
@@ -2447,6 +2448,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    // pb_adjacent           ->setEnabled( lb_files->numRows() > 1 );
    pb_to_saxs            ->setEnabled( files_selected_count && files_compatible && !files_are_time );
    pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
+   pb_movie              ->setEnabled( files_selected_count > 1 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
 
    pb_select_all_created ->setEnabled( lb_created_files->numRows() > 0 );
@@ -2614,7 +2616,10 @@ void US_Hydrodyn_Saxs_Hplc::axis_y()
       plot_dist_zoomer = (ScrollZoomer *) 0;
    }
    plot_files();
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::axis_x()
@@ -2660,7 +2665,10 @@ void US_Hydrodyn_Saxs_Hplc::axis_x()
       plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtScaleEngine );
 #endif
    }
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::options()
@@ -2830,4 +2838,17 @@ void US_Hydrodyn_Saxs_Hplc::line_width()
    }
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_line_width" ] = QString( "%1" ).arg( use_line_width );
    plot_files();
+}
+
+void US_Hydrodyn_Saxs_Hplc::movie()
+{
+   disable_all();
+
+   US_Hydrodyn_Saxs_Hplc_Movie *shm = 
+      new US_Hydrodyn_Saxs_Hplc_Movie( this );
+   US_Hydrodyn::fixWinButtons( shm );
+   shm->exec();
+   delete shm;
+
+   update_enables();
 }

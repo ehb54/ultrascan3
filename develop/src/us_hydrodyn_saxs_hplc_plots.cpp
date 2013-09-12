@@ -222,7 +222,10 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
       connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
    }
 
-   plot_errors->replot();
+   if ( !suppress_replot )
+   {
+      plot_errors->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid, 
@@ -424,7 +427,10 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
       connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
    }
 
-   plot_errors->replot();
+   if ( !suppress_replot )
+   {
+      plot_errors->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::redo_plot_errors()
@@ -519,7 +525,10 @@ void US_Hydrodyn_Saxs_Hplc::plot_errors_jump_markers()
       marker->attach( plot_errors );
 #endif
    }
-   plot_errors->replot();
+   if ( !suppress_replot )
+   {
+      plot_errors->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::errors()

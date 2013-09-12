@@ -1,0 +1,368 @@
+#include "../include/us_hydrodyn_saxs_hplc_movie.h"
+
+// design movie controller interface
+
+// still some hiccup on gauss replots w/residuals show:hide under suppress_replot control
+
+// note: this program uses cout and/or cerr and this should be replaced
+
+#define SLASH QDir::separator()
+
+US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
+                                                         US_Hydrodyn_Saxs_Hplc *hplc_win,
+                                                         QWidget *p, 
+                                                         const char *name
+                                                         ) : QDialog (p, name)
+{
+   this->hplc_win                = hplc_win;
+   this->hplc_selected_files     = hplc_selected_files;
+   this->ush_win                 = (US_Hydrodyn *)(hplc_win->us_hydrodyn);
+
+   USglobal = new US_Config();
+   setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   setCaption(tr("US-SOMO: SAXS HPLC MOVIE"));
+
+
+   for ( int i = 0; i < hplc_win->lb_files->numRows(); i++ )
+   {
+      if ( hplc_win->lb_files->isSelected( i ) )
+      {
+         hplc_selected_files    .push_back( i );
+      }
+   }
+
+   if ( !hplc_selected_files.size() )
+   {
+      QMessageBox::warning( this, 
+                            caption(),
+                            tr( "Internal error: HPLC MOVIE called with no curves selected" ) );
+      close();
+      return;
+   }
+
+   hplc_win->lb_files->clearSelection();
+
+   pos = 0;
+   last_pos = -1;
+
+   setupGUI();
+   
+   timer      = new QTimer( this );
+   connect( timer, SIGNAL(timeout()), this, SLOT( next() ) );
+   timer_msec = 
+      ush_win->gparams.count( "hplc_movie_timer_ms" ) ?
+      ush_win->gparams[ "hplc_movie_timer_ms" ].toInt() : 1000;
+
+   last_show_gauss =
+      ush_win->gparams.count( "hplc_movie_show_gauss" ) && ush_win->gparams[ "hplc_movie_show_gauss" ] == "true" ?
+      true : false;
+
+   if ( timer_msec < 50 )
+   {
+      timer_msec = 50;
+   }
+      
+   update_enables();
+   
+   global_Xpos += 30;
+   global_Ypos += 30;
+   
+   setGeometry(global_Xpos, global_Ypos, 0, 0 );
+   hplc_win->suppress_replot = true;
+   update_plot();
+   show();
+}
+
+US_Hydrodyn_Saxs_Hplc_Movie::~US_Hydrodyn_Saxs_Hplc_Movie()
+{
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
+{
+   int minHeight1 = 24;
+   int minHeight3 = 25;
+   
+   // ------ data section 
+
+   lbl_state = new QLabel( QString( tr( "Stopped: %1 of %2" ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ), this);
+   lbl_state->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_state->setMinimumHeight(minHeight1);
+   lbl_state->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_state->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   lbl_current = new QLabel( hplc_win->lb_files->text( pos ), this);
+   lbl_current->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_current->setMinimumHeight(minHeight1);
+   lbl_current->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_current->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   pb_front = new QPushButton( "|<" , this);
+   pb_front->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_front->setMinimumHeight(minHeight3);
+   pb_front->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_front, SIGNAL(clicked()), SLOT(front()));
+
+   pb_prev = new QPushButton( "<" , this);
+   pb_prev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_prev->setMinimumHeight(minHeight3);
+   pb_prev->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_prev, SIGNAL(clicked()), SLOT(prev()));
+
+   pb_slower = new QPushButton( "S-" , this);
+   pb_slower->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_slower->setMinimumHeight(minHeight3);
+   pb_slower->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_slower, SIGNAL(clicked()), SLOT(slower()));
+
+   pb_start = new QPushButton( "[]" , this);
+   pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_start->setMinimumHeight(minHeight3);
+   pb_start->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_start, SIGNAL(clicked()), SLOT(start()));
+
+   pb_faster = new QPushButton( "S+" , this);
+   pb_faster->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_faster->setMinimumHeight(minHeight3);
+   pb_faster->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_faster, SIGNAL(clicked()), SLOT(faster()));
+
+   pb_next = new QPushButton( ">" , this);
+   pb_next->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_next->setMinimumHeight(minHeight3);
+   pb_next->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_next, SIGNAL(clicked()), SLOT(next()));
+
+   pb_end = new QPushButton( ">|" , this);
+   pb_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_end->setMinimumHeight(minHeight3);
+   pb_end->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_end, SIGNAL(clicked()), SLOT(end()));
+
+   cb_show_gauss = new QCheckBox(this);
+   cb_show_gauss->setText(tr("Show Gaussians"));
+   cb_show_gauss->setEnabled( true );
+   cb_show_gauss->setChecked( last_show_gauss );
+   cb_show_gauss->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_show_gauss->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_show_gauss, SIGNAL( clicked() ), SLOT( set_show_gauss() ) );
+
+   cb_save = new QCheckBox(this);
+   cb_save->setText(tr("Save .PNGs to files: "));
+   cb_save->setEnabled( true );
+   cb_save->setChecked( false );
+   cb_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_save->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_save, SIGNAL( clicked() ), SLOT( set_save() ) );
+
+   le_save = new QLineEdit(this, "le_save Line Edit");
+   le_save->setText( "" );
+   le_save->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_save->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   pb_help = new QPushButton(tr("Help"), this);
+   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   pb_help->setMinimumHeight(minHeight1);
+   pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_help, SIGNAL(clicked()), SLOT(help()));
+
+   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   pb_cancel->setMinimumHeight(minHeight1);
+   pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
+
+   // -------- build layout
+
+
+   QVBoxLayout *background = new QVBoxLayout(this);
+
+   {
+      QBoxLayout *bl_tl = new QHBoxLayout( 0 );
+      bl_tl->addWidget( lbl_state );
+      bl_tl->addWidget( lbl_current );
+      background->addLayout( bl_tl );
+   }
+
+   {
+      QBoxLayout *bl_tl = new QHBoxLayout( 0 );
+      bl_tl->addWidget( pb_front );
+      bl_tl->addWidget( pb_prev );
+      bl_tl->addWidget( pb_slower );
+      bl_tl->addWidget( pb_start );
+      bl_tl->addWidget( pb_faster );
+      bl_tl->addWidget( pb_next );
+      bl_tl->addWidget( pb_end );
+      background->addLayout( bl_tl );
+   }
+
+   {
+      QBoxLayout *bl_tl = new QHBoxLayout( 0 );
+      bl_tl->addWidget( cb_show_gauss );
+      background->addLayout( bl_tl );
+   }
+
+   {
+      QBoxLayout *bl_tl = new QHBoxLayout( 0 );
+      bl_tl->addWidget( cb_save );
+      bl_tl->addWidget( le_save );
+      background->addLayout( bl_tl );
+   }
+
+   {
+      QBoxLayout *bottom = new QHBoxLayout( 0 );
+      bottom->addWidget( pb_help );
+      bottom->addWidget( pb_cancel );
+      
+      background->addSpacing( 2 );
+      background->addLayout( bottom );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::cancel()
+{
+   close();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::help()
+{
+   US_Help *online_help;
+   online_help = new US_Help(this);
+   online_help->show_help("manual/somo_saxs_hplc_movie.html");
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::closeEvent(QCloseEvent *e)
+{
+   hplc_win->disable_updates = true;
+   if ( hplc_win->gaussian_mode )
+   {
+      hplc_win->wheel_cancel();
+   }
+   for ( int i = 0; i < (int) hplc_selected_files.size(); ++i )
+   {
+      hplc_win->lb_files->setSelected( i, true );
+   }
+   hplc_win->suppress_replot = false;
+   hplc_win->plot_files();
+   hplc_win->disable_updates = false;
+   ush_win->gparams[ "hplc_movie_timer_ms" ] = QString( "%1" ).arg( timer_msec );
+   ush_win->gparams[ "hplc_movie_show_gauss" ] = cb_show_gauss->isChecked() ? "true" : "false";
+   e->accept();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::front()
+{
+   pos = 0;
+   update_plot();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::prev()
+{
+   if ( pos > 0 )
+   {
+      pos--;
+      update_plot();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::slower()
+{
+   timer_msec *= 2;
+   if ( timer_msec > 5000 )
+   {
+      timer_msec = 5000;
+   }
+   if ( timer->isActive() )
+   {
+      timer->changeInterval( timer_msec );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::start()
+{
+   if ( timer->isActive() )
+   {
+      timer->stop();
+      pb_start->setText( "[]" );
+      lbl_state  -> setText( QString( tr( "%1: %2 of %3" ).arg( tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
+   } else {
+      timer->start( timer_msec );
+      pb_start->setText( "||" );
+      lbl_state  -> setText( QString( tr( "%1: %2 of %3" ).arg( tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::faster()
+{
+   timer_msec /= 2;
+   if ( timer_msec < 50 )
+   {
+      timer_msec = 50;
+   }
+   if ( timer->isActive() )
+   {
+      timer->changeInterval( timer_msec );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::next()
+{
+   if ( pos < (int)hplc_selected_files.size() - 1 )
+   {
+      pos++;
+      update_plot();
+   } else {
+      if ( timer->isActive() )
+      {
+         start();
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::end()
+{
+   pos = hplc_selected_files.size() - 1;
+   update_plot();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::set_save()
+{
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::set_show_gauss()
+{
+   update_plot();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::update_enables()
+{
+   le_save->setEnabled( cb_save->isChecked() );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
+{
+   if ( last_pos != pos ||
+        cb_show_gauss->isChecked() != last_show_gauss )
+   {
+      last_pos        = pos;
+      last_show_gauss = cb_show_gauss->isChecked();
+      hplc_win->lb_files->clearSelection();
+      hplc_win->lb_files->setSelected( pos, true );
+      if ( hplc_win->gaussian_mode )
+      {
+         hplc_win->wheel_cancel();
+      }
+      if ( cb_show_gauss->isChecked() )
+      {
+         hplc_win->gauss_start();
+      } else {
+         hplc_win->plot_files();
+      }
+
+      hplc_win->plot_dist->replot();
+      hplc_win->plot_errors->replot();
+      lbl_state  -> setText( QString( tr( "%1: %2 of %3" ).arg( tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
+      lbl_current-> setText( hplc_win->lb_files->text( pos ) );
+   }
+}

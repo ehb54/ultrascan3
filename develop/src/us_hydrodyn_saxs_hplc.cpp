@@ -171,6 +171,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       // pbs.push_back( pb_select_all );
       pbs.push_back( pb_regex_load );
       pbs.push_back( pb_save_state );
+      pbs.push_back( pb_movie );
       pbs.push_back( pb_invert );
       // pbs.push_back( pb_adjacent );
       pbs.push_back( pb_select_nth );
@@ -246,6 +247,9 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    // #endif
 
    setGeometry(global_Xpos, global_Ypos, csv_width, 100 + csv_height );
+
+   suppress_replot = false;
+
    // pb_set_conc_file->setMaximumWidth ( pb_select_all->width() + 10 );
    //    pb_set_hplc->setMaximumWidth ( pb_select_all->width() + 10 );
    //    pb_set_empty ->setMaximumWidth ( pb_select_all->width() + 10 );
@@ -631,6 +635,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_view->setMaximumWidth ( minHeight1 * 4 );
    pb_view->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_view, SIGNAL(clicked()), SLOT( view() ));
+
+   pb_movie = new mQPushButton(tr("M"), this);
+   pb_movie->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_movie->setMinimumHeight(minHeight1);
+   pb_movie->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_movie, SIGNAL(clicked()), SLOT(movie()));
 
    pb_rescale = new QPushButton(tr("Rescale"), this);
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -1551,6 +1561,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // hbl_file_buttons_2->addWidget ( pb_color_rotate );
    // hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
+   hbl_file_buttons_2->addWidget ( pb_movie );
    hbl_file_buttons_2->addWidget ( pb_axis_x );
    hbl_file_buttons_2->addWidget ( pb_axis_y );
    hbl_file_buttons_2->addWidget ( pb_rescale );
@@ -1560,6 +1571,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // files_widgets.push_back ( pb_adjacent );
    files_widgets.push_back ( pb_select_nth );
    files_widgets.push_back ( pb_view );
+   files_widgets.push_back ( pb_movie );
    files_widgets.push_back ( pb_axis_x );
    files_widgets.push_back ( pb_axis_y );
    files_widgets.push_back ( pb_rescale );
@@ -2584,7 +2596,10 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
    }
    
    legend_set();
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 }
 
 bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
@@ -4714,7 +4729,10 @@ void US_Hydrodyn_Saxs_Hplc::rescale()
    connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
    
    legend_set();
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
    if ( !gaussian_mode &&
         !ggaussian_mode && 
         !baseline_mode &&
@@ -6480,7 +6498,10 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
          {
             lbl_gauss_fit ->setText( "?" );
             plot_errors      ->clear();
-            plot_errors      ->replot();
+            if ( !suppress_replot )
+            {
+               plot_errors      ->replot();
+            }
             plot_errors_grid  .clear();
             plot_errors_target.clear();
             plot_errors_fit   .clear();
@@ -6559,7 +6580,10 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
                                  offset_q.size()
                                  );
 #endif
-            plot_dist->replot();
+            if ( !suppress_replot )
+            {
+               plot_dist->replot();
+            }
          }
       }
    }
@@ -6641,6 +6665,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    // pb_adjacent           ->setEnabled( false );
    pb_to_saxs            ->setEnabled( false );
    pb_view               ->setEnabled( false );
+   pb_movie              ->setEnabled( false );
    pb_rescale            ->setEnabled( false );
    pb_select_all_created ->setEnabled( false );
    pb_adjacent_created   ->setEnabled( false );
@@ -6740,7 +6765,11 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
       gaussians = org_gaussians;
       gauss_delete_markers();
       plotted_markers.clear();
-      plot_dist->replot();
+
+      if ( !suppress_replot )
+      {
+         plot_dist->replot();
+      }
    } else {
       if ( gaussian_mode )
       {
@@ -6809,7 +6838,10 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
       }
    }
 
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 
    gaussian_mode         = false;
    ggaussian_mode        = false;
@@ -6982,7 +7014,10 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
       lb_files->setSelected( wheel_pos, false );
    }
 
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 
    qwtw_wheel            ->setEnabled( false );
    pb_wheel_save         ->setEnabled( false );
@@ -7118,7 +7153,10 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
 #endif
             }
          }
-         plot_dist->replot();
+         if ( !suppress_replot )
+         {
+            plot_dist->replot();
+         }
       } else {
          lbl_gauss_pos       ->setText( " 0 of 0 " );
          le_gauss_pos        ->setText( "" );
@@ -7209,7 +7247,10 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
 #endif
             }
          }
-         plot_dist->replot();
+         if ( !suppress_replot )
+         {
+            plot_dist->replot();
+         }
       }
    }
 }
@@ -7382,7 +7423,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_new()
    disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
    update_gauss_pos();
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
    gaussian_enables();
    if ( ggaussian_mode )
    {
@@ -7619,7 +7663,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
       {
          gauss_replot_gaussian();
       }
-      plot_dist->replot();
+      if ( !suppress_replot )
+      {
+         plot_dist->replot();
+      }
    }
 }
 
@@ -7692,7 +7739,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_text( const QString & text )
       {
          gauss_replot_gaussian();
       }
-      plot_dist->replot();
+      if ( !suppress_replot )
+      {
+         plot_dist->replot();
+      }
    }
 }
 
@@ -7709,7 +7759,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_height_text( const QString & text )
       }
       gauss_replot_gaussian();
    }
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist1_text( const QString & text )
@@ -7724,7 +7777,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist1_text( const QString & text )
          connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       }
       gauss_replot_gaussian();
-      plot_dist->replot();
+      if ( !suppress_replot )
+      {
+         plot_dist->replot();
+      }
    }
 }
 
@@ -7740,7 +7796,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist2_text( const QString & text )
          connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       }
       gauss_replot_gaussian();
-      plot_dist->replot();
+      if ( !suppress_replot )
+      {
+         plot_dist->replot();
+      }
    }
 }
 
@@ -7760,7 +7819,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_text( const QString & text )
    {
       replot_gaussian_sum();
    }
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_text( const QString & text )
@@ -7779,7 +7841,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_text( const QString & text )
    {
       replot_gaussian_sum();
    }
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_add_marker( double pos, QColor color, QString text, int align )
@@ -7898,7 +7963,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_init_markers()
       }
    }
       
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 }
 
 
@@ -8049,7 +8117,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_init_gaussians()
    }
 
    plot_gaussian_sum();
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians()
@@ -8900,7 +8971,10 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
 #endif
    }
 
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::baseline_start_s_text( const QString & text )
@@ -8916,7 +8990,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_s_text( const QString & text )
       qwtw_wheel->setValue( text.toDouble() );
    }
    replot_baseline();
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
    baseline_enables();
 }
 
@@ -8933,7 +9010,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_text( const QString & text )
       qwtw_wheel->setValue( text.toDouble() );
    }
    replot_baseline();
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
    baseline_enables();
 }
 
@@ -8967,7 +9047,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_s_text( const QString & text )
       qwtw_wheel->setValue( text.toDouble() );
    }
    replot_baseline();
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
    baseline_enables();
 }
 
@@ -9001,7 +9084,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_e_text( const QString & text )
       qwtw_wheel->setValue( text.toDouble() );
    }
    replot_baseline();
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
    baseline_enables();
 }
 
@@ -9019,7 +9105,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_init_markers()
    gauss_add_marker( le_baseline_end    ->text().toDouble(), Qt::red,     tr( "End"            ), Qt::AlignLeft | Qt::AlignTop );
    gauss_add_marker( le_baseline_end_e  ->text().toDouble(), Qt::magenta, tr( "\n\n\nLFE\nEnd" ), Qt::AlignLeft | Qt::AlignTop );
 
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::baseline_start_s_focus( bool hasFocus )
@@ -10044,7 +10133,10 @@ void US_Hydrodyn_Saxs_Hplc::set_sd_weight()
       {
          pb_ggauss_rmsd->setEnabled( true );
          plot_errors      ->clear();
-         plot_errors      ->replot();
+         if ( !suppress_replot )
+         {
+            plot_errors      ->replot();
+         }
          plot_errors_grid  .clear();
          plot_errors_target.clear();
          plot_errors_fit   .clear();
