@@ -90,7 +90,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    lbl_state->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_state->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_current = new QLabel( hplc_win->lb_files->text( pos ), this);
+   lbl_current = new QLabel( hplc_win->lb_files->text( hplc_selected_files[ pos ] ), this);
    lbl_current->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_current->setMinimumHeight(minHeight1);
    lbl_current->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -274,7 +274,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::closeEvent(QCloseEvent *e)
    }
    for ( int i = 0; i < (int) hplc_selected_files.size(); ++i )
    {
-      hplc_win->lb_files->setSelected( i, true );
+      hplc_win->lb_files->setSelected( hplc_selected_files[ i ], true );
    }
    hplc_win->suppress_replot = false;
    hplc_win->plot_files();
@@ -388,7 +388,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       last_pos        = pos;
       last_show_gauss = cb_show_gauss->isChecked();
       hplc_win->lb_files->clearSelection();
-      hplc_win->lb_files->setSelected( pos, true );
+      hplc_win->lb_files->setSelected( hplc_selected_files[ pos ], true );
       if ( hplc_win->gaussian_mode )
       {
          hplc_win->wheel_cancel();
@@ -403,7 +403,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       hplc_win->plot_dist->replot();
       hplc_win->plot_errors->replot();
       lbl_state  -> setText( QString( tr( "%1: %2 of %3" ).arg( tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
-      lbl_current-> setText( hplc_win->lb_files->text( pos ) );
+      lbl_current-> setText( hplc_win->lb_files->text( hplc_selected_files[ pos ] ) );
 
       if ( cb_save->isChecked() )
       {
@@ -433,9 +433,9 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QString tag )
    QPainter paint( &qPix );
    paint.setPen( Qt::blue );
    paint.setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold) );
-   // paint.drawText( 5, 5, hplc_win->lb_files->text( mypos ) );
-   paint.drawText( qPix.rect(), Qt::AlignBottom | Qt::AlignLeft, hplc_win->lb_files->text( mypos ) );
-   QString frame = QString( "%1" ).arg( pos + 1 );
+   // paint.drawText( 5, 5, hplc_win->lb_files->text( hplc_selected_files[ mypos ] ) );
+   paint.drawText( qPix.rect(), Qt::AlignBottom | Qt::AlignLeft, hplc_win->lb_files->text( hplc_selected_files[ mypos ] ) );
+   QString frame = QString( "%1" ).arg( mypos + 1 );
    while( frame.length() < 5 )
    {
       frame = "0" + frame;
