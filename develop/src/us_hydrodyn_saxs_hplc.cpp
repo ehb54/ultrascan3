@@ -9067,7 +9067,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_text( const QString & text )
       qwtw_wheel->setValue( text.toDouble() );
    }
    replot_baseline();
-   plot_dist->replot();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
    baseline_enables();
 }
 
