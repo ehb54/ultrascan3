@@ -139,7 +139,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    connect(pb_end, SIGNAL(clicked()), SLOT(end()));
 
    cb_show_gauss = new QCheckBox(this);
-   cb_show_gauss->setText(tr("Show Gaussians"));
+   cb_show_gauss->setText(tr("Show Gaussians   File save as type:"));
    cb_show_gauss->setEnabled( true );
    cb_show_gauss->setChecked( last_show_gauss );
    cb_show_gauss->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -147,7 +147,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    connect( cb_show_gauss, SIGNAL( clicked() ), SLOT( set_show_gauss() ) );
 
    cb_save = new QCheckBox(this);
-   cb_save->setText(tr("Save .PNGs to files: "));
+   cb_save->setText(tr("Save to file  Prefix:"));
    cb_save->setEnabled( true );
    cb_save->setChecked( false );
    cb_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -159,6 +159,37 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    le_save->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_save->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   rb_save_png = new QRadioButton( tr("png"), this);
+   rb_save_png->setEnabled(true);
+   rb_save_png->setChecked(true);
+   rb_save_png->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_save_png->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_save_jpeg = new QRadioButton( tr("jpeg"), this);
+   rb_save_jpeg->setEnabled(true);
+   rb_save_jpeg->setChecked(false);
+   rb_save_jpeg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_save_jpeg->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_save_bmp = new QRadioButton( tr("bmp"), this);
+   rb_save_bmp->setEnabled(true);
+   rb_save_bmp->setChecked(false);
+   rb_save_bmp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_save_bmp->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_save = new QButtonGroup(1, Qt::Horizontal, 0);
+   bg_save->setRadioButtonExclusive(true);
+   bg_save->insert( rb_save_png );
+   bg_save->insert( rb_save_jpeg );
+   bg_save->insert( rb_save_bmp );
+
+   cb_save_overwrite = new QCheckBox(this);
+   cb_save_overwrite->setText(tr("Overwrite"));
+   cb_save_overwrite->setEnabled( true );
+   cb_save_overwrite->setChecked( false );
+   cb_save_overwrite->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_save_overwrite->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -173,7 +204,6 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    // -------- build layout
-
 
    QVBoxLayout *background = new QVBoxLayout(this);
 
@@ -199,6 +229,9 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    {
       QBoxLayout *bl_tl = new QHBoxLayout( 0 );
       bl_tl->addWidget( cb_show_gauss );
+      bl_tl->addWidget( rb_save_png );
+      bl_tl->addWidget( rb_save_jpeg );
+      bl_tl->addWidget( rb_save_bmp );
       background->addLayout( bl_tl );
    }
 
@@ -206,6 +239,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
       QBoxLayout *bl_tl = new QHBoxLayout( 0 );
       bl_tl->addWidget( cb_save );
       bl_tl->addWidget( le_save );
+      bl_tl->addWidget( cb_save_overwrite );
       background->addLayout( bl_tl );
    }
 
@@ -289,6 +323,10 @@ void US_Hydrodyn_Saxs_Hplc_Movie::start()
       timer->start( timer_msec );
       pb_start->setText( "||" );
       lbl_state  -> setText( QString( tr( "%1: %2 of %3" ).arg( tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
+      if ( cb_save->isChecked() )
+      {
+         save_plot();
+      }
    }
 }
 
@@ -315,6 +353,8 @@ void US_Hydrodyn_Saxs_Hplc_Movie::next()
       if ( timer->isActive() )
       {
          start();
+         cb_save          ->setChecked( false );
+         cb_save_overwrite->setChecked( false );
       }
    }
 }
@@ -364,5 +404,73 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       hplc_win->plot_errors->replot();
       lbl_state  -> setText( QString( tr( "%1: %2 of %3" ).arg( tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
       lbl_current-> setText( hplc_win->lb_files->text( pos ) );
+
+      if ( cb_save->isChecked() )
+      {
+         save_plot();
+      }
    }
 }
+
+void US_Hydrodyn_Saxs_Hplc_Movie::save_plot()
+{
+   save_plot( hplc_win->plot_dist, le_save->text() );
+   if ( hplc_win->plot_errors->isVisible() )
+   {
+      save_plot( hplc_win->plot_errors, le_save->text() + "_e" );
+   }
+}
+   
+void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QString tag )
+{
+   int mypos = pos;
+   QPixmap qPix = QPixmap::grabWidget( plot );
+   if( qPix.isNull() )
+   {
+      cout << "Failed to capture the plot for saving\n";
+      return;
+   }
+   QPainter paint( &qPix );
+   paint.setPen( Qt::blue );
+   paint.setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold) );
+   // paint.drawText( 5, 5, hplc_win->lb_files->text( mypos ) );
+   paint.drawText( qPix.rect(), Qt::AlignBottom | Qt::AlignLeft, hplc_win->lb_files->text( mypos ) );
+   QString frame = QString( "%1" ).arg( pos + 1 );
+   while( frame.length() < 5 )
+   {
+      frame = "0" + frame;
+   }
+
+   if ( rb_save_png->isChecked() )
+   {
+      frame += ".png";
+   } else {
+      if ( rb_save_jpeg->isChecked() )
+      {
+         frame += ".jpeg";
+      } else {
+         frame += ".bmp";
+      }
+   }
+
+   QString f( ush_win->somo_dir + QDir::separator() + "saxs" + QDir::separator() + "tmp" + QDir::separator() +
+              tag + "_" + frame );
+
+   if ( !cb_save_overwrite->isChecked() && QFile::exists( f ) )
+   {
+      return;
+   }
+
+   if ( rb_save_png->isChecked() )
+   {
+      qPix.save( f, "PNG" );
+   } else {
+      if ( rb_save_jpeg->isChecked() )
+      {
+         qPix.save( f, "JPEG" );
+      } else {
+         qPix.save( f, "BMP" );
+      }
+   }
+}
+

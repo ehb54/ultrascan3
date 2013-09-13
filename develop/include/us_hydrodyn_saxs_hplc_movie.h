@@ -49,6 +49,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Movie : public QDialog
       QCheckBox             * cb_save;
       QLineEdit             * le_save;
 
+      QCheckBox             * cb_save_overwrite;
+
+      QButtonGroup          * bg_save;
+      QRadioButton          * rb_save_png;
+      QRadioButton          * rb_save_jpeg;
+      QRadioButton          * rb_save_bmp;
+
       QCheckBox             * cb_show_gauss;
 
       QPushButton           * pb_help;
@@ -63,6 +70,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Movie : public QDialog
       QTimer                * timer;
       int                     timer_msec;
       bool                    last_show_gauss;
+
+      void                    save_plot();
+      void                    save_plot( QWidget *plot, QString tag );
 
    private slots:
 
