@@ -51,6 +51,10 @@ hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )
          {
             tmp_stack.f_extc                   [ files[ i ] ] = f_extc[ files[ i ] ];
          }
+         if ( f_time.count( files[ i ] ) )
+         {
+            tmp_stack.f_time                   [ files[ i ] ] = f_time[ files[ i ] ];
+         }
          if ( created_files_not_saved.count( files[ i ] ) )
          {
             tmp_stack.created_files_not_saved [ files[ i ] ] = created_files_not_saved[ files[ i ] ];
@@ -86,6 +90,7 @@ hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )
       tmp_stack.f_psv                   = f_psv;
       tmp_stack.f_I0se                  = f_I0se;
       tmp_stack.f_extc                  = f_extc;
+      tmp_stack.f_time                  = f_time;
       tmp_stack.f_conc                  = f_conc;
       tmp_stack.created_files_not_saved = created_files_not_saved;
       tmp_stack.gaussians               = gaussians;
@@ -141,6 +146,7 @@ void US_Hydrodyn_Saxs_Hplc::set_current_data( hplc_stack_data & tmp_stack )
    f_psv                   = tmp_stack.f_psv;
    f_I0se                  = tmp_stack.f_I0se;
    f_extc                  = tmp_stack.f_extc;
+   f_time                  = tmp_stack.f_time;
    f_conc                  = tmp_stack.f_conc;
    created_files_not_saved = tmp_stack.created_files_not_saved;
    gaussians               = tmp_stack.gaussians;
@@ -333,6 +339,10 @@ void US_Hydrodyn_Saxs_Hplc::stack_join( hplc_stack_data & tmp_stack )
          {
             f_extc[ name ] = tmp_stack.f_extc[ name ];
          }
+         if ( tmp_stack.f_time.count( name ) )
+         {
+            f_time[ name ] = tmp_stack.f_time[ name ];
+         }
          if ( tmp_stack.created_files_not_saved.count( name ) )
          {
             created_files_not_saved[ name ] = tmp_stack.created_files_not_saved[ name ];
@@ -408,6 +418,10 @@ void US_Hydrodyn_Saxs_Hplc::stack_pcopy()
          if ( adds.f_extc.count( name ) )
          {
             clipboard.f_extc[ name ] = adds.f_extc.count( name );
+         }
+         if ( adds.f_time.count( name ) )
+         {
+            clipboard.f_time[ name ] = adds.f_time.count( name );
          }
          if ( adds.created_files_not_saved.count( name ) )
          {

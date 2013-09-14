@@ -105,6 +105,7 @@ struct hplc_stack_data
    map < QString, double >             f_I0se;
    map < QString, double >             f_conc;
    map < QString, double >             f_extc;
+   map < QString, double >             f_time;
 
    map < QString, bool >               created_files_not_saved;
    QStringList                         files;
@@ -269,6 +270,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #ifdef QT4
       QwtPlotGrid   *grid_errors;
 #endif
+      QwtPlot       *plot_ref;
+#ifdef QT4
+      QwtPlotGrid   *grid_ref;
+#endif
+
       QCheckBox     *cb_plot_errors_rev;
       QCheckBox     *cb_plot_errors_sd;
       QCheckBox     *cb_plot_errors_pct;
@@ -280,6 +286,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_p3d;
       QLabel        *lbl_wheel_pos;
       QwtWheel      *qwtw_wheel;
+      QPushButton   *pb_ref;
       QPushButton   *pb_errors;
       QPushButton   *pb_wheel_cancel;
       QPushButton   *pb_wheel_save;
@@ -380,6 +387,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       map < QString, double >             f_I0se;
       map < QString, double >             f_conc;
       map < QString, double >             f_extc;
+      map < QString, double >             f_time;
 
       map < QString, bool >               created_files_not_saved;
 
@@ -400,6 +408,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < QwtPlotCurve * >           plotted_gaussian_sum;
       vector < QwtPlotCurve * >           plotted_baseline;
       vector < QwtPlotCurve * >           plotted_hlines;
+      QwtPlotMarker *                     ref_marker;
 #else
       map < QString, long >               plotted_curves;
       vector < long >                     plotted_markers;
@@ -407,6 +416,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < long >                     plotted_gaussian_sum;
       vector < long >                     plotted_baseline;
       vector < long >                     plotted_hlines;
+      long                                ref_marker;
 #endif
       // always a multiple of 3 { a e^-[((x-b)/c)^2]/2 }, a, b, c
       // the b values are fixed by the user
@@ -672,6 +682,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       bool                         suppress_replot;
 
+      void                         update_ref();
+
    private slots:
 
       void setupGUI();
@@ -739,6 +751,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void wheel_start();
       void p3d();
+      void ref();
       void errors();
       void wheel_cancel();
       void wheel_save();

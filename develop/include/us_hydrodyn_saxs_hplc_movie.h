@@ -73,6 +73,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Movie : public QDialog
 
       void                    save_plot();
       void                    save_plot( QWidget *plot, QString tag );
+      void                    save_plot( QWidget *plot, QWidget *plot2, QString tag );
+      void                    save_plot( QPixmap & m1, QString tag, int mypos );
+
+      void                    join_maps( QPixmap & m1, QPixmap & m2 );
 
    private slots:
 

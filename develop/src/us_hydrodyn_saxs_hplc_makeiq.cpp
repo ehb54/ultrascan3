@@ -309,6 +309,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
       f_conc      [ name ] = 0e0;
       f_psv       [ name ] = 0e0;
       f_I0se      [ name ] = 0e0;
+      f_time      [ name ] = tv[ t ];
 
    } // for each q value
 
@@ -1270,6 +1271,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          f_conc      [ name ] = conc_factor;
          f_psv       [ name ] = psv.size() > g ? psv[ g ] : 0e0;
          f_I0se      [ name ] = I0se;
+         f_time      [ name ] = tv[ t ];
          if ( conv.size() > g )
          {
             f_extc      [ name ] = conv[ g ];

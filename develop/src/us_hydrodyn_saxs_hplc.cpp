@@ -9,6 +9,7 @@
 #include <qwt_scale_engine.h>
 #endif
 #include <qpalette.h>
+#include <qsplitter.h>
 
 #define JAC_VERSION
 
@@ -919,7 +920,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lbl_editor->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    connect( lbl_editor, SIGNAL( pressed() ), SLOT( hide_editor() ) );
-   lbl_editor->hide();
+   // lbl_editor->hide();
 
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -943,7 +944,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    editor->setMinimumHeight( minHeight1 * 3 );
    editor_widgets.push_back( editor );
 
-   plot_dist = new QwtPlot(this);
+   QSplitter *qs = new QSplitter( Qt::Vertical, this );
+
+   plot_dist = new QwtPlot( qs );
 #ifndef QT4
    // plot_dist->enableOutline(true);
    // plot_dist->setOutlinePen(Qt::white);
@@ -998,7 +1001,53 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 
-   plot_errors = new QwtPlot(this);
+   plot_ref = new QwtPlot( qs );
+#ifndef QT4
+   // plot_ref->enableOutline(true);
+   // plot_ref->setOutlinePen(Qt::white);
+   // plot_ref->setOutlineStyle(Qwt::VLine);
+   plot_ref->enableGridXMin();
+   plot_ref->enableGridYMin();
+#else
+   grid_ref = new QwtPlotGrid;
+   grid_ref->enableXMin( true );
+   grid_ref->enableYMin( true );
+#endif
+   plot_ref->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
+#ifndef QT4
+   plot_ref->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
+   plot_ref->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#else
+   grid_ref->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_ref->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_ref->attach( plot_ref );
+#endif
+   plot_ref->setAxisTitle(QwtPlot::xBottom, tr( "Time [a.u.]" ) );
+   plot_ref->setAxisTitle(QwtPlot::yLeft, tr("Intensity [a.u.]"));
+#ifndef QT4
+   plot_ref->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+   plot_ref->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   plot_ref->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   plot_ref->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   plot_ref->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   plot_ref->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   plot_ref->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_ref->setMargin(USglobal->config_list.margin);
+   plot_ref->setTitle("");
+#ifndef QT4
+   // plot_ref->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
+#else
+   // plot_ref->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+#endif
+   plot_ref->setCanvasBackground(USglobal->global_colors.plot);
+   plot_ref->hide();
+
+   plot_errors = new QwtPlot( this );
 #ifndef QT4
    // plot_errors->enableOutline(true);
    // plot_errors->setOutlinePen(Qt::white);
@@ -1122,6 +1171,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // qwtw_wheel->setTotalAngle( 3600.0 );
    qwtw_wheel->setEnabled      ( false );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+
+   pb_ref = new QPushButton(tr("Ref"), this);
+   pb_ref->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_ref->setMinimumHeight(minHeight1);
+   pb_ref->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_ref->setEnabled(false);
+   connect(pb_ref, SIGNAL(clicked()), SLOT(ref()));
 
    pb_errors = new QPushButton(tr("Residuals"), this);
    pb_errors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -1767,9 +1823,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    gl_wheel->addMultiCellWidget( pb_wheel_start , 0, 0, 0, 1 );
    gl_wheel->addWidget         ( lbl_wheel_pos  , 0, 2 );
    gl_wheel->addMultiCellWidget( qwtw_wheel     , 0, 0, 3, 7 );
-   gl_wheel->addWidget         ( pb_errors      , 0, 8 );
-   gl_wheel->addWidget         ( pb_wheel_cancel, 0, 9 );
-   gl_wheel->addWidget         ( pb_wheel_save  , 0, 10 );
+   gl_wheel->addWidget         ( pb_ref         , 0, 8 );
+   gl_wheel->addWidget         ( pb_errors      , 0, 9 );
+   gl_wheel->addWidget         ( pb_wheel_cancel, 0, 10 );
+   gl_wheel->addWidget         ( pb_wheel_save  , 0, 11 );
 
    QGridLayout *gl_gauss = new QGridLayout(0);
    { 
@@ -1819,7 +1876,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_baseline->addWidget( pb_baseline_apply   );
 
    QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
-   vbl_plot_group->addWidget ( plot_dist );
+   // vbl_plot_group->addWidget ( plot_dist );
+   // vbl_plot_group->addWidget ( plot_ref );
+   vbl_plot_group->addWidget ( qs );
    vbl_plot_group->addLayout ( l_plot_errors );
    vbl_plot_group->addLayout ( gl_wheel  );
    vbl_plot_group->addLayout ( gl_gauss  );
@@ -2235,6 +2294,8 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
 
    QString errors;
 
+   map < QString, double > found_times;
+
    if ( filenames.size() > 1 )
    {
       bool reorder = true;
@@ -2283,6 +2344,7 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
                ++it )
          {
             filenames << it->name;
+            found_times[ it->name ] = it->x;
          }
       }
    }
@@ -2303,6 +2365,7 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
          } else {
             editor_msg( "black", QString( tr( "%1" ) ).arg( basename ) );
             add_filenames << basename;
+            f_time[ basename ] = found_times[ filenames[ i ] ];
          }
          qApp->processEvents();
       } else {
@@ -2512,6 +2575,8 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
    {
       legend();
    }
+
+   update_ref();
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -3527,6 +3592,43 @@ void US_Hydrodyn_Saxs_Hplc::set_conc_file()
    if ( conc_widget )
    {
       conc_window->refresh( csv_conc );
+   }
+   plot_ref->clear();
+
+   if ( f_qs.count( lbl_conc_file->text() ) )
+   {
+#ifndef QT4
+      long curve;
+      curve = plot_ref->insertCurve( "concentration" );
+      plot_ref->setCurveStyle( curve, QwtCurve::Lines );
+#else
+      QwtPlotCurve *curve;
+      QwtPlotCurve *curve = new QwtPlotCurve( file );
+      curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+#ifndef QT4
+      plot_ref->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
+      plot_ref->setCurveData( curve,
+                              (double *)&f_qs[ lbl_conc_file->text() ][ 0 ],
+                              (double *)&f_Is[ lbl_conc_file->text() ][ 0 ],
+                              f_qs[ lbl_conc_file->text() ].size()
+                              );
+#else
+      curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
+      curve->setData(
+                     (double *)&f_qs[ lbl_conc_file->text() ][ 0 ],
+                     (double *)&f_Is[ lbl_conc_file->text() ][ 0 ],
+                     f_qs[ lbl_conc_file->text() ].size()
+                     );
+      curve->attach( plot_ref );
+#endif
+      plot_dist->setAxisScale( QwtPlot::xBottom, f_qs[ lbl_conc_file->text() ][ 0 ], f_qs[ lbl_conc_file->text() ].back() );
+      
+      if ( !suppress_replot )
+      {
+         plot_ref->replot();
+      }
    }
    update_enables();
 }
@@ -6730,6 +6832,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    cb_fix_dist1          ->setEnabled( false );
    cb_fix_dist2          ->setEnabled( false );
 
+   pb_ref                ->setEnabled( false );
    pb_errors             ->setEnabled( false );
 
    pb_stack_push_all     ->setEnabled( false );

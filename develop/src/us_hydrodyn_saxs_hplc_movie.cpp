@@ -71,6 +71,11 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
    hplc_win->suppress_replot = true;
    update_plot();
    show();
+   //    cout << "doin it\n";
+   //    QLabel lb( "hithere" , 0 );
+   QPainter paint( this );
+   //    paint.drawPixmap( 10, 10, QPixmap::grabWidget( &lb ) );
+   paint.drawText( 0, 0, "HELLO THERE!" );
 }
 
 US_Hydrodyn_Saxs_Hplc_Movie::~US_Hydrodyn_Saxs_Hplc_Movie()
@@ -191,13 +196,13 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    cb_save_overwrite->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_save_overwrite->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(tr("Help"), this );
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(tr("Close"), this );
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -247,7 +252,6 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
       QBoxLayout *bottom = new QHBoxLayout( 0 );
       bottom->addWidget( pb_help );
       bottom->addWidget( pb_cancel );
-      
       background->addSpacing( 2 );
       background->addLayout( bottom );
    }
@@ -414,10 +418,11 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
 
 void US_Hydrodyn_Saxs_Hplc_Movie::save_plot()
 {
-   save_plot( hplc_win->plot_dist, le_save->text() );
    if ( hplc_win->plot_errors->isVisible() )
    {
-      save_plot( hplc_win->plot_errors, le_save->text() + "_e" );
+      save_plot( hplc_win->plot_dist, hplc_win->plot_errors, le_save->text() );
+   } else {
+      save_plot( hplc_win->plot_dist, le_save->text() );
    }
 }
    
@@ -430,6 +435,35 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QString tag )
       cout << "Failed to capture the plot for saving\n";
       return;
    }
+   save_plot( qPix, tag, mypos );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::join_maps( QPixmap & m1, QPixmap & m2 )
+{
+   int m1h = m1.height();
+   int m2h = m2.height();
+
+   m1.resize( m1.width() > m2.width() ? m1.width() : m2.width(), m1h + m2h );
+   QPainter paint( &m1 );
+   paint.drawPixmap( 0, m1h, m2 );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QString tag )
+{
+   int mypos = pos;
+   QPixmap qPix  = QPixmap::grabWidget( plot );
+   QPixmap qPix2 = QPixmap::grabWidget( plot2 );
+   if( qPix.isNull() || qPix2.isNull() )
+   {
+      cout << "Failed to capture the plot for saving\n";
+      return;
+   }
+   join_maps( qPix, qPix2 );
+   save_plot( qPix, tag, mypos );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QPixmap & qPix, QString tag, int mypos )
+{
    QPainter paint( &qPix );
    paint.setPen( Qt::blue );
    paint.setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold) );

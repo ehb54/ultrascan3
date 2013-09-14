@@ -2510,6 +2510,12 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_stack_rot_down   ->setEnabled( stack_data.size() > 1 );
    pb_stack_swap       ->setEnabled( stack_data.size() );
 
+   pb_ref              ->setEnabled( files_selected_count == 1 && !files_are_time && !lbl_conc_file->text().isEmpty() );
+   if ( plot_ref->isVisible() && !pb_ref->isEnabled() )
+   {
+      plot_ref->hide();
+   }
+
    if ( files_selected_count == 2 && files_compatible )
    {
       pb_errors           ->setEnabled( true );
@@ -2852,3 +2858,86 @@ void US_Hydrodyn_Saxs_Hplc::movie()
 
    update_enables();
 }
+
+void US_Hydrodyn_Saxs_Hplc::ref()
+{
+   if ( plot_ref->isVisible() || lbl_conc_file->text().isEmpty() )
+   {
+      plot_ref->hide();
+   } else {
+      disable_all();
+      if ( !f_qs.count( lbl_conc_file->text() ) )
+      {
+         plot_ref->hide();
+         editor_msg( "dark red", tr( "Warning: Reference plot selected but no concentration file found" ) );
+         update_enables();
+         return;
+      }
+      QStringList files = all_selected_files();
+      if ( !f_time.count( files[ 0 ] ) )
+      {
+         plot_ref->hide();
+         editor_msg( "dark red", tr( "Warning: no time known for this curve" ) );
+         update_enables();
+         return;
+      }
+
+      plot_ref->show();
+      update_ref();
+      update_enables();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::update_ref()
+{
+   if ( !plot_ref->isVisible() )
+   {
+      return;
+   }
+   QStringList files = all_selected_files();
+   if ( files.size() != 1 )
+   {
+      plot_ref->hide();
+      return;
+   }
+   if ( !f_time.count( files[ 0 ] ) )
+   {
+      plot_ref->hide();
+      return;
+   }
+
+#ifndef QT4
+   plot_ref->removeMarkers();
+#else
+#warning check how to do this in qt4
+#endif
+   
+   QColor color( "red" );
+
+#ifndef QT4
+   ref_marker = plot_ref->insertMarker();
+   plot_ref->setMarkerLineStyle ( ref_marker, QwtMarker::VLine );
+   plot_ref->setMarkerPos       ( ref_marker, f_time[ files[ 0 ] ], 0e0 );
+   plot_ref->setMarkerLabelAlign( ref_marker, Qt::AlignLeft | Qt::AlignTop );
+   plot_ref->setMarkerPen       ( ref_marker, QPen( color, 2, DashDotDotLine));
+   plot_ref->setMarkerFont      ( ref_marker, QFont("Helvetica", 11, QFont::Bold));
+   plot_ref->setMarkerLabelText ( ref_marker, QString( "%1" ).arg( f_time[ files[ 0 ] ] ) );
+#else
+#warning check how to do this in qt4 needs ymark symsize
+   ref_marker = new QwtPlotMarker;
+   ref_marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
+                                     QBrush( Qt::white ), QPen( color, 2, Qt::DashLine ),
+                                     QSize( 8, sizeym ) ) );
+   ref_marker->setValue( f_time[ files[ 0 ] ], ymark );
+   ref_marker->setLabelAlignment( align );
+   ref_marker->setLabel( text );
+   ref_marker->attach( plot_ref );
+#endif
+   if ( !suppress_replot )
+   {
+      plot_ref->replot();
+   }
+}
+
+// add f_time ref everywhere (copyies etc, maybe search for extc
+// state save & load
