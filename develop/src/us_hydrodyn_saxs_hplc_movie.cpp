@@ -45,10 +45,6 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
    pos = 0;
    last_pos = -1;
 
-   setupGUI();
-   
-   timer      = new QTimer( this );
-   connect( timer, SIGNAL(timeout()), this, SLOT( next() ) );
    timer_msec = 
       ush_win->gparams.count( "hplc_movie_timer_ms" ) ?
       ush_win->gparams[ "hplc_movie_timer_ms" ].toInt() : 1000;
@@ -64,6 +60,11 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
    last_mono =
       ush_win->gparams.count( "hplc_movie_mono" ) && ush_win->gparams[ "hplc_movie_mono" ] == "true" ?
       true : false;
+
+   setupGUI();
+   
+   timer      = new QTimer( this );
+   connect( timer, SIGNAL(timeout()), this, SLOT( next() ) );
 
    if ( timer_msec < 50 )
    {
@@ -456,7 +457,9 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       {
          hplc_win->wheel_cancel();
       }
-      if ( cb_show_gauss->isChecked() )
+      if ( cb_show_gauss->isChecked() &&
+           hplc_win->f_is_time.count( hplc_win->lb_files->text( hplc_selected_files[ pos ] ) ) &&
+           hplc_win->f_is_time[ hplc_win->lb_files->text( hplc_selected_files[ pos ] ) ] )
       {
          hplc_win->gauss_start();
       }
