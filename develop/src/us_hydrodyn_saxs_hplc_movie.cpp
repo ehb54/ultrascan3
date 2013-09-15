@@ -57,6 +57,14 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
       ush_win->gparams.count( "hplc_movie_show_gauss" ) && ush_win->gparams[ "hplc_movie_show_gauss" ] == "true" ?
       true : false;
 
+   last_show_ref =
+      ush_win->gparams.count( "hplc_movie_show_ref" ) && ush_win->gparams[ "hplc_movie_show_ref" ] == "true" ?
+      true : false;
+
+   last_mono =
+      ush_win->gparams.count( "hplc_movie_mono" ) && ush_win->gparams[ "hplc_movie_mono" ] == "true" ?
+      true : false;
+
    if ( timer_msec < 50 )
    {
       timer_msec = 50;
@@ -69,6 +77,8 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
    
    setGeometry(global_Xpos, global_Ypos, 0, 0 );
    hplc_win->suppress_replot = true;
+   plot_colors = hplc_win->plot_colors;
+   set_mono();
    update_plot();
    show();
    //    cout << "doin it\n";
@@ -144,12 +154,28 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    connect(pb_end, SIGNAL(clicked()), SLOT(end()));
 
    cb_show_gauss = new QCheckBox(this);
-   cb_show_gauss->setText(tr("Show Gaussians   File save as type:"));
+   cb_show_gauss->setText(tr("Show Gaussians "));
    cb_show_gauss->setEnabled( true );
    cb_show_gauss->setChecked( last_show_gauss );
    cb_show_gauss->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_show_gauss->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect( cb_show_gauss, SIGNAL( clicked() ), SLOT( set_show_gauss() ) );
+
+   cb_show_ref = new QCheckBox(this);
+   cb_show_ref->setText(tr("Show reference "));
+   cb_show_ref->setEnabled( true );
+   cb_show_ref->setChecked( last_show_ref );
+   cb_show_ref->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_show_ref->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_show_ref, SIGNAL( clicked() ), SLOT( set_show_ref() ) );
+
+   cb_mono = new QCheckBox(this);
+   cb_mono->setText(tr("Monochrome   File save as type:"));
+   cb_mono->setEnabled( true );
+   cb_mono->setChecked( last_mono );
+   cb_mono->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_mono->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect( cb_mono, SIGNAL( clicked() ), SLOT( set_mono() ) );
 
    cb_save = new QCheckBox(this);
    cb_save->setText(tr("Save to file  Prefix:"));
@@ -234,6 +260,8 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    {
       QBoxLayout *bl_tl = new QHBoxLayout( 0 );
       bl_tl->addWidget( cb_show_gauss );
+      bl_tl->addWidget( cb_show_ref );
+      bl_tl->addWidget( cb_mono );
       bl_tl->addWidget( rb_save_png );
       bl_tl->addWidget( rb_save_jpeg );
       bl_tl->addWidget( rb_save_bmp );
@@ -271,11 +299,13 @@ void US_Hydrodyn_Saxs_Hplc_Movie::help()
 
 void US_Hydrodyn_Saxs_Hplc_Movie::closeEvent(QCloseEvent *e)
 {
+   hplc_win->plot_colors = plot_colors;
    hplc_win->disable_updates = true;
    if ( hplc_win->gaussian_mode )
    {
       hplc_win->wheel_cancel();
    }
+   hplc_win->lb_files->clearSelection();
    for ( int i = 0; i < (int) hplc_selected_files.size(); ++i )
    {
       hplc_win->lb_files->setSelected( hplc_selected_files[ i ], true );
@@ -283,8 +313,10 @@ void US_Hydrodyn_Saxs_Hplc_Movie::closeEvent(QCloseEvent *e)
    hplc_win->suppress_replot = false;
    hplc_win->plot_files();
    hplc_win->disable_updates = false;
-   ush_win->gparams[ "hplc_movie_timer_ms" ] = QString( "%1" ).arg( timer_msec );
+
+   ush_win->gparams[ "hplc_movie_timer_ms"   ] = QString( "%1" ).arg( timer_msec );
    ush_win->gparams[ "hplc_movie_show_gauss" ] = cb_show_gauss->isChecked() ? "true" : "false";
+   ush_win->gparams[ "hplc_movie_show_ref"   ] = cb_show_ref->isChecked() ? "true" : "false";
    e->accept();
 }
 
@@ -379,6 +411,23 @@ void US_Hydrodyn_Saxs_Hplc_Movie::set_show_gauss()
    update_plot();
 }
 
+void US_Hydrodyn_Saxs_Hplc_Movie::set_show_ref()
+{
+   update_plot();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::set_mono()
+{
+   if ( cb_mono->isChecked() )
+   {
+      hplc_win->plot_colors.clear();
+      hplc_win->plot_colors.push_back( plot_colors[ 0 ] );
+   } else {
+      hplc_win->plot_colors = plot_colors;
+   }
+   update_plot();
+}
+
 void US_Hydrodyn_Saxs_Hplc_Movie::update_enables()
 {
    le_save->setEnabled( cb_save->isChecked() );
@@ -387,12 +436,22 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_enables()
 void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
 {
    if ( last_pos != pos ||
-        cb_show_gauss->isChecked() != last_show_gauss )
+        cb_show_gauss->isChecked() != last_show_gauss ||
+        cb_show_ref  ->isChecked() != last_show_ref )
    {
       last_pos        = pos;
       last_show_gauss = cb_show_gauss->isChecked();
+      last_show_ref   = cb_show_ref  ->isChecked();
+
       hplc_win->lb_files->clearSelection();
+      if ( cb_show_ref->isChecked() )
+      {
+         hplc_win->plot_ref->show();
+      } else {
+         hplc_win->plot_ref->hide();
+      } 
       hplc_win->lb_files->setSelected( hplc_selected_files[ pos ], true );
+
       if ( hplc_win->gaussian_mode )
       {
          hplc_win->wheel_cancel();
@@ -400,11 +459,13 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       if ( cb_show_gauss->isChecked() )
       {
          hplc_win->gauss_start();
-      } else {
-         hplc_win->plot_files();
       }
+      // else {
+      // hplc_win->plot_files();
+      // }
 
-      hplc_win->plot_dist->replot();
+      hplc_win->plot_dist  ->replot();
+      hplc_win->plot_ref   ->replot();
       hplc_win->plot_errors->replot();
       lbl_state  -> setText( QString( tr( "%1: %2 of %3" ).arg( tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
       lbl_current-> setText( hplc_win->lb_files->text( hplc_selected_files[ pos ] ) );
@@ -420,9 +481,19 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot()
 {
    if ( hplc_win->plot_errors->isVisible() )
    {
-      save_plot( hplc_win->plot_dist, hplc_win->plot_errors, le_save->text() );
+      if ( hplc_win->plot_ref->isVisible() )
+      {
+         save_plot( hplc_win->plot_dist, hplc_win->plot_ref, hplc_win->plot_errors, le_save->text() );
+      } else {
+         save_plot( hplc_win->plot_dist, hplc_win->plot_errors, le_save->text() );
+      }
    } else {
-      save_plot( hplc_win->plot_dist, le_save->text() );
+      if ( hplc_win->plot_ref->isVisible() )
+      {
+         save_plot( hplc_win->plot_dist, hplc_win->plot_ref, le_save->text() );
+      } else {
+         save_plot( hplc_win->plot_dist, le_save->text() );
+      }
    }
 }
    
@@ -446,6 +517,22 @@ void US_Hydrodyn_Saxs_Hplc_Movie::join_maps( QPixmap & m1, QPixmap & m2 )
    m1.resize( m1.width() > m2.width() ? m1.width() : m2.width(), m1h + m2h );
    QPainter paint( &m1 );
    paint.drawPixmap( 0, m1h, m2 );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QWidget *plot3, QString tag )
+{
+   int mypos = pos;
+   QPixmap qPix  = QPixmap::grabWidget( plot );
+   QPixmap qPix2 = QPixmap::grabWidget( plot2 );
+   QPixmap qPix3 = QPixmap::grabWidget( plot3 );
+   if( qPix.isNull() || qPix2.isNull() || qPix3.isNull() )
+   {
+      cout << "Failed to capture the plot for saving\n";
+      return;
+   }
+   join_maps( qPix, qPix2 );
+   join_maps( qPix, qPix3 );
+   save_plot( qPix, tag, mypos );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QString tag )

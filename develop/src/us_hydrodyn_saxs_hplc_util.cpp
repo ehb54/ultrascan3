@@ -2330,8 +2330,6 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
 
    map < QString, bool > selected_map;
 
-   QString last_selected_file;
-
    QStringList selected_files;
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -2511,7 +2509,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_stack_swap       ->setEnabled( stack_data.size() );
 
    pb_ref              ->setEnabled( files_selected_count == 1 && !files_are_time && !lbl_conc_file->text().isEmpty() );
-   if ( plot_ref->isVisible() && !pb_ref->isEnabled() )
+   if ( !suppress_replot && plot_ref->isVisible() && !pb_ref->isEnabled() )
    {
       plot_ref->hide();
    }
@@ -2874,7 +2872,7 @@ void US_Hydrodyn_Saxs_Hplc::ref()
          return;
       }
       QStringList files = all_selected_files();
-      if ( !f_time.count( files[ 0 ] ) )
+      if ( !f_time.count( last_selected_file ) )
       {
          plot_ref->hide();
          editor_msg( "dark red", tr( "Warning: no time known for this curve" ) );
@@ -2882,7 +2880,10 @@ void US_Hydrodyn_Saxs_Hplc::ref()
          return;
       }
 
-      plot_ref->show();
+      if ( !plot_ref->isVisible() )
+      {
+         plot_ref->show();
+      }
       update_ref();
       update_enables();
    }
@@ -2894,13 +2895,7 @@ void US_Hydrodyn_Saxs_Hplc::update_ref()
    {
       return;
    }
-   QStringList files = all_selected_files();
-   if ( files.size() != 1 )
-   {
-      plot_ref->hide();
-      return;
-   }
-   if ( !f_time.count( files[ 0 ] ) )
+   if ( !f_time.count( last_selected_file ) )
    {
       plot_ref->hide();
       return;
@@ -2917,18 +2912,18 @@ void US_Hydrodyn_Saxs_Hplc::update_ref()
 #ifndef QT4
    ref_marker = plot_ref->insertMarker();
    plot_ref->setMarkerLineStyle ( ref_marker, QwtMarker::VLine );
-   plot_ref->setMarkerPos       ( ref_marker, f_time[ files[ 0 ] ], 0e0 );
+   plot_ref->setMarkerPos       ( ref_marker, f_time[ last_selected_file ], 0e0 );
    plot_ref->setMarkerLabelAlign( ref_marker, Qt::AlignLeft | Qt::AlignTop );
    plot_ref->setMarkerPen       ( ref_marker, QPen( color, 2, DashDotDotLine));
    plot_ref->setMarkerFont      ( ref_marker, QFont("Helvetica", 11, QFont::Bold));
-   plot_ref->setMarkerLabelText ( ref_marker, QString( "%1" ).arg( f_time[ files[ 0 ] ] ) );
+   plot_ref->setMarkerLabelText ( ref_marker, QString( "%1" ).arg( f_time[ last_selected_file ] ) );
 #else
 #warning check how to do this in qt4 needs ymark symsize
    ref_marker = new QwtPlotMarker;
    ref_marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
                                      QBrush( Qt::white ), QPen( color, 2, Qt::DashLine ),
                                      QSize( 8, sizeym ) ) );
-   ref_marker->setValue( f_time[ files[ 0 ] ], ymark );
+   ref_marker->setValue( f_time[ last_selected_file ], ymark );
    ref_marker->setLabelAlignment( align );
    ref_marker->setLabel( text );
    ref_marker->attach( plot_ref );
@@ -2940,4 +2935,4 @@ void US_Hydrodyn_Saxs_Hplc::update_ref()
 }
 
 // add f_time ref everywhere (copyies etc, maybe search for extc
-// state save & load
+

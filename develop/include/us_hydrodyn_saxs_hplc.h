@@ -495,6 +495,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       QStringList                         all_selected_files();
       QStringList                         all_files();
+      QString                             last_selected_file;
 
       void save_csv_saxs_iqq();
 

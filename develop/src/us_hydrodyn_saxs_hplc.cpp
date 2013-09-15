@@ -2197,6 +2197,7 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files )
          f_I0se     .erase( lb_files->text( i ) );
          f_conc     .erase( lb_files->text( i ) );
          f_extc     .erase( lb_files->text( i ) );
+         f_time     .erase( lb_files->text( i ) );
          lb_files->removeItem( i );
       }
    }
@@ -2565,7 +2566,9 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
 
    plotted_curves.clear();
 
-   if ( all_selected_files().size() > 20 &&
+   int asfs = (int) all_selected_files().size();
+
+   if ( asfs > 20 &&
 #ifndef QT4
         plot_dist->autoLegend() 
 #else
@@ -2576,7 +2579,10 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
       legend();
    }
 
-   update_ref();
+   if ( asfs == 1 )
+   {
+      update_ref();
+   }
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -2937,12 +2943,15 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
    double this_conc = 0e0;
    double this_psv  = 0e0;
    double this_I0se = 0e0;
+   bool   has_time = false;
+   double this_time = 0e0;
 
    if ( ext == "dat" )
    {
       QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
+      QRegExp rx_time      ( "Time:\\s*(\\S+)(\\s|$)" );
       if ( rx_conc.search( qv[ 0 ] ) )
       {
          this_conc = rx_conc.cap( 1 ).toDouble();
@@ -2955,6 +2964,11 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       if ( rx_I0se.search( qv[ 0 ] ) )
       {
          this_I0se = rx_I0se.cap( 1 ).toDouble();
+      }
+      if ( rx_time.search( qv[ 0 ] ) )
+      {
+         has_time = true;
+         this_time = rx_time.cap( 1 ).toDouble();
       }
    }
 
@@ -3575,7 +3589,10 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
    f_conc       [ basename ] = this_conc;
    f_psv        [ basename ] = this_psv;
    f_I0se       [ basename ] = this_I0se;
-
+   if ( has_time )
+   {
+      f_time       [ basename ] = this_time;
+   }
    return true;
 }
 
@@ -3608,14 +3625,14 @@ void US_Hydrodyn_Saxs_Hplc::set_conc_file()
 #endif
 
 #ifndef QT4
-      plot_ref->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
+      plot_ref->setCurvePen( curve, QPen( plot_colors[ 0 ], use_line_width, Qt::SolidLine ) );
       plot_ref->setCurveData( curve,
                               (double *)&f_qs[ lbl_conc_file->text() ][ 0 ],
                               (double *)&f_Is[ lbl_conc_file->text() ][ 0 ],
                               f_qs[ lbl_conc_file->text() ].size()
                               );
 #else
-      curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
+      curve->setPen( QPen( plot_colors[ 0 ], use_line_width, Qt::SolidLine ) );
       curve->setData(
                      (double *)&f_qs[ lbl_conc_file->text() ][ 0 ],
                      (double *)&f_Is[ lbl_conc_file->text() ][ 0 ],
@@ -4168,6 +4185,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
       .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
       .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
+      .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
       ;
 
    bool use_errors = ( f_errors.count( file ) && 
@@ -4767,6 +4785,13 @@ QString US_Hydrodyn_Saxs_Hplc::vector_double_to_csv( vector < double > vd )
 
 void US_Hydrodyn_Saxs_Hplc::rescale()
 {
+   //    hide_widgets( plot_errors_widgets, !plot_errors_widgets[ 0 ]->isVisible() );
+   //    hide_widgets( files_widgets, !files_widgets[ 0 ]->isVisible() );
+   //    hide_widgets( files_expert_widgets, !files_expert_widgets[ 0 ]->isVisible() );
+   //    hide_widgets( created_files_widgets, !created_files_widgets[ 0 ]->isVisible() );
+   //    hide_widgets( created_files_expert_widgets, !created_files_expert_widgets[ 0 ]->isVisible() );
+   //    hide_widgets( editor_widgets, !editor_widgets[ 0 ]->isVisible() );
+
    //bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;
@@ -9774,6 +9799,12 @@ QStringList US_Hydrodyn_Saxs_Hplc::all_selected_files()
       {
          files << lb_files->text( i );
       }
+   }
+   if ( files.size() )
+   {
+      last_selected_file = files[ 0 ];
+   } else {
+      last_selected_file = "";
    }
    return files;
 }

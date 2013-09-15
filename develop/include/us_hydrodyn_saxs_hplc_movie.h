@@ -57,6 +57,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Movie : public QDialog
       QRadioButton          * rb_save_bmp;
 
       QCheckBox             * cb_show_gauss;
+      QCheckBox             * cb_show_ref;
+      QCheckBox             * cb_mono;
 
       QPushButton           * pb_help;
       QPushButton           * pb_cancel;
@@ -70,13 +72,18 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Movie : public QDialog
       QTimer                * timer;
       int                     timer_msec;
       bool                    last_show_gauss;
+      bool                    last_show_ref;
+      bool                    last_mono;
 
       void                    save_plot();
       void                    save_plot( QWidget *plot, QString tag );
       void                    save_plot( QWidget *plot, QWidget *plot2, QString tag );
+      void                    save_plot( QWidget *plot, QWidget *plot2, QWidget *plot3, QString tag );
       void                    save_plot( QPixmap & m1, QString tag, int mypos );
 
       void                    join_maps( QPixmap & m1, QPixmap & m2 );
+
+      vector < QColor >       plot_colors;
 
    private slots:
 
@@ -89,6 +96,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Movie : public QDialog
       void end();
 
       void set_show_gauss();
+      void set_show_ref();
+      void set_mono();
       void set_save();
 
       void help();
