@@ -1046,7 +1046,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    plot_ref->setCanvasBackground(USglobal->global_colors.plot);
    plot_ref->hide();
-
+   plot_ref->setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding)); 
    plot_errors = new QwtPlot( this );
 #ifndef QT4
    // plot_errors->enableOutline(true);
