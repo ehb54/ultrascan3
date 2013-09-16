@@ -225,11 +225,33 @@ int US_ModelLoader::load_model( US_Model& model, int index )
       QVector< US_Model::SimulationComponent > comps;
 //qDebug() << "ML: nm scfactor" << nm << scfactor;
 
+      // Do a scan to determine if constant vbar
+      double vbarmax = model.components[ 0 ].vbar20;
+      double vbarmin = vbarmax;
+
       for ( int ii = 0; ii < model.components.size(); ii++ )
       {
+         vbarmax = qMax( vbarmax, model.components[ ii ].vbar20 );
+         vbarmin = qMin( vbarmin, model.components[ ii ].vbar20 );
+      }
+
+      bool cnst_vbar = ( vbarmax == vbarmin );
+
+      for ( int ii = 0; ii < model.components.size(); ii++ )
+      {
+         QString skval;
          comps << model.components[ ii ];
-         QString skval = QString().sprintf( "%9.4e %9.4e",
+
+         if ( cnst_vbar )
+         {
+            skval = QString().sprintf( "%9.4e %9.4e",
                model.components[ ii ].s, model.components[ ii ].f_f0 );
+         }
+         else
+         {
+            skval = QString().sprintf( "%9.4e %9.4e",
+               model.components[ ii ].s, model.components[ ii ].vbar20 );
+         }
          sklist << skval;
 
          if ( ! skvals.contains( skval ) )
