@@ -2715,6 +2715,8 @@ QString US_FeMatch::distrib_info() const
    double sum_s   = 0.0;
    double sum_D   = 0.0;
    double sum_c   = 0.0;
+   double sum_v   = 0.0;
+   double sum_k   = 0.0;
    double mink    = 1e+99;
    double maxk    = -1e+99;
    double minv    = 1e+99;
@@ -2723,14 +2725,18 @@ QString US_FeMatch::distrib_info() const
    for ( int ii = 0; ii < ncomp; ii++ )
    {
       double conc = model_loaded.components[ ii ].signal_concentration;
+      double kval = model_loaded.components[ ii ].f_f0;
+      double vval = model_loaded.components[ ii ].vbar20;
       sum_c      += conc;
       sum_mw     += ( model_loaded.components[ ii ].mw * conc );
       sum_s      += ( model_loaded.components[ ii ].s  * conc );
       sum_D      += ( model_loaded.components[ ii ].D  * conc );
-      mink        = qMin( model_loaded.components[ ii ].f_f0,   mink );
-      maxk        = qMax( model_loaded.components[ ii ].f_f0,   maxk );
-      minv        = qMin( model_loaded.components[ ii ].vbar20, minv );
-      maxv        = qMax( model_loaded.components[ ii ].vbar20, maxv );
+      sum_v      += ( vval * conc );
+      sum_k      += ( kval * conc );
+      mink        = qMin( kval, mink );
+      maxk        = qMax( kval, maxk );
+      minv        = qMin( vval, minv );
+      maxv        = qMax( vval, maxv );
    }
 
    mstr += table_row( tr( "Weight Average s20,W:" ),
@@ -2739,6 +2745,12 @@ QString US_FeMatch::distrib_info() const
                       QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),
                       QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+   if ( ! cnstvb )
+      mstr += table_row( tr( "Weight Average vbar20:" ),
+                         QString::number( ( sum_v / sum_c ) ) );
+   else
+      mstr += table_row( tr( "Weight Average f/f0:" ),
+                         QString::number( ( sum_k / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
                       QString().sprintf( "%6.4e", sum_c ) );
 
