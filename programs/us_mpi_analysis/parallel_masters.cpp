@@ -543,20 +543,12 @@ DbgLv(1) << "master start 2DSA" << startTime;
 
          if ( ! job_queue.isEmpty() ) continue;
 
-         // Write out the model, but skip if not 1st iteration-1
+         // Write out the model, but skip if not 1st of iteration 1
          max_rss();
-         bool do_write = ( mc_iteration > 1 );
-DbgLv(1) << "2dMast:    (1)do_write" << do_write << "mc_iter" << mc_iteration
-   << "variance" << simulation_values.variance;
-
-         if ( mc_iteration == 1 )
-         {                                       // Iteration 1
-            QString fn = data_sets[ 0 ]->run_data.runID + "*.xml";
-            QDir d( "." );
-            QStringList files = d.entryList( QStringList( fn ), QDir::Files );
-            do_write   = ( files.size() == 0 );  // Only write if none exists
-DbgLv(1) << "2dMast:      (2)do_write" << do_write << (do_write?"":files[0]);
-         }
+         bool do_write = ( mc_iteration > 1 ) ||
+                         ( mc_iteration == 1  &&  my_group == 0 );
+DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
+   << "variance" << simulation_values.variance << "my_group" << my_group;
 
          qSort( simulation_values.solutes );
 
@@ -732,33 +724,38 @@ DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
      for ( int g = 0; g < buckets.size(); g++ )
          simulation_values.solutes[ g ].s *= 1.0e-13;
 
+      if ( data_sets[ 0 ]->solute_type == 1 )
+      {  // Set up final solute to be constant-ff0, varying vbar
+         double fixed_k = parameters[ "bucket_fixed" ].toDouble();
+
+         for ( int gg = 0; gg < buckets.size(); gg++ )
+         {
+            US_Solute solu = simulation_values.solutes[ gg ];
+            solu.v         = solu.k;
+            solu.k         = fixed_k;
+            simulation_values.solutes[ gg ] = solu;
+         }
+      }
 DbgLv(1) << "GaMast: sols size" << simulation_values.solutes.size()
  << "buck size" << buckets.size();
 DbgLv(1) << "GaMast:   dset size" << data_sets.size();
 DbgLv(1) << "GaMast:   sol0.s" << simulation_values.solutes[0].s;
       calc_residuals( 0, data_sets.size(), simulation_values );
+
 DbgLv(1) << "GaMast:    calc_resids return";
 
-      // Write out the model, but skip if not 1st iteration-1
-      bool do_write = ( mc_iteration > 1 );
-DbgLv(1) << "GaMast:    (1)do_write" << do_write << "mc_iter" << mc_iteration
- << "variance" << simulation_values.variance;
-
-      if ( mc_iteration == 1 )
-      {                                       // Iteration 1
-         QString fn = data_sets[ 0 ]->run_data.runID + "*.xml";
-         QDir d( "." );
-         QStringList files = d.entryList( QStringList( fn ), QDir::Files );
-         do_write   = ( files.size() == 0 );  // Only write if none exists
-DbgLv(1) << "GaMast:      (2)do_write" << do_write << (do_write?"":files[0]);
-      }
+      // Write out the model, but skip if not 1st of iteration 1
+      bool do_write = ( mc_iteration > 1 ) ||
+                      ( mc_iteration == 1  &&  my_group == 0 );
+DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
+   << "variance" << simulation_values.variance << "my_group" << my_group;
 
       qSort( simulation_values.solutes );
+      calculated_solutes.clear();
+      calculated_solutes << simulation_values.solutes;
 
       if ( do_write )
       {
-         calculated_solutes.clear();
-         calculated_solutes << simulation_values.solutes;
 
          if ( data_sets.size() == 1 )
          {
