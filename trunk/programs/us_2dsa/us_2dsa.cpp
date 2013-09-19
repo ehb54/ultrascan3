@@ -531,6 +531,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
       model.variance    = variance;
       model.meniscus    = meniscus;
       model.wavelength  = dwavelen;
+      model.dataDescrip = edata->description;
 
       for ( int cc = 0; cc < model.components.size(); cc++ )
          model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );

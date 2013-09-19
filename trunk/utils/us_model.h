@@ -37,6 +37,7 @@ class US_UTIL_EXTERN US_Model
       QString      modelGUID;   //!< Identifier of the model
       QString      editGUID;    //!< Identifier of the edit data
       QString      requestGUID; //!< Identifier of the LIMS request
+      QString      dataDescrip; //!< Raw data triple description string
       OpticsType   optics;      //!< The optics used for the data acquisition
       AnalysisType analysis;    //!< The analysis used with this model
       GlobalType   global;      //!< Global params used for model generation

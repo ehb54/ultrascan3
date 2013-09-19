@@ -510,6 +510,7 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    model.modelGUID   = US_Util::new_guid();
    model.editGUID    = data->editGUID;
    model.requestGUID = requestGUID;
+   model.dataDescrip = data->description;
    //model.optics      = ???  How to get this?  Is is needed?
    model.analysis    = type;
    QString runID     = data->runID;
