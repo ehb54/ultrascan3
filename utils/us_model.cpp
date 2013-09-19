@@ -93,6 +93,7 @@ US_Model::US_Model()
    requestGUID .clear();
    components  .clear();
    associations.clear();
+   dataDescrip .clear();
 }
 
 bool US_Model::operator== ( const US_Model& m ) const
@@ -111,6 +112,7 @@ bool US_Model::operator== ( const US_Model& m ) const
    if ( global          != m.global          ) return false;
    if ( coSedSolute     != m.coSedSolute     ) return false;
    if ( subGrids        != m.subGrids        ) return false;
+   if ( dataDescrip     != m.dataDescrip     ) return false;
    if ( associations.size() != m.associations.size() ) return false;
 
    for ( int i = 0; i < associations.size(); i++ )
@@ -550,6 +552,7 @@ int US_Model::load_stream( QXmlStreamReader& xml )
             modelGUID       = a.value( "modelGUID"      ).toString();
             editGUID        = a.value( "editGUID"       ).toString();
             requestGUID     = a.value( "requestGUID"    ).toString();
+            dataDescrip     = a.value( "dataDescrip"    ).toString();
             coSedStr        = a.value( "coSedSolute"    ).toString();
             coSedSolute     = ( coSedStr.isEmpty() ) ? -1 : coSedStr.toInt();
             QString subgs   = a.value( "subGrids"       ).toString();
@@ -811,6 +814,9 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
    if ( monteCarlo )
       xml.writeAttribute   ( "monteCarlo",  "1"                             );
 
+   if ( ! dataDescrip.isEmpty() )
+      xml.writeAttribute   ( "dataDescrip", dataDescrip                     );
+
    // Write components
    int  ncomps  = components.size();
    bool notmany = ( ncomps < 400 );
@@ -993,6 +999,7 @@ void US_Model::debug( void )
    qDebug() << "AnalysisType" << (int)analysis;
    qDebug() << "GlobalType" << (int)global;
    qDebug() << "OpticsType" << (int)optics;
+   qDebug() << "data description" << dataDescrip;
 
    for ( int i = 0; i < components.size(); i++ )
    {

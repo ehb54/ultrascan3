@@ -525,6 +525,7 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
       model.variance    = variance;
       model.meniscus    = meniscus;
       model.wavelength  = dwavelen;
+      model.dataDescrip = edata->description;
 
       for ( int cc = 0; cc < model.components.size(); cc++ )
          model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
