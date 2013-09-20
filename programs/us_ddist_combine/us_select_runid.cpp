@@ -273,21 +273,58 @@ DbgLv(1) << "ScDB:     runid" << runid << "expid" << expid;
       if ( jj < 0 )  continue;
       runid            = runIDs[ jj ];
       int     nmodel   = 0;
+      QString ddesc    = "";
+      QStringList  emGUIDs;
+      QStringList  emDescs; 
+      QStringList  emIDs;
 
       query.clear();
       query << "get_model_desc_by_editID" << invID << edtid;
       db.query( query );
 
       while ( db.next() )
-      {  // Save each model for a run
+      {  // Accumulate stats for the models of the current edit
+         QString mID    = db.value( 0 ).toString();
          QString mGUID  = db.value( 1 ).toString();
          QString mdesc  = db.value( 2 ).toString();
          int     kk     = mdesc.lastIndexOf( ".model" );
          mdesc          = ( kk < 1 ) ? mdesc : mdesc.left( kk );
-         QString odesc  = runid + "\t" + mGUID + "\t" + mdesc;
+
+         emGUIDs << mGUID;
+         emDescs << mdesc;
+         emIDs   << mID;
+         nmodel++;
+      }
+
+      for ( int mm = 0; mm < nmodel; mm++ )
+      {  // Search until we have a data (cell) description for the edit models
+         query.clear();
+         query << "get_model_info" << emIDs[ mm ];
+
+         db.query( query );
+         db.next();
+
+         QString mxml   = db.value( 2 ).toString();
+         int     kk     = mxml.indexOf( "dataDescrip=" );
+DbgLv(1) << "ScDB:    mm kk" << mm << kk << "mdesc" << emDescs[mm];
+
+         if ( kk > 0 )
+         {
+            ddesc          = mxml.mid( kk + 13 );
+            kk             = ddesc.indexOf( "\"" );
+            ddesc          = ddesc.left( kk );
+            break;
+         }
+      }
+DbgLv(1) << "ScDB:  ddesc" << ddesc;
+
+      for ( int mm = 0; mm < nmodel; mm++ )
+      {  // Save each model for a run
+         QString mGUID  = emGUIDs[ mm ];
+         QString mdesc  = emDescs[ mm ];
+         QString odesc  = runid + "\t" + mGUID + "\t" + mdesc + "\t" + ddesc;
          mRunIDs << runid;    // Save run ID
          mDescrs << odesc;    // Save model description string
-         nmodel++;
 if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
  DbgLv(1) << "ScDB: odesc" << odesc;
       }
@@ -342,6 +379,7 @@ void US_SelectRunid::scan_local_runs( void )
             {  // Get the description and GUID of model and test it
                QXmlStreamAttributes attr = xml.attributes();
                QString mdesc = attr.value( "description" ).toString();
+               QString ddesc = attr.value( "dataDescrip" ).toString();
                QString mGUID = attr.value( "modelGUID"   ).toString();
                int     kk    = mdesc.lastIndexOf( ".model" );
                        mdesc = ( kk < 1 ) ? mdesc : mdesc.left( kk );
@@ -350,7 +388,8 @@ void US_SelectRunid::scan_local_runs( void )
                if ( runid.isEmpty() || runid.length() < 2 )  continue;
 
                // Save run ID and model string of RunID+GUID+Description
-               QString odesc  = runid + "\t" + mGUID + "\t" + mdesc;
+               QString odesc  = runid + "\t" + mGUID + "\t" + mdesc
+                                      + "\t" + ddesc;
                mRunIDs << runid;
                mDescrs << odesc;
 if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))

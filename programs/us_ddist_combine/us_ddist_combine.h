@@ -28,6 +28,7 @@ class US_DDistr_Combine : public US_Widgets
             QString            runID;    // Run ID
             QString            mGUID;    // Model GUID
             QString            mdescr;   // Model description string
+            QString            ddescr;   // Data triple description string
             QVector< double >  xvals;    // Distrib. X values (e.g., sed.coeffs)
             QVector< double >  yvals;    // Distrib. Y values (concentrations)
             QColor             color;    // Curve color
@@ -96,6 +97,7 @@ class US_DDistr_Combine : public US_Widgets
       QCheckBox*     ck_pcsaismc;
       QCheckBox*     ck_pcsadsmc;
       QCheckBox*     ck_dtall;
+      QCheckBox*     ck_mdltype;
 
       QRadioButton*  rb_pltsw;
       QRadioButton*  rb_pltDw;
@@ -138,13 +140,14 @@ class US_DDistr_Combine : public US_Widgets
       void update_disk_db ( bool );
       void fill_in_desc   ( DistrDesc&, int );
       void write_data     ( QString&, QString&, int& );
-      QString distribID   ( QString );
+      QString distribID   ( QString, QString );
       int  reportDocsFromFiles( QString&, QString&, QStringList&,
                                 US_DB2*, int&, QString& );
       void allMethodChanged  ( int );
       void methodChanged     ( int );
       void list_distributions( void );
       void changedPlotX      ( bool );
+      void ltypeChanged      ( void );
       void scale_montecarlo  ( US_Model&, int );
       bool equivalent        ( double, double, double );
 
