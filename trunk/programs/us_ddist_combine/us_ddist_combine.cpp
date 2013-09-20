@@ -109,6 +109,9 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    sel_plt->addButton( rb_pltff0, 3 );
    sel_plt->addButton( rb_pltvb,  4 );
    sel_plt->addButton( rb_pltMWl, 5 );
+   QLayout* lo_mdltype  = us_checkbox(
+         tr( "Use model descriptions for list and legend" ),
+         ck_mdltype,  false );
 
    le_runid      = us_lineedit( "(current run ID)", -1, true );
    cmb_svproj    = us_comboBox();
@@ -165,6 +168,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addWidget( lb_runids,    row++, 0, 1, 8 );
    leftLayout->addWidget( lw_runids,    row,   0, 1, 8 );
    row    += 2;
+   leftLayout->addLayout( lo_mdltype,   row++, 0, 1, 8 );
    leftLayout->addWidget( lb_models,    row++, 0, 1, 8 );
    //leftLayout->setRowStretch( row, 0 );
    leftLayout->addWidget( lw_models,    row,   0, 5, 8 );
@@ -246,6 +250,9 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    connect( rb_pltMWl,   SIGNAL( toggled     ( bool ) ),
             this,        SLOT(   changedPlotX( bool ) ) );
 
+   connect( ck_mdltype,  SIGNAL( stateChanged( int  ) ),
+            this,        SLOT(   ltypeChanged(      )  ) );
+
    connect( lw_runids,   SIGNAL( currentRowChanged( int ) ),
             this,        SLOT(   runid_select(      int ) ) );
    connect( lw_models,   SIGNAL( currentRowChanged( int ) ),
@@ -304,7 +311,7 @@ void US_DDistr_Combine::load( void )
 {
    QStringList runids;
    QString     runid;
-   te_status->setText( tr( "Building list of selectable run IDs..." ) );
+   te_status->setText( tr( "Building a list of selectable run IDs..." ) );
    qApp->processEvents();
 
    // Open a dialog and get the runID(s)
@@ -317,6 +324,7 @@ void US_DDistr_Combine::load( void )
    int nsprojs = cmb_svproj->count();
    if ( nrunids < 1 )   return;
 
+   te_status->setText( tr( "Updating the distributions list..." ) );
    update_distros();
 //*DEBUG*
 if(dbg_level>0)
@@ -328,11 +336,12 @@ if(dbg_level>0)
   QString mrun=aDescrs[ii].section("\t",0,0);
   QString mgid=aDescrs[ii].section("\t",1,1).left(9)+"...";
   QString mdes=aDescrs[ii].section("\t",2,2);
+  QString ddes=aDescrs[ii].section("\t",3,3);
   bool iter=mdes.contains("-MC_");
   if(iter&&!mdes.contains("_mc0001")) continue;
   mdes="..."+mdes.section(".",1,-1);
   DbgLv(1) << "  ii" << ii << "mrun" << mrun << "mgid" << mgid
-   << "mdes" << mdes << "iter" << iter;
+   << "mdes" << mdes << "iter" << iter << "ddes" << ddes;
  }
 }
 //*DEBUG*
@@ -804,6 +813,7 @@ DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
       if ( distros[ ii ].runID == runID )
       {  // Only (possibly) add item with matching run ID
          QString mdesc = distros[ ii ].mdescr;
+         QString ddesc = distros[ ii ].ddescr;
 
          if ( mfilter )
          {  // If method-filtering, skip any item whose method is not checked
@@ -811,7 +821,7 @@ DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
             if ( ! methods.contains( meth ) )  continue;
          }
 
-         lw_models ->addItem( distribID( mdesc ) );
+         lw_models->addItem( distribID( mdesc, ddesc ) );
       }
    }
 
@@ -905,10 +915,11 @@ void US_DDistr_Combine::possibleColors()
    return;
 }
 
-// Return a distribution ID string that is a shortened model description
-QString US_DDistr_Combine::distribID( QString mdescr )
+// Return a distribution ID string: shortened model or cell description
+QString US_DDistr_Combine::distribID( QString mdescr, QString ddescr )
 {
    const int mxrch = 30;
+   QString distrID;
    QString runID   = mdescr.section( ".",  0, -3 );
            runID   = runID.length() <= mxrch ?
                      runID : runID.left( mxrch ) + "(++)";
@@ -919,8 +930,18 @@ QString US_DDistr_Combine::distribID( QString mdescr )
            iterID  = ( method != "2DSA-FM" )
                    ? iterID.section( "_", -2, -2 )
                    : iterID.section( "_", -1, -1 );
-   QString distrID = runID + "." + triple + "." + andate
-                           + "_" + method + "_" + iterID;
+
+   if ( ck_mdltype->isChecked() )
+   {  // Model-description list/legend type
+      distrID      = runID + "." + triple + "." + andate + "_" + method
+                     + "_" + iterID;
+   }
+   else
+   {  // Data-description list/legend type  (the default)
+      distrID      = ddescr + " ++ " + method + "_";
+      distrID     += ( iterID.contains( "local" ) ) ? andate : iterID;
+      distrID     += "." + runID;
+   }
 
    return distrID;
 }
@@ -1233,7 +1254,7 @@ int US_DDistr_Combine::distro_by_descr( QString& mdesc )
 
    for ( int ii = 0; ii < distros.count(); ii++ )
    {
-      if ( mdesc == distribID( distros[ ii ].mdescr ) )
+      if ( mdesc == distribID( distros[ ii ].mdescr, distros[ ii ].ddescr ) )
       {
          index  = ii;
          break;
@@ -1285,11 +1306,13 @@ void US_DDistr_Combine::update_distros()
       QString mrun = aDescrs[ii].section( "\t", 0, 0 );
       QString mgid = aDescrs[ii].section( "\t", 1, 1 );
       QString mdes = aDescrs[ii].section( "\t", 2, 2 );
+      QString ddes = aDescrs[ii].section( "\t", 3, 3 );
 
       DistrDesc dd;
       dd.runID     = mrun;
       dd.mGUID     = mgid;
       dd.mdescr    = mdes;
+      dd.ddescr    = ddes;
       dd.iters     = mdes.contains( "-MC_" ) ? 1 : 0;
       if ( dd.iters != 0  &&  ! mdes.contains( "_mc0001" ) )  continue;
       if ( distro_by_mguid( mgid ) >= 0 )                     continue;
@@ -1430,10 +1453,21 @@ DbgLv(1) << "  PX=Molec.Wt.log";
          fill_in_desc( *pddist, ii );
 
          pdistrs << *pddist;
-         pdisIDs << distribID( pddist->mdescr );
+         pdisIDs << distribID( pddist->mdescr, pddist->ddescr );
       }
 
       plot_data();
+   }
+}
+
+// Change the contents of the distributions list based on list type change
+void US_DDistr_Combine::ltypeChanged()
+{
+   if ( lw_runids->count() > 0  &&  lw_models->count() > 0 )
+   {
+      list_distributions();
+
+      reset_plot();
    }
 }
 

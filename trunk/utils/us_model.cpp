@@ -815,7 +815,12 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
       xml.writeAttribute   ( "monteCarlo",  "1"                             );
 
    if ( ! dataDescrip.isEmpty() )
+   {
+      dataDescrip.replace( '"', "&quot;" ); // Replace '"' character
+      dataDescrip.replace( '<', "&lt;" );   // Replace '<' character
+      dataDescrip.replace( '>', "&gt;" );   // Replace '>' character
       xml.writeAttribute   ( "dataDescrip", dataDescrip                     );
+   }
 
    // Write components
    int  ncomps  = components.size();
