@@ -3,6 +3,12 @@
 
 #include "us_saxs_util.h"
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
 class umc_sortable_double {
    // sorts the vector in column order
 public:
@@ -28,21 +34,14 @@ class US_Multi_Column
       {
          clear();
          this->filename = filename;
+         is_csv = filename.right( 4 ).contains( ".csv", false );
       }
 
    QString filename;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
    vector < QString >           header;
    vector < vector < double > > data;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
+   bool                         is_csv;
+
    QString info() 
       {
          return QString( "US_Multi_Column filename %1: header %2 rows %3 columns %4\n" )
@@ -55,6 +54,7 @@ class US_Multi_Column
    void    clear() 
       {
          filename = "";
+         is_csv   = false;
          header   .clear();
          data     .clear();
       }
@@ -86,8 +86,8 @@ class US_Multi_Column
          while ( !ts.atEnd() )
          {
             QString     qs  = ts.readLine();
-            QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
-            if ( pos &&
+            QStringList qsl = QStringList::split( QRegExp( is_csv ? "," : "\\s+" ), qs );
+            if ( !pos &&
                  qsl.size() &&
                  qsl[ 0 ].contains( QRegExp( "^\\D" ) ) )
             {
@@ -102,7 +102,7 @@ class US_Multi_Column
 
             for ( unsigned int i = 0; i < qsl.size(); i++ )
             {
-               tmp_data.push_back( qsl[ i ].replace( ",", "." ).toDouble() );
+               tmp_data.push_back( qsl[ i ].stripWhiteSpace().toDouble() );
             }
             data.push_back( tmp_data );
          }
@@ -254,6 +254,8 @@ class US_Multi_Column
             return false;
          }
 
+         bool is_write_csv = use_filename.right( 4 ).contains( ".csv", false );
+
          QFile f( use_filename );
          if ( !overwrite && f.exists() )
          {
@@ -271,7 +273,11 @@ class US_Multi_Column
          {
             for ( unsigned int i = 0; i < header.size(); i++ )
             {
-               ts << header[ i ] << "\t";
+               if ( i )
+               {
+                  ts << ( is_write_csv ? "," : "\t" );
+               }
+               ts << header[ i ];
             }
             ts << endl;
          }
@@ -280,7 +286,11 @@ class US_Multi_Column
          {
             for ( unsigned int j = 0; j < data[ i ].size(); j++ )
             {
-               ts << data[ i ][ j ] << "\t";
+               if ( j )
+               {
+                  ts << ( is_write_csv ? "," : "\t" );
+               }
+               ts << data[ i ][ j ];
             }
             ts << endl;
          }
@@ -288,11 +298,6 @@ class US_Multi_Column
          return true;
       }         
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
    bool avg( vector < double > &result,
              vector < double > &a, 
              vector < double > &b )
@@ -312,11 +317,6 @@ class US_Multi_Column
          }
          return true;
       }
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
    bool join( US_Multi_Column &part1, 
               US_Multi_Column &part2,  
@@ -1060,6 +1060,48 @@ class US_Multi_Column
          return true;
       }      
 
+   bool range( unsigned int col, double min, double max )
+      {
+         errormsg = "";
+         if ( !col )
+         {
+            errormsg = QString( "Error: range: %1, col must be nonzero" ).arg( filename );
+            return false;
+         }
+
+         if ( !data.size() )
+         {
+            errormsg = QString( "Error: range: %1 has no data" ).arg( filename );
+            return false;
+         }
+
+         if ( data[ 0 ].size() < col )
+         {
+            errormsg = QString( "Error: range: %1 has %2 columns and column %3 requested" )
+               .arg( filename )
+               .arg( data[ 0 ].size() )
+               .arg( col )
+               ;
+            return false;
+         }
+
+         col--;
+
+         vector < vector < double > > new_data;
+
+         for( unsigned int i = 1; i < data.size(); i++ )
+         {
+            if ( data[ i ][ col ] >= min && 
+                 data[ i ][ col ] <= max )
+            {
+               new_data.push_back( data[ i ] );
+            }
+         }
+            
+         data = new_data;
+         return true;
+      }      
+
    bool sort( unsigned int col )
       {
          errormsg = "";
@@ -1192,17 +1234,7 @@ class US_Multi_Column
          return exp( -( x * x ) ) / sqrt( 2e0 * 3.14159265358978323e0 );
       }
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
    vector < double > getnormal( unsigned int points )
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
       {
          vector < double > result;
          if ( !points )
@@ -1229,5 +1261,11 @@ class US_Multi_Column
       }
 
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif

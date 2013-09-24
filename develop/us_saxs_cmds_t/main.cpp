@@ -81,6 +81,8 @@ int main (int argc, char **argv)
              "              \tsorts on col\n"
              "reverse       \toutfile infile\n"
              "              \treverses row order\n"
+             "range         \toutfile infile col min max\n"
+             "              \treverses row order\n"
              "pmtest        \toutfile testfile\n"
              "              test parsimonious models write model to outfile\n"
              "pm            \tcontrolfile\n"
@@ -2114,6 +2116,40 @@ int main (int argc, char **argv)
       if ( !mc.read    () ||
            !mc.uniquify( col, sumcol ) ||
            !mc.write   ( outfile, true ) )
+      {
+         cout << mc.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+      cout << mc.info();
+      exit( 0 );
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "range" ) 
+   {
+      if ( cmds.size() != 6 ) 
+      {
+         printf(
+                "usage: %s %s outfile infile col min max\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString      outfile         = cmds[ p++ ];
+      QString      infile          = cmds[ p++ ];
+      unsigned int col             = cmds[ p++ ].toUInt();
+      double       min             = cmds[ p++ ].toDouble();
+      double       max             = cmds[ p++ ].toDouble();
+
+      US_Multi_Column mc( infile );
+      if ( !mc.read  () ||
+           !mc.range( col, min, max ) ||
+           !mc.write ( outfile, true ) )
       {
          cout << mc.errormsg << endl;
          exit( errorbase );
