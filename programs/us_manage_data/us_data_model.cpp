@@ -173,10 +173,11 @@ DbgLv(1) << "gTr: db+local triples" << triples.size();
 }
 
 // Set run and triple filters
-void US_DataModel::setFilters( QString a_runf, QString a_tripf )
+void US_DataModel::setFilters( QString a_runf, QString a_tripf, QString a_srcf )
 {
    filt_run    = a_runf;   // Filter string for runID
    filt_triple = a_tripf;  // Filter string for triple
+   filt_source = a_srcf;   // Filter string for source (DB/local)
 }
 
 // Scan the database and local disk for R/E/M/N data sets
@@ -197,6 +198,11 @@ DbgLv(1) << "ScnD: Lcl sort done" << nowTime();
 
    merge_dblocal();        // Merge database and local descriptions
 DbgLv(1) << "ScnD: Merge done   " << nowTime();
+
+   if ( filt_source.startsWith( "Exclude" ) )
+   {
+      exclude_trees();     // Exclude DB-Only or Local-Only trees
+   }
 }
 
 // Get data description object at specified row
@@ -260,6 +266,12 @@ void US_DataModel::scan_dbase( )
    QString     contents;
    int         irecID;
    int         istep = 0;
+
+   if ( ! filt_source.isEmpty()  &&  filt_source == "Local Only" )
+   {  // If source filter is "Local-only", skip DB scan
+      ddescs.clear();
+      return;
+   }
 
    if ( chgrows.size() > 0 )
    {  // If changes since last scan, just modify existing db descriptions
@@ -751,6 +763,11 @@ void US_DataModel::scan_local( )
    ldescs.clear();         // local descriptions
    adescs.clear();         // all descriptions
 
+   if ( ! filt_source.isEmpty()  &&  filt_source == "DB Only" )
+   {  // If source filter is "DB-only", skip Local scan
+      return;
+   }
+
    // start with AUC (raw) and edit files in directories of resultDir
    bool        rfilt    = ( ! filt_run   .isEmpty()  &&  filt_run    != "ALL" );
    bool        tfilt    = ( ! filt_triple.isEmpty()  &&  filt_triple != "ALL" );
@@ -1169,6 +1186,53 @@ DbgLv(2) << " a/d/l sizes" << adescs.size() << ddescs.size() << ldescs.size();
    progress->setValue( nstep );
    lb_status->setText( tr( "Data Merge Complete" ) );
    qApp->processEvents();
+}
+
+// Exclude DB-only or Local-only trees
+void US_DataModel::exclude_trees( )
+{
+   QVector< DataDesc > tdess = adescs;        // temporary descr. vector
+   DataDesc            desct;                 // temporary descr. entry
+   int                 krecs = tdess.size();
+   int                 nrecs = 0;
+   bool                excdb = filt_source.contains( "DB" ); 
+   bool                exctr = false;
+   adescs.clear();
+
+   for ( int ii = 0; ii < krecs; ii++ )
+   {
+      desct        = tdess[ ii ];
+
+      if ( desct.recType == 1 )
+      {  // If head of tree, test whether DB/Local/Both
+         bool isDba   = ( ( desct.recState & REC_DB ) != 0 );
+         bool isLoc   = ( ( desct.recState & REC_LO ) != 0 );
+
+         if ( isDba && isLoc )
+         {  // If both, tree should not be excluded
+            exctr        = FALSE;
+         }
+
+         else if ( isDba )
+         {  // If DB-Only, exclude by Exclude-DB-Only filter
+            exctr        = excdb;
+         }
+
+         else
+         {  // If Local-Only, exclude by Exclude-Local-Only filter
+            exctr        = ! excdb;
+         }
+      }
+
+      if ( exctr )
+      {  // Tree is excluded, so skip this record
+         continue;
+      }
+
+      // Otherwise, copy to re-created descriptions vector
+      adescs << desct;
+      nrecs++;
+   }
 }
 
 // sort a data-set description vector
@@ -1669,26 +1733,6 @@ DbgLv(2) << "RvwD: ii ityp rtyp nrecs" << ii << ityp << rtyp << nrecs;
       cGUID    = sorts[ ii ].section( ":", 2, 2 );     // current rec GUID
       kmult    = 0;                                    // flag no multiples yet
 
-#if 0
-      for ( int jj = 0; jj < ii; jj++ )
-      {  // review all the records preceeding this one
-         pGUID    = sorts[ jj ].section( ":", 2, 2 );  // a previous GUID
-
-         if ( pGUID == cGUID )
-         {  // found a duplicate
-            kmult++;
-
-            if ( ! multis.contains( jj ) )
-            {  // not yet marked, so mark previous as multiple
-               multis << jj;    // save index
-               nmult++;         // bump count
-            }
-
-            else  // if it was marked, we can quit the inner loop
-               break;
-         }
-      }
-#endif
       int jj = tGUIDs.indexOf( cGUID );
 
       if ( jj >= 0 )

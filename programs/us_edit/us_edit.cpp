@@ -543,6 +543,7 @@ void US_Edit::reset( void )
    cb_rpms      ->clear();
    editGUIDs     .clear();
    editIDs       .clear();
+   files         .clear();
    expd_radii    .clear();
    expi_wvlns    .clear();
    rawi_wvlns    .clear();
@@ -806,6 +807,7 @@ void US_Edit::load( void )
    sd_offs   .clear();
    sd_knts   .clear();
    cb_triple->clear();
+   files     .clear();
    delete dialog;
 
    if ( triples.size() == 0 )

@@ -767,6 +767,15 @@ DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
          }
       }
 
+      if ( my_group == 0 )
+      {  // Update the tar file of outputs in case of an aborted run
+         QDir        d( "." );
+         QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
+         files.removeOne( "analysis-results.tar" );
+         US_Tar tar;
+         tar.create( "analysis-results.tar", files );
+      }
+
       if ( mc_iteration < mc_iterations )
       {  // Before last iteration:  check if max is reset based on time limit
          time_mc_iterations();    // Test if near time limit
