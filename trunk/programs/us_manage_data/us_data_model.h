@@ -50,7 +50,7 @@ class US_DataModel : public QObject
       void      setSiblings( QObject*,      QObject* );
       void      getRunIDs  ( QStringList&            );
       void      getTriples ( QStringList&,  QString  );
-      void      setFilters ( QString,       QString  );
+      void      setFilters ( QString,       QString, QString );
       US_DB2*       dbase   (      void );
       QString       invtext (      void );
       QProgressBar* progrBar(      void );
@@ -102,6 +102,7 @@ class US_DataModel : public QObject
       QString       cell;
       QString       filt_run;
       QString       filt_triple;
+      QString       filt_source;
 
       QPoint        cur_pos;
 
@@ -110,6 +111,7 @@ class US_DataModel : public QObject
       void scan_dbase(     void );
       void scan_local(     void );
       void merge_dblocal(  void );
+      void exclude_trees(  void );
       void review_dbase(   void );
 
       void sort_descs(     QVector< DataDesc >& descs );

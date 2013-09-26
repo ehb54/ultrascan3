@@ -83,6 +83,7 @@ class US_ManageData : public US_Widgets
 
       QComboBox*    cb_runid;
       QComboBox*    cb_triple;
+      QComboBox*    cb_source;
 
       int           personID;
       int           ntrows;

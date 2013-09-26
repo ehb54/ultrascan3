@@ -141,6 +141,16 @@ DbgLv(1) << "GUI setup begun";
    dctlLayout->addWidget( lb_triple, row,   0, 1, 2 );
    dctlLayout->addWidget( cb_triple, row++, 2, 1, 6 );
 
+   QLabel* lb_source = us_label( tr( "Source:" ) );
+   cb_source     = us_comboBox();
+   cb_source ->addItem( "ALL" );
+   cb_source ->addItem( "DB Only" );
+   cb_source ->addItem( "Local Only" );
+   cb_source ->addItem( "Exclude Local-Only Trees" );
+   cb_source ->addItem( "Exclude DB-Only Trees" );
+   dctlLayout->addWidget( lb_source, row,   0, 1, 2 );
+   dctlLayout->addWidget( cb_source, row++, 2, 1, 6 );
+
    pb_invtor->setToolTip( 
       tr( "Use an Investigator dialog to set the database person ID" ) );
    pb_scanda->setToolTip(
@@ -157,6 +167,8 @@ DbgLv(1) << "GUI setup begun";
       tr( "Select a single run ID with which to populate the data tree " ) );
    cb_triple->setToolTip(
       tr( "Select a single triple of the run to populate the data tree " ) );
+   cb_source->setToolTip(
+      tr( "Select a filter to limit records based on source (DB/Local) " ) );
 
    QLabel* lb_info2 = us_banner( tr( "User Data Sets Summary:" ) );
    dctlLayout->addWidget( lb_info2,  row++, 0, 1, 8 );
@@ -206,6 +218,7 @@ DbgLv(1) << "te_status fw fh  mw mh" << fontw << fonth << " " << minsw << minsh;
 
    cb_runid ->setMaximumSize( ( maxsw * 3 ) / 4, fonth * 2 );
    cb_triple->setMaximumSize( ( maxsw * 3 ) / 4, fonth * 2 );
+   cb_source->setMaximumSize( ( maxsw * 3 ) / 4, fonth * 2 );
 
    te_status->setMinimumSize( minsw, minsh );
    te_status->setMaximumSize( maxsw, maxsh );
@@ -468,8 +481,9 @@ void US_ManageData::scan_data()
 {
    QString rF = cb_runid ->currentText();
    QString tF = cb_triple->currentText();
+   QString sF = cb_source->currentText();
 DbgLv(1) << "ScnDM:  Start          " << nowTime();
-   da_model->setFilters( rF, tF ); // Set any run and triple filters
+   da_model->setFilters( rF, tF, sF );  // Set any run,triple,source filters
 
    da_model->scan_data();          // Scan the data
 DbgLv(1) << "ScnDM:  Scan Done      " << nowTime();
@@ -634,7 +648,16 @@ void US_ManageData::reportDataStatus()
       }
    }
 
-   // reformat and display report on record counts
+   // In case there was filtering, recompute counts
+   ndrecs     = ndraws + ndedts + ndmods + ndnois;
+   nlrecs     = nlraws + nledts + nlmods + nlnois;
+   ncrecs     = ndrecs + nlrecs;
+   ncraws     = ndraws + nlraws;
+   ncedts     = ndedts + nledts;
+   ncmods     = ndmods + nlmods;
+   ncnois     = ndnois + nlnois;
+
+   // Reformat and display report on record counts
    te_status->setText(
       QString().sprintf( "%5d", ncrecs ) +
       tr( " Combined Total data sets;\n  "    ) +
