@@ -105,6 +105,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QLabel        *lbl_selected;
       // QPushButton   *pb_plot_files;
       QPushButton   *pb_avg;
+      QPushButton   *pb_asum;
       QPushButton   *pb_normalize;
       QPushButton   *pb_conc_avg;
 
@@ -305,6 +306,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       bool                         adjacent_ok( QString name );
 
       void                         avg     ( QStringList files );
+      void                         asum    ( QStringList files );
       void                         conc_avg( QStringList files );
       QString                      last_created_file;
       void                         zoom_info();
@@ -393,6 +395,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void view();
       void rescale();
       void avg();
+      void asum();
       void normalize();
       void conc_avg();
       void set_buffer();
