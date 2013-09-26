@@ -1944,6 +1944,9 @@ int main (int argc, char **argv)
       }
       errorbase--;
 
+      US_Multi_Column result_linear_join_csv = result_linear_join;
+      result_linear_join_csv.filename.replace( QRegExp( "\\.txt$" ), ".csv" );
+
       if ( 
           // !result_spline_asc.write( "", true ) ||
           // !result_spline_des.write( "", true ) ||
@@ -1951,9 +1954,10 @@ int main (int argc, char **argv)
           // !result_quadratic_asc.write( "", true ) ||
           // !result_quadratic_des.write( "", true ) ||
           // !result_quadratic_join.write( "", true ) ||
-          !result_linear_asc.write( "", true ) ||
-          !result_linear_des.write( "", true ) ||
-          !result_linear_join.write( "", true )
+          !result_linear_asc     .write( "", true ) ||
+          !result_linear_des     .write( "", true ) ||
+          !result_linear_join    .write( "", true ) ||
+          !result_linear_join_csv.write( "", true )
           )
       {
          cout << mc1.errormsg << endl;
