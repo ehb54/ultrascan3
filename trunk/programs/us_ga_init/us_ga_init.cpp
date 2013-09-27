@@ -1405,6 +1405,8 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
 
    sk_distro.clear();
    wk_distro.clear();
+   sv_distro.clear();
+   wv_distro.clear();
 
    QString tstr = run_name+ "\n" + analys_name + "\n (" + method + ")";
    data_plot->setTitle( tstr );
