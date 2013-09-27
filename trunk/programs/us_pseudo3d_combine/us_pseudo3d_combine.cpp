@@ -347,7 +347,6 @@ void US_Pseudo3D_Combine::reset( void )
    data_plot->detachItems( QwtPlotItem::Rtti_PlotSpectrogram );
    data_plot->replot();
  
-   cnst_vbar  = true;
    plot_s     = true;
    plot_k     = true;
    need_save  = true;
@@ -585,7 +584,7 @@ DbgLv(2) << "(3)   need_save sv_plot" << need_save << sv_plot;
       QString runid  = tsys->run_name.section( ".",  0, -2 );
       QString triple = tsys->run_name.section( ".", -1, -1 );
       QString report = QString( "pseudo3d_" )
-         + ( cnst_vbar ? "ff0_" : "vbar_" ) + ( plot_s ? "s" : "MW" );
+         + ( plot_k ? "ff0_" : "vbar_" ) + ( plot_s ? "s" : "MW" );
 
       QString ofdir  = US_Settings::reportDir() + "/" + runid;
       QDir dirof( ofdir );
@@ -869,6 +868,9 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
    tsys.analys_name  = asys.section( "_",  0, -4 ) + "_"
                      + asys.section( "_", -2, -1 );
    tsys.method       = model.typeText();
+   tsys.method       = ( mdesc.contains( "-CG" ) )
+                       ? tsys.method.replace( "2DSA", "2DSA-CG" )
+                       : tsys.method;
    tsys.editGUID     = model.editGUID;
 DbgLv(1) << "LD: method" << tsys.method << "mdesc" << mdesc;
 

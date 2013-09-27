@@ -31,6 +31,10 @@
       label="2-D Spectrum Analysis - Global" />
     <application name="2DSA-GL-MC"
       label="2-D Spectrum Analysis - Global, Monte Carlo" />
+    <application name="2DSA-CG"
+      label="2-D Spectrum Analysis - Custom Grid" />
+    <application name="2DSA-CG-MC"
+      label="2-D Spectrum Analysis - Custom Grid, Monte Carlo" />
     <application name="dcdt" label="Time Derivative" />
     <application name="vHW" label="van Holde - Weischet Analysis" />
     <application name="GA" label="Genetic Algorithm Analysis" />
