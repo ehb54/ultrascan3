@@ -936,7 +936,7 @@ void US_GA_Initialize::plot_2dim( void )
    data_plot->replot();
 
    pb_reset->setEnabled( true );
-   pb_autassb->setEnabled( !monte_carlo && plot_k );
+   pb_autassb->setEnabled( !monte_carlo );
 }
 
 // plot data 3-D
@@ -1003,7 +1003,7 @@ void US_GA_Initialize::plot_3dim( void )
    data_plot->replot();
 
    pb_reset  ->setEnabled( true );
-   pb_autassb->setEnabled( !monte_carlo && plot_k );
+   pb_autassb->setEnabled( !monte_carlo );
 }
 
 // update pseudo-3d resolution factor
@@ -1162,7 +1162,7 @@ void US_GA_Initialize::select_plot2d()
    replot_data();
 
    pb_mandrsb->setEnabled( true );
-   pb_autassb->setEnabled( !monte_carlo && plot_k );
+   pb_autassb->setEnabled( !monte_carlo );
 }
 
 // select 3-dimensional plot
@@ -1189,7 +1189,7 @@ void US_GA_Initialize::select_plot3d()
    replot_data();
 
    pb_mandrsb->setEnabled( true );
-   pb_autassb->setEnabled( !monte_carlo && plot_k );
+   pb_autassb->setEnabled( !monte_carlo );
 }
 
 // select S (sed. coeff.) for horizontal axis
@@ -1383,6 +1383,8 @@ DbgLv(0) << "  NO Model components";
    // parse model information from its description
    mdesc        = mdesc.section( sep, 1, 1 );
    method       = model.typeText();
+   method       = mdesc.contains( "-CG" )
+                  ? method.replace( "2DSA", "2DSA-CG" ) : method;
    run_name     = mdesc.section( ".",  0, -3 );
    QString asys = mdesc.section( ".", -2, -2 );
    analys_name  = asys.section( "_", 0, 1 ) + "_"
@@ -1731,7 +1733,7 @@ void US_GA_Initialize::set_limits()
       " item and responding/defaulting Yes in the resulting dialog." ) );
 
 DbgLv(1) << "SL: autoassn plot_k" << plot_k;
-   pb_autassb->setEnabled( !monte_carlo && plot_k );
+   pb_autassb->setEnabled( !monte_carlo );
 }
 
 // Sort distribution solute list by s,k values and optionally reduce
