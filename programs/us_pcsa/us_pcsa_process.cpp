@@ -1251,7 +1251,20 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
                             "Levenberg-Marquardt fit ...\n" ), true );
 
    elite_limits( mrecs, minkv, maxkv, minp1, maxp1, minp2, maxp2 );
+#if 0
+const double par1lo=0.001;
+const double par1up=0.5;
+const double par2lo=0.0;
+const double par2up=1.0;
+minkv=klolim;
+maxkv=kuplim;
+minp1=(minp1+par1lo)*0.5;
+maxp1=(maxp1+par1up)*0.5;
+minp2=(minp2+par2lo)*0.5;
+maxp2=(maxp2+par2up)*0.5;
+#endif
 
+   double ibm_rmsd = mrecs[ 0 ].rmsd;  // Initial Best Model RMSD
    double *t     = tarray;
    double *y     = yarray;
    double *par   = parray;
@@ -1310,10 +1323,10 @@ DbgLv(0) << "   lmcfit xs,ys xe,ye rmsd" << slolim << ys << suplim << ye
    else if ( curvtype == 1 )
    { // Fit with Levenberg-Marquardt for increasing-sigmoid curves
       //control.ftol     = 30.0 * DBL_EPSILON;
-      control.ftol     = 1.2e-3;
+      control.ftol     = 1.0e-5;
       control.xtol     = control.ftol;
       control.gtol     = control.ftol;
-      control.epsilon  = 1.0e-3;
+      control.epsilon  = ibm_rmsd * 8.0e-5;
       fit_function_IS( -1.0, par );    // Make sure to reset eval. function
 DbgLv(0) << "lmcurve_fit (IS) with par1,par2" << par[0] << par[1]
    << QString().sprintf( "%14.8e %14.8e", par[0], par[1] )
