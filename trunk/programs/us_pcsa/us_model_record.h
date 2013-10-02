@@ -53,7 +53,8 @@ class ModelRecord
       //! A test for ordering model descriptions. Sort by variance.
       bool operator< ( const ModelRecord& mrec ) const
       {
-         return ( variance < mrec.variance );
+         return ( variance < mrec.variance  ||
+                  ( variance == mrec.variance && taskx < mrec.taskx ) );
       }
 
    public slots:
@@ -62,11 +63,11 @@ class ModelRecord
 
       //! Static public function to compute straight line model records
       static int compute_slines( double&, double&, double&, double&, double&,
-            int&, QVector< ModelRecord >& );
+            int&, double*, QVector< ModelRecord >& );
 
       //! Static public function to compute straight line model records
       static int compute_sigmoids( int&, double&, double&, double&, double&,
-            int&, int&, QVector< ModelRecord >& );
+            int&, int&, double*, QVector< ModelRecord >& );
 
 };
 #endif

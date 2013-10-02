@@ -37,7 +37,7 @@ void ModelRecord::clear_data( void )
 // Static public function to compute straight lines
 int ModelRecord::compute_slines( double& smin, double& smax,
       double& fmin, double& fmax, double& finc, int& nlpts,
-      QVector< ModelRecord >& mrecs )
+      double* parlims, QVector< ModelRecord >& mrecs )
 {
    mrecs.clear();
    ModelRecord mrec;
@@ -51,6 +51,21 @@ int ModelRecord::compute_slines( double& smin, double& smax,
    double  xrng  = smax - smin;
    double  xinc  = xrng / prng;
    double  ystr  = fmin;
+   if ( parlims[ 0 ] < 0.0 )
+   {
+      parlims[ 0 ] = fmin;
+      parlims[ 1 ] = fmax;
+      parlims[ 2 ] = fmin;
+      parlims[ 3 ] = fmax;
+   }
+   double  yslo  = parlims[ 0 ];
+   double  yshi  = parlims[ 1 ];
+   double  yelo  = parlims[ 2 ];
+   double  yehi  = parlims[ 3 ];
+   double  ysinc = ( yshi - yslo ) / prng;
+   double  yeinc = ( yehi - yelo ) / prng;
+           ystr  = yslo;
+
    int     mndx  = 0;
    int     nkpts = qRound( ( fmax - fmin ) / finc ) + 1;
    int     nmodl = nkpts * nkpts;
@@ -59,7 +74,7 @@ int ModelRecord::compute_slines( double& smin, double& smax,
    // Generate straight lines
    for ( int ii = 0; ii < nkpts; ii++ )
    { // Loop over k start values
-      double yend = fmin;
+      double yend = yelo;
 
       for ( int jj = 0; jj < nkpts; jj++ )
       { // Loop over k end values
@@ -91,11 +106,11 @@ int ModelRecord::compute_slines( double& smin, double& smax,
 // << mrec.par1 << mrec.par2;
          mrecs << mrec;
 
-         yend   += finc;
+         yend   += yeinc;
          mndx++;
       } // END: k-end loop
 
-      ystr   += finc;
+      ystr   += ysinc;
    } // END: k-start loop
 
    return nmodl;
@@ -104,12 +119,19 @@ int ModelRecord::compute_slines( double& smin, double& smax,
 // Static public function to compute sigmoid curves
 int ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
       double& fmin, double& fmax, int& nkpts, int& nlpts,
-      QVector< ModelRecord >& mrecs )
+      double* parlims, QVector< ModelRecord >& mrecs )
 {
-   const double p1lo  = 0.001;
-   const double p1up  = 0.5;
-   const double p2lo  = 0.0;
-   const double p2up  = 1.0;
+   if ( parlims[ 0 ] < 0.0 )
+   {
+      parlims[ 0 ] = 0.001;
+      parlims[ 1 ] = 0.5;
+      parlims[ 2 ] = 0.0;
+      parlims[ 3 ] = 1.0;
+   }
+   double  p1lo = parlims[ 0 ];
+   double  p1up = parlims[ 1 ];
+   double  p2lo = parlims[ 2 ];
+   double  p2up = parlims[ 3 ];
 
    mrecs.clear();
    ModelRecord mrec;

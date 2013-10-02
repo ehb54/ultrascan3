@@ -35,6 +35,8 @@ US_pcsaProcess::US_pcsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    kstask           = 0;
    varimin          = 9.e+9;
    minvarx          = 99999;
+
+   parlims[ 0 ]     = -1.0;
 }
 
 // Get maximum used memory
@@ -46,7 +48,8 @@ long int US_pcsaProcess::max_rss( void )
 // Start a specified PCSA fit run
 void US_pcsaProcess::start_fit( double sll, double sul, double kll, double kul,
                                 double kin, int    res, int    typ, int    nth,
-                                int    noi, double alf )
+                                int    noi, int  lmmxc, int  gfits,
+                                double gfthr, double alf )
 {
 DbgLv(1) << "PC(pcsaProc): start_fit()";
    abort       = false;
@@ -63,6 +66,9 @@ DbgLv(1) << "PC(pcsaProc): start_fit()";
    alpha       = alf;
    alpha_fx    = 0.0;
    alpha_lm    = 0.0;
+   fi_itermax  = gfits;
+   rd_thresh   = gfthr;
+   lmmxcall    = lmmxc;
 
    if ( alpha < 0.0 )
    {  // Negative alpha acts as flag
@@ -85,6 +91,11 @@ DbgLv(1) << "PC(pcsaProc): start_fit()";
          }
       }
    }
+
+   pfi_rmsd    = 1.0e+99;
+   cfi_rmsd    = pfi_rmsd;
+   fi_iter     = 1;
+
 DbgLv(1) << "PC: alf alpha lm fx scn"
    << alf << alpha << alpha_lm << alpha_fx << alpha_scn;
    errMsg      = tr( "NO ERROR: start" );
@@ -322,10 +333,10 @@ DbgLv(1) << "done: vari bvol" << mrec.variance << bvol
    ktimes     = ktimes - ktimeh * 3600 - ktimem * 60;
 
    // compose final status message
-   QString pmsg = pmessage_head() +
-      tr( "The Solution has converged...\n"
-          "Threads:  %1 ;   Models:  %2\nRun time:  " )
-      .arg( nthreads ).arg( nmtasks );
+   QString pmsg = tr( "The Solution has converged...\n"
+                      "Threads:  %1 ;   Models:  %2 ;  Iterations:  %3 ."
+                      "\nRun time:  " )
+                  .arg( nthreads ).arg( nmtasks ).arg( fi_iter );
 
    if ( ktimeh > 0 )
       pmsg += tr( "%1 hr., %2 min., %3 sec.;" )
@@ -352,6 +363,7 @@ DbgLv(1) << "done: vari bvol" << mrec.variance << bvol
    }
    else if ( curvtype == 1  ||  curvtype == 2 )
    {
+#if 0
       int    nkpts  = (int)kincr;
       int    p1ndx  = mrec.taskx / nkpts;
       int    p2ndx  = mrec.taskx - ( p1ndx * nkpts );
@@ -362,6 +374,12 @@ DbgLv(1) << "done: vari bvol" << mrec.variance << bvol
       double par2   = (double)p2ndx / krng;
       pmsg += tr( "  the curve with par1=%1 and par2=%2." )
               .arg( par1 ).arg( par2 );
+DbgLv(1) << "FIN_FIN: par1,par2" << par1 << par2 << "mpar1,mpar2"
+ << mrec.par1 << mrec.par2;
+#endif
+      pmsg += tr( "  the curve with par1=%1 and par2=%2." )
+              .arg( mrec.par1 ).arg( mrec.par2 );
+DbgLv(1) << "FIN_FIN: par1,par2" << mrec.par1 << mrec.par2;
    }
 
    emit message_update( pmsg, false );          // signal final message
@@ -371,6 +389,19 @@ DbgLv(1) << "FIN_FIN: maxrss memmb nthr" << maxrss << memmb << nthreads
  << " nsubg noisf" << nmtasks << noisflag;
 DbgLv(1) << "FIN_FIN:   kcsteps nctotal" << kcsteps << nctotal;
 DbgLv(1) << "FIN_FIN:    alpha_fx" << alpha_fx;
+   pfi_rmsd      = cfi_rmsd;
+   cfi_rmsd      = mrecs[ 0 ].rmsd;
+   rd_frac       = ( fi_iter > 1 ) ?
+                   qAbs( ( pfi_rmsd - cfi_rmsd ) / pfi_rmsd ) :
+                   rd_thresh * 2;
+DbgLv(1) << "FIN_FIN:    rd_frac rd_thresh" << rd_frac << rd_thresh;
+
+   if ( fi_iter < fi_itermax  &&  rd_frac > rd_thresh )
+   {
+      restart_fit();
+
+      return;
+   }
 
    emit process_complete( 8 );     // signal that L-M is starting
 
@@ -544,6 +575,7 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
       if ( minvarx < orecx )
       { // Clear vectors from the previous minimum
          mrecs[ minvarx ].clear_data();
+DbgLv(1) << "PJ: CLEAR: VARI VMIN ORECX" << variance << varimin << orecx;
       }
       // Save information from the minimum-variance model record
       varimin         = variance;
@@ -554,8 +586,9 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
       mrec.ri_noise   = wresult.ri_noise;
 DbgLv(1) << "PJ: MINVARX=" << minvarx;
    }
-   else
+   else if ( variance > varimin )
    { // Clear vectors from a model record that is not minimum-variance
+DbgLv(1) << "PJ:  CLEAR: VARI VMIN MVARX" << variance << varimin << minvarx;
       mrec.clear_data();
    }
 
@@ -605,6 +638,8 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx orecx" << taskx << orecx
 
       qSort( mrecs );                    // Sort model records by variance
 
+DbgLv(1) << "THR_FIN: thrn" << thrn << " mrecs size" << mrecs.size()
+ << "mrec0 taskx,vari" << mrecs[0].taskx << mrecs[0].variance;
       process_fxfinal( mrecs[ 0 ] );
 //*DBG*
 if (dbg_level>0) {
@@ -661,8 +696,9 @@ QString US_pcsaProcess::pmessage_head()
                          "?UNKNOWN?"
                        };
    QString ctype = QString( ctp[ curvtype ] );
-   return tr( "Analysis of %1 %2 %3-solute models.\n" )
-          .arg( nmtasks ).arg( ctype ).arg( cresolu );
+   return tr( "Analysis of %1 %2 %3-solute models.\n"
+              "Grid Fit Iteration %4.\n" )
+          .arg( nmtasks ).arg( ctype ).arg( cresolu ).arg( fi_iter );
 }
 
 // Get next job from queue, insuring we get the lowest depth
@@ -696,7 +732,7 @@ DbgLv(1) << "SLMO: slo sup klo kup kin res" << slo << sup << klo << kup
 
    // Compute straight-line model records
    int nmodels = ModelRecord::compute_slines( slo, sup, klo, kup, kin,
-                                              res, mrecs );
+                                              res, parlims, mrecs );
 
    // Update the solutes with vbar and add to task solutes list
    for ( int ii = 0; ii < nmodels; ii++ )
@@ -726,7 +762,7 @@ DbgLv(1) << "SGMO: ctp slo sup klo kup nkp nlp" << ctp << slo << sup
 
    // Compute sigmoid model records
    int nmodels = ModelRecord::compute_sigmoids( ctp, slo, sup, klo, kup,
-                                                nkpts, nlpts, mrecs );
+                                                nkpts, nlpts, parlims, mrecs );
 
    // Update the solutes with vbar and add to task solutes list
    for ( int ii = 0; ii < nmodels; ii++ )
@@ -1214,12 +1250,12 @@ void US_pcsaProcess::LevMarq_fit( void )
 {
    const int eslnc = 32;   // Estimated straight-line LM eval calls
    const int esigc = 44;   // Estimated sigmoid LM eval calls
-//   static US_LM::LM_Control control;
-//   static US_LM::LM_Control control( 1.e-7, 1.e-7, 1.e-7, 1.e-7,
-//                                     100., 100, 0, 0 );
    static US_LM::LM_Control control( 1.e-5, 1.e-5, 1.e-5, 1.e-5,
-//                                     100., 100, 1,  3 );
                                      100., 100, 0,  3 );
+   if ( lmmxcall < 1 )
+      return;
+
+   control.maxcall      = lmmxcall;
    static US_LM::LM_Status  status;
    static int    n_par  = 2;
    static int    m_dat  = 3;
@@ -1570,15 +1606,20 @@ void US_pcsaProcess::elite_limits( QVector< ModelRecord >& mrecs,
       double& minkv, double& maxkv, double& minp1, double& maxp1,
       double& minp2, double& maxp2 )
 {
+   double m0p1    = mrecs[ 0 ].par1;
+   double m0p2    = mrecs[ 0 ].par2;
+   const double efrac = 0.1;
    int nmr        = mrecs.size();
-//   int nelite     = ( nmr * 2 ) / 10;
-   int nelite     = ( nmr * 5 + 50 ) / 100;         // Elite is top 5%, between
-       nelite     = qMin( nmr, qMax( 5, nelite ) ); //  5 and all models
+   int nelite     = qRound( efrac * nmr );          // Elite is top 10%
+   int maxel      = nmr / 2;
+   int minel      = qMin( maxel, 7 );
+   nelite         = qMin( nelite, maxel );          // At most half of all
+   nelite         = qMax( nelite, minel );          // At least 7
 DbgLv(0) << " ElLim: nmr nelite nmtasks" << nmr << nelite << nmtasks;
 DbgLv(1) << " ElLim: in minkv maxkv" << minkv << maxkv;
 DbgLv(1) << " ElLim: in min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
 
-   for ( int ii = 0; ii < nelite; ii++ )
+   for ( int ii = 0; ii < nmr; ii++ )
    {
 if(ii<3||(ii+4)>nelite)
 DbgLv(1) << " ElLim:   ii" << ii << "par1 par2"
@@ -1591,6 +1632,11 @@ DbgLv(1) << " ElLim:   ii" << ii << "par1 par2"
       maxp1          = qMax( maxp1, mrecs[ ii ].par1  );
       minp2          = qMin( minp2, mrecs[ ii ].par2  );
       maxp2          = qMax( maxp2, mrecs[ ii ].par2  );
+
+      if ( ( ii + 1 ) >= nelite  &&
+           minp1 < m0p1  &&  maxp1 > m0p1  &&
+           minp2 < m0p2  &&  maxp2 > m0p2 )
+         break;
    }
 DbgLv(0) << " ElLim: out minkv maxkv" << minkv << maxkv;
 DbgLv(0) << " ElLim: out min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
@@ -1758,5 +1804,117 @@ DbgLv(1) << "CFin:model: desc analys vari" << model.description
    emit progress_update( mrec.variance ); 
    QApplication::restoreOverrideCursor();
 DbgLv(0) << "LMf: recomputed variance rmsd" << mrec.variance << rmsd;
+}
+
+// Restart the curve grid iteration sequence
+void US_pcsaProcess::restart_fit()
+{
+   errMsg        = tr( "NO ERROR: start" );
+   maxrss        = 0;
+   varimin       = 9.e+9;
+   minvarx       = 99999;
+DbgLv(1) << "RF: nmr" << mrecs.size() << "cfi_rmsd" << cfi_rmsd;
+
+   wkstates .resize(  nthreads );
+   wthreads .clear();
+   job_queue.clear();
+
+   orig_sols.clear();
+
+DbgLv(1) << "RF: sll sul" << slolim << suplim
+ << " kll kul kin" << klolim << kuplim << kincr
+ << " type reso nth noi" << curvtype << cresolu << nthreads << noisflag;
+
+   fi_iter++;
+
+   double minkv  = kuplim;
+   double maxkv  = klolim;
+   double maxsl  = ( kuplim - klolim ) / ( suplim - slolim );
+   double minsl  = -maxsl;
+   double minp1  = ( curvtype == 0 ) ? maxkv : 0.5;
+   double maxp1  = ( curvtype == 0 ) ? minkv : 0.001;
+   double minp2  = ( curvtype == 0 ) ? maxsl : 1.0;
+   double maxp2  = ( curvtype == 0 ) ? minsl : 0.0;
+DbgLv(1) << "RF: 2)nmr" << mrecs.size() << "iter rd_frac" << fi_iter << rd_frac;
+
+   elite_limits( mrecs, minkv, maxkv, minp1, maxp1, minp2, maxp2 );
+
+   parlims[ 0 ]  = minp1;
+   parlims[ 1 ]  = maxp1;
+   parlims[ 2 ]  = minp2;
+   parlims[ 3 ]  = maxp2;
+
+   // experiment data dimensions
+   nscans      = edata->scanCount();
+   npoints     = edata->pointCount();
+   //ModelRecord mrec   = mrecs[ 0 ];
+   mrecs    .clear();
+
+   if ( curvtype == 0 )
+   { // Determine models for straight-line curves
+      nmtasks     = slmodels( slolim, suplim, klolim, kuplim, kincr, cresolu );
+   }
+
+   else if ( curvtype == 1  ||  curvtype == 2 )
+   { // Determine models for sigmoid curves
+      int nkpts   = (int)kincr;
+DbgLv(1) << "RF: sigm: nkpts" << nkpts;
+      nmtasks     = sigmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,
+                               cresolu );
+DbgLv(1) << "RF: sigm: nmtasks" << nmtasks;
+   }
+
+   else
+      nmtasks     = 0;
+
+   kcsteps     = 0;
+   nctotal     = nmtasks;
+   emit stage_complete( kcsteps, nctotal );
+
+   kctask      = 0;
+   kstask      = 0;
+   nthreads    = ( nthreads < nmtasks ) ? nthreads : nmtasks;
+DbgLv(1) << "RF:   nscans npoints" << nscans << npoints;
+DbgLv(1) << "RF:   nctotal nthreads" << nctotal << nthreads;
+   max_rss();
+DbgLv(1) << "RF: (1)maxrss" << maxrss;
+
+   // Queue all the tasks
+   for ( int ktask = 0; ktask < nmtasks; ktask++ )
+   {
+      WorkPacket wtask;
+      int    mm   = orig_sols[ ktask ].size() - 1;
+      double strk = orig_sols[ ktask ][ 0  ].k;
+      double endk = orig_sols[ ktask ][ mm ].k;
+      wtask.par1  = mrecs[ ktask ].par1;
+      wtask.par2  = mrecs[ ktask ].par2;
+      wtask.depth = 0;
+
+      wtask.sim_vals.alpha = alpha_fx;
+
+      queue_task( wtask, strk, endk, ktask, noisflag, orig_sols[ ktask ] );
+   }
+
+   // Start the first threads. This will begin the first work units (subgrids).
+   // Thereafter, work units are started in new threads when previous
+   // threads signal that they have completed their work.
+
+   for ( int ii = 0; ii < nthreads; ii++ )
+   {
+      wthreads << 0;
+
+      WorkPacket wtask = job_queue.takeFirst();
+      submit_job( wtask, ii );
+   }
+
+   mrecs    .clear();
+   max_rss();
+   kstask = nthreads;     // count of started tasks is initially thread count
+DbgLv(1) << "RF:   kstask nthreads" << kstask << nthreads << job_queue.size();
+
+   emit message_update( pmessage_head() +
+      tr( "Starting fit iteration %1 computations of %2 models,\n"
+          "  using %3 threads" )
+      .arg( fi_iter ).arg( nmtasks ).arg( nthreads ), false );
 }
 

@@ -51,9 +51,12 @@ class US_pcsaProcess : public QObject
       //! \param typ     curve type (0->straight lines)
       //! \param nth     number of threads
       //! \param noi     noise flag: 0-3 for none|ti|ri|both
+      //! \param lmmxc   L-M maximum calls
+      //! \param gfits   grid fit maximum iterations
+      //! \param gfthr   grid fit threshold difference fraction
       //! \param alf     regularization alpha factor
       void start_fit( double, double, double, double, double,
-                      int, int, int, int, double = 0.0 );
+                      int, int, int, int, int, int, double, double = 0.0 );
 
       //! \brief Complete the final fit for alpha scan or alpha change
       //! \param alf     regularization alpha factor
@@ -148,6 +151,9 @@ private:
       int        time_fg;      // time in milliseconds for fixed-grid calcs
       int        time_lm;      // time in milliseconds for L-M calcs
       int        lmtm_id;      // L-M timing event ID
+      int        fi_iter;      // Fit iteration counter
+      int        fi_itermax;   // Maximum fit iterations
+      int        lmmxcall;     // L-M maximum calls
 
       bool       abort;        // flag used with stop_fit clicked
       bool       lm_done;      // flag for L-M completion
@@ -163,6 +169,11 @@ private:
       double     alpha;        // Tikhonov regularization factor
       double     alpha_fx;     // Alpha for fixed curves fits
       double     alpha_lm;     // Alpha for L-M fits
+      double     parlims[ 4 ]; // Par1,Par2 limits
+      double     pfi_rmsd;     // Previous fit iteration RMSD
+      double     cfi_rmsd;     // Current fit iteration RMSD
+      double     rd_frac;      // RMSD-difference fraction: (p-c)/p
+      double     rd_thresh;    // RMSD-difference threshold factor
 
       QTime      timer;        // timer for elapsed time measure
 
@@ -182,6 +193,7 @@ private:
       void compute_final   ( void );
       void elite_limits    ( QVector< ModelRecord >&, double&, double&,
                              double&, double&, double&, double& );
+      void restart_fit     ( void );
       static double evaluate_model( QList< US_SolveSim::DataSet* >&,
                                     US_SolveSim::Simulation& );
 
