@@ -92,7 +92,10 @@ class US_AnalysisControl : public US_WidgetsDialog
       QwtCounter*   ct_uplimitk;
       QwtCounter*   ct_incremk;
       QwtCounter*   ct_varcount;
+      QwtCounter*   ct_gfiters;
+      QwtCounter*   ct_gfthresh;
       QwtCounter*   ct_cresolu;
+      QwtCounter*   ct_lmmxcall;
       QwtCounter*   ct_tralpha;
       QwtCounter*   ct_thrdcnt;
 

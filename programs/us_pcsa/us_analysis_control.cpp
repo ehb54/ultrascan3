@@ -55,7 +55,8 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    QFontMetrics fmet( font() );
 
    // lay out the GUI
-   setWindowTitle( tr( "Parametrically Constrained Spectrum Analysis Controls" ) );
+   setWindowTitle(
+      tr( "Parametrically Constrained Spectrum Analysis Controls" ) );
 
    mainLayout      = new QHBoxLayout( this );
    controlsLayout  = new QGridLayout( );
@@ -75,7 +76,10 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
            lb_uplimitk     = us_label(  tr( "Upper Limit (f/f0):" ) );
            lb_incremk      = us_label(  tr( "Increment   (f/f0):" ) );
            lb_varcount     = us_label(  tr( "Variations Count:" ) );
+   QLabel* lb_gfiters      = us_label(  tr( "Grid Fit Iterations:" ) );
+   QLabel* lb_gfthresh     = us_label(  tr( "Threshold Delta-RMSD Ratio:" ) );
    QLabel* lb_cresolu      = us_label(  tr( "Curve Resolution Points:" ) );
+   QLabel* lb_lmmxcall     = us_label(  tr( "Maximum L-M Evaluate Calls:" ) );
    QLabel* lb_tralpha      = us_label(  tr( "Regularization Parameter:"  ) );
    QLabel* lb_thrdcnt      = us_label(  tr( "Thread Count:" ) );
    QLabel* lb_minvari      = us_label(  tr( "Best Model Variance:" ) );
@@ -100,7 +104,7 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    QLayout* lo_lmalpha     =
       us_checkbox( tr( "Regularize in L-M Fits"        ), ck_lmalpha  );
    QLayout* lo_fxalpha     =
-      us_checkbox( tr( "Regularize in Fixed Fits"      ), ck_fxalpha  );
+      us_checkbox( tr( "Regularize in Grid Fits"       ), ck_fxalpha  );
    QLayout* lo_tinois      =
       us_checkbox( tr( "Fit Time-Invariant Noise"      ), ck_tinoise  );
    QLayout* lo_rinois      =
@@ -116,7 +120,10 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_lolimitk  = us_counter( 3,      1,     8,    1 );
    ct_uplimitk  = us_counter( 3,      1,   100,    5 );
    ct_incremk   = us_counter( 3,   0.01,    10, 0.50 );
-   ct_varcount  = us_counter( 2,      3,   200,   11 );
+   ct_varcount  = us_counter( 2,      3,   200,    6 );
+   ct_gfiters   = us_counter( 2,      1,    20,    3 );
+   ct_gfthresh  = us_counter( 3,  1.e-6, 1.e-2, 1e-4 );
+   ct_lmmxcall  = us_counter( 2,      0,   200,  100 );
    ct_cresolu   = us_counter( 2,     20,   501,  101 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_tralpha   = us_counter( 3,      0,   100,    0 );
@@ -126,6 +133,9 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimitk->setStep( 0.01 );
    ct_incremk ->setStep( 0.01 );
    ct_varcount->setStep(    1 );
+   ct_gfiters ->setStep(    1 );
+   ct_gfthresh->setStep( 1.e-6 );
+   ct_lmmxcall->setStep(    1 );
    ct_cresolu ->setStep(    1 );
    ct_tralpha ->setStep( 0.001 );
    ct_thrdcnt ->setStep(    1 );
@@ -156,8 +166,14 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( ct_incremk,    row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_varcount,   row,   0, 1, 2 );
    controlsLayout->addWidget( ct_varcount,   row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_gfiters,    row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_gfiters,    row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_gfthresh,   row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_gfthresh,   row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_cresolu,    row,   0, 1, 2 );
    controlsLayout->addWidget( ct_cresolu,    row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_lmmxcall,   row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_lmmxcall,   row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_tralpha,    row,   0, 1, 2 );
    controlsLayout->addWidget( ct_tralpha,    row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_thrdcnt,    row,   0, 1, 2 );
@@ -247,7 +263,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    pb_pltlines->setEnabled( false );
    compute();
 
-//DbgLv(2) << "Pre-resize AC size" << size();
+//DbgLv(1) << "Pre-resize AC size" << size();
    int  fwidth   = fmet.maxWidth();
    int  rheight  = ct_lolimits->height();
    int  cminw    = fwidth * 7;
@@ -258,6 +274,9 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimitk->setMinimumWidth( cminw );
    ct_incremk ->setMinimumWidth( cminw );
    ct_varcount->setMinimumWidth( cminw );
+   ct_gfiters ->setMinimumWidth( cminw );
+   ct_gfthresh->setMinimumWidth( cminw );
+   ct_lmmxcall->setMinimumWidth( cminw );
    ct_cresolu ->setMinimumWidth( cminw );
    ct_thrdcnt ->setMinimumWidth( cminw );
    ct_lolimits->resize( csizw, rheight );
@@ -266,13 +285,16 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimitk->resize( csizw, rheight );
    ct_incremk ->resize( csizw, rheight );
    ct_varcount->resize( csizw, rheight );
+   ct_gfiters ->resize( csizw, rheight );
+   ct_gfthresh->resize( csizw, rheight );
+   ct_lmmxcall->resize( csizw, rheight );
    ct_cresolu ->resize( csizw, rheight );
    ct_thrdcnt ->resize( csizw, rheight );
 
    resize( 710, 440 );
    qApp->processEvents();
 
-//DbgLv(2) << "Post-resize AC size" << size();
+//DbgLv(1) << "Post-resize AC size" << size();
 }
 
 // enable/disable optimize counters based on chosen method
@@ -339,7 +361,10 @@ void US_AnalysisControl::start()
                    ( ck_rinoise->isChecked() ? 2 : 0 );
    int    res    = (int)ct_cresolu ->value();
    kin           = ( typ == 0 ) ? kin : (double)nvar;
-   double alpha  = ct_tralpha  ->value();
+   double gfthr  = ct_gfthresh->value();
+   int    gfits  = ct_gfiters ->value();
+   int    lmmxc  = ct_lmmxcall->value();
+   double alpha  = ct_tralpha ->value();
 
    // Alpha-scan completed:  test if we need to re-fit
 DbgLv(1) << "AnaC: (1)need_fit" << need_fit;
@@ -388,7 +413,8 @@ DbgLv(1) << "(2)pb_plot-Enabled" << pb_plot->isEnabled();
 
    if ( need_fit )
       processor->start_fit( slo, sup, klo, kup, kin,
-                            res, typ, nthr, noif, alpha );
+                            res, typ, nthr, noif, lmmxc,
+                            gfits, gfthr, alpha );
 
    else if ( need_final )
       processor->final_fit( alpha );
@@ -819,6 +845,8 @@ DbgLv(1) << "(1)pb_plot-Enabled" << pb_plot->isEnabled();
 // slot to compute model lines
 void US_AnalysisControl::compute()
 {
+   double parlims[ 4 ];
+
    ctype   = cb_curvtype->currentIndex();
    smin    = ct_lolimits->value();
    smax    = ct_uplimits->value();
@@ -828,6 +856,7 @@ void US_AnalysisControl::compute()
    nlpts   = (int)ct_cresolu ->value();
    nkpts   = qRound( ( fmax - fmin ) / finc ) + 1;
    mrecs.clear();
+   parlims[ 0 ] = -1.0;
 
    if ( ctype == 0 )
    {
@@ -837,7 +866,7 @@ void US_AnalysisControl::compute()
       ct_varcount->setVisible( false );
 
       ModelRecord::compute_slines( smin, smax, fmin, fmax, finc, nlpts,
-            mrecs );
+            parlims, mrecs );
    }
    if ( ctype == 1  ||  ctype == 2 )
    {
@@ -848,7 +877,7 @@ void US_AnalysisControl::compute()
       ct_varcount->setVisible( true  );
 
       ModelRecord::compute_sigmoids( ctype, smin, smax, fmin, fmax,
-            nkpts, nlpts, mrecs );
+            nkpts, nlpts, parlims, mrecs );
    }
    int    nlmodl  = nkpts * nkpts;
 
@@ -1008,6 +1037,7 @@ QString US_AnalysisControl::fitpars_string()
    kin           = ( typ == 0 ) ? kin : (double)nvar;
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
+
 
    return QString().sprintf( "%d %.5f %.5f %.5f %.5f %.5f %d %d",
             typ, slo, sup, klo, kup, kin, nvar, noif );

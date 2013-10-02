@@ -20,7 +20,7 @@ WorkerThread::WorkerThread( QObject* parent )
    solvesim   = NULL;
    thrn       = -1;
    depth      = 0;
-DbgLv(1) << "2P(WT): Thread created";
+DbgLv(1) << "PC(WT): Thread created";
 }
 
 // worker thread destructor
@@ -29,13 +29,13 @@ WorkerThread::~WorkerThread()
    //if ( solvesim != NULL )
    //   delete solvesim;
 
-DbgLv(1) << "2P(WT):   Thread destroy - (1)finished?" << isFinished() << thrn;
+DbgLv(1) << "PC(WT):   Thread destroy - (1)finished?" << isFinished() << thrn;
    if ( ! wait( 2000 ) )
    {
       qDebug() << "Thread destroy wait timeout(2secs) : Thread" << thrn;
    }
-DbgLv(1) << "2P(WT):   Thread destroy - (2)finished?" << isFinished() << thrn;
-DbgLv(1) << "2P(WT):    Thread destroyed" << thrn;
+DbgLv(1) << "PC(WT):   Thread destroy - (2)finished?" << isFinished() << thrn;
+DbgLv(1) << "PC(WT):    Thread destroyed" << thrn;
 }
 
 // define work for a worker thread
@@ -54,7 +54,7 @@ void WorkerThread::define_work( WorkPacket& workin )
 
    solutes_i   = workin.isolutes;
 
-QString phdr = QString( "2P(WT)dw:%1:%2:" ).arg(taskx).arg(thrn);
+QString phdr = QString( "PC(WT)dw:%1:%2:" ).arg(taskx).arg(thrn);
 if(depth>0) {
 DbgLv(1) << phdr << "depth1 psv_nnlsab" << psv_nnls_a << psv_nnls_b; }
 else { 
@@ -78,7 +78,7 @@ DbgLv(1) << phdr << "DefWk: sols size" << solutes_i.size(); }
 // get results of a completed worker thread
 void WorkerThread::get_result( WorkPacket& workout )
 {
-DbgLv(1) << "2P(WT): get_result IN";
+DbgLv(1) << "PC(WT): get_result IN";
    workout.str_k    = str_k;
    workout.end_k    = end_k;
    workout.par1     = par1;
@@ -99,12 +99,12 @@ int nn=workout.csolutes.size();
 int kk=nn/2;
 int ni=solutes_i.size();
 if(depth==0) {
-DbgLv(1) << "2P(WT): thr nn" << thrn << nn << "out sol0 solk soln"
+DbgLv(1) << "PC(WT): thr nn" << thrn << nn << "out sol0 solk soln"
  << workout.csolutes[0].c << workout.csolutes[kk].c << workout.csolutes[nn-1].c
  << "ni sol0 soln s" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
  << "c" << solutes_i[0].c << solutes_i[ni-1].c; }
 else {
-DbgLv(1) << "2P(WT): thr nn" << thrn << nn 
+DbgLv(1) << "PC(WT): thr nn" << thrn << nn 
  << "ni sol0 soln s" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
  << "c" << solutes_i[0].c << solutes_i[ni-1].c; }
 //*DEBUG*
@@ -133,7 +133,7 @@ void WorkerThread::flag_abort()
 // Do the real work of a thread:  solution from solutes set
 void WorkerThread::calc_residuals()
 {
-QString phdr = QString( "2P(WT):CR:%1:%2:" ).arg(taskx).arg(thrn);
+QString phdr = QString( "PC(WT):CR:%1:%2:" ).arg(taskx).arg(thrn);
 DbgLv(1) << phdr << "depth" << depth;
 
    if ( depth == 0 )
@@ -150,6 +150,8 @@ DbgLv(1) << phdr << "depth" << depth;
       solutes_c           = sim_vals.solutes;
       ti_noise.values     = sim_vals.ti_noise;
       ri_noise.values     = sim_vals.ri_noise;
+DbgLv(1) << phdr << "sim,res ptCounts" << sim_vals.sim_data.pointCount()
+ << sim_vals.residuals.pointCount();
    }
 
    else
