@@ -1267,8 +1267,8 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
    double maxkv  = klolim;
    double maxsl  = ( kuplim - klolim ) / ( suplim - slolim );
    double minsl  = -maxsl;
-   double minp1  = ( curvtype == 0 ) ? maxkv : 0.5;
-   double maxp1  = ( curvtype == 0 ) ? minkv : 0.001;
+   double minp1  = ( curvtype == 0 ) ? minkv : 0.5;
+   double maxp1  = ( curvtype == 0 ) ? maxkv : 0.001;
    double minp2  = ( curvtype == 0 ) ? maxsl : 1.0;
    double maxp2  = ( curvtype == 0 ) ? minsl : 0.0;
    lm_done       = false;
@@ -1621,17 +1621,21 @@ DbgLv(1) << " ElLim: in min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
 
    for ( int ii = 0; ii < nmr; ii++ )
    {
+      double str_k   = mrecs[ ii ].str_k;
+      double end_k   = mrecs[ ii ].end_k;
+      double par1    = mrecs[ ii ].par1;
+      double par2    = mrecs[ ii ].par2;
 if(ii<3||(ii+4)>nelite)
-DbgLv(1) << " ElLim:   ii" << ii << "par1 par2"
- << mrecs[ii].par1 << mrecs[ii].par2 << "str_k" << mrecs[ii].str_k;
-      minkv          = qMin( minkv, mrecs[ ii ].str_k );
-      maxkv          = qMax( maxkv, mrecs[ ii ].str_k );
-      minkv          = qMin( minkv, mrecs[ ii ].end_k );
-      maxkv          = qMax( maxkv, mrecs[ ii ].end_k );
-      minp1          = qMin( minp1, mrecs[ ii ].par1  );
-      maxp1          = qMax( maxp1, mrecs[ ii ].par1  );
-      minp2          = qMin( minp2, mrecs[ ii ].par2  );
-      maxp2          = qMax( maxp2, mrecs[ ii ].par2  );
+DbgLv(1) << " ElLim:   ii" << ii << "par1 par2" << par1 << par2
+ << "str_k end_k" << str_k << end_k << "rmsd" << mrecs[ii].rmsd;
+      minkv          = qMin( minkv, str_k );
+      maxkv          = qMax( maxkv, str_k );
+      minkv          = qMin( minkv, end_k );
+      maxkv          = qMax( maxkv, end_k );
+      minp1          = qMin( minp1, par1  );
+      maxp1          = qMax( maxp1, par1  );
+      minp2          = qMin( minp2, par2  );
+      maxp2          = qMax( maxp2, par2  );
 
       if ( ( ii + 1 ) >= nelite  &&
            minp1 < m0p1  &&  maxp1 > m0p1  &&
@@ -1831,8 +1835,8 @@ DbgLv(1) << "RF: sll sul" << slolim << suplim
    double maxkv  = klolim;
    double maxsl  = ( kuplim - klolim ) / ( suplim - slolim );
    double minsl  = -maxsl;
-   double minp1  = ( curvtype == 0 ) ? maxkv : 0.5;
-   double maxp1  = ( curvtype == 0 ) ? minkv : 0.001;
+   double minp1  = ( curvtype == 0 ) ? minkv : 0.5;
+   double maxp1  = ( curvtype == 0 ) ? maxkv : 0.001;
    double minp2  = ( curvtype == 0 ) ? maxsl : 1.0;
    double maxp2  = ( curvtype == 0 ) ? minsl : 0.0;
 DbgLv(1) << "RF: 2)nmr" << mrecs.size() << "iter rd_frac" << fi_iter << rd_frac;
@@ -1852,6 +1856,24 @@ DbgLv(1) << "RF: 2)nmr" << mrecs.size() << "iter rd_frac" << fi_iter << rd_frac;
 
    if ( curvtype == 0 )
    { // Determine models for straight-line curves
+      double xrng   = suplim - slolim;
+      double yslo   = qMax( minp1, minkv );
+      double yshi   = qMin( maxp1, maxkv );
+      double yelo   = yslo + minp2 * xrng;
+             yelo   = qMax( yelo,  minkv );
+             yelo   = qMin( yelo,  maxkv );
+      double yehi   = yshi + maxp2 * xrng;
+             yehi   = qMax( yehi,  minkv );
+             yehi   = qMin( yehi,  maxkv );
+      parlims[ 0 ]  = yslo;
+      parlims[ 1 ]  = yshi;
+      parlims[ 2 ]  = yelo;
+      parlims[ 3 ]  = yehi;
+DbgLv(1) << "RF: slin: mmk mmp1 mmp2" << minkv << maxkv << minp1 << maxp1
+ << minp2 << maxp2;
+DbgLv(1) << "RF: slin:  plims0-3: yslo,yshi:" << yslo << yshi
+ << "yelo,yehi" << yelo << yehi;
+
       nmtasks     = slmodels( slolim, suplim, klolim, kuplim, kincr, cresolu );
    }
 
@@ -1859,6 +1881,7 @@ DbgLv(1) << "RF: 2)nmr" << mrecs.size() << "iter rd_frac" << fi_iter << rd_frac;
    { // Determine models for sigmoid curves
       int nkpts   = (int)kincr;
 DbgLv(1) << "RF: sigm: nkpts" << nkpts;
+
       nmtasks     = sigmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,
                                cresolu );
 DbgLv(1) << "RF: sigm: nmtasks" << nmtasks;

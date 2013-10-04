@@ -42,12 +42,9 @@ int ModelRecord::compute_slines( double& smin, double& smax,
    mrecs.clear();
    ModelRecord mrec;
 
-   QVector< double > xvec( nlpts, 0.0 );
-   QVector< double > yvec( nlpts, 0.0 );
-
-   double* xx    = xvec.data();
-   double* yy    = yvec.data();
+   int     nkpts = qRound( ( fmax - fmin ) / finc ) + 1;
    double  prng  = (double)( nlpts - 1 );
+   double  krng  = (double)( nkpts - 1 );
    double  xrng  = smax - smin;
    double  xinc  = xrng / prng;
    double  ystr  = fmin;
@@ -62,12 +59,11 @@ int ModelRecord::compute_slines( double& smin, double& smax,
    double  yshi  = parlims[ 1 ];
    double  yelo  = parlims[ 2 ];
    double  yehi  = parlims[ 3 ];
-   double  ysinc = ( yshi - yslo ) / prng;
-   double  yeinc = ( yehi - yelo ) / prng;
+   double  ysinc = ( yshi - yslo ) / krng;
+   double  yeinc = ( yehi - yelo ) / krng;
            ystr  = yslo;
 
    int     mndx  = 0;
-   int     nkpts = qRound( ( fmax - fmin ) / finc ) + 1;
    int     nmodl = nkpts * nkpts;
    mrecs.reserve( nmodl );
 
@@ -87,14 +83,11 @@ int ModelRecord::compute_slines( double& smin, double& smax,
 
          for ( int kk = 0; kk < nlpts; kk++ )
          { // Loop over points on a line
-            xx[ kk ]    = xval;
-            yy[ kk ]    = yval;
+            isol.s      = xval * 1.e-13;
+            isol.k      = yval;
+            mrec.isolutes << isol;
             xval       += xinc;
             yval       += yinc;
-
-            isol.s      = xx[ kk ] * 1.e-13;
-            isol.k      = yy[ kk ];
-            mrec.isolutes << isol;
          } // END: points-per-line loop
 
          mrec.taskx     = mndx;
@@ -136,12 +129,6 @@ int ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
    mrecs.clear();
    ModelRecord mrec;
 
-   QVector< double > xvec( nlpts, 0.0 );
-   QVector< double > yvec( nlpts, 0.0 );
-
-   double* xx   = xvec.data();
-   double* yy   = yvec.data();
-
    double srng  = smax - smin;
    double p1llg = log( p1lo );
    double p1ulg = log( p1up );
@@ -171,6 +158,8 @@ int ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
       { // Loop over par2 value (linear progression)
          double xval  = 0.0;
          double kval  = kstr;
+         double kstv  = kval;
+         double sval  = smin;
 
          mrec.isolutes.clear();
          US_Solute isol;
@@ -180,17 +169,18 @@ int ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
             double efac  = 0.5 * erf( ( xval - p2val )
                                       / sqrt( 2.0 * p1val ) ) + 0.5;
             kval         = kstr + kdif * efac;
-            xx[ kk ]     = smin + xval * srng;
-            yy[ kk ]     = kval;
+            sval         = smin + xval * srng;
             xval        += xinc;
+            if ( kk == 0 )
+               kstv         = kval;
 
-            isol.s       = xx[ kk ] * 1.e-13;
-            isol.k       = yy[ kk ];
+            isol.s       = sval * 1.e-13;
+            isol.k       = kval;
             mrec.isolutes << isol;
          } // END: points-on-curve loop
 
          mrec.taskx   = mndx;
-         mrec.str_k   = yy[ 0 ];
+         mrec.str_k   = kstv;
          mrec.end_k   = kval;
          mrec.par1    = p1val;
          mrec.par2    = p2val;
