@@ -4505,6 +4505,7 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
    QRegExp rx_get_model("^MODEL\\s+(\\S+)");
    QRegExp rx_end("^END");
    QRegExp rx_atom("^(ATOM|HETATM|TER)");
+   QRegExp rx_remarks("^REMARK");
 
    unsigned int model    = 0;
 
@@ -4542,11 +4543,23 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
       bool                  has_model_line      = false;
       QString               last_model          = "";
 
+      QString               remarks;
+
       while ( !ts_in.atEnd() )
       {
          QString qs = ts_in.readLine();
 
          bool line_written = false;
+
+         if ( rx_remarks.search( qs ) != -1 )
+         {
+            if ( in_model )
+            {
+               ts_out << qs << endl;
+            } else {
+               remarks += qs + "\n";
+            }
+         }
 
          if ( rx_atom.search( qs ) != -1 )
          {
@@ -4561,6 +4574,8 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
                   }
                   used_model[ QString( "%1" ).arg( model ) ] = true;
                   ts_out << QString( "MODEL        %1\n" ).arg( model );
+                  ts_out << remarks;
+                  remarks = "";
                }
                actual_model_count++;
                in_model = true;
@@ -4595,6 +4610,8 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
             }
             if ( in_model )
             {
+               ts_out << remarks;
+               remarks = "";
                ts_out << "ENDMDL\n";
                line_written = true;
                in_model = false;
