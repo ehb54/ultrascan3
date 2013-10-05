@@ -69,6 +69,7 @@ DbgLv(1) << "PC(pcsaProc): start_fit()";
    fi_itermax  = gfits;
    rd_thresh   = gfthr;
    lmmxcall    = lmmxc;
+   parlims[ 0 ] = -1.0;
 
    if ( alpha < 0.0 )
    {  // Negative alpha acts as flag
@@ -1255,7 +1256,6 @@ void US_pcsaProcess::LevMarq_fit( void )
    if ( lmmxcall < 1 )
       return;
 
-   control.maxcall      = lmmxcall;
    static US_LM::LM_Status  status;
    static int    n_par  = 2;
    static int    m_dat  = 3;
@@ -1271,6 +1271,7 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
    double maxp1  = ( curvtype == 0 ) ? maxkv : 0.001;
    double minp2  = ( curvtype == 0 ) ? maxsl : 1.0;
    double maxp2  = ( curvtype == 0 ) ? minsl : 0.0;
+   control.maxcall      = lmmxcall / ( n_par + 1 );
    lm_done       = false;
    // Start timer for L-M progress bar, based on estimated duration
    kcsteps       = 0;
