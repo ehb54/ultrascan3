@@ -62,12 +62,17 @@ class ModelRecord
       void clear_data( void );
 
       //! Static public function to compute straight line model records
-      static int compute_slines( double&, double&, double&, double&, double&,
+      static int compute_slines( double&, double&, double&, double&, int&,
             int&, double*, QVector< ModelRecord >& );
 
       //! Static public function to compute straight line model records
       static int compute_sigmoids( int&, double&, double&, double&, double&,
             int&, int&, double*, QVector< ModelRecord >& );
+
+      //! Static public function to compute horizontal line model records
+      static int compute_hlines( double&, double&, double&, double&, int&,
+            int&, double*, QVector< ModelRecord >& );
+
 
 };
 #endif

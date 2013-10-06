@@ -47,7 +47,7 @@ long int US_pcsaProcess::max_rss( void )
 
 // Start a specified PCSA fit run
 void US_pcsaProcess::start_fit( double sll, double sul, double kll, double kul,
-                                double kin, int    res, int    typ, int    nth,
+                                int    nkp, int    res, int    typ, int    nth,
                                 int    noi, int  lmmxc, int  gfits,
                                 double gfthr, double alf )
 {
@@ -57,7 +57,7 @@ DbgLv(1) << "PC(pcsaProc): start_fit()";
    suplim      = sul;
    klolim      = kll;
    kuplim      = kul;
-   kincr       = kin;
+   nkpts       = nkp;
    cresolu     = res;
    curvtype    = typ;
    nthreads    = nth;
@@ -112,7 +112,7 @@ DbgLv(1) << "PC: alf alpha lm fx scn"
    mrecs    .clear();
 
 DbgLv(1) << "2P: sll sul" << slolim << suplim
- << " kll kul kin" << klolim << kuplim << kincr
+ << " kll kul nkp" << klolim << kuplim << nkpts
  << " type reso nth noi" << curvtype << cresolu << nthreads << noisflag;
 
    timer.start();              // start a timer to measure run time
@@ -121,14 +121,14 @@ DbgLv(1) << "2P: sll sul" << slolim << suplim
    nscans      = edata->scanCount();
    npoints     = edata->pointCount();
 
-   if ( curvtype == 0 )
+   if ( curvtype == 0  ||  curvtype == 3 )
    { // Determine models for straight-line curves
-      nmtasks     = slmodels( slolim, suplim, klolim, kuplim, kincr, cresolu );
+      nmtasks     = slmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,
+                              cresolu );
    }
 
    else if ( curvtype == 1  ||  curvtype == 2 )
    { // Determine models for sigmoid curves
-      int nkpts   = (int)kincr;
       nmtasks     = sigmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,
                                cresolu );
    }
@@ -329,7 +329,7 @@ DbgLv(1) << "FIN_FIN: vari" << mrec.variance << "bmndx" << mrec.taskx;
 double bvol = dsets[0]->simparams.band_volume;
 bvol=dsets[0]->simparams.band_forming?bvol:0.0;
 DbgLv(1) << "done: vari bvol" << mrec.variance << bvol
- << "slun klun" << slolim << suplim << klolim << kuplim << kincr
+ << "slun klun" << slolim << suplim << klolim << kuplim << nkpts
  << "ets" << ktimes;
    ktimes     = ktimes - ktimeh * 3600 - ktimem * 60;
 
@@ -364,25 +364,16 @@ DbgLv(1) << "done: vari bvol" << mrec.variance << bvol
    }
    else if ( curvtype == 1  ||  curvtype == 2 )
    {
-#if 0
-      int    nkpts  = (int)kincr;
-      int    p1ndx  = mrec.taskx / nkpts;
-      int    p2ndx  = mrec.taskx - ( p1ndx * nkpts );
-      double krng   = (double)( nkpts - 1 );
-      double p1off  = (double)p1ndx / krng;
-      double par1   = exp( log( 0.001 )
-                           + ( log( 0.5 ) - log( 0.001 ) ) * p1off );
-      double par2   = (double)p2ndx / krng;
-      pmsg += tr( "  the curve with par1=%1 and par2=%2." )
-              .arg( par1 ).arg( par2 );
-DbgLv(1) << "FIN_FIN: par1,par2" << par1 << par2 << "mpar1,mpar2"
- << mrec.par1 << mrec.par2;
-#endif
       pmsg += tr( "  the curve with par1=%1 and par2=%2." )
               .arg( mrec.par1 ).arg( mrec.par2 );
 DbgLv(1) << "FIN_FIN: par1,par2" << mrec.par1 << mrec.par2;
    }
 
+   else if ( curvtype == 3 )
+   {
+      pmsg += tr( "  the line from s,f/f0  %1, %2  to %3, %4." )
+              .arg( slolim ).arg( mrec.str_k ).arg( suplim ).arg( mrec.end_k );
+   }
    emit message_update( pmsg, false );          // signal final message
 
 DbgLv(1) << "FIN_FIN: Run Time: hr min sec" << ktimeh << ktimem << ktimes;
@@ -489,10 +480,6 @@ DbgLv(1) << "PC:putMRs: nmrecs" << nmrecs;
    if ( nmrecs < 1 )
       return;
 
-   kincr       = qFloor( sqrt( (double)nmrecs ) );
-   int nkpts   = (int)kincr;
-   nmtasks     = sq( nkpts );
-DbgLv(1) << "PC:putMRs:  nkpts nmtasks" << nkpts << nmtasks;
    model       = mrecs[ 0 ].model;
    sdata       = mrecs[ 0 ].sim_data;
    rdata       = mrecs[ 0 ].residuals;
@@ -501,15 +488,16 @@ DbgLv(1) << "PC:putMRs:  nkpts nmtasks" << nkpts << nmtasks;
    klolim      = mrecs[ 0 ].kmin;
    kuplim      = mrecs[ 0 ].kmax;
    curvtype    = mrecs[ 0 ].ctype;
+   nmtasks     = ( curvtype != 3 ) ? sq( nkpts ) : nkpts;
    alpha       = 0.0;
+DbgLv(1) << "PC:putMRs:  nkpts nmtasks" << nkpts << nmtasks;
 
    for ( int ii = 0; ii < nmrecs; ii++ )
    {
       varimin     = qMin( varimin, mrecs[ ii ].variance );
    }
 
-   kincr       = curvtype != 0 ? kincr : ( kuplim - klolim ) / ( kincr - 1.0 );
-DbgLv(1) << "PC:putMRs:  curvtype" << curvtype << "kincr" << kincr;
+DbgLv(1) << "PC:putMRs:  curvtype" << curvtype << "nkpts" << nkpts;
 }
 
 // Submit a job
@@ -694,6 +682,7 @@ QString US_pcsaProcess::pmessage_head()
    const char* ctp[] = { "Straight Line",
                          "Increasing Sigmoid",
                          "Decreasing Sigmoid",
+                         "Horizontal Line [ C(s) ]",
                          "?UNKNOWN?"
                        };
    QString ctype = QString( ctp[ curvtype ] );
@@ -723,17 +712,22 @@ DbgLv(1) << "NEXTJ:   wtask" << &wtask << &job_queue[jobx];
 }
 
 // Build all the straight-line models
-int US_pcsaProcess::slmodels( double slo, double sup, double klo,
-      double kup, double kin, int res )
+int US_pcsaProcess::slmodels( int ctp, double slo, double sup, double klo,
+      double kup, int nkp, int res )
 {
-DbgLv(1) << "SLMO: slo sup klo kup kin res" << slo << sup << klo << kup
-   << kin << res;
+DbgLv(1) << "SLMO: slo sup klo kup nkp res" << slo << sup << klo << kup
+   << nkp << res;
+   int    nmodels  = 0;
    double vbar20   = dsets[ 0 ]->vbar20;
    orig_sols.clear();
 
    // Compute straight-line model records
-   int nmodels = ModelRecord::compute_slines( slo, sup, klo, kup, kin,
-                                              res, parlims, mrecs );
+   if ( ctp == 0 )
+      nmodels = ModelRecord::compute_slines( slo, sup, klo, kup, nkp,
+                                             res, parlims, mrecs );
+   else if ( ctp == 3 )
+      nmodels = ModelRecord::compute_hlines( slo, sup, klo, kup, nkp,
+                                             res, parlims, mrecs );
 
    // Update the solutes with vbar and add to task solutes list
    for ( int ii = 0; ii < nmodels; ii++ )
@@ -754,16 +748,16 @@ DbgLv(1) << "SLMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
 
 // Build all the sigmoid models
 int US_pcsaProcess::sigmodels( int ctp, double slo, double sup, double klo,
-      double kup, int nkpts, int nlpts )
+      double kup, int nkp, int nlpts )
 {
 DbgLv(1) << "SGMO: ctp slo sup klo kup nkp nlp" << ctp << slo << sup
-   << klo << kup << nkpts << nlpts;
+   << klo << kup << nkp << nlpts;
    double vbar20   = dsets[ 0 ]->vbar20;
    orig_sols.clear();
 
    // Compute sigmoid model records
    int nmodels = ModelRecord::compute_sigmoids( ctp, slo, sup, klo, kup,
-                                                nkpts, nlpts, parlims, mrecs );
+                                                nkp, nlpts, parlims, mrecs );
 
    // Update the solutes with vbar and add to task solutes list
    for ( int ii = 0; ii < nmodels; ii++ )
@@ -789,15 +783,13 @@ void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
    const char* ctp[] = { "Straight Line",
                          "Increasing Sigmoid",
                          "Decreasing Sigmoid",
+                         "Horizontal Line [ C(s) ]",
                          "?UNKNOWN?"
                        };
 
    // Accumulate the statistics
    int    nbmods    = nmtasks / 10;
-   int    nkpts     = (int)kincr;
    int    nlpts     = cresolu;
-   if ( curvtype == 0 )
-      nkpts            = qRound( ( kuplim - klolim ) / kincr ) + 1;
    double rmsdmin   = 99999.0;
    double rmsdmax   = 0.0;
    double rmsdavg   = 0.0;
@@ -849,9 +841,10 @@ void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
    double str_k  = mrecs[ 0 ].str_k;
    double end_k  = mrecs[ 0 ].end_k;
 
-   if ( curvtype == 0 )
+   if ( curvtype == 0  ||  curvtype == 3 )
    {
       double slope  = ( end_k - str_k ) / ( suplim - slolim );
+      double kincr  = ( kuplim - klolim ) / (double)( nkpts - 1 );
       modstats << tr( "k (f/f0) Range + delta:" )
                << QString().sprintf( "%10.4f  %10.4f  %10.4f",
                      klolim, kuplim, kincr );
@@ -1246,6 +1239,104 @@ qDebug() << "ffDS:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
    return rmsd;
 }
 
+// Do curve-fit evaluate function (return RMSD) for a Horizontal Line model
+double US_pcsaProcess::fit_function_HL( double t, double* par )
+{
+   static int ffcall=0;          // Fit function call counter
+   static double epar[ 18 ];     // Static array for holding parameters
+   static const int nepar = sizeof( epar ) / sizeof( epar[ 0 ] );
+
+   if ( t > 0.0 )
+   { // If not t[0], return immediately
+      return 0.0;
+   }
+
+   if ( t < 0.0 )
+   { // If t is special flag (-ve.), reset ffcall and return
+      ffcall = 0;
+      return 0.0;
+   }
+
+   QTime ftimer;
+   ftimer.start();
+   QList< US_SolveSim::DataSet* > dsets;
+   void** iparP  = (void**)par;
+   void** parP   = (void**)epar;
+   double par1   = par[ 0 ];
+   double par2   = par[ 0 ];
+   int    px     = ( sizeof( double ) / sizeof( void* ) ) * 2;
+   if ( ffcall == 0 )
+   { // On 1st call, copy par array to internal static one
+      for ( int ii = 0; ii < nepar - 2; ii++ )
+         epar[ ii ]    = par[ ii + 2 ];
+      parP[ 0 ]     = iparP[ px ];
+   }
+
+   ffcall++;                                    // Bump function call counter
+   dsets << (US_SolveSim::DataSet*)parP[ 0 ];
+   int    nlpts  = (int)epar[ 1 ];              // Get limit parameters
+   double smin   = epar[ 2 ];
+   double smax   = epar[ 3 ];
+   double klow   = epar[ 6 ];
+   double khigh  = epar[ 7 ];
+   double p1lo   = epar[ 8 ];
+   double p1hi   = epar[ 9 ];
+   int    noisfl = (int)epar[ 12 ];
+   int    dbg_lv = (int)epar[ 13 ];
+   double alpha  = epar[ 14 ];
+   double kval   = par1;
+
+   // After 1st few calls, test if parameters are within limits
+   if ( ffcall > 3 )
+   {
+      // Leave a little wiggle room on limits
+      klow         -= 0.1;
+      khigh        += 0.1;
+      p1lo         -= 0.1;
+      p1hi         += 0.1;
+
+      // If this record is beyond any limit, return now with it marked as bad
+      if ( par1   < p1lo   ||  par1   > p1hi  ||
+           kval   < klow   ||  kval   > khigh )
+      {
+qDebug() << "ffHL: call" << ffcall << "par1" << par1 << "kv" << kval 
+ << "*OUT-OF-LIMITS*";
+         return 1e+99;
+      }
+   }
+
+   double prange = (double)( nlpts - 1 );
+   double sinc   = ( smax - smin ) / prange;
+   double vbar20 = dsets[ 0 ]->vbar20;
+   double scurr  = smin;
+   US_SolveSim::Simulation sim_vals;
+   sim_vals.noisflag  = noisfl;
+   sim_vals.dbg_level = dbg_lv;
+   sim_vals.alpha     = alpha;
+
+   for ( int ii = 0; ii < nlpts; ii++ )
+   { // Fill the input solutes vector
+      sim_vals.solutes << US_Solute( scurr * 1e-13, kval, 0.0, vbar20 );
+      scurr        += sinc;
+   }
+
+   // Evaluate the model
+   double rmsd   = evaluate_model( dsets, sim_vals );
+
+   epar[ 15 ]    = rmsd;
+   int    ktimms = ftimer.elapsed();
+qDebug() << "ffHL: call" << ffcall << "par1 par2" << par1 << par2
+ << "rmsd" << rmsd << "eval time" << ktimms << "ms.";
+if(ffcall<6)
+qDebug() << "ffHL:  epar0 epar1-9" << parP[0] << epar[1] << epar[2] << epar[3]
+ << epar[4] << epar[5] << epar[6] << epar[7] << epar[8] << epar[9];
+//qDebug() << "ffHL:  dsets[0]" << dsets[0] << parP[0]
+// << "dsets[0]->vbar20" << dsets[0]->vbar20;
+qDebug() << "ffHL:    kv kl kh" << kval << klow << khigh;
+
+   return rmsd;
+}
+
 // Do Levenberg-Marquardt fit
 void US_pcsaProcess::LevMarq_fit( void )
 {
@@ -1263,15 +1354,17 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
    static double tarray[ 3 ] = { 0.0, 1.0, 2.0 };
    static double yarray[ 3 ] = { 0.0, 0.0, 0.0 };
    static double parray[ 20 ];
+   bool   LnType = ( curvtype == 0  ||  curvtype == 3 );
    double minkv  = kuplim;
    double maxkv  = klolim;
    double maxsl  = ( kuplim - klolim ) / ( suplim - slolim );
    double minsl  = -maxsl;
-   double minp1  = ( curvtype == 0 ) ? minkv : 0.5;
-   double maxp1  = ( curvtype == 0 ) ? maxkv : 0.001;
-   double minp2  = ( curvtype == 0 ) ? maxsl : 1.0;
-   double maxp2  = ( curvtype == 0 ) ? minsl : 0.0;
-   control.maxcall      = lmmxcall / ( n_par + 1 );
+   double minp1  = LnType ? minkv : 0.5;
+   double maxp1  = LnType ? maxkv : 0.001;
+   double minp2  = LnType ? maxsl : 1.0;
+   double maxp2  = LnType ? minsl : 0.0;
+   int    npar   = ( curvtype != 3 ) ? n_par : 1;
+   control.maxcall      = lmmxcall / ( npar + 1 );
    lm_done       = false;
    // Start timer for L-M progress bar, based on estimated duration
    kcsteps       = 0;
@@ -1341,7 +1434,7 @@ DbgLv(0) << "lmcurve_fit (SL) with par1,par2" << par[0] << par[1]
    << "ftol,epsl" << control.ftol << control.epsilon;
       fit_function_SL( -1.0, par );    // Make sure to reset eval. function
 
-      US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
+      US_LM::lmcurve_fit_rmsd( npar, par, m_dat, t, y,
             &(US_pcsaProcess::fit_function_SL), &control, &status );
 
 DbgLv(0) << "  lmcurve_fit (SL) return: par1,par2" << par[0] << par[1];
@@ -1369,7 +1462,7 @@ DbgLv(0) << "lmcurve_fit (IS) with par1,par2" << par[0] << par[1]
    << QString().sprintf( "%14.8e %14.8e", par[0], par[1] )
    << "ftol,epsl" << control.ftol << control.epsilon;
 
-      US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
+      US_LM::lmcurve_fit_rmsd( npar, par, m_dat, t, y,
             &(US_pcsaProcess::fit_function_IS), &control, &status );
 
 DbgLv(0) << "  lmcurve_fit (IS) return: par1,par2" << par[0] << par[1]
@@ -1381,6 +1474,7 @@ double rmsd = sqrt( dsets[0]->model.variance );
 int    nsol = dsets[0]->model.components.size();
 DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol; 
    }
+
    else if ( curvtype == 2 )
    { // Fit with Levenberg-Marquardt for decreasing-sigmoid curves
       control.ftol     = 1.e-16;
@@ -1392,7 +1486,7 @@ DbgLv(0) << "lmcurve_fit (DS) with par1,par2" << par[0] << par[1]
    << QString().sprintf( "%14.8e %14.8e", par[0], par[1] )
    << "ftol,epsl" << control.ftol << control.epsilon;
 
-      US_LM::lmcurve_fit_rmsd( n_par, par, m_dat, t, y,
+      US_LM::lmcurve_fit_rmsd( npar, par, m_dat, t, y,
             &(US_pcsaProcess::fit_function_DS), &control, &status );
 
 DbgLv(0) << "  lmcurve_fit (DS) return: par1,par2" << par[0] << par[1]
@@ -1403,6 +1497,31 @@ double rmsd = sqrt( dsets[0]->model.variance );
 int    nsol = dsets[0]->model.components.size();
 DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol; 
    }
+
+   else if ( curvtype == 3 )
+   { // Fit with Levenberg-Marquardt for horizontal-line curves
+      control.ftol     = 1.e-5;
+      control.xtol     = 1.e-5;
+      control.gtol     = 1.e-5;
+      control.epsilon  = 1.e-5;
+DbgLv(0) << "lmcurve_fit (HL) with par1" << par[0]
+   << "ftol,epsl" << control.ftol << control.epsilon;
+      fit_function_HL( -1.0, par );    // Make sure to reset eval. function
+
+      US_LM::lmcurve_fit_rmsd( npar, par, m_dat, t, y,
+            &(US_pcsaProcess::fit_function_HL), &control, &status );
+
+DbgLv(0) << "  lmcurve_fit (HL) return: par1" << par[0];
+DbgLv(0) << "   lmcfit status: fnorm nfev info"
+   << status.fnorm << status.nfev << status.info
+   << US_LM::lm_statmsg( &status, false );
+double yv = par[0];
+double rmsd = sqrt( dsets[0]->model.variance );
+int    nsol = dsets[0]->model.components.size();
+DbgLv(0) << "   lmcfit xs,yv xe,yv rmsd" << slolim << yv << suplim << yv
+ << rmsd << "ncsol" << nsol;
+   }
+
    else
    {
       DbgLv( 0 ) << "*ERROR* invalid curvtype" << curvtype;
@@ -1446,6 +1565,13 @@ DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
    {
       mrec.str_k     = par[ 0 ];
       mrec.end_k     = par[ 0 ] + par[ 1 ] * ( suplim -slolim );
+   }
+
+   else if ( curvtype == 3 )
+   {
+      mrec.str_k     = par[ 0 ];
+      mrec.end_k     = par[ 0 ];
+      par[ 1 ]       = 0.0;
    }
 
    mrec.par1      = par[ 0 ];
@@ -1607,9 +1733,37 @@ void US_pcsaProcess::elite_limits( QVector< ModelRecord >& mrecs,
       double& minkv, double& maxkv, double& minp1, double& maxp1,
       double& minp2, double& maxp2 )
 {
+   const double efrac = 0.1;
+   // Set up variables that help insure that the par1,par2 extents of elites
+   // extend at least one step on either side of record 0's par1,par2
    double m0p1    = mrecs[ 0 ].par1;
    double m0p2    = mrecs[ 0 ].par2;
-   const double efrac = 0.1;
+   double m0p1l   = m0p1;
+   double m0p1h   = m0p1;
+   double m0p2l   = m0p2;
+   double m0p2h   = m0p2;
+   if ( curvtype == 0  ||  curvtype == 3 )
+   {  // Possibly adjust initial par1,par2 limits for lines
+      m0p1l          = ( m0p1 > klolim ) ? m0p1 : ( m0p1 * 1.0001 );
+      m0p1h          = ( m0p1 < kuplim ) ? m0p1 : ( m0p1 * 0.9991 );
+      m0p2l          = ( m0p2 > 0.0    ) ? m0p2 : 0.0001;
+      m0p2h          = m0p2 * 1.0001;
+   }
+
+   if ( curvtype == 1  ||  curvtype == 2 )
+   {  // Possibly adjust initial par1,par2 limits for sigmoids
+      double dif1    = m0p1 - 0.001;
+      double dif2    = m0p1 - 0.500;
+      double dif3    = m0p2 - 0.000;
+      double dif4    = m0p2 - 1.000;
+      m0p1l          = ( dif1 > 1.e-8 ) ? m0p1 : 0.002;
+      m0p1h          = ( dif2 < -1e-8 ) ? m0p1 : 0.499;
+      m0p2l          = ( dif3 > 1.e-8 ) ? m0p2 : 0.001;
+      m0p2h          = ( dif4 < -1e-8 ) ? m0p2 : 0.999;
+DbgLv(1) << " ElLim: ADJUST SIGM: m0p1 m0p1h" << m0p1 << m0p1h
+   << "m0p1<0.500" << (m0p1<0.500) << 0.500 << "(m0p1-0.5)" << (m0p1-0.5);
+   }
+
    int nmr        = mrecs.size();
    int nelite     = qRound( efrac * nmr );          // Elite is top 10%
    int maxel      = nmr / 2;
@@ -1619,6 +1773,9 @@ void US_pcsaProcess::elite_limits( QVector< ModelRecord >& mrecs,
 DbgLv(0) << " ElLim: nmr nelite nmtasks" << nmr << nelite << nmtasks;
 DbgLv(1) << " ElLim: in minkv maxkv" << minkv << maxkv;
 DbgLv(1) << " ElLim: in min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
+DbgLv(1) << " ElLim: in m0p1 m0p2" << m0p1 << m0p2;
+DbgLv(1) << " ElLim: in m0p1l,m0p1h,m0p2l,m0p2h" << m0p1l << m0p1h
+ << m0p2l << m0p2h;
 
    for ( int ii = 0; ii < nmr; ii++ )
    {
@@ -1638,10 +1795,29 @@ DbgLv(1) << " ElLim:   ii" << ii << "par1 par2" << par1 << par2
       minp2          = qMin( minp2, par2  );
       maxp2          = qMax( maxp2, par2  );
 
-      if ( ( ii + 1 ) >= nelite  &&
-           minp1 < m0p1  &&  maxp1 > m0p1  &&
-           minp2 < m0p2  &&  maxp2 > m0p2 )
+      if ( curvtype == 3 )
+      {  // Effectively skip par2 comparisons for Horizontal Lines
+         minp2          = m0p2l - 1.0;
+         maxp2          = m0p2h + 1.0;
+      }
+
+      // We want to break out of the min,max scan loop if the sorted index
+      // exceeds the elite count. But we continue in the loop if we have not
+      // yet found min,max par1,par2 values that are at least a step
+      // on either side of the par1,par2 values for the best model (m0).
+if(ii>nelite)
+DbgLv(1) << " ElLim:    minp1 maxp1 m0p1" << minp1 << maxp1 << m0p1
+ << "minp2 maxp2 m0p2" << minp2 << maxp2 << m0p2;
+      if ( ii > nelite  &&
+           minp1 < m0p1l  &&  maxp1 > m0p1h  &&
+           minp2 < m0p2l  &&  maxp2 > m0p2h )
          break;
+   }
+
+   if ( curvtype == 3 )
+   {
+      minp2          = 0.0;
+      maxp2          = 0.0;
    }
 DbgLv(0) << " ElLim: out minkv maxkv" << minkv << maxkv;
 DbgLv(0) << " ElLim: out min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
@@ -1814,6 +1990,8 @@ DbgLv(0) << "LMf: recomputed variance rmsd" << mrec.variance << rmsd;
 // Restart the curve grid iteration sequence
 void US_pcsaProcess::restart_fit()
 {
+   bool   LnType = ( curvtype == 0  ||  curvtype == 3 );
+   bool   SgType = ( curvtype == 1  ||  curvtype == 2 );
    errMsg        = tr( "NO ERROR: start" );
    maxrss        = 0;
    varimin       = 9.e+9;
@@ -1827,7 +2005,7 @@ DbgLv(1) << "RF: nmr" << mrecs.size() << "cfi_rmsd" << cfi_rmsd;
    orig_sols.clear();
 
 DbgLv(1) << "RF: sll sul" << slolim << suplim
- << " kll kul kin" << klolim << kuplim << kincr
+ << " kll kul nkp" << klolim << kuplim << nkpts
  << " type reso nth noi" << curvtype << cresolu << nthreads << noisflag;
 
    fi_iter++;
@@ -1836,10 +2014,10 @@ DbgLv(1) << "RF: sll sul" << slolim << suplim
    double maxkv  = klolim;
    double maxsl  = ( kuplim - klolim ) / ( suplim - slolim );
    double minsl  = -maxsl;
-   double minp1  = ( curvtype == 0 ) ? minkv : 0.5;
-   double maxp1  = ( curvtype == 0 ) ? maxkv : 0.001;
-   double minp2  = ( curvtype == 0 ) ? maxsl : 1.0;
-   double maxp2  = ( curvtype == 0 ) ? minsl : 0.0;
+   double minp1  = LnType ? minkv : 0.5;
+   double maxp1  = LnType ? maxkv : 0.001;
+   double minp2  = LnType ? maxsl : 1.0;
+   double maxp2  = LnType ? minsl : 0.0;
 DbgLv(1) << "RF: 2)nmr" << mrecs.size() << "iter rd_frac" << fi_iter << rd_frac;
 
    elite_limits( mrecs, minkv, maxkv, minp1, maxp1, minp2, maxp2 );
@@ -1855,8 +2033,8 @@ DbgLv(1) << "RF: 2)nmr" << mrecs.size() << "iter rd_frac" << fi_iter << rd_frac;
    //ModelRecord mrec   = mrecs[ 0 ];
    mrecs    .clear();
 
-   if ( curvtype == 0 )
-   { // Determine models for straight-line curves
+   if ( LnType )
+   { // Determine models for straight-line or horizontal-line curves
       double xrng   = suplim - slolim;
       double yslo   = qMax( minp1, minkv );
       double yshi   = qMin( maxp1, maxkv );
@@ -1875,12 +2053,12 @@ DbgLv(1) << "RF: slin: mmk mmp1 mmp2" << minkv << maxkv << minp1 << maxp1
 DbgLv(1) << "RF: slin:  plims0-3: yslo,yshi:" << yslo << yshi
  << "yelo,yehi" << yelo << yehi;
 
-      nmtasks     = slmodels( slolim, suplim, klolim, kuplim, kincr, cresolu );
+      nmtasks     = slmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,
+                              cresolu );
    }
 
-   else if ( curvtype == 1  ||  curvtype == 2 )
+   else if ( SgType )
    { // Determine models for sigmoid curves
-      int nkpts   = (int)kincr;
 DbgLv(1) << "RF: sigm: nkpts" << nkpts;
 
       nmtasks     = sigmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,

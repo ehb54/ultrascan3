@@ -23,7 +23,7 @@ class US_MLinesPlot : public US_WidgetsDialog
 
    public:
       //! \param parent A pointer to the parent widget of this one
-      US_MLinesPlot( double&, double&, double&, double&, double&,
+      US_MLinesPlot( double&, double&, double&, double&,
                      int&, int&, int&, int& );
 
       void setModel ( US_Model*, QVector< ModelRecord >& );
@@ -32,14 +32,13 @@ class US_MLinesPlot : public US_WidgetsDialog
    private:
       double&       fmin;
       double&       fmax;
-      double&       finc;
       double&       smin;
       double&       smax;
 
+      int&          ctype;
+      int&          nkpts;
       int&          nlpts;
       int&          bmndx;
-      int&          nkpts;
-      int&          ctype;
 
       US_Plot*      plotLayout1;
 
@@ -67,7 +66,7 @@ class US_MLinesPlot : public US_WidgetsDialog
       QLineEdit*    le_mtype;
       QLineEdit*    le_nlines;
       QLineEdit*    le_npoints;
-      QLineEdit*    le_kincr;
+      QLineEdit*    le_varcount;
       QLineEdit*    le_rmsdb;
       QLineEdit*    le_rmsdw;
       QLineEdit*    le_rmsde;

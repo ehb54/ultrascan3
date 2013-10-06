@@ -36,13 +36,12 @@ void ModelRecord::clear_data( void )
 
 // Static public function to compute straight lines
 int ModelRecord::compute_slines( double& smin, double& smax,
-      double& fmin, double& fmax, double& finc, int& nlpts,
+      double& fmin, double& fmax, int& nkpts, int& nlpts,
       double* parlims, QVector< ModelRecord >& mrecs )
 {
    mrecs.clear();
    ModelRecord mrec;
 
-   int     nkpts = qRound( ( fmax - fmin ) / finc ) + 1;
    double  prng  = (double)( nlpts - 1 );
    double  krng  = (double)( nkpts - 1 );
    double  xrng  = smax - smin;
@@ -132,11 +131,11 @@ int ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
    double srng  = smax - smin;
    double p1llg = log( p1lo );
    double p1ulg = log( p1up );
-   double lrng  = (double)( nlpts - 1 );
+   double prng  = (double)( nlpts - 1 );
    double krng  = (double)( nkpts - 1 );
    double p1inc = ( p1ulg - p1llg ) / krng;
    double p2inc = ( p2up  - p2lo  ) / krng;
-   double xinc  = 1.0 / lrng;
+   double xinc  = 1.0 / prng;
    double kstr  = fmin;
    double kdif  = fmax - fmin;
    if ( ctype == 2 )
@@ -152,13 +151,14 @@ int ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
    for ( int ii = 0; ii < nkpts; ii++ )
    { // Loop over par1 values (logarithmic progression)
       double p1val = exp( p1vlg );
+      double p1fac = sqrt( 2.0 * p1val );
       double p2val = p2lo;
 
       for ( int jj = 0; jj < nkpts; jj++ )
       { // Loop over par2 value (linear progression)
          double xval  = 0.0;
          double kval  = kstr;
-         double kstv  = kval;
+         double kval0 = kval;
          double sval  = smin;
 
          mrec.isolutes.clear();
@@ -166,13 +166,12 @@ int ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
 
          for ( int kk = 0; kk < nlpts; kk++ )
          { // Loop over points on a curve
-            double efac  = 0.5 * erf( ( xval - p2val )
-                                      / sqrt( 2.0 * p1val ) ) + 0.5;
+            double efac  = 0.5 * erf( ( xval - p2val ) / p1fac ) + 0.5;
             kval         = kstr + kdif * efac;
             sval         = smin + xval * srng;
             xval        += xinc;
             if ( kk == 0 )
-               kstv         = kval;
+               kval0        = kval;
 
             isol.s       = sval * 1.e-13;
             isol.k       = kval;
@@ -180,7 +179,7 @@ int ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
          } // END: points-on-curve loop
 
          mrec.taskx   = mndx;
-         mrec.str_k   = kstv;
+         mrec.str_k   = kval0;
          mrec.end_k   = kval;
          mrec.par1    = p1val;
          mrec.par2    = p2val;
@@ -194,5 +193,60 @@ int ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
    } // END: par1 values loop
 
    return nmodl;
+}
+
+// Static public function to compute horizontal lines [ C(s) ]
+int ModelRecord::compute_hlines( double& smin, double& smax,
+      double& fmin, double& fmax, int& nkpts, int& nlpts,
+      double* parlims, QVector< ModelRecord >& mrecs )
+{
+   mrecs.clear();
+   ModelRecord mrec;
+
+   double  krng  = (double)( nkpts - 1 );
+   double  prng  = (double)( nlpts - 1 );
+   double  xinc  = ( smax - smin ) / prng;
+
+   if ( parlims[ 0 ] < 0.0 )
+   {
+      parlims[ 0 ] = fmin;
+      parlims[ 1 ] = fmax;
+      parlims[ 2 ] = fmin;
+      parlims[ 3 ] = fmax;
+   }
+
+   double  yval  = parlims[ 0 ];
+   double  yinc  = ( parlims[ 1 ] - yval ) / krng;
+   int     mndx  = 0;
+   mrecs.reserve( nkpts );
+
+   // Generate horizontal lines
+   for ( int ii = 0; ii < nkpts; ii++ )
+   { // Loop over k start and end values
+      double xval = smin;
+
+      mrec.isolutes.clear();
+      US_Solute isol;
+
+      for ( int kk = 0; kk < nlpts; kk++ )
+      { // Loop over points on a line
+         isol.s      = xval * 1.e-13;
+         isol.k      = yval;
+         mrec.isolutes << isol;
+         xval       += xinc;
+      } // END: points-per-line loop
+
+      mrec.taskx  = mndx;
+      mrec.str_k  = yval;
+      mrec.end_k  = yval;
+      mrec.par1   = yval;
+      mrec.par2   = 0.0;
+      yval       += yinc;
+      mndx++;
+
+      mrecs << mrec;
+   } // END: k-value loop
+
+   return nkpts;
 }
 

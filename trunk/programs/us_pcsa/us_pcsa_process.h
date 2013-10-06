@@ -55,8 +55,8 @@ class US_pcsaProcess : public QObject
       //! \param gfits   grid fit maximum iterations
       //! \param gfthr   grid fit threshold difference fraction
       //! \param alf     regularization alpha factor
-      void start_fit( double, double, double, double, double,
-                      int, int, int, int, int, int, double, double = 0.0 );
+      void start_fit( double, double, double, double, int, int,
+                      int, int, int, int, int, double, double = 0.0 );
 
       //! \brief Complete the final fit for alpha scan or alpha change
       //! \param alf     regularization alpha factor
@@ -97,6 +97,7 @@ class US_pcsaProcess : public QObject
       static double fit_function_SL( double, double* );
       static double fit_function_IS( double, double* );
       static double fit_function_DS( double, double* );
+      static double fit_function_HL( double, double* );
 
 private:
 
@@ -139,6 +140,7 @@ private:
       int        nthreads;     // number of worker threads
       int        cresolu;      // curve resolution (points on the line)
       int        curvtype;     // curve type flag (0->straight line)
+      int        nkpts;        // number of k points
       int        nctotal;      // number of total compute-progress steps
       int        kcsteps;      // count of completed progress steps
       int        noisflag;     // noise out flag: 0(none), 1(ti), 2(ri), 3(both)
@@ -163,7 +165,6 @@ private:
       double     suplim;       // s upper limit
       double     klolim;       // k lower limit
       double     kuplim;       // k upper limit
-      double     kincr;        // k increment
       double     cparam;       // additional curve parameter
       double     varimin;      // variance minimum
       double     alpha;        // Tikhonov regularization factor
@@ -180,7 +181,7 @@ private:
    private slots:
       void queue_task      ( WorkPacket&, double, double,
                              int, int, QVector< US_Solute > );
-      int  slmodels        ( double, double, double, double, double, int );
+      int  slmodels        ( int, double, double, double, double, int, int );
       int  sigmodels       ( int, double, double, double, double, int, int );
       void process_job     ( WorkerThread* );
       void process_fxfinal ( ModelRecord&  );
