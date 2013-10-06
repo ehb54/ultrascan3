@@ -132,6 +132,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       void slim_change( void );
       void klim_change( void );
       void reso_change( void );
+      void type_change( void );
       void set_alpha  ( void );
       void start      ( void );
       void fit_final  ( void );

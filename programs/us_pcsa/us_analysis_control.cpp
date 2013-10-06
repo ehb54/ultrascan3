@@ -74,7 +74,6 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    QLabel* lb_uplimits     = us_label(  tr( "Upper Limit (s x 1e-13):" ) );
            lb_lolimitk     = us_label(  tr( "Lower Limit (f/f0):" ) );
            lb_uplimitk     = us_label(  tr( "Upper Limit (f/f0):" ) );
-           lb_incremk      = us_label(  tr( "Increment   (f/f0):" ) );
            lb_varcount     = us_label(  tr( "Variations Count:" ) );
    QLabel* lb_gfiters      = us_label(  tr( "Grid Fit Iterations:" ) );
    QLabel* lb_gfthresh     = us_label(  tr( "Threshold Delta-RMSD Ratio:" ) );
@@ -119,7 +118,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimits  = us_counter( 3, -10000, 10000,   10 );
    ct_lolimitk  = us_counter( 3,      1,     8,    1 );
    ct_uplimitk  = us_counter( 3,      1,   100,    5 );
-   ct_incremk   = us_counter( 3,   0.01,    10, 0.50 );
    ct_varcount  = us_counter( 2,      3,   200,    6 );
    ct_gfiters   = us_counter( 2,      1,    20,    3 );
    ct_gfthresh  = us_counter( 3,  1.e-6, 1.e-2, 1e-4 );
@@ -131,7 +129,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimits->setStep(  0.1 );
    ct_lolimitk->setStep( 0.01 );
    ct_uplimitk->setStep( 0.01 );
-   ct_incremk ->setStep( 0.01 );
    ct_varcount->setStep(    1 );
    ct_gfiters ->setStep(    1 );
    ct_gfthresh->setStep( 1.e-6 );
@@ -143,6 +140,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    cb_curvtype->addItem( "Straight Line" );
    cb_curvtype->addItem( "Increasing Sigmoid" );
    cb_curvtype->addItem( "Decreasing Sigmoid" );
+   cb_curvtype->addItem( "Horizontal Line [ C(s) ]" );
    cb_curvtype->setCurrentIndex( 1 );
 
    le_minvari   = us_lineedit( "0.000e-05", -1, true );
@@ -162,8 +160,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->addWidget( ct_lolimitk,   row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_uplimitk,   row,   0, 1, 2 );
    controlsLayout->addWidget( ct_uplimitk,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_incremk,    row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_incremk,    row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_varcount,   row,   0, 1, 2 );
    controlsLayout->addWidget( ct_varcount,   row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_gfiters,    row,   0, 1, 2 );
@@ -215,7 +211,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    optimize_options();
 
    connect( cb_curvtype, SIGNAL( activated   ( int )    ),
-            this,        SLOT(   compute()              ) );
+            this,        SLOT(   type_change()          ) );
    connect( ct_lolimits, SIGNAL( valueChanged( double ) ),
             this,        SLOT(   slim_change()          ) );
    connect( ct_uplimits, SIGNAL( valueChanged( double ) ),
@@ -223,8 +219,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    connect( ct_lolimitk, SIGNAL( valueChanged( double ) ),
             this,        SLOT(   klim_change()          ) );
    connect( ct_uplimitk, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   klim_change()          ) );
-   connect( ct_incremk,  SIGNAL( valueChanged( double ) ),
             this,        SLOT(   klim_change()          ) );
    connect( ct_varcount, SIGNAL( valueChanged( double ) ),
             this,        SLOT(   compute()              ) );
@@ -254,10 +248,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    connect( pb_close,    SIGNAL( clicked()    ),
             this,        SLOT(   close_all()  ) );
 
-   lb_incremk ->setVisible( true  );
-   ct_incremk ->setVisible( true  );
-   lb_varcount->setVisible( false );
-   ct_varcount->setVisible( false );
    edata          = &dsets[ 0 ]->run_data;
 
    pb_pltlines->setEnabled( false );
@@ -272,7 +262,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimits->setMinimumWidth( cminw );
    ct_lolimitk->setMinimumWidth( cminw );
    ct_uplimitk->setMinimumWidth( cminw );
-   ct_incremk ->setMinimumWidth( cminw );
    ct_varcount->setMinimumWidth( cminw );
    ct_gfiters ->setMinimumWidth( cminw );
    ct_gfthresh->setMinimumWidth( cminw );
@@ -283,7 +272,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimits->resize( csizw, rheight );
    ct_lolimitk->resize( csizw, rheight );
    ct_uplimitk->resize( csizw, rheight );
-   ct_incremk ->resize( csizw, rheight );
    ct_varcount->resize( csizw, rheight );
    ct_gfiters ->resize( csizw, rheight );
    ct_gfthresh->resize( csizw, rheight );
@@ -354,13 +342,11 @@ void US_AnalysisControl::start()
    double sup    = ct_uplimits->value();
    double klo    = ct_lolimitk->value();
    double kup    = ct_uplimitk->value();
-   double kin    = ct_incremk ->value();
    int    nthr   = (int)ct_thrdcnt ->value();
    int    nvar   = (int)ct_varcount->value();
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
    int    res    = (int)ct_cresolu ->value();
-   kin           = ( typ == 0 ) ? kin : (double)nvar;
    double gfthr  = ct_gfthresh->value();
    int    gfits  = ct_gfiters ->value();
    int    lmmxc  = ct_lmmxcall->value();
@@ -412,9 +398,8 @@ DbgLv(1) << "(2)pb_plot-Enabled" << pb_plot->isEnabled();
    qApp->processEvents();
 
    if ( need_fit )
-      processor->start_fit( slo, sup, klo, kup, kin,
-                            res, typ, nthr, noif, lmmxc,
-                            gfits, gfthr, alpha );
+      processor->start_fit( slo, sup, klo, kup, nvar, res, typ,
+                            nthr, noif, lmmxc, gfits, gfthr, alpha );
 
    else if ( need_final )
       processor->final_fit( alpha );
@@ -556,8 +541,6 @@ DbgLv(1) << "AC:advanced: get_results";
                bmndx, *mw_modstats, mrecs );
 
          int    nmrecs = mrecs.size();
-         finc          = qFloor( sqrt( (double)nmrecs ) );
-         nkpts         = (int)finc;
          int    nmtsks = sq( nkpts );
          int    strec  = nmrecs - nmtsks;
          nlpts         = mrecs[ strec ].isolutes.size();
@@ -565,7 +548,6 @@ DbgLv(1) << "AC:advanced: get_results";
          smax          = mrecs[ strec ].smax;
          fmin          = mrecs[ strec ].kmin;
          fmax          = mrecs[ strec ].kmax;
-         finc          = ( fmax - fmin ) / ( finc - 1.0 );
          ctype         = mrecs[ strec ].ctype;
 
          for ( int ii = strec; ii < nmrecs; ii++ )
@@ -593,11 +575,7 @@ DbgLv(1) << "AC:advanced: get_results";
          ct_uplimits->setValue( smax  );
          ct_lolimitk->setValue( fmin  );
          ct_uplimitk->setValue( fmax  );
-         ct_incremk ->setValue( finc  );
          ct_cresolu ->setValue( nlpts );
-
-         lb_incremk ->setVisible( ctype == 0 );
-         ct_incremk ->setVisible( ctype == 0 );
 
          fitpars       = fitpars_string();
          fitpars_connect( true );
@@ -687,6 +665,20 @@ DbgLv(1) << "RESO_CHANGE: need_fit" << need_fit
  << "reso" << ct_cresolu ->value();
    if ( need_fit )
       compute();
+}
+
+// Handle change in curve type
+void US_AnalysisControl::type_change()
+{
+   ctype   = cb_curvtype->currentIndex();
+DbgLv(1) << "TYPE_CHANGE: ctype" << ctype;
+
+   if ( ctype == 3 )
+      ct_varcount->setValue( 101 );
+   else
+      ct_varcount->setValue( 6 );
+
+   compute();
 }
 
 // Set regularization factor alpha
@@ -852,40 +844,39 @@ void US_AnalysisControl::compute()
    smax    = ct_uplimits->value();
    fmin    = ct_lolimitk->value();
    fmax    = ct_uplimitk->value();
-   finc    = ct_incremk ->value();
+   nkpts   = (int)ct_varcount->value();
    nlpts   = (int)ct_cresolu ->value();
-   nkpts   = qRound( ( fmax - fmin ) / finc ) + 1;
    mrecs.clear();
-   parlims[ 0 ] = -1.0;
+   parlims[ 0 ]   = -1.0;
+   int    nlmodl  = nkpts * nkpts;
 
    if ( ctype == 0 )
    {
-      lb_incremk ->setVisible( true  );
-      ct_incremk ->setVisible( true  );
-      lb_varcount->setVisible( false );
-      ct_varcount->setVisible( false );
-
-      ModelRecord::compute_slines( smin, smax, fmin, fmax, finc, nlpts,
+      ModelRecord::compute_slines( smin, smax, fmin, fmax, nkpts, nlpts,
             parlims, mrecs );
    }
-   if ( ctype == 1  ||  ctype == 2 )
+   else if ( ctype == 1  ||  ctype == 2 )
    {
-      nkpts          = (int)ct_varcount->value();
-      lb_incremk ->setVisible( false );
-      ct_incremk ->setVisible( false );
-      lb_varcount->setVisible( true  );
-      ct_varcount->setVisible( true  );
-
       ModelRecord::compute_sigmoids( ctype, smin, smax, fmin, fmax,
             nkpts, nlpts, parlims, mrecs );
    }
-   int    nlmodl  = nkpts * nkpts;
+   else if ( ctype == 3 )
+   {
+      nlmodl         = nkpts;
+
+      ModelRecord::compute_hlines( smin, smax, fmin, fmax, nkpts, nlpts,
+            parlims, mrecs );
+   }
 
    QString amsg   =
-      tr( "The number of test models is %1,\n"
-          " derived from the square of %2 variation points,\n"
-          " with each curve model consisting of %3 points." )
-      .arg( nlmodl ).arg( nkpts ).arg( nlpts );
+      tr( "The number of test models is %1,\n" ).arg( nlmodl );
+   if ( ctype < 3 )
+   {
+      amsg       += tr( " derived from the square of %1 variation points,\n" )
+                    .arg( nkpts );
+   }
+   amsg          += tr( " with each curve model consisting of %1 points." )
+                    .arg( nlpts );
    te_status  ->setText( amsg );
 
    bmndx          = -1;
@@ -904,19 +895,16 @@ void US_AnalysisControl::plot_lines()
    smax    = ct_uplimits->value();
    fmin    = ct_lolimitk->value();
    fmax    = ct_uplimitk->value();
-   finc    = ct_incremk ->value();
    nlpts   = (int)ct_cresolu ->value();
-   nkpts   = ( ctype > 0 )
-             ? (int)ct_varcount->value()
-             : qRound( ( fmax - fmin ) / finc ) + 1;
+   nkpts   = (int)ct_varcount->value();
 
 DbgLv(1) << "PL: mlnplotd" << mlnplotd;
    if ( mlnplotd != 0 )
       mlnplotd->close();
 DbgLv(1) << "PL:  mlnplotd closed";
 
-   mlnplotd = new US_MLinesPlot( fmin, fmax, finc, smin, smax,
-                                 nlpts, bmndx, nkpts, ctype );
+   mlnplotd = new US_MLinesPlot( fmin, fmax, smin, smax, ctype,
+                                 nkpts, nlpts, bmndx );
 
    connect( mlnplotd, SIGNAL( destroyed( QObject* ) ),
             this,     SLOT  ( closed   ( QObject* ) ) );
@@ -1032,15 +1020,13 @@ QString US_AnalysisControl::fitpars_string()
    double sup    = ct_uplimits->value();
    double klo    = ct_lolimitk->value();
    double kup    = ct_uplimitk->value();
-   double kin    = ct_incremk ->value();
    int    nvar   = (int)ct_varcount->value();
-   kin           = ( typ == 0 ) ? kin : (double)nvar;
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
 
 
-   return QString().sprintf( "%d %.5f %.5f %.5f %.5f %.5f %d %d",
-            typ, slo, sup, klo, kup, kin, nvar, noif );
+   return QString().sprintf( "%d %.5f %.5f %.5f %.5f %d %d",
+            typ, slo, sup, klo, kup, nvar, noif );
 }
 
 // Re-Connect or disconnect fit parameters controls
@@ -1058,8 +1044,6 @@ void US_AnalysisControl::fitpars_connect( bool reconn )
                this,        SLOT(   klim_change()          ) );
       connect( ct_uplimitk, SIGNAL( valueChanged( double ) ),
                this,        SLOT(   klim_change()          ) );
-      connect( ct_incremk,  SIGNAL( valueChanged( double ) ),
-               this,        SLOT(   klim_change()          ) );
       connect( ct_varcount, SIGNAL( valueChanged( double ) ),
                this,        SLOT(   compute()              ) );
       connect( ct_cresolu,  SIGNAL( valueChanged( double ) ),
@@ -1073,7 +1057,6 @@ void US_AnalysisControl::fitpars_connect( bool reconn )
       ct_uplimits->disconnect();
       ct_lolimitk->disconnect();
       ct_uplimitk->disconnect();
-      ct_incremk ->disconnect();
       ct_varcount->disconnect();
       ct_cresolu ->disconnect();
    }
@@ -1095,7 +1078,6 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
    smax          = ct_uplimits->value();
    fmin          = ct_lolimitk->value();
    fmax          = ct_uplimitk->value();
-   finc          = ct_incremk ->value();
    nlpts         = (int)ct_cresolu ->value();
    ctype         = cb_curvtype->currentIndex();
    mrec.ctype    = ctype;

@@ -14,11 +14,10 @@
 #include <qwt_scale_draw.h>
 
 // constructor:  model lines plot widget
-US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
-      double& slo, double& shi, int& nlp, int& bmx, int& nkp, int &typ )
-   : US_WidgetsDialog( 0, 0 ), fmin( flo ), fmax( fhi ), finc( fin ),
-   smin( slo ), smax( shi ), nlpts( nlp ), bmndx( bmx ), nkpts( nkp ),
-   ctype( typ )
+US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& slo,
+      double& shi, int& typ, int& nkp, int& nlp, int& bmx )
+   : US_WidgetsDialog( 0, 0 ), fmin( flo ), fmax( fhi ), smin( slo ),
+   smax( shi ), ctype( typ ), nkpts( nkp ), nlpts( nlp ), bmndx( bmx )
 {
    // lay out the GUI
    setObjectName( "US_MLinesPlot" );
@@ -49,7 +48,7 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    QLabel* lb_mtype       = us_label(  tr( "Model Type:" ) );
    QLabel* lb_nlines      = us_label(  tr( "Lines (Models):" ) );
    QLabel* lb_npoints     = us_label(  tr( "Max Points per Line:" ) );
-   QLabel* lb_kincr       = us_label(  tr( "f/f0 Increment:" ) );
+   QLabel* lb_varcount    = us_label(  tr( "Variation Count:" ) );
            lb_rmsdhd      = us_label(  tr( "RMSD Cuts" ) );
            lb_ltypeh      = us_label(  tr( "Line Type" ) );
            lb_counth      = us_label(  tr( "Counts" ) );
@@ -63,7 +62,7 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& fin,
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
-   nmodel       = nkpts * nkpts;
+   nmodel       = ( ctype != 3 ) ? ( nkpts * nkpts ) : nkpts;
    neline       = qMax( 2, nmodel / 10 );
    nsline       = qMax( 1, neline / 4  );
    nvline       = nmodel;
@@ -71,7 +70,7 @@ DbgLv(1) << "RP:  nkpts nmodel" << nkpts << nmodel;
    le_mtype     = us_lineedit( tr( "Straight Line" ),     -1, true );
    le_nlines    = us_lineedit( QString::number( nmodel ), -1, true );
    le_npoints   = us_lineedit( QString::number( nlpts  ), -1, true );
-   le_kincr     = us_lineedit( QString::number( finc   ), -1, true );
+   le_varcount  = us_lineedit( QString::number( nkpts  ), -1, true );
    le_rmsdb     = us_lineedit( QString::number( rmsd_best   ), -1, true );
    le_rmsdw     = us_lineedit( QString::number( rmsd_worst  ), -1, true );
    le_rmsde     = us_lineedit( QString::number( rmsd_elite  ), -1, true );
@@ -84,12 +83,6 @@ DbgLv(1) << "RP:  nkpts nmodel" << nkpts << nmodel;
    ct_nsline->setStep( 1 );
    ct_nvline->setStep( 1 );
    le_colmap    = us_lineedit( cmapname,                       -1, true );
-
-   if ( ctype == 1  ||  ctype == 2 )
-   {
-      lb_kincr->setText( tr( "Variation Count" ) );
-      le_kincr->setText( QString::number( nkpts ) );
-   }
 
    // Set the default color map (rainbow)
    defaultColorMap();
@@ -128,8 +121,8 @@ DbgLv(1) << "RP:  csizw cminw tsizw" << csizw << cminw << tsizw;
    pltctrlsLayout->addWidget( le_nlines,   row++, 3, 1, 3 );
    pltctrlsLayout->addWidget( lb_npoints,  row,   0, 1, 3 );
    pltctrlsLayout->addWidget( le_npoints,  row++, 3, 1, 3 );
-   pltctrlsLayout->addWidget( lb_kincr,    row,   0, 1, 3 );
-   pltctrlsLayout->addWidget( le_kincr,    row++, 3, 1, 3 );
+   pltctrlsLayout->addWidget( lb_varcount, row,   0, 1, 3 );
+   pltctrlsLayout->addWidget( le_varcount, row++, 3, 1, 3 );
    pltctrlsLayout->addWidget( lb_ltypeh,   row,   0, 1, 2 );
    pltctrlsLayout->addWidget( lb_counth,   row,   2, 1, 2 );
    pltctrlsLayout->addWidget( lb_rmsdhd,   row++, 4, 1, 2 );
@@ -152,6 +145,7 @@ DbgLv(1) << "RP:  csizw cminw tsizw" << csizw << cminw << tsizw;
    if      ( ctype == 0 ) le_mtype->setText( tr( "Straight Line" ) );
    else if ( ctype == 1 ) le_mtype->setText( tr( "Increasing Sigmoid" ) );
    else if ( ctype == 2 ) le_mtype->setText( tr( "Decreasing Sigmoid" ) );
+   else if ( ctype == 3 ) le_mtype->setText( tr( "Horizontal Line [C(s)]" ) );
 
    // Hide the color items for now
    showColorItems( false );
