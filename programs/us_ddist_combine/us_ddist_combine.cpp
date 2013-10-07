@@ -353,8 +353,8 @@ if(dbg_level>0)
  }
 }
 //*DEBUG*
-   te_status->setText( tr( "Added: %1 run(s), %2 implied models." )
-         .arg( nrunids ).arg( aDescrs.count() ) );
+   te_status->setText( tr( "Added: %1 run(s), %2 implied total models." )
+         .arg( nrunids ).arg( distros.count() ) );
 
    if ( nsprojs == 1 )
    {
