@@ -348,8 +348,8 @@ void US_AnalysisControl::start()
                    ( ck_rinoise->isChecked() ? 2 : 0 );
    int    res    = (int)ct_cresolu ->value();
    double gfthr  = ct_gfthresh->value();
-   int    gfits  = ct_gfiters ->value();
-   int    lmmxc  = ct_lmmxcall->value();
+   int    gfits  = (int)ct_gfiters ->value();
+   int    lmmxc  = (int)ct_lmmxcall->value();
    double alpha  = ct_tralpha ->value();
 
    // Alpha-scan completed:  test if we need to re-fit
@@ -456,7 +456,8 @@ void US_AnalysisControl::advanced()
 DbgLv(1) << "AC:advanced";
 DbgLv(1) << "AC:advanced  mrecs.size" << mrecs.size();
 if(mrecs.size()>0)
- DbgLv(1) << "AC:advanced mrecs0 p1 p2" << mrecs[0].par1 << mrecs[0].par2;
+ DbgLv(1) << "AC:advanced mrecs0 p1 p2" << mrecs[0].par1 << mrecs[0].par2
+  << "ctype" << mrecs[0].ctype;
    int    nthr   = (int)ct_thrdcnt ->value();
 
    US_AdvAnalysis* aadiag = new US_AdvAnalysis( &mrecs, nthr, dsets[ 0 ],
@@ -541,14 +542,13 @@ DbgLv(1) << "AC:advanced: get_results";
                bmndx, *mw_modstats, mrecs );
 
          int    nmrecs = mrecs.size();
-         int    nmtsks = sq( nkpts );
+         int    nmtsks = ( mrecs[ 0 ].ctype != 3 ) ? sq( nkpts ) : nkpts;
          int    strec  = nmrecs - nmtsks;
          nlpts         = mrecs[ strec ].isolutes.size();
          smin          = mrecs[ strec ].smin;
          smax          = mrecs[ strec ].smax;
          fmin          = mrecs[ strec ].kmin;
          fmax          = mrecs[ strec ].kmax;
-         ctype         = mrecs[ strec ].ctype;
 
          for ( int ii = strec; ii < nmrecs; ii++ )
          {
@@ -1134,6 +1134,21 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
          mrec.isolutes << isol;
          xval        += xinc;
       } // END: points-on-curve loop
+   }
+
+   else if ( ctype == 3 )
+   {
+      double xval   = smin;
+      double xinc   = xrng / prng;
+      double kval   = end_k;
+
+      for ( int kk = 0; kk < nlpts; kk++ )
+      { // Loop over points on a line
+         isol.s      = xval * 1.e-13;
+         isol.k      = kval;
+         mrec.isolutes << isol;
+         xval       += xinc;
+      } // END: points-per-line loop
    }
 
    mrecs[ 0 ] = mrec;

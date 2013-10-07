@@ -93,9 +93,11 @@ class US_DDistr_Combine : public US_Widgets
       QCheckBox*     ck_pcsasl;
       QCheckBox*     ck_pcsais;
       QCheckBox*     ck_pcsads;
+      QCheckBox*     ck_pcsahl;
       QCheckBox*     ck_pcsaslmc;
       QCheckBox*     ck_pcsaismc;
       QCheckBox*     ck_pcsadsmc;
+      QCheckBox*     ck_pcsahlmc;
       QCheckBox*     ck_dtall;
       QCheckBox*     ck_mdltype;
 

@@ -406,6 +406,8 @@ void US_pcsa::save( void )
       analysisType      = "PCSA-IS";
    else if ( curvType.contains( "Decreasing Sig" ) )
       analysisType      = "PCSA-DS";
+   else if ( curvType.contains( "Horizontal L" ) )
+      analysisType      = "PCSA-HL";
 
    if ( mciters > 1 )
       analysisType      = analysisType + "-MC";

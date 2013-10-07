@@ -91,9 +91,11 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QLayout* lo_pcsais   = us_checkbox( tr( "PCSA-IS" ),    ck_pcsais,   false );
    QLayout* lo_pcsasl   = us_checkbox( tr( "PCSA-SL" ),    ck_pcsasl,   false );
    QLayout* lo_pcsads   = us_checkbox( tr( "PCSA-DS" ),    ck_pcsads,   false );
+   QLayout* lo_pcsahl   = us_checkbox( tr( "PCSA-HL" ),    ck_pcsahl,   false );
    QLayout* lo_pcsaismc = us_checkbox( tr( "PCSA-IS-MC" ), ck_pcsaismc, false );
    QLayout* lo_pcsaslmc = us_checkbox( tr( "PCSA-SL-MC" ), ck_pcsaslmc, false );
    QLayout* lo_pcsadsmc = us_checkbox( tr( "PCSA-DS-MC" ), ck_pcsadsmc, false );
+   QLayout* lo_pcsahlmc = us_checkbox( tr( "PCSA-HL-MC" ), ck_pcsahlmc, false );
    QLayout* lo_dtall    = us_checkbox( tr( "All" ),        ck_dtall,    false );
 
    QButtonGroup* sel_plt  = new QButtonGroup( this );
@@ -147,11 +149,13 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_gaglmc,    row++, 2, 1, 6 );
    leftLayout->addLayout( lo_pcsais,    row,   0, 1, 2 );
    leftLayout->addLayout( lo_pcsasl,    row,   2, 1, 2 );
-   leftLayout->addLayout( lo_pcsads,    row++, 4, 1, 4 );
+   leftLayout->addLayout( lo_pcsads,    row,   4, 1, 2 );
+   leftLayout->addLayout( lo_pcsahl,    row++, 6, 1, 2 );
    leftLayout->addLayout( lo_pcsaismc,  row,   0, 1, 2 );
    leftLayout->addLayout( lo_pcsaslmc,  row,   2, 1, 2 );
    leftLayout->addLayout( lo_pcsadsmc,  row,   4, 1, 2 );
-   leftLayout->addLayout( lo_dtall,     row++, 6, 1, 2 );
+   leftLayout->addLayout( lo_pcsahlmc,  row++, 6, 1, 2 );
+   leftLayout->addLayout( lo_dtall,     row++, 0, 1, 8 );
 
    leftLayout->addWidget( lb_plottype,  row++, 0, 1, 8 );
    leftLayout->addLayout( lo_pltsw,     row,   0, 1, 2 );
@@ -228,11 +232,15 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_pcsads,   SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_pcsahl,   SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_pcsaismc, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_pcsaslmc, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_pcsadsmc, SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_pcsahlmc, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_dtall,    SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   allMethodChanged( int ) ) );
@@ -394,9 +402,11 @@ if(dbg_level>0)
    bool hv_pcsais   = methods.contains( "PCSA-IS"    );
    bool hv_pcsasl   = methods.contains( "PCSA-SL"    );
    bool hv_pcsads   = methods.contains( "PCSA-DS"    );
+   bool hv_pcsahl   = methods.contains( "PCSA-HL"    );
    bool hv_pcsaismc = methods.contains( "PCSA-IS-MC" );
    bool hv_pcsaslmc = methods.contains( "PCSA-SL-MC" );
    bool hv_pcsadsmc = methods.contains( "PCSA-DS-MC" );
+   bool hv_pcsahlmc = methods.contains( "PCSA-HL-MC" );
    bool hv_dtall    = methods.size() > 0;
 
    ck_2dsa    ->setEnabled( hv_2dsa     );
@@ -417,9 +427,11 @@ if(dbg_level>0)
    ck_pcsais  ->setEnabled( hv_pcsais   );
    ck_pcsasl  ->setEnabled( hv_pcsasl   );
    ck_pcsads  ->setEnabled( hv_pcsads   );
+   ck_pcsahl  ->setEnabled( hv_pcsahl   );
    ck_pcsaismc->setEnabled( hv_pcsaismc );
    ck_pcsaslmc->setEnabled( hv_pcsaslmc );
    ck_pcsadsmc->setEnabled( hv_pcsadsmc );
+   ck_pcsahlmc->setEnabled( hv_pcsahlmc );
    ck_dtall   ->setEnabled( hv_dtall    );
 
    ck_2dsa    ->setChecked( hv_2dsa     );
@@ -440,9 +452,11 @@ if(dbg_level>0)
    ck_pcsais  ->setChecked( hv_pcsais   );
    ck_pcsasl  ->setChecked( hv_pcsasl   );
    ck_pcsads  ->setChecked( hv_pcsads   );
+   ck_pcsahl  ->setChecked( hv_pcsahl   );
    ck_pcsaismc->setChecked( hv_pcsaismc );
    ck_pcsaslmc->setChecked( hv_pcsaslmc );
    ck_pcsadsmc->setChecked( hv_pcsadsmc );
+   ck_pcsahlmc->setChecked( hv_pcsahlmc );
    ck_dtall   ->setChecked( hv_dtall    );
 }
 
@@ -800,9 +814,11 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
       if ( ck_pcsais  ->isChecked() )  methods << "PCSA-IS";
       if ( ck_pcsasl  ->isChecked() )  methods << "PCSA-SL";
       if ( ck_pcsads  ->isChecked() )  methods << "PCSA-DS";
+      if ( ck_pcsahl  ->isChecked() )  methods << "PCSA-HL";
       if ( ck_pcsaismc->isChecked() )  methods << "PCSA-IS-MC";
       if ( ck_pcsaslmc->isChecked() )  methods << "PCSA-SL-MC";
       if ( ck_pcsadsmc->isChecked() )  methods << "PCSA-DS-MC";
+      if ( ck_pcsahlmc->isChecked() )  methods << "PCSA-HL-MC";
    }
 
    lw_models ->clear();
@@ -1360,9 +1376,11 @@ void US_DDistr_Combine::allMethodChanged( int state )
       ck_pcsais  ->setChecked( ck_pcsais  ->isEnabled() );
       ck_pcsasl  ->setChecked( ck_pcsasl  ->isEnabled() );
       ck_pcsads  ->setChecked( ck_pcsads  ->isEnabled() );
+      ck_pcsahl  ->setChecked( ck_pcsahl  ->isEnabled() );
       ck_pcsaismc->setChecked( ck_pcsaismc->isEnabled() );
       ck_pcsaslmc->setChecked( ck_pcsaslmc->isEnabled() );
       ck_pcsadsmc->setChecked( ck_pcsadsmc->isEnabled() );
+      ck_pcsahlmc->setChecked( ck_pcsahlmc->isEnabled() );
    }
 
    list_distributions();
