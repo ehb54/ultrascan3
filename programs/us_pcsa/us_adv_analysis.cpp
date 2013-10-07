@@ -101,6 +101,7 @@ DbgLv(1) << "AA: define GUI elements";
    cb_curvtype->addItem( tr( "Straight Line"      ) );
    cb_curvtype->addItem( tr( "Increasing Sigmoid" ) );
    cb_curvtype->addItem( tr( "Decreasing Sigmoid" ) );
+   cb_curvtype->addItem( tr( "Horizontal Line [ C(s) ]" ) );
    cb_curvtype->setCurrentIndex( 1 );
  
    // Define status text boxes and progress bar
@@ -343,17 +344,19 @@ void US_AdvAnalysis::curvtypeChanged( int ivalue )
 {
 DbgLv(1) << "curvtypeChanged" << ivalue;
    ctype          = ivalue;
-   bool is_sigm   = ( ctype != 0 );
+   bool is_sigm   = ( ctype == 1 || ctype == 2 );
    bool is_line   = ! is_sigm;
 
    lb_sigmpar1->setVisible( is_sigm );
    ct_sigmpar1->setVisible( is_sigm );
    lb_sigmpar2->setVisible( is_sigm );
    ct_sigmpar2->setVisible( is_sigm );
-   lb_k_strpt ->setVisible( is_line );
-   ct_k_strpt ->setVisible( is_line );
+   lb_k_strpt ->setVisible( ctype == 0 );
+   ct_k_strpt ->setVisible( ctype == 0 );
    lb_k_endpt ->setVisible( is_line );
    ct_k_endpt ->setVisible( is_line );
+   if ( ctype == 3 )
+      lb_k_endpt->setText( tr( "Line f/f0 End Points:" ) );
 }
 
 // Slot to handle a change in S lower bound
@@ -572,9 +575,13 @@ DbgLv(1) << "LM:xml: End ALL: nmrecs" << nmrecs << "last ncsols" << ncsols;
 
    mrec             = mrecs[ 0 ];
    ncsols           = mrec.csolutes.size();
-   QString sctype   = ( ctype == 1 ) ? "Increasing Sigmoid" :
-                    ( ( ctype == 0 ) ? "Straight Line" :
-                                       "Decreasing Sigmoid" );
+   const char* ctp[] = { "Straight Line",
+                         "Increasing Sigmoid",
+                         "Decreasing Sigmoid",
+                         "Horizontal Line [ C(s) ]",
+                         "?UNKNOWN?"
+                       };
+   QString sctype   = QString( ctp[ ctype ] );
 
    // Build the model that goes along with the BFM
    bfm_model();
@@ -846,9 +853,13 @@ DbgLv(1) << "LM:xml: End ALL: nmrecs" << nmrecs << "last ncsols" << ncsols;
    // Re-generate curve points for the model
    curve_isolutes( mrec );
 
-   QString sctype   = ( mrec.ctype == 1 ) ? "Increasing Sigmoid" :
-                    ( ( mrec.ctype == 0 ) ? "Straight Line" :
-                                            "Decreasing Sigmoid" );
+   const char* ctp[] = { "Straight Line",
+                         "Increasing Sigmoid",
+                         "Decreasing Sigmoid",
+                         "Horizontal Line [ C(s) ]",
+                         "?UNKNOWN?"
+                       };
+   QString sctype   = QString( ctp[ mrec.ctype ] );
 
    // Build the model that goes along with the BFM
    bfm_model();
@@ -1062,12 +1073,20 @@ DbgLv(1) << "build_bfm";
       mrec.par1      = mrec.str_k;
       mrec.par2      = ( mrec.str_k - mrec.end_k ) / ( smax - smin );
    }
-   else
+   else if ( ctype == 1  ||  ctype == 2 )
    {
       mrec.str_k     = kmin;
       mrec.end_k     = kmax;
       mrec.par1      = ct_sigmpar1->value();
       mrec.par2      = ct_sigmpar2->value();
+   }
+
+   else if ( ctype == 3 )
+   {
+      mrec.end_k     = ct_k_endpt ->value();
+      mrec.str_k     = mrec.end_k;
+      mrec.par1      = mrec.str_k;
+      mrec.par2      = 0.0;
    }
 
    // Generate the solute points on the curve
@@ -1628,6 +1647,20 @@ DbgLv(1) << "AA:CP:  ni" << nisols << "last kv" << kval;
          xval          += xinc;
       }
    }
+
+   else if ( ctype == 3 )  // Horizontal Line
+   {
+      double kval    = mrec.end_k;
+      double sval    = smin;
+
+      for ( int kk = 0; kk < nisols; kk++ )
+      {
+         mrec.isolutes[ kk ].s = sval * 1.e-13;
+         mrec.isolutes[ kk ].k = kval;
+         sval          += sinc;
+      }
+DbgLv(1) << "AA:CP:  ni" << nisols << "last kv" << kval;
+   }
 DbgLv(1) << "AA:CP: sol0 s,k" << mrec.isolutes[0].s << mrec.isolutes[0].k;
 int nn=nisols-1;
 DbgLv(1) << "AA:CP: soln s,k" << mrec.isolutes[nn].s << mrec.isolutes[nn].k;
@@ -1751,8 +1784,9 @@ void US_AdvAnalysis::set_fittings( QVector< ModelRecord >& s_mrecs )
    double smax  = -1.e-99;
    double kmin  = s_mrec.str_k;
    double kmax  = s_mrec.end_k;
-   ctype        = ( s_mrec.par1 == s_mrec.str_k ) ? 0 :
-                  ( ( s_mrec.str_k < s_mrec.end_k ) ? 1 : 2 );
+   ctype        = s_mrec.ctype;
+   ct_k_strpt ->setValue( s_mrec.str_k );
+   ct_k_endpt ->setValue( s_mrec.end_k );
    ct_sigmpar1->setValue( s_mrec.par1 );
    ct_sigmpar2->setValue( s_mrec.par2 );
 

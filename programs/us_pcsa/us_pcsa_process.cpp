@@ -111,7 +111,7 @@ DbgLv(1) << "PC: alf alpha lm fx scn"
    orig_sols.clear();
    mrecs    .clear();
 
-DbgLv(1) << "2P: sll sul" << slolim << suplim
+DbgLv(1) << "PC: sll sul" << slolim << suplim
  << " kll kul nkp" << klolim << kuplim << nkpts
  << " type reso nth noi" << curvtype << cresolu << nthreads << noisflag;
 
@@ -143,10 +143,10 @@ DbgLv(1) << "2P: sll sul" << slolim << suplim
    kctask      = 0;
    kstask      = 0;
    nthreads    = ( nthreads < nmtasks ) ? nthreads : nmtasks;
-DbgLv(1) << "2P:   nscans npoints" << nscans << npoints;
-DbgLv(1) << "2P:   nctotal nthreads" << nctotal << nthreads;
+DbgLv(1) << "PC:   nscans npoints" << nscans << npoints;
+DbgLv(1) << "PC:   nctotal nthreads" << nctotal << nthreads;
    max_rss();
-DbgLv(1) << "2P: (1)maxrss" << maxrss;
+DbgLv(1) << "PC: (1)maxrss" << maxrss;
 
    // Queue all the tasks
    for ( int ktask = 0; ktask < nmtasks; ktask++ )
@@ -179,7 +179,7 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss;
    mrecs    .clear();
    max_rss();
    kstask = nthreads;     // count of started tasks is initially thread count
-DbgLv(1) << "2P:   kstask nthreads" << kstask << nthreads << job_queue.size();
+DbgLv(1) << "PC:   kstask nthreads" << kstask << nthreads << job_queue.size();
 
    emit message_update( pmessage_head() +
       tr( "Starting computations of %1 models\n using %2 threads ..." )
@@ -220,7 +220,7 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
 // Complete a specified PCSA fit run after alpha scan or alpha change
 void US_pcsaProcess::final_fit( double alf )
 {
-DbgLv(1) << "2P(pcsaProc): final_fit()";
+DbgLv(1) << "PC(pcsaProc): final_fit()";
    abort       = false;
    alpha       = alf;
 
@@ -450,6 +450,7 @@ DbgLv(0) << " GET_RES:    VARI,RMSD" << mrecs[0].variance << mrecs[0].rmsd
 
    model_statistics( mrecs, modstats );
 
+DbgLv(1) << "PC:GR:   RTN";
    return all_ok;
 }
 
@@ -796,6 +797,7 @@ void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
    double brmsmin   = 99999.0;
    double brmsmax   = 0.0;
    double brmsavg   = 0.0;
+DbgLv(1) << "PC:MS: nmtasks mecssize" << nmtasks << mrecs.size();
    double rmsdmed   = mrecs[ nmtasks / 2 ].rmsd;
    double brmsmed   = mrecs[ nbmods  / 2 ].rmsd;
    int    nsolmin   = 999999;
@@ -851,6 +853,7 @@ void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
       modstats << tr( "Best curve f/f0 end points + slope:" )
                << QString().sprintf( "%10.4f  %10.4f  %10.4f",
                      str_k, end_k, slope );
+DbgLv(1) << "PC:MS:  best str_k,end_k" << str_k << end_k;
    }
    else
    {
@@ -901,6 +904,7 @@ void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
             << QString().sprintf( "%12.8f  %12.8f", brmsavg, brmsmed );
    modstats << tr( "Tikhonov regularization parameter:" )
             << QString().sprintf( "%12.3f", alpha );
+DbgLv(1) << "PC:MS:   RTN";
 
 }
 
@@ -1369,9 +1373,9 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
    // Start timer for L-M progress bar, based on estimated duration
    kcsteps       = 0;
    int    stepms = 500;
-   kctask        = ( curvtype == 0 )
-                   ? ( time_fg * nthreads * eslnc + nmtasks / 2 ) / nmtasks
-                   : ( time_fg * nthreads * esigc + nmtasks / 2 ) / nmtasks;
+   kctask        = LnType ?
+                   ( time_fg * nthreads * eslnc + nmtasks / 2 ) / nmtasks :
+                   ( time_fg * nthreads * esigc + nmtasks / 2 ) / nmtasks;
    nctotal       = ( kctask + stepms / 2 ) / stepms;
    kctask        = nctotal * stepms;
    lmtm_id       = startTimer( stepms );

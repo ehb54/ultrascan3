@@ -21,12 +21,16 @@
       label="Parametrically Constrained Spectrum Analysis (Incr. Sigmoid)" />
     <application name="PCSA-DS"
       label="Parametrically Constrained Spectrum Analysis (Decr. Sigmoid)" />
+    <application name="PCSA-HL"
+      label="Parametrically Constrained Spectrum Analysis (Horizontal Line)" />
     <application name="PCSA-SL-MC"
       label="Parametr. Constr. Spectr. Analysis (Str. Line) - Monte Carlo" />
     <application name="PCSA-IS-MC"
       label="Parametr. Constr. Spectr. Analysis (Inc. Sig.) - Monte Carlo" />
     <application name="PCSA-DS-MC"
       label="Parametr. Constr. Spectr. Analysis (Dec. Sig.) - Monte Carlo" />
+    <application name="PCSA-HL-MC"
+      label="Parametr. Constr. Spectr. Analysis (Hor. Line) - Monte Carlo" />
     <application name="2DSA-GL"
       label="2-D Spectrum Analysis - Global" />
     <application name="2DSA-GL-MC"
