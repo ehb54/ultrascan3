@@ -221,6 +221,10 @@ void US_SelectRunid::scan_dbase_runs()
       return;
    }
 
+   QStringList  mmIDs;   // All model modelIDs
+   QStringList  mmGUIDs; // All model modelGUIDs
+   QStringList  meIDs;   // All model editIDs;
+   QStringList  mmDescs; // All model descriptions
    QStringList  runIDs;  // All runs
    QStringList  expIDs;  // All experiments
    QStringList  edtIDs;  // All edits
@@ -230,9 +234,36 @@ void US_SelectRunid::scan_dbase_runs()
    QString      expid;
    QString      edtid;
    QString      eexid;
+   int          ntmodel = 0;
 
    QStringList query;
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
+
+QTime timer;
+timer.start();
+   query.clear();
+   query << "get_model_desc" << invID;
+   db.query( query );
+
+   while ( db.next() )
+   {  // Get lists of all model ids, edits and descriptions;
+      QString mdlid    = db.value( 0 ).toString();
+      QString mdlGid   = db.value( 1 ).toString();
+      QString mdesc    = db.value( 2 ).toString();
+      QString medtid   = db.value( 6 ).toString();
+      mmIDs   << mdlid;
+      mmGUIDs << mdlGid;
+      meIDs   << medtid;
+      mmDescs << mdesc;
+      ntmodel++;
+   }
+DbgLv(1) << "ScDB: ntmodel" << ntmodel;
+DbgLv(1) << "ScDB:scan time(1)" << timer.elapsed();
+int m=ntmodel-1;
+if ( m>1 ) {
+DbgLv(1) << "ScDB: 0: id,gid,eid,desc" << mmIDs[0] << mmGUIDs[0] << meIDs[0] << mmDescs[0];
+DbgLv(1) << "ScDB: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << mmDescs[m]; }
+
 
    query.clear();
    query << "get_experiment_desc" << invID;
@@ -252,6 +283,7 @@ DbgLv(1) << "ScDB:     runid" << runid << "expid" << expid;
          rmknts << 0;
       }
    }
+DbgLv(1) << "ScDB:scan time(2)" << timer.elapsed();
 
    query.clear();
    query << "all_editedDataIDs" << invID;
@@ -264,6 +296,7 @@ DbgLv(1) << "ScDB:     runid" << runid << "expid" << expid;
       edtIDs << edtid;
       eexIDs << expid;
    }
+DbgLv(1) << "ScDB:scan time(3)" << timer.elapsed();
 
    for ( int ii = 0; ii < edtIDs.count(); ii++ )
    {  // Get models for each edit
@@ -278,15 +311,19 @@ DbgLv(1) << "ScDB:     runid" << runid << "expid" << expid;
       QStringList  emDescs; 
       QStringList  emIDs;
 
-      query.clear();
-      query << "get_model_desc_by_editID" << invID << edtid;
-      db.query( query );
+      int     mst      = meIDs.indexOf( edtid );
+DbgLv(1) << "ScDB: ed ii id" << ii << edtid << "mst" << mst;
+      if ( mst < 0 )
+         continue;
 
-      while ( db.next() )
-      {  // Accumulate stats for the models of the current edit
-         QString mID    = db.value( 0 ).toString();
-         QString mGUID  = db.value( 1 ).toString();
-         QString mdesc  = db.value( 2 ).toString();
+      for ( int mm = mst; mm < ntmodel; mm++ )
+      {  // Get info for models of this edit
+         QString medtid = meIDs[ mm ];
+         if ( medtid < 0  ||  medtid != edtid )
+            continue;
+         QString mID    = mmIDs[ mm ];
+         QString mGUID  = mmGUIDs[ mm ];
+         QString mdesc  = mmDescs[ mm ];
          int     kk     = mdesc.lastIndexOf( ".model" );
          mdesc          = ( kk < 1 ) ? mdesc : mdesc.left( kk );
 
@@ -295,26 +332,30 @@ DbgLv(1) << "ScDB:     runid" << runid << "expid" << expid;
          emIDs   << mID;
          nmodel++;
       }
+DbgLv(1) << "ScDB: ed   ii id" << ii << edtid << "nmodel" << nmodel;
 
+      int lastmID = 0;
       for ( int mm = 0; mm < nmodel; mm++ )
-      {  // Search until we have a data (cell) description for the edit models
-         query.clear();
-         query << "get_model_info" << emIDs[ mm ];
+      {  // Find the last model ID for this edit
+         int currmID    = emIDs[ mm ].toInt();
+         lastmID        = qMax( lastmID, currmID );
+      }
+      query.clear();
+      query << "get_model_info" << QString::number( lastmID );
 
-         db.query( query );
-         db.next();
+      db.query( query );
+      db.next();
 
-         QString mxml   = db.value( 2 ).toString();
-         int     kk     = mxml.indexOf( "dataDescrip=" );
-DbgLv(1) << "ScDB:    mm kk" << mm << kk << "mdesc" << emDescs[mm];
+      // Get the data (cell) description for that model
+      QString mxml   = db.value( 2 ).toString();
+      int     kk     = mxml.indexOf( "dataDescrip=" );
+//DbgLv(1) << "ScDB:    mm kk" << mm << kk << "mdesc" << emDescs[mm];
 
-         if ( kk > 0 )
-         {
-            ddesc          = mxml.mid( kk + 13 );
-            kk             = ddesc.indexOf( "\"" );
-            ddesc          = ddesc.left( kk );
-            break;
-         }
+      if ( kk > 0 )
+      {
+         ddesc          = mxml.mid( kk + 13 );
+         kk             = ddesc.indexOf( "\"" );
+         ddesc          = ddesc.left( kk );
       }
 DbgLv(1) << "ScDB:  ddesc" << ddesc;
 
@@ -325,8 +366,8 @@ DbgLv(1) << "ScDB:  ddesc" << ddesc;
          QString odesc  = runid + "\t" + mGUID + "\t" + mdesc + "\t" + ddesc;
          mRunIDs << runid;    // Save run ID
          mDescrs << odesc;    // Save model description string
-if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
- DbgLv(1) << "ScDB: odesc" << odesc;
+//if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
+// DbgLv(1) << "ScDB: odesc" << odesc;
       }
 
       if ( nmodel > 0 )
@@ -334,6 +375,7 @@ if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
          rmknts.replace( jj, nmodel );
       }
    }
+DbgLv(1) << "ScDB:scan time(4)" << timer.elapsed();
 
 DbgLv(1) << "ScDB: count_allr" << count_allr << runIDs.size();
    for ( int ii = 0; ii < count_allr; ii++ )
@@ -348,6 +390,7 @@ DbgLv(1) << "ScDB:   ii count_list" << ii << count_list
       }
    }
 DbgLv(1) << "ScDB:count_list" << count_list;
+DbgLv(1) << "ScDB:scan time(9)" << timer.elapsed();
 }
 
 
