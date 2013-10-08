@@ -234,25 +234,27 @@ int US_DataProcess::record_download( int row )
 
    else if ( cdesc.recType == 3 )
    {  // download a Model record
-      US_Model model;
-
-      filepath = get_model_filename( dataGUID );
-      stat     = model.load( dataID, db );
-
+//QTime timer3;
+//timer3.start();
+      filepath = get_model_filename( &cdesc );
+//qDebug() << "DwnLd:  model time1" << timer3.elapsed();
+      QStringList query;
+      query << "get_model_info" << dataID;
+      db->query( query );
+      stat       = db->lastErrno();
       if ( stat == US_DB2::OK )
       {
-         model.update_coefficients();
-
-         stat = model.write( filepath );
-
-         if ( stat != US_DB2::OK )
+         db->next();
+//qDebug() << "DwnLd:   model time2" << timer3.elapsed();
+         QString contents = db->value( 2 ).toString();
+         QFile fileo( filepath );
+         if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
          {
-            errMsg = tr( "Model write for download, status %1" ).arg( stat );
-            stat   = 3023;  // download write error
+            QTextStream tso( &fileo );
+            tso << contents;
+            fileo.close();
+//qDebug() << "DwnLd:   model time3" << timer3.elapsed();
          }
-
-         else
-            cdesc.filename = filepath;
       }
 
       else
@@ -266,7 +268,7 @@ int US_DataProcess::record_download( int row )
    {  // download a Noise record
       US_Noise noise;
 
-      filepath = get_noise_filename( dataGUID );
+      filepath = get_noise_filename( &cdesc );
       stat     = noise.load( dataID, db );
 
       if ( stat == US_DB2::OK )
@@ -449,6 +451,20 @@ int US_DataProcess::record_remove_local( int row )
 }
 
 // Get next model file name
+QString US_DataProcess::get_model_filename( US_DataModel::DataDesc* ddesc )
+{
+   QString path = ddesc->filename;
+
+   if ( !path.isEmpty()  &&  QFile( path ).exists() )
+      return path;
+
+   if ( ( ddesc->recState & US_DataModel::REC_LO ) == 0 )
+      return get_model_filename( "" );
+   else
+      return get_model_filename( ddesc->dataGUID );
+}
+
+// Get next model file name
 QString US_DataProcess::get_model_filename( QString guid )
 {
    QString path;
@@ -457,6 +473,21 @@ QString US_DataProcess::get_model_filename( QString guid )
       return "";
 
    return US_DataFiles::get_filename( path, guid, "M", "model", "modelGUID" );
+}
+
+
+// Get next noise file name
+QString US_DataProcess::get_noise_filename( US_DataModel::DataDesc* ddesc )
+{
+   QString path = ddesc->filename;
+
+   if ( !path.isEmpty()  &&  QFile( path ).exists() )
+      return path;
+
+   if ( ( ddesc->recState & US_DataModel::REC_LO ) == 0 )
+      return get_noise_filename( "" );
+   else
+      return get_noise_filename( ddesc->dataGUID );
 }
 
 // Get next noise file name

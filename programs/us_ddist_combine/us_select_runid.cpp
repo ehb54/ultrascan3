@@ -241,6 +241,7 @@ void US_SelectRunid::scan_dbase_runs()
 
 QTime timer;
 timer.start();
+#if 0
    query.clear();
    query << "get_model_desc" << invID;
    db.query( query );
@@ -263,7 +264,7 @@ int m=ntmodel-1;
 if ( m>1 ) {
 DbgLv(1) << "ScDB: 0: id,gid,eid,desc" << mmIDs[0] << mmGUIDs[0] << meIDs[0] << mmDescs[0];
 DbgLv(1) << "ScDB: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << mmDescs[m]; }
-
+#endif
 
    query.clear();
    query << "get_experiment_desc" << invID;
@@ -278,13 +279,19 @@ DbgLv(1) << "ScDB:     runid" << runid << "expid" << expid;
       if ( ! runIDs.contains( runid ) )
       {
          count_allr++;
+#if 0
          runIDs << runid;
          expIDs << expid;
          rmknts << 0;
+#endif
+#if 1
+         rlabels << runid;     // Save run ID to list of selectable runs
+#endif
       }
    }
 DbgLv(1) << "ScDB:scan time(2)" << timer.elapsed();
 
+#if 1
    query.clear();
    query << "all_editedDataIDs" << invID;
    db.query( query );
@@ -297,7 +304,9 @@ DbgLv(1) << "ScDB:scan time(2)" << timer.elapsed();
       eexIDs << expid;
    }
 DbgLv(1) << "ScDB:scan time(3)" << timer.elapsed();
+#endif
 
+#if 0
    for ( int ii = 0; ii < edtIDs.count(); ii++ )
    {  // Get models for each edit
       edtid            = edtIDs[ ii ];
@@ -389,6 +398,7 @@ DbgLv(1) << "ScDB:   ii count_list" << ii << count_list
          rlabels << runid;     // Save run ID to list of selectable runs
       }
    }
+#endif
 DbgLv(1) << "ScDB:count_list" << count_list;
 DbgLv(1) << "ScDB:scan time(9)" << timer.elapsed();
 }
