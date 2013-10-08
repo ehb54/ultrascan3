@@ -27,33 +27,37 @@ QString US_DataFiles::get_filename( const QString& path, const QString& guid,
    for ( int ii = 0; ii < f_names.size(); ii++ )
    {  // Browse all the existing files in the directory
       QString fname  = f_names[ ii ];
-      QFile m_file( path + "/" + fname );
 
-      if ( ! m_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
+      if ( !guid.isEmpty() )
+      {  // If guid is not empty, search for a match in existing files
+         QFile m_file( path + "/" + fname );
 
-      QXmlStreamReader xml( &m_file );
+         if ( ! m_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
 
-      while ( ! xml.atEnd() )
-      {  // Search for a matching tag and attribute
-         xml.readNext();
+         QXmlStreamReader xml( &m_file );
 
-         if ( xml.isStartElement() )
-         {
-            if ( xml.name() == lkupTag )
-            {  // Found the look-up tag
-               QXmlStreamAttributes a = xml.attributes();
+         while ( ! xml.atEnd() )
+         {  // Search for a matching tag and attribute
+            xml.readNext();
 
-               if ( a.value( lkupAtt ).toString() == guid )
-               {  // There is a match of an attribute value to the GUID
-                  ofname    = fname;       // File name will be this one
-                  newFile   = false;       // Not a new file
-                  break;                   // We're done looking
+            if ( xml.isStartElement() )
+            {
+               if ( xml.name() == lkupTag )
+               {  // Found the look-up tag
+                  QXmlStreamAttributes a = xml.attributes();
+
+                  if ( a.value( lkupAtt ).toString() == guid )
+                  {  // There is a match of an attribute value to the GUID
+                     ofname    = fname;       // File name will be this one
+                     newFile   = false;       // Not a new file
+                     break;                   // We're done looking
+                  }
                }
             }
          }
-      }
 
-      m_file.close();
+         m_file.close();
+      }
 
       if ( newFile )
       {  // No match yet found:  look for a gap in numbering

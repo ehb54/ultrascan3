@@ -1223,6 +1223,37 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
 
       plot_mwl();
    } // END: isMwl=true
+//*DEBUG* Print times,omega^ts
+else
+{
+ triple = allData[0];
+ double timel = triple.scanData[0].rpm / 400.0;
+ double rpmc  = 400.0;
+ int    nstep = (int)timel;
+ double w2ti  = 0.0;
+ for ( int ii=0; ii<nstep; ii++ )
+ {
+  w2ti += sq( rpmc * M_PI / 30.0 );
+  rpmc += 400.0;
+ }
+ for ( int ii=0; ii<triple.scanData.size(); ii++ )
+ {
+  US_DataIO::Scan* ds=&triple.scanData[ii];
+  double timec = ds->seconds;
+  double rpmc  = ds->rpm;
+  w2ti += ( timec - timel ) * sq( rpmc * M_PI / 30.0 );
+  qDebug() << "scan" << ii+1 << "delta-r rpm seconds" << ds->delta_r
+   << rpmc << timec << "omega2t w2t-integ" << ds->omega2t << w2ti;
+  if(ii==0)
+  {
+   double deltt = ds->omega2t / sq(rpmc*M_PI/30.0);
+   double time1 = timel + deltt;
+   qDebug() << "   scan 1 omega2t-implied time" << time1;
+  }
+  timel = timec;
+ }
+}
+//*DEBUG* Print times,omega^ts
 
    ct_odlim->disconnect();
    ct_odlim->setValue( odlimit );
@@ -4382,7 +4413,7 @@ void US_Edit::lambda_plot_value( int value )
    if ( value < 0 )  return;
 
    plotndx     = value;
-   plotrec     = cb_lplot ->itemText( plotndx ).toDouble();
+   plotrec     = (int)cb_lplot ->itemText( plotndx ).toDouble();
 DbgLv(1) << "lambda_plot_value  value" << value << plotrec;
 
    plot_mwl();

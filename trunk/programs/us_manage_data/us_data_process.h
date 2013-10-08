@@ -42,7 +42,9 @@ class US_DataProcess : public QObject
       int                     dbg_level;
 
    private slots:
+      QString get_model_filename( US_DataModel::DataDesc* );
       QString get_model_filename( QString );
+      QString get_noise_filename( US_DataModel::DataDesc* );
       QString get_noise_filename( QString );
 };
 #endif

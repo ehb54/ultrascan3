@@ -885,6 +885,8 @@ DbgLv(1) << "ITEM do_actions" << narows << item_exs << item_act;
    bool upLoad = item_act.contains( "DB create"   )
               || item_act.contains( "DB replace"  );
    bool remove = item_act.contains( "remove"      );
+   QProgressBar* progress = da_model->progrBar();
+   QLabel*       stlabel  = da_model->statlab();
 
    if ( remove && frDB )
    {                                  // REMOVE from DB
@@ -968,6 +970,12 @@ DbgLv(1) << "RMV_REC:   karows stat1" << karows << stat1;
 
    if ( dnLoad )            
    {                                  // DOWNLOAD to LOCAL
+QTime timer;
+timer.start();
+      stlabel->setText( tr( "Downloading records to local disk..." ) );
+      progress->setMaximum( narows );
+      progress->setValue  ( 0 );
+      int ndown = 0;
       for ( int ii = 2; ii < 5; ii++ )
       {  // Download records from top down
          for ( int jj = 0; jj < narows; jj++ )
@@ -985,7 +993,9 @@ DbgLv(1) << "RMV_REC:   karows stat1" << karows << stat1;
                naerrs++;
                istat      = stat1;
             }
+            progress->setValue( ++ndown );
          }
+qDebug() << "DT: DwnLd: ii" << ii << "time" << timer.elapsed();
       }
    }
 
