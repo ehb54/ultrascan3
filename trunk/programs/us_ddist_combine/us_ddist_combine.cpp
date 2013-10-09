@@ -1317,6 +1317,8 @@ int US_DDistr_Combine::distro_by_runid( QString& runid, int first )
 // Update distributions list objects from new run models
 void US_DDistr_Combine::update_distros()
 {
+   distros.clear();
+
    for ( int ii = 0; ii < aDescrs.count(); ii++ )
    {
       QString mrun = aDescrs[ii].section( "\t", 0, 0 );

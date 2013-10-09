@@ -53,17 +53,29 @@ class US_SelectRunid : public US_WidgetsDialog
 
       QString              dsearch;     // Current data search string
 
+      QStringList          expIDs;      // Experiment IDs
+      QStringList          edtIDs;      // Edit IDs
+      QStringList          erunIDs;     // Edit run IDs
+      QStringList          eexpIDs;     // Edit experiment IDs
       QStringList          rlabels;     // Run ID labels
+      QStringList          wDescrs;     // Working model descriptions
+
+      QList< int >         redtKnts;    // Edit counts for runs
+      QList< int >         rmodKnts;    // Model counts for runs
+      QList< int >         emodKnts;    // Model counts for edits
 
       int                  count_allr;  // Count of all user runs
       int                  count_list;  // Count of discrete distribution runs
       int                  count_seld;  // Count of runs currently selected;
       int                  dbg_level;   // Debug level
+      int                  nimodel;     // Count of input model desriptions
 
    private slots:
 
       void scan_dbase_runs ( void );
       void scan_local_runs ( void );
+      void scan_dbase_models( void );
+      void scan_local_models( void );
       void list_data       ( void );
       void search          ( const QString& );
       void cancelled       ( void );

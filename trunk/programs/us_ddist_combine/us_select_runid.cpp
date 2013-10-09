@@ -11,6 +11,7 @@
 #include "us_editor.h"
 #include "us_constants.h"
 #include "us_report.h"
+#include "us_sleep.h"
 
 // Main constructor with flags for select-runID dialog
 
@@ -20,6 +21,7 @@ US_SelectRunid::US_SelectRunid( bool dbase, QStringList& runIDs,
 {
    sel_db        = dbase;
    dbg_level     = US_Settings::us_debug();
+   nimodel       = mDescrs.count();
 
    setWindowTitle( tr( "Select Run ID(s) for Discrete Distributions (%1)" )
          .arg( sel_db ? "DB" : "Local" ) );
@@ -95,7 +97,7 @@ DbgLv(1) << "SE:sel_db" << sel_db;
    QFontMetrics fm( font );
    int fhigh = fm.lineSpacing();
    int fwide = fm.width( QChar( '6' ) );
-   int lhigh = fhigh * 3 + 12;
+   int lhigh = fhigh * 4 + 12;
    int lwide = fwide * 32;
 
    te_status               = us_textedit();
@@ -161,10 +163,10 @@ DbgLv(1) << "LD:sel_db" << sel_db << "rlsize" << rlabels.size();
    count_seld = lw_data->selectedItems().size();
    te_status->setText(
       tr( "%1 scanned run IDs were used to derive the list. Of these,\n"
-          "%2 have associated discrete distribution data (models).\n"
+          "%2 have associated distributions (models), and\n"
           "%3 %4 currently selected for combination plot components." )
       .arg( count_allr ).arg( count_list ).arg( count_seld )
-      .arg( count_seld > 1 ? tr( "runs are" ) : tr( "run is" ) ) );
+      .arg( count_seld != 1 ? tr( "runs are" ) : tr( "run is" ) ) );
 }
 
 // Cancel button:  no runIDs returned
@@ -188,6 +190,14 @@ DbgLv(1) << "SE:accepted()";
       return;
    }
 
+   QString slines = te_status->toPlainText() + 
+      tr( "\nScanning models for selected run(s)..." );
+   te_status->setText( slines );
+   qApp->processEvents();
+DbgLv(1) << "SE: slines" << slines;
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   runIDs.clear();
+
    // Get and return runIDs from selected edit items
    for ( int ii = 0; ii < selitems.size(); ii++ )
    {
@@ -197,9 +207,31 @@ DbgLv(1) << "SE:  ii clabel" << ii << clabel;
 
       runIDs << clabel;
    }
-DbgLv(1) << "SE: runID" << runIDs[0];
+DbgLv(1) << "SE: runID0" << runIDs[0];
 
-   accept();        // Signal that selection was accepted
+   // Scan models to build descriptions for selected runs
+   if ( sel_db )
+      scan_dbase_models();
+   else
+      scan_local_models();
+
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
+   int namodel = wDescrs.size();
+
+   if ( namodel == 0 )
+   {
+      QMessageBox::warning( this,
+         tr( "No Implied Models" ),
+         tr( "There were no Discrete Distributions associated\n"
+             " with the selected runs.\n"
+             "Cancel or select a new set of runs." ) );
+      return;
+   }
+
+   mDescrs << wDescrs;      // Append new model descriptions
+
+   accept();                // Signal that selection was accepted
    close();
 }
 
@@ -214,192 +246,100 @@ void US_SelectRunid::scan_dbase_runs()
 
    if ( db.lastErrno() != US_DB2::OK )
    {
-      QMessageBox::information( this,
+      QMessageBox::critical( this,
          tr( "DB Connection Problem" ),
          tr( "There was an error connecting to the database:\n" )
          + db.lastError() );
       return;
    }
 
-   QStringList  mmIDs;   // All model modelIDs
-   QStringList  mmGUIDs; // All model modelGUIDs
-   QStringList  meIDs;   // All model editIDs;
-   QStringList  mmDescs; // All model descriptions
-   QStringList  runIDs;  // All runs
-   QStringList  expIDs;  // All experiments
-   QStringList  edtIDs;  // All edits
-   QStringList  eexIDs;  // Parallel edit experiments
-   QList< int > rmknts;  // Run model counts
-   QString      runid;
-   QString      expid;
-   QString      edtid;
-   QString      eexid;
-   int          ntmodel = 0;
-
-   QStringList query;
-   QString     invID  = QString::number( US_Settings::us_inv_ID() );
-
+   QStringList  query;
+   QString invID    = QString::number( US_Settings::us_inv_ID() );
 QTime timer;
 timer.start();
-#if 0
-   query.clear();
-   query << "get_model_desc" << invID;
-   db.query( query );
 
-   while ( db.next() )
-   {  // Get lists of all model ids, edits and descriptions;
-      QString mdlid    = db.value( 0 ).toString();
-      QString mdlGid   = db.value( 1 ).toString();
-      QString mdesc    = db.value( 2 ).toString();
-      QString medtid   = db.value( 6 ).toString();
-      mmIDs   << mdlid;
-      mmGUIDs << mdlGid;
-      meIDs   << medtid;
-      mmDescs << mdesc;
-      ntmodel++;
-   }
-DbgLv(1) << "ScDB: ntmodel" << ntmodel;
-DbgLv(1) << "ScDB:scan time(1)" << timer.elapsed();
-int m=ntmodel-1;
-if ( m>1 ) {
-DbgLv(1) << "ScDB: 0: id,gid,eid,desc" << mmIDs[0] << mmGUIDs[0] << meIDs[0] << mmDescs[0];
-DbgLv(1) << "ScDB: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << mmDescs[m]; }
-#endif
-
+   // Scan experiments. getting run and experiment IDs
    query.clear();
    query << "get_experiment_desc" << invID;
    db.query( query );
 
    while ( db.next() )
-   {  // Get lists of all experiments and runs; initialize run model counts
-      expid            = db.value( 0 ).toString();
-      runid            = db.value( 1 ).toString();
+   {  // Get a list of all runs in the database
+      QString expid    = db.value( 0 ).toString();
+      QString runid    = db.value( 1 ).toString();
 DbgLv(1) << "ScDB:     runid" << runid << "expid" << expid;
 
       if ( ! runIDs.contains( runid ) )
       {
          count_allr++;
-#if 0
-         runIDs << runid;
-         expIDs << expid;
-         rmknts << 0;
-#endif
-#if 1
          rlabels << runid;     // Save run ID to list of selectable runs
-#endif
+         runIDs  << runid;     // Save run ID to list of total runs
+         expIDs  << expid;     // Save experiment ID to list for total runs
       }
    }
-DbgLv(1) << "ScDB:scan time(2)" << timer.elapsed();
+DbgLv(1) << "ScDB:count_allr" << count_allr;
+DbgLv(1) << "ScDB:scan time(1)" << timer.elapsed();
 
-#if 1
+   // Scan edited data, getting runs and experiments for edits
    query.clear();
    query << "all_editedDataIDs" << invID;
    db.query( query );
 
    while ( db.next() )
-   {  // Get lists of all edits and their corresponding experiments
-      edtid            = db.value( 0 ).toString();
-      expid            = db.value( 4 ).toString();
-      edtIDs << edtid;
-      eexIDs << expid;
+   {
+      QString edtid    = db.value( 0 ).toString();
+      QString rawid    = db.value( 3 ).toString();
+      QString expid    = db.value( 4 ).toString();
+      int     kk       = expIDs.indexOf( expid );
+      QString runid    = ( kk >=0 ) ? runIDs[ kk ] : "";
+      edtIDs  << edtid;
+      erunIDs << runid;
+      eexpIDs << expid;
+   }
+DbgLv(1) << "ScDB:scan time(2)" << timer.elapsed();
+
+   // Scan saved edits, adding model counts
+   for ( int ee = 0; ee < edtIDs.count(); ee++ )
+   {
+      QString edtid    = edtIDs[ ee ];
+      query.clear();
+      query << "count_models_by_editID" << invID << edtid;
+      int     nemods   = db.functionQuery( query );
+      emodKnts << nemods;
    }
 DbgLv(1) << "ScDB:scan time(3)" << timer.elapsed();
-#endif
 
-#if 0
-   for ( int ii = 0; ii < edtIDs.count(); ii++ )
-   {  // Get models for each edit
-      edtid            = edtIDs[ ii ];
-      expid            = eexIDs[ ii ];
-      int     jj       = expIDs.indexOf( expid );
-      if ( jj < 0 )  continue;
-      runid            = runIDs[ jj ];
-      int     nmodel   = 0;
-      QString ddesc    = "";
-      QStringList  emGUIDs;
-      QStringList  emDescs; 
-      QStringList  emIDs;
-
-      int     mst      = meIDs.indexOf( edtid );
-DbgLv(1) << "ScDB: ed ii id" << ii << edtid << "mst" << mst;
-      if ( mst < 0 )
-         continue;
-
-      for ( int mm = mst; mm < ntmodel; mm++ )
-      {  // Get info for models of this edit
-         QString medtid = meIDs[ mm ];
-         if ( medtid < 0  ||  medtid != edtid )
-            continue;
-         QString mID    = mmIDs[ mm ];
-         QString mGUID  = mmGUIDs[ mm ];
-         QString mdesc  = mmDescs[ mm ];
-         int     kk     = mdesc.lastIndexOf( ".model" );
-         mdesc          = ( kk < 1 ) ? mdesc : mdesc.left( kk );
-
-         emGUIDs << mGUID;
-         emDescs << mdesc;
-         emIDs   << mID;
-         nmodel++;
-      }
-DbgLv(1) << "ScDB: ed   ii id" << ii << edtid << "nmodel" << nmodel;
-
-      int lastmID = 0;
-      for ( int mm = 0; mm < nmodel; mm++ )
-      {  // Find the last model ID for this edit
-         int currmID    = emIDs[ mm ].toInt();
-         lastmID        = qMax( lastmID, currmID );
-      }
-      query.clear();
-      query << "get_model_info" << QString::number( lastmID );
-
-      db.query( query );
-      db.next();
-
-      // Get the data (cell) description for that model
-      QString mxml   = db.value( 2 ).toString();
-      int     kk     = mxml.indexOf( "dataDescrip=" );
-//DbgLv(1) << "ScDB:    mm kk" << mm << kk << "mdesc" << emDescs[mm];
-
-      if ( kk > 0 )
+   // Build run edit and run model counts lists
+   for ( int rr = 0; rr < runIDs.count(); rr++ )
+   {
+      QString runid    = runIDs[ rr ];
+      int     nredts   = 0;
+      int     nrmods   = 0;
+      for ( int ee = 0; ee < edtIDs.count(); ee++ )
       {
-         ddesc          = mxml.mid( kk + 13 );
-         kk             = ddesc.indexOf( "\"" );
-         ddesc          = ddesc.left( kk );
-      }
-DbgLv(1) << "ScDB:  ddesc" << ddesc;
+         QString edtid    = edtIDs [ ee ];
+         QString erunid   = erunIDs[ ee ];
 
-      for ( int mm = 0; mm < nmodel; mm++ )
-      {  // Save each model for a run
-         QString mGUID  = emGUIDs[ mm ];
-         QString mdesc  = emDescs[ mm ];
-         QString odesc  = runid + "\t" + mGUID + "\t" + mdesc + "\t" + ddesc;
-         mRunIDs << runid;    // Save run ID
-         mDescrs << odesc;    // Save model description string
-//if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
-// DbgLv(1) << "ScDB: odesc" << odesc;
+         if ( erunid == runid )
+         {
+            nredts++;
+            nrmods       += emodKnts[ ee ];
+         }
       }
-
-      if ( nmodel > 0 )
-      {  // If run had associated models, mark it with the model count
-         rmknts.replace( jj, nmodel );
-      }
+      redtKnts << nredts;
+      rmodKnts << nrmods;
    }
 DbgLv(1) << "ScDB:scan time(4)" << timer.elapsed();
 
-DbgLv(1) << "ScDB: count_allr" << count_allr << runIDs.size();
-   for ( int ii = 0; ii < count_allr; ii++ )
-   {  // Loop to save to a new list only runs that had associated models
-      runid      = runIDs[ ii ];
-      if ( rmknts[ ii ] > 0 )
-      {
-         count_list++;         // Bump count of runs to be listed
-DbgLv(1) << "ScDB:   ii count_list" << ii << count_list
-   << "models" << rmknts[ii] << "run" << runid;
-         rlabels << runid;     // Save run ID to list of selectable runs
-      }
+   // Reduce the run list to only those with associated models
+   rlabels.clear();
+   for ( int rr = 0; rr < runIDs.count(); rr++ )
+   {
+      if ( rmodKnts[ rr ] > 0 )
+         rlabels << runIDs[ rr ];
    }
-#endif
-DbgLv(1) << "ScDB:count_list" << count_list;
+DbgLv(1) << "ScDB:scan time(5)" << timer.elapsed();
+DbgLv(1) << "ScDB:counts: runIDs" << runIDs.count() << "rlabels" << rlabels.count();
 DbgLv(1) << "ScDB:scan time(9)" << timer.elapsed();
 }
 
@@ -407,6 +347,8 @@ DbgLv(1) << "ScDB:scan time(9)" << timer.elapsed();
 // Scan local disk for edit sets
 void US_SelectRunid::scan_local_runs( void )
 {
+QTime timer;
+timer.start();
    QString     mdir    = US_Settings::dataDir() + "/models";
    QStringList mfilt( "M*.xml" );
    QStringList f_names = QDir( mdir )
@@ -444,7 +386,7 @@ void US_SelectRunid::scan_local_runs( void )
                QString odesc  = runid + "\t" + mGUID + "\t" + mdesc
                                       + "\t" + ddesc;
                mRunIDs << runid;
-               mDescrs << odesc;
+               wDescrs << odesc;
 if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
  DbgLv(1) << "ScLo: odesc" << odesc;
             }
@@ -454,6 +396,7 @@ if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
          }
       }
    }
+DbgLv(1) << "ScLo:scan time(1)" << timer.elapsed();
 
    QString     rdir    = US_Settings::resultDir();
    QStringList aucdirs = QDir( rdir ).entryList( 
@@ -489,6 +432,7 @@ DbgLv(1) << "ScLo:    count_allr" << count_allr << "count_list" << count_list
  << "   runID" << runID;
    }
 DbgLv(1) << "ScLo:rlabels count" << count_list << rlabels.count();
+DbgLv(1) << "ScLo:scan time(9)" << timer.elapsed();
 }
 
 
@@ -530,12 +474,142 @@ void US_SelectRunid::update_disk_db( bool isDB )
 void US_SelectRunid::selectionChanged()
 {
    count_seld = lw_data->selectedItems().size();
+   count_list = rlabels.count();
 
    te_status->setText(
       tr( "%1 scanned run IDs were used to derive the list. Of these,\n"
-          "%2 have associated discrete distribution data (models).\n"
+          "%2 have associated distributions (models), and\n"
           "%3 %4 currently selected for combination plot components." )
       .arg( count_allr ).arg( count_list ).arg( count_seld )
-      .arg( count_seld > 1 ? tr( "runs are" ) : tr( "run is" ) ) );
+      .arg( count_seld != 1 ? tr( "runs are" ) : tr( "run is" ) ) );
+}
+
+// Scan database for models associated with run sets
+void US_SelectRunid::scan_dbase_models()
+{
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+         tr( "DB Connection Problem" ),
+         tr( "There was an error connecting to the database:\n" )
+         + db.lastError() );
+      return;
+   }
+
+   QStringList        mmIDs;        // Model modelIDs
+   QStringList        mmGUIDs;      // Model modelGUIDs
+   QStringList        meIDs;        // Model editIDs;
+   QVector< QString > mmDescs;      // Model descriptions
+   QMap< QString, QString > ddmap;  // editID,dataDescr map
+
+   QStringList query;
+   QString     invID  = QString::number( US_Settings::us_inv_ID() );
+   int          ntmodel = 0;
+   int          nmodel  = 0;
+
+QTime timer;
+timer.start();
+   // Accumulate model information for edits present
+   for ( int ee = 0; ee < edtIDs.count(); ee++ )
+   {
+      QString edtid    = edtIDs [ ee ];
+      QString runid    = erunIDs[ ee ];
+      if ( ! runIDs.contains( runid ) )
+         continue;
+
+      query.clear();
+      query << "get_model_desc_by_editID" << invID << edtid;
+      db.query( query );
+
+      while( db.next() )
+      {
+         QString mdlid    = db.value( 0 ).toString();
+         QString mdlGid   = db.value( 1 ).toString();
+         QString mdesc    = db.value( 2 ).toString();
+         int     kk       = mdesc.lastIndexOf( ".model" );
+         mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
+         mmIDs   << mdlid;
+         mmGUIDs << mdlGid;
+         meIDs   << edtid;
+         mmDescs << mdesc;
+         nmodel++;
+      }
+   }
+DbgLv(1) << "ScMd:scan time(1)" << timer.elapsed();
+
+   query.clear();
+   query << "count_models" << invID;
+   ntmodel  = db.functionQuery( query );
+DbgLv(1) << "ScMd: ntmodel" << ntmodel << "nmodel" << nmodel;
+DbgLv(1) << "ScMd:scan time(2)" << timer.elapsed();
+int m=nmodel-1;
+if ( m>1 ) {
+DbgLv(1) << "ScMd: 0: id,gid,eid,desc" << mmIDs[0] << mmGUIDs[0] << meIDs[0] << mmDescs[0];
+DbgLv(1) << "ScMd: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << mmDescs[m]; }
+
+   // Scan all saved models from the end back, saving any
+   //   cell description by edit ID
+   for ( int mm = nmodel - 1; mm >=0; mm-- )
+   {
+      QString medtid   = meIDs[ mm ];
+
+      if ( ddmap.contains( medtid ) )  continue;   // Skip if already mapped
+
+      // Not yet mapped, so find any cell description in the model XML
+      QString mdlid    = mmIDs[ mm ];
+      query.clear();
+      query << "get_model_info" << mdlid;
+      db.query( query );
+      db.next();
+      QString mxml     = db.value( 2 ).toString();
+      int     kk       = mxml.indexOf( "dataDescrip=" );
+
+      if ( kk > 0 )
+      {  // We have found the data description, so map it
+         QString ddesc    = mxml.mid( kk + 13 );
+         kk               = ddesc.indexOf( "\"" );
+         ddesc            = ddesc.left( kk );
+         ddmap[ medtid ]  = ddesc;
+      }
+   }
+DbgLv(1) << "ScMd:scan time(3)" << timer.elapsed();
+
+   // Do one more pass through all the models, completing
+   //  the model descriptions
+   for ( int mm = 0; mm < nmodel; mm++ )
+   {
+      QString mID    = mmIDs  [ mm ];
+      QString mGUID  = mmGUIDs[ mm ];
+      QString mdesc  = mmDescs[ mm ];
+      QString meID   = meIDs  [ mm ];
+      QString ddesc  = ddmap.contains( meID ) ? ddmap[ meID ] : "";
+      QString runid  = mdesc.section( ".", 0, -3 );
+      QString odesc  = runid + "\t" + mGUID + "\t" + mdesc + "\t" + ddesc;
+      wDescrs << odesc;
+   }
+
+DbgLv(1) << "ScMd:scan time(9)" << timer.elapsed();
+}
+
+// Scan local disk for models associated with run sets
+void US_SelectRunid::scan_local_models()
+{
+   QStringList aDescrs = wDescrs;
+   wDescrs.clear();
+
+   // Model scan was already done for local. All we need to do
+   //  now is limit the descriptions to runIDs selected.
+   for ( int mm = 0; mm < aDescrs.count(); mm++ )
+   {
+      QString mdesc   = aDescrs[ mm ];
+      QString runid   = mdesc.section( "\t", 0, 0 );
+
+      if ( runIDs.contains( runid ) )
+         wDescrs << mdesc;
+   }
+DbgLv(1) << "ScMl:counts: aDescrs" << aDescrs.count() << "wDescrs" << wDescrs.count();
 }
 
