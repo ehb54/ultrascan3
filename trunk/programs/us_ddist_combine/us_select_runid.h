@@ -37,6 +37,7 @@ class US_SelectRunid : public US_WidgetsDialog
       QStringList&         runIDs;      // Selected run IDs
       QStringList&         mDescrs;     // Selected runs' model descriptions
       bool                 sel_db;      // Select-database flag
+      bool                 mcounted;    // Models-counted flag
 
       QStringList          mRunIDs;     // Model run IDs
 
@@ -84,5 +85,6 @@ class US_SelectRunid : public US_WidgetsDialog
       void update_person   ( int  );
       void update_disk_db  ( bool );
       void selectionChanged( void );
+      void count_models    ( void );
 };
 #endif

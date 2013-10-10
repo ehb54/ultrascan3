@@ -22,6 +22,7 @@ US_SelectRunid::US_SelectRunid( bool dbase, QStringList& runIDs,
    sel_db        = dbase;
    dbg_level     = US_Settings::us_debug();
    nimodel       = mDescrs.count();
+   mcounted      = false;
 
    setWindowTitle( tr( "Select Run ID(s) for Discrete Distributions (%1)" )
          .arg( sel_db ? "DB" : "Local" ) );
@@ -163,7 +164,7 @@ DbgLv(1) << "LD:sel_db" << sel_db << "rlsize" << rlabels.size();
    count_seld = lw_data->selectedItems().size();
    te_status->setText(
       tr( "%1 scanned run IDs were used to derive the list. Of these,\n"
-          "%2 have associated distributions (models), and\n"
+          "%2 (may) have associated distributions (models), and\n"
           "%3 %4 currently selected for combination plot components." )
       .arg( count_allr ).arg( count_list ).arg( count_seld )
       .arg( count_seld != 1 ? tr( "runs are" ) : tr( "run is" ) ) );
@@ -172,6 +173,8 @@ DbgLv(1) << "LD:sel_db" << sel_db << "rlsize" << rlabels.size();
 // Cancel button:  no runIDs returned
 void US_SelectRunid::cancelled()
 {
+   runIDs.clear();
+
    reject();
    close();
 }
@@ -224,7 +227,7 @@ DbgLv(1) << "SE: runID0" << runIDs[0];
       QMessageBox::warning( this,
          tr( "No Implied Models" ),
          tr( "There were no Discrete Distributions associated\n"
-             " with the selected runs.\n"
+             " with the selected run(s).\n"
              "Cancel or select a new set of runs." ) );
       return;
    }
@@ -243,6 +246,9 @@ void US_SelectRunid::scan_dbase_runs()
    count_allr = 0;
    count_list = 0;
    count_seld = 0;
+   rlabels.clear();
+   runIDs .clear();
+   expIDs .clear();
 
    if ( db.lastErrno() != US_DB2::OK )
    {
@@ -298,47 +304,8 @@ DbgLv(1) << "ScDB:scan time(1)" << timer.elapsed();
    }
 DbgLv(1) << "ScDB:scan time(2)" << timer.elapsed();
 
-   // Scan saved edits, adding model counts
-   for ( int ee = 0; ee < edtIDs.count(); ee++ )
-   {
-      QString edtid    = edtIDs[ ee ];
-      query.clear();
-      query << "count_models_by_editID" << invID << edtid;
-      int     nemods   = db.functionQuery( query );
-      emodKnts << nemods;
-   }
-DbgLv(1) << "ScDB:scan time(3)" << timer.elapsed();
-
-   // Build run edit and run model counts lists
-   for ( int rr = 0; rr < runIDs.count(); rr++ )
-   {
-      QString runid    = runIDs[ rr ];
-      int     nredts   = 0;
-      int     nrmods   = 0;
-      for ( int ee = 0; ee < edtIDs.count(); ee++ )
-      {
-         QString edtid    = edtIDs [ ee ];
-         QString erunid   = erunIDs[ ee ];
-
-         if ( erunid == runid )
-         {
-            nredts++;
-            nrmods       += emodKnts[ ee ];
-         }
-      }
-      redtKnts << nredts;
-      rmodKnts << nrmods;
-   }
-DbgLv(1) << "ScDB:scan time(4)" << timer.elapsed();
-
-   // Reduce the run list to only those with associated models
-   rlabels.clear();
-   for ( int rr = 0; rr < runIDs.count(); rr++ )
-   {
-      if ( rmodKnts[ rr ] > 0 )
-         rlabels << runIDs[ rr ];
-   }
-DbgLv(1) << "ScDB:scan time(5)" << timer.elapsed();
+   rlabels  = runIDs;
+   mcounted = false;
 DbgLv(1) << "ScDB:counts: runIDs" << runIDs.count() << "rlabels" << rlabels.count();
 DbgLv(1) << "ScDB:scan time(9)" << timer.elapsed();
 }
@@ -349,6 +316,8 @@ void US_SelectRunid::scan_local_runs( void )
 {
 QTime timer;
 timer.start();
+   QMap< QString, QString > ddmap;
+   QStringList mEdtIDs;
    QString     mdir    = US_Settings::dataDir() + "/models";
    QStringList mfilt( "M*.xml" );
    QStringList f_names = QDir( mdir )
@@ -376,16 +345,29 @@ timer.start();
                QString mdesc = attr.value( "description" ).toString();
                QString ddesc = attr.value( "dataDescrip" ).toString();
                QString mGUID = attr.value( "modelGUID"   ).toString();
+               QString eGUID = attr.value( "editGUID"    ).toString();
                int     kk    = mdesc.lastIndexOf( ".model" );
                        mdesc = ( kk < 1 ) ? mdesc : mdesc.left( kk );
                QString runid = mdesc.section( ".", 0, -3 );
                // Skip the model if it has no valid runID part
                if ( runid.isEmpty() || runid.length() < 2 )  continue;
 
+               if ( ddesc.isEmpty() )
+               {
+                  if ( ddmap.contains( eGUID ) )
+                     ddesc         = ddmap[ eGUID ];
+               }
+               else
+               {
+                  if ( !ddmap.contains( eGUID ) )
+                     ddmap[ eGUID ] = ddesc;
+               }
+                  
                // Save run ID and model string of RunID+GUID+Description
                QString odesc  = runid + "\t" + mGUID + "\t" + mdesc
                                       + "\t" + ddesc;
                mRunIDs << runid;
+               mEdtIDs << eGUID;
                wDescrs << odesc;
 if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
  DbgLv(1) << "ScLo: odesc" << odesc;
@@ -396,6 +378,27 @@ if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
          }
       }
    }
+
+   // Do another pass on model descriptions to insure data description
+   //  gets used for all models with the same edit GUID
+   for ( int mm = 0; mm < wDescrs.count(); mm++ )
+   {
+      QString mdesc  = wDescrs[ mm ];
+      QString ddesc  = mdesc.section( "\t", 3, 3 );
+
+      if ( ddesc.isEmpty() )
+      {
+         QString eGUID  = mEdtIDs[ mm ];
+         if ( ddmap.contains( eGUID ) )
+         {
+            ddesc          = ddmap[ eGUID ];
+DbgLv(1) << "ScLo: mm" << mm << "eGUID" << eGUID << "new ddesc" << ddesc;
+            mdesc          = mdesc.section( "\t", 0, 2 ) + "\t" + ddesc;
+            wDescrs.replace( mm, mdesc );
+         }
+      }
+   }
+
 DbgLv(1) << "ScLo:scan time(1)" << timer.elapsed();
 
    QString     rdir    = US_Settings::resultDir();
@@ -408,6 +411,8 @@ DbgLv(1) << "ScLo:rdir" << rdir << "aucdir count" << aucdirs.count();
    count_allr = 0;
    count_list = 0;
    count_seld = 0;
+   runIDs .clear();
+   rlabels.clear();
    
    for ( int ii = 0; ii < aucdirs.count(); ii++ )
    {  // Examine all the AUC files that exist locally
@@ -422,6 +427,7 @@ DbgLv(1) << "ScLo:  subdir" << subdir << "aucfiles count" << aucfiles.count();
       QString aucfbase  = aucfiles.at( 0 );
       QString runID     = aucfbase.section( ".",  0, -6 );
       count_allr++;             // Bump the count of all runIDs examined
+      runIDs << runID;
 
       if ( mRunIDs.contains( runID ) )
       {  // If this runID is represented for models, it is selectable
@@ -433,6 +439,7 @@ DbgLv(1) << "ScLo:    count_allr" << count_allr << "count_list" << count_list
    }
 DbgLv(1) << "ScLo:rlabels count" << count_list << rlabels.count();
 DbgLv(1) << "ScLo:scan time(9)" << timer.elapsed();
+   mcounted = true;
 }
 
 
@@ -454,7 +461,10 @@ void US_SelectRunid::update_person( int ID )
    QString number = ( ID > 0 ) ? QString::number( ID ) + ": " : "";
    le_invest->setText( number + US_Settings::us_inv_name() );
 
+DbgLv(1) << "UpdP: ID" << ID << "invID" << US_Settings::us_inv_ID();
    list_data();
+   count_models();
+DbgLv(1) << "UpdP:   rlabels count" << rlabels.count();
 }
 
 // Slot to update disk/db selection
@@ -464,6 +474,7 @@ void US_SelectRunid::update_disk_db( bool isDB )
 
    sel_db     = isDB;
    list_data();
+   count_models();
 
    pb_invest->setEnabled( isDB );
    setWindowTitle( tr( "Select Run ID(s) for Discrete Distributions (%1)" )
@@ -473,9 +484,30 @@ void US_SelectRunid::update_disk_db( bool isDB )
 // Slot to record a change in list item selection
 void US_SelectRunid::selectionChanged()
 {
-   count_seld = lw_data->selectedItems().size();
-   count_list = rlabels.count();
+   QList< QListWidgetItem* > selitems = lw_data->selectedItems();
+   int  kseld   = selitems.size();
+   bool counted = mcounted;
 
+   // If need be, count models and refresh the list
+   if ( ! counted )
+   {
+      QString slabel = selitems[ 0 ]->text();
+      selitems.clear();
+      lw_data->disconnect();
+
+DbgLv(1) << "sChg: count_models()";
+      count_models();
+
+      count_list   = rlabels.count();
+      
+DbgLv(1) << "sChg: count_list" << count_list << "kseld" << kseld;
+      selitems       = lw_data->findItems( slabel, Qt::MatchFixedString );
+      lw_data->setCurrentItem( selitems[ 0 ] );
+      connect( lw_data,  SIGNAL( itemSelectionChanged() ),
+               this,     SLOT  ( selectionChanged()     ) );
+   }
+
+   count_seld   = kseld;
    te_status->setText(
       tr( "%1 scanned run IDs were used to derive the list. Of these,\n"
           "%2 have associated distributions (models), and\n"
@@ -566,6 +598,7 @@ DbgLv(1) << "ScMd: m: id,gid,eid,desc" << mmIDs[m] << mmGUIDs[m] << meIDs[m] << 
       db.next();
       QString mxml     = db.value( 2 ).toString();
       int     kk       = mxml.indexOf( "dataDescrip=" );
+DbgLv(1) << "ScMd: mm kk medtid" << mm << kk << medtid;
 
       if ( kk > 0 )
       {  // We have found the data description, so map it
@@ -589,6 +622,7 @@ DbgLv(1) << "ScMd:scan time(3)" << timer.elapsed();
       QString runid  = mdesc.section( ".", 0, -3 );
       QString odesc  = runid + "\t" + mGUID + "\t" + mdesc + "\t" + ddesc;
       wDescrs << odesc;
+DbgLv(1) << "ScMd:  mm meID" << mm << meID << "ddesc" << ddesc;
    }
 
 DbgLv(1) << "ScMd:scan time(9)" << timer.elapsed();
@@ -611,5 +645,88 @@ void US_SelectRunid::scan_local_models()
          wDescrs << mdesc;
    }
 DbgLv(1) << "ScMl:counts: aDescrs" << aDescrs.count() << "wDescrs" << wDescrs.count();
+}
+
+// Count models for database case
+void US_SelectRunid::count_models()
+{
+   if ( mcounted  ||  ! sel_db )  return;
+
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+   redtKnts.clear();
+   rmodKnts.clear();
+   emodKnts.clear();
+   QStringList query;
+   QString invID    = QString::number( US_Settings::us_inv_ID() );
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   te_status->setText( tr( "Scanning runs for model counts..." ) );
+   qApp->processEvents();
+QTime timer;
+timer.start();
+
+   // Scan saved edits, adding model counts
+   for ( int ee = 0; ee < edtIDs.count(); ee++ )
+   {
+      QString edtid    = edtIDs[ ee ];
+      query.clear();
+      query << "count_models_by_editID" << invID << edtid;
+      int     nemods   = db.functionQuery( query );
+      emodKnts << nemods;
+   }
+DbgLv(1) << "KntM:scan time(1)" << timer.elapsed();
+
+   // Build run edit and run model counts lists
+   for ( int rr = 0; rr < runIDs.count(); rr++ )
+   {
+      QString runid    = runIDs[ rr ];
+      int     nredts   = 0;
+      int     nrmods   = 0;
+
+      for ( int ee = 0; ee < edtIDs.count(); ee++ )
+      {
+         QString edtid    = edtIDs [ ee ];
+         QString erunid   = erunIDs[ ee ];
+
+         if ( erunid == runid )
+         {
+            nredts++;
+            nrmods       += emodKnts[ ee ];
+         }
+      }
+
+      redtKnts << nredts;
+      rmodKnts << nrmods;
+   }
+DbgLv(1) << "KntM:  counts: runIDs redtKnts rmodKnts"
+ << runIDs.count() << redtKnts.count() << rmodKnts.count();
+DbgLv(1) << "KntM:scan time(2)" << timer.elapsed();
+
+   // Reduce the run list to only those with associated models
+   lw_data->clear();
+   rlabels .clear();
+
+   for ( int rr = 0; rr < runIDs.count(); rr++ )
+   {
+      if ( rmodKnts[ rr ] > 0 )
+      {
+         QString  clabel  = runIDs[ rr ];
+         rlabels << clabel;
+         lw_data->addItem( new QListWidgetItem( clabel ) );
+      }
+   }
+DbgLv(1) << "KntM:scan time(3)" << timer.elapsed();
+
+   mcounted = true;
+   QApplication::restoreOverrideCursor();
+   count_list = lw_data->count();
+   count_seld = lw_data->selectedItems().size();
+   te_status->setText(
+      tr( "%1 scanned run IDs were used to derive the list. Of these,\n"
+          "%2 have associated distributions (models), and\n"
+          "%3 %4 currently selected for combination plot components." )
+      .arg( count_allr ).arg( count_list ).arg( count_seld )
+      .arg( count_seld != 1 ? tr( "runs are" ) : tr( "run is" ) ) );
+   qApp->processEvents();
 }
 
