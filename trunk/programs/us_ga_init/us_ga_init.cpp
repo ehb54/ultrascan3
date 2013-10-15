@@ -233,7 +233,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_mandrsb, SIGNAL( clicked() ),
             this,       SLOT(   manDrawSb() ) );
 
-   pb_ckovrlp    = us_pushbutton( tr( "Check for Bin Overlaps" ) );
+   pb_ckovrlp    = us_pushbutton( tr( "Check for Bin Overlaps / Sort" ) );
    pb_ckovrlp->setEnabled( false );
    connect( pb_ckovrlp, SIGNAL( clicked()       ),
             this,       SLOT(   checkOverlaps() ) );
@@ -488,7 +488,15 @@ void US_GA_Initialize::reset( void )
 
 // save the GA data
 void US_GA_Initialize::save( void )
-{ 
+{
+   // Sort the buckets in increasing-s order
+   int hlx  = lw_sbin_data->currentRow();
+   soludata->sortBuckets();
+
+   // Reset the buckets plot and list
+   resetPlotAndList( hlx );
+
+   // Test for overlaps
    int novlps = soludata->countOverlaps();
 DbgLv(1) << "SAVE novlps" << novlps;
 
@@ -659,7 +667,8 @@ void US_GA_Initialize::checkOverlaps( void )
       QMessageBox::information( this,
          tr( "No Bins Overlap" ),
          tr( "No bin overlaps were found, so you\n"
-             "may proceed to saving this GA data." ) );
+             "may proceed to saving this GA data.\n"
+             "*NOTE*: Bins will now be re-sorted." ) );
       pb_save->setEnabled( true );
    }
 
@@ -674,6 +683,11 @@ void US_GA_Initialize::checkOverlaps( void )
                    "bins overlap, before you can save GA data." ) );
       pb_save->setEnabled( false );
    }
+
+   // Sort buckets, then reset the buckets plot and list
+   soludata->sortBuckets();
+   int hlx  = lw_sbin_data->currentRow();
+   resetPlotAndList( hlx );
 }
 
 // Auto assign solute bins
@@ -1983,6 +1997,14 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
                this,         SLOT(   dclick_sbdata( const QModelIndex& ) ) );
       connect( lw_sbin_data, SIGNAL( currentRowChanged( int )            ),
                this,         SLOT(   newrow_sbdata(     int )            ) );
+
+      int rx       = qMin( sx, ( nibuks - 1 ) );
+      if ( rx >= 0 )
+      {
+         lw_sbin_data->setCurrentRow( rx );
+         highlight_solute( rx );
+         data_plot->replot();
+      }
    }
 
    else if ( global  &&  sx != sxset )
@@ -2122,68 +2144,49 @@ bool US_GA_Initialize::eventFilter( QObject *obj, QEvent *e )
    }
 }
 
-// remove a solute bin from data, plot, and list
+// Remove a solute bin from data, plot, and list
 void US_GA_Initialize::removeSoluteBin( int sx )
 {
-   QList< QString > lines;
-   QList< QwtPlotCurve* > curves;
-   QwtPlotCurve* bc1;
-
+   // Remove the solute bin
    int bsize = soludata->bucketsCount();
-
-   // remove the solute bin
    soludata->removeBucketAt( sx );
-
-   // create a new set of lines for the List Widget and new list of curves
-
-   for ( int jj = 0; jj < bsize; jj++ )
-   {
-      pc1    = bucketCurveAt( jj );
-      if ( jj < sx )
-      {  // before removed item, just save the old line and curve
-         lines.append( lw_sbin_data->item( jj )->text() );
-         curves.append( pc1 );
-      }
-
-      else if ( jj > sx )
-      {  // after removed item, compose new line,title from bucket data
-         int kk = jj - 1;
-         lines.append( soludata->bucketLine( kk ) );
-         pc1->setTitle( QString( "bucket border %1" ).arg( kk ) );
-         curves.append( pc1 );
-      }
-
-      else
-      {  // completely remove the curve itself
-         delete pc1;
-         pc1    = bucketCurveAt( ( jj > 0 ) ? (jj-1) : 0 );
-      }
-   }
-
-   // replace the List Widget contents and redraw bin rectangles
-   lw_sbin_data->clear();
-   erase_buckets();
    nibuks    = bsize - 1;
+
+   // Reset the buckets plot and list
+   resetPlotAndList( sx );
+}
+
+// Reset the buckets plot and list after bucket remove or sort
+void US_GA_Initialize::resetPlotAndList( int hlx )
+{
+   // Replace the List Widget contents and redraw bin rectangles
+   int kibuks  = soludata->bucketsCount();
+   lw_sbin_data->clear();
+   erase_buckets( );
+DbgLv(1) << "rPAL:kibuks nibuks" << kibuks << nibuks;
+   nibuks      = kibuks;
    ct_nisols->setValue( (double)nibuks );
 
    for ( int jj = 0; jj < nibuks; jj++ )
-   {
-      // add the Solute Bin line back in the List Widget
-      lw_sbin_data->addItem( lines.at( jj ) );
-
-      // redraw the bin rectangle
-      bc1    = curves.at( jj );
+   {  // Draw the auto-assigned buckets and add lines to list widget
+      QRectF        rect = soludata->bucketRect( jj );
+      QwtPlotCurve* bc1  = drawBucketRect( jj, rect );
       bc1->attach( data_plot );
-      highlight_solute( jj );
-      pc1    = bc1;
+
+      lw_sbin_data->addItem( soludata->bucketLine( jj ) );
    }
 
-   if ( nibuks > 0 )
-   {  // highlight the next bucket if there is one
-      highlight_solute( ( sx < nibuks ) ? sx : ( nibuks - 1) );
+   // Highlight a specified next bucket
+   hlx       = ( hlx >= 0  &&  hlx < nibuks ) ? hlx : ( nibuks - 1 );
+DbgLv(1) << "rPAL: hlx" << hlx;
+   if ( hlx >= 0 )
+   {
+      lw_sbin_data->setCurrentRow( hlx );
+      highlight_solute( hlx );
    }
 
    data_plot->replot();
+   qApp->processEvents();
 
    return;
 }

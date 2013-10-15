@@ -218,11 +218,12 @@ class US_GA_Initialize : public US_Widgets
       QwtPlotCurve* drawBucketRect( int, QRectF );
       QwtPlotCurve* drawBucketRect( int, QPointF, QPointF );
       QwtPlotCurve* bucketCurveAt(  int );
-      void erase_buckets(   bool );
-      void erase_buckets();
-      void removeSoluteBin( int );
-      bool equivalent(      double, double, double );
-      void update_disk_db(  bool );
+      void erase_buckets   ( bool );
+      void erase_buckets   ( void );
+      void removeSoluteBin ( int );
+      void resetPlotAndList( int );
+      bool equivalent      ( double, double, double );
+      void update_disk_db  ( bool );
 
       void help     ( void )
       { showHelp.show_help( "ga_initialize.html" ); };
