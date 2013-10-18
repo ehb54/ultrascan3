@@ -394,7 +394,8 @@ totT3+=(clcSt3.msecsTo(clcSt4));
             current_time  = time2;
             current_om2t  = omeg2;
 DbgLv(1) << "RSA:    step rpm" << step << sp->rotorspeed
- << "st_ curr_time" << af_params.start_time << current_time;
+ << "st_ curr_time" << af_params.start_time << current_time
+ << "fscan lscan" << fscan << lscan;
 int mmm=simdata.scan.size()-1;
 DbgLv(1) << "RSA:     eomg1 eomg2" << ed->scan[fscan].omega_s_t
  << ed->scan[lscan-1].omega_s_t << " somg1 somg2"

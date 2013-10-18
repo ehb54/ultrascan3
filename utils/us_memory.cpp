@@ -47,7 +47,7 @@ long int US_Memory::rss_now( void )
    int stat1 = task_info( task, TASK_BASIC_INFO, (task_info_t)&task_stats, &inf_count );
    if ( stat1 == KERN_SUCCESS )
    {
-      rssnow  = ( (int64_t)task_stats.resident_size + 512 ) / 1024;
+      rssnow  = ( (long)task_stats.resident_size + 512 ) / 1024;
    }
 #endif
 
@@ -64,7 +64,7 @@ long int US_Memory::rss_now( void )
    {
       if ( GetProcessMemoryInfo( hProcess, &pmc, sizeof( pmc ) ) )
       {
-         rssnow  = ( (int64_t)pmc.PeakWorkingSetSize + 512 ) / 1024;
+         rssnow  = ( (long)pmc.PeakWorkingSetSize + 512 ) / 1024;
       }
 
       CloseHandle( hProcess );

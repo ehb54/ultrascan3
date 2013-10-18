@@ -354,6 +354,7 @@ void US_Convert::convert(
      double                               tolerance )
 {
    // Convert the data into the UltraScan3 data structure
+qDebug() << "Cvt:cnvt: IN";
    QStringList parts      = triple.split(" / ");
 
    int         cell       = parts[ 0 ].toInt();
@@ -593,6 +594,7 @@ qDebug() << "Cvt:   rCount loop complete";
 
       newRawData.scanData <<  s ;
    }
+qDebug() << "Cvt:cnvt: RTN";
 }
 
 // Subdivides existing RA triple into subsets

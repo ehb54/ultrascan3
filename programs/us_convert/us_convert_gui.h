@@ -14,6 +14,9 @@
 #include "us_solution.h"
 #include "us_selectbox.h"
 #include "us_mwl_data.h"
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
+#endif
 
 class US_ConvertGui : public US_Widgets
 {
@@ -137,6 +140,7 @@ class US_ConvertGui : public US_Widgets
       int           slambda;                   // Start Lambda on output
       int           elambda;                   // End Lambda on output
       int           nlamb_i;                   // Lambda count for raw input
+      int           dbg_level;                 // Debug level
 
       bool show_plot_progress;
       US_Experiment      ExpData; 

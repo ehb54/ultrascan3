@@ -3,7 +3,7 @@
 
 SRCDIR=/cygdrive/c/Users/Admin/Documents/ultrascan3
 US2DIR=/cygdrive/c/Users/Admin/Documents/ultrascan2
-QTBIN=/cygdrive/c/Qt/4.7.3/bin
+QTBIN=/cygdrive/c/Qt/4.8.4/bin
 DESTDIR=/cygdrive/c/dist
 SYSTYPE=`uname -o`
 if [ "${SYSTYPE}" != "Cygwin" ]; then
