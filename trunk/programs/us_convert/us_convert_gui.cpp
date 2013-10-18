@@ -58,7 +58,9 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    setWindowTitle( tr( "Convert Legacy Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   isMwl   = false;
+   isMwl      = false;
+   dbg_level  = US_Settings::us_debug();
+DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    QGridLayout* settings = new QGridLayout;
 
@@ -383,7 +385,9 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    main->setStretch( 1, 3 );
    adjustSize();
 
+DbgLv(1) << "CGui: GUI setup complete";
    reset();
+DbgLv(1) << "CGui: reset complete";
 }
 
 void US_ConvertGui::reset( void )
@@ -452,6 +456,7 @@ void US_ConvertGui::reset( void )
    step          = NONE;
 
    enableRunIDControl( true );
+DbgLv(1) << "CGui: enabRunID complete";
 
    toleranceChanged = false;
    saveStatus       = NOT_SAVED;
@@ -568,6 +573,7 @@ void US_ConvertGui::toleranceValueChanged( double )
 // User pressed the import data button
 void US_ConvertGui::import( QString dir )
 {
+DbgLv(1) << "CGui: import: IN";
    bool success = false;
 
    if ( dir.isEmpty() )
@@ -616,6 +622,7 @@ void US_ConvertGui::import( QString dir )
       referenceDefined = false;
       pb_reference->setEnabled( true );
    }
+DbgLv(1) << "CGui: import: RTN";
 }
 
 // User pressed the reimport data button
@@ -743,7 +750,7 @@ void US_ConvertGui::importMWL( void )
       cb_lambstop->addItem( clamb );
       klamb++;
    }
-//qDebug() << "MD.lambdas_raw  nlamb_i klamb" << nlamb_i << klamb
+//DbgLv(1) << "MD.lambdas_raw  nlamb_i klamb" << nlamb_i << klamb
 //   << "w0 wn" << lambdas[0] << lambdas[nlamb_i-1];
 
    cb_lambstrt->setCurrentIndex( 0 );
@@ -823,6 +830,7 @@ void US_ConvertGui::enableControls( void )
 
    else
    {
+DbgLv(1) << "CGui: enabCtl: have-data";
       // Ok to enable some buttons now
       pb_details     ->setEnabled( true );
       pb_solution    ->setEnabled( true );
@@ -883,8 +891,10 @@ void US_ConvertGui::enableControls( void )
       }
 
       enableRunIDControl( saveStatus == NOT_SAVED );
+DbgLv(1) << "CGui: enabCtl: enabRunID complete";
          
       enableSaveBtn();
+DbgLv(1) << "CGui: enabCtl: enabSvBtn complete";
    }
 }
 
@@ -1097,6 +1107,7 @@ void US_ConvertGui::runIDChanged( void )
 // Function to generate a new guid for experiment, and associate with DB
 void US_ConvertGui::editRuninfo( void )
 {
+DbgLv(1) << "CGui: edRuninfo: IN";
    if ( saveStatus == NOT_SAVED )
    {
       // Create a new GUID for the experiment as a whole
@@ -1105,11 +1116,13 @@ void US_ConvertGui::editRuninfo( void )
    }
 
    getExpInfo( );
+DbgLv(1) << "CGui: edRuninfo: getExpInfo complete";
 }
 
 // Function to load US3 data
 void US_ConvertGui::loadUS3( QString dir )
 {
+DbgLv(1) << "CGui: ldUS3: IN";
    if ( disk_controls->db() )
       loadUS3DB();
 
@@ -1120,6 +1133,7 @@ void US_ConvertGui::loadUS3( QString dir )
       loadUS3Disk( dir );
 
    checkTemperature();          // Check to see if temperature varied too much
+DbgLv(1) << "CGui: ldUS3: RTN";
 }
 
 void US_ConvertGui::loadUS3Disk( void )
@@ -1167,6 +1181,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    currentDir  = QString( dir );
 
    // Reload the AUC data
+DbgLv(1) << "CGui: ldUS3Dk: call read";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    int status = US_Convert::readUS3Disk( dir, allData, triples, runType );
    QApplication::restoreOverrideCursor();
@@ -1189,6 +1204,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    }
 
    // Now try to read the xml file
+DbgLv(1) << "CGui: ldUS3Dk: call rdExp";
    ExpData.clear();
    status = ExpData.readFromDisk( triples, runType, runID, dir );
 
@@ -1392,11 +1408,13 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    ExpData.syncOK = true;
 
    enableSaveBtn();
+DbgLv(1) << "CGui: ldUS3Dk: RTN";
 }
 
 // Function to load an experiment from the DB
 void US_ConvertGui:: loadUS3DB( void )
 {
+DbgLv(1) << "CGui: ldUS3DB: IN";
    // Verify connectivity
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -1412,6 +1430,7 @@ void US_ConvertGui:: loadUS3DB( void )
 
    // Present a dialog to ask user which experiment to load
    QString runID;
+DbgLv(1) << "CGui: ldUS3DB: call GetDBRun";
    US_GetDBRun dialog( runID );
 
    if ( dialog.exec() == QDialog::Rejected )
@@ -1427,6 +1446,7 @@ void US_ConvertGui:: loadUS3DB( void )
    QDir        readDir( US_Settings::resultDir() );
    QString     dirname = readDir.absolutePath() + "/" + runID + "/";
 
+DbgLv(1) << "CGui: ldUS3DB: call rdDBExp";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    QString status = US_ConvertIO::readDBExperiment( runID, dirname, &db );
    QApplication::restoreOverrideCursor();
@@ -1440,16 +1460,19 @@ void US_ConvertGui:: loadUS3DB( void )
    }
 
    // and load it
+DbgLv(1) << "CGui: ldUS3DB: call ldUS3Dk";
    loadUS3Disk( dirname );
 
    saveStatus = BOTH;         // override from loadUS3Disk()
    ExpData.syncOK = true;     // since we just read it from there
 
    enableControls();
+DbgLv(1) << "CGui: ldUS3DB: RTN";
 }
 
 void US_ConvertGui::getExpInfo( void )
 {
+DbgLv(1) << "CGui: gExpInf: IN";
    ExpData.runID = le_runID -> text();
 
    if ( disk_controls->db() )
@@ -1548,6 +1571,7 @@ void US_ConvertGui::getExpInfo( void )
                      SLOT  ( update_disk_db( bool ) ) );
 
    expInfo->exec();
+DbgLv(1) << "CGui: gExpInf: RTN";
 }
 
 // Updating after user has selected info from experiment dialog
@@ -1690,7 +1714,7 @@ void US_ConvertGui::changeDescription( void )
 void US_ConvertGui::changeTriple( QListWidgetItem* )
 {
    triple_index( );
-qDebug() << "chgTrp: trDx trLx" << tripDatax << tripListx;
+DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx;
    
    le_dir         -> setText( currentDir );
    le_description -> setText( allData[ tripDatax ].description );
@@ -1749,7 +1773,7 @@ void US_ConvertGui::checkTemperature( void )
 void US_ConvertGui::getCenterpieceIndex( int )
 {
    triples[ tripListx ].centerpiece = cb_centerpiece->getLogicalID();
-qDebug() << "getCenterpieceIndex " << triples[tripListx].centerpiece;
+DbgLv(1) << "getCenterpieceIndex " << triples[tripListx].centerpiece;
 
    enableSaveBtn();
 }
@@ -2318,7 +2342,7 @@ int US_ConvertGui::saveUS3Disk( void )
    int fileCount = 0;
    for ( int i = 0; i < triples.size(); i++ )
       if ( ! triples[ i ].excluded ) fileCount++;
-qDebug() << "SV:   fileCount" << fileCount;
+DbgLv(1) << "SV:   fileCount" << fileCount;
 
    // Now try to communicate status
    if ( status == US_Convert::CANTOPEN )
@@ -2502,7 +2526,7 @@ void US_ConvertGui::saveUS3DB( void )
 
       return;
    }
-qDebug() << "DBSv:  (1)trip0tripFilename" << triples[0].tripleFilename;
+DbgLv(1) << "DBSv:  (1)trip0tripFilename" << triples[0].tripleFilename;
 
    // Ok, let's make sure they know what'll happen
    if ( saveStatus == BOTH )
@@ -2531,7 +2555,7 @@ qDebug() << "DBSv:  (1)trip0tripFilename" << triples[0].tripleFilename;
 
    // First check some of the data with the DB
    int status = US_ConvertIO::checkDiskData( ExpData, triples, &db );
-qDebug() << "DBSv:  (2)trip0tripFilename" << triples[0].tripleFilename;
+DbgLv(1) << "DBSv:  (2)trip0tripFilename" << triples[0].tripleFilename;
 
    if ( status == US_DB2::NO_PERSON )  // Investigator or operator doesn't exist
    {
@@ -2575,7 +2599,7 @@ qDebug() << "DBSv:  (2)trip0tripFilename" << triples[0].tripleFilename;
    status = saveUS3Disk();
    if ( status != US_Convert::OK )
       return;
-qDebug() << "DBSv:  local files saved";
+DbgLv(1) << "DBSv:  local files saved";
 
    QString error = QString( "" );
 
@@ -2597,7 +2621,7 @@ qDebug() << "DBSv:  local files saved";
 
    QStringList files =  readDir.entryList( nameFilters, 
          QDir::Files | QDir::Readable, QDir::Name );
-qDebug() << "DBSv:  files count" << files.size();
+DbgLv(1) << "DBSv:  files count" << files.size();
 
    if ( files.size() == 0 )
    {
@@ -2841,6 +2865,7 @@ bool US_ConvertGui::read( QString dir )
 
 bool US_ConvertGui::convert( void )
 {
+DbgLv(1) << "CGui: convert(): IN";
    double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between wl numbers
 
    // Convert the data
@@ -2863,11 +2888,13 @@ bool US_ConvertGui::convert( void )
       if ( tripListx == -1 ) tripListx = i;
    }
 
+DbgLv(1) << "CGui: convert(): RTN";
    return( true );
 }
 
 bool US_ConvertGui::centerpieceInfo( void )
 {
+DbgLv(1) << "CGui: centpInfo: db" << disk_controls->db();
    if ( disk_controls->db() )
       return centerpieceInfoDB();
 
@@ -2908,6 +2935,7 @@ bool US_ConvertGui::centerpieceInfoDB( void )
    if ( options.size() > 0 )
       cb_centerpiece->addOptions( options );
 
+DbgLv(1) << "CGui: centpInfoDB RTN";
    return true;
 }
 
@@ -2957,6 +2985,7 @@ bool US_ConvertGui::centerpieceInfoDisk( void )
       cb_centerpiece->addOptions( options );
    }
 
+DbgLv(1) << "CGui: centpInfoDk RTN";
    return true;
 }
 
@@ -3188,7 +3217,7 @@ void US_ConvertGui::db_error( const QString& error )
 // User changed the Lambda Start value
 void US_ConvertGui::lambdaStartChanged( int value )
 {
-qDebug() << "lambdaStartChanged" << value;
+DbgLv(1) << "lambdaStartChanged" << value;
    slambda       = cb_lambstrt->itemText( value ).toDouble();
    elambda       = cb_lambstop->currentText().toDouble();
 
@@ -3198,7 +3227,7 @@ qDebug() << "lambdaStartChanged" << value;
 // User changed the Lambda End value
 void US_ConvertGui::lambdaEndChanged( int value )
 {
-qDebug() << "lambdaEndChanged" << value;
+DbgLv(1) << "lambdaEndChanged" << value;
    elambda       = cb_lambstrt->itemText( value ).toDouble();
    slambda       = cb_lambstrt->currentText().toDouble();
 
@@ -3274,7 +3303,7 @@ void US_ConvertGui::show_mwl_control( bool show )
 void US_ConvertGui::triple_index( )
 {
    QString triple = lw_triple->currentItem()->text();
-qDebug() << "chgTrp: triple" << triple;
+DbgLv(1) << "chgTrp: triple" << triple;
 
    for ( int ii = 0; ii < triples.size(); ii++ )
    {

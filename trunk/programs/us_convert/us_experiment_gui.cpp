@@ -333,6 +333,27 @@ bool US_ExperimentGui::load( void )
    
       if ( db.lastErrno() == US_DB2::OK )
          US_Rotor::readLabsDB( labList, &db );
+
+      if ( labList.size() > 0  &&  labList[ 0 ].instruments.size() == 0 )
+      {  // If empty instruments table, populate it
+         QStringList query;
+         query << "add_instrument" << "XLA #1" << "9999" << "1";
+         int status = db.statusQuery( query );
+         if ( status == US_DB2::OK )
+         {
+            US_Rotor::Instrument instrument;
+            US_Rotor::Operator   loperator;
+            instrument.ID      = 1;
+            instrument.name    = "XLA #1";
+            instrument.serial  = "9999";
+            loperator.ID        = 1;
+            loperator.GUID      = "";
+            loperator.lname     = "operator";
+            loperator.fname     = "an";
+            instrument.operators << loperator;
+            labList[ 0 ].instruments << instrument;
+         }
+      }
    }
 
    else
@@ -345,6 +366,7 @@ bool US_ExperimentGui::load( void )
 
 void US_ExperimentGui::reload( void )
 {
+qDebug() << "ExpG:reload: IN labList size" << labList.size();
    if ( lab_changed && labList.size() > 0 )
    {
       // Find labList info for this lab
@@ -367,12 +389,18 @@ void US_ExperimentGui::reload( void )
          currentLab = 0;
       }
 
+qDebug() << "ExpG:reload:  call setInstr";
       setInstrumentList();
+qDebug() << "ExpG:reload:  call setOper";
       setOperatorList();
 
+qDebug() << "ExpG:reload:  call instr load()";
       cb_instrument   ->load();
+qDebug() << "ExpG:reload:  call oper load()";
       cb_operator     ->load();
+qDebug() << "ExpG:reload:  retn fr open load()";
    }
+qDebug() << "ExpG:reload: RTN";
 
    lab_changed = false;
 }
@@ -523,8 +551,11 @@ QComboBox* US_ExperimentGui::us_expTypeComboBox( void )
 
 void US_ExperimentGui::setInstrumentList( void )
 {
+qDebug() << "ExpG: setInstrL: IN labList size" << labList.size()
+ << "currentLab" << currentLab;
    QList< listInfo > options;
    QList< US_Rotor::Instrument > instruments = labList[ currentLab ].instruments;
+qDebug() << "ExpG: setInstrL:  instruments size" << instruments.size();
 
    foreach ( US_Rotor::Instrument instrument, instruments )
    {
@@ -553,6 +584,8 @@ void US_ExperimentGui::setInstrumentList( void )
       // Replace instrument ID with one from the list
       expInfo.instrumentID = instruments[ currentInstrument ].ID;
       expInfo.instrumentSerial = instruments[ currentInstrument ].serial;
+qDebug() << "ExpG: setInstrL:  ins ID Ser" << expInfo.instrumentID
+ << expInfo.instrumentSerial;
    }
 }
 
