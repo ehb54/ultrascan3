@@ -2022,6 +2022,8 @@ DbgLv(1) << "RF: sll sul" << slolim << suplim
    double maxp1  = LnType ? maxkv : 0.001;
    double minp2  = LnType ? maxsl : 1.0;
    double maxp2  = LnType ? minsl : 0.0;
+   double p1best = mrecs[ 0 ].par1;
+   double p2best = mrecs[ 0 ].par2;
 DbgLv(1) << "RF: 2)nmr" << mrecs.size() << "iter rd_frac" << fi_iter << rd_frac;
 
    elite_limits( mrecs, minkv, maxkv, minp1, maxp1, minp2, maxp2 );
@@ -2034,7 +2036,6 @@ DbgLv(1) << "RF: 2)nmr" << mrecs.size() << "iter rd_frac" << fi_iter << rd_frac;
    // experiment data dimensions
    nscans      = edata->scanCount();
    npoints     = edata->pointCount();
-   //ModelRecord mrec   = mrecs[ 0 ];
    mrecs    .clear();
 
    if ( LnType )
@@ -2064,6 +2065,34 @@ DbgLv(1) << "RF: slin:  plims0-3: yslo,yshi:" << yslo << yshi
    else if ( SgType )
    { // Determine models for sigmoid curves
 DbgLv(1) << "RF: sigm: nkpts" << nkpts;
+      minp1         = parlims[ 0 ];
+      maxp1         = parlims[ 1 ];
+      minp2         = parlims[ 2 ];
+      maxp2         = parlims[ 3 ];
+DbgLv(1) << "RF: sigm:  mnmx p1 p2" << minp1 << maxp1 << minp2 << maxp2;
+      // Recompute the new min,max so that the old best is a point
+      //  on the new grid to be tested
+      double krng   = (double)( nkpts - 1 );
+      double p1rng  = maxp1 - minp1;
+      double p2rng  = maxp2 - minp2;
+      double p1inc  = p1rng / krng;
+      double p2inc  = p2rng / krng;
+      double p1dif  = qMax( p1inc, ( p1best - minp1 ) );
+      double p2dif  = qMax( p2inc, ( p2best - minp2 ) );
+      p1dif         = qFloor( p1dif / p1inc ) * p1inc;
+      p2dif         = qFloor( p2dif / p2inc ) * p2inc;
+DbgLv(1) << "RF: sigm:  p12 rng" << p1rng << p2rng << "p12 inc"
+ << p1inc << p2inc << "p12 dif" << p1dif << p2dif;
+      minp1         = p1best - p1dif;
+      maxp1         = minp1 + p1inc * krng;
+      minp2         = p2best - p2dif;
+      maxp2         = minp2 + p2inc * krng;
+DbgLv(1) << "RF: sigm:  p1,p2 best" << p1best << p2best;
+DbgLv(1) << "RF: sigm:    mnmx p1 p2" << minp1 << maxp1 << minp2 << maxp2;
+      parlims[ 0 ]  = minp1;
+      parlims[ 1 ]  = maxp1;
+      parlims[ 2 ]  = minp2;
+      parlims[ 3 ]  = maxp2;
 
       nmtasks     = sigmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,
                                cresolu );
