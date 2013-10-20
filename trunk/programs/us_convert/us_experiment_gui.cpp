@@ -335,24 +335,29 @@ bool US_ExperimentGui::load( void )
          US_Rotor::readLabsDB( labList, &db );
 
       if ( labList.size() > 0  &&  labList[ 0 ].instruments.size() == 0 )
-      {  // If empty instruments table, populate it
-         QStringList query;
-         query << "add_instrument" << "XLA #1" << "9999" << "1";
-         int status = db.statusQuery( query );
-         if ( status == US_DB2::OK )
-         {
-            US_Rotor::Instrument instrument;
-            US_Rotor::Operator   loperator;
-            instrument.ID      = 1;
-            instrument.name    = "XLA #1";
-            instrument.serial  = "9999";
-            loperator.ID        = 1;
-            loperator.GUID      = "";
-            loperator.lname     = "operator";
-            loperator.fname     = "an";
-            instrument.operators << loperator;
-            labList[ 0 ].instruments << instrument;
-         }
+      {  // If empty instrument table, warn and exit
+         US_Rotor::Instrument instrument;
+         US_Rotor::Operator   loperator;
+         instrument.ID      = 1;
+         instrument.name    = "XLA #1";
+         instrument.serial  = "9999";
+         loperator.ID        = 1;
+         loperator.GUID      = "";
+         loperator.lname     = "operator";
+         loperator.fname     = "some";
+         instrument.operators << loperator;
+         labList[ 0 ].instruments << instrument;
+
+         QMessageBox::warning( this,
+            tr( "No Instruments" ),
+            tr( "There is no instrument record in the database.\n"
+                "At least one instrument record should be added\n"
+                "   through the LIMS interface.\n\n"
+                "The current Convert Legacy Data program\n"
+                "   WILL NOW BE CLOSED!!!!" ) );
+
+         cancel();
+         exit( 99 );
       }
    }
 
