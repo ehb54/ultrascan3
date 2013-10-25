@@ -281,7 +281,7 @@ void US_MPI_Analysis::parse_files( QXmlStreamReader& xml,
    {
       xml.readNext();
 
-      if ( xml.isEndElement()  &&  xml.name() == "files" ) return;
+      if ( xml.isEndElement()  &&  xml.name() == "files" )  break;
 
       if ( xml.isStartElement() )
       {
@@ -293,6 +293,16 @@ void US_MPI_Analysis::parse_files( QXmlStreamReader& xml,
          if ( type == "edit"  ) dataset->edit_file  = filename;
          if ( type == "noise" ) dataset->noise_files << filename;
       }
+   }
+
+   QString clambda = dataset->edit_file.section( ".", -2, -2 );
+   if ( clambda.contains( "-" ) )
+   {  // Modify edit file name for MWL case
+      clambda         = clambda + "@" + dataset->auc_file.section( ".", -2, -2 );
+      QString fpart1  = dataset->edit_file.section( ".",  0, -3 );
+      QString fpart2  = dataset->edit_file.section( ".", -1, -1 );
+      dataset->edit_file = fpart1 + "." + clambda + "." + fpart2;
+if (my_rank==0) DbgLv(0) << "PF: MWL edit_file" << dataset->edit_file;
    }
 }
 
