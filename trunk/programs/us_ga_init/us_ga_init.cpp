@@ -1422,6 +1422,8 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
    sv_distro.clear();
    wv_distro.clear();
 
+   resetSb();
+
    QString tstr = run_name+ "\n" + analys_name + "\n (" + method + ")";
    data_plot->setTitle( tstr );
    cnstvbar = model.constant_vbar();
@@ -1466,7 +1468,7 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
       }
 
       // sort and reduce distributions
-      psdsiz    = sk_distro.size();
+      psdsiz    = sdistro->size();
       sort_distro( sk_distro, true );
       sort_distro( wk_distro, true );
       sort_distro( sv_distro, true );
@@ -1481,7 +1483,7 @@ for ( int jj=0;jj<qMin(sk_distro.size(),wk_distro.size());jj++ ) {
    plot_s    = cb_plot_sk->isChecked() || cb_plot_sv->isChecked();
    plot_k    = cb_plot_sk->isChecked() || cb_plot_wk->isChecked();
    plot_xy   = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
-   psdsiz    = sk_distro.size();
+//   psdsiz    = sdistro->size();
 DbgLv(1) << "Constant-Vbar" << cnstvbar;
    if ( plot_k )
    {
@@ -1535,7 +1537,7 @@ DbgLv(1) << "Constant-Vbar" << cnstvbar;
 
    pb_resetsb->setEnabled( true );
 
-   nisols       = sk_distro.size();
+   nisols       = sdistro->size();
    dfilname     = "(" + mfnam + ") " + mdesc;
    stdfline     = "  " + dfilname;
    stnpline     = tr( "The number of distribution points is %1" ).arg( nisols );
@@ -1750,6 +1752,11 @@ void US_GA_Initialize::set_limits()
 
 DbgLv(1) << "SL: autoassn plot_k" << plot_k;
    pb_autassb->setEnabled( !monte_carlo );
+
+   int kisols   = sdistro->size();
+   stnpline     = tr( "The number of distribution points is %1" ).arg( kisols );
+   te_status->setText( stcmline + "\n" + stdiline + "\n"
+         + stdfline + "\n" + stnpline );
 }
 
 // Sort distribution solute list by s,k values and optionally reduce
