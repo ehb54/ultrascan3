@@ -16,7 +16,7 @@ SOMOBINS="us3_somo.exe us3_config.exe rasmol.exe \
  rasmol.hlp us_admin.exe us_somo10.dll"
 QTDLLS="Qt3Support4.dll QtCLucene4.dll QtCore4.dll \
  QtGui4.dll QtHelp4.dll QtNetwork4.dll QtOpenGL4.dll \
- QtSql4.dll QtSvg4.dll QtWebKit4.dll QtXml4.dll"
+ QtSql4.dll QtSvg4.dll QtWebKit4.dll QtXml4.dll assistant.exe"
 
 
 echo "Copy lib DLLs to bin"
