@@ -570,6 +570,19 @@ void US_LoadAUC::create_descs( QStringList& runIDs, QStringList& infoDs,
       ddesc.tripndx     = tripndx;
 
 //qDebug() << "CrDe: ii tknt" << ii << ddesc.tripknt << "label" << label;
+      if ( datamap.contains( label ) )
+      {  // Handle the case where the label already exists
+         qDebug() << "*** DUPLICATE label" << label << "***";
+         label             = label + "(2)";
+
+         if ( datamap.contains( label ) )
+         {  // Handle two duplicates
+            label             = ddesc.label + "(3)";
+         }
+
+         ddesc.label       = label;
+      }
+
       datamap[ label ]  = ddesc;
    }
    return;

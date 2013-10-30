@@ -548,6 +548,9 @@ qDebug() << "Cvt:  rad" << radius << "rCount" << rCount << radius_count;
             rvalue = ccwLegacyData[ i ].rvalues[ k ];
             rstdev = ccwLegacyData[ i ].nz_stddev ?
                      ccwLegacyData[ i ].stddevs[ k ] : 0.0;
+//double xvk = ccwLegacyData[i].xvalues[k];
+//if (xvk>=6.07 && xvk<=6.08)
+// qDebug() << "Cvt:   j k" << j << k << "rvalue" << rvalue << "xvk" << xvk;
             k++;
             if ( rstdev != 0.0 )
                nnz++;
@@ -574,8 +577,12 @@ qDebug() << "Cvt:  rad" << radius << "rCount" << rCount << radius_count;
 
             dr        = radius - ccwLegacyData[ i ].xvalues[ k - 1 ];
 
-            rvalue    = ccwLegacyData[ i ].rvalues[ k ] + dr * dv / dR;
+            rvalue    = ccwLegacyData[ i ].rvalues[ k - 1 ] + dr * dv / dR;
             rstdev    =  0.0;
+//double xvk = ccwLegacyData[i].xvalues[k];
+//if (xvk>=6.07 && xvk<=6.08)
+// qDebug() << "Cvt:   j k" << j << k << "dv dR dr rvalue" << dv << dR << dr
+//  << rvalue << "xvk rvk" << xvk << radius;
 
             setInterpolated( interpolated, j );
          }

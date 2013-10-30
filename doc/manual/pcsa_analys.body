@@ -21,11 +21,13 @@
     Levenberg-Marquardt to refine the model. The result of that second pass
     is inserted as the final best model.</p>
 
-    <p> For a straight line type, an f/f0 increment indirectly specifies the
-    number of variations. Lines cover the full s range, with end points along
-    the f/f0 range at the specified increment. Each implied starting point
+    <p> For a straight line type, a specified variation count is given.
+    Lines cover the full s range, with end points along the f/f0 range
+    varying the specified number of times. Each implied starting point
     connects with each of the possible end points. So the square of the implied
-    number of f/f0 end points is the number of models analyzed.</p>
+    number of f/f0 end points is the number of models analyzed. If the type
+    is Horizontal Line, the f/f0 value is the same for start and end points,
+    so the number of models is the variations count itself (not its square).</p>
 
     <p> For sigmoid types, a variation count is directly specified. The curves
     cover the full s and f/f0 ranges, with "par1" and "par2" values each varying
@@ -43,6 +45,7 @@
             <li>Straight Line</li>
             <li>Increasing Sigmoid</li>
             <li>Decreasing Sigmoid</li>
+            <li>Horizontal Line [ C(s) ]</li>
           </ul>
        </li>
           
@@ -85,14 +88,17 @@
           
     <h3> Sample Control Dialogs:</h3>
 
-    <p> Control dialogs differ slightly based on whether the curve type is
-    a line or a sigmoid. If straight line is specified, curve variation count
-    is given indirectly by f/f0 increment.</p>
+    <p> Control dialog parameters differ slightly in interpretation, based on
+    whether the curve type is a line or a sigmoid. If straight line is
+    specified, the curve variation count gives the number of start and end point
+    f/f0 variations. If horizontal line is specified, curve variations gives
+    the total models, since start and end points always have the same f/f0
+    value.</p>
 
     <img src="images/pcsa_analys-line.png" alt="PCSA Analysis Control"/>
 
-    <p> If one of the sigmoid types is specified, you need to specify directly
-    the number of variations in par1 and par2 of the sigmoid function <br/>
+    <p> If one of the sigmoid types is specified, the specified number of
+    variations is in both the par1 and par2 values of the sigmoid function <br/>
     &nbsp;&nbsp;
     y = y_start + y_diff * 0.5 * erf( ( x - par2 )
     / sqrt( 2.0 * par1 ) ) + 0.5
@@ -129,25 +135,39 @@
        </li>
 
        <li>
-          <b>Increment (f/f0):</b> Set the increment by which the start
-          f/f0 point and end f/f0 point values are varied to generate the
-          straight line models to analyze. The upper minus lower f/f0 limits
-          divided by this value plus one gives the number of variations in
-          each dimension. The square of the variation count gives the total
-          number of models to analyze.
+          <b>Variations Count:</b> Specify the number of curve variations in
+          each direction to form the models. Usually, the square of this value
+          is the number of models to analyze. The number of variations
+          is applied to each of "par1" and "par2" in the sigmoid computations.
+          In the Horizontal Line case, this value is the number of models.
        </li>
 
        <li>
-          <b>Variations Count:</b> Directly specify the number of curve
-          variations in each direction to form the models. The square of this
-          value is the number of models to analyze. The number of variations
-          is applied to each of "par1" and "par2" in the sigmoid computations.
+          <b>Grid Fit Iterations:</b> Specify the number of iterations of
+          fixed grid fits to perform. Each iteration after the first starts
+          with a range of par1 and par2 values or f/f0 values that is
+          refined from the best models of the previous iteration.
+       </li>
+
+       <li>
+          <b>Threshold Delta-RMSD Ratio:</b> Specify the ratio of the delta
+          in RMSD to previous iteration RMSD that is the threshold below
+          which the iterative scan is taken to have converged.
        </li>
 
        <li>
           <b>Curve Resolution Points:</b> Specify the number of points to
           generate for each test line. This is the number of solute points
           that each model will have.
+       </li>
+
+       <li>
+          <b>Maximum L-M Evaluate Calls:</b> Specify the maximum number of
+          Levenberg-Marquardt evaluate calls to allow. The default value of
+          100 is almost always sufficient for L-M to converge. This value is
+          used to insure that a run-away condition will not occur.
+          Additionally, a value of "0" may be specified to suppress L-M and
+          use the final fixed grid best model as the overall best model.
        </li>
 
        <li>
