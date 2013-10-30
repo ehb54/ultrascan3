@@ -793,6 +793,12 @@ DbgLv(1) << "AC:cp: mrec fetched";
       return;
    }
 
+   if ( stage == 6 )
+   {  // If stopped because of memory usage, execute stop_fit
+      stop_fit();
+      return;
+   }
+
    reset_steps( nctotal, nctotal );
    QStringList modelstats;
    mrecs.clear();

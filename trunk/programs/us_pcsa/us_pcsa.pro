@@ -8,6 +8,9 @@ win32 {
 LIBS         += -lpsapi
 CONFIG       += console
 }
+mac {
+CONFIG       += console
+}
 
 HEADERS       = us_pcsa.h                \
                 us_plot_control.h        \
