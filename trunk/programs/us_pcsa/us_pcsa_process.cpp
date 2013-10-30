@@ -179,11 +179,14 @@ DbgLv(1) << "PC: (1)maxrss" << maxrss;
    mrecs    .clear();
    max_rss();
    kstask = nthreads;     // count of started tasks is initially thread count
-DbgLv(1) << "PC:   kstask nthreads" << kstask << nthreads << job_queue.size();
+DbgLv(1) << "PC:   kstask nthreads" << kstask << nthreads << job_queue.size()
+ << "(2)maxrss" << maxrss;
 
    emit message_update( pmessage_head() +
       tr( "Starting computations of %1 models\n using %2 threads ..." )
       .arg( nmtasks ).arg( nthreads ), false );
+   max_rss();
+DbgLv(1) << "PC: (3)maxrss" << maxrss;
 }
 
 // Abort a fit run
@@ -586,6 +589,7 @@ DbgLv(1) << "PJ:  CLEAR: VARI VMIN MVARX" << variance << varimin << minvarx;
 DbgLv(1) << "THR_FIN:  taskx minvarx varimin" << taskx << minvarx << varimin;
 
    max_rss();
+DbgLv(1) << "PJ: (4)maxrss" << maxrss;
 
    free_worker( thrx );               // Free up this worker thread
 

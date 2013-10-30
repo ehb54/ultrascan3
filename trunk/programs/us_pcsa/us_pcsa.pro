@@ -4,7 +4,10 @@ QT           += xml svg
 
 TARGET        = us_pcsa
 
-win32:LIBS   += -lpsapi
+win32 {
+LIBS         += -lpsapi
+CONFIG       += console
+}
 
 HEADERS       = us_pcsa.h                \
                 us_plot_control.h        \
