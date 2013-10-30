@@ -82,3 +82,56 @@ long int US_Memory::rss_max( long int& rssmax )
    return rssmax;
 }
 
+// Return the memory profile: used, available, total
+int US_Memory::memory_profile( int* pMemA, int* pMemT, int* pMemU )
+{
+   const double mb_bytes = ( 1024. * 1024. );
+   int memavail;
+   int memtotal;
+   int memused;
+   int memavpc;
+#ifdef Q_WS_X11         // Unix: use sysconf
+   double pgavail   = (double)sysconf( _SC_PHYS_PAGES );
+   double pgcurav   = (double)sysconf( _SC_AVPHYS_PAGES );
+   double pgsize    = (double)sysconf( _SC_PAGE_SIZE );
+   memtotal         = qRound( pgavail * pgsize / mb_bytes );
+   memavail         = qRound( pgcurav * pgsize / mb_bytes );
+   memused          = memtotal - memavail;
+qDebug() << "  UsMEM:X11: pgavail,curav,size" << pgavail << pgcurav << pgsize;
+#endif
+#ifdef Q_WS_MAC         // Mac: use sysctl and rss_now()
+   const double kb_bytes = 1024.;
+   QProcess qproc;
+   qproc.start( "sysctl", QStringList() << "-n" << "hw.memsize" );
+   qproc.waitForFinished( -1 );
+   QString totmem   = QString( qproc.readAllStandardOutput() ).trimmed();
+   memtotal         = qRound( totmem.toDouble() / mb_bytes );
+   memused          = qRound( (double)rss_now() / kb_bytes );
+   memavail         = memtotal - memused;
+qDebug() << "  UsMEM:Mac:  totmem" << totmem << "memtotal" << memtotal;
+#endif
+#ifdef Q_WS_WIN         // Windows: direct use of GlobalMemoryStatusEx
+   MEMORYSTATUSEX mstatx;
+   mstatx.dwLength  = sizeof( mstatx );
+   GlobalMemoryStatusEx( &mstatx );
+   long memload     = (long)mstatx.dwMemoryLoad;
+   memtotal         = qRound( (double)mstatx.ullTotalPhys / mb_bytes );
+   memavail         = qRound( (double)mstatx.ullAvailPhys / mb_bytes );
+   memused          = memtotal - memavail;
+   memavpc          = qRound( memavail * 100.0 / memtotal );
+//qDebug() << "  UsMEM:Win:  mstatx.dwMemoryLoad" << mstatx.dwMemoryLoad;
+//qDebug() << "  UsMEM:Win:  mstatx.ullTotalPhys" << mstatx.ullTotalPhys;
+//qDebug() << "  UsMEM:Win:  mstatx.ullAvailPhys" << mstatx.ullAvailPhys;
+//qDebug() << "  UsMEM:Win:  gb_bytes" << gb_bytes;
+qDebug() << "  UsMEM:Win:  memload" << memload << "memavpc" << memavpc;
+#endif
+qDebug() << "  UsMEM: memtotal,avail,used" << memtotal << memavail << memused;
+
+   memavpc          = qRound( memavail * 100.0 / memtotal );
+   if ( pMemA != NULL )  *pMemA = memavail;
+   if ( pMemT != NULL )  *pMemT = memtotal;
+   if ( pMemU != NULL )  *pMemU = memused;
+
+   return memavpc;
+}
+

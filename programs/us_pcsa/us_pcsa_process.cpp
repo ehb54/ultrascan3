@@ -147,6 +147,12 @@ DbgLv(1) << "PC:   nscans npoints" << nscans << npoints;
 DbgLv(1) << "PC:   nctotal nthreads" << nctotal << nthreads;
    max_rss();
 DbgLv(1) << "PC: (1)maxrss" << maxrss;
+   int memava;
+   int memtot;
+   int memuse;
+   int mempav = US_Memory::memory_profile( &memava, &memtot, &memuse );
+DbgLv(1) << "PC:MEM(1): pav" << mempav << "ava tot use"
+ << memava << memtot << memuse;
 
    // Queue all the tasks
    for ( int ktask = 0; ktask < nmtasks; ktask++ )
@@ -187,6 +193,9 @@ DbgLv(1) << "PC:   kstask nthreads" << kstask << nthreads << job_queue.size()
       .arg( nmtasks ).arg( nthreads ), false );
    max_rss();
 DbgLv(1) << "PC: (3)maxrss" << maxrss;
+   mempav  = US_Memory::memory_profile( &memava, &memtot, &memuse );
+DbgLv(1) << "PC:MEM(3): pav" << mempav << "ava tot use"
+ << memava << memtot << memuse;
 }
 
 // Abort a fit run
@@ -590,8 +599,30 @@ DbgLv(1) << "THR_FIN:  taskx minvarx varimin" << taskx << minvarx << varimin;
 
    max_rss();
 DbgLv(1) << "PJ: (4)maxrss" << maxrss;
+   int memava;
+   int memtot;
+   int memuse;
+   int mempav  = US_Memory::memory_profile( &memava, &memtot, &memuse );
+DbgLv(1) << "PC:MEM: (4)AvPercent" << mempav;
 
    free_worker( thrx );               // Free up this worker thread
+
+   if ( mempav < 10 )
+   {
+      QMessageBox::warning( 0, tr( "High Memory Usage" ),
+            tr( "The available memory percent of\n"
+                "the total has fallen below 10%.\n"
+                "Total memory is %1 MB;\n"
+                "Available memory is %2 MB.\n\n"
+                "Re-parameterize the fit with adjusted\n"
+                "Curve Resolution Points and/or\n"
+                "Thread Count." )
+            .arg( memtot ).arg( memava ) );
+
+      stop_fit();
+      emit process_complete( 6 );     // signal memory-related stop
+      abort    = true;
+   }
 
    if ( abort )
       return;
@@ -2150,6 +2181,8 @@ DbgLv(1) << "RF: (1)maxrss" << maxrss;
    max_rss();
    kstask = nthreads;     // count of started tasks is initially thread count
 DbgLv(1) << "RF:   kstask nthreads" << kstask << nthreads << job_queue.size();
+   int mempav = US_Memory::memory_profile();
+DbgLv(1) << "PC:MEM: (5)PcAvail" << mempav;
 
    emit message_update( pmessage_head() +
       tr( "Starting fit iteration %1 computations of %2 models,\n"
