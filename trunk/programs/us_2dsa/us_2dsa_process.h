@@ -5,6 +5,7 @@
 #include <QtCore>
 
 #include "us_extern.h"
+#include "us_widgets.h"
 #include "us_dataIO.h"
 #include "us_simparms.h"
 #include "us_model.h"
@@ -197,6 +198,7 @@ private:
       int  jobs_at_depth(    int );
       QString pmessage_head( void );
       WorkPacket next_job  ( void );
+      bool memory_check    ( void );
 };
 #endif
 
