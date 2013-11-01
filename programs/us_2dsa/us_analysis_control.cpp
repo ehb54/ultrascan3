@@ -569,13 +569,16 @@ DbgLv(1) << "AC:SF:StopFit";
    if ( processor != 0 )
    {
 DbgLv(1) << "AC:SF: processor stopping...";
+//      processor->disconnect();
       processor->stop_fit();
 DbgLv(1) << "AC:SF: processor stopped";
+      delete processor;
+DbgLv(1) << "AC:SF: processor deleted";
    }
 
    //delete processor;
    processor = 0;
-DbgLv(1) << "AC:SF: processor deleted";
+//DbgLv(1) << "AC:SF: processor deleted";
 
    qApp->processEvents();
    b_progress->reset();
@@ -712,7 +715,12 @@ DbgLv(1) << "GC:  szsol szval szgso szsso szmat szdat"
 DbgLv(1) << "GC:  mbase mgrid msubg mmatr mdata"
  << mbase << mgrid << msubg << mmatr << mdata << " megs" << megs;
 
-   le_estmemory->setText( QString::number( megs ) + " MB" );
+   int memava, memtot;
+   US_Memory::memory_profile( &memava, &memtot );
+
+   le_estmemory->setText( tr( "%1 MB  (of %2 MB total real)" )
+         .arg( megs ).arg( memtot ) );
+//   le_estmemory->setText( QString::number( megs ) + " MB" );
 
    // Output a message documenting the grid and subgrid dimensions
    int nss       = nsteps / ngrrep;
@@ -725,6 +733,18 @@ DbgLv(1) << "GC:  mbase mgrid msubg mmatr mdata"
                "  with a maximum of %3 points each (%4 x %5)." )
       .arg( nsubg ).arg( ngrrep ).arg( nspts ).arg( nss ).arg( nsk );
    te_status  ->setText( gmsg );
+
+   if ( megs > ( ( memava * 9 ) / 10 ) )
+   {  // Warn about high memory requirements
+       QMessageBox::warning( this, tr( "High Memory Usage" ),
+          tr( "The estimated memory requirement (%1 MB)\n"
+              "approaches or exceeds the available memory (%2 MB).\n"
+              "Total real memory is %3 MB.\n\n"
+              "You may proceed, but you may want to re-parameterize\n"
+              "the fit with adjusted Grid Refinements\n"
+              "and/or Thread Count values." )
+          .arg( megs ).arg( memava ).arg( memtot ) );
+   }
 }
 
 // Adjust s-limit ranges when s-limit value changes
@@ -857,6 +877,12 @@ DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
 
    b_progress->setValue( nctotal );
    qApp->processEvents();
+
+   if ( stage == 6 )
+   {  // If stopped because of memory usage, execute Stop Fit
+      stop_fit();
+      return;
+   }
 
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
 DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;

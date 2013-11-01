@@ -1,4 +1,5 @@
 //! \file us_2dsa_process.cpp
+
 #include "us_2dsa_process.h"
 #include "us_util.h"
 #include "us_settings.h"
@@ -267,6 +268,8 @@ DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
 
       WorkPacket wtask = job_queue.takeFirst();
       submit_job( wtask, ii );
+
+      memory_check();
    }
 
    max_rss();
@@ -276,6 +279,8 @@ DbgLv(1) << "2P:   kstask nthreads" << kstask << nthreads << job_queue.size();
    emit message_update( pmessage_head() +
       tr( "Starting computations of %1 subgrids\n using %2 threads ..." )
       .arg( nsubgrid ).arg( nthreads ), false );
+
+   memory_check();
 }
 
 // Set iteration parameters
@@ -315,16 +320,21 @@ void US_2dsaProcess::stop_fit()
 DbgLv(1) << "StopFit test Thread" << ii + 1;
       WorkerThread* wthr = wthreads[ ii ];
 
-      if ( wthr != 0  &&  wthr->isRunning() )
+      if ( wthr != 0 )
       {
-         wthr->flag_abort();
-DbgLv(1) << "  STOPTHR:  thread aborted";
-      }
+         wthr->disconnect();
 
-      else if ( wthr != 0  &&  ! wthr->isFinished() )
-      {
-         delete wthr;
+         if ( wthr->isRunning() )
+         {
+            wthr->flag_abort();
+DbgLv(1) << "  STOPTHR:  thread aborted";
+         }
+
+         else if ( ! wthr->isFinished() )
+         {
+            delete wthr;
 DbgLv(1) << "  STOPTHR:  thread deleted";
+         }
       }
 
       wthreads[ ii ] = 0;
@@ -795,6 +805,7 @@ void US_2dsaProcess::submit_job( WorkPacket& wtask, int thrx )
    connect( wthr, SIGNAL( work_progress( int           ) ),
             this, SLOT(   step_progress( int           ) ) );
 DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx << "depth" << wtask.depth;
+DbgLv(1) << "SUBMIT_JOB AvailPercent" << US_Memory::memory_profile();
 
    wthr->start();
 }
@@ -826,11 +837,13 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
     << wresult.csolutes[mm].k; } }
 //DBG-CONC
 
-   max_rss();
+   max_rss();                      // Compute max memory used
+   if ( taskx <= nthreads )
+      memory_check();              // Check for memory use too high
 
-   free_worker( thrx );            // free up this worker thread
+   free_worker( thrx );            // Free up this worker thread
 
-   if ( abort )
+   if ( abort )                    // Abort if so flagged
       return;
 
    // This loop should only execute, at most, once per result
@@ -1429,5 +1442,35 @@ DbgLv(1) << "NEXTJ:   wtask" << &wtask << &job_queue[jobx];
 
    job_queue.removeAt( jobx );          // Remove job from queue
    return wtask;
+}
+
+// Return flag of whether a memory check implies fits should be aborted
+bool US_2dsaProcess::memory_check()
+{
+   bool stopfit = false;
+   int memava, memtot, memuse;
+   int mempav = US_Memory::memory_profile( &memava, &memtot, &memuse );
+DbgLv(1) << "MCk:MEM: AvailPercent" << mempav;
+
+   if ( mempav < 10 )
+   {
+DbgLv(0) << "MCk:MEM: *** AvailPercent < 10 ***";
+      stop_fit();
+      QMessageBox::warning( (QWidget*)parentw, tr( "High Memory Usage" ),
+            tr( "The available memory percent of\n"
+                "the total memory has fallen below 10%.\n"
+                "Total memory is %1 MB;\n"
+                "Used memory is %2 MB;\n"
+                "Available memory is %3 MB.\n\n"
+                "Re-parameterize the fit with adjusted\n"
+                "Grid Refinements and/or Thread Count." )
+            .arg( memtot ).arg( memuse ).arg( memava ) );
+
+      emit process_complete( 6 );   // signal memory-related stop
+      abort     = true;
+      stopfit   = true;
+   }
+
+   return stopfit;
 }
 

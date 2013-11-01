@@ -141,6 +141,7 @@ if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mfac"
    int  navals      = narows * nsolutes;   // Size of "A" matrix
 DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
    QVector< double > nnls_a( navals,   0.0 );
+DbgLv(1) << "   CR:na  size" << nnls_a.size();
    QVector< double > nnls_b( narows,   0.0 );
    QVector< double > nnls_x( nsolutes, 0.0 );
    QVector< double > tinvec( ntinois,  0.0 );
@@ -672,6 +673,8 @@ if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR:  a0 a1 b0 b1"
 
    }  // End of core calculations
 
+   nnls_a.clear();
+   nnls_b.clear();
 DebugTime("END:clcr-nn");
 
 DbgLv(1) << "CR: kstodo" << kstodo;

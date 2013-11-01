@@ -286,19 +286,62 @@ void US_Win::onIndexTriggered( int index )
   if ( index >= HELP     && index < HELP_END ) help  ( index );
 }
 
-void US_Win::terminated( int /* code*/, QProcess::ExitStatus /* status */ )
+void US_Win::terminated( int code, QProcess::ExitStatus status )
 {
+//qDebug() << "PROCESS terminated:  code" << code << "status" << status;
   QList<procData*>::iterator pr;
   
   for ( pr = procs.begin(); pr != procs.end(); pr++ )
   {
     procData* d       = *pr;
     QProcess* process = d->proc;
+    int       index   = d->index;
 
     if ( process->state() == QProcess::NotRunning )
     {
+//qDebug() << "PROCESS NotRunning index" << index << "Proc name" << d->name;
+
+      if ( status == QProcess::CrashExit  &&  code >= 0 )
+      { // Process crashed:  output a message and possibly do a pop-up
+        QString msg_sb;
+        QString msg_mb;
+        QString msg_ru  = p[ index ].runningMsg;
+        QString estderr = QString( process->readAllStandardError() )
+                          .right( 2000 );    // End lines of STDERR
+        bool    badallo = estderr.contains( "bad_alloc" );
+qDebug() << "PROCESS   code" << code << "e-stderr len" << estderr.length();
+//qDebug() << "PROCESS   bad_alloc? " << badallo;
+
+        if ( badallo )
+        { // It was a "bad_alloc" crash
+          msg_sb = tr( "MEMORY ALLOC crash: " ) + msg_ru;
+          msg_mb = tr( "Process MEMORY ALLOCATION Crash:\n" ) + msg_ru;
+        }
+
+        else
+        { // It was other than bad_alloc
+          int kwhat = estderr.lastIndexOf( "what(): " );
+
+          if ( kwhat > 0 )
+          { // We have a "what():" hint in stderr
+            QString msg_wh = estderr.mid( kwhat + 7, 20 ).simplified();
+            msg_sb = "[ " + msg_wh + " ] crash: " + msg_ru;
+            msg_mb = tr( "Process Crash [ "  ) + msg_wh + " ]\n" + msg_ru;
+          }
+
+          else
+          { // Crash type is undetermined
+            msg_sb = "[ unknown type ] crash: " + msg_ru;
+          }
+        }
+
+        // Report crash in status bar and optionally in a message box pop-up
+        statusBar()->showMessage( msg_sb );
+        if ( ! msg_mb.isEmpty() )
+          QMessageBox::warning( this, tr( "Process Crash" ), msg_mb );
+      }
+
       procs.removeOne( d );
-      int index = d->index;
       p[ index ].currentRunCount--;
       delete process;  // Deleting the process structure
       delete d;        // Deleting the procData structure
