@@ -108,7 +108,6 @@
       - \ref US_ListWidget
     - \ref US_WidgetsDialog
 
-*/
   - Programs
      - \ref US_Win
      - \ref US_Config
@@ -116,8 +115,11 @@
        - \ref US_Color
        - \ref US_Database
        - \ref US_Font
+     - \ref US_Convert
      - \ref US_HelpDaemon
      - \ref licenseMain
+   
+*/
 /*!
 Practice:<br>
    
