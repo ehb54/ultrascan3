@@ -75,6 +75,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       QStringList*                     mw_modstats;
       QVector< ModelRecord >*          mw_mrecs;
       QVector< ModelRecord >*          mw_mrecs_mc;
+      int*                             mw_baserss;
 
       QWidget*                         parentw;
       QWidget*                         main_widg;
@@ -149,6 +150,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       void closed     ( QObject* );
       void    fitpars_connect( bool );
       QString fitpars_string ( void );
+      int     memory_check   ( void );
 
       void help       ( void )
       { showHelp.show_help( "pcsa_analys.html" ); };

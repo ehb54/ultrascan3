@@ -49,6 +49,7 @@ class US_pcsa : public US_AnalysisBase2
       QStringList*                mw_model_stats();
       QVector< ModelRecord >*     mw_mrecs();
       QVector< ModelRecord >*     mw_mrecs_mc();
+      int*                        mw_base_rss();
 
    private:
       QGridLayout*         progressLayout;
@@ -98,6 +99,7 @@ class US_pcsa : public US_AnalysisBase2
 
       int                  dbg_level;
       int                  mc_iters;
+      int                  baserss;
 
    private slots:
       void open_resplot( void );

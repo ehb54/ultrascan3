@@ -309,7 +309,7 @@ void US_Win::terminated( int code, QProcess::ExitStatus status )
         QString estderr = QString( process->readAllStandardError() )
                           .right( 2000 );    // End lines of STDERR
         bool    badallo = estderr.contains( "bad_alloc" );
-qDebug() << "PROCESS   code" << code << "e-stderr len" << estderr.length();
+qDebug() << "PROCESS   status" << status << "e-stderr len" << estderr.length();
 //qDebug() << "PROCESS   bad_alloc? " << badallo;
 
         if ( badallo )
@@ -332,13 +332,17 @@ qDebug() << "PROCESS   code" << code << "e-stderr len" << estderr.length();
           else
           { // Crash type is undetermined
             msg_sb = "[ unknown type ] crash: " + msg_ru;
+            msg_mb = tr( "Process Crash [ unknown type ]\n" ) + msg_ru;
           }
         }
 
-        // Report crash in status bar and optionally in a message box pop-up
+        // Report the crash in the status bar and in a message box pop-up
         statusBar()->showMessage( msg_sb );
-        if ( ! msg_mb.isEmpty() )
-          QMessageBox::warning( this, tr( "Process Crash" ), msg_mb );
+        QString selines = estderr.endsWith( "\n" )
+           ? estderr.section( "\n", -4, -2 )
+           : estderr.section( "\n", -3, -1 );
+        msg_mb += tr( "\n\nLast several stderr lines --\n\n" ) + selines;
+        QMessageBox::warning( this, tr( "Process Crash" ), msg_mb );
       }
 
       procs.removeOne( d );

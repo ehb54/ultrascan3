@@ -67,6 +67,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
          QVector< double >    ti_noise;    //!< Time-invariant noise 
          QVector< double >    ri_noise;    //!< Radially-invariant noise
          QVector< US_Solute > solutes;     //!< Input/Output solutes
+         long int             maxrss;      //!< Running max rss memory in KB
          int                  noisflag;    //!< Calculated-noise flag: 0-3
          int                  dbg_level;   //!< Debug level
          bool                 dbg_timing;  //!< Debug-timing-prints flag

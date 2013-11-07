@@ -2,6 +2,7 @@
 #include "us_memory.h"
 
 #ifdef Q_WS_X11
+#include <sys/sysinfo.h>
 #include <unistd.h>
 #endif
 
@@ -85,21 +86,31 @@ long int US_Memory::rss_max( long int& rssmax )
 // Return the memory profile: used, available, total
 int US_Memory::memory_profile( int* pMemA, int* pMemT, int* pMemU )
 {
-   const double mb_bytes = ( 1024. * 1024. );
    int memavail;
    int memtotal;
    int memused;
    int memavpc;
-#ifdef Q_WS_X11         // Unix: use sysconf
-   double pgavail   = (double)sysconf( _SC_PHYS_PAGES );
-   double pgcurav   = (double)sysconf( _SC_AVPHYS_PAGES );
-   double pgsize    = (double)sysconf( _SC_PAGE_SIZE );
-   memtotal         = qRound( pgavail * pgsize / mb_bytes );
-   memavail         = qRound( pgcurav * pgsize / mb_bytes );
-   memused          = memtotal - memavail;
-qDebug() << "  UsMEM:X11: pgavail,curav,size" << pgavail << pgcurav << pgsize;
+#ifdef Q_WS_X11         // Unix: use free command
+   QProcess qproc;
+   qproc.start( "free", QStringList() << "-m" );
+   qproc.waitForFinished( -1 );
+   QString totmem   = QString( qproc.readAllStandardOutput() ).trimmed();
+   totmem           = totmem.section( "\n", 1, 1 );
+   totmem.replace( QRegExp( "\\s+" ), " " );
+qDebug() << "  UsMEM:X11: totmem" << totmem;
+   int fmtotal      = totmem.section( " ", 1, 1 ).toInt();
+   int fmused       = totmem.section( " ", 2, 2 ).toInt();
+   int fmfree       = totmem.section( " ", 3, 3 ).toInt();
+   int fmbuffer     = totmem.section( " ", 5, 5 ).toInt();
+   int fmcache      = totmem.section( " ", 6, 6 ).toInt();
+qDebug() << "  UsMEM:X11: fmtotal,used,free,buffer,cache" << fmtotal << fmused
+ << fmfree << fmbuffer << fmcache;
+   memtotal         = fmtotal;
+   memused          = qMax( fmused, ( fmtotal - fmfree - fmcache ) );
+   memavail         = memtotal - memused;
 #endif
 #ifdef Q_WS_MAC         // Mac: use sysctl and rss_now()
+   const double mb_bytes = ( 1024. * 1024. );
    const double kb_bytes = 1024.;
    QProcess qproc;
    qproc.start( "sysctl", QStringList() << "-n" << "hw.memsize" );
@@ -111,6 +122,7 @@ qDebug() << "  UsMEM:X11: pgavail,curav,size" << pgavail << pgcurav << pgsize;
 qDebug() << "  UsMEM:Mac:  totmem" << totmem << "memtotal" << memtotal;
 #endif
 #ifdef Q_WS_WIN         // Windows: direct use of GlobalMemoryStatusEx
+   const double mb_bytes = ( 1024. * 1024. );
    MEMORYSTATUSEX mstatx;
    mstatx.dwLength  = sizeof( mstatx );
    GlobalMemoryStatusEx( &mstatx );

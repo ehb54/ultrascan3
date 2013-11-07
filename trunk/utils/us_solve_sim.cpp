@@ -4,6 +4,7 @@
 #include "us_settings.h"
 #include "us_math2.h"
 #include "us_constants.h"
+#include "us_memory.h"
 
 // Define level-conditioned debug print that includes thread/processor
 #ifdef DbgLv
@@ -139,9 +140,21 @@ if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mfac"
 
    // Set up and clear work vectors
    int  navals      = narows * nsolutes;   // Size of "A" matrix
-DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
+//DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
+
+#if 1
    QVector< double > nnls_a( navals,   0.0 );
-DbgLv(1) << "   CR:na  size" << nnls_a.size();
+#endif
+#if 0
+   QVector< double > nnls_a;
+   int  iasize      = navals;
+   if ( navals > 20000000 )
+   {
+      iasize           = narows * ( nsolutes / 2 );
+   }
+   nnls_a.reserve( iasize );
+   nnls_a.fill( 0.0, iasize );
+#endif
    QVector< double > nnls_b( narows,   0.0 );
    QVector< double > nnls_x( nsolutes, 0.0 );
    QVector< double > tinvec( ntinois,  0.0 );
@@ -326,6 +339,17 @@ if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR: ks kk" << ks << kk
             emit work_progress( increp );
             kstep = 0;                     // Reset step count
          }
+
+#if 0
+         if ( kk >= iasize  &&  iasize < navals )
+         {
+int npav = US_Memory::memory_profile();
+DbgLv(0) << "   CR:na  iasize navals" << iasize << navals << "kk narows npav" << kk << narows << npav;
+            iasize       = qMin( navals, ( iasize + narows * 4 ) );
+            nnls_a.resize( iasize );
+DbgLv(0) << "   CR:na  (3)size" << nnls_a.size() << "npav" << US_Memory::memory_profile();
+         }
+#endif
       }   // Each solute
    }   // Constant vbar
 
@@ -672,6 +696,9 @@ if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR:  a0 a1 b0 b1"
       // Note:  ti_noise and ri_noise are already zero
 
    }  // End of core calculations
+
+   sim_vals.maxrss = US_Memory::rss_max( sim_vals.maxrss );
+DbgLv(1) << "   CR:na  rss now,max" << US_Memory::rss_now() << sim_vals.maxrss;
 
    nnls_a.clear();
    nnls_b.clear();

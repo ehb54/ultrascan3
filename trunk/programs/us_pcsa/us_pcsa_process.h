@@ -91,6 +91,9 @@ class US_pcsaProcess : public QObject
       //! \brief Stop a fit that is in progress
       void stop_fit(       void );
 
+      //! \brief Clear memory in preparation for fit start
+      void clear_memory(   void );
+
       static const int solute_doubles = sizeof( US_Solute ) / sizeof( double );
 
       // Static routines needed for Levenberg-Marquardt
