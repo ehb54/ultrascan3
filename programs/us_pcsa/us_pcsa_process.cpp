@@ -114,6 +114,8 @@ DbgLv(1) << "PC: alf alpha lm fx scn"
 DbgLv(1) << "PC: sll sul" << slolim << suplim
  << " kll kul nkp" << klolim << kuplim << nkpts
  << " type reso nth noi" << curvtype << cresolu << nthreads << noisflag;
+int memmb  = qRound( (double)US_Memory::rss_now() / 1024.0 );
+DbgLv(1) << "STR_STR: nowmem" << memmb << "kthr ksol" << nthreads << cresolu;
 
    timer.start();              // start a timer to measure run time
 
@@ -150,7 +152,17 @@ DbgLv(1) << "PC: (1)maxrss" << maxrss;
    int memava;
    int memtot;
    int memuse;
-   int mempav = US_Memory::memory_profile( &memava, &memtot, &memuse );
+   int    mempav  = US_Memory::memory_profile( &memava, &memtot, &memuse );
+   int    nsoln   = orig_sols[ 0 ].size();
+   int    dsize   = nscans * npoints;
+   int    dfact   = ( nsoln + 4 ) * sizeof( double );
+   int    memneed = qRound( (double)dsize * (double)dfact / ( 1024. * 1024. ) );
+   memneed       *= nthreads;
+DbgLv(1) << "PC:MEM(1): pav" << mempav << "ns dsz dfac mneed"
+ << nsoln << dsize << dfact << memneed;
+   memuse         = memuse + memneed;
+   memava         = memtot - memuse;
+   mempav         = ( memava * 100 ) / memtot;
 DbgLv(1) << "PC:MEM(1): pav" << mempav << "ava tot use"
  << memava << memtot << memuse;
 
@@ -192,10 +204,32 @@ DbgLv(1) << "PC:   kstask nthreads" << kstask << nthreads << job_queue.size()
       tr( "Starting computations of %1 models\n using %2 threads ..." )
       .arg( nmtasks ).arg( nthreads ), false );
    max_rss();
-DbgLv(1) << "PC: (3)maxrss" << maxrss;
+DbgLv(1) << "PC: (2)maxrss" << maxrss;
    mempav  = US_Memory::memory_profile( &memava, &memtot, &memuse );
-DbgLv(1) << "PC:MEM(3): pav" << mempav << "ava tot use"
+   memuse         = memuse + memneed;
+   memava         = memtot - memuse;
+   mempav         = ( memava * 100 ) / memtot;
+DbgLv(1) << "PC:MEM(2): pav" << mempav << "ava tot use"
  << memava << memtot << memuse;
+
+#if 0
+   if ( mempav < 20 )
+   {
+      stop_fit();
+      emit process_complete( 6 );     // signal memory-related stop
+      abort    = true;
+
+      QMessageBox::warning( 0, tr( "High Memory Usage" ),
+            tr( "The available memory percent of\n"
+                "the total has fallen below 20%.\n"
+                "Total memory is %1 MB;\n"
+                "Available memory is %2 MB.\n\n"
+                "Re-parameterize the fit with adjusted\n"
+                "Curve Resolution Points and/or\n"
+                "Thread Count." )
+            .arg( memtot ).arg( memava ) );
+   }
+#endif
 }
 
 // Abort a fit run
@@ -361,6 +395,8 @@ DbgLv(1) << "done: vari bvol" << mrec.variance << bvol
 
    max_rss();
    int memmb  = qRound( (double)maxrss / 1024.0 );
+int ksol=mrec.isolutes.size();
+DbgLv(1) << "FIN_FIN: maxmem" << memmb << "kthr ksol" << nthreads << ksol;
 
    pmsg += tr( "   Maximum memory used:  " ) +
            QString::number( memmb ) + " MB\n\n" +
@@ -521,6 +557,7 @@ void US_pcsaProcess::submit_job( WorkPacket& wtask, int thrx )
    WorkerThread* wthr = new WorkerThread( this );
    wthreads[ thrx ]   = wthr;
    wkstates[ thrx ]   = WORKING;
+   wtask.sim_vals.maxrss = maxrss;
 
    wthr->define_work( wtask );
 
@@ -571,6 +608,7 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
    mrec.smax       = suplim;
    mrec.kmin       = klolim;
    mrec.kmax       = kuplim;
+   maxrss          = qMax( maxrss, wresult.sim_vals.maxrss );
 
    if ( variance < varimin )
    { // Handle a new minimum variance record
@@ -602,27 +640,21 @@ DbgLv(1) << "PJ: (4)maxrss" << maxrss;
    int memava;
    int memtot;
    int memuse;
-   int mempav  = US_Memory::memory_profile( &memava, &memtot, &memuse );
+   int    mempav  = US_Memory::memory_profile( &memava, &memtot, &memuse );
+   int    nsoln   = mrec.isolutes.size();
+   int    nscann  = wresult.sim_vals.residuals.scanCount();
+   int    npointn = wresult.sim_vals.residuals.pointCount();
+   int    dsize   = nscann * npointn;
+   int    dfact   = ( nsoln + 4 ) * sizeof( double );
+   int    memneed = qRound( (double)dsize * (double)dfact / ( 1024. * 1024. ) );
+DbgLv(1) << "PC:MEM: (4)nsol,nscn,npt,dsize,dfact,memneed"
+ << nsoln << nscann << npointn << dsize << dfact << memneed;
+   memuse         = memuse + memneed;
+   memava         = memtot - memuse;
+   mempav         = ( memava * 100 ) / memtot;
 DbgLv(1) << "PC:MEM: (4)AvPercent" << mempav;
 
    free_worker( thrx );               // Free up this worker thread
-
-   if ( mempav < 10 )
-   {
-      QMessageBox::warning( 0, tr( "High Memory Usage" ),
-            tr( "The available memory percent of\n"
-                "the total has fallen below 10%.\n"
-                "Total memory is %1 MB;\n"
-                "Available memory is %2 MB.\n\n"
-                "Re-parameterize the fit with adjusted\n"
-                "Curve Resolution Points and/or\n"
-                "Thread Count." )
-            .arg( memtot ).arg( memava ) );
-
-      stop_fit();
-      emit process_complete( 6 );     // signal memory-related stop
-      abort    = true;
-   }
 
    if ( abort )
       return;
@@ -1456,8 +1488,8 @@ DbgLv(0) << "LMf:  par1 par2" << par[0] << par[1];
    par[ 12 ]     = minp2;
    par[ 13 ]     = maxp2;
    par[ 14 ]     = noisflag;
-//   par[ 13 ]     = dbg_level;
-   par[ 15 ]     = 0;
+   par[ 15 ]     = dbg_level;
+//   par[ 15 ]     = 0;
    par[ 16 ]     = alpha_lm;
 DbgLv(1) << "LMf:  ppar2" << ppar[4] << dsets[0] << curvtype << ppar[5];
 DbgLv(1) << "LMf:  alpha" << alpha_lm << par[14];
@@ -1721,7 +1753,8 @@ DbgLv(1) << "LMf: ri count size" << ri_noise.count << ri_noise.values.size();
 
    // Insert new refined best model at the top of the list
 DbgLv(0) << "LMf:insert-new: old par1 par2" << mrecs[0].par1 << mrecs[0].par2
- << "new par1 par2" << mrec.par1 << mrec.par2;
+ << "new par1 par2" << mrec.par1 << mrec.par2 << "nmtasks mrec-size"
+ << nmtasks << mrecs.size();
 DbgLv(0) << "LMf: old01 s,k" << mrecs[0].isolutes[0].s << mrecs[0].isolutes[0].k
  << mrecs[0].isolutes[1].s << mrecs[0].isolutes[1].k;
 DbgLv(0) << "LMf: new01 s,k" << mrec.isolutes[0].s << mrec.isolutes[0].k
@@ -1964,7 +1997,7 @@ DbgLv(1) << "CFin: alpha" << alpha;
    model              = mrec.model;
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisflag;
-   sim_vals.dbg_level = dbg_level;
+//   sim_vals.dbg_level = dbg_level;
    sim_vals.alpha     = alpha;
    sim_vals.solutes   = mrec.isolutes;
 
@@ -2119,9 +2152,15 @@ DbgLv(1) << "RF: sigm:  mnmx p1 p2" << minp1 << maxp1 << minp2 << maxp2;
 DbgLv(1) << "RF: sigm:  p12 rng" << p1rng << p2rng << "p12 inc"
  << p1inc << p2inc << "p12 dif" << p1dif << p2dif;
       minp1         = p1best - p1dif;
+      minp1         = ( minp1 < 0.001 ) ? ( minp1 + p1inc ) : minp1;
       maxp1         = minp1 + p1inc * krng;
       minp2         = p2best - p2dif;
+      minp2         = ( minp2 < 0.000 ) ? ( minp2 + p2inc ) : minp2;
       maxp2         = minp2 + p2inc * krng;
+      minp1         = qMax( 0.001, minp1 );
+      maxp1         = qMin( 0.500, maxp1 );
+      minp2         = qMax( 0.000, minp2 );
+      maxp2         = qMin( 1.000, maxp2 );
 DbgLv(1) << "RF: sigm:  p1,p2 best" << p1best << p2best;
 DbgLv(1) << "RF: sigm:    mnmx p1 p2" << minp1 << maxp1 << minp2 << maxp2;
       parlims[ 0 ]  = minp1;
@@ -2175,6 +2214,8 @@ DbgLv(1) << "RF: (1)maxrss" << maxrss;
 
       WorkPacket wtask = job_queue.takeFirst();
       submit_job( wtask, ii );
+      int mempav = US_Memory::memory_profile();
+DbgLv(1) << "PC:MEM: (5)PcAvail" << mempav;
    }
 
    mrecs    .clear();
@@ -2182,7 +2223,7 @@ DbgLv(1) << "RF: (1)maxrss" << maxrss;
    kstask = nthreads;     // count of started tasks is initially thread count
 DbgLv(1) << "RF:   kstask nthreads" << kstask << nthreads << job_queue.size();
    int mempav = US_Memory::memory_profile();
-DbgLv(1) << "PC:MEM: (5)PcAvail" << mempav;
+DbgLv(1) << "PC:MEM: (6)PcAvail" << mempav;
 
    emit message_update( pmessage_head() +
       tr( "Starting fit iteration %1 computations of %2 models,\n"
@@ -2190,3 +2231,17 @@ DbgLv(1) << "PC:MEM: (5)PcAvail" << mempav;
       .arg( fi_iter ).arg( nmtasks ).arg( nthreads ), false );
 }
 
+// Clear memory allocation
+void US_pcsaProcess::clear_memory()
+{
+int memmb  = qRound( (double)US_Memory::rss_now() / 1024.0 );
+DbgLv(1) << "PC:MEM: ClrMem IN rssnow" << memmb;
+   wkstates .clear();
+   wthreads .clear();
+   job_queue.clear();
+
+   orig_sols.clear();
+   mrecs    .clear();
+memmb  = qRound( (double)US_Memory::rss_now() / 1024.0 );
+DbgLv(1) << "PC:MEM:  ClrMem OUT rssnow" << memmb;
+}

@@ -45,6 +45,7 @@ US_pcsa::US_pcsa() : US_AnalysisBase2()
    setObjectName( "US_pcsa" );
    dbg_level  = US_Settings::us_debug();
    clean_etc_dir();
+   baserss    = 0;
 
    // Build local and pcsa-specific GUI elements
    te_results = NULL;
@@ -222,6 +223,7 @@ void US_pcsa::load( void )
 
    def_local  = ! disk_controls->db();
    edata      = &dataList[ 0 ];    // point to first loaded data
+   baserss    = 0;
 
    // Move any loaded noise vectors to the "in" versions
    ri_noise_in.values = ri_noise.values;
@@ -737,6 +739,7 @@ QPointer< QTextEdit   >   US_pcsa::mw_status_text()  { return te_status;    }
 QStringList*              US_pcsa::mw_model_stats()  { return &model_stats; }
 QVector< ModelRecord >*   US_pcsa::mw_mrecs()        { return &mrecs;       }
 QVector< ModelRecord >*   US_pcsa::mw_mrecs_mc()     { return &mrecs_mc;    }
+int*                      US_pcsa::mw_base_rss()     { return &baserss;     }
 
 // Open residuals plot window
 void US_pcsa::open_resplot()

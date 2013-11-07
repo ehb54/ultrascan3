@@ -36,6 +36,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
       mw_modstats    = mainw->mw_model_stats();
       mw_mrecs       = mainw->mw_mrecs();
       mw_mrecs_mc    = mainw->mw_mrecs_mc();
+      mw_baserss     = mainw->mw_base_rss();
 DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    }
    else
@@ -329,7 +330,21 @@ void US_AnalysisControl::start()
    }
 
    else
+   {
       processor->disconnect();
+      processor->stop_fit();
+      processor->clear_memory();
+   }
+
+   // Check that fit as parameterized will not exceed memory
+   sdata      ->scanData.clear();
+   rdata      ->scanData.clear();
+   mw_mrecs   ->clear();
+   mw_mrecs_mc->clear();
+   mrecs       .clear();
+
+   if ( memory_check() )
+      return;
 
    // Set up for the start of fit processing
    varimin       = 9e+99;
@@ -1166,5 +1181,80 @@ DbgLv(1) << "AC:RM: NEW mrec0 solsize" << mrec.isolutes.size()
  << "sn s,k" << mrec.isolutes[nn].s << mrec.isolutes[nn].k;
    if ( processor != 0 )
       processor->put_mrec( mrec );
+}
+
+int US_AnalysisControl::memory_check()
+{
+   const double mb_fact = ( 1024. * 1024. );
+   const double x_fact  = 19.25;
+   const double y_fact  = 2.43;
+   const int    pc_ava  = 90;
+   const int    nxdata  = 4;
+   int    baserss  = *mw_baserss;
+   if ( baserss == 0 )
+   {
+      baserss         = qRound( (double)US_Memory::rss_now() / 1024. );
+      *mw_baserss     = baserss;
+   }
+   int    status   = 0;
+   int    nscans   = edata->scanCount();
+   int    npoints  = edata->pointCount();
+   int    idsize   = nscans * npoints * sizeof( double );
+   int    nsols    = (int)ct_cresolu ->value();
+   int    nthrds   = (int)ct_thrdcnt ->value();
+   double dsize    = (double)idsize * (double)( nsols + nxdata ) / mb_fact;
+   double msize    = ( x_fact + dsize * y_fact ) * (double)nthrds;
+   int    memneed  = baserss + qRound( msize );
+   int    memtot, memava, memuse;
+   int    mempca   = US_Memory::memory_profile( &memava, &memtot, &memuse );
+   int    memsafe  = ( memava * pc_ava ) / 100;
+int idsz = qRound(dsize);
+int imsz = qRound(msize);
+DbgLv(1) << "MEMck: memtot,ava,use,safe,need" << memtot << memava << memuse
+ << memsafe << memneed << "dsz msz ns nt" << idsz << imsz << nsols << nthrds;
+
+   if ( memneed > memsafe  ||  mempca < 20 )
+   {
+      QString title   = tr( "High Memory Usage" );
+      QString memp    = tr( "\n\nMemory Profile --\n"
+                            "  Total:  %1 MB\n"
+                            "  Available:  %2 MB\n"
+                            "  Used:  %3 MB\n"
+                            "  Estimated Need:  %4 MB\n\n" )
+         .arg( memtot ).arg( memava ).arg( memuse ).arg( memneed );
+
+      if ( memneed > memtot )
+      {
+         QMessageBox::critical( this, title,
+             tr( "Memory needed for this fit exceeds total available." )
+             + memp + tr( "This fit will not proceed.\n"
+                          "Re-parameterize the fit with adjusted\n"
+                          "Curve Resolution Points and/or\n"
+                          "Thread Count." ) );
+         status          = 1;
+      }
+
+      else
+      {
+         QMessageBox msgBox( this );
+         msgBox.setWindowTitle( title );
+         msgBox.setText( tr( "Memory needed for this fit is a\n"
+                             "high percentage of the available memory." )
+                        + memp +
+                         tr( "You may proceed if you wish (\"Yes\")\n"
+                             "Or you may stop this fit (\"No\")\n"
+                             "then re-parameterize the fit with adjusted\n"
+                             "Curve Resolution Points and/or\n"
+                             "Thread Count.\n\nProceed?" ) );
+         msgBox.addButton( QMessageBox::No );
+         msgBox.addButton( QMessageBox::Yes );
+         msgBox.setDefaultButton( QMessageBox::No );
+
+         if ( msgBox.exec() == QMessageBox::No )
+            status          = 2;
+      }
+   }
+
+   return status;
 }
 

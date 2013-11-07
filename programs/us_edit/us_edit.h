@@ -98,6 +98,7 @@ class US_Edit : public US_Widgets
       QLabel*            lb_gaps;
       QLabel*            lb_rpms;
       QLabel*            lb_triple;
+      QLabel*            lb_baseline;
 
       QLineEdit*         le_investigator;
       QLineEdit*         le_info;
@@ -123,6 +124,7 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_spikes;
       QPushButton*       pb_invert;
       QPushButton*       pb_write;
+      QPushButton*       pb_writemwl;
       QPushButton*       pb_residuals;
       QPushButton*       pb_priorEdits;
       QPushButton*       pb_reviewep;
@@ -253,6 +255,7 @@ class US_Edit : public US_Widgets
       void floating          ( void );
       void write             ( void );
       void write_triple      ( void );
+      void write_mwl         ( void );
       void review_edits      ( void );
       void next_triple       ( void );
       bool all_edits_done    ( void );

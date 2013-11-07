@@ -315,9 +315,11 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    specs->addWidget( le_plateau, s_row++, 2, 1, 2 );
 
    // Baseline row
-   pb_baseline = us_pushbutton( tr( "Specify Baseline" ), false );
-   connect( pb_baseline, SIGNAL( clicked() ), SLOT( set_baseline() ) );
-   specs->addWidget( pb_baseline, s_row, 0, 1, 2 );
+//   pb_baseline = us_pushbutton( tr( "Specify Baseline" ), false );
+//   connect( pb_baseline, SIGNAL( clicked() ), SLOT( set_baseline() ) );
+//   specs->addWidget( pb_baseline, s_row, 0, 1, 2 );
+   lb_baseline  = us_label( tr( "Baseline:" ), -1 );
+   specs->addWidget( lb_baseline, s_row, 0, 1, 2 );
 
    le_baseline = us_lineedit( "", 1, true );
    specs->addWidget( le_baseline, s_row++, 2, 1, 2 );
@@ -377,6 +379,11 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
    specs->addWidget( pb_write, s_row++, 2, 1, 2 );
+
+   pb_writemwl = us_pushbutton( tr( "Save to all Wavelengths" ), false );
+   connect( pb_writemwl, SIGNAL( clicked() ), SLOT( write_mwl() ) );
+   specs->addWidget( pb_writemwl, s_row++, 2, 1, 2 );
+pb_writemwl->setVisible(false);
 
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
@@ -504,7 +511,7 @@ void US_Edit::reset( void )
    pb_airGap      ->setEnabled( false );
    pb_dataRange   ->setEnabled( false );
    pb_plateau     ->setEnabled( false );
-   pb_baseline    ->setEnabled( false );
+//   pb_baseline    ->setEnabled( false );
    
    pb_noise       ->setEnabled( false );
    pb_residuals   ->setEnabled( false );
@@ -517,13 +524,14 @@ void US_Edit::reset( void )
    
    pb_float       ->setEnabled( false );
    pb_write       ->setEnabled( false );
+   pb_writemwl    ->setEnabled( false );
 
    // Remove icons
    pb_meniscus    ->setIcon( QIcon() );
    pb_airGap      ->setIcon( QIcon() );
    pb_dataRange   ->setIcon( QIcon() );
    pb_plateau     ->setIcon( QIcon() );
-   pb_baseline    ->setIcon( QIcon() );
+//   pb_baseline    ->setIcon( QIcon() );
    pb_noise       ->setIcon( QIcon() );
    pb_residuals   ->setIcon( QIcon() );
    pb_spikes      ->setIcon( QIcon() );
@@ -531,6 +539,7 @@ void US_Edit::reset( void )
 
    pb_float       ->setIcon( QIcon() );
    pb_write       ->setIcon( QIcon() );
+   pb_writemwl    ->setIcon( QIcon() );
 
    editID        .clear();
    data.scanData .clear();
@@ -955,7 +964,8 @@ DbgLv(1) << "LD(): CC";
       cb_rpms    ->setVisible( true  );
       pb_plateau ->setVisible( false );
       le_plateau ->setVisible( false ); 
-      pb_baseline->setVisible( false );
+      //pb_baseline->setVisible( false );
+      lb_baseline->setVisible( false );
       le_baseline->setVisible( false ); 
       lb_edtrsp  ->setVisible( true  );
       le_edtrsp  ->setVisible( true  );
@@ -1045,8 +1055,11 @@ DbgLv(1) << "LD(): CC";
       cb_rpms    ->setVisible( false );
       pb_plateau ->setVisible( true  );
       le_plateau ->setVisible( true  ); 
-      pb_baseline->setVisible( true  );
-      le_baseline->setVisible( true  ); 
+      //pb_baseline->setVisible( true  );
+      //le_baseline->setVisible( true  ); 
+      bool notMwl  = ( nwaveln < 3 );
+      lb_baseline->setVisible( notMwl );
+      le_baseline->setVisible( notMwl ); 
       lb_edtrsp  ->setVisible( false );
       le_edtrsp  ->setVisible( false );
       pb_reviewep->setVisible( false );
@@ -1070,7 +1083,7 @@ DbgLv(1) << "LD(): FF  triples size" << triples.size();
    pb_dataRange ->setEnabled( false );
    pb_plateau   ->setEnabled( false );
    pb_noise     ->setEnabled( false );
-   pb_baseline  ->setEnabled( false );
+   //pb_baseline  ->setEnabled( false );
    pb_spikes    ->setEnabled( false );
    pb_invert    ->setEnabled( true );
    pb_priorEdits->setEnabled( true );
@@ -1272,7 +1285,7 @@ void US_Edit::set_pbColors( QPushButton* pb )
    pb_airGap   ->setPalette( p );
    pb_dataRange->setPalette( p );
    pb_plateau  ->setPalette( p );
-   pb_baseline ->setPalette( p );
+   //pb_baseline ->setPalette( p );
 
    if ( pb != NULL )
    {
@@ -1606,7 +1619,7 @@ DbgLv(1) << "AGap:  plot_range()";
             pb_dataRange->setIcon( check );
             pb_plateau  ->setEnabled( true );
             pb_noise    ->setEnabled( true );
-            pb_baseline ->setEnabled( true );
+            //pb_baseline ->setEnabled( true );
             pb_spikes   ->setEnabled( true );
 
             if ( ! expIsEquil )
@@ -1661,6 +1674,7 @@ DbgLv(1) << "AGap:  plot_range()";
                   else
                   {
                      pb_write   ->setEnabled( true );
+                     pb_writemwl->setEnabled( true );
                      pb_reviewep->setEnabled( true );
                      pb_nexttrip->setEnabled( true );
                      step         = FINISHED;
@@ -1686,7 +1700,8 @@ DbgLv(1) << "AGap:  plot_range()";
             if ( total_edits >= total_speeds )
             {
                all_edits = true;
-               pb_write->setEnabled( true );
+               pb_write   ->setEnabled( true );
+               pb_writemwl->setEnabled( true );
                changes_made = all_edits;
             }
          }
@@ -1703,9 +1718,10 @@ DbgLv(1) << "AGap:  plot_range()";
             le_plateau->setText( str.sprintf( "%.3f", plateau ) );
          }
 
-         plot_last();
+         //plot_last();
+         plot_range();
          pb_plateau ->setIcon( check );
-         pb_baseline->setEnabled( true );
+         //pb_baseline->setEnabled( true );
          ct_to->setValue( 0.0 );  // Uncolor all scans
          next_step();
          break;
@@ -1742,8 +1758,9 @@ DbgLv(1) << "AGap:  plot_range()";
          }
 
          pb_write      ->setEnabled( true );
+         pb_writemwl   ->setEnabled( isMwl );
          changes_made = true;
-         pb_baseline   ->setIcon   ( check );
+         //pb_baseline   ->setIcon   ( check );
          next_step();
          break;
 
@@ -1802,15 +1819,32 @@ void US_Edit::next_step( void )
       step = PLATEAU;
       pb   = pb_plateau;
    }
+#if 0
    else if ( baseline == 0.0 ) 
    {
       step = BASELINE;
       pb   = pb_baseline;
    }
+#endif
    else
    {
       step = FINISHED;
       pb   = NULL;
+      double sum = 0.0;
+      int    pt  = data.xindex( range_left );
+      baseline   = data.xvalues[ pt + 5 ];
+
+      if ( !isMwl )
+      {
+         // Average the value for +/- 5 points
+         for ( int jj = pt; jj < pt + 11; jj++ )
+            sum += data.scanData.last().rvalues[ jj ];
+
+         double bl = sum / 11.0;
+
+         QString str;
+         le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );
+      }
    }
 
    set_pbColors( pb );
@@ -1845,9 +1879,10 @@ void US_Edit::set_meniscus( void )
    pb_dataRange->setIcon( QIcon() );
    pb_plateau  ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
-   pb_baseline ->setEnabled( false );
-   pb_baseline ->setIcon( QIcon() );
+   //pb_baseline ->setEnabled( false );
+   //pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
+   pb_writemwl ->setEnabled( all_edits && isMwl );
    pb_write    ->setIcon( QIcon() );
 
    changes_made = all_edits;
@@ -1890,9 +1925,10 @@ void US_Edit::set_airGap( void )
    pb_dataRange->setIcon( QIcon() );
    pb_plateau  ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
-   pb_baseline ->setEnabled( false );
-   pb_baseline ->setIcon( QIcon() );
+   //pb_baseline ->setEnabled( false );
+   //pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
+   pb_writemwl ->setEnabled( all_edits && isMwl );
    pb_write    ->setIcon( QIcon() );;
    changes_made = all_edits;
 
@@ -1922,9 +1958,10 @@ void US_Edit::set_dataRange( void )
    pb_dataRange->setIcon( QIcon() );
    pb_plateau  ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
-   pb_baseline ->setEnabled( false );
-   pb_baseline ->setIcon( QIcon() );
+   //pb_baseline ->setEnabled( false );
+   //pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
+   pb_writemwl ->setEnabled( all_edits && isMwl );
    pb_write    ->setIcon( QIcon() );;
    changes_made = all_edits;
 
@@ -1954,14 +1991,15 @@ void US_Edit::set_plateau( void )
    set_pbColors( pb_plateau );
 
    pb_plateau  ->setIcon( QIcon() );
-   pb_baseline ->setEnabled( false );
-   pb_baseline ->setIcon( QIcon() );
+   //pb_baseline ->setEnabled( false );
+   //pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
+   pb_writemwl ->setEnabled( all_edits && isMwl );
    pb_write    ->setIcon( QIcon() );;
    changes_made = all_edits;
 
-   undo();
    plot_range();
+   undo();
 }
 
 // Set up for a Fringe Tolerance pick
@@ -2002,10 +2040,11 @@ void US_Edit::set_baseline( void )
    le_baseline->setText( "" );
    baseline  = 0.0;
    step      = BASELINE;
-   set_pbColors( pb_baseline );
+   //set_pbColors( pb_baseline );
 
-   pb_baseline ->setIcon( QIcon() );
+   //pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
+   pb_writemwl ->setEnabled( all_edits && isMwl );
    pb_write    ->setIcon( QIcon() );;
    changes_made = all_edits;
    
@@ -2993,11 +3032,12 @@ void US_Edit::new_triple( int index )
    pb_dataRange->setEnabled( true );
    pb_plateau  ->setEnabled( true );
    pb_noise    ->setEnabled( true );
-   pb_baseline ->setEnabled( true );
+   //pb_baseline ->setEnabled( true );
    pb_spikes   ->setEnabled( true );
    pb_invert   ->setEnabled( true );
    pb_undo     ->setEnabled( true );
    pb_write    ->setEnabled( all_edits );
+   pb_writemwl ->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
@@ -3081,8 +3121,9 @@ void US_Edit::write( void )
    }
 
    changes_made = false;
-   pb_write->setEnabled( false );
-   pb_write->setIcon   ( check );
+   pb_write    ->setEnabled( false );
+   pb_writemwl ->setEnabled( false );
+   pb_write    ->setIcon   ( check );
 }
 
 // Save edits for a triple
@@ -3091,6 +3132,7 @@ void US_Edit::write_triple( void )
    QString s;
 
    meniscus  = le_meniscus->text().toDouble();
+   baseline  = data.xvalues[ data.xindex( range_left ) + 5 ];
 
    if ( expIsEquil )
    {  // Equilibrium:  set baseline,plateau as flag that those are "done"
@@ -3685,8 +3727,8 @@ void US_Edit::apply_prior( void )
       sum += scan.rvalues[ j ];
 
    le_baseline->setText( s.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
-   pb_baseline->setIcon( check );
-   pb_baseline->setEnabled( true );
+   //pb_baseline->setIcon( check );
+   //pb_baseline->setEnabled( true );
 
    // Invert
    invert = parameters.invert;
@@ -3758,8 +3800,9 @@ void US_Edit::apply_prior( void )
    step        = FINISHED;
    set_pbColors( NULL );
 
-   pb_undo ->setEnabled( true );
-   pb_write->setEnabled( true );
+   pb_undo     ->setEnabled( true );
+   pb_write    ->setEnabled( true );
+   pb_writemwl ->setEnabled( isMwl );
 
    changes_made= false;
    plot_range();
@@ -4060,8 +4103,9 @@ void US_Edit::prior_equil( void )
    step        = FINISHED;
    set_pbColors( NULL );
 
-   pb_undo ->setEnabled( true );
-   pb_write->setEnabled( true );
+   pb_undo    ->setEnabled( true );
+   pb_write   ->setEnabled( true );
+   pb_writemwl->setEnabled( isMwl );
 
    cndxt       = ( cndxt < 0 ) ? 0 : cndxt;
    cndxs       = ( cndxs < 0 ) ? 0 : cndxs;
@@ -4076,6 +4120,7 @@ void US_Edit::prior_equil( void )
 
    all_edits = all_edits_done();
    pb_write   ->setEnabled( all_edits );
+   pb_writemwl->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
 
    review_edits();
@@ -4178,23 +4223,25 @@ void US_Edit::update_disk_db( bool isDB )
 // Show or hide MWL Controls
 void US_Edit::show_mwl_controls( bool show )
 {
-   lb_gaps  ->setVisible( !show );
-   ct_gaps  ->setVisible( !show );
-   le_lxrng ->setVisible( show );
-   lb_mwlctl->setVisible( show );
-   lb_ldelta->setVisible( show );
-   ct_ldelta->setVisible( show );
-   le_ltrng ->setVisible( show );
-   lb_lstart->setVisible( show );
-   cb_lstart->setVisible( show );
-   lb_lend  ->setVisible( show );
-   cb_lend  ->setVisible( show );
-   lb_lplot ->setVisible( show );
-   cb_lplot ->setVisible( show );
-   pb_larrow->setVisible( show );
-   pb_rarrow->setVisible( show );
-   pb_custom->setVisible( show );
-   pb_incall->setVisible( show );
+   lb_gaps    ->setVisible( !show );
+   ct_gaps    ->setVisible( !show );
+   le_lxrng   ->setVisible( show );
+   lb_mwlctl  ->setVisible( show );
+   lb_ldelta  ->setVisible( show );
+   ct_ldelta  ->setVisible( show );
+   le_ltrng   ->setVisible( show );
+   lb_lstart  ->setVisible( show );
+   cb_lstart  ->setVisible( show );
+   lb_lend    ->setVisible( show );
+   cb_lend    ->setVisible( show );
+   lb_lplot   ->setVisible( show );
+   cb_lplot   ->setVisible( show );
+   pb_larrow  ->setVisible( show );
+   pb_rarrow  ->setVisible( show );
+   pb_custom  ->setVisible( show );
+   pb_incall  ->setVisible( show );
+   pb_writemwl->setVisible( show );
+pb_writemwl->setVisible(false);
 
    lo_lrange->itemAtPosition( 0, 0 )->widget()->setVisible( show );
    lo_lrange->itemAtPosition( 0, 1 )->widget()->setVisible( show );
@@ -4523,5 +4570,10 @@ DbgLv(1) << "od_radius_limit  value" << value;
    odlimit     = value;
 
    plot_mwl();
+}
+
+// Write edit to all wavelengths of the current cell/channel
+void US_Edit::write_mwl()
+{
 }
 
