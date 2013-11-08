@@ -25,7 +25,8 @@ US_2dsaProcess::US_2dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    varitol          = 1e-12;          // variance difference tolerance
    r_iter           = 0;              // refinement iteration index
    mm_iter          = 0;              // meniscus/MC iteration index
-   mintsols         = 100;            // minimum solutes per task, depth 1 ff.
+   //mintsols         = 100;            // minimum solutes per task, depth 1 ff.
+   mintsols         = 40;             // minimum solutes per task, depth 1 ff.
    maxiters         = 1;              // maximum refinement iterations
    mmtype           = 0;              // meniscus/montecarlo type (NONE)
    mmiters          = 0;              // meniscus/montecarlo iterations
@@ -39,7 +40,8 @@ US_2dsaProcess::US_2dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    npoints          = bdata->pointCount();
 
    if ( ( nscans * npoints ) > 50000 )
-      mintsols         = 80;
+      //mintsols         = 80;
+      mintsols         = 20;
 }
 
 // Get maximum used memory
@@ -269,7 +271,7 @@ DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
       WorkPacket wtask = job_queue.takeFirst();
       submit_job( wtask, ii );
 
-      memory_check();
+//      memory_check();
    }
 
    max_rss();
@@ -289,8 +291,7 @@ void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
                                 int    jgref )
 {
    maxiters   = mxiter;
-   mmtype     = ( mniter > 1 ) ? 1 : 0;
-   mmtype     = ( mciter > 1 ) ? 2 : mmtype;
+   mmtype     = ( mciter > 1 ) ? 2 : ( ( mniter > 1 ) ? 1 : 0 );
    mmiters    = ( mmtype == 0 ) ? 0 : max( mciter, mniter );
    varitol    = vtoler;
    menrange   = menrng;
@@ -315,7 +316,7 @@ void US_2dsaProcess::stop_fit()
 {
    abort   = true;
 
-   for ( int ii = 0; ii < nthreads; ii++ )
+   for ( int ii = 0; ii < wthreads.size(); ii++ )
    {
 DbgLv(1) << "StopFit test Thread" << ii + 1;
       WorkerThread* wthr = wthreads[ ii ];
@@ -328,9 +329,10 @@ DbgLv(1) << "StopFit test Thread" << ii + 1;
          {
             wthr->flag_abort();
 DbgLv(1) << "  STOPTHR:  thread aborted";
+            US_Sleep::msleep( 500 );
          }
 
-         else if ( ! wthr->isFinished() )
+//         else if ( ! wthr->isFinished() )
          {
             delete wthr;
 DbgLv(1) << "  STOPTHR:  thread deleted";
@@ -349,6 +351,20 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
 
    emit message_update( pmessage_head() +
       tr( "All computations have been aborted." ), false );
+}
+
+// Clear the processor data vector and list memory
+void US_2dsaProcess::clear_data()
+{
+   sigmas   .clear();
+   itvaris  .clear();
+   c_solutes.clear();
+   orig_sols.clear();
+   ical_sols.clear();
+   wdata .scanData.clear();
+   sdata .scanData.clear();
+   sdata1.scanData.clear();
+   rdata .scanData.clear();
 }
 
 // Slot for thread step progress:  signal control progress bar
@@ -797,6 +813,7 @@ void US_2dsaProcess::submit_job( WorkPacket& wtask, int thrx )
    wthreads[ thrx ]   = wthr;
    wkstates[ thrx ]   = WORKING;
    wkdepths[ thrx ]   = wtask.depth;
+   wtask.sim_vals.maxrss = maxrss;
 
    wthr->define_work( wtask );
 
@@ -822,6 +839,7 @@ void US_2dsaProcess::process_job( WorkerThread* wthrd )
    int thrx   = thrn - 1;          // index into thread list
    int taskx  = wresult.taskx;     // task index of task
    int depth  = wresult.depth;     // depth of result
+   maxrss     = qMax( maxrss, wresult.sim_vals.maxrss );
 DbgLv(1) << "PROCESS_JOB thrn" << thrn << "taskx" << taskx
  << "depth" << wresult.depth;
    int nrcso  = wresult.csolutes.size();
@@ -1452,6 +1470,7 @@ bool US_2dsaProcess::memory_check()
    int mempav = US_Memory::memory_profile( &memava, &memtot, &memuse );
 DbgLv(1) << "MCk:MEM: AvailPercent" << mempav;
 
+#if 0
    if ( mempav < 10 )
    {
 DbgLv(0) << "MCk:MEM: *** AvailPercent < 10 ***";
@@ -1470,6 +1489,7 @@ DbgLv(0) << "MCk:MEM: *** AvailPercent < 10 ***";
       abort     = true;
       stopfit   = true;
    }
+#endif
 
    return stopfit;
 }

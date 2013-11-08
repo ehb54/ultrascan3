@@ -39,6 +39,7 @@ class US_2dsa : public US_AnalysisBase2
       US_Noise*                   mw_ti_noise();
       US_Noise*                   mw_ri_noise();
       QPointer< QTextEdit >       mw_status_text();
+      int*                        mw_base_rss();
 
    private:
       QGridLayout*         progressLayout;
@@ -83,6 +84,7 @@ class US_2dsa : public US_AnalysisBase2
       double               rmsd;
 
       int                  dbg_level;
+      int                  baserss;
 
    private slots:
       void open_resplot( void );

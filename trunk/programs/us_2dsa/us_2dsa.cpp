@@ -47,6 +47,7 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
 
    // Build local and 2dsa-specific GUI elements
    te_results = NULL;
+   baserss    = 0;
 
    QLabel* lb_analysis = us_banner( tr( "Analysis Controls" ) );
    QLabel* lb_scan     = us_banner( tr( "Scan Control"       ) );
@@ -59,9 +60,6 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    pb_exclude   = us_pushbutton( tr( "Exclude Scan Range" ) );
    pb_exclude->setEnabled( false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude() ) );
-
-   //ct_from      = us_counter( 2, 0, 0 );
-   //ct_to        = us_counter( 2, 0, 0 );
 
    connect( ct_from, SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_from( double ) ) );
@@ -79,13 +77,14 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    
    QWidget* widg;
    for ( int ii = 0; ii < controlsLayout->count(); ii++ )
+   {
       if ( ( widg = controlsLayout->itemAt( ii )->widget() ) != 0 )
-         widg->setVisible( false );
-   ct_from->setVisible(true);
-   ct_to->setVisible(true);
-   pb_exclude->setVisible(true);
+         widg      ->setVisible( false );
+   }
+   ct_from         ->setVisible(true);
+   ct_to           ->setVisible(true);
+   pb_exclude      ->setVisible(true);
    pb_reset_exclude->setVisible(true);
-   //ct_to->setVisible(true);
 
    // Add variance and rmsd to parameters layout
    QLabel* lb_vari     = us_label ( tr( "Variance:" ) );
@@ -159,7 +158,7 @@ void US_2dsa::analysis_done( int updflag )
       pb_save   ->setEnabled( false );
       pb_plt3d  ->setEnabled( false );
       pb_pltres ->setEnabled( false );
-      models.clear();
+      models  .clear();
       tinoises.clear();
       rinoises.clear();
 
@@ -183,7 +182,8 @@ void US_2dsa::analysis_done( int updflag )
       double  rmsd  = sqrt( vari );
       le_vari->setText( QString::number( vari ) );
       le_rmsd->setText( QString::number( rmsd ) );
-DbgLv(1) << "Analysis Done VARI" << vari;
+DbgLv(1) << "Analysis Done VARI" << vari << "model,noise counts"
+ << models.count() << tinoises.count();
 
       qApp->processEvents();
       return;
@@ -230,6 +230,7 @@ void US_2dsa::load( void )
 
    loadDB     = disk_controls->db();
    edata      = &dataList[ 0 ];    // point to first loaded data
+   baserss    = 0;
 
    // Move any loaded noise vectors to the "in" versions
    ri_noise_in.values = ri_noise.values;
@@ -750,6 +751,7 @@ US_Model*                   US_2dsa::mw_model()        { return &model;    }
 US_Noise*                   US_2dsa::mw_ti_noise()     { return &ti_noise; }
 US_Noise*                   US_2dsa::mw_ri_noise()     { return &ri_noise; }
 QPointer< QTextEdit    >    US_2dsa::mw_status_text()  { return te_status;  }
+int*                        US_2dsa::mw_base_rss()     { return &baserss;  }
 
 // Open residuals plot window
 void US_2dsa::open_resplot()
