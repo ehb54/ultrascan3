@@ -78,13 +78,22 @@ class US_2dsaProcess : public QObject
       bool get_results( US_DataIO::RawData*, US_DataIO::RawData*,
                         US_Model*, US_Noise*, US_Noise* );
 
+      //! \brief Stop the current fit processing
       void stop_fit(       void );
+
+      //! \brief Clear all data memory for the processor
+      void clear_data(     void );
+
+      //! \brief Estimate progress steps after depth 0
+      //! \param ncsol Number of last calculated solutes
+      //! \returns     Number of estimated remaining steps
       int  estimate_steps( int  );
 
       //! \brief Get message for last error
       //! \returns       Message about last error
       QString lastError( void ) { return errMsg; }
 
+      // Number of doubles in a solute object
       static const int solute_doubles = sizeof( US_Solute ) / sizeof( double );
 
 private:

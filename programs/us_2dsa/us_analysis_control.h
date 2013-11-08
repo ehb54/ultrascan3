@@ -38,6 +38,8 @@ class US_AnalysisControl : public US_WidgetsDialog
       int           ncsteps;
       int           nctotal;
       int           grtype;
+      int           baserss;
+      int           memneed;
 
       QHBoxLayout*  mainLayout;
       QGridLayout*  controlsLayout;
@@ -51,6 +53,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       US_Noise*                        ti_noise;
       US_SimulationParameters*         sparms;
       QPointer< QTextEdit    >         mw_stattext;
+      int*                             mw_baserss;
 
       QWidget*                         parentw;
       US_2dsaProcess*                  processor;
@@ -137,6 +140,7 @@ class US_AnalysisControl : public US_WidgetsDialog
       void close_all(        void );
       void advanced(         void );
       void load_model(       void );
+      int  memory_check(     void );
 
       void help     ( void )
       { showHelp.show_help( "2dsa_analys.html" ); };

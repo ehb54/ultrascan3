@@ -20,6 +20,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    processor      = 0;
    dbg_level      = US_Settings::us_debug();
    grtype         = US_2dsaProcess::UGRID;
+   baserss        = 0;
 
    setObjectName( "US_AnalysisControl" );
    setAttribute( Qt::WA_DeleteOnClose, true );
@@ -458,9 +459,17 @@ void US_AnalysisControl::start()
       ti_noise       = mainw->mw_ti_noise();
       ri_noise       = mainw->mw_ri_noise();
       mw_stattext    = mainw->mw_status_text();
+      mw_baserss     = mainw->mw_base_rss();
+      baserss        = *mw_baserss;
+
+      if ( baserss == 0 )
+      {
+         baserss        = qRound( (double)US_Memory::rss_now() / 1024. );
+         *mw_baserss    = baserss;
+      }
 
       mainw->analysis_done( -1 );   // reset counters to zero
-DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
+DbgLv(1) << "AnaC: edata scans, baserss" << edata->scanData.size() << baserss;
    }
 
    // Make sure that ranges are reasonable
@@ -500,12 +509,18 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
       }
    }
 
+DbgLv(1) << "AnaC:St:MEM (1)rssnow,proc" << US_Memory::rss_now() << processor;
    // Start a processing object if need be
    if ( processor == 0 )
       processor   = new US_2dsaProcess( dsets, this );
 
    else
+   {
       processor->disconnect();
+      processor->stop_fit();
+      processor->clear_data();
+   }
+DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
 
    // Set up for the start of fit processing
    le_iteration->setText( "0" );
@@ -550,6 +565,10 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    double menrng = ct_menisrng->value();
    double cff0   = ck_varvbar->isChecked() ? ct_constff0->value() : 0.0;
 
+   // Check memory and possibly abort fit if too much needed
+   if ( memory_check() != 0 )
+      return;
+
    // Begin the fit
    processor->set_iters( mxiter, mciter, mniter, vtoler, menrng, cff0, ngrr );
 
@@ -569,7 +588,7 @@ DbgLv(1) << "AC:SF:StopFit";
    if ( processor != 0 )
    {
 DbgLv(1) << "AC:SF: processor stopping...";
-//      processor->disconnect();
+      processor->disconnect();
       processor->stop_fit();
 DbgLv(1) << "AC:SF: processor stopped";
       delete processor;
@@ -681,46 +700,42 @@ void US_AnalysisControl::grid_change()
    int    nstepk = (int)ct_nstepsk ->value();         // # steps k
    int    ngrrep = (int)ct_grrefine->value();         // # repetitions
    int    nthrd  = (int)ct_thrdcnt ->value();         // # threads
-   int    ngstep = nsteps * nstepk;                   // # grid steps
-   int    nsstep = ( nsteps / ngrrep + 1 )
-                 * ( nstepk / ngrrep + 1 );           // # subgrid steps
    int    nscan  = edata->scanCount();                // # scans
    int    nconc  = edata->pointCount();               // # concentrations
    int    ntconc = nconc * nscan;                     // # total readings
-   int    szread = sizeof( QVector<double> ) * ntconc;
-   int    szscan = sizeof( US_DataIO::Scan ) * nscan;
-   int    szedat = sizeof( US_DataIO::EditedData );
-   int    szsol  = sizeof( US_Solute );               // size Solute
-   int    szval  = sizeof( double );                  // size vector value
-   long   szgso  = ngstep * szsol;                    // size grid solutes
-   long   szsso  = nsstep * szsol * nthrd;            // size subg solutes
-   long   szdat  = szread + szscan + szedat;          // size data
-   long   szmat  = szval * ( ntconc + 2 );            // size matrix
-   if ( ck_tinoise->isChecked() || ck_rinoise->isChecked() )
-      szmat        *= 2L;
-DbgLv(1) << "GC: ngst nsst ngrr nthr" << ngstep << nsstep << ngrrep << nthrd;
-DbgLv(1) << "GC:  szsol szval szgso szsso szmat szdat"
- << szsol << szval << szgso << szsso << szmat << szdat;
-   nsstep        = ( ntconc < 50000 ) ?
-                   qMax( nsstep, 100 ) :
-                   qMax( nsstep,  80 );
-   double stepf  = (double)( nsstep * nthrd );
-   double mbase  = (double)US_Memory::rss_now() / 1024.0;
+   int    ngstep = nsteps * nstepk;                   // # grid steps
    double megas  = sq( 1024.0 );
-   double mgrid  = (double)szgso * 1.0 / megas;
-   double msubg  = (double)szsso * 1.0 / megas;
-   double mmatr  = (double)szmat * 1.1 * stepf / megas;
-   double mdata  = (double)szdat * 1.6 * stepf / megas;
-   int    megs   = qRound( mbase + mgrid + msubg + mmatr + mdata );
-DbgLv(1) << "GC:  mbase mgrid msubg mmatr mdata"
- << mbase << mgrid << msubg << mmatr << mdata << " megs" << megs;
+
+   if ( parentw )
+   {  // Get the starting base rss memory of this dataset and parameters
+      US_2dsa* mainw = (US_2dsa*)parentw;
+      mw_baserss     = mainw->mw_base_rss();
+      baserss        = *mw_baserss;
+
+      if ( baserss == 0 )
+      {
+         baserss        = qRound( (double)US_Memory::rss_now() / 1024. );
+         *mw_baserss    = baserss;
+      }
+   }
+   const double x_fact  = 17.20;
+   const double y_fact  = 2.28;
+   const int    nxdata  = 4;
+   int    nsstep = ( nsteps / ngrrep ) * ( nstepk / ngrrep );
+   int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
+                   ( ck_rinoise->isChecked() ? 2 : 0 );
+   int    ndatas = nsstep + nxdata + noif;
+   double mdata  = ( (double)ntconc * ndatas * sizeof( double ) ) / megas;
+   double tdata  = x_fact + mdata * y_fact;
+   memneed       = baserss + qRound( tdata * (double)nthrd );
+DbgLv(1) << "GC:  baserss tdata mdata ndatas nthrd" << baserss
+ << qRound(tdata) << qRound(mdata) << ndatas << nthrd << "memneed" << memneed;
 
    int memava, memtot;
    US_Memory::memory_profile( &memava, &memtot );
 
    le_estmemory->setText( tr( "%1 MB  (of %2 MB total real)" )
-         .arg( megs ).arg( memtot ) );
-//   le_estmemory->setText( QString::number( megs ) + " MB" );
+         .arg( memneed ).arg( memtot ) );
 
    // Output a message documenting the grid and subgrid dimensions
    int nss       = nsteps / ngrrep;
@@ -733,18 +748,6 @@ DbgLv(1) << "GC:  mbase mgrid msubg mmatr mdata"
                "  with a maximum of %3 points each (%4 x %5)." )
       .arg( nsubg ).arg( ngrrep ).arg( nspts ).arg( nss ).arg( nsk );
    te_status  ->setText( gmsg );
-
-   if ( megs > ( ( memava * 9 ) / 10 ) )
-   {  // Warn about high memory requirements
-       QMessageBox::warning( this, tr( "High Memory Usage" ),
-          tr( "The estimated memory requirement (%1 MB)\n"
-              "approaches or exceeds the available memory (%2 MB).\n"
-              "Total real memory is %3 MB.\n\n"
-              "You may proceed, but you may want to re-parameterize\n"
-              "the fit with adjusted Grid Refinements\n"
-              "and/or Thread Count values." )
-          .arg( megs ).arg( memava ).arg( memtot ) );
-   }
 }
 
 // Adjust s-limit ranges when s-limit value changes
@@ -1026,5 +1029,57 @@ DbgLv(1) << "Adv REJECT";
    qApp->processEvents();
 
    delete aadiag;
+}
+
+// Output warning if need be about memory needs, return continue flag
+int US_AnalysisControl::memory_check( )
+{
+   const int pc_ava = 90;
+   int status   = 0;
+   int memava, memtot, memuse;
+   int mempca   = US_Memory::memory_profile( &memava, &memtot, &memuse );
+   int memsafe  = ( memava * pc_ava ) / 100;
+
+   if ( memneed > memsafe  ||  mempca < 20 )
+   {
+      QString title   = tr( "High Memory Usage" );
+      QString memp    = tr( "\n\nMemory Profile --\n"
+                            "  Total:  %1 MB\n"
+                            "  Available:  %2 MB\n"
+                            "  Used:  %3 MB\n"
+                            "  Estimated Need:  %4 MB\n\n" )
+         .arg( memtot ).arg( memava ).arg( memuse ).arg( memneed );
+
+      if ( memneed > memtot )
+      {
+         QMessageBox::critical( this, title,
+             tr( "Memory needed for this fit exceeds total available." )
+             + memp + tr( "This fit will not proceed.\n"
+                          "Re-parameterize the fit with adjusted\n"
+                          "Grid Refinements and/or Thread Count." ) );
+         status          = 1;
+      }
+
+      else
+      {
+         QMessageBox msgBox( this );
+         msgBox.setWindowTitle( title );
+         msgBox.setText( tr( "Memory needed for this fit is a\n"
+                             "high percentage of the available memory." )
+                        + memp +
+                         tr( "You may proceed if you wish (\"Yes\")\n"
+                             "Or you may stop this fit (\"No\")\n"
+                             "then re-parameterize the fit with adjusted\n"
+                             "Grid Refinements and/or Thread Count.\n\nProceed?" ) );
+         msgBox.addButton( QMessageBox::No );
+         msgBox.addButton( QMessageBox::Yes );
+         msgBox.setDefaultButton( QMessageBox::No );
+
+         if ( msgBox.exec() == QMessageBox::No )
+            status          = 2;
+      }
+   }
+
+   return status;
 }
 

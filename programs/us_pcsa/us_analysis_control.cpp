@@ -430,12 +430,13 @@ DbgLv(1) << "AC:SF:StopFit";
    {
 DbgLv(1) << "AC:SF: processor stopping...";
       processor->stop_fit();
+      processor->clear_memory();
 DbgLv(1) << "AC:SF: processor stopped";
    }
 
-   //delete processor;
-   processor = 0;
-DbgLv(1) << "AC:SF: processor deleted";
+//   delete processor;
+//   processor = 0;
+//DbgLv(1) << "AC:SF: processor deleted";
 
    qApp->processEvents();
    b_progress->reset();
@@ -619,6 +620,9 @@ void US_AnalysisControl::close_all()
 DbgLv(1) << "AC:close: mlnplotd" << mlnplotd;
    if ( (QObject*)mlnplotd != (QObject*)0 )
       mlnplotd->close();
+
+   if ( processor != 0 )
+      delete processor;
 
    accept();
 }

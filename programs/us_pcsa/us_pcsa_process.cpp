@@ -237,7 +237,7 @@ void US_pcsaProcess::stop_fit()
 {
    abort   = true;
 
-   for ( int ii = 0; ii < nthreads; ii++ )
+   for ( int ii = 0; ii < wthreads.size(); ii++ )
    {
 DbgLv(1) << "StopFit test Thread" << ii + 1;
       WorkerThread* wthr = wthreads[ ii ];
