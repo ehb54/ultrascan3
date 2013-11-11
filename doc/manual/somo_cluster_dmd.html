@@ -41,9 +41,9 @@ The actually operative PDB file is shown in the <b>PDB file</b> field.<p>
 
 <b>Relax PDB output count</b>: is the number of PDBs produced  (Relax time / PDB timestep = PDB count) (default: 2). <p>
 
-<b>Run temp kcal/mol/kB</b>: This is the Anderson thermostat temperature for the run phase of the simulation (default: <b>0.5</b> kcal/mol/kB).<p>
+<b>Run temp kcal/mol/kB</b>: This is the Anderson thermostat temperature for the run phase of the simulation (default: <b>0.5</b> kcal/mol/kB). Note: multiply by 503 K/(kcal/mol/kB) to get K.  To avoid denaturing structured protein regions, run at a cool temperature.  Due to the nature of the implicit solvent, it will not freeze.<p>
 
-<b>Run time * 50fs</b>: is the duration of the run phase in 50 fs units (default: <b>1000000</b> 50 fs). <p>
+<b>Run time * 50fs</b>: is the duration of the run phase in 50 fs units (default: <b>10,000</b> 50 fs). Please do not use longer run times until you have had a successful run.<p>
 
 <b>Run PDB output timestep</b>: is the time interval for the run simulation to output a PDB (default: <b>1000</b> 50 fs).  <p>
 
@@ -51,8 +51,7 @@ The actually operative PDB file is shown in the <b>PDB file</b> field.<p>
 
 The primary difference between the relax and equilibrium phases is the frequency of the heat exchange between the imaginary solvent and the system atoms. The relax phase exchanges heat 100 times more frequently in order to stabilize any energetic stress present in the initial structure. The equilibrium run exchanges heat at a physically realistic rate. <p>
 
-The <b>Static range parameter</b> (to be implemented) will provide a range of structure parts that will remain fixed during the simulation.
-
+The <b>Static range parameter</b> provides a range of structure parts that will remain fixed during the simulation.  This can be entered in a format chain:startresidue#-endresidue#.  e.g. A:1-10 will keep residues 1 thru 10 of chain A static. Multiple static ranges can be separated with a comma.  N.B.: multiple static ranges will also be static in space with respect to each other.
 <p>
 <hr>
 <font face="helvetica" size="-1">
