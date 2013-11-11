@@ -23,7 +23,7 @@
 <h2>
 SOMO - Residue Definition Module:</h2>
 <p>
-<h3><center>Last updated: April 2012 </center></h3><p>
+<h3><center>Last updated: October 2013 </center></h3><p>
 
 <img SRC="somo-residue.png" ALT="SOMO Screen">
 </center>
@@ -94,7 +94,7 @@ Kiriukhin and Collins (Biophys. Chem. 99:155-168, 2002).
 <br>In contrast, the <i><b>Residue partial spec. vol. (cm^3/g)</b></i> field pertains to
 the solution partial specific volume (<i>vbar</i>) of the residue (in water @ 20°C),
 and is used to compute the global <i>vbar</i> of the model, necessary to determine
-the sedimentation coefficient from the translational frictional coefficient. 
+the sedimentation coefficient from the translational frictional coefficient (and to compute the molecular weight from SAXS data). 
 Tabulated values are available for amino acids and some carbohydrates (see Perkins,
 Eur. J. Biochem. 157:169-180, 1986), or can be computed using the Cohn and Edsall method
 (Cohn and Edsall, Proteins, amino acids and peptides as ions and dipolar ions, Reinhold
@@ -155,8 +155,7 @@ is deselected in the <a href="somo_misc.html"><i><b>Miscellaneous Options</b></i
 editor, then all the atom positioning rules defined in the <i>somo.residue</i> file
 will apply.
 <br>The <i><b>Hydration Number for Atom</b></i> field is used to assign an integer
-number of water molecules to the current atom. This field was recently introduced
-to allow for the direct hydration of a structure for SAXS computations. Currently,
+number of water molecules to the current atom. Currently,
 we have assigned directly to atoms only the amino acids hydration values, derived
 from the theoretical hydration numbers for entire residues of Kuntz and Kauzmann
 (Adv. Protein Chem. 28:239-345, 1974). The global hydration number for each bead in
@@ -187,9 +186,9 @@ field in Panel 1, the <i><b>Select Residue Bead to be defined</b></i> pull-down 
 will allow to select a bead from the list. All subsequent operations will affect
 the selected bead only.
 <br>First a color is assigned to the bead using the <i><b>Select Bead Color</b></i>
-pull-down menu. Be aware that two colors are presently reserved to "label"
+pull-down menu. <span style="color:#CC0000">Be aware that two colors are presently reserved to "label"
 the beads so that they can be automatically excluded from the hydrodynamic
-computations, colors "0" (black) and "6" (brown), so they should NOT be used.
+computations, colors "0" (black) and "6" (brown), so they should NOT be used<span style="color:#000000">.
 To avoid they inadvertent selection, a Warning pop-up will appear if color "0" or
 "6" are chosen, with this message: "Black and brown are reserved colors, please
 chose a different color". In addition, we color-code "7" (white) exposed beads
@@ -321,7 +320,7 @@ latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on April 12, 2012.
+Last modified on October 10, 2013.
 </font>
 
 </body>

@@ -24,7 +24,7 @@
 SOMO - Solution Modeler (Bead and SAXS/SANS Modeler for NMR and X-ray structures):</h2>
 </center>
 <p>
-<h3><center>Last updated: April 2012 </center></h3><p>
+<h3><center>Last updated: October 2013 </center></h3><p>
 
 The SOMO (SOlution MOdeller) module of UltraScan initially contained only
 a bead modelling utility that was originally developed by the Rocco and
@@ -52,17 +52,17 @@ the computations. Furthermore, by identifying and excluding from the
 hydrodynamic computations beads that are buried and thus not in contact
 with the solvent, a large span in the size of the structures that can
 be analysed with this method without loss of precision is obtained:
-currently, structures from 5K to 250K have been successfully studied. Recently,
+currently, structures from 5K to 250K have been successfully studied. Subsequently,
 we have also improved the original AtoB grid method (Byron, Biophys. J. 72:408-415, 1997),
 which was already included within US-SOMO, by adding the theoretical hydration,
 accessible surface area screening, and a better preservation of the original surface.
 The improved AtoB could be very useful to study large structures and complexes.<br>
-Within this new US-SOMO release you will find several additions to what wll be a fully functional
-Small-Angle X-ray or Neutron Scattering (SAXS/SANS) simulator, which will work on either the original atomic
-structure, or on a bead model, and will also process experimental data. Presently, the pairwise-distance
-distribution function <i>P(r)</i> vs. <i>r</i> computation is fully operational, and several methods are offered for the computation of SAXS <i>I(q)</i> vs. <i>q</i> curves. Some of these methods require explicit hydration of the PDB structures. We are currently (March 2012) refining our own hydration method, which is, however, not yet ready for full release. In other areas, the batch operations
-module has been expanded to include supercomputing access, with an interface to Discrete Molecular Dynamics (DMD) programs (Dokholyan, NV, Buldyrev, SV, Stanley, HE, and EI Shaknovich. Discrete molecular dynamics studies of the folding of a protein-like model. (1998) Folding & Design 3:577-587; Ding F, Dokholyan NV. Emergence of protein fold families through rational design. Public Library of Science Comput Biol. (2006) 2(7):e85).<br>
-Other additions include a model classifier in which calculated parameters can be compared and ranked against experimental data, a PDB editor, and an alternative, but more computationally intensive method of calculating the hydrodynamics based on approximate analogy that exists between certain hydrodynamic and electrostatic properties, <b>Zeno</b> (see Douglas, Some Applications of Fractional Calculus to Polymer Science, Adv. Chem. Phys. 102:121?191, 1997; Douglas et al., Hydrodynamic friction and the capacitance of arbitrarily shaped objects, Phys. Rev. E 49:5319-5331, 1994; Mansfield et al., Intrinsic Viscosity and the Electric Polarizability of Arbitrarily Shaped Objects, Phys. Rev. E, 64:61401-61416, 2001).  <a href="http://www.stevens.edu/zeno/">http://www.stevens.edu/zeno/</a>).
+Within this new US-SOMO release you will find several additions to what is already a fully functional
+Small-Angle X-ray or Neutron Scattering (SAXS/SANS) simulator module, which works on either the original atomic
+structure, or on a bead model, and has enhanced experimental data processing capabilities. In the modeling area, several methods are offered for the computation of SAXS and SANS <i>I(q)</i> vs. <i>q</i> curves. Some of these methods require explicit hydration of the PDB structure(s), which should be presently externally provided. The pairwise-distance distribution function <i>P(r)</i> vs. <i>r</i> computation is fully operational for both SAXS and SANS, and includes a graphical mapping utility to visualize which residues in a structure are contributing to specified distance ranges. In the experimental data processing area, a novel <span style="color:#CC0000">HPLC-SAXS data processing utility<span style="color:#000000"> has been implemented, which starts with the transformation of a time series of <i>I(q)</i> vs. <i>q</i> frames into a series of time chromatograms <i>I(t)</i> vs. <i>t</i> for each <i>q</i> value. A check of the baselines, potentially revealing capillary fouling due to the accumulation of material on its walls, can then be performed, and corrections applied. In case of overlapping or not baseline-resolved peaks, Single Value Decomposition (SVD) can be applied on the original or baseline-corrected data, the latter after back-generation of the <i>I(q)</i> vs. <i>q</i> frames, to identify how many components are present in the data. Global Gaussian analysis/decomposition can then be performed on the <i>I(t)</i> vs. <i>t</i> for each <i>q</i> value dataset, followed by back-generation of the  <i>I(q)</i> vs. <i>q</i> frames for each Gaussian peak.<br> 
+The <span style="color:#CC0000">Guinier analysis<span style="color:#000000"> of experimental <i>I(q)</i> vs. <i>q</i> curves has undergone a major upgrading, and now offers the determination of the overall <i>z</i>-average square radius of gyration <i>&lt;R<sub>g</sub><sup>2</sup>&gt;<sub>z</sub></i> and of the <i>w</i>-average molecular weight <i>&lt;M&gt;<sub>w</sub></i> from global Guinier, of the  <i>z</i>-average square cross-section radius of gyration <i>&lt;R<sub>c</sub><sup>2</sup>&gt;<sub>z</sub></i> and of the <i>w/z</i>-average mass per unit length <i>&lt;M/L&gt;<sub>w</sub></i> for rod-like macromolecules, and of the <i>z</i>-average square transverse radius of gyration <i>&lt;R<sub>t</sub><sup>2</sup>&gt;<sub>z</sub></i> and of the <i>w/z</i>-average mass per unit area <i>&lt;M/A&gt;<sub>w</sub></i> for disk-like marcomolecules. <br>
+The batch operations module includes supercomputing access, with an interface to Discrete Molecular Dynamics (DMD) programs (Dokholyan, NV, Buldyrev, SV, Stanley, HE, and EI Shaknovich. Discrete molecular dynamics studies of the folding of a protein-like model. (1998) Folding & Design 3:577-587; Ding F, Dokholyan NV. Emergence of protein fold families through rational design. Public Library of Science Comput Biol. (2006) 2(7):e85).<br>
+Other features include a model classifier in which calculated parameters can be compared and ranked against experimental data, a PDB editor, and an alternative, but more computationally intensive method of calculating the hydrodynamics based on approximate analogy that exists between certain hydrodynamic and electrostatic properties, <b>Zeno</b> (see Douglas, Some Applications of Fractional Calculus to Polymer Science, Adv. Chem. Phys. 102:121?191, 1997; Douglas et al., Hydrodynamic friction and the capacitance of arbitrarily shaped objects, Phys. Rev. E 49:5319-5331, 1994; Mansfield et al., Intrinsic Viscosity and the Electric Polarizability of Arbitrarily Shaped Objects, Phys. Rev. E, 64:61401-61416, 2001).  <a href="http://www.stevens.edu/zeno/">http://www.stevens.edu/zeno/</a>).
 <p>
 <p>
 <p>
@@ -100,7 +100,7 @@ residues should be properly coded in the SOMO tables (see below).
 <table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
 <tr>
 <center>
-<td><center><img SRC="somo-main.png" ALT="SOMO Screen"></td>
+<td><center><img SRC="somo-main1.png" ALT="SOMO Screen"></td>
 </tr> 
 </center>
 <td align=justify>
@@ -121,7 +121,7 @@ Functions:</b>), and the computation of the hydrodynamic parameters (<b>Hydrodyn
 <table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
 <tr>
 <center>
-<td><center><img SRC="somo-PDB_functions.png" ALT="SOMO Screen"></td>
+<td><center><img SRC="somo-PDB_functions1.png" ALT="SOMO Screen"></td>
 </tr> 
 </center>
 <td align=justify>
@@ -140,8 +140,8 @@ Selecting a PBD file will also automatically call the molecular visualization pr
 (Sayle RA, Milner-White EJ. RasMol: biomolecular graphics for all. Trends Biochem. Sci. 20:374-376, 1995)
 which will display the structure(s) in a pop-up window. For <i>Linux</i>-based systems, <i>RasMol</i> needs to be installed in
 <pre><b>$ULTRASCAN/bin</b></pre> for 32 bit machines, and <pre><b>$ULTRASCAN/bin64</b></pre>
-for 64 bit platforms. You can get a copy of <i>RasMol</i> from <a href="http://www.umass.edu/microbio/rasmol/">
-http://www.umass.edu/microbio/rasmol/</a> or from <a href="http://openrasmol.org/#Software">
+for 64 bit platforms. You can get a copy of <i>RasMol</i> from  <a href="http://www.bernstein-plus-sons.com/software/rasmol/">
+http://www.bernstein-plus-sons.com/software/rasmol/</a> (recommended, there it's under active development), or from <a href="http://www.umass.edu/microbio/rasmol/"> http://www.umass.edu/microbio/rasmol/</a>, or from <a href="http://openrasmol.org/#Software">
 http://openrasmol.org/#Software</a>.<p> Besides visualizing the structure, the HEADER and TITLE fields of the PDB file
 will be displayed in the progress window, followed by the residues list in both three- and one-letter codes, and by the 
 partial specific volume (vbar), molecular weight, molecular volume computed both from vbar and from the individual atomic
@@ -149,14 +149,14 @@ volumes, and the average electron density of each chain and of the whole structu
 If problems are encountered with the selected PDB file, like the presence of non-coded residues or missing atoms within coded residues, they will be reported in the progress window either as <i>warnings</i> or <i>errors</i>. In the latter case, 
 the program execution will be also halted, waiting for corrective action to be taken. The original
 PDB file can be viewed and, if necessary, edited by clicking on the "<i><b>View/Edit PDB File</b></i>
-button. In addition, we are currently developing an advanced <i><b>PDB editor</b></i> (see 
+button. In addition, we have developed and made available an advanced <i><b>PDB editor</b></i> (see 
  <a href="somo_pdb_editor.html">here</a>).<br>
 The PDB file can contain multiple models and if so, multiple models will be displayed by
 <i>RasMol</i> and in the list box. In this case, you can select just a single model,
 or multiple models by holding the crtl key while clicking on the models' names (crtl-A selects
 all models). If multiple models are selected, all subsequent operations (except the SAXS/SANS options)
 are carried out sequentially on the selected models. Pressing the <i><b>SAXS/SANS Functions</b></i> button will take you
-to the SAXS/SANS module, where you can perform simulations on the selected PDB structure, or deal with experimental and/or previously generated data. Presently (November 2011), the SAXS/SANS module is in an advanced state but still under development. (see <a href="somo_saxs.html">here</a>). The <i><b>Hydrate</b></i> button will instead launch a new routine, presently under development, that will add explicit hydration water molecules to the selected structure, allowing a more reliable generation of SAXS/SANS simulated curves. This new functionality will be fully described <a href="somo_hydrate.html">here</a>. Pressing the <i><b>RUN DMD</b></i> button will first open the <a href="somo_cluster_dmd.html">set-up panel</a> for running a Discrete Molecular Dynamics (DMD) simulation on the selected structure. Once the parameters have been set, the DMD run can be launched through the <a href="somo_cluster.html"><b><i>Cluster</i></b> utility</a> of the <a href="somo_batch.html"><b><i>Batch Mode Operation</b></i> </a> module. The <b><i>BD</i></b> button, not yet available in this release (April 2012), will allow running a Brownian dynamics simulation.<p>
+to the SAXS/SANS module, where you can perform simulations on the selected PDB structure, or deal with experimental and/or previously generated data (see <a href="somo_saxs.html">here</a>). The SAXS/SANS module is in an advanced state but still under development (October 2013). Pressing the <i><b>RUN DMD</b></i> button will first open the <a href="somo_cluster_dmd.html">set-up panel</a> for running a Discrete Molecular Dynamics (DMD) simulation on the selected structure. Once the parameters have been set, the DMD run can be launched through the <a href="somo_cluster.html"><b><i>Cluster</i></b></a> utility of the <a href="somo_batch.html"><b><i>Batch Mode Operation</b></i> </a> module. The <b><i>BD</i></b> button, not yet available in this release (December 2013), will allow running a Brownian dynamics simulation.<p>
 </table>
 <p>
 <table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -202,7 +202,7 @@ checkbox will allow the direct computation of the hydrodynamic parameters as soo
 generation has been completed. If this checkbox is not selected (<b>default</b> option), at the
 end of the model building phase the progress bar will be at 100% and the bead model(s) can be
 visualized with <i>RasMol</i> by clicking on <i><b>Visualize Bead Model</b></i> (recommended,
-comparing the original structure with the bead model could reveal previously unforeseen problems).
+comparing the original structure with the bead model could reveal previously unforeseen problems. <span style="color:#CC0000">Warning: if multiple models from an NMR-style file have been generated, pressing <i><b>Visualize Bead Model</b></i> will open multiple RsMol windows, one for each model!<span style="color:#000000">).
 The results of the accessible surface area (ASA) computations (see below) can also be visualized
 in a pop-up window by clicking on the <i><b>View ASA Results</b></i> button; this file also includes the
 computation of the radius of gyration (R<sub>g</sub>) directly from the atomic coordinates of the structure.
@@ -216,7 +216,7 @@ was (were) generated/saved in the SOMO format, the various settings/parameters u
 the right-side main window. Note that you can <i>decrease</i> the number of beads used, and thus the
 resolution of the model, by applying a grid procedure on a previously-generated bead model with the
 <i><b>Grid Existing Bead Model</b></i> option (see above). This could be useful when large structures are analyzed,
-although using the improved AtoB routine on the original PDB file while increasing the grid size (<i><b>Build AtoB (Grid) Bead Model</b></i>) seems to produce much better results. By selecting different file types extensions, other type of bead models can also be loaded, like the old <i>BEAMS</i>-format models, or <i>DAMMIN/DAMMIF</i>-generated models. In this case, a <a href="somo_Dammin_Dammif_bead_model_properties.html">pop-up panel</a> appears requesting entering the partial specific volume and molecular weight of the model. The <i><b>SAXS/SANS Functions</b></i> button present in this subpanel will allow to perform SAXS-or SANS-related simulations directly on the currently loaded bead model. (see <a href="somo_saxs.html">here</a>). Finally, the <i><b>Rescale/Equalize Bead Model</b></i> function (currently not active) will allow an expansion of anhydrous bead models (like <i>DAMMIN/DAMMIF</i>-generated models) to account for an hydration layer.<p>
+although using the improved AtoB routine on the original PDB file while increasing the grid size (<i><b>Build AtoB (Grid) Bead Model</b></i>) seems to produce much better results. By selecting different file types extensions, other type of bead models can also be loaded, like the old <i>BEAMS</i>-format models, or <i>DAMMIN/DAMMIF</i>-generated models. In this case, a <a href="somo_Dammin_Dammif_bead_model_properties.html">pop-up panel</a> appears requesting entering the partial specific volume and molecular weight of the model. The <i><b>SAXS/SANS Functions</b></i> button present in this subpanel will allow to perform SAXS-or SANS-related simulations directly on the currently loaded bead model. (see <a href="somo_saxs.html">here</a>). Finally, the <i><b>Rescale/Equalize Bead Model</b></i> function (as of October 2013 not active yet) will allow an expansion of anhydrous bead models (like <i>DAMMIN/DAMMIF</i>-generated models) to account for an hydration layer.<p>
 </table>
 <p>
 <table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -230,7 +230,7 @@ although using the improved AtoB routine on the original PDB file while increasi
 <b>Hydrodynamic Calculations:</b><br>
 The hydrodynamic parameters can then be determined by clicking on <i><b>Calculate RB Hydrodynamics</b></i> (a <b>warning</b> message will appear on the right-side main window if the <b><i>Zeno</i></b> method is selected).
 A partial list of parameters can be seen in a pop-up window as soon as the calculations are completed by
-clicking on <a href="somo_show_hydro.html"><i><b>Show Hydrodynamic Calculations</b></i></a> (currently, April 2012, only for the standard Garcia de la Torre-Bloomfield method). The pop-up window will also list the solvent type, temperature and its associated density and viscosity, as set in the 
+clicking on <a href="somo_show_hydro.html"><i><b>Show Hydrodynamic Calculations</b></i></a> (as of October 2013, only for the standard Garcia de la Torre-Bloomfield method). The pop-up window will also list the solvent type, temperature and its associated density and viscosity, as set in the 
 <a href=somo_hydro.html><b><i>Hydrodynamic Calculations</i></b></a> options module. A full list of
 all the parameters is also available as a text file, which can be opened from the results' pop-up window.
 Such a list from a previously analyzed model can be opened also from the <i><b>Open Hydrodynamic Calculations File</b></i>
@@ -432,9 +432,7 @@ or previously-generated bead models. A detailed description of this module can
 be found <a href=somo_grid.html>here</a>.
 
 <li>
-<b>SAXS/SANS Functions:</b> This module will control the setting of the SAXS/SANS curve
-and <i>P(r)</i> vs. <i>r</i> generator that is currently under development. A detailed description 
-of this module can be found <a href=somo_saxs_options.html>here</a>. 
+<b>SAXS/SANS Options:</b> This entry will open a new window from which various subpanels can be accessed containing the settings of the many SAXS/SANS-related operations. A detailed description of these modules can be found <a href=somo_saxs_options.html>here</a>. 
 </ul>
 </td>
 </tr>
@@ -455,13 +453,13 @@ From this pull-down menu, it will be possible in the future to access two option
 <ul>
 
 <li>
-<b>Browflex Options:</b> This module, currently under development (April 2012), will enable setting the parameters for a Brownian dynamics (BD) simulation starting from a SoMo bead model. It was originally devised to provide inputs for J. Garcia de la Torre program Browflex (J. García de la Torre et al., SIMUFLEX: Algorithms and tools for simulation of the conformation and dynamics of flexible molecules and nanoparticles in dilute solution. J. Chem. Theory Comput 5:2606-2618, 2009). A dedicated help page is under development, but not available at this time. Clicking on this option, a pop-up warning will appear:
+<b>Browflex Options:</b> This module, currently still on the planning stage (October 2013), will enable setting the parameters for a Brownian dynamics (BD) simulation starting from a SoMo bead model. It was originally devised to provide inputs for J. Garcia de la Torre program Browflex (J. García de la Torre et al., SIMUFLEX: Algorithms and tools for simulation of the conformation and dynamics of flexible molecules and nanoparticles in dilute solution. J. Chem. Theory Comput 5:2606-2618, 2009). A dedicated help page is under development, but not available at this time. Clicking on this option, a pop-up warning will appear:
 
 <center><img SRC="somo-BD_options_notavailable_warning.png" ALT="Options not available warning"></center>
 
 
 <li>
-<b>Anaflex Options:</b> This module, currently under development (April 2012), will enable setting the parameters to analyze a Brownian dynamics (BD) trajectory. It was originally devised to provide inputs for J. Garcia de la Torre program Anaflex (J. García de la Torre et al., SIMUFLEX: Algorithms and tools for simulation of the conformation and dynamics of flexible molecules and nanoparticles in dilute solution. J. Chem. Theory Comput 5:2606-2618, 2009). A dedicated help page is under development, but not available at this time. Clicking on this option, a pop-up warning will appear:
+<b>Anaflex Options:</b> This module, currently still on the planning stage (October 2013), will enable setting the parameters to analyze a Brownian dynamics (BD) trajectory. It was originally devised to provide inputs for J. Garcia de la Torre program Anaflex (J. García de la Torre et al., SIMUFLEX: Algorithms and tools for simulation of the conformation and dynamics of flexible molecules and nanoparticles in dilute solution. J. Chem. Theory Comput 5:2606-2618, 2009). A dedicated help page is under development, but not available at this time. Clicking on this option, a pop-up warning will appear:
 
 <center><img SRC="somo-BD_options_notavailable_warning.png" ALT="Options not available warning"></center>
 
@@ -580,7 +578,7 @@ The latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on April 30, 2012.
+Last modified on October 10, 2013.
 </font>
 </body>
 </html>
