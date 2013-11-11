@@ -241,7 +241,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 #if defined(BIN64)
       "bin64"
 #else
-      "/bin/"
+      "bin"
 #endif
       + SLASH
       + "crysol" 
@@ -297,8 +297,9 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
       
    QString use_pdb = pdb;
    
+
    // copy pdb if the name is too long
-   if ( our_saxs_options->crysol_version_26 &&
+   if ( our_saxs_options->crysol_version_26 ||
         QFileInfo(crysol_last_pdb).fileName() != QFileInfo(crysol_last_pdb_base).fileName() )
    {
       QFile f( pdb );
@@ -333,6 +334,10 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 
    cout << "use_pdb: <" << use_pdb << ">\n";
    cout << "crysol_last_pdb_base: <" << crysol_last_pdb_base << ">\n";
+
+   editor_msg( "dark blue", QString( "Crysol: use pdb [%1]" ).arg( use_pdb ) );
+   editor_msg( "dark blue", QString( "Crysol: last pdb base [%1]" ).arg( crysol_last_pdb_base ) );
+   editor_msg( "dark blue", QString( "Crysol: working dir [%1]" ).arg( dir ) );
 
    // clean up so we have new files
 
@@ -407,6 +412,8 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    connect( crysol, SIGNAL(launchFinished()), this, SLOT(crysol_launchFinished()) );
 
    editor->append("\n\nStarting Crysol\n");
+
+   editor_msg( "dark blue", crysol->arguments().join( " " ) );
    crysol->start();
    external_running = true;
 
