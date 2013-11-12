@@ -31,7 +31,7 @@ SOMO HPLC-SAXS Module:</h2></center>
 <img SRC="somo-HPLC-SAXS_1.png" ALT="SOMO HPLC-SAXS Figure 1">
 </center>
 <p>
-This new <b>US-SOMO</b> module was conceived for the analysis of HPLC-SAXS data. In the image above, the main panel of the <b>HPLC-SAXS</b> module is shown. The buttons with the black labels are the ones currently active, the ones with the red labels become active when allowed by the processing/visualization stage. The graphics panel shows a collection of HPLC-SAXS log<sub>10</sub>[<i>I(q)</i>] vs. <i>q</i> SAXS data frames (points with 0 or begative values are automatically omitted from the visualization only) for a BSA separation on two 7.8 &times; 300 mm ID columns packed with hydroxylated polymethacrylate particles (TSK G4000PWXL, 10 &mu;m size, 500 Å pore size, and G3000PWXL, 6 &mu;m size, 200 Å pore size, Tosoh Bioscience, Tokyo, Japan) connected in series, protected by a 6 &times; 40 mm guard column filled with G3000PW resin (Tosoh). Note the permanent upturn at very small <i>q</i>-values, most likely due to biological material aggregated in this case by the intense X-ray beam on the capillary cell walls.<p>
+This new <b>US-SOMO</b> module was conceived for the analysis of HPLC-SAXS data. In the image above, the main panel of the <b>HPLC-SAXS</b> module is shown. The buttons with the black labels are the ones currently active, the ones with the red labels become active when allowed by the processing/visualization stage. The graphics panel shows a collection of HPLC-SAXS log<sub>10</sub>[<i>I(q)</i>] vs. <i>q</i> SAXS data frames (points with 0 or negative values are automatically omitted from the visualization only) for a BSA separation on two 7.8 &times; 300 mm ID columns packed with hydroxylated polymethacrylate particles (TSK G4000PWXL, 10 &mu;m size, 500 Å pore size, and G3000PWXL, 6 &mu;m size, 200 Å pore size, Tosoh Bioscience, Tokyo, Japan) connected in series, protected by a 6 &times; 40 mm guard column filled with G3000PW resin (Tosoh). Note the permanent upturn at very small <i>q</i>-values, most likely due to biological material aggregated in this case by the intense X-ray beam on the capillary cell walls.<p>
 On the top left panel there are four buttons:<p>
 
 The <b><i>Add files</i></b> button is used to load data into the module. An operating directory can be pre-selected by clicking on the path shown above it, and navigating in the file system (selecting the <i>Lock</i> checkbox will fix that directory). The file format for SAXS data recognized by the <b>US-SOMO</b> <b><i>HPLC-SAXS</i></b> module consist of .dat files with two or three TAB- or space-separated columns containing the <i>q</i>, <i>I(q)</i>, and optionally their associated SD values, respectively. Each frame number (or time value) must be present somewhere in the filename with a common prefix and suffix. For example, data1saxs.dat, data2saxs.dat, data3saxs.dat will be recognized as frames 1,2,3, where "data" and "saxs" can be replaced by any common sequence of characters. Consequently, 1.dat, 2.dat, 3.dat would be acceptable, but abc1.dat, qrs2.dat, xyz3.dat would not, because the prefix characters are not common. Furthermore, the loader will also arrange the data files sequentially, in increasing frame number (or time value) order. The currently recognized format for concentration data is similar to the SAXS data format with the addition of the string "Frame data" in any place on the first line. The two or three columns of data are the frame number, concentration-related data, and optionally an associated SD value. <i>I(q)</i> vs. <i>q</i> and concentration data frames are automatically recognized and the labels on the x- and y-axes are then properly set.<p>
@@ -220,7 +220,7 @@ These two operations can be done on multiple selected files once the initial sin
 
 Pressing <b><i>Residuals</i></b> will split the graphics window in two, and show a plot of the fit residuals below the main plot. The residuals plot can be removed by pressing <b><i>Residuals</i></b> again (see more below).<p>
 
-<b><i>Global Gaussians</i></b> will simply find the amplitudes best fitting all the selected chromatograms based on the centres and widths found on the initial chromatogram. It is best to first select only an equally spaced subset of data by using the <b><i>Select every Nth</i></b> option available in the pop-up window appearing on pressing <b><i>Select</i></b> (see image below and <a href=saxs_hplc_nth.html>here</a>).
+<b><i>Global Gaussians</i></b> will simply find the amplitudes best fitting all the selected chromatograms based on the centres and widths found on the initial chromatogram. If centers and widths have not yet been optimized over multiple chromatograms, it is best to first select only an equally spaced subset of data by using the <b><i>Select every Nth</i></b> option available in the pop-up window appearing on pressing <b><i>Select</i></b> (see image below and <a href=saxs_hplc_nth.html>here</a>).
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_GaussSelect.png" ALT="SOMO HPLC-SAXS Global Gaussian Nth selection">
@@ -383,7 +383,7 @@ Pressing <b><i>Fit</i></b> will then bring up the <b>Fit</b> window (see <a href
 </center>
 <p>
 
-However, if significant band-broadening occurs between the concentration detector and the SAXS capillary, the widths must also be re-optimized. A band broadening correction routine will be implemented in a future release. However, the agreement with the two major peaks in the figure baove shows that, at least in the case of this dataset, this is not a major issue.<p>
+However, if significant band-broadening occurs between the concentration detector and the SAXS capillary, the widths must also be re-optimized. A band broadening correction routine will be implemented in a future release. However, the agreement with the two major peaks in the figure above shows that, at least in the case of this dataset, this is not a major issue.<p>
 
 The <b><i>Save</i></b> and <b><i>Keep</i></b> buttons must be then pressed to store and associate the resulting Gaussians to the concentration chromatogram. On re-generating the <i>I(q)</i> vs. <i>q</i> frames (see below), each concentration Gaussian peak will be mapped onto the corresponding <i>I(t)</i> vs. <i>t</i> peaks.<p>
 
@@ -435,7 +435,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 4, 2013.
+Last modified on November 12, 2013.
 </font>
 </body>
 </html>
