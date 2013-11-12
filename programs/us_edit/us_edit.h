@@ -10,6 +10,7 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO.h"
+#include "us_db2.h"
 
 class US_Edit : public US_Widgets
 {
@@ -119,7 +120,6 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_airGap;
       QPushButton*       pb_dataRange;
       QPushButton*       pb_plateau;
-      QPushButton*       pb_baseline;
       QPushButton*       pb_noise;
       QPushButton*       pb_spikes;
       QPushButton*       pb_invert;
@@ -192,6 +192,8 @@ class US_Edit : public US_Widgets
 
       double             odlimit;
 
+      US_DB2*            dbP;
+
       QList< double >    expd_radii;
       QList< int >       expi_wvlns;
       QList< int >       rawi_wvlns;
@@ -244,7 +246,6 @@ class US_Edit : public US_Widgets
       void set_airGap        ( void );
       void set_dataRange     ( void );
       void set_plateau       ( void );
-      void set_baseline      ( void );
       void mouse             ( const QwtDoublePoint& );
 
       void noise             ( void );
@@ -277,6 +278,9 @@ class US_Edit : public US_Widgets
       void lambda_new_list   ( QList< int >  );
       void lambda_include_all(        );
       void od_radius_limit   ( double );
+      int  write_xml_file    ( QString&, QString&, QString&, QString& );
+      int  write_edit_db     ( US_DB2*,
+                               QString&, QString&, QString&, QString& );
                              
       void reset             ( void );
       void reset_triple      ( void );

@@ -1,6 +1,9 @@
 [% INCLUDE header.us3
  title = 'UltraScan III Data Editor'
 %]
+
+<h2> Edit UltraScan Data </h2>
+
 <p> <img src="images/us_edit.png" alt="Data Editor Window"/> </p>
 
 <p>All experimental data aquired with the analytical ultracentrifuge
@@ -26,122 +29,175 @@ restore the un-zoomed graph.</p>
 <p>When zoomed, the graph may be panned by pressing the center mouse button
 (usually the scroll wheel) and dragging.</p>
 
-<p>Edit data by following these steps:</p>
+<h3> Edit data by following these steps: </h3>
 
 <ol> 
+  <li><strong>Step 1</strong>: Load data from the database or a local data
+  directory that contains the UltraScan 3 data files previously converted
+  from the Beckman raw data. Load choices are made in a
+  <a href="load_auc.html">Load Data Dialog</a>.</li>
 
- <li><strong>Step 1</strong>: Load data from the database or a local data
- directory that contains the UltraScan 3 data files previously converted
- from the Beckman raw data. Load choices are made in a
- <a href="load_auc.html">Load Data Dialog</a>.</li>
+  <li><strong>Step 2</strong>: Select the Cell / Channel / Wavelength
+  triple to be edited.</li>
 
- <li><strong>Step 2</strong>: Select the Cell / Channel / Wavelengh
- triple to be edited.</li>
+  <li><strong>Step 3</strong>: Specify the meniscus of the data by holding
+  down the <strong>Control</strong> key and using the left mouse button.
+  The meniscus value may be manually adjusted with the keyboard.</li>
 
- <li><strong>Step 3</strong>: Specify the meniscus of the data by holding
- down the <strong>Control</strong> key and using the left mouse button.
- The meniscus value may be manually adjusted with the keyboard.</li>
+  <li><strong>Step 4</strong>: If the data were collected with the interference
+  detector, specify the left and right edges of the air gap area of the
+  data.</li>
 
- <li><strong>Step 4</strong>: If the data were collected with the interference detector,
- specify the left and right edges of the air gap area of the data.</li>
+  <li><strong>Step 5</strong>: Specify the left and right edges of the
+  data to be analyzed. <b>Please note:</b> Do not pick the left data
+  edge too close to the meniscus. During meniscus fitting, the evaluated
+  meniscus positions may reach <i>inside</i> of the data range and violate
+  the boundary conditions of the finite element solution. This will cause
+  the meniscus fit to fail.</li>
 
- <li><strong>Step 5</strong>: Specify the left and right edges of the
- data to be analyzed. <b>Please note:</b> Do not pick the left data
- edge too close to the meniscus. During meniscus fitting, the evaluated
- meniscus positions may reach <i>inside</i> of the data range and violate
- the boundary conditions of the finite element solution. This will cause
- the meniscus fit to fail.</li>
+  <li><strong>Step 6</strong>: Specify the location of the scan plateau. This
+  is the radial position where most scans have a stable plateau, but the
+  selected position should not reach into the back-diffusion region. The most
+  appropriate point tends to be close to the right edge of the data range, but
+  not so far to the right that it extends into the region where the
+  concentration of the later scans curves upward at the bottom of the cell
+  due to back-diffusion.</li>
 
- <li><strong>Step 6</strong>: Specify the location of scan plateau. This
- is the radial position where most scans have a stable plateau, but the
- selected position should not reach into the back-diffusion region. The most
- appropriate point tends to be close to the right edge of the data range, but
- not so far to the right that it extends into the regio where the concentration
- of the later scans curves upward at the bottom of the cell due to back-diffusion.</li>
-
- <li><strong>Step 7</strong>: Specify the location of data baseline. This is usually a 
- position close to the meniscus, and is selected from the last scan.</li>
-
- <li><strong>Step 8</strong>: Make any other optional adjustments to the data
- that are necesary and save the edit profile. When saving, a pop-up message
- is presented asking for a edit ID. The default for this ID is the current date
- and time in the form of YYMMddhhmm (Year / Month / Day / Hour / Minute), but this
- default can be supplemented with a suffix of your own choice. 
-
+  <li><strong>Step 7</strong>: Make any other optional adjustments to the data
+  that are necesary and save the edit profile. When saving, a pop-up message
+  is presented asking for an edit ID. The default for this ID is the current
+  date and time in the form of YYMMddhhmm (Year / Month / Day / Hour / Minute),
+  but this default can be supplemented with a suffix of your own choice.</li>
 </ol>
 
 <p>The above process may be reset to any point by pressing the appropriate
 button at the associated specification entry.</p>
 
-<p>Repeat the above process for each triple (Cell / Channel / Wavelengh combination) in
-the data set. </p>
+<p>Repeat the above process for each triple (Cell / Channel / Wavelength
+combination) in the data set. </p>
 
 
-<p>Optional Controls</p>
+<h3> Functions: </h3>
 
 <ul>
+  <li><b>Run Info:</b> This text box displays run information for the
+  currently selected run.</li>
 
- <li><b>Threshold for Scan Gaps</b>: This spin button controls the check for
- consecutive interpolated data. If more than the specified number of
- consecutive points on a scan have been interpolated, a warning is
- displayed when the data is loaded. When editing wavelength data, this control
- specifies the gap in wavelengths.
-</li>
+  <li><b>Select Investigator</b> This button brings up a window that allows
+  selecting the current investigator for input from the database.</li>
 
- <li><b>Run Details</b>: This button brings up a child window that describes
- additional information associated with the data. The data description
- may be updated in this window.</li>
+  <li><b>Database</b> Check to specify data input from the database.</li>
 
- <li><b>Scan Controls</b>: These controls allow setting the focus for
- excluding scans or scan ranges. </li>
- <ul>
+  <li><b>Local Disk</b> Check to specify data input from local disk.</li>
 
- <li>The <b>Edit Single Scan</b> button displays a window
- where individual points may be changed by a Control-Left_Click-Drag
- operation.</li>
- 
- <li> The <b>Exclusion Profile</b> button displays a
- window where additional options for scan exclusion are available. Here it is possible
- to save only every 2nd, 3rd or nth scan.</li>
- 
- <li> The <b>Include All</b> button undoes any prior 
- exclusion operations.</li>
- 
- </ul>
- </li>
+  <li><b>Load Data</b> Click here and, in the resulting
+  <a href="load_auc.html">Load Data Dialog</a>,
+  select raw data set(s) to load for editing.</li>
 
- <li><b>Determine RI Noise</b>: This button analyzes all scans to determine
- any radial invariant noise. It brings up a window that shows polynomial
- coefficients for a best fit of the scan integral. Residuals to this integral
-represent radially invariant noise. Subtracting the residual values from 
-each datapoint in a scan will correct radially invariant noise. It is important
-that the loss of mass in the data as a function of time is properly matched to
-an appropriate polynomial, so select a polynomial degree that provides the best
-overall fit to all integral values.</li>
- 
- <li><b>Subtract Noise</b>: This button removes the calculated noise from the
- current data set.</li>
- 
- <li><b>Invert Sign</b>: This button inverts the measured data.</li>
- 
- <li><b>Remove Spikes</b>: This button determines if data readings are beyond 
- acceptable limits and adjusts outlying data points to an interpolated
- value.</li>
- 
- <li><b>Undo Noise and Spikes</b>: The button removes any corrections made
- to the data by noise or spike calculations.</li>
- 
- <li><b>Mark Data as Floating</b>: This button sets a flag to mark the data
- as floating.</li>
- 
- <li><b>Apply Prior Edits</b>: This button requests the user to specify a
- saved set of edit operations and applies them to the current data.</li>
- 
- <li><b>Reset</b>: This button removes all data and sets the program to a
- known starting point.</li>
+  <li><b>Run Details</b>: This button brings up a child window that describes
+  additional information associated with the data. The data description
+  may be updated in this window.</li>
 
+  <li><b>Cell / Channel / Wavelength</b> Select the triple for which to perform
+  editing.</li>
 
+  <li><b>Threshold for Scan Gaps</b>: This spin button controls the check for
+  consecutive interpolated data. If more than the specified number of
+  consecutive points on a scan have been interpolated, a warning is
+  displayed when the data is loaded. When editing wavelength data, this control
+  specifies the gap in wavelengths.</li>
+
+  <li><b>Scan Controls</b>: These controls allow setting the focus for
+  excluding scans or scan ranges. </li>
+  <ul>
+    <li><b>Scan Focus from:</b> Set the counter to the lower bound of scans
+    to exclude.</b></li>
+
+    <li><b>Scan Focus to:</b> Set the counter to the upper bound of scans
+    to exclude.</b></li>
+
+    <li><b>Exclude Scan Range</b> Exclude the scans indicated by the two
+    preceding scan bounding counters.</li>
+
+    <li><b>Exclusion Profile</b> This button displays a window where
+    additional options for scan exclusion are available. Here it is possible
+    to save only every 2nd, 3rd or nth scan.</li>
+ 
+    <li><b>Edit Single Scan</b> This button displays a window
+    where individual points may be changed by a Control-Left_Click-Drag
+    operation.</li>
+ 
+    <li><b>Include All</b> Clicking this button undoes any prior 
+    exclusion operations.</li>
+  </ul>
+
+  <li><b>Specify Meniscus</b> This button enables the edit range selection step
+  to be set to specify the meniscus via Ctrl-Click on the meniscus position.
+  The radius value of the selected point is displayed in the text box to
+  the right of the button.</li>
+
+  <li><b>Specify Data Range</b> This button enables the edit range selection
+  step to be set to specify the data range via Ctrl-Click's on the start and
+  end data positions. The radius values of the selected points are displayed
+  in the text box to the right of the button.</li>
+
+  <li><b>Specify Plateau</b> This button enables the edit range selection step
+  to be set to specify the plateau via Ctrl-Click on the plateau position.
+  The radius value of the selected point is displayed in the text box to
+  the right of the button.</li>
+
+  <li><b>Baseline:</b> The text box displays the radius value and average OD
+  value of a baseline automatically computed after the plateau is chosen.</li>
+
+  <li><b>OD Limit:</b> Select an upper limit on OD values in the data
+  above which data is excluded from 2-Dimensional Spectrum Analysis
+  computations.</li>
+
+  <li><b>Determine RI Noise</b> This button analyzes all scans to determine
+  any radial invariant noise. It brings up a window that shows polynomial
+  coefficients for a best fit of the scan integral. Residuals to this integral
+  represent radially invariant noise. Subtracting the residual values from 
+  each datapoint in a scan will correct radially invariant noise. It is
+  important that the loss of mass in the data as a function of time is properly
+  matched to an appropriate polynomial, so select a polynomial degree that
+  provides the best overall fit to all integral values.</li>
+ 
+  <li><b>Subtract Noise</b> This button removes the calculated noise from the
+  current data set.</li>
+ 
+  <li><b>Invert Sign</b> This button inverts the measured data.</li>
+ 
+  <li><b>Remove Spikes</b> This button determines if data readings are beyond 
+  acceptable limits and adjusts outlying data points to an interpolated
+  value.</li>
+ 
+  <li><b>Apply Prior Edits</b> This button requests the user to specify a
+  saved set of edit operations and applies them to the current data.</li>
+ 
+  <li><b>Undo Noise and Spikes</b> This button removes any corrections made
+  to the data by noise or spike calculations.</li>
+ 
+  <li><b>Mark Data as Floating</b> This button sets a flag to mark the data
+  as floating.</li>
+ 
+  <li><b>Save Current Edit Profile</b> This button initiates a save of the
+  edited data to local file(s) and/or database.</li>
+ 
+  <li><b>Reset</b> This button removes all data and sets the program to a
+  known starting point.</li>
+
+  <li><b>Help</b> Display this help.</li>
+
+  <li><b>Close</b> Close the editing session.</li>
 </ul>
+
+
+<h3> Multi-WaveLength (MWL) Controls </h3>
+
+<p>If the raw data loaded contains multiple wavelengths (more than two), the
+form of the main window changes to allow an editing sequence oriented towards
+cell / channel selection and individual wavelength selection
+( <a href="us_edit_mwl.html">MultiWavelength Edit</a> ). </p>
 
 
 [% INCLUDE footer.us3 %]
