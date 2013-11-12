@@ -18,7 +18,6 @@
 #include "us_util.h"
 #include "us_load_auc.h"
 #include "us_passwd.h"
-#include "us_db2.h"
 #include "us_get_edit.h"
 #include "us_constants.h"
 #include "us_images.h"
@@ -54,6 +53,7 @@ US_Edit::US_Edit() : US_Widgets()
    total_edits  = 0;
    v_line       = NULL;
    dbg_level    = US_Settings::us_debug();
+   dbP          = NULL;
 
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -309,15 +309,12 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    // Plateau row
    pb_plateau = us_pushbutton( tr( "Specify Plateau" ), false );
    connect( pb_plateau, SIGNAL( clicked() ), SLOT( set_plateau() ) );
-   specs->addWidget( pb_plateau, s_row, 0, 1, 2 );
+   specs->addWidget( pb_plateau, s_row,   0, 1, 2 );
 
    le_plateau = us_lineedit( "", 1, true );
    specs->addWidget( le_plateau, s_row++, 2, 1, 2 );
 
    // Baseline row
-//   pb_baseline = us_pushbutton( tr( "Specify Baseline" ), false );
-//   connect( pb_baseline, SIGNAL( clicked() ), SLOT( set_baseline() ) );
-//   specs->addWidget( pb_baseline, s_row, 0, 1, 2 );
    lb_baseline  = us_label( tr( "Baseline:" ), -1 );
    specs->addWidget( lb_baseline, s_row, 0, 1, 2 );
 
@@ -383,7 +380,6 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_writemwl = us_pushbutton( tr( "Save to all Wavelengths" ), false );
    connect( pb_writemwl, SIGNAL( clicked() ), SLOT( write_mwl() ) );
    specs->addWidget( pb_writemwl, s_row++, 2, 1, 2 );
-pb_writemwl->setVisible(false);
 
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
@@ -511,7 +507,6 @@ void US_Edit::reset( void )
    pb_airGap      ->setEnabled( false );
    pb_dataRange   ->setEnabled( false );
    pb_plateau     ->setEnabled( false );
-//   pb_baseline    ->setEnabled( false );
    
    pb_noise       ->setEnabled( false );
    pb_residuals   ->setEnabled( false );
@@ -531,7 +526,6 @@ void US_Edit::reset( void )
    pb_airGap      ->setIcon( QIcon() );
    pb_dataRange   ->setIcon( QIcon() );
    pb_plateau     ->setIcon( QIcon() );
-//   pb_baseline    ->setIcon( QIcon() );
    pb_noise       ->setIcon( QIcon() );
    pb_residuals   ->setIcon( QIcon() );
    pb_spikes      ->setIcon( QIcon() );
@@ -922,23 +916,28 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
 DbgLv(1) << "LD(): AA";
    if ( expType.isEmpty()  &&  disk_controls->db() )
    {  // no experiment type yet and data read from DB:  try for DB exp type
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
-
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( dbP == NULL )
       {
-         QMessageBox::warning( this, tr( "Connection Problem" ),
-           tr( "Could not connect to database \n" ) + db.lastError() );
-         return;
+         US_Passwd pw;
+         dbP          = new US_DB2( pw.getPasswd() );
+
+         if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
+         {
+            QMessageBox::warning( this, tr( "Connection Problem" ),
+              tr( "Could not connect to database\n" )
+              + ( ( dbP != NULL ) ? dbP->lastError() : "" ) );
+            dbP          = NULL;
+            return;
+         }
       }
 
       QStringList query;
       query << "get_experiment_info_by_runID" << runID 
             << QString::number( US_Settings::us_inv_ID() );
 
-      db.query( query );
-      db.next();
-      expType    = db.value( 8 ).toString();
+      dbP->query( query );
+      dbP->next();
+      expType    = dbP->value( 8 ).toString();
    }
 
    if ( expType.isEmpty() )  // if no experiment type, assume Velocity
@@ -964,8 +963,7 @@ DbgLv(1) << "LD(): CC";
       cb_rpms    ->setVisible( true  );
       pb_plateau ->setVisible( false );
       le_plateau ->setVisible( false ); 
-      //pb_baseline->setVisible( false );
-      lb_baseline->setVisible( false );
+      lb_baseline->setVisible( false ); 
       le_baseline->setVisible( false ); 
       lb_edtrsp  ->setVisible( true  );
       le_edtrsp  ->setVisible( true  );
@@ -1051,13 +1049,11 @@ DbgLv(1) << "LD(): CC";
 
    else
    {  // non-Equilibrium
+      bool notMwl  = ( nwaveln < 3 );
       lb_rpms    ->setVisible( false );
       cb_rpms    ->setVisible( false );
       pb_plateau ->setVisible( true  );
       le_plateau ->setVisible( true  ); 
-      //pb_baseline->setVisible( true  );
-      //le_baseline->setVisible( true  ); 
-      bool notMwl  = ( nwaveln < 3 );
       lb_baseline->setVisible( notMwl );
       le_baseline->setVisible( notMwl ); 
       lb_edtrsp  ->setVisible( false );
@@ -1083,7 +1079,6 @@ DbgLv(1) << "LD(): FF  triples size" << triples.size();
    pb_dataRange ->setEnabled( false );
    pb_plateau   ->setEnabled( false );
    pb_noise     ->setEnabled( false );
-   //pb_baseline  ->setEnabled( false );
    pb_spikes    ->setEnabled( false );
    pb_invert    ->setEnabled( true );
    pb_priorEdits->setEnabled( true );
@@ -1285,7 +1280,6 @@ void US_Edit::set_pbColors( QPushButton* pb )
    pb_airGap   ->setPalette( p );
    pb_dataRange->setPalette( p );
    pb_plateau  ->setPalette( p );
-   //pb_baseline ->setPalette( p );
 
    if ( pb != NULL )
    {
@@ -1619,7 +1613,6 @@ DbgLv(1) << "AGap:  plot_range()";
             pb_dataRange->setIcon( check );
             pb_plateau  ->setEnabled( true );
             pb_noise    ->setEnabled( true );
-            //pb_baseline ->setEnabled( true );
             pb_spikes   ->setEnabled( true );
 
             if ( ! expIsEquil )
@@ -1721,7 +1714,6 @@ DbgLv(1) << "AGap:  plot_range()";
          //plot_last();
          plot_range();
          pb_plateau ->setIcon( check );
-         //pb_baseline->setEnabled( true );
          ct_to->setValue( 0.0 );  // Uncolor all scans
          next_step();
          break;
@@ -1760,7 +1752,6 @@ DbgLv(1) << "AGap:  plot_range()";
          pb_write      ->setEnabled( true );
          pb_writemwl   ->setEnabled( isMwl );
          changes_made = true;
-         //pb_baseline   ->setIcon   ( check );
          next_step();
          break;
 
@@ -1819,15 +1810,9 @@ void US_Edit::next_step( void )
       step = PLATEAU;
       pb   = pb_plateau;
    }
-#if 0
-   else if ( baseline == 0.0 ) 
-   {
-      step = BASELINE;
-      pb   = pb_baseline;
-   }
-#endif
+
    else
-   {
+   {  // All values up to Plateau have been entered:  Finished
       step = FINISHED;
       pb   = NULL;
       double sum = 0.0;
@@ -1879,8 +1864,6 @@ void US_Edit::set_meniscus( void )
    pb_dataRange->setIcon( QIcon() );
    pb_plateau  ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
-   //pb_baseline ->setEnabled( false );
-   //pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    pb_writemwl ->setEnabled( all_edits && isMwl );
    pb_write    ->setIcon( QIcon() );
@@ -1925,8 +1908,6 @@ void US_Edit::set_airGap( void )
    pb_dataRange->setIcon( QIcon() );
    pb_plateau  ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
-   //pb_baseline ->setEnabled( false );
-   //pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    pb_writemwl ->setEnabled( all_edits && isMwl );
    pb_write    ->setIcon( QIcon() );;
@@ -1958,8 +1939,6 @@ void US_Edit::set_dataRange( void )
    pb_dataRange->setIcon( QIcon() );
    pb_plateau  ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
-   //pb_baseline ->setEnabled( false );
-   //pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    pb_writemwl ->setEnabled( all_edits && isMwl );
    pb_write    ->setIcon( QIcon() );;
@@ -1991,8 +1970,6 @@ void US_Edit::set_plateau( void )
    set_pbColors( pb_plateau );
 
    pb_plateau  ->setIcon( QIcon() );
-   //pb_baseline ->setEnabled( false );
-   //pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    pb_writemwl ->setEnabled( all_edits && isMwl );
    pb_write    ->setIcon( QIcon() );;
@@ -2032,24 +2009,6 @@ void US_Edit::set_fringe_tolerance( double /* tolerance */)
 
    US_DataIO::calc_integral( data, edits );
    replot();
-}
-
-// Set up for a Baseline pick
-void US_Edit::set_baseline( void )
-{
-   le_baseline->setText( "" );
-   baseline  = 0.0;
-   step      = BASELINE;
-   //set_pbColors( pb_baseline );
-
-   //pb_baseline ->setIcon( QIcon() );
-   pb_write    ->setEnabled( all_edits );
-   pb_writemwl ->setEnabled( all_edits && isMwl );
-   pb_write    ->setIcon( QIcon() );;
-   changes_made = all_edits;
-   
-   // Only display last curve
-   plot_last();
 }
 
 // Plot all curves
@@ -3030,9 +2989,8 @@ void US_Edit::new_triple( int index )
    pb_meniscus ->setEnabled( true );
    pb_airGap   ->setEnabled( true );
    pb_dataRange->setEnabled( true );
-   pb_plateau  ->setEnabled( true );
    pb_noise    ->setEnabled( true );
-   //pb_baseline ->setEnabled( true );
+   pb_plateau  ->setEnabled( true );
    pb_spikes   ->setEnabled( true );
    pb_invert   ->setEnabled( true );
    pb_undo     ->setEnabled( true );
@@ -3133,6 +3091,15 @@ void US_Edit::write_triple( void )
 
    meniscus  = le_meniscus->text().toDouble();
    baseline  = data.xvalues[ data.xindex( range_left ) + 5 ];
+   int dax   = triple_index;
+
+   if ( isMwl )
+   {  // For MultiWavelength, data index needs to be recomputed
+      int     ccx    = cb_triple->currentIndex();
+      int     wvx    = cb_lplot ->currentIndex();
+      QString swavl  = expc_wvlns[ wvx ];
+      dax            = ccx * nwaveln + rawc_wvlns.indexOf( swavl );
+   }
 
    if ( expIsEquil )
    {  // Equilibrium:  set baseline,plateau as flag that those are "done"
@@ -3207,361 +3174,59 @@ void US_Edit::write_triple( void )
    // workingDir + runID + editID + data type + cell + channel + wavelength 
    //            + ".xml"
 
-   QString filename = files[ triple_index ];
-DbgLv(1) << "EDT:WrTripl: tripindex" << triple_index << "filename" << filename;
+   QString filename = files[ dax ];
+DbgLv(1) << "EDT:WrTripl: tripindex" << triple_index << "dax" << dax
+ << "filename" << filename;
    int     index    = filename.indexOf( '.' ) + 1;
    filename.insert( index, editID + "." );
    QString wvpart   = "";
 
-   if ( isMwl )
-   {
-      int lwx   = expc_wvlns.size() - 1;
-      wvpart    = expc_wvlns[ 0 ] + "-" + expc_wvlns[ lwx ];
-      filename  = filename.section( ".",  0, -5 ) + "." +
-                  QString( celchns[ triple_index ] ).replace( " / ", "." ) +
-                  "." + wvpart + ".xml";
-   }
-   else
-   {
-      filename.replace( QRegExp( "auc$" ), "xml" );
-   }
+   filename.replace( QRegExp( "auc$" ), "xml" );
 DbgLv(1) << "EDT:WrTripl:  filename" << filename;
-
-   QFile f( workingDir + filename );
-
-   if ( ! f.open( QFile::WriteOnly | QFile::Text ) )
-   {
-      QMessageBox::information( this,
-            tr( "File write error" ),
-            tr( "Could not open the file\n" ) + workingDir + filename
-            + tr( "\n for writing.  Check your permissions." ) );
-      return;
-   }
 
    if ( expType.isEmpty()  ||
         expType.compare( "other", Qt::CaseInsensitive ) == 0 )
       expType = "Velocity";
 
-   QXmlStreamWriter xml( &f );
-
-   xml.setAutoFormatting( true );
-   xml.writeStartDocument();
-   xml.writeDTD         ( "<!DOCTYPE UltraScanEdits>" );
-   xml.writeStartElement( "experiment" );
-   xml.writeAttribute   ( "type", expType );
-
-   // Write identification
-   xml.writeStartElement( "identification" );
-
-   xml.writeStartElement( "runid" );
-   xml.writeAttribute   ( "value", runID );
-   xml.writeEndElement  ();
-
-   QString editGUID = editGUIDs[ triple_index ];
+   QString editGUID = editGUIDs[ dax ];
 
    if ( editGUID.isEmpty() )
    {
       editGUID = US_Util::new_guid();
-      editGUIDs.replace( triple_index, editGUID );
+      editGUIDs.replace( dax, editGUID );
    }
-
-   xml.writeStartElement( "editGUID" );
-   xml.writeAttribute   ( "value", editGUID );
-   xml.writeEndElement  ();
 
    QString rawGUID  = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
-   xml.writeStartElement( "rawDataGUID" );
-   xml.writeAttribute   ( "value", rawGUID );
-   xml.writeEndElement  ();
-
-   xml.writeEndElement  ();  // identification
-
-   QString     triple  = triples.at( triple_index );
+   QString triple   = triples.at( dax );
 DbgLv(1) << "EDT:WrTripl:   triple" << triple;
 
-   QStringList parts   = triple.split( " / " );
+   // Output the edit XML file
+   int wrstat       = write_xml_file( filename, triple, editGUID, rawGUID );
 
-   QString     cell    = parts[ 0 ];
-   QString     channel = parts[ 1 ];
-   QString     waveln  = isMwl ? wvpart : parts[ 2 ];
-
-DbgLv(1) << "write edit: isMwl" << isMwl << "waveln";
-
-   xml.writeStartElement( "run" );
-   xml.writeAttribute   ( "cell",       cell    );
-   xml.writeAttribute   ( "channel",    channel );
-   xml.writeAttribute   ( "wavelength", waveln  );
-
-   if ( isMwl )
-   {
-      xml.writeStartElement( "lambdas" );
-      for ( int ii = 0; ii < expc_wvlns.size(); ii++ )
-      {
-         xml.writeStartElement( "lambda" );
-         xml.writeAttribute   ( "value", expc_wvlns[ ii ] );
-         xml.writeEndElement  ();
-      }
-      xml.writeEndElement  ();
-   }
-
-   // Write excluded scans
-   if ( data.scanData.size() > includes.size() )
-   {
-      xml.writeStartElement( "excludes" );
-
-      for ( int i = 0; i < data.scanData.size(); i++ )
-      {
-         if ( ! includes.contains( i ) )
-         {
-            xml.writeStartElement( "exclude" );
-            xml.writeAttribute   ( "scan", QString::number( i ) );
-            xml.writeEndElement  ();
-         }
-      }
-
-      xml.writeEndElement  ();  // excludes
-   }
-
-   // Write edits
-   if ( ! changed_points.isEmpty() )
-   {
-      xml.writeStartElement( "edited" );
-
-      for ( int i = 0; i < changed_points.size(); i++ )
-      {
-         Edits* e = &changed_points[ i ];
-
-         for ( int j = 0; j < e->changes.size(); j++ )
-         {
-            xml.writeStartElement( "edit" );
-            xml.writeAttribute   ( "scan",   QString::number( e->scan ) );
-            xml.writeAttribute   ( "radius",
-               QString::number( e->changes[ j ].x(), 'f', 4 ) );
-            xml.writeAttribute   ( "value",
-               QString::number( e->changes[ j ].y(), 'f', 4 ) );
-            xml.writeEndElement  ();
-         }
-      }
-
-      xml.writeEndElement  ();  // edited
-   }
-
-   // Write meniscus, range, plateau, baseline, odlimit
-   xml.writeStartElement( "parameters" );
-
-   if ( ! expIsEquil )
-   {  // non-Equilibrium
-      xml.writeStartElement( "meniscus" );
-      xml.writeAttribute   ( "radius",
-         QString::number( meniscus, 'f', 4 ) );
-      xml.writeEndElement  ();
-
-      if ( dataType == "IP" )
-      {
-         xml.writeStartElement( "air_gap" );
-         xml.writeAttribute   ( "left",
-            QString::number( airGap_left,      'f', 4 ) );
-         xml.writeAttribute   ( "right",
-            QString::number( airGap_right,     'f', 4 ) );
-         xml.writeAttribute   ( "tolerance",
-            QString::number( ct_gaps->value(), 'f', 4 ) );
-         xml.writeEndElement  ();
-      }
-
-      xml.writeStartElement( "data_range" );
-      xml.writeAttribute   ( "left",
-         QString::number( range_left,  'f', 4 ) );
-      xml.writeAttribute   ( "right",
-         QString::number( range_right, 'f', 4 ) );
-      xml.writeEndElement  ();
-
-      xml.writeStartElement( "plateau" );
-      xml.writeAttribute   ( "radius",
-         QString::number( plateau,  'f', 4 ) );
-      xml.writeEndElement  ();
-
-      xml.writeStartElement( "baseline" );
-      xml.writeAttribute   ( "radius",
-         QString::number( baseline, 'f', 4 ) );
-      xml.writeEndElement  ();
-
-      xml.writeStartElement( "od_limit" );
-      xml.writeAttribute   ( "value",
-         QString::number( odlimit, 'f', 4 ) );
-      xml.writeEndElement  ();
-   }
-
-   else
-   {  // Equilibrium
-      if ( dataType == "IP" )
-      {
-         xml.writeStartElement( "air_gap" );
-         xml.writeAttribute   ( "left",
-            QString::number( airGap_left,      'f', 4 ) );
-         xml.writeAttribute   ( "right",
-            QString::number( airGap_right,     'f', 4 ) );
-         xml.writeAttribute   ( "tolerance",
-            QString::number( ct_gaps->value(), 'f', 4 ) );
-         xml.writeEndElement  ();
-      }
-
-      int jsd  = sd_offs[ triple_index ];
-      int ksd  = jsd + sd_knts[ triple_index ];
-
-      for ( int ii = jsd; ii < ksd; ii++ )
-      {
-         double speed     = sData[ ii ].speed;
-         int    sStart    = sData[ ii ].first_scan;
-         int    sCount    = sData[ ii ].scan_count;
-         double meniscus  = sData[ ii ].meniscus;
-         double dataLeft  = sData[ ii ].dataLeft;
-         double dataRight = sData[ ii ].dataRight;
-
-         xml.writeStartElement( "speed" );
-         xml.writeAttribute   ( "value",     QString::number( speed )  );
-         xml.writeAttribute   ( "scanStart", QString::number( sStart ) );
-         xml.writeAttribute   ( "scanCount", QString::number( sCount ) );
-
-         xml.writeStartElement( "meniscus" );
-         xml.writeAttribute   ( "radius", QString::number( meniscus, 'f', 4 ) );
-         xml.writeEndElement  ();  // meniscus
-
-         xml.writeStartElement( "data_range" );
-         xml.writeAttribute   ( "left",  QString::number( dataLeft,  'f', 4 ) );
-         xml.writeAttribute   ( "right", QString::number( dataRight, 'f', 4 ) );
-         xml.writeEndElement  ();  // data_range
-
-         xml.writeEndElement  ();  // speed
-      }
-   }
- 
-   xml.writeEndElement  ();  // parameters
-
-   if ( ! pb_residuals->icon().isNull()  ||
-        ! pb_spikes->icon().isNull()     ||
-        invert == -1.0                   ||
-        floatingData )
-   {
-      xml.writeStartElement( "operations" );
- 
-      // Write RI Noise
-      if ( ! pb_residuals->icon().isNull() )
-      {
-         xml.writeStartElement( "subtract_ri_noise" );
-         xml.writeAttribute   ( "order", QString::number( noise_order ) );
-         xml.writeEndElement  ();
-      }
-
-      // Write Remove Spikes
-      if ( ! pb_spikes->icon().isNull() )
-      {
-         xml.writeStartElement( "remove_spikes" );
-         xml.writeEndElement  ();
-      }
-
-      // Write Invert
-      if ( invert == -1.0 )
-      {
-         xml.writeStartElement( "invert" );
-         xml.writeEndElement  ();
-      }
-
-      // Write indication of floating data
-      if ( floatingData )
-      {
-         xml.writeStartElement( "floating_data" );
-         xml.writeEndElement  ();
-      }
-
-      xml.writeEndElement  ();  // operations
-   }
-
-   xml.writeEndElement  ();  // run
-   xml.writeEndElement  ();  // experiment
-   xml.writeEndDocument ();
-
-   f.close();
+   if ( wrstat != 0 )
+      return;
 
    if ( disk_controls->db() )
    {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
-
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( dbP == NULL )
       {
-         QMessageBox::warning( this, tr( "Connection Problem" ),
-           tr( "Could not connect to database \n" ) + db.lastError() );
+         US_Passwd pw;
+         dbP          = new US_DB2( pw.getPasswd() );
+         if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
+         {
+            QMessageBox::warning( this, tr( "Connection Problem" ),
+              tr( "Could not connect to database \n" ) + dbP->lastError() );
+            return;
+         }
+      }
+
+      QString editID   = editIDs[ dax ];
+
+      // Output the edit database record
+      wrstat     = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
+
+      if ( wrstat != 0 )
          return;
-      }
-
-      QStringList q( "get_rawDataID_from_GUID" );
-      q << rawGUID;
-      db.query( q );
-
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         QMessageBox::warning( this, 
-           tr( "AUC Data is not in DB" ),
-           tr( "Cannot save edit data to the database.\n"
-               "The associated AUC data is not present." ) );
-      }
-      else
-      {
-         db.next();
-         QString rawDataID = db.value( 0 ).toString();
-
-         QString editID    = editIDs[ triple_index ];
-         int     idEdit    = editID.toInt();
-
-         // Save edit file to DB
-         q.clear();
-
-         if ( editID.isEmpty() )
-         {
-            q << "new_editedData" << rawDataID << editGUID << runID
-              << filename << "";
-
-            db.query( q );
-
-            if ( db.lastErrno() != US_DB2::OK )
-            {
-               QMessageBox::warning( this, tr( "Database Problem" ),
-                 tr( "Could not insert metadata into the database \n" ) + 
-                 db.lastError() );
-
-               return;
-            }
-
-            idEdit   = db.lastInsertID();
-            editID   = QString::number( idEdit );
-            editIDs.replace( triple_index, editID );
-         }
-
-         else
-         {
-            q << "update_editedData" << editID << rawDataID << editGUID
-              << runID << filename << "";
-            db.query( q );
-
-            if ( db.lastErrno() != US_DB2::OK )
-            {
-               QMessageBox::warning( this, tr( "Database Problem" ),
-                 tr( "Could not update metadata in the database \n" ) + 
-                 db.lastError() );
-
-               return;
-            }
-         }
-
-         db.writeBlobToDB( workingDir + filename, "upload_editData", idEdit );
-
-         if ( db.lastErrno() != US_DB2::OK )
-         {
-            QMessageBox::warning( this, tr( "Database Problem" ),
-              tr( "Could not insert edit xml data into database \n" ) + 
-              db.lastError() );
-         }
-      }
    }
 }
 
@@ -3727,8 +3392,6 @@ void US_Edit::apply_prior( void )
       sum += scan.rvalues[ j ];
 
    le_baseline->setText( s.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
-   //pb_baseline->setIcon( check );
-   //pb_baseline->setEnabled( true );
 
    // Invert
    invert = parameters.invert;
@@ -4206,6 +3869,10 @@ bool US_Edit::all_edits_done( void )
 
    else
    {
+      all_ed_done = ( range_left  != 0  &&
+                      range_right != 0  &&
+                      plateau     != 0  &&
+                      baseline    != 0 );
    }
 
    return all_ed_done;
@@ -4241,7 +3908,6 @@ void US_Edit::show_mwl_controls( bool show )
    pb_custom  ->setVisible( show );
    pb_incall  ->setVisible( show );
    pb_writemwl->setVisible( show );
-pb_writemwl->setVisible(false);
 
    lo_lrange->itemAtPosition( 0, 0 )->widget()->setVisible( show );
    lo_lrange->itemAtPosition( 0, 1 )->widget()->setVisible( show );
@@ -4575,5 +4241,483 @@ DbgLv(1) << "od_radius_limit  value" << value;
 // Write edit to all wavelengths of the current cell/channel
 void US_Edit::write_mwl()
 {
+   QString str;
+   if ( ! isMwl )
+   {
+      QMessageBox::warning( this,
+            tr( "Invalid Selection" ),
+            tr( "The \"Save to all Wavelengths\" button is only valid\n"
+                "for MultiWavelength data. No Save will be performed." ) );
+      return;
+   }
+
+   meniscus  = le_meniscus->text().toDouble();
+   baseline  = data.xvalues[ data.xindex( range_left ) + 5 ];
+
+   if ( expIsEquil )
+   {  // Equilibrium:  set baseline,plateau as flag that those are "done"
+      int jsd     = sd_offs[ triple_index ];
+      meniscus    = sData[ jsd ].meniscus;
+      range_left  = sData[ jsd ].dataLeft;
+      range_right = sData[ jsd ].dataRight;
+      baseline    = range_left;
+      plateau     = range_right;
+   }
+
+   // Check if complete
+   if ( meniscus == 0.0 )
+      str = tr( "meniscus" );
+   else if ( dataType == "IP" && ( airGap_left == 0.0 || airGap_right == 9.0 ) )
+      str = tr( "air gap" );
+   else if ( range_left == 0.0 || range_right == 9.0 )
+      str = tr( "data range" );
+   else if ( plateau == 0.0 )
+      str = tr( "plateau" );
+   else if ( baseline == 0.0 )
+      str = tr( "baseline" );
+
+   if ( ! str.isEmpty() )
+   {
+      QMessageBox::information( this,
+            tr( "Data missing" ),
+            tr( "You must define the " ) + str +
+            tr( " before writing the edit profile." ) );
+      return;
+   }
+
+   QString sufx = "";
+
+   // Ask for editID if not yet defined
+   while ( editID.isEmpty() )
+   {
+      QString now  =  QDateTime::currentDateTime()
+                      .toUTC().toString( "yyMMddhhmm" );
+
+      bool ok;
+      QString msg = tr( "The base Edit ID for this edit session is <b>" )
+         + now + "</b> .<br/>"
+         + tr( "You may add an optional suffix to further distinquish<br/>"
+               "the Edit ID. Use alphanumeric characters, underscores,<br/>"
+               "or hyphens (no spaces). Enter 0 to 10 suffix characters." );
+      sufx   = QInputDialog::getText( this, 
+         tr( "Create a unique session Edit ID" ),
+         msg,
+         QLineEdit::Normal,
+         sufx,
+         &ok );
+      
+      if ( ! ok ) return;
+
+      sufx.remove( QRegExp( "[^\\w\\d_-]" ) );
+      editID = now + sufx;
+
+      if ( editID.length() > 20 )
+      {
+         QMessageBox::critical( this,
+            tr( "Text length error" ),
+            tr( "You entered %1 characters for the Edit ID suffix.\n"
+                "Re-enter, limiting length to 10 characters." )
+            .arg( sufx.length() ) );
+         editID.clear();
+         sufx = sufx.left( 10 );
+      }
+   }
+
+   int     ccx      = cb_triple->currentIndex();
+   int     wvx      = cb_lplot ->currentIndex();
+   int     daxst    = ccx * nwaveln;
+   int     dax      = daxst;
+   QString celchn   = celchns.at( ccx );
+   QString scell    = celchn.section( "/", 0, 0 ).simplified();
+   QString schan    = celchn.section( "/", 1, 1 ).simplified();
+   QString tripbase = scell + " / " + schan + " / ";
+DbgLv(1) << "EDT:WrMwl:  dax celchn" << dax << celchn;
+
+   QString filebase = files[ dax ].section( ".",  0, -6 )
+                    + "." + editID + "."
+                    + files[ dax ].section( ".", -5, -5 )
+                    + "." + scell + "." + schan + ".";
+
+   // Loop to output a file/db-record for each wavelength of the cell/channel
+
+DbgLv(1) << "EDT:WrMwl: files,wvlns.size" << files.size() << expc_wvlns.size();
+   for ( wvx = 0; wvx < expc_wvlns.size(); wvx++ )
+   {
+      QString swavl    = expc_wvlns[ wvx ];
+      QString triple   = tripbase + swavl;
+      QString filename = filebase + swavl + ".xml";
+DbgLv(1) << "EDT:WrMwl:  wvx triple" << wvx << triple << "filename" << filename;
+
+      dax              = daxst + rawc_wvlns.indexOf( swavl );
+DbgLv(1) << "EDT:WrMwl:   dax,editGUIDs.size" << dax << editGUIDs.size();
+      QString editGUID = editGUIDs[ dax ];
+
+      if ( editGUID.isEmpty() )
+      {
+         editGUID = US_Util::new_guid();
+         editGUIDs.replace( dax, editGUID );
+      }
+DbgLv(1) << "EDT:WrMwl:    editGUID" << editGUID;
+
+DbgLv(1) << "EDT:WrMwl:   dax,allData.size" << dax << allData.size();
+      QString rawGUID  = US_Util::uuid_unparse(
+            (unsigned char*)allData[ dax ].rawGUID );
+DbgLv(1) << "EDT:WrMwl:    rawGUID" << rawGUID;
+
+      // Output the edit XML file
+      int wrstat       = write_xml_file( filename, triple, editGUID, rawGUID );
+DbgLv(1) << "EDT:WrMwl:     write_xml_file stat" << wrstat;
+
+      if ( wrstat != 0 )
+         return;
+
+      if ( disk_controls->db() )
+      {
+         if ( dbP == NULL )
+         {
+            US_Passwd pw;
+            dbP          = new US_DB2( pw.getPasswd() );
+            if ( dbP == NULL  ||  dbP->lastErrno() != US_DB2::OK )
+            {
+               QMessageBox::warning( this, tr( "Connection Problem" ),
+                 tr( "Could not connect to database \n" ) + dbP->lastError() );
+               return;
+            }
+         }
+
+         QString editID   = editIDs[ dax ];
+
+         // Output the edit database record
+         wrstat     = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
+
+         if ( wrstat != 0 )
+            return;
+      }  // END:  DB output
+   }  // END:  wavelength-in-cellchannel loop
+DbgLv(1) << "EDT:WrMwl: DONE";
+}
+
+// Write edit xml file
+int US_Edit::write_xml_file( QString& fname, QString& triple,
+      QString& editGUID, QString& rawGUID )
+{
+   QFile efo( workingDir + fname );
+
+   if ( ! efo.open( QFile::WriteOnly | QFile::Text ) )
+   {
+      QMessageBox::information( this,
+            tr( "File write error" ),
+            tr( "Could not open the file\n" ) + workingDir + fname
+            + tr( "\n for writing.  Check your permissions." ) );
+      return 1;
+   }
+
+DbgLv(1) << "EDT:WrXml: IN: fname,triple,editGUID,rawGUID"
+ << fname << triple << editGUID << rawGUID;
+   QXmlStreamWriter xml( &efo );
+
+   xml.setAutoFormatting( true );
+   xml.writeStartDocument();
+   xml.writeDTD         ( "<!DOCTYPE UltraScanEdits>" );
+   xml.writeStartElement( "experiment" );
+   xml.writeAttribute   ( "type", expType );
+
+   // Write identification
+   xml.writeStartElement( "identification" );
+
+   xml.writeStartElement( "runid" );
+   xml.writeAttribute   ( "value", runID );
+   xml.writeEndElement  ();
+
+   xml.writeStartElement( "editGUID" );
+   xml.writeAttribute   ( "value", editGUID );
+   xml.writeEndElement  ();
+
+   xml.writeStartElement( "rawDataGUID" );
+   xml.writeAttribute   ( "value", rawGUID );
+   xml.writeEndElement  ();
+
+   xml.writeEndElement  ();  // identification
+
+   QStringList parts   = triple.contains( " / " ) ?
+                         triple.split( " / " ) :
+                         triple.split( "." );
+DbgLv(1) << "EDT:WrXml:  parts.size" << parts.size();
+
+   QString     cell    = parts[ 0 ];
+   QString     channel = parts[ 1 ];
+   QString     waveln  = parts[ 2 ];
+
+DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
+
+   xml.writeStartElement( "run" );
+   xml.writeAttribute   ( "cell",       cell    );
+   xml.writeAttribute   ( "channel",    channel );
+   xml.writeAttribute   ( "wavelength", waveln  );
+
+   // Write excluded scans
+   if ( data.scanData.size() > includes.size() )
+   {
+      xml.writeStartElement( "excludes" );
+
+      for ( int ii = 0; ii < data.scanData.size(); ii++ )
+      {
+         if ( ! includes.contains( ii ) )
+         {
+            xml.writeStartElement( "exclude" );
+            xml.writeAttribute   ( "scan", QString::number( ii ) );
+            xml.writeEndElement  ();
+         }
+      }
+
+      xml.writeEndElement  ();  // excludes
+   }
+
+   // Write edits
+   if ( ! changed_points.isEmpty() )
+   {
+      xml.writeStartElement( "edited" );
+
+      for ( int ii = 0; ii < changed_points.size(); ii++ )
+      {
+         Edits* e = &changed_points[ ii ];
+
+         for ( int jj = 0; jj < e->changes.size(); jj++ )
+         {
+            xml.writeStartElement( "edit" );
+            xml.writeAttribute   ( "scan",   QString::number( e->scan ) );
+            xml.writeAttribute   ( "radius",
+               QString::number( e->changes[ jj ].x(), 'f', 4 ) );
+            xml.writeAttribute   ( "value",
+               QString::number( e->changes[ jj ].y(), 'f', 4 ) );
+            xml.writeEndElement  ();
+         }
+      }
+
+      xml.writeEndElement  ();  // edited
+   }
+
+   // Write meniscus, range, plateau, baseline, odlimit
+   xml.writeStartElement( "parameters" );
+
+   if ( ! expIsEquil )
+   {  // non-Equilibrium
+      xml.writeStartElement( "meniscus" );
+      xml.writeAttribute   ( "radius",
+         QString::number( meniscus, 'f', 4 ) );
+      xml.writeEndElement  ();
+
+      if ( dataType == "IP" )
+      {
+         xml.writeStartElement( "air_gap" );
+         xml.writeAttribute   ( "left",
+            QString::number( airGap_left,      'f', 4 ) );
+         xml.writeAttribute   ( "right",
+            QString::number( airGap_right,     'f', 4 ) );
+         xml.writeAttribute   ( "tolerance",
+            QString::number( ct_gaps->value(), 'f', 4 ) );
+         xml.writeEndElement  ();
+      }
+
+      xml.writeStartElement( "data_range" );
+      xml.writeAttribute   ( "left",
+         QString::number( range_left,  'f', 4 ) );
+      xml.writeAttribute   ( "right",
+         QString::number( range_right, 'f', 4 ) );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "plateau" );
+      xml.writeAttribute   ( "radius",
+         QString::number( plateau,  'f', 4 ) );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "baseline" );
+      xml.writeAttribute   ( "radius",
+         QString::number( baseline, 'f', 4 ) );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "od_limit" );
+      xml.writeAttribute   ( "value",
+         QString::number( odlimit, 'f', 4 ) );
+      xml.writeEndElement  ();
+   }
+
+   else
+   {  // Equilibrium
+      if ( dataType == "IP" )
+      {
+         xml.writeStartElement( "air_gap" );
+         xml.writeAttribute   ( "left",
+            QString::number( airGap_left,      'f', 4 ) );
+         xml.writeAttribute   ( "right",
+            QString::number( airGap_right,     'f', 4 ) );
+         xml.writeAttribute   ( "tolerance",
+            QString::number( ct_gaps->value(), 'f', 4 ) );
+         xml.writeEndElement  ();
+      }
+
+      int jsd  = sd_offs[ triple_index ];
+      int ksd  = jsd + sd_knts[ triple_index ];
+
+      for ( int ii = jsd; ii < ksd; ii++ )
+      {
+         double speed     = sData[ ii ].speed;
+         int    sStart    = sData[ ii ].first_scan;
+         int    sCount    = sData[ ii ].scan_count;
+         double meniscus  = sData[ ii ].meniscus;
+         double dataLeft  = sData[ ii ].dataLeft;
+         double dataRight = sData[ ii ].dataRight;
+
+         xml.writeStartElement( "speed" );
+         xml.writeAttribute   ( "value",     QString::number( speed )  );
+         xml.writeAttribute   ( "scanStart", QString::number( sStart ) );
+         xml.writeAttribute   ( "scanCount", QString::number( sCount ) );
+
+         xml.writeStartElement( "meniscus" );
+         xml.writeAttribute   ( "radius", QString::number( meniscus, 'f', 4 ) );
+         xml.writeEndElement  ();  // meniscus
+
+         xml.writeStartElement( "data_range" );
+         xml.writeAttribute   ( "left",  QString::number( dataLeft,  'f', 4 ) );
+         xml.writeAttribute   ( "right", QString::number( dataRight, 'f', 4 ) );
+         xml.writeEndElement  ();  // data_range
+
+         xml.writeEndElement  ();  // speed
+      }
+   }
+ 
+   xml.writeEndElement  ();  // parameters
+
+   if ( ! pb_residuals->icon().isNull()  ||
+        ! pb_spikes->icon().isNull()     ||
+        invert == -1.0                   ||
+        floatingData )
+   {
+      xml.writeStartElement( "operations" );
+ 
+      // Write RI Noise
+      if ( ! pb_residuals->icon().isNull() )
+      {
+         xml.writeStartElement( "subtract_ri_noise" );
+         xml.writeAttribute   ( "order", QString::number( noise_order ) );
+         xml.writeEndElement  ();
+      }
+
+      // Write Remove Spikes
+      if ( ! pb_spikes->icon().isNull() )
+      {
+         xml.writeStartElement( "remove_spikes" );
+         xml.writeEndElement  ();
+      }
+
+      // Write Invert
+      if ( invert == -1.0 )
+      {
+         xml.writeStartElement( "invert" );
+         xml.writeEndElement  ();
+      }
+
+      // Write indication of floating data
+      if ( floatingData )
+      {
+         xml.writeStartElement( "floating_data" );
+         xml.writeEndElement  ();
+      }
+
+      xml.writeEndElement  ();  // operations
+   }
+
+   xml.writeEndElement  ();  // run
+   xml.writeEndElement  ();  // experiment
+   xml.writeEndDocument ();
+
+   efo.close();
+   return 0;
+}
+
+// Write edit database record
+int US_Edit::write_edit_db( US_DB2* dbP, QString& fname, QString& editGUID,
+      QString& editID, QString& rawGUID )
+{
+   int idEdit;
+
+   if ( dbP == NULL )
+   {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+         tr( "Could not connect to database \n" ) + dbP->lastError() );
+      return 1;
+   }
+
+   QStringList query( "get_rawDataID_from_GUID" );
+   query << rawGUID;
+   dbP->query( query );
+
+   if ( dbP->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning( this, 
+         tr( "AUC Data is not in DB" ),
+         tr( "Cannot save edit data to the database.\n"
+             "The associated AUC data is not present." ) );
+      return 2;
+   }
+
+   dbP->next();
+   QString rawDataID = dbP->value( 0 ).toString();
+
+
+   // Save edit file to DB
+   query.clear();
+
+   if ( editID.isEmpty() )
+   {
+      query << "new_editedData" << rawDataID << editGUID << runID
+            << fname << "";
+
+      dbP->query( query );
+
+      if ( dbP->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Database Problem" ),
+            tr( "Could not insert metadata into the database\n" ) + 
+                dbP->lastError() );
+
+         return 3;
+      }
+
+      idEdit   = dbP->lastInsertID();
+      editID   = QString::number( idEdit );
+      int dax  = editGUIDs.indexOf( editGUID );
+      editIDs.replace( dax, editID );
+   }
+
+   else
+   {
+      query << "update_editedData" << editID << rawDataID << editGUID
+            << runID << fname << "";
+      dbP->query( query );
+
+      if ( dbP->lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::warning( this, tr( "Database Problem" ),
+            tr( "Could not update metadata in the database \n" ) + 
+            dbP->lastError() );
+
+         return 4;
+      }
+
+      idEdit   = editID.toInt();
+   }
+
+   dbP->writeBlobToDB( workingDir + fname, "upload_editData", idEdit );
+
+   if ( dbP->lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning( this, tr( "Database Problem" ),
+         tr( "Could not insert edit xml data into database \n" ) + 
+         dbP->lastError() );
+      return 5;
+   }
+
+   return 0;
 }
 

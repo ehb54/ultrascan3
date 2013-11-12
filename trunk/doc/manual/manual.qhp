@@ -106,7 +106,9 @@
             <file>images/database.png</file>
            
             <file>us_edit.html</file>
+            <file>us_edit_mwl.html</file>
             <file>images/us_edit.png</file>
+            <file>images/us_edit_mwl.png</file>
 
             <file>advanced_config.html</file>
             <file>images/advanced_config.png</file>
