@@ -82,7 +82,7 @@ The modulation effects the exponential decay of a point scatterer extended from 
 
 The next three entries set some <b><i>Crysol</i></b> options (the first affects also the <b><i>SH-DB</i></b> method):<p>
 <b>SH/Crysol: Maximun order of harmonics</b> (default: <b>15</b>). Increase this number as the size of the structure grows (max for the current Crysol implementation: 40).<p> 
-<b>Crysol: Order of the Fibonacci grid</b> (default: <b>17</b>). Increase this number as the size of the structure grows (max for the current Crysol implementation: ??)<p>
+<b>Crysol: Order of the Fibonacci grid</b> (default: <b>17</b>). Increase this number as the size of the structure grows (max for the current Crysol implementation: 18)<p>
 <b>Crysol: Contrast of the hydration shell (e/A^3):</b> (default: <b>0.03 e/A<sup>3</sup></b>). Set this parameter to "0" if you want to run Crysol on a structure with explicit hydration waters.<p>
 Three checkboxes follow, still Crysol-related:<p>
 <i>Crysol: automatically load difference intensity</i> (default: <b>on</b>). After a Crysol computation, the difference intensity data will be loaded in the graphic window.<p>
@@ -266,7 +266,7 @@ Next come a series of checkboxes:<p>
 <i>Do not use experimental errors in Iq fits</i>. Every fitting by default is performed with SD weighting, which can be turned off by ticking this checkbox.(Default: <b>Off</b>).<p>
 </ul>
 
-The <b><i>Excluded volume SWH [A^3]</i></b> field allows entering a volume for the SAS hydration water different from the one utilized for the hydrodynamic computations (see the <a href="somo_misc.html"><b>US-SOMO Miscellaneous Options</b></a> help page). If the field is left blank, the hydrodynamic hydration water volume will be used.<p> 
+The <b><i>Excluded volume WAT [A^3]</i></b> field allows entering a volume for the SAS hydration water different from the one utilized for the hydrodynamic computations (see the <a href="somo_misc.html"><b>US-SOMO Miscellaneous Options</b></a> help page). If the field is left blank, the hydrodynamic hydration water volume will be used.<p> 
 The <b><i>Excluded volume scaling</i></b> field allows to modify by a % value the excluded volumes of the non-water atomic groups as tabulated in the <a href="somo-2.png">atom definition</a> table. <p>
 Pressing the <b><i>Clear remembered molecular weights</i></b> button will erase stored MW from the program's memory.<p>
 Finally, a different <i>q</i> range can be entered in the <b><i>I(q) curve q range for scaling, NNLS and best fit (Angstrom)</i></b> two fields. 
