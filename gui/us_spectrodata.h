@@ -14,25 +14,30 @@
 
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
 
-//! \brief Structure for values of each solution distribution point
+//! \brief Simple structure for essential values of each solution distribution point
 typedef struct solute_s
 {
-   double s;
-   double k;
-   double c;
-} Solute;
+   double s;    //!< sedimentation coefficient
+   double k;    //!< frictional ratio
+   double c;    //!< concentration
+   double d;    //!< diffusion coefficient
+   double w;    //!< molecular weight
+} S_Solute;
 
 //! \brief Class derived from QwtRasterData to supply QwtPlotSpectrogram data
 class US_SpectrogramData: public QwtRasterData
 {
-
 public:
 
+   //! \brief SpectroGram Data constructor
    US_SpectrogramData();
+   //! \brief SpectroGram Data constructor
    US_SpectrogramData( QwtDoubleRect& );
 
+   //! \brief Return a copy of SpectroGram Data
    virtual QwtRasterData *copy() const;
 
+   //! \brief Return the Z range (minimum,maximum pair)
    virtual QwtDoubleInterval range() const;
 
    /*! \brief Called to get data ranges and raster size in pixels
@@ -74,35 +79,35 @@ public:
    virtual double value( double, double ) const;
 
    /*! \brief Sets up the internal raster, based on a set of Solute points.
-       \param solu  The list of solution points for the current distribution.
+       \param solu  Pointer to list of solution points for the current distribution.
    */
-   void setRaster( QList< Solute >& );
+   void setRaster( QList< S_Solute >* );
 
 private:
 
-   QList< double > rdata;        // Raster data: z-values at each pixel
-   QwtDoubleRect   drecti;       // Data rectangle for x,y plot ranges
+   QList< double > rdata;        //!< Raster data: z-values at each pixel
+   QwtDoubleRect   drecti;       //!< Data rectangle for x,y plot ranges
 
-   double          xmin;         // X minimum
-   double          xmax;         // X maximum
-   double          xrng;         // X data range (xmax-xmin)
-   double          xinc;         // X increment (xreso-1)/xrng
-   double          ymin;         // Y minimum
-   double          ymax;         // Y maximum
-   double          yrng;         // Y data range (ymax-ymin)
-   double          yinc;         // Y increment (yreso-1)/xrng
-   double          zmin;         // Z minimum
-   double          zmax;         // Z maximum
-   double          zminr;        // Z minimum in raster w floor adjust
-   double          xreso;        // number of X pixels per scan
-   double          yreso;        // number of Y scans
-   double          resol;        // resolution parameter for Gaussian
-   double          zfloor;       // floor percent below z minimum
+   double          xmin;         //!< X minimum
+   double          xmax;         //!< X maximum
+   double          xrng;         //!< X data range (xmax-xmin)
+   double          xinc;         //!< X increment (xreso-1)/xrng
+   double          ymin;         //!< Y minimum
+   double          ymax;         //!< Y maximum
+   double          yrng;         //!< Y data range (ymax-ymin)
+   double          yinc;         //!< Y increment (yreso-1)/xrng
+   double          zmin;         //!< Z minimum
+   double          zmax;         //!< Z maximum
+   double          zminr;        //!< Z minimum in raster w floor adjust
+   double          xreso;        //!< number of X pixels per scan
+   double          yreso;        //!< number of Y scans
+   double          resol;        //!< resolution parameter for Gaussian
+   double          zfloor;       //!< floor percent below z minimum
 
-   int             nxpsc;        // integral number of X pixels per scan
-   int             nyscn;        // integral number of Y scans
-   int             nxypt;        // total number of X,Y points in raster
-   int             dbg_level;
+   int             nxpsc;        //!< integral number of X pixels per scan
+   int             nyscn;        //!< integral number of Y scans
+   int             nxypt;        //!< total number of X,Y points in raster
+   int             dbg_level;    //!< debug level value for conditional qDebug()
 };
 
 #endif

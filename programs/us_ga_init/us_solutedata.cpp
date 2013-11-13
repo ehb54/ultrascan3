@@ -12,7 +12,7 @@ bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
       ( ( buck1.s_min == buck2.s_min ) && ( buck1.ff0_min < buck2.ff0_min ) );
 }
 
-// Holds Solute data for US_GA_Initialize
+// Holds S_Solute data for US_GA_Initialize
 US_SoluteData::US_SoluteData( void ) : QObject()
 {
    bndx      = -1;
@@ -262,7 +262,7 @@ QString US_SoluteData::bucketLine(  int ix )
          .arg( buk.ff0_min ).arg( buk.ff0_max );
 }
 
-void US_SoluteData::setDistro( QList< Solute >* a_distro )
+void US_SoluteData::setDistro( QList< S_Solute >* a_distro )
 {
    distro  = a_distro;
 }
@@ -692,8 +692,8 @@ int US_SoluteData::buildDataMC( bool plot_s, bool plot_k )
    int         nsol = distro->size();
    int         nbuk = allbucks.size();
    bucket      buk;          // bucket record
-   Solute      d_sol;        // solute record
-   SimComp          simc;    // simulation component record
+   S_Solute    d_sol;        // solute record
+   SimComp     simc;         // simulation component record
    QList< SimComp > bcomp;   // sim component list
    qreal       bsmin;        // bucket vertices
    qreal       bsmax;

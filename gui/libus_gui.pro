@@ -56,6 +56,7 @@ HEADERS      = \
                us_sassoc.h              \
                us_select_edits.h        \
                us_solution_gui.h        \
+               us_spectrodata.h         \
                us_table.h               \
                us_widgets.h             \
                us_widgets_dialog.h      \
@@ -95,6 +96,7 @@ SOURCES      = \
                us_sassoc.cpp              \
                us_select_edits.cpp        \
                us_solution_gui.cpp        \
+               us_spectrodata.cpp         \
                us_table.cpp               \
                us_widgets.cpp             \
                us_widgets_dialog.cpp      \
