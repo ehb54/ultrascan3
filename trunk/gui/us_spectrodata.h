@@ -4,6 +4,7 @@
 
 #include <QtCore>
 
+#include <us_extern.h>
 #include <qwt_color_map.h>
 #include <qwt_plot_spectrogram.h>
 #include <qwt_scale_widget.h>
@@ -25,7 +26,7 @@ typedef struct solute_s
 } S_Solute;
 
 //! \brief Class derived from QwtRasterData to supply QwtPlotSpectrogram data
-class US_SpectrogramData: public QwtRasterData
+class US_GUI_EXTERN US_SpectrogramData : public QwtRasterData
 {
 public:
 
