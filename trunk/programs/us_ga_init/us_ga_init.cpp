@@ -29,8 +29,8 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// qSort LessThan method for Solute sort
-bool distro_lessthan( const Solute &solu1, const Solute &solu2 )
+// qSort LessThan method for S_Solute sort
+bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 {  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
    return ( solu1.s < solu2.s ) ||
           ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
@@ -1343,10 +1343,10 @@ void US_GA_Initialize::select_plot_wv()
 // load the solute distribution from a file or from DB
 void US_GA_Initialize::load_distro()
 {
-   Solute          sol_sk;
-   Solute          sol_wk;
-   Solute          sol_sv;
-   Solute          sol_wv;
+   S_Solute        sol_sk;
+   S_Solute        sol_wk;
+   S_Solute        sol_sv;
+   S_Solute        sol_wv;
    US_Model        model;
    QString         mdesc;
    bool            loadDB = dkdb_cntrls->db();
@@ -1760,7 +1760,7 @@ DbgLv(1) << "SL: autoassn plot_k" << plot_k;
 }
 
 // Sort distribution solute list by s,k values and optionally reduce
-void US_GA_Initialize::sort_distro( QList< Solute >& listsols,
+void US_GA_Initialize::sort_distro( QList< S_Solute >& listsols,
       bool reduce )
 {
    int sizi = listsols.size();
@@ -1776,9 +1776,9 @@ void US_GA_Initialize::sort_distro( QList< Solute >& listsols,
 
    if ( reduce )
    {     // skip any duplicates in sorted list
-      Solute sol1;
-      Solute sol2;
-      QList< Solute > reduced;
+      S_Solute sol1;
+      S_Solute sol2;
+      QList< S_Solute > reduced;
       sol1     = listsols.at( 0 );
       reduced.append( sol1 );    // output first entry
       int kdup = 0;
@@ -1913,8 +1913,8 @@ void US_GA_Initialize::getMouseUp( const QwtDoublePoint& p )
 
    if ( sx >= 0 )
    {  // for solute point nearest to rectangle midpoint
-      Solute sol  = sdistro->at( sx );
-      qreal bucc  = sol.c;  // get concentrate value
+      S_Solute sol  = sdistro->at( sx );
+      qreal bucc    = sol.c;  // get concentrate value
 
       // add the bucket entry and add a text box entry
       soludata->appendBucket( bucr, bucp, bucc, 2 );

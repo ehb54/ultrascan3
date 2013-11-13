@@ -64,9 +64,16 @@ void US_SpectrogramData::setRastRanges( double a_xres, double a_yres,
    drecti   = a_drecti;
 }
 
+// Set constant Z range for use with manual or looping displays
+void US_SpectrogramData::setZRange( double a_zmin, double a_zmax )
+{
+   zmin     = a_zmin;
+   zmax     = a_zmax;
+}
+
 // Method called by QwtPlotSpectrogram for each raster point.
 // This version gets or interpolates a point from the raster buffer.
-double US_SpectrogramData::value( double x, double y ) const
+double US_SpectrogramData::value(double x, double y) const
 {
    double rx  = ( x - xmin ) * xinc;   // real x pixel position
    double ry  = ( ymax - y ) * yinc;   // real y pixel position
@@ -107,13 +114,13 @@ double US_SpectrogramData::value( double x, double y ) const
 }
 
 // Set up raster values from solution distribution set.
-void US_SpectrogramData::setRaster( QList< Solute >* solu )
+void US_SpectrogramData::setRaster( QList< S_Solute >* solu )
 {
    double xval;
    double yval;
    double zval;
 
-   int nsol    = solu->size();         // number Solute points
+   int nsol    = solu->size();          // number Solute points
    if ( nsol < 1 )
       return;
 
@@ -121,8 +128,8 @@ void US_SpectrogramData::setRaster( QList< Solute >* solu )
    xmax        = drecti.right();
 
    if ( xmin == xmax )
-   {  // Auto-limits:  calculate x,y,z ranges
-      xmin        = solu->at( 0 ).s;   // initial minima,maxima
+   {  // Auto-limits:  calculate x,y ranges
+      xmin        = solu->at( 0 ).s;    // initial minima,maxima
       ymin        = solu->at( 0 ).k;
       zmin        = solu->at( 0 ).c;
       xmax        = xmin;
@@ -135,14 +142,13 @@ void US_SpectrogramData::setRaster( QList< Solute >* solu )
       {
          xval    = solu->at( ii ).s;
          yval    = solu->at( ii ).k;
-         zval    = solu->at( ii ).c;
-
-         xmin    = qMin( xmin, xval );
-         xmax    = qMax( xmax, xval );
-         ymin    = qMin( ymin, yval );
-         ymax    = qMax( ymax, yval );
-         zmin    = qMin( zmin, zval );
-         zmax    = qMax( zmax, zval );
+         zval    = solu->at( ii ).c; 
+         xmin    = qMin( xval, xmin );
+         xmax    = qMax( xval, xmax );
+         ymin    = qMin( yval, ymin );
+         ymax    = qMax( yval, ymax );
+         zmin    = qMin( zval, zmin );
+         zmax    = qMax( zval, zmax );
       }
 
       xrng    = xmax - xmin;          // initial ranges and pixel/data ratios
@@ -166,34 +172,22 @@ void US_SpectrogramData::setRaster( QList< Solute >* solu )
    {  // Given x,y ranges
       ymin    = drecti.top   ();
       ymax    = drecti.bottom();
-      zmin    = solu->at( 0 ).c;
-      zmax    = zmin;
-
-      // scan solute distribution for Z range
-
-      for ( int ii = 1; ii < nsol; ii++ )
-      {
-         zval    = solu->at( ii ).c;
-         zmin    = qMin( zmin, zval );
-         zmax    = qMax( zmax, zval );
-      }
    }
 
    if ( nsol == 1 )
    {
-      zmin      *= zfloor;
-      xmin      *= 0.90;
-      xmax      *= 1.10;
-      ymin      *= 0.90;
-      ymax      *= 1.10;
+      zmin   *= zfloor;
+      xmin   *= 0.90;
+      xmax   *= 1.10;
+      ymin   *= 0.90;
+      ymax   *= 1.10;
    }
 
    xrng    = xmax - xmin;
    yrng    = ymax - ymin;
    xinc    = ( xreso - 1.0 ) / xrng;
    yinc    = ( yreso - 1.0 ) / yrng;
-   zmin   -= ( ( zmax - zmin ) * zfloor );
-   zrng    = zmax - zmin;
+   zminr   = zmin - ( ( zmax - zmin ) * zfloor );
 
    // set bounding rectangle for raster plot
    setBoundingRect( QwtDoubleRect( xmin, ymin, xrng, yrng ) );
@@ -203,7 +197,7 @@ void US_SpectrogramData::setRaster( QList< Solute >* solu )
 
    for ( int ii = 0; ii < nxypt; ii++ )
    {
-      rdata.append( zmin );
+      rdata.append( zminr );
    }
 
    // Populate raster with z values derived from a Gaussian distribution
@@ -224,7 +218,6 @@ void US_SpectrogramData::setRaster( QList< Solute >* solu )
    int    hiyd  = nyscn / 4;
    nxd          = ( nxd < 10 ) ? 10 : ( ( nxd > hixd ) ? hixd : nxd );
    nyd          = ( nyd < 10 ) ? 10 : ( ( nyd > hiyd ) ? hiyd : nyd );
-DbgLv(2) << "SpecDat: nxd,nyd=" << nxd << "," << nyd;
 
    if ( resol != 100.0 )
    {
@@ -232,7 +225,7 @@ DbgLv(2) << "SpecDat: nxd,nyd=" << nxd << "," << nyd;
       {   // spread z values for each distribution point
          xval    = solu->at( kk ).s;                   // x,y,z
          yval    = solu->at( kk ).k;
-         zval    = solu->at( kk ).c - zmin;            // use z in 0,zrng range
+         zval    = solu->at( kk ).c - zminr;           // use z in 0,zrng range
 
          int rx  = (int)( ( xval - xmin ) * xinc );    // x index of this point
          int fx  = rx - nxd;                           // first reasonable x

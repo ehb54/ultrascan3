@@ -21,33 +21,37 @@
 #include "us_colorgradIO.h"
 #include "us_spectrodata.h"
 
+//!< \brief Distribution structure
 typedef struct distro_sys
 {
-   QList< Solute > sk_distro;
-   QList< Solute > wk_distro;
-   QList< Solute > sv_distro;
-   QList< Solute > wv_distro;
-   QList< Solute > sk_distro_zp;
-   QList< Solute > wk_distro_zp;
-   QList< Solute > sv_distro_zp;
-   QList< Solute > wv_distro_zp;
-   QwtLinearColorMap* colormap;
-   QString         run_name;
-   QString         analys_name;
-   QString         method;
-   QString         cmapname;
-   QString         editGUID;
-   int             distro_type;
-   bool            monte_carlo;
+   QList< S_Solute >   sk_distro;
+   QList< S_Solute >   wk_distro;
+   QList< S_Solute >   sv_distro;
+   QList< S_Solute >   wv_distro;
+   QList< S_Solute >   sk_distro_zp;
+   QList< S_Solute >   wk_distro_zp;
+   QList< S_Solute >   sv_distro_zp;
+   QList< S_Solute >   wv_distro_zp;
+   QwtLinearColorMap*  colormap;
+   QString             run_name;
+   QString             analys_name;
+   QString             method;
+   QString             cmapname;
+   QString             editGUID;
+   int                 distro_type;
+   bool                monte_carlo;
 } DisSys;
 
-bool distro_lessthan( const Solute&, const Solute& );
+//! \brief Less-than function for sorting distributions
+bool distro_lessthan( const S_Solute&, const S_Solute& );
 
+//! Class for displaying models in pseudo-3D
 class US_Pseudo3D_Combine : public US_Widgets
 {
    Q_OBJECT
 
    public:
+      //! \brief Pseudo-3D Combination constructor
       US_Pseudo3D_Combine();
 
    private:
@@ -181,7 +185,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       void stop(        void );
       void reset(       void );
       void set_limits(  void );
-      void sort_distro( QList< Solute >&, bool );
+      void sort_distro( QList< S_Solute >&, bool );
       void remove_distro( void );
 
       void help       ( void )

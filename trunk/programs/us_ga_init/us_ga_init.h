@@ -21,13 +21,17 @@
 #include "us_spectrodata.h"
 #include "us_solutedata.h"
 
-bool distro_lessthan( const Solute&, const Solute& );
+//! \brief Less-than function for sorting S_Solute values
+bool distro_lessthan( const S_Solute&, const S_Solute& );
 
+//! Class for displaying model distributions and selecting buckets
+//! for use in Genetic Algorithm analysis
 class US_GA_Initialize : public US_Widgets
 {
    Q_OBJECT
 
    public:
+      //! Genetic Algorithm Initialize constructor
       US_GA_Initialize();
 
    private:
@@ -103,11 +107,11 @@ class US_GA_Initialize : public US_Widgets
       QPen          cbukpen;
       QPen          pbukpen;
 
-      QList< Solute >  sk_distro;
-      QList< Solute >  wk_distro;
-      QList< Solute >  sv_distro;
-      QList< Solute >  wv_distro;
-      QList< Solute >* sdistro;
+      QList< S_Solute >  sk_distro;
+      QList< S_Solute >  wk_distro;
+      QList< S_Solute >  sv_distro;
+      QList< S_Solute >  wv_distro;
+      QList< S_Solute >* sdistro;
 
       QwtDoublePoint  p1;
       QwtDoublePoint  p2;
@@ -205,7 +209,7 @@ class US_GA_Initialize : public US_Widgets
       void reset(          void );
       void view(           void );
       void set_limits(     void );
-      void sort_distro( QList< Solute >&, bool );
+      void sort_distro( QList< S_Solute >&, bool );
       void setBucketPens(  void );
       void highlight_solute( QwtPlotCurve* );
       void highlight_solute( int );

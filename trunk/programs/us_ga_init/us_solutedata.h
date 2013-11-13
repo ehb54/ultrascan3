@@ -101,7 +101,7 @@ class US_SoluteData : public QObject
     QPointF  bucketPoint( int );
     QSizeF   bucketSize(  int );
     QString  bucketLine(  int );
-    void     setDistro( QList< Solute >* );
+    void     setDistro( QList< S_Solute >* );
     int      findNearestPoint( QPointF& );
     int      removeBucketAt( int );
     int      autoCalcBins( int, qreal, qreal );
@@ -119,7 +119,7 @@ class US_SoluteData : public QObject
     QList< bucket >            allbucks;
     QList< SimComp >           component;
     QList< QList< SimComp > >  MC_solute;
-    QList< Solute >*           distro;
+    QList< S_Solute >*         distro;
 
     int      bndx;
     int      dbg_level;

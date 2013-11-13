@@ -34,8 +34,8 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// qSort LessThan method for Solute sort
-bool distro_lessthan( const Solute &solu1, const Solute &solu2 )
+// qSort LessThan method for S_Solute sort
+bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
 {  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
    return ( solu1.s < solu2.s ) ||
           ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
@@ -434,7 +434,7 @@ void US_Pseudo3D_Combine::plot_data( void )
    // get current distro
    plot_xy        = ( plot_s ? 0 : 1 ) + ( plot_k ? 0 : 2 );
    DisSys* tsys   = (DisSys*)&system.at( curr_distr );
-   QList< Solute >* sol_d = &tsys->sk_distro;
+   QList< S_Solute >* sol_d = &tsys->sk_distro;
 
    if ( zpcent )
    {
@@ -501,8 +501,8 @@ void US_Pseudo3D_Combine::plot_data( void )
       for ( int ii = 0; ii < system.size(); ii++ )
       {
          DisSys* tsys = (DisSys*)&system.at( ii );
-         QList< Solute >* sol_z  = zpcent ? &tsys->sk_distro_zp
-                                          : &tsys->sk_distro;
+         QList< S_Solute >* sol_z  = zpcent ? &tsys->sk_distro_zp
+                                            : &tsys->sk_distro;
 
          for ( int jj = 0; jj < sol_z->size(); jj++ )
          {
@@ -517,7 +517,7 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
    spec_dat.setZRange( plt_zmin, plt_zmax );
-   spec_dat.setRaster( *sol_d );
+   spec_dat.setRaster( sol_d );
 
    d_spectrogram->attach( data_plot );
 
@@ -850,10 +850,10 @@ void US_Pseudo3D_Combine::load_distro()
 void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
 {
    DisSys      tsys;
-   Solute      sol_sk;
-   Solute      sol_wk;
-   Solute      sol_sv;
-   Solute      sol_wv;
+   S_Solute    sol_sk;
+   S_Solute    sol_wk;
+   S_Solute    sol_sv;
+   S_Solute    sol_wv;
 
    model.update_coefficients();          // fill in any missing coefficients
 
@@ -1318,7 +1318,7 @@ DbgLv(1) << "SL: setVal fmin fmax" << fmin << fmax;
 }
 
 // Sort distribution solute list by s,k values and optionally reduce
-void US_Pseudo3D_Combine::sort_distro( QList< Solute >& listsols,
+void US_Pseudo3D_Combine::sort_distro( QList< S_Solute >& listsols,
       bool reduce )
 {
    int sizi = listsols.size();
@@ -1334,10 +1334,10 @@ void US_Pseudo3D_Combine::sort_distro( QList< Solute >& listsols,
 
    if ( reduce )
    {     // skip any duplicates in sorted list
-      Solute sol1;
-      Solute sol2;
-      QList< Solute > reduced;
-      QList< Solute >::iterator jj = listsols.begin();
+      S_Solute sol1;
+      S_Solute sol2;
+      QList< S_Solute > reduced;
+      QList< S_Solute >::iterator jj = listsols.begin();
       sol1     = *jj;
       reduced.append( *jj );     // output first entry
       int kdup = 0;
