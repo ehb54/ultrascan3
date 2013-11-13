@@ -1,4 +1,4 @@
-//! \file us_adv_analysis.h
+//! \file us_adv_analysis_pc.h
 #ifndef US_ADV_ANALYSIS_H
 #define US_ADV_ANALYSIS_H
 
@@ -17,16 +17,18 @@
 
 //! \brief A class to provide a window for advanced analysis controls
 
-class US_AdvAnalysis : public US_WidgetsDialog
+class US_AdvAnalysisPc : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
-      //! \brief US_AdvAnalysis constructor
-      //! \param sim_par Pointer to simulation parameters
-      //! \param         Pointer to the parent of this widget
-      US_AdvAnalysis( QVector< ModelRecord >*, const int,
-                      US_SolveSim::DataSet*, QWidget* p = 0 );
+      //! \brief US_AdvAnalysisPc constructor
+      //! \param p_mrs   Pointer to model records vector
+      //! \param nth     Number of threads to use
+      //! \param ds0     Pointer to first dataset record
+      //! \param p       Pointer to the parent of this widget
+      US_AdvAnalysisPc( QVector< ModelRecord >*, const int,
+                        US_SolveSim::DataSet*, QWidget* p = 0 );
 
       //! \brief Return flag of advanced analysis state and possibly MC models
       //! \param p_mrecsmc  Pointer for return of MC model records if appropo
@@ -140,7 +142,7 @@ class US_AdvAnalysis : public US_WidgetsDialog
       void start_montecarlo( void );
       void set_gaussians   ( US_SolveSim::Simulation& );
       void apply_gaussians ( void );
-      void process_job     ( WorkerThread* );
+      void process_job     ( WorkerThreadPc* );
       void montecarlo_done ( void );
       void under_construct ( QString );
       void curve_isolutes  ( ModelRecord& );

@@ -1,5 +1,5 @@
-//! \file us_worker.cpp
-#include "us_worker.h"
+//! \file us_worker_pc.cpp
+#include "us_worker_pc.h"
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_astfem_math.h"
@@ -12,7 +12,7 @@
 
 
 // construct worker thread
-WorkerThread::WorkerThread( QObject* parent )
+WorkerThreadPc::WorkerThreadPc( QObject* parent )
    : QThread( parent )
 {
    dbg_level  = US_Settings::us_debug();
@@ -24,7 +24,7 @@ DbgLv(1) << "PC(WT): Thread created";
 }
 
 // worker thread destructor
-WorkerThread::~WorkerThread()
+WorkerThreadPc::~WorkerThreadPc()
 {
    //if ( solvesim != NULL )
    //   delete solvesim;
@@ -39,7 +39,7 @@ DbgLv(1) << "PC(WT):    Thread destroyed" << thrn;
 }
 
 // define work for a worker thread
-void WorkerThread::define_work( WorkPacket& workin )
+void WorkerThreadPc::define_work( WorkPacketPc& workin )
 {
    str_k       = workin.str_k;
    end_k       = workin.end_k;
@@ -76,7 +76,7 @@ DbgLv(1) << phdr << "DefWk: sols size" << solutes_i.size(); }
 }
 
 // get results of a completed worker thread
-void WorkerThread::get_result( WorkPacket& workout )
+void WorkerThreadPc::get_result( WorkPacketPc& workout )
 {
 DbgLv(1) << "PC(WT): get_result IN";
    workout.str_k    = str_k;
@@ -111,7 +111,7 @@ DbgLv(1) << "PC(WT): thr nn" << thrn << nn
 }
 
 // run the worker thread
-void WorkerThread::run()
+void WorkerThreadPc::run()
 {
 QString phdr = QString( "WT:RUN:%1:%2:" ).arg(taskx).arg(thrn);
    calc_residuals();              // do all the work here
@@ -125,13 +125,13 @@ DbgLv(1) << phdr << "   sig w_c";
 }
 
 // set a flag so that a worker thread will abort as soon as possible
-void WorkerThread::flag_abort()
+void WorkerThreadPc::flag_abort()
 {
    solvesim->abort_work();
 }
 
 // Do the real work of a thread:  solution from solutes set
-void WorkerThread::calc_residuals()
+void WorkerThreadPc::calc_residuals()
 {
 QString phdr = QString( "PC(WT):CR:%1:%2:" ).arg(taskx).arg(thrn);
 DbgLv(1) << phdr << "depth" << depth;
@@ -178,13 +178,13 @@ DbgLv(1) << phdr << "      sv.xnormsq" << sim_vals.xnormsq;
 }
 
 // Slot to forward a progress signal
-void WorkerThread::forward_progress( int steps )
+void WorkerThreadPc::forward_progress( int steps )
 {
    emit work_progress( steps );
    qApp->processEvents();
 }
 
-void WorkerThread::apply_alpha( const double alpha,
+void WorkerThreadPc::apply_alpha( const double alpha,
       QVector< double >* psv_nnls_a, QVector< double >* psv_nnls_b,
       const int nscans, const int npoints, const int nisols,
       double& variance, double& xnormsq )

@@ -1,4 +1,4 @@
-//! \file us_analysis_control.h
+//! \file us_analysis_control_pc.h
 #ifndef US_ANALYSIS_CTL_H
 #define US_ANALYSIS_CTL_H
 
@@ -13,16 +13,17 @@
 
 //! \brief A class to provide a window with 2DSA analysis controls
 
-class US_AnalysisControl : public US_WidgetsDialog
+class US_AnalysisControlPc : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
-      //! \brief US_AnalysisControl constructor
-      //! \param dat_exp Pointer to the experiment data
-      //! \param         Pointer to the parent of this widget
-      US_AnalysisControl( QList< US_SolveSim::DataSet* >&, QWidget* p = 0 );
+      //! \brief US_AnalysisControlPc constructor
+      //! \param dsets   Reference to the datasets list
+      //! \param p       Pointer to the parent of this widget
+      US_AnalysisControlPc( QList< US_SolveSim::DataSet* >&, QWidget* p = 0 );
 
+      //! \brief Public function to close an analysis control window
       void close( void );
 
    public slots:

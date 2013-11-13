@@ -1,4 +1,4 @@
-//! \file us_worker.h
+//! \file us_worker_pc.h
 #ifndef US_THREAD_WORKER_H
 #define US_THREAD_WORKER_H
 
@@ -17,56 +17,61 @@
 #endif
 
 //! \brief Worker thread task packet
-typedef struct work_packet_s
+typedef struct work_packet_pc_s
 {
-   int     thrn;       // thread number (1,...)
-   int     taskx;      // task index (0,...)
-   int     depth;      // depth (0->fit, 1->alpha-scan)
-   int     state;      // state flag (0-3 for READY,RUNNING,COMPLETE,ABORTED)
-   int     noisf;      // noise flag (0-3 for NONE,TI,RI,BOTH)
+   int     thrn;       //!< thread number (1,...)
+   int     taskx;      //!< task index (0,...)
+   int     depth;      //!< depth (0->fit, 1->alpha-scan)
+   int     state;      //!< state flag (0-3 for READY,RUNNING,COMPLETE,ABORTED)
+   int     noisf;      //!< noise flag (0-3 for NONE,TI,RI,BOTH)
 
-   double  str_k;      // model start k value
-   double  end_k;      // model end   k value
-   double  par1;       // sigmoid model par1 value
-   double  par2;       // sigmoid model par2 value
+   double  str_k;      //!< model start k value
+   double  end_k;      //!< model end   k value
+   double  par1;       //!< sigmoid model par1 value
+   double  par2;       //!< sigmoid model par2 value
 
-   QVector< US_Solute >     isolutes;    // input solutes
-   QVector< US_Solute >     csolutes;    // computed solutes
-   QVector< double >        ti_noise;    // computed ti noise
-   QVector< double >        ri_noise;    // computed ri noise
-   QVector< double >*       psv_nnls_a;  // pointer to nnls A matrix
-   QVector< double >*       psv_nnls_b;  // pointer to nnls B matrix
+   QVector< US_Solute >     isolutes;    //!< input solutes
+   QVector< US_Solute >     csolutes;    //!< computed solutes
+   QVector< double >        ti_noise;    //!< computed ti noise
+   QVector< double >        ri_noise;    //!< computed ri noise
+   QVector< double >*       psv_nnls_a;  //!< pointer to nnls A matrix
+   QVector< double >*       psv_nnls_b;  //!< pointer to nnls B matrix
 
-   QList< US_SolveSim::DataSet* > dsets;     // list of data set object pointers
-   US_SolveSim::Simulation        sim_vals;  // simulation values
+   QList< US_SolveSim::DataSet* > dsets; //!< list of data set object pointers
+   US_SolveSim::Simulation  sim_vals;    //!< simulation values
 
-} WorkPacket;
+} WorkPacketPc;
 
-//! \brief Worker thread to do actual work of PCSA analysis
+//! \brief Worker thread to do the actual computational work of PCSA analysis
 
-/*! \class WorkerThread
- *
-    This class is for each of the individual worker threads that do the
-    actual work of PCSA analysis.
-*/
-class WorkerThread : public QThread
+//! \class WorkerThreadPc
+//! This class is for each of the individual worker threads that do the
+//! actual computational work of PCSA analysis.
+class WorkerThreadPc : public QThread
 {
    Q_OBJECT
 
    public:
-      WorkerThread( QObject* parent = 0 );
-      ~WorkerThread();
+      WorkerThreadPc( QObject* parent = 0 );
+      ~WorkerThreadPc();
 
    public slots:
-      void define_work     ( WorkPacket& );
-      void get_result      ( WorkPacket& );
+      //! \brief Define the work packet for a worker thread
+      //! \param workin   Input work definition packet
+      void define_work     ( WorkPacketPc& );
+      //! \brief Get the results work packet of a completed worker thread
+      //! \param workout  Output work definition packet
+      void get_result      ( WorkPacketPc& );
+      //! \brief Run the worker thread
       void run             ();
+      //! \brief Set a flag so a worker thread will abort as soon as possible
       void flag_abort      ();
+      //! \brief Public slot to forward a progress signal
       void forward_progress( int  );
 
    signals:
       void work_progress   ( int );
-      void work_complete   ( WorkerThread* );
+      void work_complete   ( WorkerThreadPc* );
 
    private:
 
@@ -120,4 +125,3 @@ class WorkerThread : public QThread
 };
 
 #endif
-

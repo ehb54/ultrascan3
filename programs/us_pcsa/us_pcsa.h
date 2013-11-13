@@ -2,17 +2,16 @@
 #define US_PCSA_H
 
 #include <unistd.h>
-#include "us_plot_control.h"
-#include "us_analysis_control.h"
+#include "us_plot_control_pc.h"
+#include "us_analysis_control_pc.h"
 #include "us_noise_loader.h"
-#include "us_resplot.h"
+#include "us_resplot_pc.h"
 #include "us_mlplot.h"
 #include "us_model_record.h"
 #include "us_db2.h"
 #include "us_astfem_rsa.h"
 #include "us_model.h"
 #include "us_noise.h"
-//#include "us_model_loader.h"
 #include "us_editor.h"
 #include "us_math2.h"
 #include "us_run_details2.h"
@@ -64,10 +63,10 @@ class US_pcsa : public US_AnalysisBase2
       US_DataIO::RawData              sdata;
       US_DataIO::RawData              rdata;
 
-      QPointer< US_ResidPlot >        resplotd;
-      QPointer< US_PlotControl >      eplotcd;
-      QPointer< US_AnalysisControl >  analcd;
-      QPointer< US_MLinesPlot >       mlplotd;
+      QPointer< US_ResidPlotPc >        resplotd;
+      QPointer< US_PlotControlPc >      eplotcd;
+      QPointer< US_AnalysisControlPc >  analcd;
+      QPointer< US_MLinesPlot >         mlplotd;
 
       QVector< ModelRecord >          mrecs;
       QVector< ModelRecord >          mrecs_mc;

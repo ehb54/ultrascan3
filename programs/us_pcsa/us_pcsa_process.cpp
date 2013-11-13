@@ -169,7 +169,7 @@ DbgLv(1) << "PC:MEM(1): pav" << mempav << "ava tot use"
    // Queue all the tasks
    for ( int ktask = 0; ktask < nmtasks; ktask++ )
    {
-      WorkPacket wtask;
+      WorkPacketPc wtask;
       int    mm   = orig_sols[ ktask ].size() - 1;
       double strk = orig_sols[ ktask ][ 0  ].k;
       double endk = orig_sols[ ktask ][ mm ].k;
@@ -190,7 +190,7 @@ DbgLv(1) << "PC:MEM(1): pav" << mempav << "ava tot use"
    {
       wthreads << 0;
 
-      WorkPacket wtask = job_queue.takeFirst();
+      WorkPacketPc wtask = job_queue.takeFirst();
       submit_job( wtask, ii );
    }
 
@@ -240,7 +240,7 @@ void US_pcsaProcess::stop_fit()
    for ( int ii = 0; ii < wthreads.size(); ii++ )
    {
 DbgLv(1) << "StopFit test Thread" << ii + 1;
-      WorkerThread* wthr = wthreads[ ii ];
+      WorkerThreadPc* wthr = wthreads[ ii ];
 
       if ( wthr != 0  &&  wthr->isRunning() )
       {
@@ -550,19 +550,19 @@ DbgLv(1) << "PC:putMRs:  curvtype" << curvtype << "nkpts" << nkpts;
 }
 
 // Submit a job
-void US_pcsaProcess::submit_job( WorkPacket& wtask, int thrx )
+void US_pcsaProcess::submit_job( WorkPacketPc& wtask, int thrx )
 {
    wtask.thrn         = thrx + 1;
 
-   WorkerThread* wthr = new WorkerThread( this );
+   WorkerThreadPc* wthr = new WorkerThreadPc( this );
    wthreads[ thrx ]   = wthr;
    wkstates[ thrx ]   = WORKING;
    wtask.sim_vals.maxrss = maxrss;
 
    wthr->define_work( wtask );
 
-   connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
-            this, SLOT(   process_job(   WorkerThread* ) ) );
+   connect( wthr, SIGNAL( work_complete( WorkerThreadPc* ) ),
+            this, SLOT(   process_job(   WorkerThreadPc* ) ) );
 DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx
  << "sk ek" << wtask.str_k << wtask.end_k;
 
@@ -572,10 +572,10 @@ DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx
 // Slot to handle the results of a just-completed worker thread.
 // Accumulate computed solutes.
 // If there is more work to do, start a new thread for a new work unit.
-void US_pcsaProcess::process_job( WorkerThread* wthrd )
+void US_pcsaProcess::process_job( WorkerThreadPc* wthrd )
 {
    if ( abort )  return;
-   WorkPacket wresult;
+   WorkPacketPc wresult;
 
    wthrd->get_result( wresult );   // get results of thread task
    int thrn   = wresult.thrn;      // thread number of task
@@ -682,7 +682,7 @@ DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx orecx" << taskx << orecx
       while ( ! job_queue.isEmpty() &&
               ( thrx = wkstates.indexOf( READY ) ) >= 0 )
       {
-         WorkPacket wtask = next_job();
+         WorkPacketPc wtask = next_job();
 
          submit_job( wtask, thrx );
          kstask++;                       // Bump count of started worker threads
@@ -713,7 +713,7 @@ if (dbg_level>0) {
 }
 
 // Build a task and add it to the queue
-void US_pcsaProcess::queue_task( WorkPacket& wtask, double strk, double endk,
+void US_pcsaProcess::queue_task( WorkPacketPc& wtask, double strk, double endk,
       int taskx, int noisf, QVector< US_Solute > isolutes )
 {
    wtask.thrn     = 0;             // thread number (none while queued)
@@ -760,9 +760,9 @@ QString US_pcsaProcess::pmessage_head()
 }
 
 // Get next job from queue, insuring we get the lowest depth
-WorkPacket US_pcsaProcess::next_job()
+WorkPacketPc US_pcsaProcess::next_job()
 {
-   WorkPacket wtask;
+   WorkPacketPc wtask;
    if ( job_queue.size() == 0 )  return wtask;
 
    int jobx    = 0;
@@ -2191,7 +2191,7 @@ DbgLv(1) << "RF: (1)maxrss" << maxrss;
    // Queue all the tasks
    for ( int ktask = 0; ktask < nmtasks; ktask++ )
    {
-      WorkPacket wtask;
+      WorkPacketPc wtask;
       int    mm   = orig_sols[ ktask ].size() - 1;
       double strk = orig_sols[ ktask ][ 0  ].k;
       double endk = orig_sols[ ktask ][ mm ].k;
@@ -2212,7 +2212,7 @@ DbgLv(1) << "RF: (1)maxrss" << maxrss;
    {
       wthreads << 0;
 
-      WorkPacket wtask = job_queue.takeFirst();
+      WorkPacketPc wtask = job_queue.takeFirst();
       submit_job( wtask, ii );
       int mempav = US_Memory::memory_profile();
 DbgLv(1) << "PC:MEM: (5)PcAvail" << mempav;

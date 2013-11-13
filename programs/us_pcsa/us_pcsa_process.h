@@ -13,7 +13,7 @@
 #include "us_noise.h"
 #include "us_db2.h"
 #include "us_solute.h"
-#include "us_worker.h"
+#include "us_worker_pc.h"
 #include "us_model_record.h"
 
 #ifndef DbgLv
@@ -117,8 +117,8 @@ private:
 
       long int max_rss( void );
 
-      QList< WorkerThread* >     wthreads;   // worker threads
-      QList< WorkPacket >        job_queue;  // job queue
+      QList< WorkerThreadPc* >   wthreads;   // worker threads
+      QList< WorkPacketPc >      job_queue;  // job queue
 
       QVector< ModelRecord >     mrecs;      // model records for each task
 
@@ -182,17 +182,17 @@ private:
       QTime      timer;        // timer for elapsed time measure
 
    private slots:
-      void queue_task      ( WorkPacket&, double, double,
+      void queue_task      ( WorkPacketPc&, double, double,
                              int, int, QVector< US_Solute > );
       int  slmodels        ( int, double, double, double, double, int, int );
       int  sigmodels       ( int, double, double, double, double, int, int );
-      void process_job     ( WorkerThread* );
+      void process_job     ( WorkerThreadPc* );
       void process_fxfinal ( ModelRecord&  );
-      void submit_job      ( WorkPacket&, int );
+      void submit_job      ( WorkPacketPc&, int );
       void free_worker     ( int  );
       void model_statistics( QVector< ModelRecord >&, QStringList& );
       QString pmessage_head( void );
-      WorkPacket next_job  ( void );
+      WorkPacketPc next_job( void );
       void LevMarq_fit     ( void );
       void compute_final   ( void );
       void elite_limits    ( QVector< ModelRecord >&, double&, double&,

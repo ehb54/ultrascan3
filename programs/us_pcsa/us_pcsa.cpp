@@ -5,8 +5,8 @@
 
 #include "us_pcsa.h"
 #include "us_resids_bitmap.h"
-#include "us_plot_control.h"
-#include "us_analysis_control.h"
+#include "us_plot_control_pc.h"
+#include "us_analysis_control_pc.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -752,7 +752,7 @@ void US_pcsa::open_resplot()
    else
       rbd_pos  = this->pos() + QPoint(  100, 100 );
 
-   resplotd = new US_ResidPlot( this );
+   resplotd = new US_ResidPlotPc( this );
    resplotd->move( rbd_pos );
    resplotd->setVisible( true );
    connect( resplotd, SIGNAL( destroyed   ( QObject *) ),
@@ -770,7 +770,7 @@ void US_pcsa::open_3dplot()
    else
       epd_pos  = this->pos() + QPoint(  400, 200 );
 
-   eplotcd = new US_PlotControl( this, &model );
+   eplotcd = new US_PlotControlPc( this, &model );
    eplotcd->move( epd_pos );
    eplotcd->show();
    connect( eplotcd,  SIGNAL( destroyed   ( QObject *) ),
@@ -844,7 +844,7 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
    else
       acd_pos  = this->pos() + QPoint(  500,  50 );
 
-   analcd  = new US_AnalysisControl( dsets, this );
+   analcd  = new US_AnalysisControlPc( dsets, this );
    analcd->move( acd_pos );
    analcd->show();
    connect( analcd,   SIGNAL( destroyed   ( QObject *) ),
