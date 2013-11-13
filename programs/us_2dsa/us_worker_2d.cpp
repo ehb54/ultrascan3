@@ -1,5 +1,5 @@
-//! \file us_worker.cpp
-#include "us_worker.h"
+//! \file us_worker_2d.cpp
+#include "us_worker_2d.h"
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_astfem_math.h"
@@ -12,7 +12,7 @@
 
 
 // construct worker thread
-WorkerThread::WorkerThread( QObject* parent )
+WorkerThread2D::WorkerThread2D( QObject* parent )
    : QThread( parent )
 {
    dbg_level  = US_Settings::us_debug();
@@ -23,7 +23,7 @@ DbgLv(1) << "2P(WT): Thread created";
 }
 
 // worker thread destructor
-WorkerThread::~WorkerThread()
+WorkerThread2D::~WorkerThread2D()
 {
    //if ( solvesim != NULL )
    //   delete solvesim;
@@ -38,7 +38,7 @@ DbgLv(1) << "2P(WT):    Thread destroyed" << thrn;
 }
 
 // define work for a worker thread
-void WorkerThread::define_work( WorkPacket& workin )
+void WorkerThread2D::define_work( WorkPacket2D& workin )
 {
 
    llim_s      = workin.ll_s;
@@ -71,7 +71,7 @@ void WorkerThread::define_work( WorkPacket& workin )
 }
 
 // get results of a completed worker thread
-void WorkerThread::get_result( WorkPacket& workout )
+void WorkerThread2D::get_result( WorkPacket2D& workout )
 {
    workout.ll_s     = llim_s;
    workout.ll_k     = llim_k;
@@ -96,7 +96,7 @@ DbgLv(1) << "2P(WT): thr nn" << thrn << nn << "out sol0 solk soln"
 }
 
 // run the worker thread
-void WorkerThread::run()
+void WorkerThread2D::run()
 {
 
    calc_residuals();              // do all the work here
@@ -108,13 +108,13 @@ void WorkerThread::run()
 }
 
 // set a flag so that a worker thread will abort as soon as possible
-void WorkerThread::flag_abort()
+void WorkerThread2D::flag_abort()
 {
    solvesim->abort_work();
 }
 
 // Do the real work of a thread:  solution from solutes set
-void WorkerThread::calc_residuals()
+void WorkerThread2D::calc_residuals()
 {
 
    if ( typeref == (-2) )
@@ -144,13 +144,13 @@ void WorkerThread::calc_residuals()
 }
 
 // Slot to forward a progress signal
-void WorkerThread::forward_progress( int steps )
+void WorkerThread2D::forward_progress( int steps )
 {
    emit work_progress( steps );
 }
 
 // Do thread work for model-ratio:  solution from single model, find ratio
-void WorkerThread::calc_resids_ratio()
+void WorkerThread2D::calc_resids_ratio()
 {
    dset_wk                    = *dsets[ 0 ];
    US_SolveSim::DataSet* dset = &dset_wk;

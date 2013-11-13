@@ -22,7 +22,7 @@ class US_RpScan : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      //! \param mr The best model record from initial scan
+      //! \brief Regularization Parameter Scan constructor
       US_RpScan( QList< US_SolveSim::DataSet* >&, ModelRecord&, int&,
                  double&, QWidget* p = 0 );
 

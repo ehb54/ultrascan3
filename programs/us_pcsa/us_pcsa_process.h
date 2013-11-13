@@ -46,8 +46,8 @@ class US_pcsaProcess : public QObject
       //! \param sul     s upper limit
       //! \param kll     k lower limit
       //! \param kul     k upper limit
-      //! \param kin     k increment
-      //! \param res     resolution == line points count
+      //! \param nkp     number of k points (variations)
+      //! \param res     resolution == line points count (model solutes)
       //! \param typ     curve type (0->straight lines)
       //! \param nth     number of threads
       //! \param noi     noise flag: 0-3 for none|ti|ri|both
@@ -63,15 +63,15 @@ class US_pcsaProcess : public QObject
       void final_fit( double );
 
       //! \brief Get results upon completion of all refinements
-      //! \param da_sim  Calculated simulation data
-      //! \param da_res  Residuals data (exper - simul)
-      //! \param da_mdl  Composite model
-      //! \param da_tin  Time-invariant noise (or null)
-      //! \param da_rin  Radially-invariant noise (or null)
-      //! \param bm_ndx  Best model index
-      //! \param report  Mrecs report stringlist
-      //! \param mrecs   Model record vector
-      //! \returns       Success flag:  true if successful
+      //! \param da_sim    Calculated simulation data
+      //! \param da_res    Residuals data (exper - simul)
+      //! \param da_mdl    Composite model
+      //! \param da_tin    Time-invariant noise (or null)
+      //! \param da_rin    Radially-invariant noise (or null)
+      //! \param bm_ndx    Best model index
+      //! \param modstats  Mrecs report stringlist
+      //! \param p_mrecs   Model record vector
+      //! \returns         Success flag:  true if successful
       bool get_results( US_DataIO::RawData*, US_DataIO::RawData*,
                         US_Model*, US_Noise*, US_Noise*, int&,
                         QStringList&, QVector< ModelRecord >& );
@@ -81,11 +81,11 @@ class US_pcsaProcess : public QObject
       void get_mrec( ModelRecord& );
 
       //! \brief Replace best mrec in internal mrecs list
-      //! \param p_mrec  Model record
+      //! \param a_mrec  Model record
       void put_mrec( ModelRecord& );
 
       //! \brief Replace internal mrecs list
-      //! \param p_mrecs Model records list
+      //! \param a_mrecs Model records list
       void put_mrecs( QVector< ModelRecord >& );
 
       //! \brief Stop a fit that is in progress

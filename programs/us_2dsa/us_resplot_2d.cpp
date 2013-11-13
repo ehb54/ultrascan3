@@ -1,6 +1,6 @@
-//! \file us_resplot.cpp
+//! \file us_resplot_2d.cpp
 
-#include "us_resplot.h"
+#include "us_resplot_2d.h"
 #include "us_2dsa.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -10,7 +10,7 @@
 #include <qwt_legend.h>
 
 // constructor:  residuals plot widget
-US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
+US_ResidPlot2D::US_ResidPlot2D( QWidget* parent = 0 )
    : US_WidgetsDialog( 0, 0 )
 {
    // lay out the GUI
@@ -139,7 +139,7 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    connect( pb_close,  SIGNAL( clicked()   ),
             this,      SLOT( close_all()   ) );
 
-   // get data pointers from parent of parent
+   // get data pointers from parent widget
 
    have_ed   = false;
    have_sd   = false;
@@ -147,11 +147,11 @@ US_ResidPlot::US_ResidPlot( QWidget* p = 0 )
    have_ri   = false;
    have_bm   = false;
    skip_plot = true;
-DbgLv(1) << "RP: P" << ( p != 0 );
+DbgLv(1) << "RP: P" << ( parent != 0 );
 
-   if ( p )
+   if ( parent )
    {
-      US_2dsa*  mainw = (US_2dsa*)p;
+      US_2dsa*  mainw = (US_2dsa*)parent;
       edata           = mainw->mw_editdata();
       sdata           = mainw->mw_simdata();
       ti_noise        = mainw->mw_ti_noise();
@@ -194,7 +194,7 @@ DbgLv(1) << "RP:edata  " << have_ed;
 }
 
 // plot-experimental-data box [un]checked
-void US_ResidPlot::pedaCheck( bool chkd )
+void US_ResidPlot2D::pedaCheck( bool chkd )
 {
    if ( chkd )
    {  // box is being checked:  sub boxes enabled if data present
@@ -212,19 +212,19 @@ void US_ResidPlot::pedaCheck( bool chkd )
 }
 
 // subtract-ti-noise box [un]checked
-void US_ResidPlot::stinCheck( bool )
+void US_ResidPlot2D::stinCheck( bool )
 {
    plot_data();
 }
 
 // subtract-ri-noise box [un]checked
-void US_ResidPlot::srinCheck( bool )
+void US_ResidPlot2D::srinCheck( bool )
 {
    plot_data();
 }
 
 // plot-simulation-data box [un]checked
-void US_ResidPlot::psdaCheck( bool chkd )
+void US_ResidPlot2D::psdaCheck( bool chkd )
 {
    if ( chkd )
    {  // box is being checked:  sub boxes enabled if data present
@@ -242,19 +242,19 @@ void US_ResidPlot::psdaCheck( bool chkd )
 }
 
 // add-ti-noise box [un]checked
-void US_ResidPlot::atinCheck( bool )
+void US_ResidPlot2D::atinCheck( bool )
 {
    plot_data();
 }
 
 // add-ri-noise box [un]checked
-void US_ResidPlot::arinCheck( bool )
+void US_ResidPlot2D::arinCheck( bool )
 {
    plot_data();
 }
 
 // plot-residuals  box [un]checked
-void US_ResidPlot::presCheck( bool chkd )
+void US_ResidPlot2D::presCheck( bool chkd )
 {
    skip_plot = true;
 
@@ -271,7 +271,7 @@ void US_ResidPlot::presCheck( bool chkd )
 }
 
 // plot-ti-noise box [un]checked
-void US_ResidPlot::ptinCheck( bool chkd )
+void US_ResidPlot2D::ptinCheck( bool chkd )
 {
    skip_plot = true;
 
@@ -288,7 +288,7 @@ void US_ResidPlot::ptinCheck( bool chkd )
 }
 
 // plot-ri-noise box [un]checked
-void US_ResidPlot::prinCheck( bool chkd )
+void US_ResidPlot2D::prinCheck( bool chkd )
 {
    skip_plot = true;
 
@@ -305,7 +305,7 @@ void US_ResidPlot::prinCheck( bool chkd )
 }
 
 // plot-random-noise box [un]checked
-void US_ResidPlot::pranCheck( bool chkd )
+void US_ResidPlot2D::pranCheck( bool chkd )
 {
    skip_plot = true;
 
@@ -322,7 +322,7 @@ void US_ResidPlot::pranCheck( bool chkd )
 }
 
 // show-residual-bitmap box [un]checked
-void US_ResidPlot::srbmCheck( bool chkd )
+void US_ResidPlot2D::srbmCheck( bool chkd )
 {
    if ( chkd )
    {  // bitmap checked:  replot to possibly build new map
@@ -338,7 +338,7 @@ void US_ResidPlot::srbmCheck( bool chkd )
 }
 
 // close button clicked
-void US_ResidPlot::close_all()
+void US_ResidPlot2D::close_all()
 {
    if ( resbmap != 0 )
    {
@@ -349,7 +349,7 @@ void US_ResidPlot::close_all()
 }
 
 // plot the data
-void US_ResidPlot::plot_data()
+void US_ResidPlot2D::plot_data()
 {
    if ( skip_plot )  // avoid redundant successive calls
       return;
@@ -360,7 +360,7 @@ void US_ResidPlot::plot_data()
 }
 
 // plot the experimental data
-void US_ResidPlot::plot_edata()
+void US_ResidPlot2D::plot_edata()
 {
    data_plot1->detachItems();
    data_plot1->clear();
@@ -515,7 +515,7 @@ void US_ResidPlot::plot_edata()
 }
 
 // plot the residual data
-void US_ResidPlot::plot_rdata()
+void US_ResidPlot2D::plot_rdata()
 {
    data_plot2->detachItems();
    data_plot2->clear();
@@ -782,7 +782,7 @@ void US_ResidPlot::plot_rdata()
 }
 
 // react to residual bitmap having been closed
-void US_ResidPlot::resids_closed()
+void US_ResidPlot2D::resids_closed()
 {
 DbgLv(1) << "Resids BitMap Closed!!!";
    resbmap = 0;

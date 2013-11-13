@@ -1,4 +1,4 @@
-//! \file us_advanced.h
+//! \file us_advanced_fem.h
 #ifndef US_ADVANCED_H
 #define US_ADVANCED_H
 
@@ -13,15 +13,17 @@
 
 //! \brief A class to provide a window for advanced analysis controls
 
-class US_Advanced : public US_WidgetsDialog
+class US_AdvancedFem : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
-      //! \brief US_Advanced constructor
-      //! \param model Pointer to model
-      //! \param       Pointer to the parent of this widget
-      US_Advanced( US_Model*, QMap< QString, QString>&, QWidget* p = 0 );
+      //! \brief US_AdvancedFem constructor
+      //! \param amodel   Pointer to model
+      //! \param adv_vals Reference to advanced values map
+      //! \param p        Pointer to the parent of this widget
+      US_AdvancedFem( US_Model*, QMap< QString, QString>&,
+                      QWidget* p = 0 );
 
    private:
       US_Model*                 model;

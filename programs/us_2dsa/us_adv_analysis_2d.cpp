@@ -1,20 +1,20 @@
-//! \file us_adv_analysis.cpp
+//! \file us_adv_analysis_2d.cpp
 
 #include "us_2dsa.h"
-#include "us_adv_analysis.h"
+#include "us_adv_analysis_2d.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
 #include <qwt_legend.h>
 
 // constructor:  enhanced plot control widget
-US_AdvAnalysis::US_AdvAnalysis( US_SimulationParameters* sim_par,
+US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
     bool& loadDB, QWidget* p ) : US_WidgetsDialog( p, 0 ), loadDB( loadDB )
 {
    sparms         = sim_par;
    parentw        = p;
 
-   setObjectName( "US_AdvAnalysis" );
+   setObjectName( "US_AdvAnalysis2D" );
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
 
@@ -253,7 +253,7 @@ qDebug() << "Post-resize size" << size();
 }
 
 // public slot to get dialog parameters
-void US_AdvAnalysis::get_parameters(
+void US_AdvAnalysis2D::get_parameters(
    int&  rtype, double& rtpar1, double& rtpar2, double& rtpar3,
    US_Model& modpar, bool& reg, double& repar1 )
 {
@@ -303,7 +303,7 @@ void US_AdvAnalysis::get_parameters(
 }
 
 // enable/disable optimize counters based on chosen method
-void US_AdvAnalysis::optimize_options()
+void US_AdvAnalysis2D::optimize_options()
 {
    ct_grrefine->setEnabled( ck_unifgr->isChecked() );
    //ct_mciters ->setEnabled( ck_mcarlo->isChecked() );
@@ -318,7 +318,7 @@ void US_AdvAnalysis::optimize_options()
 }
 
 // uncheck optimize options other than one just checked
-void US_AdvAnalysis::uncheck_optimize( int ckflag )
+void US_AdvAnalysis2D::uncheck_optimize( int ckflag )
 {
    if ( ckflag != 1 ) ck_unifgr->setChecked( false );
    if ( ckflag != 2 ) ck_locugr->setChecked( false );
@@ -328,13 +328,13 @@ void US_AdvAnalysis::uncheck_optimize( int ckflag )
 }
 
 // handle band forming toggled
-void US_AdvAnalysis::checkBandForm( bool checked )
+void US_AdvAnalysis2D::checkBandForm( bool checked )
 {
    ct_bandload->setEnabled( checked );
 }
 
 // handle uniform grid checked
-void US_AdvAnalysis::checkUniGrid(  bool checked )
+void US_AdvAnalysis2D::checkUniGrid(  bool checked )
 {
    if ( checked )
    {
@@ -354,31 +354,31 @@ qDebug() << "checkuni size" << size();
 }
 
 // handle local uniform grid checked
-void US_AdvAnalysis::checkLocalUni( bool checked )
+void US_AdvAnalysis2D::checkLocalUni( bool checked )
 {
    if ( checked ) { uncheck_optimize( 2 ); optimize_options(); }
 }
 
 // handle random local grid checked
-void US_AdvAnalysis::checkRandLoc(  bool checked )
+void US_AdvAnalysis2D::checkRandLoc(  bool checked )
 {
    if ( checked ) { uncheck_optimize( 3 ); optimize_options(); }
 }
 
 // handle solute coalescing checked
-void US_AdvAnalysis::checkSoluCoal( bool checked )
+void US_AdvAnalysis2D::checkSoluCoal( bool checked )
 {
    if ( checked ) { uncheck_optimize( 4 ); optimize_options(); }
 }
 
 // handle clip lowest conc. solute checked
-void US_AdvAnalysis::checkClipLow(  bool checked )
+void US_AdvAnalysis2D::checkClipLow(  bool checked )
 {
    if ( checked ) { uncheck_optimize( 5 ); optimize_options(); }
 }
 
 // handle float meniscus position checked
-void US_AdvAnalysis::checkMeniscus( bool checked )
+void US_AdvAnalysis2D::checkMeniscus( bool checked )
 {
 qDebug() << "SET MENISRNG enabled" << checked;
    ct_menisrng->setEnabled(  checked );
@@ -388,7 +388,7 @@ qDebug() << "SET MENISRNG enabled" << checked;
 }
 
 // handle monte carlo iterations checked
-void US_AdvAnalysis::checkMonteCar( bool checked )
+void US_AdvAnalysis2D::checkMonteCar( bool checked )
 {
    ct_mciters ->setEnabled( checked );
    if ( checked )
@@ -396,7 +396,7 @@ void US_AdvAnalysis::checkMonteCar( bool checked )
 }
 
 // handle model-defined grid checked
-void US_AdvAnalysis::checkMdGrid( bool checked )
+void US_AdvAnalysis2D::checkMdGrid( bool checked )
 {
 qDebug() << "SET MdGrid enabled" << checked;
    int nsol = model.components.size();
@@ -424,7 +424,7 @@ qDebug() << "SET MdGrid enabled" << checked;
 }
 
 // handle model-defined ratios checked
-void US_AdvAnalysis::checkMdRatios( bool checked )
+void US_AdvAnalysis2D::checkMdRatios( bool checked )
 {
 qDebug() << "SET MdRatios enabled" << checked;
    int nsol = model.components.size();
@@ -452,13 +452,13 @@ qDebug() << "SET MdRatios enabled" << checked;
 }
 
 // handle regularization checked
-void US_AdvAnalysis::checkRegular(  bool checked )
+void US_AdvAnalysis2D::checkRegular(  bool checked )
 {
    ct_regufact->setEnabled( checked );
 }
 
 // accept button clicked
-void US_AdvAnalysis::select()
+void US_AdvAnalysis2D::select()
 {
    sparms->band_forming = rb_bandcp  ->isChecked();
    sparms->band_volume  = ct_bandload->value() / 1000.0;
@@ -475,7 +475,7 @@ void US_AdvAnalysis::select()
 }
 
 // Load-model button clicked
-void US_AdvAnalysis::load_model()
+void US_AdvAnalysis2D::load_model()
 {
    QString  mdesc  ( "" );
    QString  mfilter( "" );

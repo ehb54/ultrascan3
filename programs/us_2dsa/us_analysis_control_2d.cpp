@@ -1,8 +1,8 @@
-//! \file us_analysis_control.cpp
+//! \file us_analysis_control_2d.cpp
 
 #include "us_2dsa.h"
-#include "us_analysis_control.h"
-#include "us_adv_analysis.h"
+#include "us_analysis_control_2d.h"
+#include "us_adv_analysis_2d.h"
 #include "us_settings.h"
 #include "us_passwd.h"
 #include "us_db2.h"
@@ -12,7 +12,7 @@
 #include <qwt_legend.h>
 
 // constructor:  2dsa analysis controls widget
-US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
+US_AnalysisControl2D::US_AnalysisControl2D( QList< US_SolveSim::DataSet* >& dsets,
    bool& loadDB, QWidget* p ) : US_WidgetsDialog( p, 0 ),
    dsets( dsets ), loadDB( loadDB )
 {
@@ -22,7 +22,7 @@ US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
    grtype         = US_2dsaProcess::UGRID;
    baserss        = 0;
 
-   setObjectName( "US_AnalysisControl" );
+   setObjectName( "US_AnalysisControl2D" );
    setAttribute( Qt::WA_DeleteOnClose, true );
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
@@ -273,7 +273,7 @@ DbgLv(1) << "idealThrCout" << nthr;
 }
 
 // enable/disable optimize counters based on chosen method
-void US_AnalysisControl::optimize_options()
+void US_AnalysisControl2D::optimize_options()
 {
    ct_grrefine->setEnabled( ck_unifgr->isChecked() );
    ct_menisrng->setEnabled( ck_menisc->isChecked() );
@@ -294,7 +294,7 @@ void US_AnalysisControl::optimize_options()
 }
 
 // uncheck optimize options other than one just checked
-void US_AnalysisControl::uncheck_optimize( int ckflag )
+void US_AnalysisControl2D::uncheck_optimize( int ckflag )
 {
    if ( ckflag >  3 ) ck_unifgr->setChecked( false );
    if ( ckflag == 3 ) ck_menisc->setChecked( false );
@@ -302,7 +302,7 @@ void US_AnalysisControl::uncheck_optimize( int ckflag )
 }
 
 // handle uniform grid checked
-void US_AnalysisControl::checkUniGrid(  bool checked )
+void US_AnalysisControl2D::checkUniGrid(  bool checked )
 {
    if ( checked )
       uncheck_optimize( 1 );
@@ -335,7 +335,7 @@ void US_AnalysisControl::checkUniGrid(  bool checked )
 }
 
 // Handle custom grid checked
-void US_AnalysisControl::checkCusGrid(  bool checked )
+void US_AnalysisControl2D::checkCusGrid(  bool checked )
 {
    ck_unifgr ->setChecked( ! checked );
    ck_varvbar->setEnabled( ! checked );
@@ -350,7 +350,7 @@ void US_AnalysisControl::checkCusGrid(  bool checked )
 }
 
 // handle float meniscus position checkec
-void US_AnalysisControl::checkMeniscus( bool checked )
+void US_AnalysisControl2D::checkMeniscus( bool checked )
 {
    if ( checked )
       uncheck_optimize( 2 );
@@ -359,7 +359,7 @@ void US_AnalysisControl::checkMeniscus( bool checked )
 }
 
 // handle Monte Carlo checked
-void US_AnalysisControl::checkMonteCar( bool checked )
+void US_AnalysisControl2D::checkMonteCar( bool checked )
 {
    if ( checked )
       uncheck_optimize( 3 );
@@ -368,44 +368,44 @@ void US_AnalysisControl::checkMonteCar( bool checked )
 }
 
 // handle local uniform grid checked
-void US_AnalysisControl::checkLocalUni( bool checked )
+void US_AnalysisControl2D::checkLocalUni( bool checked )
 {
    if ( checked ) { uncheck_optimize( 4 ); optimize_options(); }
 }
 
 // handle random local grid checked
-void US_AnalysisControl::checkRandLoc(  bool checked )
+void US_AnalysisControl2D::checkRandLoc(  bool checked )
 {
    if ( checked ) { uncheck_optimize( 5 ); optimize_options(); }
 }
 
 // handle solute coalescing checked
-void US_AnalysisControl::checkSoluCoal( bool checked )
+void US_AnalysisControl2D::checkSoluCoal( bool checked )
 {
    if ( checked ) { uncheck_optimize( 6 ); optimize_options(); }
 }
 
 // handle clip lowest conc. solute checked
-void US_AnalysisControl::checkClipLow(  bool checked )
+void US_AnalysisControl2D::checkClipLow(  bool checked )
 {
    if ( checked ) { uncheck_optimize( 7 ); optimize_options(); }
 }
 
 // handle Regularization checked
-void US_AnalysisControl::checkRegular(  bool checked )
+void US_AnalysisControl2D::checkRegular(  bool checked )
 {
    if ( checked ) { uncheck_optimize( 8 ); optimize_options(); }
 }
 
 // handle iterations checked
-void US_AnalysisControl::checkIterate(  bool checked )
+void US_AnalysisControl2D::checkIterate(  bool checked )
 {
    ct_iters->setEnabled( checked );
    ct_iters->setValue( ( checked ? 3 : 1 ) );
 }
 
 // handle vary-vbar checked
-void US_AnalysisControl::checkVaryVbar(  bool checked )
+void US_AnalysisControl2D::checkVaryVbar(  bool checked )
 {
    lb_constff0->setVisible( checked );
    ct_constff0->setVisible( checked );
@@ -447,7 +447,7 @@ void US_AnalysisControl::checkVaryVbar(  bool checked )
 }
 
 // start fit button clicked
-void US_AnalysisControl::start()
+void US_AnalysisControl2D::start()
 {
    if ( parentw )
    {  // Get pointers to needed objects from the main
@@ -582,7 +582,7 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
 }
 
 // stop fit button clicked
-void US_AnalysisControl::stop_fit()
+void US_AnalysisControl2D::stop_fit()
 {
 DbgLv(1) << "AC:SF:StopFit";
    if ( processor != 0 )
@@ -618,7 +618,7 @@ DbgLv(1) << "AC:SF: processor deleted";
 }
 
 // Load Model button clicked
-void US_AnalysisControl::load_model()
+void US_AnalysisControl2D::load_model()
 {
    QString  mdesc( "" );
    QString  mfilter( "" );
@@ -674,27 +674,27 @@ void US_AnalysisControl::load_model()
 }
 
 // plot button clicked
-void US_AnalysisControl::plot()
+void US_AnalysisControl2D::plot()
 {
    US_2dsa* mainw = (US_2dsa*)parentw;
    mainw->analysis_done( 1 );
 }
 
 // save button clicked
-void US_AnalysisControl::save()
+void US_AnalysisControl2D::save()
 {
    US_2dsa* mainw = (US_2dsa*)parentw;
    mainw->analysis_done( 2 );
 }
 
 // Close button clicked
-void US_AnalysisControl::close_all()
+void US_AnalysisControl2D::close_all()
 {
    close();
 }
 
 // Reset memory estimate when grid steps, threads or repetitions changes
-void US_AnalysisControl::grid_change()
+void US_AnalysisControl2D::grid_change()
 {
    int    nsteps = (int)ct_nstepss ->value();         // # steps s
    int    nstepk = (int)ct_nstepsk ->value();         // # steps k
@@ -751,7 +751,7 @@ DbgLv(1) << "GC:  baserss tdata mdata ndatas nthrd" << baserss
 }
 
 // Adjust s-limit ranges when s-limit value changes
-void US_AnalysisControl::slim_change()
+void US_AnalysisControl2D::slim_change()
 {
    double loval  = ct_lolimits->value();
    double upval  = ct_uplimits->value();
@@ -789,7 +789,7 @@ void US_AnalysisControl::slim_change()
 }
 
 // Set k-upper-limit to lower when k grid points == 1
-void US_AnalysisControl::klim_change()
+void US_AnalysisControl2D::klim_change()
 {
    if ( ct_nstepsk->value() == 1.0 )
    {
@@ -798,7 +798,7 @@ void US_AnalysisControl::klim_change()
 }
 
 // Test for k-steps==1 when k-step value changes
-void US_AnalysisControl::kstep_change()
+void US_AnalysisControl2D::kstep_change()
 {
    if ( ct_nstepsk->value() == 1.0 )
    {  // Set up for C(s) parameters
@@ -824,7 +824,7 @@ void US_AnalysisControl::kstep_change()
 }
 
 // slot to handle progress update
-void US_AnalysisControl::update_progress( int ksteps )
+void US_AnalysisControl2D::update_progress( int ksteps )
 {
    ncsteps += ksteps;
 
@@ -839,7 +839,7 @@ DbgLv(2) << "UpdPr: ks ncs nts" << ksteps << ncsteps << nctotal;
 }
 
 // slot to handle updated progress message
-void US_AnalysisControl::progress_message( QString pmsg, bool append )
+void US_AnalysisControl2D::progress_message( QString pmsg, bool append )
 {
    QString amsg;
 
@@ -860,7 +860,7 @@ void US_AnalysisControl::progress_message( QString pmsg, bool append )
 }
 
 // Slot to handle resetting progress
-void US_AnalysisControl::reset_steps( int kcs, int nct )
+void US_AnalysisControl2D::reset_steps( int kcs, int nct )
 {
 DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
    ncsteps      = kcs;
@@ -873,7 +873,7 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
 }
 
 // slot to handle completed processing
-void US_AnalysisControl::completed_process( int stage )
+void US_AnalysisControl2D::completed_process( int stage )
 {
    bool alldone = ( stage == 9 );
 DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
@@ -951,12 +951,12 @@ DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
 }
 
 // slot to handle advanced analysis controls
-void US_AnalysisControl::advanced()
+void US_AnalysisControl2D::advanced()
 {
    US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
 DbgLv(1) << "Adv sparms.bf sect" << sparms->band_forming << sparms->cp_sector;
 
-   US_AdvAnalysis* aadiag = new US_AdvAnalysis( sparms, loadDB, this );
+   US_AdvAnalysis2D* aadiag = new US_AdvAnalysis2D( sparms, loadDB, this );
    if ( aadiag->exec() == QDialog::Accepted )
    {
              grtype = US_2dsaProcess::UGRID;
@@ -1032,7 +1032,7 @@ DbgLv(1) << "Adv REJECT";
 }
 
 // Output warning if need be about memory needs, return continue flag
-int US_AnalysisControl::memory_check( )
+int US_AnalysisControl2D::memory_check( )
 {
    const int pc_ava = 90;
    int status   = 0;

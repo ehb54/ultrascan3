@@ -1,4 +1,4 @@
-//! \file us_plot_control.h
+//! \file us_plot_control_fem.h
 #ifndef US_PLOT_CONTROL_H
 #define US_PLOT_CONTROL_H
 
@@ -6,7 +6,7 @@
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
-#include "us_resplot.h"
+#include "us_resplot_fem.h"
 #include "us_plot3d.h"
 #include "us_model.h"
 #include "us_plot.h"
@@ -14,17 +14,17 @@
 
 //! \brief A class to provide a window with enhanced plot controls
 
-class US_PlotControl : public US_WidgetsDialog
+class US_PlotControlFem : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
-      //! \brief US_PlotControl constructor
-      //! \param parent Pointer to the parent of this widget
-      //! \param model  Pointer to the model to be plotted
-      US_PlotControl( QWidget* p = 0, US_Model* = 0 );
+      //! \brief US_PlotControlFem constructor
+      //! \param p       Pointer to the parent of this widget
+      //! \param amodel  Pointer to the model to be plotted
+      US_PlotControlFem( QWidget* p = 0, US_Model* = 0 );
 
-      //! \brief Public function to return US_PlotControl's caller (e.g., US_Fematch)
+      //! \brief Public function to return US_PlotControlFem's caller (e.g., US_Fematch)
       //! \returns Pointer to the QWidget that created this plot control
       QWidget* caller( void );
 
