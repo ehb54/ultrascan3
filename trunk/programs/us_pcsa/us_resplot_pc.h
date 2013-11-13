@@ -1,4 +1,4 @@
-//! \file us_resplot.h
+//! \file us_resplot_pc.h
 #ifndef US_RESID_PLOT_H
 #define US_RESID_PLOT_H
 
@@ -15,13 +15,14 @@
 
 //! \brief A class to provide a window with experimental/residuals plots
 
-class US_ResidPlot : public US_WidgetsDialog
+class US_ResidPlotPc : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
-      //! \param parent A pointer to the parent widget of this one
-      US_ResidPlot( QWidget* );
+      //! \brief Residual Plot constructor
+      //! \param parent  A pointer to the parent widget of this one
+      US_ResidPlotPc( QWidget* );
 
    private:
       QHBoxLayout*  mainLayout;

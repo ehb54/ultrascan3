@@ -329,7 +329,7 @@ qDebug() << "A0: alpha" << calpha << "vari xnsq" << v_vari << v_xnsq
 
       for ( int jt = 0; jt < nthr; jt++ )
       {  // Submit the first tasks using available threads
-         WorkPacket wtask;
+         WorkPacketPc wtask;
          calpha               = alphas[ jt + 1 ];
          US_SolveSim::Simulation sim_vals;
          sim_vals.alpha       = calpha;
@@ -353,12 +353,12 @@ qDebug() << "A0: alpha" << calpha << "vari xnsq" << v_vari << v_xnsq
          wtask.csolutes.clear();
 DbgLv(1) << "ASC:   jt" << jt << "alpha" << calpha;
 
-         WorkerThread* wthr   = new WorkerThread( this );
+         WorkerThreadPc* wthr   = new WorkerThreadPc( this );
 
          wthr->define_work( wtask );
          wthreads << wthr;
-         connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
-                  this, SLOT(   process_job(   WorkerThread* ) ) );
+         connect( wthr, SIGNAL( work_complete( WorkerThreadPc* ) ),
+                  this, SLOT(   process_job(   WorkerThreadPc* ) ) );
          wthr->start();
          nasubm++;
 DbgLv(1) << "ASC:      defined: nasubm" << nasubm;
@@ -640,10 +640,10 @@ void US_RpScan::mouse( const QwtDoublePoint& p )
    data_plot1->replot();
 }
 
-void US_RpScan::process_job( WorkerThread* wthrd )
+void US_RpScan::process_job( WorkerThreadPc* wthrd )
 {
 DbgLv(1) << "SCPJ: IN";
-   WorkPacket wresult;
+   WorkPacketPc wresult;
    nacomp++;                            // Bump alphas-complete count
    b_progress->setValue( nacomp );
    wthrd->get_result( wresult );        // Get results of thread task
@@ -671,7 +671,7 @@ DbgLv(1) << "SCPJ:    ALL-DONE";
 
    if ( nasubm < nalpha )
    {  // We need to set up to submit another task
-      WorkPacket wtask     = wresult;
+      WorkPacketPc wtask     = wresult;
       wtask.taskx          = nasubm;
       wtask.sim_vals.alpha = alphas[ nasubm ];
       wtask.dsets          = dsets;
@@ -684,14 +684,14 @@ DbgLv(1) << "SCPJ:     new subm nnls_a nnls_b" << wtask.psv_nnls_a
       wtask.csolutes.clear();
 DbgLv(1) << "SCPJ:     new subm taskx alpha" << nasubm << wtask.sim_vals.alpha;
 
-//      WorkerThread* wthr   = new WorkerThread( this );
-      WorkerThread* wthr   = wthrd;
+//      WorkerThreadPc* wthr   = new WorkerThreadPc( this );
+      WorkerThreadPc* wthr   = wthrd;
 
       wthr->define_work( wtask );
 DbgLv(1) << "SCPJ:     new subm   work defined  sv_nnls_a" << wtask.psv_nnls_b;
       wthr->disconnect();
-      connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
-               this, SLOT(   process_job(   WorkerThread* ) ) );
+      connect( wthr, SIGNAL( work_complete( WorkerThreadPc* ) ),
+               this, SLOT(   process_job(   WorkerThreadPc* ) ) );
       wthr->start();
       nasubm++;
 DbgLv(1) << "SCPJ:     new subm   tsk started" << nasubm;

@@ -1,7 +1,7 @@
-//! \file us_plot_control.cpp
+//! \file us_plot_control_pc.cpp
 
 #include "us_pcsa.h"
-#include "us_plot_control.h"
+#include "us_plot_control_pc.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_constants.h"
@@ -9,12 +9,12 @@
 #include <qwt_legend.h>
 
 // constructor:  enhanced plot control widget
-US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
+US_PlotControlPc::US_PlotControlPc( QWidget* p, US_Model* amodel )
    : US_WidgetsDialog( p, 0 )
 {
    model          = amodel;
 
-   setObjectName( "US_PlotControl" );
+   setObjectName( "US_PlotControlPc" );
    setAttribute( Qt::WA_DeleteOnClose, true );
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
@@ -225,68 +225,68 @@ qDebug() << "PlCtl: ncomps   " << model->components.size();
 }
 
 // mw x box checked
-void US_PlotControl::xmwtCheck( bool chkd )
+void US_PlotControlPc::xmwtCheck( bool chkd )
 {
    checkSet( chkd, true,  0 );
 }
 // mw y box checked
-void US_PlotControl::ymwtCheck( bool chkd )
+void US_PlotControlPc::ymwtCheck( bool chkd )
 {
    checkSet( chkd, false, 0 );
 }
 // sedcoeff x box checked
-void US_PlotControl::xsedCheck( bool chkd )
+void US_PlotControlPc::xsedCheck( bool chkd )
 {
    checkSet( chkd, true,  1 );
 }
 // sedcoeff y box checked
-void US_PlotControl::ysedCheck( bool chkd )
+void US_PlotControlPc::ysedCheck( bool chkd )
 {
    checkSet( chkd, false, 1 );
 }
 // diffcoeff x box checked
-void US_PlotControl::xdifCheck( bool chkd )
+void US_PlotControlPc::xdifCheck( bool chkd )
 {
    checkSet( chkd, true,  2 );
 }
 // diffcoeff y box checked
-void US_PlotControl::ydifCheck( bool chkd )
+void US_PlotControlPc::ydifCheck( bool chkd )
 {
    checkSet( chkd, false, 2 );
 }
 // friccoeff x box checked
-void US_PlotControl::xfcoCheck( bool chkd )
+void US_PlotControlPc::xfcoCheck( bool chkd )
 {
    checkSet( chkd, true,  3 );
 }
 // friccoeff y box checked
-void US_PlotControl::yfcoCheck( bool chkd )
+void US_PlotControlPc::yfcoCheck( bool chkd )
 {
    checkSet( chkd, false, 3 );
 }
 // fricratio x box checked
-void US_PlotControl::xfraCheck( bool chkd )
+void US_PlotControlPc::xfraCheck( bool chkd )
 {
    checkSet( chkd, true,  4 );
 }
 // fricratio y box checked
-void US_PlotControl::yfraCheck( bool chkd )
+void US_PlotControlPc::yfraCheck( bool chkd )
 {
    checkSet( chkd, false, 4 );
 }
 // Vbar x box checked
-void US_PlotControl::xvbaCheck( bool chkd )
+void US_PlotControlPc::xvbaCheck( bool chkd )
 {
    checkSet( chkd, true,  5 );
 }
 // Vbar y box checked
-void US_PlotControl::yvbaCheck( bool chkd )
+void US_PlotControlPc::yvbaCheck( bool chkd )
 {
    checkSet( chkd, false, 5 );
 }
 
 // handle any x or y box checked
-void US_PlotControl::checkSet( bool chkd, bool isX, int row )
+void US_PlotControlPc::checkSet( bool chkd, bool isX, int row )
 {
    if ( !chkd )                                // only respond if checked
       return;
@@ -341,28 +341,28 @@ void US_PlotControl::checkSet( bool chkd, bool isX, int row )
 }
 
 // z scale factor changed
-void US_PlotControl::zscal_value( double value )
+void US_PlotControlPc::zscal_value( double value )
 {
    zscale   = value;
 }
 // grid resolution changed
-void US_PlotControl::gridr_value( double value )
+void US_PlotControlPc::gridr_value( double value )
 {
    gridres  = value;
 }
 // peak smoothing changed
-void US_PlotControl::peaks_value( double value )
+void US_PlotControlPc::peaks_value( double value )
 {
    pksmooth = value;
 }
 // peak width changed
-void US_PlotControl::peakw_value( double value )
+void US_PlotControlPc::peakw_value( double value )
 {
    pkwidth  = value;
 }
 
 // 3d plot button clicked
-void US_PlotControl::plot3_btn()
+void US_PlotControlPc::plot3_btn()
 {
    int typex = dimensionType( xCheck );
    int typey = dimensionType( yCheck );
@@ -384,12 +384,12 @@ void US_PlotControl::plot3_btn()
 }
 
 // close button clicked
-void US_PlotControl::close_all()
+void US_PlotControlPc::close_all()
 {
    close();
 }
 
-int US_PlotControl::dimensionType( QVector< QCheckBox* >& xycheck )
+int US_PlotControlPc::dimensionType( QVector< QCheckBox* >& xycheck )
 {
    int dimType = 1;
 

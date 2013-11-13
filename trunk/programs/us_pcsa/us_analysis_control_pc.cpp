@@ -1,8 +1,8 @@
-//! \file us_analysis_control.cpp
+//! \file us_analysis_control_pc.cpp
 
 #include "us_pcsa.h"
-#include "us_analysis_control.h"
-#include "us_adv_analysis.h"
+#include "us_analysis_control_pc.h"
+#include "us_adv_analysis_pc.h"
 #include "us_simparms.h"
 #include "us_rpscan.h"
 #include "us_settings.h"
@@ -12,7 +12,7 @@
 #include "us_memory.h"
 
 // constructor:  pcsa analysis controls widget
-US_AnalysisControl::US_AnalysisControl( QList< US_SolveSim::DataSet* >& dsets,
+US_AnalysisControlPc::US_AnalysisControlPc( QList< US_SolveSim::DataSet* >& dsets,
     QWidget* p ) : US_WidgetsDialog( p, 0 ), dsets( dsets )
 {
    parentw        = p;
@@ -48,7 +48,7 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
       return;
    }
 
-   setObjectName( "US_AnalysisControl" );
+   setObjectName( "US_AnalysisControlPc" );
    setAttribute( Qt::WA_DeleteOnClose, true );
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(),
@@ -287,7 +287,7 @@ DbgLv(1) << "idealThrCout" << nthr;
 }
 
 // enable/disable optimize counters based on chosen method
-void US_AnalysisControl::optimize_options()
+void US_AnalysisControlPc::optimize_options()
 {
    bool use_noise = ( ct_tralpha->value() == 0.0 );
    ck_tinoise ->setEnabled( use_noise );
@@ -298,12 +298,12 @@ void US_AnalysisControl::optimize_options()
 }
 
 // uncheck optimize options other than one just checked
-void US_AnalysisControl::uncheck_optimize( int /*ckflag*/ )
+void US_AnalysisControlPc::uncheck_optimize( int /*ckflag*/ )
 {
 }
 
 // start fit button clicked
-void US_AnalysisControl::start()
+void US_AnalysisControlPc::start()
 {
    US_pcsa* mainw = (US_pcsa*)parentw;
    mainw->analysis_done( -1 );        // Reset counters to zero
@@ -423,7 +423,7 @@ DbgLv(1) << "(2)pb_plot-Enabled" << pb_plot->isEnabled();
 }
 
 // stop fit button clicked
-void US_AnalysisControl::stop_fit()
+void US_AnalysisControlPc::stop_fit()
 {
 DbgLv(1) << "AC:SF:StopFit";
    if ( processor != 0 )
@@ -457,7 +457,7 @@ DbgLv(1) << "(3)pb_plot-Enabled" << pb_plot->isEnabled();
 }
 
 // plot button clicked
-void US_AnalysisControl::plot()
+void US_AnalysisControlPc::plot()
 {
    *mw_mrecs       = mrecs;
    *model          = mrecs[ 0 ].model;
@@ -466,7 +466,7 @@ void US_AnalysisControl::plot()
 }
 
 // advanced controls button clicked
-void US_AnalysisControl::advanced()
+void US_AnalysisControlPc::advanced()
 {
    US_pcsa* mainw = (US_pcsa*)parentw;
 DbgLv(1) << "AC:advanced";
@@ -476,8 +476,8 @@ if(mrecs.size()>0)
   << "ctype" << mrecs[0].ctype;
    int    nthr   = (int)ct_thrdcnt ->value();
 
-   US_AdvAnalysis* aadiag = new US_AdvAnalysis( &mrecs, nthr, dsets[ 0 ],
-                                                this );
+   US_AdvAnalysisPc* aadiag = new US_AdvAnalysisPc( &mrecs, nthr,
+                                                    dsets[ 0 ], this );
 
    if ( aadiag->exec() == QDialog::Accepted )
    {
@@ -605,7 +605,7 @@ DbgLv(1) << "AC:advanced dialog exec() return - CANCELED";
 }
 
 // save button clicked
-void US_AnalysisControl::save()
+void US_AnalysisControlPc::save()
 {
    US_pcsa* mainw = (US_pcsa*)parentw;
 DbgLv(1) << "AC:save: model components size" << model->components.size();
@@ -615,7 +615,7 @@ DbgLv(1) << "AC:save: model components size" << model->components.size();
 }
 
 // Close all windows
-void US_AnalysisControl::close_all()
+void US_AnalysisControlPc::close_all()
 {
 DbgLv(1) << "AC:close: mlnplotd" << mlnplotd;
    if ( (QObject*)mlnplotd != (QObject*)0 )
@@ -628,13 +628,13 @@ DbgLv(1) << "AC:close: mlnplotd" << mlnplotd;
 }
 
 // Public close slot
-void US_AnalysisControl::close()
+void US_AnalysisControlPc::close()
 {
    close_all();
 }
 
 // Adjust s-limit ranges when s-limit value changes
-void US_AnalysisControl::slim_change()
+void US_AnalysisControlPc::slim_change()
 {
    double loval  = ct_lolimits->value();
    double upval  = ct_uplimits->value();
@@ -672,13 +672,13 @@ void US_AnalysisControl::slim_change()
 }
 
 // Set k-upper-limit to lower when k grid points == 1
-void US_AnalysisControl::klim_change()
+void US_AnalysisControlPc::klim_change()
 {
    compute();
 }
 
 // Handle change in resolution count
-void US_AnalysisControl::reso_change()
+void US_AnalysisControlPc::reso_change()
 {
 DbgLv(1) << "RESO_CHANGE: need_fit" << need_fit
  << "reso" << ct_cresolu ->value();
@@ -687,7 +687,7 @@ DbgLv(1) << "RESO_CHANGE: need_fit" << need_fit
 }
 
 // Handle change in curve type
-void US_AnalysisControl::type_change()
+void US_AnalysisControlPc::type_change()
 {
    ctype   = cb_curvtype->currentIndex();
 DbgLv(1) << "TYPE_CHANGE: ctype" << ctype;
@@ -701,7 +701,7 @@ DbgLv(1) << "TYPE_CHANGE: ctype" << ctype;
 }
 
 // Set regularization factor alpha
-void US_AnalysisControl::set_alpha()
+void US_AnalysisControlPc::set_alpha()
 {
    bool regular   = ( ct_tralpha->value() != 0.0 );
    ck_tinoise ->setEnabled( !regular );
@@ -728,7 +728,7 @@ void US_AnalysisControl::set_alpha()
 }
 
 // Slot to handle progress update
-void US_AnalysisControl::update_progress( double variance )
+void US_AnalysisControlPc::update_progress( double variance )
 {
    ncsteps ++;
 
@@ -750,7 +750,7 @@ DbgLv(2) << "UpdPr: ncs nts vari" << ncsteps << nctotal << variance;
 }
 
 // slot to handle updated progress message
-void US_AnalysisControl::progress_message( QString pmsg, bool append )
+void US_AnalysisControlPc::progress_message( QString pmsg, bool append )
 {
    QString amsg;
 
@@ -771,7 +771,7 @@ void US_AnalysisControl::progress_message( QString pmsg, bool append )
 }
 
 // Slot to handle resetting progress
-void US_AnalysisControl::reset_steps( int kcs, int nct )
+void US_AnalysisControlPc::reset_steps( int kcs, int nct )
 {
 DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
    ncsteps      = kcs;
@@ -784,7 +784,7 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
 }
 
 // slot to handle completed processing
-void US_AnalysisControl::completed_process( int stage )
+void US_AnalysisControlPc::completed_process( int stage )
 {
    US_pcsa* mainw = (US_pcsa*)parentw;
 DbgLv(1) << "AC:cp: stage" << stage;
@@ -860,7 +860,7 @@ DbgLv(1) << "(1)pb_plot-Enabled" << pb_plot->isEnabled();
 }
 
 // slot to compute model lines
-void US_AnalysisControl::compute()
+void US_AnalysisControlPc::compute()
 {
    double parlims[ 4 ];
 
@@ -913,7 +913,7 @@ DbgLv(1) << "CM: need_fit" << need_fit;
 }
 
 // slot to launch a plot dialog showing model lines
-void US_AnalysisControl::plot_lines()
+void US_AnalysisControlPc::plot_lines()
 {
    ctype   = cb_curvtype->currentIndex();
    smin    = ct_lolimits->value();
@@ -960,7 +960,7 @@ DbgLv(0) << "PLOTLINE: mlines w h" << pixmap.width() << pixmap.height();
 }
 
 // Private slot to mark a child widget as closed, if it has been destroyed
-void US_AnalysisControl::closed( QObject* o )
+void US_AnalysisControlPc::closed( QObject* o )
 {
    QString oname = o->objectName();
 
@@ -969,7 +969,7 @@ void US_AnalysisControl::closed( QObject* o )
 }
 
 // Set flags and start fit where fits and final computation are needed
-void US_AnalysisControl::fit_final( void )
+void US_AnalysisControlPc::fit_final( void )
 {
    need_fit    = true;
    need_final  = true;
@@ -979,7 +979,7 @@ void US_AnalysisControl::fit_final( void )
 }
 
 // Set flags and open the dialog to do an Alpha scan
-void US_AnalysisControl::scan_alpha( void )
+void US_AnalysisControlPc::scan_alpha( void )
 {
    ModelRecord mrec;
    need_fit        = false;
@@ -1021,7 +1021,7 @@ DbgLv(1) << "AC:sa: RpScan deleted";
 }
 
 // Set flags and start fit where only final computation is needed
-void US_AnalysisControl::final_only( void )
+void US_AnalysisControlPc::final_only( void )
 {
    need_fit    = false;
    need_final  = true;
@@ -1038,7 +1038,7 @@ DbgLv(1) << "AC:fo: klp nlp" << klpts << nlpts;
 }
 
 // Compose a string showing the current settings for fit parameters
-QString US_AnalysisControl::fitpars_string()
+QString US_AnalysisControlPc::fitpars_string()
 {
    int    typ    = cb_curvtype->currentIndex();
    double slo    = ct_lolimits->value();
@@ -1055,7 +1055,7 @@ QString US_AnalysisControl::fitpars_string()
 }
 
 // Re-Connect or disconnect fit parameters controls
-void US_AnalysisControl::fitpars_connect( bool reconn )
+void US_AnalysisControlPc::fitpars_connect( bool reconn )
 {
    if ( reconn )
    {  // Reconnect controls
@@ -1088,7 +1088,7 @@ void US_AnalysisControl::fitpars_connect( bool reconn )
 }
 
 // Recompute the top model record after change to resolution points
-void US_AnalysisControl::recompute_mrec()
+void US_AnalysisControlPc::recompute_mrec()
 {
    ModelRecord mrec  = mrecs[ 0 ];
 int nn=mrec.isolutes.size()-1;
@@ -1187,7 +1187,7 @@ DbgLv(1) << "AC:RM: NEW mrec0 solsize" << mrec.isolutes.size()
       processor->put_mrec( mrec );
 }
 
-int US_AnalysisControl::memory_check()
+int US_AnalysisControlPc::memory_check()
 {
    const double mb_fact = ( 1024. * 1024. );
    const double x_fact  = 19.25;

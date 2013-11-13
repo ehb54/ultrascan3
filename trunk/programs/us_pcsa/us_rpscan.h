@@ -11,7 +11,7 @@
 #include "us_solve_sim.h"
 #include "us_plot.h"
 #include "us_model_record.h"
-#include "us_worker.h"
+#include "us_worker_pc.h"
 #include "us_help.h"
 #include "qwt_plot_marker.h"
 
@@ -32,7 +32,7 @@ class US_RpScan : public US_WidgetsDialog
       int&                             nthr;
       double&                          alpha;
 
-      QList< WorkerThread* >           wthreads;
+      QList< WorkerThreadPc* >         wthreads;
 
       US_Plot*           plotLayout1;
 
@@ -86,7 +86,7 @@ class US_RpScan : public US_WidgetsDialog
       void scan       ( void   );
       void plot_data  ( void   );
       void mouse      ( const QwtDoublePoint& );
-      void process_job( WorkerThread* );
+      void process_job( WorkerThreadPc* );
       void apply_alpha( const double,
                         QVector< double >*, QVector< double >*,
                         const int, const int, const int, double&, double& );

@@ -1,12 +1,12 @@
-//! \file us_adv_analysis.cpp
+//! \file us_adv_analysis_pc.cpp
 
 #include "us_pcsa.h"
-#include "us_adv_analysis.h"
+#include "us_adv_analysis_pc.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
 // constructor:  enhanced plot control widget
-US_AdvAnalysis::US_AdvAnalysis( QVector< ModelRecord >* p_mrs, const int nth,
+US_AdvAnalysisPc::US_AdvAnalysisPc( QVector< ModelRecord >* p_mrs, const int nth,
     US_SolveSim::DataSet* ds0, QWidget* p ) : US_WidgetsDialog( p, 0 )
 {
    p_mrecs        = p_mrs;
@@ -17,7 +17,7 @@ US_AdvAnalysis::US_AdvAnalysis( QVector< ModelRecord >* p_mrs, const int nth,
    store_dir      = US_Settings::resultDir() + "/" + dset0->run_data.runID;
 DbgLv(1) << "AA: IN";
 
-   setObjectName( "US_AdvAnalysis" );
+   setObjectName( "US_AdvAnalysisPc" );
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
    setAttribute( Qt::WA_DeleteOnClose, false );
@@ -288,7 +288,7 @@ DbgLv(1) << "Post-resize size" << size();
 }
 
 // Return state flag from advanced actions and, possibly, MC models
-int US_AdvAnalysis::advanced_results( QVector< ModelRecord >* p_mrecsmc )
+int US_AdvAnalysisPc::advanced_results( QVector< ModelRecord >* p_mrecsmc )
 {
    // Set state flag reflecting new-bfm, new-mrs, montecarlo
    int state    = bfm_new ?           msk_bfnew   : 0;
@@ -312,7 +312,7 @@ DbgLv(1) << "advanced_results - state=" << state;
 }
 
 // Accept button clicked
-void US_AdvAnalysis::select()
+void US_AdvAnalysisPc::select()
 {
    if ( mrs_new  &&  p_mrecs != 0 )
    {  // If model records are new, return them to the caller
@@ -329,7 +329,7 @@ void US_AdvAnalysis::select()
 }
 
 // Cancel button clicked
-void US_AdvAnalysis::cancel()
+void US_AdvAnalysisPc::cancel()
 {
    bfm_new      = false;
    mrs_new      = false;
@@ -340,7 +340,7 @@ void US_AdvAnalysis::cancel()
 }
 
 // Slot to handle a change in curve type
-void US_AdvAnalysis::curvtypeChanged( int ivalue )
+void US_AdvAnalysisPc::curvtypeChanged( int ivalue )
 {
 DbgLv(1) << "curvtypeChanged" << ivalue;
    ctype          = ivalue;
@@ -360,56 +360,56 @@ DbgLv(1) << "curvtypeChanged" << ivalue;
 }
 
 // Slot to handle a change in S lower bound
-void US_AdvAnalysis::slowerChanged( double value )
+void US_AdvAnalysisPc::slowerChanged( double value )
 {
 DbgLv(1) << "slowerChanged" << value;
 }
 
 // Slot to handle a change in S upper bound
-void US_AdvAnalysis::supperChanged( double value )
+void US_AdvAnalysisPc::supperChanged( double value )
 {
 DbgLv(1) << "supperChanged" << value;
 }
 
 // Slot to handle a change in sigmoid par 1
-void US_AdvAnalysis::sipar1Changed( double value )
+void US_AdvAnalysisPc::sipar1Changed( double value )
 {
 DbgLv(1) << "sipar1Changed" << value;
 }
 
 // Slot to handle a change in sigmoid par 2
-void US_AdvAnalysis::sipar2Changed( double value )
+void US_AdvAnalysisPc::sipar2Changed( double value )
 {
 DbgLv(1) << "sipar2Changed" << value;
 }
 
 // Slot to handle a change in K(f/f0) lower bound
-void US_AdvAnalysis::klowerChanged( double value )
+void US_AdvAnalysisPc::klowerChanged( double value )
 {
 DbgLv(1) << "klowerChanged" << value;
 }
 
 // Slot to handle a change in K(f/f0) upper bound
-void US_AdvAnalysis::kupperChanged( double value )
+void US_AdvAnalysisPc::kupperChanged( double value )
 {
 DbgLv(1) << "kupperChanged" << value;
 }
 
 // Slot to handle a change in curve points
-void US_AdvAnalysis::pointsChanged( double value )
+void US_AdvAnalysisPc::pointsChanged( double value )
 {
 DbgLv(1) << "pointsChanged" << value;
 }
 
 // Slot to handle a change in monte carlo iterations
-void US_AdvAnalysis::mciterChanged( double value )
+void US_AdvAnalysisPc::mciterChanged( double value )
 {
 DbgLv(1) << "mciterChanged" << value;
    mciters           = (int)value;
 }
 
 // Slot to load a model records list from disk
-void US_AdvAnalysis::load_mrecs()
+void US_AdvAnalysisPc::load_mrecs()
 {
 DbgLv(1) << "load_mrecs";
    // Query and get the file for loading
@@ -602,7 +602,7 @@ DbgLv(1) << "LM:xml: End ALL: nmrecs" << nmrecs << "last ncsols" << ncsols;
 }
 
 // Slot to store a model records list to disk
-void US_AdvAnalysis::store_mrecs()
+void US_AdvAnalysisPc::store_mrecs()
 {
 DbgLv(1) << "store_mrecs";
 //under_construct( "Store Model Records" );
@@ -725,7 +725,7 @@ else DbgLv(1) << "store_mrecs - FILE NAME *NOT* EMPTY" << store_file;
 }
 
 // Slot to load a best final model from disk
-void US_AdvAnalysis::load_bfm()
+void US_AdvAnalysisPc::load_bfm()
 {
 DbgLv(1) << "load_bfm";
 //under_construct( "Load Final Model" );
@@ -881,7 +881,7 @@ DbgLv(1) << "LM:xml: End ALL: nmrecs" << nmrecs << "last ncsols" << ncsols;
 }
 
 // Slot to store a best final model to disk
-void US_AdvAnalysis::store_bfm()
+void US_AdvAnalysisPc::store_bfm()
 {
 DbgLv(1) << "store_bfm";
    // Query and get the file for storing
@@ -988,7 +988,7 @@ DbgLv(1) << "store_bfm";
 }
 
 // Slot to reset the best final model to its initial state
-void US_AdvAnalysis::reset_bfm()
+void US_AdvAnalysisPc::reset_bfm()
 {
 DbgLv(1) << "reset_bfm";
    mrec         = mrec0;
@@ -1015,7 +1015,7 @@ DbgLv(1) << "reset_bfm";
 }
 
 // Slot to reset the list of model records to its initial state
-void US_AdvAnalysis::reset_mrecs()
+void US_AdvAnalysisPc::reset_mrecs()
 {
 DbgLv(1) << "reset_mrecs";
    mrecs        = mrecs0;
@@ -1042,7 +1042,7 @@ DbgLv(1) << "reset_mrecs";
 }
 
 // Slot to build a new best final model from specified fitting controls
-void US_AdvAnalysis::build_bfm()
+void US_AdvAnalysisPc::build_bfm()
 {
 DbgLv(1) << "build_bfm";
 //under_construct( "Build Final Model" );
@@ -1135,7 +1135,7 @@ DbgLv(1) << "build_bfm";
 }
 
 // Slot to start and process monte carlo iterations
-void US_AdvAnalysis::start_montecarlo()
+void US_AdvAnalysisPc::start_montecarlo()
 {
    // Test and return immediately if valid mrecs still required
    if ( mrecs_required( "Start Monte Carlo" ) )
@@ -1242,7 +1242,7 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
       mrecs_mc << mrec_mc;
       set_gaussians( sim_vals );
 
-      WorkPacket    wtbase;
+      WorkPacketPc  wtbase;
       wtbase.par1      = mrec.par1;
       wtbase.par2      = mrec.par2;
       wtbase.str_k     = mrec.str_k;
@@ -1265,7 +1265,7 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
       {
          apply_gaussians();
 
-         WorkPacket wtask       = wtbase;
+         WorkPacketPc wtask     = wtbase;
          US_SolveSim::Simulation        sim_vals;
          sim_vals.solutes       = mrec.isolutes;
 
@@ -1278,9 +1278,9 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
 
          wtask.dsets[ 0 ]->run_data = wdata;
 
-         WorkerThread* wthrd    = new WorkerThread( this );
-         connect( wthrd, SIGNAL( work_complete( WorkerThread* ) ),
-                  this,  SLOT  ( process_job  ( WorkerThread* ) ) );
+         WorkerThreadPc* wthrd  = new WorkerThreadPc( this );
+         connect( wthrd, SIGNAL( work_complete( WorkerThreadPc* ) ),
+                  this,  SLOT  ( process_job  ( WorkerThreadPc* ) ) );
 
          wthrd->define_work( wtask );
 
@@ -1295,7 +1295,7 @@ DbgLv(1) << "    ksiters" << ksiters << "dsets[0]" << wtask.dsets[0];
 }
 
 // Set gaussian distribution: sigmas and iteration 1 simulation data
-void US_AdvAnalysis::set_gaussians( US_SolveSim::Simulation& sim_vals )
+void US_AdvAnalysisPc::set_gaussians( US_SolveSim::Simulation& sim_vals )
 {
    bool gausmoo  = US_Settings::debug_match( "MC-GaussianSmooth" );
    int  nscans   = edata->scanCount();
@@ -1346,7 +1346,7 @@ DbgLv(1) << "AA: gausmoo: rmsd-i rmsc-s sigscl" << rmsdi << rmsds << sigscl;
 }
 
 // Apply gaussians: add in random variations of sigmas to base simulation
-void US_AdvAnalysis::apply_gaussians()
+void US_AdvAnalysisPc::apply_gaussians()
 {
    int nscans   = edata->scanCount();
    int npoints  = edata->pointCount();
@@ -1364,10 +1364,10 @@ void US_AdvAnalysis::apply_gaussians()
 }
 
 // Process the completion of an MC worker thread
-void US_AdvAnalysis::process_job( WorkerThread* wthr )
+void US_AdvAnalysisPc::process_job( WorkerThreadPc* wthr )
 {
    kciters++;
-   WorkPacket wresult;
+   WorkPacketPc wresult;
    wthr->get_result( wresult );
 
    ModelRecord mrec_mc = mrecs_mc[ 0 ];
@@ -1403,7 +1403,7 @@ DbgLv(1) << "    ksiters" << ksiters << "   apply_gaussians";
 
       apply_gaussians();
 
-      WorkPacket    wtask        = wresult;
+      WorkPacketPc  wtask        = wresult;
       wtask.dsets[ 0 ]           = &wkdsets[ wresult.thrn - 1 ];
       wtask.dsets[ 0 ]->run_data = wdata;
       wtask.taskx                = ksiters;
@@ -1412,9 +1412,9 @@ DbgLv(1) << "    ksiters" << ksiters << "     wt tskx,thrn"
 
       delete wthr;
 
-      WorkerThread* wthrd    = new WorkerThread( this );
-      connect( wthrd, SIGNAL( work_complete( WorkerThread* ) ),
-               this,  SLOT  ( process_job  ( WorkerThread* ) ) );
+      WorkerThreadPc* wthrd  = new WorkerThreadPc( this );
+      connect( wthrd, SIGNAL( work_complete( WorkerThreadPc* ) ),
+               this,  SLOT  ( process_job  ( WorkerThreadPc* ) ) );
 
       wthrd->define_work( wtask );
       wthrd->start();
@@ -1423,7 +1423,7 @@ DbgLv(1) << "    ksiters" << ksiters << "      dsets[0]" << wtask.dsets[0];
 }
 
 // Complete model records and the final model after monte carlo completion
-void US_AdvAnalysis::montecarlo_done( void )
+void US_AdvAnalysisPc::montecarlo_done( void )
 {
 DbgLv(1) << "==montecarlo_done()==";
    stat_bfm( tr( "Building MC models and final composite..." ), true );
@@ -1576,14 +1576,14 @@ DbgLv(1) << "MCD: cc ccin ncsols" << cc << ccin << ncsols;
 }
 
 // Pop up an under-construction message dialog
-void US_AdvAnalysis::under_construct( QString proc )
+void US_AdvAnalysisPc::under_construct( QString proc )
 {
    QMessageBox::information( this, tr( "UNDER CONSTRUCTION" ),
       tr( "Implementation of <b>%1</b> is not yet complete." ).arg( proc ) );
 }
 
 // Re-generate the input solute curve points for a model record
-void US_AdvAnalysis::curve_isolutes( ModelRecord& mrec )
+void US_AdvAnalysisPc::curve_isolutes( ModelRecord& mrec )
 {
    int    nisols  = mrec.isolutes.size();
    int    ctype   = mrec.ctype;
@@ -1667,7 +1667,7 @@ DbgLv(1) << "AA:CP: soln s,k" << mrec.isolutes[nn].s << mrec.isolutes[nn].k;
 }
 
 // Generate the model that goes with the BFM record
-void US_AdvAnalysis::bfm_model( void )
+void US_AdvAnalysisPc::bfm_model( void )
 {
    US_Model modela;
    US_Model::SimulationComponent zcomponent;
@@ -1730,19 +1730,19 @@ void US_AdvAnalysis::bfm_model( void )
 }
 
 // Display status message for model records
-void US_AdvAnalysis::stat_mrecs( const QString msg, bool append, int line )
+void US_AdvAnalysisPc::stat_mrecs( const QString msg, bool append, int line )
 {
    show_stat( te_mrecstat, msg, append, line );
 }
 
 // Display status message for best final model
-void US_AdvAnalysis::stat_bfm( const QString msg, bool append, int line )
+void US_AdvAnalysisPc::stat_bfm( const QString msg, bool append, int line )
 {
    show_stat( te_bfmstat, msg, append, line );
 }
 
 // Display status message to a text edit with append and line options
-void US_AdvAnalysis::show_stat( QTextEdit* tedit, const QString msg,
+void US_AdvAnalysisPc::show_stat( QTextEdit* tedit, const QString msg,
       bool append, int aft_line )
 {
    if ( append )
@@ -1775,7 +1775,7 @@ void US_AdvAnalysis::show_stat( QTextEdit* tedit, const QString msg,
 }
 
 // Set the fitting control counters from model records
-void US_AdvAnalysis::set_fittings( QVector< ModelRecord >& s_mrecs )
+void US_AdvAnalysisPc::set_fittings( QVector< ModelRecord >& s_mrecs )
 {
    ModelRecord s_mrec = s_mrecs[ 0 ];
    nisols       = s_mrec.isolutes.size();
@@ -1815,7 +1815,7 @@ void US_AdvAnalysis::set_fittings( QVector< ModelRecord >& s_mrecs )
 }
 
 // Return a flag and possibly warn if operation requires valid mrecs
-bool US_AdvAnalysis::mrecs_required( QString oper )
+bool US_AdvAnalysisPc::mrecs_required( QString oper )
 {
    // Test the mrecs list for validity
    bool needMrs   = ( mrecs.size() < 2  ||  mrecs[ 1 ].csolutes.size() < 1 );
@@ -1837,7 +1837,7 @@ bool US_AdvAnalysis::mrecs_required( QString oper )
 }
 
 // Return a flag and possibly warn if operation incompatible
-bool US_AdvAnalysis::bfm_incompat( QString fname )
+bool US_AdvAnalysisPc::bfm_incompat( QString fname )
 {
    // Test the compatibility of a new BFM with existing mrecs
    bool   inCompat  = false;
