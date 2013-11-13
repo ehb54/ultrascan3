@@ -30,6 +30,8 @@
 This pop-up windows appears when clicking on the <b><i>RUN DMD</i></b> button in the main US-SOMO panel. 
 <p>
 The actually operative PDB file is shown in the <b>PDB file</b> field.<p>
+<b>N.B.</b>: The PDB should be prepared without any alternate confirmations.  Additionally, and missing residue(s) within a chain will create problems and will be broken up by DMD into seperate "chains", due to the impossibility of creating any realistic physical bond across the missing residue(s). Residues not known natively by DMD will cause the run to fail.  For example, carbohydrates must be removed.  We recommend you run a short <b>run time</b> job until you get a successful run. 
+<p>
 
 <b>Active</b>: whether or not the specific parameters/pdb will be run. <p>
 
@@ -53,6 +55,10 @@ The primary difference between the relax and equilibrium phases is the frequency
 
 The <b>Static range parameter</b> provides a range of structure parts that will remain fixed during the simulation.  This can be entered in a format chain:startresidue#-endresidue#.  e.g. A:1-10 will keep residues 1 thru 10 of chain A static. Multiple static ranges can be separated with a comma.  N.B.: multiple static ranges will also be static in space with respect to each other.
 <p>
+
+The <b>Static range (native) parameter</b> is a readonly field that shows the conversion of the entered <b>Static range</b> into the native format used by DMD.
+<p>
+
 <hr>
 <font face="helvetica" size="-1">
 www contact: <a href="mailto:emre@biochem.uthscsa.edu">Emre Brookes</a>
