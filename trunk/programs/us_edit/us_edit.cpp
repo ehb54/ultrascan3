@@ -955,6 +955,7 @@ DbgLv(1) << "LD(): AA";
    expIsOther = ( !expIsVelo  &&  !expIsEquil  &&  !expIsDiff );
    expType    = expIsOther ? "Other" : expType;
    odlimit    = 1.5;
+   init_includes();
 
 DbgLv(1) << "LD(): CC";
    if ( expIsEquil )
@@ -1034,7 +1035,6 @@ DbgLv(1) << "LD(): CC";
          cb_rpms->addItems( trip_rpms );
       }
 
-      init_includes();
       pick     ->disconnect();
       connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                      SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
@@ -1711,10 +1711,12 @@ DbgLv(1) << "AGap:  plot_range()";
             le_plateau->setText( str.sprintf( "%.3f", plateau ) );
          }
 
-         //plot_last();
          plot_range();
          pb_plateau ->setIcon( check );
          ct_to->setValue( 0.0 );  // Uncolor all scans
+         pb_write      ->setEnabled( true );
+         pb_writemwl   ->setEnabled( isMwl );
+         changes_made = true;
          next_step();
          break;
 
@@ -1869,7 +1871,8 @@ void US_Edit::set_meniscus( void )
    pb_write    ->setIcon( QIcon() );
 
    changes_made = all_edits;
-   spikes = false;
+DbgLv(1) << "set_meniscus -- changes_made" << changes_made;
+   spikes       = false;
    pb_spikes   ->setEnabled( false );
    pb_spikes   ->setIcon( QIcon() );
 
@@ -2415,6 +2418,9 @@ DbgLv(1) << "PlMwl:    START xa_RAD";
 
       for ( int ii = 0; ii < nscan; ii++ )
       {
+if(!includes.contains(ii)) DbgLv(1) << "PlMwl:     ii" << ii << "NOT INCLUDED";
+         if ( ! includes.contains( ii ) ) continue;
+
          US_DataIO::Scan*  scn = &data.scanData[ ii ];
          int     kk     = ptxs;
 
@@ -2444,7 +2450,6 @@ DbgLv(1) << "PlMwl:    START xa_RAD";
       pick     ->disconnect();
       connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                      SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
-      init_includes();
 DbgLv(1) << "PlMwl:      END xa_RAD  kodlim odlimit" << kodlim << odlimit;
    }
 
@@ -2457,6 +2462,8 @@ DbgLv(1) << "PlMwl:    START xa_WAV";
 
       for ( int ii = 0; ii < nscan; ii++ )
       {
+         if ( ! includes.contains( ii ) ) continue;
+
          for ( int jj = 0; jj < npoint; jj++ )
          {
             rr[ jj ] = expi_wvlns[ jj ];
@@ -2996,7 +3003,10 @@ void US_Edit::new_triple( int index )
    pb_undo     ->setEnabled( true );
    pb_write    ->setEnabled( all_edits );
    pb_writemwl ->setEnabled( all_edits && isMwl );
+   all_edits    = false;
    changes_made = all_edits;
+
+   init_includes();
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_from   ( double ) ) );
@@ -3021,8 +3031,6 @@ void US_Edit::new_triple( int index )
       cb_rpms->addItems( trip_rpms );
 
       le_edtrsp->setText( cb_triple->currentText() + " : " + trip_rpms[ 0 ] );
-
-      init_includes();
    }
 
    else
@@ -3082,6 +3090,7 @@ void US_Edit::write( void )
    pb_write    ->setEnabled( false );
    pb_writemwl ->setEnabled( false );
    pb_write    ->setIcon   ( check );
+   pb_writemwl ->setIcon   ( check );
 }
 
 // Save edits for a triple
@@ -3775,13 +3784,13 @@ void US_Edit::prior_equil( void )
    cb_triple->setCurrentIndex( cndxt );
    cb_rpms  ->setCurrentIndex( cndxs );
 
-   changes_made= false;
+   //changes_made= false;
    //plot_range();
 
    pb_reviewep->setEnabled( true );
    pb_nexttrip->setEnabled( true );
 
-   all_edits = all_edits_done();
+   all_edits    = all_edits_done();
    pb_write   ->setEnabled( all_edits );
    pb_writemwl->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
@@ -3875,6 +3884,7 @@ bool US_Edit::all_edits_done( void )
                       baseline    != 0 );
    }
 
+DbgLv(1) << "all_ed_done" << all_ed_done;
    return all_ed_done;
 }
 
@@ -4394,6 +4404,12 @@ DbgLv(1) << "EDT:WrMwl:     write_xml_file stat" << wrstat;
             return;
       }  // END:  DB output
    }  // END:  wavelength-in-cellchannel loop
+
+   changes_made = false;
+   pb_write    ->setEnabled( false );
+   pb_writemwl ->setEnabled( false );
+   pb_write    ->setIcon   ( check );
+   pb_writemwl ->setIcon   ( check );
 DbgLv(1) << "EDT:WrMwl: DONE";
 }
 
