@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_additional.h"
+#include "../include/us_hydrodyn_cluster_best.h"
 #include "../include/us_hydrodyn_cluster_bfnb.h"
 #include "../include/us_hydrodyn_cluster_bfnb_nsa.h"
 #include "../include/us_hydrodyn_cluster_oned.h"
@@ -88,6 +89,20 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    pb_bfnb_nsa->setMinimumHeight(minHeight1);
    pb_bfnb_nsa->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect( pb_bfnb_nsa, SIGNAL( clicked() ), SLOT( bfnb_nsa() ) );
+
+   cb_best = new QCheckBox(this);
+   cb_best->setText(tr(" Active "));
+   cb_best->setChecked( options_active.count( "best" ) && options_active[ "best" ] );
+   cb_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_best->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_best->setMinimumHeight( minHeight1 );
+   connect( cb_best, SIGNAL( clicked() ), this, SLOT( set_best() ) );
+
+   pb_best = new QPushButton( "BEST", this );
+   pb_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_best->setMinimumHeight(minHeight1);
+   pb_best->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect( pb_best, SIGNAL( clicked() ), SLOT( best() ) );
 
    cb_oned = new QCheckBox(this);
    cb_oned->setText(tr(" Active "));
@@ -191,6 +206,10 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    gl_options->addWidget( pb_bfnb_nsa  , j, 1 );
    j++;
 
+   gl_options->addWidget( cb_best      , j, 0 );
+   gl_options->addWidget( pb_best      , j, 1 );
+   j++;
+
    gl_options->addWidget( cb_oned      , j, 0 );
    gl_options->addWidget( pb_oned      , j, 1 );
    j++;
@@ -261,6 +280,7 @@ void US_Hydrodyn_Cluster_Additional::update_enables()
 {
    pb_bfnb      ->setEnabled( cb_bfnb      ->isChecked() );
    pb_bfnb_nsa  ->setEnabled( cb_bfnb_nsa  ->isChecked() );
+   pb_best      ->setEnabled( cb_best      ->isChecked() );
    pb_oned      ->setEnabled( cb_oned  ->isChecked() );
    pb_csa       ->setEnabled( cb_csa       ->isChecked() );
    pb_dammin    ->setEnabled( cb_dammin    ->isChecked() );
@@ -329,6 +349,34 @@ void US_Hydrodyn_Cluster_Additional::bfnb_nsa()
    delete hc;
    options_selected[ "bfnb_nsa" ] = parameters;
 }
+
+void US_Hydrodyn_Cluster_Additional::set_best()
+{
+   options_active[ "best" ] = cb_best->isChecked();
+   update_enables();
+}
+
+void US_Hydrodyn_Cluster_Additional::best()
+{
+   cout << QString( "current load save path %1\n" ).arg( load_save_path );
+   map < QString, QString > parameters;
+   if ( options_selected.count( "best" ) )
+   {
+      parameters = options_selected[ "best" ];
+   }
+   QDir::setCurrent( load_save_path );
+   US_Hydrodyn_Cluster_Best *hc = 
+      new US_Hydrodyn_Cluster_Best(
+                                   us_hydrodyn,
+                                   &parameters,
+                                   this 
+                                   );
+   US_Hydrodyn::fixWinButtons( hc );
+   hc->exec();
+   delete hc;
+   options_selected[ "best" ] = parameters;
+}
+
 
 void US_Hydrodyn_Cluster_Additional::set_oned()
 {
