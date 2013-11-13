@@ -1,4 +1,4 @@
-//! \file us_adv_analysis.h
+//! \file us_adv_analysis_2d.h
 #ifndef US_ADV_ANALYSIS_H
 #define US_ADV_ANALYSIS_H
 
@@ -12,16 +12,16 @@
 
 //! \brief A class to provide a window for advanced analysis controls
 
-class US_AdvAnalysis : public US_WidgetsDialog
+class US_AdvAnalysis2D : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
-      //! \brief US_AdvAnalysis constructor
+      //! \brief US_AdvAnalysis2D constructor
       //! \param sim_par Pointer to simulation parameters
-      //! \param loadDb  Flag for whether loads are from DB
-      //! \param         Pointer to the parent of this widget
-      US_AdvAnalysis( US_SimulationParameters*, bool&, QWidget* p = 0 );
+      //! \param loadDB  Flag for whether loads are from DB
+      //! \param p       Pointer to the parent of this widget
+      US_AdvAnalysis2D( US_SimulationParameters*, bool&, QWidget* p = 0 );
 
    public slots:
       void get_parameters( int&,  double&, double&, double&,

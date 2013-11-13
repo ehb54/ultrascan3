@@ -288,7 +288,7 @@ void US_Win::onIndexTriggered( int index )
 
 void US_Win::terminated( int code, QProcess::ExitStatus status )
 {
-//qDebug() << "PROCESS terminated:  code" << code << "status" << status;
+qDebug() << "PROCESS terminated:  code" << code << "status" << status;
   QList<procData*>::iterator pr;
   
   for ( pr = procs.begin(); pr != procs.end(); pr++ )
@@ -299,9 +299,9 @@ void US_Win::terminated( int code, QProcess::ExitStatus status )
 
     if ( process->state() == QProcess::NotRunning )
     {
-//qDebug() << "PROCESS NotRunning index" << index << "Proc name" << d->name;
+qDebug() << "PROCESS NotRunning index" << index << "Proc name" << d->name;
 
-      if ( status == QProcess::CrashExit  &&  code >= 0 )
+      if ( status == QProcess::CrashExit )
       { // Process crashed:  output a message and possibly do a pop-up
         QString msg_sb;
         QString msg_mb;
@@ -605,7 +605,7 @@ void US_Win::help( int index )
         tr( "About UltraScan..." ),
         tr( "UltraScan III version %1\n"
             "%2\n"
-            "Copyright 1989 - 2012\n"
+            "Copyright 1989 - 2014\n"
             "Borries Demeler and the University of Texas System\n\n"
             "For more information, please visit:\n"
             "http://www.ultrascan.uthscsa.edu/\n\n"

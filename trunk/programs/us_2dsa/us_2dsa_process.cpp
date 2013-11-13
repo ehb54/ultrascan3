@@ -251,7 +251,7 @@ DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
    // Queue all the depth-0 tasks
    for ( int ktask = 0; ktask < nsubgrid; ktask++ )
    {
-      WorkPacket wtask;
+      WorkPacket2D wtask;
       double llss = orig_sols[ ktask ][ 0 ].s;
       double llsk = orig_sols[ ktask ][ 0 ].k;
 
@@ -268,7 +268,7 @@ DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
    {
       wthreads << 0;
 
-      WorkPacket wtask = job_queue.takeFirst();
+      WorkPacket2D wtask = job_queue.takeFirst();
       submit_job( wtask, ii );
 
 //      memory_check();
@@ -319,7 +319,7 @@ void US_2dsaProcess::stop_fit()
    for ( int ii = 0; ii < wthreads.size(); ii++ )
    {
 DbgLv(1) << "StopFit test Thread" << ii + 1;
-      WorkerThread* wthr = wthreads[ ii ];
+      WorkerThread2D* wthr = wthreads[ ii ];
 
       if ( wthr != 0 )
       {
@@ -332,11 +332,8 @@ DbgLv(1) << "  STOPTHR:  thread aborted";
             US_Sleep::msleep( 500 );
          }
 
-//         else if ( ! wthr->isFinished() )
-         {
-            delete wthr;
+         delete wthr;
 DbgLv(1) << "  STOPTHR:  thread deleted";
-         }
       }
 
       wthreads[ ii ] = 0;
@@ -384,7 +381,7 @@ void US_2dsaProcess::final_computes()
 
    max_rss();
 
-   WorkPacket wtask;
+   WorkPacket2D wtask;
 
    int depth      = maxdepth++;
    wtask.thrn     = 0;
@@ -413,7 +410,7 @@ DbgLv(1) << "FinalComp: szSoluI" << wtask.isolutes.size();
 
    c_solutes[ depth ].clear();
 
-   WorkerThread* wthr = new WorkerThread( this );
+   WorkerThread2D* wthr = new WorkerThread2D( this );
 
    int thrx = wkstates.indexOf( READY );
    while ( thrx < 0 )
@@ -425,10 +422,10 @@ DbgLv(1) << "FinalComp: szSoluI" << wtask.isolutes.size();
    wtask.thrn = thrx + 1;
    wthr->define_work( wtask );
 
-   connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
-            this, SLOT(   process_final( WorkerThread* ) ) );
-   connect( wthr, SIGNAL( work_progress( int           ) ),
-            this, SLOT(   step_progress( int           ) ) );
+   connect( wthr, SIGNAL( work_complete( WorkerThread2D* ) ),
+            this, SLOT(   process_final( WorkerThread2D* ) ) );
+   connect( wthr, SIGNAL( work_progress( int             ) ),
+            this, SLOT(   step_progress( int             ) ) );
 
    emit message_update( pmessage_head() + tr( "Computing final NNLS ..." ),
       false );
@@ -438,11 +435,11 @@ DbgLv(1) << "FinalComp: szSoluI" << wtask.isolutes.size();
 }
 
 // Slot to handle output of final pass on composite calculated solutes
-void US_2dsaProcess::process_final( WorkerThread* wthrd )
+void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
 {
    if ( abort ) return;
 
-   WorkPacket wresult;
+   WorkPacket2D wresult;
 
    wthrd->get_result( wresult );     // get results of thread task
 
@@ -805,11 +802,11 @@ DbgLv(1) << " GET_RES:    VARI" << rdata.scanData[0].delta_r
 }
 
 // Submit a job
-void US_2dsaProcess::submit_job( WorkPacket& wtask, int thrx )
+void US_2dsaProcess::submit_job( WorkPacket2D& wtask, int thrx )
 {
    wtask.thrn         = thrx + 1;
 
-   WorkerThread* wthr = new WorkerThread( this );
+   WorkerThread2D* wthr = new WorkerThread2D( this );
    wthreads[ thrx ]   = wthr;
    wkstates[ thrx ]   = WORKING;
    wkdepths[ thrx ]   = wtask.depth;
@@ -817,10 +814,10 @@ void US_2dsaProcess::submit_job( WorkPacket& wtask, int thrx )
 
    wthr->define_work( wtask );
 
-   connect( wthr, SIGNAL( work_complete( WorkerThread* ) ),
-            this, SLOT(   process_job(   WorkerThread* ) ) );
-   connect( wthr, SIGNAL( work_progress( int           ) ),
-            this, SLOT(   step_progress( int           ) ) );
+   connect( wthr, SIGNAL( work_complete( WorkerThread2D* ) ),
+            this, SLOT(   process_job(   WorkerThread2D* ) ) );
+   connect( wthr, SIGNAL( work_progress( int             ) ),
+            this, SLOT(   step_progress( int             ) ) );
 DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx << "depth" << wtask.depth;
 DbgLv(1) << "SUBMIT_JOB AvailPercent" << US_Memory::memory_profile();
 
@@ -830,9 +827,9 @@ DbgLv(1) << "SUBMIT_JOB AvailPercent" << US_Memory::memory_profile();
 // Slot to handle the results of a just-completed worker thread.
 // Accumulate computed solutes.
 // If there is more work to do, start a new thread for a new work unit.
-void US_2dsaProcess::process_job( WorkerThread* wthrd )
+void US_2dsaProcess::process_job( WorkerThread2D* wthrd )
 {
-   WorkPacket wresult;
+   WorkPacket2D wresult;
 
    wthrd->get_result( wresult );   // get results of thread task
    int thrn   = wresult.thrn;      // thread number of task
@@ -882,7 +879,7 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
 
    if ( nextc > maxtsols )
    {  // if new solutes push count over limit, queue a job at next depth
-      WorkPacket wtask = wresult;
+      WorkPacket2D wtask = wresult;
       int taskx    = tkdepths.size();
 
       queue_task( wtask, slolim, klolim, taskx, depthn, jnois,
@@ -948,7 +945,7 @@ DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
    {
       if ( jobs_at_depth( dd ) == 0  &&  c_solutes[ dd ].size() > 0 )
       {  // queue a task to handle last solutes at this depth
-         WorkPacket wtask = wresult;
+         WorkPacket2D wtask = wresult;
          int taskx    = tkdepths.size();
          int depthn   = dd + 1;
 DbgLv(1) << "THR_FIN:    QT: taskx depth solsz" << taskx << depth << c_solutes[dd].size();
@@ -980,7 +977,7 @@ DbgLv(1) << "THR_FIN: jqempty" << job_queue.isEmpty() << "ReadyWorkerNdx"
    // Submit jobs while queue is not empty and a worker thread is ready
    while ( ! job_queue.isEmpty() && ( thrx = wkstates.indexOf( READY ) ) >= 0 )
    {
-      WorkPacket wtask = next_job();
+      WorkPacket2D wtask = next_job();
 
       submit_job( wtask, thrx );
       kstask++;                       // bump count of started worker threads
@@ -1005,7 +1002,7 @@ DbgLv(1) << "THR_FIN: *NONEW* jqempty" << job_queue.isEmpty()
          if ( jobs_at_depth( dd ) == 0  &&  c_solutes[ dd ].size() > 0 )
          {  // queue a task to handle remaining solutes at next depth
             depth        = dd;
-            WorkPacket wtask = wresult;
+            WorkPacket2D wtask = wresult;
             int taskx    = tkdepths.size();
 DbgLv(1) << "THR_FIN:    QT: /NONEW/taskx depth solsz" << taskx << depth
  << c_solutes[dd].size();
@@ -1027,7 +1024,7 @@ DbgLv(1) << "THR_FIN:    QT: /NONEW/ thrx" << thrx;
 }
 
 // Build a task and add it to the queue
-void US_2dsaProcess::queue_task( WorkPacket& wtask, double llss, double llsk,
+void US_2dsaProcess::queue_task( WorkPacket2D& wtask, double llss, double llsk,
       int taskx, int depth, int noisf, QVector< US_Solute > isolutes )
 {
    wtask.thrn     = 0;             // thread number (none while queued)
@@ -1135,7 +1132,7 @@ DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
       double llss = isolutes[ 0 ].s;
       double llsk = isolutes[ 0 ].k;
       qSort( isolutes );
-      WorkPacket wtask;
+      WorkPacket2D wtask;
       queue_task( wtask, llss, llsk, ktask, jdpth, jnois, isolutes );
       maxtsols       = max( maxtsols, isolutes.size() );
    }
@@ -1158,7 +1155,7 @@ if(ktadd<ncsol) {
    // that they have completed their work.
    for ( int ii = 0; ii < nthreads; ii++ )
    {
-      WorkPacket wtask = job_queue.takeFirst();
+      WorkPacket2D wtask = job_queue.takeFirst();
       submit_job( wtask, ii );
    }
 
@@ -1231,7 +1228,7 @@ int nrpts  = dsets[0]->run_data.xvalues.size();
 int szdata = sizeof(US_DataIO::RawData)+(nscns*szscnd)+(nscns*nrpts*szrdng);
 int szsimu = sizeof(US_SolveSim::Simulation)+(2*szdata)+(szsols*ktisol);
 int szdset = sizeof(US_SolveSim::DataSet);
-int szwrkp = sizeof(WorkPacket);
+int szwrkp = sizeof(WorkPacket2D);
     szwrkp = szwrkp + szsols*100 + szsimu + szdset;
 DbgLv(1) << "ES: nscns nrpts ktisol" << nscns << nrpts << ktisol;
 DbgLv(1) << "ES:   szscnd szrdng szsols" << szscnd << szrdng << szsols;
@@ -1343,7 +1340,7 @@ void US_2dsaProcess::requeue_tasks()
       double llsk = orig_sols[ ktask ][ 0 ].k;
       // Get the solutes originally created for this subgrid
       QVector< US_Solute > isolutes = orig_sols[ ktask ];
-      WorkPacket wtask;
+      WorkPacket2D wtask;
       queue_task( wtask, llss, llsk, ktask, jdpth, jnois, isolutes );
    }
 
@@ -1354,7 +1351,7 @@ void US_2dsaProcess::requeue_tasks()
    // Start the first threads
    for ( int ii = 0; ii < nthreads; ii++ )
    {
-      WorkPacket wtask = job_queue.takeFirst();
+      WorkPacket2D wtask = job_queue.takeFirst();
       submit_job( wtask, ii );
    }
 
@@ -1429,9 +1426,9 @@ QString US_2dsaProcess::pmessage_head()
 }
 
 // Get next job from queue, insuring we get the lowest depth
-WorkPacket US_2dsaProcess::next_job()
+WorkPacket2D US_2dsaProcess::next_job()
 {
-   WorkPacket wtask;
+   WorkPacket2D wtask;
    if ( job_queue.size() == 0 )  return wtask;
 
    int jobx    = 0;

@@ -5,8 +5,8 @@
 
 #include "us_2dsa.h"
 #include "us_resids_bitmap.h"
-#include "us_plot_control.h"
-#include "us_analysis_control.h"
+#include "us_plot_control_2d.h"
+#include "us_analysis_control_2d.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -764,7 +764,7 @@ void US_2dsa::open_resplot()
    else
       rbd_pos  = this->pos() + QPoint(  100, 100 );
 
-   resplotd = new US_ResidPlot( this );
+   resplotd = new US_ResidPlot2D( this );
    resplotd->move( rbd_pos );
    resplotd->setVisible( true );
 }
@@ -780,7 +780,7 @@ void US_2dsa::open_3dplot()
    else
       epd_pos  = this->pos() + QPoint(  400, 200 );
 
-   eplotcd = new US_PlotControl( this, &model );
+   eplotcd = new US_PlotControl2D( this, &model );
    eplotcd->move( epd_pos );
    eplotcd->show();
 }
@@ -854,7 +854,7 @@ DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
    else
       acd_pos  = this->pos() + QPoint(  500,  50 );
 
-   analcd  = new US_AnalysisControl( dsets, loadDB, this );
+   analcd  = new US_AnalysisControl2D( dsets, loadDB, this );
    analcd->move( acd_pos );
    analcd->show();
    qApp->processEvents();

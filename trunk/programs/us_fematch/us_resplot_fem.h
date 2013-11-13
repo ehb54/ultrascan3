@@ -1,4 +1,4 @@
-//! \file us_resplot.h
+//! \file us_resplot_fem.h
 #ifndef US_RESID_PLOT_H
 #define US_RESID_PLOT_H
 
@@ -15,13 +15,20 @@
 
 //! \brief A class to provide a window with experimental/residuals plots
 
-class US_ResidPlot : public US_WidgetsDialog
+class US_ResidPlotFem : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
       //! \param parent A pointer to the parent widget of this one
-      US_ResidPlot( QWidget* );
+      US_ResidPlotFem( QWidget* );
+
+      //! \brief Force a specific plot in the lower plot
+      //! \param plotf Flag plot to force: 1,2 == ti_noise,ri_noise
+      void set_plot( int );
+
+      //! \brief Return a QwtPlot pointer for the lower plot
+      QwtPlot* rp_data_plot2();
 
    private:
       QHBoxLayout*  mainLayout;
@@ -34,6 +41,9 @@ class US_ResidPlot : public US_WidgetsDialog
       US_Plot*      plotLayout1;
       US_Plot*      plotLayout2;
 
+      QwtPlot*      data_plot1;
+      QwtPlot*      data_plot2;
+
       bool          have_ed;
       bool          have_sd;
       bool          have_ti;
@@ -44,9 +54,6 @@ class US_ResidPlot : public US_WidgetsDialog
       int           dbg_level;
 
    protected:
-      QwtPlot*      data_plot1;
-      QwtPlot*      data_plot2;
-
       US_DataIO::EditedData*      edata;
       US_DataIO::Scan*            escan;
       US_DataIO::RawData*         sdata;

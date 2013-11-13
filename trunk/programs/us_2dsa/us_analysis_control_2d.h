@@ -1,4 +1,4 @@
-//! \file us_analysis_control.h
+//! \file us_analysis_control_2d.h
 #ifndef US_ANALYSIS_CTL_H
 #define US_ANALYSIS_CTL_H
 
@@ -12,16 +12,16 @@
 
 //! \brief A class to provide a window with 2DSA analysis controls
 
-class US_AnalysisControl : public US_WidgetsDialog
+class US_AnalysisControl2D : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
-      //! \brief US_AnalysisControl constructor
-      //! \param dat_exp Pointer to the experiment data
-      //! \param loadDb  Flag for whether loads are from DB
-      //! \param         Pointer to the parent of this widget
-      US_AnalysisControl( QList< US_SolveSim::DataSet* >&, bool&, QWidget* p = 0 );
+      //! \brief US_AnalysisControl2D constructor
+      //! \param dsets   Pointer to the experiment data
+      //! \param loadDB  Flag for whether loads are from DB
+      //! \param p       Pointer to the parent of this widget
+      US_AnalysisControl2D( QList< US_SolveSim::DataSet* >&, bool&, QWidget* p = 0 );
 
    public slots:
       void update_progress (  int  );

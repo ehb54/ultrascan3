@@ -1,18 +1,19 @@
-//! \file us_advanced.cpp
+//! \file us_advanced_fem.cpp
 
-#include "us_advanced.h"
+#include "us_advanced_fem.h"
 #include "us_fematch.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
 // constructor:  advanced analysis control widget
-US_Advanced::US_Advanced( US_Model* amodel, QMap< QString, QString >& adv_vals,
-    QWidget* p ) : US_WidgetsDialog( p, 0 ), parmap( adv_vals )
+US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
+   QMap< QString, QString >& adv_vals, QWidget* p ) :
+   US_WidgetsDialog( p, 0 ), parmap( adv_vals )
 {
    model          = amodel;
    parentw        = p;
 
-   setObjectName( "US_Advanced" );
+   setObjectName( "US_AdvancedFem" );
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
 
@@ -167,7 +168,7 @@ qDebug() << "Post-resize size" << size();
 }
 
 // private slot to pass parameters then close with an accepted() signal
-void US_Advanced::done( void )
+void US_AdvancedFem::done( void )
 {
    parmap[ "simpoints" ] = QString::number( ct_simpoints->value() );
    parmap[ "bldvolume" ] = QString::number( ct_bldvolume->value() );
@@ -184,7 +185,7 @@ void US_Advanced::done( void )
 }
 
 // private slot to advance to the next model component
-void US_Advanced::next_component( void )
+void US_AdvancedFem::next_component( void )
 {
    int icomp = (int)ct_component->value();
    int ncomp = model->components.size();
@@ -194,7 +195,7 @@ void US_Advanced::next_component( void )
 }
 
 // private slot to set the model component index and fill in the implied text
-void US_Advanced::set_component( double compx )
+void US_AdvancedFem::set_component( double compx )
 {
    int icomp  = (int)compx - 1;
 

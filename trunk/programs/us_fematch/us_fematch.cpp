@@ -1,4 +1,4 @@
-//! \file us_fe_match.cpp
+//! \file us_fematch.cpp
 
 #include <QApplication>
 #include <QtSvg>
@@ -832,7 +832,7 @@ void US_FeMatch::save_data( void )
    if ( eplotcd == 0  ||  eplotcd->data_3dplot() == 0 )
    {  // if no 3d plot control up,  ask what user wants for 3d plot save
       if ( eplotcd == 0 )
-         eplotcd = new US_PlotControl( this, &model );
+         eplotcd = new US_PlotControlFem( this, &model );
       eplotcd->move( epd_pos );
       eplotcd->show();
       eplotcd->do_3dplot();
@@ -1017,7 +1017,7 @@ DbgLv(1) << "(9)p1type" << p1type;
    {
       if ( resplotd == 0 )
       {
-         resplotd = new US_ResidPlot( this );
+         resplotd = new US_ResidPlotFem( this );
          resplotd->move( rpd_pos );
          resplotd->show();
       }
@@ -1032,7 +1032,7 @@ DbgLv(1) << "(9)p1type" << p1type;
    {
       if ( resplotd == 0 )
       {
-         resplotd = new US_ResidPlot( this );
+         resplotd = new US_ResidPlotFem( this );
          resplotd->move( rpd_pos );
          resplotd->show();
       }
@@ -1535,7 +1535,8 @@ void US_FeMatch::distrib_plot_resids( )
 // Open a dialog with advanced analysis parameters
 void US_FeMatch::advanced( )
 {
-   advdiag = new US_Advanced( &model_loaded, adv_vals, (QWidget*)this );
+   advdiag = new US_AdvancedFem( &model_loaded, adv_vals,
+                                 (QWidget*)this );
    advdiag->show();
 }
 
@@ -1548,7 +1549,7 @@ void US_FeMatch::plot3d( )
       eplotcd->close();
    }
 
-   eplotcd = new US_PlotControl( this, &model_loaded );
+   eplotcd = new US_PlotControlFem( this, &model_loaded );
    eplotcd->move( epd_pos );
    eplotcd->show();
 }
@@ -1562,7 +1563,7 @@ void US_FeMatch::plotres( )
       resplotd->close();
    }
 
-   resplotd = new US_ResidPlot( this );
+   resplotd = new US_ResidPlotFem( this );
    resplotd->move( rpd_pos );
    resplotd->show();
 }
@@ -2865,7 +2866,7 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
    {  // Special case of 3dplot PNG
       if ( eplotcd == 0 )
       {  // if no 3d plot control up,  create it now
-         eplotcd = new US_PlotControl( this, &model );
+         eplotcd = new US_PlotControlFem( this, &model );
          eplotcd->move( epd_pos );
          eplotcd->show();
          eplotcd->do_3dplot();

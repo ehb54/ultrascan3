@@ -1,4 +1,4 @@
-//! \file us_plot_control.h
+//! \file us_plot_control_2d.h
 #ifndef US_PLOT_CONTROL_H
 #define US_PLOT_CONTROL_H
 
@@ -13,15 +13,15 @@
 
 //! \brief A class to provide a window with enhanced plot controls
 
-class US_PlotControl : public US_WidgetsDialog
+class US_PlotControl2D : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
-      //! \brief US_PlotControl constructor
-      //! \param parent Pointer to the parent of this widget
-      //! \param model  Pointer to the model to be plotted
-      US_PlotControl( QWidget* p = 0, US_Model* = 0 );
+      //! \brief US_PlotControl2D constructor
+      //! \param p       Pointer to the parent of this widget
+      //! \param amodel  Pointer to the model to be plotted
+      US_PlotControl2D( QWidget* p = 0, US_Model* = 0 );
 
    private:
 

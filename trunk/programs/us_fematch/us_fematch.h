@@ -2,10 +2,10 @@
 #define US_FEMATCH_H
 
 #include "us_resids_bitmap.h"
-#include "us_plot_control.h"
-#include "us_advanced.h"
+#include "us_plot_control_fem.h"
+#include "us_advanced_fem.h"
 #include "us_noise_loader.h"
-#include "us_resplot.h"
+#include "us_resplot_fem.h"
 #include "us_dataIO.h"
 #include "us_db2.h"
 #include "us_astfem_rsa.h"
@@ -126,10 +126,10 @@ class US_FeMatch : public US_Widgets
       US_Noise                    ti_noise;
       US_Solution                 solution_rec;
 
-      QPointer< US_ResidsBitmap > rbmapd;
-      QPointer< US_PlotControl >  eplotcd;
-      QPointer< US_ResidPlot >    resplotd;
-      QPointer< US_Advanced >     advdiag;
+      QPointer< US_ResidsBitmap >    rbmapd;
+      QPointer< US_PlotControlFem >  eplotcd;
+      QPointer< US_ResidPlotFem >    resplotd;
+      QPointer< US_AdvancedFem >     advdiag;
 
       QPoint                      bmd_pos;
       QPoint                      epd_pos;

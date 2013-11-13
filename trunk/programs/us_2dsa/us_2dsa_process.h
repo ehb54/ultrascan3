@@ -12,7 +12,7 @@
 #include "us_noise.h"
 #include "us_db2.h"
 #include "us_solute.h"
-#include "us_worker.h"
+#include "us_worker_2d.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -39,8 +39,7 @@ class US_2dsaProcess : public QObject
       enum TaskState  { READY, WORKING, ABORTED };
 
       //! \brief Create a 2DSA processor object
-      //! \param da_exper  Pointer to input experiment data
-      //! \param sim_pars  Pointer to simulation parameters
+      //! \param dsets     Pointer to input experiment data
       //! \param parent    Pointer to parent object
       US_2dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
                       QObject* = 0 );
@@ -52,7 +51,7 @@ class US_2dsaProcess : public QObject
       //! \param kll     k lower limit
       //! \param kul     k upper limit
       //! \param nks     number of k steps
-      //! \param ngf     number of grid refinements
+      //! \param ngr     number of grid refinements
       //! \param nthr    number of threads
       //! \param noif    noise flag: 0-3 for none|ti|ri|both
       void start_fit( double, double, int, double, double, int,
@@ -111,8 +110,8 @@ private:
 
       long int max_rss( void );
 
-      QList< WorkerThread* >     wthreads;   // worker threads
-      QList< WorkPacket >        job_queue;  // job queue
+      QList< WorkerThread2D* >   wthreads;   // worker threads
+      QList< WorkPacket2D >      job_queue;  // job queue
 
       QVector< int >             wkstates;   // worker thread states
       QVector< int >             wkdepths;   // worker thread depths
@@ -189,10 +188,10 @@ private:
       QTime      timer;        // timer for elapsed time measure
 
    private slots:
-      void queue_task( WorkPacket&, double, double,
+      void queue_task( WorkPacket2D&, double, double,
                        int, int, int, QVector< US_Solute > );
-      void process_job(      WorkerThread* );
-      void process_final(    WorkerThread* );
+      void process_job(      WorkerThread2D* );
+      void process_final(    WorkerThread2D* );
       void step_progress(    int );
       void final_computes(   void );
       void iterate(          void );
@@ -200,13 +199,13 @@ private:
       void set_monteCarlo(   void );
       void set_gaussians(    void );
       void requeue_tasks(    void );
-      void submit_job(       WorkPacket&, int );
+      void submit_job(       WorkPacket2D&, int );
       void free_worker(      int  );
       int  running_at_depth( int );
       int  queued_at_depth(  int );
       int  jobs_at_depth(    int );
       QString pmessage_head( void );
-      WorkPacket next_job  ( void );
+      WorkPacket2D next_job( void );
       bool memory_check    ( void );
 };
 #endif

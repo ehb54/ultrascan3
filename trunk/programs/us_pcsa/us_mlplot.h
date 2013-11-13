@@ -22,7 +22,15 @@ class US_MLinesPlot : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      //! \param parent A pointer to the parent widget of this one
+      //! \brief Model Lines Plot constructor
+      //! \param flo   f/f0 low value
+      //! \param fhi   f/f0 high value
+      //! \param slo   s low value
+      //! \param shi   s high value
+      //! \param typ   curve type flag (0-3 -> SL,IS,DS,HL)
+      //! \param nkp   number of k points (variations)
+      //! \param nlp   number of line curve points (model solutes)
+      //! \param bmx   best model index
       US_MLinesPlot( double&, double&, double&, double&,
                      int&, int&, int&, int& );
 

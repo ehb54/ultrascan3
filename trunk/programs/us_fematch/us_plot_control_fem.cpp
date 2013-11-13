@@ -1,7 +1,7 @@
-//! \file us_plot_control.cpp
+//! \file us_plot_control_fem.cpp
 
-#include "us_2dsa.h"
-#include "us_plot_control.h"
+#include "us_fematch.h"
+#include "us_plot_control_fem.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_constants.h"
@@ -9,12 +9,13 @@
 #include <qwt_legend.h>
 
 // constructor:  enhanced plot control widget
-US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
-   : US_WidgetsDialog( p, 0 )
+US_PlotControlFem::US_PlotControlFem( QWidget* p, US_Model* amodel )
+   : US_WidgetsDialog( 0, 0 )
 {
+   wparent        = p;
    model          = amodel;
 
-   setObjectName( "US_PlotControl" );
+   setObjectName( "US_PlotControlFem" );
    setAttribute( Qt::WA_DeleteOnClose, true );
    setPalette( US_GuiSettings::frameColor() );
    setFont( QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
@@ -46,7 +47,6 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QLabel* lb_dimen1      = us_label(  tr( "1 (x)" ) );
    QLabel* lb_dimen2      = us_label(  tr( "2 (y)" ) );
 
-   //QPushButton* pb_rplot  = us_pushbutton( tr( "Residuals Plot" ) );
    QPushButton* pb_plot3d = us_pushbutton( tr( "3D Plot" ) );
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
@@ -63,7 +63,7 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QCheckBox*   ck_yfra;
    QCheckBox*   ck_xvba;
    QCheckBox*   ck_yvba;
-
+ 
    QLayout*     lo_xmwt   = us_checkbox( tr( "x=mw"   ), ck_xmwt, false );
    QLayout*     lo_ymwt   = us_checkbox( tr( "y=mw"   ), ck_ymwt, false );
    QLayout*     lo_xsed   = us_checkbox( tr( "x=s"    ), ck_xsed, true  );
@@ -82,36 +82,36 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    QwtCounter* ct_peaksmoo  = us_counter( 3,    1,  200,    1 );
    QwtCounter* ct_peakwidth = us_counter( 3, 0.01, 10.0, 0.01 );
 
-   int row = 1;
-   controlsLayout->addWidget( lb_dimens,     row,   0, 1, 2 );
-   controlsLayout->addWidget( lb_dimen1,     row,   2, 1, 1 );
-   controlsLayout->addWidget( lb_dimen2,     row++, 3, 1, 1 );
-   controlsLayout->addWidget( lb_molwt,      row,   0, 1, 2 );
-   controlsLayout->addLayout( lo_xmwt,       row,   2, 1, 1 );
-   controlsLayout->addLayout( lo_ymwt,       row++, 3, 1, 1 );
-   controlsLayout->addWidget( lb_sedcoeff,   row,   0, 1, 2 );
-   controlsLayout->addLayout( lo_xsed,       row,   2, 1, 1 );
-   controlsLayout->addLayout( lo_ysed,       row++, 3, 1, 1 );
-   controlsLayout->addWidget( lb_diffcoeff,  row,   0, 1, 2 );
-   controlsLayout->addLayout( lo_xdif,       row,   2, 1, 1 );
-   controlsLayout->addLayout( lo_ydif,       row++, 3, 1, 1 );
-   controlsLayout->addWidget( lb_friccoeff,  row,   0, 1, 2 );
-   controlsLayout->addLayout( lo_xfco,       row,   2, 1, 1 );
-   controlsLayout->addLayout( lo_yfco,       row++, 3, 1, 1 );
-   controlsLayout->addWidget( lb_fricratio,  row,   0, 1, 2 );
-   controlsLayout->addLayout( lo_xfra,       row,   2, 1, 1 );
-   controlsLayout->addLayout( lo_yfra,       row++, 3, 1, 1 );
-   controlsLayout->addWidget( lb_vbar,       row,   0, 1, 2 );
-   controlsLayout->addLayout( lo_xvba,       row,   2, 1, 1 );
-   controlsLayout->addLayout( lo_yvba,       row++, 3, 1, 1 );
-   controlsLayout->addWidget( lb_zscalefac,  row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_zscalefac,  row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_gridreso,   row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_gridreso,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_peaksmoo,   row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_peaksmoo,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_peakwidth,  row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_peakwidth,  row++, 2, 1, 2 );
+   int row = 0;
+   controlsLayout->addWidget( lb_dimens,    row,   0, 1, 2 );
+   controlsLayout->addWidget( lb_dimen1,    row,   2, 1, 1 );
+   controlsLayout->addWidget( lb_dimen2,    row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_molwt,     row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xmwt,      row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_ymwt,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_sedcoeff,  row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xsed,      row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_ysed,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_diffcoeff, row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xdif,      row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_ydif,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_friccoeff, row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xfco,      row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_yfco,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_fricratio, row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xfra,      row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_yfra,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_vbar,      row,   0, 1, 2 );
+   controlsLayout->addLayout( lo_xvba,      row,   2, 1, 1 );
+   controlsLayout->addLayout( lo_yvba,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( lb_zscalefac, row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_zscalefac, row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_gridreso,  row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_gridreso,  row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_peaksmoo,  row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_peaksmoo,  row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_peakwidth, row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_peakwidth, row++, 2, 1, 2 );
 
    buttonsLayout->addWidget( pb_plot3d );
    buttonsLayout->addWidget( pb_help   );
@@ -195,17 +195,17 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
    lb_sedcoeff ->adjustSize();
    ct_zscalefac->setMinimumWidth( lb_sedcoeff->width() );
    adjustSize();
-
    bool cnstff0 = model->constant_ff0();
-
+   
    if ( cnstff0 )
-   {  // f/f0 constant, so disable f/f0 X,Y check boxes
+   {  // f/f0 constant, so disable f/f0 check boxes
       ck_xfra->setEnabled( false );
       ck_yfra->setEnabled( false );
       ck_xfra->setChecked( false );
       ck_yfra->setChecked( false );
       ck_yvba->setChecked( true  );
    }
+
    if ( model->constant_vbar() )
    {  // Vbar constant, so disable vbar X,Y check boxes
       ck_xvba->setEnabled( false );
@@ -217,76 +217,103 @@ US_PlotControl::US_PlotControl( QWidget* p, US_Model* amodel )
       else
          ck_yfra->setChecked( true  );
    }
+}
 
-qDebug() << "PlCtl: cnst_vbar" << model->constant_vbar();
-qDebug() << "PlCtl: cnst_ff0 " << model->constant_ff0 ();
-qDebug() << "PlCtl: ck_yfra  " << ck_yfra->text();
-qDebug() << "PlCtl: ncomps   " << model->components.size();
+// return caller of plot_control
+QWidget* US_PlotControlFem::caller( void )
+{
+   return wparent;
+}
+
+// public slot to force (re-)plot of currently specified 3-D plot
+void US_PlotControlFem::do_3dplot()
+{
+   plot3_btn();
+}
+
+// Public slot to return a pointer to the 3D plot data widget
+QGLWidget* US_PlotControlFem::data_3dplot( void )
+{
+   QGLWidget* widgP = (QGLWidget*)0;
+
+   if ( plot3d_w != 0 )
+   {
+      //plot3_btn();
+      widgP = plot3d_w->dataWidgetP();
+   }
+
+   return widgP;
+}
+
+// Public slot to return a pointer to the 3D plot main widget
+US_Plot3D* US_PlotControlFem::widget_3dplot( void )
+{
+   return (US_Plot3D*)plot3d_w;
 }
 
 // mw x box checked
-void US_PlotControl::xmwtCheck( bool chkd )
+void US_PlotControlFem::xmwtCheck( bool chkd )
 {
    checkSet( chkd, true,  0 );
 }
 // mw y box checked
-void US_PlotControl::ymwtCheck( bool chkd )
+void US_PlotControlFem::ymwtCheck( bool chkd )
 {
    checkSet( chkd, false, 0 );
 }
 // sedcoeff x box checked
-void US_PlotControl::xsedCheck( bool chkd )
+void US_PlotControlFem::xsedCheck( bool chkd )
 {
    checkSet( chkd, true,  1 );
 }
 // sedcoeff y box checked
-void US_PlotControl::ysedCheck( bool chkd )
+void US_PlotControlFem::ysedCheck( bool chkd )
 {
    checkSet( chkd, false, 1 );
 }
 // diffcoeff x box checked
-void US_PlotControl::xdifCheck( bool chkd )
+void US_PlotControlFem::xdifCheck( bool chkd )
 {
    checkSet( chkd, true,  2 );
 }
 // diffcoeff y box checked
-void US_PlotControl::ydifCheck( bool chkd )
+void US_PlotControlFem::ydifCheck( bool chkd )
 {
    checkSet( chkd, false, 2 );
 }
 // friccoeff x box checked
-void US_PlotControl::xfcoCheck( bool chkd )
+void US_PlotControlFem::xfcoCheck( bool chkd )
 {
    checkSet( chkd, true,  3 );
 }
 // friccoeff y box checked
-void US_PlotControl::yfcoCheck( bool chkd )
+void US_PlotControlFem::yfcoCheck( bool chkd )
 {
    checkSet( chkd, false, 3 );
 }
 // fricratio x box checked
-void US_PlotControl::xfraCheck( bool chkd )
+void US_PlotControlFem::xfraCheck( bool chkd )
 {
    checkSet( chkd, true,  4 );
 }
 // fricratio y box checked
-void US_PlotControl::yfraCheck( bool chkd )
+void US_PlotControlFem::yfraCheck( bool chkd )
 {
    checkSet( chkd, false, 4 );
 }
 // Vbar x box checked
-void US_PlotControl::xvbaCheck( bool chkd )
+void US_PlotControlFem::xvbaCheck( bool chkd )
 {
    checkSet( chkd, true,  5 );
 }
 // Vbar y box checked
-void US_PlotControl::yvbaCheck( bool chkd )
+void US_PlotControlFem::yvbaCheck( bool chkd )
 {
    checkSet( chkd, false, 5 );
 }
 
 // handle any x or y box checked
-void US_PlotControl::checkSet( bool chkd, bool isX, int row )
+void US_PlotControlFem::checkSet( bool chkd, bool isX, int row )
 {
    if ( !chkd )                                // only respond if checked
       return;
@@ -324,13 +351,15 @@ void US_PlotControl::checkSet( bool chkd, bool isX, int row )
          }
       }
    }
+   
    if ( model->constant_ff0() )
-   {  // f/f0 constant, so disable f/f0 X,Y check boxes
+   {  // f/f0 constant, so disable f/f0 check boxes
       xCheck[ 4 ]->setEnabled( false );
       yCheck[ 4 ]->setEnabled( false );
       xCheck[ 4 ]->setChecked( false );
       yCheck[ 4 ]->setChecked( false );
    }
+
    if ( model->constant_vbar() )
    {  // Vbar constant, so disable vbar X,Y check boxes
       xCheck[ 5 ]->setEnabled( false );
@@ -341,38 +370,36 @@ void US_PlotControl::checkSet( bool chkd, bool isX, int row )
 }
 
 // z scale factor changed
-void US_PlotControl::zscal_value( double value )
+void US_PlotControlFem::zscal_value( double value )
 {
    zscale   = value;
 }
 // grid resolution changed
-void US_PlotControl::gridr_value( double value )
+void US_PlotControlFem::gridr_value( double value )
 {
    gridres  = value;
 }
 // peak smoothing changed
-void US_PlotControl::peaks_value( double value )
+void US_PlotControlFem::peaks_value( double value )
 {
    pksmooth = value;
 }
 // peak width changed
-void US_PlotControl::peakw_value( double value )
+void US_PlotControlFem::peakw_value( double value )
 {
    pkwidth  = value;
 }
 
 // 3d plot button clicked
-void US_PlotControl::plot3_btn()
+void US_PlotControlFem::plot3_btn()
 {
    int typex = dimensionType( xCheck );
    int typey = dimensionType( yCheck );
    int typez = 1;
+//qDebug() << "PC: p3btn type x,y" << typex << typey;
 
    if ( plot3d_w == 0 )
    {
-      if ( model == 0  ||  model->components.size() < 1 )
-         return;
-
       plot3d_w = new US_Plot3D( this, model );
    }
 
@@ -384,12 +411,15 @@ void US_PlotControl::plot3_btn()
 }
 
 // close button clicked
-void US_PlotControl::close_all()
+void US_PlotControlFem::close_all()
 {
+   if ( plot3d_w != 0 )
+      plot3d_w->close();
+
    close();
 }
 
-int US_PlotControl::dimensionType( QVector< QCheckBox* >& xycheck )
+int US_PlotControlFem::dimensionType( QVector< QCheckBox* >& xycheck )
 {
    int dimType = 1;
 
