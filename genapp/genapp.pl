@@ -639,7 +639,7 @@ add_includes( "qlayout.h" );
 
         $setup_gui .= 
             "\n" .
-            "   $tag =  new QLabel      ( $credits[ i ], this );\n" .
+            "   $tag =  new QLabel      ( $credits[ $i ], this );\n" .
             "   $tag -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );\n" .
             "   $tag -> setMinimumHeight( minHeight1 );\n" .
             "   $tag -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );\n" .

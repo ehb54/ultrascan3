@@ -1,0 +1,55 @@
+prefix     US_Hydrodyn_Cluster_
+title      "US-SOMO: BEST cluster interface"
+credit     "Cite: Michael Connolly, http://biohedron.drupalgardens.com, \"MSRoll\""
+credit     "Cite: S.R. Aragon, \"A precise boundary element method for macromolecular transport properties\", J. Comp. Chem, 25, 1191-1205 (2004)."
+name       best
+include    us_hydrodyn_cluster.h
+input      void                     * us_hydrodyn
+input      map < QString, QString > * parameters
+saveload   json cluster_best *parameters 
+_variables
+map     string  s - - best_msr_gridspace "best_msr_gridspace" "MSROLL: grid spacing"
+map     string  s - - best_msr_prober "best_msr_prober" "MSROLL: probe radius"
+map     string  s - - best_msr_finenessangle "best_msr_finenessangle" "MSROLL: fineness angle (max ~0.3)"
+map     string  s - - best_msr_coalescer "best_msr_coalescer" "MSROLL: coalesce radius"
+map     string  s - - best_rcoal_nmin "best_rcoal_nmin" "COALESCE: minimum number of triangles (Typically 2000 for small and 3000 for large protein)"
+map     string  s - - best_rcoal_nmax "best_rcoal_nmax" "COALESCE: maximum number of triangles (Typically 4000 for small and 9000 for large protein)"
+map     string  s - - best_rcoal_n "best_rcoal_n" "COALESCE: number of files produced (Typically 4)"
+map     string  s - - best_best_na "best_best_na" "BEST: omit the area correction (default:unchecked) {this is actually a regularization, so it is not advised to check this!}"
+map     string  s - - best_best_p "best_best_p" "BEST: perform a pre-averaged hydrodynamic interaction calculation (default:unchecked)"
+map     string  s - - best_best_v "best_best_v" "BEST: Compute the Viscosity Factor {in the Centroid} (default:unchecked)"
+map     string  s - - best_best_vc "best_best_vc" "BEST: Compute the Viscosity Factor in the Center of Viscosity {longer calculation} (default:checked)"
+map     string  s - - best_best_mw "best_best_mm" "BEST: override computed molecular weight (default:blank=compute from structure)"
+_end
+_elements
+variable best_msr_gridspace
+row
+variable best_msr_prober
+row
+variable best_msr_finenessangle
+row
+variable best_msr_coalescer
+row
+variable best_rcoal_nmin
+row
+variable best_rcoal_nmax
+row
+variable best_rcoal_n
+row
+variable best_best_mw
+row
+checkbox best_best_na
+row
+checkbox best_best_p
+row
+checkbox best_best_v false
+row
+checkbox best_best_vc true
+row
+button      save
+button      load
+row
+_end
+# template cluster.multiple
+template cluster.h
+template cluster.cpp
