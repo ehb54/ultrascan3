@@ -336,6 +336,7 @@ SOURCES += \
   src/us_saxs_util.cpp \
   src/us_saxs_util_asab1.cpp \
   src/us_saxs_util_a2sb.cpp \
+  src/us_saxs_util_best.cpp \
   src/us_saxs_util_crysol.cpp \
   src/us_saxs_util_cuda.cpp \
   src/us_saxs_util_dammin.cpp \

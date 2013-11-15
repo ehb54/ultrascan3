@@ -754,6 +754,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool load_config_json ( QString &json );
       void hard_coded_defaults();
 
+      QStringList msroll_radii;
+      QStringList msroll_names;
+
    public:
 
       bool select_from_directory_history( QString &dir, QWidget *parent = (QWidget *)0 );

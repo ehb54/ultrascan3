@@ -172,6 +172,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "exactq|"
                       "additionalexperimentgrid|"
                       "inputfile|"
+                      "inputfilenoread|"
                       "tag|"
                       "output|"
                       "outputfile|"
@@ -307,6 +308,23 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "1dintermediatesaves|"
                       "1dspecmult|"
 
+                      "bestmsrprober|"
+                      "bestmsrfinenessangle|"
+                      "bestmsrcoalescer|"
+                      "bestrcoalnmin|"
+                      "bestrcoalnmax|"
+                      "bestrcoaln|"
+                      "bestbestwatr|"
+                      "bestbestna|"
+                      "bestbestp|"
+                      "bestbestv|"
+                      "bestbestvc|"
+                      "bestbestmw|"
+                      "bestbestmw|"
+                      "bestmsrradiifile|"
+                      "bestmsrpatternfile|"
+                      "bestrun|"
+
                       "useiqtargetev|"
                       "setiqtargetevfromvbar|"
                       "hybridradiusexclvol|"
@@ -332,6 +350,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "additionalexperimentgrid|"
                       "dmdsupportfile|"
                       "1drotationfile|"
+                      "bestmsrradiifile|"
+                      "bestmsrpatternfile|"
+                      "inputfilenoread|"
                       "inputfile)$"
                       );
 
@@ -369,6 +390,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "experimentgrid|"
                       "additionalexperimentgrid|"
                       "inputfile|"
+                      "inputfilenoread|"
                       "tag|"
                       "output|"
                       "taroutput|"
@@ -430,6 +452,22 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "1daxisrotations|"
                       "1drotationfile|"
                       "1dintermediatesaves|"
+
+                      "bestmsrprober|"
+                      "bestmsrfinenessangle|"
+                      "bestmsrcoalescer|"
+                      "bestrcoalnmin|"
+                      "bestrcoalnmax|"
+                      "bestrcoaln|"
+                      "bestbestwatr|"
+                      "bestbestna|"
+                      "bestbestp|"
+                      "bestbestv|"
+                      "bestbestvc|"
+                      "bestbestmw|"
+                      "bestbestmw|"
+                      "bestmsrradiifile|"
+                      "bestmsrpatternfile|"
 
                       "iqtargetev|"
 
@@ -982,6 +1020,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
             return false;
          }
          cout << "back from a2sbrun\n" << flush;
+      }
+
+      if ( option == "bestrun" )
+      {
+         if ( !run_best() )
+         {
+            return false;
+         }
       }
 
       if ( option == "1drun" ||

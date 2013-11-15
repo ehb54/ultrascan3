@@ -36,11 +36,18 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    cluster_additional_methods_prepend                  [ "bfnb"     ] = "bfnbpm_";
    cluster_additional_methods_prepend                  [ "bfnb_nsa" ] = "bfnb_";
    cluster_additional_methods_prepend                  [ "oned"     ] = "oned_";
+   cluster_additional_methods_prepend                  [ "best"     ] = "best_";
    cluster_additional_methods_one_pdb_exactly          [ "oned"     ] = true;
    cluster_additional_methods_no_tgz_output            [ "oned"     ] = true;
    cluster_additional_methods_must_run_alone           [ "bfnb"     ] = true;
    cluster_additional_methods_must_run_alone           [ "oned"     ] = true;
    cluster_additional_methods_add_selected_files       [ "oned"     ] = true;
+
+   cluster_additional_methods_modes[ "one_run_per_file"               ][ "best" ] = true;
+   cluster_additional_methods_modes[ "additional_processing_per_file" ][ "best" ] = true;
+   cluster_additional_methods_modes[ "additional_processing_global"   ][ "best" ] = true;
+   cluster_additional_methods_modes[ "no_multi_model_pdb"             ][ "best" ] = true;
+   cluster_additional_methods_modes[ "inputfilenoread"                ][ "best" ] = true;
 
    cluster_config[ "userid" ] = "";
    cluster_config[ "server" ] = "";
@@ -1515,6 +1522,12 @@ void US_Hydrodyn_Cluster::update_output_name( const QString &cqs )
       qs.replace( QRegExp( "^oned_" ), "" );
       le_output_name->setText( qs );
    }
+   if ( cqs.contains( QRegExp( "^best_" ) ) )
+   {
+      QString qs = cqs;
+      qs.replace( QRegExp( "^best_" ), "" );
+      le_output_name->setText( qs );
+   }
    if ( cqs.contains( "_out", false ) )
    {
       QString qs = cqs;
@@ -2878,7 +2891,8 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
          {
             editor_msg( "red"     , 
                         tr( 
-                           "The active additonal method requires exactly one pdb to be selected"
+                           QString( "The addtional method %1 requires exactly one pdb to be selected" )
+                           .arg( methods[ i ] )
                            ) );
             return;
          }
@@ -2906,6 +2920,32 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                                                       filename, 
                                                       common_prefix,
                                                       use_extension );
+   }
+
+   if ( batch_window->cb_mm_all->isChecked() )
+   {
+      QString errors;
+      for ( int i = 0; i < ( int ) methods.size(); i++ )
+      {
+         if (
+             cluster_additional_methods_modes.count( "no_multi_model_pdb" ) &&
+             cluster_additional_methods_modes[ "no_multi_model_pdb" ].count( methods[ i ] ) )
+         {
+            errors += methods[ i ] + " ";
+         }
+      }
+      if ( !errors.isEmpty() )
+      {
+            QMessageBox::message( tr( "Please note:" ), 
+                                  QString( 
+                                          tr( "You have selected to process all models in multi-model PDBs with the %1additional method(s).\n"
+                                              "If you are including multi-model PDBs, only the first model's results will be produced.\n"
+                                              "If you wish to process all the individual models, split the multi model PDB into individual files\n"
+                                              "You can split the multi-model PDB into individual files using the PDB Editor / Split button." ) )
+                                  .arg( errors.upper() )
+                                  );
+         
+      }
    }
 
    QString base = 
@@ -2969,6 +3009,24 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
    // }
    // ------------------------------------------------- 
 
+   for ( int m = 0; m < ( int )methods.size(); m++ )
+   {
+      if ( 
+          cluster_additional_methods_modes.count( "additional_processing_global" ) &&
+          cluster_additional_methods_modes[ "additional_processing_global" ].count( methods[ m ] ) )
+      {
+         if ( !additional_processing(
+                                     base,
+                                     base_source_files,
+                                     "additional_processing_global",
+                                     methods[ m ]
+                                     ) )
+         {
+            editor_msg( "red", tr( "Internal error:additional processing per file error" ) );
+         }
+      }
+   }
+
    if ( !cb_for_mpi->isChecked() &&
         !copy_files_to_pkg_dir( base_source_files ) )
    {
@@ -2978,6 +3036,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
 
    QString      out = base;
    QStringList  source_files;
+   QStringList  source_files_to_clear;
    QStringList  dest_files;
    QStringList  use_selected_files;
 
@@ -3015,7 +3074,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                }
             }            
          }
-
+            
          if ( cluster_additional_methods_options_selected->count( methods[ m ] ) )
          {
             for ( map < QString, QString >::iterator it = (*cluster_additional_methods_options_selected)[ methods[ m ] ].begin();
@@ -3039,8 +3098,46 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                   }
                }
             }
-            out += methods[ m ] + "run\n";
-            out += "\n";
+            if ( cluster_additional_methods_modes.count( "one_run_per_file"  ) &&
+                 cluster_additional_methods_modes[ "one_run_per_file" ].count( methods[ m ] ) )
+            {
+               for ( unsigned int j = 0; j < (unsigned int)selected_files.size(); ++j )
+               {
+                  if ( (int)j % jobs == i )
+                  {
+                     out += QString( "%1 %2\n" )
+                        .arg( cluster_additional_methods_modes.count( "inputfilenoread"  ) &&
+                              cluster_additional_methods_modes[ "inputfilenoread" ].count( methods[ m ] ) ?
+                              "InputFileNoRead" : "InputFIle     " )
+                        .arg( QFileInfo( selected_files[ j ] ).fileName() );
+                     if ( !already_added.count( selected_files[ j ] ) )
+                     {
+                        source_files_to_clear << selected_files[ j ];
+                        already_added[ selected_files[ j ] ]++;
+                        if ( 
+                            cluster_additional_methods_modes.count( "additional_processing_per_file" ) &&
+                            cluster_additional_methods_modes[ "additional_processing_per_file" ].count( methods[ m ] ) )
+                        {
+                           if ( !additional_processing(
+                                                       out,
+                                                       source_files_to_clear,
+                                                       "additional_processing_per_file",
+                                                       methods[ m ], 
+                                                       selected_files[ j ] 
+                                                       ) )
+                           {
+                              editor_msg( "red", tr( "Internal error:additional processing per file error" ) );
+                           }
+                        }
+                        out += methods[ m ] + "run\n";
+                        out += "\n";
+                     }
+                  }
+               }            
+            } else {
+               out += methods[ m ] + "run\n";
+               out += "\n";
+            }               
          }
       }
    
@@ -3080,6 +3177,14 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
             editor_msg( "red", errormsg );
             return;
          }
+         if ( source_files_to_clear.size() )
+         {
+            if ( !copy_files_to_pkg_dir( source_files_to_clear ) )
+            {
+               editor_msg( "red", errormsg );
+               return;
+            }
+         }
          
          // build tar archive
          QStringList list;
@@ -3097,6 +3202,11 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
          {
             to_tar_list << QFileInfo( source_files[ i ] ).fileName();
             remove_file_list << pkg_dir + SLASH + QFileInfo( source_files[ i ] ).fileName();
+         }
+         for ( unsigned int i = 0; i < (unsigned int)source_files_to_clear.size(); i++ )
+         {
+            to_tar_list << QFileInfo( source_files_to_clear[ i ] ).fileName();
+            remove_file_list << pkg_dir + SLASH + QFileInfo( source_files_to_clear[ i ] ).fileName();
          }
          remove_file_list << pkg_dir + SLASH + QFileInfo( use_file ).fileName();
 
@@ -3143,7 +3253,8 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
             source_files .clear();
             already_added.clear();
          }
-         
+         source_files_to_clear.clear();
+
          out = base;
          // out += QString( "sleep\t%!\n" ).arg( i );
       }
@@ -3179,6 +3290,14 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
          editor_msg( "red", errormsg );
          return;
       }
+      if ( source_files_to_clear.size() )
+      {
+         if ( !copy_files_to_pkg_dir( source_files_to_clear ) )
+         {
+            editor_msg( "red", errormsg );
+            return;
+         }
+      }
 
       // build tar archive
       QStringList qsl;
@@ -3196,6 +3315,11 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
       {
          to_tar_list << QFileInfo( source_files[ i ] ).fileName();
          remove_file_list << pkg_dir + SLASH + QFileInfo( source_files[ i ] ).fileName();
+      }
+      for ( unsigned int i = 0; i < (unsigned int)source_files_to_clear.size(); i++ )
+      {
+         to_tar_list << QFileInfo( source_files_to_clear[ i ] ).fileName();
+         remove_file_list << pkg_dir + SLASH + QFileInfo( source_files_to_clear[ i ] ).fileName();
       }
       remove_file_list << pkg_dir + SLASH + QFileInfo( use_file ).fileName();
 
@@ -3237,7 +3361,8 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
          return;
       }
       
-      source_files.clear();
+      source_files         .clear();
+      source_files_to_clear.clear();
       
       out = base;
    }
@@ -4225,4 +4350,90 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
 
    editor_msg( "black", tr( "Package complete" ) );
 
+}
+
+bool US_Hydrodyn_Cluster::additional_processing(
+                                                QString       & out,
+                                                QStringList   & source_files,
+                                                const QString & type, 
+                                                const QString & method, 
+                                                const QString & file
+                                                )
+{
+   if ( method == "best" )
+   {
+      if ( type == "additional_processing_per_file" )
+      {
+         if (  (*cluster_additional_methods_options_selected).count( method ) &&
+               !(*cluster_additional_methods_options_selected)[ method ].count( "bestbestmw" ) )
+         {
+            // compute mw for file
+            if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
+                 !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
+            {
+               if ( !batch_window->screen_pdb( file, false ) )
+               {
+                  editor_msg( "red", QString( tr( "Error: loading %1 for computation of molecular weight" ) ).arg( file ) );
+               } else {
+                  float mw = ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ].mw;
+                  editor_msg( "blue", QString( tr( "Molecular weight of %1: %2 Daltons\n" ) ).arg( QFileInfo( file ).fileName() ).arg( mw ) );
+                  out += QString( "bestbestmw      %1\n" ).arg( mw );
+               }
+            } else {
+               editor_msg( "red", "Error: bead models are not supported for msroll" );
+               // result = batch_window->screen_bead_model( file );
+            }
+         }
+         return true;
+      }
+      if ( type == "additional_processing_global" )
+      {
+         QString common_prefix = cb_for_mpi->isChecked() ? "../common/" : "";
+         QString my_msroll_radii = ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_radii.join( "" );
+         if (  (*cluster_additional_methods_options_selected).count( method ) &&
+               (*cluster_additional_methods_options_selected)[ method ].count( "bestbestwatr" ) )
+         {
+            QRegExp rx( " (\\S+) (\\S)+ WATOW" );
+            if ( rx.search( my_msroll_radii ) != -1 )
+            {
+               my_msroll_radii.replace( rx, QString( " %1 %2 WATOW" )
+                                        .arg( (*cluster_additional_methods_options_selected)[ method ][ "bestbestwatr" ] )
+                                        .arg( (*cluster_additional_methods_options_selected)[ method ][ "bestbestwatr" ].toDouble() / 2.68 )
+                                        );
+            }
+         }
+         QString dir = ( ( US_Hydrodyn * ) us_hydrodyn)->somo_dir + QDir::separator() + "tmp" + QDir::separator();
+         
+         QFile f_radii( dir + "msroll_radii.txt" );
+         if ( !f_radii.open( IO_WriteOnly ) )
+         {
+            editor_msg( "red", QString( tr( "Error: can not create MSROLL radii file: %1" ) ).arg( f_radii.name() ) );
+         } else {
+            QTextStream ts( &f_radii );
+            ts << my_msroll_radii;
+            f_radii.close();
+            source_files << f_radii.name();
+            out += QString( "bestmsrradiifile %1%2\n" ).arg( common_prefix ).arg( QFileInfo( f_radii ).fileName() );
+            editor_msg( "blue", QString( tr( "Notice: created MSROLL radii file: %1" ) ).arg( f_radii.name() ) );
+         }
+
+         QFile f_names( dir + "msroll_names.txt" );
+         if ( !f_names.open( IO_WriteOnly ) )
+         {
+            editor_msg( "red", QString( tr( "Error: can not create MSROLL names file: %1" ) ).arg( f_names.name() ) );
+         } else {
+            QTextStream ts( &f_names );
+            for ( unsigned int i = 0; i < ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_names.size(); i++ )
+            {
+               ts << ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_names[ i ];
+            }
+            f_names.close();
+            source_files << f_names.name();
+            out += QString( "bestmsrpatternfile %1%2\n" ).arg( common_prefix ).arg( QFileInfo( f_names ).fileName() );
+            editor_msg( "blue", QString( tr( "Notice: created MSROLL names file: %1" ) ).arg( f_names.name() ) );
+         }
+         return true;
+      }
+   }
+   return false;
 }

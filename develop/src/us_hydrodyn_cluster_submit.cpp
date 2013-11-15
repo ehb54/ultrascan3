@@ -559,7 +559,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
    unsigned int job_count = ( unsigned int ) tar_list.size() - common_count - 1;
    
    {
-      QRegExp rx( "^(bfnb|bfnbpm|oned)_p(\\d+)_" );
+      QRegExp rx( "^(bfnb|bfnbpm|oned|best)_p(\\d+)_" );
       if ( rx.search( file ) != -1 )
       {
          job_count = rx.cap( 2 ).toUInt();

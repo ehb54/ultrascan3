@@ -30,6 +30,12 @@
 
 //standard C and C++ defs:
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
 using namespace std;
 
 class US_EXTERN US_Hydrodyn_Cluster : public QDialog
@@ -118,11 +124,6 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       bool          dup_in_submitted_or_completed();
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       map < QString, QString >                  cluster_config;
       map < QString, map < QString, QString > > cluster_systems;
       map < QString, QString >                  cluster_stage_to_system;
@@ -143,12 +144,8 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       map < QString, bool >                       cluster_additional_methods_must_run_alone;
       map < QString, QString >                    cluster_additional_methods_prepend;
       map < QString, QString >                    cluster_additional_methods_add_selected_files;
+      map < QString, map < QString, bool > >      cluster_additional_methods_modes;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
       csv           csv_advanced;
       bool          any_advanced();
       QStringList   advanced_addition();
@@ -188,6 +185,14 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
 
       void          create_additional_methods_parallel_pkg_bfnb ( QString filename );
 
+      bool          additional_processing                  ( 
+                                                            QString       & out,
+                                                            QStringList   & source_files,
+                                                            const QString & type, 
+                                                            const QString & method, 
+                                                            const QString & file = "" 
+                                                            );
+
    private slots:
 
       void setupGUI();
@@ -222,4 +227,9 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
    
 };
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 #endif

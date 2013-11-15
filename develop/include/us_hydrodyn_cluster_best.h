@@ -14,6 +14,7 @@
 #include "qlineedit.h"
 #include "qfontmetrics.h"
 #include "qcheckbox.h"
+#include "us_mqlabel.h"
 #include "qpushbutton.h"
 #include "qfiledialog.h"
 #include "qmessagebox.h"
@@ -43,26 +44,35 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       QLabel *                                lbl_title;
       QLabel *                                lbl_credits_1;
       QLabel *                                lbl_credits_2;
-      QLabel *                                lbl_best_msr_gridspace;
-      QLineEdit *                             le_best_msr_gridspace;
-      QLabel *                                lbl_best_msr_prober;
-      QLineEdit *                             le_best_msr_prober;
-      QLabel *                                lbl_best_msr_finenessangle;
-      QLineEdit *                             le_best_msr_finenessangle;
-      QLabel *                                lbl_best_msr_coalescer;
-      QLineEdit *                             le_best_msr_coalescer;
-      QLabel *                                lbl_best_rcoal_nmin;
-      QLineEdit *                             le_best_rcoal_nmin;
-      QLabel *                                lbl_best_rcoal_nmax;
-      QLineEdit *                             le_best_rcoal_nmax;
-      QLabel *                                lbl_best_rcoal_n;
-      QLineEdit *                             le_best_rcoal_n;
-      QLabel *                                lbl_best_best_mw;
-      QLineEdit *                             le_best_best_mw;
-      QCheckBox *                             cb_best_best_na;
-      QCheckBox *                             cb_best_best_p;
-      QCheckBox *                             cb_best_best_v;
-      QCheckBox *                             cb_best_best_vc;
+      QLabel *                                lbl_bestmsrprober;
+      QLineEdit *                             le_bestmsrprober;
+      QLabel *                                lbl_bestmsrfinenessangle;
+      QLineEdit *                             le_bestmsrfinenessangle;
+      QLabel *                                lbl_bestrcoalnmin;
+      QLineEdit *                             le_bestrcoalnmin;
+      QLabel *                                lbl_bestrcoalnmax;
+      QLineEdit *                             le_bestrcoalnmax;
+      QLabel *                                lbl_bestrcoaln;
+      QLineEdit *                             le_bestrcoaln;
+      QLabel *                                lbl_bestbestmw;
+      QLineEdit *                             le_bestbestmw;
+      QLabel *                                lbl_bestbestwatr;
+      QLineEdit *                             le_bestbestwatr;
+      QCheckBox *                             cb_bestbestvc;
+      QLabel *                                lbl_opt_label;
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+      vector < QWidget * >                    widgets_opt_label;
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+      void                                    hide_widgets( vector < QWidget * >, bool do_hide = true, bool do_resize = true );
+      QLabel *                                lbl_bestmsrcoalescer;
+      QLineEdit *                             le_bestmsrcoalescer;
+      QCheckBox *                             cb_bestbestv;
+      QCheckBox *                             cb_bestbestp;
+      QCheckBox *                             cb_bestbestna;
       QPushButton *                           pb_save;
       QPushButton *                           pb_load;
 
@@ -77,18 +87,19 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
 
    private slots:
 
-      void                                    update_best_msr_gridspace( const QString & );
-      void                                    update_best_msr_prober( const QString & );
-      void                                    update_best_msr_finenessangle( const QString & );
-      void                                    update_best_msr_coalescer( const QString & );
-      void                                    update_best_rcoal_nmin( const QString & );
-      void                                    update_best_rcoal_nmax( const QString & );
-      void                                    update_best_rcoal_n( const QString & );
-      void                                    update_best_best_mw( const QString & );
-      void                                    set_best_best_na();
-      void                                    set_best_best_p();
-      void                                    set_best_best_v();
-      void                                    set_best_best_vc();
+      void                                    update_bestmsrprober( const QString & );
+      void                                    update_bestmsrfinenessangle( const QString & );
+      void                                    update_bestrcoalnmin( const QString & );
+      void                                    update_bestrcoalnmax( const QString & );
+      void                                    update_bestrcoaln( const QString & );
+      void                                    update_bestbestmw( const QString & );
+      void                                    update_bestbestwatr( const QString & );
+      void                                    set_bestbestvc();
+      void                                    hide_opt_label();
+      void                                    update_bestmsrcoalescer( const QString & );
+      void                                    set_bestbestv();
+      void                                    set_bestbestp();
+      void                                    set_bestbestna();
       void                                    save();
       void                                    load();
 

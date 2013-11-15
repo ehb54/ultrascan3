@@ -43,6 +43,8 @@
 
 #define TOLERANCE overlap_tolerance
 
+
+
 void US_Hydrodyn::read_residue_file()
 {
    QString str1, str2;
@@ -65,8 +67,8 @@ void US_Hydrodyn::read_residue_file()
    map < QString, bool > pbr_override_map; // maps positioner for overwrite
    unknown_residues.clear(); // keep track of unknown residues
 
-   vector < QString > msroll_radii;
-   vector < QString > msroll_names;
+   msroll_radii.clear();
+   msroll_names.clear();
 
    i=1;
    if (f.open(IO_ReadOnly|IO_Translate))
@@ -98,7 +100,7 @@ void US_Hydrodyn::read_residue_file()
             ts >> new_atom.hybrid.mw;
             ts >> new_atom.hybrid.radius;
             ts >> new_atom.bead_assignment;
-            if ( misc.export_msroll &&
+            if ( /* misc.export_msroll && */
                  new_residue.name.length() < 4 )
             {
                QString use_residue_name = new_residue.name;

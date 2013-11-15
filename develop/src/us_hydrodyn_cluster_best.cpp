@@ -57,173 +57,187 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_credits_2 -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
    lbl_credits_2 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold ) );
 
-   lbl_best_msr_gridspace = new QLabel      ( tr( "MSROLL: grid spacing" ), this );
-   lbl_best_msr_gridspace ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_best_msr_gridspace ->setMinimumHeight( minHeight1 );
-   lbl_best_msr_gridspace ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
-   lbl_best_msr_gridspace ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_best_msr_gridspace ->setMinimumWidth ( QFontMetrics( lbl_best_msr_gridspace->font() ).maxWidth() * 47 );
+   lbl_bestmsrprober = new QLabel      ( tr( "MSROLL: probe radius (default:blank=1.5)" ), this );
+   lbl_bestmsrprober ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestmsrprober ->setMinimumHeight( minHeight1 );
+   lbl_bestmsrprober ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestmsrprober ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestmsrprober ->setMinimumWidth ( QFontMetrics( lbl_bestmsrprober->font() ).maxWidth() * 47 );
 
-   le_best_msr_gridspace = new QLineEdit     ( this, "best_msr_gridspace Line Edit" );
-   le_best_msr_gridspace ->setText           ( parameters->count( "best_msr_gridspace" ) ? ( *parameters )[ "best_msr_gridspace" ] : "" );
-   le_best_msr_gridspace ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_best_msr_gridspace ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   le_best_msr_gridspace ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_best_msr_gridspace ->setMinimumHeight  ( minHeight1 );
-   le_best_msr_gridspace ->setMinimumWidth   ( 150 );
-   connect( le_best_msr_gridspace, SIGNAL( textChanged( const QString & ) ), SLOT( update_best_msr_gridspace( const QString & ) ) );
+   le_bestmsrprober = new QLineEdit     ( this, "bestmsrprober Line Edit" );
+   le_bestmsrprober ->setText           ( parameters->count( "bestmsrprober" ) ? ( *parameters )[ "bestmsrprober" ] : "" );
+   le_bestmsrprober ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestmsrprober ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestmsrprober ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestmsrprober ->setMinimumHeight  ( minHeight1 );
+   le_bestmsrprober ->setMinimumWidth   ( 150 );
+   connect( le_bestmsrprober, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrprober( const QString & ) ) );
 
-   lbl_best_msr_prober = new QLabel      ( tr( "MSROLL: probe radius" ), this );
-   lbl_best_msr_prober ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_best_msr_prober ->setMinimumHeight( minHeight1 );
-   lbl_best_msr_prober ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
-   lbl_best_msr_prober ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_best_msr_prober ->setMinimumWidth ( QFontMetrics( lbl_best_msr_prober->font() ).maxWidth() * 47 );
+   lbl_bestmsrfinenessangle = new QLabel      ( tr( "MSROLL: fineness angle (max ~0.3?)" ), this );
+   lbl_bestmsrfinenessangle ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestmsrfinenessangle ->setMinimumHeight( minHeight1 );
+   lbl_bestmsrfinenessangle ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestmsrfinenessangle ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestmsrfinenessangle ->setMinimumWidth ( QFontMetrics( lbl_bestmsrfinenessangle->font() ).maxWidth() * 47 );
 
-   le_best_msr_prober = new QLineEdit     ( this, "best_msr_prober Line Edit" );
-   le_best_msr_prober ->setText           ( parameters->count( "best_msr_prober" ) ? ( *parameters )[ "best_msr_prober" ] : "" );
-   le_best_msr_prober ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_best_msr_prober ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   le_best_msr_prober ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_best_msr_prober ->setMinimumHeight  ( minHeight1 );
-   le_best_msr_prober ->setMinimumWidth   ( 150 );
-   connect( le_best_msr_prober, SIGNAL( textChanged( const QString & ) ), SLOT( update_best_msr_prober( const QString & ) ) );
+   le_bestmsrfinenessangle = new QLineEdit     ( this, "bestmsrfinenessangle Line Edit" );
+   le_bestmsrfinenessangle ->setText           ( parameters->count( "bestmsrfinenessangle" ) ? ( *parameters )[ "bestmsrfinenessangle" ] : "" );
+   le_bestmsrfinenessangle ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestmsrfinenessangle ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestmsrfinenessangle ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestmsrfinenessangle ->setMinimumHeight  ( minHeight1 );
+   le_bestmsrfinenessangle ->setMinimumWidth   ( 150 );
+   connect( le_bestmsrfinenessangle, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrfinenessangle( const QString & ) ) );
 
-   lbl_best_msr_finenessangle = new QLabel      ( tr( "MSROLL: fineness angle (max ~0.3)" ), this );
-   lbl_best_msr_finenessangle ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_best_msr_finenessangle ->setMinimumHeight( minHeight1 );
-   lbl_best_msr_finenessangle ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
-   lbl_best_msr_finenessangle ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_best_msr_finenessangle ->setMinimumWidth ( QFontMetrics( lbl_best_msr_finenessangle->font() ).maxWidth() * 47 );
+   lbl_bestrcoalnmin = new QLabel      ( tr( "COALESCE: minimum number of triangles (Typically 2000 for small and 3000 for large protein)" ), this );
+   lbl_bestrcoalnmin ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestrcoalnmin ->setMinimumHeight( minHeight1 );
+   lbl_bestrcoalnmin ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestrcoalnmin ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestrcoalnmin ->setMinimumWidth ( QFontMetrics( lbl_bestrcoalnmin->font() ).maxWidth() * 47 );
 
-   le_best_msr_finenessangle = new QLineEdit     ( this, "best_msr_finenessangle Line Edit" );
-   le_best_msr_finenessangle ->setText           ( parameters->count( "best_msr_finenessangle" ) ? ( *parameters )[ "best_msr_finenessangle" ] : "" );
-   le_best_msr_finenessangle ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_best_msr_finenessangle ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   le_best_msr_finenessangle ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_best_msr_finenessangle ->setMinimumHeight  ( minHeight1 );
-   le_best_msr_finenessangle ->setMinimumWidth   ( 150 );
-   connect( le_best_msr_finenessangle, SIGNAL( textChanged( const QString & ) ), SLOT( update_best_msr_finenessangle( const QString & ) ) );
+   le_bestrcoalnmin = new QLineEdit     ( this, "bestrcoalnmin Line Edit" );
+   le_bestrcoalnmin ->setText           ( parameters->count( "bestrcoalnmin" ) ? ( *parameters )[ "bestrcoalnmin" ] : "" );
+   le_bestrcoalnmin ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestrcoalnmin ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestrcoalnmin ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestrcoalnmin ->setMinimumHeight  ( minHeight1 );
+   le_bestrcoalnmin ->setMinimumWidth   ( 150 );
+   connect( le_bestrcoalnmin, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestrcoalnmin( const QString & ) ) );
 
-   lbl_best_msr_coalescer = new QLabel      ( tr( "MSROLL: coalesce radius" ), this );
-   lbl_best_msr_coalescer ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_best_msr_coalescer ->setMinimumHeight( minHeight1 );
-   lbl_best_msr_coalescer ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
-   lbl_best_msr_coalescer ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_best_msr_coalescer ->setMinimumWidth ( QFontMetrics( lbl_best_msr_coalescer->font() ).maxWidth() * 47 );
+   lbl_bestrcoalnmax = new QLabel      ( tr( "COALESCE: maximum number of triangles (Typically 4000 for small and 9000 for large protein)" ), this );
+   lbl_bestrcoalnmax ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestrcoalnmax ->setMinimumHeight( minHeight1 );
+   lbl_bestrcoalnmax ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestrcoalnmax ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestrcoalnmax ->setMinimumWidth ( QFontMetrics( lbl_bestrcoalnmax->font() ).maxWidth() * 47 );
 
-   le_best_msr_coalescer = new QLineEdit     ( this, "best_msr_coalescer Line Edit" );
-   le_best_msr_coalescer ->setText           ( parameters->count( "best_msr_coalescer" ) ? ( *parameters )[ "best_msr_coalescer" ] : "" );
-   le_best_msr_coalescer ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_best_msr_coalescer ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   le_best_msr_coalescer ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_best_msr_coalescer ->setMinimumHeight  ( minHeight1 );
-   le_best_msr_coalescer ->setMinimumWidth   ( 150 );
-   connect( le_best_msr_coalescer, SIGNAL( textChanged( const QString & ) ), SLOT( update_best_msr_coalescer( const QString & ) ) );
+   le_bestrcoalnmax = new QLineEdit     ( this, "bestrcoalnmax Line Edit" );
+   le_bestrcoalnmax ->setText           ( parameters->count( "bestrcoalnmax" ) ? ( *parameters )[ "bestrcoalnmax" ] : "" );
+   le_bestrcoalnmax ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestrcoalnmax ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestrcoalnmax ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestrcoalnmax ->setMinimumHeight  ( minHeight1 );
+   le_bestrcoalnmax ->setMinimumWidth   ( 150 );
+   connect( le_bestrcoalnmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestrcoalnmax( const QString & ) ) );
 
-   lbl_best_rcoal_nmin = new QLabel      ( tr( "COALESCE: minimum number of triangles (Typically 2000 for small and 3000 for large protein)" ), this );
-   lbl_best_rcoal_nmin ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_best_rcoal_nmin ->setMinimumHeight( minHeight1 );
-   lbl_best_rcoal_nmin ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
-   lbl_best_rcoal_nmin ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_best_rcoal_nmin ->setMinimumWidth ( QFontMetrics( lbl_best_rcoal_nmin->font() ).maxWidth() * 47 );
+   lbl_bestrcoaln = new QLabel      ( tr( "COALESCE: number of files produced (Typically 4)" ), this );
+   lbl_bestrcoaln ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestrcoaln ->setMinimumHeight( minHeight1 );
+   lbl_bestrcoaln ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestrcoaln ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestrcoaln ->setMinimumWidth ( QFontMetrics( lbl_bestrcoaln->font() ).maxWidth() * 47 );
 
-   le_best_rcoal_nmin = new QLineEdit     ( this, "best_rcoal_nmin Line Edit" );
-   le_best_rcoal_nmin ->setText           ( parameters->count( "best_rcoal_nmin" ) ? ( *parameters )[ "best_rcoal_nmin" ] : "" );
-   le_best_rcoal_nmin ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_best_rcoal_nmin ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   le_best_rcoal_nmin ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_best_rcoal_nmin ->setMinimumHeight  ( minHeight1 );
-   le_best_rcoal_nmin ->setMinimumWidth   ( 150 );
-   connect( le_best_rcoal_nmin, SIGNAL( textChanged( const QString & ) ), SLOT( update_best_rcoal_nmin( const QString & ) ) );
+   le_bestrcoaln = new QLineEdit     ( this, "bestrcoaln Line Edit" );
+   le_bestrcoaln ->setText           ( parameters->count( "bestrcoaln" ) ? ( *parameters )[ "bestrcoaln" ] : "" );
+   le_bestrcoaln ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestrcoaln ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestrcoaln ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestrcoaln ->setMinimumHeight  ( minHeight1 );
+   le_bestrcoaln ->setMinimumWidth   ( 150 );
+   connect( le_bestrcoaln, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestrcoaln( const QString & ) ) );
 
-   lbl_best_rcoal_nmax = new QLabel      ( tr( "COALESCE: maximum number of triangles (Typically 4000 for small and 9000 for large protein)" ), this );
-   lbl_best_rcoal_nmax ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_best_rcoal_nmax ->setMinimumHeight( minHeight1 );
-   lbl_best_rcoal_nmax ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
-   lbl_best_rcoal_nmax ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_best_rcoal_nmax ->setMinimumWidth ( QFontMetrics( lbl_best_rcoal_nmax->font() ).maxWidth() * 47 );
+   lbl_bestbestmw = new QLabel      ( tr( "BEST: override computed molecular weight (default:blank=compute from structure)" ), this );
+   lbl_bestbestmw ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestbestmw ->setMinimumHeight( minHeight1 );
+   lbl_bestbestmw ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestbestmw ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestbestmw ->setMinimumWidth ( QFontMetrics( lbl_bestbestmw->font() ).maxWidth() * 47 );
 
-   le_best_rcoal_nmax = new QLineEdit     ( this, "best_rcoal_nmax Line Edit" );
-   le_best_rcoal_nmax ->setText           ( parameters->count( "best_rcoal_nmax" ) ? ( *parameters )[ "best_rcoal_nmax" ] : "" );
-   le_best_rcoal_nmax ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_best_rcoal_nmax ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   le_best_rcoal_nmax ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_best_rcoal_nmax ->setMinimumHeight  ( minHeight1 );
-   le_best_rcoal_nmax ->setMinimumWidth   ( 150 );
-   connect( le_best_rcoal_nmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_best_rcoal_nmax( const QString & ) ) );
+   le_bestbestmw = new QLineEdit     ( this, "bestbestmw Line Edit" );
+   le_bestbestmw ->setText           ( parameters->count( "bestbestmw" ) ? ( *parameters )[ "bestbestmw" ] : "" );
+   le_bestbestmw ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestbestmw ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestbestmw ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestbestmw ->setMinimumHeight  ( minHeight1 );
+   le_bestbestmw ->setMinimumWidth   ( 150 );
+   connect( le_bestbestmw, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestbestmw( const QString & ) ) );
 
-   lbl_best_rcoal_n = new QLabel      ( tr( "COALESCE: number of files produced (Typically 4)" ), this );
-   lbl_best_rcoal_n ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_best_rcoal_n ->setMinimumHeight( minHeight1 );
-   lbl_best_rcoal_n ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
-   lbl_best_rcoal_n ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_best_rcoal_n ->setMinimumWidth ( QFontMetrics( lbl_best_rcoal_n->font() ).maxWidth() * 47 );
+   lbl_bestbestwatr = new QLabel      ( tr( "BEST: water 'WAT' radius (default:blank = use value from residue table)" ), this );
+   lbl_bestbestwatr ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestbestwatr ->setMinimumHeight( minHeight1 );
+   lbl_bestbestwatr ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestbestwatr ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestbestwatr ->setMinimumWidth ( QFontMetrics( lbl_bestbestwatr->font() ).maxWidth() * 47 );
 
-   le_best_rcoal_n = new QLineEdit     ( this, "best_rcoal_n Line Edit" );
-   le_best_rcoal_n ->setText           ( parameters->count( "best_rcoal_n" ) ? ( *parameters )[ "best_rcoal_n" ] : "" );
-   le_best_rcoal_n ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_best_rcoal_n ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   le_best_rcoal_n ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_best_rcoal_n ->setMinimumHeight  ( minHeight1 );
-   le_best_rcoal_n ->setMinimumWidth   ( 150 );
-   connect( le_best_rcoal_n, SIGNAL( textChanged( const QString & ) ), SLOT( update_best_rcoal_n( const QString & ) ) );
+   le_bestbestwatr = new QLineEdit     ( this, "bestbestwatr Line Edit" );
+   le_bestbestwatr ->setText           ( parameters->count( "bestbestwatr" ) ? ( *parameters )[ "bestbestwatr" ] : "" );
+   le_bestbestwatr ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestbestwatr ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestbestwatr ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestbestwatr ->setMinimumHeight  ( minHeight1 );
+   le_bestbestwatr ->setMinimumWidth   ( 150 );
+   connect( le_bestbestwatr, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestbestwatr( const QString & ) ) );
 
-   lbl_best_best_mw = new QLabel      ( tr( "BEST: override computed molecular weight (default:blank=compute from structure)" ), this );
-   lbl_best_best_mw ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_best_best_mw ->setMinimumHeight( minHeight1 );
-   lbl_best_best_mw ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
-   lbl_best_best_mw ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_best_best_mw ->setMinimumWidth ( QFontMetrics( lbl_best_best_mw->font() ).maxWidth() * 47 );
+   cb_bestbestvc = new QCheckBox    ( tr( "BEST: Compute the Viscosity Factor in the Center of Viscosity {longer calculation} (default:checked)" ), this );
+   cb_bestbestvc ->setMinimumHeight ( minHeight1 );
+   cb_bestbestvc ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   cb_bestbestvc ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   cb_bestbestvc ->setMinimumWidth  ( QFontMetrics( cb_bestbestvc->font() ).maxWidth() * 47 );
 
-   le_best_best_mw = new QLineEdit     ( this, "best_best_mw Line Edit" );
-   le_best_best_mw ->setText           ( parameters->count( "best_best_mw" ) ? ( *parameters )[ "best_best_mw" ] : "" );
-   le_best_best_mw ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_best_best_mw ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   le_best_best_mw ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_best_best_mw ->setMinimumHeight  ( minHeight1 );
-   le_best_best_mw ->setMinimumWidth   ( 150 );
-   connect( le_best_best_mw, SIGNAL( textChanged( const QString & ) ), SLOT( update_best_best_mw( const QString & ) ) );
-
-   cb_best_best_na = new QCheckBox    ( tr( "BEST: omit the area correction (default:unchecked) {this is actually a regularization, so it is not advised to check this!}" ), this );
-   cb_best_best_na ->setMinimumHeight ( minHeight1 );
-   cb_best_best_na ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   cb_best_best_na ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_best_best_na ->setMinimumWidth  ( QFontMetrics( cb_best_best_na->font() ).maxWidth() * 47 );
-
-   cb_best_best_na ->setChecked        ( parameters->count( "best_best_na" ) && ( *parameters )[ "best_best_na" ] == "true" ? true : false );
-   connect( cb_best_best_na, SIGNAL( clicked() ), SLOT( set_best_best_na() ) );
-
-   cb_best_best_p = new QCheckBox    ( tr( "BEST: perform a pre-averaged hydrodynamic interaction calculation (default:unchecked)" ), this );
-   cb_best_best_p ->setMinimumHeight ( minHeight1 );
-   cb_best_best_p ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   cb_best_best_p ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_best_best_p ->setMinimumWidth  ( QFontMetrics( cb_best_best_p->font() ).maxWidth() * 47 );
-
-   cb_best_best_p ->setChecked        ( parameters->count( "best_best_p" ) && ( *parameters )[ "best_best_p" ] == "true" ? true : false );
-   connect( cb_best_best_p, SIGNAL( clicked() ), SLOT( set_best_best_p() ) );
-
-   cb_best_best_v = new QCheckBox    ( tr( "BEST: Compute the Viscosity Factor {in the Centroid} (default:unchecked)" ), this );
-   cb_best_best_v ->setMinimumHeight ( minHeight1 );
-   cb_best_best_v ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   cb_best_best_v ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_best_best_v ->setMinimumWidth  ( QFontMetrics( cb_best_best_v->font() ).maxWidth() * 47 );
-
-   cb_best_best_v ->setChecked        ( parameters->count( "best_best_v" ) && ( *parameters )[ "best_best_v" ] == "true" ? true : false );
-   connect( cb_best_best_v, SIGNAL( clicked() ), SLOT( set_best_best_v() ) );
-
-   cb_best_best_vc = new QCheckBox    ( tr( "BEST: Compute the Viscosity Factor in the Center of Viscosity {longer calculation} (default:checked)" ), this );
-   cb_best_best_vc ->setMinimumHeight ( minHeight1 );
-   cb_best_best_vc ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
-   cb_best_best_vc ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_best_best_vc ->setMinimumWidth  ( QFontMetrics( cb_best_best_vc->font() ).maxWidth() * 47 );
-
-   if ( !parameters->count( "best_best_vc" ) )
+   if ( !parameters->count( "bestbestvc" ) )
    {
-      ( *parameters )[ "best_best_vc" ] = "true";
+      ( *parameters )[ "bestbestvc" ] = "true";
    }
-   cb_best_best_vc ->setChecked        ( parameters->count( "best_best_vc" ) && ( *parameters )[ "best_best_vc" ] == "true" ? true : false );
-   connect( cb_best_best_vc, SIGNAL( clicked() ), SLOT( set_best_best_vc() ) );
+   cb_bestbestvc ->setChecked        ( parameters->count( "bestbestvc" ) && ( *parameters )[ "bestbestvc" ] == "true" ? true : false );
+   connect( cb_bestbestvc, SIGNAL( clicked() ), SLOT( set_bestbestvc() ) );
+
+   lbl_opt_label =  new mQLabel     ( tr( "Optional controls" ), this );
+   lbl_opt_label -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
+   lbl_opt_label -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
+   lbl_opt_label -> setMinimumHeight( minHeight1 );
+   lbl_opt_label -> setPalette      ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
+   lbl_opt_label -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+   connect( lbl_opt_label, SIGNAL( pressed() ), SLOT( hide_opt_label() ) );
+
+
+   lbl_bestmsrcoalescer = new QLabel      ( tr( "MSROLL: coalesce radius (default:blank)" ), this );
+   lbl_bestmsrcoalescer ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestmsrcoalescer ->setMinimumHeight( minHeight1 );
+   lbl_bestmsrcoalescer ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestmsrcoalescer ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestmsrcoalescer ->setMinimumWidth ( QFontMetrics( lbl_bestmsrcoalescer->font() ).maxWidth() * 47 );
+
+   le_bestmsrcoalescer = new QLineEdit     ( this, "bestmsrcoalescer Line Edit" );
+   widgets_opt_label.push_back( lbl_bestmsrcoalescer );
+   widgets_opt_label.push_back( le_bestmsrcoalescer );
+   le_bestmsrcoalescer ->setText           ( parameters->count( "bestmsrcoalescer" ) ? ( *parameters )[ "bestmsrcoalescer" ] : "" );
+   le_bestmsrcoalescer ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestmsrcoalescer ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestmsrcoalescer ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestmsrcoalescer ->setMinimumHeight  ( minHeight1 );
+   le_bestmsrcoalescer ->setMinimumWidth   ( 150 );
+   connect( le_bestmsrcoalescer, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrcoalescer( const QString & ) ) );
+
+   cb_bestbestv = new QCheckBox    ( tr( "BEST: Compute the Viscosity Factor {in the Centroid} (default:unchecked)" ), this );
+   cb_bestbestv ->setMinimumHeight ( minHeight1 );
+   cb_bestbestv ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   cb_bestbestv ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   cb_bestbestv ->setMinimumWidth  ( QFontMetrics( cb_bestbestv->font() ).maxWidth() * 47 );
+
+   widgets_opt_label.push_back( cb_bestbestv );
+   cb_bestbestv ->setChecked        ( parameters->count( "bestbestv" ) && ( *parameters )[ "bestbestv" ] == "true" ? true : false );
+   connect( cb_bestbestv, SIGNAL( clicked() ), SLOT( set_bestbestv() ) );
+
+   cb_bestbestp = new QCheckBox    ( tr( "BEST: perform a pre-averaged hydrodynamic interaction calculation (default:unchecked)" ), this );
+   cb_bestbestp ->setMinimumHeight ( minHeight1 );
+   cb_bestbestp ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   cb_bestbestp ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   cb_bestbestp ->setMinimumWidth  ( QFontMetrics( cb_bestbestp->font() ).maxWidth() * 47 );
+
+   widgets_opt_label.push_back( cb_bestbestp );
+   cb_bestbestp ->setChecked        ( parameters->count( "bestbestp" ) && ( *parameters )[ "bestbestp" ] == "true" ? true : false );
+   connect( cb_bestbestp, SIGNAL( clicked() ), SLOT( set_bestbestp() ) );
+
+   cb_bestbestna = new QCheckBox    ( tr( "BEST: omit the area correction (default:unchecked) {this is actually a regularization, so it is not advised to check this!}" ), this );
+   cb_bestbestna ->setMinimumHeight ( minHeight1 );
+   cb_bestbestna ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   cb_bestbestna ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   cb_bestbestna ->setMinimumWidth  ( QFontMetrics( cb_bestbestna->font() ).maxWidth() * 47 );
+
+   widgets_opt_label.push_back( cb_bestbestna );
+   cb_bestbestna ->setChecked        ( parameters->count( "bestbestna" ) && ( *parameters )[ "bestbestna" ] == "true" ? true : false );
+   connect( cb_bestbestna, SIGNAL( clicked() ), SLOT( set_bestbestna() ) );
 
    pb_save =  new QPushButton ( tr( "Save" ), this );
    pb_save -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
@@ -258,70 +272,76 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    background->addSpacing( 4 );
    QHBoxLayout * hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( lbl_best_msr_gridspace );
-   hbl->addWidget( le_best_msr_gridspace );
+   hbl->addWidget( lbl_bestmsrprober );
+   hbl->addWidget( le_bestmsrprober );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( lbl_best_msr_prober );
-   hbl->addWidget( le_best_msr_prober );
+   hbl->addWidget( lbl_bestmsrfinenessangle );
+   hbl->addWidget( le_bestmsrfinenessangle );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( lbl_best_msr_finenessangle );
-   hbl->addWidget( le_best_msr_finenessangle );
+   hbl->addWidget( lbl_bestrcoalnmin );
+   hbl->addWidget( le_bestrcoalnmin );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( lbl_best_msr_coalescer );
-   hbl->addWidget( le_best_msr_coalescer );
+   hbl->addWidget( lbl_bestrcoalnmax );
+   hbl->addWidget( le_bestrcoalnmax );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( lbl_best_rcoal_nmin );
-   hbl->addWidget( le_best_rcoal_nmin );
+   hbl->addWidget( lbl_bestrcoaln );
+   hbl->addWidget( le_bestrcoaln );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( lbl_best_rcoal_nmax );
-   hbl->addWidget( le_best_rcoal_nmax );
+   hbl->addWidget( lbl_bestbestmw );
+   hbl->addWidget( le_bestbestmw );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( lbl_best_rcoal_n );
-   hbl->addWidget( le_best_rcoal_n );
+   hbl->addWidget( lbl_bestbestwatr );
+   hbl->addWidget( le_bestbestwatr );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( lbl_best_best_mw );
-   hbl->addWidget( le_best_best_mw );
+   hbl->addWidget( cb_bestbestvc );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( cb_best_best_na );
+   hbl->addWidget( lbl_opt_label );
+   hide_widgets( widgets_opt_label, true, false );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( cb_best_best_p );
+   hbl->addWidget( lbl_bestmsrcoalescer );
+   hbl->addWidget( le_bestmsrcoalescer );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( cb_best_best_v );
+   hbl->addWidget( cb_bestbestv );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( cb_best_best_vc );
+   hbl->addWidget( cb_bestbestp );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( cb_bestbestna );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
@@ -361,63 +381,63 @@ void US_Hydrodyn_Cluster_Best::help()
 
 void US_Hydrodyn_Cluster_Best::closeEvent( QCloseEvent *e )
 {
-   if ( parameters->count( "best_msr_gridspace" ) &&
-        (*parameters)[ "best_msr_gridspace" ].isEmpty() )
+   if ( parameters->count( "bestmsrprober" ) &&
+        (*parameters)[ "bestmsrprober" ].isEmpty() )
    {
-      parameters->erase( "best_msr_gridspace" );
+      parameters->erase( "bestmsrprober" );
    }
-   if ( parameters->count( "best_msr_prober" ) &&
-        (*parameters)[ "best_msr_prober" ].isEmpty() )
+   if ( parameters->count( "bestmsrfinenessangle" ) &&
+        (*parameters)[ "bestmsrfinenessangle" ].isEmpty() )
    {
-      parameters->erase( "best_msr_prober" );
+      parameters->erase( "bestmsrfinenessangle" );
    }
-   if ( parameters->count( "best_msr_finenessangle" ) &&
-        (*parameters)[ "best_msr_finenessangle" ].isEmpty() )
+   if ( parameters->count( "bestrcoalnmin" ) &&
+        (*parameters)[ "bestrcoalnmin" ].isEmpty() )
    {
-      parameters->erase( "best_msr_finenessangle" );
+      parameters->erase( "bestrcoalnmin" );
    }
-   if ( parameters->count( "best_msr_coalescer" ) &&
-        (*parameters)[ "best_msr_coalescer" ].isEmpty() )
+   if ( parameters->count( "bestrcoalnmax" ) &&
+        (*parameters)[ "bestrcoalnmax" ].isEmpty() )
    {
-      parameters->erase( "best_msr_coalescer" );
+      parameters->erase( "bestrcoalnmax" );
    }
-   if ( parameters->count( "best_rcoal_nmin" ) &&
-        (*parameters)[ "best_rcoal_nmin" ].isEmpty() )
+   if ( parameters->count( "bestrcoaln" ) &&
+        (*parameters)[ "bestrcoaln" ].isEmpty() )
    {
-      parameters->erase( "best_rcoal_nmin" );
+      parameters->erase( "bestrcoaln" );
    }
-   if ( parameters->count( "best_rcoal_nmax" ) &&
-        (*parameters)[ "best_rcoal_nmax" ].isEmpty() )
+   if ( parameters->count( "bestbestmw" ) &&
+        (*parameters)[ "bestbestmw" ].isEmpty() )
    {
-      parameters->erase( "best_rcoal_nmax" );
+      parameters->erase( "bestbestmw" );
    }
-   if ( parameters->count( "best_rcoal_n" ) &&
-        (*parameters)[ "best_rcoal_n" ].isEmpty() )
+   if ( parameters->count( "bestbestwatr" ) &&
+        (*parameters)[ "bestbestwatr" ].isEmpty() )
    {
-      parameters->erase( "best_rcoal_n" );
+      parameters->erase( "bestbestwatr" );
    }
-   if ( parameters->count( "best_best_mw" ) &&
-        (*parameters)[ "best_best_mw" ].isEmpty() )
+   if ( parameters->count( "bestmsrcoalescer" ) &&
+        (*parameters)[ "bestmsrcoalescer" ].isEmpty() )
    {
-      parameters->erase( "best_best_mw" );
+      parameters->erase( "bestmsrcoalescer" );
    }
-   if ( parameters->count( "best_best_na" ) &&
-        ( (*parameters)[ "best_best_na" ].isEmpty() ||
-          (*parameters)[ "best_best_na" ] == "false" ) )
+   if ( parameters->count( "bestbestv" ) &&
+        ( (*parameters)[ "bestbestv" ].isEmpty() ||
+          (*parameters)[ "bestbestv" ] == "false" ) )
    {
-      parameters->erase( "best_best_na" );
+      parameters->erase( "bestbestv" );
    }
-   if ( parameters->count( "best_best_p" ) &&
-        ( (*parameters)[ "best_best_p" ].isEmpty() ||
-          (*parameters)[ "best_best_p" ] == "false" ) )
+   if ( parameters->count( "bestbestp" ) &&
+        ( (*parameters)[ "bestbestp" ].isEmpty() ||
+          (*parameters)[ "bestbestp" ] == "false" ) )
    {
-      parameters->erase( "best_best_p" );
+      parameters->erase( "bestbestp" );
    }
-   if ( parameters->count( "best_best_v" ) &&
-        ( (*parameters)[ "best_best_v" ].isEmpty() ||
-          (*parameters)[ "best_best_v" ] == "false" ) )
+   if ( parameters->count( "bestbestna" ) &&
+        ( (*parameters)[ "bestbestna" ].isEmpty() ||
+          (*parameters)[ "bestbestna" ] == "false" ) )
    {
-      parameters->erase( "best_best_v" );
+      parameters->erase( "bestbestna" );
    }
 
    global_Xpos -= 30;
@@ -425,64 +445,81 @@ void US_Hydrodyn_Cluster_Best::closeEvent( QCloseEvent *e )
    e->accept();
 }
 
-void US_Hydrodyn_Cluster_Best::update_best_msr_gridspace( const QString & )
+void US_Hydrodyn_Cluster_Best::update_bestmsrprober( const QString & )
 {
-   ( *parameters )[ "best_msr_gridspace" ] = le_best_msr_gridspace->text();
+   ( *parameters )[ "bestmsrprober" ] = le_bestmsrprober->text();
 }
 
-void US_Hydrodyn_Cluster_Best::update_best_msr_prober( const QString & )
+void US_Hydrodyn_Cluster_Best::update_bestmsrfinenessangle( const QString & )
 {
-   ( *parameters )[ "best_msr_prober" ] = le_best_msr_prober->text();
+   ( *parameters )[ "bestmsrfinenessangle" ] = le_bestmsrfinenessangle->text();
 }
 
-void US_Hydrodyn_Cluster_Best::update_best_msr_finenessangle( const QString & )
+void US_Hydrodyn_Cluster_Best::update_bestrcoalnmin( const QString & )
 {
-   ( *parameters )[ "best_msr_finenessangle" ] = le_best_msr_finenessangle->text();
+   ( *parameters )[ "bestrcoalnmin" ] = le_bestrcoalnmin->text();
 }
 
-void US_Hydrodyn_Cluster_Best::update_best_msr_coalescer( const QString & )
+void US_Hydrodyn_Cluster_Best::update_bestrcoalnmax( const QString & )
 {
-   ( *parameters )[ "best_msr_coalescer" ] = le_best_msr_coalescer->text();
+   ( *parameters )[ "bestrcoalnmax" ] = le_bestrcoalnmax->text();
 }
 
-void US_Hydrodyn_Cluster_Best::update_best_rcoal_nmin( const QString & )
+void US_Hydrodyn_Cluster_Best::update_bestrcoaln( const QString & )
 {
-   ( *parameters )[ "best_rcoal_nmin" ] = le_best_rcoal_nmin->text();
+   ( *parameters )[ "bestrcoaln" ] = le_bestrcoaln->text();
 }
 
-void US_Hydrodyn_Cluster_Best::update_best_rcoal_nmax( const QString & )
+void US_Hydrodyn_Cluster_Best::update_bestbestmw( const QString & )
 {
-   ( *parameters )[ "best_rcoal_nmax" ] = le_best_rcoal_nmax->text();
+   ( *parameters )[ "bestbestmw" ] = le_bestbestmw->text();
 }
 
-void US_Hydrodyn_Cluster_Best::update_best_rcoal_n( const QString & )
+void US_Hydrodyn_Cluster_Best::update_bestbestwatr( const QString & )
 {
-   ( *parameters )[ "best_rcoal_n" ] = le_best_rcoal_n->text();
+   ( *parameters )[ "bestbestwatr" ] = le_bestbestwatr->text();
 }
 
-void US_Hydrodyn_Cluster_Best::update_best_best_mw( const QString & )
+void US_Hydrodyn_Cluster_Best::set_bestbestvc()
 {
-   ( *parameters )[ "best_best_mw" ] = le_best_best_mw->text();
+   ( *parameters )[ "bestbestvc" ] = cb_bestbestvc->isChecked() ? "true" : "false";
+}
+void US_Hydrodyn_Cluster_Best::hide_opt_label()
+{
+   hide_widgets( widgets_opt_label, widgets_opt_label.size() && widgets_opt_label[ 0 ]->isVisible() );
 }
 
-void US_Hydrodyn_Cluster_Best::set_best_best_na()
+void US_Hydrodyn_Cluster_Best::hide_widgets( vector < QWidget * > w, bool do_hide, bool do_resize )
 {
-   ( *parameters )[ "best_best_na" ] = cb_best_best_na->isChecked() ? "true" : "false";
+   for ( unsigned int i = 0; i < ( unsigned int )w.size(); i++ )
+   {
+       do_hide ? w[ i ]->hide() : w[ i ]->show();
+   }
+   if ( do_resize )
+   {
+       qApp->processEvents();
+       resize( 0, 0 );
+   }
 }
 
-void US_Hydrodyn_Cluster_Best::set_best_best_p()
+void US_Hydrodyn_Cluster_Best::update_bestmsrcoalescer( const QString & )
 {
-   ( *parameters )[ "best_best_p" ] = cb_best_best_p->isChecked() ? "true" : "false";
+   ( *parameters )[ "bestmsrcoalescer" ] = le_bestmsrcoalescer->text();
 }
 
-void US_Hydrodyn_Cluster_Best::set_best_best_v()
+void US_Hydrodyn_Cluster_Best::set_bestbestv()
 {
-   ( *parameters )[ "best_best_v" ] = cb_best_best_v->isChecked() ? "true" : "false";
+   ( *parameters )[ "bestbestv" ] = cb_bestbestv->isChecked() ? "true" : "false";
 }
 
-void US_Hydrodyn_Cluster_Best::set_best_best_vc()
+void US_Hydrodyn_Cluster_Best::set_bestbestp()
 {
-   ( *parameters )[ "best_best_vc" ] = cb_best_best_vc->isChecked() ? "true" : "false";
+   ( *parameters )[ "bestbestp" ] = cb_bestbestp->isChecked() ? "true" : "false";
+}
+
+void US_Hydrodyn_Cluster_Best::set_bestbestna()
+{
+   ( *parameters )[ "bestbestna" ] = cb_bestbestna->isChecked() ? "true" : "false";
 }
 
 void US_Hydrodyn_Cluster_Best::save()
@@ -553,17 +590,17 @@ void US_Hydrodyn_Cluster_Best::load()
 
 void US_Hydrodyn_Cluster_Best::update_fields()
 {
-   le_best_msr_gridspace                           ->setText( parameters->count( "best_msr_gridspace" ) ? ( *parameters )[ "best_msr_gridspace" ] : "" );
-   le_best_msr_prober                              ->setText( parameters->count( "best_msr_prober" ) ? ( *parameters )[ "best_msr_prober" ] : "" );
-   le_best_msr_finenessangle                       ->setText( parameters->count( "best_msr_finenessangle" ) ? ( *parameters )[ "best_msr_finenessangle" ] : "" );
-   le_best_msr_coalescer                           ->setText( parameters->count( "best_msr_coalescer" ) ? ( *parameters )[ "best_msr_coalescer" ] : "" );
-   le_best_rcoal_nmin                              ->setText( parameters->count( "best_rcoal_nmin" ) ? ( *parameters )[ "best_rcoal_nmin" ] : "" );
-   le_best_rcoal_nmax                              ->setText( parameters->count( "best_rcoal_nmax" ) ? ( *parameters )[ "best_rcoal_nmax" ] : "" );
-   le_best_rcoal_n                                 ->setText( parameters->count( "best_rcoal_n" ) ? ( *parameters )[ "best_rcoal_n" ] : "" );
-   le_best_best_mw                                 ->setText( parameters->count( "best_best_mw" ) ? ( *parameters )[ "best_best_mw" ] : "" );
-   cb_best_best_na                                 ->setChecked( parameters->count( "best_best_na" ) && ( *parameters )[ "best_best_na" ] == "true" ? true : false );
-   cb_best_best_p                                  ->setChecked( parameters->count( "best_best_p" ) && ( *parameters )[ "best_best_p" ] == "true" ? true : false );
-   cb_best_best_v                                  ->setChecked( parameters->count( "best_best_v" ) && ( *parameters )[ "best_best_v" ] == "true" ? true : false );
-   cb_best_best_vc                                 ->setChecked( parameters->count( "best_best_vc" ) && ( *parameters )[ "best_best_vc" ] == "true" ? true : false );
+   le_bestmsrprober                                ->setText( parameters->count( "bestmsrprober" ) ? ( *parameters )[ "bestmsrprober" ] : "" );
+   le_bestmsrfinenessangle                         ->setText( parameters->count( "bestmsrfinenessangle" ) ? ( *parameters )[ "bestmsrfinenessangle" ] : "" );
+   le_bestrcoalnmin                                ->setText( parameters->count( "bestrcoalnmin" ) ? ( *parameters )[ "bestrcoalnmin" ] : "" );
+   le_bestrcoalnmax                                ->setText( parameters->count( "bestrcoalnmax" ) ? ( *parameters )[ "bestrcoalnmax" ] : "" );
+   le_bestrcoaln                                   ->setText( parameters->count( "bestrcoaln" ) ? ( *parameters )[ "bestrcoaln" ] : "" );
+   le_bestbestmw                                   ->setText( parameters->count( "bestbestmw" ) ? ( *parameters )[ "bestbestmw" ] : "" );
+   le_bestbestwatr                                 ->setText( parameters->count( "bestbestwatr" ) ? ( *parameters )[ "bestbestwatr" ] : "" );
+   cb_bestbestvc                                   ->setChecked( parameters->count( "bestbestvc" ) && ( *parameters )[ "bestbestvc" ] == "true" ? true : false );
+   le_bestmsrcoalescer                             ->setText( parameters->count( "bestmsrcoalescer" ) ? ( *parameters )[ "bestmsrcoalescer" ] : "" );
+   cb_bestbestv                                    ->setChecked( parameters->count( "bestbestv" ) && ( *parameters )[ "bestbestv" ] == "true" ? true : false );
+   cb_bestbestp                                    ->setChecked( parameters->count( "bestbestp" ) && ( *parameters )[ "bestbestp" ] == "true" ? true : false );
+   cb_bestbestna                                   ->setChecked( parameters->count( "bestbestna" ) && ( *parameters )[ "bestbestna" ] == "true" ? true : false );
 }
 
