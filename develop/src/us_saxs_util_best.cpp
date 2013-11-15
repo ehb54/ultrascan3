@@ -56,10 +56,11 @@ bool US_Saxs_Util::run_best()
 
    // run msroll
 
+   int p = 0;
    {
       QString cmd = 
          QString( "%1 -m %2 -r %3 -y %4 -t %5.c3p -v %6.c3v" )
-         .arg( progs[ 0 ] )
+         .arg( progs[ p ] )
          .arg( control_parameters[ "inputfilenoread" ] )
          .arg( control_parameters[ "bestmsrradiifile" ] )
          .arg( control_parameters[ "bestmsrpatternfile" ] )
@@ -82,42 +83,152 @@ bool US_Saxs_Util::run_best()
          cmd += QString( " -l %1" ).arg( control_parameters[ "bestmsrcoalescer" ] );
       }
 
-      qDebug( QString( "best cmd = %1\n" ).arg( cmd ) );
+      cmd += QString( " 2> msr_%1.stderr > msr_%2.stdout" ).arg( inputbase ).arg( inputbase );
+      qDebug( QString( "best cmd = %1" ).arg( cmd ) );
 
-      // run & check output
+      cout << "Starting " + progs[ p ] + "\n";
+      cout << cmd << endl;
+      system( cmd.ascii() );
+      cout << "Finished " + progs[ p ] + "\n";
+
+      QStringList expected;
+      expected 
+         << inputbase + ".c3p"
+         << inputbase + ".c3v"
+         << "msr_" + inputbase + ".stdout"
+         << "msr_" + inputbase + ".stderr"
+         ;
+
+      for ( int i = 0; i < (int) expected.size(); ++i )
+      {
+         if ( !QFile( expected[ i ] ).exists() )
+         {
+            errormsg += QString( "BEST: %1 did not produce expected output file %2\n" )
+               .arg( progs[ p ] )
+               .arg( expected[ i ] )
+               ;
+         }
+      }
+   }
+
+   if ( !errormsg.isEmpty() )
+   {
+      return false;
    }
 
    // run rcoal
+   p++;
    {
       QString cmd = 
          QString( "%1 -f %2.c3p -nmax %3 -nmin %4 -n %5" )
-         .arg( progs[ 1 ] )
+         .arg( progs[ p ] )
          .arg( inputbase )
          .arg( control_parameters[ "bestrcoalnmax" ] )
          .arg( control_parameters[ "bestrcoalnmin" ] )
-         .arg( control_parameters[ "bestrcoalnm" ] )
+         .arg( control_parameters[ "bestrcoaln" ] )
          ;
 
-      qDebug( QString( "best cmd = %1\n" ).arg( cmd ) );
+      cmd += QString( " 2> rcoal_%1.stderr > rcoal_%2.stdout" ).arg( inputbase ).arg( inputbase );
+
+      qDebug( QString( "best cmd = %1" ).arg( cmd ) );
+      cout << "Starting " + progs[ p ] + "\n";
+      cout << cmd << endl;
+      system( cmd.ascii() );
+      cout << "Finished " + progs[ p ] + "\n";
 
       // run & check output
+      QStringList expected;
+      expected 
+         << "rcoal_" + inputbase + ".stdout"
+         << "rcoal_" + inputbase + ".stderr"
+         ;
+
+      for ( int i = 0; i < (int) expected.size(); ++i )
+      {
+         if ( !QFile( expected[ i ] ).exists() )
+         {
+            errormsg += QString( "BEST: %1 did not produce expected output file %2\n" )
+               .arg( progs[ p ] )
+               .arg( expected[ i ] )
+               ;
+         }
+      }
+   }
+
+   if ( !errormsg.isEmpty() )
+   {
+      return false;
+   }
+
+   QStringList outfiles;
+   {
+      QFile f( "rcoal_" + inputbase + ".stdout" );
+      f.open( IO_ReadOnly );
+      QTextStream ts( &f );
+      while ( !ts.atEnd() )
+      {
+         QString qs = ts.readLine();
+         if ( qs.contains( "Output files written:" ) )
+         {
+            outfiles << QString( ts.readLine() ).stripWhiteSpace();
+         }
+      }
+      f.close();
    }
 
    // run best
+   p++;
+   for ( int i = 0; i < (int) outfiles.size(); ++i )
    {
+      qDebug( QString( "processing outfile %1" ).arg( outfiles[ i ] ) );
       QString cmd = 
-         QString( "%1 -f %2.c3p -nmax %3 -nmin %4 -n %5" )
-         .arg( progs[ 1 ] )
-         .arg( inputbase )
-         .arg( control_parameters[ "bestrcoalnmax" ] )
-         .arg( control_parameters[ "bestrcoalnmin" ] )
-         .arg( control_parameters[ "bestrcoalnm" ] )
+         QString( "%1 -f %2 -mw %3" )
+         .arg( progs[ p ] )
+         .arg( outfiles[ i ] )
+         .arg( control_parameters[ "bestbestmw" ] )
          ;
 
-      qDebug( QString( "best cmd = %1\n" ).arg( cmd ) );
+      if ( control_parameters.count( "bestbestna" ) )
+      {
+         cmd += " -na";
+      }
+      if ( control_parameters.count( "bestbestp" ) )
+      {
+         cmd += " -p";
+      }
+      if ( control_parameters.count( "bestbestv" ) )
+      {
+         cmd += " -v";
+      }
+      if ( control_parameters.count( "bestbestvc" ) )
+      {
+         cmd += " -vc";
+      }
 
-      // run & check output
-      // get list of files for next step
+      cmd += QString( " 2> best_%1.stderr > best_%2.stdout" ).arg( outfiles[ i ] ).arg( outfiles[ i ] );
+
+      qDebug( QString( "best cmd = %1" ).arg( cmd ) );
+      cout << "Starting " + progs[ p ] + "\n";
+      cout << cmd << endl;
+      system( cmd.ascii() );
+      cout << "Finished " + progs[ p ] + "\n";
+
+      QStringList expected;
+      expected 
+         << "best_" + outfiles[ i ] + ".stdout"
+         << "best_" + outfiles[ i ] + ".stderr"
+         ;
+
+      for ( int i = 0; i < (int) expected.size(); ++i )
+      {
+         if ( !QFile( expected[ i ] ).exists() )
+         {
+            errormsg += QString( "BEST: %1 did not produce expected output file %2\n" )
+               .arg( progs[ p ] )
+               .arg( expected[ i ] )
+               ;
+         }
+      }
    }
 
    errormsg = "best: not yet\n"; 
