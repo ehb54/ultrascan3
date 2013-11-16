@@ -381,6 +381,7 @@ bool US_Saxs_Util::input_dimensions( point &range )
    return true;
 }
 
+// TODO: should replace with general strip_pdb() function
 bool US_Saxs_Util::dmd_strip_pdb()
 {
    // remove dmd unrecognized atoms from pdb
