@@ -4,8 +4,8 @@ US-SOMO~(main window)
   Data
   HPLC
    SVD
-   Concentration detector
    Fit~(Gaussians and global Gaussians)
+   Concentration detector
   Guinier options
   Open options panel
    SAXS computation options

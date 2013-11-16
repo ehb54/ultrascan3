@@ -78,7 +78,8 @@ my($graph) = GraphViz2 -> new
      global => {directed => 1},
 #     graph  => {label => 'US-SOMO Programs', rankdir => 'LR'},
      graph  => { rankdir => 'LR' },
-#     logger => $logger,
+     logger => $logger,
+#     concentrate => true,
      node   => {shape => 'box'},
     );
 
@@ -172,11 +173,11 @@ for ( $i = 0; $i < @l; ++$i )
             $ee = $l[ $i ];
             if ( !$edges{ lc( "${fe}:::${ee}" ) } )
             {
-                $graph -> add_edge( from => $fe, to => $ee, arrowsize => 1, color => $color[ $lp[ -1 ] ] );
-                print "add_edge( from => \"$fe\", to => \"$ee\", arrowsize => 1, color => $color[ $lp[ -1 ] ] )\n";
+                $graph -> add_edge( from => $fe, to => $ee, arrowsize => 1, color => $color[ $lp[ -1 ] ], weight => 2 );
+                print "add_edge( from => \"$fe\", to => \"$ee\", arrowsize => 1, color => $color[ $lp[ -1 ] ], weight => 2 )\n";
                 $edges{ lc ( "${fe}:::${ee}" ) } = 1;
             } else {
-                print "skipped: add_edge( from => \"$fe\", to => \"$ee\", arrowsize => 1, color => $color[ $lp[ -1 ] ] )\n";
+                print "skipped: add_edge( from => \"$fe\", to => \"$ee\", arrowsize => 1, color => $color[ $lp[ -1 ] ], weight => 2 )\n";
             }
         }
     }
