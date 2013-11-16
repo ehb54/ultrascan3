@@ -168,7 +168,10 @@ print `diff $f $of`;
 # ----- protocols, toppar
 
 `cp -r $haddock/protocols $runrun/`;
-`cp -r $haddock/toppar $runrun/`;
+$cmd = "cp -r $haddock/toppar $runrun/";
+print "$cmd\n";
+print `$cmd`;
+# `cp -r $haddock/toppar $runrun/`;
 `cp -r $haddock/tools $runrun/`;
 
 # mk other dirs
