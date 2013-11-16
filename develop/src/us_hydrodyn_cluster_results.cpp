@@ -325,6 +325,28 @@ void US_Hydrodyn_Cluster_Results::purge()
                } else {
                   editor_msg( "black", QString( tr( "Removed %1" ) ).arg( lvi->text( 0 ) ) );
                }
+               QString qs = lvi->text( 0 );
+               qs.replace( QRegExp( "_out.t..$" ), "" );
+               QStringList qscheck;
+               qscheck 
+                  <<  qs + ".tar"
+                  <<  qs + ".tgz"
+                  <<  qs + ".TAR"
+                  <<  qs + ".TGZ"
+                  ;
+                  
+               for ( int i = 0; i < (int) qscheck.size(); ++i )
+               {
+                  if ( QFile::exists( qscheck ) )
+                  {
+                     if ( !QFile::remove( qscheck ) )
+                     {
+                        editor_msg( "red", QString( tr( "Error: can not remove %1" ) ).arg( qscheck ) );
+                     } else {
+                        editor_msg( "black", QString( tr( "Removed %1" ) ).arg( qscheck ) );
+                     }
+                  }
+               }
             }
          } while ( ( lvi = lvi->nextSibling() ) );
       }
