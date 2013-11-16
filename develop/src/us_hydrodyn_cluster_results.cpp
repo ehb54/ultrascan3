@@ -337,13 +337,13 @@ void US_Hydrodyn_Cluster_Results::purge()
                   
                for ( int i = 0; i < (int) qscheck.size(); ++i )
                {
-                  if ( QFile::exists( qscheck ) )
+                  if ( QFile::exists( qscheck[ i ] ) )
                   {
-                     if ( !QFile::remove( qscheck ) )
+                     if ( !QFile::remove( qscheck[ i ] ) )
                      {
-                        editor_msg( "red", QString( tr( "Error: can not remove %1" ) ).arg( qscheck ) );
+                        editor_msg( "red", QString( tr( "Error: can not remove %1" ) ).arg( qscheck[ i ] ) );
                      } else {
-                        editor_msg( "black", QString( tr( "Removed %1" ) ).arg( qscheck ) );
+                        editor_msg( "black", QString( tr( "Removed %1" ) ).arg( qscheck[ i ] ) );
                      }
                   }
                }
