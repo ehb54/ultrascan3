@@ -3,9 +3,6 @@
 #  include <mpi.h>
 #endif
 
-#ifndef PI
-# define  PI 3.141592654
-#endif
 #define  SMAX 20
 
 #include <stdio.h>
@@ -18,6 +15,9 @@
 #include <stdlib.h>
 
 #include "../include/us_hydrodyn_pat.h"
+#ifndef PI
+# define  PI 3.141592654
+#endif
 
 // #define DEBUG_WW
 #if defined(DEBUG_WW)
