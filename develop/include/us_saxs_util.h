@@ -1210,6 +1210,14 @@ class US_EXTERN US_Saxs_Util
       QStringList  experimental_grids;
       bool         process_one_iqq();
 
+      bool         strip_pdb( 
+                             QString & pdb_stripped,
+                             const QString & pdb,
+                             const QStringList & exclude_atoms_list,
+                             const QStringList & exclude_residues_list,
+                             bool exclude_hydrogens = false
+                              );
+
       bool         calc_saxs_iq_native_fast_bead_model  ();
       bool         calc_saxs_iq_native_debye_bead_model ();
       bool         calc_saxs_iq_native_hybrid_bead_model();

@@ -52,7 +52,25 @@ bool US_Saxs_Util::run_best()
       return false;
    }
 
-   QString inputbase = QFileInfo( control_parameters[ "inputfilenoread" ] ).baseName();
+   // strip pdb
+
+   QString pdb_stripped;
+   QStringList exclude_atoms_list;
+   QStringList exclude_residues_list;
+   exclude_residues_list 
+      << "HOH"
+      ;
+
+   if ( !strip_pdb( pdb_stripped,
+                    control_parameters[ "inputfilenoread" ],
+                    exclude_atoms_list,
+                    exclude_residues_list,
+                    true ) )
+   {
+      return false;
+   }
+
+   QString inputbase = QFileInfo( pdb_stripped ).baseName();
 
    // run msroll
 
@@ -61,7 +79,7 @@ bool US_Saxs_Util::run_best()
       QString cmd = 
          QString( "%1 -m %2 -r %3 -y %4 -t %5.c3p -v %6.c3v" )
          .arg( progs[ p ] )
-         .arg( control_parameters[ "inputfilenoread" ] )
+         .arg( pdb_stripped )
          .arg( control_parameters[ "bestmsrradiifile" ] )
          .arg( control_parameters[ "bestmsrpatternfile" ] )
          .arg( inputbase )
@@ -107,6 +125,8 @@ bool US_Saxs_Util::run_best()
                .arg( progs[ p ] )
                .arg( expected[ i ] )
                ;
+         } else {
+            output_files << expected[ i ];
          }
       }
    }
@@ -151,6 +171,8 @@ bool US_Saxs_Util::run_best()
                .arg( progs[ p ] )
                .arg( expected[ i ] )
                ;
+         } else {
+            output_files << expected[ i ];
          }
       }
    }
@@ -171,6 +193,7 @@ bool US_Saxs_Util::run_best()
          if ( qs.contains( "Output files written:" ) )
          {
             outfiles << QString( ts.readLine() ).stripWhiteSpace();
+            output_files << QString( ts.readLine() ).stripWhiteSpace();
          }
       }
       f.close();
@@ -219,29 +242,35 @@ bool US_Saxs_Util::run_best()
          << "best_" + outfiles[ i ] + ".stderr"
          ;
 
-      if ( control_parameters.count( "bestbestvc" ) )
+      QString expected_base;
+
+      if ( control_parameters.count( "bestbestv" ) &&
+           !control_parameters.count( "bestbestvc" ) )
       {
-         expected
-            << outfiles[ i ] + "vcm.log" 
-            << outfiles[ i ] + "vcm.be" 
-            ;
+         expected_base += "v";
       }
 
-      if ( control_parameters.count( "bestbestv" ) )
+      if ( control_parameters.count( "bestbestvc" ) )
       {
-         expected
-            << outfiles[ i ] + "vm.log" 
-            << outfiles[ i ] + "vm.be" 
-            ;
+         expected_base += "vc";
       }
+
+      expected_base += "m";
 
       if ( control_parameters.count( "bestbestna" ) )
       {
-         expected
-            << outfiles[ i ] + "mn.log" 
-            << outfiles[ i ] + "mn.be" 
-            ;
+         expected_base += "n";
       }
+
+      if ( control_parameters.count( "bestbestp" ) )
+      {
+         expected_base += "p";
+      }
+
+      expected
+         << outfiles[ i ] + expected_base + "log" 
+         << outfiles[ i ] + expected_base + "be" 
+         ;
 
       for ( int i = 0; i < (int) expected.size(); ++i )
       {
@@ -251,10 +280,157 @@ bool US_Saxs_Util::run_best()
                .arg( progs[ p ] )
                .arg( expected[ i ] )
                ;
+         } else {
+            output_files << expected[ i ];
          }
       }
    }
 
-   errormsg = "best: not yet\n"; 
-   return false;
+   return true;
+}
+
+bool US_Saxs_Util::strip_pdb( 
+                             QString & pdb_stripped,
+                             const QString & pdb,
+                             const QStringList & exclude_atoms_list,
+                             const QStringList & exclude_residues_list,
+                             bool exclude_hydrogens
+                              )
+{
+   QString strip_tag = "_s";
+
+   QString base_pdb = QFileInfo( pdb ).baseName();
+   pdb_stripped = base_pdb + strip_tag;
+
+   unsigned int ext = 0;
+   while ( QFile::exists( pdb_stripped + ".pdb" ) )
+   {
+      pdb_stripped = base_pdb + strip_tag + QString( "_%1" ).arg( ++ext );
+   }
+   QString stripped_log = pdb_stripped + "-removed.pdb";
+   pdb_stripped +=  ".pdb";
+   
+   QFile fi( pdb );
+   if ( !fi.open( IO_ReadOnly ) )
+   {
+      errormsg =  QString( "Error: can not read file %1" )
+         .arg( pdb );
+      return false;
+   }
+
+   // outputs
+   // ? FIX THIS: should be renamed ? and renamed in output_files
+
+   QFile fo( pdb_stripped );
+   if ( !fo.open( IO_WriteOnly ) )
+   {
+      errormsg =  QString( "Error: can not create file %1" )
+         .arg( pdb_stripped );
+      fi.close();
+      return false;
+   }
+
+   QFile fol( stripped_log );
+   if ( !fol.open( IO_WriteOnly ) )
+   {
+      errormsg =  QString( "Error: can not create file %1" )
+         .arg( stripped_log );
+      fi.close();
+      fo.close();
+      return false;
+   }
+   
+   // don't know everything yet, but will modify as necessarry
+
+   map < QString, bool > exclude_atoms;
+   map < QString, bool > exclude_residues;
+
+   for ( unsigned int i = 0; i < exclude_atoms_list.size(); i++ )
+   {
+      exclude_atoms[ exclude_atoms_list[ i ] ] = true;
+   }
+
+   for ( unsigned int i = 0; i < exclude_residues_list.size(); i++ )
+   {
+      exclude_residues[ exclude_residues_list[ i ] ] = true;
+   }
+
+   QTextStream tsi ( &fi );
+   QTextStream tso ( &fo );
+   QTextStream tsol( &fol );
+
+   QRegExp rx_check_line( "^(ATOM|HETATM)" );
+
+   QRegExp rx_ter       ( "^(TER)" );
+
+   unsigned int last_chain_residue_no = 0;
+   QString      last_key;
+   QString      last_chain_id;
+
+   while ( !tsi.atEnd() )
+   {
+      QString qs = tsi.readLine();
+      bool keep = true;
+      if ( rx_check_line.search( qs ) != -1 )
+      {
+         QString residue = qs.mid( 17, 3 );
+         QString atom    = qs.mid( 12, 4 );
+
+         if ( exclude_hydrogens &&
+              ( qs.mid(12,1) == "H" || qs.mid(13,1) == "H" ) )
+         {
+            keep = false;
+         } else {
+            if ( exclude_atoms.count( atom ) ||
+                 exclude_residues.count( residue ) )
+            {
+               keep = false;
+            }
+         }
+      }
+      if ( rx_ter.search( qs ) != -1 )
+      {
+         keep = false;
+      }
+      if ( keep )
+      {
+         if ( rx_check_line.search( qs ) != -1 )
+         {
+            QString      chain_id   = qs.mid( 21, 1 );
+            unsigned int residue_no = qs.mid( 22, 4 ).stripWhiteSpace().toUInt();
+            QString      this_key   = chain_id + qs.mid( 22, 4 ).stripWhiteSpace();
+            // if we start a new chain, we're ok
+            if ( chain_id != last_chain_id )
+            {
+               if ( !last_chain_id.isEmpty() )
+               {
+                  tso << "TER\n";
+               }
+               last_chain_id         = chain_id;
+               last_key              = this_key;
+               last_chain_residue_no = residue_no;
+            }
+            if ( last_key != this_key )
+            {
+               last_chain_residue_no++;
+               if ( last_chain_residue_no != residue_no )
+               {
+                  tso << "TER\n";
+                  last_chain_id         = chain_id;
+                  last_chain_residue_no = residue_no;
+               }
+               last_key              = this_key;
+            }
+         }
+         tso << qs << endl;
+      } else {
+         tsol << qs << endl;
+      }
+   }
+   fi.close();
+   fo.close();
+   fol.close();
+   output_files << pdb_stripped;
+   output_files << stripped_log;
+   return true;
 }
