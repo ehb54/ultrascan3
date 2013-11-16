@@ -219,6 +219,30 @@ bool US_Saxs_Util::run_best()
          << "best_" + outfiles[ i ] + ".stderr"
          ;
 
+      if ( control_parameters.count( "bestbestvc" ) )
+      {
+         expected
+            << outfiles[ i ] + "vcm.log" 
+            << outfiles[ i ] + "vcm.be" 
+            ;
+      }
+
+      if ( control_parameters.count( "bestbestv" ) )
+      {
+         expected
+            << outfiles[ i ] + "vm.log" 
+            << outfiles[ i ] + "vm.be" 
+            ;
+      }
+
+      if ( control_parameters.count( "bestbestna" ) )
+      {
+         expected
+            << outfiles[ i ] + "mn.log" 
+            << outfiles[ i ] + "mn.be" 
+            ;
+      }
+
       for ( int i = 0; i < (int) expected.size(); ++i )
       {
          if ( !QFile( expected[ i ] ).exists() )
