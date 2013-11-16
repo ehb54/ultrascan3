@@ -192,11 +192,27 @@ bool US_Saxs_Util::run_best()
          QString qs = ts.readLine();
          if ( qs.contains( "Output files written:" ) )
          {
-            outfiles << QString( ts.readLine() ).stripWhiteSpace();
-            output_files << QString( ts.readLine() ).stripWhiteSpace();
+            do 
+            {
+               qs = QString( ts.readLine() ).stripWhiteSpace();
+            } while ( qs.isEmpty() && !ts.atEnd() );
+
+            if ( !qs.isEmpty() )
+            {
+               outfiles << qs;
+               output_files << qs;
+               // qDebug( QString( "outfiles.back() is %1" ).arg( outfiles.back() ) );
+            } else {
+               errormsg += "could not correctly find output files in rcoal stdout\n";
+            }
          }
       }
       f.close();
+   }
+
+   if ( !errormsg.isEmpty() )
+   {
+      return false;
    }
 
    // run best
