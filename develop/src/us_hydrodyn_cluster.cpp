@@ -41,6 +41,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    cluster_additional_methods_no_tgz_output            [ "oned"     ] = true;
    cluster_additional_methods_must_run_alone           [ "bfnb"     ] = true;
    cluster_additional_methods_must_run_alone           [ "oned"     ] = true;
+   cluster_additional_methods_must_run_alone           [ "best"     ] = true;
    cluster_additional_methods_add_selected_files       [ "oned"     ] = true;
 
    cluster_additional_methods_modes[ "one_run_per_file"               ][ "best" ] = true;
