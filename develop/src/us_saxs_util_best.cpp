@@ -284,8 +284,8 @@ bool US_Saxs_Util::run_best()
       }
 
       expected
-         << outfiles[ i ] + expected_base + "log" 
-         << outfiles[ i ] + expected_base + "be" 
+         << outfiles[ i ] + expected_base + ".log" 
+         << outfiles[ i ] + expected_base + ".be" 
          ;
 
       for ( int i = 0; i < (int) expected.size(); ++i )
@@ -300,6 +300,11 @@ bool US_Saxs_Util::run_best()
             output_files << expected[ i ];
          }
       }
+   }
+
+   if ( !errormsg.isEmpty() )
+   {
+      return false;
    }
 
    return true;
