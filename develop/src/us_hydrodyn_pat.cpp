@@ -3,7 +3,9 @@
 #  include <mpi.h>
 #endif
 
-#define  PI 3.141592654
+#ifndef PI
+# define  PI 3.141592654
+#endif
 #define  SMAX 20
 
 #include <stdio.h>
