@@ -43,8 +43,6 @@
 
 #define TOLERANCE overlap_tolerance
 
-
-
 void US_Hydrodyn::read_residue_file()
 {
    QString str1, str2;
