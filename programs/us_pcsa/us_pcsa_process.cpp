@@ -261,6 +261,7 @@ DbgLv(1) << "  STOPTHR:  thread deleted";
 
    emit message_update( pmessage_head() +
       tr( "All computations have been aborted." ), false );
+   abort       = false;
 }
 
 // Complete a specified PCSA fit run after alpha scan or alpha change
@@ -477,8 +478,10 @@ bool US_pcsaProcess::get_results( US_DataIO::RawData*     da_sim,
    bool all_ok      = true;
    model.alphaRP    = alpha;
    mrecs[ 0 ].model = model;
+   abort            = false;
+DbgLv(1) << "PC:GR: IN  abort" << abort;
 
-   if ( abort ) return false;
+//   if ( abort ) return false;
 
    *da_sim     = sdata;                           // copy simulation data
    *da_res     = rdata;                           // copy residuals data
@@ -537,7 +540,11 @@ DbgLv(1) << "PC:putMRs: nmrecs" << nmrecs;
    klolim      = mrecs[ 0 ].kmin;
    kuplim      = mrecs[ 0 ].kmax;
    curvtype    = mrecs[ 0 ].ctype;
-   nmtasks     = ( curvtype != 3 ) ? sq( nkpts ) : nkpts;
+   nmtasks     = ( mrecs[ 0 ].taskx == mrecs[ 1 ].taskx )
+               ? ( nmrecs - 1 ) : nmrecs;
+   nkpts       = ( curvtype != 3 )
+               ? ( qRound( sqrt( (double)nmtasks ) ) )
+               : nmtasks;
    alpha       = 0.0;
 DbgLv(1) << "PC:putMRs:  nkpts nmtasks" << nkpts << nmtasks;
 
