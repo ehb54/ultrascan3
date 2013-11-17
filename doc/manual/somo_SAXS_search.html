@@ -24,7 +24,7 @@
 US-SOMO - SAXS parameters search module</h2>
 <p>
 <p>
-<h3><center>Last updated: March 2012 </center></h3><p>
+<h3><center>Last updated: November 2013 </center></h3><p>
 <p>
 <td><img SRC="somo-SAXS_Search_control.png" ALT="SOMO SAXS parameters search module"></td>
 </center>
@@ -38,7 +38,7 @@ This module is used to set the low- and high-limits for (currently) three parame
 <i>Scaling excluded volume</i>: the exact value of the excluded volume for each atomic group is still a matter of debate. The scaling factor that we have introduced in the <a href=somo_saxs_options.html> SAXS/SANS Options submenu</a> will change the value of all the excluded volumes of non-water atomic groups as tabulated in the <a href="somo-2.png">atom definition</a> table by a fixed %. In this module, the % can be varied between limiting values;
 
 <li>
-<i>WAT excluded volume</i>: this is the excluded volume of explicit hydration waters as defined within <b>US-SOMO</b>. Waters added using other hydration programs should be renamed as "WAT" in order to be properly considered in the computations. This volume, set by default to 24 A<sup>3</sup>, can be changed in the <a href=somo_saxs_options.html> SAXS/SANS Options submenu</a>. In this module, it can be varied between limiting values.
+<i>WAT excluded volume</i>: this is the excluded volume of explicit hydration waters added using external hydration programs (the residue name for these waters should be renamed as "WAT" in order to be properly considered within <b>US-SOMO</b>). This volume, set by default to 24 A<sup>3</sup>, can be changed in the <a href=somo_saxs_options.html> SAXS/SANS Options submenu</a>. In this module, it can be varied between limiting values.
 </ul>
 <p>
 The parameters that will be varied during a search are selected by ticking the corresponding checkbox in the <i>Active</i> column. The starting and ending values for the search ae entered under the <i>Low value</i> and <i>High value</i> fields, respectively. The <i>Points</i> and <i>Interval</i> fields are correlated entries that allow to set the stepsize of the search. Given a low- and a high-value, entering the number of points will set the interval, and vice-versa. The last two fields, <i>Current value</i> and <i>Best value</i> will be constantly updated during a search.<p>  
@@ -68,7 +68,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 16, 2012.
+Last modified on November 15, 2013.
 </font>
 </body>
 </html>
