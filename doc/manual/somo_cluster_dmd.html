@@ -56,8 +56,24 @@ The primary difference between the relax and equilibrium phases is the frequency
 The <b>Static range parameter</b> provides a range of structure parts that will remain fixed during the simulation.  This can be entered in a format chain:startresidue#-endresidue#.  e.g. A:1-10 will keep residues 1 thru 10 of chain A static. Multiple static ranges can be separated with a comma.  N.B.: multiple static ranges will also be static in space with respect to each other.
 <p>
 
-The <b>Static range (native) parameter</b> is a readonly field that shows the conversion of the entered <b>Static range</b> into the native format used by DMD.
+The <b>Static range (native) parameter</b> is a readonly field that shows the conversion of the entered <b>Static range</b> into the native format used by DMD. <p>
+
+It is possible to select a row by clicking on the row number at the left.  This becomes important if you wish to run multiple DMD's simultaneously on the same or different PDB files.
+Running multiple PDBs simultaneously is actually an efficient use of computational resources, as the DMD program itself is not inherently parallel, and cluster jobs take control of full nodes
+consisting of from 8 to 16 cores, so each line can run in parallel on the cluster job's allocated nodes.<p>
+<b>Copy Values</b>: Copies the values of the selected row. </p>
+<b>Paste values to selected</b>: Pastes the previously copied values to the currently selected row.  This only becomes available if when <b>Copy Values</b> has previously been pressed.<p>
+<b>Paste values to all</b>: Pastes the previously copied values to all rows.  This only becomes available if when <b>Copy Values</b> has previously been pressed. For example, if you have several
+PDBs active for a DMD run, you can propagate the various values to all the rows<p>
+<b>Duplicate row</b>: This makes a duplicate of the selected row.  For example, this could be useful to run the same PDB at various temperatures and/or various static ranges.  Running for differing times is not as useful, as the
+output data of the longer run would just be an extension of the shorter run.
 <p>
+<b>Load</b>: This allows you to load previously saved values. Note: If you have saved valuess for a different PDB, the program will ask if you wish to apply the values to one of the available PDBs.<p>
+<b>Reset</b>: Resets to default values and original PDBs.  Duplicates of a PDB will be removed.<p>
+<b>Save</b>: This allows you to save all current values to a file.  It will produce a text file with an extension of .dmd <p>
+<b>Cancel</b>: Exits without remembering any changes made to the values.<p>
+<b>Help</b>: Brings up this help document in a web browser.<p>
+<b>Close</b>: Exits and remembers all changes made to the values in preparation for creating a cluster job package for submission. <p>
 
 <hr>
 <font face="helvetica" size="-1">
@@ -74,7 +90,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 14, 2012.
+Last modified on November 17, 2013.
 </font>
 </body>
 </html>
