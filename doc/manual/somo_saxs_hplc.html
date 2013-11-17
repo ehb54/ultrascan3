@@ -24,7 +24,7 @@
 SOMO HPLC-SAXS Module:</h2></center>
 <h3><center>Last updated: November 2013 </center></h3><p>
 
-<center><span style="color:#CC0000">NOTICE: portions of this help file are taken from the Supplementary Materials of "Brookes et al. Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US SOMO) enhanced SAS module,"<br> J. Appl. Cryst., 46: Part 6 (2013).<span style="color:#000000">
+<center><span style="color:#CC0000">NOTICE: portions of this help file are taken from the Supplementary Materials of "Brookes et al. Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US SOMO) enhanced SAS module,"<br> J. Appl. Cryst., 46: Part 6 (2013).</span>
 </center>
 
 <p><center>
@@ -75,7 +75,7 @@ Each time the <b><i>Width</i></b> button is pressed, it increments the data line
 <b><i>Smooth</i></b> performs a regularization of selected data using a moving window, whose dimension is defined in a pop-up menu, using a Gaussian smoothing kernel of 2n + 1 points.<p>
 
 <b><i>Repeak</i></b> is used to effectively scale data on the Y-axis to a pre-set target, selectable in a pop-up window among the data subjected to this operation (this affects the data, a new file is generated with "rp" and the scaling factor added at the end of the filename).<p>
-<b><i>SVD</i></b> operates only on <i>I(q)</i> vs. <i>q</i> datasets. It opens a pop-up window were a single-value decomposition analysis (e.g., Williamson et al.,  Biophys J. 94, 4906-4923, 2008) can be performed on the selected data (see <a href=somo_saxs_hplc_svd.html>here</a>). <span style="color:#CC0000">Important:<span style="color:#000000"> the data must be all on the same grid; if not, a warning message will appear in the bottom left <b><i>Messages</i></b> window: "<span style="color:#CC0000">SVD: curves must be on the same grid, try 'Crop Common' first<span style="color:#000000">" (see below for the use of the <b><i>Crop Common</i></b> button).<p>
+<b><i>SVD</i></b> operates only on <i>I(q)</i> vs. <i>q</i> datasets. It opens a pop-up window were a single-value decomposition analysis (e.g., Williamson et al.,  Biophys J. 94, 4906-4923, 2008) can be performed on the selected data (see <a href=somo_saxs_hplc_svd.html>here</a>). <span style="color:#CC0000">Important:</span> the data must be all on the same grid; if not, a warning message will appear in the bottom left <b><i>Messages</i></b> window: "<span style="color:#CC0000">SVD: curves must be on the same grid, try 'Crop Common' first</span>" (see below for the use of the <b><i>Crop Common</i></b> button).<p>
 
 <b><i>Make I(t)</i></b> is one of the crucial operations in the <b>HPLC-SAXS</b> module. It allows to generate a series of "chromatograms" (<i>I(t)</i> vs. <i>t</i>, where <i>t</i> can be real elution time or frame number) for each <i>q</i>-value present in the original data files (see below).<p>
 
@@ -127,7 +127,7 @@ When a part of the graph is selected using the mouse/left button, the buttons in
 <b><i>Crop Visible</i></b> will remove what is shown in the graphics window.<p>
 
 <li>
-<b><i>Crop Zeros</i></b> will remove data having zero or negative values in the intensity columns (<span style="color:#CC0000">discouraged: a warning panel will pop-up, asking the user whether she/he really wants to proceed, since experimental zero or negative values have statistical significance<span style="color:#000000">).<p>
+<b><i>Crop Zeros</i></b> will remove data having zero or negative values in the intensity columns (<span style="color:#CC0000">discouraged: a warning panel will pop-up, asking the user whether she/he really wants to proceed, since experimental zero or negative values have statistical significance</span>).<p>
 
 <li>
 <b><i>Crop Left</i></b> and <b><i>Crop Right</i></b> will remove one point on the left or right of the selected data, respectively.<p>
@@ -234,7 +234,7 @@ Pressing <b><i>Select in main window</i></b> will close the pop-up window and th
 </center>
 <p>
 
-In the image above, the <b><i>Global Gaussians</i></b> results on the <b><i>Nth</i></b> selected files are shown, together with the grouped fit residuals. The common centers and widhts, <span style="color:#CC0000">not optimized but just based on the initial chromatogram fit<span style="color:#000000">, are displayed in the graph as vertical and horizontal bars, respectively. <p>
+In the image above, the <b><i>Global Gaussians</i></b> results on the <b><i>Nth</i></b> selected files are shown, together with the grouped fit residuals. The common centers and widhts, <span style="color:#CC0000">not optimized but just based on the initial chromatogram fit</span>, are displayed in the graph as vertical and horizontal bars, respectively. <p>
 
 <b><i>Save</i></b> will save the resulting Gaussians to the current selected directory (with extension -gauss.dat for Gaussians of single files and -mgauss.dat for Gaussians of multiple files).<p>
 
