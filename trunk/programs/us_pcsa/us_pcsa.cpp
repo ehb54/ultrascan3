@@ -391,6 +391,7 @@ void US_pcsa::view( void )
 // Save data (model,noise), report, and PNG image files
 void US_pcsa::save( void )
 {
+DbgLv(1) << "SV: IN";
    QString analysisDate = QDateTime::currentDateTime().toUTC()
                           .toString( "yyMMddhhmm" );
    QString reqGUID      = US_Util::new_guid();
@@ -401,6 +402,7 @@ void US_pcsa::save( void )
    QString dates        = "e" + editID + "_a" + analysisDate;
    int     mciters      = mrecs_mc.size();
    QString analysisType = "PCSA";
+DbgLv(1) << "SV: model_stats size" << model_stats.size();
    QString curvType     = model_stats[ 1 ];
    if ( curvType.contains( "Straight L" ) )
       analysisType      = "PCSA-SL";
@@ -413,6 +415,7 @@ void US_pcsa::save( void )
 
    if ( mciters > 1 )
       analysisType      = analysisType + "-MC";
+DbgLv(1) << "SV: analysisType" << analysisType;
 
    QString requestID    = "local";
    QString tripleID     = edata->cell + edata->channel + edata->wavelength; 
@@ -492,6 +495,7 @@ DbgLv(1) << "SV: kmodels mciters" << kmodels << mciters << "mname" << mname;
             break;
       }
    }
+DbgLv(1) << "SV: mnames size" << mnames.size();
 
    indx   = 1;
 
@@ -505,11 +509,11 @@ DbgLv(1) << "SV: kmodels mciters" << kmodels << mciters << "mname" << mname;
             break;
       }
    }
-//double tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
-//double tini = ti_noise_in.count > 0 ? ti_noise_in.values[0] : 0.0;
-//double rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
-//double rini = ri_noise_in.count > 0 ? ri_noise_in.values[0] : 0.0;
-//DbgLv(1) << "  Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
+double tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
+double tini = ti_noise_in.count > 0 ? ti_noise_in.values[0] : 0.0;
+double rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
+double rini = ri_noise_in.count > 0 ? ri_noise_in.values[0] : 0.0;
+DbgLv(1) << "SV: Pre-sum tno tni" << tino << tini << "rno rni" << rino << rini;
 
    // Output model and noises
 DbgLv(1) << "SV: mrecs size" << mrecs.size();
@@ -543,6 +547,7 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
 
    else
    {  // Output the individual models of a MonteCarlo set
+DbgLv(1) << "SV: MC models  mciters" << mciters;
       for ( int jmc = 0; jmc < mciters; jmc++ )
       {
          iterID            = QString().sprintf( "mc%04d", jmc + 1 );
@@ -554,11 +559,13 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
          model.requestGUID = reqGUID;
          model.analysis    = US_Model::PCSA;
 
+DbgLv(1) << "SV: MC models   jmc" << jmc << "write" << mnames[jmc];
          // output the model
          if ( dbP != NULL )
             model.write( dbP );
          else
             model.write( mname );
+DbgLv(1) << "SV: MC models     write complete";
 
          if ( jmc == 0 )
             mname1            = mname;
@@ -576,6 +583,7 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
       ti_noise.noiseGUID   = US_Util::new_guid();
       nname                = noipath + "/" + nnames[ kk++ ];
       int nicount          = ti_noise_in.count;
+DbgLv(1) << "SV:  TI nicount" << nicount;
 
       if ( nicount > 0 )   // Sum in any input noise
          ti_noise.sum_noise( ti_noise_in, true );
@@ -610,6 +618,7 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
       ri_noise.noiseGUID   = US_Util::new_guid();
       nname                = noipath + "/" + nnames[ kk++ ];
       int nicount          = ri_noise_in.count;
+DbgLv(1) << "SV:  RI nicount" << nicount;
 
       if ( nicount > 0 )   // Sum in any input noise
          ri_noise.sum_noise( ri_noise_in, true );
@@ -635,9 +644,9 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
          ri_noise.sum_noise( noise_rmv, true );
       }
    }
-//tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
-//rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
-//DbgLv(1) << "  Post-sum tno rno" << tino << rino;
+tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
+rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
+DbgLv(1) << "SV:  Post-sum tno rno" << tino << rino;
 
    if ( dbP != NULL )
    {
