@@ -121,7 +121,11 @@ DbgLv(1) << "TRP:  csizw cminw" << csizw << cminw;
 //   row         += 7;
    QString ctype  = tr( "Increasing Sigmoid" );
    if ( mrec.str_k == mrec.par1 )
-      ctype          = tr( "Straight Line" );
+   {
+      ctype          = mrec.str_k != mrec.end_k 
+                     ? tr( "Straight Line" )
+                     : tr( "Horizontal Line" );
+   }
    else if ( mrec.str_k > mrec.end_k )
       ctype          = tr( "Decreasing Sigmoid" );
    le_mtype->setText( ctype );
