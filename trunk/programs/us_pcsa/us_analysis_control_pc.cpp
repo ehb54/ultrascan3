@@ -332,8 +332,11 @@ void US_AnalysisControlPc::start()
    else
    {
       processor->disconnect();
-      processor->stop_fit();
-      processor->clear_memory();
+      if ( need_fit )
+      {
+         processor->stop_fit();
+         processor->clear_memory();
+      }
    }
 
    // Check that fit as parameterized will not exceed memory
@@ -557,8 +560,9 @@ DbgLv(1) << "AC:advanced: get_results";
          processor->get_results( sdata, rdata, model, ti_noise, ri_noise,
                bmndx, *mw_modstats, mrecs );
 
+         ctype         = mrecs[ 0 ].ctype;
          int    nmrecs = mrecs.size();
-         int    nmtsks = ( mrecs[ 0 ].ctype != 3 ) ? sq( nkpts ) : nkpts;
+         int    nmtsks = ( ctype != 3 ) ? sq( nkpts ) : nkpts;
          int    strec  = nmrecs - nmtsks;
          nlpts         = mrecs[ strec ].isolutes.size();
          smin          = mrecs[ strec ].smin;

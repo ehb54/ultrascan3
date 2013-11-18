@@ -1996,7 +1996,7 @@ void US_pcsaProcess::timerEvent( QTimerEvent *event )
 // Perform one final regularization computation when L-M was non-regularized
 void US_pcsaProcess::compute_final()
 {
-DbgLv(1) << "CFin: alpha" << alpha;
+DbgLv(1) << "CFin: alpha" << alpha << "mrecs size" << mrecs.size();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    QTime ftimer;
    ftimer.start();
@@ -2007,6 +2007,7 @@ DbgLv(1) << "CFin: alpha" << alpha;
 //   sim_vals.dbg_level = dbg_level;
    sim_vals.alpha     = alpha;
    sim_vals.solutes   = mrec.isolutes;
+DbgLv(1) << "CFin:  isolutes size" << sim_vals.solutes.size();
 
    // Evaluate the model
    US_SolveSim::DataSet* dset = dsets[ 0 ];
@@ -2018,6 +2019,7 @@ DbgLv(1) << "CFin: alpha" << alpha;
    int    nmsol   = dset->model.components.size();
    int    nisol   = mrec.isolutes.size();
    int    ktimsc = ( ftimer.elapsed() + 500 ) / 1000;
+DbgLv(1) << "CFin:     nmsol nisol" << nmsol << nisol;
 
    QString fmsg   = tr(
       "\nA final best model (RMSD=%1; %2-solute, %3 out; %4 sec.)\n"
