@@ -32,7 +32,7 @@ WorkerThreadPc::~WorkerThreadPc()
 DbgLv(1) << "PC(WT):   Thread destroy - (1)finished?" << isFinished() << thrn;
    if ( ! wait( 2000 ) )
    {
-      qDebug() << "Thread destroy wait timeout(2secs) : Thread" << thrn;
+      DbgLv(1) << "Thread destroy wait timeout(2secs) : Thread" << thrn;
    }
 DbgLv(1) << "PC(WT):   Thread destroy - (2)finished?" << isFinished() << thrn;
 DbgLv(1) << "PC(WT):    Thread destroyed" << thrn;
@@ -41,6 +41,7 @@ DbgLv(1) << "PC(WT):    Thread destroyed" << thrn;
 // define work for a worker thread
 void WorkerThreadPc::define_work( WorkPacketPc& workin )
 {
+   mutex.lock();
    str_k       = workin.str_k;
    end_k       = workin.end_k;
    par1        = workin.par1;
@@ -73,11 +74,13 @@ DbgLv(1) << phdr << "DefWk: sols size" << solutes_i.size(); }
    sim_vals.ti_noise    = workin.sim_vals.ti_noise;
    sim_vals.ri_noise    = workin.sim_vals.ti_noise;
    sim_vals.solutes     = solutes_i;
+   mutex.unlock();
 }
 
 // get results of a completed worker thread
 void WorkerThreadPc::get_result( WorkPacketPc& workout )
 {
+   mutex.lock();
 DbgLv(1) << "PC(WT): get_result IN";
    workout.str_k    = str_k;
    workout.end_k    = end_k;
@@ -108,6 +111,7 @@ DbgLv(1) << "PC(WT): thr nn" << thrn << nn
  << "ni sol0 soln s" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
  << "c" << solutes_i[0].c << solutes_i[ni-1].c; }
 //*DEBUG*
+   mutex.unlock();
 }
 
 // run the worker thread
@@ -116,12 +120,12 @@ void WorkerThreadPc::run()
 QString phdr = QString( "WT:RUN:%1:%2:" ).arg(taskx).arg(thrn);
    calc_residuals();              // do all the work here
 
-DbgLv(1) << phdr << " c_r return";
-   quit();
-   exec();
-
 DbgLv(1) << phdr << "   sig w_c";
    emit work_complete( this );    // signal that a thread's work is done
+
+DbgLv(1) << phdr << "     c_r return";
+   quit();
+   exec();
 }
 
 // set a flag so that a worker thread will abort as soon as possible
@@ -167,7 +171,6 @@ DbgLv(1) << phdr << "   call apply_alpha" << alpha;
       apply_alpha( alpha, psv_nnls_a, psv_nnls_b,
             nscans, npoints, nisols, variance, xnormsq );
 DbgLv(1) << phdr << "     get apply_alpha: vari xnsq" << variance << xnormsq;
-qApp->processEvents();
 
       sim_vals.variance   = variance;
       sim_vals.xnormsq    = xnormsq;
@@ -181,7 +184,6 @@ DbgLv(1) << phdr << "      sv.xnormsq" << sim_vals.xnormsq;
 void WorkerThreadPc::forward_progress( int steps )
 {
    emit work_progress( steps );
-   qApp->processEvents();
 }
 
 void WorkerThreadPc::apply_alpha( const double alpha,
@@ -192,47 +194,65 @@ void WorkerThreadPc::apply_alpha( const double alpha,
 QString phdr = QString( "wAA:%1:%2:" ).arg(taskx).arg(thrn);
    int    ntotal   = nscans * npoints;
    int    narows   = ntotal + nisols;
+   int    navals   = narows * nisols;
+   int    ncsols   = 0;
           variance = 0.0;
           xnormsq  = 0.0;
-   int    ncsols   = 0;
-   QVector< double > nnls_a = *psv_nnls_a;   // Local copy of A matrix
-   QVector< double > nnls_b = *psv_nnls_b;   // Local copy of B matrix
-   QVector< double > nnls_x;
-   QVector< double > simdat;
-   nnls_x  .fill( 0.0, nisols );
-   simdat  .fill( 0.0, ntotal );
-qDebug() << phdr << " ns np ni na" << nscans << npoints << nisols << narows;
-#if 0
-   double alphad   = 0.0;
+   QVector< double > nnls_a( navals );       // Local copy of A matrix
+   QVector< double > nnls_b( narows );       // Local copy of b matrix
+   QVector< double > nnls_x( nisols );       // Local copy of x matrix
+   QVector< double > simdat;                 // Simulation vector
 
-   // Determine scaling factor for alpha
-   for ( int rr = 0; rr < npoints; rr++ )
-      alphad          = qMax( alphad, (*psv_nnls_b)[ rr ] );
+   // Fill local copies of matrices
+   mutex.lock();
 
-   alphad          = ( alphad == 0.0 ) ? alpha : ( sqrt( alphad ) * alpha );
-#endif
+   for ( int jj = 0; jj < navals; jj++ )
+      nnls_a[ jj ]    = psv_nnls_a->at( jj );
+
+   for ( int jj = 0; jj < narows; jj++ )
+      nnls_b[ jj ]    = psv_nnls_b->at( jj );
+
+   nnls_x.fill( 0.0, nisols );
+
+int kavl=psv_nnls_a->size();
+   mutex.unlock();
+DbgLv(1) << phdr << " ns np ni na" << nscans << npoints << nisols << narows;
+//for(int jj=0;jj<(narows*2);jj++)
+//{ nnls_a << 0.0; nnls_b << 0.0; nnls_x << 0.0; }
 
    // Replace alpha in the diagonal of the lower square of A
+   double* a_ptr   = nnls_a.data();
+   double* b_ptr   = nnls_b.data();
+   double* x_ptr   = nnls_x.data();
    int    dx       = ntotal;
-   int    dinc     = ntotal + nisols + 1;
-//qDebug() << phdr << " alf alfd" << alpha << alphad << "dx dinc" << dx << dinc;
-qDebug() << phdr << " alpha" << alpha << "dx dinc" << dx << dinc;
+   int    dinc     = narows + 1;
+DbgLv(1) << phdr << " alpha" << alpha << "dx dinc" << dx << dinc;
 
-   for ( int cc = 0; cc < nisols; cc++ )
+   for ( int cc = 0; cc < nisols; cc++, dx += dinc )
    {
-//      nnls_a[ dx ]    = alphad;
-      nnls_a[ dx ]    = alpha;
-      dx             += dinc;
+      a_ptr[ dx ]     = alpha;
    }
 
+
    // Compute the X vector using NNLS
-   US_Math2::nnls( nnls_a.data(), narows, narows, nisols,
-                   nnls_b.data(), nnls_x.data() );
+DbgLv(1) << phdr << "pre-nnls";
+   US_Math2::nnls( a_ptr, narows, narows, nisols, b_ptr, x_ptr );
+
+DbgLv(1) << phdr << "post-nnls  rss_now" << US_Memory::rss_now();
+   nnls_a.clear();                 // Free work A and b matrices
+   nnls_b.clear();
+   simdat.fill( 0.0, ntotal );     // Initialize simulation vector
+int ktot=simdat.size();
+DbgLv(1) << phdr << "  simdat fill ktot,kavl,naro" << ktot << kavl << narows
+ << "rss_now" << US_Memory::rss_now();
+   double* s_ptr   = simdat.data();
+   a_ptr           = psv_nnls_a->data();
+   b_ptr           = psv_nnls_b->data();
 
    // Construct the output solutes and the implied simulation and xnorm-sq
    for ( int cc = 0; cc < nisols; cc++ )
    {
-      double soluval  = nnls_x[ cc ];   // Computed concentration, this solute
+      double soluval  = x_ptr[ cc ];    // Computed concentration, this solute
 
       if ( soluval > 0.0 )
       {
@@ -241,7 +261,7 @@ qDebug() << phdr << " alpha" << alpha << "dx dinc" << dx << dinc;
 
          for ( int kk = 0; kk < ntotal; kk++ )
          {
-            simdat[ kk ]   += ( soluval * (*psv_nnls_a)[ aa++ ] );
+            s_ptr[ kk ]    += ( soluval * a_ptr[ aa++ ] );
          }
 
          ncsols++;
@@ -251,17 +271,17 @@ qDebug() << phdr << " alpha" << alpha << "dx dinc" << dx << dinc;
    // Calculate the sum for the variance computation
    for ( int kk = 0; kk < ntotal; kk++ )
    {
-      variance       += sq( ( (*psv_nnls_b)[ kk ] - simdat[ kk ] ) );
+      variance       += sq( ( b_ptr[ kk ] - s_ptr[ kk ] ) );
    }
-qDebug() << phdr << "    ntot ncsols" << ntotal << ncsols
+DbgLv(1) << phdr << "    ntot ncsols" << ntotal << ncsols
  << "varisum" << variance;
 
    // Return computed variance and xnorm-sq
    variance         /= (double)ntotal;
-qDebug() << phdr << " alpha" << alpha << "vari xnsq" << variance << xnormsq;
+DbgLv(1) << phdr << " alpha" << alpha << "vari xnsq" << variance << xnormsq;
 int mm = npoints / 2;
-qDebug() << phdr << " mm=" << mm << "a[m] b[m] s[m]"
- << (*psv_nnls_a)[mm] << (*psv_nnls_b)[mm] << simdat[mm];
-qApp->processEvents();
+DbgLv(1) << phdr << " mm=" << mm << "a[m] b[m] s[m]"
+ << (*psv_nnls_a)[mm] << (*psv_nnls_b)[mm] << simdat[mm]
+ << "rss_now" << US_Memory::rss_now();
 }
 

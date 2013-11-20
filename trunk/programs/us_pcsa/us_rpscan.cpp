@@ -212,12 +212,11 @@ void US_RpScan::scan()
    double calpha = ct_stralpha->value();
    double ealpha = ct_endalpha->value();
    double dalpha = ct_incalpha->value();
-   ealpha       += dalpha * 0.1;
+   nalpha        = qRound( ( ealpha - calpha ) / dalpha ) + 1;
    alphas.clear();
    varias.clear();
    xnorms.clear();
    b_progress->reset();
-   nalpha        = qRound( ( ealpha - calpha ) / dalpha ) + 1;
    b_progress->setMaximum( nalpha );
    double varmx  = 0.0;
    double xnomx  = 0.0;
@@ -228,7 +227,7 @@ void US_RpScan::scan()
    timer.start();              // Start a timer to measure run time
    qApp->processEvents();
 
-   while( calpha <= ealpha )
+   for ( int ja = 0; ja < nalpha; ja++ )
    {  // Loop to populate alpha scan arrays with preliminary values
       alphas << calpha;
       varias << v_vari;
@@ -236,8 +235,9 @@ void US_RpScan::scan()
       calpha += dalpha;
    }
 
+int kalpha=nalpha;
    nalpha        = alphas.size();
-DbgLv(1) << "ASC:  nalpha" << nalpha << "nthr" << nthr;
+DbgLv(1) << "ASC:  nalpha" << nalpha << kalpha << "nthr" << nthr;
 
    if ( nthr == 1 )
    {  // Non-multi-threaded scan
@@ -397,10 +397,10 @@ DbgLv(1) << "ASC:      defined: nasubm" << nasubm;
    xscl          = qPow( 10.0, lgx );
 DbgLv(1) << "Log-varia Log-xnorm" << lgv << lgx << "vscl xscl" << vscl << xscl;
 
-   for ( int jj = 0; jj < nalpha; jj++ )
+   for ( int ja = 0; ja < nalpha; ja++ )
    {  // Scale the variance,normsq points
-      varias[ jj ] *= vscl;
-      xnorms[ jj ] *= xscl;
+      varias[ ja ] *= vscl;
+      xnorms[ ja ] *= xscl;
    }
 
    b_progress->setValue( nalpha );
@@ -656,7 +656,7 @@ DbgLv(1) << "SCPJ: IN";
 DbgLv(1) << "SCPJ:  thrn" << thrn << "taskx" << taskx;
    double variance = wresult.sim_vals.variance;
    double xnormsq  = wresult.sim_vals.xnormsq;
-DbgLv(1) << "SCPJ:  a v x" << alphas[taskx] << variance << xnormsq;
+DbgLv(1) << "SCPJ:   a v x" << alphas[taskx] << variance << xnormsq;
    varias[ taskx ] = variance;
    xnorms[ taskx ] = xnormsq;
 //   delete wthrd;
@@ -675,7 +675,7 @@ DbgLv(1) << "SCPJ:    ALL-DONE";
 
    if ( nasubm < nalpha )
    {  // We need to set up to submit another task
-      WorkPacketPc wtask     = wresult;
+      WorkPacketPc wtask   = wresult;
       wtask.taskx          = nasubm;
       wtask.sim_vals.alpha = alphas[ nasubm ];
       wtask.dsets          = dsets;
@@ -689,11 +689,12 @@ DbgLv(1) << "SCPJ:     new subm nnls_a nnls_b" << wtask.psv_nnls_a
 DbgLv(1) << "SCPJ:     new subm taskx alpha" << nasubm << wtask.sim_vals.alpha;
 
 //      WorkerThreadPc* wthr   = new WorkerThreadPc( this );
-      WorkerThreadPc* wthr   = wthrd;
+      wthrd->disconnect();
+      WorkerThreadPc* wthr = wthrd;
 
       wthr->define_work( wtask );
 DbgLv(1) << "SCPJ:     new subm   work defined  sv_nnls_a" << wtask.psv_nnls_b;
-      wthr->disconnect();
+//      wthr->disconnect();
       connect( wthr, SIGNAL( work_complete( WorkerThreadPc* ) ),
                this, SLOT(   process_job(   WorkerThreadPc* ) ) );
       wthr->start();
@@ -716,19 +717,10 @@ void US_RpScan::apply_alpha( const double alpha, QVector< double >* psv_nnls_a,
    QVector< double > nnls_b = *psv_nnls_b;
    QVector< double > nnls_x;
    QVector< double > simdat;
-   nnls_x  .fill( 0.0, nisols );
-   simdat  .fill( 0.0, ntotal );
+   nnls_x.fill( 0.0, nisols );
+   simdat.fill( 0.0, ntotal );
 qDebug() << "AA: ns np ni na" << nscans << npoints << nisols << narows;
 
-#if 0
-   double alphad   = 0.0;
-
-   // Determine scaling factor for alpha
-   for ( int rr = 0; rr < npoints; rr++ )
-      alphad          = qMax( alphad, (*psv_nnls_b)[ rr ] );
-
-   alphad          = ( alphad == 0.0 ) ? alpha : ( sqrt( alphad ) * alpha );
-#endif
    // Replace alpha in the diagonal of the lower square of A
    int    dx       = ntotal;
    int    dinc     = ntotal + nisols + 1;
@@ -737,7 +729,6 @@ qDebug() << "AA:  alf" << alpha << "dx dinc" << dx << dinc;
 
    for ( int cc = 0; cc < nisols; cc++ )
    {
-//      nnls_a[ dx ]    = alphad;
       nnls_a[ dx ]    = alpha;
       dx             += dinc;
    }
