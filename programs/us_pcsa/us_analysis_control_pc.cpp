@@ -562,7 +562,10 @@ DbgLv(1) << "AC:advanced: get_results";
 
          ctype         = mrecs[ 0 ].ctype;
          int    nmrecs = mrecs.size();
-         int    nmtsks = ( ctype != 3 ) ? sq( nkpts ) : nkpts;
+         int    nmtsks = ( mrecs[ 0 ].taskx == mrecs[ 1 ].taskx )
+                       ? ( nmrecs - 1 ) : nmrecs;
+         nkpts         = ( ctype != 3 )
+                       ? qRound( sqrt( (double)nmtsks ) ) : nmtsks;
          int    strec  = nmrecs - nmtsks;
          nlpts         = mrecs[ strec ].isolutes.size();
          smin          = mrecs[ strec ].smin;
@@ -595,6 +598,7 @@ DbgLv(1) << "AC:advanced: get_results";
          ct_uplimits->setValue( smax  );
          ct_lolimitk->setValue( fmin  );
          ct_uplimitk->setValue( fmax  );
+         ct_varcount->setValue( nkpts );
          ct_cresolu ->setValue( nlpts );
 
          fitpars       = fitpars_string();

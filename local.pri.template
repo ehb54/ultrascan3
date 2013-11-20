@@ -17,13 +17,17 @@ unix {
   #QMAKE_UIC  = distcc $(QTDIR)/bin/uic
   #QMAKE_LINK = distcc g++
 
-  QWTPATH     = /usr/local/qwt-5.1.1
-  SINGLEDIR   = /opt/qt/addons/qtsingleapplication-2.5_1-commercial/src/
-  MYSQLDIR    = /usr/lib/mysql
+  QWTPATH     = /usr/local/qwt-5.2.3
+  QWTLIB      = -L../../lib -L../lib -L/opt/qwt-5.2.3/lib -lqwtplot3d-qt4 -lqwt -lGLU
+  SINGLEDIR   = /usr/local/qt4/addons/qtsingleapplication-2.6_1-opensource/src/
+  MYSQLDIR    = /usr/lib/i386-linux-gnu
+  MYSQLPATH   = /usr/include/mysql
+  QWT3D       = ../qwtplot3d-qt4
+  X11LIB      = -L/usr/lib/X11 -lXau -lX11
 
-  # For supercomputer back ends, we only need us_utils but we also
-  # build us_db to satisfy link requirements.  To avoid needing
-  # libmysqlclient and libqca, define the following 
+
+  # For supercomputer back ends, we only need us_utils.
+  # To avoid needing libmysqlclient and libqca, define the following 
 
   # DEFINES += NO_DB
   MPIPATH  = /share/apps64/openmpi
@@ -36,17 +40,21 @@ win32 {
   # due to us3 directory structure
 
   QWT3D       = ../qwtplot3d-qt4
-  OPENSSL     = C:/OpenSSL-Win32
-  MYSQLPATH   = C:/mysql
-  QWTPATH     = C:/qwt-5.2.1
-  SINGLEDIR   = C:/qt/4.7.1/addons/qtsingleapplication-2.5_1-commercial/src/
+  OPENSSL     = C:/openssl
+  MYSQLPATH   = C:/mysql-5.5
+  QTMYSQLPATH = C:/Qt/4.8.4/src/plugins/sqldrivers/mysql/release
+  QTPATH      = C:/Qt/4.8.4
+  QMAKESPEC   = win32-g++-4.6
+  QWTPATH     = C:/qwt-5.2.3
+  SINGLEDIR   = C:/Qt/4.8.4/addons/qtsingleapplication-2.5_1-commercial/src/
+  MINGWDIR    = C:/mingw
   
   contains( DEBUGORRELEASE, debug ) {
-    QWTLIB      = $$QWTPATH/lib/qwtd5.lib
-    MYSQLLIB    = $$MYSQLPATH/lib/libmysqld.lib
+    QWTLIB      = $$QWTPATH/lib/libqwtd5.a
+    MYSQLLIB    = $$MYSQLPATH/lib/libmysqld.a
   } else {
-    QWTLIB      = $$QWTPATH/lib/qwt5.lib
-    MYSQLLIB    = $$MYSQLPATH/lib/libmysql.lib
+    QWTLIB      = $$QWTPATH/lib/libqwt5.a
+    MYSQLLIB    = $$MYSQLPATH/lib/libmysql.a
   }
 
   #  __LCC__ is needed on W32 to make mysql headers include the right W32 includes
@@ -54,14 +62,16 @@ win32 {
 }
 
 macx {
-  BUILDBASE    = /Users/garygorbet/us3
-  QWTPATH      = $$BUILDBASE/ultrascan3/qwt-5.2
-  QWTLIB       = -L$$QWTPATH/lib -lqwt
+  BUILDBASE   = /Users/garygorbet/us3/ultrascan3
+  QWTPATH     = $$BUILDBASE/qwt-5.2.3
+  QWTLIB      = -L$$QWTPATH/lib -lqwt
   SINGLEDIR    = $$BUILDBASE/qtsingleapplication-2.6_1-opensource/src
-  CONFIG      += x86_64 x86 app_bundle
+##  CONFIG      += x86_64 x86 app_bundle
+  CONFIG      += x86_64
   DEFINES     += MAC OSX
   INCLUDEPATH += /System/Libraries/Frameworks/OpenGL.framework/Headers
   INCLUDEPATH += ../qwtplot3d-qt4/include
+  INCLUDEPATH += /usr/X11R6/include
   INCLUDEPATH += ../Frameworks/QtCore.framework/Headers
   INCLUDEPATH += ../Frameworks/QtGui.framework/Headers
   INCLUDEPATH += ../Frameworks/QtOpenGL.framework/Headers
@@ -70,8 +80,10 @@ macx {
   LIBS        += -L/System/Library/Frameworks/OpenGL.framework/Libraries
   LIBS        += -lssl -lcrypto -lqwtplot3d-qt4
   LIBS        += -framework QtOpenGL
-  MYSQLDIR     = /usr/local/mysql
-  MYSQLPATH    = $$MYSQLDIR
+  MYSQLPATH    = $$BUILDBASE/mysql
+  MYSQLDIR     = $$MYSQLPATH/lib
   LIBS        += -lmysqlclient -L$$MYSQLDIR/lib
+  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
   INCLUDEPATH += $$MYSQLDIR/include
 }
+

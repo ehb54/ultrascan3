@@ -76,8 +76,8 @@ DbgLv(1) << "AA: define GUI elements";
    double smax  = 10.0;
    double kmin  = 1.0;
    double kmax  = 5.0;
-   ct_s_lower   = us_counter( 1, -1, 10, smin );
-   ct_s_upper   = us_counter( 1, -1, 10, smax );
+   ct_s_lower   = us_counter( 1, -1, 1000, smin );
+   ct_s_upper   = us_counter( 1, -1, 1000, smax );
    ct_k_lower   = us_counter( 1,      1,     8, kmin );
    ct_k_upper   = us_counter( 1,      1,   100, kmax );
    ct_k_strpt   = us_counter( 3,      1,     8, kmin );
@@ -1780,11 +1780,13 @@ void US_AdvAnalysisPc::set_fittings( QVector< ModelRecord >& s_mrecs )
    ModelRecord s_mrec = s_mrecs[ 0 ];
    nisols       = s_mrec.isolutes.size();
    nmrecs       = s_mrecs.size();
-   double smin  = 1.e99;
-   double smax  = -1.e-99;
-   double kmin  = s_mrec.str_k;
-   double kmax  = s_mrec.end_k;
+   double smin  = s_mrec.smin;
+   double smax  = s_mrec.smax;
+   double kmin  = s_mrec.kmin;
+   double kmax  = s_mrec.kmax;
    ctype        = s_mrec.ctype;
+DbgLv(1) << "AA:SF: ctype s,k min,max" << ctype << smin << smax
+ << kmin << kmax;
    ct_k_strpt ->setValue( s_mrec.str_k );
    ct_k_endpt ->setValue( s_mrec.end_k );
    ct_sigmpar1->setValue( s_mrec.par1 );
@@ -1812,6 +1814,7 @@ void US_AdvAnalysisPc::set_fittings( QVector< ModelRecord >& s_mrecs )
    ct_k_lower ->setValue( kmin );
    ct_k_upper ->setValue( kmax );
    ct_crpoints->setValue( nisols );
+DbgLv(1) << "AA:SF: (2) s,k min,max" << ctype << smin << smax << kmin << kmax;
 }
 
 // Return a flag and possibly warn if operation requires valid mrecs
@@ -1866,7 +1869,8 @@ DbgLv(1) << "AA:BI:  (5)inCompat" << inCompat;
    {
       const char* ctps[] = { "Straight Line",
                              "Increasing Sigmoid",
-                             "Decreasing Sigmoid" };
+                             "Decreasing Sigmoid",
+                             "Horizontal Line" };
       QString fpars    = QString( ctps[ ftype ] )
          + tr( " ; s %1 to %2 ; f/f0 %3 to %4" )
          .arg( fsmin ).arg( fsmax ).arg( fkmin ).arg( fkmax );

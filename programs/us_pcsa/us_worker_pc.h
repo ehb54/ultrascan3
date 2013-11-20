@@ -82,7 +82,9 @@ class WorkerThreadPc : public QThread
             QVector< double >*, QVector< double >*,
             const int, const int, const int, double&, double& );
 
-      long int maxrss;
+      QMutex   mutex;        // mutex
+
+      long int maxrss;       // maximum rss memory used
 
       double  str_k;         // start model k value
       double  end_k;         // end   model k value
