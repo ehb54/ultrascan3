@@ -621,7 +621,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
       parameters[ "no_errors"   ] = qs_no_errors;
       parameters[ "zero_points" ] = qs_zero_points;
-      if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+      if ( U_EXPT )
       {
          parameters[ "expert_mode" ] = "true";
       }

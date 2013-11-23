@@ -389,7 +389,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
       crysol->addArgument( "/eh" );
    }
 
-   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode &&
+   if ( U_EXPT &&
         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_crysol_target" ) &&
         !( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ].isEmpty() )
    {
@@ -458,7 +458,7 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    // we just want the .int, the rest will be removed if needed
 
    QString type = ".int";
-   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode &&
+   if ( U_EXPT &&
         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_crysol_target" ) &&
         !( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ].isEmpty() )
    {

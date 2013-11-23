@@ -593,7 +593,9 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
 
-   if ( !( ( US_Hydrodyn * ) hplc_win->us_hydrodyn )->advanced_config.expert_mode )
+   void * us_hydrodyn = hplc_win->us_hydrodyn;
+
+   if ( !U_EXPT )
    {
       pb_gsm_sd->hide();
       pb_gsm_ih->hide();

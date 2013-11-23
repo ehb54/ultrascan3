@@ -1189,7 +1189,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    background->addLayout ( gl_bottom );
    background->addSpacing( 1 );
 
-   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   if ( !U_EXPT )
    {
       pb_asum->hide();
    }

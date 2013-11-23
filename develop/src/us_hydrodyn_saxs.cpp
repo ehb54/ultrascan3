@@ -524,7 +524,7 @@ void US_Hydrodyn_Saxs::refresh(
 
 void US_Hydrodyn_Saxs::setupGUI()
 {
-   started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+   started_in_expert_mode = U_EXPT;
 
    int minHeight0 = 18;
    int minHeight1 = 22;

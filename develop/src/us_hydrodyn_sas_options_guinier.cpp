@@ -517,7 +517,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
       j++;
    }
 
-   if ( !( ( US_Hydrodyn * )us_hydrodyn)->advanced_config.expert_mode )
+   if ( !U_EXPT )
    {
       cb_use_cs_psv->hide();
       le_cs_psv->hide();

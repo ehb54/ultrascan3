@@ -399,6 +399,12 @@ struct saxs_options
    bool         cryson_manual_hs;
 };
 
+#if defined( A_EXPT )
+# define U_EXPT ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode 
+#else
+# define U_EXPT false
+#endif
+
 struct saxs_atom
 {
    QString saxs_name;

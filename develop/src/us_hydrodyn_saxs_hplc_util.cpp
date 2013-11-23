@@ -2400,9 +2400,9 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_gauss_start        ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_ggauss_start       ->setEnabled( files_selected_count > 1 && files_are_time && gaussians.size() );
    cb_sd_weight          ->setEnabled( files_selected_count && files_are_time && gaussians.size() );
-   cb_fix_width          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode );
-   cb_fix_dist1          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode );
-   cb_fix_dist2          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode );
+   cb_fix_width          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && U_EXPT );
+   cb_fix_dist1          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && U_EXPT );
+   cb_fix_dist2          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && U_EXPT );
    pb_baseline_start     ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_baseline_apply     ->setEnabled( files_selected_count && 
                                        files_are_time && 
@@ -2679,7 +2679,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
 {
    map < QString, QString > parameters;
 
-   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   if ( U_EXPT )
    {
       parameters[ "expert_mode" ] = "true";
    }
@@ -2747,7 +2747,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
 
 void US_Hydrodyn_Saxs_Hplc::hide_files()
 {
-   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   if ( U_EXPT )
    {
       hide_widgets( files_expert_widgets, files_widgets[ 0 ]->isVisible() );
    }
@@ -2758,7 +2758,7 @@ void US_Hydrodyn_Saxs_Hplc::hide_files()
 
 void US_Hydrodyn_Saxs_Hplc::hide_created_files()
 {
-   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   if ( U_EXPT )
    {
       hide_widgets( created_files_expert_widgets, created_files_widgets[ 0 ]->isVisible() );
    }

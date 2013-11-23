@@ -241,7 +241,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    pb_cancel       ->setMinimumWidth( csv_width / 3 );
 
    // #if defined( JAC_VERSION )
-   //    if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   //    if ( !U_EXPT )
    //    {
    //       pb_help         ->setMinimumWidth( csv_width / 3 );
    //    }
@@ -1336,19 +1336,19 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    cb_fix_width = new QCheckBox(this);
    cb_fix_width->setText(tr("Eq width  "));
-   cb_fix_width->setEnabled( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode );
+   cb_fix_width->setEnabled( U_EXPT );
    cb_fix_width->setChecked( true );
    cb_fix_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_fix_width->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect( cb_fix_width, SIGNAL( clicked() ), SLOT( set_fix_width() ) );
-   // if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   // if ( !U_EXPT )
    // {
    // cb_fix_width->hide();
    // }
 
    cb_fix_dist1 = new QCheckBox(this);
    cb_fix_dist1->setText(tr("Eq dist1  "));
-   cb_fix_dist1->setEnabled( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode );
+   cb_fix_dist1->setEnabled( U_EXPT );
    cb_fix_dist1->setChecked( true );
    cb_fix_dist1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_fix_dist1->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -1356,7 +1356,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    cb_fix_dist2 = new QCheckBox(this);
    cb_fix_dist2->setText(tr("Eq dist2  "));
-   cb_fix_dist2->setEnabled( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode );
+   cb_fix_dist2->setEnabled( U_EXPT );
    cb_fix_dist2->setChecked( true );
    cb_fix_dist2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_fix_dist2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -1657,7 +1657,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_expert_widgets.push_back( pb_stack_rot_down );
    files_expert_widgets.push_back( pb_stack_swap );
 
-   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   if ( !U_EXPT )
    {
       pb_regex_load->hide();
       le_regex->hide();
@@ -1684,7 +1684,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_conc_avg->hide();
 
    // #if defined( JAC_VERSION )
-   // if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   // if ( !U_EXPT )
    // {
    //   pb_options->hide();
    // }

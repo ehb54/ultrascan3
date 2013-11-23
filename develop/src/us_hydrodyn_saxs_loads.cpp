@@ -788,7 +788,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         &run_nnls,
                                         &run_best_fit,
                                         &nnls_target,
-                                        1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode,
+                                        1 || U_EXPT,
                                         us_hydrodyn
                                         );
    US_Hydrodyn::fixWinButtons( hslc );
@@ -2292,7 +2292,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                                           &run_nnls,
                                           &run_best_fit,
                                           &nnls_target,
-                                          1 || ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode,
+                                          1 || U_EXPT,
                                           us_hydrodyn
                                           );
          US_Hydrodyn::fixWinButtons( hslc );

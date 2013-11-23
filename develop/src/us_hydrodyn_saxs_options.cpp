@@ -61,7 +61,7 @@ US_Hydrodyn_SaxsOptions::~US_Hydrodyn_SaxsOptions()
 
 void US_Hydrodyn_SaxsOptions::setupGUI()
 {
-   started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+   started_in_expert_mode = U_EXPT;
 
    int minHeight1 = 30;
    lbl_info = new QLabel(tr("US-SOMO SAS Options:"), this);

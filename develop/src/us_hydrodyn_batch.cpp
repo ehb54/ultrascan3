@@ -191,7 +191,7 @@ void US_Hydrodyn_Batch::setupGUI()
 #if defined(WIN32)
    pb_make_movie = (QPushButton *) 0;
 #else
-   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   if ( U_EXPT )
    {
       pb_make_movie = new QPushButton(tr("Make movie"), this);
       Q_CHECK_PTR(pb_make_movie);

@@ -243,7 +243,7 @@ US_Hydrodyn_Cluster::~US_Hydrodyn_Cluster()
 void US_Hydrodyn_Cluster::setupGUI()
 {
    bool expert_mode = 
-      ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode ||
+      U_EXPT ||
       active_additional_methods().size();
 
    int minHeight1 = 30;

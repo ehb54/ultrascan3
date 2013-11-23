@@ -29,7 +29,7 @@ US_Hydrodyn_SasOptionsMisc::~US_Hydrodyn_SasOptionsMisc()
 
 void US_Hydrodyn_SasOptionsMisc::setupGUI()
 {
-   bool started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+   bool started_in_expert_mode = U_EXPT;
 
    int minHeight1 = 30;
    lbl_info = new QLabel(tr("US-SOMO SAS Miscellaneous Options:"), this);
