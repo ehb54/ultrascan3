@@ -24,7 +24,7 @@ class US_ConvertGui : public US_Widgets
 
   public:
 
-      //! \brief   Some status codes to keep track of where data has been saved to
+      //! \brief Some status codes to keep track of where data has been saved to
       enum aucStatus
       {
          NOT_SAVED,         //!< The file has not been saved
@@ -55,11 +55,12 @@ class US_ConvertGui : public US_Widgets
 
       QString       runType;
       QString       oldRunType;
+      QString       runID;
 
       QLabel*       lb_description;
 
       QLineEdit*    le_investigator;
-      QString       runID;
+      QLineEdit*    le_status;
       QLineEdit*    le_runID;
       QLineEdit*    le_runID2;
       QLineEdit*    le_dir;
@@ -113,12 +114,20 @@ class US_ConvertGui : public US_Widgets
 
       US_SelectBox*  cb_centerpiece;
 
-      QList< US_DataIO::BeckmanRawScan > legacyData; // legacy data from file
-      QVector< US_DataIO::RawData >      allData;    // All ccw-separated data
-      QString       currentDir;
-      QString       saveDescription;
+      QList< US_DataIO::BeckmanRawScan > legacyData;   //!< legacy data fr file
+      QVector< US_DataIO::RawData >      allData;      //!< All loaded data
+      QVector< US_DataIO::RawData* >     outData;      //!< Output data pointers
+      QList< US_Convert::TripleInfo >    all_tripinfo; //!< all triple info
+      QList< US_Convert::TripleInfo >    out_tripinfo; //!< output triple info
+      QList< US_Convert::TripleInfo >    all_chaninfo; //!< all channel info
+      QList< US_Convert::TripleInfo >    out_chaninfo; //!< output channel info
+      QStringList                        all_triples;  //!< all triple strings
+      QStringList                        all_channels; //!< all channel strings
+      QStringList                        out_triples;  //!< out triple strings
+      QStringList                        out_channels; //!< out channel strings
+      QList< int >                       out_chandatx; //!< chn.start data index
 
-      QVector< US_Convert::Excludes >   allExcludes; // All excludes for triples
+      QVector< US_Convert::Excludes >    allExcludes;  //!< All triple excludes
 
       US_MwlData    mwl_data;
 
@@ -142,9 +151,11 @@ class US_ConvertGui : public US_Widgets
       int           nlamb_i;                   // Lambda count for raw input
       int           dbg_level;                 // Debug level
 
-      bool show_plot_progress;
-      US_Experiment      ExpData; 
-      QList< US_Convert::TripleInfo > triples;
+      QString       currentDir;                // Current data file directory
+      QString       saveDescription;           // Saved channel description
+
+      bool          show_plot_progress;        // Flag to show plot progress
+      US_Experiment ExpData;                   // Experiment data object
 
       void reset           ( void );
       void enableRunIDControl( bool );
@@ -209,7 +220,7 @@ class US_ConvertGui : public US_Widgets
       void tripleApplyAll    ( void );
       void runDetails        ( void );
       void changeDescription ( void );
-      void changeTriple      ( QListWidgetItem* );
+      void changeTriple      ( void );
       void getCenterpieceIndex( int );
       void focus_from        ( double );
       void focus_to          ( double );
@@ -232,6 +243,9 @@ class US_ConvertGui : public US_Widgets
       void show_mwl_control  ( bool );
       void mwl_connect       ( bool );
       void reset_lambdas     ( void );
+      void mwl_setup         ( void );
+      void init_output_data  ( void );
+      void build_output_data ( void );
       void help              ( void )
         { showHelp.show_help( "convert.html" ); };
 };

@@ -43,6 +43,7 @@ HEADERS      = \
                us_loadable_noise.h      \
                us_model_gui.h           \
                us_model_loader.h        \
+               us_mwl_data.h            \
                us_noise_loader.h        \
                us_passwd.h              \
                us_plot.h                \
@@ -83,6 +84,7 @@ SOURCES      = \
                us_loadable_noise.cpp      \
                us_model_gui.cpp           \
                us_model_loader.cpp        \
+               us_mwl_data.cpp            \
                us_noise_loader.cpp        \
                us_passwd.cpp              \
                us_plot.cpp                \

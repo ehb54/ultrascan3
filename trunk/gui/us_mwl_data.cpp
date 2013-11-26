@@ -4,7 +4,6 @@
 #include "us_mwl_data.h"
 #include "us_util.h"
 #include "us_settings.h"
-#include "us_editor.h"
 
 #define RPM_ROUND 50     // Value for nearest multiple rounding of RPM
 
@@ -138,7 +137,6 @@ DbgLv(1) << "MwDa: npoint nlambda" << npoint << nlambda;
 
          read_lambdas( ds, ri_wavelns, nlamb_i );
 DbgLv(1) << "MwDa:   read_lambdas COMPLETE";
-         ex_wavelns  = ri_wavelns;
          slambda     = ri_wavelns[ 0 ];
          elambda     = ri_wavelns[ nlamb_i - 1 ];
 int ww=nlamb_i-1;
@@ -192,7 +190,114 @@ DbgLv(1) << "MwDa: da20,40" << ri_readings[20][40] << "m+40 n-40"
       .arg( nfile ) );
    qApp->processEvents();
 
+   // Initialize the wavelengths lists for all channels
+   ex_wavelns.clear();
+
+   for ( int cc = 0; cc < ncelchn; cc++ )
+   {
+      ex_wavelns << ri_wavelns;
+   }
+
    return status;
+}
+
+// Load internal values from a vector of loaded rawDatas
+void US_MwlData::load_mwl( QVector< US_DataIO::RawData >& allData )
+{
+   QStringList chans;
+   nfile    = allData.size();
+   ntriple  = nfile;
+   ntrip_i  = nfile;
+   ntriple  = ntrip_i;
+   nscan    = allData[ 0 ].scanCount();
+   npoint   = allData[ 0 ].pointCount();
+   npointt  = npoint * nscan;
+
+   ri_readings.clear();
+   ri_wavelns .clear();
+   ex_wavelns .clear();
+   cells      .clear();
+   cellchans  .clear();
+   ccdescs    .clear();
+   triples    .clear();
+
+   for ( int trx = 0; trx < nfile; trx++ )
+   {
+      US_DataIO::RawData* edata = &allData[ trx ];
+
+      QString cell        = QString::number( edata->cell );
+      QString chan        = QString( edata->channel );
+      int     iwvl        = qRound( edata->scanData[ 0 ].wavelength );
+      QString wavl        = QString::number( iwvl );
+      QString celchn      = cell + " / " + chan;
+      QString triple      = celchn + " / " + wavl;
+
+      if ( ! cells.contains( cell ) )
+         cells << cell;
+
+      if ( ! chans.contains( chan ) )
+         chans << chan;
+
+      if ( ! cellchans.contains( celchn ) )
+      {
+         cellchans << celchn;
+         ccdescs   << edata->description;
+      }
+
+      if ( ! triples.contains( triple ) )
+         triples << triple;
+
+      if ( ! ri_wavelns.contains( iwvl ) )
+      {
+         ri_wavelns << iwvl;
+      }
+
+      for ( int ss = 0; ss < nscan; ss++ )
+      {
+         ri_readings << edata->scanData[ ss ].rvalues;
+      }
+   }
+
+   ncell    = cells.size();
+   nchan    = chans.size();
+   ncelchn  = cellchans.size();
+   nlamb_i  = ri_wavelns.size();;
+   nlambda  = nlamb_i;
+   slambda  = ri_wavelns[ 0 ];
+
+   if ( ( nlambda * ncelchn ) == ntriple )
+   {  // If all cells have same wavelengths, just duplicate list
+      for ( int ccx = 0; ccx < ncelchn; ccx++ )
+      {
+         ex_wavelns << ri_wavelns;
+      }
+   }
+
+   else
+   {  // If wavelength lists vary, we must build them carefully
+      QVector< int > wvs;
+
+      for ( int ccx = 0; ccx < ncelchn; ccx++ )
+      {  // First fill with empty vectors
+         ex_wavelns << wvs;
+      }
+
+      for ( int trx = 0; trx < ntriple; trx++ )
+      {  // Fill each cells list with only the wavelengths it has
+         QString triple  = triples[ trx ];
+         QString celchn  = triple.section( " / ", 0, 1 );
+         int     iwvl    = triple.section( " / ", 2, 2 ).toInt();
+         int     ccx     = cellchans.indexOf( celchn );
+
+         if ( ccx < 0 )
+         {
+            qDebug() << "load_mwl:*ERROR* unexpected missing cell" << celchn;
+            continue;
+         }
+
+         ex_wavelns[ ccx ] << iwvl;
+      }
+   }
 }
 
 // Return a readings values vector for a given triple, scan
@@ -211,14 +316,17 @@ int US_MwlData::rvalues( int& tripx, int& scanx, QVector< double >& rvs )
 }
 
 // Return the lambdas vector for the data
-int US_MwlData::lambdas( QVector< int >& wls )
+int US_MwlData::lambdas( QVector< int >& wls, int ccx )
 {
+   set_celchnx( ccx );
+   nlambda    = ex_wavelns[ curccx ].count();
+
    wls.clear();
    wls.reserve( nlambda );
 
    for ( int ii = 0; ii < nlambda; ii++ )
    {
-      wls << ex_wavelns[ ii ];
+      wls << ex_wavelns[ curccx ][ ii ];
    }
 
    return nlambda;
@@ -362,28 +470,98 @@ void US_MwlData::read_rdata( QDataStream& ds, QVector< double >& rvs,
 }
 
 // Set Lambda ranges for export
-int US_MwlData::set_lambdas( int start, int end )
+int US_MwlData::set_lambdas( int start, int end, int ccx )
 {
+   set_celchnx( ccx );
 qDebug() << "SetLamb  s/e" << start << end;
-   slambda       = ( start > 0 ) ? start : ri_wavelns[ 0 ];
-   elambda       = ( end   > 0 ) ? end   : ri_wavelns[ nlamb_i - 1 ];
-   ex_wavelns.clear();
+   if ( ex_wavelns[ curccx ].count() == 0 )
+   {  // If out list is empty, build from input
+      slambda       = ( start > 0 ) ? start : ri_wavelns[ 0 ];
+      elambda       = ( end   > 0 ) ? end   : ri_wavelns[ nlamb_i - 1 ];
+      ex_wavelns[ curccx ].clear();
 
-   // Set up export lambdas
-   int    wvxs   = indexOfLambda( slambda );
-   int    wvxe   = indexOfLambda( elambda ) + 1;
-   nlambda       = wvxe - wvxs;
-   int    wvx    = wvxs;
+      // Set up export lambdas
+      int    wvxs   = indexOfLambda( slambda );
+      int    wvxe   = indexOfLambda( elambda );
+      nlambda       = wvxe - wvxs + 1;
+      int    wvx    = wvxs;
 
-   while ( wvx < wvxe )
-   {  // Duplicate lambdas from the range of raw lambdas
-      ex_wavelns << ri_wavelns[ wvx++ ];
+      while ( wvx <= wvxe )
+      {  // Duplicate lambdas from the range of raw lambdas
+         ex_wavelns[ curccx ] << ri_wavelns[ wvx++ ];
+      }
+qDebug() << "SetLamb  (2)n" << nlambda << wvxs << wvxe << wvx;
    }
 
-   slambda       = ex_wavelns[ 0 ];
-   elambda       = ex_wavelns[ nlambda - 1 ];
+   else
+   {  // If out list exists, pair it down to the new range
+      QVector< int > wkwaves = ex_wavelns[ curccx ];
+      nlambda       = wkwaves.count();
+      int old_start = wkwaves[ 0 ];
+      int old_end   = wkwaves[ nlambda - 1 ];
+      slambda       = ( start > 0 ) ? start : old_start;
+      elambda       = ( end   > 0 ) ? end   : old_end;
+      ex_wavelns[ curccx ].clear();
+qDebug() << "SetLamb  (3)n" << nlambda << slambda << elambda << "ccx" << curccx;
+
+      // Set up export lambdas
+      int    wvxs   = wkwaves.indexOf( slambda );
+      int    wvxe   = wkwaves.indexOf( elambda );
+             wvxe   = ( wvxe < 0 ) ? ( nlambda - 1 ) : wvxe;
+      int    wvx    = wvxs;
+qDebug() << "SetLamb   wvxs wvxe" << wvxs << wvxe;
+
+      if ( slambda < old_start )
+      {  // If start is before old list, grab some from the original input
+         wvxs       = indexOfLambda( slambda );
+         slambda    = ri_wavelns[ wvxs++ ];
+
+         while ( slambda < old_start  &&  wvxs < nlamb_i )
+         {
+            ex_wavelns[ curccx ] << slambda;
+            slambda    = ri_wavelns[ wvxs++ ];
+         }
+         wvx        = 0;
+      }
+
+      while ( wvx <= wvxe )
+      {  // Duplicate lambdas from the range of previous lambdas
+         ex_wavelns[ curccx ] << wkwaves[ wvx++ ];
+      }
+
+      if ( elambda > old_end )
+      {  // If end is after old list, append some from the original list
+         wvxs       = indexOfLambda( old_end ) + 1;
+         wvxe       = indexOfLambda( elambda );
+         old_end    = ri_wavelns[ wvxs++ ];
+
+         while ( old_end < elambda  &&  wvxs < nlamb_i )
+         {
+            ex_wavelns[ curccx ] << old_end;
+            old_end    = ri_wavelns[ wvxs++ ];
+         }
+      }
+
+qDebug() << "SetLamb  (4)n" << nlambda << wvxs << wvxe << wvx;
+   }
+
+   nlambda       = ex_wavelns[ curccx ].count();
+   slambda       = ex_wavelns[ curccx ][ 0 ];
+   elambda       = ex_wavelns[ curccx ][ nlambda - 1 ];
    ntriple       = nlambda * ncelchn;
 qDebug() << "SetLamb    s/e/n" << slambda << elambda << nlambda;
+   return nlambda;
+}
+
+// Set a new lambdas vector for a channel
+int US_MwlData::set_lambdas( QVector< int >& wls, int ccx )
+{
+   set_celchnx( ccx );
+   ex_wavelns[ curccx ] = wls;
+   nlambda       = wls.count();
+   slambda       = wls[ 0 ];
+   elambda       = wls[ nlambda - 1 ];
+
    return nlambda;
 }
 
@@ -393,7 +571,7 @@ int US_MwlData::indexOfLambda( int lambda )
    int    wvx     = ri_wavelns.indexOf( lambda );   // Try exact match
 
    if ( wvx < 0 )
-   {  // If lambda in not in the list, find the nearest to a match
+   {  // If lambda is not in the list, find the nearest to a match
       int    diflow  = 9999;
 
       for ( int ii = 0; ii < nlamb_i; ii++ )
@@ -434,7 +612,7 @@ qDebug() << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint;
       xout << rad_val;
       rad_val  += rad_inc;
    }
-qDebug() << "BldRawD   xout size" << xout.size() << npoint;
+qDebug() << "BldRawD   xout size ntrip" << xout.size() << npoint << ntrip_i;
 
    // Set up the interpolated byte array (all zeroes)
    int    nbytei   = ( npoint + 7 ) / 8;
@@ -442,13 +620,17 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
 
    // Build a raw data set for each triple
    char   dtype0   = 'R';
-   char   dtype1   = intensity ? 'I' : 'A';
+   char   dtype1   = 'I';
    int    ccx      = 0;
    int    wvx      = 0;
    int    hdx      = 0;
+qDebug() << "BldRawD szs: ccd" << ccdescs.size() << "hdrs" << headers.size()
+ << "rds" << ri_readings.size() << ri_readings[0].size()
+ << "wvs" << ri_wavelns.size() << "nli nlo" << nlamb_i << nlambda;
 
    for ( int trx = 0; trx < ntrip_i; trx++ )
    {
+qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
       US_DataIO::RawData rdata;
       QString uuid_str  = US_Util::new_guid();
       US_Util::uuid_parse( uuid_str, (unsigned char*)rdata.rawGUID );
@@ -461,7 +643,6 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
       int jhx           = hdx; 
       int rdx           = 0;
       rdata.description = ccdescs.at( ccx );
-//qDebug() << "BldRawD     trx" << trx << " building scans...";
 
       for ( int scx = 0; scx < nscan; scx++ )
       {  // Set scan values
@@ -486,7 +667,7 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
          rdata.scanData << scan;      // Append a scan to a triple
       } // END: scan loop
 
-//qDebug() << "BldRawD     trx" << trx << " saving allData...";
+qDebug() << "BldRawD     trx" << trx << " saving allData...";
       allData << rdata;               // Append triple data to the array
       le_status->setText( tr( "Of %1 raw AUCs, built %2" )
           .arg( ntriple ).arg( trx + 1 ) );
@@ -499,13 +680,14 @@ qDebug() << "BldRawD   xout size" << xout.size() << npoint;
          wvx  = 0;
          hdx  = ccx * nscan;
       }
-//qDebug() << "BldRawD   ccx wvx hdx" << ccx << wvx << hdx;
+qDebug() << "BldRawD   ccx wvx hdx" << ccx << wvx << hdx << headers.size();
    } // END: triple loop
 
    le_status->setText( tr( "All %1 raw AUCs have been build." )
        .arg( ntriple ) );
    qApp->processEvents();
 
+qDebug() << "BldRawD  DONE ntriple" << ntriple << ntrip_i;
    return ntriple;
 }
 
@@ -517,17 +699,18 @@ int US_MwlData::countOf( QString key )
    return counts[ key ];
 }
 
-// Return a count of a specified type
+// Return the channel description string for a given cell/channel
 QString US_MwlData::cc_description( QString celchn )
 {
    int ccx = cellchans.indexOf( celchn );
    return ( ccx < 0 ? "" : ccdescs.at( ccx ) );
 }
 
+// Return the runID and runType strings for the data
 void US_MwlData::run_values( QString& arunid, QString& aruntype )
 {
    arunid   = runID;
-   aruntype = intensity ? "RI" : "RA";
+   aruntype = "RI";
 }
 
 // Private slot to map counts and sizes
@@ -587,10 +770,6 @@ void US_MwlData::read_runxml( QDir ddir, QString curdir )
          if ( xml.name() == "runID" )
          {
             runID           = att.value( "name"           ).toString();
-            QString speed   = att.value( "speed_mode"     ).toString();
-            QString intens  = att.value( "take_intensity" ).toString();
-            speed_mode      = ( speed  == "Y" );
-            intensity       = ( intens == "Y" );
          }
          else if ( xml.name() == "cell" )
          {
@@ -613,5 +792,15 @@ void US_MwlData::read_runxml( QDir ddir, QString curdir )
    }
 
    xfi.close();
+}
+
+// Set current cell/channel index
+int US_MwlData::set_celchnx( int ccx )
+{
+qDebug() << "SetCCX" << ccx;
+   curccx    = qMax( 0, ccx );
+   curccx    = qMin( curccx, ( ncelchn - 1 ) );
+
+   return curccx;
 }
 
