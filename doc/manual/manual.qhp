@@ -66,7 +66,8 @@
             <keyword id="s1" name="save-colormap" ref="save_colormap.html"/>
             <keyword id="s2" name="second-moment" ref="second_moment.html"/>
             <keyword id="s3" name="select-edits"  ref="select_edits.html"/>
-            <keyword id="s4" name="solution"      ref="us_solution.html"/>
+            <keyword id="s4" name="select-triples" ref="convert-seltrip.html"/>
+            <keyword id="s5" name="solution"      ref="us_solution.html"/>
             <keyword id="t1" name="time-derivative" ref="time_derivative.html"/>
             <keyword id="v1" name="vhw-combine"   ref="vhw_combine.html"/>
             <keyword id="v2" name="vhw-distrib-plot" ref="vhw_distrib_plot.html"/>
@@ -85,12 +86,14 @@
             
             <file>convert.html</file>
             <file>convert-experiment.html</file>
+            <file>convert-seltrip.html</file>
             <file>images/convert.png</file>
             <file>images/convert-RIdata.png</file>
             <file>images/convert-subset.png</file>
             <file>images/convert-tolerance.png</file>
             <file>images/convert-exclude.png</file>
             <file>images/convert-experiment.png</file>
+            <file>images/convert-seltrip.png</file>
 
             <file>uscol.html</file>
             <file>images/color-1.png</file>

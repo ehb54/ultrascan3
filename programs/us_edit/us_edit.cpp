@@ -324,7 +324,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    // OD Limit
    lb_odlim  = us_label( tr( "OD Limit:" ), -1 );
    odlimit   = 1.5;
-   ct_odlim  = us_counter( 3, 0.1, 50.0, odlimit );
+   ct_odlim  = us_counter( 3, 0.1, 50000.0, odlimit );
    ct_odlim ->setFont( font );
    ct_odlim ->setStep( 0.01 );
    ct_odlim ->setMinimumWidth( lwid );
@@ -1066,7 +1066,7 @@ DbgLv(1) << "LD(): CC";
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
 DbgLv(1) << "LD(): FF  triples size" << triples.size();
-      if ( nwaveln < 3 )
+      if ( notMwl )
          plot_current( 0 );
    }
 
@@ -1181,6 +1181,7 @@ DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
       QVector< double > wrdata;
       wrdata.fill( 0.0, ndpoint );
+      rdata .clear();
 DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
 
       for ( int ii = 0; ii < ndset; ii++ )
@@ -3851,7 +3852,7 @@ bool US_Edit::all_edits_done( void )
          int jsd = sd_offs[ jd ];
          int ksd = jsd + sd_knts[ jd ];
          QList< double > drpms;
-         US_DataIO::RawData* rdata = &allData[ jd ];
+         US_DataIO::RawData* rawdat = &allData[ jd ];
 
          // Count edits done on this data set
          for ( int js = jsd; js < ksd; js++ )
@@ -3861,9 +3862,9 @@ bool US_Edit::all_edits_done( void )
          }
 
          // Count speeds present in this data set
-         for ( int js = 0; js < rdata->scanData.size(); js++ )
+         for ( int js = 0; js < rawdat->scanData.size(); js++ )
          {
-            double  drpm = rdata->scanData[ js ].rpm;
+            double  drpm = rawdat->scanData[ js ].rpm;
 
             if ( ! drpms.contains( drpm ) )
                drpms << drpm;

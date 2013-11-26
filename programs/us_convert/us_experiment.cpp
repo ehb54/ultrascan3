@@ -274,6 +274,7 @@ int US_Experiment::saveToDisk(
    if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
       return( US_Convert::CANTOPEN );
 
+qDebug() << "  EsTD: writeFile" << writeFile;
    QXmlStreamWriter xml;
    xml.setDevice( &file );
    xml.setAutoFormatting( true );
@@ -290,87 +291,106 @@ int US_Experiment::saveToDisk(
    xml.writeAttribute   ( "type", this->expType );
    xml.writeAttribute   ( "runID", this->runID );
 
-      xml.writeStartElement( "investigator" );
-      xml.writeAttribute   ( "id", QString::number( this->invID ) );
-      xml.writeAttribute   ( "guid", this->invGUID );
-      xml.writeEndElement  ();
+   xml.writeStartElement( "investigator" );
+   xml.writeAttribute   ( "id", QString::number( this->invID ) );
+   xml.writeAttribute   ( "guid", this->invGUID );
+   xml.writeEndElement  ();
       
-      xml.writeStartElement( "name" );
-      xml.writeAttribute   ( "value", this->name );
-      xml.writeEndElement  ();
+   xml.writeStartElement( "name" );
+   xml.writeAttribute   ( "value", this->name );
+   xml.writeEndElement  ();
       
-      xml.writeStartElement( "project" );
-      xml.writeAttribute   ( "id",   QString::number( this->project.projectID ) );
-      xml.writeAttribute   ( "guid", this->project.projectGUID );
-      xml.writeAttribute   ( "desc", this->project.projectDesc );
-      xml.writeEndElement  ();
+   xml.writeStartElement( "project" );
+   xml.writeAttribute   ( "id", QString::number( this->project.projectID ) );
+   xml.writeAttribute   ( "guid", this->project.projectGUID );
+   xml.writeAttribute   ( "desc", this->project.projectDesc );
+   xml.writeEndElement  ();
       
-      xml.writeStartElement( "lab" );
-      xml.writeAttribute   ( "id",   QString::number( this->labID   ) );
-      xml.writeEndElement  ();
+   xml.writeStartElement( "lab" );
+   xml.writeAttribute   ( "id",   QString::number( this->labID   ) );
+   xml.writeEndElement  ();
       
-      xml.writeStartElement( "instrument" );
-      xml.writeAttribute   ( "id",     QString::number( this->instrumentID ) );
-      xml.writeAttribute   ( "serial", this->instrumentSerial );
-      xml.writeEndElement  ();
+   xml.writeStartElement( "instrument" );
+   xml.writeAttribute   ( "id",     QString::number( this->instrumentID ) );
+   xml.writeAttribute   ( "serial", this->instrumentSerial );
+   xml.writeEndElement  ();
       
-      xml.writeStartElement( "operator" );
-      xml.writeAttribute   ( "id", QString::number( this->operatorID ) );
-      xml.writeAttribute   ( "guid", this->operatorGUID );
+   xml.writeStartElement( "operator" );
+   xml.writeAttribute   ( "id", QString::number( this->operatorID ) );
+   xml.writeAttribute   ( "guid", this->operatorGUID );
+   xml.writeEndElement  ();
+
+   xml.writeStartElement( "rotor" );
+   xml.writeAttribute   ( "id",     QString::number( this->rotorID   ) );
+   xml.writeAttribute   ( "guid",   this->rotorGUID );
+   xml.writeAttribute   ( "serial", this->rotorSerial );
+   xml.writeAttribute   ( "name", this->rotorName );
+   xml.writeEndElement  ();
+
+   xml.writeStartElement( "calibration" );
+   xml.writeAttribute   ( "id",     QString::number( this->calibrationID ) );
+   xml.writeAttribute   ( "coeff1", QString::number( this->rotorCoeff1   ) );
+   xml.writeAttribute   ( "coeff2", QString::number( this->rotorCoeff2   ) );
+   xml.writeAttribute( "date", this->rotorUpdated.toString( "yyyy-MM-dd" ) );
+   xml.writeEndElement  ();
+   int     psolID    = -1;
+   QString psolGUID  = "";
+   QString psolDesc  = "";
+qDebug() << "  EsTD: triples loop" << triples.size();
+
+   // loop through the following for c/c/w combinations
+   for ( int trx = 0; trx < triples.size(); trx++ )
+   {
+      US_Convert::TripleInfo* trp = &triples[ trx ];
+      if ( trp->excluded ) continue;
+
+      QString triple     = trp->tripleDesc;
+      QStringList parts  = triple.split(" / ");
+
+      QString cell       = parts[ 0 ];
+      QString channel    = parts[ 1 ];
+      QString wl         = parts[ 2 ];
+
+      QString uuidc = US_Util::uuid_unparse( (unsigned char*)trp->tripleGUID );
+
+      xml.writeStartElement( "dataset" );
+      xml.writeAttribute   ( "id",      QString::number( trp->tripleID ) );
+      xml.writeAttribute   ( "guid",    uuidc );
+      xml.writeAttribute   ( "cell",    cell );
+      xml.writeAttribute   ( "channel", channel );
+
+      if ( runType == "WA" )
+         xml.writeAttribute( "radius", wl );
+
+      else
+         xml.writeAttribute( "wavelength", wl );
+
+      xml.writeStartElement( "centerpiece" );
+      xml.writeAttribute   ( "id", QString::number( trp->centerpiece ) );
       xml.writeEndElement  ();
 
-      xml.writeStartElement( "rotor" );
-      xml.writeAttribute   ( "id",     QString::number( this->rotorID   ) );
-      xml.writeAttribute   ( "guid",   this->rotorGUID );
-      xml.writeAttribute   ( "serial", this->rotorSerial );
-      xml.writeAttribute   ( "name", this->rotorName );
-      xml.writeEndElement  ();
+      int     csolID   = trp->solution.solutionID;
+      QString csolGUID = trp->solution.solutionGUID;
+      QString csolDesc = trp->solution.solutionDesc;
 
-      xml.writeStartElement( "calibration" );
-      xml.writeAttribute   ( "id",     QString::number( this->calibrationID   ) );
-      xml.writeAttribute   ( "coeff1", QString::number( this->rotorCoeff1     ) );
-      xml.writeAttribute   ( "coeff2", QString::number( this->rotorCoeff2     ) );
-      xml.writeAttribute   ( "date",   this->rotorUpdated.toString( "yyyy-MM-dd" ) );
-      xml.writeEndElement  ();
-
-      // loop through the following for c/c/w combinations
-      for ( int i = 0; i < triples.size(); i++ )
+      if ( csolID == psolID  ||  ( csolID < 0 && csolGUID == psolGUID ) )
       {
-         US_Convert::TripleInfo* t = &triples[ i ];
-         if ( t->excluded ) continue;
-
-         QString triple         = t->tripleDesc;
-         QStringList parts      = triple.split(" / ");
-
-         QString     cell       = parts[ 0 ];
-         QString     channel    = parts[ 1 ];
-         QString     wl         = parts[ 2 ];
-
-         QString uuidc = US_Util::uuid_unparse( (unsigned char*)t->tripleGUID );
-         xml.writeStartElement( "dataset" );
-         xml.writeAttribute   ( "id", QString::number( t->tripleID ) );
-         xml.writeAttribute   ( "guid", uuidc );
-         xml.writeAttribute   ( "cell", cell );
-         xml.writeAttribute   ( "channel", channel );
-
-         if ( runType == "WA" )
-            xml.writeAttribute( "radius", wl );
-
-         else
-            xml.writeAttribute( "wavelength", wl );
-
-            xml.writeStartElement( "centerpiece" );
-            xml.writeAttribute   ( "id", QString::number( t->centerpiece ) );
-            xml.writeEndElement  ();
-
-            xml.writeStartElement( "solution" );
-            xml.writeAttribute   ( "id",   QString::number( t->solution.solutionID ) );
-            xml.writeAttribute   ( "guid", t->solution.solutionGUID );
-            xml.writeAttribute   ( "desc", t->solution.solutionDesc );
-            xml.writeEndElement  ();
-
-         xml.writeEndElement   ();
+         csolID           = psolID;
+         csolGUID         = psolGUID;
+         csolDesc         = psolDesc;
       }
+
+      psolID           = csolID;
+      psolGUID         = csolGUID;
+      psolDesc         = csolDesc;
+      xml.writeStartElement( "solution" );
+      xml.writeAttribute   ( "id",   QString::number( csolID ) );
+      xml.writeAttribute   ( "guid", csolGUID );
+      xml.writeAttribute   ( "desc", csolDesc );
+      xml.writeEndElement  ();
+
+      xml.writeEndElement  ();
+   }
 
    xml.writeStartElement( "opticalSystem" );
    xml.writeAttribute   ( "value", this->opticalSystem );
@@ -392,6 +412,7 @@ int US_Experiment::saveToDisk(
    xml.writeEndDocument();
 
    // Make sure the project is saved to disk too
+qDebug() << "  EsTD: call proj saveToDisk";
    this->project.saveToDisk();
 
    return( US_Convert::OK );
@@ -510,7 +531,8 @@ void US_Experiment::readExperiment(
             this->calibrationID      = a.value( "id"     ).toString().toInt();
             this->rotorCoeff1        = a.value( "coeff1" ).toString().toFloat();
             this->rotorCoeff2        = a.value( "coeff2" ).toString().toFloat();
-            this->rotorUpdated       = QDate::fromString( a.value( "date" ).toString(), "yyyy-MM-dd" );
+            this->rotorUpdated       =
+               QDate::fromString( a.value( "date" ).toString(), "yyyy-MM-dd" );
          }
 
          else if ( xml.name() == "dataset" )
@@ -546,7 +568,8 @@ void US_Experiment::readExperiment(
             {
                triples[ ndx ].tripleID = a.value( "id" ).toString().toInt();
                QString uuidc = a.value( "guid" ).toString();
-               US_Util::uuid_parse( uuidc, (unsigned char*) triples[ ndx ].tripleGUID );
+               US_Util::uuid_parse( uuidc,
+                  (unsigned char*) triples[ ndx ].tripleGUID );
 
                if ( runType == "WA" )
                {
@@ -609,13 +632,12 @@ void US_Experiment::readExperiment(
             xml.readNext();
             this->centrifugeProtocol = xml.text().toString();
          }
-
       }
-
    }
 }
 
-void US_Experiment::readDataset( QXmlStreamReader& xml, US_Convert::TripleInfo& triple )
+void US_Experiment::readDataset( QXmlStreamReader& xml,
+                                 US_Convert::TripleInfo& triple )
 {
    while ( ! xml.atEnd() )
    {
@@ -858,3 +880,4 @@ void US_Experiment::show( void )
    for ( int i = 0; i < RIProfile.size(); i++ )
       qDebug() << RIProfile[ i ];
 }
+

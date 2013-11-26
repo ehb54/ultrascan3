@@ -7,23 +7,23 @@ CONFIG       += console
 
 TARGET        = us_convert
 
-HEADERS       = us_convert_gui.h       \
-                us_convert.h           \
+HEADERS       = us_convert.h           \
+                us_convert_gui.h       \
                 us_convertio.h         \
+                us_get_dbrun.h         \
                 us_experiment.h        \
                 us_experiment_gui.h    \
-                us_selectbox.h         \
                 us_intensity.h         \
-                us_get_dbrun.h         \
-                us_mwl_data.h
+                us_selectbox.h         \
+                us_select_triples.h
 
-SOURCES       = us_convert_gui.cpp     \
-                us_convert.cpp         \
+SOURCES       = us_convert.cpp         \
+                us_convert_gui.cpp     \
                 us_convertio.cpp       \
+                us_get_dbrun.cpp       \
                 us_experiment.cpp      \
                 us_experiment_gui.cpp  \
-                us_selectbox.cpp       \
                 us_intensity.cpp       \
-                us_get_dbrun.cpp       \
-                us_mwl_data.cpp
+                us_selectbox.cpp       \
+                us_select_triples.cpp
 
