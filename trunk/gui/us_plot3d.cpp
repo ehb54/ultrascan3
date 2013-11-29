@@ -1429,7 +1429,7 @@ void US_Plot3D::pick_data_co()
 
    QString mapfname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::appBaseDir() + "/etc",
+      US_Settings::baseDataDir() + "/etc",
       filter, 0, 0 );
 
    if ( mapfname.isEmpty() )

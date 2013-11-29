@@ -47,8 +47,7 @@ US_ColorGradient::US_ColorGradient( QWidget* parent, Qt::WindowFlags flags )
    // Give initial values for run time variables
    have_save   = false;
    new_mods    = false;
-   //grad_dir    = US_Settings::appBaseDir() + "/etc";
-   grad_dir    = US_Settings::dataDir().replace( "/data", "/etc" );
+   grad_dir    = US_Settings::baseDataDir() + "/etc";
 
    // Clean up the ./etc directories
    int nefmods = clean_etc_dir( true );
