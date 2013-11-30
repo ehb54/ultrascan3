@@ -26,14 +26,17 @@ class US_UTIL_EXTERN US_Settings
     // Directories
 
     //! \brief Get the directory for raw data
-    static QString     dataDir( void );
+    static QString     importDir( void );
     //! \brief Set the directory for raw data
-    static void        set_dataDir( const QString& );
+    static void        set_importDir( const QString& );
 
     //! \brief Get the directory where temporary files can be stored
     static QString     tmpDir( void );
     //! \brief Set the directory where temporary files can be stored
     static void        set_tmpDir( const QString& );
+
+    //! \brief Get the directory for data (analytes, models, ...)
+    static QString     dataDir( void );
 
     //! \brief Get the directory where data and reports are archived locally
     static QString     archiveDir( void );
