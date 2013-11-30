@@ -40,7 +40,7 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
 
    setWindowTitle( tr( "Edit Rotor Calibration" ) );
    setPalette( US_GuiSettings::frameColor() );
-   check  = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
+   check  = QIcon( US_Settings::appBaseDir() + "/etc/check.png" );
 
    QGridLayout* top = new QGridLayout( this );
    top->setSpacing         ( 2 );

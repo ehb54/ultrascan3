@@ -15,118 +15,78 @@ void US_Settings::set_browser( const QString& browser )
 }
 
 // Directories
-// UltraScan Home
-QString US_Settings::usHomeDir( void )
+
+// Work base directory (where archive,results,reports.etc hang)
+QString US_Settings::workBaseDir( void )
 {
-  QSettings settings( US3, "UltraScan" );
-  //QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
-  QString home = appBaseDir();
-  return settings.value( "usHomeDir",  home ).toString();
+   QSettings settings( US3, "UltraScan" );
+   return settings.value( "workBaseDir",
+                          QDir::homePath() + "/ultrascan" ).toString();
 }
 
-void US_Settings::set_usHomeDir( const QString& dir )
+void US_Settings::set_workBaseDir( const QString& dir )
 {
   QSettings settings( US3, "UltraScan" );
-  if ( dir == appBaseDir() )
-    settings.remove( "usHomeDir" );
+  if ( dir ==  QDir::homePath() + "/ultrascan" )
+    settings.remove( "workBaseDir" );
   else
-    settings.setValue( "usHomeDir", dir );
+    settings.setValue( "workBaseDir", dir );
 }
 
 // dataDir
 QString US_Settings::dataDir( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "dataDir", QDir::homePath() + "/ultrascan/data" ).toString();
+  return settings.value( "dataDir", workBaseDir() + "/data" ).toString();
 }
 
 void US_Settings::set_dataDir( const QString& dir )
 {
   QSettings settings( US3, "UltraScan" );
-  if ( dir ==  QDir::homePath() + "/ultrascan/data" )
+  if ( dir == workBaseDir() + "/data" )
     settings.remove( "dataDir" );
   else
     settings.setValue( "dataDir", dir );
 }
 
-// resultDir
-QString US_Settings::resultDir( void )
-{
-  QSettings settings( US3, "UltraScan" );
-  return settings.value( "resultDir", QDir::homePath() + "/ultrascan/results" ).toString();
-}
-
-void US_Settings::set_resultDir( const QString& dir )
-{
-  QSettings settings( US3, "UltraScan" );
-  if ( dir ==  QDir::homePath() + "/ultrascan/results" )
-    settings.remove( "resultDir" );
-  else
-    settings.setValue( "resultDir", dir );
-}
-
-// reportDir
-QString US_Settings::reportDir( void )
-{
-  QSettings settings( US3, "UltraScan" );
-  return settings.value( "reportDir", QDir::homePath() + "/ultrascan/reports" ).toString();
-}
-
-void US_Settings::set_reportDir( const QString& dir )
-{
-  QSettings settings( US3, "UltraScan" );
-  if ( dir ==  QDir::homePath() + "/ultrascan/reports" )
-    settings.remove( "reportDir" );
-  else
-    settings.setValue( "reportDir", dir );
-}
-
-// archiveDir
-QString US_Settings::archiveDir( void )
-{
-  QSettings settings( US3, "UltraScan" );
-  return settings.value( "archiveDir", QDir::homePath() + "/ultrascan/archive" ).toString();
-}
-
-void US_Settings::set_archiveDir( const QString& dir )
-{
-  QSettings settings( US3, "UltraScan" );
-  if ( dir ==  QDir::homePath() + "/ultrascan/archive" )
-    settings.remove( "archiveDir" );
-  else
-    settings.setValue( "archiveDir", dir );
-}
-
-// Help
-QString US_Settings::helpDir( void )
-{
-  QSettings settings( US3, "UltraScan" );
-  return settings.value( "helpDir", QDir::homePath() + "/ultrascan/doc" ).toString();
-}
-
-void US_Settings::set_helpDir( const QString& dir )
-{
-  QSettings settings( US3, "UltraScan" );
-  if ( dir ==  QDir::homePath() + "/ultrascan/doc" )
-    settings.remove( "helpDir" );
-  else
-    settings.setValue( "helpDir", dir );
-}
-
-// tmp
+// tmpDir
 QString US_Settings::tmpDir( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "tmpDir", QDir::homePath() + "/ultrascan/tmp" ).toString();
+  return settings.value( "tmpDir", workBaseDir() + "/tmp" ).toString();
 }
 
 void US_Settings::set_tmpDir( const QString& dir )
 {
   QSettings settings( US3, "UltraScan" );
-  if ( dir ==  QDir::homePath() + "/ultrascan/tmp" )
+  if ( dir == workBaseDir() + "/tmp" )
     settings.remove( "tmpDir" );
   else
     settings.setValue( "tmpDir", dir );
+}
+
+// archiveDir
+QString US_Settings::archiveDir( void )
+{
+   return ( workBaseDir() + "/archive" );
+}
+
+// resultDir
+QString US_Settings::resultDir( void )
+{
+   return ( workBaseDir() + "/results" );
+}
+
+// reportDir
+QString US_Settings::reportDir( void )
+{
+   return ( workBaseDir() + "/reports" );
+}
+
+// etcDir
+QString US_Settings::etcDir( void )
+{
+   return ( workBaseDir() + "/etc" );
 }
 
 // Base to application directory
@@ -135,7 +95,7 @@ QString US_Settings::appBaseDir( void )
    QString base = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
 
    if ( base.contains( ".app/Contents" ) )
-   {
+   {  // For Mac, move up path to where ./bin exists
       int ii  = base.lastIndexOf( "/bin/" );
 
       if ( ii > 0 )
@@ -143,12 +103,6 @@ QString US_Settings::appBaseDir( void )
    }
 
    return base;
-}
-
-// Base to data directory
-QString US_Settings::baseDataDir( void )
-{
-   return dataDir().remove( QRegExp( "/data$" ) );
 }
 
 

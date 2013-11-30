@@ -25,10 +25,12 @@ int main( int argc, char* argv[] )
 US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   : US_Widgets( true, parent, flags )
 {
-  font   = NULL;
-  db     = NULL;
-  colors = NULL;
-  admin  = NULL;
+  font      = NULL;
+  db        = NULL;
+  colors    = NULL;
+  admin     = NULL;
+  chg_ddata = false;
+  chg_dtmp  = false;
 
   setWindowTitle( "UltraScan Configuration" );
   setPalette( US_GuiSettings::frameColor() );
@@ -68,6 +70,20 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   le_browser = us_lineedit( browser, 0 );
   directories->addWidget( le_browser, row++, 1 );
 
+  // Base Work Directory
+  pb_workDir = us_pushbutton( tr( "Base Work Directory:" ) );
+  pb_workDir->setFixedWidth( w );  
+  directories->addWidget( pb_workDir, row, 0 );
+  connect( pb_workDir, SIGNAL( clicked() ), this, SLOT( open_workDir() ) );
+
+  QString workDir = US_Settings::workBaseDir();
+  le_w = qMax( fm->width( workDir ) + 20, le_w );
+
+  le_workDir = us_lineedit( workDir, 0 );
+  directories->addWidget( le_workDir, row++, 1 );
+  connect( le_workDir, SIGNAL( editingFinished()  ),
+           this,       SLOT(   update_workDir()   ) );
+
   // Data Directory
   pb_dataDir = us_pushbutton( tr( "Data Directory:" ) );
   pb_dataDir->setFixedWidth( w );  
@@ -79,43 +95,8 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
   le_dataDir = us_lineedit( dataDir, 0 );
   directories->addWidget( le_dataDir, row++, 1 );
-
-  // Result Directory
-  pb_resultDir = us_pushbutton( tr( "Result Directory:" ) );
-  pb_resultDir->setFixedWidth( w );  
-  directories->addWidget( pb_resultDir, row, 0 );
-  connect( pb_resultDir, SIGNAL( clicked() ), this, SLOT( open_resultDir() ) );
-
-  QString resultDir = US_Settings::resultDir();
-  le_w = qMax( fm->width( resultDir ) + 20, le_w );
-
-  le_resultDir = us_lineedit( resultDir, 0 );
-  directories->addWidget( le_resultDir, row++, 1 );
-
-  // Report Directory
-  pb_reportDir = us_pushbutton( tr( "HTML Reports:" ) );
-  pb_reportDir->setFixedWidth( w );  
-  directories->addWidget( pb_reportDir, row, 0 );
-  connect( pb_reportDir, SIGNAL( clicked() ), this, SLOT( open_reportDir() ) );
-
-  QString reportDir = US_Settings::reportDir();
-  le_w = qMax( fm->width( reportDir ) + 20, le_w );
-
-  le_reportDir = us_lineedit( reportDir, 0 );
-  directories->addWidget( le_reportDir, row++, 1 );
-
-  // Archive Directory
-  pb_archiveDir = us_pushbutton( tr( "Archive Directory:" ) );
-  pb_archiveDir->setFixedWidth( w );  
-  
-  directories->addWidget( pb_archiveDir, row, 0 );
-  connect( pb_archiveDir, SIGNAL( clicked() ), this, SLOT( open_archiveDir() ) );
-
-  QString archiveDir = US_Settings::archiveDir();
-  le_w = qMax( fm->width( archiveDir ) + 20, le_w );
-
-  le_archiveDir = us_lineedit( archiveDir, 0 );
-  directories->addWidget( le_archiveDir, row++, 1 );
+  connect( le_dataDir, SIGNAL( editingFinished()  ),
+           this,       SLOT(   update_dataDir()   ) );
 
   // Temporary Directory
   pb_tmpDir = us_pushbutton( tr( "Temporary Directory:" ) );
@@ -128,12 +109,12 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
   le_tmpDir = us_lineedit( tmpDir, 0 );
   directories->addWidget( le_tmpDir, row++, 1 );
+  connect( le_tmpDir, SIGNAL( editingFinished() ),
+           this,      SLOT(   update_tmpDir()   ) );
   
   le_browser   ->setMinimumWidth( le_w );
+  le_workDir   ->setMinimumWidth( le_w );
   le_dataDir   ->setMinimumWidth( le_w );
-  le_resultDir ->setMinimumWidth( le_w );
-  le_reportDir ->setMinimumWidth( le_w );
-  le_archiveDir->setMinimumWidth( le_w );
   le_tmpDir    ->setMinimumWidth( le_w );
 
   topbox->addLayout( directories );
@@ -146,45 +127,6 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   row = 0;
   QGridLayout* otherSettings = new QGridLayout();
 
-/* Not used any more.  Hard coded to 0.5C.
-  // Temperature Tolerance
-  QLabel* temperature = us_label( tr( "Temperature Tolerance (" ) + DEGC
-        + "):" );
-  otherSettings->addWidget( temperature, row, 0 );
-
-  sb_temperature_tol = new QDoubleSpinBox();
-  sb_temperature_tol->setRange( 0.1, 1.0 );
-  sb_temperature_tol->setSingleStep( 0.1 );
-  sb_temperature_tol->setDecimals( 1 );
-  sb_temperature_tol->setValue( US_Settings::tempTolerance() );
-  sb_temperature_tol->setPalette( US_GuiSettings::editColor() );
-  sb_temperature_tol->setFont( QFont( US_GuiSettings::fontFamily(), 
-                                      US_GuiSettings::fontSize() ) );
-  otherSettings->addWidget( sb_temperature_tol, row++, 1 );
-*/
-
-
-/*  Not used any more
-  // Beckman Bug
-  QLabel* beckman = us_label( "Beckman Time Bug Correction:" );
-  otherSettings->addWidget( beckman, row, 0 );
-
-  QGridLayout* radiobutton = new QGridLayout();
-  radiobutton->setSpacing        ( 0 );
-  radiobutton->setContentsMargins( 0, 0, 0, 0 );
-
-  QLabel* lb_background = new QLabel;
-  lb_background->setAutoFillBackground( true );
-  lb_background->setPalette( US_GuiSettings::normalColor() );
-
-  QGridLayout* rb1 = us_radiobutton( tr( "On" ), rb_on );
-  radiobutton->addLayout( rb1, 0, 0 );
-
-  QGridLayout* rb2 = us_radiobutton( tr( "Off" ), rb_off, true );
-  radiobutton->addLayout( rb2, 0, 1 );
-
-  otherSettings->addLayout( radiobutton, row++, 1 );
-*/
   // Disk/DB preference
   QLabel* lb_disk_db = us_label( "Default Data Location:" );
   otherSettings->addWidget( lb_disk_db, row, 0 );
@@ -259,19 +201,15 @@ void US_Config::help( void )
 
 void US_Config::save( void )
 {
-   US_Settings::set_browser   ( le_browser   ->text() );
-   US_Settings::set_dataDir   ( le_dataDir   ->text() );
-   US_Settings::set_resultDir ( le_resultDir ->text() );
-   US_Settings::set_reportDir ( le_reportDir ->text() );
-   US_Settings::set_archiveDir( le_archiveDir->text() );
-   US_Settings::set_tmpDir    ( le_tmpDir    ->text() );
+   US_Settings::set_browser    ( le_browser->text() );
+   US_Settings::set_workBaseDir( le_workDir->text() );
+   US_Settings::set_dataDir    ( le_dataDir->text() );
+   US_Settings::set_tmpDir     ( le_tmpDir ->text() );
 
    // Ensure data directories are properly created
    QDir dir;
+   dir.mkpath( le_workDir   ->text() );
    dir.mkpath( le_dataDir   ->text() );
-   dir.mkpath( le_resultDir ->text() );
-   dir.mkpath( le_reportDir ->text() );
-   dir.mkpath( le_archiveDir->text() );
    dir.mkpath( le_tmpDir    ->text() );
 
    QMessageBox::information( this,
@@ -325,43 +263,72 @@ void US_Config::open_browser( void )
   if ( browser != "" ) le_browser->setText( browser );
 }
 
+// Slot to react to file dialog setting of base work directory
+void US_Config::open_workDir( void )
+{
+  QString dir = QFileDialog::getExistingDirectory( this,
+         tr( "Select desired base work directory" ), le_workDir->text() );
+
+  if ( dir != "" )
+  {
+     le_workDir->setText( dir );
+     update_workDir();
+  }
+}
+
+// Slot to react to file dialog setting of data directory
 void US_Config::open_dataDir( void )
 {
   QString dir = QFileDialog::getExistingDirectory( this,
          tr( "Select desired data directory" ), le_dataDir->text() );
 
-  if ( dir != "" ) le_dataDir->setText( dir );
+  if ( dir != "" )
+  {
+     le_dataDir->setText( dir );
+     update_dataDir();
+  }
 }
 
-void US_Config::open_resultDir( void )
-{
-  QString dir = QFileDialog::getExistingDirectory( this,
-         tr( "Select desired result directory" ), le_resultDir->text() );
-
-  if ( dir != "" ) le_resultDir->setText( dir );
-}
-
-void US_Config::open_reportDir( void )
-{
-  QString dir = QFileDialog::getExistingDirectory( this,
-         tr( "Select desired report directory" ), le_reportDir->text() );
-
-  if ( dir != "" ) le_reportDir->setText( dir );
-}
-
-void US_Config::open_archiveDir( void )
-{
-  QString dir = QFileDialog::getExistingDirectory( this,
-         tr( "Select desired archive directory" ), le_archiveDir->text() );
-
-  if ( dir != "" ) le_archiveDir->setText( dir );
-}
-
+// Slot to react to file dialog setting of tmp directory
 void US_Config::open_tmpDir( void )
 {
   QString dir = QFileDialog::getExistingDirectory( this,
          tr( "Select desired temporary directory" ), le_tmpDir->text() );
 
-  if ( dir != "" ) le_tmpDir->setText( dir );
+  if ( dir != "" )
+  {
+     le_tmpDir->setText( dir );
+     update_tmpDir();
+  }
+}
+
+// Slot to react to change in work base directory
+void US_Config::update_workDir( void )
+{
+   QString work_dir  = le_workDir->text();
+
+   if ( !chg_ddata )
+   {  // If data directory wasn't changed already, default using work base
+      le_dataDir->setText( work_dir + "/data" );
+   }
+
+   if ( !chg_dtmp )
+   {  // If tmp directory wasn't changed already, default using work base
+      le_tmpDir->setText( work_dir + "/tmp" );
+   }
+}
+
+// Slot to react to change in data directory
+void US_Config::update_dataDir( void )
+{
+   // Mark data directory as having been changed
+   chg_ddata   = true;
+}
+
+// Slot to react to change in tmp directory
+void US_Config::update_tmpDir( void )
+{
+   // Mark data directory as having been changed
+   chg_dtmp    = true;
 }
 

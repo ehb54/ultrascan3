@@ -16,30 +16,30 @@ class US_SelectLambdas : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_SelectLambdas( QList< int > );
+      US_SelectLambdas( QVector< int > );
 
    signals:
-      void new_lambda_list( QList< int > );
+      void new_lambda_list( QVector< int > );
 
    private:
-      QLineEdit*     le_original;
-      QLineEdit*     le_selected;
+      QLineEdit*       le_original;
+      QLineEdit*       le_selected;
 
-      QListWidget*   lw_original;
-      QListWidget*   lw_selected;
+      QListWidget*     lw_original;
+      QListWidget*     lw_selected;
 
-      QPushButton*   pb_add;
-      QPushButton*   pb_remove;
-      QPushButton*   pb_accept;
+      QPushButton*     pb_add;
+      QPushButton*     pb_remove;
+      QPushButton*     pb_accept;
 
-      int            dbg_level;
-      int            nbr_orig;
-      int            nbr_select;
+      int              dbg_level;
+      int              nbr_orig;
+      int              nbr_select;
 
-      QList< int >   original;
-      QList< int >   selected;
+      QVector< int >   original;
+      QVector< int >   selected;
       
-      US_Help        showHelp;
+      US_Help          showHelp;
 
    private slots:
       void add_selections( void );

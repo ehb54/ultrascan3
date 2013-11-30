@@ -45,7 +45,7 @@ int main( int argc, char* argv[] )
 // Constructor
 US_Edit::US_Edit() : US_Widgets()
 {
-   check        = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
+   check        = QIcon( US_Settings::appBaseDir() + "/etc/check.png" );
    invert       = 1.0;
    all_edits    = false;
    men_1click   = US_Settings::debug_match( "men2click" ) ? false : true;
@@ -78,63 +78,41 @@ US_Edit::US_Edit() : US_Widgets()
    // Start of Grid Layout
    QGridLayout* specs = new QGridLayout;
 
-   // Row 1
    // Investigator
-
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
 
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
 
-   int id = US_Settings::us_inv_ID();
+   int     id      = US_Settings::us_inv_ID();
    QString number  = ( id > 0 ) ? 
       QString::number( US_Settings::us_inv_ID() ) + ": " 
       : "";
    le_investigator = us_lineedit( number + US_Settings::us_inv_name(),
                                   1, true );
 
-   // Row 1A
-   disk_controls = new US_Disk_DB_Controls;
+   // Disk/DB control
+   disk_controls   = new US_Disk_DB_Controls;
 
-   // Row 2
-   QPushButton* pb_load = us_pushbutton( tr( "Load Data" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
-   pb_details = us_pushbutton( tr( "Run Details" ), false );
-   connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
+   // Load
+   QPushButton*
+      pb_load      = us_pushbutton( tr( "Load Data" ) );
+   pb_details      = us_pushbutton( tr( "Run Details" ), false );
 
-   // Row 3
-   lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
-
-   cb_triple = us_comboBox();
-   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
-                       SLOT  ( new_triple         ( int ) ) );
-
-   lb_rpms   = us_label( tr( "Speed Step (RPM) of triple" ), -1 );
-   cb_rpms   = us_comboBox();
+   // Triple and Speed Step
+   lb_triple       = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
+   cb_triple       = us_comboBox();
+   lb_rpms         = us_label( tr( "Speed Step (RPM) of triple" ), -1 );
+   cb_rpms         = us_comboBox();
    lb_rpms->setVisible( false );
    cb_rpms->setVisible( false );
 
-   // Row 4
+   // Scan Gaps
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
-   lb_gaps = us_label( tr( "Threshold for Scan Gaps" ), -1 );
-
-   ct_gaps = us_counter ( 1, 10.0, 100.0 );
+   lb_gaps         = us_label( tr( "Threshold for Scan Gaps" ), -1 );
+   ct_gaps         = us_counter( 1, 10.0, 100.0 );
    ct_gaps->setStep ( 10.0 );
    ct_gaps->setValue( 50.0 );
-
-   int s_row = 0;
-   specs->addWidget( pb_investigator, s_row,   0, 1, 1 );
-   specs->addWidget( le_investigator, s_row++, 1, 1, 3 );
-   specs->addLayout( disk_controls,   s_row++, 0, 1, 4 );
-   specs->addWidget( pb_load,         s_row,   0, 1, 2 );
-   specs->addWidget( pb_details,      s_row++, 2, 1, 2 );
-   specs->addWidget( lb_triple,       s_row,   0, 1, 2 );
-   specs->addWidget( cb_triple,       s_row++, 2, 1, 2 );
-   specs->addWidget( lb_rpms,         s_row,   0, 1, 2 );
-   specs->addWidget( cb_rpms,         s_row++, 2, 1, 2 );
-   specs->addWidget( lb_gaps,         s_row,   0, 1, 2 );
-   specs->addWidget( ct_gaps,         s_row++, 2, 1, 2 );
 
    // MWL Control
    QFontMetrics fmet( font );
@@ -143,52 +121,56 @@ US_Edit::US_Edit() : US_Widgets()
    int lwid = fwid * 4;
    int swid = lwid + fwid;
    const QChar chlamb( 955 );
-   lb_mwlctl = us_banner( tr( "Wavelength Controls" ) );
+   lb_mwlctl       = us_banner( tr( "Wavelength Controls" ) );
    QButtonGroup* r_group = new QButtonGroup( this );
    QButtonGroup* x_group = new QButtonGroup( this );
-   lo_lrange = us_radiobutton( tr( "Lambda Range" ),       rb_lrange, true  );
-   lo_custom = us_radiobutton( tr( "Custom Lambda List" ), rb_custom, false );
+   lo_lrange       = us_radiobutton( tr( "Lambda Range" ),       rb_lrange,
+                                     true  );
+   lo_custom       = us_radiobutton( tr( "Custom Lambda List" ), rb_custom,
+                                     false );
    rb_lrange->setFont( font );
    rb_custom->setFont( font );
    r_group->addButton( rb_lrange, 0 );
    r_group->addButton( rb_custom, 1 );
-   lb_ldelta = us_label( tr( "%1 Index Increment:" ).arg( chlamb ), -1 );
-   ct_ldelta = us_counter( 1, 1, 100, 1 );
+   lb_ldelta       = us_label( tr( "%1 Index Increment:" ).arg( chlamb ), -1 );
+   ct_ldelta       = us_counter( 1, 1, 100, 1 );
    ct_ldelta->setFont( font );
    ct_ldelta->setStep( 1 );
    ct_ldelta->setMinimumWidth( lwid );
    ct_ldelta->resize( rhgt, swid );
-   lb_lstart = us_label( tr( "%1 Start:" ).arg( chlamb ), -1 );
-   lb_lend   = us_label( tr( "%1 End:"   ).arg( chlamb ), -1 );
-   lb_lplot  = us_label( tr( "Plot (W nm):" ), -1 );
+   lb_lstart       = us_label( tr( "%1 Start:" ).arg( chlamb ), -1 );
+   lb_lend         = us_label( tr( "%1 End:"   ).arg( chlamb ), -1 );
+   lb_lplot        = us_label( tr( "Plot (W nm):" ), -1 );
 
-   int     nlmbd  = 224;
-   int     lmbdlo = 251;
-   int     lmbdhi = 650;
-   int     lmbddl = 1;
-   QString lrsmry = tr( "%1 raw: %2 %3 to %4" )
+   int     nlmbd   = 224;
+   int     lmbdlo  = 251;
+   int     lmbdhi  = 650;
+   int     lmbddl  = 1;
+   QString lrsmry  = tr( "%1 raw: %2 %3 to %4" )
       .arg( nlmbd ).arg( chlamb ).arg( lmbdlo ).arg( lmbdhi );
    le_ltrng  = us_lineedit( lrsmry, -1, true );
    QString lxsmry = tr( "%1 MWL exports: %2 %3 to %4, raw index increment %5" )
       .arg( nlmbd ).arg( chlamb ).arg( lmbdlo ).arg( lmbdhi ).arg( lmbddl );
-   le_lxrng  = us_lineedit( lxsmry, -1, true );
-   cb_lplot  = us_comboBox();
-   cb_lstart = us_comboBox();
-   cb_lend   = us_comboBox();
+   le_lxrng       = us_lineedit( lxsmry, -1, true );
+   cb_lplot       = us_comboBox();
+   cb_lstart      = us_comboBox();
+   cb_lend        = us_comboBox();
 
    cb_lplot ->setFont( font );
    cb_lstart->setFont( font );
    cb_lend  ->setFont( font );
 
-   pb_custom = us_pushbutton( tr( "Custom Lambdas" ),      false, -1 );
-   pb_incall = us_pushbutton( tr( "Include All Lambdas" ), true,  -1 );
-   pb_larrow = us_pushbutton( tr( "previous" ), true, -2 );
-   pb_rarrow = us_pushbutton( tr( "next"     ), true, -2 );
+   pb_custom      = us_pushbutton(  tr( "Custom Lambdas" ),      false, -1 );
+   pb_incall      = us_pushbutton(  tr( "Include All Lambdas" ), true,  -1 );
+   pb_larrow      = us_pushbutton(  tr( "previous" ), true, -2 );
+   pb_rarrow      = us_pushbutton(  tr( "next"     ), true, -2 );
    pb_larrow->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT ) );
    pb_rarrow->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
 
-   lo_radius = us_radiobutton( tr( "x axis Radius" ),     rb_radius, true  );
-   lo_waveln = us_radiobutton( tr( "x axis Wavelength" ), rb_waveln, false );
+   lo_radius      = us_radiobutton( tr( "x axis Radius" ),     rb_radius,
+                                    true  );
+   lo_waveln      = us_radiobutton( tr( "x axis Wavelength" ), rb_waveln,
+                                    false );
    rb_radius->setFont( font );
    rb_waveln->setFont( font );
    x_group->addButton( rb_radius, 0 );
@@ -204,196 +186,194 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    cb_lstart->setCurrentIndex( 0 );
    cb_lend  ->setCurrentIndex( 6 );
 
-   specs->addWidget( le_lxrng,  s_row++, 0, 1, 4 );
-   specs->addWidget( lb_mwlctl, s_row++, 0, 1, 4 );
-   specs->addLayout( lo_lrange, s_row,   0, 1, 2 );
-   specs->addLayout( lo_custom, s_row++, 2, 1, 2 );
-   specs->addWidget( lb_ldelta, s_row,   0, 1, 1 );
-   specs->addWidget( ct_ldelta, s_row,   1, 1, 1 );
-   specs->addWidget( le_ltrng,  s_row++, 2, 1, 2 );
-   specs->addWidget( lb_lstart, s_row,   0, 1, 1 );
-   specs->addWidget( cb_lstart, s_row,   1, 1, 1 );
-   specs->addWidget( lb_lend,   s_row,   2, 1, 1 );
-   specs->addWidget( cb_lend,   s_row++, 3, 1, 1 );
-   specs->addWidget( pb_custom, s_row,   0, 1, 2 );
-   specs->addWidget( pb_incall, s_row++, 2, 1, 2 );
-   specs->addLayout( lo_radius, s_row,   0, 1, 2 );
-   specs->addLayout( lo_waveln, s_row++, 2, 1, 2 );
-   specs->addWidget( lb_lplot,  s_row,   0, 1, 1 );
-   specs->addWidget( cb_lplot,  s_row,   1, 1, 1 );
-   specs->addWidget( pb_larrow, s_row,   2, 1, 1 );
-   specs->addWidget( pb_rarrow, s_row++, 3, 1, 1 );
-
    connect_mwl_ctrls( true );
 
-   // Row 5
+   // Scan Controls
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
-   specs->addWidget( lb_scan, s_row++, 0, 1, 4 );
    
    // Scans
-   QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
+   QLabel* lb_from = us_label(  tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   specs->addWidget( lb_from, s_row, 0, 1, 2 );
 
-   ct_from = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_from        = us_counter( 3, 0.0, 0.0 ); // Update range upon load
    ct_from->setStep( 1 );
-   specs->addWidget( ct_from, s_row++, 2, 1, 2 );
 
-   QLabel* lb_to = us_label( tr( "to:" ), -1 );
+   QLabel* lb_to  = us_label( tr( "to:" ), -1 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   specs->addWidget( lb_to, s_row, 0, 1, 2 );
 
-   ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
+   ct_to          = us_counter( 3, 0.0, 0.0 ); // Update range upon load
    ct_to->setStep( 1 );
-   specs->addWidget( ct_to, s_row++, 2, 1, 2 );
    
    // Exclude and Include pushbuttons
-   // Row 7
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
-   connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
-   specs->addWidget( pb_excludeRange, s_row, 0, 1, 2 );
-   
-   pb_exclusion = us_pushbutton( tr( "Exclusion Profile" ), false );
-   connect( pb_exclusion, SIGNAL( clicked() ), SLOT( exclusion() ) );
-   specs->addWidget( pb_exclusion, s_row++, 2, 1, 2 );
+   pb_exclusion    = us_pushbutton( tr( "Exclusion Profile" ),  false );
+   pb_edit1       = us_pushbutton( tr( "Edit Single Scan" ), false );
+   pb_include     = us_pushbutton( tr( "Include All" ), false );
 
-   // Row 8
-   pb_edit1 = us_pushbutton( tr( "Edit Single Scan" ), false );
-   connect( pb_edit1, SIGNAL( clicked() ), SLOT( edit_scan() ) );
-   specs->addWidget( pb_edit1, s_row, 0, 1, 2 );
-
-   // Row 9
-   pb_include = us_pushbutton( tr( "Include All" ), false );
-   connect( pb_include, SIGNAL( clicked() ), SLOT( include() ) );
-   specs->addWidget( pb_include, s_row++, 2, 1, 2 );
-
-   // Edit label row
+   // Edit controls 
    QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
-   specs->addWidget( lb_edit, s_row++, 0, 1, 4 );
 
    // Edit Triple:Speed display (Equilibrium only)
-   lb_edtrsp   = us_label( tr( "Edit Triple:Speed :" ), -1, true );
-   specs->addWidget( lb_edtrsp, s_row,   0, 1, 2 );
-   le_edtrsp   = us_lineedit( "" );
-   specs->addWidget( le_edtrsp, s_row++, 2, 1, 2 );
+   lb_edtrsp      = us_label( tr( "Edit Triple:Speed :" ), -1, true );
+   le_edtrsp      = us_lineedit( "" );
    lb_edtrsp->setVisible(  false );
    le_edtrsp->setVisible(  false );
 
-   // Meniscus row
-   pb_meniscus = us_pushbutton( tr( "Specify Meniscus" ), false );
-   connect( pb_meniscus, SIGNAL( clicked() ), SLOT( set_meniscus() ) );
-   specs->addWidget( pb_meniscus, s_row, 0, 1, 2 );
+   // Meniscus
+   pb_meniscus    = us_pushbutton( tr( "Specify Meniscus" ), false );
+   le_meniscus    = us_lineedit( "", 1 );
 
-   le_meniscus = us_lineedit( "", 1 );
-   specs->addWidget( le_meniscus, s_row++, 2, 1, 2 );
-
-   // Air Gap row (hidden by default)
+   // Air Gap (hidden by default)
    pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
-   connect( pb_airGap, SIGNAL( clicked() ), SLOT( set_airGap() ) );
-   specs->addWidget( pb_airGap, s_row, 0, 1, 2 );
-
    le_airGap = us_lineedit( "", 1, true );
-   specs->addWidget( le_airGap, s_row++, 2, 1, 2 );
-
    pb_airGap->setHidden( true );
    le_airGap->setHidden( true );
 
-   // Data range row
-   pb_dataRange = us_pushbutton( tr( "Specify Data Range" ), false );
-   connect( pb_dataRange, SIGNAL( clicked() ), SLOT( set_dataRange() ) );
-   specs->addWidget( pb_dataRange, s_row, 0, 1, 2 );
-
-   le_dataRange = us_lineedit( "", 1, true );
-   specs->addWidget( le_dataRange, s_row++, 2, 1, 2 );
-
-   // Plateau row
-   pb_plateau = us_pushbutton( tr( "Specify Plateau" ), false );
-   connect( pb_plateau, SIGNAL( clicked() ), SLOT( set_plateau() ) );
-   specs->addWidget( pb_plateau, s_row,   0, 1, 2 );
-
-   le_plateau = us_lineedit( "", 1, true );
-   specs->addWidget( le_plateau, s_row++, 2, 1, 2 );
-
-   // Baseline row
-   lb_baseline  = us_label( tr( "Baseline:" ), -1 );
-   specs->addWidget( lb_baseline, s_row, 0, 1, 2 );
-
-   le_baseline = us_lineedit( "", 1, true );
-   specs->addWidget( le_baseline, s_row++, 2, 1, 2 );
+   // Data range
+   pb_dataRange   = us_pushbutton( tr( "Specify Data Range" ), false );
+   le_dataRange   = us_lineedit( "", 1, true );
+   // Plateau
+   pb_plateau     = us_pushbutton( tr( "Specify Plateau" ), false );
+   le_plateau     = us_lineedit( "", 1, true );
+   // Baseline
+   lb_baseline    = us_label(      tr( "Baseline:" ), -1 );
+   le_baseline    = us_lineedit( "", 1, true );
 
    // OD Limit
-   lb_odlim  = us_label( tr( "OD Limit:" ), -1 );
-   odlimit   = 1.5;
-   ct_odlim  = us_counter( 3, 0.1, 50000.0, odlimit );
+   lb_odlim       = us_label( tr( "OD Limit:" ), -1 );
+   odlimit        = 1.5;
+   ct_odlim       = us_counter( 3, 0.1, 50000.0, odlimit );
    ct_odlim ->setFont( font );
    ct_odlim ->setStep( 0.01 );
    ct_odlim ->setMinimumWidth( lwid );
    ct_odlim ->resize( rhgt, swid );
-   specs->addWidget( lb_odlim,    s_row,   0, 1, 2 );
-   specs->addWidget( ct_odlim,    s_row++, 2, 1, 2 );
-   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
-            this,      SLOT  ( od_radius_limit    ( double ) ) );
 
-   // Noise
-   pb_noise = us_pushbutton( tr( "Determine RI Noise" ), false );
-   connect( pb_noise, SIGNAL( clicked() ), SLOT( noise() ) );
-   specs->addWidget( pb_noise, s_row, 0, 1, 2 );
+   // Noise, Residuals, Invert, Spikes, Prior, Undo
+   pb_noise       = us_pushbutton( tr( "Determine RI Noise" ),        false );
+   pb_residuals   = us_pushbutton( tr( "Subtract Noise" ),            false );
+   pb_invert      = us_pushbutton( tr( "Invert Sign" ),               false );
+   pb_spikes      = us_pushbutton( tr( "Remove Spikes" ),             false );
+   pb_priorEdits  = us_pushbutton( tr( "Apply Prior Edits" ),         false );
+   pb_undo        = us_pushbutton( tr( "Undo Noise and Spikes" ),     false );
 
-   pb_residuals = us_pushbutton( tr( "Subtract Noise" ), false );
-   connect( pb_residuals, SIGNAL( clicked() ), SLOT( subtract_residuals() ) );
-   specs->addWidget( pb_residuals, s_row++, 2, 1, 2 );
-
-   pb_invert = us_pushbutton( tr( "Invert Sign" ), false );
-   connect( pb_invert, SIGNAL( clicked() ), SLOT( invert_values() ) );
-   specs->addWidget( pb_invert, s_row, 0, 1, 2 );
-  
-   pb_spikes = us_pushbutton( tr( "Remove Spikes" ), false );
-   connect( pb_spikes, SIGNAL( clicked() ), SLOT( remove_spikes() ) );
-   specs->addWidget( pb_spikes, s_row++, 2, 1, 2 );
-   
-   pb_priorEdits = us_pushbutton( tr( "Apply Prior Edits" ), false );
-   connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
-   specs->addWidget( pb_priorEdits, s_row, 0, 1, 2 );
-
-   pb_undo = us_pushbutton( tr( "Undo Noise and Spikes" ), false );
-   connect( pb_undo, SIGNAL( clicked() ), SLOT( undo() ) );
-   specs->addWidget( pb_undo, s_row++, 2, 1, 2 );
-
-   pb_reviewep = us_pushbutton( tr( "Review Edit Profile" ), false );
-   connect( pb_reviewep, SIGNAL( clicked() ), SLOT( review_edits() ) );
-   specs->addWidget( pb_reviewep, s_row,   0, 1, 2 );
-
-   pb_nexttrip = us_pushbutton( tr( "Next Triple" ),         false );
-   connect( pb_nexttrip, SIGNAL( clicked() ), SLOT( next_triple()  ) );
-   specs->addWidget( pb_nexttrip, s_row++, 2, 1, 2 );
+   // Review, Next Triple, Float, Save, Save-all
+   pb_reviewep    = us_pushbutton( tr( "Review Edit Profile" ),       false );
+   pb_nexttrip    = us_pushbutton( tr( "Next Triple" ),               false );
    pb_reviewep->setVisible( false );
    pb_nexttrip->setVisible( false );
+   pb_float       = us_pushbutton( tr( "Mark Data as Floating" ),     false );
+   pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
+   pb_writemwl    = us_pushbutton( tr( "Save to all Wavelengths" ),   false );
 
-   pb_float = us_pushbutton( tr( "Mark Data as Floating" ), false );
-   connect( pb_float, SIGNAL( clicked() ), SLOT( floating() ) );
-   specs->addWidget( pb_float, s_row, 0, 1, 2 );
+   connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
+   connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
+   connect( pb_investigator, SIGNAL( clicked() ),
+                             SLOT  ( sel_investigator()         ) );
+   connect( pb_load,         SIGNAL( clicked() ), SLOT( load()  ) );
+   connect( cb_triple,       SIGNAL( currentIndexChanged( int ) ), 
+                             SLOT  ( new_triple         ( int ) ) );
+   connect( pb_exclusion,    SIGNAL( clicked() ), SLOT( exclusion()     ) );
+   connect( pb_edit1,        SIGNAL( clicked() ), SLOT( edit_scan()     ) );
+   connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
+   connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
+   connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
+   connect( pb_dataRange,    SIGNAL( clicked() ), SLOT( set_dataRange() ) );
+   connect( pb_plateau,      SIGNAL( clicked() ), SLOT( set_plateau()   ) );
+   connect( ct_odlim,        SIGNAL( valueChanged   ( double ) ),
+                             SLOT  ( od_radius_limit( double ) ) );
+   connect( pb_noise,        SIGNAL( clicked() ), SLOT( noise() ) );
+   connect( pb_residuals,    SIGNAL( clicked() ),
+                             SLOT  ( subtract_residuals() ) );
+   connect( pb_invert,       SIGNAL( clicked() ), SLOT( invert_values() ) );
+   connect( pb_spikes,       SIGNAL( clicked() ), SLOT( remove_spikes() ) );
+   connect( pb_priorEdits,   SIGNAL( clicked() ), SLOT( apply_prior()   ) );
+   connect( pb_undo,         SIGNAL( clicked() ), SLOT( undo()      ) );
+   connect( pb_reviewep,     SIGNAL( clicked() ), SLOT( review_edits()  ) );
+   connect( pb_nexttrip,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
+   connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
+   connect( pb_write,        SIGNAL( clicked() ), SLOT( write()     ) );
+   connect( pb_writemwl,     SIGNAL( clicked() ), SLOT( write_mwl() ) );
 
-   pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
-   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
-   specs->addWidget( pb_write, s_row++, 2, 1, 2 );
-
-   pb_writemwl = us_pushbutton( tr( "Save to all Wavelengths" ), false );
-   connect( pb_writemwl, SIGNAL( clicked() ), SLOT( write_mwl() ) );
-   specs->addWidget( pb_writemwl, s_row++, 2, 1, 2 );
+   // Lay out specs widgets and layouts
+   int s_row = 0;
+   specs->addWidget( pb_investigator, s_row,   0, 1, 1 );
+   specs->addWidget( le_investigator, s_row++, 1, 1, 3 );
+   specs->addLayout( disk_controls,   s_row++, 0, 1, 4 );
+   specs->addWidget( pb_load,         s_row,   0, 1, 2 );
+   specs->addWidget( pb_details,      s_row++, 2, 1, 2 );
+   specs->addWidget( lb_triple,       s_row,   0, 1, 2 );
+   specs->addWidget( cb_triple,       s_row++, 2, 1, 2 );
+   specs->addWidget( lb_rpms,         s_row,   0, 1, 2 );
+   specs->addWidget( cb_rpms,         s_row++, 2, 1, 2 );
+   specs->addWidget( lb_gaps,         s_row,   0, 1, 2 );
+   specs->addWidget( ct_gaps,         s_row++, 2, 1, 2 );
+   specs->addWidget( le_lxrng,        s_row++, 0, 1, 4 );
+   specs->addWidget( lb_mwlctl,       s_row++, 0, 1, 4 );
+   specs->addLayout( lo_lrange,       s_row,   0, 1, 2 );
+   specs->addLayout( lo_custom,       s_row++, 2, 1, 2 );
+   specs->addWidget( lb_ldelta,       s_row,   0, 1, 1 );
+   specs->addWidget( ct_ldelta,       s_row,   1, 1, 1 );
+   specs->addWidget( le_ltrng,        s_row++, 2, 1, 2 );
+   specs->addWidget( lb_lstart,       s_row,   0, 1, 1 );
+   specs->addWidget( cb_lstart,       s_row,   1, 1, 1 );
+   specs->addWidget( lb_lend,         s_row,   2, 1, 1 );
+   specs->addWidget( cb_lend,         s_row++, 3, 1, 1 );
+   specs->addWidget( pb_custom,       s_row,   0, 1, 2 );
+   specs->addWidget( pb_incall,       s_row++, 2, 1, 2 );
+   specs->addLayout( lo_radius,       s_row,   0, 1, 2 );
+   specs->addLayout( lo_waveln,       s_row++, 2, 1, 2 );
+   specs->addWidget( lb_lplot,        s_row,   0, 1, 1 );
+   specs->addWidget( cb_lplot,        s_row,   1, 1, 1 );
+   specs->addWidget( pb_larrow,       s_row,   2, 1, 1 );
+   specs->addWidget( pb_rarrow,       s_row++, 3, 1, 1 );
+   specs->addWidget( lb_scan,         s_row++, 0, 1, 4 );
+   specs->addWidget( lb_from,         s_row,   0, 1, 2 );
+   specs->addWidget( ct_from,         s_row++, 2, 1, 2 );
+   specs->addWidget( lb_to,           s_row,   0, 1, 2 );
+   specs->addWidget( ct_to,           s_row++, 2, 1, 2 );
+   specs->addWidget( pb_excludeRange, s_row,   0, 1, 2 );
+   specs->addWidget( pb_exclusion,    s_row++, 2, 1, 2 );
+   specs->addWidget( pb_edit1,        s_row,   0, 1, 2 );
+   specs->addWidget( pb_include,      s_row++, 2, 1, 2 );
+   specs->addWidget( lb_edit,         s_row++, 0, 1, 4 );
+   specs->addWidget( lb_edtrsp,       s_row,   0, 1, 2 );
+   specs->addWidget( le_edtrsp,       s_row++, 2, 1, 2 );
+   specs->addWidget( pb_meniscus,     s_row,   0, 1, 2 );
+   specs->addWidget( le_meniscus,     s_row++, 2, 1, 2 );
+   specs->addWidget( pb_airGap,       s_row,   0, 1, 2 );
+   specs->addWidget( le_airGap,       s_row++, 2, 1, 2 );
+   specs->addWidget( pb_dataRange,    s_row,   0, 1, 2 );
+   specs->addWidget( le_dataRange,    s_row++, 2, 1, 2 );
+   specs->addWidget( pb_plateau,      s_row,   0, 1, 2 );
+   specs->addWidget( le_plateau,      s_row++, 2, 1, 2 );
+   specs->addWidget( lb_baseline,     s_row,   0, 1, 2 );
+   specs->addWidget( le_baseline,     s_row++, 2, 1, 2 );
+   specs->addWidget( lb_odlim,        s_row,   0, 1, 2 );
+   specs->addWidget( ct_odlim,        s_row++, 2, 1, 2 );
+   specs->addWidget( pb_noise,        s_row,   0, 1, 2 );
+   specs->addWidget( pb_residuals,    s_row++, 2, 1, 2 );
+   specs->addWidget( pb_invert,       s_row,   0, 1, 2 );
+   specs->addWidget( pb_spikes,       s_row++, 2, 1, 2 );
+   specs->addWidget( pb_priorEdits,   s_row,   0, 1, 2 );
+   specs->addWidget( pb_undo,         s_row++, 2, 1, 2 );
+   specs->addWidget( pb_reviewep,     s_row,   0, 1, 2 );
+   specs->addWidget( pb_nexttrip,     s_row++, 2, 1, 2 );
+   specs->addWidget( pb_float,        s_row,   0, 1, 2 );
+   specs->addWidget( pb_write,        s_row++, 2, 1, 2 );
+   specs->addWidget( pb_writemwl,     s_row++, 2, 1, 2 );
 
    // Button rows
-   QBoxLayout* buttons = new QHBoxLayout;
-
-   QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
-   buttons->addWidget( pb_reset );
-
-   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
-   buttons->addWidget( pb_help );
-
+   QBoxLayout*  buttons   = new QHBoxLayout;
+   QPushButton* pb_reset  = us_pushbutton( tr( "Reset" ) );
+   QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
+
+   connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset() ) );
+   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()  ) );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
+
+   buttons->addWidget( pb_reset );
+   buttons->addWidget( pb_help );
    buttons->addWidget( pb_accept );
 
    // Plot layout on right side of window
@@ -459,6 +439,7 @@ void US_Edit::reset( void )
    invert        = 1.0;  // Multiplier = 1.0 or -1.0
    noise_order   = 0;
    triple_index  = 0;
+   data_index    = 0;
    isMwl         = false;
    xaxis_radius  = true;
    lsel_range    = true;
@@ -535,7 +516,7 @@ void US_Edit::reset( void )
    pb_write       ->setIcon( QIcon() );
    pb_writemwl    ->setIcon( QIcon() );
 
-   editID        .clear();
+   editLabel     .clear();
    data.scanData .clear();
    includes      .clear();
    changed_points.clear();
@@ -546,6 +527,7 @@ void US_Edit::reset( void )
    cb_rpms      ->clear();
    editGUIDs     .clear();
    editIDs       .clear();
+   editFnames    .clear();
    files         .clear();
    expd_radii    .clear();
    expi_wvlns    .clear();
@@ -800,8 +782,10 @@ void US_Edit::load( void )
    US_LoadAUC* dialog =
       new US_LoadAUC( isLocal, allData, triples, workingDir );
 
-   connect( dialog, SIGNAL( changed       ( bool ) ),
-            this,   SLOT  ( update_disk_db( bool ) ) );
+   connect( dialog, SIGNAL( progress      ( QString ) ),
+            this,   SLOT  ( progress_load ( QString ) ) );
+   connect( dialog, SIGNAL( changed       ( bool )    ),
+            this,   SLOT  ( update_disk_db( bool )    ) );
 
    if ( dialog->exec() == QDialog::Rejected )  return;
 
@@ -826,6 +810,7 @@ void US_Edit::load( void )
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                        SLOT  ( new_triple         ( int ) ) );
    triple_index = 0;
+   data_index   = 0;
    
    le_info->setText( runID );
 
@@ -857,21 +842,25 @@ void US_Edit::load( void )
    QString runtype = runID + "." + dataType;
    nwaveln         = 0;
    ncelchn         = 0;
+   outData.clear();
 
-   for ( int ii = 0; ii < triples.size(); ii++ )
+   for ( int trx = 0; trx < triples.size(); trx++ )
    {  // Generate file names
-      QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
+      QString triple = QString( triples.at( trx ) ).replace( " / ", "." );
       QString file   = runtype + "." + triple + ".auc";
       files << file;
 
+      // Save pointers as initial output data vector
+      outData << &allData[ trx ];
+
       QString scell  = triple.section( ".", 0, 0 ).simplified();
       QString schan  = triple.section( ".", 1, 1 ).simplified();
-      QString waveln = triple.section( ".", 2, 2 ).simplified();
+      QString swavl  = triple.section( ".", 2, 2 ).simplified();
 
-      if ( ! rawc_wvlns.contains( waveln ) )
+      if ( ! rawc_wvlns.contains( swavl ) )
       {  // Accumulate wavelengths in case this is MWL
          nwaveln++;
-         rawc_wvlns << waveln;
+         rawc_wvlns << swavl;
       }
 
       nwavelo         = nwaveln;
@@ -886,8 +875,8 @@ void US_Edit::load( void )
 DbgLv(1) << "rawc_wvlns size" << rawc_wvlns.size() << nwaveln;
 DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
    rawc_wvlns.sort();
-   for ( int ii = 0; ii < nwaveln; ii++ )
-      rawi_wvlns << rawc_wvlns[ ii ].toInt();
+   for ( int wvx = 0; wvx < nwaveln; wvx++ )
+      rawi_wvlns << rawc_wvlns[ wvx ].toInt();
 
    workingDir   = workingDir + "/";
    QString file = workingDir + runtype + ".xml";
@@ -913,7 +902,6 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       xf.close();
    }
 
-DbgLv(1) << "LD(): AA";
    if ( expType.isEmpty()  &&  disk_controls->db() )
    {  // no experiment type yet and data read from DB:  try for DB exp type
       if ( dbP == NULL )
@@ -957,7 +945,6 @@ DbgLv(1) << "LD(): AA";
    odlimit    = 1.5;
    init_includes();
 
-DbgLv(1) << "LD(): CC";
    if ( expIsEquil )
    {  // Equilibrium
       lb_rpms    ->setVisible( true  );
@@ -1065,7 +1052,7 @@ DbgLv(1) << "LD(): CC";
 
       pb_priorEdits->disconnect();
       connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
-DbgLv(1) << "LD(): FF  triples size" << triples.size();
+DbgLv(1) << "LD():  triples size" << triples.size();
       if ( notMwl )
          plot_current( 0 );
    }
@@ -1118,11 +1105,12 @@ DbgLv(1) << "LD(): FF  triples size" << triples.size();
 
    ntriple      = triples.size();
 DbgLv(1) << " triples    size" << ntriple;
-   editGUIDs.fill( "", ntriple );
-   editIDs  .fill( "", ntriple );
+   editGUIDs .fill( "",     ntriple );
+   editIDs   .fill( "",     ntriple );
+   editFnames.fill( "none", ntriple );
 
    isMwl        = ( nwaveln > 2 );
-DbgLv(1) << "LD(): NN  nwaveln isMwl" << nwaveln << isMwl;
+DbgLv(1) << "LD(): nwaveln isMwl" << nwaveln << isMwl << rawi_wvlns.size();
 
    if ( isMwl )
    {  // Set values related to MultiWaveLength
@@ -1140,35 +1128,40 @@ DbgLv(1) << "IS-MWL: wvlns size" << rawc_wvlns.size();
          .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda )
          .arg( dlambda ) );
 
+      // Load the internal object that keeps track of MWL data
+      mwl_data.load_mwl( allData );
+DbgLv(1) << "IS-MWL:   load_mwl complete";
+
+      expd_radii .clear();
+      expc_wvlns .clear();
+      nwavelo      = mwl_data.lambdas( expi_wvlns, 0 );
+DbgLv(1) << "IS-MWL:    new nwavelo" << nwavelo << expi_wvlns.count();
+
+      // Initialize export wavelength lists for first channel
+      for ( int wvx = 0; wvx < nwavelo; wvx++ )
+      {
+         expc_wvlns << QString::number( expi_wvlns[ wvx ] );
+      }
+
       // Update wavelength lists in GUI elements
       cb_lstart->clear();
       cb_lend  ->clear();
       cb_lplot ->clear();
-      cb_lstart->addItems( rawc_wvlns );
-      cb_lend  ->addItems( rawc_wvlns );
-      cb_lplot ->addItems( rawc_wvlns );
-      int lastx    = nwaveln - 1;
-      plotndx      = nwaveln / 2;
+      cb_lstart->addItems( expc_wvlns );
+      cb_lend  ->addItems( expc_wvlns );
+      cb_lplot ->addItems( expc_wvlns );
+      int lastx    = nwavelo - 1;
+      plotndx      = nwavelo / 2;
       cb_lplot ->setCurrentIndex( plotndx );
       cb_lstart->setCurrentIndex( 0 );
       cb_lend  ->setCurrentIndex( lastx );
-
-      expd_radii .clear();
-      expi_wvlns .clear();
-      expc_wvlns .clear();
-
-      for ( int ii = 0; ii < nwaveln; ii++ )
-      {  // Update the list of wavelengths that may be plotted
-         expi_wvlns << rawi_wvlns[ ii ];
-         expc_wvlns << rawc_wvlns[ ii ];
-      }
 DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
 
-      data          = allData[ 0 ];
-      nrpoint       = data.pointCount();
-      int nscan     = data.scanCount();
+      edata         = &allData[ 0 ];
+      nrpoint       = edata->pointCount();
+      int nscan     = edata->scanCount();
       int ndset     = ncelchn * nrpoint;
-      int ndpoint   = nscan * nwaveln;
+      int ndpoint   = nscan * nwavelo;
 DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
  << ndset << ndpoint;
 
@@ -1190,8 +1183,6 @@ DbgLv(1) << "IS-MWL:  wrdata size" << wrdata.size() << ndpoint;
       }
 DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
 
-      US_DataIO::RawData*  edata;
-
       // Update wavelength-x-axis data vector with amplitude data points
       // The input has (ncelchn * nwaveln) data sets, each of which
       //   contains (nscan * nrpoint) data points.
@@ -1206,13 +1197,13 @@ DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
          for ( int scx = 0; scx < nscan; scx++ )
          {  // Handle each scan of a triple
-            US_DataIO::Scan* scn   = &edata->scanData[ scx ];
+            US_DataIO::Scan* scan  = &edata->scanData[ scx ];
             int    odx    = ccx * nrpoint;         // Output dataset index
             int    opx    = scx * nwaveln + wvx;   // Output point index
 //DbgLv(1) << "IS-MWL:    scx odx opx" << scx << odx << opx;
             for ( int rax = 0; rax < nrpoint; rax++ )
             {  // Store each radius data point as a wavelength point in a scan
-               rdata[ odx++ ][ opx ]  = scn->rvalues[ rax ];
+               rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
             } // END: radius points loop
          } // END: scans loop
       } // END: input triples loop
@@ -1542,8 +1533,8 @@ DbgLv(1) << "AGap: L R" << airGap_left << airGap_right << " AdjIntf";
                plot->btnZoom->setChecked( false );
 
             // Display the data
-            QString s;
-            le_airGap->setText( s.sprintf( "%.3f - %.3f", 
+            QString wkstr;
+            le_airGap->setText( wkstr.sprintf( "%.3f - %.3f", 
                      airGap_left, airGap_right ) );
 
             step = RANGE;
@@ -1599,8 +1590,8 @@ DbgLv(1) << "AGap:  plot_range()";
             }
             
             // Display the data
-            QString s;
-            le_dataRange->setText( s.sprintf( "%.3f - %.3f", 
+            QString wkstr;
+            le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f", 
                      range_left, range_right ) );
 
             step = PLATEAU;
@@ -1647,7 +1638,7 @@ DbgLv(1) << "AGap:  plot_range()";
                         cb_triple->currentText() + " : " + trip_rpms[ 0 ];
                      le_edtrsp->setText( trsp );
 
-                     data = allData[ index ];
+                     data = *outData[ index ];
                      cb_rpms->clear();
 
                      for ( int ii = 0; ii < data.scanData.size(); ii++ )
@@ -1708,8 +1699,8 @@ DbgLv(1) << "AGap:  plot_range()";
 
          // Display the data (localize str)
          {
-            QString str;
-            le_plateau->setText( str.sprintf( "%.3f", plateau ) );
+            QString wkstr;
+            le_plateau->setText( wkstr.sprintf( "%.3f", plateau ) );
          }
 
          plot_range();
@@ -1724,7 +1715,7 @@ DbgLv(1) << "AGap:  plot_range()";
       case BASELINE:
          {
             // Use the last scan
-            US_DataIO::Scan  s = data.scanData.last();
+            US_DataIO::Scan* scan = &data.scanData.last();
             
             int start = data.xindex( range_left );
             int end   = data.xindex( range_right );
@@ -1742,13 +1733,13 @@ DbgLv(1) << "AGap:  plot_range()";
 
             // Average the value for +/- 5 points
             for ( int j = pt - 5; j <= pt + 5; j++ )
-               sum += s.rvalues[ j ];
+               sum += scan->rvalues[ j ];
 
             double bl = sum / 11.0;
             baseline  = p.x();
 
-            QString str;
-            le_baseline->setText( str.sprintf( "%.3f (%.3e)", p.x(), bl ) );
+            QString wkstr;
+            le_baseline->setText( wkstr.sprintf( "%.3f (%.3e)", p.x(), bl ) );
             plot_range();
          }
 
@@ -1993,8 +1984,8 @@ void US_Edit::set_fringe_tolerance( double /* tolerance */)
    if ( step == MENISCUS  ||  step == AIRGAP  ||  step == RANGE ) return;
 
    // Reset the data
-   int index = cb_triple->currentIndex();
-   data = allData[ index ];
+   int index = index_data();
+   data = *outData[ index ];
 
    US_DataIO::EditValues  edits;
    edits.airGapLeft  = airGap_left;
@@ -2335,22 +2326,22 @@ void US_Edit::plot_mwl( void )
 
    QString     rectype = tr( "Wavelength" );
    double      recvalu = 250;
-   int         index   = cb_triple->currentIndex();
-   int         ccx     = index;
+   int         index   = index_data();
+   int         ccx     = triple_index;
    int         recndx  = cb_lplot ->currentIndex();
    QString     celchn  = celchns.at( ccx );
    QString     scell   = celchn.section( "/", 0, 0 ).simplified();
    QString     schan   = celchn.section( "/", 1, 1 ).simplified();
    QString     svalu;
+
 DbgLv(1) << "PlMwl:  index celchn" << index << celchn;
 
    if ( xaxis_radius )
    {
-      index               = ccx * nwavelo + recndx;
 DbgLv(1) << "PlMwl:   x-r index cc nw rx" << index << ccx << nwavelo << recndx;
-DbgLv(1) << "PlMwl:    allData size" << allData.size();
+DbgLv(1) << "PlMwl:    outData size" << outData.size();
 DbgLv(1) << "PlMwl:    expc_wvlns size" << expc_wvlns.size();
-      data                = allData[ index ];
+      data                = *outData[ data_index ];
       recvalu             = expi_wvlns.at( recndx );
       svalu               = expc_wvlns.at( recndx );
    }
@@ -2359,7 +2350,7 @@ DbgLv(1) << "PlMwl:    expc_wvlns size" << expc_wvlns.size();
    {
       index               = ccx * nrpoint + recndx;
 DbgLv(1) << "PlMwl:   x-w index cc nr rx" << index << ccx << nrpoint << recndx;
-      data                = allData[ 0 ];
+      data                = *outData[ 0 ];
       rectype             = tr( "Radius" );
       recvalu             = expd_radii.at( recndx );
       svalu               = expc_radii.at( recndx );
@@ -2870,11 +2861,9 @@ void US_Edit::remove_spikes( void )
 // Undo changes
 void US_Edit::undo( void )
 {
-   // Copy from allData to data
-   int index = cb_triple->currentIndex();
-
+   // Copy from outData to data
    if ( step < PLATEAU )
-      data      = allData[ index ];
+      data      = *outData[ index_data() ];
 
    // Redo some things depending on type
    if ( dataType == "IP" )
@@ -2959,6 +2948,9 @@ void US_Edit::subtract_residuals( void )
 // Select a new triple
 void US_Edit::new_triple( int index )
 {
+   triple_index    = index;
+DbgLv(1) << "EDT:NewTr: tripindex" << triple_index << "chgs" << changes_made;
+
    if ( changes_made )
    {
       QMessageBox mb;
@@ -2981,14 +2973,34 @@ void US_Edit::new_triple( int index )
       }
    }
 
-   triple_index = index;
+   // Set up data indexes
+   rb_radius->setChecked( true );
+   rb_waveln->setChecked( false );
+
+   index_data();
+DbgLv(1) << "EDT:NewTr: trip,data index" << triple_index << data_index;
+
+   if ( isMwl )
+   {  // MWL:  restore the wavelengths for the newly selected triple
+      QVector< int > wvs;
+      mwl_data.lambdas( wvs, triple_index );
+      lambda_new_list ( wvs );
+DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
+   }
+
+   // Reset for new triple
    reset_triple(); 
 
    // Need to reconnect after reset
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                        SLOT  ( new_triple         ( int ) ) );
 
-   data = allData[ index ];
+   edata          = outData[ data_index ];
+   data           = *edata;
+   QString swavl  = cb_lplot ->currentText();
+   QString triple = cb_triple->currentText() + ( isMwl ? " / " + swavl : "" );
+   int     idax   = triples.indexOf( triple );
+DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax;
 
    // Enable pushbuttons
    pb_details  ->setEnabled( true );
@@ -3004,6 +3016,8 @@ void US_Edit::new_triple( int index )
    pb_undo     ->setEnabled( true );
    pb_write    ->setEnabled( all_edits );
    pb_writemwl ->setEnabled( all_edits && isMwl );
+   pb_write    ->setIcon   ( all_edits          ? check : QIcon() );
+   pb_writemwl ->setIcon   ( all_edits && isMwl ? check : QIcon() );
    all_edits    = false;
    changes_made = all_edits;
 
@@ -3035,12 +3049,96 @@ void US_Edit::new_triple( int index )
    }
 
    else
-   {  // non-Equilibrium
-      set_pbColors( pb_meniscus );
-      plot_current( index );
+   {  // non-Equilibrium:  possibly re-do/un-do edits
+      QString trbase   = cb_triple->currentText();
+      triple           = trbase;
+
+      if ( isMwl )
+      {
+         plotndx          = cb_lplot->currentIndex();
+         swavl            = cb_lplot->currentText();
+         triple          += " / " + swavl;
+         plotrec          = swavl.toInt();
+      }
+
+      QString fname    = editFnames[ idax ];
+      bool    app_edit = ( fname != "none" );
+DbgLv(1) << "EDT:NewTr:   app_edit" << app_edit << "fname" << fname;
+
+      if ( app_edit )
+      {  // This data has editing,  ask if it should be applied
+         QStringList editfiles;
+
+         if ( fname == "same" )
+         {  // Need to find an edit file for this channel
+            QString celchn   = trbase + " / ";
+            int     wvxe     = nwavelo - 1;
+DbgLv(1) << "EDT:NewTr:     wvxe ewvsiz" << wvxe << expc_wvlns.count();
+            int     jdax     = triples.indexOf( celchn + expc_wvlns[ 0    ] );
+            int     ldax     = triples.indexOf( celchn + expc_wvlns[ wvxe ] );
+DbgLv(1) << "EDT:NewTr:      jdax ldax" << jdax << ldax;
+
+            while ( jdax <= ldax )
+            {
+               if ( editFnames[ jdax ].length() > 4 )
+               {
+                  fname         = editFnames[ jdax ];
+                  idax          = jdax;
+                  break;
+               }
+
+               jdax++;
+            }
+         }
+
+         QString trtype   = isMwl ? "cell/channel" : "triple";
+         QString trvalu   = isMwl ? trbase         : triple;
+DbgLv(1) << "EDT:NewTr:   tr type,valu" << trtype << trvalu; 
+
+         QMessageBox mbox;
+         QPushButton* pb_appl;
+         QString msg      = tr( "Edits have been loaded or saved<br/>"
+                                "for the current %1 (%2).<br/></br/>"
+                                "Do you wish to<br/>"
+                                "&nbsp;&nbsp;"
+                                "apply them (<b>Apply Edits</b>) or<br/>"
+                                "&nbsp;&nbsp;"
+                                "ignore them (<b>Ignore Edits</b>)<br/>"
+                                "in data displays?" )
+                            .arg( trtype ).arg( trvalu );
+         mbox.setIcon      ( QMessageBox::Question );
+         mbox.setIcon      ( QMessageBox::Question );
+         mbox.setTextFormat( Qt::RichText );
+         mbox.setText      ( msg );
+                            mbox.addButton( tr( "Ignore Edits"   ),
+                                            QMessageBox::RejectRole );
+         pb_appl          = mbox.addButton( tr( "Apply Edits" ),
+                                            QMessageBox::AcceptRole );
+         mbox.setDefaultButton( pb_appl );
+         mbox.exec();
+         app_edit         = ( mbox.clickedButton() == pb_appl );
+      }
+
+      if ( app_edit )
+      {  // If editing chosen, apply it
+         US_DataIO::EditValues parameters;
+
+         US_DataIO::readEdits( workingDir + fname, parameters );
+
+         apply_edits( parameters );
+      }
+
+      else
+      {  // If no editing, be sure to turn off edits
+         set_meniscus();
+      }
+
+DbgLv(1) << "EDT:NewTr:   men" << meniscus << "dx" << idax;
+      plot_current( idax );
    }
 
-   set_meniscus();
+   replot();
+DbgLv(1) << "EDT:NewTr: DONE";
 }
 
 // Select a new speed within a triple
@@ -3081,7 +3179,7 @@ void US_Edit::write( void )
       for ( int jr = 0; jr < triples.size(); jr++ )
       {
          triple_index = jr;
-         data         = allData[ jr ];
+         data         = *outData[ jr ];
 
          write_triple();
       }
@@ -3099,16 +3197,18 @@ void US_Edit::write_triple( void )
 {
    QString s;
 
-   meniscus  = le_meniscus->text().toDouble();
-   baseline  = data.xvalues[ data.xindex( range_left ) + 5 ];
-   int dax   = triple_index;
+   meniscus       = le_meniscus->text().toDouble();
+   baseline       = data.xvalues[ data.xindex( range_left ) + 5 ];
+   int     odax   = cb_triple->currentIndex();
+   int     idax   = odax;
 
    if ( isMwl )
    {  // For MultiWavelength, data index needs to be recomputed
-      int     ccx    = cb_triple->currentIndex();
       int     wvx    = cb_lplot ->currentIndex();
       QString swavl  = expc_wvlns[ wvx ];
-      dax            = ccx * nwaveln + rawc_wvlns.indexOf( swavl );
+      QString triple = cb_triple->currentText() + " / " + swavl;
+      idax           = triples.indexOf( triple );
+      odax           = index_data( wvx );
    }
 
    if ( expIsEquil )
@@ -3144,20 +3244,20 @@ void US_Edit::write_triple( void )
 
    QString sufx = "";
 
-   // Ask for editID if not yet defined
-   while ( editID.isEmpty() )
+   // Ask for editLabel if not yet defined
+   while ( editLabel.isEmpty() )
    {
       QString now  =  QDateTime::currentDateTime()
                       .toUTC().toString( "yyMMddhhmm" );
 
       bool ok;
-      QString msg = tr( "The base Edit ID for this edit session is <b>" )
+      QString msg = tr( "The base Edit Label for this edit session is <b>" )
          + now + "</b> .<br/>"
          + tr( "You may add an optional suffix to further distinquish<br/>"
-               "the Edit ID. Use alphanumeric characters, underscores,<br/>"
+               "the Edit Label. Use alphanumeric characters, underscores,<br/>"
                "or hyphens (no spaces). Enter 0 to 10 suffix characters." );
       sufx   = QInputDialog::getText( this, 
-         tr( "Create a unique session Edit ID" ),
+         tr( "Create a unique session Edit Label" ),
          msg,
          QLineEdit::Normal,
          sufx,
@@ -3166,29 +3266,29 @@ void US_Edit::write_triple( void )
       if ( ! ok ) return;
 
       sufx.remove( QRegExp( "[^\\w\\d_-]" ) );
-      editID = now + sufx;
+      editLabel = now + sufx;
 
-      if ( editID.length() > 20 )
+      if ( editLabel.length() > 20 )
       {
          QMessageBox::critical( this,
             tr( "Text length error" ),
-            tr( "You entered %1 characters for the Edit ID suffix.\n"
+            tr( "You entered %1 characters for the Edit Label suffix.\n"
                 "Re-enter, limiting length to 10 characters." )
             .arg( sufx.length() ) );
-         editID.clear();
+         editLabel.clear();
          sufx = sufx.left( 10 );
       }
    }
 
    // Determine file name
-   // workingDir + runID + editID + data type + cell + channel + wavelength 
+   // workingDir + runID + editLabel + data type + cell + channel + wavelength 
    //            + ".xml"
 
-   QString filename = files[ dax ];
-DbgLv(1) << "EDT:WrTripl: tripindex" << triple_index << "dax" << dax
+   QString filename = files[ idax ];
+DbgLv(1) << "EDT:WrTripl: tripindex" << triple_index << "idax" << idax
  << "filename" << filename;
    int     index    = filename.indexOf( '.' ) + 1;
-   filename.insert( index, editID + "." );
+   filename.insert( index, editLabel + "." );
    QString wvpart   = "";
 
    filename.replace( QRegExp( "auc$" ), "xml" );
@@ -3198,16 +3298,16 @@ DbgLv(1) << "EDT:WrTripl:  filename" << filename;
         expType.compare( "other", Qt::CaseInsensitive ) == 0 )
       expType = "Velocity";
 
-   QString editGUID = editGUIDs[ dax ];
+   QString editGUID = editGUIDs[ idax ];
 
    if ( editGUID.isEmpty() )
    {
       editGUID = US_Util::new_guid();
-      editGUIDs.replace( dax, editGUID );
+      editGUIDs.replace( idax, editGUID );
    }
 
    QString rawGUID  = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
-   QString triple   = triples.at( dax );
+   QString triple   = triples.at( idax );
 DbgLv(1) << "EDT:WrTripl:   triple" << triple;
 
    // Output the edit XML file
@@ -3230,7 +3330,7 @@ DbgLv(1) << "EDT:WrTripl:   triple" << triple;
          }
       }
 
-      QString editID   = editIDs[ dax ];
+      QString editID   = editIDs[ idax ];
 
       // Output the edit database record
       wrstat     = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
@@ -3244,27 +3344,30 @@ DbgLv(1) << "EDT:WrTripl:   triple" << triple;
 void US_Edit::apply_prior( void )
 {
    QString filename;
+   QString filepath;
    int     index1;
+   US_DB2* dbP    = NULL;
+DbgLv(1) << "AppPri: IN  dkdb" << disk_controls->db();
 
    if ( disk_controls->db() )
    {
       US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
+      dbP            = new US_DB2( pw.getPasswd() );
 
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( dbP->lastErrno() != US_DB2::OK )
       {
          QMessageBox::warning( this, tr( "Connection Problem" ),
-           tr( "Could not connect to database: \n" ) + db.lastError() );
+           tr( "Could not connect to database: \n" ) + dbP->lastError() );
          return;
       }
 
       QStringList q( "get_rawDataID_from_GUID" );
      
       q << US_Util::uuid_unparse( (uchar*)data.rawGUID );
-      db.query( q );
+      dbP->query( q );
 
       // Error check    
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( dbP->lastErrno() != US_DB2::OK )
       {
          QMessageBox::warning( this,
            tr( "AUC Data is not in DB" ),
@@ -3273,22 +3376,22 @@ void US_Edit::apply_prior( void )
          return;
       }
       
-      db.next();
-      QString rawDataID = db.value( 0 ).toString();
+      dbP->next();
+      QString rawDataID = dbP->value( 0 ).toString();
 
       q.clear();
       q << "get_editedDataIDs" << rawDataID;
 
-      db.query( q );
+      dbP->query( q );
 
 
       QStringList editDataIDs;
       QStringList filenames;
 
-      while ( db.next() )
+      while ( dbP->next() )
       {
-         editDataIDs << db.value( 0 ).toString();
-         filenames   << db.value( 2 ).toString();
+         editDataIDs << dbP->value( 0 ).toString();
+         filenames   << dbP->value( 2 ).toString();
       }
 
       if ( editDataIDs.size() == 0 )
@@ -3306,9 +3409,9 @@ void US_Edit::apply_prior( void )
 
       if ( index >= 0 ) 
       {
-         filename   = workingDir + filenames[ index ];
+         filepath   = workingDir + filenames[ index ];
          int dataID = editDataIDs[ index ].toInt();
-         db.readBlobFromDB( filename, "download_editData", dataID );
+         dbP->readBlobFromDB( filepath, "download_editData", dataID );
       }
    }
    else
@@ -3321,161 +3424,126 @@ void US_Edit::apply_prior( void )
       filter = tr( "Edits(" ) + filter + tr( ");;All XML (*.xml)" );
       
       // Ask for edit file
-      filename = QFileDialog::getOpenFileName( this, 
+      filepath = QFileDialog::getOpenFileName( this, 
             tr( "Select a saved edit file" ),
             workingDir, filter );
    }
+DbgLv(1) << "AppPri: fpath" << filepath;
 
-   if ( filename.isEmpty() ) return; 
+   if ( filepath.isEmpty() ) return; 
+
+   // Get multiple edits if they exist and user so chooses
+   QStringList editfiles;
+   filepath         = filepath.replace( "\\", "/"   );
+   filename         = filepath.section( "/", -1, -1 );
+   QString triple   = filename.section( ".", -4, -2 )
+                              .replace( ".", " / "  );
+   int     idax     = triples.indexOf( triple );
+
+   int     nledits  = like_edit_files( filename, editfiles, dbP );
+DbgLv(1) << "AppPri: nledits" << nledits << editfiles.count();
+
+   if ( nledits > 1 )
+   {
+      QPushButton* pb_defb; 
+      QPushButton* pb_selo;
+      QPushButton* pb_allw;
+      QString edtLbl = editfiles[ 0 ].section( ".", -6, -6 );
+      int swavl      = editfiles[           0 ].section( ".", -2, -2 ).toInt();
+      int ewavl      = editfiles[ nledits - 1 ].section( ".", -2, -2 ).toInt();
+
+      QMessageBox mbox;
+      QString msg  = tr( "%1 wavelengths (%2 to %3) have the same<br/>"
+                         "Edit Label of \"%4\" as the selected file.<br/>"
+                         "<br/>"
+                         "Specify whether you wish to apply edits only<br/>"
+                         "to the selected file (<b>Selected Only</b>)<br/>"
+                         "or to apply them to all wavelengths of the<br/>"
+                         "current cell/channel (<b>All Wavelengths</b>)." )
+                     .arg( nledits ).arg( swavl ).arg( ewavl ).arg( edtLbl );
+      mbox.setIcon      ( QMessageBox::Question );
+      mbox.setTextFormat( Qt::RichText );
+      mbox.setText      ( msg );
+      pb_selo        = mbox.addButton( tr( "Selected Only"   ),
+                                       QMessageBox::RejectRole );
+      pb_allw        = mbox.addButton( tr( "All Wavelengths" ),
+                                       QMessageBox::AcceptRole );
+      pb_defb        = nledits > 2 ? pb_allw : pb_selo;
+      mbox.setDefaultButton( pb_defb );
+      mbox.exec();
+
+      if ( mbox.clickedButton() == pb_selo )
+      {  // Only apply for the selected file
+DbgLv(1) << "AppPri: SelOnly button clicked";
+         nledits        = 1;
+         editfiles.clear();
+         editfiles << filename;
+
+         editFnames[ idax ] = filename;
+      }
+
+      else
+      {  // Apply to all like-labeled wavelengths in the channel
+DbgLv(1) << "AppPri: AllWavl button clicked";
+         for ( int ii = 0; ii < nledits; ii++ )
+         {  // Save selected edit file name; use "same" for others in channel
+            QString edfile = editfiles[ ii ];
+            QString triple = edfile.section( ".", -4, -2 )
+                                   .replace( ".", " / " );
+            int     jdax   = triples.indexOf( triple );
+
+            if ( edfile != filename )
+            {  // The selected file
+               editFnames[ jdax ] = filename;
+            }
+
+            else
+            {  // Non-selected file
+               editFnames[ jdax ] = QString( "same" );
+            }
+         }
+      }
+   }
+
+   else
+   {  // Save edit file name for the single triple
+      editFnames[ idax ] = filename;
+   }
+
+   // Reset data from input data
+   data           = allData[ idax ];
 
    // Read the edits
    US_DataIO::EditValues parameters;
 
-   int result = US_DataIO::readEdits( filename, parameters );
+   int     result = US_DataIO::readEdits( filepath, parameters );
 
    if ( result != US_DataIO::OK )
    {
       QMessageBox::warning( this,
-            tr( "XML Error" ),
-            tr( "An error occurred when reading edit file\n\n" ) 
-            +  US_DataIO::errorString( result ) );
+         tr( "XML Error" ),
+         tr( "An error occurred when reading edit file\n\n" ) 
+         +  US_DataIO::errorString( result ) );
       return;
    }
 
-   QString uuid = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
+   QString uuid   = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
 
    if ( parameters.dataGUID != uuid )
    {
       QMessageBox::warning( this,
-            tr( "Data Error" ),
-            tr( "The edit file was not created using the current data" ) );
+         tr( "Data Error" ),
+         tr( "The edit file was not created using the current data" ) );
+DbgLv(1) << "parsGUID rawGUID" << parameters.dataGUID << uuid;
       return;
    }
    
-   // Reset data from allData
-   index1 = cb_triple->currentIndex();
-   data = allData[ index1 ];
+   // Apply the edits with specified parameters
+   apply_edits( parameters );
 
-   // Apply the edits
-   // Specified parameters
-   QString s;
-
-   meniscus    = parameters.meniscus;
-   range_left  = parameters.rangeLeft;
-   range_right = parameters.rangeRight;
-   plateau     = parameters.plateau;
-   baseline    = parameters.baseline;
-   odlimit     = parameters.ODlimit;
-
-   le_meniscus->setText( s.sprintf( "%.3f", meniscus ) );
-   pb_meniscus->setIcon( check );
-   pb_meniscus->setEnabled( true );
-
-   airGap_left  = parameters.airGapLeft;
-   airGap_right = parameters.airGapRight;
-
-   if ( dataType == "IP" )
-   {
-      US_DataIO::adjust_interference( data, parameters );
-      US_DataIO::calc_integral      ( data, parameters );
-      le_airGap->setText( s.sprintf( "%.3f - %.3f", 
-               airGap_left, airGap_right ) ); 
-      pb_airGap->setIcon( check );
-      pb_airGap->setEnabled( true );
-   }
-
-   le_dataRange->setText( s.sprintf( "%.3f - %.3f",
-           range_left, range_right ) );
-   pb_dataRange->setIcon( check );
-   pb_dataRange->setEnabled( true );
-   
-   le_plateau->setText( s.sprintf( "%.3f", plateau ) );
-   pb_plateau->setIcon( check );
-   pb_plateau->setEnabled( true );
-
-   US_DataIO::Scan  scan  = data.scanData.last();
-   int              pt    = data.xindex( baseline );
-   double           sum   = 0.0;
-
-   // Average the value for +/- 5 points
-   for ( int j = pt - 5; j <= pt + 5; j++ )
-      sum += scan.rvalues[ j ];
-
-   le_baseline->setText( s.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
-
-   // Invert
-   invert = parameters.invert;
-   
-   if ( invert == -1.0 ) pb_invert->setIcon( check );
-   else                  pb_invert->setIcon( QIcon() );
-
-   // Excluded scans
-   init_includes();
-   reset_excludes(); // Zero exclude combo boxes
-   qSort( parameters.excludes );
-
-   for ( int i = parameters.excludes.size(); i > 0; i-- )
-      includes.removeAt( parameters.excludes[ i - 1 ] );
-
-   // Edited points
-   changed_points.clear();
-
-   for ( int i = 0; i < parameters.editedPoints.size(); i++ )
-   {
-      int    scan   = parameters.editedPoints[ i ].scan;
-      int    index1 = (int)parameters.editedPoints[ i ].radius;
-      double value  = parameters.editedPoints[ i ].value;
-      
-      Edits e;
-      e.scan = scan;
-      e.changes << QPointF( index1, value );
-     
-      changed_points << e;
-      
-      data.scanData[ scan ].rvalues[ index1 ] = value;
-   }
-
-   // Spikes
-   spikes = parameters.removeSpikes;
-
-   pb_spikes->setIcon( QIcon() );
-   pb_spikes->setEnabled( true );
-   if ( spikes ) remove_spikes();
-   
-   // Noise
-   noise_order = parameters.noiseOrder;
-   if ( noise_order > 0 )
-   {
-      US_RiNoise::calc_residuals( data, includes, range_left, range_right, 
-            noise_order, residuals );
-      
-      subtract_residuals();
-   }
-   else
-   {
-      pb_noise    ->setIcon( QIcon() );
-      pb_residuals->setIcon( QIcon() );
-      pb_residuals->setEnabled( false );
-   }
-
-   // Floating data
-   floatingData = parameters.floatingData;
-   if ( floatingData )
-      pb_float->setIcon( check );
-   else
-      pb_float->setIcon( QIcon() );
-
-   ct_odlim->disconnect();
-   ct_odlim->setValue( odlimit );
-   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
-            this,      SLOT  ( od_radius_limit    ( double ) ) );
-
-   step        = FINISHED;
-   set_pbColors( NULL );
-
-   pb_undo     ->setEnabled( true );
-   pb_write    ->setEnabled( true );
-   pb_writemwl ->setEnabled( isMwl );
+   pb_undo    ->setEnabled( true  );
+   pb_write   ->setEnabled( true  );
+   pb_writemwl->setEnabled( isMwl );
 
    changes_made= false;
    plot_range();
@@ -3487,9 +3555,9 @@ void US_Edit::prior_equil( void )
    int     cndxt     = cb_triple->currentIndex();
    int     cndxs     = cb_rpms  ->currentIndex();
    int     index1;
-   QString filename;
+   QString     filename;
    QStringList cefnames;
-   data    = allData[ 0 ];
+   data    = *outData[ 0 ];
 
    if ( disk_controls->db() )
    {  // Get prior equilibrium edits from DB
@@ -3553,19 +3621,19 @@ void US_Edit::prior_equil( void )
       if ( index < 0 )
          return;
 
-      filename   = filenames[ index ];
-      int dataID = editDataIDs[ index ].toInt();
+      filename          = filenames[ index ];
+      int     dataID    = editDataIDs[ index ].toInt();
 
-      QString editID = filename.section( ".", 1, 1 );
-      filename   = workingDir + filename;
+      QString editLabel = filename.section( ".", 1, 1 );
+      filename          = workingDir + filename;
       db.readBlobFromDB( filename, "download_editData", dataID );
 
       cefnames << filename;   // save the first file name
 
-      // Loop to get files with same edit ID from other triples
-      for ( int ii = 1; ii < allData.size(); ii++ )
+      // Loop to get files with same Edit Label from other triples
+      for ( int ii = 1; ii < outData.size(); ii++ )
       {
-         data    = allData[ ii ];
+         data    = *outData[ ii ];
          q.clear();
          q << "get_rawDataID_from_GUID" 
            << US_Util::uuid_unparse( (uchar*)data.rawGUID );
@@ -3583,9 +3651,9 @@ void US_Edit::prior_equil( void )
          {
             dataID      = db.value( 0 ).toString().toInt();
             filename    = db.value( 2 ).toString();
-            QString eid = filename.section( ".", 1, 1 );
+            QString elb = filename.section( ".", 1, 1 );
             
-            if ( eid == editID )
+            if ( elb == editLabel )
             {
                found = true;
                filename = workingDir + filename;
@@ -3615,16 +3683,16 @@ void US_Edit::prior_equil( void )
 
       if ( filename.isEmpty() ) return; 
 
-      filename = filename.replace( "\\", "/" );
-      QString editID = filename.section( "/", -1, -1 ).section( ".", 1, 1 );
-      QString runID  = filename.section( "/", -1, -1 ).section( ".", 0, 0 );
+      filename          = filename.replace( "\\", "/" );
+      QString editLabel = filename.section( "/", -1, -1 ).section( ".", 1, 1 );
+      QString runID     = filename.section( "/", -1, -1 ).section( ".", 0, 0 );
 
       for ( int ii = 0; ii < files.size(); ii++ )
       {
-         filename  = files[ ii ];
-         filename  = runID + "." + editID + "."
-                     + filename.section( ".", 1, -2 ) + ".xml";
-         filename  = workingDir + filename;
+         filename          = files[ ii ];
+         filename          = runID + "." + editLabel + "."
+                             + filename.section( ".", 1, -2 ) + ".xml";
+         filename          = workingDir + filename;
 
          if ( QFile( filename ).exists() )
             cefnames << filename;
@@ -3636,7 +3704,7 @@ void US_Edit::prior_equil( void )
 
    for ( int ii = 0; ii < cefnames.size(); ii++ )
    {  // Read and apply edits from edit files
-      data     = allData[ ii ];
+      data     = *outData[ ii ];
       filename = cefnames[ ii ];
 
       // Read the edits
@@ -3664,7 +3732,7 @@ void US_Edit::prior_equil( void )
       }
    
       // Apply the edits
-      QString s;
+      QString wkstr;
 
       meniscus    = parameters.meniscus;
       range_left  = parameters.rangeLeft;
@@ -3686,7 +3754,7 @@ void US_Edit::prior_equil( void )
             sData[ jsd++ ] = parameters.speedData[ jj ];
       }
 
-      le_meniscus->setText( s.sprintf( "%.3f", meniscus ) );
+      le_meniscus->setText( wkstr.sprintf( "%.3f", meniscus ) );
       pb_meniscus->setIcon( check );
       pb_meniscus->setEnabled( true );
 
@@ -3697,13 +3765,13 @@ void US_Edit::prior_equil( void )
       {
          US_DataIO::adjust_interference( data, parameters );
          US_DataIO::calc_integral      ( data, parameters );
-         le_airGap->setText( s.sprintf( "%.3f - %.3f", 
+         le_airGap->setText( wkstr.sprintf( "%.3f - %.3f", 
                   airGap_left, airGap_right ) ); 
          pb_airGap->setIcon( check );
          pb_airGap->setEnabled( true );
       }
 
-      le_dataRange->setText( s.sprintf( "%.3f - %.3f",
+      le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f",
               range_left, range_right ) );
       pb_dataRange->setIcon( check );
       pb_dataRange->setEnabled( true );
@@ -3820,7 +3888,6 @@ void US_Edit::next_triple( void )
 {
    int row = cb_triple->currentIndex() + 1;
    row     = ( row < cb_triple->count() ) ? row : 0;
-   data    = allData[ row ];
 
    cb_triple->disconnect();
    cb_triple->setCurrentIndex( row );
@@ -3834,6 +3901,7 @@ void US_Edit::next_triple( void )
       cb_rpms  ->setCurrentIndex( 0 );
    }
 
+   data    = *outData[ index_data() ];
    plot_range();
 }
 
@@ -3847,12 +3915,12 @@ bool US_Edit::all_edits_done( void )
       total_edits  = 0;
       total_speeds = 0;
 
-      for ( int jd = 0; jd < allData.size(); jd++ )
+      for ( int jd = 0; jd < outData.size(); jd++ )
       {  // Examine each data set to evaluate whether edits complete
          int jsd = sd_offs[ jd ];
          int ksd = jsd + sd_knts[ jd ];
          QList< double > drpms;
-         US_DataIO::RawData* rawdat = &allData[ jd ];
+         US_DataIO::RawData* rawdat = outData[ jd ];
 
          // Count edits done on this data set
          for ( int js = jsd; js < ksd; js++ )
@@ -3889,13 +3957,19 @@ DbgLv(1) << "all_ed_done" << all_ed_done;
    return all_ed_done;
 }
 
-// Private slot to update disk/db control with dialog changes it
+// Private slot to update disk/db control when dialog changes it
 void US_Edit::update_disk_db( bool isDB )
 {
    if ( isDB )
       disk_controls->set_db();
    else
       disk_controls->set_disk();
+}
+
+// Private slot to show progress text for load-auc
+void US_Edit::progress_load( QString progress )
+{
+   le_info->setText( progress );
 }
 
 // Show or hide MWL Controls
@@ -4136,9 +4210,41 @@ void US_Edit::lambda_plot_value( int value )
 {
    if ( value < 0 )  return;
 
-   plotndx     = value;
-   plotrec     = (int)cb_lplot ->itemText( plotndx ).toDouble();
+   double  menissv  = meniscus;
+   plotndx          = value;
+
+   if ( ! xaxis_radius )
+   {  // If plotting radius records, go straight to plotting
+      plot_mwl();
+      return;
+   }
+
+   // If plotting wavelength records, check need to re-do/un-do edits
+   QString swavl    = cb_lplot ->itemText( plotndx );
+   QString triple   = cb_triple->currentText() + " / " + swavl;
+   int     idax     = triples.indexOf( triple );
+   plotrec          = swavl.toInt();
 DbgLv(1) << "lambda_plot_value  value" << value << plotrec;
+   QString fname    = ( menissv != 0.0 ) ? editFnames[ idax ] : "none";
+
+
+   if ( fname == "none" )
+   {  // New wavelength has no edit:  turn off edits
+      set_meniscus();
+   }
+
+   else if ( fname != "same" )
+   {  // New wavelength has its own edit:  apply it
+      US_DataIO::EditValues parameters;
+
+      US_DataIO::readEdits( workingDir + fname, parameters );
+
+      apply_edits( parameters );
+   }
+
+   else if ( step != MENISCUS )
+   {  // New wavelength has same edit as others in channel:  make sure applied
+   }
 
    plot_mwl();
 }
@@ -4154,9 +4260,9 @@ DbgLv(1) << "lambda_plot_prev  clicked";
       plotndx = 0;
       pb_larrow->setEnabled( false );
    }
-   pb_rarrow->setEnabled( true );
 
-   cb_lplot->setCurrentIndex( plotndx );
+   pb_rarrow->setEnabled     ( true );
+   cb_lplot ->setCurrentIndex( plotndx );
 }
 
 // Plot-next has been clicked
@@ -4165,17 +4271,17 @@ void US_Edit::lambda_plot_next()
 DbgLv(1) << "lambda_plot_next  clicked";
    plotndx++;
 
-   int lstx = rb_radius->isChecked() ? ( expc_wvlns.size() - 1 )
-                                     : ( expc_radii.size() - 1 );
+   int lstx = xaxis_radius ? ( expc_wvlns.size() - 1 )
+                           : ( expc_radii.size() - 1 );
 
    if ( plotndx >= lstx )
    {
       plotndx = lstx;
       pb_rarrow->setEnabled( false );
    }
-   pb_larrow->setEnabled( true );
 
-   cb_lplot->setCurrentIndex( plotndx );
+   pb_larrow->setEnabled     ( true );
+   cb_lplot ->setCurrentIndex( plotndx );
 }
 
 // Custom Lambdas has been clicked
@@ -4184,8 +4290,8 @@ void US_Edit::lambda_custom_list()
 DbgLv(1) << "lambda_custom_list  clicked";
    US_SelectLambdas* sel_lambd = new US_SelectLambdas( rawi_wvlns );
 
-   connect( sel_lambd, SIGNAL( new_lambda_list( QList< int > ) ),
-            this,      SLOT  ( lambda_new_list( QList< int > ) ) );
+   connect( sel_lambd, SIGNAL( new_lambda_list( QVector< int > ) ),
+            this,      SLOT  ( lambda_new_list( QVector< int > ) ) );
 
    if ( sel_lambd->exec() == QDialog::Accepted )
    {
@@ -4212,7 +4318,7 @@ DbgLv(1) << "  lambda_custom_list  ACCEPTED";
 }
 
 // Custom Lambdas have been specified
-void US_Edit::lambda_new_list( QList< int > newlams )
+void US_Edit::lambda_new_list( QVector< int > newlams )
 {
    nwavelo     = newlams.count();
    expi_wvlns  = newlams;
@@ -4298,20 +4404,20 @@ void US_Edit::write_mwl()
 
    QString sufx = "";
 
-   // Ask for editID if not yet defined
-   while ( editID.isEmpty() )
+   // Ask for editLabel if not yet defined
+   while ( editLabel.isEmpty() )
    {
       QString now  =  QDateTime::currentDateTime()
                       .toUTC().toString( "yyMMddhhmm" );
 
       bool ok;
-      QString msg = tr( "The base Edit ID for this edit session is <b>" )
+      QString msg  = tr( "The base Edit Label for this edit session is <b>" )
          + now + "</b> .<br/>"
          + tr( "You may add an optional suffix to further distinquish<br/>"
-               "the Edit ID. Use alphanumeric characters, underscores,<br/>"
+               "the Edit Label. Use alphanumeric characters, underscores,<br/>"
                "or hyphens (no spaces). Enter 0 to 10 suffix characters." );
-      sufx   = QInputDialog::getText( this, 
-         tr( "Create a unique session Edit ID" ),
+      sufx         = QInputDialog::getText( this, 
+         tr( "Create a unique session Edit Label" ),
          msg,
          QLineEdit::Normal,
          sufx,
@@ -4320,33 +4426,98 @@ void US_Edit::write_mwl()
       if ( ! ok ) return;
 
       sufx.remove( QRegExp( "[^\\w\\d_-]" ) );
-      editID = now + sufx;
+      editLabel    = now + sufx;
 
-      if ( editID.length() > 20 )
+      if ( editLabel.length() > 20 )
       {
          QMessageBox::critical( this,
             tr( "Text length error" ),
-            tr( "You entered %1 characters for the Edit ID suffix.\n"
+            tr( "You entered %1 characters for the Edit Label suffix.\n"
                 "Re-enter, limiting length to 10 characters." )
             .arg( sufx.length() ) );
-         editID.clear();
+         editLabel.clear();
          sufx = sufx.left( 10 );
       }
    }
 
-   int     ccx      = cb_triple->currentIndex();
-   int     wvx      = cb_lplot ->currentIndex();
-   int     daxst    = ccx * nwaveln;
-   int     dax      = daxst;
-   QString celchn   = celchns.at( ccx );
+   QVector< int > oldi_wvlns;
+   int     kwavelo  = mwl_data.lambdas( oldi_wvlns );
+   int     nwavelo  = expi_wvlns.count();
+   int     wvx;
+   bool    chg_lamb = ( kwavelo != nwavelo );
+
+   if ( ! chg_lamb )
+   {  // If no change in number of wavelengths, check actual lists
+      for ( wvx = 0; wvx < nwavelo; wvx++ )
+      {
+         if ( oldi_wvlns[ wvx ] != expi_wvlns[ wvx ] )
+         {  // There is a difference in the lists:  mark as such
+            chg_lamb      = true;
+            break;
+         }
+      }
+   }
+
+   if ( chg_lamb )
+   {  // If wavelengths have changed, save new list and rebuild some vectors
+      mwl_data.set_lambdas( expi_wvlns );  // Save new lambdas for channel
+
+      int dax1         = data_index;       // Index of data start for channel
+      int dax2         = dax1;
+
+      QVector< US_DataIO::RawData* > oldData   = outData;
+      QVector< QString >             oedtGUIDs = editGUIDs;
+      QVector< QString >             oedtIDs   = editIDs;
+      outData  .clear();
+      editGUIDs.clear();
+      editIDs  .clear();
+
+      for ( int trx = 0; trx < dax2; trx++ )
+      {  // Copy any data preceding this channel
+         outData   << oldData  [ trx ];
+         editGUIDs << oedtGUIDs[ trx ];
+         editIDs   << oedtIDs  [ trx ];
+      }
+
+      for ( wvx = 0; wvx < nwavelo; wvx++ )
+      {  // Copy data associated with the new wavelengths list
+         int wvxo         = oldi_wvlns.indexOf( expi_wvlns[ wvx ] );
+
+         if ( wvxo < 0 )
+         {
+            qDebug() << "*ERROR* wavelength unexpectedly missing:"
+                     << expi_wvlns[ wvx ];
+            continue;
+         }
+
+         int trx          = dax2 + wvxo;
+         outData   << oldData  [ trx ];
+         editGUIDs << oedtGUIDs[ trx ];
+         editIDs   << oedtIDs  [ trx ];
+         dax1++;
+      }
+
+      dax2             = oldData.count();
+
+      for ( int trx = dax1; trx < dax2; trx++ )
+      {  // Copy any data following the current channel
+         outData   << oldData  [ trx ];
+         editGUIDs << oedtGUIDs[ trx ];
+         editIDs   << oedtIDs  [ trx ];
+      }
+   }
+
+   QString celchn   = celchns.at( triple_index );
    QString scell    = celchn.section( "/", 0, 0 ).simplified();
    QString schan    = celchn.section( "/", 1, 1 ).simplified();
    QString tripbase = scell + " / " + schan + " / ";
-DbgLv(1) << "EDT:WrMwl:  dax celchn" << dax << celchn;
+   int     idax     = triples.indexOf( tripbase + expc_wvlns[ 0 ] );
+   int     odax     = index_data( 0 );
+DbgLv(1) << "EDT:WrMwl:  dax celchn" << odax << celchn;
 
-   QString filebase = files[ dax ].section( ".",  0, -6 )
-                    + "." + editID + "."
-                    + files[ dax ].section( ".", -5, -5 )
+   QString filebase = files[ idax ].section( ".",  0, -6 )
+                    + "." + editLabel + "."
+                    + files[ idax ].section( ".", -5, -5 )
                     + "." + scell + "." + schan + ".";
 
    // Loop to output a file/db-record for each wavelength of the cell/channel
@@ -4357,22 +4528,23 @@ DbgLv(1) << "EDT:WrMwl: files,wvlns.size" << files.size() << expc_wvlns.size();
       QString swavl    = expc_wvlns[ wvx ];
       QString triple   = tripbase + swavl;
       QString filename = filebase + swavl + ".xml";
+      idax             = triples.indexOf( triple );
+      odax             = index_data( wvx );
 DbgLv(1) << "EDT:WrMwl:  wvx triple" << wvx << triple << "filename" << filename;
 
-      dax              = daxst + rawc_wvlns.indexOf( swavl );
-DbgLv(1) << "EDT:WrMwl:   dax,editGUIDs.size" << dax << editGUIDs.size();
-      QString editGUID = editGUIDs[ dax ];
+DbgLv(1) << "EDT:WrMwl:   idax,editGUIDs.size" << idax << editGUIDs.size();
+      QString editGUID = editGUIDs[ idax ];
 
       if ( editGUID.isEmpty() )
       {
-         editGUID = US_Util::new_guid();
-         editGUIDs.replace( dax, editGUID );
+         editGUID      = US_Util::new_guid();
+         editGUIDs.replace( idax, editGUID );
       }
 DbgLv(1) << "EDT:WrMwl:    editGUID" << editGUID;
 
-DbgLv(1) << "EDT:WrMwl:   dax,allData.size" << dax << allData.size();
+DbgLv(1) << "EDT:WrMwl:   odax,outData.size" << odax << outData.size();
       QString rawGUID  = US_Util::uuid_unparse(
-            (unsigned char*)allData[ dax ].rawGUID );
+            (unsigned char*)outData[ odax ]->rawGUID );
 DbgLv(1) << "EDT:WrMwl:    rawGUID" << rawGUID;
 
       // Output the edit XML file
@@ -4396,10 +4568,10 @@ DbgLv(1) << "EDT:WrMwl:     write_xml_file stat" << wrstat;
             }
          }
 
-         QString editID   = editIDs[ dax ];
+         QString editID   = editIDs[ idax ];
 
          // Output the edit database record
-         wrstat     = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
+         wrstat = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
 
          if ( wrstat != 0 )
             return;
@@ -4736,5 +4908,248 @@ int US_Edit::write_edit_db( US_DB2* dbP, QString& fname, QString& editGUID,
    }
 
    return 0;
+}
+
+// Return the index in the output data of the current or specified wavelength
+int US_Edit::index_data( int wvx )
+{
+   triple_index = cb_triple->currentIndex();  // Triple index
+   int odatx    = triple_index;               // Default output data index
+
+   if ( isMwl )
+   {  // For MWL, compute data index from wavelength and triple indexes
+      if ( wvx < 0 )
+      {  // For the default case, use the current wavelength index
+         plotndx      = cb_lplot->currentIndex();
+         int iwavl    = expi_wvlns[ plotndx ];
+         data_index   = mwl_data.data_index( iwavl, triple_index );
+         odatx        = data_index;
+      }
+
+      else
+      {  // Use a specified wavelength index (and do not set internal value)
+         int iwavl    = expi_wvlns[ wvx ];
+         odatx        = mwl_data.data_index( iwavl, triple_index );
+      }
+   }
+
+   else  // for non-MWL, set data index internal value to triple index
+      data_index   = triple_index;
+
+   return odatx;
+}
+
+// Get a list of filenames with Edit Label like a specified file name
+int US_Edit::like_edit_files( QString filename, QStringList& editfiles,
+      US_DB2* dbP )
+{
+   // Determine local-disk files with same edit label and cell/channel
+   QString filebase = filename.section( ".", 0, -3 );
+   QStringList filter( filebase + ".*.xml" );
+   QStringList ldfiles = QDir( workingDir ).entryList(
+         filter, QDir::Files, QDir::Name );
+   int     nledits  = ldfiles.count();
+DbgLv(1) << "LiEdFi: nledits" << ldfiles.count() << filter;
+
+   if ( dbP != NULL )
+   {  // Determine database like files and compare to local
+      QString     invID = QString::number( US_Settings::us_inv_ID() );
+      QStringList dbfiles;
+      QStringList dbEdIds;
+      QStringList dbquery;
+//      QString rawGUID   = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
+
+      // Get the rawData ID for this data
+//      dbquery.clear();
+//      dbquery << "get_rawDataID_from_GUID" << rawGUID;
+//      dbP->query( dbquery );
+//      dbP->next();
+//      QString rawDataID = dbP->value( 0 ).toString();
+//DbgLv(1) << "LiEdFi:  rawDataID" << rawDataID;
+
+      // Get the filenames and edit IDs for like-named files in the DB
+      dbquery.clear();
+//      dbquery << "get_editedDataIDs" << rawDataID;
+      dbquery << "all_editedDataIDs" << invID;
+      dbP->query( dbquery );
+
+      while ( dbP->next() )
+      {  // Accumulate filenames and editIDs from the database
+         QString idData     = dbP->value( 0 ).toString();
+         QString efname     = dbP->value( 2 ).toString()
+                              .section( "/", -1, -1 );
+//DbgLv(1) << "LiEdFi:   db0,2" << idData << efname << "fbase" << filebase;
+
+         if ( efname.startsWith( filebase ) )
+         {  // Where the file name has like edit label and cell/chan, save it
+            dbfiles   << efname;
+            dbEdIds   << idData;
+DbgLv(1) << "LiEdFi:     id fn dbfsiz" << idData << efname << dbfiles.count();
+         }
+      }
+
+      int nlocals      = ldfiles.count();
+      nledits          = dbfiles.count();
+DbgLv(1) << "LiEdFi:  nlocals nledits" << nlocals << nledits;
+
+      if ( nledits != nlocals )
+      {  // DB records are not matched locally, so download from DB
+         if ( nlocals == 0 )
+            QDir().mkpath( workingDir );
+
+         dbfiles.sort();
+
+         for ( int ii = 0; ii < dbfiles.count(); ii++ )
+         {  // Download each DB record to a local file
+            QString fname     = workingDir + dbfiles[ ii ];
+            int     dataID    = dbEdIds[ ii ].toInt();
+
+            dbP->readBlobFromDB( fname, "download_editData", dataID );
+         }
+
+         ldfiles           = dbfiles;
+      }
+   }
+
+   editfiles        = ldfiles;
+   nledits          = editfiles.count();
+
+   if ( nledits < 2 )
+   {  // Only one file exists, so just pass it back
+      editfiles << filename;
+      nledits          = 1;
+   }
+
+   else
+   {  // If multiple files, sort them
+      editfiles.sort();
+   }
+DbgLv(1) << "LiEdFi: nle fn0" << nledits << editfiles[0];
+
+   return nledits;
+}
+
+// Apply edits to the current triple data
+int US_Edit::apply_edits( US_DataIO::EditValues parameters )
+{
+   int status = 0;
+
+   // Apply the edits with specified parameters
+   QString wkstr;
+
+   meniscus    = parameters.meniscus;
+   range_left  = parameters.rangeLeft;
+   range_right = parameters.rangeRight;
+   plateau     = parameters.plateau;
+   baseline    = parameters.baseline;
+   odlimit     = parameters.ODlimit;
+
+   le_meniscus->setText( wkstr.sprintf( "%.3f", meniscus ) );
+   pb_meniscus->setIcon( check );
+   pb_meniscus->setEnabled( true );
+
+   airGap_left  = parameters.airGapLeft;
+   airGap_right = parameters.airGapRight;
+
+   if ( dataType == "IP" )
+   {
+      US_DataIO::adjust_interference( data, parameters );
+      US_DataIO::calc_integral      ( data, parameters );
+      le_airGap->setText( wkstr.sprintf( "%.3f - %.3f", 
+               airGap_left, airGap_right ) ); 
+      pb_airGap->setIcon( check );
+      pb_airGap->setEnabled( true );
+   }
+
+   le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f",
+           range_left, range_right ) );
+   pb_dataRange->setIcon( check );
+   pb_dataRange->setEnabled( true );
+   
+   le_plateau  ->setText( wkstr.sprintf( "%.3f", plateau ) );
+   pb_plateau  ->setIcon( check );
+   pb_plateau  ->setEnabled( true );
+
+   US_DataIO::Scan  scan  = data.scanData.last();
+   int              pt    = data.xindex( baseline );
+   double           sum   = 0.0;
+
+   // Average the value for +/- 5 points
+   for ( int jj = pt - 5; jj <= pt + 5; jj++ )
+      sum += scan.rvalues[ jj ];
+
+   le_baseline->setText( wkstr.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
+
+   // Invert
+   invert = parameters.invert;
+   
+   if ( invert == -1.0 ) pb_invert->setIcon( check );
+   else                  pb_invert->setIcon( QIcon() );
+
+   // Excluded scans
+   init_includes();
+   reset_excludes(); // Zero exclude combo boxes
+   qSort( parameters.excludes );
+
+   for ( int ii = parameters.excludes.size(); ii > 0; ii-- )
+      includes.removeAt( parameters.excludes[ ii - 1 ] );
+
+   // Edited points
+   changed_points.clear();
+
+   for ( int ii = 0; ii < parameters.editedPoints.size(); ii++ )
+   {
+      int    scan   = parameters.editedPoints[ ii ].scan;
+      int    index1 = (int)parameters.editedPoints[ ii ].radius;
+      double value  = parameters.editedPoints[ ii ].value;
+      
+      Edits e;
+      e.scan = scan;
+      e.changes << QPointF( index1, value );
+     
+      changed_points << e;
+      
+      data.scanData[ scan ].rvalues[ index1 ] = value;
+   }
+
+   // Spikes
+   spikes = parameters.removeSpikes;
+
+   pb_spikes->setIcon( QIcon() );
+   pb_spikes->setEnabled( true );
+   if ( spikes ) remove_spikes();
+   
+   // Noise
+   noise_order = parameters.noiseOrder;
+   if ( noise_order > 0 )
+   {
+      US_RiNoise::calc_residuals( data, includes, range_left, range_right, 
+            noise_order, residuals );
+      
+      subtract_residuals();
+   }
+   else
+   {
+      pb_noise    ->setIcon( QIcon() );
+      pb_residuals->setIcon( QIcon() );
+      pb_residuals->setEnabled( false );
+   }
+
+   // Floating data
+   floatingData = parameters.floatingData;
+   if ( floatingData )
+      pb_float->setIcon( check );
+   else
+      pb_float->setIcon( QIcon() );
+
+   ct_odlim->disconnect();
+   ct_odlim->setValue( odlimit );
+   connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
+            this,      SLOT  ( od_radius_limit    ( double ) ) );
+
+   set_pbColors( NULL );
+   step        = FINISHED;
+
+   return status;
 }
 

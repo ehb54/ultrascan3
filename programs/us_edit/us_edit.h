@@ -11,6 +11,7 @@
 #include "us_plot.h"
 #include "us_dataIO.h"
 #include "us_db2.h"
+#include "us_mwl_data.h"
 
 class US_Edit : public US_Widgets
 {
@@ -30,10 +31,14 @@ class US_Edit : public US_Widgets
             QList< QPointF > changes;
       };
 
-      QList< Edits >                changed_points;
-      US_DataIO::RawData            data;
-      QList< US_DataIO::SpeedData > sData;
-      QVector< US_DataIO::RawData > allData;
+      QList< Edits >                    changed_points;
+      US_DataIO::RawData                data;
+      US_DataIO::RawData*               edata;
+      QList< US_DataIO::SpeedData >     sData;
+      QVector< US_DataIO::RawData >     allData;
+      QVector< US_DataIO::RawData* >    outData;
+
+      US_MwlData         mwl_data;
 
       bool               changes_made;
       bool               spikes;
@@ -47,6 +52,7 @@ class US_Edit : public US_Widgets
 
       int                noise_order;
       int                triple_index;
+      int                data_index;
       int                total_speeds;
       int                total_edits;
       int                dbg_level;
@@ -61,12 +67,13 @@ class US_Edit : public US_Widgets
       double             invert;
       double             plateau;
 
-      QList< int >       sd_offs;    // speed data offsets, ea. triple
-      QList< int >       sd_knts;    // speed data counts, ea. triple
-      QList< int >       includes;
-      QList< double >    residuals;
-      QVector< QString > editGUIDs;
-      QVector< QString > editIDs;
+      QList< int >       sd_offs;        // Speed data offsets, ea. triple
+      QList< int >       sd_knts;        // Speed data counts, ea. triple
+      QList< int >       includes;       // Scan includes, current triple
+      QList< double >    residuals;      // Noise residuals, current triple
+      QVector< QString > editGUIDs;      // Edit GUIDs, ea. i/p triple
+      QVector< QString > editIDs;        // Edit DB IDs, ea. i/p triple
+      QVector< QString > editFnames;     // Edit file names, ea. i/p triple
 
       US_Help            showHelp;
 
@@ -74,7 +81,7 @@ class US_Edit : public US_Widgets
 
       QString            workingDir;
       QString            runID;
-      QString            editID;
+      QString            editLabel;
       QString            dataType;
       QString            expType;
       QStringList        files;
@@ -194,9 +201,9 @@ class US_Edit : public US_Widgets
 
       US_DB2*            dbP;
 
-      QList< double >    expd_radii;
-      QList< int >       expi_wvlns;
-      QList< int >       rawi_wvlns;
+      QVector< double >  expd_radii;
+      QVector< int >     expi_wvlns;
+      QVector< int >     rawi_wvlns;
 
       QVector< QVector< double > >  rdata;
 
@@ -275,12 +282,16 @@ class US_Edit : public US_Widgets
       void lambda_plot_prev  (        );
       void lambda_plot_next  (        );
       void lambda_custom_list(        );
-      void lambda_new_list   ( QList< int >  );
+      void lambda_new_list   ( QVector< int > );
       void lambda_include_all(        );
       void od_radius_limit   ( double );
+      void progress_load     ( QString );
       int  write_xml_file    ( QString&, QString&, QString&, QString& );
       int  write_edit_db     ( US_DB2*,
                                QString&, QString&, QString&, QString& );
+      int  index_data        ( int = -1 );
+      int  like_edit_files   ( QString, QStringList&, US_DB2* );
+      int  apply_edits       ( US_DataIO::EditValues parameters );
                              
       void reset             ( void );
       void reset_triple      ( void );
@@ -288,3 +299,4 @@ class US_Edit : public US_Widgets
       { showHelp.show_help( "manual/us_edit.html" ); };
 };
 #endif
+

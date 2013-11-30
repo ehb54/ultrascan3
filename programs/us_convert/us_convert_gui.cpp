@@ -3136,9 +3136,7 @@ DbgLv(1) << "CGui: centpInfoDB RTN";
 bool US_ConvertGui::centerpieceInfoDisk( void )
 {
    // First figure out the xml file name, and try to open it
-   //QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
-   QString home = US_Settings::appBaseDir();
-   QFile f( home + "/etc/abstractCenterpieces.xml");
+   QFile f( US_Settings::appBaseDir() + "/etc/abstractCenterpieces.xml" );
 
    if ( ! f.open( QIODevice::ReadOnly ) ) return false;
 
