@@ -52,17 +52,11 @@ private:
   QPushButton*    pb_rootDir;
   QLineEdit*      le_rootDir;
                  
+  QPushButton*    pb_workDir;
+  QLineEdit*      le_workDir;
+                 
   QPushButton*    pb_dataDir;
   QLineEdit*      le_dataDir;
-                 
-  QPushButton*    pb_resultDir;
-  QLineEdit*      le_resultDir;
-                 
-  QPushButton*    pb_reportDir;
-  QLineEdit*      le_reportDir;
-                 
-  QPushButton*    pb_archiveDir;
-  QLineEdit*      le_archiveDir;
                  
   QPushButton*    pb_tmpDir;
   QLineEdit*      le_tmpDir;
@@ -80,20 +74,25 @@ private:
 
   US_Disk_DB_Controls* disk_db_control;
 
+  bool            chg_ddata;
+  bool            chg_dtmp;
+
 private slots:
 
   void open_browser     ( void );
+  void open_workDir     ( void );
   void open_dataDir     ( void );
-  void open_resultDir   ( void );
-  void open_reportDir   ( void );
-  void open_archiveDir  ( void );
   void open_tmpDir      ( void );
   void update_colors    ( void );
   void update_font      ( void );
   void update_db        ( void );
   void update_password  ( void );
   void update_advanced  ( void );
+  void update_workDir   ( void );
+  void update_dataDir   ( void );
+  void update_tmpDir    ( void );
   void save             ( void );
   void help             ( void );
   void set_data_location( bool );
 };
+

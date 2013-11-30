@@ -28,7 +28,7 @@ US_Properties::US_Properties( US_Model& mod, int access )
    gray.setColor( QPalette::Base, QColor( 0xd0, 0xd0, 0xd0 ) );
    
    // Initialize the check icon
-   check = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
+   check = QIcon( US_Settings::appBaseDir() + "/etc/check.png" );
 
    // Grid
    QGridLayout* main = new QGridLayout( this );

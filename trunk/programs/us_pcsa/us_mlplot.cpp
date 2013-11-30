@@ -507,7 +507,6 @@ void US_MLinesPlot::showColorItems( bool visible )
 // Select a color map from a file
 void US_MLinesPlot::selectColorMap( void )
 {
-   //QString filter = tr( "Color Map files (cm*.xml);;"
    QString filter = tr( "Color Map files (*cm-*.xml);;"
                         "Any XML files (*.xml);;"
                         "Any files (*)" );
@@ -515,8 +514,7 @@ void US_MLinesPlot::selectColorMap( void )
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
        tr( "Load Color Map File" ),
-       US_Settings::baseDataDir() + "/etc",
-       filter, 0, 0 );
+       US_Settings::etcDir(), filter, 0, 0 );
 
    if ( fname.isEmpty() )
         return;

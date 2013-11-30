@@ -5,7 +5,7 @@
 #include "us_gui_settings.h"
 
 
-US_SelectLambdas::US_SelectLambdas( QList< int > lambdas )
+US_SelectLambdas::US_SelectLambdas( QVector< int > lambdas )
    : US_WidgetsDialog( 0, 0 )
 {
    original    = lambdas;
@@ -123,9 +123,10 @@ DbgLv(0) << "RemoveSelections";
    for ( int ii = 0; ii < selitems.count(); ii++ )
    {
       int lambda   = selitems.at( ii )->text().toInt();
+      int selndx   = selected.indexOf( lambda );
 
-      if ( selected.contains( lambda ) )
-         selected.removeOne( lambda );
+      if ( selndx >= 0 )
+         selected.remove( selndx );
    }
 
    nbr_select   = selected.size();

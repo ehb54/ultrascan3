@@ -1574,9 +1574,7 @@ void US_GA_Initialize::load_color()
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
-      US_Settings::baseDataDir() + "/etc",
-      filter,
-      0, 0 );
+      US_Settings::etcDir(), filter, 0, 0 );
 
    if ( fname.isEmpty() )
       return;

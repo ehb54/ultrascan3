@@ -794,13 +794,41 @@ void US_MwlData::read_runxml( QDir ddir, QString curdir )
    xfi.close();
 }
 
-// Set current cell/channel index
+// Set the current cell/channel index
 int US_MwlData::set_celchnx( int ccx )
 {
 qDebug() << "SetCCX" << ccx;
-   curccx    = qMax( 0, ccx );
-   curccx    = qMin( curccx, ( ncelchn - 1 ) );
+   curccx    = qMax( 0, qMin( ccx, ( ncelchn - 1 ) ) );
 
    return curccx;
+}
+
+// Return the output data index of a wavelength in a channel
+int US_MwlData::data_index( int waveln, int ccx )
+{
+   // Set the current cell/channel index
+   set_celchnx( ccx );
+
+   // Initially, data index is wavelength index in current cell/channel
+   int datax = qMax( 0, ex_wavelns[ curccx ].indexOf( waveln ) );
+
+   // Bump the data index by the sum of wavelengths preceding the channel
+   for ( int ii = 0; ii < curccx; ii++ )
+      datax    += ex_wavelns[ ii ].count();
+
+   return datax;
+}
+
+// Return the output data index of a wavelength in a channel
+int US_MwlData::data_index( QString clambda, int ccx )
+{
+   return data_index( clambda.toInt(), ccx );
+}
+
+// Return the output data index of a wavelength in a channel
+int US_MwlData::data_index( QString clambda, QString celchn )
+{
+   int ccx   = cellchans.indexOf( celchn );
+   return data_index( clambda.toInt(), ccx );
 }
 

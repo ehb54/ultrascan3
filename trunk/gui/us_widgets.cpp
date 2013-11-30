@@ -490,7 +490,7 @@ int US_Widgets::clean_etc_dir( bool report )
    int nfcopy         = 0;
    int nfdele         = 0;
    QString ietc_dname = US_Settings::appBaseDir() + "/etc";  // Install etc
-   QString wetc_dname = US_Settings::baseDataDir() + "/etc"; // Work etc
+   QString wetc_dname = US_Settings::etcDir();               // Work etc
    QString list_fname = "etc_belongs_list.txt";  // Files that belong in etc
    QDir ietc_dir( ietc_dname );
    QDir wetc_dir( wetc_dname );
@@ -566,7 +566,7 @@ int US_Widgets::clean_etc_dir( bool report )
 qDebug() << "niefs nwefs" << niefs << nwefs << "nkeep/copy/link/dirf"
  << nkeepf << ncopyf << nlinkf << nsdir;
 
-   // Examine each file in */ultrascan3/etc and operate on it
+   // Examine each file in ie_files (e.g.,"*/ultrascan3/etc") and operate on it
    for ( int ii = 0; ii < niefs; ii++ )
    {
       QString filename = ietc_files[ ii ];
@@ -603,7 +603,7 @@ qDebug() << "niefs nwefs" << niefs << nwefs << "nkeep/copy/link/dirf"
          }
          else
          {  // Not present in work-etc, so copy
-            qDebug() << "   not present in */ultrascan/etc";
+            qDebug() << "   not present in" << wetc_dname;
             nfcopy++;
             qDebug() << "       FILE COPY" << nfcopy;
             QFile( ietc_dname + filename ).copy(
@@ -635,7 +635,7 @@ qDebug() << "niefs nwefs" << niefs << nwefs << "nkeep/copy/link/dirf"
          }
          else
          {  // Not present in work-etc, so copy
-            qDebug() << "   not present in */ultrascan/etc";
+            qDebug() << "   not present in" << wetc_dname;
             nfcopy++;
             qDebug() << "       FILE COPY" << nfcopy;
             QFile( sltarg ).copy( wetc_dname + filename );

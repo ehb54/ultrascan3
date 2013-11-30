@@ -685,7 +685,7 @@ void US_SimulationParametersGui::save( void )
 {
    QString fn = QFileDialog::getSaveFileName( this,
          tr( "Save Simulation Parameters in:" ),
-         US_Settings::baseDataDir() + "/etc", 
+         US_Settings::etcDir(), 
          tr( "SimParams files (sp_*.xml);;"
              "All XML files (*.xml);;"
              "All files (*)" ) );
@@ -758,7 +758,7 @@ void US_SimulationParametersGui::load( void )
 {
    QString fn = QFileDialog::getOpenFileName( this,
          tr( "Load Simulation Parameters from:" ),
-         US_Settings::baseDataDir() + "/etc", 
+         US_Settings::etcDir(), 
          tr( "SimParams files (sp_*.xml);;"
              "All XML files (*.xml);;"
              "All files (*)" ) );
@@ -863,7 +863,7 @@ void US_SimulationParametersGui::update_mesh( int mesh )
                 "larger than the bottom of the cell will be\n"
                 "excluded from the concentration vector." ) );
 
-      QFile meshfile( US_Settings::usHomeDir() + "/mesh.dat");
+      QFile meshfile( US_Settings::appBaseDir() + "/mesh.dat");
       
       if ( meshfile.open( QIODevice::ReadOnly | QIODevice::Text ) )
       {
@@ -923,7 +923,7 @@ void US_SimulationParametersGui::update_mesh( int mesh )
                tr( "Please note:\n\n"
                    "UltraScan could not open the mesh file!\n"
                    "The file:\n\n" ) +  
-                   US_Settings::usHomeDir() + tr( "/mesh.dat\n\n"
+                   US_Settings::appBaseDir() + tr( "/mesh.dat\n\n"
                    "could not be opened." ) );
       }
    }

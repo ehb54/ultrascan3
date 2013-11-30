@@ -25,48 +25,35 @@ class US_UTIL_EXTERN US_Settings
 
     // Directories
 
-    //! \brief Get the user's stored home directory
-    static QString     usHomeDir( void );
-    //! \brief Set the user's stored home directory
-    static void        set_usHomeDir( const QString& );
-
     //! \brief Get the directory for raw data
     static QString     dataDir( void );
     //! \brief Set the directory for raw data
     static void        set_dataDir( const QString& );
-
-    //! \brief Get the directory for result data
-    static QString     resultDir( void );
-    //! \brief Set the directory for result data
-    static void        set_resultDir( const QString& );
-
-    //! \brief Get the directory for reports from the supercomputer
-    static QString     reportDir( void );
-    //! \brief Set the directory for reports from the supercomputer
-    static void        set_reportDir( const QString& );
-
-    //! \brief Get the directory for help files
-    //! \note This function is deprecated and not used
-    static QString     helpDir( void );
-    //! \brief Set the directory for help files
-    //! \note This function is deprecated and not used
-    static void        set_helpDir( const QString& );
-
-    //! \brief Get the directory where data and reports are archived locally
-    static QString     archiveDir( void );
-    //! \brief Set the directory where data and reports are archived locally
-    static void        set_archiveDir( const QString& );
 
     //! \brief Get the directory where temporary files can be stored
     static QString     tmpDir( void );
     //! \brief Set the directory where temporary files can be stored
     static void        set_tmpDir( const QString& );
 
+    //! \brief Get the directory where data and reports are archived locally
+    static QString     archiveDir( void );
+
+    //! \brief Get the directory for results data
+    static QString     resultDir( void );
+
+    //! \brief Get the directory for reports from the supercomputer
+    static QString     reportDir( void );
+
+    //! \brief Get the directory where working ./etc files reside
+    static QString     etcDir();
+
     //! \brief Get the base directory in which ./bin apps reside
     static QString     appBaseDir();
 
-    //! \brief Get the base work directory in which ./data resides
-    static QString     baseDataDir();
+    //! \brief Get work base directory for archive,results,reports.etc
+    static QString     workBaseDir();
+    //! \brief Set the work base directory for archive,results,reports.etc
+    static void        set_workBaseDir( const QString& );
 
     // License
     

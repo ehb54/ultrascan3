@@ -119,6 +119,24 @@ class US_GUI_EXTERN US_MwlData : public QObject
       //! \returns       The actual current cell/channel index in use
       int     set_celchnx   ( int = 0 );
 
+      //! \brief Return the output data index of a wavelength in a channel
+      //! \param waveln  Wavelength in cell/channel to index
+      //! \param ccx     Cell/channel index at which to search for wavelength
+      //! \returns       The output data index of the triple
+      int     data_index    ( int = 0, int = -1 );
+
+      //! \brief Return the output data index of a wavelength in a channel
+      //! \param clambda Wavelength (as string) in cell/channel to index
+      //! \param ccx     Cell/channel index at which to search for wavelength
+      //! \returns       The output data index of the triple
+      int     data_index    ( QString, int = -1 );
+
+      //! \brief Return the output data index of a wavelength in a channel
+      //! \param clambda Wavelength string for search in cell/channel
+      //! \param celchn  Cell/channel string for search of wavelength
+      //! \returns       The output data index of the triple
+      int     data_index    ( QString, QString );
+
    private:
       QVector< QVector< double > > ri_readings; //!< Raw input readings
       QVector< int >               ri_wavelns;  //!< Raw input wavelengths

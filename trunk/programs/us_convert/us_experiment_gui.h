@@ -47,10 +47,10 @@ class US_ExperimentGui : public US_WidgetsDialog
                  to accept the current choices. This information is
                  passed back to the calling function.
 
-          \param dataOut A reference to a structure that contains all
+          \param expInfo A reference to a structure that contains all
                          the current experiment data
       */
-      void updateExpInfoSelection( US_Experiment& );
+      void updateExpInfoSelection( US_Experiment& expInfo );
 
       /*! \brief The signal that is emitted when the user chooses
                  to cancel the current selection. In this case all
