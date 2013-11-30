@@ -84,19 +84,19 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   connect( le_workDir, SIGNAL( editingFinished()  ),
            this,       SLOT(   update_workDir()   ) );
 
-  // Data Directory
-  pb_dataDir = us_pushbutton( tr( "Data Directory:" ) );
-  pb_dataDir->setFixedWidth( w );  
-  directories->addWidget( pb_dataDir, row, 0 );
-  connect( pb_dataDir, SIGNAL( clicked() ), this, SLOT( open_dataDir() ) );
+  // Imports Directory
+  pb_importDir = us_pushbutton( tr( "Imports Directory:" ) );
+  pb_importDir->setFixedWidth( w );  
+  directories->addWidget( pb_importDir, row, 0 );
+  connect( pb_importDir, SIGNAL( clicked() ), this, SLOT( open_importDir() ) );
 
-  QString dataDir = US_Settings::dataDir();
-  le_w = qMax( fm->width( dataDir ) + 20, le_w );
+  QString importDir = US_Settings::importDir();
+  le_w = qMax( fm->width( importDir ) + 20, le_w );
 
-  le_dataDir = us_lineedit( dataDir, 0 );
-  directories->addWidget( le_dataDir, row++, 1 );
-  connect( le_dataDir, SIGNAL( editingFinished()  ),
-           this,       SLOT(   update_dataDir()   ) );
+  le_importDir = us_lineedit( importDir, 0 );
+  directories->addWidget( le_importDir, row++, 1 );
+  connect( le_importDir, SIGNAL( editingFinished()  ),
+           this,       SLOT(   update_importDir()   ) );
 
   // Temporary Directory
   pb_tmpDir = us_pushbutton( tr( "Temporary Directory:" ) );
@@ -114,7 +114,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   
   le_browser   ->setMinimumWidth( le_w );
   le_workDir   ->setMinimumWidth( le_w );
-  le_dataDir   ->setMinimumWidth( le_w );
+  le_importDir ->setMinimumWidth( le_w );
   le_tmpDir    ->setMinimumWidth( le_w );
 
   topbox->addLayout( directories );
@@ -201,15 +201,15 @@ void US_Config::help( void )
 
 void US_Config::save( void )
 {
-   US_Settings::set_browser    ( le_browser->text() );
-   US_Settings::set_workBaseDir( le_workDir->text() );
-   US_Settings::set_dataDir    ( le_dataDir->text() );
-   US_Settings::set_tmpDir     ( le_tmpDir ->text() );
+   US_Settings::set_browser    ( le_browser  ->text() );
+   US_Settings::set_workBaseDir( le_workDir  ->text() );
+   US_Settings::set_importDir  ( le_importDir->text() );
+   US_Settings::set_tmpDir     ( le_tmpDir   ->text() );
 
    // Ensure data directories are properly created
    QDir dir;
    dir.mkpath( le_workDir   ->text() );
-   dir.mkpath( le_dataDir   ->text() );
+   dir.mkpath( le_importDir ->text() );
    dir.mkpath( le_tmpDir    ->text() );
 
    QMessageBox::information( this,
@@ -277,15 +277,15 @@ void US_Config::open_workDir( void )
 }
 
 // Slot to react to file dialog setting of data directory
-void US_Config::open_dataDir( void )
+void US_Config::open_importDir( void )
 {
   QString dir = QFileDialog::getExistingDirectory( this,
-         tr( "Select desired data directory" ), le_dataDir->text() );
+         tr( "Select desired data directory" ), le_importDir->text() );
 
   if ( dir != "" )
   {
-     le_dataDir->setText( dir );
-     update_dataDir();
+     le_importDir->setText( dir );
+     update_importDir();
   }
 }
 
@@ -309,17 +309,17 @@ void US_Config::update_workDir( void )
 
    if ( !chg_ddata )
    {  // If data directory wasn't changed already, default using work base
-      le_dataDir->setText( work_dir + "/data" );
+      le_importDir->setText( work_dir + "/imports" );
    }
 
    if ( !chg_dtmp )
    {  // If tmp directory wasn't changed already, default using work base
-      le_tmpDir->setText( work_dir + "/tmp" );
+      le_tmpDir   ->setText( work_dir + "/tmp" );
    }
 }
 
 // Slot to react to change in data directory
-void US_Config::update_dataDir( void )
+void US_Config::update_importDir( void )
 {
    // Mark data directory as having been changed
    chg_ddata   = true;

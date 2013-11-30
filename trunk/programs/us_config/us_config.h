@@ -55,8 +55,8 @@ private:
   QPushButton*    pb_workDir;
   QLineEdit*      le_workDir;
                  
-  QPushButton*    pb_dataDir;
-  QLineEdit*      le_dataDir;
+  QPushButton*    pb_importDir;
+  QLineEdit*      le_importDir;
                  
   QPushButton*    pb_tmpDir;
   QLineEdit*      le_tmpDir;
@@ -81,7 +81,7 @@ private slots:
 
   void open_browser     ( void );
   void open_workDir     ( void );
-  void open_dataDir     ( void );
+  void open_importDir   ( void );
   void open_tmpDir      ( void );
   void update_colors    ( void );
   void update_font      ( void );
@@ -89,7 +89,7 @@ private slots:
   void update_password  ( void );
   void update_advanced  ( void );
   void update_workDir   ( void );
-  void update_dataDir   ( void );
+  void update_importDir ( void );
   void update_tmpDir    ( void );
   void save             ( void );
   void help             ( void );

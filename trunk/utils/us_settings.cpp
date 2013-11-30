@@ -33,20 +33,20 @@ void US_Settings::set_workBaseDir( const QString& dir )
     settings.setValue( "workBaseDir", dir );
 }
 
-// dataDir
-QString US_Settings::dataDir( void )
+// importDir
+QString US_Settings::importDir( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "dataDir", workBaseDir() + "/data" ).toString();
+  return settings.value( "importDir", workBaseDir() + "/imports" ).toString();
 }
 
-void US_Settings::set_dataDir( const QString& dir )
+void US_Settings::set_importDir( const QString& dir )
 {
   QSettings settings( US3, "UltraScan" );
-  if ( dir == workBaseDir() + "/data" )
-    settings.remove( "dataDir" );
+  if ( dir == workBaseDir() + "/imports" )
+    settings.remove( "importDir" );
   else
-    settings.setValue( "dataDir", dir );
+    settings.setValue( "importDir", dir );
 }
 
 // tmpDir
@@ -63,6 +63,12 @@ void US_Settings::set_tmpDir( const QString& dir )
     settings.remove( "tmpDir" );
   else
     settings.setValue( "tmpDir", dir );
+}
+
+// dataDir
+QString US_Settings::dataDir( void )
+{
+   return ( workBaseDir() + "/data" );
 }
 
 // archiveDir

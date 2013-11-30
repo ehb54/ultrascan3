@@ -50,11 +50,13 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
 
    // Ensure data directories are there
    QDir dir;
-   dir.mkpath( US_Settings::dataDir()    );
-   dir.mkpath( US_Settings::resultDir()  );
-   dir.mkpath( US_Settings::tmpDir()     );
-   dir.mkpath( US_Settings::reportDir()  );
-   dir.mkpath( US_Settings::archiveDir() );
+   dir.mkpath( US_Settings::workBaseDir() );
+   dir.mkpath( US_Settings::importDir()   );
+   dir.mkpath( US_Settings::dataDir()     );
+   dir.mkpath( US_Settings::archiveDir()  );
+   dir.mkpath( US_Settings::resultDir()   );
+   dir.mkpath( US_Settings::reportDir()   );
+   dir.mkpath( US_Settings::tmpDir()      );
 
    setWindowTitle( tr( "Convert Legacy Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -726,7 +728,7 @@ void US_ConvertGui::importMWL( void )
    // Ask for data directory
    QString dir = QFileDialog::getExistingDirectory( this, 
          tr( "Raw MWL Data Directory" ),
-         US_Settings::dataDir() + "/mwl",
+         US_Settings::importDir(),
          QFileDialog::DontResolveSymlinks );
 
    // Restore area beneath dialog
@@ -2990,7 +2992,7 @@ bool US_ConvertGui::read( void )
    // Ask for data directory
    QString dir = QFileDialog::getExistingDirectory( this, 
          tr( "Raw Data Directory" ),
-         US_Settings::dataDir(),
+         US_Settings::importDir(),
          QFileDialog::DontResolveSymlinks );
 
    // Restore area beneath dialog
