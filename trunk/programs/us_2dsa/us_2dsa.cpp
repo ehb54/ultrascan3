@@ -44,6 +44,8 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    setWindowTitle( tr( "2-Dimensional Spectrum Analysis" ) );
    setObjectName( "US_2dsa" );
    dbg_level  = US_Settings::us_debug();
+   // Insure working etc is populated with color maps
+   clean_etc_dir();
 
    // Build local and 2dsa-specific GUI elements
    te_results = NULL;

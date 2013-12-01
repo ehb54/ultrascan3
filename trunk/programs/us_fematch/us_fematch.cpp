@@ -46,6 +46,8 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    int local  = US_Settings::default_data_location();
    dbg_level  = US_Settings::us_debug();
+   // Insure working etc is populated with color maps
+   clean_etc_dir();
 
    // set up the GUI
    setPalette( US_GuiSettings::frameColor() );

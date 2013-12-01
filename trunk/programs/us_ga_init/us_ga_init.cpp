@@ -61,8 +61,9 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    rght->setContentsMargins( 0, 1, 0, 1 );
 
    dbg_level = US_Settings::us_debug();
-   clean_etc_dir( true );
 
+   // Insure working etc is populated with color maps
+   clean_etc_dir( true );
 
    // series of rows: most of them label on left, counter/box on right
    lb_info1      = us_banner( tr( "Genetic Algorithm Controls" ) );
