@@ -52,11 +52,12 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    QDir dir;
    dir.mkpath( US_Settings::workBaseDir() );
    dir.mkpath( US_Settings::importDir()   );
+   dir.mkpath( US_Settings::tmpDir()      );
    dir.mkpath( US_Settings::dataDir()     );
    dir.mkpath( US_Settings::archiveDir()  );
    dir.mkpath( US_Settings::resultDir()   );
    dir.mkpath( US_Settings::reportDir()   );
-   dir.mkpath( US_Settings::tmpDir()      );
+   dir.mkpath( US_Settings::etcDir()      );
 
    setWindowTitle( tr( "Convert Legacy Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );

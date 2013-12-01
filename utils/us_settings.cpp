@@ -16,7 +16,7 @@ void US_Settings::set_browser( const QString& browser )
 
 // Directories
 
-// Work base directory (where archive,results,reports.etc hang)
+// Work base directory (where archive,results,reports,etc hang)
 QString US_Settings::workBaseDir( void )
 {
    QSettings settings( US3, "UltraScan" );

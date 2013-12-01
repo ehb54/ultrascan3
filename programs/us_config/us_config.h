@@ -74,7 +74,7 @@ private:
 
   US_Disk_DB_Controls* disk_db_control;
 
-  bool            chg_ddata;
+  bool            chg_dimport;
   bool            chg_dtmp;
 
 private slots:

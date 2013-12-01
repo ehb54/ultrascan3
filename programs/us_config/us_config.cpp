@@ -25,12 +25,12 @@ int main( int argc, char* argv[] )
 US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   : US_Widgets( true, parent, flags )
 {
-  font      = NULL;
-  db        = NULL;
-  colors    = NULL;
-  admin     = NULL;
-  chg_ddata = false;
-  chg_dtmp  = false;
+  font        = NULL;
+  db          = NULL;
+  colors      = NULL;
+  admin       = NULL;
+  chg_dimport = false;
+  chg_dtmp    = false;
 
   setWindowTitle( "UltraScan Configuration" );
   setPalette( US_GuiSettings::frameColor() );
@@ -133,8 +133,8 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
   disk_db_control = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
   otherSettings->addLayout( disk_db_control, row++, 1 );
-  connect( disk_db_control, SIGNAL( changed        ( bool ) ), 
-                            SLOT( set_data_location( bool ) ) );
+  connect( disk_db_control, SIGNAL( changed          ( bool ) ), 
+                            SLOT(   set_data_location( bool ) ) );
   // Color Preferences
   QLabel* color = us_label( "Color Preferences:" );
   otherSettings->addWidget( color, row, 0 );
@@ -206,7 +206,7 @@ void US_Config::save( void )
    US_Settings::set_importDir  ( le_importDir->text() );
    US_Settings::set_tmpDir     ( le_tmpDir   ->text() );
 
-   // Ensure data directories are properly created
+   // Ensure work directories are properly created
    QDir dir;
    dir.mkpath( le_workDir   ->text() );
    dir.mkpath( le_importDir ->text() );
@@ -276,11 +276,11 @@ void US_Config::open_workDir( void )
   }
 }
 
-// Slot to react to file dialog setting of data directory
+// Slot to react to file dialog setting of imports directory
 void US_Config::open_importDir( void )
 {
   QString dir = QFileDialog::getExistingDirectory( this,
-         tr( "Select desired data directory" ), le_importDir->text() );
+         tr( "Select desired imports directory" ), le_importDir->text() );
 
   if ( dir != "" )
   {
@@ -307,8 +307,8 @@ void US_Config::update_workDir( void )
 {
    QString work_dir  = le_workDir->text();
 
-   if ( !chg_ddata )
-   {  // If data directory wasn't changed already, default using work base
+   if ( !chg_dimport )
+   {  // If imports directory wasn't changed already, default using work base
       le_importDir->setText( work_dir + "/imports" );
    }
 
@@ -318,17 +318,17 @@ void US_Config::update_workDir( void )
    }
 }
 
-// Slot to react to change in data directory
+// Slot to react to change in imports directory
 void US_Config::update_importDir( void )
 {
-   // Mark data directory as having been changed
-   chg_ddata   = true;
+   // Mark imports directory as having been changed
+   chg_dimport = true;
 }
 
 // Slot to react to change in tmp directory
 void US_Config::update_tmpDir( void )
 {
-   // Mark data directory as having been changed
+   // Mark tmp directory as having been changed
    chg_dtmp    = true;
 }
 

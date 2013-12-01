@@ -492,6 +492,7 @@ int US_Widgets::clean_etc_dir( bool report )
    QString ietc_dname = US_Settings::appBaseDir() + "/etc";  // Install etc
    QString wetc_dname = US_Settings::etcDir();               // Work etc
    QString list_fname = "etc_belongs_list.txt";  // Files that belong in etc
+   QDir().mkpath( wetc_dname );   // Make sure work etc directory exists
    QDir ietc_dir( ietc_dname );
    QDir wetc_dir( wetc_dname );
    ietc_dname        += "/";
@@ -507,8 +508,6 @@ int US_Widgets::clean_etc_dir( bool report )
    QStringList wetc_files;        // All files initially in work etc
    int niefs = ie_files.size();   // Count of install etc files
    int nwefs = we_files.size();   // Count of work etc files
-
-   QDir().mkpath( wetc_dname );   // Make sure work etc directory exists
 
    for ( int ii = 0; ii < niefs; ii++ )     // Build list of install etc files
       ietc_files << ie_files[ ii ].fileName();
