@@ -16,7 +16,7 @@ OBJECTS_DIR    = src/obj
 
 # enabled threading in fitting algorithm:
 DEFINES += THREAD
-
+DEFINES += A_EXPT
 # Automatic hardware platform and operating system configurations:
 
 INCLUDEPATH = $(QWTDIR)/include $(QTDIR)/include $(QWT3DDIR)/include 
@@ -225,6 +225,7 @@ SOURCES += \
   src/us_hydrodyn_pdb_tool_merge.cpp \
   src/us_hydrodyn_pdb_tool_renum.cpp \
   src/us_hydrodyn_pdb_tool_selres.cpp \
+  src/us_hydrodyn_pdb_tool_sort.cpp \
   src/us_hydrodyn_pdb_tool_util.cpp \
   src/us_hydrodyn_pdb_visualization.cpp \
   src/us_hydrodyn_results.cpp \
@@ -304,6 +305,7 @@ SOURCES += \
   src/us_montecarloreport.cpp \
   src/us_montecarlostats.cpp \
   src/us_nucleotide.cpp \
+  src/us_pdb_util.cpp \
   src/us_pm.cpp \
   src/us_pm_best.cpp \
   src/us_pm_best_sphere.cpp \
@@ -561,6 +563,7 @@ HEADERS += \
   include/us_hydrodyn_pdb_tool_merge.h \
   include/us_hydrodyn_pdb_tool_renum.h \
   include/us_hydrodyn_pdb_tool_selres.h \
+  include/us_hydrodyn_pdb_tool_sort.h \
   include/us_hydrodyn_pdb_visualization.h \
   include/us_hydrodyn_results.h \
   include/us_hydrodyn_sas_options_saxs.h \
@@ -624,6 +627,7 @@ HEADERS += \
   include/us_montecarloreport.h \
   include/us_montecarlostats.h \
   include/us_nucleotide.h \
+  include/us_pdb_util.h \
   include/us_pm.h \
   include/us_pixmap.h \
   include/us_plotdata.h \

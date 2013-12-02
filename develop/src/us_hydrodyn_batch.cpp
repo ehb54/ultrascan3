@@ -140,6 +140,7 @@ void US_Hydrodyn_Batch::setupGUI()
          if ( !dup )
          {
             lb_files->insertItem(batch->file[i]);
+            ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( batch->file[ i ] );
          } else {
             load_errors += QString(tr("File skipped: %1 (already in list)\n")).arg(batch->file[i]);
          }
@@ -777,6 +778,7 @@ void US_Hydrodyn_Batch::add_files( vector < QString > filenames )
       {
          current_files[filenames[i]] = true;
          batch->file.push_back(filenames[i]);
+         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filenames[ i ] );
          lb_files->insertItem(filenames[i]);
          editor->setColor("dark blue");
          editor->append(QString(tr("File loaded: %1")).arg(filenames[i]));

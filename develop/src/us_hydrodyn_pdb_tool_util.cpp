@@ -141,6 +141,21 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( QListView *lv )
       f.close();
       editor_msg( "dark blue", QString( tr( "Created selected residue file %1" ) ).arg( f.name() ) );
    }
+   {
+      QString out;
+      QListViewItemIterator it1( lv );
+      while ( it1.current() ) 
+      {
+         QListViewItem *item1 = it1.current();
+         if ( item1->depth() == 2 && is_selected( item1 ) )
+         {
+            out += QString( "%1%2" ).arg( out.isEmpty() ? "" : "," ).arg( get_residue_number( item1 ) );
+         }
+         it1++;
+      }
+      lv == lv_csv ?
+         csv_msg( "blue", out ) : csv2_msg( "blue", out );
+   }
 }
 
 set < QListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QListView * lv, 
@@ -227,6 +242,7 @@ set < QListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QListView
             }
             if ( this_asa >= max_asa )
             {
+               // cout << QString( "'%1'\n" ).arg( residue );
                exposed.insert( residue );
             }
          }               
@@ -245,7 +261,7 @@ set < QListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QListView
          if ( get_model_id( item ) == models[ i ] &&
               exposed.count( QString( "%1~%2~%3" )
                              .arg( get_residue_name( item ) )
-                             .arg( get_chain_id( item ) )
+                             .arg( get_chain_id( item ).stripWhiteSpace() )
                              .arg( get_residue_number( item ) ) ) &&
               ( !only_selected || is_selected( item ) ) )
          {
@@ -427,7 +443,7 @@ set < QListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( QListView * lv,
          if ( get_model_id( item ) == models[ i ] &&
               exposed.count( QString( "%1~%2~%3" )
                              .arg( get_residue_name( item ) )
-                             .arg( get_chain_id( item ) )
+                             .arg( get_chain_id( item ).stripWhiteSpace() )
                              .arg( get_residue_number( item ) ) ) &&
               ( !only_selected || is_selected( item ) ) )
          {
@@ -653,7 +669,7 @@ vector < QStringList > US_Hydrodyn_Pdb_Tool::separate_models( csv &ref_csv )
    QRegExp rx_model ( "^MODEL"  );
    QRegExp rx_endmdl( "^ENDMDL" );
    QRegExp rx_end   ( "^END" );
-   QRegExp rx_skip  ( "^(MODEL|ENDMDL)"  );
+   QRegExp rx_skip  ( "^(MODEL|ENDMDL|HEADER|REMARK)"  );
 
    QStringList qsl_model;
 
@@ -757,9 +773,22 @@ void US_Hydrodyn_Pdb_Tool::sel( QListView *lv )
 
    QStringList sels = QStringList::split( ",", text );
    set < int > to_sel;
+
+   QRegExp rx_range( "(\\d+)-(\\d+)" );
+
    for ( int i = 0; i < (int) sels.size(); ++i )
    {
-      to_sel.insert( sels[ i ].toInt() );
+      if ( rx_range.search( sels[ i ] ) != -1 )
+      {
+         int startr = rx_range.cap( 1 ).toInt();
+         int endr   = rx_range.cap( 2 ).toInt();
+         for ( int j = startr; j <= endr; ++j )
+         {
+            to_sel.insert( j );
+         }
+      } else {
+         to_sel.insert( sels[ i ].toInt() );
+      }
    }
 
    for ( set < int >::iterator it = to_sel.begin();

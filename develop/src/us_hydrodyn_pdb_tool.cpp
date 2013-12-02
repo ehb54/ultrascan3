@@ -36,6 +36,17 @@ public:
    }
 };
 
+class sortable_dist_name {
+public:
+   double  dist;
+   int     pairs;
+   QString name;
+   bool operator < (const sortable_dist_name& objIn) const
+   {
+      return ( dist < objIn.dist );
+   }
+};
+
 double US_Hydrodyn_Pdb_Tool::pair_dist( QListViewItem *item1, QListViewItem *item2 )
 {
    double dx = item1->text( 3 ).toDouble() - item2->text( 3 ).toDouble();
@@ -306,6 +317,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_check->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_check, SIGNAL(clicked()), SLOT(csv_check()));
 
+   pb_csv_sort = new QPushButton(tr("Sort"), this);
+   pb_csv_sort->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_csv_sort->setMinimumHeight(minHeight1);
+   pb_csv_sort->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_sort, SIGNAL(clicked()), SLOT(csv_sort()));
+
    pb_csv_find_alt = new QPushButton(tr("Find alternate matching residues"), this);
    pb_csv_find_alt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_find_alt->setMinimumHeight(minHeight1);
@@ -487,6 +504,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_check->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_check, SIGNAL(clicked()), SLOT(csv2_check()));
 
+   pb_csv2_sort = new QPushButton(tr("Sort"), this);
+   pb_csv2_sort->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_csv2_sort->setMinimumHeight(minHeight1);
+   pb_csv2_sort->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_sort, SIGNAL(clicked()), SLOT(csv2_sort()));
+
    pb_csv2_find_alt = new QPushButton(tr("Find alternate matching residues"), this);
    pb_csv2_find_alt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_find_alt->setMinimumHeight(minHeight1);
@@ -636,6 +659,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_3->addSpacing( 2 );
    hbl_center_buttons_row_3->addWidget( pb_csv_check );
    hbl_center_buttons_row_3->addSpacing( 2 );
+   hbl_center_buttons_row_3->addWidget( pb_csv_sort );
+   hbl_center_buttons_row_3->addSpacing( 2 );
    hbl_center_buttons_row_3->addWidget( pb_csv_find_alt );
    hbl_center_buttons_row_3->addSpacing( 2 );
    hbl_center_buttons_row_3->addWidget( pb_csv_clash_report );
@@ -712,6 +737,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_3->addWidget( pb_csv2_reseq );
    hbl_right_buttons_row_3->addSpacing( 2 );
    hbl_right_buttons_row_3->addWidget( pb_csv2_check );
+   hbl_right_buttons_row_3->addSpacing( 2 );
+   hbl_right_buttons_row_3->addWidget( pb_csv2_sort );
    hbl_right_buttons_row_3->addSpacing( 2 );
    hbl_right_buttons_row_3->addWidget( pb_csv2_find_alt );
    hbl_right_buttons_row_3->addSpacing( 2 );
@@ -795,10 +822,14 @@ void US_Hydrodyn_Pdb_Tool::update_font()
 
 void US_Hydrodyn_Pdb_Tool::save()
 {
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
    QString fn;
-   fn = QFileDialog::getSaveFileName(QString::null, QString::null,this );
+   fn = QFileDialog::getSaveFileName( use_dir, "*.pdb *.PDB", this, "save dialog", caption() + tr( ": Save" )  );
    if(!fn.isEmpty() )
    {
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( fn );
       QString text = editor->text();
       QFile f( fn );
       if ( !f.open( IO_WriteOnly | IO_Translate) )
@@ -834,6 +865,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    pb_csv_angle                ->setEnabled( counts.atoms == 3 );
    pb_csv_reseq                ->setEnabled( csv1.data.size() );
    pb_csv_check                ->setEnabled( csv1.data.size() );
+   pb_csv_sort                 ->setEnabled( counts.models > 1 );
    pb_csv_find_alt             ->setEnabled( counts.residues == 1 );
    pb_csv_clash_report         ->setEnabled( any_csv_selected );
    pb_csv_sel                  ->setEnabled( csv1.data.size() );
@@ -874,6 +906,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv2_angle                ->setEnabled( counts.atoms == 3 );
    pb_csv2_reseq                ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_check                ->setEnabled( csv2[ csv2_pos ].data.size() );
+   pb_csv2_sort                 ->setEnabled( counts.models > 1 );
    pb_csv2_find_alt             ->setEnabled( counts.residues == 1 );
    pb_csv2_clash_report         ->setEnabled( any_csv2_selected );
    pb_csv2_sel                  ->setEnabled( csv2[ csv2_pos ].data.size() );
@@ -1065,6 +1098,8 @@ void US_Hydrodyn_Pdb_Tool::save_csv( QListView *lv )
       ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb.isEmpty() ?
       ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir :
       ((US_Hydrodyn *)us_hydrodyn)->path_view_pdb;
+
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
    QString filename = QFileDialog::getSaveFileName(
                                                    use_dir,
@@ -1919,6 +1954,7 @@ void US_Hydrodyn_Pdb_Tool::visualize( QListView *lv )
 
    {
       QTextStream t( &f );
+      t << QString( "TITLE %1\n" ).arg( tmp_csv.name );
       t << csv_to_pdb( tmp_csv );
       f.close();
    }
@@ -2468,6 +2504,22 @@ void US_Hydrodyn_Pdb_Tool::select_model( QListView *lv, QString model )
    {
       QListViewItem *item1 = it1.current();
       if ( !item1->depth() && item1->text( 0 ) == model )
+      {
+         item1->setSelected( true );
+      }
+      ++it1;
+   }
+   clean_selection( lv );
+}
+
+void US_Hydrodyn_Pdb_Tool::select_model( QListView *lv, const set < QString > & models )
+{
+   lv->selectAll( false );
+   QListViewItemIterator it1( lv );
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( !item1->depth() && models.count( item1->text( 0 ) ) )
       {
          item1->setSelected( true );
       }
@@ -4427,13 +4479,13 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
    {
       QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
       ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-      files = QFileDialog::getOpenFileNames(
-                                            "PDB files (*.pdb *.PDB)"
-                                            , use_dir
-                                            , this
-                                            , tr( "US-SOMO: PDB editor : Select PDBs to join" ) 
-                                            , tr( "Select PDB files to join, Cancel when done" )
-                                            );
+      files = US_Pdb_Util::sort_pdbs( QFileDialog::getOpenFileNames(
+                                                                    "PDB files (*.pdb *.PDB)"
+                                                                    , use_dir
+                                                                    , this
+                                                                    , tr( "US-SOMO: PDB editor : Select PDBs to join" ) 
+                                                                    , tr( "Select PDB files to join, Cancel when done" )
+                                                                    ) );
       for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
       {
          if ( !already_listed.count( files[ i ] ) )
@@ -4923,6 +4975,7 @@ void US_Hydrodyn_Pdb_Tool::csv_clear()
    csv1 = new_csv;
    csv_to_lv( csv1, lv_csv );
    csv_undos.clear();
+   te_csv->clear();
    update_enables_csv();
 }
 
@@ -4938,6 +4991,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_clear()
    qwtw_wheel->setRange( 0.0, 0.0, 1 );
    lbl_pos_range->setText("1\nof\n1");
    csv2_redisplay( 0 );
+   te_csv2->clear();
    update_enables_csv2();
 }
 
@@ -4987,6 +5041,240 @@ void US_Hydrodyn_Pdb_Tool::csv_check()
       selection_since_count_csv1 = true;
    }
    update_enables_csv();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv_sort()
+{
+   do_sort( lv_csv );
+   update_enables_csv();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_sort()
+{
+   do_sort( lv_csv2 );
+   update_enables_csv2();
+}
+
+void US_Hydrodyn_Pdb_Tool::do_sort( QListView *lv )
+{
+   map < QString, QString > parameters;
+   US_Hydrodyn_Pdb_Tool_Sort *uhpts = 
+      new US_Hydrodyn_Pdb_Tool_Sort(
+                                     us_hydrodyn,
+                                     &parameters,
+                                     this 
+                                     );
+   US_Hydrodyn::fixWinButtons( uhpts );
+   uhpts->exec();
+   delete uhpts;
+
+   QString residuesa = 
+      parameters.count( "residuesa" ) ? parameters[ "residuesa" ] : "";
+   QString residuesb = 
+      parameters.count( "residuesb" ) ? parameters[ "residuesb" ] : "";
+   int reportcount = 
+      parameters.count( "reportcount" ) ? parameters[ "reportcount" ].toInt() : 99999;
+   bool order =  parameters.count( "order" );
+   bool caonly =  parameters.count( "caonly" );
+
+   if ( !residuesa.length() ||
+        !residuesb.length() )
+   {
+      QString msg = tr( "Residues must be selected for sorting" );
+      lv == lv_csv ?
+         csv_msg( "red", msg ) : csv2_msg( "red", msg );
+      return;
+   }
+
+   {
+      QString msg = 
+         QString( tr( "Residues a: %1\n" ) ).arg( residuesa )
+         + QString( tr( "Residues b: %1\n" ) ).arg( residuesb )
+         + QString( tr( "Report count: %1\n" ) ).arg( reportcount == 99999 ? QString( "\"All\"" ) : QString( "%1" ).arg( reportcount ) )
+         + QString( tr( "Order: %1\n" ) ).arg( QString( tr( ( order ? "Maximum" : "Minimum" ) ) + " aggregate distance" ) )
+         + QString( tr( "CA Only: %1\n" ) ).arg( caonly ? "True" : "False" )
+         ;
+      lv == lv_csv ?
+         csv_msg( "blue", msg ) : csv2_msg( "blue", msg );
+   }
+
+   // validate residues, take selected models and compute aggregrate pairwise distance of residues and select the report count number of models
+   // and report on the distances
+
+   // expand residue strings
+
+   set < QString > set_a;
+   set < QString > set_b;
+   if ( !US_Pdb_Util::range_to_set( set_a, residuesa ) ||
+        !US_Pdb_Util::range_to_set( set_b, residuesb )
+        )
+   {
+      QString msg = tr( "Invalid residue format" );
+      lv == lv_csv ?
+         csv_msg( "red", msg ) : csv2_msg( "red", msg );
+      return;
+   }      
+
+   if ( !set_a.size() || !set_b.size() )
+   {
+      QString msg = tr( "Residues parsed empty" );
+      lv == lv_csv ?
+         csv_msg( "red", msg ) : csv2_msg( "red", msg );
+      return;
+   }      
+      
+   qDebug( "set_a contains:" );
+   for ( set < QString >::iterator it = set_a.begin();
+         it != set_a.end();
+         it++ )
+   {
+      qDebug( *it );
+   }
+      
+   qDebug( "set_b contains:" );
+   for ( set < QString >::iterator it = set_b.begin();
+         it != set_b.end();
+         it++ )
+   {
+      qDebug( *it );
+   }
+   
+   csv tmp_csv;
+
+   if ( lv == lv_csv )
+   {
+      tmp_csv = to_csv( lv, csv1 );
+   } else {
+      tmp_csv = to_csv( lv, csv2[ csv2_pos ] );
+   }
+
+   // go through tmp_csv and find residues
+   // error if not present
+
+   QString last_model = "__first__";
+
+   list < sortable_dist_name > model_distances;
+
+   vector < point > pointsa;
+   vector < point > pointsb;
+   point t;
+
+   for ( int i = 0; i < (int) tmp_csv.data.size(); ++i )
+   {
+      QString model      = tmp_csv.data[ i ][ 0 ];
+      QString chain      = QString( tmp_csv.data[ i ][ 1 ] ).stripWhiteSpace();
+      QString residuen   = QString( tmp_csv.data[ i ][ 3 ] ).stripWhiteSpace();
+
+      if ( model != last_model )
+      {
+         if ( last_model != "__first__" )
+         {
+            // compute distance for last model
+            sortable_dist_name sdn;
+            sdn.name  = last_model;
+            sdn.dist  = 0e0;
+            sdn.pairs = 0;
+            for ( int j = 0; j < (int) pointsa.size(); ++j )
+            {
+               for ( int k = 0; k < (int) pointsb.size(); ++k )
+               {
+                  sdn.pairs++;
+                  sdn.dist += 
+                     sqrt( 
+                          ( ( pointsa[ j ].axis[ 0 ] - pointsb[ k ].axis[ 0 ] ) *
+                            ( pointsa[ j ].axis[ 0 ] - pointsb[ k ].axis[ 0 ] ) )
+                          +
+                          ( ( pointsa[ j ].axis[ 1 ] - pointsb[ k ].axis[ 1 ] ) *
+                            ( pointsa[ j ].axis[ 1 ] - pointsb[ k ].axis[ 1 ] ) )
+                          +
+                          ( ( pointsa[ j ].axis[ 2 ] - pointsb[ k ].axis[ 2 ] ) *
+                            ( pointsa[ j ].axis[ 2 ] - pointsb[ k ].axis[ 2 ] ) )
+                          );
+               }
+            }
+            model_distances.push_back( sdn );
+            pointsa.clear();
+            pointsb.clear();
+         }
+         last_model = model;
+      }
+      QString check = QString( "%1~%2" ).arg( chain ).arg( residuen );
+      // qDebug( QString( "check <%1> atom <%2>" ).arg( check ).arg( tmp_csv.data[ i ][ 4 ] ) );
+      if ( !caonly || tmp_csv.data[ i ][ 4 ] == " CA " )
+      { 
+         if ( set_a.count( check ) )
+         {
+            t.axis[ 0 ] = tmp_csv.data[ i ][ 8 ].toFloat();
+            t.axis[ 1 ] = tmp_csv.data[ i ][ 9 ].toFloat();
+            t.axis[ 2 ] = tmp_csv.data[ i ][ 10 ].toFloat();
+            pointsa.push_back( t );
+         }
+         if ( set_b.count( check ) )
+         {
+            t.axis[ 0 ] = tmp_csv.data[ i ][ 8 ].toFloat();
+            t.axis[ 1 ] = tmp_csv.data[ i ][ 9 ].toFloat();
+            t.axis[ 2 ] = tmp_csv.data[ i ][ 10 ].toFloat();
+            pointsb.push_back( t );
+         }
+      }
+   }
+
+   if ( pointsa.size() && pointsb.size() )
+   {
+      // compute distance for last model
+      sortable_dist_name sdn;
+      sdn.name = last_model;
+      sdn.dist = 0e0;
+      for ( int j = 0; j < (int) pointsa.size(); ++j )
+      {
+         for ( int k = 0; k < (int) pointsb.size(); ++k )
+         {
+            sdn.dist += 
+               sqrt( 
+                    ( ( pointsa[ j ].axis[ 0 ] - pointsb[ k ].axis[ 0 ] ) *
+                      ( pointsa[ j ].axis[ 0 ] - pointsb[ k ].axis[ 0 ] ) )
+                    +
+                    ( ( pointsa[ j ].axis[ 1 ] - pointsb[ k ].axis[ 1 ] ) *
+                      ( pointsa[ j ].axis[ 1 ] - pointsb[ k ].axis[ 1 ] ) )
+                    +
+                    ( ( pointsa[ j ].axis[ 2 ] - pointsb[ k ].axis[ 2 ] ) *
+                      ( pointsa[ j ].axis[ 2 ] - pointsb[ k ].axis[ 2 ] ) )
+                    );
+         }
+      }
+      model_distances.push_back( sdn );
+   }
+
+   model_distances.sort();
+
+   if ( order )
+   {
+      model_distances.reverse();
+   }
+
+   if ( (int) model_distances.size() > reportcount )
+   {
+      model_distances.resize( reportcount );
+   }
+
+   set < QString > models;
+
+   for ( list < sortable_dist_name >::iterator it = model_distances.begin();
+         it != model_distances.end();
+         it++ )
+   {
+      QString msg = QString( "model %1 distances %2 pairs %3" ).arg( it->name ).arg( it->dist ).arg( it->pairs );
+      lv == lv_csv ?
+         csv_msg( "dark blue", msg ) : csv2_msg( "dark blue", msg );
+      models.insert( it->name );
+   }
+   select_model( lv, models );
+   if ( lv == lv_csv )
+   {
+      selection_since_count_csv1 = true;
+   } else {
+      selection_since_count_csv2 = true;
+   }
 }
 
 void US_Hydrodyn_Pdb_Tool::select_these( QListView *lv, vector < QString > &error_keys )

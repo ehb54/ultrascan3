@@ -18,6 +18,7 @@
 
 #include "us_util.h"
 #include "us_saxs_util.h"
+#include "us_pdb_util.h"
 
 //standard C and C++ defs:
 
@@ -31,6 +32,7 @@
 #include "us_hydrodyn_comparative.h"
 #include "us_hydrodyn_pdb_tool_merge.h"
 #include "us_hydrodyn_pdb_tool_renum.h"
+#include "us_hydrodyn_pdb_tool_sort.h"
 #include "qwt_wheel.h"
 
 using namespace std;
@@ -87,6 +89,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv_angle;
       QPushButton   *pb_csv_reseq;
       QPushButton   *pb_csv_check;
+      QPushButton   *pb_csv_sort;
       QPushButton   *pb_csv_find_alt;
       QPushButton   *pb_csv_clash_report;
       QPushButton   *pb_csv_sel;
@@ -118,6 +121,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv2_angle;
       QPushButton   *pb_csv2_reseq;
       QPushButton   *pb_csv2_check;
+      QPushButton   *pb_csv2_sort;
       QPushButton   *pb_csv2_find_alt;
       QPushButton   *pb_csv2_clash_report;
       QPushButton   *pb_csv2_sel;
@@ -239,6 +243,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QStringList   model_set              ( QListView *lv ); // returns a list of selected models
       QStringList   atom_sel_rasmol        ( QListView *lv ); // returns a list of selected atoms with chain and atom
       void          select_model           ( QListView *lv, QString model ); // selects just that model
+      void          select_model           ( QListView *lv, const set < QString > & models );
       void          select_chain           ( QListView *lv ); // selected a set of chains
       void          select_chain           ( QListView *lv, QStringList chains ); // selected a set of chains
       void          select_chain           ( QListView *lv, QString chain ); // selected one chain
@@ -277,6 +282,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QStringList naccess_result_data;
       bool        naccess_running;
       bool        naccess_run                    ( QString pdb );
+      
+      void        do_sort( QListView *lv );
 
    private slots:
       
@@ -307,6 +314,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_angle();
       void csv_reseq();
       void csv_check();
+      void csv_sort();
       void csv_find_alt();
       void csv_clash_report();
       void csv_visualize();
@@ -333,6 +341,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_angle();
       void csv2_reseq();
       void csv2_check();
+      void csv2_sort();
       void csv2_find_alt();
       void csv2_clash_report();
       void csv2_visualize();
