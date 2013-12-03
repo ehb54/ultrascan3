@@ -141,7 +141,7 @@ bool US_Saxs_Util::run_best()
                .arg( expected[ i ] )
                ;
          } else {
-            output_files << expected[ i ];
+            // output_files << expected[ i ];
          }
       }
       // count triangles produced
@@ -172,12 +172,35 @@ bool US_Saxs_Util::run_best()
       }
    }
 
+   inputbase = best_inputbase;
+
+   {
+      QStringList expected;
+      expected 
+         << inputbase + ".c3p"
+         << inputbase + ".c3v"
+         << "msr_" + inputbase + ".stdout"
+         << "msr_" + inputbase + ".stderr"
+         ;
+
+      for ( int i = 0; i < (int) expected.size(); ++i )
+      {
+         if ( !QFile( expected[ i ] ).exists() )
+         {
+            errormsg += QString( "BEST: %1 did not produce expected output file %2\n" )
+               .arg( progs[ p ] )
+               .arg( expected[ i ] )
+               ;
+         } else {
+            output_files << expected[ i ];
+         }
+      }
+   }
+
    if ( !errormsg.isEmpty() )
    {
       return false;
    }
-
-   inputbase = best_inputbase;
 
    // run rcoal
    p++;
