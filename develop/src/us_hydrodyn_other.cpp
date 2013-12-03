@@ -498,8 +498,12 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
 
    temp_atom.altLoc = str1.mid(16, 1);
 
-   str2 = str1.mid(17, 3);
+   str2 = str1.mid(17,3);
    temp_atom.resName = str2.stripWhiteSpace();
+   if ( temp_atom.resName == "SWH" )
+   {
+      temp_atom.resName = "WAT";
+   }
 
    temp_atom.chainID = str1.mid(20, 2).stripWhiteSpace();
 
@@ -750,6 +754,10 @@ int US_Hydrodyn::read_pdb( const QString &filename )
                   {
                      bool break_chain = ( temp_chain.chainID != str1.mid(21, 1) );
                      QString thisResName = str1.mid(17,3).stripWhiteSpace();
+                     if ( thisResName == "SWH" )
+                     {
+                        thisResName = "WAT";
+                     }
                      bool known_residue = ( multi_residue_map.count(thisResName) );
                      bool this_is_aa =  ( known_residue &&
                                          residue_list[multi_residue_map[thisResName][0]].type == 0 );

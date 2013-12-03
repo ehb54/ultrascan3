@@ -4394,13 +4394,25 @@ bool US_Hydrodyn_Cluster::additional_processing(
          if (  (*cluster_additional_methods_options_selected).count( method ) &&
                (*cluster_additional_methods_options_selected)[ method ].count( "bestbestwatr" ) )
          {
-            QRegExp rx( " (\\S+) (\\S)+ WATOW" );
-            if ( rx.search( my_msroll_radii ) != -1 )
             {
-               my_msroll_radii.replace( rx, QString( " %1 %2 WATOW" )
-                                        .arg( (*cluster_additional_methods_options_selected)[ method ][ "bestbestwatr" ] )
-                                        .arg( (*cluster_additional_methods_options_selected)[ method ][ "bestbestwatr" ].toDouble() / 2.68 )
-                                        );
+               QRegExp rx( " (\\S+) (\\S)+ WATOW" );
+               if ( rx.search( my_msroll_radii ) != -1 )
+               {
+                  my_msroll_radii.replace( rx, QString( " %1 %2 WATOW" )
+                                           .arg( (*cluster_additional_methods_options_selected)[ method ][ "bestbestwatr" ] )
+                                           .arg( (*cluster_additional_methods_options_selected)[ method ][ "bestbestwatr" ].toDouble() / 2.68 )
+                                           );
+               }
+            }
+            {
+               QRegExp rx( " (\\S+) (\\S)+ SWHOW" );
+               if ( rx.search( my_msroll_radii ) != -1 )
+               {
+                  my_msroll_radii.replace( rx, QString( " %1 %2 SWHOW" )
+                                           .arg( (*cluster_additional_methods_options_selected)[ method ][ "bestbestwatr" ] )
+                                           .arg( (*cluster_additional_methods_options_selected)[ method ][ "bestbestwatr" ].toDouble() / 2.68 )
+                                           );
+               }
             }
          }
          QString dir = ( ( US_Hydrodyn * ) us_hydrodyn)->somo_dir + QDir::separator() + "tmp" + QDir::separator();

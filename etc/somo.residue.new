@@ -2014,6 +2014,10 @@ Explicit Water of Hydration
 WAT	9	  24.04	40.3	1	1	0.803
 OW	O2H2	18.01	1.4	0	1	0	2
 0	15	0	0	24.041
+Alt Water of Hydration
+SWH	9	  24.04	40.3	1	1	0.803
+OW	O2H2	18.01	1.4	0	1	0	2
+0	15	0	0	24.041
 Dodecyl-beta-D-maltoside
 LMT	7	 491.60	534.2	35	4	0.823
 C1B	C4H1	13.02	1.88	0	0	0	0
