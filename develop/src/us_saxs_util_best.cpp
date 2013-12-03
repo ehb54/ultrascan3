@@ -13,6 +13,7 @@ bool US_Saxs_Util::run_best()
       << "bestrcoaln"
       << "bestmsrradiifile"
       << "bestmsrpatternfile"
+      << "bestmsrmaxtriangles"
       ;
 
    for ( int i = 0; i < (int) required.size(); ++i )
@@ -71,19 +72,32 @@ bool US_Saxs_Util::run_best()
    }
 
    QString inputbase = QFileInfo( pdb_stripped ).baseName();
-
+   
    // run msroll
 
    int p = 0;
+   double  start_fineness   = ( control_parameters.count( "bestmsrfinenessangle" ) &&
+                               control_parameters[ "bestmsrfinenessangle" ].toDouble() >= .5 ) ? control_parameters[ "bestmsrfinenessangle" ].toDouble() : (double) 0.8;
+   int     found_triangles  = 0;
+   int     best_triangles   = 0;
+   int     max_triangles    = control_parameters[ "bestmsrmaxtriangles" ].toInt();
+   QString best_inputbase   = "";
+
+   for( double use_fineness = start_fineness; found_triangles <= max_triangles && use_fineness >= 0.3; use_fineness -= 0.02 )
    {
+      QString msr_inputbase = QString( "%1_f%2" ).arg( inputbase ).arg( QString( "%1" ).arg( use_fineness ).replace( ".", "_" ) );
+      if ( best_inputbase.isEmpty() )
+      {
+         best_inputbase = msr_inputbase;
+      }
       QString cmd = 
          QString( "%1 -m %2 -r %3 -y %4 -t %5.c3p -v %6.c3v" )
          .arg( progs[ p ] )
          .arg( pdb_stripped )
          .arg( control_parameters[ "bestmsrradiifile" ] )
          .arg( control_parameters[ "bestmsrpatternfile" ] )
-         .arg( inputbase )
-         .arg( inputbase )
+         .arg( msr_inputbase )
+         .arg( msr_inputbase )
          ;
 
       if ( control_parameters.count( "bestmsrprober" ) )
@@ -91,17 +105,18 @@ bool US_Saxs_Util::run_best()
          cmd += QString( " -p %1" ).arg( control_parameters[ "bestmsrprober" ] );
       }
 
-      if ( control_parameters.count( "bestmsrfinenessangle" ) )
-      {
-         cmd += QString( " -f %1" ).arg( control_parameters[ "bestmsrfinenessangle" ] );
-      }
+      //      if ( control_parameters.count( "bestmsrfinenessangle" ) )
+      //      {
+      //         cmd += QString( " -f %1" ).arg( control_parameters[ "bestmsrfinenessangle" ] );
+      //      }
+      cmd += QString( " -f %1" ).arg( use_fineness );
 
       if ( control_parameters.count( "bestmsrcoalescer" ) )
       {
          cmd += QString( " -l %1" ).arg( control_parameters[ "bestmsrcoalescer" ] );
       }
 
-      cmd += QString( " 2> msr_%1.stderr > msr_%2.stdout" ).arg( inputbase ).arg( inputbase );
+      cmd += QString( " 2> msr_%1.stderr > msr_%2.stdout" ).arg( msr_inputbase ).arg( msr_inputbase );
       qDebug( QString( "best cmd = %1" ).arg( cmd ) );
 
       cout << "Starting " + progs[ p ] + "\n";
@@ -111,10 +126,10 @@ bool US_Saxs_Util::run_best()
 
       QStringList expected;
       expected 
-         << inputbase + ".c3p"
-         << inputbase + ".c3v"
-         << "msr_" + inputbase + ".stdout"
-         << "msr_" + inputbase + ".stderr"
+         << msr_inputbase + ".c3p"
+         << msr_inputbase + ".c3v"
+         << "msr_" + msr_inputbase + ".stdout"
+         << "msr_" + msr_inputbase + ".stderr"
          ;
 
       for ( int i = 0; i < (int) expected.size(); ++i )
@@ -129,12 +144,40 @@ bool US_Saxs_Util::run_best()
             output_files << expected[ i ];
          }
       }
+      // count triangles produced
+      {
+         QFile f( "msr_" + msr_inputbase + ".stderr" );
+         f.open( IO_ReadOnly );
+         QTextStream ts( &f );
+         while ( !ts.atEnd() )
+         {
+            QString qs = ts.readLine();
+            if ( qs.contains( "triangles written to disk" ) )
+            {
+               QStringList qsl = QStringList::split( " ", qs.stripWhiteSpace() );
+               if ( qsl.size() )
+               {
+                  found_triangles = qsl[ 0 ].toInt();
+                  qDebug( QString( "found triangles %1 with fineness %2" ).arg( found_triangles ).arg( use_fineness ) );
+                  if ( found_triangles > best_triangles && found_triangles <= max_triangles )
+                  {
+                     best_triangles = found_triangles;
+                     best_inputbase = msr_inputbase;
+                  }
+                  break;
+               }
+            }
+         }
+         f.close();
+      }
    }
 
    if ( !errormsg.isEmpty() )
    {
       return false;
    }
+
+   inputbase = best_inputbase;
 
    // run rcoal
    p++;

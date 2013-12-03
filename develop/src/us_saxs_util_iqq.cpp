@@ -310,6 +310,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
                       "bestmsrprober|"
                       "bestmsrfinenessangle|"
+                      "bestmsrmaxtriangles|"
                       "bestmsrcoalescer|"
                       "bestrcoalnmin|"
                       "bestrcoalnmax|"
@@ -456,6 +457,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "bestmsrprober|"
                       "bestmsrfinenessangle|"
                       "bestmsrcoalescer|"
+                      "bestmsrmaxtriangles|"
                       "bestrcoalnmin|"
                       "bestrcoalnmax|"
                       "bestrcoaln|"
