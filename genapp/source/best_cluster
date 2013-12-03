@@ -9,7 +9,8 @@ input      map < QString, QString > * parameters
 saveload   json cluster_best *parameters 
 _variables
 map     string  s - - bestmsrprober "bestmsrprober" "MSROLL: probe radius (default:blank=1.5)"
-map     string  s - - bestmsrfinenessangle "bestmsrfinenessangle" "MSROLL: fineness angle (max ~0.3?)"
+map     string  s - - bestmsrfinenessangle "bestmsrfinenessangle" "MSROLL: starting fineness angle\n(recommended value >= 0.6)"
+map     string  s - - bestmsrmaxtriangles "bestmsrmaxtriangles" "MSROLL: maximum output triangles\n(recommended value 75000)"
 map     string  s - - bestmsrcoalescer "bestmsrcoalescer" "MSROLL: coalesce radius (default:blank)"
 map     string  s - - bestrcoalnmin "bestrcoalnmin" "COALESCE: minimum number of triangles (Typically 2000 for small and 3000 for large protein)"
 map     string  s - - bestrcoalnmax "bestrcoalnmax" "COALESCE: maximum number of triangles (Typically 4000 for small and 9000 for large protein)"
@@ -25,6 +26,8 @@ _elements
 variable bestmsrprober
 row
 variable bestmsrfinenessangle
+row
+variable bestmsrmaxtriangles
 row
 variable bestrcoalnmin
 row
