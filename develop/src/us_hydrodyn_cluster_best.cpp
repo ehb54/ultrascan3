@@ -73,9 +73,9 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrprober ->setMinimumWidth   ( 150 );
    connect( le_bestmsrprober, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrprober( const QString & ) ) );
 
-   lbl_bestmsrfinenessangle = new QLabel      ( tr( "MSROLL: fineness angle (max ~0.3?)" ), this );
+   lbl_bestmsrfinenessangle = new QLabel      ( tr( "MSROLL: starting fineness angle\n(recommended value >= 0.6)" ), this );
    lbl_bestmsrfinenessangle ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_bestmsrfinenessangle ->setMinimumHeight( minHeight1 );
+   lbl_bestmsrfinenessangle ->setMinimumHeight( minHeight1 *  2 );
    lbl_bestmsrfinenessangle ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_bestmsrfinenessangle ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestmsrfinenessangle ->setMinimumWidth ( QFontMetrics( lbl_bestmsrfinenessangle->font() ).maxWidth() * 47 );
@@ -85,9 +85,25 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrfinenessangle ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_bestmsrfinenessangle ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
    le_bestmsrfinenessangle ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_bestmsrfinenessangle ->setMinimumHeight  ( minHeight1 );
+   le_bestmsrfinenessangle ->setMinimumHeight  ( minHeight1 *  2 );
    le_bestmsrfinenessangle ->setMinimumWidth   ( 150 );
    connect( le_bestmsrfinenessangle, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrfinenessangle( const QString & ) ) );
+
+   lbl_bestmsrmaxtriangles = new QLabel      ( tr( "MSROLL: maximum output triangles\n(recommended value 75000)" ), this );
+   lbl_bestmsrmaxtriangles ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestmsrmaxtriangles ->setMinimumHeight( minHeight1 *  2 );
+   lbl_bestmsrmaxtriangles ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestmsrmaxtriangles ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestmsrmaxtriangles ->setMinimumWidth ( QFontMetrics( lbl_bestmsrmaxtriangles->font() ).maxWidth() * 47 );
+
+   le_bestmsrmaxtriangles = new QLineEdit     ( this, "bestmsrmaxtriangles Line Edit" );
+   le_bestmsrmaxtriangles ->setText           ( parameters->count( "bestmsrmaxtriangles" ) ? ( *parameters )[ "bestmsrmaxtriangles" ] : "" );
+   le_bestmsrmaxtriangles ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestmsrmaxtriangles ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestmsrmaxtriangles ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestmsrmaxtriangles ->setMinimumHeight  ( minHeight1 *  2 );
+   le_bestmsrmaxtriangles ->setMinimumWidth   ( 150 );
+   connect( le_bestmsrmaxtriangles, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrmaxtriangles( const QString & ) ) );
 
    lbl_bestrcoalnmin = new QLabel      ( tr( "COALESCE: minimum number of triangles (Typically 2000 for small and 3000 for large protein)" ), this );
    lbl_bestrcoalnmin ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
@@ -284,6 +300,12 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_bestmsrmaxtriangles );
+   hbl->addWidget( le_bestmsrmaxtriangles );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestrcoalnmin );
    hbl->addWidget( le_bestrcoalnmin );
    hbl->addSpacing( 4 );
@@ -391,6 +413,11 @@ void US_Hydrodyn_Cluster_Best::closeEvent( QCloseEvent *e )
    {
       parameters->erase( "bestmsrfinenessangle" );
    }
+   if ( parameters->count( "bestmsrmaxtriangles" ) &&
+        (*parameters)[ "bestmsrmaxtriangles" ].isEmpty() )
+   {
+      parameters->erase( "bestmsrmaxtriangles" );
+   }
    if ( parameters->count( "bestrcoalnmin" ) &&
         (*parameters)[ "bestrcoalnmin" ].isEmpty() )
    {
@@ -453,6 +480,11 @@ void US_Hydrodyn_Cluster_Best::update_bestmsrprober( const QString & )
 void US_Hydrodyn_Cluster_Best::update_bestmsrfinenessangle( const QString & )
 {
    ( *parameters )[ "bestmsrfinenessangle" ] = le_bestmsrfinenessangle->text();
+}
+
+void US_Hydrodyn_Cluster_Best::update_bestmsrmaxtriangles( const QString & )
+{
+   ( *parameters )[ "bestmsrmaxtriangles" ] = le_bestmsrmaxtriangles->text();
 }
 
 void US_Hydrodyn_Cluster_Best::update_bestrcoalnmin( const QString & )
@@ -592,6 +624,7 @@ void US_Hydrodyn_Cluster_Best::update_fields()
 {
    le_bestmsrprober                                ->setText( parameters->count( "bestmsrprober" ) ? ( *parameters )[ "bestmsrprober" ] : "" );
    le_bestmsrfinenessangle                         ->setText( parameters->count( "bestmsrfinenessangle" ) ? ( *parameters )[ "bestmsrfinenessangle" ] : "" );
+   le_bestmsrmaxtriangles                          ->setText( parameters->count( "bestmsrmaxtriangles" ) ? ( *parameters )[ "bestmsrmaxtriangles" ] : "" );
    le_bestrcoalnmin                                ->setText( parameters->count( "bestrcoalnmin" ) ? ( *parameters )[ "bestrcoalnmin" ] : "" );
    le_bestrcoalnmax                                ->setText( parameters->count( "bestrcoalnmax" ) ? ( *parameters )[ "bestrcoalnmax" ] : "" );
    le_bestrcoaln                                   ->setText( parameters->count( "bestrcoaln" ) ? ( *parameters )[ "bestrcoaln" ] : "" );
