@@ -200,7 +200,7 @@ CREATE  TABLE IF NOT EXISTS experiment (
   runTemp FLOAT NULL ,
   label VARCHAR(80) NULL ,
   comment TEXT NULL ,
-  RIProfile TEXT NULL ,
+  RIProfile LONGTEXT NULL ,
   centrifugeProtocol TEXT NULL ,
   dateUpdated DATETIME NULL ,
   PRIMARY KEY (experimentID) ,
