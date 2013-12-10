@@ -1366,6 +1366,7 @@ DbgLv(1) << "CGui: call rdRIDk";
          pb_intensity->setEnabled( true );
          
          referenceDefined = true;
+         isPseudo         = true;
 DbgLv(1) << "CGui: (5)referDef=" << referenceDefined;
          pb_reference->setEnabled( false );
          pb_cancelref->setEnabled( true );
@@ -2094,12 +2095,54 @@ void US_ConvertGui::process_subsets( void )
 // User pressed the Define reference button while analyzing intensity data
 void US_ConvertGui::define_reference( void )
 {
+   if ( isMwl )
+   {  // First insure that the full range of wavelengths are available
+      //  for defining reference scans
+      int kdiff       = 0;
+
+      for ( int ccx = 0; ccx < out_channels.size(); ccx++ )
+      {  // Review the wavelength ranges for each channel
+         QVector< int > wvs;
+         int klamb       = mwl_data.lambdas( wvs, ccx );
+
+         if ( klamb != nlamb_i )
+         {  // Count of wavelengths differs from the full input range
+            kdiff++;
+         }
+
+         else
+         {  // Test each wavelength in this channel's range
+            for ( int jj = 0; jj < klamb; jj++ )
+            {  // Record any differences
+               if ( wvs[ jj ] != all_lambdas[ jj ] )
+                  kdiff++;
+            }
+         }
+      }
+
+      if ( kdiff != 0 )
+      {  // Report dangerous differences and allow a reference define cancel
+         int status = QMessageBox::information( this,
+            tr( "Inconsistent Reference Wavelengths" ),
+            tr( "Differences in wavelength ranges exist for the channels.\n"
+                "The safest course is to always open the full range of\n"
+                "input wavelengths for the Reference channel.\n\n"
+                "If you are sure that Reference wavelengths will cover\n"
+                "all other channels, you may \"Proceed\".\n\n"
+                "Otherwise, you should \"Cancel\".\n" ),
+            tr( "&Cancel" ), tr( "&Proceed" ) );
+
+         if ( status == 0 ) return;
+      }
+   }
+
    connect( picker, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                     SLOT  ( cClick  ( const QwtDoublePoint& ) ) );
 
    reference_start = 0.0;
    reference_end   = 0.0;
-   pb_reference ->setEnabled( false );
+   pb_reference->setEnabled( false );
+   pb_cancelref->setEnabled( true );
 
    step = REFERENCE;
 }
@@ -2197,6 +2240,12 @@ void US_ConvertGui::PseudoCalcAvg( void )
 {
    if ( referenceDefined ) return;  // Average calculation has already been done
 
+   if ( isMwl )
+   {  // Do calculations for each wavelength, if MWL
+      PseudoCalcAvgMWL();
+      return;
+   }
+
    US_DataIO::RawData* referenceData = outData[ tripDatax ];
    int ref_size = referenceData->xvalues.size();
 
@@ -2228,12 +2277,6 @@ void US_ConvertGui::PseudoCalcAvg( void )
 
    }
  
-   if ( isMwl )
-   {
-      PseudoCalcAvgMWL();
-      return;
-   }
-
    // Now average around excluded values
    int lastGood  = 0;
    int countBad  = 0;
@@ -2301,8 +2344,16 @@ DbgLv(1) << "CGui: (7)referDef=" << referenceDefined;
 // Bring up a graph window showing the intensity profile
 void US_ConvertGui::show_intensity( void )
 {
+   QString triple = out_triples[ 0 ];
+   if ( isMwl )
+   {
+      triple      = out_channels[ 0 ] + " / "
+         + QString::number( ExpData.RIwvlns[ 0 ] ) + "-"
+         + QString::number( ExpData.RIwvlns[ ExpData.RI_nwvlns - 1 ] );
+   }
+   
    US_Intensity* dialog
-      = new US_Intensity( runID, all_tripinfo[0].tripleDesc, 
+      = new US_Intensity( runID, triple,
                         ( const QVector< double > ) ExpData.RIProfile );
    dialog->exec();
    qApp->processEvents();
@@ -2311,29 +2362,65 @@ void US_ConvertGui::show_intensity( void )
 // Un-do reference scans apply
 void US_ConvertGui::cancel_reference( void )
 {
+   int wvoff    = 0;
+   int rscans   = ExpData.RI_nscans;
+
    // Do the inverse operation and retrieve raw intensity data
-   for ( int i = 0; i < outData.size(); i++ )
+   for ( int ii = 0; ii < outData.size(); ii++ )
    {
-      US_DataIO::RawData* currentData = outData[ i ];
+      US_DataIO::RawData* currentData = outData[ ii ];
 
-      for ( int j = 0; j < currentData->scanData.size(); j++ )
-      {
-         US_DataIO::Scan* s = &currentData->scanData[ j ];
+      if ( isMwl )
+      {  // For MWL, profile is offset by wavelength
+         int iwavl    = out_triples[ ii ].section( " / ", 2, 2 ).toInt();
+         wvoff        = ExpData.RIwvlns.indexOf( iwavl );
 
-         for ( int k = 0; k < s->rvalues.size(); k++ )
+         if ( wvoff < 0 )
          {
-            double rvalue = s->rvalues[ k ];
+            qDebug() << "Triple " << out_triples[ ii ]
+               << "has NO CORRESPONDING RI PROFILE POINT!!!";
+            wvoff        = 0;
+            QMessageBox::information( this,
+              tr( "Error" ),
+              tr( "Triple %1 has NO CORRESPONDING RI PROFILE POINT!!!" )
+              .arg( out_triples[ ii ] ) );
+            int kwavl    = 99999;
 
-            s->rvalues[ k ] = ExpData.RIProfile[ j ] / pow( 10, rvalue );
+            for ( int jj = 0; jj < ExpData.RI_nwvlns; jj++ )
+            {  // Find index of nearest wavelength
+               int jwavl    = qAbs( ExpData.RIwvlns[ jj ] - iwavl );
+
+               if ( jwavl < kwavl )
+               {
+                  kwavl        = jwavl;
+                  wvoff        = jj;
+               }
+            }
+         }
+      }
+
+      wvoff       *= rscans;
+
+      for ( int jj = 0; jj < currentData->scanData.size(); jj++ )
+      {
+         US_DataIO::Scan* scan  = &currentData->scanData[ jj ];
+         double           rppro = ExpData.RIProfile[ jj + wvoff ];
+
+         for ( int kk = 0; kk < scan->rvalues.size(); kk++ )
+         {
+            double rvalue = scan->rvalues[ kk ];
+
+            scan->rvalues[ kk ] = rppro / pow( 10, rvalue );
          }
       }
    }
 
    referenceDefined = false;
-DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
+   isPseudo         = false;
    ExpData.RIProfile.clear();
-   reference_start = 0.0;
-   reference_end   = 0.0;
+   reference_start  = 0.0;
+   reference_end    = 0.0;
+DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
 
    for ( int ii = 0; ii < all_tripinfo.size(); ii++ )
       all_tripinfo[ ii ].excluded = false;
@@ -2735,10 +2822,13 @@ DbgLv(1) << "DBSv:  (1)trip0tripFilename" << out_tripinfo[0].tripleFilename;
    }
 
    // First check some of the data with the DB
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    le_status->setText( tr( "Preparing Save with DB check ..." ) );
    qApp->processEvents();
 
    int status = US_ConvertIO::checkDiskData( ExpData, out_tripinfo, &db );
+
+   QApplication::restoreOverrideCursor();
 DbgLv(1) << "DBSv:  (2)trip0tripFilename" << out_tripinfo[0].tripleFilename;
 
    if ( status == US_DB2::NO_PERSON )  // Investigator or operator doesn't exist
@@ -3433,8 +3523,8 @@ DbgLv(1) << "lambdaStartChanged" << value << "sl el tLx cCh"
       int iwavl     = all_tripinfo[ trx ]
                       .tripleDesc.section( " / ", 2, 2 ).toInt();
 
-      if ( all_tripinfo[ trx ].channelID == currChan  &&  iwavl < slambda )
-         all_tripinfo[ trx ].excluded = true;
+      if ( all_tripinfo[ trx ].channelID == currChan )
+         all_tripinfo[ trx ].excluded = ( iwavl < slambda );
 DbgLv(1) << "lStChg:  trx iwavl chnID excl" << trx << iwavl
  << all_tripinfo[trx].channelID << all_tripinfo[trx].excluded;
    }
@@ -3462,7 +3552,7 @@ DbgLv(1) << "lEnChg:  val" << value << "sl el tLx cCh"
                       .tripleDesc.section( " / ", 2, 2 ).toInt();
 
       if ( all_tripinfo[ trx ].channelID == currChan  &&  iwavl > elambda )
-         all_tripinfo[ trx ].excluded = true;
+         all_tripinfo[ trx ].excluded = ( iwavl > elambda );
    }
 
    build_output_data();
@@ -3625,27 +3715,29 @@ DbgLv(1) << "rsL: PlCurr RTN";
 // Do pseudo-absorbance calculation and apply for MultiWaveLength case
 void US_ConvertGui::PseudoCalcAvgMWL( void )
 {
-   QVector< double >  ripprof;      // RIP profile for a single wavelength
+   QVector< double >  ri_prof;      // RI profile for a single wavelength
+   ExpData.RIProfile.clear();       // Composite RI profile
+   ExpData.RIwvlns  .clear();       // RI profile wavelengths
 
-   if ( referenceDefined ) return;  // Average calculation has already been done
+   if ( referenceDefined ) return;  // Average calculation is already done
 
    US_DataIO::RawData* refData = outData[ tripDatax ];
    int ref_size = refData->xvalues.size();
    int ccx      = tripListx;
    int tripx    = out_chandatx[ ccx ];
-   int kwvlns   = ( ( ccx + 1 ) < out_channels.size() )
-                ? ( out_chandatx[ ccx + 1 ] - tripx )
-                : ( out_chandatx.size() - tripx + 1 );
-DbgLv(1) << "PseCalcAvgMWL: ccx tripx kwvlns" << ccx << tripx << kwvlns;
+   nlambda      = mwl_data.lambdas( exp_lambdas, tripListx );
+   ExpData.RI_nscans = refData->scanData.size();
+   ExpData.RI_nwvlns = nlambda;
+DbgLv(1) << "PseCalcAvgMWL: ccx tripx nlambda" << ccx << tripx << nlambda;
 
    // Loop to calculate reference data for each wavelength,
    //  then apply it to all triples with that same wavelength.
-   for ( int wvx = 0; wvx < kwvlns; wvx++ )
+   for ( int wvx = 0; wvx < nlambda; wvx++ )
    {
       refData      = outData[ tripx ];
       ref_size     = refData->xvalues.size();
       int nscan    = refData->scanData.size();
-      ripprof.clear();
+      ri_prof.clear();
 
       // Get the reference profile for the current wavelength
       for ( int ss = 0; ss < nscan; ss++ )
@@ -3668,17 +3760,25 @@ DbgLv(1) << "PseCalcAvgMWL: ccx tripx kwvlns" << ccx << tripx << kwvlns;
             rr++;
          }
 
-         if ( count > 0 )
-            ripprof << sum / (double)count;
-         else
-            ripprof << 1.0;
+         double rip_avg  = count > 0 ? ( sum / (double)count ) : 1.0;
+         ri_prof           << rip_avg;
+         ExpData.RIProfile << rip_avg;
+
       } // END: scan loop for reference triple
 
-      int rip_size = ripprof.size();
+      int rip_size = ri_prof.size();
+      int iwavl    = exp_lambdas[ wvx ];
+DbgLv(1) << "PseCalcAvgMWL:  wvx" << wvx << "rsiz wavl" << rip_size << iwavl;
+      ExpData.RIwvlns << iwavl;
 
       // Now calculate the pseudo-absorbance for all cell/channel/this-lambda
-      for ( int trx = wvx; trx < outData.size(); trx += kwvlns )
+      for ( int trx = 0; trx < outData.size(); trx++ )
       {
+         int jwavl    = out_triples[ trx ].section( " / ", -1, -1 ).toInt();
+
+         if ( jwavl != iwavl )  continue;
+
+         // Triple data has the current wavelength value
          US_DataIO::RawData* currentData = outData[ trx ];
 
          for ( int ss = 0; ss < currentData->scanData.size(); ss++ )
@@ -3686,7 +3786,7 @@ DbgLv(1) << "PseCalcAvgMWL: ccx tripx kwvlns" << ccx << tripx << kwvlns;
             US_DataIO::Scan* scan = &currentData->scanData[ ss ];
             // Check for boundary condition
             int    ndx    = ( ss < rip_size ) ? ss : rip_size - 1;
-            double rippr  = ripprof[ ndx ];
+            double ripval = ri_prof[ ndx ];
 
             for ( int rr = 0; rr < scan->rvalues.size(); rr++ )
             {
@@ -3694,7 +3794,7 @@ DbgLv(1) << "PseCalcAvgMWL: ccx tripx kwvlns" << ccx << tripx << kwvlns;
                // evaluates to 0 or wherever log function is undefined or -inf
                double rvalue       = qMax( 1.0, scan->rvalues[ rr ] );
 
-               scan->rvalues[ rr ] = log10( rippr / rvalue );
+               scan->rvalues[ rr ] = log10( ripval / rvalue );
             } // END: readings loop for a scan
 
          } // END: scan loop for a specific triple
@@ -3702,6 +3802,7 @@ DbgLv(1) << "PseCalcAvgMWL: ccx tripx kwvlns" << ccx << tripx << kwvlns;
       } // END: cell-channel apply loop for one wavelength
 
       tripx++;
+DbgLv(1) << "PseCalcAvgMWL:   tripx" << tripx;
    } // END: WaveLength loop
 
    isPseudo         = true;
@@ -3719,7 +3820,6 @@ void US_ConvertGui::mwl_setup()
 
    // Propagate initial lists of Lambdas
    nlamb_i         = mwl_data.lambdas_raw( all_lambdas );
-   int    klamb    = 0;
    int    rlamb_s  = all_lambdas[ 0 ];
    int    rlamb_e  = all_lambdas[ nlamb_i - 1 ];
    cb_lambstrt->clear();
@@ -3730,11 +3830,10 @@ void US_ConvertGui::mwl_setup()
       QString clamb = QString::number( all_lambdas[ ii ] );
       cb_lambstrt->addItem( clamb );
       cb_lambstop->addItem( clamb );
-      klamb++;
    }
 
    cb_lambstrt->setCurrentIndex( 0 );
-   cb_lambstop->setCurrentIndex( klamb - 1 );
+   cb_lambstop->setCurrentIndex( nlamb_i - 1 );
    nlambda         = mwl_data.lambdas( exp_lambdas );
    cb_lambplot->clear();
 

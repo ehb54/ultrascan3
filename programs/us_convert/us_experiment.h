@@ -64,6 +64,9 @@ class US_Experiment
       bool             syncOK;             //!< The user has connected with the db
       QStringList      experimentTypes;    //!< A list of possible experiment types
       QVector< double > RIProfile;         //!< If RI data, the intensity profile
+      QVector< int >    RIwvlns;           //!< For RI+MWL, wavelengths present
+      int               RI_nscans;         //!< RI+MWL scans per profile
+      int               RI_nwvlns;         //!< RI+MWL wavelengths (profiles count)
 
       /*! \brief Generic constructor for the US_Experiment class.
       */

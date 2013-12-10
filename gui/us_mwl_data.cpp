@@ -529,15 +529,18 @@ qDebug() << "SetLamb   wvxs wvxe" << wvxs << wvxe;
          ex_wavelns[ curccx ] << wkwaves[ wvx++ ];
       }
 
+qDebug() << "SetLamb   elambda old_end" << elambda << old_end;
       if ( elambda > old_end )
       {  // If end is after old list, append some from the original list
          wvxs       = indexOfLambda( old_end ) + 1;
          wvxe       = indexOfLambda( elambda );
          old_end    = ri_wavelns[ wvxs++ ];
+qDebug() << "SetLamb     wvx s,e" << wvxs << wvxe << "old_end" << old_end;
 
-         while ( old_end < elambda  &&  wvxs < nlamb_i )
+         while ( old_end <= elambda )
          {
             ex_wavelns[ curccx ] << old_end;
+            if ( wvxs >= nlamb_i )  break;
             old_end    = ri_wavelns[ wvxs++ ];
          }
       }
