@@ -453,6 +453,7 @@ int US_Experiment::readFromDisk(
    }
 
    bool error = xml.hasError();
+qDebug() << "readFromDisk() error" << error;
    f.close();
 
    if ( error ) return US_Convert::BADXML;
@@ -694,30 +695,49 @@ int US_Experiment::readRIDisk(
    QString filename = runID      + "." 
                     + "RIProfile.xml";
 
+   this->RIProfile.clear();
+   this->RIwvlns  .clear();
+   this->RI_nscans  = 0;
+   this->RI_nwvlns  = 0;
+
    QFile f( dirname + filename );
    if ( ! f.open( QIODevice::ReadOnly ) ) return US_Convert::CANTOPEN;
-   QTextStream ds( &f );
 
+   QTextStream ds( &f );
    QXmlStreamReader xml( &f );
 
-   this->RIProfile.clear();
    while ( ! xml.atEnd() )
    {
       xml.readNext();
 
       if ( xml.isStartElement() )
       {
-         if ( xml.name() == "RI" )
+         QXmlStreamAttributes a = xml.attributes();
+         QStringRef xname       = xml.name();
+
+         if ( xname == "RI" )
          {
-            QXmlStreamAttributes a = xml.attributes();
-            double value           = a.value("value").toString().toDouble();
+            double value     = a.value( "value"       ).toString().toDouble();
             this->RIProfile << value;
+         }
+
+         else if ( xname == "WVL" )
+         {
+            int    iwavl     = a.value( "value"       ).toString().toInt();
+            this->RIwvlns   << iwavl;
+         }
+
+         else if ( xname == "WVPro" )
+         {
+            this->RI_nscans  = a.value( "scans"       ).toString().toInt();
+            this->RI_nwvlns  = a.value( "wavelengths" ).toString().toInt();
          }
       }
    }
 
    bool error = xml.hasError();
    f.close();
+qDebug() << "readRIDisk() error" << error;
 
    if ( error ) return US_Convert::BADXML;
 
@@ -759,7 +779,25 @@ void US_Experiment::createRIXml( QByteArray& str )
       xml.writeStartElement( "RI" );
       xml.writeAttribute   ( "value", QString::number( value ) );
       xml.writeEndElement  ();
+   }
 
+   if ( this->RIwvlns.size() > 1 )
+   {
+      int nscans = this->RI_nscans;
+      int nwvlns = this->RI_nwvlns;
+
+      for ( int jj = 0; jj < nwvlns; jj++ )
+      {
+         int iwavl  = this->RIwvlns[ jj ];
+         xml.writeStartElement( "WVL" );
+         xml.writeAttribute   ( "value",    QString::number( iwavl  ) );
+         xml.writeEndElement  ();
+      }
+
+      xml.writeStartElement( "WVPro" );
+      xml.writeAttribute   ( "scans",       QString::number( nscans ) );
+      xml.writeAttribute   ( "wavelengths", QString::number( nwvlns ) );
+      xml.writeEndElement  ();
    }
 
    xml.writeEndElement(); // US_RIProfile
@@ -776,23 +814,42 @@ int US_Experiment::importRIxml( QByteArray& str )
    QXmlStreamReader xml( &buffer );
 
    this->RIProfile.clear();
+   this->RIwvlns  .clear();
+   this->RI_nscans   = 0;
+   this->RI_nwvlns   = 0;
+
    while ( ! xml.atEnd() )
    {
       xml.readNext();
 
       if ( xml.isStartElement() )
       {
-         if ( xml.name() == "RI" )
+         QXmlStreamAttributes a = xml.attributes();
+         QStringRef xname       = xml.name();
+
+         if ( xname == "RI" )
          {
-            QXmlStreamAttributes a = xml.attributes();
-            double value           = a.value("value").toString().toDouble();
+            double value     = a.value( "value"       ).toString().toDouble();
             this->RIProfile << value;
+         }
+
+         else if ( xname == "WVL" )
+         {
+            int    iwavl     = a.value( "value"       ).toString().toInt();
+            this->RIwvlns << iwavl;
+         }
+
+         else if ( xname == "WVPro" )
+         {
+            this->RI_nscans  = a.value( "scans"       ).toString().toInt();
+            this->RI_nwvlns  = a.value( "wavelengths" ).toString().toInt();
          }
       }
    }
 
    bool error = xml.hasError();
    buffer.close();
+qDebug() << "importRIxml() error" << error;
 
    if ( error ) return US_Convert::BADXML;
 

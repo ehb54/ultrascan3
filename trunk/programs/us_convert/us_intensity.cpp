@@ -45,6 +45,14 @@ US_Intensity::US_Intensity(
    buttons->addWidget( pb_close );
 
    main->addLayout( buttons, row++, 2, 1, 4 );
+   QString ctriple = US_Util::compressed_triple( triple );
+
+   if ( triple.contains( "-" ) )
+   {  // Handle special MWL triple with wavelength range
+      data_plot->setTitle( tr( "Intensity Profile\n"
+                               "for wavelengths: " )
+                            + ctriple.mid( 2 ) );
+   }
 
    draw_plot( dataIn );
 
@@ -52,7 +60,7 @@ US_Intensity::US_Intensity(
    QString dir    = US_Settings::reportDir() + "/" + runID;
    if ( ! QDir( dir ).exists() )      // make sure the directory exists
       QDir().mkdir( dir );
-   QString ctriple = US_Util::compressed_triple( triple );
+
    QString filename = dir + "/cnvt." + ctriple + ".intensity.svg";
 
    int status = US_GuiUtil::save_plot( filename, data_plot );
