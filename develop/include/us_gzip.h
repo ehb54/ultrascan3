@@ -6,6 +6,10 @@
 
 #include <sys/types.h>
 
+#ifdef UNIX
+#include <unistd.h>
+#endif
+
 #include "us_extern.h"
 
 // Error codes

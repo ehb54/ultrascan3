@@ -1,6 +1,10 @@
 #ifndef US_DB_RST_MONTECARLO_H
 #define US_DB_RST_mONTECARLO_H
 
+#ifdef UNIX
+#include <unistd.h>
+#endif
+
 #include "us_db.h"
 #include "us_montecarloreport.h"
 #include "us_db_runrequest.h"

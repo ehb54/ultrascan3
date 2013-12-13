@@ -283,6 +283,9 @@ bool US_Saxs_Util::run_best()
 
    // run best
    p++;
+   QStringList csvfiles;
+   QStringList triangles;
+
    for ( int i = 0; i < (int) outfiles.size(); ++i )
    {
       qDebug( QString( "processing outfile %1" ).arg( outfiles[ i ] ) );
@@ -354,6 +357,9 @@ bool US_Saxs_Util::run_best()
          << outfiles[ i ] + expected_base + ".be" 
          ;
 
+      csvfiles  << outfiles[ i ] + expected_base + ".be";
+      triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase ) ), "" ).replace( QRegExp( "^0*" ) , "" );
+
       for ( int i = 0; i < (int) expected.size(); ++i )
       {
          if ( !QFile( expected[ i ] ).exists() )
@@ -368,12 +374,159 @@ bool US_Saxs_Util::run_best()
       }
    }
 
+   {
+      QFile f( QString( "%1.csv" ).arg( inputbase ) );
+
+      qDebug( QString( "output file %1\n" ).arg( f.name() ) );
+
+      vector < QStringList > csvresults;
+      QStringList csv_header;
+      csv_header
+            << "Area (A^2)"
+            << "True Area (A^2)"
+            << "Areafactor"
+            << "True Volume (A^3)"
+            << "Molecular Weight (g/mol)"
+            << "Temperature (K)"
+            << "Solvent Viscosity (Poise)"
+            << "Number of Surface Patches"
+            << "Centroid Coordinates (A) [x]"
+            << "Centroid Coordinates (A) [y]"
+            << "Centroid Coordinates (A) [z]"
+            << "Vector between Center of Resistance/Centroid [x]"
+            << "Vector between Center of Resistance/Centroid [y]"
+            << "Vector between Center of Resistance/Centroid [z]"
+            << "Vector between Centers of Diffusion/Resistance [x]"
+            << "Vector between Centers of Diffusion/Resistance [y]"
+            << "Vector between Centers of Diffusion/Resistance [z]"
+            << "Trace of Dtt Tensor (1/A) [1,1]"
+            << "Trace of Dtt Tensor (1/A) [2,2]"
+            << "Trace of Dtt Tensor (1/A) [3,3]"
+            << "Trace of Symmetric Dtr Tensor (1/A^2) [1,1]"
+            << "Trace of Symmetric Dtr Tensor (1/A^2) [2,2]"
+            << "Trace of Symmetric Dtr Tensor (1/A^2) [3,3]"
+            << "Trace of Drr TENSOR (1/A^3) [1,1]"
+            << "Trace of Drr TENSOR (1/A^3) [2,2]"
+            << "Trace of Drr TENSOR (1/A^3) [3,3]"
+            ;
+
+      for ( int i = 0 ; i < (int) csvfiles.size(); ++i )
+      {
+         qDebug( QString( "csv input file %1 triangles %2\n" ).arg( csvfiles[ i ] ).arg( triangles[ i ] ) );
+         QStringList qsl = best_output_column( csvfiles[ i ] );
+         csvresults.push_back( qsl );
+      }
+
+      if ( !f.open( IO_WriteOnly ) )
+      {
+         errormsg = QString( "error opening %1 for output" ).arg( f.name() );
+         return false;
+      }
+      QTextStream ts( &f );
+      ts << "\"Triangles used\",";
+      for ( int i = 0; i < (int) triangles.size(); ++i )
+      {
+         ts << triangles[ i ] << ",";
+      }
+      ts << endl;
+
+      for ( int i = 0; i < (int) csv_header.size(); ++i )
+      {
+         ts << QString( "\"%1\"," ).arg( csv_header[ i ] );
+         for ( int j = 0; j < (int) csvresults.size(); ++j )
+         {
+            if ( (int) csvresults[ j ].size() > i )
+            {
+               ts << csvresults[ j ][ i ].toDouble() << ",";
+            } else {
+               ts << "?,";
+            }
+         }
+         ts << endl;
+      }
+      f.close();
+      output_files << f.name();
+   }
+
    if ( !errormsg.isEmpty() )
    {
       return false;
    }
 
    return true;
+}
+
+QStringList US_Saxs_Util::best_output_column( QString fname )
+{
+   QFile f( fname );
+   QStringList qsl;
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      qsl << QString( "error opening %1" ).arg( f.name() );
+      return qsl;
+   }
+
+   QRegExp rx_skip( "^\\s*$" );
+   QRegExp rx_1( "\\s+([0-9.+-E]+)\\s*$" );
+   QRegExp rx_3( "\\s+([0-9.+-E]+)\\s+([0-9.+-E]+)\\s+([0-9.+-E]+)\\s*$" );
+
+   QTextStream ts( &f );
+   for ( int i = 0; i < 4; ++i )
+   {
+      ts.readLine();
+   }
+   for ( int i = 0; i < 8; ++i )
+   {
+      QString qs = ts.readLine();
+      if ( rx_1.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( i + 5 );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_1.cap( 1 );
+   }
+   for ( int i = 0; i < 2; ++i )
+   {
+      ts.readLine();
+   }   
+   for ( int i = 0; i < 3; ++i )
+   {
+      ts.readLine();
+      QString qs = ts.readLine();
+      if ( rx_3.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( 2 * i + 5 + 2 + 8 );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_3.cap( 1 );
+      qsl << rx_3.cap( 2 );
+      qsl << rx_3.cap( 3 );
+   }   
+   for ( int i = 0; i < 3; ++i )
+   {
+      ts.readLine();
+   }   
+
+   for ( int i = 0; i < 3; ++i )
+   {
+      ts.readLine();
+      for ( int j = 0; j < 3; ++j )
+      {
+         QString qs = ts.readLine();
+         if ( rx_3.search( qs ) == -1 )
+         {
+            qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( j + i * 5 + 2 * 3 + 5 + 2 + 8 );
+            f.close();
+            return qsl;
+         }
+         qsl << rx_3.cap( j + 1 );
+      }
+      ts.readLine();
+   }   
+   f.close();
+   return qsl;
 }
 
 bool US_Saxs_Util::strip_pdb( 

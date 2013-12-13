@@ -802,6 +802,7 @@ class US_EXTERN US_Saxs_Util
       // unsigned int exponential_terms;
       // double       compute_exponential_f( double t, const double *par );
       bool run_best();
+      QStringList best_output_column( QString fname );
 
       bool run_crysol();
       bool run_dammin();
@@ -920,6 +921,9 @@ class US_EXTERN US_Saxs_Util
       void wgsbs_gsm_df(our_vector *vd, our_vector *v);
 
       double compute_gsm_exponentials_f( our_vector *v );
+
+      bool c2check( QString a, QString b );
+
    private:
       // exponential gsm:
       vector < double > compute_gsm_exponentials_mtto4pi2;

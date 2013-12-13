@@ -334,6 +334,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "prbinsize|"
                       "prcurve|"
 
+                      "c2check|"
+                      "c2checkcaonly|"
+
                       "remark)$"
                       );
 
@@ -476,8 +479,16 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "prbinsize|"
                       "prcurve|"
 
+                      "c2check|"
+
                       "outputfile)$"
                       );
+
+   QRegExp rx_arg_2  ( 
+                      "^("
+                      "c2check)$"
+                       );
+
 
    QRegExp rx_valid_saxs_iqmethod (
                                    "^("
@@ -543,6 +554,16 @@ bool US_Saxs_Util::read_control( QString controlfile )
             .arg( line );
          return false;
       }
+
+      if ( rx_arg_2.search( option ) != -1 && 
+           qsl.size() < 2 )
+      {
+         errormsg = QString( "Error reading %1 line %2 : Missing argument " )
+            .arg( controlfile )
+            .arg( line );
+         return false;
+      }
+
 
       if ( rx_file.search( option ) != -1 )
       {
@@ -688,6 +709,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
          if ( !noticemsg.isEmpty() )
          {
             cout << noticemsg;
+         }
+      }
+
+      if ( option == "c2check" )
+      {
+         if ( !c2check( qsl[ 0 ] , qsl[ 1 ] ) )
+         {
+            return false;
          }
       }
 

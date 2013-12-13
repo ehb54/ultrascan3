@@ -7,6 +7,10 @@
 #include <qpushbutton.h>
 #include <qtextedit.h>
 
+#ifdef UNIX
+#include <unistd.h>
+#endif
+
 #include "us_util.h"
 #include "us_widgets.h"
 
