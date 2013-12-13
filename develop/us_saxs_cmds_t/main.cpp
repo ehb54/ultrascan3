@@ -16,6 +16,25 @@ QString US_Version = REVISION;
 
 int main (int argc, char **argv)
 {
+   // QStringList outfiles;
+   // QStringList triangles;
+   // vector < double > one_over_triangles;
+   // QString inputbase = "1hel_s_f0_6";
+   // outfiles
+   //    << "1hel_s_f0_6_01774"
+   //    << "1hel_s_f0_6_02012"
+   //    << "1hel_s_f0_6_02457"
+   //    ;
+   // for ( int i = 0; i < (int) outfiles.size(); ++i )
+   // {
+   //    triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase ) ), "" ).replace( QRegExp( "^0*" ) , "" );
+   //    one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
+   //                                  1e0 / triangles.back().toDouble() : -1e0 );
+   //    qDebug( QString( "%1 %2\n" ).arg( triangles.back() ).arg( one_over_triangles.back() ) );
+   // }
+
+   // exit( 0 );
+
    if (argc < 2) 
    {
       printf(

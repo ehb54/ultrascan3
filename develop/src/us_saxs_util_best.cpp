@@ -362,6 +362,8 @@ bool US_Saxs_Util::run_best()
       triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase ) ), "" ).replace( QRegExp( "^0*" ) , "" );
       one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
                                     1e0 / triangles.back().toDouble() : -1e0 );
+
+      // qDebug( QString( "triangles %1 %2\n" ).arg( triangles.back() ).arg( one_over_triangles.back() ) );
       
       for ( int i = 0; i < (int) expected.size(); ++i )
       {
@@ -469,7 +471,7 @@ bool US_Saxs_Util::run_best()
          {
             ts << ",";
          }
-         ts << "\"Extrapolation to zero triangles (b)\",\"Sigma b\",\"Slope (a)\",\"Sigma a\",\"chi^2\"" << endl;
+         ts << "\"Extrapolation to zero triangles (a)\",\"Sigma a\",\"Sigma a %\",\"Slope (b)\",\"Sigma b\",\"Sigma b %\",\"chi^2\"" << endl;
       }
 
       ts << "\"Triangles used\",";
@@ -479,9 +481,9 @@ bool US_Saxs_Util::run_best()
       }
       ts << endl;
       ts << "\"1/Triangles used\",";
-      for ( int i = 0; i < (int) triangles.size(); ++i )
+      for ( int i = 0; i < (int) one_over_triangles.size(); ++i )
       {
-         ts <<  QString( "=%1" ).arg(  one_over_triangles[ i ] );
+         ts <<  QString( "=%1," ).arg( one_over_triangles[ i ] );
       }
       ts << endl;
 
@@ -508,23 +510,31 @@ bool US_Saxs_Util::run_best()
                ts << "?,";
                missing_data = true;
             }
-            if ( !missing_data && do_linear_fit && extrapolate.count( j ) )
-            {
-               linear_fit( one_over_triangles,
-                           y,
-                           a,
-                           b,
-                           siga,
-                           sigb,
-                           chi2 );
-               ts << QString( "=%1,=%2,=%3,=%4,=%5," )
-                  .arg( b,    0, 'g', 8 )
-                  .arg( sigb, 0, 'g', 8 )
-                  .arg( a,    0, 'g', 8 )
-                  .arg( siga, 0, 'g', 8 )
-                  .arg( chi2, 0, 'g', 8 )
-                  ;
-            }
+            qDebug( QString( "i %1 missing_data %2 do_linear_fit %3 extrapolate.count( i ) %4" )
+                    .arg( i )
+                    .arg( missing_data ? "true" : "false" )
+                    .arg( do_linear_fit ? "true" : "false" )
+                    .arg( extrapolate.count( i ) ) 
+                    );
+         }
+         if ( !missing_data && do_linear_fit && extrapolate.count( i ) )
+         {
+            linear_fit( one_over_triangles,
+                        y,
+                        a,
+                        b,
+                        siga,
+                        sigb,
+                        chi2 );
+            ts << QString( "=%1,=%2,=%3,=%4,=%5,=%6,=%7" )
+               .arg( a,    0, 'g', 8 )
+               .arg( siga, 0, 'g', 8 )
+               .arg( a != 0 ? fabs( 100.0 * siga / a ) : (double) 0, 0, 'g', 8 )
+               .arg( b,    0, 'g', 8 )
+               .arg( sigb, 0, 'g', 8 )
+               .arg( b != 0 ? fabs( 100.0 * sigb / b ) : (double) 0, 0, 'g', 8 )
+               .arg( chi2, 0, 'g', 8 )
+               ;
          }
          ts << endl;
       }
@@ -718,7 +728,7 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
    }      
    {
       QString qs = ts.readLine();
-      qs.replace( QRegExp( "\\s+cm^2/s\\s*$" ), "" );
+      qs.replace( QRegExp( "\\s+cm\\^2/s\\s*$" ), "" );
       qDebug( QString( "qs dtt cm^2/s <%1>\n" ).arg( qs ) );
       if ( rx_1.search( qs ) == -1 )
       {
