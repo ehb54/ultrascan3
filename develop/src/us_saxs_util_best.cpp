@@ -361,7 +361,7 @@ bool US_Saxs_Util::run_best()
       csvfiles  << outfiles[ i ] + expected_base + ".be";
       triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase ) ), "" ).replace( QRegExp( "^0*" ) , "" );
       one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
-                                    1e0 / triangles[ i ].toDouble() : -1e0 );
+                                    1e0 / triangles.back().toDouble() : -1e0 );
       
       for ( int i = 0; i < (int) expected.size(); ++i )
       {
@@ -464,7 +464,12 @@ bool US_Saxs_Util::run_best()
       QTextStream ts( &f );
       if ( do_linear_fit )
       {
-         ts << ",\"Extrapolation to zero triangles (b)\",\"Sigma b\",\"Slope (a)\",\"Sigma a\",\"chi^2\"" << endl;
+         ts << ",";
+         for ( int j = 0; j < (int) csvresults.size(); ++j )
+         {
+            ts << ",";
+         }
+         ts << "\"Extrapolation to zero triangles (b)\",\"Sigma b\",\"Slope (a)\",\"Sigma a\",\"chi^2\"" << endl;
       }
 
       ts << "\"Triangles used\",";
@@ -714,6 +719,7 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
    {
       QString qs = ts.readLine();
       qs.replace( QRegExp( "\\s+cm^2/s\\s*$" ), "" );
+      qDebug( QString( "qs dtt cm^2/s <%1>\n" ).arg( qs ) );
       if ( rx_1.search( qs ) == -1 )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "Dtt (cm^2/s) 1/3 trace" );
