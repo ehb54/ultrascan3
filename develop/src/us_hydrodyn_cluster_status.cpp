@@ -1018,6 +1018,7 @@ void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & res
       status.replace( QRegExp( "\n|\r" ), " " );
       status.replace( QRegExp( "\\s+" ), " " );
       status.replace( QRegExp( "\\s+$" ), "" );
+      status.replace( "SUBMITED", "SUBMITTED" );
       cout << "status:" << status << endl;
       next_to_process->setText( 1, status );
       QString message = current_http_response;
