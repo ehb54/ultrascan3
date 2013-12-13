@@ -285,6 +285,7 @@ bool US_Saxs_Util::run_best()
    p++;
    QStringList csvfiles;
    QStringList triangles;
+   vector < double > one_over_triangles;
 
    for ( int i = 0; i < (int) outfiles.size(); ++i )
    {
@@ -359,7 +360,9 @@ bool US_Saxs_Util::run_best()
 
       csvfiles  << outfiles[ i ] + expected_base + ".be";
       triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase ) ), "" ).replace( QRegExp( "^0*" ) , "" );
-
+      one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
+                                    1e0 / triangles[ i ].toDouble() : -1e0 );
+      
       for ( int i = 0; i < (int) expected.size(); ++i )
       {
          if ( !QFile( expected[ i ] ).exists() )
@@ -373,6 +376,8 @@ bool US_Saxs_Util::run_best()
          }
       }
    }
+
+   bool do_linear_fit = outfiles.size() > 2;
 
    {
       QFile f( QString( "%1.csv" ).arg( inputbase ) );
@@ -411,22 +416,38 @@ bool US_Saxs_Util::run_best()
             << "EIGENVALUES OF Drr TENSOR (1/A^3) [1]"
             << "EIGENVALUES OF Drr TENSOR (1/A^3) [2]"
             << "EIGENVALUES OF Drr TENSOR (1/A^3) [3]"
+            << "EIGENVALUES OF Drr (1/A^3) 1/3 Trace"
+            << "EIGENVALUES OF Drr Anisotropy"
             << "EIGENVALUES OF Drr TENSOR (1/s) [1]"
             << "EIGENVALUES OF Drr TENSOR (1/s) [2]"
             << "EIGENVALUES OF Drr TENSOR (1/s) [3]"
+            << "EIGENVALUES OF Drr(Exact) (1/s) 1/3 Trace"
             << "EIGENVALUES OF Dtt TENSOR (1/A) [1]"
             << "EIGENVALUES OF Dtt TENSOR (1/A) [2]"
             << "EIGENVALUES OF Dtt TENSOR (1/A) [3]"
+            << "EIGENVALUES OF Dtt (1/A) 1/3 Trace"
+            << "EIGENVALUES OF Dtt Anisotropy"
             << "EIGENVALUES OF Dtt TENSOR (cm^2/s) [1]"
             << "EIGENVALUES OF Dtt TENSOR (cm^2/s) [2]"
             << "EIGENVALUES OF Dtt TENSOR (cm^2/s) [3]"
+            << "EIGENVALUES OF Dtt(Exact) (cm^2/s) 1/3 Trace"
             << "Vector between Center of Viscosity/Centroid [Dx]"
             << "Vector between Center of Viscosity/Centroid [Dy]"
             << "Vector between Center of Viscosity/Centroid [Dz]"
-            << "INTRINSIC VISCOSITY AT THE CENTER OF VISCOSITY CHI"
-            << "CHI*VOLUME (A^3)"
-            << "ETA (cm^3/g)"
+            << "Intrinsic Viscosity at the Center of Viscosity Chi"
+            << "Intrinsic Viscosity at the Center of Viscosity Chi*Volume (A^3)"
+            << "Eta (cm^3/g)"
             ;
+
+      set < int > extrapolate;
+      for ( int i = 17; i < 44; ++i )
+      {
+         extrapolate.insert( i );
+      }
+      for ( int i = 47; i < 50; ++i )
+      {
+         extrapolate.insert( i );
+      }
 
       for ( int i = 0 ; i < (int) csvfiles.size(); ++i )
       {
@@ -441,23 +462,63 @@ bool US_Saxs_Util::run_best()
          return false;
       }
       QTextStream ts( &f );
+      if ( do_linear_fit )
+      {
+         ts << ",\"Extrapolation to zero triangles (b)\",\"Sigma b\",\"Slope (a)\",\"Sigma a\",\"chi^2\"" << endl;
+      }
+
       ts << "\"Triangles used\",";
       for ( int i = 0; i < (int) triangles.size(); ++i )
       {
-         ts << triangles[ i ] << ",";
+         ts << "=" << triangles[ i ] << ",";
+      }
+      ts << endl;
+      ts << "\"1/Triangles used\",";
+      for ( int i = 0; i < (int) triangles.size(); ++i )
+      {
+         ts <<  QString( "=%1" ).arg(  one_over_triangles[ i ] );
       }
       ts << endl;
 
       for ( int i = 0; i < (int) csv_header.size(); ++i )
       {
          ts << QString( "\"%1\"," ).arg( csv_header[ i ] );
+
+         bool missing_data = false;
+
+         vector < double > y;
+         double a;
+         double b;
+         double siga;
+         double sigb;
+         double chi2;
+
          for ( int j = 0; j < (int) csvresults.size(); ++j )
          {
             if ( (int) csvresults[ j ].size() > i )
             {
-               ts << QString( "=%1" ).arg( csvresults[ j ][ i ].toDouble(), 0, 'g', 8 ) << ",";
+               y.push_back( csvresults[ j ][ i ].toDouble() );
+               ts << QString( "=%1" ).arg( y.back(), 0, 'g', 8 ) << ",";
             } else {
                ts << "?,";
+               missing_data = true;
+            }
+            if ( !missing_data && do_linear_fit && extrapolate.count( j ) )
+            {
+               linear_fit( one_over_triangles,
+                           y,
+                           a,
+                           b,
+                           siga,
+                           sigb,
+                           chi2 );
+               ts << QString( "=%1,=%2,=%3,=%4,=%5," )
+                  .arg( b,    0, 'g', 8 )
+                  .arg( sigb, 0, 'g', 8 )
+                  .arg( a,    0, 'g', 8 )
+                  .arg( siga, 0, 'g', 8 )
+                  .arg( chi2, 0, 'g', 8 )
+                  ;
             }
          }
          ts << endl;
@@ -557,8 +618,26 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
       qsl << rx_3.cap( 2 );
       qsl << rx_3.cap( 3 );
    }      
-   ts.readLine();
-   ts.readLine();
+   {
+      QString qs = ts.readLine();
+      if ( rx_1.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "Drr (1/A^3) 1/3 trace" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_1.cap( 1 );
+   }
+   {
+      QString qs = ts.readLine();
+      if ( rx_1.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "Drr (1/A^3) Anisotropy" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_1.cap( 1 );
+   }
    ts.readLine();
    ts.readLine();
    { // eigenvalues of Drr (1/s)
@@ -573,7 +652,17 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
       qsl << rx_3.cap( 2 );
       qsl << rx_3.cap( 3 );
    }
-   ts.readLine();
+   {
+      QString qs = ts.readLine();
+      qs.replace( QRegExp( "\\s+1/s\\s*$" ), "" );
+      if ( rx_1.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "Drr (1/s) 1/3 trace" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_1.cap( 1 );
+   }
    ts.readLine();
    ts.readLine();
    { // eigenvalues of Dtt (1/a^3)
@@ -588,8 +677,26 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
       qsl << rx_3.cap( 2 );
       qsl << rx_3.cap( 3 );
    }      
-   ts.readLine();
-   ts.readLine();
+   {
+      QString qs = ts.readLine();
+      if ( rx_1.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "Dtt (1/A) 1/3 trace" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_1.cap( 1 );
+   }
+   {
+      QString qs = ts.readLine();
+      if ( rx_1.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "Dtt (1/A) Anisotropy" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_1.cap( 1 );
+   }
    ts.readLine();
    ts.readLine();
    { // eigenvalues of Dtt (cm^2/s)
@@ -604,7 +711,17 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
       qsl << rx_3.cap( 2 );
       qsl << rx_3.cap( 3 );
    }      
-   ts.readLine();
+   {
+      QString qs = ts.readLine();
+      qs.replace( QRegExp( "\\s+cm^2/s\\s*$" ), "" );
+      if ( rx_1.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "Dtt (cm^2/s) 1/3 trace" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_1.cap( 1 );
+   }
    ts.readLine();
    ts.readLine();
    ts.readLine();
