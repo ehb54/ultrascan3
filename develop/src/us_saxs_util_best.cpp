@@ -437,7 +437,7 @@ bool US_Saxs_Util::run_best()
          {
             if ( (int) csvresults[ j ].size() > i )
             {
-               ts << csvresults[ j ][ i ].toDouble() << ",";
+               ts << QString( "%1" ).arg( csvresults[ j ][ i ].toDouble(), 0, 'g', 8 ).lower() << ",";
             } else {
                ts << "?,";
             }
