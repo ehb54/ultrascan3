@@ -408,6 +408,24 @@ bool US_Saxs_Util::run_best()
             << "Trace of Drr TENSOR (1/A^3) [1,1]"
             << "Trace of Drr TENSOR (1/A^3) [2,2]"
             << "Trace of Drr TENSOR (1/A^3) [3,3]"
+            << "EIGENVALUES OF Drr TENSOR (1/A^3) [1]"
+            << "EIGENVALUES OF Drr TENSOR (1/A^3) [2]"
+            << "EIGENVALUES OF Drr TENSOR (1/A^3) [3]"
+            << "EIGENVALUES OF Drr TENSOR (1/s) [1]"
+            << "EIGENVALUES OF Drr TENSOR (1/s) [2]"
+            << "EIGENVALUES OF Drr TENSOR (1/s) [3]"
+            << "EIGENVALUES OF Dtt TENSOR (1/A) [1]"
+            << "EIGENVALUES OF Dtt TENSOR (1/A) [2]"
+            << "EIGENVALUES OF Dtt TENSOR (1/A) [3]"
+            << "EIGENVALUES OF Dtt TENSOR (cm^2/s) [1]"
+            << "EIGENVALUES OF Dtt TENSOR (cm^2/s) [2]"
+            << "EIGENVALUES OF Dtt TENSOR (cm^2/s) [3]"
+            << "Vector between Center of Viscosity/Centroid [Dx]"
+            << "Vector between Center of Viscosity/Centroid [Dy]"
+            << "Vector between Center of Viscosity/Centroid [Dz]"
+            << "INTRINSIC VISCOSITY AT THE CENTER OF VISCOSITY CHI"
+            << "CHI*VOLUME (A^3)"
+            << "ETA (cm^3/g)"
             ;
 
       for ( int i = 0 ; i < (int) csvfiles.size(); ++i )
@@ -467,8 +485,9 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
    }
 
    QRegExp rx_skip( "^\\s*$" );
-   QRegExp rx_1( "\\s+([0-9.+-E]+)\\s*$" );
-   QRegExp rx_3( "\\s+([0-9.+-E]+)\\s+([0-9.+-E]+)\\s+([0-9.+-E]+)\\s*$" );
+   QRegExp rx_1 ( "\\s+([0-9.+-E]+)\\s*$" );
+   QRegExp rx_3 ( "\\s+([0-9.+-E]+)\\s+([0-9.+-E]+)\\s+([0-9.+-E]+)\\s*$" );
+   QRegExp rx_3s( "Dx =\\s+([0-9.+-E]+)\\s+Dy =\\s+([0-9.+-E]+)\\s+Dz =\\s+([0-9.+-E]+)\\s*$" );
 
    QTextStream ts( &f );
    for ( int i = 0; i < 4; ++i )
@@ -525,6 +544,105 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
       }
       ts.readLine();
    }   
+   ts.readLine();
+   { // eigenvalues of Drr (1/a^3)
+      QString qs = ts.readLine();
+      if ( rx_3.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "eigenvalues of Drr (1/a^3)" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_3.cap( 1 );
+      qsl << rx_3.cap( 2 );
+      qsl << rx_3.cap( 3 );
+   }      
+   ts.readLine();
+   ts.readLine();
+   ts.readLine();
+   ts.readLine();
+   { // eigenvalues of Drr (1/s)
+      QString qs = ts.readLine();
+      if ( rx_3.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "eigenvalues of Drr (1/s)" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_3.cap( 1 );
+      qsl << rx_3.cap( 2 );
+      qsl << rx_3.cap( 3 );
+   }
+   ts.readLine();
+   ts.readLine();
+   ts.readLine();
+   { // eigenvalues of Dtt (1/a^3)
+      QString qs = ts.readLine();
+      if ( rx_3.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "eigenvalues of Dtt (1/a^3)" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_3.cap( 1 );
+      qsl << rx_3.cap( 2 );
+      qsl << rx_3.cap( 3 );
+   }      
+   ts.readLine();
+   ts.readLine();
+   ts.readLine();
+   ts.readLine();
+   { // eigenvalues of Dtt (cm^2/s)
+      QString qs = ts.readLine();
+      if ( rx_3.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "eigenvalues of Dtt (cm^2/s)" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_3.cap( 1 );
+      qsl << rx_3.cap( 2 );
+      qsl << rx_3.cap( 3 );
+   }      
+   ts.readLine();
+   ts.readLine();
+   ts.readLine();
+   ts.readLine();
+   { // Vector between Center of Viscosity/Centroid
+      QString qs = ts.readLine();
+      if ( rx_3s.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "Vector between Center of Viscosity/Centroid" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_3s.cap( 1 );
+      qsl << rx_3s.cap( 2 );
+      qsl << rx_3s.cap( 3 );
+   }      
+   ts.readLine();
+   for ( int i = 0; i < 2; ++i )
+   {
+      QString qs = ts.readLine();
+      if ( rx_1.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2 %3" ).arg( f.name() ).arg( i ).arg( "CHI" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_1.cap( 1 );
+   }
+   ts.readLine();
+   {
+      QString qs = ts.readLine();
+      if ( rx_1.search( qs ) == -1 )
+      {
+         qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "ETA" );
+         f.close();
+         return qsl;
+      }
+      qsl << rx_1.cap( 1 );
+   }
    f.close();
    return qsl;
 }
