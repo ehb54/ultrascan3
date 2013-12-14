@@ -47,6 +47,7 @@ int main( int argc, char* argv[] )
 US_ConvertGui::US_ConvertGui() : US_Widgets()
 {
    ExpData.invID = US_Settings::us_inv_ID();
+   QFont font2( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 2 );
 
    // Ensure data directories are there
    QDir dir;
@@ -104,8 +105,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::blue );
    le_status->setPalette( stpal );
-   le_status->setFont( QFont( US_GuiSettings::fontFamily(),
-                              US_GuiSettings::fontSize() - 2 ) );
+   lb_status->setFont( font2 ); 
+   le_status->setFont( font2 ); 
 
    // Display Run ID
    QLabel* lb_runID  = us_label(      tr( "Run ID:" ) );
@@ -186,6 +187,12 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_description      = us_label(    tr( "Description:" ), -1 );
    lb_description ->setMaximumWidth( 175 );
    le_description      = us_lineedit( "", 1 );
+   lb_runID2     ->setFont( font2 ); 
+   le_runID2     ->setFont( font2 ); 
+   lb_dir        ->setFont( font2 ); 
+   le_dir        ->setFont( font2 ); 
+   lb_description->setFont( font2 ); 
+   le_description->setFont( font2 ); 
 
    // Cell / Channel / Wavelength
    QGridLayout* ccw    = new QGridLayout();
@@ -214,7 +221,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    pb_cancelref        = us_pushbutton( tr( "Undo Reference Scans" ), false );
    // Define intensity profile
    pb_intensity        = us_pushbutton( tr( "Show Intensity Profile" ), false );
-   // drop scan
+   // Drop scan
    pb_dropScan         = us_pushbutton( tr( "Drop Selected Triples" ), false );
    QLabel* lb_solution = us_label(      tr( "Solution:" ) );
    le_solutionDesc     = us_lineedit(   "", 1, true );
@@ -230,6 +237,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_to->setStep( 1 );
+
    // Exclude and Include pushbuttons
    pb_exclude          = us_pushbutton( tr( "Exclude Scan(s)" ), false );
    pb_include          = us_pushbutton( tr( "Include All" ), false );
@@ -245,8 +253,6 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    settings ->addWidget( wg_investigator, row,   0, 1, 2 );
    settings ->addWidget( le_investigator, row++, 2, 1, 2 );
    settings ->addLayout( disk_controls,   row++, 0, 1, 4 );
-   settings ->addWidget( lb_status,       row,   0, 1, 1 );
-   settings ->addWidget( le_status,       row++, 1, 1, 3 );
    settings ->addWidget( lb_run,          row++, 0, 1, 4 );
    settings ->addWidget( pb_import,       row,   0, 1, 2 );
    settings ->addWidget( pb_editRuninfo,  row++, 2, 1, 2 );
@@ -265,7 +271,6 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    settings ->addWidget( cb_lambplot,     row,   1, 1, 1 );
    settings ->addWidget( pb_lambprev,     row,   2, 1, 1 );
    settings ->addWidget( pb_lambnext,     row++, 3, 1, 1 );
-   settings ->addWidget( lb_runinfo,      row++, 0, 1, 4 );
 
    textBoxes->addWidget( lb_runID2,       row,   0 );
    textBoxes->addWidget( le_runID2,       row++, 1, 1, 3 );
@@ -289,7 +294,6 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    ccw      ->addWidget( lb_solution,     row,   0 );
    ccw      ->addWidget( le_solutionDesc, row++, 1, 1, 3 );
 
-   settings ->addLayout( textBoxes,       row++, 0, 1, 4 );
    settings ->addLayout( ccw,             row++, 0, 1, 4 );
    settings ->addWidget( lb_scan,         row++, 0, 1, 4 );
    settings ->addWidget( lb_from,         row,   0, 1, 2 );
@@ -333,6 +337,15 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lw_todoinfo->setMaximumHeight ( 90 );
    lw_todoinfo->setSelectionMode( QAbstractItemView::NoSelection );
    todo->addWidget( lw_todoinfo );
+
+   QGridLayout* descripts = new QGridLayout;
+
+   int  drow = 0;
+   descripts->addWidget( lb_status,      drow,   0, 1, 1 );
+   descripts->addWidget( le_status,      drow++, 1, 1, 3 );
+   descripts->addWidget( lb_runinfo,     drow++, 0, 1, 4 );
+   descripts->addLayout( textBoxes,      drow++, 0, 1, 4 );
+
 
    // Connect signals and slots
    if ( isadmin )
@@ -397,6 +410,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    
    right->addLayout( plot );
    right->addLayout( todo );
+   right->addLayout( descripts );
 
    QHBoxLayout* main = new QHBoxLayout( this );
    main->setSpacing         ( 2 );
@@ -898,7 +912,7 @@ void US_ConvertGui::enableRunIDControl( bool setEnable )
 void US_ConvertGui::enableScanControls( void )
 {
 DbgLv(1) << "CGui:enabScContr: isMwl" << isMwl;
-   if ( isMwl )  return;
+//   if ( isMwl )  return;
    triple_index();
 DbgLv(1) << "CGui:enabScContr: trx dax" << tripListx << tripDatax;
 
@@ -1954,7 +1968,7 @@ void US_ConvertGui::focus_to( double scan )
 
 void US_ConvertGui::focus( int from, int to )
 {
-   if ( from == 0 && to == 0 )
+   if ( ( from == 0 && to == 0 )  ||  isMwl )
    {
       pb_exclude->setEnabled( false );
       pb_include->setEnabled( false );
@@ -3325,8 +3339,7 @@ DbgLv(1) << " PlCur: PlTit RTN";
 DbgLv(1) << " PlCur: PlAll RTN";
    
    // Set the Scan spin boxes
-   if ( ! isMwl )
-      enableScanControls();
+   enableScanControls();
 DbgLv(1) << " PlCur: EScCt RTN";
 }
 
@@ -3636,13 +3649,10 @@ void US_ConvertGui::show_mwl_control( bool show )
    pb_lambprev->setVisible( show );
    pb_lambnext->setVisible( show );
 
-   lb_scan    ->setVisible( !show );
-   lb_from    ->setVisible( !show );
-   ct_from    ->setVisible( !show );
-   lb_to      ->setVisible( !show );
-   ct_to      ->setVisible( !show );
+#if 1
    pb_exclude ->setVisible( !show );
    pb_include ->setVisible( !show );
+#endif
 
    adjustSize();
 }

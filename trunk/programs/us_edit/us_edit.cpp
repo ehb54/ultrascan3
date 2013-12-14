@@ -2366,7 +2366,7 @@ DbgLv(1) << "PlMwl: ccx index rtype rval" << ccx << index << rectype << recvalu;
    le_info->setText( runID + "  (" + desc + ")" );
 
    // Plot Title
-   QString     title   = tr( "Radial Intensity Data\n"
+   QString     title   = tr( "Pseudo Absorbance Data\n"
                              "Run ID: %1\n"
                              "Cell: %2  Channel: %3  %4: %5" )
                          .arg( runID ).arg( scell ).arg( schan )
@@ -2376,7 +2376,7 @@ DbgLv(1) << "PlMwl:  title" << title;
    data_plot->setTitle    ( title );
    data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Absorbance (OD)" ) );
 
-   data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); 
+   data_plot->detachItems ( QwtPlotItem::Rtti_PlotCurve ); 
    v_line = NULL;
 
    int     nscan  = data.scanData.size();
@@ -2410,8 +2410,11 @@ DbgLv(1) << "PlMwl:    START xa_RAD";
 
       for ( int ii = 0; ii < nscan; ii++ )
       {
-if(!includes.contains(ii)) DbgLv(1) << "PlMwl:     ii" << ii << "NOT INCLUDED";
-         if ( ! includes.contains( ii ) ) continue;
+         if ( ! includes.contains( ii ) )
+         {
+DbgLv(1) << "PlMwl:     ii" << ii << "NOT INCLUDED";
+            continue;
+         }
 
          US_DataIO::Scan*  scn = &data.scanData[ ii ];
          int     kk     = ptxs;
