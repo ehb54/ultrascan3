@@ -32,6 +32,8 @@ unix {
   # DEFINES += NO_DB
   MPIPATH  = /share/apps64/openmpi
   MPILIBS  = -L$${MPIPATH}/lib -lmpi -lopen-pal
+  QMAKE_CXXFLAGS_RELEASE = -O3
+  QMAKE_CFLAGS_RELEASE   = -O3
 }
 
 win32 {
