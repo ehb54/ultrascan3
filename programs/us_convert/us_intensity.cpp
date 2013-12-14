@@ -9,8 +9,9 @@
 US_Intensity::US_Intensity( 
       const QString runID, 
       const QString triple, 
-      const QVector< double >& data ) 
-    : US_WidgetsDialog( 0, 0 ), dataIn( data )
+      const QVector< double >& data,
+      const QVector< double >& scan ) 
+    : US_WidgetsDialog( 0, 0 ), dataIn( data ), scanIn( scan )
 {
    setWindowTitle( tr( "Details for Average Intensity Values" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -52,9 +53,11 @@ US_Intensity::US_Intensity(
       data_plot->setTitle( tr( "Intensity Profile\n"
                                "for wavelengths: " )
                             + ctriple.mid( 2 ) );
+      data_plot->setAxisTitle( QwtPlot::xBottom,
+                               tr( "Wavelength.Scan Number" ) );
    }
 
-   draw_plot( dataIn );
+   draw_plot( dataIn, scanIn );
 
    // Just automatically save the plot in a file
    QString dir    = US_Settings::reportDir() + "/" + runID;
@@ -69,13 +72,17 @@ US_Intensity::US_Intensity(
 
 }
 
-void US_Intensity::draw_plot( const QVector< double >& scanData )
+void US_Intensity::draw_plot( const QVector< double >& scanData,
+                              const QVector< double >& scanNbrs )
 {
    // Set up the axes and titles
    QwtText axisTitle = data_plot->axisTitle( QwtPlot::yLeft );
-   
+
+   int     szdata    = scanData.size();
+   double  xmin      = qFloor( scanNbrs[ 0 ] );
+   double  xmax      = qFloor( scanNbrs[ szdata - 1 ] ) + 1.0;
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
-   data_plot->setAxisScale    ( QwtPlot::xBottom, 1.0, scanData.size() );
+   data_plot->setAxisScale    ( QwtPlot::xBottom, xmin, xmax );
    data_plot->setAxisMaxMinor ( QwtPlot::xBottom, 0 );
    data_plot->setAxisTitle    ( QwtPlot::yLeft, "Intensity" );
 
@@ -87,22 +94,23 @@ void US_Intensity::draw_plot( const QVector< double >& scanData )
    sym.setSize ( 6 );
 
    // Get the scan data in the right format
-   double* x = new double[ scanData.size() ];
-   double* y = new double[ scanData.size() ];
+   QVector< double > xvec( szdata );
+   QVector< double > yvec( szdata );
+   double* xx = xvec.data();
+   double* yy = yvec.data();
 
-   for ( int i = 0; i < scanData.size(); i++ )
+   for ( int ii = 0; ii < szdata; ii++ )
    {
-      x[ i ] = i + 1;
-      y[ i ] = scanData[ i ];
+      xx[ ii ] = scanNbrs[ ii ];
+      yy[ ii ] = scanData[ ii ];
    }
+qDebug() << "Ints:dr_pl: xx0 xxn" << xx[0] << xx[scanData.size()-1];
 
    QwtPlotCurve* c1 = us_curve( data_plot, tr( "Intensity" ) );
    c1->setPen   ( QPen( QBrush( Qt::yellow ), 2 ) );
    c1->setSymbol( sym );
-   c1->setData  ( x, y, scanData.size() );
+   c1->setData  ( xx, yy, szdata );
 
    data_plot->replot();
-
-   delete [] x;
-   delete [] y;
 }
+

@@ -2345,16 +2345,51 @@ DbgLv(1) << "CGui: (7)referDef=" << referenceDefined;
 void US_ConvertGui::show_intensity( void )
 {
    QString triple = out_triples[ 0 ];
+   QVector< double > scan_nbrs;
+   
    if ( isMwl )
-   {
+   {  // For MWL, set special triple string and build scan numbers
+      int riscans    = ExpData.RI_nscans;
+      int riwvlns    = ExpData.RI_nwvlns;
       triple      = out_channels[ 0 ] + " / "
          + QString::number( ExpData.RIwvlns[ 0 ] ) + "-"
-         + QString::number( ExpData.RIwvlns[ ExpData.RI_nwvlns - 1 ] );
+         + QString::number( ExpData.RIwvlns[ riwvlns - 1 ] );
+
+      // Scan numbers are composite wavelength.scan
+      double scndiv  = 0.1;
+      double scnmax  = (double)riscans;
+      double scnfra  = scnmax * scndiv;
+      while ( scnfra > 0.999 )
+      {
+         scndiv        *= 0.1;
+         scnfra         = scnmax * scndiv;
+      }
+DbgLv(1) << "CGui: show_intensity  scndiv scnfra" << scndiv << scnfra;
+
+      for ( int ii = 0; ii < riwvlns; ii++ )
+      {
+         double wvbase  = (double)ExpData.RIwvlns[ ii ];
+
+         for ( int jj = 0; jj < riscans; jj++ )
+         {
+            double scnnbr  = wvbase + scndiv * (double)( jj + 1 );
+            scan_nbrs << scnnbr;
+         }
+      }
    }
    
+   else
+   {  // For non-MWL, set scan numbers vector
+      for ( int ii = 0; ii < ExpData.RIProfile.size(); ii++ )
+         scan_nbrs << (double)( ii + 1 );
+   }
+DbgLv(1) << "CGui: show_intensity  scn1 scnn" << scan_nbrs[0]
+ << scan_nbrs[ scan_nbrs.size() - 1 ] << "isMwl" << isMwl;
+
    US_Intensity* dialog
       = new US_Intensity( runID, triple,
-                        ( const QVector< double > ) ExpData.RIProfile );
+                        ( const QVector< double > ) ExpData.RIProfile,
+                        ( const QVector< double > ) scan_nbrs );
    dialog->exec();
    qApp->processEvents();
 }

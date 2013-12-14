@@ -18,13 +18,17 @@ class US_Intensity : public US_WidgetsDialog
       //! \param runID   The runID of the experiment
       //! \param triple  The triple to place in the name of the saved file
       //! \param data    A reference to a list of doubles to plot 
-      US_Intensity( const QString, const QString, const QVector< double >& );
+      //! \param scan    A reference to a list of scan number
+      US_Intensity( const QString, const QString, const QVector< double >&,
+                                   const QVector< double >& );
 
    private:
       QwtPlot*     data_plot;
       const QVector< double >& dataIn;
+      const QVector< double >& scanIn;
 
-      void         draw_plot    ( const QVector< double >& );
+      void         draw_plot    ( const QVector< double >&,
+                                  const QVector< double >& );
 
 };
 #endif
