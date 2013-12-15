@@ -89,7 +89,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrfinenessangle ->setMinimumWidth   ( 150 );
    connect( le_bestmsrfinenessangle, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrfinenessangle( const QString & ) ) );
 
-   lbl_bestmsrmaxtriangles = new QLabel      ( tr( "MSROLL: maximum output triangles\n(recommended value 75000)" ), this );
+   lbl_bestmsrmaxtriangles = new QLabel      ( tr( "MSROLL: maximum output triangles\n(recommended max value 60000)" ), this );
    lbl_bestmsrmaxtriangles ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestmsrmaxtriangles ->setMinimumHeight( minHeight1 *  2 );
    lbl_bestmsrmaxtriangles ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
