@@ -60,7 +60,7 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    dir.mkpath( US_Settings::reportDir()   );
    dir.mkpath( US_Settings::etcDir()      );
 
-   setWindowTitle( tr( "Convert Legacy Raw Data" ) );
+   setWindowTitle( tr( "Import Experimental Data (Beckman-XLA/XLI, Aviv Fluorescence, OpenAUC Multiwavelength)" ) );
    setPalette( US_GuiSettings::frameColor() );
 
    isMwl        = false;
