@@ -15,6 +15,7 @@
 #include "../include/us_hydrodyn_grid_atob.h"
 #include "../include/us_revision.h"
 #include "../include/us3_defines.h"
+#include "../include/us_hydrodyn_best.h"
 #include <qregexp.h>
 #include <qfont.h>
 #include <stdlib.h>
@@ -416,6 +417,7 @@ US_Hydrodyn::~US_Hydrodyn()
 {
 }
 
+
 void US_Hydrodyn::setupGUI()
 {
    int minHeight1 = 27;
@@ -426,10 +428,6 @@ void US_Hydrodyn::setupGUI()
    lookup_tables->insertItem(tr("Add/Edit &Atom"), this, SLOT(edit_atom()));
    lookup_tables->insertItem(tr("Add/Edit &Residue"), this, SLOT(residue()));
    lookup_tables->insertItem(tr("Add/Edit &SAXS coefficients"), this, SLOT(do_saxs()));
-   if ( advanced_config.expert_mode )
-   {
-      lookup_tables->insertItem(tr("Make test set"), this, SLOT( make_test_set() ) );
-   }
 
    somo_options = new QPopupMenu;
    somo_options->insertItem(tr("&ASA Calculation"), this, SLOT(show_asa()));
@@ -754,6 +752,13 @@ void US_Hydrodyn::setupGUI()
    pb_comparative->setPalette( PALET_PUSHB );
    connect(pb_comparative, SIGNAL(clicked()), SLOT(select_comparative()));
 
+   pb_best = new QPushButton(tr("BEST"), this);
+   pb_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_best->setEnabled(true);
+   pb_best->setPalette( PALET_PUSHB );
+   connect(pb_best, SIGNAL(clicked()), SLOT( best_analysis()));
+   pb_best->hide();
+
    pb_open_hydro_results = new QPushButton(tr("Open Hydrodynamic Calculations File"), this);
    Q_CHECK_PTR(pb_open_hydro_results);
    pb_open_hydro_results->setMinimumHeight(minHeight1);
@@ -1036,7 +1041,13 @@ void US_Hydrodyn::setupGUI()
    //   background->addWidget(pb_anaflex_run, j, 0);
    //   background->addWidget(pb_anaflex_load_results, j, 1);
    //   j++;
-   background->addWidget(pb_comparative, j, 0);
+   {
+      QBoxLayout * hbl = new QHBoxLayout( 0 );
+      hbl->addWidget( pb_comparative );
+      hbl->addWidget( pb_best );
+      background->addLayout( hbl, j, 0 );
+   }
+   // background->addWidget(pb_comparative, j, 0);
    background->addWidget(pb_open_hydro_results, j, 1);
    j++;
    background->addWidget(pb_select_save_params, j, 0);
@@ -1057,6 +1068,14 @@ void US_Hydrodyn::setupGUI()
    fixWinButtons( this );
 }
 
+void US_Hydrodyn::set_expert( bool expert )
+{
+   if ( expert )
+   {
+      pb_best->show();
+      lookup_tables->insertItem(tr("Make test set"), this, SLOT( make_test_set() ) );
+   }
+}
 
 void US_Hydrodyn::set_disabled()
 {
@@ -2171,7 +2190,7 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
          if ((*model)[i].active)
          {
             fwrite(&((*model)[i].bead_cog_coordinate.axis[0]), sizeof(float), 3, f);
-            float color[3] = { .2f, .2f, ((*model)[i].all_beads.size() / 5) > 1 ? 1 : ((*model)[i].all_beads.size() / 5) };
+            float color[3] = { .2f, .2f, ((int)(*model)[i].all_beads.size() / 5) > 1 ? 1 : ((float)(*model)[i].all_beads.size() / 5.0f) };
             fwrite(color, sizeof(float), 3, f);
             fwrite(&(*model)[i].bead_computed_radius, sizeof(float), 1, f);
          }
@@ -2184,7 +2203,7 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
       {
          if ((*model)[i].active)
          {
-            float color[3] = { .2f, .2f, ((*model)[i].all_beads.size() / 5) > 1 ? 1 : ((*model)[i].all_beads.size() / 5) };
+            float color[3] = { .2f, .2f, ((*model)[i].all_beads.size() / 5) > 1 ? 1 : ((float)(*model)[i].all_beads.size() / 5.0f) };
             fprintf(f,"%f %f %f %f %f %f %f\n",
                     (*model)[i].bead_coordinate.axis[0],
                     (*model)[i].bead_coordinate.axis[1],
@@ -3886,6 +3905,29 @@ void US_Hydrodyn::select_comparative()
          new US_Hydrodyn_Comparative(&comparative, this, &comparative_widget);
       fixWinButtons( comparative_window );
       comparative_window->show();
+   }
+}
+
+void US_Hydrodyn::best_analysis()
+{
+   if ( best_widget )
+   {
+      if ( best_window->isVisible() )
+      {
+         best_window->raise();
+      }
+      else
+      {
+         best_window->show();
+      }
+      return;
+   }
+   else
+   {
+      best_window = 
+         (QWidget *) new US_Hydrodyn_Best( this, & best_widget );
+      fixWinButtons( best_window );
+      best_window->show();
    }
 }
 

@@ -355,26 +355,26 @@ class US_EXTERN US_Saxs_Util
       bool project_1d(QString wikitag, unsigned int pngsplits);
 
       // linear fit code, solves  y = a + bx, returing sigmas & chi2
-      void linear_fit( 
-                      vector < double > x, 
-                      vector < double > y, 
-                      double &a,
-                      double &b,
-                      double &siga,
-                      double &sigb,
-                      double &chi2
-                      );
+      static void linear_fit( 
+                             vector < double > x, 
+                             vector < double > y, 
+                             double &a,
+                             double &b,
+                             double &siga,
+                             double &sigb,
+                             double &chi2
+                              );
 
-      void linear_fit( 
-                      vector < double > x, 
-                      vector < double > y, 
-                      vector < double > e, 
-                      double &a,
-                      double &b,
-                      double &siga,
-                      double &sigb,
-                      double &chi2
-                      );
+      static void linear_fit( 
+                             vector < double > x, 
+                             vector < double > y, 
+                             vector < double > e, 
+                             double &a,
+                             double &b,
+                             double &siga,
+                             double &sigb,
+                             double &chi2
+                              );
 
       // linear fit code, solves  y = kx, returing chi2
       bool scaling_fit( 

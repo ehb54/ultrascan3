@@ -98,6 +98,7 @@ SOURCES += \
   src/us_config_gui.cpp \
   src/us_constraint_control.cpp \
   src/us_create_global.cpp \
+  src/us_csv.cpp \
   src/us_data_io.cpp \
   src/us_database.cpp \
   src/us_db.cpp \
@@ -183,6 +184,7 @@ SOURCES += \
   src/us_hydrodyn_batch.cpp \
   src/us_hydrodyn_batch_movie_opts.cpp \
   src/us_hydrodyn_bead_output.cpp \
+  src/us_hydrodyn_best.cpp \
   src/us_hydrodyn_bd.cpp \
   src/us_hydrodyn_bd_core.cpp \
   src/us_hydrodyn_bd_options.cpp \
@@ -443,6 +445,7 @@ HEADERS += \
   include/us_config_gui.h \
   include/us_constraint_control.h \
   include/us_create_global.h \
+  include/us_csv.h \
   include/us_data_io.h \
   include/us_database.h \
   include/us_db.h \
@@ -530,6 +533,7 @@ HEADERS += \
   include/us_hydrodyn_bd_options.h \
   include/us_hydrodyn_bd_load_results_opts.h \
   include/us_hydrodyn_bead_output.h \
+  include/us_hydrodyn_best.h \
   include/us_hydrodyn_cluster.h \
   include/us_hydrodyn_cluster_additional.h \
   include/us_hydrodyn_cluster_advanced.h \

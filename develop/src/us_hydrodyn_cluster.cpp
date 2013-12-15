@@ -1939,7 +1939,7 @@ unsigned int US_Hydrodyn_Cluster::dmd_entry_count( QString inputfile )
    // for current file, create DMDTime/Temp/Relax/Run commands
    
    vector < unsigned int > active_csv_rows;
-   bool ok = false;
+   // bool ok = false;
    for ( unsigned int i = 0; i < (unsigned int)csv_dmd.prepended_names.size(); i++ )
    {
       if ( inputfile == csv_dmd.prepended_names[ i ] &&
@@ -1947,7 +1947,7 @@ unsigned int US_Hydrodyn_Cluster::dmd_entry_count( QString inputfile )
            csv_dmd.data[ i ][ 1 ] == "Y" )
       {
          active_csv_rows.push_back( i );
-         ok = true;
+         // ok = true;
       }
    }
    return active_csv_rows.size();

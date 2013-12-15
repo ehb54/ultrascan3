@@ -396,10 +396,12 @@ void US_Hydrodyn_Cluster_Results::select_all()
 
 bool US_Hydrodyn_Cluster_Results::clean_dir( QString dir ) 
 {
+   qDebug( QString( "clean_dir %1" ).arg( dir ) );
+   system( "pwd" );
    errormsg = "";
    if ( !QDir::setCurrent( dir ) )
    {
-      errormsg = QString( tr( "Error: can not change to directory %1" ) ).arg( dir );
+      errormsg = QString( tr( "Error: can not change to directory %1 (clean_dir)" ) ).arg( dir );
       return false;
    }
 
@@ -419,7 +421,7 @@ bool US_Hydrodyn_Cluster_Results::clean_dir( QString dir )
             }
             if ( !QDir::setCurrent( dir ) )
             {
-               errormsg = QString( tr( "Error: can not change to directory %1" ) ).arg( dir );
+               errormsg = QString( tr( "Error: can not change to directory %1 (clean_dir2)" ) ).arg( dir );
                return false;
             }
             QDir qd;
@@ -497,7 +499,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    if ( !QDir::setCurrent( completed_dir ) )
    {
-      errormsg = QString( tr( "Error: can not change to directory %1" ) ).arg( completed_dir );
+      errormsg = QString( tr( "Error: can not change to directory %1 (load_one_result)" ) ).arg( completed_dir );
       return false;
    }
 
@@ -516,7 +518,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    if ( !QDir::setCurrent( tmp_dir ) )
    {
-      errormsg = QString( tr( "Error: can not change to directory %1" ) ).arg( tmp_dir );
+      errormsg = QString( tr( "Error: can not change to directory %1 (load_one_result2)" ) ).arg( tmp_dir );
       return false;
    }
 
@@ -639,7 +641,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
          QString dirPath = tmp_dir + SLASH + subDirPath;
          if ( !QDir::setCurrent( dirPath ) )
          {
-            errormsg = QString( tr( "Error: can not change to directory %1" ) ).arg( dirPath );
+            errormsg = QString( tr( "Error: can not change to directory %1 (load_one_result3)" ) ).arg( dirPath );
             return false;
          }
 
@@ -739,7 +741,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    if ( !QDir::setCurrent( tmp_dir ) )
    {
-      errormsg = QString( tr( "Error: can not change to directory %1" ) ).arg( tmp_dir );
+      errormsg = QString( tr( "Error: can not change to directory %1 (load_one_result4)" ) ).arg( tmp_dir );
       return false;
    }
 
@@ -820,7 +822,7 @@ bool US_Hydrodyn_Cluster_Results::merge_this_csv( QString dest, vector < QString
 
    if ( !QDir::setCurrent( tmp_dir ) )
    {
-      errormsg = QString( tr( "Error: can not change to directory %1" ) ).arg( tmp_dir );
+      errormsg = QString( tr( "Error: can not change to directory %1 (merge_this_csv)" ) ).arg( tmp_dir );
       return false;
    }
 
@@ -936,7 +938,7 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
       }
       if ( !QDir::setCurrent( from_dir ) )
       {
-         errormsg = QString( tr( "Error: can not change to directory %1" ) ).arg( from_dir );
+         errormsg = QString( tr( "Error: can not change to directory %1 (move_to_results)" ) ).arg( from_dir );
          return false;
       }
 

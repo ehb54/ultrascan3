@@ -3829,7 +3829,8 @@ cercaint(int k)
 static void
 formato()
 {
-   int p, conferma;
+   // int  p;
+   int conferma;
    float passo;
 
    pulisci();
@@ -3864,7 +3865,7 @@ formato()
    form1 = 1;
    vel = 1;
    k = 1;
-   p = 0;
+   // p = 0;
    fl = (float) 0.022;
    q1 = 3;
    numdis = 1;

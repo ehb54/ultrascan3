@@ -168,6 +168,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Batch *batch_window;
       bool comparative_widget;
       US_Hydrodyn_Comparative *comparative_window;
+      bool best_widget;
+      QWidget *best_window;
       QString residue_filename;
       QLabel *lbl_table;
       void do_reset();
@@ -372,6 +374,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       //      QPushButton *pb_anaflex_load_results;
 
       QPushButton *pb_comparative;
+      QPushButton *pb_best;
 
       QProgressBar *progress;
       // TextEdit *e;
@@ -759,6 +762,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
    public:
 
+      void set_expert( bool );
+
       bool select_from_directory_history( QString &dir, QWidget *parent = (QWidget *)0 );
       void add_to_directory_history( QString dir );
 
@@ -921,6 +926,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void set_overwrite();
       void set_saveParams();
       void select_comparative();
+      void best_analysis();
 
       // dmd functions:
       void dmd_run();
