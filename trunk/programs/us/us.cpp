@@ -574,11 +574,11 @@ void US_Win::help( int index )
         tr( "UltraScan Credits" ),
         tr( "The UltraScan-III and LIMS-III software were developed by:\n\n"
             "Emre Brookes, Weiming Cao, Bruce Dubbs, Gary Gorbet, " 
-            "Jeremy Mann, Suresh Marru, Marlon Pierce, Raminder Singh "
-			   "and Dan Zollars.\n\n"
+            "Jeremy Mann, Suresh Marru, Shabhaz Memon, Marlon Pierce, \n"
+	    "Raminder Singh and Dan Zollars.\n\n"
             "Project Director: Borries Demeler\n\n"
             "This development was funded by NIH Grant RR022200 "
-				"and NSF grant TG-MCB070039.\n\n"
+	    "and NSF grants ACI-1339649 and TG-MCB070039.\n\n"
 
             "We thank the following individuals for contributions "
             "to the UltraScan project:\n\n"
@@ -587,6 +587,7 @@ void US_Win::help( int index )
             " * Jose Garcia de la Torre\n"
             " * Brad Langford\n"
             " * Thomas Laue\n"
+            " * Luitgard Nagel-Steger\n"
             " * Zach Ozer\n"
             " * Karel Planken\n"
             " * Mattia Rocco\n"
@@ -594,6 +595,7 @@ void US_Win::help( int index )
             " * Bruno Spotorno\n"
             " * Giovanni Tassara\n"
             " * Oleg Tsodikov\n"
+            " * Johannes Walter\n"
             " * Nikola Wenta\n"
             " * Josh Wilson" ) );
 
