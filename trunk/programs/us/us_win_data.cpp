@@ -140,13 +140,13 @@ namespace US_WinData
     },
     
     { P_CONVERT,  1, 0, "us_convert",
-      QObject::tr( "Loading Legacy Data Conversion" ),
-      QObject::tr( "Legacy Data Conversion Program" )
+      QObject::tr( "Loading Experimental Data Import Routine" ),
+      QObject::tr( "Experimental Data Import Program" )
     },
     
     { P_EXPORT,   1, 0, "us_export",
-      QObject::tr( "Loading Legacy Data Export" ),
-      QObject::tr( "Legacy Data Export Program" )
+      QObject::tr( "Loading OpenAUC Data Export Routine" ),
+      QObject::tr( "OpenAUC Data Export Program" )
     },
     
     { P_FITMEN,   0, 0, "us_fit_meniscus",

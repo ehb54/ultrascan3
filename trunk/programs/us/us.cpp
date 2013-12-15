@@ -172,15 +172,15 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   //addMenu(  P_GLOBFITSP, tr( "Global &Spectrum Fit" ),        fit );
   
   QMenu* utilities   = new QMenu( tr( "&Utilities" ),   this );
-  addMenu(  P_CONVERT  , tr( "&Convert Legacy Data"              ), utilities );
-  addMenu(  P_EXPORT   , tr( "&Export Legacy Data"               ), utilities );
+  addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
+  addMenu(  P_EXPORT   , tr( "&Export OpenAUC Data"              ), utilities );
   addMenu(  P_FITMEN   , tr( "&Fit Meniscus"                     ), utilities );
   addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator"         ), utilities );
   addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );
   addMenu(  P_ROTORCAL , tr( "R&otor Calibration"                ), utilities );
   addMenu(  P_LICENSE  , tr( "&License Manager"                  ), utilities );
-  addMenu(  P_VHWCOMB ,  tr( "Combine &Distribution Plots (vHW)" ), utilities );
-  addMenu(  P_DDCOMB   , tr( "Combine D&iscrete Distributions"   ), utilities );
+  addMenu(  P_VHWCOMB ,  tr( "Combine Distribution &Plots (vHW)" ), utilities );
+  addMenu(  P_DDCOMB   , tr( "Combine &Discrete Distributions"   ), utilities );
   addMenu(  P_GLOMODL ,  tr( "Create Global &Model"              ), utilities );
 
   QMenu* simulation  = new QMenu( tr( "S&imulation" ),  this );
