@@ -60,6 +60,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       QLineEdit *                             le_bestbestmw;
       QLabel *                                lbl_bestbestwatr;
       QLineEdit *                             le_bestbestwatr;
+      QLabel *                                lbl_bestexpand;
+      QLineEdit *                             le_bestexpand;
       QCheckBox *                             cb_bestbestvc;
       QLabel *                                lbl_opt_label;
 #ifdef WIN32
@@ -97,6 +99,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       void                                    update_bestrcoaln( const QString & );
       void                                    update_bestbestmw( const QString & );
       void                                    update_bestbestwatr( const QString & );
+      void                                    update_bestexpand( const QString & );
       void                                    set_bestbestvc();
       void                                    hide_opt_label();
       void                                    update_bestmsrcoalescer( const QString & );

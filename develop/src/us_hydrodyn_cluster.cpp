@@ -4392,6 +4392,32 @@ bool US_Hydrodyn_Cluster::additional_processing(
          QString common_prefix = cb_for_mpi->isChecked() ? "../common/" : "";
          QString my_msroll_radii = ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_radii.join( "" );
          if (  (*cluster_additional_methods_options_selected).count( method ) &&
+               (*cluster_additional_methods_options_selected)[ method ].count( "bestexpand" ) &&
+               (*cluster_additional_methods_options_selected)[ method ][ "bestexpand" ].toDouble() > 0e0
+               )
+         {
+            double mult = (*cluster_additional_methods_options_selected)[ method ][ "bestexpand" ].toDouble();
+            editor_msg( "dark blue", QString( tr( "Radii will be multiplied by %1" ) ).arg( mult ) );
+            QStringList my_qsl_radii = ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_radii;
+            QRegExp rx( "(^\\d+) (\\S+) (\\S+) (\\S+)" );
+            for ( int i = 0; i < (int) my_qsl_radii.size(); ++i )
+            {
+               if ( rx.search( my_qsl_radii[ i ] ) == -1 )
+               {
+                  editor_msg( "red", tr( "radii multiplication failed" ) );
+                  return false;
+               } else {
+                  my_qsl_radii[ i ] = QString( "%1 %2 %3 %4\n" )
+                     .arg( rx.cap( 1 ) )
+                     .arg( rx.cap( 2 ).toDouble() * mult )
+                     .arg( rx.cap( 3 ) )
+                     .arg( rx.cap( 4 ) );
+               }
+            }
+            my_msroll_radii = my_qsl_radii.join( "" );
+         }
+
+         if (  (*cluster_additional_methods_options_selected).count( method ) &&
                (*cluster_additional_methods_options_selected)[ method ].count( "bestbestwatr" ) )
          {
             {

@@ -440,7 +440,7 @@ void US_Hydrodyn_Best::load()
    }
 
    int line = 3;
-   disconnect( lb_data, SIGNAL( selectionChanged() ) );
+   disconnect( lb_data, SIGNAL( selectionChanged() ), 0, 0 );
    while ( !ts.atEnd() )
    {
       ++line;
@@ -497,6 +497,7 @@ void US_Hydrodyn_Best::load()
 
 void US_Hydrodyn_Best::cb_changed()
 {
+   // qDebug( "cb_changed" );
    QString text = lb_data->selectedItem()->text();
    cb_checked[ text ].clear();
    for ( int i = 0; i < (int) cb_points.size(); ++i )
@@ -511,6 +512,7 @@ void US_Hydrodyn_Best::cb_changed()
    
 void US_Hydrodyn_Best::data_selected()
 {
+   // qDebug( "data_selected" );
    QString text = lb_data->selectedItem()->text();
    // qDebug( QString( "selected %1 map %2" ).arg( text ).arg( parameter_data[ text ].size() ) );
    plot_data->clear();
@@ -792,7 +794,7 @@ void US_Hydrodyn_Best::save_results()
    pb_save_results->setEnabled( false );
    pb_load        ->setEnabled( false );
    lb_data        ->setEnabled( false );
-   disconnect( lb_data, SIGNAL( selectionChanged() ) );
+   disconnect( lb_data, SIGNAL( selectionChanged() ), 0, 0 );
 
    int cur_selected = lb_data->index( lb_data->selectedItem() );
 

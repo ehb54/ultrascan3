@@ -62,7 +62,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrprober ->setMinimumHeight( minHeight1 );
    lbl_bestmsrprober ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_bestmsrprober ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_bestmsrprober ->setMinimumWidth ( QFontMetrics( lbl_bestmsrprober->font() ).maxWidth() * 47 );
+   lbl_bestmsrprober ->setMinimumWidth ( QFontMetrics( lbl_bestmsrprober->font() ).maxWidth() * 41 );
 
    le_bestmsrprober = new QLineEdit     ( this, "bestmsrprober Line Edit" );
    le_bestmsrprober ->setText           ( parameters->count( "bestmsrprober" ) ? ( *parameters )[ "bestmsrprober" ] : "" );
@@ -78,7 +78,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrfinenessangle ->setMinimumHeight( minHeight1 *  2 );
    lbl_bestmsrfinenessangle ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_bestmsrfinenessangle ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_bestmsrfinenessangle ->setMinimumWidth ( QFontMetrics( lbl_bestmsrfinenessangle->font() ).maxWidth() * 47 );
+   lbl_bestmsrfinenessangle ->setMinimumWidth ( QFontMetrics( lbl_bestmsrfinenessangle->font() ).maxWidth() * 41 );
 
    le_bestmsrfinenessangle = new QLineEdit     ( this, "bestmsrfinenessangle Line Edit" );
    le_bestmsrfinenessangle ->setText           ( parameters->count( "bestmsrfinenessangle" ) ? ( *parameters )[ "bestmsrfinenessangle" ] : "" );
@@ -94,7 +94,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrmaxtriangles ->setMinimumHeight( minHeight1 *  2 );
    lbl_bestmsrmaxtriangles ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_bestmsrmaxtriangles ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_bestmsrmaxtriangles ->setMinimumWidth ( QFontMetrics( lbl_bestmsrmaxtriangles->font() ).maxWidth() * 47 );
+   lbl_bestmsrmaxtriangles ->setMinimumWidth ( QFontMetrics( lbl_bestmsrmaxtriangles->font() ).maxWidth() * 41 );
 
    le_bestmsrmaxtriangles = new QLineEdit     ( this, "bestmsrmaxtriangles Line Edit" );
    le_bestmsrmaxtriangles ->setText           ( parameters->count( "bestmsrmaxtriangles" ) ? ( *parameters )[ "bestmsrmaxtriangles" ] : "" );
@@ -110,7 +110,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestrcoalnmin ->setMinimumHeight( minHeight1 );
    lbl_bestrcoalnmin ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_bestrcoalnmin ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_bestrcoalnmin ->setMinimumWidth ( QFontMetrics( lbl_bestrcoalnmin->font() ).maxWidth() * 47 );
+   lbl_bestrcoalnmin ->setMinimumWidth ( QFontMetrics( lbl_bestrcoalnmin->font() ).maxWidth() * 41 );
 
    le_bestrcoalnmin = new QLineEdit     ( this, "bestrcoalnmin Line Edit" );
    le_bestrcoalnmin ->setText           ( parameters->count( "bestrcoalnmin" ) ? ( *parameters )[ "bestrcoalnmin" ] : "" );
@@ -126,7 +126,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestrcoalnmax ->setMinimumHeight( minHeight1 );
    lbl_bestrcoalnmax ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_bestrcoalnmax ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_bestrcoalnmax ->setMinimumWidth ( QFontMetrics( lbl_bestrcoalnmax->font() ).maxWidth() * 47 );
+   lbl_bestrcoalnmax ->setMinimumWidth ( QFontMetrics( lbl_bestrcoalnmax->font() ).maxWidth() * 41 );
 
    le_bestrcoalnmax = new QLineEdit     ( this, "bestrcoalnmax Line Edit" );
    le_bestrcoalnmax ->setText           ( parameters->count( "bestrcoalnmax" ) ? ( *parameters )[ "bestrcoalnmax" ] : "" );
@@ -142,7 +142,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestrcoaln ->setMinimumHeight( minHeight1 );
    lbl_bestrcoaln ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_bestrcoaln ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_bestrcoaln ->setMinimumWidth ( QFontMetrics( lbl_bestrcoaln->font() ).maxWidth() * 47 );
+   lbl_bestrcoaln ->setMinimumWidth ( QFontMetrics( lbl_bestrcoaln->font() ).maxWidth() * 41 );
 
    le_bestrcoaln = new QLineEdit     ( this, "bestrcoaln Line Edit" );
    le_bestrcoaln ->setText           ( parameters->count( "bestrcoaln" ) ? ( *parameters )[ "bestrcoaln" ] : "" );
@@ -158,7 +158,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestbestmw ->setMinimumHeight( minHeight1 );
    lbl_bestbestmw ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_bestbestmw ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_bestbestmw ->setMinimumWidth ( QFontMetrics( lbl_bestbestmw->font() ).maxWidth() * 47 );
+   lbl_bestbestmw ->setMinimumWidth ( QFontMetrics( lbl_bestbestmw->font() ).maxWidth() * 41 );
 
    le_bestbestmw = new QLineEdit     ( this, "bestbestmw Line Edit" );
    le_bestbestmw ->setText           ( parameters->count( "bestbestmw" ) ? ( *parameters )[ "bestbestmw" ] : "" );
@@ -174,7 +174,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestbestwatr ->setMinimumHeight( minHeight1 );
    lbl_bestbestwatr ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_bestbestwatr ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_bestbestwatr ->setMinimumWidth ( QFontMetrics( lbl_bestbestwatr->font() ).maxWidth() * 47 );
+   lbl_bestbestwatr ->setMinimumWidth ( QFontMetrics( lbl_bestbestwatr->font() ).maxWidth() * 41 );
 
    le_bestbestwatr = new QLineEdit     ( this, "bestbestwatr Line Edit" );
    le_bestbestwatr ->setText           ( parameters->count( "bestbestwatr" ) ? ( *parameters )[ "bestbestwatr" ] : "" );
@@ -185,11 +185,27 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestbestwatr ->setMinimumWidth   ( 150 );
    connect( le_bestbestwatr, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestbestwatr( const QString & ) ) );
 
+   lbl_bestexpand = new QLabel      ( tr( "BEST: expand radii by this multiplier (default:blank=1, no expansion)" ), this );
+   lbl_bestexpand ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestexpand ->setMinimumHeight( minHeight1 );
+   lbl_bestexpand ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestexpand ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestexpand ->setMinimumWidth ( QFontMetrics( lbl_bestexpand->font() ).maxWidth() * 41 );
+
+   le_bestexpand = new QLineEdit     ( this, "bestexpand Line Edit" );
+   le_bestexpand ->setText           ( parameters->count( "bestexpand" ) ? ( *parameters )[ "bestexpand" ] : "" );
+   le_bestexpand ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestexpand ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestexpand ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestexpand ->setMinimumHeight  ( minHeight1 );
+   le_bestexpand ->setMinimumWidth   ( 150 );
+   connect( le_bestexpand, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestexpand( const QString & ) ) );
+
    cb_bestbestvc = new QCheckBox    ( tr( "BEST: Compute the Viscosity Factor in the Center of Viscosity {longer calculation} (default:checked)" ), this );
    cb_bestbestvc ->setMinimumHeight ( minHeight1 );
    cb_bestbestvc ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
    cb_bestbestvc ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_bestbestvc ->setMinimumWidth  ( QFontMetrics( cb_bestbestvc->font() ).maxWidth() * 47 );
+   cb_bestbestvc ->setMinimumWidth  ( QFontMetrics( cb_bestbestvc->font() ).maxWidth() * 41 );
 
    if ( !parameters->count( "bestbestvc" ) )
    {
@@ -212,7 +228,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrcoalescer ->setMinimumHeight( minHeight1 );
    lbl_bestmsrcoalescer ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_bestmsrcoalescer ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_bestmsrcoalescer ->setMinimumWidth ( QFontMetrics( lbl_bestmsrcoalescer->font() ).maxWidth() * 47 );
+   lbl_bestmsrcoalescer ->setMinimumWidth ( QFontMetrics( lbl_bestmsrcoalescer->font() ).maxWidth() * 41 );
 
    le_bestmsrcoalescer = new QLineEdit     ( this, "bestmsrcoalescer Line Edit" );
    widgets_opt_label.push_back( lbl_bestmsrcoalescer );
@@ -229,7 +245,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    cb_bestbestv ->setMinimumHeight ( minHeight1 );
    cb_bestbestv ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
    cb_bestbestv ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_bestbestv ->setMinimumWidth  ( QFontMetrics( cb_bestbestv->font() ).maxWidth() * 47 );
+   cb_bestbestv ->setMinimumWidth  ( QFontMetrics( cb_bestbestv->font() ).maxWidth() * 41 );
 
    widgets_opt_label.push_back( cb_bestbestv );
    cb_bestbestv ->setChecked        ( parameters->count( "bestbestv" ) && ( *parameters )[ "bestbestv" ] == "true" ? true : false );
@@ -239,7 +255,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    cb_bestbestp ->setMinimumHeight ( minHeight1 );
    cb_bestbestp ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
    cb_bestbestp ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_bestbestp ->setMinimumWidth  ( QFontMetrics( cb_bestbestp->font() ).maxWidth() * 47 );
+   cb_bestbestp ->setMinimumWidth  ( QFontMetrics( cb_bestbestp->font() ).maxWidth() * 41 );
 
    widgets_opt_label.push_back( cb_bestbestp );
    cb_bestbestp ->setChecked        ( parameters->count( "bestbestp" ) && ( *parameters )[ "bestbestp" ] == "true" ? true : false );
@@ -249,7 +265,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    cb_bestbestna ->setMinimumHeight ( minHeight1 );
    cb_bestbestna ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
    cb_bestbestna ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_bestbestna ->setMinimumWidth  ( QFontMetrics( cb_bestbestna->font() ).maxWidth() * 47 );
+   cb_bestbestna ->setMinimumWidth  ( QFontMetrics( cb_bestbestna->font() ).maxWidth() * 41 );
 
    widgets_opt_label.push_back( cb_bestbestna );
    cb_bestbestna ->setChecked        ( parameters->count( "bestbestna" ) && ( *parameters )[ "bestbestna" ] == "true" ? true : false );
@@ -332,6 +348,12 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestbestwatr );
    hbl->addWidget( le_bestbestwatr );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_bestexpand );
+   hbl->addWidget( le_bestexpand );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
@@ -443,6 +465,11 @@ void US_Hydrodyn_Cluster_Best::closeEvent( QCloseEvent *e )
    {
       parameters->erase( "bestbestwatr" );
    }
+   if ( parameters->count( "bestexpand" ) &&
+        (*parameters)[ "bestexpand" ].isEmpty() )
+   {
+      parameters->erase( "bestexpand" );
+   }
    if ( parameters->count( "bestmsrcoalescer" ) &&
         (*parameters)[ "bestmsrcoalescer" ].isEmpty() )
    {
@@ -510,6 +537,11 @@ void US_Hydrodyn_Cluster_Best::update_bestbestmw( const QString & )
 void US_Hydrodyn_Cluster_Best::update_bestbestwatr( const QString & )
 {
    ( *parameters )[ "bestbestwatr" ] = le_bestbestwatr->text();
+}
+
+void US_Hydrodyn_Cluster_Best::update_bestexpand( const QString & )
+{
+   ( *parameters )[ "bestexpand" ] = le_bestexpand->text();
 }
 
 void US_Hydrodyn_Cluster_Best::set_bestbestvc()
@@ -630,6 +662,7 @@ void US_Hydrodyn_Cluster_Best::update_fields()
    le_bestrcoaln                                   ->setText( parameters->count( "bestrcoaln" ) ? ( *parameters )[ "bestrcoaln" ] : "" );
    le_bestbestmw                                   ->setText( parameters->count( "bestbestmw" ) ? ( *parameters )[ "bestbestmw" ] : "" );
    le_bestbestwatr                                 ->setText( parameters->count( "bestbestwatr" ) ? ( *parameters )[ "bestbestwatr" ] : "" );
+   le_bestexpand                                   ->setText( parameters->count( "bestexpand" ) ? ( *parameters )[ "bestexpand" ] : "" );
    cb_bestbestvc                                   ->setChecked( parameters->count( "bestbestvc" ) && ( *parameters )[ "bestbestvc" ] == "true" ? true : false );
    le_bestmsrcoalescer                             ->setText( parameters->count( "bestmsrcoalescer" ) ? ( *parameters )[ "bestmsrcoalescer" ] : "" );
    cb_bestbestv                                    ->setChecked( parameters->count( "bestbestv" ) && ( *parameters )[ "bestbestv" ] == "true" ? true : false );
