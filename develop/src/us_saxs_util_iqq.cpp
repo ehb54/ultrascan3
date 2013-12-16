@@ -324,6 +324,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "bestbestmw|"
                       "bestmsrradiifile|"
                       "bestmsrpatternfile|"
+                      "bestexpand|"
                       "bestrun|"
 
                       "useiqtargetev|"
@@ -473,6 +474,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                       "bestbestmw|"
                       "bestmsrradiifile|"
                       "bestmsrpatternfile|"
+                      "bestexpand|"
 
                       "iqtargetev|"
 
