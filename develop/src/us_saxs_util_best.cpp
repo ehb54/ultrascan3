@@ -4,6 +4,8 @@
 
 bool US_Saxs_Util::run_best()
 {
+   QStringList save_output_files = output_files;
+
    errormsg = "";
    QStringList required;
    required 
@@ -270,6 +272,7 @@ bool US_Saxs_Util::run_best()
                // qDebug( QString( "outfiles.back() is %1" ).arg( outfiles.back() ) );
             } else {
                errormsg += "could not correctly find output files in rcoal stdout\n";
+               // lower max triangles
             }
          }
       }
@@ -278,6 +281,19 @@ bool US_Saxs_Util::run_best()
 
    if ( !errormsg.isEmpty() )
    {
+      return false;
+   }
+
+   if ( !outfiles.size() )
+   {
+      if ( max_triangles > 25000 )
+      {
+         control_parameters[ "bestmsrmaxtriangles" ] = 
+            QString( "%1" ).arg( max_triangles - 2500 );
+         output_files = save_output_files;
+         return run_best();
+      }
+      errormsg += QString( "too few triangles %1 after rcoal fail" ).arg( max_triangles );
       return false;
    }
 
