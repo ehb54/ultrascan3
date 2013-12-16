@@ -47,7 +47,6 @@ int main( int argc, char* argv[] )
 US_ConvertGui::US_ConvertGui() : US_Widgets()
 {
    ExpData.invID = US_Settings::us_inv_ID();
-   //QFont font2( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 2 );
 
    // Ensure data directories are there
    QDir dir;
@@ -105,8 +104,6 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::blue );
    le_status->setPalette( stpal );
-   //lb_status->setFont( font2 ); 
-   //le_status->setFont( font2 ); 
 
    // Display Run ID
    QLabel* lb_runID  = us_label(      tr( "Run ID:" ) );
@@ -135,7 +132,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    pb_details        = us_pushbutton( tr( "Run Details" ), false );
 
    // Load MWL data
-   pb_impmwl         = us_pushbutton( tr( "Import MWL Run from HD" ) );
+   pb_impmwl         = us_pushbutton( tr( "Import MWL Data from HD" ) );
    le_lambraw        = us_lineedit(   tr( "" ), 0, true );
 
    // Set the wavelength tolerance for c/c/w determination
@@ -267,14 +264,14 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    ccw      ->addWidget( lb_runinfo,      row++, 0, 1, 4 );
    ccw      ->addWidget( lb_runID2,       row,   0, 1, 1 );
-   ccw      ->addWidget( le_runID2,       row++, 1, 1, 2 );
+   ccw      ->addWidget( le_runID2,       row++, 1, 1, 3 );
    ccw      ->addWidget( lb_dir,          row,   0, 1, 1 );
-   ccw      ->addWidget( le_dir,          row++, 1, 1, 2 );
+   ccw      ->addWidget( le_dir,          row++, 1, 1, 3 );
    ccw      ->addWidget( lb_triple,       row++, 0, 1, 4 );
    ccw      ->addWidget( lb_description,  row,   0, 1, 1 );
-   ccw      ->addWidget( le_description,  row++, 1, 1, 2 );
+   ccw      ->addWidget( le_description,  row++, 1, 1, 3 );
    ccw      ->addWidget( lw_triple,       row,   0, 6, 1 );
-   ccw      ->addWidget( lb_ccwinfo,      row++, 1, 1, 4 );
+   ccw      ->addWidget( lb_ccwinfo,      row++, 1, 1, 3 );
    ccw      ->addWidget( cb_centerpiece,  row++, 1, 1, 3 );
    ccw      ->addWidget( pb_solution,     row,   1 );
    ccw      ->addWidget( pb_applyAll,     row++, 2 );
@@ -405,10 +402,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
 
    main->addLayout( left );
    main->addLayout( right );
-
-   //main->setStretch( 0, 2 );
-   //main->setStretch( 1, 3 );
-   //adjustSize();
+   main->setStretchFactor( left,  3 );
+   main->setStretchFactor( right, 5 );
 
 DbgLv(1) << "CGui: GUI setup complete";
    reset();

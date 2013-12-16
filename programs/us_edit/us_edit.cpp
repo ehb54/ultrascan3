@@ -4361,6 +4361,7 @@ DbgLv(1) << "od_radius_limit  value" << value;
 // Write edit to all wavelengths of the current cell/channel
 void US_Edit::write_mwl()
 {
+   QString saved_info = le_info->text();
    QString str;
    if ( ! isMwl )
    {
@@ -4522,6 +4523,7 @@ DbgLv(1) << "EDT:WrMwl:  dax celchn" << odax << celchn;
                     + "." + editLabel + "."
                     + files[ idax ].section( ".", -5, -5 )
                     + "." + scell + "." + schan + ".";
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Loop to output a file/db-record for each wavelength of the cell/channel
 
@@ -4551,6 +4553,8 @@ DbgLv(1) << "EDT:WrMwl:   odax,outData.size" << odax << outData.size();
 DbgLv(1) << "EDT:WrMwl:    rawGUID" << rawGUID;
 
       // Output the edit XML file
+      le_info->setText( tr( "Writing " ) + filename + " ..." );
+      qApp->processEvents();
       int wrstat       = write_xml_file( filename, triple, editGUID, rawGUID );
 DbgLv(1) << "EDT:WrMwl:     write_xml_file stat" << wrstat;
 
@@ -4575,17 +4579,21 @@ DbgLv(1) << "EDT:WrMwl:     write_xml_file stat" << wrstat;
 
          // Output the edit database record
          wrstat = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
+DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
 
          if ( wrstat != 0 )
             return;
       }  // END:  DB output
    }  // END:  wavelength-in-cellchannel loop
 
+   QApplication::restoreOverrideCursor();
    changes_made = false;
    pb_write    ->setEnabled( false );
    pb_writemwl ->setEnabled( false );
    pb_write    ->setIcon   ( check );
    pb_writemwl ->setIcon   ( check );
+   le_info->setText( saved_info );
+   qApp->processEvents();
 DbgLv(1) << "EDT:WrMwl: DONE";
 }
 
