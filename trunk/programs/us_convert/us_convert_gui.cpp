@@ -47,7 +47,7 @@ int main( int argc, char* argv[] )
 US_ConvertGui::US_ConvertGui() : US_Widgets()
 {
    ExpData.invID = US_Settings::us_inv_ID();
-   QFont font2( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 2 );
+   //QFont font2( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 2 );
 
    // Ensure data directories are there
    QDir dir;
@@ -105,8 +105,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::blue );
    le_status->setPalette( stpal );
-   lb_status->setFont( font2 ); 
-   le_status->setFont( font2 ); 
+   //lb_status->setFont( font2 ); 
+   //le_status->setFont( font2 ); 
 
    // Display Run ID
    QLabel* lb_runID  = us_label(      tr( "Run ID:" ) );
@@ -114,7 +114,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_runID->setVisible( false ); // for now
 
    le_runID          = us_lineedit(   "", 1, true );
-   le_runID ->setMinimumWidth( 280 );
+   //le_runID ->setMinimumWidth( 280 );
    // Add this later, after tabs: settings->addWidget( le_runID, row++, 1 );
    le_runID ->setVisible ( false );  // for now
 
@@ -142,14 +142,14 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    QLabel* lb_tolerance = us_label(   tr( "Separation Tolerance:" ) );
    ct_tolerance      = us_counter ( 2, 0.0, 100.0, 5.0 );
    ct_tolerance->setStep( 1 );
-   ct_tolerance->setMinimumWidth( 80 );
+   //ct_tolerance->setMinimumWidth( 80 );
 
    // Set up MWL controls
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( font );
-   ct_tolerance->adjustSize();
-   int   fwid    = fmet.maxWidth();
-   int   swid    = fwid * 5;
+   //ct_tolerance->adjustSize();
+   //int   fwid    = fmet.maxWidth();
+   //int   swid    = fwid * 5;
    static QChar clambda( 955 );   // Lambda character
 
    lb_mwlctrl   = us_banner  ( tr( "Multi-Wavelength Lambda Controls" ) );
@@ -163,36 +163,28 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    pb_lambnext  = us_pushbutton( "next",     true, -2 );
    pb_lambprev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
    pb_lambnext->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
-   lb_lambstrt->setMinimumWidth( swid );
-   cb_lambstrt->setMinimumWidth( swid );
-   lb_lambstop->setMinimumWidth( swid );
-   cb_lambstop->setMinimumWidth( swid );
+   //lb_lambstrt->setMinimumWidth( swid );
+   //cb_lambstrt->setMinimumWidth( swid );
+   //lb_lambstop->setMinimumWidth( swid );
+   //cb_lambstop->setMinimumWidth( swid );
 
    mwl_connect( true );
 
    QLabel* lb_runinfo  = us_banner(   tr( "Run Information" ) );
 
    // Change Run ID
-   QGridLayout* textBoxes = new QGridLayout();
-
    QLabel* lb_runID2   = us_label(    tr( "Run ID:" ) );
    le_runID2           = us_lineedit( "", 1 );
-   le_runID2 ->setMinimumWidth( 225 );
+   //le_runID2 ->setMinimumWidth( 225 );
 
    // Directory
    QLabel* lb_dir      = us_label(    tr( "Directory:" ) );
    le_dir              = us_lineedit( "", 1, true );
 
    // Description
-   lb_description      = us_label(    tr( "Description:" ), -1 );
-   lb_description ->setMaximumWidth( 175 );
+   lb_description      = us_label(    tr( "Description:" ), 0 );
+   //lb_description ->setMaximumWidth( 175 );
    le_description      = us_lineedit( "", 1 );
-   lb_runID2     ->setFont( font2 ); 
-   le_runID2     ->setFont( font2 ); 
-   lb_dir        ->setFont( font2 ); 
-   le_dir        ->setFont( font2 ); 
-   lb_description->setFont( font2 ); 
-   le_description->setFont( font2 ); 
 
    // Cell / Channel / Wavelength
    QGridLayout* ccw    = new QGridLayout();
@@ -228,12 +220,12 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Scan Controls
    lb_scan             = us_banner(     tr( "Scan Controls" ) );
    // Scan focus from
-   lb_from             = us_label(      tr( "Scan Focus from:" ), -1 );
+   lb_from             = us_label(      tr( "Scan Focus from:" ), 0 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_from             = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_from->setStep( 1 );
    // Scan focus to
-   lb_to               = us_label(      tr( "Scan Focus to:" ), -1 );
+   lb_to               = us_label(      tr( "Scan Focus to:" ), 0 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_to->setStep( 1 );
@@ -272,14 +264,15 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    settings ->addWidget( pb_lambprev,     row,   2, 1, 1 );
    settings ->addWidget( pb_lambnext,     row++, 3, 1, 1 );
 
-   textBoxes->addWidget( lb_runID2,       row,   0 );
-   textBoxes->addWidget( le_runID2,       row++, 1, 1, 3 );
-   textBoxes->addWidget( lb_dir,          row,   0 );
-   textBoxes->addWidget( le_dir,          row++, 1, 1, 3 );
-   textBoxes->addWidget( lb_description,  row,   0 );
-   textBoxes->addWidget( le_description,  row++, 1, 1, 3 );
 
+   ccw      ->addWidget( lb_runinfo,      row++, 0, 1, 4 );
+   ccw      ->addWidget( lb_runID2,       row,   0, 1, 1 );
+   ccw      ->addWidget( le_runID2,       row++, 1, 1, 2 );
+   ccw      ->addWidget( lb_dir,          row,   0, 1, 1 );
+   ccw      ->addWidget( le_dir,          row++, 1, 1, 2 );
    ccw      ->addWidget( lb_triple,       row++, 0, 1, 4 );
+   ccw      ->addWidget( lb_description,  row,   0, 1, 1 );
+   ccw      ->addWidget( le_description,  row++, 1, 1, 2 );
    ccw      ->addWidget( lw_triple,       row,   0, 6, 1 );
    ccw      ->addWidget( lb_ccwinfo,      row++, 1, 1, 4 );
    ccw      ->addWidget( cb_centerpiece,  row++, 1, 1, 3 );
@@ -293,15 +286,11 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    ccw      ->addWidget( pb_dropScan,     row++, 2 );
    ccw      ->addWidget( lb_solution,     row,   0 );
    ccw      ->addWidget( le_solutionDesc, row++, 1, 1, 3 );
+   ccw      ->addWidget( lb_status,       row,   0 );
+   ccw      ->addWidget( le_status,       row++, 1, 1, 3 );
 
    settings ->addLayout( ccw,             row++, 0, 1, 4 );
-   settings ->addWidget( lb_scan,         row++, 0, 1, 4 );
-   settings ->addWidget( lb_from,         row,   0, 1, 2 );
-   settings ->addWidget( ct_from,         row++, 2, 1, 2 );
-   settings ->addWidget( lb_to,           row,   0, 1, 2 );
-   settings ->addWidget( ct_to,           row++, 2, 1, 2 );
-   settings ->addWidget( pb_exclude,      row,   0, 1, 2 );
-   settings ->addWidget( pb_include,      row++, 2, 1, 2 );
+
    settings ->addWidget( pb_reset,        row,   0, 1, 1 );
    settings ->addWidget( pb_help,         row,   1, 1, 1 );
    settings ->addWidget( pb_saveUS3,      row,   2, 1, 1 );
@@ -313,7 +302,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                                    tr( "Radius (in cm)" ), 
                                    tr( "Absorbance" ) );
 
-   data_plot->setMinimumSize( 600, 400 );
+   data_plot->setMinimumSize( 500, 300 );
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
@@ -326,26 +315,25 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
                                Qt::LeftButton, Qt::ControlModifier );
 
+   QGridLayout* todo = new QGridLayout();
+
    // Instructions ( missing to do items )
-   QVBoxLayout* todo = new QVBoxLayout();
-
-   QLabel* lb_todoinfo = us_banner( tr( "Instructions ( to do list )" ), -1 );
-   todo->addWidget( lb_todoinfo );
-
+   QLabel* lb_todoinfo = us_banner( tr( "Instructions ( to do list )" ), 0 );
    lw_todoinfo = us_listwidget();
    lw_todoinfo->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
    lw_todoinfo->setMaximumHeight ( 90 );
    lw_todoinfo->setSelectionMode( QAbstractItemView::NoSelection );
-   todo->addWidget( lw_todoinfo );
 
-   QGridLayout* descripts = new QGridLayout;
-
-   int  drow = 0;
-   descripts->addWidget( lb_status,      drow,   0, 1, 1 );
-   descripts->addWidget( le_status,      drow++, 1, 1, 3 );
-   descripts->addWidget( lb_runinfo,     drow++, 0, 1, 4 );
-   descripts->addLayout( textBoxes,      drow++, 0, 1, 4 );
-
+   // Scan controls:
+   todo->addWidget( lb_scan,         row++, 0, 1, 4 );
+   todo->addWidget( lb_from,         row,   0, 1, 2 );
+   todo->addWidget( ct_from,         row++, 2, 1, 2 );
+   todo->addWidget( lb_to,           row,   0, 1, 2 );
+   todo->addWidget( ct_to,           row++, 2, 1, 2 );
+   todo->addWidget( pb_exclude,      row,   0, 1, 2 );
+   todo->addWidget( pb_include,      row++, 2, 1, 2 );
+   todo->addWidget( lb_todoinfo,     row++, 0, 1, 4 );
+   todo->addWidget( lw_todoinfo,     row++, 0, 1, 4 );
 
    // Connect signals and slots
    if ( isadmin )
@@ -410,7 +398,6 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    
    right->addLayout( plot );
    right->addLayout( todo );
-   right->addLayout( descripts );
 
    QHBoxLayout* main = new QHBoxLayout( this );
    main->setSpacing         ( 2 );
@@ -419,9 +406,9 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    main->addLayout( left );
    main->addLayout( right );
 
-   main->setStretch( 0, 2 );
-   main->setStretch( 1, 3 );
-   adjustSize();
+   //main->setStretch( 0, 2 );
+   //main->setStretch( 1, 3 );
+   //adjustSize();
 
 DbgLv(1) << "CGui: GUI setup complete";
    reset();
@@ -848,7 +835,7 @@ DbgLv(1) << "CGui: enabCtl: have-data";
       
       // Most triples are ccw
       lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
-      ct_tolerance->setMinimumWidth( 160 );
+      //ct_tolerance->setMinimumWidth( 160 );
       ct_tolerance->setNumButtons  ( 2 );
       ct_tolerance->setRange       ( 0.0, 100.0 );
       ct_tolerance->setStep        ( 1.0 );
@@ -859,7 +846,7 @@ DbgLv(1) << "CGui: enabCtl: have-data";
       {
          // First of all, wavelength triples are ccr.
          lb_triple   ->setText( tr( "Cell / Channel / Radius" ) );
-         ct_tolerance->setMinimumWidth( 160 );
+         //ct_tolerance->setMinimumWidth( 160 );
          ct_tolerance->setNumButtons  ( 3 );
          ct_tolerance->setRange       ( 0.0, 10.0 );
          ct_tolerance->setStep        ( 0.001 );
