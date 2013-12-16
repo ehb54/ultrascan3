@@ -122,14 +122,14 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    QLabel* lb_run    = us_banner(     tr( "Load the Run" ) );
 
    // Pushbuttons to load and reload data
-   pb_import         = us_pushbutton( tr( "Import Legacy Run from HD" ) );
+   pb_import         = us_pushbutton( tr( "Import Exp. Data from HD" ) );
 
    // External program to enter experiment information
    pb_editRuninfo    = us_pushbutton( tr( "Edit Run Information" ) );
    pb_editRuninfo->setEnabled( false );
 
    // load US3 data ( that perhaps has been done offline )
-   pb_loadUS3        = us_pushbutton( tr( "Load US3 Run" ), true );
+   pb_loadUS3        = us_pushbutton( tr( "Load OpenAUC Data" ), true );
 
    // Run details
    pb_details        = us_pushbutton( tr( "Run Details" ), false );
