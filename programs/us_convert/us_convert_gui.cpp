@@ -119,14 +119,14 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    QLabel* lb_run    = us_banner(     tr( "Load the Run" ) );
 
    // Pushbuttons to load and reload data
-   pb_import         = us_pushbutton( tr( "Import Exp. Data from HD" ) );
+   pb_import         = us_pushbutton( tr( "Import XLA/I/F Data from HD" ) );
 
    // External program to enter experiment information
    pb_editRuninfo    = us_pushbutton( tr( "Edit Run Information" ) );
    pb_editRuninfo->setEnabled( false );
 
    // load US3 data ( that perhaps has been done offline )
-   pb_loadUS3        = us_pushbutton( tr( "Load OpenAUC Data" ), true );
+   pb_loadUS3        = us_pushbutton( tr( "Load US3 OpenAUC Data" ), true );
 
    // Run details
    pb_details        = us_pushbutton( tr( "Run Details" ), false );
@@ -190,7 +190,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                             tr( "Cell / Channel / Wavelength" ), -1 );
    lw_triple           = us_listwidget();
    lw_triple->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
-   lw_triple->setMaximumWidth ( 120 );
+   lw_triple->setMaximumWidth ( 150 );
    QLabel* lb_ccwinfo  = us_label(
                             tr( "Enter Associated Triple (c/c/w) Info:" ) );
 
@@ -245,10 +245,10 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    settings ->addWidget( lb_run,          row++, 0, 1, 4 );
    settings ->addWidget( pb_import,       row,   0, 1, 2 );
    settings ->addWidget( pb_editRuninfo,  row++, 2, 1, 2 );
-   settings ->addWidget( pb_loadUS3,      row,   0, 1, 2 );
-   settings ->addWidget( pb_details,      row++, 2, 1, 2 );
    settings ->addWidget( pb_impmwl,       row,   0, 1, 2 );
    settings ->addWidget( le_lambraw,      row++, 2, 1, 2 );
+   settings ->addWidget( pb_loadUS3,      row,   0, 1, 2 );
+   settings ->addWidget( pb_details,      row++, 2, 1, 2 );
    settings ->addWidget( lb_tolerance,    row,   0, 1, 2 );
    settings ->addWidget( ct_tolerance,    row++, 2, 1, 2 );
    settings ->addWidget( lb_mwlctrl,      row++, 0, 1, 4 );
