@@ -741,7 +741,7 @@ void US_ConvertGui::importMWL( void )
    // Read the data
    le_status->setText( tr( "Importing MWL data ..." ) );
    qApp->processEvents();
-   mwl_data.import_data( currentDir, le_description );
+   mwl_data.import_data( currentDir, le_status );
    isMwl       = true;
    runType     = "RI";
    mwl_data.run_values( runID, runType );
@@ -3630,10 +3630,8 @@ void US_ConvertGui::show_mwl_control( bool show )
    pb_lambprev->setVisible( show );
    pb_lambnext->setVisible( show );
 
-#if 1
    pb_exclude ->setVisible( !show );
    pb_include ->setVisible( !show );
-#endif
 
    adjustSize();
 }
@@ -3682,10 +3680,6 @@ void US_ConvertGui::reset_lambdas()
    if ( ! isMwl )
       return;
 
-#if 0
-   slambda       = cb_lambstrt->currentText().toInt();
-   elambda       = cb_lambstop->currentText().toInt();
-#endif
    int plambda   = cb_lambplot->currentText().toInt();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -3886,15 +3880,6 @@ void US_ConvertGui::mwl_setup()
 
    // Ok to enable some buttons now
    enableControls();
-
-#if 0
-   if ( runType == "RI" )
-   {
-      referenceDefined = false;
-DbgLv(1) << "CGui: (10)referDef=" << referenceDefined;
-      pb_reference->setEnabled( true );
-   }
-#endif
 
    static QChar clambda( 955 );   // Lambda character
    QString lambmsg = tr( "%1 raw:  %2 %3 to %4" )

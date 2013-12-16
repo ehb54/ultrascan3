@@ -3318,6 +3318,8 @@ DbgLv(1) << "EDT:WrTripl:   triple" << triple;
 
    if ( wrstat != 0 )
       return;
+   else
+      editFnames[ idax ] = filename;
 
    if ( disk_controls->db() )
    {
@@ -4560,6 +4562,8 @@ DbgLv(1) << "EDT:WrMwl:     write_xml_file stat" << wrstat;
 
       if ( wrstat != 0 )
          return;
+      else
+         editFnames[ idax ] = filename;
 
       if ( disk_controls->db() )
       {
