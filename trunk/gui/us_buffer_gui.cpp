@@ -150,6 +150,13 @@ US_BufferGui::US_BufferGui(
    connect( pb_synch, SIGNAL( clicked() ), SLOT( synch_components() ) );
    main->addWidget( pb_synch,  row++, 0 );
 
+   // Enable/Disable Sync button based on whether components file is writable
+   QString etcdir   = US_Settings::appBaseDir() + "/etc/";
+   QString bufcmp   = etcdir + "bufferComponents.xml";
+   QFileInfo fi( bufcmp );
+   pb_synch->setEnabled( ( !fi.exists() && QFileInfo( etcdir ).isWritable() )
+                         || fi.isWritable() );
+
    row = 1;
 
    // Investigator
