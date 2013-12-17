@@ -1,10 +1,12 @@
 #include "../include/us_saxs_util.h"
+#include "../include/us_file_util.h"
 
 // note: this program uses cout and/or cerr and this should be replaced
 
 bool US_Saxs_Util::run_best()
 {
    QStringList save_output_files = output_files;
+   QStringList rm_output_files;
 
    errormsg = "";
    QStringList required;
@@ -84,6 +86,7 @@ bool US_Saxs_Util::run_best()
    int     best_triangles   = 0;
    int     max_triangles    = control_parameters[ "bestmsrmaxtriangles" ].toInt();
    QString best_inputbase   = "";
+   double  best_fineness    = start_fineness;
 
    for( double use_fineness = start_fineness; found_triangles <= max_triangles && use_fineness >= 0.3; use_fineness -= 0.02 )
    {
@@ -144,6 +147,7 @@ bool US_Saxs_Util::run_best()
                ;
          } else {
             // output_files << expected[ i ];
+            rm_output_files << expected[ i ];
          }
       }
       // count triangles produced
@@ -161,10 +165,28 @@ bool US_Saxs_Util::run_best()
                {
                   found_triangles = qsl[ 0 ].toInt();
                   qDebug( QString( "found triangles %1 with fineness %2" ).arg( found_triangles ).arg( use_fineness ) );
+                  if ( use_fineness == start_fineness &&
+                       found_triangles > max_triangles )
+                  {
+                     control_parameters[ "bestmsrfinenessangle" ] =
+                        QString( "%1" ).arg( control_parameters[ "bestmsrfinenessangle" ].toDouble() + 0.1e0 );
+                     qDebug( QString( "too many triangles with largest fineness, incrementing max fineness to %1" )
+                             .arg( control_parameters[ "bestmsrfinenessangle" ] ) );
+                     unlink( pdb_stripped );
+                     output_files = save_output_files;
+                     for ( int i = 0; i < (int) rm_output_files.size(); ++i )
+                     {
+                        qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
+                        unlink( rm_output_files[ i ] );
+                     }
+                     return run_best();
+                  }
+
                   if ( found_triangles > best_triangles && found_triangles <= max_triangles )
                   {
                      best_triangles = found_triangles;
                      best_inputbase = msr_inputbase;
+                     best_fineness  = use_fineness;
                   }
                   break;
                }
@@ -195,6 +217,7 @@ bool US_Saxs_Util::run_best()
                ;
          } else {
             output_files << expected[ i ];
+            rm_output_files << expected[ i ];
          }
       }
    }
@@ -205,12 +228,17 @@ bool US_Saxs_Util::run_best()
    }
 
    // run rcoal
+   QString inputbase23 = QString( "%1_f%2" ).arg( inputbase.left( 17 ) ).arg( QString( "%1" ).arg( best_fineness ).replace( ".", "_" ) );
    p++;
    {
+      US_File_Util ufu;
+      ufu.copy( QString( "%1.c3p" ).arg( inputbase ), QString( "%1.c3p" ).arg( inputbase23 ), true );
+      ufu.copy( QString( "%1.c3v" ).arg( inputbase ), QString( "%1.c3v" ).arg( inputbase23 ), true );
+
       QString cmd = 
          QString( "%1 -f %2.c3p -nmax %3 -nmin %4 -n %5" )
          .arg( progs[ p ] )
-         .arg( inputbase )
+         .arg( inputbase23 )
          .arg( control_parameters[ "bestrcoalnmax" ] )
          .arg( control_parameters[ "bestrcoalnmin" ] )
          .arg( control_parameters[ "bestrcoaln" ] )
@@ -241,6 +269,7 @@ bool US_Saxs_Util::run_best()
                ;
          } else {
             output_files << expected[ i ];
+            rm_output_files << expected[ i ];
          }
       }
    }
@@ -269,6 +298,7 @@ bool US_Saxs_Util::run_best()
             {
                outfiles << qs;
                output_files << qs;
+               rm_output_files << qs;
                // qDebug( QString( "outfiles.back() is %1" ).arg( outfiles.back() ) );
             } else {
                errormsg += "could not correctly find output files in rcoal stdout\n";
@@ -290,7 +320,13 @@ bool US_Saxs_Util::run_best()
       {
          control_parameters[ "bestmsrmaxtriangles" ] = 
             QString( "%1" ).arg( max_triangles - 2500 );
+         unlink( pdb_stripped );
          output_files = save_output_files;
+         for ( int i = 0; i < (int) rm_output_files.size(); ++i )
+         {
+            qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
+            unlink( rm_output_files[ i ] );
+         }
          return run_best();
       }
       errormsg += QString( "too few triangles %1 after rcoal fail" ).arg( max_triangles );
