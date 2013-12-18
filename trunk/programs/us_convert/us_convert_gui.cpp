@@ -1378,6 +1378,26 @@ DbgLv(1) << "CGui: (5)referDef=" << referenceDefined;
    // Initialize export data pointers vector
    init_output_data();
 
+   // Copy solution and centerpiece info to channel vectors
+   int         cCenterpiece = all_tripinfo[ 0 ].centerpiece;
+   US_Solution cSolution    = all_tripinfo[ 0 ].solution;
+   int         idax         = 0;
+
+   for ( int ii = 0; ii < all_chaninfo.size(); ii++ )
+   {
+      if ( idax != out_chandatx[ ii ] )
+      {
+         idax         = out_chandatx[ ii ];
+         cCenterpiece = all_tripinfo[ idax ].centerpiece;
+         cSolution    = all_tripinfo[ idax ].solution;
+      }
+
+      all_chaninfo[ ii ].centerpiece  = cCenterpiece;
+      all_chaninfo[ ii ].solution     = cSolution;
+DbgLv(1) << "CGui:     chan trip" << ii << idax
+   << "centp sol" << cCenterpiece << cSolution.solutionGUID;
+   }
+
    if ( isMwl )
    {  // If need be, load MWL data object
       mwl_data.load_mwl( allData );
@@ -3892,8 +3912,11 @@ void US_ConvertGui::mwl_setup()
 // Initialize output data pointers and lists
 void US_ConvertGui::init_output_data()
 {
+
+   bool have_trip = ( all_tripinfo.size() == allData.size() );
+   if ( ! have_trip )
+      all_tripinfo.clear();
    outData     .clear();
-   all_tripinfo.clear();
    all_chaninfo.clear();
    all_triples .clear();
    all_channels.clear();
@@ -3912,6 +3935,9 @@ void US_ConvertGui::init_output_data()
 
       outData      << edata;
 
+      if ( have_trip )
+         tripinfo = all_tripinfo[ trx ];
+
       QString triple   = QString::number( edata->cell ) + " / "
          + QString( edata->channel ) + " / "
          + QString::number( qRound( edata->scanData[ 0 ].wavelength ) );
@@ -3926,7 +3952,10 @@ void US_ConvertGui::init_output_data()
       chaninfo             = tripinfo;
       chaninfo.tripleDesc  = celchn;
 
-      all_tripinfo << tripinfo;
+      if ( have_trip )
+         all_tripinfo[ trx ] = tripinfo;
+      else
+         all_tripinfo << tripinfo;
       out_tripinfo << tripinfo;
       all_triples  << triple;
       out_triples  << triple;
