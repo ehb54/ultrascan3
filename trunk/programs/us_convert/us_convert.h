@@ -128,7 +128,7 @@ class US_Convert
       //!           has been saved to disk before and doesn't require new GUIDs
       //! \returns      One of the ioError status codes, above
       static int    saveToDisk(
-                    QVector< US_DataIO::RawData >& ,
+                    QVector< US_DataIO::RawData* >& ,
                     QList< TripleInfo >& ,
                     QVector< Excludes >& ,
                     QString ,

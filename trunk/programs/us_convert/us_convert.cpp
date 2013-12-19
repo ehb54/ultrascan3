@@ -156,7 +156,7 @@ void US_Convert::convertLegacyData(
 }
 
 int US_Convert::saveToDisk(
-    QVector< US_DataIO::RawData >& rawConvertedData,
+    QVector< US_DataIO::RawData* >& rawConvertedData,
     QList< TripleInfo >& triples,
     QVector< Excludes >& allExcludes,
     QString runType,
@@ -165,7 +165,7 @@ int US_Convert::saveToDisk(
     bool saveGUIDs
     )
 {
-   if ( rawConvertedData[ 0 ].scanData.empty() ) 
+   if ( rawConvertedData[ 0 ]->scanData.empty() ) 
       return NODATA;
 
    // Write the data
@@ -224,12 +224,12 @@ int US_Convert::saveToDisk(
       // Let's see if there is a triple guid already (from a previous save)
       // Otherwise the rawGUID characters should already be initialized to 0
       QString uuidc = 
-         US_Util::uuid_unparse( (unsigned char*) rawConvertedData[ i ].rawGUID );
+         US_Util::uuid_unparse( (unsigned char*) rawConvertedData[ i ]->rawGUID );
 
       if ( saveGUIDs && uuidc != "00000000-0000-0000-0000-000000000000" ) 
       {
          // Make sure xml file matches
-         memcpy( triples [ i ].tripleGUID, (char*) rawConvertedData[ i ].rawGUID, 16 );
+         memcpy( triples [ i ].tripleGUID, (char*) rawConvertedData[ i ]->rawGUID, 16 );
       }
 
       else
@@ -238,7 +238,7 @@ int US_Convert::saveToDisk(
          uchar uuid[ 16 ];
          QString uuid_string = US_Util::new_guid();
          US_Util::uuid_parse( uuid_string, uuid );
-         memcpy( rawConvertedData[ i ].rawGUID, (char*) uuid, 16 );
+         memcpy( rawConvertedData[ i ]->rawGUID, (char*) uuid, 16 );
          memcpy( triples [ i ].tripleGUID, (char*) uuid, 16 );
       }
 
@@ -258,12 +258,12 @@ int US_Convert::saveToDisk(
       triples[ i ].tripleFilename = filename;
 
       // Create a copy of the current dataset so we can alter it
-      US_DataIO::RawData  currentData     = rawConvertedData[ i ];
+      US_DataIO::RawData  currentData     = *rawConvertedData[ i ];
       Excludes currentExcludes = allExcludes     [ i ];
 
       // Now recopy scans, except for excluded ones
       currentData.scanData.clear();
-      QVector< US_DataIO::Scan > sourceScans = rawConvertedData[ i ].scanData;
+      QVector< US_DataIO::Scan > sourceScans = rawConvertedData[ i ]->scanData;
       for ( int j = 0; j < sourceScans.size(); j++ )
       {
          if ( ! currentExcludes.contains( j ) )

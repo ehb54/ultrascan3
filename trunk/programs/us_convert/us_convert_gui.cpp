@@ -1706,6 +1706,24 @@ void US_ConvertGui::updateSolutionInfo( US_Solution s )
 
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
 
+   // For MWL, duplicate solution to all triples of the channel
+   if ( isMwl )
+   {
+      int idax   = out_chandatx[ tripListx ];
+      int ldax   = tripListx + 1;
+      ldax       = ldax < out_chandatx.size()
+                 ? out_chandatx[ ldax ]
+                 : out_tripinfo.size();
+
+      while ( idax < ldax )
+      {
+         out_tripinfo[ idax++ ].solution = s;
+DbgLv(0) << "CGui: updSol: dax" << idax
+ << "s.desc s.id" << s.solutionDesc << s.solutionID << s.solutionGUID;
+      }
+   }
+
+   // Re-plot
    plot_current();
 
    QApplication::restoreOverrideCursor();
@@ -1925,8 +1943,24 @@ void US_ConvertGui::checkTemperature( void )
 
 void US_ConvertGui::getCenterpieceIndex( int )
 {
-   out_chaninfo[ tripListx ].centerpiece = cb_centerpiece->getLogicalID();
+   int cpID      = cb_centerpiece->getLogicalID();
+   out_chaninfo[ tripListx ].centerpiece = cpID;
 DbgLv(1) << "getCenterpieceIndex " << out_chaninfo[tripListx].centerpiece;
+
+   // For MWL, duplicate centerpiece to all triples of the channel
+   if ( isMwl )
+   {
+      int idax   = out_chandatx[ tripListx ];
+      int ldax   = tripListx + 1;
+      ldax       = ldax < out_chandatx.size()
+                 ? out_chandatx[ ldax ]
+                 : out_tripinfo.size();
+
+      while ( idax < ldax )
+      {
+         out_tripinfo[ idax++ ].centerpiece = cpID;
+      }
+   }
 
    enableSaveBtn();
 }
@@ -2645,17 +2679,15 @@ int US_ConvertGui::saveUS3Disk( void )
    qApp->processEvents();
    bool saveGUIDs = saveStatus != NOT_SAVED ;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   status = US_Convert::saveToDisk( allData, all_tripinfo, allExcludes,
+   status = US_Convert::saveToDisk( outData, out_tripinfo, allExcludes,
                                     runType, runID, dirname, saveGUIDs );
    QApplication::restoreOverrideCursor();
 
    // Now try to write the xml file
-   status = ExpData.saveToDisk( all_tripinfo, runType, runID, dirname );
+   status = ExpData.saveToDisk( out_tripinfo, runType, runID, dirname );
 
    // How many files should have been written?
-   int fileCount = 0;
-   for ( int ii = 0; ii < all_tripinfo.size(); ii++ )
-      if ( ! all_tripinfo[ ii ].excluded ) fileCount++;
+   int fileCount = out_tripinfo.size();
 DbgLv(1) << "SV:   fileCount" << fileCount;
 
    // Now try to communicate status
@@ -3020,7 +3052,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    le_status->setText( tr( "Writing raw data to DB ..." ) );
    qApp->processEvents();
-   QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData, all_tripinfo,
+   QString writeStatus = US_ConvertIO::writeRawDataToDB( ExpData, out_tripinfo,
                                                          dir, &db );
    QApplication::restoreOverrideCursor();
 
@@ -3032,9 +3064,6 @@ DbgLv(1) << "DBSv:  files count" << files.size();
       le_status->setText( tr( "*ERROR* Problem saving experiment." ) );
       return;
    }
-
-//   QMessageBox::information( this, tr( "Record saved" ),
-//      tr( "The run information has been saved to the DB successfully \n" ) );
 
    le_status->setText( tr( "DB data save complete. Saving reports..." ) );
    qApp->processEvents();
