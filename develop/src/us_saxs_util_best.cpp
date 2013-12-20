@@ -96,7 +96,7 @@ bool US_Saxs_Util::run_best()
          best_inputbase = msr_inputbase;
       }
       QString cmd = 
-         QString( "%1 -m %2 -r %3 -y %4 -t %5.c3p -v %6.c3v" )
+         QString( "ulimit -s 16535; %1 -m %2 -r %3 -y %4 -t %5.c3p -v %6.c3v" )
          .arg( progs[ p ] )
          .arg( pdb_stripped )
          .arg( control_parameters[ "bestmsrradiifile" ] )
@@ -155,11 +155,13 @@ bool US_Saxs_Util::run_best()
          QFile f( "msr_" + msr_inputbase + ".stderr" );
          f.open( IO_ReadOnly );
          QTextStream ts( &f );
+         bool did_find_triangles = false;
          while ( !ts.atEnd() )
          {
             QString qs = ts.readLine();
             if ( qs.contains( "triangles written to disk" ) )
             {
+               did_find_triangles = true;
                QStringList qsl = QStringList::split( " ", qs.stripWhiteSpace() );
                if ( qsl.size() )
                {
@@ -193,6 +195,22 @@ bool US_Saxs_Util::run_best()
             }
          }
          f.close();
+         if ( !did_find_triangles &&
+              !found_triangles )
+         {
+            control_parameters[ "bestmsrfinenessangle" ] =
+               QString( "%1" ).arg( control_parameters[ "bestmsrfinenessangle" ].toDouble() + 0.1e0 );
+            qDebug( QString( "msroll failed and failed for previous values of fineness, incrementing max fineness to %1" )
+                    .arg( control_parameters[ "bestmsrfinenessangle" ] ) );
+            unlink( pdb_stripped );
+            output_files = save_output_files;
+            for ( int i = 0; i < (int) rm_output_files.size(); ++i )
+            {
+               qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
+               unlink( rm_output_files[ i ] );
+            }
+            return run_best();
+         }
       }
    }
 
@@ -411,11 +429,13 @@ bool US_Saxs_Util::run_best()
          ;
 
       csvfiles  << outfiles[ i ] + expected_base + ".be";
-      triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase ) ), "" ).replace( QRegExp( "^0*" ) , "" );
+      qDebug( QString( "outfiles[ i ] '%1' inputbase '%2' inputbase23 '%3'" )
+              .arg( outfiles[ i ] ).arg( inputbase ).arg( inputbase23 ) );
+      triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase23 ) ), "" ).replace( QRegExp( "^0*" ) , "" );
       one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
                                     1e0 / triangles.back().toDouble() : -1e0 );
 
-      // qDebug( QString( "triangles %1 %2\n" ).arg( triangles.back() ).arg( one_over_triangles.back() ) );
+      qDebug( QString( "triangles %1 %2\n" ).arg( triangles.back() ).arg( one_over_triangles.back() ) );
       
       for ( int i = 0; i < (int) expected.size(); ++i )
       {
