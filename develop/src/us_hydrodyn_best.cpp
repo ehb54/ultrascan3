@@ -903,7 +903,7 @@ void US_Hydrodyn_Best::data_selected()
                      .arg( chi2, 0, 'g', 8 )
                      );
 
-         double deltax = ( use_one_over_triangles.back() - UHB_MINX ) / ( UHB_PTS - 1 );
+         double deltax = ( one_over_triangles[ 0 ] * 1.1 - UHB_MINX ) / ( UHB_PTS - 1 );
          for ( int i = 0; i < UHB_PTS; ++i )
          {
             x[ i ] = UHB_MINX + deltax * i;
