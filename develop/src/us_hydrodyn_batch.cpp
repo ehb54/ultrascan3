@@ -2661,7 +2661,7 @@ void US_Hydrodyn_Batch::make_movie()
          bool result;
          QString file = get_file_name(i);
          QString dir = QFileInfo(file).dirPath();
-         QColor save_color = editor->color();
+         // QColor save_color = editor->color();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
          {
             // result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, true);

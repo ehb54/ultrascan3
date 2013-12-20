@@ -52,7 +52,11 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       QwtPlotGrid           *                 grid_data;
 #endif
       QHBoxLayout           *                 hbl_points;
+      QLabel                *                 lbl_points;
       vector < QCheckBox * >                  cb_points;
+      QHBoxLayout           *                 hbl_points_ln;
+      QLabel                *                 lbl_points_ln;
+      vector < QCheckBox * >                  cb_points_ln;
 
       // ------- bottom section
 
@@ -63,6 +67,7 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       // ------- out of gui area
 
       map < QString, set < int > >            cb_checked;
+      map < QString, set < int > >            cb_checked_ln;
 
       QColorGroup                             cg_red;
 
@@ -96,6 +101,15 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       double                                  last_chi2;
       QString                                 last_pts_removed;
 
+      double                                  last_a_ln;
+      double                                  last_siga_ln;
+      double                                  last_b_ln;
+      double                                  last_sigb_ln;
+      double                                  last_chi2_ln;
+      QString                                 last_pts_removed_ln;
+
+      bool                                    ln_plot_ok;
+
    private slots:
 
       // ------ data section 
@@ -117,7 +131,8 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       void                                    cancel();
 
       void                                    data_selected();
-      void                                    cb_changed();
+      void                                    cb_changed   ( bool do_data = true );
+      void                                    cb_changed_ln( bool do_data = true );
 
    protected slots:
 

@@ -2326,7 +2326,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
 
    unsigned int files_selected_count                      = 0;
    // unsigned int non_hplc_non_empty_files_selected_count = 0;
-   unsigned int last_selected_pos                         = 0;
+   // unsigned int last_selected_pos                         = 0;
 
    map < QString, bool > selected_map;
 
@@ -2338,7 +2338,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       {
          selected_files << lb_files->text( i );
          selected_map[ lb_files->text( i ) ] = true;
-         last_selected_pos = i;
+         // last_selected_pos = i;
          last_selected_file = lb_files->text( i );
          files_selected_count++;
          //          if ( lb_files->text( i ) != lbl_hplc->text() &&
@@ -2785,7 +2785,7 @@ void US_Hydrodyn_Saxs_Hplc::svd()
 
    vector < QString > selected_files;
 
-   int m = 0; // rows
+   // int m = 0; // rows
    int n = 0; // cols
 
    {
@@ -2805,7 +2805,7 @@ void US_Hydrodyn_Saxs_Hplc::svd()
                grids.push_back( f_qs[ this_file ] );
                if ( !n )
                {
-                  m = (int) f_qs[ this_file ].size();
+                  // m = (int) f_qs[ this_file ].size();
                }
                ++n;
             }

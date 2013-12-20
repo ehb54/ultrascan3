@@ -113,7 +113,6 @@ void US_Hydrodyn_Best::setupGUI()
 
    editor_widgets.push_back( editor );
 
-
    // ------ plot section
    plot_data = new QwtPlot(this);
 #ifndef QT4
@@ -160,6 +159,16 @@ void US_Hydrodyn_Best::setupGUI()
 #endif
    plot_data->setCanvasBackground(USglobal->global_colors.plot);
 
+   lbl_points = new QLabel( "Linear:", this );
+   lbl_points->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_points->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   lbl_points->show();
+
+   lbl_points_ln = new QLabel( "Log:   ", this );
+   lbl_points_ln->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_points_ln->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   lbl_points_ln->show();
+
    // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
 
 
@@ -205,7 +214,11 @@ void US_Hydrodyn_Best::setupGUI()
       bl->addWidget( plot_data );
       // needs layout for dynamic cb_'s 
       hbl_points = new QHBoxLayout( 0 );
+      hbl_points->addWidget( lbl_points );
       bl->addLayout( hbl_points );
+      hbl_points_ln = new QHBoxLayout( 0 );
+      hbl_points_ln->addWidget( lbl_points_ln );
+      bl->addLayout( hbl_points_ln );
       top->addLayout( bl );
    }
 
@@ -337,8 +350,15 @@ void US_Hydrodyn_Best::clear()
       hbl_points->remove( cb_points[ i ] );
       delete cb_points[ i ];
    }
+   for ( int i = 0; i < (int) cb_points_ln.size(); ++i )
+   {
+      hbl_points_ln->remove( cb_points_ln[ i ] );
+      delete cb_points_ln[ i ];
+   }
    cb_points          .clear();
+   cb_points_ln       .clear();
    cb_checked         .clear();
+   cb_checked_ln      .clear();
    loaded_csv_trimmed .clear();
    loaded_csv_filename = "";
    last_pts_removed    = "";
@@ -419,6 +439,7 @@ void US_Hydrodyn_Best::load()
       }
    }         
 
+
    loaded_csv_trimmed << ts.readLine(); // triangles used
    {
       loaded_csv_trimmed << ts.readLine();
@@ -435,6 +456,13 @@ void US_Hydrodyn_Best::load()
 
       for ( int i = 1; i <= points; ++i )
       {
+         if ( qsl[ i ] == "=-1" )
+         {
+            f.close();
+            editor_msg( "red", QString( tr( "Error on file %1 line 3: 1/triangles incorrect" ) ).arg( f.name() ) );
+            pb_load->setEnabled( true );
+            return;
+         }
          one_over_triangles.push_back( QString( qsl[ i ] ).replace( QRegExp( "^=" ), "" ).toDouble() );
       }
    }
@@ -467,6 +495,18 @@ void US_Hydrodyn_Best::load()
          {
             qs += QString( "%1," ).arg( qsl[ i ] );
             parameter_data[ qsl[ 0 ] ].push_back( QString( qsl[ i ] ).replace( QRegExp( "^=" ), "" ).toDouble() );
+            if ( qsl[ i ] == "?" )
+            {
+               f.close();
+               editor_msg( "red", QString( tr( "Error on file %1 line %2 - missing data for column %3" ) )
+                           .arg( f.name() )
+                           .arg( line ) 
+                           .arg( i + 1 ) 
+                           );
+               pb_load->setEnabled( true );
+               connect( lb_data, SIGNAL( selectionChanged() ), SLOT( data_selected() ) );
+               return;
+            }
          }
          loaded_csv_trimmed << qs;
          lb_data->insertItem( qsl[ 0 ] );
@@ -485,17 +525,30 @@ void US_Hydrodyn_Best::load()
       cb_points.push_back( cb );
       hbl_points->addWidget( cb );
    }
+   for ( int i = 0; i < points; ++i )
+   {
+      QCheckBox * cb = new QCheckBox( this );
+      cb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      cb->setText( QString( "%1" ).arg( i + 1 ) );
+      cb->setChecked( false );
+      cb->setEnabled( true );
+      cb->show();
+      connect( cb, SIGNAL( clicked() ), SLOT( cb_changed_ln() ) );
+      cb_points_ln.push_back( cb );
+      hbl_points_ln->addWidget( cb );
+   }
    
    f.close();
    loaded_csv_filename = f.name();
    lb_data->setSelected( 0, true );
    connect( lb_data, SIGNAL( selectionChanged() ), SLOT( data_selected() ) );
-   cb_changed();
+   cb_changed   ( false );
+   cb_changed_ln( true  );
    pb_load->setEnabled( true );
    pb_save_results->setEnabled( true );
 }
 
-void US_Hydrodyn_Best::cb_changed()
+void US_Hydrodyn_Best::cb_changed( bool do_data )
 {
    // qDebug( "cb_changed" );
    QString text = lb_data->selectedItem()->text();
@@ -507,7 +560,28 @@ void US_Hydrodyn_Best::cb_changed()
          cb_checked[ text ].insert( i );
       }
    }
-   data_selected();
+   if ( do_data )
+   {
+      data_selected();
+   }
+}
+
+void US_Hydrodyn_Best::cb_changed_ln( bool do_data )
+{
+   // qDebug( "cb_changed_ln" );
+   QString text = lb_data->selectedItem()->text();
+   cb_checked_ln[ text ].clear();
+   for ( int i = 0; i < (int) cb_points_ln.size(); ++i )
+   {
+      if ( cb_points_ln[ i ]->isChecked() )
+      {
+         cb_checked_ln[ text ].insert( i );
+      }
+   }
+   if ( do_data )
+   {
+      data_selected();
+   }
 }
    
 void US_Hydrodyn_Best::data_selected()
@@ -529,12 +603,38 @@ void US_Hydrodyn_Best::data_selected()
       cb_points[ i ]->setChecked( cb_checked[ text ].count( i ) );
    }
 
+   // if ( !cb_checked_ln.count( text ) )
+   // {
+   //    // set all off
+   //    for ( int i = 0; i < (int) cb_points_ln.size(); ++i )
+   //    {
+   //       if ( parameter_data[ text ][ i ] > 0e0 )
+   //       {
+   //          cb_checked_ln[ text ].insert( i );
+   //       }
+   //    }
+   // }
+
+   for ( int i = 0; i < (int) cb_points_ln.size(); ++i )
+   {
+      cb_points_ln[ i ]->setChecked( cb_checked_ln[ text ].count( i ) );
+      cb_points_ln[ i ]->setEnabled( parameter_data[ text ][ i ] > 0e0 );
+   }
+
    vector < double > use_one_over_triangles;
    vector < double > use_parameter_data;
    vector < double > skip_one_over_triangles;
    vector < double > skip_parameter_data;
+   vector < double > use_one_over_triangles_ln;
+   vector < double > use_parameter_data_ln;
+   vector < double > skip_one_over_triangles_ln;
+   vector < double > skip_parameter_data_ln;
 
-   last_pts_removed = "";
+   last_pts_removed    = "";
+   last_pts_removed_ln = "";
+
+   set < int > selected_points;
+   set < int > selected_points_ln;
 
    //for ( int i = 0; i < (int) one_over_triangles.size(); ++i )
    for ( int i = (int) one_over_triangles.size() - 1; i >= 0; --i )
@@ -543,13 +643,26 @@ void US_Hydrodyn_Best::data_selected()
       {
          use_one_over_triangles .push_back( one_over_triangles[ i ] );
          use_parameter_data     .push_back( parameter_data[ text ][ i ] );
+         selected_points        .insert( i );
       } else {
          skip_one_over_triangles.push_back( one_over_triangles[ i ] );
          skip_parameter_data    .push_back( parameter_data[ text ][ i ] );
          last_pts_removed += QString( "%1 " ).arg( points - i );
       }  
+      if ( cb_points_ln[ points - i - 1 ]->isChecked() &&
+           parameter_data[ text ][ i ] > 0e0 )
+      {
+         use_one_over_triangles_ln .push_back( one_over_triangles[ i ] );
+         use_parameter_data_ln     .push_back( parameter_data[ text ][ i ] );
+         selected_points_ln        .insert( i );
+      } else {
+         skip_one_over_triangles_ln.push_back( one_over_triangles[ i ] );
+         skip_parameter_data_ln    .push_back( parameter_data[ text ][ i ] );
+         last_pts_removed_ln += QString( "%1 " ).arg( points - i );
+      }  
    }
 
+   for ( int i = 0; i < (int) one_over_triangles.size(); ++i )
    {
 #ifndef QT4
       long curve = plot_data->insertCurve( "plot" );
@@ -560,24 +673,52 @@ void US_Hydrodyn_Best::data_selected()
 #endif
 
       QwtSymbol sym;
-      sym.setStyle(QwtSymbol::Diamond);
-      sym.setSize( 10 );
-      sym.setPen  ( Qt::cyan );
-      sym.setBrush( Qt::cyan );
+      if ( selected_points   .count( i ) &&
+           selected_points_ln.count( i ) )
+      {
+         sym.setStyle(QwtSymbol::Diamond);
+         sym.setSize( 12 );
+         sym.setPen  ( Qt::cyan );
+         sym.setBrush( Qt::blue );
+      }
+      if (  selected_points   .count( i ) &&
+           !selected_points_ln.count( i ) )
+      {
+         sym.setStyle(QwtSymbol::UTriangle);
+         sym.setSize( 10 );
+         sym.setPen  ( Qt::cyan );
+         sym.setBrush( Qt::blue );
+      }
+      if ( !selected_points   .count( i ) &&
+            selected_points_ln.count( i ) )
+      {
+         sym.setStyle(QwtSymbol::DTriangle);
+         sym.setSize( 10 );
+         sym.setPen  ( Qt::cyan );
+         sym.setBrush( Qt::blue );
+      }
+      if ( !selected_points   .count( i ) &&
+           !selected_points_ln.count( i ) )
+      {
+         sym.setStyle(QwtSymbol::XCross);
+         sym.setSize( 10 );
+         sym.setPen  ( Qt::red );
+         sym.setBrush( Qt::red );
+      }
 
 #ifndef QT4
       plot_data->setCurveData( curve, 
-                               (double *)&( use_one_over_triangles[ 0 ] ),
-                               (double *)&( use_parameter_data    [ 0 ] ),
-                               (int) use_one_over_triangles.size()
+                               (double *)&( one_over_triangles[ i ] ),
+                               (double *)&( parameter_data[ text ][ i ] ),
+                               1
                                );
       plot_data->setCurveStyle( curve, QwtCurve::Lines);
       plot_data->setCurveSymbol( curve, sym );
 #else
       curve->setData(
-                     (double *)&( use_one_over_triangles[ 0 ] ),
-                     (double *)&( use_parameter_data    [ 0 ] ),
-                     (int) use_one_over_triangles.size()
+                     (double *)&( one_over_triangles[ i ] ),
+                     (double *)&( parameter_data[ text ][ i ] ),
+                     1
                      );
 
       // curve->setPen( QPen( Qt::red, 2, Qt::SolidLine ) );
@@ -585,158 +726,240 @@ void US_Hydrodyn_Best::data_selected()
       curve->setStyle( QwtPlotCurve::Lines );
       curve->setSymbol( sym );
 #endif
+   }      
+   
 
+   double miny = 0e0;
+   double maxy = 0e0;
+
+   if ( parameter_data[ text ].size() )
+   {
+      miny = parameter_data[ text ][ 0 ];
+      maxy = parameter_data[ text ][ 0 ];
    }
 
-
+   for ( int i = 0; i < (int) parameter_data[ text ].size(); ++i )
    {
-#ifndef QT4
-      long curve = plot_data->insertCurve( "plot skip" );
-      plot_data->setCurveStyle( curve, QwtCurve::Dots );
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "plot skip" );
-      curve->setStyle( QwtPlotCurve::Dots );
-#endif
-
-      QwtSymbol sym;
-      sym.setStyle( QwtSymbol::XCross );
-      sym.setSize( 11 );
-      sym.setPen  ( Qt::red );
-      sym.setBrush( Qt::red );
-
-#ifndef QT4
-      plot_data->setCurveData( curve, 
-                               (double *)&( skip_one_over_triangles[ 0 ] ),
-                               (double *)&( skip_parameter_data    [ 0 ] ),
-                               (int) skip_one_over_triangles.size()
-                               );
-      plot_data->setCurveStyle( curve, QwtCurve::Lines);
-      plot_data->setCurveSymbol( curve, sym );
-#else
-      curve->setData(
-                     (double *)&( skip_one_over_triangles[ 0 ] ),
-                     (double *)&( skip_parameter_data    [ 0 ] ),
-                     (int) skip_one_over_triangles.size()
-                     );
-
-      // curve->setPen( QPen( Qt::red, 2, Qt::SolidLine ) );
-      curve->attach( plot_data );
-      curve->setStyle( QwtPlotCurve::Lines );
-      curve->setSymbol( sym );
-#endif
-
+      if ( miny > parameter_data[ text ][ i ] )
+      {
+         miny = parameter_data[ text ][ i ];
+      }
+      if ( maxy < parameter_data[ text ][ i ] )
+      {
+         maxy = parameter_data[ text ][ i ];
+      }
    }
 
    // run LR
 
-   last_a    = 0e0;
-   last_siga = 0e0;
-   last_b    = 0e0;
-   last_sigb = 0e0;
-   last_chi2 = 0e0;
-
-   if ( use_one_over_triangles.size() > 1 )   
    {
-      double a;
-      double b;
-      double siga;
-      double sigb;
-      double chi2;
+      last_a    = 0e0;
+      last_siga = 0e0;
+      last_b    = 0e0;
+      last_sigb = 0e0;
+      last_chi2 = 0e0;
+
+      if ( use_one_over_triangles.size() > 1 )   
+      {
+         double a;
+         double b;
+         double siga;
+         double sigb;
+         double chi2;
 
 
-      US_Saxs_Util::linear_fit( use_one_over_triangles,
-                                use_parameter_data,
-                                a,
-                                b,
-                                siga,
-                                sigb,
-                                chi2 );
+         US_Saxs_Util::linear_fit( use_one_over_triangles,
+                                   use_parameter_data,
+                                   a,
+                                   b,
+                                   siga,
+                                   sigb,
+                                   chi2 );
 
 
-      last_a    = a;
-      last_siga = siga;
-      last_b    = b;
-      last_sigb = sigb;
-      last_chi2 = chi2;
+         last_a    = a;
+         last_siga = siga;
+         last_b    = b;
+         last_sigb = sigb;
+         last_chi2 = chi2;
 
-      double x[ 2 ];
-      double y[ 2 ];
+         double x[ 2 ];
+         double y[ 2 ];
 
-      editor_msg( "blue", 
-                  QString( tr( "%1: 0 triangle extrapolation=%2 sigma=%3 sigma %=%4 slope=%5 sigma=%6 sigma %=%7 chi^2=%8" ) )
-                  .arg( text )
-                  .arg( a,    0, 'g', 8 )
-                  .arg( siga, 0, 'g', 8 )
-                  .arg( a != 0 ? fabs( 100.0 * siga / a ) : (double) 0, 0, 'g', 8 )
-                  .arg( b,    0, 'g', 8 )
-                  .arg( sigb, 0, 'g', 8 )
-                  .arg( b != 0 ? fabs( 100.0 * sigb / b ) : (double) 0, 0, 'g', 8 )
-                  .arg( chi2, 0, 'g', 8 )
-                  );
-
-      x[ 0 ] = 0e0;
-      x[ 1 ] = one_over_triangles[ 0 ] * 1.1;
-      y[ 0 ] = a;
-      y[ 1 ] = a + x[ 1 ] * b;
-      
-#ifndef QT4
-      long curve = plot_data->insertCurve( "plot lr" );
-      plot_data->setCurveStyle( curve, QwtCurve::Lines );
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "plot lr" );
-      curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-#ifndef QT4
-      plot_data->setCurveData( curve, 
-                               (double *)&( x[ 0 ] ),
-                               (double *)&( y[ 0 ] ),
-                               2
-                               );
-      plot_data->setCurvePen( curve, QPen( Qt::green, 2, SolidLine));
-
-#else
-      curve->setData(
-                     (double *)&( x[ 0 ] ),
-                     (double *)&( y[ 0 ] ),
-                     2
+         editor_msg( "blue", 
+                     QString( tr( "%1: 0 triangle extrapolation=%2 sigma=%3 sigma %=%4 slope=%5 sigma=%6 sigma %=%7 chi^2=%8" ) )
+                     .arg( text )
+                     .arg( a,    0, 'g', 8 )
+                     .arg( siga, 0, 'g', 8 )
+                     .arg( a != 0 ? fabs( 100.0 * siga / a ) : (double) 0, 0, 'g', 8 )
+                     .arg( b,    0, 'g', 8 )
+                     .arg( sigb, 0, 'g', 8 )
+                     .arg( b != 0 ? fabs( 100.0 * sigb / b ) : (double) 0, 0, 'g', 8 )
+                     .arg( chi2, 0, 'g', 8 )
                      );
 
-      curve->setPen( QPen( Qt::green, 2, Qt::SolidLine ) );
-      curve->attach( plot_data );
+         x[ 0 ] = 0e0;
+         x[ 1 ] = one_over_triangles[ 0 ] * 1.1;
+         y[ 0 ] = a;
+         y[ 1 ] = a + x[ 1 ] * b;
+
+#ifndef QT4
+         long curve = plot_data->insertCurve( "plot lr" );
+         plot_data->setCurveStyle( curve, QwtCurve::Lines );
+#else
+         QwtPlotCurve *curve = new QwtPlotCurve( "plot lr" );
+         curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-      plot_data->setAxisScale( QwtPlot::xBottom, 0, one_over_triangles[ 0 ] * 1.1e0  );
-      double min = y[ 0 ] < y[ 1 ] ? y[ 0 ] : y[ 1 ];
-      double max = y[ 0 ] < y[ 1 ] ? y[ 1 ] : y[ 0 ];
-      for ( int i = 0; i < (int) use_parameter_data.size(); ++i )
-      {
-         if ( min > use_parameter_data[ i ] )
-         {
-            min = use_parameter_data[ i ];
-         }
-         if ( max < use_parameter_data[ i ] )
-         {
-            max = use_parameter_data[ i ];
-         }
-      }
+#ifndef QT4
+         plot_data->setCurveData( curve, 
+                                  (double *)&( x[ 0 ] ),
+                                  (double *)&( y[ 0 ] ),
+                                  2
+                                  );
+         plot_data->setCurvePen( curve, QPen( Qt::green, 2, SolidLine));
 
-      for ( int i = 0; i < (int) skip_parameter_data.size(); ++i )
-      {
-         if ( min > skip_parameter_data[ i ] )
+#else
+         curve->setData(
+                        (double *)&( x[ 0 ] ),
+                        (double *)&( y[ 0 ] ),
+                        2
+                        );
+
+         curve->setPen( QPen( Qt::green, 2, Qt::SolidLine ) );
+         curve->attach( plot_data );
+#endif
+
+         double min = y[ 0 ] < y[ 1 ] ? y[ 0 ] : y[ 1 ];
+         double max = y[ 0 ] < y[ 1 ] ? y[ 1 ] : y[ 0 ];
+         if ( miny > min )
          {
-            min = skip_parameter_data[ i ];
+            miny = min;
          }
-         if ( max < skip_parameter_data[ i ] )
+         if ( maxy < max )
          {
-            max = skip_parameter_data[ i ];
+            maxy = max;
          }
       }
+   }
+
+   // run LR ln
+
+   {
+      last_a_ln    = 0e0;
+      last_siga_ln = 0e0;
+      last_b_ln    = 0e0;
+      last_sigb_ln = 0e0;
+      last_chi2_ln = 0e0;
+
+      ln_plot_ok = false;
+      if ( use_one_over_triangles_ln.size() > 1 )   
+      {
+         double a;
+         double b;
+         double siga;
+         double sigb;
+         double chi2;
+
+         vector < double > fit_x;
+         vector < double > fit_y;
+         for ( int i = 0; i < (int) use_one_over_triangles_ln.size(); ++i )
+         {
+            fit_x.push_back( use_one_over_triangles_ln[ i ] * log( use_one_over_triangles_ln[ i ] ) );
+            fit_y.push_back( log( use_parameter_data_ln    [ i ] ) );
+         }
+            
+         US_Saxs_Util::linear_fit( fit_x,
+                                   fit_y,
+                                   a,
+                                   b,
+                                   siga,
+                                   sigb,
+                                   chi2 );
+
+         ln_plot_ok = true;
+
+         last_a_ln    = a;
+         last_siga_ln = siga;
+         last_b_ln    = b;
+         last_sigb_ln = sigb;
+         last_chi2_ln = chi2;
+
+#define UHB_PTS  200
+#define UHB_MINX 1e-20
+
+         double x[ UHB_PTS ];
+         double y[ UHB_PTS ];
+
+         editor_msg( "dark blue", 
+                     QString( tr( "%1: 0 triangle LN extrapolation=%2 sigma=%3 sigma %=%4 slope=%5 sigma=%6 sigma %=%7 chi^2=%8" ) )
+                     .arg( text )
+                     .arg( exp( a ),    0, 'g', 8 )
+                     .arg( exp( a ) * siga, 0, 'g', 8 )
+                     .arg( exp( a ) != 0 ? fabs( 100.0 * exp( a ) * siga / exp( a ) ) : (double) 0, 0, 'g', 8 )
+                     .arg( b,    0, 'g', 8 )
+                     .arg( sigb, 0, 'g', 8 )
+                     .arg( b != 0 ? fabs( 100.0 * sigb / b ) : (double) 0, 0, 'g', 8 )
+                     .arg( chi2, 0, 'g', 8 )
+                     );
+
+         double deltax = ( use_one_over_triangles.back() - UHB_MINX ) / ( UHB_PTS - 1 );
+         for ( int i = 0; i < UHB_PTS; ++i )
+         {
+            x[ i ] = UHB_MINX + deltax * i;
+            y[ i ] = exp( a + b * x[ i ] * log( x[ i ] ) );
+         }
+      
+#ifndef QT4
+         long curve = plot_data->insertCurve( "plot lr ln" );
+         plot_data->setCurveStyle( curve, QwtCurve::Lines );
+#else
+         QwtPlotCurve *curve = new QwtPlotCurve( "plot lr ln" );
+         curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+#ifndef QT4
+         plot_data->setCurveData( curve, 
+                                  (double *)&( x[ 0 ] ),
+                                  (double *)&( y[ 0 ] ),
+                                  UHB_PTS
+                                  );
+         plot_data->setCurvePen( curve, QPen( Qt::darkMagenta, 2, SolidLine));
+
+#else
+         curve->setData(
+                        (double *)&( x[ 0 ] ),
+                        (double *)&( y[ 0 ] ),
+                        UHB_PTS
+                        );
+
+         curve->setPen( QPen( Qt::green, 2, Qt::SolidLine ) );
+         curve->attach( plot_data );
+#endif
+
+         double min = y[ 0 ] < y[ UHB_PTS - 1 ] ? y[ 0 ] : y[ UHB_PTS - 1 ];
+         double max = y[ 0 ] < y[ UHB_PTS - 1 ] ? y[ UHB_PTS - 1 ] : y[ 0 ];
+         if ( miny > min )
+         {
+            miny = min;
+         }
+         if ( maxy < max )
+         {
+            maxy = max;
+         }
+      }
+   }
+
+   // set up axis scale
+
+   {
+      plot_data->setAxisScale( QwtPlot::xBottom, 0, one_over_triangles[ 0 ] * 1.1e0  );
+
                             
-      min < 0 ?
-         plot_data->setAxisScale( QwtPlot::yLeft  , min * 1.03e0 , max * .97e0 ) :
-         plot_data->setAxisScale( QwtPlot::yLeft  , min * 0.97e0 , max * 1.03e0 ) ;
-   }   
+      miny < 0 ?
+             plot_data->setAxisScale( QwtPlot::yLeft  , miny * 1.03e0 , maxy * .97e0 ) :
+         plot_data->setAxisScale( QwtPlot::yLeft  , miny * 0.97e0 , maxy * 1.03e0 ) ;
+   }
 
    if ( plot_data_zoomer )
    {
@@ -800,6 +1023,7 @@ void US_Hydrodyn_Best::save_results()
 
    map < QString, QString > additions;
 
+   bool any_ln_plot = false;
    for ( int i = 0; i < (int) lb_data->count(); ++i )
    {
       lb_data->setSelected( i, true );
@@ -823,6 +1047,30 @@ void US_Hydrodyn_Best::save_results()
          .arg( last_chi2, 0, 'g', 8 )
          .arg( last_pts_removed )
          ;
+
+      if ( ln_plot_ok )
+      {
+         any_ln_plot = true;
+         additions[ lb_data->text( i ) ] += 
+            QString( ",=%1,%2%3,%4%5" )
+            .arg( exp( last_a_ln ),    0, 'g', 8 )
+            .arg( ( isnan( last_siga_ln ) || isnan( last_a_ln ) || isnan( exp( last_a_ln ) ) )  ? "=" : "" )
+            .arg( exp( last_a_ln ) * last_siga_ln, 0, 'g', 8 )
+            .arg( ( isnan( last_siga_ln ) || isnan( last_a_ln ) )? "=" : "" )
+            .arg( exp( last_a_ln ) != 0 ? fabs( 100.0 * exp( last_a_ln ) * last_siga_ln / exp( last_a_ln ) ) : (double) 0, 0, 'g', 8 )
+            +
+            QString( ",=%1,%2%3,%4%5" )
+            .arg( last_b_ln,    0, 'g', 8 )
+            .arg( isnan( last_sigb_ln ) ? "=" : "" )
+            .arg( last_sigb_ln, 0, 'g', 8 )
+            .arg( isnan( last_sigb_ln ) ? "=" : "" )
+            .arg( last_b_ln != 0 ? fabs( 100.0 * last_sigb_ln / last_b_ln ) : (double) 0, 0, 'g', 8 )
+            +
+            QString( ",=%1,%2" )
+            .arg( last_chi2_ln, 0, 'g', 8 )
+            .arg( last_pts_removed_ln )
+            ;
+      }
    }      
 
    QStringList out;
@@ -836,7 +1084,13 @@ void US_Hydrodyn_Best::save_results()
       }
    }
    out[ 0 ] += ",\"Points removed (largest number of triangles is point 1)\"";
-
+   if ( any_ln_plot )
+   {
+      out[ 0 ] +=
+         ",\"LN: Extrapolation to zero triangles (a)\",\"Sigma a\",\"Sigma a %\",\"Slope (b)\",\"Sigma b\",\"Sigma b %\",\"chi^2\""
+         ;
+      out[ 0 ] += ",\"Points removed (largest number of triangles is point 1)\"";
+   }
    // qDebug( loaded_csv_filename );
    // qDebug( loaded_csv_trimmed.join( "\n" ) );
    // qDebug( out.join( "\n" ) );
