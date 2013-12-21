@@ -112,11 +112,21 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    }         
    errorno--;
 
+   unsigned int skip_cores_per_core = 0;
+
    if ( myrank )
    {
       // wait until rank 0 process has prepared things;
       cout << QString("%1: waiting for process 0 to finish\n" ).arg( myrank ) << flush;
       if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
+      {
+         MPI_Abort( MPI_COMM_WORLD, errorno );
+         exit( errorno );
+      }         
+      errorno--;
+
+      cout << QString("%1: waiting for broadcast of skip_cores_per_core\n" ).arg( myrank ) << flush;
+      if ( MPI_SUCCESS != MPI_Bcast( &skip_cores_per_core, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD ) )
       {
          MPI_Abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
@@ -188,8 +198,6 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          exit( errorno );
       }
       errorno--;
-
-      unsigned int skip_cores_per_core = 0;
 
       // check to make sure all files .tgz
 
@@ -307,20 +315,6 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          cout << QString("%1: done with common files\n" ).arg( myrank ) << flush;
       }
 
-      if ( skip_cores_per_core )
-      {
-         QStringList qslt_new;
-         for ( int i = 0; i < (int) qslt.size(); ++i )
-         {
-            qslt_new << qslt[ i ];
-            for ( int j = 0; j < (int) skip_cores_per_core; ++j )
-            {
-               qslt_new << "SLEEP";
-            }
-         }
-         qslt = qslt_new;
-      }
-
       QString qs_files = qslt.join( "\n" ).ascii();
       sizeoflist = qs_files.length();
       char char_files[ sizeoflist + 1 ];
@@ -328,6 +322,14 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
       cout << QString("%1: signaling end of barrier\n" ).arg( myrank ) << flush;
       if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
+      {
+         MPI_Abort( MPI_COMM_WORLD, errorno );
+         exit( errorno );
+      }         
+      errorno--;
+
+      cout << QString("%1: broadcasting skip_cores_per_core\n" ).arg( myrank ) << flush;
+      if ( MPI_SUCCESS != MPI_Bcast( &skip_cores_per_core, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD ) )
       {
          MPI_Abort( MPI_COMM_WORLD, errorno );
          exit( errorno );
@@ -362,9 +364,21 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    QStringList full_output_list;
    map < QString, bool > in_output;
 
-   for ( unsigned int i = myrank; i < qslt.size(); i += npes )
+   unsigned int inc       = skip_cores_per_core + 1;
+   unsigned int use_procs = int( 5e-1 + (double) npes / ( double )inc );
+
+   unsigned int pn = 0;
+
+   if ( !myrank )
    {
-      if ( qslt[ i ] != "SLEEP" )
+      qDebug( QString( "0: np %1 jobs %2 useprocs %3 inc %4" ).arg( npes ).arg( qslt.size() ).arg( use_procs ).arg( inc ) );
+   }
+
+   if ( myrank % inc )
+   {
+      qDebug( QString( "%1: sleep" ).arg( myrank ) );
+   } else {
+      for ( unsigned int i = myrank / inc; i < qslt.size(); i += use_procs )
       {
          cout << QString( "%1: processing job %2\n" ).arg( myrank ).arg( qslt[ i ] ) << flush;
          // mkdir 
@@ -402,7 +416,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
             full_output_list << QString( "tmp_%1/" ).arg( i ) + job_output_files[ j ];
          }
       }
-   } 
+   }
 
    cout << QString("%1: end of computation barrier\n" ).arg( myrank ) << flush;
    if ( (unsigned int) myrank >= qslt.size() )
