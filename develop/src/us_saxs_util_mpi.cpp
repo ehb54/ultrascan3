@@ -189,6 +189,8 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       }
       errorno--;
 
+      unsigned int skip_cores_per_core = 0;
+
       // check to make sure all files .tgz
 
       if ( qslt.grep( QRegExp( "\\.(tgz|TGZ)$" ) ).size() != qslt.size() )
@@ -267,6 +269,26 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
                exit( errorno );
             }
             errorno--;
+
+            // check for directives
+            {
+               QFile f( "__directives" );
+               if ( f.exists() )
+               {
+                  if ( !f.open( IO_ReadOnly ) )
+                  {
+                     qDebug("Error: could not open directives file" );
+                     MPI_Abort( MPI_COMM_WORLD, errorno );
+                     exit( errorno );
+                  }
+                  QTextStream ts( &f );
+                  QString qs = ts.readLine();
+                  f.close();
+                  skip_cores_per_core = qs.toUInt();
+                  qDebug( QString( "%1: found directives, skip cores per core is %2" ).arg( myrank ).arg( skip_cores_per_core ) );
+               }
+            }
+            
             QDir::setCurrent( qs_base_dir );
          }
 
@@ -283,6 +305,20 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          qslt = newqslt;
 
          cout << QString("%1: done with common files\n" ).arg( myrank ) << flush;
+      }
+
+      if ( skip_cores_per_core )
+      {
+         QStringList qslt_new;
+         for ( int i = 0; i < (int) qslt.size(); ++i )
+         {
+            qslt_new << qslt[ i ];
+            for ( int j = 0; j < (int) skip_cores_per_core; ++j )
+            {
+               qslt_new << "SLEEP";
+            }
+         }
+         qslt = qslt_new;
       }
 
       QString qs_files = qslt.join( "\n" ).ascii();
@@ -305,7 +341,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          exit( errorno );
       }         
       errorno--;
-         
+
       cout << QString("%1: broadcast list data\n" ).arg( myrank ) << flush;
       if ( MPI_SUCCESS != MPI_Bcast( char_files, sizeoflist + 1, MPI_CHAR, 0, MPI_COMM_WORLD ) )
       {
@@ -328,40 +364,43 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    for ( unsigned int i = myrank; i < qslt.size(); i += npes )
    {
-      cout << QString( "%1: processing job %2\n" ).arg( myrank ).arg( qslt[ i ] ) << flush;
-      // mkdir 
-      QString qs_run_dir = QString( "%1/tmp_%2" ).arg( qs_base_dir ).arg( i );
-      QDir qd( qs_run_dir );
-      if ( !qd.exists() )
+      if ( qslt[ i ] != "SLEEP" )
       {
-         qd.mkdir( qs_run_dir );
-      }
-      QDir::setCurrent( qs_run_dir );
+         cout << QString( "%1: processing job %2\n" ).arg( myrank ).arg( qslt[ i ] ) << flush;
+         // mkdir 
+         QString qs_run_dir = QString( "%1/tmp_%2" ).arg( qs_base_dir ).arg( i );
+         QDir qd( qs_run_dir );
+         if ( !qd.exists() )
+         {
+            qd.mkdir( qs_run_dir );
+         }
+         QDir::setCurrent( qs_run_dir );
       
-      if ( !read_control( QString( "../%1" ).arg( qslt[ i ] ) ) )
-      {
-         cout << QString( "%1: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
-         // MPI_Abort( MPI_COMM_WORLD, errorno );
-         // exit( errorno );
-         QFile f( QString( "errors-%1" ).arg( i ) );
-         if( f.open( IO_WriteOnly | IO_Append ) )
+         if ( !read_control( QString( "../%1" ).arg( qslt[ i ] ) ) )
          {
-            QTextStream ts( &f );
-            ts << QString( "%1: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
-            f.close();
-         }
-         if ( !in_output.count( f.name() ) )
-         {
-            in_output[ f.name() ] = true;
-            full_output_list << QString( "tmp_%1/%2" ).arg( i ).arg( f.name() );
-         }
-      }         
-      errorno--;
+            cout << QString( "%1: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
+            // MPI_Abort( MPI_COMM_WORLD, errorno );
+            // exit( errorno );
+            QFile f( QString( "errors-%1" ).arg( i ) );
+            if( f.open( IO_WriteOnly | IO_Append ) )
+            {
+               QTextStream ts( &f );
+               ts << QString( "%1: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
+               f.close();
+            }
+            if ( !in_output.count( f.name() ) )
+            {
+               in_output[ f.name() ] = true;
+               full_output_list << QString( "tmp_%1/%2" ).arg( i ).arg( f.name() );
+            }
+         }         
+         errorno--;
 
-      // collect result files
-      for ( unsigned int j = 0; j < job_output_files.size(); j++ )
-      {
-         full_output_list << QString( "tmp_%1/" ).arg( i ) + job_output_files[ j ];
+         // collect result files
+         for ( unsigned int j = 0; j < job_output_files.size(); j++ )
+         {
+            full_output_list << QString( "tmp_%1/" ).arg( i ) + job_output_files[ j ];
+         }
       }
    } 
 

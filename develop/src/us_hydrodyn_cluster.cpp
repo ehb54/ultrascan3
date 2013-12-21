@@ -4471,6 +4471,17 @@ bool US_Hydrodyn_Cluster::additional_processing(
             out += QString( "bestmsrpatternfile %1%2\n" ).arg( common_prefix ).arg( QFileInfo( f_names ).fileName() );
             editor_msg( "blue", QString( tr( "Notice: created MSROLL names file: %1" ) ).arg( f_names.name() ) );
          }
+         QFile f_directives( dir + "__directives" );
+         if ( !f_directives.open( IO_WriteOnly ) )
+         {
+            editor_msg( "red", QString( tr( "Error: can not create directives file: %1" ) ).arg( f_directives.name() ) );
+         } else {
+            QTextStream ts( &f_directives );
+            ts << "2" << endl;
+            f_directives.close();
+            source_files << f_directives.name();
+         }
+
          return true;
       }
    }
