@@ -166,20 +166,30 @@ bool US_Saxs_Util::run_best()
                if ( qsl.size() )
                {
                   found_triangles = qsl[ 0 ].toInt();
-                  qDebug( QString( "found triangles %1 with fineness %2" ).arg( found_triangles ).arg( use_fineness ) );
+                  qDebug( QString( "found triangles %1 with fineness %2 on %3" )
+                          .arg( found_triangles )
+                          .arg( use_fineness )
+                          .arg( control_parameters[ "inputfilenoread" ] )
+                          );
                   if ( use_fineness == start_fineness &&
                        found_triangles > max_triangles )
                   {
                      control_parameters[ "bestmsrfinenessangle" ] =
                         QString( "%1" ).arg( control_parameters[ "bestmsrfinenessangle" ].toDouble() + 0.1e0 );
-                     qDebug( QString( "too many triangles with largest fineness, incrementing max fineness to %1" )
-                             .arg( control_parameters[ "bestmsrfinenessangle" ] ) );
+                     qDebug( QString( "too many triangles with largest fineness, incrementing max fineness to %1 on %2" )
+                             .arg( control_parameters[ "bestmsrfinenessangle" ] )
+                             .arg( control_parameters[ "inputfilenoread" ] ) );
                      unlink( pdb_stripped );
                      output_files = save_output_files;
                      for ( int i = 0; i < (int) rm_output_files.size(); ++i )
                      {
                         qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
                         unlink( rm_output_files[ i ] );
+                     }
+                     if ( control_parameters[ "bestmsrfinenessangle" ].toDouble() > 2e0 )
+                     {
+                        errormsg = QString( "BEST: starting fineness too large %1" ).arg( control_parameters[ "inputfilenoread" ] );
+                        return false;
                      }
                      return run_best();
                   }
@@ -200,8 +210,10 @@ bool US_Saxs_Util::run_best()
          {
             control_parameters[ "bestmsrfinenessangle" ] =
                QString( "%1" ).arg( control_parameters[ "bestmsrfinenessangle" ].toDouble() + 0.1e0 );
-            qDebug( QString( "msroll failed and failed for previous values of fineness, incrementing max fineness to %1" )
-                    .arg( control_parameters[ "bestmsrfinenessangle" ] ) );
+            qDebug( QString( "msroll failed and failed for previous values of fineness, incrementing max fineness to %1 on %2" )
+                    .arg( control_parameters[ "bestmsrfinenessangle" ] ) 
+                    .arg( control_parameters[ "inputfilenoread" ] )
+                    );
             unlink( pdb_stripped );
             output_files = save_output_files;
             for ( int i = 0; i < (int) rm_output_files.size(); ++i )
@@ -209,6 +221,12 @@ bool US_Saxs_Util::run_best()
                qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
                unlink( rm_output_files[ i ] );
             }
+            if ( control_parameters[ "bestmsrfinenessangle" ].toDouble() > 2e0 )
+            {
+               errormsg = QString( "BEST: starting fineness too large %1" ).arg( control_parameters[ "inputfilenoread" ] );
+               return false;
+            }
+
             return run_best();
          }
       }
@@ -435,7 +453,8 @@ bool US_Saxs_Util::run_best()
       one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
                                     1e0 / triangles.back().toDouble() : -1e0 );
 
-      qDebug( QString( "triangles %1 %2\n" ).arg( triangles.back() ).arg( one_over_triangles.back() ) );
+      qDebug( QString( "triangles %1 %2 on %3\n" ).arg( triangles.back() ).arg( one_over_triangles.back() )
+              .arg( control_parameters[ "inputfilenoread" ] ) );
       
       for ( int i = 0; i < (int) expected.size(); ++i )
       {
@@ -579,7 +598,7 @@ bool US_Saxs_Util::run_best()
                y.push_back( csvresults[ j ][ i ].toDouble() );
                ts << QString( "=%1" ).arg( y.back(), 0, 'g', 8 ) << ",";
             } else {
-               ts << "?,";
+               ts << "=-1,";
                missing_data = true;
             }
             qDebug( QString( "i %1 missing_data %2 do_linear_fit %3 extrapolate.count( i ) %4" )
