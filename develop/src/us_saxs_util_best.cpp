@@ -470,7 +470,7 @@ bool US_Saxs_Util::run_best()
       }
    }
 
-   bool do_linear_fit = outfiles.size() > 2;
+   bool do_linear_fit = outfiles.size() > 1;
 
    {
       QFile f( QString( "%1.csv" ).arg( inputbase ) );
@@ -555,7 +555,7 @@ bool US_Saxs_Util::run_best()
          return false;
       }
       QTextStream ts( &f );
-      if ( do_linear_fit )
+      if ( 1 || do_linear_fit )
       {
          ts << ",";
          for ( int j = 0; j < (int) csvresults.size(); ++j )
