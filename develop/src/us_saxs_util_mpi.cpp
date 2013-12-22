@@ -365,13 +365,22 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    map < QString, bool > in_output;
 
    unsigned int inc       = skip_cores_per_core + 1;
-   unsigned int use_procs = int( 5e-1 + (double) npes / ( double )inc );
+   unsigned int use_procs = npes / inc;
+   if ( npes % inc )
+   {
+      use_procs++;
+   }
 
    unsigned int pn = 0;
 
    if ( !myrank )
    {
-      qDebug( QString( "0: np %1 jobs %2 useprocs %3 inc %4" ).arg( npes ).arg( qslt.size() ).arg( use_procs ).arg( inc ) );
+      qDebug( QString( "0: jobs %1 np %2 skip %3 useprocs %4 inc %5" )
+              .arg( qslt.size() )
+              .arg( npes )
+              .arg( skip_cores_per_core )
+              .arg( use_procs )
+              .arg( inc ) );
    }
 
    if ( myrank % inc )

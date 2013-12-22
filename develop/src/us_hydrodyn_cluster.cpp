@@ -50,6 +50,8 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    cluster_additional_methods_modes[ "no_multi_model_pdb"             ][ "best" ] = true;
    cluster_additional_methods_modes[ "inputfilenoread"                ][ "best" ] = true;
 
+   cluster_additional_methods_job_multiplier[ "best" ] = 3;
+
    cluster_config[ "userid" ] = "";
    cluster_config[ "server" ] = "";
 
@@ -2839,7 +2841,15 @@ QString US_Hydrodyn_Cluster::job_prepend_name()
    if ( !prepend.isEmpty() &&
         cb_for_mpi->isChecked() )
    {
-      prepend += QString( "p%1_" ).arg( le_no_of_jobs->text() );
+      QStringList methods = active_additional_methods();
+      if ( methods.size() &&
+           cluster_additional_methods_job_multiplier.count( methods[ 0 ] ) )
+      {
+         prepend += QString( "p%1_" )
+            .arg( le_no_of_jobs->text().toUInt() * cluster_additional_methods_job_multiplier[ methods[ 0 ] ] );
+      } else {
+         prepend += QString( "p%1_" ).arg( le_no_of_jobs->text() );
+      }
    }
    return prepend;
 }
@@ -4477,7 +4487,7 @@ bool US_Hydrodyn_Cluster::additional_processing(
             editor_msg( "red", QString( tr( "Error: can not create directives file: %1" ) ).arg( f_directives.name() ) );
          } else {
             QTextStream ts( &f_directives );
-            ts << "2" << endl;
+            ts << QString( "%1" ).arg( cluster_additional_methods_job_multiplier[ "best" ] - 1 ) << endl;
             f_directives.close();
             source_files << f_directives.name();
          }
