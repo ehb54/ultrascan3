@@ -377,6 +377,10 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    if ( myrank % inc )
    {
       qDebug( QString( "%1: sleep" ).arg( myrank ) );
+      if ( (unsigned int) myrank >= qslt.size() )
+      {
+         full_output_list << "null_remove";
+      }
    } else {
       for ( unsigned int i = myrank / inc; i < qslt.size(); i += use_procs )
       {
@@ -418,11 +422,13 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       }
    }
 
-   cout << QString("%1: end of computation barrier\n" ).arg( myrank ) << flush;
-   if ( (unsigned int) myrank >= qslt.size() )
+   //   if ( (unsigned int) myrank >= qslt.size() )
+   if ( !full_output_list.size() )
    {
       full_output_list << "null_remove";
    }
+
+   qDebug( QString("%1: end of computation barrier my full_output_list %2\n" ).arg( myrank ).arg( full_output_list.join( ":" ) ) );
 
    if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
    {
