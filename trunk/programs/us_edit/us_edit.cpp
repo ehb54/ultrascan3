@@ -4961,8 +4961,20 @@ int US_Edit::like_edit_files( QString filename, QStringList& editfiles,
    // Determine local-disk files with same edit label and cell/channel
    QString filebase = filename.section( ".", 0, -3 );
    QStringList filter( filebase + ".*.xml" );
-   QStringList ldfiles = QDir( workingDir ).entryList(
+   QStringList edfiles = QDir( workingDir ).entryList(
          filter, QDir::Files, QDir::Name );
+   QStringList ldfiles;
+
+   // Pare down the list to those with triples matching loaded files
+   for ( int ii = 0; ii < edfiles.count(); ii++ )
+   {
+      QString fname    = edfiles[ ii ];
+      QString triple   = fname.section( ".", -4, -2 ).replace( ".", " / " );
+
+      if ( triples.contains( triple ) )
+         ldfiles << fname;
+   }
+
    int     nledits  = ldfiles.count();
 DbgLv(1) << "LiEdFi: nledits" << ldfiles.count() << filter;
 
@@ -4993,10 +5005,14 @@ DbgLv(1) << "LiEdFi: nledits" << ldfiles.count() << filter;
          QString idData     = dbP->value( 0 ).toString();
          QString efname     = dbP->value( 2 ).toString()
                               .section( "/", -1, -1 );
+         QString triple     = efname.section( ".", -4, -2 )
+                              .replace( ".", " / " );
 //DbgLv(1) << "LiEdFi:   db0,2" << idData << efname << "fbase" << filebase;
 
-         if ( efname.startsWith( filebase ) )
-         {  // Where the file name has like edit label and cell/chan, save it
+         // If the file name has a like edit label, has the same cell/channel,
+         //  and has triple matching a loaded file, save it.
+         if ( efname.startsWith( filebase )  &&  triples.contains( triple ) )
+         {
             dbfiles   << efname;
             dbEdIds   << idData;
 DbgLv(1) << "LiEdFi:     id fn dbfsiz" << idData << efname << dbfiles.count();
@@ -5029,13 +5045,13 @@ DbgLv(1) << "LiEdFi:  nlocals nledits" << nlocals << nledits;
    editfiles        = ldfiles;
    nledits          = editfiles.count();
 
-   if ( nledits < 2 )
-   {  // Only one file exists, so just pass it back
+   if ( nledits == 0 )
+   {  // No files (should not happen):  return at least the specified file name
       editfiles << filename;
       nledits          = 1;
    }
 
-   else
+   else if ( nledits > 1 )
    {  // If multiple files, sort them
       editfiles.sort();
    }
