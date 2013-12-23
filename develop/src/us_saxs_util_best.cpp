@@ -581,7 +581,7 @@ bool US_Saxs_Util::run_best()
          compute_tau( this_tau_input[ 0 ],
                       this_tau_input[ 1 ],
                       this_tau_input[ 2 ],
-                      10,
+                      .1,
                       this_tau_results );
          for ( int j = 0; j < (int) this_tau_results.size(); ++j )
          {
