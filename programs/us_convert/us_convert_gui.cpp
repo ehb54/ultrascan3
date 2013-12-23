@@ -2740,6 +2740,7 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
       if ( referenceDefined )
       {
          status = ExpData.saveRIDisk( runID, dirname ); 
+DbgLv(1) << "SV:   saveRIDisk status" << status;
          
          if ( status == US_Convert::CANTOPEN )
          {
@@ -2759,6 +2760,8 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
          
          }
       }
+else
+DbgLv(1) << "SV:   NO saveRIDisk : refDef" << referenceDefined;
 
       else
       {
@@ -2772,6 +2775,8 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
 
       }
    }
+else
+DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
 
    // Status is OK
    le_status->setText( tr( "%1 %2 files were written to disk." )
