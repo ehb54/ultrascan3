@@ -641,12 +641,12 @@ bool US_Saxs_Util::run_best()
                ts << "=-1,";
                missing_data = true;
             }
-            qDebug( QString( "i %1 missing_data %2 do_linear_fit %3 extrapolate.count( i ) %4" )
-                    .arg( i )
-                    .arg( missing_data ? "true" : "false" )
-                    .arg( do_linear_fit ? "true" : "false" )
-                    .arg( extrapolate.count( i ) ) 
-                    );
+            // qDebug( QString( "i %1 missing_data %2 do_linear_fit %3 extrapolate.count( i ) %4" )
+            //         .arg( i )
+            //         .arg( missing_data ? "true" : "false" )
+            //         .arg( do_linear_fit ? "true" : "false" )
+            //         .arg( extrapolate.count( i ) ) 
+            //         );
          }
          if ( !missing_data && do_linear_fit && extrapolate.count( i ) )
          {
