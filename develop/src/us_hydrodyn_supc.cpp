@@ -4248,6 +4248,7 @@ static void
 relax_rigid_calc()
 {
 
+
    // char pluto;
    float ddd[3];
    float rrr[3];
@@ -4258,9 +4259,26 @@ relax_rigid_calc()
 
    autovalori();
 
+   {
+
+      qDebug( QString( "supc compute_tau: input ev's: %1 %2 %3 fconv %4" )
+              .arg( (double)dl1 )
+              .arg( (double)dl2 )
+              .arg( (double)dl3 )
+              .arg( fconv ) );
+      vector < double > results;
+      double x1 = dl1;
+      double x2 = dl2;
+      double x3 = dl3;
+      US_Saxs_Util::compute_tau( x1, x2, x3, fconv, results );
+   }
+
    ddr[0] = dl1;
    ddr[1] = dl2;
    ddr[2] = dl3;
+
+   printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",dl1,dl2,dl3);
+   printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
 
    /*      printf("\nValori ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
            scanf("%s",&pluto1);
@@ -4445,6 +4463,13 @@ relax_rigid_calc()
               scanf("%s",&pluto1);
               getchar();       */
    }
+
+   for ( int i = 0; i < 5; ++i )
+   {
+      qDebug( QString( "supc tau results %1 %2" ).arg( i+1 ).arg( (double)tao[ i ] ) );
+   }
+   qDebug( QString( "supc tau results %1 %2" ).arg( 5 ).arg( taoh ) );
+   qDebug( QString( "supc tau results %1 %2" ).arg( 6 ).arg( taom ) );
 
 }
 

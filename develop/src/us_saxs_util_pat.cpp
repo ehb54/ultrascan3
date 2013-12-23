@@ -137,6 +137,12 @@ void US_Saxs_Util::compute_tau( double drrev1,
 
    // autovalori();
 
+   qDebug( QString( "compute_tau: input ev's: %1 %2 %3 fconv %4" )
+           .arg( drrev1 )
+           .arg( drrev2 )
+           .arg( drrev3 )
+           .arg( fconv ) );
+
    ddr[0] = drrev1;
    ddr[1] = drrev2;
    ddr[2] = drrev3;
@@ -158,7 +164,6 @@ void US_Saxs_Util::compute_tau( double drrev1,
       pd[2] = ddr[2];
       if (ddr[2] <= ddr[1])
          a = (int) 2.0;
-
    }
 
    if ((fabs(ddr[0] - ddr[2]) / ddr[0]) < 0.01)
@@ -201,7 +206,7 @@ void US_Saxs_Util::compute_tau( double drrev1,
       tau[5] = 1.0 / tau[5];
       for (a = 0; a < 5; a++)
       {
-         tau[a] = tau[a] * 1E-09;
+         tau[a] = tau[a]; // * 1E-09;
       }
       tau[6] = ((1.0 / tau[0]) + (2 * (1.0 / tau[1])) + (2 * (1.0 / tau[3]))) / 5;
    }
@@ -218,7 +223,7 @@ void US_Saxs_Util::compute_tau( double drrev1,
       tau[5] = 1.0 / tau[5];
       for (a = 0; a < 5; a++)
       {
-         tau[a] = tau[a] * 1E-09;
+         tau[a] = tau[a]; // * 1E-09;
       }
       tau[6] = ((2 * (1.0 / tau[1])) + (2 * (1.0 / tau[3])) + (1.0 / tau[4])) / 5;
    }
@@ -297,12 +302,17 @@ void US_Saxs_Util::compute_tau( double drrev1,
       for (a = 0; a < 5; a++)
       {
          tau[5] += tau[a];
-         tau[a] = tau[a] * 1E-09;
+         tau[a] = tau[a]; // * 1E-09;
          tau[6] += 1.0 / tau[a];
       }
       tau[5] = tau[5] / 5.0;
       tau[5] = 1.0 / tau[5];
       tau[6] = tau[6] / 5.0;
+   }
+
+   for (a = 0; a < 5; a++)
+   {
+      tau[a] = 1e0 / tau[a];
    }
 
    vector < double > save_tau;
@@ -327,6 +337,9 @@ void US_Saxs_Util::compute_tau( double drrev1,
    {
       tau[ i ] *= pow( fconv, 3e0 ) * 1e9;
    }
+
+   for ( int i = 0; i < (int) tau.size(); ++i )
+   {
+      qDebug( QString( "compute_tau: tau results %1 %2" ).arg( i+1 ).arg( tau[ i ] ) );
+   }
 }
-
-

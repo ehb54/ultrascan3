@@ -530,13 +530,13 @@ bool US_Saxs_Util::run_best()
             << "Intrinsic Viscosity at the Center of Viscosity Chi"
             << "Intrinsic Viscosity at the Center of Viscosity Chi*Volume (A^3)"
             << "Eta (cm^3/g)"
-            << "Tau(1) (s)"
-            << "Tau(2) (s)"
-            << "Tau(3) (s)"
-            << "Tau(4) (s)"
-            << "Tau(5) (s)"
-            << "Tau(h) (s)"
-            << "Tau(m) (s)"
+            << "Tau(1) (ns)"
+            << "Tau(2) (ns)"
+            << "Tau(3) (ns)"
+            << "Tau(4) (ns)"
+            << "Tau(5) (ns)"
+            << "Tau(h) (ns)"
+            << "Tau(m) (ns)"
          ;
 
       set < int > source_for_tau;
@@ -570,7 +570,7 @@ bool US_Saxs_Util::run_best()
          {
             if ( source_for_tau.count( j ) )
             {
-               this_tau_input.push_back( qsl[ j ].toDouble() );
+               this_tau_input.push_back( qsl[ j ].toDouble() * 1e-3 );
             }
          }
          if ( this_tau_input.size() != 3 )
@@ -581,7 +581,7 @@ bool US_Saxs_Util::run_best()
          compute_tau( this_tau_input[ 0 ],
                       this_tau_input[ 1 ],
                       this_tau_input[ 2 ],
-                      .1,
+                      10,
                       this_tau_results );
          for ( int j = 0; j < (int) this_tau_results.size(); ++j )
          {
