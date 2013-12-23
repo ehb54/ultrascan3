@@ -437,6 +437,8 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       full_output_list << "null_remove";
    }
 
+   nice( 20 );
+
    qDebug( QString("%1: end of computation barrier my full_output_list %2\n" ).arg( myrank ).arg( full_output_list.join( ":" ) ) );
 
    if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )

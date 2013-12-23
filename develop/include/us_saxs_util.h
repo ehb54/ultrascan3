@@ -796,6 +796,15 @@ class US_EXTERN US_Saxs_Util
 
       static double       spline_erf( double x );
 
+      static bool         pat_model( PDB_model & model );
+      static bool         write_model( PDB_model & model, QString filename );
+
+      static void         compute_tau( double drrev1,
+                                       double drrev2,
+                                       double drrev3,
+                                       double fconv,
+                                       vector < double > & tau );
+         
    private:
 
       // double       minusoneoverfourpisq;

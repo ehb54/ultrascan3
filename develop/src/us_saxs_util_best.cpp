@@ -530,14 +530,28 @@ bool US_Saxs_Util::run_best()
             << "Intrinsic Viscosity at the Center of Viscosity Chi"
             << "Intrinsic Viscosity at the Center of Viscosity Chi*Volume (A^3)"
             << "Eta (cm^3/g)"
-            ;
+            << "Tau(1) (s)"
+            << "Tau(2) (s)"
+            << "Tau(3) (s)"
+            << "Tau(4) (s)"
+            << "Tau(5) (s)"
+            << "Tau(h) (s)"
+            << "Tau(m) (s)"
+         ;
+
+      set < int > source_for_tau;
+      source_for_tau.insert( 31 );
+      source_for_tau.insert( 32 );
+      source_for_tau.insert( 33 );
+
+      vector < vector < double > > tau_results;
 
       set < int > extrapolate;
       for ( int i = 17; i < 44; ++i )
       {
          extrapolate.insert( i );
       }
-      for ( int i = 47; i < 50; ++i )
+      for ( int i = 47; i < 57; ++i )
       {
          extrapolate.insert( i );
       }
@@ -547,6 +561,32 @@ bool US_Saxs_Util::run_best()
          qDebug( QString( "csv input file %1 triangles %2\n" ).arg( csvfiles[ i ] ).arg( triangles[ i ] ) );
          QStringList qsl = best_output_column( csvfiles[ i ] );
          csvresults.push_back( qsl );
+
+         // compute tau
+
+         vector < double > this_tau_input;
+         vector < double > this_tau_results;
+         for ( int j = 0; j < (int) qsl.size(); j++ )
+         {
+            if ( source_for_tau.count( j ) )
+            {
+               this_tau_input.push_back( qsl[ j ].toDouble() );
+            }
+         }
+         if ( this_tau_input.size() != 3 )
+         {
+            errormsg = QString( "incorrect # of tau inputs %2" ).arg( this_tau_input.size() );
+            return false;
+         }
+         compute_tau( this_tau_input[ 0 ],
+                      this_tau_input[ 1 ],
+                      this_tau_input[ 2 ],
+                      .1,
+                      this_tau_results );
+         for ( int j = 0; j < (int) this_tau_results.size(); ++j )
+         {
+            csvresults.back() << QString( "%1" ).arg( this_tau_results[ j ] );
+         }
       }
 
       if ( !f.open( IO_WriteOnly ) )

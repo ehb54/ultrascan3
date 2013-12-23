@@ -360,6 +360,7 @@ SOURCES += \
   src/us_saxs_util_nsa_ga.cpp \
   src/us_saxs_util_nsa_gsm.cpp \
   src/us_saxs_util_nsa_sga.cpp \
+  src/us_saxs_util_pat.cpp \
   src/us_saxs_util_pm.cpp \
   src/us_saxs_util_sgp.cpp \
   src/us_saxs_util_sgp_phys.cpp \

@@ -46,6 +46,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
 
    cluster_additional_methods_modes[ "one_run_per_file"               ][ "best" ] = true;
    cluster_additional_methods_modes[ "additional_processing_per_file" ][ "best" ] = true;
+   cluster_additional_methods_modes[ "inputfile_pat_addendum"         ][ "best" ] = true;
    cluster_additional_methods_modes[ "additional_processing_global"   ][ "best" ] = true;
    cluster_additional_methods_modes[ "no_multi_model_pdb"             ][ "best" ] = true;
    cluster_additional_methods_modes[ "inputfilenoread"                ][ "best" ] = true;
@@ -3116,11 +3117,17 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                {
                   if ( (int)j % jobs == i )
                   {
+                     QString use_filename = selected_files[ j ];
+                     if ( cluster_additional_methods_modes[ "inputfile_pat_addendum" ].count( methods[ m ] ) )
+                     {
+                        use_filename = QFileInfo( selected_files[ j ] ).baseName() + "_pat" + "." + QFileInfo( selected_files[ j ] ).extension();
+                     }
+
                      out += QString( "%1 %2\n" )
                         .arg( cluster_additional_methods_modes.count( "inputfilenoread"  ) &&
                               cluster_additional_methods_modes[ "inputfilenoread" ].count( methods[ m ] ) ?
-                              "InputFileNoRead" : "InputFIle     " )
-                        .arg( QFileInfo( selected_files[ j ] ).fileName() );
+                              "InputFileNoRead" : "InputFile     " )
+                        .arg( QFileInfo( use_filename ).fileName() );
                      if ( !already_added.count( selected_files[ j ] ) )
                      {
                         source_files_to_clear << selected_files[ j ];
@@ -4389,6 +4396,21 @@ bool US_Hydrodyn_Cluster::additional_processing(
                   float mw = ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ].mw;
                   editor_msg( "blue", QString( tr( "Molecular weight of %1: %2 Daltons\n" ) ).arg( QFileInfo( file ).fileName() ).arg( mw ) );
                   out += QString( "bestbestmw      %1\n" ).arg( mw );
+                  // PAT
+                  if ( !US_Saxs_Util::pat_model( ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ] ) )
+                  {
+                     editor_msg( "red", QString( tr( "Error: perform PAT on  %1" ) ).arg( file ) );
+                  } else {
+                     editor_msg( "blue", QString( tr( "PAT on %1 ok" ) ).arg( file ) );
+                     QString dir = ( ( US_Hydrodyn * ) us_hydrodyn)->somo_dir + QDir::separator() + "tmp" + QDir::separator();
+                     QString patfile =  dir + QFileInfo( file ).baseName() + "_pat" + "." + QFileInfo( file ).extension();
+                     if ( !US_Saxs_Util::write_model( ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ] , patfile ) )
+                     {
+                        editor_msg( "red", QString( tr( "Error: writing PAT'd pdb %1" ) ).arg( patfile ) );
+                     } else {
+                        source_files << patfile;
+                     }
+                  }
                }
             } else {
                editor_msg( "red", "Error: bead models are not supported for msroll" );
