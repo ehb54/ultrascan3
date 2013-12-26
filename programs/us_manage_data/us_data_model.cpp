@@ -1718,15 +1718,17 @@ bool US_DataModel::review_descs( QStringList& sorts,
    if ( nrecs < 1 )
       return abort;
 
-   int ii = sorts[ 0 ].section( ":", 1, 1 ).toInt();
-   ityp   = descv[ ii ].recType;
-   rtyp   = QString( rtyps[ ityp - 1 ] );
+   int ii   = sorts[ 0 ].section( ":", 1, 1 ).toInt();
+   ityp     = descv[ ii ].recType;
+   rtyp     = QString( rtyps[ ityp - 1 ] );
 
    if ( descv[ ii ].recordID >= 0 )
-      rtyp   = "DB " + rtyp;
+      rtyp     = "DB " + rtyp;
    else
-      rtyp   = "Local " + rtyp;
+      rtyp     = "Local " + rtyp;
 DbgLv(2) << "RvwD: ii ityp rtyp nrecs" << ii << ityp << rtyp << nrecs;
+   cGUID    = sorts[ 0 ].section( ":", 2, 2 );
+   tGUIDs << cGUID;
 
    for ( int ii = 1; ii < nrecs; ii++ )
    {  // do a pass to determine if there are duplicate GUIDs
@@ -1749,6 +1751,8 @@ DbgLv(2) << "RvwD: ii ityp rtyp nrecs" << ii << ityp << rtyp << nrecs;
       {  // this pass found a duplicate:  save the index and bump count
          multis << ii;
          nmult++;
+DbgLv(1) << "RvwD: nmult" << nmult << "ii,jj" << ii << jj
+ << "cGUID,pGUID" << cGUID << tGUIDs[jj];
       }
 
       tGUIDs << cGUID;
