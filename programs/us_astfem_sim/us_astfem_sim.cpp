@@ -399,9 +399,10 @@ void US_Astfem_Sim::start_simulation( void )
    }
 
    // Set the time for the scans
-   double current_time = 0.0;
    double w2t_sum      = 0.0;
-   double delay;
+   double delay        = simparams.speed_step[ 0 ].delay_hours * 3600
+                       + simparams.speed_step[ 0 ].delay_minutes * 60;
+   double current_time = delay;
    double duration;
    double increment    = 0.0;
    int    scan_number  = 0;
