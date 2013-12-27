@@ -1961,6 +1961,8 @@ DbgLv(1) << "getCenterpieceIndex " << out_chaninfo[tripListx].centerpiece;
          out_tripinfo[ idax++ ].centerpiece = cpID;
       }
    }
+   else
+      out_tripinfo[ tripListx ].centerpiece = cpID;
 
    enableSaveBtn();
 }
