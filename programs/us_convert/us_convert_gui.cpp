@@ -102,7 +102,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    QLabel* lb_status = us_label(      tr( "Status:" ) );
    le_status         = us_lineedit(   tr( "(no data loaded)" ), 1, true );
    QPalette stpal;
-   stpal.setColor( QPalette::Text, Qt::blue );
+   stpal.setColor( QPalette::Text, Qt::white );
+   stpal.setColor( QPalette::Base, Qt::blue  );
    le_status->setPalette( stpal );
 
    // Display Run ID
@@ -784,7 +785,7 @@ DbgLv(1) << "CGui:iM: mwlsetup";
 DbgLv(1) << "CGui:IM:   (2)tLx infsz" << tripListx << out_chaninfo.count();
    mwl_setup();
 
-   le_status->setText( tr( "MWL Import is complete." ) );
+   le_status->setText( tr( "MWL Import IS COMPLETE." ) );
    qApp->processEvents();
    QApplication::restoreOverrideCursor();
 DbgLv(1) << "CGui:iM:  DONE";
@@ -1371,7 +1372,7 @@ DbgLv(1) << "CGui: (5)referDef=" << referenceDefined;
 
    if ( allData.size() == 0 ) return;
 
-   le_status->setText( tr( "%1 data triples are now loaded." )
+   le_status->setText( tr( "%1 data triples are NOW LOADED." )
                        .arg( allData.size() ) );
    qApp->processEvents();
 
@@ -1465,7 +1466,7 @@ DbgLv(1) << "CGui: call plot_current";
    ExpData.syncOK = true;
 
    enableSaveBtn();
-   le_status->setText( tr( "Local disk data load is complete." ) );
+   le_status->setText( tr( "Local disk data load IS COMPLETE." ) );
    qApp->processEvents();
 DbgLv(1) << "CGui: ldUS3Dk: RTN";
 }
@@ -1532,7 +1533,7 @@ DbgLv(1) << "CGui: ldUS3DB: call ldUS3Dk";
 
    enableControls();
 
-   le_status->setText( tr( "%1 data triples are now loaded from DB." )
+   le_status->setText( tr( "%1 data triples are NOW LOADED from DB." )
                        .arg( allData.size() ) );
    qApp->processEvents();
 
@@ -2860,7 +2861,7 @@ DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
    tripListx = save_tripListx;
    plot_current();
    data_plot->setVisible( true );
-   le_status->setText( tr( "Saving of plot files is complete." ) );
+   le_status->setText( tr( "Saving of plot files IS COMPLETE." ) );
    qApp->processEvents();
    QApplication::restoreOverrideCursor();
 
@@ -3079,7 +3080,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
 
    saveReportsToDB();
 
-   le_status->setText( tr( "DB data and reports save is complete." ) );
+   le_status->setText( tr( "DB data and reports save IS COMPLETE." ) );
    qApp->processEvents();
 }
 
