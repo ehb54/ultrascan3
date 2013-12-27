@@ -60,8 +60,8 @@
   <li>
     <b><a name="utils" id="utils">Utilities</a></b>:
     <ul>
-      <li> <a href="convert.html">Convert Legacy Data</a> </li>
-      <li> <a href="export_legacy.html">Export Legacy Data</a> </li>
+      <li> <a href="convert.html">Import Experimental Data</a> </li>
+      <li> <a href="export_legacy.html">Export Experimental Data</a> </li>
       <li> <a href="fit_meniscus.html">Fit Meniscus</a> </li>
       <li> <a href="colorgradient.html">Color Gradient Generator</a> </li>
       <li> <a href="reporter.html">Report Generator</a> </li>
