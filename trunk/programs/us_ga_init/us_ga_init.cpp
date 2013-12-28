@@ -981,8 +981,20 @@ void US_GA_Initialize::plot_3dim( void )
    if ( auto_lim )
       drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
    else
+   {
+      double zmin = sdistro->at( 0 ).c;
+      double zmax = zmin;
       drect = QwtDoubleRect( plsmin, plfmin,
             ( plsmax - plsmin ), ( plfmax - plfmin ) );
+
+      for ( int jj = 0; jj < sdistro->size(); jj++ )
+      {
+         zmin  = qMin( zmin, sdistro->at( jj ).c );
+         zmax  = qMax( zmax, sdistro->at( jj ).c );
+      }
+
+      spec_dat.setZRange( zmin, zmax );
+   }
 
    spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
    spec_dat.setRaster( sdistro );
@@ -1004,10 +1016,8 @@ void US_GA_Initialize::plot_3dim( void )
 
    if ( auto_lim )
    {   // auto limits
-      data_plot->setAxisScale( QwtPlot::yLeft,
-         spec_dat.yrange().minValue(), spec_dat.yrange().maxValue() );
-      data_plot->setAxisScale( QwtPlot::xBottom,
-         spec_dat.xrange().minValue(), spec_dat.xrange().maxValue() );
+      data_plot->setAxisAutoScale( QwtPlot::yLeft   );
+      data_plot->setAxisAutoScale( QwtPlot::xBottom );
    }
    else
    {   // manual limits
@@ -1655,22 +1665,11 @@ void US_GA_Initialize::set_limits()
 
    if ( rdif == 0.0 )
    {
-      //QMessageBox::warning( this,
-      //   tr( "Constant f/f0 ; Varying Vbar" ),
-      //   tr( "NOTE: This model has constant f/f0 values.\n"
-      //       "It cannot currently be used for GA." ) );
-
       rdif      = 0.5;
       update_plfmin( fmin - rdif );
       update_plfmax( fmax + rdif );
       update_plsmin( smin );
       update_plsmax( smax );
-
-      //auto_lim  = false;
-      //cb_autlim->setChecked( auto_lim );
-      //select_autolim();
-
-      //return;
    }
 
    fmin     -= rdif;
@@ -1704,20 +1703,30 @@ void US_GA_Initialize::set_limits()
    if ( auto_lim )
    {
       // set auto limits
-      smax       += ( ( smax - smin ) / 20.0 );
-      smin       -= ( ( smax - smin ) / 20.0 );
-      fmax       += ( ( fmax - fmin ) / 20.0 );
-      fmin       -= ( ( fmax - fmin ) / 20.0 );
+      bool smpo   = smin >= 0.0;
+      smax       += ( ( smax - smin ) * 0.1 );
+      smin       -= ( ( smax - smin ) * 0.1 );
+      fmax       += ( ( fmax - fmin ) * 0.1 );
+      fmin       -= ( ( fmax - fmin ) * 0.1 );
       fmin        = ( fmin < 0.1 ) ? 0.1 : fmin;
+      smin        = smpo ? qMax( 0.0, smin ) : smin;
 
       if ( ( fmax - fmin ) < 1.0e-3 )
-         fmax       += ( fmax / 10.0 );
+         fmax       += ( fmax * 0.1 );
 
       if ( ( smax - smin ) < 1.0e-100 )
       {
-         smin       -= ( smin / 30.0 );
-         smax       += ( smax / 30.0 );
+         smin       -= ( smin * 0.04 );
+         smax       += ( smax * 0.04 );
       }
+
+      // Make x,y limits multiples of reasonable values
+      double sinc = plot_s ? 0.1 : 100.0;
+      double finc = plot_k ? 0.1 : 0.01;
+      smin        = qFloor( smin / sinc ) * sinc;
+      smax        = qFloor( smax / sinc ) * sinc + sinc;
+      fmin        = qFloor( fmin / finc ) * finc;
+      fmax        = qFloor( fmax / finc ) * finc + finc;
 
       ct_plsmin->setValue( smin );
       ct_plsmax->setValue( smax );
