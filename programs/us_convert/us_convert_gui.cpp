@@ -2630,6 +2630,10 @@ void US_ConvertGui::saveUS3( void )
 
    else
       saveUS3Disk();          // Save AUCs to disk
+
+   QMessageBox::information( this,
+       tr( "Save is Complete" ),
+       tr( "The save of all data and reports is complete." ) );
 }
 
 // Save to disk (default directory)

@@ -541,10 +541,8 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    if ( auto_sxy )
    { // Auto scale x and y
-      data_plot->setAxisScale( QwtPlot::yLeft,  
-         spec_dat.yrange().minValue(), spec_dat.yrange().maxValue() );
-      data_plot->setAxisScale( QwtPlot::xBottom,
-         spec_dat.xrange().minValue(), spec_dat.xrange().maxValue() );
+      data_plot->setAxisAutoScale( QwtPlot::yLeft   );
+      data_plot->setAxisAutoScale( QwtPlot::xBottom );
    }
    else
    { // Manual limits on x and y
@@ -1241,28 +1239,28 @@ DbgLv(1) << "SL: adjusted fmin fmax" << fmin << fmax;
          rinc      = 1000.0;
          ct_plt_smax->setRange( 0.0, rmin, rinc );
          ct_plt_smin->setRange( 0.0, rmin, rinc );
-         smax       += ( ( smax - smin ) / 100.0 );
-         smin       -= ( ( smax - smin ) / 100.0 );
+         smax       += ( ( smax - smin ) * 0.01 );
+         smin       -= ( ( smax - smin ) * 0.01 );
          smin        = ( smin < 0.0 ) ? 0.0 : smin;
       }
 
       if ( ( smax - smin ) < 1.0e-100 )
       {
-         smin       -= ( smin / 30.0 );
-         smax       += ( smax / 30.0 );
+         smin       -= ( smin * 0.04 );
+         smax       += ( smax * 0.04 );
       }
 
       if ( plot_k )
       {
-         fmax       += ( ( fmax - fmin ) / 20.0 );
-         fmin       -= ( ( fmax - fmin ) / 20.0 );
+         fmax       += ( ( fmax - fmin ) * 0.1 );
+         fmin       -= ( ( fmax - fmin ) * 0.1 );
          fmin        = qMax( fmin, 0.1 );
 
          if ( ( fmax - fmin ) < 1.0e-3 )
-            fmax       += ( fmax / 10.0 );
+            fmax       += ( fmax * 0.1 );
 
-         fmin        = (double)( (int)( fmin * 10.0 ) ) / 10.0;
-         fmax        = (double)( (int)( fmax * 10.0 + 0.5 ) ) / 10.0;
+         fmin        = qFloor( fmin * 10.0 ) * 0.1;
+         fmax        = qFloor( fmax * 10.0 ) * 0.1 + 0.1;
       }
 
       else
@@ -1274,15 +1272,15 @@ DbgLv(1) << "SL: auto-adjusted fmin fmax" << fmin << fmax;
 
       if ( plot_s )
       {
-         smin        = (double)( (int)( smin * 10.0 ) ) / 10.0;
-         smax        = (double)( (int)( smax * 10.0 + 0.5 ) ) / 10.0;
+         smin        = qFloor( smin * 10.0 ) * 0.1;
+         smax        = qFloor( smax * 10.0 ) * 0.1 + 0.1;
          if ( smin < 0.0  &&  smin > (-1.0) )
             smin        = 0.0;
       }
       else
       {
-         smin        = (double)( (int)( smin / 10.0 ) ) * 10.0;
-         smax        = (double)( (int)( smax / 10.0 + 1.5 ) ) * 10.0;
+         smin        = qFloor( smin * 0.1 ) * 10.0;
+         smax        = qFloor( smax * 0.1 ) * 10.0 + 10.0;
       }
 DbgLv(1) << "SL: setVal fmin fmax" << fmin << fmax;
       ct_plt_smin->setValue( smin );
