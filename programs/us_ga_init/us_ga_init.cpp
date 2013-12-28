@@ -1087,7 +1087,7 @@ void US_GA_Initialize::update_plsmax( double dval )
    if ( ! plot_s )
    {  // For MW, use logarithmic steps
       double rinc = qMax( pow( 10.0, qRound( log10( dval ) ) - 2.0 ), 10.0 );
-      ct_plsmin->setRange( -10.0, 1.0E+5, rinc );
+      ct_plsmin->setRange( -10.0, 1.0E+8, rinc );
       ct_plsmax->setRange(   0.0, 1.0E+8, rinc );
    }
 }

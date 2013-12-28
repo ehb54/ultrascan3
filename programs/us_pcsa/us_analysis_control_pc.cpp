@@ -429,19 +429,6 @@ DbgLv(1) << "(2)pb_plot-Enabled" << pb_plot->isEnabled();
 void US_AnalysisControlPc::stop_fit()
 {
 DbgLv(1) << "AC:SF:StopFit";
-   if ( processor != 0 )
-   {
-DbgLv(1) << "AC:SF: processor stopping...";
-      processor->stop_fit();
-      processor->clear_memory();
-DbgLv(1) << "AC:SF: processor stopped";
-   }
-
-//   delete processor;
-//   processor = 0;
-//DbgLv(1) << "AC:SF: processor deleted";
-
-   qApp->processEvents();
    b_progress->reset();
 
    pb_startfit->setEnabled( true );
@@ -455,6 +442,14 @@ DbgLv(1) << "(3)pb_plot-Enabled" << pb_plot->isEnabled();
 
    US_pcsa* mainw = (US_pcsa*)parentw;
    mainw->analysis_done( -1 );   // Reset counters to zero
+
+   if ( processor != 0 )
+   {
+DbgLv(1) << "AC:SF: processor stopping...";
+      processor->stop_fit();
+      processor->clear_memory();
+DbgLv(1) << "AC:SF: processor stopped";
+   }
 
    qApp->processEvents();
 }
