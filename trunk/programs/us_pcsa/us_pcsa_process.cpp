@@ -244,12 +244,14 @@ DbgLv(1) << "StopFit test Thread" << ii + 1;
 
       if ( wthr != 0  &&  wthr->isRunning() )
       {
+         wthr->disconnect();
          wthr->flag_abort();
 DbgLv(1) << "  STOPTHR:  thread aborted";
       }
 
       else if ( wthr != 0  &&  ! wthr->isFinished() )
       {
+         wthr->disconnect();
          delete wthr;
 DbgLv(1) << "  STOPTHR:  thread deleted";
       }
@@ -742,7 +744,7 @@ void US_pcsaProcess::queue_task( WorkPacketPc& wtask, double strk, double endk,
 // Free up a worker thread
 void US_pcsaProcess::free_worker( int tx )
 {
-   if ( tx >= 0  &&  tx < nthreads )
+   if ( tx >= 0  &&  tx < wthreads.size() )
    {
       if ( wthreads[ tx ] != 0 )
          delete wthreads[ tx ];       // destroy thread
