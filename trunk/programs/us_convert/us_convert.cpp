@@ -136,7 +136,8 @@ void US_Convert::convertLegacyData(
 
    if ( triples.size() == 1 )
    {
-      convert( rawLegacyData, newRawData, triples[ 0 ].tripleDesc, runType, tolerance );
+      convert( rawLegacyData, newRawData, triples[ 0 ].tripleDesc,
+               runType, tolerance );
 
       rawConvertedData << newRawData;
    }
@@ -147,7 +148,9 @@ void US_Convert::convertLegacyData(
       for ( int i = 0; i < triples.size(); i++ )
       {
          // Convert data for this cell / channel / wavelength
-         convert( rawLegacyData, newRawData, triples[ i ].tripleDesc, runType, tolerance );
+         convert( rawLegacyData, newRawData, triples[ i ].tripleDesc,
+                  runType, tolerance );
+qDebug() << "Cvt:cvLD: i, trip" << i << triples[i].tripleDesc;
 
          // and save it
          rawConvertedData << newRawData;
@@ -624,6 +627,7 @@ void US_Convert::splitRAData(
 
    for ( int i = 0; i < oldData->size(); i++ )
    {
+qDebug() << "Cvt:splRA: i cTrip" << i << currentTriple;
       if ( i != currentTriple )
       {
          // Copy this triple over as is
@@ -633,7 +637,8 @@ void US_Convert::splitRAData(
 
       else
       {
-         for ( int j = 1; j < subsets.size(); j++ )  // 4 limits define 3 regions
+         // 4 limits define 3 regions
+         for ( int j = 1; j < subsets.size(); j++ )
          {
             US_DataIO::RawData newRawData;
 
@@ -669,6 +674,7 @@ void US_Convert::splitRAData(
             t.tripleDesc = QString::number( newRawData.cell    ) + " / " +
                            QString        ( newRawData.channel ) + " / " +
                            wavelength;
+qDebug() << "Cvt:splRA:  tDesc" << t.tripleDesc;
 
             // Avoid duplication of GUID's
             QString uuidc = US_Util::uuid_unparse( (unsigned char*)t.tripleGUID );
@@ -751,9 +757,9 @@ US_DataIO::Scan US_Convert::newScanSubset(
 
 void US_Convert::setTriples( 
      QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
-     QList< TripleInfo >&     triples,
-     QString                              runType,
-     double                               tolerance )
+     QList< TripleInfo >&                triples,
+     QString                             runType,
+     double                              tolerance )
 {
    // Wavelength data is handled differently here
    if ( runType == "WA" )
@@ -865,6 +871,7 @@ void US_Convert::setCcrTriples(
    {
       QString r = QString::number( rawLegacyData[ i ].rpoint, 'f', 1 );
       radii << r;
+qDebug() << "CCR:   i, r" << i << r;
    }
 
    // Merge radii
@@ -888,6 +895,7 @@ void US_Convert::setCcrTriples(
    }
 
    if ( mode.size() > 0 ) modes << mode;
+qDebug() << "CCR: mode" << mode;
 
    // Now we have a list of modes.  
    // Average each list and round to the closest integer.
@@ -901,6 +909,7 @@ void US_Convert::setCcrTriples(
 
       r_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
    }
+qDebug() << "CCR: r_average" << r_average;
 
    // Now that we have a more reliable list of radii, let's
    // find out the possible cell, channel, and radius combinations
@@ -920,14 +929,18 @@ void US_Convert::setCcrTriples(
             break;
          }
       }
+qDebug() << "CCR: radius" << radius;
 
       QString t = cell + " / " + channel + " / " + radius;
       bool found = false;
+
       for ( int j = 0; j < triples.size(); j++ )
       {
          if ( triples[ j ].tripleDesc == t )
             found = true;
       }
+
+qDebug() << "CCR:  t" << t << "found" << found;
       if ( ! found )
       {
          TripleInfo triple;

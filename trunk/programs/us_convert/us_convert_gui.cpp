@@ -38,7 +38,7 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   
+
    US_ConvertGui w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
@@ -91,7 +91,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
       wg_investigator         = (QWidget*)lb_investigator;
       pb_investigator->setVisible( false );
    }
-      
+
    le_investigator   = us_lineedit(   tr( "Not Selected" ), 0, true );
 
    // Radio buttons
@@ -296,7 +296,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Plot layout for the right side of window
    QBoxLayout* plot = new US_Plot( data_plot,
                                    tr( "Absorbance Data" ),
-                                   tr( "Radius (in cm)" ), 
+                                   tr( "Radius (in cm)" ),
                                    tr( "Absorbance" ) );
 
    data_plot->setMinimumSize( 500, 300 );
@@ -354,7 +354,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                             SLOT  ( changeDescription()        ) );
    connect( lw_triple,      SIGNAL( itemSelectionChanged()     ),
                             SLOT  ( changeTriple()             ) );
-   connect( cb_centerpiece, SIGNAL( activated          ( int ) ), 
+   connect( cb_centerpiece, SIGNAL( activated          ( int ) ),
                             SLOT  ( getCenterpieceIndex( int ) ) );
    connect( pb_solution,    SIGNAL( clicked()          ),
                             SLOT(   getSolutionInfo()  ) );
@@ -384,15 +384,15 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                             SLOT(   saveUS3()  ) );
    connect( pb_close,       SIGNAL( clicked()  ),
                             SLOT(   close() )  );
-   
+
    // Now let's assemble the page
-   
+
    QVBoxLayout* left     = new QVBoxLayout;
 
    left->addLayout( settings );
-   
+
    QVBoxLayout* right    = new QVBoxLayout;
-   
+
    right->addLayout( plot );
    right->addLayout( todo );
 
@@ -471,7 +471,7 @@ void US_ConvertGui::reset( void )
    // Erase the todo list
    lw_todoinfo->clear();
    lw_todoinfo->addItem( "Load or import some AUC data" );
-   
+
    data_plot     ->detachItems();
    picker        ->disconnect();
    data_plot     ->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
@@ -511,7 +511,7 @@ void US_ConvertGui::resetAll( void )
    {  // Output warning when resetting (but only if we have data)
       int status = QMessageBox::information( this,
          tr( "New Data Warning" ),
-         tr( "This will erase all data currently on the screen, and " 
+         tr( "This will erase all data currently on the screen, and "
              "reset the program to its starting condition. No hard-drive "
              "data or database information will be affected. Proceed? " ),
          tr( "&OK" ), tr( "&Cancel" ),
@@ -606,30 +606,39 @@ void US_ConvertGui::toleranceValueChanged( double )
 // User pressed the import data button
 void US_ConvertGui::import( QString dir )
 {
-DbgLv(1) << "CGui: import: IN";
+DbgLv(1) << "CGui:IMP: IN  dir" << dir;
    bool success = false;
    le_status->setText( tr( "Importing legacy data ..." ) );
 
+DbgLv(1) << "CGui:IMP: read CALL";
    if ( dir.isEmpty() )
       success = read();                // Read the legacy data
 
    else
       success = read( dir );
 
+DbgLv(1) << "CGui:IMP:  read RTN  succ" << success;
    if ( ! success ) return;
 
    // Define default tolerances before converting
    scanTolerance = ( runType == "WA" ) ? 0.1 : 5.0;
+   ct_tolerance->disconnect();
    ct_tolerance->setValue( scanTolerance );
+   connect( ct_tolerance,   SIGNAL( valueChanged         ( double ) ),
+                            SLOT  ( toleranceValueChanged( double ) ) );
 
    // Figure out all the triple combinations and convert data
+DbgLv(1) << "CGui:IMP: convert CALL  toler" << scanTolerance;
    success = convert();
+DbgLv(1) << "CGui:IMP:  cv succ" << success;
 
    if ( ! success ) return;
 
    // Initialize export data pointers vector
+DbgLv(1) << "CGui:IMP: init_output_data CALL";
    init_output_data();
 
+DbgLv(1) << "CGui:IMP: setTripleInfo CALL";
    setTripleInfo();
 
    checkTemperature();          // Check to see if temperature varied too much
@@ -637,8 +646,9 @@ DbgLv(1) << "CGui: import: IN";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Initialize exclude list
+DbgLv(1) << "CGui:IMP: init_excludes CALL";
    init_excludes();
-   
+
    plot_current();
 
    QApplication::restoreOverrideCursor();
@@ -652,6 +662,7 @@ DbgLv(1) << "CGui: import: IN";
    saveStatus = NOT_SAVED;
 
    // Ok to enable some buttons now
+DbgLv(1) << "CGui:IMP: enableControls CALL";
    enableControls();
 
    if ( runType == "RI" )
@@ -678,25 +689,27 @@ void US_ConvertGui::reimport( void )
       all_tripinfo.clear();
 
       le_solutionDesc ->setText( "" );
-   
+
       // Figure out all the triple combinations and convert data
       success = convert();
-   
+
       if ( ! success )
       {
          QApplication::restoreOverrideCursor();
          return;
       }
-   
+
+      init_output_data();
+
       setTripleInfo();
    }
 
    // Initialize exclude list
    init_excludes();
-   
+
    // In this case the runType is not changing
    oldRunType = runType;
-   
+
    pb_include->setEnabled( false );
    pb_exclude->setEnabled( false );
    plot_current();
@@ -723,7 +736,7 @@ DbgLv(1) << "CGui: (3)referDef=" << referenceDefined;
 void US_ConvertGui::importMWL( void )
 {
    // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this, 
+   QString dir = QFileDialog::getExistingDirectory( this,
          tr( "Raw MWL Data Directory" ),
          US_Settings::importDir(),
          QFileDialog::DontResolveSymlinks );
@@ -816,18 +829,18 @@ DbgLv(1) << "CGui: enabCtl: have-data";
 
       if ( runType == "RI" )
          pb_reference->setEnabled( ! referenceDefined );
-   
+
       if ( subsets.size() < 1 )
       {
          // Allow user to define subsets, if he hasn't already
          pb_define   ->setEnabled( true );
-      } 
+      }
 
       // Disable load buttons if there is data
       pb_import ->setEnabled( false );
       pb_loadUS3->setEnabled( false );
       pb_impmwl ->setEnabled( false );
-      
+
       // Most triples are ccw
       lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
       //ct_tolerance->setMinimumWidth( 160 );
@@ -859,14 +872,14 @@ DbgLv(1) << "CGui: enabCtl: have-data";
 //           rx.exactMatch( all_tripinfo[ tripListx ].solution.solutionGUID ) )
       if ( out_chaninfo.size() > 1  &&
            rx.exactMatch( out_chaninfo[ tripListx ].solution.solutionGUID ) )
-      {   
+      {
          pb_applyAll  -> setEnabled( true );
       }
 
       enableRunIDControl( saveStatus == NOT_SAVED );
 DbgLv(1) << "CGui: enabCtl: enabRunID complete";
 DbgLv(1) << "CGui:   tLx infsz" << tripListx << out_chaninfo.count();
-         
+
       enableSaveBtn();
 DbgLv(1) << "CGui: enabCtl: enabSvBtn complete";
    }
@@ -887,7 +900,7 @@ void US_ConvertGui::enableRunIDControl( bool setEnable )
       le_runID2->disconnect();
       us_setReadOnly( le_runID2, true );
    }
-         
+
 }
 
 // Reset the boundaries on the scan controls
@@ -900,13 +913,13 @@ DbgLv(1) << "CGui:enabScContr: trx dax" << tripListx << tripDatax;
 
    ct_from->disconnect();
    ct_from->setMinValue( 0.0 );
-   ct_from->setMaxValue(  outData[ tripDatax ]->scanData.size() 
+   ct_from->setMaxValue(  outData[ tripDatax ]->scanData.size()
                         - allExcludes[ tripDatax ].size() );
    ct_from->setValue   ( 0 );
 
    ct_to  ->disconnect();
    ct_to  ->setMinValue( 0.0 );
-   ct_to  ->setMaxValue(  outData[ tripDatax ]->scanData.size() 
+   ct_to  ->setMaxValue(  outData[ tripDatax ]->scanData.size()
                         - allExcludes[ tripDatax ].size() );
    ct_to  ->setValue   ( 0 );
 
@@ -944,7 +957,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
             + tr( ": Load or import some AUC data" ) );
       completed = false;
    }
-   
+
    // Is the run info defined?
    QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
@@ -961,7 +974,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
             + tr( ": Edit run information" ) );
       completed = false;
    }
-   
+
    // Have we filled out all the c/c/w info?
    // Check GUIDs, because solutionID's may not be present yet.
    foreach ( US_Convert::TripleInfo tripinfo, out_chaninfo )
@@ -969,7 +982,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
       if ( ! rx.exactMatch( tripinfo.solution.solutionGUID ) )
       {
          count++;
-         lw_todoinfo->addItem( QString::number( count ) + 
+         lw_todoinfo->addItem( QString::number( count ) +
                                tr( ": Select solution for triple " ) +
                                tripinfo.tripleDesc );
          completed = false;
@@ -981,20 +994,20 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
       if ( tripinfo.centerpiece == 0 )
       {
          count++;
-         lw_todoinfo->addItem( QString::number( count ) + 
+         lw_todoinfo->addItem( QString::number( count ) +
                                tr( ": Select centerpiece for triple " ) +
                                tripinfo.tripleDesc );
          completed = false;
       }
    }
-  
+
    if ( disk_controls->db() )
    {
       // Verify connectivity
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
-   
+
       if ( db.lastErrno() != US_DB2::OK )
       {
          count++;
@@ -1002,22 +1015,22 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
                                tr( ": Verify database connectivity" ) );
          completed = false;
       }
-   
-      // Information is there, but we need to see if the runID exists in the 
+
+      // Information is there, but we need to see if the runID exists in the
       // DB. If we didn't load it from there, then we shouldn't be able to sync
       int recStatus = ExpData.checkRunID( &db );
-   
+
       // if a record is found but saveStatus==BOTH,
       //  then we are editing that record
       if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) // ||
-           // ( ! ExpData.syncOK ) ) 
+           // ( ! ExpData.syncOK ) )
       {
          count++;
          lw_todoinfo->addItem( QString::number( count ) +
                                tr( ": Select a different runID" ) );
          completed = false;
       }
-   
+
       // Not checking operator on disk -- defined as "Local"
       if ( ExpData.operatorID == 0 )
       {
@@ -1033,7 +1046,7 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
    if ( ( runType == "RI" ) && ( ! referenceDefined ) )
    {
       count++;
-      lw_todoinfo->addItem( QString::number( count ) + 
+      lw_todoinfo->addItem( QString::number( count ) +
                             tr( ": Define reference scans" ) );
    }
 
@@ -1047,7 +1060,7 @@ void US_ConvertGui::runIDChanged( void )
    // See if we need to update the runID
    QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
    QString new_runID = le_runID2->text();
-      
+
    if ( rx.indexIn( new_runID ) >= 0 )
    {
       runID = new_runID;
@@ -1055,7 +1068,7 @@ void US_ConvertGui::runIDChanged( void )
       {
          QMessageBox::warning( this,
                tr( "RunID Name Too Long" ),
-               tr( "The runID name may be at most\n"  
+               tr( "The runID name may be at most\n"
                    "50 characters in length." ) );
          runID = runID.left( 50 );
       }
@@ -1114,16 +1127,16 @@ DbgLv(1) << "CGui: ldUS3: RTN";
 void US_ConvertGui::loadUS3Disk( void )
 {
    // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this, 
+   QString dir = QFileDialog::getExistingDirectory( this,
          tr("US3 Raw Data Directory"),
          US_Settings::resultDir(),
          QFileDialog::DontResolveSymlinks );
-   
+
    // Restore area beneath dialog
    qApp->processEvents();
 
-   if ( dir.isEmpty() ) return; 
-   
+   if ( dir.isEmpty() ) return;
+
    dir.replace( "\\", "/" );  // WIN32 issue
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
@@ -1137,15 +1150,15 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    qApp->processEvents();
 
    // Check the runID
-   QStringList components =  dir.split( "/", QString::SkipEmptyParts );  
+   QStringList components =  dir.split( "/", QString::SkipEmptyParts );
    QString new_runID = components.last();
-      
+
    QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
    if ( rx.indexIn( new_runID ) < 0 )
    {
       QMessageBox::warning( this,
             tr( "Bad runID Name" ),
-            tr( "The runID name may consist only of alphanumeric\n"  
+            tr( "The runID name may consist only of alphanumeric\n"
                 "characters, the underscore, and the hyphen." ) );
       return;
    }
@@ -1169,7 +1182,7 @@ DbgLv(1) << "CGui: ldUS3Dk: call read";
    {
       QMessageBox::warning( this,
             tr( "No Files Found" ),
-            tr( "There were no files of the form *.auc\n"  
+            tr( "There were no files of the form *.auc\n"
                 "found in the specified directory." ) );
       return;
    }
@@ -1191,7 +1204,7 @@ DbgLv(1) << "CGui: ldUS3Dk: call rdExp  sz(trinfo)" << all_tripinfo.count();
 
    if ( status == US_Convert::CANTOPEN )
    {
-      QString readFile = runID      + "." 
+      QString readFile = runID      + "."
                        + runType    + ".xml";
       QMessageBox::information( this,
          tr( "Error" ),
@@ -1201,7 +1214,7 @@ DbgLv(1) << "CGui: ldUS3Dk: call rdExp  sz(trinfo)" << all_tripinfo.count();
 
    else if ( status == US_Convert::BADXML )
    {
-      QString readFile = runID      + "." 
+      QString readFile = runID      + "."
                        + runType    + ".xml";
       QMessageBox::information( this,
          tr( "Error" ),
@@ -1223,21 +1236,21 @@ DbgLv(1) << "CGui: ldUS3Dk: call rdExp  sz(trinfo)" << all_tripinfo.count();
 DbgLv(1) << "CGui: ldUS3Dk: call prj-rDk";
    status = ExpData.project.readFromDisk( ExpData.project.projectGUID );
 
-   // Error reporting 
-   if ( status == US_DB2::NO_PROJECT ) 
-   { 
-      QMessageBox::information( this, 
-            tr( "Attention" ), 
-            tr( "The project was not found.\n" 
-                "Please select an existing project and try again.\n" ) ); 
-   } 
-   
-   else if ( status != US_DB2::OK ) 
-   { 
-      QMessageBox::information( this, 
-            tr( "Disk Read Problem" ), 
-            tr( "Could not read data from the disk.\n" 
-                "Disk status: " ) + QString::number( status ) ); 
+   // Error reporting
+   if ( status == US_DB2::NO_PROJECT )
+   {
+      QMessageBox::information( this,
+            tr( "Attention" ),
+            tr( "The project was not found.\n"
+                "Please select an existing project and try again.\n" ) );
+   }
+
+   else if ( status != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+            tr( "Disk Read Problem" ),
+            tr( "Could not read data from the disk.\n"
+                "Disk status: " ) + QString::number( status ) );
    }
 
    // and clear it out
@@ -1285,7 +1298,7 @@ DbgLv(1) << "SOLCHK:  ii csolGUID EMPTY" << ii << csolGUID;
                 "Please select an existing solution and try again.\n" ) );
 DbgLv(1) << "SOLERR: ii psolGUID csolGUI" << ii << psolGUID << csolGUID;
       }
-      
+
       else if ( status == US_DB2::NO_BUFFER )
       {
          QMessageBox::information( this,
@@ -1293,7 +1306,7 @@ DbgLv(1) << "SOLERR: ii psolGUID csolGUI" << ii << psolGUID << csolGUID;
             tr( "The buffer this solution refers to was not found.\n"
                 "Please restore and try again.\n" ) );
       }
-      
+
       else if ( status == US_DB2::NO_ANALYTE )
       {
          QMessageBox::information( this,
@@ -1301,13 +1314,13 @@ DbgLv(1) << "SOLERR: ii psolGUID csolGUI" << ii << psolGUID << csolGUID;
             tr( "One of the analytes this solution refers to was not found.\n"
                 "Please restore and try again.\n" ) );
       }
-      
+
       else if ( status != US_DB2::OK )
       {
-         QMessageBox::information( this, 
-            tr( "Disk Read Problem" ), 
-            tr( "Could not read data from the disk.\n" 
-                "Disk status: " ) + QString::number( status ) ); 
+         QMessageBox::information( this,
+            tr( "Disk Read Problem" ),
+            tr( "Could not read data from the disk.\n"
+                "Disk status: " ) + QString::number( status ) );
       }
 
       // Just clear it out
@@ -1331,24 +1344,24 @@ DbgLv(1) << "CGui: call rdRIDk";
 
       if ( status == US_Convert::CANTOPEN )
       {
-         QString readFile = runID      + "." 
+         QString readFile = runID      + "."
                           + "RIProfile.xml";
          QMessageBox::information( this,
             tr( "Error" ),
             tr( "US3 run data ok, but unable to read intensity profile.\n " ) +
             tr( "Cannot open read file: " ) + dir + readFile );
       }
-      
+
       else if ( status == US_Convert::BADXML )
       {
-         QString readFile = runID      + "." 
+         QString readFile = runID      + "."
                           + "RIProfile.xml";
          QMessageBox::information( this,
             tr( "Error" ),
             tr( "US3 run data ok, but unable to read intensity profile.\n " ) +
             tr( "Improper XML in read file: " ) + dir + readFile );
       }
-      
+
       else if ( status != US_Convert::OK )
       {
          QMessageBox::information( this,
@@ -1360,7 +1373,7 @@ DbgLv(1) << "CGui: call rdRIDk";
       {
          // Enable intensity plot
          pb_intensity->setEnabled( true );
-         
+
          referenceDefined = true;
          isPseudo         = true;
 DbgLv(1) << "CGui: (5)referDef=" << referenceDefined;
@@ -1440,7 +1453,7 @@ DbgLv(1) << "CGui: call plot_current";
 
    // Ok to enable some buttons now
    enableControls();
-   if ( ! disk_controls->db() ) 
+   if ( ! disk_controls->db() )
       pb_saveUS3  ->setEnabled( true );
 
    pb_details     ->setEnabled( true );
@@ -1457,7 +1470,7 @@ DbgLv(1) << "CGui: call plot_current";
    {
       // Allow user to define subsets, if he hasn't already
       pb_define   ->setEnabled( true );
-   } 
+   }
 
    saveStatus = ( ExpData.expID == 0 ) ? HD_ONLY : BOTH;
    //pb_editRuninfo  ->setEnabled ( saveStatus == HD_ONLY );
@@ -1551,7 +1564,7 @@ DbgLv(1) << "CGui: gExpInf: IN";
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
-     
+
       if ( db.lastErrno() != US_DB2::OK )
       {
          QMessageBox::information( this,
@@ -1559,12 +1572,12 @@ DbgLv(1) << "CGui: gExpInf: IN";
                 tr( "Error making the DB connection.\n" ) );
          return;
       }
-     
+
       // Check if the run ID already exists in the DB
       int recStatus = ExpData.checkRunID( &db );
-     
+
       // if saveStatus == BOTH, then we are editing the record from the database
-      if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) ) 
+      if ( ( recStatus == US_DB2::OK ) && ( saveStatus != BOTH ) )
       {
          QMessageBox::information( this,
                 tr( "Error" ),
@@ -1821,7 +1834,7 @@ void US_ConvertGui::changeTriple()
 {
    triple_index( );
 DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx;
-   
+
    le_dir         ->setText( currentDir );
    le_description ->setText( outData[ tripDatax ]->description );
    le_solutionDesc->setText( out_chaninfo[ tripListx ].solution.solutionDesc );
@@ -1839,10 +1852,10 @@ DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx;
 
    // Reset maximum scan control values
    enableScanControls();
-   
+
    // The centerpiece combo box
    cb_centerpiece->setLogicalIndex( out_chaninfo[ tripListx ].centerpiece );
-   
+
    // Redo plot
    plot_current();
 }
@@ -1920,26 +1933,26 @@ DbgLv(1) << " sTI: NOT Mwl";
 
 void US_ConvertGui::checkTemperature( void )
 {
-   // Temperature check 
-   double dt = 0.0; 
-  
-   foreach( US_DataIO::RawData triple, allData ) 
-   { 
-       double temp_spread = triple.temperature_spread(); 
-       dt = ( temp_spread > dt ) ? temp_spread : dt; 
-   } 
-  
-   if ( dt > US_Settings::tempTolerance() ) 
-   { 
-      QMessageBox::warning( this, 
-            tr( "Temperature Problem" ), 
-            tr( "The temperature in this run varied over the course\n" 
-                "of the run to a larger extent than allowed by the\n" 
-                "current threshold (" ) 
-                + QString::number( US_Settings::tempTolerance(), 'f', 1 ) 
-                + " " + DEGC + tr( "). The accuracy of experimental\n" 
-                "results may be affected significantly." ) ); 
-   } 
+   // Temperature check
+   double dt = 0.0;
+
+   foreach( US_DataIO::RawData triple, allData )
+   {
+       double temp_spread = triple.temperature_spread();
+       dt = ( temp_spread > dt ) ? temp_spread : dt;
+   }
+
+   if ( dt > US_Settings::tempTolerance() )
+   {
+      QMessageBox::warning( this,
+            tr( "Temperature Problem" ),
+            tr( "The temperature in this run varied over the course\n"
+                "of the run to a larger extent than allowed by the\n"
+                "current threshold (" )
+                + QString::number( US_Settings::tempTolerance(), 'f', 1 )
+                + " " + DEGC + tr( "). The accuracy of experimental\n"
+                "results may be affected significantly." ) );
+   }
 }
 
 void US_ConvertGui::getCenterpieceIndex( int )
@@ -1978,7 +1991,7 @@ void US_ConvertGui::focus_from( double scan )
       ct_to->disconnect();
       ct_to->setValue( scan );
       to = from;
-      
+
       connect( ct_to, SIGNAL( valueChanged ( double ) ),
                       SLOT  ( focus_to     ( double ) ) );
    }
@@ -1996,7 +2009,7 @@ void US_ConvertGui::focus_to( double scan )
       ct_from->disconnect();
       ct_from->setValue( scan );
       from = to;
-      
+
       connect( ct_from, SIGNAL( valueChanged ( double ) ),
                         SLOT  ( focus_from   ( double ) ) );
    }
@@ -2018,7 +2031,7 @@ void US_ConvertGui::focus( int from, int to )
    }
 
    QList< int > focus;  // We don't care if -1 is in the list
-   for ( int i = from - 1; i <= to - 1; i++ ) focus << i;  
+   for ( int i = from - 1; i <= to - 1; i++ ) focus << i;
 
    set_colors( focus );
 
@@ -2129,6 +2142,7 @@ void US_ConvertGui::process_subsets( void )
    pb_process ->setEnabled( false );
    picker   ->disconnect();
 
+DbgLv(1) << "CGui:pSS: split CALL";
    // Now let's split the triple
    US_Convert::splitRAData( allData, all_tripinfo, tripDatax, subsets );
 
@@ -2136,10 +2150,15 @@ void US_ConvertGui::process_subsets( void )
    subsets.clear();
 
    // Reinitialize some things
+DbgLv(1) << "CGui:pSS: initOut CALL";
+   init_output_data();
+DbgLv(1) << "CGui:pSS: setTrip CALL";
    setTripleInfo();
+DbgLv(1) << "CGui:pSS: initExc CALL";
    init_excludes();
+DbgLv(1) << "CGui:pSS: enabCtl CALL";
    enableControls();
-   
+
    plot_current();
    QApplication::restoreOverrideCursor();
 }
@@ -2280,7 +2299,7 @@ void US_ConvertGui::cClick( const QwtDoublePoint& p )
 
          else
             process_reference( p );
-     
+
       default :
          break;
 
@@ -2328,7 +2347,7 @@ void US_ConvertGui::PseudoCalcAvg( void )
          ExpData.RIProfile << 1.0;    // See the log10 function, later
 
    }
- 
+
    // Now average around excluded values
    int lastGood  = 0;
    int countBad  = 0;
@@ -2369,7 +2388,7 @@ void US_ConvertGui::PseudoCalcAvg( void )
          {
             double rvalue = scan->rvalues[ rr ];
 
-            // Protect against possible inf's and nan's, if a reading 
+            // Protect against possible inf's and nan's, if a reading
             // evaluates to 0 or wherever log function is undefined or -inf
             if ( rvalue < 1.0 ) rvalue = 1.0;
 
@@ -2398,7 +2417,7 @@ void US_ConvertGui::show_intensity( void )
 {
    QString triple = out_triples[ 0 ];
    QVector< double > scan_nbrs;
-   
+
    if ( isMwl )
    {  // For MWL, set special triple string and build scan numbers
       int riscans    = ExpData.RI_nscans;
@@ -2429,7 +2448,7 @@ DbgLv(1) << "CGui: show_intensity  scndiv scnfra" << scndiv << scnfra;
          }
       }
    }
-   
+
    else
    {  // For non-MWL, set scan numbers vector
       for ( int ii = 0; ii < ExpData.RIProfile.size(); ii++ )
@@ -2639,17 +2658,17 @@ void US_ConvertGui::saveUS3( void )
 // Save to disk (default directory)
 int US_ConvertGui::saveUS3Disk( void )
 {
-   if ( allData[ 0 ].scanData.empty() ) return US_Convert::NODATA; 
+   if ( allData[ 0 ].scanData.empty() ) return US_Convert::NODATA;
 
    QDir     writeDir( US_Settings::resultDir() );
    QString  dirname = writeDir.absolutePath() + "/" + runID + "/";
 
-   if ( saveStatus == NOT_SAVED  && 
+   if ( saveStatus == NOT_SAVED  &&
         writeDir.exists( runID ) )
    {
         QMessageBox::information( this,
            tr( "Error" ),
-           tr( "The write directory,  " ) + dirname + 
+           tr( "The write directory,  " ) + dirname +
            tr( " already exists. Please change run ID to a unique value." ) );
         return US_Convert::DUP_RUNID;
    }
@@ -2700,7 +2719,7 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
    // Now try to communicate status
    if ( status == US_Convert::CANTOPEN )
    {
-      QString writeFile = runID      + "." 
+      QString writeFile = runID      + "."
                         + runType    + ".xml";
       QMessageBox::information( this,
             tr( "Error" ),
@@ -2715,7 +2734,7 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
             tr( "The run information file was not written. "
                 "Please click on the "
                 "'Associate Run with DB' button \n\n " ) +
-            QString::number( fileCount ) + " " + 
+            QString::number( fileCount ) + " " +
             runID + tr( " files written." ) );
       return( status );
    }
@@ -2728,8 +2747,8 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
             tr( "Solution information is incomplete. Please click on the "
                 "'Manage Solutions' button for each "
                 "cell, channel, and wavelength combination \n\n " ) +
-            QString::number( fileCount ) + " "                + 
-            runID + tr( " files written." ) );
+            QString::number( fileCount ) + " "
+            + runID + tr( " files written." ) );
       return( status );
    }
 
@@ -2746,25 +2765,25 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
    {
       if ( referenceDefined )
       {
-         status = ExpData.saveRIDisk( runID, dirname ); 
+         status = ExpData.saveRIDisk( runID, dirname );
 DbgLv(1) << "SV:   saveRIDisk status" << status;
-         
+
          if ( status == US_Convert::CANTOPEN )
          {
-            QString writeFile = runID      + "." 
+            QString writeFile = runID      + "."
                               + "RIProfile.xml";
             QMessageBox::information( this,
                   tr( "Error" ),
                   tr( "Cannot open write file: " ) + dirname + writeFile );
          }
-         
+
          else if ( status != US_Convert::OK )
          {
             QMessageBox::information( this,
                   tr( "Error" ),
                   tr( "Error: " ) + status );
             return( status );
-         
+
          }
       }
 else
@@ -2775,7 +2794,7 @@ DbgLv(1) << "SV:   NO saveRIDisk : refDef" << referenceDefined;
          // Maybe the profile has been deleted, so let's
          // delete the xml file and avoid confusion later
          QDir d( dirname );
-         QString filename = runID      + "." 
+         QString filename = runID      + "."
                           + "RIProfile.xml";
          if ( d.exists( filename ) && ! d.remove( filename ) )
             qDebug() << "Unable to remove file" << filename;
@@ -2789,7 +2808,7 @@ DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
    le_status->setText( tr( "%1 %2 files were written to disk." )
                        .arg( fileCount ).arg( runID ) );
    qApp->processEvents();
-  
+
    if ( saveStatus == NOT_SAVED )
       saveStatus = HD_ONLY;
 
@@ -2840,16 +2859,12 @@ DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
       {
          double r       = wl.toDouble() * 1000.0;
          QString radius = QString::number( (int) round( r ) );
-         triple         = cell 
-                        + channel 
-                        + radius;
+         triple         = cell + channel + radius;
       }
-            
+
       else
       {
-         triple         = cell 
-                        + channel 
-                        + wl;
+         triple         = cell + channel + wl;
       }
 
       QString filename = dir + "/cnvt." + triple + ".raw.svg";
@@ -2989,7 +3004,7 @@ DbgLv(1) << "DBSv:  local files saved";
 
    QDir readDir( dir );
 
-   QStringList files =  readDir.entryList( nameFilters, 
+   QStringList files =  readDir.entryList( nameFilters,
          QDir::Files | QDir::Readable, QDir::Name );
 DbgLv(1) << "DBSv:  files count" << files.size();
 
@@ -2997,7 +3012,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
    {
       QMessageBox::warning( this,
             tr( "No Files Found" ),
-            tr( "There were no files of the form *.auc\n"  
+            tr( "There were no files of the form *.auc\n"
                 "found in the specified directory." ) );
       return;
    }
@@ -3007,7 +3022,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
       // Then the user is trying to overwrite a runID that is already in the DB
       QMessageBox::warning( this,
             tr( "Duplicate runID" ),
-            tr( "This runID already exists in the database. To edit that "  
+            tr( "This runID already exists in the database. To edit that "
                 "run information, load it from there to begin with.\n" ) );
       return;
    }
@@ -3057,7 +3072,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
    }
 
    // If the data came from the database in the first place,
-   // then this function erases all the edit profiles, models 
+   // then this function erases all the edit profiles, models
    // and noise files in the database too. However, if one
    // changes most of the things here ( solution, rotor, etc. )
    // it would invalidate the data anyway.
@@ -3154,7 +3169,7 @@ void US_ConvertGui::saveReportsToDB( void )
       {
          errorMsg += file + " was not saved to report database; error code: "
                           + QString::number( status ) + "\n";
-         qDebug() << "US_ConvertGui.saveDocumentFromFile error: " 
+         qDebug() << "US_ConvertGui.saveDocumentFromFile error: "
                   << db.lastError() << db.lastErrno();
       }
    }
@@ -3172,7 +3187,7 @@ void US_ConvertGui::saveReportsToDB( void )
 bool US_ConvertGui::read( void )
 {
    // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this, 
+   QString dir = QFileDialog::getExistingDirectory( this,
          tr( "Raw Data Directory" ),
          US_Settings::importDir(),
          QFileDialog::DontResolveSymlinks );
@@ -3180,7 +3195,7 @@ bool US_ConvertGui::read( void )
    // Restore area beneath dialog
    qApp->processEvents();
 
-   if ( dir.isEmpty() ) return( false ); 
+   if ( dir.isEmpty() ) return( false );
 
    dir.replace( "\\", "/" );  // WIN32 issue
 
@@ -3206,6 +3221,8 @@ bool US_ConvertGui::read( QString dir )
       new_runID.replace( pos, 1, "_" );      // Replace 1 char at position pos
       runID_changed = true;
    }
+DbgLv(1) << "CGui:RD: dir" << dir << "new_runID" << new_runID
+ << "rID_chgd" << runID_changed;
 
    // Let the user know if the runID name has changed
    if ( runID_changed )
@@ -3213,7 +3230,7 @@ bool US_ConvertGui::read( QString dir )
       QMessageBox::warning( this,
             tr( "RunID Name Changed" ),
             tr( "The runID name has been changed. It may consist only"
-                "of alphanumeric \n" 
+                "of alphanumeric \n"
                 " characters, the underscore, and the hyphen. New runID: " )
             + new_runID );
    }
@@ -3228,9 +3245,11 @@ bool US_ConvertGui::read( QString dir )
    oldRunType = runType;            // let's see if the runType changes
 
    // Read the data
+DbgLv(1) << "CGui:RD:  rdLegDat CALL";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    US_Convert::readLegacyData( dir, legacyData, runType );
    QApplication::restoreOverrideCursor();
+DbgLv(1) << "CGui:RD:   rdLegDat RTN  lDsz" << legacyData.size();
 
    if ( legacyData.size() == 0 ) return( false );
 
@@ -3242,19 +3261,23 @@ bool US_ConvertGui::read( QString dir )
 
 bool US_ConvertGui::convert( void )
 {
-DbgLv(1) << "CGui: convert(): IN";
-   double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between wl numbers
+DbgLv(1) << "CGui:CV: IN";
+   // Set tolerance to stay between wl numbers
+//   double tolerance = (double)ct_tolerance->value() + 0.05;
+   double tolerance = (double)ct_tolerance->value();
 
    // Convert the data
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   US_Convert::convertLegacyData( legacyData, allData, all_tripinfo, 
+   US_Convert::convertLegacyData( legacyData, allData, all_tripinfo,
                                   runType, tolerance );
+DbgLv(1) << "CGui:CV: ndat ntrip runType" << allData.size()
+ << all_tripinfo.size() << runType;
    QApplication::restoreOverrideCursor();
 
    if ( allData.size() == 0 ) return( false );
 
    le_description->setText( allData[ 0 ].description );
-   saveDescription = QString( allData[ 0 ].description ); 
+   saveDescription = QString( allData[ 0 ].description );
 
    // Now let's show the user the first one
    tripListx = -1;
@@ -3263,9 +3286,10 @@ DbgLv(1) << "CGui: convert(): IN";
       if ( all_tripinfo[ i ].excluded ) continue;
 
       if ( tripListx == -1 ) tripListx = i;
+DbgLv(1) << "CGui:CV:  i, trip" << i << all_tripinfo[i].tripleDesc;
    }
 
-DbgLv(1) << "CGui: convert(): RTN";
+DbgLv(1) << "CGui:CV: RTN tLx" << tripListx << "ntrip" << all_tripinfo.size();
    return( true );
 }
 
@@ -3379,7 +3403,7 @@ DbgLv(1) << " PlCur: PlTit RTN";
    // Plot current data for cell / channel / wavelength triple
    plot_all();
 DbgLv(1) << " PlCur: PlAll RTN";
-   
+
    // Set the Scan spin boxes
    enableScanControls();
 DbgLv(1) << " PlCur: EScCt RTN";
@@ -3408,6 +3432,7 @@ DbgLv(1) << "  PlTit: triple" << triple << "parts" << parts;
    QString ccwlong     = runID + tr( "\nCell: "       ) + cell
                                + tr( "  Channel: "    ) + channel
                                + tr( "  Wavelength: " ) + wavelen;
+   QString ccrlong     = QString( ccwlong ).replace( "Wavelength:", "Radius:" );
 DbgLv(1) << "  PlTit: dataType" << dataType;
 
    if      ( dataType == "RA" )
@@ -3437,24 +3462,24 @@ DbgLv(1) << "  PlTit: dataType" << dataType;
       title = tr( "Fluorescence Intensity Data\nRun ID: " ) + ccwlong;
       yLegend = tr( "Fluorescence Intensity" );
    }
-      
+
    else if ( dataType == "WA" )
    {
-      title = tr( "Wavelength Data\nRun ID: " ) + ccwlong;
+      title = tr( "Wavelength Data\nRun ID: " ) + ccrlong;
       xLegend = tr( "Wavelength" );
-      yLegend = tr( "Value" );
+      yLegend = tr( "Absorbance" );
    }
 
    else if ( dataType == "WI" )
    {
-      title = tr( "Wavelength Intensity Data\nRun ID: " ) + ccwlong;
+      title = tr( "Wavelength Intensity Data\nRun ID: " ) + ccrlong;
       xLegend = tr( "Wavelength" );
-      yLegend = tr( "Value" );
+      yLegend = tr( "Intensity" );
    }
 
    else
       title = tr( "File type not recognized" );
-   
+
    data_plot->setTitle( title );
    data_plot->setAxisTitle( QwtPlot::yLeft, yLegend );
    data_plot->setAxisTitle( QwtPlot::xBottom, xLegend );
@@ -3519,10 +3544,10 @@ void US_ConvertGui::plot_all( void )
    // Reset the scan curves within the new limits
    double padR = ( maxR - minR ) / 30.0;
    double padV = ( maxV - minV ) / 30.0;
-   
+
    data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
    data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
-   
+
    show_plot_progress = false;
    data_plot->replot();
 }
@@ -3537,17 +3562,17 @@ void US_ConvertGui::set_colors( const QList< int >& focus )
    // Get pointers to curves
    QwtPlotItemList        list = data_plot->itemList();
    QList< QwtPlotCurve* > curves;
-  
+
    for ( int i = 0; i < list.size(); i++ )
    {
       if ( list[ i ]->title().text().contains( "Raw" ) )
          curves << dynamic_cast< QwtPlotCurve* >( list[ i ] );
    }
-  
+
    QPen   p   = curves[ 0 ]->pen();
    QBrush b   = curves[ 0 ]->brush();
    QColor std = US_GuiSettings::plotCurve();
-   
+
    // Mark these scans in red
    for ( int i = 0; i < curves.size(); i++ )
    {
@@ -3829,8 +3854,7 @@ DbgLv(1) << "PseCalcAvgMWL: ccx tripx nlambda" << ccx << tripx << nlambda;
          int    count = 0;
          double sum   = 0.0;
 
-         while ( refData->radius( rr ) < reference_start  && 
-                 rr < ref_size )
+         while ( refData->radius( rr ) < reference_start  &&  rr < ref_size )
             rr++;
 
          while ( refData->radius( rr ) < reference_end  &&
@@ -3871,7 +3895,7 @@ DbgLv(1) << "PseCalcAvgMWL:  wvx" << wvx << "rsiz wavl" << rip_size << iwavl;
 
             for ( int rr = 0; rr < scan->rvalues.size(); rr++ )
             {
-               // Protect against possible inf's and nan's, if a reading 
+               // Protect against possible inf's and nan's, if a reading
                // evaluates to 0 or wherever log function is undefined or -inf
                double rvalue       = qMax( 1.0, scan->rvalues[ rr ] );
 
@@ -3934,7 +3958,7 @@ void US_ConvertGui::mwl_setup()
 
    // Initialize exclude list
    init_excludes();
-   
+
    plot_current();
 
    saveStatus = NOT_SAVED;
@@ -3953,8 +3977,8 @@ void US_ConvertGui::mwl_setup()
 // Initialize output data pointers and lists
 void US_ConvertGui::init_output_data()
 {
-
    bool have_trip = ( all_tripinfo.size() == allData.size() );
+DbgLv(1) << "CGui:IOD: have_trip" << have_trip;
    if ( ! have_trip )
       all_tripinfo.clear();
    outData     .clear();
@@ -3969,7 +3993,7 @@ void US_ConvertGui::init_output_data()
 
    // Set up initial export-data pointers list and all/out lists
    for ( int trx = 0; trx < allData.size(); trx++ )
-   {  
+   {
       US_DataIO::RawData*    edata    = &allData[ trx ];
       US_Convert::TripleInfo tripinfo;
       US_Convert::TripleInfo chaninfo;
@@ -3981,7 +4005,9 @@ void US_ConvertGui::init_output_data()
 
       QString triple   = QString::number( edata->cell ) + " / "
          + QString( edata->channel ) + " / "
-         + QString::number( qRound( edata->scanData[ 0 ].wavelength ) );
+         + ( ! runType.contains( "W" )
+             ? QString::number( qRound( edata->scanData[ 0 ].wavelength ) )
+             : tripinfo.tripleDesc.section( " / ", 2, 2 ) );
       QString celchn   = triple.section( " / ", 0, 1 );
       int     chanID   = all_channels.indexOf( celchn ) + 1;
       chanID           = ( chanID < 1 ) ? ( all_channels.count() + 1 ) : chanID;
@@ -3992,6 +4018,7 @@ void US_ConvertGui::init_output_data()
       tripinfo.excluded    = false;
       chaninfo             = tripinfo;
       chaninfo.tripleDesc  = celchn;
+DbgLv(1) << "CGui:IOD: trx" << trx << "triple" << triple;
 
       if ( have_trip )
          all_tripinfo[ trx ] = tripinfo;
@@ -4001,18 +4028,29 @@ void US_ConvertGui::init_output_data()
       all_triples  << triple;
       out_triples  << triple;
 
-      if ( ! all_channels.contains( celchn ) )
+      if ( ! all_channels.contains( celchn )  ||  runType.contains( "W" ) )
       {
          all_channels << celchn;
          all_chaninfo << chaninfo;
          out_channels << celchn;
          out_chaninfo << chaninfo;
          out_chandatx << trx;
+DbgLv(1) << "CGui:IOD:  ochx" << trx << "celchn cID" << celchn << chanID;
       }
    }
 
    // MultiWaveLength if channels and triples counts differ
-   isMwl            = ( all_chaninfo.count() != all_tripinfo.count() ); 
+   isMwl            = ( all_chaninfo.count() != all_tripinfo.count() );
+
+   if ( ! isMwl )
+   {
+      for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
+      {
+         QString triple = all_tripinfo[ trx ].tripleDesc;
+         all_chaninfo[ trx ].tripleDesc = triple;
+         out_chaninfo[ trx ].tripleDesc = triple;
+      }
+   }
 }
 
 // Build output data pointers and lists after new exclusions

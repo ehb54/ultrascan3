@@ -7,7 +7,7 @@
     data, acquired using an ultracentrifuge, into a set of files
     written in the UltraScan III OpenAUC format. An AUC file is
     a binary file that contains all the information from a single
-    dataset (cell/channel/wavelength combinationi, also called a
+    dataset (cell/channel/wavelength combination, also called a
     <i>triple</i>) imported and converted from the original raw data
     format.  So if the raw experimental run contained data in three
     channels us_convert would convert that into three binary AUC
