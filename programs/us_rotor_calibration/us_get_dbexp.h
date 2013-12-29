@@ -18,20 +18,19 @@ class US_GetDBExp : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      /*! \brief  Generic constructor for the US_GetDBExp dialog.
-
-          \param  Where the selected runID will be stored
-      */
+      //! \brief  Generic constructor for the US_GetDBExp dialog.
+      //! \param  eID Where the selected runID will be stored
       US_GetDBExp( QString& );
 
-      //! \class RunInfo Used to store the information to display
+      //! \class RunInfo
+      //!  Used to store the information to display
       class RunInfo
       {
          public:
-         int      ID;                     //!< The experiment ID
-         QString  date;                   //!< The date the experiment was last updated
-         QString  runID;                  //!< The unique per-investigator runID
-         QString  label;                  //!< The identifying label
+         int      ID;             //!< The experiment ID
+         QString  date;           //!< The date the experiment was last updated
+         QString  runID;          //!< The unique per-investigator runID
+         QString  label;          //!< The identifying label
       };
       
    private:

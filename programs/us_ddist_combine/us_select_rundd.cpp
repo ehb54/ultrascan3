@@ -1,6 +1,6 @@
-//! \file us_select_runid.cpp
+//! \file us_select_rundd.cpp
 
-#include "us_select_runid.h"
+#include "us_select_rundd.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_matrix.h"
@@ -15,7 +15,7 @@
 
 // Main constructor with flags for select-runID dialog
 
-US_SelectRunid::US_SelectRunid( bool dbase, QStringList& runIDs,
+US_SelectRunDD::US_SelectRunDD( bool dbase, QStringList& runIDs,
    QStringList& mdescrs ) : US_WidgetsDialog( 0, 0 ),
    runIDs( runIDs ), mDescrs( mdescrs )
 {
@@ -114,7 +114,7 @@ DbgLv(1) << "SE:sel_db" << sel_db;
 }
 
 // Hide list items that do not contain search string
-void US_SelectRunid::search( const QString& search_string )
+void US_SelectRunDD::search( const QString& search_string )
 {
    lw_data->setCurrentItem( NULL );
 
@@ -127,7 +127,7 @@ void US_SelectRunid::search( const QString& search_string )
 }
 
 // List data choices (from db or disk)
-void US_SelectRunid::list_data()
+void US_SelectRunDD::list_data()
 {
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    rlabels.clear();
@@ -171,7 +171,7 @@ DbgLv(1) << "LD:sel_db" << sel_db << "rlsize" << rlabels.size();
 }
 
 // Cancel button:  no runIDs returned
-void US_SelectRunid::cancelled()
+void US_SelectRunDD::cancelled()
 {
    runIDs.clear();
 
@@ -180,7 +180,7 @@ void US_SelectRunid::cancelled()
 }
 
 // Accept button:  set up to return runs and associated model information
-void US_SelectRunid::accepted()
+void US_SelectRunDD::accepted()
 {
 DbgLv(1) << "SE:accepted()";
    QList< QListWidgetItem* > selitems = lw_data->selectedItems();
@@ -239,7 +239,7 @@ DbgLv(1) << "SE: runID0" << runIDs[0];
 }
 
 // Scan database for run sets
-void US_SelectRunid::scan_dbase_runs()
+void US_SelectRunDD::scan_dbase_runs()
 {
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
@@ -312,7 +312,7 @@ DbgLv(1) << "ScDB:scan time(9)" << timer.elapsed();
 
 
 // Scan local disk for edit sets
-void US_SelectRunid::scan_local_runs( void )
+void US_SelectRunDD::scan_local_runs( void )
 {
 QTime timer;
 timer.start();
@@ -444,7 +444,7 @@ DbgLv(1) << "ScLo:scan time(9)" << timer.elapsed();
 
 
 // Investigator button clicked:  get investigator from dialog
-void US_SelectRunid::get_person()
+void US_SelectRunDD::get_person()
 {
    int invID     = US_Settings::us_inv_ID();
    US_Investigator* dialog = new US_Investigator( true, invID );
@@ -456,7 +456,7 @@ void US_SelectRunid::get_person()
 }
 
 // Slot to handle accept in investigator dialog
-void US_SelectRunid::update_person( int ID )
+void US_SelectRunDD::update_person( int ID )
 {
    QString number = ( ID > 0 ) ? QString::number( ID ) + ": " : "";
    le_invest->setText( number + US_Settings::us_inv_name() );
@@ -468,7 +468,7 @@ DbgLv(1) << "UpdP:   rlabels count" << rlabels.count();
 }
 
 // Slot to update disk/db selection
-void US_SelectRunid::update_disk_db( bool isDB )
+void US_SelectRunDD::update_disk_db( bool isDB )
 {
    emit changed( isDB );
 
@@ -482,7 +482,7 @@ void US_SelectRunid::update_disk_db( bool isDB )
 }
 
 // Slot to record a change in list item selection
-void US_SelectRunid::selectionChanged()
+void US_SelectRunDD::selectionChanged()
 {
    QList< QListWidgetItem* > selitems = lw_data->selectedItems();
    int  kseld   = selitems.size();
@@ -517,7 +517,7 @@ DbgLv(1) << "sChg: count_list" << count_list << "kseld" << kseld;
 }
 
 // Scan database for models associated with run sets
-void US_SelectRunid::scan_dbase_models()
+void US_SelectRunDD::scan_dbase_models()
 {
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
@@ -629,7 +629,7 @@ DbgLv(1) << "ScMd:scan time(9)" << timer.elapsed();
 }
 
 // Scan local disk for models associated with run sets
-void US_SelectRunid::scan_local_models()
+void US_SelectRunDD::scan_local_models()
 {
    QStringList aDescrs = wDescrs;
    wDescrs.clear();
@@ -648,7 +648,7 @@ DbgLv(1) << "ScMl:counts: aDescrs" << aDescrs.count() << "wDescrs" << wDescrs.co
 }
 
 // Count models for database case
-void US_SelectRunid::count_models()
+void US_SelectRunDD::count_models()
 {
    if ( mcounted  ||  ! sel_db )  return;
 

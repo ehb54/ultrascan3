@@ -1,6 +1,6 @@
-//! \file us_select_runid.h
-#ifndef US_SELECT_RUNID_H
-#define US_SELECT_RUNID_H
+//! \file us_select_rundd.h
+#ifndef US_SELECT_RUNDD_H
+#define US_SELECT_RUNDD_H
 
 #include <QtGui>
 
@@ -14,7 +14,7 @@
 #endif
 
 //! \brief A dialog class to select run ID for combo discrete distributions plot
-class US_SelectRunid : public US_WidgetsDialog
+class US_SelectRunDD : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -22,10 +22,10 @@ class US_SelectRunid : public US_WidgetsDialog
 
       //! \brief Main constructor for dialog to select run ID(s)
       //! \param dbase    Flag: Data source is database
-      //! \param runids   A reference to the selected runIDs list
+      //! \param runIDs   A reference to the selected runIDs list
       //! \param mdescrs  A reference to the model descriptions for runs
 
-      US_SelectRunid( bool, QStringList&, QStringList& );
+      US_SelectRunDD( bool, QStringList&, QStringList& );
 
    signals:
       //! \brief A signal to tell the parent when the disk/db selection

@@ -15,9 +15,7 @@ class US_SimulationParametersGui : public US_WidgetsDialog
 {
 	Q_OBJECT
 	public:
-      //! \param params - Location for simulation parameters to be updated
-      //! \param p      - Parent widget, normally not specified
-      //! \param f      - Window flags, normally not specified
+      //! \param params Location for simulation parameters to be updated
 		US_SimulationParametersGui( US_SimulationParameters& );
 
    signals:

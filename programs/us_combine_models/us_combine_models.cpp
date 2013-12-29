@@ -1,4 +1,4 @@
-//! \file us_combmodels.cpp
+//! \file us_combine_models.cpp
 
 #include <QApplication>
 

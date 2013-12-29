@@ -4,6 +4,8 @@
 #include "us_rasmol_control.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
+#include "us_license_t.h"
+#include "us_license.h"
 
 //! \brief Main program for US_RasmolControl. Loads translators and starts
 //         the class US_RasmolControl.
@@ -11,6 +13,8 @@
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
+
+#include "main1.inc"
 
    US_RasmolControl w;
    w.show();                   //!< \memberof QWidget

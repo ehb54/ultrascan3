@@ -22,7 +22,7 @@ class US_SelectRunid : public US_WidgetsDialog
 
       //! \brief Main constructor for dialog to select edits(s)
       //! \param dbase    Flag: Data source is database
-      //! \param runids   A reference to the selected runIDs list
+      //! \param runIDs   A reference to the selected runIDs list
 
       US_SelectRunid( bool, QStringList& );
 
