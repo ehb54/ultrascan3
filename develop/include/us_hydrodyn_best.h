@@ -52,10 +52,10 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       QwtPlotGrid           *                 grid_data;
 #endif
       QHBoxLayout           *                 hbl_points;
-      QLabel                *                 lbl_points;
+      mQLabel               *                 lbl_points;
       vector < QCheckBox * >                  cb_points;
       QHBoxLayout           *                 hbl_points_ln;
-      QLabel                *                 lbl_points_ln;
+      mQLabel               *                 lbl_points_ln;
       vector < QCheckBox * >                  cb_points_ln;
 
       // ------- bottom section
@@ -110,6 +110,15 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
 
       bool                                    ln_plot_ok;
 
+      QStringList                             tau_inputs;
+      set < QString >                         tau_input_set;
+      QStringList                             tau_msg;
+      void                                    recompute_tau();
+      map < QString, vector < double > >      last_lin_extrapolation;
+      map < QString, vector < double > >      last_log_extrapolation;
+      QStringList                             tau_csv_addendum_tag;
+      QStringList                             tau_csv_addendum_val;
+
    private slots:
 
       // ------ data section 
@@ -130,9 +139,12 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       void                                    help();
       void                                    cancel();
 
-      void                                    data_selected();
+      void                                    data_selected( bool do_recompute_tau = true );
       void                                    cb_changed   ( bool do_data = true );
       void                                    cb_changed_ln( bool do_data = true );
+
+      void                                    toggle_points();
+      void                                    toggle_points_ln();
 
    protected slots:
 

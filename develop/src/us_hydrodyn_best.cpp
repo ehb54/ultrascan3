@@ -31,6 +31,27 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
 
    plot_data_zoomer      = (ScrollZoomer *) 0;
 
+   tau_inputs
+      << "EIGENVALUES OF Drr TENSOR (1/s) [1]"
+      << "EIGENVALUES OF Drr TENSOR (1/s) [2]"
+      << "EIGENVALUES OF Drr TENSOR (1/s) [3]"
+      ;
+
+   for ( int i = 0; i < (int) tau_inputs.size(); ++i )
+   {
+      tau_input_set.insert( tau_inputs[ i ] );
+   }
+
+   tau_msg
+      << "Tau (1) (ns)"
+      << "Tau (2) (ns)"
+      << "Tau (3) (ns)"
+      << "Tau (4) (ns)"
+      << "Tau (5) (ns)"
+      << "Tau (h) (ns)"
+      << "Tau (m) (ns)"
+      ;
+
    setupGUI();
 
    global_Xpos += 30;
@@ -159,18 +180,19 @@ void US_Hydrodyn_Best::setupGUI()
 #endif
    plot_data->setCanvasBackground(USglobal->global_colors.plot);
 
-   lbl_points = new QLabel( "Linear:", this );
+   lbl_points = new mQLabel( "Linear:", this );
    lbl_points->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_points->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lbl_points->show();
+   connect( lbl_points, SIGNAL( pressed() ), SLOT( toggle_points() ) );
 
-   lbl_points_ln = new QLabel( "Log:   ", this );
+   lbl_points_ln = new mQLabel( "Log:   ", this );
    lbl_points_ln->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_points_ln->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lbl_points_ln->show();
+   connect( lbl_points_ln, SIGNAL( pressed() ), SLOT( toggle_points_ln() ) );
 
    // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
-
 
    pb_help =  new QPushButton ( tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
@@ -355,13 +377,17 @@ void US_Hydrodyn_Best::clear()
       hbl_points_ln->remove( cb_points_ln[ i ] );
       delete cb_points_ln[ i ];
    }
-   cb_points          .clear();
-   cb_points_ln       .clear();
-   cb_checked         .clear();
-   cb_checked_ln      .clear();
-   loaded_csv_trimmed .clear();
-   loaded_csv_filename = "";
-   last_pts_removed    = "";
+   cb_points             .clear();
+   cb_points_ln          .clear();
+   cb_checked            .clear();
+   cb_checked_ln         .clear();
+   loaded_csv_trimmed    .clear();
+   loaded_csv_filename    = "";
+   last_pts_removed       = "";
+   last_lin_extrapolation.clear();
+   last_log_extrapolation.clear();
+   tau_csv_addendum_tag  .clear();
+   tau_csv_addendum_val  .clear();
 }      
 
 void US_Hydrodyn_Best::load()
@@ -540,7 +566,13 @@ void US_Hydrodyn_Best::load()
    
    f.close();
    loaded_csv_filename = f.name();
+   for ( int i = 0; i < (int) lb_data->count(); ++i )
+   {
+      lb_data->setSelected( i, true );
+      data_selected( false );
+   }
    lb_data->setSelected( 0, true );
+   recompute_tau();
    connect( lb_data, SIGNAL( selectionChanged() ), SLOT( data_selected() ) );
    cb_changed   ( false );
    cb_changed_ln( true  );
@@ -584,7 +616,7 @@ void US_Hydrodyn_Best::cb_changed_ln( bool do_data )
    }
 }
    
-void US_Hydrodyn_Best::data_selected()
+void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 {
    // qDebug( "data_selected" );
    QString text = lb_data->selectedItem()->text();
@@ -751,6 +783,8 @@ void US_Hydrodyn_Best::data_selected()
    }
 
    // run LR
+   last_lin_extrapolation.erase( text );
+
 
    {
       last_a    = 0e0;
@@ -782,6 +816,12 @@ void US_Hydrodyn_Best::data_selected()
          last_b    = b;
          last_sigb = sigb;
          last_chi2 = chi2;
+
+         last_lin_extrapolation[ text ].push_back( last_a );
+         last_lin_extrapolation[ text ].push_back( last_siga );
+         last_lin_extrapolation[ text ].push_back( last_b );
+         last_lin_extrapolation[ text ].push_back( last_sigb );
+         last_lin_extrapolation[ text ].push_back( last_chi2 );
 
          double x[ 2 ];
          double y[ 2 ];
@@ -845,6 +885,8 @@ void US_Hydrodyn_Best::data_selected()
 
    // run LR ln
 
+   last_log_extrapolation.erase( text );
+
    {
       last_a_ln    = 0e0;
       last_siga_ln = 0e0;
@@ -884,6 +926,12 @@ void US_Hydrodyn_Best::data_selected()
          last_b_ln    = b;
          last_sigb_ln = sigb;
          last_chi2_ln = chi2;
+
+         last_log_extrapolation[ text ].push_back( last_a_ln );
+         last_log_extrapolation[ text ].push_back( last_siga_ln );
+         last_log_extrapolation[ text ].push_back( last_b_ln );
+         last_log_extrapolation[ text ].push_back( last_sigb_ln );
+         last_log_extrapolation[ text ].push_back( last_chi2_ln );
 
 #define UHB_PTS  200
 #define UHB_MINX 1e-20
@@ -972,6 +1020,13 @@ void US_Hydrodyn_Best::data_selected()
 #ifndef QT4
    plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
+   if ( do_recompute_tau &&
+        tau_input_set.count( text ) )
+   {
+      qDebug( "data selected & do recompute_tau" );
+      recompute_tau();
+   }
+
 
    plot_data->replot();
 }
@@ -1027,7 +1082,7 @@ void US_Hydrodyn_Best::save_results()
    for ( int i = 0; i < (int) lb_data->count(); ++i )
    {
       lb_data->setSelected( i, true );
-      data_selected();
+      data_selected( false );
       additions[ lb_data->text( i ) ] = 
          QString( "=%1,%2%3,%4%5" )
          .arg( last_a,    0, 'g', 8 )
@@ -1072,6 +1127,7 @@ void US_Hydrodyn_Best::save_results()
             ;
       }
    }      
+   recompute_tau();
 
    QStringList out;
    for ( int i = 0; i < (int)loaded_csv_trimmed.size(); ++i )
@@ -1083,6 +1139,16 @@ void US_Hydrodyn_Best::save_results()
          out.back() += additions[ qsl[ 0 ] ];
       }
    }
+   for ( int i = 0; i < (int) tau_csv_addendum_tag.size(); ++i )
+   {
+      out << QString( "\"%1\"," ).arg( tau_csv_addendum_tag[ i ] );
+      for ( int j = 0; j < points; ++j )
+      {
+         out.back() += ",";
+      }
+      out.back() += tau_csv_addendum_val[ i ];
+   }
+
    out[ 0 ] += ",\"Points removed (largest number of triangles is point 1)\"";
    if ( any_ln_plot )
    {
@@ -1103,4 +1169,116 @@ void US_Hydrodyn_Best::save_results()
    pb_save_results->setEnabled( true );
    pb_load        ->setEnabled( true );
    lb_data        ->setEnabled( true );
+
+}
+
+void US_Hydrodyn_Best::recompute_tau()
+{
+
+   bool lin_ok = true;
+   bool log_ok = true;
+
+   tau_csv_addendum_tag.clear();
+   tau_csv_addendum_val.clear();
+
+   for ( int i = 0; i < (int) tau_inputs.size(); ++i )
+   {
+      if ( !last_lin_extrapolation.count( tau_inputs[ i ] ) )
+      {
+         lin_ok = false;
+      }
+      if ( !last_log_extrapolation.count( tau_inputs[ i ] ) )
+      {
+         log_ok = false;
+      }
+   }
+
+   if ( lin_ok )
+   {
+      vector < double > this_tau_results;
+      QString msg;
+      
+      US_Saxs_Util::compute_tau( 
+                                last_lin_extrapolation[ tau_inputs[ 0 ] ][ 0 ] * 1e-3,
+                                last_lin_extrapolation[ tau_inputs[ 1 ] ][ 0 ] * 1e-3,
+                                last_lin_extrapolation[ tau_inputs[ 2 ] ][ 0 ] * 1e-3,
+                                .1,
+                                this_tau_results );
+
+      for ( int i = 0; i < (int) this_tau_results.size(); ++i )
+      {
+         tau_csv_addendum_tag << QString( tr( "Linear extrapolation of Drr EV (1/s) %1" ) ).arg( tau_msg[ i ] );
+         tau_csv_addendum_val << QString( "%1" ).arg( this_tau_results[ i ], 0, 'g', 8 );
+         msg += tau_csv_addendum_tag.back() + " " + tau_csv_addendum_val.back() + "\n";
+      }
+      editor_msg( "dark blue", msg );
+   }
+
+   if ( log_ok )
+   {
+      vector < double > this_tau_results;
+      
+      US_Saxs_Util::compute_tau( 
+                                exp( last_log_extrapolation[ tau_inputs[ 0 ] ][ 0 ] ) * 1e-3,
+                                exp( last_log_extrapolation[ tau_inputs[ 1 ] ][ 0 ] ) * 1e-3,
+                                exp( last_log_extrapolation[ tau_inputs[ 2 ] ][ 0 ] ) * 1e-3,
+                                .1,
+                                this_tau_results );
+
+      QString msg;
+      for ( int i = 0; i < (int) this_tau_results.size(); ++i )
+      {
+         tau_csv_addendum_tag << QString( tr( "Log extrapolation of Drr EV (1/s) %1" ) ).arg( tau_msg[ i ] );
+         tau_csv_addendum_val << QString( "%1" ).arg( this_tau_results[ i ], 0, 'g', 8 );
+         msg += tau_csv_addendum_tag.back() + " " + tau_csv_addendum_val.back() + "\n";
+      }
+      editor_msg( "dark blue", msg );
+   }
+}
+
+void US_Hydrodyn_Best::toggle_points()
+{
+   bool any_checked = false;
+   for ( int i = 0; i < (int) cb_points.size(); ++i )
+   {
+      if ( cb_points[ i ]->isChecked() )
+      {
+         any_checked = true;
+         break;
+      }
+   }
+
+   for ( int i = 0; i < (int) cb_points.size(); ++i )
+   {
+      disconnect( cb_points[ i ], SIGNAL( clicked() ), 0, 0 );
+      cb_points[ i ]->setChecked( !any_checked );
+      connect( cb_points[ i ], SIGNAL( clicked() ), SLOT( cb_changed() ) );
+   }
+   cb_changed();
+   // data_selected();
+}
+
+void US_Hydrodyn_Best::toggle_points_ln()
+{
+   bool any_checked = false;
+   for ( int i = 0; i < (int) cb_points_ln.size(); ++i )
+   {
+      if ( cb_points_ln[ i ]->isChecked() )
+      {
+         any_checked = true;
+         break;
+      }
+   }
+
+   for ( int i = 0; i < (int) cb_points_ln.size(); ++i )
+   {
+      if ( cb_points_ln[ i ]->isEnabled() )
+      {
+         disconnect( cb_points_ln[ i ], SIGNAL( clicked() ), 0, 0 );
+         cb_points_ln[ i ]->setChecked( !any_checked );
+         connect( cb_points_ln[ i ], SIGNAL( clicked() ), SLOT( cb_changed_ln() ) );
+      }
+   }
+   cb_changed_ln();
+   // data_selected();
 }

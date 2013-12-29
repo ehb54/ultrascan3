@@ -137,11 +137,11 @@ void US_Saxs_Util::compute_tau( double drrev1,
 
    // autovalori();
 
-   qDebug( QString( "compute_tau: input ev's: %1 %2 %3 fconv %4" )
-           .arg( drrev1 )
-           .arg( drrev2 )
-           .arg( drrev3 )
-           .arg( fconv ) );
+   // qDebug( QString( "compute_tau: input ev's: %1 %2 %3 fconv %4" )
+   //         .arg( drrev1 )
+   //         .arg( drrev2 )
+   //         .arg( drrev3 )
+   //         .arg( fconv ) );
 
    ddr[0] = drrev1;
    ddr[1] = drrev2;
@@ -338,8 +338,8 @@ void US_Saxs_Util::compute_tau( double drrev1,
       tau[ i ] *= pow( fconv, 3e0 ) * 1e9;
    }
 
-   for ( int i = 0; i < (int) tau.size(); ++i )
-   {
-      qDebug( QString( "compute_tau: tau results %1 %2" ).arg( i+1 ).arg( tau[ i ] ) );
-   }
+   // for ( int i = 0; i < (int) tau.size(); ++i )
+   // {
+   //    qDebug( QString( "compute_tau: tau results %1 %2" ).arg( i+1 ).arg( tau[ i ] ) );
+   // }
 }
