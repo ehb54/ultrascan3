@@ -24,7 +24,7 @@ class US_HelpDaemon : public QObject
 
   public slots:
     //! \brief Sends the web page to be shown to Qt's Assistant.
-    //! \param page A QString of the page to show.
+    //! \param helpPage A QString of the page to show.
     void show ( const QString& );
 
     //! \brief A slot to catch the message that the user closed Assistant.

@@ -3,7 +3,7 @@
 #include <QApplication>
 
 #include "us_ddist_combine.h"
-#include "us_select_runid.h"
+#include "us_select_rundd.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -323,7 +323,7 @@ void US_DDistr_Combine::load( void )
    qApp->processEvents();
 
    // Open a dialog and get the runID(s)
-   US_SelectRunid srdiag( dkdb_cntrls->db(), runids, aDescrs );
+   US_SelectRunDD srdiag( dkdb_cntrls->db(), runids, aDescrs );
    connect( &srdiag,      SIGNAL( changed( bool ) ),
             this,    SLOT( update_disk_db( bool ) ) );
    srdiag.exec();

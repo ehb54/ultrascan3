@@ -5,8 +5,8 @@ QT           += xml svg
 TARGET        = us_ddist_combine
 
 HEADERS       = us_ddist_combine.h     \
-                us_select_runid.h
+                us_select_rundd.h
 
 SOURCES       = us_ddist_combine.cpp   \
-                us_select_runid.cpp
+                us_select_rundd.cpp
 

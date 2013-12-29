@@ -23,7 +23,7 @@ class US_SyncExperiment : public QObject
       
       Sets up the database person ID and pointer to the database connection
 
-          \param    db       A pointer to an open database connection
+          \param    a_db     A pointer to an open database connection
           \param    parent   Pointer to parent QWidget.
       */
       US_SyncExperiment( US_DB2*, QWidget* = 0 );
