@@ -15,8 +15,9 @@
 #include "qfontmetrics.h"
 #include "qcheckbox.h"
 #include "us_mqlabel.h"
-#include "qpushbutton.h"
+#include "qfile.h"
 #include "qfiledialog.h"
+#include "qpushbutton.h"
 #include "qmessagebox.h"
 #include "qregexp.h"
 #include "us_json.h"
@@ -77,6 +78,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       QCheckBox *                             cb_bestbestv;
       QCheckBox *                             cb_bestbestp;
       QCheckBox *                             cb_bestbestna;
+      QLabel *                                lbl_bestmsrradiifile;
+      QLineEdit *                             le_bestmsrradiifile;
+      QLabel *                                lbl_bestmsrpatternfile;
+      QLineEdit *                             le_bestmsrpatternfile;
       QPushButton *                           pb_save;
       QPushButton *                           pb_load;
 
@@ -106,6 +111,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       void                                    set_bestbestv();
       void                                    set_bestbestp();
       void                                    set_bestbestna();
+      void                                    update_bestmsrradiifile( const QString & );
+      void                                    update_bestmsrpatternfile( const QString & );
       void                                    save();
       void                                    load();
 

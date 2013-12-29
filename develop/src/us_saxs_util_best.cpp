@@ -16,7 +16,6 @@ bool US_Saxs_Util::run_best()
       << "bestrcoalnmax"
       << "bestrcoaln"
       << "bestmsrradiifile"
-      << "bestmsrpatternfile"
       << "bestmsrmaxtriangles"
       ;
 
@@ -95,16 +94,31 @@ bool US_Saxs_Util::run_best()
       {
          best_inputbase = msr_inputbase;
       }
-      QString cmd = 
-         QString( "ulimit -s 16535; %1 -m %2 -r %3 -y %4 -t %5.c3p -v %6.c3v" )
-         .arg( progs[ p ] )
-         .arg( pdb_stripped )
-         .arg( control_parameters[ "bestmsrradiifile" ] )
-         .arg( control_parameters[ "bestmsrpatternfile" ] )
-         .arg( msr_inputbase )
-         .arg( msr_inputbase )
-         ;
+      
+      QString cmd;
 
+      if ( control_parameters.count( "bestmsrpatternfile" ) )
+      {
+         cmd = 
+            QString( "ulimit -s 16535; %1 -m %2 -r %3 -y %4 -t %5.c3p -v %6.c3v" )
+            .arg( progs[ p ] )
+            .arg( pdb_stripped )
+            .arg( control_parameters[ "bestmsrradiifile" ] )
+            .arg( control_parameters[ "bestmsrpatternfile" ] )
+            .arg( msr_inputbase )
+            .arg( msr_inputbase )
+            ;
+      } else {
+         cmd = 
+            QString( "ulimit -s 16535; %1 -m %2 -r %3 -t %4.c3p -v %5.c3v" )
+            .arg( progs[ p ] )
+            .arg( pdb_stripped )
+            .arg( control_parameters[ "bestmsrradiifile" ] )
+            .arg( msr_inputbase )
+            .arg( msr_inputbase )
+            ;
+      }         
+       
       if ( control_parameters.count( "bestmsrprober" ) )
       {
          cmd += QString( " -p %1" ).arg( control_parameters[ "bestmsrprober" ] );
@@ -159,6 +173,12 @@ bool US_Saxs_Util::run_best()
          while ( !ts.atEnd() )
          {
             QString qs = ts.readLine();
+            if ( qs.contains( "cannot open fineness file" ) )
+            {
+               errormsg = QString( "BEST: msroll error with names/radii files" ).arg( control_parameters[ "inputfilenoread" ] );
+               return false;
+            }
+               
             if ( qs.contains( "triangles written to disk" ) )
             {
                did_find_triangles = true;

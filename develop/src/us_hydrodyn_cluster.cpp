@@ -50,6 +50,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    cluster_additional_methods_modes[ "additional_processing_global"   ][ "best" ] = true;
    cluster_additional_methods_modes[ "no_multi_model_pdb"             ][ "best" ] = true;
    cluster_additional_methods_modes[ "inputfilenoread"                ][ "best" ] = true;
+   cluster_additional_methods_modes[ "acceptcommon"                   ][ "best" ] = true;
 
    cluster_additional_methods_job_multiplier[ "best" ] = 3;
 
@@ -2860,7 +2861,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                                                          QString common_prefix,
                                                          bool    use_extension )
 {
-   editor_msg( "dark red" , tr( "Files:\n" + additional_method_files        ( active_additional_methods()[ 0 ] ).join( "\n" ) + "\n" ) );
+   editor_msg( "dark blue" , tr( "Files:\n" + additional_method_files        ( active_additional_methods()[ 0 ] ).join( "\n" ) + "\n" ) );
    editor_msg( "dark blue", tr( "Text:\n" + additional_method_package_text ( active_additional_methods()[ 0 ] ) + "\n" ) );
 
    if ( active_additional_mpi_mix_issue() )
@@ -3099,14 +3100,27 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
                      .arg( it->first )
                      .arg( it->second );
                } else {
-                  out += 
-                     QString( "%1\t%2\n" )
-                     .arg( it->first )
-                     .arg( QFileInfo( it->second ).fileName() );
-                  if ( !already_added.count( it->second ) )
+                  if ( cluster_additional_methods_modes[ "acceptcommon" ].count( methods[ m ] ) )
                   {
-                     source_files << it->second;
-                     already_added[ it->second ]++;
+                     out += 
+                        QString( "%1\t%2\n" )
+                        .arg( it->first )
+                        .arg( common_prefix + QFileInfo( it->second ).fileName() );
+                     if ( !already_added.count( it->second ) )
+                     {
+                        base_source_files << it->second;
+                        already_added[ it->second ]++;
+                     }
+                  } else {
+                     out += 
+                        QString( "%1\t%2\n" )
+                        .arg( it->first )
+                        .arg( QFileInfo( it->second ).fileName() );
+                     if ( !already_added.count( it->second ) )
+                     {
+                        source_files << it->second;
+                        already_added[ it->second ]++;
+                     }
                   }
                }
             }
@@ -4475,34 +4489,65 @@ bool US_Hydrodyn_Cluster::additional_processing(
          }
          QString dir = ( ( US_Hydrodyn * ) us_hydrodyn)->somo_dir + QDir::separator() + "tmp" + QDir::separator();
          
-         QFile f_radii( dir + "msroll_radii.txt" );
-         if ( !f_radii.open( IO_WriteOnly ) )
+         if ( !(*cluster_additional_methods_options_selected)[ method ].count( "bestmsrradiifile" ) )
          {
-            editor_msg( "red", QString( tr( "Error: can not create MSROLL radii file: %1" ) ).arg( f_radii.name() ) );
-         } else {
-            QTextStream ts( &f_radii );
-            ts << my_msroll_radii;
-            f_radii.close();
-            source_files << f_radii.name();
-            out += QString( "bestmsrradiifile %1%2\n" ).arg( common_prefix ).arg( QFileInfo( f_radii ).fileName() );
-            editor_msg( "blue", QString( tr( "Notice: created MSROLL radii file: %1" ) ).arg( f_radii.name() ) );
+            QFile f_radii( dir + "msroll_radii.txt" );
+            if ( !f_radii.open( IO_WriteOnly ) )
+            {
+               editor_msg( "red", QString( tr( "Error: can not create MSROLL radii file: %1" ) ).arg( f_radii.name() ) );
+            } else {
+               QTextStream ts( &f_radii );
+               ts << my_msroll_radii;
+               f_radii.close();
+               source_files << f_radii.name();
+               out += QString( "bestmsrradiifile %1%2\n" ).arg( common_prefix ).arg( QFileInfo( f_radii ).fileName() );
+               editor_msg( "blue", QString( tr( "Notice: created MSROLL radii file: %1" ) ).arg( f_radii.name() ) );
+            }
          }
 
-         QFile f_names( dir + "msroll_names.txt" );
-         if ( !f_names.open( IO_WriteOnly ) )
+         if ( !(*cluster_additional_methods_options_selected)[ method ].count( "bestmsrpatternfile" ) &&
+              !(*cluster_additional_methods_options_selected)[ method ].count( "bestmsrradiifile" ) )
          {
-            editor_msg( "red", QString( tr( "Error: can not create MSROLL names file: %1" ) ).arg( f_names.name() ) );
-         } else {
-            QTextStream ts( &f_names );
-            for ( unsigned int i = 0; i < ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_names.size(); i++ )
+            QFile f_names( dir + "msroll_names.txt" );
+            if ( !f_names.open( IO_WriteOnly ) )
             {
-               ts << ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_names[ i ];
+               editor_msg( "red", QString( tr( "Error: can not create MSROLL names file: %1" ) ).arg( f_names.name() ) );
+            } else {
+               QTextStream ts( &f_names );
+               for ( unsigned int i = 0; i < ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_names.size(); i++ )
+               {
+                  ts << ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_names[ i ];
+               }
+               f_names.close();
+               source_files << f_names.name();
+               out += QString( "bestmsrpatternfile %1%2\n" ).arg( common_prefix ).arg( QFileInfo( f_names ).fileName() );
+               editor_msg( "blue", QString( tr( "Notice: created MSROLL names file: %1" ) ).arg( f_names.name() ) );
             }
-            f_names.close();
-            source_files << f_names.name();
-            out += QString( "bestmsrpatternfile %1%2\n" ).arg( common_prefix ).arg( QFileInfo( f_names ).fileName() );
-            editor_msg( "blue", QString( tr( "Notice: created MSROLL names file: %1" ) ).arg( f_names.name() ) );
          }
+
+         if ( (*cluster_additional_methods_options_selected)[ method ].count( "bestmsrradiifile" ) )
+         {
+            if ( (*cluster_additional_methods_options_selected).count( method ) )
+            {
+               if ( (*cluster_additional_methods_options_selected)[ method ].count( "bestbestwatr" ) ||
+                    (*cluster_additional_methods_options_selected)[ method ].count( "bestexpand" ) )
+               {
+                  editor_msg( "red", tr( "Manual radii file does not support water radius or expansion" ) );
+                  return false;
+               }
+            }
+            editor_msg( "blue", tr( "Manual radii file specified" ) );
+         }
+
+         if ( 
+             ( !(*cluster_additional_methods_options_selected)[ method ].count( "bestmsrradiifile" ) &&
+               (*cluster_additional_methods_options_selected)[ method ].count( "bestmsrpatternfile" ) ) 
+              )
+         {
+            editor_msg( "red", tr( "Manual pattern file requires radii file" ) );
+            return false;
+         }
+
          QFile f_directives( dir + "__directives" );
          if ( !f_directives.open( IO_WriteOnly ) )
          {

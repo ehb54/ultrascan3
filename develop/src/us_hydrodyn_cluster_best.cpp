@@ -271,6 +271,42 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    cb_bestbestna ->setChecked        ( parameters->count( "bestbestna" ) && ( *parameters )[ "bestbestna" ] == "true" ? true : false );
    connect( cb_bestbestna, SIGNAL( clicked() ), SLOT( set_bestbestna() ) );
 
+   lbl_bestmsrradiifile = new QLabel      ( tr( "MSROLL: manual radii file" ), this );
+   lbl_bestmsrradiifile ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestmsrradiifile ->setMinimumHeight( minHeight1 );
+   lbl_bestmsrradiifile ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestmsrradiifile ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestmsrradiifile ->setMinimumWidth ( QFontMetrics( lbl_bestmsrradiifile->font() ).maxWidth() * 41 );
+
+   le_bestmsrradiifile = new QLineEdit     ( this, "bestmsrradiifile Line Edit" );
+   widgets_opt_label.push_back( lbl_bestmsrradiifile );
+   widgets_opt_label.push_back( le_bestmsrradiifile );
+   le_bestmsrradiifile ->setText           ( parameters->count( "bestmsrradiifile" ) ? ( *parameters )[ "bestmsrradiifile" ] : "" );
+   le_bestmsrradiifile ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestmsrradiifile ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestmsrradiifile ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestmsrradiifile ->setMinimumHeight  ( minHeight1 );
+   le_bestmsrradiifile ->setMinimumWidth   ( 150 );
+   connect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrradiifile( const QString & ) ) );
+
+   lbl_bestmsrpatternfile = new QLabel      ( tr( "MSROLL: manual name pattern file (must also provide radii file above)" ), this );
+   lbl_bestmsrpatternfile ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_bestmsrpatternfile ->setMinimumHeight( minHeight1 );
+   lbl_bestmsrpatternfile ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_bestmsrpatternfile ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   lbl_bestmsrpatternfile ->setMinimumWidth ( QFontMetrics( lbl_bestmsrpatternfile->font() ).maxWidth() * 41 );
+
+   le_bestmsrpatternfile = new QLineEdit     ( this, "bestmsrpatternfile Line Edit" );
+   widgets_opt_label.push_back( lbl_bestmsrpatternfile );
+   widgets_opt_label.push_back( le_bestmsrpatternfile );
+   le_bestmsrpatternfile ->setText           ( parameters->count( "bestmsrpatternfile" ) ? ( *parameters )[ "bestmsrpatternfile" ] : "" );
+   le_bestmsrpatternfile ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
+   le_bestmsrpatternfile ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_bestmsrpatternfile ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bestmsrpatternfile ->setMinimumHeight  ( minHeight1 );
+   le_bestmsrpatternfile ->setMinimumWidth   ( 150 );
+   connect( le_bestmsrpatternfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrpatternfile( const QString & ) ) );
+
    pb_save =  new QPushButton ( tr( "Save" ), this );
    pb_save -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_save -> setMinimumHeight( minHeight1 );
@@ -390,6 +426,18 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    background->addLayout( hbl );
    hbl = new QHBoxLayout( 0 );
    hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_bestmsrradiifile );
+   hbl->addWidget( le_bestmsrradiifile );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
+   hbl->addWidget( lbl_bestmsrpatternfile );
+   hbl->addWidget( le_bestmsrpatternfile );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new QHBoxLayout( 0 );
+   hbl->addSpacing( 4 );
    hbl->addWidget( pb_save );
    hbl->addWidget( pb_load );
    hbl->addSpacing( 4 );
@@ -493,6 +541,16 @@ void US_Hydrodyn_Cluster_Best::closeEvent( QCloseEvent *e )
    {
       parameters->erase( "bestbestna" );
    }
+   if ( parameters->count( "bestmsrradiifile" ) &&
+        (*parameters)[ "bestmsrradiifile" ].isEmpty() )
+   {
+      parameters->erase( "bestmsrradiifile" );
+   }
+   if ( parameters->count( "bestmsrpatternfile" ) &&
+        (*parameters)[ "bestmsrpatternfile" ].isEmpty() )
+   {
+      parameters->erase( "bestmsrpatternfile" );
+   }
 
    global_Xpos -= 30;
    global_Ypos -= 30;
@@ -586,6 +644,38 @@ void US_Hydrodyn_Cluster_Best::set_bestbestna()
    ( *parameters )[ "bestbestna" ] = cb_bestbestna->isChecked() ? "true" : "false";
 }
 
+void US_Hydrodyn_Cluster_Best::update_bestmsrradiifile( const QString & )
+{
+   QString filename = QFileDialog::getOpenFileName(
+                                                   QString::null,
+                                                   QString::null,
+                                                   this,
+                                                   "open file dialog",
+                                                   tr( "Select a file for MSROLL: manual radii file" )
+                                                   );
+
+   disconnect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   le_bestmsrradiifile->setText( filename );
+   connect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrradiifile( const QString & ) ) );
+   ( *parameters )[ "bestmsrradiifile" ] = le_bestmsrradiifile->text();
+}
+
+void US_Hydrodyn_Cluster_Best::update_bestmsrpatternfile( const QString & )
+{
+   QString filename = QFileDialog::getOpenFileName(
+                                                   QString::null,
+                                                   QString::null,
+                                                   this,
+                                                   "open file dialog",
+                                                   tr( "Select a file for MSROLL: manual name pattern file (must also provide radii file above)" )
+                                                   );
+
+   disconnect( le_bestmsrpatternfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   le_bestmsrpatternfile->setText( filename );
+   connect( le_bestmsrpatternfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrpatternfile( const QString & ) ) );
+   ( *parameters )[ "bestmsrpatternfile" ] = le_bestmsrpatternfile->text();
+}
+
 void US_Hydrodyn_Cluster_Best::save()
 {
    QString fn = QFileDialog::getSaveFileName( 
@@ -668,5 +758,11 @@ void US_Hydrodyn_Cluster_Best::update_fields()
    cb_bestbestv                                    ->setChecked( parameters->count( "bestbestv" ) && ( *parameters )[ "bestbestv" ] == "true" ? true : false );
    cb_bestbestp                                    ->setChecked( parameters->count( "bestbestp" ) && ( *parameters )[ "bestbestp" ] == "true" ? true : false );
    cb_bestbestna                                   ->setChecked( parameters->count( "bestbestna" ) && ( *parameters )[ "bestbestna" ] == "true" ? true : false );
+   disconnect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   le_bestmsrradiifile                             ->setText( parameters->count( "bestmsrradiifile" ) ? ( *parameters )[ "bestmsrradiifile" ] : "" );
+   connect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrradiifile( const QString & ) ) );
+   disconnect( le_bestmsrpatternfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   le_bestmsrpatternfile                           ->setText( parameters->count( "bestmsrpatternfile" ) ? ( *parameters )[ "bestmsrpatternfile" ] : "" );
+   connect( le_bestmsrpatternfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrpatternfile( const QString & ) ) );
 }
 
