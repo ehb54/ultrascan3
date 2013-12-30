@@ -400,6 +400,15 @@ QString US_Model::typeText( void )
          else if ( global == SUPERGLOBAL )  // SuperGlobal subtype
             tdesc    = ( jj > 0 ) ? tdesc + "-SG" : "SuperGlobal";
 
+         if ( analysis == PCSA )            // Add sub-type (SL,IS,DS,HL) to PCSA
+         {
+            int kk   = description.indexOf( "_PCSA" );
+            if ( kk > 0 )  // Append "-SL"|"-IS"|"-DS"|"-HL"
+               tdesc    = tdesc + description.mid( kk + 5, 3 );
+            else           // By default, assume "-IS"
+               tdesc    = tdesc + "-IS";
+         }
+
          if ( monteCarlo )                  // Monte Carlo subtype
             tdesc    = tdesc + "-MC";
 
