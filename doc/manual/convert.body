@@ -41,20 +41,17 @@
     <p>To load data into the application, do one of the following:</p>
 
     <ul>
-      <li><b>Importing Experimental Data</b>. Click on the &quot;Import XLA/I/F
-      Data from HD.&quot; Locate the raw data on your local disk, and
-      highlight the directory that contains the files. This procedure
+      <li><b>Importing Experimental Data</b>. Click on the &quot;Import
+      Experimental Data&quot button; locate the raw data on your local disk,
+      and highlight the directory that contains the files. This procedure
       is the same no matter which type of ultracentrifuge data was acquired.
-      Us_convert will convert the data and display it in the window.</li>
-
-      <li><b>Importing MWL Data</b>. Click on the &quot;Import MWL Data from
-      HD.&quot; Locate the raw multi-waveLength data on your local disk, and
-      highlight the directory that contains the files. This program will convert
-      the MWL data and display it in the window.</li>
+      Us_convert will convert the data and display it in the window.
+      The contents of the chosen directory determines whether the data type
+      is raw XLA/I/F ASCII data, MWL data, or simulated AUC data.</li>
 
       <li><b>Loading US3 Data</b>. You can load data that has already been
       converted and stored in the UltraScan III OpenAUC format, either from disk
-      or database, by clicking on the &quot;Load US3 OpenAUC Data&quot; button.
+      or database, by clicking on the &quot;Load US3 OpenAUC Run&quot; button.
       This program will display the data so that you can edit it further or
       synchronize data between disk and database.</li>
     </ul>

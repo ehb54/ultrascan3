@@ -59,7 +59,8 @@ US_ConvertGui::US_ConvertGui() : US_Widgets()
    dir.mkpath( US_Settings::reportDir()   );
    dir.mkpath( US_Settings::etcDir()      );
 
-   setWindowTitle( tr( "Import Experimental Data (Beckman-XLA/XLI, Aviv Fluorescence, OpenAUC Multiwavelength)" ) );
+   setWindowTitle( tr( "Import Experimental Data (Beckman-XLA/XLI,"
+                       " Aviv Fluorescence, OpenAUC Multiwavelength)" ) );
    setPalette( US_GuiSettings::frameColor() );
 
    isMwl        = false;
@@ -120,34 +121,26 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    QLabel* lb_run    = us_banner(     tr( "Load the Run" ) );
 
    // Pushbuttons to load and reload data
-   pb_import         = us_pushbutton( tr( "Import XLA/I/F Data from HD" ) );
+   pb_import         = us_pushbutton( tr( "Import Experimental Data" ) );
 
    // External program to enter experiment information
    pb_editRuninfo    = us_pushbutton( tr( "Edit Run Information" ) );
    pb_editRuninfo->setEnabled( false );
 
    // load US3 data ( that perhaps has been done offline )
-   pb_loadUS3        = us_pushbutton( tr( "Load US3 OpenAUC Data" ), true );
+   pb_loadUS3        = us_pushbutton( tr( "Load US3 OpenAUC Run" ), true );
 
    // Run details
    pb_details        = us_pushbutton( tr( "Run Details" ), false );
-
-   // Load MWL data
-   pb_impmwl         = us_pushbutton( tr( "Import MWL Data from HD" ) );
-   le_lambraw        = us_lineedit(   tr( "" ), 0, true );
 
    // Set the wavelength tolerance for c/c/w determination
    QLabel* lb_tolerance = us_label(   tr( "Separation Tolerance:" ) );
    ct_tolerance      = us_counter ( 2, 0.0, 100.0, 5.0 );
    ct_tolerance->setStep( 1 );
-   //ct_tolerance->setMinimumWidth( 80 );
 
    // Set up MWL controls
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( font );
-   //ct_tolerance->adjustSize();
-   //int   fwid    = fmet.maxWidth();
-   //int   swid    = fwid * 5;
    static QChar clambda( 955 );   // Lambda character
 
    lb_mwlctrl   = us_banner  ( tr( "Multi-Wavelength Lambda Controls" ) );
@@ -161,10 +154,6 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    pb_lambnext  = us_pushbutton( "next",     true, -2 );
    pb_lambprev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
    pb_lambnext->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
-   //lb_lambstrt->setMinimumWidth( swid );
-   //cb_lambstrt->setMinimumWidth( swid );
-   //lb_lambstop->setMinimumWidth( swid );
-   //cb_lambstop->setMinimumWidth( swid );
 
    mwl_connect( true );
 
@@ -246,8 +235,6 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    settings ->addWidget( lb_run,          row++, 0, 1, 4 );
    settings ->addWidget( pb_import,       row,   0, 1, 2 );
    settings ->addWidget( pb_editRuninfo,  row++, 2, 1, 2 );
-   settings ->addWidget( pb_impmwl,       row,   0, 1, 2 );
-   settings ->addWidget( le_lambraw,      row++, 2, 1, 2 );
    settings ->addWidget( pb_loadUS3,      row,   0, 1, 2 );
    settings ->addWidget( pb_details,      row++, 2, 1, 2 );
    settings ->addWidget( lb_tolerance,    row,   0, 1, 2 );
@@ -346,8 +333,6 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                             SLOT(   loadUS3()     ) );
    connect( pb_details,     SIGNAL( clicked()     ),
                             SLOT(   runDetails()  ) );
-   connect( pb_impmwl,      SIGNAL( clicked()     ),
-                            SLOT(   importMWL()   ) );
    connect( ct_tolerance,   SIGNAL( valueChanged         ( double ) ),
                             SLOT  ( toleranceValueChanged( double ) ) );
    connect( le_description, SIGNAL( textEdited( QString )      ),
@@ -423,7 +408,6 @@ void US_ConvertGui::reset( void )
 
    pb_import     ->setEnabled( true  );
    pb_loadUS3    ->setEnabled( true  );
-   pb_impmwl     ->setEnabled( true  );
    pb_exclude    ->setEnabled( false );
    pb_include    ->setEnabled( false );
    pb_details    ->setEnabled( false );
@@ -434,7 +418,6 @@ void US_ConvertGui::reset( void )
    pb_editRuninfo ->setEnabled( false );
    pb_applyAll   ->setEnabled( false );
    pb_saveUS3    ->setEnabled( false );
-   le_lambraw    ->clear();
 
    ct_tolerance  ->setEnabled( true  );
 
@@ -527,10 +510,12 @@ void US_ConvertGui::resetAll( void )
    reference_start = 0;
    reference_end   = 0;
 
+   connectTolerance( false );
    ct_tolerance    ->setMinValue(   0.0 );
    ct_tolerance    ->setMaxValue( 100.0 );
    ct_tolerance    ->setValue   (   5.0 );
    ct_tolerance    ->setStep( 1 );
+   connectTolerance( true );
    scanTolerance   = 5.0;
    runID           = "";
    data_plot->setTitle( tr( "Absorbance Data" ) );
@@ -604,41 +589,44 @@ void US_ConvertGui::toleranceValueChanged( double )
 }
 
 // User pressed the import data button
-void US_ConvertGui::import( QString dir )
+void US_ConvertGui::import()
 {
-DbgLv(1) << "CGui:IMP: IN  dir" << dir;
+   int impType = getImports();
+
+   if ( impType == 1 )
+   {
+      importMWL();
+      return;
+   }
+
+   else if ( impType == 2 )
+   {
+      importAUC();
+      return;
+   }
+
+DbgLv(1) << "CGui:IMP: IN";
    bool success = false;
-   le_status->setText( tr( "Importing legacy data ..." ) );
+   le_status->setText( tr( "Importing experimental data ..." ) );
 
-DbgLv(1) << "CGui:IMP: read CALL";
-   if ( dir.isEmpty() )
-      success = read();                // Read the legacy data
+   success = read();                // Read the legacy data
 
-   else
-      success = read( dir );
-
-DbgLv(1) << "CGui:IMP:  read RTN  succ" << success;
    if ( ! success ) return;
 
    // Define default tolerances before converting
    scanTolerance = ( runType == "WA" ) ? 0.1 : 5.0;
-   ct_tolerance->disconnect();
+   connectTolerance( false );
    ct_tolerance->setValue( scanTolerance );
-   connect( ct_tolerance,   SIGNAL( valueChanged         ( double ) ),
-                            SLOT  ( toleranceValueChanged( double ) ) );
+   connectTolerance( true );
 
    // Figure out all the triple combinations and convert data
-DbgLv(1) << "CGui:IMP: convert CALL  toler" << scanTolerance;
    success = convert();
-DbgLv(1) << "CGui:IMP:  cv succ" << success;
 
    if ( ! success ) return;
 
    // Initialize export data pointers vector
-DbgLv(1) << "CGui:IMP: init_output_data CALL";
    init_output_data();
 
-DbgLv(1) << "CGui:IMP: setTripleInfo CALL";
    setTripleInfo();
 
    checkTemperature();          // Check to see if temperature varied too much
@@ -732,24 +720,9 @@ DbgLv(1) << "CGui: (3)referDef=" << referenceDefined;
    }
 }
 
-// User pressed the import MWL data button
+// Import sub-directory contains MWL data
 void US_ConvertGui::importMWL( void )
 {
-   // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this,
-         tr( "Raw MWL Data Directory" ),
-         US_Settings::importDir(),
-         QFileDialog::DontResolveSymlinks );
-
-   // Restore area beneath dialog
-   qApp->processEvents();
-
-   if ( dir.isEmpty() ) return;
-
-   dir.replace( "\\", "/" );  // WIN32 issue
-
-   currentDir  = QString( dir );
-   runID       = currentDir.section( "/", -1, -1 );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Read the data
@@ -769,8 +742,10 @@ void US_ConvertGui::importMWL( void )
    ExpData.runID = runID;
 
    // Define default tolerances before converting
+   connectTolerance( false );
    scanTolerance = ( runType == "WA" ) ? 0.1 : 5.0;
    ct_tolerance->setValue( scanTolerance );
+   connectTolerance( true );
 
    show_mwl_control( true );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
@@ -788,20 +763,74 @@ DbgLv(1) << "CGui:iM: buildraw";
    mwl_data.build_rawData ( allData );
 DbgLv(1) << "CGui:iM: init_out";
    init_output_data();
-DbgLv(1) << "CGui:IM:   (1)tLx infsz" << tripListx << out_chaninfo.count();
 
    le_status->setText( tr( "Building Lambda list ..." ) );
    qApp->processEvents();
 
    // Set up MWL data object after import
 DbgLv(1) << "CGui:iM: mwlsetup";
-DbgLv(1) << "CGui:IM:   (2)tLx infsz" << tripListx << out_chaninfo.count();
    mwl_setup();
 
-   le_status->setText( tr( "MWL Import IS COMPLETE." ) );
+//   le_status->setText( tr( "MWL Import IS COMPLETE." ) );
    qApp->processEvents();
    QApplication::restoreOverrideCursor();
 DbgLv(1) << "CGui:iM:  DONE";
+}
+
+// Import simulation data in AUC form
+void US_ConvertGui::importAUC( void )
+{
+   QString importDir = currentDir;
+   QDir readDir( importDir );
+
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   le_status->setText( tr( "Loading AUC simulation data ..." ) );
+   QStringList nameFilters = QStringList( "*.auc" );
+   QStringList files =  readDir.entryList( nameFilters,
+         QDir::Files | QDir::Readable, QDir::Name );
+   allData     .clear();
+   all_tripinfo.clear();
+
+   for ( int trx = 0; trx < files.size(); trx++ )
+   {
+      QString fname = files[ trx ];
+      QString fpath = importDir + "/" + fname;
+      US_DataIO::RawData     rdata;
+      US_Convert::TripleInfo tripinfo;
+
+      US_DataIO::readRawData( fpath, rdata );
+
+      allData << rdata;
+
+      QString triple   = QString::number( rdata.cell ) + " / "
+         + QString( rdata.channel ) + " / "
+         + QString::number( qRound( rdata.scanData[ 0 ].wavelength ) );
+      tripinfo.tripleID    = trx + 1;
+      tripinfo.tripleDesc  = triple;
+      tripinfo.description = rdata.description;
+      tripinfo.channelID   = trx + 1;
+      tripinfo.excluded    = false;
+
+      all_tripinfo << tripinfo;
+   }
+   qApp->processEvents();
+   QApplication::restoreOverrideCursor();
+
+   QString fname = files[ 0 ];
+   runType       = QString( fname ).section( ".", -5, -5 );
+   runID         = QString( fname ).section( ".",  0, -6 );
+   le_runID2->setText( runID );
+   le_runID ->setText( runID );
+   scanTolerance = 5.0;
+
+   init_output_data();
+   setTripleInfo();
+   le_description -> setText( allData[ 0 ].description );
+   init_excludes();
+   plot_current();
+   saveStatus    = NOT_SAVED;
+   enableControls();
+   le_status->setText( tr( "AUC simulation data import IS COMPLETE." ) );
 }
 
 // Enable the common dialog controls when there is data
@@ -812,7 +841,7 @@ void US_ConvertGui::enableControls( void )
 
    else
    {
-DbgLv(1) << "CGui: enabCtl: have-data";
+DbgLv(1) << "CGui: enabCtl: have-data" << allData.size() << all_tripinfo.size();
       // Ok to enable some buttons now
       pb_details     ->setEnabled( true );
       pb_solution    ->setEnabled( true );
@@ -839,11 +868,10 @@ DbgLv(1) << "CGui: enabCtl: have-data";
       // Disable load buttons if there is data
       pb_import ->setEnabled( false );
       pb_loadUS3->setEnabled( false );
-      pb_impmwl ->setEnabled( false );
 
       // Most triples are ccw
       lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
-      //ct_tolerance->setMinimumWidth( 160 );
+      connectTolerance( false );
       ct_tolerance->setNumButtons  ( 2 );
       ct_tolerance->setRange       ( 0.0, 100.0 );
       ct_tolerance->setStep        ( 1.0 );
@@ -854,12 +882,13 @@ DbgLv(1) << "CGui: enabCtl: have-data";
       {
          // First of all, wavelength triples are ccr.
          lb_triple   ->setText( tr( "Cell / Channel / Radius" ) );
-         //ct_tolerance->setMinimumWidth( 160 );
          ct_tolerance->setNumButtons  ( 3 );
          ct_tolerance->setRange       ( 0.0, 10.0 );
          ct_tolerance->setStep        ( 0.001 );
          ct_tolerance->setValue       ( scanTolerance );
       }
+
+      connectTolerance( true );
 
       // Let's calculate if we're eligible to copy this triple info to all
       // or to save it
@@ -877,8 +906,6 @@ DbgLv(1) << "CGui: enabCtl: have-data";
       }
 
       enableRunIDControl( saveStatus == NOT_SAVED );
-DbgLv(1) << "CGui: enabCtl: enabRunID complete";
-DbgLv(1) << "CGui:   tLx infsz" << tripListx << out_chaninfo.count();
 
       enableSaveBtn();
 DbgLv(1) << "CGui: enabCtl: enabSvBtn complete";
@@ -2150,13 +2177,9 @@ DbgLv(1) << "CGui:pSS: split CALL";
    subsets.clear();
 
    // Reinitialize some things
-DbgLv(1) << "CGui:pSS: initOut CALL";
    init_output_data();
-DbgLv(1) << "CGui:pSS: setTrip CALL";
    setTripleInfo();
-DbgLv(1) << "CGui:pSS: initExc CALL";
    init_excludes();
-DbgLv(1) << "CGui:pSS: enabCtl CALL";
    enableControls();
 
    plot_current();
@@ -3184,34 +3207,27 @@ void US_ConvertGui::saveReportsToDB( void )
 
 }
 
-bool US_ConvertGui::read( void )
+int US_ConvertGui::getImports()
 {
-   // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this,
+   QString dir;
+   int impType  = 0;
+
+   dir = QFileDialog::getExistingDirectory( this,
          tr( "Raw Data Directory" ),
          US_Settings::importDir(),
          QFileDialog::DontResolveSymlinks );
 
-   // Restore area beneath dialog
-   qApp->processEvents();
+   dir.replace( "\\", "/" );
 
-   if ( dir.isEmpty() ) return( false );
+   if ( dir.isEmpty() )      // If no directory chosen, return now
+      return -1;
 
-   dir.replace( "\\", "/" );  // WIN32 issue
-
-   return( read( dir ) );
-}
-
-bool US_ConvertGui::read( QString dir )
-{
-   // Get legacy file names
-   QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
-   d.makeAbsolute();
-   if ( dir.right( 1 ) != "/" ) dir += "/";  // Ensure trailing /
+   QDir readDir( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
+   readDir.makeAbsolute();
+   if ( dir.right( 1 ) != "/" ) dir += "/";  // Ensure trailing "/"
 
    // See if we need to fix the runID
-   QStringList components = dir.split( "/", QString::SkipEmptyParts );
-   QString new_runID = components.last();
+   QString new_runID = dir.section( "/", -2, -2 );
    QRegExp rx( "[^A-Za-z0-9_-]" );
 
    int pos = 0;
@@ -3221,7 +3237,7 @@ bool US_ConvertGui::read( QString dir )
       new_runID.replace( pos, 1, "_" );      // Replace 1 char at position pos
       runID_changed = true;
    }
-DbgLv(1) << "CGui:RD: dir" << dir << "new_runID" << new_runID
+DbgLv(1) << "CGui:gI: dir" << dir << "new_runID" << new_runID
  << "rID_chgd" << runID_changed;
 
    // Let the user know if the runID name has changed
@@ -3236,18 +3252,56 @@ DbgLv(1) << "CGui:RD: dir" << dir << "new_runID" << new_runID
    }
 
    // Set the runID and directory
-   runID = new_runID;
+   runID       = new_runID;
    le_runID ->setText( runID );
    le_runID2->setText( runID );
    le_dir   ->setText( dir );
    currentDir  = QString( dir );
 
+   // Get the list of files in the chosen directory
+   QStringList nameFilters = QStringList( "*" );
+   QStringList files =  readDir.entryList( nameFilters,
+         QDir::Files | QDir::Readable, QDir::Name );
+
+   int nauc    = 0;
+   int nmwrs   = 0;
+   int nothr   = 0;
+   int ntotf   = files.size();
+
+   for ( int jj = 0; jj < ntotf; jj++ )
+   {
+      QString fname = files[ jj ];
+
+      if ( fname.endsWith( ".mwrs" ) )
+         nmwrs++;
+
+      else if ( fname.endsWith( ".auc" ) )
+         nauc++;
+
+      else
+         nothr++;
+   }
+
+   if ( nmwrs > nothr )
+      impType     = 1;             // Flag import of MWL data
+
+   else if ( nauc > nothr )
+      impType     = 2;             // Flag import of AUC data
+
+   else
+      impType     = 0;             // Flag import of Beckman Raw
+
+   return impType;
+}
+
+bool US_ConvertGui::read( void )
+{
    oldRunType = runType;            // let's see if the runType changes
 
-   // Read the data
+   // Read the legacy data
 DbgLv(1) << "CGui:RD:  rdLegDat CALL";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   US_Convert::readLegacyData( dir, legacyData, runType );
+   US_Convert::readLegacyData( currentDir, legacyData, runType );
    QApplication::restoreOverrideCursor();
 DbgLv(1) << "CGui:RD:   rdLegDat RTN  lDsz" << legacyData.size();
 
@@ -3263,7 +3317,6 @@ bool US_ConvertGui::convert( void )
 {
 DbgLv(1) << "CGui:CV: IN";
    // Set tolerance to stay between wl numbers
-//   double tolerance = (double)ct_tolerance->value() + 0.05;
    double tolerance = (double)ct_tolerance->value();
 
    // Convert the data
@@ -3402,11 +3455,9 @@ DbgLv(1) << " PlCur: PlTit RTN";
 
    // Plot current data for cell / channel / wavelength triple
    plot_all();
-DbgLv(1) << " PlCur: PlAll RTN";
 
    // Set the Scan spin boxes
    enableScanControls();
-DbgLv(1) << " PlCur: EScCt RTN";
 }
 
 void US_ConvertGui::plot_titles( void )
@@ -3554,7 +3605,7 @@ void US_ConvertGui::plot_all( void )
 
 void US_ConvertGui::replot( void )
 {
-  plot_all();
+   plot_all();
 }
 
 void US_ConvertGui::set_colors( const QList< int >& focus )
@@ -3925,8 +3976,6 @@ void US_ConvertGui::mwl_setup()
 
    // Propagate initial lists of Lambdas
    nlamb_i         = mwl_data.lambdas_raw( all_lambdas );
-   int    rlamb_s  = all_lambdas[ 0 ];
-   int    rlamb_e  = all_lambdas[ nlamb_i - 1 ];
    cb_lambstrt->clear();
    cb_lambstop->clear();
 
@@ -3966,10 +4015,14 @@ void US_ConvertGui::mwl_setup()
    // Ok to enable some buttons now
    enableControls();
 
+   int    rlamb_s  = all_lambdas[ 0 ];
+   int    rlamb_e  = all_lambdas[ nlamb_i - 1 ];
+   int    ntriple  = all_tripinfo.size();
    static QChar clambda( 955 );   // Lambda character
-   QString lambmsg = tr( "%1 raw:  %2 %3 to %4" )
-      .arg( nlamb_i ).arg( clambda ).arg( rlamb_s ).arg( rlamb_e );
-   le_lambraw->setText( lambmsg );
+   QString lambmsg = tr( "MWL imported : %1 triples :  %2 %3 to %4" )
+      .arg( ntriple ).arg( clambda ).arg( rlamb_s ).arg( rlamb_e );
+//   le_lambraw->setText( lambmsg );
+   le_status->setText( lambmsg );
    qApp->processEvents();
    adjustSize();
 }
@@ -4087,6 +4140,20 @@ void US_ConvertGui::build_output_data()
       }
 
       outx++;
+   }
+}
+
+// Turn ct_tolerance connection on or off
+void US_ConvertGui::connectTolerance( bool setConnect )
+{
+   if ( setConnect )
+   {
+      connect( ct_tolerance,   SIGNAL( valueChanged         ( double ) ),
+                               SLOT  ( toleranceValueChanged( double ) ) );
+   }
+   else
+   {
+      ct_tolerance->disconnect();
    }
 }
 
