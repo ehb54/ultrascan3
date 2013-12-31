@@ -865,7 +865,8 @@ void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
                        };
 
    // Accumulate the statistics
-   int    nbmods    = nmtasks / 10;
+   int    nbmods    = nmtasks / 5;
+          nbmods    = qMin( nmtasks - 1, qMax( 3, nbmods ) );
    int    nlpts     = cresolu;
    double rmsdmin   = 99999.0;
    double rmsdmax   = 0.0;
@@ -873,7 +874,7 @@ void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
    double brmsmin   = 99999.0;
    double brmsmax   = 0.0;
    double brmsavg   = 0.0;
-DbgLv(1) << "PC:MS: nmtasks mecssize" << nmtasks << mrecs.size();
+DbgLv(1) << "PC:MS: nmtasks mrssiz nbmods" << nmtasks << mrecs.size() << nbmods;
    double rmsdmed   = mrecs[ nmtasks / 2 ].rmsd;
    double brmsmed   = mrecs[ nbmods  / 2 ].rmsd;
    int    nsolmin   = 999999;

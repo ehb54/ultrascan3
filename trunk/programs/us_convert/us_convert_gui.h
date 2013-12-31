@@ -98,7 +98,6 @@ class US_ConvertGui : public US_Widgets
       QPushButton*  pb_editRuninfo;
       QPushButton*  pb_import;
       QPushButton*  pb_loadUS3;
-      QPushButton*  pb_impmwl;
       QPushButton*  pb_details;
       QPushButton*  pb_applyAll;
       QPushButton*  pb_solution;
@@ -196,9 +195,11 @@ class US_ConvertGui : public US_Widgets
       */
       void assign_investigator( int );
 
-      void import            ( QString dir = "" );
+      void import            ( void );
       void reimport          ( void );
       void importMWL         ( void );
+      void importAUC         ( void );
+      int  getImports        ( void );
       void enableControls    ( void );
       void runIDChanged      ( void );
       void toleranceValueChanged( double );     // signal to notify of change
@@ -246,6 +247,7 @@ class US_ConvertGui : public US_Widgets
       void mwl_setup         ( void );
       void init_output_data  ( void );
       void build_output_data ( void );
+      void connectTolerance  ( bool );
       void help              ( void )
         { showHelp.show_help( "convert.html" ); };
 };

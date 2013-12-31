@@ -758,9 +758,9 @@ void US_Astfem_Sim::save_scans( void )
 {
    QString fn = QFileDialog::getExistingDirectory( this,
          tr( "Select a directory for the simulated data:" ),
-         US_Settings::resultDir() );
+         US_Settings::importDir() );
 
-   // The user gave a directory name, save in Beckman/XLA format
+   // The user gave a directory name, save in openAUC format
 
    if ( ! fn.isEmpty() )
       save_xla( fn ); 
@@ -845,7 +845,7 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
    QString schann    = QString( QChar( sim_data.channel ) );
    int     cell      = sim_data.cell;
    int     wvlen     = qRound( sim_data.scanData[ 0 ].wavelength );
-           wvlen     = ( wvlen < 1 ) ? 260 : wvlen;
+           wvlen     = ( wvlen < 99 ) ? 123 : wvlen;
    QString ofname    = QString( "%1/%2.%3.%4.%5.%6.auc" )
       .arg( dirname ).arg( run_id ).arg( stype ).arg( cell )
       .arg( schann  ).arg( wvlen  );
