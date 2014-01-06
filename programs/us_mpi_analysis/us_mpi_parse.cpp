@@ -129,10 +129,10 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
                   if ( buckets.size() == 0 )
                      parameters[ "ytype" ]     = ytype;
 
-                  b.s_min       = (double)qRound( smin * 1e+6 ) * 1e-6;
-                  b.s_max       = (double)qRound( smax * 1e+6 ) * 1e-6;
-                  b.ff0_min     = (double)qRound( fmin * 1e+6 ) * 1e-6;
-                  b.ff0_max     = (double)qRound( fmax * 1e+6 ) * 1e-6;
+                  b.s_min       = (long)( smin * 1e+6 + 0.5 ) * 1e-6;
+                  b.s_max       = (long)( smax * 1e+6 + 0.5 ) * 1e-6;
+                  b.ff0_min     = (long)( fmin * 1e+6 + 0.5 ) * 1e-6;
+                  b.ff0_max     = (long)( fmax * 1e+6 + 0.5 ) * 1e-6;
 
                   buckets << b;
                }

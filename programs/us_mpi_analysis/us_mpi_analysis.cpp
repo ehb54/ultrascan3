@@ -216,6 +216,7 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
       abort( "Global fit is not compatible with noise computation" );
    }
 
+
    // Calculate meniscus values
    meniscus_values.resize( meniscus_points );
 
@@ -317,12 +318,15 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
    }
 
    // Check GA buckets
+   double  s_max = parameters[ "s_max" ].toDouble() * 1.0e-13;
+
    if ( analysis_type == "GA" )
    {
       if ( buckets.size() < 1 )
          abort( "No buckets defined" );
 
       QList< QRectF > bucket_rects;
+      s_max             = buckets[ 0 ].s_max;
 
       // Put into Qt rectangles (upper left, lower right points)
       for ( int i = 0; i < buckets.size(); i++ )
@@ -332,7 +336,11 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
          bucket_rects << QRectF( 
                QPointF( buckets[ i ].s_min, buckets[ i ].ff0_max ),
                QPointF( buckets[ i ].s_max, buckets[ i ].ff0_min ) );
+
+         s_max             = qMax( s_max, buckets[ i ].s_max );
       }
+
+      s_max            *= 1.0e-13;
 
       for ( int i = 0; i < bucket_rects.size() - 1; i++ )
       {
@@ -375,6 +383,23 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
          }
       }
    }
+
+   // Do a check of implied grid size
+   US_SolveSim* ssim  = new US_SolveSim( data_sets, 0, false );
+   QString smsg;
+
+   if ( ssim->check_grid_size( s_max, smsg ) )
+   {
+      if ( my_rank == 0 )
+         qDebug() << smsg;
+      delete ssim;
+      abort( "Implied Grid Size is Too Large!" );
+   }
+//else
+// qDebug() << "check_grid_size FALSE  s_max" << s_max
+//    << "rpm" << data_sets[0]->simparams.speed_step[0].rotorspeed;
+
+   delete ssim;
 
    // Set some defaults
    if ( ! parameters.contains( "mutate_sigma" ) ) 

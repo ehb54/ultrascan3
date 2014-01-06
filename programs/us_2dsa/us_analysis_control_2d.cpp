@@ -509,6 +509,20 @@ DbgLv(1) << "AnaC: edata scans, baserss" << edata->scanData.size() << baserss;
       }
    }
 
+   // Insure that max RPM and S-value imply a reasonable grid size
+   US_SolveSim* ssim  = new US_SolveSim( dsets, 0, false );
+   double       s_max = ct_uplimits->value() * 1e-13;
+   QString      smsg;
+
+   if ( ssim->check_grid_size( s_max, smsg ) )
+   {
+      QMessageBox::critical( this, tr( "Implied Grid Size is Too Large!" ),
+            smsg );
+      delete ssim;
+      return;
+   }
+   delete ssim;
+
 DbgLv(1) << "AnaC:St:MEM (1)rssnow,proc" << US_Memory::rss_now() << processor;
    // Start a processing object if need be
    if ( processor == 0 )
