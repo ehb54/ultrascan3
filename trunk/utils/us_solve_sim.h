@@ -84,6 +84,12 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
 
   public slots:
 
+    //! \brief Check if implied grid size is beyond limits
+    //! \param s_max     S-value maximum
+    //! \param smsg      Returned size error message (if return=true)
+    //! \returns         Flag of size problem existing
+    bool check_grid_size( double, QString& );
+
     //! \brief Calculate a simulation and the resulting residuals
     //!
     //! \param offset         Starting data-sets offset

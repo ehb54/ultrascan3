@@ -369,13 +369,23 @@ totT2+=(clcSt2.msecsTo(clcSt3));
                   (int)( lg_bm_rat / ( s_omg_fac * af_params.dt ) );
             }
 
-            if ( af_params.simpoints > 10000 ) af_params.simpoints = 10000;
+            if ( af_params.simpoints > 10000 )
+            {
+DbgLv(1) << "RSA: ***COMPUTED simpoints:" << af_params.simpoints
+ << "omg2t s_val dt dura" << af_params.omega_s << sc->s << af_params.dt
+ << duration << "** simpts set to 10000 **";
+               af_params.simpoints = 10000;
+            }
 
             // Find out the minimum number of simpoints needed to provide
             // the necessary dt:
             af_params.time_steps = (int)( duration / af_params.dt ) + 1;
             af_params.start_time = current_time;
             af_params.start_om2t = current_om2t;
+if(af_params.time_steps>10000)
+DbgLv(1) << "RSA: ***COMPUTED time_steps:" << af_params.time_steps
+ << "dur" << duration << "o2t s" << af_params.omega_s << sc->s 
+ << "dt" << af_params.dt << "rat fac" << lg_bm_rat << s_omg_fac;
 #ifdef TIMING_RA
 QDateTime clcSt4 = QDateTime::currentDateTime();
 totT3+=(clcSt3.msecsTo(clcSt4));
@@ -634,14 +644,22 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
          af_params.dt     = lg_bm_rat
                             / ( s_omg_fac * ( simparams.simpoints - 1 ) );
 
-         if (af_params.dt > duration )
+         if ( af_params.dt > duration )
          {
             af_params.dt        = duration;
             af_params.simpoints = 1 +
                (int)( lg_bm_rat / ( s_omg_fac * af_params.dt ) );
          }
 
-         if ( af_params.simpoints > 10000 ) af_params.simpoints = 10000;
+         if ( af_params.simpoints > 10000 )
+         {
+DbgLv(1) << "RSA: ***COMPUTED simpoints:" << af_params.simpoints
+ << "omg2t s_max dt dura" << af_params.omega_s << s_max << af_params.dt
+ << duration << "** simpts set to 10000 **";
+            af_params.simpoints = 10000;
+         }
+else
+DbgLv(1) << "RSA: ***COMPUTED simpoints:" << af_params.simpoints;
 
          // Find out the minimum number of simpoints needed to provide the
          // necessary dt:
@@ -1668,6 +1686,8 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
    N  = x.size();
    xA = x.data();
+//DbgLv(1) << "RSA: ***COMPUTED N" << N << "simpts" << af_params.simpoints
+// << "omg2t s0 dt" << af_params.omega_s << af_params.s[0] << af_params.dt;
 }
 
 //////////////////////////////////////////////////////////////%
