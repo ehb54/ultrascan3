@@ -84,6 +84,13 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
 
   public slots:
 
+    //! \brief Static function to check if implied grid size is beyond limits
+    //! \param data_sets The set of data sets for which to check
+    //! \param s_max     S-value maximum
+    //! \param smsg      Returned size error message (if return=true)
+    //! \returns         Flag of size problem existing
+    static bool checkGridSize( QList< DataSet* >&, double, QString& );
+
     //! \brief Check if implied grid size is beyond limits
     //! \param s_max     S-value maximum
     //! \param smsg      Returned size error message (if return=true)

@@ -84,8 +84,9 @@ US_SolveSim::Simulation::Simulation()
    noisflag      = 0;
 }
 
-// Check the grid size implied by data and model
-bool US_SolveSim::check_grid_size( double s_max, QString& smsg )
+// Static function to check the grid size implied by data and model
+bool US_SolveSim::checkGridSize( QList< DataSet* >& data_sets,
+                                 double s_max, QString& smsg )
 {
    const long tstep_max = 10000L;
    bool   too_large = false;
@@ -100,7 +101,8 @@ bool US_SolveSim::check_grid_size( double s_max, QString& smsg )
    for ( int dd = 0; dd < data_sets.size(); dd++ )
    {
       sparams          = &data_sets[ dd ]->simparams;
-      QVector< US_SimulationParameters::SpeedProfile > speed_step = sparams->speed_step;
+      QVector< US_SimulationParameters::SpeedProfile > speed_step
+                       = sparams->speed_step;
 
       for ( int ss = 0; ss < speed_step.size(); ss++ )
       {
@@ -123,19 +125,25 @@ bool US_SolveSim::check_grid_size( double s_max, QString& smsg )
    if ( tsteps > tstep_max )
    {
       too_large       = true;
-      smsg            = tr( "The combination of rotor speed, the ratio of sedimentation\n"
-                            "over diffusion coefficient, and length of experiment\n"
-                            "caused the program to exceed available memory.\n"
-                            "Please sufficiently reduce any of these to bring\n"
-                            "the program into a feasible range.\n\n"
-                            "Related data and simulation parameters include:\n"
-                            "  Maximum speed = %1 RPM ;\n"
-                            "  Maximum S value = %2 x 1e-13 ;\n"
-                            "  Computed grid time steps / radius points = %3 ." )
-                        .arg( rpm_max ).arg( s_show ).arg( tsteps );
+      smsg = tr( "The combination of rotor speed, the ratio of sedimentation\n"
+                 "over diffusion coefficient, and length of experiment\n"
+                 "caused the program to exceed available memory.\n"
+                 "Please sufficiently reduce any of these to bring\n"
+                 "the program into a feasible range.\n\n"
+                 "Related data and simulation parameters include:\n"
+                 "   Maximum speed = %1 RPM ;\n"
+                 "   Maximum S value = %2 x 1e-13 ;\n"
+                 "   Computed grid time steps and radius points = %3 ." )
+              .arg( rpm_max ).arg( s_show ).arg( tsteps );
    }
 
    return too_large;
+}
+
+// Check the grid size implied by data and model (class method)
+bool US_SolveSim::check_grid_size( double s_max, QString& smsg )
+{
+   return checkGridSize( data_sets, s_max, smsg );
 }
 
 // Do the real work of a 2dsa/ga thread/processor:  simulation from solutes set
