@@ -385,21 +385,17 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
    }
 
    // Do a check of implied grid size
-   US_SolveSim* ssim  = new US_SolveSim( data_sets, 0, false );
    QString smsg;
 
-   if ( ssim->check_grid_size( s_max, smsg ) )
+   if ( US_SolveSim::checkGridSize( data_sets, s_max, smsg ) )
    {
       if ( my_rank == 0 )
          qDebug() << smsg;
-      delete ssim;
       abort( "Implied Grid Size is Too Large!" );
    }
 //else
 // qDebug() << "check_grid_size FALSE  s_max" << s_max
 //    << "rpm" << data_sets[0]->simparams.speed_step[0].rotorspeed;
-
-   delete ssim;
 
    // Set some defaults
    if ( ! parameters.contains( "mutate_sigma" ) ) 

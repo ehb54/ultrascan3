@@ -350,18 +350,15 @@ void US_AnalysisControlPc::start()
       return;
 
    // Check implied grid size does not exceed limits
-   US_SolveSim* ssim   = new US_SolveSim( dsets, 0, false );
    double       s_max  = ct_uplimits->value() * 1.0e-13;
    QString      smsg;
 
-   if ( ssim->check_grid_size( s_max, smsg ) )
+   if ( US_SolveSim::checkGridSize( dsets, s_max, smsg ) )
    {
       QMessageBox::critical( this,
          tr( "Implied Grid Size is Too Large!" ), smsg );
-      delete ssim;
       return;
    }
-   delete ssim;
 
    // Set up for the start of fit processing
    varimin       = 9e+99;
