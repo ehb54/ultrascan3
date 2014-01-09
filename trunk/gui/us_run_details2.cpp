@@ -563,14 +563,18 @@ void US_RunDetails2::update( int index )
 
 void US_RunDetails2::show_rpm_details( int /* index */ )
 {
+qDebug() << "show_rpm_details";
    QString msg = tr( "The following scans have been measured at " )
                + lw_rpm->currentItem()->text() + ":\n\n";
 
+qDebug() << " srd: msg" << msg;
    QStringList sl  = lw_rpm->currentItem()->text().split( " " ); 
    int         rpm = sl[ 0 ].toInt();
+qDebug() << " srd: sl" << sl << "rpm" << rpm << "np" << sl.count();
 
    sl = map.values( rpm );
    qSort( sl ); // contains cell / channel / wavelength / scan
+                //  ( or cell / channel / scan  for MWL data )
 
    QString triple;
 
@@ -581,22 +585,34 @@ void US_RunDetails2::show_rpm_details( int /* index */ )
 
       foreach( value, sl )
       {
+//qDebug() << " srd:  triple" << triple << "value" << value;
          if ( value.startsWith( triple ) )
          {
             QStringList components = value.split( " / " );
-            scans << components[ 3 ].toInt();
+            int         lvx        = components.size() - 1;
+            scans << components[ lvx ].toInt();
          }
       }
       
       if ( scans.size() == 0 ) continue;
       
       QStringList cellChWl = triple.split( " / " );
+qDebug() << " srd: ccw" << cellChWl << "ccwsz" << cellChWl.count();
 
-      msg += tr( "Cell: "         ) + cellChWl[ 0 ] 
-          +  tr( ", Channel: "    ) + cellChWl[ 1 ]
-          +  tr( ", Wavelength: " ) + cellChWl[ 2 ]
-          +  tr( ", Scan Count: " );
-         
+      if ( cellChWl.size() > 2 )
+      {  // Normal (c/c/w/s) data
+         msg += tr( "Cell: "         ) + cellChWl[ 0 ] 
+             +  tr( ", Channel: "    ) + cellChWl[ 1 ]
+             +  tr( ", Wavelength: " ) + cellChWl[ 2 ]
+             +  tr( ", Scan Count: " );
+      }
+
+      else
+      {  // MWL (c/c/s) data
+         msg += tr( "Cell: "         ) + cellChWl[ 0 ] 
+             +  tr( ", Channel: "    ) + cellChWl[ 1 ]
+             +  tr( ", Scan Count: " );
+      }
 
       msg += QString::number( scans.size() ) + "\n";
    }
