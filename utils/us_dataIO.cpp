@@ -217,6 +217,8 @@ bool US_DataIO::readLegacyFile( const QString&  file,
    data.rpoint        = pp[ 6 ].toDouble();
    data.count         = pp[ 7 ].toInt();
    data.nz_stddev     = false;
+   // Round speed to nearest multiple of 100
+   data.rpm           = qRound( data.rpm / 100.0 ) * 100.0;
 
 
    // Read radius, data, and standard deviation
@@ -620,6 +622,8 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
          u2.I = qFromLittleEndian( u1.I );
          sc.rpm = u2.f;
 //sc.rpm = qRound( sc.rpm / 50.0 ) * 50.0;
+         // Round speed to nearest multiple of 100
+         sc.rpm = qRound( sc.rpm / 100.0 ) * 100.0;
 
          // Seconds
          read( ds, u1.c, 4, crc );

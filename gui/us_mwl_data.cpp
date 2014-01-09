@@ -658,6 +658,8 @@ qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
          scan.delta_r      = rad_inc;
          scan.rvalues.reserve( npoint );
          scan.interpolated = interpo;
+         // Round speed to nearest multiple of 100
+         scan.rpm          = qRound( scan.rpm / 100.0 ) * 100.0;
 //qDebug() << "BldRawD      scx" << scx << "jhx" << jhx
 // << "seconds" << scan.seconds;
          jhx++;
