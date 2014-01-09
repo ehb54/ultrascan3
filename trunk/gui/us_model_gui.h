@@ -55,6 +55,7 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
 
       QList< ModelDesc > model_descriptions;
 
+      QLineEdit*     le_mlfilt;              
       QLineEdit*     le_description;              
       QLineEdit*     le_investigator;
       QLineEdit*     le_wavelength;

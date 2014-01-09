@@ -159,7 +159,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    QLabel* lb_scans = us_label( tr( "Scans to be saved:" ) );
    main->addWidget( lb_scans, row, 0, 1, 3 );
 
-   cnt_scans = us_counter( 3, 2, 1000, sp->scans );
+   cnt_scans = us_counter( 3, 2, 5000, sp->scans );
    cnt_scans->setStep    ( 1 );
    cnt_scans->setIncSteps( QwtCounter::Button1,   1 );
    cnt_scans->setIncSteps( QwtCounter::Button2,  10 );
