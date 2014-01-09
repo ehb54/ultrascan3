@@ -128,7 +128,7 @@ bool US_Saxs_Util::run_best()
       //      {
       //         cmd += QString( " -f %1" ).arg( control_parameters[ "bestmsrfinenessangle" ] );
       //      }
-      cmd += QString( " -f %1" ).arg( use_fineness );
+      cmd += QString( " -f %1" ).arg( use_fineness, 0, 'f', 3 );
 
       if ( control_parameters.count( "bestmsrcoalescer" ) )
       {
@@ -175,7 +175,7 @@ bool US_Saxs_Util::run_best()
             QString qs = ts.readLine();
             if ( qs.contains( "cannot open fineness file" ) )
             {
-               errormsg = QString( "BEST: msroll error with names/radii files" ).arg( control_parameters[ "inputfilenoread" ] );
+               errormsg = QString( "BEST: msroll error with names/radii files %1" ).arg( control_parameters[ "inputfilenoread" ] );
                return false;
             }
                

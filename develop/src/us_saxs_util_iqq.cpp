@@ -1057,6 +1057,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "bestrun" )
       {
+         //         control_parameters[ "bestmsrmaxtriangles" ] = "85000";
          if ( !run_best() )
          {
             return false;
