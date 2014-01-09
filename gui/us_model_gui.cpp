@@ -53,6 +53,12 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    disk_controls = new US_Disk_DB_Controls;
    main->addLayout( disk_controls, row++, 0, 1, 2 );
 
+   QLabel* lb_mlfilt = us_label( tr( "List Filter:" ) );
+   main->addWidget( lb_mlfilt, row, 0 );
+
+   le_mlfilt = us_lineedit( "" );
+   main->addWidget( le_mlfilt, row++, 1 );
+
    QPushButton* pb_models = us_pushbutton( tr( "List Available Models" ) );
    connect( pb_models, SIGNAL( clicked() ), SLOT( list_models() ) );
    main->addWidget( pb_models, row, 0 );
@@ -164,7 +170,7 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    }
 
    check_db();
-   adjustSize();  // QWidget function
+   resize( 600, 600 );
 }
 
 void US_ModelGui::new_model( void )
@@ -652,6 +658,11 @@ void US_ModelGui::list_models( void )
 
    model_descriptions.clear();
    le_description->clear();
+   QString mfilt = le_mlfilt->text();
+   bool    listall = mfilt.isEmpty();
+   QRegExp mpart;
+   if ( ! listall )
+      mpart           = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
 
    if ( ! disk_controls->db() )
    {
@@ -684,7 +695,8 @@ void US_ModelGui::list_models( void )
                   md.editGUID    = a.value( "editGUID"    ).toString();
                   md.filename    = path + "/" + f_names[ i ];
                   md.DB_id       = -1;
-                  model_descriptions << md;
+                  if ( listall  ||  md.description.contains( mpart ) )
+                     model_descriptions << md;
                   break;
                }
             }
@@ -728,7 +740,8 @@ void US_ModelGui::list_models( void )
          md.editGUID    = db.value( 5 ).toString();
          md.filename.clear();
 
-         model_descriptions << md;
+         if ( listall  ||  md.description.contains( mpart ) )
+            model_descriptions << md;
       }
    }
  
