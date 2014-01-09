@@ -763,7 +763,10 @@ void US_Astfem_Sim::save_scans( void )
    // The user gave a directory name, save in openAUC format
 
    if ( ! fn.isEmpty() )
-      save_xla( fn ); 
+   {
+      fn = fn.replace( "\\", "/" );
+      save_xla( fn );
+   }
 }
 
 void US_Astfem_Sim::save_xla( const QString& dirname )
