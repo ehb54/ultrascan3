@@ -420,7 +420,24 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
                in_output[ f.name() ] = true;
                full_output_list << QString( "tmp_%1/%2" ).arg( i ).arg( f.name() );
             }
-         }         
+         } else {
+            if ( !noticemsg.isEmpty() )
+            {
+               QFile f( QString( "notice-%1" ).arg( i ) );
+               if( f.open( IO_WriteOnly | IO_Append ) )
+               {
+                  QTextStream ts( &f );
+                  ts << QString( "%1: %2\n" ).arg( myrank ).arg( noticemsg ) << flush;
+                  f.close();
+               }
+               if ( !in_output.count( f.name() ) )
+               {
+                  in_output[ f.name() ] = true;
+                  full_output_list << QString( "tmp_%1/%2" ).arg( i ).arg( f.name() );
+               }
+            }
+         }
+               
          errorno--;
 
          // collect result files

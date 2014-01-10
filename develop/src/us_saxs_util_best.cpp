@@ -8,7 +8,8 @@ bool US_Saxs_Util::run_best()
    QStringList save_output_files = output_files;
    QStringList rm_output_files;
 
-   errormsg = "";
+   errormsg  = "";
+   noticemsg = "";
    QStringList required;
    required 
       << "inputfilenoread"
@@ -475,6 +476,8 @@ bool US_Saxs_Util::run_best()
    QStringList triangles;
    vector < double > one_over_triangles;
 
+   QStringList use_outfiles;
+
    for ( int i = 0; i < (int) outfiles.size(); ++i )
    {
       qDebug( QString( "processing outfile %1" ).arg( outfiles[ i ] ) );
@@ -541,6 +544,25 @@ bool US_Saxs_Util::run_best()
          expected_base += "p";
       }
 
+      bool is_nan = false;
+      {
+         QFile f( outfiles[ i ] + expected_base + ".be" );
+         if ( f.exists() && f.open( IO_ReadOnly ) )
+         {
+            QTextStream ts( &f );
+            while ( !is_nan && !ts.atEnd() )
+            {
+               QString qs = ts.readLine();
+               if ( qs.contains( "NaN" ) )
+               {
+                  is_nan = true;
+                  noticemsg += QString( "BEST run for %1 produced NaN results\n" ).arg( f.name() );
+               }
+            }
+            f.close();
+         }
+      }
+
       expected
          << outfiles[ i ] + expected_base + ".log" 
          << outfiles[ i ] + expected_base + ".be" 
@@ -553,8 +575,12 @@ bool US_Saxs_Util::run_best()
       one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
                                     1e0 / triangles.back().toDouble() : -1e0 );
 
-      qDebug( QString( "triangles %1 %2 on %3\n" ).arg( triangles.back() ).arg( one_over_triangles.back() )
-              .arg( control_parameters[ "inputfilenoread" ] ) );
+      qDebug( QString( "triangles %1 %2 on %3 nan %4\n" )
+              .arg( triangles.back() )
+              .arg( one_over_triangles.back() )
+              .arg( control_parameters[ "inputfilenoread" ] ) 
+              .arg( is_nan ? "true" : "false" )
+              );
       
       for ( int i = 0; i < (int) expected.size(); ++i )
       {
@@ -565,10 +591,20 @@ bool US_Saxs_Util::run_best()
                .arg( expected[ i ] )
                ;
          } else {
-            output_files << expected[ i ];
+            if ( !is_nan )
+            {
+               output_files << expected[ i ];
+               use_outfiles << outfiles[ i ];
+            }
          }
       }
    }
+
+   qDebug( QString( "outfiles %1" ).arg( outfiles.join( ":" ) ) );
+   qDebug( QString( "use_outfiles %1" ).arg( use_outfiles.join( ":" ) ) );
+
+   outfiles = use_outfiles;
+   qDebug( QString( "outfiles after %1" ).arg( outfiles.join( ":" ) ) );
 
    bool do_linear_fit = outfiles.size() > 1;
 
