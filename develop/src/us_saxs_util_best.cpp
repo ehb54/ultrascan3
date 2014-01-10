@@ -389,6 +389,75 @@ bool US_Saxs_Util::run_best()
       return false;
    }
 
+   // make bead models
+   {
+      double psv         = 0e0;
+      float  bead_radius = 0.2f;
+      for ( int i = 0; i < (int) outfiles.size(); ++i )
+      {
+         QFile f( outfiles[ i ] );
+         if ( !f.open( IO_ReadOnly ) )
+         {
+            errormsg += QString( "Could not open rcoal output file %1\n" ).arg( f.name() );
+            return false;
+         }
+
+         QString out;
+         int vertices;
+
+         {
+            QTextStream ts( &f );
+            {
+               QString qs = ts.readLine();
+               QRegExp rx_vert( "^\\s*(\\d+)\\s+" );
+               if ( rx_vert.search( qs ) == -1 )
+               {
+                  errormsg += QString( "Rcoal output file %1 improper format on line 1 %1 <%2>\n" ).arg( f.name() ).arg( qs );
+                  f.close();
+                  return false;
+               }
+            
+               vertices = rx_vert.cap( 1 ).toInt();
+            }
+            out += QString( "%1 %2\n" ).arg( vertices ).arg( psv );
+            {
+               QRegExp rx_data( "^\\s*(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+" );
+               for ( int i = 0; i < vertices; ++i )
+               {
+                  QString qs = ts.readLine();
+                  if ( rx_data.search( qs ) == -1 )
+                  {
+                     errormsg += QString( "Rcoal output file %1 improper format on line %1 %2 <%3>\n" ).arg( i + 2 ).arg( f.name() ).arg( qs );
+                     f.close();
+                     return false;
+                  }
+                  out += QString( "%1 %2 %3 %4 1 1 x 1\n" )
+                     .arg( rx_data.cap( 1 ) )
+                     .arg( rx_data.cap( 2 ) )
+                     .arg( rx_data.cap( 3 ) )
+                     .arg( bead_radius )
+                     ;
+               }
+            }
+            f.close();
+         }
+      
+         QFile fo( f.name() + ".bead_model" );
+         if ( !fo.open( IO_WriteOnly ) )
+         {
+            errormsg += QString( "Could not open bead model output file %1\n" ).arg( fo.name() );
+            return false;
+         }
+         {
+            QTextStream ts( &fo );
+            ts << out;
+            fo.close();
+         }
+         output_files    << fo.name();
+         rm_output_files << fo.name();
+      }
+   }
+
    // run best
    p++;
    QStringList csvfiles;
