@@ -404,7 +404,7 @@ bool US_Saxs_Util::run_best()
 
          QString out;
          int vertices;
-
+         int beads = 0;
          {
             QTextStream ts( &f );
             {
@@ -419,8 +419,10 @@ bool US_Saxs_Util::run_best()
             
                vertices = rx_vert.cap( 1 ).toInt();
             }
-            out += QString( "%1 %2\n" ).arg( vertices ).arg( psv );
+            // out += QString( "%1 %2\n" ).arg( vertices ).arg( psv );
+            
             {
+               set < QString > used;
                QRegExp rx_data( "^\\s*(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+" );
                for ( int i = 0; i < vertices; ++i )
                {
@@ -431,12 +433,20 @@ bool US_Saxs_Util::run_best()
                      f.close();
                      return false;
                   }
-                  out += QString( "%1 %2 %3 %4 1 1 x 1\n" )
+                  QString key = QString( "%1 %2 %3" )
                      .arg( rx_data.cap( 1 ) )
                      .arg( rx_data.cap( 2 ) )
                      .arg( rx_data.cap( 3 ) )
-                     .arg( bead_radius )
                      ;
+                  if ( !used.count( key ) )
+                  {
+                     used.insert( key );
+                     beads++;
+                     out += QString( "%1 %2 1 1 x 1\n" )
+                        .arg( key )
+                        .arg( bead_radius )
+                        ;
+                  }
                }
             }
             f.close();
@@ -450,6 +460,7 @@ bool US_Saxs_Util::run_best()
          }
          {
             QTextStream ts( &fo );
+            ts << QString( "%1 %2\n" ).arg( beads ).arg( psv );
             ts << out;
             fo.close();
          }
