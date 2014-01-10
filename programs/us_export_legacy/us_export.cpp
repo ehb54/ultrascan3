@@ -387,9 +387,9 @@ void US_ExportLegacy::export_data( void )
    QString rawDtyp2;
    rDataStrings( rdata, rawDtyp2, rawCell, rawChann, rawWaveln );
    QStringList files;
-   QString     legadir( US_Settings::dataDir() + "/legacy" );
+   QString     legadir( US_Settings::importDir() );
 
-   // Insure that */data/legacy/runid exists
+   // Insure that */imports/runid exists
    mkdir( legadir, runID );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -437,7 +437,7 @@ void US_ExportLegacy::exp_mosttypes( QStringList& files )
 {
    // Get data pointers and output directory
    rdata       = &rawList [ 0 ];
-   QString legadir( US_Settings::dataDir() + "/legacy" );
+   QString legadir( US_Settings::importDir() );
    mkdir( legadir, runID );
    QString odirname = legadir + "/" + runID + "/";
    QString ofname;
@@ -561,7 +561,7 @@ void US_ExportLegacy::exp_intensity( QStringList& files )
 {
    // Get 1st triple data pointer and output directory
    rdata       = &rawList [ 0 ];
-   QString legadir( US_Settings::dataDir() + "/legacy" );
+   QString legadir( US_Settings::importDir() );
    mkdir( legadir, runID );
    QString odirname = legadir + "/" + runID + "/";
    QString ofname;
@@ -687,7 +687,7 @@ void US_ExportLegacy::exp_interference( QStringList& files )
 {
    // Get 1st triple data pointers and output directory
    rdata       = &rawList [ 0 ];
-   QString legadir( US_Settings::dataDir() + "/legacy" );
+   QString legadir( US_Settings::importDir() );
    mkdir( legadir, runID );
    QString odirname = legadir + "/" + runID + "/";
    QString ofname;
@@ -823,13 +823,15 @@ QString US_ExportLegacy::data_details( void )
    if ( rawDtype == "WI" )    dataType = tr( "Wavelength Intensity" );
    if ( rawDtype == "IP" )    dataType = tr( "Interference" );
    if ( rawDtype == "FI" )    dataType = tr( "Fluourescence Intensity" );
-   dataType        = dataType + "  (" + rawDtype + ")";
+   dataType       = dataType + "  (" + rawDtype + ")";
+   QString expDir = US_Settings::importDir() + "/" + runID;
 
    QString s =
       "\n" + indent( 4 ) + tr( "<h3>Detailed Run Information:</h3>\n" )
       + indent( 4 ) + "<table>\n"
       + table_row( tr( "Cell Description:" ), rdata->description )
       + table_row( tr( "Data Directory:"   ), workingDir )
+      + table_row( tr( "Export Directory:" ), expDir )
       + table_row( tr( "Data Type:"        ), dataType )
       + table_row( tr( "Rotor Speed:"      ),  
             QString::number( (int)rdata->scanData[ 0 ].rpm ) + " rpm" );

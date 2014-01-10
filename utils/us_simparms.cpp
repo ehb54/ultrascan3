@@ -69,11 +69,13 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    int     lscx        = 0;
    int     cp_id       = 0;
    QString channel     = editdata.channel;
-   int     ch          = QString( "ABCDEFGH" ).indexOf( channel );
-           ch          = qMax( 0, ch ) / 2;
-//DbgLv(2) << "SP:iFD: ch" << ch << editdata.channel << (ch+1);
+   int     iechan      = QString( "ABCDEFGH" ).indexOf( channel );
+   int     ch          = qMax( 0, iechan ) / 2;
+           iechan      = qMax( 0, iechan ) + 1;
    QString ecell       = editdata.cell;
    int     iecell      = ecell.toInt();
+DbgLv(1) << "SP:iFD: cell chan ch" << ecell << channel << ch
+   << editdata.channel << (ch+1);
 
    rotorCalID          = "0";
    QString fn          = US_Settings::resultDir() + "/" + editdata.runID + "/"
@@ -110,9 +112,11 @@ void US_SimulationParameters::initFromData( US_DB2* db,
          {  // Pick up centerpiece ID from  <centerpiece ... id=...
             QXmlStreamAttributes a = xml.attributes();
             dcp_id           = a.value( "id"      ).toString().toInt();
+DbgLv(1) << "SP:iFD:  dcell dchan" << dcell << dchan;
             if ( dcell == iecell  &&  dchan == channel )
             { // If cell,channel match edit, pick up CpID
                cp_id            = dcp_id;
+DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
             }
          }
       }
@@ -187,7 +191,6 @@ DbgLv(2) << "SP:iFD:   speedstep" << speed_step.size() << "scans" << sp.scans
  << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
 
 #ifndef NO_DB
-   int     iechan      = ch + 1;
    if ( db != NULL )
    {  // If reading from the database, get rotor,centerpiece info from DB
       int         stat_db = 0;
@@ -247,6 +250,8 @@ DbgLv(2) << "SP:iFD:   speedstep" << speed_step.size() << "scans" << sp.scans
                int ichan    = db->value( 3 ).toInt();
                int cellCpId = db->value( 4 ).toInt();
 
+DbgLv(1) << "Sim parms: cell iecell ichan iechan" << cell << iecell
+   << ichan << iechan << "ccId" << cellCpId;
                if ( cellCpId > 0  &&  cell == iecell  &&  ichan == iechan )
                { // Valid CpID with cell,channel matching edit
                   cp_id        = cellCpId;
