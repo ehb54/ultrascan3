@@ -1743,6 +1743,7 @@ int main (int argc, char **argv)
       if ( !usu.read_control( controlfile ) )
       {
          cout << usu.errormsg << endl;
+         cout << usu.noticemsg << endl;
          exit( errorbase - 1 );
       }
       exit(0);

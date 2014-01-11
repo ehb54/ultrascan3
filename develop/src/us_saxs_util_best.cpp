@@ -544,11 +544,12 @@ bool US_Saxs_Util::run_best()
          expected_base += "p";
       }
 
-      bool is_nan = false;
+      bool is_nan = true;
       {
          QFile f( outfiles[ i ] + expected_base + ".be" );
          if ( f.exists() && f.open( IO_ReadOnly ) )
          {
+            is_nan = false;
             QTextStream ts( &f );
             while ( !is_nan && !ts.atEnd() )
             {
@@ -568,19 +569,30 @@ bool US_Saxs_Util::run_best()
          << outfiles[ i ] + expected_base + ".be" 
          ;
 
-      csvfiles  << outfiles[ i ] + expected_base + ".be";
-      qDebug( QString( "outfiles[ i ] '%1' inputbase '%2' inputbase23 '%3'" )
-              .arg( outfiles[ i ] ).arg( inputbase ).arg( inputbase23 ) );
-      triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase23 ) ), "" ).replace( QRegExp( "^0*" ) , "" );
-      one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
-                                    1e0 / triangles.back().toDouble() : -1e0 );
+      if ( !is_nan )
+      {
+         use_outfiles << outfiles[ i ];
+         csvfiles  << outfiles[ i ] + expected_base + ".be";
+         qDebug( QString( "outfiles[ i ] '%1' inputbase '%2' inputbase23 '%3'" )
+                 .arg( outfiles[ i ] ).arg( inputbase ).arg( inputbase23 ) );
+         triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase23 ) ), "" ).replace( QRegExp( "^0*" ) , "" );
+         one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
+                                       1e0 / triangles.back().toDouble() : -1e0 );
 
-      qDebug( QString( "triangles %1 %2 on %3 nan %4\n" )
-              .arg( triangles.back() )
-              .arg( one_over_triangles.back() )
-              .arg( control_parameters[ "inputfilenoread" ] ) 
-              .arg( is_nan ? "true" : "false" )
-              );
+         qDebug( QString( "triangles %1 %2 on %3\n" )
+                 .arg( triangles.back() )
+                 .arg( one_over_triangles.back() )
+                 .arg( control_parameters[ "inputfilenoread" ] ) 
+                 );
+      } else {
+         qDebug( QString( "NaN found on %3\n" )
+                 .arg( control_parameters[ "inputfilenoread" ] ) 
+                 );
+         errormsg += QString( "BEST: %1 did not produced NaN results in %2\n" )
+            .arg( progs[ p ] )
+            .arg( outfiles[ i ] + expected_base + ".be" )
+            ;
+      }         
       
       for ( int i = 0; i < (int) expected.size(); ++i )
       {
@@ -591,11 +603,8 @@ bool US_Saxs_Util::run_best()
                .arg( expected[ i ] )
                ;
          } else {
-            if ( !is_nan )
-            {
-               output_files << expected[ i ];
-               use_outfiles << outfiles[ i ];
-            }
+            output_files << expected[ i ];
+            use_outfiles << outfiles[ i ];
          }
       }
    }
@@ -604,7 +613,6 @@ bool US_Saxs_Util::run_best()
    qDebug( QString( "use_outfiles %1" ).arg( use_outfiles.join( ":" ) ) );
 
    outfiles = use_outfiles;
-   qDebug( QString( "outfiles after %1" ).arg( outfiles.join( ":" ) ) );
 
    bool do_linear_fit = outfiles.size() > 1;
 
