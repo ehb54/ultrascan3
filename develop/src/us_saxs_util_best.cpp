@@ -588,7 +588,7 @@ bool US_Saxs_Util::run_best()
          qDebug( QString( "NaN found on %3\n" )
                  .arg( control_parameters[ "inputfilenoread" ] ) 
                  );
-         errormsg += QString( "BEST: %1 did not produced NaN results in %2\n" )
+         errormsg += QString( "BEST: %1 did produced NaN results in %2 (suggest lowering MSROLL max triangles)\n" )
             .arg( progs[ p ] )
             .arg( outfiles[ i ] + expected_base + ".be" )
             ;
