@@ -3,6 +3,8 @@
 
 // note: this program uses cout and/or cerr and this should be replaced
 
+#define MIN_TRIANGLES 12000
+
 bool US_Saxs_Util::run_best()
 {
    QStringList save_output_files = output_files;
@@ -373,7 +375,7 @@ bool US_Saxs_Util::run_best()
 
    if ( !outfiles.size() )
    {
-      if ( max_triangles > 25000 )
+      if ( max_triangles > MIN_TRIANGLES )
       {
          control_parameters[ "bestmsrmaxtriangles" ] = 
             QString( "%1" ).arg( max_triangles - 2500 );
@@ -817,10 +819,10 @@ bool US_Saxs_Util::run_best()
       output_files << f.name();
    }
 
-   if ( !errormsg.isEmpty() )
-   {
-      return false;
-   }
+   // if ( !errormsg.isEmpty() )
+   // {
+   //    return false;
+   // }
 
    return true;
 }

@@ -404,12 +404,17 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          QDir::setCurrent( qs_run_dir );
       
          noticemsg = "";
+         errormsg = "";
 
          if ( !read_control( QString( "../%1" ).arg( qslt[ i ] ) ) )
          {
             cout << QString( "%1: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
             // MPI_Abort( MPI_COMM_WORLD, errorno );
             // exit( errorno );
+         }
+
+         if ( !errormsg.isEmpty() )
+         {
             QFile f( QString( "errors-%1" ).arg( i ) );
             if( f.open( IO_WriteOnly | IO_Append ) )
             {
