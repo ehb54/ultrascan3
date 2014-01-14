@@ -154,7 +154,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
 
    USglobal=new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption(tr("SAS Plotting Functions"));
+   setCaption( tr( "US-SOMO: " + tr( "SAS Plotting Functions" ) ) );
    reset_search_csv();
    reset_screen_csv();
    reset_buffer_csv();

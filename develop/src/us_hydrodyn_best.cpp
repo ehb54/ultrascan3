@@ -1,4 +1,6 @@
 #include "../include/us_hydrodyn_best.h"
+#include "../include/us_vector.h"
+#include "../include/us_lm.h"
 
 #if defined(WIN32)
 #  include <dos.h>
@@ -6,6 +8,14 @@
 #  include <float.h>
 #  define isnan _isnan
 #endif
+
+namespace BFIT
+{
+   double compute_f( double x, const double *par )
+   {
+      return par[ 0 ] + par[ 1 ] * exp( x * par[ 2 ] );
+   }
+}
 
 US_Hydrodyn_Best::US_Hydrodyn_Best(
                                    void                     *              us_hydrodyn,
@@ -192,6 +202,12 @@ void US_Hydrodyn_Best::setupGUI()
    lbl_points_ln->show();
    connect( lbl_points_ln, SIGNAL( pressed() ), SLOT( toggle_points_ln() ) );
 
+   lbl_points_exp = new mQLabel( "Exp:   ", this );
+   lbl_points_exp->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_points_exp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   lbl_points_exp->show();
+   connect( lbl_points_exp, SIGNAL( pressed() ), SLOT( toggle_points_exp() ) );
+
    // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
 
    pb_help =  new QPushButton ( tr( "Help" ), this );
@@ -241,6 +257,9 @@ void US_Hydrodyn_Best::setupGUI()
       hbl_points_ln = new QHBoxLayout( 0 );
       hbl_points_ln->addWidget( lbl_points_ln );
       bl->addLayout( hbl_points_ln );
+      hbl_points_exp = new QHBoxLayout( 0 );
+      hbl_points_exp->addWidget( lbl_points_exp );
+      bl->addLayout( hbl_points_exp );
       top->addLayout( bl );
    }
 
@@ -377,15 +396,23 @@ void US_Hydrodyn_Best::clear()
       hbl_points_ln->remove( cb_points_ln[ i ] );
       delete cb_points_ln[ i ];
    }
+   for ( int i = 0; i < (int) cb_points_exp.size(); ++i )
+   {
+      hbl_points_exp->remove( cb_points_exp[ i ] );
+      delete cb_points_exp[ i ];
+   }
    cb_points             .clear();
    cb_points_ln          .clear();
+   cb_points_exp         .clear();
    cb_checked            .clear();
    cb_checked_ln         .clear();
+   cb_checked_exp        .clear();
    loaded_csv_trimmed    .clear();
    loaded_csv_filename    = "";
    last_pts_removed       = "";
    last_lin_extrapolation.clear();
    last_log_extrapolation.clear();
+   last_exp_extrapolation.clear();
    tau_csv_addendum_tag  .clear();
    tau_csv_addendum_val  .clear();
 }      
@@ -563,6 +590,18 @@ void US_Hydrodyn_Best::load()
       cb_points_ln.push_back( cb );
       hbl_points_ln->addWidget( cb );
    }
+   for ( int i = 0; i < points; ++i )
+   {
+      QCheckBox * cb = new QCheckBox( this );
+      cb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      cb->setText( QString( "%1" ).arg( i + 1 ) );
+      cb->setChecked( false );
+      cb->setEnabled( true );
+      cb->show();
+      connect( cb, SIGNAL( clicked() ), SLOT( cb_changed_exp() ) );
+      cb_points_exp.push_back( cb );
+      hbl_points_exp->addWidget( cb );
+   }
    
    f.close();
    loaded_csv_filename = f.name();
@@ -574,8 +613,9 @@ void US_Hydrodyn_Best::load()
    lb_data->setSelected( 0, true );
    recompute_tau();
    connect( lb_data, SIGNAL( selectionChanged() ), SLOT( data_selected() ) );
-   cb_changed   ( false );
-   cb_changed_ln( true  );
+   cb_changed    ( false );
+   cb_changed_ln ( false );
+   cb_changed_exp( true  );
    pb_load->setEnabled( true );
    pb_save_results->setEnabled( true );
 }
@@ -608,6 +648,24 @@ void US_Hydrodyn_Best::cb_changed_ln( bool do_data )
       if ( cb_points_ln[ i ]->isChecked() )
       {
          cb_checked_ln[ text ].insert( i );
+      }
+   }
+   if ( do_data )
+   {
+      data_selected();
+   }
+}
+
+void US_Hydrodyn_Best::cb_changed_exp( bool do_data )
+{
+   // qDebug( "cb_changed_exp" );
+   QString text = lb_data->selectedItem()->text();
+   cb_checked_exp[ text ].clear();
+   for ( int i = 0; i < (int) cb_points_exp.size(); ++i )
+   {
+      if ( cb_points_exp[ i ]->isChecked() )
+      {
+         cb_checked_exp[ text ].insert( i );
       }
    }
    if ( do_data )
@@ -653,20 +711,34 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
       cb_points_ln[ i ]->setEnabled( parameter_data[ text ][ i ] > 0e0 );
    }
 
+   for ( int i = 0; i < (int) cb_points_exp.size(); ++i )
+   {
+      cb_points_exp[ i ]->setChecked( cb_checked_exp[ text ].count( i ) );
+      cb_points_exp[ i ]->setEnabled( parameter_data[ text ][ i ] > 0e0 );
+   }
+
    vector < double > use_one_over_triangles;
    vector < double > use_parameter_data;
    vector < double > skip_one_over_triangles;
    vector < double > skip_parameter_data;
+
    vector < double > use_one_over_triangles_ln;
    vector < double > use_parameter_data_ln;
    vector < double > skip_one_over_triangles_ln;
    vector < double > skip_parameter_data_ln;
 
-   last_pts_removed    = "";
-   last_pts_removed_ln = "";
+   vector < double > use_one_over_triangles_exp;
+   vector < double > use_parameter_data_exp;
+   vector < double > skip_one_over_triangles_exp;
+   vector < double > skip_parameter_data_exp;
+
+   last_pts_removed     = "";
+   last_pts_removed_ln  = "";
+   last_pts_removed_exp = "";
 
    set < int > selected_points;
    set < int > selected_points_ln;
+   set < int > selected_points_exp;
 
    //for ( int i = 0; i < (int) one_over_triangles.size(); ++i )
    for ( int i = (int) one_over_triangles.size() - 1; i >= 0; --i )
@@ -692,6 +764,17 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
          skip_parameter_data_ln    .push_back( parameter_data[ text ][ i ] );
          last_pts_removed_ln += QString( "%1 " ).arg( points - i );
       }  
+      if ( cb_points_exp[ points - i - 1 ]->isChecked() &&
+           parameter_data[ text ][ i ] > 0e0 )
+      {
+         use_one_over_triangles_exp .push_back( one_over_triangles[ i ] );
+         use_parameter_data_exp     .push_back( parameter_data[ text ][ i ] );
+         selected_points_exp        .insert( i );
+      } else {
+         skip_one_over_triangles_exp.push_back( one_over_triangles[ i ] );
+         skip_parameter_data_exp    .push_back( parameter_data[ text ][ i ] );
+         last_pts_removed_exp += QString( "%1 " ).arg( points - i );
+      }  
    }
 
    for ( int i = 0; i < (int) one_over_triangles.size(); ++i )
@@ -706,7 +789,8 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 
       QwtSymbol sym;
       if ( selected_points   .count( i ) &&
-           selected_points_ln.count( i ) )
+           ( selected_points_ln.count( i ) ||
+             selected_points_exp.count( i ) ) )
       {
          sym.setStyle(QwtSymbol::Diamond);
          sym.setSize( 12 );
@@ -714,23 +798,26 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
          sym.setBrush( Qt::blue );
       }
       if (  selected_points   .count( i ) &&
-           !selected_points_ln.count( i ) )
+            !( selected_points_ln.count( i ) ||
+               selected_points_exp.count( i ) ) )
       {
          sym.setStyle(QwtSymbol::UTriangle);
          sym.setSize( 10 );
          sym.setPen  ( Qt::cyan );
          sym.setBrush( Qt::blue );
       }
-      if ( !selected_points   .count( i ) &&
-            selected_points_ln.count( i ) )
+      if ( !selected_points    .count( i ) &&
+           ( selected_points_ln .count( i ) ||
+             selected_points_exp.count( i ) ) )
       {
          sym.setStyle(QwtSymbol::DTriangle);
          sym.setSize( 10 );
          sym.setPen  ( Qt::cyan );
          sym.setBrush( Qt::blue );
       }
-      if ( !selected_points   .count( i ) &&
-           !selected_points_ln.count( i ) )
+      if ( !selected_points    .count( i ) &&
+           !selected_points_ln .count( i ) &&
+           !selected_points_exp.count( i ) )
       {
          sym.setStyle(QwtSymbol::XCross);
          sym.setSize( 10 );
@@ -939,7 +1026,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
          double x[ UHB_PTS ];
          double y[ UHB_PTS ];
 
-         editor_msg( "dark blue", 
+         editor_msg( "blue", 
                      QString( tr( "%1: 0 triangle LN extrapolation=%2 sigma=%3 sigma %=%4 slope=%5 sigma=%6 sigma %=%7 chi^2=%8" ) )
                      .arg( text )
                      .arg( exp( a ),    0, 'g', 8 )
@@ -998,6 +1085,262 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
       }
    }
 
+   // run y = a + b exp( c x ) fit
+
+   last_exp_extrapolation.erase( text );
+
+   {
+      last_a_exp    = 0e0;
+      last_siga_exp = 0e0;
+      last_b_exp    = 0e0;
+      last_sigb_exp = 0e0;
+      last_chi2_exp = 0e0;
+
+      exp_plot_ok = false;
+      if ( use_one_over_triangles_exp.size() > 2 )   
+      {
+         vector < double > fit_x;
+         vector < double > fit_y;
+         for ( int i = 0; i < (int) use_one_over_triangles_exp.size(); ++i )
+         {
+            fit_x.push_back( use_one_over_triangles_exp[ i ] );
+            fit_y.push_back( use_parameter_data_exp    [ i ] );
+         }
+
+         // #define DEBUGEXP
+#if defined( DEBUGEXP )
+         fit_x.clear();
+         fit_y.clear();
+         fit_x.push_back( -.99 ); fit_y.push_back( .418 );
+         fit_x.push_back( -.945 ); fit_y.push_back( .412 );
+         fit_x.push_back( -.874 ); fit_y.push_back( .452 );
+         fit_x.push_back( -.859 ); fit_y.push_back( .48 );
+         fit_x.push_back( -.64 ); fit_y.push_back( .453 );
+         fit_x.push_back( -.573 ); fit_y.push_back( .501 );
+         fit_x.push_back( -.433 ); fit_y.push_back( .619 );
+         fit_x.push_back( -.042 ); fit_y.push_back( .9 );
+         fit_x.push_back( -.007 ); fit_y.push_back( .911 );
+         fit_x.push_back( .054 ); fit_y.push_back( .966 );
+         fit_x.push_back( .088 ); fit_y.push_back( .966 );
+         fit_x.push_back( .222 ); fit_y.push_back( 1.123 );
+         fit_x.push_back( .401 ); fit_y.push_back( 1.414 );
+         fit_x.push_back( .465 ); fit_y.push_back( 1.683 );
+         fit_x.push_back( .633 ); fit_y.push_back( 2.101 );
+         fit_x.push_back( .637 ); fit_y.push_back( 1.94 );
+         fit_x.push_back( .735 ); fit_y.push_back( 2.473 );
+         fit_x.push_back( .762 ); fit_y.push_back( 2.276 );
+         fit_x.push_back( .791 ); fit_y.push_back( 2.352 );
+         fit_x.push_back( .981 ); fit_y.push_back( 3.544 );
+#endif
+
+         vector < double > S( fit_x.size() );
+
+         // as in Jean Jaquelin Regressions et equations integrals pp 16-18
+
+         // compute S(k)
+         S[ 0 ] = 0e0;
+         for ( int i = 1; i < (int) fit_x.size(); ++i )
+         {
+            S[ i ] = S[ i - 1 ] + .5 * ( fit_y[ i ] + fit_y[ i - 1 ] ) * ( fit_x[ i ] - fit_x[ i - 1 ] );
+         }
+
+         US_Vector::printvector3( "exp fit input", fit_x, fit_y, S, 5 );
+
+         double a    = 0e0;
+         double b    = 0e0;
+         double c    = 0e0;
+         double chi2 = 0e0;
+
+         double L11 = 0e0;
+         double L12 = 0e0;
+         double L22 = 0e0;
+         double R1  = 0e0;
+         double R2  = 0e0;
+         
+         for ( int i = 0; i < (int) fit_x.size(); ++i )
+         {
+            double t1 = fit_x[ i ] - fit_x[ 0 ];
+            double t2 = fit_y[ i ] - fit_y[ 0 ];
+            L11 += t1 * t1;
+            L12 += t1 * S[ i ];
+            L22 += S[ i ] * S[ i ];
+            R1  += t2 * t1;
+            R2  += t2 * S[ i ];
+         }
+
+         double det = L11 * L22 - L12 * L12;
+         if ( det == 0e0 )
+         {
+            editor_msg( "red", tr( "exponential fit: zero determinant in fit" ) );
+         } else {
+            double oneoverdet = 1e0 / det;
+            // double A1 = oneoverdet * ( L22 * R1 - L12 * R2 );
+            double B1 = oneoverdet * ( - L12 * R1 + L11 * R2 );
+            if ( B1 == 0e0 )
+            {
+               editor_msg( "red", tr( "exponential fit: zero c" ) );
+            } else {
+               // double a1 = -A1 / B1;
+               double c1 = B1;
+               
+               double L11 = (double) fit_x.size();
+               double L12 = 0e0;
+               double L22 = 0e0;
+               double R1  = 0e0;
+               double R2  = 0e0;
+         
+               for ( int i = 0; i < (int) fit_x.size(); ++i )
+               {
+                  double t1 = exp( c1 * fit_x[ i ] );
+                  L12 += t1;
+                  L22 += t1 * t1;
+                  R1  += fit_y[ i ];
+                  R2  += fit_y[ i ] * t1;
+               }
+
+               double det = L11 * L22 - L12 * L12;
+
+               if ( det == 0e0 )
+               {
+                  editor_msg( "red", tr( "exponential fit: zero second determinant in fit" ) );
+               } else {
+                  double oneoverdet = 1e0 / det;
+                  double a2 = oneoverdet * ( L22 * R1 - L12 * R2 );
+                  double b2 = oneoverdet * ( - L12 * R1 + L11 * R2 );
+
+                  a = a2;
+                  b = b2;
+                  c = c1;
+                  qDebug( QString( "ok: a = %1 b = %2 c = %3" ).arg( a ).arg( b ).arg( c ) );
+                  exp_plot_ok = true;
+
+               }
+            }
+         }
+
+         if ( exp_plot_ok )
+         {
+            // refine with LM?
+            LM::lm_control_struct control = LM::lm_control_double;
+            control.printflags = 0; // 3; // monitor status (+1) and parameters (+2)
+            control.epsilon    = 1e-2;
+            control.stepbound  = 100;
+            control.maxcall    = 500;
+
+            LM::lm_status_struct status;
+            
+            vector < double > par;
+            par.push_back( a );
+            par.push_back( b );
+            par.push_back( c );
+
+            LM::lmcurve_fit_rmsd( ( int )      par.size(),
+                                  ( double * ) &( par[ 0 ] ),
+                                  ( int )      fit_x.size(),
+                                  ( double * ) &( fit_x[ 0 ] ),
+                                  ( double * ) &( fit_y[ 0 ] ),
+                                  BFIT::compute_f,
+                                  (const LM::lm_control_struct *)&control,
+                                  &status );
+   
+            if ( status.fnorm < 0e0 )
+            {
+               qDebug( "WARNING: lm() returned negative rmsd\n" );
+            } else {
+               a = par[ 0 ];
+               b = par[ 1 ];
+               c = par[ 2 ];
+            }
+
+            // compute chi2 from fit(?)
+            
+            for ( int i = 0; i < (int) fit_x.size(); ++i )
+            {
+               if ( fit_y[ i ] != 0e0 )
+               {
+                  double t = fit_y[ i ] - a + b * exp( c * fit_x[ i ] ) ;
+                  chi2 += t * t / fit_y[ i ];
+               }
+            }
+            double siga = sqrt( chi2 );
+
+            last_a_exp    = a;
+            last_siga_exp = siga;
+            last_b_exp    = b;
+            last_sigb_exp = 0;
+            last_c_exp    = c;
+            last_sigc_exp = 0;
+            last_chi2_exp = chi2;
+
+            last_exp_extrapolation[ text ].push_back( last_a_exp + last_b_exp );
+            last_exp_extrapolation[ text ].push_back( last_siga_exp );
+            last_exp_extrapolation[ text ].push_back( last_b_exp );
+            last_exp_extrapolation[ text ].push_back( last_sigb_exp );
+            last_exp_extrapolation[ text ].push_back( last_c_exp );
+            last_exp_extrapolation[ text ].push_back( last_sigc_exp );
+            last_exp_extrapolation[ text ].push_back( last_chi2_exp );
+
+            double x[ UHB_PTS ];
+            double y[ UHB_PTS ];
+            
+            editor_msg( "blue", 
+                        QString( tr( "%1: 0 triangle EXP extrapolation=%2 sigma=%2 b=%3 c=%4 chi^2=%5" ) )
+                        .arg( text )
+                        .arg( a + b,    0, 'g', 8 )
+                        .arg( siga,     0, 'g', 8 )
+                        .arg( b,        0, 'g', 8 )
+                        .arg( c,        0, 'g', 8 )
+                        .arg( chi2,     0, 'g', 8 )
+                        );
+
+            double deltax = ( one_over_triangles[ 0 ] * 1.1 ) / ( UHB_PTS - 1 );
+            for ( int i = 0; i < UHB_PTS; ++i )
+            {
+               x[ i ] = deltax * i;
+               y[ i ] = a + b * exp( c * x[ i ] );
+            }
+      
+#ifndef QT4
+            long curve = plot_data->insertCurve( "plot lm exp" );
+            plot_data->setCurveStyle( curve, QwtCurve::Lines );
+#else
+            QwtPlotCurve *curve = new QwtPlotCurve( "plot lm exp" );
+            curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+#ifndef QT4
+            plot_data->setCurveData( curve, 
+                                     (double *)&( x[ 0 ] ),
+                                     (double *)&( y[ 0 ] ),
+                                     UHB_PTS
+                                     );
+            plot_data->setCurvePen( curve, QPen( Qt::yellow, 2, SolidLine));
+
+#else
+            curve->setData(
+                           (double *)&( x[ 0 ] ),
+                           (double *)&( y[ 0 ] ),
+                           UHB_PTS
+                           );
+
+            curve->setPen( QPen( Qt::green, 2, Qt::SolidLine ) );
+            curve->attach( plot_data );
+#endif
+
+            double min = y[ 0 ] < y[ UHB_PTS - 1 ] ? y[ 0 ] : y[ UHB_PTS - 1 ];
+            double max = y[ 0 ] < y[ UHB_PTS - 1 ] ? y[ UHB_PTS - 1 ] : y[ 0 ];
+            if ( miny > min )
+            {
+               miny = min;
+            }
+            if ( maxy < max )
+            {
+               maxy = max;
+            }
+         }
+      }
+   }
+           
    // set up axis scale
 
    {
@@ -1078,7 +1421,8 @@ void US_Hydrodyn_Best::save_results()
 
    map < QString, QString > additions;
 
-   bool any_ln_plot = false;
+   bool any_ln_plot  = false;
+   bool any_exp_plot = false;
    for ( int i = 0; i < (int) lb_data->count(); ++i )
    {
       lb_data->setSelected( i, true );
@@ -1126,6 +1470,30 @@ void US_Hydrodyn_Best::save_results()
             .arg( last_pts_removed_ln )
             ;
       }
+
+      if ( exp_plot_ok )
+      {
+         any_exp_plot = true;
+         additions[ lb_data->text( i ) ] += 
+            QString( ",=%1,%2%3,%4%5" )
+            .arg( last_a_exp,    0, 'g', 8 )
+            .arg( isnan( last_siga_exp ) ? "=" : "" )
+            .arg( last_siga_exp, 0, 'g', 8 )
+            .arg( isnan( last_siga_exp ) ? "=" : "" )
+            .arg( last_a_exp != 0 ? fabs( 100.0 * last_siga_exp / last_a_exp ) : (double) 0, 0, 'g', 8 )
+            +
+            QString( ",=%1,%2%3,%4%5" )
+            .arg( last_b_exp,    0, 'g', 8 )
+            .arg( isnan( last_sigb_exp ) ? "=" : "" )
+            .arg( last_sigb_exp, 0, 'g', 8 )
+            .arg( isnan( last_sigb_exp ) ? "=" : "" )
+            .arg( last_b_exp != 0 ? fabs( 100.0 * last_sigb_exp / last_b_exp ) : (double) 0, 0, 'g', 8 )
+            +
+            QString( ",=%1,%2" )
+            .arg( last_chi2_exp, 0, 'g', 8 )
+            .arg( last_pts_removed_exp )
+            ;
+      }
    }      
    recompute_tau();
 
@@ -1157,6 +1525,13 @@ void US_Hydrodyn_Best::save_results()
          ;
       out[ 0 ] += ",\"Points removed (largest number of triangles is point 1)\"";
    }
+   if ( any_exp_plot )
+   {
+      out[ 0 ] +=
+         ",\"EXP: Extrapolation to zero triangles (a)\",\"Sigma a\",\"Sigma a %\",\"Slope (b)\",\"Sigma b\",\"Sigma b %\",\"chi^2\""
+         ;
+      out[ 0 ] += ",\"Points removed (largest number of triangles is point 1)\"";
+   }
    // qDebug( loaded_csv_filename );
    // qDebug( loaded_csv_trimmed.join( "\n" ) );
    // qDebug( out.join( "\n" ) );
@@ -1177,6 +1552,7 @@ void US_Hydrodyn_Best::recompute_tau()
 
    bool lin_ok = true;
    bool log_ok = true;
+   bool exp_ok = true;
 
    tau_csv_addendum_tag.clear();
    tau_csv_addendum_val.clear();
@@ -1190,6 +1566,10 @@ void US_Hydrodyn_Best::recompute_tau()
       if ( !last_log_extrapolation.count( tau_inputs[ i ] ) )
       {
          log_ok = false;
+      }
+      if ( !last_exp_extrapolation.count( tau_inputs[ i ] ) )
+      {
+         exp_ok = false;
       }
    }
 
@@ -1228,7 +1608,28 @@ void US_Hydrodyn_Best::recompute_tau()
       QString msg;
       for ( int i = 0; i < (int) this_tau_results.size(); ++i )
       {
-         tau_csv_addendum_tag << QString( tr( "Log extrapolation of Drr EV (1/s) %1" ) ).arg( tau_msg[ i ] );
+         tau_csv_addendum_tag << QString( tr( "LOG extrapolation of Drr EV (1/s) %1" ) ).arg( tau_msg[ i ] );
+         tau_csv_addendum_val << QString( "%1" ).arg( this_tau_results[ i ], 0, 'g', 8 );
+         msg += tau_csv_addendum_tag.back() + " " + tau_csv_addendum_val.back() + "\n";
+      }
+      editor_msg( "dark blue", msg );
+   }
+
+   if ( exp_ok )
+   {
+      vector < double > this_tau_results;
+      
+      US_Saxs_Util::compute_tau( 
+                                last_exp_extrapolation[ tau_inputs[ 0 ] ][ 0 ] * 1e-3,
+                                last_exp_extrapolation[ tau_inputs[ 1 ] ][ 0 ] * 1e-3,
+                                last_exp_extrapolation[ tau_inputs[ 2 ] ][ 0 ] * 1e-3,
+                                .1,
+                                this_tau_results );
+
+      QString msg;
+      for ( int i = 0; i < (int) this_tau_results.size(); ++i )
+      {
+         tau_csv_addendum_tag << QString( tr( "EXP extrapolation of Drr EV (1/s) %1" ) ).arg( tau_msg[ i ] );
          tau_csv_addendum_val << QString( "%1" ).arg( this_tau_results[ i ], 0, 'g', 8 );
          msg += tau_csv_addendum_tag.back() + " " + tau_csv_addendum_val.back() + "\n";
       }
@@ -1282,3 +1683,29 @@ void US_Hydrodyn_Best::toggle_points_ln()
    cb_changed_ln();
    // data_selected();
 }
+
+void US_Hydrodyn_Best::toggle_points_exp()
+{
+   bool any_checked = false;
+   for ( int i = 0; i < (int) cb_points_exp.size(); ++i )
+   {
+      if ( cb_points_exp[ i ]->isChecked() )
+      {
+         any_checked = true;
+         break;
+      }
+   }
+
+   for ( int i = 0; i < (int) cb_points_exp.size(); ++i )
+   {
+      if ( cb_points_exp[ i ]->isEnabled() )
+      {
+         disconnect( cb_points_exp[ i ], SIGNAL( clicked() ), 0, 0 );
+         cb_points_exp[ i ]->setChecked( !any_checked );
+         connect( cb_points_exp[ i ], SIGNAL( clicked() ), SLOT( cb_changed_exp() ) );
+      }
+   }
+   cb_changed_exp();
+   // data_selected();
+}
+
