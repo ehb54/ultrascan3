@@ -111,6 +111,17 @@ void US_Hydrodyn_Best::setupGUI()
 
    input_widgets.push_back( pb_save_results );
 
+   cb_plus_lm = new QCheckBox( this );
+   cb_plus_lm->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_plus_lm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   cb_plus_lm->setText( tr( "EXP fit with LM refinement" ) );
+   cb_plus_lm->setChecked( false );
+   cb_plus_lm->setEnabled( true );
+   cb_plus_lm->show();
+
+   connect( cb_plus_lm, SIGNAL( clicked() ), SLOT( data_selected() ) );
+   input_widgets.push_back( cb_plus_lm );
+
    // ------ editor section
 
    lbl_editor = new mQLabel("Messages", this);
@@ -239,6 +250,7 @@ void US_Hydrodyn_Best::setupGUI()
          bl->addLayout( hbl );
       }
 
+      bl->addWidget( cb_plus_lm );
       bl->addWidget( lbl_editor );
       bl->addWidget( frame );
       bl->addWidget( editor );
@@ -1220,40 +1232,69 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 
          if ( exp_plot_ok )
          {
-            // refine with LM?
-            LM::lm_control_struct control = LM::lm_control_double;
-            control.printflags = 0; // 3; // monitor status (+1) and parameters (+2)
-            control.epsilon    = 1e-2;
-            control.stepbound  = 100;
-            control.maxcall    = 500;
-
-            LM::lm_status_struct status;
-            
-            vector < double > par;
-            par.push_back( a );
-            par.push_back( b );
-            par.push_back( c );
-
-            LM::lmcurve_fit_rmsd( ( int )      par.size(),
-                                  ( double * ) &( par[ 0 ] ),
-                                  ( int )      fit_x.size(),
-                                  ( double * ) &( fit_x[ 0 ] ),
-                                  ( double * ) &( fit_y[ 0 ] ),
-                                  BFIT::compute_f,
-                                  (const LM::lm_control_struct *)&control,
-                                  &status );
-   
-            if ( status.fnorm < 0e0 )
+            chi2 = 0e0;
+            for ( int i = 0; i < (int) fit_x.size(); ++i )
             {
-               qDebug( "WARNING: lm() returned negative rmsd\n" );
-            } else {
-               a = par[ 0 ];
-               b = par[ 1 ];
-               c = par[ 2 ];
+               if ( fit_y[ i ] != 0e0 )
+               {
+                  double t = fit_y[ i ] - a + b * exp( c * fit_x[ i ] ) ;
+                  chi2 += t * t / fit_y[ i ];
+               }
+            }
+
+            if ( cb_plus_lm->isChecked() )
+            {
+               double org_chi2 = chi2;
+               // refine with LM?
+               LM::lm_control_struct control = LM::lm_control_double;
+               control.printflags = 0; // 3; // monitor status (+1) and parameters (+2)
+               control.epsilon    = 1e-2;
+               control.stepbound  = 100;
+               control.maxcall    = 1000;
+
+               LM::lm_status_struct status;
+            
+               vector < double > par;
+               par.push_back( a );
+               par.push_back( b );
+               par.push_back( c );
+
+               LM::lmcurve_fit_rmsd( ( int )      par.size(),
+                                     ( double * ) &( par[ 0 ] ),
+                                     ( int )      fit_x.size(),
+                                     ( double * ) &( fit_x[ 0 ] ),
+                                     ( double * ) &( fit_y[ 0 ] ),
+                                     BFIT::compute_f,
+                                     (const LM::lm_control_struct *)&control,
+                                     &status );
+   
+               if ( status.fnorm < 0e0 )
+               {
+                  qDebug( "WARNING: lm() returned negative rmsd\n" );
+               } else {
+                  chi2 = 0e0;
+                  for ( int i = 0; i < (int) fit_x.size(); ++i )
+                  {
+                     if ( fit_y[ i ] != 0e0 )
+                     {
+                        double t = fit_y[ i ] - par[ 0 ] + par[ 1 ] * exp( par[ 2 ] * fit_x[ i ] ) ;
+                        chi2 += t * t / fit_y[ i ];
+                     }
+                  }
+                  if ( chi2 < org_chi2 )
+                  {
+                     a = par[ 0 ];
+                     b = par[ 1 ];
+                     c = par[ 2 ];
+                  } else {
+                     editor_msg( "dark red", tr( "Notice: LM did not improve the fit, discarded" ) );
+                  }
+               }
             }
 
             // compute chi2 from fit(?)
             
+            chi2 = 0e0;
             for ( int i = 0; i < (int) fit_x.size(); ++i )
             {
                if ( fit_y[ i ] != 0e0 )
