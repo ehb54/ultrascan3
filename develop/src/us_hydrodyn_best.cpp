@@ -1,5 +1,5 @@
 #include "../include/us_hydrodyn_best.h"
-#include "../include/us_vector.h"
+// #include "../include/us_vector.h"
 #include "../include/us_lm.h"
 
 #if defined(WIN32)
@@ -1156,7 +1156,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
             S[ i ] = S[ i - 1 ] + .5 * ( fit_y[ i ] + fit_y[ i - 1 ] ) * ( fit_x[ i ] - fit_x[ i - 1 ] );
          }
 
-         US_Vector::printvector3( "exp fit input", fit_x, fit_y, S, 5 );
+         // US_Vector::printvector3( "exp fit input", fit_x, fit_y, S, 5 );
 
          double a    = 0e0;
          double b    = 0e0;
@@ -1223,7 +1223,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
                   a = a2;
                   b = b2;
                   c = c1;
-                  qDebug( QString( "ok: a = %1 b = %2 c = %3" ).arg( a ).arg( b ).arg( c ) );
+                  // qDebug( QString( "ok: a = %1 b = %2 c = %3" ).arg( a ).arg( b ).arg( c ) );
                   exp_plot_ok = true;
 
                }
