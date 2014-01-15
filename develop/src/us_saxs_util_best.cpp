@@ -594,6 +594,19 @@ bool US_Saxs_Util::run_best()
             .arg( progs[ p ] )
             .arg( outfiles[ i ] + expected_base + ".be" )
             ;
+         if ( max_triangles > MIN_TRIANGLES )
+         {
+            control_parameters[ "bestmsrmaxtriangles" ] = 
+               QString( "%1" ).arg( max_triangles - 2500 );
+            unlink( pdb_stripped );
+            output_files = save_output_files;
+            for ( int i = 0; i < (int) rm_output_files.size(); ++i )
+            {
+               qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
+               unlink( rm_output_files[ i ] );
+            }
+            return run_best();
+         }
       }         
       
       for ( int i = 0; i < (int) expected.size(); ++i )
@@ -604,6 +617,19 @@ bool US_Saxs_Util::run_best()
                .arg( progs[ p ] )
                .arg( expected[ i ] )
                ;
+            if ( max_triangles > MIN_TRIANGLES )
+            {
+               control_parameters[ "bestmsrmaxtriangles" ] = 
+                  QString( "%1" ).arg( max_triangles - 2500 );
+               unlink( pdb_stripped );
+               output_files = save_output_files;
+               for ( int i = 0; i < (int) rm_output_files.size(); ++i )
+               {
+                  qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
+                  unlink( rm_output_files[ i ] );
+               }
+               return run_best();
+            }
          } else {
             output_files << expected[ i ];
             use_outfiles << outfiles[ i ];
