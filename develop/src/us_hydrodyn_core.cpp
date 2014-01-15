@@ -2143,7 +2143,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance)
                retval++;
                QColor save_color = editor->color();
                editor->setColor("red");
-               editor->append(QString(tr("WARNING: Bead model has an overlap violation on beads %1 %2 overlap %3\n"))
+               editor->append(QString(tr("WARNING: Bead model has an overlap violation on beads %1 %2 overlap %3 A\n"))
                               .arg(i + 1)
                               .arg(j + 1)
                               .arg(separation));
