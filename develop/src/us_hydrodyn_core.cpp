@@ -2032,6 +2032,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 }
 
 // #define DEBUG_OVERLAP
+// #define DEBUG_OVERLAP_2
 // #define DEBUG
 // #define DEBUG2
 
@@ -2051,7 +2052,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance)
    for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
       for (unsigned int j = i + 1; j < bead_model.size(); j++) {
 #if defined(DEBUG_OVERLAP_2)
-         if(i == 2 && (j == 107 || j == 108))
+         if(i == 2 && (j == 34 || j == 60))
             printf("x1 overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - %s\n",
                    i, j,
                    bead_model[i].chain,
@@ -2112,7 +2113,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance)
                     pow(bead_model[i].bead_coordinate.axis[2] -
                         bead_model[j].bead_coordinate.axis[2], 2));
 #if defined(DEBUG_OVERLAP_2)
-            if(i == 2 && (j == 107 || j == 108))
+            if(i == 2 && (j == 34 || j == 60))
                printf("x2 overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - %s\n",
                       i, j,
                       bead_model[i].chain,
@@ -2143,13 +2144,13 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance)
                QColor save_color = editor->color();
                editor->setColor("red");
                editor->append(QString(tr("WARNING: Bead model has an overlap violation on beads %1 %2 overlap %3\n"))
-                              .arg(i)
-                              .arg(j)
+                              .arg(i + 1)
+                              .arg(j + 1)
                               .arg(separation));
                editor->setColor(save_color);
 #if defined(DEBUG_OVERLAP)
             printf("overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f(%s) %f(%s) with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - needs reduction\n",
-                   i, j,
+                   i + 1, j + 1,
                    bead_model[i].chain,
                    bead_model[j].chain,
                    bead_model[i].exposed_code,
