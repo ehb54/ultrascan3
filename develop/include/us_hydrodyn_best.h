@@ -57,17 +57,21 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       QHBoxLayout           *                 hbl_points_ln;
       mQLabel               *                 lbl_points_ln;
       vector < QCheckBox * >                  cb_points_ln;
+      QHBoxLayout           *                 hbl_points_exp;
+      mQLabel               *                 lbl_points_exp;
+      vector < QCheckBox * >                  cb_points_exp;
+      QCheckBox             *                 cb_plus_lm;
 
       // ------- bottom section
 
       QPushButton *                           pb_help;
       QPushButton *                           pb_close;
 
-
       // ------- out of gui area
 
       map < QString, set < int > >            cb_checked;
       map < QString, set < int > >            cb_checked_ln;
+      map < QString, set < int > >            cb_checked_exp;
 
       QColorGroup                             cg_red;
 
@@ -81,7 +85,6 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
 
       void                     *              us_hydrodyn;
       bool                     *              best_widget;
-
 
       void                                    setupGUI();
 
@@ -110,12 +113,24 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
 
       bool                                    ln_plot_ok;
 
+      double                                  last_a_exp;
+      double                                  last_siga_exp;
+      double                                  last_b_exp;
+      double                                  last_sigb_exp;
+      double                                  last_c_exp;
+      double                                  last_sigc_exp;
+      double                                  last_chi2_exp;
+      QString                                 last_pts_removed_exp;
+
+      bool                                    exp_plot_ok;
+
       QStringList                             tau_inputs;
       set < QString >                         tau_input_set;
       QStringList                             tau_msg;
       void                                    recompute_tau();
       map < QString, vector < double > >      last_lin_extrapolation;
       map < QString, vector < double > >      last_log_extrapolation;
+      map < QString, vector < double > >      last_exp_extrapolation;
       QStringList                             tau_csv_addendum_tag;
       QStringList                             tau_csv_addendum_val;
 
@@ -139,12 +154,14 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       void                                    help();
       void                                    cancel();
 
-      void                                    data_selected( bool do_recompute_tau = true );
-      void                                    cb_changed   ( bool do_data = true );
-      void                                    cb_changed_ln( bool do_data = true );
+      void                                    data_selected    ( bool do_recompute_tau = true );
+      void                                    cb_changed       ( bool do_data = true );
+      void                                    cb_changed_ln    ( bool do_data = true );
+      void                                    cb_changed_exp   ( bool do_data = true );
 
-      void                                    toggle_points();
-      void                                    toggle_points_ln();
+      void                                    toggle_points    ();
+      void                                    toggle_points_ln ();
+      void                                    toggle_points_exp();
 
    protected slots:
 
