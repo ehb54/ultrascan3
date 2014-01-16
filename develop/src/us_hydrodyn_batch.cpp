@@ -3221,6 +3221,18 @@ QString US_Hydrodyn_Batch::iqq_suffix()
             .arg( our_saxs_options->sh_max_harmonics )
             .arg( our_saxs_options->sh_fibonacci_grid_order )
             .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+         if ( U_EXPT &&
+              (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_ra" ) &&
+              (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ].toDouble() > 0e0 )
+         {
+            qs += QString( "_ra%1" ).arg( (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ] ).replace(".", "_" );
+         }
+         if ( U_EXPT &&
+              (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_vol" ) &&
+              (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ].toDouble() > 0e0 )
+         {
+            qs += QString( "_ev%1" ).arg( (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ] ).replace(".", "_" );
+         }
       } else {
          if ( our_saxs_options->saxs_iq_foxs )
          {

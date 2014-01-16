@@ -2518,7 +2518,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      mapkey = "OXT|OXT";
                   }
                   QString hybrid_name = residue_atom_hybrid_map[mapkey];
-                  double radius = 0e0;
+                  // double radius = 0e0;
                   if ( rb_curve_saxs->isChecked() )
                   {
                      if ( !hybrid_map.count(hybrid_name) )
@@ -2534,7 +2534,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                     );
                         qApp->processEvents();
                      } else {
-                        radius = hybrid_map[hybrid_name].radius;
+                        // radius = hybrid_map[hybrid_name].radius;
                      }
                   }
                   if ( !atom_map.count( this_atom->name + "~" + hybrid_name ) )
@@ -2789,7 +2789,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             pb_pr_contrib->setEnabled(true);
          } else {
             // non contrib version:
-            printf( "atoms.size() %d\n", atoms.size() );
+            printf( "atoms.size() %d\n", (int) atoms.size() );
             for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
             {
                progress_pr->setProgress(i+1);
@@ -6948,6 +6948,18 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
             .arg( our_saxs_options->sh_max_harmonics )
             .arg( our_saxs_options->sh_fibonacci_grid_order )
             .arg( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ).replace(".", "_" ) );
+         if ( U_EXPT &&
+              (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_ra" ) &&
+              (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ].toDouble() > 0e0 )
+         {
+            qs += QString( "_ra%1" ).arg( (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ] ).replace(".", "_" );
+         }
+         if ( U_EXPT &&
+              (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_vol" ) &&
+              (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ].toDouble() > 0e0 )
+         {
+            qs += QString( "_ev%1" ).arg( (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ] ).replace(".", "_" );
+         }
       } else {
          if ( our_saxs_options->saxs_iq_foxs )
          {
