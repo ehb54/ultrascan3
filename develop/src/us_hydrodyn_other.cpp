@@ -7346,7 +7346,7 @@ bool US_Hydrodyn::install_new_version()
             }
          }
       }
-      return true;
+      return false;
       break;
    case 1: 
       return false;

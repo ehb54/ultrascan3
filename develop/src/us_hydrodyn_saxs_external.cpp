@@ -518,7 +518,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
       crysol_manual_input << QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q) );
       crysol_manual_input << ( our_saxs_options->crysol_explicit_hydrogens ? "Y" : "N" );
       crysol_manual_input << "Y"; // fit expt curve
-      crysol_manual_input << ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ];
+      crysol_manual_input << QFileInfo( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] ).fileName();
       crysol_manual_input << "N"; // subtract constant
       crysol_manual_input << "1"; // angular units
       crysol_manual_input << QString("%1").arg( our_saxs_options->water_e_density, 0, 'f', 4 ) ;
@@ -555,10 +555,61 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
             f.close();
          }
 
-         QString cmd = QString( "cd %1\n%2 < input > output" ).arg( dir ).arg( prog );
-         editor_msg( "blue", "\nStarting Crysol");
+         {
+            US_File_Util ufu;
+            if ( !ufu.copy( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ], dir ) )
+            {
+               editor_msg( "red", ufu.errormsg );
+               pb_plot_saxs_sans->setEnabled(true);
+               return -1;
+            }
+         }
+
+         QString cmd = QString( "\"%1\" < input > output" ).arg( prog );
+         editor_msg( "blue", "\nStarting Crysol\n" + cmd );
          qApp->processEvents();
+         QString savedir = QDir::currentDirPath();
+         QDir::setCurrent( dir );
+// #if defined( WIN32 )
+// attempt to create job with no "cmd" box
+//          {
+//             PROCESS_INFORMATION processInformation = {0};
+//             STARTUPINFO startupInfo                = {0};
+//             startupInfo.cb                         = sizeof(startupInfo);
+ 
+//             wchar_t wtext[ 2048 ];
+//             mbstowcs( wtext, cmd.ascii(), strlen( cmd.ascii() ) + 1 ); //Plus null
+
+//             // Create the process
+//             BOOL result = CreateProcess(NULL, wtext,
+//                                         NULL, NULL, FALSE, 
+//                                         NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, 
+//                                         NULL, NULL, &startupInfo, &processInformation);
+
+
+//             qDebug( "result: " + result );
+
+//             // STARTUPINFOW si;
+//             // PROCESS_INFORMATION pi;
+
+//             // ZeroMemory(&si, sizeof(si));
+//             // si.cb = sizeof(si);
+//             // ZeroMemory(&pi, sizeof(pi));
+
+//             // wchar_t wtext[ 1024 ];
+//             // mbstowcs(wtext, cmd.ascii(), strlen(cmd.ascii())+1);//Plus null
+
+//             // if (CreateProcessW( NULL, wtext, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+//             // {
+//             //    WaitForSingleObject(pi.hProcess, INFINITE);
+//             //    CloseHandle(pi.hProcess);
+//             //    CloseHandle(pi.hThread);
+//             // }
+//          }
+// #else
          system( cmd );
+// #endif
+         QDir::setCurrent( savedir );
          {
             QFile f( dir + QDir::separator() + "output" );
             if ( !f.open( IO_ReadOnly ) )
