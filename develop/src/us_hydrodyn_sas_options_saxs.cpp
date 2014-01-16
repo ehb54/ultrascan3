@@ -303,11 +303,58 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    cb_crysol_explicit_hydrogens->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_crysol_explicit_hydrogens, SIGNAL(clicked()), this, SLOT(set_crysol_explicit_hydrogens()));
 
+   lbl_ra = new QLabel( tr(" Crysol: Average atomic radius (A):"), this );
+   lbl_ra->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_ra->setMinimumHeight(minHeight1);
+   lbl_ra->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_ra->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_ra = new mQLineEdit(this, "le_ra Line Edit");
+   le_ra->setText( 
+                  (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_ra" ) ?
+                  (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ] : QString( "0" ) );
+   le_ra->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   le_ra->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_ra->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_ra->setEnabled( true );
+   le_ra->setValidator( new QDoubleValidator( 0, 9, 3, le_ra ) );
+   connect( le_ra, SIGNAL( textChanged( const QString & ) ), SLOT( set_ra( const QString & ) ) );
+   
+   if ( !started_in_expert_mode )
+   {
+      lbl_ra->hide();
+      le_ra->hide();
+   }
+
+   lbl_vol = new QLabel( tr(" Crysol: Excluded volume (A^3):"), this );
+   lbl_vol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_vol->setMinimumHeight(minHeight1);
+   lbl_vol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_vol = new mQLineEdit(this, "le_vol Line Edit");
+   le_vol->setText( 
+                  (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_vol" ) ?
+                  (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ] : QString( "0" ) );
+   le_vol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   le_vol->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_vol->setEnabled( true );
+   le_vol->setValidator( new QDoubleValidator( 0, 1e15, 2, le_vol ) );
+   connect( le_vol, SIGNAL( textChanged( const QString & ) ), SLOT( set_vol( const QString & ) ) );
+   
+   if ( !started_in_expert_mode )
+   {
+      lbl_vol->hide();
+      le_vol->hide();
+   }
+
    pb_crysol_target = new QPushButton(tr("Crysol target experimental data"), this);
    pb_crysol_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_crysol_target->setMinimumHeight(minHeight1);
    pb_crysol_target->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_crysol_target, SIGNAL(clicked()), SLOT(crysol_target()));
+
 
    le_crysol_target = new QLineEdit(this, "");
    le_crysol_target->setMinimumHeight(minHeight1);
@@ -430,6 +477,14 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
 
    background->addWidget(lbl_crysol_hydration_shell_contrast, j, 0);
    background->addWidget(cnt_crysol_hydration_shell_contrast, j, 1);
+   j++;
+
+   background->addWidget( lbl_ra, j, 0 );
+   background->addWidget( le_ra,  j, 1 );
+   j++;
+
+   background->addWidget( lbl_vol, j, 0 );
+   background->addWidget( le_vol,  j, 1 );
    j++;
 
    background->addWidget(pb_crysol_target, j, 0);
@@ -920,6 +975,16 @@ void US_Hydrodyn_SasOptionsSaxs::crysol_target()
    {
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
    }
+}
+
+void US_Hydrodyn_SasOptionsSaxs::set_ra( const QString & str )
+{
+   (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ] = str;
+}
+
+void US_Hydrodyn_SasOptionsSaxs::set_vol( const QString & str )
+{
+   (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ] = str;
 }
 
    

@@ -82,6 +82,12 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       QCheckBox  *cb_crysol_version_26;
       QCheckBox  *cb_crysol_explicit_hydrogens;
 
+      QLabel      *lbl_ra;
+      QLineEdit   *le_ra;
+
+      QLabel      *lbl_vol;
+      QLineEdit   *le_vol;
+
       QPushButton *pb_crysol_target;
       QLineEdit   *le_crysol_target;
 
@@ -130,6 +136,9 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
       void crysol_target();
 
       void set_sastbx_method( int );
+
+      void set_ra ( const QString & );
+      void set_vol( const QString & );
 
       void cancel();
       void help();

@@ -971,7 +971,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
                                (double *)&( f_Is[ file ][ 0 ] ),
                                q_points
                                );
-      plot_data->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
+      plot_data->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, SolidLine));
 #else
       curve->setData(
                      (double *)&( f_qs[ file ][ 0 ] ),
@@ -2947,6 +2947,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
 
    bool use_errors = true;
 
+   vector < int >    use_pos;
+   vector < QColor > use_color( (int) use_list.size() );
+
    for ( int i = 0; i < (int) use_list.size(); ++i )
    {
       if ( use_errors &&
@@ -2959,6 +2962,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
          cb_plot_errors_sd->hide();
       }
       
+      use_color[ i ] = plot_colors[ f_pos[ use_list[ i ] ] % plot_colors.size() ];
+
       if ( f_qs_string[ use_ref_list[ i ] ] != 
            f_qs_string[ use_list    [ i ] ] )
       {
@@ -2968,9 +2973,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
 
       for ( int j = 0; j < (int) f_qs[ use_list[ i ] ].size(); ++j )
       {
-         grid  .push_back( f_qs[ use_list[ i ] ][ j ] - f_qs[ use_list[ i ] ][ 0 ] + grid_ofs );
-         fit   .push_back( f_Is[ use_list[ i ] ][ j ] );
-         target.push_back( f_Is[ use_ref_list[ i ] ][ j ] );
+         grid   .push_back( f_qs[ use_list[ i ] ][ j ] - f_qs[ use_list[ i ] ][ 0 ] + grid_ofs );
+         fit    .push_back( f_Is[ use_list[ i ] ][ j ] );
+         target .push_back( f_Is[ use_ref_list[ i ] ][ j ] );
+         use_pos.push_back( i );   
          if ( use_errors )
          {
             errors.push_back( f_errors[ use_ref_list[ i ] ][ j ] );
@@ -2988,9 +2994,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       target = tmp;
    }
 
-   vector < double > x;
-   vector < double > y;
-   vector < double > e;
+   vector < vector < double > > x( (int) use_list.size() );
+   vector < vector < double > > y( (int) use_list.size() );
+   vector < vector < double > > e( (int) use_list.size() );
 
    if ( cb_plot_errors_pct->isChecked() )
    {
@@ -3002,9 +3008,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
          {
             if ( target[ i ] != 0e0 )
             {
-               x.push_back( grid[ i ] );
-               y.push_back( 0e0 );
-               e.push_back( 100.0 * ( target[ i ] - fit[ i ] ) / target[ i ] );
+               x[ use_pos[ i ] ].push_back( grid[ i ] );
+               y[ use_pos[ i ] ].push_back( 0e0 );
+               e[ use_pos[ i ] ].push_back( 100.0 * ( target[ i ] - fit[ i ] ) / target[ i ] );
             }
          }
       } else {
@@ -3014,9 +3020,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
          {
             if ( target[ i ] != 0e0 )
             {
-               x.push_back( grid[ i ] );
-               y.push_back( 0e0 );
-               e.push_back( 100.0 * ( target[ i ] - fit[ i ] ) / target[ i ] );
+               x[ use_pos[ i ] ].push_back( grid[ i ] );
+               y[ use_pos[ i ] ].push_back( 0e0 );
+               e[ use_pos[ i ] ].push_back( 100.0 * ( target[ i ] - fit[ i ] ) / target[ i ] );
             } else {
                cout << QString( "target at pos %1 is zero\n" ).arg( i );
             }
@@ -3028,30 +3034,33 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
          // cout << "errors ok & used\n";
          for ( unsigned int i = 0; i < ( unsigned int )target.size(); i++ )
          {
-            x.push_back( grid[ i ] );
-            y.push_back( 0e0 );
-            e.push_back( ( target[ i ] - fit[ i ] ) / errors[ i ] );
+            x[ use_pos[ i ] ].push_back( grid[ i ] );
+            y[ use_pos[ i ] ].push_back( 0e0 );
+            e[ use_pos[ i ] ].push_back( ( target[ i ] - fit[ i ] ) / errors[ i ] );
          }
       } else {
          // cout << "errors not ok & not used\n";
          for ( unsigned int i = 0; i < ( unsigned int )target.size(); i++ )
          {
-            x.push_back( grid[ i ] );
-            y.push_back( 0e0 );
-            e.push_back( target[ i ] - fit[ i ] );
+            x[ use_pos[ i ] ].push_back( grid[ i ] );
+            y[ use_pos[ i ] ].push_back( 0e0 );
+            e[ use_pos[ i ] ].push_back( target[ i ] - fit[ i ] );
          }
       }
    }
 
-   for ( unsigned int i = 0; i < ( unsigned int ) e.size(); i++ )
+   for ( int j = 0; j < (int) e.size(); ++j )
    {
-      if ( e[ i ] < -50e0 )
+      for ( unsigned int i = 0; i < ( unsigned int ) e.size(); i++ )
       {
-         e[ i ] = -50e0;
-      } else {
-         if ( e[ i ] > 50e0 )
+         if ( e[ j ][ i ] < -50e0 )
          {
-            e[ i ] = 50e0;
+            e[ j ][ i ] = -50e0;
+         } else {
+            if ( e[ j ][ i ] > 50e0 )
+            {
+               e[ j ][ i ] = 50e0;
+            }
          }
       }
    }
@@ -3059,77 +3068,83 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
    // printvector( "x", x );
    // printvector( "e", e );
 
+   for ( int j = 0; j < (int) x.size(); ++j )
    {
+      {
 #ifndef QT4
-      long curve;
-      curve = plot_errors->insertCurve( "base" );
-      plot_errors->setCurveStyle( curve, QwtCurve::Lines );
+         long curve;
+         curve = plot_errors->insertCurve( "base" );
+         plot_errors->setCurveStyle( curve, QwtCurve::Lines );
 #else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
-      curve->setStyle( QwtPlotCurve::Lines );
+         QwtPlotCurve *curve;
+         QwtPlotCurve *curve = new QwtPlotCurve( "base" );
+         curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
 #ifndef QT4
-      plot_errors->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
-      plot_errors->setCurveData( curve,
-                                 (double *)&x[ 0 ],
-                                 (double *)&y[ 0 ],
-                                 x.size()
-                                 );
+         plot_errors->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
+         plot_errors->setCurveData( curve,
+                                    (double *)&x[ j ][ 0 ],
+                                    (double *)&y[ j ][ 0 ],
+                                    x[ j ].size()
+                                    );
 #else
-      curve->setPen( QPen( Qt::red, use_line_width, Qt::SolidLine ) );
-      curve->setData(
-                     (double *)&x[ 0 ],
-                     (double *)&y[ 0 ],
-                     x.size()
-                     );
-      curve->attach( plot_errors );
+         curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
+         curve->setData(
+                        (double *)&x[ j ][ 0 ],
+                        (double *)&y[ j ][ 0 ],
+                        x[ j ].size()
+                        );
+         curve->attach( plot_errors );
 #endif
-   }
+      }
 
-   {
+      {
 #ifndef QT4
-      long curve;
-      curve = plot_errors->insertCurve( "errors" );
-      plot_errors->setCurveStyle( curve, QwtCurve::Lines );
+         long curve;
+         curve = plot_errors->insertCurve( "errors" );
+         plot_errors->setCurveStyle( curve, QwtCurve::Lines );
 #else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
-      curve->setStyle( QwtPlotCurve::Lines );
+         QwtPlotCurve *curve;
+         QwtPlotCurve *curve = new QwtPlotCurve( file );
+         curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
 #ifndef QT4
-      plot_errors->setCurvePen( curve, QPen( Qt::red, use_line_width, Qt::SolidLine ) );
-      plot_errors->setCurveData( curve,
-                                 (double *)&x[ 0 ],
-                                 (double *)&e[ 0 ],
-                                 x.size()
-                                 );
-      plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
+         plot_errors->setCurvePen( curve, QPen( use_color[ j ], use_line_width, Qt::SolidLine ) );
+         plot_errors->setCurveData( curve,
+                                    (double *)&x[ j ][ 0 ],
+                                    (double *)&e[ j ][ 0 ],
+                                    x[ j ].size()
+                                    );
+         plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
-      curve->setPen( QPen( Qt::red, use_line_width, Qt::SolidLine ) );
-      curre->setData(
-                     (double *)&x[ 0 ],
-                     (double *)&e[ 0 ],
-                     x.size()
-                     );
-      curve->setStyle( QwtCurve::Sticks );
-      curve->attach( plot_errors );
+         curve->setPen( QPen( use_color[ j ], use_line_width, Qt::SolidLine ) );
+         curre->setData(
+                        (double *)&x[ j ][ 0 ],
+                        (double *)&e[ j ][ 0 ],
+                        x[ j ].size()
+                        );
+         curve->setStyle( QwtCurve::Sticks );
+         curve->attach( plot_errors );
 #endif
+      }
    }
 
    if ( !plot_errors_zoomer )
    {
-      double maxy = e[ 0 ];
+      double maxy = e[ 0 ][ 0 ];
 
-      for ( unsigned int i = 1; i < ( unsigned int )e.size(); i++ )
+      for ( int j = 0; j < (int) x.size(); ++j )
       {
-         if ( maxy < fabs( e[ i ] ) )
+         for ( unsigned int i = 1; i < ( unsigned int )e[ j ].size(); i++ )
          {
-            maxy = fabs( e[ i ] );
-         }
-      }            
+            if ( maxy < fabs( e[ j ][ i ] ) )
+            {
+               maxy = fabs( e[ j ][ i ] );
+            }
+         }            
+      }
 
       plot_errors->setAxisTitle(QwtPlot::yLeft, QString(
                                                         tr( cb_plot_errors_pct->isChecked() ?
@@ -3138,7 +3153,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
                                                               "delta I%1/sd" : "delta I%1" 
                                                               ) ) ).arg( iq_it_state ? "I(t)" : "I(q)" ) );
 
-      plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ], x.back() );
+      plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ][ 0 ], x.back().back() );
       plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
 
       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());

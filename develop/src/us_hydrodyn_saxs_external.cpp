@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn.h"
+#include "../include/us_cmdline_app.h"
 #include <qregexp.h>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -10,7 +11,7 @@ void US_Hydrodyn_Saxs::editor_msg( QColor color, QColor bgcolor, QString msg )
 {
    msg.replace( QRegExp( "\n*$" ), "" );
    msg += "\n";
-   QColor save_color_bg = editor->paragraphBackgroundColor( editor->paragraphs() - 1 );
+   // QColor save_color_bg = editor->paragraphBackgroundColor( editor->paragraphs() - 1 );
    editor->setParagraphBackgroundColor( editor->paragraphs() - 1,  bgcolor );
    editor_msg( color, msg );
    editor->setParagraphBackgroundColor( editor->paragraphs() - 1,  "white" );
@@ -250,6 +251,9 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 #endif      
       ;
 
+   crysol_stdout.clear();
+   crysol_stderr.clear();
+
    {
       QFileInfo qfi(prog);
       if ( !qfi.exists() )
@@ -287,6 +291,35 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
       return -1;
    }
 
+   QString uniqstr = QDateTime::currentDateTime().toString( "yyyyMMddhhmmsszzz" );
+   QDir qd_dir2( dir + QDir::separator() + uniqstr );
+   if ( qd_dir2.exists() )
+   {
+      unsigned int ext = 1;
+      do {
+         qd_dir2.setPath( dir + QDir::separator() + uniqstr + QString( "-%1" ).arg( ext++ ) );
+      } while ( qd_dir2.exists() );
+   }
+
+   if ( !qd_dir2.mkdir( qd_dir2.path() ) )
+   {
+      editor_msg("red", QString("Crysol called but could not create the temporary directory '%1'. Check permissions\n").arg(qd_dir2.path()));
+      return -1;
+   }
+   if ( !qd_dir2.exists() )
+   {
+      editor_msg("red", QString("Crysol called but the directory '%1' does not exist\n").arg(qd_dir2.path()));
+      return -1;
+   }
+
+   if ( !qd_dir2.isReadable() )
+   {
+      editor_msg("red", QString("Crysol called but the directory '%1' is not readable. Check permissions\n").arg(qd_dir2.path()));
+      return -1;
+   }
+
+   dir = qd_dir2.path();
+
    crysol_last_pdb = pdb;
    if ( our_saxs_options->crysol_version_26 )
    {
@@ -297,10 +330,9 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
       
    QString use_pdb = pdb;
    
-
-   // copy pdb if the name is too long
-   if ( our_saxs_options->crysol_version_26 ||
-        QFileInfo(crysol_last_pdb).fileName() != QFileInfo(crysol_last_pdb_base).fileName() )
+   // always copy pdb
+   //   if (  our_saxs_options->crysol_version_26 || 
+   //        QFileInfo(crysol_last_pdb).fileName() != QFileInfo(crysol_last_pdb_base).fileName() )
    {
       QFile f( pdb );
       if ( !f.open( IO_ReadOnly ) )
@@ -320,17 +352,48 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
       QTextStream ts( &f );
       QTextStream ts2( &f2 );
 
-      while ( !ts.atEnd() )
+      if ( selected_models[ 0 ] != 0 )
       {
-         qs = ts.readLine();
-         ts2 << qs << endl;
+         QRegExp rx_model( "^MODEL\\s+(\\S+)(\\s+|$)" );
+         
+         bool found_model = false;
+         while ( !ts.atEnd() )
+         {
+            qs = ts.readLine();
+            if ( rx_model.search( qs ) != -1 )
+            {
+               if ( rx_model.cap( 1 ).toUInt() == selected_models[ 0 ] + 1 )
+               {
+                  found_model = true;
+               }
+            }
+            if ( found_model )
+            {
+               ts2 << qs << endl;
+               if ( qs.left( 6 ) == "ENDMDL" )
+               {
+                  break;
+               }
+            }
+         }                  
+      } else {
+         while ( !ts.atEnd() )
+         {
+            qs = ts.readLine();
+            ts2 << qs << endl;
+            if ( qs.left( 6 ) == "ENDMDL" )
+            {
+               break;
+            }
+         }
       }
       f.close();
       f2.close();
       use_pdb = crysol_last_pdb_base;
-   } else {
-      use_pdb = pdb;
    }
+   //else {
+   //      use_pdb = pdb;
+   //   }
 
    cout << "use_pdb: <" << use_pdb << ">\n";
    cout << "crysol_last_pdb_base: <" << crysol_last_pdb_base << ">\n";
@@ -364,76 +427,336 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    crysol = new QProcess( this );
    crysol->setWorkingDirectory( dir );
    crysol->addArgument( prog );
-   crysol->addArgument( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb );
 
-   crysol->addArgument( "/sm" );
-   crysol->addArgument( QString("%1").arg( our_saxs_options->end_q ) );
-
-   crysol->addArgument( "/ns" );
-   crysol->addArgument( QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q)) );
-
-   crysol->addArgument( "/dns" );
-   crysol->addArgument( QString("%1").arg( our_saxs_options->water_e_density ) );
-
-   crysol->addArgument( "/dro" );
-   crysol->addArgument( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ) );
-
-   crysol->addArgument( "/lm" );
-   crysol->addArgument( QString("%1").arg( our_saxs_options->sh_max_harmonics ) );
-
-   crysol->addArgument( "/fb" );
-   crysol->addArgument( QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order ) );
-
-   if ( our_saxs_options->crysol_explicit_hydrogens )
-   {
-      crysol->addArgument( "/eh" );
-   }
+   crysol_manual_mode = false;
+   crysol_manual_input.clear();
 
    if ( U_EXPT &&
         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_crysol_target" ) &&
         !( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ].isEmpty() )
    {
-      US_File_Util ufu;
-      if ( !ufu.copy( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ], dir ) )
+      if ( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_ra" ) &&
+           (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ].toDouble() > 0e0 )
       {
-         editor_msg( "red", ufu.errormsg );
-         if ( ufu.errormsg.contains( QRegExp( "exists$" ) ) )
-         {
-            crysol->addArgument( QFileInfo( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] ).fileName() );
-         }
-      } else {
-         crysol->addArgument( QFileInfo( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] ).fileName() );
+         editor_msg( "dark red", QString( tr( "Note: Manual average atomic radius %1 (A)" ) )
+                     .arg( (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ] ) );
+         crysol_manual_mode = true;
+      }
+      if ( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_vol" ) &&
+           (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ].toDouble() >  0e0 )
+      {
+         editor_msg( "dark red", QString( tr( "Note: Manual excluded volume %1 (A^3)" ) )
+                     .arg( (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ] ) );
+         crysol_manual_mode = true;
       }
    }
+
+   if ( crysol_manual_mode )
+   {
+      editor_msg( "dark red", QString( tr( "Note: crysol running in interactive mode" ) ) );
+#if defined( UHSE_APP_RESPONSE_WAY )
+      crysol_app_text .clear();
+      crysol_response .clear();
+
+      crysol_app_text << "Enter your option ...................... <";
+      crysol_response << "0";
+      crysol_app_text << "Brookhaven file name ................... <";
+      crysol_response << ( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb );
+      crysol_app_text << "Maximum order of  harmonics ........... <";
+      crysol_response << QString("%1").arg( our_saxs_options->sh_max_harmonics );
+      crysol_app_text << "Order of Fibonacci grid ............... <";
+      crysol_response << QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order );
+      crysol_app_text << "Maximum s value ........................ <";
+      crysol_response << QString("%1").arg( our_saxs_options->end_q );
+      crysol_app_text << "Number of points ....................... <";
+      crysol_response << QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q) );
+      crysol_app_text << "Account for explicit hydrogens? [ Y / N ] <";
+      crysol_response << ( our_saxs_options->crysol_explicit_hydrogens ? "Y" : "N" );
+      crysol_app_text << "Fit the experimental curve [ Y / N ] .. <";
+      crysol_response << "Y";
+      crysol_app_text << "Enter data file ........................ <";
+      crysol_response << ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ];
+      crysol_app_text << "Subtract constant ...................... <";
+      crysol_response << "N";
+      crysol_app_text << "sin(theta)/lambda [1/nm]  (4) ..... <";
+      crysol_response << "1";
+      crysol_app_text << "Electron density of the solvent, e/A**3  <";
+      crysol_response << QString("%1").arg( our_saxs_options->water_e_density, 0, 'f', 4 );
+      crysol_app_text << "Plot the fit [ Y / N ] ................. <";
+      crysol_response << "N";
+      crysol_app_text << "Another set of parameters [ Y / N ] .... <";
+      crysol_response << "Y";
+      crysol_app_text << "Minimize again with new limits [ Y / N ] <";
+      crysol_response << "N";
+      crysol_app_text << "Contrast of the solvation shell ........ <";
+      crysol_response << QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast, 0, 'f', 4 ); // hydration shell contrast
+      crysol_app_text << "Average atomic radius .................. <";
+      crysol_response << 
+         QString( ( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_ra" ) &&
+                    (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ].toDouble() > 0e0 ) ?
+                  (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ] : ""  )
+         ;
+      crysol_app_text << "Excluded volume ........................ <";
+      crysol_response << 
+         QString( ( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_vol" ) &&
+                    (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ].toDouble() > 0e0 ) ?
+                  (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ] : "" )
+         ;
+      crysol_app_text << "Plot the fit [ Y / N ] ................. <";
+      crysol_response << "N";
+      crysol_app_text << "Another set of parameters [ Y / N ] .... <";
+      crysol_response << "N";
+      crysol_app_text << "Intensities    saved to file";
+      crysol_response << "___run___";
+#endif
+
+      crysol_manual_input << ""; // option
+      crysol_manual_input << ( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb );
+      crysol_manual_input << QString("%1").arg( our_saxs_options->sh_max_harmonics );
+      crysol_manual_input << QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order );
+      crysol_manual_input << QString("%1").arg( our_saxs_options->end_q );
+      crysol_manual_input << QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q) );
+      crysol_manual_input << ( our_saxs_options->crysol_explicit_hydrogens ? "Y" : "N" );
+      crysol_manual_input << "Y"; // fit expt curve
+      crysol_manual_input << ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ];
+      crysol_manual_input << "N"; // subtract constant
+      crysol_manual_input << "1"; // angular units
+      crysol_manual_input << QString("%1").arg( our_saxs_options->water_e_density, 0, 'f', 4 ) ;
+      crysol_manual_input << "N"; // plot fit
+      crysol_manual_input << "Y"; // another set
+      crysol_manual_input << "N"; // minimize again
+      crysol_manual_input << QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast, 0, 'f', 4 ); // hydration shell contrast
+      crysol_manual_input << 
+         QString( ( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_ra" ) &&
+                    (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ].toDouble() > 0e0 ) ?
+                  (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ] : ""  )
+         ;
+      crysol_manual_input << 
+         QString( ( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_vol" ) &&
+                    (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ].toDouble() > 0e0 ) ?
+                  (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ] : "" )
+         ;
+      crysol_manual_input << "N";
+      crysol_manual_input << "N";
+      qDebug( "crysol input\n------\n" + crysol_manual_input.join( "\n" ) + "\n----" );
+
+      // create input log file, run system command into output 
+      {
+         {
+            QFile f( dir + QDir::separator() + "input" );
+            if ( !f.open( IO_WriteOnly ) )
+            {
+               editor_msg( "red", QString( tr( "Error: trying to create input file %1" ) ).arg( f.name() ) );
+               return -1;
+            }
+            QTextStream ts( &f );
+            ts << crysol_manual_input.join( "\n" ) << endl;
+            f.close();
+         }
+
+         QString cmd = QString( "cd %1\n%2 < input > output" ).arg( dir ).arg( prog );
+         editor_msg( "blue", "\nStarting Crysol");
+         qApp->processEvents();
+         system( cmd );
+         {
+            QFile f( dir + QDir::separator() + "output" );
+            if ( !f.open( IO_ReadOnly ) )
+            {
+               editor_msg( "red", QString( tr( "Error: trying to read output file %1" ) ).arg( f.name() ) );
+               return -1;
+            }
+            QTextStream ts( &f );
+            while ( !ts.atEnd() )
+            {
+               crysol_stdout << ts.readLine();
+            }
+            f.close();
+            editor_msg( "brown", crysol_stdout.join( "\n" ) );
+         }
+         crysol_finishup();
+         return 0;
+      }
+   } else {
+      crysol->addArgument( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb );
+
+      crysol->addArgument( "/sm" );
+      crysol->addArgument( QString("%1").arg( our_saxs_options->end_q ) );
+
+      crysol->addArgument( "/ns" );
+      crysol->addArgument( QString("%1").arg( (unsigned int)(our_saxs_options->end_q / our_saxs_options->delta_q)) );
+
+      crysol->addArgument( "/dns" );
+      crysol->addArgument( QString("%1").arg( our_saxs_options->water_e_density ) );
+
+      crysol->addArgument( "/dro" );
+      crysol->addArgument( QString("%1").arg( our_saxs_options->crysol_hydration_shell_contrast ) );
+
+      crysol->addArgument( "/lm" );
+      crysol->addArgument( QString("%1").arg( our_saxs_options->sh_max_harmonics ) );
+      
+      crysol->addArgument( "/fb" );
+      crysol->addArgument( QString("%1").arg( our_saxs_options->sh_fibonacci_grid_order ) );
+
+      if ( our_saxs_options->crysol_explicit_hydrogens )
+      {
+         crysol->addArgument( "/eh" );
+      }
+
+      if ( U_EXPT &&
+           ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_crysol_target" ) &&
+           !( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ].isEmpty() )
+      {
+         US_File_Util ufu;
+         if ( !ufu.copy( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ], dir ) )
+         {
+            editor_msg( "red", ufu.errormsg );
+            if ( ufu.errormsg.contains( QRegExp( "exists$" ) ) )
+            {
+               crysol->addArgument( QFileInfo( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] ).fileName() );
+            }
+         } else {
+            crysol->addArgument( QFileInfo( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] ).fileName() );
+         }
+      }
+
+   }
+
 
    connect( crysol, SIGNAL(readyReadStdout()), this, SLOT(crysol_readFromStdout()) );
    connect( crysol, SIGNAL(readyReadStderr()), this, SLOT(crysol_readFromStderr()) );
    connect( crysol, SIGNAL(processExited()), this, SLOT(crysol_processExited()) );
-   connect( crysol, SIGNAL(launchFinished()), this, SLOT(crysol_launchFinished()) );
 
+#if defined( UHSE_APP_RESPONSE_WAY )
+   if ( crysol_manual_mode )
+   {
+      connect( &crysol_timer,  SIGNAL( timeout()         ), this, SLOT( crysol_timeout()        ) );
+      crysol_query_response_pos = 0;
+      crysol_run_to_end         = false;
+      crysol_timer_delay_ms     = 240000;
+   }
+#endif
+   
    editor->append("\n\nStarting Crysol\n");
-
+   
    editor_msg( "dark blue", crysol->arguments().join( " " ) );
    crysol->start();
    external_running = true;
-
+   
    return 0;
+}
+
+void US_Hydrodyn_Saxs::crysol_timeout()
+{
+   editor_msg( "red", tr( "Error: out of responses to queries (timeout)\n" ) );
+   qDebug( "timeout" );
+   crysol->kill();
 }
 
 void US_Hydrodyn_Saxs::crysol_readFromStdout()
 {
    while ( crysol->canReadLineStdout() )
    {
-      editor_msg("brown", crysol->readLineStdout() + "\n");
+      QString qs = crysol->readLineStdout();
+      crysol_stdout << qs;
+      editor_msg("brown", qs );
    }
-   //  qApp->processEvents();
+
+#if defined( UHSE_APP_RESPONSE_WAY )
+   if ( !crysol_manual_mode )
+   {
+      while ( crysol->canReadLineStdout() )
+      {
+         QString qs = crysol->readLineStdout();
+         crysol_stdout << qs;
+         editor_msg("brown", qs );
+      }
+      return;
+   }
+   crysol_timer.stop();
+
+   qDebug( "readFromStdout()" );
+   QString qs;
+   QString text;
+   //   do {
+   // while ( crysol->canReadLineStdout() )
+   // {
+   //    qs = crysol->readLineStdout();
+   //    crysol_stdout << qs;
+   //    editor_msg("brown", qs );
+   //    text += qs;
+   // };
+      //   } while ( qs != QString::null );
+
+   //do {
+      QString read = crysol->readStdout();
+      qs = QString( "%1" ).arg( read );
+      crysol_stdout << qs;
+      editor_msg("brown", qs );
+      text += qs;
+      // } while ( qs.length() );
+   
+   qDebug( QString( "received <%1>" ).arg( text ) );
+
+   if ( !crysol_run_to_end && crysol_app_text.size() )
+   {
+      // if not at first entry, read data to find match
+      int previous_pos = crysol_query_response_pos;
+      while ( ( int ) crysol_app_text.size() > crysol_query_response_pos &&
+              !text.contains( crysol_app_text[ crysol_query_response_pos ] ) && 
+              crysol_query_response_pos )
+      {
+         crysol_query_response_pos++;
+      }
+      if ( crysol_query_response_pos >= ( int ) crysol_app_text.size() )
+      {
+         crysol_query_response_pos = previous_pos;
+         if ( crysol_timer_delay_ms )
+         {
+            qDebug( QString( "starting timer for %1 seconds" ).arg( ( double )crysol_timer_delay_ms / 1000e0 ) );
+            crysol_timer.start( crysol_timer_delay_ms );
+         } else {
+            qDebug( tr( "Error: out of responses to queries" ) );
+            crysol->kill();
+         }
+         return;
+      }         
+
+      // do we have a match?
+      if ( ( int ) crysol_app_text.size() > crysol_query_response_pos &&
+           text.contains( crysol_app_text[ crysol_query_response_pos ] ) )
+      {
+         qDebug( QString( "received <%1> from application" ).arg( crysol_app_text[ crysol_query_response_pos ] ) );
+         if ( crysol_response[ crysol_query_response_pos ] != "___run___" )
+         {
+            if ( crysol_response[ crysol_query_response_pos ].left( 2 ).contains( "__" ) )
+            {
+               qDebug(  
+                      QString( tr( "Error: undefined response <%1> to query <%2>" ) )
+                      .arg( crysol_response[ crysol_query_response_pos ] )
+                      .arg( crysol_app_text[ crysol_query_response_pos ] ) )
+                  ;
+               crysol->kill();
+               return;
+            }
+            qDebug( QString( "sent     <%1> to application"   ).arg( crysol_response[ crysol_query_response_pos ] ) );
+            crysol->writeToStdin( crysol_response[ crysol_query_response_pos ] + "\n" );
+            crysol_query_response_pos++;
+         } else {
+            qDebug( "now run to end of application" );
+            crysol_run_to_end = true;
+         }
+      }
+   }
+#endif
 }
    
 void US_Hydrodyn_Saxs::crysol_readFromStderr()
 {
    while ( crysol->canReadLineStderr() )
    {
-      editor_msg("red", crysol->readLineStderr() + "\n");
+      QString qs = crysol->readLineStderr();
+      crysol_stderr << qs;
+      editor_msg("red", qs + "\n");
    }
    //  qApp->processEvents();
 }
@@ -449,6 +772,14 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    disconnect( crysol, SIGNAL(readyReadStderr()), 0, 0);
    disconnect( crysol, SIGNAL(processExited()), 0, 0);
 
+   if ( crysol_manual_mode )
+   {
+      disconnect( crysol, SIGNAL(wroteToStdin()), 0, 0);
+   }
+
+   qDebug( "crysolstdout: " + crysol_stdout.join("\n") );
+   qDebug( "crysolstderr: " + crysol_stderr.join("\n") );
+
    // crysol creates 4 files:
    // crysol_summary.txt
    // pdb##.alm
@@ -456,6 +787,38 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    // pdb##.int
 
    // we just want the .int, the rest will be removed if needed
+
+   // crysol
+   crysol_finishup();
+}
+
+void US_Hydrodyn_Saxs::crysol_finishup()
+{
+   QStringList intensity_lines = crysol_stdout.grep( QRegExp( "Intensities\\s+saved to file" ) );
+   QStringList fit_lines       = crysol_stdout.grep( QRegExp( "Data fit\\s+saved to file" ) );
+
+   QString new_intensity_file;
+   QString new_fit_file;
+
+   if ( intensity_lines.size() == 1 )
+   {
+      QRegExp rx( "Intensities\\s+saved to file (\\S+)" );
+      if ( rx.search( intensity_lines[ 0 ] ) != -1 )
+      {
+         new_intensity_file = rx.cap( 1 );
+      }
+   }
+   if ( fit_lines.size() == 1 )
+   {
+      QRegExp rx( "Data fit\\s+saved to file (\\S+)" );
+      if ( rx.search( fit_lines[ 0 ] ) != -1 )
+      {
+         new_fit_file = rx.cap( 1 );
+      }
+   }
+
+   // qDebug( "intensity_file: " + new_intensity_file );
+   // qDebug( "fit_file: " + new_fit_file );
 
    QString type = ".int";
    if ( U_EXPT &&
@@ -466,6 +829,19 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    }
 
    QString created_dat = crysol_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"") +  "00" + type;
+
+   // qDebug( "created_dat: " + created_dat );
+
+   if ( !new_intensity_file.isEmpty() )
+   {
+      created_dat = QFileInfo( created_dat ).dirPath() + QDir::separator() + new_intensity_file;
+   }
+   if ( !new_fit_file.isEmpty() )
+   {
+      created_dat = QFileInfo( created_dat ).dirPath() + QDir::separator() + new_fit_file;
+   }
+
+   // qDebug( "created_dat after rplc: " + created_dat );
 
    if ( !QFile::exists( created_dat ) )
    {
@@ -478,7 +854,9 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    // now move the file to the saxs directory
    QString new_created_dat = 
       ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + 
-      QFileInfo( crysol_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),"") ).fileName() + iqq_suffix() + type;
+      QFileInfo( crysol_last_pdb.replace(QRegExp("\\.(pdb|PDB)$"),"") ).fileName() + 
+      ( selected_models[ 0 ] == 0 ? QString( "" ) : QString( "_m%1" ).arg( selected_models[ 0 ] + 1 ) )
+      + iqq_suffix() + type;
 
    if ( QFile::exists(new_created_dat) )
    {
@@ -511,10 +889,16 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    external_running = false;
 }
    
+void US_Hydrodyn_Saxs::crysol_wroteToStdin()
+{
+   qDebug( "Crysol wroteToStdin" );
+}
+
 void US_Hydrodyn_Saxs::crysol_launchFinished()
 {
    editor_msg("brown", "Crysol launch exited\n");
    disconnect( crysol, SIGNAL(launchFinished()), 0, 0);
+   qDebug( "crysol launchFinished" );
 }
 
 // -------------------- cryson ------------------------------
@@ -615,20 +999,20 @@ int US_Hydrodyn_Saxs::run_sans_iq_cryson( QString pdb )
 
    // clean up so we have new files
 
-   {
-      QString base = cryson_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"");
-      cout << "base: <" << base << ">\n";
+   // {
+   //    QString base = cryson_last_pdb_base.replace(QRegExp("\\.(pdb|PDB)$"),"");
+   //    cout << "base: <" << base << ">\n";
 
-      QString to_remove = base + "00.alm";
-      cout << "to_remove: <" << to_remove << ">\n";
-      QFile::remove( to_remove );
+   //    QString to_remove = base + "00.alm";
+   //    cout << "to_remove: <" << to_remove << ">\n";
+   //    QFile::remove( to_remove );
 
-      to_remove = base + "00.log";
-      QFile::remove( to_remove );
+   //    to_remove = base + "00.log";
+   //    QFile::remove( to_remove );
 
-      to_remove = base + "00.int";
-      QFile::remove( to_remove );
-   }      
+   //    to_remove = base + "00.int";
+   //    QFile::remove( to_remove );
+   // }      
 
    pb_plot_saxs_sans->setEnabled(false);
 

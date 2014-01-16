@@ -19,6 +19,7 @@
 #include <qprinter.h>
 #include <qregexp.h>
 #include <qwt_wheel.h>
+#include <qtimer.h>
 
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
@@ -707,12 +708,16 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QProcess *cryson;
       QProcess *sastbx;
 
+      QStringList crysol_stdout;
+      QStringList crysol_stderr;
       QString foxs_last_pdb;
       QString sastbx_last_pdb;
       QString crysol_last_pdb;
       QString crysol_last_pdb_base;
       QString cryson_last_pdb;
       QString cryson_last_pdb_base;
+      bool crysol_manual_mode;
+      QStringList crysol_manual_input;
 
       void calc_saxs_iq_native_debye();
       void calc_saxs_iq_native_sh();
@@ -826,6 +831,18 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 # endif
 #endif      
 
+#if defined( UHSE_APP_RESPONSE_WAY )
+      QStringList    crysol_app_text;
+      QStringList    crysol_response;
+      
+      int            crysol_query_response_pos;
+      bool           crysol_run_to_end;
+
+      QTimer         crysol_timer;
+      int            crysol_timer_delay_ms;
+#endif
+      void           crysol_finishup();
+
    private slots:
 
       void manual_guinier_process();
@@ -854,6 +871,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void crysol_readFromStderr();
       void crysol_launchFinished();
       void crysol_processExited();
+      void crysol_wroteToStdin();
+      void crysol_timeout();
 
       void cryson_readFromStdout();
       void cryson_readFromStderr();

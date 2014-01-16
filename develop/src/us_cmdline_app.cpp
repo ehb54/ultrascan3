@@ -7,8 +7,9 @@ US_Cmdline_App::US_Cmdline_App(
                                QStringList    app_text,
                                QStringList    response,
                                QString      * error_msg,
-                               int            timer_delay_ms
-
+                               int            timer_delay_ms,
+                               QStringList  * stdout,
+                               QStringList  * stderr
                                )
 {
    this->qa             = qa;
@@ -18,6 +19,8 @@ US_Cmdline_App::US_Cmdline_App(
    this->response       = response;
    this->error_msg      = error_msg;
    this->timer_delay_ms = timer_delay_ms;
+   this->stdout         = stdout;
+   this->stderr         = stderr;
 
    *error_msg = "";
 
@@ -61,14 +64,14 @@ US_Cmdline_App::US_Cmdline_App(
 
    if ( !process.start() )
    {
-      cout << "error starting\n";
+      qDebug( "error starting" );
       *error_msg += QString( "Error: could not start process: %1\n" ).arg( args[ 0 ] );
       process.kill();
       qa->quit();
       qa->processEvents();
       return;
    }
-   cout << QString( "starting process: %1\n" ).arg( args[ 0 ] ).ascii();
+   qDebug( QString( "starting process: %1" ).arg( args[ 0 ] ) );
 }
 
 US_Cmdline_App::~US_Cmdline_App()
@@ -80,28 +83,36 @@ void US_Cmdline_App::timeout()
 {
    *error_msg += 
       QString( "Error: out of responses to queries (timeout)\n" );
-   cout << "timeout\n";
+   qDebug( "timeout" );
    process.kill();
 }
 
 void US_Cmdline_App::readFromStdout()
 {
    timer.stop();
-   cout << "readFromStdout()\n";
+   qDebug( "readFromStdout()" );
    QString qs;
    QString text;
    do {
       qs = process.readLineStdout();
+      if ( stdout )
+      {
+         *stdout << qs;
+      }
       text += qs + "\n";
    } while ( qs != QString::null );
 
    do {
       QString read = process.readStdout();
+      if ( stdout )
+      {
+         *stdout << qs;
+      }
       qs = QString( "%1" ).arg( read );
       text += qs;
    } while ( qs.length() );
    
-   cout << QString( "received <%1>\n" ).arg( text ).ascii();
+   qDebug( QString( "received <%1>" ).arg( text ) );
 
    if ( !run_to_end && app_text.size() )
    {
@@ -118,7 +129,7 @@ void US_Cmdline_App::readFromStdout()
          query_response_pos = previous_pos;
          if ( timer_delay_ms )
          {
-            cout << QString( "starting timer for %1 seconds\n" ).arg( ( double )timer_delay_ms / 1000e0 ).ascii();
+            qDebug( QString( "starting timer for %1 seconds" ).arg( ( double )timer_delay_ms / 1000e0 ) );
             timer.start( timer_delay_ms );
          } else {
             *error_msg += 
@@ -134,7 +145,7 @@ void US_Cmdline_App::readFromStdout()
       if ( ( int ) app_text.size() > query_response_pos &&
            text.contains( app_text[ query_response_pos ] ) )
       {
-         cout << QString( "received <%1> from application\n" ).arg( app_text[ query_response_pos ] ).ascii();
+         qDebug( QString( "received <%1> from application" ).arg( app_text[ query_response_pos ] ) );
          if ( response[ query_response_pos ] != "___run___" )
          {
             if ( response[ query_response_pos ].left( 2 ).contains( "__" ) )
@@ -148,11 +159,11 @@ void US_Cmdline_App::readFromStdout()
                qa->quit();
                return;
             }
-            cout << QString( "sent     <%1> to application\n"   ).arg( response[ query_response_pos ] ).ascii();
+            qDebug( QString( "sent     <%1> to application"   ).arg( response[ query_response_pos ] ) );
             process.writeToStdin( response[ query_response_pos ] + "\n" );
             query_response_pos++;
          } else {
-            cout << "now run to end of application\n";
+            qDebug( "now run to end of application" );
             run_to_end = true;
          }
       }
@@ -161,12 +172,19 @@ void US_Cmdline_App::readFromStdout()
 
 void US_Cmdline_App::readFromStderr()
 {
-   cout << "readFromStderr()\n";
+   qDebug( "readFromStderr()" );
+   if ( stderr )
+   {
+      while ( process.canReadLineStderr() )
+      {
+         *stderr << process.readLineStderr();
+      }
+   }
 }
 
 void US_Cmdline_App::processExited()
 {
-   cout << "processExited()\n";
+   qDebug( "processExited()" );
 
    if ( !process.normalExit() )
    {
@@ -183,5 +201,5 @@ void US_Cmdline_App::processExited()
 
 void US_Cmdline_App::launchFinished()
 {
-   cout << "launchFinished()\n";
+   qDebug( "launchFinished()" );
 }
