@@ -424,9 +424,6 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 
    pb_plot_saxs_sans->setEnabled(false);
 
-   crysol = new QProcess( this );
-   crysol->setWorkingDirectory( dir );
-   crysol->addArgument( prog );
 
    crysol_manual_mode = false;
    crysol_manual_input.clear();
@@ -566,11 +563,24 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
          }
 
          QString cmd = QString( "\"%1\" < input > output" ).arg( prog );
-         editor_msg( "blue", "\nStarting Crysol\n" + cmd );
-         qApp->processEvents();
-         QString savedir = QDir::currentDirPath();
-         QDir::setCurrent( dir );
-// #if defined( WIN32 )
+#if defined( WIN32 )
+         {
+            QFile f( dir + QDir::separator() + "run.bat" );
+            if ( !f.open( IO_WriteOnly ) )
+            {
+               editor_msg( "red", QString( tr( "Error: trying to create batch file %1" ) ).arg( f.name() ) );
+               pb_plot_saxs_sans->setEnabled(true);
+               return -1;
+            }
+            QTextStream ts( &f );
+            ts << cmd << endl;
+            f.close();
+
+            crysol = new QProcess( this );
+            crysol->setWorkingDirectory( dir );
+            crysol->addArgument( f.name() );
+         }
+
 // attempt to create job with no "cmd" box
 //          {
 //             PROCESS_INFORMATION processInformation = {0};
@@ -606,9 +616,13 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 //             //    CloseHandle(pi.hThread);
 //             // }
 //          }
-// #else
+
+#else
+         editor_msg( "blue", "\nStarting Crysol\n" + cmd );
+         qApp->processEvents();
+         QString savedir = QDir::currentDirPath();
+         QDir::setCurrent( dir );
          system( cmd );
-// #endif
          QDir::setCurrent( savedir );
          {
             QFile f( dir + QDir::separator() + "output" );
@@ -628,8 +642,13 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
          }
          crysol_finishup();
          return 0;
+#endif
       }
    } else {
+      crysol = new QProcess( this );
+      crysol->setWorkingDirectory( dir );
+      crysol->addArgument( prog );
+
       crysol->addArgument( our_saxs_options->crysol_version_26 ? QFileInfo(use_pdb).fileName() : use_pdb );
 
       crysol->addArgument( "/sm" );
@@ -673,7 +692,6 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
       }
 
    }
-
 
    connect( crysol, SIGNAL(readyReadStdout()), this, SLOT(crysol_readFromStdout()) );
    connect( crysol, SIGNAL(readyReadStderr()), this, SLOT(crysol_readFromStderr()) );
@@ -816,6 +834,7 @@ void US_Hydrodyn_Saxs::crysol_readFromStderr()
    
 void US_Hydrodyn_Saxs::crysol_processExited()
 {
+
    //   for ( int i = 0; i < 10000; i++ )
    //   {
    crysol_readFromStderr();
@@ -827,7 +846,20 @@ void US_Hydrodyn_Saxs::crysol_processExited()
 
    if ( crysol_manual_mode )
    {
-      disconnect( crysol, SIGNAL(wroteToStdin()), 0, 0);
+      QFile f( crysol->workingDirectory().dirName() + QDir::separator() + "output" );
+      if ( !f.open( IO_ReadOnly ) )
+      {
+         editor_msg( "red", QString( tr( "Error: trying to read output file %1" ) ).arg( f.name() ) );
+         pb_plot_saxs_sans->setEnabled(true);
+         return;
+      }
+      QTextStream ts( &f );
+      while ( !ts.atEnd() )
+      {
+         crysol_stdout << ts.readLine();
+      }
+      f.close();
+      editor_msg( "brown", crysol_stdout.join( "\n" ) );
    }
 
    qDebug( "crysolstdout: " + crysol_stdout.join("\n") );
@@ -842,6 +874,7 @@ void US_Hydrodyn_Saxs::crysol_processExited()
    // we just want the .int, the rest will be removed if needed
 
    // crysol
+   delete crysol;
    crysol_finishup();
 }
 
