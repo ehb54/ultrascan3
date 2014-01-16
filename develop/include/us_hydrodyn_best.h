@@ -135,6 +135,8 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       QStringList                             tau_csv_addendum_tag;
       QStringList                             tau_csv_addendum_val;
 
+      QString                                 save_last_file;
+
    private slots:
 
       // ------ data section 
@@ -163,6 +165,8 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       void                                    toggle_points    ();
       void                                    toggle_points_ln ();
       void                                    toggle_points_exp();
+
+      void                                    set_last_file    ( const QString & str );
 
    protected slots:
 

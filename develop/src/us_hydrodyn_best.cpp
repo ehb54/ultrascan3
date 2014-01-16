@@ -112,12 +112,13 @@ void US_Hydrodyn_Best::setupGUI()
    input_widgets.push_back( pb_save_results );
 
    le_last_file = new QLineEdit(this);
-   le_last_file->setText( "" );
-   le_last_file->setReadOnly( true );
+   save_last_file = "";
+   le_last_file->setText( save_last_file );
    le_last_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_last_file->setMinimumHeight(minHeight1);
    le_last_file->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_last_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   connect( le_last_file, SIGNAL( textChanged( const QString & ) ), SLOT( set_last_file( const QString & ) ) );
 
    input_widgets.push_back( le_last_file );
 
@@ -443,7 +444,8 @@ void US_Hydrodyn_Best::clear()
 void US_Hydrodyn_Best::load()
 {
    // open file, clear lb_data, clear plot, reload lb_data
-   le_last_file->setText( "" );
+   save_last_file = "";
+   le_last_file->setText( save_last_file );
    pb_load->setEnabled( false );
    QString use_dir = 
       USglobal->config_list.root_dir + 
@@ -477,7 +479,8 @@ void US_Hydrodyn_Best::load()
       return;
    }
 
-   le_last_file->setText( filename );
+   save_last_file = filename;
+   le_last_file->setText( save_last_file );
 
    QTextStream ts( &f );
    if ( ts.atEnd() )
@@ -1764,3 +1767,10 @@ void US_Hydrodyn_Best::toggle_points_exp()
    // data_selected();
 }
 
+void US_Hydrodyn_Best::set_last_file( const QString & str )
+{
+   if ( str != save_last_file )
+   {
+      le_last_file->setText( save_last_file );
+   }
+}
