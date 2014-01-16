@@ -547,6 +547,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
             if ( !f.open( IO_WriteOnly ) )
             {
                editor_msg( "red", QString( tr( "Error: trying to create input file %1" ) ).arg( f.name() ) );
+               pb_plot_saxs_sans->setEnabled(true);
                return -1;
             }
             QTextStream ts( &f );
@@ -563,6 +564,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
             if ( !f.open( IO_ReadOnly ) )
             {
                editor_msg( "red", QString( tr( "Error: trying to read output file %1" ) ).arg( f.name() ) );
+               pb_plot_saxs_sans->setEnabled(true);
                return -1;
             }
             QTextStream ts( &f );

@@ -7,9 +7,9 @@ US_Cmdline_App::US_Cmdline_App(
                                QStringList    app_text,
                                QStringList    response,
                                QString      * error_msg,
-                               int            timer_delay_ms,
-                               QStringList  * stdout,
-                               QStringList  * stderr
+                               int            timer_delay_ms
+                               // QStringList  * stdout,
+                               // QStringList  * stderr
                                )
 {
    this->qa             = qa;
@@ -19,8 +19,8 @@ US_Cmdline_App::US_Cmdline_App(
    this->response       = response;
    this->error_msg      = error_msg;
    this->timer_delay_ms = timer_delay_ms;
-   this->stdout         = stdout;
-   this->stderr         = stderr;
+   // this->stdout         = stdout;
+   // this->stderr         = stderr;
 
    *error_msg = "";
 
@@ -95,19 +95,19 @@ void US_Cmdline_App::readFromStdout()
    QString text;
    do {
       qs = process.readLineStdout();
-      if ( stdout )
-      {
-         *stdout << qs;
-      }
+      // if ( stdout )
+      // {
+      //    *stdout << qs;
+      // }
       text += qs + "\n";
    } while ( qs != QString::null );
 
    do {
       QString read = process.readStdout();
-      if ( stdout )
-      {
-         *stdout << qs;
-      }
+      // if ( stdout )
+      // {
+      //    *stdout << qs;
+      // }
       qs = QString( "%1" ).arg( read );
       text += qs;
    } while ( qs.length() );
@@ -173,13 +173,13 @@ void US_Cmdline_App::readFromStdout()
 void US_Cmdline_App::readFromStderr()
 {
    qDebug( "readFromStderr()" );
-   if ( stderr )
-   {
-      while ( process.canReadLineStderr() )
-      {
-         *stderr << process.readLineStderr();
-      }
-   }
+   // if ( stderr )
+   // {
+   //    while ( process.canReadLineStderr() )
+   //    {
+   //       *stderr << process.readLineStderr();
+   //    }
+   // }
 }
 
 void US_Cmdline_App::processExited()

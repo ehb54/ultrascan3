@@ -23,7 +23,7 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( QListView *lv )
    }
 
    editor_msg( "blue", tr( "Select nearest atoms" ) );
-   pdb_sel_count counts = count_selected( lv );
+   // pdb_sel_count counts = count_selected( lv );
 
    double max_dist = parameters[ "max_dist" ].toDouble();
 

@@ -39,9 +39,9 @@ class US_Cmdline_App : public QObject
                      QStringList    app_text,
                      QStringList    response,
                      QString      * error_msg,
-                     int            timer_delay_ms = 0,
-                     QStringList  * stdout         = (QStringList *)0,
-                     QStringList  * stderr         = (QStringList *)0
+                     int            timer_delay_ms = 0
+                     //                     QStringList  * stdout         = (QStringList *)0,
+                     //                     QStringList  * stderr         = (QStringList *)0
                      );
       ~US_Cmdline_App();
       QString      * error_msg;
@@ -61,8 +61,8 @@ class US_Cmdline_App : public QObject
       QStringList    args;
       QStringList    app_text;
       QStringList    response;
-      QStringList  * stdout;
-      QStringList  * stderr;
+      // QStringList  * stdout;
+      // QStringList  * stderr;
 
       int            query_response_pos;
       bool           run_to_end;
