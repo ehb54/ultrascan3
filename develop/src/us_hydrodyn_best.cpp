@@ -111,6 +111,16 @@ void US_Hydrodyn_Best::setupGUI()
 
    input_widgets.push_back( pb_save_results );
 
+   le_last_file = new QLineEdit(this);
+   le_last_file->setText( "" );
+   le_last_file->setReadOnly( true );
+   le_last_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_last_file->setMinimumHeight(minHeight1);
+   le_last_file->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_last_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   input_widgets.push_back( le_last_file );
+
    cb_plus_lm = new QCheckBox( this );
    cb_plus_lm->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    cb_plus_lm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -250,6 +260,7 @@ void US_Hydrodyn_Best::setupGUI()
          bl->addLayout( hbl );
       }
 
+      bl->addWidget( le_last_file );
       bl->addWidget( cb_plus_lm );
       bl->addWidget( lbl_editor );
       bl->addWidget( frame );
@@ -432,6 +443,7 @@ void US_Hydrodyn_Best::clear()
 void US_Hydrodyn_Best::load()
 {
    // open file, clear lb_data, clear plot, reload lb_data
+   le_last_file->setText( "" );
    pb_load->setEnabled( false );
    QString use_dir = 
       USglobal->config_list.root_dir + 
@@ -464,6 +476,8 @@ void US_Hydrodyn_Best::load()
       pb_load->setEnabled( true );
       return;
    }
+
+   le_last_file->setText( filename );
 
    QTextStream ts( &f );
    if ( ts.atEnd() )

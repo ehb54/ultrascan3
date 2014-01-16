@@ -37,6 +37,8 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       QListBox *                              lb_data;
       QPushButton *                           pb_load;
       QPushButton *                           pb_save_results;
+      QLineEdit *                             le_last_file;
+      QCheckBox             *                 cb_plus_lm;
 
       // ------ editor section 
 
@@ -60,7 +62,6 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       QHBoxLayout           *                 hbl_points_exp;
       mQLabel               *                 lbl_points_exp;
       vector < QCheckBox * >                  cb_points_exp;
-      QCheckBox             *                 cb_plus_lm;
 
       // ------- bottom section
 
