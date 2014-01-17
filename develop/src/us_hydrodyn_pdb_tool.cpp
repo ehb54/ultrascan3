@@ -2768,7 +2768,7 @@ void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
                {
                   if ( !item1->childCount() && is_selected( item1 ) )
                   {
-                     if ( !( ++count ) % 500 )
+                     if ( !( ++count % 500 ) )
                      {
                         editor_msg( "black", QString( "processed %1" ).arg( count ) );
                         qApp->processEvents();
@@ -2827,7 +2827,7 @@ void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
                {
                   if ( !item1->childCount() && is_selected( item1 ) )
                   {
-                     if ( !( ++count ) % 500 )
+                     if ( !( ++count % 500 ) )
                      {
                         editor_msg( "black", QString( "processed %1" ).arg( count ) );
                         qApp->processEvents();
@@ -2967,7 +2967,7 @@ void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
          {
             if ( !item1->childCount() && is_selected( item1 ) )
             {
-               if ( !( ++count ) % 500 )
+               if ( !( ++count % 500 ) )
                {
                   editor_msg( "black", QString( "processed %1" ).arg( count ) );
                   qApp->processEvents();
@@ -3025,7 +3025,7 @@ void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
          {
             if ( !item1->childCount() && is_selected( item1 ) )
             {
-               if ( !( ++count ) % 500 )
+               if ( !( ++count % 500 ) )
                {
                   editor_msg( "black", QString( "processed %1" ).arg( count ) );
                   qApp->processEvents();
