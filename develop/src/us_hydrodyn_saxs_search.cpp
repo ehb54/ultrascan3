@@ -376,8 +376,27 @@ void US_Hydrodyn_Saxs_Search::set_target()
       if ( !scaling_target.isEmpty() )
       {
          saxs_window->ask_iq_target_grid();
-      }
+         if (
+             saxs_window->our_saxs_options->saxs_iq_crysol &&
+             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_crysol_target" ) &&
+             !( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ].isEmpty() )
+         {
+            editor_msg( "red", QString( tr( "WARNING: Crysol has an active experimental target of %1 which may or may not be the same as the selected plot target %2" ) )
+                        .arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] )
+                        .arg( scaling_target ) );
+         }
+      } else {
+         if (
+             saxs_window->our_saxs_options->saxs_iq_crysol &&
+             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_crysol_target" ) &&
+             !( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ].isEmpty() )
+         {
+            editor_msg( "dark red", QString( tr( "NOTICE: Crysol has an active experimental target of %1" ) )
+                        .arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] ) );
+         }
+      }         
    }
+        
    lbl_current_target->setText( scaling_target );
 }
 
@@ -389,6 +408,7 @@ void US_Hydrodyn_Saxs_Search::start()
    {
       return;
    }
+   best_fitness = 1e99;
    running = true;
    update_enables();
 
