@@ -84,7 +84,6 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
 
    t_csv = new QTable(csv1.data.size(), csv1.header.size(), this);
    t_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   // t_csv->setMinimumHeight(minHeight1 * 3);
    // t_csv->setMinimumWidth(minWidth1);
    t_csv->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -121,6 +120,8 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
    // probably I'm not understanding something, but these next two lines don't seem to do anything
    t_csv->horizontalHeader()->adjustHeaderSize();
    t_csv->adjustSize();
+   t_csv->setMinimumHeight( ( t_csv->rowHeight( 0 ) + 6 ) * csv1.num_data.size() );
+   t_csv->setMaximumHeight( ( t_csv->rowHeight( 0 ) + 10 ) * csv1.num_data.size() );
 
    recompute_interval_from_points();
 
