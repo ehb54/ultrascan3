@@ -639,6 +639,7 @@ void US_Hydrodyn_Saxs_Search::run_one()
    // run the analysis, get fitness
    
    editor_msg("black", "Running anaysis " + msg + "\n");
+   qApp->processEvents();
    
    // change to saxs/sans?
 
@@ -749,6 +750,7 @@ void US_Hydrodyn_Saxs_Search::update_enables()
    cb_save_to_csv      ->setEnabled( !running );
    le_csv_filename     ->setEnabled( !running && cb_save_to_csv->isChecked() );
    cb_individual_files ->setEnabled( !running );
+   t_csv               ->setEnabled( !running );
 
    if ( *saxs_widget )
    {
