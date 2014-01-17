@@ -1887,10 +1887,22 @@ QStringList US_Hydrodyn_Cluster::advanced_addition()
             out += "SwhExclVol      ";
             ok = true;
          }
-         if ( csv_advanced.data[ it->first ][ 0 ] == "I(q) Crysol: contrast of hydration shell" )
+         if ( csv_advanced.data[ it->first ][ 0 ] == "Crysol: contrast of hydration shell" )
          {
             tag += "hs";
             out += "CrysolChs       ";
+            ok = true;
+         }
+         if ( csv_advanced.data[ it->first ][ 0 ] == "Crysol: average atomic radius" )
+         {
+            tag += "ra";
+            out += "CrysolRa       ";
+            ok = true;
+         }
+         if ( csv_advanced.data[ it->first ][ 0 ] == "Crysol: Excluded volume" )
+         {
+            tag += "ev";
+            out += "CrysolEv       ";
             ok = true;
          }
          if ( ok )

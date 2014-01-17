@@ -5238,6 +5238,45 @@ void US_Hydrodyn_Saxs::reset_search_csv()
    search_csv.prepended_names.push_back(tmp_data[0]);
    search_csv.data.push_back(tmp_data);
 
+   tmp_data.clear();
+   tmp_data.push_back("Crysol: average atomic radius");
+   tmp_data.push_back("N");
+   tmp_data.push_back("1.5");
+   tmp_data.push_back("1.7");
+   tmp_data.push_back("11");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   search_csv.prepended_names.push_back(tmp_data[0]);
+   search_csv.data.push_back(tmp_data);
+
+   tmp_data.clear();
+   tmp_data.push_back("Crysol: Excluded volume");
+   tmp_data.push_back("N");
+   tmp_data.push_back("10000");
+   tmp_data.push_back("20000");
+   tmp_data.push_back("11");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   search_csv.prepended_names.push_back(tmp_data[0]);
+   search_csv.data.push_back(tmp_data);
+
+   tmp_data.clear();
+   tmp_data.push_back("Crysol: contrast of hydration shell");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.01");
+   tmp_data.push_back("0.05");
+   tmp_data.push_back("11");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+   tmp_data.push_back("");
+
+   search_csv.prepended_names.push_back(tmp_data[0]);
+   search_csv.data.push_back(tmp_data);
+
    for ( unsigned int i = 0; i < search_csv.data.size(); i++ )
    {
       vector < double > tmp_num_data;

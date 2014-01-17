@@ -2674,9 +2674,26 @@ void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
                                                                  1,
                                                                  &ok, 
                                                                  this );
+
    if ( !ok ) 
    {
       return;
+   }
+
+   double dist_thresh = QInputDialog::getDouble(
+                                                tr( "US-SOMO: PDB editor : Pairwise Distances" ) ,
+                                                QString( tr( "Enter a maximum threshold distance or press CANCEL for no threshold limit:" ) )
+                                                ,
+                                                0,
+                                                0, 
+                                                1e99,
+                                                4,
+                                                &ok, 
+                                                this );
+
+   if ( !ok )
+   {
+      dist_thresh = 1e99;
    }
 
    QString restrict_atom;
@@ -2739,43 +2756,116 @@ void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
          map < lvipair, double > distmap;
 
          QListViewItemIterator it1( lv );
-         while ( it1.current() ) 
+         if ( dist_thresh != 1e99 )
          {
-            QListViewItem *item1 = it1.current();
-            if ( restrict_atom.isEmpty() || get_atom_name( item1 ) == restrict_atom )
+            editor_msg( "brown", QString( tr( "using threshold limit %1" ).arg( dist_thresh, 0, 'f', 3 ) ) );
+            qApp->processEvents();
+            unsigned int count = 0;
+            while ( it1.current() ) 
             {
-               if ( !item1->childCount() && is_selected( item1 ) )
+               QListViewItem *item1 = it1.current();
+               if ( restrict_atom.isEmpty() || get_atom_name( item1 ) == restrict_atom )
                {
-                  
-                  QListViewItemIterator it2( lv );
-                  while ( it2.current() ) 
+                  if ( !item1->childCount() && is_selected( item1 ) )
                   {
-                     QListViewItem *item2 = it2.current();
-                     lvipair lvp;
-                     lvp.lvi1 = item2;
-                     lvp.lvi2 = item1;
-                     if ( item1 != item2 && !item2->childCount() && is_selected( item2 ) && !distmap.count( lvp ) )
+                     if ( !( ++count ) % 500 )
                      {
-                        double d = pair_dist( item1, item2 );
-                        lvp.lvi1 = item1;
-                        lvp.lvi2 = item2;
-                        if ( !distmap.count( lvp ) )
-                        {
-                           distmap[ lvp ] = d;
-                        } else {
-                           if ( distmap[ lvp ] > d )
-                           {
-                              distmap[ lvp ] = d;
-                           }
-                        }
-                        
+                        editor_msg( "black", QString( "processed %1" ).arg( count ) );
+                        qApp->processEvents();
                      }
-                     ++it2;
+
+                     QListViewItemIterator it2( lv );
+                     while ( it2.current() ) 
+                     {
+                        QListViewItem *item2 = it2.current();
+                        lvipair lvp;
+                        lvp.lvi1 = item2;
+                        lvp.lvi2 = item1;
+                        if ( item1 != item2 && !item2->childCount() && is_selected( item2 ) && !distmap.count( lvp ) )
+                        {
+                           double dx = item1->text( 3 ).toDouble() - item2->text( 3 ).toDouble();
+                           if ( dx <= dist_thresh )
+                           {
+                              double dy = item1->text( 4 ).toDouble() - item2->text( 4 ).toDouble();
+                              if ( dy <= dist_thresh )
+                              {
+                                 double dz = item1->text( 5 ).toDouble() - item2->text( 5 ).toDouble();
+                                 if ( dz <= dist_thresh )
+                                 {
+                                    double d = sqrt( dx * dx + dy * dy + dz * dz );
+                                    if ( d <= dist_thresh )
+                                    {
+                                       lvp.lvi1 = item1;
+                                       lvp.lvi2 = item2;
+                                       if ( !distmap.count( lvp ) )
+                                       {
+                                          distmap[ lvp ] = d;
+                                       } else {
+                                          if ( distmap[ lvp ] > d )
+                                          {
+                                             distmap[ lvp ] = d;
+                                          }
+                                       }
+                                    }
+                                 }
+                              }
+                           }
+                        
+                        }
+                        ++it2;
+                     }
                   }
                }
+               ++it1;
             }
-            ++it1;
+         } else {
+            unsigned int count = 0;
+            while ( it1.current() ) 
+            {
+               QListViewItem *item1 = it1.current();
+               if ( restrict_atom.isEmpty() || get_atom_name( item1 ) == restrict_atom )
+               {
+                  if ( !item1->childCount() && is_selected( item1 ) )
+                  {
+                     if ( !( ++count ) % 500 )
+                     {
+                        editor_msg( "black", QString( "processed %1" ).arg( count ) );
+                        qApp->processEvents();
+                     }
+                     QListViewItemIterator it2( lv );
+                     while ( it2.current() ) 
+                     {
+                        QListViewItem *item2 = it2.current();
+                        lvipair lvp;
+                        lvp.lvi1 = item2;
+                        lvp.lvi2 = item1;
+                        if ( item1 != item2 && !item2->childCount() && is_selected( item2 ) && !distmap.count( lvp ) )
+                        {
+                           double dx = item1->text( 3 ).toDouble() - item2->text( 3 ).toDouble();
+                           double dy = item1->text( 4 ).toDouble() - item2->text( 4 ).toDouble();
+                           double dz = item1->text( 5 ).toDouble() - item2->text( 5 ).toDouble();
+                           double d = sqrt( dx * dx + dy * dy + dz * dz );
+                           lvp.lvi1 = item1;
+                           lvp.lvi2 = item2;
+                           if ( !distmap.count( lvp ) )
+                           {
+                              distmap[ lvp ] = d;
+                           } else {
+                              if ( distmap[ lvp ] > d )
+                              {
+                                 distmap[ lvp ] = d;
+                              }
+                           }
+                        
+                        }
+                        ++it2;
+                     }
+                  }
+               }
+               ++it1;
+            }
          }
+
          
          list < sortable_qlipair_double > lsqd;
          
@@ -2865,42 +2955,114 @@ void US_Hydrodyn_Pdb_Tool::distances( QListView *lv )
    map < lvipair, double > distmap;
 
    QListViewItemIterator it1( lv );
-   while ( it1.current() ) 
+   if ( dist_thresh != 1e99 )
    {
-      QListViewItem *item1 = it1.current();
-      if ( restrict_atom.isEmpty() || get_atom_name( item1 ) == restrict_atom )
+      editor_msg( "brown", QString( tr( "using threshold limit %1" ).arg( dist_thresh, 0, 'f', 3 ) ) );
+      qApp->processEvents();
+      unsigned int count = 0;
+      while ( it1.current() ) 
       {
-         if ( !item1->childCount() && is_selected( item1 ) )
+         QListViewItem *item1 = it1.current();
+         if ( restrict_atom.isEmpty() || get_atom_name( item1 ) == restrict_atom )
          {
-            
-            QListViewItemIterator it2( lv );
-            while ( it2.current() ) 
+            if ( !item1->childCount() && is_selected( item1 ) )
             {
-               QListViewItem *item2 = it2.current();
-               lvipair lvp;
-               lvp.lvi1 = item2;
-               lvp.lvi2 = item1;
-               if ( item1 != item2 && !item2->childCount() && is_selected( item2 ) && !distmap.count( lvp ) )
+               if ( !( ++count ) % 500 )
                {
-                  double d = pair_dist( item1, item2 );
-                  lvp.lvi1 = item1;
-                  lvp.lvi2 = item2;
-                  if ( !distmap.count( lvp ) )
+                  editor_msg( "black", QString( "processed %1" ).arg( count ) );
+                  qApp->processEvents();
+               }
+            
+               QListViewItemIterator it2( lv );
+               while ( it2.current() ) 
+               {
+                  QListViewItem *item2 = it2.current();
+                  lvipair lvp;
+                  lvp.lvi1 = item2;
+                  lvp.lvi2 = item1;
+                  if ( item1 != item2 && !item2->childCount() && is_selected( item2 ) && !distmap.count( lvp ) )
                   {
-                     distmap[ lvp ] = d;
-                  } else {
-                     if ( distmap[ lvp ] > d )
+                     double dx = item1->text( 3 ).toDouble() - item2->text( 3 ).toDouble();
+                     if ( dx <= dist_thresh )
                      {
-                        distmap[ lvp ] = d;
+                        double dy = item1->text( 4 ).toDouble() - item2->text( 4 ).toDouble();
+                        if ( dy <= dist_thresh )
+                        {
+                           double dz = item1->text( 5 ).toDouble() - item2->text( 5 ).toDouble();
+                           if ( dz <= dist_thresh )
+                           {
+                              double d = sqrt( dx * dx + dy * dy + dz * dz );
+                              if ( d <= dist_thresh )
+                              {
+                                 lvp.lvi1 = item1;
+                                 lvp.lvi2 = item2;
+                                 if ( !distmap.count( lvp ) )
+                                 {
+                                    distmap[ lvp ] = d;
+                                 } else {
+                                    if ( distmap[ lvp ] > d )
+                                    {
+                                       distmap[ lvp ] = d;
+                                    }
+                                 }
+                              }
+                           }
+                        }
                      }
                   }
-                  
+                  ++it2;
                }
-               ++it2;
             }
          }
+         ++it1;
       }
-      ++it1;
+   } else {
+      unsigned int count = 0;
+      while ( it1.current() ) 
+      {
+         QListViewItem *item1 = it1.current();
+         if ( restrict_atom.isEmpty() || get_atom_name( item1 ) == restrict_atom )
+         {
+            if ( !item1->childCount() && is_selected( item1 ) )
+            {
+               if ( !( ++count ) % 500 )
+               {
+                  editor_msg( "black", QString( "processed %1" ).arg( count ) );
+                  qApp->processEvents();
+               }
+            
+               QListViewItemIterator it2( lv );
+               while ( it2.current() ) 
+               {
+                  QListViewItem *item2 = it2.current();
+                  lvipair lvp;
+                  lvp.lvi1 = item2;
+                  lvp.lvi2 = item1;
+                  if ( item1 != item2 && !item2->childCount() && is_selected( item2 ) && !distmap.count( lvp ) )
+                  {
+                     double dx = item1->text( 3 ).toDouble() - item2->text( 3 ).toDouble();
+                     double dy = item1->text( 4 ).toDouble() - item2->text( 4 ).toDouble();
+                     double dz = item1->text( 5 ).toDouble() - item2->text( 5 ).toDouble();
+                     double d = sqrt( dx * dx + dy * dy + dz * dz );
+                     lvp.lvi1 = item1;
+                     lvp.lvi2 = item2;
+                     if ( !distmap.count( lvp ) )
+                     {
+                        distmap[ lvp ] = d;
+                     } else {
+                        if ( distmap[ lvp ] > d )
+                        {
+                           distmap[ lvp ] = d;
+                        }
+                     }
+                  
+                  }
+                  ++it2;
+               }
+            }
+         }
+         ++it1;
+      }
    }
 
    list < sortable_qlipair_double > lsqd;
@@ -4592,7 +4754,7 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
       QTextStream ts_in( &f_in );
 
       bool                  atom_or_model_found = false;
-      bool                  has_model_line      = false;
+      // bool                  has_model_line      = false;
       QString               last_model          = "";
 
       QString               remarks;
@@ -4633,7 +4795,7 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
                in_model = true;
             }
 
-            has_model_line      = false;
+            // has_model_line      = false;
             atom_or_model_found = true;
             ts_out << qs << "\n";
             line_written = true;
@@ -4641,7 +4803,7 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
          if ( rx_model.search( qs ) != -1 )
          {
             atom_or_model_found = true;
-            has_model_line      = true;
+            // has_model_line      = true;
             if ( rx_get_model.search( qs ) != -1 )
             {
                last_model = rx_get_model.cap( 1 );
@@ -5332,7 +5494,7 @@ void US_Hydrodyn_Pdb_Tool::csv_find_alt()
    csv_msg( "blue", tr( "Matching residues: " ) + alt_residues.join( " " ) );
    
    bool self_included = false;
-   unsigned int self_pos;
+   // unsigned int self_pos;
 
    QStringList alt_residues_no_self;
    for ( unsigned int i = 0; i < (unsigned int)alt_residues.size(); i++ )
@@ -5340,7 +5502,7 @@ void US_Hydrodyn_Pdb_Tool::csv_find_alt()
       if ( tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() == alt_residues[ i ] )
       {
          self_included = true;
-         self_pos = i;
+         // self_pos = i;
       } else {
          alt_residues_no_self << alt_residues[ i ];
       }
@@ -5436,7 +5598,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_find_alt()
    csv2_msg( "blue", tr( "Matching residues: " ) + alt_residues.join( " " ) );
    
    bool self_included = false;
-   unsigned int self_pos;
+   // unsigned int self_pos;
 
    QStringList alt_residues_no_self;
    for ( unsigned int i = 0; i < (unsigned int)alt_residues.size(); i++ )
@@ -5444,7 +5606,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_find_alt()
       if ( tmp_csv.data[ 0 ][ 2 ].stripWhiteSpace() == alt_residues[ i ] )
       {
          self_included = true;
-         self_pos = i;
+         // self_pos = i;
       } else {
          alt_residues_no_self << alt_residues[ i ];
       }

@@ -598,6 +598,18 @@ void US_Hydrodyn_Saxs_Search::run_one()
          {
             saxs_window->our_saxs_options->swh_excl_vol = t_csv->text(i, 6).toFloat();
          }
+         if ( t_csv->text( i, 0 ).contains("Crysol: average atomic radius") )
+         {
+            (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ] = t_csv->text(i, 6);
+         }
+         if ( t_csv->text( i, 0 ).contains("Crysol: Excluded volume") )
+         {
+            (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ] = t_csv->text(i, 6);
+         }
+         if ( t_csv->text( i, 0 ).contains("Crysol: contrast of hydration shell") )
+         {
+            saxs_window->our_saxs_options->crysol_hydration_shell_contrast = t_csv->text(i, 6).toFloat();
+         }
       }
    }
 
@@ -833,6 +845,22 @@ bool US_Hydrodyn_Saxs_Search::validate_saxs_window()
                                      "US-SOMO Search",
                                      "Scaling excluded volume and WAT excluded volume\n"
                                      "are not supported by the FoXS and CRYSOL I(q) functions\n"
+                                     );
+               return false;
+            }
+         }
+         if ( 
+             ( t_csv->text( i, 0 ).contains("Crysol: Excluded volume") ||
+               t_csv->text( i, 0 ).contains("Crysol: average atomic radius") ||
+               t_csv->text( i, 0 ).contains("Crysol: contrast of hydration shell") ) 
+             )
+         {
+            if ( !saxs_window->our_saxs_options->saxs_iq_crysol )
+            {
+               QMessageBox::warning( this, 
+                                     "US-SOMO Search",
+                                     "Crysol excluded volume, average atomic radius and contrast of hydration shell\n"
+                                     "are only supported by Crysol I(q)\n"
                                      );
                return false;
             }

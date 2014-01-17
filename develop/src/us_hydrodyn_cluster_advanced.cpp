@@ -477,10 +477,30 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.data.push_back(tmp_data);
 
    tmp_data.clear();
-   tmp_data.push_back("I(q) Crysol: contrast of hydration shell");
+   tmp_data.push_back("Crysol: average atomic radius");
    tmp_data.push_back("N");
-   tmp_data.push_back("0.0");
-   tmp_data.push_back("0.5");
+   tmp_data.push_back("1.5");
+   tmp_data.push_back("1.7");
+   tmp_data.push_back("11");
+
+   csv1.prepended_names.push_back(tmp_data[0]);
+   csv1.data.push_back(tmp_data);
+
+   tmp_data.clear();
+   tmp_data.push_back("Crysol: Excluded volume");
+   tmp_data.push_back("N");
+   tmp_data.push_back("10000");
+   tmp_data.push_back("20000");
+   tmp_data.push_back("11");
+
+   csv1.prepended_names.push_back(tmp_data[0]);
+   csv1.data.push_back(tmp_data);
+
+   tmp_data.clear();
+   tmp_data.push_back("Crysol: contrast of hydration shell");
+   tmp_data.push_back("N");
+   tmp_data.push_back("0.01");
+   tmp_data.push_back("0.05");
    tmp_data.push_back("11");
    
    csv1.prepended_names.push_back(tmp_data[0]);
