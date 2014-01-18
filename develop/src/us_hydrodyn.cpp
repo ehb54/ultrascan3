@@ -411,6 +411,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
          saxs_options.wavelength;
       saxs_options.delta_q =  floor(saxs_options.delta_q * SAXS_Q_ROUNDING + 0.5) / SAXS_Q_ROUNDING;
    }         
+   add_to_directory_history( somo_pdb_dir, false );
+   add_to_directory_history( somo_saxs_dir, false );
 }
 
 US_Hydrodyn::~US_Hydrodyn()

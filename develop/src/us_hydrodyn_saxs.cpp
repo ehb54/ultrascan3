@@ -407,8 +407,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    push_back_color_if_ok( bgc, QColor( 154, 205, 50 ) ); /* Yellow-Green */
 
    saxs_search_update_enables();
-   add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + "x" );
-   add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "x" );
+   add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs", false );
+   add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH, false );
 
    sync_conc_csv();
 }

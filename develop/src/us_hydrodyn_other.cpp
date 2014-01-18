@@ -14,6 +14,7 @@
 #include "../include/us_hydrodyn_asab1.h"
 #include "../include/us_hydrodyn_grid_atob.h"
 #include "../include/us_math.h"
+#include "../include/us_dirhist.h"
 #include <qregexp.h>
 #include <qfont.h>
 #include <stdlib.h>
@@ -46,7 +47,7 @@
 void US_Hydrodyn::read_residue_file()
 {
    QString str1, str2;
-   unsigned int numatoms, numbeads, i, j, positioner;
+   unsigned int numatoms, numbeads, /* i, */ j, positioner;
    QFile f(residue_filename);
    int error_count = 0;
    int line_count = 1;
@@ -68,7 +69,7 @@ void US_Hydrodyn::read_residue_file()
    msroll_radii.clear();
    msroll_names.clear();
 
-   i=1;
+   // i=1;
    if (f.open(IO_ReadOnly|IO_Translate))
    {
       QTextStream ts(&f);
@@ -3918,6 +3919,24 @@ void US_Hydrodyn::write_config(const QString& fname)
          parameters[ "gparam:" + it->first ] = it->second;
       }
 
+      {
+         QStringList qsl_tmp1;
+         QStringList qsl_tmp2;
+         for ( unsigned int i = 0; i < directory_history.size(); i++ )
+         {
+            if ( directory_last_access.count( directory_history[ i ] ) )
+            { 
+               qsl_tmp1 << directory_history[ i ];
+               qsl_tmp2 << QString( "%1" ).arg( (unsigned int)directory_last_access[ directory_history[ i ] ].toTime_t() );
+            }
+         }
+         if ( qsl_tmp1.size() )
+         {
+            parameters[ "directory_history"     ] = qsl_tmp1.join( "\n" );
+            parameters[ "directory_last_access" ] = qsl_tmp2.join( "\n" );
+         }
+      }
+
       ts << US_Json::compose( parameters );
       f.close();
    }
@@ -4392,6 +4411,26 @@ bool US_Hydrodyn::load_config_json ( QString &json )
          }
       }
    }
+
+   if ( parameters.count( "directory_history" ) &&
+        parameters.count( "directory_last_access" ) )
+   {
+      directory_history    .clear();
+      directory_last_access.clear();
+      QStringList qsl_tmp1 = QStringList::split( "\n", parameters[ "directory_history"     ] );
+      QStringList qsl_tmp2 = QStringList::split( "\n", parameters[ "directory_last_access" ] );
+      if ( qsl_tmp1.size() == qsl_tmp2.size() )
+      {
+         QDateTime dt;
+         for ( int i = 0; i < (int) qsl_tmp1.size(); ++i )
+         {
+            directory_history.push_back( qsl_tmp1[ i ] );
+            dt.setTime_t( qsl_tmp2[ i ].toUInt() );
+            directory_last_access[ directory_history.back() ] = dt;
+         }
+      }
+   }
+      
 
    // fix up consistancy parameters
 
@@ -8267,40 +8306,60 @@ bool US_Hydrodyn::select_from_directory_history( QString &dir, QWidget *parent )
       return false;
    }
 
-   QStringList use_history;
+   // QStringList use_history;
 
-   int current = 0;
-   for ( unsigned int i = 0; i < directory_history.size(); i++ )
+   // int current = 0;
+   // for ( unsigned int i = 0; i < directory_history.size(); i++ )
+   // {
+   //    if ( directory_history[ i ] == dir )
+   //    {
+   //       current = i;
+   //    }
+   //    use_history << directory_history[ i ];
+   // }
+
+   bool    is_ok;
+   QString selected = dir;
+         
+   US_Dirhist * usd = new US_Dirhist( directory_history,
+                                      directory_last_access,
+                                      selected,
+                                      is_ok,
+                                      parent ? parent : this
+                                      );
+   usd->exec();
+   if ( is_ok )
    {
-      if ( directory_history[ i ] == dir )
-      {
-         current = i;
-      }
-      use_history << directory_history[ i ];
-   }
-
-   bool ok;
-   QString res = QInputDialog::getItem(
-                                       tr("Previous directories"),
-                                       QString( tr("Select the directory or Cancel for the default directory of\n%1") )
-                                       .arg( dir )
-                                       , 
-                                       use_history,
-                                       current, 
-                                       FALSE, 
-                                       &ok,
-                                       parent ? parent : this );
-   if ( ok ) {
-      dir = res;
+      dir = selected;
       return true;
    } 
    return false;
+
+   // bool ok;
+   // QString res = QInputDialog::getItem(
+   //                                     tr("Previous directories"),
+   //                                     QString( tr("Select the directory or Cancel for the default directory of\n%1") )
+   //                                     .arg( dir )
+   //                                     , 
+   //                                     use_history,
+   //                                     current, 
+   //                                     FALSE, 
+   //                                     &ok,
+   //                                     parent ? parent : this );
+   // if ( ok ) {
+   //    dir = res;
+   //    return true;
+   // } 
+   // return false;
 }
    
-void US_Hydrodyn::add_to_directory_history( QString filename )
+void US_Hydrodyn::add_to_directory_history( QString filename, bool accessed )
 {
+   QFileInfo fi( filename );
 
-   QString dir = QFileInfo(filename).dirPath(true);
+   QString dir = QDir::cleanDirPath( fi.isDir() ? fi.filePath() : fi.dirPath() );
+
+   qDebug( QString( "add to dir history %1 %2 %3" ).arg( filename ).arg( dir ).arg( accessed ? "true" : "false" ) );
    if ( dir.isEmpty() )
    {
       return;
@@ -8309,6 +8368,10 @@ void US_Hydrodyn::add_to_directory_history( QString filename )
    // push to top
    QStringList new_dir_history;
    new_dir_history << dir;
+   if ( accessed )
+   {
+      directory_last_access[ dir ] = QDateTime::currentDateTime();
+   }
    for ( unsigned int i = 0; i < directory_history.size(); i++ )
    {
       if ( directory_history[ i ] != dir )
@@ -8317,4 +8380,5 @@ void US_Hydrodyn::add_to_directory_history( QString filename )
       }
    }
    directory_history = new_dir_history;
+   //   qDebug( "new directory history: " + directory_history.join(":") );
 }

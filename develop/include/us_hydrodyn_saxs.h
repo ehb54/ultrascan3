@@ -750,7 +750,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void clear_plot_saxs_data();
 
       bool select_from_directory_history( QString &dir, QWidget *parent = (QWidget *)0 );
-      void add_to_directory_history( QString dir );
+      void add_to_directory_history( QString dir, bool accessed = true );
       
       csv  search_csv;
       void reset_search_csv();

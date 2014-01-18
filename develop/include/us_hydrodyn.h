@@ -706,7 +706,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void restore_state();
       void clear_state();
 
-      QStringList directory_history;
+      QStringList                       directory_history;
+      map < QString, QDateTime >        directory_last_access;
 
       bool                     saxs_screen_widget;
       US_Hydrodyn_Saxs_Screen  *saxs_screen_window;
@@ -765,7 +766,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void set_expert( bool );
 
       bool select_from_directory_history( QString &dir, QWidget *parent = (QWidget *)0 );
-      void add_to_directory_history( QString dir );
+      void add_to_directory_history( QString dir, bool accessed = true );
 
       unsigned int current_model;
       QString project;   // name of the current project - derived from the prefix of the pdb filename

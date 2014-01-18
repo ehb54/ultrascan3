@@ -129,6 +129,7 @@ SOURCES += \
   src/us_dcdrdat.cpp \
   src/us_dcdtdat.cpp \
   src/us_diagnostics.cpp \
+  src/us_dirhist.cpp \
   src/us_dma60.cpp \
   src/us_dtactrl.cpp \
   src/us_edeabs.cpp \
@@ -477,6 +478,7 @@ HEADERS += \
   include/us_dcdrdat.h \
   include/us_dcdtdat.h \
   include/us_diagnostics.h \
+  include/us_dirhist.h \
   include/us_dma60.h \
   include/us_dtactrl.h \
   include/us_edeabs.h \

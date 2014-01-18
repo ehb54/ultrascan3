@@ -3198,67 +3198,10 @@ bool US_Hydrodyn_Saxs::select_from_directory_history( QString &dir, QWidget *par
    return ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( dir, parent );
 }
 
-//    if ( !((US_Hydrodyn *)us_hydrodyn)->directory_history.size() ||
-//         ( ((US_Hydrodyn *)us_hydrodyn)->directory_history.size() == 1 && 
-//           ((US_Hydrodyn *)us_hydrodyn)->directory_history.contains( dir ) ) )
-//    {
-//       return false;
-//    }
-
-//    QStringList use_history;
-
-//    int current = 0;
-//    for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->directory_history.size(); i++ )
-//    {
-//       if ( ((US_Hydrodyn *)us_hydrodyn)->directory_history[ i ] == dir )
-//       {
-//          current = i;
-//       }
-//       // if ( ((US_Hydrodyn *)us_hydrodyn)->directory_history[ i ] != dir )
-//       // {
-//       use_history << ((US_Hydrodyn *)us_hydrodyn)->directory_history[ i ];
-//       // }
-//    }
-
-//    bool ok;
-//    QString res = QInputDialog::getItem(
-//                                        tr("Previous directories"),
-//                                        QString( tr("Select the directory or Cancel for the default directory of\n%1") )
-//                                        .arg( dir )
-//                                        , 
-//                                        use_history,
-//                                        current, 
-//                                        FALSE, 
-//                                        &ok,
-//                                        parent ? parent : this );
-//    if ( ok ) {
-//       dir = res;
-//       return true;
-//    } 
-//    return false;
-// }
    
-void US_Hydrodyn_Saxs::add_to_directory_history( QString filename )
+void US_Hydrodyn_Saxs::add_to_directory_history( QString filename, bool accessed )
 {
-   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
-
-   //    QString dir = QFileInfo(filename).dirPath(true);
-   //    if ( dir.isEmpty() )
-   //    {
-   //       return;
-   //    }
-
-   //    // push to top
-   //    QStringList new_dir_history;
-   //    new_dir_history << dir;
-   //    for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->directory_history.size(); i++ )
-   //    {
-   //       if ( ((US_Hydrodyn *)us_hydrodyn)->directory_history[ i ] != dir )
-   //       {
-   //          new_dir_history << ((US_Hydrodyn *)us_hydrodyn)->directory_history[ i ];
-   //       }
-   //    }
-   //    ((US_Hydrodyn *)us_hydrodyn)->directory_history = new_dir_history;
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename, accessed );
 }
 
 vector < double > US_Hydrodyn_Saxs::range_crop( vector < double > &q, vector < double > &I )
