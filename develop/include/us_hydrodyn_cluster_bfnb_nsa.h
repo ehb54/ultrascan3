@@ -12,11 +12,13 @@
 #include "qstring.h"
 #include "qlayout.h"
 #include "qlineedit.h"
+#include "qfontmetrics.h"
 #include "qpushbutton.h"
 #include "qfiledialog.h"
 #include "qmessagebox.h"
 #include "qregexp.h"
 #include "us_json.h"
+#include "us_hydrodyn.h"
 
 using namespace std;
 

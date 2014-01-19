@@ -646,8 +646,10 @@ void US_Hydrodyn_Cluster_Best::set_bestbestna()
 
 void US_Hydrodyn_Cluster_Best::update_bestmsrradiifile( const QString & )
 {
+   QString use_dir;
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString filename = QFileDialog::getOpenFileName(
-                                                   QString::null,
+                                                   use_dir,
                                                    QString::null,
                                                    this,
                                                    "open file dialog",
@@ -657,13 +659,19 @@ void US_Hydrodyn_Cluster_Best::update_bestmsrradiifile( const QString & )
    disconnect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    le_bestmsrradiifile->setText( filename );
    connect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrradiifile( const QString & ) ) );
+   if ( !filename.isEmpty() )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+   }
    ( *parameters )[ "bestmsrradiifile" ] = le_bestmsrradiifile->text();
 }
 
 void US_Hydrodyn_Cluster_Best::update_bestmsrpatternfile( const QString & )
 {
+   QString use_dir;
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString filename = QFileDialog::getOpenFileName(
-                                                   QString::null,
+                                                   use_dir,
                                                    QString::null,
                                                    this,
                                                    "open file dialog",
@@ -673,32 +681,39 @@ void US_Hydrodyn_Cluster_Best::update_bestmsrpatternfile( const QString & )
    disconnect( le_bestmsrpatternfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    le_bestmsrpatternfile->setText( filename );
    connect( le_bestmsrpatternfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrpatternfile( const QString & ) ) );
+   if ( !filename.isEmpty() )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+   }
    ( *parameters )[ "bestmsrpatternfile" ] = le_bestmsrpatternfile->text();
 }
 
 void US_Hydrodyn_Cluster_Best::save()
 {
-   QString fn = QFileDialog::getSaveFileName( 
-                                              QString::null, 
-                                              "*.cluster_best",
-                                              this,
-                                              tr( QString( "%1: Save" ).arg( "US-SOMO: BEST cluster interface" ) ),
-                                              tr( "Save the parameters" ) 
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString filename = QFileDialog::getSaveFileName( 
+                                                   use_dir,
+                                                   "*.cluster_best",
+                                                   this,
+                                                   tr( QString( "%1: Save" ).arg( "US-SOMO: BEST cluster interface" ) ),
+                                                   tr( "Save the parameters" ) 
                                               );
 
-   if( !fn.isEmpty() )
+   if( !filename.isEmpty() )
    {
-      if ( !fn.contains( QRegExp( "\\.cluster_best$" ) ) )
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+      if ( !filename.contains( QRegExp( "\\.cluster_best$" ) ) )
       {
-         fn += ".cluster_best";
+         filename += ".cluster_best";
       }
-      QFile f( fn );
+      QFile f( filename );
       if ( !f.open( IO_WriteOnly ) )
       {
          QMessageBox::information( this,
                                    tr( QString( "%1: Save" ).arg( "US-SOMO: BEST cluster interface" ) ),
                                    QString( tr( "Could not open file %1 for writing" ) )
-                                   .arg( fn ) 
+                                   .arg( filename ) 
                                    );
          return;
       }
@@ -710,23 +725,26 @@ void US_Hydrodyn_Cluster_Best::save()
 
 void US_Hydrodyn_Cluster_Best::load()
 {
-   QString fn = QFileDialog::getOpenFileName( 
-                                              QString::null, 
-                                              "*.cluster_best",
-                                              this,
-                                              tr( QString( "%1: Open" ).arg( "US-SOMO: BEST cluster interface" ) ),
-                                              tr( "Load parameters" ) 
-                                              );
-   if( !fn.isEmpty() )
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString filename = QFileDialog::getOpenFileName( 
+                                                   use_dir,
+                                                   "*.cluster_best",
+                                                   this,
+                                                   tr( QString( "%1: Open" ).arg( "US-SOMO: BEST cluster interface" ) ),
+                                                   tr( "Load parameters" ) 
+                                                  );
+   if( !filename.isEmpty() )
    {
-      QFile f( fn );
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+      QFile f( filename );
       if ( !f.open( IO_ReadOnly ) )
       {
           QMessageBox::information( 
                                     this,
                                     tr( QString( "%1: Open" ).arg( "US-SOMO: BEST cluster interface" ) ),
                                     QString( tr( "Could not open file %1 for reading" ) )
-                                    .arg( fn ) 
+                                    .arg( filename ) 
                                     );
           return;
       }

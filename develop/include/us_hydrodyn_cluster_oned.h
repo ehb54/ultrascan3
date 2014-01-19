@@ -15,6 +15,7 @@
 #include "qfontmetrics.h"
 #include "qfile.h"
 #include "qfiledialog.h"
+#include "us_hydrodyn.h"
 #include "qpushbutton.h"
 #include "qmessagebox.h"
 #include "qregexp.h"

@@ -10,7 +10,7 @@ saveload   json cluster_best *parameters
 _variables
 map     string  s - - bestmsrprober "bestmsrprober" "MSROLL: probe radius (default:blank=1.5)"
 map     string  s - - bestmsrfinenessangle "bestmsrfinenessangle" "MSROLL: starting fineness angle\n(recommended value >= 0.6)"
-map     string  s - - bestmsrmaxtriangles "bestmsrmaxtriangles" "MSROLL: maximum output triangles\n(recommended value 75000)"
+map     string  s - - bestmsrmaxtriangles "bestmsrmaxtriangles" "MSROLL: maximum output triangles\n(recommended max value 60000)"
 map     string  s - - bestmsrcoalescer "bestmsrcoalescer" "MSROLL: coalesce radius (default:blank)"
 map     string  s - - bestrcoalnmin "bestrcoalnmin" "COALESCE: minimum number of triangles (Typically 2000 for small and 3000 for large protein)"
 map     string  s - - bestrcoalnmax "bestrcoalnmax" "COALESCE: maximum number of triangles (Typically 4000 for small and 9000 for large protein)"
@@ -21,6 +21,9 @@ map     string  s - - bestbestp "bestbestp" "BEST: perform a pre-averaged hydrod
 map     string  s - - bestbestv "bestbestv" "BEST: Compute the Viscosity Factor {in the Centroid} (default:unchecked)"
 map     string  s - - bestbestvc "bestbestvc" "BEST: Compute the Viscosity Factor in the Center of Viscosity {longer calculation} (default:checked)"
 map     string  s - - bestbestmw "bestbestmw" "BEST: override computed molecular weight (default:blank=compute from structure)"
+map     string  s - - bestexpand "bestexpand" "BEST: expand radii by this multiplier (default:blank=1, no expansion)"
+map     infile  s - - bestmsrradiifile "bestmsrradiifile" "MSROLL: manual radii file"
+map     infile  s - - bestmsrpatternfile "bestmsrpatternfile" "MSROLL: manual name pattern file (must also provide radii file above)"
 _end
 _elements
 variable bestmsrprober
@@ -39,6 +42,8 @@ variable bestbestmw
 row
 variable bestbestwatr
 row
+variable bestexpand
+row
 checkbox bestbestvc true
 row
 showhidelabel opt_label "Optional controls"
@@ -51,6 +56,10 @@ row
 checkbox bestbestp
 row
 checkbox bestbestna
+row
+variable bestmsrradiifile
+row
+variable bestmsrpatternfile
 row
 endshowhidelabel opt_label
 button      save

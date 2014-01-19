@@ -900,28 +900,32 @@ __END
                     add_includes( "qmessagebox.h" );
                     add_includes( "qregexp.h" );
                     add_includes( "us_json.h" );
+                    add_includes( "us_hydrodyn.h" );
                     $function_code .= <<__END
-   QString fn = QFileDialog::getSaveFileName( 
-                                              QString::null, 
-                                              "*.$arg2",
-                                              this,
-                                              tr( QString( "%1: Save" ).arg( $capture{ "title" } ) ),
-                                              tr( "Save the parameters" ) 
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString filename = QFileDialog::getSaveFileName( 
+                                                   use_dir,
+                                                   "*.$arg2",
+                                                   this,
+                                                   tr( QString( "%1: Save" ).arg( $capture{ "title" } ) ),
+                                                   tr( "Save the parameters" ) 
                                               );
 
-   if( !fn.isEmpty() )
+   if( !filename.isEmpty() )
    {
-      if ( !fn.contains( QRegExp( "\\\\.$arg2\$" ) ) )
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+      if ( !filename.contains( QRegExp( "\\\\.$arg2\$" ) ) )
       {
-         fn += ".$arg2";
+         filename += ".$arg2";
       }
-      QFile f( fn );
+      QFile f( filename );
       if ( !f.open( IO_WriteOnly ) )
       {
          QMessageBox::information( this,
                                    tr( QString( "%1: Save" ).arg( $capture{ "title" } ) ),
                                    QString( tr( "Could not open file %1 for writing" ) )
-                                   .arg( fn ) 
+                                   .arg( filename ) 
                                    );
          return;
       }
@@ -949,24 +953,28 @@ __END
                     add_includes( "qfiledialog.h" );
                     add_includes( "qmessagebox.h" );
                     add_includes( "us_json.h" );
+                    add_includes( "us_hydrodyn.h" );
                     $function_code .= <<__END
-   QString fn = QFileDialog::getOpenFileName( 
-                                              QString::null, 
-                                              "*.$arg2",
-                                              this,
-                                              tr( QString( "%1: Open" ).arg( $capture{ "title" } ) ),
-                                              tr( "Load parameters" ) 
-                                              );
-   if( !fn.isEmpty() )
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString filename = QFileDialog::getOpenFileName( 
+                                                   use_dir,
+                                                   "*.$arg2",
+                                                   this,
+                                                   tr( QString( "%1: Open" ).arg( $capture{ "title" } ) ),
+                                                   tr( "Load parameters" ) 
+                                                  );
+   if( !filename.isEmpty() )
    {
-      QFile f( fn );
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+      QFile f( filename );
       if ( !f.open( IO_ReadOnly ) )
       {
           QMessageBox::information( 
                                     this,
                                     tr( QString( "%1: Open" ).arg( $capture{ "title" } ) ),
                                     QString( tr( "Could not open file %1 for reading" ) )
-                                    .arg( fn ) 
+                                    .arg( filename ) 
                                     );
           return;
       }
@@ -1212,9 +1220,12 @@ __END
             {
                 add_includes( "qfile.h"       );
                 add_includes( "qfiledialog.h" );
+                add_includes( "us_hydrodyn.h" );
                 $cpp_functions .= <<__END
+   QString use_dir;
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString filename = QFileDialog::getOpenFileName(
-                                                   QString::null,
+                                                   use_dir,
                                                    QString::null,
                                                    this,
                                                    "open file dialog",
@@ -1224,6 +1235,10 @@ __END
    disconnect( le_${name}, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    le_${name}->setText( filename );
    connect( le_${name}, SIGNAL( textChanged( const QString & ) ), SLOT( update_${name}( const QString & ) ) );
+   if ( !filename.isEmpty() )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+   }
 __END
                ;
             }

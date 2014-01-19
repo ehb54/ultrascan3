@@ -428,8 +428,10 @@ void US_Hydrodyn_Pdb_Tool_Renum::closeEvent( QCloseEvent *e )
 
 void US_Hydrodyn_Pdb_Tool_Renum::update_inputfile( const QString & )
 {
+   QString use_dir;
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString filename = QFileDialog::getOpenFileName(
-                                                   QString::null,
+                                                   use_dir,
                                                    QString::null,
                                                    this,
                                                    "open file dialog",
@@ -439,6 +441,10 @@ void US_Hydrodyn_Pdb_Tool_Renum::update_inputfile( const QString & )
    disconnect( le_inputfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    le_inputfile->setText( filename );
    connect( le_inputfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_inputfile( const QString & ) ) );
+   if ( !filename.isEmpty() )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+   }
    ( *parameters )[ "inputfile" ] = le_inputfile->text();
 }
 

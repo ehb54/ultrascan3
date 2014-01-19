@@ -4,6 +4,8 @@
 // -------------- WARNING: any modifications made to this code will be overwritten -------------
 // ---------------------------------------------------------------------------------------------
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #include "../include/us_hydrodyn_cluster_bfnb.h"
 
 US_Hydrodyn_Cluster_Bfnb::US_Hydrodyn_Cluster_Bfnb(
@@ -1305,27 +1307,30 @@ void US_Hydrodyn_Cluster_Bfnb::update_pmdebug( const QString & )
 
 void US_Hydrodyn_Cluster_Bfnb::save()
 {
-   QString fn = QFileDialog::getSaveFileName( 
-                                              QString::null, 
-                                              "*.cluster_bfnb",
-                                              this,
-                                              tr( QString( "%1: Save" ).arg( "US-SOMO: BNFB cluster interface" ) ),
-                                              tr( "Save the parameters" ) 
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString filename = QFileDialog::getSaveFileName( 
+                                                   use_dir,
+                                                   "*.cluster_bfnb",
+                                                   this,
+                                                   tr( QString( "%1: Save" ).arg( "US-SOMO: BNFB cluster interface" ) ),
+                                                   tr( "Save the parameters" ) 
                                               );
 
-   if( !fn.isEmpty() )
+   if( !filename.isEmpty() )
    {
-      if ( !fn.contains( QRegExp( "\\.cluster_bfnb$" ) ) )
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+      if ( !filename.contains( QRegExp( "\\.cluster_bfnb$" ) ) )
       {
-         fn += ".cluster_bfnb";
+         filename += ".cluster_bfnb";
       }
-      QFile f( fn );
+      QFile f( filename );
       if ( !f.open( IO_WriteOnly ) )
       {
          QMessageBox::information( this,
                                    tr( QString( "%1: Save" ).arg( "US-SOMO: BNFB cluster interface" ) ),
                                    QString( tr( "Could not open file %1 for writing" ) )
-                                   .arg( fn ) 
+                                   .arg( filename ) 
                                    );
          return;
       }
@@ -1337,23 +1342,26 @@ void US_Hydrodyn_Cluster_Bfnb::save()
 
 void US_Hydrodyn_Cluster_Bfnb::load()
 {
-   QString fn = QFileDialog::getOpenFileName( 
-                                              QString::null, 
-                                              "*.cluster_bfnb",
-                                              this,
-                                              tr( QString( "%1: Open" ).arg( "US-SOMO: BNFB cluster interface" ) ),
-                                              tr( "Load parameters" ) 
-                                              );
-   if( !fn.isEmpty() )
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString filename = QFileDialog::getOpenFileName( 
+                                                   use_dir,
+                                                   "*.cluster_bfnb",
+                                                   this,
+                                                   tr( QString( "%1: Open" ).arg( "US-SOMO: BNFB cluster interface" ) ),
+                                                   tr( "Load parameters" ) 
+                                                  );
+   if( !filename.isEmpty() )
    {
-      QFile f( fn );
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+      QFile f( filename );
       if ( !f.open( IO_ReadOnly ) )
       {
           QMessageBox::information( 
                                     this,
                                     tr( QString( "%1: Open" ).arg( "US-SOMO: BNFB cluster interface" ) ),
                                     QString( tr( "Could not open file %1 for reading" ) )
-                                    .arg( fn ) 
+                                    .arg( filename ) 
                                     );
           return;
       }

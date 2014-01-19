@@ -15,6 +15,7 @@
 #include "qfontmetrics.h"
 #include "qfile.h"
 #include "qfiledialog.h"
+#include "us_hydrodyn.h"
 
 using namespace std;
 

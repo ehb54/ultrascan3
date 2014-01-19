@@ -4,6 +4,8 @@
 // -------------- WARNING: any modifications made to this code will be overwritten -------------
 // ---------------------------------------------------------------------------------------------
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #include "../include/us_hydrodyn_cluster_oned.h"
 
 US_Hydrodyn_Cluster_Oned::US_Hydrodyn_Cluster_Oned(
@@ -428,6 +430,8 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
 
    background->addLayout ( hbl_bottom );
    background->addSpacing( 4 );
+   qApp->processEvents();
+   resize( 0, 0 );
 }
 
 void US_Hydrodyn_Cluster_Oned::cancel()
@@ -462,8 +466,10 @@ void US_Hydrodyn_Cluster_Oned::closeEvent( QCloseEvent *e )
 
 void US_Hydrodyn_Cluster_Oned::update_1drotationfile( const QString & )
 {
+   QString use_dir;
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString filename = QFileDialog::getOpenFileName(
-                                                   QString::null,
+                                                   use_dir,
                                                    QString::null,
                                                    this,
                                                    "open file dialog",
@@ -473,6 +479,10 @@ void US_Hydrodyn_Cluster_Oned::update_1drotationfile( const QString & )
    disconnect( le_1drotationfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    le_1drotationfile->setText( filename );
    connect( le_1drotationfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_1drotationfile( const QString & ) ) );
+   if ( !filename.isEmpty() )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+   }
    ( *parameters )[ "1drotationfile" ] = le_1drotationfile->text();
 }
 
@@ -538,27 +548,30 @@ void US_Hydrodyn_Cluster_Oned::update_1dintermediatesaves( const QString & )
 
 void US_Hydrodyn_Cluster_Oned::save()
 {
-   QString fn = QFileDialog::getSaveFileName( 
-                                              QString::null, 
-                                              "*.cluster_oned",
-                                              this,
-                                              tr( QString( "%1: Save" ).arg( "US-SOMO: 1d cluster interface" ) ),
-                                              tr( "Save the parameters" ) 
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString filename = QFileDialog::getSaveFileName( 
+                                                   use_dir,
+                                                   "*.cluster_oned",
+                                                   this,
+                                                   tr( QString( "%1: Save" ).arg( "US-SOMO: 1d cluster interface" ) ),
+                                                   tr( "Save the parameters" ) 
                                               );
 
-   if( !fn.isEmpty() )
+   if( !filename.isEmpty() )
    {
-      if ( !fn.contains( QRegExp( "\\.cluster_oned$" ) ) )
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+      if ( !filename.contains( QRegExp( "\\.cluster_oned$" ) ) )
       {
-         fn += ".cluster_oned";
+         filename += ".cluster_oned";
       }
-      QFile f( fn );
+      QFile f( filename );
       if ( !f.open( IO_WriteOnly ) )
       {
          QMessageBox::information( this,
                                    tr( QString( "%1: Save" ).arg( "US-SOMO: 1d cluster interface" ) ),
                                    QString( tr( "Could not open file %1 for writing" ) )
-                                   .arg( fn ) 
+                                   .arg( filename ) 
                                    );
          return;
       }
@@ -570,23 +583,26 @@ void US_Hydrodyn_Cluster_Oned::save()
 
 void US_Hydrodyn_Cluster_Oned::load()
 {
-   QString fn = QFileDialog::getOpenFileName( 
-                                              QString::null, 
-                                              "*.cluster_oned",
-                                              this,
-                                              tr( QString( "%1: Open" ).arg( "US-SOMO: 1d cluster interface" ) ),
-                                              tr( "Load parameters" ) 
-                                              );
-   if( !fn.isEmpty() )
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString filename = QFileDialog::getOpenFileName( 
+                                                   use_dir,
+                                                   "*.cluster_oned",
+                                                   this,
+                                                   tr( QString( "%1: Open" ).arg( "US-SOMO: 1d cluster interface" ) ),
+                                                   tr( "Load parameters" ) 
+                                                  );
+   if( !filename.isEmpty() )
    {
-      QFile f( fn );
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+      QFile f( filename );
       if ( !f.open( IO_ReadOnly ) )
       {
           QMessageBox::information( 
                                     this,
                                     tr( QString( "%1: Open" ).arg( "US-SOMO: 1d cluster interface" ) ),
                                     QString( tr( "Could not open file %1 for reading" ) )
-                                    .arg( fn ) 
+                                    .arg( filename ) 
                                     );
           return;
       }

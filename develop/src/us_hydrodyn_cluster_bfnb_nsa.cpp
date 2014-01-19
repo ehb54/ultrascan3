@@ -4,6 +4,8 @@
 // -------------- WARNING: any modifications made to this code will be overwritten -------------
 // ---------------------------------------------------------------------------------------------
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 #include "../include/us_hydrodyn_cluster_bfnb_nsa.h"
 
 US_Hydrodyn_Cluster_Bfnb_Nsa::US_Hydrodyn_Cluster_Bfnb_Nsa(
@@ -12,7 +14,6 @@ US_Hydrodyn_Cluster_Bfnb_Nsa::US_Hydrodyn_Cluster_Bfnb_Nsa(
                                                            QWidget *                               p,
                                                            const char *                            name
                                                            ) : QDialog( p, name )
-
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->parameters                           = parameters;
@@ -44,7 +45,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_title -> setPalette      ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
-   lbl_credits_1 =  new QLabel      ( "Cite: Brookes, E. BFNB 2012", this );
+   lbl_credits_1 =  new QLabel      ( "Cite: Brookes, E. BFNB 2013", this );
    lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_credits_1 -> setMinimumHeight( minHeight1 );
    lbl_credits_1 -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
@@ -55,7 +56,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaspheres ->setMinimumHeight( minHeight1 );
    lbl_nsaspheres ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsaspheres ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsaspheres ->setMinimumWidth ( 460 );
+   lbl_nsaspheres ->setMinimumWidth ( QFontMetrics( lbl_nsaspheres->font() ).maxWidth() * 13 );
 
    le_nsaspheres = new QLineEdit     ( this, "nsaspheres Line Edit" );
    le_nsaspheres ->setText           ( parameters->count( "nsaspheres" ) ? ( *parameters )[ "nsaspheres" ] : "" );
@@ -71,7 +72,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaess ->setMinimumHeight( minHeight1 );
    lbl_nsaess ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsaess ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsaess ->setMinimumWidth ( 460 );
+   lbl_nsaess ->setMinimumWidth ( QFontMetrics( lbl_nsaess->font() ).maxWidth() * 13 );
 
    le_nsaess = new QLineEdit     ( this, "nsaess Line Edit" );
    le_nsaess ->setText           ( parameters->count( "nsaess" ) ? ( *parameters )[ "nsaess" ] : "" );
@@ -87,7 +88,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaexcl ->setMinimumHeight( minHeight1 );
    lbl_nsaexcl ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsaexcl ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsaexcl ->setMinimumWidth ( 460 );
+   lbl_nsaexcl ->setMinimumWidth ( QFontMetrics( lbl_nsaexcl->font() ).maxWidth() * 13 );
 
    le_nsaexcl = new QLineEdit     ( this, "nsaexcl Line Edit" );
    le_nsaexcl ->setText           ( parameters->count( "nsaexcl" ) ? ( *parameters )[ "nsaexcl" ] : "" );
@@ -103,7 +104,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaga ->setMinimumHeight( minHeight1 );
    lbl_nsaga ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsaga ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsaga ->setMinimumWidth ( 460 );
+   lbl_nsaga ->setMinimumWidth ( QFontMetrics( lbl_nsaga->font() ).maxWidth() * 13 );
 
    le_nsaga = new QLineEdit     ( this, "nsaga Line Edit" );
    le_nsaga ->setText           ( parameters->count( "nsaga" ) ? ( *parameters )[ "nsaga" ] : "" );
@@ -119,7 +120,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsasga ->setMinimumHeight( minHeight1 );
    lbl_nsasga ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsasga ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsasga ->setMinimumWidth ( 460 );
+   lbl_nsasga ->setMinimumWidth ( QFontMetrics( lbl_nsasga->font() ).maxWidth() * 13 );
 
    le_nsasga = new QLineEdit     ( this, "nsasga Line Edit" );
    le_nsasga ->setText           ( parameters->count( "nsasga" ) ? ( *parameters )[ "nsasga" ] : "" );
@@ -135,7 +136,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaiterations ->setMinimumHeight( minHeight1 );
    lbl_nsaiterations ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsaiterations ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsaiterations ->setMinimumWidth ( 460 );
+   lbl_nsaiterations ->setMinimumWidth ( QFontMetrics( lbl_nsaiterations->font() ).maxWidth() * 13 );
 
    le_nsaiterations = new QLineEdit     ( this, "nsaiterations Line Edit" );
    le_nsaiterations ->setText           ( parameters->count( "nsaiterations" ) ? ( *parameters )[ "nsaiterations" ] : "" );
@@ -151,7 +152,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaepsilon ->setMinimumHeight( minHeight1 );
    lbl_nsaepsilon ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsaepsilon ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsaepsilon ->setMinimumWidth ( 460 );
+   lbl_nsaepsilon ->setMinimumWidth ( QFontMetrics( lbl_nsaepsilon->font() ).maxWidth() * 13 );
 
    le_nsaepsilon = new QLineEdit     ( this, "nsaepsilon Line Edit" );
    le_nsaepsilon ->setText           ( parameters->count( "nsaepsilon" ) ? ( *parameters )[ "nsaepsilon" ] : "" );
@@ -167,7 +168,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsagsm ->setMinimumHeight( minHeight1 );
    lbl_nsagsm ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsagsm ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsagsm ->setMinimumWidth ( 460 );
+   lbl_nsagsm ->setMinimumWidth ( QFontMetrics( lbl_nsagsm->font() ).maxWidth() * 13 );
 
    le_nsagsm = new QLineEdit     ( this, "nsagsm Line Edit" );
    le_nsagsm ->setText           ( parameters->count( "nsagsm" ) ? ( *parameters )[ "nsagsm" ] : "" );
@@ -183,7 +184,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsascale ->setMinimumHeight( minHeight1 );
    lbl_nsascale ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsascale ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsascale ->setMinimumWidth ( 460 );
+   lbl_nsascale ->setMinimumWidth ( QFontMetrics( lbl_nsascale->font() ).maxWidth() * 13 );
 
    le_nsascale = new QLineEdit     ( this, "nsascale Line Edit" );
    le_nsascale ->setText           ( parameters->count( "nsascale" ) ? ( *parameters )[ "nsascale" ] : "" );
@@ -199,7 +200,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsagenerations ->setMinimumHeight( minHeight1 );
    lbl_nsagenerations ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsagenerations ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsagenerations ->setMinimumWidth ( 460 );
+   lbl_nsagenerations ->setMinimumWidth ( QFontMetrics( lbl_nsagenerations->font() ).maxWidth() * 13 );
 
    le_nsagenerations = new QLineEdit     ( this, "nsagenerations Line Edit" );
    le_nsagenerations ->setText           ( parameters->count( "nsagenerations" ) ? ( *parameters )[ "nsagenerations" ] : "" );
@@ -215,7 +216,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsapopulation ->setMinimumHeight( minHeight1 );
    lbl_nsapopulation ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsapopulation ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsapopulation ->setMinimumWidth ( 460 );
+   lbl_nsapopulation ->setMinimumWidth ( QFontMetrics( lbl_nsapopulation->font() ).maxWidth() * 13 );
 
    le_nsapopulation = new QLineEdit     ( this, "nsapopulation Line Edit" );
    le_nsapopulation ->setText           ( parameters->count( "nsapopulation" ) ? ( *parameters )[ "nsapopulation" ] : "" );
@@ -231,7 +232,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaelitism ->setMinimumHeight( minHeight1 );
    lbl_nsaelitism ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsaelitism ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsaelitism ->setMinimumWidth ( 460 );
+   lbl_nsaelitism ->setMinimumWidth ( QFontMetrics( lbl_nsaelitism->font() ).maxWidth() * 13 );
 
    le_nsaelitism = new QLineEdit     ( this, "nsaelitism Line Edit" );
    le_nsaelitism ->setText           ( parameters->count( "nsaelitism" ) ? ( *parameters )[ "nsaelitism" ] : "" );
@@ -247,7 +248,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsamutate ->setMinimumHeight( minHeight1 );
    lbl_nsamutate ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsamutate ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsamutate ->setMinimumWidth ( 460 );
+   lbl_nsamutate ->setMinimumWidth ( QFontMetrics( lbl_nsamutate->font() ).maxWidth() * 13 );
 
    le_nsamutate = new QLineEdit     ( this, "nsamutate Line Edit" );
    le_nsamutate ->setText           ( parameters->count( "nsamutate" ) ? ( *parameters )[ "nsamutate" ] : "" );
@@ -263,7 +264,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsacrossover ->setMinimumHeight( minHeight1 );
    lbl_nsacrossover ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsacrossover ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsacrossover ->setMinimumWidth ( 460 );
+   lbl_nsacrossover ->setMinimumWidth ( QFontMetrics( lbl_nsacrossover->font() ).maxWidth() * 13 );
 
    le_nsacrossover = new QLineEdit     ( this, "nsacrossover Line Edit" );
    le_nsacrossover ->setText           ( parameters->count( "nsacrossover" ) ? ( *parameters )[ "nsacrossover" ] : "" );
@@ -279,7 +280,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaearlytermination ->setMinimumHeight( minHeight1 );
    lbl_nsaearlytermination ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_nsaearlytermination ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_nsaearlytermination ->setMinimumWidth ( 460 );
+   lbl_nsaearlytermination ->setMinimumWidth ( QFontMetrics( lbl_nsaearlytermination->font() ).maxWidth() * 13 );
 
    le_nsaearlytermination = new QLineEdit     ( this, "nsaearlytermination Line Edit" );
    le_nsaearlytermination ->setText           ( parameters->count( "nsaearlytermination" ) ? ( *parameters )[ "nsaearlytermination" ] : "" );
@@ -295,7 +296,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_sgpdistancequantum ->setMinimumHeight( minHeight1 );
    lbl_sgpdistancequantum ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_sgpdistancequantum ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_sgpdistancequantum ->setMinimumWidth ( 460 );
+   lbl_sgpdistancequantum ->setMinimumWidth ( QFontMetrics( lbl_sgpdistancequantum->font() ).maxWidth() * 13 );
 
    le_sgpdistancequantum = new QLineEdit     ( this, "sgpdistancequantum Line Edit" );
    le_sgpdistancequantum ->setText           ( parameters->count( "sgpdistancequantum" ) ? ( *parameters )[ "sgpdistancequantum" ] : "" );
@@ -311,7 +312,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_sgpdistancemin ->setMinimumHeight( minHeight1 );
    lbl_sgpdistancemin ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_sgpdistancemin ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_sgpdistancemin ->setMinimumWidth ( 460 );
+   lbl_sgpdistancemin ->setMinimumWidth ( QFontMetrics( lbl_sgpdistancemin->font() ).maxWidth() * 13 );
 
    le_sgpdistancemin = new QLineEdit     ( this, "sgpdistancemin Line Edit" );
    le_sgpdistancemin ->setText           ( parameters->count( "sgpdistancemin" ) ? ( *parameters )[ "sgpdistancemin" ] : "" );
@@ -327,7 +328,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_sgpdistancemax ->setMinimumHeight( minHeight1 );
    lbl_sgpdistancemax ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_sgpdistancemax ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_sgpdistancemax ->setMinimumWidth ( 460 );
+   lbl_sgpdistancemax ->setMinimumWidth ( QFontMetrics( lbl_sgpdistancemax->font() ).maxWidth() * 13 );
 
    le_sgpdistancemax = new QLineEdit     ( this, "sgpdistancemax Line Edit" );
    le_sgpdistancemax ->setText           ( parameters->count( "sgpdistancemax" ) ? ( *parameters )[ "sgpdistancemax" ] : "" );
@@ -343,7 +344,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_sgpradiusmin ->setMinimumHeight( minHeight1 );
    lbl_sgpradiusmin ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_sgpradiusmin ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_sgpradiusmin ->setMinimumWidth ( 460 );
+   lbl_sgpradiusmin ->setMinimumWidth ( QFontMetrics( lbl_sgpradiusmin->font() ).maxWidth() * 13 );
 
    le_sgpradiusmin = new QLineEdit     ( this, "sgpradiusmin Line Edit" );
    le_sgpradiusmin ->setText           ( parameters->count( "sgpradiusmin" ) ? ( *parameters )[ "sgpradiusmin" ] : "" );
@@ -359,7 +360,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_sgpradiusmax ->setMinimumHeight( minHeight1 );
    lbl_sgpradiusmax ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
    lbl_sgpradiusmax ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_sgpradiusmax ->setMinimumWidth ( 460 );
+   lbl_sgpradiusmax ->setMinimumWidth ( QFontMetrics( lbl_sgpradiusmax->font() ).maxWidth() * 13 );
 
    le_sgpradiusmax = new QLineEdit     ( this, "sgpradiusmax Line Edit" );
    le_sgpradiusmax ->setText           ( parameters->count( "sgpradiusmax" ) ? ( *parameters )[ "sgpradiusmax" ] : "" );
@@ -539,6 +540,8 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
 
    background->addLayout ( hbl_bottom );
    background->addSpacing( 4 );
+   qApp->processEvents();
+   resize( 0, 0 );
 }
 
 void US_Hydrodyn_Cluster_Bfnb_Nsa::cancel()
@@ -763,27 +766,30 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::update_sgpradiusmax( const QString & )
 
 void US_Hydrodyn_Cluster_Bfnb_Nsa::save()
 {
-   QString fn = QFileDialog::getSaveFileName( 
-                                              QString::null, 
-                                              "*.cluster_bfnb_nsa",
-                                              this,
-                                              tr( QString( "%1: Save" ).arg( "US-SOMO: BNFB/NSA cluster interface" ) ),
-                                              tr( "Save the parameters" ) 
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString filename = QFileDialog::getSaveFileName( 
+                                                   use_dir,
+                                                   "*.cluster_bfnb_nsa",
+                                                   this,
+                                                   tr( QString( "%1: Save" ).arg( "US-SOMO: BNFB/NSA cluster interface" ) ),
+                                                   tr( "Save the parameters" ) 
                                               );
 
-   if( !fn.isEmpty() )
+   if( !filename.isEmpty() )
    {
-      if ( !fn.contains( QRegExp( "\\.cluster_bfnb_nsa$" ) ) )
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+      if ( !filename.contains( QRegExp( "\\.cluster_bfnb_nsa$" ) ) )
       {
-         fn += ".cluster_bfnb_nsa";
+         filename += ".cluster_bfnb_nsa";
       }
-      QFile f( fn );
+      QFile f( filename );
       if ( !f.open( IO_WriteOnly ) )
       {
          QMessageBox::information( this,
                                    tr( QString( "%1: Save" ).arg( "US-SOMO: BNFB/NSA cluster interface" ) ),
                                    QString( tr( "Could not open file %1 for writing" ) )
-                                   .arg( fn ) 
+                                   .arg( filename ) 
                                    );
          return;
       }
@@ -795,24 +801,26 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::save()
 
 void US_Hydrodyn_Cluster_Bfnb_Nsa::load()
 {
-   // cout << QDir::current().path();
-   QString fn = QFileDialog::getOpenFileName( 
-                                              QString::null, 
-                                              "*.cluster_bfnb_nsa",
-                                              this,
-                                              tr( QString( "%1: Open" ).arg( "US-SOMO: BNFB/NSA cluster interface" ) ),
-                                              tr( "Load parameters" ) 
-                                              );
-   if( !fn.isEmpty() )
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString filename = QFileDialog::getOpenFileName( 
+                                                   use_dir,
+                                                   "*.cluster_bfnb_nsa",
+                                                   this,
+                                                   tr( QString( "%1: Open" ).arg( "US-SOMO: BNFB/NSA cluster interface" ) ),
+                                                   tr( "Load parameters" ) 
+                                                  );
+   if( !filename.isEmpty() )
    {
-      QFile f( fn );
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+      QFile f( filename );
       if ( !f.open( IO_ReadOnly ) )
       {
           QMessageBox::information( 
                                     this,
                                     tr( QString( "%1: Open" ).arg( "US-SOMO: BNFB/NSA cluster interface" ) ),
                                     QString( tr( "Could not open file %1 for reading" ) )
-                                    .arg( fn ) 
+                                    .arg( filename ) 
                                     );
           return;
       }
