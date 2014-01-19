@@ -868,3 +868,103 @@ BEGIN
 
 END$$
 
+-- adds a new speedstep table record, relating an experiment to the speedstep
+DROP PROCEDURE IF EXISTS new_speedstep$$
+CREATE PROCEDURE new_speedstep ( p_personGUID   CHAR(36),
+                                 p_password     VARCHAR(80),
+                                 p_experimentID INT(11),
+                                 p_scans        INT(11),
+                                 p_durationhrs  INT(11),
+                                 p_durationmins DOUBLE,
+                                 p_delayhrs     INT(11),
+                                 p_delaymins    DOUBLE,
+                                 p_rotorspeed   INT(11),
+                                 p_acceleration INT(11),
+                                 p_accelerflag  TINYINT(1),
+                                 p_w2tfirst     FLOAT,
+                                 p_w2tlast      FLOAT,
+                                 p_timefirst    INT(11),
+                                 p_timelast     INT(11) )
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS;
+  SET @@FOREIGN_KEY_CHECKS=0;
+
+  IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
+    INSERT INTO speedstep SET
+      experimentID = p_experimentID,
+      scans        = p_scans,
+      durationhrs  = p_durationhrs,
+      durationmins = p_durationmins,
+      delayhrs     = p_delayhrs,
+      delaymins    = p_delaymins,
+      rotorspeed   = p_rotorspeed,
+      acceleration = p_acceleration,
+      accelerflag  = p_accelerflag,
+      w2tfirst     = p_w2tfirst,
+      w2tlast      = p_w2tlast,
+      timefirst    = p_timefirst,
+      timelast     = p_timelast;
+
+  END IF;
+
+  SET @@FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- SELECTs all speedstep table records relating to an experiment
+DROP PROCEDURE IF EXISTS all_speedsteps$$
+CREATE PROCEDURE all_speedsteps ( p_personGUID   CHAR(36),
+                                  p_password     VARCHAR(80),
+                                  p_experimentID INT )
+  READS SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
+    SELECT @OK AS status;
+
+    SELECT   speedstepID, scans, durationhrs, durationmins, delayhrs, delaymins,
+             rotorspeed, acceleration, accelerflag, w2tfirst, w2tlast, timefirst, timelast
+    FROM     speedstep
+    WHERE    experimentID = p_experimentID
+    ORDER BY speedstepID;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+-- DELETEs all speedstep table records associated with an experiment
+DROP PROCEDURE IF EXISTS delete_speedsteps$$
+CREATE PROCEDURE delete_speedsteps ( p_personGUID   CHAR(36),
+                                     p_password     VARCHAR(80),
+                                     p_experimentID INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
+    DELETE FROM speedstep
+    WHERE experimentID = p_experimentID;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+

@@ -106,8 +106,8 @@ bool US_SolveSim::checkGridSize( QList< DataSet* >& data_sets,
 
       for ( int ss = 0; ss < speed_step.size(); ss++ )
       {
-         int    duration  = speed_step[ ss ].duration_hours * 3600
-                          + speed_step[ ss ].duration_minutes * 60;
+         int    duration  = qRound( speed_step[ ss ].duration_hours * 3600.0
+                                  + speed_step[ ss ].duration_minutes * 60.0 );
          time_max         = qMax( time_max, duration );
          rpm_max          = qMax( rpm_max, speed_step[ ss ].rotorspeed );
       }
@@ -352,7 +352,7 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
-               if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
+               if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor) )
                   continue;
 
                ksols++;
@@ -368,7 +368,8 @@ int ks=kk;
                for ( int ss = 0; ss < nscans; ss++ )
                   for ( int rr = 0; rr < npoints; rr++ )
                      nnls_a[ kk++ ] = simdat.value( ss, rr );
-if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR: ks kk" << ks << kk
+//if(lim_offs>1&&(thrnrank==1||thrnrank==11))
+DbgLv(1) << "CR: ks kk" << ks << kk
  << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[kk-2] << nnls_a[kk-1]
  << "cc ee" << cc << ee;
             }
@@ -394,13 +395,21 @@ if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR: ks kk" << ks << kk
                }
             }
 
+DbgLv(1) << "CR: NNLS A filled ee" << ee << lim_offs;
+DbgLv(1) << "CR: NNLS  &simdat" << &simdat;
+DbgLv(1) << "CR: NNLS  &model " << &model;
+DbgLv(1) << "CR: NNLS  &nnls_a" << &nnls_a;
+DbgLv(1) << "CR: NNLS  &simulations" << &simulations;
+DbgLv(1) << "CR: NNLS  astfem_rsa" << &astfem_rsa;
          }  // Each data set
+DbgLv(1) << "CR: NNLS A filled lo" << lim_offs;
 
          if ( signal_wanted  &&  ++kstep == increp )
          {  // If asked for and step at increment, signal progress
             emit work_progress( increp );
             kstep = 0;                     // Reset step count
          }
+DbgLv(1) << "CR: NNLS A filled EMIT complete";
 
 #if 0
          if ( kk >= iasize  &&  iasize < navals )
@@ -412,7 +421,9 @@ DbgLv(0) << "   CR:na  iasize navals" << iasize << navals << "kk narows npav" <<
 DbgLv(0) << "   CR:na  (3)size" << nnls_a.size() << "npav" << US_Memory::memory_profile();
          }
 #endif
+DbgLv(1) << "CR: NNLS A filled cc" << cc << nsolutes;
       }   // Each solute
+DbgLv(1) << "CR: NNLS A filled";
    }   // Constant vbar
 
    else if ( stype == 1 )

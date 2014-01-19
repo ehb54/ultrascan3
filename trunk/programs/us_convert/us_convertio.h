@@ -33,10 +33,10 @@ class US_ConvertIO
           \param    runID   The run ID to look up in the database
           \param    dir     The location where the binary auc files are to go.
           \param    db      An open db connection
+          \param    speedsteps Reference for returned experiment speed steps vector
       */
-      static QString readDBExperiment( QString,
-                                       QString,
-                                       US_DB2* = 0 );
+      static QString readDBExperiment( QString, QString, US_DB2*,
+                        QVector< SP_SPEEDPROFILE >& );
 
       /*! \brief Writes a new DB rawData record for each triple
 

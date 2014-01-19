@@ -180,6 +180,7 @@ totT1+=(clcSt1.msecsTo(QDateTime::currentDateTime()));
 #endif
          int    lscan = 0;
          int    fscan = 0;
+         int    nstep = simparams.speed_step.size();
          double time0 = 0.0;
          double time1 = 0.0;
          double time2 = 0.0;
@@ -190,7 +191,7 @@ totT1+=(clcSt1.msecsTo(QDateTime::currentDateTime()));
          US_SimulationParameters::SpeedProfile* sp;
          US_AstfemMath::MfemData*               ed;
 
-         for ( int step = 0; step < simparams.speed_step.size(); step++ )
+         for ( int step = 0; step < nstep; step++ )
          {
 #ifdef TIMING_RA
 QDateTime clcSt2 = QDateTime::currentDateTime();
@@ -198,6 +199,22 @@ QDateTime clcSt2 = QDateTime::currentDateTime();
             sp      = &simparams.speed_step[ step ];
             ed      = &af_data;
             step_speed = (double)sp->rotorspeed;
+
+DbgLv(1) << "RSA:PO: STEP NSTEP FSTIME TIMEL" << step << nstep
+ << ed->scan[fscan].time << sp->time_last;
+            if ( nstep > 1 )
+            {  // For multi-speed, skip steps outside experimental scan range
+               if ( ed->scan[ fscan ].time > sp->time_last )
+               {
+                  time2   = sp->time_last;
+                  omeg2   = sp->w2t_last;
+                  current_speed = step_speed;
+               continue;
+               }
+
+               if ( step > 0  &&  ed->scan[ lscan - 1 ].time < sp->time_first )
+                  break;
+            }
 
             adjust_limits( sp->rotorspeed );
 
@@ -556,6 +573,7 @@ DbgLv(2) << "RSA: decompose OUT";
 #ifdef TIMING_RA
 QDateTime clcSt5 = QDateTime::currentDateTime();
 #endif
+      int    nstep = simparams.speed_step.size();
       int    lscan = 0;
       int    fscan = 0;
       double time0 = 0.0;
@@ -565,10 +583,11 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
       US_SimulationParameters::SpeedProfile* sp;
       US_AstfemMath::MfemData*               ed;
 
-      for ( int ss = 0; ss < simparams.speed_step.size(); ss++ )
+      for ( int step = 0; step < nstep; step++ )
       {
-         sp           = &simparams.speed_step[ ss ];
+         sp           = &simparams.speed_step[ step ];
          ed           = &af_data;
+         step_speed   = (double)sp->rotorspeed;
 
          adjust_limits( sp->rotorspeed );
          ed->meniscus = af_params.current_meniscus;
@@ -579,7 +598,19 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
          time0        = time2;
          time1        = ed->scan[ fscan     ].time;
          time2        = ed->scan[ lscan - 1 ].time;
-         step_speed   = (double)sp->rotorspeed;
+
+         if ( nstep > 1 )
+         {  // For multi-speed, skip steps outside experimental scan range
+            if ( ed->scan[ fscan ].time > sp->time_last )
+            {
+               time2   = sp->time_last;
+               current_speed = step_speed;
+               continue;
+            }
+
+            if ( step > 0  &&  ed->scan[ lscan - 1 ].time < sp->time_first )
+               break;
+         }
 
          // We need to simulate acceleration
          if ( sp->acceleration_flag )
@@ -617,7 +648,7 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
 
          duration      = time2 - time0;
 
-         if ( ss == simparams.speed_step.size() - 1 )
+         if ( step == simparams.speed_step.size() - 1 )
             duration += (double)( (int)( duration * 0.05 ) );  // +5%
 
          if ( accel_time > duration )
@@ -670,8 +701,8 @@ DbgLv(2) << "RSA:   tsteps sttime" << af_params.time_steps << current_time;
          calculate_ra2( step_speed, step_speed, vC0, simdata, false );
 
          // Set the current time to the last scan of this speed step
-         duration      = sp->duration_hours * 3600.
-                       + sp->duration_minutes * 60.;
+         duration      = sp->duration_hours * 3600.0
+                       + sp->duration_minutes * 60.0;
          delay         = sp->delay_hours * 3600.0
                        + sp->delay_minutes * 60.0;
          current_time  = time1;
@@ -710,15 +741,41 @@ totT6+=(clcSt6.msecsTo(clcSt7));
    if ( time_correction  &&  !simout_flag )
    {
       int soff   = 0;
-      int nsstep = simparams.speed_step.size();
+      int nstep  = simparams.speed_step.size();
       double correction = 0.0;
 
       // Check each speed step to see if it contains acceleration
-      for ( int ss = 0; ss < nsstep; ss++ )
+      for ( int step = 0; step < nstep; step++ )
       {
-         US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ss];
-         US_AstfemMath::MfemData*               ed = &af_data;
+         US_SimulationParameters::SpeedProfile*
+                                   sp = &simparams.speed_step[ step ];
+         US_AstfemMath::MfemData*  ed = &af_data;
          int nscans = sp->scans;
+DbgLv(1) << "RSA: TimeCorr step" << step << "nscans" << nscans;
+
+         if ( nstep > 1 )
+         {  // For multi-speed, skip steps outside experimental scan range
+            int mxscan = ed->scan.size();
+            int fscan  = 0;
+            int lscan  = nscans;
+            lscan      = qMin( lscan, mxscan );
+            int kscans = lscan - fscan;
+            lscan--;
+DbgLv(1) << "RSA: TimeCorr  nscans kscans fscan lscan mxscan" << nscans
+   << kscans << fscan << lscan << mxscan;
+DbgLv(1) << "RSA: TimeCorr   stimef stimel" << sp->time_first << sp->time_last
+   << "etimef etimel" << ed->scan[ fscan ].time << ed->scan[ lscan ].time;
+            nscans     = qMin( nscans, kscans );
+
+            if ( kscans < 1  ||  ed->scan[ fscan ].time > sp->time_last )
+            {
+//               soff      += nscans;
+               continue;
+            }
+
+            if ( step > 0  &&  ed->scan[ lscan ].time < sp->time_first )
+               break;
+         }
 
          // We need to correct time
          if ( sp->acceleration_flag )
@@ -736,10 +793,10 @@ totT6+=(clcSt6.msecsTo(clcSt7));
                double* ytmp = ytmpVec.data();
 
                // Only fit the scans that belong to this speed step
-               for ( int i = 0; i < nscans; i++ )
+               for ( int ii = 0; ii < nscans; ii++ )
                {
-                  xtmp[ i ] = ed->scan[ i + soff ].time;
-                  ytmp[ i ] = ed->scan[ i + soff ].omega_s_t;
+                  xtmp[ ii ] = ed->scan[ ii + soff ].time;
+                  ytmp[ ii ] = ed->scan[ ii + soff ].omega_s_t;
                }
 
                US_Math2::linefit( &xtmp, &ytmp, &slope, &intercept, &sigma,
@@ -747,10 +804,17 @@ totT6+=(clcSt6.msecsTo(clcSt7));
 
                correction = -intercept / slope;
             }
+DbgLv(1) << "RSA: TimeCorr   correction" << correction << "nscans" << nscans;
 
             for ( int i = 0; i < nscans; i++ )
                ed->scan[ i + soff ].time -= correction;
+
+            // We only need make correction for one speed step
+            break;
          }
+
+         if ( correction > 0.0 )
+            break;
          soff += nscans;
       }
    }
@@ -777,6 +841,7 @@ if((ncalls%TIMING_RA_INC)<1) {
   << totT1 << totT2 << totT3 << totT4 << totT5 << totT6 << totT7 << totT8;
 }
 #endif
+DbgLv(1) << "ASTFEM CALC DONE";
    return 0;
 }
 
@@ -1343,15 +1408,18 @@ clcSt3 = QDateTime::currentDateTime();
                         ? (double)( af_params.time_steps ) : 1.0;
    double rpm_inc     = ( rpm_stop - rpm_start ) / time_dif;
    double rpm_current = rpm_start - rpm_inc;
+   int    ntsteps     = af_params.time_steps;
+   int    nisteps     = ntsteps + 2;
 
    // Calculate all time steps (plus a little overlap)
-   for ( int ii = 0; ii < af_params.time_steps + 2; ii++ )
+   for ( int ii = 0; ii < nisteps; ii++ )
    {
 #ifdef TIMING_NI
 clcSt4 = QDateTime::currentDateTime();
 ttT3+=(clcSt3.msecsTo(clcSt4));
 #endif
-      if ( ii < af_params.time_steps )
+//      if ( ii < ntsteps )
+      if ( ii <= ntsteps )
          rpm_current   += rpm_inc;
 
 #ifndef NO_DB
@@ -1364,8 +1432,8 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
 
          for ( int j1 = 0; j1 < 3; j1++ )
          {
-            double* CAj  = CA[ j1 ];
-            double* CBj  = CB[ j1 ];
+            double* CAj  = CA [ j1 ];
+            double* CBj  = CB [ j1 ];
             double* CA1j = CA1[ j1 ];
             double* CA2j = CA2[ j1 ];
             double* CB1j = CB1[ j1 ];
@@ -1374,7 +1442,6 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
             for ( int j2 = 0; j2 < N; j2++ )
             {
                CAj[ j2 ] = CA1j[ j2 ] + rpm_ratio * ( CA2j[ j2 ] - CA1j[ j2 ] );
-
                CBj[ j2 ] = CB1j[ j2 ] + rpm_ratio * ( CB2j[ j2 ] - CB1j[ j2 ] );
             }
          }
@@ -1385,8 +1452,8 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
 
       w2t_integral += ( simscan.time - last_time ) *
                       sq( rpm_current * M_PI / 30.0 );
-if(ii<2||ii>af_params.time_steps-1) {
-DbgLv(1) << "TMS:RSA:ni: step" << ii << "time ltime omg"
+if(ii<3||ii>ntsteps-2) {
+DbgLv(1) << "TMS:RSA:ni: iistep" << ii << "time ltime omg"
  << simscan.time << last_time << w2t_integral << "rpm" << rpm_current
  << "st_omg" << af_params.start_om2t << "N" << N;}
 
@@ -1399,7 +1466,7 @@ DbgLv(2) << "TMS:RSA:ni: time omega_s_t" << simscan.time << simscan.omega_s_t
       simscan.conc.clear();
       simscan.conc.reserve( N );
 
-      for ( int j = 0; j < N; j++ ) simscan.conc .append( C0[ j ] );
+      for ( int jj = 0; jj < N; jj++ ) simscan.conc .append( C0[ jj ] );
 
       simdata.scan.append( simscan );
 if(ii==0) DbgLv(1) << "TMS:RSA:ni:  Scan Added";
@@ -1416,16 +1483,16 @@ ttT4+=(clcSt4.msecsTo(clcSt5));
          right_hand_side[ 0 ] = - CB[ 1 ][ 0 ] * C0[ 0 ]
                                 - CB[ 2 ][ 0 ] * C0[ 1 ];
 
-         for ( int j = 1; j < N - 1; j++ )
+         for ( int jj = 1; jj < N - 1; jj++ )
          {
-            right_hand_side[ j ] = - CB[ 0 ][ j ] * C0[ j - 1 ]
-                                   - CB[ 1 ][ j ] * C0[ j     ]
-                                   - CB[ 2 ][ j ] * C0[ j + 1 ];
+            right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj - 1 ]
+                                    - CB[ 1 ][ jj ] * C0[ jj     ]
+                                    - CB[ 2 ][ jj ] * C0[ jj + 1 ];
          }
 
-         int j = N - 1;
-         right_hand_side[ j ] = - CB[ 0 ][ j ] * C0[ j - 1 ]
-                                - CB[ 1 ][ j ] * C0[ j     ];
+         int jj = N - 1;
+         right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj - 1 ]
+                                 - CB[ 1 ][ jj ] * C0[ jj     ];
       }
       else
       {
@@ -1435,28 +1502,28 @@ ttT4+=(clcSt4.msecsTo(clcSt5));
             right_hand_side[ 1 ] = - CB[ 1 ][ 1 ] * C0[ 0 ]
                                    - CB[ 2 ][ 1 ] * C0[ 1 ];
 
-            for ( int j = 2; j < N; j++ )
+            for ( int jj = 2; jj < N; jj++ )
             {
-               right_hand_side[ j ] = - CB[ 0 ][ j ] * C0[ j - 2 ]
-                                      - CB[ 1 ][ j ] * C0[ j - 1 ]
-                                      - CB[ 2 ][ j ] * C0[ j     ];
+               right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj - 2 ]
+                                       - CB[ 1 ][ jj ] * C0[ jj - 1 ]
+                                       - CB[ 2 ][ jj ] * C0[ jj     ];
             }
          }
          else
          {
-            for ( int j = 0; j < N - 2; j++ )
+            for ( int jj = 0; jj < N - 2; jj++ )
             {
-               right_hand_side[ j ] = - CB[ 0 ][ j ] * C0[ j     ]
-                                      - CB[ 1 ][ j ] * C0[ j + 1 ]
-                                      - CB[ 2 ][ j ] * C0[ j + 2 ];
+               right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj     ]
+                                       - CB[ 1 ][ jj ] * C0[ jj + 1 ]
+                                       - CB[ 2 ][ jj ] * C0[ jj + 2 ];
             }
 
-            int j = N - 2;
-            right_hand_side[ j ] = - CB[ 0 ][ j ] * C0[ j     ]
-                                   - CB[ 1 ][ j ] * C0[ j + 1 ];
+            int jj = N - 2;
+            right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj     ]
+                                    - CB[ 1 ][ jj ] * C0[ jj + 1 ];
 
-            j = N - 1;
-            right_hand_side[ j ] = -CB[ 0 ][ j ] * C0[ j ];
+            jj = N - 1;
+            right_hand_side[ jj ] = -CB[ 0 ][ jj ] * C0[ jj ];
          }
       }
 
@@ -1470,7 +1537,7 @@ clcSt7 = QDateTime::currentDateTime();
 ttT6+=(clcSt6.msecsTo(clcSt7));
 #endif
 
-      for ( int j = 0; j < N; j++ ) C0[ j ] = C1[ j ];
+      for ( int jj = 0; jj < N; jj++ ) C0[ jj ] = C1[ jj ];
 
 #ifndef NO_DB
       if ( show_movie )
@@ -1487,7 +1554,7 @@ clcSt3 = QDateTime::currentDateTime();
 ttT7+=(clcSt7.msecsTo(clcSt3));
 #endif
 
-      if ( ii == af_params.time_steps )
+      if ( ii == ntsteps )
       {
          C_init.radius       .clear();
          C_init.concentration.clear();

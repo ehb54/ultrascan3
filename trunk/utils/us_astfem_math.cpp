@@ -397,8 +397,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    //        (filled with zeros) before using this routine!
    //        The radius also has to be assigned!
 
-   if ( expdata.scan.size() == 0 || expdata.scan[0].conc.size() == 0 ||
-        simdata.scan.size() == 0 || simdata.radius.size() == 0 ) 
+   if ( expdata.scan.size() == 0  ||  expdata.scan[ 0 ].conc.size() == 0  ||
+        simdata.scan.size() == 0  ||  simdata.radius.size()         == 0 )
       return -1;
 
    // Iterate through all experimental data scans and find the first time point
@@ -413,7 +413,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    if ( use_time )
    {
-      double s_time  = simdata.scan[ 0 ].time;
+      double s_time  = simdata.scan[          0 ].time;
       double l_time  = simdata.scan[ sscans - 1 ].time;
 
       for ( int expscan = 0; expscan < escans; expscan++ )
@@ -428,12 +428,14 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
          }
       }
 
-      fscan         = ( fscan < 0 ) ? 0 : fscan;
+      fscan         = ( fscan < 0 ) ?      0 : fscan;
       lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
+qDebug() << "MATHi: s_time l_time" << s_time << e_time
+ << "fscan lscan" << fscan << lscan;
    }
    else // Use omega^2t integral for interpolation
    {
-      double s_omega = simdata.scan[ 0 ].omega_s_t;
+      double s_omega = simdata.scan[          0 ].omega_s_t;
       double l_omega = simdata.scan[ sscans - 1 ].omega_s_t;
 
       for ( int expscan = 0; expscan < escans; expscan++ )
@@ -448,7 +450,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
          }
       }
 
-      fscan         = ( fscan < 0 ) ? 0 : fscan;
+      fscan         = ( fscan < 0 ) ?      0 : fscan;
       lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
 //qDebug() << "MATHi: s_omega l_omega" << s_omega << e_omega
 // << "fscan lscan" << fscan << lscan;
@@ -473,9 +475,12 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    // NOTE: *expdata has to be initialized to have the proper size
    //        (filled with zeros) before using this routine!
    //        The radius also has to be assigned!
+   int    nsscan  = simdata.scan.size();
+   int    nsconc  = simdata.radius.size();
+   int    nescan  = expdata.scan.size();
+   int    neconc  = expdata.scan[ 0 ].conc.size();
 
-   if ( expdata.scan.size() == 0 || expdata.scan[0].conc.size() == 0 ||
-        simdata.scan.size() == 0 || simdata.radius.size() == 0 ) 
+   if ( nescan == 0  ||  neconc == 0  ||  nsscan == 0  ||  nsconc == 0 )
       return -1;
 
    // First, create a temporary MfemData instance (tmp_data) that has the
@@ -488,12 +493,12 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    
    tmp_data.scan  .clear();
    tmp_data.radius.clear();
-   tmp_data.scan  .reserve( expdata.scan  .size() );
-   tmp_data.radius.reserve( simdata.radius.size() );
+   tmp_data.scan  .reserve( nescan );
+   tmp_data.radius.reserve( nsconc );
    
    // Fill tmp_data.radius with radius positions from the simdata array:
 
-   for ( int ii = 0; ii < simdata.radius.size(); ii++ )
+   for ( int ii = 0; ii < nsconc; ii++ )
    {
       tmp_data.radius << simdata.radius[ ii ];
    }
@@ -511,6 +516,9 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    if ( use_time )
    {
+      int       eftime = expdata.scan[          0 ].time;
+      int       sltime = simdata.scan[ nsscan - 1 ].time;
+
       for ( int expscan = fscan; expscan < lscan; expscan++ )
       {  // Interpolate where needed to a range of experiment scans
          MfemScan* sscan1 = &simdata.scan[ simscan ];
@@ -523,17 +531,20 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
          while ( simdata.scan[ simscan ].time < e_time )
          {
             simscan ++;
-            // make sure we don't overrun bounds:
-            if ( simscan == (int) simdata.scan.size() )
-            {
-               qDebug() << "simulation time scan[" << simscan << "]: " 
-                        << simdata.scan[ simscan - 1 ].time
-                        << ", expdata scan time[" << expscan << "]: " 
-                        << expdata.scan[ expscan ].time;
+            // Make sure we don't overrun bounds:
+            if ( simscan == nsscan )
+            {  // Sim scan count has exceeded limit
+               if ( sltime >= eftime )
+               {  // Output a message if time ranges overlap
+                  qDebug() << "simulation time scan[" << simscan << "]: " 
+                           << simdata.scan[ simscan - 1 ].time
+                           << ", expdata scan time[" << expscan << "]: " 
+                           << expdata.scan[ expscan ].time;
 
-               qDebug() << "The simulated data does not cover the entire "
-                           "experimental time range and ends too early!\n"
-                           "exiting...\n";
+                  qDebug() << "The simulated data does not cover the entire "
+                              "experimental time range and ends too early!\n"
+                              "exiting...\n";
+               }
 
 #if 0
 #if defined(USE_MPI)
@@ -566,10 +577,10 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             double a;
             double b;
             tmp_scan.conc.clear();
-            tmp_scan.conc.reserve( simdata.radius.size() );
+            tmp_scan.conc.reserve( nsconc );
             
             // interpolate the concentration points:
-            for ( int ii = 0; ii < simdata.radius.size(); ii++ )
+            for ( int ii = 0; ii < nsconc; ii++ )
             {
                a = ( sscan2->conc[ ii ] - sscan1->conc[ ii ] ) /
                   ( s_time2 - s_time1 );
@@ -654,10 +665,10 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             double a;
             double b;
             tmp_scan.conc.clear();
-            tmp_scan.conc.reserve( simdata.radius.size() );
+            tmp_scan.conc.reserve( nsconc );
 
             // Interpolate the concentration points:
-            for ( int ii = 0; ii < simdata.radius.size(); ii++ )
+            for ( int ii = 0; ii < nsconc; ii++ )
             {
                a = ( sscan2->conc[ ii ] - sscan1->conc[ ii ] ) /
                    ( s_omega2 - s_omega1 );
@@ -706,7 +717,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    int jj = 0;
 
-   for ( int ii = 0; ii < expdata.radius.size(); ii++ )
+   for ( int ii = 0; ii < neconc; ii++ )
    {
       while ( tmp_data.radius[ jj ] < expdata.radius[ ii ] )
       {

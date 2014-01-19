@@ -7,6 +7,7 @@
 #include "us_passwd.h"
 #include "us_convert.h"
 #include "us_convertio.h"
+#include "us_experiment.h"
 #include "us_util.h"
 
 // Generic constructor
@@ -234,14 +235,14 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
 }
 
 // Function to read the experiment info and binary auc files to disk
-QString US_ConvertIO::readDBExperiment( QString runID,
-                                        QString dir,
-                                        US_DB2* db )
+QString US_ConvertIO::readDBExperiment( QString runID, QString dir,
+          US_DB2* db, QVector< SP_SPEEDPROFILE >& speedsteps )
+
 {
    US_Experiment ExpData;       // A local copy
    QList< US_Convert::TripleInfo > triples;  // a local copy
 qDebug() << "rDBE: call ExpData.readFromDB";
-   int readStatus = ExpData.readFromDB( runID, db );
+   int readStatus = ExpData.readFromDB( runID, db, speedsteps );
 
    if ( readStatus == US_DB2::NO_EXPERIMENT )
       return( "The current run ID is not found in the database." );
@@ -291,8 +292,9 @@ qDebug() << "rDBE: call ExpData.saveRIDisk";
 
    // Now try to write the xml file
 qDebug() << "rDBE: call ExpData.saveToDisk";
+   QVector< SP_SPEEDPROFILE > sp_dmy;
    int xmlStatus = ExpData.saveToDisk( triples, ExpData.opticalSystem,
-                                       runID, dir );
+                                       runID, dir, sp_dmy );
 
    if ( xmlStatus == US_Convert::CANTOPEN )
    {
@@ -613,18 +615,22 @@ int US_ConvertIO::checkDiskData( US_Experiment& ExpData,
    {
       if ( triples[ i ].excluded ) continue;
 
-      QString uuidc = US_Util::uuid_unparse( (unsigned char*) triples[ i ].tripleGUID );
+      QString uuidc = US_Util::uuid_unparse(
+            (unsigned char*) triples[ i ].tripleGUID );
       q.clear();
       q << QString( "get_rawDataID_from_GUID" )
         << uuidc;
       db->query( q );
 
       int status = db->lastErrno();
+qDebug() << "iSv: trip" << i << "tGUID" << uuidc
+ << "stat,ok,norow" << status << US_DB2::OK << US_DB2::NOROWS;
       if ( status == US_DB2::OK )
       {
          // Save updated triple ID
          if ( db->next() )
             triples[ i ].tripleID = db->value( 0 ).toString().toInt();
+qDebug() << "iSv:    tID" << triples[i].tripleID;
       }
 
       else if ( status == US_DB2::NOROWS )

@@ -12,6 +12,7 @@
 #include "us_experiment.h"
 #include "us_dataIO.h"
 #include "us_solution.h"
+#include "us_simparms.h"
 #include "us_selectbox.h"
 #include "us_mwl_data.h"
 #ifndef DbgLv
@@ -128,7 +129,9 @@ class US_ConvertGui : public US_Widgets
 
       QVector< US_Convert::Excludes >    allExcludes;  //!< All triple excludes
 
-      US_MwlData    mwl_data;
+      QVector< SP_SPEEDPROFILE >         speedsteps;   //!< Speed steps
+
+      US_MwlData    mwl_data;                  //!< MWL data object
 
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
@@ -248,6 +251,7 @@ class US_ConvertGui : public US_Widgets
       void init_output_data  ( void );
       void build_output_data ( void );
       void connectTolerance  ( bool );
+      int  countSpeeds       ( QVector< int >&, int* );
       void help              ( void )
         { showHelp.show_help( "convert.html" ); };
 };

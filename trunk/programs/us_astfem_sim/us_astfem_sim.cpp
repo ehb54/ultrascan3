@@ -198,9 +198,9 @@ qDebug() << "ASim:InSP:  bottom" << bottom << simparams.bottom;
    simparams.speed_step .clear();
 
    sp.duration_hours    = 5;
-   sp.duration_minutes  = 30;
+   sp.duration_minutes  = 30.0;
    sp.delay_hours       = 0;
-   sp.delay_minutes     = 20;
+   sp.delay_minutes     = 20.0;
    sp.rotorspeed        = (int)rpm;
    sp.scans             = 30;
    sp.acceleration      = 400;
@@ -276,9 +276,9 @@ void US_Astfem_Sim::change_status()
    mtyps << "ASTFEM" << "CLAVERIE" << "MOVING_HAT" << "USER" << "ASTFVM";
    QString simtype = mtyps[ (int)simparams.meshType ];
 
-   int dhrs  = simparams.speed_step[ 0 ].duration_hours;
-   int dmns  = simparams.speed_step[ 0 ].duration_minutes;
-   int scns  = simparams.speed_step[ 0 ].scans;
+   int    dhrs  = simparams.speed_step[ 0 ].duration_hours;
+   double dmns  = simparams.speed_step[ 0 ].duration_minutes;
+   int    scns  = simparams.speed_step[ 0 ].scans;
 
    for ( int ii = 1; ii < simparams.speed_step.size(); ii++ )
    {
@@ -290,7 +290,7 @@ void US_Astfem_Sim::change_status()
    if ( dmns > 59 )
    {
       int khrs = dmns / 60;
-      dmns    -= ( khrs * 60 );
+      dmns    -= ( khrs * 60.0 );
       dhrs    += khrs;
    }
 
@@ -400,9 +400,10 @@ void US_Astfem_Sim::start_simulation( void )
 
    // Set the time for the scans
    double w2t_sum      = 0.0;
-   double delay        = simparams.speed_step[ 0 ].delay_hours * 3600
-                       + simparams.speed_step[ 0 ].delay_minutes * 60;
+   double delay        = simparams.speed_step[ 0 ].delay_hours * 3600.0
+                       + simparams.speed_step[ 0 ].delay_minutes * 60.0;
    double current_time = delay;
+//   double current_time = 0.0;
    double duration;
    double increment    = 0.0;
    int    scan_number  = 0;
@@ -414,28 +415,37 @@ void US_Astfem_Sim::start_simulation( void )
 
       // First time point of this speed step in secs
       US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ ii ];
-      double w2t   = sq( sp->rotorspeed * M_PI / 30.0 );
+      double w2t     = sq( sp->rotorspeed * M_PI / 30.0 );
 
-      delay         = sp->delay_hours * 3600 + sp->delay_minutes * 60;
-      duration      = sp->duration_hours * 3600 + sp->duration_minutes * 60;
-      increment     = ( duration - delay ) / (double)( sp->scans - 1 );
+      delay          = sp->delay_hours    * 3600. + sp->delay_minutes    * 60.;
+      duration       = sp->duration_hours * 3600. + sp->duration_minutes * 60.;
+//      increment      = ( duration - delay ) / (double)( sp->scans - 1 );
+      increment      = duration / (double)( sp->scans - 1 );
       if ( ii == 0 )
          w2t_sum        = current_time * w2t;
       double w2t_inc = increment * w2t;
-      current_time += ( delay - increment );
+//      current_time  += ( delay - increment );
 DbgLv(2) << "SIM curtime dur incr" << current_time << duration << increment;
 
       for ( int jj = 0; jj < sp->scans; jj++ )
       {
          US_DataIO::Scan* scan = &sim_data.scanData[ scan_number ];
-         current_time += increment;
-         scan->seconds = current_time;
+//         current_time += increment;
+         scan->seconds = (double)qRound( current_time );
          scan->omega2t = w2t_sum;
          w2t_sum      += w2t_inc;
+         current_time += increment;
 
          scan_number++;
 DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       }
+
+      int j1           = scan_number - sp->scans;
+      int j2           = scan_number - 1;
+      sp->w2t_first    = sim_data.scanData[ j1 ].omega2t;
+      sp->w2t_last     = sim_data.scanData[ j2 ].omega2t;
+      sp->time_first   = sim_data.scanData[ j1 ].seconds;
+      sp->time_last    = sim_data.scanData[ j2 ].seconds;
    }
 
    lb_progress->setText( tr( "% Completed:" ) );

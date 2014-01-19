@@ -415,7 +415,7 @@ void US_ConvertGui::reset( void )
    pb_cancelref  ->setEnabled( false );
    pb_dropScan   ->setEnabled( false );
    pb_solution   ->setEnabled( false );
-   pb_editRuninfo ->setEnabled( false );
+   pb_editRuninfo->setEnabled( false );
    pb_applyAll   ->setEnabled( false );
    pb_saveUS3    ->setEnabled( false );
 
@@ -1553,7 +1553,8 @@ DbgLv(1) << "CGui: ldUS3DB: call rdDBExp";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    le_status->setText( tr( "Loading data from DB (Experiment) ..." ) );
    qApp->processEvents();
-   QString status = US_ConvertIO::readDBExperiment( runID, dirname, &db );
+   QString status = US_ConvertIO::readDBExperiment( runID, dirname, &db,
+         speedsteps );
    QApplication::restoreOverrideCursor();
 
    if ( status  != QString( "" ) )
@@ -2667,11 +2668,92 @@ DbgLv(1) << "DelTrip:     ccx nlam" << 0 << exp_lambdas.count();
 // Function to save US3 data
 void US_ConvertGui::saveUS3( void )
 {
-   if ( disk_controls->db() )
-      saveUS3DB();            // Save AUCs to disk then DB
+   // Test to see if this is multi-speed data
+   QVector< int > speeds;
+   int notrips  = 0;
+   int nspeeds  = countSpeeds( speeds, &notrips );
+   int nitrips  = allData.count();
+   int kotrips  = nitrips * nspeeds;
+DbgLv(1) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
+DbgLv(1) << "SV:  speeds" << speeds;
+
+   if ( nspeeds < 2  ||  notrips != kotrips )
+   {  // For single-speed data, save current triples
+      if ( disk_controls->db() )
+         saveUS3DB();          // Save AUCs to disk then DB
+
+      else
+         saveUS3Disk();        // Save AUCs to disk
+   }
 
    else
-      saveUS3Disk();          // Save AUCs to disk
+   {  // For multi-speed data, report and split data into speed-runIDs
+      QMessageBox::information( this,
+          tr( "Multi-Speed Data to be Saved" ),
+          tr( "%1 speeds are present in the data to be saved\n"
+              "It will be split into single-speed runs.\n"
+              "The %2 input triples will result in\n"
+              "    %3 total output triples." )
+              .arg( nspeeds ).arg( nitrips ).arg( notrips ) );
+
+      QString runIDsave = runID;                        // Save run ID
+      QString runIDbase = runIDsave + "-";              // Base new run ID
+      QVector< US_DataIO::RawData > oriData = allData;  // Save original data
+      QVector< double > oriRIPro = ExpData.RIProfile;   // Save original RI Pro
+      int     nripro    = ExpData.RIProfile.count();
+      uchar uuid[ 16 ];
+//      saveStatus        = NOT_SAVED;
+
+      for ( int spx = 0; spx < nspeeds; spx++ )
+      {
+         int ispeed        = speeds[ spx ];
+         runID             = runIDbase + QString::number( ispeed );
+         double speed      = (double)ispeed;
+         ExpData.runID     = runID;
+         ExpData.expGUID.clear();
+DbgLv(1) << "SV:   runID" << runID;
+         le_runID2->setText( runID );
+
+         // Create triple datasets with scans at the current speed
+         for ( int trx = 0; trx < nitrips; trx++ )
+         {
+            allData[ trx ].scanData.clear();
+
+            if ( trx == 0 )
+               ExpData.RIProfile.clear();
+
+            for ( int ss = 0; ss < oriData[ trx ].scanData.count(); ss++ )
+            {
+               if ( oriData[ trx ].scanData[ ss ].rpm == speed )
+               {  // Save scan (+RI profile?) for scan where speed matches
+                  allData[ trx ].scanData << oriData[ trx ].scanData[ ss ];
+
+                  if ( trx == 0  &&  ss < nripro )
+                     ExpData.RIProfile << oriRIPro[ ss ];
+               }
+            }
+DbgLv(1) << "SV:    trx" << trx << "scans" << allData[ trx ].scanData.count();
+
+            QString fname     = out_tripinfo[ trx ].tripleFilename;
+            QString uuidst    = US_Util::new_guid();
+            US_Util::uuid_parse( uuidst, uuid );
+            out_tripinfo[ trx ].tripleFilename
+                              = runID + "." + fname.section( ".", -5, -1 );
+            out_tripinfo[ trx ].tripleID
+                              = trx + 1;
+            memcpy( (unsigned char*)out_tripinfo[ trx ].tripleGUID, uuid, 16 );
+            memcpy( (unsigned char*)allData     [ trx ].rawGUID   , uuid, 16 );
+            outData[ trx ]    = &allData[ trx ];
+         }
+
+         // Save the triples of the current speed-run
+         if ( disk_controls->db() )
+            saveUS3DB();       // Save AUCs to disk then DB
+
+         else
+            saveUS3Disk();     // Save AUCs to disk
+      }
+   }
 
    QMessageBox::information( this,
        tr( "Save is Complete" ),
@@ -2733,7 +2815,8 @@ int US_ConvertGui::saveUS3Disk( void )
    QApplication::restoreOverrideCursor();
 
    // Now try to write the xml file
-   status = ExpData.saveToDisk( out_tripinfo, runType, runID, dirname );
+   status = ExpData.saveToDisk( out_tripinfo, runType, runID, dirname,
+                                speedsteps );
 
    // How many files should have been written?
    int fileCount = out_tripinfo.size();
@@ -2927,6 +3010,8 @@ void US_ConvertGui::saveUS3DB( void )
       return;
    }
 DbgLv(1) << "DBSv:  (1)trip0tripFilename" << out_tripinfo[0].tripleFilename;
+DbgLv(1) << "DBSv:     tripleGUID       "
+ << US_Util::uuid_unparse((uchar*)out_tripinfo[0].tripleGUID);
 
    // Ok, let's make sure they know what'll happen
    if ( saveStatus == BOTH )
@@ -2960,8 +3045,12 @@ DbgLv(1) << "DBSv:  (1)trip0tripFilename" << out_tripinfo[0].tripleFilename;
 
    int status = US_ConvertIO::checkDiskData( ExpData, out_tripinfo, &db );
 
+   // Save a flag for need to repeat the disk write later
+   bool repeat_disk = ( status == US_DB2::NO_RAWDATA );
+
    QApplication::restoreOverrideCursor();
 DbgLv(1) << "DBSv:  (2)trip0tripFilename" << out_tripinfo[0].tripleFilename;
+DbgLv(1) << "DBSv:     dset tripleID    " << out_tripinfo[0].tripleID;
 
    if ( status == US_DB2::NO_PERSON )  // Investigator or operator doesn't exist
    {
@@ -3004,6 +3093,7 @@ DbgLv(1) << "DBSv:  (2)trip0tripFilename" << out_tripinfo[0].tripleFilename;
    // Save updated files and prepare to transfer to DB
    le_status->setText( tr( "Preparing Save with Disk write ..." ) );
    qApp->processEvents();
+DbgLv(1) << "DBSv:  (2)dset tripleID    " << out_tripinfo[0].tripleID;
    status = saveUS3Disk();
    if ( status != US_Convert::OK )
       return;
@@ -3056,7 +3146,7 @@ DbgLv(1) << "DBSv:  files count" << files.size();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    le_status->setText( tr( "Saving Experiment to DB ..." ) );
    qApp->processEvents();
-   status = ExpData.saveToDB( ( saveStatus == BOTH ), &db );
+   status = ExpData.saveToDB( ( saveStatus == BOTH ), &db, speedsteps );
    QApplication::restoreOverrideCursor();
 
    if ( status == US_DB2::NO_PROJECT )
@@ -3113,6 +3203,16 @@ DbgLv(1) << "DBSv:  files count" << files.size();
             tr( "Unspecified database error: " ) + writeStatus );
       le_status->setText( tr( "*ERROR* Problem saving experiment." ) );
       return;
+   }
+
+   if ( repeat_disk )
+   {  // Last disk save did not have tripleID values, so update files
+      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+      le_status->setText( tr( "Writing updated Raw records to disk..." ) );
+      status = saveUS3Disk();
+      QApplication::restoreOverrideCursor();
+      qApp->processEvents();
+DbgLv(1) << "DBSv:  REPEAT disk save for raw IDs";
    }
 
    le_status->setText( tr( "DB data save complete. Saving reports..." ) );
@@ -4092,6 +4192,10 @@ DbgLv(1) << "CGui:IOD:  ochx" << trx << "celchn cID" << celchn << chanID;
       }
    }
 
+   // Save a vector of speed steps computed from the data scans
+   US_SimulationParameters::computeSpeedSteps( &allData[ 0 ].scanData,
+         speedsteps );
+
    // MultiWaveLength if channels and triples counts differ
    isMwl            = ( all_chaninfo.count() != all_tripinfo.count() );
 
@@ -4155,5 +4259,48 @@ void US_ConvertGui::connectTolerance( bool setConnect )
    {
       ct_tolerance->disconnect();
    }
+}
+
+// Function to count speeds present in all data
+int US_ConvertGui::countSpeeds( QVector< int >& speeds, int* pNotrips  )
+{
+   speeds.clear();                      // Initial list of unique speeds
+   int nspeed        = 0;               // Total unique speeds encountered
+   int notrips       = 0;               // Count of total output triples
+   int nitrips       = allData.size();  // Count of input triples
+   int pspeed        = 0;               // Speed at previous scan
+
+   if ( isMwl )
+   {  // Skip the speed counting for MWL
+      return nspeed;
+   }
+
+   for ( int trx = 0; trx < nitrips; trx++ )
+   {  // Examine the speeds within each triple
+      US_DataIO::RawData* edata  = &allData[ trx ];
+
+      for ( int ss = 0; ss < edata->scanData.size(); ss++ )
+      {  // Test each scan's speed
+         int speed      = qRound( edata->scanData[ ss ].rpm );
+
+         if ( ! speeds.contains( speed ) )
+         {  // New speed:  add to list and bump unique-speed count
+            speeds << speed;            // Newly encountered speed
+            nspeed++;                   // Count of unique speeds
+         }
+
+         if ( speed != pspeed )
+         {  // Not the same speed as previous scan:  bump out-triple count
+            pspeed         = speed;     // Previous speed for next iteration
+            notrips++;                  // Count of output triples
+         }
+      }
+DbgLv(1) << "cS: trx nspeed notrips" << nspeed << notrips;
+   }
+
+   if ( pNotrips != NULL )
+      *pNotrips      = notrips;         // Return number of output triples
+
+   return nspeed;                       // Return number of unique speeds
 }
 

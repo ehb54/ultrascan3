@@ -1,5 +1,6 @@
 //! \file us_2dsa_process.cpp
 
+#include "us_2dsa.h"
 #include "us_2dsa_process.h"
 #include "us_util.h"
 #include "us_settings.h"
@@ -11,7 +12,7 @@
 #include "us_memory.h"
 
 // Class to process 2DSA simulations
-US_2dsaProcess::US_2dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
+US_2dsaProcess::US_2dsaProcess( QList< SS_DATASET* >& dsets,
    QObject* parent /*=0*/ ) : QObject( parent ), dsets( dsets )
 {
    bdata    = &dsets[ 0 ]->run_data;  // pointer to base experiment data
@@ -479,7 +480,7 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
    }
 DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
 
-   US_SolveSim::DataSet* dset = dsets[ 0 ];
+   SS_DATASET* dset   = dsets[ 0 ];
    double sfactor     = 1.0 / dset->s20w_correction;
    double dfactor     = 1.0 / dset->D20w_correction;
    double vbar20      = dset->vbar20;
@@ -1227,7 +1228,7 @@ int nscns  = dsets[0]->run_data.scanData.size();
 int nrpts  = dsets[0]->run_data.xvalues.size();
 int szdata = sizeof(US_DataIO::RawData)+(nscns*szscnd)+(nscns*nrpts*szrdng);
 int szsimu = sizeof(US_SolveSim::Simulation)+(2*szdata)+(szsols*ktisol);
-int szdset = sizeof(US_SolveSim::DataSet);
+int szdset = sizeof(SS_DATASET);
 int szwrkp = sizeof(WorkPacket2D);
     szwrkp = szwrkp + szsols*100 + szsimu + szdset;
 DbgLv(1) << "ES: nscns nrpts ktisol" << nscns << nrpts << ktisol;

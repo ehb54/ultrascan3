@@ -622,7 +622,7 @@ void US_SimulationParametersGui::update_duration_hours( double hours )
 void US_SimulationParametersGui::update_duration_mins( double minutes )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
-   sp->duration_minutes = (int)minutes;
+   sp->duration_minutes = minutes;
    check_delay();
    update_combobox();
 }
