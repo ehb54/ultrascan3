@@ -7,6 +7,7 @@
 #include "us_passwd.h"
 #include "us_investigator.h"
 #include "us_util.h"
+#include "us_simparms.h"
 #include "us_experiment.h"
 
 US_Experiment::US_Experiment( void )
@@ -39,10 +40,14 @@ int US_Experiment::checkRunID( US_DB2* db )
    return US_DB2::OK;
 }
 
-int US_Experiment::saveToDB( bool update, US_DB2* db )
+int US_Experiment::saveToDB( bool update, US_DB2* db,
+                             QVector< SP_SPEEDPROFILE >& speedsteps )
 {
+qDebug() << "Exp:svToDB: update" << update << "ss-count" << speedsteps.count();
    // Let's see if the project is in the db already
    int status = project.saveToDB( db );
+qDebug() << "Exp:svToDB: projsv status(+NO_PR)" << status << US_DB2::NO_PROJECT
+ << "expID" << expID;
    if ( status == US_DB2::NO_PROJECT )
       return status;
 
@@ -125,20 +130,39 @@ int US_Experiment::saveToDB( bool update, US_DB2* db )
    }
 
    // Let's get some info after db update
+   QString idExp = QString::number( expID );
    q.clear();
-   q << "get_experiment_info"
-     << QString::number( expID );
+   q << "get_experiment_info" << idExp;
    db->query( q );
    db->next();
 
    date = db->value( 12 ).toString();
 
+   // If multispeed, add speed steps to the database
+   q.clear();
+   q << "delete_speedsteps" << idExp;   // Delete any records for experiment
+   saveStatus = db->statusQuery( q );
+   if ( saveStatus != 0 )
+   {
+      qDebug() << "Delete_SpeedSteps" << saveStatus << db->lastError();
+   }
+qDebug() << "Exp:svToDB: delss status" << saveStatus << db->lastError();
+
+qDebug() << "Exp:svToDB:  ss count" << speedsteps.count() << "expID" << expID;
+   for ( int jj = 0; jj < speedsteps.count(); jj++ )
+   {
+qDebug() << "Exp:svToDB:   jj" << jj << "expID" << expID;
+int ssstat=
+      US_SimulationParameters::speedstepToDB( db, expID, &speedsteps[ jj ] );
+qDebug() << "Exp:svToDB:     ssstat=" << ssstat;
+   }
+
    return US_DB2::OK;
 }
 
 // Function to read an experiment from DB
-int US_Experiment::readFromDB( QString runID, 
-                               US_DB2* db )
+int US_Experiment::readFromDB( QString runID, US_DB2* db,
+                               QVector< SP_SPEEDPROFILE >& speedsteps )
 {
    QStringList q( "get_experiment_info_by_runID" );
    q << runID
@@ -251,7 +275,10 @@ int US_Experiment::readFromDB( QString runID,
          return US_DB2::ERROR;
       }
    }
-      
+
+   // If this is multi-speed, get speed steps for the experiment
+   US_SimulationParameters::speedstepsFromDB( db, expID, speedsteps );
+
    return US_DB2::OK;
 }
 
@@ -259,7 +286,8 @@ int US_Experiment::saveToDisk(
     QList< US_Convert::TripleInfo >& triples,
     QString runType,
     QString runID,
-    QString dirname )
+    QString dirname,
+    QVector< SP_SPEEDPROFILE >& speedsteps )
 { 
    QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
 
@@ -273,6 +301,7 @@ int US_Experiment::saveToDisk(
    QFile file( dirname + writeFile );
    if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
       return( US_Convert::CANTOPEN );
+
 
 qDebug() << "  EsTD: writeFile" << writeFile;
    QXmlStreamWriter xml;
@@ -391,6 +420,9 @@ qDebug() << "  EsTD: triples loop" << triples.size();
 
       xml.writeEndElement  ();
    }
+
+   for ( int jj = 0; jj < speedsteps.count(); jj++ )
+      US_SimulationParameters::speedstepToXml( xml, &speedsteps[ jj ] );
 
    xml.writeStartElement( "opticalSystem" );
    xml.writeAttribute   ( "value", this->opticalSystem );

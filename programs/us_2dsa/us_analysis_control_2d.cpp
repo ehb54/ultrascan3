@@ -12,7 +12,7 @@
 #include <qwt_legend.h>
 
 // constructor:  2dsa analysis controls widget
-US_AnalysisControl2D::US_AnalysisControl2D( QList< US_SolveSim::DataSet* >& dsets,
+US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
    bool& loadDB, QWidget* p ) : US_WidgetsDialog( p, 0 ),
    dsets( dsets ), loadDB( loadDB )
 {

@@ -25,9 +25,10 @@ class US_UTIL_EXTERN US_SimulationParameters
 
    //! \brief A function to update the simulation parameters to match 
    //! an experiment's edited data.
-   //! \param db       Pointer to opened database connection or NULL
-   //! \param editdata Data structure of edited data that contains run info.
-   void initFromData( US_DB2*, US_DataIO::EditedData& );
+   //! \param db         Pointer to opened database connection or NULL
+   //! \param editdata   Data structure of edited data that contains run info.
+   //! \param incl_speed Flag to include speed steps in update
+   void initFromData( US_DB2*, US_DataIO::EditedData&, bool = true );
 
    //! \brief Read hardware files to update bottom and rotor coefficients array
    //! \param db     Pointer to opened database connection or NULL
@@ -69,6 +70,35 @@ class US_UTIL_EXTERN US_SimulationParameters
    //!               parameters; name part usually in "sp_*.xml" form.
    //! \returns      Status flag:  0 if able to write to file
    static int put_simparms( US_SimulationParameters&, QString );
+
+   //! \brief A function to compute speed steps from data scans
+   //! \param scans      Pointer to vector of data scans
+   //! \param speedsteps Returned vector of speed step profiles
+   static void computeSpeedSteps( QVector< US_DataIO::Scan >*, QVector< SpeedProfile >& );
+
+   //! \brief Static function to get a speed step profile from an xml portion
+   //! \param xmli   Reference to xml stream from which to read
+   //! \param spo    Reference to speed profile to populate
+   static void speedstepFromXml( QXmlStreamReader&, SpeedProfile& );
+
+   //! \brief Static function to write a speed step profile to an xml portion
+   //! \param xmlo   Reference to xml stream to which to write
+   //! \param spi    Pointer to speed profile to represent in xml
+   static void speedstepToXml( QXmlStreamWriter&, SpeedProfile* );
+
+   //! \brief Static function to get all speed steps for an experiment from DB
+   //! \param dbP    Pointer to opened database connection
+   //! \param expID  ID of experiment for which to fetch speed steps
+   //! \param sps    Reference to vector of speed profiles to populate
+   //! \returns      The number of speed steps found for experiment
+   static int speedstepsFromDB( US_DB2*, int, QVector< SpeedProfile >& );
+
+   //! \brief Static function to write a speed step profile to an xml portion
+   //! \param dbP    Pointer to opened database connection
+   //! \param expID  ID of experiment for which to upload a speed step
+   //! \param spi    Pointer to speed profile to upload to the database
+   //! \returns      The speedstep DB ID number (<1 if error)
+   static int speedstepToDB( US_DB2*, int, SpeedProfile* );
 
    //! \brief Dump class contents to stderr
    void debug( void );
@@ -123,13 +153,17 @@ class US_UTIL_EXTERN US_SimulationParameters
 
       SpeedProfile();
 
-      int    duration_hours;   //!< Hours at the given speed
-      int    duration_minutes; //!< Minutes at the given speed (0-59)
-      int    delay_hours;      //!< Hours delay before starting scans
-      double delay_minutes;    //!< Minutes delay before starting scans (0-59)
-      int    scans;            //!< Number of scans at this RPM
-      int    acceleration;     //!< Acceleration rate from previus RPM (RPM/second)
-      int    rotorspeed;       //!< RPM for this step
+      double duration_minutes;  //!< Minutes at the given speed (0-59)
+      double delay_minutes;     //!< Minutes delay before starting scans (0-59)
+      double w2t_first;         //!< omega2t at first scan of step
+      double w2t_last;          //!< omega2t at last scan of step
+      int    duration_hours;    //!< Hours at the given speed
+      int    delay_hours;       //!< Hours delay before starting scans
+      int    time_first;        //!< Seconds at first scan of step
+      int    time_last;         //!< Seconds at last scan of step
+      int    scans;             //!< Number of scans at this RPM
+      int    rotorspeed;        //!< RPM for this step
+      int    acceleration;      //!< Acceleration rate from previous RPM (RPM/second)
       bool   acceleration_flag; //!< Flag to simulate RPM acceleration or not
    };
 };

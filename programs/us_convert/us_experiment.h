@@ -5,7 +5,12 @@
 #include "us_extern.h"
 #include "us_convert.h"
 #include "us_project.h"
+#include "us_simparms.h"
 #include "us_rotor.h"
+
+#ifndef SP_SPEEDPROFILE
+#define SP_SPEEDPROFILE US_SimulationParameters::SpeedProfile
+#endif
 
 /*! \class US_Experiment
            This class provides a data structure and associated routines to 
@@ -84,87 +89,74 @@ class US_Experiment
           \param    update Is it ok to update an existing database runID 
                            (maybe the user is updating a DB record)?
           \param    db For database access, an open database connection
+          \param    speedstep Reference to vector of experiment speed steps
       */
-      int saveToDB           ( bool = false, US_DB2* = 0 );
+      int saveToDB( bool, US_DB2*, QVector< SP_SPEEDPROFILE >& );
 
       /*! \brief    Reads experiment information from the db
 
           \param runID  The run ID of the experiment.
           \param    db For database access, an open database connection
+          \param    speedstep Reference to vector of experiment speed steps
           \returns  One of the US_DB2 error codes
       */
-      int readFromDB( QString , 
-                      US_DB2* = 0 );
+      int readFromDB( QString, US_DB2*, QVector< SP_SPEEDPROFILE >& );
 
       /*! \brief    Writes an xml file
 
           \param triples A reference to a structure provided by the calling
-                        function that already contains all the different
-                        cell/channel/wavelength combinations in the data. 
-          \param runType A reference to a variable that already contains the type
-                        of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
-                        This information will affect how the data is
-                        written.
-          \param runID  The run ID of the experiment.
+                         function that already contains all the different
+                         cell/channel/wavelength combinations in the data.
+          \param runType A reference to a variable that already contains the
+                         type of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
+                         This information will affect how the data is written.
+          \param runID   The run ID of the experiment.
           \param dirname The directory in which the files are to be written.
+          \param speedsteps  Reference to a vector of speed steps for the
+                             experiment.
       */
-      int saveToDisk( 
-                 QList< US_Convert::TripleInfo >& ,
-                 QString ,
-                 QString ,
-                 QString );
+      int saveToDisk( QList< US_Convert::TripleInfo >&,
+                      QString, QString, QString,
+                      QVector< SP_SPEEDPROFILE >& );
 
       /*! \brief    Reads an xml file
 
           \param triples A reference to a structure provided by the calling
-                        function that will contain all the different
-                        cell/channel/wavelength defined by the xml file.
+                         function that will contain all the different
+                         cell/channel/wavelength defined by the xml file.
           \param runType A reference to a variable that will contain the type
-                        of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
-                        This information will affect how the data is
-                        stored.
-          \param runID  The run ID of the experiment.
+                         of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
+                         This information will affect how the data is stored.
+          \param runID   The run ID of the experiment.
           \param dirname The directory from which the files are read.
       */
-      int readFromDisk( 
-                 QList< US_Convert::TripleInfo >& ,
-                 QString ,
-                 QString ,
-                 QString );
+      int readFromDisk( QList< US_Convert::TripleInfo >&,
+                        QString, QString, QString );
 
       /*! \brief    Writes the radial intensity profile data to the HD
 
           \param    runID   The run ID associated with the RI data
           \param    dirname The location where the RI Profile is to go.
       */
-      int saveRIDisk( 
-           QString ,
-           QString );
+      int saveRIDisk( QString , QString );
 
       /*! \brief    Reads radial intensity profile data from the HD
 
           \param    runID   The run ID associated with the RI data
           \param    dirname The location where the RI Profile is.
       */
-      int readRIDisk( 
-           QString ,
-           QString );
+      int readRIDisk( QString , QString );
 
-      void clear( void );                  //!< Function to reset all class variables to defaults
-      void show ( void );                  // Temporary function to display current exp info
+      void clear( void ); //!< Function to reset all class variables to defaults
+      void show ( void ); //!< Temporary function to display current exp info
 
       RotorInfo         hwInfo;
 
    private:
-      void readExperiment( 
-                 QXmlStreamReader& , 
-                 QList< US_Convert::TripleInfo >& ,
-                 QString ,
-                 QString );
+      void readExperiment( QXmlStreamReader&, 
+                 QList< US_Convert::TripleInfo >&, QString , QString );
 
-      void readDataset( 
-                 QXmlStreamReader& , 
-                 US_Convert::TripleInfo& );
+      void readDataset( QXmlStreamReader&, US_Convert::TripleInfo& );
 
       void createRIXml( QByteArray& );
 

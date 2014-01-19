@@ -226,13 +226,14 @@ int US_Convert::saveToDisk(
 
       // Let's see if there is a triple guid already (from a previous save)
       // Otherwise the rawGUID characters should already be initialized to 0
-      QString uuidc = 
-         US_Util::uuid_unparse( (unsigned char*) rawConvertedData[ i ]->rawGUID );
+      QString uuidc = US_Util::uuid_unparse(
+            (unsigned char*) rawConvertedData[ i ]->rawGUID );
 
       if ( saveGUIDs && uuidc != "00000000-0000-0000-0000-000000000000" ) 
       {
          // Make sure xml file matches
-         memcpy( triples [ i ].tripleGUID, (char*) rawConvertedData[ i ]->rawGUID, 16 );
+         memcpy( triples [ i ].tripleGUID,
+                 (char*) rawConvertedData[ i ]->rawGUID, 16 );
       }
 
       else
@@ -241,8 +242,8 @@ int US_Convert::saveToDisk(
          uchar uuid[ 16 ];
          QString uuid_string = US_Util::new_guid();
          US_Util::uuid_parse( uuid_string, uuid );
-         memcpy( rawConvertedData[ i ]->rawGUID, (char*) uuid, 16 );
-         memcpy( triples [ i ].tripleGUID, (char*) uuid, 16 );
+         memcpy( rawConvertedData[ i ]->rawGUID,   (char*) uuid, 16 );
+         memcpy( triples         [ i ].tripleGUID, (char*) uuid, 16 );
       }
 
       // Same with solutionGUID

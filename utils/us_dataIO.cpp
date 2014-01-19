@@ -1359,6 +1359,7 @@ void US_DataIO::copyRange ( double left, double right, const Scan& orig,
    dest.wavelength  = orig.wavelength;
    dest.delta_r     = orig.delta_r;
    dest.nz_stddev   = orig.nz_stddev;
+   dest.stddevs.clear();
 
    int index_L      = index( origx, left );
    int index_R      = index( origx, right );
@@ -1387,6 +1388,17 @@ void US_DataIO::copyRange ( double left, double right, const Scan& orig,
       }
 
       current_bit++;
+   }
+
+   if ( orig.nz_stddev )
+   {  // Likely some stddevs non-zero, but double-check since range changed
+      int nnz = 0;
+
+      for ( int ii = 0; ii < dest.stddevs.count(); ii++ )
+         if ( dest.stddevs[ ii ] != 0.0 )
+            nnz++;
+
+      dest.nz_stddev   = ( nnz > 0 );
    }
 }
 

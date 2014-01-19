@@ -43,30 +43,28 @@ US_SimulationParameters::US_SimulationParameters()
 US_SimulationParameters::SpeedProfile::SpeedProfile()
 {
    duration_hours    = 0;
-   duration_minutes  = 0;
+   duration_minutes  = 0.0;
    delay_hours       = 0;
-   delay_minutes     = 0;
+   delay_minutes     = 0.0;
    scans             = 0;
-   acceleration      = 400;
    rotorspeed        = 0;
+   acceleration      = 400;
    acceleration_flag = true;
+   w2t_first         = 0.0;
+   w2t_last          = 0.0;
+   time_first        = 0;
+   time_last         = 0;
 }
+
 
 // Set simulation parameter values from an experimental EditedData set.
 void US_SimulationParameters::initFromData( US_DB2* db,
-   US_DataIO::EditedData& editdata )
+   US_DataIO::EditedData& editdata, bool incl_speed )
 {
    SpeedProfile sp;
 
    int     dbg_level   = US_Settings::us_debug();
-   int     scanCount   = editdata.scanData.size();
-   double  time1       = editdata.scanData[ 0 ].seconds;
-   double  time2       = 0.0;
-   double  delay_secs  = time1;
    double  rpm         = editdata.scanData[ 0 ].rpm;
-   double  rpmnext     = rpm;
-   double  step_secs   = 0.0;
-   int     lscx        = 0;
    int     cp_id       = 0;
    QString channel     = editdata.channel;
    int     iechan      = QString( "ABCDEFGH" ).indexOf( channel );
@@ -131,64 +129,8 @@ DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
    bottom_position     = 7.2;
    meniscus            = editdata.meniscus;
 
-   speed_step.clear();
-DbgLv(2) << "SP:iFD: scan" << 1 << "rpm time omega2t"
- << rpm << time1 << editdata.scanData[0].omega2t;
-
-   for ( int ii = 1; ii < scanCount; ii++ )
-   {  // Loop to build speed steps where RPM changes
-      rpmnext          = editdata.scanData[ ii ].rpm;
-DbgLv(2) << "SP:iFD: scan" << (ii+1) << "rpm time omega2t"
- << rpmnext << editdata.scanData[ii].seconds << editdata.scanData[ii].omega2t;
-
-      if ( rpm != rpmnext  &&  ( qAbs( rpm - rpmnext ) / rpm ) < 0.005 )
-      {  // Ignore apparent speed-step if the rpm change is small & for 1 scan
-         if ( ii == ( scanCount - 1 )  ||
-              rpm == editdata.scanData[ ii + 1 ].rpm )
-            rpmnext = rpm;
-         if ( ii == 1 )
-            rpm     = rpmnext;
-      }
-
-      if ( rpm != rpmnext )
-      {  // RPM has changed, so need to create speed step for previous scans
-         time2               = editdata.scanData[ ii - 1 ].seconds;
-         step_secs           = time2 - time1 + delay_secs;
-         sp.duration_hours   = (int)( step_secs / 3600.0 );
-         sp.duration_minutes = (int)( step_secs / 60.0 )
-                               - ( sp.duration_hours * 60 );
-         sp.delay_hours      = (int)( delay_secs / 3600.0 );
-         sp.delay_minutes    = ( delay_secs / 60.0 )
-                               - ( (double)sp.delay_hours * 60.0 );
-         sp.scans            = ii - lscx;
-         sp.rotorspeed       = (int)rpm;
-         speed_step.append( sp );
-DbgLv(1) << "SP:iFD:   speedstep" << speed_step.size() << "scans" << sp.scans
- << "duration h m" << sp.duration_hours << sp.duration_minutes
- << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
-
-         lscx                = ii;
-         rpm                 = rpmnext;
-         time1               = editdata.scanData[ ii     ].seconds;
-         delay_secs          = time1 - time2;
-      }
-   }
-
-   // Set final (only?) speed step
-   time2               = editdata.scanData[ scanCount - 1 ].seconds;
-   step_secs           = time2 - time1 + delay_secs;
-   sp.duration_hours   = (int)( step_secs / 3600.0 );
-   sp.duration_minutes = (int)( step_secs / 60.0 )
-                         - ( sp.duration_hours * 60 );
-   sp.delay_hours      = (int)( delay_secs / 3600.0 );
-   sp.delay_minutes    = ( delay_secs / 60.0 )
-                         - ( (double)sp.delay_hours * 60.0 );
-   sp.scans            = scanCount - lscx;
-   sp.rotorspeed       = (int)rpm;
-   speed_step.append( sp );
-DbgLv(2) << "SP:iFD:   speedstep" << speed_step.size() << "scans" << sp.scans
- << "duration h m" << sp.duration_hours << sp.duration_minutes
- << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
+   if ( incl_speed )
+      computeSpeedSteps( &editdata.scanData, speed_step );
 
 #ifndef NO_DB
    if ( db != NULL )
@@ -279,6 +221,100 @@ DbgLv(1) << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
    db     = NULL; // Stop compiler warning
 #endif
 DbgLv(2) << "SP:iFD: bottom" << bottom;
+}
+
+// Compute the speed steps vector from data scans
+void US_SimulationParameters::computeSpeedSteps(
+      QVector< US_DataIO::Scan >* scans,
+      QVector< US_SimulationParameters::SpeedProfile >& speedsteps )
+{
+   SpeedProfile sp;
+   speedsteps.clear();
+   int     dbg_level   = US_Settings::us_debug();
+   int     scanCount   = (*scans).size();
+   double  time1       = (*scans)[ 0 ].seconds;
+   double  time2       = 0.0;
+   double  w2t1        = (*scans)[ 0 ].omega2t;
+   double  w2t2        = 0.0;
+   double  delay_secs  = time1;
+   double  rpm         = (*scans)[ 0 ].rpm;
+   double  rpmnext     = rpm;
+   double  step_secs   = 0.0;
+   int     lscx        = 0;
+DbgLv(1) << "SP:cSS: scan" << 1 << "rpm time omega2t"
+ << rpm << qRound(time1) << (*scans)[ 0 ].omega2t;
+
+   for ( int ii = 1; ii < scanCount; ii++ )
+   {  // Loop to build speed steps where RPM changes
+      rpmnext          = (*scans)[ ii ].rpm;
+DbgLv(1) << "SP:cSS: scan" << (ii+1) << "rpm time omega2t"
+ << rpmnext << qRound((*scans)[ii].seconds) << (*scans)[ii].omega2t;
+
+      if ( rpm != rpmnext  &&  ( qAbs( rpm - rpmnext ) / rpm ) < 0.005 )
+      {  // Ignore apparent speed-step if the rpm change is small & for 1 scan
+         if ( ii == ( scanCount - 1 )  ||
+              rpm == (*scans)[ ii + 1 ].rpm )
+            rpmnext = rpm;
+         if ( ii == 1 )
+            rpm     = rpmnext;
+      }
+
+      if ( rpm != rpmnext )
+      {  // RPM has changed, so need to create speed step for previous scans
+         time2               = (*scans)[ ii - 1 ].seconds;
+         w2t2                = (*scans)[ ii - 1 ].omega2t;
+//         step_secs           = time2 - time1 + delay_secs;
+         step_secs           = time2 - time1;
+         sp.duration_hours   = (int)( step_secs / 3600.0 );
+         sp.duration_minutes = ( step_secs / 60.0 )
+                               - ( (double)sp.duration_hours * 60.0 );
+         sp.delay_hours      = (int)( delay_secs / 3600.0 );
+         sp.delay_minutes    = ( delay_secs / 60.0 )
+                               - ( (double)sp.delay_hours * 60.0 );
+         sp.scans            = ii - lscx;
+         sp.rotorspeed       = (int)rpm;
+         sp.w2t_first        = w2t1;
+         sp.w2t_last         = w2t2;
+         sp.time_first       = qRound( time1 );
+         sp.time_last        = qRound( time2 );
+         speedsteps.append( sp );
+DbgLv(1) << "SP:cSS:   speedsteps" << speedsteps.size() << "scans" << sp.scans
+ << "duration h m" << sp.duration_hours << sp.duration_minutes
+ << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
+DbgLv(1) << "SP:cSS:      w2t1 w2t2 time1 time2" << sp.w2t_first << sp.w2t_last
+ << sp.time_first << sp.time_last;
+
+         lscx                = ii;
+         rpm                 = rpmnext;
+         time1               = (*scans)[ ii ].seconds;
+         w2t1                = (*scans)[ ii ].omega2t;
+         delay_secs          = time1 - time2;
+      }
+   }
+
+   // Set final (only?) speed step
+   time2               = (*scans)[ scanCount - 1 ].seconds;
+   w2t2                = (*scans)[ scanCount - 1 ].omega2t;
+//   step_secs           = time2 - time1 + delay_secs;
+   step_secs           = time2 - time1;
+   sp.duration_hours   = (int)( step_secs / 3600.0 );
+   sp.duration_minutes = ( step_secs / 60.0 )
+                         - ( (double)sp.duration_hours * 60.0 );
+   sp.delay_hours      = (int)( delay_secs / 3600.0 );
+   sp.delay_minutes    = ( delay_secs / 60.0 )
+                         - ( (double)sp.delay_hours * 60.0 );
+   sp.scans            = scanCount - lscx;
+   sp.rotorspeed       = (int)rpm;
+   sp.w2t_first        = w2t1;
+   sp.w2t_last         = w2t2;
+   sp.time_first       = qRound( time1 );
+   sp.time_last        = qRound( time2 );
+   speedsteps.append( sp );
+DbgLv(1) << "SP:cSS:   speedsteps" << speedsteps.size() << "scans" << sp.scans
+ << "duration h m" << sp.duration_hours << sp.duration_minutes
+ << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
+DbgLv(1) << "SP:cSS:      w2t1 w2t2 time1 time2" << sp.w2t_first << sp.w2t_last
+ << sp.time_first << sp.time_last;
 }
 
 // Set parameters from hardware files, related to rotor and centerpiece
@@ -442,32 +478,7 @@ int US_SimulationParameters::load_simparms( QString fname )
 
          else if ( xml.isStartElement()  &&  xml.name() == "speedstep" )
          {
-            a     = xml.attributes();
-
-            astr  = a.value( "duration_hrs"  ).toString();
-            if ( !astr.isEmpty() )
-               sp.duration_hours    = astr.toInt();
-            astr  = a.value( "duration_mins" ).toString();
-            if ( !astr.isEmpty() )
-               sp.duration_minutes  = astr.toInt();
-            astr  = a.value( "delay_hrs"     ).toString();
-            if ( !astr.isEmpty() )
-               sp.delay_hours       = astr.toInt();
-            astr  = a.value( "delay_mins"    ).toString();
-            if ( !astr.isEmpty() )
-               sp.delay_minutes     = astr.toDouble();
-            astr  = a.value( "rotorspeed"    ).toString();
-            if ( !astr.isEmpty() )
-               sp.rotorspeed        = astr.toInt();
-            astr  = a.value( "acceleration"  ).toString();
-            if ( !astr.isEmpty() )
-               sp.acceleration      = astr.toInt();
-            astr  = a.value( "accelerflag"   ).toString();
-            if ( !astr.isEmpty() )
-               sp.acceleration_flag = ( astr == "yes" || astr == "1" );
-            astr  = a.value( "scans"         ).toString();
-            if ( !astr.isEmpty() )
-               sp.scans             = astr.toInt();
+            speedstepFromXml( xml, sp );
 
             speed_step.append( sp );
          }
@@ -559,24 +570,7 @@ int US_SimulationParameters::save_simparms( QString fname )
       {
          spi = &speed_step[ ii ];
 
-         xml.writeStartElement( "speedstep" );
-         xml.writeAttribute   ( "duration_hrs",
-            QString::number( spi->duration_hours   ) );
-         xml.writeAttribute   ( "duration_mins",
-            QString::number( spi->duration_minutes ) );
-         xml.writeAttribute   ( "delay_hrs",
-            QString::number( spi->delay_hours      ) );
-         xml.writeAttribute   ( "delay_mins",
-            QString::number( spi->delay_minutes    ) );
-         xml.writeAttribute   ( "rotorspeed",
-            QString::number( spi->rotorspeed       ) );
-         xml.writeAttribute   ( "acceleration",
-            QString::number( spi->acceleration     ) );
-         xml.writeAttribute   ( "accelerflag",
-            spi->acceleration_flag ? "1" : "0" );
-         xml.writeAttribute   ( "scans",
-            QString::number( spi->scans            ) );
-         xml.writeEndElement  ();  // speedstep
+         speedstepToXml( xml, spi );
       }
 
       xml.writeEndElement  ();   // params
@@ -594,7 +588,6 @@ int US_SimulationParameters::save_simparms( QString fname )
    return stat;
 }
 
-
 // Load simulation parameters from file
 int US_SimulationParameters::get_simparms( US_SimulationParameters& sparms,
       QString fname )
@@ -609,6 +602,161 @@ int US_SimulationParameters::put_simparms( US_SimulationParameters& sparms,
    return sparms.save_simparms( fname );
 }
 
+// Get a speed step from an XML portion
+void US_SimulationParameters::speedstepFromXml( QXmlStreamReader& xmli,
+      SpeedProfile& spo )
+{
+   const QString trueStr( " 1YesyesTruetrue" );
+   QXmlStreamAttributes attr = xmli.attributes();
+   QString astr;
+
+   astr  = attr.value( "duration_hrs"  ).toString();
+   if ( !astr.isEmpty() )
+      spo.duration_hours    = astr.toInt();
+   astr  = attr.value( "duration_mins" ).toString();
+   if ( !astr.isEmpty() )
+      spo.duration_minutes  = astr.toDouble();
+   astr  = attr.value( "delay_hrs"     ).toString();
+   if ( !astr.isEmpty() )
+      spo.delay_hours       = astr.toInt();
+   astr  = attr.value( "delay_mins"    ).toString();
+   if ( !astr.isEmpty() )
+      spo.delay_minutes     = astr.toDouble();
+   astr  = attr.value( "rotorspeed"    ).toString();
+   if ( !astr.isEmpty() )
+      spo.rotorspeed        = astr.toInt();
+   astr  = attr.value( "acceleration"  ).toString();
+   if ( !astr.isEmpty() )
+      spo.acceleration      = astr.toInt();
+   astr  = attr.value( "accelerflag"   ).toString();
+   if ( !astr.isEmpty() )
+      spo.acceleration_flag = ( trueStr.indexOf( astr ) > 0 );
+   astr  = attr.value( "scans"         ).toString();
+   if ( !astr.isEmpty() )
+      spo.scans             = astr.toInt();
+   astr  = attr.value( "w2tfirst"      ).toString();
+   if ( !astr.isEmpty() )
+      spo.w2t_first         = astr.toDouble();
+   astr  = attr.value( "w2tlast"       ).toString();
+   if ( !astr.isEmpty() )
+      spo.w2t_last          = astr.toDouble();
+   astr  = attr.value( "timefirst"     ).toString();
+   if ( !astr.isEmpty() )
+      spo.time_first        = astr.toInt();
+   astr  = attr.value( "timelast"      ).toString();
+   if ( !astr.isEmpty() )
+      spo.time_last         = astr.toInt();
+}
+
+// Write a speed step to an XML stream
+void US_SimulationParameters::speedstepToXml( QXmlStreamWriter& xmlo,
+      SpeedProfile* spi )
+{
+   xmlo.writeStartElement( "speedstep" );
+   xmlo.writeAttribute   ( "duration_hrs",
+      QString::number( spi->duration_hours   ) );
+   xmlo.writeAttribute   ( "duration_mins",
+      QString::number( spi->duration_minutes ) );
+   xmlo.writeAttribute   ( "delay_hrs",
+      QString::number( spi->delay_hours      ) );
+   xmlo.writeAttribute   ( "delay_mins",
+      QString::number( spi->delay_minutes    ) );
+   xmlo.writeAttribute   ( "rotorspeed",
+      QString::number( spi->rotorspeed       ) );
+   xmlo.writeAttribute   ( "acceleration",
+      QString::number( spi->acceleration     ) );
+   xmlo.writeAttribute   ( "accelerflag",
+      ( spi->acceleration_flag ? "1" : "0"   ) );
+   xmlo.writeAttribute   ( "scans",
+      QString::number( spi->scans            ) );
+   xmlo.writeAttribute   ( "w2tfirst",  
+      QString::number( spi->w2t_first        ) );
+   xmlo.writeAttribute   ( "w2tlast",   
+      QString::number( spi->w2t_last         ) );
+   xmlo.writeAttribute   ( "timefirst", 
+      QString::number( spi->time_first       ) );
+   xmlo.writeAttribute   ( "timelast",  
+      QString::number( spi->time_last        ) );
+   xmlo.writeEndElement  ();  // speedstep
+}
+
+// Get all speed steps for an experiment from the database
+int US_SimulationParameters::speedstepsFromDB( US_DB2* dbP, int expID,
+      QVector< SpeedProfile >& sps )
+{
+   int nspeeds    = 0;
+   sps.clear();
+
+   if ( dbP == NULL  ||  expID < 1 )
+      return nspeeds;
+
+int dbg_level=US_Settings::us_debug();
+   QString idExp = QString::number( expID );
+   QStringList query;
+   query << "all_speedsteps" << idExp;
+
+   dbP->query( query );
+   while( dbP->next() )
+   {
+      SpeedProfile spo;
+      int sspeedID          = dbP->value(  0 ).toInt();
+      spo.scans             = dbP->value(  1 ).toInt();
+      spo.duration_hours    = dbP->value(  2 ).toInt();
+      spo.duration_minutes  = dbP->value(  3 ).toDouble();
+      spo.delay_hours       = dbP->value(  4 ).toInt();
+      spo.delay_minutes     = dbP->value(  5 ).toDouble();
+      spo.rotorspeed        = dbP->value(  6 ).toInt();
+      spo.acceleration      = dbP->value(  7 ).toInt();
+      QString aflag         = dbP->value(  8 ).toString();
+      spo.acceleration_flag = ( aflag.isEmpty() || aflag == "1" );
+      spo.w2t_first         = dbP->value(  9 ).toDouble();
+      spo.w2t_last          = dbP->value( 10 ).toDouble();
+      spo.time_first        = dbP->value( 11 ).toInt();
+      spo.time_last         = dbP->value( 12 ).toInt();;
+      sps << spo;
+      nspeeds++;
+DbgLv(1) << "SP:ssFromDB: speedstep" << nspeeds << "id" << sspeedID;
+   }
+
+   return nspeeds;
+}
+
+// Upload a speed step for an experiment to the database
+int US_SimulationParameters::speedstepToDB( US_DB2* dbP, int expID,
+      SpeedProfile* spi )
+{
+int dbg_level=US_Settings::us_debug();
+DbgLv(1) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
+   int sstepID    = -1;
+
+   if ( dbP == NULL  ||  expID < 0  ||  spi == NULL )
+      return sstepID;
+
+   QString idExp = QString::number( expID );
+   QStringList query;
+   query << "new_speedstep" << idExp
+         << QString::number( spi->scans )
+         << QString::number( spi->duration_hours )
+         << QString::number( spi->duration_minutes )
+         << QString::number( spi->delay_hours )
+         << QString::number( spi->delay_minutes )
+         << QString::number( spi->rotorspeed )
+         << QString::number( spi->acceleration )
+         << QString(         spi->acceleration_flag ? "1" : "0" )
+         << QString::number( spi->w2t_first )
+         << QString::number( spi->w2t_last )
+         << QString::number( spi->time_first )
+         << QString::number( spi->time_last );
+   dbP->statusQuery( query );
+   sstepID    = dbP->lastInsertID();
+DbgLv(1) << "SP:ssToDB: speedstep" << sstepID << dbP->lastError();
+DbgLv(1) << "SP:ssToDB:  w2t" << spi->w2t_first << spi->w2t_last
+ << QString::number(spi->w2t_first) << QString::number(spi->w2t_last);
+
+   return sstepID;
+}
+
+// Debug print
 void US_SimulationParameters::debug( void )
 {
    qDebug() << "Sim parms Dump";
@@ -644,5 +792,10 @@ void US_SimulationParameters::debug( void )
       qDebug() << "   Acceleration  " << speed_step[ i ].acceleration;
       qDebug() << "   Rotor Speed   " << speed_step[ i ].rotorspeed;
       qDebug() << "   Accel Flag    " << speed_step[ i ].acceleration_flag;
+      qDebug() << "   Omega2t First " << speed_step[ i ].w2t_first;
+      qDebug() << "   Omega2t Last  " << speed_step[ i ].w2t_last;
+      qDebug() << "   Time First    " << speed_step[ i ].time_first;
+      qDebug() << "   Time Last     " << speed_step[ i ].time_last;
    }
 }
+

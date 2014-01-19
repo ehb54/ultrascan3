@@ -18,6 +18,10 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
+#ifndef SS_DATASET
+#define SS_DATASET US_SolveSim::DataSet
+#endif
+
 //! \brief 2DSA Processor object
 
 /*! \class US_2dsaProcess
@@ -41,8 +45,7 @@ class US_2dsaProcess : public QObject
       //! \brief Create a 2DSA processor object
       //! \param dsets     Pointer to input experiment data
       //! \param parent    Pointer to parent object
-      US_2dsaProcess( QList< US_SolveSim::DataSet* >& dsets,
-                      QObject* = 0 );
+      US_2dsaProcess( QList< SS_DATASET* >&, QObject* = 0 );
 
       //! \brief Start the fit calculations
       //! \param sll     s lower limit
@@ -104,7 +107,7 @@ private:
       void message_update(   QString, bool );
 
 private:
-      QList< US_SolveSim::DataSet* >& dsets;
+      QList< SS_DATASET* >&      dsets;      // List of dataset pointers
 
       long int maxrss;
 

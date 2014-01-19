@@ -7,7 +7,7 @@
 #include "us_resplot_2d.h"
 #include "us_dataIO.h"
 #include "us_db2.h"
-#include "us_astfem_rsa.h"
+#include "us_solve_sim.h"
 #include "us_model.h"
 #include "us_noise.h"
 #include "us_model_loader.h"
@@ -21,6 +21,13 @@
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
+#ifndef SP_SPEEDPROFILE
+#define SP_SPEEDPROFILE US_SimulationParameters::SpeedProfile
+#endif
+#ifndef SS_DATASET
+#define SS_DATASET US_SolveSim::DataSet
 #endif
 
 class US_2dsa : public US_AnalysisBase2
@@ -46,9 +53,11 @@ class US_2dsa : public US_AnalysisBase2
 
       US_Editor*           te_results;
 
-      US_SolveSim::DataSet            dset;
+      SS_DATASET           dset;
 
-      QList< US_SolveSim::DataSet* >  dsets;
+      QList< SS_DATASET* >            dsets;
+
+      QVector< SP_SPEEDPROFILE >      speed_steps;
 
       US_DataIO::EditedData*          edata;
       US_DataIO::RawData              sdata;
@@ -80,6 +89,7 @@ class US_2dsa : public US_AnalysisBase2
       QPushButton*         pb_pltres;
 
       bool                 loadDB;
+      bool                 exp_steps;
 
       double               rmsd;
 

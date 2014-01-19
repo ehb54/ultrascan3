@@ -244,6 +244,77 @@ void US_2dsa::load( void )
    ti_noise   .count  = 0;
    ri_noise   .count  = 0;
 DbgLv(1) << "ri,ti noise in" << ri_noise_in.count << ti_noise_in.count;
+
+   // Get speed steps from disk or DB experiment
+   if ( loadDB )
+   {  // Fetch the speed steps for the experiment from the database
+      US_Passwd   pw;
+      US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
+      QStringList query;
+      QString     expID;
+      int         idExp  = 0;
+      query << "get_experiment_info_by_runID"
+            << runID
+            << QString::number( US_Settings::us_inv_ID() );
+      dbP->query( query );
+
+      if ( dbP->lastErrno() == US_DB2::OK )
+      {
+        dbP->next();
+        idExp              = dbP->value( 1 ).toInt();
+        US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
+DbgLv(1) << "SS: ss count" << speed_steps.count() << "idExp" << idExp;
+if (speed_steps.count()>0 )
+DbgLv(1) << "SS:  ss0 w2tfirst w2tlast timefirst timelast"
+   << speed_steps[0].w2t_first << speed_steps[0].w2t_last
+   << speed_steps[0].time_first << speed_steps[0].time_last;
+      }
+   }
+
+   else
+   {  // Read run experiment file and parse out speed steps
+      QString expfpath = directory + "/" + runID + "."
+                       + edata->dataType + ".xml";
+DbgLv(1) << "LD: expf path" << expfpath;
+      QFile xfi( expfpath )
+         ;
+      if ( xfi.open( QIODevice::ReadOnly ) )
+      {  // Read and parse "<speedstep>" lines in the XML
+         QXmlStreamReader xmli( &xfi );
+
+         while ( ! xmli.atEnd() )
+         {
+            xmli.readNext();
+
+            if ( xmli.isStartElement()  &&  xmli.name() == "speedstep" )
+            {
+               SP_SPEEDPROFILE  sp;
+               US_SimulationParameters::speedstepFromXml( xmli, sp );
+               speed_steps << sp;
+DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
+            }
+         }
+
+         xfi.close();
+      }
+   }
+
+   exp_steps  = ( speed_steps.count() > 0 );  // Flag any multi-step experiment
+int nesc=edata->scanData.size();
+int etm1=edata->scanData[0].seconds;
+double eom1=edata->scanData[0].omega2t;
+int etm2=edata->scanData[nesc-1].seconds;
+double eom2=edata->scanData[nesc-1].omega2t;
+int nssp=speed_steps.count();
+int nssc=speed_steps[nssp-1].scans;
+int stm1=speed_steps[nssp-1].time_first;
+double som1=speed_steps[nssp-1].w2t_first;
+int stm2=speed_steps[nssp-1].time_last;
+double som2=speed_steps[nssp-1].w2t_last;
+DbgLv(1) << "LD:sp: nesc nssp nssc" << nesc << nssp << nssc;
+DbgLv(1) << "LD:sp:  etm1 etm2 eom1 eom2" << etm1 << etm2 << eom1 << eom2;
+DbgLv(1) << "LD:sp:  stm1 stm2 som1 som2" << stm1 << stm2 << som1 << som2;
+
 }
 
 // plot the data
@@ -827,7 +898,14 @@ DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
    US_Passwd pw;
    loadDB                  = disk_controls->db();
    US_DB2* dbP             = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
-   dset.simparams.initFromData( dbP, dataList[ drow ] );
+
+   // Initialize simulation parameters from data.
+   // Skip adding speed steps if this is multi-speed, initially,
+   // but set speed steps to the experiment vector.
+   dset.simparams.initFromData( dbP, dataList[ drow ], !exp_steps );
+
+   if ( exp_steps )
+      dset.simparams.speed_step  = speed_steps;
 
    dset.run_data           = dataList[ drow ];
    dset.simparams.bottom   = dset.simparams.bottom_position;
@@ -842,6 +920,8 @@ DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
 DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
  << dset.simparams.rotorcoeffs[0] << dset.simparams.rotorcoeffs[1];
 
+DbgLv(1) << "SimulationParameter --";
+if(dbg_level>0) dset.simparams.debug();
    if ( dbP != NULL )
    {
       delete dbP;
