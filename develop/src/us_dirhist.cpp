@@ -85,9 +85,8 @@ void US_Dirhist::setupGUI()
    t_hist->hideColumn( 2 );
    t_hist->horizontalHeader()->setClickEnabled( true );
    t_hist->setColumnMovingEnabled( false );
-   // order_ascending = true;
-   t_sort_column( 1 );
 
+   t_hist->sortColumn( 2, false, true );
    t_hist->clearSelection();
 
    bool any_selected = false;
@@ -178,9 +177,38 @@ void US_Dirhist::closeEvent(QCloseEvent *e)
    e->accept();
 }
 
-void US_Dirhist::t_sort_column( int i )
+void US_Dirhist::t_sort_column( int col )
 {
-   t_hist->sortColumn( i ? 2 : 0, order_ascending, true );
+   // keep selection & currrent
+   set < QString > selected;
+
+   QString current = t_hist->text( t_hist->currentRow(), 0 );
+   for ( int i = 0; i < t_hist->numRows(); ++i )
+   {
+      if ( t_hist->isRowSelected( i ) )
+      {
+         selected.insert( t_hist->text( i, 0 ) );
+      }
+   }
+   
+   t_hist->sortColumn( col ? 2 : 0, order_ascending, true );
+
+   disconnect( t_hist, SIGNAL( selectionChanged() ), 0, 0 );
+   t_hist->clearSelection();
+   for ( int i = 0; i < t_hist->numRows(); ++i )
+   {
+      if ( selected.count( t_hist->text( i, 0 ) ) )
+      {
+         t_hist->selectRow( i );
+      }
+      if ( current == t_hist->text( i, 0 ) )
+      {
+         t_hist->setCurrentCell( i, 0 );
+      }
+   }
+   connect( t_hist, SIGNAL( selectionChanged() ), SLOT( t_selectionChanged() ) );
+   t_selectionChanged();
+
    order_ascending = !order_ascending;
 }
 

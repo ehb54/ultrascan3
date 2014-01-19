@@ -8320,7 +8320,15 @@ bool US_Hydrodyn::select_from_directory_history( QString &dir, QWidget *parent )
 
    bool    is_ok;
    QString selected = dir;
+
+   QFileInfo fi( dir );
+   if ( fi.exists() )
+   {
+      selected = QDir::cleanDirPath( fi.isDir() ? fi.filePath() : fi.dirPath() );
+   }
          
+   add_to_directory_history( selected, false );
+
    US_Dirhist * usd = new US_Dirhist( directory_history,
                                       directory_last_access,
                                       selected,
