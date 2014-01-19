@@ -4415,11 +4415,25 @@ bool US_Hydrodyn_Cluster::additional_processing(
             if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
                  !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
             {
-               if ( !batch_window->screen_pdb( file, false ) )
+               bool ok = true;
+               double mw;
+               if ( batch_window->screen_pdb( file, false ) )
                {
-                  editor_msg( "red", QString( tr( "Error: loading %1 for computation of molecular weight" ) ).arg( file ) );
+                  mw = ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ].mw;
                } else {
-                  float mw = ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ].mw;
+                  // try alternale
+                  editor_msg( "dark red", QString( tr( "Warning: error loading %1 for computation of molecular weight" ) ).arg( file ) );
+                  if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_util->pdb_mw( file, mw ) )
+                  {
+                     editor_msg( "dark red", QString( tr( "Notice: direct atom method for computation of molecular weight of %1 used" ) ).arg( file ) );
+                  } else {
+                     editor_msg( "red", QString( tr( "Error: direct atom method for computation of molecular weight of %1 failed" ) ).arg( file ) );
+                     ok = false;
+                  }
+               }
+
+               if ( ok )
+               {
                   editor_msg( "blue", QString( tr( "Molecular weight of %1: %2 Daltons\n" ) ).arg( QFileInfo( file ).fileName() ).arg( mw ) );
                   out += QString( "bestbestmw      %1\n" ).arg( mw );
                   // PAT

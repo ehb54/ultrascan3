@@ -494,6 +494,9 @@ class US_EXTERN US_Saxs_Util
       map < QString, atom >          atom_map;
       map < QString, vector <int> >  multi_residue_map;
       map < QString, QString >       residue_atom_hybrid_map;
+      map < QString, double >        atom_mw;
+
+      bool                           load_mw_json( QString filename );
 
       bool iqq_sphere( 
                       QString tag,          // creates iqq for a sphere based on Rayleigh (1911)
@@ -805,6 +808,9 @@ class US_EXTERN US_Saxs_Util
                                        double fconv,
                                        vector < double > & tau );
          
+      bool                pdb_mw( QString file, double & mw );
+      bool                pdb_mw( QStringList & qsl, double & mw );
+
    private:
 
       // double       minusoneoverfourpisq;

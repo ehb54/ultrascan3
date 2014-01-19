@@ -36,6 +36,7 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       mQLabel *                               lbl_input;
       QListBox *                              lb_data;
       QPushButton *                           pb_load;
+      QPushButton *                           pb_join_results;
       QPushButton *                           pb_save_results;
       QLineEdit *                             le_last_file;
       QCheckBox             *                 cb_plus_lm;
@@ -142,7 +143,8 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       // ------ data section 
 
       void                                    load();
-      void                                    save();
+      void                                    join_results();
+      void                                    save_results();
 
       void                                    hide_input();
 
@@ -150,7 +152,7 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
 
       void                                    clear_display();
       void                                    update_font();
-      void                                    save_results();
+      void                                    save();
 
       void                                    hide_editor();
 

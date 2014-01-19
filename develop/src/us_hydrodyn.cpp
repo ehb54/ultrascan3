@@ -390,6 +390,14 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       saxs_util->our_saxs_options = saxs_options;
    }
 
+   if ( 
+       !saxs_util->load_mw_json( USglobal->config_list.system_dir + 
+                                 QDir::separator() + "etc" +
+                                 QDir::separator() + "mw.json" ) )
+   {
+      editor_msg( "red", tr( "Warning: mw.json not read" ) );
+   }
+
    if ( saxs_options.wavelength == 0 )
    {
       saxs_options.start_q = 

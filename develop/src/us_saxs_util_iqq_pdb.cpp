@@ -2907,3 +2907,70 @@ bool US_Saxs_Util::compute_scale_excl_vol()
       ;
    return true;
 }
+
+bool US_Saxs_Util::pdb_mw( QString file, double & mw )
+{
+   errormsg = "";
+   QFile f( file );
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      errormsg = QString( "US_Saxs_Util::pdb_pw(): could not open file %1" ).arg( file );
+      return false;
+   }
+   QTextStream ts( &f );
+   QStringList qsl;
+   while ( !ts.atEnd() )
+   {
+      qsl << ts.readLine();
+   }
+   return pdb_mw( qsl, mw );
+}
+
+bool US_Saxs_Util::pdb_mw( QStringList &qsl, double & mw )
+{
+   if ( !atom_mw.size() )
+   {
+      errormsg = "US_Saxs_Util:: mw table not loaded";
+      return false;
+   }
+      
+   map < QString, int > atom_counts;
+
+   QRegExp rx_atom( "^(HETATM|ATOM)" );
+
+   for ( int i = 0; i < (int) qsl.size(); ++i )
+   {
+      if ( rx_atom.search( qsl[ i ] ) != -1 )
+      {
+         QString qs = qsl[ i ].mid( 76, 2 ).stripWhiteSpace();
+         if ( qs.isEmpty() )
+         {
+            errormsg = "US_Saxs_Util::pdb_pw(): atom names must be defined in columns 77, 78 of pdb";
+            return false;
+         }
+         if ( atom_counts.count( qs ) )
+         {
+            atom_counts[ qs ]++;
+         } else {
+            atom_counts[ qs ] = 1;
+         }
+      }
+   }
+
+   mw = 0e0;
+   for ( map < QString, int >::iterator it = atom_counts.begin();
+         it != atom_counts.end();
+         it++ )
+   {
+      if ( !atom_mw.count( it->first ) )
+      {
+         errormsg = QString( "US_Saxs_Util::pdb_pw(): atom_mw map does not contain atom %1" ).arg( it->first );
+         return false;
+      }
+      mw += atom_mw[ it->first ] * it->second;
+   }
+
+   qDebug( QString( "total mw %1" ).arg( mw ) );
+
+   return true;
+}

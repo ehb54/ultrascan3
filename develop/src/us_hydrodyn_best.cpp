@@ -67,7 +67,7 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
    global_Xpos += 30;
    global_Ypos += 30;
 
-   setGeometry( global_Xpos, global_Ypos, 0, 0 );
+   setGeometry( global_Xpos, global_Ypos, 800, 600 );
 }
 
 US_Hydrodyn_Best::~US_Hydrodyn_Best()
@@ -101,6 +101,16 @@ void US_Hydrodyn_Best::setupGUI()
    pb_load -> setMinimumHeight( minHeight1 );
    pb_load -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
+
+   input_widgets.push_back( pb_load );
+
+   pb_join_results =  new QPushButton ( tr( "Join results" ), this );
+   pb_join_results -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
+   pb_join_results -> setMinimumHeight( minHeight1 );
+   pb_join_results -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   connect( pb_join_results, SIGNAL( clicked() ), SLOT( join_results() ) );
+
+   input_widgets.push_back( pb_join_results );
 
    pb_save_results =  new QPushButton ( tr( "Save Results" ), this );
    pb_save_results -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
@@ -257,6 +267,7 @@ void US_Hydrodyn_Best::setupGUI()
       {
          QHBoxLayout *hbl = new QHBoxLayout( 0 );
          hbl->addWidget( pb_load );
+         hbl->addWidget( pb_join_results );
          hbl->addWidget( pb_save_results );
          bl->addLayout( hbl );
       }
@@ -1471,6 +1482,7 @@ void US_Hydrodyn_Best::save_results()
    }
 
    pb_save_results->setEnabled( false );
+   pb_join_results->setEnabled( false );
    pb_load        ->setEnabled( false );
    lb_data        ->setEnabled( false );
    disconnect( lb_data, SIGNAL( selectionChanged() ), 0, 0 );
@@ -1575,6 +1587,7 @@ void US_Hydrodyn_Best::save_results()
       out.back() += tau_csv_addendum_val[ i ];
    }
 
+   out[ 0 ] = "\"" + le_last_file->text() + "\"" + out[ 0 ];
    out[ 0 ] += ",\"Points removed (largest number of triangles is point 1)\"";
    if ( any_ln_plot )
    {
@@ -1600,9 +1613,9 @@ void US_Hydrodyn_Best::save_results()
    connect( lb_data, SIGNAL( selectionChanged() ), SLOT( data_selected() ) );
    lb_data->setSelected( cur_selected, TRUE );
    pb_save_results->setEnabled( true );
+   pb_join_results->setEnabled( true );
    pb_load        ->setEnabled( true );
    lb_data        ->setEnabled( true );
-
 }
 
 void US_Hydrodyn_Best::recompute_tau()
@@ -1773,4 +1786,190 @@ void US_Hydrodyn_Best::set_last_file( const QString & str )
    {
       le_last_file->setText( save_last_file );
    }
+}
+
+void US_Hydrodyn_Best::join_results()
+{
+   QStringList join_files;
+   QStringList files;
+   map < QString, bool > already_listed;
+
+   QString use_dir = 
+      USglobal->config_list.root_dir + 
+      QDir::separator() + "somo" + 
+      QDir::separator() + "cluster" +
+      QDir::separator() + "results"
+      ;
+
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   do 
+   {
+      files = QFileDialog::getOpenFileNames(
+                                            "CSV files (*.csv *.CSV)"
+                                            , use_dir
+                                            , this
+                                            , tr( caption() + tr( ": Select CSV results to join" ) )
+                                            , tr( "Select CSV results to join" )
+                                            );
+
+      for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
+      {
+         if ( !already_listed.count( files[ i ] ) )
+         {
+            join_files << files[ i ];
+            already_listed[ files[ i ] ] = true;
+            ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( files[ i ] );
+         }
+      }
+   } while ( files.size() );
+   if ( !join_files.size() )
+   {
+      return;
+   }
+
+   if ( join_files.size() == 1 )
+   {
+      editor_msg( "red", tr( "Error: Only one file selected to join." ) );
+      return;
+   }
+   
+   QString save_file;
+   {
+      QString use_dir = 
+         USglobal->config_list.root_dir + 
+         QDir::separator() + "somo" + 
+         QDir::separator() + "cluster" +
+         QDir::separator() + "results"
+         ;
+
+      ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
+      save_file = QFileDialog::getSaveFileName( use_dir
+                                                , "CSV files (*.csv *.CSV)"
+                                                , this
+                                                , tr( caption() + tr( ": Select CSV results to join" ) )
+                                                , tr( "Choose a name to save the joined CSV results" )
+                                                );
+
+
+      if ( save_file.isEmpty() )
+      {
+         return;
+      }
+   }
+
+   save_file.replace(  QRegExp( "(-joined|)\\.(csv|CSV)$" ), "" );
+   save_file += "-joined.csv";
+
+   if ( QFile::exists( save_file ) )
+   {
+      save_file = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( save_file, 0, this );
+   }
+
+   // parse through all results files, make output file grouping by result
+
+   editor_msg( "dark blue", 
+               QString( "Joining %1 as %2" )
+               .arg( join_files.join( "\n" ) )
+               .arg( save_file ) );
+
+   QFile f_out( save_file );
+   if ( !f_out.open( IO_WriteOnly ) )
+   {
+      editor_msg( "red", QString( tr( "Error: Can not open file %1 for writing" ) ).arg( save_file ) );
+      return;
+   }
+
+   QTextStream ts_out( &f_out );
+
+   map < QString, QStringList > output;
+
+   for ( int i = 0; i < ( int)join_files.size(); ++i )
+   {
+      editor_msg( "dark gray", QString( tr( "Processing %1" ) ).arg( join_files[ i ] ) );
+      qApp->processEvents();
+
+
+      QFile f_in( join_files[ i ] );
+
+      if ( !f_in.open( IO_ReadOnly ) )
+      {
+         editor_msg( "red", QString( tr( "Error: Can not open file %1 for reading" ) ).arg( join_files[ i ] ) );
+         f_out.close();
+         f_out.remove();
+         return;
+      }
+
+      QTextStream ts_in( &f_in );
+
+      QStringList qsl = US_Csv::parse_line( ts_in.readLine() ).gres( "\"", "" );
+      if ( !qsl.size() )
+      {
+         editor_msg( "red", QString( tr( "Error: file %1 error on line 1 (empty)" ) ).arg( join_files[ i ] ) );
+         f_in.close();
+         f_out.close();
+         f_out.remove();
+         return;
+      }
+         
+      QString     name = qsl[ 0 ];
+      if ( name.isEmpty() )
+      {
+         name = join_files[ i ];
+      }
+
+      int tmp_points;
+      for ( tmp_points = 1; tmp_points < (int) qsl.size() && qsl[ tmp_points ] != "Extrapolation to zero triangles (a)"; ++tmp_points );
+      tmp_points--;
+         
+      qDebug( QString( "tmp_points %1 qsl size %2" ).arg( tmp_points ).arg( qsl.size() ) );
+      if ( (int) qsl.size() <= tmp_points + 1 )
+      {
+         editor_msg( "red", QString( tr( "Error: file %1 error on line 1 (points)" ) ).arg( join_files[ i ] ) );
+         f_in.close();
+         f_out.close();
+         f_out.remove();
+         return;
+      }
+         
+      if ( qsl[ tmp_points + 1 ] != "Extrapolation to zero triangles (a)" )
+      {
+         editor_msg( "red", QString( tr( "Error: file %1 error on line 1 (tag)" ) ).arg( join_files[ i ] ) );
+         f_in.close();
+         f_out.close();
+         f_out.remove();
+         return;
+      }
+
+      while ( !ts_in.atEnd() )
+      {
+         QStringList qsl = US_Csv::parse_line( ts_in.readLine() ); //.gres( "\"", "" );
+         if ( (int) qsl.size() >= tmp_points + 2 )
+         {
+            QStringList qsl_out;
+            qsl_out << "\"" + name + "\",\"" + QFileInfo( name ).baseName() + "\"";
+            for ( int j = tmp_points + 1; j < (int) qsl.size(); ++j )
+            {
+               qsl_out << qsl[ j ];
+            }
+            output[ qsl[ 0 ] ] << qsl_out.join( "," );
+         }
+      }
+      f_in.close();
+   }
+
+   ts_out << ",,\"Extrapolation to zero triangles (a)\",\"Sigma a\",\"Sigma a %\",\"Slope (b)\",\"Sigma b\",\"Sigma b %\",\"chi^2\",\"Points removed (largest number of triangles is point 1)\"" << endl;
+
+   for (  map < QString, QStringList >::iterator it = output.begin();
+          it != output.end();
+          ++it )
+   {
+      ts_out << "\n";
+      ts_out << ",,\"" + it->first + "\"" << endl;
+      ts_out << it->second.join( "\n" ) << endl;
+   }
+
+   f_out.close();
+   editor_msg( "blue", 
+               QString( tr( "Join results created %1" ) ).arg( f_out.name() ) );
 }

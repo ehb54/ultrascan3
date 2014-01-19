@@ -11,7 +11,7 @@ bool US_Saxs_Util::select_residue_file( QString filename )
    QString str2;
    unsigned int numatoms;
    unsigned int numbeads;
-   unsigned int i;
+   // unsigned int i;
    unsigned int j;
    unsigned int positioner;
 
@@ -26,7 +26,7 @@ bool US_Saxs_Util::select_residue_file( QString filename )
    map < QString, int > dup_residue_map;
    map < QString, bool > pbr_override_map; // maps positioner for overwrite
    unknown_residues.clear(); // keep track of unknown residues
-   i = 1;
+   // i = 1;
 
    residue new_residue;
    atom new_atom;
@@ -1270,5 +1270,31 @@ bool US_Saxs_Util::calc_mw()
    }
 
    current_model = save_current_model;
+   return true;
+}
+
+bool US_Saxs_Util::load_mw_json( QString filename )
+{
+   QFile f( filename );
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      errormsg = QString( "US_Saxs_Util::load_mw_json could not open file %1" ).arg( filename );
+      return false;
+   }
+   QString qs;
+   QTextStream ts( &f );
+   while ( !ts.atEnd() )
+   {
+      qs += ts.readLine();
+   }
+   f.close();
+   atom_mw.clear();
+   map < QString, QString > parameters = US_Json::split( qs );
+   for ( map < QString, QString >::iterator it = parameters.begin();
+         it != parameters.end();
+         it++ )
+   {
+      atom_mw[ it->first ] = it->second.toDouble();
+   }
    return true;
 }
