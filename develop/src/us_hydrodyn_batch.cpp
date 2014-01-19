@@ -140,7 +140,7 @@ void US_Hydrodyn_Batch::setupGUI()
          if ( !dup )
          {
             lb_files->insertItem(batch->file[i]);
-            ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( batch->file[ i ] );
+            ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( batch->file[ i ], false );
          } else {
             load_errors += QString(tr("File skipped: %1 (already in list)\n")).arg(batch->file[i]);
          }
