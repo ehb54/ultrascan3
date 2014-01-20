@@ -549,7 +549,7 @@ void US_Hydrodyn_Cluster_Oned::update_1dintermediatesaves( const QString & )
 void US_Hydrodyn_Cluster_Oned::save()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
-   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
    QString filename = QFileDialog::getSaveFileName( 
                                                    use_dir,
                                                    "*.cluster_oned",
@@ -584,7 +584,7 @@ void US_Hydrodyn_Cluster_Oned::save()
 void US_Hydrodyn_Cluster_Oned::load()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
-   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
    QString filename = QFileDialog::getOpenFileName( 
                                                    use_dir,
                                                    "*.cluster_oned",

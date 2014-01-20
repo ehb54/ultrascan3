@@ -1858,6 +1858,7 @@ void US_Hydrodyn_Best::join_results()
       }
    }
 
+
    save_file.replace(  QRegExp( "(-joined|)\\.(csv|CSV)$" ), "" );
    save_file += "-joined.csv";
 
@@ -1879,6 +1880,9 @@ void US_Hydrodyn_Best::join_results()
       editor_msg( "red", QString( tr( "Error: Can not open file %1 for writing" ) ).arg( save_file ) );
       return;
    }
+
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( save_file );
+
 
    QTextStream ts_out( &f_out );
 

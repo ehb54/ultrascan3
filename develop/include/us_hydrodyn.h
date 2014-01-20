@@ -708,6 +708,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QStringList                       directory_history;
       map < QString, QDateTime >        directory_last_access;
+      map < QString, QString >          directory_last_filetype;
 
       bool                     saxs_screen_widget;
       US_Hydrodyn_Saxs_Screen  *saxs_screen_window;
@@ -765,7 +766,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       void set_expert( bool );
 
-      bool select_from_directory_history( QString &dir, QWidget *parent = (QWidget *)0 );
+      bool select_from_directory_history( QString &dir, QWidget *parent = (QWidget *)0, bool select_dir = false );
       void add_to_directory_history( QString dir, bool accessed = true );
 
       unsigned int current_model;

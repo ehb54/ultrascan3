@@ -3,16 +3,18 @@
 US_Dirhist::US_Dirhist(
                        QStringList                 & history,
                        map < QString, QDateTime >  & last_access,
+                       map < QString, QString >    & last_filetype,
                        QString                     & selected,
                        bool                        & is_ok,
                        QWidget                     * p,
                        const char                  * name
                        ) : QDialog(p, name)
 {
-   this->history     = & history;
-   this->last_access = & last_access;
-   this->selected    = & selected;
-   this->is_ok       = & is_ok;
+   this->history       = & history;
+   this->last_access   = & last_access;
+   this->last_filetype = & last_filetype;
+   this->selected      = & selected;
+   this->is_ok         = & is_ok;
 
    order_ascending   = false;
 
@@ -26,6 +28,10 @@ US_Dirhist::US_Dirhist(
    // global_Xpos += 30;
    // global_Ypos += 30;
    // setGeometry(global_Xpos, global_Ypos, 0, 0);
+   t_hist->setMinimumWidth( 1.1 *  
+                            ( t_hist->columnWidth( 0 ) +
+                              t_hist->columnWidth( 1 ) +
+                              t_hist->columnWidth( 3 ) ) );
 }
 
 US_Dirhist::~US_Dirhist()
@@ -44,7 +50,7 @@ void US_Dirhist::setupGUI()
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   t_hist = new QTable( history->size(), 3, this);
+   t_hist = new QTable( history->size(), 5, this);
    t_hist->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    t_hist->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    t_hist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -56,6 +62,7 @@ void US_Dirhist::setupGUI()
 
    t_hist->horizontalHeader()->setLabel( 0, tr( "Directory" ) );
    t_hist->horizontalHeader()->setLabel( 1, tr( "Last access" ) );
+   t_hist->horizontalHeader()->setLabel( 3, tr( "Last type loaded" ) );
 
    {
       unsigned int unknowns = 0;
@@ -65,6 +72,9 @@ void US_Dirhist::setupGUI()
          t_hist->setText( i, 1, 
                           last_access->count( (*history)[ i ] ) ?
                           (*last_access)[ (*history)[ i ] ].toString( Qt::LocalDate ) : "" );
+         t_hist->setText( i, 3, 
+                          ( last_filetype->count( (*history)[ i ] ) && !(*last_filetype)[ (*history)[ i ] ].isEmpty() ) ?
+                          ( "." + (*last_filetype)[ (*history)[ i ] ] ) : "" );
          {
             QString qs = 
                QString( "%1" )
@@ -76,13 +86,26 @@ void US_Dirhist::setupGUI()
                qs = "0" + qs;
             }
             t_hist->setText( i, 2, qs );
+
+            // now type sorted by last access
+            QString type =
+               last_filetype->count( (*history)[ i ] ) ?
+               (*last_filetype)[ (*history)[ i ] ] : "";
+
+            while ( type.length() < 20 )
+            {
+               type += " ";
+            }
+            t_hist->setText( i, 4, type + qs );
          }
       }
    }
    t_hist->setSelectionMode( QTable::MultiRow );
    t_hist->setColumnWidth( 0, 400 );
    t_hist->setColumnWidth( 1, 180 );
+   t_hist->setColumnWidth( 3, 120 );
    t_hist->hideColumn( 2 );
+   t_hist->hideColumn( 4 );
    t_hist->horizontalHeader()->setClickEnabled( true );
    t_hist->setColumnMovingEnabled( false );
 
@@ -153,7 +176,6 @@ void US_Dirhist::setupGUI()
    background->addWidget( pb_help  , j, 0 );
    background->addWidget( pb_cancel, j, 1 );
 
-   setMinimumWidth( 800 );
    t_selectionChanged();
 }
 
@@ -191,7 +213,7 @@ void US_Dirhist::t_sort_column( int col )
       }
    }
    
-   t_hist->sortColumn( col ? 2 : 0, order_ascending, true );
+   t_hist->sortColumn( col ? col + 1 : col, order_ascending, true );
 
    disconnect( t_hist, SIGNAL( selectionChanged() ), 0, 0 );
    t_hist->clearSelection();

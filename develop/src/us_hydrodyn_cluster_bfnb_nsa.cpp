@@ -767,7 +767,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::update_sgpradiusmax( const QString & )
 void US_Hydrodyn_Cluster_Bfnb_Nsa::save()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
-   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
    QString filename = QFileDialog::getSaveFileName( 
                                                    use_dir,
                                                    "*.cluster_bfnb_nsa",
@@ -802,7 +802,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::save()
 void US_Hydrodyn_Cluster_Bfnb_Nsa::load()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
-   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
    QString filename = QFileDialog::getOpenFileName( 
                                                    use_dir,
                                                    "*.cluster_bfnb_nsa",

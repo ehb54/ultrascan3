@@ -33,6 +33,7 @@ class US_EXTERN US_Dirhist : public QDialog
       US_Dirhist(
                  QStringList                 & history,
                  map < QString, QDateTime >  & last_access,
+                 map < QString, QString >    & last_filetype,
                  QString                     & selected,
                  bool                        & is_ok,
                  QWidget                     * p = 0, 
@@ -58,6 +59,7 @@ class US_EXTERN US_Dirhist : public QDialog
 
       QStringList                * history;
       map < QString, QDateTime > * last_access;
+      map < QString, QString >   * last_filetype;
       QString                    * selected;
       bool                       * is_ok;
 

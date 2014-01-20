@@ -903,7 +903,7 @@ __END
                     add_includes( "us_hydrodyn.h" );
                     $function_code .= <<__END
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
-   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
    QString filename = QFileDialog::getSaveFileName( 
                                                    use_dir,
                                                    "*.$arg2",
@@ -956,7 +956,7 @@ __END
                     add_includes( "us_hydrodyn.h" );
                     $function_code .= <<__END
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
-   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
    QString filename = QFileDialog::getOpenFileName( 
                                                    use_dir,
                                                    "*.$arg2",
