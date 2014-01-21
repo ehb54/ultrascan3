@@ -1295,6 +1295,33 @@ bool US_Saxs_Util::load_mw_json( QString filename )
          it++ )
    {
       atom_mw[ it->first ] = it->second.toDouble();
+      // qDebug( QString( "atom '%1' mw '%2'" ).arg( it->first ).arg( it->second.toDouble() ) );
+   }
+   return true;
+}
+
+bool US_Saxs_Util::load_vdw_json( QString filename )
+{
+   QFile f( filename );
+   if ( !f.open( IO_ReadOnly ) )
+   {
+      errormsg = QString( "US_Saxs_Util::load_vdw_json could not open file %1" ).arg( filename );
+      return false;
+   }
+   QString qs;
+   QTextStream ts( &f );
+   while ( !ts.atEnd() )
+   {
+      qs += ts.readLine();
+   }
+   f.close();
+   atom_vdw.clear();
+   map < QString, QString > parameters = US_Json::split( qs );
+   for ( map < QString, QString >::iterator it = parameters.begin();
+         it != parameters.end();
+         it++ )
+   {
+      atom_vdw[ it->first ] = it->second.toDouble();
    }
    return true;
 }

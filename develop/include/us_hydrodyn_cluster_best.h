@@ -14,7 +14,7 @@
 #include "qlineedit.h"
 #include "qfontmetrics.h"
 #include "qcheckbox.h"
-#include "us_mqlabel.h"
+#include "us_mqt.h"
 #include "qfile.h"
 #include "qfiledialog.h"
 #include "us_hydrodyn.h"

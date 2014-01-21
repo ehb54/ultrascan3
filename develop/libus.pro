@@ -292,6 +292,7 @@ SOURCES += \
   src/us_imgviewer.cpp \
   src/us_infopanel.cpp \
   src/us_json.cpp \
+  src/us_mqt.cpp \
   src/us_license.cpp \
   src/us_lm.cpp \
   src/us_lncr2.cpp \
@@ -618,7 +619,7 @@ HEADERS += \
   include/us_imgviewer.h \
   include/us_infopanel.h \
   include/us_json.h \
-  include/us_mqlabel.h \
+  include/us_mqt.h \
   include/us_license.h \
   include/us_lm.h \
   include/us_lncr2.h \

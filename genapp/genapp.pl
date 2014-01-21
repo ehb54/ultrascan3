@@ -755,7 +755,7 @@ add_includes( "qlayout.h" );
         if ( $tok =~ /^showhidelabel$/ )
         {
             add_includes( "qlabel.h" );
-            add_includes( "us_mqlabel.h" );
+            add_includes( "us_mqt.h" );
 
             my $label = "lbl_$name";
             $private .= 

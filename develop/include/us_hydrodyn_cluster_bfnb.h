@@ -11,7 +11,7 @@
 #include "qlabel.h"
 #include "qstring.h"
 #include "qlayout.h"
-#include "us_mqlabel.h"
+#include "us_mqt.h"
 #include "qlineedit.h"
 #include "qfontmetrics.h"
 #include "qcheckbox.h"

@@ -398,6 +398,14 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       editor_msg( "red", tr( "Warning: mw.json not read" ) );
    }
 
+   if ( 
+       !saxs_util->load_vdw_json( USglobal->config_list.system_dir + 
+                                  QDir::separator() + "etc" +
+                                  QDir::separator() + "vdw.json" ) )
+   {
+      editor_msg( "red", tr( "Warning: vdw.json not read" ) );
+   }
+
    if ( saxs_options.wavelength == 0 )
    {
       saxs_options.start_q = 

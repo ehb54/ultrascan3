@@ -82,6 +82,25 @@ US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
    selection_since_clean_csv2 = true;
    pdb_tool_merge_widget = false;
    usu = new US_Saxs_Util();
+   bm_active = true;
+
+   if ( 
+       !usu->load_mw_json( USglobal->config_list.system_dir + 
+                           QDir::separator() + "etc" +
+                           QDir::separator() + "mw.json" ) )
+   {
+      qDebug( "no mw.json load" );
+      bm_active = false;
+   }
+
+   if ( 
+       !usu->load_vdw_json( USglobal->config_list.system_dir + 
+                            QDir::separator() + "etc" +
+                            QDir::separator() + "vdw.json" ) )
+   {
+      qDebug( "no vdw.json load" );
+      bm_active = false;
+   }
 
    update_enables();
 
@@ -201,11 +220,13 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
 
    // center pane
 
-   lbl_csv = new QLabel("", this);
+   lbl_csv = new mQLabel(tr("Panel 1"), this);
    lbl_csv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_csv->setMinimumHeight(minHeight1);
    lbl_csv->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+
+   connect( lbl_csv, SIGNAL( pressed() ), SLOT( hide_csv() ) );
 
    lv_csv = new QListView( this );
    lv_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -215,17 +236,20 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    lv_csv->setMinimumWidth( 175 );
 
    lv_csv->addColumn( "Models" );
-   for ( unsigned int i = 6; i < (unsigned int)csv1.header.size() - 1; i++ )
+   for ( unsigned int i = 6; i < (unsigned int)csv1.header.size() - 2; i++ )
    {
       lv_csv->addColumn( csv1.header[i] );
    }
+   lv_csv->addColumn( csv1.header.back() );
 
    lv_csv->setSorting        ( -1 );
    lv_csv->setRootIsDecorated( true );
    lv_csv->setSelectionMode  ( QListView::Multi );
    connect(lv_csv, SIGNAL(selectionChanged()), SLOT(csv_selection_changed()));
 
-   lbl_csv->setText( csv1.name );
+   panel1_widgets.push_back( lv_csv );
+
+   lbl_csv->setText( csv1.name.isEmpty() ? tr( "Panel 1" ) : csv1.name );
    csv_to_lv( csv1, lv_csv );
 
    te_csv = new QTextEdit(this);
@@ -233,11 +257,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    te_csv->setReadOnly(true);
    te_csv->setMaximumHeight( minHeight1 * 4 );
    
+   panel1_widgets.push_back( te_csv );
+
    pb_csv_load_1 = new QPushButton(tr("Load"), this);
    pb_csv_load_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_load_1->setMinimumHeight(minHeight1);
    pb_csv_load_1->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_load_1, SIGNAL(clicked()), SLOT(csv_load_1()));
+
+   panel1_widgets.push_back( pb_csv_load_1 );
 
    pb_csv_load = new QPushButton(tr("Load All"), this);
    pb_csv_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -245,11 +273,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_load, SIGNAL(clicked()), SLOT(csv_load()));
 
+   panel1_widgets.push_back( pb_csv_load );
+
    pb_csv_visualize = new QPushButton(tr("Visualize"), this);
    pb_csv_visualize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_visualize->setMinimumHeight(minHeight1);
    pb_csv_visualize->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_visualize, SIGNAL(clicked()), SLOT(csv_visualize()));
+
+   panel1_widgets.push_back( pb_csv_visualize );
 
    pb_csv_save = new QPushButton(tr("Save"), this);
    pb_csv_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -257,11 +289,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_save, SIGNAL(clicked()), SLOT(csv_save()));
 
+   panel1_widgets.push_back( pb_csv_save );
+
    pb_csv_undo = new QPushButton(tr("Undo"), this);
    pb_csv_undo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_undo->setMinimumHeight(minHeight1);
    pb_csv_undo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_undo, SIGNAL(clicked()), SLOT(csv_undo()));
+
+   panel1_widgets.push_back( pb_csv_undo );
 
    pb_csv_clear = new QPushButton(tr("Clear"), this);
    pb_csv_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -269,11 +305,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_clear, SIGNAL(clicked()), SLOT(csv_clear()));
 
+   panel1_widgets.push_back( pb_csv_clear );
+
    pb_csv_cut = new QPushButton(tr("Cut"), this);
    pb_csv_cut->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_cut->setMinimumHeight(minHeight1);
    pb_csv_cut->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_cut, SIGNAL(clicked()), SLOT(csv_cut()));
+
+   panel1_widgets.push_back( pb_csv_cut );
 
    pb_csv_copy = new QPushButton(tr("Copy"), this);
    pb_csv_copy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -281,11 +321,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_copy->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_copy, SIGNAL(clicked()), SLOT(csv_copy()));
 
+   panel1_widgets.push_back( pb_csv_copy );
+
    pb_csv_paste = new QPushButton(tr("Paste"), this);
    pb_csv_paste->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_paste->setMinimumHeight(minHeight1);
    pb_csv_paste->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_paste, SIGNAL(clicked()), SLOT(csv_paste()));
+
+   panel1_widgets.push_back( pb_csv_paste );
 
    pb_csv_paste_new = new QPushButton(tr("Paste as new"), this);
    pb_csv_paste_new->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -293,11 +337,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_paste_new->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_paste_new, SIGNAL(clicked()), SLOT(csv_paste_new()));
 
+   panel1_widgets.push_back( pb_csv_paste_new );
+
    pb_csv_merge = new QPushButton(tr("Merge"), this);
    pb_csv_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_merge->setMinimumHeight(minHeight1);
    pb_csv_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_merge, SIGNAL(clicked()), SLOT(csv_merge()));
+
+   panel1_widgets.push_back( pb_csv_merge );
 
    pb_csv_angle = new QPushButton(tr("Angle"), this);
    pb_csv_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -305,11 +353,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_angle->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_angle, SIGNAL(clicked()), SLOT(csv_angle()));
 
+   panel1_widgets.push_back( pb_csv_angle );
+
    pb_csv_reseq = new QPushButton(tr("Reseq"), this);
    pb_csv_reseq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_reseq->setMinimumHeight(minHeight1);
    pb_csv_reseq->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_reseq, SIGNAL(clicked()), SLOT(csv_reseq()));
+
+   panel1_widgets.push_back( pb_csv_reseq );
 
    pb_csv_check = new QPushButton(tr("Check"), this);
    pb_csv_check->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -317,11 +369,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_check->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_check, SIGNAL(clicked()), SLOT(csv_check()));
 
+   panel1_widgets.push_back( pb_csv_check );
+
    pb_csv_sort = new QPushButton(tr("Sort"), this);
    pb_csv_sort->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sort->setMinimumHeight(minHeight1);
    pb_csv_sort->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sort, SIGNAL(clicked()), SLOT(csv_sort()));
+
+   panel1_widgets.push_back( pb_csv_sort );
 
    pb_csv_find_alt = new QPushButton(tr("Find alternate matching residues"), this);
    pb_csv_find_alt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -329,11 +385,23 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_find_alt->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_find_alt, SIGNAL(clicked()), SLOT(csv_find_alt()));
 
-   pb_csv_clash_report = new QPushButton(tr("Pairwise distance"), this);
+   panel1_widgets.push_back( pb_csv_find_alt );
+
+   pb_csv_bm = new QPushButton(tr("BM"), this);
+   pb_csv_bm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_csv_bm->setMinimumHeight(minHeight1);
+   pb_csv_bm->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv_bm, SIGNAL(clicked()), SLOT(csv_bm()));
+
+   panel1_widgets.push_back( pb_csv_bm );
+
+   pb_csv_clash_report = new QPushButton(tr("PW distance"), this);
    pb_csv_clash_report->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_clash_report->setMinimumHeight(minHeight1);
    pb_csv_clash_report->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_clash_report, SIGNAL(clicked()), SLOT(csv_clash_report()));
+
+   panel1_widgets.push_back( pb_csv_clash_report );
 
    pb_csv_sel = new QPushButton(tr("Select"), this);
    pb_csv_sel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -341,11 +409,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_sel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel, SIGNAL(clicked()), SLOT(csv_sel()));
 
+   panel1_widgets.push_back( pb_csv_sel );
+
    pb_csv_sel_clear = new QPushButton(tr("Clear"), this);
    pb_csv_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sel_clear->setMinimumHeight(minHeight1);
    pb_csv_sel_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_clear, SIGNAL(clicked()), SLOT(csv_sel_clear()));
+
+   panel1_widgets.push_back( pb_csv_sel_clear );
 
    pb_csv_sel_clean = new QPushButton(tr("Clean"), this);
    pb_csv_sel_clean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -353,11 +425,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_sel_clean->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_clean, SIGNAL(clicked()), SLOT(csv_sel_clean()));
 
+   panel1_widgets.push_back( pb_csv_sel_clean );
+
    pb_csv_sel_invert = new QPushButton(tr("Invert"), this);
    pb_csv_sel_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sel_invert->setMinimumHeight(minHeight1);
    pb_csv_sel_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_invert, SIGNAL(clicked()), SLOT(csv_sel_invert()));
+
+   panel1_widgets.push_back( pb_csv_sel_invert );
 
    pb_csv_sel_chain = new QPushButton(tr("Chain"), this);
    pb_csv_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -365,11 +441,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_sel_chain->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_chain, SIGNAL(clicked()), SLOT(csv_sel_chain()));
 
+   panel1_widgets.push_back( pb_csv_sel_chain );
+
    pb_csv_sel_nearest_atoms = new QPushButton(tr("Nearest Atoms"), this);
    pb_csv_sel_nearest_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sel_nearest_atoms->setMinimumHeight(minHeight1);
    pb_csv_sel_nearest_atoms->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_nearest_atoms, SIGNAL(clicked()), SLOT(csv_sel_nearest_atoms()));
+
+   panel1_widgets.push_back( pb_csv_sel_nearest_atoms );
 
    pb_csv_sel_nearest_residues = new QPushButton(tr("Nearest Residues"), this);
    pb_csv_sel_nearest_residues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -377,19 +457,25 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_sel_nearest_residues->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv_sel_nearest_residues, SIGNAL(clicked()), SLOT(csv_sel_nearest_residues()));
 
+   panel1_widgets.push_back( pb_csv_sel_nearest_residues );
+
    lbl_csv_sel_msg = new QLabel("", this);
    lbl_csv_sel_msg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_csv_sel_msg->setMinimumHeight(minHeight1);
    lbl_csv_sel_msg->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_csv_sel_msg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
+   panel1_widgets.push_back( lbl_csv_sel_msg );
+
    // right pane
 
-   lbl_csv2 = new QLabel("", this);
+   lbl_csv2 = new mQLabel(tr("Panel 2"), this);
    lbl_csv2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_csv2->setMinimumHeight(minHeight1);
    lbl_csv2->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_csv2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+
+   connect( lbl_csv2, SIGNAL( pressed() ), SLOT( hide_csv2() ) );
 
    lv_csv2 = new QListView( this );
    lv_csv2->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -399,7 +485,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    lv_csv2->setMinimumWidth( 175 );
 
    lv_csv2->addColumn( "Models" );
-   for ( unsigned int i = 6; i < (unsigned int)csv1.header.size() - 1; i++ )
+   for ( unsigned int i = 6; i < (unsigned int)csv1.header.size(); i++ )
    {
       lv_csv2->addColumn( csv1.header[i] );
    }
@@ -409,10 +495,14 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    lv_csv2->setSelectionMode  ( QListView::Multi );
    connect(lv_csv2, SIGNAL(selectionChanged()), SLOT(csv2_selection_changed()));
 
+   panel2_widgets.push_back( lv_csv2 );
+
    te_csv2 = new QTextEdit(this);
    te_csv2->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    te_csv2->setReadOnly(true);
    te_csv2->setMaximumHeight( minHeight1 * 4 );
+
+   panel2_widgets.push_back( te_csv2 );
 
    pb_csv2_load_1 = new QPushButton(tr("Load"), this);
    pb_csv2_load_1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -420,11 +510,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_load_1->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_load_1, SIGNAL(clicked()), SLOT(csv2_load_1()));
 
+   panel2_widgets.push_back( pb_csv2_load_1 );
+
    pb_csv2_load = new QPushButton(tr("Load All"), this);
    pb_csv2_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_load->setMinimumHeight(minHeight1);
    pb_csv2_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_load, SIGNAL(clicked()), SLOT(csv2_load()));
+
+   panel2_widgets.push_back( pb_csv2_load );
 
    pb_csv2_visualize = new QPushButton(tr("Visualize"), this);
    pb_csv2_visualize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -432,11 +526,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_visualize->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_visualize, SIGNAL(clicked()), SLOT(csv2_visualize()));
 
+   panel2_widgets.push_back( pb_csv2_visualize );
+
    pb_csv2_dup = new QPushButton(tr("Dup"), this);
    pb_csv2_dup->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_dup->setMinimumHeight(minHeight1);
    pb_csv2_dup->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_dup, SIGNAL(clicked()), SLOT(csv2_dup()));
+
+   panel2_widgets.push_back( pb_csv2_dup );
 
    pb_csv2_save = new QPushButton(tr("Save"), this);
    pb_csv2_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -444,11 +542,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_save, SIGNAL(clicked()), SLOT(csv2_save()));
 
+   panel2_widgets.push_back( pb_csv2_save );
+
    pb_csv2_undo = new QPushButton(tr("Undo"), this);
    pb_csv2_undo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_undo->setMinimumHeight(minHeight1);
    pb_csv2_undo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_undo, SIGNAL(clicked()), SLOT(csv2_undo()));
+
+   panel2_widgets.push_back( pb_csv2_undo );
 
    pb_csv2_clear = new QPushButton(tr("Clear"), this);
    pb_csv2_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -456,11 +558,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_clear, SIGNAL(clicked()), SLOT(csv2_clear()));
 
+   panel2_widgets.push_back( pb_csv2_clear );
+
    pb_csv2_cut = new QPushButton(tr("Cut"), this);
    pb_csv2_cut->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_cut->setMinimumHeight(minHeight1);
    pb_csv2_cut->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_cut, SIGNAL(clicked()), SLOT(csv2_cut()));
+
+   panel2_widgets.push_back( pb_csv2_cut );
 
    pb_csv2_copy = new QPushButton(tr("Copy"), this);
    pb_csv2_copy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -468,11 +574,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_copy->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_copy, SIGNAL(clicked()), SLOT(csv2_copy()));
 
+   panel2_widgets.push_back( pb_csv2_copy );
+
    pb_csv2_paste = new QPushButton(tr("Paste"), this);
    pb_csv2_paste->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_paste->setMinimumHeight(minHeight1);
    pb_csv2_paste->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_paste, SIGNAL(clicked()), SLOT(csv2_paste()));
+
+   panel2_widgets.push_back( pb_csv2_paste );
 
    pb_csv2_paste_new = new QPushButton(tr("Paste as new"), this);
    pb_csv2_paste_new->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -480,11 +590,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_paste_new->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_paste_new, SIGNAL(clicked()), SLOT(csv2_paste_new()));
 
+   panel2_widgets.push_back( pb_csv2_paste_new );
+
    pb_csv2_merge = new QPushButton(tr("Merge"), this);
    pb_csv2_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_merge->setMinimumHeight(minHeight1);
    pb_csv2_merge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_merge, SIGNAL(clicked()), SLOT(csv2_merge()));
+
+   panel2_widgets.push_back( pb_csv2_merge );
 
    pb_csv2_angle = new QPushButton(tr("Angle"), this);
    pb_csv2_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -492,11 +606,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_angle->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_angle, SIGNAL(clicked()), SLOT(csv2_angle()));
 
+   panel2_widgets.push_back( pb_csv2_angle );
+
    pb_csv2_reseq = new QPushButton(tr("Reseq"), this);
    pb_csv2_reseq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_reseq->setMinimumHeight(minHeight1);
    pb_csv2_reseq->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_reseq, SIGNAL(clicked()), SLOT(csv2_reseq()));
+
+   panel2_widgets.push_back( pb_csv2_reseq );
 
    pb_csv2_check = new QPushButton(tr("Check"), this);
    pb_csv2_check->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -504,11 +622,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_check->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_check, SIGNAL(clicked()), SLOT(csv2_check()));
 
+   panel2_widgets.push_back( pb_csv2_check );
+
    pb_csv2_sort = new QPushButton(tr("Sort"), this);
    pb_csv2_sort->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sort->setMinimumHeight(minHeight1);
    pb_csv2_sort->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sort, SIGNAL(clicked()), SLOT(csv2_sort()));
+
+   panel2_widgets.push_back( pb_csv2_sort );
 
    pb_csv2_find_alt = new QPushButton(tr("Find alternate matching residues"), this);
    pb_csv2_find_alt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -516,11 +638,23 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_find_alt->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_find_alt, SIGNAL(clicked()), SLOT(csv2_find_alt()));
 
-   pb_csv2_clash_report = new QPushButton(tr("Pairwise Distance"), this);
+   panel2_widgets.push_back( pb_csv2_find_alt );
+
+   pb_csv2_bm = new QPushButton(tr("BM"), this);
+   pb_csv2_bm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_csv2_bm->setMinimumHeight(minHeight1);
+   pb_csv2_bm->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_csv2_bm, SIGNAL(clicked()), SLOT(csv2_bm()));
+
+   panel2_widgets.push_back( pb_csv2_bm );
+
+   pb_csv2_clash_report = new QPushButton(tr("PW Distance"), this);
    pb_csv2_clash_report->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_clash_report->setMinimumHeight(minHeight1);
    pb_csv2_clash_report->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_clash_report, SIGNAL(clicked()), SLOT(csv2_clash_report()));
+
+   panel2_widgets.push_back( pb_csv2_clash_report );
 
    pb_csv2_sel = new QPushButton(tr("Select"), this);
    pb_csv2_sel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -528,11 +662,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_sel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel, SIGNAL(clicked()), SLOT(csv2_sel()));
 
+   panel2_widgets.push_back( pb_csv2_sel );
+
    pb_csv2_sel_clear = new QPushButton(tr("Clear"), this);
    pb_csv2_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sel_clear->setMinimumHeight(minHeight1);
    pb_csv2_sel_clear->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_clear, SIGNAL(clicked()), SLOT(csv2_sel_clear()));
+
+   panel2_widgets.push_back( pb_csv2_sel_clear );
 
    pb_csv2_sel_clean = new QPushButton(tr("Clean"), this);
    pb_csv2_sel_clean->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -540,11 +678,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_sel_clean->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_clean, SIGNAL(clicked()), SLOT(csv2_sel_clean()));
 
+   panel2_widgets.push_back( pb_csv2_sel_clean );
+
    pb_csv2_sel_invert = new QPushButton(tr("Invert"), this);
    pb_csv2_sel_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sel_invert->setMinimumHeight(minHeight1);
    pb_csv2_sel_invert->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_invert, SIGNAL(clicked()), SLOT(csv2_sel_invert()));
+
+   panel2_widgets.push_back( pb_csv2_sel_invert );
 
    pb_csv2_sel_chain = new QPushButton(tr("Chain"), this);
    pb_csv2_sel_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -552,11 +694,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_sel_chain->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_chain, SIGNAL(clicked()), SLOT(csv2_sel_chain()));
 
+   panel2_widgets.push_back( pb_csv2_sel_chain );
+
    pb_csv2_sel_nearest_atoms = new QPushButton(tr("Nearest Atoms"), this);
    pb_csv2_sel_nearest_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sel_nearest_atoms->setMinimumHeight(minHeight1);
    pb_csv2_sel_nearest_atoms->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_nearest_atoms, SIGNAL(clicked()), SLOT(csv2_sel_nearest_atoms()));
+
+   panel2_widgets.push_back( pb_csv2_sel_nearest_atoms );
 
    pb_csv2_sel_nearest_residues = new QPushButton(tr("Nearest Residues"), this);
    pb_csv2_sel_nearest_residues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -564,11 +710,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_sel_nearest_residues->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_csv2_sel_nearest_residues, SIGNAL(clicked()), SLOT(csv2_sel_nearest_residues()));
 
+   panel2_widgets.push_back( pb_csv2_sel_nearest_residues );
+
    lbl_csv2_sel_msg = new QLabel("", this);
    lbl_csv2_sel_msg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_csv2_sel_msg->setMinimumHeight(minHeight1);
    lbl_csv2_sel_msg->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_csv2_sel_msg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+
+   panel2_widgets.push_back( lbl_csv2_sel_msg );
 
    qwtw_wheel = new QwtWheel( this );
    qwtw_wheel->setOrientation  ( Qt::Vertical );
@@ -577,11 +727,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    // qwtw_wheel->setMinimumHeight( minHeight1 );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
 
+   panel2_widgets.push_back( qwtw_wheel );
+
    lbl_pos_range = new QLabel("1\nof\n1", this);
    lbl_pos_range->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    lbl_pos_range->setMaximumHeight( minHeight1 * 2 + minHeight1 / 2 );
    lbl_pos_range->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_pos_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
+   panel2_widgets.push_back( lbl_pos_range );
 
    // build layout
    QGridLayout *gl_panes = new QGridLayout( 0, 0, 0, 1, 1 );
@@ -663,6 +817,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_3->addSpacing( 2 );
    hbl_center_buttons_row_3->addWidget( pb_csv_find_alt );
    hbl_center_buttons_row_3->addSpacing( 2 );
+   hbl_center_buttons_row_3->addWidget( pb_csv_bm );
+   hbl_center_buttons_row_3->addSpacing( 2 );
    hbl_center_buttons_row_3->addWidget( pb_csv_clash_report );
 
    QBoxLayout *hbl_center_buttons_row_4 = new QHBoxLayout;
@@ -741,6 +897,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_3->addWidget( pb_csv2_sort );
    hbl_right_buttons_row_3->addSpacing( 2 );
    hbl_right_buttons_row_3->addWidget( pb_csv2_find_alt );
+   hbl_right_buttons_row_3->addSpacing( 2 );
+   hbl_right_buttons_row_3->addWidget( pb_csv2_bm );
    hbl_right_buttons_row_3->addSpacing( 2 );
    hbl_right_buttons_row_3->addWidget( pb_csv2_clash_report );
 
@@ -867,6 +1025,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv()
    pb_csv_check                ->setEnabled( csv1.data.size() );
    pb_csv_sort                 ->setEnabled( counts.models > 1 );
    pb_csv_find_alt             ->setEnabled( counts.residues == 1 );
+   pb_csv_bm                   ->setEnabled( bm_active && any_csv_selected );
    pb_csv_clash_report         ->setEnabled( any_csv_selected );
    pb_csv_sel                  ->setEnabled( csv1.data.size() );
    pb_csv_sel_clear            ->setEnabled( any_csv_selected );
@@ -908,6 +1067,7 @@ void US_Hydrodyn_Pdb_Tool::update_enables_csv2()
    pb_csv2_check                ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_sort                 ->setEnabled( counts.models > 1 );
    pb_csv2_find_alt             ->setEnabled( counts.residues == 1 );
+   pb_csv2_bm                   ->setEnabled( bm_active && any_csv_selected );
    pb_csv2_clash_report         ->setEnabled( any_csv2_selected );
    pb_csv2_sel                  ->setEnabled( csv2[ csv2_pos ].data.size() );
    pb_csv2_sel_clear            ->setEnabled( any_csv2_selected );
@@ -1126,7 +1286,7 @@ void US_Hydrodyn_Pdb_Tool::save_csv( QListView *lv )
 
    if ( !f.open( IO_WriteOnly ) )
    {
-      QMessageBox::warning( this, "UltraScan",
+      QMessageBox::warning( this, caption(),
                             QString(tr("Could not open %1 for writing!")).arg(filename) );
       return;
    }
@@ -1726,7 +1886,8 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QListView *lv )
                             csv1.data[ i ][ 9 ],
                             csv1.data[ i ][ 10 ],
                             csv1.data[ i ][ 11 ],
-                            csv1.data[ i ][ 12 ]
+                            // csv1.data[ i ][ 12 ],
+                            csv1.data[ i ][ 13 ]
                             );
       if ( csv1.current_item_key == model_chain_residue_atom )
       {
@@ -1754,10 +1915,10 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QListView *lv )
 
    if ( lv == lv_csv )
    {
-      lbl_csv->setText( csv1.name );
+      lbl_csv->setText( csv1.name.isEmpty() ? tr( "Panel 1" ) : csv1.name );
       selection_since_count_csv1 = true;
    } else {
-      lbl_csv2->setText( (unsigned int)csv2.size() > csv2_pos ? csv2[ csv2_pos ].name : "unknown" );
+      lbl_csv2->setText( (unsigned int)csv2.size() > csv2_pos ? csv2[ csv2_pos ].name : tr( "Panel 2" ) );
       selection_since_count_csv2 = true;
    }
 }
@@ -2140,6 +2301,7 @@ void US_Hydrodyn_Pdb_Tool::load( QListView *lv, QString &filename, bool only_fir
       {
          // not supporting anything else for now
          // later we should store, save remarks connct's etc
+
          continue;
       }
 
@@ -6311,3 +6473,150 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
 
    return;
 }
+
+void US_Hydrodyn_Pdb_Tool::hide_widgets( vector < QWidget * > w, bool hide )
+{
+   for ( unsigned int i = 0; i < ( unsigned int )w.size(); i++ )
+   {
+      hide ? w[ i ]->hide() : w[ i ]->show();
+   }
+}
+
+void US_Hydrodyn_Pdb_Tool::hide_csv()
+{
+   hide_widgets( panel1_widgets, panel1_widgets[ 0 ]->isVisible() );
+}
+
+void US_Hydrodyn_Pdb_Tool::hide_csv2()
+{
+   hide_widgets( panel2_widgets, panel2_widgets[ 0 ]->isVisible() );
+}
+
+void US_Hydrodyn_Pdb_Tool::csv_bm()
+{
+   do_bm( lv_csv );
+   update_enables_csv();
+}
+
+void US_Hydrodyn_Pdb_Tool::csv2_bm()
+{
+   do_bm( lv_csv2 );
+   update_enables_csv2();
+}
+
+void US_Hydrodyn_Pdb_Tool::do_bm( QListView *lv )
+{
+   // 1st find atoms
+
+   bool ok;
+   double expansion = QInputDialog::getDouble(
+                                              tr( "US-SOMO: PDB editor : Bead model from atoms" )
+                                              , QString( tr( "Enter a vDW multiplier:" ) )
+                                              , 1
+                                              , 5e-1 
+                                              , 5e1
+                                              , 4
+                                              , &ok
+                                              , this 
+                                              );
+
+   if ( !ok )
+   {
+      return;
+   }
+
+   csv csv_to_save;
+   if ( lv == lv_csv )
+   {
+      csv_to_save = to_csv( lv_csv, csv1 );
+   } else {
+      csv_to_save = to_csv( lv_csv2, csv2[ csv2_pos ] );
+   }
+
+   QStringList out;
+
+   QListViewItemIterator it1( lv );
+   while ( it1.current() ) 
+   {
+      QListViewItem *item1 = it1.current();
+      if ( !item1->childCount() && is_selected( item1 ) )
+      {
+         //item1->text( 3 ).toFloat();
+         //item1->text( 4 ).toFloat();
+         //item1->text( 5 ).toFloat();
+         QString atom = item1->text( 7 ).stripWhiteSpace();
+         if ( !usu->atom_mw.count( atom ) )
+         {
+            QString msg = QString( tr( "Atom '%1' not found in loaded molecular weights (mw.json)" ) ).arg( atom );
+            lv == lv_csv ?
+               csv_msg( "red", msg ) : csv2_msg( "red", msg );
+            return;
+         }
+         if ( !usu->atom_vdw.count( atom ) )
+         {
+            QString msg = QString( tr( "Atom '%1' not found in loaded molecular vdw radii (vdw.json)" ) ).arg( atom );
+            lv == lv_csv ?
+               csv_msg( "red", msg ) : csv2_msg( "red", msg );
+            return;
+         }
+         out << 
+            QString( "%1 %2 %3 %4 %5 1 %6.%7.%8 0\\n" )
+            .arg( item1->text( 3 ) )
+            .arg( item1->text( 4 ) )
+            .arg( item1->text( 5 ) )
+            .arg( usu->atom_vdw[ atom ] * expansion )
+            .arg( usu->atom_mw[ atom ] )
+            .arg( item1->text( 1 ) )
+            .arg( item1->text( 2 ) )
+            ;
+      }
+      ++it1;
+   }
+
+   // take the atoms and ask for inflation & make a bead model
+   QString use_dir;
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
+   QString filename = QFileDialog::getSaveFileName(
+                                                   use_dir,
+                                                   "*.bead_model *.BEAD_MODEL",
+                                                   this,
+                                                   "save file dialog",
+                                                   tr("Choose a filename to save the bead model") );
+
+   if ( filename.isEmpty() )
+   {
+      return;
+   }
+
+   filename.replace( QRegExp("(_e\\d_\\d+|)\\.bead_model$",false), "" );
+   filename += QString( "_e%1" ).arg( expansion, 0, 'f', 4 ).replace( ".", "_" );
+   filename += ".bead_model";
+
+   if ( QFile::exists(filename) )
+   {
+      filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( filename, 0, this );
+   }
+
+   QFile f(filename);
+
+   if ( !f.open( IO_WriteOnly ) )
+   {
+      QMessageBox::warning( this, caption(),
+                            QString( tr("Could not open %1 for writing!") ).arg(filename) );
+      return;
+   }
+
+   QTextStream ts( &f );
+   ts << QString( "%1 .5\n" ).arg( out.size() );
+   ts << out.join("\n") << endl;
+   f.close();
+   {
+
+      QString msg = QString( tr( "Created beam model output file %1" ) ).arg( f.name() );
+      lv == lv_csv ?
+         csv_msg( "blue", msg ) : csv2_msg( "blue", msg );
+   }
+   return;
+}
+

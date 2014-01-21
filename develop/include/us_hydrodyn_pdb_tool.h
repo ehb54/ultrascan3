@@ -33,6 +33,7 @@
 #include "us_hydrodyn_pdb_tool_merge.h"
 #include "us_hydrodyn_pdb_tool_renum.h"
 #include "us_hydrodyn_pdb_tool_sort.h"
+#include "us_mqt.h"
 #include "qwt_wheel.h"
 
 using namespace std;
@@ -72,7 +73,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_hybrid_split;
       QPushButton   *pb_h_to_chainX;
 
-      QLabel        *lbl_csv;
+      mQLabel        *lbl_csv;
       QListView     *lv_csv;
       QTextEdit     *te_csv;
       QPushButton   *pb_csv_load_1;
@@ -91,6 +92,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv_check;
       QPushButton   *pb_csv_sort;
       QPushButton   *pb_csv_find_alt;
+      QPushButton   *pb_csv_bm;
       QPushButton   *pb_csv_clash_report;
       QPushButton   *pb_csv_sel;
       QPushButton   *pb_csv_sel_clear;
@@ -101,7 +103,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv_sel_nearest_residues;
       QLabel        *lbl_csv_sel_msg;
 
-      QLabel        *lbl_csv2;
+      mQLabel        *lbl_csv2;
       QListView     *lv_csv2;
       QTextEdit     *te_csv2;
       QwtWheel      *qwtw_wheel;
@@ -123,6 +125,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_csv2_check;
       QPushButton   *pb_csv2_sort;
       QPushButton   *pb_csv2_find_alt;
+      QPushButton   *pb_csv2_bm;
       QPushButton   *pb_csv2_clash_report;
       QPushButton   *pb_csv2_sel;
       QPushButton   *pb_csv2_sel_clear;
@@ -285,6 +288,15 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       
       void        do_sort( QListView *lv );
 
+      void        do_bm( QListView *lv );
+
+      vector < QWidget * > panel1_widgets;
+      vector < QWidget * > panel2_widgets;
+
+      void hide_widgets( vector < QWidget * >, bool do_hide = true );
+
+      bool        bm_active;
+
    private slots:
       
       void setupGUI();
@@ -299,6 +311,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void renum_pdb();
       void hybrid_split();
       void h_to_chainX();
+
+      void hide_csv();
 
       void csv_selection_changed();
       void csv_load_1();
@@ -316,6 +330,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_check();
       void csv_sort();
       void csv_find_alt();
+      void csv_bm();
       void csv_clash_report();
       void csv_visualize();
       void csv_sel();
@@ -325,6 +340,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_sel_chain();
       void csv_sel_nearest_atoms();
       void csv_sel_nearest_residues();
+
+      void hide_csv2();
 
       void csv2_selection_changed();
       void csv2_load_1();
@@ -343,6 +360,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_check();
       void csv2_sort();
       void csv2_find_alt();
+      void csv2_bm();
       void csv2_clash_report();
       void csv2_visualize();
       void csv2_sel();

@@ -87,43 +87,7 @@ struct shd_data
    vector < complex < float > > A1v;
 };
 
-class mQLineEdit : public QLineEdit
-{
-   Q_OBJECT
-
-   public:
-
-      mQLineEdit ( QWidget *parent = 0 , const char * name = 0 );
-      ~mQLineEdit();
-
-   signals:
-      void focussed(bool hasFocus);
-
-   protected:
-      virtual void focusInEvent ( QFocusEvent *e );
-      virtual void focusOutEvent ( QFocusEvent *e );
-};
-
-#include "us_mqlabel.h"
-
-
-class mQPushButton : public QPushButton
-{
-   Q_OBJECT
-
-   public:
-
-      mQPushButton ( QWidget *parent = 0 , const char * name = 0 );
-      mQPushButton ( const QString & text, QWidget *parent = 0 , const char * name = 0 );
-      ~mQPushButton();
-
-   signals:
-      void doubleClicked();
-
-   protected:
-      virtual void mouseDoubleClickEvent ( QMouseEvent *e );
-};
-
+#include "us_mqt.h"
 
 struct crop_undo_data
 {
