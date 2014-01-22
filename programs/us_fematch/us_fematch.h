@@ -33,6 +33,7 @@ class US_FeMatch : public US_Widgets
 
       US_DataIO::EditedData*      fem_editdata();
       US_DataIO::RawData*         fem_simdata();
+      QList< int >*               fem_excllist();
       US_Model*                   fem_model();
       US_Noise*                   fem_ti_noise();
       US_Noise*                   fem_ri_noise();
