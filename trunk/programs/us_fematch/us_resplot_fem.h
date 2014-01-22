@@ -56,6 +56,7 @@ class US_ResidPlotFem : public US_WidgetsDialog
    protected:
       US_DataIO::EditedData*      edata;
       US_DataIO::Scan*            escan;
+      QList< int >*               excllist;
       US_DataIO::RawData*         sdata;
       US_Noise*                   ri_noise;
       US_Noise*                   ti_noise;

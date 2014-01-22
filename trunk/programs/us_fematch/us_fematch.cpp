@@ -351,6 +351,9 @@ us_setReadOnly( le_compress, true );
 // public function to get pointer to edit data
 US_DataIO::EditedData*      US_FeMatch::fem_editdata() { return edata;     }
 
+// public function to get pointer to list of excluded scans
+QList< int >*               US_FeMatch::fem_excllist() { return &excludedScans;}
+
 // public function to get pointer to sim data
 US_DataIO::RawData*         US_FeMatch::fem_simdata()  { return sdata;     }
 
