@@ -794,8 +794,86 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
    int    kk          = old_points - 1;
 
    for ( int ii = 0; ii < total_scans; ii++ )
+   {  // Accumulate the maximum computed OD value
+      maxc = qMax( maxc, sim_data.value( ii, kk ) );
+   }
+
+   // Compute a data threshold that is scan 1's plateau reading times 3
+   QVector< double > xtmpVec( total_scans );
+   QVector< double > ytmpVec( total_scans );
+   double *xtmp    = xtmpVec.data();
+   double *ytmp    = ytmpVec.data();
+   double intercept;
+   double slope;
+   double sigma;
+   double correl;
+
+   for ( int ii = 0; ii < total_scans; ii++ )
+   {  // Build time,omega2t points
+      xtmp[ ii ]      = sim_data.scanData[ ii ].seconds;
+      ytmp[ ii ]      = sim_data.scanData[ ii ].omega2t;
+   }
+
+   // Fit to time,omega2t and use fit to compute the time correction
+   US_Math2::linefit( &xtmp, &ytmp, &slope, &intercept, &sigma,
+                      &correl, total_scans );
+
+   double timecorr = -intercept / slope;
+   double s20wcorr = -2.0;
+   double omega    = sim_data.scanData[ 0 ].rpm * M_PI / 30.0;
+   double oterm    = ( sim_data.scanData[ 0 ].seconds - timecorr )
+                     * omega * omega * s20wcorr;
+   double s1plat   = 0.0;
+
+   for ( int jj = 0; jj < system.components.count(); jj++ )
    {
-      maxc = max( maxc, sim_data.value( ii, kk ) );
+      US_Model::SimulationComponent* sc = &system.components[ jj ];
+      double conc     = sc->signal_concentration;
+      double sval     = sc->s;
+      s1plat         += ( conc * exp( oterm * sval ) );
+   }
+
+   double dthresh  = s1plat * 3.0;
+
+   // If the overall maximum reading exceeds the threshold,
+   //  limit OD values in all scans to the threshold
+   if ( maxc > dthresh )
+   {
+      int nchange     = 0;  // Total threshold changes
+      int nmodscn     = 0;  // Modified scans
+
+
+      for ( int ii = 0; ii < total_scans; ii++ )
+      {  // Examine each scan
+         int kchange  = 0;  // Changes in a scan
+
+         for ( int jj = 0; jj < old_points; jj++ )
+         {  // Examine each reading point in a scan
+
+            if ( sim_data.value( ii, jj ) > dthresh )
+            {  // Set a high value to the threshold and bump counts
+               sim_data.setValue( ii, jj, dthresh );
+               nchange++;   // Bump the count of total threshold changes
+               kchange++;   // Bump the count of threshold changes in this scan
+            }
+         }
+
+         // Bump the count of scans in which a threshold limit was applied
+         if ( kchange > 0 )
+            nmodscn++;
+      }
+DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
+ << "maxc dthresh" << maxc << dthresh;
+
+      // Report that some readings were threshold-limited
+      QMessageBox::information( this,
+            tr( "OD Values Threshold Limited" ),
+            tr( "%1 readings in %2 scans were reset\n"
+                "to a threshold value of %3 ,\n"
+                "3 times the scan 1 plateau value.\n"
+                "The pre-threshold-limit maximum OD\n"
+                "value was %4 ." )
+            .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
    }
 
    //US_ClipData* cd = new US_ClipData( maxc, b, m, total_conc );
