@@ -89,7 +89,7 @@ class US_Experiment
           \param    update Is it ok to update an existing database runID 
                            (maybe the user is updating a DB record)?
           \param    db For database access, an open database connection
-          \param    speedstep Reference to vector of experiment speed steps
+          \param    speedsteps Reference to vector of experiment speed steps
       */
       int saveToDB( bool, US_DB2*, QVector< SP_SPEEDPROFILE >& );
 
@@ -97,7 +97,7 @@ class US_Experiment
 
           \param runID  The run ID of the experiment.
           \param    db For database access, an open database connection
-          \param    speedstep Reference to vector of experiment speed steps
+          \param    speedsteps Reference to vector of experiment speed steps
           \returns  One of the US_DB2 error codes
       */
       int readFromDB( QString, US_DB2*, QVector< SP_SPEEDPROFILE >& );

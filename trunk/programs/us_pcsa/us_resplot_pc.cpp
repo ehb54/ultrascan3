@@ -157,6 +157,7 @@ DbgLv(1) << "RP: P" << ( parent != 0 );
       US_pcsa*  mainw = (US_pcsa*)parent;
       edata           = mainw->mw_editdata();
       sdata           = mainw->mw_simdata();
+      excllist        = mainw->mw_excllist();
       ti_noise        = mainw->mw_ti_noise();
       ri_noise        = mainw->mw_ri_noise();
       have_ed         = ( edata != 0 );
@@ -453,6 +454,8 @@ void US_ResidPlotPc::plot_edata()
 
       for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
+         if ( excllist->contains( ii ) )  continue;
+
          if ( do_subrin )
             rinoi    = ri_noise->values[ ii ];
 
@@ -486,6 +489,8 @@ void US_ResidPlotPc::plot_edata()
 
       for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
+         if ( excllist->contains( ii ) )  continue;
+
          if ( do_addrin )
             rinoi    = ri_noise->values[ ii ];
 
@@ -591,6 +596,8 @@ void US_ResidPlotPc::plot_rdata()
 
       for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
+         if ( excllist->contains( ii ) )  continue;
+
          rinoi    = 0.0;
          if ( do_subrin )
             rinoi    = ri_noise->values[ ii ];
@@ -696,6 +703,8 @@ void US_ResidPlotPc::plot_rdata()
 
       for ( int ii = 0; ii < count; ii++ )
       {  // get random noise (y) for each scan
+         if ( excllist->contains( ii ) )  continue;
+
          rinoi    = have_ri ? ri_noise->values[ ii ] : 0.0;
 
          for ( int jj = 0; jj < points; jj++ )
@@ -740,6 +749,13 @@ void US_ResidPlotPc::plot_rdata()
 
       for ( int ii = 0; ii < count; ii++ )
       {  // build a vector for each scan
+         if ( excllist->contains( ii ) )
+         {
+            resscan.fill( 0.0 );
+            resids[ ii ] = resscan;
+            continue;
+         }
+
          rinoi    = 0.0;
          if ( do_subrin )
             rinoi    = ri_noise->values[ ii ];
