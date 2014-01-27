@@ -410,7 +410,6 @@ bool US_Extinction::loadScan(const QString &fileName)
       {
          str1 = ts.readLine();
 	 str1 = str1.simplifyWhiteSpace();
-	 cout << str1 << endl;
          str2 = getToken(&str1, " ");
          temp_x = str2.toFloat();
 	 //cout << temp_x << ", " << str2 << endl;
@@ -1084,6 +1083,10 @@ void US_Extinction::update_lambdaCutoff(const QString &str)
    {
       selected_wavelength = lambdaCutoff;
       cnt_wavelength->setValue(selected_wavelength);
+      QMessageBox::message(tr("UltraScan Warning:"),
+                           tr("Please note:\n\n"
+                           "The extinction coefficient wavelength was\n"
+                           "adjusted to match the lower wavelength limit."));
    }
 }
 
