@@ -1080,6 +1080,11 @@ void US_Extinction::update_lambdaCutoff(const QString &str)
    {
       lambda_min = lambdaCutoff; // adjust lambda_min to the cutoff
    }
+   if (selected_wavelength < lambdaCutoff)
+   {
+      selected_wavelength = lambdaCutoff;
+      cnt_wavelength->setValue(selected_wavelength);
+   }
 }
 
 void US_Extinction::update_pathlength(const QString &str)
