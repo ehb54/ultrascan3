@@ -401,7 +401,7 @@ bool US_Extinction::loadScan(const QString &fileName)
    f.setName(fileName);
    wls.lambda.clear();
    wls.od.clear();
-   if (f.open(IO_ReadOnly))
+   if (f.open(IO_ReadOnly | IO_Translate))
    {
       QTextStream ts(&f);
       wls.description = ts.readLine();
@@ -409,10 +409,14 @@ bool US_Extinction::loadScan(const QString &fileName)
       while (!ts.eof())
       {
          str1 = ts.readLine();
+	 str1 = str1.simplifyWhiteSpace();
+	 cout << str1 << endl;
          str2 = getToken(&str1, " ");
          temp_x = str2.toFloat();
+	 //cout << temp_x << ", " << str2 << endl;
          str2 = getToken(&str1, " ");
          temp_y = str2.toFloat();
+	 //cout << temp_y << ", " << str2 << endl;
          if (temp_x >= lambdaCutoff && temp_y <= odCutoff)
          {
             wls.lambda.push_back(temp_x);
