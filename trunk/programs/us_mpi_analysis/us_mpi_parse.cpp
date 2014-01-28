@@ -163,6 +163,8 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
 void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
       US_SolveSim::DataSet* dataset )
 {
+   dataset->simparams.speed_step.clear();
+
    QXmlStreamAttributes a;
 
    while ( ! xml.atEnd() )
@@ -172,53 +174,55 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
 
       if ( xml.isEndElement()  &&  xml.name() == "dataset" ) return;
 
-      if ( xml.isStartElement()  &&  xml.name() == "files" )
+      if ( ! xml.isStartElement() )  continue;
+
+      if ( xml.name() == "files" )
          parse_files( xml, dataset ); 
 
-      if ( xml.isStartElement()  &&  xml.name() == "solution" )
+      if ( xml.name() == "solution" )
          parse_solution( xml, dataset ); 
 
-      if ( xml.isStartElement()  &&  xml.name() == "simpoints" )
+      if ( xml.name() == "simpoints" )
       {
          a                  = xml.attributes();
          dataset->simparams.simpoints
                             = a.value( "value" ).toString().toInt();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "band_volume" )
+      if ( xml.name() == "band_volume" )
       {
          a                  = xml.attributes();
          dataset->simparams.band_volume
                             = a.value( "value" ).toString().toDouble();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "radial_grid" )
+      if ( xml.name() == "radial_grid" )
       {
          a                  = xml.attributes();
          dataset->simparams.meshType = (US_SimulationParameters::MeshType)
                               a.value( "value" ).toString().toInt();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "time_grid" )
+      if ( xml.name() == "time_grid" )
       {
          a                  = xml.attributes();
          dataset->simparams.gridType = (US_SimulationParameters::GridType)
                               a.value( "value" ).toString().toInt();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "density" )
+      if ( xml.name() == "density" )
       {
          a                    = xml.attributes();
          dataset->density     = a.value( "value" ).toString().toDouble();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "viscosity" )
+      if ( xml.name() == "viscosity" )
       {
          a                    = xml.attributes();
          dataset->viscosity   = a.value( "value" ).toString().toDouble();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "rotor_stretch" )
+      if ( xml.name() == "rotor_stretch" )
       {
          a                    = xml.attributes();
          QStringList stretch  = 
@@ -228,14 +232,14 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
          dataset->rotor_stretch[ 1 ] = stretch[ 1 ].toDouble();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_bottom" )
+      if ( xml.name() == "centerpiece_bottom" )
       {
          a                      = xml.attributes();
          dataset->centerpiece_bottom
                                 = a.value( "value" ).toString().toDouble();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_shape" )
+      if ( xml.name() == "centerpiece_shape" )
       {
          a                      = xml.attributes();
          QString shape          = a.value( "value" ).toString();
@@ -251,25 +255,34 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
                                 = qMax( 0, shapes.indexOf( shape ) );
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_angle" )
+      if ( xml.name() == "centerpiece_angle" )
       {
          a                      = xml.attributes();
          dataset->simparams.cp_angle
                                 = a.value( "value" ).toString().toDouble();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_pathlength" )
+      if ( xml.name() == "centerpiece_pathlength" )
       {
          a                      = xml.attributes();
          dataset->simparams.cp_pathlen
                                 = a.value( "value" ).toString().toDouble();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "centerpiece_width" )
+      if ( xml.name() == "centerpiece_width" )
       {
          a                      = xml.attributes();
          dataset->simparams.cp_width
                                 = a.value( "value" ).toString().toDouble();
+      }
+
+      if ( xml.name() == "speedstep" )
+      {
+         US_SimulationParameters::SpeedProfile sp;
+
+         US_SimulationParameters::speedstepFromXml( xml, sp );
+
+         dataset->simparams.speed_step << sp;
       }
    }
 }

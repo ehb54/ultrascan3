@@ -268,25 +268,22 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
       sd.manual    = ds->manual;
       sd.vbar20    = ds->vbar20;
       sd.vbar      = ds->vbartb;
-
 if ( my_rank == 0 )
-   DbgLv(0) << "density/viscosity/comm vbar20/commvbar" << sd.density
-                                                        << sd.viscosity 
-                                                        << sd.vbar20 
-                                                        << sd.vbar;
+ DbgLv(0) << "density/viscosity/comm vbar20/commvbar"
+  << sd.density << sd.viscosity << sd.vbar20 << sd.vbar;
 
       US_Math2::data_correction( ds->temperature, sd );
 
       ds->s20w_correction = sd.s20w_correction;
       ds->D20w_correction = sd.D20w_correction;
-
 if ( my_rank == 0 )
-   DbgLv(0) << "s20w_correction/D20w_correction" << sd.s20w_correction 
-    << sd.D20w_correction;
+ DbgLv(0) << "s20w_correction/D20w_correction"
+  << sd.s20w_correction << sd.D20w_correction;
 
       // Set up simulation parameters for the data set
  
-      ds->simparams.initFromData( NULL, *edata );
+      bool incl_speed     = ( ds->simparams.speed_step.count() < 1 );
+      ds->simparams.initFromData( NULL, *edata, incl_speed );
  
       ds->simparams.rotorcoeffs[ 0 ]  = ds->rotor_stretch[ 0 ];
       ds->simparams.rotorcoeffs[ 1 ]  = ds->rotor_stretch[ 1 ];
