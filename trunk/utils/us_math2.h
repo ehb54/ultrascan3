@@ -279,6 +279,15 @@ class US_UTIL_EXTERN US_Math2
       //! \return Approximation of erfc(x)
       static double erfc( double );
 
+      //! \brief Compute best uniform grid repetitions for 2DSA
+      //!        and possibly modify grid point counts in each dimension
+      //! \param ngrid_s Reference to grid points in the s dimension,
+      //!                both input and possibly modified value
+      //! \param ngrid_k Reference to grid points in the k dimension,
+      //!                both input and possibly modified value
+      //! \return Computed best number of grid repetitions
+      static int best_grid_reps( int&, int& );
+
       private:
 
       static void _nnls_g1 ( double a, double b, double*, double*, double* );

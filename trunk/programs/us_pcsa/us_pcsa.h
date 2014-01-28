@@ -29,6 +29,13 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
+#ifndef SP_SPEEDPROFILE
+#define SP_SPEEDPROFILE US_SimulationParameters::SpeedProfile
+#endif
+#ifndef SS_DATASET
+#define SS_DATASET US_SolveSim::DataSet
+#endif
+
 class US_pcsa : public US_AnalysisBase2
 {
    Q_OBJECT
@@ -56,9 +63,11 @@ class US_pcsa : public US_AnalysisBase2
 
       US_Editor*           te_results;
 
-      US_SolveSim::DataSet            dset;
+      SS_DATASET                      dset;
 
-      QList< US_SolveSim::DataSet* >  dsets;
+      QList< SS_DATASET* >            dsets;
+
+      QVector< SP_SPEEDPROFILE >      speed_steps;
 
       US_DataIO::EditedData*          edata;
       US_DataIO::RawData              sdata;
@@ -100,6 +109,8 @@ class US_pcsa : public US_AnalysisBase2
       int                  dbg_level;
       int                  mc_iters;
       int                  baserss;
+
+      bool                 exp_steps;
 
    private slots:
       void open_resplot( void );

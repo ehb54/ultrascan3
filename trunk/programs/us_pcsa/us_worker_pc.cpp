@@ -146,7 +146,7 @@ DbgLv(1) << phdr << "depth" << depth;
 
       sim_vals.solutes    = solutes_i;
       sim_vals.noisflag   = noisflag;
-//      sim_vals.dbg_level  = dbg_level;
+      sim_vals.dbg_level  = dbg_level;
       sim_vals.dbg_timing = US_Settings::debug_match( "pcsaTiming" );
 
       solvesim->calc_residuals( 0, 1, sim_vals );

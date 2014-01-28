@@ -428,8 +428,6 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
          }
       }
 
-      fscan         = ( fscan < 0 ) ?      0 : fscan;
-      lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
 qDebug() << "MATHi: s_time l_time" << s_time << e_time
  << "fscan lscan" << fscan << lscan;
    }
@@ -456,8 +454,10 @@ qDebug() << "MATHi: s_time l_time" << s_time << e_time
 // << "fscan lscan" << fscan << lscan;
    }
 
+   if ( fscan < 0  ||  lscan < 0 )
+      return -1;
+
    // Interpolate all radial points from each scan in tmp_data onto expdata
-   //
    interpolate( expdata, simdata, use_time, fscan, lscan );
 
    return 0;

@@ -40,10 +40,6 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    QLabel* lb_refopts      = us_banner( tr( "Refinement Options:" ) );
 
    QLabel* lb_optimiz      = us_banner( tr( "Optimization Methods:" ) );
-   QLabel* lb_grrefine     = us_label(  tr( "Grid Refinements:" ) );
-   //QLabel* lb_menisrng     = us_label(  tr( "Meniscus Fit Range (cm):" ) );
-   //QLabel* lb_menispts     = us_label(  tr( "Meniscus Grid Points:" ) );
-   //QLabel* lb_mciters      = us_label(  tr( "Monte Carlo Iterations:" ) );
    QLabel* lb_repetloc     = us_label(  tr( "Repetitions:" ) );
    QLabel* lb_scfactor     = us_label(  tr( "Scaling Factor:" ) );
    QLabel* lb_scfact2      = us_label(  tr( "Scaling Factor 2:" ) );
@@ -93,7 +89,6 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    QLayout*  lo_mdrati  =
       us_checkbox( tr( "Model-Defined Ratios and Grid"     ), ck_mdrati );
 
-   ct_grrefine  = us_counter( 2,    1,   20,    6 );
    ct_repetloc  = us_counter( 2,    1,   20,    1 );
    ct_scfactor  = us_counter( 3, 0.01, 10.0,  0.3 );
    ct_scfact2   = us_counter( 3, 0.01, 10.0,  0.9 );
@@ -106,7 +101,6 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    //ct_mciters   = us_counter( 3,    1, 2000,   20 );
    ct_regufact  = us_counter( 3, 0.01, 10.0,  0.9 );
 
-   ct_grrefine ->setStep(    1 );
    ct_repetloc ->setStep(    1 );
    ct_scfactor ->setStep( 0.01 );
    ct_scfact2  ->setStep( 0.01 );
@@ -137,8 +131,6 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    int row      = 0;
    optimizeLayout->addWidget( lb_optimiz,    row++, 0, 1, 6 );
    optimizeLayout->addLayout( lo_unifgr,     row++, 0, 1, 6 );
-   optimizeLayout->addWidget( lb_grrefine,   row,   0, 1, 4 );
-   optimizeLayout->addWidget( ct_grrefine,   row++, 4, 1, 2 );
    optimizeLayout->addLayout( lo_locugr,     row++, 0, 1, 6 );
    optimizeLayout->addWidget( lb_repetloc,   row,   0, 1, 4 );
    optimizeLayout->addWidget( ct_repetloc,   row++, 4, 1, 2 );
@@ -258,7 +250,7 @@ void US_AdvAnalysis2D::get_parameters(
    US_Model& modpar, bool& reg, double& repar1 )
 {
    rtype   = US_2dsaProcess::UGRID;
-   rtpar1  = ct_grrefine->value();
+   rtpar1  = 8.0;
    rtpar2  = 0.0;
    rtpar3  = 0.0;
 
@@ -305,8 +297,6 @@ void US_AdvAnalysis2D::get_parameters(
 // enable/disable optimize counters based on chosen method
 void US_AdvAnalysis2D::optimize_options()
 {
-   ct_grrefine->setEnabled( ck_unifgr->isChecked() );
-   //ct_mciters ->setEnabled( ck_mcarlo->isChecked() );
    ct_repetloc->setEnabled( ck_locugr->isChecked() );
    ct_scfactor->setEnabled( ck_locugr->isChecked() );
    ct_scfact2 ->setEnabled( ck_locugr->isChecked() );

@@ -196,10 +196,11 @@ DbgLv(1) << "Analysis Done VARI" << vari << "model,noise counts"
    bool plotdata     = updflag == 1;
    bool savedata     = updflag == 2;
 
-DbgLv(1) << "Analysis Done";
+DbgLv(1) << "Analysis Done" << updflag;
 DbgLv(1) << "  model components size" << model.components.size();
-DbgLv(1) << "  edat0 sdat0 rdat0"
- << edata->value(0,0) << sdata.value(0,0) << rdata.value(0,0);
+DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
+ << edata->value(0,0) << sdata.value(0,0) << rdata.value(0,0)
+ << ((ti_noise.count>0)?ti_noise.values[0]:0.0);
 
    pb_plt3d ->setEnabled( true );
    pb_pltres->setEnabled( true );
@@ -243,6 +244,9 @@ void US_2dsa::load( void )
    ti_noise_in.count  = ti_noise_in.values.size();
    ti_noise   .count  = 0;
    ri_noise   .count  = 0;
+   speed_steps.clear();
+   tinoises   .clear();
+   rinoises   .clear();
 DbgLv(1) << "ri,ti noise in" << ri_noise_in.count << ti_noise_in.count;
 
    // Get speed steps from disk or DB experiment
@@ -813,6 +817,7 @@ US_DataIO::EditedData* US_2dsa::mw_editdata()
    int drow = lw_triples->currentRow();
    edata    = ( drow >= 0 ) ? &dataList[ drow ] : 0;
 
+DbgLv(1) << "(M)mw_ed" << edata;
    return edata;
 }
 
@@ -820,6 +825,7 @@ US_DataIO::EditedData* US_2dsa::mw_editdata()
 
 US_DataIO::RawData*         US_2dsa::mw_simdata()      { return &sdata;    }
 US_DataIO::RawData*         US_2dsa::mw_resdata()      { return &rdata;    }
+QList< int >*               US_2dsa::mw_excllist()     { return &excludedScans;}
 US_Model*                   US_2dsa::mw_model()        { return &model;    }
 US_Noise*                   US_2dsa::mw_ti_noise()     { return &ti_noise; }
 US_Noise*                   US_2dsa::mw_ri_noise()     { return &ri_noise; }
@@ -905,10 +911,11 @@ DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
    dset.simparams.initFromData( dbP, dataList[ drow ], !exp_steps );
 
    if ( exp_steps )
+   {
       dset.simparams.speed_step  = speed_steps;
+   }
 
    dset.run_data           = dataList[ drow ];
-   dset.simparams.bottom   = dset.simparams.bottom_position;
    dset.viscosity          = viscosity;
    dset.density            = density;
    dset.temperature        = avTemp;
@@ -1230,6 +1237,13 @@ void US_2dsa::new_triple( int index )
    sdata.scanData.clear();                 // Clear simulation and upper plot
    data_plot1->detachItems();
    data_plot1->clear();
+   models     .clear();
+   tinoises   .clear();
+   rinoises   .clear();
+   ri_noise.values.clear();
+   ti_noise.values.clear();
+   ti_noise   .count  = 0;
+   ri_noise   .count  = 0;
 
    US_AnalysisBase2::new_triple( index );  // New triple as in any analysis
 }

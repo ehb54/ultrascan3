@@ -50,6 +50,7 @@ class US_ResidPlot2D : public US_WidgetsDialog
       US_DataIO::EditedData*      edata;
       US_DataIO::Scan*            escan;
       US_DataIO::RawData*         sdata;
+      QList< int >*               excllist;
       US_Noise*                   ri_noise;
       US_Noise*                   ti_noise;
       QPointer< US_ResidsBitmap > resbmap;

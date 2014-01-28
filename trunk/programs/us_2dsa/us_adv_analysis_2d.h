@@ -41,7 +41,6 @@ class US_AdvAnalysis2D : public US_WidgetsDialog
 
       QWidget*      parentw;
 
-      QwtCounter*   ct_grrefine;
       QwtCounter*   ct_menisrng;
       QwtCounter*   ct_menispts;
       QwtCounter*   ct_mciters;

@@ -134,8 +134,8 @@ DbgLv(1) << "MENISC: mm_iter meniscus bmeniscus"
    // SubGrid deltas  (increments between subgrid points)
    int nsubp_s = ( nssteps + ngrefine - 1 ) / ngrefine;
    int nsubp_k = ( nksteps + ngrefine - 1 ) / ngrefine;
-   sdelta_s    = ( suplim - slolim ) / (double)( max( nsubp_s - 1, 1 ) );
-   sdelta_k    = ( kuplim - klolim ) / (double)( max( nsubp_k - 1, 1 ) );
+   sdelta_s    = ( suplim - slolim ) / (double)( qMax( nsubp_s - 1, 1 ) );
+   sdelta_k    = ( kuplim - klolim ) / (double)( qMax( nsubp_k - 1, 1 ) );
 
    // Grid deltas     (overall increment between grid points)
    gdelta_s    = sdelta_s / (double)ngrefine;
@@ -155,7 +155,7 @@ DbgLv(1) << "MENISC: mm_iter meniscus bmeniscus"
    int kksubg  = nksteps * nssteps
                  - ( kgref + kgrefsq ) * ( nsubp_s + nsubp_k ) + kgrefsq;
 DbgLv(1) << "2P:    kgref kgrefsq kksubg" << kgref << kgrefsq << kksubg;
-   maxtsols    = max( maxtsols, mintsols );
+   maxtsols    = qMax( maxtsols, mintsols );
 
    int ktcsol  = maxtsols - 5;
    int nnstep  = ( noisflag > 0 ? ( sq( ktcsol ) / 10 + 2 ) : 2 ) * nsubgrid;
@@ -258,7 +258,7 @@ DbgLv(1) << "ii" << ii << "soli" << soli.s << soli.k << soli.c;
 
       queue_task( wtask, llss, llsk, ktask, jdpth, jnois, orig_sols[ ktask ] );
 
-      maxtsols       = max( maxtsols, wtask.isolutes.size() );
+      maxtsols       = qMax( maxtsols, wtask.isolutes.size() );
    }
 
    // Start the first threads. This will begin the first work units (subgrids).
@@ -293,7 +293,7 @@ void US_2dsaProcess::set_iters( int    mxiter, int    mciter, int    mniter,
 {
    maxiters   = mxiter;
    mmtype     = ( mciter > 1 ) ? 2 : ( ( mniter > 1 ) ? 1 : 0 );
-   mmiters    = ( mmtype == 0 ) ? 0 : max( mciter, mniter );
+   mmiters    = ( mmtype == 0 ) ? 0 : qMax( mciter, mniter );
    varitol    = vtoler;
    menrange   = menrng;
    cnstff0    = cff0;
@@ -778,9 +778,9 @@ DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
 // Public slot to get results upon completion of all refinements
 bool US_2dsaProcess::get_results( US_DataIO::RawData* da_sim,
                                   US_DataIO::RawData* da_res,
-                                  US_Model*            da_mdl,
-                                  US_Noise*            da_tin,
-                                  US_Noise*            da_rin )
+                                  US_Model*           da_mdl,
+                                  US_Noise*           da_tin,
+                                  US_Noise*           da_rin )
 {
    bool all_ok = true;
 
@@ -852,6 +852,23 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
     << " s,ff0" << wresult.csolutes[mm].s*1.0e+13
     << wresult.csolutes[mm].k; } }
 //DBG-CONC
+//DBG-DATA
+#if 1
+if (dbg_level>0)
+{
+ double dtot=0.0;
+ double ntot=0.0;
+ int    nnoi=wresult.ti_noise.count();
+ for (int ii=0; ii<nscans; ii++ )
+  for (int jj=0; jj<npoints; jj++ )
+   dtot += edata->value(ii,jj);
+ for (int jj=0; jj<nnoi; jj++ )
+  ntot += wresult.ti_noise[jj];
+ DbgLv(1) << "PJ:DA DTOT" << dtot << "thr,tsk,ncso" << thrn << taskx << nrcso
+  << "edata" << edata << "nti,NTOT" << nnoi << ntot;
+}
+#endif
+//DBG-DATA
 
    max_rss();                      // Compute max memory used
    if ( taskx <= nthreads )
@@ -886,7 +903,7 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
       queue_task( wtask, slolim, klolim, taskx, depthn, jnois,
                   c_solutes[ depth ] );
 
-      maxdepth     = max( maxdepth, depthn );
+      maxdepth     = qMax( maxdepth, depthn );
       c_solutes[ depth ].clear();
 DbgLv(1) << "THR_FIN: depth" << wtask.depth << " #solutes"
  << wtask.isolutes.size() << " nextc maxtsols" << nextc << maxtsols
@@ -1078,7 +1095,7 @@ DbgLv(1) << "ITER: start of iteration" << r_iter+1 << " mxdp" << maxdepth;
 
    // Bump total steps estimate based on additional solutes in subgrids
    nctotal      = ( r_iter == 1 ) ? nctotal : ( ( nctotal + kcsteps ) / 2 );
-   nctotal      = max( kcsteps, nctotal ) + 10;
+   nctotal      = qMax( kcsteps, nctotal ) + 10;
 DbgLv(1) << "ITER:   r-iter0 ncto ncsol" << nctotal << ncsol;
    int ktisol   = maxtsols - 5;
    int ktask    = nsubgrid + 1;
@@ -1135,7 +1152,7 @@ DbgLv(1) << "ITER: kt" << ktask << "iterate nisol o a c +"
       qSort( isolutes );
       WorkPacket2D wtask;
       queue_task( wtask, llss, llsk, ktask, jdpth, jnois, isolutes );
-      maxtsols       = max( maxtsols, isolutes.size() );
+      maxtsols       = qMax( maxtsols, isolutes.size() );
    }
 
 //*DEBUG

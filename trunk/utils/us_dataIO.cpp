@@ -426,6 +426,8 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
       uchar u[ 4 ];
    } ui;
 
+   quint16 si;  
+
    char d[ 5 ] = "DATA";
    write( ds, d, 4, crc );
 
@@ -445,7 +447,10 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
    write( ds, ui.c, 4, crc );
 
    // Encoded wavelength
-   qToLittleEndian( (quint16)( ( data.wavelength - 180.0 ) * 100.0 ), ui.u );
+   si = (quint16)qRound( ( data.wavelength - 180.0 ) * 100.0 );
+   qToLittleEndian<quint16>( si, ui.u );
+//qDebug() << "DIO: wvln si" << data.wavelength << si
+// << "ui.c" << (int)ui.c[0] << (int)ui.c[1];
    write( ds, ui.c, 2, crc );
 
    uf.f = (float) data.delta_r;     // delta r 
@@ -459,7 +464,6 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
    // Write readings
    double  delta  = ( pp.max_data1 - pp.min_data1 ) / 65535;
    double  delta2 = ( pp.max_data2 - pp.min_data2 ) / 65535;
-   quint16 si;  
 
    bool    stdDev = ( ( pp.min_data2 != 0.0  ||  pp.max_data2 != 0.0 )
                   &&  ( data.stddevs.size() == data.rvalues.size()   ) );
