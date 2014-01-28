@@ -623,7 +623,8 @@ double US_Math2::normal_distribution( double sigma, double mean, double x )
    return exp( exponent ) / sqrt( 2.0 * M_PI * sq( sigma ) );
 }
 
-double US_Math2::time_correction( const QVector< US_DataIO::EditedData >& dataList )
+double US_Math2::time_correction(
+      const QVector< US_DataIO::EditedData >& dataList )
 {
    int size  = dataList[ 0 ].scanData.size();
 
@@ -645,7 +646,6 @@ double US_Math2::time_correction( const QVector< US_DataIO::EditedData >& dataLi
 
       for ( int j = 0; j < e->scanData.size(); j++ )
       {
-        if ( e->scanData[ j ].omega2t > 9.99999e10 ) break;
         x[ count ] = e->scanData[ j ].omega2t;
         y[ count ] = e->scanData[ j ].seconds;
         count++;
@@ -1354,5 +1354,55 @@ double US_Math2::calcCommonVbar( US_Solution& solution, double temperature )
       cvbar     = vbsum / wtsum;    // Common vbar is the weighted average
 
    return cvbar;
+}
+
+// Compute the best number of uniform grid repetitions for 2DSA,
+// given specified initial total grid points in the 's' and 'k'
+// (f/f0 or vbar) dimensions. Modify grid points slightly to insure
+// they are multiples of grid repetitions and are with reasonable limits.
+int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
+{
+   const int min_grid = 10;   // Grid points at least 10
+   const int max_grid = 200;  // Grid points at most 200
+   const int min_subg = 40;   // Sub-grid size at least 40
+   const int max_subg = 200;  // Sub-grid size at most 200
+   const int min_reps = 1;    // Repetitions at least 1
+   const int max_reps = 40;   // Repetitions at most 40
+
+   // Insure grid points are within reasonable limits
+   ngrid_s         = qMin( max_grid, qMax( min_grid, ngrid_s ) );
+   ngrid_k         = qMin( max_grid, qMax( min_grid, ngrid_k ) );
+
+   // Compute the initial best grid-repetitions value
+   int    nreps_g  = qRound( pow( (double)( ngrid_s * ngrid_k ), 0.25 ) );
+
+   // Compute the initial sub-grid point counts in each dimension,
+   //  insuring the next highest integers are used.
+   int nsubg_s     = ( ngrid_s + nreps_g - 1 ) / nreps_g;
+   int nsubg_k     = ( ngrid_k + nreps_g - 1 ) / nreps_g;
+
+   // Adjust values until the product yields no more than 200 sub-grid points
+   while ( ( nsubg_s * nsubg_k ) > max_subg  &&  nreps_g < max_reps )
+   {  // Increase grid-reps and recompute sub-grid points
+      nreps_g++;
+      nsubg_s         = ( ngrid_s + nreps_g - 1 ) / nreps_g;
+      nsubg_k         = ( ngrid_k + nreps_g - 1 ) / nreps_g;
+   }
+
+   // Adjust values until the product yields no less than 40 sub-grid points
+   while ( ( nsubg_s * nsubg_k ) < min_subg  &&  nreps_g > min_reps )
+   {  // Decrease grid-reps and recompute sub-grid points
+      nreps_g--;
+      nsubg_s         = ( ngrid_s + nreps_g - 1 ) / nreps_g;
+      nsubg_k         = ( ngrid_k + nreps_g - 1 ) / nreps_g;
+   }
+
+   // Recalculate the total grid points in each dimension
+   //  to be multiples of the grid repetitions
+   ngrid_s         = nsubg_s * nreps_g;
+   ngrid_k         = nsubg_k * nreps_g;
+
+   // Return the computed number of grid repetitions
+   return nreps_g;
 }
 

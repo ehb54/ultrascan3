@@ -154,14 +154,15 @@ DbgLv(1) << "RP: P" << ( parent != 0 );
       US_2dsa*  mainw = (US_2dsa*)parent;
       edata           = mainw->mw_editdata();
       sdata           = mainw->mw_simdata();
+      excllist        = mainw->mw_excllist();
       ti_noise        = mainw->mw_ti_noise();
       ri_noise        = mainw->mw_ri_noise();
       have_ed         = ( edata != 0 );
       have_sd         = ( sdata != 0 );
       have_ti         = ( ti_noise != 0  &&  ti_noise->count > 0 );
       have_ri         = ( ri_noise != 0  &&  ri_noise->count > 0 );
-DbgLv(1) << "RP:edata  " << have_ed;
-DbgLv(1) << "RP:sdata  " << have_sd;
+DbgLv(1) << "RP:edata  " << have_ed << edata;
+DbgLv(1) << "RP:sdata  " << have_sd << sdata;
 DbgLv(1) << "RP:ti_noise count" << (have_ti ? ti_noise->count : 0);
 DbgLv(1) << "RP:ri_noise count" << (have_ri ? ri_noise->count : 0);
    }
@@ -450,6 +451,8 @@ void US_ResidPlot2D::plot_edata()
 
       for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
+         if ( excllist->contains( ii ) )  continue;
+
          if ( do_subrin )
             rinoi    = ri_noise->values[ ii ];
 
@@ -483,6 +486,8 @@ void US_ResidPlot2D::plot_edata()
 
       for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
+         if ( excllist->contains( ii ) )  continue;
+
          if ( do_addrin )
             rinoi    = ri_noise->values[ ii ];
 
@@ -584,6 +589,8 @@ void US_ResidPlot2D::plot_rdata()
 
       for ( int ii = 0; ii < count; ii++ )
       {  // get readings (y) for each scan
+         if ( excllist->contains( ii ) )  continue;
+
          rinoi    = 0.0;
          if ( do_subrin )
             rinoi    = ri_noise->values[ ii ];
@@ -686,6 +693,8 @@ void US_ResidPlot2D::plot_rdata()
 
       for ( int ii = 0; ii < count; ii++ )
       {  // get random noise (y) for each scan
+         if ( excllist->contains( ii ) )  continue;
+
          rinoi    = have_ri ? ri_noise->values[ ii ] : 0.0;
 
          for ( int jj = 0; jj < points; jj++ )
@@ -728,6 +737,13 @@ void US_ResidPlot2D::plot_rdata()
 
       for ( int ii = 0; ii < count; ii++ )
       {  // build a vector for each scan
+         if ( excllist->contains( ii ) )
+         {
+            resscan.fill( 0.0 );
+            resids[ ii ] = resscan;
+            continue;
+         }
+
          rinoi    = 0.0;
          if ( do_subrin )
             rinoi    = ri_noise->values[ ii ];

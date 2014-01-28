@@ -118,7 +118,7 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       double last_time;      
 
       double w2t_integral;    //!< Keep track of w2t_integral value globally
-      int    N;               //!< Number of points used in radial direction
+      int    Nx;              //!< Number of points used in radial direction
       int    dbg_level;
       
       US_AstfemMath::AstFemParameters af_params;

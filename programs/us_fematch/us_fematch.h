@@ -24,6 +24,10 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
+#ifndef SP_SPEEDPROFILE
+#define SP_SPEEDPROFILE US_SimulationParameters::SpeedProfile
+#endif
+
 class US_FeMatch : public US_Widgets
 {
    Q_OBJECT
@@ -102,6 +106,7 @@ class US_FeMatch : public US_Widgets
       bool          dataLatest;
       bool          buffLoaded;
       bool          cnstvb;
+      bool          exp_steps;
 
       QString       run_name;
       QString       cell;
@@ -126,6 +131,8 @@ class US_FeMatch : public US_Widgets
       US_Noise                    ri_noise;
       US_Noise                    ti_noise;
       US_Solution                 solution_rec;
+
+      QVector< SP_SPEEDPROFILE >     speed_steps;
 
       QPointer< US_ResidsBitmap >    rbmapd;
       QPointer< US_PlotControlFem >  eplotcd;

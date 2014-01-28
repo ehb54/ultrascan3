@@ -57,7 +57,7 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
    QLabel* lb_status       = us_label(  tr( "Status:" ) );
 
    QLabel* lb_optimiz      = us_banner( tr( "Optimization Methods:" ) );
-   QLabel* lb_grrefine     = us_label(  tr( "Grid Refinements:" ) );
+   QLabel* lb_gridreps     = us_label(  tr( "Grid Repetitions:" ) );
    QLabel* lb_menisrng     = us_label(  tr( "Meniscus Fit Range (cm):" ) );
    QLabel* lb_menispts     = us_label(  tr( "Meniscus Grid Points:" ) );
    QLabel* lb_mciters      = us_label(  tr( "Monte Carlo Iterations:" ) );
@@ -104,32 +104,32 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_thrdcnt ->setStep(    1 );
    ct_constff0->setStep( 0.01 );
 
-   le_estmemory = us_lineedit( "100 MB", -1, true );
-   le_iteration = us_lineedit( "0", -1, true );
-   le_oldvari   = us_lineedit( "0.000e-05", -1, true );
-   le_newvari   = us_lineedit( "0.000e-05", -1, true );
-   le_improve   = us_lineedit( "0.000e-08", -1, true );
+   le_estmemory = us_lineedit( tr( "100 MB" ), -1, true );
+   le_iteration = us_lineedit( "0",            -1, true );
+   le_oldvari   = us_lineedit( "0.000e-05",    -1, true );
+   le_newvari   = us_lineedit( "0.000e-05",    -1, true );
+   le_improve   = us_lineedit( "0.000e-08",    -1, true );
+   le_gridreps  = us_lineedit(
+      tr( "8  ( -> 64 64-point subgrids )" ),  -1, true );
 
    b_progress   = us_progressBar( 0, 100, 0 );
 
    QLayout*  lo_iters   =
-      us_checkbox( tr( "Use Iterative Method"     ), ck_iters  );
+      us_checkbox( tr( "Use Iterative Method"    ), ck_iters,  false );
    QLayout*  lo_unifgr  =
-      us_checkbox( tr( "Uniform Grid"             ), ck_unifgr, true );
+      us_checkbox( tr( "Uniform Grid"            ), ck_unifgr, true  );
    QLayout*  lo_custgr  =
-      us_checkbox( tr( "Custom Grid"              ), ck_custgr );
+      us_checkbox( tr( "Custom Grid"             ), ck_custgr, false );
    QLayout*  lo_menisc  =
-      us_checkbox( tr( "Float Meniscus Position"  ), ck_menisc );
+      us_checkbox( tr( "Float Meniscus Position" ), ck_menisc, false );
    QLayout*  lo_mcarlo  =
-      us_checkbox( tr( "Monte Carlo Iterations"   ), ck_mcarlo );
+      us_checkbox( tr( "Monte Carlo Iterations"  ), ck_mcarlo, false );
 
 
    ct_iters     = us_counter( 2,    1,   16,    1 );
-   ct_grrefine  = us_counter( 2,    1,   20,    6 );
    ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
    ct_menispts  = us_counter( 2,    3,   21,   10 );
    ct_mciters   = us_counter( 3,    3, 2000,   20 );
-   ct_grrefine ->setStep(    1 );
    ct_menisrng ->setStep( 0.01 );
    ct_menispts ->setStep(    1 );
    ct_mciters  ->setStep(    1 );
@@ -180,26 +180,26 @@ DbgLv(1) << "idealThrCout" << nthr;
    controlsLayout->setRowStretch( row, 2 );
 
    row           = 0;
-   optimizeLayout->addWidget( lb_optimiz,    row++, 0, 1, 2 );
-   optimizeLayout->addLayout( lo_unifgr,     row++, 0, 1, 2 );
-   optimizeLayout->addWidget( lb_grrefine,   row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_grrefine,   row++, 1, 1, 1 );
-   optimizeLayout->addLayout( lo_custgr,     row,   0, 1, 1 );
-   optimizeLayout->addWidget( pb_ldmodel,    row++, 1, 1, 2 );
-   optimizeLayout->addLayout( lo_menisc,     row++, 0, 1, 2 );
-   optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_menisrng,   row++, 1, 1, 1 );
-   optimizeLayout->addWidget( lb_menispts,   row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_menispts,   row++, 1, 1, 1 );
-   optimizeLayout->addLayout( lo_mcarlo,     row++, 0, 1, 2 );
-   optimizeLayout->addWidget( lb_mciters,    row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_mciters,    row++, 1, 1, 1 );
-   optimizeLayout->addWidget( pb_advance,    row++, 0, 1, 2 );
-   optimizeLayout->addLayout( lo_iters,      row++, 0, 1, 2 );
-   optimizeLayout->addWidget( lb_iters,      row,   0, 1, 1 );
-   optimizeLayout->addWidget( ct_iters,      row++, 1, 1, 1 );
-   optimizeLayout->addWidget( lb_statinfo,   row++, 0, 1, 2 );
-   optimizeLayout->addWidget( te_status,     row,   0, 2, 2 );
+   optimizeLayout->addWidget( lb_optimiz,    row++, 0, 1, 4 );
+   optimizeLayout->addLayout( lo_unifgr,     row++, 0, 1, 4 );
+   optimizeLayout->addWidget( lb_gridreps,   row,   0, 1, 1 );
+   optimizeLayout->addWidget( le_gridreps,   row++, 1, 1, 3 );
+   optimizeLayout->addLayout( lo_custgr,     row,   0, 1, 2 );
+   optimizeLayout->addWidget( pb_ldmodel,    row++, 2, 1, 4 );
+   optimizeLayout->addLayout( lo_menisc,     row++, 0, 1, 4 );
+   optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 2 );
+   optimizeLayout->addWidget( ct_menisrng,   row++, 2, 1, 2 );
+   optimizeLayout->addWidget( lb_menispts,   row,   0, 1, 2 );
+   optimizeLayout->addWidget( ct_menispts,   row++, 2, 1, 2 );
+   optimizeLayout->addLayout( lo_mcarlo,     row++, 0, 1, 4 );
+   optimizeLayout->addWidget( lb_mciters,    row,   0, 1, 2 );
+   optimizeLayout->addWidget( ct_mciters,    row++, 2, 1, 2 );
+   optimizeLayout->addWidget( pb_advance,    row++, 0, 1, 4 );
+   optimizeLayout->addLayout( lo_iters,      row++, 0, 1, 4 );
+   optimizeLayout->addWidget( lb_iters,      row,   0, 1, 2 );
+   optimizeLayout->addWidget( ct_iters,      row++, 2, 1, 2 );
+   optimizeLayout->addWidget( lb_statinfo,   row++, 0, 1, 4 );
+   optimizeLayout->addWidget( te_status,     row,   0, 2, 4 );
    row    += 6;
 
    QLabel* lb_optspace     = us_banner( "" );
@@ -232,8 +232,6 @@ DbgLv(1) << "idealThrCout" << nthr;
    connect( ct_nstepss,  SIGNAL( valueChanged( double ) ),
             this,        SLOT(   grid_change()          ) );
    connect( ct_nstepsk,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   grid_change()          ) );
-   connect( ct_grrefine, SIGNAL( valueChanged( double ) ),
             this,        SLOT(   grid_change()          ) );
    connect( ct_thrdcnt,  SIGNAL( valueChanged( double ) ),
             this,        SLOT(   grid_change()          ) );
@@ -275,7 +273,6 @@ DbgLv(1) << "idealThrCout" << nthr;
 // enable/disable optimize counters based on chosen method
 void US_AnalysisControl2D::optimize_options()
 {
-   ct_grrefine->setEnabled( ck_unifgr->isChecked() );
    ct_menisrng->setEnabled( ck_menisc->isChecked() );
    ct_menispts->setEnabled( ck_menisc->isChecked() );
    ct_mciters ->setEnabled( ck_mcarlo->isChecked() );
@@ -325,6 +322,7 @@ void US_AnalysisControl2D::checkUniGrid(  bool checked )
       ct_thrdcnt ->setValue  ( nthr );
       ck_varvbar ->setEnabled( true );
       ct_constff0->setEnabled( true );
+      grtype       = US_2dsaProcess::UGRID;
    }
 
    ck_custgr ->disconnect();
@@ -470,6 +468,7 @@ void US_AnalysisControl2D::start()
 
       mainw->analysis_done( -1 );   // reset counters to zero
 DbgLv(1) << "AnaC: edata scans, baserss" << edata->scanData.size() << baserss;
+DbgLv(1) << "AnaC: edata" << edata;
    }
 
    // Make sure that ranges are reasonable
@@ -546,18 +545,20 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
    double klo    = ct_lolimitk->value();
    double kup    = ct_uplimitk->value();
    int    nks    = (int)ct_nstepsk->value();
-   int    ngrr   = (int)ct_grrefine->value();
    int    nthr   = (int)ct_thrdcnt->value();
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
+
+   int    ngrr   = ( grtype < 0 ) ? grtype
+                 : US_Math2::best_grid_reps( nss, nks );
+
+   ct_nstepss->setValue( nss );
+   ct_nstepsk->setValue( nks );
+
    ti_noise->values.clear();
    ri_noise->values.clear();
    ti_noise->count = 0;
    ri_noise->count = 0;
-
-   ngrr            = ( grtype < 0 ) ? grtype : ngrr;
-
-   nctotal         = 10000;
 
    connect( processor, SIGNAL( progress_update(   int ) ),
             this,      SLOT(   update_progress(   int ) ) );
@@ -576,6 +577,7 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
    double vtoler = 1.0e-12;
    double menrng = ct_menisrng->value();
    double cff0   = ck_varvbar->isChecked() ? ct_constff0->value() : 0.0;
+   nctotal       = 10000;
 
    // Check memory and possibly abort fit if too much needed
    if ( memory_check() != 0 )
@@ -710,13 +712,15 @@ void US_AnalysisControl2D::grid_change()
 {
    int    nsteps = (int)ct_nstepss ->value();         // # steps s
    int    nstepk = (int)ct_nstepsk ->value();         // # steps k
-   int    ngrrep = (int)ct_grrefine->value();         // # repetitions
    int    nthrd  = (int)ct_thrdcnt ->value();         // # threads
    int    nscan  = edata->scanCount();                // # scans
    int    nconc  = edata->pointCount();               // # concentrations
    int    ntconc = nconc * nscan;                     // # total readings
-   int    ngstep = nsteps * nstepk;                   // # grid steps
    double megas  = sq( 1024.0 );
+
+   int    ngrrep = US_Math2::best_grid_reps( nsteps, nstepk );
+
+   int    ngstep = nsteps * nstepk;                   // # grid steps
 
    if ( parentw )
    {  // Get the starting base rss memory of this dataset and parameters
@@ -749,17 +753,23 @@ DbgLv(1) << "GC:  baserss tdata mdata ndatas nthrd" << baserss
    le_estmemory->setText( tr( "%1 MB  (of %2 MB total real)" )
          .arg( memneed ).arg( memtot ) );
 
+DbgLv(1) << "GC:  ngrrep nsteps nstepk" << ngrrep << nsteps << nstepk;
+
    // Output a message documenting the grid and subgrid dimensions
+//   int nss       = nsteps / ngrrep;
+//   int nsk       = nstepk / ngrrep;
    int nss       = nsteps / ngrrep;
    int nsk       = nstepk / ngrrep;
    int nspts     = nss * nsk;
    int nsubg     = sq( ngrrep );
    QString gmsg = tr( "Total grid is approximately %1 points (%2 x %3).\n" )
       .arg( ngstep ).arg( nsteps ).arg( nstepk );
-   gmsg += tr( "Subgrid refinement is %1 subgrids (%2 ^ 2)\n"
+   gmsg += tr( "Subgrid repetitions is %1 subgrids (%2 ^ 2)\n"
                "  with a maximum of %3 points each (%4 x %5)." )
       .arg( nsubg ).arg( ngrrep ).arg( nspts ).arg( nss ).arg( nsk );
    te_status  ->setText( gmsg );
+   le_gridreps->setText( tr( "%1   ( -> %2 %3-point subgrids )" )
+         .arg( ngrrep ).arg( nsubg ).arg( nspts ) );
 }
 
 // Adjust s-limit ranges when s-limit value changes
@@ -816,10 +826,8 @@ void US_AnalysisControl2D::kstep_change()
    {  // Set up for C(s) parameters
       ct_uplimitk->setValue( ct_lolimitk->value() );
       ct_thrdcnt ->setValue( 1.0 );
-      ct_grrefine->setValue( 1.0 );
       ct_uplimitk->setEnabled( false );
       ct_thrdcnt ->setEnabled( false );
-      ct_grrefine->setEnabled( false );
    }
 
    else if ( ct_uplimitk->value() == ct_lolimitk->value() )
@@ -828,10 +836,8 @@ void US_AnalysisControl2D::kstep_change()
       int nthr     = US_Settings::threads();
       nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
       ct_thrdcnt ->setValue( nthr );
-      ct_grrefine->setValue( 10.0  );
       ct_uplimitk->setEnabled( true );
       ct_thrdcnt ->setEnabled( true );
-      ct_grrefine->setEnabled( true );
    }
 }
 
@@ -901,6 +907,28 @@ DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
 
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
 DbgLv(1) << "AC:cp: RES: ti,ri counts" << ti_noise->count << ri_noise->count;
+//DBG-DATA
+#if 1
+if (dbg_level>0)
+{
+ double dtot=0.0;
+ double ntot=0.0;
+ double stot=0.0;
+ int nnoi=ti_noise->count;
+ int knoi=ti_noise->values.count();
+ for (int ii=0; ii<edata->scanCount(); ii++ )
+  for (int jj=0; jj<edata->pointCount(); jj++ )
+  {
+   dtot += edata->value(ii,jj);
+   stot += sdata->value(ii,jj);
+  }
+ for (int jj=0; jj<knoi; jj++ )
+  ntot += ti_noise->values[jj];
+ DbgLv(1) << "AC:cp DTOT" << dtot << "edata" << edata << "NTOT" << ntot
+  << "nnoi knoi" << nnoi << knoi << "STOT" << stot;
+}
+#endif
+//DBG-DATA
 
    US_DataIO::Scan* rscan0 = &rdata->scanData[ 0 ];
    int    iternum  = (int)rscan0->rpm;

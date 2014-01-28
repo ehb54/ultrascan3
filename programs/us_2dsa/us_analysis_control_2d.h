@@ -74,7 +74,6 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       QwtCounter*   ct_uplimitk;
       QwtCounter*   ct_nstepsk;
       QwtCounter*   ct_thrdcnt;
-      QwtCounter*   ct_grrefine;
       QwtCounter*   ct_menisrng;
       QwtCounter*   ct_menispts;
       QwtCounter*   ct_repetloc;
@@ -106,6 +105,7 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       QLineEdit*    le_oldvari;
       QLineEdit*    le_newvari;
       QLineEdit*    le_improve;
+      QLineEdit*    le_gridreps;
 
       QTextEdit*    te_status;
 

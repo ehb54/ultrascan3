@@ -381,6 +381,7 @@ void US_FeMatch::load( void )
    rawList.      clear();
    excludedScans.clear();
    triples.      clear();
+   speed_steps  .clear();
 
    dataLoaded = false;
    buffLoaded = false;
@@ -389,6 +390,7 @@ void US_FeMatch::load( void )
    int local  = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
                                   : US_Disk_DB_Controls::Disk;
 
+DbgLv(1) << "LD: open dialog";
    US_DataLoader* dialog =
       new US_DataLoader( dataLatest, local, rawList, dataList,
             triples, workingDir, QString( "velocity" ) );
@@ -398,16 +400,75 @@ void US_FeMatch::load( void )
    connect( dialog, SIGNAL( progress(     const QString ) ),
             this,   SLOT( set_progress(   const QString ) ) );
 
+DbgLv(1) << "LD: exec dialog";
    if ( dialog->exec() != QDialog::Accepted )  return;
+DbgLv(1) << "LD: local" << local << US_Disk_DB_Controls::DB;
 
-   if ( ! dkdb_cntrls->db() )
-   {
-      workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 );
-      workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
+   edata     = &dataList[ 0 ];
+   runID     = edata->runID;
+
+   // Get speed steps from disk or DB experiment
+   if ( local == US_Disk_DB_Controls::DB )
+   {  // Fetch the speed steps for the experiment from the database
+      workingDir = tr( "(database)" );
+DbgLv(1) << "LD:  DB IN  runID" << runID;
+
+      US_Passwd   pw;
+      US_DB2*     dbP    = new US_DB2( pw.getPasswd() );
+      QStringList query;
+      QString     expID;
+      int         idExp  = 0;
+      query << "get_experiment_info_by_runID"
+            << runID
+            << QString::number( US_Settings::us_inv_ID() );
+      dbP->query( query );
+
+      if ( dbP->lastErrno() == US_DB2::OK )
+      {
+        dbP->next();
+        idExp              = dbP->value( 1 ).toInt();
+        US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
+DbgLv(1) << "SS: ss count" << speed_steps.count() << "idExp" << idExp;
+if (speed_steps.count()>0 )
+DbgLv(1) << "SS:  ss0 w2tfirst w2tlast timefirst timelast"
+   << speed_steps[0].w2t_first << speed_steps[0].w2t_last
+   << speed_steps[0].time_first << speed_steps[0].time_last;
+      }
    }
 
    else
-      workingDir = tr( "(database)" );
+   {  // Read run experiment file and parse out speed steps
+      workingDir = workingDir.section( workingDir.left( 1 ), 4, 4 );
+      workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
+DbgLv(1) << "LD:  Disk IN  runID" << runID << "workingDir" << workingDir;
+
+      QString expfpath = workingDir + "/" + runID + "."
+                       + edata->dataType + ".xml";
+DbgLv(1) << "LD: expf path" << expfpath;
+      QFile xfi( expfpath )
+         ;
+      if ( xfi.open( QIODevice::ReadOnly ) )
+      {  // Read and parse "<speedstep>" lines in the XML
+         QXmlStreamReader xmli( &xfi );
+
+         while ( ! xmli.atEnd() )
+         {
+            xmli.readNext();
+
+            if ( xmli.isStartElement()  &&  xmli.name() == "speedstep" )
+            {
+               SP_SPEEDPROFILE  sp;
+               US_SimulationParameters::speedstepFromXml( xmli, sp );
+               speed_steps << sp;
+DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
+            }
+         }
+
+         xfi.close();
+      }
+   }
+
+   exp_steps  = ( speed_steps.count() > 0 );  // Flag any multi-step experiment
 
    qApp->processEvents();
 
@@ -422,7 +483,6 @@ void US_FeMatch::load( void )
 
    allExcls.fill( excludedScans, ntriples );
 
-   edata     = &dataList[ 0 ];
    scanCount = edata->scanData.size();
    double avgTemp = edata->average_temperature();
 
@@ -1911,17 +1971,10 @@ DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
    adjust_model();
 
    // Initialize simulation parameters using edited data information
-   if ( dkdb_cntrls->db() )
-   {
-      US_Passwd pw;
-      US_DB2 db( pw.getPasswd() );
-      simparams.initFromData( &db, *edata );
-   }
+   US_Passwd pw;
+   US_DB2* dbP = dkdb_cntrls->db() ? new US_DB2( pw.getPasswd() ) : NULL;     
 
-   else
-   {
-      simparams.initFromData( NULL, *edata );
-   }
+   simparams.initFromData( dbP, *edata, !exp_steps );
 DbgLv(1) << " initFrDat rotorCalID coeffs" << simparams.rotorCalID
    << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 simparams.simpoints = adv_vals[ "simpoints" ].toInt();
@@ -1931,6 +1984,8 @@ DbgLv(1) << " simulation points" << simparams.simpoints;
    simparams.gridType          = US_SimulationParameters::MOVING;
    simparams.radial_resolution = ( radhi - radlo ) / (double)( nconc - 1 );
    simparams.bottom            = simparams.bottom_position;
+   if ( exp_steps )
+      simparams.speed_step        = speed_steps;
 
    QString mtyp = adv_vals[ "meshtype"  ];
    QString gtyp = adv_vals[ "gridtype"  ];

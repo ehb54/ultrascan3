@@ -42,6 +42,7 @@ class US_2dsa : public US_AnalysisBase2
       US_DataIO::EditedData*      mw_editdata();
       US_DataIO::RawData*         mw_simdata();
       US_DataIO::RawData*         mw_resdata();
+      QList< int >*               mw_excllist();
       US_Model*                   mw_model();
       US_Noise*                   mw_ti_noise();
       US_Noise*                   mw_ri_noise();
