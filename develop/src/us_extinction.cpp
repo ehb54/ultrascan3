@@ -343,7 +343,7 @@ void US_Extinction::selectScans()
    QStringList sl;
    int position;
    QFile f;
-   filter = "*.W?? *.w??";
+   filter = "*.W?? *.w?? *.txt *.TXT *.dat *.DAT *.asc *.ASC";
 
    // allow multiple files to be selected:
 
