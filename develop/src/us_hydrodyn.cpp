@@ -2152,6 +2152,9 @@ void US_Hydrodyn::view_pdb()
       path_view_pdb.isEmpty() ?
       somo_pdb_dir :
       path_view_pdb;
+
+   select_from_directory_history( use_dir, this );
+
    QString filename = QFileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
    
    if (!filename.isEmpty())
@@ -2242,7 +2245,6 @@ void US_Hydrodyn::load_bead_model()
       path_load_bead_model.isEmpty() ?
       somo_dir :
       path_load_bead_model;
-
 
    select_from_directory_history( use_dir, this );
 
@@ -3531,6 +3533,8 @@ void US_Hydrodyn::view_asa()
       somo_dir :
       path_view_asa_res;
 
+   select_from_directory_history( use_dir, this );
+
    QString filename = QFileDialog::getOpenFileName(use_dir, "*.asa_res *.ASA_RES", this);
    if (!filename.isEmpty())
    {
@@ -3565,6 +3569,8 @@ void US_Hydrodyn::view_bead_model()
                somo_dir :
                path_view_bead_model;
             
+            select_from_directory_history( use_dir, this );
+
             filename = QFileDialog::getOpenFileName(use_dir
                                                     ,"Bead models (*.bead_model *.BEAD_MODEL);;"
                                                     "BEAMS (*.beams *.BEAMS);;"
@@ -3590,6 +3596,8 @@ void US_Hydrodyn::view_bead_model()
          path_view_bead_model.isEmpty() ?
          somo_dir :
          path_view_bead_model;
+
+      select_from_directory_history( use_dir, this );
 
       filename = QFileDialog::getOpenFileName(use_dir
                                               ,"Bead models (*.bead_model *.BEAD_MODEL);;"
@@ -3975,6 +3983,8 @@ void US_Hydrodyn::open_hydro_results()
                somo_dir :
                path_open_hydro_res;
             
+            select_from_directory_history( use_dir, this );
+
             filename = QFileDialog::getOpenFileName(use_dir, "*.hydro_res *.HYDRO_RES *.zno *.ZNO", this);
 
             if ( !filename.isEmpty() )
@@ -3993,6 +4003,8 @@ void US_Hydrodyn::open_hydro_results()
          path_open_hydro_res.isEmpty() ?
          somo_dir :
          path_open_hydro_res;
+
+      select_from_directory_history( use_dir, this );
 
       filename = QFileDialog::getOpenFileName(use_dir, "*.hydro_res *.HYDRO_RES", this);
 

@@ -2130,43 +2130,64 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
          }
 
          unsigned int this_reps = 0;
-         double ssd = 0e0;
-         double integral_I;
+         double I_tot;
+
+         double alpha = 0e0;
+         double last_alpha = 0e0;
+         vector < double > bl = last_bl;
 
          do {
+            last_alpha = alpha;
             this_reps++;
-            integral_I = 0e0;
-            vector < double > bl( bl_I.size() );
+            I_tot = 0e0;
 
             // note: this "if" could be separated into 2 loops
             // removing one of the condition checks
 
             for ( unsigned int j = 0; j < ( unsigned int ) bl_I.size(); j++ )
             {
-               bl[ j ] = start_y;
                if ( f_qs[ files[ i ] ][ j ] >= start &&
-                    f_qs[ files[ i ] ][ j ] <= end &&
-                    bl_I[ j ] - last_bl[ j ] > 0e0 )
+                    f_qs[ files[ i ] ][ j ] <= end )
                {
-                  integral_I += bl_I[ j ] - last_bl[ j ];
+                  I_tot += bl_I[ j ] - bl[ j ];
                }
             }
 
-            if ( integral_I > 0e0 )
+            if ( I_tot > 0e0 )
             {
-               double delta_bl_over_integral_I = delta_bl / integral_I;
+               alpha = delta_bl / I_tot;
 
-               double integral_0_j_I = 0e0;
+               editor_msg( "dark blue", QString( tr( "delta_Bl %1 Itot %2 alpha %3" ) )
+                           .arg( delta_bl ).arg( I_tot ).arg( alpha ) );
+
+               vector < double > D( bl.size() );
 
                for ( unsigned int j = 0; j < bl_I.size(); j++ )
                {
                   if ( f_qs[ files[ i ] ][ j ] >= start &&
-                       f_qs[ files[ i ] ][ j ] <= end &&
-                       bl_I[ j ] - last_bl[ j ] > 0e0 )
+                       f_qs[ files[ i ] ][ j ] <= end )
                   {
-                     integral_0_j_I += bl_I[ j ] - last_bl[ j ];
+                     D[ j ] = alpha * ( f_Is[ files[ i ] ][ j ] - bl[ j ] );
                   }
-                  bl[ j ] = start_y + integral_0_j_I * delta_bl_over_integral_I;
+               }
+                  
+               for ( unsigned int j = 0; j < bl_I.size(); j++ )
+               {
+                  if ( f_qs[ files[ i ] ][ j ] < start )
+                  {
+                     bl[ j ] = start_y;
+                  } else {
+                     if ( f_qs[ files[ i ] ][ j ] <= end )
+                     {
+                        bl[ j ] = start_y;
+                        for ( unsigned int k = 0; k <= j ; ++k )
+                        {
+                           bl[ j ] += D[ k ];
+                        }
+                     } else {
+                        bl[ j ] = end_y;
+                     }
+                  }
                   new_I[ j ] = f_Is[ files[ i ] ][ j ] - bl[ j ];
                }
             } else {
@@ -2174,22 +2195,15 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
                {
                   new_I[ j ] = f_Is[ files[ i ] ][ j ] - bl[ j ];
                }
-               editor_msg( "dark red", QString( tr( "Warning: the integral of %1 was zero => constant baseline" ) ).arg( files[ i ] ) );
+               editor_msg( "dark red", QString( tr( "Warning: the integral of %1 was less than or equal to zero => constant baseline" ) ).arg( files[ i ] ) );
             }
 
             if ( save_bl )
             {
-               add_plot( QString( "BI_%1-%2" ).arg( files[ i ] ).arg( reps ), f_qs[ files[ i ] ], bl, true, false );
+               add_plot( QString( "BI_%1-%2" ).arg( files[ i ] ).arg( this_reps ), f_qs[ files[ i ] ], bl, true, false );
             }
 
-            ssd = 0e0;
-            for ( unsigned int j = 0; j < bl_I.size(); j++ )
-            {
-               double tmp = bl[ j ] - last_bl[ j ];
-               ssd += tmp * tmp;
-            }
-            last_bl = bl;
-         } while ( this_reps < reps && ssd > 1e0 );
+         } while ( this_reps < reps && alpha > 0e0 && ( fabs( alpha - last_alpha ) / alpha ) > 0.005 );
 
          bl_I = new_I;
 
@@ -2201,10 +2215,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
          //             .arg( integral_I )
          //             ;
 
-         bl_name += QString( "-bi%1-%2s" ).arg( delta_bl, 0, 'g', 6 ).arg( integral_I, 0, 'g', 6 ).replace( ".", "_" );
+         bl_name += QString( "-bi%1-%2s" ).arg( delta_bl, 0, 'g', 6 ).arg( alpha, 0, 'g', 6 ).replace( ".", "_" );
          while ( current_files.count( bl_name ) )
          {
-            bl_name = files[ i ] + QString( "-bi%1-%2s-%3" ).arg( delta_bl, 0, 'g', 6 ).arg( integral_I, 0, 'g', 6 ).arg( ++ext ).replace( ".", "_" );
+            bl_name = files[ i ] + QString( "-bi%1-%2s-%3" ).arg( delta_bl, 0, 'g', 6 ).arg( alpha, 0, 'g', 6 ).arg( ++ext ).replace( ".", "_" );
          }
 
       } else {

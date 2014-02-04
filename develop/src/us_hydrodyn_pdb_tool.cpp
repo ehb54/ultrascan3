@@ -6509,6 +6509,21 @@ void US_Hydrodyn_Pdb_Tool::do_bm( QListView *lv )
    // 1st find atoms
 
    bool ok;
+   double psv = QInputDialog::getDouble(
+                                        tr( "US-SOMO: PDB editor : Bead model from atoms" )
+                                        , QString( tr( "Enter an estimated PSV" ) )
+                                        , 7e-1
+                                        , 1e-3
+                                        , 2e0
+                                        , 3
+                                        , &ok
+                                        , this 
+                                        );
+   if ( !ok )
+   {
+      return;
+   }
+
    double expansion = QInputDialog::getDouble(
                                               tr( "US-SOMO: PDB editor : Bead model from atoms" )
                                               , QString( tr( "Enter a vDW multiplier:" ) )
@@ -6560,14 +6575,15 @@ void US_Hydrodyn_Pdb_Tool::do_bm( QListView *lv )
             return;
          }
          out << 
-            QString( "%1 %2 %3 %4 %5 1 %6.%7.%8 0\\n" )
+            QString( "%1 %2 %3 %4 %5 1 %6 0" )
             .arg( item1->text( 3 ) )
             .arg( item1->text( 4 ) )
             .arg( item1->text( 5 ) )
             .arg( usu->atom_vdw[ atom ] * expansion )
             .arg( usu->atom_mw[ atom ] )
-            .arg( item1->text( 1 ) )
-            .arg( item1->text( 2 ) )
+            .arg( item1->parent()->text(0).stripWhiteSpace().replace( QRegExp( "\\s+" ), ":" ) + 
+                  ":" + 
+                  item1->text( 0 ).stripWhiteSpace().replace( QRegExp( "\\s+" ), ":" ) )
             ;
       }
       ++it1;
@@ -6578,7 +6594,11 @@ void US_Hydrodyn_Pdb_Tool::do_bm( QListView *lv )
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
    QString filename = QFileDialog::getSaveFileName(
-                                                   use_dir,
+                                                   use_dir + QDir::separator() + QFileInfo( 
+                                                                                           lv == lv_csv ?
+                                                                                           csv1.name :
+                                                                                           csv2[ csv2_pos ].name ).baseName()
+                                                   ,
                                                    "*.bead_model *.BEAD_MODEL",
                                                    this,
                                                    "save file dialog",
@@ -6589,8 +6609,11 @@ void US_Hydrodyn_Pdb_Tool::do_bm( QListView *lv )
       return;
    }
 
-   filename.replace( QRegExp("(_e\\d_\\d+|)\\.bead_model$",false), "" );
-   filename += QString( "_e%1" ).arg( expansion, 0, 'f', 4 ).replace( ".", "_" );
+   filename.replace( QRegExp("(_e\\d+_\\d+|)\\.bead_model$",false), "" );
+   if ( expansion != 1e0 )
+   {
+      filename += QString( "_e%1" ).arg( expansion, 0, 'f', 4 ).replace( ".", "_" );
+   }
    filename += ".bead_model";
 
    if ( QFile::exists(filename) )
@@ -6608,7 +6631,7 @@ void US_Hydrodyn_Pdb_Tool::do_bm( QListView *lv )
    }
 
    QTextStream ts( &f );
-   ts << QString( "%1 .5\n" ).arg( out.size() );
+   ts << QString( "%1 %2\n" ).arg( out.size() ).arg( psv, 0, 'f', 3 );
    ts << out.join("\n") << endl;
    f.close();
    {

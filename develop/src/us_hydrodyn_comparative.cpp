@@ -2437,6 +2437,8 @@ void US_Hydrodyn_Comparative::load_param()
       USglobal->config_list.root_dir + "/" + "somo" :
       comparative->path_param;
 
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
    QString fname = QFileDialog::getOpenFileName(
                                                 use_dir,
                                                 "*.smp",
@@ -2458,6 +2460,8 @@ void US_Hydrodyn_Comparative::load_param()
                             QString(tr("Could not open %1 for reading! (permissions?)")).arg(fname) );
       return;
    }
+
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( f.name() );
 
    QString qs = "";
    QTextStream ts( &f );
@@ -2512,6 +2516,8 @@ void US_Hydrodyn_Comparative::save_param()
       USglobal->config_list.root_dir + "/" + "somo" :
       comparative->path_param;
 
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
    QString fname = QFileDialog::getSaveFileName(
                                                 use_dir,
                                                 "*.smp",
@@ -2542,6 +2548,8 @@ void US_Hydrodyn_Comparative::save_param()
                             QString(tr("Could not open %1 for writing!")).arg(fname) );
       return;
    }
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( f.name() );
+
    QTextStream t( &f );
    t << serialize_comparative_info( *comparative );
    f.close();
@@ -2554,6 +2562,8 @@ void US_Hydrodyn_Comparative::load_csv()
       comparative->path_csv.isEmpty() ?
       USglobal->config_list.root_dir + "/" + "somo" :
       comparative->path_csv;
+
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
    QStringList filenames = QFileDialog::getOpenFileNames(
                                                          "csv files (*.csv)"
@@ -2570,10 +2580,12 @@ void US_Hydrodyn_Comparative::load_csv()
 
    comparative->path_csv = QFileInfo(filenames[0]).dirPath(true);
 
+
    for ( QStringList::iterator it = filenames.begin();
          it != filenames.end();
          it++ )
    {
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( *it );
       csv tmp_csv = csv_read(*it);
       if ( !csv_error.isEmpty() )
       {
