@@ -38,6 +38,12 @@
 
 using namespace std;
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
 class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 {
 
@@ -139,11 +145,6 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       QPushButton   *pb_help;
       QPushButton   *pb_cancel;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
 
       vector < csv >                csv2;
       vector < csv >                csv_undos;
@@ -152,11 +153,6 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       map < QString, unsigned int > csv_selected_element_counts;
       map < QString, unsigned int > csv2_selected_element_counts;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
       csv           csv1;
       unsigned int  csv2_pos;
 
@@ -258,11 +254,6 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 
       void          select_residues_with_atoms_selected( QListView *lv );
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       set    < QListViewItem * >            get_exposed_set         ( QListView *lv, 
                                                                       double max_asa,
                                                                       bool only_selected = false );
@@ -274,11 +265,6 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       vector < QString >                    get_models              ( QListView *lv );
       vector < vector < QListViewItem * > > separate_models         ( QListView *lv );
       vector < QStringList >                separate_models         ( csv &ref_csv );
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
       QProcess  * naccess;
       QString     naccess_last_pdb;
@@ -385,5 +371,11 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 
       void closeEvent(QCloseEvent *);
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif
