@@ -325,6 +325,8 @@ class US_MPI_Analysis : public QObject
     void   lamm_gsm_df   ( const US_Vector&, US_Vector& );
     void   align_gene    ( Gene& );
 
+    void   vector_scaled_sum   ( US_Vector&, US_Vector&, double,
+                                 US_Vector&, double = 1.0 );
     void   pmasters_start      ( void );
     void   job_parse           ( const QString& );
     void   pmasters_supervisor ( void );

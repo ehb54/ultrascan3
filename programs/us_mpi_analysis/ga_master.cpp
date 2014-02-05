@@ -106,9 +106,13 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
             break;
       }
       else
+      {
+         qDebug() << "Final Fit RMSD" << sqrt( simulation_values.variance );
          break;
+      }
    }
 
+   DbgLv(0) << my_rank << ": Master signalling FINISHED to all Demes";
 
    MPI_Job job;
 
@@ -126,6 +130,11 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
 
 void US_MPI_Analysis::ga_master_loop( void )
 {
+//   static const double fit_div        = 1.0e-9;
+//   static const double fit_mul        = 1.0e+9;
+   static const double DIGIT_FIT      = 1.0e+4;
+   static const int    max_same_count = my_workers * 5;
+   static const int    min_generation = 10;
    int    avg_generation       = 0;
    bool   early_termination    = false;
    int    fitness_same_count   = 0;
@@ -143,10 +152,13 @@ DbgLv(1) << "ga_master start loop:  gcores_count fitsize" << gcores_count
    }
 
    QList  < Gene > emigres;      // Holds genes passed as emmigrants
-   QVector< int  > generations( gcores_count, 0 ); 
+   QVector< int  > v_generations( gcores_count, 0 ); 
    int             sum = 0;
    int             avg = 0;
    long            rsstotal = 0L;
+   double          fit_power      = 5;
+   double          fit_digit      = 1.0e4;
+   double          fitness_round  = 1.0e5;
 
 
    while ( workers > 0 )
@@ -173,11 +185,11 @@ QString s;
       switch ( status.MPI_TAG )
       {
          case GENERATION:
-            generations[ worker ] = msg.generation;
+            v_generations[ worker ] = msg.generation;
 
             sum = 0;
             for ( int i = 1; i <= my_workers; i++ ) 
-               sum += generations[ i ];
+               sum += v_generations[ i ];
 
             avg = qRound( sum / my_workers ) + 1;
 
@@ -214,56 +226,64 @@ QString s;
                       my_communicator,
                       MPI_STATUS_IGNORE );
 
-DbgLv(1) << "  MAST: work" << worker << "fit msg,bestw,besto"
- << msg.fitness << best_fitness[worker].fitness << best_overall_fitness;
-            if ( msg.fitness < best_fitness[ worker ].fitness )
-               best_fitness[ worker ].fitness = msg.fitness;
-
-g = "";
-for ( int i = 0; i < buckets.size(); i++ )
-    g += s.sprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
-
-DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
-
             max_rss();
 
-            static const double fit_div        = 1.0e-9;
-            static const double fit_mul        = 1.0e+9;
-            static const int    max_same_count = my_workers * 5;
-            static const int    min_generation = 10;
+            // Compute a current-deme best fitness value that is rounded
+            //  to 4 significant digits
+            fit_power      = (double)qRound( log10( msg.fitness ) );
+            fit_digit      = pow( 10.0, -fit_power ) * DIGIT_FIT;
+            fitness_round  = (double)qRound64( msg.fitness * fit_digit )
+                             / fit_digit;
+
+DbgLv(1) << "  MAST: work" << worker << "fit msg,round,bestw,besto"
+ << msg.fitness << fitness_round << best_fitness[worker].fitness
+ << best_overall_fitness;
+            // Set deme's best fitness
+            if ( fitness_round < best_fitness[ worker ].fitness )
+               best_fitness[ worker ].fitness = fitness_round;
+g = "";
+for ( int i = 0; i < buckets.size(); i++ )
+  g += s.sprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
+DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
 
             if ( ! early_termination )
-            {
-               double fitness_round = (double)qRound64( msg.fitness * fit_mul ) * fit_div;
-DbgLv(1) << "  MAST: work" << worker << "fit besto,round" << best_overall_fitness << fitness_round;
+            {  // Handle normal pre-early-termination updates
+               if ( avg_generation == 1  &&  mc_iterations == 1  &&
+                   best_overall_fitness == LARGE )
+               {  // Report first best-fit RMSD
+                  DbgLv(0) << "First Best Fit RMSD" << sqrt( fitness_round );
+               }
+DbgLv(1) << "  MAST: work" << worker << "fit besto,round" << best_overall_fitness << fitness_round
+ << "fit_power fit_digit msgfit" << fit_power << fit_digit << msg.fitness;
 
                if ( fitness_round < best_overall_fitness )
-               {
+               {  // Update over-all best fitness value (rounded)
                   best_overall_fitness = fitness_round;
                   fitness_same_count   = 0;
                }
                else
-               {
+               {  // Bump the count of consecutive same best overall fitness
                   fitness_same_count++;
                }
 
 
                if ( fitness_same_count > max_same_count  &&
                     avg_generation     > min_generation )
-               {
+               {  // Mark early termination at threshold same-fitness count
                   DbgLv(0) << "Fitness has not improved in the last"
                      << fitness_same_count
                      << "deme results - Early Termination.";
                   early_termination = true;
                }
+
             }
 DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
  << "fitness_same_count" << fitness_same_count
  << " early_term?" << early_termination;
-            
+
+            // Tell the worker to either stop or continue
             tag = early_termination ? FINISHED : GENERATION; 
 
-            // Tell the worker to either continue or stop
             MPI_Send( &msg,            // MPI #3
                       0,               // Only interested in the tag 
                       MPI_BYTE,  
@@ -311,6 +331,10 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
 
                emigres << gene;
             }
+//*DEBUG*
+//if(emigres[0][0].s<0.0)
+// DbgLv(0) << "MAST: **GENE s" << emigres[0][0].s << " Emigrant";
+//*DEBUG*
 
             max_rss();
 
@@ -333,6 +357,10 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
                       worker,
                       IMMIGRATE,
                       my_communicator );
+//*DEBUG*
+//if(immigrants[0].s<0.0)
+// DbgLv(0) << "MAST: **GENE s" << immigrants[0].s << " Immigrant-to-send";
+//*DEBUG*
             break;
          }
       }
@@ -345,7 +373,7 @@ DbgLv(1) << "Master maxrss" << maxrss << " worker total rss" << rsstotal
    maxrss += rsstotal;
 
    if ( early_termination )
-   {
+   {  // Report when we have reached early termination of generations
       int mc_iter  = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
       DbgLv(0) << "Early termination at average generation" << avg
          << ", MC" << mc_iter;

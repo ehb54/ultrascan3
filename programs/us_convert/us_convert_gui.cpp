@@ -2976,6 +2976,7 @@ DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
       QString filename = dir + "/cnvt." + triple + ".raw.svg";
 
       // Redo current plot and write it to a file
+      lw_triple->setCurrentRow( tripListx );
       plot_current();
       int status = US_GuiUtil::save_plot( filename, data_plot );
       if ( status != 0 )
@@ -2984,6 +2985,7 @@ DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
 
    // Restore original plot
    tripListx = save_tripListx;
+   lw_triple->setCurrentRow( tripListx );
    plot_current();
    data_plot->setVisible( true );
    le_status->setText( tr( "Saving of plot files IS COMPLETE." ) );
