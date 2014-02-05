@@ -89,10 +89,10 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
 DbgLv(1) << "idealThrCout" << nthr;
    ct_lolimits  = us_counter( 3, -10000, 10000,   1 );
    ct_uplimits  = us_counter( 3, -10000, 10000,  10 );
-   ct_nstepss   = us_counter( 3,      1,  1000,  60 );
+   ct_nstepss   = us_counter( 3,      1,  1000,  64 );
    ct_lolimitk  = us_counter( 3,      1,     8,   1 );
    ct_uplimitk  = us_counter( 3,      1,    20,   4 );
-   ct_nstepsk   = us_counter( 3,      1,  1000,  60 );
+   ct_nstepsk   = us_counter( 3,      1,  1000,  64 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_constff0  = us_counter( 3,      1,    10,   1  );
    ct_lolimits->setStep(  0.1 );

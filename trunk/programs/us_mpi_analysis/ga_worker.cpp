@@ -6,9 +6,14 @@ QDateTime elapsed = QDateTime::currentDateTime();
 #define ELAPSEDSEC (elapsed.secsTo(QDateTime::currentDateTime()))
 #define DbTimMsg(a) DbTiming << my_rank << generation << ELAPSEDNOW << a;
 #define DRTiming    DbTiming << my_rank
-#if 0
+
+#if 1
 #define UPDATE_FIT
 #endif
+
+// Minimize prints debug level
+//#define DL 0
+#define DL 1
 
 void US_MPI_Analysis::ga_worker( void )
 {
@@ -49,8 +54,8 @@ void US_MPI_Analysis::ga_worker( void )
       ga_worker_loop();
 
       msg.size = max_rss();
-DbgLv(0) << "Deme" << grp_nbr << deme_nbr
-         << ": Generations finished, second" << ELAPSEDSEC;
+      DbgLv(0) << "Deme" << grp_nbr << deme_nbr
+         << ":   Generations finished, second" << ELAPSEDSEC;
 
       MPI_Send( &msg,           // This iteration is finished
                 sizeof( msg ),  // to MPI #1
@@ -127,6 +132,9 @@ DbgLv(0) << "Deme" << grp_nbr << deme_nbr
 
             break;
 
+         case GENERATION:   
+            break;
+
          default:
             abort( "Unknown message at end of GA worker loop" );
             break;
@@ -197,11 +205,14 @@ DbTimMsg("Worker after get_fitness loop + sort");
       // Refine with gradient search method (gsm) on last generation
       if ( generation == generations - 1 )
       {
-
+DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
+         << ": At last generation minimize.";
 DbTimMsg("Worker before gsm rank/generation/elapsed");
 
          fitness[ 0 ].fitness = minimize( genes[ fitness[ 0 ].index ], 
                                           fitness[ 0 ].fitness );
+DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
+         << ":   last generation minimize fitness=" << fitness[0].fitness;
 DbTimMsg("Worker after gsm rank/generation/elapsed");
       }
 
@@ -247,41 +258,67 @@ DbTimMsg("Worker after receive instructions");
 
       max_rss();
 
-      if ( status.MPI_TAG == FINISHED ) break;
+      if ( status.MPI_TAG == FINISHED )
+      {
+         DbgLv(0) << "Deme" << grp_nbr << deme_nbr
+            << ": Finish signalled at deme generation" << generation + 1;
+         break;
+      }
 
       // See if we are really done
-      if ( generation == generations - 1 ) continue;
+      if ( generation == generations - 1 )
+      {
+         DbgLv(0) << "Deme" << grp_nbr << deme_nbr
+            << ": At last generation";
+         continue;
+      }
 
       // Mark duplicate genes 
       int f0 = 0;  // An index into the fitness array
       int f1 = 1;  // A second index
+      // The value of 1.0e-8 for close fitness is arbitrary. Parameterize?
+      const double NEAR_MATCH = 1.0e-8;
+      const double EPSF_SCALE = 1.0e-3;
+      double fitpwr      = (double)qRound( log10( fitness[ 0 ].fitness ) );
+      double epsilon_f   = pow( 10.0, fitpwr ) * EPSF_SCALE;
+DbgLv(1) << "gw:" << my_rank << ": Dup best-gene clean: fitness0 fitpwr epsilon_f"
+ << fitness[0].fitness << fitpwr << epsilon_f;
 
       while ( f1 < population )
       {
-         // The value of 1.0e-8 for close fitness is arbitrary. Paramaterize?
-         if ( fabs( fitness[ f0 ].fitness - fitness[ f1 ].fitness ) < 1.0e-8 )
+         double fitdiff = qAbs( fitness[ f0 ].fitness - fitness[ f1 ].fitness );
+
+         if ( fitdiff < epsilon_f )
          {
-            bool match = true;
+            bool match   = true;
+            int  g0      = fitness[ f0 ].index;
+            int  g1      = fitness[ f1 ].index;
 
-            for ( int i = 0; i < buckets.size(); i++ )
+            for ( int ii = 0; ii < buckets.size(); ii++ )
             {
-               int g0 = fitness[ f0 ].index;
-               int g1 = fitness[ f1 ].index;
+               double sdif = qAbs( genes[ g0 ][ ii ].s -  genes[ g1 ][ ii ].s );
+               double kdif = qAbs( genes[ g0 ][ ii ].k -  genes[ g1 ][ ii ].k );
 
-               if ( fabs( genes[ g0 ][ i ].s -  genes[ g1 ][ i ].s ) > 1.0e-8 ||
-                    fabs( genes[ g0 ][ i ].k -  genes[ g1 ][ i ].k ) > 1.0e-8 )
+               if ( sdif > NEAR_MATCH  ||  kdif > NEAR_MATCH )
                {
-                  match = false;
-                  f0    = f1;
+DbgLv(1) << "gw:" << my_rank << ":  Dup NOT cleaned: f0 f1 fit0 fit1"
+ << f0 << f1 << fitness[f0].fitness << fitness[f1].fitness << "ii g0 g1 g0s g1s"
+ << ii << g0 << g1 << genes[g0][ii].s << genes[f1][ii].s;
+                  match        = false;
+                  f0           = f1;
                   break;
                }
             }
 
             if ( match )
+            {
+DbgLv(1) << "gw:" << my_rank << ":  Dup cleaned: f0 f1 fit0 fit1"
+ << f0 << f1 << fitness[f0].fitness << fitness[f1].fitness;
                fitness[ f1 ].fitness = LARGE;  // Invalidate gene/sim_values 
+            }
          }
          else
-            f0 = f1;
+            f0           = f1;
 
          f1++;
       }
@@ -357,31 +394,44 @@ void US_MPI_Analysis::align_gene( Gene& gene )
 
       gene[ i ].s = s;
       gene[ i ].k = k;
+//*DEBUG*
+//if(gene[i].s<0.0) {
+//int grp_nbr  = ( my_rank / gcores_count );
+//int deme_nbr = my_rank - grp_nbr * gcores_count;
+//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[i].s << "ALIGN"
+// << "ds s_min gridpt" << ds << s_min << qRound( ds / buckets[i].ds );
+//}
+//*DEBUG*
    }
 }
 
 double US_MPI_Analysis::get_fitness( const Gene& gene )
 {
    US_SolveSim::Simulation sim = simulation_values;
+sim.dbg_level = qMax(0,dbg_level-1);
    sim.solutes = gene;
    qSort( sim.solutes );
 
-   QString key = "";
+   int     nsols = gene.size();
+   QString key   = "";
    QString str;
 
-   for ( int s = 0; s < gene.size(); s++ )
-   {
-      key += str.sprintf( "%.5f%.5f", sim.solutes[ s ].s,  sim.solutes[ s ].k );
+   for ( int cc = 0; cc < nsols; cc++ )
+   {  // Concatenate all solute s,k values to form fitness key
+      key += str.sprintf( "%.5f%.5f", sim.solutes[ cc ].s,
+                                      sim.solutes[ cc ].k );
    }
 
+DbgLv(2) << "get_fitness: nsols" << nsols << "key" << key;
    if ( fitness_map.contains( key ) )
-   {
+   {  // We are already have a match to this key, so use its fitness value
       fitness_hits++;
+DbgLv(2) << "get_fitness: HIT!  new hits" << fitness_hits;
       return fitness_map.value( key );
    }
 
-   for ( int s = 0; s < gene.size(); s++ ) 
-      sim.solutes[ s ].s *= 1.0e-13;
+   for ( int cc = 0; cc < nsols; cc++ ) 
+      sim.solutes[ cc ].s *= 1.0e-13;
 
 //DbTimMsg("  ++ call gf calc_residuals");
    calc_residuals( current_dataset, datasets_to_process, sim );
@@ -391,15 +441,16 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
    int    solute_count = 0;
 
    if ( data_sets.size() == 1 )
-   {
-      for ( int cc = 0; cc < sim.solutes.size(); cc++ )
+   {  // Count solutes whose concentration is at least the threshold
+      for ( int cc = 0; cc < nsols; cc++ )
       {
          if ( sim.solutes[ cc ].c >= concentration_threshold ) solute_count++;
       }
+DbgLv(2) << "get_fitness: sol_count conc_thresh" << solute_count << concentration_threshold;
    }
 
    else
-   {
+   {  // For multiple datasets, use a weighted average fitness
       double concen    = 0.0;
       fitness          = 0.0;
 
@@ -410,12 +461,12 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
 
       fitness         /= (double)datasets_to_process;
 
-      for ( int cc = 0; cc < sim.solutes.size(); cc++ )
+      for ( int cc = 0; cc < nsols; cc++ )
          concen          += sim.solutes[ cc ].c;
 
       double cthresh   = concentration_threshold * concen;
 
-      for ( int cc = 0; cc < sim.solutes.size(); cc++ )
+      for ( int cc = 0; cc < nsols; cc++ )
       {
          if ( sim.solutes[ cc ].c >= cthresh ) solute_count++;
       }
@@ -423,6 +474,7 @@ double US_MPI_Analysis::get_fitness( const Gene& gene )
 
    fitness *= ( 1.0 + sq( regularization * solute_count ) );
    fitness_map.insert( key, fitness ); 
+DbgLv(2) << "get_fitness:  out fitness" << fitness;
 
 //*DEBUG*
 //if(datasets_to_process>1 && generation<11 )
@@ -435,27 +487,40 @@ if(dbg_level>1 && datasets_to_process>1 && generation<11 )
    return fitness;
 }
 
-double US_MPI_Analysis::get_fitness_v( const US_Vector& v )
+// Compute the fitness of a gene represented as a vector of doubles
+double US_MPI_Analysis::get_fitness_v( const US_Vector& vv )
 {
    // Convert from US_Vector to Gene
-   int  size  = v.size() / 2;
+   int  size  = vv.size() / 2;
    int  index = 0;
    Gene gene( size );
    
-   for ( int i = 0; i < size; i++ )
+   for ( int ii = 0; ii < size; ii++ )
    {
-      gene[ i ].s = v[ index++ ];
-      gene[ i ].k = v[ index++ ];
+      gene[ ii ].s = vv[ index++ ];
+      gene[ ii ].k = vv[ index++ ];
    }
 
-   return get_fitness( gene );
+//*DEBUG*
+if(gene[0].s<0.0) {
+int grp_nbr  = ( my_rank / gcores_count );
+int deme_nbr = my_rank - grp_nbr * gcores_count;
+DbgLv(DL) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "FIT_V";
+}
+//*DEBUG*
+//   return get_fitness( gene );
+   int dbgsv = dbg_level;
+//   dbg_level = 2;
+   double fitn = get_fitness( gene );
+   dbg_level = dbgsv;
+   return fitn;
 }
 
 int US_MPI_Analysis::u_random( int modulo )
 {
    // Returns a uniform random integer between 0 and modulo - 1
    // Default modulo is 100
-   return (int)floor( (double)modulo * US_Math2::ranf() );
+   return (int)qFloor( (double)modulo * US_Math2::ranf() );
 }
 
 int US_MPI_Analysis::e_random( void )
@@ -492,7 +557,13 @@ void US_MPI_Analysis::mutate_gene( Gene& gene )
       mutate_s( gene[ solute ], solute );
       mutate_k( gene[ solute ], solute );
    }
-
+//*DEBUG*
+//if(gene[0].s<0.0) {
+//int grp_nbr  = ( my_rank / gcores_count );
+//int deme_nbr = my_rank - grp_nbr * gcores_count;
+//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "MUTATE";
+//}
+//*DEBUG*
 }
 
 void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
@@ -508,6 +579,13 @@ void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
    solute.s += delta * buckets[ b ].ds;
    solute.s  = qMax( solute.s, buckets[ b ].s_min );
    solute.s  = qMin( solute.s, buckets[ b ].s_max );
+//*DEBUG*
+//if(solute.s<0.0) {
+//int grp_nbr  = ( my_rank / gcores_count );
+//int deme_nbr = my_rank - grp_nbr * gcores_count;
+//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "  solute.s" << solute.s << "MUTATE_S";
+//}
+//*DEBUG*
 }
 
 void US_MPI_Analysis::mutate_k( US_Solute& solute, int b )
@@ -549,6 +627,13 @@ void US_MPI_Analysis::cross_gene( Gene& gene, QList< Gene > old_genes )
    {
       gene[ i ] = cross_from[ i ];
    }
+//*DEBUG*
+//if(gene[0].s<0.0) {
+//int grp_nbr  = ( my_rank / gcores_count );
+//int deme_nbr = my_rank - grp_nbr * gcores_count;
+//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "CROSS";
+//}
+//*DEBUG*
 }
 
 int US_MPI_Analysis::migrate_genes( void )
@@ -565,6 +650,13 @@ int US_MPI_Analysis::migrate_genes( void )
       int  gene_index = e_random();
       emmigres += genes[ fitness[ gene_index ].index ];
    }
+//*DEBUG*
+//if(emmigres[0].s<0.0) {
+//int grp_nbr  = ( my_rank / gcores_count );
+//int deme_nbr = my_rank - grp_nbr * gcores_count;
+//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << emmigres[0].s << "EMMIGRES";
+//}
+//*DEBUG*
 
    // MPI send msg type
    MPI_GA_MSG msg;
@@ -616,6 +708,13 @@ DbgLv(1) << "MG:Deme" << deme_nbr << ": solsent mg_count" << solutes_sent
          Gene gene = immigres.mid( i * bucket_sols, bucket_sols );
          genes[ elitism_count + i ] = gene;
       }
+//*DEBUG*
+//if(genes[elitism_count][0].s<0.0) {
+//int grp_nbr  = ( my_rank / gcores_count );
+//int deme_nbr = my_rank - grp_nbr * gcores_count;
+//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << genes[elitism_count][0].s << "IMMIGRANT";
+//}
+//*DEBUG*
    }
 
    return mgenes_count;
@@ -637,6 +736,13 @@ US_MPI_Analysis::Gene US_MPI_Analysis::new_gene( void )
 
       gene << solute;
    }
+//*DEBUG*
+//if(gene[0].s<0.0) {
+//int grp_nbr  = ( my_rank / gcores_count );
+//int deme_nbr = my_rank - grp_nbr * gcores_count;
+//DbgLv(0) << "Dem :" << grp_nbr << deme_nbr << "gene.s" << gene[0].s << "NEW";
+//}
+//*DEBUG*
 
    return gene;
 }
@@ -660,84 +766,120 @@ static long totT6=0L;
 long insms;
 QDateTime clcSt0=QDateTime::currentDateTime();
 #endif
-   int       vsize = gene.size() * 2;
-   US_Vector v( vsize );  // Input values
-   US_Vector u( vsize );  // Vector of derivatives
+   int       gsize = gene.size();
+   int       vsize = gsize * 2;
+   US_Vector vv( vsize );  // Input values
+   US_Vector uu( vsize );  // Vector of derivatives
 
    // Create hessian as identity matrix
    QVector< QVector< double > > hessian( vsize );
 
-   for ( int i = 0; i < vsize; i++ ) 
+   for ( int ii = 0; ii < vsize; ii++ ) 
    {
-      hessian[ i ] = QVector< double >( vsize, 0.0 );
-      hessian[ i ][ i ] = 1.0;
+      hessian[ ii ] = QVector< double >( vsize, 0.0 );
+      hessian[ ii ][ ii ] = 1.0;
    }
 
+int grp_nbr  = ( my_rank / gcores_count );
+int deme_nbr = my_rank - grp_nbr * gcores_count;
+QString Phd = "MIN:" + QString().sprintf("%d:%d",grp_nbr,deme_nbr) + ":";
+DbgLv(DL) << Phd << "vsize" << vsize << "fitness" << fitness
+ << "gene0.s" << gene[0].s;
    int index = 0;
 
    // Convert gene to array of doubles
-   for ( int i = 0; i < gene.size(); i++ )
+   for ( int ii = 0; ii < gsize; ii++ )
    {
-      v.assign( index++, gene[ i ].s );
-      v.assign( index++, gene[ i ].k );
+      vv.assign( index++, gene[ ii ].s );
+      vv.assign( index++, gene[ ii ].k );
    }
 
-   lamm_gsm_df( v, u );   // u is vector of derivatives
+DbgLv(DL) << Phd << "   (0)call lamm_gsm_df";
+   lamm_gsm_df( vv, uu );   // uu is vector of derivatives
+DbgLv(DL) << Phd << "    (0) rtn fr lamm_gsm_df u0" << uu[0];
 #ifdef TIMING_MZ
 QDateTime clcSt1=QDateTime::currentDateTime();
 totT1+=clcSt0.msecsTo(clcSt1);
 #endif
 
-   static const double epsilon        = 1.0e-7;
+   static const double epsilon_f      = 1.0e-7;
    static const int    max_iterations = 20;
    int                 iteration      = 0;
+   double              epsilon        = epsilon_f * fitness * 4.0;
+DbgLv(DL) << Phd << "epsilon" << epsilon << "uL2norm" << uu.L2norm();
+   bool                neg_cnstr      = ( vv[ 0 ] < 0.1 );  // Negative constraint?
 
-   while ( u.L2norm() >= epsilon  && iteration < max_iterations )
+   while ( uu.L2norm() >= epsilon_f  && iteration < max_iterations )
    {
 #ifdef TIMING_MZ
 clcSt1=QDateTime::currentDateTime();
 #endif
       iteration++;
+DbgLv(DL) << Phd << " iter" << iteration << "fitness" << fitness;
       if ( fitness == 0.0 ) break;
 
-      US_Vector v_s1 = v;
+      US_Vector v_s1 = vv;
       double g_s1    = fitness;
       double s1      = 0.0;
       double s2      = 0.5;
       double s3      = 1.0;
 
-      US_Vector v_s2 = u;
-      v_s2.scale( -s2 );
-      v_s2.add  ( v );                   // v_s2 = u * -s2 + v
+      // v_s2 = vv - uu * s2
+      US_Vector v_s2( vsize );
+      vector_scaled_sum( v_s2, uu, -s2, vv );
 
+      if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
+      {
+DbgLv(DL) << Phd << " NEG-CNSTR:01: v_s2[0]" << v_s2[0];
+         v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+      }
+
+DbgLv(DL) << Phd << "  iter" << iteration << "v_s2[0]" << v_s2[0];
       double g_s2 = get_fitness_v( v_s2 );
+DbgLv(DL) << Phd << "   iter" << iteration << "g_s2" << g_s2;
 
       // Cut down until we have a decrease
-      while ( s2 > epsilon  && g_s2 > g_s1 )
+      while ( s2 > epsilon  &&  g_s2 > g_s1 )
       {
          s3  = s2;
          s2 *= 0.5;
-         v_s2 = u;
-         v_s2.scale( -s2 );
-         v_s2.add  ( v );                // v_s2 = u * -s2 + v
+         // v_s2 = vv - uu * s2
+         vector_scaled_sum( v_s2, uu, -s2, vv );
+DbgLv(DL) << Phd << "  s2 g_s2 g_s1" << s2 << g_s2 << g_s1;
+         if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
+         {
+DbgLv(DL) << Phd << " NEG-CNSTR:02: v_s2[0]" << v_s2[0];
+            v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+         }
+
          g_s2 = get_fitness_v( v_s2 );
       }
 #ifdef TIMING_MZ
 QDateTime clcSt2=QDateTime::currentDateTime();
 totT2+=clcSt1.msecsTo(clcSt2);
 #endif
+DbgLv(DL) << Phd << "  g_s2" << g_s2 << "s2 s3" << s2 << s3;
 
       // Test for initial decrease
-      if ( s2 <= epsilon  ||  s3 - s2 < epsilon ) break;
+      if ( s2 <= epsilon  ||  ( s3 - s2 ) < epsilon ) break;
 
-      US_Vector v_s3 = u;
-      v_s3.scale( -s3 );
-      v_s3.add  ( v );                   // v_s3 = u * -s3 + v
+      US_Vector v_s3( vsize );
+
+      // v_s3 = vv - uu * s3
+      vector_scaled_sum( v_s3, uu, -s3, vv );
+
+      if ( neg_cnstr  &&  v_s3[ 0 ] < 0.1 )
+      {
+DbgLv(DL) << Phd << " NEG-CNSTR:03: v_s3[0]" << v_s3[0];
+         v_s3.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+      }
+
       double g_s3 = get_fitness_v( v_s3 );
 #ifdef TIMING_MZ
 QDateTime clcSt3=QDateTime::currentDateTime();
 totT3+=clcSt2.msecsTo(clcSt3);
 #endif
+DbgLv(DL) << Phd << "  g_s3" << g_s3 << "s1 s2 s3" << s1 << s2 << s3;
 
       int              reps     = 0;
       static const int max_reps = 100;
@@ -754,27 +896,28 @@ totT3+=clcSt2.msecsTo(clcSt3);
          double s2_2 = sq( s2 );
          double s3_2 = sq( s3 );
 
-         double a = ( ( g_s1 - g_s3 ) * s1_s3 -
-                      ( g_s2 - g_s3 ) * s2_s3
-                    ) * s1_s2;
+         double aa = ( ( g_s1 - g_s3 ) * s1_s3 -
+                       ( g_s2 - g_s3 ) * s2_s3
+                     ) * s1_s2;
 
-         double b = ( g_s3 * ( s2_2 - s1_2 ) +
-                      g_s2 * ( s1_2 - s3_2 ) +
-                      g_s1 * ( s3_2 - s2_2 )
-                    ) *
-                    s1_s2 * s1_s3 * s2_s3;
+         double bb = ( g_s3 * ( s2_2 - s1_2 ) +
+                       g_s2 * ( s1_2 - s3_2 ) +
+                       g_s1 * ( s3_2 - s2_2 )
+                     ) *
+                     s1_s2 * s1_s3 * s2_s3;
 
          static const double max_a = 1.0e-25;
 
-         if ( fabs( a ) < max_a )
+DbgLv(DL) << Phd << "   reps" << reps << "aa" << aa;
+         if ( qAbs( aa ) < max_a )
          {
             index = 0;
 
             // Restore gene from array of doubles
-            for ( int i = 0; i < gene.size(); i++ )
+            for ( int ii = 0; ii < gsize; ii++ )
             {
-               gene[ i ].s = v[ index++ ];
-               gene[ i ].k = v[ index++ ];
+               gene[ ii ].s = vv[ index++ ];
+               gene[ ii ].k = vv[ index++ ];
             }
 
 #ifdef TIMING_MZ
@@ -790,105 +933,129 @@ DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6"
             return fitness;
          }
 
-         double x         = -b / ( 2.0 * a );
+         double xx        = -bb / ( 2.0 * aa );
          double prev_g_s2 = g_s2;
 
-         if ( x < s1 )
+         if ( xx < s1 )
          {
-            if ( x < ( s1 + s1 - s2 ) ) // Keep it close
+            if ( xx < ( s1 + s1 - s2 ) ) // Keep it close
             {
-               x = s1 + s1 - s2;             // x <- s1 + ds
-               if ( x < 0 ) x = s1 / 2.0;
+               xx = s1 + s1 - s2;             // xx <- s1 + ds
+               if ( xx < 0 ) xx = s1 / 2.0;
             }
 
-            if ( x < 0 )  //  Wrong direction!
+            if ( xx < 0 )  //  Wrong direction!
             {
                if ( s1 < 0 ) s1 = 0.0;
-               x = 0;
+               xx = 0;
             }
 
-            // OK, take x, s1, s2 
-            US_Vector temp = v_s3;
+            // OK, take xx, s1, s2 
             v_s3  = v_s2;
             g_s3  = g_s2;                  // 3 <- 2
             s3    = s2;
             v_s2  = v_s1;
             g_s2  = g_s1;
             s2    = s1;                    // 2 <- 1
-            v_s1  = temp;
-            s1    = x;                     // 1 <- x
+            s1    = xx;                    // 1 <- xx
  
-            v_s1 = u;
-            v_s1.scale( -s1 );
-            v_s1.add( v );            // v_s1 = u * -s1 + v
+            // v_s1 = vv - uu * s1
+            vector_scaled_sum( v_s1, uu, -s1, vv );
+ 
+            if ( neg_cnstr  &&  v_s1[ 0 ] < 0.1 )
+            {
+DbgLv(DL) << Phd << " NEG-CNSTR:04: v_s1[0]" << v_s1[0];
+               v_s1.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+            }
 
+DbgLv(DL) << Phd << "  x<s1 get_fitness";
             g_s1 = get_fitness_v( v_s1 ); 
          }
-         else if ( x < s2 ) // Take s1, x, s2
+         else if ( xx < s2 ) // Take s1, xx, s2
          {
-            US_Vector temp = v_s3;
             v_s3  = v_s2;
             g_s3  = g_s2;             // 3 <- 2
             s3    = s2;
-            v_s2  = temp;
-            s2    = x;                // 2 <- x
+            s2    = xx;               // 2 <- xx
 
-            v_s2 = u;
-            v_s2.scale( -s2 );
-            v_s2.add( v );           // v_s2 = u * -s2 +v
+            // v_s2 = vv - uu * s2
+            vector_scaled_sum( v_s2, uu, -s2, vv );
 
+            if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
+            {
+DbgLv(DL) << Phd << " NEG-CNSTR:05: v_s2[0]" << v_s2[0];
+               v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+            }
+
+DbgLv(DL) << Phd << "  xx<s2 get_fitness";
             g_s2 = get_fitness_v( v_s2 );
          }
-         else if ( x < s3 )  // Take s2, x, s3
+         else if ( xx < s3 )  // Take s2, xx, s3
          {
-            US_Vector temp = v_s3;
             v_s1  = v_s2;
             g_s1  = g_s2;
             s1    = s2;              // 2 <- 1
-            v_s2  = temp;
-            s2    = x;               // 2 <- x
+            s2    = xx;              // 2 <- xx
 
-            v_s2 = u;
-            v_s2.scale( -s2 );
-            v_s2.add  ( v );         // v_s2 = u * -s2 + v
+            // v_s2 = vv - uu * s2
+            vector_scaled_sum( v_s2, uu, -s2, vv );
 
+            if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
+            {
+DbgLv(DL) << Phd << " NEG-CNSTR:06: v_s2[0]" << v_s2[0];
+               v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+            }
+
+DbgLv(DL) << Phd << "  xx<s3 get_fitness";
             g_s2 = get_fitness_v( v_s2 );
          }
-         else  // x >= s3
+         else  // xx >= s3
          {
-            if ( x > ( s3 + s3 - s2 ) ) // if x > s3 + ds/2
+            if ( xx > ( s3 + s3 - s2 ) ) // if xx > s3 + ds/2
             { 
-               US_Vector v_s4 = u;
-               v_s4.scale( -x );
-               v_s4.add  ( v );        // v_s4 = u * -x + v
+               // v_s4 = vv - uu * xx
+               US_Vector v_s4( vsize );
+               vector_scaled_sum( v_s4, uu, -xx, vv );
 
+               if ( neg_cnstr  &&  v_s4[ 0 ] < 0.1 )
+               {
+DbgLv(DL) << Phd << " NEG-CNSTR:07: v_s4[0]" << v_s4[0];
+                  v_s4.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+               }
+
+DbgLv(DL) << Phd << "  xx>=s3 get_fitness (A)";
                double g_s4 = get_fitness_v( v_s4 );
 
-               if ( g_s4 > g_s2 && g_s4 > g_s3 && g_s4 > g_s1 ) 
+               if ( g_s4 > g_s2  &&  g_s4 > g_s3  &&  g_s4 > g_s1 ) 
                {
-                  x = s3 + s3 - s2;   // x = s3 + ds/2
+                  xx = s3 + s3 - s2;   // xx = s3 + ds/2
                }
             }
 
-            // Take s2, s3, x 
-            US_Vector temp = v_s1;
+            // Take s2, s3, xx 
             v_s1  = v_s2;
             g_s1  = g_s2;            // 1 <- 2
             s1    = s2;
             v_s2  = v_s3;
             g_s2  = g_s3;
             s2    = s3;              // 2 <- 3
-            v_s3  = temp;
-            s3    = x;               // 3 <- x
+            s3    = xx;              // 3 <- xx
 
-            v_s3 = u;
-            v_s3.scale( -s3 );
-            v_s3.add  ( v );         // v_s3 = u * -s3 + v
+            // v_s3 = vv - uu * s3
+            vector_scaled_sum( v_s3, uu, -s3, vv );
 
+            if ( neg_cnstr  &&  v_s3[ 0 ] < 0.1 )
+            {
+DbgLv(DL) << Phd << " NEG-CNSTR:01: v_s2[0]" << v_s2[0];
+               v_s3.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+            }
+
+DbgLv(DL) << Phd << "  xx>=s3 get_fitness";
             g_s3 = get_fitness_v( v_s3 );
          }
 
-         if ( fabs( prev_g_s2 - g_s2 ) < epsilon ) break;
+DbgLv(DL) << Phd << "  p_g_s2 g_s2" << prev_g_s2 << g_s2;
+         if ( qAbs( prev_g_s2 - g_s2 ) < epsilon ) break;
       }  // end of inner loop
 
       US_Vector v_p( vsize );
@@ -908,94 +1075,102 @@ DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6"
          v_p     = v_s3;
          fitness = g_s3;
       }
+DbgLv(DL) << Phd << "   g_s? fitness" << fitness;
       
 #ifdef TIMING_MZ
 QDateTime clcSt4=QDateTime::currentDateTime();
 totT4+=clcSt3.msecsTo(clcSt4);
 #endif
+DbgLv(DL) << Phd << "   call lamm_gsm_df";
       US_Vector v_g( vsize );        // Vector of derivatives
-      lamm_gsm_df( v_p, v_g );       // New gradient in v_g (old in u) 
+      lamm_gsm_df( v_p, v_g );       // New gradient in v_g (old in uu) 
+DbgLv(DL) << Phd << "    retn fr lamm_gsm_df";
 #ifdef TIMING_MZ
 QDateTime clcSt5=QDateTime::currentDateTime();
 totT5+=clcSt4.msecsTo(clcSt5);
 #endif
 
-      US_Vector v_dx = v_p;
-      US_Vector temp = v;
-      temp.scale( -1.0 );
-      v_dx.add( temp );              // v_dx = v_p - v
+      US_Vector v_dx( vsize );
+      // v_dx = v_p - vv
+      vector_scaled_sum( v_dx, vv, -1.0, v_p );
 
-      v = v_p;                       // v    = v_p
 
-      US_Vector v_dg = v_g;
-      temp           = u;
-      temp.scale( -1.0 );
-      v_dg.add( temp );              // dgradient  v_dg = v_g - u
+      vv = v_p;                      // vv   = v_p
+
+      // dgradient  v_dg = v_g - uu
+      US_Vector v_dg( vsize );
+      vector_scaled_sum( v_dg, uu, -1.0, v_g );
 
       US_Vector v_hdg( vsize );
 
       // v_hdg = hessian * v_dg ( matrix * vector )
-      for ( int i = 0; i < vsize; i++ )
+      for ( int ii = 0; ii < vsize; ii++ )
       {
-         v_hdg.assign( i, 0.0 );
+         double dotprod = 0.0;
 
-         for ( int j = 0; j < vsize; j++ )
-            v_hdg.assign( i, v_hdg[ i ] + hessian[ i ][ j ] * v_dg[ j ] );
+         for ( int jj = 0; jj < vsize; jj++ )
+            dotprod += ( hessian[ ii ][ jj ] * v_dg[ jj ] );
+
+         v_hdg.assign( ii, dotprod );
       }
 
       double fac   = v_dg.dot( v_dx  );
       double fae   = v_dg.dot( v_hdg );
       double sumdg = v_dg.dot( v_dg  );
       double sumxi = v_dx.dot( v_dx  );
+DbgLv(DL) << Phd << "  fac sumdg sumxi" << fac << sumdg << sumxi;
 
       if ( fac > sqrt( epsilon * sumdg * sumxi ) )
       {
          fac        = 1.0 / fac;
          double fad = 1.0 / fae;
 
-         for ( int i = 0; i < vsize; i++ )
+         for ( int ii = 0; ii < vsize; ii++ )
          {
-            v_dg.assign( i, fac * v_dx[ i ] - fad * v_hdg[ i ] );
+            v_dg.assign( ii, fac * v_dx[ ii ] - fad * v_hdg[ ii ] );
          }
 
-         for ( int i = 0; i < vsize; i++ )
+         for ( int ii = 0; ii < vsize; ii++ )
          {
-            for ( int j = i; j < vsize; j++ )
+            for ( int jj = ii; jj < vsize; jj++ )
             {
-               hessian[ i ][ j ] +=
-                  fac * v_dx [ i ] * v_dx [ j ] -
-                  fad * v_hdg[ i ] * v_hdg[ j ] +
-                  fae * v_dg [ i ] * v_dg [ j ];
+               hessian[ ii ][ jj ] +=
+                  fac * v_dx [ ii ] * v_dx [ jj ] -
+                  fad * v_hdg[ ii ] * v_hdg[ jj ] +
+                  fae * v_dg [ ii ] * v_dg [ jj ];
 
                  // It's a symmetrical matrix
-                 hessian[ j ][ i ] = hessian[ i ][ j ];
+                 hessian[ jj ][ ii ] = hessian[ ii ][ jj ];
             }
          }
       }
 
-      // u = hessian * v_g ( matrix * vector )
-      for ( int i = 0; i < vsize; i++ )
+      // uu = hessian * v_g ( matrix * vector )
+      for ( int ii = 0; ii < vsize; ii++ )
       {
-         u.assign( i, 0.0 );
+         double dotprod = 0.0;
 
-         for ( int j = 0; j < vsize; j++ )
-            u.assign( i, u[ i ] + hessian[ i ][ j ] * v_g[ j ] );
+         for ( int jj = 0; jj < vsize; jj++ )
+            dotprod    += ( hessian[ ii ][ jj ] * v_g[ jj ] );
+
+         uu.assign( ii, dotprod );
       }
 
 #ifdef TIMING_MZ
 QDateTime clcSt6=QDateTime::currentDateTime();
 totT6+=clcSt5.msecsTo(clcSt6);
 #endif
-   }  // end while ( u.L2norm() > epsilon )
+   }  // end while ( uu.L2norm() > epsilon )
 
    index = 0;
 
    // Restore gene from array of doubles
-   for ( int i = 0; i < gene.size(); i++ )
+   for ( int ii = 0; ii < gsize; ii++ )
    {
-      gene[ i ].s = v[ index++ ];
-      gene[ i ].k = v[ index++ ];
+      gene[ ii ].s = vv[ index++ ];
+      gene[ ii ].k = vv[ index++ ];
    }
+DbgLv(DL) << Phd << "OUT:fitness" << fitness << "gene0.s" << gene[0].s;
 
 #ifdef TIMING_MZ
 insms=(long)clcSt0.msecsTo(QDateTime::currentDateTime());
@@ -1008,6 +1183,21 @@ DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6"
    return fitness;
 }
 
+// Set vector values to the scaled sums of two vectors
+void US_MPI_Analysis::vector_scaled_sum( US_Vector& cc, US_Vector& aa, double sa,
+      US_Vector&bb, double sb )
+{
+   int sizec = qMin( cc.size(), qMin( aa.size(), bb.size() ) );
+
+   if ( sb == 1.0 )
+      for ( int ii = 0; ii < sizec; ii++ )
+         cc.assign( ii, aa[ ii ] * sa + bb[ ii ] );
+   else
+      for ( int ii = 0; ii < sizec; ii++ )
+         cc.assign( ii, aa[ ii ] * sa + bb[ ii ] * sb );
+
+   return;
+}
 
 // Update the fitness value for a set of solutes.
 // Initially (index<0), the A and B matrices are populated.
@@ -1020,6 +1210,8 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
    static QVector< double > nnls_b;
           QVector< double > nnls_x;
           QVector< double > nnls_c;
+          QVector< double > w_nnls_a;
+          QVector< double > w_nnls_b;
    US_SolveSim::DataSet*   dset  = data_sets[ 0 ];
    US_DataIO::EditedData*  edata = &dset->run_data;
    US_DataIO::RawData      simdat;
@@ -1170,9 +1362,13 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
       }
 //qDebug() << "UF:  kk jj" << kk << jj;
 
+      // Put A and B in work vectors since NNLS corrupts them
+      w_nnls_a = nnls_a;
+      w_nnls_b = nnls_b;
+
       // Re-do NNLS to get X concentrations using replaced A
-      US_Math2::nnls( nnls_a.data(), ntotal, ntotal, nsols,
-                      nnls_b.data(), nnls_x.data() );
+      US_Math2::nnls( w_nnls_a.data(), ntotal, ntotal, nsols,
+                      w_nnls_b.data(), nnls_x.data() );
 
       kk     = index * ntotal;
       jj     = 0;
@@ -1261,55 +1457,55 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
    return fitness;
 }
 
-void US_MPI_Analysis::lamm_gsm_df( const US_Vector& v, US_Vector& vd )
+void US_MPI_Analysis::lamm_gsm_df( const US_Vector& vv, US_Vector& vd )
 {
-   static const double h        = 0.01;
-   static const double h2_recip = 0.5 / h;
+   static const double hh       = 0.01;
+   static const double h2_recip = 0.5 / hh;
 
    // Work with a temporary vector
-   US_Vector t = v;
+   US_Vector tt = vv;
 
 #ifdef UPDATE_FIT
    if ( current_dataset == 0  &&  data_sets.size() == 1 )
    {
-      update_fitness( -1, t );
+      update_fitness( -1, tt );
 
-      for ( int i = 0; i < t.size(); i++ )
+      for ( int ii = 0; ii < tt.size(); ii++ )
       {
-         double save = t[ i ];
-         int    cc   = i / 2;
+         double save = tt[ ii ];
+         int    cc   = ii / 2;
 
-         t.assign( i, save - h );
-         double y0 = update_fitness( cc, t );    // Calc fitness value -h
+         tt.assign( ii, save - hh );
+         double y0   = update_fitness( cc, tt );  // Calc fitness value -h
 
-         t.assign( i, save + h );
-         double y2 = update_fitness( cc, t );    // Calc fitness value +h
+         tt.assign( ii, save + hh );
+         double y2   = update_fitness( cc, tt );  // Calc fitness value +h
 
-         vd.assign( i, ( y2 - y0 ) * h2_recip ); // The derivative
-         t.assign( i, save );
+         vd.assign( ii, ( y2 - y0 ) * h2_recip ); // The derivative
+         tt.assign( ii, save );
       }
    }
 
    else
 #endif
    {
-      for ( int i = 0; i < t.size(); i++ )
+      for ( int ii = 0; ii < tt.size(); ii++ )
       {
-         double save = t[ i ];
+         double save = tt[ ii ];
 
-         t.assign( i, save - h );
-         double y0 = get_fitness_v( t );         // Calc fitness value -h
+         tt.assign( ii, save - hh );
+         double y0   = get_fitness_v( tt );       // Calc fitness value -h
 
-         t.assign( i, save + h );
-         double y2 = get_fitness_v( t );         // Calc fitness value +h
+         tt.assign( ii, save + hh );
+         double y2   = get_fitness_v( tt );       // Calc fitness value +h
 
-         vd.assign( i, ( y2 - y0 ) * h2_recip ); // The derivative
-         t.assign( i, save );
+         vd.assign( ii, ( y2 - y0 ) * h2_recip ); // The derivative
+         tt.assign( ii, save );
       }
    }
-//int n=t.size()-1;
-//qDebug() << "GDF: vd0..." << vd[0] << vd[1] << vd[2] << vd[3];
-//qDebug() << "GDF: ...vdn" << vd[n-3] << vd[n-2] << vd[n-1] << vd[n];
+int nn=tt.size()-1;
+DbgLv(DL) << "GDF: vd0..." << vd[0] << vd[1] << vd[2] << vd[3];
+DbgLv(DL) << "GDF: ...vdn" << vd[nn-3] << vd[nn-2] << vd[nn-1] << vd[nn];
 
 }
 

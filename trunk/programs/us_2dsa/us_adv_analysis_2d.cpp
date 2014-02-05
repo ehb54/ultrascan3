@@ -65,7 +65,7 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    ct_bandload->setStep(  0.1 );
    ct_bandload->setValue( sparms->band_volume * 1000.0 );
    ct_spoints ->setStep(   10 );
-   ct_spoints ->setValue( 200 );
+   ct_spoints ->setValue( sparms->simpoints );
    ct_bandload->setEnabled( rb_bandcp->isChecked() );
 
    QLayout*  lo_unifgr  =

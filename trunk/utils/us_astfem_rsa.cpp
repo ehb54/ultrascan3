@@ -538,11 +538,11 @@ DbgLv(2) << "RSA:    jj index" << jj << index;
          // Global to local index
          af_params.local_index[ index ] = jj;
 
-         af_params.role[ jj ] =  cr;  // Add jj'th rule
+         cr.comp_index        = index;
+         cr.rcomps .clear();
+         cr.stoichs.clear();
 
-         af_params.role[ jj ].comp_index = index;
-         af_params.role[ jj ].rcomps .clear();
-         af_params.role[ jj ].stoichs.clear();
+         af_params.role[ jj ] =  cr;  // Add jj'th rule
 
          // Check all assoc rule in this rg
          for ( int aa = 0; aa < rg[ group ].association.size(); aa++ )
@@ -1352,6 +1352,17 @@ QDateTime clcSt9 = clcSt0;
       US_AstfemMath::initialize_2d( 3, Nsave, &CA );
       US_AstfemMath::initialize_2d( 3, Nsave, &CB );
    }
+   else
+   {
+      for ( int ii = 0; ii < 3; ii++ )
+      {
+         for ( int jj = 0; jj < Nx; jj++ )
+         {
+            CA[ ii ][ jj ] = 0.0;
+            CB[ ii ][ jj ] = 0.0;
+         }
+      }
+   }
 #else
    US_AstfemMath::initialize_2d( 3, Nx, &CA );
    US_AstfemMath::initialize_2d( 3, Nx, &CB );
@@ -1397,6 +1408,19 @@ ttT1+=(clcSt1.msecsTo(clcSt2));
          US_AstfemMath::initialize_2d( 3, Nx, &CB1 );
          US_AstfemMath::initialize_2d( 3, Nx, &CB2 );
          Nsavea = Nx;
+      }
+      else
+      {
+         for ( int ii = 0; ii < 3; ii++ )
+         {
+            for ( int jj = 0; jj < Nx; jj++ )
+            {
+               CA1[ ii ][ jj ] = 0.0;
+               CA2[ ii ][ jj ] = 0.0;
+               CB1[ ii ][ jj ] = 0.0;
+               CB2[ ii ][ jj ] = 0.0;
+            }
+         }
       }
 #else
       US_AstfemMath::initialize_2d( 3, Nx, &CA1 );

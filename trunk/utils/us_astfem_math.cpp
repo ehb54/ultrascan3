@@ -204,11 +204,10 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
       Nsave = N;
       gamvec.resize( N );
    }
-
-   double* gam = gamvec.data();
 #else
-   double* gam = new double [ N ];
+   QVector< double > gamvec( N );
 #endif
+   double* gam = gamvec.data();
    
    if ( bet == 0.0 ) qDebug() << "Error 1 in tridiag";
 
@@ -224,12 +223,10 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
       u[ j ] = ( r[ j ] - a[ j ] * u[ j - 1 ] ) / bet;
    }
 
+   gam[ 0 ] = gam[ 1 ];
+
    for ( int j = N - 2; j >= 0; j-- )
       u[ j ] -= gam[ j + 1 ] * u[ j + 1 ];
-   
-#ifndef NO_DB
-   delete [] gam;
-#endif
 }
 
 //////////////////////////////////////////////////////////////////
@@ -516,8 +513,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    if ( use_time )
    {
-      int       eftime = expdata.scan[          0 ].time;
-      int       sltime = simdata.scan[ nsscan - 1 ].time;
+      int       eftime = (int)expdata.scan[          0 ].time;
+      int       sltime = (int)simdata.scan[ nsscan - 1 ].time;
 
       for ( int expscan = fscan; expscan < lscan; expscan++ )
       {  // Interpolate where needed to a range of experiment scans
