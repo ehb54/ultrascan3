@@ -101,6 +101,23 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( le_reps, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_reps->setMinimumWidth( 60 );
 
+   lbl_alpha =  new QLabel      ( tr( "alpha early termination limit:" ), this );
+   lbl_alpha -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_alpha -> setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_alpha -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_alpha = new QLineEdit(this, "le_alpha Line Edit");
+   le_alpha->setText( parameters->count( "hplc_bl_alpha" ) ? (*parameters)[ "hplc_bl_alpha" ] : "1" );
+   le_alpha->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_alpha->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_alpha->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 0, 1, 3, le_alpha );
+      le_alpha->setValidator( qdv );
+   }
+   connect( le_alpha, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_alpha->setMinimumWidth( 60 );
+
    lbl_gaussian_type = new QLabel ( tr( "Gaussian Mode" ), this);
    lbl_gaussian_type->setAlignment( Qt::AlignCenter | Qt::AlignVCenter);
    lbl_gaussian_type->setPalette  ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
@@ -177,6 +194,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    gl_bl->addWidget         ( le_smooth  , 0, 1 );
    gl_bl->addWidget         ( lbl_reps   , 1, 0 );
    gl_bl->addWidget         ( le_reps    , 1, 1 );
+   gl_bl->addWidget         ( lbl_alpha  , 2, 0 );
+   gl_bl->addWidget         ( le_alpha   , 2, 1 );
 
    background->addLayout( gl_bl );
    background->addWidget( cb_save_bl );
@@ -251,6 +270,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    (*parameters)[ "hplc_bl_save"     ]   = cb_save_bl ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_bl_smooth"   ]   = le_smooth  ->text();
    (*parameters)[ "hplc_bl_reps"     ]   = le_reps    ->text();
+   (*parameters)[ "hplc_bl_alpha"    ]   = le_alpha   ->text();
 
    if ( rb_gauss->isChecked() )
    {

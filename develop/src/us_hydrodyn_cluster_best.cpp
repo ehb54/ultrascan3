@@ -4,8 +4,6 @@
 // -------------- WARNING: any modifications made to this code will be overwritten -------------
 // ---------------------------------------------------------------------------------------------
 
-// note: this program uses cout and/or cerr and this should be replaced
-
 #include "../include/us_hydrodyn_cluster_best.h"
 
 US_Hydrodyn_Cluster_Best::US_Hydrodyn_Cluster_Best(

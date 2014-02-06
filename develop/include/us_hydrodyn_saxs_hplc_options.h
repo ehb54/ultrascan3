@@ -50,6 +50,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QLabel *                                lbl_reps;
       QLineEdit *                             le_reps;
 
+      QLabel *                                lbl_alpha;
+      QLineEdit *                             le_alpha;
+
       QCheckBox *                             cb_save_bl;
 
       QLabel *                                lbl_gaussian_type;

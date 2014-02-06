@@ -696,7 +696,7 @@ bool US_Hydrodyn_Saxs_1d::update_image()
 #else
       curve->setData(
                      ( double *)& q      [0],
-                     ( doulbe *)& modulii[0],
+                     ( double *)& modulii[0],
                      detector_pixels_width
                      );
       curve->setPen( QPen( plot_colors[ plot_count % plot_colors.size() ], 2, Qt::SolidLine ) );

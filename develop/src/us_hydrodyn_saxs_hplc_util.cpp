@@ -2133,6 +2133,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
          double I_tot;
 
          double alpha = 0e0;
+         double alpha_epsilon = 
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_alpha" ) ?
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha" ].toDouble() : 5e-3;
+
          double last_alpha = 0e0;
          vector < double > bl = last_bl;
 
@@ -2157,7 +2161,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
             {
                alpha = delta_bl / I_tot;
 
-               editor_msg( "dark blue", QString( tr( "delta_Bl %1 Itot %2 alpha %3" ) )
+               editor_msg( "dark blue", QString( tr( "iteration %1 delta_Bl %2 Itot %3 alpha %4" ) )
+                           .arg( this_reps )
                            .arg( delta_bl ).arg( I_tot ).arg( alpha ) );
 
                vector < double > D( bl.size() );
@@ -2203,7 +2208,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
                add_plot( QString( "BI_%1-%2" ).arg( files[ i ] ).arg( this_reps ), f_qs[ files[ i ] ], bl, true, false );
             }
 
-         } while ( this_reps < reps && alpha > 0e0 && ( fabs( alpha - last_alpha ) / alpha ) > 0.005 );
+         } while ( this_reps < reps && alpha > 0e0 && ( fabs( alpha - last_alpha ) / alpha ) > alpha_epsilon );
 
          bl_I = new_I;
 
@@ -2703,6 +2708,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_bl_save"     ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save"     ];
    parameters[ "hplc_bl_smooth"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"   ];
    parameters[ "hplc_bl_reps"     ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"     ];
+   parameters[ "hplc_bl_alpha"    ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"    ];
 
    parameters[ "hplc_csv_transposed" ] = 
       (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) ?
@@ -2725,6 +2731,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save"     ] = parameters[ "hplc_bl_save"     ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"   ] = parameters[ "hplc_bl_smooth"   ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"     ] = parameters[ "hplc_bl_reps"     ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"    ] = parameters[ "hplc_bl_alpha"    ];
 
    // maybe ask (warn) here if gaussian data structures have data
 
