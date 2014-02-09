@@ -315,133 +315,147 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
 // Public function to set dimension value types and calculate data ranges
 void US_Plot3D::setTypes( int tx, int ty, int tz )
 {
+   const double VROUND = 10.0;
+   const double VNEGOF = (1.0/VROUND);
+   const double MAX_ANNO = (99.9/VROUND);
+//   const double MAX_ANNO = (999.0/VROUND);
    US_Model::SimulationComponent* sc;
    int    ncomp = model->components.size();
    int    powrz;
    double xval;
    double yval;
    double zval;
+   double xround = VROUND;
+   double yround = VROUND;
 
    // set internal type-flag variables
-   typex = tx;
-   typey = ty;
-   typez = tz;
+   typex   = tx;
+   typey   = ty;
+   typez   = tz;
 DbgLv(2) << "P3D:sT: type xyz" << typex << typey << typez;
 
    // determine the range of values for each of the 3 dimensions
-   sc    = &model->components[ 0 ];          // first component
-   xmin  = comp_value( sc, typex,  1.0 );    // initial ranges
-   ymin  = comp_value( sc, typey,  1.0 );
-   zmin  = comp_value( sc, -typez, 1.0 );
-   xmax  = xmin;
-   ymax  = ymin;
-   zmax  = zmin;
+   sc      = &model->components[ 0 ];          // first component
+   xmin    = comp_value( sc, typex,  1.0 );    // initial ranges
+   ymin    = comp_value( sc, typey,  1.0 );
+   zmin    = comp_value( sc, -typez, 1.0 );
+   xmax    = xmin;
+   ymax    = ymin;
+   zmax    = zmin;
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
-      sc    = &model->components[ ii ];      // current component
+      sc      = &model->components[ ii ];      // current component
 
-      xval  = comp_value( sc, typex,  1.0 ); // x,y,z value of component
-      yval  = comp_value( sc, typey,  1.0 );
-      zval  = comp_value( sc, -typez, 1.0 );
+      xval    = comp_value( sc, typex,  1.0 ); // x,y,z value of component
+      yval    = comp_value( sc, typey,  1.0 );
+      zval    = comp_value( sc, -typez, 1.0 );
 
-      xmin  = xmin < xval ? xmin : xval;     // update range values
-      xmax  = xmax > xval ? xmax : xval;
-      ymin  = ymin < yval ? ymin : yval;
-      ymax  = ymax > yval ? ymax : yval;
-      zmin  = zmin < zval ? zmin : zval;
-      zmax  = zmax > zval ? zmax : zval;
+      xmin    = xmin < xval ? xmin : xval;     // update range values
+      xmax    = xmax > xval ? xmax : xval;
+      ymin    = ymin < yval ? ymin : yval;
+      ymax    = ymax > yval ? ymax : yval;
+      zmin    = zmin < zval ? zmin : zval;
+      zmax    = zmax > zval ? zmax : zval;
    }
 
    if ( ncomp == 1 )
    {
-      zmin *= 0.90;
-      zmax *= 1.10;
-      ymin *= 0.90;
-      ymax *= 1.10;
-      xmin *= 0.90;
-      xmax *= 1.10;
+      zmin   *= 0.90;
+      zmax   *= 1.10;
+      ymin   *= 0.90;
+      ymax   *= 1.10;
+      xmin   *= 0.90;
+      xmax   *= 1.10;
    }
 
    // extend x,y,z ranges a bit
-   xval    = ( xmax - xmin ) * 0.05;
-   xmin   -= xval;
-   xmax   += xval;
-   yval    = ( ymax - ymin ) * 0.05;
-   ymin   -= yval;
-   ymax   += yval;
-   //zval    = ( zmax - zmin ) * 0.05;
-   //zmin   -= zval;
-   //zmax   += zval;
+   xval      = ( xmax - xmin ) * 0.05;
+   xmin     -= xval;
+   xmax     += xval;
+   yval      = ( ymax - ymin ) * 0.05;
+   ymin     -= yval;
+   ymax     += yval;
 
    // determine a normalizing power-of-ten for x and y
-   x_norm  = 9.99 / xmax;
-   y_norm  = 9.99 / ymax;
-   z_norm  = 9.99 / zmax;
+   double xavg   = ( xmin + xmax ) * 0.5;
+   double yavg   = ( ymin + ymax ) * 0.5;
+   x_norm    = MAX_ANNO / xavg;
+   y_norm    = MAX_ANNO / yavg;
+   z_norm    = MAX_ANNO / zmax;
 DbgLv(2) << "P3D:sR: xmax ymax xnorm ynorm" << xmax << ymax << x_norm << y_norm;
 DbgLv(2) << "P3D:sR:  zmin zmax" << zmin << zmax;
-   powrx   = qRound( log10( x_norm ) );
-   powry   = qRound( log10( y_norm ) );
-   powrz   = qRound( log10( z_norm ) );
-   x_norm  = pow( 10.0, (double)powrx );
-   y_norm  = pow( 10.0, (double)powry );
-   z_norm  = pow( 10.0, (double)powrz );
+   powrx     = qRound( log10( x_norm ) );
+   powry     = qRound( log10( y_norm ) );
+   powrz     = qRound( log10( z_norm ) );
+   x_norm    = pow( 10.0, (double)powrx );
+   y_norm    = pow( 10.0, (double)powry );
+   z_norm    = pow( 10.0, (double)powrz );
+   x_norm   *= 0.1;
 
-
-   if ( ( xmax * x_norm ) > 9.99 )
+   if ( ( xavg * x_norm ) > MAX_ANNO )
    {
-      x_norm  *= 0.1;
+      x_norm   *= 0.1;
       powrx--;
    }
 
-   if ( ( ymax * y_norm ) > 9.99 )
+   if ( ( yavg * y_norm ) > MAX_ANNO )
    {
-      y_norm  *= 0.1;
+      y_norm   *= 0.1;
       powry--;
    }
 
-   if ( ( zmax * z_norm ) > 9.99 )
+   if ( ( zmax * z_norm ) > MAX_ANNO )
    {
-      z_norm  *= 0.1;
+      z_norm   *= 0.1;
       powrz--;
    }
 
-   if ( typex == 6 ) x_norm *= 10.0;
-   if ( typey == 6 ) y_norm *= 10.0;
-//z_norm=1.0;
-//z_norm=2.0/zmax;
+   if ( typex == 6 )
+   {
+      x_norm   /= 10.0;
+      xround   *= 10.0;
+   }
+   if ( typey == 6 )
+   {
+      y_norm   /= 10.0;
+      yround   *= 10.0;
+   }
+
 DbgLv(2) << "P3D:sR: powx powy xnorm ynorm" << powrx << powry << x_norm << y_norm;
-   xmax   *= x_norm;
-   ymax   *= y_norm;
-   xmin   *= x_norm;
-   ymin   *= y_norm;
-   zmin   *= z_norm;
-   zmax   *= z_norm;
+   xmax     *= x_norm;
+   ymax     *= y_norm;
+   xmin     *= x_norm;
+   ymin     *= y_norm;
+   zmin     *= z_norm;
+   zmax     *= z_norm;
 DbgLv(2) << "P3D:sR: xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
-   xmin    = (double)( (int)( xmin * 10.0 )     ) * 0.1;
-   xmax    = (double)( (int)( xmax * 10.0 ) + 1 ) * 0.1;
-   xmin    = ( xmin < 0.0 ) ? ( xmin - 0.1 ) : xmin;
-   ymin    = (double)( (int)( ymin * 10.0 )     ) * 0.1;
-   ymax    = (double)( (int)( ymax * 10.0 ) + 1 ) * 0.1;
-   ymin    = ( ymin < 0.0 ) ? ( ymin - 0.1 ) : ymin;
-   zmax    = (double)( (int)( zmax * 10.0 ) + 1 ) * 0.1;
-   zmin    = 0.0;
+   xmin      = (double)( (int)( xmin * xround )     ) / xround;
+   xmax      = (double)( (int)( xmax * xround ) + 1 ) / xround;
+   xmin      = ( xmin < 0.0 ) ? ( xmin - VNEGOF ) : xmin;
+   ymin      = (double)( (int)( ymin * yround )     ) / yround;
+   ymax      = (double)( (int)( ymax * yround ) + 1 ) / yround;
+   ymin      = ( ymin < 0.0 ) ? ( ymin - VNEGOF ) : ymin;
+   zmax      = (double)( (int)( zmax * VROUND ) + 1 ) / VROUND;
+   zmin      = 0.0;
 DbgLv(2) << "P3D:sR:  xmin xmax" << xmin << xmax
  << " ymin ymax" << ymin << ymax << " zmin zmax" << zmin << zmax;
 }
 
 // Public function to set internal variables from plot control parameters
-void US_Plot3D::setParameters( double a_scale, double a_gridr,
-      double a_alpha, double a_beta )
+void US_Plot3D::setParameters( double z_scale, double a_gridr,
+      double a_alpha, double a_beta, double x_scale, double y_scale )
 {
    // get the variables set in the plot control dialog
-   zscale   = a_scale;
-   gridres  = a_gridr;
-   alpha    = a_alpha;
-   beta     = a_beta;
+   zscale      = z_scale;
+   gridres     = a_gridr;
+   alpha       = a_alpha;
+   beta        = a_beta;
+   xscale      = x_scale;
+   yscale      = y_scale;
 
-   ncols    = qRound( gridres );
-   nrows    = ncols;
+   ncols       = qRound( gridres );
+   nrows       = ncols;
 
    // set size of raster data
    zdata.resize( ncols );
@@ -642,12 +656,16 @@ if ((ii&63)==1&&(jj&63)==1) DbgLv(2) << "P3D:    rp: col" << jj
    dataWidget->coordinates()->setNumberFont( US_GuiSettings::fontFamily(),
                                              US_GuiSettings::fontSize() );
 
+//dataWidget->coordinates()->setAutoScale( true );
+   QString annopad( "    " );
    x_scale  = ymax / xmax;
    y_scale  = 1.0;
    z_scale  = zscale;
    xatitle  = xyAxisTitle( typex, x_norm );
    yatitle  = xyAxisTitle( typey, y_norm );
    zatitle  = zAxisTitle(  typez );
+   xatitle  = annopad + xatitle;
+   yatitle  = yatitle + annopad;
 
 DbgLv(2) << "P3D:rP:  xmin xmax" << xmin << xmax
  << " ymin ymax" << ymin << ymax << " xscl yscl" << x_scale << y_scale;
@@ -661,6 +679,8 @@ DbgLv(2) << "P3D:rP:  xmin xmax" << xmin << xmax
       x_scale *= 2.0;
    }
 DbgLv(2) << "P3D:rP:  xscl yscl" << x_scale << y_scale;
+   x_scale  *= xscale;
+   y_scale  *= yscale;
 
    dataWidget->coordinates()->axes[X1].setLabelString( xatitle );
    dataWidget->coordinates()->axes[X2].setLabelString( xatitle );

@@ -29,6 +29,9 @@ class US_PlotControl2D : public US_WidgetsDialog
       QGridLayout*  controlsLayout;
       QHBoxLayout*  buttonsLayout;
 
+      QwtCounter*   ct_rxscale;
+      QwtCounter*   ct_ryscale;
+
       QVector< QCheckBox* >    xCheck;
       QVector< QCheckBox* >    yCheck;
 

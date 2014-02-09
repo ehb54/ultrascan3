@@ -45,6 +45,8 @@ US_PlotControl2D::US_PlotControl2D( QWidget* p, US_Model* amodel )
    QLabel* lb_peakwidth   = us_label(  tr( "Peak Width:" ) );
    QLabel* lb_dimen1      = us_label(  tr( "1 (x)" ) );
    QLabel* lb_dimen2      = us_label(  tr( "2 (y)" ) );
+   QLabel* lb_rxscale     = us_label(  tr( "Relative X Scale:" ) );
+   QLabel* lb_ryscale     = us_label(  tr( "Relative Y Scale:" ) );
 
    //QPushButton* pb_rplot  = us_pushbutton( tr( "Residuals Plot" ) );
    QPushButton* pb_plot3d = us_pushbutton( tr( "3D Plot" ) );
@@ -81,6 +83,8 @@ US_PlotControl2D::US_PlotControl2D( QWidget* p, US_Model* amodel )
    QwtCounter* ct_gridreso  = us_counter( 3,   50,  300,   10 );
    QwtCounter* ct_peaksmoo  = us_counter( 3,    1,  200,    1 );
    QwtCounter* ct_peakwidth = us_counter( 3, 0.01, 10.0, 0.01 );
+               ct_rxscale   = us_counter( 3,  0.1,   50, 0.01 );
+               ct_ryscale   = us_counter( 3,  0.1,   50, 0.01 );
 
    int row = 1;
    controlsLayout->addWidget( lb_dimens,     row,   0, 1, 2 );
@@ -112,6 +116,10 @@ US_PlotControl2D::US_PlotControl2D( QWidget* p, US_Model* amodel )
    controlsLayout->addWidget( ct_peaksmoo,   row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_peakwidth,  row,   0, 1, 2 );
    controlsLayout->addWidget( ct_peakwidth,  row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_rxscale,    row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_rxscale,    row++, 2, 1, 2 );
+   controlsLayout->addWidget( lb_ryscale,    row,   0, 1, 2 );
+   controlsLayout->addWidget( ct_ryscale,    row++, 2, 1, 2 );
 
    buttonsLayout->addWidget( pb_plot3d );
    buttonsLayout->addWidget( pb_help   );
@@ -144,10 +152,14 @@ US_PlotControl2D::US_PlotControl2D( QWidget* p, US_Model* amodel )
    ct_gridreso ->setValue( gridres  );
    ct_peaksmoo ->setValue( pksmooth );
    ct_peakwidth->setValue( pkwidth  );
-   ct_zscalefac->setStep(  0.01 );
-   ct_gridreso ->setStep(  10   );
-   ct_peaksmoo ->setStep(  1    );
-   ct_peakwidth->setStep(  0.01 );
+   ct_rxscale  ->setValue( 1.0      );
+   ct_ryscale  ->setValue( 1.0      );
+   ct_zscalefac->setStep ( 0.01 );
+   ct_gridreso ->setStep ( 10   );
+   ct_peaksmoo ->setStep ( 1    );
+   ct_peakwidth->setStep ( 0.01 );
+   ct_ryscale  ->setStep ( 0.01 );
+   ct_ryscale  ->setStep ( 0.01 );
 
    connect( ck_xmwt, SIGNAL( toggled( bool ) ),
             this,    SLOT( xmwtCheck( bool ) ) );
@@ -364,9 +376,11 @@ void US_PlotControl2D::peakw_value( double value )
 // 3d plot button clicked
 void US_PlotControl2D::plot3_btn()
 {
-   int typex = dimensionType( xCheck );
-   int typey = dimensionType( yCheck );
-   int typez = 1;
+   int    typex  = dimensionType( xCheck );
+   int    typey  = dimensionType( yCheck );
+   int    typez  = 1;
+   double rxscl  = ct_rxscale->value();
+   double ryscl  = ct_ryscale->value();
 
    if ( plot3d_w == 0 )
    {
@@ -377,7 +391,7 @@ void US_PlotControl2D::plot3_btn()
    }
 
    plot3d_w->setTypes     ( typex, typey, typez );
-   plot3d_w->setParameters( zscale, gridres, pksmooth, pkwidth );
+   plot3d_w->setParameters( zscale, gridres, pksmooth, pkwidth, rxscl, ryscl );
    plot3d_w->replot       ( );
 
    plot3d_w->setVisible( true );
