@@ -781,12 +781,12 @@ void US_Astfem_Sim::save_scans( void )
 
 void US_Astfem_Sim::save_xla( const QString& dirname )
 {
-   double b         = simparams.bottom;
-   double m         = simparams.meniscus;
+   double brad      = simparams.bottom;
+   double mrad      = simparams.meniscus;
    double grid_res  = simparams.radial_resolution;
 
    // Add 30 points in front of meniscus                                                               
-   int    points      = (int)( ( b - m ) / grid_res ) + 31; 
+   int    points      = (int)( ( brad - mrad ) / grid_res ) + 31; 
    
    double maxc        = 0.0;
    int    total_scans = sim_data.scanCount();
@@ -881,11 +881,10 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
    
    progress->setMaximum( total_scans );
    progress->reset();
-   
-   double* temp_conc   = new double [ points ];
-   double  rad         = m - 30.0 * grid_res;
-   double  conc        = 0.0;
-   double  conc_res    = 0.0;
+ 
+   QVector< double > tconc_v( points );
+   double* temp_conc   = tconc_v.data();
+   double  rad         = mrad - 30.0 * grid_res;
    sim_data.xvalues.resize( points );
    lb_progress->setText( "Writing..." );
    
@@ -900,23 +899,21 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
       US_DataIO::Scan* scan = &sim_data.scanData[ ii ];
 
       for ( int jj = 30; jj < points; jj++ )
-      {
+      {  // Position the computed concentration values after the first 30
          temp_conc[ jj ] = scan->rvalues[ jj - 30 ];
       }
 
-      conc     = 0.0;
-      conc_res = temp_conc[ 30 ] / 30.0;
-
       for ( int jj = 0; jj < 30; jj++ )
-      {
-         temp_conc[ jj ] = conc;
-         conc  += conc_res;
+      {  // Zero the first 30 points
+         temp_conc[ jj ] = 0.0;
       }
+
+      temp_conc[ 30 ] = s1plat * 2.0;   // Put a spike at the meniscus
 
       scan->rvalues.resize( points );
 
       for ( int jj = 0; jj < points; jj++ )
-      {
+      {  // Store the values: first 30 then computed values
          scan->rvalues[ jj ] = temp_conc[ jj ];
       }
 
@@ -946,7 +943,6 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
    progress->setValue( total_scans );
    lb_progress->setText( tr( "Completed" ) );
    
-   delete [] temp_conc;
    pb_saveSim->setEnabled( false );
 }
 

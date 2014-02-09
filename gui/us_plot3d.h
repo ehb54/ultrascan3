@@ -36,11 +36,14 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       //! \param tz  The type flag for Z
       void setTypes     ( int, int, int );
       //! \brief Public function to set plot control parameters
-      //! \param a_scale  Z scale factor
+      //! \param z_scale  Z scale factor
       //! \param a_gridr  Grid resolution
       //! \param a_alpha  Alpha factor
       //! \param a_beta   Beta factor
-      void setParameters( double, double, double, double );
+      //! \param x_scale  Relative X scale factor
+      //! \param y_scale  Relative Y scale factor
+      void setParameters( double, double, double, double,
+                          double = 1.0, double = 1.0 );
       //! \brief Public function to (re)calculate Z values at fixed increments
       //! \param zdat     Z data vector of vectors
       void calculateData( QVector< QVector< double > >& );
@@ -154,6 +157,8 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       double        zmax;
       double        zfloor;
       double        zscale;
+      double        xscale;
+      double        yscale;
       double        gridres;
       double        x_norm;
       double        y_norm;
