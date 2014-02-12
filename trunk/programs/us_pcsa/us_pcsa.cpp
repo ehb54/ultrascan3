@@ -62,8 +62,15 @@ US_pcsa::US_pcsa() : US_AnalysisBase2()
    pb_exclude->setEnabled( false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude() ) );
 
-   //ct_from      = us_counter( 2, 0, 0 );
-   //ct_to        = us_counter( 2, 0, 0 );
+   // Effectively disable boundaries to turn off cyan portion of plot2
+   ct_boundaryPercent->disconnect();
+   ct_boundaryPercent->setRange  ( 0.0, 300.0, 1.0 );
+   ct_boundaryPercent->setValue  ( 300.0 );
+   ct_boundaryPercent->setEnabled( false );
+   ct_boundaryPos    ->disconnect();
+   ct_boundaryPos    ->setRange  ( -50.0, 300.0, 1.0 );
+   ct_boundaryPos    ->setValue  ( -50.0 );
+   ct_boundaryPos    ->setEnabled( false );
 
    connect( ct_from, SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_from( double ) ) );
@@ -299,6 +306,10 @@ DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
 // plot the data
 void US_pcsa::data_plot( void )
 {
+   // Disable base2 cyan boundary portion
+   ct_boundaryPercent->setValue( 300.0 );
+   ct_boundaryPos    ->setValue( -50.0 );
+
 DbgLv(1) << "Data Plot by Base";
    US_AnalysisBase2::data_plot();      // plot experiment data
 DbgLv(1) << "Data Plot from Base";

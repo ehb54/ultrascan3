@@ -87,6 +87,16 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    ct_to           ->setVisible(true);
    pb_exclude      ->setVisible(true);
    pb_reset_exclude->setVisible(true);
+   // Effectively disable boundaries to turn off cyan portion of plot2
+   ct_boundaryPercent->disconnect();
+   ct_boundaryPercent->setRange  ( 0.0, 300.0, 1.0 );
+   ct_boundaryPercent->setValue  ( 300.0 );
+   ct_boundaryPercent->setEnabled( false );
+   ct_boundaryPos    ->disconnect();
+   ct_boundaryPos    ->setRange  ( -50.0, 300.0, 1.0 );
+   ct_boundaryPos    ->setValue  ( -50.0 );
+   ct_boundaryPos    ->setEnabled( false );
+
 
    // Add variance and rmsd to parameters layout
    QLabel* lb_vari     = us_label ( tr( "Variance:" ) );
@@ -324,6 +334,10 @@ DbgLv(1) << "LD:sp:  stm1 stm2 som1 som2" << stm1 << stm2 << som1 << som2;
 // plot the data
 void US_2dsa::data_plot( void )
 {
+   // Disable base2 cyan boundary portion
+   ct_boundaryPercent->setValue( 300.0 );
+   ct_boundaryPos    ->setValue( -50.0 );
+
 DbgLv(1) << "Data Plot by Base";
    US_AnalysisBase2::data_plot();      // plot experiment data
 DbgLv(1) << "Data Plot from Base";
