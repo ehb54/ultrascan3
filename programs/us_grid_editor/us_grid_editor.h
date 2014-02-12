@@ -50,33 +50,39 @@ class US_Grid_Editor : public US_Widgets
 
    private:
 
+      enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+
 		int		grid_index;   	// number of total partialGrids, used as the index to identify partialGrids,
 										// starts at 1 and aligns with partialGrid
 		int		partialGrid;  	// currently active partialGrid
 		int		subGrids;		// number of subgrids
-      QLabel	*lbl_info1;
-      QLabel	*lbl_info2;
-      QLabel	*lbl_xaxis;
-      QLabel	*lbl_yaxis;
-      QLabel	*lbl_xRes;
-      QLabel	*lbl_yRes;
-      QLabel	*lbl_xMin;
-      QLabel	*lbl_xMax;
-      QLabel	*lbl_yMin;
-      QLabel	*lbl_yMax;
-      QLabel	*lbl_zVal;
-      QLabel	*lbl_density;
-      QLabel	*lbl_viscosity;
-      QLabel	*lbl_partialGrid;
-      QLabel	*lbl_subGrid;
+      QLabel	*lb_info1;
+      QLabel	*lb_info2;
+      QLabel	*lb_xaxis;
+      QLabel	*lb_yaxis;
+      QLabel	*lb_fixed;
+      QLabel	*lb_xRes;
+      QLabel	*lb_yRes;
+      QLabel	*lb_xMin;
+      QLabel	*lb_xMax;
+      QLabel	*lb_yMin;
+      QLabel	*lb_yMax;
+      QLabel	*lb_zVal;
+      QLabel	*lb_density;
+      QLabel	*lb_viscosity;
+      QLabel	*lb_partialGrid;
+      QLabel	*lb_subGrid;
 
       QLineEdit    *le_density;
       QLineEdit    *le_viscosity;
       QLineEdit    *le_investigator;
 
+      QComboBox    *cb_fixed;
+
       US_Help       showHelp;
 		QList <gridpoint> current_grid;
 		QList <gridpoint> final_grid;
+
 		gridpoint maxgridpoint;
 		gridpoint mingridpoint;
 
@@ -105,12 +111,20 @@ class US_Grid_Editor : public US_Widgets
       QPushButton  *pb_reset;
       QPushButton  *pb_investigator;
 
-		QCheckBox *cb_show_final_grid;
-		QCheckBox *cb_show_sub_grid;
+		QCheckBox *ck_show_final_grid;
+		QCheckBox *ck_show_sub_grid;
 
       QRadioButton *rb_x_s;
       QRadioButton *rb_x_mw;
+      QRadioButton *rb_x_ff0;
+      QRadioButton *rb_x_D;
+      QRadioButton *rb_x_f; 
+      QRadioButton *rb_x_vbar;
+      QRadioButton *rb_y_s;
+      QRadioButton *rb_y_mw;
       QRadioButton *rb_y_ff0;
+      QRadioButton *rb_y_D;
+      QRadioButton *rb_y_f; 
       QRadioButton *rb_y_vbar;
       QRadioButton *rb_plot1;
       QRadioButton *rb_plot2;
@@ -132,8 +146,9 @@ class US_Grid_Editor : public US_Widgets
 		double		  ff0;
 
       int dbg_level;
-		int plot_x; // 0 = s, 1 = MW
-		int plot_y; // 0 = ff0, 1 = vbar
+		int plot_x; // 0-5 for s,f/f0,mw,vbar,D,f
+		int plot_y; // 0-5 for s,f/f0,mw,vbar,D,f
+		int plot_z; // 0-5 for s,f/f0,mw,vbar,D,f
 		int selected_plot;
 
    private slots:
@@ -146,25 +161,49 @@ class US_Grid_Editor : public US_Widgets
       void update_yMax( double );
       void update_zVal( double );
       void update_partialGrid( double );
-      void update_subGrids( double );
-      void update_density( const QString & );
+      void update_subGrids   ( double );
+      void update_density  ( const QString & );
       void update_viscosity( const QString & );
-      void update_plot( void );
+      void update_plot  ( void );
       void select_x_axis( int );
       void select_y_axis( int );
-      void select_plot( int );
+      void select_fixed ( const QString & );
+      void select_plot  ( int );
       void delete_partialGrid( void );
-      void add_partialGrid( void );
-      void save( void );
+      void add_partialGrid   ( void );
+      void save ( void );
       void reset( void );
-      void help( void ) { showHelp.show_help( "grid_editor.html" ); };
-		void calc_gridpoints( void );
+      void help ( void ) { showHelp.show_help( "grid_editor.html" ); };
+		void calc_gridpoints  ( void );
+		void calc_gridpoints_2( void );
 		void set_minmax( const struct gridpoint &);
 		void show_final_grid( bool );
 		void show_sub_grid( bool );
       void update_disk_db(  bool );
 		void sel_investigator( void );
 		void print_minmax( void );
+		double grid_value( struct gridpoint&, int );
+      bool set_comp_skw( struct gridpoint& );
+      bool set_comp_skv( struct gridpoint& );
+      bool set_comp_skd( struct gridpoint& );
+      bool set_comp_skf( struct gridpoint& );
+      bool set_comp_swv( struct gridpoint& );
+      bool set_comp_swd( struct gridpoint& );
+      bool set_comp_swf( struct gridpoint& );
+      bool set_comp_svd( struct gridpoint& );
+      bool set_comp_svf( struct gridpoint& );
+      bool set_comp_sdf( struct gridpoint& );
+      bool set_comp_kwv( struct gridpoint& );
+      bool set_comp_kwd( struct gridpoint& );
+      bool set_comp_kwf( struct gridpoint& );
+      bool set_comp_kvd( struct gridpoint& );
+      bool set_comp_kvf( struct gridpoint& );
+      bool set_comp_kdf( struct gridpoint& );
+      bool set_comp_wvd( struct gridpoint& );
+      bool set_comp_wvf( struct gridpoint& );
+      bool set_comp_wdf( struct gridpoint& );
+      bool set_comp_vdf( struct gridpoint& );
+      bool check_grid_point( double, struct gridpoint& );
 };
 
 #endif

@@ -700,13 +700,12 @@ void US_FeMatch::data_plot( void )
 
    QVector< double > vecr( count );
    QVector< double > vecv( count );
-   double* r         = vecr.data();
-   double* v         = vecv.data();
+   double* rr        = vecr.data();
+   double* vv        = vecv.data();
 
    QString       title; 
-   QwtPlotCurve* c;
+   QwtPlotCurve* cc;
    QPen          pen_red(  Qt::red );
-   QPen          pen_cyan( Qt::cyan );
    QPen          pen_plot( US_GuiSettings::plotCurve() );
 
    // Calculate basic parameters for other functions
@@ -740,75 +739,21 @@ void US_FeMatch::data_plot( void )
 
       dscan          = &edata->scanData[ ii ];
 
-      double lower_limit = baseline;
-      double upper_limit = dscan->plateau;
-
-      int jj    = 0;
-      count     = 0;
-
-      // Plot each scan in (up to) three segments: below, in, and above
-      // the specified boundaries
-
-      while ( jj < points  &&  dscan->rvalues[ jj ] < lower_limit )
-      {  // accumulate coordinates of below-baseline points
-         r[ count   ] = edata->radius( jj );
-         v[ count++ ] = edata->value( ii, jj++ );
+      for ( int jj = 0; jj < points; jj++ )
+      {
+         rr[ jj ] = edata->radius(     jj );
+         vv[ jj ] = edata->value ( ii, jj );
       }
 
-      if ( count > 1 )
-      {  // plot portion of curve below baseline
-         title = tr( "Curve " ) + QString::number( ii ) + tr( " below range" );
-         c     = us_curve( data_plot2, title );
+      title = tr( "Curve " ) + QString::number( ii ) + tr( " in range" );
+      cc    = us_curve( data_plot2, title );
 
-         if ( highlight )
-            c->setPen( pen_red );
-         else
-            c->setPen( pen_cyan );
+      if ( highlight )
+         cc->setPen( pen_red );
+      else
+         cc->setPen( pen_plot );
          
-         c->setData( r, v, count );
-      }
-
-      count = 0;
-
-      while ( jj < points  &&  dscan->rvalues[ jj ] < upper_limit )
-      {  // accumulate coordinates of curve within baseline-to-plateau
-         r[ count   ] = edata->radius( jj );
-         v[ count++ ] = edata->value( ii, jj++ );
-      }
-
-      if ( count > 1 )
-      {  // plot portion of curve within baseline-to-plateau
-         title = tr( "Curve " ) + QString::number( ii ) + tr( " in range" );
-         c     = us_curve( data_plot2, title );
-
-         if ( highlight )
-            c->setPen( pen_red );
-         else
-            c->setPen( pen_plot );
-         
-         c->setData( r, v, count );
-      }
-
-      count = 0;
-
-      while ( jj < points )
-      {  // accumulate coordinates of curve portion above plateau
-         r[ count   ] = edata->radius( jj );
-         v[ count++ ] = edata->value( ii, jj++ );
-      }
-
-      if ( count > 1 )
-      {  // plot portion of curve above plateau
-         title = tr( "Curve " ) + QString::number( ii ) + tr( " above range" );
-         c     = us_curve( data_plot2, title );
-
-         if ( highlight )
-            c->setPen( pen_red );
-         else
-            c->setPen( pen_cyan );
-        
-         c->setData( r, v, count );
-      }
+      cc->setData( rr, vv, points );
    }
 
    // Plot simulation
@@ -842,33 +787,33 @@ DbgLv(1) << "      sdata->cMN" << sdata->value(nscan-1,nconc-1);
          points    = sdata->pointCount();
 DbgLv(2) << "      II POINTS" << ii << points;
          count     = 0;
-         double rr = 0.0;
-         double vv = 0.0;
+         double rp = 0.0;
+         double vp = 0.0;
          double da = 0.0;
          rnoi      = have_ri ? ri_noise.values[ ii ] : 0.0;
 
          for ( int jj = 0; jj < points; jj++ )
          {  // accumulate coordinates of simulation curve
             tnoi      = have_ti ? ti_noise.values[ jj ] : 0.0;
-            rr        = sdata->radius( jj );
-            vv        = sdata->value( ii, jj ) + rnoi + tnoi;
+            rp        = sdata->radius( jj );
+            vp        = sdata->value( ii, jj ) + rnoi + tnoi;
             da        = edata->value( ii, jj );
-            rmsd     += sq( da - vv );
+            rmsd     += sq( da - vp );
             kpts++;
 DbgLv(3) << "       JJ rr vv" << jj << rr << vv;
 
-            if ( rr > rl )
+            if ( rp > rl )
             {
-               r[ count   ] = rr;
-               v[ count++ ] = vv;
+               rr[ count   ] = rp;
+               vv[ count++ ] = vp;
             }
          }
          title   = "SimCurve " + QString::number( ii );
-         c       = us_curve( data_plot2, title );
-         c->setPen( pen_red );
-         c->setData( r, v, count );
+         cc      = us_curve( data_plot2, title );
+         cc->setPen( pen_red );
+         cc->setData( rr, vv, count );
 DbgLv(1) << "Sim plot scan count" << ii << count
- << "  r0 v0 rN vN" << r[0] << v[0 ] << r[count-1] << v[count-1];
+ << "  r0 v0 rN vN" << rr[0] << vv[0 ] << rr[count-1] << vv[count-1];
       }
 
       rmsd       /= (double)kpts;
