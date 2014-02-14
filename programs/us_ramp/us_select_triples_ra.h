@@ -1,3 +1,4 @@
+//! \file us_select_triples_ra.h
 #ifndef US_SELECT_TRIPLES_H
 #define US_SELECT_LAMBDAS_H
 
@@ -11,12 +12,12 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-class US_SelectTriples : public US_WidgetsDialog
+class US_SelectTriplesRa : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
-      US_SelectTriples( QStringList& );
+      US_SelectTriplesRa( QStringList& );
 
    signals:
       void new_triple_list( QStringList );

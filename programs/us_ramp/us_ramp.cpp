@@ -70,27 +70,6 @@ int US_Ramp::saveToDisk(
                        + "ramp";
    //qDebug()<<"tripledesc_filename_cellchan_cell_chan"<<all_chaninfo[i].tripleDesc<<i<<filename;
 
-//       // Let's see if there is a triple guid already (from a previous save)
-//       // Otherwise the rawGUID characters should already be initialized to 0
-//       QString uuidc = 
-//          US_Util::uuid_unparse( (unsigned char*) rawConvertedData[ i ]->rawGUID );
-// 
-//       if ( saveGUIDs && uuidc != "00000000-0000-0000-0000-000000000000" ) 
-//       {
-//          // Make sure xml file matches
-//          memcpy( all_chaninfo [ i ].tripleGUID, (char*) rawConvertedData[ i ]->rawGUID, 16 );
-//       }
-// 
-//       else
-//       {
-//          // Calculate and save the guid for this triple
-//          uchar uuid[ 16 ];
-//          QString uuid_string = US_Util::new_guid();
-//          US_Util::uuid_parse( uuid_string, uuid );
-//          memcpy( rawConvertedData[ i ]->rawGUID, (char*) uuid, 16 );
-//          memcpy( all_chaninfo [ i ].tripleGUID, (char*) uuid, 16 );
-//       }
-
       // Same with solutionGUID
       QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
       qDebug()<<"_______________________________________________________________________";
@@ -116,15 +95,9 @@ int US_Ramp::saveToDisk(
       // Now write altered dataset
      writeRawData( dirname + filename, savecc );
 
-// 
-//    if ( status != US_DataIO::OK )
-//    {
-//       // Try to delete the files and tell the user
-//       return NOT_WRITTEN;
    }
-// 
-//    
-//    return OK;
+
+   return OK;
 }
 
 int US_Ramp::writeRawData( QString file, US_mwlRamp::RampRawData& data )

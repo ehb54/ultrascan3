@@ -1,13 +1,13 @@
-//! \file us_get_dbrun.cpp
+//! \file us_get_dbrun_ra.cpp
 
-#include "us_get_dbrun.h"
+#include "us_get_dbrun_ra.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_db2.h"
 #include "us_passwd.h"
 
 // Primary constructor to establish the dialog
-US_GetDBRun::US_GetDBRun( QString& r ) 
+US_GetDBRunRa::US_GetDBRunRa( QString& r ) 
 : US_WidgetsDialog( 0, 0 ), runID( r )
 {
    setWindowTitle( tr( "Available US3 Runs..." ) );
@@ -98,7 +98,7 @@ US_GetDBRun::US_GetDBRun( QString& r )
 }
 
 // Function to load the runInfo structure with all runID's in the DB
-bool US_GetDBRun::loadData( void )
+bool US_GetDBRunRa::loadData( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
@@ -152,13 +152,13 @@ bool US_GetDBRun::loadData( void )
 }
 
 // Function to sort rows when column header is clicked
-void US_GetDBRun::columnClicked( int col )
+void US_GetDBRunRa::columnClicked( int col )
 {
    tw -> sortItems( col );
 }
 
 // Function to pass information back when select button is pressed
-void US_GetDBRun::select( void )
+void US_GetDBRunRa::select( void )
 {
    int ndx = tw ->currentRow();
 
@@ -167,7 +167,7 @@ void US_GetDBRun::select( void )
 }
 
 // Function to delete the highlighted run when delete button is pressed
-void US_GetDBRun::deleteRun( void )
+void US_GetDBRunRa::deleteRun( void )
 {
    US_Passwd pw;
    QString masterPW = pw.getPasswd();

@@ -1,12 +1,12 @@
-//! \file us_select_triples.cpp
+//! \file us_select_triples_ra.cpp
 
-#include "us_select_triples.h"
+#include "us_select_triples_ra.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
 //! Class to present a pair of lists (included, excluded) to allow the
 //!  user to select triples to be excluded (deleted)
-US_SelectTriples::US_SelectTriples( QStringList& triples )
+US_SelectTriplesRa::US_SelectTriplesRa( QStringList& triples )
    : US_WidgetsDialog( 0, 0 ), triples( triples )
 {
    original    = triples;                 // List of original includes
@@ -93,7 +93,7 @@ US_SelectTriples::US_SelectTriples( QStringList& triples )
 }
 
 // Slot to add selections to the excluded list
-void US_SelectTriples::add_selections()
+void US_SelectTriplesRa::add_selections()
 {
 DbgLv(0) << "AddSelections";
    // Get the list of selected items
@@ -137,7 +137,7 @@ DbgLv(0) << "AddSelections";
 }
 
 // Slot to remove items from the excluded list
-void US_SelectTriples::rmv_selections()
+void US_SelectTriplesRa::rmv_selections()
 {
 DbgLv(0) << "RemoveSelections";
    // Get the list of selected items
@@ -181,7 +181,7 @@ DbgLv(0) << "RemoveSelections";
 }
 
 // Reset the lists and buttons to their original state
-void US_SelectTriples::reset( void )
+void US_SelectTriplesRa::reset( void )
 {
    lw_original->clear();
    lw_selected->clear();
@@ -200,7 +200,7 @@ void US_SelectTriples::reset( void )
 }
 
 // Cancel button clicked:  returned delete-selections is empty
-void US_SelectTriples::cancel( void )
+void US_SelectTriplesRa::cancel( void )
 {
    triples.clear();
 
@@ -209,7 +209,7 @@ void US_SelectTriples::cancel( void )
 }
 
 // Accept button clicked:  returned delete-selections list is the excluded list
-void US_SelectTriples::done( void )
+void US_SelectTriplesRa::done( void )
 {
    triples       = excludes;
 

@@ -1,4 +1,4 @@
-//! \file us_experiment_gui.h
+//! \file us_experiment_gui_ra.h
 #ifndef US_EXPERIMENT_GUI_H
 #define US_EXPERIMENT_GUI_H
 
@@ -7,24 +7,24 @@
 #include "us_extern.h"
 #include "us_help.h"
 #include "us_ramp.h"
-#include "us_experiment.h"
-#include "us_selectbox.h"
+#include "us_experiment_ra.h"
+#include "us_selectbox_ra.h"
 #include "us_project.h"
 #include "us_rotor.h"
 
-/*! \class US_ExperimentGui
+/*! \class US_ExperimentGuiRa
            This class provides the ability to associate raw data with
            the relevant experiment parameters, such as the lab,
            instrument, and rotor on which the experiment was run. 
 */
            
-class US_ExperimentGui : public US_WidgetsDialog
+class US_ExperimentGuiRa : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
 
-      /*! \brief Generic constructor for the US_ExperimentGui class. To 
+      /*! \brief Generic constructor for the US_ExperimentGuiRa class. To 
                  instantiate the class a calling function must
                  provide a structure to contain all the data.
           \param signal_wanted A boolean value indicating whether the caller
@@ -34,12 +34,12 @@ class US_ExperimentGui : public US_WidgetsDialog
           \param select_db_disk Indicates whether the default search is on
                          the local disk or in the DB
       */
-      US_ExperimentGui( bool = false,
-                        const US_Experiment& = US_Experiment(),
-                        int  = US_Disk_DB_Controls::Default );
+      US_ExperimentGuiRa( bool = false,
+                          const US_ExperimentRa& = US_ExperimentRa(),
+                          int  = US_Disk_DB_Controls::Default );
 
       //! A null destructor. 
-      ~US_ExperimentGui() {};
+      ~US_ExperimentGuiRa() {};
 
    signals:
 
@@ -50,7 +50,7 @@ class US_ExperimentGui : public US_WidgetsDialog
           \param expInfo A reference to a structure that contains all
                          the current experiment data
       */
-      void updateExpInfoSelection( US_Experiment& expInfo );
+      void updateExpInfoSelection( US_ExperimentRa& expInfo );
 
       /*! \brief The signal that is emitted when the user chooses
                  to cancel the current selection. In this case all
@@ -64,7 +64,7 @@ class US_ExperimentGui : public US_WidgetsDialog
       void use_db( bool DB );
 
    private:
-      US_Experiment          expInfo;
+      US_ExperimentRa        expInfo;
       QVector< US_Rotor::Lab > labList;
       int                    currentLab;
       int                    currentInstrument;
@@ -78,8 +78,8 @@ class US_ExperimentGui : public US_WidgetsDialog
       QStringList            experimentTypes;
       QComboBox*             cb_expType;
 
-      US_SelectBox*          cb_instrument;
-      US_SelectBox*          cb_operator;
+      US_SelectBoxRa*        cb_instrument;
+      US_SelectBoxRa*        cb_operator;
                           
       QLineEdit*             le_investigator;
       QLineEdit*             le_runID;

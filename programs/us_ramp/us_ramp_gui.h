@@ -10,10 +10,10 @@
 #include "us_plot.h"
 #include "us_ramp.h"
 #include "us_mwlramp.h"
-#include "us_experiment.h"
+#include "us_experiment_ra.h"
 #include "us_dataIO.h"
 #include "us_solution.h"
-#include "us_selectbox.h"
+#include "us_selectbox_ra.h"
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
 #endif
@@ -120,7 +120,7 @@ class US_RampGui : public US_Widgets
       QLineEdit*    le_dropScan;
       QPushButton*  pb_saveUS3;
 
-      US_SelectBox*  cb_centerpiece;
+      US_SelectBoxRa*  cb_centerpiece;
 
       QVector< US_mwlRamp::RampRawData >      allData;   //!< All loaded data --> substituded with ramp.alldata
       QVector< US_mwlRamp::RampRawData* >     outData;      //!< Output data pointers
@@ -156,7 +156,7 @@ class US_RampGui : public US_Widgets
       QString       saveDescription;           // Saved channel description
 
       bool          show_plot_progress;        // Flag to show plot progress
-      US_Experiment ExpData;                   // Experiment data object
+      US_ExperimentRa ExpData;                 // ExperimentRa data object
       
       US_mwlRamp ramp;	//KL - to get this one working I had to add us_ramp.h/.cpp to .pro!
       
@@ -218,7 +218,7 @@ class US_RampGui : public US_Widgets
       void loadUS3Disk       ( void );
       void loadUS3Disk       ( QString );
 //       void loadUS3DB         ( void );
-      void updateExpInfo     ( US_Experiment& );
+      void updateExpInfo     ( US_ExperimentRa& );
       void cancelExpInfo     ( void );
       void getSolutionInfo   ( void );
       void updateSolutionInfo( US_Solution );

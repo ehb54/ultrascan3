@@ -1,4 +1,4 @@
-//! \file us_experiment.h
+//! \file us_experiment_ra.h
 #ifndef US_EXPERIMENT_H
 #define US_EXPERIMENT_H
 
@@ -13,7 +13,7 @@
            instrument, and rotor on which the experiment was run. 
 */
            
-class US_Experiment
+class US_ExperimentRa
 {
    public:
 
@@ -68,9 +68,9 @@ class US_Experiment
 //       int               RI_nscans;         //!< RI+MWL scans per profile
 //       int               RI_nwvlns;         //!< RI+MWL wavelengths (profiles count)
 
-      /*! \brief Generic constructor for the US_Experiment class.
+      /*! \brief Generic constructor for the US_ExperimentRa class.
       */
-      US_Experiment( void );
+      US_ExperimentRa( void );
 
       /*! \brief    Determine if the current experiment runID exists in the DB. 
                     Updates expID accordingly, or to 0 if not found.
@@ -80,7 +80,6 @@ class US_Experiment
       int checkRunID( US_DB2* = 0 );
 
       /*! \brief    Function to save the experiment information to db
-
           \param    update Is it ok to update an existing database runID 
                            (maybe the user is updating a DB record)?
           \param    db For database access, an open database connection
@@ -88,7 +87,6 @@ class US_Experiment
       int saveToDB           ( bool = false, US_DB2* = 0 );
 
       /*! \brief    Reads experiment information from the db
-
           \param runID  The run ID of the experiment.
           \param    db For database access, an open database connection
           \returns  One of the US_DB2 error codes
@@ -97,12 +95,12 @@ class US_Experiment
                       US_DB2* = 0 );
 
       /*! \brief    Writes an xml file
-
+          \param data    A reference to a RampRawData vector.
           \param triples A reference to a structure provided by the calling
                         function that already contains all the different
                         cell/channel/wavelength combinations in the data. 
-          \param runType A reference to a variable that already contains the type
-                        of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
+          \param runType A reference to a variable that already contains the
+                        type of data ( "RA", "IP", "RI", "FI", "WA", or "WI").
                         This information will affect how the data is
                         written.
           \param runID  The run ID of the experiment.

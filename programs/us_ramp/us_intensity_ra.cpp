@@ -1,12 +1,12 @@
-//! \file us_intensity.cpp
+//! \file us_intensity_ra.cpp
 
-#include "us_intensity.h"
+#include "us_intensity_ra.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_util.h"
 #include "us_gui_util.h"
 
-US_Intensity::US_Intensity( 
+US_IntensityRa::US_IntensityRa( 
       const QString runID, 
       const QString triple, 
       const QVector< double >& data,
@@ -72,7 +72,7 @@ US_Intensity::US_Intensity(
 
 }
 
-void US_Intensity::draw_plot( const QVector< double >& scanData,
+void US_IntensityRa::draw_plot( const QVector< double >& scanData,
                               const QVector< double >& scanNbrs )
 {
    // Set up the axes and titles

@@ -12,7 +12,8 @@ US_mwlRamp::US_mwlRamp(): QObject()
 }
 
 
-bool US_mwlRamp::import_data( QString& mwldir, QLineEdit* lestat, QVector< US_mwlRamp::RampRawData >  &    allData, QString & runID_xml_mwl )
+bool US_mwlRamp::import_data( QString& mwldir, QLineEdit* lestat,
+      QVector< US_mwlRamp::RampRawData >& allData, QString& runID_xml_mwl )
 {
     bool status  = true;
     cur_dir      = mwldir;
