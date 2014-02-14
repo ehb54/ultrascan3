@@ -12,8 +12,9 @@
 #include "us_memory.h"
 
 // constructor:  pcsa analysis controls widget
-US_AnalysisControlPc::US_AnalysisControlPc( QList< US_SolveSim::DataSet* >& dsets,
-    QWidget* p ) : US_WidgetsDialog( p, 0 ), dsets( dsets )
+US_AnalysisControlPc::US_AnalysisControlPc(
+   QList< US_SolveSim::DataSet* >& dsets, QWidget* p )
+   : US_WidgetsDialog( p, 0 ), dsets( dsets )
 {
    parentw        = p;
    processor      = 0;
@@ -91,7 +92,7 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    pb_pltlines = us_pushbutton( tr( "Plot Model Lines"              ), true );
    pb_startfit = us_pushbutton( tr( "Start Fit"                     ), true );
    pb_scanregp = us_pushbutton( tr( "Perform Regularization Scan"   ), false );
-   pb_finalmdl = us_pushbutton( tr( "Regularize Current Model"      ), false );
+   pb_finalmdl = us_pushbutton( tr( "Recompute Best Model"          ), false );
    pb_stopfit  = us_pushbutton( tr( "Stop Fit"                      ), false );
    pb_plot     = us_pushbutton( tr( "Plot Results"                  ), false );
    pb_save     = us_pushbutton( tr( "Save Results"                  ), false );
@@ -500,6 +501,19 @@ DbgLv(1) << "AC:advanced dialog exec() return - ACCEPTED";
       int      mciter = mmcupd ? mrecs_mc.size() : 0;
 DbgLv(1) << "AC:advanced dialog state=" << state << "mainw" << mainw;
 
+      if ( ck_tinoise->isChecked()  ||  ck_rinoise->isChecked() )
+      {
+         QMessageBox::warning( this, tr( "Problematic combination!" ),
+            tr( "The combination of one or two noise fits selected and "
+                "Advanced Controls chosen is problematic, since model "
+                "records only specify fitting curves and not noise "
+                "parameters.\n\n"
+                "You may proceed, but the safest course is to click on "
+                "the Recompute Best Model button to re-fit with noises.\n\n"
+                "Any Save Results where noise is involved is better "
+                "executed *before* Advanced Controls." ) );
+      }
+
       // Update model recs where possible and appropriate
       if ( mrsupd )
       {
@@ -726,13 +740,13 @@ void US_AnalysisControlPc::set_alpha()
    if ( regular )
    {
       pb_finalmdl->setText( tr( "Regularize Current Model" ) );
+      ck_tinoise->setChecked( false );
+      ck_rinoise->setChecked( false );
    }
 
    else
    {
-      pb_finalmdl->setText( tr( "Unregularize Current Model" ) );
-      ck_tinoise ->setChecked( false );
-      ck_rinoise ->setChecked( false );
+      pb_finalmdl->setText( tr( "Recompute Best Model"     ) );
    }
 
    if ( ct_tralpha->value() >= 10.0 )

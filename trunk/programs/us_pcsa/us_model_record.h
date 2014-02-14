@@ -65,7 +65,7 @@ class ModelRecord
       static int compute_slines( double&, double&, double&, double&, int&,
             int&, double*, QVector< ModelRecord >& );
 
-      //! Static public function to compute straight line model records
+      //! Static public function to compute sigmoid curve model records
       static int compute_sigmoids( int&, double&, double&, double&, double&,
             int&, int&, double*, QVector< ModelRecord >& );
 
