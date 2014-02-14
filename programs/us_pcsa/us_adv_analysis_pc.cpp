@@ -1097,6 +1097,8 @@ DbgLv(1) << "build_bfm";
    dsets << dset0;
    US_SolveSim::Simulation sim_vals;
    sim_vals.solutes       = mrec.isolutes;
+   sim_vals.ti_noise      = mrec.ti_noise;
+   sim_vals.ri_noise      = mrec.ri_noise;
 
    US_SolveSim* solvesim  = new US_SolveSim( dsets, 0, false );
 

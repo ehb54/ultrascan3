@@ -490,10 +490,16 @@ DbgLv(1) << "PC:GR: IN  abort" << abort;
    *da_mdl     = model;                           // copy model
 
    if ( ( noisflag & 1 ) != 0  &&  da_tin != 0 )
+   {
       *da_tin     = ti_noise;                     // copy any ti noise
+      mrecs[ 0 ].ti_noise = ti_noise.values;
+   }
 
    if ( ( noisflag & 2 ) != 0  &&  da_rin != 0 )
+   {
       *da_rin     = ri_noise;                     // copy any ri noise
+      mrecs[ 0 ].ri_noise = ri_noise.values;
+   }
 
    p_mrecs     = mrecs;                           // copy model records vector
    bm_ndx      = mrecs[ 0 ].taskx;
@@ -529,6 +535,8 @@ void US_pcsaProcess::put_mrecs( QVector< ModelRecord >& a_mrecs )
 {
    mrecs       = a_mrecs;                 // Copy model records list
    int nmrecs  = mrecs.size();
+   int ntinoi  = mrecs[ 0 ].ti_noise.count();
+   int nrinoi  = mrecs[ 0 ].ri_noise.count();
 DbgLv(1) << "PC:putMRs: nmrecs" << nmrecs;
 
    if ( nmrecs < 1 )
@@ -542,6 +550,21 @@ DbgLv(1) << "PC:putMRs: nmrecs" << nmrecs;
    klolim      = mrecs[ 0 ].kmin;
    kuplim      = mrecs[ 0 ].kmax;
    curvtype    = mrecs[ 0 ].ctype;
+
+   if ( ntinoi > 0 )
+   {
+      ti_noise.values    = mrecs[ 0 ].ti_noise;
+      ti_noise.minradius = edata->radius( 0 );
+      ti_noise.maxradius = edata->radius( npoints - 1 );
+      ti_noise.count     = ntinoi;
+   }
+
+   if ( nrinoi > 0 )
+   {
+      ri_noise.values    = mrecs[ 0 ].ri_noise;
+      ri_noise.count     = nrinoi;
+   }
+
    nmtasks     = ( mrecs[ 0 ].taskx == mrecs[ 1 ].taskx )
                ? ( nmrecs - 1 ) : nmrecs;
    nkpts       = ( curvtype != 3 )
