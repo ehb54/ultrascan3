@@ -1,4 +1,4 @@
-//! \file us_experiment.cpp
+//! \file us_experiment_ra.cpp
 
 #include <QtCore>
 
@@ -7,9 +7,9 @@
 #include "us_passwd.h"
 #include "us_investigator.h"
 #include "us_util.h"
-#include "us_experiment.h"
+#include "us_experiment_ra.h"
 
-US_Experiment::US_Experiment( void )
+US_ExperimentRa::US_ExperimentRa( void )
 {
    // Experiment types
    experimentTypes.clear();
@@ -22,7 +22,7 @@ US_Experiment::US_Experiment( void )
 }
 
 // Function to see if the current runID already exists in the database
-int US_Experiment::checkRunID( US_DB2* db )
+int US_ExperimentRa::checkRunID( US_DB2* db )
 {
    // Let's see if we can find the run ID
    expID = 0;
@@ -39,7 +39,7 @@ int US_Experiment::checkRunID( US_DB2* db )
    return US_DB2::OK;
 }
 
-int US_Experiment::saveToDB( bool update, US_DB2* db )
+int US_ExperimentRa::saveToDB( bool update, US_DB2* db )
 {
    // Let's see if the project is in the db already
    int status = project.saveToDB( db );
@@ -129,7 +129,7 @@ int US_Experiment::saveToDB( bool update, US_DB2* db )
 }
 
 // Function to read an experiment from DB
-int US_Experiment::readFromDB( QString runID, 
+int US_ExperimentRa::readFromDB( QString runID, 
                                US_DB2* db )
 {
    QStringList q( "get_experiment_info_by_runID" );
@@ -233,7 +233,7 @@ int US_Experiment::readFromDB( QString runID,
    return US_DB2::OK;
 }
 
-int US_Experiment::saveToDisk(
+int US_ExperimentRa::saveToDisk(
     QVector< US_mwlRamp::RampRawData* >& data,
     QList< US_Ramp::TripleInfo >& triples,
     QString runType,
@@ -399,7 +399,7 @@ qDebug() << "  EsTD: call proj saveToDisk";
    return( US_Ramp::OK );
 }
 
-int US_Experiment::readFromDisk( 
+int US_ExperimentRa::readFromDisk( 
     QList< US_Ramp::TripleInfo >& triples,
     QString runType,
     QString runID,
@@ -442,7 +442,7 @@ qDebug() << "readFromDisk() error" << error;
    return US_Ramp::OK;
 }
 
-void US_Experiment::readExperiment( 
+void US_ExperimentRa::readExperiment( 
      QXmlStreamReader& xml, 
      QList< US_Ramp::TripleInfo >& triples,
      QString runType,
@@ -605,7 +605,7 @@ void US_Experiment::readExperiment(
          show();
 }
 
-void US_Experiment::readDataset( QXmlStreamReader& xml,
+void US_ExperimentRa::readDataset( QXmlStreamReader& xml,
                                  US_Ramp::TripleInfo& triple )
 {
    while ( ! xml.atEnd() )
@@ -645,7 +645,7 @@ void US_Experiment::readDataset( QXmlStreamReader& xml,
 
 
 // Zero out all data structures
-void US_Experiment::clear( void )
+void US_ExperimentRa::clear( void )
 {
    invID              = US_Settings::us_inv_ID();
    invGUID            = QString( "" );
@@ -677,7 +677,7 @@ void US_Experiment::clear( void )
 
 }
 
-void US_Experiment::show( void )
+void US_ExperimentRa::show( void )
 {
    QString syncOK_text = ( syncOK ) ? "true" : "false";
 

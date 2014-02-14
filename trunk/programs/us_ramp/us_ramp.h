@@ -73,11 +73,9 @@ class US_Ramp
       //! \param rawConvertedData  A reference to a structure provided by the
       //!           calling function that already contains the US3
       //!           raw converted data.
-      //! \param triples           A reference to a structure provided by the
+      //! \param all_chaninfo      A reference to a structure provided by the
       //!           calling function that already contains all the different
       //!           cell/channel/wavelength combinations in the data. 
-      //! \param allExcludes       A reference to a QVector of excluded scans
-      //!           for each c/c/w combination
       //! \param runType           A reference to a variable that already
       //!           contains the type of data ( "RA", "IP", "RI", "FI", "WA",
       //!           or "WI"). This information will affect how the data is

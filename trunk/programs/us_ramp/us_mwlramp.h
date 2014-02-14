@@ -65,52 +65,14 @@ public:
 
 
     //! \brief Import ramp data from a specified directory
-    //! \param mwldir  Raw ramp data directory
-    //! \param lestat  Status LineEdit pointer
-    //! \returns       Status of import (true->imported OK)
-    bool    import_data   ( QString&, QLineEdit*, QVector< US_mwlRamp::RampRawData >   &   allData, QString & runID_xml_mwl);
-    
-    //! \brief Import ramp data from a specified directory
-    //! \param mwldir  Raw ramp data directory
-    //! \param lestat  Status LineEdit pointer
-    //! \returns       Status of import (true->imported OK)
-    bool    saveToDisk   ( QString&, QLineEdit* );
-    
-    
-
-//     //! \brief A count of specified type
-//     //! \param key     Key string for which to map a value ("file",...)
-//     //! \returns       Number of values for the array with given key
-//     int     countOf       ( QString );
-// 
-//     //! \brief Update output lambdas by range redefinition
-//     //! \param start   Start lambda (0 -> first)
-//     //! \param end     End lambda (0 -> last)
-//     //! \param ccx     Cell/channel index to use (-1 -> current)
-//     //! \returns       Number of lambdas in the new lambda range
-//     int     set_lambdas   ( int = 0, int = 0, int = -1 );
-// 
-//     //! \brief Return lambda values
-//     //! \param wls     Output lambdas vector for given channel
-//     //! \param ccx     Cell/channel index to use (-1 -> current)
-//     //! \returns       Number of lambdas for the cell/channel
-//     int     lambdas       ( QVector< int >&, int = -1 );
-// 
-//     //! \brief Return lambda values for raw original
-//     //! \param wls     Output lambdas vector for the imported data
-//     //! \returns       Number of lambdas in the imported MWL data
-//     int     lambdas_raw   ( QVector< int >& );
-// 
-//     //! \brief Match lambda in original list
-//     //! \param lambda  Lambda value to find in the original import list
-//     //! \returns       Index of the lambda match in the lambdas list
-//     int     indexOfLambda ( int );
-// 
-//     //! \brief Set the current cell/channel index
-//     //! \param ccx     Cell/channel index to set as the current one
-//     //! \returns       The actual current cell/channel index in use
-//     int     set_celchnx   ( int = 0 );
-
+    //! \param mwldir         Raw ramp data directory
+    //! \param lestat         Status LineEdit pointer
+    //! \param allData        Reference to RampRawData vector
+    //! \param runID_xml_mwl  Run ID string
+    //! \returns              Status of import (true->imported OK)
+    bool    import_data   ( QString&, QLineEdit*,
+          QVector< US_mwlRamp::RampRawData >& allData, QString & runID_xml_mwl);
+ 
 private:
     QVector< int >               ri_wavelns;  //!< Raw input wavelengths
     QVector< QVector< int > >    ex_wavelns;  //!< Export Wavelengths, ea. cc

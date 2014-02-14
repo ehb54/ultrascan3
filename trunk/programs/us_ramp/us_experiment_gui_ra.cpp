@@ -1,8 +1,8 @@
-//! \file us_experiment_gui.cpp
+//! \file us_experiment_gui_ra.cpp
 
 #include <QtGui>
 
-#include "us_experiment_gui.h"
+#include "us_experiment_gui_ra.h"
 #include "us_passwd.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -11,9 +11,9 @@
 #include "us_project_gui.h"
 #include "us_rotor_gui.h"
 
-US_ExperimentGui::US_ExperimentGui( 
+US_ExperimentGuiRa::US_ExperimentGuiRa( 
       bool  signal_wanted,
-      const US_Experiment& dataIn,
+      const US_ExperimentRa& dataIn,
       int   select_db_disk ) :
    US_WidgetsDialog( 0, 0 ), expInfo( dataIn )
 {
@@ -115,7 +115,7 @@ US_ExperimentGui::US_ExperimentGui(
    // instrumentID
    QLabel* lb_instrument = us_label( tr( "Instrument:" ) );
    hardware->addWidget( lb_instrument, row, 0 );
-   cb_instrument = new US_SelectBox( this );
+   cb_instrument = new US_SelectBoxRa( this );
    connect( cb_instrument, SIGNAL( activated        ( int ) ),
                            SLOT  ( change_instrument( int ) ) );
    hardware->addWidget( cb_instrument, row++, 1 );
@@ -123,7 +123,7 @@ US_ExperimentGui::US_ExperimentGui(
    // operatorID
    QLabel* lb_operator = us_label( tr( "Operator:" ) );
    hardware->addWidget( lb_operator, row, 0 );
-   cb_operator = new US_SelectBox( this );
+   cb_operator = new US_SelectBoxRa( this );
    hardware->addWidget( cb_operator, row++, 1 );
 
    // Run Temperature
@@ -211,7 +211,7 @@ US_ExperimentGui::US_ExperimentGui(
    reset();
 }
 
-void US_ExperimentGui::reset( void )
+void US_ExperimentGuiRa::reset( void )
 {
    reload();
 
@@ -293,7 +293,7 @@ void US_ExperimentGui::reset( void )
 
 // function to load what we can initially
 // returns true if successful
-bool US_ExperimentGui::load( void )
+bool US_ExperimentGuiRa::load( void )
 {
    if ( expInfo.invID == 0 )
    {
@@ -364,7 +364,7 @@ bool US_ExperimentGui::load( void )
    return( true );
 }
 
-void US_ExperimentGui::reload( void )
+void US_ExperimentGuiRa::reload( void )
 {
 qDebug() << "ExpG:reload: IN labList size" << labList.size();
    if ( lab_changed && labList.size() > 0 )
@@ -405,11 +405,11 @@ qDebug() << "ExpG:reload: RTN";
    lab_changed = false;
 }
 
-void US_ExperimentGui::syncHardware( void )
+void US_ExperimentGuiRa::syncHardware( void )
 {
 }
 
-void US_ExperimentGui::selectInvestigator( void )
+void US_ExperimentGuiRa::selectInvestigator( void )
 {
    US_Investigator* inv_dialog = new US_Investigator( true, expInfo.invID );
 
@@ -420,7 +420,7 @@ void US_ExperimentGui::selectInvestigator( void )
    inv_dialog->exec();
 }
 
-void US_ExperimentGui::assignInvestigator( int invID )
+void US_ExperimentGuiRa::assignInvestigator( int invID )
 {
    expInfo.invID = invID;
 
@@ -428,7 +428,7 @@ void US_ExperimentGui::assignInvestigator( int invID )
    le_investigator->setText( number + US_Settings::us_inv_name());
 }
 
-void US_ExperimentGui::getInvestigatorInfo( void )
+void US_ExperimentGuiRa::getInvestigatorInfo( void )
 {
    expInfo.invID = US_Settings::us_inv_ID();     // just to be sure
    expInfo.name  = US_Settings::us_inv_name();
@@ -451,7 +451,7 @@ void US_ExperimentGui::getInvestigatorInfo( void )
    }
 }
 
-void US_ExperimentGui::source_changed( bool db )
+void US_ExperimentGuiRa::source_changed( bool db )
 {
    QStringList DB = US_Settings::defaultDB();
 
@@ -469,7 +469,7 @@ void US_ExperimentGui::source_changed( bool db )
    reset();
 }
 
-void US_ExperimentGui::update_disk_db( bool db )
+void US_ExperimentGuiRa::update_disk_db( bool db )
 {
    ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
 
@@ -477,7 +477,7 @@ void US_ExperimentGui::update_disk_db( bool db )
    emit use_db( db );
 }
 
-void US_ExperimentGui::selectProject( void )
+void US_ExperimentGuiRa::selectProject( void )
 {
    // Save other elements on the page first
    expInfo.label         = le_label   ->text(); 
@@ -506,20 +506,20 @@ void US_ExperimentGui::selectProject( void )
    delete projInfo;
 }
 
-void US_ExperimentGui::assignProject( US_Project& project )
+void US_ExperimentGuiRa::assignProject( US_Project& project )
 {
    expInfo.project  = project;
 
    reset();
 }
 
-void US_ExperimentGui::cancelProject( void )
+void US_ExperimentGuiRa::cancelProject( void )
 {
    reset();
 }
 
 // Function to update the labe associated with the current experiment
-void US_ExperimentGui::saveLabel( void )
+void US_ExperimentGuiRa::saveLabel( void )
 {
    expInfo.label = le_label->text();
    expInfo.label = expInfo.label.trimmed();
@@ -531,7 +531,7 @@ void US_ExperimentGui::saveLabel( void )
    reset();         // To get the pb_accept enable code
 }
 
-QComboBox* US_ExperimentGui::us_expTypeComboBox( void )
+QComboBox* US_ExperimentGuiRa::us_expTypeComboBox( void )
 {
    QComboBox* cb = us_comboBox();
 
@@ -549,7 +549,7 @@ QComboBox* US_ExperimentGui::us_expTypeComboBox( void )
    return cb;
 }
 
-void US_ExperimentGui::setInstrumentList( void )
+void US_ExperimentGuiRa::setInstrumentList( void )
 {
 qDebug() << "ExpG: setInstrL: IN labList size" << labList.size()
  << "currentLab" << currentLab;
@@ -589,7 +589,7 @@ qDebug() << "ExpG: setInstrL:  ins ID Ser" << expInfo.instrumentID
    }
 }
 
-void US_ExperimentGui::setOperatorList( void )
+void US_ExperimentGuiRa::setOperatorList( void )
 {
    QList< listInfo > options;
    QList< US_Rotor::Instrument > instruments = labList[ currentLab ].instruments;
@@ -642,7 +642,7 @@ void US_ExperimentGui::setOperatorList( void )
 }
 
 // Function to change the current instrument
-void US_ExperimentGui::change_instrument( int )
+void US_ExperimentGuiRa::change_instrument( int )
 {
    // First time through here the combo box might not be displayed yet
    expInfo.instrumentID = ( cb_instrument->getLogicalID() == -1 )
@@ -658,7 +658,7 @@ void US_ExperimentGui::change_instrument( int )
    reset();
 }
 
-void US_ExperimentGui::selectRotor( void )
+void US_ExperimentGuiRa::selectRotor( void )
 {
    // Save other elements on the page first
    expInfo.label         = le_label   ->text(); 
@@ -690,7 +690,7 @@ void US_ExperimentGui::selectRotor( void )
    rotorInfo->exec();
 }
 
-void US_ExperimentGui::assignRotor( US_Rotor::Rotor& rotor, US_Rotor::RotorCalibration& calibration )
+void US_ExperimentGuiRa::assignRotor( US_Rotor::Rotor& rotor, US_Rotor::RotorCalibration& calibration )
 {
    expInfo.rotorID       = rotor.ID;
    expInfo.rotorGUID     = rotor.GUID;
@@ -712,12 +712,12 @@ void US_ExperimentGui::assignRotor( US_Rotor::Rotor& rotor, US_Rotor::RotorCalib
    reset();
 }
 
-void US_ExperimentGui::cancelRotor( void )
+void US_ExperimentGuiRa::cancelRotor( void )
 {
    reset();
 }
 
-void US_ExperimentGui::accept( void )
+void US_ExperimentGuiRa::accept( void )
 {
    // We can sync with the DB
    expInfo.syncOK = true;
@@ -766,7 +766,7 @@ void US_ExperimentGui::accept( void )
    close();
 }
 
-void US_ExperimentGui::cancel( void )
+void US_ExperimentGuiRa::cancel( void )
 {
 //   expInfo.clear();
 
@@ -774,7 +774,7 @@ void US_ExperimentGui::cancel( void )
    close();
 }
 
-void US_ExperimentGui::connect_error( const QString& error )
+void US_ExperimentGuiRa::connect_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Connection Problem" ),
          tr( "Could not connect to database \n" ) + error );

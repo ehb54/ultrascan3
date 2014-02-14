@@ -1,3 +1,4 @@
+//! \file us_get_dbrun_ra.h
 #ifndef US_GET_DBRUN_H
 #define US_GET_DBRUN_H
 
@@ -6,20 +7,20 @@
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 
-//! \class US_GetDBRun
+//! \class US_GetDBRunRa
 //!        This class creates a dialog with all the experimentIDs,
 //!        dates last updated, runIDs and labels belonging to the
 //!        current user displayed. When the user clicks the select 
 //!        button, the highlighted runID is passed back to
 //!        the calling program.
-class US_GetDBRun : public US_WidgetsDialog
+class US_GetDBRunRa : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
-      //! \brief  Generic constructor for the US_GetDBRun dialog.
+      //! \brief  Generic constructor for the US_GetDBRunRa dialog.
       //  \param  r Where the selected runID will be stored
-      US_GetDBRun( QString& );
+      US_GetDBRunRa( QString& );
 
       //! \class RunInfo
       //! This class is used to store the information to display

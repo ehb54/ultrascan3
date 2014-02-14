@@ -9,14 +9,13 @@
 #include "us_plot.h"
 #include "us_math2.h"
 #include "us_ramp_gui.h"
-// #include "us_convertio.h"
-#include "us_experiment_gui.h"
-#include "us_select_triples.h"
+#include "us_experiment_gui_ra.h"
+#include "us_select_triples_ra.h"
 #include "us_solution_gui.h"
 #include "us_db2.h"
 #include "us_passwd.h"
-#include "us_intensity.h"
-#include "us_get_dbrun.h"
+#include "us_intensity_ra.h"
+#include "us_get_dbrun_ra.h"
 #include "us_investigator.h"
 #include "us_constants.h"
 #include "us_report.h"
@@ -215,7 +214,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_ccwinfo->setMaximumHeight(25);
 
    // Set up centerpiece drop-down
-   cb_centerpiece      = new US_SelectBox( this );
+   cb_centerpiece      = new US_SelectBoxRa( this );
    centerpieceInfo();
    cb_centerpiece -> load();
 
@@ -1356,12 +1355,12 @@ DbgLv(1) << "CGui: gExpInf: IN";
    int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                         : US_Disk_DB_Controls::Disk;
 
-   US_ExperimentGui* expInfo = new US_ExperimentGui( true,    // signal_wanted
+   US_ExperimentGuiRa* expInfo = new US_ExperimentGuiRa( true,    // signal_wanted
                                                      ExpData,
                                                      dbdisk );
 
-   connect( expInfo, SIGNAL( updateExpInfoSelection( US_Experiment& ) ),
-            this   , SLOT  ( updateExpInfo         ( US_Experiment& ) ) );
+   connect( expInfo, SIGNAL( updateExpInfoSelection( US_ExperimentRa& ) ),
+            this   , SLOT  ( updateExpInfo         ( US_ExperimentRa& ) ) );
 
    connect( expInfo, SIGNAL( cancelExpInfoSelection() ),
             this   , SLOT  ( cancelExpInfo         () ) );
@@ -1374,7 +1373,7 @@ DbgLv(1) << "CGui: gExpInf: RTN";
 }
 
 // Updating after user has selected info from experiment dialog
-void US_RampGui::updateExpInfo( US_Experiment& d )
+void US_RampGui::updateExpInfo( US_ExperimentRa& d )
 {
    // Update local copy
    ExpData = d;

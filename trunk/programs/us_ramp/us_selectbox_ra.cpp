@@ -1,18 +1,18 @@
-//! \file us_selectbox.cpp
+//! \file us_selectbox_ra.cpp
 
 #include "us_gui_settings.h"
-#include "us_selectbox.h"
+#include "us_selectbox_ra.h"
 
 // A class for creating widgets with options referred to
 //   by a logical ID
-US_SelectBase::US_SelectBase()
+US_SelectBaseRa::US_SelectBaseRa()
 {
 }
 
 // The implementation routines for a combo box
-US_SelectBox::US_SelectBox( QWidget* parent )
+US_SelectBoxRa::US_SelectBoxRa( QWidget* parent )
              : QComboBox( parent ),
-               US_SelectBase()
+               US_SelectBaseRa()
 {
 
    this->setPalette( US_GuiSettings::normalColor() );
@@ -23,12 +23,12 @@ US_SelectBox::US_SelectBox( QWidget* parent )
    this->load();
 }
 
-void US_SelectBox::addOption( listInfo& option )
+void US_SelectBoxRa::addOption( listInfo& option )
 {
    this->widgetList << option;
 }
 
-void US_SelectBox::addOptions( QList<listInfo>& options )
+void US_SelectBoxRa::addOptions( QList<listInfo>& options )
 {
    // Initialize combo box or other type of control
    this->widgetList.clear();
@@ -40,7 +40,7 @@ void US_SelectBox::addOptions( QList<listInfo>& options )
    this->setCurrentIndex( 0 );
 }
 
-void US_SelectBox::load( void )
+void US_SelectBoxRa::load( void )
 {
    this->clear();
    
@@ -51,7 +51,7 @@ void US_SelectBox::load( void )
 }
 
 // Function to update a combobox so that the current choice is selected
-void US_SelectBox::setLogicalIndex( int ID )
+void US_SelectBoxRa::setLogicalIndex( int ID )
 {
    for ( int i = 0; i < this->widgetList.size(); i++ )
    {
@@ -66,7 +66,7 @@ void US_SelectBox::setLogicalIndex( int ID )
    this->setCurrentIndex( 0 );
 }
 
-int US_SelectBox::getLogicalID( void ) 
+int US_SelectBoxRa::getLogicalID( void ) 
 {
    int ndx = this->currentIndex();
 
@@ -75,9 +75,9 @@ int US_SelectBox::getLogicalID( void )
 }
 
 // Implementation routines for a ListWidget
-US_ListwidgetBox::US_ListwidgetBox( QWidget* parent, int fontAdjust )
+US_ListwidgetBoxRa::US_ListwidgetBoxRa( QWidget* parent, int fontAdjust )
                 : QListWidget( parent ),
-                  US_SelectBase()
+                  US_SelectBaseRa()
 {
    this->setAutoFillBackground( true );
    this->setPalette( US_GuiSettings::editColor() );
@@ -87,12 +87,12 @@ US_ListwidgetBox::US_ListwidgetBox( QWidget* parent, int fontAdjust )
    this->load();
 }
 
-void US_ListwidgetBox::addOption( listInfo& option )
+void US_ListwidgetBoxRa::addOption( listInfo& option )
 {
    this->widgetList << option;
 }
 
-void US_ListwidgetBox::addOptions( QList<listInfo>& options )
+void US_ListwidgetBoxRa::addOptions( QList<listInfo>& options )
 {
    // Initialize list widget
    this->widgetList.clear();
@@ -102,7 +102,7 @@ void US_ListwidgetBox::addOptions( QList<listInfo>& options )
    this->setCurrentRow( 0 );
 }
 
-void US_ListwidgetBox::load( void )
+void US_ListwidgetBoxRa::load( void )
 {
    this->clear();
    
@@ -113,7 +113,7 @@ void US_ListwidgetBox::load( void )
 }
 
 // Function to update a combobox so that the current choice is selected
-void US_ListwidgetBox::setLogicalIndex( int ID )
+void US_ListwidgetBoxRa::setLogicalIndex( int ID )
 {
    for ( int i = 0; i < this->widgetList.size(); i++ )
    {
@@ -128,7 +128,7 @@ void US_ListwidgetBox::setLogicalIndex( int ID )
    this->setCurrentRow( 0 );
 }
 
-int US_ListwidgetBox::getLogicalID( void ) 
+int US_ListwidgetBoxRa::getLogicalID( void ) 
 {
    int ndx = this->currentRow();
 
