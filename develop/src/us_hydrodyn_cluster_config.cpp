@@ -474,7 +474,7 @@ void US_Hydrodyn_Cluster_Config::add_new()
          << "executable"
          << "queue";
       
-      for ( unsigned int i = 0; i < params.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) params.size(); i++ )
       {
          tmp_system[ params[ i ] ] = "";
       }

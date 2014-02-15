@@ -5301,7 +5301,7 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
 
                // find clash distance of each one, then exit for now:
 
-               float        min_dist        = 1e30f;
+               // float        min_dist        = 1e30f;
                unsigned int min_dist_pos    = 0;
                bool         found_non_clash = false;
                vector < point > min_water;
@@ -5357,7 +5357,7 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
                   float this_dist = min_dist_to_struct_and_waters( new_waters[ 0 ] );
                   if ( this_dist > 0 )
                   {
-                     min_dist = this_dist;
+                     // min_dist = this_dist;
                      min_dist_pos = m;
                      found_non_clash = true;
                      min_water = new_waters;
@@ -5529,7 +5529,7 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
                   return false;
                }
          
-               float        min_dist        = 1e30f;
+               // float        min_dist        = 1e30f;
                unsigned int min_dist_pos    = 0;
                bool         found_non_clash = false;
                vector < point > min_water;
@@ -5628,7 +5628,7 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
                      float this_dist = min_dist_to_struct_and_waters( new_waters[ 0 ] );
                      if ( this_dist > 0 )
                      {
-                        min_dist = this_dist;
+                        // min_dist = this_dist;
                         min_dist_pos = m;
                         found_non_clash = true;
                         min_water = new_waters;

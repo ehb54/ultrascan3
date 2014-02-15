@@ -1358,18 +1358,18 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_resid->enableGridXMin();
    plot_resid->enableGridYMin();
 #else
-   grid_errors = new QwtPlotGrid;
-   grid_errors->enableXMin( true );
-   grid_errors->enableYMin( true );
+   grid_resid = new QwtPlotGrid;
+   grid_resid->enableXMin( true );
+   grid_resid->enableYMin( true );
 #endif
    plot_resid->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
 #ifndef QT4
    plot_resid->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_resid->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_errors->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_errors->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
-   grid_errors->attach( plot_resid );
+   grid_resid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_resid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_resid->attach( plot_resid );
 #endif
    // plot_resid->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q (1/Angstrom) or Frame"));
    // plot_resid->setAxisTitle(QwtPlot::yLeft, tr("I(q) (log scale)"));
@@ -2609,13 +2609,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          // sleep app loop
          {
             int all_done;
-#if !defined(WIN32)
-            timespec ns;
-            timespec ns_ret;
-            ns.tv_sec = 0;
-            ns.tv_nsec = 50000000l;
-#endif
-            
             do {
                all_done = threads;
                for ( j = 0; j < threads; j++ )
@@ -2623,11 +2616,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   all_done -= saxs_pr_thr_threads[j]->saxs_pr_thr_work_status();
                }
                qApp->processEvents();
-#if defined(WIN32)
-               _sleep(1);
-#else
-               nanosleep(&ns, &ns_ret);
-#endif
+               mQThread::msleep( 333 );
             } while(all_done);
          }
          
@@ -3319,8 +3308,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       run_saxs_iq_foxs( model_filepathname );
       while ( external_running )
       {
-         QWaitCondition sleep;
-         sleep.wait( 1000 );  
+         mQThread::msleep( 333 );
          cout << "an event\n" << flush;
          qApp->processEvents();
       }
@@ -3329,10 +3317,10 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
    if ( !source && our_saxs_options->saxs_iq_crysol ) 
    {
       run_saxs_iq_crysol( model_filepathname );
+      
       while ( external_running )
       {
-         QWaitCondition sleep;
-         sleep.wait( 1000 );  
+         mQThread::msleep( 333 );
          cout << "an event\n" << flush;
          qApp->processEvents();
       }
@@ -3343,8 +3331,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       run_saxs_iq_sastbx( model_filepathname );
       while ( external_running )
       {
-         QWaitCondition sleep;
-         sleep.wait( 1000 );  
+         mQThread::msleep( 333 );
          cout << "an event\n" << flush;
          qApp->processEvents();
       }
@@ -3914,12 +3901,6 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          // sleep app loop
          {
             int all_done;
-#if !defined(WIN32)
-            timespec ns;
-            timespec ns_ret;
-            ns.tv_sec = 0;
-            ns.tv_nsec = 500000000l;
-#endif
             do {
                all_done = threads;
                for ( j = 0; j < threads; j++ )
@@ -3927,11 +3908,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   all_done -= saxs_Iq_thr_threads[j]->saxs_Iq_thr_work_status();
                }
                qApp->processEvents();
-#if defined(WIN32)
-               _sleep(1);
-#else
-               nanosleep(&ns, &ns_ret);
-#endif
+               mQThread::msleep( 333 );
             } while(all_done);
          }
          
@@ -4518,8 +4495,7 @@ void US_Hydrodyn_Saxs::show_plot_sans()
       run_sans_iq_cryson( model_filepathname );
       while ( external_running )
       {
-         QWaitCondition sleep;
-         sleep.wait( 1000 );  
+         mQThread::msleep( 333 );
          cout << "an event\n" << flush;
          qApp->processEvents();
       }

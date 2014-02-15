@@ -22,7 +22,7 @@ US_Dirhist::US_Dirhist(
 
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 
-   setCaption( tr("US-SOMO: Select directory") );
+   setCaption( tr("US-SOMO: Previously used directories") );
 
    setupGUI();
    // global_Xpos += 30;
@@ -43,7 +43,7 @@ void US_Dirhist::setupGUI()
    int minHeight1 = 30;
    //   int minHeight2 = 50;
 
-   lbl_info = new QLabel( tr( "Select directory " ), this );
+   lbl_info = new QLabel( tr( "Previously used directories" ), this );
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);

@@ -935,7 +935,7 @@ place1(float a1[3])
 
    int i;
    float tetar = 0.0;
-   float b1x, b1y, b1z, b1nx, b1ny, b1nz;
+   float b1x, b1y, b1z, b1nx, /* b1ny, */ b1nz;
 
    b1x = a1[0];
    b1y = a1[1];
@@ -985,7 +985,7 @@ place1(float a1[3])
    }
 
    b1nx = b1x * cos(tetar) + b1y * sin(tetar);
-   b1ny = (-b1x * sin(tetar)) + b1y * cos(tetar);
+   // b1ny = (-b1x * sin(tetar)) + b1y * cos(tetar);
    b1nz = b1z;
 
    /* the model is now aligned so that the line passing */

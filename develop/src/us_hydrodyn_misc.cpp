@@ -403,11 +403,11 @@ void US_Hydrodyn_Misc::update_vbar_temperature(const QString &str)
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
-void US_Hydrodyn_Misc::update_vbar_signal(float val1, float val2)
+void US_Hydrodyn_Misc::update_vbar_signal(float /* val1 */, float val2)
 {
    QString str;
-   float vbar20;
-   vbar20 = val1;
+   // float vbar20;
+   // vbar20 = val1;
    (*misc).vbar = val2;
    le_vbar->setText(str.sprintf("%5.3f", (*misc).vbar));
    emit vbar_changed();

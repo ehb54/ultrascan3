@@ -1940,7 +1940,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
 
    rotamer tmp_rotamer;
 
-   for ( unsigned int i = 0; i < qsl.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
    {
       if ( rx_skip.search( qsl[ i ] ) != -1 )
       {
@@ -2042,7 +2042,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
 
             bool         found_match = false;
             unsigned int pos;
-            for ( unsigned int j = 0; j < rotamers[ residue ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) rotamers[ residue ].size(); j++ )
             {
                // cout << QString( "rotamers '%1' %2 name '%3'\n" )
                // .arg( residue )
@@ -2083,7 +2083,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             for ( unsigned int j = 0; j < 2; j++ )
             {
                bool found_sc_atom = false;
-               for ( unsigned int k = 0; k < ref_rotamer.side_chain.size(); k++ )
+               for ( unsigned int k = 0; k < (unsigned int) ref_rotamer.side_chain.size(); k++ )
                {
                   if ( ref_rotamer.side_chain[ k ].name == atoms[ j ] )
                   {
@@ -2103,7 +2103,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                }
             }               
                
-            if ( ref_rotamer.waters.size() <= water_number )
+            if ( (unsigned int) ref_rotamer.waters.size() <= water_number )
             {
                error_msg = 
                   QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found reference rotamer, but it has %3 waters, less than %4 requested" ) )
@@ -2224,11 +2224,11 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
 
             // now setup and do transformation
             vector < point > ref_rotamer_p;
-            for ( unsigned int j = 0; j < ref_rotamer.side_chain.size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) ref_rotamer.side_chain.size(); j++ )
             {
                ref_rotamer_p.push_back( ref_rotamer.side_chain[ j ].coordinate );
             }
-            for ( unsigned int j = 0; j < ref_rotamer.waters.size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) ref_rotamer.waters.size(); j++ )
             {
                ref_rotamer_p.push_back( ref_rotamer.waters[ j ].coordinate );
             }
@@ -2244,7 +2244,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             rotamer new_ref_rotamer = ref_rotamer;
             // not avail yet
             // new_ref_rotamer.water_positioning_atoms.push_back( ref_rotamer.water_positioning_atoms[ water_number ] );
-            for ( unsigned int j = 0; j < ref_rotamer.side_chain.size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) ref_rotamer.side_chain.size(); j++ )
             {
                new_ref_rotamer.side_chain[ j ].coordinate = ref_rotamer_np[ j ];
                new_ref_rotamer.atom_map[ new_ref_rotamer.side_chain[ j ].name ].coordinate =
@@ -2254,7 +2254,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             // now we are putting each water in its own ref rotamer since
             // each is being multiply rotated and
             // it is a water of memory to store rot**waters variants
-            // for ( unsigned int j = 0; j < ref_rotamer.waters.size(); j++ )
+            // for ( unsigned int j = 0; j < (unsigned int) ref_rotamer.waters.size(); j++ )
             // {
             new_ref_rotamer.waters.resize( 1 );
             new_ref_rotamer.waters[ 0 ].coordinate = ref_rotamer_np[ ref_rotamer.side_chain.size() + water_number ];
@@ -2295,16 +2295,16 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          // we will just list each vector as a separate model
 
 
-         for ( unsigned int jj = 0; jj < rotated_rotamers[ name ].size(); jj++ )
+         for ( unsigned int jj = 0; jj < (unsigned int) rotated_rotamers[ name ].size(); jj++ )
          {
             out += QString( "REMARK  water %1\n" ).arg( jj + 1 );
-            for ( unsigned int j = 0; j < rotated_rotamers[ name ][ jj ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) rotated_rotamers[ name ][ jj ].size(); j++ )
             {
                out += QString( "MODEL     %1\n" ).arg( j + 1 );
 
                unsigned int apos = 0;
 
-               for ( unsigned int k = 0; k < rotated_rotamers[ name ][ jj ][ j ].side_chain.size(); k++ )
+               for ( unsigned int k = 0; k < (unsigned int) rotated_rotamers[ name ][ jj ][ j ].side_chain.size(); k++ )
                {
                   out += QString( "" )
                      .sprintf(     
@@ -2323,7 +2323,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                               );
                }
                out += "TER\n";
-               for ( unsigned int k = 0; k < rotated_rotamers[ name ][ jj ][ j ].waters.size(); k++ )
+               for ( unsigned int k = 0; k < (unsigned int) rotated_rotamers[ name ][ jj ][ j ].waters.size(); k++ )
                {
                   out += QString( "" )
                      .sprintf(     
@@ -2444,7 +2444,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                << "TRP"
                << "TYR"
                << "VAL";
-            for ( unsigned int j = 0; j < AAs.size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) AAs.size(); j++ )
             {
                cout << QString( "expanding AA pointmap for AA %1\n" ).arg( AAs[ j ] );
                if ( pointmap_atoms.count( AAs[ j ] ) )
@@ -2470,7 +2470,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          QString res = qsl_line[ 0 ];
          qsl_line.pop_front();
          vector < QString > four_atoms;
-         for ( unsigned int j = 0; j < qsl_line.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) qsl_line.size(); j++ )
          {
             four_atoms.push_back( qsl_line[ j ] );
             if ( four_atoms.size() == 4 )
@@ -2646,7 +2646,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          it != rotamers.end();
          it++ )
    {
-      for ( unsigned int i = 0; i < it->second.size() && i < 1; i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size() && i < 1; i++ )
       {
          if ( hydrate_count.count( it->first ) )
          {
@@ -2683,7 +2683,7 @@ bool US_Hydrodyn::compute_rotamer_dihedrals( QString &error_msg )
           it++ )
    {
       // for each rotamer for the residue
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
 #if defined( DEBUG_DIHEDRAL )
          cout << 
@@ -2693,7 +2693,7 @@ bool US_Hydrodyn::compute_rotamer_dihedrals( QString &error_msg )
 #endif
          it->second[ i ].dihedral_angles.clear();
          // process each dihedral chain, giving 4 points
-         for ( unsigned int j = 0; j < dihedral_atoms[ it->first ].size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) dihedral_atoms[ it->first ].size(); j++ )
          {
 #if defined( DEBUG_DIHEDRAL )
             cout << QString("  dihedral chain pos %1:\n").arg( j );
@@ -2707,7 +2707,7 @@ bool US_Hydrodyn::compute_rotamer_dihedrals( QString &error_msg )
                   .arg( it->first );
                return false;
             }
-            for ( unsigned int k = 0; k < dihedral_atoms[ it->first ][ j ].size(); k++ )
+            for ( unsigned int k = 0; k < (unsigned int) dihedral_atoms[ it->first ][ j ].size(); k++ )
             {
 #if defined( DEBUG_DIHEDRAL )
                cout << QString("  %1: ").arg( dihedral_atoms[ it->first ][ j ][ k ] );
@@ -2761,10 +2761,10 @@ QString US_Hydrodyn::list_rotamer_dihedrals()
           it++ )
    {
       out += QString( "Rotamers for residue: %1\n" ).arg( it->first );
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          out += QString(" %1: sc").arg( it->second[ i ].extension );
-         for ( unsigned int j = 0; j < it->second[ i ].dihedral_angles.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second[ i ].dihedral_angles.size(); j++ )
          {
             out += QString(" %1").arg( it->second[ i ].dihedral_angles[ j ] );
          }
@@ -2789,7 +2789,7 @@ QString US_Hydrodyn::list_pointmaps()
          QString( "Pointmaps for residue: %1  number of maps %2\n" )
          .arg( it->first )
          .arg( it->second.size() );
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          out += 
             QString( "    mapping to %1\n" )
@@ -2806,15 +2806,15 @@ QString US_Hydrodyn::list_pointmaps()
          if ( pointmap_atoms_ref_residue.count( it->first ) &&
               pointmap_atoms_ref_residue[ it->first ].size() > i )
          {
-            for ( unsigned int j = 0; j < it->second[ i ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) it->second[ i ].size(); j++ )
             {
                out += QString("    %1 -> %2\n")
                   .arg( it->second[ i ][ j ] )
                   .arg( pointmap_atoms_dest.count( it->first )
                         ?
-                        ( pointmap_atoms_dest[ it->first ].size() > i 
+                        ( (unsigned int) pointmap_atoms_dest[ it->first ].size() > i 
                           ?
-                          ( pointmap_atoms_dest[ it->first ][ i ].size() > j 
+                          ( (unsigned int) pointmap_atoms_dest[ it->first ][ i ].size() > j 
                             ?
                             pointmap_atoms_dest[ it->first ][ i ][ j ] 
                             :
@@ -2840,7 +2840,7 @@ QString US_Hydrodyn::list_rotated_rotamers()
          it++ )
    {
       cout << QString( "key %1 entries %2\n" ).arg( it->first ).arg( it->second.size() );
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          cout << QString( "key %1 entry %2 entries %3\n" ).arg( it->first ).arg( i ).arg( it->second[ i ].size() );
          for ( unsigned int j = 0; j < it->second[ i ].size(); j++ )
@@ -2857,7 +2857,7 @@ QString US_Hydrodyn::list_rotated_rotamers()
          it++ )
    {
       cout << QString( "key %1 entries %2\n" ).arg( it->first ).arg( it->second.size() );
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          cout << it->second[ i ];
       }
@@ -2876,9 +2876,9 @@ QString US_Hydrodyn::list_rotamers( bool coords )
           it++ )
    {
       out += QString(" %1:\n").arg( it->first );
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
-         for ( unsigned int j = 0; j < it->second[i].size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second[i].size(); j++ )
          {
             out += QString(" %1").arg( it->second[i][j] );
          }
@@ -2893,10 +2893,10 @@ QString US_Hydrodyn::list_rotamers( bool coords )
           it++ )
    {
       out += QString( "Rotamers for residue: %1\n" ).arg( it->first );
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          out += QString(" %1: sc").arg( it->second[ i ].extension );
-         for ( unsigned int j = 0; j < it->second[ i ].side_chain.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second[ i ].side_chain.size(); j++ )
          {
             out += QString(" %1").arg( it->second[ i ].side_chain[ j ].name );
             if ( coords )
@@ -2908,7 +2908,7 @@ QString US_Hydrodyn::list_rotamers( bool coords )
             }
          }
          out += " w";
-         for ( unsigned int j = 0; j < it->second[ i ].waters.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second[ i ].waters.size(); j++ )
          {
             out += QString(" %1").arg( it->second[ i ].waters[ j ].name );
             if ( coords )
@@ -2952,7 +2952,7 @@ bool US_Hydrodyn::compute_best_fit_rotamer( QString &error_msg )
       float        best_fitness     = 1e30f;
       unsigned int best_fitness_pos = 0;
 
-      for ( unsigned int i = 0; i < rotamers[ resName ].size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) rotamers[ resName ].size(); i++ )
       {
          if ( it->second.size() != rotamers[ resName ][ i ].dihedral_angles.size() )
          {
@@ -2965,7 +2965,7 @@ bool US_Hydrodyn::compute_best_fit_rotamer( QString &error_msg )
             return false;
          }
          float fitness = 0.0;
-         for ( unsigned int j = 0; j < it->second.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second.size(); j++ )
          {
             // the dihedral angles are computed by acos, and range of acos is [0,pi], 
             // so I think we are ok
@@ -3024,7 +3024,7 @@ bool US_Hydrodyn::setup_pointmap_rotamers( QString &error_msg )
          return false;
       }
 
-      for ( unsigned int i = 0; i < pointmap_atoms_ref_residue[ resName ].size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) pointmap_atoms_ref_residue[ resName ].size(); i++ )
       {
          if ( !rotamers.count( pointmap_atoms_ref_residue[ resName ][ i ] ) )
          {
@@ -3051,7 +3051,7 @@ QString US_Hydrodyn::list_pointmap_rotamers()
          it++ )
    {
       out += QString( "%1:" ).arg( it->first );
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          out += QString( " %1" ).arg( it->second[ i ].name );
       }
@@ -3076,19 +3076,19 @@ bool US_Hydrodyn::compute_water_positioning_atoms( QString & error_msg )
          it != rotamers.end();
          it++ )
    {
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          it->second[ i ].water_positioning_atoms.clear();
 
          // for each water
 
-         for ( unsigned int j = 0; j < it->second[ i ].waters.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second[ i ].waters.size(); j++ )
          {
             lsf.clear();
             wpa.clear();
             
             // find the distance to each side chain atom
-            for ( unsigned int k = 0; k < it->second[ i ].side_chain.size(); k++ )
+            for ( unsigned int k = 0; k < (unsigned int) it->second[ i ].side_chain.size(); k++ )
             {
                sf.f = dist( it->second[ i ].waters[ j ].coordinate, it->second[ i ].side_chain[ k ].coordinate );
                sf.index = k;
@@ -3133,7 +3133,7 @@ bool US_Hydrodyn::compute_water_positioning_atoms( QString & error_msg )
          return false;
       }
 
-      unsigned int water_count = it->second.size();
+      unsigned int water_count = (unsigned int) it->second.size();
       
       if ( water_count != back_ref[ it->first ]->water_positioning_atoms.size() )
       {
@@ -3144,9 +3144,9 @@ bool US_Hydrodyn::compute_water_positioning_atoms( QString & error_msg )
          return false;
       }
 
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
-         for ( unsigned int j = 0; j < it->second[ i ].size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second[ i ].size(); j++ )
          {
             it->second[ i ][ j ].water_positioning_atoms.push_back( back_ref[ it->first ]->water_positioning_atoms[ i ] );
          }
@@ -3165,13 +3165,13 @@ QString US_Hydrodyn::list_water_positioning_atoms()
           it++ )
    {
       out += QString( "  Rotamer for residue: %1\n" ).arg( it->first );
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          out += QString("  %1:\n").arg( it->second[ i ].extension );
-         for ( unsigned int j = 0; j < it->second[ i ].water_positioning_atoms.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second[ i ].water_positioning_atoms.size(); j++ )
          {
             out += QString( "    water %1 :" ).arg( j );
-            for ( unsigned int k = 0; k < it->second[ i ].water_positioning_atoms[ j ].size(); k++ )
+            for ( unsigned int k = 0; k < (unsigned int) it->second[ i ].water_positioning_atoms[ j ].size(); k++ )
             {
                out += QString(" %1").arg( it->second[ i ].water_positioning_atoms[ j ][ k ] );
             }
@@ -3187,13 +3187,13 @@ QString US_Hydrodyn::list_water_positioning_atoms()
           it != rotamers.end();
           it++ )
    {
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          out += QString("%1-%2 ").arg( it->first ).arg( it->second[ i ].extension );
-         for ( unsigned int j = 0; j < it->second[ i ].water_positioning_atoms.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second[ i ].water_positioning_atoms.size(); j++ )
          {
             out += QString( " [%1]" ).arg( j );
-            for ( unsigned int k = 0; k < it->second[ i ].water_positioning_atoms[ j ].size(); k++ )
+            for ( unsigned int k = 0; k < (unsigned int) it->second[ i ].water_positioning_atoms[ j ].size(); k++ )
             {
                out += QString(" %1").arg( it->second[ i ].water_positioning_atoms[ j ][ k ] );
             }
@@ -3248,13 +3248,13 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
          return false;
       }
 
-      for ( unsigned int i = 0; i < it->second.water_positioning_atoms.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.water_positioning_atoms.size(); i++ )
       {
          // get coordinates of 
          p1.resize( it->second.water_positioning_atoms[ i ].size() );
          p2.resize( it->second.water_positioning_atoms[ i ].size() );
             
-         for ( unsigned int j = 0; j < it->second.water_positioning_atoms[ i ].size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second.water_positioning_atoms[ i ].size(); j++ )
          {
             if ( !it->second.atom_map.count( it->second.water_positioning_atoms[ i ][ j ] ) )
             {
@@ -3344,7 +3344,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
          return false;
       }
          
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          // for each water to add:
          // compute transformation matrix from the pointmap_atoms_dest in the pointmap_atom_ref_residue
@@ -3376,7 +3376,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
             return false;
          }
 
-         for ( unsigned int j = 0; j < p1.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) p1.size(); j++ )
          {
             // cout << QString("mapping: %1 %2 dest %3\n")
             // .arg(it->first)
@@ -3422,20 +3422,20 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
          // .arg( it->first )
          // .arg( resName );
 
-         for ( unsigned int j = 0; j < it->second[ i ].waters.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second[ i ].waters.size(); j++ )
          {
             vector < point > rotamer_waters;
             rotamer_waters.push_back( it->second[ i ].waters[ j ].coordinate );
             vector < point > new_waters;
 #if defined( UHH_DEBUG_ALIGN )
             cout << QString( "aligning: " );
-            for ( unsigned int k = 0; k < p1.size(); k++ )
+            for ( unsigned int k = 0; k < (unsigned int) p1.size(); k++ )
             {
                cout << p1[k] << p2[k] << " ";
             }
             cout << endl;
             cout << QString( "aligning waters: " );
-            for ( unsigned int k = 0; k < rotamer_waters.size(); k++ )
+            for ( unsigned int k = 0; k < (unsigned int) rotamer_waters.size(); k++ )
             {
                cout << rotamer_waters[k];
             }
@@ -3447,7 +3447,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
             }
 #if defined( UHH_DEBUG_ALIGN )
             cout << QString( "aligning after xfrom waters: " );
-            for ( unsigned int k = 0; k < new_waters.size(); k++ )
+            for ( unsigned int k = 0; k < (unsigned int) new_waters.size(); k++ )
             {
                cout << new_waters[k];
             }
@@ -3476,8 +3476,8 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
                   // cout << QString( "using %1 for water radius %2\n" ).arg( water_radius ).arg(  multi_residue_map.count( "WAT" ) ? "has WAT" : "no WAT" );
 
                   // check structure:
-                  for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-                     for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+                  for (unsigned int j = 0; j < (unsigned int) model_vector[i].molecule.size (); j++) {
+                     for (unsigned int k = 0; k < (unsigned int) model_vector[i].molecule[j].atom.size (); k++) {
                         PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
          
                         if ( dist( this_atom->coordinate, p ) < ( this_atom->radius + water_radius ) * dist_threshold )
@@ -3493,7 +3493,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
                         it != waters_to_add.end();
                         it++ )
                   {
-                     for ( unsigned int i = 0; i < it->second.size(); i++ )
+                     for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
                      {
                         if ( dist( it->second[ i ], p ) <=  2e0 * water_radius * dist_threshold )
                         {
@@ -3530,7 +3530,7 @@ QString US_Hydrodyn::list_waters_to_add()
          it++ )
    {
       out += QString( "%1: " ).arg( it->first );
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          out += QString( " [%1,%2,%3]" )
             .arg( it->second[ i ].axis[ 0 ] )
@@ -3567,8 +3567,8 @@ float US_Hydrodyn::min_dist_to_struct_and_waters( point p )
    float this_dist;
 
    // check structure:
-   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+   for (unsigned int j = 0; j < (unsigned int) model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < (unsigned int) model_vector[i].molecule[j].atom.size (); k++) {
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
          
          this_dist = dist( this_atom->coordinate, p ) - ( this_atom->radius + water_radius ) * dist_threshold;
@@ -3587,7 +3587,7 @@ float US_Hydrodyn::min_dist_to_struct_and_waters( point p )
          it != waters_to_add.end();
          it++ )
    {
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          this_dist = dist( it->second[ i ], p ) -  2e0 * water_radius * dist_threshold;
          if ( this_dist < 0e0 )
@@ -3613,8 +3613,8 @@ bool US_Hydrodyn::has_steric_clash( point p, bool summary )
    // cout << QString( "using %1 for water radius %2\n" ).arg( water_radius ).arg(  multi_residue_map.count( "WAT" ) ? "has WAT" : "no WAT" );
 
    // check structure:
-   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+   for (unsigned int j = 0; j < (unsigned int) model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < (unsigned int) model_vector[i].molecule[j].atom.size (); k++) {
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
          
          if ( dist( this_atom->coordinate, p ) < ( this_atom->radius + water_radius ) * dist_threshold )
@@ -3639,7 +3639,7 @@ bool US_Hydrodyn::has_steric_clash( point p, bool summary )
          it != waters_to_add.end();
          it++ )
    {
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          if ( dist( it->second[ i ], p ) <=  2e0 * water_radius * dist_threshold )
          {
@@ -3664,7 +3664,7 @@ float US_Hydrodyn::min_dist_to_waters( point p )
          it != waters_to_add.end();
          it++ )
    {
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          float this_dist = dist( it->second[ i ], p );
          if ( first )
@@ -3709,13 +3709,13 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
          it++ )
    {
       // cout << QString( "checking steric clash water to add %1\n" ).arg( it->first );
-      for ( unsigned int pos = 0; pos < it->second.size(); pos++ )
+      for ( unsigned int pos = 0; pos < (unsigned int) it->second.size(); pos++ )
       {
          point p = it->second[ pos ];
 
          // check structure:
-         for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+         for (unsigned int j = 0; j < (unsigned int) model_vector[i].molecule.size (); j++) {
+            for (unsigned int k = 0; k < (unsigned int) model_vector[i].molecule[j].atom.size (); k++) {
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
                if ( dist( this_atom->coordinate, p ) < ( this_atom->radius + water_radius ) * dist_threshold )
                {
@@ -3829,7 +3829,7 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
                it2 != waters_to_add.end();
                it2++ )
          {
-            for ( unsigned int j = ( it2 == it ? pos + 1 : 0 ); j < it2->second.size(); j++ )
+            for ( unsigned int j = ( it2 == it ? pos + 1 : 0 ); j < (unsigned int) it2->second.size(); j++ )
             {
                if ( dist( it2->second[ j ], p ) < 2e0 * water_radius * dist_threshold )
                {
@@ -4027,7 +4027,7 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
          ;              
       ts << qs;
       ts << "\nDetailed clash info:\n\n";
-      for ( unsigned int i = 0; i < hydrate_clash_log.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) hydrate_clash_log.size(); i++ )
       {
          ts << hydrate_clash_log[ i ];
       }
@@ -4108,8 +4108,8 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
    unsigned int residue_number = 0;
    map < QString, bool > chains_used;
 
-   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+   for (unsigned int j = 0; j < (unsigned int) model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < (unsigned int) model_vector[i].molecule[j].atom.size (); k++) {
          PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
          last_hydrated_pdb_text +=
@@ -4187,7 +4187,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
          it != waters_to_add.end();
          it++ )
    {
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          last_hydrated_pdb_text +=
             QString("")
@@ -4239,11 +4239,11 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
       {
          out += QString( "select %1\ncolor cyan\n" ).arg( it->first );
       }
-      for ( unsigned int i = 0; i < hydrate_clash_waters_rtmr_list.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) hydrate_clash_waters_rtmr_list.size(); i++ )
       {
          out += QString( "select %1\ncolor yellow\n" ).arg( hydrate_clash_waters_rtmr_list[ i ] );
       }
-      for ( unsigned int i = 0; i < hydrate_clash_waters_pm_list.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) hydrate_clash_waters_pm_list.size(); i++ )
       {
          out += QString( "select %1\ncolor green\n" ).arg( hydrate_clash_waters_pm_list[ i ] );
       }
@@ -4292,8 +4292,8 @@ bool US_Hydrodyn::selected_models_contain( QString residue )
 {
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++) {
       if ( lb_model->isSelected( i ) ) {
-         for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-            for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+         for (unsigned int j = 0; j < (unsigned int) model_vector[i].molecule.size (); j++) {
+            for (unsigned int k = 0; k < (unsigned int) model_vector[i].molecule[j].atom.size (); k++) {
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
                if ( this_atom->resName == residue )
                {
@@ -4329,7 +4329,7 @@ QString US_Hydrodyn::validate_pointmap()
                .arg( it->first );
             to_erase[ it->first ] = true;
          } else {
-            for ( unsigned int i = 0; i < it->second.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
             {
                if ( !rotamers.count( it->second[ i ] ) )
                {
@@ -4357,9 +4357,9 @@ QString US_Hydrodyn::validate_pointmap()
    {
       if ( !to_erase.count( it->first ) )
       {
-         for ( unsigned int i = 0; i < it->second.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
          {
-            for ( unsigned int j = 0; j < it->second[ i ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) it->second[ i ].size(); j++ )
             {
                if ( !rotamers[ pointmap_atoms_ref_residue[ it->first ][ i ] ][ 0 ].atom_map.count( it->second[ i ][ j ] ) )
                {
@@ -4461,7 +4461,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
          p1.resize( it->second.water_positioning_atoms[ i ].size() );
          p2.resize( it->second.water_positioning_atoms[ i ].size() );
             
-         for ( unsigned int j = 0; j < it->second.water_positioning_atoms[ i ].size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) it->second.water_positioning_atoms[ i ].size(); j++ )
          {
             if ( !it->second.atom_map.count( it->second.water_positioning_atoms[ i ][ j ] ) )
             {
@@ -4557,7 +4557,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
          return false;
       }
          
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          // for each water to add:
          // compute transformation matrix from the pointmap_atoms_dest in the pointmap_atom_ref_residue
@@ -4603,7 +4603,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                return false;
             }
             
-            for ( unsigned int j = 0; j < p1.size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) p1.size(); j++ )
             {
                // cout << QString("mapping: %1 %2 dest %3\n")
                // .arg(it->first)
@@ -4652,7 +4652,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                .arg( resName );
 #endif
             
-            for ( unsigned int j = 0; j < ref_rotamer.waters.size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) ref_rotamer.waters.size(); j++ )
             {
                vector < point > rotamer_waters;
                rotamer_waters.push_back( ref_rotamer.waters[ j ].coordinate );
@@ -4732,7 +4732,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
       water_choices[ it->first ].resize( it->second.size() );
       water_choices_source[ it->first ].resize( it->second.size() );
 
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          // for each water to add:
          // compute transformation matrix from the pointmap_atoms_dest in the pointmap_atom_ref_residue
@@ -4753,7 +4753,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             // multiple rotated rotamers
 #if defined( NOT_YET )
             bool found_rotated_rotamer_without_clash = false;
-            for ( unsigned int k = 0; k < rotated_rotamers[ it->second[ i ].name ].size(); k++ )
+            for ( unsigned int k = 0; k < (unsigned int) rotated_rotamers[ it->second[ i ].name ].size(); k++ )
             {
                ref_rotamer = rotated_rotamers[ it->second[ i ].name ][ k ];
 
@@ -4782,7 +4782,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   return false;
                }
             
-               for ( unsigned int j = 0; j < p1.size(); j++ )
+               for ( unsigned int j = 0; j < (unsigned int) p1.size(); j++ )
                {
                   // cout << QString("mapping: %1 %2 dest %3\n")
                   // .arg(it->first)
@@ -4842,7 +4842,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                
                // now we are going to save them all and create a nmr style set of options
 
-               for ( unsigned int j = 0; j < ref_rotamer.waters.size(); j++ )
+               for ( unsigned int j = 0; j < (unsigned int) ref_rotamer.waters.size(); j++ )
                {
                   vector < point > rotamer_waters;
                   rotamer_waters.push_back( ref_rotamer.waters[ j ].coordinate );
@@ -4901,7 +4901,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
          .arg( rejected.count( it->first ) ? rejected[ it->first ] : 0 )
          ;
 
-      for ( int i = 0; i < ( int ) it->second.size(); i++ )
+      for ( int i = 0; i < ( int ) (unsigned int) it->second.size(); i++ )
       {
          if ( it->second[ i ].size() )
          {
@@ -4911,7 +4911,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             .arg( it->first )
             .arg( i )
             .arg( it->second[ i ].size() );
-         for ( int j = 0; j < ( int ) it->second[ i ].size(); j++ )
+         for ( int j = 0; j < ( int ) (unsigned int) it->second[ i ].size(); j++ )
          {
             out += QString( "  %1 pr %2 ch %3 waters %4\n" )
                .arg( it->first )
@@ -5180,8 +5180,8 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
       unsigned int residue_number = 0;
       map < QString, bool > chains_used;
 
-      for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-         for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+      for (unsigned int j = 0; j < (unsigned int) model_vector[i].molecule.size (); j++) {
+         for (unsigned int k = 0; k < (unsigned int) model_vector[i].molecule[j].atom.size (); k++) {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
             last_hydrated_pdb_text +=
@@ -5259,7 +5259,7 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
             it != waters_to_add.end();
             it++ )
       {
-         for ( unsigned int i = 0; i < it->second.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
          {
             last_hydrated_pdb_text +=
                QString("")
@@ -5309,11 +5309,11 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
       {
          out += QString( "select %1\ncolor cyan\n" ).arg( it->first );
       }
-      for ( unsigned int i = 0; i < hydrate_clash_waters_rtmr_list.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) hydrate_clash_waters_rtmr_list.size(); i++ )
       {
          out += QString( "select %1\ncolor yellow\n" ).arg( hydrate_clash_waters_rtmr_list[ i ] );
       }
-      for ( unsigned int i = 0; i < hydrate_clash_waters_pm_list.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) hydrate_clash_waters_pm_list.size(); i++ )
       {
          out += QString( "select %1\ncolor green\n" ).arg( hydrate_clash_waters_pm_list[ i ] );
       }
@@ -5436,7 +5436,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
    progress->setProgress( residues_in_order.size(), residues_in_order.size() * 2 );
 
-   for ( unsigned int i = 0; i < residues_in_order.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) residues_in_order.size(); i++ )
    {
       
       progress->setProgress( residues_in_order.size() + i, residues_in_order.size() * 2 );
@@ -5486,19 +5486,19 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             }
                
             // for each water:
-            for ( unsigned int ii = 0; ii < best_fit.water_positioning_atoms.size(); ii++ )
+            for ( unsigned int ii = 0; ii < (unsigned int) best_fit.water_positioning_atoms.size(); ii++ )
             {
 
                // find clash distance of each one, then exit for now:
 
-               float        min_dist        = (float)1e30;
+               // float        min_dist        = (float)1e30;
                unsigned int min_dist_pos    = 0;
                bool         found_non_clash = false;
                vector < point > min_water;
 
                // for each rotated rotamer
 
-               for ( unsigned int m = 0; m < rotated_rotamers[ best_fit.name ][ ii ].size(); m++ )
+               for ( unsigned int m = 0; m < (unsigned int) rotated_rotamers[ best_fit.name ][ ii ].size(); m++ )
                {
                   rotamer this_ref_rotamer = rotated_rotamers[ best_fit.name ][ ii ][ m ];
 
@@ -5516,7 +5516,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                      return false;
                   }
             
-                  for ( unsigned int jj = 0; jj < this_ref_rotamer.water_positioning_atoms[ 0 ].size(); jj++ )
+                  for ( unsigned int jj = 0; jj < (unsigned int) this_ref_rotamer.water_positioning_atoms[ 0 ].size(); jj++ )
                   {
                      if ( !this_ref_rotamer.atom_map.count( this_ref_rotamer.water_positioning_atoms[ 0 ][ jj ] ) )
                      {
@@ -5547,7 +5547,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   float this_dist = min_dist_to_struct_and_waters( new_waters[ 0 ] );
                   if ( this_dist > 0 )
                   {
-                     min_dist = this_dist;
+                     // min_dist = this_dist;
                      min_dist_pos = m;
                      found_non_clash = true;
                      min_water = new_waters;
@@ -5589,13 +5589,13 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             //                return false;
             //             }
 
-            for ( unsigned int i = 0; i < best_fit.water_positioning_atoms.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int) best_fit.water_positioning_atoms.size(); i++ )
             {
                // get coordinates of 
                p1.resize( best_fit.water_positioning_atoms[ i ].size() );
                p2.resize( best_fit.water_positioning_atoms[ i ].size() );
             
-               for ( unsigned int j = 0; j < best_fit.water_positioning_atoms[ i ].size(); j++ )
+               for ( unsigned int j = 0; j < (unsigned int) best_fit.water_positioning_atoms[ i ].size(); j++ )
                {
                   if ( !best_fit.atom_map.count( best_fit.water_positioning_atoms[ i ][ j ] ) )
                   {
@@ -5683,7 +5683,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
          }
          
          // this is for each water
-         for ( unsigned int i = 0; i < pointmap_rotamers[ this_residue ].size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) pointmap_rotamers[ this_residue ].size(); i++ )
          {
             // for each water to add:
             // compute transformation matrix from the pointmap_atoms_dest in the pointmap_atom_ref_residue
@@ -5717,14 +5717,14 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   return false;
                }
          
-               float        min_dist        = (float)1e30;
+               // float        min_dist        = (float)1e30;
                unsigned int min_dist_pos    = 0;
                bool         found_non_clash = false;
                vector < point > min_water;
 
                // for each rotated rotamer:
 
-               for ( unsigned int k = 0; k < rotated_rotamers[ ref_rotamer.name ][ i ].size(); k++ )
+               for ( unsigned int k = 0; k < (unsigned int) rotated_rotamers[ ref_rotamer.name ][ i ].size(); k++ )
                {
                   rotamer this_ref_rotamer = rotated_rotamers[ ref_rotamer.name ][ i ][ k ];
 
@@ -5753,7 +5753,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                      return false;
                   }
             
-                  for ( unsigned int j = 0; j < p1.size(); j++ )
+                  for ( unsigned int j = 0; j < (unsigned int) p1.size(); j++ )
                   {
                      // cout << QString("mapping: %1 %2 dest %3\n")
                      // .arg(this_residue)
@@ -5803,7 +5803,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   }
                
 
-                  for ( unsigned int m = 0; m < rotated_rotamers[ this_ref_rotamer.name ][ 0 ].size(); m++ )
+                  for ( unsigned int m = 0; m < (unsigned int) rotated_rotamers[ this_ref_rotamer.name ][ 0 ].size(); m++ )
                   {
                      vector < point > rotamer_waters;
                      // this is probably not correct:
@@ -5816,7 +5816,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                      float this_dist = min_dist_to_struct_and_waters( new_waters[ 0 ] );
                      if ( this_dist > 0 )
                      {
-                        min_dist = this_dist;
+                        // min_dist = this_dist;
                         min_dist_pos = m;
                         found_non_clash = true;
                         min_water = new_waters;
@@ -5871,7 +5871,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   return false;
                }
             
-               for ( unsigned int j = 0; j < p1.size(); j++ )
+               for ( unsigned int j = 0; j < (unsigned int) p1.size(); j++ )
                {
                   // cout << QString("mapping: %1 %2 dest %3\n")
                   // .arg(this_residue)
@@ -5920,7 +5920,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   .arg( resName );
 #endif
             
-               for ( unsigned int j = 0; j < ref_rotamer.waters.size(); j++ )
+               for ( unsigned int j = 0; j < (unsigned int) ref_rotamer.waters.size(); j++ )
                {
                   vector < point > rotamer_waters;
                   rotamer_waters.push_back( ref_rotamer.waters[ j ].coordinate );

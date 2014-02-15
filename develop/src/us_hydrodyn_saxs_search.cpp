@@ -656,20 +656,21 @@ void US_Hydrodyn_Saxs_Search::run_one()
        )
    {
       // block until finished, there must be a better way of doing this
-#if !defined(WIN32)
-      timespec ns;
-      timespec ns_ret;
-      ns.tv_sec = 0;
-      ns.tv_nsec = 25000000l;
-#endif
+      // #if !defined(WIN32)
+      //       timespec ns;
+      //       timespec ns_ret;
+      //       ns.tv_sec = 0;
+      //       ns.tv_nsec = 25000000l;
+      // #endif
       while ( saxs_window->external_running )
       {
          qApp->processEvents();
-#if defined(WIN32)
-         _sleep( 1 );
-#else
-         nanosleep(&ns, &ns_ret);
-#endif
+         mQThread::msleep( 333 );
+         // #if defined(WIN32)
+         //          _sleep( 1 );
+         // #else
+         //          nanosleep(&ns, &ns_ret);
+         // #endif
       }
    }
 

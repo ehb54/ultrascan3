@@ -393,13 +393,13 @@ bool US_Saxs_Util::load_saxs( QString filename  )
    double new_I;
    double new_q;
    unsigned int Icolumn = 1;
-   unsigned int I_errorcolumn = 0;
+   // unsigned int I_errorcolumn = 0;
    bool dolog10 = false;
    QString res = "";
    QString tag1;
    QString tag2;
 
-   bool do_crop = false;
+   // bool do_crop = false;
 
    if ( f.open( IO_ReadOnly ) )
    {
@@ -419,14 +419,14 @@ bool US_Saxs_Util::load_saxs( QString filename  )
          return false;
       }
 
-      unsigned int number_of_fields = 0;
+      // unsigned int number_of_fields = 0;
       if ( qv.size() > 3 )
       {
          QString test_line = qv[2];
          test_line.replace(QRegExp("^\\s+"),"");
          test_line.replace(QRegExp("\\s+$"),"");
          QStringList test_list = QStringList::split(QRegExp("\\s+"), test_line);
-         number_of_fields = test_list.size();
+         // number_of_fields = test_list.size();
          // cout << "number of fields: " << number_of_fields << endl;
       }
 
@@ -438,21 +438,21 @@ bool US_Saxs_Util::load_saxs( QString filename  )
       if ( ext == "dat" ) 
       {
          // foxs?
-         do_crop = false;
+         // do_crop = false;
 
          Icolumn = 1;
-         I_errorcolumn = 2;
-         if ( qsl.grep("exp_intensity").size() )
-         {
-            I_errorcolumn = 0;
-         }
+         // I_errorcolumn = 2;
+         // if ( qsl.grep("exp_intensity").size() )
+         // {
+         //    I_errorcolumn = 0;
+         // }
       }
       if ( ext == "fit" ) 
       {
-         do_crop = false;
+         // do_crop = false;
 
          Icolumn = 2;
-         I_errorcolumn = 0;
+         // I_errorcolumn = 0;
       }
       if ( ext == "ssaxs" ) 
       {
@@ -472,7 +472,7 @@ bool US_Saxs_Util::load_saxs( QString filename  )
          }
          
          QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
-         if ( tokens.size() > Icolumn )
+         if ( (unsigned int) tokens.size() > Icolumn )
          {
             new_q = tokens[0].toDouble();
             new_I = tokens[Icolumn].toDouble();

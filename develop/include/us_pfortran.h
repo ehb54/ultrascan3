@@ -10991,8 +10991,12 @@
      Define the constants used in the translation of the auxilliary I/O statements
      for the C and FORTRAN user biases.
    */
+#ifndef TRUE
 #define TRUE          1
+#endif
+#ifndef FALSE
 #define FALSE         0
+#endif
 #define OPEN          ftnopen
 #define PAUSE         ftnpause
 #define REWIND        ftnrew

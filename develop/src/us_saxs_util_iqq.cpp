@@ -1104,7 +1104,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
             }
          } else {
             map < QString, bool > tag_names;
-            for ( unsigned int i = 0; i < experimental_grids.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int) experimental_grids.size(); i++ )
             {
                unsigned ext = 0;
                QString grid_tag_base = "_g" + QFileInfo( experimental_grids[ i ] ).baseName();
@@ -1224,9 +1224,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
          control_parameters[ "gridsearch_running" ] = "running"; 
          double best_msd = 9e99;
-         double best_x   = 0e0;
-         double best_y   = 0e0;
-         double best_z   = 0e0;
+         // double best_x   = 0e0;
+         // double best_y   = 0e0;
+         // double best_z   = 0e0;
 
          for ( x = startx; x <= endx; x += delta )
          {
@@ -1258,9 +1258,9 @@ bool US_Saxs_Util::read_control( QString controlfile )
                   if ( best_msd > msd )
                   {
                      best_msd = msd;
-                     best_x = x;
-                     best_y = y;
-                     best_z = z;
+                     // best_x = x;
+                     // best_y = y;
+                     // best_z = z;
                      cout << QString( "new best: %1 at %2,%3,%4\n" ).arg( msd ).arg( x ).arg( y ).arg( z );
                   }
                }
@@ -1294,7 +1294,7 @@ bool US_Saxs_Util::process_one_iqq()
          ( control_parameters.count( "outputfile" ) ?
            control_parameters[ "outputfile" ] : "" );
       
-      for ( unsigned int i = 0; i < output_dmd_pdbs.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) output_dmd_pdbs.size(); i++ )
       {
          control_parameters[ "inputfile" ] = output_dmd_pdbs[ i ];
          control_parameters[ "outputfile" ] = QFileInfo( output_dmd_pdbs[ i ] ).baseName();
@@ -1615,7 +1615,7 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
 void US_Saxs_Util::validate_control_parameters_set_one( QStringList &checks, 
                                                         QStringList &vals )
 {
-   for ( unsigned int i = 0; i < checks.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) checks.size(); i++ )
    {
       if ( !control_parameters.count( checks[ i ] ) )
       {
@@ -1666,7 +1666,7 @@ bool US_Saxs_Util::validate_control_parameters( bool for_sgp )
 
       qsl_required << "outputfile";
       
-      for ( unsigned int i = 0; i < qsl_required.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) qsl_required.size(); i++ )
       {
          if ( !control_parameters.count( qsl_required[ i ] ) )
          {

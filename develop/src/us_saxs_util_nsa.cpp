@@ -44,7 +44,7 @@ bool US_Saxs_Util::nsa_validate()
       qsl_required << "nsaepsilon";
       qsl_required << "nsagsm";
       
-      for ( unsigned int i = 0; i < qsl_required.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) qsl_required.size(); i++ )
       {
          if ( !control_parameters.count( qsl_required[ i ] ) )
          {
@@ -332,7 +332,7 @@ double US_Saxs_Util::nsa_fitness()
    }
 #endif
 
-   if ( isnan( chi2 ) )
+   if ( !fit_ok || isnan( chi2 ) )
    {
       QFile f( "nan_fitness_model.bead_model" );
       if ( f.open( IO_WriteOnly ) )

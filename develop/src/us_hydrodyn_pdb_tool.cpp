@@ -4009,7 +4009,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
             }
             model_names[ model_name ] = true;
             model_name_vector.push_back ( model_name );
-            if ( model_name.length() > max_model_name_len )
+            if ( (unsigned int) model_name.length() > max_model_name_len )
             {
                max_model_name_len = model_name.length();
             }
@@ -4032,7 +4032,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
             QString model_name = QString("%1").arg( i + 1 );
             model_names[ model_name ] = true;
             model_name_vector.push_back ( model_name );
-            if ( model_name.length() > max_model_name_len )
+            if ( (unsigned int) model_name.length() > max_model_name_len )
             {
                max_model_name_len = model_name.length();
             }
@@ -4083,7 +4083,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
 
 
    QString ext = "X";
-   while ( ext.length() < max_model_name_len )
+   while ( (unsigned int) ext.length() < max_model_name_len )
    {
       ext = "X" + ext;
    }
@@ -4167,7 +4167,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
                if ( !( pos % res ) )
                {
                   QString use_ext = model_name_vector[ pos ];
-                  while ( use_ext.length() < max_model_name_len )
+                  while ( (unsigned int) use_ext.length() < max_model_name_len )
                   {
                      use_ext = "0" + use_ext;
                   }
@@ -5096,7 +5096,7 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
    cout << QString( "itassertemplate %1\n" ).arg( itassertemplate );
 
    map < QString, bool > use_chain_map;
-   for ( unsigned int i = 0; i < usechainlist.length(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) usechainlist.length(); i++ )
    {
       use_chain_map[ QString( "%1" ).arg( usechainlist[ (int) i ] ) ] = true;
    }

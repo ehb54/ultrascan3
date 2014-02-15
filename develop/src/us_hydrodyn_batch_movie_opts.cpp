@@ -27,7 +27,7 @@ US_Hydrodyn_Batch_Movie_Opts::US_Hydrodyn_Batch_Movie_Opts(
    this->fps = fps;
    this->scale = scale;
    this->cancel_req = cancel_req;
-   this->cancel_req = false;
+   *(this->cancel_req) = false;
    this->clean_up = clean_up;
    this->somo_dir = somo_dir;
    this->use_tc = use_tc;

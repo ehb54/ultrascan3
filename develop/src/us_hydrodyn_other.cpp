@@ -369,7 +369,7 @@ void US_Hydrodyn::read_residue_file()
          editor_msg( "red", QString( tr( "Error: can not create MSROLL radii file: %1" ) ).arg( f_radii.name() ) );
       } else {
          QTextStream ts( &f_radii );
-         for ( unsigned int i = 0; i < msroll_radii.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) msroll_radii.size(); i++ )
          {
             ts << msroll_radii[ i ];
          }
@@ -383,7 +383,7 @@ void US_Hydrodyn::read_residue_file()
          editor_msg( "red", QString( tr( "Error: can not create MSROLL names file: %1" ) ).arg( f_names.name() ) );
       } else {
          QTextStream ts( &f_names );
-         for ( unsigned int i = 0; i < msroll_names.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) msroll_names.size(); i++ )
          {
             ts << msroll_names[ i ];
          }
@@ -1344,7 +1344,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      {
                         qsl = QStringList::split( QRegExp( "\\s+" ), bsaxsv[ j / 2 ] );
                         cout << QString( "loading: bvsaxs qsl size %1\n" ).arg( qsl.size() );
-                        for ( unsigned int i = 2; i < qsl.size() - 1; i++ )
+                        for ( int i = 2; i < (int) qsl.size() - 1; i++ )
                         {
                            tmp_saxs.vcoeff.push_back( qsl[ i ].toDouble() );
                         }
@@ -3889,7 +3889,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       // vectors to write:
       {
          QStringList qsl_tmp;
-         for ( unsigned int i = 0; i < saxs_options.dummy_saxs_names.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) saxs_options.dummy_saxs_names.size(); i++ )
          {
             qsl_tmp << saxs_options.dummy_saxs_names[ i ];
          }
@@ -3897,7 +3897,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       }
       {
          QStringList qsl_tmp;
-         for ( unsigned int i = 0; i < batch.file.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) batch.file.size(); i++ )
          {
             qsl_tmp << batch.file[ i ];
          }
@@ -3905,7 +3905,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       }
       {
          QStringList qsl_tmp;
-         for ( unsigned int i = 0; i < save_params.field.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) save_params.field.size(); i++ )
          {
             qsl_tmp << save_params.field[ i ];
          }
@@ -3923,7 +3923,7 @@ void US_Hydrodyn::write_config(const QString& fname)
          QStringList qsl_tmp1;
          QStringList qsl_tmp2;
          QStringList qsl_tmp3;
-         for ( unsigned int i = 0; i < directory_history.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) directory_history.size(); i++ )
          {
             if ( directory_last_access.count( directory_history[ i ] ) )
             { 
@@ -8338,7 +8338,7 @@ bool US_Hydrodyn::select_from_directory_history( QString &dir, QWidget *parent, 
       selected = QDir::cleanDirPath( fi.isDir() ? fi.filePath() : fi.dirPath() );
    }
          
-   for ( unsigned int i = 0; i < directory_history.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) directory_history.size(); i++ )
    {
       if ( directory_history[ i ] == selected )
       {
@@ -8411,7 +8411,7 @@ void US_Hydrodyn::add_to_directory_history( QString filename, bool accessed )
       directory_last_access  [ dir ] = QDateTime::currentDateTime();
       directory_last_filetype[ dir ] = fi.extension( false );
    }
-   for ( unsigned int i = 0; i < directory_history.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) directory_history.size(); i++ )
    {
       if ( directory_history[ i ] != dir )
       {

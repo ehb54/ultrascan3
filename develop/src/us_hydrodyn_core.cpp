@@ -3143,22 +3143,22 @@ void US_Hydrodyn::radial_reduction( bool from_grid )
 
    float overlap[] =
       {
-         sidechain_overlap.fuse_beads_percent / 100.0,
-         mainchain_overlap.fuse_beads_percent / 100.0,
-         buried_overlap.fuse_beads_percent / 100.0,
-         grid_overlap.fuse_beads_percent / 100.0
+         (float) ( sidechain_overlap.fuse_beads_percent / 100.0 ),
+         (float) ( mainchain_overlap.fuse_beads_percent / 100.0 ),
+         (float) ( buried_overlap.fuse_beads_percent / 100.0 ),
+         (float) ( grid_overlap.fuse_beads_percent / 100.0 )
       };
 
    float rr_overlap[] =
       {
-         (sidechain_overlap.remove_hierarch ?
-          sidechain_overlap.remove_hierarch_percent : sidechain_overlap.remove_sync_percent) / 100.0,
-         (mainchain_overlap.remove_hierarch ?
-          mainchain_overlap.remove_hierarch_percent : mainchain_overlap.remove_sync_percent) / 100.0,
-         (buried_overlap.remove_hierarch ?
-          buried_overlap.remove_hierarch_percent : buried_overlap.remove_sync_percent) / 100.0,
-         (grid_overlap.remove_hierarch ?
-          grid_overlap.remove_hierarch_percent : grid_overlap.remove_sync_percent) / 100.0
+         (float)( ( sidechain_overlap.remove_hierarch ?
+                    sidechain_overlap.remove_hierarch_percent : sidechain_overlap.remove_sync_percent) / 100.0 ),
+         (float)( ( mainchain_overlap.remove_hierarch ?
+                    mainchain_overlap.remove_hierarch_percent : mainchain_overlap.remove_sync_percent) / 100.0 ),
+         (float)( ( buried_overlap.remove_hierarch ?
+                    buried_overlap.remove_hierarch_percent : buried_overlap.remove_sync_percent) / 100.0 ),
+         (float)( ( grid_overlap.remove_hierarch ?
+                    grid_overlap.remove_hierarch_percent : grid_overlap.remove_sync_percent) / 100.0 )
       };
 
 
@@ -5791,19 +5791,19 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
 
    float overlap[] =
       {
-         sidechain_overlap.fuse_beads_percent / 100.0,
-         mainchain_overlap.fuse_beads_percent / 100.0,
-         buried_overlap.fuse_beads_percent / 100.0
+         (float) ( sidechain_overlap.fuse_beads_percent / 100.0 ),
+         (float) ( mainchain_overlap.fuse_beads_percent / 100.0 ),
+         (float) ( buried_overlap.fuse_beads_percent / 100.0 )
       };
 
    float rr_overlap[] =
       {
-         (sidechain_overlap.remove_hierarch ?
-          sidechain_overlap.remove_hierarch_percent : sidechain_overlap.remove_sync_percent) / 100.0,
-         (mainchain_overlap.remove_hierarch ?
-          mainchain_overlap.remove_hierarch_percent : mainchain_overlap.remove_sync_percent) / 100.0,
-         (buried_overlap.remove_hierarch ?
-          buried_overlap.remove_hierarch_percent : buried_overlap.remove_sync_percent) / 100.0
+         (float) ( ( sidechain_overlap.remove_hierarch ?
+                     sidechain_overlap.remove_hierarch_percent : sidechain_overlap.remove_sync_percent) / 100.0 ),
+         (float) ( ( mainchain_overlap.remove_hierarch ?
+                     mainchain_overlap.remove_hierarch_percent : mainchain_overlap.remove_sync_percent) / 100.0 ),
+         (float) ( ( buried_overlap.remove_hierarch ?
+                     buried_overlap.remove_hierarch_percent : buried_overlap.remove_sync_percent) / 100.0 )
       };
 
 

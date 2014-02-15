@@ -20,6 +20,7 @@
 #include <qregexp.h>
 #include <qwt_wheel.h>
 #include <qtimer.h>
+#include <qmutex.h>
 
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"

@@ -135,7 +135,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    t_csv->setEnabled(true);
 
-   for ( unsigned int i = 0; i < csv_commands.header.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv_commands.header.size(); i++ )
    {
       t_csv->horizontalHeader()->setLabel(i, csv_commands.header[i]);
    }
@@ -588,7 +588,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
             in_model = true;
             model_names[ model_name ] = true;
             model_name_vector.push_back ( model_name );
-            if ( model_name.length() > max_model_name_len )
+            if ( (unsigned int) model_name.length() > max_model_name_len )
             {
                max_model_name_len = model_name.length();
             }
@@ -780,7 +780,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
    range_entry cut_range;
 
    bool any_cuts = false;
-   for ( unsigned int i = 0; i < csv_commands.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv_commands.data.size(); i++ )
    {
       if ( csv_commands.data[ i ].size() < 7 ||
            csv_commands.num_data[ i ].size() < 7 )
@@ -902,7 +902,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
       csv_fit = csv_from;
       csv_fit.data.clear();
 
-      for ( unsigned int i = 0; i < csv_from.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) csv_from.data.size(); i++ )
       {
          if ( csv_from.data[ i ].size() < 14 )
          {
@@ -952,7 +952,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
 
          if ( cross_fit_chains.count( chain ) )
          {
-            for ( unsigned int j = 0; j < cross_fit_chains[ chain ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) cross_fit_chains[ chain ].size(); j++ )
             {
                QString fit_chain   = chain;
                QString cross_chain = cross_fit_chains[ fit_chain ][ j ];
@@ -983,7 +983,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
 
          if ( cross_cross_chains.count( chain ) )
          {
-            for ( unsigned int j = 0; j < cross_cross_chains[ chain ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) cross_cross_chains[ chain ].size(); j++ )
             {
                QString cross_chain = chain;
                QString fit_chain   = cross_cross_chains[ cross_chain ][ j ];
@@ -1015,7 +1015,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
       csv new_csv = csv_to;
       new_csv.data.clear();
 
-      for ( unsigned int i = 0; i < csv_to.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
       {
          if ( csv_to.data[ i ].size() < 14 )
          {
@@ -1044,7 +1044,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
    // determine to ranges for merge position 
    map < QString, range_entry > to_range_map;
 
-   for ( unsigned int i = 0; i < csv_to.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
    {
       if ( csv_to.data[ i ].size() < 14 )
       {
@@ -1089,7 +1089,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
    // extract to fit points
    extra_chain_reported.clear();
 
-   for ( unsigned int i = 0; i < csv_to.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
    {
       if ( csv_to.data[ i ].size() < 14 )
       {
@@ -1119,7 +1119,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
 
       if ( cross_fit_chains.count( chain ) )
       {
-         for ( unsigned int j = 0; j < cross_fit_chains[ chain ].size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) cross_fit_chains[ chain ].size(); j++ )
          {
             QString fit_chain   = chain;
             QString cross_chain = cross_fit_chains[ fit_chain ][ j ];
@@ -1183,7 +1183,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
       csv new_csv = csv_to;
       new_csv.data.clear();
 
-      for ( unsigned int i = 0; i < csv_to.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
       {
          if ( csv_to.data[ i ].size() < 14 )
          {
@@ -1203,7 +1203,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
          {
             // cout << QString("adding merge for previous chain %1 (current %2) before pos %3\n").arg(last_chain).arg(chain).arg(pos);
             chain_added[ last_chain ] = true;
-            for ( unsigned int j = 0; j < merge_data[ last_chain ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) merge_data[ last_chain ].size(); j++ )
             {
                vector < point > ps;
                point p;
@@ -1241,7 +1241,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
             // cout << QString("adding merge for chain %1 before pos %2\n").arg(chain).arg(pos);
             chain_added[ chain ] = true;
             // xform & add chain 
-            for ( unsigned int j = 0; j < merge_data[ chain ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) merge_data[ chain ].size(); j++ )
             {
                vector < point > ps;
                point p;
@@ -1282,7 +1282,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
       {
          // cout << QString("adding merge at end previous chain %1\n").arg(last_chain);
          chain_added[ last_chain ] = true;
-         for ( unsigned int j = 0; j < merge_data[ last_chain ].size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) merge_data[ last_chain ].size(); j++ )
          {
             // not yet xformed
             vector < point > ps;
@@ -1318,7 +1318,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
       // this could also be run over the merge map:
       //  for ( map < QString, vector < vector < QString > > > merge_data.begin(); etc
 
-      for ( unsigned int i = 0; i < csv_from.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) csv_from.data.size(); i++ )
       {
          if ( csv_from.data[ i ].size() < 14 )
          {
@@ -1399,7 +1399,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
 
       last_chain = "__first__";
       unsigned atompos = 0;
-      for ( unsigned int i = 0; i < new_csv.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) new_csv.data.size(); i++ )
       {
          QString chain    = new_csv.data[ i ][ 1 ];
          if ( chain != last_chain )
@@ -1526,11 +1526,11 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_auto()
    // setup extra chains
    extra_chains_list.clear();
    map < QString, bool > chains_in_to;
-   for ( unsigned int i = 0; i < to_ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) to_ranges.size(); i++ )
    {
       chains_in_to[ to_ranges[ i ].chain ] = true;
    }
-   for ( unsigned int i = 0; i < from_ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) from_ranges.size(); i++ )
    {
       if ( !chains_in_to.count( from_ranges[ i ].chain ) )
       {
@@ -1538,23 +1538,23 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_auto()
       }
    }
 
-   for ( unsigned int i = 0; i < from_ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) from_ranges.size(); i++ )
    {
       cout << QString( "From ranges %1: " ).arg( i ) << from_ranges[ i ] << endl;
    }
-   for ( unsigned int i = 0; i < to_ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) to_ranges.size(); i++ )
    {
       cout << QString( "To ranges %1: " ).arg( i ) << to_ranges[ i ] << endl;
    }
 
    map < QString, unsigned int > from_range_pos;
 
-   for ( unsigned int i = 0; i < from_ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) from_ranges.size(); i++ )
    {
       from_range_pos[ from_ranges[ i ].chain ] = i;
    }
 
-   for ( unsigned int i = 0; i < to_ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) to_ranges.size(); i++ )
    {
 #if defined( USPTM_DEBUG )
       cout << "checking to range: " << to_ranges[ i ] << endl;
@@ -1761,7 +1761,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_range( QListView *lv, vector < range_ent
 
    map < QString, unsigned int > range_pos;
 
-   for ( unsigned int i = 0; i < csv1.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv1.data.size(); i++ )
    {
       if ( csv1.data[ i ].size() < 14 )
       {
@@ -1797,7 +1797,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_range( QListView *lv, vector < range_ent
 
    uhptm_sortable_uint usui;
 
-   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       list < uhptm_sortable_uint > lusui;
       lusui.clear();
@@ -1825,7 +1825,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_range( QListView *lv, vector < range_ent
    }
          
 #if defined( USPTM_DEBUG )
-   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       cout << ranges[ i ] << endl;
       
@@ -1848,7 +1848,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_t_csv_range( vector < range_entry > &ran
 {
    make_csv_chain_map();
    unsigned int pos;
-   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       if ( csv_chain_map.count( ranges[ i ].chain ) )
       {
@@ -1869,7 +1869,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_from_to_merge()
    sel_to_range( lv_csv_from, ranges );
    update_t_csv_range( ranges, 1, 2 );
    update_cache_range();
-   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       QString chain = ranges[ i ].chain;
       if ( cache_to_range_pos.count( chain ) )
@@ -1886,7 +1886,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_from_to_fit()
    sel_to_range( lv_csv_from, ranges );
    update_t_csv_range( ranges, 3, 4 );
    update_cache_range();
-   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       QString chain = ranges[ i ].chain;
       if ( cache_to_range_pos.count( chain ) )
@@ -1903,7 +1903,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_to_fit()
    sel_to_range( lv_csv_to, ranges );
    update_t_csv_range( ranges, 3, 4 );
    update_cache_range();
-   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       QString chain = ranges[ i ].chain;
       if ( cache_to_range_pos.count( chain ) )
@@ -1920,7 +1920,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_to_cut()
    sel_to_range( lv_csv_to, ranges );
    update_t_csv_range( ranges, 5, 6 );
    update_cache_range();
-   for ( unsigned int i = 0; i < ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       QString chain = ranges[ i ].chain;
       if ( cache_to_range_pos.count( chain ) )
@@ -1983,12 +1983,12 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
    map < QString, unsigned int > from_range_pos;
    map < QString, unsigned int > to_range_pos;
 
-   for ( unsigned int i = 0; i < from_ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) from_ranges.size(); i++ )
    {
       from_range_pos[ from_ranges[ i ].chain ] = i;
    }
 
-   for ( unsigned int i = 0; i < to_ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) to_ranges.size(); i++ )
    {
       to_range_pos[ to_ranges[ i ].chain ] = i;
    }
@@ -2015,7 +2015,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
 
    unsigned int errors = 0;
 
-   for ( unsigned int i = 0; i < csv_commands.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv_commands.data.size(); i++ )
    {
       if ( csv_commands.data[ i ].size() < 7 ||
            csv_commands.num_data[ i ].size() < 7 )
@@ -2062,7 +2062,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
       }
    }
 
-   for ( unsigned int i = 0; i < fit_ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) fit_ranges.size(); i++ )
    {
       if ( !get_chains( fit_ranges[ i ].chain, fit_chain, cross_chain ) )
       {
@@ -2090,7 +2090,7 @@ bool US_Hydrodyn_Pdb_Tool_Merge::validate_commands()
       }
    }      
 
-   for ( unsigned int i = 0; i < merge_ranges.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) merge_ranges.size(); i++ )
    {
       cut_range = cut_ranges[ i ];
       if ( cut_range.start || cut_range.end )
@@ -2369,17 +2369,17 @@ void US_Hydrodyn_Pdb_Tool_Merge::csv_save()
 
    QString qs;
 
-   for ( unsigned int i = 0; i < csv_commands.header.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv_commands.header.size(); i++ )
    {
       qs += QString("%1\"%2\"").arg(i ? "," : "").arg(csv_commands.header[i]);
    }
 
    t << qs << endl;
 
-   for ( unsigned int i = 0; i < csv_commands.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv_commands.data.size(); i++ )
    {
       qs = "";
-      for ( unsigned int j = 0; j < csv_commands.data[i].size(); j++ )
+      for ( unsigned int j = 0; j < (unsigned int) csv_commands.data[i].size(); j++ )
       {
          qs += QString("%1%2").arg(j ? "," : "").arg(csv_commands.data[i][j]);
       }
@@ -2474,9 +2474,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_t_csv_data()
 {
    t_csv->setNumRows( csv_commands.data.size() );
 
-   for ( unsigned int i = 0; i < csv_commands.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv_commands.data.size(); i++ )
    {
-      for ( unsigned int j = 0; j < csv_commands.data[i].size(); j++ )
+      for ( unsigned int j = 0; j < (unsigned int) csv_commands.data[i].size(); j++ )
       {
          t_csv->setText( i, j, csv_commands.data[i][j] );
       }
@@ -2521,7 +2521,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
    range_entry cut_range;
 
    bool any_cuts = false;
-   for ( unsigned int i = 0; i < csv_commands.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv_commands.data.size(); i++ )
    {
       if ( csv_commands.data[ i ].size() < 7 ||
            csv_commands.num_data[ i ].size() < 7 )
@@ -2643,7 +2643,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
       csv_fit = csv_from;
       csv_fit.data.clear();
 
-      for ( unsigned int i = 0; i < csv_from.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) csv_from.data.size(); i++ )
       {
          if ( csv_from.data[ i ].size() < 14 )
          {
@@ -2690,7 +2690,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
 
          if ( cross_fit_chains.count( chain ) )
          {
-            for ( unsigned int j = 0; j < cross_fit_chains[ chain ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) cross_fit_chains[ chain ].size(); j++ )
             {
                QString fit_chain   = chain;
                QString cross_chain = cross_fit_chains[ fit_chain ][ j ];
@@ -2718,7 +2718,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
 
          if ( cross_cross_chains.count( chain ) )
          {
-            for ( unsigned int j = 0; j < cross_cross_chains[ chain ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) cross_cross_chains[ chain ].size(); j++ )
             {
                QString cross_chain = chain;
                QString fit_chain   = cross_cross_chains[ cross_chain ][ j ];
@@ -2750,7 +2750,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
       csv new_csv = csv_to;
       new_csv.data.clear();
 
-      for ( unsigned int i = 0; i < csv_to.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
       {
          if ( csv_to.data[ i ].size() < 14 )
          {
@@ -2779,7 +2779,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
    // determine to ranges for merge position 
    map < QString, range_entry > to_range_map;
 
-   for ( unsigned int i = 0; i < csv_to.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
    {
       if ( csv_to.data[ i ].size() < 14 )
       {
@@ -2821,7 +2821,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
       }
    }
    // extract to fit points
-   for ( unsigned int i = 0; i < csv_to.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
    {
       if ( csv_to.data[ i ].size() < 14 )
       {
@@ -2848,7 +2848,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
 
       if ( cross_fit_chains.count( chain ) )
       {
-         for ( unsigned int j = 0; j < cross_fit_chains[ chain ].size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) cross_fit_chains[ chain ].size(); j++ )
          {
             QString fit_chain   = chain;
             QString cross_chain = cross_fit_chains[ fit_chain ][ j ];
@@ -2907,7 +2907,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
       csv new_csv = csv_to;
       new_csv.data.clear();
 
-      for ( unsigned int i = 0; i < csv_to.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
       {
          if ( csv_to.data[ i ].size() < 14 )
          {
@@ -2927,7 +2927,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
          {
             // cout << QString("adding merge for previous chain %1 (current %2) before pos %3\n").arg(last_chain).arg(chain).arg(pos);
             chain_added[ last_chain ] = true;
-            for ( unsigned int j = 0; j < merge_data[ last_chain ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) merge_data[ last_chain ].size(); j++ )
             {
                vector < point > ps;
                point p;
@@ -2965,7 +2965,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
             // cout << QString("adding merge for chain %1 before pos %2\n").arg(chain).arg(pos);
             chain_added[ chain ] = true;
             // xform & add chain 
-            for ( unsigned int j = 0; j < merge_data[ chain ].size(); j++ )
+            for ( unsigned int j = 0; j < (unsigned int) merge_data[ chain ].size(); j++ )
             {
                vector < point > ps;
                point p;
@@ -3006,7 +3006,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
       {
          // cout << QString("adding merge at end previous chain %1\n").arg(last_chain);
          chain_added[ last_chain ] = true;
-         for ( unsigned int j = 0; j < merge_data[ last_chain ].size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) merge_data[ last_chain ].size(); j++ )
          {
             // not yet xformed
             vector < point > ps;
@@ -3042,7 +3042,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
       // this could also be run over the merge map:
       //  for ( map < QString, vector < vector < QString > > > merge_data.begin(); etc
 
-      for ( unsigned int i = 0; i < csv_from.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) csv_from.data.size(); i++ )
       {
          if ( csv_from.data[ i ].size() < 14 )
          {
@@ -3123,7 +3123,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
 
       last_chain = "__first__";
       unsigned atompos = 0;
-      for ( unsigned int i = 0; i < new_csv.data.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) new_csv.data.size(); i++ )
       {
          QString chain    = new_csv.data[ i ][ 1 ];
          if ( chain != last_chain )
@@ -3161,7 +3161,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::extra_chains()
    {
       if ( it->first.length() <= 1 )
       {
-         for ( unsigned int i = 0; i < extra_chains_list.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) extra_chains_list.size(); i++ )
          {
             QString cross_chain = QString( "%1+%2" ).arg( it->first ).arg( extra_chains_list[ i ] );
             if ( !csv_chain_map.count( cross_chain ) )
@@ -3198,7 +3198,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
    {
       if ( it->first.length() <= 1 )
       {
-         for ( unsigned int i = 0; i < extra_chains_list.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) extra_chains_list.size(); i++ )
          {
             QString cross_chain = QString( "%1+%2" ).arg( it->first ).arg( extra_chains_list[ i ] );
             if ( !csv_chain_map.count( cross_chain ) )
@@ -3229,7 +3229,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::only_closest()
       QString minimum_key_a;
       QString minimum_key_b;
 
-      for ( unsigned int i = 0; i < it->second.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
          progress->setProgress( pos++ ); 
          qApp->processEvents();
@@ -3336,12 +3336,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_cache_range()
       map < QString, unsigned int > from_range_pos;
       map < QString, unsigned int > to_range_pos;
 
-      for ( unsigned int i = 0; i < from_ranges.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) from_ranges.size(); i++ )
       {
          from_range_pos[ from_ranges[ i ].chain ] = i;
       }
 
-      for ( unsigned int i = 0; i < to_ranges.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) to_ranges.size(); i++ )
       {
          to_range_pos[ to_ranges[ i ].chain ] = i;
       }

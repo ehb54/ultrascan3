@@ -159,7 +159,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
                                                         tgz_files.join("\n") + 
                                                         ( tgz_files.size() ? "\n" : "" ) +
                                                         tar_files.join("\n") );
-      for ( unsigned int i = 0; i < submitted_files.count(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) submitted_files.count(); i++ )
       {
          submitted_jobs[ submitted_files[ i ].replace( QRegExp( "\\.(tar|tgz|TAR|TGZ)$" ), "" ) ] = true;
       }
@@ -184,7 +184,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
                                             tgz_files.join("\n") + 
                                             ( tgz_files.size() ? "\n" : "" ) +
                                             tar_files.join("\n") );
-      for ( unsigned int i = 0; i < completed_files.count(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) completed_files.count(); i++ )
       {
          completed_jobs[ completed_files[ i ].replace( QRegExp( "_(out|OUT)\\.(tar|tgz|TAR|TGZ)$" ), "" ) ] = true;
       }
@@ -204,7 +204,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       QDir qd;
 
       QStringList results_files = qd.entryList( "*" );
-      for ( unsigned int i = 0; i < results_files.count(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)results_files.count(); i++ )
       {
          results_jobs[ results_files[ i ].replace( QRegExp( "_(out|OUT)\\.(tar|tgz|TAR|TGZ)$" ), "" ) ] = true;
       }
@@ -1094,7 +1094,7 @@ void US_Hydrodyn_Cluster::create_pkg()
          if ( use_extension )
          {
             ext = QString("%1").arg( write_count );
-            while ( ext.length() < extension_count_length )
+            while ( (unsigned int) ext.length() < extension_count_length )
             {
                ext = "0" + ext;
             }
@@ -1197,7 +1197,7 @@ void US_Hydrodyn_Cluster::create_pkg()
       if ( use_extension )
       {
          ext = QString("%1").arg( write_count );
-         while ( ext.length() < extension_count_length )
+         while ( (unsigned int) ext.length() < extension_count_length )
          {
             ext = "0" + ext;
          }
@@ -3193,7 +3193,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
          if ( use_extension )
          {
             ext = QString("%1").arg( write_count );
-            while ( ext.length() < extension_count_length )
+            while ( (unsigned int) ext.length() < extension_count_length )
             {
                ext = "0" + ext;
             }
@@ -3310,7 +3310,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
       if ( use_extension )
       {
          ext = QString("%1").arg( write_count );
-         while ( ext.length() < extension_count_length )
+         while ( (unsigned int) ext.length() < extension_count_length )
          {
             ext = "0" + ext;
          }
@@ -4540,7 +4540,7 @@ bool US_Hydrodyn_Cluster::additional_processing(
                editor_msg( "red", QString( tr( "Error: can not create MSROLL names file: %1" ) ).arg( f_names.name() ) );
             } else {
                QTextStream ts( &f_names );
-               for ( unsigned int i = 0; i < ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_names.size(); i++ )
+               for ( unsigned int i = 0; i < (unsigned int) ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_names.size(); i++ )
                {
                   ts << ( ( US_Hydrodyn * ) us_hydrodyn)->msroll_names[ i ];
                }

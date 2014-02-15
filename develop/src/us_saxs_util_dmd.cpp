@@ -183,7 +183,7 @@ bool US_Saxs_Util::dmd_prepare()
            control_parameters[ "dmdstatic" ] != "none" )
       {
          QStringList qsl = QStringList::split( ",", control_parameters[ "dmdstatic" ] );
-         for ( unsigned int i = 0; i < qsl.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
          {
             ts << QString( "Static %1\n" ).arg( qsl[ i ] );
          }
@@ -452,12 +452,12 @@ bool US_Saxs_Util::dmd_strip_pdb()
    map < QString, bool > exclude_atoms;
    map < QString, bool > exclude_residues;
 
-   for ( unsigned int i = 0; i < exclude_atoms_list.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) exclude_atoms_list.size(); i++ )
    {
       exclude_atoms[ exclude_atoms_list[ i ] ] = true;
    }
 
-   for ( unsigned int i = 0; i < exclude_residues_list.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) exclude_residues_list.size(); i++ )
    {
       exclude_residues[ exclude_residues_list[ i ] ] = true;
    }

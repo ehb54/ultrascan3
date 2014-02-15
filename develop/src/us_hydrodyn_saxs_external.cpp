@@ -712,7 +712,6 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    editor_msg( "dark blue", crysol->arguments().join( " " ) );
    crysol->start();
    external_running = true;
-   
    return 0;
 }
 

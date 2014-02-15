@@ -213,8 +213,7 @@ set < QListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QListView
       naccess_run( filename );
       while ( naccess_running )
       {
-         QWaitCondition sleep;
-         sleep.wait( 500 );  
+         mQThread::msleep( 333 );
          qApp->processEvents();
       }
       if ( !naccess_result_data.size() )

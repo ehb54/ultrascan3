@@ -23,7 +23,7 @@ map < QString, QString > US_Json::split( QString qs )
    QString tok1;
    QString tok2;
 
-   for ( unsigned i = 0; i < qs.length(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) qs.length(); i++ )
    {
       QChar qc = qs.at( i );
 #if defined( USJ_DEBUG )

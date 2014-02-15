@@ -1087,13 +1087,13 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
 
    csv_addendum.replace( ".", "_" );
 
-   bool created_batch = false;
+   // bool created_batch = false;
    batch_info save_batch_info = batch;
    batch.file.clear();
    batch.file.push_back( filename );
    if ( !batch_widget )
    {
-      created_batch = true;
+      // created_batch = true;
       batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
       fixWinButtons( batch_window );
       batch_window->lb_files->setSelected( 0, true );

@@ -4,6 +4,7 @@
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
+#include <qthread.h>
 
 class mQLabel : public QLabel
 {
@@ -54,6 +55,14 @@ class mQPushButton : public QPushButton
 
    protected:
       virtual void mouseDoubleClickEvent ( QMouseEvent *e );
+};
+
+class mQThread : public QThread
+{
+ public:
+   static void sleep(unsigned long secs);
+   static void msleep(unsigned long msecs);
+   static void usleep(unsigned long usecs);
 };
 
 #endif

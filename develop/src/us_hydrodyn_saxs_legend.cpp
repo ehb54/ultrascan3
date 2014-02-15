@@ -1,7 +1,11 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include <qwt_legend.h>
 
-void US_Hydrodyn_Saxs::plot_saxs_clicked( long key )
+void US_Hydrodyn_Saxs::plot_saxs_clicked( long 
+#ifndef QT4
+                                          key
+#endif
+                                          )
 {
 #ifndef QT4
    int pos = -1;
@@ -97,7 +101,11 @@ void US_Hydrodyn_Saxs::plot_saxs_item_clicked( QwtPlotItem*
 #endif
 }
 
-void US_Hydrodyn_Saxs::plot_pr_clicked( long key )
+void US_Hydrodyn_Saxs::plot_pr_clicked( long
+#ifndef QT4
+                                        key
+#endif
+                                        )
 {
 #ifndef QT4
    cout << QString( "plot_pr_clicked %1\n" ).arg( key );

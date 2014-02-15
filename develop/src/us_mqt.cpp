@@ -38,3 +38,17 @@ void mQPushButton::mouseDoubleClickEvent ( QMouseEvent *e )
    emit( doubleClicked() );
 }
 
+void mQThread::sleep( unsigned long secs )
+{
+   QThread::sleep( secs );
+}
+
+void mQThread::msleep( unsigned long msecs )
+{
+   QThread::msleep( msecs );
+}
+
+void mQThread::usleep( unsigned long usecs )
+{
+   QThread::usleep( usecs );
+}
