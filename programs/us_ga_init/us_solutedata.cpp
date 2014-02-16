@@ -717,6 +717,7 @@ int US_SoluteData::buildDataMC( bool plot_s, bool plot_k )
          simc.f   = d_sol.k;
          simc.c   = d_sol.c;
          simc.d   = d_sol.d;
+         simc.v   = d_sol.v;
 
          component.append( simc );       // and add it to list
       }
@@ -733,6 +734,7 @@ int US_SoluteData::buildDataMC( bool plot_s, bool plot_k )
          simc.f   = d_sol.k;
          simc.c   = d_sol.c;
          simc.d   = d_sol.d;
+         simc.v   = d_sol.v;
 
          component.append( simc );       // and add it to list
       }
@@ -778,7 +780,7 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
 
    QString ffvb    = isPlotK ?
                      tr( "Frictional ratio:          " ) :
-                     tr( "Vbar:                      " ); 
+                     tr( "Partial specific volume:   " ); 
    QString fv_titl = ffvb.simplified().replace( ":", "" );
    
    QFile fileo( fname );
@@ -844,11 +846,24 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                vsum    += ( bcomp.at( jj ).d * bcomp.at( jj ).c );
             ts << ( vsum / tconc ) << endl;
 
+#if 0
             ts << ffvb;
             vsum     = 0.0;
 
             for ( int jj = 0; jj < ksol; jj++ )
                vsum    += ( bcomp.at( jj ).f * bcomp.at( jj ).c );
+            ts << ( vsum / tconc ) << endl;
+#endif
+            ts << tr( "Frictional ratio:           " );
+            vsum     = 0.0;
+            for ( int jj = 0; jj < ksol; jj++ )
+               vsum    += ( bcomp.at( jj ).f * bcomp.at( jj ).c );
+            ts << ( vsum / tconc ) << endl;
+
+            ts << tr( "Partial specific volume:    " );
+            vsum     = 0.0;
+            for ( int jj = 0; jj < ksol; jj++ )
+               vsum    += ( bcomp.at( jj ).v * bcomp.at( jj ).c );
             ts << ( vsum / tconc ) << endl;
 
             ts << tr( "Partial concentration:      " );
@@ -883,10 +898,23 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             outputStats( ts, valus, concs, false,
                   tr( "Diffusion coefficient:     " ) );
 
+#if 0
             valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).f );
             outputStats( ts, valus, concs, false, ffvb );
+#endif
+            valus.clear();
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).f );
+            outputStats( ts, valus, concs, false,
+                  tr( "Frictional ratio:          " ) );
+
+            valus.clear();
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).v );
+            outputStats( ts, valus, concs, false,
+                  tr( "Partial specific volume:   " ) );
 
             for ( int jj = 0; jj < ksol; jj++ )
                vtotal    += bcomp.at( jj ).c;
@@ -946,9 +974,20 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                ts << bcomp.at( jj ).d << "  ";
             ts << endl;
 
+#if 0
             ts << ffvb;
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).f << "  ";
+            ts << endl;
+#endif
+            ts << tr( "Frictional ratio:          " );
+            for ( int jj = 0; jj < ksol; jj++ )
+               ts << bcomp.at( jj ).f << "  ";
+            ts << endl;
+
+            ts << tr( "Partial specific volume:   " );
+            for ( int jj = 0; jj < ksol; jj++ )
+               ts << bcomp.at( jj ).v << "  ";
             ts << endl;
  
             ts << tr( "Concentration:             " );
@@ -981,10 +1020,23 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             outputStats( ts, valus, concs, true,
                   tr( "Diffusion Coefficient" ) );
 
+#if 0
             valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).f );
             outputStats( ts, valus, concs, true, fv_titl );
+#endif
+            valus.clear();
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).f );
+            outputStats( ts, valus, concs, true,
+                  tr( "Frictional Ratio" ) );
+
+            valus.clear();
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).v );
+            outputStats( ts, valus, concs, true,
+                  tr( "Partial Specific Volume" ) );
          }
       }
 
@@ -1049,8 +1101,8 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       conc      = concs.at( jj );
       vsum     += ( val * conc );
       vctot    += conc;
-      vlo       = ( vlo < val ) ? vlo : val;
-      vhi       = ( vhi > val ) ? vhi : val;
+      vlo       = qMin( vlo, val );
+      vhi       = qMax( vhi, val );
       xplot[jj] = (qreal)jj;
       yplot[jj] = val;
    }
@@ -1109,6 +1161,8 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       area     += yplot[ ii ] * bininc;
    }
 
+   double fvdif     = qAbs( ( vhi - vlo ) / vlo );
+   bool is_constant = ( fvdif < 0.0001 );
    val       = -1.0;
    int thisb = 0;
 
@@ -1129,7 +1183,28 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
    conf95lo  = vmean - 1.960 * sdevi;
    conf95hi  = vmean + 1.960 * sdevi;
 
-   if ( details )
+   if ( details  &&  is_constant )
+   {
+      ts << "\n\n" << tr( "Results for the " ) << title << ":\n\n";
+
+      if ( vhi == vlo )
+      {
+         ts << tr( "Constant Value:            " ) 
+            << str1.sprintf( "%6.4e\n", vhi   );
+      }
+
+      else
+      {
+         ts << tr( "Maximum Value:             " ) 
+            << str1.sprintf( "%6.4e\n", vhi   );
+         ts << tr( "Minimum Value:             " ) 
+            << str1.sprintf( "%6.4e\n", vlo   );
+         ts << tr( "(Nearly) Constant Value:   " ) 
+            << str1.sprintf( "%6.4e\n", vmean );
+      }
+   }
+
+   else if ( details )
    {  // Details
       ts << "\n\n" << tr( "Results for the " ) << title << ":\n\n";
       ts << tr( "Maximum Value:             " ) 
@@ -1176,6 +1251,11 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
       str1.sprintf( "%e", conf99lo ).append( tr( " (low), " ) );
       str2.sprintf( "%e", conf99hi ).append( tr( " (high)\n" ) );
       ts << tr( "99% Confidence Interval:   " ) << str1 << str2;
+   }
+
+   else if ( is_constant )
+   {  // Summary (where value is constant)
+      ts << title << str1.sprintf( " %6.4e (**constant**)\n", vmean );
    }
 
    else

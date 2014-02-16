@@ -18,11 +18,13 @@
 //! \brief Simple structure for essential values of each solution distribution point
 typedef struct solute_s
 {
-   double s;    //!< sedimentation coefficient
-   double k;    //!< frictional ratio
-   double c;    //!< concentration
-   double d;    //!< diffusion coefficient
+   double s;    //!< sedimentation coefficient (or current X)
+   double k;    //!< frictional ratio (or current Y)
+   double c;    //!< concentration (Z or Z percent)
    double w;    //!< molecular weight
+   double v;    //!< vbar
+   double d;    //!< diffusion coefficient
+   double f;    //!< frictional coefficient
 } S_Solute;
 
 //! \brief Class derived from QwtRasterData to supply QwtPlotSpectrogram data
