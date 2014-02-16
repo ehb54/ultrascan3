@@ -11,6 +11,7 @@ typedef struct short_sim_comp_s
    double f;    // frictional ratio
    double c;    // concentration
    double d;    // diffusion coefficient
+   double v;    // vbar20
 } SimComp;
 
 //! \brief Store and retrieve solution data

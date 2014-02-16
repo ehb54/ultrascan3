@@ -25,13 +25,9 @@
 typedef struct distro_sys
 {
    QList< S_Solute >   sk_distro;
-   QList< S_Solute >   wk_distro;
-   QList< S_Solute >   sv_distro;
-   QList< S_Solute >   wv_distro;
+   QList< S_Solute >   xy_distro;
    QList< S_Solute >   sk_distro_zp;
-   QList< S_Solute >   wk_distro_zp;
-   QList< S_Solute >   sv_distro_zp;
-   QList< S_Solute >   wv_distro_zp;
+   QList< S_Solute >   xy_distro_zp;
    QwtLinearColorMap*  colormap;
    QString             run_name;
    QString             analys_name;
@@ -39,6 +35,8 @@ typedef struct distro_sys
    QString             cmapname;
    QString             editGUID;
    int                 distro_type;
+   int                 plot_x;
+   int                 plot_y;
    bool                monte_carlo;
 } DisSys;
 
@@ -55,6 +53,9 @@ class US_Pseudo3D_Combine : public US_Widgets
       US_Pseudo3D_Combine();
 
    private:
+
+      enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+
       QLabel*       lb_plt_smin;
       QLabel*       lb_plt_smax;
       QLabel*       lb_plt_fmin;
@@ -97,14 +98,30 @@ class US_Pseudo3D_Combine : public US_Widgets
       QPushButton*  pb_close;
       QPushButton*  pb_rmvdist;
 
-      QCheckBox*    cb_autosxy;
-      QCheckBox*    cb_autoscz;
-      QCheckBox*    cb_conloop;
-      QCheckBox*    cb_plot_sk;
-      QCheckBox*    cb_plot_wk;
-      QCheckBox*    cb_plot_sv;
-      QCheckBox*    cb_plot_wv;
-      QCheckBox*    cb_zpcent;
+      QCheckBox*    ck_autosxy;
+      QCheckBox*    ck_autoscz;
+      QCheckBox*    ck_conloop;
+      QCheckBox*    ck_plot_sk;
+      QCheckBox*    ck_plot_wk;
+      QCheckBox*    ck_plot_sv;
+      QCheckBox*    ck_plot_wv;
+      QCheckBox*    ck_zpcent;
+
+      QRadioButton* rb_x_s;
+      QRadioButton* rb_x_ff0;
+      QRadioButton* rb_x_mw;
+      QRadioButton* rb_x_vbar;
+      QRadioButton* rb_x_D;
+      QRadioButton* rb_x_f;
+      QRadioButton* rb_y_s;
+      QRadioButton* rb_y_ff0;
+      QRadioButton* rb_y_mw;
+      QRadioButton* rb_y_vbar;
+      QRadioButton* rb_y_D;
+      QRadioButton* rb_y_f;
+
+      QButtonGroup* bg_x_axis;
+      QButtonGroup* bg_y_axis;
 
       QList< DisSys > system;
 
@@ -132,6 +149,8 @@ class US_Pseudo3D_Combine : public US_Widgets
       int           patm_dlay;
       int           dbg_level;
       int           plot_xy;
+      int           plot_x;
+      int           plot_y;
 
       bool          cnst_vbar;
       bool          auto_sxy;
@@ -145,11 +164,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       bool          latest;
       bool          zpcent;
 
-      QString       xa_title_s;
-      QString       xa_title_w;
       QString       xa_title;
-      QString       ya_title_k;
-      QString       ya_title_v;
       QString       ya_title;
       QString       cmapname;
       QString       mfilter;
@@ -172,10 +187,6 @@ class US_Pseudo3D_Combine : public US_Widgets
       void select_autosxy( void );
       void select_autoscz( void );
       void select_conloop( void );
-      void select_plot_sk( void );
-      void select_plot_wk( void );
-      void select_plot_sv( void );
-      void select_plot_wv( void );
       void update_disk_db( bool );
       void select_prefilt( void );
       void load_distro(    void );
@@ -187,6 +198,10 @@ class US_Pseudo3D_Combine : public US_Widgets
       void set_limits(  void );
       void sort_distro( QList< S_Solute >&, bool );
       void remove_distro( void );
+      void select_x_axis( int  );
+      void select_y_axis( int  );
+      void build_xy_distro( void );
+      QString anno_title  ( int );
 
       void help       ( void )
       { showHelp.show_help( "pseudo3d_combine.html" ); };

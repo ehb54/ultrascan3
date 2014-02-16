@@ -757,7 +757,7 @@ qDebug() << "  up0)yRes" << yRes;
          xatitle         = tr( "Molecular Weight" );
          break;
       case ATTR_V:
-         xatitle         = tr( "Specific Density Volume" );
+         xatitle         = tr( "Partial Specific Volume" );
          break;
       case ATTR_D:
          xatitle         = tr( "Diffusion Coefficient" );
@@ -780,7 +780,7 @@ qDebug() << "  up0)yRes" << yRes;
          yatitle         = tr( "Molecular Weight" );
          break;
       case ATTR_V:
-         yatitle         = tr( "Specific Density Volume" );
+         yatitle         = tr( "Partial Specific Volume" );
          break;
       case ATTR_D:
          yatitle         = tr( "Diffusion Coefficient" );

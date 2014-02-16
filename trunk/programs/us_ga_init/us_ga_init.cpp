@@ -540,6 +540,9 @@ DbgLv(1) << "SAVE novlps" << novlps;
    if ( ! dirp.exists( fdir ) )
       dirp.mkpath( fdir );
 
+   if ( ! dirp.exists( fdir2 ) )
+      dirp.mkpath( fdir2 );
+
 DbgLv(1) << "SAVE plot_s" << plot_s;
    if ( plot_s )
    {
@@ -1451,24 +1454,28 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
          sol_sk.c  = model.components[ jj ].signal_concentration;
          sol_sk.d  = model.components[ jj ].D;
          sol_sk.w  = model.components[ jj ].mw;
+         sol_sk.v  = model.components[ jj ].vbar20;
 
          sol_wk.s  = model.components[ jj ].mw;
          sol_wk.k  = sol_sk.k;
          sol_wk.c  = sol_sk.c;
          sol_wk.d  = sol_sk.d;
          sol_wk.w  = sol_sk.s;
+         sol_wk.v  = sol_sk.v;
 
          sol_sv.s  = sol_sk.s;
          sol_sv.k  = model.components[ jj ].vbar20;
          sol_sv.c  = sol_sk.c;
          sol_sv.d  = sol_sk.d;
          sol_sv.w  = sol_sk.w;
+         sol_sk.v  = model.components[ jj ].vbar20;
 
          sol_wv.s  = sol_wk.s;
          sol_wv.k  = sol_sv.k;
          sol_wv.c  = sol_sk.c;
          sol_wv.d  = sol_sk.d;
          sol_wv.w  = sol_sk.s;
+         sol_wv.v  = sol_sk.v;
 //DbgLv(2) << "Solute jj s w k c d" << jj << sol_s.s << sol_w.s << sol_s.k
 //   << sol_s.c << sol_s.d << " vb" << model.components[jj].vbar20;
 
