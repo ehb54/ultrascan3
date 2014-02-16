@@ -232,17 +232,6 @@ void US_pcsa::load( void )
    edata      = &dataList[ 0 ];    // point to first loaded data
    baserss    = 0;
 
-   // Move any loaded noise vectors to the "in" versions
-   ri_noise_in.values = ri_noise.values;
-   ti_noise_in.values = ti_noise.values;
-   ri_noise.values.clear();
-   ti_noise.values.clear();
-   ri_noise_in.count  = ri_noise_in.values.size();
-   ti_noise_in.count  = ti_noise_in.values.size();
-   ti_noise   .count  = 0;
-   ri_noise   .count  = 0;
-   speed_steps    .clear();
-DbgLv(1) << "ri,ti noise in" << ri_noise_in.count << ti_noise_in.count;
    US_Passwd pw;
    US_DB2* dbP             = disk_controls->db()
                              ? new US_DB2( pw.getPasswd() )
@@ -613,6 +602,8 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
          model.write( dbP );
       else
          model.write( mname );
+DbgLv(1) << "SV: Post-wrdb tno tni"
+ << ti_noise.values[0] << ti_noise_in.values[0];
    }
 
    else
@@ -655,8 +646,13 @@ DbgLv(1) << "SV: MC models     write complete";
       int nicount          = ti_noise_in.count;
 DbgLv(1) << "SV:  TI nicount" << nicount;
 
+DbgLv(1) << "SV: Pre-sum tno tni"
+ << ti_noise.values[0] << ti_noise_in.values[0] << "counts sizes"
+ << ti_noise.count << nicount << ti_noise.values.size()
+ << ti_noise_in.values.size();
       if ( nicount > 0 )   // Sum in any input noise
          ti_noise.sum_noise( ti_noise_in, true );
+DbgLv(1) << "SV:  Post-sum tno" << ti_noise.values[0];
 
       err = ti_noise.write( nname );
       if ( err != US_DB2::OK )
@@ -692,6 +688,7 @@ DbgLv(1) << "SV:  RI nicount" << nicount;
 
       if ( nicount > 0 )   // Sum in any input noise
          ri_noise.sum_noise( ri_noise_in, true );
+DbgLv(1) << "SV:  Post-sum rno" << ri_noise.values[0];
 
       err = ri_noise.write( nname );
       if ( err != US_DB2::OK )
@@ -714,9 +711,8 @@ DbgLv(1) << "SV:  RI nicount" << nicount;
          ri_noise.sum_noise( noise_rmv, true );
       }
    }
-tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
-rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
-DbgLv(1) << "SV:  Post-sum tno rno" << tino << rino;
+DbgLv(1) << "SV:  Post-write tno rno"
+ << ti_noise.values[0] << ri_noise.values[0];
 
    if ( dbP != NULL )
    {
@@ -1153,7 +1149,31 @@ void US_pcsa::new_triple( int index )
    data_plot1->detachItems();
    data_plot1->clear();
 
+   // Temporarily restore loaded noise vectors from triples vectors
+   ti_noise           = tinoises[ index ];
+   ri_noise           = rinoises[ index ];
+
    US_AnalysisBase2::new_triple( index );  // New triple as in any analysis
+
+   // Move any loaded noise vectors to the "in" versions
+   ti_noise_in        = ti_noise;
+   ri_noise_in        = ri_noise;
+   ti_noise_in.values = ti_noise.values;
+   ri_noise_in.values = ri_noise.values;
+   ti_noise_in.count  = ti_noise_in.values.size();
+   ri_noise_in.count  = ri_noise_in.values.size();
+   tinoises[ index ]  = ti_noise_in;
+   rinoises[ index ]  = ri_noise_in;
+   ti_noise.values.clear();
+   ri_noise.values.clear();
+   ti_noise.count     = 0;
+   ri_noise.count     = 0;
+DbgLv(1) << "NTr: ti noise in n0,type,count,size" << ti_noise_in.values[0]
+ << ti_noise_in.type << ti_noise_in.count << ti_noise_in.values.size();
+DbgLv(1) << "NTr: ti noise in  minr,maxr"
+ << ti_noise_in.minradius << ti_noise_in.maxradius;
+DbgLv(1) << "NTr: ri noise in n0,type,count,size" << ri_noise_in.values[0]
+ << ri_noise_in.type << ri_noise_in.count << ri_noise_in.values.size();
 }
 
 // Remove any temporary plot file and close all opened windows
