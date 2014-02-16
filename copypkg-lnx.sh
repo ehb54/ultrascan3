@@ -14,7 +14,7 @@ SURL="//bcf2.uthscsa.edu/ultrascan3/trunk"
 REV=`svn info svn:${SURL}|grep Revision|awk '{print $2}'`
 RSYNC="rsync -av --exclude=.svn"
 REVL=`svn info ${SRCDIR}|grep Revision|awk '{print $2}'`
-VERS="2.1"
+VERS="3.0"
 
 if [ "${REV}" != "${REVL}" ]; then
   # Abort if source is not latest revision
