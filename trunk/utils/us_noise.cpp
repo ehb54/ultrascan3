@@ -5,6 +5,8 @@
 #include "us_settings.h"
 #include "us_util.h"
 
+#define isNan(a) (a!=a)
+
 // constructor - initialize empty
 US_Noise::US_Noise()
 {
@@ -451,16 +453,24 @@ bool US_Noise::sum_noise( US_Noise noise2, bool always_sum )
 
    else
    {  // determine if they match in count and any radius range
+      double difflo = qAbs( minradius - noise2.minradius );
+      double diffhi = qAbs( maxradius - noise2.maxradius );
       if ( count != noise2.count  ||
-         ( type == RI  && 
-         ( minradius != noise2.minradius  || minradius != noise2.minradius ) ) )
+         ( type == TI  &&  ( difflo > 0.0001  ||  diffhi > 0.0001 ) ) )
+      {
          match   = false;
+qDebug() << "SM-NOI: difflo diffhi" << difflo << diffhi;
+      }
    }
 
    if ( match )
    {  // if they match, simply sum vector values;
       for ( int ii = 0; ii < values.size(); ii++ )
+      {
          values[ ii ] += noise2.values[ ii ];
+if(isNan(values[ii]))
+ qDebug() << "SM-NOI: ii" << ii << "noi o i" << values[ii] << noise2.values[ii];
+      }
    }
 
    else if ( always_sum )
@@ -468,7 +478,7 @@ bool US_Noise::sum_noise( US_Noise noise2, bool always_sum )
       
       if ( type == RI )
       {  // for radially-invariant, just sum for minimum count
-         int mcount = ( count < noise2.count ) ? count : noise2.count;
+         int    mcount = qMin( count, noise2.count );
 
          for ( int ii = 0; ii < mcount; ii++ )
             values[ ii ] += noise2.values[ ii ];
@@ -477,6 +487,9 @@ bool US_Noise::sum_noise( US_Noise noise2, bool always_sum )
 
       else
       {  // for time-invariant,  interpolate by radius location
+qDebug() << "SM-NOI: *NTRP* count count2" << count << noise2.count
+ << "type" << type << "mnmx r" << minradius << noise2.minradius
+ << maxradius << noise2.maxradius;
          double radval = minradius;
          double radinc = ( maxradius - minradius ) / (double)( count - 1 );
          double radlo2 = noise2.minradius;

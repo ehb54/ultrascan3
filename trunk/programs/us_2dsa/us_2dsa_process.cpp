@@ -457,6 +457,8 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
    {  // copy TI noise to caller and internal vector
       ti_noise.minradius = edata->radius( 0 );
       ti_noise.maxradius = edata->radius( npoints - 1 );
+      ti_noise.minradius = (double)qRound( ti_noise.minradius * 1e+5 ) * 1e-5;
+      ti_noise.maxradius = (double)qRound( ti_noise.maxradius * 1e+5 ) * 1e-5;
       ti_noise.values.resize( npoints );
       ti_noise.count = npoints;
 

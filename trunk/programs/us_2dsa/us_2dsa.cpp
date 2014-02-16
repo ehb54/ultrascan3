@@ -170,9 +170,9 @@ void US_2dsa::analysis_done( int updflag )
       pb_save   ->setEnabled( false );
       pb_plt3d  ->setEnabled( false );
       pb_pltres ->setEnabled( false );
-      models  .clear();
-      tinoises.clear();
-      rinoises.clear();
+      models   .clear();
+      ti_noises.clear();
+      ri_noises.clear();
 
       qApp->processEvents();
       return;
@@ -183,10 +183,10 @@ void US_2dsa::analysis_done( int updflag )
       models << model;
 
       if ( ti_noise.count > 0 )
-         tinoises << ti_noise;
+         ti_noises << ti_noise;
 
       if ( ri_noise.count > 0 )
-         rinoises << ri_noise;
+         ri_noises << ri_noise;
 
       QString mdesc = model.description;
       QString avari = mdesc.mid( mdesc.indexOf( "VARI=" ) + 5 );
@@ -195,7 +195,7 @@ void US_2dsa::analysis_done( int updflag )
       le_vari->setText( QString::number( vari ) );
       le_rmsd->setText( QString::number( rmsd ) );
 DbgLv(1) << "Analysis Done VARI" << vari << "model,noise counts"
- << models.count() << tinoises.count();
+ << models.count() << ti_noises.count();
 
       qApp->processEvents();
       return;
@@ -244,20 +244,9 @@ void US_2dsa::load( void )
    loadDB     = disk_controls->db();
    edata      = &dataList[ 0 ];    // point to first loaded data
    baserss    = 0;
-
-   // Move any loaded noise vectors to the "in" versions
-   ri_noise_in.values = ri_noise.values;
-   ti_noise_in.values = ti_noise.values;
-   ri_noise.values.clear();
-   ti_noise.values.clear();
-   ri_noise_in.count  = ri_noise_in.values.size();
-   ti_noise_in.count  = ti_noise_in.values.size();
-   ti_noise   .count  = 0;
-   ri_noise   .count  = 0;
    speed_steps.clear();
-   tinoises   .clear();
-   rinoises   .clear();
-DbgLv(1) << "ri,ti noise in" << ri_noise_in.count << ti_noise_in.count;
+   ti_noises  .clear();
+   ri_noises  .clear();
 
    // Get speed steps from disk or DB experiment
    if ( loadDB )
@@ -560,8 +549,8 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    int         indx     = 1;
    int         kmodels  = 0;
    int         knoises  = 0;
-   bool        have_ti  = ( tinoises.size() > 0 );
-   bool        have_ri  = ( rinoises.size() > 0 );
+   bool        have_ti  = ( ti_noises.size() > 0 );
+   bool        have_ri  = ( ri_noises.size() > 0 );
 
    while( indx > 0 )
    {  // build a list of available model file names
@@ -638,7 +627,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
       if ( have_ti )
       {  // output a TI noise
-         ti_noise             = tinoises[ jj ];
+         ti_noise             = ti_noises[ jj ];
          ti_noise.description = descbase + iterID + ".ti_noise";
          ti_noise.type        = US_Noise::TI;
          ti_noise.modelGUID   = model.modelGUID;
@@ -667,7 +656,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
       if ( have_ri )
       {  // output an RI noise
-         ri_noise             = rinoises[ jj ];
+         ri_noise             = ri_noises[ jj ];
          ri_noise.description = descbase + iterID + ".ri_noise";
          ri_noise.type        = US_Noise::RI;
          ri_noise.modelGUID   = model.modelGUID;
@@ -1252,14 +1241,28 @@ void US_2dsa::new_triple( int index )
    data_plot1->detachItems();
    data_plot1->clear();
    models     .clear();
-   tinoises   .clear();
-   rinoises   .clear();
-   ri_noise.values.clear();
-   ti_noise.values.clear();
-   ti_noise   .count  = 0;
-   ri_noise   .count  = 0;
+   ti_noises  .clear();
+   ri_noises  .clear();
+
+   // Temporarily restore any loaded noise vectors from triples vectors
+   ti_noise           = tinoises[ index ];
+   ri_noise           = rinoises[ index ];
 
    US_AnalysisBase2::new_triple( index );  // New triple as in any analysis
+
+   // Move any loaded noise vectors to the "in" versions
+   ti_noise_in        = ti_noise;
+   ri_noise_in        = ri_noise;
+   ti_noise_in.values = ti_noise.values;
+   ri_noise_in.values = ri_noise.values;
+   ti_noise_in.count  = ti_noise_in.values.size();
+   ri_noise_in.count  = ri_noise_in.values.size();
+   tinoises[ index ]  = ti_noise_in;
+   rinoises[ index ]  = ri_noise_in;
+   ti_noise.values.clear();
+   ri_noise.values.clear();
+   ti_noise.count     = 0;
+   ri_noise.count     = 0;
 }
 
 // Fit meniscus data table string
