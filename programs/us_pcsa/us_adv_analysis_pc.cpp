@@ -1156,6 +1156,7 @@ DbgLv(1) << "start_montecarlo";
    US_SolveSim::DataSet dset    = *dset0;
    QList< US_SolveSim::DataSet* > dsets;
    dsets << &dset;
+
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    b_progress->reset();
    b_progress->setMaximum( mciters );
@@ -1550,10 +1551,22 @@ DbgLv(1) << "MCD: cc ccin ncsols" << cc << ccin << ncsols;
    int    nscans  = edata->scanCount();
    int    npoints = edata->pointCount();
    double varia   = 0.0;
+   bool have_ti   = ( mrec.ti_noise.size() > 0 );
+   bool have_ri   = ( mrec.ri_noise.size() > 0 );
+   double tinoi   = 0.0;
+   double rinoi   = 0.0;
 
    for ( int ss = 0; ss < nscans; ss++ )
+   {
+      rinoi    = have_ri ? mrec.ri_noise[ ss ] : 0.0;
+
       for ( int rr = 0; rr < npoints; rr++ )
-         varia   += sq( ( edata->value( ss, rr ) - sdata->value( ss, rr ) ) );
+      {
+         tinoi    = have_ti ? mrec.ti_noise[ rr ] : 0.0;
+         varia   += sq( ( edata->value( ss, rr ) - sdata->value( ss, rr )
+                          - rinoi - tinoi ) );
+      }
+   }
 
    varia         /= (double)( nscans * npoints );
    mrec.variance  = varia;

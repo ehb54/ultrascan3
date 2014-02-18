@@ -1,5 +1,5 @@
 #  revision.sh  - fill us_revision.h with lastest revision string
-MVERS="2.1"
+MVERS=`grep US_Version ../../utils/us_defines.h|cut -d'"' -f2`
 REV1=`svn info|grep 'Changed Rev'|cut -f4 -d' '`
 REV2=`(cd ../../utils;svn info|grep 'Changed Rev'|cut -f4 -d' ')`
 DATE1=`svn info|grep 'Changed Date'|cut -f4 -d' '`
