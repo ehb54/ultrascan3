@@ -237,7 +237,7 @@ void US_Hydrodyn_Saxs_Hplc::p3d()
    vector < vector < double > >            g_area;      // a vector of the gaussian area
    vector < double >                       g_area_sum; // a vector of the gaussian area
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) files.size(); i++ )
    {
       vector < vector < double > > tmp_v;
       vector < double >            tmp_sum;
@@ -2629,7 +2629,7 @@ void US_Hydrodyn_Saxs_Hplc::axis_y()
       plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
       // actually need to test this, not sure what the correct version is
-      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
+      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    }
    if ( plot_dist_zoomer )
@@ -2685,7 +2685,7 @@ void US_Hydrodyn_Saxs_Hplc::axis_x()
       plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
 #else
       // actually need to test this, not sure what the correct version is
-      plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtScaleEngine );
+      plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
 #endif
    }
    if ( !suppress_replot )
@@ -2925,7 +2925,7 @@ void US_Hydrodyn_Saxs_Hplc::update_ref()
 #ifndef QT4
    plot_ref->removeMarkers();
 #else
-#warning check how to do this in qt4
+   plot_ref->detachItems( QwtPlotItem::Rtti_PlotMarker );
 #endif
    
    QColor color( "red" );
@@ -2939,15 +2939,18 @@ void US_Hydrodyn_Saxs_Hplc::update_ref()
    plot_ref->setMarkerFont      ( ref_marker, QFont("Helvetica", 11, QFont::Bold));
    plot_ref->setMarkerLabelText ( ref_marker, QString( "%1" ).arg( f_time[ last_selected_file ] ) );
 #else
-#warning check how to do this in qt4 needs ymark symsize
-   ref_marker = new QwtPlotMarker;
-   ref_marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
-                                     QBrush( Qt::white ), QPen( color, 2, Qt::DashLine ),
-                                     QSize( 8, sizeym ) ) );
-   ref_marker->setValue( f_time[ last_selected_file ], ymark );
-   ref_marker->setLabelAlignment( align );
-   ref_marker->setLabel( text );
-   ref_marker->attach( plot_ref );
+   QwtPlotMarker * ref_marker = new QwtPlotMarker;
+   ref_marker->setLineStyle       ( QwtPlotMarker::VLine );
+   ref_marker->setLinePen         ( QPen( color, 2, Qt::DashDotDotLine ) );
+   ref_marker->setLabelOrientation( Qt::Horizontal );
+   ref_marker->setXValue          ( f_time[ last_selected_file ] );
+   ref_marker->setLabelAlignment  ( Qt::AlignRight | Qt::AlignTop );
+   {
+      QwtText qwtt( QString( "%1" ).arg( f_time[ last_selected_file ] ) );
+      qwtt.setFont( QFont("Helvetica", 11, QFont::Bold ) );
+      ref_marker->setLabel           ( qwtt );
+   }
+   ref_marker->attach             ( plot_ref );
 #endif
    if ( !suppress_replot )
    {

@@ -1,5 +1,7 @@
 #include "../include/us_vector.h"
 
+// note: this program uses cout and/or cerr and this should be replaced
+
 void US_Vector::printvector( QString qs, vector < unsigned int > x )
 {
    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );

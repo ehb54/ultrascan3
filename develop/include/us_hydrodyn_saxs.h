@@ -30,6 +30,7 @@
 # include "qwt_legend.h"
 # include "qwt_plot_grid.h"
 # include "qwt_plot_curve.h"
+# include "qwt_scale_engine.h"
 #endif
 
 #include "us_util.h"

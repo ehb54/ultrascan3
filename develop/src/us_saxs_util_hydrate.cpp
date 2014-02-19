@@ -6183,7 +6183,7 @@ bool US_Saxs_Util::list_steric_clash_recheck()
          ;              
       ts << qs;
       ts << "\nDetailed clash info:\n\n";
-      for ( unsigned int i = 0; i < hydrate_clash_log.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) hydrate_clash_log.size(); i++ )
       {
          ts << hydrate_clash_log[ i ];
       }

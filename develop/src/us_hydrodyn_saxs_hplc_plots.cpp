@@ -122,8 +122,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
          curve = plot_errors->insertCurve( "base" );
          plot_errors->setCurveStyle( curve, QwtCurve::Lines );
 #else
-         QwtPlotCurve *curve;
-         QwtPlotCurve *curve = new QwtPlotCurve( file );
+         QwtPlotCurve *curve = new QwtPlotCurve( "base" );
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -151,8 +150,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
          curve = plot_errors->insertCurve( "errors" );
          plot_errors->setCurveStyle( curve, QwtCurve::Lines );
 #else
-         QwtPlotCurve *curve;
-         QwtPlotCurve *curve = new QwtPlotCurve( file );
+         QwtPlotCurve *curve = new QwtPlotCurve( "errors" );
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -166,12 +164,12 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
          plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
          curve->setPen( QPen( plot_colors[ f_pos[ unified_ggaussian_files[ j ] ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         curre->setData(
+         curve->setData(
                         (double *)&x[ 0 ],
                         (double *)&e[ 0 ],
                         x.size()
                         );
-         curve->setStyle( QwtCurve::Sticks );
+         curve->setStyle( QwtPlotCurve::Sticks );
          curve->attach( plot_errors );
 #endif
       }
@@ -344,8 +342,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
       curve = plot_errors->insertCurve( "base" );
       plot_errors->setCurveStyle( curve, QwtCurve::Lines );
 #else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
+      QwtPlotCurve *curve = new QwtPlotCurve( "base" );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -373,8 +370,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
       curve = plot_errors->insertCurve( "errors" );
       plot_errors->setCurveStyle( curve, QwtCurve::Lines );
 #else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
+      QwtPlotCurve *curve = new QwtPlotCurve( "errors" );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -388,12 +384,12 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
       plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
       curve->setPen( QPen( Qt::red, use_line_width, Qt::SolidLine ) );
-      curre->setData(
+      curve->setData(
                      (double *)&x[ 0 ],
                      (double *)&e[ 0 ],
                      x.size()
                      );
-      curve->setStyle( QwtCurve::Sticks );
+      curve->setStyle( QwtPlotCurve::Sticks );
       curve->attach( plot_errors );
 #endif
    }
@@ -514,15 +510,18 @@ void US_Hydrodyn_Saxs_Hplc::plot_errors_jump_markers()
       plot_errors->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold) );
       plot_errors->setMarkerLabelText ( marker, QString( "%1" ).arg( i + 1 ) ); // unified_ggaussian_files[ i ] );
 #else
-#warning check how to do this in qt4 needs ymark symsize
-      QwtPlotMarker* marker = new QwtPlotMarker;
-      marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
-                                    QBrush( Qt::white ), QPen( Qt::cyan, 2, Qt::DashLine ),
-                                    QSize( 8, sizeym ) ) );
-      marker->setValue( unified_ggaussian_jumps[ i ] );
-      marker->setLabelAlignment( Qt::AlignRight | Qt::AlignTop );
-      marker->setLabel( QString( "%1" ).arg( i + 1 ) ); // unified_ggaussian_files[ i ] );
-      marker->attach( plot_errors );
+      QwtPlotMarker * marker = new QwtPlotMarker;
+      marker->setLineStyle       ( QwtPlotMarker::VLine );
+      marker->setLinePen         ( QPen( Qt::cyan, 2, Qt::DashDotDotLine ) );
+      marker->setLabelOrientation( Qt::Horizontal );
+      marker->setXValue          ( unified_ggaussian_jumps[ i ] );
+      marker->setLabelAlignment  ( Qt::AlignRight | Qt::AlignTop );
+      {
+         QwtText qwtt( QString( "%1" ).arg( i + 1 ) );
+         qwtt.setFont( QFont("Helvetica", 11, QFont::Bold ) );
+         marker->setLabel           ( qwtt );
+      }
+      marker->attach             ( plot_errors );
 #endif
    }
    if ( !suppress_replot )

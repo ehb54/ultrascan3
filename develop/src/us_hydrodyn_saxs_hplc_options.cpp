@@ -246,6 +246,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       le_smooth        ->hide();
       lbl_reps         ->hide();
       le_reps          ->hide();
+      lbl_alpha        ->hide();
+      le_alpha         ->hide();
       cb_save_bl       ->hide();
 
       lbl_gaussian_type->hide();

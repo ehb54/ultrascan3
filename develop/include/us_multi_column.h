@@ -2,6 +2,9 @@
 #define US_MULTI_COLUMN_H
 
 #include "us_saxs_util.h"
+#ifdef QT4
+# include "qdebug.h"
+#endif
 
 #ifdef WIN32
 # if !defined( QT4 )
@@ -514,7 +517,7 @@ class US_Multi_Column
             tmp_data.push_back( pos );
             if ( !usu.apply_natural_spline( x, y, y2, pos, new_val ) )
             {
-               cout << usu.errormsg << endl;
+               qDebug( usu.errormsg );
             }
             tmp_data.push_back( new_val );
             mcx.data.push_back( tmp_data );
@@ -1224,7 +1227,7 @@ class US_Multi_Column
             }
          }                 
          data = new_data;
-         cout << QString( "rows %1 from %2\n" ).arg( rows ).arg( tot );
+         qDebug( QString( "rows %1 from %2" ).arg( rows ).arg( tot ) );
          return true;
       }      
 
@@ -1239,8 +1242,7 @@ class US_Multi_Column
          vector < double > result;
          if ( !points )
          {
-            cout << "Internal error: getnormal called with zero points\n";
-            cerr << "Internal error: getnormal called with zero points\n";
+            qDebug( "Internal error: getnormal called with zero points" );
             return result;
          }
          points++;

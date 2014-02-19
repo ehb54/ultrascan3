@@ -28,7 +28,7 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
    setCaption(tr("US-SOMO: SAXS HPLC SVD"));
 
    cg_red = USglobal->global_colors.cg_label;
-   cg_red.setBrush( QColorGroup::Foreground, QBrush( QColor( "red" ),  QBrush::SolidPattern ) );
+   cg_red.setBrush( QColorGroup::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
 
    if ( !hplc_selected_files.size() )
    {
@@ -204,18 +204,18 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    plot_data->enableGridXMin();
    plot_data->enableGridYMin();
 #else
-   grid_saxs = new QwtPlotGrid;
-   grid_saxs->enableXMin( true );
-   grid_saxs->enableYMin( true );
+   grid_data = new QwtPlotGrid;
+   grid_data->enableXMin( true );
+   grid_data->enableYMin( true );
 #endif
    plot_data->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
 #ifndef QT4
    plot_data->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_data->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_saxs->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
-   grid_saxs->attach( plot_data );
+   grid_data->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_data->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_data->attach( plot_data );
 #endif
    plot_data->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q [1/Angstrom]" )); // or Time or Frame"));
    plot_data->setAxisTitle(QwtPlot::yLeft, tr("Intensity [a.u.] (log scale)"));
@@ -237,7 +237,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 #ifndef QT4
    plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
-   plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
+   plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    plot_data->setCanvasBackground(USglobal->global_colors.plot);
 
@@ -260,9 +260,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    plot_errors->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_errors->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_saxs->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
-   grid_saxs->attach( plot_errors );
+   grid_errors->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_errors->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_errors->attach( plot_errors );
 #endif
    // plot_errors->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q [1/Angstrom]" )); // or Time or Frame"));
    plot_errors->setAxisTitle(QwtPlot::yLeft, tr("Delta Intensity [a.u.]"));
@@ -284,7 +284,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 #ifndef QT4
    plot_errors->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
-   plot_errors->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
+   plot_errors->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    plot_errors->setCanvasBackground(USglobal->global_colors.plot);
 
@@ -1625,7 +1625,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_x_title()
       plot_data->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
 #else
       // actually need to test this, not sure what the correct version is
-      plot_data->setAxisScaleEngine(QwtPlot::xBottom, new QwtScaleEngine );
+      plot_data->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
 #endif
    }
 }
@@ -1662,7 +1662,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_y_title()
       plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
       // actually need to test this, not sure what the correct version is
-      plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
+      plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    }
 }
@@ -3076,7 +3076,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
          curve = plot_errors->insertCurve( "base" );
          plot_errors->setCurveStyle( curve, QwtCurve::Lines );
 #else
-         QwtPlotCurve *curve;
          QwtPlotCurve *curve = new QwtPlotCurve( "base" );
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
@@ -3105,8 +3104,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
          curve = plot_errors->insertCurve( "errors" );
          plot_errors->setCurveStyle( curve, QwtCurve::Lines );
 #else
-         QwtPlotCurve *curve;
-         QwtPlotCurve *curve = new QwtPlotCurve( file );
+         QwtPlotCurve *curve = new QwtPlotCurve( "errors" );
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -3120,12 +3118,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
          plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
          curve->setPen( QPen( use_color[ j ], use_line_width, Qt::SolidLine ) );
-         curre->setData(
+         curve->setData(
                         (double *)&x[ j ][ 0 ],
                         (double *)&e[ j ][ 0 ],
                         x[ j ].size()
                         );
-         curve->setStyle( QwtCurve::Sticks );
+         curve->setStyle( QwtPlotCurve::Sticks );
          curve->attach( plot_errors );
 #endif
       }
@@ -3197,15 +3195,18 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_errors_jump_markers()
       plot_errors->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold) );
       plot_errors->setMarkerLabelText ( marker, QString( "%1" ).arg( i + 1 ) );
 #else
-#warning check how to do this in qt4 needs ymark symsize
-      QwtPlotMarker* marker = new QwtPlotMarker;
-      marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
-                                    QBrush( Qt::white ), QPen( Qt::cyan, 1, Qt::DashLine ),
-                                    QSize( 8, sizeym ) ) );
-      marker->setValue( plot_errors_jumps[ i ] );
-      marker->setLabelAlignment( Qt::AlignRight | Qt::AlignTop );
-      marker->setLabel( QString( "%1" ).arg( i + 1 ) ); 
-      marker->attach( plot_errors );
+      QwtPlotMarker * marker = new QwtPlotMarker;
+      marker->setLineStyle       ( QwtPlotMarker::VLine );
+      marker->setLinePen         ( QPen( Qt::cyan, 2, Qt::DashDotDotLine ) );
+      marker->setLabelOrientation( Qt::Horizontal );
+      marker->setXValue          ( plot_errors_jumps[ i ] );
+      marker->setLabelAlignment  ( Qt::AlignRight | Qt::AlignTop );
+      {
+         QwtText qwtt( QString( "%1" ).arg( i + 1 ) );
+         qwtt.setFont( QFont("Helvetica", 11, QFont::Bold ) );
+         marker->setLabel           ( qwtt );
+      }
+      marker->attach             ( plot_errors );
 #endif
    }
    plot_errors->replot();
@@ -3338,8 +3339,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
          curve = plot_errors->insertCurve( "base" );
          plot_errors->setCurveStyle( curve, QwtCurve::Lines );
 #else
-         QwtPlotCurve *curve;
-         QwtPlotCurve *curve = new QwtPlotCurve( file );
+         QwtPlotCurve *curve = new QwtPlotCurve( "base" );
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -3367,8 +3367,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
          curve = plot_errors->insertCurve( "errors" );
          plot_errors->setCurveStyle( curve, QwtCurve::Lines );
 #else
-         QwtPlotCurve *curve;
-         QwtPlotCurve *curve = new QwtPlotCurve( file );
+         QwtPlotCurve *curve = new QwtPlotCurve( "errors" );
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -3382,12 +3381,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
          plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
          curve->setPen( QPen( plot_colors[ f_pos[ this_color_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         curre->setData(
+         curve->setData(
                         (double *)&x[ 0 ],
                         (double *)&e[ 0 ],
                         x.size()
                         );
-         curve->setStyle( QwtCurve::Sticks );
+         curve->setStyle( QwtPlotCurve::Sticks );
          curve->attach( plot_errors );
 #endif
       }

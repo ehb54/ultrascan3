@@ -37,7 +37,7 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
    setCaption( tr( "US-SOMO: BEST results analysis tool" ) );
 
    cg_red = USglobal->global_colors.cg_label;
-   cg_red.setBrush( QColorGroup::Foreground, QBrush( QColor( "red" ),  QBrush::SolidPattern ) );
+   cg_red.setBrush( QColorGroup::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
 
    plot_data_zoomer      = (ScrollZoomer *) 0;
 
@@ -185,18 +185,18 @@ void US_Hydrodyn_Best::setupGUI()
    plot_data->enableGridXMin();
    plot_data->enableGridYMin();
 #else
-   grid_saxs = new QwtPlotGrid;
-   grid_saxs->enableXMin( true );
-   grid_saxs->enableYMin( true );
+   grid_data = new QwtPlotGrid;
+   grid_data->enableXMin( true );
+   grid_data->enableYMin( true );
 #endif
    plot_data->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
 #ifndef QT4
    plot_data->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_data->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_saxs->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
-   grid_saxs->attach( plot_data );
+   grid_data->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_data->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_data->attach( plot_data );
 #endif
    plot_data->setAxisTitle(QwtPlot::xBottom, tr( "1/Triangles"      ) ); 
    plot_data->setAxisTitle(QwtPlot::yLeft,   tr( "Parameter [a.u.]" ) );
@@ -218,7 +218,7 @@ void US_Hydrodyn_Best::setupGUI()
 #ifndef QT4
    plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
-   plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
+   plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    plot_data->setCanvasBackground(USglobal->global_colors.plot);
 
@@ -834,7 +834,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
       {
          sym.setStyle(QwtSymbol::Diamond);
          sym.setSize( 12 );
-         sym.setPen  ( Qt::cyan );
+         sym.setPen  ( QPen( Qt::cyan ) );
          sym.setBrush( Qt::blue );
       }
       if (  selected_points   .count( i ) &&
@@ -843,7 +843,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
       {
          sym.setStyle(QwtSymbol::UTriangle);
          sym.setSize( 10 );
-         sym.setPen  ( Qt::cyan );
+         sym.setPen  ( QPen( Qt::cyan ) );
          sym.setBrush( Qt::blue );
       }
       if ( !selected_points    .count( i ) &&
@@ -852,7 +852,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
       {
          sym.setStyle(QwtSymbol::DTriangle);
          sym.setSize( 10 );
-         sym.setPen  ( Qt::cyan );
+         sym.setPen  ( QPen( Qt::cyan ) );
          sym.setBrush( Qt::blue );
       }
       if ( !selected_points    .count( i ) &&
@@ -861,7 +861,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
       {
          sym.setStyle(QwtSymbol::XCross);
          sym.setSize( 10 );
-         sym.setPen  ( Qt::red );
+         sym.setPen  ( QPen( Qt::red ) );
          sym.setBrush( Qt::red );
       }
 

@@ -2400,7 +2400,7 @@ void US_Hydrodyn_Saxs::set_guinier()
 #ifndef QT4
       plot_saxs->removeMarkers();
 #else
-#warning check how to do this in qt4
+      plot_saxs->detachItems( QwtPlotItem::Rtti_PlotMarker );
 #endif
    }
 
@@ -2991,7 +2991,7 @@ void US_Hydrodyn_Saxs::plot_guinier_pts_removed( int i, bool cs, bool Rt )
       sym.setStyle(QwtSymbol::XCross);
       sym.setSize(12);
       sym.setBrush(Qt::red);
-      sym.setPen  (Qt::red);
+      sym.setPen  ( QPen( Qt::red) );
       for ( map < double, double >::iterator it = plotted_cs_guinier_pts_removed[ i ].begin();
             it != plotted_cs_guinier_pts_removed[ i ].end();
             it++ )
@@ -3022,7 +3022,7 @@ void US_Hydrodyn_Saxs::plot_guinier_pts_removed( int i, bool cs, bool Rt )
          sym.setStyle(QwtSymbol::XCross);
          sym.setSize(12);
          sym.setBrush(Qt::red);
-         sym.setPen  (Qt::red);
+         sym.setPen  ( QPen( Qt::red) );
          for ( map < double, double >::iterator it = plotted_Rt_guinier_pts_removed[ i ].begin();
                it != plotted_Rt_guinier_pts_removed[ i ].end();
                it++ )
@@ -3052,7 +3052,7 @@ void US_Hydrodyn_Saxs::plot_guinier_pts_removed( int i, bool cs, bool Rt )
          sym.setStyle(QwtSymbol::XCross);
          sym.setSize(12);
          sym.setBrush(Qt::red);
-         sym.setPen  (Qt::red);
+         sym.setPen  (QPen( Qt::red) );
 
          for ( map < double, double >::iterator it = plotted_guinier_pts_removed[ i ].begin();
                it != plotted_guinier_pts_removed[ i ].end();

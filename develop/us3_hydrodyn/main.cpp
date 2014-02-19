@@ -84,6 +84,8 @@ int main (int argc, char **argv)
       hydrodyn->advanced_config.scroll_editor = true;
       hydrodyn->advanced_config.expert_mode = true;
    }
+   hydrodyn->set_expert( expert );
+
    if ( debug )
    {
       hydrodyn->advanced_config.debug_1 = true;

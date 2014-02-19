@@ -7,6 +7,9 @@
 #ifndef WIN32
 # include <sys/time.h>
 #endif
+#ifdef QT4
+# include <qwt_scale_engine.h>
+#endif
 
 #if defined( HAS_CBF )
 #  include <cbf.h>
@@ -3326,7 +3329,11 @@ XYZ ArbitraryRotate(XYZ p,double theta,XYZ r)
 }
 #endif
 
-bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString name )
+bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString 
+#if !defined( HAS_CBF )
+                                                         name 
+#endif
+)
 {
    // make a copy of mapname, open read/write, write datablock
    errormsg = "";

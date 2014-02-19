@@ -9,6 +9,7 @@
 #include <qpushbutton.h>
 #include <qdialog.h>
 #include <qtable.h>
+#include <qdatetime.h>
 
 #include "us_util.h"
 

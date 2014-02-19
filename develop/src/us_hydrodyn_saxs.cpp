@@ -16,9 +16,6 @@
 #include "../include/us_math.h"
 #include <qwaitcondition.h>
 #include "qwt_symbol.h"
-#ifdef QT4
-# include <qwt_scale_engine.h>
-#endif
 
 #define SLASH "/"
 #if defined(WIN32)

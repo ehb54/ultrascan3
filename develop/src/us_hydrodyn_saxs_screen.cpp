@@ -29,7 +29,7 @@ US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
    setupGUI();
    running = false;
 
-   for ( unsigned int i = 0; i < saxs_window->plotted_I_error.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) saxs_window->plotted_I_error.size(); i++ )
    {
       qs.      push_back( saxs_window->plotted_q           [ i ] );
       Is.      push_back( saxs_window->plotted_I           [ i ] );
@@ -557,7 +557,7 @@ void US_Hydrodyn_Saxs_Screen::set_target( QString scaling_target )
 {
    lbl_current_target->setText( scaling_target );
    bool target_found = false;
-   for ( unsigned int i = 0; i < names.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) names.size(); i++ )
    {
       if ( names[i] == lbl_current_target->text() )
       {
@@ -573,7 +573,7 @@ void US_Hydrodyn_Saxs_Screen::set_target( QString scaling_target )
    target_found      = false;
    last_target_found = false;
    unsigned int target_pos;
-   for ( unsigned int i = 0; i < names.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) names.size(); i++ )
    {
       if ( names[i] == lbl_current_target->text() )
       {
@@ -636,7 +636,7 @@ void US_Hydrodyn_Saxs_Screen::run_all_targets()
    running = true;
    update_enables();
 
-   for ( unsigned int i = 0; i < saxs_window->qsl_plotted_iq_names.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) saxs_window->qsl_plotted_iq_names.size(); i++ )
    {
       progress2->setProgress(i + 1, saxs_window->qsl_plotted_iq_names.size() + 1 );
       editor_msg("blue", QString("running %1\n").arg( saxs_window->qsl_plotted_iq_names[ i ] ) );

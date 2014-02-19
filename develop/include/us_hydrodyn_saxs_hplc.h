@@ -576,7 +576,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                         gaussian_enables();
       void                         ggaussian_enables();
 
-      void                         gauss_add_marker( double pos, QColor color, QString text, int align = Qt::AlignRight | Qt::AlignTop );
+      void                         gauss_add_marker( double pos, 
+                                                     QColor color, 
+                                                     QString text, 
+#ifndef QT4
+                                                     int 
+#else
+                                                     Qt::Alignment
+#endif
+                                                     align
+                                                     = Qt::AlignRight | Qt::AlignTop );
       void                         gauss_init_markers();
       void                         gauss_delete_markers();
 

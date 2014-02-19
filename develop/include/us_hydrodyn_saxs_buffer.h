@@ -354,7 +354,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       mQLineEdit                   *le_last_focus;
 
       void                         join_enables();
-      void                         join_add_marker( double pos, QColor color, QString text, int align = Qt::AlignRight | Qt::AlignTop );
+      void                         join_add_marker( double pos, 
+                                                    QColor color, 
+                                                    QString text, 
+#ifndef QT4
+                                                    int 
+#else
+                                                    Qt::Alignment
+#endif
+                                                    align = Qt::AlignRight | Qt::AlignTop );
       void                         join_init_markers();
       void                         join_delete_markers();
       void                         replot_join();

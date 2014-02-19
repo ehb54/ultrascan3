@@ -1,0 +1,2 @@
+These files require perl >= 5.17 &  CPAN module GraphViz2 installed
+The provide a way to produce a graphic layout of window interaction

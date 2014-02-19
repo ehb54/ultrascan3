@@ -119,7 +119,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    plot3d_flag     = false;
 
    cg_red = USglobal->global_colors.cg_label;
-   cg_red.setBrush( QColorGroup::Foreground, QBrush( QColor( "red" ),  QBrush::SolidPattern ) );
+   cg_red.setBrush( QColorGroup::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
 
    setupGUI();
    update_gauss_mode();
@@ -476,26 +476,26 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    int minHeight3 = 25;
 
    QColorGroup cg_magenta = USglobal->global_colors.cg_normal;
-   cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "magenta" ), QBrush::HorPattern ) );
+   cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "magenta" ), Qt::HorPattern ) );
 
    /*
-   cg_magenta.setBrush( QColorGroup::Foreground, QBrush( QColor( "magenta" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Button, QBrush( QColor( "blue" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Light, QBrush( QColor( "darkcyan" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Midlight, QBrush( QColor( "darkblue" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Dark, QBrush( QColor( "yellow" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Mid, QBrush( QColor( "darkred" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Text, QBrush( QColor( "green" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::BrightText, QBrush( QColor( "darkgreen" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::ButtonText, QBrush( QColor( "cyan" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "gray" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Shadow, QBrush( QColor( "magenta" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Highlight, QBrush( QColor( "darkyellow" ), QBrush::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::HighlightedText, QBrush( QColor( "darkred" ), QBrush::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Foreground, QBrush( QColor( "magenta" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Button, QBrush( QColor( "blue" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Light, QBrush( QColor( "darkcyan" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Midlight, QBrush( QColor( "darkblue" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Dark, QBrush( QColor( "yellow" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Mid, QBrush( QColor( "darkred" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Text, QBrush( QColor( "green" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::BrightText, QBrush( QColor( "darkgreen" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::ButtonText, QBrush( QColor( "cyan" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "gray" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Shadow, QBrush( QColor( "magenta" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Highlight, QBrush( QColor( "darkyellow" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::HighlightedText, QBrush( QColor( "darkred" ), Qt::DiagCrossPattern ) );
    */
 
    QColorGroup cg_red = cg_magenta;
-   cg_red.setBrush( QColorGroup::Base, QBrush( QColor( "red" ), QBrush::DiagCrossPattern ) );
+   cg_red.setBrush( QColorGroup::Base, QBrush( QColor( "red" ), Qt::DiagCrossPattern ) );
 
    lbl_files = new mQLabel("Data files", this);
    lbl_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -3619,8 +3619,7 @@ void US_Hydrodyn_Saxs_Hplc::set_conc_file()
       curve = plot_ref->insertCurve( "concentration" );
       plot_ref->setCurveStyle( curve, QwtCurve::Lines );
 #else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
+      QwtPlotCurve *curve = new QwtPlotCurve( "concentration" );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -6932,7 +6931,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
 #ifndef QT4
                plot_dist->removeCurve( plotted_baseline[ i ] );
 #else
-#warning check how to do this in qt4
+               plotted_baseline[ i ]->detach();
 #endif
             }
             if ( plotted_curves.count( wheel_file ) &&
@@ -6941,7 +6940,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
 #ifndef QT4
                plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], use_line_width, SolidLine));
 #else
-               plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+               plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
 #endif
             }
          } else {
@@ -7265,19 +7264,13 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
 #ifndef QT4
                plot_dist->setMarkerPen       ( plotted_markers[ i ], QPen( Qt::magenta, 2, DashDotDotLine));
 #else
-#warning check how to do this in qt4 needs ymark symsize
-               plotted_markers[ i ]->setSymbol( QwtSymbol( QwtSymbol::VLine,
-                                                           QBrush( Qt::white ), QPen( Qt::magenta, 2, Qt::DashLine ),
-                                                           QSize( 8, sizeym ) ) );
+               plotted_markers[ i ]->setLinePen( QPen( Qt::magenta, 2, Qt::DashDotDotLine ) );
 #endif
             } else {
 #ifndef QT4
                plot_dist->setMarkerPen       ( plotted_markers[ i ], QPen( Qt::blue, 2, DashDotDotLine));
 #else
-#warning check how to do this in qt4 needs ymark symsize
-               plotted_markers[ i ]->setSymbol( QwtSymbol( QwtSymbol::VLine,
-                                                           QBrush( Qt::white ), QPen( Qt::blue, 2, Qt::DashLine ),
-                                                           QSize( 8, sizeym ) ) );
+               plotted_markers[ i ]->setLinePen( QPen( Qt::blue, 2, Qt::DashDotDotLine ) );
 #endif
             }
          }
@@ -7359,19 +7352,13 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
 #ifndef QT4
                plot_dist->setMarkerPen       ( plotted_markers[ i ], QPen( Qt::magenta, 2, DashDotDotLine));
 #else
-#warning check how to do this in qt4 needs ymark symsize
-               plotted_markers[ i ]->setSymbol( QwtSymbol( QwtSymbol::VLine,
-                                                           QBrush( Qt::white ), QPen( Qt::magenta, 2, Qt::DashLine ),
-                                                           QSize( 8, sizeym ) ) );
+               plotted_markers[ i ]->setLinePen( QPen( Qt::magenta, 2, Qt::DashDotDotLine));
 #endif
             } else {
 #ifndef QT4
                plot_dist->setMarkerPen       ( plotted_markers[ i ], QPen( Qt::blue, 2, DashDotDotLine));
 #else
-#warning check how to do this in qt4 needs ymark symsize
-               plotted_markers[ i ]->setSymbol( QwtSymbol( QwtSymbol::VLine,
-                                                           QBrush( Qt::white ), QPen( Qt::blue, 2, Qt::DashLine ),
-                                                           QSize( 8, sizeym ) ) );
+               plotted_markers[ i ]->setLinePen( QPen( Qt::blue, 2, Qt::DashDotDotLine));
 #endif
             }
          }
@@ -7449,7 +7436,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
 #ifndef QT4
    plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, use_line_width, SolidLine));
 #else
-   plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ Qt::cyan, use_line_width, Qt::SolidLine ) ) );
+   plotted_curves[ wheel_file ]->setPen( QPen( Qt::cyan, use_line_width, Qt::SolidLine ) );
 #endif
 
    org_gaussians = gaussians;
@@ -7777,8 +7764,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
 #ifndef QT4
       plot_dist->setMarkerPos( plotted_markers[ 2 + gaussian_pos ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-      plotted_markers[ 2 + gaussian_pos ]->setValue( pos, ymark );
+      plotted_markers[ 2 + gaussian_pos ]->setXValue( text.toDouble() );
 #endif
       if ( qwtw_wheel->value() != text.toDouble() )
       {
@@ -7936,8 +7922,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-   plotted_markers[ 0 ]->setValue( pos, ymark );
+   plotted_markers[ 0 ]->setXValue( text.toDouble() );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
@@ -7958,8 +7943,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-   plotted_markers[ 1 ]->setValue( pos, ymark );
+   plotted_markers[ 1 ]->setXValue( text.toDouble() );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
@@ -7975,7 +7959,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_text( const QString & text )
    }
 }
 
-void US_Hydrodyn_Saxs_Hplc::gauss_add_marker( double pos, QColor color, QString text, int align )
+void US_Hydrodyn_Saxs_Hplc::gauss_add_marker( double pos, 
+                                              QColor color, 
+                                              QString text, 
+#ifndef QT4
+                                              int 
+#else
+                                              Qt::Alignment
+#endif
+                                              align )
 {
 #ifndef QT4
    long marker = plot_dist->insertMarker();
@@ -7986,15 +7978,18 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_marker( double pos, QColor color, QString 
    plot_dist->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold));
    plot_dist->setMarkerLabelText ( marker, text );
 #else
-#warning check how to do this in qt4 needs ymark symsize
-   QwtPlotMarker* marker = new QwtPlotMarker;
-   marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
-                                 QBrush( Qt::white ), QPen( color, 2, Qt::DashLine ),
-                                 QSize( 8, sizeym ) ) );
-   marker->setValue( pos, ymark );
-   marker->setLabelAlignment( align );
-   marker->setLabel( text );
-   marker->attach( plot_dist );
+   QwtPlotMarker * marker = new QwtPlotMarker;
+   marker->setLineStyle       ( QwtPlotMarker::VLine );
+   marker->setLinePen         ( QPen( color, 2, Qt::DashDotDotLine ) );
+   marker->setLabelOrientation( Qt::Horizontal );
+   marker->setXValue          ( pos );
+   marker->setLabelAlignment  ( align );
+   {
+      QwtText qwtt( text );
+      qwtt.setFont( QFont("Helvetica", 11, QFont::Bold ) );
+      marker->setLabel           ( qwtt );
+   }
+   marker->attach             ( plot_dist );
 #endif
    plotted_markers.push_back( marker );
 }   
@@ -8031,8 +8026,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_hline( double center, double width )
    curve = plot_dist->insertCurve( "hline" );
    plot_dist->setCurveStyle( curve, QwtCurve::Lines );
 #else
-   QwtPlotCurve *curve;
-   QwtPlotCurve *curve = new QwtPlotCurve( file );
+   QwtPlotCurve *curve = new QwtPlotCurve( "hline" );
    curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -8103,16 +8097,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_markers()
 #ifndef QT4
    plot_dist->removeMarkers();
 #else
-#warning check how to do this in qt4
+   plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );
 #endif
    for ( unsigned int i = 0; i < ( unsigned int )plotted_hlines.size(); i++ )
    {
 #ifndef QT4
       plot_dist->removeCurve( plotted_hlines[ i ] );
 #else
-#warning check how to do this in qt4
+      plotted_hlines[ i ]->detach();
 #endif
-      
    }
 }
 
@@ -8207,8 +8200,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_gaussian( double *g, QColor color )
    curve = plot_dist->insertCurve( "gaussian" );
    plot_dist->setCurveStyle( curve, QwtCurve::Lines );
 #else
-   QwtPlotCurve *curve;
-   QwtPlotCurve *curve = new QwtPlotCurve( file );
+   QwtPlotCurve *curve = new QwtPlotCurve( "gaussian" );
    curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -8258,7 +8250,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians()
 #ifndef QT4
       plot_dist->removeCurve( plotted_gaussians[ i ] );
 #else
-#warning check how to do this in qt4
+      plotted_gaussians[ i ]->detach();
 #endif
    }
    for ( unsigned int i = 0; i < ( unsigned int ) plotted_gaussian_sum.size(); i++ )
@@ -8266,7 +8258,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians()
 #ifndef QT4
       plot_dist->removeCurve( plotted_gaussian_sum[ i ] );
 #else
-#warning check how to do this in qt4
+      plotted_gaussian_sum[ i ]->detach();
 #endif
    }
 }
@@ -8389,7 +8381,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_gaussian_sum()
 #ifndef QT4
          y[ j ] = plot_dist->curve( plotted_gaussians[ 0 ] )->y( j );
 #else
-#warning check how to do this in qt4
+         y[ j ] = plotted_gaussians[ 0 ]->y( j );
 #endif
       }
 
@@ -8400,7 +8392,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_gaussian_sum()
 #ifndef QT4
             y[ j ] += plot_dist->curve( plotted_gaussians[ i ] )->y( j );
 #else
-#warning check how to do this in qt4
+            y[ j ] += plotted_gaussians[ i ]->y( j );
 #endif
          }
       }
@@ -8416,8 +8408,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_gaussian_sum()
    curve = plot_dist->insertCurve( "gaussian_sum" );
    plot_dist->setCurveStyle( curve, QwtCurve::Lines );
 #else
-   QwtPlotCurve *curve;
-   QwtPlotCurve *curve = new QwtPlotCurve( file );
+   QwtPlotCurve *curve = new QwtPlotCurve( "gaussian_sum" );
    curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -8462,7 +8453,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_gaussian_sum()
 #ifndef QT4
          y[ j ] = plot_dist->curve( plotted_gaussians[ 0 ] )->y( j );
 #else
-#warning check how to do this in qt4
+         y[ j ] = plotted_gaussians[ 0 ]->y( j );
 #endif
       }
    } else {
@@ -8479,7 +8470,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_gaussian_sum()
 #ifndef QT4
          y[ j ] += plot_dist->curve( plotted_gaussians[ i ] )->y( j );
 #else
-#warning check how to do this in qt4
+         y[ j ] += plotted_gaussians[ i ]->y( j );
 #endif
       }
    }
@@ -8711,7 +8702,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start()
 #ifndef QT4
    plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, use_line_width, SolidLine));
 #else
-   plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ Qt::cyan, use_line_width, Qt::SolidLine ) ) );
+   plotted_curves[ wheel_file ]->setPen( QPen( Qt::cyan, use_line_width, Qt::SolidLine ) );
 #endif
 
    baseline_mode = true;
@@ -8981,7 +8972,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
 #ifndef QT4
       plot_dist->removeCurve( plotted_baseline[ i ] );
 #else
-#warning check how to do this in qt4
+      plotted_baseline[ i ]->detach();
 #endif
    }
    plotted_baseline.clear();
@@ -8997,8 +8988,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
       curve = plot_dist->insertCurve( "baseline" );
       plot_dist->setCurveStyle( curve, QwtCurve::Lines );
 #else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
+      QwtPlotCurve *curve = new QwtPlotCurve( "baseline" );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -9012,7 +9002,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
                                2
                                );
 #else
-      curve->setPen( QPen( Qt:green, use_line_width, Qt::DashLine ) );
+      curve->setPen( QPen( Qt::green, use_line_width, Qt::DashLine ) );
       plotted_baseline[ 0 ]->setData(
                                      (double *)&x[ 0 ],
                                      (double *)&y[ 0 ],
@@ -9035,8 +9025,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
       curve = plot_dist->insertCurve( "baseline s" );
       plot_dist->setCurveStyle( curve, QwtCurve::Lines );
 #else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
+      QwtPlotCurve *curve = new QwtPlotCurve( "baseline s" );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -9050,7 +9039,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
                                2
                                );
 #else
-      curve->setPen( QPen( QColor( start_color, use_line_width, Qt::DashLine ) );
+      curve->setPen( QPen( start_color, use_line_width, Qt::DashLine ) );
       plotted_baseline.back()->setData(
                                        (double *)&x[ 0 ],
                                        (double *)&y[ 0 ],
@@ -9074,8 +9063,7 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline()
       curve = plot_dist->insertCurve( "baseline e" );
       plot_dist->setCurveStyle( curve, QwtCurve::Lines );
 #else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
+      QwtPlotCurve *curve = new QwtPlotCurve( "baseline e" );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -9110,8 +9098,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_s_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-   plotted_markers[ 0 ]->setValue( pos, ymark );
+   plotted_markers[ 0 ]->setXValue( text.toDouble() );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
@@ -9130,8 +9117,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-   plotted_markers[ 1 ]->setValue( pos, ymark );
+   plotted_markers[ 1 ]->setXValue( text.toDouble() );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
@@ -9150,8 +9136,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_e_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 2 ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-   plotted_markers[ 2 ]->setValue( pos, ymark );
+   plotted_markers[ 2 ]->setXValue( text.toDouble() );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
@@ -9167,8 +9152,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_s_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 3 ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-   plotted_markers[ 3 ]->setValue( pos, ymark );
+   plotted_markers[ 3 ]->setXValue( text.toDouble() );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
@@ -9187,8 +9171,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 4 ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-   plotted_markers[ 4 ]->setValue( pos, ymark );
+   plotted_markers[ 4 ]->setXValue( text.toDouble() );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
@@ -9207,8 +9190,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_e_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 5 ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-   plotted_markers[ 5 ]->setValue( pos, ymark );
+   plotted_markers[ 5 ]->setXValue( text.toDouble() );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {

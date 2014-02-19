@@ -1377,7 +1377,6 @@ void US_Hydrodyn_Saxs::do_plot_resid()
          curve = plot_resid->insertCurve( "base" );
          plot_resid->setCurveStyle( curve, QwtCurve::Lines );
 #else
-         QwtPlotCurve *curve;
          QwtPlotCurve *curve = new QwtPlotCurve( "base" );
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
@@ -1503,7 +1502,6 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
       curve = plot_resid->insertCurve( "base" );
       plot_resid->setCurveStyle( curve, QwtCurve::Lines );
 #else
-      QwtPlotCurve *curve;
       QwtPlotCurve *curve = new QwtPlotCurve( "base" );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
@@ -1532,8 +1530,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
       curve = plot_resid->insertCurve( "errors" );
       plot_resid->setCurveStyle( curve, QwtCurve::Lines );
 #else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
+      QwtPlotCurve *curve = new QwtPlotCurve( "errors" );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -1547,12 +1544,12 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
       plot_resid->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
       curve->setPen( QPen( qc, 1, Qt::SolidLine ) );
-      curre->setData(
+      curve->setData(
                      (double *)&x[ 0 ],
                      (double *)&e[ 0 ],
                      x.size()
                      );
-      curve->setStyle( QwtCurve::Sticks );
+      curve->setStyle( QwtPlotCurve::Sticks );
       curve->attach( plot_resid );
 #endif
    }
@@ -1568,8 +1565,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x_d,
       curve = plot_resid->insertCurve( "errors" );
       plot_resid->setCurveStyle( curve, QwtCurve::Lines );
 #else
-      QwtPlotCurve *curve;
-      QwtPlotCurve *curve = new QwtPlotCurve( file );
+      QwtPlotCurve *curve = new QwtPlotCurve( "errors" );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
@@ -1583,12 +1579,12 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x_d,
       plot_resid->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
       curve->setPen( QPen( qc, 1, Qt::DotLine ) );
-      curre->setData(
+      curve->setData(
                      (double *)&x_d[ 0 ],
                      (double *)&e_d[ 0 ],
                      x_d.size()
                      );
-      curve->setStyle( QwtCurve::Sticks );
+      curve->setStyle( QwtPlotCurve::Sticks );
       curve->attach( plot_resid );
 #endif
    }
@@ -1609,7 +1605,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
    sym.setStyle(QwtSymbol::XCross);
    sym.setSize(10);
    sym.setBrush(Qt::red);
-   sym.setPen  (Qt::red);
+   sym.setPen  ( QPen( Qt::red ) );
 
    for ( int i = 0; i < (int)x.size(); i++ )
    {

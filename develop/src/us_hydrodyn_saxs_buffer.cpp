@@ -6130,7 +6130,7 @@ void US_Hydrodyn_Saxs_Buffer::axis_y()
       plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
       // actually need to test this, not sure what the correct version is
-      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtScaleEngine );
+      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    }
    if ( plot_dist_zoomer )
@@ -6160,7 +6160,7 @@ void US_Hydrodyn_Saxs_Buffer::axis_x()
       plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
 #else
       // actually need to test this, not sure what the correct version is
-      plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtScaleEngine );
+      plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
 #endif
    }
    plot_dist->replot();
@@ -6993,7 +6993,7 @@ void US_Hydrodyn_Saxs_Buffer::wheel_cancel()
 #ifndef QT4
       plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], 1, SolidLine));
 #else
-      plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
+      plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
 #endif
    }
 
@@ -7077,8 +7077,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-   plotted_markers[ 0 ]->setValue( pos, ymark );
+   plotted_markers[ 0 ]->setXValue( text.toDouble() );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
@@ -7093,8 +7092,7 @@ void US_Hydrodyn_Saxs_Buffer::join_point_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-   plotted_markers[ 0 ]->setValue( pos, ymark );
+   plotted_markers[ 1 ]->setXValue( text.toDouble() );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
@@ -7109,8 +7107,7 @@ void US_Hydrodyn_Saxs_Buffer::join_end_text( const QString & text )
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 2 ], text.toDouble(), 0e0 );
 #else
-#warning check how to do this in qt4 needs ymark
-   plotted_markers[ 0 ]->setValue( pos, ymark );
+   plotted_markers[ 2 ]->setXValue( text.toDouble() );
 #endif
    if ( qwtw_wheel->value() != text.toDouble() )
    {
@@ -7612,8 +7609,8 @@ void US_Hydrodyn_Saxs_Buffer::join_start()
    plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan  , 1, SolidLine));
    plot_dist->setCurvePen( plotted_curves[ join_file  ], QPen( Qt::yellow, 1, SolidLine));
 #else
-   plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ Qt::cyan  , 1, Qt::SolidLine ) ) );
-   plotted_curves[ join_file  ]->setPen( QPen( plot_colors[ Qt::yellow, 1, Qt::SolidLine ) ) );
+   plotted_curves[ wheel_file ]->setPen( QPen( Qt::cyan  , 1, Qt::SolidLine ) );
+   plotted_curves[ join_file  ]->setPen( QPen( Qt::yellow, 1, Qt::SolidLine ) );
 #endif
 
    join_low_q = 
@@ -7646,7 +7643,7 @@ void US_Hydrodyn_Saxs_Buffer::join_delete_markers()
 #ifndef QT4
    plot_dist->removeMarkers();
 #else
-#warning check how to do this in qt4
+   plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );
 #endif
 }
 
@@ -7663,7 +7660,15 @@ void US_Hydrodyn_Saxs_Buffer::join_init_markers()
    plot_dist->replot();
 }
 
-void US_Hydrodyn_Saxs_Buffer::join_add_marker( double pos, QColor color, QString text, int align )
+void US_Hydrodyn_Saxs_Buffer::join_add_marker( double pos, 
+                                               QColor color, 
+                                               QString text, 
+#ifndef QT4
+                                               int 
+#else
+                                               Qt::Alignment
+#endif
+                                               align )
 {
 #ifndef QT4
    long marker = plot_dist->insertMarker();
@@ -7674,15 +7679,18 @@ void US_Hydrodyn_Saxs_Buffer::join_add_marker( double pos, QColor color, QString
    plot_dist->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold));
    plot_dist->setMarkerLabelText ( marker, text );
 #else
-#warning check how to do this in qt4 needs ymark symsize
-   QwtPlotMarker* marker = new QwtPlotMarker;
-   marker->setSymbol( QwtSymbol( QwtSymbol::VLine,
-                                 QBrush( Qt::white ), QPen( color, 2, Qt::DashLine ),
-                                 QSize( 8, sizeym ) ) );
-   marker->setValue( pos, ymark );
-   marker->setLabelAlignment( align );
-   marker->setLabel( text );
-   marker->attach( plot_dist );
+   QwtPlotMarker * marker = new QwtPlotMarker;
+   marker->setLineStyle       ( QwtPlotMarker::VLine );
+   marker->setLinePen         ( QPen( color, 2, Qt::DashDotDotLine ) );
+   marker->setLabelOrientation( Qt::Horizontal );
+   marker->setXValue          ( pos );
+   marker->setLabelAlignment  ( align );
+   {
+      QwtText qwtt( text );
+      qwtt.setFont( QFont("Helvetica", 11, QFont::Bold ) );
+      marker->setLabel           ( qwtt );
+   }
+   marker->attach             ( plot_dist );
 #endif
    plotted_markers.push_back( marker );
 }   

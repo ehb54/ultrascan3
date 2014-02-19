@@ -61,7 +61,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       QwtPlot               * plot_errors;
       ScrollZoomer          * plot_errors_zoomer;
 #ifdef QT4
-      QwtPlotGrid           * grid_sd;
+      QwtPlotGrid           * grid_errors;
 #endif
 
       QCheckBox             * cb_plot_errors;
