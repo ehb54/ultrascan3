@@ -44,6 +44,38 @@ win32 {
   DESTDIR              = ..\..\bin\
 }
 
-macx { RC_FILE = ultrascan.icns }
+macx {
+
+  BUILDBASE   = /Users/eb/us3/ultrascan3
+##  QWTPATH     = $$BUILDBASE/qwt-5.2.3
+  QWTPATH     = /src/qwt-5.2.3
+  QWTLIB      = -L$$QWTPATH/lib -lqwt
+##  SINGLEDIR    = $$BUILDBASE/qtsingleapplication-2.6_1-opensource/src
+##  CONFIG      += x86_64 x86 app_bundle
+  CONFIG      += x86_64
+  DEFINES     += MAC OSX
+  INCLUDEPATH += /usr/include
+  INCLUDEPATH += /System/Library/Frameworks/OpenGL.framework/Versions/A/Headers
+  INCLUDEPATH += $$QWTPATH/src
+  INCLUDEPATH += /Users/eb/us3/qwtplot3d-qt4/include
+  INCLUDEPATH += /usr/X11R6/include
+  INCLUDEPATH += /Library/Frameworks/QtCore.framework/Versions/4/Headers
+  INCLUDEPATH += /Library/Frameworks/QtGui.framework//Versions/4/Headers
+  INCLUDEPATH += /Library/Frameworks/QtOpenGL.framework/Versions/4/Headers
+##  INCLUDEPATH += /Library/Frameworks/QtSvg.framework/Versions/4/Headers
+##  INCLUDEPATH += /Library/Frameworks/QtXml.framework/Versions/4/Headers
+  LIBS        += -L/System/Library/Frameworks/OpenGL.framework/Libraries
+  LIBS        += -L/Users/eb/us3/lib
+  LIBS        += -lssl -lcrypto -lqwtplot3d-qt4
+  LIBS        += -framework QtOpenGL
+
+##  MYSQLPATH    = $$BUILDBASE/mysql
+##  MYSQLDIR     = $$MYSQLPATH/lib
+##  LIBS        += -lmysqlclient -L$$MYSQLDIR/lib
+  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
+##  INCLUDEPATH += $$MYSQLDIR/include
+}
+
+#macx { RC_FILE = us_somo.icns }
 #The following line was inserted by qt3to4
 QT += qt3support 

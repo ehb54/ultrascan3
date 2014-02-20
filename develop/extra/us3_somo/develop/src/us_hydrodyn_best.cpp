@@ -9,6 +9,7 @@
 //Added by qt3to4:
 #include <Q3TextStream>
 #include <Q3HBoxLayout>
+#include <QLabel>
 #include <Q3Frame>
 #include <Q3PopupMenu>
 #include <Q3VBoxLayout>
@@ -87,6 +88,18 @@ void US_Hydrodyn_Best::setupGUI()
    int minHeight1 = 24;
    int minHeight3 = 25;
 
+   lbl_credits_1 =  new QLabel      ( "Cite: Michael Connolly, http://biohedron.drupalgardens.com, \"MSRoll\"", this );
+   lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
+   lbl_credits_1 -> setMinimumHeight( minHeight1 );
+   lbl_credits_1 -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   lbl_credits_2 =  new QLabel      ( "Cite: S.R. Aragon, \"A precise boundary element method for macromolecular transport properties\", J. Comp. Chem, 25, 1191-1205 (2004).", this );
+   lbl_credits_2 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
+   lbl_credits_2 -> setMinimumHeight( minHeight1 );
+   lbl_credits_2 -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   lbl_credits_2 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
    // ------ input section 
    lbl_input = new mQLabel("Data fields", this);
    lbl_input->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -146,10 +159,10 @@ void US_Hydrodyn_Best::setupGUI()
    cb_plus_lm->setText( tr( "EXP fit with LM refinement" ) );
    cb_plus_lm->setChecked( false );
    cb_plus_lm->setEnabled( true );
-   cb_plus_lm->show();
-
+   // cb_plus_lm->show();
+   cb_plus_lm->hide();
    connect( cb_plus_lm, SIGNAL( clicked() ), SLOT( data_selected() ) );
-   input_widgets.push_back( cb_plus_lm );
+   //   input_widgets.push_back( cb_plus_lm );
 
    // ------ editor section
 
@@ -239,13 +252,15 @@ void US_Hydrodyn_Best::setupGUI()
    lbl_points_ln = new mQLabel( "Log:   ", this );
    lbl_points_ln->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_points_ln->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-   lbl_points_ln->show();
+   // lbl_points_ln->show();
+   lbl_points_ln->hide();
    connect( lbl_points_ln, SIGNAL( pressed() ), SLOT( toggle_points_ln() ) );
 
    lbl_points_exp = new mQLabel( "Exp:   ", this );
    lbl_points_exp->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lbl_points_exp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-   lbl_points_exp->show();
+   // lbl_points_exp->show();
+   lbl_points_exp->hide();
    connect( lbl_points_exp, SIGNAL( pressed() ), SLOT( toggle_points_exp() ) );
 
    // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
@@ -306,6 +321,8 @@ void US_Hydrodyn_Best::setupGUI()
       top->addLayout( bl );
    }
 
+   background->addWidget( lbl_credits_1 );
+   background->addWidget( lbl_credits_2 );
    background->addLayout( top );
    background->addSpacing( 4 );
 
@@ -633,7 +650,8 @@ void US_Hydrodyn_Best::load()
       cb->setText( QString( "%1" ).arg( i + 1 ) );
       cb->setChecked( false );
       cb->setEnabled( true );
-      cb->show();
+      // cb->show();
+      cb->hide();
       connect( cb, SIGNAL( clicked() ), SLOT( cb_changed_ln() ) );
       cb_points_ln.push_back( cb );
       hbl_points_ln->addWidget( cb );
@@ -645,7 +663,8 @@ void US_Hydrodyn_Best::load()
       cb->setText( QString( "%1" ).arg( i + 1 ) );
       cb->setChecked( false );
       cb->setEnabled( true );
-      cb->show();
+      // cb->show();
+      cb->hide();
       connect( cb, SIGNAL( clicked() ), SLOT( cb_changed_exp() ) );
       cb_points_exp.push_back( cb );
       hbl_points_exp->addWidget( cb );
@@ -978,42 +997,127 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
          y[ 0 ] = a;
          y[ 1 ] = a + x[ 1 ] * b;
 
-#ifndef QT4
-         long curve = plot_data->insertCurve( "plot lr" );
-         plot_data->setCurveStyle( curve, QwtCurve::Lines );
-#else
-         QwtPlotCurve *curve = new QwtPlotCurve( "plot lr" );
-         curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-#ifndef QT4
-         plot_data->setCurveData( curve, 
-                                  (double *)&( x[ 0 ] ),
-                                  (double *)&( y[ 0 ] ),
-                                  2
-                                  );
-         plot_data->setCurvePen( curve, QPen( Qt::green, 2, SolidLine));
-
-#else
-         curve->setData(
-                        (double *)&( x[ 0 ] ),
-                        (double *)&( y[ 0 ] ),
-                        2
-                        );
-
-         curve->setPen( QPen( Qt::green, 2, Qt::SolidLine ) );
-         curve->attach( plot_data );
-#endif
-
-         double min = y[ 0 ] < y[ 1 ] ? y[ 0 ] : y[ 1 ];
-         double max = y[ 0 ] < y[ 1 ] ? y[ 1 ] : y[ 0 ];
-         if ( miny > min )
          {
-            miny = min;
+#ifndef QT4
+            long curve = plot_data->insertCurve( "plot lr" );
+            plot_data->setCurveStyle( curve, QwtCurve::Lines );
+#else
+            QwtPlotCurve *curve = new QwtPlotCurve( "plot lr" );
+            curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+#ifndef QT4
+            plot_data->setCurveData( curve, 
+                                     (double *)&( x[ 0 ] ),
+                                     (double *)&( y[ 0 ] ),
+                                     2
+                                     );
+            plot_data->setCurvePen( curve, QPen( Qt::green, 2, SolidLine));
+
+#else
+            curve->setData(
+                           (double *)&( x[ 0 ] ),
+                           (double *)&( y[ 0 ] ),
+                           2
+                           );
+
+            curve->setPen( QPen( Qt::green, 2, Qt::SolidLine ) );
+            curve->attach( plot_data );
+#endif
+            double min = y[ 0 ] < y[ 1 ] ? y[ 0 ] : y[ 1 ];
+            double max = y[ 0 ] < y[ 1 ] ? y[ 1 ] : y[ 0 ];
+            if ( miny > min )
+            {
+               miny = min;
+            }
+            if ( maxy < max )
+            {
+               maxy = max;
+            }
          }
-         if ( maxy < max )
+         if ( use_one_over_triangles.size() > 2 )
          {
-            maxy = max;
+            double yp[ 2 ];
+            yp[ 0 ] = y[ 0 ] + last_siga;
+            yp[ 1 ] = y[ 1 ] + last_siga;
+#ifndef QT4
+            long curve = plot_data->insertCurve( "plot lr p" );
+            plot_data->setCurveStyle( curve, QwtCurve::Lines );
+#else
+            QwtPlotCurve *curve = new QwtPlotCurve( "plot lr p" );
+            curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+#ifndef QT4
+            plot_data->setCurveData( curve, 
+                                     (double *)&( x[ 0 ] ),
+                                     (double *)&( yp[ 0 ] ),
+                                     2
+                                     );
+            plot_data->setCurvePen( curve, QPen( Qt::darkGreen, 2, Qt::DashDotLine));
+
+#else
+            curve->setData(
+                           (double *)&( x[ 0 ] ),
+                           (double *)&( yp[ 0 ] ),
+                           2
+                           );
+
+            curve->setPen( QPen( Qt::green, 2, Qt::DashDotLine ) );
+            curve->attach( plot_data );
+#endif
+            double min = yp[ 0 ] < yp[ 1 ] ? yp[ 0 ] : yp[ 1 ];
+            double max = yp[ 0 ] < yp[ 1 ] ? yp[ 1 ] : yp[ 0 ];
+            if ( miny > min )
+            {
+               miny = min;
+            }
+            if ( maxy < max )
+            {
+               maxy = max;
+            }
+         }
+         if ( use_one_over_triangles.size() > 2 )
+         {
+            double ym[ 2 ];
+            ym[ 0 ] = y[ 0 ] - last_siga;
+            ym[ 1 ] = y[ 1 ] - last_siga;
+#ifndef QT4
+            long curve = plot_data->insertCurve( "plot lr m" );
+            plot_data->setCurveStyle( curve, QwtCurve::Lines );
+#else
+            QwtPlotCurve *curve = new QwtPlotCurve( "plot lr m" );
+            curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+#ifndef QT4
+            plot_data->setCurveData( curve, 
+                                     (double *)&( x[ 0 ] ),
+                                     (double *)&( ym[ 0 ] ),
+                                     2
+                                     );
+            plot_data->setCurvePen( curve, QPen( Qt::darkGreen, 2, Qt::DashDotLine));
+
+#else
+            curve->setData(
+                           (double *)&( x[ 0 ] ),
+                           (double *)&( ym[ 0 ] ),
+                           2
+                           );
+
+            curve->setPen( QPen( Qt::green, 2, Qt::DashDotLine ) );
+            curve->attach( plot_data );
+#endif
+            double min = ym[ 0 ] < ym[ 1 ] ? ym[ 0 ] : ym[ 1 ];
+            double max = ym[ 0 ] < ym[ 1 ] ? ym[ 1 ] : ym[ 0 ];
+            if ( miny > min )
+            {
+               miny = min;
+            }
+            if ( maxy < max )
+            {
+               maxy = max;
+            }
          }
       }
    }

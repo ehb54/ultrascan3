@@ -3381,7 +3381,7 @@ XYZ ArbitraryRotate(XYZ p,double theta,XYZ r)
 #endif
 
 bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString 
-#if !defined( HAS_CBF )
+#if defined( HAS_CBF )
                                                          name 
 #endif
 )

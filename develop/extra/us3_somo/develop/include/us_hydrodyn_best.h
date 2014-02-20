@@ -8,6 +8,7 @@
 #include <Q3HBoxLayout>
 #include <QCloseEvent>
 #include <Q3Frame>
+#include <QLabel>
 
 using namespace std;
 
@@ -36,6 +37,9 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
       US_Config *                             USglobal;
 
       // ------ input section 
+
+      QLabel *                                lbl_credits_1;
+      QLabel *                                lbl_credits_2;
 
       mQLabel *                               lbl_input;
       Q3ListBox *                              lb_data;

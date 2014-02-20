@@ -681,7 +681,9 @@
 #ifdef MEMOFUNC
 #ifdef UNXPLAT
 #ifndef COHPLAT
-#include <malloc.h>
+# ifndef OSX
+#  include <malloc.h>
+# endif
 #endif
 #else
 #ifdef AZTPLAT
