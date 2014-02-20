@@ -16,7 +16,7 @@
 ##########################################################################################
 
 # Messages -- sets UNAME
-!include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
+#!include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
 
 TEMPLATE        = app
 INCLUDEPATH     = $(QWTDIR)/include

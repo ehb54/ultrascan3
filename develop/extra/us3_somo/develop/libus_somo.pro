@@ -1,5 +1,5 @@
 # Messages
-!include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
+#!include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
 
 revision.target           = include/us_revision.h
 revision.commands         = sh revision.sh
