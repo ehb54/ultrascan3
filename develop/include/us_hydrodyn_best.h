@@ -33,6 +33,9 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
 
       // ------ input section 
 
+      QLabel *                                lbl_credits_1;
+      QLabel *                                lbl_credits_2;
+
       mQLabel *                               lbl_input;
       QListBox *                              lb_data;
       QPushButton *                           pb_load;

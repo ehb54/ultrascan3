@@ -141,6 +141,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    set_default();   // setup configuration defaults before reading initial config
    read_config(""); // specify default configuration by leaving argument empty
    atom_widget                     = false;
+   best_widget                     = false;
    residue_widget                  = false;
    hybrid_widget                   = false;
    saxs_widget                     = false;
