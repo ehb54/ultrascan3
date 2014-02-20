@@ -1313,7 +1313,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.c = qsl[ 10 ].toFloat();
                      tmp_saxs.c5 = qsl[ 10 ].toFloat();
                      tmp_saxs.volume = qsl[ 11 ].toFloat();
-                     if ( bsaxs.size() > j + 1 )
+                     if ( (unsigned int) bsaxs.size() > j + 1 )
                      {
                         qsl = QStringList::split( QRegExp( "\\s+" ), bsaxs[ j + 1 ] );
                         if ( tmp_saxs.saxs_name != qsl[ 1 ].upper() )

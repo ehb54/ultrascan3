@@ -255,6 +255,7 @@ void US_Hydrodyn_AdvancedConfig::set_use_sounds()
 void US_Hydrodyn_AdvancedConfig::set_expert_mode()
 {
    (*advanced_config).expert_mode = cb_expert_mode->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->set_expert( cb_expert_mode->isChecked() );
    if ( cb_expert_mode->isChecked() )
    {
       // cb_auto_view_pdb->setChecked(false);

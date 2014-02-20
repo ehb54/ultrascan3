@@ -330,7 +330,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    {
       QStringList tmp_files;
-      for ( unsigned int i = 0; i < files.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) files.size(); i++ )
       {
          if ( files[ i ] != lbl_conc_file->text() )
          {

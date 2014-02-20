@@ -1537,11 +1537,11 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
          }
          
          QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
-         if ( tokens.size() > Icolumn )
+         if ( (unsigned int) tokens.size() > Icolumn )
          {
             new_q = tokens[0].toDouble();
             new_I = tokens[Icolumn].toDouble();
-            if ( I_errorcolumn && tokens.size() > I_errorcolumn )
+            if ( I_errorcolumn && (unsigned int) tokens.size() > I_errorcolumn )
             {
                new_I_error = tokens[I_errorcolumn].toDouble();
                if ( our_saxs_options->iqq_expt_data_contains_variances )
@@ -1550,7 +1550,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
                }
             }
             
-            if ( Icolumn2 && tokens.size() > Icolumn2 )
+            if ( Icolumn2 && (unsigned int) tokens.size() > Icolumn2 )
             {
                new_I2 = tokens[Icolumn2].toDouble();
                if ( dolog10 )
@@ -1565,11 +1565,11 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
             }
             I.push_back(new_I);
             q.push_back(new_q * units);
-            if ( I_errorcolumn && tokens.size() > I_errorcolumn )
+            if ( I_errorcolumn && (unsigned int) tokens.size() > I_errorcolumn )
             {
                I_error.push_back(new_I_error);
             }
-            if ( Icolumn2 && tokens.size() > Icolumn2 )
+            if ( Icolumn2 && (unsigned int) tokens.size() > Icolumn2 )
             {
                I2.push_back(new_I2);
             }
@@ -3518,11 +3518,11 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          }
          
          QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
-         if ( tokens.size() > Icolumn )
+         if ( (unsigned int) tokens.size() > Icolumn )
          {
             new_q = tokens[0].toDouble();
             new_I = tokens[Icolumn].toDouble();
-            if ( I_errorcolumn && tokens.size() > I_errorcolumn )
+            if ( I_errorcolumn && (unsigned int) tokens.size() > I_errorcolumn )
             {
                new_I_error = tokens[I_errorcolumn].toDouble();
                if ( our_saxs_options->iqq_expt_data_contains_variances )
@@ -3531,7 +3531,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
                }
             }
             
-            if ( Icolumn2 && tokens.size() > Icolumn2 )
+            if ( Icolumn2 && (unsigned int) tokens.size() > Icolumn2 )
             {
                new_I2 = tokens[Icolumn2].toDouble();
                if ( dolog10 )
@@ -3546,11 +3546,11 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
             }
             I.push_back(new_I);
             q.push_back(new_q * units);
-            if ( I_errorcolumn && tokens.size() > I_errorcolumn )
+            if ( I_errorcolumn && (unsigned int) tokens.size() > I_errorcolumn )
             {
                I_error.push_back(new_I_error);
             }
-            if ( Icolumn2 && tokens.size() > Icolumn2 )
+            if ( Icolumn2 && (unsigned int) tokens.size() > Icolumn2 )
             {
                I2.push_back(new_I2);
             }
