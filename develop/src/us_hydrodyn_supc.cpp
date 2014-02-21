@@ -15,7 +15,7 @@
 // note: this program uses cout and/or cerr and this should be replaced
 
 // #define OLD_WAY_CHECK
-#define  PI M_PI
+// #define  PI M_PI
 // below are moved to variable values
 // #define  ETAo VISC_20W
 // #define  DENS DENS_20W
@@ -805,8 +805,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    int k; 
    int flag_mem;
    int bc;
-   char r1;
 #if defined(USE_MAIN)
+   char r1;
    char command[200];
 #endif
    float temp, x, y, z;
@@ -994,8 +994,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    {
       intestazione();
       printf("\n- Boundary Conditions :\n\n");
-      printf(" 1) STICK boundary condition (6*PI*ETAo)\n");
-      printf(" 2) SLIP boundary condition (4*PI*ETAo)\n\n");
+      printf(" 1) STICK boundary condition (6*M_PI*ETAo)\n");
+      printf(" 2) SLIP boundary condition (4*M_PI*ETAo)\n\n");
       printf(" Select (1/2) :___ ");
       scanf("%d", &cc);
       getchar();
@@ -1064,9 +1064,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    }
 
    intestazione();
+   r1 = 'y';
 #else
    cdmolix = 2; // non sequential files
-   r1 = 'y';
    flag_mem = 1;
 
    /* Initialization for average values */
@@ -1788,11 +1788,11 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       else
       {
          for (i = 0; i < nat; i++)
-            totvol += (4.0 / 3.0 * PI * dt[i].r * dt[i].r * dt[i].r);
+            totvol += (4.0 / 3.0 * M_PI * dt[i].r * dt[i].r * dt[i].r);
          totvolb = totvol;
       }
       for (i = 0; i < nat; i++)
-         totsup += PI * dt[i].r * dt[i].r * 4.0;
+         totsup += M_PI * dt[i].r * dt[i].r * 4.0;
 
       if (num != 1)      /* average values of parameters */
       {
@@ -1808,8 +1808,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             mascor1 = (float) pesmol;
 
          temp = f * 1.0E-07 * fconv / 
-            ( 6.0 * PI * ETAo *
-              pow( 3.0 * mascor1 * partvol / (4.0 * PI * AVOGADRO), 1.0/3.0));
+            ( 6.0 * M_PI * ETAo *
+              pow( 3.0 * mascor1 * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0));
          ff0_t += temp;
          ff0_t2 += temp * temp;
          temp = 0.0;
@@ -1841,8 +1841,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             Rgu2 += pow((rou * fconv), 2);
          }
 
-         RSt += f * fconv / (bc * PI * ETAo);
-         RSt2 += pow((f * fconv / (bc * PI * ETAo)), 2);
+         RSt += f * fconv / (bc * M_PI * ETAo);
+         RSt2 += pow((f * fconv / (bc * M_PI * ETAo)), 2);
 
          temp = 0.0;
          for (i = 0; i < 3; i++)
@@ -1859,8 +1859,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          for (i = 0; i < 3; i++)
          {
             temp = 0.0;
-            RSr[i] += pow((3.0 / Dr[i * 4] / bc / 4.0 / PI / ETAo), 0.333333L) * fconv;
-            temp += pow((3.0 / Dr[i * 4] / bc / 4.0 / PI / ETAo), 0.333333L) * fconv;
+            RSr[i] += pow((3.0 / Dr[i * 4] / bc / 4.0 / M_PI / ETAo), 0.333333L) * fconv;
+            temp += pow((3.0 / Dr[i * 4] / bc / 4.0 / M_PI / ETAo), 0.333333L) * fconv;
             RSr2[i] += pow(temp, 2);
 
             CdR[i] += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
@@ -1887,16 +1887,16 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          temp = vis * correz * pow(fconv, 3);
          VIM2 += pow(temp, 2.0f);
 
-         RE += 1.0E7 * pow((0.3 * pesmol * vis / (PI * AVO)), 0.333333) * fconv;
-         temp = 1.0E7 * pow((0.3 * pesmol * vis / (PI * AVO)), 0.333333) * fconv;
+         RE += 1.0E7 * pow((0.3 * pesmol * vis / (M_PI * AVO)), 0.333333) * fconv;
+         temp = 1.0E7 * pow((0.3 * pesmol * vis / (M_PI * AVO)), 0.333333) * fconv;
          RE2 += pow(temp, 2);
 
          VIMC += (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
          temp = (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
          VIMC2 += pow(temp, 2);
 
-         REC += 1.0E7 * pow((0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO)), 0.333333) * fconv;
-         temp = 1.0E7 * pow((0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO)), 0.333333) * fconv;
+         REC += 1.0E7 * pow((0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (M_PI * AVO)), 0.333333) * fconv;
+         temp = 1.0E7 * pow((0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (M_PI * AVO)), 0.333333) * fconv;
          REC2 += pow(temp, 2);
 
 #if defined(TSUDA_DOUBLESUM)
@@ -1904,24 +1904,24 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          temp = (vis4 * correz) * pow(fconv, 3);
          VIMDS2 += pow(temp, 2.0f);
 
-         REDS += 1.0E7 * pow((0.3 * pesmol * vis4 / (PI * AVO)), 0.333333) * fconv;
-         temp = 1.0E7 * pow((0.3 * pesmol * vis4 / (PI * AVO)), 0.333333) * fconv;
+         REDS += 1.0E7 * pow((0.3 * pesmol * vis4 / (M_PI * AVO)), 0.333333) * fconv;
+         temp = 1.0E7 * pow((0.3 * pesmol * vis4 / (M_PI * AVO)), 0.333333) * fconv;
          REDS2 += pow(temp, 2);
 
          VIMTM += (vis1 * correz) * pow(fconv, 3);
          temp = (vis1 * correz) * pow(fconv, 3);
          VIMTM2 += pow(temp, 2.0f);
 
-         RETM += 1.0E7 * pow((0.3 * pesmol * vis1 / (PI * AVO)), 0.333333) * fconv;
-         temp = 1.0E7 * pow((0.3 * pesmol * vis1 / (PI * AVO)), 0.333333) * fconv;
+         RETM += 1.0E7 * pow((0.3 * pesmol * vis1 / (M_PI * AVO)), 0.333333) * fconv;
+         temp = 1.0E7 * pow((0.3 * pesmol * vis1 / (M_PI * AVO)), 0.333333) * fconv;
          RETM2 += pow(temp, 2.0f);
 
          VIMTV += (vis2 * correz) * pow(fconv, 3);
          temp = (vis2 * correz) * pow(fconv, 3);
          VIMTV2 += pow(temp, 2.0f);
 
-         RETV += 1.0E7 * pow((0.3 * pesmol * vis2 / (PI * AVO)), 0.333333) * fconv;
-         temp = 1.0E7 * pow((0.3 * pesmol * vis2 / (PI * AVO)), 0.333333) * fconv;
+         RETV += 1.0E7 * pow((0.3 * pesmol * vis2 / (M_PI * AVO)), 0.333333) * fconv;
+         temp = 1.0E7 * pow((0.3 * pesmol * vis2 / (M_PI * AVO)), 0.333333) * fconv;
          RETV2 += pow(temp, 2);
 #endif
 
@@ -2102,9 +2102,9 @@ presentazione()
       printf("%s\n", "- Model     : NORMALIZED");
 
    if (cc == 1)
-      printf("\n- STICK boundary condition (6*PI*ETAo)\n");
+      printf("\n- STICK boundary condition (6*M_PI*ETAo)\n");
    else
-      printf("- SLIP boundary condition (4*PI*ETAo)\n\n");
+      printf("- SLIP boundary condition (4*M_PI*ETAo)\n\n");
 }
 
 /**************************************************************************/
@@ -2216,9 +2216,9 @@ stampamatrice(float *n)
    if (metodo != 3)
    {
       if (cc == 1)
-         ss = 6.0 * PI * ETAo;
+         ss = 6.0 * M_PI * ETAo;
       else
-         ss = 4.0 * PI * ETAo;
+         ss = 4.0 * M_PI * ETAo;
    }
 
    for (i = 0; i < 3; i++)
@@ -2247,9 +2247,9 @@ stampamatrice1(float *n)
    if (metodo != 3)
    {
       if (cc == 1)
-         ss = 6.0 * PI * ETAo;
+         ss = 6.0 * M_PI * ETAo;
       else
-         ss = 4.0 * PI * ETAo;
+         ss = 4.0 * M_PI * ETAo;
    }
 
    for (i = 0; i < 3; i++)
@@ -2274,9 +2274,9 @@ stampamatrice1l(long double *n)
    if (metodo != 3)
    {
       if (cc == 1)
-         ss = 6.0 * PI * ETAo;
+         ss = 6.0 * M_PI * ETAo;
       else
-         ss = 4.0 * PI * ETAo;
+         ss = 4.0 * M_PI * ETAo;
    }
 
    for (i = 0; i < 3; i++)
@@ -2370,8 +2370,8 @@ stampa_ris()
    //     ( supc_results->mass * (1.0 - partvol * DENS_20W) / 
    //       ( AVOGADRO * supc_results->s20w * 1e-13) ) 
    //     /
-   //     ( 6.0 * PI * ETAo * 
-   //       pow(3.0 * supc_results->mass * partvol / (4.0 * PI * AVOGADRO), 1.0/3.0)) 
+   //     ( 6.0 * M_PI * ETAo * 
+   //       pow(3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0)) 
    //     );
 
    if (raflag == -1.0) 
@@ -2415,8 +2415,8 @@ stampa_ris()
    }
 
    supc_results->ff0 = 
-      f * 1.0E-07 * fconv / ( 6.0 * PI * ETAo *
-      pow( 3.0 * supc_results->mass * partvol / (4.0 * PI * AVOGADRO), 1.0/3.0));
+      f * 1.0E-07 * fconv / ( 6.0 * M_PI * ETAo *
+      pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0));
 
    printf("%s%.2f\n", "- FRICTIONAL RATIO                = ", supc_results->ff0);
 
@@ -2429,12 +2429,21 @@ stampa_ris()
       temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
    printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.ascii());
 
+#if !defined( MINGW )
    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
    printf("%s%.0Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
+#else
+   printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+   printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+   printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+   printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (double)((KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
+   printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (double)((KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
+   printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (double)((KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
+#endif
 
    printf("%s%.2f\t%s\n", "- MOLECULAR WEIGHT   (from file)         = ", pesmol, "[Da]");
    if (sfecalc == 2)
@@ -2478,15 +2487,15 @@ stampa_ris()
       supc_results->rg = ro * fconv;
    }
 
-   printf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * PI * ETAo), "[nm]");
-   supc_results->rs = f * fconv / (bc * PI * ETAo);
+   printf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * M_PI * ETAo), "[nm]");
+   supc_results->rs = f * fconv / (bc * M_PI * ETAo);
 
-   printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ", (double)( pow((3.0 / Dr[0] / bc / 4.0 / PI / ETAo), (0.33333L)) * fconv ),
+   printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ", (double)( pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (0.33333L)) * fconv ),
           "[nm]");
-   printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ", (double)( pow((3.0 / Dr[4] / bc / 4.0 / PI / ETAo), (0.33333L)) * fconv ),
+   printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ", (double)( pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (0.33333L)) * fconv ),
           "[nm]");
    printf("%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
-          ( double )( pow((3.0 / Dr[8] / bc / 4.0 / PI / ETAo), (0.33333L)) * fconv ), "[nm]");
+          ( double )( pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo), (0.33333L)) * fconv ), "[nm]");
 
    printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE  :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
           "[nm]");
@@ -2510,7 +2519,7 @@ stampa_ris()
 
    printf("%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY     = ", vis * correz * pow(fconv, 3), "[cm^3/g]");
 
-   einst = pow(0.3 * pesmol * vis / (PI * AVO), 0.33333);
+   einst = pow(0.3 * pesmol * vis / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    printf("%s%.2f\t%s\n", "- UNCORRECTED EINSTEIN'S RADIUS       = ", einst * fconv, "[nm]");
    if ((volcor == 1) && ((colorsixf == 0) || (colorsixf == 1) || (colorsixf == 2)))
@@ -2519,7 +2528,7 @@ stampa_ris()
       printf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY       = ",
              (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
       supc_results->viscosity = (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
-      einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO), 0.33333);
+      einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / ( M_PI * AVO), 0.33333);
       einst = 1E7 * einst;
       // printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
       printf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS         = ", einst * fconv, "[nm]");
@@ -2530,7 +2539,7 @@ stampa_ris()
       printf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY       = ",
              (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
       supc_results->viscosity = (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3);
-      einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / (PI * AVO), 0.33333);
+      einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / ( M_PI * AVO), 0.33333);
       einst = 1E7 * einst;
       // printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
       printf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS         = ", einst * fconv, "[nm]");
@@ -2538,21 +2547,22 @@ stampa_ris()
 
 #if defined(TSUDA_DOUBLESUM)
    printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(DoubleSum CM)   = ", vis4 * correz * pow(fconv, 3.0f), "[cm^3/g]");
-   einst = pow(0.3 * pesmol * vis4 / (PI * AVO), 0.33333);
+   einst = pow(0.3 * pesmol * vis4 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (DoubleSum CM)    = ", einst * fconv, "[nm]");
    printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CM)       = ", vis1 * correz * pow(fconv, 3.0f), "[cm^3/g]");
-   einst = pow(0.3 * pesmol * vis1 / (PI * AVO), 0.33333);
+   einst = pow(0.3 * pesmol * vis1 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CM)        = ", einst * fconv, "[nm]");
    printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CV)       = ", vis2 * correz * pow(fconv, 3.0f), "[cm^3/g]");
-   einst = pow(0.3 * pesmol * vis2 / (PI * AVO), 0.33333);
+   einst = pow(0.3 * pesmol * vis2 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)        = ", einst * fconv, "[nm]");
 #endif
 
    printf("\nRELAXATION TIMES\n\n");
 
+#if !defined( MINGW )
    if (taoflag == 1.0)
    {
       printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
@@ -2577,6 +2587,33 @@ stampa_ris()
       printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
       printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    }
+#else
+   if (taoflag == 1.0)
+   {
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+   }
+   if (taoflag == 2.0)
+   {
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+   }
+   if (taoflag == 0.0)
+   {
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[2] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+   }
+#endif
+
    printf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    printf("%s\t%.2f\t%s (%s)\n\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    supc_results->tau = taoh * 1.0E+09 * pow(fconv, 3.0f);
@@ -2914,14 +2951,14 @@ mem_ris(int model)
 
    hydro_res.sprintf("%s%.2f\n", "- FRICTIONAL RATIO      = ", 
            f * 1.0E-07 * fconv / 
-           ( 6.0 * PI * ETAo *
-             pow( 3.0 * supc_results->mass * partvol / (4.0 * PI * AVOGADRO), 1.0/3.0)));
+           ( 6.0 * M_PI * ETAo *
+             pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0)));
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
    this_data.results.ff0 = 
       f * 1.0E-07 * fconv / 
-      ( 6.0 * PI * ETAo *
-        pow( 3.0 * supc_results->mass * partvol / (4.0 * PI * AVOGADRO), 1.0/3.0));
+      ( 6.0 * M_PI * ETAo *
+        pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0));
 
    temp = 0.0;
    for (i = 0; i < 3; i++)
@@ -2939,35 +2976,62 @@ mem_ris(int model)
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef = temp / 3.0;
 
+#if !defined( MINGW )
    hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+#else
+   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+#endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
    this_data.rot_fric_coef_x = 1.0E-21 / Dr[0] * pow(fconv, 3);
 
+#if !defined( MINGW )
    hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+#else
+   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+#endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
    this_data.rot_fric_coef_y = 1.0E-21 / Dr[4] * pow(fconv, 3);
 
+#if !defined( MINGW )
    hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+#else
+   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+#endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
    this_data.rot_fric_coef_z = 1.0E-21 / Dr[8] * pow(fconv, 3);
 
+#if !defined( MINGW )
    hydro_res.sprintf("%s%.2Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3),
            "[1/s] ", tag2.ascii());
+#else
+   hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (double)(KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3)),
+           "[1/s] ", tag2.ascii());
+#endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef_x = KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3);
 
+#if !defined( MINGW )
    hydro_res.sprintf("%s%.2Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3),
            "[1/s] ", tag2.ascii());
+#else
+   hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (double)(KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3)),
+           "[1/s] ", tag2.ascii());
+#endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef_y = KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3);
 
+#if !defined( MINGW )
    hydro_res.sprintf("%s%.2Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3),
            "[1/s] ", tag2.ascii());
+#else
+   hydro_res.sprintf("%s%.2f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (double)(KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3)),
+           "[1/s] ", tag2.ascii());
+#endif
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef_z = KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3);
@@ -3040,28 +3104,28 @@ mem_ris(int model)
       this_data.hydro_res += hydro_res;
       this_data.results.rg = ro * fconv;
    }
-   hydro_res.sprintf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * PI * ETAo), "[nm]");
+   hydro_res.sprintf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * M_PI * ETAo), "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
-   this_data.results.rs =  f * fconv / (bc * PI * ETAo);
+   this_data.results.rs =  f * fconv / (bc * M_PI * ETAo);
 
    hydro_res.sprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ",
-           (double)( pow((3.0 / Dr[0] / bc / 4.0 / PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
+           (double)( pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
-   this_data.rot_stokes_rad_x = pow((3.0 / Dr[0] / bc / 4.0 / PI / ETAo), (long double)(0.33333)) * fconv;
+   this_data.rot_stokes_rad_x = pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
 
    hydro_res.sprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ",
-                     ( double )( pow((3.0 / Dr[4] / bc / 4.0 / PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
+                     ( double )( pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
-   this_data.rot_stokes_rad_y = pow((3.0 / Dr[4] / bc / 4.0 / PI / ETAo), (long double)(0.33333)) * fconv;
+   this_data.rot_stokes_rad_y = pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
 
    hydro_res.sprintf("%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
-                     ( double )( pow((3.0 / Dr[8] / bc / 4.0 / PI / ETAo),(long double) (0.33333)) * fconv ), "[nm]");
+                     ( double )( pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo),(long double) (0.33333)) * fconv ), "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
-   this_data.rot_stokes_rad_z = pow((3.0 / Dr[8] / bc / 4.0 / PI / ETAo), (long double)(0.33333)) * fconv;
+   this_data.rot_stokes_rad_z = pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
 
    hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE   :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
            "[nm]");
@@ -3117,7 +3181,7 @@ mem_ris(int model)
    this_data.hydro_res += hydro_res;
    this_data.unc_int_visc = vis * correz * pow(fconv, 3.0f);
 
-   einst = pow(0.3 * pesmol * vis / (PI * AVO), 0.33333);
+   einst = pow(0.3 * pesmol * vis / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    // hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                    = ", einst * fconv, "[nm]");
    // create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
@@ -3138,7 +3202,7 @@ mem_ris(int model)
       this_data.results.viscosity =  (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
       this_data.cor_int_visc = (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
 
-      einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO), 0.33333);
+      einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / ( M_PI * AVO), 0.33333);
       einst = 1E7 * einst;
       // hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
       // create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
@@ -3159,7 +3223,7 @@ mem_ris(int model)
       this_data.results.viscosity = (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3);
       this_data.cor_int_visc = (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3);
 
-      einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / (PI * AVO), 0.33333);
+      einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / ( M_PI * AVO), 0.33333);
       einst = 1E7 * einst;
       // hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
       // create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
@@ -3176,7 +3240,7 @@ mem_ris(int model)
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
    
-   einst = pow(0.3 * pesmol * vis4 / (PI * AVO), 0.33333);
+   einst = pow(0.3 * pesmol * vis4 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (DoubleSum CM)     = ", einst * fconv, "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
@@ -3186,7 +3250,7 @@ mem_ris(int model)
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
    
-   einst = pow(0.3 * pesmol * vis1 / (PI * AVO), 0.33333);
+   einst = pow(0.3 * pesmol * vis1 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CM)         = ", einst * fconv, "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
@@ -3196,7 +3260,7 @@ mem_ris(int model)
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
    
-   einst = pow(0.3 * pesmol * vis2 / (PI * AVO), 0.33333);
+   einst = pow(0.3 * pesmol * vis2 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)         = ", einst * fconv, "[nm]");
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
@@ -3207,6 +3271,7 @@ mem_ris(int model)
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;   
 
+#if !defined( MINGW )
    if (taoflag == 1.0)
    {
       hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
@@ -3288,6 +3353,90 @@ mem_ris(int model)
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[4] * pow(fconv, 3.0f);
    }
+#else
+   if (taoflag == 1.0)
+   {
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_1 = tao[0] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_3 = tao[1] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_5 = tao[3] * pow(fconv, 3.0f);
+   }
+   if (taoflag == 2.0)
+   {
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_1 = tao[4] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_3 = tao[1] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_5 = tao[3] * pow(fconv, 3.0f);
+   }
+   if (taoflag == 0.0)
+   {
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_1 = tao[0] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[2] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_3 = tao[2] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
+
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      this_data.hydro_res += hydro_res;
+      this_data.rel_times_tau_5 = tao[4] * pow(fconv, 3.0f);
+   }
+#endif
+
    hydro_res.sprintf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
@@ -4277,8 +4426,13 @@ relax_rigid_calc()
    ddr[1] = dl2;
    ddr[2] = dl3;
 
+#if !defined( MINGW )
    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",dl1,dl2,dl3);
    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
+#else
+   printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)dl1,(double)dl2,(double)dl3);
+   printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)ddr[0],(double)ddr[1],(double)ddr[2]);
+#endif
 
    /*      printf("\nValori ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
            scanf("%s",&pluto1);
@@ -5029,7 +5183,7 @@ initarray(int k)
       partvolc2 = 0.0;
       for (i = 0; i < nat; i++)
       {
-         partvolc1 = partvolc1 + (4.0 / 3.0 * PI * dt[i].ru * dt[i].ru * dt[i].ru * fconv1 * fconv1 * fconv1 * 1E-21);
+         partvolc1 = partvolc1 + (4.0 / 3.0 * M_PI * dt[i].ru * dt[i].ru * dt[i].ru * fconv1 * fconv1 * fconv1 * 1E-21);
          partvolc2 = partvolc2 + dt[i].m;
       }
       partvolc = partvolc1 * AVO / partvolc2;
@@ -5119,7 +5273,7 @@ initarray(int k)
       for (i = 0; i < nat; i++)
       {
          /*     if(colorsixf==1)     */
-         interm1 += pow(dt[i].r, 3) * PI * 8.0 * ETAo;   /* calculating the total volume correction of the beads, including the buried ones */
+         interm1 += pow(dt[i].r, 3) * M_PI * 8.0 * ETAo;   /* calculating the total volume correction of the beads, including the buried ones */
 
          if (dt[i].col == 6);
 
@@ -5652,7 +5806,7 @@ sigmarRcalc1()
       if (volcor == 1)
       {
          for (i = 0; i < nat; i++)
-            interm += pow(dt[i].r, 3) * PI * 8.0 * ETAo;
+            interm += pow(dt[i].r, 3) * M_PI * 8.0 * ETAo;
       }
       else
          interm = volcor1 * 6.0 * ETAo;   /* manual volume correction */
@@ -5819,9 +5973,9 @@ calcqij()
          rj = dt[j].r;
 
          if (cc == 1)   /* Corrected 9 Oct 1997 MR */
-            etai = 6.0 * PI * ETAo * ri;
+            etai = 6.0 * M_PI * ETAo * ri;
          else
-            etai = 4 * PI * ETAo * ri;
+            etai = 4 * M_PI * ETAo * ri;
 
          aa = 0.0;
 
@@ -5861,7 +6015,7 @@ calcqij()
                   qq = (tempji[l] * tempji[k]) / d2;
                   rr = (dt[i].r * dt[i].r + dt[j].r * dt[j].r);
                   tt = del + qq + (rr / d2) * (del / 3.0 - qq);
-                  tt = tt / (dij * 8.0 * PI * ETAo);
+                  tt = tt / (dij * 8.0 * M_PI * ETAo);
                   q[i * (nat * 9) + j * 9 + inx] = tt;
                   q[j * (nat * 9) + i * 9 + inx] = tt;
                }
@@ -6100,7 +6254,7 @@ visco()
       {
          etai = 1.0;
 
-         etai = 1.0 / (6.0 * PI * dt[j].r * ETAo);
+         etai = 1.0 / (6.0 * M_PI * dt[j].r * ETAo);
 
          cv[0] += etai * (8.0 * q[i * (nat * 9) + j * 9 + 0] +
                           6.0 * q[i * (nat * 9) + j * 9 + 4] + 6.0 * q[i * (nat * 9) + j * 9 + 8]);
@@ -6320,7 +6474,7 @@ tsuda()
 
    H = 32.0 / 15.0 * H;
 
-   vis1 = 4.0 * AVO * 1.0E-21 * PI * E * E / (3.0 * pesmol * (H + I));
+   vis1 = 4.0 * AVO * 1.0E-21 * M_PI * E * E / (3.0 * pesmol * (H + I));
 
 }
 
@@ -6435,7 +6589,7 @@ tsuda1()
 
    H = 32.0 / 15.0 * H;
 
-   vis2 = 4.0 * AVO * 1.0E-21 * PI * E * E / (3.0 * pesmol * (H + I));
+   vis2 = 4.0 * AVO * 1.0E-21 * M_PI * E * E / (3.0 * pesmol * (H + I));
 
 }
 
@@ -6462,7 +6616,7 @@ doublesum()
 
       Ri = sqrt(pow((dt[i].x - xm), 2) + pow((dt[i].y - ym), 2) + pow((dt[i].z - zm), 2));
 
-      a1 += 6.0 * PI * ETAo * ri * Ri * Ri;
+      a1 += 6.0 * M_PI * ETAo * ri * Ri * Ri;
 
       for (j = 0; j < nat; j++)
       {
@@ -6478,7 +6632,7 @@ doublesum()
 
             RRcosalfa = (dt[i].x - xm) * (dt[j].x - xm) + (dt[i].y - ym) * (dt[j].y - ym) + (dt[i].z - zm) * (dt[j].z - zm);
 
-            a2 += 6.0 * PI * ETAo * ri * rj * RRcosalfa / R;
+            a2 += 6.0 * M_PI * ETAo * ri * rj * RRcosalfa / R;
 
          }
       }
