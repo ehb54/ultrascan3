@@ -1109,7 +1109,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
                curve->setData(
                               (double *)&( x[ 0 ] ),
                               (double *)&( ym[ 0 ] ),
-                              1
+                              2
                               );
 
                curve->setPen( QPen( Qt::green, 1, Qt::DashDotLine ) );
