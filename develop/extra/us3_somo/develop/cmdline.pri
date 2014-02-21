@@ -34,14 +34,20 @@ unix {
 }
 
 win32 {
-  CONFIG              += qt warn thread release
-  #CONFIG              += qt warn thread debug
-  QMAKE_CXXFLAGS      += /EHsc          # Assume extern C functions never throw exceptions
-  QMAKE_CXXFLAGS      += /Fd$(IntDir)\  # Put intermediate directories in separate location
-  QMAKE_LFLAGS_DEBUG  += /NODEFAULTLIB:"msvcrt.lib"
-  QMAKE_LFLAGS_RELEASE =                # Remove //DELAYLOAD: statements
-  LIBS                += ../../bin/libus99.lib 
-  DESTDIR              = ..\..\bin\
+  message ("Configuring for the Microsoft Windows Platform...")
+  TEMPLATE             = lib
+  TARGET               = us_somo
+  QWTPATH              = C:/qwt-5.2.3
+  CONFIG              += qt thread warn exceptions dll release
+  DEFINES             += QT_DLL QWT_USE_DLL US_MAKE_DLL US_MAKE_GUI_DLL
+  LIBS                += $$QWTPATH/lib/libqwt5.a
+  INCLUDEPATH         += $$QWTPATH/src
+  INCLUDEPATH         += C:/us3/qwtplot3d-qt4/include
+  LIBS                += C:/us3/lib/libqwtplot3d-qt4.a
+  INCLUDEPATH         += ../src
+  DEFINES             += MINGW
+  DESTDIR              = ../../bin
+  LIBS                += ../../bin/libus_somo10.a
 }
 
 macx {

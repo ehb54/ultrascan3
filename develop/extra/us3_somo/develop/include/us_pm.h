@@ -27,7 +27,7 @@
 #include "us_hydrodyn_pat.h"
 #include "../shd_mpi/shs_use.h"
 
-#ifdef WIN32
+#if defined( WIN32 ) && !defined( MINGW )
 typedef _int16 int16_t;
 typedef _int32 int32_t;
 typedef unsigned _int16 uint16_t;

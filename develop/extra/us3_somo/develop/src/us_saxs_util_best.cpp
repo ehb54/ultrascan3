@@ -1145,12 +1145,12 @@ bool US_Saxs_Util::strip_pdb(
    map < QString, bool > exclude_atoms;
    map < QString, bool > exclude_residues;
 
-   for ( unsigned int i = 0; i < exclude_atoms_list.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) exclude_atoms_list.size(); i++ )
    {
       exclude_atoms[ exclude_atoms_list[ i ] ] = true;
    }
 
-   for ( unsigned int i = 0; i < exclude_residues_list.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) exclude_residues_list.size(); i++ )
    {
       exclude_residues[ exclude_residues_list[ i ] ] = true;
    }

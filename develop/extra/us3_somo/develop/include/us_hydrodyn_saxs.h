@@ -60,7 +60,7 @@
 
 using namespace std;
 
-#ifdef WIN32
+#if defined( WIN32 ) && !defined( MINGW )
 typedef _int16 int16_t;
 typedef unsigned _int32 uint32_t;
 #else

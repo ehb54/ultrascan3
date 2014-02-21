@@ -6,7 +6,7 @@
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include "../qwt5/scrollzoomer.h"
+#include "../qwt/scrollzoomer.h"
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'scrollzoomer.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 63

@@ -1,8 +1,7 @@
 # Messages
-#!include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
+!include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
 
 revision.target           = include/us_revision.h
-revision.commands         = sh revision.sh
 revision.depends          = FORCE
 QMAKE_EXTRA_TARGETS       += revision
 
@@ -29,6 +28,7 @@ DEFINES += NO_EDITOR_PRINT
 DEFINES += QT4
 
 unix {
+  revision.commands         = sh revision.sh
   TARGET                  = us_somo
   QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
   DEFINES                += UNIX
@@ -49,16 +49,26 @@ unix {
 
 win32 {
   message ("Configuring for the Microsoft Windows Platform...")
+  MINGWDIR    = C:/mingw
   TEMPLATE             = lib
   TARGET               = us_somo
+  QWTPATH              = C:/qwt-5.2.3
   CONFIG              += qt thread warn exceptions dll release
   DEFINES             += QT_DLL QWT_USE_DLL US_MAKE_DLL US_MAKE_GUI_DLL
-  LIBS                += $(QWTDIR)/lib/libqwt5.a
+  LIBS                += $$QWTPATH/lib/libqwt5.a
+  INCLUDEPATH         += $$QWTPATH/src
+  INCLUDEPATH         += C:/us3/qwtplot3d-qt4/include
+  LIBS                += C:/us3/lib/libqwtplot3d-qt4.a
+  LIBS                += -lQtOpenGL
+  LIBS                += $$MINGWDIR/lib/libglu32.a
+  LIBS                += $$MINGWDIR/lib/libopengl32.a
+  INCLUDEPATH         += src
+  DEFINES             += MINGW
   DESTDIR              = ../bin
 }
 
-
 macx {
+  revision.commands         = sh revision.sh
   BUILDBASE   = /Users/eb/us3/ultrascan3
 #  QWTPATH     = $$BUILDBASE/qwt-5.2.3
   QWTPATH     = /src/qwt-5.2.3

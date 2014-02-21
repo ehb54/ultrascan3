@@ -62,6 +62,7 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
 #ifdef QT4
       QwtPlotGrid           *                 grid_data;
 #endif
+      QCheckBox             *                 cb_errorlines;
       Q3HBoxLayout           *                 hbl_points;
       mQLabel               *                 lbl_points;
       vector < QCheckBox * >                  cb_points;

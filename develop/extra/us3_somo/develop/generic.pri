@@ -38,9 +38,9 @@ unix {
 win32 {
   TEMPLATE     =app
   MINGWDIR     =c:/mingw
-  MYSQLPATH    =c:/mysql-5.5
+#  MYSQLPATH    =c:/mysql-5.5
   QTMYSQLPATH  =$(QTDIR)/src/plugins/sqldrivers/mysql/release
-  MYSQLLIB     =$$MYSQLPATH/lib/libmysql.a
+#  MYSQLLIB     =$$MYSQLPATH/lib/libmysql.a
   OPENSSL      =c:/openssl
   VER          =10
   CONFIG      += qt thread warn release
@@ -48,10 +48,14 @@ win32 {
   INCLUDEPATH  += $$MYSQLPATH/include ../$$QWT3D/include
   INCLUDEPATH  += $$OPENSSL/include
   INCLUDEPATH  += $$QTPATH/include
+  INCLUDEPATH         += C:/us3/qwtplot3d-qt4/include
+  INCLUDEPATH         += ../src
+  DEFINES             += MINGW
+
   LIBS         += $$QWTLIB
-  LIBS         += $$MYSQLLIB
-  LIBS         += $$QTMYSQLPATH/libqsqlmysql4.a
-  LIBS         += $$OPENSSL/lib/libeay32.a
+#  LIBS         += $$MYSQLLIB
+#  LIBS         += $$QTMYSQLPATH/libqsqlmysql4.a
+#  LIBS         += $$OPENSSL/lib/libeay32.a
   LIBS         += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
   LIBS         += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
   LIBS         += ../../bin/libus_somo$${VER}.a
