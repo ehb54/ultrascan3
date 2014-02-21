@@ -117,7 +117,11 @@
 #define _CRT_SECURE_NO_DEPRECATE  1
 #define DLL_EXPORT __declspec(dllexport)
 #define A86PLAT
+#if !defined( MINGW )
 #define longlong  _int64
+#else
+#define longlong  long long
+#endif
 #define longdouble long double
 #define LL_C(x) x##L
 #else
