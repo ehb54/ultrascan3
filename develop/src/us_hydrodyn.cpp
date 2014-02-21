@@ -78,6 +78,15 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    //        O_WRONLY | O_CREAT | O_TRUNC, 0666);
    // dup2(r_stderr, STDERR_FILENO);
 
+   {
+      QString tmp_dir = USglobal->config_list.root_dir + SLASH + "etc";
+      QDir dir1( tmp_dir );
+      if (!dir1.exists())
+      {
+         dir1.mkdir(tmp_dir);
+      }
+   }
+
    somo_dir = USglobal->config_list.root_dir + SLASH +  "somo";
    QDir dir1(somo_dir);
    if (!dir1.exists())
