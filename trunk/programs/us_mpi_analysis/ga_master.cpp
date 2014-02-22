@@ -46,28 +46,45 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
       qSort( best_fitness );
       simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
+      double fixval  = ( attr_z == ATTR_V )
+                     ? data_sets[ 0 ]->vbar20
+                     : parameters[ "bucket_fixed" ].toDouble();
+      US_Model::SimulationComponent zcomp;
+      zcomp.s          = 0.0;
+      zcomp.f_f0       = 0.0;
+      zcomp.mw         = 0.0;
+      zcomp.vbar20     = data_sets[ 0 ]->vbar20;
+      zcomp.D          = 0.0;
+      zcomp.f          = 0.0;
+      set_comp_attrib( zcomp, fixval, attr_z );
 
-     for ( int g = 0; g < buckets.size(); g++ )
-        simulation_values.solutes[ g ].s *= 1.0e-13;
+      // Convert all solutes to type s,k,v
+      for ( int gg = 0; gg < buckets.size(); gg++ )
+      {
+         US_Solute* solu  = &simulation_values.solutes[ gg ];
+         US_Model::SimulationComponent
+                    mcomp = zcomp;
+         set_comp_attrib( mcomp, solu->s, attr_x );
+         set_comp_attrib( mcomp, solu->k, attr_y );
 
-     if ( data_sets[ 0 ]->solute_type == 1 )
-     {  // Set up final solute to be constant-ff0, varying-vbar
-        double fixed_k = parameters[ "bucket_fixed" ].toDouble();
+         US_Model::calc_coefficients( mcomp );
 
-        for ( int g = 0; g < buckets.size(); g++ )
-        {
-           US_Solute solu = simulation_values.solutes[ g ];
-           solu.v         = solu.k;
-           solu.k         = fixed_k;
-           simulation_values.solutes[ g ] = solu;
-        }
-     }
+         solu->s          = mcomp.s;
+         solu->k          = mcomp.f_f0;
+         solu->v          = mcomp.vbar20;
+      }
 DbgLv(1) << "GaMast: sols size" << simulation_values.solutes.size()
  << "buck size" << buckets.size();
-DbgLv(1) << "GaMast:   dset size" << data_sets.size();
-DbgLv(1) << "GaMast:   sol0.s" << simulation_values.solutes[0].s;
+DbgLv(1) << "GaMast:   dset size" << data_sets.size()
+ << "sol0.s" << simulation_values.solutes[0].s
+ << "sol0.k" << simulation_values.solutes[0].k
+ << "sol0.v" << simulation_values.solutes[0].v;
+
       calc_residuals( 0, data_sets.size(), simulation_values );
-DbgLv(1) << "GaMast:    calc_resids return";
+DbgLv(1) << "GaMast:    calc_resids return - calcsize"
+ << simulation_values.solutes.size();
+DbgLv(1) << "GaMast:      sol0.s" << simulation_values.solutes[0].s
+ << "sol0.c" << simulation_values.solutes[0].c;
 
       qSort( simulation_values.solutes );
       calculated_solutes.clear();
@@ -593,7 +610,11 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
       id                = id.replace( "2DSA", "2DSA-CG" );
    QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
    int     stype     = data_sets[ 0 ]->solute_type;
+//stype=(stype>9)?0:stype;
    double  vbar20    = data_sets[ 0 ]->vbar20;
+   bool    cnstvb    = ( stype == 0  ||  attr_z == ATTR_V );
+DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
+ << "attr_z cnstvb vbar20" << attr_z << cnstvb << vbar20;
 
    model.description = runID + "." + tripleID + "." + analyID + ".model";
 DbgLv(1) << "wrMo: model descr" << model.description;
@@ -610,7 +631,7 @@ DbgLv(1) << "wrMo: model descr" << model.description;
       component.f_f0                 = solute->k;
       component.signal_concentration = solute->c;
       component.name                 = QString().sprintf( "SC%04d", i + 1 );
-      component.vbar20               = ( stype == 0 ) ? vbar20 : solute->v;
+      component.vbar20               = cnstvb  ? vbar20 : solute->v;
 
       US_Model::calc_coefficients( component );
       model.components << component;

@@ -1,6 +1,7 @@
 //! \file us_solutedata.cpp
 
 #include "us_solutedata.h"
+#include "us_ga_init.h"
 #include "us_defines.h"
 #include "us_math2.h"
 #include "us_settings.h"
@@ -8,8 +9,8 @@
 // bucket vertex LessThan routine
 bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
 {  // TRUE iff  (sx1<sx2) ||  (sx1==sx2 && sy1<sy2)
-   return ( buck1.s_min < buck2.s_min ) ||
-      ( ( buck1.s_min == buck2.s_min ) && ( buck1.ff0_min < buck2.ff0_min ) );
+   return ( buck1.x_min < buck2.x_min ) ||
+      ( ( buck1.x_min == buck2.x_min ) && ( buck1.y_min < buck2.y_min ) );
 }
 
 // Holds S_Solute data for US_GA_Initialize
@@ -17,7 +18,6 @@ US_SoluteData::US_SoluteData( void ) : QObject()
 {
    bndx      = -1;
    dbg_level = US_Settings::us_debug();
-   isPlotK   = true;
 
    allbucks.clear();
 }
@@ -111,12 +111,12 @@ bucket US_SoluteData::createBucket( QRectF brect, QPointF bpnt,
 {
    bucket buk;
 
-   buk.s       = bpnt.x();
-   buk.ff0     = bpnt.y();
-   buk.s_min   = brect.left();
-   buk.s_max   = brect.right();
-   buk.ff0_min = brect.bottom();
-   buk.ff0_max = brect.top();
+   buk.x       = bpnt.x();
+   buk.y       = bpnt.y();
+   buk.x_min   = brect.left();
+   buk.x_max   = brect.right();
+   buk.y_min   = brect.bottom();
+   buk.y_max   = brect.top();
    buk.conc    = bconc;
    buk.status  = bstat;
 
@@ -189,21 +189,21 @@ bucket US_SoluteData::currentBucket()
 QRectF US_SoluteData::bucketRect(  int ix )
 {
    bucket buk = bucketAt( ix );
-   qreal x1   = buk.s_min;
-   qreal x2   = buk.s_max;
-   qreal y1   = buk.ff0_min;
-   qreal y2   = buk.ff0_max;
+   qreal x1   = buk.x_min;
+   qreal x2   = buk.x_max;
+   qreal y1   = buk.y_min;
+   qreal y2   = buk.y_max;
 
    if ( x1 > x2 )
    {
       x1         = x2;
-      x2         = buk.s_min;
+      x2         = buk.x_min;
    }
 
    if ( y1 > y2 )
    {
       y1         = y2;
-      y2         = buk.ff0_min;
+      y2         = buk.y_min;
    }
 
    return QRectF( QPointF( x1, y1 ), QPointF( x2, y2 ) );
@@ -212,10 +212,10 @@ QRectF US_SoluteData::bucketRect(  int ix )
 QPointF US_SoluteData::bucketPoint( int ix, bool nearest )
 {
    bucket buk  = bucketAt( ix );    // get specified bucket
-   qreal x1    = buk.s_min;         // get vertices
-   qreal x2    = buk.s_max;
-   qreal y1    = buk.ff0_min;
-   qreal y2    = buk.ff0_max;
+   qreal x1    = buk.x_min;         // get vertices
+   qreal x2    = buk.x_max;
+   qreal y1    = buk.y_min;
+   qreal y2    = buk.y_max;
 
    QPointF mpt( ( x1 + x2 ) / 2.0, ( y1 + y2 ) / 2.0 );
    QPointF spt = mpt;               // get mid-point
@@ -235,36 +235,46 @@ QPointF US_SoluteData::bucketPoint( int ix )
 QSizeF US_SoluteData::bucketSize(  int ix )
 {
    bucket buk = bucketAt( ix );
-   qreal xext = buk.s_max - buk.s_min;
+   qreal xext = buk.x_max - buk.x_min;
    xext       = ( xext > 0.0 ) ? xext : -xext;
-   qreal yext = buk.ff0_max - buk.ff0_min;
+   qreal yext = buk.y_max - buk.y_min;
    yext       = ( yext > 0.0 ) ? yext : -yext;
    QSizeF siz( xext, yext );
    return siz;
 }
 
-QString US_SoluteData::bucketLine(  int ix )
+QString US_SoluteData::bucketLine( int ix )
 {
-   bucket buk = bucketAt( ix );
-   int kx     = ( ix < 0 ) ? bucketsCount() : ( ix + 1 );
+   const QString cts[] = { "s", "ff0", "MW", "vbar", "D", "f" };
+
+   bucket  buk = bucketAt( ix );
+   int     kx  = ( ix < 0 ) ? bucketsCount() : ( ix + 1 );
+   QString slo = cts[ attr_x ] + "_min";
+   QString shi = cts[ attr_x ] + "_max";
+   QString klo = cts[ attr_y ] + "_min";
+   QString khi = cts[ attr_y ] + "_max";
 
    limitBucket( buk );
 
-   if ( buk.ff0_max > 1.0 )
+   if ( attr_x < attr_y )
       return QString(
-         "Solute Bin %1: s_min=%2, s_max=%3, f/f0_min=%4, f/f0_max=%5" )
-         .arg( kx ).arg( buk.s_min ).arg( buk.s_max )
-         .arg( buk.ff0_min ).arg( buk.ff0_max );
+         "Solute Bin %1: %2=%3, %4=%5, %6=%7, %8=%9" ).arg( kx )
+         .arg( slo ).arg( buk.x_min ).arg( shi ).arg( buk.x_max )
+         .arg( klo ).arg( buk.y_min ).arg( khi ).arg( buk.y_max );
    else
       return QString(
-         "Solute Bin %1: s_min=%2, s_max=%3, vbar_min=%4, vbar_max=%5" )
-         .arg( kx ).arg( buk.s_min ).arg( buk.s_max )
-         .arg( buk.ff0_min ).arg( buk.ff0_max );
+         "Solute Bin %1: %2=%3, %4=%5, %6=%7, %8=%9" ).arg( kx )
+         .arg( klo ).arg( buk.y_min ).arg( khi ).arg( buk.y_max )
+         .arg( slo ).arg( buk.x_min ).arg( shi ).arg( buk.x_max );
 }
 
-void US_SoluteData::setDistro( QList< S_Solute >* a_distro )
+void US_SoluteData::setDistro( QList< S_Solute >* a_distro,
+      int a_ax, int a_ay, int a_az )
 {
    distro  = a_distro;
+   attr_x  = a_ax;
+   attr_y  = a_ay;
+   attr_z  = a_az;
 }
 
 int US_SoluteData::findNearestPoint( QPointF& midpt )
@@ -313,8 +323,6 @@ int US_SoluteData::removeBucketAt( int ix )
 int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
 {
 #define _MIN_VHR_ 0.01
-#define FMIN(a,b) ((a<b)?a:b)
-#define FMAX(a,b) ((a>b)?a:b)
    QList< bucket >  tbuk1;
    QList< bucket >  tbuk2;
    QList< bucket >* buks1 = &tbuk1;
@@ -340,14 +348,14 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
    for ( int jj = 0; jj < nisols; jj++ )
    {
       qreal sval  = distro->at( jj ).s;
-      qreal fval  = distro->at( jj ).k;
+      qreal kval  = distro->at( jj ).k;
       cval        = distro->at( jj ).c;
-      buk.s       = sval;
-      buk.s_min   = sval - wbuckh;
-      buk.s_max   = sval + wbuckh;
-      buk.ff0     = fval;
-      buk.ff0_min = fval - hbuckh;
-      buk.ff0_max = fval + hbuckh;
+      buk.x       = sval;
+      buk.x_min   = sval - wbuckh;
+      buk.x_max   = sval + wbuckh;
+      buk.y       = kval;
+      buk.y_min   = kval - hbuckh;
+      buk.y_max   = kval + hbuckh;
       buk.conc    = cval;
       buk.status  = 2;
       limitBucket( buk );
@@ -401,18 +409,18 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
             continue;
          }
 
-         qreal cx1    = buk.s_min;
-         qreal cx2    = buk.s_max;
-         qreal cy1    = buk.ff0_min;
-         qreal cy2    = buk.ff0_max;
+         qreal cx1    = buk.x_min;
+         qreal cx2    = buk.x_max;
+         qreal cy1    = buk.y_min;
+         qreal cy2    = buk.y_max;
 
          for ( int kk = 0; kk < jj; kk++ )
          {  // compare current to each previous bucket
             bucket buk2  = buks1->at( kk );
-            qreal px1    = buk2.s_min;
-            qreal px2    = buk2.s_max;
-            qreal py1    = buk2.ff0_min;
-            qreal py2    = buk2.ff0_max;
+            qreal px1    = buk2.x_min;
+            qreal px2    = buk2.x_max;
+            qreal py1    = buk2.y_min;
+            qreal py2    = buk2.y_max;
 
             if ( cx1 < px2 )
             {  // possible horizontal overlap
@@ -426,38 +434,38 @@ int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
                   vertr        = ( py2 - cy1 ) / hfbuck;
                   if ( vertr < horzr )
                   {  // split vertically
-                     buk2.s_min   = FMIN(cx1,px2);
-                     buk2.s_max   = FMAX(px2,cx1);
-                     buk2.ff0_min = FMIN(py2,cy2);
-                     buk2.ff0_max = FMAX(cy2,py2);
-                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
-                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     buk2.x_min   = qMin( cx1, px2 );
+                     buk2.x_max   = qMax( px2, cx1 );
+                     buk2.y_min   = qMin( py2, cy2 );
+                     buk2.y_max   = qMax( cy2, py2 );
+                     horzr        = ( buk2.x_max   - buk2.x_min   ) / wsbuck;
+                     vertr        = ( buk2.y_max - buk2.y_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
 else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
-                     buk.s_min    = FMIN(px2,cx2);
-                     buk.s_max    = FMAX(cx2,px2);
-                     buk.ff0_min  = cy1;
-                     buk.ff0_max  = cy2;
+                     buk.x_min    = qMin( px2, cx2 );
+                     buk.x_max    = qMax( cx2, px2 );
+                     buk.y_min    = cy1;
+                     buk.y_max    = cy2;
                   }
 
                   else
                   {  // split horizontally
-                     buk2.s_min   = cx1;
-                     buk2.s_max   = cx2;
-                     buk2.ff0_min = FMIN(py2,cy2);
-                     buk2.ff0_max = FMAX(cy2,py2);
-                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
-                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     buk2.x_min   = cx1;
+                     buk2.x_max   = cx2;
+                     buk2.y_min   = qMin( py2, cy2 );
+                     buk2.y_max   = qMax( cy2, py2 );
+                     horzr        = ( buk2.x_max   - buk2.x_min   ) / wsbuck;
+                     vertr        = ( buk2.y_max - buk2.y_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
 else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
-                     buk.s_min    = FMIN(px2,cx2);
-                     buk.s_max    = FMAX(cx2,px2);
-                     buk.ff0_min  = FMIN(cy1,py2);
-                     buk.ff0_max  = FMAX(py2,cy1);
+                     buk.x_min    = qMin( px2, cx2 );
+                     buk.x_max    = qMax( cx2, px2 );
+                     buk.y_min    = qMin( cy1, py2 );
+                     buk.y_max    = qMax( py2, cy1 );
                   }
 DbgLv(2) << "  LL OVL: novls " << novls;
                   break;
@@ -472,38 +480,38 @@ DbgLv(2) << "  LL OVL: novls " << novls;
                   vertr        = ( cy2 - py1 ) / hfbuck;
                   if ( vertr < horzr )
                   {  // split vertically
-                     buk2.s_min   = FMIN(cx1,px2);
-                     buk2.s_max   = FMAX(px2,cx1);
-                     buk2.ff0_min = FMIN(cy1,py1);
-                     buk2.ff0_max = FMAX(py1,cy1);
-                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
-                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     buk2.x_min   = qMin( cx1, px2 );
+                     buk2.x_max   = qMax( px2, cx1 );
+                     buk2.y_min   = qMin( cy1, py1 );
+                     buk2.y_max   = qMax( py1, cy1 );
+                     horzr        = ( buk2.x_max   - buk2.x_min   ) / wsbuck;
+                     vertr        = ( buk2.y_max - buk2.y_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
 else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
-                     buk.s_min    = FMIN(px2,cx2);
-                     buk.s_max    = FMAX(cx2,px2);
-                     buk.ff0_min  = cy1;
-                     buk.ff0_max  = cy2;
+                     buk.x_min    = qMin( px2, cx2 );
+                     buk.x_max    = qMax( cx2, px2 );
+                     buk.y_min    = cy1;
+                     buk.y_max    = cy2;
                   }
 
                   else
                   {  // split horizontally
-                     buk2.s_min   = FMIN(px2,cx2);
-                     buk2.s_max   = FMAX(cx2,px2);
-                     buk2.ff0_min = FMIN(py1,cy2);
-                     buk2.ff0_max = FMAX(cy2,py1);
-                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
-                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     buk2.x_min   = qMin( px2, cx2 );
+                     buk2.x_max   = qMax( cx2, px2 );
+                     buk2.y_min   = qMin( py1, cy2 );
+                     buk2.y_max   = qMax( cy2, py1 );
+                     horzr        = ( buk2.x_max   - buk2.x_min   ) / wsbuck;
+                     vertr        = ( buk2.y_max - buk2.y_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
 else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
-                     buk.s_min    = FMIN(cx1,cx2);
-                     buk.s_max    = FMAX(cx2,cx1);
-                     buk.ff0_min  = FMIN(cy1,py1);
-                     buk.ff0_max  = FMAX(py1,cy1);
+                     buk.x_min    = qMin( cx1, cx2 );
+                     buk.x_max    = qMax( cx2, cx1 );
+                     buk.y_min    = qMin( cy1, py1 );
+                     buk.y_max    = qMax( py1, cy1 );
                   }
 DbgLv(2) << "  UL OVL: novls " << novls;
                   break;
@@ -513,8 +521,8 @@ DbgLv(2) << "  UL OVL: novls " << novls;
                {  // current overlaps in its middle left
                   novls++;
                   buk.status   = 1;
-                  buk.s_min    = FMIN(px2,cx2);
-                  buk.s_max    = FMAX(cx2,px2);
+                  buk.x_min    = qMin( px2, cx2 );
+                  buk.x_max    = qMax( cx2, px2 );
 DbgLv(2) << "  UL OVL: novls " << novls;
                   break;
                }
@@ -528,54 +536,54 @@ DbgLv(2) << "  UL OVL: novls " << novls;
                   vertr        = ( py2 - py1 ) / hfbuck;
                   if ( vertr < horzr )
                   {  // split vertically (into 3 total parts)
-                     buk2.s_min   = FMIN(cx1,px2);  // top
-                     buk2.s_max   = FMAX(px2,cx1);
-                     buk2.ff0_min = FMIN(py1,cy2);
-                     buk2.ff0_max = FMAX(cy2,py1);
-                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
-                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     buk2.x_min   = qMin( cx1, px2 );  // top
+                     buk2.x_max   = qMax( px2, cx1 );
+                     buk2.y_min   = qMin( py1, cy2 );
+                     buk2.y_max   = qMax( cy2, py1 );
+                     horzr        = ( buk2.x_max   - buk2.x_min   ) / wsbuck;
+                     vertr        = ( buk2.y_max - buk2.y_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
 else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
-                     buk2.ff0_min = FMIN(cy1,py1);  // bottom
-                     buk2.ff0_max = FMAX(py1,cy1);
-                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
-                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     buk2.y_min   = qMin( cy1, py1 );  // bottom
+                     buk2.y_max   = qMax( py1, cy1 );
+                     horzr        = ( buk2.x_max   - buk2.x_min   ) / wsbuck;
+                     vertr        = ( buk2.y_max - buk2.y_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
 else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
-                     buk.s_min    = FMIN(px2,cx2);  // right
-                     buk.s_max    = FMAX(cx2,px2);
-                     buk.ff0_min  = cy1;
-                     buk.ff0_max  = cy2;
+                     buk.x_min    = qMin( px2, cx2 );  // right
+                     buk.x_max    = qMax( cx2, px2 );
+                     buk.y_min    = cy1;
+                     buk.y_max    = cy2;
                   }
 
                   else
                   {  // split horizontally (into 3 total parts)
-                     buk2.s_min   = FMIN(cx1,cx2);  // top
-                     buk2.s_max   = FMAX(cx2,cx1);
-                     buk2.ff0_min = FMIN(py2,cy2);
-                     buk2.ff0_max = FMAX(cy2,py2);
-                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
-                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     buk2.x_min   = qMin( cx1, cx2 );  // top
+                     buk2.x_max   = qMax( cx2, cx1 );
+                     buk2.y_min   = qMin( py2, cy2 );
+                     buk2.y_max   = qMax( cy2, py2 );
+                     horzr        = ( buk2.x_max   - buk2.x_min   ) / wsbuck;
+                     vertr        = ( buk2.y_max - buk2.y_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
 else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
-                     buk2.ff0_min = FMIN(cy1,py1);  // bottom
-                     buk2.ff0_max = FMAX(py1,cy1);
-                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
-                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     buk2.y_min   = qMin( cy1, py1 );  // bottom
+                     buk2.y_max   = qMax( py1, cy1 );
+                     horzr        = ( buk2.x_max   - buk2.x_min   ) / wsbuck;
+                     vertr        = ( buk2.y_max - buk2.y_min ) / hfbuck;
                      if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
                         buks2->append( buk2 );
 else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
-                     buk.s_min    = FMIN(px2,cx2);  // middle
-                     buk.s_max    = FMAX(cx2,px2);
-                     buk.ff0_min  = FMIN(py1,py2);
-                     buk.ff0_max  = FMAX(py2,py1);
+                     buk.x_min    = qMin( px2, cx2 );  // middle
+                     buk.x_max    = qMax( cx2, px2 );
+                     buk.y_min    = qMin( py1, py2 );
+                     buk.y_max    = qMax( py2, py1 );
                   }
 DbgLv(2) << "  UL OVL: novls " << novls;
                   break;
@@ -590,15 +598,15 @@ DbgLv(2) << "  UL OVL: novls " << novls;
                {  // current overlaps in its upper part
                   novls++;
                   buk.status   = 1;
-                  buk.ff0_min  = FMIN(cy1,py1);
-                  buk.ff0_max  = FMAX(py1,cy1);
+                  buk.y_min    = qMin( cy1, py1 );
+                  buk.y_max    = qMax( py1, cy1 );
 DbgLv(2) << "   UV OVL: novls " << novls;
                   break;
                }
             }
          }
-         horzr        = ( buk.s_max   - buk.s_min   ) / wsbuck;
-         vertr        = ( buk.ff0_max - buk.ff0_min ) / hfbuck;
+         horzr        = ( buk.x_max   - buk.x_min   ) / wsbuck;
+         vertr        = ( buk.y_max - buk.y_min ) / hfbuck;
          if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
             buks2->append( buk );
 else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
@@ -646,13 +654,13 @@ else DbgLv(2) << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
 
 // save bucket information to file for use by GA
 int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
-      double fixval )
+      int ztype, double fixval )
 {
    int     rc   = 0;
    int     nsol = allbucks.size();
    QString line;
    bucket  buk;
-   const QString cts[] = { "mw", "s", "D", "f", "ff0", "vbar" };
+   const QString cts[] = { "s", "ff0", "MW", "vbar", "D", "f" };
 
    QFile fileo( fname );
 
@@ -661,8 +669,9 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
       QTextStream ts( &fileo );
 
       // Line 1 with count,xtype,ytype,fixed
-      line.sprintf( "%d %d %d %.5f", nsol, xtype, ytype, fixval );
-      line = line + " # " + cts[ xtype ] + " " + cts[ ytype ];
+      line.sprintf( "%d %d %d %d %.5f", nsol, xtype, ytype, ztype, fixval );
+      line = line + " # " + cts[ xtype ] + " " + cts[ ytype ]
+                  + " "   + cts[ ztype ];
       ts << line << endl;
 
       for ( int jj = 0; jj < nsol; jj++ )
@@ -673,7 +682,7 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
 
          line.sprintf(
             "%6.4f, %6.4f, %6.4f, %6.4f",
-             buk.s_min, buk.s_max, buk.ff0_min, buk.ff0_max );
+             buk.x_min, buk.x_max, buk.y_min, buk.y_max );
          ts << line << endl;
       }
       fileo.close();
@@ -686,7 +695,7 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
 
 
 // build the data lists for Monte Carlo analysis
-int US_SoluteData::buildDataMC( bool plot_s, bool plot_k )
+int US_SoluteData::buildDataMC()
 {
    int         rc   = 0;
    int         nsol = distro->size();
@@ -697,48 +706,28 @@ int US_SoluteData::buildDataMC( bool plot_s, bool plot_k )
    QList< SimComp > bcomp;   // sim component list
    qreal       bsmin;        // bucket vertices
    qreal       bsmax;
-   qreal       bfmin;
-   qreal       bfmax;
+   qreal       bkmin;
+   qreal       bkmax;
    qreal       ssval;        // component s,f_f0 values
    qreal       sfval;
-   isPlotK          = plot_k;
 
    // build component list from solute lists
    component.clear();
 
-   if ( plot_s )      // solute distro is s_distro
+   for ( int jj = 0; jj < nsol; jj++ )
    {
-      for ( int jj = 0; jj < nsol; jj++ )
-      {
-         d_sol    = distro->at( jj );    // get solute record ("x" is "s")
+      d_sol    = distro->at( jj );    // get solute record ("x" is "s")
 
-         simc.s   = d_sol.s * 1e-13;     // compose simulation component
-         simc.w   = d_sol.w;
-         simc.f   = d_sol.k;
-         simc.c   = d_sol.c;
-         simc.d   = d_sol.d;
-         simc.v   = d_sol.v;
+      simc.s   = d_sol.si * 1e-13;    // compose simulation component
+      simc.w   = d_sol.w;
+      simc.f   = d_sol.ki;
+      simc.c   = d_sol.c;
+      simc.d   = d_sol.d;
+      simc.v   = d_sol.v;
 
-         component.append( simc );       // and add it to list
-      }
+      component.append( simc );       // and add it to list
    }
 
-   else               // solute distro is mw_distro
-   {
-      for ( int jj = 0; jj < nsol; jj++ )
-      {
-         d_sol    = distro->at( jj );    // get solute record ("x" is "mw")
-
-         simc.s   = d_sol.w * 1e-13;     // compose simulation component
-         simc.w   = d_sol.s;
-         simc.f   = d_sol.k;
-         simc.c   = d_sol.c;
-         simc.d   = d_sol.d;
-         simc.v   = d_sol.v;
-
-         component.append( simc );       // and add it to list
-      }
-   }
    // build list of component solute data for each bucket
    MC_solute.clear();
 
@@ -746,10 +735,10 @@ int US_SoluteData::buildDataMC( bool plot_s, bool plot_k )
    {
       // get bucket dimensions
       buk      = allbucks.at( jj );      // get bucket and its vertices
-      bsmin    = buk.s_min;
-      bsmax    = buk.s_max;
-      bfmin    = buk.ff0_min;
-      bfmax    = buk.ff0_max;
+      bsmin    = buk.x_min;
+      bsmax    = buk.x_max;
+      bkmin    = buk.y_min;
+      bkmax    = buk.y_max;
       bcomp.clear();
 
       for ( int kk = 0; kk < nsol; kk++ )
@@ -757,7 +746,7 @@ int US_SoluteData::buildDataMC( bool plot_s, bool plot_k )
          ssval    = distro->at( kk ).s;  // "x,y" of solute point
          sfval    = distro->at( kk ).k;
          if ( ssval >= bsmin  &&  ssval <= bsmax   &&
-              sfval >= bfmin  &&  sfval <= bfmax )
+              sfval >= bkmin  &&  sfval <= bkmax )
          {  // solute is in this bin:  save component for bin
             bcomp.append( component.at( kk ) );
          }
@@ -778,11 +767,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
    QList< SimComp > bcomp;   // sim component list
    QList< double >  vals;
 
-   QString ffvb    = isPlotK ?
-                     tr( "Frictional ratio:          " ) :
-                     tr( "Partial specific volume:   " ); 
-   QString fv_titl = ffvb.simplified().replace( ":", "" );
-   
    QFile fileo( fname );
 
    if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -846,14 +830,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                vsum    += ( bcomp.at( jj ).d * bcomp.at( jj ).c );
             ts << ( vsum / tconc ) << endl;
 
-#if 0
-            ts << ffvb;
-            vsum     = 0.0;
-
-            for ( int jj = 0; jj < ksol; jj++ )
-               vsum    += ( bcomp.at( jj ).f * bcomp.at( jj ).c );
-            ts << ( vsum / tconc ) << endl;
-#endif
             ts << tr( "Frictional ratio:           " );
             vsum     = 0.0;
             for ( int jj = 0; jj < ksol; jj++ )
@@ -898,12 +874,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             outputStats( ts, valus, concs, false,
                   tr( "Diffusion coefficient:     " ) );
 
-#if 0
-            valus.clear();
-            for ( int jj = 0; jj < ksol; jj++ )
-               valus.append( bcomp.at( jj ).f );
-            outputStats( ts, valus, concs, false, ffvb );
-#endif
             valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).f );
@@ -974,12 +944,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
                ts << bcomp.at( jj ).d << "  ";
             ts << endl;
 
-#if 0
-            ts << ffvb;
-            for ( int jj = 0; jj < ksol; jj++ )
-               ts << bcomp.at( jj ).f << "  ";
-            ts << endl;
-#endif
             ts << tr( "Frictional ratio:          " );
             for ( int jj = 0; jj < ksol; jj++ )
                ts << bcomp.at( jj ).f << "  ";
@@ -1020,12 +984,6 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             outputStats( ts, valus, concs, true,
                   tr( "Diffusion Coefficient" ) );
 
-#if 0
-            valus.clear();
-            for ( int jj = 0; jj < ksol; jj++ )
-               valus.append( bcomp.at( jj ).f );
-            outputStats( ts, valus, concs, true, fv_titl );
-#endif
             valus.clear();
             for ( int jj = 0; jj < ksol; jj++ )
                valus.append( bcomp.at( jj ).f );
@@ -1268,35 +1226,43 @@ void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
 // Insure vertexes of a bucket do not exceed physically possible limits
 void US_SoluteData::limitBucket( bucket& buk )
 {
-   if ( buk.s_min > 0.0 )
-   {  // All-positive s's start at 0.1 at least
-      buk.s_min   = qMax( 0.1, buk.s_min );
-      buk.s_max   = qMax( ( buk.s_min + 0.0001 ), buk.s_max );
+   if ( attr_x != US_GA_Initialize::ATTR_D  &&
+        attr_x != US_GA_Initialize::ATTR_F )
+   {
+      if ( buk.x_min > 0.0 )
+      {  // All-positive s's start at 0.1 at least
+         buk.x_min   = qMax( 0.1, buk.x_min );
+         buk.x_max   = qMax( ( buk.x_min + 0.0001 ), buk.x_max );
+      }
+
+      else if ( buk.x_max <= 0.0 )
+      {  // All-negative s's end at -0.1 at most
+         buk.x_max   = qMin( -0.1, buk.x_max );
+         buk.x_min   = qMin( ( buk.x_max - 0.0001 ), buk.x_min );
+      }
+
+      else if ( ( buk.x_min + buk.x_max ) >= 0.0 )
+      {  // Mostly positive clipped to all positive starting at 0.1
+         buk.x_min   = 0.1;
+         buk.x_max   = qMax( 0.2, buk.x_max );
+      }
+
+      else
+      {  // Mostly negative clipped to all negative ending at -0.1
+         buk.x_min   = qMin( -0.2, buk.x_min );
+         buk.x_max   = -0.1;
+      }
    }
 
-   else if ( buk.s_max <= 0.0 )
-   {  // All-negative s's end at -0.1 at most
-      buk.s_max   = qMin( -0.1, buk.s_max );
-      buk.s_min   = qMin( ( buk.s_max - 0.0001 ), buk.s_min );
+   if ( attr_y != US_GA_Initialize::ATTR_D  &&
+        attr_y != US_GA_Initialize::ATTR_F )
+   {
+      if ( attr_y == US_GA_Initialize::ATTR_K )
+         buk.y_min = qMax(  1.0, buk.y_min );
+      else
+         buk.y_min = qMax(  0.1, buk.y_min );
+      buk.y_max = qMax( ( buk.y_min + 0.0001 ), buk.y_max );
    }
-
-   else if ( ( buk.s_min + buk.s_max ) >= 0.0 )
-   {  // Mostly positive clipped to all positive starting at 0.1
-      buk.s_min   = 0.1;
-      buk.s_max   = qMax( 0.2, buk.s_max );
-   }
-
-   else
-   {  // Mostly negative clipped to all negative ending at -0.1
-      buk.s_min   = qMin( -0.2, buk.s_min );
-      buk.s_max   = -0.1;
-   }
-
-   if ( buk.ff0_max > 1.0 )
-      buk.ff0_min = qMax(  1.0, buk.ff0_min );
-   else
-      buk.ff0_min = qMax(  0.1, buk.ff0_min );
-   buk.ff0_max = qMax( ( buk.ff0_min + 0.0001 ), buk.ff0_max );
 }
 
 // Count the number of overlaps in the current list of buckets
@@ -1373,8 +1339,8 @@ void US_SoluteData::bucketSeparate( int ii, int jj,
    }
 
    bucket bukj  = bucketAt( jj );
-   bukj.s_min   = bukrecj.left();
-   bukj.ff0_max = bukrecj.bottom();
+   bukj.x_min   = bukrecj.left();
+   bukj.y_max = bukrecj.bottom();
    allbucks    .replace( jj, bukj );
    bucket_rects.replace( jj, bukrecj );
 }
@@ -1387,7 +1353,7 @@ int US_SoluteData::countFullestBucket()
 
    if ( nbuks == 0 )
    {
-      buildDataMC( true, isPlotK );
+      buildDataMC();
       nbuks     = MC_solute.size();
    }
 DbgLv(1) << "countFB-absize" << nbuks;

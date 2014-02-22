@@ -19,12 +19,12 @@ typedef struct short_sim_comp_s
 class bucket
 {
    public:
-      double s;
-      double s_min;
-      double s_max;
-      double ff0;
-      double ff0_max;
-      double ff0_min;
+      double x;
+      double x_min;
+      double x_max;
+      double y;
+      double y_max;
+      double y_min;
       double conc;
       int    status; // 0 = full-sized bucket, 
                      // 1 = this bucket is reduced from overlap
@@ -33,31 +33,29 @@ class bucket
       ~bucket() {};
       bool operator==(const bucket& objIn) 
       {
-         return (s == objIn.s && s_min == objIn.s_min && s_max == objIn.s_max 
-            && ff0 == objIn.ff0 && ff0_min == objIn.ff0_min
-            && ff0_max == objIn.ff0_max 
-            && conc == objIn.conc && status == objIn.status);
+         return ( x == objIn.x && x_min == objIn.x_min && x_max == objIn.x_max 
+               && y == objIn.y && y_min == objIn.y_min && y_max == objIn.y_max 
+               && conc == objIn.conc && status == objIn.status );
       }
       bool operator!=(const bucket& objIn)
       {
-         return (s != objIn.s || s_min != objIn.s_min || s_max != objIn.s_max 
-            || ff0 != objIn.ff0 || ff0_min != objIn.ff0_min
-            || ff0_max != objIn.ff0_max 
-            || conc != objIn.conc || status != objIn.status);
+         return ( x != objIn.x || x_min != objIn.x_min || x_max != objIn.x_max 
+               || y != objIn.y || y_min != objIn.y_min || y_max != objIn.y_max 
+               || conc != objIn.conc || status != objIn.status );
       }
       bool operator < (const bucket& objIn) const
       {
-         if (s < objIn.s)
+         if ( x < objIn.x )
          {
-            return (true);
+            return ( true );
          }
-         else if (s == objIn.s && ff0 < objIn.ff0)
+         else if ( x == objIn.x && y < objIn.y )
          {
-            return(true);
+            return ( true );
          }
          else
          {
-            return(false);
+            return ( false );
          }
       }
 };
@@ -102,12 +100,12 @@ class US_SoluteData : public QObject
     QPointF  bucketPoint( int );
     QSizeF   bucketSize(  int );
     QString  bucketLine(  int );
-    void     setDistro( QList< S_Solute >* );
+    void     setDistro( QList< S_Solute >*, int, int, int );
     int      findNearestPoint( QPointF& );
     int      removeBucketAt( int );
     int      autoCalcBins( int, qreal, qreal );
-    int      saveGAdata( QString&, int = 1, int = 4, double = 0.0 );
-    int      buildDataMC( bool, bool );
+    int      saveGAdata  ( QString&, int = 0, int = 1, int = 3, double = 0.0 );
+    int      buildDataMC ( void );
     int      reportDataMC( QString&, int );
     void     outputStats( QTextStream&, QList< qreal >&, QList< qreal >&,
                           bool, QString ); 
@@ -123,9 +121,10 @@ class US_SoluteData : public QObject
     QList< S_Solute >*         distro;
 
     int      bndx;
+    int      attr_x;
+    int      attr_y;
+    int      attr_z;
     int      dbg_level;
-
-    bool     isPlotK;
 
     QRectF   brecmin;
     QRectF   brecmax;

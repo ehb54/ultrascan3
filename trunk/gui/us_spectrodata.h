@@ -25,6 +25,8 @@ typedef struct solute_s
    double v;    //!< vbar
    double d;    //!< diffusion coefficient
    double f;    //!< frictional coefficient
+   double si;   //!< saved initial s
+   double ki;   //!< saved initial k
 } S_Solute;
 
 //! \brief Class derived from QwtRasterData to supply QwtPlotSpectrogram data

@@ -11,6 +11,7 @@
 #include "us_simparms.h"
 #include "us_solve_sim.h"
 #include "us_vector.h"
+#include "us_math2.h"
 
 #define SIMULATION       US_SolveSim::Simulation
 #define DATASET          US_SolveSim::DataSet
@@ -30,6 +31,9 @@ class US_MPI_Analysis : public QObject
     void start( void );
      
   private:
+
+    enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+
     int                 proc_count;
     int                 my_rank;
     int                 my_group;
@@ -60,6 +64,9 @@ class US_MPI_Analysis : public QObject
     int                 plague;
     int                 migrate_count;
     int                 elitism;
+    int                 attr_x;
+    int                 attr_y;
+    int                 attr_z;
 
     double              mutate_sigma;
     double              p_mutate_s;
@@ -189,10 +196,10 @@ class US_MPI_Analysis : public QObject
     class Bucket
     {
       public:
-         double s_min;
-         double s_max;
-         double ff0_min;
-         double ff0_max;
+         double x_min;
+         double x_max;
+         double y_min;
+         double y_max;
          double ds;
          double dk;
     };
@@ -333,6 +340,10 @@ class US_MPI_Analysis : public QObject
     void   pmasters_master     ( void );
     void   pmasters_worker     ( void );
     void   time_mc_iterations  ( void );
+    void   set_comp_attrib     ( US_Model::SimulationComponent&,
+                                 double, int );
+    void   build_component( US_Model::SimulationComponent&,
+                            US_Math2::SolutionData&, double, double );
 
     // Debug
     void dump_buckets( void );

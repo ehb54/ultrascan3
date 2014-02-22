@@ -33,13 +33,13 @@ void US_MPI_Analysis::ga_worker( void )
 
    for ( int b = 0; b < buckets.size(); b++ )
    {
-      double s_min   = buckets[ b ].s_min;
-      double s_max   = buckets[ b ].s_max;
-      double ff0_min = buckets[ b ].ff0_min;
-      double ff0_max = buckets[ b ].ff0_max;
+      double x_min   = buckets[ b ].x_min;
+      double x_max   = buckets[ b ].x_max;
+      double y_min   = buckets[ b ].y_min;
+      double y_max   = buckets[ b ].y_max;
       
-      buckets[ b ].ds = ( s_max   - s_min   ) / extn_s;
-      buckets[ b ].dk = ( ff0_max - ff0_min ) / extn_k;
+      buckets[ b ].ds = ( x_max - x_min ) / extn_s;
+      buckets[ b ].dk = ( y_max - y_min ) / extn_k;
    }
 
    MPI_GA_MSG msg;
@@ -367,7 +367,7 @@ void US_MPI_Analysis::align_gene( Gene& gene )
    for ( int i = 0; i < gene.size(); i++ )
    {
       double s     = gene[ i ].s;
-      double s_min = buckets[ i ].s_min;
+      double s_min = buckets[ i ].x_min;
       double ds    = s - s_min;
 
       if ( ds < 0 )
@@ -380,7 +380,7 @@ void US_MPI_Analysis::align_gene( Gene& gene )
       }
 
       double k     = gene[ i ].k;
-      double k_min = buckets[ i ].ff0_min;
+      double k_min = buckets[ i ].y_min;
       double dk    = k - k_min;
 
       if ( dk < 0 )
@@ -430,8 +430,46 @@ DbgLv(2) << "get_fitness: HIT!  new hits" << fitness_hits;
       return fitness_map.value( key );
    }
 
-   for ( int cc = 0; cc < nsols; cc++ ) 
-      sim.solutes[ cc ].s *= 1.0e-13;
+   for ( int cc = 0; cc < nsols; cc++ )
+   {
+      double sval          = sim.solutes[ cc ].s;
+      double kval          = sim.solutes[ cc ].k;
+
+      switch( attr_x )
+      {
+         case ATTR_S:
+            sim.solutes[ cc ].s  = sval * 1.0e-13;
+            break;
+         case ATTR_K:
+            sim.solutes[ cc ].k  = sval;
+            break;
+         case ATTR_W:
+         case ATTR_D:
+         case ATTR_F:
+            sim.solutes[ cc ].d  = sval;
+            break;
+         case ATTR_V:
+            sim.solutes[ cc ].v  = sval;
+         default:
+            break;
+      }
+      switch( attr_y )
+      {
+         case ATTR_S:
+            sim.solutes[ cc ].s  = kval * 1.0e-13;
+            break;
+         case ATTR_W:
+         case ATTR_D:
+         case ATTR_F:
+            sim.solutes[ cc ].d  = kval;
+            break;
+         case ATTR_V:
+            sim.solutes[ cc ].v  = kval;
+         default:
+         case ATTR_K:
+            break;
+      }
+   }
 
 //DbTimMsg("  ++ call gf calc_residuals");
    calc_residuals( current_dataset, datasets_to_process, sim );
@@ -577,8 +615,8 @@ void US_MPI_Analysis::mutate_s( US_Solute& solute, int b )
 
    // Ensure new value is at a grid point and within bucket
    solute.s += delta * buckets[ b ].ds;
-   solute.s  = qMax( solute.s, buckets[ b ].s_min );
-   solute.s  = qMin( solute.s, buckets[ b ].s_max );
+   solute.s  = qMax( solute.s, buckets[ b ].x_min );
+   solute.s  = qMin( solute.s, buckets[ b ].x_max );
 //*DEBUG*
 //if(solute.s<0.0) {
 //int grp_nbr  = ( my_rank / gcores_count );
@@ -600,8 +638,8 @@ void US_MPI_Analysis::mutate_k( US_Solute& solute, int b )
 
    // Ensure new value is at a grid point and within bucket
    solute.k += delta * buckets[ b ].dk;
-   solute.k  = qMax( solute.k, buckets[ b ].ff0_min );
-   solute.k  = qMin( solute.k, buckets[ b ].ff0_max );
+   solute.k  = qMax( solute.k, buckets[ b ].y_min );
+   solute.k  = qMin( solute.k, buckets[ b ].y_max );
 }
 
 void US_MPI_Analysis::cross_gene( Gene& gene, QList< Gene > old_genes )
@@ -728,11 +766,11 @@ US_MPI_Analysis::Gene US_MPI_Analysis::new_gene( void )
    {
       US_Solute solute;
 
-      double s_min   = buckets[ b ].s_min;
-      double ff0_min = buckets[ b ].ff0_min;
+      double x_min   = buckets[ b ].x_min;
+      double y_min   = buckets[ b ].y_min;
       
-      solute.s = s_min   + u_random( s_grid ) * buckets[ b ].ds;
-      solute.k = ff0_min + u_random( k_grid ) * buckets[ b ].dk;
+      solute.s = x_min + u_random( s_grid ) * buckets[ b ].ds;
+      solute.k = y_min + u_random( k_grid ) * buckets[ b ].dk;
 
       gene << solute;
    }
@@ -1221,25 +1259,28 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
    int    vsize   = v.size();
    int    nsols   = vsize / 2;
    int    navals  = nsols * ntotal;
-   bool   cnst_vb = ( dset->solute_type == 0 );
    double fixval  = parameters[ "bucket_fixed" ].toDouble();
+   fixval         = ( attr_z == ATTR_V ) ? dset->vbar20 : fixval;
 //qDebug() << "UF: vsize nsols ntotal navals" << vsize << nsols << ntotal << navals;
+
+   US_Math2::SolutionData sd;
+   sd.density     = dset->density;
+   sd.viscosity   = dset->viscosity;
+   sd.manual      = dset->manual;
+   sd.vbar20      = dset->vbar20;
+   sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, dset->temperature );
+   US_Math2::data_correction( dset->temperature, sd );
+
    US_Model::SimulationComponent zcomponent;
    zcomponent.s      = 0.0;
-   zcomponent.D      = 0.0;
+   zcomponent.f_f0   = 0.0;
    zcomponent.mw     = 0.0;
+   zcomponent.vbar20 = dset->vbar20;
+   zcomponent.D      = 0.0;
    zcomponent.f      = 0.0;
 
-   if ( cnst_vb )
-   {  // Fixed vbar
-      zcomponent.f_f0   = 0.0;
-      zcomponent.vbar20 = dset->vbar20;
-   }
-   else
-   {  // Fixed f/f0
-      zcomponent.f_f0   = fixval;
-      zcomponent.vbar20 = 0.0;
-   }
+   set_comp_attrib( zcomponent, fixval, attr_z );
+//DbgLv(1) << "UF: xyz" << attr_x << attr_y << attr_z << "fixval" << fixval;
 
    if ( index < 0 )
    {  // Do the initial population of A and B matrices
@@ -1251,38 +1292,13 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 
       for ( int vv = 0; vv < vsize; vv += 2 )
       {  // Fit each solute and populate the A matrix with simulations
+         double xval   = v[ vv ];
+         double yval   = v[ vv + 1 ];
          US_Model model;
          model.components.resize( 1 );
          model.components[ 0 ]      = zcomponent;
-         model.components[ 0 ].s    = v[ vv     ] * 1.0e-13;
 
-         if ( cnst_vb )
-         {  // Normal constant-vbar case
-            model.components[ 0 ].f_f0 = v[ vv + 1 ];
-
-            US_Model::calc_coefficients( model.components[ 0 ] );
-
-            model.components[ 0 ].s   /= dset->s20w_correction;
-            model.components[ 0 ].D   /= dset->D20w_correction;
-         }
-
-         else
-         {  // Varying vbar, fixed f/f0
-            model.components[ 0 ].vbar20 = v[ vv + 1 ];
-
-            US_Model::calc_coefficients( model.components[ 0 ] );
-
-            US_Math2::SolutionData sd;
-            sd.density                 = dset->density;
-            sd.viscosity               = dset->viscosity;
-            sd.manual                  = dset->manual;
-            sd.vbar20                  = model.components[ 0 ].vbar20;
-            sd.vbar                    = US_Math2::adjust_vbar20(
-                                            sd.vbar20, dset->temperature );
-            US_Math2::data_correction( dset->temperature, sd );
-            model.components[ 0 ].s   /= sd.s20w_correction;
-            model.components[ 0 ].D   /= sd.D20w_correction;
-         }
+         build_component( model.components[ 0 ], sd, xval, yval );
 
          US_AstfemMath::initSimData( simdat, *edata, 0.0 );
          US_Astfem_RSA astfem_rsa( model, dset->simparams );
@@ -1312,35 +1328,9 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
 
       int vv = index * 2;
       model.components[ 0 ]      = zcomponent;
-      model.components[ 0 ].s    = v[ vv     ] * 1.0e-13;
 
-      if ( cnst_vb )
-      {  // Normal constant-vbar case
-         model.components[ 0 ].f_f0 = v[ vv + 1 ];
+      build_component( model.components[ 0 ], sd, v[ vv ], v[ vv + 1 ] );
 
-         US_Model::calc_coefficients( model.components[ 0 ] );
-
-         model.components[ 0 ].s   /= dset->s20w_correction;
-         model.components[ 0 ].D   /= dset->D20w_correction;
-      }
-
-      else
-      {  // Varying vbar, fixed f/f0
-         model.components[ 0 ].vbar20 = v[ vv + 1 ];
-
-         US_Model::calc_coefficients( model.components[ 0 ] );
-
-         US_Math2::SolutionData sd;
-         sd.density                 = dset->density;
-         sd.viscosity               = dset->viscosity;
-         sd.manual                  = dset->manual;
-         sd.vbar20                  = model.components[ 0 ].vbar20;
-         sd.vbar                    = US_Math2::adjust_vbar20(
-                                         sd.vbar20, dset->temperature );
-         US_Math2::data_correction( dset->temperature, sd );
-         model.components[ 0 ].s   /= sd.s20w_correction;
-         model.components[ 0 ].D   /= sd.D20w_correction;
-      }
 //qDebug() << "UF: index vv" << index << vv << "s,D"
 // << model.components[0].s << model.components[0].D;
 
@@ -1389,40 +1379,11 @@ double US_MPI_Analysis::update_fitness( int index, US_Vector& v )
          if ( soluval > 0.0 )
          {
             model.components << zcomponent;
-
             int vv = cc * 2;
-            model.components[ kk ].s    = v[ vv     ] * 1.0e-13;
 
-            if ( cnst_vb )
-            {  // Normal constant-vbar case
-               model.components[ kk ].f_f0 = v[ vv + 1 ];
+            build_component( model.components[ kk ], sd, v[ vv ], v[ vv + 1 ] );
 
-               US_Model::calc_coefficients( model.components[ kk ] );
-
-               model.components[ kk ].s   /= dset->s20w_correction;
-               model.components[ kk ].D   /= dset->D20w_correction;
-            }
-
-            else
-            {  // Varying vbar, fixed f/f0
-               model.components[ kk ].vbar20 = v[ vv + 1 ];
-
-               US_Model::calc_coefficients( model.components[ kk ] );
-
-               US_Math2::SolutionData sd;
-               sd.density                  = dset->density;
-               sd.viscosity                = dset->viscosity;
-               sd.manual                   = dset->manual;
-               sd.vbar20                   = model.components[ 0 ].vbar20;
-               sd.vbar                     = US_Math2::adjust_vbar20(
-                                                sd.vbar20, dset->temperature );
-               US_Math2::data_correction( dset->temperature, sd );
-               model.components[ kk ].s   /= sd.s20w_correction;
-               model.components[ kk ].D   /= sd.D20w_correction;
-            }
-
-            model.components[ kk ].signal_concentration = soluval;
-            kk++;
+            model.components[ kk++ ].signal_concentration = soluval;
 
             if ( soluval >= concentration_threshold )  ksol++;
          }
@@ -1517,10 +1478,10 @@ void US_MPI_Analysis::dump_buckets( void )
    
    for ( int b = 0; b < buckets.size(); b++ )
    {
-      DbgLv(1) << buckets[ b ].s_min
-               << buckets[ b ].s_max
-               << buckets[ b ].ff0_min
-               << buckets[ b ].ff0_max
+      DbgLv(1) << buckets[ b ].x_min
+               << buckets[ b ].x_max
+               << buckets[ b ].y_min
+               << buckets[ b ].y_max
                << buckets[ b ].ds
                << buckets[ b ].dk;
    }
@@ -1578,5 +1539,60 @@ void US_MPI_Analysis::dump_fitness( const QList< Fitness >& fitness )
    }
 
    DbgLv(1) << s;
+}
+
+// Set a coefficient value for a specified model component attribute
+void US_MPI_Analysis::set_comp_attrib( US_Model::SimulationComponent& mcomp,
+      double covalue, int attribx )
+{
+   switch ( attribx )
+   {  // Set the coefficient value indicated by the attribute index
+      default:
+      case ATTR_S:      // Set sedimentation coefficient at scale
+         mcomp.s      = covalue * 1.e-13;
+         break;
+      case ATTR_K:      // Set frictional ratio
+         mcomp.f_f0   = covalue;
+         break;
+      case ATTR_W:      // Set molecular weight
+         mcomp.mw     = covalue;
+         break;
+      case ATTR_V:      // Set partial specific volume (vbar)
+         mcomp.vbar20 = covalue;
+         break;
+      case ATTR_D:      // Set diffusion coefficient
+         mcomp.D      = covalue;
+         break;
+      case ATTR_F:      // Set frictional coefficient
+         mcomp.f      = covalue;
+         break;
+   }
+}
+
+// Build a model component from sparse attribute values
+void US_MPI_Analysis::build_component( US_Model::SimulationComponent& mcomp,
+   US_Math2::SolutionData& sd, double xval, double yval )
+{
+   US_SolveSim::DataSet* dset  = data_sets[ 0 ];
+
+   // Set the X,Y attributes of the model component
+   set_comp_attrib( mcomp, xval, attr_x );
+   set_comp_attrib( mcomp, yval, attr_y );
+
+   // Compute all the remaining coefficients
+   US_Model::calc_coefficients( mcomp );
+
+   // If vbar is not fixed, recompute solution-based corrections
+   if ( attr_z != ATTR_V )
+   {
+      sd.vbar20     = mcomp.vbar20;
+      sd.vbar       = US_Math2::adjust_vbar20( sd.vbar20, dset->temperature );
+
+      US_Math2::data_correction( dset->temperature, sd );
+   }
+
+   // Do corrections to sedimentation and diffusion coefficients
+   mcomp.s      /= sd.s20w_correction;
+   mcomp.D      /= sd.D20w_correction;
 }
 

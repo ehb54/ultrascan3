@@ -58,8 +58,8 @@ class US_Pseudo3D_Combine : public US_Widgets
 
       QLabel*       lb_plt_smin;
       QLabel*       lb_plt_smax;
-      QLabel*       lb_plt_fmin;
-      QLabel*       lb_plt_fmax;
+      QLabel*       lb_plt_kmin;
+      QLabel*       lb_plt_kmax;
 
       QTextEdit*    te_distr_info;
 
@@ -72,8 +72,8 @@ class US_Pseudo3D_Combine : public US_Widgets
       QwtCounter*   ct_xreso;
       QwtCounter*   ct_yreso;
       QwtCounter*   ct_zfloor;
-      QwtCounter*   ct_plt_fmin;     
-      QwtCounter*   ct_plt_fmax;     
+      QwtCounter*   ct_plt_kmin;     
+      QwtCounter*   ct_plt_kmax;     
       QwtCounter*   ct_plt_smin;     
       QwtCounter*   ct_plt_smax;     
       QwtCounter*   ct_plt_dlay;     
@@ -128,16 +128,16 @@ class US_Pseudo3D_Combine : public US_Widgets
       double        resolu;
       double        plt_smin;
       double        plt_smax;
-      double        plt_fmin;
-      double        plt_fmax;
+      double        plt_kmin;
+      double        plt_kmax;
       double        plt_zmin;
       double        plt_zmax;
       double        plt_zmin_zp;
       double        plt_zmax_zp;
       double        plt_zmin_co;
       double        plt_zmax_co;
-      double        k_range;
       double        s_range;
+      double        k_range;
       double        xreso;
       double        yreso;
       double        zfloor;
@@ -148,7 +148,6 @@ class US_Pseudo3D_Combine : public US_Widgets
       int           patm_id;
       int           patm_dlay;
       int           dbg_level;
-      int           plot_xy;
       int           plot_x;
       int           plot_y;
 
@@ -156,8 +155,6 @@ class US_Pseudo3D_Combine : public US_Widgets
       bool          auto_sxy;
       bool          auto_scz;
       bool          cont_loop;
-      bool          plot_s;
-      bool          plot_k;
       bool          looping;
       bool          need_save;
       bool          runsel;
@@ -178,10 +175,10 @@ class US_Pseudo3D_Combine : public US_Widgets
       void update_yreso(      double );
       void update_zfloor(     double );
       void update_curr_distr( double );
-      void update_plot_fmin(  double );
-      void update_plot_fmax(  double );
       void update_plot_smin(  double );
       void update_plot_smax(  double );
+      void update_plot_kmin(  double );
+      void update_plot_kmax(  double );
       void plot_data(      int );
       void plot_data(      void );
       void select_autosxy( void );

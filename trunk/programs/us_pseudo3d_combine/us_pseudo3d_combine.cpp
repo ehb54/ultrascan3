@@ -118,21 +118,21 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    us_checkbox( tr( "Z as Percentage" ), ck_zpcent, false );
 
-   lb_plt_fmin   = us_label( tr( "Plot Limit f/f0 Minimum:" ) );
-   lb_plt_fmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   lb_plt_kmin   = us_label( tr( "Plot Limit f/f0 Minimum:" ) );
+   lb_plt_kmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_plt_fmin   = us_counter( 3, 1.0, 50.0, 1.0 );
-   ct_plt_fmin->setStep( 1 );
-   connect( ct_plt_fmin, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plot_fmin( double ) ) );
+   ct_plt_kmin   = us_counter( 3, 1.0, 50.0, 1.0 );
+   ct_plt_kmin->setStep( 1 );
+   connect( ct_plt_kmin, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_plot_kmin( double ) ) );
 
-   lb_plt_fmax   = us_label( tr( "Plot Limit f/f0 Maximum:" ) );
-   lb_plt_fmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   lb_plt_kmax   = us_label( tr( "Plot Limit f/f0 Maximum:" ) );
+   lb_plt_kmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_plt_fmax   = us_counter( 3, 1.0, 50.0, 4.0 );
-   ct_plt_fmax->setStep( 1 );
-   connect( ct_plt_fmax, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plot_fmax( double ) ) );
+   ct_plt_kmax   = us_counter( 3, 1.0, 50.0, 4.0 );
+   ct_plt_kmax->setStep( 1 );
+   connect( ct_plt_kmax, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_plot_kmax( double ) ) );
 
    lb_plt_smin   = us_label( tr( "Plot Limit s Minimum:" ) );
    lb_plt_smin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
@@ -301,10 +301,10 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    spec->addWidget( ck_autoscz,    s_row++, 4, 1, 4 );
    spec->addWidget( ck_conloop,    s_row,   0, 1, 4 );
    spec->addWidget( ck_zpcent,     s_row++, 4, 1, 4 );
-   spec->addWidget( lb_plt_fmin,   s_row,   0, 1, 4 );
-   spec->addWidget( ct_plt_fmin,   s_row++, 4, 1, 4 );
-   spec->addWidget( lb_plt_fmax,   s_row,   0, 1, 4 );
-   spec->addWidget( ct_plt_fmax,   s_row++, 4, 1, 4 );
+   spec->addWidget( lb_plt_kmin,   s_row,   0, 1, 4 );
+   spec->addWidget( ct_plt_kmin,   s_row++, 4, 1, 4 );
+   spec->addWidget( lb_plt_kmax,   s_row,   0, 1, 4 );
+   spec->addWidget( ct_plt_kmax,   s_row++, 4, 1, 4 );
    spec->addWidget( lb_plt_smin,   s_row,   0, 1, 4 );
    spec->addWidget( ct_plt_smin,   s_row++, 4, 1, 4 );
    spec->addWidget( lb_plt_smax,   s_row,   0, 1, 4 );
@@ -416,14 +416,14 @@ void US_Pseudo3D_Combine::reset( void )
    cont_loop  = false;
    ck_conloop->setChecked( cont_loop );
 
-   plt_fmin   = 0.8;
-   plt_fmax   = 4.2;
-   ct_plt_fmin->setRange( 0.1, 50, 0.01 );
-   ct_plt_fmin->setValue( plt_fmin );
-   ct_plt_fmin->setEnabled( false );
-   ct_plt_fmax->setRange( 1, 50, 0.01 );
-   ct_plt_fmax->setValue( plt_fmax );
-   ct_plt_fmax->setEnabled( false );
+   plt_kmin   = 0.8;
+   plt_kmax   = 4.2;
+   ct_plt_kmin->setRange( 0.1, 50, 0.01 );
+   ct_plt_kmin->setValue( plt_kmin );
+   ct_plt_kmin->setEnabled( false );
+   ct_plt_kmax->setRange( 1, 50, 0.01 );
+   ct_plt_kmax->setValue( plt_kmax );
+   ct_plt_kmax->setEnabled( false );
 
    plt_smin   = 1.0;
    plt_smax   = 10.0;
@@ -517,8 +517,8 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    else
    {
-      drect = QwtDoubleRect( plt_smin, plt_fmin,
-            ( plt_smax - plt_smin ), ( plt_fmax - plt_fmin ) );
+      drect = QwtDoubleRect( plt_smin, plt_kmin,
+            ( plt_smax - plt_smin ), ( plt_kmax - plt_kmin ) );
    }
 
    plt_zmin = zpcent ? 100.0 :  1e+8;
@@ -577,7 +577,7 @@ void US_Pseudo3D_Combine::plot_data( void )
       double lStep = data_plot->axisStepSize( QwtPlot::yLeft   );
       double bStep = data_plot->axisStepSize( QwtPlot::xBottom );
       data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax, bStep );
-      data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax, lStep );
+      data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax, lStep );
    }
 
    rightAxis->setColorMap( QwtDoubleInterval( plt_zmin, plt_zmax ),
@@ -604,13 +604,14 @@ DbgLv(2) << "(3)   need_save sv_plot" << need_save << sv_plot;
    //if ( need_save  &&  sv_plot )
    if ( sv_plot )
    {  // Automatically save plot image in a PNG file
+      const QString s_attrs[] = { "s", "ff0", "MW", "vbar", "D", "f" };
       QPixmap plotmap( data_plot->size() );
       plotmap.fill( US_GuiSettings::plotColor().color( QPalette::Background ) );
 
       QString runid  = tsys->run_name.section( ".",  0, -2 );
       QString triple = tsys->run_name.section( ".", -1, -1 );
-      QString report = QString( "pseudo3d_" )
-         + ( plot_k ? "ff0_" : "vbar_" ) + ( plot_s ? "s" : "MW" );
+      QString report = QString( "pseudo3d_" ) + s_attrs[ plot_x ]
+         + "_" + s_attrs[ plot_y ];
 
       QString ofdir  = US_Settings::reportDir() + "/" + runid;
       QDir dirof( ofdir );
@@ -692,6 +693,10 @@ DbgLv(1) << "upd_curr_distr" << curr_distr;
             + " (" + tsys->method + ")\n    " + tsys->analys_name );
    }
 
+   build_xy_distro();
+
+   set_limits();
+
 }
 
 void US_Pseudo3D_Combine::update_plot_smin( double dval )
@@ -706,21 +711,21 @@ void US_Pseudo3D_Combine::update_plot_smax( double dval )
 DbgLv(1) << "plt_smax" << plt_smax;
 }
 
-void US_Pseudo3D_Combine::update_plot_fmin( double dval )
+void US_Pseudo3D_Combine::update_plot_kmin( double dval )
 {
-   plt_fmin = dval;
+   plt_kmin = dval;
 }
 
-void US_Pseudo3D_Combine::update_plot_fmax( double dval )
+void US_Pseudo3D_Combine::update_plot_kmax( double dval )
 {
-   plt_fmax = dval;
+   plt_kmax = dval;
 }
 
 void US_Pseudo3D_Combine::select_autosxy()
 {
    auto_sxy   = ck_autosxy->isChecked();
-   ct_plt_fmin->setEnabled( !auto_sxy );
-   ct_plt_fmax->setEnabled( !auto_sxy );
+   ct_plt_kmin->setEnabled( !auto_sxy );
+   ct_plt_kmax->setEnabled( !auto_sxy );
    ct_plt_smin->setEnabled( !auto_sxy );
    ct_plt_smax->setEnabled( !auto_sxy );
 
@@ -929,8 +934,8 @@ DbgLv(1) << "LD: zminzp zmaxzp" << plt_zmin_zp << plt_zmax_zp;
 DbgLv(1) << "LD:  auto_sxy call set_limits";
       set_limits();
 DbgLv(1) << "LD:  auto_sxy  rtn fr set_limits";
-      ct_plt_fmin->setEnabled( false );
-      ct_plt_fmax->setEnabled( false );
+      ct_plt_kmin->setEnabled( false );
+      ct_plt_kmax->setEnabled( false );
       ct_plt_smin->setEnabled( false );
       ct_plt_smax->setEnabled( false );
    }
@@ -938,14 +943,14 @@ DbgLv(1) << "LD:  auto_sxy  rtn fr set_limits";
    {
       plt_smin    = ct_plt_smin->value();
       plt_smax    = ct_plt_smax->value();
-      plt_fmin    = ct_plt_fmin->value();
-      plt_fmax    = ct_plt_fmax->value();
+      plt_kmin    = ct_plt_kmin->value();
+      plt_kmax    = ct_plt_kmax->value();
 DbgLv(1) << "LD:  non-auto_sxy call set_limits";
       set_limits();
 DbgLv(1) << "LD:  non-auto_sxy  rtn fr set_limits";
    }
    data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
-   data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
+   data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax );
 
    pb_pltall ->setEnabled( true );
    pb_refresh->setEnabled( true );
@@ -1022,16 +1027,20 @@ void US_Pseudo3D_Combine::stop()
 
 void US_Pseudo3D_Combine::set_limits()
 {
-   double fmin = 1.0e30;
-   double fmax = -1.0e30;
    double smin = 1.0e30;
    double smax = -1.0e30;
+   double kmin = 1.0e30;
+   double kmax = -1.0e30;
+   double sinc;
+   double kinc;
    xa_title    = anno_title( plot_x );
    ya_title    = anno_title( plot_y );
-   double rdif;
 
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
+
+   if ( system.size() < 1 )
+      return;
 
    // find min,max for X,Y distributions
    for ( int ii = 0; ii < system.size(); ii++ )
@@ -1041,57 +1050,68 @@ void US_Pseudo3D_Combine::set_limits()
       for ( int jj = 0; jj < tsys->xy_distro.size(); jj++ )
       {
          double sval = tsys->xy_distro.at( jj ).s;
-         double fval = tsys->xy_distro.at( jj ).k;
+         double kval = tsys->xy_distro.at( jj ).k;
          smin        = qMin( smin, sval );
          smax        = qMax( smax, sval );
-         fmin        = qMin( fmin, fval );
-         fmax        = qMax( fmax, fval );
+         kmin        = qMin( kmin, kval );
+         kmax        = qMax( kmax, kval );
       }
    }
 
    // adjust minima, maxima
-   rdif      = ( smax - smin ) / 10.0;
-   smin     -= rdif;
-   smax     += rdif;
-   rdif      = ( fmax - fmin ) / 10.0;
-   rdif      = ( rdif == 0.0 ) ? 0.1 : rdif;
-DbgLv(1) << "SL: real fmin fmax" << fmin << fmax;
-   fmin     -= rdif;
-   fmax     += rdif;
-DbgLv(1) << "SL: adjusted fmin fmax" << fmin << fmax;
+   sinc      = ( smax - smin ) / 10.0;
+   kinc      = ( kmax - kmin ) / 10.0;
+   sinc      = ( sinc <= 0.0 ) ? ( smin * 0.05 ) : sinc;
+   kinc      = ( kinc <= 0.0 ) ? ( kmin * 0.05 ) : kinc;
+DbgLv(1) << "SL: real smin smax kmin kmax" << smin << smax << kmin << kmax;
+   smin     -= sinc;
+   smax     += sinc;
+   kmin     -= kinc;
+   kmax     += kinc;
+DbgLv(1) << "SL: adjusted smin smax kmin kmax" << smin << smax << kmin << kmax;
 
    if ( auto_sxy )
    {  // Set auto limits on X and Y
-      smax       += ( ( smax - smin ) / 20.0 );
-      smin       -= ( ( smax - smin ) / 20.0 );
-      smin        = ( plot_x == ATTR_S ) ? smin : qMax( 0.0, smin );
-      smin        = ( plot_x == ATTR_K ) ? qMax( 0.8, smin ) : smin;
+      sinc        = pow( 10.0, qFloor( log10( smax ) ) - 3.0 );
+      kinc        = pow( 10.0, qFloor( log10( kmax ) ) - 3.0 );
+      if ( qAbs( ( smax - smin ) / smax ) < 0.001 )
+      {  // Put padding around virtually constant value
+         smin     -= sinc;
+         smax     += sinc;
+      }
+      if ( qAbs( ( kmax - kmin ) / kmax ) < 0.001 )
+      {  // Put padding around virtually constant value
+         kmin     -= kinc;
+         kmax     += kinc;
+      }
+      // Make sure limits are nearest reasonable values
+      smin        = qFloor( smin / sinc ) * sinc;
+      smax        = qFloor( smax / sinc ) * sinc + sinc;
+      smin        = ( plot_x != ATTR_S ) ? qMax( smin, 0.0 ) : smin;
+      smin        = ( plot_x == ATTR_K ) ? qMax( smin, 0.5 ) : smin;
+      kmin        = qFloor( kmin / kinc ) * kinc;
+      kmax        = qFloor( kmax / kinc ) * kinc + kinc;
 
-      fmax       += ( ( fmax - fmin ) * 0.1 );
-      fmin       -= ( ( fmax - fmin ) * 0.1 );
-      fmin        = ( plot_y == ATTR_S ) ? fmin : qMax( 0.0, fmin );
-      fmin        = ( plot_y == ATTR_K ) ? qMax( 0.8, fmin ) : fmin;
-
-DbgLv(1) << "SL: setVal fmin fmax" << fmin << fmax;
+DbgLv(1) << "SL: setVal kmin kmax" << kmin << kmax;
       ct_plt_smin->setValue( smin );
       ct_plt_smax->setValue( smax );
-      ct_plt_fmin->setValue( fmin );
-      ct_plt_fmax->setValue( fmax );
+      ct_plt_kmin->setValue( kmin );
+      ct_plt_kmax->setValue( kmax );
 
       plt_smin    = smin;
       plt_smax    = smax;
-      plt_fmin    = fmin;
-      plt_fmax    = fmax;
+      plt_kmin    = kmin;
+      plt_kmax    = kmax;
    }
    else
    {
       plt_smin    = ct_plt_smin->value();
       plt_smax    = ct_plt_smax->value();
-      plt_fmin    = ct_plt_fmin->value();
-      plt_fmax    = ct_plt_fmax->value();
+      plt_kmin    = ct_plt_kmin->value();
+      plt_kmax    = ct_plt_kmax->value();
    }
-DbgLv(1) << "SL: plt_smin _smax _fmin _fmax" << plt_smin << plt_smax
- << plt_fmin << plt_fmax;
+DbgLv(1) << "SL: plt_smin _smax _kmin _kmax" << plt_smin << plt_smax
+ << plt_kmin << plt_kmax;
 }
 
 // Sort distribution solute list by s,k values and optionally reduce
@@ -1293,6 +1313,10 @@ void US_Pseudo3D_Combine::select_x_axis( int ival )
    rb_y_D   ->setEnabled( plot_x != ATTR_D );
    rb_y_f   ->setEnabled( plot_x != ATTR_F );
 
+   build_xy_distro();
+
+   set_limits();
+
    plot_data();
 }
 
@@ -1309,15 +1333,15 @@ void US_Pseudo3D_Combine::select_y_axis( int ival )
    plot_y     = ival;
 qDebug() << "select-y: plot_y" << plot_y;
 
-   lb_plt_fmin->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
+   lb_plt_kmin->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
                        + tr( " Minimum:" ) );
-   lb_plt_fmax->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
+   lb_plt_kmax->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
                        + tr( " Maximum:" ) );
 qDebug() << "  ylab" << ylabs[plot_y];
-   ct_plt_fmin->setRange( ymins[ plot_y ], ymaxs[ plot_y ], yincs[ plot_y ] );
-   ct_plt_fmax->setRange( ymins[ plot_y ], ymaxs[ plot_y ], yincs[ plot_y ] );
-   ct_plt_fmin->setValue( yvlos[ plot_y ] );
-   ct_plt_fmax->setValue( yvhis[ plot_y ] );
+   ct_plt_kmin->setRange( ymins[ plot_y ], ymaxs[ plot_y ], yincs[ plot_y ] );
+   ct_plt_kmax->setRange( ymins[ plot_y ], ymaxs[ plot_y ], yincs[ plot_y ] );
+   ct_plt_kmin->setValue( yvlos[ plot_y ] );
+   ct_plt_kmax->setValue( yvhis[ plot_y ] );
 qDebug() << "  yval-lo val-hi" << yvlos[plot_y] << yvhis[plot_y];
 
    rb_x_s   ->setEnabled( plot_y != ATTR_S );
@@ -1327,12 +1351,18 @@ qDebug() << "  yval-lo val-hi" << yvlos[plot_y] << yvhis[plot_y];
    rb_x_D   ->setEnabled( plot_y != ATTR_D );
    rb_x_f   ->setEnabled( plot_y != ATTR_F );
 
+   build_xy_distro();
+
+   set_limits();
+
    plot_data();
 }
 
 // Re-generate the XY version of the current distribution
 void US_Pseudo3D_Combine::build_xy_distro()
 {
+   if ( system.size() < 1 )
+      return;
    DisSys* tsys     = (DisSys*)&system.at( curr_distr );
    if ( tsys->plot_x == plot_x  && tsys->plot_y == plot_y )
       return;
