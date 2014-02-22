@@ -30,6 +30,9 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile,
 
    dbg_level    = 0;
    dbg_timing   = FALSE;
+   attr_x       = ATTR_S;
+   attr_y       = ATTR_K;
+   attr_z       = ATTR_V;
 
    if ( my_rank == 0 ) 
       socket = new QUdpSocket( this );
@@ -315,7 +318,7 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
    }
 
    // Check GA buckets
-   double  s_max = parameters[ "s_max" ].toDouble() * 1.0e-13;
+   double  x_max = parameters[ "x_max" ].toDouble() * 1.0e-13;
 
    if ( analysis_type == "GA" )
    {
@@ -323,7 +326,7 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
          abort( "No buckets defined" );
 
       QList< QRectF > bucket_rects;
-      s_max             = buckets[ 0 ].s_max;
+      x_max             = buckets[ 0 ].x_max;
 
       // Put into Qt rectangles (upper left, lower right points)
       for ( int i = 0; i < buckets.size(); i++ )
@@ -331,13 +334,13 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
          limitBucket( buckets[ i ] );
 
          bucket_rects << QRectF( 
-               QPointF( buckets[ i ].s_min, buckets[ i ].ff0_max ),
-               QPointF( buckets[ i ].s_max, buckets[ i ].ff0_min ) );
+               QPointF( buckets[ i ].x_min, buckets[ i ].y_max ),
+               QPointF( buckets[ i ].x_max, buckets[ i ].y_min ) );
 
-         s_max             = qMax( s_max, buckets[ i ].s_max );
+         x_max             = qMax( x_max, buckets[ i ].x_max );
       }
 
-      s_max            *= 1.0e-13;
+      x_max            *= 1.0e-13;
 
       for ( int i = 0; i < bucket_rects.size() - 1; i++ )
       {
@@ -384,14 +387,14 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
    // Do a check of implied grid size
    QString smsg;
 
-   if ( US_SolveSim::checkGridSize( data_sets, s_max, smsg ) )
+   if ( US_SolveSim::checkGridSize( data_sets, x_max, smsg ) )
    {
       if ( my_rank == 0 )
          qDebug() << smsg;
       abort( "Implied Grid Size is Too Large!" );
    }
 //else
-// qDebug() << "check_grid_size FALSE  s_max" << s_max
+// qDebug() << "check_grid_size FALSE  x_max" << x_max
 //    << "rpm" << data_sets[0]->simparams.speed_step[0].rotorspeed;
 
    // Set some defaults
@@ -652,34 +655,34 @@ void US_MPI_Analysis::stats_output( int walltime, int cputime, int maxrssmb,
 // Insure vertexes of a bucket do not exceed physically possible limits
 void US_MPI_Analysis::limitBucket( Bucket& buk )
 {
-   if ( buk.s_min > 0.0 )
+   if ( buk.x_min > 0.0 )
    {  // All-positive s's start at 0.1 at least
-      buk.s_min   = qMax( 0.1, buk.s_min );
-      buk.s_max   = qMax( ( buk.s_min + 0.0001 ), buk.s_max );
+      buk.x_min   = qMax( 0.1, buk.x_min );
+      buk.x_max   = qMax( ( buk.x_min + 0.0001 ), buk.x_max );
    }
 
-   else if ( buk.s_max <= 0.0 )
+   else if ( buk.x_max <= 0.0 )
    {  // All-negative s's end at -0.1 at most
-      buk.s_max   = qMin( -0.1, buk.s_max );
-      buk.s_min   = qMin( ( buk.s_max - 0.0001 ), buk.s_min );
+      buk.x_max   = qMin( -0.1, buk.x_max );
+      buk.x_min   = qMin( ( buk.x_max - 0.0001 ), buk.x_min );
    }
 
-   else if ( ( buk.s_min + buk.s_max ) >= 0.0 )
+   else if ( ( buk.x_min + buk.x_max ) >= 0.0 )
    {  // Mostly positive clipped to all positive starting at 0.1
-      buk.s_min   = 0.1;
-      buk.s_max   = qMax( 0.2, buk.s_max );
+      buk.x_min   = 0.1;
+      buk.x_max   = qMax( 0.2, buk.x_max );
    }
 
    else
    {  // Mostly negative clipped to all negative ending at -0.1
-      buk.s_min   = qMin( -0.2, buk.s_min );
-      buk.s_max   = -0.1;
+      buk.x_min   = qMin( -0.2, buk.x_min );
+      buk.x_max   = -0.1;
    }
 
    if ( data_sets[ 0 ]->solute_type == 0 )
    {  // If y-type is "ff0", insure minimum is at least 1.0
-      buk.ff0_min = qMax(  1.0, buk.ff0_min );
-      buk.ff0_max = qMax( ( buk.ff0_min + 0.0001 ), buk.ff0_max );
+      buk.y_min   = qMax(  1.0, buk.y_min );
+      buk.y_max   = qMax( ( buk.y_min + 0.0001 ), buk.y_max );
    }
 }
 

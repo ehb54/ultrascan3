@@ -34,22 +34,24 @@ class US_GA_Initialize : public US_Widgets
       //! Genetic Algorithm Initialize constructor
       US_GA_Initialize();
 
+      enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+
    private:
 
       QLabel*       lb_info1;
       QLabel*       lb_nisols;
-      QLabel*       lb_wsbuck;
-      QLabel*       lb_hfbuck;
+      QLabel*       lb_wxbuck;
+      QLabel*       lb_hybuck;
       QLabel*       lb_info2;
       QLabel*       lb_resolu;
       QLabel*       lb_xreso;
       QLabel*       lb_yreso;
       QLabel*       lb_zfloor;
       QLabel*       lb_autlim;
-      QLabel*       lb_plsmin;
-      QLabel*       lb_plsmax;
-      QLabel*       lb_plfmin;
-      QLabel*       lb_plfmax;
+      QLabel*       lb_plxmin;
+      QLabel*       lb_plxmax;
+      QLabel*       lb_plymin;
+      QLabel*       lb_plymax;
 
       QListWidget*  lw_sbin_data;
       QTextEdit*    te_pctl_help;
@@ -59,16 +61,16 @@ class US_GA_Initialize : public US_Widgets
       US_Help       showHelp;
  
       QwtCounter*   ct_nisols;
-      QwtCounter*   ct_wsbuck;
-      QwtCounter*   ct_hfbuck;
+      QwtCounter*   ct_wxbuck;
+      QwtCounter*   ct_hybuck;
       QwtCounter*   ct_resolu;
       QwtCounter*   ct_xreso;
       QwtCounter*   ct_yreso;
       QwtCounter*   ct_zfloor;
-      QwtCounter*   ct_plfmin;     
-      QwtCounter*   ct_plfmax;     
-      QwtCounter*   ct_plsmin;     
-      QwtCounter*   ct_plsmax;     
+      QwtCounter*   ct_plxmin;     
+      QwtCounter*   ct_plxmax;     
+      QwtCounter*   ct_plymin;     
+      QwtCounter*   ct_plymax;     
 
       QwtPlot*            data_plot;
       QwtPlotSpectrogram* d_spectrogram;
@@ -94,35 +96,45 @@ class US_GA_Initialize : public US_Widgets
       QPushButton*  pb_reset;
       QPushButton*  pb_view;
 
-      QCheckBox*    cb_autlim;
-      QCheckBox*    cb_1dplot;
-      QCheckBox*    cb_2dplot;
-      QCheckBox*    cb_3dplot;
-      QCheckBox*    cb_plot_sk;
-      QCheckBox*    cb_plot_wk;
-      QCheckBox*    cb_plot_sv;
-      QCheckBox*    cb_plot_wv;
+      QCheckBox*    ck_autlim;
+      QCheckBox*    ck_1dplot;
+      QCheckBox*    ck_2dplot;
+      QCheckBox*    ck_3dplot;
+
+      QRadioButton* rb_x_s;
+      QRadioButton* rb_x_ff0;
+      QRadioButton* rb_x_mw;
+      QRadioButton* rb_x_vbar;
+      QRadioButton* rb_x_D;
+      QRadioButton* rb_x_f;
+      QRadioButton* rb_y_s;
+      QRadioButton* rb_y_ff0;
+      QRadioButton* rb_y_mw;
+      QRadioButton* rb_y_vbar;
+      QRadioButton* rb_y_D;
+      QRadioButton* rb_y_f;
+
+      QButtonGroup* bg_x_axis;
+      QButtonGroup* bg_y_axis;
 
       QPen*         pickpen;
       QPen          cbukpen;
       QPen          pbukpen;
 
       QList< S_Solute >  sk_distro;
-      QList< S_Solute >  wk_distro;
-      QList< S_Solute >  sv_distro;
-      QList< S_Solute >  wv_distro;
+      QList< S_Solute >  xy_distro;
       QList< S_Solute >* sdistro;
 
       QwtDoublePoint  p1;
       QwtDoublePoint  p2;
 
-      double        wsbuck;
-      double        hfbuck;
+      double        wxbuck;
+      double        hybuck;
       double        resolu;
-      double        plsmin;
-      double        plsmax;
-      double        plfmin;
-      double        plfmax;
+      double        plxmin;
+      double        plxmax;
+      double        plymin;
+      double        plymax;
       double        k_range;
       double        s_range;
       double        xreso;
@@ -140,18 +152,19 @@ class US_GA_Initialize : public US_Widgets
       int           psdsiz;
       int           dbg_level;
       int           plot_xy;
+      int           attr_x;
+      int           attr_y;
+      int           attr_z;
 
       bool          minmax;
       bool          zoom;
       bool          auto_lim;
       bool          monte_carlo;
-      bool          plot_s;
-      bool          plot_k;
       bool          rbtn_click;
       bool          runsel;
       bool          latest;
-      bool          cnstvbar;
       bool          manbuks;
+      bool          is_saved;
 
       QString       run_name;
       QString       analys_name;
@@ -168,6 +181,7 @@ class US_GA_Initialize : public US_Widgets
       QString       stdiline;
       QString       stdfline;
       QString       stnpline;
+      QString       stfxline;
       QString       mfilter;
       QString       editGUID;
 
@@ -176,16 +190,16 @@ class US_GA_Initialize : public US_Widgets
    private slots:
 
       void update_nisols( double );
-      void update_wsbuck( double );
-      void update_hfbuck( double );
+      void update_wxbuck( double );
+      void update_hybuck( double );
       void update_resolu( double );
       void update_xreso(  double );
       void update_yreso(  double );
       void update_zfloor( double );
-      void update_plfmin( double );
-      void update_plfmax( double );
-      void update_plsmin( double );
-      void update_plsmax( double );
+      void update_plxmin( double );
+      void update_plxmax( double );
+      void update_plymin( double );
+      void update_plymax( double );
       void replot_data( void );
       void plot_1dim(   void );
       void plot_2dim(   void );
@@ -194,10 +208,6 @@ class US_GA_Initialize : public US_Widgets
       void select_plot1d(  void );
       void select_plot2d(  void );
       void select_plot3d(  void );
-      void select_plot_sk( void );
-      void select_plot_wk( void );
-      void select_plot_sv( void );
-      void select_plot_wv( void );
       void select_prefilt( void );
       void load_distro (   void );
       void load_color(     void );
@@ -228,6 +238,10 @@ class US_GA_Initialize : public US_Widgets
       void resetPlotAndList( int );
       bool equivalent      ( double, double, double );
       void update_disk_db  ( bool );
+      void select_x_axis   ( int );
+      void select_y_axis   ( int );
+      void build_xy_distro ( void );
+      QString anno_title   ( int  );
 
       void help     ( void )
       { showHelp.show_help( "ga_initialize.html" ); };

@@ -116,6 +116,9 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     void work_progress ( int );
 
   private:
+
+    enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+
     QList< DataSet* >& data_sets;     // Data sets for which to solve
 
     int                thrnrank;      // Thread number or processor rank (1,...)
@@ -190,6 +193,10 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     // Limit data to thresholds  (experiment data version)
     bool data_threshold    ( US_DataIO::EditedData*,
                              double, double, double, double );
+
+    // Set a model component attribute value
+    void set_comp_attr     ( US_Model::SimulationComponent&,
+                             US_Solute&, int );
 
     // Output a debug print of time for a labelled event
     void DebugTime         ( QString );

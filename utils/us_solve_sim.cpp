@@ -426,9 +426,21 @@ DbgLv(1) << "CR: NNLS A filled cc" << cc << nsolutes;
 DbgLv(1) << "CR: NNLS A filled";
    }   // Constant vbar
 
-   else if ( stype == 1 )
-   {  // Special case of varying vbar with constant f/f0
-      zcomponent.f_f0   = sim_vals.solutes[ 0 ].k;
+   else if ( stype == 1  ||  stype > 9 )
+   {  // Special case of varying vbar with constant f/f0  (or other)
+      int attr_x     = 0;      // Default X is s
+      int attr_y     = 3;      // Default Y is vbar
+      int attr_z     = 1;      // Default fixed is f/f0
+
+      if ( stype > 9 )
+      {  // Explicitly given attribute types
+          attr_x     = ( stype >> 6 ) & 7;
+          attr_y     = ( stype >> 3 ) & 7;
+          attr_z     =   stype        & 7;
+      }
+DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype;
+
+      set_comp_attr( zcomponent, sim_vals.solutes[ 0 ], attr_z );
 
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
@@ -452,10 +464,13 @@ DbgLv(1) << "CR: NNLS A filled";
 
             US_Math2::data_correction( avtemp, sd );
 
-            // Set model with standard space s and k
-            model.components[ 0 ]        = zcomponent;
-            model.components[ 0 ].s      = sim_vals.solutes[ cc ].s;
-            model.components[ 0 ].vbar20 = sd.vbar20;
+            // Set model with standard space s and k  (or other 2 attributes)
+            zcomponent.vbar20          = dset->vbar20;
+            model.components[ 0 ]      = zcomponent;
+            set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
+                           attr_x );
+            set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
+                           attr_y );
 
             // Fill in the missing component values
             model.update_coefficients();
@@ -1564,5 +1579,33 @@ bool US_SolveSim::data_threshold( US_DataIO::EditedData* edata,
    }
 
    return ( nnzro == 0 );
+}
+
+// Set a model component attribute value
+void US_SolveSim::set_comp_attr( US_Model::SimulationComponent& component,
+      US_Solute& solute, int attr_type )
+{
+   switch ( attr_type )
+   {
+      default:
+      case ATTR_S:          // Sedimentation Coefficient
+         component.s      = solute.s;
+         break;
+      case ATTR_K:          // Frictional Ratio
+         component.f_f0   = solute.k;
+         break;
+      case ATTR_W:          // Molecular Weight
+         component.mw     = solute.d;
+         break;
+      case ATTR_V:          // Partial Specific Volume (vbar)
+         component.vbar20 = solute.v;
+         break;
+      case ATTR_D:          // Diffusion Coefficient
+         component.D      = solute.d;
+         break;
+      case ATTR_F:          // Frictional Coefficient
+         component.f      = solute.d;
+         break;
+   }
 }
 

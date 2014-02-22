@@ -39,19 +39,46 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
          {
             US_SolveSim::DataSet* d = new US_SolveSim::DataSet;
             parse_dataset( xml, d );
+
             if ( parameters.contains( "CG_model" ) )
-            {
+            {  // Flag Custom Grid model input
                d->model_file  = parameters[ "CG_model" ];
                d->solute_type = 2;
             }
+
+            else if ( ! parameters[ "ztype" ].isEmpty() )
+            {  // Flag generic x,y model with fixed "z"
+               QStringList s_attrs;
+               s_attrs << "s" << "ff0" << "MW" << "vbar" << "D" << "f";
+               attr_x         = s_attrs.indexOf( parameters[ "xtype" ] );
+               attr_y         = s_attrs.indexOf( parameters[ "ytype" ] );
+               attr_z         = s_attrs.indexOf( parameters[ "ztype" ] );
+               attr_x         = ( attr_x < 0 ) ? ATTR_S : attr_x;
+               attr_y         = ( attr_y < 0 ) ? ATTR_K : attr_y;
+               attr_z         = ( attr_z < 0 ) ? ATTR_V : attr_z;
+               // The solute type flag is a number which when viewed as
+               //  octal is in the form "01xyz".
+               d->solute_type = ( attr_x << 6 ) + ( attr_y << 3 ) + attr_z;
+            }
+
             else if ( parameters[ "ytype" ] == "vbar" )
-            {
+            {  // Flag s,vbar model with fixed f_f0
                d->solute_type = 1;
+               attr_x         = ATTR_S;
+               attr_y         = ATTR_V;
+               attr_z         = ATTR_K;
             }
+
             else
-            {
+            {  // Flag standard s,k model with fixed vbar
                d->solute_type = 0;
+               attr_x         = ATTR_S;
+               attr_y         = ATTR_K;
+               attr_z         = ATTR_V;
+//d->solute_type = (0 << 6) + (1 << 3) + 3;
             }
+
+if (my_rank==0) DbgLv(0) << "PF: solute_type" << d->solute_type;
             data_sets << d;
          }
       }
@@ -63,6 +90,7 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
 void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
 {
    QXmlStreamAttributes a;
+   QString ytype;
 
    while ( ! xml.atEnd() )
    {
@@ -112,33 +140,71 @@ void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
 
                if ( name == "bucket" )
                { // Get bucket coordinates; try to forestall round-off problems
-                  QString ytype = QString( "ff0" );
+                  QString ytyp0 = QString( "ff0" );
                   Bucket b;
-                  double smin   = a.value( "s_min"   ).toString().toDouble();
-                  double smax   = a.value( "s_max"   ).toString().toDouble();
-                  double fmin   = a.value( "ff0_min" ).toString().toDouble();
-                  double fmax   = a.value( "ff0_max" ).toString().toDouble();
+                  QString stxmn = a.value( "x_min"    ).toString();
+                  QString stxmx = a.value( "x_max"    ).toString();
+                  QString stymn = a.value( "y_min"    ).toString();
+                  QString stymx = a.value( "y_max"    ).toString();
+                  QString stfmn = a.value( "ff0_min"  ).toString();
+                  QString stfmx = a.value( "ff0_max"  ).toString();
+                  QString stvmn = a.value( "vbar_min" ).toString();
+                  QString stvmx = a.value( "vbar_max" ).toString();
+                  double xmin   = stxmn.toDouble();
+                  double xmax   = stxmx.toDouble();
+                  double ymin   = stymn.toDouble();
+                  double ymax   = stymx.toDouble();
 
-                  if ( fmax == 0.0 )
+                  if ( stxmx.isEmpty() )
                   {
-                     fmin       = a.value( "vbar_min" ).toString().toDouble();
-                     fmax       = a.value( "vbar_max" ).toString().toDouble();
-                     ytype      = QString( "vbar" );
+                     xmin       = a.value( "s_min"   ).toString().toDouble();
+                     xmax       = a.value( "s_max"   ).toString().toDouble();
+                     if ( !stfmx.isEmpty() )
+                     {
+                        ymin    = stfmn.toDouble();
+                        ymax    = stfmx.toDouble();
+                        ytyp0   = QString( "ff0" );
+                     }
+                     else if ( !stvmx.isEmpty() )
+                     {
+                        ymin    = stvmn.toDouble();
+                        ymax    = stvmx.toDouble();
+                        ytyp0   = QString( "vbar" );
+                     }
                   }
 
-                  if ( buckets.size() == 0 )
+                  if ( ytype.isEmpty() )
+                  {
+                     ytype      = ytyp0;
                      parameters[ "ytype" ]     = ytype;
+                  }
 
-                  b.s_min       = (long)( smin * 1e+6 + 0.5 ) * 1e-6;
-                  b.s_max       = (long)( smax * 1e+6 + 0.5 ) * 1e-6;
-                  b.ff0_min     = (long)( fmin * 1e+6 + 0.5 ) * 1e-6;
-                  b.ff0_max     = (long)( fmax * 1e+6 + 0.5 ) * 1e-6;
+                  // Try to forestall round-off problems
+if (my_rank==0) DbgLv(0) << "PF: xymnmx" << xmin << xmax << ymin << ymax;
+                  int xpwr      = (int)qFloor( log10( xmax ) ) - 6;
+                  int ypwr      = (int)qFloor( log10( ymax ) ) - 6;
+                  double xinc   = pow( 10.0, xpwr );
+                  double yinc   = pow( 10.0, ypwr );
+if (my_rank==0) DbgLv(0) << "PF:  xp yp xi yi" << xpwr << ypwr << xinc << yinc;
+                  b.x_min       = qRound64( xmin / xinc ) * xinc;
+                  b.x_max       = qRound64( xmax / xinc ) * xinc;
+                  b.y_min       = qRound64( ymin / yinc ) * yinc;
+                  b.y_max       = qRound64( ymax / yinc ) * yinc;
+if (my_rank==0) DbgLv(0) << "PF:   rnd xymnmx" << b.x_min << b.x_max << b.y_min << b.y_max;
 
                   buckets << b;
                }
                else if ( name == "CG_model" )
                {
                   parameters[ name ]        = a.value( "filename" ).toString();
+               }
+               else if ( name == "bucket_fixed" )
+               {
+                  parameters[ name ]        = a.value( "value" ).toString();
+                  parameters[ "xtype" ]     = a.value( "xtype" ).toString();
+                  parameters[ "ytype" ]     = a.value( "ytype" ).toString();
+                  parameters[ "ztype" ]     = a.value( "fixedtype" ).toString();
+                  ytype                     = parameters[ "ytype" ];
                }
                else
                {

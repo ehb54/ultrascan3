@@ -17,7 +17,7 @@ class US_UTIL_EXTERN US_Solute
       //! \param k0 The initial frictional ratio
       //! \param c0 The initial concentration
       //! \param v0 The initial vbar
-      //! \param d0 The initial diffusion coefficient
+      //! \param d0 The initial diffusion coefficient (or MW or f)
       US_Solute( double = 0.0, double = 0.0, double = 0.0,
                  double = 0.0, double = 0.0 );
 
@@ -25,7 +25,7 @@ class US_UTIL_EXTERN US_Solute
       double k;  //!< Frictional ratio
       double c;  //!< Concentration
       double v;  //!< Vbar
-      double d;  //!< Diffusion coefficient
+      double d;  //!< Diffusion coefficient (or Molec.Weight or Fric.Coeff.)
 
       //! A test for solute equality
       //! \param solute A value for comparison 
