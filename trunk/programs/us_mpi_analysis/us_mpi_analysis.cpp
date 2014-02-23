@@ -317,10 +317,11 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
       maxods << odmax;
    }
 
-   // Check GA buckets
+   double  s_max = parameters[ "s_max" ].toDouble() * 1.0e-13;
    double  x_max = parameters[ "x_max" ].toDouble() * 1.0e-13;
    double  y_max = 1e-39;
 
+   // Check GA buckets
    if ( analysis_type == "GA" )
    {
       if ( buckets.size() < 1 )
@@ -384,11 +385,12 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
             }
          }
       }
+
+      s_max         = x_max;            // By default s_max is x_max for GA
    }
 
    // Do a check of implied grid size
    QString smsg;
-   double  s_max    = x_max;            // By default s_max is x_max
    double  zval     = parameters[ "bucket_fixed" ].toDouble();
 
    if ( attr_x != ATTR_S )
