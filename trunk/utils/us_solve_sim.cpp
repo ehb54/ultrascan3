@@ -455,14 +455,6 @@ DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype;
             US_DataIO::RawData     simdat;
             int npoints    = edata->xvalues.size();
             int nscans     = edata->scanData.size();
-            double avtemp  = dset->temperature;
-            sd.viscosity   = dset->viscosity;
-            sd.density     = dset->density;
-            sd.manual      = dset->manual;
-            sd.vbar20      = sim_vals.solutes[ cc ].v;
-            sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
-
-            US_Math2::data_correction( avtemp, sd );
 
             // Set model with standard space s and k  (or other 2 attributes)
             zcomponent.vbar20          = dset->vbar20;
@@ -476,6 +468,14 @@ DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype;
             model.update_coefficients();
 
             // Convert to experimental space
+            double avtemp  = dset->temperature;
+            sd.viscosity   = dset->viscosity;
+            sd.density     = dset->density;
+            sd.manual      = dset->manual;
+            sd.vbar20      = sim_vals.solutes[ cc ].v;
+            sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
+            US_Math2::data_correction( avtemp, sd );
+
             model.components[ 0 ].s   /= sd.s20w_correction;
             model.components[ 0 ].D   /= sd.D20w_correction;
 

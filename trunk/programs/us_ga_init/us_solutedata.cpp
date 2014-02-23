@@ -657,10 +657,13 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
       int ztype, double fixval )
 {
    int     rc   = 0;
-   int     nsol = allbucks.size();
+   int     nbuk = allbucks.size();
    QString line;
    bucket  buk;
    const QString cts[] = { "s", "ff0", "MW", "vbar", "D", "f" };
+   const char hfmt[] = "%d %d %d %d %.3e";          // Header format
+   const char lfmt[] = "%.3e, %.3e, %.3e, %.3e";    // Lines format
+   const char* cffmt = "%.3e";                      // Comment fixed format
 
    QFile fileo( fname );
 
@@ -668,21 +671,23 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
    {
       QTextStream ts( &fileo );
 
-      // Line 1 with count,xtype,ytype,fixed
-      line.sprintf( "%d %d %d %d %.5f", nsol, xtype, ytype, ztype, fixval );
-      line = line + " # " + cts[ xtype ] + " " + cts[ ytype ]
-                  + " "   + cts[ ztype ];
+      // Line 1 with count,xtype,ytype,ztype,fixed
+      line.sprintf( hfmt, nbuk, xtype, ytype, ztype, fixval );
+      line         += " # buckets=" + QString::number( nbuk )
+                   +  " x=" + cts[ xtype ] + " y=" + cts[ ytype ]
+                   +  " fixed=" + cts[ ztype ] +  "="
+                   + ( ( ztype == US_GA_Initialize::ATTR_V )
+                   ?  "0.0=(data_set_vbar)"
+                   :  QString().sprintf( cffmt, fixval ) );
       ts << line << endl;
 
-      for ( int jj = 0; jj < nsol; jj++ )
+      for ( int jj = 0; jj < nbuk; jj++ )
       {
          buk      = allbucks.at( jj );
 
          limitBucket( buk );
 
-         line.sprintf(
-            "%6.4f, %6.4f, %6.4f, %6.4f",
-             buk.x_min, buk.x_max, buk.y_min, buk.y_max );
+         line.sprintf( lfmt, buk.x_min, buk.x_max, buk.y_min, buk.y_max );
          ts << line << endl;
       }
       fileo.close();

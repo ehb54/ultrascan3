@@ -340,6 +340,7 @@ class US_MPI_Analysis : public QObject
     void   pmasters_master     ( void );
     void   pmasters_worker     ( void );
     void   time_mc_iterations  ( void );
+    void   solutes_from_gene   ( Gene&, int );
     void   set_comp_attrib     ( US_Model::SimulationComponent&,
                                  double, int );
     void   build_component( US_Model::SimulationComponent&,

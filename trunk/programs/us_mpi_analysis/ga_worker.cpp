@@ -412,17 +412,17 @@ sim.dbg_level = qMax(0,dbg_level-1);
    sim.solutes = gene;
    qSort( sim.solutes );
 
-   int     nsols = gene.size();
-   QString key   = "";
+   int     nisols = gene.size();
+   QString key    = "";
    QString str;
 
-   for ( int cc = 0; cc < nsols; cc++ )
+   for ( int cc = 0; cc < nisols; cc++ )
    {  // Concatenate all solute s,k values to form fitness key
       key += str.sprintf( "%.5f%.5f", sim.solutes[ cc ].s,
                                       sim.solutes[ cc ].k );
    }
 
-DbgLv(2) << "get_fitness: nsols" << nsols << "key" << key;
+DbgLv(2) << "get_fitness: nisols" << nisols << "key" << key;
    if ( fitness_map.contains( key ) )
    {  // We are already have a match to this key, so use its fitness value
       fitness_hits++;
@@ -430,46 +430,7 @@ DbgLv(2) << "get_fitness: HIT!  new hits" << fitness_hits;
       return fitness_map.value( key );
    }
 
-   for ( int cc = 0; cc < nsols; cc++ )
-   {
-      double sval          = sim.solutes[ cc ].s;
-      double kval          = sim.solutes[ cc ].k;
-
-      switch( attr_x )
-      {
-         case ATTR_S:
-            sim.solutes[ cc ].s  = sval * 1.0e-13;
-            break;
-         case ATTR_K:
-            sim.solutes[ cc ].k  = sval;
-            break;
-         case ATTR_W:
-         case ATTR_D:
-         case ATTR_F:
-            sim.solutes[ cc ].d  = sval;
-            break;
-         case ATTR_V:
-            sim.solutes[ cc ].v  = sval;
-         default:
-            break;
-      }
-      switch( attr_y )
-      {
-         case ATTR_S:
-            sim.solutes[ cc ].s  = kval * 1.0e-13;
-            break;
-         case ATTR_W:
-         case ATTR_D:
-         case ATTR_F:
-            sim.solutes[ cc ].d  = kval;
-            break;
-         case ATTR_V:
-            sim.solutes[ cc ].v  = kval;
-         default:
-         case ATTR_K:
-            break;
-      }
-   }
+   solutes_from_gene( sim.solutes, nisols );
 
 //DbTimMsg("  ++ call gf calc_residuals");
    calc_residuals( current_dataset, datasets_to_process, sim );
@@ -477,10 +438,11 @@ DbgLv(2) << "get_fitness: HIT!  new hits" << fitness_hits;
 
    double fitness      = sim.variance;
    int    solute_count = 0;
+   int    nosols       = sim.solutes.size();
 
    if ( data_sets.size() == 1 )
    {  // Count solutes whose concentration is at least the threshold
-      for ( int cc = 0; cc < nsols; cc++ )
+      for ( int cc = 0; cc < nosols; cc++ )
       {
          if ( sim.solutes[ cc ].c >= concentration_threshold ) solute_count++;
       }
@@ -499,12 +461,12 @@ DbgLv(2) << "get_fitness: sol_count conc_thresh" << solute_count << concentratio
 
       fitness         /= (double)datasets_to_process;
 
-      for ( int cc = 0; cc < nsols; cc++ )
+      for ( int cc = 0; cc < nosols; cc++ )
          concen          += sim.solutes[ cc ].c;
 
       double cthresh   = concentration_threshold * concen;
 
-      for ( int cc = 0; cc < nsols; cc++ )
+      for ( int cc = 0; cc < nosols; cc++ )
       {
          if ( sim.solutes[ cc ].c >= cthresh ) solute_count++;
       }
@@ -513,6 +475,16 @@ DbgLv(2) << "get_fitness: sol_count conc_thresh" << solute_count << concentratio
    fitness *= ( 1.0 + sq( regularization * solute_count ) );
    fitness_map.insert( key, fitness ); 
 DbgLv(2) << "get_fitness:  out fitness" << fitness;
+//*DEBUG*
+if(fitness_map.size() == 20 )
+{
+ int n=nosols-1;
+ DbgLv(0) << "w:" << my_rank << generation << ": fmapsize fitness nsols"
+  << fitness_map.size() << fitness << nisols << nosols
+  << "s0 s,k,v" << sim.solutes[0].s << sim.solutes[0].k << sim.solutes[0].v
+  << "sn s,k,v" << sim.solutes[n].s << sim.solutes[n].k << sim.solutes[n].v;
+}
+//*DEBUG*
 
 //*DEBUG*
 //if(datasets_to_process>1 && generation<11 )
@@ -1594,5 +1566,60 @@ void US_MPI_Analysis::build_component( US_Model::SimulationComponent& mcomp,
    // Do corrections to sedimentation and diffusion coefficients
    mcomp.s      /= sd.s20w_correction;
    mcomp.D      /= sd.D20w_correction;
+}
+
+void US_MPI_Analysis::solutes_from_gene( Gene& solutes, int nsols )
+{
+   double fixval    = ( attr_z == ATTR_V )
+                    ? data_sets[ 0 ]->vbar20
+                    : parameters[ "bucket_fixed" ].toDouble();
+
+   for ( int cc = 0; cc < nsols; cc++ )
+   {
+      double sval      = solutes[ cc ].s;
+      double kval      = solutes[ cc ].k;
+      solutes[ cc ].s  = ( attr_z == ATTR_S ) ? fixval : 0.0;
+      solutes[ cc ].k  = ( attr_z == ATTR_K ) ? fixval : 0.0;
+      solutes[ cc ].v  = ( attr_z == ATTR_V ) ? fixval : 0.0;
+      solutes[ cc ].d  = ( attr_z == ATTR_W  ||  attr_z == ATTR_D  ||
+                           attr_z == ATTR_F ) ? fixval : 0.0;
+
+      switch( attr_x )
+      {
+         case ATTR_S:
+            solutes[ cc ].s  = sval * 1.0e-13;
+            break;
+         case ATTR_K:
+            solutes[ cc ].k  = sval;
+            break;
+         case ATTR_W:
+         case ATTR_D:
+         case ATTR_F:
+            solutes[ cc ].d  = sval;
+            break;
+         case ATTR_V:
+            solutes[ cc ].v  = sval;
+         default:
+            break;
+      }
+      switch( attr_y )
+      {
+         case ATTR_S:
+            solutes[ cc ].s  = kval * 1.0e-13;
+            break;
+         case ATTR_K:
+            solutes[ cc ].k  = kval;
+            break;
+         case ATTR_W:
+         case ATTR_D:
+         case ATTR_F:
+            solutes[ cc ].d  = kval;
+            break;
+         case ATTR_V:
+            solutes[ cc ].v  = kval;
+         default:
+            break;
+      }
+   }
 }
 

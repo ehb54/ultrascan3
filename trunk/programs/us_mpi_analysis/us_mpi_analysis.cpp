@@ -319,6 +319,7 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
 
    // Check GA buckets
    double  x_max = parameters[ "x_max" ].toDouble() * 1.0e-13;
+   double  y_max = 1e-39;
 
    if ( analysis_type == "GA" )
    {
@@ -338,6 +339,7 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
                QPointF( buckets[ i ].x_max, buckets[ i ].y_min ) );
 
          x_max             = qMax( x_max, buckets[ i ].x_max );
+         y_max             = qMax( y_max, buckets[ i ].y_max );
       }
 
       x_max            *= 1.0e-13;
@@ -386,8 +388,48 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
 
    // Do a check of implied grid size
    QString smsg;
+   double  s_max    = x_max;            // By default s_max is x_max
+   double  zval     = parameters[ "bucket_fixed" ].toDouble();
 
-   if ( US_SolveSim::checkGridSize( data_sets, x_max, smsg ) )
+   if ( attr_x != ATTR_S )
+   {  // We will need to determine the maximum s value
+      if ( attr_y == ATTR_S )           // s_max may be y_max
+         s_max         = y_max * 1.0e-13;
+      else if ( attr_z == ATTR_S )      // s_max may be fixed value
+         s_max         = zval  * 1.0e-13;
+      else
+      {                                 // s_max may need computing
+         s_max         = 1e-39;
+         zval          = ( attr_z == ATTR_V ) ? data_sets[ 0 ]->vbar20 : zval;
+         US_Model::SimulationComponent zcomp;
+         zcomp.s       = 0.0;
+         zcomp.f_f0    = 0.0;
+         zcomp.mw      = 0.0;
+         zcomp.vbar20  = 0.0;
+         zcomp.D       = 0.0;
+         zcomp.f       = 0.0;
+
+         for ( int jj = 0; jj < buckets.size(); jj++ )
+         {  // Compute s using given x,y,fixed and find the max
+            double xval   = buckets[ jj ].x_max;
+            double yval   = buckets[ jj ].y_max;
+            US_Model::SimulationComponent mcomp = zcomp;
+            set_comp_attrib( mcomp, xval, attr_x );
+            set_comp_attrib( mcomp, yval, attr_y );
+            set_comp_attrib( mcomp, zval, attr_z );
+            US_Model::calc_coefficients( mcomp );
+if (my_rank==0) DbgLv(0) << "ckGrSz:  buck" << jj << "xv yv zv"
+ << xval << yval << zval << "mc s k w v d f"
+ << mcomp.s << mcomp.f_f0 << mcomp.mw << mcomp.vbar20 << mcomp.D << mcomp.f;
+            s_max         = qMax( s_max, mcomp.s );
+         }
+      }
+
+   }
+if (my_rank==0) DbgLv(0) << "ckGrSz: s_max" << s_max << "attr_x,y,z"
+ << attr_x << attr_y << attr_z;
+
+   if ( US_SolveSim::checkGridSize( data_sets, s_max, smsg ) )
    {
       if ( my_rank == 0 )
          qDebug() << smsg;
@@ -656,9 +698,15 @@ void US_MPI_Analysis::stats_output( int walltime, int cputime, int maxrssmb,
 void US_MPI_Analysis::limitBucket( Bucket& buk )
 {
    if ( buk.x_min > 0.0 )
-   {  // All-positive s's start at 0.1 at least
-      buk.x_min   = qMax( 0.1, buk.x_min );
-      buk.x_max   = qMax( ( buk.x_min + 0.0001 ), buk.x_max );
+   {  // All-positive s's start at 0.1 at least (other attribs are different)
+      double xmin = 0.1;
+      xmin        = ( attr_x == ATTR_K ) ? 1.0   : xmin;
+      xmin        = ( attr_x == ATTR_V ) ? 0.01  : xmin;
+      xmin        = ( attr_x == ATTR_D ) ? 1.e-9 : xmin;
+      xmin        = ( attr_x == ATTR_F ) ? 1.e-9 : xmin;
+      double xinc = xmin / 1000.0;
+      buk.x_min   = qMax( xmin, buk.x_min );
+      buk.x_max   = qMax( ( buk.x_min + xinc ), buk.x_max );
    }
 
    else if ( buk.x_max <= 0.0 )
@@ -679,7 +727,7 @@ void US_MPI_Analysis::limitBucket( Bucket& buk )
       buk.x_max   = -0.1;
    }
 
-   if ( data_sets[ 0 ]->solute_type == 0 )
+   if ( attr_y == ATTR_K )
    {  // If y-type is "ff0", insure minimum is at least 1.0
       buk.y_min   = qMax(  1.0, buk.y_min );
       buk.y_max   = qMax( ( buk.y_min + 0.0001 ), buk.y_max );
