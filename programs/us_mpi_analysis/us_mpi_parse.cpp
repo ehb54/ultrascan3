@@ -78,7 +78,8 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
 //d->solute_type = (0 << 6) + (1 << 3) + 3;
             }
 
-if (my_rank==0) DbgLv(0) << "PF: solute_type" << d->solute_type;
+if (my_rank==0) DbgLv(0) << "PF: solute_type" << d->solute_type
+ << "attr_x _y _z" << attr_x << attr_y << attr_z;
             data_sets << d;
          }
       }

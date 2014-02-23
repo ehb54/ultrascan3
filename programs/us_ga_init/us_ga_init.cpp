@@ -583,23 +583,14 @@ DbgLv(1) << "SAVE novlps" << novlps;
       dirp.mkpath( fdir2 );
 
 DbgLv(1) << "SAVE ax,y,z" << attr_x << attr_y << attr_z;
-bool plot_s=true;
-//bool plot_k=true;
-   if ( attr_x == ATTR_S  &&  attr_y == ATTR_K )
-   {
-      soludata->saveGAdata( fname );
-   }
-   else
-   {
-      double fixval = 0.0;
-      fixval        = ( attr_z == ATTR_S ) ? sk_distro[ 0 ].s : fixval;
-      fixval        = ( attr_z == ATTR_K ) ? sk_distro[ 0 ].k : fixval;
-      fixval        = ( attr_z == ATTR_W ) ? sk_distro[ 0 ].w : fixval;
-      fixval        = ( attr_z == ATTR_D ) ? sk_distro[ 0 ].d : fixval;
-      fixval        = ( attr_z == ATTR_F ) ? sk_distro[ 0 ].f : fixval;
+   double fixval = 0.0;
+   fixval        = ( attr_z == ATTR_S ) ? sk_distro[ 0 ].s : fixval;
+   fixval        = ( attr_z == ATTR_K ) ? sk_distro[ 0 ].k : fixval;
+   fixval        = ( attr_z == ATTR_W ) ? sk_distro[ 0 ].w : fixval;
+   fixval        = ( attr_z == ATTR_D ) ? sk_distro[ 0 ].d : fixval;
+   fixval        = ( attr_z == ATTR_F ) ? sk_distro[ 0 ].f : fixval;
 
-      soludata->saveGAdata( fname, attr_x, attr_y, attr_z, fixval );
-   }
+   soludata->saveGAdata( fname, attr_x, attr_y, attr_z, fixval );
 
    if ( manbuks )
    {  // if manual buckets, build up and analyze data, then report
@@ -620,9 +611,7 @@ DbgLv(1) << "SAVE call reportMC";
    }
 
    // Report on files saved
-   QString msg = tr( "Saved:\n" );
-   if ( plot_s )
-      msg     += "    " + fndat + "\n";
+   QString msg = tr( "Saved:\n    " ) + fndat + "\n";
 
    if ( manbuks )
    {

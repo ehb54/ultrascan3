@@ -46,47 +46,56 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
       qSort( best_fitness );
       simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
-      double fixval  = ( attr_z == ATTR_V )
-                     ? data_sets[ 0 ]->vbar20
-                     : parameters[ "bucket_fixed" ].toDouble();
-      US_Model::SimulationComponent zcomp;
-      zcomp.s          = 0.0;
-      zcomp.f_f0       = 0.0;
-      zcomp.mw         = 0.0;
-      zcomp.vbar20     = data_sets[ 0 ]->vbar20;
-      zcomp.D          = 0.0;
-      zcomp.f          = 0.0;
-      set_comp_attrib( zcomp, fixval, attr_z );
+      int nisols      = simulation_values.solutes.size();
+DbgLv(1) << "GaMast: sols size" << nisols << "buck size" << buckets.size()
+ << "dset size" << data_sets.size();
+DbgLv(1) << "GaMast:  sol0.s .k .v .d" << simulation_values.solutes[0].s
+ << simulation_values.solutes[0].k << simulation_values.solutes[0].v
+ << simulation_values.solutes[0].d;
 
-      // Convert all solutes to type s,k,v
-      for ( int gg = 0; gg < buckets.size(); gg++ )
+      solutes_from_gene( simulation_values.solutes, nisols );
+DbgLv(1) << "GaMast:   osol0.s .k .v .d" << simulation_values.solutes[0].s
+ << simulation_values.solutes[0].k << simulation_values.solutes[0].v
+ << simulation_values.solutes[0].d;
+
+      calc_residuals( 0, data_sets.size(), simulation_values );
+DbgLv(1) << "GaMast:    calc_resids return - calcsize vari"
+ << simulation_values.solutes.size() << simulation_values.variance;
+DbgLv(1) << "GaMast:    csol0.s .k .v .d" << simulation_values.solutes[0].s
+ << simulation_values.solutes[0].k << simulation_values.solutes[0].v
+ << simulation_values.solutes[0].d;
+
+      qSort( simulation_values.solutes );
+
+      // Convert given solute points to s,k for model output
+      double vbar20  = data_sets[ 0 ]->vbar20;
+      QList< int > attrxs;
+      attrxs << attr_x << attr_y << attr_z;
+      bool   have_s  = ( attrxs.indexOf( ATTR_S ) >= 0 );
+      bool   have_k  = ( attrxs.indexOf( ATTR_K ) >= 0 );
+      bool   have_w  = ( attrxs.indexOf( ATTR_W ) >= 0 );
+      bool   have_d  = ( attrxs.indexOf( ATTR_D ) >= 0 );
+      bool   have_f  = ( attrxs.indexOf( ATTR_F ) >= 0 );
+      bool   vary_v  = ( attr_z != ATTR_V );
+
+      for ( int gg = 0; gg < simulation_values.solutes.size(); gg++ )
       {
-         US_Solute* solu  = &simulation_values.solutes[ gg ];
-         US_Model::SimulationComponent
-                    mcomp = zcomp;
-         set_comp_attrib( mcomp, solu->s, attr_x );
-         set_comp_attrib( mcomp, solu->k, attr_y );
+         US_Solute* solu   = &simulation_values.solutes[ gg ];
+         US_Model::SimulationComponent mcomp;
+         mcomp.s        = have_s ? solu->s : 0.0;
+         mcomp.f_f0     = have_k ? solu->k : 0.0;
+         mcomp.mw       = have_w ? solu->d : 0.0;
+         mcomp.vbar20   = vary_v ? solu->v : vbar20;
+         mcomp.D        = have_d ? solu->d : 0.0;
+         mcomp.f        = have_f ? solu->d : 0.0;
 
          US_Model::calc_coefficients( mcomp );
 
-         solu->s          = mcomp.s;
-         solu->k          = mcomp.f_f0;
-         solu->v          = mcomp.vbar20;
+         solu->s        = mcomp.s;
+         solu->k        = mcomp.f_f0;
+         solu->v        = mcomp.vbar20;
       }
-DbgLv(1) << "GaMast: sols size" << simulation_values.solutes.size()
- << "buck size" << buckets.size();
-DbgLv(1) << "GaMast:   dset size" << data_sets.size()
- << "sol0.s" << simulation_values.solutes[0].s
- << "sol0.k" << simulation_values.solutes[0].k
- << "sol0.v" << simulation_values.solutes[0].v;
-
-      calc_residuals( 0, data_sets.size(), simulation_values );
-DbgLv(1) << "GaMast:    calc_resids return - calcsize"
- << simulation_values.solutes.size();
-DbgLv(1) << "GaMast:      sol0.s" << simulation_values.solutes[0].s
- << "sol0.c" << simulation_values.solutes[0].c;
-
-      qSort( simulation_values.solutes );
+         
       calculated_solutes.clear();
       calculated_solutes << simulation_values.solutes;
 
