@@ -481,13 +481,13 @@ DbgLv(1) << "sgMC: mciter" << mc_iteration;
    if ( mc_iteration == 1 )
    {
       //meniscus_values << -1.0;
-      max_depth = 0;  // Make the datasets compatible
+      max_depth   = 0;  // Make the datasets compatible
       calculated_solutes.clear();
       calculated_solutes << best_genes[ best_fitness[ 0 ].index ];
-DbgLv(1) << "sgMC: bfgenes stored" << calculated_solutes[0].size();
+      int ncsols  = calculated_solutes[ 0 ].size();
+DbgLv(1) << "sgMC: bfgenes stored" << ncsols;
 
-      for ( int i = 0; i < calculated_solutes[ 0 ].size(); i++ )
-         calculated_solutes[ 0 ][ i ].s *= 1.0e-13;
+      solutes_from_gene( calculated_solutes[ 0 ], ncsols );
 
 DbgLv(1) << "sgMC:  sol0 s" << calculated_solutes[0][0].s;
       set_gaussians();

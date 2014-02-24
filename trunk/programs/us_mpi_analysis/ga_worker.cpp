@@ -476,10 +476,10 @@ DbgLv(2) << "get_fitness: sol_count conc_thresh" << solute_count << concentratio
    fitness_map.insert( key, fitness ); 
 DbgLv(2) << "get_fitness:  out fitness" << fitness;
 //*DEBUG*
-if(fitness_map.size() == 20 )
+if(dbg_level>0 && fitness_map.size()==20 )
 {
  int n=nosols-1;
- DbgLv(0) << "w:" << my_rank << generation << ": fmapsize fitness nsols"
+ DbgLv(1) << "w:" << my_rank << generation << ": fmapsize fitness nsols"
   << fitness_map.size() << fitness << nisols << nosols
   << "s0 s,k,v" << sim.solutes[0].s << sim.solutes[0].k << sim.solutes[0].v
   << "sn s,k,v" << sim.solutes[n].s << sim.solutes[n].k << sim.solutes[n].v;
