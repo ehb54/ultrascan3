@@ -618,12 +618,10 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    if ( analysis_type.contains( "CG" ) )
       id                = id.replace( "2DSA", "2DSA-CG" );
    QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
-   int     stype     = data_sets[ 0 ]->solute_type;
-//stype=(stype>9)?0:stype;
-   double  vbar20    = data_sets[ 0 ]->vbar20;
-   bool    cnstvb    = ( stype == 0  ||  attr_z == ATTR_V );
+   int     stype     = data_sets[ current_dataset ]->solute_type;
+   double  vbar20    = data_sets[ current_dataset ]->vbar20;
 DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
- << "attr_z cnstvb vbar20" << attr_z << cnstvb << vbar20;
+ << "attr_z vbar20 sol0.v" << attr_z << vbar20 << sim.solutes[0].v;
 
    model.description = runID + "." + tripleID + "." + analyID + ".model";
 DbgLv(1) << "wrMo: model descr" << model.description;
@@ -640,7 +638,7 @@ DbgLv(1) << "wrMo: model descr" << model.description;
       component.f_f0                 = solute->k;
       component.signal_concentration = solute->c;
       component.name                 = QString().sprintf( "SC%04d", i + 1 );
-      component.vbar20               = cnstvb  ? vbar20 : solute->v;
+      component.vbar20               = (attr_z == ATTR_V) ? vbar20 : solute->v;
 
       US_Model::calc_coefficients( component );
       model.components << component;
