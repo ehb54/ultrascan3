@@ -44,6 +44,9 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
             {  // Flag Custom Grid model input
                d->model_file  = parameters[ "CG_model" ];
                d->solute_type = 2;
+               attr_x         = ATTR_S;
+               attr_y         = ATTR_V;
+               attr_z         = ATTR_K;
             }
 
             else if ( ! parameters[ "ztype" ].isEmpty() )
