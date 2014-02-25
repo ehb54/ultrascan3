@@ -2976,7 +2976,7 @@ bool US_Saxs_Util::pdb_mw( QStringList &qsl, double & mw )
       mw += atom_mw[ it->first ] * it->second;
    }
 
-   qDebug( QString( "total mw %1" ).arg( mw ) );
+   // qDebug( QString( "total mw %1" ).arg( mw ) );
 
    return true;
 }

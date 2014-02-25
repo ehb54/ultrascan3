@@ -64,14 +64,14 @@ US_Cmdline_App::US_Cmdline_App(
 
    if ( !process.start() )
    {
-      qDebug( "error starting" );
+      // qDebug( "error starting" );
       *error_msg += QString( "Error: could not start process: %1\n" ).arg( args[ 0 ] );
       process.kill();
       qa->quit();
       qa->processEvents();
       return;
    }
-   qDebug( QString( "starting process: %1" ).arg( args[ 0 ] ) );
+   // qDebug( QString( "starting process: %1" ).arg( args[ 0 ] ) );
 }
 
 US_Cmdline_App::~US_Cmdline_App()
@@ -83,14 +83,14 @@ void US_Cmdline_App::timeout()
 {
    *error_msg += 
       QString( "Error: out of responses to queries (timeout)\n" );
-   qDebug( "timeout" );
+   // qDebug( "timeout" );
    process.kill();
 }
 
 void US_Cmdline_App::readFromStdout()
 {
    timer.stop();
-   qDebug( "readFromStdout()" );
+   // qDebug( "readFromStdout()" );
    QString qs;
    QString text;
    do {
@@ -112,7 +112,7 @@ void US_Cmdline_App::readFromStdout()
       text += qs;
    } while ( qs.length() );
    
-   qDebug( QString( "received <%1>" ).arg( text ) );
+   // qDebug( QString( "received <%1>" ).arg( text ) );
 
    if ( !run_to_end && app_text.size() )
    {
@@ -129,7 +129,7 @@ void US_Cmdline_App::readFromStdout()
          query_response_pos = previous_pos;
          if ( timer_delay_ms )
          {
-            qDebug( QString( "starting timer for %1 seconds" ).arg( ( double )timer_delay_ms / 1000e0 ) );
+            // qDebug( QString( "starting timer for %1 seconds" ).arg( ( double )timer_delay_ms / 1000e0 ) );
             timer.start( timer_delay_ms );
          } else {
             *error_msg += 
@@ -145,7 +145,7 @@ void US_Cmdline_App::readFromStdout()
       if ( ( int ) app_text.size() > query_response_pos &&
            text.contains( app_text[ query_response_pos ] ) )
       {
-         qDebug( QString( "received <%1> from application" ).arg( app_text[ query_response_pos ] ) );
+         // qDebug( QString( "received <%1> from application" ).arg( app_text[ query_response_pos ] ) );
          if ( response[ query_response_pos ] != "___run___" )
          {
             if ( response[ query_response_pos ].left( 2 ).contains( "__" ) )
@@ -159,11 +159,11 @@ void US_Cmdline_App::readFromStdout()
                qa->quit();
                return;
             }
-            qDebug( QString( "sent     <%1> to application"   ).arg( response[ query_response_pos ] ) );
+            // qDebug( QString( "sent     <%1> to application"   ).arg( response[ query_response_pos ] ) );
             process.writeToStdin( response[ query_response_pos ] + "\n" );
             query_response_pos++;
          } else {
-            qDebug( "now run to end of application" );
+            // qDebug( "now run to end of application" );
             run_to_end = true;
          }
       }
@@ -172,7 +172,7 @@ void US_Cmdline_App::readFromStdout()
 
 void US_Cmdline_App::readFromStderr()
 {
-   qDebug( "readFromStderr()" );
+   // qDebug( "readFromStderr()" );
    // if ( stderr )
    // {
    //    while ( process.canReadLineStderr() )
@@ -184,7 +184,7 @@ void US_Cmdline_App::readFromStderr()
 
 void US_Cmdline_App::processExited()
 {
-   qDebug( "processExited()" );
+   // qDebug( "processExited()" );
 
    if ( !process.normalExit() )
    {
@@ -201,5 +201,5 @@ void US_Cmdline_App::processExited()
 
 void US_Cmdline_App::launchFinished()
 {
-   qDebug( "launchFinished()" );
+   // qDebug( "launchFinished()" );
 }

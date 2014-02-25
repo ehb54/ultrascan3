@@ -89,7 +89,7 @@ US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
                            QDir::separator() + "etc" +
                            QDir::separator() + "mw.json" ) )
    {
-      qDebug( "no mw.json load" );
+      // qDebug( "no mw.json load" );
       bm_active = false;
    }
 
@@ -98,7 +98,7 @@ US_Hydrodyn_Pdb_Tool::US_Hydrodyn_Pdb_Tool(
                             QDir::separator() + "etc" +
                             QDir::separator() + "vdw.json" ) )
    {
-      qDebug( "no vdw.json load" );
+      // qDebug( "no vdw.json load" );
       bm_active = false;
    }
 
@@ -5447,21 +5447,21 @@ void US_Hydrodyn_Pdb_Tool::do_sort( QListView *lv )
       return;
    }      
       
-   qDebug( "set_a contains:" );
-   for ( set < QString >::iterator it = set_a.begin();
-         it != set_a.end();
-         it++ )
-   {
-      qDebug( *it );
-   }
+   // qDebug( "set_a contains:" );
+   // for ( set < QString >::iterator it = set_a.begin();
+   //       it != set_a.end();
+   //       it++ )
+   // {
+   //    qDebug( *it );
+   // }
       
-   qDebug( "set_b contains:" );
-   for ( set < QString >::iterator it = set_b.begin();
-         it != set_b.end();
-         it++ )
-   {
-      qDebug( *it );
-   }
+   // qDebug( "set_b contains:" );
+   // for ( set < QString >::iterator it = set_b.begin();
+   //       it != set_b.end();
+   //       it++ )
+   // {
+   //    qDebug( *it );
+   // }
    
    csv tmp_csv;
 

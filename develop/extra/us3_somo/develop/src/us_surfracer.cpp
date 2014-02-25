@@ -840,7 +840,7 @@ managedge(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *hits
 
          if (j == ned)   /*this is a brand new one */
          {
-            for (l = 0; l <= ned - 1 && edge[l * 2] != -1; l++);   /*breaks when encounters an empty spot */
+            for (l = 0; l <= ned - 1 && edge[l * 2] != -1; l++) {};   /*breaks when encounters an empty spot */
 
             edge[l * 2] = -2;   /*records cycle papameters into the empty spot */
             edge[l * 2 + 1] = cycles[hits[i]][1];
@@ -875,7 +875,7 @@ managedge(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *hits
             if (l == ned)   /*did not find it */
             {
                dbg("me 4.4");
-               for (p = 0; p < ned && edge[p * 2] != -1; p++);   /*found an empty spot */ // emre this is where it craps out
+               for (p = 0; p < ned && edge[p * 2] != -1; p++) {};   /*found an empty spot */ // emre this is where it fails
                dbg("me 4.5");
 
                edge[p * 2] = cycles[hits[i]][j + 1];   /*recording in the reverse order */
@@ -910,7 +910,7 @@ managedge(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *hits
          if (l == ned)   /*did not find it */
          {
             dbg("me 6");
-            for (p = 0; p < ned && edge[p * 2] != -1; p++);   /*found an empty spot */
+            for (p = 0; p < ned && edge[p * 2] != -1; p++) {};   /*found an empty spot */
 
             edge[p * 2] = cycles[hits[i]][0];   /*recording in the reverse order */
             edge[p * 2 + 1] = cycles[hits[i]][nvincyc[hits[i]] - 1];

@@ -229,7 +229,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   if ( ! filename.isReadable() ) return GZIP_NOREAD;
 
   // Get the times and other data
-  QDateTime    lastRead   = filename.lastRead();
+  // QDateTime    lastRead   = filename.lastRead();
   QDateTime    lastMod    = filename.lastModified();
   
   filetime = lastMod.toTime_t();

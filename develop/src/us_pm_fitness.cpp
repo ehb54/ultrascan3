@@ -409,11 +409,11 @@ bool US_PM::compute_delta_I(
    {
       if ( !pdata.count( *it ) )
       {
-         qDebug( QString( "pdata does not contain %1 %2 %3\n" )
-                 .arg( it->x[0] )
-                 .arg( it->x[1] )
-                 .arg( it->x[2] ) )
-            ;
+         // qDebug( QString( "pdata does not contain %1 %2 %3\n" )
+         //         .arg( it->x[0] )
+         //         .arg( it->x[1] )
+         //         .arg( it->x[2] ) )
+         //    ;
          exit(-1);
       }
       v_pdata_subtracts.push_back( &pdata[ *it ] );

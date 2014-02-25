@@ -785,7 +785,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          for ( inc = 1;
                (i + inc < model_idx.size()) && 
                   (model_idx[i + inc] == model_idx[i] + inc);
-               inc++ );
+               inc++ ) {};
          inc--;
          supc_results->name += QString("%1").arg(model_idx[i]+1);
          if ( inc > 1 ) {
@@ -4415,11 +4415,11 @@ relax_rigid_calc()
 
    {
 
-      qDebug( QString( "supc compute_tau: input ev's: %1 %2 %3 fconv %4" )
-              .arg( (double)dl1 )
-              .arg( (double)dl2 )
-              .arg( (double)dl3 )
-              .arg( fconv ) );
+      // qDebug( QString( "supc compute_tau: input ev's: %1 %2 %3 fconv %4" )
+      //         .arg( (double)dl1 )
+      //         .arg( (double)dl2 )
+      //         .arg( (double)dl3 )
+      //         .arg( fconv ) );
       vector < double > results;
       double x1 = dl1;
       double x2 = dl2;
@@ -4623,12 +4623,12 @@ relax_rigid_calc()
               getchar();       */
    }
 
-   for ( int i = 0; i < 5; ++i )
-   {
-      qDebug( QString( "supc tau results %1 %2" ).arg( i+1 ).arg( (double)tao[ i ] ) );
-   }
-   qDebug( QString( "supc tau results %1 %2" ).arg( 5 ).arg( taoh ) );
-   qDebug( QString( "supc tau results %1 %2" ).arg( 6 ).arg( taom ) );
+   // for ( int i = 0; i < 5; ++i )
+   // {
+   //    qDebug( QString( "supc tau results %1 %2" ).arg( i+1 ).arg( (double)tao[ i ] ) );
+   // }
+   // qDebug( QString( "supc tau results %1 %2" ).arg( 5 ).arg( taoh ) );
+   // qDebug( QString( "supc tau results %1 %2" ).arg( 6 ).arg( taom ) );
 
 }
 

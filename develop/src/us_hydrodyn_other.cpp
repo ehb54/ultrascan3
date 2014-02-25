@@ -8396,7 +8396,7 @@ void US_Hydrodyn::add_to_directory_history( QString filename, bool accessed )
 
    QString dir = QDir::cleanDirPath( fi.isDir() ? fi.filePath() : fi.dirPath() );
 
-   qDebug( QString( "add to dir history %1 %2 %3" ).arg( filename ).arg( dir ).arg( accessed ? "true" : "false" ) );
+   // qDebug( QString( "add to dir history %1 %2 %3" ).arg( filename ).arg( dir ).arg( accessed ? "true" : "false" ) );
    if ( dir.isEmpty() ||
         dir.contains( QRegExp( "^\\." ) ) )
    {

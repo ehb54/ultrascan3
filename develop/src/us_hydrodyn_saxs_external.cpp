@@ -535,7 +535,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
          ;
       crysol_manual_input << "N";
       crysol_manual_input << "N";
-      qDebug( "crysol input\n------\n" + crysol_manual_input.join( "\n" ) + "\n----" );
+      // qDebug( "crysol input\n------\n" + crysol_manual_input.join( "\n" ) + "\n----" );
 
       // create input log file, run system command into output 
       {
@@ -718,7 +718,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 void US_Hydrodyn_Saxs::crysol_timeout()
 {
    editor_msg( "red", tr( "Error: out of responses to queries (timeout)\n" ) );
-   qDebug( "timeout" );
+   // qDebug( "timeout" );
    crysol->kill();
 }
 
@@ -744,7 +744,7 @@ void US_Hydrodyn_Saxs::crysol_readFromStdout()
    }
    crysol_timer.stop();
 
-   qDebug( "readFromStdout()" );
+   // qDebug( "readFromStdout()" );
    QString qs;
    QString text;
    //   do {
@@ -765,7 +765,7 @@ void US_Hydrodyn_Saxs::crysol_readFromStdout()
       text += qs;
       // } while ( qs.length() );
    
-   qDebug( QString( "received <%1>" ).arg( text ) );
+      // qDebug( QString( "received <%1>" ).arg( text ) );
 
    if ( !crysol_run_to_end && crysol_app_text.size() )
    {
@@ -782,10 +782,10 @@ void US_Hydrodyn_Saxs::crysol_readFromStdout()
          crysol_query_response_pos = previous_pos;
          if ( crysol_timer_delay_ms )
          {
-            qDebug( QString( "starting timer for %1 seconds" ).arg( ( double )crysol_timer_delay_ms / 1000e0 ) );
+            // qDebug( QString( "starting timer for %1 seconds" ).arg( ( double )crysol_timer_delay_ms / 1000e0 ) );
             crysol_timer.start( crysol_timer_delay_ms );
          } else {
-            qDebug( tr( "Error: out of responses to queries" ) );
+            // qDebug( tr( "Error: out of responses to queries" ) );
             crysol->kill();
          }
          return;
@@ -795,24 +795,24 @@ void US_Hydrodyn_Saxs::crysol_readFromStdout()
       if ( ( int ) crysol_app_text.size() > crysol_query_response_pos &&
            text.contains( crysol_app_text[ crysol_query_response_pos ] ) )
       {
-         qDebug( QString( "received <%1> from application" ).arg( crysol_app_text[ crysol_query_response_pos ] ) );
+         // qDebug( QString( "received <%1> from application" ).arg( crysol_app_text[ crysol_query_response_pos ] ) );
          if ( crysol_response[ crysol_query_response_pos ] != "___run___" )
          {
             if ( crysol_response[ crysol_query_response_pos ].left( 2 ).contains( "__" ) )
             {
-               qDebug(  
-                      QString( tr( "Error: undefined response <%1> to query <%2>" ) )
-                      .arg( crysol_response[ crysol_query_response_pos ] )
-                      .arg( crysol_app_text[ crysol_query_response_pos ] ) )
-                  ;
+               // qDebug(  
+               //        QString( tr( "Error: undefined response <%1> to query <%2>" ) )
+               //        .arg( crysol_response[ crysol_query_response_pos ] )
+               //        .arg( crysol_app_text[ crysol_query_response_pos ] ) )
+               //    ;
                crysol->kill();
                return;
             }
-            qDebug( QString( "sent     <%1> to application"   ).arg( crysol_response[ crysol_query_response_pos ] ) );
+            // qDebug( QString( "sent     <%1> to application"   ).arg( crysol_response[ crysol_query_response_pos ] ) );
             crysol->writeToStdin( crysol_response[ crysol_query_response_pos ] + "\n" );
             crysol_query_response_pos++;
          } else {
-            qDebug( "now run to end of application" );
+            // qDebug( "now run to end of application" );
             crysol_run_to_end = true;
          }
       }
@@ -861,8 +861,8 @@ void US_Hydrodyn_Saxs::crysol_processExited()
       editor_msg( "brown", crysol_stdout.join( "\n" ) );
    }
 
-   qDebug( "crysolstdout: " + crysol_stdout.join("\n") );
-   qDebug( "crysolstderr: " + crysol_stderr.join("\n") );
+   // qDebug( "crysolstdout: " + crysol_stdout.join("\n") );
+   // qDebug( "crysolstderr: " + crysol_stderr.join("\n") );
 
    // crysol creates 4 files:
    // crysol_summary.txt
@@ -976,14 +976,14 @@ void US_Hydrodyn_Saxs::crysol_finishup()
    
 void US_Hydrodyn_Saxs::crysol_wroteToStdin()
 {
-   qDebug( "Crysol wroteToStdin" );
+   // qDebug( "Crysol wroteToStdin" );
 }
 
 void US_Hydrodyn_Saxs::crysol_launchFinished()
 {
    editor_msg("brown", "Crysol launch exited\n");
    disconnect( crysol, SIGNAL(launchFinished()), 0, 0);
-   qDebug( "crysol launchFinished" );
+   // qDebug( "crysol launchFinished" );
 }
 
 // -------------------- cryson ------------------------------

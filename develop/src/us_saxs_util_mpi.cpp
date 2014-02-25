@@ -285,7 +285,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
                {
                   if ( !f.open( IO_ReadOnly ) )
                   {
-                     qDebug("Error: could not open directives file" );
+                     // qDebug("Error: could not open directives file" );
                      MPI_Abort( MPI_COMM_WORLD, errorno );
                      exit( errorno );
                   }
@@ -293,7 +293,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
                   QString qs = ts.readLine();
                   f.close();
                   skip_cores_per_core = qs.toUInt();
-                  qDebug( QString( "%1: found directives, skip cores per core is %2" ).arg( myrank ).arg( skip_cores_per_core ) );
+                  // qDebug( QString( "%1: found directives, skip cores per core is %2" ).arg( myrank ).arg( skip_cores_per_core ) );
                }
             }
             
@@ -375,17 +375,17 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    if ( !myrank )
    {
-      qDebug( QString( "0: jobs %1 np %2 skip %3 useprocs %4 inc %5" )
-              .arg( qslt.size() )
-              .arg( npes )
-              .arg( skip_cores_per_core )
-              .arg( use_procs )
-              .arg( inc ) );
+      // qDebug( QString( "0: jobs %1 np %2 skip %3 useprocs %4 inc %5" )
+      //         .arg( qslt.size() )
+      //         .arg( npes )
+      //         .arg( skip_cores_per_core )
+      //         .arg( use_procs )
+      //         .arg( inc ) );
    }
 
    if ( myrank % inc )
    {
-      qDebug( QString( "%1: sleep" ).arg( myrank ) );
+      // qDebug( QString( "%1: sleep" ).arg( myrank ) );
       if ( (unsigned int) myrank >= qslt.size() )
       {
          full_output_list << "null_remove";
@@ -463,7 +463,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    nice( 20 );
 
-   qDebug( QString("%1: end of computation barrier my full_output_list %2\n" ).arg( myrank ).arg( full_output_list.join( ":" ) ) );
+   // qDebug( QString("%1: end of computation barrier my full_output_list %2\n" ).arg( myrank ).arg( full_output_list.join( ":" ) ) );
 
    if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
    {

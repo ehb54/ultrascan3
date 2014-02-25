@@ -396,7 +396,7 @@ void US_Hydrodyn_Cluster_Results::select_all()
 
 bool US_Hydrodyn_Cluster_Results::clean_dir( QString dir ) 
 {
-   qDebug( QString( "clean_dir %1" ).arg( dir ) );
+   // qDebug( QString( "clean_dir %1" ).arg( dir ) );
    system( "pwd" );
    errormsg = "";
    if ( !QDir::setCurrent( dir ) )

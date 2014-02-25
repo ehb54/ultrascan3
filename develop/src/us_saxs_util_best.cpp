@@ -139,7 +139,7 @@ bool US_Saxs_Util::run_best()
       }
 
       cmd += QString( " 2> msr_%1.stderr > msr_%2.stdout" ).arg( msr_inputbase ).arg( msr_inputbase );
-      qDebug( QString( "best cmd = %1" ).arg( cmd ) );
+      // qDebug( QString( "best cmd = %1" ).arg( cmd ) );
 
       cout << "Starting " + progs[ p ] + "\n";
       cout << cmd << endl;
@@ -189,24 +189,24 @@ bool US_Saxs_Util::run_best()
                if ( qsl.size() )
                {
                   found_triangles = qsl[ 0 ].toInt();
-                  qDebug( QString( "found triangles %1 with fineness %2 on %3" )
-                          .arg( found_triangles )
-                          .arg( use_fineness )
-                          .arg( control_parameters[ "inputfilenoread" ] )
-                          );
+                  // qDebug( QString( "found triangles %1 with fineness %2 on %3" )
+                  //         .arg( found_triangles )
+                  //         .arg( use_fineness )
+                  //         .arg( control_parameters[ "inputfilenoread" ] )
+                  //         );
                   if ( use_fineness == start_fineness &&
                        found_triangles > max_triangles )
                   {
                      control_parameters[ "bestmsrfinenessangle" ] =
                         QString( "%1" ).arg( control_parameters[ "bestmsrfinenessangle" ].toDouble() + 0.1e0 );
-                     qDebug( QString( "too many triangles with largest fineness, incrementing max fineness to %1 on %2" )
-                             .arg( control_parameters[ "bestmsrfinenessangle" ] )
-                             .arg( control_parameters[ "inputfilenoread" ] ) );
+                     // qDebug( QString( "too many triangles with largest fineness, incrementing max fineness to %1 on %2" )
+                     //         .arg( control_parameters[ "bestmsrfinenessangle" ] )
+                     //         .arg( control_parameters[ "inputfilenoread" ] ) );
                      unlink( pdb_stripped );
                      output_files = save_output_files;
                      for ( int i = 0; i < (int) rm_output_files.size(); ++i )
                      {
-                        qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
+                        // qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
                         unlink( rm_output_files[ i ] );
                      }
                      if ( control_parameters[ "bestmsrfinenessangle" ].toDouble() > 2e0 )
@@ -233,15 +233,15 @@ bool US_Saxs_Util::run_best()
          {
             control_parameters[ "bestmsrfinenessangle" ] =
                QString( "%1" ).arg( control_parameters[ "bestmsrfinenessangle" ].toDouble() + 0.1e0 );
-            qDebug( QString( "msroll failed and failed for previous values of fineness, incrementing max fineness to %1 on %2" )
-                    .arg( control_parameters[ "bestmsrfinenessangle" ] ) 
-                    .arg( control_parameters[ "inputfilenoread" ] )
-                    );
+            // qDebug( QString( "msroll failed and failed for previous values of fineness, incrementing max fineness to %1 on %2" )
+            //         .arg( control_parameters[ "bestmsrfinenessangle" ] ) 
+            //         .arg( control_parameters[ "inputfilenoread" ] )
+            //         );
             unlink( pdb_stripped );
             output_files = save_output_files;
             for ( int i = 0; i < (int) rm_output_files.size(); ++i )
             {
-               qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
+               // qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
                unlink( rm_output_files[ i ] );
             }
             if ( control_parameters[ "bestmsrfinenessangle" ].toDouble() > 2e0 )
@@ -305,7 +305,7 @@ bool US_Saxs_Util::run_best()
 
       cmd += QString( " 2> rcoal_%1.stderr > rcoal_%2.stdout" ).arg( inputbase ).arg( inputbase );
 
-      qDebug( QString( "best cmd = %1" ).arg( cmd ) );
+      // qDebug( QString( "best cmd = %1" ).arg( cmd ) );
       cout << "Starting " + progs[ p ] + "\n";
       cout << cmd << endl;
       system( cmd.ascii() );
@@ -383,7 +383,7 @@ bool US_Saxs_Util::run_best()
          output_files = save_output_files;
          for ( int i = 0; i < (int) rm_output_files.size(); ++i )
          {
-            qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
+            // qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
             unlink( rm_output_files[ i ] );
          }
          return run_best();
@@ -482,7 +482,7 @@ bool US_Saxs_Util::run_best()
 
    for ( int i = 0; i < (int) outfiles.size(); ++i )
    {
-      qDebug( QString( "processing outfile %1" ).arg( outfiles[ i ] ) );
+      // qDebug( QString( "processing outfile %1" ).arg( outfiles[ i ] ) );
       QString cmd = 
          QString( "%1 -f %2 -mw %3" )
          .arg( progs[ p ] )
@@ -509,7 +509,7 @@ bool US_Saxs_Util::run_best()
 
       cmd += QString( " 2> best_%1.stderr > best_%2.stdout" ).arg( outfiles[ i ] ).arg( outfiles[ i ] );
 
-      qDebug( QString( "best cmd = %1" ).arg( cmd ) );
+      // qDebug( QString( "best cmd = %1" ).arg( cmd ) );
       cout << "Starting " + progs[ p ] + "\n";
       cout << cmd << endl;
       system( cmd.ascii() );
@@ -575,21 +575,21 @@ bool US_Saxs_Util::run_best()
       {
          use_outfiles << outfiles[ i ];
          csvfiles  << outfiles[ i ] + expected_base + ".be";
-         qDebug( QString( "outfiles[ i ] '%1' inputbase '%2' inputbase23 '%3'" )
-                 .arg( outfiles[ i ] ).arg( inputbase ).arg( inputbase23 ) );
+         // qDebug( QString( "outfiles[ i ] '%1' inputbase '%2' inputbase23 '%3'" )
+         //         .arg( outfiles[ i ] ).arg( inputbase ).arg( inputbase23 ) );
          triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase23 ) ), "" ).replace( QRegExp( "^0*" ) , "" );
          one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
                                        1e0 / triangles.back().toDouble() : -1e0 );
 
-         qDebug( QString( "triangles %1 %2 on %3\n" )
-                 .arg( triangles.back() )
-                 .arg( one_over_triangles.back() )
-                 .arg( control_parameters[ "inputfilenoread" ] ) 
-                 );
+         // qDebug( QString( "triangles %1 %2 on %3\n" )
+         //         .arg( triangles.back() )
+         //         .arg( one_over_triangles.back() )
+         //         .arg( control_parameters[ "inputfilenoread" ] ) 
+         //         );
       } else {
-         qDebug( QString( "NaN found on %3\n" )
-                 .arg( control_parameters[ "inputfilenoread" ] ) 
-                 );
+         // qDebug( QString( "NaN found on %3\n" )
+         //         .arg( control_parameters[ "inputfilenoread" ] ) 
+         //         );
          errormsg += QString( "BEST: %1 did produced NaN results in %2 (suggest lowering MSROLL max triangles)\n" )
             .arg( progs[ p ] )
             .arg( outfiles[ i ] + expected_base + ".be" )
@@ -602,7 +602,7 @@ bool US_Saxs_Util::run_best()
             output_files = save_output_files;
             for ( int i = 0; i < (int) rm_output_files.size(); ++i )
             {
-               qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
+               // qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
                unlink( rm_output_files[ i ] );
             }
             return run_best();
@@ -625,7 +625,7 @@ bool US_Saxs_Util::run_best()
                output_files = save_output_files;
                for ( int i = 0; i < (int) rm_output_files.size(); ++i )
                {
-                  qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
+                  // qDebug( QString( "removing %1" ).arg( rm_output_files[ i ] ) );
                   unlink( rm_output_files[ i ] );
                }
                return run_best();
@@ -637,8 +637,8 @@ bool US_Saxs_Util::run_best()
       }
    }
 
-   qDebug( QString( "outfiles %1" ).arg( outfiles.join( ":" ) ) );
-   qDebug( QString( "use_outfiles %1" ).arg( use_outfiles.join( ":" ) ) );
+   // qDebug( QString( "outfiles %1" ).arg( outfiles.join( ":" ) ) );
+   // qDebug( QString( "use_outfiles %1" ).arg( use_outfiles.join( ":" ) ) );
 
    outfiles = use_outfiles;
 
@@ -647,7 +647,7 @@ bool US_Saxs_Util::run_best()
    {
       QFile f( QString( "%1.csv" ).arg( inputbase ) );
 
-      qDebug( QString( "output file %1\n" ).arg( f.name() ) );
+      // qDebug( QString( "output file %1\n" ).arg( f.name() ) );
 
       vector < QStringList > csvresults;
       QStringList csv_header;
@@ -730,7 +730,7 @@ bool US_Saxs_Util::run_best()
 
       for ( int i = 0 ; i < (int) csvfiles.size(); ++i )
       {
-         qDebug( QString( "csv input file %1 triangles %2\n" ).arg( csvfiles[ i ] ).arg( triangles[ i ] ) );
+         // qDebug( QString( "csv input file %1 triangles %2\n" ).arg( csvfiles[ i ] ).arg( triangles[ i ] ) );
          QStringList qsl = best_output_column( csvfiles[ i ] );
          csvresults.push_back( qsl );
 
@@ -1032,7 +1032,7 @@ QStringList US_Saxs_Util::best_output_column( QString fname )
    {
       QString qs = ts.readLine();
       qs.replace( QRegExp( "\\s+cm\\^2/s\\s*$" ), "" );
-      qDebug( QString( "qs dtt cm^2/s <%1>\n" ).arg( qs ) );
+      // qDebug( QString( "qs dtt cm^2/s <%1>\n" ).arg( qs ) );
       if ( rx_1.search( qs ) == -1 )
       {
          qsl << QString( "error in %1 could not read data pos %2" ).arg( f.name() ).arg( "Dtt (cm^2/s) 1/3 trace" );

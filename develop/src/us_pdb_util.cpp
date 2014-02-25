@@ -163,11 +163,11 @@ QString US_Pdb_Util::qstring_common_tail( const QString & s1, const QString & s2
 
 bool US_Pdb_Util::range_to_set( set < QString > & result, const QString & s )
 {
-   qDebug( QString( "range_to_set '%1'" ).arg( s ) );
+   // qDebug( QString( "range_to_set '%1'" ).arg( s ) );
 
    QStringList qsl = QStringList::split( QRegExp( "\\s*(\\s|,|;)\\s*" ), s );
 
-   qDebug( qsl.join("\n") + QString( "\n" ) );
+   // qDebug( qsl.join("\n") + QString( "\n" ) );
 
    QRegExp rx_1( "(.?):(\\d+)" );
    QRegExp rx_2( "(.?):(\\d+)-(\\d+)" );

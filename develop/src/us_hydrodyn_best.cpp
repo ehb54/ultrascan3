@@ -1418,7 +1418,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
    
                if ( status.fnorm < 0e0 )
                {
-                  qDebug( "WARNING: lm() returned negative rmsd\n" );
+                  // qDebug( "WARNING: lm() returned negative rmsd\n" );
                } else {
                   chi2 = 0e0;
                   for ( int i = 0; i < (int) fit_x.size(); ++i )
@@ -1555,7 +1555,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
    if ( do_recompute_tau &&
         tau_input_set.count( text ) )
    {
-      qDebug( "data selected & do recompute_tau" );
+      // qDebug( "data selected & do recompute_tau" );
       recompute_tau();
    }
 
@@ -1574,7 +1574,7 @@ void US_Hydrodyn_Best::save_results()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    use_dir += QDir::separator() + QFileInfo( loaded_csv_filename ).baseName() + "_results.csv";
-   qDebug( use_dir );
+   // qDebug( use_dir );
 
    QString filename = QFileDialog::getSaveFileName(use_dir, "*.csv *.CSV", this,
                                                    caption() + tr( " Save Results" ),
@@ -2043,10 +2043,10 @@ void US_Hydrodyn_Best::join_results()
       }
 
       int tmp_points;
-      for ( tmp_points = 1; tmp_points < (int) qsl.size() && qsl[ tmp_points ] != "Extrapolation to zero triangles (a)"; ++tmp_points );
+      for ( tmp_points = 1; tmp_points < (int) qsl.size() && qsl[ tmp_points ] != "Extrapolation to zero triangles (a)"; ++tmp_points ){};
       tmp_points--;
          
-      qDebug( QString( "tmp_points %1 qsl size %2" ).arg( tmp_points ).arg( qsl.size() ) );
+      // qDebug( QString( "tmp_points %1 qsl size %2" ).arg( tmp_points ).arg( qsl.size() ) );
       if ( (int) qsl.size() <= tmp_points + 1 )
       {
          editor_msg( "red", QString( tr( "Error: file %1 error on line 1 (points)" ) ).arg( join_files[ i ] ) );

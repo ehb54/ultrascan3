@@ -15,7 +15,7 @@ bool US_Saxs_Util::c2check( QString a, QString b )
    vector < saxs_atom > atomsa;
    vector < saxs_atom > atomsb;
 
-   qDebug( QString( "caonly %1" ).arg( control_parameters.count( "c2checkcaonly" ) ) );
+   // qDebug( QString( "caonly %1" ).arg( control_parameters.count( "c2checkcaonly" ) ) );
 
    QString inputbase = QFileInfo( control_parameters[ "inputfile" ] ).baseName();
 
@@ -93,7 +93,7 @@ bool US_Saxs_Util::c2check( QString a, QString b )
          centers.push_back ( new_point );
       }
 
-      qDebug( QString( "c2check ran providing %1 centers" ).arg( centers.size() ) );
+      // qDebug( QString( "c2check ran providing %1 centers" ).arg( centers.size() ) );
       // create output file
 
       QString plotlog;
@@ -181,7 +181,7 @@ bool US_Saxs_Util::c2check( QString a, QString b )
          output_files << f.name();
       }
 
-      qDebug(  QString( "splot %1\n" ).arg( plotlog ) );
+      // qDebug(  QString( "splot %1\n" ).arg( plotlog ) );
 
       {
          QFile f( "plotlog" );
