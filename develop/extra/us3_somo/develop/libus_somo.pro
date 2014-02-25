@@ -87,14 +87,14 @@ win32 {
 
 macx {
   revision.commands         = sh revision.sh
+
   BUILDBASE   = /Users/eb/us3/ultrascan3
-#  QWTPATH     = $$BUILDBASE/qwt-5.2.3
   QWTPATH     = /src/qwt-5.2.3
   QWTLIB      = -L$$QWTPATH/lib -lqwt
-#  SINGLEDIR    = $$BUILDBASE/qtsingleapplication-2.6_1-opensource/src
-##  CONFIG      += x86_64 x86 app_bundle
+
   CONFIG      += x86_64
   DEFINES     += MAC OSX
+
   INCLUDEPATH += /usr/include
   INCLUDEPATH += /System/Library/Frameworks/OpenGL.framework/Versions/A/Headers
   INCLUDEPATH += $$QWTPATH/src
@@ -105,22 +105,17 @@ macx {
   INCLUDEPATH += /Library/Frameworks/QtOpenGL.framework/Versions/4/Headers
   INCLUDEPATH += /Library/Frameworks/QtSvg.framework/Versions/4/Headers
   INCLUDEPATH += /Library/Frameworks/QtXml.framework/Versions/4/Headers
+
   LIBS        += -L/System/Library/Frameworks/OpenGL.framework/Libraries
   LIBS        += -L/Users/eb/us3/lib
   LIBS        += -lssl -lcrypto -lqwtplot3d-qt4
   LIBS        += -framework QtOpenGL
 
-#  MYSQLPATH    = $$BUILDBASE/mysql
-#  MYSQLDIR     = $$MYSQLPATH/lib
-#  LIBS        += -lmysqlclient -L$$MYSQLDIR/lib
-  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
-#  INCLUDEPATH += $$MYSQLDIR/include
+#  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
 }
-
 
 # Do not remake cpp and h files from ui files
 #FORMS = 3dplot/mesh2mainwindowbase.ui 3dplot/lightingdlgbase.ui
-
 
 SOURCES += \
   us_admin.cpp \
