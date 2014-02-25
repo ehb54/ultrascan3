@@ -31,6 +31,12 @@
 #include "../include/us_hydrodyn_saxs_hplc.h"
 #include "../include/us_saxs_util.h"
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
 using namespace std;
 
 
@@ -82,17 +88,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       
       QLabel        *lbl_fix_curves;
       // QLineEdit     *le_fix_curves;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < QCheckBox * > cb_fix_curves;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
       QLabel        *lbl_epsilon;
       QLineEdit     *le_epsilon;
@@ -126,22 +122,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       bool          setup_run();
 
       bool          update_hplc;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
+
       vector < double > gsm_t;
       vector < double > gsm_y;
       vector < double > gsm_yp;
 
       vector < vector < double > > gaussians_undo;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
       void gsm_setup();
       long global_iter;
       long this_iterations;
@@ -195,18 +182,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
 
       unsigned int            common_size;
       unsigned int            per_file_size;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < bool >         is_common; // is common maps the offsets to layout of the regular file specific gaussians
       vector < unsigned int > offset;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
    private slots:
 
@@ -232,12 +209,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       void closeEvent(QCloseEvent *);
    
 };
-
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
 
 namespace HFIT_GLOBAL 
 {

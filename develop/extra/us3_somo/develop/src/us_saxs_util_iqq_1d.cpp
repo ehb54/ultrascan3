@@ -31,7 +31,7 @@ bool US_Saxs_Util::compute_1d()
       qsl_required << "1dsamplerotations";
       qsl_required << "1daxisrotations";
       qsl_required << "1drotationfile";
-      for ( unsigned int i = 0; i < qsl_required.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) qsl_required.size(); i++ )
       {
          if ( !control_parameters.count( qsl_required[ i ] ) )
          {

@@ -11,12 +11,6 @@
 #include <qwt_scale_engine.h>
 #endif
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
-
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
 #define UHSH_VAL_DEC 8

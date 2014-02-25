@@ -1231,7 +1231,8 @@ long US_Saxs_Util::min_gsm_5_1(our_vector *i, double epsilon, long max_iter) {
    double a, b, x;
    double s1_s2, s1_s3, s2_s3;
    double s1_2, s2_2, s3_2;
-   double prev_s2, prev_g_s2;
+   // double prev_s2;
+   double prev_g_s2;
    double fitness;
    long iter = 0l;
    int reps, last_reps = 0;
@@ -1384,7 +1385,7 @@ long US_Saxs_Util::min_gsm_5_1(our_vector *i, double epsilon, long max_iter) {
          x = -b / (2e0 * a);
 
          prev_g_s2 = g_s2;
-         prev_s2 = s2;
+         // prev_s2 = s2;
 
 #if defined(DEBUG_GSM)
          printf("new x = %.12g\n", x);
@@ -1583,7 +1584,8 @@ long US_Saxs_Util::min_fr_pr_cgd(our_vector *i, double epsilon, long max_iter) {
    double a, b, x;
    double s1_s2, s1_s3, s2_s3;
    double s1_2, s2_2, s3_2;
-   double prev_s2, prev_g_s2;
+   // double prev_s2;
+   double prev_g_s2;
    long iter = 0l;
    int reps, last_reps = 0;
    double gg, ggd;
@@ -1751,7 +1753,7 @@ long US_Saxs_Util::min_fr_pr_cgd(our_vector *i, double epsilon, long max_iter) {
          x = -b / (2e0 * a);
 
          prev_g_s2 = g_s2;
-         prev_s2 = s2;
+         // prev_s2 = s2;
 
 #if defined(DEBUG_GSM)
          printf("new x = %.12g\n", x);
@@ -1993,7 +1995,8 @@ long US_Saxs_Util::min_hessian_bfgs(our_vector *ip, double epsilon, long max_ite
    double a, b, x;
    double s1_s2, s1_s3, s2_s3;
    double s1_2, s2_2, s3_2;
-   double prev_s2, prev_g_s2;
+   // double prev_s2;
+   double prev_g_s2;
    long iter = 0l;
    int reps, last_reps = 0;
    int i,j;
@@ -2178,7 +2181,7 @@ long US_Saxs_Util::min_hessian_bfgs(our_vector *ip, double epsilon, long max_ite
          x = -b / (2e0 * a);
 
          prev_g_s2 = g_s2;
-         prev_s2 = s2;
+         // prev_s2 = s2;
 
 #if defined(DEBUG_GSM)
          printf("new x = %.12g\n", x);
@@ -3471,11 +3474,11 @@ bool US_Saxs_Util::wiki(QString &result)
       .arg(p_project)
       ;
 
-   bool any_saxs_at_all = false;
-   bool any_saxs_samples = false;
+   // bool any_saxs_at_all = false;
+   // bool any_saxs_samples = false;
    bool any_saxs_buffers = false;
    bool any_waxs_at_all = false;
-   bool any_waxs_samples = false;
+   // bool any_waxs_samples = false;
    bool any_waxs_buffers = false;
 
    for ( unsigned int i = 0; i < wave_names_vector.size(); i++ )
@@ -3494,10 +3497,10 @@ bool US_Saxs_Util::wiki(QString &result)
          ;
       if ( wave_types[wave_names_vector[i]] == "saxs" )
       {
-         any_saxs_at_all = true;
+         // any_saxs_at_all = true;
          if ( wave_concs[wave_names_vector[i]] ) 
          {
-            any_saxs_samples = true;
+            // any_saxs_samples = true;
          } else {
             any_saxs_buffers = true;
          }
@@ -3507,7 +3510,7 @@ bool US_Saxs_Util::wiki(QString &result)
          any_waxs_at_all = true;
          if ( wave_concs[wave_names_vector[i]] ) 
          {
-            any_waxs_samples = true;
+            // any_waxs_samples = true;
          } else {
             any_waxs_buffers = true;
          }
@@ -5192,7 +5195,7 @@ bool US_Saxs_Util::merge_projects(
       Q3TextStream ts2(&f2);
 
       QString saxs_guinier;
-      bool start_collecting_saxs_guinier = false;
+      // bool start_collecting_saxs_guinier = false;
       int start_collecting = -1;
       bool link_done = false;
 
@@ -5203,7 +5206,7 @@ bool US_Saxs_Util::merge_projects(
          if ( line.contains("Guinier Summary") )
          {
             start_collecting++;
-            start_collecting_saxs_guinier = true;
+            // start_collecting_saxs_guinier = true;
          }
          if ( line.contains("== Project source file ==") )
          {
@@ -7481,9 +7484,9 @@ void US_Saxs_Util::natural_spline( vector < double > &x,
                                    vector < double > &y2 )
 {
    double  p;
-   double  qn;
+   // double  qn;
    double  sig;
-   double  un;
+   // double  un;
    vector < double > u(x.size());
    
    y2.resize(x.size());
@@ -7499,7 +7502,7 @@ void US_Saxs_Util::natural_spline( vector < double > &x,
       u [ i ] = ( 6e0 * u[ i ] / ( x[ i + 1 ] - x[ i - 1 ] ) - sig * u[ i - 1 ] ) / p;
    }
    
-   qn = un = 0e0;
+   // qn =  un = 0e0;
    
    y2[ x.size() - 1 ] = 0e0;
    

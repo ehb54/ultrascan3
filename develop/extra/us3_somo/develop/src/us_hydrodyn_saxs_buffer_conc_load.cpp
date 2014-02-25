@@ -37,7 +37,7 @@ US_Hydrodyn_Saxs_Buffer_Conc_Load::US_Hydrodyn_Saxs_Buffer_Conc_Load(
    // remove rows that are not all numeric
    QRegExp rx_numeric( "^(-|\\+|)(\\d*(|\\.)(\\d+))(|(e|E)(-|\\+|)\\d+)$" );
 
-   for ( unsigned int i = 0; i < qsl_text.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) qsl_text.size(); i++ )
    {
       QString qs = qsl_text[ i ].stripWhiteSpace();
       QStringList line = QStringList::split( rx_split, qs );
@@ -46,7 +46,7 @@ US_Hydrodyn_Saxs_Buffer_Conc_Load::US_Hydrodyn_Saxs_Buffer_Conc_Load(
          lines.push_back( line );
          vector < QString > tmp_data;
          bool all_numeric = true;
-         for ( unsigned int j = 0; j < line.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) line.size(); j++ )
          {
             if ( rx_numeric.search( line[ j ].stripWhiteSpace() ) != -1 )
             {
@@ -289,9 +289,9 @@ csv US_Hydrodyn_Saxs_Buffer_Conc_Load::current_csv()
 {
    csv tmp_csv = disp_csv;
    
-   for ( unsigned int i = 0; i < disp_csv.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) disp_csv.data.size(); i++ )
    {
-      for ( unsigned int j = 0; j < disp_csv.data[i].size(); j++ )
+      for ( unsigned int j = 0; j < (unsigned int) disp_csv.data[i].size(); j++ )
       {
          tmp_csv.data[i][j] = t_csv->text( i, j );
       }
@@ -420,9 +420,9 @@ QString US_Hydrodyn_Saxs_Buffer_Conc_Load::csv_to_qstring( csv from_csv )
    qs += QString( "# header size %1\n" ).arg( from_csv.header.size() );
    qs += QString( "# data size %1\n" ).arg( from_csv.data.size() );
    
-   for ( unsigned int i = 0; i < from_csv.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) from_csv.data.size(); i++ )
    {
-      for ( unsigned int j = 0; j < from_csv.data[i].size(); j++ )
+      for ( unsigned int j = 0; j < (unsigned int) from_csv.data[i].size(); j++ )
       {
          qs += QString("%1%2").arg(j ? "," : "").arg(from_csv.data[i][j]);
       }
@@ -437,9 +437,9 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::reload_csv()
    // cout << csv_to_qstring( disp_csv );
    t_csv->setNumRows( disp_csv.data.size() );
    t_csv->setNumCols( disp_csv.header.size() );
-   for ( unsigned int i = 0; i < disp_csv.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) disp_csv.data.size(); i++ )
    {
-      for ( unsigned int j = 0; j < disp_csv.data[ i ].size(); j++ )
+      for ( unsigned int j = 0; j < (unsigned int) disp_csv.data[ i ].size(); j++ )
       {
          t_csv->setText( i, j, disp_csv.data[ i ][ j ]);
       }
@@ -451,7 +451,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::trial()
    // go through original csv & try to find matches
    map < QString, QString > concs;
 
-   for ( unsigned int i = 0; i < csv1->data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) csv1->data.size(); i++ )
    {
       if ( csv1->data[ i ].size() > 1 )
       {
@@ -464,7 +464,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::trial()
 
    map < QString, QString > loaded_concs;
 
-   for ( unsigned int i = 0; i < tmp_csv.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) tmp_csv.data.size(); i++ )
    {
       if ( tmp_csv.data[ i ].size() > lbl_name->text().toUInt() - 1 &&
            tmp_csv.data[ i ].size() > lbl_conc->text().toUInt() - 1 )
@@ -504,7 +504,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::trial()
 
    trial_csv = *csv1;
 
-   for ( unsigned int i = 0; i < trial_csv.data.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) trial_csv.data.size(); i++ )
    {
       if ( trial_csv.data[ i ].size() > 1 &&
            new_concs.count( trial_csv.data[ i ][ 0 ] ) )

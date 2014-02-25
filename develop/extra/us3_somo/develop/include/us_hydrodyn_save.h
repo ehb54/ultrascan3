@@ -34,6 +34,12 @@
 #include "../include/us_hydrodyn_results.h"
 #include "../include/us_hydrodyn_hydro.h"
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
 using namespace std;
 
 struct save_data
@@ -137,11 +143,6 @@ class US_EXTERN US_Hydrodyn_Save : public Q3Frame
       QPushButton                   *pb_add;
       QPushButton                   *pb_remove;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < Q3ListBox * >         lb_possible;
 
       vector < QString >            field;
@@ -168,12 +169,6 @@ class US_EXTERN US_Hydrodyn_Save : public Q3Frame
 #define DT_TRIPLE_DOUBLE            6
 #define DT_DOUBLE_NA                7
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
-
       QPushButton   *pb_help;
       QPushButton   *pb_cancel;
 
@@ -199,5 +194,11 @@ class US_EXTERN US_Hydrodyn_Save : public Q3Frame
       void closeEvent(QCloseEvent *);
    
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif

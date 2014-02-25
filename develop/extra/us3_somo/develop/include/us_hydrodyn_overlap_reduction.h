@@ -19,6 +19,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+
+#ifdef WIN32
+# if !defined( QT4 )
+#  pragma warning ( disable: 4251 )
+# endif
+#endif
+
 using namespace std;
 
 struct overlap_reduction
@@ -52,19 +59,7 @@ class US_EXTERN US_Hydrodyn_OR : public Q3Frame
       struct overlap_reduction *o_r;
       bool *replicate_o_r_method;
 
-#ifdef WIN32
-# if !defined( QT4 )
-#  pragma warning ( disable: 4251 )
-# endif
-#endif
-
       vector < void * > *other_ORs;  // this is to reference all _OR's when replication is used
-
-#ifdef WIN32
-# if !defined( QT4 )
-#  pragma warning ( default: 4251 )
-# endif
-#endif
 
       void *us_hydrodyn;
 
@@ -99,6 +94,12 @@ class US_EXTERN US_Hydrodyn_OR : public Q3Frame
       void update_sync(double);
       void update_hierarch(double);
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+#  pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif
 

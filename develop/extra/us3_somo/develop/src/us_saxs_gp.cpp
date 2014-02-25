@@ -31,7 +31,7 @@ QString sgp_node::validate_params()
       << "branchmax";
       
    QString qs;
-   for ( unsigned int i = 0; i < params.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) params.size(); i++ )
    {
       if ( !sgp_params.count( params[ i ] ) )
       {
@@ -69,7 +69,7 @@ QString sgp_node::default_params()
 
    QString qs;
 
-   for ( unsigned int i = 0; i < params.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) params.size(); i++ )
    {
       if ( !sgp_params.count(  params[ i ] ) )
       {

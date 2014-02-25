@@ -50,7 +50,7 @@ bool US_PM::best_vary_one_param(
    double this_fit;
 
    double delta      = best_delta_start;
-   double prev_size;
+   // double prev_size;
    double best_size  = 1e-99;
 
    double low_limit  = best_delta_size_min;
@@ -132,7 +132,7 @@ bool US_PM::best_vary_one_param(
                break;
             }
             prev_fit = this_fit;
-            prev_size = params[ param_to_vary ];
+            // prev_size = params[ param_to_vary ];
             steps_without_change = 0;
          } else {
             //             QString qs = 
@@ -209,8 +209,8 @@ bool US_PM::best_vary_two_param(
    double low_limit  = best_delta_size_min;
    double high_limit = best_delta_size_max;
 
-   double prev_size;
-   double best_size;
+   // double prev_size;
+   // double best_size;
 
    double best_fit = 1e99;
    double prev_fit = 1e99;
@@ -243,7 +243,7 @@ bool US_PM::best_vary_two_param(
          if ( this_fit < prev_fit )
          {
             best_fit = this_fit;
-            best_size = params[ param_to_vary_2 ];
+            // best_size = params[ param_to_vary_2 ];
             model = this_model;
          }
          if ( this_fit > prev_fit )
@@ -251,7 +251,7 @@ bool US_PM::best_vary_two_param(
             break;
          }
          prev_fit = this_fit;
-         prev_size = params[ param_to_vary_2 ];
+         // prev_size = params[ param_to_vary_2 ];
 
       }
       if ( last_fitness_3_pos < 0e0 ||
@@ -420,7 +420,7 @@ bool US_PM::best_vary_one_param(
    double this_fit;
 
    double delta      = best_delta_start;
-   double prev_size;
+   // double prev_size;
    double best_size  = -1e99;
 
    double low_limit  = low_fparams [ param_to_vary - 1 ];
@@ -521,7 +521,7 @@ bool US_PM::best_vary_one_param(
                break;
             }
             prev_fit = this_fit;
-            prev_size = params[ param_to_vary ];
+            // prev_size = params[ param_to_vary ];
             steps_without_change = 0;
          } else {
             //             QString qs = 
@@ -601,8 +601,8 @@ bool US_PM::best_vary_two_param(
    us_timers.start_timer ( qs_timer );
 
    double delta      = best_delta_start;
-   double prev_size;
-   double best_size;
+   // double prev_size;
+   // double best_size;
 
    double low_limit  = low_fparams [ param_to_vary_2 - 1 ];
    double high_limit = high_fparams[ param_to_vary_2 - 1 ];
@@ -659,7 +659,7 @@ bool US_PM::best_vary_two_param(
          if ( this_fit < prev_fit )
          {
             best_fit = this_fit;
-            best_size = params[ param_to_vary_2 ];
+            // best_size = params[ param_to_vary_2 ];
             model = this_model;
             best_params = params;
          }
@@ -668,7 +668,7 @@ bool US_PM::best_vary_two_param(
             break;
          }
          prev_fit = this_fit;
-         prev_size = params[ param_to_vary_2 ];
+         // prev_size = params[ param_to_vary_2 ];
 
       }
       if ( last_fitness_3_pos < 0e0 ||

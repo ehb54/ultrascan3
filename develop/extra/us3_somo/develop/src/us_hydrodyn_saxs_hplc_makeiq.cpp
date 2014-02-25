@@ -823,7 +823,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    vector < double >                       g_area_sum; // a vector of the gaussian area
 
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) files.size(); i++ )
    {
       vector < vector < double > > tmp_v;
       vector < double >            tmp_sum;

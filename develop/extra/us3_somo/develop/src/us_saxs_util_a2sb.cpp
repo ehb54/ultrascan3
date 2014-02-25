@@ -40,7 +40,7 @@ bool US_Saxs_Util::a2sb_validate()
    {
       qsl_required << "a2sbcubeside";
       
-      for ( unsigned int i = 0; i < qsl_required.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) qsl_required.size(); i++ )
       {
          if ( !control_parameters.count( qsl_required[ i ] ) )
          {
@@ -140,7 +140,7 @@ bool US_Saxs_Util::a2sb_run()
    bool failed = false;
 
    for ( unsigned int current_model = 0; 
-         current_model < model_vector_as_loaded.size(); 
+         current_model < (unsigned int) model_vector_as_loaded.size(); 
          current_model++ )
    {
       if ( failed )

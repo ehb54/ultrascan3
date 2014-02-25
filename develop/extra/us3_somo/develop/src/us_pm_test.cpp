@@ -57,8 +57,8 @@ QString US_PM::test( QString name, QString oname )
    double       grid_conversion_factor = 1e0;
    int          max_dimension          = USPM_MAX_VAL;
    double       drho                   = 1e-1;
-   double       buffer_e_density       = 0e0;
-   double       ev                     = 0e0;
+   // double       buffer_e_density       = 0e0;
+   // double       ev                     = 0e0;
    unsigned int max_harmonics          = 12;
    // unsigned int fibonacci_grid         = 17;
    bool         only_last_model        = false;
@@ -69,8 +69,8 @@ QString US_PM::test( QString name, QString oname )
       grid_conversion_factor = ts.readLine().stripWhiteSpace().toDouble();
       max_dimension          = ts.readLine().stripWhiteSpace().toInt   ();
       drho                   = ts.readLine().stripWhiteSpace().toDouble();
-      buffer_e_density       = ts.readLine().stripWhiteSpace().toDouble();
-      ev                     = ts.readLine().stripWhiteSpace().toDouble();
+      /* buffer_e_density       = */ ts.readLine().stripWhiteSpace().toDouble();
+      /* ev                     = */ ts.readLine().stripWhiteSpace().toDouble();
       max_harmonics          = ts.readLine().stripWhiteSpace().toUInt();
       // fibonacci_grid         = ts.readLine().stripWhiteSpace().toUInt();
       only_last_model        = ts.readLine().stripWhiteSpace().lower() == "only_last";

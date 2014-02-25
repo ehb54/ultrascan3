@@ -49,11 +49,13 @@ static Q3TextEdit *editor;
 #define MAXCYCLES 40
 // #define DEBUGMSG
 
-static void dbg(const char *s) {
+static void dbg(const char *
+#if defined(DEBUGMSG)
+                s
+#endif
+                ) {
 #if defined(DEBUGMSG)
    printf("sr: %s\n",s); fflush(stdout);
-#else
-   *s++;*s--;  // avoid warning
 #endif
 }
 
@@ -1346,7 +1348,7 @@ surfracer_main(float prober,
    // FILE *pdbfile;
    // FILE *asafile;
    // FILE *cavfile;
-   FILE *resfile;
+   // FILE *resfile;
 
    float uijk[3];
    float utb[3];
@@ -1396,9 +1398,9 @@ surfracer_main(float prober,
    int cyc1;
    int nvincyc[MAXCYCLES];
 
-   clock_t start1;
-   clock_t end1;
-   clock_t start2;
+   // clock_t start1;
+   // clock_t end1;
+   // clock_t start2;
    // clock_t end2;
 
 #if defined(US_SURFRACER_COMPUTE_EXTRAS)
@@ -1828,7 +1830,7 @@ surfracer_main(float prober,
 
          delta = (2. + prober) * 2.;   /*box size around each atom */
 
-         start1 = clock();
+         // start1 = clock();
 
          for (ai = 0; ai <= atomnumber - 1; ai++)   /*taking an atom (going through all) */
          {
@@ -2083,7 +2085,7 @@ surfracer_main(float prober,
          free(atomcon);      /*frees space that will not be used further */
          atomcon = (int *) 0;
 
-         end1 = clock();
+         // end1 = clock();
 
          /*optimizing memory allocation here */
          if (nv > 0)         /*if there are vertices */
@@ -2214,7 +2216,7 @@ surfracer_main(float prober,
             edgeatom[i] = -1;
          }
 
-         start2 = clock();
+         // start2 = clock();
 
          //printf("\nSurface built successfully...");
          //printf("\nStarting area calculation..."); fflush(stdout);
@@ -2398,9 +2400,8 @@ surfracer_main(float prober,
    }
    return (0);
 
-   resfile = fopen("result.txt", "a");   /*resfile will have the breakdown of all areas */
-
 #if defined(US_SURFRACER_COMPUTE_EXTRAS)
+   resfile = fopen("result.txt", "a");   /*resfile will have the breakdown of all areas */
    /*calculating the curvatures*/
    if (calcmode == 3)
       for (i = 0; i <= atomnumber - 1; i++)

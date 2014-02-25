@@ -170,7 +170,7 @@ namespace nr {
       double rjl;
       double rjl1;
       double rjmu;
-      double rjp1;
+      // double rjp1;
       double rjpl;
       double rjtemp;
       double ry1;
@@ -254,7 +254,7 @@ namespace nr {
       rjl  = isign * FPMIN;
       rjpl = h * rjl;
       rjl1 = rjl;
-      rjp1 = rjpl;
+      // rjp1 = rjpl;
       fact = xnu * xi;
       for ( l = nl; l >= 1; l-- ) 
       {

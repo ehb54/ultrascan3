@@ -226,6 +226,7 @@ bool US_Saxs_Util::run_dammin()
    response << "___run___";
    args     << "dammin";
 
+
    // check requireed parameters defined ?
 
    int argc = 0;

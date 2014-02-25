@@ -491,7 +491,7 @@ void US_Hydrodyn_Saxs_Hplc_Conc::load()
       
    if ( QFileInfo( fname ).extension( false ).contains( QRegExp( "^(sbc|SBC)$" ) ) )
    {
-      for ( unsigned int i = 0; i < qsl_lines.size(); i++ ) 
+      for ( unsigned int i = 0; i < (unsigned int) qsl_lines.size(); i++ ) 
       {
          QString qs = qsl_lines[ i ];
          QStringList qsl = csv_parse_line( qs );

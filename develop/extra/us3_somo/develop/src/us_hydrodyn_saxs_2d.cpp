@@ -25,12 +25,6 @@
 // #define UHS2_IMAGE_DEBUG
 // #define UHS2_ROTATIONS_DEBUG
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
-
 /* **********************************************************
     Thus the scattering amplitude of a dry protein should be : 
 

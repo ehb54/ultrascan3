@@ -48,23 +48,41 @@ unix {
 }
 
 win32 {
-  message ("Configuring for the Microsoft Windows Platform...")
-  MINGWDIR    = C:/mingw
-  TEMPLATE             = lib
-  TARGET               = us_somo
-  QWTPATH              = C:/qwt-5.2.3
-  CONFIG              += qt thread warn exceptions dll release
-  DEFINES             += QT_DLL QWT_USE_DLL US_MAKE_DLL US_MAKE_GUI_DLL
-  LIBS                += $$QWTPATH/lib/libqwt5.a
-  INCLUDEPATH         += $$QWTPATH/src
-  INCLUDEPATH         += C:/us3/qwtplot3d-qt4/include
-  LIBS                += C:/us3/lib/libqwtplot3d-qt4.a
-  LIBS                += -lQtOpenGL
-  LIBS                += $$MINGWDIR/lib/libglu32.a
-  LIBS                += $$MINGWDIR/lib/libopengl32.a
-  INCLUDEPATH         += src
-  DEFINES             += MINGW
-  DESTDIR              = ../bin
+  MINGWDIR        = C:/mingw
+  QTPATH          = C:/Qt/4.8.4
+  QWTPATH         = C:/qwt-5.2.3
+  US3PATH         = C:/Users/Admin/Documents/ultrascan3
+  QWT3DPATH       = $$US3PATH/qwtplot3d-qt4
+  DESTDIR         = ../bin
+
+  QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_STL
+  QMAKESPEC       = win32-g++-4.6
+
+  CONFIG         += qt warn_on opengl thread zlib release
+  CONFIG         += dll exceptions
+
+  DEFINES        += US_MAKE_DLL US_MAKE_GUI_DLL
+  DEFINES        += MINGW
+
+  contains( DEBUGORRELEASE, debug ) {
+    QWTLIB        = $$QWTPATH/lib/libqwtd5.a
+  } else {
+    QWTLIB        = $$QWTPATH/lib/libqwt5.a
+  }
+
+  INCLUDEPATH    += src
+  INCLUDEPATH    += $$QWT3DPATH/include
+
+  LIBS           += -lQtOpenGL4
+  LIBS           += $$QWTLIB
+  LIBS           += $$MINGWDIR/lib/libkernel32.a
+  LIBS           += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
+  LIBS           += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
+
+  LIBS           += -L$$QWTPATH/lib -lqwt5
+  LIBS           += $$US3PATH/lib/libqwtplot3d-qt4.a
+  LIBS           += -L$$US3PATH/lib -lqwtplot3d-qt4
+
 }
 
 macx {
@@ -748,4 +766,4 @@ IMAGES = \
 #The following line was inserted by qt3to4
 QT += qt3support 
 #The following line was inserted by qt3to4
-QT +=  
+QT +=  opengl 

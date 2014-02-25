@@ -4071,13 +4071,14 @@ autovalori()
 
    int a1, a2;
    long double b, c, d;
-   long double a[3][3], slip;
+   long double a[3][3];
+   // long slip;
 
    /* COMPUTATION OF THE EIGENVALUES dl1, dl2, dl3  OF THE MATRIX A */
 
-   slip = 1.0;
-   if (cc == 2)
-      slip = 1.5;
+   // slip = 1.0;
+   // if (cc == 2)
+   //    slip = 1.5;
 
    for (a1 = 0; a1 < 3; a1++)
       for (a2 = 0; a2 < 3; a2++)
@@ -4404,7 +4405,7 @@ relax_rigid_calc()
 
    // char pluto;
    float ddd[3];
-   float rrr[3];
+   // float rrr[3];
    long double ddr[3];
    long double pd[3] = { 0.0, 0.0, 0.0 };
    int a;
@@ -4445,7 +4446,7 @@ relax_rigid_calc()
    for (a = 0; a < 3; a++)
    {
       ddd[a] = 0.0;
-      rrr[a] = 0.0;
+      // rrr[a] = 0.0;
    }
 
    a = (int) 0.0;
@@ -5839,7 +5840,7 @@ overlap()
 {
    int i, j, flag;
    float dist;
-   float overlval;
+   // float overlval;
 #if defined(USE_MAIN)
    char r5;
 #endif
@@ -5860,7 +5861,7 @@ overlap()
       for (j = i + 1; j < nat; j++)
       {
          dist = pow((dt[i].x - dt[j].x), 2) + pow((dt[i].y - dt[j].y), 2) + pow((dt[i].z - dt[j].z), 2);
-         overlval = (dist - pow((dt[i].r + dt[j].r), 2));
+         // overlval = (dist - pow((dt[i].r + dt[j].r), 2));
          // if (dist - pow((dt[i].r + dt[j].r), 2)) < -0.01)
          float diff = sqrt(dist) - (dt[i].r + dt[j].r);
          diff = ((int)((diff * decpow) + (diff > 0 ? 0.5 : -0.5))) / (float)decpow;
@@ -5964,8 +5965,11 @@ static void
 calcqij()
 {
    int i, j, k, l, inx;
-   float qqx, qqy, qqz, del, aa, ri, rj, d2, qq, rr, tt;
-   float tempij[3], tempji[3], dij, etai;
+   float qqx, qqy, qqz, del, aa, ri;
+   // float rj;
+   float d2, qq, rr, tt;
+   // float tempij[3];
+   float tempji[3], dij, etai;
 
    del = 0.0;
 
@@ -5974,7 +5978,7 @@ calcqij()
       for (j = i; j < nat; j++)
       {
          ri = dt[i].r;
-         rj = dt[j].r;
+         // rj = dt[j].r;
 
          if (cc == 1)   /* Corrected 9 Oct 1997 MR */
             etai = 6.0 * M_PI * ETAo * ri;
@@ -5986,17 +5990,17 @@ calcqij()
          qqx = dt[i].x - dt[j].x;
          aa += qqx * qqx;
          tempji[0] = (-qqx);
-         tempij[0] = qqx;
+         // tempij[0] = qqx;
 
          qqy = dt[i].y - dt[j].y;
          aa += qqy * qqy;
          tempji[1] = (-qqy);
-         tempij[1] = qqy;
+         // tempij[1] = qqy;
 
          qqz = dt[i].z - dt[j].z;
          aa += qqz * qqz;
          tempji[2] = (-qqz);
-         tempij[2] = qqz;
+         // tempij[2] = qqz;
 
          aa = sqrt(aa);
          dij = aa;
@@ -6097,7 +6101,7 @@ static void
 secondo(long double b, long double c)
 {
    float delta, pfraz, pin;
-   int coco;
+   // int coco;
 
    delta = b * b - 4.0 * c;
 
@@ -6115,8 +6119,8 @@ secondo(long double b, long double c)
       dl2 = (-b + sqrt(b * b - 4.0 * c)) / 2.0;
       dl3 = (-b - sqrt(b * b - 4.0 * c)) / 2.0;
    }
-   else
-      coco = 1;      /* TWO COMPLEX CONJUGATED EIGENVALUES */
+   // else
+   //    coco = 1;      /* TWO COMPLEX CONJUGATED EIGENVALUES */
 
    /*
      if(coco==1)
@@ -6142,7 +6146,7 @@ terzo(long double b, long double c, long double d)
    // float nb, nc, nd;
    float p, q, s, r, pq, epsi, y1, y2, y3, alfa, alf1;
    float unterzo, beta, bet1, rad, pfraz, pin;
-   int coco;
+   // int coco;
 
    if ((c == 0.0) && (d == 0.0))
    {
@@ -6169,7 +6173,8 @@ terzo(long double b, long double c, long double d)
    pfraz = pfraz - pin;
 
    if ((s > 0.0) && ((pin != 0) || ((pin == 0) && (pfraz > 0.01))))
-      coco = 1;      /* TWO COMPLEX CONJUGATED EIGENVALUES */
+   {}
+   //      coco = 1;      /* TWO COMPLEX CONJUGATED EIGENVALUES */
 
    else if ((s < 0.0) && ((pin != 0) || ((pin == 0) && (pfraz > 0.01))))
    {
@@ -6231,18 +6236,20 @@ terzo(long double b, long double c, long double d)
 static void
 visco()
 {
-   float numx, numy, numz, den, bc;
-   float temp, temp1, temp2, temp3, etai, mas, sum1, sum11, sum111;
+   // float numx, numy, numz, den, bc;
+   float temp, temp1, temp2, temp3, etai;
+   // float mas;
+   float sum1, sum11, sum111;
    int i, j;
    // float a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, E, H, I, RRcosalfa, ri, rj, Ri, Rj, R;
 
    // int Na = 1;
 
-   mas = 0.0;
-   numx = 0.0;
-   numy = 0.0;
-   numz = 0.0;
-   den = 0.0;
+   // mas = 0.0;
+   // numx = 0.0;
+   // numy = 0.0;
+   // numz = 0.0;
+   // den = 0.0;
    vis = 0.0;
 
    /* COMPUTATION OF THE VISCOSITY CENTER COORDINATES */
@@ -6312,10 +6319,10 @@ visco()
 
    Mxv(cv, bb);
 
-   if (cc == 1)
-      bc = 6.0;
-   else
-      bc = 4.0;
+   // if (cc == 1)
+   //    bc = 6.0;
+   // else
+   //    bc = 4.0;
 
    for (i = 0; i < nat; i++)
    {

@@ -35,7 +35,7 @@ bool US_Saxs_Util::nsa_sga_validate()
       qsl_required << "nsapopulation";
       qsl_required << "nsasgaincrement";
       
-      for ( unsigned int i = 0; i < qsl_required.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) qsl_required.size(); i++ )
       {
          if ( !control_parameters.count( qsl_required[ i ] ) )
          {

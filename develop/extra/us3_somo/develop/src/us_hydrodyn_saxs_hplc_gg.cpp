@@ -2,12 +2,6 @@
 #include "../include/us_hydrodyn_saxs_hplc.h"
 // #include <assert.h>
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
-
 bool US_Hydrodyn_Saxs_Hplc::unified_ggaussian_to_f_gaussians()
 {
    if ( !unified_ggaussian_ok )

@@ -318,7 +318,7 @@ bool US_Saxs_Util::sgp_init_sgp()
       << "radiusmax"
       << "branchmax";
 
-   for ( unsigned int i = 0; i < param.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) param.size(); i++ )
    {
       sgp_params[ sgp_param[ i ] ] = control_parameters[ param[ i ] ].toDouble();
    }
@@ -381,7 +381,7 @@ bool US_Saxs_Util::sgp_validate()
       qsl_required << "sgppopulation";
       qsl_required << "targetedensity";
       
-      for ( unsigned int i = 0; i < qsl_required.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) qsl_required.size(); i++ )
       {
          if ( !control_parameters.count( qsl_required[ i ] ) )
          {

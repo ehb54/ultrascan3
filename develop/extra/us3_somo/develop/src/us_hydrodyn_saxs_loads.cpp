@@ -213,7 +213,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             QStringList qsl_data = qsl.grep(",\"I(q)\",");
             QStringList qsl_sd   = qsl.grep(",\"I(q) sd\",");
             map < QString, QString > sd_map;
-            for ( unsigned int i = 0; i < qsl_sd.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int) qsl_sd.size(); i++ )
             {
                QStringList qsl_s = QStringList::split( ",", qsl_sd[i], true );
                sd_map[ qsl_s[ 0 ] ] = qsl_sd[ i ];
@@ -221,19 +221,19 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                
             US_Saxs_Util usu;
 
-            for ( unsigned int i = 0; i < qsl_data.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int) qsl_data.size(); i++ )
             {
                QStringList qsl_d = QStringList::split( ",", qsl_data[i], true );
                vector < double > original_i;
                vector < double > original_i_error;
-               for ( unsigned int j = 2; j < qsl_d.size() - 1; j++ )
+               for ( int j = 2; j < (int) qsl_d.size() - 1; j++ )
                {
                   original_i.push_back( qsl_d[j].toDouble() );
                }
                if ( sd_map.count( qsl_d[ 0 ] ) )
                {
                   QStringList qsl_s = QStringList::split( ",", sd_map[ qsl_d[ 0 ] ], true );
-                  for ( unsigned int j = 2; j < qsl_s.size() - 1; j++ )
+                  for ( int j = 2; j < (int) qsl_s.size() - 1; j++ )
                   {
                      original_i_error.push_back( qsl_s[j].toDouble() );
                   }
@@ -264,7 +264,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                   new_qsl_errors << QString( "%1,\"I(q) sd\",%2" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni_error ) );
                }
             }
-            for ( unsigned int i = 0; i < new_qsl_errors.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int) new_qsl_errors.size(); i++ )
             {
                new_qsl << new_qsl_errors[ i ];
             }
@@ -589,25 +589,25 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          QStringList qsl_data = qsl.grep(",\"I(q)\",");
          QStringList qsl_sd   = qsl.grep(",\"I(q) sd\",");
          map < QString, QString > sd_map;
-         for ( unsigned int i = 0; i < qsl_sd.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) qsl_sd.size(); i++ )
          {
             QStringList qsl_s = QStringList::split( ",", qsl_sd[i], true );
             sd_map[ qsl_s[ 0 ] ] = qsl_sd[ i ];
          }
 
-         for ( unsigned int i = 0; i < qsl_data.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) qsl_data.size(); i++ )
          {
             QStringList qsl_d = QStringList::split( ",", qsl_data[i], true );
             vector < double > original_i;
             vector < double > original_i_error;
-            for ( unsigned int j = 2; j < qsl_d.size() - 1; j++ )
+            for ( int j = 2; j < (int) qsl_d.size() - 1; j++ )
             {
                original_i.push_back( qsl_d[j].toDouble() );
             }
             if ( sd_map.count( qsl_d[ 0 ] ) )
             {
                QStringList qsl_s = QStringList::split( ",", sd_map[ qsl_d[ 0 ] ], true );
-               for ( unsigned int j = 2; j < qsl_s.size() - 1; j++ )
+               for ( int j = 2; j < (int) qsl_s.size() - 1; j++ )
                {
                   original_i_error.push_back( qsl_s[j].toDouble() );
                }
@@ -627,7 +627,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                new_qsl_errors << QString( "%1,\"I(q) sd\",%2" ).arg( qsl_d[ 0 ] ).arg( vector_double_to_csv( ni_error ) );
             }
          }
-         for ( unsigned int i = 0; i < new_qsl_errors.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) new_qsl_errors.size(); i++ )
          {
             new_qsl << new_qsl_errors[ i ];
          }
