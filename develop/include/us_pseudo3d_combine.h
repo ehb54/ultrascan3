@@ -28,6 +28,12 @@
 #include <vector>
 #include <iterator>
 
+#ifdef WIN32
+# if !defined( QT4 )
+#pragma warning ( disable: 4251 )
+# endif
+#endif
+
 struct distro_system
 {
    list <Solute> s_distro;
@@ -50,20 +56,8 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
       US_Pseudo3D_Combine(QWidget *p = 0, const char *name = 0);
       ~US_Pseudo3D_Combine();
 
-#ifdef WIN32
-# if !defined( QT4 )
-#pragma warning ( disable: 4251 )
-# endif
-#endif
-
       vector <struct distro_system> system;
       vector <QColor> current_gradient;
-
-#ifdef WIN32
-# if !defined( QT4 )
-#pragma warning ( default: 4251 )
-# endif
-#endif
 
     US_Config *USglobal;    /*!< A US_Config reference. */
       float resolution, plot_fmax, plot_fmin, plot_smax, plot_smin;
@@ -147,6 +141,12 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
       void setup_GUI();
       void closeEvent(QCloseEvent *);
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+#pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif
 

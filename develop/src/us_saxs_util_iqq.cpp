@@ -635,7 +635,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "sleep" )
       {
-#if !defined( Q_WS_WIN )
+#if !defined( Q_WS_WIN ) || defined( MINGW )
          // 999999999
          double secs = qsl[ 0 ].toDouble();
          secs *= 2e0;

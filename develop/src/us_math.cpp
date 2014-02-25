@@ -1167,7 +1167,7 @@ double us_erfc(double x)
 }
 
 
-#ifdef WIN32
+#if defined( WIN32 ) && !defined( MINGW )
 
 typedef unsigned int u_int32_t;
 typedef union

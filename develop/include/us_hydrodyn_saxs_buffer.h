@@ -40,6 +40,12 @@
 #include "qwt/scrollbar.h"
 #include "qwt/scrollzoomer.h"
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
 using namespace std;
 
 class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
@@ -223,11 +229,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QString          errormsg;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < QColor >                  plot_colors;
 
       map < QString, vector < QString > > f_qs_string;
@@ -252,11 +253,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       bool                                is_nonzero_vector( vector < double > &v );
       bool                                is_zero_vector( vector < double > &v );
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
       void save_csv_saxs_iqq();
 
       csv  current_csv();
@@ -329,11 +325,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       double                       join_mult_end;
       double                       join_mult_delta;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
 #ifdef QT4
       map < QString, QwtPlotCurve * >     plotted_curves;
       vector < QwtPlotMarker * >          plotted_markers;
@@ -344,11 +335,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       vector < long >                     plotted_markers;
       long                                wheel_curve;
       long                                join_curve;
-#endif
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
 #endif
 
       mQLineEdit                   *le_last_focus;
@@ -476,5 +462,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void closeEvent(QCloseEvent *);
    
 };
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif

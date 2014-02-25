@@ -43,13 +43,13 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_title -> setPalette      ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
-   lbl_credits_1 =  new QLabel      ( "Cite: Michael Connolly, http://biohedron.drupalgardens.com, \"MSRoll\"", this );
+   lbl_credits_1 =  new QLabel      ( "Cite: S.R. Aragon, \"A precise boundary element method for macromolecular transport properties\", J. Comp. Chem, 25, 1191-1205 (2004).", this );
    lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_credits_1 -> setMinimumHeight( minHeight1 );
    lbl_credits_1 -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
    lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold ) );
 
-   lbl_credits_2 =  new QLabel      ( "Cite: S.R. Aragon, \"A precise boundary element method for macromolecular transport properties\", J. Comp. Chem, 25, 1191-1205 (2004).", this );
+   lbl_credits_2 =  new QLabel      ( "Cite: Michael Connolly, http://biohedron.drupalgardens.com, \"MSRoll\"", this );
    lbl_credits_2 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_credits_2 -> setMinimumHeight( minHeight1 );
    lbl_credits_2 -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );

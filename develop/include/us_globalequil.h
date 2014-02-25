@@ -28,6 +28,12 @@
 #include "us_printfilter.h"
 #include "us_data_io.h"
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
 
 class US_EXTERN US_GlobalEquil : public QFrame
 {
@@ -38,13 +44,8 @@ class US_EXTERN US_GlobalEquil : public QFrame
       US_GlobalEquil(QWidget *p=0, const char *name="usglobalequil");
       ~US_GlobalEquil();
       
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
 
-    vector <struct rotorInfo> rotor_list;
+      vector <struct rotorInfo> rotor_list;
       vector <struct centerpieceInfo> cp_list;
       bool model_widget;
       bool monte_carlo_widget;
@@ -70,12 +71,6 @@ class US_EXTERN US_GlobalEquil : public QFrame
       vector <struct runinfo> run_information;
       vector <QString> scan_info;
       vector <float> residuals, original_data, yfit;
-
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
       US_MonteCarlo *monte_carlo_window;
       struct MonteCarlo mc;
@@ -191,6 +186,12 @@ class US_EXTERN US_GlobalEquil : public QFrame
       void getPlotMouseReleased(const QMouseEvent &e);
       void closeEvent(QCloseEvent *);
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif
 

@@ -760,11 +760,11 @@ add_includes( "qlayout.h" );
             my $label = "lbl_$name";
             $private .= 
                 "      QLabel *                                $label;\n" .
-                "#ifdef WIN32\n" .
+                "#if defined( WIN32 ) && !defined( QT4 )\n" .
                 "  #pragma warning ( disable: 4251 )\n" .
                 "#endif\n" .
                 "      vector < QWidget * >                    widgets_$name;\n" .
-                "#ifdef WIN32\n" .
+                "#if defined( WIN32 ) && !defined( QT4 )\n" .
                 "  #pragma warning ( default: 4251 )\n" .
                 "#endif\n" .
                 "";

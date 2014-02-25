@@ -46,7 +46,7 @@ r ___damminrandomizestructure___
 q Weight
 r ___damminweight___
 q Initial scale factor
-r ___dammininitial scale factor___
+r ___dammininitialscalefactor___
 q Fix the scale factor
 r ___damminfixscalefactor___
 q Initial annealing temperature

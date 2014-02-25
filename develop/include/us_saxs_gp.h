@@ -19,11 +19,6 @@
 
 extern  map < QString, double > sgp_params;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
 class sgp_sphere
 {
@@ -75,21 +70,9 @@ class sgp_node
    sgp_node *                      root        ();
    point                           checksum    ();
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
-
    vector < sgp_sphere >           sgp_spheres ();  // minimal structure for now
    vector < PDB_atom >             bead_model  ();
    QString                         qs_bead_model ();
-
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 
    point                           get_coordinate();
 
@@ -132,6 +115,12 @@ public:
       return node->fitness < objIn.node->fitness;
    }
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif
 

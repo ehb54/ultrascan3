@@ -29,7 +29,14 @@
 
 #include "us_hydrodyn_saxs.h"
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
 using namespace std;
+
 
 class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
 {
@@ -104,11 +111,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
 
       QString saxs_header_iqq;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < vector < double > > qs;
       vector < vector < double > > Is;
       vector < vector < double > > I_errors;
@@ -117,11 +119,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
       vector < QString >           csv_source_name_iqq;
       vector < double >            saxs_q;
       vector < vector < double > > saxs_iqq;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
       void save_csv_saxs_iqq();
 
       csv  current_csv();
@@ -160,5 +157,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
       void closeEvent(QCloseEvent *);
    
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif

@@ -3694,7 +3694,7 @@ void US_Hydrodyn::visualize( bool movie_frame,
                //               qApp->processEvents();
                while ( rasmol && rasmol->isRunning() )
                {
-#if defined(WIN32)
+#if defined(WIN32) && !defined( MINGW )
                   _sleep(1);
 #else
                   usleep(1000);

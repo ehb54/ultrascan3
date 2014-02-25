@@ -1,7 +1,7 @@
 prefix     US_Hydrodyn_Cluster_
 title      "US-SOMO: BEST cluster interface"
-credit     "Cite: Michael Connolly, http://biohedron.drupalgardens.com, \"MSRoll\""
 credit     "Cite: S.R. Aragon, \"A precise boundary element method for macromolecular transport properties\", J. Comp. Chem, 25, 1191-1205 (2004)."
+credit     "Cite: Michael Connolly, http://biohedron.drupalgardens.com, \"MSRoll\""
 name       best
 include    us_hydrodyn_cluster.h
 input      void                     * us_hydrodyn

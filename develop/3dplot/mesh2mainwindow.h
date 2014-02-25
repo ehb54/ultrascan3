@@ -13,7 +13,7 @@ class QFileDialog;
 class ColorMapPreview;
 class LightingDlg;
 
-class Mesh2MainWindow : public Mesh2MainWindowBase
+class US_EXTERN Mesh2MainWindow : public Mesh2MainWindowBase
 {
 	Q_OBJECT
 public:

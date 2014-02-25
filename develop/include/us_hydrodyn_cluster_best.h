@@ -66,11 +66,11 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       QLineEdit *                             le_bestexpand;
       QCheckBox *                             cb_bestbestvc;
       QLabel *                                lbl_opt_label;
-#ifdef WIN32
+#if defined( WIN32 ) && !defined( QT4 )
   #pragma warning ( disable: 4251 )
 #endif
       vector < QWidget * >                    widgets_opt_label;
-#ifdef WIN32
+#if defined( WIN32 ) && !defined( QT4 )
   #pragma warning ( default: 4251 )
 #endif
       void                                    hide_widgets( vector < QWidget * >, bool do_hide = true, bool do_resize = true );
