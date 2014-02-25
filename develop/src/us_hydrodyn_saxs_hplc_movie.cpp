@@ -4,8 +4,6 @@
 
 // still some hiccup on gauss replots w/residuals show:hide under suppress_replot control
 
-// note: this program uses cout and/or cerr and this should be replaced
-
 #define SLASH QDir::separator()
 
 US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
@@ -506,7 +504,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QString tag )
    QPixmap qPix = QPixmap::grabWidget( plot );
    if( qPix.isNull() )
    {
-      cout << "Failed to capture the plot for saving\n";
+      qDebug( "Failed to capture the plot for saving\n" );
       return;
    }
    save_plot( qPix, tag, mypos );
@@ -530,7 +528,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QWid
    QPixmap qPix3 = QPixmap::grabWidget( plot3 );
    if( qPix.isNull() || qPix2.isNull() || qPix3.isNull() )
    {
-      cout << "Failed to capture the plot for saving\n";
+      qDebug( "Failed to capture the plot for saving\n" );
       return;
    }
    join_maps( qPix, qPix2 );
@@ -545,7 +543,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QStr
    QPixmap qPix2 = QPixmap::grabWidget( plot2 );
    if( qPix.isNull() || qPix2.isNull() )
    {
-      cout << "Failed to capture the plot for saving\n";
+      qDebug( "Failed to capture the plot for saving\n" );
       return;
    }
    join_maps( qPix, qPix2 );

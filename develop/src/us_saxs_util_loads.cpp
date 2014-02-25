@@ -456,7 +456,7 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
    last_pdb_title .clear();
    last_pdb_filename = "FromQStringList";
 
-   for ( unsigned int i = 0; i < qsl.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
    {
       str1 = qsl[ i ];
       if ( str1.left(3) == "TER" )

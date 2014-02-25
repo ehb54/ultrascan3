@@ -76,7 +76,7 @@ int US_Tar::create( const QString& archive, const QStringList& files,
 
    if ( list ) list->clear();
 
-   for ( unsigned int i = 0; i < files.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) files.size(); i++ )
    {
       QString   current = files[ i ];
       QFileInfo f( current );
@@ -205,7 +205,7 @@ void US_Tar::write_file( const QString& file )
    memset( (void*) tar_header.h, 0, sizeof( tar_header ) );
 
    // Populate the header
-   if ( file.length() > sizeof( tar_header.header.name ) - 1 )
+   if ( (int) file.length() > (int) sizeof( tar_header.header.name ) - 1 )
       //throw TAR_FILENAMETOOLONG;
       write_long_filename( file );
 
@@ -691,7 +691,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
    
    
 
-   for ( unsigned int i = 0; i < dirs.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) dirs.size(); i++ )
    {
       struct utimbuf time;
       time.actime  = times[ i ];  
