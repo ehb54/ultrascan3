@@ -50,6 +50,12 @@
 #endif
 
 #ifdef MAC
+  #ifdef PLATFORM
+  #undef PLATFORM
+  #endif
+  #ifdef TITLE
+  #undef TITLE
+  #endif
   #define PLATFORM "mac"
   #define TITLE    "Macintosh"
 #endif

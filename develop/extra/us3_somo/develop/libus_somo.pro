@@ -114,8 +114,10 @@ macx {
 #  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
 }
 
+
 # Do not remake cpp and h files from ui files
 #FORMS = 3dplot/mesh2mainwindowbase.ui 3dplot/lightingdlgbase.ui
+
 
 SOURCES += \
   us_admin.cpp \
