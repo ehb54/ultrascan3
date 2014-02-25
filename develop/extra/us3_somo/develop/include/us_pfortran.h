@@ -114,7 +114,9 @@
 #endif
 
 #ifdef MSCPLAT               /* 32 bit MicroSoft C under WIN32S */
+#ifndef _CRT_SECURE_NO_DEPRECATE 
 #define _CRT_SECURE_NO_DEPRECATE  1
+#endif
 #define DLL_EXPORT __declspec(dllexport)
 #define A86PLAT
 #if !defined( MINGW )

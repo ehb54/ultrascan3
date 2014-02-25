@@ -4770,7 +4770,7 @@ void US_Hydrodyn_Comparative::csv_remove_column( csv &csv1, QString name )
    unsigned int col = csv1.header_map[name];
    cout << "csv_remove_column column number " << col << endl;
    
-   map < QString, int >::iterator it = csv1.header_map.find(name);
+   // map < QString, int >::iterator it = csv1.header_map.find(name);
    csv1.header_map.erase(name);
    
    unsigned int last_col = csv1.header.size() - 1;
