@@ -30,7 +30,7 @@ US_Hydrodyn_Saxs_Hplc_Conc_Load::US_Hydrodyn_Saxs_Hplc_Conc_Load(
    // remove rows that are not all numeric
    QRegExp rx_numeric( "^(-|\\+|)(\\d*(|\\.)(\\d+))(|(e|E)(-|\\+|)\\d+)$" );
 
-   for ( unsigned int i = 0; i < qsl_text.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) qsl_text.size(); i++ )
    {
       QString qs = qsl_text[ i ].stripWhiteSpace();
       QStringList line = QStringList::split( rx_split, qs );
@@ -39,7 +39,7 @@ US_Hydrodyn_Saxs_Hplc_Conc_Load::US_Hydrodyn_Saxs_Hplc_Conc_Load(
          lines.push_back( line );
          vector < QString > tmp_data;
          bool all_numeric = true;
-         for ( unsigned int j = 0; j < line.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) line.size(); j++ )
          {
             if ( rx_numeric.search( line[ j ].stripWhiteSpace() ) != -1 )
             {

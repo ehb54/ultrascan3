@@ -9652,7 +9652,7 @@ QString US_Hydrodyn_Saxs_Hplc::pad_zeros( int val, int max )
 {
    unsigned int len = QString( "%1" ).arg( max ).length();
    QString      s   = QString( "%1" ).arg( val );
-   while ( s.length() < len )
+   while ( (unsigned int) s.length() < len )
    {
       s = "0" + s;
    }

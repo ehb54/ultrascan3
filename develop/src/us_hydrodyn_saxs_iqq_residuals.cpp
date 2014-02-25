@@ -439,10 +439,10 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
                       QwtPlot::yLeft, 
                       left_axis_title
                       );
-   double minx;
-   double maxx;
-   double miny;
-   double maxy;
+   double minx = 0e0;
+   double maxx = 0e0;
+   double miny = 0e0;
+   double maxy = 0e0;
    bool any_set = false;
 
    for ( unsigned int pos = 0; pos < qs.size(); pos++ )

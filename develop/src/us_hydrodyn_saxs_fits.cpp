@@ -5,8 +5,6 @@
 #include "../include/us_revision.h"
 #include "../include/us_math.h"
 
-// note: this program uses cout and/or cerr and this should be replaced
-
 #define SLASH "/"
 #if defined(WIN32)
 #  include <dos.h>
@@ -49,7 +47,7 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
       }
    }
 
-   cout << "max_iqq_len " << max_iqq_len << endl;
+   // cout << "max_iqq_len " << max_iqq_len << endl;
 
    vector < double > use_A;
 
@@ -903,7 +901,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
    US_Saxs_Util usu;
 
    double lowest_chi2     = 9e99;
-   int    lowest_chi2_pos = 0;
+   // int    lowest_chi2_pos = 0;
 
    for ( unsigned int i = 0; i < best_fit_models.size(); i++ )
    {
@@ -935,7 +933,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       if ( !i )
       {
          lowest_chi2 = chi2[i];
-         lowest_chi2_pos = 0;
+         // lowest_chi2_pos = 0;
          lowest_rmsd = rmsds[i];
          lowest_rmsd_pos = 0;
          model = tmp_model;
@@ -943,7 +941,7 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
          if ( lowest_chi2 > chi2[i] )
          {
             lowest_chi2 = chi2[i];
-            lowest_chi2_pos = i;
+            // lowest_chi2_pos = i;
          }
          if ( lowest_rmsd > rmsds[i] )
          {
