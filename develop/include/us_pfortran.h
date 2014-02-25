@@ -12832,8 +12832,8 @@
    {
       int i;                    /* Dummy counter */
       int iret;                 /* Return value */
-      char* str;
-      int nstr;
+      // char* str;
+      // int nstr;
 
       /**************************************************************************/
       /*                                                                        */
@@ -12845,8 +12845,8 @@
       /*                                                                        */
       /**************************************************************************/
 
-      str = strg;
-      nstr = ns;
+      // str = strg;
+      // nstr = ns;
       fioier = 0;
       while(ns && (*strg == ' '))
       {                              /* Strip any leading blanks */
@@ -19260,11 +19260,11 @@ int ns;                        /* String length or integer information */
 #endif
 {
    char* strg;
-   int nstr;
+   // int nstr;
    int nc;
 
    strg = (char*) str;
-   nstr = ns;
+   // nstr = ns;
    if(ns) switch(option)
    {
    case 1:                     /* Specify file name */

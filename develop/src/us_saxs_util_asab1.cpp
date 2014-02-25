@@ -52,7 +52,7 @@ struct dati2
 
 static void mami1();
 static void ragir();
-static void init();
+// static void init();
 static void init2();
 static void formato();
 static void scala();
@@ -82,7 +82,7 @@ static struct dati2 dis[IMAX];
 
 static char ridotto[20], ridotto_rmc[20];   /* array for the output file name after ASA re-check */
 
-static char ragcol[SMAX];   /* array for the file name where radii, masses and colors of the beads are stored */
+// static char ragcol[SMAX];   /* array for the file name where radii, masses and colors of the beads are stored */
 
 static int nat;
 static int numdis;   /* index of the bead under examination */
@@ -91,8 +91,8 @@ static int form, form1, vel;
 static int quota, passi, cont1;
 static int q1;
 static int q2;
-static int corr;
-static int sim;
+// static int corr;
+// static int sim;
 static int rbulk;
 static int flag1;
 static int countb;
@@ -108,7 +108,8 @@ static float fl, k;
 static float maxx, minx, maxy, miny, maxz, minz;
 static float xp1, xp2, yp1, yp2;
 static float m1, m2, medio, base, altez;
-static float arr1[60], ro, ro1, xm, ym, zm;
+// static float arr1[60];
+static float ro, ro1, xm, ym, zm;
 static float min_asa = (float) -1.0;
 static float rprobe = (float) 0.0;
 
@@ -285,7 +286,9 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
       return retval;
    }
 
-   int i, ii, l, j, s, kk, kkk, ini, contatom, contatom1, indCA, indC, indO;
+   int i, ii, l, j, s, kk, kkk;
+   // int ini;
+   int contatom, contatom1, indCA, indC, indO;
    int posiz, massa = 0, check_asa = 0;
    float sommarc, Dz, d1z, zz, temp, asamin, asalevel, asapep, asatot, perc, voltot;
    char azoto[1];
@@ -312,7 +315,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
    printf("#                Version 3.5, August 2006              #\n");
    printf("########################################################\n");
 
-   ini = 3;
+   // ini = 3;
 
    /*choice of the probe's radius*/
 
@@ -323,7 +326,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
       flag1 = 1;
       init2();
       em("s4");
-      ini = 2;
+      // ini = 2;
       check_asa = 1;
       min_asa = asa_opts->threshold_percent;
    }
@@ -1420,47 +1423,47 @@ ragir()
 // ----------------------------------- init1.c -------------------------------------
 // #warning init1.c 
 
-static FILE *init1_mol;
-static FILE *init1_mol1;
-static FILE *init1_rmc;
+// static FILE *init1_mol;
+// static FILE *init1_mol1;
+// static FILE *init1_rmc;
 
 // void init();
 // void pulisci();
 
-static void
-init()
-{
-   int i;
+// static void
+// init()
+// {
+//    int i;
 
-   pulisci();
+//    pulisci();
 
-   init1_mol = fopen("test", "r");
-   init1_mol1 = fopen("provaly2", "r");
+//    init1_mol = fopen("test", "r");
+//    init1_mol1 = fopen("provaly2", "r");
 
-   fscanf(init1_mol, "%d", &nat);
-   fscanf(init1_mol, "%f", &raggio);
-   fscanf(init1_mol, "%s", ragcol);
+//    fscanf(init1_mol, "%d", &nat);
+//    fscanf(init1_mol, "%f", &raggio);
+//    fscanf(init1_mol, "%s", ragcol);
 
-   init1_rmc = fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
+//    init1_rmc = fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
 
-   for (i = 0; i < nat; i++)
-   {
-      fscanf(init1_mol, "%f", &(dt[i].x));
-      fscanf(init1_mol, "%f", &(dt[i].y));
-      fscanf(init1_mol, "%f", &(dt[i].z));
-      fscanf(init1_rmc, "%f", &(dt[i].r));
-      fscanf(init1_rmc, "%d", &(dt[i].m));
-      fscanf(init1_rmc, "%d", &(dt[i].col));
-      //fscanf(init1_mol1, "%s", &(dt[i].elm));
-      //fscanf(init1_mol1, "%s", &(dt[i].amin));
-      fscanf(init1_mol1, "%4c", &(dt[i].elm[0]));
-      fscanf(init1_mol1, "%4c", &(dt[i].amin[0]));
-   }
+//    for (i = 0; i < nat; i++)
+//    {
+//       fscanf(init1_mol, "%f", &(dt[i].x));
+//       fscanf(init1_mol, "%f", &(dt[i].y));
+//       fscanf(init1_mol, "%f", &(dt[i].z));
+//       fscanf(init1_rmc, "%f", &(dt[i].r));
+//       fscanf(init1_rmc, "%d", &(dt[i].m));
+//       fscanf(init1_rmc, "%d", &(dt[i].col));
+//       //fscanf(init1_mol1, "%s", &(dt[i].elm));
+//       //fscanf(init1_mol1, "%s", &(dt[i].amin));
+//       fscanf(init1_mol1, "%4c", &(dt[i].elm[0]));
+//       fscanf(init1_mol1, "%4c", &(dt[i].amin[0]));
+//    }
 
-   fclose(init1_mol);
-   fclose(init1_rmc);
-   fclose(init1_mol1);
-}
+//    fclose(init1_mol);
+//    fclose(init1_rmc);
+//    fclose(init1_mol1);
+// }
 
 static void
 pulisci()
@@ -1686,1223 +1689,1223 @@ init2()
 /* MODIFIED APRIL 2003 IN GENOVA FOR OCTYL GLUCOSIDE */
 /* FIXED JUNE 2005 IN GENOVA FOR NO SPACE BETWEEN 'ATOM' OR 'HETATM' FIELDS AND PROGRESSIVE NUMBER */
 
-static FILE *init3_brook;
-static FILE *init3_mol;
-static FILE *init3_mol1;
-static FILE *init3_pippa;
-static FILE *new_mol;
-static FILE *new_mol1;
-static FILE *new_mol2;
-static FILE *new_mol3;
+// static FILE *init3_brook;
+// static FILE *init3_mol;
+// static FILE *init3_mol1;
+// static FILE *init3_pippa;
+// static FILE *new_mol;
+// static FILE *new_mol1;
+// static FILE *new_mol2;
+// static FILE *new_mol3;
 
-static void assignrad(int);
-static void assigntab(int);
-static int flagr1, fe2, fe3;
+// static void assignrad(int);
+// static void assigntab(int);
+// static int flagr1, fe2, fe3;
 
-static char arr_temp[200];
+// static char arr_temp[200];
 
 /*************************************************************/
 
-static void
-assignrad(int xx)
-{
-   float flrad = 0.0;
-   struct dati1 *dd;
+// static void
+// assignrad(int xx)
+// {
+//    float flrad = 0.0;
+//    struct dati1 *dd;
 
-   dd = dt;
-   dd += xx;
+//    dd = dt;
+//    dd += xx;
 
-   switch (dd->elm[0])
-   {
-   case 'C':
-      if (isalpha(dd->elm[1]) != 0 || isdigit(dd->elm[1]) != 0)   /* selects c alpha etc. */
-      {
-         if (dd->elm[1] == 'A')   /* C alpha C4H1 */
-         {
-            flrad = (float) 1.87;
-            if (strcmp(dd->amin, "GLY") != 0)
-               dd->m = 13;
-            else
-               dd->m = 14;
-         }
+//    switch (dd->elm[0])
+//    {
+//    case 'C':
+//       if (isalpha(dd->elm[1]) != 0 || isdigit(dd->elm[1]) != 0)   /* selects c alpha etc. */
+//       {
+//          if (dd->elm[1] == 'A')   /* C alpha C4H1 */
+//          {
+//             flrad = (float) 1.87;
+//             if (strcmp(dd->amin, "GLY") != 0)
+//                dd->m = 13;
+//             else
+//                dd->m = 14;
+//          }
 
-         else if (dd->elm[1] == 'B')   /* C beta C4H2  */
-         {
-            flrad = (float) 1.87;
-            if (strcmp(dd->amin, "ALA") != 0)
-               dd->m = 14;
-            else
-               dd->m = 15;
-         }
+//          else if (dd->elm[1] == 'B')   /* C beta C4H2  */
+//          {
+//             flrad = (float) 1.87;
+//             if (strcmp(dd->amin, "ALA") != 0)
+//                dd->m = 14;
+//             else
+//                dd->m = 15;
+//          }
 
-         else if (dd->elm[1] == 'G')   /* C gamma  */
-         {
-            if ((strcmp(dd->amin, "VAL") == 0) || (strcmp(dd->amin, "THR") == 0))   /* C4H3 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 15;
-            }
-            else if (strcmp(dd->amin, "ILE") == 0)   /* C4H2 & C4H3 */
-            {
-               flrad = (float) 1.87;
-               if (dd->elm[2] == '1')
-                  dd->m = 14;
-               else
-                  dd->m = 15;
-            }
-            else if (strcmp(dd->amin, "LEU") == 0)   /* C4H1 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-            else if ((strcmp(dd->amin, "PRO") == 0) || (strcmp(dd->amin, "MET") == 0))   /* C4H2 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else if ((strcmp(dd->amin, "GLU") == 0) || (strcmp(dd->amin, "GLN") == 0))   /* C4H2 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else if ((strcmp(dd->amin, "ARG") == 0) || (strcmp(dd->amin, "LYS") == 0))   /* C4H2 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin, "TRP") == 0))   /* C3H0 */
-            {
-               flrad = (float) 1.76;
-               dd->m = 12;
-            }
-            else if ((strcmp(dd->amin, "ASP") == 0) || (strcmp(dd->amin, "ASN") == 0))   /* C3H0 */
-            {
-               flrad = (float) 1.76;
-               dd->m = 12;
-            }
-            else if ((strcmp(dd->amin, "HIS") == 0) || (strcmp(dd->amin, "TYR") == 0))   /* C3H0 */
-            {
-               flrad = (float) 1.76;
-               dd->m = 12;
-            }
-         }
+//          else if (dd->elm[1] == 'G')   /* C gamma  */
+//          {
+//             if ((strcmp(dd->amin, "VAL") == 0) || (strcmp(dd->amin, "THR") == 0))   /* C4H3 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 15;
+//             }
+//             else if (strcmp(dd->amin, "ILE") == 0)   /* C4H2 & C4H3 */
+//             {
+//                flrad = (float) 1.87;
+//                if (dd->elm[2] == '1')
+//                   dd->m = 14;
+//                else
+//                   dd->m = 15;
+//             }
+//             else if (strcmp(dd->amin, "LEU") == 0)   /* C4H1 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//             else if ((strcmp(dd->amin, "PRO") == 0) || (strcmp(dd->amin, "MET") == 0))   /* C4H2 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else if ((strcmp(dd->amin, "GLU") == 0) || (strcmp(dd->amin, "GLN") == 0))   /* C4H2 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else if ((strcmp(dd->amin, "ARG") == 0) || (strcmp(dd->amin, "LYS") == 0))   /* C4H2 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin, "TRP") == 0))   /* C3H0 */
+//             {
+//                flrad = (float) 1.76;
+//                dd->m = 12;
+//             }
+//             else if ((strcmp(dd->amin, "ASP") == 0) || (strcmp(dd->amin, "ASN") == 0))   /* C3H0 */
+//             {
+//                flrad = (float) 1.76;
+//                dd->m = 12;
+//             }
+//             else if ((strcmp(dd->amin, "HIS") == 0) || (strcmp(dd->amin, "TYR") == 0))   /* C3H0 */
+//             {
+//                flrad = (float) 1.76;
+//                dd->m = 12;
+//             }
+//          }
 
-         else if (dd->elm[1] == 'D')   /* C delta  */
-         {
-            if (strcmp(dd->amin, "PRO") == 0)   /* C4H2 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else if (strcmp(dd->amin, "PHE") == 0)   /* C3H1 */
-            {
-               flrad = (float) 1.76;
-               dd->m = 13;
-            }
-            else if (strcmp(dd->amin, "TRP") == 0)   /* C3H1 & C3H0 */
-            {
-               flrad = (float) 1.76;
-               if (dd->elm[2] == '1')
-                  dd->m = 13;
-               else
-                  dd->m = 12;
-            }
-            else if ((strcmp(dd->amin, "ILE") == 0) || (strcmp(dd->amin, "LEU") == 0))   /* C4H3 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 15;
-            }
-            else if ((strcmp(dd->amin, "GLU") == 0) || (strcmp(dd->amin, "GLN") == 0))   /* C3H0 */
-            {
-               flrad = (float) 1.76;
-               dd->m = 12;
-            }
-            else if ((strcmp(dd->amin, "ARG") == 0) || (strcmp(dd->amin, "LYS") == 0))   /* C4H2 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else if ((strcmp(dd->amin, "HIS") == 0) || (strcmp(dd->amin, "TYR") == 0))   /* C3H1 */
-            {
-               flrad = (float) 1.76;
-               dd->m = 13;
-            }
-         }
+//          else if (dd->elm[1] == 'D')   /* C delta  */
+//          {
+//             if (strcmp(dd->amin, "PRO") == 0)   /* C4H2 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else if (strcmp(dd->amin, "PHE") == 0)   /* C3H1 */
+//             {
+//                flrad = (float) 1.76;
+//                dd->m = 13;
+//             }
+//             else if (strcmp(dd->amin, "TRP") == 0)   /* C3H1 & C3H0 */
+//             {
+//                flrad = (float) 1.76;
+//                if (dd->elm[2] == '1')
+//                   dd->m = 13;
+//                else
+//                   dd->m = 12;
+//             }
+//             else if ((strcmp(dd->amin, "ILE") == 0) || (strcmp(dd->amin, "LEU") == 0))   /* C4H3 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 15;
+//             }
+//             else if ((strcmp(dd->amin, "GLU") == 0) || (strcmp(dd->amin, "GLN") == 0))   /* C3H0 */
+//             {
+//                flrad = (float) 1.76;
+//                dd->m = 12;
+//             }
+//             else if ((strcmp(dd->amin, "ARG") == 0) || (strcmp(dd->amin, "LYS") == 0))   /* C4H2 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else if ((strcmp(dd->amin, "HIS") == 0) || (strcmp(dd->amin, "TYR") == 0))   /* C3H1 */
+//             {
+//                flrad = (float) 1.76;
+//                dd->m = 13;
+//             }
+//          }
 
-         else if (dd->elm[1] == 'E')   /* C epsilon  */
-         {
-            if (strcmp(dd->amin, "MET") == 0)   /* C4H3 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 15;
-            }
-            else if (strcmp(dd->amin, "HIS") == 0)   /* C3H1 */
-            {
-               flrad = (float) 1.76;
-               dd->m = 13;
-            }
-            else if (strcmp(dd->amin, "LYS") == 0)   /* C4H2 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else if (strcmp(dd->amin, "TRP") == 0)   /* C3H0 & C3H1 */
-            {
-               flrad = (float) 1.76;
-               if (dd->elm[2] == '2')
-                  dd->m = 12;
-               else
-                  dd->m = 13;
-            }
-            else if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin, "TYR") == 0))   /* C3H1 */
-            {
-               flrad = (float) 1.76;
-               dd->m = 13;
-            }
-         }
+//          else if (dd->elm[1] == 'E')   /* C epsilon  */
+//          {
+//             if (strcmp(dd->amin, "MET") == 0)   /* C4H3 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 15;
+//             }
+//             else if (strcmp(dd->amin, "HIS") == 0)   /* C3H1 */
+//             {
+//                flrad = (float) 1.76;
+//                dd->m = 13;
+//             }
+//             else if (strcmp(dd->amin, "LYS") == 0)   /* C4H2 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else if (strcmp(dd->amin, "TRP") == 0)   /* C3H0 & C3H1 */
+//             {
+//                flrad = (float) 1.76;
+//                if (dd->elm[2] == '2')
+//                   dd->m = 12;
+//                else
+//                   dd->m = 13;
+//             }
+//             else if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin, "TYR") == 0))   /* C3H1 */
+//             {
+//                flrad = (float) 1.76;
+//                dd->m = 13;
+//             }
+//          }
 
-         else if (dd->elm[1] == 'Z')   /* C zeta  */
-         {
-            if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin, "TRP") == 0))   /* C3H1 */
-            {
-               flrad = (float) 1.76;
-               dd->m = 13;
-            }
-            else if ((strcmp(dd->amin, "TYR") == 0) || (strcmp(dd->amin, "ARG") == 0))   /* C3H0 */
-            {
-               flrad = (float) 1.76;
-               dd->m = 12;
-            }
-         }
+//          else if (dd->elm[1] == 'Z')   /* C zeta  */
+//          {
+//             if ((strcmp(dd->amin, "PHE") == 0) || (strcmp(dd->amin, "TRP") == 0))   /* C3H1 */
+//             {
+//                flrad = (float) 1.76;
+//                dd->m = 13;
+//             }
+//             else if ((strcmp(dd->amin, "TYR") == 0) || (strcmp(dd->amin, "ARG") == 0))   /* C3H0 */
+//             {
+//                flrad = (float) 1.76;
+//                dd->m = 12;
+//             }
+//          }
 
-         else if (dd->elm[1] == 'H')   /* C eta  C3H1  */
-         {
-            flrad = (float) 1.76;
-            dd->m = 13;
-         }
+//          else if (dd->elm[1] == 'H')   /* C eta  C3H1  */
+//          {
+//             flrad = (float) 1.76;
+//             dd->m = 13;
+//          }
 
-         else if (dd->elm[1] == '1')   /* C1X of sugar or detergent */
-         {
-            if (isalpha(dd->elm[2]) != 0 || isdigit(dd->elm[2]) != 0)   /* selects c >= 10  */
-            {
-               if (dd->elm[2] == '0')   /* C10 of sugar or detergent */
-               {
-                  if (strcmp(dd->amin, "SIA") == 0)   /* C3H0 */
-                  {
-                     flrad = (float) 1.76;
-                     dd->m = 12;
-                  }
-                  else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C10 C4H2 */
-                  {
-                     /*                  strcpy(dd->amin,"OG2"); */
-                     flrad = (float) 1.87;
-                     dd->m = 14;
-                  }
-                  else   /* unknown  */
-                  {
-                     flrad = (float) 1.87;
-                     dd->m = 13;
-                  }
-               }
-               else if (dd->elm[2] == '1')   /* C11 of sugar or detergent */
-               {
-                  if (strcmp(dd->amin, "SIA") == 0)   /* C4H3 */
-                  {
-                     flrad = (float) 1.87;
-                     dd->m = 15;
-                  }
-                  else if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C11 C4H2 */
-                  {
-                     /*                  strcpy(dd->amin,"OG3"); */
-                     flrad = (float) 1.87;
-                     dd->m = 14;
-                  }
-                  else   /* unknown */
-                  {
-                     flrad = (float) 1.87;
-                     dd->m = 13;
-                  }
-               }
-               else if (dd->elm[2] == '2')   /* C12 of detergent */
-               {
-                  if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C12 C4H2 */
-                  {
-                     /*                  strcpy(dd->amin,"OG3"); */
-                     flrad = (float) 1.87;
-                     dd->m = 14;
-                  }
-                  else   /* unknown */
-                  {
-                     flrad = (float) 1.87;
-                     dd->m = 13;
-                  }
-               }
-               else if (dd->elm[2] == '3')   /* C13 of detergent */
-               {
-                  if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C13 C4H2 */
-                  {
-                     /*                  strcpy(dd->amin,"OG3"); */
-                     flrad = (float) 1.87;
-                     dd->m = 14;
-                  }
-                  else   /* unknown */
-                  {
-                     flrad = (float) 1.87;
-                     dd->m = 13;
-                  }
-               }
-               else if (dd->elm[2] == '4')   /* C14 of detergent */
-               {
-                  if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C14 C4H3 */
-                  {
-                     /*                  strcpy(dd->amin,"OG3"); */
-                     flrad = (float) 1.87;
-                     dd->m = 15;
-                  }
-                  else   /* unknown */
-                  {
-                     flrad = (float) 1.87;
-                     dd->m = 13;
-                  }
-               }
-            }
-            else      /* selects C1 */
-            {
-               if (strcmp(dd->amin, "SIA") == 0)   /* C3H0 */
-               {
-                  flrad = (float) 1.76;
-                  dd->m = 12;
-               }
-               else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C1 C4H1 */
-               {
-                  /*               strcpy(dd->amin,"OG1");  */
-                  flrad = (float) 1.87;
-                  dd->m = 13;
-               }
-               else   /* MAN, GAL, NAG, FUC  C4H1 */
-               {
-                  flrad = (float) 1.87;
-                  dd->m = 13;
-               }
-            }
-         }
+//          else if (dd->elm[1] == '1')   /* C1X of sugar or detergent */
+//          {
+//             if (isalpha(dd->elm[2]) != 0 || isdigit(dd->elm[2]) != 0)   /* selects c >= 10  */
+//             {
+//                if (dd->elm[2] == '0')   /* C10 of sugar or detergent */
+//                {
+//                   if (strcmp(dd->amin, "SIA") == 0)   /* C3H0 */
+//                   {
+//                      flrad = (float) 1.76;
+//                      dd->m = 12;
+//                   }
+//                   else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C10 C4H2 */
+//                   {
+//                      /*                  strcpy(dd->amin,"OG2"); */
+//                      flrad = (float) 1.87;
+//                      dd->m = 14;
+//                   }
+//                   else   /* unknown  */
+//                   {
+//                      flrad = (float) 1.87;
+//                      dd->m = 13;
+//                   }
+//                }
+//                else if (dd->elm[2] == '1')   /* C11 of sugar or detergent */
+//                {
+//                   if (strcmp(dd->amin, "SIA") == 0)   /* C4H3 */
+//                   {
+//                      flrad = (float) 1.87;
+//                      dd->m = 15;
+//                   }
+//                   else if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C11 C4H2 */
+//                   {
+//                      /*                  strcpy(dd->amin,"OG3"); */
+//                      flrad = (float) 1.87;
+//                      dd->m = 14;
+//                   }
+//                   else   /* unknown */
+//                   {
+//                      flrad = (float) 1.87;
+//                      dd->m = 13;
+//                   }
+//                }
+//                else if (dd->elm[2] == '2')   /* C12 of detergent */
+//                {
+//                   if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C12 C4H2 */
+//                   {
+//                      /*                  strcpy(dd->amin,"OG3"); */
+//                      flrad = (float) 1.87;
+//                      dd->m = 14;
+//                   }
+//                   else   /* unknown */
+//                   {
+//                      flrad = (float) 1.87;
+//                      dd->m = 13;
+//                   }
+//                }
+//                else if (dd->elm[2] == '3')   /* C13 of detergent */
+//                {
+//                   if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C13 C4H2 */
+//                   {
+//                      /*                  strcpy(dd->amin,"OG3"); */
+//                      flrad = (float) 1.87;
+//                      dd->m = 14;
+//                   }
+//                   else   /* unknown */
+//                   {
+//                      flrad = (float) 1.87;
+//                      dd->m = 13;
+//                   }
+//                }
+//                else if (dd->elm[2] == '4')   /* C14 of detergent */
+//                {
+//                   if (strcmp(dd->amin, "OG3") == 0)   /* OCTYL GLUCOSIDE C14 C4H3 */
+//                   {
+//                      /*                  strcpy(dd->amin,"OG3"); */
+//                      flrad = (float) 1.87;
+//                      dd->m = 15;
+//                   }
+//                   else   /* unknown */
+//                   {
+//                      flrad = (float) 1.87;
+//                      dd->m = 13;
+//                   }
+//                }
+//             }
+//             else      /* selects C1 */
+//             {
+//                if (strcmp(dd->amin, "SIA") == 0)   /* C3H0 */
+//                {
+//                   flrad = (float) 1.76;
+//                   dd->m = 12;
+//                }
+//                else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C1 C4H1 */
+//                {
+//                   /*               strcpy(dd->amin,"OG1");  */
+//                   flrad = (float) 1.87;
+//                   dd->m = 13;
+//                }
+//                else   /* MAN, GAL, NAG, FUC  C4H1 */
+//                {
+//                   flrad = (float) 1.87;
+//                   dd->m = 13;
+//                }
+//             }
+//          }
 
-         else if (dd->elm[1] == '2')   /* C2 of sugar */
-         {
-            if (strcmp(dd->amin, "SIA") == 0)   /* C4H0? */
-            {
-               flrad = (float) 1.87;
-               dd->m = 12;
-            }
-            else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C2 C4H1 */
-            {
-               /*            strcpy(dd->amin,"OG1"); */
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-            else      /* MAN, GAL, NAG, FUC  C4H1 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-         }
+//          else if (dd->elm[1] == '2')   /* C2 of sugar */
+//          {
+//             if (strcmp(dd->amin, "SIA") == 0)   /* C4H0? */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 12;
+//             }
+//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C2 C4H1 */
+//             {
+//                /*            strcpy(dd->amin,"OG1"); */
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//             else      /* MAN, GAL, NAG, FUC  C4H1 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//          }
 
-         else if (dd->elm[1] == '3')   /* C3 of sugar */
-         {
-            if (strcmp(dd->amin, "SIA") == 0)   /* C4H2 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C3 C4H1 */
-            {
-               /*            strcpy(dd->amin,"OG1"); */
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-            else      /* MAN, GAL, NAG, FUC  C4H1 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-         }
+//          else if (dd->elm[1] == '3')   /* C3 of sugar */
+//          {
+//             if (strcmp(dd->amin, "SIA") == 0)   /* C4H2 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C3 C4H1 */
+//             {
+//                /*            strcpy(dd->amin,"OG1"); */
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//             else      /* MAN, GAL, NAG, FUC  C4H1 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//          }
 
-         else if (dd->elm[1] == '4')   /* C4 of sugar  C4H1 */
-         {
-            if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C4 C4H1 */
-            {
-               /*            strcpy(dd->amin,"OG1"); */
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-            else      /* MAN, GAL, NAG, FUC  C4H1 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-         }
+//          else if (dd->elm[1] == '4')   /* C4 of sugar  C4H1 */
+//          {
+//             if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C4 C4H1 */
+//             {
+//                /*            strcpy(dd->amin,"OG1"); */
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//             else      /* MAN, GAL, NAG, FUC  C4H1 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//          }
 
-         else if (dd->elm[1] == '5')   /* C5 of sugar  C4H1 */
-         {
-            if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C5 C4H1 */
-            {
-               /*            strcpy(dd->amin,"OG1"); */
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-            else      /* MAN, GAL, NAG, FUC  C4H1 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-         }
+//          else if (dd->elm[1] == '5')   /* C5 of sugar  C4H1 */
+//          {
+//             if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C5 C4H1 */
+//             {
+//                /*            strcpy(dd->amin,"OG1"); */
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//             else      /* MAN, GAL, NAG, FUC  C4H1 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//          }
 
-         else if (dd->elm[1] == '6')   /* C6 of sugar */
-         {
-            if (strcmp(dd->amin, "SIA") == 0)   /* C4H1 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-            else if (strcmp(dd->amin, "FUC") == 0)   /* C4H3 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 15;
-            }
-            else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C6 C4H2 */
-            {
-               /*            strcpy(dd->amin,"OG1"); */
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else      /* MAN, GAL, NAG  C4H2 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-         }
+//          else if (dd->elm[1] == '6')   /* C6 of sugar */
+//          {
+//             if (strcmp(dd->amin, "SIA") == 0)   /* C4H1 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//             else if (strcmp(dd->amin, "FUC") == 0)   /* C4H3 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 15;
+//             }
+//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE C6 C4H2 */
+//             {
+//                /*            strcpy(dd->amin,"OG1"); */
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else      /* MAN, GAL, NAG  C4H2 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//          }
 
-         else if (dd->elm[1] == '7')   /* C7 of sugar */
-         {
-            if (strcmp(dd->amin, "NAG") == 0)   /* C3H0 */
-            {
-               flrad = (float) 1.76;
-               dd->m = 12;
-            }
-            else if (strcmp(dd->amin, "SIA") == 0)   /* C4H1 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-            else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C7 C4H2 */
-            {
-               /*            strcpy(dd->amin,"OG2"); */
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else      /* unknown */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-         }
+//          else if (dd->elm[1] == '7')   /* C7 of sugar */
+//          {
+//             if (strcmp(dd->amin, "NAG") == 0)   /* C3H0 */
+//             {
+//                flrad = (float) 1.76;
+//                dd->m = 12;
+//             }
+//             else if (strcmp(dd->amin, "SIA") == 0)   /* C4H1 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//             else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C7 C4H2 */
+//             {
+//                /*            strcpy(dd->amin,"OG2"); */
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else      /* unknown */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//          }
 
-         else if (dd->elm[1] == '8')   /* C8 of sugar */
-         {
-            if (strcmp(dd->amin, "NAG") == 0)   /* C4H3 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 15;
-            }
-            else if (strcmp(dd->amin, "SIA") == 0)   /* C4H1 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 13;
-            }
-            else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C8 C4H2 */
-            {
-               /*            strcpy(dd->amin,"OG2"); */
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else      /* unknown */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-         }
+//          else if (dd->elm[1] == '8')   /* C8 of sugar */
+//          {
+//             if (strcmp(dd->amin, "NAG") == 0)   /* C4H3 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 15;
+//             }
+//             else if (strcmp(dd->amin, "SIA") == 0)   /* C4H1 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 13;
+//             }
+//             else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C8 C4H2 */
+//             {
+//                /*            strcpy(dd->amin,"OG2"); */
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else      /* unknown */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//          }
 
-         else if (dd->elm[1] == '9')   /* C9 of sugar */
-         {
-            if (strcmp(dd->amin, "SIA") == 0)   /* C4H2 */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C9 C4H2 */
-            {
-               /*            strcpy(dd->amin,"OG2"); */
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-            else      /* unknown */
-            {
-               flrad = (float) 1.87;
-               dd->m = 14;
-            }
-         }
+//          else if (dd->elm[1] == '9')   /* C9 of sugar */
+//          {
+//             if (strcmp(dd->amin, "SIA") == 0)   /* C4H2 */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else if (strcmp(dd->amin, "OG2") == 0)   /* OCTYL GLUCOSIDE C9 C4H2 */
+//             {
+//                /*            strcpy(dd->amin,"OG2"); */
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//             else      /* unknown */
+//             {
+//                flrad = (float) 1.87;
+//                dd->m = 14;
+//             }
+//          }
 
-         else      /*  unknown  */
-         {
-            flrad = (float) 1.8;
-            dd->m = 14;
-         }
-      }
-      else         /* C of peptide bond  C3H0 */
-      {
-         flrad = (float) 1.76;
-         dd->m = 12;
-      }
-      break;
+//          else      /*  unknown  */
+//          {
+//             flrad = (float) 1.8;
+//             dd->m = 14;
+//          }
+//       }
+//       else         /* C of peptide bond  C3H0 */
+//       {
+//          flrad = (float) 1.76;
+//          dd->m = 12;
+//       }
+//       break;
 
-   case 'O':
-      if (isalpha(dd->elm[1]) != 0 || isdigit(dd->elm[1]) != 0)   /* selects Ox  */
-      {
-         if ((dd->elm[1] == 'D') || (dd->elm[1] == 'E'))   /* selects OD & OE  O1H0 */
-         {
-            flrad = (float) 1.42;
-            dd->m = 16;
-         }
+//    case 'O':
+//       if (isalpha(dd->elm[1]) != 0 || isdigit(dd->elm[1]) != 0)   /* selects Ox  */
+//       {
+//          if ((dd->elm[1] == 'D') || (dd->elm[1] == 'E'))   /* selects OD & OE  O1H0 */
+//          {
+//             flrad = (float) 1.42;
+//             dd->m = 16;
+//          }
 
-         else if ((dd->elm[1] == 'G') || (dd->elm[1] == 'H'))   /* selects OG & OH  O2H1 */
-         {
-            flrad = (float) 1.46;
-            dd->m = 17;
-         }
-         else if (dd->elm[1] == '1')   /* O1X of sugar */
-         {
-            if (isalpha(dd->elm[2]) != 0 || isdigit(dd->elm[2]) != 0)   /* selects O >= 10 or O1A/O1B  */
-            {
-               if ((dd->elm[2] == 'A') || (dd->elm[2] == 'B'))   /* selects O1A and O1B of SIA */
-               {
-                  if (strcmp(dd->amin, "SIA") == 0)   /* O1H0 */
-                  {
-                     flrad = (float) 1.42;
-                     dd->m = 16;
-                  }
-                  else   /* unknown  */
-                  {
-                     flrad = (float) 1.40;
-                     dd->m = 16;
-                  }
-               }
-               else if (dd->elm[2] == '0')   /* O10 of sugar */
-               {
-                  if (strcmp(dd->amin, "SIA") == 0)   /* O1H0 */
-                  {
-                     flrad = (float) 1.42;
-                     dd->m = 16;
-                  }
-                  else   /* unknown  */
-                  {
-                     flrad = (float) 1.40;
-                     dd->m = 16;
-                  }
-               }
-            }
-            else      /* selects O1 */
-            {
-               if (strcmp(dd->amin, "SIA") == 0)   /* O1H0 */
-               {
-                  flrad = (float) 1.42;
-                  dd->m = 16;
-               }
-               else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O1 O1H0 */
-               {
-                  /*               strcpy(dd->amin,"OG1"); */
-                  flrad = (float) 1.42;
-                  dd->m = 16;
-               }
-               else   /* MAN, GAL, NAG, FUC  O2H1 */
-               {
-                  flrad = (float) 1.46;
-                  dd->m = 17;
-               }
-            }
-         }
+//          else if ((dd->elm[1] == 'G') || (dd->elm[1] == 'H'))   /* selects OG & OH  O2H1 */
+//          {
+//             flrad = (float) 1.46;
+//             dd->m = 17;
+//          }
+//          else if (dd->elm[1] == '1')   /* O1X of sugar */
+//          {
+//             if (isalpha(dd->elm[2]) != 0 || isdigit(dd->elm[2]) != 0)   /* selects O >= 10 or O1A/O1B  */
+//             {
+//                if ((dd->elm[2] == 'A') || (dd->elm[2] == 'B'))   /* selects O1A and O1B of SIA */
+//                {
+//                   if (strcmp(dd->amin, "SIA") == 0)   /* O1H0 */
+//                   {
+//                      flrad = (float) 1.42;
+//                      dd->m = 16;
+//                   }
+//                   else   /* unknown  */
+//                   {
+//                      flrad = (float) 1.40;
+//                      dd->m = 16;
+//                   }
+//                }
+//                else if (dd->elm[2] == '0')   /* O10 of sugar */
+//                {
+//                   if (strcmp(dd->amin, "SIA") == 0)   /* O1H0 */
+//                   {
+//                      flrad = (float) 1.42;
+//                      dd->m = 16;
+//                   }
+//                   else   /* unknown  */
+//                   {
+//                      flrad = (float) 1.40;
+//                      dd->m = 16;
+//                   }
+//                }
+//             }
+//             else      /* selects O1 */
+//             {
+//                if (strcmp(dd->amin, "SIA") == 0)   /* O1H0 */
+//                {
+//                   flrad = (float) 1.42;
+//                   dd->m = 16;
+//                }
+//                else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O1 O1H0 */
+//                {
+//                   /*               strcpy(dd->amin,"OG1"); */
+//                   flrad = (float) 1.42;
+//                   dd->m = 16;
+//                }
+//                else   /* MAN, GAL, NAG, FUC  O2H1 */
+//                {
+//                   flrad = (float) 1.46;
+//                   dd->m = 17;
+//                }
+//             }
+//          }
 
-         else if (dd->elm[1] == '2')   /* O2 of sugar */
-         {
-            if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O2 O2H1 */
-            {
-               /*               strcpy(dd->amin,"OG1"); */
-               flrad = (float) 1.46;
-               dd->m = 17;
-            }
-            else      /* MAN, GAL, FUC, SIA  O2H1 */
-            {
-               flrad = (float) 1.46;
-               dd->m = 17;
-            }
-         }
+//          else if (dd->elm[1] == '2')   /* O2 of sugar */
+//          {
+//             if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O2 O2H1 */
+//             {
+//                /*               strcpy(dd->amin,"OG1"); */
+//                flrad = (float) 1.46;
+//                dd->m = 17;
+//             }
+//             else      /* MAN, GAL, FUC, SIA  O2H1 */
+//             {
+//                flrad = (float) 1.46;
+//                dd->m = 17;
+//             }
+//          }
 
-         else if (dd->elm[1] == '3')   /* O3 of sugar */
-         {
-            if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O3 O2H1 */
-            {
-               /*               strcpy(dd->amin,"OG1"); */
-               flrad = (float) 1.46;
-               dd->m = 17;
-            }
-            else      /* MAN, GAL, NAG, FUC  O2H1 */
-            {
-               flrad = (float) 1.46;
-               dd->m = 17;
-            }
-         }
+//          else if (dd->elm[1] == '3')   /* O3 of sugar */
+//          {
+//             if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O3 O2H1 */
+//             {
+//                /*               strcpy(dd->amin,"OG1"); */
+//                flrad = (float) 1.46;
+//                dd->m = 17;
+//             }
+//             else      /* MAN, GAL, NAG, FUC  O2H1 */
+//             {
+//                flrad = (float) 1.46;
+//                dd->m = 17;
+//             }
+//          }
 
-         else if (dd->elm[1] == '4')   /* O4 of sugar  O2H1 */
-         {
-            flrad = (float) 1.46;
-            dd->m = 17;
-            /*             if(strcmp(dd->amin,"OG1")==0) / * OCTYL GLUCOSIDE O4 O2H1 */
-            /*               strcpy(dd->amin,"OG1"); */
-         }
+//          else if (dd->elm[1] == '4')   /* O4 of sugar  O2H1 */
+//          {
+//             flrad = (float) 1.46;
+//             dd->m = 17;
+//             /*             if(strcmp(dd->amin,"OG1")==0) / * OCTYL GLUCOSIDE O4 O2H1 */
+//             /*               strcpy(dd->amin,"OG1"); */
+//          }
 
-         else if (dd->elm[1] == '5')   /* O5 of sugar */
-         {
-            /* MAN, GAL, NAG, FUC O1H0 */
-            {
-               flrad = (float) 1.42;
-               dd->m = 16;
-               /*             if(strcmp(dd->amin,"OG1")==0) / * OCTYL GLUCOSIDE O5 O2H1 */
-               /*               strcpy(dd->amin,"OG1"); */
-            }
-         }
+//          else if (dd->elm[1] == '5')   /* O5 of sugar */
+//          {
+//             /* MAN, GAL, NAG, FUC O1H0 */
+//             {
+//                flrad = (float) 1.42;
+//                dd->m = 16;
+//                /*             if(strcmp(dd->amin,"OG1")==0) / * OCTYL GLUCOSIDE O5 O2H1 */
+//                /*               strcpy(dd->amin,"OG1"); */
+//             }
+//          }
 
-         else if (dd->elm[1] == '6')   /* O6 of sugar */
-         {
-            if (strcmp(dd->amin, "SIA") == 0)   /* O1H0 */
-            {
-               flrad = (float) 1.42;
-               dd->m = 16;
-            }
-            else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O6 O2H1 */
-            {
-               /*            strcpy(dd->amin,"OG1"); */
-               flrad = (float) 1.46;
-               dd->m = 17;
-            }
-            else      /* MAN, GAL, NAG  O2H1 */
-            {
-               flrad = (float) 1.46;
-               dd->m = 17;
-            }
-         }
+//          else if (dd->elm[1] == '6')   /* O6 of sugar */
+//          {
+//             if (strcmp(dd->amin, "SIA") == 0)   /* O1H0 */
+//             {
+//                flrad = (float) 1.42;
+//                dd->m = 16;
+//             }
+//             else if (strcmp(dd->amin, "OG1") == 0)   /* OCTYL GLUCOSIDE O6 O2H1 */
+//             {
+//                /*            strcpy(dd->amin,"OG1"); */
+//                flrad = (float) 1.46;
+//                dd->m = 17;
+//             }
+//             else      /* MAN, GAL, NAG  O2H1 */
+//             {
+//                flrad = (float) 1.46;
+//                dd->m = 17;
+//             }
+//          }
 
-         else if (dd->elm[1] == '7')   /* O7 of sugar */
-         {
-            if (strcmp(dd->amin, "NAG") == 0)   /* O1H0 */
-            {
-               flrad = (float) 1.42;
-               dd->m = 16;
-            }
-            else if (strcmp(dd->amin, "SIA") == 0)   /* O2H1 */
-            {
-               flrad = (float) 1.46;
-               dd->m = 17;
-            }
-            else      /* unknown */
-            {
-               flrad = (float) 1.40;
-               dd->m = 16;
-            }
-         }
+//          else if (dd->elm[1] == '7')   /* O7 of sugar */
+//          {
+//             if (strcmp(dd->amin, "NAG") == 0)   /* O1H0 */
+//             {
+//                flrad = (float) 1.42;
+//                dd->m = 16;
+//             }
+//             else if (strcmp(dd->amin, "SIA") == 0)   /* O2H1 */
+//             {
+//                flrad = (float) 1.46;
+//                dd->m = 17;
+//             }
+//             else      /* unknown */
+//             {
+//                flrad = (float) 1.40;
+//                dd->m = 16;
+//             }
+//          }
 
-         else if (dd->elm[1] == '8')   /* O8 of sugar */
-         {
-            if (strcmp(dd->amin, "SIA") == 0)   /* O2H1 */
-            {
-               flrad = (float) 1.46;
-               dd->m = 17;
-            }
-            else      /* unknown */
-            {
-               flrad = (float) 1.40;
-               dd->m = 16;
-            }
-         }
+//          else if (dd->elm[1] == '8')   /* O8 of sugar */
+//          {
+//             if (strcmp(dd->amin, "SIA") == 0)   /* O2H1 */
+//             {
+//                flrad = (float) 1.46;
+//                dd->m = 17;
+//             }
+//             else      /* unknown */
+//             {
+//                flrad = (float) 1.40;
+//                dd->m = 16;
+//             }
+//          }
 
-         else if (dd->elm[1] == '9')   /* O9 of sugar */
-         {
-            if (strcmp(dd->amin, "SIA") == 0)   /* O2H1 */
-            {
-               flrad = (float) 1.46;
-               dd->m = 17;
-            }
-            else      /* unknown */
-            {
-               flrad = (float) 1.40;
-               dd->m = 16;
-            }
-         }
-         else
-         {
-            flrad = (float) 1.4;
-            dd->m = 16;
-         }
-      }
-      else
-      {
-         flrad = (float) 1.4;
-         dd->m = 16;
-      }
-      break;
+//          else if (dd->elm[1] == '9')   /* O9 of sugar */
+//          {
+//             if (strcmp(dd->amin, "SIA") == 0)   /* O2H1 */
+//             {
+//                flrad = (float) 1.46;
+//                dd->m = 17;
+//             }
+//             else      /* unknown */
+//             {
+//                flrad = (float) 1.40;
+//                dd->m = 16;
+//             }
+//          }
+//          else
+//          {
+//             flrad = (float) 1.4;
+//             dd->m = 16;
+//          }
+//       }
+//       else
+//       {
+//          flrad = (float) 1.4;
+//          dd->m = 16;
+//       }
+//       break;
 
-   case 'N':
-      if (isalpha(dd->elm[1]) != 0 || isdigit(dd->elm[1]) != 0)
-         /*      flrad=(float) 1.8;      */
-      {
-         if ((dd->elm[1] == 'D') || (dd->elm[1] == 'E'))   /* selects ND & NE  */
-         {
-            if ((strcmp(dd->amin, "GLN") == 0) || (strcmp(dd->amin, "ASN") == 0))   /* N3H2 */
-            {
-               flrad = (float) 1.64;
-               dd->m = 16;
-            }
-            else if ((strcmp(dd->amin, "TRP") == 0) || (strcmp(dd->amin, "HIS") == 0))   /* N3H2 */
-            {
-               if (dd->elm[2] == '1')   /* ND1 of HIS or NE1  N3H1 */
-               {
-                  flrad = (float) 1.64;
-                  dd->m = 15;
-               }
-               else   /* NE2 of HIS  N3H0 */
-               {
-                  flrad = (float) 1.64;
-                  dd->m = 14;
-               }
-            }
-            else if (strcmp(dd->amin, "ARG") == 0)   /* N3H1 */
-            {
-               /* printf("qui arrivo arg");
-                  scanf("%s",pluto);
-                  getchar(); */
-               flrad = (float) 1.64;
-               dd->m = 15;
-               /* printf("qui arrivo arg flrad= %f\n",flrad);
-                  scanf("%s",pluto);
-                  getchar(); */
-            }
-         }
+//    case 'N':
+//       if (isalpha(dd->elm[1]) != 0 || isdigit(dd->elm[1]) != 0)
+//          /*      flrad=(float) 1.8;      */
+//       {
+//          if ((dd->elm[1] == 'D') || (dd->elm[1] == 'E'))   /* selects ND & NE  */
+//          {
+//             if ((strcmp(dd->amin, "GLN") == 0) || (strcmp(dd->amin, "ASN") == 0))   /* N3H2 */
+//             {
+//                flrad = (float) 1.64;
+//                dd->m = 16;
+//             }
+//             else if ((strcmp(dd->amin, "TRP") == 0) || (strcmp(dd->amin, "HIS") == 0))   /* N3H2 */
+//             {
+//                if (dd->elm[2] == '1')   /* ND1 of HIS or NE1  N3H1 */
+//                {
+//                   flrad = (float) 1.64;
+//                   dd->m = 15;
+//                }
+//                else   /* NE2 of HIS  N3H0 */
+//                {
+//                   flrad = (float) 1.64;
+//                   dd->m = 14;
+//                }
+//             }
+//             else if (strcmp(dd->amin, "ARG") == 0)   /* N3H1 */
+//             {
+//                /* printf("qui arrivo arg");
+//                   scanf("%s",pluto);
+//                   getchar(); */
+//                flrad = (float) 1.64;
+//                dd->m = 15;
+//                /* printf("qui arrivo arg flrad= %f\n",flrad);
+//                   scanf("%s",pluto);
+//                   getchar(); */
+//             }
+//          }
 
-         else if (dd->elm[1] == 'Z')   /* N zeta  */
-         {
-            if (strcmp(dd->amin, "LYS") == 0)   /* N4H3 */
-            {
-               flrad = (float) 1.64;
-               dd->m = 17;
-            }
-            else if (strcmp(dd->amin, "ARG") == 0)   /* N3H2 */
-            {
-               flrad = (float) 1.64;
-               dd->m = 16;
-            }
-         }
+//          else if (dd->elm[1] == 'Z')   /* N zeta  */
+//          {
+//             if (strcmp(dd->amin, "LYS") == 0)   /* N4H3 */
+//             {
+//                flrad = (float) 1.64;
+//                dd->m = 17;
+//             }
+//             else if (strcmp(dd->amin, "ARG") == 0)   /* N3H2 */
+//             {
+//                flrad = (float) 1.64;
+//                dd->m = 16;
+//             }
+//          }
 
-         else if (dd->elm[1] == '2')   /* N2 of sugar NAG N3H1 */
-         {
-            flrad = (float) 1.64;
-            dd->m = 15;
-         }
+//          else if (dd->elm[1] == '2')   /* N2 of sugar NAG N3H1 */
+//          {
+//             flrad = (float) 1.64;
+//             dd->m = 15;
+//          }
 
-         else if (dd->elm[1] == '5')   /* N5 of sugar SIA N3H1 */
-         {
-            flrad = (float) 1.64;
-            dd->m = 15;
-         }
-         else
-         {
-            flrad = (float) 1.64;
-            dd->m = 14;
-         }
-      }
-      else
-      {
-         flrad = (float) 1.64;
-         if (strcmp(dd->amin, "PRO") != 0)
-            dd->m = 15;
-         else
-            dd->m = 14;
-      }
-      break;
+//          else if (dd->elm[1] == '5')   /* N5 of sugar SIA N3H1 */
+//          {
+//             flrad = (float) 1.64;
+//             dd->m = 15;
+//          }
+//          else
+//          {
+//             flrad = (float) 1.64;
+//             dd->m = 14;
+//          }
+//       }
+//       else
+//       {
+//          flrad = (float) 1.64;
+//          if (strcmp(dd->amin, "PRO") != 0)
+//             dd->m = 15;
+//          else
+//             dd->m = 14;
+//       }
+//       break;
 
-   case 'S':
-      if (strcmp(dd->amin, "MET") == 0)   /* S2H0 */
-      {
-         flrad = (float) 1.77;
-         dd->m = 32;
-      }
+//    case 'S':
+//       if (strcmp(dd->amin, "MET") == 0)   /* S2H0 */
+//       {
+//          flrad = (float) 1.77;
+//          dd->m = 32;
+//       }
 
-      else if (strcmp(dd->amin, "CYS") == 0)   /* S2H1 */
-      {
-         flrad = (float) 1.77;
-         dd->m = 33;
-      }
+//       else if (strcmp(dd->amin, "CYS") == 0)   /* S2H1 */
+//       {
+//          flrad = (float) 1.77;
+//          dd->m = 33;
+//       }
 
-      break;
+//       break;
 
-   default:
-      flrad = (float) 1.8;
-   }
+//    default:
+//       flrad = (float) 1.8;
+//    }
 
-   fprintf(init3_mol1, "%s\t%f\n", dd->elm, flrad);
-   dd->r = flrad + rprobe;
-}
+//    fprintf(init3_mol1, "%s\t%f\n", dd->elm, flrad);
+//    dd->r = flrad + rprobe;
+// }
 
 /************************************************************************/
 
-static void
-assigntab(int xx)
-{
-   int k;
-   float x;
-   struct dati1 *dd;
+// static void
+// assigntab(int xx)
+// {
+//    int k;
+//    float x;
+//    struct dati1 *dd;
 
-   dd = dt;
-   dd += xx;
+//    dd = dt;
+//    dd += xx;
 
-   /* printf("rbulk= %d\trprobe= %f\n",rbulk,rprobe);
-      scanf("%s",pluto);
-      getchar(); */
+//    /* printf("rbulk= %d\trprobe= %f\n",rbulk,rprobe);
+//       scanf("%s",pluto);
+//       getchar(); */
 
-   if (rbulk == 0)
-      k = 0;
-   else
-      k = 28;
+//    if (rbulk == 0)
+//       k = 0;
+//    else
+//       k = 28;
 
-   if (rprobe > 0.001)      /* 25/6/02 CONTROLLO, E' STRANO! LA FORMULA È PER L'AREA DEL CERCHIO, NON PER LA SUPERFICE DELLA SFERA!!!!! IMPLEMENTATA QUELLA GIUSTA SOTTO, E RICALCOLATI I PARAMETRI PER LA TABELLA */
-   {
-      /*   for(rbulk=0;rbulk<20;rbulk++)
-           {
-           x=(float) (arr1[rbulk]);
-           x/=PI;
-           x=(float) sqrt(x);
-           x+=rprobe;
-           x*=x;
-           x*=PI;
-           arr1[20+rbulk]=(int) x;
-           printf("%s%d%s%f\n","arr1[",20+rbulk,"]= ",arr1[20+rbulk]);
-           }    */
+//    if (rprobe > 0.001)      /* 25/6/02 CONTROLLO, E' STRANO! LA FORMULA È PER L'AREA DEL CERCHIO, NON PER LA SUPERFICE DELLA SFERA!!!!! IMPLEMENTATA QUELLA GIUSTA SOTTO, E RICALCOLATI I PARAMETRI PER LA TABELLA */
+//    {
+//       /*   for(rbulk=0;rbulk<20;rbulk++)
+//            {
+//            x=(float) (arr1[rbulk]);
+//            x/=PI;
+//            x=(float) sqrt(x);
+//            x+=rprobe;
+//            x*=x;
+//            x*=PI;
+//            arr1[20+rbulk]=(int) x;
+//            printf("%s%d%s%f\n","arr1[",20+rbulk,"]= ",arr1[20+rbulk]);
+//            }    */
 
-      for (rbulk = 0; rbulk < 28; rbulk++)
-      {
-         x = (float) (arr1[rbulk]);
-         x /= (4.0 * PI);
-         x = (float) sqrt(x);
-         x += rprobe;
-         x *= x;
-         x *= (4.0 * PI);
-         arr1[28 + rbulk] = (int) x;
-         /*      printf("%s%d%s%f\n","arr1[",28+rbulk,"]= ",arr1[28+rbulk]); */
-      }
-   }
+//       for (rbulk = 0; rbulk < 28; rbulk++)
+//       {
+//          x = (float) (arr1[rbulk]);
+//          x /= (4.0 * PI);
+//          x = (float) sqrt(x);
+//          x += rprobe;
+//          x *= x;
+//          x *= (4.0 * PI);
+//          arr1[28 + rbulk] = (int) x;
+//          /*      printf("%s%d%s%f\n","arr1[",28+rbulk,"]= ",arr1[28+rbulk]); */
+//       }
+//    }
 
-   switch (dd->amin[0])
-   {
-   case ('A'):
-      switch (dd->amin[1])
-      {
-      case ('L'):
-         dd->tab = arr1[k];
-         dd->vol = (float) 87.8;
-         if (strcmp(dd->elm, "CB") == 0)
-            dd->m = 15;
-         break;
+//    switch (dd->amin[0])
+//    {
+//    case ('A'):
+//       switch (dd->amin[1])
+//       {
+//       case ('L'):
+//          dd->tab = arr1[k];
+//          dd->vol = (float) 87.8;
+//          if (strcmp(dd->elm, "CB") == 0)
+//             dd->m = 15;
+//          break;
 
-      case ('R'):
-         dd->tab = arr1[k + 1];
-         dd->vol = (float) 188.2;
+//       case ('R'):
+//          dd->tab = arr1[k + 1];
+//          dd->vol = (float) 188.2;
 
-         switch (dd->elm[0])
-         {
-         case ('C'):
-            dd->m = 14;   /*C? */
-            if (dd->elm[1] == 'Z')
-               dd->m = 12;
-            /*CZ*/ if (dd->elm[1] == 'A')
-               dd->m = 13;
-            /*CA*/ break;
+//          switch (dd->elm[0])
+//          {
+//          case ('C'):
+//             dd->m = 14;   /*C? */
+//             if (dd->elm[1] == 'Z')
+//                dd->m = 12;
+//             /*CZ*/ if (dd->elm[1] == 'A')
+//                dd->m = 13;
+//             /*CA*/ break;
 
-         case ('N'):
-            if (dd->elm[1] == 'E')
-               dd->m = 15;
-            /*NE*/ if (dd->elm[2] == '1')
-               dd->m = 16;   /*NH1 */
-            if (dd->elm[2] == '2')
-               dd->m = 17;   /*NH2 */
-            break;
-         }
-         break;
+//          case ('N'):
+//             if (dd->elm[1] == 'E')
+//                dd->m = 15;
+//             /*NE*/ if (dd->elm[2] == '1')
+//                dd->m = 16;   /*NH1 */
+//             if (dd->elm[2] == '2')
+//                dd->m = 17;   /*NH2 */
+//             break;
+//          }
+//          break;
 
-      case ('S'):
-         if (dd->amin[2] == 'N')
-            /*ASN*/
-         {
-            dd->tab = arr1[k + 2];
-            dd->vol = (float) 120.1;
+//       case ('S'):
+//          if (dd->amin[2] == 'N')
+//             /*ASN*/
+//          {
+//             dd->tab = arr1[k + 2];
+//             dd->vol = (float) 120.1;
 
-            switch (dd->elm[0])
-            {
-            case ('C'):
-               dd->m = 14;
-               /*CB*/ if (dd->elm[1] == 'G')
-                  dd->m = 12;
-               /*CG*/ break;
+//             switch (dd->elm[0])
+//             {
+//             case ('C'):
+//                dd->m = 14;
+//                /*CB*/ if (dd->elm[1] == 'G')
+//                   dd->m = 12;
+//                /*CG*/ break;
 
-            case ('O'):
-               dd->m = 16;   /*OD1 */
-               break;
+//             case ('O'):
+//                dd->m = 16;   /*OD1 */
+//                break;
 
-            case ('N'):
-               dd->m = 18;   /*ND2 */
-               break;
-            }
-         }
-         else
-            /*ASP*/
-         {
-            dd->tab = arr1[k + 3];
-            dd->vol = (float) 115.4;
+//             case ('N'):
+//                dd->m = 18;   /*ND2 */
+//                break;
+//             }
+//          }
+//          else
+//             /*ASP*/
+//          {
+//             dd->tab = arr1[k + 3];
+//             dd->vol = (float) 115.4;
 
-            switch (dd->elm[0])
-            {
-            case ('C'):
-               dd->m = 14;
-               /*CB*/ if (dd->elm[1] == 'G')
-                  dd->m = 12;
-               /*CG*/ break;
+//             switch (dd->elm[0])
+//             {
+//             case ('C'):
+//                dd->m = 14;
+//                /*CB*/ if (dd->elm[1] == 'G')
+//                   dd->m = 12;
+//                /*CG*/ break;
 
-            case ('O'):
-               dd->m = 16;   /*OD1 */
-               break;
-            }
-         }
-         break;
-      }
-      break;
+//             case ('O'):
+//                dd->m = 16;   /*OD1 */
+//                break;
+//             }
+//          }
+//          break;
+//       }
+//       break;
 
-   case ('C'):
-      dd->tab = arr1[k + 4];
-      dd->vol = (float) 105.4;
-      if (dd->elm[0] == 'C')
-         dd->m = 14;
-      else
-         dd->m = 33;
-      break;
+//    case ('C'):
+//       dd->tab = arr1[k + 4];
+//       dd->vol = (float) 105.4;
+//       if (dd->elm[0] == 'C')
+//          dd->m = 14;
+//       else
+//          dd->m = 33;
+//       break;
 
-   case ('G'):
-      switch (dd->amin[2])
-      {
-      case ('N'):
-         dd->tab = arr1[k + 5];
-         dd->vol = (float) 145.1;
+//    case ('G'):
+//       switch (dd->amin[2])
+//       {
+//       case ('N'):
+//          dd->tab = arr1[k + 5];
+//          dd->vol = (float) 145.1;
 
-         switch (dd->elm[0])
-         {
-         case ('C'):
-            dd->m = 14;   /*C? */
-            if (dd->elm[1] == 'D')
-               dd->m = 12;
-            /*CD*/ break;
+//          switch (dd->elm[0])
+//          {
+//          case ('C'):
+//             dd->m = 14;   /*C? */
+//             if (dd->elm[1] == 'D')
+//                dd->m = 12;
+//             /*CD*/ break;
 
-         default:
-            dd->m = 16;   /* OE1, NE2 */
-         }
-         break;
+//          default:
+//             dd->m = 16;   /* OE1, NE2 */
+//          }
+//          break;
 
-      case ('U'):
-         dd->tab = arr1[k + 6];
-         dd->vol = (float) 140.9;
+//       case ('U'):
+//          dd->tab = arr1[k + 6];
+//          dd->vol = (float) 140.9;
 
-         switch (dd->elm[0])
-         {
-         case ('C'):
-            dd->m = 14;   /*C? */
-            if (dd->elm[1] == 'D')
-               dd->m = 12;
-            /*CD*/ break;
+//          switch (dd->elm[0])
+//          {
+//          case ('C'):
+//             dd->m = 14;   /*C? */
+//             if (dd->elm[1] == 'D')
+//                dd->m = 12;
+//             /*CD*/ break;
 
-         default:
-            dd->m = 16;   /* OE1, OE2 */
-         }
-         break;
+//          default:
+//             dd->m = 16;   /* OE1, OE2 */
+//          }
+//          break;
 
-      case ('Y'):
-         dd->tab = arr1[k + 7];
-         dd->vol = (float) 59.9;
-         break;
+//       case ('Y'):
+//          dd->tab = arr1[k + 7];
+//          dd->vol = (float) 59.9;
+//          break;
 
-      case ('L'):      /* GAL */
-         dd->tab = arr1[k + 20];
-         dd->vol = (float) 165.0;
-         break;
-      }
-      break;
+//       case ('L'):      /* GAL */
+//          dd->tab = arr1[k + 20];
+//          dd->vol = (float) 165.0;
+//          break;
+//       }
+//       break;
 
-   case ('H'):
-      dd->tab = arr1[k + 8];
-      dd->vol = (float) 156.3;
+//    case ('H'):
+//       dd->tab = arr1[k + 8];
+//       dd->vol = (float) 156.3;
 
-      switch (dd->elm[0])
-      {
-      case ('C'):
-         dd->m = 13;      /*C? */
-         if (dd->elm[1] == 'B')
-            dd->m = 14;
-         /*CB*/ if (dd->elm[1] == 'G')
-            dd->m = 12;
-         /*CG*/ break;
+//       switch (dd->elm[0])
+//       {
+//       case ('C'):
+//          dd->m = 13;      /*C? */
+//          if (dd->elm[1] == 'B')
+//             dd->m = 14;
+//          /*CB*/ if (dd->elm[1] == 'G')
+//             dd->m = 12;
+//          /*CG*/ break;
 
-      case ('N'):
-         dd->m = 15;      /*ND1 */
-         if (dd->elm[1] == 'E')
-            dd->m = 14;   /*NE2 */
-         break;
-      }
-      break;
+//       case ('N'):
+//          dd->m = 15;      /*ND1 */
+//          if (dd->elm[1] == 'E')
+//             dd->m = 14;   /*NE2 */
+//          break;
+//       }
+//       break;
 
-   case ('I'):
-      dd->tab = arr1[k + 9];
-      dd->vol = (float) 166.1;
-      dd->m = 15;      /*C? */
-      if (dd->elm[1] == 'B')
-         dd->m = 13;
-      /*CB*/ if (strcmp(dd->elm, "CG1") == 0)
-         dd->m = 14;      /*CG1 */
-      break;
+//    case ('I'):
+//       dd->tab = arr1[k + 9];
+//       dd->vol = (float) 166.1;
+//       dd->m = 15;      /*C? */
+//       if (dd->elm[1] == 'B')
+//          dd->m = 13;
+//       /*CB*/ if (strcmp(dd->elm, "CG1") == 0)
+//          dd->m = 14;      /*CG1 */
+//       break;
 
-   case ('N'):      /* NAG */
-      dd->tab = arr1[k + 21];
-      dd->vol = (float) 224.7;
-      break;
+//    case ('N'):      /* NAG */
+//       dd->tab = arr1[k + 21];
+//       dd->vol = (float) 224.7;
+//       break;
 
-   case ('F'):      /* FUC */
-      dd->tab = arr1[k + 22];
-      dd->vol = (float) 162.4;
-      break;
+//    case ('F'):      /* FUC */
+//       dd->tab = arr1[k + 22];
+//       dd->vol = (float) 162.4;
+//       break;
 
-   case ('L'):
-      switch (dd->amin[1])
-      {
-      case ('E'):
-         dd->tab = arr1[k + 10];
-         dd->vol = 168;
+//    case ('L'):
+//       switch (dd->amin[1])
+//       {
+//       case ('E'):
+//          dd->tab = arr1[k + 10];
+//          dd->vol = 168;
 
-         switch (dd->elm[1])
-         {
-         case ('B'):
-            dd->m = 14;
-            /*CB*/ break;
-         case ('G'):
-            dd->m = 13;
-            /*CG*/ break;
-         case ('D'):
-            dd->m = 15;   /*CD? */
-            break;
-         }
-         break;
+//          switch (dd->elm[1])
+//          {
+//          case ('B'):
+//             dd->m = 14;
+//             /*CB*/ break;
+//          case ('G'):
+//             dd->m = 13;
+//             /*CG*/ break;
+//          case ('D'):
+//             dd->m = 15;   /*CD? */
+//             break;
+//          }
+//          break;
 
-      case ('Y'):
-         dd->tab = arr1[k + 11];
-         dd->vol = (float) 172.7;
+//       case ('Y'):
+//          dd->tab = arr1[k + 11];
+//          dd->vol = (float) 172.7;
 
-         switch (dd->elm[0])
-         {
-         case ('C'):
-            dd->m = 14;   /*C? */
-            break;
+//          switch (dd->elm[0])
+//          {
+//          case ('C'):
+//             dd->m = 14;   /*C? */
+//             break;
 
-         default:
-            dd->m = 17;
-            /*NZ*/}
-         break;
-      }
-      break;
+//          default:
+//             dd->m = 17;
+//             /*NZ*/}
+//          break;
+//       }
+//       break;
 
-   case ('M'):
-      switch (dd->amin[1])
-      {
-      case ('E'):
-         dd->tab = arr1[k + 12];
-         dd->vol = (float) 165.2;
+//    case ('M'):
+//       switch (dd->amin[1])
+//       {
+//       case ('E'):
+//          dd->tab = arr1[k + 12];
+//          dd->vol = (float) 165.2;
 
-         switch (dd->elm[1])
-         {
-         case ('D'):
-            dd->m = 32;
-            /*SD*/ break;
-         case ('E'):
-            dd->m = 15;
-            /*CE*/ break;
-         default:
-            dd->m = 14;   /*C? */
-         }
-      case ('A'):      /* MAN */
-         dd->tab = arr1[k + 23];
-         dd->vol = (float) 165.0;
+//          switch (dd->elm[1])
+//          {
+//          case ('D'):
+//             dd->m = 32;
+//             /*SD*/ break;
+//          case ('E'):
+//             dd->m = 15;
+//             /*CE*/ break;
+//          default:
+//             dd->m = 14;   /*C? */
+//          }
+//       case ('A'):      /* MAN */
+//          dd->tab = arr1[k + 23];
+//          dd->vol = (float) 165.0;
 
-         break;
-      }
-      break;
+//          break;
+//       }
+//       break;
 
-   case ('P'):
-      switch (dd->amin[1])
-      {
-      case ('H'):
-         dd->tab = arr1[k + 13];
-         dd->vol = (float) 189.7;
+//    case ('P'):
+//       switch (dd->amin[1])
+//       {
+//       case ('H'):
+//          dd->tab = arr1[k + 13];
+//          dd->vol = (float) 189.7;
 
-         switch (dd->elm[1])
-         {
-         case ('B'):
-            dd->m = 14;
-            /*CB*/ break;
-         case ('G'):
-            dd->m = 12;
-            /*CG*/ break;
-         default:
-            dd->m = 13;   /*C? */
-         }
-         break;
-         break;
+//          switch (dd->elm[1])
+//          {
+//          case ('B'):
+//             dd->m = 14;
+//             /*CB*/ break;
+//          case ('G'):
+//             dd->m = 12;
+//             /*CG*/ break;
+//          default:
+//             dd->m = 13;   /*C? */
+//          }
+//          break;
+//          break;
 
-      case ('R'):
-         dd->tab = arr1[k + 14];
-         dd->vol = (float) 123.3;
-         dd->m = 14;      /*C? */
-         break;
-      }
-      break;
+//       case ('R'):
+//          dd->tab = arr1[k + 14];
+//          dd->vol = (float) 123.3;
+//          dd->m = 14;      /*C? */
+//          break;
+//       }
+//       break;
 
-   case ('S'):
-      switch (dd->amin[1])
-      {
-      case ('E'):
-         dd->tab = arr1[k + 15];
-         dd->vol = (float) 91.7;
-         if (dd->elm[0] == 'C')
-            dd->m = 14;
-         else
-            dd->m = 17;
+//    case ('S'):
+//       switch (dd->amin[1])
+//       {
+//       case ('E'):
+//          dd->tab = arr1[k + 15];
+//          dd->vol = (float) 91.7;
+//          if (dd->elm[0] == 'C')
+//             dd->m = 14;
+//          else
+//             dd->m = 17;
 
-         break;
+//          break;
 
-      case ('I'):      /* SIA */
-         dd->tab = arr1[k + 24];
-         dd->vol = (float) 280.8;
-         break;
-      }
-      break;
+//       case ('I'):      /* SIA */
+//          dd->tab = arr1[k + 24];
+//          dd->vol = (float) 280.8;
+//          break;
+//       }
+//       break;
 
-   case ('T'):
-      switch (dd->amin[1])
-      {
-      case ('H'):
-         dd->tab = arr1[k + 16];
-         dd->vol = (float) 118.3;
-         if (strcmp(dd->elm, "CB") == 0)
-            dd->m = 13;
-         if (strcmp(dd->elm, "OG1") == 0)
-            dd->m = 17;
-         if (strcmp(dd->elm, "CG2") == 0)
-            dd->m = 15;
-         break;
+//    case ('T'):
+//       switch (dd->amin[1])
+//       {
+//       case ('H'):
+//          dd->tab = arr1[k + 16];
+//          dd->vol = (float) 118.3;
+//          if (strcmp(dd->elm, "CB") == 0)
+//             dd->m = 13;
+//          if (strcmp(dd->elm, "OG1") == 0)
+//             dd->m = 17;
+//          if (strcmp(dd->elm, "CG2") == 0)
+//             dd->m = 15;
+//          break;
 
-      case ('R'):
-         dd->tab = arr1[k + 17];
-         dd->vol = (float) 227.9;
+//       case ('R'):
+//          dd->tab = arr1[k + 17];
+//          dd->vol = (float) 227.9;
 
-         switch (dd->elm[0])
-         {
-         case ('N'):
-            dd->m = 15;   /*NE1 */
-            break;
-         case ('C'):
-            if (strcmp(dd->elm, "CB") == 0)
-               dd->m = 14;
-            else if ((strcmp(dd->elm, "CG") == 0) || (strcmp(dd->elm, "CD2") == 0) || (strcmp(dd->elm, "CE2") == 0))
-               dd->m = 12;
-            else
-               dd->m = 13;   /*C? */
-         }
-         break;
+//          switch (dd->elm[0])
+//          {
+//          case ('N'):
+//             dd->m = 15;   /*NE1 */
+//             break;
+//          case ('C'):
+//             if (strcmp(dd->elm, "CB") == 0)
+//                dd->m = 14;
+//             else if ((strcmp(dd->elm, "CG") == 0) || (strcmp(dd->elm, "CD2") == 0) || (strcmp(dd->elm, "CE2") == 0))
+//                dd->m = 12;
+//             else
+//                dd->m = 13;   /*C? */
+//          }
+//          break;
 
-      case ('Y'):
-         dd->tab = arr1[k + 18];
-         dd->vol = (float) 191.2;
+//       case ('Y'):
+//          dd->tab = arr1[k + 18];
+//          dd->vol = (float) 191.2;
 
-         switch (dd->elm[0])
-         {
-         case ('O'):
-            dd->m = 17;
-            /*OH*/ break;
-         case ('C'):
-            if (strcmp(dd->elm, "CB") == 0)
-               dd->m = 14;
-            else if ((strcmp(dd->elm, "CG") == 0) || (strcmp(dd->elm, "CZ") == 0))
-               dd->m = 12;
-            else
-               dd->m = 13;   /*C? */
-         }
-         break;
-      }
-      break;
+//          switch (dd->elm[0])
+//          {
+//          case ('O'):
+//             dd->m = 17;
+//             /*OH*/ break;
+//          case ('C'):
+//             if (strcmp(dd->elm, "CB") == 0)
+//                dd->m = 14;
+//             else if ((strcmp(dd->elm, "CG") == 0) || (strcmp(dd->elm, "CZ") == 0))
+//                dd->m = 12;
+//             else
+//                dd->m = 13;   /*C? */
+//          }
+//          break;
+//       }
+//       break;
 
-   case ('V'):
-      dd->tab = arr1[k + 19];
-      dd->vol = (float) 138.8;
+//    case ('V'):
+//       dd->tab = arr1[k + 19];
+//       dd->vol = (float) 138.8;
 
-      if (strcmp(dd->elm, "CB") == 0)
-         dd->m = 13;
-      else
-         dd->m = 15;
-      break;
+//       if (strcmp(dd->elm, "CB") == 0)
+//          dd->m = 13;
+//       else
+//          dd->m = 15;
+//       break;
 
-   case ('O'):
-      switch (dd->amin[2])
-      {
-      case ('1'):      /* OG1 */
-         dd->tab = arr1[k + 25];
-         dd->vol = (float) 165.0;
+//    case ('O'):
+//       switch (dd->amin[2])
+//       {
+//       case ('1'):      /* OG1 */
+//          dd->tab = arr1[k + 25];
+//          dd->vol = (float) 165.0;
 
-         break;
+//          break;
 
-      case ('2'):      /* OG2 */
-         dd->tab = arr1[k + 26];
-         dd->vol = (float) 100.0;
+//       case ('2'):      /* OG2 */
+//          dd->tab = arr1[k + 26];
+//          dd->vol = (float) 100.0;
 
-         break;
+//          break;
 
-      case ('3'):      /* OG3 */
-         dd->tab = arr1[k + 27];
-         dd->vol = (float) 100.0;
+//       case ('3'):      /* OG3 */
+//          dd->tab = arr1[k + 27];
+//          dd->vol = (float) 100.0;
 
-         break;
-      }
+//          break;
+//       }
 
-      /* printf("%s%s\t%s%f\n","dd->amin= ",dd->amin,"dd->tab= ",dd->tab);
-         scanf("%s",pluto);
-         getchar(); 
-         break;
-         printf("%s%s\t%s%f\n","dd->amin= ",dd->amin,"dd->tab= ",dd->tab);
-         scanf("%s",pluto);
-         getchar(); */
-   }
-   /* printf("%s%s\t%s%f\n","dd->amin= ",dd->amin,"dd->tab= ",dd->tab);
-      scanf("%s",pluto);
-      getchar(); */
-}
+//       /* printf("%s%s\t%s%f\n","dd->amin= ",dd->amin,"dd->tab= ",dd->tab);
+//          scanf("%s",pluto);
+//          getchar(); 
+//          break;
+//          printf("%s%s\t%s%f\n","dd->amin= ",dd->amin,"dd->tab= ",dd->tab);
+//          scanf("%s",pluto);
+//          getchar(); */
+//    }
+//    /* printf("%s%s\t%s%f\n","dd->amin= ",dd->amin,"dd->tab= ",dd->tab);
+//       scanf("%s",pluto);
+//       getchar(); */
+// }
 
 // ----------------------------------- maxmin.c -------------------------------------
 // #warning maxmin.c 
@@ -3237,7 +3240,8 @@ cercaint(int k)
 static void
 formato()
 {
-   int p, conferma;
+   // int p;
+   int conferma;
    float passo;
 
    pulisci();
@@ -3272,7 +3276,7 @@ formato()
    form1 = 1;
    vel = 1;
    k = 1;
-   p = 0;
+   // p = 0;
    fl = (float) 0.022;
    q1 = 3;
    numdis = 1;

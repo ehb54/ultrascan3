@@ -197,14 +197,18 @@ bool US_PM::compute_CYJ_I( set < pm_point > & model, vector < double > &I_result
       register double  qp_t_rtp0;
       // it's odd that the * version is a bit slower
       // register double  *Jp;
+#if !defined( ALT_SPHBES )
       register unsigned int J_ofs;
+#endif
       for ( unsigned int i = 0; i < (unsigned int) v_pdata.size(); ++i )
       {
          if ( v_pdata[ i ]->no_J )
          {
             v_pdata[ i ]->no_J = false;
             // Jp = &( v_pdata[ i ]->J[ 0 ] );
+#if !defined( ALT_SPHBES )
             J_ofs = 0;
+#endif
             for ( unsigned int j = 0; j < q_points; ++j )
             {
                // J_ofs = j * ( 1 + max_harmonics );

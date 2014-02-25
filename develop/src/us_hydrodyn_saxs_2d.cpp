@@ -13,8 +13,6 @@
 // #define UHS2_IMAGE_DEBUG
 // #define UHS2_ROTATIONS_DEBUG
 
-// note: this program uses cout and/or cerr and this should be replaced
-
 /* **********************************************************
     Thus the scattering amplitude of a dry protein should be : 
 

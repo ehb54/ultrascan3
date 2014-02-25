@@ -29,10 +29,14 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
    double a, b, x;
    double s1_s2, s1_s3, s2_s3;
    double s1_2, s2_2, s3_2;
-   double prev_s2, prev_g_s2;
+   // double prev_s2;
+   double prev_g_s2;
    double fitness;
    long iter = 0l;
-   int reps, last_reps = 0;
+   int reps;
+#if defined(PRINT_GSM_INFO)
+   int last_reps = 0;
+#endif
    //  int j;
 
    //  printf("conjugate gradient initial position: ");
@@ -196,7 +200,7 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
          x = -b / (2e0 * a);
 
          prev_g_s2 = g_s2;
-         prev_s2 = s2;
+         // prev_s2 = s2;
 
 #if defined( USUNG_DEBUG )
          printf("new x = %.12g\n", x);
@@ -311,7 +315,9 @@ long US_Saxs_Util::nsa_min_gsm_5_1( our_vector *i, double epsilon, long max_iter
          }
          /*      puts(""); */
       }
+#if defined(PRINT_GSM_INFO)
       last_reps = reps;
+#endif
       /*    printf("v_s2 ");
             print_our_vector(v_s2); */
 
@@ -410,9 +416,13 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
    double a, b, x;
    double s1_s2, s1_s3, s2_s3;
    double s1_2, s2_2, s3_2;
-   double prev_s2, prev_g_s2;
+   // double prev_s2;
+   double prev_g_s2;
    long iter = 0l;
-   int reps, last_reps = 0;
+   int reps;
+#if defined(PRINT_GSM_INFO)
+   int last_reps = 0;
+#endif
    double gg, ggd;
    double fitness;
 
@@ -590,7 +600,7 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
          x = -b / (2e0 * a);
 
          prev_g_s2 = g_s2;
-         prev_s2 = s2;
+         // prev_s2 = s2;
 
 #if defined( USUNG_DEBUG )
          printf("new x = %.12g\n", x);
@@ -705,7 +715,9 @@ long US_Saxs_Util::nsa_min_fr_pr_cgd(our_vector *i, double epsilon, long max_ite
          }
          /*      puts(""); */
       }
+#if defined(PRINT_GSM_INFO)
       last_reps = reps;
+#endif
       /*    printf("v_s2 ");
             print_our_vector(v_s2); */
       if(g_s2 < g_s3 && g_s2 < g_s1) {
@@ -841,9 +853,13 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
    double a, b, x;
    double s1_s2, s1_s3, s2_s3;
    double s1_2, s2_2, s3_2;
-   double prev_s2, prev_g_s2;
+   // double prev_s2;
+   double prev_g_s2;
    long iter = 0l;
-   int reps, last_reps = 0;
+   int reps;
+#if defined(PRINT_GSM_INFO)
+   int last_reps = 0;
+#endif
    int i,j;
    double fitness;
    double fac, fad, fae, sumdg, sumxi;
@@ -1038,7 +1054,7 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
          x = -b / (2e0 * a);
 
          prev_g_s2 = g_s2;
-         prev_s2 = s2;
+         // prev_s2 = s2;
 
 #if defined( USUNG_DEBUG )
          printf("new x = %.12g\n", x);
@@ -1153,7 +1169,9 @@ long US_Saxs_Util::nsa_min_hessian_bfgs(our_vector *ip, double epsilon, long max
          }
          /*      puts(""); */
       }
+#if defined(PRINT_GSM_INFO)
       last_reps = reps;
+#endif
       if(g_s2 < g_s3 && g_s2 < g_s1) {
          copy_our_vector(v_p, v_s2);
          g_s4 = g_s2;

@@ -2305,7 +2305,7 @@ namespace zeno {
       */
       static int nneb,nebtab[MAXELTS],ninn;
       static float bubble[3],bubble_rad,rlist[MAXELTS];
-      static int nerr;
+      // static int nerr;
       static float rlaunch,rlaunch1;
       static int j,i;
       static float q2pade,shadow,delta_shadow;
@@ -2438,7 +2438,7 @@ namespace zeno {
       puts("z2");
       Tcubit->ncube = 0;
       Tsell->nell = 0;
-      nerr = 0;
+      // nerr = 0;
       launch_done = FALSE;
       zeno_done = FALSE;
       kirk_done = FALSE;
@@ -7734,14 +7734,15 @@ namespace zeno {
         and the arbitrary point p.
       */
    {
-      static float pmc[3],q[3],ro,dp;
+      static float pmc[3],q[3],ro;
+      // static float dp;
       /*
 *************************************************
 */
       vector_difference(p,c,pmc);
       rotate(q,t,pmc);
       ro = fifsqrt(fifpow(q[0],2.0F)+fifpow(q[1],2.0F));
-      dp = fifabs(ro-*r);
+      // dp = fifabs(ro-*r);
       *inside = FALSE;
       if(fifabs(q[2]) < *l/2.0F) {
          if(ro <= *r) {
@@ -8948,7 +8949,9 @@ namespace zeno {
       static char flush[2000];
       static double sum[20],acd[20],shoo[20];
       static float x[20],v[3],rlsh;
-      static int i,mout,mtdo,jax,loop;
+      static int i;
+      // static int mout;
+      static int mtdo,jax,loop;
       static float d;
       // static int need;
       /*
@@ -8995,7 +8998,7 @@ namespace zeno {
       }
       if(!Tshush->silent) WRITE(OUTPUT,FMT,F200,1,STRG,id,USZ_MAX_ID_SIZE,INT4,*m1,0);
       if(!Tshush->silent) WRITE(OUTPUT,FMT,F201,1,0);
-      mout = 0;
+      // mout = 0;
       mtdo = *m1;
       int steps = mtdo / 100;
       for(jax=1; jax<=mtdo; jax++) {
@@ -9191,7 +9194,8 @@ namespace zeno {
       } Cshush;
       static Cshush *Tshush = (Cshush*) Xshush;
       static double grand;
-      static float copy[3][3],dopy[3][3];
+      // static float copy[3][3];
+      // static float dopy[3][3];
       static int kk[3],khitp[20][3],khite[20][3];
       static double vp[20][3][3],ve[20][3][3],sum[20];
       static float aa[3][3],daa[3][3];
@@ -9338,8 +9342,8 @@ namespace zeno {
       */
       for(ii=0; ii<3; ii++) {
          for(jj=0; jj<3; jj++) {
-            copy[jj][ii] = aa[jj][ii];
-            dopy[jj][ii] = daa[jj][ii];
+            // copy[jj][ii] = aa[jj][ii];
+            // dopy[jj][ii] = daa[jj][ii];
          }
       }
       aa[1][0] = 0.5F*(aa[1][0]+aa[0][1]);
@@ -11997,7 +12001,8 @@ that is less than 1.
       static float rr2;
       static int j;
       static float rr;
-      static int need,k;
+      // static int need;
+      static int k;
       static float rho,delta_rho;
       /*
 **********************************************************************
@@ -12087,7 +12092,7 @@ that is less than 1.
          sum1[loop-1] = sum1[loop-1]+1.0e0;
          rg2sum[loop-1] = rg2sum[loop-1]+(double)rr2;
          rg2norm[loop-1] = rg2norm[loop-1]+2.0e0;
-         need = fifnint(79.0F*(float)i/(float)*m1do);
+         //         need = fifnint(79.0F*(float)i/(float)*m1do);
 //          while(mout < need) {
 //             *(flush) = *(round+mout+1-1);
 //             /*

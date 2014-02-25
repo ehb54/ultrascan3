@@ -589,7 +589,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             sd_map[ qsl_s[ 0 ] ] = qsl_sd[ i ];
          }
 
-         for ( unsigned int i = 0; i < qsl_data.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) qsl_data.size(); i++ )
          {
             QStringList qsl_d = QStringList::split( ",", qsl_data[i], true );
             vector < double > original_i;

@@ -1,7 +1,5 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 
-// note: this program uses cout and/or cerr and this should be replaced
-
 // #define  UHSHFG_DEBUG
 // #define  UHSHFG_DEBUG2
 
