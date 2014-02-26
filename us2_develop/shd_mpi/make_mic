@@ -1,1 +1,0 @@
-mpicxx -o shd.mic -O3 -mmic main.cpp shd.cpp shd_compute.cpp shd_sh.cpp shs_use.cpp

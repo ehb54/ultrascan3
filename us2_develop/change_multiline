@@ -1,9 +1,0 @@
-#!/bin/sh
-for each in us*; do
-	if [ -d $each ]; then
-		cd $each
-		echo $each
-		$ULTRASCAN/develop/multiline *.pro
-		cd ..
-	fi
-done
