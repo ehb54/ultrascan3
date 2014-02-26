@@ -34,22 +34,29 @@ unix {
 }
 
 win32 {
-  TEMPLATE     =app
-  MINGWDIR     =c:/mingw
-  VER          = 10
-  CONFIG      += qt thread warn release
-  INCLUDEPATH  += $$QWTPATH/src ..
-  INCLUDEPATH  += $$MYSQLPATH/include ../$$QWT3D/include
-  INCLUDEPATH  += $$OPENSSL/include
-  INCLUDEPATH  += $$QTPATH/include
-  INCLUDEPATH         += C:/us3/qwtplot3d-qt4/include
-  INCLUDEPATH         += ../src
-  DEFINES             += MINGW
+  US3PATH         = C:/Users/Admin/Documents/ultrascan3
+  MINGWDIR        = C:/mingw
+  QWT3DPATH       = $$US3PATH/qwtplot3d-qt4
+  VER             = 10
+
+  CONFIG         += qt thread warn release
+
+  QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_STL
+  QMAKESPEC       = win32-g++-4.6
+
+  DEFINES        += MINGW
+
+  INCLUDEPATH    += $$QWTPATH/src ..
+  INCLUDEPATH    += $$MYSQLPATH/include ../$$QWT3D/include
+  INCLUDEPATH    += $$OPENSSL/include
+  INCLUDEPATH    += $$QTPATH/include
+  INCLUDEPATH    += $$QWT3DPATH/include
+  INCLUDEPATH    += ../src
 
   LIBS         += $$QWTLIB
   LIBS         += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
   LIBS         += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
-  LIBS         += ../../bin/libus_somo$${VER}.a
+  LIBS         += $$US3PATH/somo/bin/liblibus_somo$${VER}.a
 }
 
 macx {
