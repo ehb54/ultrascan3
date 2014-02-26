@@ -47,7 +47,7 @@ unix:contains (UNAME,IRIX64) {
 }
 unix:contains(UNAME,Darwin) {
   DEFINES  += OSX
-  UNAME = $$system(uname -p)
+#  UNAME = $$system(uname -p)
   message ("Configuring for the Darwin Macintosh OS-X operating system...")
 } 
 unix:contains (UNAME, pentium4) {
@@ -77,7 +77,7 @@ unix:contains (UNAME, i386) {
 }
 unix:contains (UNAME, x86_64) {
   DEFINES += OPTERON
-  message ("Configuring for the Opteron 64-bit Platform...")
+  message ("Configuring for the x86_64-bit Platform...")
 }
 unix:contains (UNAME, mips) {
   DEFINES += SGI
@@ -111,12 +111,7 @@ macx:contains (UNAME, powerpc) {
 }
 
 macx {
-   CONFIG += x86 x86_64
-   ##QMAKE_CFLAGS   += -arch ppc -arch i386
-   ##QMAKE_LFLAGS   += -arch ppc -arch i386
-   ##CFLAGS   += -arch ppc -arch i386
-   ##LDFLAGS   += -arch ppc -arch i386
-   ##QWTDIR        = /usr/local/qt3/qwt-4.2.0
-   ##QWT3DDIR      = /usr/local/qt3/qwtplot3d
+   CONFIG += x86_64
+   UNAME = OSX
 }
 

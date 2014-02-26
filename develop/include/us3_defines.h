@@ -49,6 +49,11 @@
   #define TITLE    "Intel"
 #endif
 
+#ifdef OPTERON
+  #define PLATFORM "opteron"
+  #define TITLE    "64-bit AMD Opteron"
+#endif
+
 #ifdef MAC
   #ifdef PLATFORM
   #undef PLATFORM
@@ -58,11 +63,6 @@
   #endif
   #define PLATFORM "mac"
   #define TITLE    "Macintosh"
-#endif
-
-#ifdef OPTERON
-  #define PLATFORM "opteron"
-  #define TITLE    "64-bit AMD Opteron"
 #endif
 
 #ifdef SGI

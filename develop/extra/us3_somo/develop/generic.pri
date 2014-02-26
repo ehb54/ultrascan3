@@ -3,10 +3,8 @@
 # This is designed to be included in a .pro file
 # It provides boilerplate for all the UltraScan main programs.
 
-
-
 # Messages
-# !include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
+!include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
 
 QWTDIR          = /opt/qwt-qt4
 
@@ -21,28 +19,24 @@ DEFINES += NO_EDITOR_PRINT
 DEFINES += QT4
 
 unix {
- UNAME                  = $$system(uname -a)
+# UNAME                  = $$system(uname -a)
  CONFIG                += qt warn thread release
  DEFINES               += UNIX
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
  MYSQLPATH              = /usr/lib/mysql
 
  contains(UNAME,x86_64) {
-    LIBS    += -L$(QWTDIR)/lib64/ -L$(QWTDIR)/lib/ -lqwt -L$(ULTRASCAN)/somo/lib64 -lus_somo
+    LIBS    += -L$(QWTDIR)/lib64/ -L$(QWTDIR)/lib/ -lqwt -L$(ULTRASCAN)/lib64 -lus_somo
     DESTDIR  = ../../bin64
  } else {
-    LIBS    += -L$(QWTDIR)/lib -lqwt -L$(ULTRASCAN)/somo/lib -lus_somo
+    LIBS    += -L$(QWTDIR)/lib -lqwt -L$(ULTRASCAN)/lib -lus_somo
  }
 }
 
 win32 {
   TEMPLATE     =app
   MINGWDIR     =c:/mingw
-#  MYSQLPATH    =c:/mysql-5.5
-  QTMYSQLPATH  =$(QTDIR)/src/plugins/sqldrivers/mysql/release
-#  MYSQLLIB     =$$MYSQLPATH/lib/libmysql.a
-  OPENSSL      =c:/openssl
-  VER          =10
+  VER          = 10
   CONFIG      += qt thread warn release
   INCLUDEPATH  += $$QWTPATH/src ..
   INCLUDEPATH  += $$MYSQLPATH/include ../$$QWT3D/include
@@ -53,24 +47,19 @@ win32 {
   DEFINES             += MINGW
 
   LIBS         += $$QWTLIB
-#  LIBS         += $$MYSQLLIB
-#  LIBS         += $$QTMYSQLPATH/libqsqlmysql4.a
-#  LIBS         += $$OPENSSL/lib/libeay32.a
   LIBS         += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
   LIBS         += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
   LIBS         += ../../bin/libus_somo$${VER}.a
 }
 
 macx {
-
   BUILDBASE   = /Users/eb/us3/ultrascan3
-##  QWTPATH     = $$BUILDBASE/qwt-5.2.3
   QWTPATH     = /src/qwt-5.2.3
   QWTLIB      = -L$$QWTPATH/lib -lqwt
-##  SINGLEDIR    = $$BUILDBASE/qtsingleapplication-2.6_1-opensource/src
-##  CONFIG      += x86_64 x86 app_bundle
-  CONFIG      += x86_64
   DEFINES     += MAC OSX
+
+  CONFIG      += x86_64
+
   INCLUDEPATH += /usr/include
   INCLUDEPATH += /System/Library/Frameworks/OpenGL.framework/Versions/A/Headers
   INCLUDEPATH += $$QWTPATH/src
@@ -79,18 +68,14 @@ macx {
   INCLUDEPATH += /Library/Frameworks/QtCore.framework/Versions/4/Headers
   INCLUDEPATH += /Library/Frameworks/QtGui.framework//Versions/4/Headers
   INCLUDEPATH += /Library/Frameworks/QtOpenGL.framework/Versions/4/Headers
-##  INCLUDEPATH += /Library/Frameworks/QtSvg.framework/Versions/4/Headers
-##  INCLUDEPATH += /Library/Frameworks/QtXml.framework/Versions/4/Headers
+
   LIBS        += -L/System/Library/Frameworks/OpenGL.framework/Libraries
   LIBS        += -L/Users/eb/us3/lib
   LIBS        += -lssl -lcrypto -lqwtplot3d-qt4
   LIBS        += -framework QtOpenGL
   LIBS        += -L/Users/eb/us2a/develop/extra/us3_somo/lib
 
-##  MYSQLPATH    = $$BUILDBASE/mysql
-##  MYSQLDIR     = $$MYSQLPATH/lib
-  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
-##  INCLUDEPATH += $$MYSQLDIR/include
+#  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
 }
 
 # macx { RC_FILE = us_somo.icns }
