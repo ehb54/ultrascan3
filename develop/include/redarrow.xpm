@@ -1,0 +1,22 @@
+/* XPM */
+static const char *redarrow[] = {
+"    16    13        5            1",
+". c #ff0000",
+"# c #cc0000",
+"a c None",
+"b c #aa0000",
+"c c #000000",
+"...caaaaaaaaaaaa",
+".....caaaaaaaaaa",
+"##.....caaaaaaaa",
+"bb##.....caaaaaa",
+"cbbb##.....caaaa",
+"ccbbbb##.....caa",
+"cccbbbbb##.....c",
+"ccbbbb##.....caa",
+"cbbb##.....caaaa",
+"bb##.....caaaaaa",
+"##.....caaaaaaaa",
+".....caaaaaaaaaa",
+"...caaaaaaaaaaaa"
+};
