@@ -88,6 +88,11 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    plot_saxs_zoomer  = (ScrollZoomer *)0;
    plot_resid_zoomer = (ScrollZoomer *)0;
 
+#if defined( QT4 )
+   saxs_legend_vis   = false;
+   pr_legend_vis     = false;
+#endif
+
    saxs_residuals_widget = false;
 
    // note changes to this section should be updated in US_Hydrodyn_SaxsOptions::update_q()
@@ -385,6 +390,10 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    add_to_directory_history( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH, false );
 
    sync_conc_csv();
+#if defined( QT4 )
+   set_saxs_legend();
+   set_pr_legend();
+#endif
 }
 
 void US_Hydrodyn_Saxs::push_back_color_if_ok( QColor bg, QColor set )
@@ -1355,13 +1364,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setAutoLegend( false );
    plot_saxs->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
    connect( plot_saxs, SIGNAL( legendClicked( long ) ), SLOT( plot_saxs_clicked( long ) ) );
-#else
-   QwtLegend* legend_sa = new QwtLegend;
-   legend_sa->setFrameStyle( Q3Frame::Box | Q3Frame::Sunken );
-   plot_saxs->insertLegend( legend_sa, QwtPlot::BottomLegend );
-   legend_sa->setItemMode( QwtLegend::ClickableItem );
-   connect( plot_saxs, SIGNAL( legendClicked( QwtPlotItem* ) ),
-                SLOT( plot_saxs_item_clicked( QwtPlotItem* ) ) );
 #endif
    plot_saxs->setAxisScale( QwtPlot::xBottom, 0e0, 1e0 );
 
@@ -1411,16 +1413,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_pr->setAutoLegend( false );
    plot_pr->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
    connect( plot_pr, SIGNAL( legendClicked( long ) ), SLOT( plot_pr_clicked( long ) ) );
-#else
-   QwtLegend* legend_pr = new QwtLegend;
-   legend_pr->setFrameStyle( Q3Frame::Box | Q3Frame::Sunken );
-   plot_pr->insertLegend( legend_pr, QwtPlot::BottomLegend );
-   legend_pr->setItemMode( QwtLegend::ClickableItem );
-   connect( plot_pr, SIGNAL( legendClicked( QwtPlotItem* ) ),
-                SLOT( plot_pr_item_clicked( QwtPlotItem* ) ) );
 #endif
-
-
 
    plot_resid = new QwtPlot(this);
 #ifndef QT4
@@ -3167,6 +3160,10 @@ void US_Hydrodyn_Saxs::clear_plot_pr()
    dup_plotted_pr_name_check.clear();
    plot_pr->clear();
    plot_pr->replot();
+#if defined( QT4 )
+   pr_legend_vis = false;
+   set_pr_legend();
+#endif
 }
 
 
@@ -4439,6 +4436,11 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    plotted_Rt_guinier_b.clear();
    plotted_Rt_guinier_x.clear();
    plotted_Rt_guinier_y.clear();
+
+#if defined( QT4 )
+   saxs_legend_vis = false;
+   set_saxs_legend(); 
+#endif
 }
 
 void US_Hydrodyn_Saxs::clear_plot_saxs_and_replot_experimental()

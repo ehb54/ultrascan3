@@ -1,5 +1,7 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include <qwt_legend.h>
+//Added by qt3to4:
+#include <Q3Frame>
 
 void US_Hydrodyn_Saxs::plot_saxs_clicked( long 
 #ifndef QT4
@@ -150,18 +152,25 @@ void US_Hydrodyn_Saxs::saxs_legend()
       plot_saxs->enableLegend ( true, -1 );
    }
 #else
-   bool legvi = true;
-   QwtPlotItemList ilist = plot_saxs->itemList();
-   for ( int ii = 0; ii < ilist.size(); ii++ )
+   saxs_legend_vis = !saxs_legend_vis;
+   set_saxs_legend();
+#endif
+}
+
+void US_Hydrodyn_Saxs::set_saxs_legend()
+{
+#if defined( QT4 )
+   if ( saxs_legend_vis )
    {
-      QwtPlotItem* plitem = ilist[ ii ];
-      if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve )
-         continue;
-      bool legon = plitem->testItemAttribute( QwtPlotItem::Legend );
-      plitem->setItemAttribute( QwtPlotItem::Legend, !legon );
-      legvi = !legon;
+      QwtLegend* legend_saxs = new QwtLegend;
+      legend_saxs->setItemMode( QwtLegend::ClickableItem );
+      legend_saxs->setFrameStyle( Q3Frame::Box | Q3Frame::Sunken );
+      plot_saxs->insertLegend( legend_saxs, QwtPlot::BottomLegend );
+      connect( plot_saxs, SIGNAL( legendClicked( QwtPlotItem* ) ),
+               SLOT( plot_saxs_item_clicked( QwtPlotItem* ) ) );
+   } else {
+      plot_saxs->insertLegend( NULL );
    }
-   plot_saxs->legend()->setVisible( legvi );
 #endif
 }
 
@@ -177,17 +186,24 @@ void US_Hydrodyn_Saxs::pr_legend()
       plot_pr->enableLegend ( true, -1 );
    }
 #else
-   bool legvi = true;
-   QwtPlotItemList ilist = plot_pr->itemList();
-   for ( int ii = 0; ii < ilist.size(); ii++ )
+   pr_legend_vis = !pr_legend_vis;
+   set_pr_legend();
+#endif
+}
+
+void US_Hydrodyn_Saxs::set_pr_legend()
+{
+#if defined( QT4 )
+   if ( pr_legend_vis )
    {
-      QwtPlotItem* plitem = ilist[ ii ];
-      if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve )
-         continue;
-      bool legon = plitem->testItemAttribute( QwtPlotItem::Legend );
-      plitem->setItemAttribute( QwtPlotItem::Legend, !legon );
-      legvi = !legon;
+      QwtLegend* legend_pr = new QwtLegend;
+      legend_pr->setItemMode( QwtLegend::ClickableItem );
+      legend_pr->setFrameStyle( Q3Frame::Box | Q3Frame::Sunken );
+      plot_pr->insertLegend( legend_pr, QwtPlot::BottomLegend );
+      connect( plot_pr, SIGNAL( legendClicked( QwtPlotItem* ) ),
+               SLOT( plot_pr_item_clicked( QwtPlotItem* ) ) );
+   } else {
+      plot_pr->insertLegend( NULL );
    }
-   plot_pr->legend()->setVisible( legvi );
 #endif
 }

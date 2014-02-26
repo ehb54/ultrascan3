@@ -21,8 +21,9 @@ DEFINES += NO_DB
 DEFINES += NO_EDITOR_PRINT
 DEFINES += QT4
 
+TARGET  = us_somo
+
 unix {
-  TARGET                  = us_somo
   QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
   DEFINES                += UNIX
   #CONFIG                 += qt thread warn release 
@@ -755,3 +756,5 @@ IMAGES = \
 QT += qt3support 
 #The following line was inserted by qt3to4
 QT +=  opengl 
+#The following line was inserted by qt3to4
+QT +=  

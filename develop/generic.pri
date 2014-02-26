@@ -51,7 +51,7 @@ win32 {
   LIBS         += $$QWTLIB
   LIBS         += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
   LIBS         += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
-  LIBS         += ../../bin/liblibus_somo$${VER}.a
+  LIBS         += ../../bin/libus_somo$${VER}.a
 }
 
 macx {

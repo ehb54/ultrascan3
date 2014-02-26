@@ -42,7 +42,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    order_ascending = false;
    conc_widget     = false;
 #ifdef QT4
-   legend_vis      = true;
+   legend_vis      = false;
 #endif
 
    QDir::setCurrent( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs" );

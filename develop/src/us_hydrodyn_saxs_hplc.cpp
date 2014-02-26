@@ -114,7 +114,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    order_ascending = false;
    conc_widget     = false;
 #ifdef QT4
-   legend_vis      = true;
+   legend_vis      = false;
 #endif
    usu             = new US_Saxs_Util();
 

@@ -461,6 +461,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
 
    private:
 
+#if defined( QT4 )
+      bool saxs_legend_vis;
+      bool pr_legend_vis;
+#endif
+
       void  create_shd( vector < saxs_atom > & atoms,
                         vector < double >    & q,
                         vector < double >    & q2,
@@ -810,6 +815,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       int            crysol_timer_delay_ms;
 #endif
       void           crysol_finishup();
+
+      void           set_saxs_legend();
+      void           set_pr_legend();
+#if defined( QT4 )
+      QwtLegend *    legend_saxs;
+      QwtLegend *    legend_pr;
+#endif
 
    private slots:
 
