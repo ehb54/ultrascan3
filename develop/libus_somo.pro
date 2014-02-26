@@ -1,10 +1,6 @@
 # Messages
 !include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
 
-revision.target           = include/us_revision.h
-revision.depends          = FORCE
-QMAKE_EXTRA_TARGETS       += revision
-
 TEMPLATE       = lib
 TRANSLATIONS   = lib.ts
 VERSION        = 10
@@ -28,7 +24,6 @@ DEFINES += NO_EDITOR_PRINT
 DEFINES += QT4
 
 unix {
-  revision.commands         = sh revision.sh
   TARGET                  = us_somo
   QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
   DEFINES                += UNIX
@@ -82,12 +77,9 @@ win32 {
   LIBS           += -L$$QWTPATH/lib -lqwt5
   LIBS           += $$US3PATH/lib/libqwtplot3d-qt4.a
   LIBS           += -L$$US3PATH/lib -lqwtplot3d-qt4
-
 }
 
 macx {
-  revision.commands         = sh revision.sh
-
   BUILDBASE   = /Users/eb/us3/ultrascan3
   QWTPATH     = /src/qwt-5.2.3
   QWTLIB      = -L$$QWTPATH/lib -lqwt

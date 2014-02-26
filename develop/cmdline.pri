@@ -80,6 +80,7 @@ macx {
 ##  LIBS        += -lmysqlclient -L$$MYSQLDIR/lib
   X11LIB       = -L/usr/X11R6/lib -lXau -lX11
 ##  INCLUDEPATH += $$MYSQLDIR/include
+  DESTDIR              = ../../bin
 }
 
 #macx { RC_FILE = us_somo.icns }

@@ -6,10 +6,10 @@
 # Messages
 !include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
 
-QWTDIR          = /opt/qwt-qt4
+QWTDIR          = /src/qwt-qt4
 
 TEMPLATE        = app
-INCLUDEPATH     = $(QWTDIR)/src $(QWTDIR)/include
+INCLUDEPATH     = $$QWTDIR/src $$QWTDIR/include
 DEPENDPATH     += ../src ../include
 SOURCES         = main.cpp 
 DESTDIR         = ../../bin
@@ -26,10 +26,10 @@ unix {
  MYSQLPATH              = /usr/lib/mysql
 
  contains(UNAME,x86_64) {
-    LIBS    += -L$(QWTDIR)/lib64/ -L$(QWTDIR)/lib/ -lqwt -L$(ULTRASCAN)/lib64 -lus_somo
+    LIBS    += -L$$QWTDIR/lib64/ -L$$QWTDIR/lib/ -lqwt -L$(ULTRASCAN)/lib64 -lus_somo
     DESTDIR  = ../../bin64
  } else {
-    LIBS    += -L$(QWTDIR)/lib -lqwt -L$(ULTRASCAN)/lib -lus_somo
+    LIBS    += -L$$QWTDIR/lib -lqwt -L$(ULTRASCAN)/lib -lus_somo
  }
 }
 
@@ -75,7 +75,7 @@ macx {
   LIBS        += -framework QtOpenGL
   LIBS        += -L/Users/eb/us2a/develop/extra/us3_somo/lib
 
-#  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
+  DESTDIR         = ../../bin
 }
 
 # macx { RC_FILE = us_somo.icns }
