@@ -9,8 +9,6 @@ OBJECTS_DIR    = src/obj
 
 #RC_FILE        = ../icon.rc
 
-DEFINES += A_EXPT
-
 # enabled threading in fitting algorithm:
 DEFINES += THREAD
 
@@ -66,6 +64,7 @@ win32 {
   }
 
   INCLUDEPATH    += src
+  INCLUDEPATH    += $$QWTPATH/include
   INCLUDEPATH    += $$QWT3DPATH/include
 
   LIBS           += -lQtOpenGL4
@@ -756,5 +755,3 @@ IMAGES = \
 QT += qt3support 
 #The following line was inserted by qt3to4
 QT +=  opengl 
-#The following line was inserted by qt3to4
-QT +=  

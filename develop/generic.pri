@@ -36,20 +36,22 @@ unix {
 win32 {
   TEMPLATE     =app
   MINGWDIR     =c:/mingw
+  QTPATH          = C:/Qt/4.8.4
+  QWTPATH         = C:/qwt-5.2.3
+  US3PATH         = C:/Users/Admin/Documents/ultrascan3
+  QWT3DPATH       = $$US3PATH/qwtplot3d-qt4
+
   VER          = 10
   CONFIG      += qt thread warn release
-  INCLUDEPATH  += $$QWTPATH/src ..
-  INCLUDEPATH  += $$MYSQLPATH/include ../$$QWT3D/include
-  INCLUDEPATH  += $$OPENSSL/include
-  INCLUDEPATH  += $$QTPATH/include
-  INCLUDEPATH         += C:/us3/qwtplot3d-qt4/include
-  INCLUDEPATH         += ../src
+  INCLUDEPATH    += ../src
+  INCLUDEPATH    += $$QWTPATH/include
+  INCLUDEPATH    += $$QWT3DPATH/include
   DEFINES             += MINGW
 
   LIBS         += $$QWTLIB
   LIBS         += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
   LIBS         += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
-  LIBS         += ../../bin/libus_somo$${VER}.a
+  LIBS         += ../../bin/liblibus_somo$${VER}.a
 }
 
 macx {
