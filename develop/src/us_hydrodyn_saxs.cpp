@@ -1590,10 +1590,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    editor->setMinimumWidth(300);
    editor->setMinimumHeight(minHeight1 * 6);
 
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
-   frame->setMinimumHeight(minHeight0);
-
 #if defined(QT4) && defined(Q_WS_MAC)
    {
       Q3PopupMenu * file = new Q3PopupMenu;
@@ -1610,6 +1606,10 @@ void US_Hydrodyn_Saxs::setupGUI()
       menu->insertItem(tr("&Messages"), file );
    }
 #else
+   Q3Frame *frame;
+   frame = new Q3Frame(this);
+   frame->setMinimumHeight(minHeight0);
+
    m = new QMenuBar(frame, "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
@@ -1823,10 +1823,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    j++;
    //   background->addWidget(pb_load_pr, j, 0);
    // background->addWidget(pb_clear_plot_pr, j, 1);
-
    
+#if !defined(QT4) || !defined(Q_WS_MAC)
    background->addMultiCellWidget(frame, j, j, 0, 1);
    j++;
+#endif
    background->addMultiCellWidget(editor, j, j, 0, 1);
    //   background->addMultiCellWidget(editor, j, j+3, 0, 1);
    // background->addMultiCellWidget(plot_pr, j-2, j+3, 2, 2);

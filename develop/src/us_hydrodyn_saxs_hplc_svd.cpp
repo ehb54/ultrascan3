@@ -194,11 +194,6 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    editor->setReadOnly(true);
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
-   frame->setMinimumHeight(minHeight3);
-   editor_widgets.push_back( frame );
-
 #if defined(QT4) && defined(Q_WS_MAC)
    {
       Q3PopupMenu * file = new Q3PopupMenu;
@@ -212,6 +207,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       mb_editor->insertItem(tr("&Messages"), file );
    }
 #else
+   Q3Frame *frame;
+   frame = new Q3Frame(this);
+   frame->setMinimumHeight(minHeight3);
+   editor_widgets.push_back( frame );
+
    mb_editor = new QMenuBar(frame, "menu" );
    mb_editor->setMinimumHeight(minHeight1 - 5);
    mb_editor->setPalette( PALET_NORMAL );
@@ -662,7 +662,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       }
 
       bl->addWidget( lbl_editor );
+#if !defined(QT4) || !defined(Q_WS_MAC)
       bl->addWidget( frame );
+#endif
       bl->addWidget( editor );
 
       top->addLayout ( bl );

@@ -1432,10 +1432,6 @@ void US_Hydrodyn_Comparative::setupGUI()
    // editor->setMinimumWidth(300);
    // editor->setMinimumHeight(minHeight1 * 7);
 
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
-   frame->setMinimumHeight(minHeight3);
-
 #if defined(QT4) && defined(Q_WS_MAC)
    {
       Q3PopupMenu * file = new Q3PopupMenu;
@@ -1452,6 +1448,10 @@ void US_Hydrodyn_Comparative::setupGUI()
       menu->insertItem(tr("&Messages"), file );
    }
 #else
+   Q3Frame *frame;
+   frame = new Q3Frame(this);
+   frame->setMinimumHeight(minHeight3);
+
    m = new QMenuBar(frame, "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
@@ -1653,7 +1653,9 @@ void US_Hydrodyn_Comparative::setupGUI()
    gl_loaded_selected_editor->addLayout(hbl_selected_buttons2, 3, 1);
 
    Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout(0);
+#if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
+#endif
    vbl_editor_group->addWidget(editor);
 
    // gl_loaded_selected_editor->addWidget(frame, 0, 2);

@@ -319,10 +319,6 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
-   frame->setMinimumHeight(minHeight3);
-
 #if defined(QT4) && defined(Q_WS_MAC)
    {
       Q3PopupMenu * file = new Q3PopupMenu;
@@ -336,6 +332,10 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
       menu->insertItem(tr("&Messages"), file );
    }
 #else
+   Q3Frame *frame;
+   frame = new Q3Frame(this);
+   frame->setMinimumHeight(minHeight3);
+
    m = new QMenuBar(frame, "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
@@ -417,7 +417,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    hbl_bottom->addSpacing( 2 );
 
    Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout(0);
+#if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame );
+#endif
    vbl_editor_group->addWidget( editor );
 
    Q3VBoxLayout *background = new Q3VBoxLayout(this);

@@ -421,10 +421,6 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
-   frame->setMinimumHeight(minHeight3);
-
 #if defined(QT4) && defined(Q_WS_MAC)
    {
       Q3PopupMenu * file = new Q3PopupMenu;
@@ -438,6 +434,10 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
       menu->insertItem(tr("&Messages"), file );
    }
 #else
+   Q3Frame *frame;
+   frame = new Q3Frame(this);
+   frame->setMinimumHeight(minHeight3);
+
    m = new QMenuBar(frame, "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
@@ -582,7 +582,9 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
 
    Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout( 0 );
    vbl_editor_group->addLayout( gl_options );
+#if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame      );
+#endif
    vbl_editor_group->addWidget( editor     );
 
    Q3BoxLayout *hbl_plot_buttons     = new Q3HBoxLayout( 0 );
