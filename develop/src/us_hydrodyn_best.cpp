@@ -1,3 +1,4 @@
+#include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_best.h"
 // #include "../include/us_vector.h"
 #include "../include/us_lm.h"
@@ -42,7 +43,7 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
    *best_widget = true;
 
    USglobal = new US_Config();
-   setPalette( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
+   setPalette( PALET_FRAME );
    setCaption( tr( "US-SOMO: BEST results analysis tool" ) );
 
    cg_red = USglobal->global_colors.cg_label;
@@ -91,26 +92,30 @@ void US_Hydrodyn_Best::setupGUI()
    lbl_credits_1 =  new QLabel      ( "Cite: S.R. Aragon, \"A precise boundary element method for macromolecular transport properties\", J. Comp. Chem, 25, 1191-1205 (2004).", this );
    lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_credits_1 -> setMinimumHeight( minHeight1 );
-   lbl_credits_1 -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   lbl_credits_1 -> setPalette      ( PALET_LABEL );
+   AUTFBACK( lbl_credits_1 );
    lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
    lbl_credits_2 =  new QLabel      ( "Cite: Michael Connolly, http://biohedron.drupalgardens.com, \"MSRoll\"", this );
    lbl_credits_2 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_credits_2 -> setMinimumHeight( minHeight1 );
-   lbl_credits_2 -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   lbl_credits_2 -> setPalette      ( PALET_LABEL );
+   AUTFBACK( lbl_credits_2 );
    lbl_credits_2 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
    // ------ input section 
    lbl_input = new mQLabel("Data fields", this);
    lbl_input->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_input->setMinimumHeight(minHeight1);
-   lbl_input->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_input->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_input );
    lbl_input->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    connect( lbl_input, SIGNAL( pressed() ), SLOT( hide_input() ) );
 
    lb_data = new Q3ListBox( this );
    lb_data->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
-   lb_data->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lb_data->setPalette( PALET_EDIT );
+   AUTFBACK( lb_data );
    lb_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lb_data->setEnabled(true);
    connect( lb_data, SIGNAL( selectionChanged() ), SLOT( data_selected() ) );
@@ -120,7 +125,7 @@ void US_Hydrodyn_Best::setupGUI()
    pb_load =  new QPushButton ( tr( "Load CSV" ), this );
    pb_load -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_load -> setMinimumHeight( minHeight1 );
-   pb_load -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   pb_load -> setPalette      ( PALET_PUSHB );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
 
    input_widgets.push_back( pb_load );
@@ -128,7 +133,7 @@ void US_Hydrodyn_Best::setupGUI()
    pb_join_results =  new QPushButton ( tr( "Join results" ), this );
    pb_join_results -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_join_results -> setMinimumHeight( minHeight1 );
-   pb_join_results -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   pb_join_results -> setPalette      ( PALET_PUSHB );
    connect( pb_join_results, SIGNAL( clicked() ), SLOT( join_results() ) );
 
    input_widgets.push_back( pb_join_results );
@@ -136,7 +141,7 @@ void US_Hydrodyn_Best::setupGUI()
    pb_save_results =  new QPushButton ( tr( "Save Results" ), this );
    pb_save_results -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_save_results -> setMinimumHeight( minHeight1 );
-   pb_save_results -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   pb_save_results -> setPalette      ( PALET_PUSHB );
    pb_save_results -> setEnabled      ( false );
    connect( pb_save_results, SIGNAL( clicked() ), SLOT( save_results() ) );
 
@@ -147,14 +152,16 @@ void US_Hydrodyn_Best::setupGUI()
    le_last_file->setText( save_last_file );
    le_last_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_last_file->setMinimumHeight(minHeight1);
-   le_last_file->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_last_file->setPalette( PALET_NORMAL );
+   AUTFBACK( le_last_file );
    le_last_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    connect( le_last_file, SIGNAL( textChanged( const QString & ) ), SLOT( set_last_file( const QString & ) ) );
 
    input_widgets.push_back( le_last_file );
 
    cb_plus_lm = new QCheckBox( this );
-   cb_plus_lm->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_plus_lm->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_plus_lm );
    cb_plus_lm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    cb_plus_lm->setText( tr( "EXP fit with LM refinement" ) );
    cb_plus_lm->setChecked( false );
@@ -166,7 +173,8 @@ void US_Hydrodyn_Best::setupGUI()
 
 
    cb_errorlines = new QCheckBox( this );
-   cb_errorlines->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_errorlines->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_errorlines );
    cb_errorlines->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    cb_errorlines->setText( tr( "Display error lines (+/- 1 sigma of linear fit)" ) );
    cb_errorlines->setChecked( false );
@@ -180,12 +188,14 @@ void US_Hydrodyn_Best::setupGUI()
    lbl_editor = new mQLabel("Messages", this);
    lbl_editor->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_editor->setMinimumHeight(minHeight1);
-   lbl_editor->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_editor->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_editor );
    lbl_editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    connect( lbl_editor, SIGNAL( pressed() ), SLOT( hide_editor() ) );
 
    editor = new Q3TextEdit(this);
-   editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   editor->setPalette( PALET_NORMAL );
+   AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
@@ -212,7 +222,8 @@ void US_Hydrodyn_Best::setupGUI()
 #else
    mb_editor = new QMenuBar(frame, "menu" );
    mb_editor->setMinimumHeight(minHeight1 - 5);
-   mb_editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   mb_editor->setPalette( PALET_NORMAL );
+   AUTFBACK( mb_editor );
 
    Q3PopupMenu * file = new Q3PopupMenu(editor);
    mb_editor->insertItem( tr("&File"), file );
@@ -239,7 +250,8 @@ void US_Hydrodyn_Best::setupGUI()
    grid_data->enableXMin( true );
    grid_data->enableYMin( true );
 #endif
-   plot_data->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
+   plot_data->setPalette( PALET_NORMAL );
+   AUTFBACK( plot_data );
 #ifndef QT4
    plot_data->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_data->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
@@ -273,20 +285,23 @@ void US_Hydrodyn_Best::setupGUI()
    plot_data->setCanvasBackground(USglobal->global_colors.plot);
 
    lbl_points = new mQLabel( "Linear:", this );
-   lbl_points->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_points->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_points );
    lbl_points->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lbl_points->show();
    connect( lbl_points, SIGNAL( pressed() ), SLOT( toggle_points() ) );
 
    lbl_points_ln = new mQLabel( "Log:   ", this );
-   lbl_points_ln->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_points_ln->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_points_ln );
    lbl_points_ln->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    // lbl_points_ln->show();
    lbl_points_ln->hide();
    connect( lbl_points_ln, SIGNAL( pressed() ), SLOT( toggle_points_ln() ) );
 
    lbl_points_exp = new mQLabel( "Exp:   ", this );
-   lbl_points_exp->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_points_exp->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_points_exp );
    lbl_points_exp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    // lbl_points_exp->show();
    lbl_points_exp->hide();
@@ -297,13 +312,13 @@ void US_Hydrodyn_Best::setupGUI()
    pb_help =  new QPushButton ( tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
-   pb_help -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
    pb_close =  new QPushButton ( tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
-   pb_close -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
    // -------- build layout
@@ -399,7 +414,8 @@ void US_Hydrodyn_Best::hide_editor()
    if ( editor_widgets[ 0 ]->isVisible() )
    {
       cout << "resetting editor palette\n";
-      lbl_editor->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      lbl_editor->setPalette( PALET_LABEL );
+      AUTFBACK( lbl_editor );
    }
 }
 
@@ -664,7 +680,8 @@ void US_Hydrodyn_Best::load()
    for ( int i = 0; i < points; ++i )
    {
       QCheckBox * cb = new QCheckBox( this );
-      cb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      cb->setPalette( PALET_NORMAL );
+      AUTFBACK( cb );
       cb->setText( QString( "%1" ).arg( i + 1 ) );
       cb->setChecked( true );
       cb->setEnabled( true );
@@ -676,7 +693,8 @@ void US_Hydrodyn_Best::load()
    for ( int i = 0; i < points; ++i )
    {
       QCheckBox * cb = new QCheckBox( this );
-      cb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      cb->setPalette( PALET_NORMAL );
+      AUTFBACK( cb );
       cb->setText( QString( "%1" ).arg( i + 1 ) );
       cb->setChecked( false );
       cb->setEnabled( true );
@@ -689,7 +707,8 @@ void US_Hydrodyn_Best::load()
    for ( int i = 0; i < points; ++i )
    {
       QCheckBox * cb = new QCheckBox( this );
-      cb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      cb->setPalette( PALET_NORMAL );
+      AUTFBACK( cb );
       cb->setText( QString( "%1" ).arg( i + 1 ) );
       cb->setChecked( false );
       cb->setEnabled( true );
