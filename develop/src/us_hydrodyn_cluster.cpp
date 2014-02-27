@@ -2518,7 +2518,8 @@ bool US_Hydrodyn_Cluster::corrupt_config()
 
          if ( !ufu.move( configfile, configcorruptfile, true ) )
          {
-            errormsg = QString( tr( "Error: Could not rename corrupt cluster configuration file:" + ufu.errormsg ) );
+            editor_msg( "red", QString( tr( "Error: Could not rename corrupt cluster configuration file:" + ufu.errormsg + " Check permissions or manually remove: ") )
+                        .arg( pkg_dir + QDir::separator() + configfile ) );
             return false;
          } else {
             editor_msg( "blue", 
