@@ -290,7 +290,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
    // int ini;
    int contatom, contatom1, indCA, indC, indO;
    int posiz, massa = 0, check_asa = 0;
-   float sommarc, Dz, d1z, zz, temp, asamin, asalevel, asapep, asatot, perc, voltot;
+   float sommarc, Dz, d1z, zz, temp, asamin, asalevel = 10, asapep, asatot, perc, voltot;
    char azoto[1];
    char carbonio0[3];
    char carbonio1[2];
