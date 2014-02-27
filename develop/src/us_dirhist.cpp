@@ -139,7 +139,7 @@ void US_Dirhist::setupGUI()
    connect( t_hist, SIGNAL( doubleClicked( int, int, int, const QPoint & ) ), SLOT( t_doubleClicked( int, int, int, const QPoint & ) ) );
    connect( t_hist, SIGNAL( selectionChanged() ), SLOT( t_selectionChanged() ) );
 
-   pb_del = new QPushButton(tr("Delete directory"), this);
+   pb_del = new QPushButton(tr("Delete directory from history"), this);
    pb_del->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_del->setMinimumHeight(minHeight1);
    pb_del->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));

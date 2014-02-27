@@ -2682,6 +2682,10 @@ bool US_Hydrodyn_Cluster::read_config()
       }
 
       qsl.pop_front();
+      if ( !qsl.size() )
+      {
+         continue;
+      }
 
       if ( rx_config.search( option ) != -1 )
       {
