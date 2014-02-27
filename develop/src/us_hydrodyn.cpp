@@ -1128,7 +1128,10 @@ void US_Hydrodyn::set_expert( bool expert )
 {
    if ( expert )
    {
-      pb_best->show();
+      if ( U_EXPT )
+      {
+         pb_best->show();
+      }
       lookup_tables->insertItem(tr("Make test set"), this, SLOT( make_test_set() ) );
    }
 }

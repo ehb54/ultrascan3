@@ -818,10 +818,6 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
 
       void           set_saxs_legend();
       void           set_pr_legend();
-#if defined( QT4 )
-      QwtLegend *    legend_saxs;
-      QwtLegend *    legend_pr;
-#endif
 
    private slots:
 
