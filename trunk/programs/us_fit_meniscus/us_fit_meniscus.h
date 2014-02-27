@@ -74,6 +74,9 @@ class US_FitMeniscus : public US_Widgets
       QPushButton*         pb_plot;
       QPushButton*         pb_reset;
 
+      QCheckBox*           ck_confirm;
+      QCheckBox*           ck_applymwl;
+
       QSpinBox*            sb_order;
 
       QwtPlot*             meniscus_plot;
@@ -87,6 +90,9 @@ class US_FitMeniscus : public US_Widgets
       QString              fname_load;
       QString              fname_edit;
 
+      QStringList          edtfiles;
+
+      int                  nedtfs;
       int                  dbg_level;
    private slots:
       void reset    (      void );

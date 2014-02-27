@@ -5,7 +5,8 @@
 #include "us_util.h"
 #include "us_settings.h"
 
-#define RPM_ROUND 50     // Value for nearest multiple rounding of RPM
+#define RPM_ROUND 2.0         // Value for nearest multiple rounding of RPM
+#define RPM_MAX_DIFF 200.0    // Maximum rpm difference defining a speed step
 
 
 // Hold data read in and selected from a raw MWL data directory
@@ -415,8 +416,6 @@ double US_MwlData::dword( char* cbuf )
 // Utility to read an MWL header from a data stream
 void US_MwlData::read_header( QDataStream& ds, DataHdr& hd )
 {
-   const int    irround = RPM_ROUND;
-   const double drround = (double)irround;
    char cbuf[ 28 ];
 
    ds.readRawData( cbuf, 24 );
@@ -427,7 +426,6 @@ void US_MwlData::read_header( QDataStream& ds, DataHdr& hd )
    hd.ichan         = QString( "ABCDEFGH" ).indexOf( hd.channel );
    hd.iscan         = hword( cbuf + 2 );
    hd.rotor_speed   = hword( cbuf + 4 );
-   hd.rotor_speed   = qRound( (double)hd.rotor_speed / drround ) * irround;
    hd.temperature   = (double)( hword( cbuf + 6 ) ) / 10.0;
    hd.omega2t       = dword( cbuf + 8 );
    hd.elaps_time    = iword( cbuf + 12 );
@@ -645,7 +643,12 @@ qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
       rdata.xvalues     = xout;
       int jhx           = hdx; 
       int rdx           = 0;
+      int kspstep       = 1;
+      double rpm_min    = 1e+9;
+      double rpm_max    = 1e-9;
+      double rpm_sum    = 0.0;
       rdata.description = ccdescs.at( ccx );
+      QVector< double > rrpms;
 
       for ( int scx = 0; scx < nscan; scx++ )
       {  // Set scan values
@@ -658,10 +661,20 @@ qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
          scan.delta_r      = rad_inc;
          scan.rvalues.reserve( npoint );
          scan.interpolated = interpo;
-         // Round speed to nearest multiple of 100
-         scan.rpm          = qRound( scan.rpm / 100.0 ) * 100.0;
-//qDebug() << "BldRawD      scx" << scx << "jhx" << jhx
-// << "seconds" << scan.seconds;
+         // Accumulate rpm min,max,sum
+         rpm_min           = qMin( rpm_min, scan.rpm );
+         rpm_max           = qMax( rpm_max, scan.rpm );
+         rpm_sum          += scan.rpm;
+         if ( scx > 0  &&  scan.rpm != rrpms[ scx - 1 ] )
+            kspstep++;
+//*DEBUG*
+if(trx==0) {
+qDebug() << "BldRawD      scx" << scx << "jhx" << jhx
+ << "seconds" << scan.seconds << "rpm" << scan.rpm 
+ << "speed steps" << kspstep;
+}
+//*DEBUG*
+         rrpms << scan.rpm;
          jhx++;
 
          for ( int kk = 0; kk < npoint; kk++ )
@@ -671,6 +684,24 @@ qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
 
          rdata.scanData << scan;      // Append a scan to a triple
       } // END: scan loop
+
+      // If multiple speed steps and min,max close; replace with average
+      if ( kspstep > 1  &&  ( rpm_max - rpm_min ) < RPM_MAX_DIFF )
+      {
+         double rpm_avg    = (double)qRound( rpm_sum / (double)nscan );
+         double rpm_out    = qRound( rpm_avg / RPM_ROUND ) * RPM_ROUND;
+
+         for ( int scx = 0; scx < nscan; scx++ )
+         {
+            rdata.scanData[ scx ].rpm = rpm_out;
+         }
+//*DEBUG*
+if(trx==0) {
+ qDebug() << "BldRawD trx=" << trx << "rpm_min rpm_max rpm_avg rpm_out"
+    << rpm_min << rpm_max << rpm_avg << rpm_out;
+}
+//*DEBUG*
+      }
 
 qDebug() << "BldRawD     trx" << trx << " saving allData...";
       allData << rdata;               // Append triple data to the array
