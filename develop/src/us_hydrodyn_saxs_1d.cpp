@@ -127,7 +127,9 @@ US_Hydrodyn_Saxs_1d::~US_Hydrodyn_Saxs_1d()
 void US_Hydrodyn_Saxs_1d::setupGUI()
 {
    int minHeight1 = 30;
+#if !defined(QT4) || !defined(Q_WS_MAC)
    int minHeight3 = 30;
+#endif
 
    lbl_title = new QLabel( tr( "US-SOMO: SAXS 1D Simulation" ), this);
    lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);

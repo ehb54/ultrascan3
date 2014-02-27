@@ -444,11 +444,11 @@
    void DebugSetname(char* Filename);
    void LogMessage(char* FormatString,...);
 #define VOID void
-#define HANDLE void*
+// #define HANDLE void*
 #define CONST const
 #else
 #define VOID char
-#define HANDLE char*
+// #define HANDLE char*
 #define CONST
 #endif
 

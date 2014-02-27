@@ -1342,7 +1342,9 @@ US_Hydrodyn_Xsr::~US_Hydrodyn_Xsr()
 void US_Hydrodyn_Xsr::setupGUI()
 {
    int minHeight1 = 30;
+#if !defined(QT4) || !defined(Q_WS_MAC)
    int minHeight3 = 30;
+#endif
 
    lbl_title = new QLabel( tr( "US-SOMO: SAXS Cross Sectional Analysis" ), this);
    lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);

@@ -87,7 +87,9 @@ US_Hydrodyn_Best::~US_Hydrodyn_Best()
 void US_Hydrodyn_Best::setupGUI()
 {
    int minHeight1 = 24;
+#if !defined(QT4) || !defined(Q_WS_MAC)
    int minHeight3 = 25;
+#endif
 
    lbl_credits_1 =  new QLabel      ( "Cite: S.R. Aragon, \"A precise boundary element method for macromolecular transport properties\", J. Comp. Chem, 25, 1191-1205 (2004).", this );
    lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );

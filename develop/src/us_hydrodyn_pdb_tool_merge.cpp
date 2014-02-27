@@ -133,7 +133,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::reset_csv_commands()
 void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
 {
    int minHeight1 = 22;
+#if !defined(QT4) || !defined(Q_WS_MAC)
    int minHeight3 = 30;
+#endif
 
    lbl_title = new QLabel(csv_commands.name.left(80), this);
    lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);

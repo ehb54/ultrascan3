@@ -101,7 +101,9 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    int minHeight1  = 30;
    int minHeight1b = 75;
    int minHeight2  = 45;
+#if !defined(QT4) || !defined(Q_WS_MAC)
    int minHeight3  = 30;
+#endif
 
    lbl_title = new QLabel(csv1.name.left(80), this);
    lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);

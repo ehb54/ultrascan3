@@ -72,7 +72,9 @@ US_Hydrodyn_Cluster_Advanced::~US_Hydrodyn_Cluster_Advanced()
 void US_Hydrodyn_Cluster_Advanced::setupGUI()
 {
    int minHeight1 = 30;
+#if !defined(QT4) || !defined(Q_WS_MAC)
    int minHeight3 = 30;
+#endif
 
    lbl_title = new QLabel(csv1.name.left(80), this);
    lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
