@@ -32,6 +32,7 @@ class US_GUI_EXTERN US_MwlData : public QObject
             int      icell;         //!< Cell index (0,...)
             int      ichan;         //!< Channel index (0,...)
             int      iscan;         //!< Scan index (0,...)
+            int      set_speed;     //!< Rotor speed in RPM set constant
             int      rotor_speed;   //!< Rotor speed in RPM
             int      elaps_time;    //!< Scan elapsed time in seconds
             int      npoint;        //!< Number of radius data points
@@ -172,6 +173,8 @@ class US_GUI_EXTERN US_MwlData : public QObject
       int       slambda;             //!< Starting output lambda
       int       elambda;             //!< Ending output lambda
       int       dbg_level;           //!< Debug level
+
+      double    evers;               //!< Experiment version number
 
       QString   cur_dir;             //!< Currently selected i/p data directory
       QString   runID;               //!< Run ID
