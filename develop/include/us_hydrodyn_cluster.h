@@ -121,6 +121,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       // cluster config info
 
       bool          read_config();
+      bool          corrupt_config();
       bool          write_config();
       QString       list_config();
 

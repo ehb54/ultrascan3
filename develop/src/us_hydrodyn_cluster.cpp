@@ -2493,6 +2493,31 @@ QString US_Hydrodyn_Cluster::options_summary()
    return prefix + qs;
 }
 
+bool US_Hydrodyn_Cluster::corrupt_config()
+{
+   switch (
+           QMessageBox::question(
+                                 this,
+                                 caption() + tr( " : Configuration file corrupt" ),
+                                 QString( tr( "The cluster configuration file was found to be corrupt.\n"
+                                              "Would you like to recreate it from the template file?\n"
+                                              "Answering \"Yes\" is recommended." ) ),
+                                 QMessageBox::Yes, 
+                                 QMessageBox::No,
+                                 QMessageBox::NoButton
+                                 ) )
+   {
+   case QMessageBox::Yes : 
+      return read_config();
+      break;
+   case QMessageBox::No : 
+   default :
+      return false;
+      break;
+   }
+   return false;
+}
+
 bool US_Hydrodyn_Cluster::read_config()
 {
    // read "config.new" in package dir
@@ -2557,6 +2582,7 @@ bool US_Hydrodyn_Cluster::read_config()
                       ")$"
                       );
    QRegExp rx_config ( 
+
                       "^("
                       "userid|"
                       "userpw|"
@@ -2609,15 +2635,15 @@ bool US_Hydrodyn_Cluster::read_config()
             .arg( configfile )
             .arg( line )
             .arg( qsl[ 0 ] );
-         return false;
+         return corrupt_config();
       }
 
-      if ( qsl.size() < 1 )
+      if ( qsl.size() < 2 )
       {
          errormsg = QString( "Error reading %1 line %2 : Missing argument " )
             .arg( configfile )
             .arg( line );
-         return false;
+         return corrupt_config();
       }
 
       qsl.pop_front();
@@ -2637,7 +2663,8 @@ bool US_Hydrodyn_Cluster::read_config()
                .arg( configfile )
                .arg( line )
                .arg( qsl[ 0 ] );
-            return false;
+
+            return corrupt_config();
          }
 
          map < QString, QString > tmp_system;
@@ -2653,7 +2680,7 @@ bool US_Hydrodyn_Cluster::read_config()
                .arg( configfile )
                .arg( line )
                .arg( option );
-            return false;
+            return corrupt_config();
          }
 
          cluster_systems[ last_system ][ option ] = qsl[ 0 ];
@@ -2670,7 +2697,7 @@ bool US_Hydrodyn_Cluster::read_config()
          .arg( configfile )
          .arg( line )
          .arg( option );
-      return false;
+      return corrupt_config();
    }
    f.close();
 
