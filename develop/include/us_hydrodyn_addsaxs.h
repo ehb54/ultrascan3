@@ -11,7 +11,7 @@
 #include <qlineedit.h>
 #include <qlabel.h>
 #include <qwidget.h>
-#include <qcombobox.h>
+#include <Q3ComboBox>
 #include <qpushbutton.h>
 #include <q3frame.h>
 //Added by qt3to4:
@@ -50,7 +50,7 @@ class US_AddSaxs : public QWidget
       QLabel *lbl_saxs_name;
       QLabel *lbl_number_of_saxs;
 
-      QComboBox *cmb_saxs;
+      Q3ComboBox *cmb_saxs;
 
       QLineEdit *le_saxs_name;
       QLineEdit *le_a1;
