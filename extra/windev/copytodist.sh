@@ -10,3 +10,5 @@ cp -rp ${US3SOMO}/bin ${DESTDIR}/
 cp -rp ${US3SOMO}/etc ${DESTDIR}/
 cp -rp ${US3SOMO}/doc ${DESTDIR}/somo/
 cp -rp ${US3SOMO}/somo/demo ${DESTDIR}/somo/
+cp -p ${US3SOMO}/LICENSE.txt ${DESTDIR}/
+
