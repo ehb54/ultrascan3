@@ -5,10 +5,6 @@
 #include "us_util.h"
 #include "us_settings.h"
 
-#define RPM_ROUND 2.0         // Value for nearest multiple rounding of RPM
-#define RPM_MAX_DIFF 200.0    // Maximum rpm difference defining a speed step
-
-
 // Hold data read in and selected from a raw MWL data directory
 US_MwlData::US_MwlData( )
 {
@@ -31,6 +27,7 @@ DbgLv(1) << "MwDa: cur_dir" << cur_dir;
    if ( cur_dir.right( 1 ) != "/" )  cur_dir += "/";
 
    read_runxml( ddir, cur_dir );
+DbgLv(1) << "MwDa: evers" << evers;
 
    int kcelchn  = cellchans.count();
    cellchans.clear();
@@ -199,6 +196,7 @@ DbgLv(1) << "MwDa: da20,40" << ri_readings[20][40] << "m+40 n-40"
       ex_wavelns << ri_wavelns;
    }
 
+DbgLv(1) << "MwDa: status" << status << " stat_text" << le_status->text();
    return status;
 }
 
@@ -418,21 +416,39 @@ void US_MwlData::read_header( QDataStream& ds, DataHdr& hd )
 {
    char cbuf[ 28 ];
 
-   ds.readRawData( cbuf, 24 );
+   int nhbyte       = ( evers == 1.0 ) ? 24 : 26;
+   ds.readRawData( cbuf, nhbyte );
 
    hd.cell          = QChar( '0' | cbuf[ 0 ] );
    hd.channel       = QChar( cbuf[ 1 ] );
    hd.icell         = cells.indexOf( QString( hd.cell ) );
    hd.ichan         = QString( "ABCDEFGH" ).indexOf( hd.channel );
    hd.iscan         = hword( cbuf + 2 );
-   hd.rotor_speed   = hword( cbuf + 4 );
-   hd.temperature   = (double)( hword( cbuf + 6 ) ) / 10.0;
-   hd.omega2t       = dword( cbuf + 8 );
-   hd.elaps_time    = iword( cbuf + 12 );
-   hd.npoint        = hword( cbuf + 16 );
-   hd.radius_start  = (double)( hword( cbuf + 18 ) ) / 1000.0;
-   hd.radius_step   = (double)( hword( cbuf + 20 ) ) / 10000.0;
-   hd.nlambda       = hword( cbuf + 22 );
+   hd.set_speed     = hword( cbuf + 4 );
+
+   if ( evers > 1.0 )
+   {  // Current version that includes both set_speed and rotor_speed
+      hd.rotor_speed   = hword( cbuf + 6 );
+      hd.temperature   = (double)( hword( cbuf + 8 ) ) / 10.0;
+      hd.omega2t       = dword( cbuf + 10 );
+      hd.elaps_time    = iword( cbuf + 14 );
+      hd.npoint        = hword( cbuf + 18 );
+      hd.radius_start  = (double)( hword( cbuf + 20 ) ) / 1000.0;
+      hd.radius_step   = (double)( hword( cbuf + 22 ) ) / 10000.0;
+      hd.nlambda       = hword( cbuf + 24 );
+   }
+
+   else
+   {  // Older version with only rotor_speed (use that as set_speed)
+      hd.rotor_speed   = hd.set_speed;
+      hd.temperature   = (double)( hword( cbuf + 6 ) ) / 10.0;
+      hd.omega2t       = dword( cbuf + 8 );
+      hd.elaps_time    = iword( cbuf + 12 );
+      hd.npoint        = hword( cbuf + 16 );
+      hd.radius_start  = (double)( hword( cbuf + 18 ) ) / 1000.0;
+      hd.radius_step   = (double)( hword( cbuf + 20 ) ) / 10000.0;
+      hd.nlambda       = hword( cbuf + 22 );
+   }
 }
 
 // Utility to read the lambdas from a data stream
@@ -606,7 +622,8 @@ int US_MwlData::build_rawData( QVector< US_DataIO::RawData >& allData )
    QVector< double > xout;
    double rad_val  = headers[ 0 ].radius_start;
    double rad_inc  = headers[ 0 ].radius_step;
-qDebug() << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint;
+qDebug() << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint
+ << "  evers" << evers;
 
    for ( int ii = 0; ii < npoint; ii++ )
    {
@@ -644,9 +661,15 @@ qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
       int jhx           = hdx; 
       int rdx           = 0;
       int kspstep       = 1;
+      int kscx          = 0;
+      int nspstep       = 0;
+      int kscan         = 0;
       double rpm_min    = 1e+9;
       double rpm_max    = 1e-9;
       double rpm_sum    = 0.0;
+      double rpm_setp   = 0.0;
+      double rpm_set    = headers[ jhx ].set_speed;
+      double rpm_avg    = 0.0;
       rdata.description = ccdescs.at( ccx );
       QVector< double > rrpms;
 
@@ -654,6 +677,8 @@ qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
       {  // Set scan values
          US_DataIO::Scan scan;
          scan.temperature  = headers[ jhx ].temperature;
+         rpm_setp          = rpm_set;
+         rpm_set           = headers[ jhx ].set_speed;
          scan.rpm          = headers[ jhx ].rotor_speed;
          scan.seconds      = headers[ jhx ].elaps_time;
          scan.omega2t      = headers[ jhx ].omega2t;
@@ -661,17 +686,37 @@ qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
          scan.delta_r      = rad_inc;
          scan.rvalues.reserve( npoint );
          scan.interpolated = interpo;
+         if ( scx > 0  &&  scan.rpm != rrpms[ scx - 1 ] )
+            kspstep++;
+
+         if ( rpm_set != rpm_setp )
+         {  // A new speed step is reached, re-do speeds in the previous one
+            nspstep++;
+            rpm_avg           = (double)qRound( rpm_sum / (double)kscan );
+
+            for ( int jsx = kscx; jsx < scx; jsx++ )
+               rdata.scanData[ jsx ].rpm  = rpm_avg;
+
+            kscx              = scx;
+            kscan             = 1;
+            rpm_sum           = 0.0;
+            rpm_min           = scan.rpm;
+            rpm_max           = scan.rpm;
+         }
+         else
+         {  // Bump scan count in a speed step
+            kscan++;
+         }
+
          // Accumulate rpm min,max,sum
          rpm_min           = qMin( rpm_min, scan.rpm );
          rpm_max           = qMax( rpm_max, scan.rpm );
          rpm_sum          += scan.rpm;
-         if ( scx > 0  &&  scan.rpm != rrpms[ scx - 1 ] )
-            kspstep++;
 //*DEBUG*
 if(trx==0) {
 qDebug() << "BldRawD      scx" << scx << "jhx" << jhx
  << "seconds" << scan.seconds << "rpm" << scan.rpm 
- << "speed steps" << kspstep;
+ << "speed step" << kspstep << nspstep+1;
 }
 //*DEBUG*
          rrpms << scan.rpm;
@@ -685,23 +730,51 @@ qDebug() << "BldRawD      scx" << scx << "jhx" << jhx
          rdata.scanData << scan;      // Append a scan to a triple
       } // END: scan loop
 
-      // If multiple speed steps and min,max close; replace with average
-      if ( kspstep > 1  &&  ( rpm_max - rpm_min ) < RPM_MAX_DIFF )
-      {
-         double rpm_avg    = (double)qRound( rpm_sum / (double)nscan );
-         double rpm_out    = qRound( rpm_avg / RPM_ROUND ) * RPM_ROUND;
+      if ( evers < 1.2 )
+      {  // For an old data version, get the average of all scans
+         rpm_min           = 1.e+9;
+         rpm_max           = 1.e-9;
+         rpm_sum           = 0.0;
 
          for ( int scx = 0; scx < nscan; scx++ )
          {
-            rdata.scanData[ scx ].rpm = rpm_out;
+            double srpm       = rdata.scanData[ scx ].rpm;
+            rpm_min           = qMin( rpm_min, srpm );
+            rpm_max           = qMax( rpm_max, srpm );
+            rpm_sum          += srpm;
          }
+
+         kscan             = nscan;
+         nspstep           = 0;
+         kscx              = 0;
+         rpm_set           = (double)qRound( ( rpm_min + rpm_max ) * 0.5 );
+      }
+
+      // Set the average speed for the final/only speed step
+      nspstep++;
+      rpm_avg           = (double)qRound( rpm_sum / (double)kscan );
+      for ( int scx = kscx; scx < nscan; scx++ )
+      {
+         rdata.scanData[ scx ].rpm = rpm_avg;
+      }
+
+      if ( evers > 1.0 )
+      {  // In newer data, a set_speed may differ from the average
+         if ( qAbs( rpm_avg - rpm_set ) > 10.0 )
+         {
+            QMessageBox::warning( 0,
+                  tr( "Set/Average Speed Difference" ),
+                  tr( "The stored set_speed (%1) and the average of"
+                      " recorded rotor_speeds (%2) differ"
+                      " significantly!" ).arg( rpm_set ).arg( rpm_avg ) );
+         }
+      }
 //*DEBUG*
 if(trx==0) {
- qDebug() << "BldRawD trx=" << trx << "rpm_min rpm_max rpm_avg rpm_out"
-    << rpm_min << rpm_max << rpm_avg << rpm_out;
+ qDebug() << "BldRawD trx=" << trx << "rpm_min rpm_max rpm_avg rpm_set"
+    << rpm_min << rpm_max << rpm_avg << rpm_set << "speed steps" << nspstep;
 }
 //*DEBUG*
-      }
 
 qDebug() << "BldRawD     trx" << trx << " saving allData...";
       allData << rdata;               // Append triple data to the array
@@ -720,7 +793,7 @@ qDebug() << "BldRawD   ccx wvx hdx" << ccx << wvx << hdx << headers.size();
    } // END: triple loop
 
    le_status->setText( tr( "All %1 raw AUCs have been build." )
-       .arg( ntriple ) );
+                       .arg( ntriple ) );
    qApp->processEvents();
 
 qDebug() << "BldRawD  DONE ntriple" << ntriple << ntrip_i;
@@ -805,24 +878,28 @@ void US_MwlData::read_runxml( QDir ddir, QString curdir )
          QXmlStreamAttributes att = xml.attributes();
          if ( xml.name() == "runID" )
          {
-            runID           = att.value( "name"           ).toString();
+            runID           = att.value( "name"    ).toString();
          }
          else if ( xml.name() == "cell" )
          {
-            celi            = att.value( "id"             ).toString();
+            celi            = att.value( "id"      ).toString();
             celi            = QString::number( celi.toInt() );
          }
          else if ( xml.name() == "channel" )
          {
-            chni            = att.value( "id"             ).toString();
+            chni            = att.value( "id"      ).toString();
             cech            = celi + " / " + chni;
-            QString desc    = att.value( "sample"         ).toString();
+            QString desc    = att.value( "sample"  ).toString();
 
             if ( ! cellchans.contains( cech ) )
             {
                cellchans << cech;
                ccdescs << desc;
             }
+         }
+         else if ( xml.name() == "settings_mwrs_experiment" )
+         {
+            evers           = att.value( "version" ).toString().toDouble();
          }
       }
    }
