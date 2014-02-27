@@ -2508,7 +2508,25 @@ bool US_Hydrodyn_Cluster::corrupt_config()
                                  ) )
    {
    case QMessageBox::Yes : 
-      return read_config();
+      {
+         QDir::setCurrent( pkg_dir );
+         
+         QString configfile        = "config";
+         QString configcorruptfile = "config.corrupt";
+      
+         US_File_Util ufu;
+
+         if ( !ufu.move( configfile, configcorruptfile, true ) )
+         {
+            errormsg = QString( tr( "Error: Could not rename corrupt cluster configuration file:" + ufu.errormsg ) );
+            return false;
+         } else {
+            editor_msg( "blue", 
+                        QString( tr( "Notice: Renamed corrupt cluster configuration file to \"%1\"." ) )
+                        .arg( configcorruptfile ) );
+         }
+         return read_config();
+      }
       break;
    case QMessageBox::No : 
    default :
@@ -2581,6 +2599,23 @@ bool US_Hydrodyn_Cluster::read_config()
                       "ftp"
                       ")$"
                       );
+
+   QRegExp rx_req_arg  ( 
+                        "^("
+                        "server|"
+                        "manage|"
+                        "system|"
+                        "type|"
+                        "corespernode|"
+                        "maxcores|"
+                        "runtime|"
+                        "maxruntime|"
+                        "queue|"
+                        "executable|"
+                        "stage|"
+                        "ftp"
+                        ")$"
+                         );
    QRegExp rx_config ( 
 
                       "^("
@@ -2638,7 +2673,7 @@ bool US_Hydrodyn_Cluster::read_config()
          return corrupt_config();
       }
 
-      if ( qsl.size() < 2 )
+      if ( rx_req_arg.search( option ) != -1 && qsl.size() < 2 )
       {
          errormsg = QString( "Error reading %1 line %2 : Missing argument " )
             .arg( configfile )
