@@ -1604,7 +1604,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 # endif
       file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
-      menu = new QMenuBar( this );
+      QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
       menu->insertItem(tr("&Messages"), file );

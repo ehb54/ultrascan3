@@ -199,6 +199,19 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    frame->setMinimumHeight(minHeight3);
    editor_widgets.push_back( frame );
 
+#if defined(QT4) && defined(Q_WS_MAC)
+   {
+      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+
+      mb_editor = new QMenuBar( this );
+      AUTFBACK( mb_editor );
+
+      mb_editor->insertItem(tr("&Messages"), file );
+   }
+#else
    mb_editor = new QMenuBar(frame, "menu" );
    mb_editor->setMinimumHeight(minHeight1 - 5);
    mb_editor->setPalette( PALET_NORMAL );
@@ -209,6 +222,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
    file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
    file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+#endif
+
    editor->setWordWrap (Q3TextEdit::WidgetWidth);
    editor->setMinimumHeight( minHeight1 * 3 );
 

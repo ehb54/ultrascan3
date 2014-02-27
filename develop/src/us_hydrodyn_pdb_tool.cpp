@@ -175,6 +175,19 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    Q3Frame *frame = new Q3Frame(this);
    frame->setMinimumHeight(minHeight1);
 
+#if defined(QT4) && defined(Q_WS_MAC)
+   {
+      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+
+      QMenuBar *menu = new QMenuBar( this );
+      AUTFBACK( menu );
+
+      menu->insertItem(tr("&Messages"), file );
+   }
+#else
    m = new QMenuBar(frame, "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
@@ -184,6 +197,8 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
    file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
    file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+#endif
+
    editor->setWordWrap (Q3TextEdit::WidgetWidth);
    editor->setMinimumHeight(300);
 

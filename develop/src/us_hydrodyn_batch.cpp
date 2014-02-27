@@ -598,18 +598,37 @@ void US_Hydrodyn_Batch::setupGUI()
    AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setMinimumWidth(350);
-   m = new QMenuBar(editor, "menu" );
-   m->setMinimumHeight(minHeight1);
+
+#if defined(QT4) && defined(Q_WS_MAC)
+   {
+      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+# ifndef NO_EDITOR_PRINT
+      file->insertItem( tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
+# endif
+      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+
+      QMenuBar * menu = new QMenuBar( this );
+      AUTFBACK( menu );
+
+      menu->insertItem(tr("&Messages"), file );
+   }
+#else
+   m = new QMenuBar( editor, "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
    Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( tr("&File"), file );
    file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
    file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-#ifndef NO_EDITOR_PRINT
+# ifndef NO_EDITOR_PRINT
    file->insertItem( tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-#endif
+# endif
    file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+#endif
+
    editor->setWordWrap (((US_Hydrodyn *)us_hydrodyn)->advanced_config.scroll_editor ? Q3TextEdit::NoWrap : Q3TextEdit::WidgetWidth);
    editor->setMargin(5);
 
