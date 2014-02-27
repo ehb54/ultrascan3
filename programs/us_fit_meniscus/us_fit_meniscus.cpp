@@ -125,6 +125,15 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    pb_scandb->setToolTip(
          tr( "Scan fit-meniscus models in DB; create local table files" ) );
 
+   us_checkbox( tr( "Confirm Each Update Step" ), ck_confirm,  true );
+   us_checkbox( tr( "Apply to All Wavelengths" ), ck_applymwl, true );
+//   ck_applymwl->setVisible( false );
+   ck_confirm ->setToolTip(
+         tr( "Pop up confirmation dialogs at each update step" ) );
+   ck_applymwl->setToolTip(
+         tr( "Apply the meniscus update to all wavelengths of"
+             " the current cell/channel" ) );
+
    pb_plot   = us_pushbutton( tr( "Plot" ) );
    connect( pb_plot, SIGNAL( clicked() ), SLOT( plot_data() ) );
    pb_plot->setToolTip(
@@ -158,6 +167,8 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    cntrlsLayout->addLayout( dkdb_cntrls,  row,    0, 1,  6 );
    cntrlsLayout->addWidget( pb_update,    row,    6, 1,  5 );
    cntrlsLayout->addWidget( pb_scandb,    row++, 11, 1,  5 );
+   cntrlsLayout->addWidget( ck_confirm,   row,    0, 1,  8 );
+   cntrlsLayout->addWidget( ck_applymwl,  row++,  8, 1,  8 );
    cntrlsLayout->addWidget( pb_plot,      row,    0, 1,  4 );
    cntrlsLayout->addWidget( pb_reset,     row,    4, 1,  4 );
    cntrlsLayout->addWidget( pb_help,      row,    8, 1,  4 );
@@ -428,59 +439,159 @@ void US_FitMeniscus::edit_update( void )
    QString fn = filedir + "/" + fname_edit;
    QFile filei( fn );
    QString edtext;
+   QStringList edtexts;
 
    if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
       return;
    }
 
-   QTextStream ts( &filei );
-   while ( !ts.atEnd() )
-      edtext += ts.readLine() + "\n";
-   filei.close();
+   bool confirm  = ck_confirm->isChecked();
+   bool all_wvl  = ( nedtfs > 1  &&  ck_applymwl->isChecked() );
+   bool rmv_mdls = true;
+   bool db_upd   = dkdb_cntrls->db();
+   int  mlsx     = 0;
+   int  meqx     = 0;
+   int  mvsx     = 0;
+   int  mvcn     = 0;
+   int  mlnn     = 0;
+   QString mmsg  = "";
 
-   int mlsx = edtext.indexOf( "<meniscus radius=" );
-   int meqx = edtext.indexOf( "=\"", mlsx );
-   int mvsx = meqx + 2;
-   int mvcn = edtext.indexOf( "\"",  mvsx + 1 ) - mvsx;
+   if ( ! all_wvl )
+   {  // Apply to a single triple
+      QTextStream ts( &filei );
+      while ( !ts.atEnd() )
+         edtext += ts.readLine() + "\n";
+      filei.close();
 
-   edtext   = edtext.replace( mvsx, mvcn, le_fit->text() );
-   int mlnn = edtext.indexOf( ">", mlsx ) - mlsx + 1;
+      mlsx     = edtext.indexOf( "<meniscus radius=" );
+      if ( mlsx < 0 )  return;
+      meqx     = edtext.indexOf( "=\"", mlsx );
+      mvsx     = meqx + 2;
+      mvcn     = edtext.indexOf( "\"",  mvsx + 1 ) - mvsx;
 
-   QFile fileo( fn );
+      edtext   = edtext.replace( mvsx, mvcn, le_fit->text() );
+      mlnn     = edtext.indexOf( ">", mlsx ) - mlsx + 1;
 
-   if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
-      return;
+      QFile fileo( fn );
 
-   QTextStream tso( &fileo );
-   tso << edtext;
-   fileo.close();
+      if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+         return;
 
-   QString msg = tr( "In file directory\n    " ) + filedir + " ,\n" +
+      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+      QTextStream tso( &fileo );
+      tso << edtext;
+      fileo.close();
+
+      mmsg     = tr( "In file directory\n    " ) + filedir + " ,\n" +
                  tr( "file\n    " ) + fname_edit + "\n" +
                  tr( "has been modified with the line:\n    " ) + 
                  edtext.mid( mlsx, mlnn );
    
-   // If using DB, update the edit record there
+      // If using DB, update the edit record there
 
-   if ( dkdb_cntrls->db() )
-   {
-      update_db_edit( edtext, fn, msg );
-   }
+      if ( db_upd )
+      {
+         update_db_edit( edtext, fn, mmsg );
+      }
 
-   msg += tr( "\n\nDo you want to remove all fit-meniscus models\n"
-              "(and associated noises) except for the one\n"
-              "associated with the nearest meniscus value?" );
+      if ( confirm )
+      {  // Confirm at each update step
+         mmsg    += tr( "\n\nDo you want to remove all fit-meniscus models"
+                        " (and associated noises) except for the one"
+                        " associated with the nearest meniscus value?" );
 
-   int response = QMessageBox::question( this, tr( "Edit File Updated" ),
-         msg, QMessageBox::Yes, QMessageBox::Cancel );
+         int response = QMessageBox::question( this, tr( "Edit File Updated" ),
+               mmsg, QMessageBox::Yes, QMessageBox::Cancel );
+         rmv_mdls     = ( response == QMessageBox::Yes );
+      }
+   }  // END: apply to single triple
 
-   if ( response == QMessageBox::Yes )
+   else
+   {  // Apply to all wavelengths in a cell/channel
+      QString dmsg  = "";
+DbgLv(1) << " eupd: AppWvl: nedtfs" << nedtfs;
+      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+      for ( int jj = 0; jj < nedtfs; jj++ )
+      {
+         QString fn = filedir + "/" + edtfiles.at( jj );
+DbgLv(1) << " eupd:     jj" << jj << "fn" << fn;
+         QFile filei( fn );
+
+         if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            continue;
+
+         QTextStream ts( &filei );
+         edtext  = "";
+         while ( !ts.atEnd() )
+            edtext += ts.readLine() + "\n";
+         filei.close();
+
+         mlsx     = edtext.indexOf( "<meniscus radius=" );
+         if ( mlsx < 0 )  continue;
+         meqx     = edtext.indexOf( "=\"", mlsx );
+         mvsx     = meqx + 2;
+         mvcn     = edtext.indexOf( "\"",  mvsx + 1 ) - mvsx;
+
+         edtext   = edtext.replace( mvsx, mvcn, le_fit->text() );
+         mlnn     = edtext.indexOf( ">", mlsx ) - mlsx + 1;
+
+DbgLv(1) << " eupd:      mlsx mlnn" << mlsx << mlnn;
+         QFile fileo( fn );
+
+         if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+            continue;
+
+         QTextStream tso( &fileo );
+         tso << edtext;
+         fileo.close();
+
+         // If using DB, update the edit record there
+
+         if ( db_upd )
+         {
+            update_db_edit( edtext, fn, dmsg );
+         }
+
+      }  // END: wavelengths loop
+
+      mmsg     = tr( "In file directory\n    " ) + filedir + " ,\n" +
+                 tr( "file\n    " ) + fname_edit + "\n" +
+                 tr( "has been modified with the line:\n    " ) + 
+                 edtext.mid( mlsx, mlnn ) +
+                 tr( "\n\n%1 other cell/channel files were"
+                     " simularly modified." ).arg( nedtfs - 1 ) + dmsg;
+   
+      if ( confirm )
+      {  // Confirm at each update step
+         mmsg    += tr( "\n\nDo you want to remove all fit-meniscus models"
+                        " (and associated noises) except for the one"
+                        " associated with the nearest meniscus value?" );
+
+         int response = QMessageBox::question( this, tr( "Edit File Updated" ),
+                           mmsg, QMessageBox::Yes, QMessageBox::Cancel );
+
+         rmv_mdls = ( response == QMessageBox::Yes );
+      }
+   }  // END: apply to all wavelengths
+
+   if ( rmv_mdls )
    {
 DbgLv(1) << " call Remove Models";
-      remove_models();
+     remove_models();
    }
-else DbgLv(1) << " NO Models removed";
+
+   QApplication::restoreOverrideCursor();
+
+   if ( ! confirm )
+   {
+      mmsg    += tr( "\n\nAll fit-meniscus models (and associated noises),"
+                     " except for the one set associated with the nearest"
+                     " meniscus value, were removed." );
+
+      QMessageBox::information( this, tr( "Edit File Updated" ), mmsg );
+   }
 }
 
 // Slot for handling a loaded file:  set the name of loaded,edit files
@@ -493,21 +604,30 @@ void US_FitMeniscus::file_loaded( QString fn )
    QString editID   = edittrip.section( "-",  0, -2 ).mid( 1 );
    QString tripnode = edittrip.section( "-", -1, -1 );
    QString runID    = filedir.section( "/", -1, -1 );
+   QString celchn   = tripnode.left( 1 ) + "." +
+                      tripnode.mid( 1, 1 );
    QString tripl    = tripnode.left( 1 ) + "." +
                       tripnode.mid( 1, 1 ) + "." +
                       tripnode.mid( 2 );
    QStringList edtfilt;
-   edtfilt << runID + "." + editID + ".*." + tripl + ".xml";
+   edtfilt << runID + "." + editID + ".*." + celchn + ".*.xml";
 
    fname_edit = "";
-
-   QStringList edtfiles = QDir( filedir ).entryList(
-         edtfilt, QDir::Files, QDir::Name );
+   edtfiles   = QDir( filedir ).entryList( edtfilt, QDir::Files, QDir::Name );
 DbgLv(1) << "EDITFILT" << edtfilt;
-   if ( edtfiles.size() >= 1 )
+   nedtfs     = edtfiles.size();
+
+   if ( nedtfs > 0 )
    {
-      fname_edit = edtfiles.at( 0 );
+      for ( int jj = 0; jj < nedtfs; jj++ )
+      {
+         if ( edtfiles.at( jj ).contains( tripl ) )
+         fname_edit = edtfiles.at( jj );
+      }
       pb_update->setEnabled( true );
+DbgLv(1) << " nedtfs" << nedtfs << "fname_edit" << fname_edit;
+DbgLv(1) << "   f0" << edtfiles.at(0);
+if(nedtfs>1) DbgLv(1) << "   f1" << edtfiles.at(1);
    }
 
    else
@@ -523,7 +643,6 @@ DbgLv(1) << "EDITFILT" << edtfilt;
                 "to create a local copy of an Edit file for\n     " )
             + fname_load + tr( "\nof run\n     " ) + runID );
    }
-DbgLv(1) << " fname_edit" << fname_edit;
 
    plot_data();
 
@@ -865,8 +984,23 @@ DbgLv(1) << "updDbEd: edGUID" << edGUID;
 DbgLv(1) << "updDbEd: idEdit" << idEdit;
    db.writeBlobToDB( efilepath, "upload_editData", idEdit );
 
-   msg += tr( "\n\nThe meniscus value was also updated for the"
-              "\ncorresponding edit record in the database." );
+   if ( nedtfs == 1  ||  ! ck_applymwl->isChecked() )
+   {
+      msg += tr( "\n\nThe meniscus value was also updated for the"
+                 " corresponding edit record in the database." );
+   }
+
+   else
+   {
+      QString fn       = efilepath.section( "/", -1, -1 );
+      int lstfx        = nedtfs - 1;
+      if ( fn == edtfiles[ lstfx ] )
+      {
+         msg += tr( "\n\nThe meniscus value was also updated for the"
+                    " corresponding edit records in the database." );
+      }
+   }
+
    return;
 }
 
@@ -911,6 +1045,7 @@ DbgLv(1) << "RmvMod: scn1 srchRun srchEdit srchTrip"
    int dArTime          = 0;
    int lkModx           = -1;
    int dkModx           = -1;
+   bool db_upd          = dkdb_cntrls->db();
 
    for ( int ii = 0; ii < modfiles.size(); ii++ )
    {
@@ -996,7 +1131,7 @@ DbgLv(1) << "RmvMod:  minMdif lkModx" << minMdif << lkModx;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Make a list of f-m models that match for DB, if possible
-   if ( dkdb_cntrls->db() )
+   if ( db_upd )
    {
       ModelDesc dmodd;
       QString   invID = QString::number( US_Settings::us_inv_ID() );
@@ -1293,26 +1428,29 @@ DbgLv(1) << "RmvMod: 1st rmv-mod: jj modDesc" << jj << modDesc;
 
       nlnois             = nlrnoi + ( nlrnoi > nlrmod ? 2 : 1 );
       ndnois             = ndrnoi + ( ndrnoi > ndrmod ? 2 : 1 );
+      bool rmv_mdls      = true;
 DbgLv(1) << "RmvMod: nlrmod ndrmod nlrnoi ndrnoi nlnois ndnois"
  << nlrmod << ndrmod << nlrnoi << ndrnoi << nlnois << ndnois;
-      QString msg = tr( "%1 local model files;\n"
-                        "%2 database model files;\n"
-                        "%3 local noise files;\n"
-                        "%4 database noise files;\n"
-                        "have been identified for removal.\n\n"
-                        "Do you really want to delete them?" )
-         .arg( nlrmod ).arg( ndrmod ).arg( nlrnoi ).arg( ndrnoi );
+      if ( ck_confirm->isChecked() )
+      {
+         QString msg = tr( "%1 local model files;\n"
+                           "%2 database model files;\n"
+                           "%3 local noise files;\n"
+                           "%4 database noise files;\n"
+                           "have been identified for removal.\n\n"
+                           "Do you really want to delete them?" )
+            .arg( nlrmod ).arg( ndrmod ).arg( nlrnoi ).arg( ndrnoi );
 
-      int response = QMessageBox::question( this,
-            tr( "Remove Models and Noises?" ),
-            msg, QMessageBox::Yes, QMessageBox::Cancel );
+         int response = QMessageBox::question( this,
+               tr( "Remove Models and Noises?" ),
+               msg, QMessageBox::Yes, QMessageBox::Cancel );
+         rmv_mdls           = ( response == QMessageBox::Yes );
+      }
 
-      if ( response == QMessageBox::Yes )
+      if ( rmv_mdls )
       {
          US_Passwd pw;
-         US_DB2* dbP = NULL;
-
-         if ( dkdb_cntrls->db() )  dbP = new US_DB2( pw.getPasswd() );
+         US_DB2* dbP = db_upd ? new US_DB2( pw.getPasswd() ) : NULL;
 
          QStringList query;
          QString recID;
