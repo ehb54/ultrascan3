@@ -4092,7 +4092,8 @@
 
       af = (float)(a);
       bf = (float)(b);
-      return *(LONG*)&af == *(LONG*)&bf;
+      //      return *(LONG*)&af == *(LONG*)&bf;
+      return af == bf;
    }
 
    /*
@@ -4849,7 +4850,8 @@
 
       af = (float)(a);
       bf = (float)(b);
-      return *(LONG*)&af != *(LONG*)&bf;
+      //      return *(LONG*)&af != *(LONG*)&bf;
+      return af != bf;
    }
 
    /*
