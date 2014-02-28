@@ -6165,6 +6165,9 @@ double US_Hydrodyn_Pdb_Tool::minimum_pair_distance  ( Q3ListView *lv,
    }
 
    lvipair min_lvp;
+   min_lvp.lvi1 = (Q3ListViewItem *)0;
+   min_lvp.lvi2 = (Q3ListViewItem *)0;
+
    double  min_distance = 9e99;
 
    for ( unsigned int i = 0; i < (unsigned int)items_chain_1.size(); i++ )
