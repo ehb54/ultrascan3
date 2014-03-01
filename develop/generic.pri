@@ -22,7 +22,7 @@ unix {
 
  contains(UNAME,x86_64) {
     LIBS    += -L$$QWTPATH/lib64 -lqwt -L$$US3PATH/lib64 -lqwtplot3d-qt4
-    DESTDIR  = ../../bin64
+    DESTDIR  = $$US3SOMOPATH/bin64
  } else {
     LIBS    += -L$$QWTPATH/lib -lqwt -L$$US3PATH/lib -lqwtplot3d-qt4
  }
@@ -41,6 +41,7 @@ win32 {
 }
 
 macx {
+  DESTDIR      = $$US3SOMOPATH/bin
   LIBS        += -L$$US3SOMOPATH/lib
 }
 

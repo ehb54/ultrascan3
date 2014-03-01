@@ -1,0 +1,91 @@
+# Profile include file for local use
+#  Copy file to local.pri and change variables to match your installation
+
+# ---- user configuration area ----
+# **** make sure the following variables are set for your system ***
+
+# uncomment exactly one of these:
+# DEBUGORRELEASE = debug
+DEBUGORRELEASE = release
+
+# path of US3 source base
+US3PATH       = /Users/eb/us3
+
+# path of US3_SOMO source base
+US3SOMOPATH   = /Users/eb/us3_somo
+
+# path of the QT 
+QTPATH        = 
+QWTPATH       = /src/qwt-5.2.3
+
+# for windows also define the MINGWPATH
+MINGWPATH     =
+
+# ---- these below might need to be modified in unusual cirscumstances ----
+QWT3DPATH     = $$US3PATH/qwtplot3d-qt4
+
+# ---- probably should not be changed
+
+CONFIG     += qt thread warn
+contains( DEBUGORRELEASE, debug ) {
+   CONFIG    += debug
+} else {
+   CONFIG    += release
+}
+
+INCLUDEPATH  += $$US3SOMOPATH/develop/src
+INCLUDEPATH  += $$QTPATH/include
+# some qwt5 have libraries in src/ some in include/; having extra (possibly non-existant) include paths is not problem
+INCLUDEPATH  += $$QWTPATH/include $$QWTPATH/src
+INCLUDEPATH  += $$QWT3DPATH/include
+
+# ---- system specific definitions
+!include ( uname.pri ) error( "uname.pri missing or corrupt.  Aborting..." )
+DEFINES         += QT4
+
+unix {
+  # Local flags
+  #QMAKE_CXXFLAGS_DEBUG += -pg
+  #QMAKE_LFLAGS_DEBUG += -pg
+
+  #If you want your compiles to do a globus run on bcf, uncomment the following lines:
+  # Be sure to add the environment variable MAKEFLAGS=-j44
+  #QMAKE_CXX  = g++
+  #QMAKE_CC   = g++
+  #QMAKE_MOC  = $(QTDIR)/bin/moc
+  #QMAKE_UIC  = $(QTDIR)/bin/uic
+  #QMAKE_LINK = g++
+
+  QMAKE_CXXFLAGS_RELEASE = -O3
+  QMAKE_CFLAGS_RELEASE   = -O3
+}
+
+win32 {
+
+  QMAKESPEC   = win32-g++-4.6
+  
+  DEFINES      += MINGW
+
+  contains( DEBUGORRELEASE, debug ) {
+    QWTLIB      = $$QWTPATH/lib/libqwtd5.a
+  } else {
+    QWTLIB      = $$QWTPATH/lib/libqwt5.a
+  }
+}
+
+macx {
+  QWTLIB      = -L$$QWTPATH/lib -lqwt
+##  CONFIG      += x86_64 x86 app_bundle
+  CONFIG      += x86_64
+  DEFINES     += MAC OSX
+  INCLUDEPATH += /System/Libraries/Frameworks/OpenGL.framework/Headers
+#  INCLUDEPATH += /usr/X11R6/include
+  INCLUDEPATH += /Library/Frameworks/QtCore.framework/Headers
+  INCLUDEPATH += /Library/Frameworks/QtGui.framework/Headers
+  INCLUDEPATH += /Library/Frameworks/QtOpenGL.framework/Headers
+  LIBS        += -L/System/Library/Frameworks/OpenGL.framework/Libraries
+  LIBS        += -L$$US3PATH/lib
+  LIBS        += -lqwtplot3d-qt4
+  LIBS        += -framework QtOpenGL
+}
+
