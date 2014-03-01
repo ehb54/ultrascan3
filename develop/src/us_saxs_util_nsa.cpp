@@ -712,10 +712,14 @@ QString US_Saxs_Util::nsa_physical_stats()
    double volume = 0e0;
    double volume_intersection = 0e0;
    point pmin;
-   point pmax;
-   point prmin;
-   point prmax;
-
+   // initialization to shut up compiler warning
+   pmin.axis[ 0 ] = 0.0f;
+   pmin.axis[ 1 ] = 0.0f;
+   pmin.axis[ 2 ] = 0.0f;
+   point pmax = pmin;
+   point prmin = pmin;
+   point prmax = pmin;
+   
    // subtract each radius from min add to max?
    // possible alternate bounding box ...
 
