@@ -35,7 +35,7 @@ contains( DEBUGORRELEASE, debug ) {
 
 INCLUDEPATH  += $$US3SOMOPATH/develop/src
 INCLUDEPATH  += $$QTPATH/include
-# some qwt5 have libraries in src/ some in include/; having extra (possibly non-existant) include paths is not problem
+# some qwt5 have libraries in src/ some in include/; having extra (possibly non-existant) include paths is not a problem
 INCLUDEPATH  += $$QWTPATH/include $$QWTPATH/src
 INCLUDEPATH  += $$QWT3DPATH/include
 
