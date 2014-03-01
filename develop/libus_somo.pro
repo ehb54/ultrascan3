@@ -26,9 +26,7 @@ contains( DEFINES, "OSX" ) {
     unix {
       QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
       DEFINES                += UNIX
-      #CONFIG                 += qt thread warn release 
-      CONFIG                 += qt thread warn debug
-    
+      CONFIG                 += qt thread warn
     
       contains(UNAME,x86_64) {
         LIBS    += -L$$QWTPATH/lib64/ -L$$QWTPATH/lib/ -lqwt 
