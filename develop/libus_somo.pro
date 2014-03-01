@@ -12,7 +12,6 @@ DEFINES += THREAD
 
 # Automatic hardware platform and operating system configurations:
 
-INCLUDEPATH = $$QWTPATH/src $$QTDIR/include
 DEPENDPATH += src include
 DEFINES += NO_DB
 
@@ -40,9 +39,6 @@ unix {
 }
 
 win32 {
-  MINGWDIR        = C:/mingw
-  QTPATH          = C:/Qt/4.8.4
-  QWTPATH         = C:/qwt-5.2.3
   DESTDIR         = ../bin
 
   QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_STL
