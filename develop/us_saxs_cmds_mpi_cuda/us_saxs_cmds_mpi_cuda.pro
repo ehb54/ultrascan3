@@ -84,9 +84,9 @@ TARGET = us_saxs_cmds_mpi_cuda
 
 unix {
  contains(UNAME,x86_64) {
-    TARGET = $(ULTRASCAN)/bin64/us_saxs_cmds_mpi_cuda
+    DESTDIR = $$US3SOMOPATH/bin64/us_saxs_cmds_mpi_cuda
  } else {
-    TARGET = $(ULTRASCAN)/bin/us_saxs_cmds_mpi_cuda
+    DESTDIR = $$US3SOMOPATH/bin/us_saxs_cmds_mpi_cuda
  }
 }
 

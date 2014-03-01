@@ -4,80 +4,44 @@
 # It provides boilerplate for all the UltraScan main programs.
 
 # Messages
-!include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
-
-QWTDIR          = /src/qwt-qt4
+!include ( local.pri ) error( "local.pri missing or corrupt.  Aborting..." )
 
 TEMPLATE        = app
-INCLUDEPATH     = $$QWTDIR/src $$QWTDIR/include
-DEPENDPATH     += ../src ../include
+DEPENDPATH     += $$US3SOMOPATH/src $$US3SOMOPATH/include
 SOURCES         = main.cpp 
-DESTDIR         = ../../bin
+DESTDIR         = $$US3SOMOPATH/bin
+
 DEFINES += NO_DB
 # temporary fix (us2 code was using qt2 qpdevmnt which I think need to be replaced by qprintdevicemetrics)
 DEFINES += NO_EDITOR_PRINT
-DEFINES += QT4
 
 unix {
-# UNAME                  = $$system(uname -a)
- CONFIG                += qt warn thread release
+ UNAME                  = $$system(uname -a)
  DEFINES               += UNIX
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
- MYSQLPATH              = /usr/lib/mysql
 
  contains(UNAME,x86_64) {
-    LIBS    += -L$$QWTDIR/lib64/ -L$$QWTDIR/lib/ -lqwt -L$(ULTRASCAN)/lib64 -lus_somo
+    LIBS    += -L$$QWTPATH/lib64 -lqwt -L$$US3PATH/lib64 -lqwtplot3d-qt4
     DESTDIR  = ../../bin64
  } else {
-    LIBS    += -L$$QWTDIR/lib -lqwt -L$(ULTRASCAN)/lib -lus_somo
+    LIBS    += -L$$QWTPATH/lib -lqwt -L$$US3PATH/lib -lqwtplot3d-qt4
  }
+
+ LIBS +=  -L$$US3SOMOPATH/lib -lus_somo
 }
 
 win32 {
-  TEMPLATE     =app
-  MINGWDIR     =c:/mingw
-  QTPATH          = C:/Qt/4.8.4
-  QWTPATH         = C:/qwt-5.2.3
-  US3PATH         = C:/Users/Admin/Documents/ultrascan3
-  QWT3DPATH       = $$US3PATH/qwtplot3d-qt4
-
   VER          = 10
-  CONFIG      += qt thread warn release
-  INCLUDEPATH    += ../src
-  INCLUDEPATH    += $$QWTPATH/include
-  INCLUDEPATH    += $$QWT3DPATH/include
-  DEFINES             += MINGW
+  DEFINES      += MINGW
 
   LIBS         += $$QWTLIB
-  LIBS         += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
-  LIBS         += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
-  LIBS         += ../../bin/libus_somo$${VER}.a
+  LIBS         += $$MINGWPATH/lib/libws2_32.a $$MINGWPATH/lib/libadvapi32.a
+  LIBS         += $$MINGWPATH/lib/libgdi32.a $$MINGWPATH/lib/libuser32.a
+  LIBS         += $$US3SOMOPATH/bin/libus_somo$${VER}.a
 }
 
 macx {
-  BUILDBASE   = /Users/eb/us3/ultrascan3
-  QWTPATH     = /src/qwt-5.2.3
-  QWTLIB      = -L$$QWTPATH/lib -lqwt
-  DEFINES     += MAC OSX
-
-  CONFIG      += x86_64
-
-  INCLUDEPATH += /usr/include
-  INCLUDEPATH += /System/Library/Frameworks/OpenGL.framework/Versions/A/Headers
-  INCLUDEPATH += $$QWTPATH/src
-  INCLUDEPATH += /Users/eb/us3/qwtplot3d-qt4/include
-  INCLUDEPATH += /usr/X11R6/include
-  INCLUDEPATH += /Library/Frameworks/QtCore.framework/Versions/4/Headers
-  INCLUDEPATH += /Library/Frameworks/QtGui.framework//Versions/4/Headers
-  INCLUDEPATH += /Library/Frameworks/QtOpenGL.framework/Versions/4/Headers
-
-  LIBS        += -L/System/Library/Frameworks/OpenGL.framework/Libraries
-  LIBS        += -L/Users/eb/us3/lib
-  LIBS        += -lssl -lcrypto -lqwtplot3d-qt4
-  LIBS        += -framework QtOpenGL
-  LIBS        += -L/Users/eb/us2a/develop/extra/us3_somo/lib
-
-  DESTDIR         = ../../bin
+  LIBS        += -L$$US3SOMOPATH/lib
 }
 
 # macx { RC_FILE = us_somo.icns }

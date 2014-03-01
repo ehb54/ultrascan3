@@ -1,5 +1,5 @@
 # Messages
-!include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
+!include ( local.pri ) error( "local.pri missing or corrupt.  Aborting..." )
 
 TEMPLATE       = lib
 TRANSLATIONS   = lib.ts
@@ -7,16 +7,15 @@ VERSION        = 10
 MOC_DIR        = src/moc
 OBJECTS_DIR    = src/obj
 
-#RC_FILE        = ../icon.rc
-
 # enabled threading in fitting algorithm:
 DEFINES += THREAD
 
 # Automatic hardware platform and operating system configurations:
 
-INCLUDEPATH = $(QWTDIR)/src $(QTDIR)/include
+INCLUDEPATH = $$QWTPATH/src $$QTDIR/include
 DEPENDPATH += src include
 DEFINES += NO_DB
+
 # temporary fix (us2 code was using qt2 qpdevmnt which I think need to be replaced by qprintdevicemetrics)
 DEFINES += NO_EDITOR_PRINT
 DEFINES += QT4
@@ -29,14 +28,13 @@ unix {
   #CONFIG                 += qt thread warn release 
   CONFIG                 += qt thread warn debug
 
-  INCLUDEPATH    +=  $(QWTDIR)/include
 
   contains(UNAME,x86_64) {
-    LIBS    += -L$(QWTDIR)/lib64/ -L$(QWTDIR)/lib/ -lqwt 
+    LIBS    += -L$$QWTPATH/lib64/ -L$$QWTPATH/lib/ -lqwt 
     DEFINES += BIN64
     DESTDIR  = ../lib64
   } else {
-    LIBS += -L$(QWTDIR)/lib -lqwt
+    LIBS += -L$$QWTPATH/lib -lqwt
     DESTDIR  = ../lib
   }
 }
@@ -45,14 +43,12 @@ win32 {
   MINGWDIR        = C:/mingw
   QTPATH          = C:/Qt/4.8.4
   QWTPATH         = C:/qwt-5.2.3
-  US3PATH         = C:/Users/Admin/Documents/ultrascan3
-  QWT3DPATH       = $$US3PATH/qwtplot3d-qt4
   DESTDIR         = ../bin
 
   QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_STL
   QMAKESPEC       = win32-g++-4.6
 
-  CONFIG         += qt warn_on opengl thread zlib release
+  CONFIG         += qt warn_on opengl thread zlib
   CONFIG         += dll exceptions
 
   DEFINES        += US_MAKE_DLL US_MAKE_GUI_DLL
@@ -64,9 +60,6 @@ win32 {
     QWTLIB        = $$QWTPATH/lib/libqwt5.a
   }
 
-  INCLUDEPATH    += src
-  INCLUDEPATH    += $$QWTPATH/include
-  INCLUDEPATH    += $$QWT3DPATH/include
 
   LIBS           += -lQtOpenGL4
   LIBS           += $$QWTLIB

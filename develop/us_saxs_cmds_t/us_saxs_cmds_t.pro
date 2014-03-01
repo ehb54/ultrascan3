@@ -79,12 +79,10 @@ TARGET = us_saxs_cmds_t
 
 unix {
  contains(UNAME,x86_64) {
-    TARGET = $(ULTRASCAN)/bin64/us_saxs_cmds_t
+    DESTDIR = $$US3SOMOPATH/bin64
  } else {
-    TARGET = $(ULTRASCAN)/bin/us_saxs_cmds_t
+    DESTDIR = $$US3SOMOPATH/bin
  }
 }
-#The following line was inserted by qt3to4
-QT +=  qt3support 
 #The following line was inserted by qt3to4
 QT +=  qt3support 

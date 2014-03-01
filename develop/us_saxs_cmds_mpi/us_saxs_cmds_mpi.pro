@@ -83,9 +83,9 @@ TARGET = us_saxs_cmds_mpi
 
 unix {
  contains(UNAME,x86_64) {
-    TARGET = $(ULTRASCAN)/bin64/us_saxs_cmds_mpi
+    DESTDIR = $$US3SOMOPATH/bin64/us_saxs_cmds_mpi
  } else {
-    TARGET = $(ULTRASCAN)/bin/us_saxs_cmds_mpi
+    DESTDIR = $$US3SOMOPATH/bin/us_saxs_cmds_mpi
  }
 }
 
