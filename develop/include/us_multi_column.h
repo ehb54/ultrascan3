@@ -982,7 +982,7 @@ class US_Multi_Column
             for( int j = -( int ) points; j <= ( int ) points; j++ ) 
             {
                int jp = ( int ) i + j;
-               if ( jp >= 0 && jp < y.size() ) 
+               if ( jp >= 0 && jp < (int) y.size() ) 
                {
                   int uj = j;
                   if ( j < 0 ) 
