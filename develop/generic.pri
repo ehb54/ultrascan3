@@ -46,7 +46,7 @@ win32 {
 
 macx {
   DESTDIR      = $$US3SOMOPATH/bin
-  LIBS        += -L$$US3SOMOPATH/lib
+  LIBS        += -L$$US3SOMOPATH/lib -lus_somo
 }
 
 # macx { RC_FILE = us_somo.icns }
