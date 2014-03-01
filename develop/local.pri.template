@@ -74,12 +74,13 @@ win32 {
 }
 
 macx {
-  QWTLIB      = -L$$QWTPATH/lib -lqwt
+#  QWTLIB      = -L$$QWTPATH/lib -lqwt
 ##  CONFIG      += x86_64 x86 app_bundle
   CONFIG      += x86_64
   DEFINES     += MAC OSX
   INCLUDEPATH += /System/Libraries/Frameworks/OpenGL.framework/Headers
-#  INCLUDEPATH += /usr/X11R6/include
+  INCLUDEPATH += /usr/X11R6/include
+  INCLUDEPATH += /usr/X11R6/include/GL
   INCLUDEPATH += /Library/Frameworks/QtCore.framework/Headers
   INCLUDEPATH += /Library/Frameworks/QtGui.framework/Headers
   INCLUDEPATH += /Library/Frameworks/QtOpenGL.framework/Headers
@@ -87,5 +88,5 @@ macx {
   LIBS        += -L$$US3PATH/lib
   LIBS        += -lqwtplot3d-qt4
   LIBS        += -framework QtOpenGL
+#  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
 }
-

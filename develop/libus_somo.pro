@@ -31,15 +31,15 @@ unix {
   contains(UNAME,x86_64) {
     LIBS    += -L$$QWTPATH/lib64/ -L$$QWTPATH/lib/ -lqwt 
     DEFINES += BIN64
-    DESTDIR  = ../lib64
+    DESTDIR  = $$US3SOMOPATH/lib64
   } else {
     LIBS += -L$$QWTPATH/lib -lqwt
-    DESTDIR  = ../lib
+    DESTDIR  = $$US3SOMOPATH/lib
   }
 }
 
 win32 {
-  DESTDIR         = ../bin
+  DESTDIR         = $$US3SOMOPATH/bin
 
   QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_STL
   QMAKESPEC       = win32-g++-4.6
@@ -69,30 +69,7 @@ win32 {
 }
 
 macx {
-  BUILDBASE   = /Users/eb/us3/ultrascan3
-  QWTPATH     = /src/qwt-5.2.3
-  QWTLIB      = -L$$QWTPATH/lib -lqwt
-
-  CONFIG      += x86_64
-  DEFINES     += MAC OSX
-
-  INCLUDEPATH += /usr/include
-  INCLUDEPATH += /System/Library/Frameworks/OpenGL.framework/Versions/A/Headers
-  INCLUDEPATH += $$QWTPATH/src
-  INCLUDEPATH += /Users/eb/us3/qwtplot3d-qt4/include
-  INCLUDEPATH += /usr/X11R6/include
-  INCLUDEPATH += /Library/Frameworks/QtCore.framework/Versions/4/Headers
-  INCLUDEPATH += /Library/Frameworks/QtGui.framework//Versions/4/Headers
-  INCLUDEPATH += /Library/Frameworks/QtOpenGL.framework/Versions/4/Headers
-  INCLUDEPATH += /Library/Frameworks/QtSvg.framework/Versions/4/Headers
-  INCLUDEPATH += /Library/Frameworks/QtXml.framework/Versions/4/Headers
-
-  LIBS        += -L/System/Library/Frameworks/OpenGL.framework/Libraries
-  LIBS        += -L/Users/eb/us3/lib
-  LIBS        += -lssl -lcrypto -lqwtplot3d-qt4
-  LIBS        += -framework QtOpenGL
-
-#  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
+    DESTDIR  = $$US3SOMOPATH/lib
 }
 
 
