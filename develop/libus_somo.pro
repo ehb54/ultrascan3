@@ -62,9 +62,9 @@ win32 {
 
   LIBS           += -lQtOpenGL4
   LIBS           += $$QWTLIB
-  LIBS           += $$MINGWDIR/lib/libkernel32.a
-  LIBS           += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
-  LIBS           += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
+  LIBS           += $$MINGWPATH/lib/libkernel32.a
+  LIBS           += $$MINGWPATH/lib/libws2_32.a $$MINGWPATH/lib/libadvapi32.a
+  LIBS           += $$MINGWPATH/lib/libgdi32.a $$MINGWPATH/lib/libuser32.a
 
   LIBS           += -L$$QWTPATH/lib -lqwt5
   LIBS           += $$US3PATH/lib/libqwtplot3d-qt4.a
