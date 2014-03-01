@@ -17,25 +17,28 @@ DEFINES += NO_DB
 
 # temporary fix (us2 code was using qt2 qpdevmnt which I think need to be replaced by qprintdevicemetrics)
 DEFINES += NO_EDITOR_PRINT
-DEFINES += QT4
 
 TARGET  = us_somo
 
-unix {
-  QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
-  DEFINES                += UNIX
-  #CONFIG                 += qt thread warn release 
-  CONFIG                 += qt thread warn debug
-
-
-  contains(UNAME,x86_64) {
-    LIBS    += -L$$QWTPATH/lib64/ -L$$QWTPATH/lib/ -lqwt 
-    DEFINES += BIN64
-    DESTDIR  = $$US3SOMOPATH/lib64
-  } else {
-    LIBS += -L$$QWTPATH/lib -lqwt
-    DESTDIR  = $$US3SOMOPATH/lib
-  }
+# OSX also reports UNIX
+contains( DEFINES, "OSX" ) {
+} else {
+    unix {
+      QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
+      DEFINES                += UNIX
+      #CONFIG                 += qt thread warn release 
+      CONFIG                 += qt thread warn debug
+    
+    
+      contains(UNAME,x86_64) {
+        LIBS    += -L$$QWTPATH/lib64/ -L$$QWTPATH/lib/ -lqwt 
+        DEFINES += BIN64
+        DESTDIR  = $$US3SOMOPATH/lib64
+      } else {
+        LIBS += -L$$QWTPATH/lib -lqwt
+        DESTDIR  = $$US3SOMOPATH/lib
+      }
+   }
 }
 
 win32 {

@@ -43,21 +43,27 @@ INCLUDEPATH  += $$QWT3DPATH/include
 !include ( uname.pri ) error( "uname.pri missing or corrupt.  Aborting..." )
 DEFINES         += QT4
 
-unix {
-  # Local flags
-  #QMAKE_CXXFLAGS_DEBUG += -pg
-  #QMAKE_LFLAGS_DEBUG += -pg
 
-  #If you want your compiles to do a globus run on bcf, uncomment the following lines:
-  # Be sure to add the environment variable MAKEFLAGS=-j44
-  #QMAKE_CXX  = g++
-  #QMAKE_CC   = g++
-  #QMAKE_MOC  = $(QTDIR)/bin/moc
-  #QMAKE_UIC  = $(QTDIR)/bin/uic
-  #QMAKE_LINK = g++
-
-  QMAKE_CXXFLAGS_RELEASE = -O3
-  QMAKE_CFLAGS_RELEASE   = -O3
+# OSX also reports UNIX
+contains( DEFINES, "OSX" ) {
+} else {
+    unix {
+      # Local flags
+      #QMAKE_CXXFLAGS_DEBUG += -pg
+      #QMAKE_LFLAGS_DEBUG += -pg
+    
+      #If you want your compiles to do a globus run on bcf, uncomment the following lines:
+      # Be sure to add the environment variable MAKEFLAGS=-j44
+      #QMAKE_CXX  = g++
+      #QMAKE_CC   = g++
+      #QMAKE_MOC  = $(QTDIR)/bin/moc
+      #QMAKE_UIC  = $(QTDIR)/bin/uic
+      #QMAKE_LINK = g++
+    
+# these should really be in qmake.conf 
+      QMAKE_CXXFLAGS_RELEASE = -O3
+      QMAKE_CFLAGS_RELEASE   = -O3
+   }
 }
 
 win32 {
@@ -74,19 +80,19 @@ win32 {
 }
 
 macx {
-#  QWTLIB      = -L$$QWTPATH/lib -lqwt
 ##  CONFIG      += x86_64 x86 app_bundle
-  CONFIG      += x86_64
+  CONFIG      *= x86_64
   DEFINES     += MAC OSX
   INCLUDEPATH += /System/Libraries/Frameworks/OpenGL.framework/Headers
-  INCLUDEPATH += /usr/X11R6/include
-  INCLUDEPATH += /usr/X11R6/include/GL
   INCLUDEPATH += /Library/Frameworks/QtCore.framework/Headers
   INCLUDEPATH += /Library/Frameworks/QtGui.framework/Headers
   INCLUDEPATH += /Library/Frameworks/QtOpenGL.framework/Headers
+  INCLUDEPATH += /usr/X11R6/include
+  INCLUDEPATH += /usr/X11R6/include/GL
   LIBS        += -L/System/Library/Frameworks/OpenGL.framework/Libraries
   LIBS        += -L$$US3PATH/lib
   LIBS        += -lqwtplot3d-qt4
   LIBS        += -framework QtOpenGL
+  LIBS        += -L$$QWTPATH/lib -lqwt
 #  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
 }

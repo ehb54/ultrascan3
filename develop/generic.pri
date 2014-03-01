@@ -15,19 +15,23 @@ DEFINES += NO_DB
 # temporary fix (us2 code was using qt2 qpdevmnt which I think need to be replaced by qprintdevicemetrics)
 DEFINES += NO_EDITOR_PRINT
 
-unix {
- UNAME                  = $$system(uname -a)
- DEFINES               += UNIX
- QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
-
- contains(UNAME,x86_64) {
-    LIBS    += -L$$QWTPATH/lib64 -lqwt -L$$US3PATH/lib64 -lqwtplot3d-qt4
-    DESTDIR  = $$US3SOMOPATH/bin64
- } else {
-    LIBS    += -L$$QWTPATH/lib -lqwt -L$$US3PATH/lib -lqwtplot3d-qt4
- }
-
- LIBS +=  -L$$US3SOMOPATH/lib -lus_somo
+# OSX also reports UNIX
+contains( DEFINES, "OSX" ) {
+} else {
+    unix {
+     UNAME                  = $$system(uname -a)
+     DEFINES               += UNIX
+     QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
+    
+     contains(UNAME,x86_64) {
+        LIBS    += -L$$QWTPATH/lib64 -lqwt -L$$US3PATH/lib64 -lqwtplot3d-qt4
+        DESTDIR  = $$US3SOMOPATH/bin64
+     } else {
+        LIBS    += -L$$QWTPATH/lib -lqwt -L$$US3PATH/lib -lqwtplot3d-qt4
+     }
+    
+     LIBS +=  -L$$US3SOMOPATH/lib -lus_somo
+    }
 }
 
 win32 {
