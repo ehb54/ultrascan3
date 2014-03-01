@@ -15,8 +15,8 @@ US3PATH       = /src/us3
 US3SOMOPATH   = /src/us3_somo
 
 # path of the QT 
-QTPATH        = /src/qwt-5.2.3
-QWTPATH       = /src/qt4.8.5
+QTPATH        = /src/qt4.8.5
+QWTPATH       = /src/qwt-5.2.3
 
 # for windows also define the MINGWPATH
 MINGWPATH     =

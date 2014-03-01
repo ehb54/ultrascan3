@@ -14,7 +14,7 @@ US3PATH       = /Users/eb/us3
 # path of US3_SOMO source base
 US3SOMOPATH   = /Users/eb/us3_somo
 
-# path of the QT 
+# path of the QT (on OSX QTPATH can be left undefined)
 QTPATH        = 
 QWTPATH       = /src/qwt-5.2.3
 
