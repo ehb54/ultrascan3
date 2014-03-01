@@ -106,7 +106,7 @@ bool US_Saxs_Util::pdb_hydrate()
       qsl_required << "asastep";
       qsl_required << "asacalculation";
       
-      for ( unsigned int i = 0; i < qsl_required.size(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int) qsl_required.size(); i++ )
       {
          if ( !control_parameters.count( qsl_required[ i ] ) )
          {
@@ -659,7 +659,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
 
    rotamer tmp_rotamer;
 
-   for ( unsigned int i = 0; i < qsl.size(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
    {
       if ( rx_skip.search( qsl[ i ] ) != -1 )
       {
@@ -1147,7 +1147,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
          QString res = qsl_line[ 0 ];
          qsl_line.pop_front();
          vector < QString > four_atoms;
-         for ( unsigned int j = 0; j < qsl_line.size(); j++ )
+         for ( unsigned int j = 0; j < (unsigned int) qsl_line.size(); j++ )
          {
             four_atoms.push_back( qsl_line[ j ] );
             if ( four_atoms.size() == 4 )

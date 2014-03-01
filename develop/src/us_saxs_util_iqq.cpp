@@ -737,7 +737,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
                ( control_parameters.count( "outputfile" ) ?
                  control_parameters[ "outputfile" ] : "" );
                
-            for ( unsigned int i = 0; i < output_dmd_pdbs.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int) output_dmd_pdbs.size(); i++ )
             {
                control_parameters[ "inputfile" ] = output_dmd_pdbs[ i ];
                control_parameters[ "outputfile" ] = QFileInfo( output_dmd_pdbs[ i ] ).baseName();

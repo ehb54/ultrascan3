@@ -21,7 +21,7 @@ public:
    unsigned int  index;
    bool operator < (const umc_sortable_double& objIn) const
    {
-      unsigned int i;
+      //      unsigned int i;
       return d < objIn.d;
    }
 };
@@ -97,7 +97,7 @@ class US_Multi_Column
                  qsl[ 0 ].contains( QRegExp( "^\\D" ) ) )
             {
                // take as header;
-               for ( unsigned int i = 0; i < qsl.size(); i++ )
+               for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
                {
                   header.push_back( qsl[ i ] );
                }
@@ -105,7 +105,7 @@ class US_Multi_Column
             }
             vector < double > tmp_data;
 
-            for ( unsigned int i = 0; i < qsl.size(); i++ )
+            for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
             {
                tmp_data.push_back( qsl[ i ].stripWhiteSpace().toDouble() );
             }
@@ -487,7 +487,7 @@ class US_Multi_Column
             }
          }
 
-         unsigned int n = x.size();
+         // unsigned int n = x.size();
          // attempt at setting slopes failed
          // double slope1 = ( y[ 1 ] - y[ 0 ] ) / ( x[ 1 ] - x[ 0 ] );
          // double slope2 = ( y[ n - 1 ] - y[ n - 2 ] ) / ( x[ n - 1 ] - x[ n - 2 ] );
@@ -528,7 +528,7 @@ class US_Multi_Column
 
          // end debug stuff -----------
 
-         for ( unsigned int i = 0; i < data.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) data.size(); i++ )
          {
             double new_val = 0e0;
             if ( data[ i ][ dep1 ] >= part2_min_dep &&
@@ -997,7 +997,7 @@ class US_Multi_Column
          }
          {
             unsigned int low  = 0;
-            unsigned int high = data.size();
+            unsigned int high = (unsigned int) data.size();
             if ( !smooth_endpoints )
             {
                low++;
@@ -1026,7 +1026,7 @@ class US_Multi_Column
             return false;
          }
 
-         if ( data[ 0 ].size() < col )
+         if ( (unsigned int) data[ 0 ].size() < col )
          {
             errormsg = QString( "Error: repeak: %1 has %2 columns and column %3 requested" )
                .arg( filename )
@@ -1040,7 +1040,7 @@ class US_Multi_Column
 
          double max = data[ 0 ][ col ];
          
-         for( unsigned int i = 1; i < data.size(); i++ )
+         for( unsigned int i = 1; i < (unsigned int) data.size(); i++ )
          {
             if ( max < data[ i ][ col ] )
             {
@@ -1058,7 +1058,7 @@ class US_Multi_Column
             return false;
          }
 
-         for( unsigned int i = 0; i < data.size(); i++ )
+         for( unsigned int i = 0; i < (unsigned int) data.size(); i++ )
          {
             data[ i ][ col ] /= max;
          }
@@ -1080,7 +1080,7 @@ class US_Multi_Column
             return false;
          }
 
-         if ( data[ 0 ].size() < col )
+         if ( (unsigned int) data[ 0 ].size() < col )
          {
             errormsg = QString( "Error: range: %1 has %2 columns and column %3 requested" )
                .arg( filename )
@@ -1094,7 +1094,7 @@ class US_Multi_Column
 
          vector < vector < double > > new_data;
 
-         for( unsigned int i = 1; i < data.size(); i++ )
+         for( unsigned int i = 1; i < (unsigned int) data.size(); i++ )
          {
             if ( data[ i ][ col ] >= min && 
                  data[ i ][ col ] <= max )
@@ -1122,7 +1122,7 @@ class US_Multi_Column
             return false;
          }
 
-         if ( data[ 0 ].size() < col )
+         if ( (unsigned int) data[ 0 ].size() < col )
          {
             errormsg = QString( "Error: sort: %1 has %2 columns and column %3 requested" )
                .arg( filename )
@@ -1136,7 +1136,7 @@ class US_Multi_Column
 
          list < umc_sortable_double > lumcsd;
 
-         for ( unsigned int i = 0; i < data.size(); i++ )
+         for ( unsigned int i = 0; i < (unsigned int) data.size(); i++ )
          {
             umc_sortable_double umcsd;
             umcsd.index = i;
@@ -1169,7 +1169,7 @@ class US_Multi_Column
 
          vector < vector < double > > new_data;
          
-         for( int i = data.size() - 1; i >= 0; i-- )
+         for( int i = (int) data.size() - 1; i >= 0; i-- )
          {
             new_data.push_back( data[ i ] );
          }
@@ -1193,8 +1193,8 @@ class US_Multi_Column
             return false;
          }
 
-         if ( data[ 0 ].size() < col ||
-              data[ 0 ].size() < sumcol )
+         if ( (unsigned int) data[ 0 ].size() < col ||
+              (unsigned int) data[ 0 ].size() < sumcol )
          {
             errormsg = QString( "Error: uniquify: %1 has %2 columns and columns %3 and %4 requested" )
                .arg( filename )
@@ -1215,7 +1215,7 @@ class US_Multi_Column
          unsigned int tot = 0;
          unsigned int rows = 0;
 
-         for( unsigned int i = 0; i < data.size(); i++ )
+         for( unsigned int i = 0; i < (unsigned int) data.size(); i++ )
          {
             double ref = data[ i ][ col ];
             tot++;
@@ -1253,11 +1253,11 @@ class US_Multi_Column
             result.push_back( normal( ( 2e0 / points ) * ( double )i ) );
          }
          double tot = result[ 0 ];
-         for ( unsigned int j = 1; j < result.size(); j++ ) 
+         for ( unsigned int j = 1; j < (unsigned int) result.size(); j++ ) 
          {
             tot += 2 * result[ j ];
          }
-         for ( unsigned int j = 1; j < result.size(); j++ ) 
+         for ( unsigned int j = 1; j < (unsigned int) result.size(); j++ ) 
          {
             result[ j ] /= tot;
          }
