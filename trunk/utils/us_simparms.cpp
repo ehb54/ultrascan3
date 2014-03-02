@@ -54,6 +54,10 @@ US_SimulationParameters::SpeedProfile::SpeedProfile()
    w2t_last          = 0.0;
    time_first        = 0;
    time_last         = 0;
+
+   avg_speed         = 0.0;
+   speed_stddev      = 0.0;
+   set_speed         = 0;
 }
 
 
@@ -223,6 +227,44 @@ DbgLv(1) << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
 DbgLv(2) << "SP:iFD: bottom" << bottom;
 }
 
+// Read the speed steps vector from runID file
+int US_SimulationParameters::readSpeedSteps( QString runID, QString dataType,
+      QVector< US_SimulationParameters::SpeedProfile >& speedsteps )
+{
+   speedsteps.clear();
+   SpeedProfile sp;
+   int     nsteps      = 0;
+   int     dbg_level   = US_Settings::us_debug();
+   QString fn          = US_Settings::resultDir() + "/" + runID + "/"
+                         + runID + "." + dataType + ".xml";
+   QFile filei( fn );
+
+   if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {  // If experiment/run file exists, get speed steps from it
+DbgLv(1) << "SP:rSS: fn" << fn;
+      QXmlStreamReader xml( &filei );
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement()  &&  xml.name() == "speedstep" )
+         {
+            speedstepFromXml( xml, sp );
+
+            speedsteps << sp;
+            nsteps++;
+DbgLv(1) << "SP:rSS:   step" << nsteps << "rotorspeed" << sp.rotorspeed
+ << "avg_speed" << sp.avg_speed;
+         }
+      }
+
+      filei.close();
+   }
+
+   return nsteps;
+}
+
 // Compute the speed steps vector from data scans
 void US_SimulationParameters::computeSpeedSteps(
       QVector< US_DataIO::Scan >* scans,
@@ -277,7 +319,8 @@ DbgLv(1) << "SP:cSS: scan" << (ii+1) << "rpm time omega2t"
          sp.w2t_last         = w2t2;
          sp.time_first       = qRound( time1 );
          sp.time_last        = qRound( time2 );
-         speedsteps.append( sp );
+
+         speedsteps << sp;
 DbgLv(1) << "SP:cSS:   speedsteps" << speedsteps.size() << "scans" << sp.scans
  << "duration h m" << sp.duration_hours << sp.duration_minutes
  << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
@@ -309,7 +352,8 @@ DbgLv(1) << "SP:cSS:      w2t1 w2t2 time1 time2" << sp.w2t_first << sp.w2t_last
    sp.w2t_last         = w2t2;
    sp.time_first       = qRound( time1 );
    sp.time_last        = qRound( time2 );
-   speedsteps.append( sp );
+
+   speedsteps << sp;
 DbgLv(1) << "SP:cSS:   speedsteps" << speedsteps.size() << "scans" << sp.scans
  << "duration h m" << sp.duration_hours << sp.duration_minutes
  << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
@@ -646,6 +690,17 @@ void US_SimulationParameters::speedstepFromXml( QXmlStreamReader& xmli,
    astr  = attr.value( "timelast"      ).toString();
    if ( !astr.isEmpty() )
       spo.time_last         = astr.toInt();
+
+   // MWL enhancements
+   astr  = attr.value( "set_speed"     ).toString();
+   if ( !astr.isEmpty() )
+      spo.set_speed         = astr.toInt();
+   astr  = attr.value( "avg_speed"     ).toString();
+   if ( !astr.isEmpty() )
+      spo.avg_speed         = astr.toDouble();
+   astr  = attr.value( "speed_stddev"  ).toString();
+   if ( !astr.isEmpty() )
+      spo.speed_stddev      = astr.toDouble();
 }
 
 // Write a speed step to an XML stream
@@ -677,6 +732,18 @@ void US_SimulationParameters::speedstepToXml( QXmlStreamWriter& xmlo,
       QString::number( spi->time_first       ) );
    xmlo.writeAttribute   ( "timelast",  
       QString::number( spi->time_last        ) );
+
+   // Possible MWL enhancements
+   if ( spi->set_speed > 0 )
+   {
+      xmlo.writeAttribute   ( "set_speed", 
+         QString::number( spi->set_speed        ) );
+      xmlo.writeAttribute   ( "avg_speed", 
+         QString::number( spi->avg_speed        ) );
+      xmlo.writeAttribute   ( "speed_stddev",
+         QString::number( spi->speed_stddev     ) );
+   }
+
    xmlo.writeEndElement  ();  // speedstep
 }
 

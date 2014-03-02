@@ -179,8 +179,8 @@ US_RunDetails2::US_RunDetails2( const QVector< US_DataIO::RawData >& data,
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
                         SLOT  ( update           ( int ) ) );
 
-   connect( lw_rpm    , SIGNAL( currentRowChanged( int ) ),
-                        SLOT  ( show_rpm_details ( int ) ) );
+   connect( lw_rpm,     SIGNAL( itemClicked     ( QListWidgetItem* ) ),
+            this,       SLOT  ( show_rpm_details( QListWidgetItem* ) ) );
 }
 
 US_RunDetails2::~US_RunDetails2()
@@ -499,6 +499,8 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
 
 void US_RunDetails2::update( int index )
 {
+   lw_rpm->clearSelection();
+
    if ( lw_triples->currentItem()->text().contains( tr( "All" ) ) )
    {
       show_all_data();
@@ -561,22 +563,26 @@ void US_RunDetails2::update( int index )
    draw_plot( x.constData(), t.constData(), r.constData(), m.constData(), scanCount );
 }
 
-void US_RunDetails2::show_rpm_details( int /* index */ )
+void US_RunDetails2::show_rpm_details( QListWidgetItem* item )
 {
 qDebug() << "show_rpm_details";
-   QString msg = tr( "The following scans have been measured at " )
-               + lw_rpm->currentItem()->text() + ":\n\n";
+   QString sspeed  = item->text();
+   QString msg     = tr( "The following scans have been measured at " )
+                   + sspeed + ":\n\n";
 
 qDebug() << " srd: msg" << msg;
-   QStringList sl  = lw_rpm->currentItem()->text().split( " " ); 
-   int         rpm = sl[ 0 ].toInt();
+   QStringList sl  = sspeed.split( " " );
+   sspeed          = sl[ 0 ];
+   int     rpm     = sspeed.toInt();
 qDebug() << " srd: sl" << sl << "rpm" << rpm << "np" << sl.count();
 
-   sl = map.values( rpm );
+   sl              = map.values( rpm );
    qSort( sl ); // contains cell / channel / wavelength / scan
                 //  ( or cell / channel / scan  for MWL data )
 
-   QString triple;
+   QString triple  = triples[ 0 ];
+   bool    isMwl   = triple.split( " / " ).size() < 3;
+   QString pcellCh = "0/Z";
 
    foreach( triple, triples )
    {
@@ -597,28 +603,63 @@ qDebug() << " srd: sl" << sl << "rpm" << rpm << "np" << sl.count();
       if ( scans.size() == 0 ) continue;
       
       QStringList cellChWl = triple.split( " / " );
+      QString     cellCh   = cellChWl[ 0 ] + "/" + cellChWl[ 1 ];
 qDebug() << " srd: ccw" << cellChWl << "ccwsz" << cellChWl.count();
+qDebug() << " srd:  pcellCh cellCh isMwl" << pcellCh << cellCh << isMwl;
 
       if ( cellChWl.size() > 2 )
       {  // Normal (c/c/w/s) data
-         msg += tr( "Cell: "         ) + cellChWl[ 0 ] 
-             +  tr( ", Channel: "    ) + cellChWl[ 1 ]
-             +  tr( ", Wavelength: " ) + cellChWl[ 2 ]
-             +  tr( ", Scan Count: " );
+         msg    += tr( "Cell: "         ) + cellChWl[ 0 ] 
+                +  tr( ", Channel: "    ) + cellChWl[ 1 ]
+                +  tr( ", Wavelength: " ) + cellChWl[ 2 ]
+                +  tr( ", Scan Count: " );
+         isMwl   = ( isMwl  ||  cellCh == pcellCh );
+qDebug() << " srd:   isMwl" << isMwl;
       }
 
       else
       {  // MWL (c/c/s) data
-         msg += tr( "Cell: "         ) + cellChWl[ 0 ] 
-             +  tr( ", Channel: "    ) + cellChWl[ 1 ]
-             +  tr( ", Scan Count: " );
+         msg    += tr( "Cell: "         ) + cellChWl[ 0 ] 
+                +  tr( ", Channel: "    ) + cellChWl[ 1 ]
+                +  tr( ", Scan Count: " );
       }
 
-      msg += QString::number( scans.size() ) + "\n";
+      msg    += QString::number( scans.size() ) + "\n";
+      pcellCh = cellCh;
    }
 
+   if ( isMwl )
+   {
+      msg    += moreSpeedInfo( rpm );
+   }
+
+#if 1
    QMessageBox::information( this,
          tr( "Speed Information" ), msg );
+#endif
+#if 0
+   msg += tr( "\nYou may \"Close\" this dialog or click \"Details\""
+              " to open a text dialog showing speed details"
+              " for all scans" );
+   QMessageBox msgbox;
+   msgbox.setIcon( QMessageBox::Information );
+   msgbox.setText( tr( "Speed Information" ) );
+   msgbox.setInformativeText( msg );
+   msgbox.addButton( tr( "Details"  ), QMessageBox::AcceptRole );
+   msgbox.addButton( tr( "Close"    ), QMessageBox::RejectRole );
+   msgbox.adjustSize();
+   int sbutton = msgbox.exec();
+qDebug() << "select button" << sbutton << "Rej(C) Acc(D)"
+   << QMessageBox::RejectRole << QMessageBox::AcceptRole;
+
+   if ( sbutton == QMessageBox::AcceptRole )
+   {
+QMessageBox::information( this, "DEBUG", "you clicked DETAILS" );
+   }
+else
+QMessageBox::information( this, "DEBUG", "you clicked CLOSE" );
+#endif
+   lw_rpm->clearSelection();
 }
 
 void US_RunDetails2::plot_temp( void )
@@ -644,3 +685,62 @@ void US_RunDetails2::plot_combined( void )
    plotType = COMBINED;
    update( lw_triples->currentRow() );
 }
+
+// Read any speedsteps from run xml and create speed details message
+QString US_RunDetails2::moreSpeedInfo( double rpm )
+{
+   QString msg    = "";
+   QString runID  = le_runID->text();
+   QString fname  = US_Settings::resultDir() + "/" + runID + "/"
+                    + runID + ".RI.xml";
+   QFile   filei( fname );
+qDebug() << " srd:mSI: rpm fname" << rpm << fname;
+   double  rpm_s  = 0.0;
+   double  rpm_a  = 0.0;
+   double  rpm_d  = 0.0;
+
+   if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QXmlStreamReader xmli( &filei );
+
+      while ( ! xmli.atEnd() )
+      {
+         xmli.readNext();
+qDebug() << " srd:mSI:  xml name" << xmli.name();
+
+         if ( xmli.isStartElement()  &&   xmli.name() == "speedstep" )
+         {
+            QXmlStreamAttributes attr = xmli.attributes();
+            double  rpm_x  = attr.value( "rotorspeed"   ).toString().toDouble();
+            QString msg    = "";
+qDebug() << " srd:mSI:   rpm_x" << rpm_x;
+
+            if ( rpm_x == rpm )
+            {
+               rpm_s       = attr.value( "set_speed"    ).toString().toDouble();
+               rpm_a       = attr.value( "avg_speed"    ).toString().toDouble();
+               rpm_d       = attr.value( "speed_stddev" ).toString().toDouble();
+qDebug() << " srd:mSI:M:  rpm_s rpm_a rpm_d" << rpm_s << rpm_a << rpm_d;
+               break;
+            }
+         }
+      }
+
+      filei.close();
+   }
+qDebug() << " srd:mSI:    rpm_s rpm_a rpm_d" << rpm_s << rpm_a << rpm_d;
+
+   if ( rpm_a != 0.0 )
+   {
+      msg            = tr( "\nSpeed step additional information:"
+                           "\n   Set Speed                = %1"
+                           "\n   Average Speed            = %2"
+                           "\n   Speed Standard Deviation = %3" )
+                       .arg( rpm_s ).arg( rpm_a ).arg( rpm_d );
+   }
+else
+ msg="\n*** MWL but no extended speedstep values ***";
+   
+   return msg;
+}
+

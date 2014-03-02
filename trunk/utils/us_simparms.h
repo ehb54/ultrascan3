@@ -71,6 +71,13 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \returns      Status flag:  0 if able to write to file
    static int put_simparms( US_SimulationParameters&, QString );
 
+   //! \brief A function to read speed steps from runID file
+   //! \param runID      Run ID string
+   //! \param dataType   Data type string (e.g., "RI")
+   //! \param speedsteps Returned vector of speed step profiles
+   //! \returns          Number of speed steps found
+   static int  readSpeedSteps( QString, QString, QVector< SpeedProfile >& );
+
    //! \brief A function to compute speed steps from data scans
    //! \param scans      Pointer to vector of data scans
    //! \param speedsteps Returned vector of speed step profiles
@@ -157,6 +164,8 @@ class US_UTIL_EXTERN US_SimulationParameters
       double delay_minutes;     //!< Minutes delay before starting scans (0-59)
       double w2t_first;         //!< omega2t at first scan of step
       double w2t_last;          //!< omega2t at last scan of step
+      double avg_speed;         //!< Unrounded average speed in speed step
+      double speed_stddev;      //!< Standard deviation of speeds in speed step
       int    duration_hours;    //!< Hours at the given speed
       int    delay_hours;       //!< Hours delay before starting scans
       int    time_first;        //!< Seconds at first scan of step
@@ -164,6 +173,7 @@ class US_UTIL_EXTERN US_SimulationParameters
       int    scans;             //!< Number of scans at this RPM
       int    rotorspeed;        //!< RPM for this step
       int    acceleration;      //!< Acceleration rate from previous RPM (RPM/second)
+      int    set_speed;         //!< Set speed for MWL data
       bool   acceleration_flag; //!< Flag to simulate RPM acceleration or not
    };
 };

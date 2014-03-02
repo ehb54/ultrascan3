@@ -99,10 +99,10 @@ class US_UTIL_EXTERN US_Math2
       //!       
       //! \param x Pointer to an array of x values
       //! \param y Pointer to an array of y values
-      //! \param slope       Pointer to location to retrun the line's slope
-      //! \param intercept   Pointer to location to retrun the line's y intercept
-      //! \param sigma       Pointer to location to retrun the standard deviation 
-      //! \param correlation Pointer to location to retrun the correlation
+      //! \param slope       Pointer to location to return the line's slope
+      //! \param intercept   Pointer to location to return the line's y intercept
+      //! \param sigma       Pointer to location to return the standard deviation 
+      //! \param correlation Pointer to location to return the correlation
       //! \param arraysize   Input array size
       static double linefit   ( double**, double**, double*, double*, double*, 
                                 double* , int );
@@ -237,7 +237,7 @@ class US_UTIL_EXTERN US_Math2
       \param x      On exit, x[] will contain the solution vector.
       \param rnorm  On exit, rnorm contains the Euclidean norm of the
                     residual vector.  It may be set to NULL if the 
-                    retruned value is not needed.
+                    returned value is not needed.
 
       \param wp     An n-array of working space, w[].  On exit, w[] will 
                     contain the dual solution vector.
