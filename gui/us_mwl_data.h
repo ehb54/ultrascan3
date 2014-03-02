@@ -6,6 +6,11 @@
 
 #include "us_extern.h"
 #include "us_dataIO.h"
+#include "us_simparms.h"
+
+#ifndef SP_SPEEDPROFILE
+#define SP_SPEEDPROFILE US_SimulationParameters::SpeedProfile
+#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
@@ -138,10 +143,20 @@ class US_GUI_EXTERN US_MwlData : public QObject
       //! \returns       The output data index of the triple
       int     data_index    ( QString, QString );
 
+      //! \brief Update the speed profile for MWL data
+      //! \param speedsteps Reference to speed steps profile to update
+      //! \returns          The number of speed steps in the profile
+      int     update_speedsteps( QVector< SP_SPEEDPROFILE >& );
+
    private:
       QVector< QVector< double > > ri_readings; //!< Raw input readings
       QVector< int >               ri_wavelns;  //!< Raw input wavelengths
       QVector< QVector< int > >    ex_wavelns;  //!< Export Wavelengths, ea. cc
+
+      QVector< double >   r_rpms;    //!< Raw RPMs from scans
+      QVector< double >   s_rpms;    //!< Set RPMs from speed steps
+      QVector< double >   a_rpms;    //!< Average RPMs from speed steps
+      QVector< double >   d_rpms;    //!< Standard Deviation RPMs from steps
 
       QList< DataHdr >    headers;   //!< Mwl input file headers
 

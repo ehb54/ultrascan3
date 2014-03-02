@@ -4,6 +4,7 @@
 #include "us_mwl_data.h"
 #include "us_util.h"
 #include "us_settings.h"
+#include "us_math2.h"
 
 // Hold data read in and selected from a raw MWL data directory
 US_MwlData::US_MwlData( )
@@ -622,6 +623,10 @@ int US_MwlData::build_rawData( QVector< US_DataIO::RawData >& allData )
    QVector< double > xout;
    double rad_val  = headers[ 0 ].radius_start;
    double rad_inc  = headers[ 0 ].radius_step;
+   r_rpms.clear();
+   s_rpms.clear();
+   a_rpms.clear();
+   d_rpms.clear();
 qDebug() << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint
  << "  evers" << evers;
 
@@ -670,8 +675,8 @@ qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
       double rpm_setp   = 0.0;
       double rpm_set    = headers[ jhx ].set_speed;
       double rpm_avg    = 0.0;
+      double rpm_stdd   = 0.0;
       rdata.description = ccdescs.at( ccx );
-      QVector< double > rrpms;
 
       for ( int scx = 0; scx < nscan; scx++ )
       {  // Set scan values
@@ -686,17 +691,31 @@ qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
          scan.delta_r      = rad_inc;
          scan.rvalues.reserve( npoint );
          scan.interpolated = interpo;
-         if ( scx > 0  &&  scan.rpm != rrpms[ scx - 1 ] )
+         if ( scx > 0  &&  scan.rpm != r_rpms[ scx - 1 ] )
             kspstep++;
 
          if ( rpm_set != rpm_setp )
          {  // A new speed step is reached, re-do speeds in the previous one
             nspstep++;
-            rpm_avg           = (double)qRound( rpm_sum / (double)kscan );
+            rpm_avg           = rpm_sum / (double)kscan;
+            rpm_stdd          = 0.0;
 
             for ( int jsx = kscx; jsx < scx; jsx++ )
-               rdata.scanData[ jsx ].rpm  = rpm_avg;
+            {
+               // Store the average over the speed step as the scan speed
+               rdata.scanData[ jsx ].rpm          = (double)qRound( rpm_avg );
 
+               // Compute chi-squared sum
+               rpm_stdd         += sq( r_rpms[ jsx ] - rpm_avg );
+            }
+
+            // Compute standard deviation of speeds and save step values
+            rpm_stdd          = sqrt( rpm_stdd  ) / (double)kscan;
+            a_rpms << rpm_avg;
+            s_rpms << rpm_setp;
+            d_rpms << rpm_stdd;
+
+            // Reinitialize for next speed step
             kscx              = scx;
             kscan             = 1;
             rpm_sum           = 0.0;
@@ -719,7 +738,7 @@ qDebug() << "BldRawD      scx" << scx << "jhx" << jhx
  << "speed step" << kspstep << nspstep+1;
 }
 //*DEBUG*
-         rrpms << scan.rpm;
+         r_rpms << scan.rpm;
          jhx++;
 
          for ( int kk = 0; kk < npoint; kk++ )
@@ -752,11 +771,24 @@ qDebug() << "BldRawD      scx" << scx << "jhx" << jhx
 
       // Set the average speed for the final/only speed step
       nspstep++;
-      rpm_avg           = (double)qRound( rpm_sum / (double)kscan );
+      rpm_stdd          = 0.0;
+      rpm_avg           = rpm_sum / (double)kscan;
+
       for ( int scx = kscx; scx < nscan; scx++ )
       {
-         rdata.scanData[ scx ].rpm = rpm_avg;
+         // Store the average over the speed step as the scan speed
+         rdata.scanData[ scx ].rpm          = (double)qRound( rpm_avg );
+
+         // Compute the chi-squared sum
+         rpm_stdd         += sq( r_rpms[ scx ] - rpm_avg );
       }
+
+      // Compute standard deviation of speeds and update step values
+      rpm_stdd          = sqrt( rpm_stdd  ) / (double)kscan;
+
+      a_rpms << rpm_avg;
+      s_rpms << rpm_set;
+      d_rpms << rpm_stdd;
 
       if ( evers > 1.0 )
       {  // In newer data, a set_speed may differ from the average
@@ -910,7 +942,7 @@ void US_MwlData::read_runxml( QDir ddir, QString curdir )
 // Set the current cell/channel index
 int US_MwlData::set_celchnx( int ccx )
 {
-qDebug() << "SetCCX" << ccx;
+//qDebug() << "SetCCX" << ccx;
    curccx    = qMax( 0, qMin( ccx, ( ncelchn - 1 ) ) );
 
    return curccx;
@@ -943,5 +975,23 @@ int US_MwlData::data_index( QString clambda, QString celchn )
 {
    int ccx   = cellchans.indexOf( celchn );
    return data_index( clambda.toInt(), ccx );
+}
+
+// Update the speed profile for the current MWL data
+int US_MwlData::update_speedsteps( QVector< SP_SPEEDPROFILE >& speedsteps )
+{
+   int nsteps  = qMin( speedsteps.size(), s_rpms.size() );
+DbgLv(1) << "MwDa:uSS: nsteps" << nsteps << speedsteps.size() << s_rpms.size();
+
+   for ( int jj = 0; jj < nsteps; jj++ )
+   {
+      speedsteps[ jj ].set_speed     = s_rpms[ jj ];
+      speedsteps[ jj ].avg_speed     = a_rpms[ jj ];
+      speedsteps[ jj ].speed_stddev  = d_rpms[ jj ];
+DbgLv(1) << "MwDa:uSS:   jj" << "set_speed avg_speed speed_stddev"
+ << s_rpms[ jj ] << a_rpms[ jj ] << d_rpms[ jj ];
+   }
+
+   return nsteps;
 }
 

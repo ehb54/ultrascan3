@@ -1554,7 +1554,7 @@ DbgLv(1) << "CGui: ldUS3DB: call rdDBExp";
    le_status->setText( tr( "Loading data from DB (Experiment) ..." ) );
    qApp->processEvents();
    QString status = US_ConvertIO::readDBExperiment( runID, dirname, &db,
-         speedsteps );
+                                                    speedsteps );
    QApplication::restoreOverrideCursor();
 
    if ( status  != QString( "" ) )
@@ -1822,12 +1822,15 @@ void US_ConvertGui::runDetails( void )
    // Create data structures for US_RunDetails2
    QStringList tripleDescriptions;
    QVector< US_DataIO::RawData >  currentData;
+
    if ( isMwl )
    {  // For MWL, only pass the 1st data set of each cell/channel
       for ( int ii = 0; ii < out_chaninfo.size(); ii++ )
       {
          currentData        << *outData[ out_chandatx[ ii ] ];
-         tripleDescriptions << out_chaninfo[ ii ].tripleDesc;
+         QString celchn      = out_chaninfo[ ii ].tripleDesc;
+         celchn              = celchn.section( " / ", 0, 1 );
+         tripleDescriptions << celchn;
       }
    }
 
@@ -4194,15 +4197,33 @@ DbgLv(1) << "CGui:IOD:  ochx" << trx << "celchn cID" << celchn << chanID;
       }
    }
 
-   // Save a vector of speed steps computed from the data scans
-   US_SimulationParameters::computeSpeedSteps( &allData[ 0 ].scanData,
-         speedsteps );
+   // Save a vector of speed steps read or computed from the data scans
+   char chtype[ 3 ] = { 'R', 'A', '\0' };
+   strncpy( chtype, allData[ 0 ].type, 2 );
+   QString dataType = QString( chtype ).left( 2 );
+   int     nspeed   = US_SimulationParameters::readSpeedSteps( runID, dataType,
+                                                               speedsteps );
+DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
+
+   if ( nspeed == 0 )
+      US_SimulationParameters::computeSpeedSteps( &allData[ 0 ].scanData,
+                                                  speedsteps );
+DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
 
    // MultiWaveLength if channels and triples counts differ
    isMwl            = ( all_chaninfo.count() != all_tripinfo.count() );
+DbgLv(1) << "CGui:IOD:  isMwl" << isMwl << "c.count t.count"
+ << all_chaninfo.count() << all_tripinfo.count();
 
-   if ( ! isMwl )
-   {
+   if ( isMwl )
+   {  // If MWL, update speed steps
+DbgLv(1) << "CGui:IOD:   updSS call";
+      nspeed = mwl_data.update_speedsteps( speedsteps );
+DbgLv(1) << "CGui:IOD:    updSS rtn nspeed" << nspeed;
+   }
+
+   else
+   {  // Else complete channel lists
       for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
       {
          QString triple = all_tripinfo[ trx ].tripleDesc;

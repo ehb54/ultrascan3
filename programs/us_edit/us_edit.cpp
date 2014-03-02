@@ -2344,6 +2344,11 @@ DbgLv(1) << "PlMwl:    expc_wvlns size" << expc_wvlns.size();
       data                = *outData[ data_index ];
       recvalu             = expi_wvlns.at( recndx );
       svalu               = expc_wvlns.at( recndx );
+QString dcell=QString::number(data.cell);
+QString dchan=QString(QChar(data.channel));
+QString dwavl=QString::number(data.scanData[0].wavelength);
+DbgLv(1) << "PlMwl:     c triple" << scell << schan << svalu
+ << "d triple" << dcell << dchan << dwavl;
    }
 
    else
@@ -4136,6 +4141,7 @@ void US_Edit::reset_plot_lambdas()
    dlambda        = (int)ct_ldelta->value();
    slambda        = cb_lstart->currentText().toInt();
    elambda        = cb_lend  ->currentText().toInt();
+   int     plambd = cb_lplot ->currentText().toInt();
    int     strtx  = cb_lstart->currentIndex();
    int     endx   = cb_lend  ->currentIndex() + 1;
    int     plotx  = cb_lplot ->currentIndex();
@@ -4152,6 +4158,7 @@ DbgLv(1) << "rpl: dl sl el px" << dlambda << slambda << elambda << plotx;
    }
 
    nwavelo        = expi_wvlns.size();
+   plotx          = qMax( 0, expi_wvlns.indexOf( plambd ) );
    plotx          = ( plotx < nwavelo ) ? plotx : ( nwavelo / 2 );
 DbgLv(1) << "rpl:   nwavelo plotx" << nwavelo << plotx;
 DbgLv(1) << "rpl:    pl1 pln" << expi_wvlns[0] << expi_wvlns[nwavelo-1];
@@ -4172,6 +4179,10 @@ DbgLv(1) << "rpl:    pl1 pln" << expi_wvlns[0] << expi_wvlns[nwavelo-1];
       .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda )
       + ( lsel_range ? tr( " raw index increment %1." ).arg( dlambda )
                      : tr( " from custom selections." ) ) );
+
+   mwl_data.set_lambdas( expi_wvlns );
+
+   reset_outData();
 }
 
 // X-axis has been changed to Radius or Wavelength
@@ -4468,49 +4479,7 @@ void US_Edit::write_mwl()
    {  // If wavelengths have changed, save new list and rebuild some vectors
       mwl_data.set_lambdas( expi_wvlns );  // Save new lambdas for channel
 
-      int dax1         = data_index;       // Index of data start for channel
-      int dax2         = dax1;
-
-      QVector< US_DataIO::RawData* > oldData   = outData;
-      QVector< QString >             oedtGUIDs = editGUIDs;
-      QVector< QString >             oedtIDs   = editIDs;
-      outData  .clear();
-      editGUIDs.clear();
-      editIDs  .clear();
-
-      for ( int trx = 0; trx < dax2; trx++ )
-      {  // Copy any data preceding this channel
-         outData   << oldData  [ trx ];
-         editGUIDs << oedtGUIDs[ trx ];
-         editIDs   << oedtIDs  [ trx ];
-      }
-
-      for ( wvx = 0; wvx < nwavelo; wvx++ )
-      {  // Copy data associated with the new wavelengths list
-         int wvxo         = oldi_wvlns.indexOf( expi_wvlns[ wvx ] );
-
-         if ( wvxo < 0 )
-         {
-            qDebug() << "*ERROR* wavelength unexpectedly missing:"
-                     << expi_wvlns[ wvx ];
-            continue;
-         }
-
-         int trx          = dax2 + wvxo;
-         outData   << oldData  [ trx ];
-         editGUIDs << oedtGUIDs[ trx ];
-         editIDs   << oedtIDs  [ trx ];
-         dax1++;
-      }
-
-      dax2             = oldData.count();
-
-      for ( int trx = dax1; trx < dax2; trx++ )
-      {  // Copy any data following the current channel
-         outData   << oldData  [ trx ];
-         editGUIDs << oedtGUIDs[ trx ];
-         editIDs   << oedtIDs  [ trx ];
-      }
+      reset_outData();
    }
 
    QString celchn   = celchns.at( triple_index );
@@ -4939,6 +4908,8 @@ int US_Edit::index_data( int wvx )
          int iwavl    = expi_wvlns[ plotndx ];
          data_index   = mwl_data.data_index( iwavl, triple_index );
          odatx        = data_index;
+DbgLv(1) << "IxDa: dx" << data_index << "plx wavl trx"
+ << plotndx << iwavl << triple_index;
       }
 
       else
@@ -5182,5 +5153,27 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
    step        = FINISHED;
 
    return status;
+}
+
+// Reset the output data pointer vector after change in wavelengths
+void US_Edit::reset_outData()
+{
+   if ( ! isMwl )  return;
+
+   outData.clear();
+   QVector< int > ex_wvlns;
+
+   for ( int ccx = 0; ccx < ntriple; ccx++ )
+   {
+      int kwvln   = mwl_data.lambdas( ex_wvlns, ccx );
+      int ccoff   = ccx * nwaveln;
+
+      for ( int wvo = 0; wvo < kwvln; wvo++ )
+      {
+         int iwavl   = ex_wvlns[ wvo ];
+         int idatx   = ccoff + rawi_wvlns.indexOf( iwavl );
+         outData << &allData[ idatx ];
+      }
+   }
 }
 

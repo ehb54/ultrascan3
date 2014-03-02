@@ -82,10 +82,11 @@ class US_GUI_EXTERN US_RunDetails2 : public US_WidgetsDialog
    private slots:
       void update           ( int  );
       void update_timer     ( void );
-      void show_rpm_details ( int  );
+      void show_rpm_details ( QListWidgetItem* );
       void plot_temp        ( void );
       void plot_rpm         ( void );
       void plot_interval    ( void );
       void plot_combined    ( void );
+      QString moreSpeedInfo ( double );
 };
 #endif

@@ -279,11 +279,11 @@ class US_Edit : public US_Widgets
       void lselect_custom_on ( bool   );
       void xaxis_radius_on   ( bool   );
       void xaxis_waveln_on   ( bool   );
-      void lambda_plot_prev  (        );
-      void lambda_plot_next  (        );
-      void lambda_custom_list(        );
+      void lambda_plot_prev  ( void   );
+      void lambda_plot_next  ( void   );
+      void lambda_custom_list( void   );
       void lambda_new_list   ( QVector< int > );
-      void lambda_include_all(        );
+      void lambda_include_all( void   );
       void od_radius_limit   ( double );
       void progress_load     ( QString );
       int  write_xml_file    ( QString&, QString&, QString&, QString& );
@@ -295,6 +295,7 @@ class US_Edit : public US_Widgets
                              
       void reset             ( void );
       void reset_triple      ( void );
+      void reset_outData     ( void );
       void help              ( void )
       { showHelp.show_help( "manual/us_edit.html" ); };
 };
