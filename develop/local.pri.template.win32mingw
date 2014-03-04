@@ -21,7 +21,7 @@ QWTPATH       = C:/qwt-5.2.3
 # for windows also define the MINGWPATH
 MINGWPATH     = C:/mingw
 
-# ---- these below might need to be modified in unusual cirscumstances ----
+# ---- these below might need to be modified in unusual circumstances ----
 QWT3DPATH     = $$US3PATH/qwtplot3d-qt4
 
 # ---- probably should not be changed
