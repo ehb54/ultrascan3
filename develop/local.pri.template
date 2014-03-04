@@ -23,8 +23,14 @@ MINGWPATH     =
 
 # ---- these below might need to be modified in unusual circumstances ----
 QWT3DPATH     = $$US3PATH/qwtplot3d-qt4
+# define this if you are not using qwtplot3d-qt4 as the qwtplot3d lib for linux & osx
+QWT3DLIBNAME  = 
 
 # ---- probably should not be changed
+
+count( QWT3DLIBNAME, 0 ) {
+   QWT3DLIBNAME = qwtplot3d-qt4
+}
 
 CONFIG     += qt thread warn
 contains( DEBUGORRELEASE, debug ) {
@@ -42,7 +48,6 @@ INCLUDEPATH  += $$QWT3DPATH/include
 # ---- system specific definitions
 !include ( uname.pri ) error( "uname.pri missing or corrupt.  Aborting..." )
 DEFINES         += QT4
-
 
 # OSX also reports UNIX
 contains( DEFINES, "OSX" ) {
@@ -91,7 +96,7 @@ macx {
   INCLUDEPATH += /usr/X11R6/include/GL
   LIBS        += -L/System/Library/Frameworks/OpenGL.framework/Libraries
   LIBS        += -L$$US3PATH/lib
-  LIBS        += -lqwtplot3d-qt4
+  LIBS        += -l$$QWT3DLIBNAME
   LIBS        += -framework QtOpenGL
   LIBS        += -L$$QWTPATH/lib -lqwt
 #  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
