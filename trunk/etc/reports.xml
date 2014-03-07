@@ -97,10 +97,39 @@
     <report name="combo-distrib" label="Sed. Coeff. Combo Distribution" />
     <report name="combo-sb-distrib" label="Combo Svalue-Boundary Data Table" />
     <report name="combo-list-include" label="Combo List of Included Sets" />
+    <report name="pseudo3d_s_ff0" label="Pseudo3d s_vs_ff0 Distribution" />
+    <report name="pseudo3d_s_MW" label="Pseudo3d s_vs_MW Distribution" />
+    <report name="pseudo3d_s_vbar" label="Pseudo3d s_vs_vbar Distribution" />
+    <report name="pseudo3d_s_D" label="Pseudo3d s_vs_D Distribution" />
+    <report name="pseudo3d_s_f" label="Pseudo3d s_vs_f Distribution" />
     <report name="pseudo3d_ff0_s" label="Pseudo3d ff0_vs_s Distribution" />
     <report name="pseudo3d_ff0_MW" label="Pseudo3d ff0_vs_MW Distribution" />
+    <report name="pseudo3d_ff0_vbar" label="Pseudo3d ff0_vs_vbar Distribution" />
+    <report name="pseudo3d_ff0_D" label="Pseudo3d ff0_vs_D Distribution" />
+    <report name="pseudo3d_ff0_f" label="Pseudo3d ff0_vs_f Distribution" />
+    <report name="pseudo3d_MW_s" label="Pseudo3d MW_vs_s Distribution" />
+    <report name="pseudo3d_MW_ff0" label="Pseudo3d MW_vs_ff0 Distribution" />
+    <report name="pseudo3d_MW_vbar" label="Pseudo3d MW_vs_vbar Distribution" />
+    <report name="pseudo3d_MW_D" label="Pseudo3d MW_vs_D Distribution" />
+    <report name="pseudo3d_MW_f" label="Pseudo3d MW_vs_f Distribution" />
     <report name="pseudo3d_vbar_s" label="Pseudo3d vbar_vs_s Distribution" />
+    <report name="pseudo3d_vbar_ff0" label="Pseudo3d vbar_vs_ff0 Distribution" />
     <report name="pseudo3d_vbar_MW" label="Pseudo3d vbar_vs_MW Distribution" />
+    <report name="pseudo3d_vbar_D" label="Pseudo3d vbar_vs_D Di0stribution" />
+    <report name="pseudo3d_vbar_f" label="Pseudo3d vbar_vs_f Di0stribution" />
+    <report name="pseudo3d_D_s" label="Pseudo3d D_vs_s Distribution" />
+    <report name="pseudo3d_D_ff0" label="Pseudo3d D_vs_ff0 Distribution" />
+    <report name="pseudo3d_D_MW" label="Pseudo3d D_vs_MW Distribution" />
+    <report name="pseudo3d_D_vbar" label="Pseudo3d D_vs_vbar Distribution" />
+    <report name="pseudo3d_D_f" label="Pseudo3d D_vs_f Distribution" />
+    <report name="pseudo3d_f_s" label="Pseudo3d f_vs_s Distribution" />
+    <report name="pseudo3d_f_ff0" label="Pseudo3d f_vs_ff0 Distribution" />
+    <report name="pseudo3d_f_MW" label="Pseudo3d f_vs_MW Distribution" />
+    <report name="pseudo3d_f_vbar" label="Pseudo3d f_vs_vbar Distribution" />
+    <report name="pseudo3d_f_D" label="Pseudo3d f_vs_D Distribution" />
+    <report name="raw" label="Raw Scan Data" />
+    <report name="raw" label="Raw Scan Data" />
+    <report name="raw" label="Raw Scan Data" />
     <report name="raw" label="Raw Scan Data" />
     <report name="intensity" label="Intensity Profile Data" />
     <report name="rundetail" label="Run Detail Information" />
