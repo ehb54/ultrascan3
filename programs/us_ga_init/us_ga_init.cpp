@@ -549,16 +549,14 @@ DbgLv(1) << "SAVE novlps" << novlps;
       return;
    }
 
-   if ( ! manbuks  ||
-        ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V ) )
-   {  // MW & auto-assigned buckets:  there can be no output file
+   if ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V )
+   {  // None of X,Y,fixed is vbar:  there can be no output file
       QMessageBox::information( this,
          tr( "No Files Output" ),
-         tr( "No files will be saved, since buckets were not"
-             " manually drawn and/or neither X,Y nor fixed attribute"
+         tr( "No files will be saved, since neither X,Y nor fixed attribute"
              " is vbar.\n\n"
-             "To output a gadistro file, manually pick buckets in"
-             " X,Y,fixed that includes vbar." ) );
+             "To output a gadistro file, insure that one of X,Y,fixed"
+             " is vbar." ) );
       return;
    }
 
@@ -592,6 +590,9 @@ DbgLv(1) << "SAVE ax,y,z" << attr_x << attr_y << attr_z;
 
    soludata->saveGAdata( fname, attr_x, attr_y, attr_z, fixval );
 
+   // Report on files saved
+   QString msg = tr( "Saved:\n    " ) + fndat + "\n";
+
    if ( manbuks )
    {  // if manual buckets, build up and analyze data, then report
 
@@ -608,13 +609,7 @@ DbgLv(1) << "SAVE call reportMC";
       QFile( fnam2 ).remove();
       QFile( fname ).copy( fnam2 );
       pb_view   ->setEnabled( true );
-   }
 
-   // Report on files saved
-   QString msg = tr( "Saved:\n    " ) + fndat + "\n";
-
-   if ( manbuks )
-   {
       msg     += "    " + fnsta + "\n";
       msg     += tr( "in directory:\n    " ) + fdir + tr( "\n\nand\n" );
       msg     += "    " + fnst2 + "\n";
@@ -1648,10 +1643,13 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
       " item and responding/defaulting Yes in the resulting dialog." );
 
    if ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V )
-   {
       hmsg         = hmsg + tr(
       "\n\nNO SAVE ENABLED:  None of X or Y or the fixed-attribute is VBAR." );
-   }
+
+   if ( monte_carlo )
+      hmsg         = hmsg + tr(
+      "\n\nNO AUTOASSIGN ENABLED:  Distribution is from a Monte-Carlo." );
+
    te_pctl_help->setText( hmsg );
 
 DbgLv(1) << "SL: autoassn xmin,xmax,ymin,ymax" << plxmin << plxmax
