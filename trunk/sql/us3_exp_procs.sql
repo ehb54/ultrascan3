@@ -884,7 +884,10 @@ CREATE PROCEDURE new_speedstep ( p_personGUID   CHAR(36),
                                  p_w2tfirst     FLOAT,
                                  p_w2tlast      FLOAT,
                                  p_timefirst    INT(11),
-                                 p_timelast     INT(11) )
+                                 p_timelast     INT(11),
+                                 p_setspeed     INT(11),
+                                 p_avgspeed     FLOAT,
+                                 p_speedsdev    FLOAT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -908,7 +911,10 @@ BEGIN
       w2tfirst     = p_w2tfirst,
       w2tlast      = p_w2tlast,
       timefirst    = p_timefirst,
-      timelast     = p_timelast;
+      timelast     = p_timelast,
+      setspeed     = p_setspeed,
+      avgspeed     = p_avgspeed,
+      speedsdev    = p_speedsdev;
 
   END IF;
 
@@ -934,7 +940,8 @@ BEGIN
     SELECT @OK AS status;
 
     SELECT   speedstepID, scans, durationhrs, durationmins, delayhrs, delaymins,
-             rotorspeed, acceleration, accelerflag, w2tfirst, w2tlast, timefirst, timelast
+             rotorspeed, acceleration, accelerflag, w2tfirst, w2tlast, timefirst, timelast,
+             setspeed, avgspeed, speedsdev
     FROM     speedstep
     WHERE    experimentID = p_experimentID
     ORDER BY speedstepID;

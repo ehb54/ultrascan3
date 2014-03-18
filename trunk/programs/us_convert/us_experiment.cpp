@@ -278,6 +278,9 @@ int US_Experiment::readFromDB( QString runID, US_DB2* db,
 
    // If this is multi-speed, get speed steps for the experiment
    US_SimulationParameters::speedstepsFromDB( db, expID, speedsteps );
+qDebug() << "Exp:rdDB: speedsteps size expID" << speedsteps.size() << expID;
+if(speedsteps.size()>0)
+ qDebug() << "Exp:rdDB:  ss0 speed" << speedsteps[0].rotorspeed;
 
    return US_DB2::OK;
 }

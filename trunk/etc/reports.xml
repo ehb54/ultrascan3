@@ -128,9 +128,6 @@
     <report name="pseudo3d_f_vbar" label="Pseudo3d f_vs_vbar Distribution" />
     <report name="pseudo3d_f_D" label="Pseudo3d f_vs_D Distribution" />
     <report name="raw" label="Raw Scan Data" />
-    <report name="raw" label="Raw Scan Data" />
-    <report name="raw" label="Raw Scan Data" />
-    <report name="raw" label="Raw Scan Data" />
     <report name="intensity" label="Intensity Profile Data" />
     <report name="rundetail" label="Run Detail Information" />
     <report name="dataset_info" label="General Data Set Information" />

@@ -715,7 +715,7 @@ qDebug() << " srd:mSI:  xml name" << xmli.name();
             QString msg    = "";
 qDebug() << " srd:mSI:   rpm_x" << rpm_x;
 
-            if ( rpm_x == rpm )
+            if ( qAbs( rpm_x - rpm ) < 200.0 )
             {
                rpm_s       = attr.value( "set_speed"    ).toString().toDouble();
                rpm_a       = attr.value( "avg_speed"    ).toString().toDouble();
