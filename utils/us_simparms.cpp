@@ -5,6 +5,7 @@
 #include "us_hardware.h"
 #include "us_settings.h"
 #include "us_constants.h"
+#include "us_math2.h"
 
 //!< level-conditioned debug print
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -283,6 +284,7 @@ void US_SimulationParameters::computeSpeedSteps(
    double  rpmnext     = rpm;
    double  step_secs   = 0.0;
    int     lscx        = 0;
+   double  rpm_sum     = 0.0;
 DbgLv(1) << "SP:cSS: scan" << 1 << "rpm time omega2t"
  << rpm << qRound(time1) << (*scans)[ 0 ].omega2t;
 
@@ -314,11 +316,19 @@ DbgLv(1) << "SP:cSS: scan" << (ii+1) << "rpm time omega2t"
          sp.delay_minutes    = ( delay_secs / 60.0 )
                                - ( (double)sp.delay_hours * 60.0 );
          sp.scans            = ii - lscx;
-         sp.rotorspeed       = (int)rpm;
          sp.w2t_first        = w2t1;
          sp.w2t_last         = w2t2;
          sp.time_first       = qRound( time1 );
          sp.time_last        = qRound( time2 );
+         double rpm_avg      = rpm_sum / (double)sp.scans;
+         sp.avg_speed        = rpm_avg;
+         sp.rotorspeed       = qRound( rpm_avg );
+         sp.set_speed        = sp.rotorspeed;
+         double rpm_stdd     = 0.0;
+         for ( int jj = lscx; jj < ii; jj++ )
+            rpm_stdd           += sq( (*scans)[ jj ].rpm - rpm_avg );
+         rpm_stdd            = sqrt( rpm_stdd ) / (double)sp.scans;
+         sp.speed_stddev     = rpm_stdd;
 
          speedsteps << sp;
 DbgLv(1) << "SP:cSS:   speedsteps" << speedsteps.size() << "scans" << sp.scans
@@ -332,7 +342,10 @@ DbgLv(1) << "SP:cSS:      w2t1 w2t2 time1 time2" << sp.w2t_first << sp.w2t_last
          time1               = (*scans)[ ii ].seconds;
          w2t1                = (*scans)[ ii ].omega2t;
          delay_secs          = time1 - time2;
+         rpm_sum             = 0.0;
       }
+
+      rpm_sum            += rpm;
    }
 
    // Set final (only?) speed step
@@ -347,11 +360,19 @@ DbgLv(1) << "SP:cSS:      w2t1 w2t2 time1 time2" << sp.w2t_first << sp.w2t_last
    sp.delay_minutes    = ( delay_secs / 60.0 )
                          - ( (double)sp.delay_hours * 60.0 );
    sp.scans            = scanCount - lscx;
-   sp.rotorspeed       = (int)rpm;
    sp.w2t_first        = w2t1;
    sp.w2t_last         = w2t2;
    sp.time_first       = qRound( time1 );
    sp.time_last        = qRound( time2 );
+   double rpm_avg      = rpm_sum / (double)sp.scans;
+   sp.avg_speed        = rpm_avg;
+   sp.rotorspeed       = qRound( rpm_avg );
+   sp.set_speed        = sp.rotorspeed;
+   double rpm_stdd     = 0.0;
+   for ( int jj = lscx; jj < scanCount; jj++ )
+      rpm_stdd           += sq( (*scans)[ jj ].rpm - rpm_avg );
+   rpm_stdd            = sqrt( rpm_stdd ) / (double)sp.scans;
+   sp.speed_stddev     = rpm_stdd;
 
    speedsteps << sp;
 DbgLv(1) << "SP:cSS:   speedsteps" << speedsteps.size() << "scans" << sp.scans
@@ -708,6 +729,18 @@ void US_SimulationParameters::speedstepToXml( QXmlStreamWriter& xmlo,
       SpeedProfile* spi )
 {
    xmlo.writeStartElement( "speedstep" );
+   xmlo.writeAttribute   ( "rotorspeed",
+      QString::number( spi->rotorspeed       ) );
+   xmlo.writeAttribute   ( "scans",
+      QString::number( spi->scans            ) );
+   xmlo.writeAttribute   ( "timefirst", 
+      QString::number( spi->time_first       ) );
+   xmlo.writeAttribute   ( "timelast",  
+      QString::number( spi->time_last        ) );
+   xmlo.writeAttribute   ( "w2tfirst",  
+      QString::number( spi->w2t_first        ) );
+   xmlo.writeAttribute   ( "w2tlast",   
+      QString::number( spi->w2t_last         ) );
    xmlo.writeAttribute   ( "duration_hrs",
       QString::number( spi->duration_hours   ) );
    xmlo.writeAttribute   ( "duration_mins",
@@ -716,22 +749,10 @@ void US_SimulationParameters::speedstepToXml( QXmlStreamWriter& xmlo,
       QString::number( spi->delay_hours      ) );
    xmlo.writeAttribute   ( "delay_mins",
       QString::number( spi->delay_minutes    ) );
-   xmlo.writeAttribute   ( "rotorspeed",
-      QString::number( spi->rotorspeed       ) );
    xmlo.writeAttribute   ( "acceleration",
       QString::number( spi->acceleration     ) );
    xmlo.writeAttribute   ( "accelerflag",
       ( spi->acceleration_flag ? "1" : "0"   ) );
-   xmlo.writeAttribute   ( "scans",
-      QString::number( spi->scans            ) );
-   xmlo.writeAttribute   ( "w2tfirst",  
-      QString::number( spi->w2t_first        ) );
-   xmlo.writeAttribute   ( "w2tlast",   
-      QString::number( spi->w2t_last         ) );
-   xmlo.writeAttribute   ( "timefirst", 
-      QString::number( spi->time_first       ) );
-   xmlo.writeAttribute   ( "timelast",  
-      QString::number( spi->time_last        ) );
 
    // Possible MWL enhancements
    if ( spi->set_speed > 0 )
@@ -780,6 +801,9 @@ int dbg_level=US_Settings::us_debug();
       spo.w2t_last          = dbP->value( 10 ).toDouble();
       spo.time_first        = dbP->value( 11 ).toInt();
       spo.time_last         = dbP->value( 12 ).toInt();;
+      spo.set_speed         = dbP->value( 13 ).toInt();;
+      spo.avg_speed         = dbP->value( 14 ).toDouble();;
+      spo.speed_stddev      = dbP->value( 15 ).toDouble();;
       sps << spo;
       nspeeds++;
 DbgLv(1) << "SP:ssFromDB: speedstep" << nspeeds << "id" << sspeedID;
@@ -813,7 +837,10 @@ DbgLv(1) << "SP:ssToDB: dbP expid spi" << dbP << expID << spi;
          << QString::number( spi->w2t_first )
          << QString::number( spi->w2t_last )
          << QString::number( spi->time_first )
-         << QString::number( spi->time_last );
+         << QString::number( spi->time_last )
+         << QString::number( spi->set_speed )
+         << QString::number( spi->avg_speed )
+         << QString::number( spi->speed_stddev );
    dbP->statusQuery( query );
    sstepID    = dbP->lastInsertID();
 DbgLv(1) << "SP:ssToDB: speedstep" << sstepID << dbP->lastError();
@@ -863,6 +890,9 @@ void US_SimulationParameters::debug( void )
       qDebug() << "   Omega2t Last  " << speed_step[ i ].w2t_last;
       qDebug() << "   Time First    " << speed_step[ i ].time_first;
       qDebug() << "   Time Last     " << speed_step[ i ].time_last;
+      qDebug() << "   Set Speed     " << speed_step[ i ].set_speed;
+      qDebug() << "   Average Speed " << speed_step[ i ].avg_speed;
+      qDebug() << "   Speed StdDev  " << speed_step[ i ].speed_stddev;
    }
 }
 

@@ -988,6 +988,7 @@ DbgLv(1) << "MwDa:uSS: nsteps" << nsteps << speedsteps.size() << s_rpms.size();
       speedsteps[ jj ].set_speed     = s_rpms[ jj ];
       speedsteps[ jj ].avg_speed     = a_rpms[ jj ];
       speedsteps[ jj ].speed_stddev  = d_rpms[ jj ];
+      speedsteps[ jj ].rotorspeed    = qRound( a_rpms[ jj ] );
 DbgLv(1) << "MwDa:uSS:   jj" << "set_speed avg_speed speed_stddev"
  << s_rpms[ jj ] << a_rpms[ jj ] << d_rpms[ jj ];
    }

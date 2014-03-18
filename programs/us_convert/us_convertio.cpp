@@ -243,6 +243,8 @@ QString US_ConvertIO::readDBExperiment( QString runID, QString dir,
    QList< US_Convert::TripleInfo > triples;  // a local copy
 qDebug() << "rDBE: call ExpData.readFromDB";
    int readStatus = ExpData.readFromDB( runID, db, speedsteps );
+qDebug() << "rDBE:  ss size ss0.sp" << speedsteps.size()
+ << speedsteps[0].rotorspeed;
 
    if ( readStatus == US_DB2::NO_EXPERIMENT )
       return( "The current run ID is not found in the database." );
@@ -292,9 +294,13 @@ qDebug() << "rDBE: call ExpData.saveRIDisk";
 
    // Now try to write the xml file
 qDebug() << "rDBE: call ExpData.saveToDisk";
+#if 0
    QVector< SP_SPEEDPROFILE > sp_dmy;
    int xmlStatus = ExpData.saveToDisk( triples, ExpData.opticalSystem,
                                        runID, dir, sp_dmy );
+#endif
+   int xmlStatus = ExpData.saveToDisk( triples, ExpData.opticalSystem,
+                                       runID, dir, speedsteps );
 
    if ( xmlStatus == US_Convert::CANTOPEN )
    {
