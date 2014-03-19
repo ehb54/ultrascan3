@@ -47,7 +47,12 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
       QPushButton *                           pb_join_results;
       QPushButton *                           pb_save_results;
       QLineEdit *                             le_last_file;
+      QPushButton *                           pb_apply_qtest;
+      QPushButton *                           pb_reset_qtest;
       QCheckBox             *                 cb_plus_lm;
+      QCheckBox             *                 cb_errorlines;
+      QCheckBox             *                 cb_manual_rejection;
+      QCheckBox             *                 cb_loose_qtest;
 
       // ------ editor section 
 
@@ -62,7 +67,6 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
 #ifdef QT4
       QwtPlotGrid           *                 grid_data;
 #endif
-      QCheckBox             *                 cb_errorlines;
       Q3HBoxLayout           *                 hbl_points;
       mQLabel               *                 lbl_points;
       vector < QCheckBox * >                  cb_points;
@@ -147,6 +151,10 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
 
       QString                                 save_last_file;
 
+      vector < double >                       Qc95;
+      vector < double >                       Qc80;
+      vector < double >                       Qc70;
+
    private slots:
 
       // ------ data section 
@@ -154,6 +162,11 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
       void                                    load();
       void                                    join_results();
       void                                    save_results();
+
+      void                                    apply_qtest();
+      void                                    reset_qtest();
+      void                                    set_loose_qtest();
+      void                                    set_manual_rejection();
 
       void                                    hide_input();
 

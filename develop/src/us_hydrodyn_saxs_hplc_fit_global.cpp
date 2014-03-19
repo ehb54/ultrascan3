@@ -636,7 +636,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
 
-   // void * us_hydrodyn = hplc_win->us_hydrodyn;
+   void * us_hydrodyn = hplc_win->us_hydrodyn;
 
    if ( !U_EXPT )
    {

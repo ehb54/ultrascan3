@@ -72,6 +72,45 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
       << "Tau (m) (ns)"
       ;
 
+   Qc95.resize( 10 );
+   Qc95[ 0  ] = 0e0;
+   Qc95[ 1  ] = 0e0;
+   Qc95[ 2  ] = 0e0;
+   Qc95[ 3  ] = 0.941e0;
+   Qc95[ 4  ] = 0.765e0;
+   Qc95[ 5  ] = 0.642e0;
+   Qc95[ 6  ] = 0.56e0;
+   Qc95[ 7  ] = 0.507e0;
+   Qc95[ 8  ] = 0.47e0;
+   Qc95[ 9  ] = 0.44e0;
+   Qc95[ 10 ] = 0.41e0;
+
+   Qc80.resize( 10 );
+   Qc80[ 0  ] = 0e0;
+   Qc80[ 1  ] = 0e0;
+   Qc80[ 2  ] = 0e0;
+   Qc80[ 3  ] = 0.781e0;
+   Qc80[ 4  ] = 0.560e0;
+   Qc80[ 5  ] = 0.451e0;
+   Qc80[ 6  ] = 0.386e0;
+   Qc80[ 7  ] = 0.344e0;
+   Qc80[ 8  ] = 0.385e0;
+   Qc80[ 9  ] = 0.352e0;
+   Qc80[ 10 ] = 0.325e1;
+
+   Qc70.resize( 10 );
+   Qc70[ 0  ] = 0e0;
+   Qc70[ 1  ] = 0e0;
+   Qc70[ 2  ] = 0e0;
+   Qc70[ 3  ] = 0.684e0;
+   Qc70[ 4  ] = 0.471e0;
+   Qc70[ 5  ] = 0.373e0;
+   Qc70[ 6  ] = 0.318e0;
+   Qc70[ 7  ] = 0.281e0;
+   Qc70[ 8  ] = 0.318e0;
+   Qc70[ 9  ] = 0.288e0;
+   Qc70[ 10 ] = 0.265e1;
+
    setupGUI();
 
    global_Xpos += 30;
@@ -173,7 +212,6 @@ void US_Hydrodyn_Best::setupGUI()
    connect( cb_plus_lm, SIGNAL( clicked() ), SLOT( data_selected() ) );
    //   input_widgets.push_back( cb_plus_lm );
 
-
    cb_errorlines = new QCheckBox( this );
    cb_errorlines->setPalette( PALET_NORMAL );
    AUTFBACK( cb_errorlines );
@@ -184,6 +222,44 @@ void US_Hydrodyn_Best::setupGUI()
    cb_errorlines->show();
    connect( cb_errorlines, SIGNAL( clicked() ), SLOT( data_selected() ) );
    input_widgets.push_back( cb_errorlines );
+
+   cb_manual_rejection = new QCheckBox( this );
+   cb_manual_rejection->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_manual_rejection );
+   cb_manual_rejection->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   cb_manual_rejection->setText( tr( "Allow manual point rejection" ) );
+   cb_manual_rejection->setChecked( false );
+   cb_manual_rejection->setEnabled( true );
+   cb_manual_rejection->show();
+   connect( cb_manual_rejection, SIGNAL( clicked() ), SLOT( set_manual_rejection() ) );
+   input_widgets.push_back( cb_manual_rejection );
+
+   pb_apply_qtest =  new QPushButton ( tr( "Apply Q test criterion" ), this );
+   pb_apply_qtest -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
+   pb_apply_qtest -> setMinimumHeight( minHeight1 );
+   pb_apply_qtest -> setPalette      ( PALET_PUSHB );
+   pb_apply_qtest -> setEnabled      ( false );
+   connect( pb_apply_qtest, SIGNAL( clicked() ), SLOT( apply_qtest() ) );
+   input_widgets.push_back( pb_apply_qtest );
+
+   pb_reset_qtest =  new QPushButton ( tr( "Reset" ), this );
+   pb_reset_qtest -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
+   pb_reset_qtest -> setMinimumHeight( minHeight1 );
+   pb_reset_qtest -> setPalette      ( PALET_PUSHB );
+   pb_reset_qtest -> setEnabled      ( false );
+   connect( pb_reset_qtest, SIGNAL( clicked() ), SLOT( reset_qtest() ) );
+   input_widgets.push_back( pb_reset_qtest );
+
+   cb_loose_qtest = new QCheckBox( this );
+   cb_loose_qtest->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_loose_qtest );
+   cb_loose_qtest->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   cb_loose_qtest->setText( tr( "80% Q test criterion" ) );
+   cb_loose_qtest->setChecked( false );
+   cb_loose_qtest->setEnabled( true );
+   cb_loose_qtest->show();
+   connect( cb_loose_qtest, SIGNAL( clicked() ), SLOT( set_loose_qtest() ) );
+   input_widgets.push_back( cb_loose_qtest );
 
    // ------ editor section
 
@@ -344,6 +420,14 @@ void US_Hydrodyn_Best::setupGUI()
       bl->addWidget( le_last_file );
       bl->addWidget( cb_plus_lm );
       bl->addWidget( cb_errorlines );
+      bl->addWidget( cb_manual_rejection );
+      {
+         Q3HBoxLayout *hbl = new Q3HBoxLayout( 0 );
+         hbl->addWidget( pb_apply_qtest );
+         hbl->addWidget( pb_reset_qtest );
+         hbl->addWidget( cb_loose_qtest );
+         bl->addLayout( hbl );
+      }
       bl->addWidget( lbl_editor );
 
 #if !defined(QT4) || !defined(Q_WS_MAC)
@@ -689,7 +773,7 @@ void US_Hydrodyn_Best::load()
       AUTFBACK( cb );
       cb->setText( QString( "%1" ).arg( i + 1 ) );
       cb->setChecked( true );
-      cb->setEnabled( true );
+      cb->setEnabled( cb_manual_rejection->isChecked() );
       cb->show();
       connect( cb, SIGNAL( clicked() ), SLOT( cb_changed() ) );
       cb_points.push_back( cb );
@@ -702,7 +786,7 @@ void US_Hydrodyn_Best::load()
       AUTFBACK( cb );
       cb->setText( QString( "%1" ).arg( i + 1 ) );
       cb->setChecked( false );
-      cb->setEnabled( true );
+      cb->setEnabled( cb_manual_rejection->isChecked() );
       // cb->show();
       cb->hide();
       connect( cb, SIGNAL( clicked() ), SLOT( cb_changed_ln() ) );
@@ -716,7 +800,7 @@ void US_Hydrodyn_Best::load()
       AUTFBACK( cb );
       cb->setText( QString( "%1" ).arg( i + 1 ) );
       cb->setChecked( false );
-      cb->setEnabled( true );
+      cb->setEnabled( cb_manual_rejection->isChecked() );
       // cb->show();
       cb->hide();
       connect( cb, SIGNAL( clicked() ), SLOT( cb_changed_exp() ) );
@@ -739,6 +823,8 @@ void US_Hydrodyn_Best::load()
    cb_changed_exp( true  );
    pb_load->setEnabled( true );
    pb_save_results->setEnabled( true );
+   pb_apply_qtest->setEnabled( true );
+   pb_reset_qtest->setEnabled( true );
 }
 
 void US_Hydrodyn_Best::cb_changed( bool do_data )
@@ -1891,13 +1977,21 @@ void US_Hydrodyn_Best::toggle_points()
       }
    }
 
+   if ( !cb_manual_rejection->isChecked() )
+   {
+      any_checked = false;
+   }
+
    for ( int i = 0; i < (int) cb_points.size(); ++i )
    {
       disconnect( cb_points[ i ], SIGNAL( clicked() ), 0, 0 );
       cb_points[ i ]->setChecked( !any_checked );
       connect( cb_points[ i ], SIGNAL( clicked() ), SLOT( cb_changed() ) );
    }
-   cb_changed();
+   if ( cb_points.size() )
+   {
+      cb_changed();
+   }
    // data_selected();
 }
 
@@ -1911,6 +2005,11 @@ void US_Hydrodyn_Best::toggle_points_ln()
          any_checked = true;
          break;
       }
+   }
+
+   if ( !cb_manual_rejection->isChecked() )
+   {
+      any_checked = false;
    }
 
    for ( int i = 0; i < (int) cb_points_ln.size(); ++i )
@@ -1936,6 +2035,11 @@ void US_Hydrodyn_Best::toggle_points_exp()
          any_checked = true;
          break;
       }
+   }
+
+   if ( !cb_manual_rejection->isChecked() )
+   {
+      any_checked = false;
    }
 
    for ( int i = 0; i < (int) cb_points_exp.size(); ++i )
@@ -2147,4 +2251,198 @@ void US_Hydrodyn_Best::join_results()
    f_out.close();
    editor_msg( "blue", 
                QString( tr( "Join results created %1" ) ).arg( f_out.name() ) );
+}
+
+class uhb_sortable_double {
+public:
+   double       x;
+   int          index;
+   bool operator < (const uhb_sortable_double& objIn) const
+   {
+      return x < objIn.x;
+   }
+};
+
+void US_Hydrodyn_Best::reset_qtest()
+{
+   toggle_points();
+}
+
+void US_Hydrodyn_Best::apply_qtest()
+{
+   // only applies to linear
+   if ( !lb_data->count() )
+   {
+      return;
+   }
+   QString text = lb_data->selectedItem()->text();
+
+   vector < double > use_one_over_triangles;
+   vector < double > use_parameter_data;
+   vector < double > skip_one_over_triangles;
+   vector < double > skip_parameter_data;
+   vector < int >    point_ref;
+   set < int > selected_points;
+
+   for ( int i = (int) one_over_triangles.size() - 1; i >= 0; --i )
+   {
+      if ( cb_points[ points - i - 1 ]->isChecked() )
+      {
+         use_one_over_triangles .push_back( one_over_triangles[ i ] );
+         use_parameter_data     .push_back( parameter_data[ text ][ i ] );
+         selected_points        .insert( i );
+         point_ref              .push_back( points - i - 1 );
+      } else {
+         skip_one_over_triangles.push_back( one_over_triangles[ i ] );
+         skip_parameter_data    .push_back( parameter_data[ text ][ i ] );
+      }
+   }
+
+   if ( use_one_over_triangles.size() < 3 )
+   {
+      editor_msg( "red", tr( "To few points available for Q test" ) );
+      return;
+   }
+
+   vector < double > Qc = cb_loose_qtest->isChecked() ? Qc80 : Qc95;
+
+   bool use_Qc = use_one_over_triangles.size() <= Qc.size();
+
+   list < uhb_sortable_double > deltas;
+
+   uhb_sortable_double delta;
+   for ( int i = 0; i < (int) use_one_over_triangles.size(); ++i )
+   {
+      delta.x     = use_parameter_data[ i ] - ( last_a + use_one_over_triangles[ i ] * last_b );
+      delta.index = point_ref[ i ];
+      // qDebug( QString( "compute use_parameter_data[ i ] %1\n"
+      //                  "        use_one_over_triangles[ i ] %2" )
+      //         .arg( use_parameter_data[ i ] )
+      //         .arg( use_one_over_triangles[ i ] )
+      //         );
+      // qDebug( QString( "compute delta %1 index %2" ).arg( delta.x ).arg( delta.index ) );
+      deltas.push_back( delta );
+   }
+
+   deltas.sort();
+   if ( fabs( deltas.back().x ) < fabs( deltas.front().x ) )
+   {
+      deltas.reverse();
+   }
+
+   vector < uhb_sortable_double > vdeltas;
+
+   for ( list < uhb_sortable_double >::iterator it = deltas.begin();
+         it != deltas.end();
+         ++it )
+   {
+      vdeltas.push_back( *it );
+   }
+
+   if ( vdeltas.back().x == vdeltas[ 0 ].x )
+   {
+      editor_msg( "blue", tr( "Q test: all deltas identical, no points can be rejected" ) );
+      return;
+   }
+
+   int vdelta_end = (int) vdeltas.size() - 1;
+
+   double Q = 
+      ( vdeltas[ vdelta_end ].x - vdeltas[ vdelta_end - 1 ].x ) /
+      ( vdeltas[ vdelta_end ].x - vdeltas[ 0 ].x );
+
+   QString msg = QString( tr( "Q test: Q = %1 " ) ).arg( Q );
+      
+   double qc_mult = cb_loose_qtest->isChecked() ? .75e0 : 1e0;
+
+   if ( use_Qc )
+   {
+      msg += QString( "Qc = %1 " ).arg( Qc[ vdeltas.size() ] );
+   }
+
+   if ( ( use_Qc  &&  Qc[ vdeltas.size() ] < Q ) ||
+        ( !use_Qc &&  fabs( vdeltas.back().x ) >= 2.6 * qc_mult ) )
+   {
+      msg += QString( tr( "Removing point %1" ) ).arg( vdeltas.back().index + 1 );
+      if ( cb_loose_qtest->isChecked() )
+      {
+         editor_msg( "dark red", tr( "WARNING: 80% Q test criterion parameters used" ) );
+      }
+      editor_msg( "blue", msg);
+      cb_points[ vdeltas.back().index ]->setChecked( false );
+      cb_changed();
+      cb_loose_qtest->setChecked( false );
+      return;
+   }
+
+   msg += tr( "No points removed." );
+
+   editor_msg( "blue", msg );
+   cb_loose_qtest->setChecked( false );
+}
+
+void US_Hydrodyn_Best::set_loose_qtest()
+{
+   if ( cb_loose_qtest->isChecked() )
+   {
+      switch ( QMessageBox::warning( this
+                                     , caption() + tr( " : Warning" )
+                                     , tr( "80% Q test is not recommended.\n"
+                                           "Do you still want to enable the 80% Q test criteria?" )
+                                     , QMessageBox::Yes
+                                     , QMessageBox::No
+                                     ) )
+      {
+      case QMessageBox::Yes :
+         break;
+      case QMessageBox::No :
+         cb_loose_qtest->setChecked( false );
+         break;
+      default :
+         break;
+      }
+   }
+}
+
+void US_Hydrodyn_Best::set_manual_rejection()
+{
+   if ( cb_manual_rejection->isChecked() )
+   {
+      switch ( QMessageBox::warning( this
+                                     , caption() + tr( " : Warning" )
+                                     , tr( "Manual outlier rejection is not recommended.\n"
+                                           "'Apply Q test criterion' is preferred.\n"
+                                           "Do you still want to enable manual rejection?" )
+                                     , QMessageBox::Yes
+                                     , QMessageBox::No
+                                     ) )
+      {
+      case QMessageBox::Yes :
+         break;
+      case QMessageBox::No :
+         cb_manual_rejection->setChecked( false );
+         break;
+      default :
+         break;
+      }
+   }
+   for ( int i = 0; i < (int) cb_points.size(); ++i )
+   {
+      cb_points[ i ]->setEnabled( cb_manual_rejection->isChecked() );
+   }
+   // for ( int i = 0; i < (int) cb_points_ln.size(); ++i )
+   // {
+   //    cb_points_ln[ i ]->setEnabled( cb_manual_rejection->isChecked() );
+   // }
+   // for ( int i = 0; i < (int) cb_points_exp.size(); ++i )
+   // {
+   //    cb_points_exp[ i ]->setEnabled( cb_manual_rejection->isChecked() );
+   // }
+
+   if ( !cb_manual_rejection->isChecked() )
+   {
+      toggle_points();
+      // toggle_points_ln();
+      // toggle_points_exp();
+   }
 }

@@ -1128,7 +1128,7 @@ void US_Hydrodyn::set_expert( bool expert )
 {
    if ( expert )
    {
-      if ( U_EXPT )
+      if ( A_EXPT && advanced_config.expert_mode )
       {
          pb_best->show();
       }
