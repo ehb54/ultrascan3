@@ -72,7 +72,7 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
       << "Tau (m) (ns)"
       ;
 
-   Qc95.resize( 10 );
+   Qc95.resize( 11 );
    Qc95[ 0  ] = 0e0;
    Qc95[ 1  ] = 0e0;
    Qc95[ 2  ] = 0e0;
@@ -85,7 +85,7 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
    Qc95[ 9  ] = 0.44e0;
    Qc95[ 10 ] = 0.41e0;
 
-   Qc80.resize( 10 );
+   Qc80.resize( 11 );
    Qc80[ 0  ] = 0e0;
    Qc80[ 1  ] = 0e0;
    Qc80[ 2  ] = 0e0;
@@ -98,7 +98,7 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
    Qc80[ 9  ] = 0.352e0;
    Qc80[ 10 ] = 0.325e1;
 
-   Qc70.resize( 10 );
+   Qc70.resize( 11 );
    Qc70[ 0  ] = 0e0;
    Qc70[ 1  ] = 0e0;
    Qc70[ 2  ] = 0e0;
