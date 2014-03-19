@@ -1601,6 +1601,37 @@ CREATE  TABLE IF NOT EXISTS reportDocument (
     ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
 
+-- -----------------------------------------------------
+-- Table speedstep
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS speedstep ;
+
+CREATE  TABLE IF NOT EXISTS speedstep (
+  speedstepID int(11) NOT NULL AUTO_INCREMENT ,
+  experimentID int(11) NOT NULL ,
+  scans int(11) NOT NULL ,
+  durationhrs int(11) NOT NULL ,
+  durationmins double NOT NULL ,
+  delayhrs int(11) NOT NULL ,
+  delaymins double NOT NULL ,
+  rotorspeed int(11) NOT NULL ,
+  acceleration int(11) NOT NULL ,
+  accelerflag tinyint(1) DEFAULT 1 ,
+  w2tfirst float NOT NULL ,
+  w2tlast float NOT NULL ,
+  timefirst int(11) NOT NULL ,
+  timelast int(11) NOT NULL ,
+  setspeed int(11) NOT NULL ,
+  avgspeed float NOT NULL ,
+  speedsdev float NOT NULL ,
+  PRIMARY KEY (speedstepID) ,
+  CONSTRAINT fk_speedstep_experimentID
+    FOREIGN KEY (experimentID)
+    REFERENCES experiment (experimentID)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
 -- Load some non-changing hardware data
 SOURCE us3_hardware_data.sql
 SOURCE us3_buffer_components.sql

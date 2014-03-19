@@ -1088,11 +1088,19 @@ BEGIN
   IF ( verify_editData_permission( p_personGUID, p_password, p_editedDataID ) = @OK ) THEN
 
     -- Make sure records match if they have related tables or not
-    DELETE      editedData, model, noise, modelPerson
+    DELETE      reportDocument, documentLink
+    FROM        reportDocument
+    LEFT JOIN   documentLink ON ( documentLink.reportDocumentID = reportDocument.reportDocumentID )
+    WHERE       reportDocument.editedDataID = p_editedDataID;
+
+    DELETE      model, noise, modelPerson
     FROM        editedData
     LEFT JOIN   model       ON ( model.editedDataID   = editedData.editedDataID )
     LEFT JOIN   noise       ON ( noise.modelID        = model.modelID )
     LEFT JOIN   modelPerson ON ( modelPerson.modelID  = model.modelID )
+    WHERE       editedData.editedDataID = p_editedDataID;
+
+    DELETE      FROM editedData
     WHERE       editedData.editedDataID = p_editedDataID;
 
   END IF;
