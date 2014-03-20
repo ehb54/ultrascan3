@@ -120,9 +120,23 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrmaxtriangles ->setMinimumWidth   ( 150 );
    connect( le_bestmsrmaxtriangles, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrmaxtriangles( const QString & ) ) );
 
-   lbl_bestrcoalnmin = new QLabel      ( tr( "COALESCE: minimum number of triangles (Typically 2000 for small and 3000 for large protein)" ), this );
+   cb_bestrcoalautominmax = new QCheckBox    ( tr( "COALESCE: automatically determine the minimum and maximum number of triangles based upon MW\n(checking overrides next 2 settings)" ), this );
+   cb_bestrcoalautominmax ->setMinimumHeight ( minHeight1 *  2 );
+   cb_bestrcoalautominmax ->setPalette       ( PALET_NORMAL );
+   AUTFBACK( cb_bestrcoalautominmax );
+   cb_bestrcoalautominmax ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   cb_bestrcoalautominmax ->setMinimumWidth  ( QFontMetrics( cb_bestrcoalautominmax->font() ).maxWidth() * 41 );
+
+   if ( !parameters->count( "bestrcoalautominmax" ) )
+   {
+      ( *parameters )[ "bestrcoalautominmax" ] = "true";
+   }
+   cb_bestrcoalautominmax ->setChecked        ( parameters->count( "bestrcoalautominmax" ) && ( *parameters )[ "bestrcoalautominmax" ] == "true" ? true : false );
+   connect( cb_bestrcoalautominmax, SIGNAL( clicked() ), SLOT( set_bestrcoalautominmax() ) );
+
+   lbl_bestrcoalnmin = new QLabel      ( tr( "COALESCE: minimum number of triangles ( heurstic 18 * Sqrt(MW[Da]) )\n(Not active if 'automatically determine ...' checked above)" ), this );
    lbl_bestrcoalnmin ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_bestrcoalnmin ->setMinimumHeight( minHeight1 );
+   lbl_bestrcoalnmin ->setMinimumHeight( minHeight1 *  2 );
    lbl_bestrcoalnmin ->setPalette      ( PALET_LABEL );
    AUTFBACK( lbl_bestrcoalnmin );
    lbl_bestrcoalnmin ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
@@ -134,13 +148,13 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestrcoalnmin ->setPalette        ( PALET_NORMAL );
    AUTFBACK( le_bestrcoalnmin );
    le_bestrcoalnmin ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_bestrcoalnmin ->setMinimumHeight  ( minHeight1 );
+   le_bestrcoalnmin ->setMinimumHeight  ( minHeight1 *  2 );
    le_bestrcoalnmin ->setMinimumWidth   ( 150 );
    connect( le_bestrcoalnmin, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestrcoalnmin( const QString & ) ) );
 
-   lbl_bestrcoalnmax = new QLabel      ( tr( "COALESCE: maximum number of triangles (Typically 4000 for small and 9000 for large protein)" ), this );
+   lbl_bestrcoalnmax = new QLabel      ( tr( "COALESCE: maximum number of triangles ( heurstic 30 * Sqrt(MW[Da]) )\n(Not active if 'automatically determine ...' checked above)" ), this );
    lbl_bestrcoalnmax ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_bestrcoalnmax ->setMinimumHeight( minHeight1 );
+   lbl_bestrcoalnmax ->setMinimumHeight( minHeight1 *  2 );
    lbl_bestrcoalnmax ->setPalette      ( PALET_LABEL );
    AUTFBACK( lbl_bestrcoalnmax );
    lbl_bestrcoalnmax ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
@@ -152,7 +166,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestrcoalnmax ->setPalette        ( PALET_NORMAL );
    AUTFBACK( le_bestrcoalnmax );
    le_bestrcoalnmax ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_bestrcoalnmax ->setMinimumHeight  ( minHeight1 );
+   le_bestrcoalnmax ->setMinimumHeight  ( minHeight1 *  2 );
    le_bestrcoalnmax ->setMinimumWidth   ( 150 );
    connect( le_bestrcoalnmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestrcoalnmax( const QString & ) ) );
 
@@ -191,24 +205,6 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestbestmw ->setMinimumHeight  ( minHeight1 );
    le_bestbestmw ->setMinimumWidth   ( 150 );
    connect( le_bestbestmw, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestbestmw( const QString & ) ) );
-
-   lbl_bestbestwatr = new QLabel      ( tr( "BEST: water 'WAT' radius (default:blank = use value from residue table)" ), this );
-   lbl_bestbestwatr ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_bestbestwatr ->setMinimumHeight( minHeight1 );
-   lbl_bestbestwatr ->setPalette      ( PALET_LABEL );
-   AUTFBACK( lbl_bestbestwatr );
-   lbl_bestbestwatr ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   lbl_bestbestwatr ->setMinimumWidth ( QFontMetrics( lbl_bestbestwatr->font() ).maxWidth() * 41 );
-
-   le_bestbestwatr = new QLineEdit     ( this, "bestbestwatr Line Edit" );
-   le_bestbestwatr ->setText           ( parameters->count( "bestbestwatr" ) ? ( *parameters )[ "bestbestwatr" ] : "" );
-   le_bestbestwatr ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_bestbestwatr ->setPalette        ( PALET_NORMAL );
-   AUTFBACK( le_bestbestwatr );
-   le_bestbestwatr ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_bestbestwatr ->setMinimumHeight  ( minHeight1 );
-   le_bestbestwatr ->setMinimumWidth   ( 150 );
-   connect( le_bestbestwatr, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestbestwatr( const QString & ) ) );
 
    lbl_bestexpand = new QLabel      ( tr( "BEST: expand radii by this multiplier (default:blank=1, no expansion)" ), this );
    lbl_bestexpand ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
@@ -271,39 +267,6 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrcoalescer ->setMinimumHeight  ( minHeight1 );
    le_bestmsrcoalescer ->setMinimumWidth   ( 150 );
    connect( le_bestmsrcoalescer, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrcoalescer( const QString & ) ) );
-
-   cb_bestbestv = new QCheckBox    ( tr( "BEST: Compute the Viscosity Factor {in the Centroid} (default:unchecked)" ), this );
-   cb_bestbestv ->setMinimumHeight ( minHeight1 );
-   cb_bestbestv ->setPalette       ( PALET_NORMAL );
-   AUTFBACK( cb_bestbestv );
-   cb_bestbestv ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_bestbestv ->setMinimumWidth  ( QFontMetrics( cb_bestbestv->font() ).maxWidth() * 41 );
-
-   widgets_opt_label.push_back( cb_bestbestv );
-   cb_bestbestv ->setChecked        ( parameters->count( "bestbestv" ) && ( *parameters )[ "bestbestv" ] == "true" ? true : false );
-   connect( cb_bestbestv, SIGNAL( clicked() ), SLOT( set_bestbestv() ) );
-
-   cb_bestbestp = new QCheckBox    ( tr( "BEST: perform a pre-averaged hydrodynamic interaction calculation (default:unchecked)" ), this );
-   cb_bestbestp ->setMinimumHeight ( minHeight1 );
-   cb_bestbestp ->setPalette       ( PALET_NORMAL );
-   AUTFBACK( cb_bestbestp );
-   cb_bestbestp ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_bestbestp ->setMinimumWidth  ( QFontMetrics( cb_bestbestp->font() ).maxWidth() * 41 );
-
-   widgets_opt_label.push_back( cb_bestbestp );
-   cb_bestbestp ->setChecked        ( parameters->count( "bestbestp" ) && ( *parameters )[ "bestbestp" ] == "true" ? true : false );
-   connect( cb_bestbestp, SIGNAL( clicked() ), SLOT( set_bestbestp() ) );
-
-   cb_bestbestna = new QCheckBox    ( tr( "BEST: omit the area correction (default:unchecked) {this is actually a regularization, so it is not advised to check this!}" ), this );
-   cb_bestbestna ->setMinimumHeight ( minHeight1 );
-   cb_bestbestna ->setPalette       ( PALET_NORMAL );
-   AUTFBACK( cb_bestbestna );
-   cb_bestbestna ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
-   cb_bestbestna ->setMinimumWidth  ( QFontMetrics( cb_bestbestna->font() ).maxWidth() * 41 );
-
-   widgets_opt_label.push_back( cb_bestbestna );
-   cb_bestbestna ->setChecked        ( parameters->count( "bestbestna" ) && ( *parameters )[ "bestbestna" ] == "true" ? true : false );
-   connect( cb_bestbestna, SIGNAL( clicked() ), SLOT( set_bestbestna() ) );
 
    lbl_bestmsrradiifile = new QLabel      ( tr( "MSROLL: manual radii file" ), this );
    lbl_bestmsrradiifile ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
@@ -396,6 +359,11 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    background->addLayout( hbl );
    hbl = new Q3HBoxLayout( 0 );
    hbl->addSpacing( 4 );
+   hbl->addWidget( cb_bestrcoalautominmax );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new Q3HBoxLayout( 0 );
+   hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestrcoalnmin );
    hbl->addWidget( le_bestrcoalnmin );
    hbl->addSpacing( 4 );
@@ -420,12 +388,6 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    background->addLayout( hbl );
    hbl = new Q3HBoxLayout( 0 );
    hbl->addSpacing( 4 );
-   hbl->addWidget( lbl_bestbestwatr );
-   hbl->addWidget( le_bestbestwatr );
-   hbl->addSpacing( 4 );
-   background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
-   hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestexpand );
    hbl->addWidget( le_bestexpand );
    hbl->addSpacing( 4 );
@@ -445,21 +407,6 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestmsrcoalescer );
    hbl->addWidget( le_bestmsrcoalescer );
-   hbl->addSpacing( 4 );
-   background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
-   hbl->addSpacing( 4 );
-   hbl->addWidget( cb_bestbestv );
-   hbl->addSpacing( 4 );
-   background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
-   hbl->addSpacing( 4 );
-   hbl->addWidget( cb_bestbestp );
-   hbl->addSpacing( 4 );
-   background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
-   hbl->addSpacing( 4 );
-   hbl->addWidget( cb_bestbestna );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new Q3HBoxLayout( 0 );
@@ -546,11 +493,6 @@ void US_Hydrodyn_Cluster_Best::closeEvent( QCloseEvent *e )
    {
       parameters->erase( "bestbestmw" );
    }
-   if ( parameters->count( "bestbestwatr" ) &&
-        (*parameters)[ "bestbestwatr" ].isEmpty() )
-   {
-      parameters->erase( "bestbestwatr" );
-   }
    if ( parameters->count( "bestexpand" ) &&
         (*parameters)[ "bestexpand" ].isEmpty() )
    {
@@ -560,24 +502,6 @@ void US_Hydrodyn_Cluster_Best::closeEvent( QCloseEvent *e )
         (*parameters)[ "bestmsrcoalescer" ].isEmpty() )
    {
       parameters->erase( "bestmsrcoalescer" );
-   }
-   if ( parameters->count( "bestbestv" ) &&
-        ( (*parameters)[ "bestbestv" ].isEmpty() ||
-          (*parameters)[ "bestbestv" ] == "false" ) )
-   {
-      parameters->erase( "bestbestv" );
-   }
-   if ( parameters->count( "bestbestp" ) &&
-        ( (*parameters)[ "bestbestp" ].isEmpty() ||
-          (*parameters)[ "bestbestp" ] == "false" ) )
-   {
-      parameters->erase( "bestbestp" );
-   }
-   if ( parameters->count( "bestbestna" ) &&
-        ( (*parameters)[ "bestbestna" ].isEmpty() ||
-          (*parameters)[ "bestbestna" ] == "false" ) )
-   {
-      parameters->erase( "bestbestna" );
    }
    if ( parameters->count( "bestmsrradiifile" ) &&
         (*parameters)[ "bestmsrradiifile" ].isEmpty() )
@@ -610,6 +534,11 @@ void US_Hydrodyn_Cluster_Best::update_bestmsrmaxtriangles( const QString & )
    ( *parameters )[ "bestmsrmaxtriangles" ] = le_bestmsrmaxtriangles->text();
 }
 
+void US_Hydrodyn_Cluster_Best::set_bestrcoalautominmax()
+{
+   ( *parameters )[ "bestrcoalautominmax" ] = cb_bestrcoalautominmax->isChecked() ? "true" : "false";
+}
+
 void US_Hydrodyn_Cluster_Best::update_bestrcoalnmin( const QString & )
 {
    ( *parameters )[ "bestrcoalnmin" ] = le_bestrcoalnmin->text();
@@ -628,11 +557,6 @@ void US_Hydrodyn_Cluster_Best::update_bestrcoaln( const QString & )
 void US_Hydrodyn_Cluster_Best::update_bestbestmw( const QString & )
 {
    ( *parameters )[ "bestbestmw" ] = le_bestbestmw->text();
-}
-
-void US_Hydrodyn_Cluster_Best::update_bestbestwatr( const QString & )
-{
-   ( *parameters )[ "bestbestwatr" ] = le_bestbestwatr->text();
 }
 
 void US_Hydrodyn_Cluster_Best::update_bestexpand( const QString & )
@@ -665,21 +589,6 @@ void US_Hydrodyn_Cluster_Best::hide_widgets( vector < QWidget * > w, bool do_hid
 void US_Hydrodyn_Cluster_Best::update_bestmsrcoalescer( const QString & )
 {
    ( *parameters )[ "bestmsrcoalescer" ] = le_bestmsrcoalescer->text();
-}
-
-void US_Hydrodyn_Cluster_Best::set_bestbestv()
-{
-   ( *parameters )[ "bestbestv" ] = cb_bestbestv->isChecked() ? "true" : "false";
-}
-
-void US_Hydrodyn_Cluster_Best::set_bestbestp()
-{
-   ( *parameters )[ "bestbestp" ] = cb_bestbestp->isChecked() ? "true" : "false";
-}
-
-void US_Hydrodyn_Cluster_Best::set_bestbestna()
-{
-   ( *parameters )[ "bestbestna" ] = cb_bestbestna->isChecked() ? "true" : "false";
 }
 
 void US_Hydrodyn_Cluster_Best::update_bestmsrradiifile( const QString & )
@@ -803,17 +712,14 @@ void US_Hydrodyn_Cluster_Best::update_fields()
    le_bestmsrprober                                ->setText( parameters->count( "bestmsrprober" ) ? ( *parameters )[ "bestmsrprober" ] : "" );
    le_bestmsrfinenessangle                         ->setText( parameters->count( "bestmsrfinenessangle" ) ? ( *parameters )[ "bestmsrfinenessangle" ] : "" );
    le_bestmsrmaxtriangles                          ->setText( parameters->count( "bestmsrmaxtriangles" ) ? ( *parameters )[ "bestmsrmaxtriangles" ] : "" );
+   cb_bestrcoalautominmax                          ->setChecked( parameters->count( "bestrcoalautominmax" ) && ( *parameters )[ "bestrcoalautominmax" ] == "true" ? true : false );
    le_bestrcoalnmin                                ->setText( parameters->count( "bestrcoalnmin" ) ? ( *parameters )[ "bestrcoalnmin" ] : "" );
    le_bestrcoalnmax                                ->setText( parameters->count( "bestrcoalnmax" ) ? ( *parameters )[ "bestrcoalnmax" ] : "" );
    le_bestrcoaln                                   ->setText( parameters->count( "bestrcoaln" ) ? ( *parameters )[ "bestrcoaln" ] : "" );
    le_bestbestmw                                   ->setText( parameters->count( "bestbestmw" ) ? ( *parameters )[ "bestbestmw" ] : "" );
-   le_bestbestwatr                                 ->setText( parameters->count( "bestbestwatr" ) ? ( *parameters )[ "bestbestwatr" ] : "" );
    le_bestexpand                                   ->setText( parameters->count( "bestexpand" ) ? ( *parameters )[ "bestexpand" ] : "" );
    cb_bestbestvc                                   ->setChecked( parameters->count( "bestbestvc" ) && ( *parameters )[ "bestbestvc" ] == "true" ? true : false );
    le_bestmsrcoalescer                             ->setText( parameters->count( "bestmsrcoalescer" ) ? ( *parameters )[ "bestmsrcoalescer" ] : "" );
-   cb_bestbestv                                    ->setChecked( parameters->count( "bestbestv" ) && ( *parameters )[ "bestbestv" ] == "true" ? true : false );
-   cb_bestbestp                                    ->setChecked( parameters->count( "bestbestp" ) && ( *parameters )[ "bestbestp" ] == "true" ? true : false );
-   cb_bestbestna                                   ->setChecked( parameters->count( "bestbestna" ) && ( *parameters )[ "bestbestna" ] == "true" ? true : false );
    disconnect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    le_bestmsrradiifile                             ->setText( parameters->count( "bestmsrradiifile" ) ? ( *parameters )[ "bestmsrradiifile" ] : "" );
    connect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrradiifile( const QString & ) ) );

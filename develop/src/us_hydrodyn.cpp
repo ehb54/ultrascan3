@@ -569,7 +569,7 @@ void US_Hydrodyn::setupGUI()
    AUTFBACK( lbl_table );
    lbl_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   pb_batch = new QPushButton(tr("Batch Mode Operation"), this);
+   pb_batch = new QPushButton(tr("Batch Mode/Cluster Operation"), this);
    Q_CHECK_PTR(pb_batch);
    pb_batch->setMinimumHeight(minHeight1);
    pb_batch->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

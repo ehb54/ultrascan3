@@ -4518,6 +4518,12 @@ bool US_Hydrodyn_Cluster::additional_processing(
    {
       if ( type == "additional_processing_per_file" )
       {
+         double mw = 0e0;
+         if (  (*cluster_additional_methods_options_selected).count( method ) &&
+               (*cluster_additional_methods_options_selected)[ method ].count( "bestbestmw" ) )
+         {
+            mw = (*cluster_additional_methods_options_selected)[ method ][ "bestbestmw" ].toDouble();
+         }
          if (  (*cluster_additional_methods_options_selected).count( method ) &&
                !(*cluster_additional_methods_options_selected)[ method ].count( "bestbestmw" ) )
          {
@@ -4526,7 +4532,6 @@ bool US_Hydrodyn_Cluster::additional_processing(
                  !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
             {
                bool ok = true;
-               double mw;
                if ( batch_window->screen_pdb( file, false ) )
                {
                   mw = ((US_Hydrodyn *)us_hydrodyn)->model_vector[ 0 ].mw;
@@ -4566,6 +4571,18 @@ bool US_Hydrodyn_Cluster::additional_processing(
                editor_msg( "red", "Error: bead models are not supported for msroll" );
                // result = batch_window->screen_bead_model( file );
             }
+            if (  (*cluster_additional_methods_options_selected).count( method ) &&
+                  (*cluster_additional_methods_options_selected)[ method ].count( "bestrcoalautominmax" ) )
+            {
+               int maxtriangles = (int) ( 30 * sqrt( mw ) );
+               int mintriangles = (int) ( 18 * sqrt( mw ) );
+               out += QString( "bestrcoalnmin   %1\n" ).arg( mintriangles );
+               out += QString( "bestrcoalnmax   %1\n" ).arg( maxtriangles );
+               editor_msg( "blue", QString( "COALESCE: triangles range %1 to %2 for file %3" )
+                           .arg( mintriangles )
+                           .arg( maxtriangles )
+                           .arg( file ) );
+            }               
          }
          return true;
       }

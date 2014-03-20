@@ -54,6 +54,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       QLineEdit *                             le_bestmsrfinenessangle;
       QLabel *                                lbl_bestmsrmaxtriangles;
       QLineEdit *                             le_bestmsrmaxtriangles;
+      QCheckBox *                             cb_bestrcoalautominmax;
       QLabel *                                lbl_bestrcoalnmin;
       QLineEdit *                             le_bestrcoalnmin;
       QLabel *                                lbl_bestrcoalnmax;
@@ -62,8 +63,6 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       QLineEdit *                             le_bestrcoaln;
       QLabel *                                lbl_bestbestmw;
       QLineEdit *                             le_bestbestmw;
-      QLabel *                                lbl_bestbestwatr;
-      QLineEdit *                             le_bestbestwatr;
       QLabel *                                lbl_bestexpand;
       QLineEdit *                             le_bestexpand;
       QCheckBox *                             cb_bestbestvc;
@@ -78,9 +77,6 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       void                                    hide_widgets( vector < QWidget * >, bool do_hide = true, bool do_resize = true );
       QLabel *                                lbl_bestmsrcoalescer;
       QLineEdit *                             le_bestmsrcoalescer;
-      QCheckBox *                             cb_bestbestv;
-      QCheckBox *                             cb_bestbestp;
-      QCheckBox *                             cb_bestbestna;
       QLabel *                                lbl_bestmsrradiifile;
       QLineEdit *                             le_bestmsrradiifile;
       QLabel *                                lbl_bestmsrpatternfile;
@@ -102,18 +98,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       void                                    update_bestmsrprober( const QString & );
       void                                    update_bestmsrfinenessangle( const QString & );
       void                                    update_bestmsrmaxtriangles( const QString & );
+      void                                    set_bestrcoalautominmax();
       void                                    update_bestrcoalnmin( const QString & );
       void                                    update_bestrcoalnmax( const QString & );
       void                                    update_bestrcoaln( const QString & );
       void                                    update_bestbestmw( const QString & );
-      void                                    update_bestbestwatr( const QString & );
       void                                    update_bestexpand( const QString & );
       void                                    set_bestbestvc();
       void                                    hide_opt_label();
       void                                    update_bestmsrcoalescer( const QString & );
-      void                                    set_bestbestv();
-      void                                    set_bestbestp();
-      void                                    set_bestbestna();
       void                                    update_bestmsrradiifile( const QString & );
       void                                    update_bestmsrpatternfile( const QString & );
       void                                    save();

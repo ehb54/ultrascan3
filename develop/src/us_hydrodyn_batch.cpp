@@ -72,7 +72,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    *batch_widget = true;
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("SOMO Batch Operation Control"));
+   setCaption( "US-SOMO: " + tr( "Batch Mode / Cluster Operation" ) );
    // should move to save/restore
    batch->mm_first = true;
    batch->mm_all = false;
@@ -1005,7 +1005,7 @@ void US_Hydrodyn_Batch::load_somo()
                 ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms != batch->missing_atoms )
             {
                switch ( QMessageBox::question(this, 
-                                              tr("UltraScan Notice"),
+                                              caption() + tr( ": Notice" ),
                                               QString(tr("Please note:\n\n"
                                                          "You are loading a PDB file and the current Batch Operation\n"
                                                          "PDB parsing options don't match SOMO's current settings\n"
@@ -1539,7 +1539,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
    if ( !((US_Hydrodyn *)us_hydrodyn)->misc.compute_vbar )
    {
       switch ( QMessageBox::warning(this, 
-                                    tr("UltraScan Warning"),
+                                    caption() + tr( ": Warning" ),
                                     QString(tr("Please note:\n\nThe vbar is currently manually set to %1.\n"
                                                "What would you like to do?\n"))
                                     .arg(((US_Hydrodyn *)us_hydrodyn)->misc.vbar),
@@ -1567,7 +1567,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
    if ( !quiet && !((US_Hydrodyn *)us_hydrodyn)->overwrite )
    {
       switch ( QMessageBox::warning(this, 
-                                    tr("UltraScan Warning"),
+                                    caption() + tr( ": Warning" ),
                                     QString(tr("Please note:\n\n"
                                                "Overwriting of existing files currently off.\n"
                                                "This could cause Batch mode to block during processing.\n"
