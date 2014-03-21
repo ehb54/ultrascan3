@@ -52,7 +52,10 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
       QCheckBox             *                 cb_plus_lm;
       QCheckBox             *                 cb_errorlines;
       QCheckBox             *                 cb_manual_rejection;
-      QCheckBox             *                 cb_loose_qtest;
+      QButtonGroup          *                 bg_qtest_level;
+      QRadioButton          *                 rb_90_qtest;
+      QRadioButton          *                 rb_80_qtest;
+      QRadioButton          *                 rb_70_qtest;
 
       // ------ editor section 
 

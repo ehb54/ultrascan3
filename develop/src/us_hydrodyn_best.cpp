@@ -250,16 +250,42 @@ void US_Hydrodyn_Best::setupGUI()
    connect( pb_reset_qtest, SIGNAL( clicked() ), SLOT( reset_qtest() ) );
    input_widgets.push_back( pb_reset_qtest );
 
-   cb_loose_qtest = new QCheckBox( this );
-   cb_loose_qtest->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_loose_qtest );
-   cb_loose_qtest->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-   cb_loose_qtest->setText( tr( "80% Q test criterion" ) );
-   cb_loose_qtest->setChecked( false );
-   cb_loose_qtest->setEnabled( true );
-   cb_loose_qtest->show();
-   connect( cb_loose_qtest, SIGNAL( clicked() ), SLOT( set_loose_qtest() ) );
-   input_widgets.push_back( cb_loose_qtest );
+   rb_90_qtest = new QRadioButton ( this );
+   rb_90_qtest->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_90_qtest );
+   rb_90_qtest->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   rb_90_qtest->setText( tr( "90%" ) );
+   rb_90_qtest->setChecked( true );
+   rb_90_qtest->setEnabled( true );
+   rb_90_qtest->show();
+   input_widgets.push_back( rb_90_qtest );
+
+   rb_80_qtest = new QRadioButton ( this );
+   rb_80_qtest->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_80_qtest );
+   rb_80_qtest->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   rb_80_qtest->setText( tr( "80%" ) );
+   rb_80_qtest->setEnabled( true );
+   rb_80_qtest->show();
+   connect( rb_80_qtest, SIGNAL( clicked() ), SLOT( set_loose_qtest() ) );
+   input_widgets.push_back( rb_80_qtest );
+
+   rb_70_qtest = new QRadioButton ( this );
+   rb_70_qtest->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_70_qtest );
+   rb_70_qtest->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   rb_70_qtest->setText( tr( "70% test level" ) );
+   rb_70_qtest->setEnabled( true );
+   rb_70_qtest->show();
+   connect( rb_70_qtest, SIGNAL( clicked() ), SLOT( set_loose_qtest() ) );
+   input_widgets.push_back( rb_70_qtest );
+
+   bg_qtest_level = new QButtonGroup( this );
+   int bg_pos = 0;
+   bg_qtest_level->setExclusive(true);
+   bg_qtest_level->addButton( rb_90_qtest, bg_pos++ );
+   bg_qtest_level->addButton( rb_80_qtest, bg_pos++ );
+   bg_qtest_level->addButton( rb_70_qtest, bg_pos++ );
 
    // ------ editor section
 
@@ -425,7 +451,9 @@ void US_Hydrodyn_Best::setupGUI()
          Q3HBoxLayout *hbl = new Q3HBoxLayout( 0 );
          hbl->addWidget( pb_apply_qtest );
          hbl->addWidget( pb_reset_qtest );
-         hbl->addWidget( cb_loose_qtest );
+         hbl->addWidget( rb_90_qtest );
+         hbl->addWidget( rb_80_qtest );
+         hbl->addWidget( rb_70_qtest );
          bl->addLayout( hbl );
       }
       bl->addWidget( lbl_editor );
@@ -2304,7 +2332,7 @@ void US_Hydrodyn_Best::apply_qtest()
       return;
    }
 
-   vector < double > Qc = cb_loose_qtest->isChecked() ? Qc80 : Qc95;
+   vector < double > Qc = rb_90_qtest->isChecked() ? Qc95 : ( rb_80_qtest->isChecked() ? Qc80 : Qc70 );
 
    bool use_Qc = use_one_over_triangles.size() <= Qc.size();
 
@@ -2353,7 +2381,7 @@ void US_Hydrodyn_Best::apply_qtest()
 
    QString msg = QString( tr( "Q test: Q = %1 " ) ).arg( Q );
       
-   double qc_mult = cb_loose_qtest->isChecked() ? .75e0 : 1e0;
+   double qc_mult =  rb_90_qtest->isChecked() ? 1e0 : ( rb_80_qtest->isChecked() ? .8e0 : .7e0 );
 
    if ( use_Qc )
    {
@@ -2364,31 +2392,36 @@ void US_Hydrodyn_Best::apply_qtest()
         ( !use_Qc &&  fabs( vdeltas.back().x ) >= 2.6 * qc_mult ) )
    {
       msg += QString( tr( "Removing point %1" ) ).arg( vdeltas.back().index + 1 );
-      if ( cb_loose_qtest->isChecked() )
+      if ( rb_80_qtest->isChecked() )
       {
          editor_msg( "dark red", tr( "WARNING: 80% Q test criterion parameters used" ) );
+      }
+      if ( rb_70_qtest->isChecked() )
+      {
+         editor_msg( "dark red", tr( "WARNING: 70% Q test criterion parameters used" ) );
       }
       editor_msg( "blue", msg);
       cb_points[ vdeltas.back().index ]->setChecked( false );
       cb_changed();
-      cb_loose_qtest->setChecked( false );
+      rb_90_qtest->setChecked( true );
       return;
    }
 
    msg += tr( "No points removed." );
 
    editor_msg( "blue", msg );
-   cb_loose_qtest->setChecked( false );
+   rb_90_qtest->setChecked( true );
 }
 
 void US_Hydrodyn_Best::set_loose_qtest()
 {
-   if ( cb_loose_qtest->isChecked() )
+   if ( !rb_90_qtest->isChecked() )
    {
       switch ( QMessageBox::warning( this
                                      , caption() + tr( " : Warning" )
-                                     , tr( "80% Q test is not recommended.\n"
-                                           "Do you still want to enable the 80% Q test criteria?" )
+                                     , ( rb_80_qtest->isChecked() ? "80" : "70" ) +
+                                       tr( "% Q test is not recommended.\n"
+                                           "Do you still want to enable?" )
                                      , QMessageBox::Yes
                                      , QMessageBox::No
                                      ) )
@@ -2396,7 +2429,7 @@ void US_Hydrodyn_Best::set_loose_qtest()
       case QMessageBox::Yes :
          break;
       case QMessageBox::No :
-         cb_loose_qtest->setChecked( false );
+         rb_90_qtest->setChecked( true );
          break;
       default :
          break;
