@@ -628,7 +628,20 @@ qDebug() << " srd:   isMwl" << isMwl;
       pcellCh = cellCh;
    }
 
-   if ( isMwl )
+   bool have_avg  = false;
+   QString runID  = le_runID->text();
+   QString fname  = US_Settings::resultDir() + "/" + runID + "/"
+                    + runID + ".RI.xml";
+   QFile   filei( fname );
+   if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QTextStream texti( &filei );
+      QString xtext  = texti.readAll();
+      have_avg       = xtext.contains( "avg_speed" );
+      filei.close();
+   }
+
+   if ( have_avg )
    {
       msg    += moreSpeedInfo( rpm );
    }
@@ -732,11 +745,13 @@ qDebug() << " srd:mSI:    rpm_s rpm_a rpm_d" << rpm_s << rpm_a << rpm_d;
 
    if ( rpm_a != 0.0 )
    {
+      int rpm_fe     = qRound( rpm_a );
       msg            = tr( "\nSpeed step additional information:"
-                           "\n   Set Speed                = %1"
-                           "\n   Average Speed            = %2"
-                           "\n   Speed Standard Deviation = %3" )
-                       .arg( rpm_s ).arg( rpm_a ).arg( rpm_d );
+                           "\n   Set Speed = %1 ;"
+                           "\n   Average Speed = %2 ;"
+                           "\n   Speed Standard Deviation = %3 ;"
+                           "\n   Finite Element Rotor Speed = %4 ." )
+                       .arg( rpm_s ).arg( rpm_a ).arg( rpm_d ).arg( rpm_fe );
    }
 else
  msg="\n*** MWL but no extended speedstep values ***";
