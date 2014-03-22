@@ -2271,32 +2271,11 @@ double US_FeMatch::calc_baseline( int drow ) const
 // Model type text string
 QString US_FeMatch::text_model( US_Model model, int width )
 {
-   QString title = model.typeText();
+   QString stitle = model.typeText();
+   QString title  = stitle;
 
-   if ( width == 0 )
-   {  // short title (file node):  add any "ra", "gl" ,... "mc"
-
-      if ( model.associations.size() > 1 )
-         title = title + "-RA";
-
-      if ( model.global == US_Model::MENISCUS )
-         title = title + "-FM";
-
-      else if ( model.global == US_Model::GLOBAL )
-         title = title + "-GL";
-
-      else if ( model.global == US_Model::SUPERGLOBAL )
-         title = title + "-SG";
-
-      if ( model.monteCarlo )
-         title = title + "-MC";
-
-   }
-
-   else
+   if ( width != 0 )
    {  // long title:  add any suffixes and check need to center
-      QString stitle = title;
-
       switch ( (int)model.analysis )
       {
          case (int)US_Model::TWODSA:
