@@ -74,9 +74,9 @@ int US_TimeState::open_write_data( QString fpath,
    nvalues     = 0;
    rec_size    = 0;
 
-   strncpy( cdata,   _TMST_MAGI_, 4 );
-   strncpy( cdata+4, _TMST_VERS_, 3 );
-   cdata[ 5 ]  = cdata[ 6 ];
+   strncpy( cdata,     _TMST_MAGI_, 4 );  // "USTS"
+   strncpy( cdata + 4, _TMST_VERS_, 3 );  // "1.0"
+   cdata[ 5 ]  = cdata[ 6 ];              // '1','0'
    fhdr_size   = 6;
 
    keys.clear();
@@ -390,8 +390,8 @@ int US_TimeState::write_xml( double timeinc )
       xml.writeEndElement  ( );
    }
 
-   xml.writeEndElement  ( );
-   xml.writeEndElement  ( );
+   xml.writeEndElement  ( );  // "</file>"
+   xml.writeEndElement  ( );  // "</TimeState>"
    xml.writeEndDocument ( );
    xfo.close();
 
@@ -606,6 +606,7 @@ int US_TimeState::time_ivalue( QString key, int* stat )
    {
       char  cwrk[ 256 ];
       char* cval  = (char*)cwrk;
+      char* eval  = cval + rlen;
       double dvalue;
 
       switch( rfmt )
@@ -629,6 +630,7 @@ int US_TimeState::time_ivalue( QString key, int* stat )
             break;
          case 5:                                 // Cnnn
             memcpy( cval, rdata, rlen );
+            *eval       = '\0';
             ivalue      = QString( cval ).left( rlen ).toInt();
             break;
          default:                                // UNKNOWN
@@ -656,6 +658,7 @@ double US_TimeState::time_dvalue( QString key, int* stat )
    {
       char  cwrk[ 256 ];
       char* cval  = (char*)cwrk;
+      char* eval  = cval + rlen;
       double ivalue;
 
       switch( rfmt )
@@ -680,6 +683,7 @@ double US_TimeState::time_dvalue( QString key, int* stat )
             break;
          case 5:                                 // Cnnn
             memcpy( cval, rdata, rlen );
+            *eval       = '\0';
             dvalue      = QString( cval ).left( rlen ).toDouble();
             break;
          default:                                // UNKNOWN

@@ -472,7 +472,7 @@ DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype;
             sd.viscosity   = dset->viscosity;
             sd.density     = dset->density;
             sd.manual      = dset->manual;
-            sd.vbar20      = sim_vals.solutes[ cc ].v;
+            sd.vbar20      = model.components[ 0 ].vbar20;
             sd.vbar        = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
             US_Math2::data_correction( avtemp, sd );
 
@@ -566,6 +566,7 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
             // Fill in the missing component values
             model.update_coefficients();
 
+            // Convert to experimental space
             sd.viscosity   = dset->viscosity;
             sd.density     = dset->density;
             sd.manual      = dset->manual;
@@ -574,7 +575,6 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
 
             US_Math2::data_correction( avtemp, sd );
 
-            // Convert to experimental space
             model.components[ 0 ].s   /= sd.s20w_correction;
             model.components[ 0 ].D   /= sd.D20w_correction;
 
