@@ -284,7 +284,7 @@ void US_SimulationParameters::computeSpeedSteps(
    double  rpmnext     = rpm;
    double  step_secs   = 0.0;
    int     lscx        = 0;
-   double  rpm_sum     = 0.0;
+   double  rpm_sum     = rpm;
 DbgLv(1) << "SP:cSS: scan" << 1 << "rpm time omega2t"
  << rpm << qRound(time1) << (*scans)[ 0 ].omega2t;
 
@@ -320,15 +320,13 @@ DbgLv(1) << "SP:cSS: scan" << (ii+1) << "rpm time omega2t"
          sp.w2t_last         = w2t2;
          sp.time_first       = qRound( time1 );
          sp.time_last        = qRound( time2 );
-         double rpm_avg      = rpm_sum / (double)sp.scans;
-         sp.avg_speed        = rpm_avg;
-         sp.rotorspeed       = qRound( rpm_avg );
-         sp.set_speed        = sp.rotorspeed;
-         double rpm_stdd     = 0.0;
+         sp.avg_speed        = rpm_sum / (double)sp.scans;
+         sp.rotorspeed       = qRound( sp.avg_speed );
+         sp.set_speed        = ( ( sp.rotorspeed + 50 ) / 100 ) * 100;
+         sp.speed_stddev     = 0.0;
          for ( int jj = lscx; jj < ii; jj++ )
-            rpm_stdd           += sq( (*scans)[ jj ].rpm - rpm_avg );
-         rpm_stdd            = sqrt( rpm_stdd ) / (double)sp.scans;
-         sp.speed_stddev     = rpm_stdd;
+            sp.speed_stddev    += sq( (*scans)[ jj ].rpm - sp.avg_speed );
+         sp.speed_stddev     = sqrt( sp.speed_stddev ) / (double)sp.scans;
 
          speedsteps << sp;
 DbgLv(1) << "SP:cSS:   speedsteps" << speedsteps.size() << "scans" << sp.scans
@@ -336,6 +334,8 @@ DbgLv(1) << "SP:cSS:   speedsteps" << speedsteps.size() << "scans" << sp.scans
  << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
 DbgLv(1) << "SP:cSS:      w2t1 w2t2 time1 time2" << sp.w2t_first << sp.w2t_last
  << sp.time_first << sp.time_last;
+DbgLv(1) << "SP:cSS:       sp set avg sdev" << sp.set_speed << sp.avg_speed
+ << sp.speed_stddev;
 
          lscx                = ii;
          rpm                 = rpmnext;
@@ -364,15 +364,13 @@ DbgLv(1) << "SP:cSS:      w2t1 w2t2 time1 time2" << sp.w2t_first << sp.w2t_last
    sp.w2t_last         = w2t2;
    sp.time_first       = qRound( time1 );
    sp.time_last        = qRound( time2 );
-   double rpm_avg      = rpm_sum / (double)sp.scans;
-   sp.avg_speed        = rpm_avg;
-   sp.rotorspeed       = qRound( rpm_avg );
-   sp.set_speed        = sp.rotorspeed;
-   double rpm_stdd     = 0.0;
+   sp.avg_speed        = rpm_sum / (double)sp.scans;
+   sp.rotorspeed       = qRound( sp.avg_speed );
+   sp.set_speed        = ( ( sp.rotorspeed + 50 ) / 100 ) * 100;
+   sp.speed_stddev     = 0.0;
    for ( int jj = lscx; jj < scanCount; jj++ )
-      rpm_stdd           += sq( (*scans)[ jj ].rpm - rpm_avg );
-   rpm_stdd            = sqrt( rpm_stdd ) / (double)sp.scans;
-   sp.speed_stddev     = rpm_stdd;
+      sp.speed_stddev    += sq( (*scans)[ jj ].rpm - sp.avg_speed );
+   sp.speed_stddev     = sqrt( sp.speed_stddev ) / (double)sp.scans;
 
    speedsteps << sp;
 DbgLv(1) << "SP:cSS:   speedsteps" << speedsteps.size() << "scans" << sp.scans
@@ -380,6 +378,8 @@ DbgLv(1) << "SP:cSS:   speedsteps" << speedsteps.size() << "scans" << sp.scans
  << "delay h m" << sp.delay_hours << sp.delay_minutes << "rpm" << rpm;
 DbgLv(1) << "SP:cSS:      w2t1 w2t2 time1 time2" << sp.w2t_first << sp.w2t_last
  << sp.time_first << sp.time_last;
+DbgLv(1) << "SP:cSS:       sp set avg sdev" << sp.set_speed << sp.avg_speed
+ << sp.speed_stddev;
 }
 
 // Set parameters from hardware files, related to rotor and centerpiece

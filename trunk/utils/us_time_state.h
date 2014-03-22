@@ -155,8 +155,8 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       QDataStream* dso;             //!< Output data stream pointer.
       QDataStream* dsi;             //!< Input data stream pointer.
 
-      QString      filename;        //!< Scan-Details base file name.
-      QString      filepath;        //!< Scan-Details full file path.
+      QString      filename;        //!< TimeState binary base file name.
+      QString      filepath;        //!< TimeState binary full file path.
       QString      fvers;           //!< File version string.
       QString      error_msg;       //!< Current error message string.
 
