@@ -2271,51 +2271,7 @@ double US_FeMatch::calc_baseline( int drow ) const
 // Model type text string
 QString US_FeMatch::text_model( US_Model model, int width )
 {
-   QString title;
-
-   switch ( (int)model.analysis )
-   {
-      case (int)US_Model::TWODSA:
-         title = ( width == 0 ) ? "2DSA" :
-            tr( "2-Dimensional Spectrum Analysis" );
-         break;
-
-      case (int)US_Model::TWODSA_MW:
-         title = ( width == 0 ) ? "2DSA-MW" :
-            tr( "2-Dimensional Spectrum Analysis" );
-         break;
-
-      case (int)US_Model::GA:
-         title = ( width == 0 ) ? "GA" :
-            tr( "Genetic Algorithm Analysis" );
-         break;
-
-      case (int)US_Model::GA_MW:
-         title = ( width == 0 ) ? "GA-MW" :
-            tr( "Genetic Algorithm Analysis" );
-         break;
-
-      case (int)US_Model::COFS:
-         title = ( width == 0 ) ? "COFS" :
-            tr( "C(s) Analysis" );
-         break;
-
-      case (int)US_Model::FE:
-         title = ( width == 0 ) ? "FE" :
-            tr( "Finite Element Analysis" );
-         break;
-
-      case (int)US_Model::PCSA:
-         title = ( width == 0 ) ? "PCSA" :
-            tr( "Parametrically Constrained Spectrum Analysis" );
-         break;
-
-      case (int)US_Model::MANUAL:
-      default:
-         title = ( width == 0 ) ? "2DSA" :
-            tr( "2-Dimensional Spectrum Analysis" );
-         break;
-   }
+   QString title = model.typeText();
 
    if ( width == 0 )
    {  // short title (file node):  add any "ra", "gl" ,... "mc"
@@ -2339,6 +2295,51 @@ QString US_FeMatch::text_model( US_Model model, int width )
 
    else
    {  // long title:  add any suffixes and check need to center
+      QString stitle = title;
+
+      switch ( (int)model.analysis )
+      {
+         case (int)US_Model::TWODSA:
+         case (int)US_Model::TWODSA_MW:
+            title = tr( "2-Dimensional Spectrum Analysis" );
+            break;
+
+         case (int)US_Model::GA:
+         case (int)US_Model::GA_MW:
+            title = tr( "Genetic Algorithm Analysis" );
+            break;
+
+         case (int)US_Model::COFS:
+            title = tr( "C(s) Analysis" );
+            break;
+
+         case (int)US_Model::FE:
+            title = tr( "Finite Element Analysis" );
+            break;
+
+         case (int)US_Model::PCSA:
+            title = tr( "Parametrically Constrained Spectrum Analysis " );
+
+            if ( stitle.contains( "-SL" ) )
+               title += tr( "(Straight Line)" );
+
+            else if ( stitle.contains( "-IS" ) )
+               title += tr( "(Incr. Sigmoid)" );
+
+            else if ( stitle.contains( "-DS" ) )
+               title += tr( "(Decr. Sigmoid)" );
+
+            else if ( stitle.contains( "-HL" ) )
+               title += tr( "(Horizontal Line)" );
+
+            break;
+
+         case (int)US_Model::MANUAL:
+         default:
+            title = tr( "2-Dimensional Spectrum Analysis" );
+            break;
+      }
+
       if ( model.associations.size() > 1 )
          title = title + " (RA)";
 
