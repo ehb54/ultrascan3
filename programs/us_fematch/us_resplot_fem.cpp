@@ -819,6 +819,7 @@ void US_ResidPlotFem::plot_rdata()
 
    // display curves we have created; then clean up
 
+   data_plot2->setAxisScale( QwtPlot::xBottom, rmin, rmax );
    data_plot2->replot();
 }
 
