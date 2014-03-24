@@ -376,7 +376,7 @@ DbgLv(1) << "Data Plot from Base";
          double tn  = have_ti ? ti_noise.values[ jj ] : 0.0;
          rr         = sdata.radius( jj );
          vv         = sdata.value( ii, jj++ ) + rn + tn;
-         if ( jj > rl )
+         if ( rr > rl )
          {
             ra[ kk   ] = rr;
             va[ kk++ ] = vv;
@@ -430,10 +430,8 @@ DbgLv(1) << "Data Plot from Base";
    data_plot1->setTitle( tr( "Residuals" ) );
 
    // plot zero line through residuals plot
-   double xlo = edata->radius( 0 );
-   double xhi = edata->radius( npoints - 1 );
-   xlo        = 0.1 * (double)( (int)( xlo * 10.0 ) );
-   xhi        = 0.1 * (double)( qRound( xhi * 10.0 + 0.5 ) );
+   double xlo = edata->radius(           0 ) - 0.05;
+   double xhi = edata->radius( npoints - 1 ) + 0.05;
    ra[ 0 ]    = xlo;
    ra[ 1 ]    = xhi;
    va[ 0 ]    = 0.0;
@@ -443,6 +441,7 @@ DbgLv(1) << "Data Plot from Base";
    cc->setData( ra, va, 2 );
 
    // draw the plot
+   data_plot1->setAxisScale( QwtPlot::xBottom, xlo, xhi );
    data_plot1->replot();
 
    // report on variance and rmsd

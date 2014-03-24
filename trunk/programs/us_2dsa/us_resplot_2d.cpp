@@ -564,10 +564,8 @@ void US_ResidPlot2D::plot_rdata()
    QPen          pen_plot( Qt::green );
 
    // plot a zero line in red
-   double xlo = edata->radius( 0 );
-   double xhi = edata->radius( points - 1 );
-   xlo        = 0.1 * (double)( (int) ( xlo * 10.0       ) );
-   xhi        = 0.1 * (double)( qRound( xhi * 10.0 + 0.5 ) );
+   double xlo = edata->radius(          0 ) - 0.05;
+   double xhi = edata->radius( points - 1 ) + 0.05;
    rr[ 0 ]    = !do_pltrin ? xlo : 0.0;
    rr[ 1 ]    = !do_pltrin ? xhi : double( count );
    vv[ 0 ]    = 0.0;
@@ -794,6 +792,7 @@ void US_ResidPlot2D::plot_rdata()
 
    // display curves we have created; then clean up
 
+   data_plot2->setAxisScale( QwtPlot::xBottom, xlo, xhi );
    data_plot2->replot();
 }
 
