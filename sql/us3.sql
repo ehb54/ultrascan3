@@ -1632,6 +1632,26 @@ CREATE  TABLE IF NOT EXISTS speedstep (
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table timestate
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS timestate ;
+
+CREATE  TABLE IF NOT EXISTS timestate (
+  timestateID int(11) NOT NULL AUTO_INCREMENT ,
+  experimentID int(11) NOT NULL ,
+  filename varchar(255) NOT NULL default '',
+  definitions longtext,
+  data longblob,
+  lastUpdated TIMESTAMP NULL ,
+  PRIMARY KEY (timestateID) ,
+  CONSTRAINT fk_timestate_experimentID
+    FOREIGN KEY (experimentID)
+    REFERENCES experiment (experimentID)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
 -- Load some non-changing hardware data
 SOURCE us3_hardware_data.sql
 SOURCE us3_buffer_components.sql

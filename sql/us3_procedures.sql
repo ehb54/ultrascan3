@@ -64,6 +64,7 @@ BEGIN
   SET @NO_REPORT_TRIPLE = 521;
   SET @NO_REPORT_DOCUMENT = 522;
   SET @NO_DOCUMENT_LINK = 523;
+  SET @MORE_THAN_SINGLE_ROW = 524;
 
   -- Some user levels
   SET @US3_USER       = 0;
@@ -522,5 +523,6 @@ SOURCE us3_spectrum_procs.sql
 SOURCE us3_model_procs.sql
 SOURCE us3_noise_procs.sql
 SOURCE us3_report_procs.sql
+SOURCE us3_timestate_procs.sql
 
 DELIMITER ;

@@ -676,6 +676,12 @@ BEGIN
     DELETE FROM experimentPerson
     WHERE experimentID = p_experimentID;
 
+    DELETE FROM speedstep
+    WHERE experimentID = p_experimentID;
+
+    DELETE FROM timestate
+    WHERE experimentID = p_experimentID;
+
     DELETE FROM experiment
     WHERE experimentID = p_experimentID;
 

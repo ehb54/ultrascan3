@@ -148,6 +148,11 @@ class US_GUI_EXTERN US_MwlData : public QObject
       //! \returns          The number of speed steps in the profile
       int     update_speedsteps( QVector< SP_SPEEDPROFILE >& );
 
+      //! \brief Return vector of raw speeds for MWL data scans
+      //! \param rrpms  Reference for returned raw RPM values for each scan
+      //! \returns      The number of rpm values (scans) returned
+      int     raw_speeds( QVector< double >& );
+
    private:
       QVector< QVector< double > > ri_readings; //!< Raw input readings
       QVector< int >               ri_wavelns;  //!< Raw input wavelengths

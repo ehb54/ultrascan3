@@ -5,6 +5,7 @@
 #include <QtCore>
 #include "us_extern.h"
 #include "us_util.h"
+#include "us_db2.h"
 
 #define _TMST_MAGI_ "USTS"
 #define _TMST_VERS_ "1.0"
@@ -77,10 +78,10 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \return       Status flag (0->OK).
       int flush_record( void );
 
-      //! \brief Write the sibling XML file for the last opened data file.
+      //! \brief Write the definitions XML file for the last opened data file.
       //! \param timeinc  Time increment (0.0 -> no time increment).
       //! \return         Status flag (0->OK).
-      int write_xml( double );
+      int write_defs( double = 0.0 );
 
       //! \brief Flush any remaining records and close the output data file.
       //! \return         Status flag (0->OK).
@@ -118,21 +119,21 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \param key    Key to which field to fetch.
       //! \param stat   Optional pointer for return of status value.
       //! \return       Integer value for given key in current record.
-      int time_ivalue( QString, int* = 0 );
+      int time_ivalue( const QString, int* = 0 );
 
       //! \brief Get a time double value for a given key from the current
       //!        record.
       //! \param key    Key to which field to fetch.
       //! \param stat   Optional pointer for return of status value.
       //! \return       Double value for given key in current record.
-      double time_dvalue( QString, int* = 0 );
+      double time_dvalue( const QString, int* = 0 );
 
       //! \brief Get a time string value for a given key from the current
       //!        record.
       //! \param key    Key to which field to fetch.
       //! \param stat   Optional pointer for return of status value.
       //! \return       String value for given key in current record.
-      QString time_svalue( QString, int* = 0 );
+      QString time_svalue( const QString, int* = 0 );
 
       //! \brief Close the input data file.
       //! \return       Status flag (0->OK).
@@ -146,6 +147,45 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \brief Get the error message for the last error.
       //! \return        Error message string for the last error that occurred.
       QString last_error_message( void );
+
+      //! \brief Static function to create a new TMST record in DB
+      //! \param dbP     Pointer to opened DB connection
+      //! \param expID   Experiment ID of new record
+      //! \param fpath   File path of local TMST from which to create
+      //! \return        New timestateID (<0 if error)
+      static int dbCreate  ( US_DB2*, const int, const QString );
+
+      //! \brief Static function to delete a TMST record from DB
+      //! \param dbP     Pointer to opened DB connection
+      //! \param tmstID  The timestate ID of record to delete
+      //! \return        Status of action (US_DB2::OK,...)
+      static int dbDelete  ( US_DB2*, const int );
+
+      //! \brief Static function to examine a TMST record in DB
+      //! \param dbP      Pointer to opened DB connection
+      //! \param tmstIdP  Pointer to TMST db ID (NULL to use expID)
+      //! \param expIdP   Pointer to experiment db ID (NULL to use tmstID)
+      //! \param fnameP   Pointer for return of .tmst base filename
+      //! \param xdefsP   Pointer for return of .xml definitions string
+      //! \param cksumP   Pointer for return of binary data cksum+size string
+      //! \param lastupdP Pointer for return of last-updated datetime
+      //! \return         Status of action (US_DB2::OK,...)
+      static int dbExamine ( US_DB2*, int* = 0, int* = 0, QString* = 0,
+                             QString* = 0, QString* = 0, QDateTime* = 0 );
+
+      //! \brief Static function to download a TMST binary data record from DB
+      //! \param dbP     Pointer to opened DB connection
+      //! \param tmstID  The timestate ID of record to download
+      //! \param fpath   Full path to local file to which to download
+      //! \return        Status of action (US_DB2::OK,...)
+      static int dbDownload( US_DB2*, const int, const QString );
+
+      //! \brief Static function to upload a TMST binary data record to DB
+      //! \param dbP     Pointer to opened DB connection
+      //! \param tmstID  The timestate ID of record to upload
+      //! \param fpath   Full path to local file from which to upload
+      //! \return        Status of action (US_DB2::OK,...)
+      static int dbUpload  ( US_DB2*, const int, const QString );
 
    private:
 
@@ -216,7 +256,7 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \brief Set the error status and message.
       int    set_error   ( int );
       //! \brief Get a key's parameters (format-type, length, key-offset).
-      int    key_parameters( QString&, int*, int*, int* );
+      int    key_parameters( const QString, int*, int*, int* );
 };
 #endif
 
