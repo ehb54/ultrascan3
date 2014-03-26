@@ -239,12 +239,12 @@ QString US_ConvertIO::readDBExperiment( QString runID, QString dir,
           US_DB2* db, QVector< SP_SPEEDPROFILE >& speedsteps )
 
 {
-   US_Experiment ExpData;       // A local copy
-   QList< US_Convert::TripleInfo > triples;  // a local copy
+   US_Experiment ExpData;                    // A local copy of experiment
+   QList< US_Convert::TripleInfo > triples;  // A local copy of triples
 qDebug() << "rDBE: call ExpData.readFromDB";
    int readStatus = ExpData.readFromDB( runID, db, speedsteps );
-qDebug() << "rDBE:  ss size ss0.sp" << speedsteps.size()
- << speedsteps[0].rotorspeed;
+qDebug() << "rDBE:  ss size ss0.sp ss0.avg" << speedsteps.size()
+ << speedsteps[0].rotorspeed << speedsteps[0].avg_speed;
 
    if ( readStatus == US_DB2::NO_EXPERIMENT )
       return( "The current run ID is not found in the database." );

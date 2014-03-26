@@ -996,3 +996,11 @@ DbgLv(1) << "MwDa:uSS:   jj" << "set_speed avg_speed speed_stddev"
    return nsteps;
 }
 
+// Return a vector of raw speeds for all MWL data scans
+int US_MwlData::raw_speeds( QVector< double >& rrpms )
+{
+   int nscans  = r_rpms.size();
+   rrpms       = r_rpms;
+   return nscans;
+}
+

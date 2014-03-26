@@ -57,6 +57,7 @@ class US_ConvertGui : public US_Widgets
       QString       runType;
       QString       oldRunType;
       QString       runID;
+      QString       tmst_fnamei;
 
       QLabel*       lb_description;
 
@@ -252,6 +253,8 @@ class US_ConvertGui : public US_Widgets
       void build_output_data ( void );
       void connectTolerance  ( bool );
       int  countSpeeds       ( QVector< int >&, int* );
+      int  writeTimeStateDisk( void );
+      int  writeTimeStateDB  ( void );
       void help              ( void )
         { showHelp.show_help( "convert.html" ); };
 };

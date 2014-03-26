@@ -6,7 +6,7 @@
 #define _TR_(a) QObject::tr(a)
 #endif
 #ifndef DbgLv
-#define DbgLv(a) if(dbg_level>a)qDebug()  //!< debug-level-conditioned qDebug()
+#define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
 #endif
 
 // Constructor of the US_TimeState object
@@ -102,15 +102,19 @@ int US_TimeState::set_key( QString key, QString format )
       status      = 101;
       set_error( status );
       error_msg += format;
+DbgLv(1) << "TS: key format" << key << format << "stat errm" << status << error_msg;
       return status;
    }
 
    int flen     = QString( format ).mid( 1 ).toInt();
-   int offset   = ( nvalues == 0 ) ? 0 : offs[ nvalues - 1 ] + flen;
+   int offset   = rec_size;
    keys << key;
    fmts << format;
    offs << offset;
    nvalues++;
+   rec_size     = offset + flen;
+DbgLv(1) << "TS: nval" << nvalues << "key format" << key << format
+ << "offs flen" << offset << flen << "rsize" << rec_size;
 
    return status;
 }
@@ -332,6 +336,7 @@ int US_TimeState::flush_record()
 
    dso->writeRawData( cdata, rec_size );
    timex++;
+   ntimes++;
    memset( cdata, 0, rec_size );
    file_size  += (qint64)rec_size;
 
@@ -351,8 +356,8 @@ int US_TimeState::close_write_data()
    return status;
 }
 
-// Write the sibling XML file for the last opened output data file
-int US_TimeState::write_xml( double timeinc )
+// Write the definitions (XML) file for the last opened output data file
+int US_TimeState::write_defs( double timeinc )
 {
    int status  = 0;
    time_inc    = timeinc < 0.0 ? time_inc : timeinc;
@@ -363,7 +368,7 @@ int US_TimeState::write_xml( double timeinc )
    QFile xfo( xfpath );
 
    if ( !xfo.open( QIODevice::WriteOnly | QIODevice::Text ) )
-   {
+   {  // Error opening the file for write
       status     = 700;
       set_error( status );
       return status;
@@ -373,25 +378,25 @@ int US_TimeState::write_xml( double timeinc )
    xml.setAutoFormatting( true );
    xml.writeStartDocument();
    xml.writeDTD              ( "<!DOCTYPE US_TimeState>" );
-   xml.writeStartElement( "TimeState" );
+   xml.writeStartElement( "TimeState" );    // <TimeState version=...>
    xml.writeAttribute   ( "version",        QString( _TMST_VERS_ ) );
 
-   xml.writeStartElement( "file" );
+   xml.writeStartElement( "file" );         // <file time_count=...>
    xml.writeAttribute   ( "time_count",     QString::number( ntimes )     );
    xml.writeAttribute   ( "constant_incr",  ( const_ti ? "1" : "0" )      );
    xml.writeAttribute   ( "time_increment", QString::number( time_inc )   );
    xml.writeAttribute   ( "first_time",     QString::number( time_first ) );
 
    for ( int jj = 0; jj < nvalues; jj++ )
-   {
-      xml.writeStartElement( "value" );
+   {  // Key,Format for each value field in the records
+      xml.writeStartElement( "value" );     // <value key=...format=.../>
       xml.writeAttribute   ( "key",    keys[ jj ] );
       xml.writeAttribute   ( "format", fmts[ jj ] );
       xml.writeEndElement  ( );
    }
 
-   xml.writeEndElement  ( );  // "</file>"
-   xml.writeEndElement  ( );  // "</TimeState>"
+   xml.writeEndElement  ( );                // </file>
+   xml.writeEndElement  ( );                // </TimeState>
    xml.writeEndDocument ( );
    xfo.close();
 
@@ -406,7 +411,7 @@ int US_TimeState::open_read_data( QString fpath )
    filei       = new QFile( filepath );
 
    if ( ! filei->open( QIODevice::ReadOnly ) )
-   {
+   {  // Error opening file for read
       status     = 500;
       set_error( status );
       error_msg += filepath;
@@ -427,7 +432,7 @@ int US_TimeState::open_read_data( QString fpath )
    dsi->readRawData( cdata, fhdr_size );
 
    if ( strncmp( cdata, _TMST_MAGI_, 4 ) != 0 )
-   {
+   {  // Error in magic number (wrong kind of file?)
       status     = 501;
       set_error( status );
       error_msg += QString( _TMST_MAGI_ ) + " "
@@ -440,34 +445,34 @@ int US_TimeState::open_read_data( QString fpath )
    cdata[ 8 ]  = cdata[ 5 ];
    cdata[ 9 ]  = '\0';
    if ( strncmp( cdata+6, _TMST_VERS_, 3 ) )
-   {
+   {  // Error in version of file
       status     = 502;
       set_error( status );
       error_msg += fvers + " " + QString( cdata+6 ).left( 3 );
       return status;
    }
 
-   ntimes      = 0;
+   ntimes      = 0;                     // Initialize counts and size
    nvalues     = 0;
    rec_size    = 0;
 
-   strncpy( cdata,   _TMST_MAGI_, 4 );
-   strncpy( cdata+4, _TMST_VERS_, 3 );
-   cdata[ 5 ]  = cdata[ 6 ];
+   strncpy( cdata,   _TMST_MAGI_, 4 );  // "USTS"
+   strncpy( cdata+4, _TMST_VERS_, 3 );  // "1.0"
+   cdata[ 5 ]  = cdata[ 6 ];            // '1','0'
 
-   keys.clear();
+   keys.clear();                        // Initialize field attributes
    fmts.clear();
    offs.clear();
    int koff    = 0;
 
-   // Read the associated XML file
+   // Read the associated XML definitions file
    QString xfname = QString( filename ).section( ".", 0, -2 ) + ".xml";
    QString xfpath = QString( filepath ).section( ".", 0, -2 ) + ".xml";
 
    QFile xfi( xfpath );
 
    if ( !xfi.open( QIODevice::ReadOnly | QIODevice::Text ) )
-   {
+   {  // Error opening xml definitions for read
       status     = 505;
       set_error( status );
       return status;
@@ -476,7 +481,7 @@ int US_TimeState::open_read_data( QString fpath )
    QXmlStreamReader xml( &xfi );
 
    while( ! xml.atEnd() )
-   {
+   {  // Read definition elements
       QString xname;
       QString attv;
       QXmlStreamAttributes attr;
@@ -488,12 +493,12 @@ int US_TimeState::open_read_data( QString fpath )
          attr       = xml.attributes();
 
          if ( xname == "TimeState" )
-         {
+         {  // Parse file/object version
             fvers      = attr.value( "version" ).toString();
          }
 
          else if ( xname == "file" )
-         {
+         {  // Parse overall file attributes
             attv       = attr.value( "time_count"     ).toString();
             ntimes     = attv.isEmpty() ? ntimes     : attv.toInt();
 
@@ -508,19 +513,19 @@ int US_TimeState::open_read_data( QString fpath )
          }
 
          else if ( xname == "value" )
-         {
+         {  // Parse the attributes of a record field
             QString ky = attr.value( "key"    ).toString();
             QString fm = attr.value( "format" ).toString();
 
-            keys << ky;
-            fmts << fm;
-            offs << koff;
-            koff      += fm.mid( 1 ).toInt();
+            keys << ky;                         // Add key to list
+            fmts << fm;                         // Add format
+            offs << koff;                       // Add offset in record
+            koff      += fm.mid( 1 ).toInt();   // Bump offset by value length
 
-            nvalues++;
+            nvalues++;                          // Bump count of values
          }
-      }
-   }
+      }  // End: is-start-element
+   }  // End: element loop
 
    xfi.close();
 
@@ -592,13 +597,14 @@ int US_TimeState::read_record( int rtimex )
 }
 
 // Get a time integer value for a given key from the current record
-int US_TimeState::time_ivalue( QString key, int* stat )
+int US_TimeState::time_ivalue( const QString key, int* stat )
 {
    int ivalue  = 0;
    int rfmt    = 0;
    int rlen    = 4;
    int roff    = 0;
 
+   // Fetch attributes of the specified key; point to its record position
    int status  = key_parameters( key, &rfmt, &rlen, &roff );
    char* rdata = cdata + roff;
 
@@ -610,7 +616,7 @@ int US_TimeState::time_ivalue( QString key, int* stat )
       double dvalue;
 
       switch( rfmt )
-      {
+      {  // Fetch the value in this key's format; get integer output value
          case 0:                                 // I4
             ivalue      = iword( rdata );
             break;
@@ -644,13 +650,14 @@ int US_TimeState::time_ivalue( QString key, int* stat )
 }
 
 // Get a time double value for a given key from the current record
-double US_TimeState::time_dvalue( QString key, int* stat )
+double US_TimeState::time_dvalue( const QString key, int* stat )
 {
    double dvalue  = 0.0;
    int rfmt    = 0;
    int rlen    = 4;
    int roff    = 0;
 
+   // Fetch attributes of the specified key; point to its record position
    int status  = key_parameters( key, &rfmt, &rlen, &roff );
    char* rdata = cdata + roff;
 
@@ -662,7 +669,7 @@ double US_TimeState::time_dvalue( QString key, int* stat )
       double ivalue;
 
       switch( rfmt )
-      {
+      {  // Fetch the value in this key's format; get double output value
          case 0:                                 // I4
             ivalue      = iword( rdata );
             dvalue      = (double)ivalue;
@@ -706,13 +713,14 @@ QString US_TimeState::time_svalue( QString key, int* stat )
    int rlen    = 4;
    int roff    = 0;
 
+   // Fetch attributes of the specified key; point to its record position
    int status  = key_parameters( key, &rfmt, &rlen, &roff );
    char* rdata = cdata + roff;
 
    if ( status == 0 )
    {
       switch( rfmt )
-      {
+      {  // Fetch the value in this key's format; get string output value
          case 0:                                 // I4
             ivalue      = iword( rdata );
             svalue      = QString::number( ivalue );
@@ -751,10 +759,10 @@ int US_TimeState::close_read_data()
 {
    int status  = 0;
 
-   filei->close();
-   filei       = NULL;
-   dsi         = NULL;
-   rd_open     = false;
+   filei->close();                     // Close the input file
+   filei       = NULL;                 // Clear the file pointer
+   dsi         = NULL;                 // Clear the data stream pointer
+   rd_open     = false;                // Flag a closed file
 
    return status;
 }
@@ -787,9 +795,9 @@ QString US_TimeState::error_message( int status )
    QString   errmsg  = _TR_( "UNKNOWN" );
 
    for ( int ii = 0; ii < netypes; ii++ )
-   {  // Find the error message corresponding to the status flag
+   {  // Find a match to the specified error status code
       if ( emap[ ii ].estat == status )
-      {
+      {  // A status code match is found, so get the corresponding message
          errmsg      = emap[ ii ].emsg;
          break;
       }
@@ -804,6 +812,212 @@ QString US_TimeState::last_error_message( )
 {
    return error_msg;
 }
+
+// Static function to create a TMST record in the DB from a local file set
+int US_TimeState::dbCreate( US_DB2* dbP,
+                            const int expID, const QString fpath )
+{
+   QStringList query;
+   int tmstID   = -1;
+   if ( dbP == NULL  ||  fpath.isEmpty()  ||  expID < 1 )
+      return tmstID;   // Invalid arguments
+
+   QString tmst_fpath = fpath;
+   QString defs_fpath = QString( fpath ).section( ".", 0, -2 ) + ".xml";
+
+   QFile dfi( tmst_fpath );
+   QFile xfi( defs_fpath );
+   if ( !dfi.exists()  ||  !xfi.exists() )
+      return -2;       // Local files do not both exist
+
+   if ( ! xfi.open( QIODevice::ReadOnly ) )
+      return -3;       // Cannot open definitions file
+
+   // Get attributes of the local files and test for existing DB record
+   QString tmst_cksm  = US_Util::md5sum_file( tmst_fpath );
+   QString defs_cksm  = US_Util::md5sum_file( defs_fpath );
+   QString tmst_fname = QString( fpath ).section( "/", -1, -1 );
+int dbg_level=US_Settings::us_debug();
+DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
+
+   QByteArray defs_da = xfi.readAll();
+   xfi.close();
+   QString idTmst     = QString::number( tmstID  );
+   QString idExp      = QString::number( expID );
+   QString fnamedb;
+   QString xdefs;
+   QString cksumdb;
+   QByteArray defs_ld;
+   tmstID             = 0;
+   int expIDdb        = expID;
+ 
+   int stat           = dbExamine( dbP, &tmstID, &expIDdb, &fnamedb,
+                                   &xdefs, &cksumdb );
+DbgLv(1) << "dbCreate:  dbExam stat" << stat << "tmstID expID"
+ << tmstID << expIDdb << "cksumdb" << cksumdb;
+   if ( stat == US_DB2::OK )
+   {  // We have an already existing DB record, so check how it matches local
+      if ( cksumdb == tmst_cksm )
+      {  // Binary data appears to match, so check xml defs
+         QByteArray defsdb  = xdefs.toUtf8();
+         QString cksumxd    = QString( QCryptographicHash::hash(
+                              defsdb, QCryptographicHash::Md5 ).toHex() )
+                              + " " + QString::number( defsdb.size() );
+ 
+         if ( tmstID > 0  &&  cksumxd == defs_cksm )
+         {  // Xml definitions characters also match, return with existing DB
+            if ( fnamedb != tmst_fname )
+            {  // If the file name differs, we must update the record
+               dbP->mysqlEscapeString( defs_ld, defs_da, defs_da.size() );
+               query.clear();
+               query << "update_timestate" << idTmst << idExp
+                     << tmst_fname << defs_ld;
+               dbP->statusQuery( query );
+            }
+
+            return tmstID;
+         }
+      }
+
+      // Not a complete match, so we must delete the DB record and re-create it
+      if ( tmstID > 0 )
+      {
+         dbDelete( dbP, tmstID );
+      }
+   }
+
+   // Escape definitions xml string, then create a new DB record
+   dbP->mysqlEscapeString( defs_ld, defs_da, defs_da.size() );
+   query.clear();
+   query << "new_timestate" << idExp << tmst_fname << defs_ld;
+   stat         = dbP->statusQuery( query );
+   int nsrtID   = dbP->lastInsertID();
+   tmstID       = ( stat == US_DB2::OK  ||  stat == US_DB2::NOROWS )
+                ? nsrtID : -4;
+DbgLv(1) << "dbCreate:  new_timestate status" << stat
+ << "idExp tmstID nsrtID dsiz" << idExp << tmstID << nsrtID << defs_da.size();
+
+   return tmstID;
+}
+
+// Static function to delete a TMST record from the DB
+int US_TimeState::dbDelete( US_DB2* dbP, const int tmstID )
+{
+int dbg_level=US_Settings::us_debug();
+DbgLv(1) << "dbDelete: dbP tmstID" << dbP << tmstID;
+   QStringList query;
+   query << "delete_timestate" << QString::number( tmstID );
+   int status = dbP->statusQuery( query );
+
+   return status;
+}
+
+// Static function to examine a TMST record from the DB
+int US_TimeState::dbExamine( US_DB2* dbP, int* tmstIdP, int* expIdP,
+      QString* fnameP, QString* xdefsP, QString* cksumP, QDateTime* lastupdP )
+{
+int dbg_level=US_Settings::us_debug();
+DbgLv(1) << "dbExamine: dbP tmstID expID fname xdefs cksum lastupd"
+ << dbP << tmstIdP << expIdP << fnameP << xdefsP << cksumP << lastupdP;
+   QStringList query;
+   int tmstID    = ( tmstIdP == NULL ) ? 0 : *tmstIdP;
+   int expID     = ( expIdP  == NULL ) ? 0 : *expIdP;
+   int status    = US_DB2::OK;
+DbgLv(1) << "dbExamine: tmstID expID" << tmstID << expID;
+
+   if ( tmstID > 0 )
+   {  // TimeState ID is given, get experimentID; then fall thru for the rest
+      query.clear();
+      query << "get_timestate" << QString::number( tmstID );
+      dbP->query( query );
+      status        = dbP->lastErrno();
+DbgLv(1) << "dbExamine:  get_timestate tmstID" << tmstID << "status" << status;
+      if ( status != US_DB2::OK )
+         return status;
+
+      int nrows     = dbP->numRows();
+      dbP->next();
+      expID         = dbP->value( 0 ).toString().toInt();
+DbgLv(1) << "dbExamine:  get_timestate expID" << expID << "nrows" << nrows;
+      if ( expIdP != NULL )
+         *expIdP       = expID;
+   }
+
+   else if ( expID > 0 )
+   {  // Experiment ID is given, get timestateID; then fall thru for the rest
+//query.clear();
+//query << "get_experiment2_timestate" << QString::number( expID );
+//dbP->query( query );
+//status=dbP->lastErrno();
+//DbgLv(1) << "dbExamine:  get_experiment2_timestate expID status" << expID << status;
+      query.clear();
+      query << "get_experiment_timestate" << QString::number( expID );
+      dbP->query( query );
+      status        = dbP->lastErrno();
+DbgLv(1) << "dbExamine:  get_experiment_timestate expID status" << expID << status;
+      if ( status != US_DB2::OK )
+         return status;
+
+      int nrows     = dbP->numRows();
+DbgLv(1) << "dbExamine:  get_experiment_timestate  nrows" << nrows;
+//      dbP->next();
+bool havenx=dbP->next();
+      status        = dbP->lastErrno();
+DbgLv(1) << "dbExamine:  get_experiment_timestate  next status" << status
+ << "have_next" << havenx;
+      tmstID        = dbP->value( 0 ).toString().toInt();
+DbgLv(1) << "dbExamine:  get_experiment_timestate   tmstID" << tmstID
+ << dbP->value(0).toString() << dbP->value(1).toString();
+      if ( tmstIdP != NULL )
+         *tmstIdP      = tmstID;
+   }
+
+   else
+   {  // Neither tmstID nor expID given
+      return US_DB2::NO_EXPERIMENT;
+   }
+
+   if ( fnameP != NULL )    // Return file name if requested
+      *fnameP       = dbP->value( 1 ).toString();
+
+   if ( xdefsP != NULL )    // Return xml definitions string if requested
+      *xdefsP       = dbP->value( 2 ).toString();
+
+   if ( cksumP != NULL )    // Return cksum+size string if requested
+      *cksumP       = dbP->value( 3 ).toString() + " " +
+                      dbP->value( 4 ).toString();
+if(cksumP!=NULL)
+DbgLv(1) << "dbExamine:  cksum-db" << *cksumP;
+
+   if ( lastupdP != NULL )  // Return last-updated datetime if requested
+      *lastupdP     = QDateTime::fromString( dbP->value( 5 ).toString(),
+                                             Qt::ISODate ).toUTC();
+
+   return status;
+}
+
+// Static function to download a TMST binary data record from the DB
+int US_TimeState::dbDownload( US_DB2* dbP, const int tmstID,
+      const QString fpath )
+{
+int dbg_level=US_Settings::us_debug();
+DbgLv(1) << "dbDownload: dbP tmstID fpath" << dbP << tmstID << fpath;
+   int status = dbP->readBlobFromDB( fpath, QString( "download_timestate" ),
+                                     tmstID );
+   return status;
+}
+
+// Static function to upload a TMST binary data record to the DB
+int US_TimeState::dbUpload( US_DB2* dbP, const int tmstID,
+      const QString fpath )
+{
+int dbg_level=US_Settings::us_debug();
+DbgLv(1) << "dbUpload: dbP tmstID fpath" << dbP << tmstID << fpath;
+   int status = dbP->writeBlobToDB( fpath, QString( "upload_timestate" ),
+                                    tmstID );
+   return status;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////
 // Private slots.  Internal utilities like fetch/store half,full,float
@@ -991,7 +1205,7 @@ int US_TimeState::set_error( int status )
 //  rfmtP = optional pointer for format flag (0-5 for I4,I2,I1,F4,F8,Cn)
 //  rlenP = optional pointer for field length (1,2,4,8 for F,I; 1-127 for C)
 //  roffP = optional pointer for offset of field in data record
-int US_TimeState::key_parameters( QString& key,
+int US_TimeState::key_parameters( const QString key,
                                   int* rfmtP, int* rlenP, int* roffP )
 {
    int status   = 0;
