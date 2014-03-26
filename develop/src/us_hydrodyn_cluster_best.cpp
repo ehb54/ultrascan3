@@ -75,6 +75,10 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrprober ->setMinimumWidth ( QFontMetrics( lbl_bestmsrprober->font() ).maxWidth() * 41 );
 
    le_bestmsrprober = new QLineEdit     ( this, "bestmsrprober Line Edit" );
+   if ( !parameters->count( "bestmsrprober" ) )
+   {
+      ( *parameters )[ "bestmsrprober" ] = "1.5";
+   }
    le_bestmsrprober ->setText           ( parameters->count( "bestmsrprober" ) ? ( *parameters )[ "bestmsrprober" ] : "" );
    le_bestmsrprober ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_bestmsrprober ->setPalette        ( PALET_NORMAL );
@@ -93,6 +97,10 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrfinenessangle ->setMinimumWidth ( QFontMetrics( lbl_bestmsrfinenessangle->font() ).maxWidth() * 41 );
 
    le_bestmsrfinenessangle = new QLineEdit     ( this, "bestmsrfinenessangle Line Edit" );
+   if ( !parameters->count( "bestmsrfinenessangle" ) )
+   {
+      ( *parameters )[ "bestmsrfinenessangle" ] = ".6";
+   }
    le_bestmsrfinenessangle ->setText           ( parameters->count( "bestmsrfinenessangle" ) ? ( *parameters )[ "bestmsrfinenessangle" ] : "" );
    le_bestmsrfinenessangle ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_bestmsrfinenessangle ->setPalette        ( PALET_NORMAL );
@@ -111,6 +119,10 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrmaxtriangles ->setMinimumWidth ( QFontMetrics( lbl_bestmsrmaxtriangles->font() ).maxWidth() * 41 );
 
    le_bestmsrmaxtriangles = new QLineEdit     ( this, "bestmsrmaxtriangles Line Edit" );
+   if ( !parameters->count( "bestmsrmaxtriangles" ) )
+   {
+      ( *parameters )[ "bestmsrmaxtriangles" ] = "60000";
+   }
    le_bestmsrmaxtriangles ->setText           ( parameters->count( "bestmsrmaxtriangles" ) ? ( *parameters )[ "bestmsrmaxtriangles" ] : "" );
    le_bestmsrmaxtriangles ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_bestmsrmaxtriangles ->setPalette        ( PALET_NORMAL );
@@ -170,7 +182,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestrcoalnmax ->setMinimumWidth   ( 150 );
    connect( le_bestrcoalnmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestrcoalnmax( const QString & ) ) );
 
-   lbl_bestrcoaln = new QLabel      ( tr( "COALESCE: number of files produced (Typically 4)" ), this );
+   lbl_bestrcoaln = new QLabel      ( tr( "COALESCE: number of files produced (Typically 6)" ), this );
    lbl_bestrcoaln ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestrcoaln ->setMinimumHeight( minHeight1 );
    lbl_bestrcoaln ->setPalette      ( PALET_LABEL );
@@ -179,6 +191,10 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestrcoaln ->setMinimumWidth ( QFontMetrics( lbl_bestrcoaln->font() ).maxWidth() * 41 );
 
    le_bestrcoaln = new QLineEdit     ( this, "bestrcoaln Line Edit" );
+   if ( !parameters->count( "bestrcoaln" ) )
+   {
+      ( *parameters )[ "bestrcoaln" ] = "6";
+   }
    le_bestrcoaln ->setText           ( parameters->count( "bestrcoaln" ) ? ( *parameters )[ "bestrcoaln" ] : "" );
    le_bestrcoaln ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_bestrcoaln ->setPalette        ( PALET_NORMAL );
@@ -268,6 +284,17 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrcoalescer ->setMinimumWidth   ( 150 );
    connect( le_bestmsrcoalescer, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrcoalescer( const QString & ) ) );
 
+   cb_bestmsrusesomoradii = new QCheckBox    ( tr( "MSROLL: Use US-SOMO radii (checking overrides next 2 fields)" ), this );
+   cb_bestmsrusesomoradii ->setMinimumHeight ( minHeight1 );
+   cb_bestmsrusesomoradii ->setPalette       ( PALET_NORMAL );
+   AUTFBACK( cb_bestmsrusesomoradii );
+   cb_bestmsrusesomoradii ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
+   cb_bestmsrusesomoradii ->setMinimumWidth  ( QFontMetrics( cb_bestmsrusesomoradii->font() ).maxWidth() * 41 );
+
+   widgets_opt_label.push_back( cb_bestmsrusesomoradii );
+   cb_bestmsrusesomoradii ->setChecked        ( parameters->count( "bestmsrusesomoradii" ) && ( *parameters )[ "bestmsrusesomoradii" ] == "true" ? true : false );
+   connect( cb_bestmsrusesomoradii, SIGNAL( clicked() ), SLOT( set_bestmsrusesomoradii() ) );
+
    lbl_bestmsrradiifile = new QLabel      ( tr( "MSROLL: manual radii file" ), this );
    lbl_bestmsrradiifile ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestmsrradiifile ->setMinimumHeight( minHeight1 );
@@ -279,6 +306,10 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrradiifile = new QLineEdit     ( this, "bestmsrradiifile Line Edit" );
    widgets_opt_label.push_back( lbl_bestmsrradiifile );
    widgets_opt_label.push_back( le_bestmsrradiifile );
+   if ( !parameters->count( "bestmsrradiifile" ) )
+   {
+      ( *parameters )[ "bestmsrradiifile" ] = QString( USglobal->config_list.system_dir + QDir::separator() + "etc" + QDir::separator() + "best.radii" );
+   }
    le_bestmsrradiifile ->setText           ( parameters->count( "bestmsrradiifile" ) ? ( *parameters )[ "bestmsrradiifile" ] : "" );
    le_bestmsrradiifile ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_bestmsrradiifile ->setPalette        ( PALET_NORMAL );
@@ -411,6 +442,11 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    background->addLayout( hbl );
    hbl = new Q3HBoxLayout( 0 );
    hbl->addSpacing( 4 );
+   hbl->addWidget( cb_bestmsrusesomoradii );
+   hbl->addSpacing( 4 );
+   background->addLayout( hbl );
+   hbl = new Q3HBoxLayout( 0 );
+   hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestmsrradiifile );
    hbl->addWidget( le_bestmsrradiifile );
    hbl->addSpacing( 4 );
@@ -503,6 +539,12 @@ void US_Hydrodyn_Cluster_Best::closeEvent( QCloseEvent *e )
    {
       parameters->erase( "bestmsrcoalescer" );
    }
+   if ( parameters->count( "bestmsrusesomoradii" ) &&
+        ( (*parameters)[ "bestmsrusesomoradii" ].isEmpty() ||
+          (*parameters)[ "bestmsrusesomoradii" ] == "false" ) )
+   {
+      parameters->erase( "bestmsrusesomoradii" );
+   }
    if ( parameters->count( "bestmsrradiifile" ) &&
         (*parameters)[ "bestmsrradiifile" ].isEmpty() )
    {
@@ -589,6 +631,11 @@ void US_Hydrodyn_Cluster_Best::hide_widgets( vector < QWidget * > w, bool do_hid
 void US_Hydrodyn_Cluster_Best::update_bestmsrcoalescer( const QString & )
 {
    ( *parameters )[ "bestmsrcoalescer" ] = le_bestmsrcoalescer->text();
+}
+
+void US_Hydrodyn_Cluster_Best::set_bestmsrusesomoradii()
+{
+   ( *parameters )[ "bestmsrusesomoradii" ] = cb_bestmsrusesomoradii->isChecked() ? "true" : "false";
 }
 
 void US_Hydrodyn_Cluster_Best::update_bestmsrradiifile( const QString & )
@@ -720,6 +767,7 @@ void US_Hydrodyn_Cluster_Best::update_fields()
    le_bestexpand                                   ->setText( parameters->count( "bestexpand" ) ? ( *parameters )[ "bestexpand" ] : "" );
    cb_bestbestvc                                   ->setChecked( parameters->count( "bestbestvc" ) && ( *parameters )[ "bestbestvc" ] == "true" ? true : false );
    le_bestmsrcoalescer                             ->setText( parameters->count( "bestmsrcoalescer" ) ? ( *parameters )[ "bestmsrcoalescer" ] : "" );
+   cb_bestmsrusesomoradii                          ->setChecked( parameters->count( "bestmsrusesomoradii" ) && ( *parameters )[ "bestmsrusesomoradii" ] == "true" ? true : false );
    disconnect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    le_bestmsrradiifile                             ->setText( parameters->count( "bestmsrradiifile" ) ? ( *parameters )[ "bestmsrradiifile" ] : "" );
    connect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrradiifile( const QString & ) ) );

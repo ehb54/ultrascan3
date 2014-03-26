@@ -261,9 +261,9 @@ US_Hydrodyn_Cluster::~US_Hydrodyn_Cluster()
 
 void US_Hydrodyn_Cluster::setupGUI()
 {
-   bool expert_mode = 
-      U_EXPT ||
-      active_additional_methods().size();
+   // bool expert_mode = 
+   //    U_EXPT ||
+   //    active_additional_methods().size();
 
    int minHeight1 = 30;
 
@@ -366,14 +366,14 @@ void US_Hydrodyn_Cluster::setupGUI()
    pb_dmd->setPalette( PALET_PUSHB );
    connect( pb_dmd, SIGNAL( clicked() ), SLOT( dmd() ) );
 
-   if ( expert_mode )
-   {
-      pb_additional = new QPushButton(tr("Other methods"), this);
-      pb_additional->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-      pb_additional->setMinimumHeight(minHeight1);
-      pb_additional->setPalette( PALET_PUSHB );
-      connect(pb_additional, SIGNAL(clicked()), SLOT(additional()));
-   }
+   // if ( expert_mode )
+   // {
+   pb_additional = new QPushButton(tr("Other methods"), this);
+   pb_additional->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_additional->setMinimumHeight(minHeight1);
+   pb_additional->setPalette( PALET_PUSHB );
+   connect(pb_additional, SIGNAL(clicked()), SLOT(additional()));
+   // }
 
    pb_advanced = new QPushButton(tr("Advanced options"), this);
    pb_advanced->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -483,11 +483,11 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_mpi_etc->addSpacing( 4 );
    hbl_mpi_etc->addWidget ( pb_dmd );
    hbl_mpi_etc->addSpacing( 4 );
-   if ( expert_mode )
-   {
-      hbl_mpi_etc->addWidget ( pb_additional );
-      hbl_mpi_etc->addSpacing( 4 );
-   }
+   // if ( expert_mode )
+   // {
+   hbl_mpi_etc->addWidget ( pb_additional );
+   hbl_mpi_etc->addSpacing( 4 );
+   // }
    hbl_mpi_etc->addWidget ( pb_advanced );
    hbl_mpi_etc->addSpacing( 4 );
    
@@ -4642,6 +4642,27 @@ bool US_Hydrodyn_Cluster::additional_processing(
          }
          QString dir = ( ( US_Hydrodyn * ) us_hydrodyn)->somo_dir + QDir::separator() + "tmp" + QDir::separator();
          
+         if ( !(*cluster_additional_methods_options_selected)[ method ].count( "bestmsrusesomoradii" ) &&
+              !(*cluster_additional_methods_options_selected)[ method ].count( "bestmsrradiifile" ) )
+         {
+            (*cluster_additional_methods_options_selected)[ method ][ "bestmsrradiifile" ] =
+               QString( USglobal->config_list.system_dir + QDir::separator() + "etc" + QDir::separator() + "best.radii" );
+            editor_msg( "blue", QString( tr( "Notice: using default BEST radii  file: %1" ) )
+                        .arg( (*cluster_additional_methods_options_selected)[ method ][ "bestmsrradiifile" ] ) );
+         }
+
+         if ( (*cluster_additional_methods_options_selected)[ method ].count( "bestmsrusesomoradii" ) )
+         {
+            if ( (*cluster_additional_methods_options_selected)[ method ].count( "bestmsrradiifile" ) )
+            {
+               (*cluster_additional_methods_options_selected)[ method ].erase( "bestmsrradiifile" );
+            }
+            if ( (*cluster_additional_methods_options_selected)[ method ].count( "bestmsrpatternfile" ) )
+            {
+               (*cluster_additional_methods_options_selected)[ method ].erase( "bestmsrpatternfile" );
+            }
+         }
+
          if ( !(*cluster_additional_methods_options_selected)[ method ].count( "bestmsrradiifile" ) )
          {
             QFile f_radii( dir + "msroll_radii.txt" );

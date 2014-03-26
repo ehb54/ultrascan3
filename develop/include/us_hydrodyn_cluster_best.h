@@ -77,6 +77,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       void                                    hide_widgets( vector < QWidget * >, bool do_hide = true, bool do_resize = true );
       QLabel *                                lbl_bestmsrcoalescer;
       QLineEdit *                             le_bestmsrcoalescer;
+      QCheckBox *                             cb_bestmsrusesomoradii;
       QLabel *                                lbl_bestmsrradiifile;
       QLineEdit *                             le_bestmsrradiifile;
       QLabel *                                lbl_bestmsrpatternfile;
@@ -107,6 +108,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Best : public QDialog
       void                                    set_bestbestvc();
       void                                    hide_opt_label();
       void                                    update_bestmsrcoalescer( const QString & );
+      void                                    set_bestmsrusesomoradii();
       void                                    update_bestmsrradiifile( const QString & );
       void                                    update_bestmsrpatternfile( const QString & );
       void                                    save();

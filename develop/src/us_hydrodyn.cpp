@@ -776,7 +776,7 @@ void US_Hydrodyn::setupGUI()
    pb_visualize->setPalette( PALET_PUSHB );
    connect(pb_visualize, SIGNAL(clicked()), SLOT(visualize()));
 
-   pb_batch2 = new QPushButton(tr("Batch Mode Operation"), this);
+   pb_batch2 = new QPushButton(tr("Batch Mode/Cluster Operation"), this);
    Q_CHECK_PTR(pb_batch2);
    pb_batch2->setMinimumHeight(minHeight1);
    pb_batch2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -810,7 +810,7 @@ void US_Hydrodyn::setupGUI()
    pb_best->setEnabled(true);
    pb_best->setPalette( PALET_PUSHB );
    connect(pb_best, SIGNAL(clicked()), SLOT( best_analysis()));
-   pb_best->hide();
+   // pb_best->hide();
 
    pb_open_hydro_results = new QPushButton(tr("Open Hydrodynamic Calculations File"), this);
    Q_CHECK_PTR(pb_open_hydro_results);
@@ -1128,7 +1128,7 @@ void US_Hydrodyn::set_expert( bool expert )
 {
    if ( expert )
    {
-      pb_best->show();
+      //      pb_best->show();
       lookup_tables->insertItem(tr("Make test set"), this, SLOT( make_test_set() ) );
    }
 }

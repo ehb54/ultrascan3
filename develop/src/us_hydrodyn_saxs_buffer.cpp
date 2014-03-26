@@ -2,6 +2,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
+#include "../include/us_hydrodyn_saxs_buffer_nth.h"
 #ifdef QT4
 #include <qwt_scale_engine.h>
 //Added by qt3to4:
@@ -110,7 +111,8 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       pbs.push_back( pb_similar_files );
       pbs.push_back( pb_regex_load );
       pbs.push_back( pb_invert );
-      pbs.push_back( pb_adjacent );
+      // pbs.push_back( pb_adjacent );
+      pbs.push_back( pb_select_nth );
       pbs.push_back( pb_color_rotate );
       pbs.push_back( pb_to_saxs );
       pbs.push_back( pb_view );
@@ -118,6 +120,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       pbs.push_back( pb_normalize );
 
       pbs.push_back( pb_legend );
+      pbs.push_back( pb_util );
       pbs.push_back( pb_axis_x );
       pbs.push_back( pb_axis_y );
       pbs.push_back( pb_wheel_cancel );
@@ -443,11 +446,17 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    //    pb_join->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    //    connect(pb_join, SIGNAL(clicked()), SLOT(join()));
 
-   pb_adjacent = new QPushButton(tr("Similar"), this);
-   pb_adjacent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_adjacent->setMinimumHeight(minHeight1);
-   pb_adjacent->setPalette( PALET_PUSHB );
-   connect(pb_adjacent, SIGNAL(clicked()), SLOT(adjacent()));
+   pb_select_nth = new QPushButton(tr("Select"), this);
+   pb_select_nth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_select_nth->setMinimumHeight(minHeight1);
+   pb_select_nth->setPalette( PALET_PUSHB );
+   connect(pb_select_nth, SIGNAL(clicked()), SLOT(select_nth()));
+
+   // pb_adjacent = new QPushButton(tr("Similar"), this);
+   // pb_adjacent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   // pb_adjacent->setMinimumHeight(minHeight1);
+   // pb_adjacent->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   // connect(pb_adjacent, SIGNAL(clicked()), SLOT(adjacent()));
 
    pb_to_saxs = new QPushButton(tr("S"), this);
    pb_to_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -982,6 +991,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_legend->setPalette( PALET_PUSHB );
    connect(pb_legend, SIGNAL(clicked()), SLOT(legend()));
 
+   pb_util = new QPushButton(tr("U"), this);
+   pb_util->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_util->setMinimumHeight(minHeight1);
+   pb_util->setPalette( PALET_PUSHB );
+   connect(pb_util, SIGNAL(clicked()), SLOT(util()));
+
    pb_axis_x = new QPushButton(tr("X"), this);
    pb_axis_x->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_x->setMinimumHeight(minHeight1);
@@ -1095,10 +1110,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    Q3BoxLayout *hbl_file_buttons_2 = new Q3HBoxLayout( 0 );
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
-   hbl_file_buttons_2->addWidget ( pb_adjacent );
+   // hbl_file_buttons_2->addWidget ( pb_adjacent );
+   hbl_file_buttons_2->addWidget ( pb_select_nth );
    hbl_file_buttons_2->addWidget ( pb_color_rotate );
    hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
+   hbl_file_buttons_2->addWidget ( pb_util );
    hbl_file_buttons_2->addWidget ( pb_axis_x );
    hbl_file_buttons_2->addWidget ( pb_axis_y );
    hbl_file_buttons_2->addWidget ( pb_rescale );
@@ -1266,6 +1283,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    if ( !U_EXPT )
    {
       pb_asum->hide();
+      pb_util->hide();
    }
 }
 
@@ -2054,7 +2072,8 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_color_rotate       ->setEnabled( files_selected_count );
    //    pb_join               ->setEnabled( files_selected_count == 2 );
    pb_join_start         ->setEnabled( files_selected_count == 2 );
-   pb_adjacent           ->setEnabled( lb_files->numRows() > 1 );
+   // pb_adjacent           ->setEnabled( lb_files->numRows() > 1 );
+   pb_select_nth         ->setEnabled( true );
    pb_to_saxs            ->setEnabled( files_selected_count );
    pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
@@ -2155,6 +2174,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
    pb_legend           ->setEnabled( lb_files->numRows() && files_selected_count <= 20 );
+   pb_util             ->setEnabled( true );
    pb_axis_x           ->setEnabled( lb_files->numRows() );
    pb_axis_y           ->setEnabled( lb_files->numRows() );
    // cb_guinier          ->setEnabled( files_selected_count );
@@ -2456,15 +2476,15 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
       raise();
    }
 
-   if ( *saxs_widget )
+   // if ( *saxs_widget )
+   // {
+   if ( cb_lock_dir->isChecked() )
    {
-      if ( cb_lock_dir->isChecked() )
-      {
-         saxs_window->add_to_directory_history( lbl_dir->text() );
-      }
-      saxs_window->select_from_directory_history( use_dir, this );
-      raise();
+      ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( lbl_dir->text() );
    }
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   raise();
+   // }
 
    QStringList filenames = Q3FileDialog::getOpenFileNames(
                                                          "dat files [foxs / other] (*.dat);;"
@@ -2960,7 +2980,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       errormsg = QString("Error: %1 does not exist").arg( filename );
       return false;
    }
-   cout << QString( "opening %1\n" ).arg( filename ) << flush;
+   //   cout << QString( "opening %1\n" ).arg( filename ) << flush;
    
    QString ext = QFileInfo( filename ).extension( false ).lower();
 
@@ -3095,7 +3115,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       return false;
    }
 
-   cout << QString( "opened %1\n" ).arg( filename ) << flush;
+   // cout << QString( "opened %1\n" ).arg( filename ) << flush;
    QString basename = QFileInfo( filename ).baseName( true );
    f_name      [ basename ] = filename;
    f_pos       [ basename ] = f_qs.size();
@@ -3869,7 +3889,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
    QString use_filename;
    if ( f_name.count( file ) )
    {
-      use_filename = f_name[ file ];
+      use_filename = QFileInfo( f_name[ file ] ).fileName();
    } else {
       use_filename = file + ".dat";
    }
@@ -4597,109 +4617,115 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
    return false;
 }
 
-void US_Hydrodyn_Saxs_Buffer::adjacent()
-{
-   QString match_name;
-   int     match_pos = 0;
-   QStringList turn_on;
+// void US_Hydrodyn_Saxs_Buffer::adjacent()
+// {
+//    qDebug( "adjacent" );
+//    QString match_name;
+//    int     match_pos = 0;
+//    QStringList turn_on;
 
-   disable_all();
+//    disable_all();
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
-   {
-      if ( lb_files->isSelected( i ) )
-      {
-         match_name = lb_files->text( i );
-         turn_on << match_name;
-         match_pos = i;
-         break;
-      }
-   }
+//    qDebug( "adjacent 0" );
+//    for ( int i = 0; i < lb_files->numRows(); i++ )
+//    {
+//       if ( lb_files->isSelected( i ) )
+//       {
+//          match_name = lb_files->text( i );
+//          turn_on << match_name;
+//          match_pos = i;
+//          break;
+//       }
+//    }
+//    qDebug( "adjacent 1" );
 
-   QRegExp rx;
+//    QRegExp rx;
 
-   bool found = false;
-   // if we have bsub
-   if ( match_name.contains( "_bsub_a" ) )
-   {
-      found = true;
-      rx.setPattern(
-                    QString( "^%1" )
-                    .arg( match_name )
-                    .replace( QRegExp( "_bsub_a.*$" ), "" )
-                    .replace( QRegExp( "\\d+$" ), "\\d+" )
-                    + 
-                    QString( "%1$" )
-                    .arg( match_name )
-                    .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
-                    );
-   }
+//    bool found = false;
+//    // if we have bsub
+//    if ( match_name.contains( "_bsub_a" ) )
+//    {
+//       found = true;
+//       rx.setPattern(
+//                     QString( "^%1" )
+//                     .arg( match_name )
+//                     .replace( QRegExp( "_bsub_a.*$" ), "" )
+//                     .replace( QRegExp( "\\d+$" ), "\\d+" )
+//                     + 
+//                     QString( "%1$" )
+//                     .arg( match_name )
+//                     .replace( QRegExp( "^.*_bsub" ), "_bsub" ) 
+//                     );
+//    }
 
-   if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
-   {
-      found = true;
-      rx.setPattern(
-                    QString( "^%1" )
-                    .arg( match_name )
-                    .replace( QRegExp( "_cn\\d+.*$" ), "" )
-                    );
-   }
+//    qDebug( "adjacent 2" );
+//    if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
+//    {
+//       found = true;
+//       rx.setPattern(
+//                     QString( "^%1" )
+//                     .arg( match_name )
+//                     .replace( QRegExp( "_cn\\d+.*$" ), "" )
+//                     );
+//    }
 
-   if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
-   {
-      found = true;
-      rx.setPattern(
-                    QString( "^%1" )
-                    .arg( match_name )
-                    .replace( QRegExp( "\\d+$" ), "" ) 
-                    );
-   }
+//    qDebug( "adjacent 3" );
+//    if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
+//    {
+//       found = true;
+//       rx.setPattern(
+//                     QString( "^%1" )
+//                     .arg( match_name )
+//                     .replace( QRegExp( "\\d+$" ), "" ) 
+//                     );
+//    }
 
-   // cout << "rx: " << rx.pattern() << endl;
+//    // cout << "rx: " << rx.pattern() << endl;
 
-   unsigned int newly_set = 0;
+//    unsigned int newly_set = 0;
+//    qDebug( "adjacent 4" );
 
-   if ( found )
-   {
-      disable_updates = true;
+//    if ( found )
+//    {
+//       disable_updates = true;
       
-      for ( int i = match_pos - 1; i >= 0; i-- )
-      {
-         if ( lb_files->text( i ).contains( rx ) )
-         {
-            if ( !lb_files->isSelected( i ) )
-            {
-               lb_files->setSelected( i, true );
-               newly_set++;
-            }
-         }
-      }
+//       for ( int i = match_pos - 1; i >= 0; i-- )
+//       {
+//          if ( lb_files->text( i ).contains( rx ) )
+//          {
+//             if ( !lb_files->isSelected( i ) )
+//             {
+//                lb_files->setSelected( i, true );
+//                newly_set++;
+//             }
+//          }
+//       }
       
-      for ( int i = match_pos + 1; i < lb_files->numRows(); i++ )
-      {
-         if ( lb_files->text( i ).contains( rx ) )
-         {
-            if ( !lb_files->isSelected( i ) )
-            {
-               lb_files->setSelected( i, true );
-               newly_set++;
-            }
-         }
-      }
+//       for ( int i = match_pos + 1; i < lb_files->numRows(); i++ )
+//       {
+//          if ( lb_files->text( i ).contains( rx ) )
+//          {
+//             if ( !lb_files->isSelected( i ) )
+//             {
+//                lb_files->setSelected( i, true );
+//                newly_set++;
+//             }
+//          }
+//       }
       
-      if ( !newly_set )
-      {
-         adjacent_select( lb_files, match_name );
-         return;
-      }
-      disable_updates = false;
-      update_files();
-   } else {
-      adjacent_select( lb_files, match_name );
-      return;
-   }      
-   update_enables();
-}
+//       if ( !newly_set )
+//       {
+//          adjacent_select( lb_files, match_name );
+//          return;
+//       }
+//       disable_updates = false;
+//       update_files();
+//    } else {
+//       adjacent_select( lb_files, match_name );
+//       return;
+//    }      
+//    update_enables();
+// }
 
 void US_Hydrodyn_Saxs_Buffer::adjacent_created()
 {
@@ -7207,8 +7233,9 @@ void US_Hydrodyn_Saxs_Buffer::disable_all()
    pb_set_empty          ->setEnabled( false );
    pb_select_all         ->setEnabled( false );
    pb_invert             ->setEnabled( false );
-   pb_join               ->setEnabled( false );
-   pb_adjacent           ->setEnabled( false );
+   // pb_join               ->setEnabled( false );
+   // pb_adjacent           ->setEnabled( false );
+   pb_select_nth         ->setEnabled( false );
    pb_to_saxs            ->setEnabled( false );
    pb_view               ->setEnabled( false );
    pb_rescale            ->setEnabled( false );
@@ -7227,9 +7254,9 @@ void US_Hydrodyn_Saxs_Buffer::disable_all()
    pb_crop_undo          ->setEnabled( false );
    pb_crop_right         ->setEnabled( false ); 
    pb_legend             ->setEnabled( false );
+   pb_util               ->setEnabled( false );
    pb_axis_x             ->setEnabled( false );
    pb_axis_y             ->setEnabled( false );
-
    pb_add_files          ->setEnabled( false );
 
    lb_files              ->setEnabled( false );
@@ -8082,8 +8109,10 @@ void US_Hydrodyn_Saxs_Buffer::push_back_color_if_ok( QColor bg, QColor set )
 
 void US_Hydrodyn_Saxs_Buffer::dir_pressed()
 {
+   QString use_dir = lbl_dir->text();
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString s = Q3FileDialog::getExistingDirectory(
-                                                 lbl_dir->text(),
+                                                 use_dir,
                                                  this,
                                                  "get existing directory",
                                                  tr( "Choose a new base directory" ),
@@ -8092,17 +8121,16 @@ void US_Hydrodyn_Saxs_Buffer::dir_pressed()
    {
       QDir::setCurrent( s );
       lbl_dir->setText(  QDir::currentDirPath() );
-      if ( *saxs_widget )
-      {
-         saxs_window->add_to_directory_history( s );
-      }
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
    }
 }
 
 void US_Hydrodyn_Saxs_Buffer::created_dir_pressed()
 {
+   QString use_dir = lbl_dir->text();
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString s = Q3FileDialog::getExistingDirectory(
-                                                 lbl_dir->text(),
+                                                 use_dir,
                                                  this,
                                                  "get existing directory",
                                                  tr( "Choose a new base directory for saving files" ),
@@ -8110,10 +8138,7 @@ void US_Hydrodyn_Saxs_Buffer::created_dir_pressed()
    if ( !s.isEmpty() )
    {
       lbl_created_dir->setText( s );
-      if ( *saxs_widget )
-      {
-         saxs_window->add_to_directory_history( s );
-      }
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
    }
 }
 
@@ -8429,4 +8454,49 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
       conc_window->refresh( csv_conc );
    }
    update_enables();
+}
+
+void US_Hydrodyn_Saxs_Buffer::select_nth()
+{
+   map < QString, QString > parameters;
+
+   parameters[ "buffer_nth_contains"   ] = 
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "buffer_nth_contains" ) ?
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "buffer_nth_contains" ] : "";
+
+   US_Hydrodyn_Saxs_Buffer_Nth *buffer_nth = 
+      new US_Hydrodyn_Saxs_Buffer_Nth(
+                                   this,
+                                   & parameters,
+                                   this );
+   US_Hydrodyn::fixWinButtons( buffer_nth );
+   buffer_nth->exec();
+   delete buffer_nth;
+
+   if ( !parameters.count( "go" ) )
+   {
+      return;
+   }
+
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "buffer_nth_contains" ] =
+      parameters.count( "buffer_nth_contains" ) ? parameters[ "buffer_nth_contains" ] : "";
+
+   disable_updates = true;
+   lb_files->clearSelection();
+   for ( int i = 0; i < lb_files->numRows(); ++i )
+   {
+      if ( parameters.count( QString( "%1" ).arg( i ) ) )
+      {
+         lb_files->setSelected( i, true );
+      }
+   }
+   disable_updates = false;
+   plot_files();
+   update_enables();
+}
+
+
+void US_Hydrodyn_Saxs_Buffer::util()
+{
+   // qDebug( "not enabled" );
 }

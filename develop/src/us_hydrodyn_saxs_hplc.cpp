@@ -2325,15 +2325,15 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
       raise();
    }
 
-   if ( *saxs_widget )
+   // if ( *saxs_widget )
+   // {
+   if ( cb_lock_dir->isChecked() )
    {
-      if ( cb_lock_dir->isChecked() )
-      {
-         saxs_window->add_to_directory_history( lbl_dir->text() );
-      }
-      saxs_window->select_from_directory_history( use_dir, this );
-      raise();
+      ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( lbl_dir->text() );
    }
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   raise();
+   // }
 
    QStringList filenames = Q3FileDialog::getOpenFileNames(
                                                          "dat files [foxs / other] (*.dat);;"
@@ -4206,7 +4206,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
    QString use_filename;
    if ( f_name.count( file ) && !f_name[ file ].isEmpty() )
    {
-      use_filename = f_name[ file ];
+      use_filename = QFileInfo( f_name[ file ] ).fileName();
    } else {
       use_filename = file + ".dat";
    }
@@ -10146,8 +10146,10 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_results()
 
 void US_Hydrodyn_Saxs_Hplc::dir_pressed()
 {
+   QString use_dir = lbl_dir->text();
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString s = Q3FileDialog::getExistingDirectory(
-                                                 lbl_dir->text(),
+                                                 use_dir,
                                                  this,
                                                  "get existing directory",
                                                  tr( "Choose a new base directory" ),
@@ -10156,17 +10158,16 @@ void US_Hydrodyn_Saxs_Hplc::dir_pressed()
    {
       QDir::setCurrent( s );
       lbl_dir->setText(  QDir::currentDirPath() );
-      if ( *saxs_widget )
-      {
-         saxs_window->add_to_directory_history( s );
-      }
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
    }
 }
 
 void US_Hydrodyn_Saxs_Hplc::created_dir_pressed()
 {
+   QString use_dir = lbl_dir->text();
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString s = Q3FileDialog::getExistingDirectory(
-                                                 lbl_dir->text(),
+                                                 use_dir,
                                                  this,
                                                  "get existing directory",
                                                  tr( "Choose a new base directory for saving files" ),
@@ -10174,10 +10175,7 @@ void US_Hydrodyn_Saxs_Hplc::created_dir_pressed()
    if ( !s.isEmpty() )
    {
       lbl_created_dir->setText( s );
-      if ( *saxs_widget )
-      {
-         saxs_window->add_to_directory_history( s );
-      }
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
    }
 }
 
@@ -10400,15 +10398,16 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
       raise();
    }
 
-   if ( *saxs_widget )
+   // if ( *saxs_widget )
+   // {
+   if ( cb_lock_dir->isChecked() )
    {
-      if ( cb_lock_dir->isChecked() )
-      {
-         saxs_window->add_to_directory_history( lbl_dir->text() );
-      }
-      saxs_window->select_from_directory_history( use_dir, this );
-      raise();
+      ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( lbl_dir->text() );
    }
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   raise();
+   // }
+
 
    QString fn = Q3FileDialog::getSaveFileName( use_dir, "*.dat", this, this->caption() + tr( " Save State" ),
                                               tr( "Select a name to save the state" ) );

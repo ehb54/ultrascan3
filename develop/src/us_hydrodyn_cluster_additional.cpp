@@ -65,6 +65,8 @@ US_Hydrodyn_Cluster_Additional::~US_Hydrodyn_Cluster_Additional()
 
 void US_Hydrodyn_Cluster_Additional::setupGUI()
 {
+   bool expert_mode = U_EXPT;
+
    int minHeight1 = 30;
 
    lbl_title = new QLabel( tr( "    US-SOMO: Cluster: Other Methods    " ), this );
@@ -212,6 +214,26 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    pb_ok->setMinimumHeight(minHeight1);
    pb_ok->setPalette( PALET_PUSHB );
    connect(pb_ok, SIGNAL(clicked()), SLOT(ok()));
+
+   if ( !expert_mode )
+   {
+      cb_bfnb->hide();
+      pb_bfnb->hide();
+      cb_bfnb_nsa->hide();
+      pb_bfnb_nsa->hide();
+      // cb_best->hide();
+      // pb_best->hide();
+      cb_oned->hide();
+      pb_oned->hide();
+      cb_csa->hide();
+      pb_csa->hide();
+      cb_dammin->hide();
+      pb_dammin->hide();
+      cb_dammif->hide();
+      pb_dammif->hide();
+      cb_gasbor->hide();
+      pb_gasbor->hide();
+   }      
 
    // build layout
 

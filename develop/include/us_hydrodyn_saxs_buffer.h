@@ -58,6 +58,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       friend class US_Hydrodyn_Batch;
       friend class US_Hydrodyn_Saxs;
       friend class US_Hydrodyn_Saxs_Buffer_Conc;
+      friend class US_Hydrodyn_Saxs_Buffer_Nth;
 
    public:
       US_Hydrodyn_Saxs_Buffer(
@@ -104,7 +105,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
 
       QPushButton   *pb_select_all;
       QPushButton   *pb_invert;
-      QPushButton   *pb_adjacent;
+      // QPushButton   *pb_adjacent;
+      QPushButton   *pb_select_nth;
       QPushButton   *pb_join;
       QPushButton   *pb_to_saxs;
       QPushButton   *pb_view;
@@ -202,6 +204,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       QPushButton   *pb_crop_undo;
       QPushButton   *pb_crop_right;
       QPushButton   *pb_legend;
+      QPushButton   *pb_util;
       QPushButton   *pb_axis_x;
       QPushButton   *pb_axis_y;
 
@@ -387,7 +390,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       void select_all();
       void invert();
       void join();
-      void adjacent();
+      // void adjacent();
+      void select_nth();
       void to_saxs();
       void view();
       void rescale();
@@ -453,6 +457,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       void crop_undo();
       void crop_right();
       void legend();
+      void util();
       void axis_x();
       void axis_y();
       void legend_set();
