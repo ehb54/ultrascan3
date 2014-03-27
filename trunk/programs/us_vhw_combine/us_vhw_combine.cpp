@@ -139,7 +139,9 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    qtitle.setText( tr( "Relative Frequency" ) );
 
    data_plot1->setMinimumSize( 640, 400 );
-   data_plot1->enableAxis  ( QwtPlot::yRight, true );
+   data_plot1->enableAxis  ( QwtPlot::yRight,  true );
+   data_plot1->enableAxis  ( QwtPlot::yLeft,   true );
+   data_plot1->enableAxis  ( QwtPlot::xBottom, true );
    data_plot1->setAxisScale( QwtPlot::xBottom, 1.0,  10.0 );
    data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, 100.0 );
    data_plot1->setAxisScale( QwtPlot::yRight,  0.0,   6.0 );
@@ -429,10 +431,8 @@ void US_vHW_Combine::plot_data( void )
    QwtPlotGrid* grid = us_grid( data_plot1 );
    grid->enableXMin( true );
    grid->enableYMin( true );
-   grid->setMajPen(
-         QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   grid->setMinPen(
-         QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
+   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
 
    for ( int ii = 0; ii < pdistrs.size(); ii++ )
       plot_distr( pdistrs[ ii ], pdisIDs[ ii ] );
@@ -451,28 +451,20 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    double* yf  = ddesc.efreqs.data();
 
    QString dcID = distrID + tr( " (integ.)" );
-   QString lcID = distrID + tr( " (integ.line)" );
    QString ecID = distrID + tr( " (diff.)" );
    QwtPlotCurve* dcurve;
-   QwtPlotCurve* lcurve;
    QwtPlotCurve* ecurve;
-   QPen          dlpen( QPen( Qt::yellow ) );
-   QPen          elpen( QPen( QBrush( ddesc.color ), 3.0 ) );
+   QPen    dlpen( QPen( Qt::yellow ) );
+   QPen    elpen( QPen( QBrush( ddesc.color ), 3.0 ) );
 
    if ( dplot )
    {  // Build curves for distribution plot
       dcurve        = us_curve( data_plot1, dcID );
-      dcurve->setStyle ( QwtPlotCurve::NoCurve );
+      dcurve->setStyle ( QwtPlotCurve::Lines );
       dcurve->setSymbol( ddesc.symbol );
+      dcurve->setPen   ( dlpen );
       dcurve->setData  ( xx, yy, ndispt );
       dcurve->setYAxis ( QwtPlot::yLeft );
-
-      lcurve        = us_curve( data_plot1, lcID );
-      lcurve->setStyle ( QwtPlotCurve::Lines );
-      lcurve->setPen   ( dlpen );
-      lcurve->setData  ( xx, yy, ndispt );
-      lcurve->setYAxis ( QwtPlot::yLeft );
-      lcurve->setItemAttribute( QwtPlotItem::Legend, false );
    }
 
    if ( eplot )
