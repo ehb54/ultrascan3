@@ -697,6 +697,7 @@ DbgLv(1) << "upd_curr_distr" << curr_distr;
 
    set_limits();
 
+   plot_data();
 }
 
 void US_Pseudo3D_Combine::update_plot_smin( double dval )
@@ -999,6 +1000,8 @@ void US_Pseudo3D_Combine::load_color()
       tsys->colormap  = colormap;
       tsys->cmapname  = cmapname;
    }
+
+   plot_data();
 }
 
 // Start a loop of plotting all distros

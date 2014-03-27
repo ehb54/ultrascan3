@@ -1427,6 +1427,22 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
    else if ( equivalent( fmin, fmax, 0.001 ) )
       attr_z    = ATTR_F;
 
+   if ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V )
+   {  // No attribute is vbar, so use vbar as the default X or Y
+      int attrv = ATTR_V;
+
+      if ( attr_y == attr_z )
+      {
+         rb_y_vbar->setChecked( true  );
+         select_y_axis( attrv );
+      }
+      else
+      {
+         rb_x_vbar->setChecked( true  );
+         select_x_axis( attrv );
+      }
+   }
+
    QStringList attrs;
    attrs << "s" << "f/f0" << "MW" << "vbar" << "D" << "f";
    QString s_attr = attrs[ attr_z ];
@@ -1513,6 +1529,8 @@ void US_GA_Initialize::load_color()
    stcmline  = cmapname;
    te_status->setText( stcmline + "\n" + stdiline + "\n"
          + stdfline + "\n" + stfxline + "\n" + stnpline );
+
+   replot_data();
 }
 
 // set plot x,y limits
