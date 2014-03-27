@@ -1,8 +1,8 @@
 #include "../include/us_mqt.h"
 //Added by qt3to4:
+#include <QMouseEvent>
 #include <QFocusEvent>
 #include <QLabel>
-#include <QMouseEvent>
 
 mQLineEdit::mQLineEdit( QWidget *parent, const char * name ) : QLineEdit( parent, name ) {}
 
@@ -55,4 +55,16 @@ void mQThread::msleep( unsigned long msecs )
 void mQThread::usleep( unsigned long usecs )
 {
    QThread::usleep( usecs );
+}
+
+void ShowHide::hide_widgets( std::vector < QWidget *> widgets, bool hide, QWidget * do_resize )
+{
+   for ( unsigned int i = 0; i < ( unsigned int )widgets.size(); i++ )
+   {
+      hide ? widgets[ i ]->hide() : widgets[ i ]->show();
+   }
+   if ( do_resize )
+   {
+       do_resize->resize( 0, 0 );
+   }
 }

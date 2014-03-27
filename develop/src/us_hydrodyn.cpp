@@ -1131,6 +1131,8 @@ void US_Hydrodyn::set_expert( bool expert )
       //      pb_best->show();
       lookup_tables->insertItem(tr("Make test set"), this, SLOT( make_test_set() ) );
    }
+   expert ? pb_equi_grid_bead_model->show() : pb_equi_grid_bead_model->hide();
+   expert ? pb_rescale_bead_model->show() : pb_rescale_bead_model->hide();
 }
 
 void US_Hydrodyn::set_disabled()

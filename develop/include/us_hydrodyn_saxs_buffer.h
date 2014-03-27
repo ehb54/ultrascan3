@@ -370,6 +370,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
 
       bool                         adjacent_select( Q3ListBox *lb, QString match );
 
+      void                         select_these( map < QString, QString > & parameters, bool reenable = true );
+
    private slots:
 
       void setupGUI();

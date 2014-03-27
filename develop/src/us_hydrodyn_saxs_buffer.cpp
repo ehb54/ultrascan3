@@ -2073,7 +2073,7 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    //    pb_join               ->setEnabled( files_selected_count == 2 );
    pb_join_start         ->setEnabled( files_selected_count == 2 );
    // pb_adjacent           ->setEnabled( lb_files->numRows() > 1 );
-   pb_select_nth         ->setEnabled( true );
+   pb_select_nth         ->setEnabled( lb_files->numRows() > 2 );
    pb_to_saxs            ->setEnabled( files_selected_count );
    pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
@@ -2174,9 +2174,10 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
    pb_legend           ->setEnabled( lb_files->numRows() && files_selected_count <= 20 );
-   pb_util             ->setEnabled( true );
+   pb_util             ->setEnabled( lb_files->numRows() );
    pb_axis_x           ->setEnabled( lb_files->numRows() );
    pb_axis_y           ->setEnabled( lb_files->numRows() );
+   pb_color_rotate     ->setEnabled( true );
    // cb_guinier          ->setEnabled( files_selected_count );
    legend_set();
 
@@ -7275,6 +7276,8 @@ void US_Hydrodyn_Saxs_Buffer::disable_all()
    le_join_end           ->setEnabled( false );
    pb_join_fit_scaling   ->setEnabled( false );
    pb_join_fit_linear    ->setEnabled( false );
+
+   pb_color_rotate       ->setEnabled( false );
 }
 
 
@@ -8456,31 +8459,8 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
    update_enables();
 }
 
-void US_Hydrodyn_Saxs_Buffer::select_nth()
+void US_Hydrodyn_Saxs_Buffer::select_these( map < QString, QString > & parameters, bool reenable )
 {
-   map < QString, QString > parameters;
-
-   parameters[ "buffer_nth_contains"   ] = 
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "buffer_nth_contains" ) ?
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "buffer_nth_contains" ] : "";
-
-   US_Hydrodyn_Saxs_Buffer_Nth *buffer_nth = 
-      new US_Hydrodyn_Saxs_Buffer_Nth(
-                                   this,
-                                   & parameters,
-                                   this );
-   US_Hydrodyn::fixWinButtons( buffer_nth );
-   buffer_nth->exec();
-   delete buffer_nth;
-
-   if ( !parameters.count( "go" ) )
-   {
-      return;
-   }
-
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "buffer_nth_contains" ] =
-      parameters.count( "buffer_nth_contains" ) ? parameters[ "buffer_nth_contains" ] : "";
-
    disable_updates = true;
    lb_files->clearSelection();
    for ( int i = 0; i < lb_files->numRows(); ++i )
@@ -8492,7 +8472,45 @@ void US_Hydrodyn_Saxs_Buffer::select_nth()
    }
    disable_updates = false;
    plot_files();
-   update_enables();
+   if ( reenable )
+   {
+      update_enables();
+   }
+}
+
+void US_Hydrodyn_Saxs_Buffer::select_nth()
+{
+   map < QString, QString > parameters;
+
+   parameters[ "buffer_nth_contains"   ] = 
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "buffer_nth_contains" ) ?
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "buffer_nth_contains" ] : "";
+
+   parameters[ "buffer_nth_shown"  ] = 
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "buffer_nth_shown" ) ?
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "buffer_nth_shown" ] : "";
+
+   US_Hydrodyn_Saxs_Buffer_Nth *buffer_nth = 
+      new US_Hydrodyn_Saxs_Buffer_Nth(
+                                   this,
+                                   & parameters,
+                                   this );
+   US_Hydrodyn::fixWinButtons( buffer_nth );
+   buffer_nth->exec();
+   delete buffer_nth;
+
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "buffer_nth_shown" ] =
+      parameters.count( "buffer_nth_shown" ) ? parameters[ "buffer_nth_shown" ] : "";
+
+   if ( !parameters.count( "go" ) )
+   {
+      return;
+   }
+
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "buffer_nth_contains" ] =
+      parameters.count( "buffer_nth_contains" ) ? parameters[ "buffer_nth_contains" ] : "";
+
+   select_these( parameters );
 }
 
 

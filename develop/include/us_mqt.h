@@ -8,6 +8,7 @@
 //Added by qt3to4:
 #include <QMouseEvent>
 #include <QFocusEvent>
+#include <vector>
 
 class mQLabel : public QLabel
 {
@@ -66,6 +67,12 @@ class mQThread : public QThread
    static void sleep(unsigned long secs);
    static void msleep(unsigned long msecs);
    static void usleep(unsigned long usecs);
+};
+
+class ShowHide
+{
+ public:
+   static void hide_widgets( std::vector < QWidget *> widgets, bool hide = true, QWidget * resize = (QWidget *) 0 );
 };
 
 #endif
