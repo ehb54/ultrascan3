@@ -495,17 +495,6 @@ DbgLv(2) << "   xsn yfn" << xs[kk-1] << yf[kk-1];
    data_plot1->enableAxis      ( QwtPlot::yLeft,  dplot );
    data_plot1->enableAxis      ( QwtPlot::yRight, eplot );
 
-   if ( pdistrs.size() < 2 )
-   {  // Set up grid if first distribution in plot
-      QwtPlotGrid* grid = us_grid( data_plot1 );
-      grid->enableXMin( true );
-      grid->enableYMin( true );
-      grid->setMajPen(
-            QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-      grid->setMinPen(
-            QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
-   }
-
    data_plot1->replot();
 }
 
