@@ -24,8 +24,7 @@ class US_MPI_Analysis : public QObject
  Q_OBJECT
 
   public:
-    US_MPI_Analysis( const QString&, const QString& );
-    US_MPI_Analysis( const QString& );
+    US_MPI_Analysis( int, QStringList& );
 
   public slots:
     void start( void );
@@ -121,7 +120,7 @@ class US_MPI_Analysis : public QObject
     QString             analysisDate;
 
     QMap< QString, QString > parameters;
-    QMap< QString, QString > job_params;
+    QMap< QString, QString > task_params;
   
     QDateTime           submitTime;
     QDateTime           startTime;
@@ -335,7 +334,7 @@ class US_MPI_Analysis : public QObject
     void   vector_scaled_sum   ( US_Vector&, US_Vector&, double,
                                  US_Vector&, double = 1.0 );
     void   pmasters_start      ( void );
-    void   job_parse           ( const QString& );
+    void   task_parse          ( const QString& );
     void   pmasters_supervisor ( void );
     void   pmasters_master     ( void );
     void   pmasters_worker     ( void );

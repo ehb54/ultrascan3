@@ -14,22 +14,92 @@ int main( int argc, char* argv[] )
    MPI_Init( &argc, &argv );
    QCoreApplication application( argc, argv );
 
-   if ( argc == 1 )
-      new US_MPI_Analysis( argv[ 1 ] );
+   QStringList cmdargs;
 
-   else if ( argc == 2 )
-      new US_MPI_Analysis( argv[ 1 ], argv[ 2 ] );
+   for ( int jj = 0; jj < argc; jj++ )
+      cmdargs << argv[ jj ];
+
+   new US_MPI_Analysis( argc, cmdargs );
 }
 
 // Constructor
-US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile,
-      const QString& jxmlfili ) : QObject()
+US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
 {
+   // Command line special parameter keys
+   const QString wallkey( "-walltime" );
+   const QString pmgckey( "-pmgc" );
+   // Alternate versions of those keys
+   const QString wallkey2( "-WallTimeLimit" );
+   const QString pmgckey2( "-MGroupCount" );
+   const QString wallkey3( "-wallTimeLimit" );
+   const QString pmgckey3( "-mGroupCount" );
+
    MPI_Comm_size( MPI_COMM_WORLD, &proc_count );
    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
 
    dbg_level    = 0;
    dbg_timing   = FALSE;
+   QString tarfile;
+   QString jxmlfili;
+   task_params[ "walltime"    ] = "1440";
+   task_params[ "mgroupcount" ] = "1";
+
+   // Get some task parameters from the command line
+   for ( int jj = 1; jj < nargs; jj++ )
+   {
+      QString cmdarg = cmdargs[ jj ];
+if(my_rank==0)
+DbgLv(0) << "CmdArg: jj" << jj << "cmdarg" << cmdarg;
+
+      if ( cmdarg.startsWith( "-" ) )
+      {  // Argument pair is keyed set (.e.g., "-maxwall <n>")
+         QString cmdval = "";
+         int valx       = cmdarg.indexOf( "=" ); 
+
+         if ( valx > 0 )
+         {  // Syntax is "-key=value"
+            cmdval         = cmdarg.mid( valx + 1 ).simplified();
+         }
+
+         else if ( ( jj + 1 ) < nargs )
+         {  // Syntax is "-key value"
+            cmdval         = cmdargs[ ++jj ];
+         }
+
+         if ( cmdarg.contains( wallkey )   ||
+              cmdarg.contains( wallkey2 )  ||
+              cmdarg.contains( wallkey3 ) )
+         {  // Get maximum wall time in minutes
+            task_params[ "walltime"    ] = cmdval;
+         }
+
+         else if ( cmdarg.contains( pmgckey )   ||
+                   cmdarg.contains( pmgckey2 )  ||
+                   cmdarg.contains( pmgckey3 ) )
+         {  // Get number of parallel masters groups
+            task_params[ "mgroupcount" ] = cmdval;
+         }
+if(my_rank==0)
+DbgLv(0) << "CmdArg:   valx" << valx << "cmdval" << cmdval;
+      }
+
+      else if ( tarfile.isEmpty() )
+      {  // First non-keyed argument is tar file path
+         tarfile      = cmdarg;
+      }
+
+      else
+      {  // Second non-keyed argument is jobxmlfile
+         jxmlfili     = cmdarg;
+      }
+   }
+if(my_rank==0) {
+DbgLv(0) << "CmdArg: walltime" << task_params["walltime"];
+DbgLv(0) << "CmdArg: mgroupcount" << task_params["mgroupcount"];
+DbgLv(0) << "CmdArg: tarfile" << tarfile;
+DbgLv(0) << "CmdArg: jxmlfili" << jxmlfili;
+}
+
    attr_x       = ATTR_S;
    attr_y       = ATTR_K;
    attr_z       = ATTR_V;
@@ -37,8 +107,11 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile,
    if ( my_rank == 0 ) 
       socket = new QUdpSocket( this );
 
-   QString output_dir = "output";
-   QDir    d( "." );
+   QStringList ffilt;
+   QDir    wkdir      = QDir::current();
+   QString work_dir   = QDir::currentPath();
+   QString output_dir = work_dir + "/output";
+   QString input_dir  = work_dir + "/input";
 
    if ( my_rank == 0 )
    {
@@ -53,48 +126,20 @@ US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile,
 
       // Create a dedicated output directory and make sure it's empty
       // During testing, it may not always be empty
-      QDir output( "." );
-      output.mkdir  ( output_dir );
-      output.setPath( output_dir );
+      wkdir.mkdir  ( output_dir );
 
-      QStringList files = output.entryList( QStringList( "*" ), QDir::Files );
+      QDir odir( output_dir );
+      ffilt.clear();
+      ffilt << "*";
+      QStringList files = odir.entryList( ffilt, QDir::Files );
       QString     file;
 
-      foreach( file, files ) output.remove( file );
+      foreach( file, files ) odir.remove( file );
       DbgLv(0) << "Start:  processor_count" << proc_count;
    }
  
    MPI_Barrier( MPI_COMM_WORLD ); // Sync everybody up
 
-   QStringList files = d.entryList( QStringList( "hpc*.xml" ) );
-   if ( files.size() != 1 ) abort( "Could not find unique hpc input file." );
-
-   QString xmlfile   = files[ 0 ];
-   QString jxmlfile  = jxmlfili;
-
-   // Parse job xml file  (input argument or detected file)
-   if ( jxmlfile.isEmpty() )
-   {
-      QStringList jfilt;
-      jfilt << "input/*jobxmlfile.xml";
-      jfilt << "*jobxmlfile.xml";
-      jfilt << "us3.pbs";
-      QStringList jfiles = d.entryList( jfilt, QDir::Files );
-      jxmlfile           = jfiles.size() > 0 ? jfiles[ 0 ]
-                                             : "input/jobxmlfile.xml";
-DbgLv(1) << "  jfiles size" << jfiles.size() << "jxmlfile" << jxmlfile;
-   }
-
-   job_parse( jxmlfile );
-
-   if ( my_rank == 0 )
-   {  // Save submit time
-      submitTime      = QFileInfo( tarfile ).lastModified();
-mgroup_count=job_params["mgroupcount"].toInt();
-DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
- << mgroup_count;
-      printf( "Us_Mpi_Analysis %s has started.\n", REVISION );
-   }
 
    startTime      = QDateTime::currentDateTime();
    analysisDate   = startTime.toUTC().toString( "yyMMddhhmm" );
@@ -109,6 +154,22 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
    buckets   .clear();
    maxods    .clear();
 
+   QString xmlfile;
+   ffilt.clear();
+   ffilt << "hpc*.xml";
+   QStringList files = wkdir.entryList( ffilt );
+   if ( files.size() == 0 )
+   {
+      files = QDir( input_dir ).entryList( ffilt );
+      if ( files.size() == 1 )
+         xmlfile = input_dir + "/" + files[ 0 ];
+   }
+   else
+      xmlfile = files[ 0 ];
+
+   if ( files.size() != 1 ) abort( "Could not find unique hpc input file." );
+
+   // Parse analysis parameters
    parse( xmlfile );
 
    uint seed = 0;
@@ -121,6 +182,43 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
    else
       US_Math2::randomize();
 
+   QString jxmlfile  = jxmlfili;
+
+   // Parse task xml file if present or needed (input argument or detected file)
+   if ( jxmlfile.isEmpty() )
+   {  // Not on command line: just look for its presence in the work directory
+      ffilt.clear();
+      ffilt << "*jobxmlfile.xml";
+      ffilt << "jobxmlfile.xml";
+      QStringList jfiles = QDir( input_dir ).entryList( ffilt, QDir::Files );
+if(my_rank==0) DbgLv(0) << "  jfiles size" << jfiles.size();
+
+      if ( jfiles.size() > 0 )
+      {  // Files found in ./input
+         jxmlfile           = input_dir + "/" + jfiles[ 0 ];
+      }
+
+      else
+      {  // Files not found in ./input, so try base work directory
+         ffilt << "us3.pbs";
+         jfiles          = wkdir.entryList( ffilt, QDir::Files );
+         jxmlfile           = jfiles.size() > 0 ? jfiles[ 0 ] : "";
+      }
+if(my_rank==0)
+DbgLv(0) << "  jfiles size" << jfiles.size() << "jxmlfile" << jxmlfile;
+   }
+
+   task_parse( jxmlfile );
+
+   if ( my_rank == 0 )
+   {  // Save submit time
+      submitTime      = QFileInfo( tarfile ).lastModified();
+DbgLv(0) << "submitTime " << submitTime
+ << " parallel-masters count" << task_params["mgroupcount"].toInt()
+ << " walltime" << task_params["walltime"].toInt();
+      printf( "Us_Mpi_Analysis %s has started.\n", REVISION );
+   }
+
    group_rank = my_rank;    // Temporary setting for send_udp
 
    QString msg_start = QString( "Starting --  " ) + QString( REVISION );
@@ -129,52 +227,52 @@ DbgLv(0) << "submitTime " << submitTime << " parallel-masters count"
    // Read data 
    for ( int i = 0; i < data_sets.size(); i++ )
    {
-      US_SolveSim::DataSet* d = data_sets[ i ];
+      US_SolveSim::DataSet* dset = data_sets[ i ];
 
       try
       {
-         int result = US_DataIO::loadData( ".", d->edit_file, d->run_data );
+         int result = US_DataIO::loadData( ".", dset->edit_file, dset->run_data );
 
          if ( result != US_DataIO::OK ) throw result;
       }
       catch ( int error )
       {
-         QString msg = "Bad data file " + d->auc_file + " " + d->edit_file;
+         QString msg = "Bad data file " + dset->auc_file + " " + dset->edit_file;
 DbgLv(0) << "BAD DATA. error" << error << "rank" << my_rank;
          abort( msg, error );
       }
       catch ( US_DataIO::ioError error )
       {
-         QString msg = "Bad data file " + d->auc_file + " " + d->edit_file;
+         QString msg = "Bad data file " + dset->auc_file + " " + dset->edit_file;
 DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 //if(proc_count!=16)
          abort( msg, error );
       }
 //DbgLv(0) << "Good DATA. rank" << my_rank;
 
-      for ( int j = 0; j < d->noise_files.size(); j++ )
+      for ( int j = 0; j < dset->noise_files.size(); j++ )
       {
           US_Noise noise;
 
-          int err = noise.load( d->noise_files[ j ] );
+          int err = noise.load( dset->noise_files[ j ] );
 
           if ( err != 0 )
           {
-             QString msg = "Bad noise file " + d->noise_files[ j ];
+             QString msg = "Bad noise file " + dset->noise_files[ j ];
              abort( msg );
           }
 
-          if ( noise.apply_to_data( d->run_data  ) != 0 )
+          if ( noise.apply_to_data( dset->run_data  ) != 0 )
           {
-             QString msg = "Bad noise file " + d->noise_files[ j ];
+             QString msg = "Bad noise file " + dset->noise_files[ j ];
              abort( msg );
           }
       }
 
-      d->temperature = d->run_data.average_temperature();
-      d->vbartb = US_Math2::calcCommonVbar( d->solution_rec, d->temperature );
+      dset->temperature = dset->run_data.average_temperature();
+      dset->vbartb = US_Math2::calcCommonVbar( dset->solution_rec, dset->temperature );
 
-      if ( d->centerpiece_bottom == 7.3 )
+      if ( dset->centerpiece_bottom == 7.3 )
          abort( "The bottom is set to the invalid default value of 7.3" );
    }
 
@@ -459,8 +557,8 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: s_max" << s_max << "attr_x,y,z"
    mc_iteration         = 0;
 
    // Determine masters-group count and related controls
-   mgroup_count = job_params[ "mgroupcount" ].toInt();
-   max_walltime = job_params[ "walltime"    ].toInt();
+   mgroup_count = task_params[ "mgroupcount" ].toInt();
+   max_walltime = task_params[ "walltime"    ].toInt();
    if ( mc_iterations < 2  ||  mgroup_count > ( mc_iterations + 2 ) )
       mgroup_count = 1;
 
@@ -472,12 +570,6 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: s_max" << s_max << "attr_x,y,z"
    
    else
       pmasters_start();         // Start parallel-masters job
-}
-
-// Alternate Constructor (empty jobxmlfile name)
-US_MPI_Analysis::US_MPI_Analysis( const QString& tarfile ) : QObject()
-{
-   US_MPI_Analysis( tarfile, QString( "" ) );
 }
 
 // Main function  (single master group)

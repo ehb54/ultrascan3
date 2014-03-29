@@ -56,12 +56,19 @@ DbgLv(1) << "Final-my_rank" << my_rank << " msecs=" << startTime.msecsTo(QDateTi
    exit( 0 );
 }
 
-// Parse Job XML, mainly for max wall-time and master-groups-count
-void US_MPI_Analysis::job_parse( const QString& xmlfile )
+// Parse Task XML, mainly for max wall-time and master-groups-count
+void US_MPI_Analysis::task_parse( const QString& xmlfile )
 {
+   if ( xmlfile.isEmpty() )
+   {
+      if ( my_rank == 0 ) DbgLv(0) << "No separate jobxmlfile";
+      return;
+   }
+
+if (my_rank==0) DbgLv(0) << "task_parse xmlfile" << xmlfile;
    QFile file ( xmlfile );
-   job_params[ "walltime"    ] = "1440";
-   job_params[ "mgroupcount" ] = "1";
+   task_params[ "walltime"    ] = "1440";
+   task_params[ "mgroupcount" ] = "1";
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
    {  // If no job xml or us3.pbs, return now
@@ -69,7 +76,7 @@ void US_MPI_Analysis::job_parse( const QString& xmlfile )
 
       if ( proc_count > 64 )
       {
-         job_params[ "mgroupcount" ] = parameters[ "req_mgroupcount" ];
+         task_params[ "mgroupcount" ] = parameters[ "req_mgroupcount" ];
          if ( my_rank == 0 ) DbgLv(0) << " Value of mgroupcount set to"
             << parameters[ "req_mgroupcount" ];
       }
@@ -92,8 +99,8 @@ void US_MPI_Analysis::job_parse( const QString& xmlfile )
             int     valu1 = svalu.section( ":", 0, 0 ).toInt();
             int     valu2 = svalu.section( ":", 1, 1 ).toInt();
             svalu         = QString::number( valu1 * 60 + valu2 );
-            job_params[ "walltime"    ] = svalu;
-//if (my_rank==0) DbgLv(0) << "h m" << valu1 << valu2 << "svalu" << svalu;
+            task_params[ "walltime"    ] = svalu;
+if (my_rank==0) DbgLv(0) << "h m" << valu1 << valu2 << "svalu" << svalu;
          }
 
          if ( jgr > 0 )
@@ -102,12 +109,14 @@ void US_MPI_Analysis::job_parse( const QString& xmlfile )
             int     valu1 = svalu.toInt();
                     valu1 = valu1 < 0 ? 1 : valu1;
             svalu         = QString::number( valu1 );
-            job_params[ "mgroupcount" ] = svalu;
-//if (my_rank==0) DbgLv(0) << "group" << svalu << "valu1" << valu1;
+            task_params[ "mgroupcount" ] = svalu;
+if (my_rank==0) DbgLv(0) << "group" << svalu << "valu1" << valu1;
          }
       }
 
       file.close();
+if ( my_rank == 0 ) DbgLv(0) << "walltime=" << task_params["walltime"]
+ << "mgroupcount=" << task_params["mgroupcount"];
       return;
    }
 
@@ -125,7 +134,7 @@ void US_MPI_Analysis::job_parse( const QString& xmlfile )
          {
             QString value = xml.readElementText();
 
-            job_params[ name ] = value;
+            task_params[ name ] = value;
          }
       }
 
@@ -134,8 +143,8 @@ void US_MPI_Analysis::job_parse( const QString& xmlfile )
    }
 
    file.close();
-if ( my_rank == 0 ) DbgLv(1) << "walltime=" << job_params["walltime"]
- << "mgroupcount=" << job_params["mgroupcount"];
+if ( my_rank == 0 ) DbgLv(1) << "walltime=" << task_params["walltime"]
+ << "mgroupcount=" << task_params["mgroupcount"];
 }
 
 // Parallel-masters supervisor
