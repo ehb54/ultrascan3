@@ -278,6 +278,7 @@ SOURCES += \
   us_hydrodyn_saxs_hplc.cpp \
   us_hydrodyn_saxs_hplc_gui.cpp \
   us_hydrodyn_saxs_hplc_stack.cpp \
+  us_hydrodyn_saxs_hplc_modes.cpp \
   us_hydrodyn_saxs_hplc_makeiq.cpp \
   us_hydrodyn_saxs_hplc_plots.cpp \
   us_hydrodyn_saxs_hplc_ciq.cpp \
