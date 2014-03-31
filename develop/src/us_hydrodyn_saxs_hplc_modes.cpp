@@ -562,7 +562,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
 
          if ( !le_last_focus )
          {
-            cout << "aw: no last focus in scale mode\n";
+            // cout << "aw: no last focus in scale mode\n";
             return;
          }
 
@@ -665,7 +665,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
 
          if ( !le_last_focus )
          {
-            cout << "aw: no last focus in baseline mode\n";
+            // cout << "aw: no last focus in baseline mode\n";
             return;
          }
 
@@ -1048,7 +1048,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
             save_name = wheel_file + QString( "_ts%1-%2" ).arg( qwtw_wheel->value() ).arg( ++ext ).replace( ".", "_" );
          }
    
-         cout << QString( "new name is %1\n" ).arg( save_name );
+         // cout << QString( "new name is %1\n" ).arg( save_name );
 
          lb_created_files->insertItem( save_name );
          lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
