@@ -288,6 +288,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       QPushButton   *pb_wheel_start;
       QPushButton   *pb_p3d;
+      QLabel        *lbl_blank1;
       QLabel        *lbl_wheel_pos;
       QwtWheel      *qwtw_wheel;
       QPushButton   *pb_ref;
@@ -346,6 +347,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_legend;
       QPushButton   *pb_axis_x;
       QPushButton   *pb_axis_y;
+
+      QLabel        *lbl_mode_title;
+      QPushButton   *pb_scale;
+      QPushButton   *pb_guinier;
+
+      // scale
+
+      QLabel       * lbl_scale_low_high;
+      QRadioButton * rb_scale_low;
+      QRadioButton * rb_scale_high;
+      QButtonGroup * bg_scale_low_high;
+      QCheckBox    * cb_scale_sd;
+      QLabel       * lbl_scale_q_range;
+      mQLineEdit   * le_scale_q_start;
+      mQLineEdit   * le_scale_q_end;
+      QPushButton  * pb_scale_apply;
 
       bool          order_ascending;
 
@@ -466,6 +483,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < QWidget * >                created_files_expert_widgets;
       vector < QWidget * >                editor_widgets;
 
+      vector < QWidget * >                gaussian_widgets;
+      vector < QWidget * >                gaussian_4var_widgets;
+      vector < QWidget * >                gaussian_5var_widgets;
+      vector < QWidget * >                ggaussian_widgets;
+      vector < QWidget * >                ggaussian_4var_widgets;
+      vector < QWidget * >                ggaussian_5var_widgets;
+      vector < QWidget * >                baseline_widgets;
+      vector < QWidget * >                scale_widgets;
+      vector < QWidget * >                plot_widgets;
+
       vector < double >                   conc_curve( vector < double > &t,
                                                       unsigned int peak,
                                                       double conv );
@@ -572,10 +599,26 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 #endif
       void                         disable_all();
 
-      bool                         gaussian_mode;
-      bool                         ggaussian_mode;
-      bool                         baseline_mode;
-      bool                         timeshift_mode;
+      // bool                         gaussian_mode;
+      // bool                         ggaussian_mode;
+      // bool                         baseline_mode;
+      // bool                         timeshift_mode;
+
+      enum                         modes
+      {
+         MODE_NORMAL
+         ,MODE_GAUSSIAN
+         ,MODE_GGAUSSIAN
+         ,MODE_BASELINE
+         ,MODE_TIMESHIFT
+         ,MODE_SCALE
+      };
+
+      modes                        current_mode;
+      void                         mode_select();
+      void                         mode_title( QString title );
+      void                         mode_select( modes mode );
+      void                         mode_setup_widgets();
 
       void                         gaussian_enables();
       void                         ggaussian_enables();
@@ -697,6 +740,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       bool                         suppress_replot;
 
       void                         update_ref();
+
+      
+
 
    private slots:
 
@@ -837,6 +883,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void baseline_end_focus          ( bool );
       void baseline_end_e_focus        ( bool );
 
+      void scale                       ();
+      void scale_q_start_text          ( const QString & );
+      void scale_q_end_text            ( const QString & );
+      void scale_q_start_focus         ( bool );
+      void scale_q_end_focus           ( bool );
+      void scale_apply                 ();
+      void scale_enables               ();
+
+      void guinier();
+
       void select_vis();
       void remove_vis();
       void crop_left();
@@ -864,5 +920,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void closeEvent(QCloseEvent *);
    
 };
+
+#define UHSH_WHEEL_RES 10000000
+#define Q_VAL_TOL 5e-6
+#define UHSH_VAL_DEC 8
 
 #endif

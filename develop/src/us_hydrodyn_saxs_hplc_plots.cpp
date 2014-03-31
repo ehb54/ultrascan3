@@ -259,7 +259,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
       return;
    }
 
-   if ( ggaussian_mode && cb_plot_errors_group->isChecked() )
+   if ( current_mode == MODE_GGAUSSIAN && cb_plot_errors_group->isChecked() )
    {
       update_plot_errors_group();
       return;
@@ -448,7 +448,7 @@ void US_Hydrodyn_Saxs_Hplc::redo_plot_errors()
    vector < double > errors = plot_errors_errors;
 
    update_plot_errors( grid, target, fit, errors );
-   if ( ggaussian_mode )
+   if ( current_mode == MODE_GGAUSSIAN )
    {
       plot_errors_jump_markers();
    }
@@ -540,7 +540,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
    {
       hide_widgets( plot_errors_widgets, true );
    } else {
-      if ( ggaussian_mode )
+      if ( current_mode == MODE_GGAUSSIAN )
       {
          hide_widgets( plot_errors_widgets, false );
          if ( !unified_ggaussian_use_errors )
@@ -551,7 +551,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
             cb_plot_errors_sd->hide();
          }
       } else {
-         if ( gaussian_mode )
+         if ( current_mode == MODE_GAUSSIAN )
          {
             hide_widgets( plot_errors_widgets, false );
             cb_plot_errors_group->hide();

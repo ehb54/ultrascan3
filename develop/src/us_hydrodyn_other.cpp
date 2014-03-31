@@ -3938,7 +3938,9 @@ void US_Hydrodyn::write_config(const QString& fname)
                qsl_tmp1 << directory_history[ i ];
                qsl_tmp2 << QString( "%1" ).arg( (unsigned int)directory_last_access[ directory_history[ i ] ].toTime_t() );
                qsl_tmp3 << 
-                  ( directory_last_filetype.count( directory_history[ i ] ) ?                  
+                  ( ( directory_last_filetype.count( directory_history[ i ] ) &&
+                      !directory_last_filetype[ directory_history[ i ] ].isEmpty() )
+                    ?
                     directory_last_filetype[ directory_history[ i ] ] : "____" );
             }
          }
@@ -3949,6 +3951,7 @@ void US_Hydrodyn::write_config(const QString& fname)
             parameters[ "directory_last_filetype" ] = qsl_tmp3.join( "\n" );
          }
       }
+
 
       ts << US_Json::compose( parameters );
       f.close();
@@ -8405,7 +8408,7 @@ void US_Hydrodyn::add_to_directory_history( QString filename, bool accessed )
 
    QString dir = QDir::cleanDirPath( fi.isDir() ? fi.filePath() : fi.dirPath() );
 
-   // qDebug( QString( "add to dir history %1 %2 %3" ).arg( filename ).arg( dir ).arg( accessed ? "true" : "false" ) );
+   // qDebug( QString( "add to dir history %1 %2 %3 %4" ).arg( filename ).arg( dir ).arg( fi.extension( false ) ).arg( accessed ? "true" : "false" ) );
    if ( dir.isEmpty() ||
         dir.contains( QRegExp( "^\\." ) ) )
    {

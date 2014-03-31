@@ -204,7 +204,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       QPushButton   *pb_crop_undo;
       QPushButton   *pb_crop_right;
       QPushButton   *pb_legend;
-      QPushButton   *pb_util;
       QPushButton   *pb_axis_x;
       QPushButton   *pb_axis_y;
 
@@ -372,6 +371,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
 
       void                         select_these( map < QString, QString > & parameters, bool reenable = true );
 
+      double                       tot_intensity( QString &file, double q_min = 0e0, double q_max = 6e0 );
+
    private slots:
 
       void setupGUI();
@@ -459,7 +460,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       void crop_undo();
       void crop_right();
       void legend();
-      void util();
       void axis_x();
       void axis_y();
       void legend_set();

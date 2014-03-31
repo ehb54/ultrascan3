@@ -120,7 +120,6 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
       pbs.push_back( pb_normalize );
 
       pbs.push_back( pb_legend );
-      pbs.push_back( pb_util );
       pbs.push_back( pb_axis_x );
       pbs.push_back( pb_axis_y );
       pbs.push_back( pb_wheel_cancel );
@@ -991,12 +990,6 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    pb_legend->setPalette( PALET_PUSHB );
    connect(pb_legend, SIGNAL(clicked()), SLOT(legend()));
 
-   pb_util = new QPushButton(tr("U"), this);
-   pb_util->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_util->setMinimumHeight(minHeight1);
-   pb_util->setPalette( PALET_PUSHB );
-   connect(pb_util, SIGNAL(clicked()), SLOT(util()));
-
    pb_axis_x = new QPushButton(tr("X"), this);
    pb_axis_x->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_x->setMinimumHeight(minHeight1);
@@ -1115,7 +1108,6 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_color_rotate );
    hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
-   hbl_file_buttons_2->addWidget ( pb_util );
    hbl_file_buttons_2->addWidget ( pb_axis_x );
    hbl_file_buttons_2->addWidget ( pb_axis_y );
    hbl_file_buttons_2->addWidget ( pb_rescale );
@@ -1283,7 +1275,6 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    if ( !U_EXPT )
    {
       pb_asum->hide();
-      pb_util->hide();
    }
 }
 
@@ -2174,7 +2165,6 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
    pb_legend           ->setEnabled( lb_files->numRows() && files_selected_count <= 20 );
-   pb_util             ->setEnabled( lb_files->numRows() );
    pb_axis_x           ->setEnabled( lb_files->numRows() );
    pb_axis_y           ->setEnabled( lb_files->numRows() );
    pb_color_rotate     ->setEnabled( true );
@@ -7255,7 +7245,6 @@ void US_Hydrodyn_Saxs_Buffer::disable_all()
    pb_crop_undo          ->setEnabled( false );
    pb_crop_right         ->setEnabled( false ); 
    pb_legend             ->setEnabled( false );
-   pb_util               ->setEnabled( false );
    pb_axis_x             ->setEnabled( false );
    pb_axis_y             ->setEnabled( false );
    pb_add_files          ->setEnabled( false );
@@ -8513,8 +8502,25 @@ void US_Hydrodyn_Saxs_Buffer::select_nth()
    select_these( parameters );
 }
 
-
-void US_Hydrodyn_Saxs_Buffer::util()
+double US_Hydrodyn_Saxs_Buffer::tot_intensity( QString &file, double q_min, double q_max )
 {
-   // qDebug( "not enabled" );
+   if ( !f_qs_string .count( file ) ||
+        !f_qs        .count( file ) ||
+        !f_Is        .count( file ) ||
+        !f_pos       .count( file ) )
+   {
+      editor_msg( "red", QString( tr( "Total intensity compute internal error: no curve named %1" ) ).arg( file ) );
+      return -9e99;
+   }
+
+   double tot_i = 0e0;
+   for ( int i = 0; i < (int) f_qs[ file ].size(); ++i )
+   {
+      if ( f_qs[ file ][ i ] >= q_min &&
+           f_qs[ file ][ i ] <= q_max )
+      {
+         tot_i += f_Is[ file ][ i ];
+      }
+   }
+   return tot_i;
 }

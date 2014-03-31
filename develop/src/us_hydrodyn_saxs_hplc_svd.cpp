@@ -3505,11 +3505,9 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::setup_save( QString tag, QString & fname )
 {
    QString use_dir = QDir::currentDirPath();
 
-   if ( ush_win->saxs_widget )
-   {
-      ush_win->saxs_plot_window->select_from_directory_history( use_dir, this );
-      raise();
-   }
+   ush_win->select_from_directory_history( use_dir, this );
+   raise();
+
    fname = Q3FileDialog::getSaveFileName(
                                         use_dir,
                                         "Text files (*.txt *.TXT);;"
@@ -3528,10 +3526,8 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::setup_save( QString tag, QString & fname )
       fname = ush_win->fileNameCheck( fname, 0, this );
       raise();
    }
-   if ( ush_win->saxs_widget )
-   {
-      ush_win->saxs_plot_window->add_to_directory_history( fname );
-   }
+   ush_win->add_to_directory_history( fname );
+
    return true;
 }
 

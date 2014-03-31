@@ -5,10 +5,13 @@
 #include <qlineedit.h>
 #include <qpushbutton.h>
 #include <qthread.h>
+#include <q3listbox.h>
 //Added by qt3to4:
 #include <QMouseEvent>
 #include <QFocusEvent>
 #include <vector>
+#include <qcolor.h>
+#include <math.h>
 
 class mQLabel : public QLabel
 {
@@ -72,7 +75,30 @@ class mQThread : public QThread
 class ShowHide
 {
  public:
-   static void hide_widgets( std::vector < QWidget *> widgets, bool hide = true, QWidget * resize = (QWidget *) 0 );
+   static void hide_widgets( std::vector < QWidget *> widgets, bool hide = true, QWidget * do_resize = (QWidget *) 0 );
 };
+
+class MQT
+{
+ public:
+   static QStringList get_lb_qsl( Q3ListBox * lb, bool only_selected = false );
+};
+
+// plot colors
+
+class PC
+{
+ public:
+
+   PC( QColor bgc );
+   
+   void color_rotate();
+   QColor color( int i );
+   
+ private:
+   std::vector < QColor >                  plot_colors;
+   void  push_back_color_if_ok( QColor bg, QColor set );
+};
+
 
 #endif

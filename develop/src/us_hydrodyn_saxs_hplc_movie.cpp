@@ -320,7 +320,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::closeEvent(QCloseEvent *e)
 {
    hplc_win->plot_colors = plot_colors;
    hplc_win->disable_updates = true;
-   if ( hplc_win->gaussian_mode )
+   if ( hplc_win->current_mode == hplc_win->MODE_GAUSSIAN )
    {
       hplc_win->wheel_cancel();
    }
@@ -471,7 +471,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       } 
       hplc_win->lb_files->setSelected( hplc_selected_files[ pos ], true );
 
-      if ( hplc_win->gaussian_mode )
+      if ( hplc_win->current_mode == hplc_win->MODE_GAUSSIAN )
       {
          hplc_win->wheel_cancel();
       }

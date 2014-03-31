@@ -1,6 +1,7 @@
 #ifndef US_HYDRODYN_SAXS_BUFFER_NTH_H
 #define US_HYDRODYN_SAXS_BUFFER_NTH_H
 
+#include "us_hydrodyn.h"
 #include "us_hydrodyn_saxs_buffer.h"
 #include "qlabel.h"
 #include "qstring.h"
@@ -30,8 +31,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
 
       US_Config *                             USglobal;
 
-      QLabel *                                lbl_title;
-
+      mQLabel *                               lbl_title;
+      vector < QWidget * >                    files_widgets;
 
       QLabel *                                lbl_files;
       Q3ListBox *                              lb_files;
@@ -76,6 +77,29 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
       QPushButton *                           pb_contains_only;
       QPushButton *                           pb_contains_add;
 
+      // ------ plot section
+
+      PC *                                    pc;
+      QwtPlot *                               plot_data;
+      ScrollZoomer *                          plot_data_zoomer;
+#ifdef QT4
+      QwtPlotGrid *                           grid_data;
+#endif
+#ifdef QT4
+      vector < QwtPlotCurve * >               plotted_curves;
+      QwtPlotMarker *                         plot_marker;
+#else
+      vector < long >                         plotted_curves;
+      long *                                  plot_marker;
+#endif      
+      vector < QString >                      plotted_names;
+      vector < vector < double > >            plotted_x;
+      vector < vector < double > >            plotted_y;
+
+      QPushButton *                           pb_color_rotate;
+      QPushButton *                           pb_clear_plot;
+      QPushButton *                           pb_save_dat;
+
       // intensity
 
       mQLabel *                               lbl_intensity;
@@ -88,7 +112,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
       QPushButton *                           pb_i_avg_all;
       QPushButton *                           pb_i_avg_sel;
       
-      QCheckBox *                             cb_i_above;
+      QButtonGroup *                          bg_i_above_below;
+      QRadioButton *                          rb_i_above;
+      QRadioButton *                          rb_i_below;
       QLineEdit *                             le_i_level;
 
       Q3TextEdit *                             te_q;
@@ -96,6 +122,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
       QPushButton *                           pb_i_only;
       QPushButton *                           pb_i_add;
 
+      QwtWheel *                              qwtw_wheel;
 
       QPushButton *                           pb_help;
       QPushButton *                           pb_quit;
@@ -103,11 +130,19 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
       QPushButton *                           pb_go;
 
       void                     *              us_hydrodyn_saxs_buffer;
+      void                     *              us_hydrodyn;
       map < QString, QString > *              parameters;
 
       void                                    setupGUI();
 
+      void                                    i_avg( QStringList files );
+
+      set < int >                             get_intensity_selected();
+
    private slots:
+
+      // files
+      void                                    hide_files();
 
       // select
       void                                    hide_select();
@@ -123,8 +158,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
       void                                    hide_intensity();
       void                                    i_avg_all();
       void                                    i_avg_sel();
+      void                                    update_i_level();
+      void                                    adjust_wheel ( double );
       void                                    i_only();
       void                                    i_add();
+
+      void                                    color_rotate();
+      void                                    clear_plot();
+      void                                    save_dat();
 
       void                                    update_files_selected();
 

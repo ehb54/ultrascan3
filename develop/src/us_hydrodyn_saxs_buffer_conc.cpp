@@ -434,11 +434,8 @@ void US_Hydrodyn_Saxs_Buffer_Conc::load()
 
    QString use_dir = QDir::currentDirPath();
 
-   if ( *(((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_widget) )
-   {
-      ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_window->select_from_directory_history( use_dir, this );
-      raise();
-   }
+   ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   raise();
 
    QString fname = Q3FileDialog::getOpenFileName(
                                                 use_dir,
@@ -566,10 +563,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::save()
       return;
    }
 
-   if ( ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_widget )
-   {
-      ((US_Hydrodyn_Saxs_Buffer *)saxs_buffer_window)->saxs_window->add_to_directory_history( fname );
-   }
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( fname );
 
    csv tmp_csv = current_csv();
 

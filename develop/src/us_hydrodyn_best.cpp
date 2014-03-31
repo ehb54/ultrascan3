@@ -498,6 +498,12 @@ void US_Hydrodyn_Best::setupGUI()
       background->addLayout ( hbl_bottom );
    }
 
+   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   {
+      rb_90_qtest->hide();
+      rb_80_qtest->hide();
+      rb_70_qtest->hide();
+   }
 }
 
 void US_Hydrodyn_Best::cancel()

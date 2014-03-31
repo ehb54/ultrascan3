@@ -2,12 +2,13 @@
 #include "../include/us_hydrodyn_saxs_buffer_nth.h"
 #include <set>
 //Added by qt3to4:
+#include <Q3TextStream>
 #include <Q3HBoxLayout>
-#include <QCloseEvent>
-#include <Q3BoxLayout>
-#include <Q3GridLayout>
 #include <QLabel>
+#include <Q3GridLayout>
 #include <Q3VBoxLayout>
+#include <Q3BoxLayout>
+#include <QCloseEvent>
 
 US_Hydrodyn_Saxs_Buffer_Nth::US_Hydrodyn_Saxs_Buffer_Nth(
                                                      void                     *              us_hydrodyn_saxs_buffer,
@@ -16,14 +17,25 @@ US_Hydrodyn_Saxs_Buffer_Nth::US_Hydrodyn_Saxs_Buffer_Nth(
                                                      const char *                            name
                                                      ) : QDialog( p, name )
 {
-   this->us_hydrodyn_saxs_buffer                = us_hydrodyn_saxs_buffer;
+   this->us_hydrodyn_saxs_buffer              = us_hydrodyn_saxs_buffer;
+   this->us_hydrodyn                          = ((US_Hydrodyn_Saxs_Buffer *)us_hydrodyn_saxs_buffer)->us_hydrodyn;
    this->parameters                           = parameters;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
    setCaption( tr( "US-SOMO: SAXS Data Utility : Select curves" ) );
 
+   plot_data_zoomer      = (ScrollZoomer *) 0;
+
+#ifdef QT4
+   plot_marker           = (QwtPlotMarrker *) 0;
+#else
+   plot_marker           = (long *) 0;
+#endif
+
    setupGUI();
+   pc                    = new PC( plot_data->canvasBackground() );
+
    update_enables();
    update_files_selected();
 
@@ -41,18 +53,21 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
 {
    int minHeight1  = 24;
 
-   lbl_title =  new QLabel      ( caption(), this );
+   lbl_title =  new mQLabel     ( caption(), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette( PALET_LABEL );
    AUTFBACK( lbl_title );
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
+   
+   connect( lbl_title, SIGNAL( pressed() ), SLOT( hide_files() ) );
 
    lbl_files =  new QLabel      ( tr( "Complete list of data files" ), this );
    lbl_files -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_files -> setPalette      ( PALET_NORMAL );
    AUTFBACK( lbl_files );
    lbl_files -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Normal) );
+   files_widgets.push_back( lbl_files );
 
    lb_files =  new Q3ListBox(this, "files files listbox" );
    lb_files -> setPalette( PALET_NORMAL );
@@ -70,14 +85,15 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
          lb_files->setSelected( i , true );
       }
    }
-
    connect( lb_files, SIGNAL( selectionChanged() ), SLOT( update_files_selected() ) );
+   files_widgets.push_back( lb_files );
 
    lbl_files_sel =  new QLabel      ( tr( "Selected data files" ), this );
    lbl_files_sel -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_files_sel -> setPalette      ( PALET_NORMAL );
    AUTFBACK( lbl_files_sel );
    lbl_files_sel -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Normal) );
+   files_widgets.push_back( lbl_files_sel );
 
    lb_files_sel =  new Q3ListBox(this, "files_sel files_sel listbox" );
    lb_files_sel -> setPalette( PALET_NORMAL );
@@ -86,12 +102,14 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
    lb_files_sel -> setEnabled(true);
    lb_files_sel -> setSelectionMode( Q3ListBox::NoSelection );
    lb_files_sel -> setMinimumHeight( minHeight1 * 8 );
+   files_widgets.push_back( lb_files_sel );
 
    lbl_files_selected =  new QLabel      ( "", this );
    lbl_files_selected -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_files_selected -> setPalette      ( PALET_NORMAL );
    AUTFBACK( lbl_files_selected );
    lbl_files_selected -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Normal) );
+   files_widgets.push_back( lbl_files_selected );
 
    // select
 
@@ -263,7 +281,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
    // probably compute min/max q range over all
 
    le_q_start = new QLineEdit(this, "le_q_start Line Edit");
-   le_q_start->setText( "" );
+   le_q_start->setText( "0" );
    le_q_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_q_start->setPalette( PALET_NORMAL );
    AUTFBACK( le_q_start );
@@ -275,7 +293,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
    intensity_widgets.push_back( le_q_start );
 
    le_q_end = new QLineEdit(this, "le_q_end Line Edit");
-   le_q_end->setText( "" );
+   le_q_end->setText( "5" );
    le_q_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_q_end->setPalette( PALET_NORMAL );
    AUTFBACK( le_q_end );
@@ -311,13 +329,28 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
 
    intensity_widgets.push_back( te_q );
 
-   cb_i_above =  new QCheckBox   ( tr( "Above intensity level [A.U.]:" ), this );
-   cb_i_above -> setPalette      ( PALET_NORMAL );
-   AUTFBACK( cb_i_above );
-   cb_i_above -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   connect( cb_i_above, SIGNAL( clicked() ), SLOT( update_enables() ) );
+   rb_i_above =  new QRadioButton( tr( "Above " ), this );
+   rb_i_above -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_i_above );
+   rb_i_above -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_i_above, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   intensity_widgets.push_back( cb_i_above );
+   intensity_widgets.push_back( rb_i_above );
+
+   rb_i_below =  new QRadioButton( tr( "Below intensity level [A.U.]:" ), this );
+   rb_i_below -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_i_below );
+   rb_i_below -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_i_below, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   intensity_widgets.push_back( rb_i_below );
+
+   bg_i_above_below = new QButtonGroup( this );
+   int bg_pos = 0;
+   bg_i_above_below->setExclusive(true);
+   bg_i_above_below->addButton( rb_i_above, bg_pos++ );
+   bg_i_above_below->addButton( rb_i_below, bg_pos++ );
+   rb_i_below->setChecked( true );
 
    // probably compute min/max q range over all
 
@@ -329,7 +362,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
    le_i_level->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    le_i_level->setValidator( new QDoubleValidator( le_i_level ) );
    // ( (QDoubleValidator *)le_i_level->validator() )->setRange( 0, .5, 3 );
-   connect( le_i_level, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   connect( le_i_level, SIGNAL( textChanged( const QString & ) ), SLOT( update_i_level() ) );
    le_i_level->setMinimumWidth( 80 );
    intensity_widgets.push_back( le_i_level );
 
@@ -349,10 +382,87 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
 
    intensity_widgets.push_back( pb_i_add );
 
+   plot_data = new QwtPlot(this);
+#ifndef QT4
+   // plot_data->enableOutline(true);
+   // plot_data->setOutlinePen(Qt::white);
+   // plot_data->setOutlineStyle(Qwt::VLine);
+   plot_data->enableGridXMin();
+   plot_data->enableGridYMin();
+#else
+   grid_data = new QwtPlotGrid;
+   grid_data->enableXMin( true );
+   grid_data->enableYMin( true );
+#endif
+   plot_data->setPalette( PALET_NORMAL );
+   AUTFBACK( plot_data );
+#ifndef QT4
+   plot_data->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
+   plot_data->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#else
+   grid_data->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_data->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_data->attach( plot_data );
+#endif
+   plot_data->setAxisTitle(QwtPlot::xBottom, tr( "Curve position" ) );
+   plot_data->setAxisTitle(QwtPlot::yLeft, tr("Average Intensity [a.u.]"));
+#ifndef QT4
+   plot_data->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+   plot_data->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   plot_data->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   plot_data->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   plot_data->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   plot_data->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   plot_data->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   plot_data->setMargin(USglobal->config_list.margin);
+   plot_data->setTitle("");
+#ifndef QT4
+   plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
+#else
+   plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
+#endif
+   plot_data->setCanvasBackground(USglobal->global_colors.plot);
 
+   intensity_widgets.push_back( plot_data );
+
+   qwtw_wheel = new QwtWheel( this );
+   qwtw_wheel->setMass         ( 0.5 );
+   qwtw_wheel->setMinimumHeight( minHeight1 );
+   qwtw_wheel->setEnabled      ( false );
+   connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+
+   intensity_widgets.push_back( qwtw_wheel );
+
+   pb_clear_plot =  new QPushButton ( tr( "Clear" ), this );
+   pb_clear_plot -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_clear_plot -> setMinimumHeight( minHeight1 );
+   pb_clear_plot -> setPalette      ( PALET_PUSHB );
+   connect( pb_clear_plot, SIGNAL( clicked() ), SLOT( clear_plot() ) );
+
+   intensity_widgets.push_back( pb_clear_plot );
+
+   pb_color_rotate =  new QPushButton ( tr( "Rotate colors" ), this );
+   pb_color_rotate -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_color_rotate -> setMinimumHeight( minHeight1 );
+   pb_color_rotate -> setPalette      ( PALET_PUSHB );
+   connect( pb_color_rotate, SIGNAL( clicked() ), SLOT( color_rotate() ) );
+
+   intensity_widgets.push_back( pb_color_rotate );
+
+   pb_save_dat =  new QPushButton ( tr( "Save .DAT" ), this );
+   pb_save_dat -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_save_dat -> setMinimumHeight( minHeight1 );
+   pb_save_dat -> setPalette      ( PALET_PUSHB );
+   connect( pb_save_dat, SIGNAL( clicked() ), SLOT( save_dat() ) );
+
+   intensity_widgets.push_back( pb_save_dat );
 
    // bottom
-
 
    pb_help =  new QPushButton ( tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -378,9 +488,10 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
    pb_go -> setPalette      ( PALET_PUSHB );
    connect( pb_go, SIGNAL( clicked() ), SLOT( go() ) );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
-   background->addWidget( lbl_title );
+   Q3BoxLayout *background = new Q3HBoxLayout( this );
+   Q3VBoxLayout *left = new Q3VBoxLayout( 0 );
 
+   left->addWidget( lbl_title );
 
    Q3HBoxLayout *hbl_files_pane = new Q3HBoxLayout( 0 );
    {
@@ -396,10 +507,10 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
       hbl_files_pane->addLayout( vbl_files_sel );
    }
 
-   background->addLayout( hbl_files_pane );
-   background->addWidget( lbl_files_selected );
+   left->addLayout( hbl_files_pane );
+   left->addWidget( lbl_files_selected );
 
-   background->addWidget( lbl_select_nth );
+   left->addWidget( lbl_select_nth );
    {
       Q3GridLayout *gl_nth = new Q3GridLayout( 0 );
 
@@ -412,29 +523,29 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
       gl_nth->addWidget         ( le_end         , 2, 1 );
       gl_nth->addWidget         ( lbl_end_name   , 2, 2 );
 
-      background->addLayout( gl_nth );
+      left->addLayout( gl_nth );
       Q3HBoxLayout *hbl_sel = new Q3HBoxLayout( 0 );
       hbl_sel->addWidget ( pb_nth_only );
       hbl_sel->addWidget ( pb_nth_add );
-      background->addLayout ( hbl_sel );
+      left->addLayout ( hbl_sel );
    }
 
-   background->addWidget( lbl_contain );
+   left->addWidget( lbl_contain );
    {
       Q3GridLayout *gl_contains = new Q3GridLayout( 0 );
 
       gl_contains->addWidget         ( lbl_contains    , 0, 0 );
       gl_contains->addWidget         ( le_contains     , 0, 1 );
 
-      background->addLayout( gl_contains );
+      left->addLayout( gl_contains );
 
       Q3HBoxLayout *hbl_sel = new Q3HBoxLayout( 0 );
       hbl_sel->addWidget ( pb_contains_only );
       hbl_sel->addWidget ( pb_contains_add );
-      background->addLayout ( hbl_sel );
+      left->addLayout ( hbl_sel );
    }
 
-   background->addWidget( lbl_intensity );
+   left->addWidget( lbl_intensity );
    {
       Q3GridLayout *gl_intensity = new Q3GridLayout( 0 );
 
@@ -460,16 +571,22 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
       gl_intensity->addMultiCellWidget( te_q, j, j + 2, 0, 2);
       j += 3;
 
-      gl_intensity->addWidget         ( cb_i_above, j, 0 );
+      {
+         Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+         hbl->addWidget( rb_i_above );
+         hbl->addWidget( rb_i_below );
+         gl_intensity->addLayout( hbl, j, 0 );
+      }
+
       gl_intensity->addMultiCellWidget( le_i_level, j, j, 1, 2 );
       ++j;
 
-      background->addLayout( gl_intensity );
+      left->addLayout( gl_intensity );
 
       Q3HBoxLayout *hbl_sel = new Q3HBoxLayout( 0 );
       hbl_sel->addWidget ( pb_i_only );
       hbl_sel->addWidget ( pb_i_add );
-      background->addLayout ( hbl_sel );
+      left->addLayout ( hbl_sel );
    }
 
    Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
@@ -478,8 +595,25 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
    hbl_bottom->addWidget ( pb_do_select );
    hbl_bottom->addWidget ( pb_go );
 
-   background->addSpacing( 4 );
-   background->addLayout ( hbl_bottom );
+   left->addSpacing( 4 );
+   left->addLayout ( hbl_bottom );
+
+   background->addLayout( left );
+
+   {
+      Q3BoxLayout * vbl = new Q3VBoxLayout( 0 );
+      vbl->addWidget( plot_data );
+      vbl->addWidget( qwtw_wheel );
+
+      {
+         Q3BoxLayout * hbl = new Q3HBoxLayout( 0 );
+         hbl->addWidget( pb_clear_plot );
+         hbl->addWidget( pb_color_rotate );
+         hbl->addWidget( pb_save_dat );
+         vbl->addLayout( hbl );
+      }
+      background->addLayout( vbl );
+   }      
 
    ShowHide::hide_widgets( select_widgets );
    ShowHide::hide_widgets( contain_widgets );
@@ -494,6 +628,11 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
       } else {
          ShowHide::hide_widgets( intensity_widgets, false, this );
       }
+   }
+   if ( parameters->count( "buffer_nth_files_hidden" ) &&
+        (*parameters)[ "buffer_nth_files_hidden" ] == "true" )
+   {
+      ShowHide::hide_widgets( files_widgets, true, this );
    }
 }
 
@@ -641,6 +780,39 @@ void US_Hydrodyn_Saxs_Buffer_Nth::update_enables()
    le_q_start  ->setEnabled( cb_q_range->isChecked() );
    le_q_end    ->setEnabled( cb_q_range->isChecked() );
    pb_i_avg_sel->setEnabled( files_selected );
+
+
+   // compute above / below
+
+   bool any_selected_not_intensity = false;
+   bool any_intensity_not_selected = false;
+
+   set < int > intensity = get_intensity_selected();
+
+   for ( set < int >::iterator it = intensity.begin();
+         it != intensity.end();
+         it++ )
+   {
+      if ( !selected.count( *it ) )
+      {
+         any_intensity_not_selected = true;
+         break;
+      }
+   }
+
+   for ( set < int >::iterator it = selected.begin();
+         it != selected.end();
+         it++ )
+   {
+      if ( !intensity.count( *it ) )
+      {
+         any_selected_not_intensity = true;
+         break;
+      }
+   }
+
+   pb_i_only ->setEnabled( !le_i_level->text().isEmpty() && ( any_intensity_not_selected || any_selected_not_intensity ) );
+   pb_i_add  ->setEnabled( !le_i_level->text().isEmpty() && any_intensity_not_selected && any_selected_not_intensity );
 }
 
 void US_Hydrodyn_Saxs_Buffer_Nth::nth_only()
@@ -734,6 +906,23 @@ void US_Hydrodyn_Saxs_Buffer_Nth::hide_select()
    ShowHide::hide_widgets( intensity_widgets, true, this );
 }
 
+void US_Hydrodyn_Saxs_Buffer_Nth::hide_files()
+{
+   if ( files_widgets.size() )
+   {
+      ShowHide::hide_widgets( files_widgets, files_widgets[ 0 ]->isVisible(), this );
+      if ( !files_widgets[ 0 ]->isVisible() )
+      {
+         (*parameters)[ "buffer_nth_files_hidden" ] = "true";
+      } else {
+         if ( parameters->count( "buffer_nth_files_hidden" ) )
+         {
+            parameters->erase( "buffer_nth_files_hidden" );
+         }
+      }
+   }
+}
+
 void US_Hydrodyn_Saxs_Buffer_Nth::hide_contain()
 {
    if ( contain_widgets.size() )
@@ -763,19 +952,338 @@ void US_Hydrodyn_Saxs_Buffer_Nth::hide_intensity()
    ShowHide::hide_widgets( contain_widgets, true, this );
 }
         
+void US_Hydrodyn_Saxs_Buffer_Nth::i_avg( QStringList files )
+{
+   double min_i = 0e0;
+   double max_i = 0e0;
+   double tot_i = 0e0;
+
+   double q_min = 0e0;
+   double q_max = 6e0;
+
+   QString msg;
+
+   if ( !files.size() )
+   {
+      te_q->setText( tr( "nothing to compute" ) );
+      return;
+   }
+
+   if ( cb_q_range->isChecked() )
+   {
+      q_min = le_q_start->text().toDouble();
+      q_max = le_q_end  ->text().toDouble();
+      msg += QString( tr( "q range clipped to %1 %2\n" ) ).arg( q_min ).arg( q_max );
+   }
+
+   vector < double > x;
+   vector < double > y;
+
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      x.push_back( QString( files[ i ] ).replace( QRegExp( " :.*$" ), "" ).toDouble() );
+      double this_i = ((US_Hydrodyn_Saxs_Buffer *)us_hydrodyn_saxs_buffer)->tot_intensity( QString( files[ i ] ).replace( QRegExp( "^\\d+ : " ), "" ), q_min, q_max );
+      y.push_back( this_i );
+      if ( !i || min_i > this_i )
+      {
+         min_i = this_i;
+      }
+      if ( !i || max_i < this_i )
+      {
+         max_i = this_i;
+      }
+      tot_i += this_i;
+   }
+
+   // US_Vector::printvector2( "plot", x, y );
+
+   msg += QString( 
+                  "minimum total I : %1\n"
+                  "maximum total I : %2\n"
+                  "average total I : %3\n" 
+                   )
+      .arg( min_i )
+      .arg( max_i )
+      .arg( tot_i / files.size() )
+      ;
+
+   te_q->setText( msg );
+
+   qwtw_wheel->setRange( min_i, max_i, ( max_i - min_i ) / 10000000 );
+   update_i_level();
+
+   QString plotname = QString( files[ 0 ] ).replace( QRegExp( "^\\d+ : " ), "" ).replace( QRegExp( ".(dat|DAT)$" ), "" );
+   plotname += cb_q_range->isChecked() ?
+      QString( "_qs%1_qe%2" ).arg( q_min ).arg( q_max ).replace( ".", "_" ) :
+      QString( "_q_all" );
+      
+#ifndef QT4
+   long curve = plot_data->insertCurve( plotname );
+   plot_data->setCurveStyle( curve, QwtCurve::Lines );
+#else
+   QwtPlotCurve *curve = new QwtPlotCurve( plotname );
+   curve->setStyle( QwtPlotCurve::Lines );
+#endif
+   plotted_curves.push_back( curve );
+   plotted_names.push_back( plotname );
+   plotted_x.push_back( x );
+   plotted_y.push_back( y );
+
+#ifndef QT4
+   plot_data->setCurveData( curve,
+                            (double *)&( x[ 0 ] ),
+                            (double *)&( y[ 0 ] ),
+                            x.size()
+                            );
+   plot_data->setCurvePen( curve, QPen( pc->color( (int) plotted_curves.size() - 1 ), 1, SolidLine));
+#else
+   curve->setData(
+                  (double *)&( x ),
+                  (double *)&( y ),
+                  x.size()
+                  );
+
+   curve->setPen( pc->color( (int) plotted_curves.size() - 1 ), 1, Qt::SolidLine );
+
+   curve->attach( plot_data );
+#endif
+
+   if ( !plot_data_zoomer )
+   {
+      plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
+      plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
+      plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+   }
+
+   plot_data->setAxisScale( QwtPlot::xBottom , x[ 0 ] - 1, x.back() + 1);
+   //   plot_data->setAxisScale( QwtPlot::yLeft   , min_i * 0.90, max_i * 1.1e0 );
+
+   plot_data->replot();
+}
+
+
 void US_Hydrodyn_Saxs_Buffer_Nth::i_avg_all()
 {
+   i_avg( MQT::get_lb_qsl( lb_files ) );
 }
 
 void US_Hydrodyn_Saxs_Buffer_Nth::i_avg_sel()
 {
+   i_avg( MQT::get_lb_qsl( lb_files, true ) );
+}
+
+set < int > US_Hydrodyn_Saxs_Buffer_Nth::get_intensity_selected()
+{
+   QStringList files = MQT::get_lb_qsl( lb_files );
+
+   set < int > result;
+
+   if ( !files.size() )
+   {
+      te_q->setText( tr( "nothing to compute" ) );
+      return result;
+   }
+
+   double q_min = 0e0;
+   double q_max = 6e0;
+
+   if ( cb_q_range->isChecked() )
+   {
+      q_min = le_q_start->text().toDouble();
+      q_max = le_q_end  ->text().toDouble();
+   }
+
+   double cutoff = le_i_level->text().toDouble();
+
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      double this_i = ((US_Hydrodyn_Saxs_Buffer *)us_hydrodyn_saxs_buffer)->tot_intensity( QString( files[ i ] ).replace( QRegExp( "^\\d+ : " ), "" ), q_min, q_max );
+      if ( rb_i_above->isChecked() ? ( this_i >= cutoff ) : ( this_i <= cutoff ) )
+      {
+         result.insert( i );
+      }
+   }
+   //   qDebug( QString( "get_intensity_selected files size %1 q_min %2 q_max %3 cutoff %4" ).arg( files.size() ).arg( q_min ).arg( q_max ).arg( cutoff ) );
+   // for ( set < int >::iterator it = result.begin();
+   //       it != result.end();
+   //       it++ )
+   // {
+   //    qDebug( QString( "get_intensity_selected to select %1" ).arg( *it ) );
+   // }
+   return result;
 }
 
 void US_Hydrodyn_Saxs_Buffer_Nth::i_only()
 {
+   set < int > to_select = get_intensity_selected();
+   disconnect( lb_files, SIGNAL( selectionChanged() ), 0, 0 );
+   lb_files->clearSelection();
+   for ( set < int >::iterator it = to_select.begin();
+         it != to_select.end();
+         it++ )
+   {
+      lb_files->setSelected( *it, true );
+   }
+   connect( lb_files, SIGNAL( selectionChanged() ), SLOT( update_files_selected() ) );
+   update_files_selected();
 }
 
 void US_Hydrodyn_Saxs_Buffer_Nth::i_add()
 {
+   set < int > to_select = get_intensity_selected();
+   disconnect( lb_files, SIGNAL( selectionChanged() ), 0, 0 );
+   for ( set < int >::iterator it = to_select.begin();
+         it != to_select.end();
+         it++ )
+   {
+      lb_files->setSelected( *it, true );
+   }
+   connect( lb_files, SIGNAL( selectionChanged() ), SLOT( update_files_selected() ) );
+   update_files_selected();
 }
 
+void US_Hydrodyn_Saxs_Buffer_Nth::clear_plot()
+{
+   plotted_curves.clear();
+   plotted_names .clear();
+   plotted_x     .clear();
+   plotted_y     .clear();
+
+   plot_data->clear();
+   plot_data->replot();
+
+#ifdef QT4
+   plot_marker     = (QwtPlotMarrker *) 0;
+#else
+   plot_marker     = (long *) 0;
+#endif
+   qwtw_wheel      ->setEnabled( false );
+}
+
+void US_Hydrodyn_Saxs_Buffer_Nth::color_rotate()
+{
+   pc->color_rotate();
+   for ( int i = 0; i < (int) plotted_curves.size(); ++i )
+   {
+#ifndef QT4
+      plot_data->setCurvePen( plotted_curves[ i ],  QPen( pc->color( i ), 1, SolidLine));
+#else
+      plotted_curves[ i ]->setPen( pc->color( i ), 1, Qt::SolidLine );
+#endif
+   }
+   plot_data->replot();
+}
+
+void US_Hydrodyn_Saxs_Buffer_Nth::save_dat()
+{
+   if ( !plotted_curves.size() )
+   {
+      return;
+   }
+
+
+   QString use_dir = QDir::currentDirPath();
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
+   QString s = Q3FileDialog::getExistingDirectory(
+                                                 use_dir,
+                                                 this,
+                                                 "get existing directory",
+                                                 tr( "Choose a directory to save the intensity plots" ),
+                                                 true );
+   if ( !s.isEmpty() )
+   {
+      use_dir = s;
+      QDir::setCurrent( s );
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
+   }
+
+   bool cancel = false;
+
+   bool overwrite_all = false;
+
+   for ( int i = 0; i < (int) plotted_curves.size(); ++i )
+   {
+      QString fname = plotted_names[ i ] + ".dat";
+
+      if ( QFile::exists( fname ) )
+      {
+         fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck2( fname, cancel, overwrite_all, 0, this );
+         raise();
+         if ( cancel )
+         {
+            return;
+         }
+      }
+      
+      QFile f( fname );
+      if ( !f.open( QIODevice::WriteOnly ) )
+      {
+         QMessageBox::warning( this, 
+                               caption(),
+                               tr( QString( "could not open %1 for writing" ).arg( f.name() ) ) );
+         return;
+      }
+
+      Q3TextStream ts( &f );
+
+      ts << QString( "Time: average intensity %1\n" ).arg( plotted_names[ i ] );
+      ts << "t I(t)\n";
+
+      for ( int j = 0; j < (int) plotted_x[ i ].size(); ++j )
+      {
+         ts << plotted_x[ i ][ j ] << " " << plotted_y[ i ][ j ] << endl;
+      }
+
+      f.close();
+   }
+
+   QMessageBox::information( this, 
+                             caption() + tr( " : Write plotted files" ),
+                             QString( tr( "%1 file%2 saved in direrctory %3" ) )
+                             .arg( plotted_curves.size() )
+                             .arg( plotted_curves.size() > 1 ? "s" : "" )
+                             .arg( use_dir ) );
+}
+
+void US_Hydrodyn_Saxs_Buffer_Nth::update_i_level()
+{
+   // add plot marker
+
+   if ( !plot_marker )
+   {
+#ifndef QT4
+      plot_marker = new long;
+      *plot_marker = plot_data->insertMarker();
+      plot_data->setMarkerLineStyle ( *plot_marker, QwtMarker::HLine );
+      plot_data->setMarkerPen       ( *plot_marker, QPen( Qt::red, 1, DashDotDotLine));
+#else
+      plot_marker = new QwtPlotMarker;
+      plot_marker->setLineStyle     ( QwtPlotMarker::VLine );
+      plot_marker->setLinePen       ( QPen( Qt::red, 1, Qt::DashDotDotLine ) );
+      plot_marker->attach           ( plot_data );
+#endif
+      qwtw_wheel->setEnabled        ( true );
+   }
+
+#ifndef QT4
+   plot_data->setMarkerPos          ( *plot_marker, 0, le_i_level->text().toDouble() );
+#else
+   plot_marker->setYValue           ( pos );
+#endif
+   plot_data->replot();
+
+   if ( qwtw_wheel->value() != le_i_level->text().toDouble() )
+   {
+      qwtw_wheel->setValue( le_i_level->text().toDouble() );
+   }
+
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Buffer_Nth::adjust_wheel( double pos )
+{
+   le_i_level->setText( QString( "%1" ).arg( pos ) );
+}
