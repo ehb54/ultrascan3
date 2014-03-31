@@ -20,26 +20,26 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    int minHeight3 = 25;
 
    QColorGroup cg_magenta = USglobal->global_colors.cg_normal;
-   cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "magenta" ), Qt::HorPattern ) );
+   cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
 
    /*
-   cg_magenta.setBrush( QColorGroup::Foreground, QBrush( QColor( "magenta" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Button, QBrush( QColor( "blue" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Light, QBrush( QColor( "darkcyan" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Midlight, QBrush( QColor( "darkblue" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Dark, QBrush( QColor( "yellow" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Mid, QBrush( QColor( "darkred" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Text, QBrush( QColor( "green" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::BrightText, QBrush( QColor( "darkgreen" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::ButtonText, QBrush( QColor( "cyan" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "gray" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Shadow, QBrush( QColor( "magenta" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::Highlight, QBrush( QColor( "darkyellow" ), Qt::DiagCrossPattern ) );
-   cg_magenta.setBrush( QColorGroup::HighlightedText, QBrush( QColor( "darkred" ), Qt::DiagCrossPattern ) );
+   cg_magenta.setBrush( QColorGroup::Foreground, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::Button, QBrush( QColor( "blue" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::Light, QBrush( QColor( "darkcyan" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::Midlight, QBrush( QColor( "darkblue" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::Dark, QBrush( QColor( "yellow" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::Mid, QBrush( QColor( "darkred" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::Text, QBrush( QColor( "green" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::BrightText, QBrush( QColor( "darkgreen" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::ButtonText, QBrush( QColor( "cyan" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "gray" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::Shadow, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::Highlight, QBrush( QColor( "darkyellow" ), Qt::SolidPattern ) );
+   cg_magenta.setBrush( QColorGroup::HighlightedText, QBrush( QColor( "darkred" ), Qt::SolidPattern ) );
    */
 
    QColorGroup cg_red = cg_magenta;
-   cg_red.setBrush( QColorGroup::Base, QBrush( QColor( "red" ), Qt::DiagCrossPattern ) );
+   cg_red.setBrush( QColorGroup::Base, QBrush( QColor( "red" ), Qt::SolidPattern ) );
 
    lbl_files = new mQLabel("Data files", this);
    lbl_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1783,6 +1783,12 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    scale_widgets.push_back( lbl_blank1 );
    scale_widgets.push_back( qwtw_wheel );
    scale_widgets.push_back( lbl_wheel_pos );
+
+   // timeshift_widgets;
+
+   timeshift_widgets.push_back( lbl_blank1 );
+   timeshift_widgets.push_back( qwtw_wheel );
+   timeshift_widgets.push_back( lbl_wheel_pos );
 }   
 
 void US_Hydrodyn_Saxs_Hplc::mode_select()

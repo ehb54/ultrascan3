@@ -1513,7 +1513,7 @@ int main (int argc, char **argv)
    if (cmds[0].lower() == "project_merge") 
    {
       if ( !( cmds.size() == 2 ||
-              cmds.size() == 3 && cmds[2].lower() == "gnom" ) ) 
+              ( cmds.size() == 3 && cmds[2].lower() == "gnom" ) ) )
       {
          printf(
                 "usage: %s %s outfile { gnom }\n"

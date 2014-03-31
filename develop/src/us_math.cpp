@@ -1,11 +1,5 @@
 #include "../include/us_math.h"
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
-
 #undef DEBUG
 
 unsigned long square(int num)
