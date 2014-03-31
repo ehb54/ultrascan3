@@ -28,7 +28,7 @@ US_Hydrodyn_Saxs_Buffer_Nth::US_Hydrodyn_Saxs_Buffer_Nth(
    plot_data_zoomer      = (ScrollZoomer *) 0;
 
 #ifdef QT4
-   plot_marker           = (QwtPlotMarrker *) 0;
+   plot_marker           = (QwtPlotMarker *) 0;
 #else
    plot_marker           = (long *) 0;
 #endif
@@ -1043,7 +1043,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::i_avg( QStringList files )
                   x.size()
                   );
 
-   curve->setPen( pc->color( (int) plotted_curves.size() - 1 ), 1, Qt::SolidLine );
+   curve->setPen( QPen( pc->color( (int) plotted_curves.size() - 1 ), 1, Qt::SolidLine ) );
 
    curve->attach( plot_data );
 #endif
@@ -1155,7 +1155,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::clear_plot()
    plot_data->replot();
 
 #ifdef QT4
-   plot_marker     = (QwtPlotMarrker *) 0;
+   plot_marker     = (QwtPlotMarker *) 0;
 #else
    plot_marker     = (long *) 0;
 #endif
@@ -1170,7 +1170,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::color_rotate()
 #ifndef QT4
       plot_data->setCurvePen( plotted_curves[ i ],  QPen( pc->color( i ), 1, SolidLine));
 #else
-      plotted_curves[ i ]->setPen( pc->color( i ), 1, Qt::SolidLine );
+      plotted_curves[ i ]->setPen( QPen( pc->color( i ), 1, Qt::SolidLine ) );
 #endif
    }
    plot_data->replot();
@@ -1271,7 +1271,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::update_i_level()
 #ifndef QT4
    plot_data->setMarkerPos          ( *plot_marker, 0, le_i_level->text().toDouble() );
 #else
-   plot_marker->setYValue           ( pos );
+   plot_marker->setYValue           ( le_i_level->text().toDouble() );
 #endif
    plot_data->replot();
 
