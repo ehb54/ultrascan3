@@ -276,6 +276,7 @@ SOURCES += \
   us_hydrodyn_saxs_buffer_conc_load.cpp \
   us_hydrodyn_saxs_buffer_nth.cpp \
   us_hydrodyn_saxs_hplc.cpp \
+  us_hydrodyn_saxs_hplc_gui.cpp \
   us_hydrodyn_saxs_hplc_stack.cpp \
   us_hydrodyn_saxs_hplc_makeiq.cpp \
   us_hydrodyn_saxs_hplc_plots.cpp \
