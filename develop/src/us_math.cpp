@@ -779,10 +779,10 @@ float calc_bottom(int rotor, int centerpiece, int channel, unsigned int rpm)
    if (!readCenterpieceInfo(&cp_list))
    {
 #if !defined(USE_MPI)
-      cerr << "UltraScan Fatal Error: There was a problem opening the\n"
-         "centerpiece database file:\n\n" + USglobal->config_list.system_dir + "/etc/centerpiece.dat\n\n"
-         "Please install the centerpiece database file\n"
-         "before proceeding. Exiting with -2..." << endl;
+      // cerr << "UltraScan Fatal Error: There was a problem opening the\n"
+      //    "centerpiece database file:\n\n" + USglobal->config_list.system_dir + "/etc/centerpiece.dat\n\n"
+      //    "Please install the centerpiece database file\n"
+      //    "before proceeding. Exiting with -2..." << endl;
       delete USglobal;
 #endif
       return(-2.0); // centerpiece could not be read
@@ -790,10 +790,10 @@ float calc_bottom(int rotor, int centerpiece, int channel, unsigned int rpm)
    if (!readRotorInfo(&rotor_list))
    {
 #if !defined(USE_MPI)
-      cerr << "UltraScan Fatal Error: There was a problem opening the\n"
-         "rotor database file:\n\n" + USglobal->config_list.system_dir + "/etc/rotor.dat\n\n"
-         "Please install the rotor database file\n"
-         "before proceeding. Exiting with -3..." << endl;
+      // cerr << "UltraScan Fatal Error: There was a problem opening the\n"
+      //    "rotor database file:\n\n" + USglobal->config_list.system_dir + "/etc/rotor.dat\n\n"
+      //    "Please install the rotor database file\n"
+      //    "before proceeding. Exiting with -3..." << endl;
       delete USglobal;
 #endif
       return(-3.0);

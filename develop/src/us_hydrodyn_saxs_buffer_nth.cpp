@@ -1038,8 +1038,8 @@ void US_Hydrodyn_Saxs_Buffer_Nth::i_avg( QStringList files )
    plot_data->setCurvePen( curve, QPen( pc->color( (int) plotted_curves.size() - 1 ), 1, SolidLine));
 #else
    curve->setData(
-                  (double *)&( x ),
-                  (double *)&( y ),
+                  (double *)&( x[ 0 ] ),
+                  (double *)&( y[ 0 ] ),
                   x.size()
                   );
 
@@ -1261,7 +1261,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::update_i_level()
       plot_data->setMarkerPen       ( *plot_marker, QPen( Qt::red, 1, DashDotDotLine));
 #else
       plot_marker = new QwtPlotMarker;
-      plot_marker->setLineStyle     ( QwtPlotMarker::VLine );
+      plot_marker->setLineStyle     ( QwtPlotMarker::HLine );
       plot_marker->setLinePen       ( QPen( Qt::red, 1, Qt::DashDotDotLine ) );
       plot_marker->attach           ( plot_data );
 #endif
