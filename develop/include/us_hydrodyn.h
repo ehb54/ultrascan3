@@ -124,6 +124,7 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       friend class US_Hydrodyn_SasOptionsExperimental;
       friend class US_Hydrodyn_SasOptionsGuinier;
       friend class US_Hydrodyn_SasOptionsSans;
+      friend class US_Hydrodyn_Hplc;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 

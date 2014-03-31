@@ -2701,3 +2701,63 @@ void US_Hydrodyn_Saxs_Hplc::update_ref()
 }
 
 // add f_time ref everywhere (copyies etc, maybe search for extc
+
+double US_Hydrodyn_Saxs_Hplc::tot_intensity( QString &file, double q_min, double q_max )
+{
+   if ( !f_qs_string .count( file ) ||
+        !f_qs        .count( file ) ||
+        !f_Is        .count( file ) ||
+        !f_pos       .count( file ) )
+   {
+      editor_msg( "red", QString( tr( "Total intensity compute internal error: no curve named %1" ) ).arg( file ) );
+      return -9e99;
+   }
+
+   double tot_i = 0e0;
+   for ( int i = 0; i < (int) f_qs[ file ].size(); ++i )
+   {
+      if ( f_qs[ file ][ i ] >= q_min &&
+           f_qs[ file ][ i ] <= q_max )
+      {
+         tot_i += f_Is[ file ][ i ];
+      }
+   }
+   return tot_i;
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_selected( set < QString > & to_select, bool do_replot )
+{
+   disable_updates = true;
+   lb_files->clearSelection();
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      if ( to_select.count( lb_files->text( i ) ) )
+      {
+         lb_files->setSelected( i, true );
+      }
+   }
+
+   disable_updates = false;
+   if ( do_replot )
+   {
+      plot_files();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::set_created_selected( set < QString > & to_select, bool do_replot )
+{
+   disable_updates = true;
+   lb_created_files->clearSelection();
+   for ( int i = 0; i < (int)lb_created_files->numRows(); i++ )
+   {
+      if ( to_select.count( lb_created_files->text( i ) ) )
+      {
+         lb_created_files->setSelected( i, true );
+      }
+   }
+   disable_updates = false;
+   if ( do_replot )
+   {
+      plot_files();
+   }
+}

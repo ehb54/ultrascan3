@@ -7,13 +7,30 @@ void US_Hydrodyn_Saxs_Hplc::scale()
 
    bool any_selected = false;
 
+   scale_selected    .clear();
+   scale_q           .clear();
+   scale_I           .clear();
+   scale_e           .clear();
+   scale_last_created.clear();
+
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected( i ) )
       {
-         wheel_file = lb_files->text( i );
+         if ( !any_selected )
+         {
+            wheel_file = lb_files->text( i );
+         }
+         scale_selected.insert( lb_files->text( i ) );
          any_selected = true;
-         break;
+         scale_q[ lb_files->text( i ) ] = f_qs[ lb_files->text( i ) ];
+         scale_I[ lb_files->text( i ) ] = f_Is[ lb_files->text( i ) ];
+         scale_e[ lb_files->text( i ) ] = f_errors[ lb_files->text( i ) ];
+         if ( !plotted_curves.count( lb_files->text( i ) ) )
+         {
+            editor_msg( "red", QString( tr( "Internal error: scale selected %1, but no plotted curve found" ) ).arg( lb_files->text( i ) ) );
+            return;
+         }
       }
    }
 
@@ -67,6 +84,10 @@ void US_Hydrodyn_Saxs_Hplc::scale()
 
    disable_all();
    mode_select( MODE_SCALE );
+   pb_rescale     ->setEnabled( true );
+
+   scale_applied = false;
+
    running       = true;
 
    scale_enables();
@@ -85,11 +106,379 @@ void US_Hydrodyn_Saxs_Hplc::scale_enables()
    rb_scale_low          ->setEnabled( true );
    le_scale_q_start      ->setEnabled( true );
    le_scale_q_end        ->setEnabled( true );
+   pb_scale_q_reset      ->setEnabled( true );
+   pb_scale_reset        ->setEnabled( true );
    pb_scale_apply        ->setEnabled( true );
+   pb_scale_create       ->setEnabled( scale_applied );
+}
+
+QString US_Hydrodyn_Saxs_Hplc::scale_get_target( bool do_msg )
+{
+   double min_i = 0e0;
+   double max_i = 0e0;
+   double tot_i = 0e0;
+
+   double q_min = le_scale_q_start->text().toDouble();
+   double q_max = le_scale_q_end  ->text().toDouble();
+
+   QString msg;
+
+   if ( !scale_selected.size() )
+   {
+      editor_msg( "red",  tr( "Scale: internal error, no selected files" ) );
+      return "";
+   }
+
+   if ( q_min >= q_max )
+   {
+      editor_msg( "red",  tr( "Error: Scale mode: minimum q value is greator or equal to maximum q value" ) );
+      return "";
+   }
+
+   QString max_file;
+   QString min_file;
+
+   bool first_one = true;
+   for ( set < QString >::iterator it = scale_selected.begin();
+         it != scale_selected.end();
+         ++it )
+   {
+      QString file = *it;
+      double this_i = tot_intensity( file, q_min, q_max );
+      if ( first_one || min_i > this_i )
+      {
+         first_one = false;
+         min_i     = this_i;
+         min_file  = file;
+      }
+      if ( first_one || max_i < this_i )
+      {
+         first_one = false;
+         max_i     = this_i;
+         max_file  = file;
+      }
+      tot_i += this_i;
+   }
+
+   msg += QString( "\nScale %2 files from q: %2 %3\n" ).arg( scale_selected.size() ).arg( q_min ).arg( q_max );
+
+   msg += QString( 
+                  "minimum total I : %1 %2\n" 
+                  "maximum total I : %3 %4\n"
+                  "average total I : %5\n" 
+                   )
+      .arg( min_file )
+      .arg( min_i )
+      .arg( max_file )
+      .arg( max_i )
+      .arg( tot_i / scale_selected.size() )
+      ;
+
+   if ( do_msg )
+   {
+      editor_msg( "blue", msg );
+   }
+
+   return rb_scale_low->isChecked() ? min_file : max_file;
 }
 
 void US_Hydrodyn_Saxs_Hplc::scale_apply()
 {
+   QString target = scale_get_target( true );
+   if ( target.isEmpty() )
+   {
+      scale_enables();
+      return;
+   }
+      
+   editor_msg( "blue", QString( tr( "scaling target is %1" ) ).arg( target ) );
+
+   double q_min = le_scale_q_start->text().toDouble();
+   double q_max = le_scale_q_end  ->text().toDouble();
+
+   for ( set < QString >::iterator it = scale_selected.begin();
+         it != scale_selected.end();
+         ++it )
+   {
+      if ( q_min < scale_q[ *it ][ 0 ] )
+      {
+         q_min = scale_q[ *it ][ 0 ];
+      }
+      if ( q_max > scale_q[ *it ].back() )
+      {
+         q_max = scale_q[ *it ].back();
+      }
+   }
+
+   le_scale_q_start->setText( QString( "%1" ).arg( q_min ) );
+   le_scale_q_end  ->setText( QString( "%1" ).arg( q_max ) );
+
+   US_Saxs_Util * usu              = ((US_Hydrodyn *)us_hydrodyn)->saxs_util;
+   saxs_options * our_saxs_options = &(((US_Hydrodyn *)us_hydrodyn)->saxs_options);
+
+   vector < double > target_q;
+   vector < double > target_I;
+   vector < double > target_e;
+
+   bool target_has_e = 
+      ( ( scale_q[ target ].size() == scale_e[ target ].size() ) &&
+        usu->is_nonzero_vector( scale_e[ target ] ) );
+      
+   double       avg_std_dev_frac        = 0e0;
+   unsigned int avg_std_dev_point_count = 0;
+
+   for ( int i = 0; i < (int) scale_q[ target ].size(); ++i )
+   {
+      if ( scale_q[ target ][ i ] >= q_min &&
+           scale_q[ target ][ i ] <= q_max )
+      {
+         target_q.push_back( scale_q[ target ][ i ] );
+         target_I.push_back( scale_I[ target ][ i ] );
+         if ( target_has_e )
+         {
+            target_e.push_back( scale_e[ target ][ i ] );
+            if ( scale_I[ target ][ i ] )
+            {
+               avg_std_dev_frac += scale_e[ target ][ i ] / scale_I[ target ][ i ];
+               avg_std_dev_point_count++;
+            }
+         }
+      }
+   }            
+
+   if ( avg_std_dev_point_count )
+   {
+      avg_std_dev_frac /= ( double ) avg_std_dev_point_count;
+   }
+
+   if ( !target_q.size() )
+   {
+      editor_msg( "red", QString( tr( "Error: Scale 'apply': the target curve for scaling has no points in the selected q range" ) ) );
+      scale_enables();
+      return;
+   }
+
+   bool do_chi2_fitting        = our_saxs_options->iqq_scale_chi2_fitting;
+   bool do_scale_linear_offset = our_saxs_options->iqq_scale_linear_offset;
+
+   QString notices;
+
+   if ( our_saxs_options->ignore_errors && target_has_e )
+   {
+      notices += tr( "Ignoring experimental errors in target\n" );
+      do_chi2_fitting = false;
+   }
+
+   if ( do_chi2_fitting && !target_has_e )
+   {
+      notices += tr( "\nChi^2 fitting requested, but target data has no or some zero standard deviation data. Chi^2 fitting not used" );
+      do_chi2_fitting = false;
+   }
+
+   if ( our_saxs_options->iqq_scale_nnls && do_chi2_fitting && our_saxs_options->iqq_scale_chi2_fitting )
+   {
+      notices += tr( "\nChi^2 fitting is currently not compatable with NNLS scaling, Chi^2 fitting not used" );
+      do_chi2_fitting = false;
+   }
+
+   if ( our_saxs_options->iqq_scale_nnls && do_scale_linear_offset )
+   {
+      notices += tr("\nScale with linear offset is not compatable with NNLS scaling" );
+      do_scale_linear_offset = false;
+   }
+
+   if ( !our_saxs_options->iqq_scale_nnls && do_scale_linear_offset )
+   {
+      notices +=  tr("\nScale with linear offset is not currently implemented");
+      do_scale_linear_offset = false;
+   }
+
+   if ( !notices.isEmpty() )
+   {
+      editor_msg( "dark red", "Scale 'apply' notices:" + notices );
+   }         
+   notices = "";
+
+   if ( do_chi2_fitting )
+   {
+      editor_msg( "dark blue", tr(  "Chi^2 fitting\n" ) );
+   }
+
+   map < QString, double > k;
+   map < QString, double > chi2;
+
+   for ( set < QString >::iterator it = scale_selected.begin();
+         it != scale_selected.end();
+         ++it )
+   {
+      if ( *it != target )
+      {
+         vector < double > source_I;
+         if ( !usu->interpolate( source_I, target_q, scale_q[ *it ], scale_I[ *it ] ) )
+         {
+            editor_msg( "red",
+                        QString( tr( "Error: Scale 'apply': %1 could not interpolate to target on specified q range: %2" ) )
+                        .arg( *it )
+                        .arg( usu->errormsg ) );
+            scale_enables();
+            return;
+         }
+
+         k   [ *it ] = 1e0;
+         chi2[ *it ] = 9e99;
+
+         if ( our_saxs_options->iqq_scale_nnls )
+         {
+            usu->nnls_fit( 
+                          source_I, 
+                          target_I, 
+                          k   [ *it ], 
+                          chi2[ *it ]
+                           );
+         } else {
+            if ( do_chi2_fitting )
+            {
+               usu->scaling_fit( 
+                                source_I, 
+                                target_I, 
+                                target_e,
+                                k   [ *it ], 
+                                chi2[ *it ]
+                                 );
+            } else {
+               usu->scaling_fit( 
+                                source_I, 
+                                target_I, 
+                                k   [ *it ], 
+                                chi2[ *it ]
+                                 );
+            }
+         }
+      }
+   }
+
+   QString fit_msg = "";
+
+   for ( set < QString >::iterator it = scale_selected.begin();
+         it != scale_selected.end();
+         ++it )
+   {
+      if ( *it != target )
+      {
+         bool source_has_e = ( scale_q[ *it ].size() == scale_e[ target ].size() );
+         for ( int i = 0; i < (int) scale_I[ *it ].size(); ++i )
+         {
+            scale_I[ *it ][ i ] *= k[ *it ];
+            if ( source_has_e )
+            {
+               scale_e[ *it ][ i ] *= k[ *it ];
+            }
+         }
+         fit_msg += QString( "%1 : " ).arg( *it );
+         if ( do_chi2_fitting )
+         {
+            // usu.calc_chisq_prob( 0.5 * target_I.size() - ( do_scale_linear_offset ? 2 : 1 ),
+            // 0.5 * chi2[ *it ],
+            // chi2_prob );
+            fit_msg += 
+               QString( "chi^2=%1 df=%2 nchi=%3" )
+               .arg( chi2[ *it ], 6 )
+               .arg( target_I.size() - ( do_scale_linear_offset ? 2 : 1 ) )
+               .arg( sqrt( chi2[ *it ] / ( target_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 )
+               ;
+            if ( avg_std_dev_frac )
+            {
+               fit_msg += QString( " sdf=%1 nchi*sdf=%2 " )
+                  .arg( avg_std_dev_frac ) 
+                  .arg( avg_std_dev_frac * sqrt( chi2[ *it ] / ( target_I.size() - ( do_scale_linear_offset ? 2 : 1 ) ) ), 5 );
+            }
+         } else {
+            fit_msg += QString( "RMSD = %1" ).arg( chi2[ *it ], 5 );
+         }
+         fit_msg += "\n";
+      }         
+   }
+
+   editor_msg( "dark blue", fit_msg );
+
+   scale_replot();
+   scale_applied_q_min = q_min;
+   scale_applied_q_max = q_max;
+   scale_applied = true;
+   scale_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::scale_q_reset()
+{
+   le_scale_q_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ]   ) );
+   le_scale_q_end  ->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+}
+
+void US_Hydrodyn_Saxs_Hplc::scale_reset()
+{
+   for ( set < QString >::iterator it = scale_selected.begin();
+         it != scale_selected.end();
+         ++it )
+   {
+      scale_q[ *it ] = f_qs    [ *it ];
+      scale_I[ *it ] = f_Is    [ *it ];
+      scale_e[ *it ] = f_errors[ *it ];
+   }
+   scale_replot();
+   scale_applied = false;
+   scale_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::scale_replot()
+{
+   for ( set < QString >::iterator it = scale_selected.begin();
+         it != scale_selected.end();
+         ++it )
+   {
+#ifndef QT4
+      plot_dist->setCurveData( plotted_curves[ *it ], 
+                               (double *)&( scale_q[ *it ][ 0 ] ),
+                               (double *)&( scale_I[ *it ][ 0 ] ),
+                               scale_q[ *it ].size()
+                               );
+#else
+      plotted_curves[ *it ]->setData(
+                           (double *)&( scale_q[ *it ][ 0 ] ),
+                           (double *)&( scale_I[ *it ][ 0 ] ),
+                           scale_q[ *it ].size()
+                           );
+#endif
+   }
+   plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc::scale_create()
+{
+   scale_last_created.clear();
+
+   for ( set < QString >::iterator it = scale_selected.begin();
+         it != scale_selected.end();
+         ++it )
+   {
+      QString name = 
+         QString( "%1_scaled_q%2_%3" )
+         .arg( *it )
+         .arg( scale_applied_q_min, 5 )
+         .arg( scale_applied_q_max, 5 )
+         .replace( ".", "_" );
+
+      add_plot( 
+               name,
+               scale_q[ *it ], 
+               scale_I[ *it ], 
+               scale_e[ *it ], 
+               f_is_time[ *it ], 
+               false );
+
+      scale_last_created.insert( last_created_file );
+   }      
+
+   scale_applied = false;
    scale_enables();
 }
 
@@ -485,8 +874,17 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
 
    case MODE_SCALE :
       {
+         scale_q.clear();
+         scale_I.clear();
+         scale_e.clear();
          gauss_delete_markers();
          plotted_markers.clear();
+         if ( scale_last_created.size() )
+         {
+            set_selected        ( scale_last_created );
+            set_created_selected( scale_last_created );
+         }
+         plot_files();
       }
       break;
 

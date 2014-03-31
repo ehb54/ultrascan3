@@ -363,6 +363,37 @@ bool US_Saxs_Util::interpolate(QString outtag, QString totag, QString fromtag)
    return true;
 }
 
+bool US_Saxs_Util::interpolate( vector < double > & results,
+                                vector < double > & to_r, 
+                                vector < double > & from_r, 
+                                vector < double > & from_pr )
+{
+   errormsg = "";
+
+   vector < double > new_from_r;
+   vector < double > new_from_pr;
+   new_from_r.push_back(-1);
+   new_from_pr.push_back(0);
+
+   for ( int i = 0; i < (int) from_r.size(); i++ )
+   {
+      new_from_r.push_back(from_r[i]);
+      new_from_pr.push_back(from_pr[i]);
+   }
+   new_from_r.push_back(1e99);
+   new_from_pr.push_back(0);
+   
+   wave["from"].q = new_from_r;
+   wave["from"].r = new_from_pr;
+   wave["from"].s = new_from_pr;
+   wave["to"].q = to_r;
+   wave["to"].r = to_r;
+
+   bool ok = interpolate( "out", "to", "from" );
+   results = wave["out"].r;
+   return ok;
+}
+
 double US_Saxs_Util::rmsd(QString tag1, QString tag2)
 {
    errormsg = "";

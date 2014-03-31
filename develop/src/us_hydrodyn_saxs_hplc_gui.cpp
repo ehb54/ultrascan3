@@ -1185,8 +1185,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect(pb_scale, SIGNAL(clicked()), SLOT(scale()));
    pb_scale->setEnabled( false );
 
-   lbl_scale_low_high = new QLabel( tr( "Scale to " ), this );
-   lbl_scale_low_high->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_scale_low_high = new QLabel( tr( "Scale to: " ), this );
+   lbl_scale_low_high->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_scale_low_high->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_scale_low_high );
    lbl_scale_low_high->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -1197,7 +1197,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    rb_scale_low -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    connect( rb_scale_low, SIGNAL( clicked() ), SLOT( scale_enables() ) );
                                     
-   rb_scale_high =  new QRadioButton( tr( "Maximum" ), this );
+   rb_scale_high =  new QRadioButton( tr( "Maximum " ), this );
    rb_scale_high -> setPalette      ( PALET_NORMAL );
    AUTFBACK( rb_scale_high );
    rb_scale_high -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -1217,9 +1217,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    cb_scale_sd->setPalette( PALET_NORMAL );
    AUTFBACK( cb_scale_sd );
    connect( cb_scale_sd, SIGNAL( clicked() ), SLOT( scale_enables() ) );
+   cb_scale_sd->hide();
 
-   lbl_scale_q_range = new QLabel( tr( "Scale to " ), this );
-   lbl_scale_q_range->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_scale_q_range = new QLabel( tr( "q range for scaling: " ), this );
+   lbl_scale_q_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_scale_q_range->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_scale_q_range );
    lbl_scale_q_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -1244,12 +1245,33 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( le_scale_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( scale_q_end_text( const QString & ) ) );
    connect( le_scale_q_end, SIGNAL( focussed ( bool ) )             , SLOT( scale_q_end_focus( bool ) ) );
 
+   pb_scale_q_reset = new QPushButton(tr("Reset q range"), this);
+   pb_scale_q_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_scale_q_reset->setMinimumHeight(minHeight1);
+   pb_scale_q_reset->setPalette( PALET_PUSHB );
+   connect(pb_scale_q_reset, SIGNAL(clicked()), SLOT(scale_q_reset()));
+   pb_scale_q_reset->setEnabled( false );
+
+   pb_scale_reset = new QPushButton(tr("Reset scaling"), this);
+   pb_scale_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_scale_reset->setMinimumHeight(minHeight1);
+   pb_scale_reset->setPalette( PALET_PUSHB );
+   connect(pb_scale_reset, SIGNAL(clicked()), SLOT(scale_reset()));
+   pb_scale_reset->setEnabled( false );
+
    pb_scale_apply = new QPushButton(tr("Apply"), this);
    pb_scale_apply->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_scale_apply->setMinimumHeight(minHeight1);
    pb_scale_apply->setPalette( PALET_PUSHB );
    connect(pb_scale_apply, SIGNAL(clicked()), SLOT(scale_apply()));
    pb_scale_apply->setEnabled( false );
+
+   pb_scale_create = new QPushButton(tr("Create scaled set"), this);
+   pb_scale_create->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_scale_create->setMinimumHeight(minHeight1);
+   pb_scale_create->setPalette( PALET_PUSHB );
+   connect(pb_scale_create, SIGNAL(clicked()), SLOT(scale_create()));
+   pb_scale_create->setEnabled( false );
 
    // guinier mode
 
@@ -1540,15 +1562,27 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_mode->addWidget( pb_wheel_cancel );
    hbl_mode->addWidget( pb_wheel_save );
 
-   Q3BoxLayout *hbl_scale = new Q3HBoxLayout( 0 );
-   hbl_scale->addWidget( lbl_scale_low_high );
-   hbl_scale->addWidget( rb_scale_low );
-   hbl_scale->addWidget( rb_scale_high );
-   hbl_scale->addWidget( cb_scale_sd );
-   hbl_scale->addWidget( lbl_scale_q_range );
-   hbl_scale->addWidget( le_scale_q_start );
-   hbl_scale->addWidget( le_scale_q_end );
-   hbl_scale->addWidget( pb_scale_apply );
+   Q3BoxLayout *vbl_scale = new Q3VBoxLayout( 0 );
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( lbl_scale_q_range );
+      hbl->addWidget( le_scale_q_start );
+      hbl->addWidget( le_scale_q_end );
+      hbl->addWidget( pb_scale_q_reset );
+      vbl_scale->addLayout( hbl );
+   }      
+
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( lbl_scale_low_high );
+      hbl->addWidget( rb_scale_low );
+      hbl->addWidget( rb_scale_high );
+      hbl->addWidget( cb_scale_sd );
+      hbl->addWidget( pb_scale_reset );
+      hbl->addWidget( pb_scale_apply );
+      hbl->addWidget( pb_scale_create );
+      vbl_scale->addLayout( hbl );
+   }      
 
    Q3GridLayout *gl_gauss = new Q3GridLayout(0);
    { 
@@ -1604,7 +1638,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addLayout ( gl_wheel );
    vbl_plot_group->addWidget ( lbl_mode_title );
    vbl_plot_group->addLayout ( hbl_mode );
-   vbl_plot_group->addLayout ( hbl_scale );
+   vbl_plot_group->addLayout ( vbl_scale );
    vbl_plot_group->addLayout ( gl_gauss );
    // vbl_plot_group->addLayout ( hbl_gauss2 );
    vbl_plot_group->addLayout ( gl_gauss2  );
@@ -1679,6 +1713,9 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    gaussian_widgets.push_back( le_gauss_fit_end );
    gaussian_widgets.push_back( pb_gauss_save );
    gaussian_widgets.push_back( pb_gauss_as_curves );
+   gaussian_widgets.push_back( lbl_blank1 );
+   gaussian_widgets.push_back( qwtw_wheel );
+   gaussian_widgets.push_back( lbl_wheel_pos );
 
    // ggaussian_widgets;
 
@@ -1697,6 +1734,9 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    ggaussian_widgets.push_back( pb_ggauss_results );
    ggaussian_widgets.push_back( pb_gauss_save );
    ggaussian_widgets.push_back( pb_gauss_as_curves );
+   ggaussian_widgets.push_back( lbl_blank1 );
+   ggaussian_widgets.push_back( qwtw_wheel );
+   ggaussian_widgets.push_back( lbl_wheel_pos );
 
    // gaussian_4var_widgets;
    gaussian_4var_widgets.push_back( le_gauss_pos_dist1 );
@@ -1723,17 +1763,26 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    baseline_widgets.push_back( le_baseline_end );
    baseline_widgets.push_back( le_baseline_end_e );
    baseline_widgets.push_back( pb_baseline_apply );
+   baseline_widgets.push_back( lbl_blank1 );
+   baseline_widgets.push_back( qwtw_wheel );
+   baseline_widgets.push_back( lbl_wheel_pos );
 
    // scale_widgets;
 
    scale_widgets.push_back( lbl_scale_low_high );
    scale_widgets.push_back( rb_scale_low );
    scale_widgets.push_back( rb_scale_high );
-   scale_widgets.push_back( cb_scale_sd );
+   // scale_widgets.push_back( cb_scale_sd );
    scale_widgets.push_back( lbl_scale_q_range );
    scale_widgets.push_back( le_scale_q_start );
    scale_widgets.push_back( le_scale_q_end );
+   scale_widgets.push_back( pb_scale_q_reset );
    scale_widgets.push_back( pb_scale_apply );
+   scale_widgets.push_back( pb_scale_reset );
+   scale_widgets.push_back( pb_scale_create );
+   scale_widgets.push_back( lbl_blank1 );
+   scale_widgets.push_back( qwtw_wheel );
+   scale_widgets.push_back( lbl_wheel_pos );
 }   
 
 void US_Hydrodyn_Saxs_Hplc::mode_select()
@@ -1749,6 +1798,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
    ShowHide::hide_widgets( ggaussian_5var_widgets );
    ShowHide::hide_widgets( baseline_widgets );
    ShowHide::hide_widgets( scale_widgets );
+   ShowHide::hide_widgets( timeshift_widgets );
 
    switch ( current_mode )
    {
@@ -1780,7 +1830,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
       break;
 
    case MODE_BASELINE  : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets  , false ); break;
-   case MODE_TIMESHIFT : mode_title( pb_wheel_start->text() ); break;
+   case MODE_TIMESHIFT : mode_title( pb_wheel_start->text() ); ShowHide::hide_widgets( timeshift_widgets  , false );break;
    case MODE_SCALE     : mode_title( pb_scale->text() ); ShowHide::hide_widgets( scale_widgets     , false ); break;
    default : qDebug( "mode select error" ); break;
    }

@@ -69,6 +69,12 @@ using namespace std;
 # define M_ONE_OVER_SQRT2   7.07106781188e-1
 #endif
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
 class ga_individual
 {
  public:
@@ -91,11 +97,6 @@ class ga_individual
 
 struct hplc_stack_data
 {
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
    map < QString, vector < QString > > f_qs_string;
    map < QString, vector < double > >  f_qs;
    map < QString, vector < double > >  f_Is;
@@ -117,12 +118,6 @@ struct hplc_stack_data
    QStringList                         created_files;
    map < QString, bool >               created_selected_files;
    vector < double >                   gaussians;
-
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 };
 
 class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
@@ -362,7 +357,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QLabel       * lbl_scale_q_range;
       mQLineEdit   * le_scale_q_start;
       mQLineEdit   * le_scale_q_end;
+      QPushButton  * pb_scale_q_reset;
+      QPushButton  * pb_scale_reset;
       QPushButton  * pb_scale_apply;
+      QPushButton  * pb_scale_create;
+
+      set < QString > scale_selected;
 
       bool          order_ascending;
 
@@ -381,11 +381,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       QString          errormsg;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < double >                  plot_errors_grid;
       vector < double >                  plot_errors_target;
       vector < double >                  plot_errors_fit;
@@ -491,16 +486,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < QWidget * >                ggaussian_5var_widgets;
       vector < QWidget * >                baseline_widgets;
       vector < QWidget * >                scale_widgets;
+      vector < QWidget * >                timeshift_widgets;
       vector < QWidget * >                plot_widgets;
 
       vector < double >                   conc_curve( vector < double > &t,
                                                       unsigned int peak,
                                                       double conv );
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
       unsigned int                        unified_ggaussian_curves;
       unsigned int                        unified_ggaussian_gaussians_size;
       QStringList                         unified_ggaussian_files;
@@ -717,18 +708,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       unsigned int                 common_size;
       unsigned int                 per_file_size;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < bool >              is_common; // is common maps the offsets to layout of the regular file specific gaussians
       vector < unsigned int >      offset;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
+
       unsigned int                 use_line_width;
 
       QColorGroup                  cg_red;
@@ -741,8 +723,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       void                         update_ref();
 
-      
+      double                       tot_intensity( QString &file, double q_min = 0e0, double q_max = 6e0 );
 
+      QString                      scale_get_target( bool do_msgs = false );
+      bool                         scale_applied;
+      double                       scale_applied_q_min;
+      double                       scale_applied_q_max;
+
+      set < QString >              scale_last_created;
+      void                         set_selected        ( set < QString > &, bool do_replot = true );
+      void                         set_created_selected( set < QString > &, bool do_replot = true );
+
+      map < QString, vector <double > > scale_q;
+      map < QString, vector <double > > scale_I;
+      map < QString, vector <double > > scale_e;
+      void                         scale_replot();
 
    private slots:
 
@@ -888,7 +883,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void scale_q_end_text            ( const QString & );
       void scale_q_start_focus         ( bool );
       void scale_q_end_focus           ( bool );
+      void scale_q_reset               ();
       void scale_apply                 ();
+      void scale_reset                 ();
+      void scale_create                ();
       void scale_enables               ();
 
       void guinier();
@@ -920,6 +918,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void closeEvent(QCloseEvent *);
    
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 
 #define UHSH_WHEEL_RES 10000000
 #define Q_VAL_TOL 5e-6

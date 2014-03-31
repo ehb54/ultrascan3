@@ -116,6 +116,12 @@ class US_EXTERN US_Saxs_Util
       bool   normalize  ( QString outtag,   QString tag );
       bool   merge      ( QString outtag,   QString tag1,    double  w1,    QString tag2,  double w2 );
 
+      bool  interpolate(
+                        vector < double > & results,
+                        vector < double > & to_r, 
+                        vector < double > & from_r, 
+                        vector < double > & from_pr );
+
       bool subbackground(
                          QString outtag, 
                          QString solutiontag, 

@@ -2299,12 +2299,16 @@ public:
 
 void US_Hydrodyn_Best::reset_qtest()
 {
+   cb_manual_rejection->setChecked( false );
    toggle_points();
 }
 
 void US_Hydrodyn_Best::apply_qtest()
 {
    // only applies to linear
+   
+   reset_qtest();
+
    if ( !lb_data->count() )
    {
       return;
