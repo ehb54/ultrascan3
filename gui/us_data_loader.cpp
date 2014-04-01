@@ -84,31 +84,38 @@ US_DataLoader::US_DataLoader(
 
    main->addLayout( top );
 
-   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+   QFont tw_font( US_Widgets::fixedFont().family(),
+                  US_GuiSettings::fontSize() );
 
    // Tree widget to show data choices
    tw_data = new QTreeWidget( this );
    tw_data->setFrameStyle   ( QFrame::NoFrame );
    tw_data->setPalette      ( US_GuiSettings::editColor() );
-   tw_data->setFont         ( font );
+   tw_data->setFont         ( tw_font );
    tw_data->setSelectionMode( QAbstractItemView::ExtendedSelection );
-
    tw_data->installEventFilter( this );
    main->addWidget( tw_data );
 
+   // Notes
+   QTextEdit* te_notes  = new QTextEdit();
+   te_notes->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+   te_notes->setTextColor( Qt::blue );
+   te_notes->setText( tr( "Right-mouse-button-click on a list selection"
+                          " for details." ) );
+   int font_ht          = QFontMetrics( tw_font ).lineSpacing();
+   te_notes->setMaximumHeight( font_ht + 12 );
+   main->addWidget( te_notes );
+
    // Button Row
-   QHBoxLayout* buttons = new QHBoxLayout;
-
-   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   QHBoxLayout* buttons   = new QHBoxLayout;
+   QPushButton* pb_help   = us_pushbutton( tr( "Help"   ) );
+   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()      ) );
    buttons->addWidget( pb_help );
-
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
    buttons->addWidget( pb_cancel );
-
-   QPushButton* pb_accept = us_pushbutton( tr( "Load" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
+   QPushButton* pb_accept = us_pushbutton( tr( "Load"   ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted()  ) );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons );
@@ -116,6 +123,7 @@ US_DataLoader::US_DataLoader(
    // List from disk or db source
    etype_filt = etype_filt.isEmpty() ? "velocity" : etype_filt.toLower();
    list_data();
+   resize( 720, 500 );
 }
 
 void US_DataLoader::search( const QString& search_string )
@@ -433,9 +441,16 @@ void US_DataLoader::list_data()
       scan_local_edit();
    }
 
+   QStringList crlabels;
+   QStringList hdrs;
+   hdrs << tr( "Run|Triple|Edit" )
+        << tr( "Date" )
+        << tr( "edDbID" )
+        << tr( "Label" );
    tw_data->clear();
-   tw_data->setColumnCount( 1 );
-   tw_data->setHeaderLabel( tr( "Edited Data Sets" ) );
+   tw_data->setColumnCount( 4 );
+   tw_data->setHeaderLabels( hdrs );
+   tw_data->setSortingEnabled( true );
    
    QTreeWidgetItem* twi_edit;
    QTreeWidgetItem* twi_runi = NULL;
@@ -447,6 +462,7 @@ void US_DataLoader::list_data()
    QString           ptlabel = "";
    int               ndxt    = 1;
    int               ndxe    = 1;
+   bool              fromDB  = disk_controls->db();
 
    if ( dlabels.size() == 0 )
    {
@@ -460,13 +476,21 @@ void US_DataLoader::list_data()
    {  // Propagate list widget with labels
       QString  cdescr  = dlabels.at( ii );
       DataDesc ddesc   = ddescrs.at( ii );
+      QString  dbID    = fromDB
+                         ? QString().sprintf( "%6d", ddesc.DB_id )
+                         : QString( "" );
+      crlabels.clear();
+      crlabels << ddesc.runID
+               << QString( ddesc.date ).section( " ", 0, 0 ).simplified()
+               << dbID
+               << ddesc.elabel;
       QString  crlabel = ddesc.runID;
       QString  ctlabel = ddesc.tripID;
       QString  celabel = ddesc.editID;
 
       if ( crlabel != prlabel )
       {  // New runID:  add top-level item
-         twi_runi = new QTreeWidgetItem( QStringList( crlabel ), ii );
+         twi_runi = new QTreeWidgetItem( crlabels, ii );
          tw_data->addTopLevelItem( twi_runi );
 
          twi_trip = new QTreeWidgetItem( QStringList( ctlabel ), ii );
@@ -500,6 +524,14 @@ void US_DataLoader::list_data()
       ddesc.editndx     = ndxe;
       datamap[ cdescr ] = ddesc;
    }
+
+   tw_data->expandAll();
+   tw_data->resizeColumnToContents( 0 );
+   tw_data->resizeColumnToContents( 1 );
+   tw_data->resizeColumnToContents( 2 );
+   tw_data->collapseAll();
+   tw_data->setSortingEnabled( true );
+   tw_data->sortByColumn( 1, Qt::DescendingOrder );
 
    // Walk through entries backwards to propagate edit,triple counts
    prlabel = "";
@@ -615,9 +647,11 @@ void US_DataLoader::scan_dbase_edit()
    while( db.next() )
    {  // Accumulate a mapping of AUC Filename to DB ID
       QString  aucID    = db.value( 0 ).toString();
+      QString  rLabel   = db.value( 1 ).toString();
       QString  aFname   = db.value( 2 ).toString();
+      QString  expID    = db.value( 3 ).toString();
       QString  aucGUID  = db.value( 9 ).toString();
-      aucIDs[ aFname ]  = aucID + "^" + aucGUID;
+      aucIDs[ aFname ]  = aucID + "^" + aucGUID + "^" + expID + "^" + rLabel;
    }
 
 //qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -672,8 +706,15 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       QString edtlamb  = tripID  .section( ".",  2,  2 );
       QString aucfname = runID + "." + dataType + "." + tripID + ".auc";
       bool    isMwl    = edtlamb.contains( "-" );
-      int     idAUC    = isMwl ? 0
-                         : aucIDs[ aucfname ].section( "^", 0, 0 ).toInt();
+      int     idAUC    = aucIDs[ aucfname ].section( "^", 0, 0 ).toInt();
+      QString aucGUID  = aucIDs[ aucfname ].section( "^", 1, 1 );
+      int     idExp    = aucIDs[ aucfname ].section( "^", 2, 2 ).toInt();
+      QString elabel   = aucIDs[ aucfname ].section( "^", 3, 3 );
+      if ( isMwl )
+      {
+         idAUC            = 0;
+         idExp            = 0;
+      }
 //qDebug() << "ScDB:   isMwl idAUC" << isMwl << idAUC << "aucfname" << aucfname;
 
 //qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -688,8 +729,10 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       ddesc.descript   = descrip;
       ddesc.filename   = filename;
       ddesc.dataGUID   = recGUID;
-      ddesc.aucGUID    = parID;
+      ddesc.aucGUID    = aucGUID;
       ddesc.DB_id      = idRec;
+      ddesc.elabel     = elabel;
+      ddesc.exp_id     = idExp;
       ddesc.auc_id     = idAUC;
       ddesc.date       = date;
       ddesc.tripknt    = 1;
@@ -752,10 +795,12 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
             aucEntr       = aucIDs[ aucfname ];
             idAUC         = aucEntr.section( "^", 0, 0 ).toInt();
             parGUID       = aucEntr.section( "^", 1, 1 );
+            idExp         = aucEntr.section( "^", 2, 2 ).toInt();
             ddesc.tripID       = tripID;
             ddesc.editID       = editID + "@" + elambda;
             ddesc.descript     = descrip;
             ddesc.aucGUID      = parGUID;
+            ddesc.exp_id       = idExp;
             ddesc.auc_id       = idAUC;
             ddesc.tripknt      = tripknt;
             ddesc.tripndx      = ii + 1;
@@ -787,6 +832,8 @@ void US_DataLoader::scan_local_edit( void )
    
    QStringList aucfilt( "*.auc" );
    QStringList edtfilt;
+   QString elabel;
+   QString expID;
    
    for ( int ii = 0; ii < aucdirs.size(); ii++ )
    {
@@ -796,6 +843,8 @@ void US_DataLoader::scan_local_edit( void )
 
       if ( aucfiles.size() < 1 )
          continue;
+
+      experiment_info( subdir, elabel, expID );
 
       QString aucfbase  = aucfiles.at( 0 );
       QString aucfname  = subdir + "/" + aucfbase;
@@ -893,7 +942,9 @@ void US_DataLoader::scan_local_edit( void )
          ddesc.filename   = filename;
          ddesc.dataGUID   = recGUID;
          ddesc.aucGUID    = parGUID;
+         ddesc.elabel     = elabel;
          ddesc.DB_id      = -1;
+         ddesc.exp_id     = expID.toInt();
          ddesc.auc_id     = -1;
          ddesc.date       = date;
          ddesc.tripknt    = 1;
@@ -1099,6 +1150,7 @@ void US_DataLoader::show_data_info( QPoint pos )
    QString descript = ddesc.descript;
    QString dbID     = QString::number( ddesc.DB_id );
    QString aucID    = QString::number( ddesc.auc_id );
+   QString expID    = QString::number( ddesc.exp_id );
    QString filename = ddesc.filename;
    QString filespec = filename;
 
@@ -1112,12 +1164,14 @@ void US_DataLoader::show_data_info( QPoint pos )
    QString dtext    = tr( "Data Information:" )
       + tr( "\n  Label:                 " ) + label
       + tr( "\n  Description:           " ) + descript
-      + tr( "\n  Database ID:           " ) + dbID
+      + tr( "\n  Edit Database ID:      " ) + dbID
       + tr( "\n  Filename:              " ) + filespec
       + tr( "\n  Last Updated:          " ) + ddesc.date
-      + tr( "\n  Data Global ID:        " ) + ddesc.dataGUID
+      + tr( "\n  Edit Global ID:        " ) + ddesc.dataGUID
       + tr( "\n  AUC Global ID:         " ) + ddesc.aucGUID
       + tr( "\n  AUC DB ID:             " ) + aucID
+      + tr( "\n  Experiment DB ID:      " ) + expID
+      + tr( "\n  Experiment Label:      " ) + ddesc.elabel
       + tr( "\n  Run ID:                " ) + ddesc.runID
       + tr( "\n  Triple ID:             " ) + ddesc.tripID
       + tr( "\n  Edit ID:               " ) + ddesc.editID
@@ -1149,5 +1203,56 @@ void US_DataLoader::update_disk_db( bool db )
    pb_invest->setEnabled( ( US_Settings::us_inv_level() > 0 ) && db );
 
    list_data();
+}
+
+// Internal utility to get local file experiment information (label,id)
+void US_DataLoader::experiment_info( QString& rundir, QString& elabel,
+      QString& expID )
+{
+   elabel             = "";
+   expID              = "-1";
+
+   rundir.replace( "\\", "/" );
+   if ( QString( rundir ).right( 1 ) != "/" )
+      rundir            += "/";
+
+   QString runID      = QString( rundir ).section( "/", -2, -2 );
+   QStringList ffilt( runID + ".??.xml" );
+   QStringList efiles = QDir( rundir ).entryList( ffilt, QDir::Files,
+                                                  QDir::Name );
+   if ( efiles.size() != 1 )
+      return;
+
+   QString fname      = efiles[ 0 ];
+   QString fpath      = rundir + efiles[ 0 ];
+   QFile filei( fpath );
+
+   if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      return;
+
+   QXmlStreamReader xml( &filei );
+
+   while( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isStartElement() )
+      {
+         if ( xml.name() == "experiment" )
+         {
+            QXmlStreamAttributes atts = xml.attributes();
+            expID              = atts.value( "id" ).toString();
+         }
+
+         else if ( xml.name() == "label" )
+         {
+            xml.readNext();
+            elabel             = xml.text().toString();
+         }
+      }
+   }
+
+   filei.close();
+   return;
 }
 

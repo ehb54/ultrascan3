@@ -16,7 +16,7 @@
 #include "us_db2.h"
 #include "us_passwd.h"
 #include "us_intensity.h"
-#include "us_get_dbrun.h"
+#include "us_get_run.h"
 #include "us_investigator.h"
 #include "us_constants.h"
 #include "us_time_state.h"
@@ -98,8 +98,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    le_investigator   = us_lineedit(   tr( "Not Selected" ), 0, true );
 
    // Radio buttons
-   disk_controls = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
-   save_diskDB = US_Disk_DB_Controls::Default;
+   disk_controls     = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
+   save_diskDB       = US_Disk_DB_Controls::Default;
 
    // Display status
    QLabel* lb_status = us_label(      tr( "Status:" ) );
@@ -1225,42 +1225,50 @@ DbgLv(1) << "CGui: edRuninfo: getExpInfo complete";
 }
 
 // Function to load US3 data
-void US_ConvertGui::loadUS3( QString dir )
+void US_ConvertGui::loadUS3( )
 {
+   // Open a dialog to get the RunID from DB or Disk
+   US_GetRun dialog( runID, disk_controls->db() );
+
+   connect( &dialog, SIGNAL( dkdb_changed  ( bool ) ),
+            this,    SLOT  ( update_disk_db( bool ) ) );
+
+   if ( dialog.exec() == QDialog::Rejected )
+      return;
+
+   if ( runID == QString( "" ) )
+      return;
+
+   // Restore area beneath dialog
+   qApp->processEvents();
+
 DbgLv(1) << "CGui: ldUS3: IN";
+   // Load the data
    if ( disk_controls->db() )
       loadUS3DB();
 
-   else if ( dir.isEmpty() )
-      loadUS3Disk();
-
    else
-      loadUS3Disk( dir );
+      loadUS3Disk();
 
    checkTemperature();          // Check to see if temperature varied too much
 DbgLv(1) << "CGui: ldUS3: RTN";
 
 }
 
+// Load AUC data from disk
 void US_ConvertGui::loadUS3Disk( void )
 {
-   // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this,
-         tr("US3 Raw Data Directory"),
-         US_Settings::resultDir(),
-         QFileDialog::DontResolveSymlinks );
-
-   // Restore area beneath dialog
-   qApp->processEvents();
-
-   if ( dir.isEmpty() ) return;
+   // Construct the full path to the run directory
+   QString dir = US_Settings::resultDir() + "/" + runID;
 
    dir.replace( "\\", "/" );  // WIN32 issue
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
+   // Load data from disk
    loadUS3Disk( dir );
 }
 
+// Load AUC data from a specified directory on local disk
 void US_ConvertGui::loadUS3Disk( QString dir )
 {
    resetAll();
@@ -1269,7 +1277,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
 
    // Check the runID
    QStringList components =  dir.split( "/", QString::SkipEmptyParts );
-   QString new_runID = components.last();
+   QString new_runID      = components.last();
 
    QRegExp rx( "^[A-Za-z0-9_-]{1,80}$" );
    if ( rx.indexIn( new_runID ) < 0 )
@@ -1282,7 +1290,7 @@ void US_ConvertGui::loadUS3Disk( QString dir )
    }
 
    // Set the runID and directory
-   runID = new_runID;
+   runID       = new_runID;
    le_runID ->setText( runID );
    le_runID2->setText( runID );
    le_dir   ->setText( dir );
@@ -1664,21 +1672,7 @@ DbgLv(1) << "CGui: ldUS3DB: IN";
       return;
    }
 
-   // Present a dialog to ask user which experiment to load
-   QString runID;
-DbgLv(1) << "CGui: ldUS3DB: call GetDBRun";
-   US_GetDBRun dialog( runID );
-
-   if ( dialog.exec() == QDialog::Rejected )
-      return;
-
-   if ( runID == QString( "" ) )
-      return;
-
-   // Restore area beneath dialog
-   qApp->processEvents();
-
-   // Now that we have the runID, let's copy the DB info to HD
+   // We have runID from a call to a load dialog; let's copy the DB info to HD
    QDir        readDir( US_Settings::resultDir() );
    QString     dirname = readDir.absolutePath() + "/" + runID + "/";
 
@@ -1696,7 +1690,7 @@ DbgLv(1) << "CGui: ldUS3DB: call rdDBExp";
       return;
    }
 
-   // and load it
+   // And load it
 DbgLv(1) << "CGui: ldUS3DB: call ldUS3Dk";
    le_status->setText( tr( "Loading data from DB (Disk data) ..." ) );
    qApp->processEvents();
