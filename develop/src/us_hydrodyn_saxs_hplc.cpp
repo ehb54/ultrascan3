@@ -1337,61 +1337,124 @@ bool US_Hydrodyn_Saxs_Hplc::get_min_max( QString file,
                                          double &miny,
                                          double &maxy )
 {
-   if ( !f_qs_string .count( file ) ||
-        !f_qs        .count( file ) ||
-        !f_Is        .count( file ) ||
-        !f_pos       .count( file ) )
+   if ( current_mode == MODE_SCALE )
    {
-      // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
-      return false;
-   }
+      //    qDebug( QString("get min max mode scale %1" ).arg( file ) );
+      if ( !scale_q     .count( file ) ||
+           !scale_I     .count( file ) ||
+           !f_pos       .count( file ) )
+      {
+         // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
+         return false;
+      }
 
-   minx = f_qs[ file ][ 0 ];
-   maxx = f_qs[ file ][ f_qs[ file ].size() - 1 ];
+      minx = scale_q[ file ][ 0 ];
+      maxx = scale_q[ file ].back();
 
-   miny = f_Is[ file ][ 0 ];
-   maxy = f_Is[ file ][ 0 ];
-   if ( axis_y_log )
-   {
-      unsigned int i = 0;
-      while ( miny <= 0e0 && i < f_Is[ file ].size() )
+      miny = scale_I[ file ][ 0 ];
+      maxy = scale_I[ file ][ 0 ];
+      if ( axis_y_log )
       {
-         miny = f_Is[ file ][ i ];
-         maxy = f_Is[ file ][ i ];
-         minx = f_qs[ file ][ i ];
-         maxx = f_qs[ file ][ i ];
-         i++;
-      }
-      for ( ; i < f_Is[ file ].size(); i++ )
-      {
-         if ( miny > f_Is[ file ][ i ] && f_Is[ file ][ i ] > 0e0 )
+         unsigned int i = 0;
+         while ( miny <= 0e0 && i < scale_I[ file ].size() )
          {
-            miny = f_Is[ file ][ i ];
+            miny = scale_I[ file ][ i ];
+            maxy = scale_I[ file ][ i ];
+            minx = scale_q[ file ][ i ];
+            maxx = scale_q[ file ][ i ];
+            i++;
          }
-         if ( maxy < f_Is[ file ][ i ] )
+         for ( ; i < scale_I[ file ].size(); i++ )
          {
-            maxy = f_Is[ file ][ i ];
+            if ( miny > scale_I[ file ][ i ] && scale_I[ file ][ i ] > 0e0 )
+            {
+               miny = scale_I[ file ][ i ];
+            }
+            if ( maxy < scale_I[ file ][ i ] )
+            {
+               maxy = scale_I[ file ][ i ];
+            }
+            if ( maxx < scale_q[ file ][ i ] )
+            {
+               maxx = scale_q[ file ][ i ];
+            }
          }
-         if ( maxx < f_qs[ file ][ i ] )
+         if ( miny <= 0e0 )
          {
-            maxx = f_qs[ file ][ i ];
+            miny = 1e0;
+         }
+         // printf( "miny %g\n", miny );
+      } else {
+         for ( unsigned int i = 1; i < scale_I[ file ].size(); i++ )
+         {
+            if ( miny > scale_I[ file ][ i ] )
+            {
+               miny = scale_I[ file ][ i ];
+            }
+            if ( maxy < scale_I[ file ][ i ] )
+            {
+               maxy = scale_I[ file ][ i ];
+            }
          }
       }
-      if ( miny <= 0e0 )
-      {
-         miny = 1e0;
-      }
-      // printf( "miny %g\n", miny );
+      // qDebug( QString("get min max mode scale %1 x %2:%3 x %4:%5" ).arg( file ).arg( minx ).arg( maxx ).arg( miny ).arg( maxy ) );
    } else {
-      for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
+      if ( !f_qs_string .count( file ) ||
+           !f_qs        .count( file ) ||
+           !f_Is        .count( file ) ||
+           !f_pos       .count( file ) )
       {
-         if ( miny > f_Is[ file ][ i ] )
+         // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
+         return false;
+      }
+
+      minx = f_qs[ file ][ 0 ];
+      maxx = f_qs[ file ].back();
+
+      miny = f_Is[ file ][ 0 ];
+      maxy = f_Is[ file ][ 0 ];
+      if ( axis_y_log )
+      {
+         unsigned int i = 0;
+         while ( miny <= 0e0 && i < f_Is[ file ].size() )
          {
             miny = f_Is[ file ][ i ];
-         }
-         if ( maxy < f_Is[ file ][ i ] )
-         {
             maxy = f_Is[ file ][ i ];
+            minx = f_qs[ file ][ i ];
+            maxx = f_qs[ file ][ i ];
+            i++;
+         }
+         for ( ; i < f_Is[ file ].size(); i++ )
+         {
+            if ( miny > f_Is[ file ][ i ] && f_Is[ file ][ i ] > 0e0 )
+            {
+               miny = f_Is[ file ][ i ];
+            }
+            if ( maxy < f_Is[ file ][ i ] )
+            {
+               maxy = f_Is[ file ][ i ];
+            }
+            if ( maxx < f_qs[ file ][ i ] )
+            {
+               maxx = f_qs[ file ][ i ];
+            }
+         }
+         if ( miny <= 0e0 )
+         {
+            miny = 1e0;
+         }
+         // printf( "miny %g\n", miny );
+      } else {
+         for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
+         {
+            if ( miny > f_Is[ file ][ i ] )
+            {
+               miny = f_Is[ file ][ i ];
+            }
+            if ( maxy < f_Is[ file ][ i ] )
+            {
+               maxy = f_Is[ file ][ i ];
+            }
          }
       }
    }

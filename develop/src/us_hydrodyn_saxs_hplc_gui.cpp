@@ -1219,6 +1219,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( cb_scale_sd, SIGNAL( clicked() ), SLOT( scale_enables() ) );
    cb_scale_sd->hide();
 
+   cb_scale_save_intp = new QCheckBox(this);
+   cb_scale_save_intp->setText(tr("Save interpolated to target"));
+   cb_scale_save_intp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_scale_save_intp->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_scale_save_intp );
+   connect( cb_scale_save_intp, SIGNAL( clicked() ), SLOT( scale_enables() ) );
+
    lbl_scale_q_range = new QLabel( tr( "q range for scaling: " ), this );
    lbl_scale_q_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_scale_q_range->setPalette( PALET_NORMAL );
@@ -1578,6 +1585,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( rb_scale_low );
       hbl->addWidget( rb_scale_high );
       hbl->addWidget( cb_scale_sd );
+      hbl->addWidget( cb_scale_save_intp );
       hbl->addWidget( pb_scale_reset );
       hbl->addWidget( pb_scale_apply );
       hbl->addWidget( pb_scale_create );
@@ -1773,6 +1781,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    scale_widgets.push_back( rb_scale_low );
    scale_widgets.push_back( rb_scale_high );
    // scale_widgets.push_back( cb_scale_sd );
+   scale_widgets.push_back( cb_scale_save_intp );
    scale_widgets.push_back( lbl_scale_q_range );
    scale_widgets.push_back( le_scale_q_start );
    scale_widgets.push_back( le_scale_q_end );

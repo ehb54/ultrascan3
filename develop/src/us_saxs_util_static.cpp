@@ -10899,3 +10899,140 @@ bool US_Saxs_Util::is_nonzero_vector( vector < double > &v )
    }
    return non_zero;
 }
+
+bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line_size )
+{
+   
+   QFile of( outfile );
+   if ( of.exists() )
+   {
+      cout << QString( "pdb2fasta: output file %1 already exists, please manually remove and try again\n" ).arg( of.name() );
+      return false;
+   }
+   if ( !of.open( QIODevice::WriteOnly ) )
+   {
+      cout << QString( "pdb2fasta: could not open output file %1, please check permissions and existence of directory if specified\n" ).arg( of.name() );
+      return false;
+   }
+   
+   Q3TextStream tso( &of );
+
+   QRegExp rx_atom ("^ATOM");
+   QRegExp rx_model("^MODEL");
+   QRegExp rx_end  ("^END");
+   
+   map < QString, QChar > residue2fasta;
+   residue2fasta["GLY"] = 'G';
+   residue2fasta["ALA"] = 'A';
+   residue2fasta["VAL"] = 'V';
+   residue2fasta["LEU"] = 'L';
+   residue2fasta["ILE"] = 'I';
+   residue2fasta["MET"] = 'M';
+   residue2fasta["PHE"] = 'F';
+   residue2fasta["TRP"] = 'W';
+   residue2fasta["PRO"] = 'P';
+   residue2fasta["SER"] = 'S';
+   residue2fasta["THR"] = 'T';
+   residue2fasta["CYS"] = 'C';
+   residue2fasta["CYH"] = 'B';
+   residue2fasta["TYR"] = 'Y';
+   residue2fasta["ASN"] = 'N';
+   residue2fasta["GLN"] = 'Q';
+   residue2fasta["ASP"] = 'D';
+   residue2fasta["GLU"] = 'E';
+   residue2fasta["LYS"] = 'K';
+   residue2fasta["ARG"] = 'R';
+   residue2fasta["HIS"] = 'H';
+
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      QFile f( files[ i ] );
+      if ( !f.exists() )
+      {
+         cout << QString( "pdb2fasta: file not found %1\n" ).arg( f.name() );
+         of.close();
+         return false;
+      }
+      if ( !f.open( QIODevice::ReadOnly ) )
+      {
+         cout << QString( "pdb2fasta: file could not be opened %1\n" ).arg( f.name() );
+         of.close();
+         return false;
+      }
+
+      QString fasta;
+
+      // >pdb|model|chain
+      // ; original full path
+
+      QString pdb = QFileInfo( f ).baseName( true );
+
+      Q3TextStream ts ( &f );
+
+      QString last_chain;
+
+      int line_size = 0;
+
+      int model_count = 1;
+
+      QString resname;
+      QString chain;
+      QString model;
+
+      while ( !ts.atEnd() )
+      {
+         QString qs = ts.readLine();
+         if ( qs.contains( rx_model ) )
+         {
+            QStringList qsl = QStringList::split( QRegExp("\\s+"), qs.left(20) );
+            if ( qsl.size() == 1 )
+            {
+               model = QString( "%1" ).arg( model_count );
+            } else {
+               model = qsl[ 1 ];
+            }
+            model_count++;
+            last_chain = "";
+         }
+
+         if ( qs.contains( rx_atom ) )
+         {
+            if ( qs.mid( 12, 4 ).stripWhiteSpace() == "CA" )
+            {
+               chain   = qs.mid( 22, 1 );
+               resname = qs.mid( 17, 3 );
+
+               if ( chain != last_chain )
+               {
+                  fasta += 
+                     ( line_size ? "\n" : "" ) 
+                     + QString( ">%1|%2|%3\n;%4\n" )
+                     .arg( pdb )
+                     .arg( model )
+                     .arg( chain )
+                     .arg( f.name() )
+                     ;
+                  last_chain = chain;
+                  line_size = 0;
+               }                  
+               fasta += 
+                  ( residue2fasta.count( resname ) ?
+                    residue2fasta[ resname ] : QChar( 'X' ) );
+
+               if ( ++line_size >= max_line_size )
+               {
+                  fasta += "\n";
+                  line_size = 0;
+               }
+            }
+         }
+      }
+      if ( line_size )
+      {
+         fasta += "\n";
+      }
+      tso << fasta;
+   }
+   of.close();
+   return true;
+}

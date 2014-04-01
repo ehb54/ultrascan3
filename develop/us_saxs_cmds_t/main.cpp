@@ -109,9 +109,11 @@ int main (int argc, char **argv)
              "range         \toutfile infile col min max\n"
              "              \treverses row order\n"
              "pmtest        \toutfile testfile\n"
-             "              test parsimonious models write model to outfile\n"
+             "              \ttest parsimonious models write model to outfile\n"
              "pm            \tcontrolfile\n"
              "              \tperform pm (controlfile can be a .tar or .tgz\n"
+             "fasta         \tmax_line_length outfile pdb1 {pdb2 ... }\n"
+             "              \tconvert listed .pdb's to a fasta formatted outputfile\n"
              , argv[0]
              );
       exit(-1);
@@ -2233,6 +2235,41 @@ int main (int argc, char **argv)
       if ( !usu.run_pm( controlfile ) )
       {
          cout << usu.errormsg << endl;
+         exit( errorbase );
+      }
+      
+      exit( 0 );
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "fasta" ) 
+   {
+      if ( cmds.size() <= 3 ) 
+      {
+         printf(
+                "usage: %s %s max_line_length outfile pdb1 {pdb2 ... }\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+
+      int          max_line_length = cmds[ p++ ].toInt();
+      QString      outfile         = cmds[ p++ ];
+
+      QStringList files;
+
+      while ( (int) cmds.size() > p )
+      {
+         files << cmds[ p++ ];
+      }
+
+      if ( !US_Saxs_Util::pdb2fasta( outfile, files, max_line_length ) )
+      {
+         cout << "Errors found" << endl;
          exit( errorbase );
       }
       

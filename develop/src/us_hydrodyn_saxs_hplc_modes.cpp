@@ -190,7 +190,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_apply()
       scale_enables();
       return;
    }
-      
+
    editor_msg( "blue", QString( tr( "scaling target is %1" ) ).arg( target ) );
 
    double q_min = le_scale_q_start->text().toDouble();
@@ -402,9 +402,11 @@ void US_Hydrodyn_Saxs_Hplc::scale_apply()
    editor_msg( "dark blue", fit_msg );
 
    scale_replot();
-   scale_applied_q_min = q_min;
-   scale_applied_q_max = q_max;
-   scale_applied = true;
+   scale_applied_q_min  = q_min;
+   scale_applied_q_max  = q_max;
+   scale_applied_target = target;
+   scale_applied        = true;
+
    scale_enables();
 }
 
@@ -467,14 +469,75 @@ void US_Hydrodyn_Saxs_Hplc::scale_create()
          .arg( scale_applied_q_max, 5 )
          .replace( ".", "_" );
 
-      add_plot( 
-               name,
-               scale_q[ *it ], 
-               scale_I[ *it ], 
-               scale_e[ *it ], 
-               f_is_time[ *it ], 
-               false );
+      if ( cb_scale_save_intp->isChecked() && *it != scale_applied_target )
+      {
+         name += "_interp";
 
+         double q_min = scale_q[ scale_applied_target ][ 0 ];
+         double q_max = scale_q[ scale_applied_target ].back();
+         if ( q_min < scale_q[ *it ][ 0 ] )
+         {
+            q_min = scale_q[ *it ][ 0 ];
+         }
+         if ( q_max > scale_q[ *it ].back() )
+         {
+            q_max = scale_q[ *it ].back();
+         }
+
+         vector < double > target_q;
+
+         for ( int i = 0; i < (int) scale_q[ scale_applied_target ].size(); ++i )
+         {
+            if ( scale_q[ scale_applied_target ][ i ] >= q_min &&
+                 scale_q[ scale_applied_target ][ i ] <= q_max )
+            {
+               target_q.push_back( scale_q[ scale_applied_target ][ i ] );
+            }
+         }            
+
+         vector < double > source_I;
+         vector < double > source_e;
+         if ( !usu->interpolate( source_I, target_q, scale_q[ *it ], scale_I[ *it ] ) )
+         {
+            editor_msg( "red",
+                        QString( tr( "Error: Scale 'apply': %1 could not interpolate to target on specified q range: %2" ) )
+                        .arg( *it )
+                        .arg( usu->errormsg ) );
+            scale_enables();
+            return;
+         }
+
+         if ( scale_e[ *it ].size() == scale_q[ *it ].size() )
+         {
+            if ( !usu->interpolate( source_e, target_q, scale_q[ *it ], scale_e[ *it ] ) )
+            {
+               editor_msg( "red",
+                           QString( tr( "Error: Scale 'apply': %1 could not interpolate to target on specified q range: %2" ) )
+                           .arg( *it )
+                           .arg( usu->errormsg ) );
+               scale_enables();
+               return;
+            }
+         }
+
+         add_plot( 
+                  name,
+                  target_q, 
+                  source_I, 
+                  source_e, 
+                  f_is_time[ *it ], 
+                  false );
+
+      } else {
+         add_plot( 
+                  name,
+                  scale_q[ *it ], 
+                  scale_I[ *it ], 
+                  scale_e[ *it ], 
+                  f_is_time[ *it ], 
+                  false );
+
+      }
       scale_last_created.insert( last_created_file );
    }      
 
@@ -884,7 +947,9 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
             set_selected        ( scale_last_created );
             set_created_selected( scale_last_created );
          }
+         mode_select( MODE_NORMAL );
          plot_files();
+         rescale();
       }
       break;
 

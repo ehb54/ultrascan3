@@ -354,6 +354,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QRadioButton * rb_scale_high;
       QButtonGroup * bg_scale_low_high;
       QCheckBox    * cb_scale_sd;
+      QCheckBox    * cb_scale_save_intp;
       QLabel       * lbl_scale_q_range;
       mQLineEdit   * le_scale_q_start;
       mQLineEdit   * le_scale_q_end;
@@ -737,6 +738,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, vector <double > > scale_q;
       map < QString, vector <double > > scale_I;
       map < QString, vector <double > > scale_e;
+      QString                      scale_applied_target;
+
       void                         scale_replot();
 
    private slots:

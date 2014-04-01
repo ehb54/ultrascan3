@@ -819,6 +819,8 @@ class US_EXTERN US_Saxs_Util
       bool                pdb_mw( QString file, double & mw );
       bool                pdb_mw( QStringList & qsl, double & mw );
 
+      static bool         pdb2fasta( QString outfile, QStringList &files, int max_line_size = 120 );
+
    private:
 
       // double       minusoneoverfourpisq;

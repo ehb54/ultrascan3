@@ -1229,7 +1229,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::save_dat()
 
       Q3TextStream ts( &f );
 
-      ts << QString( "Time: average intensity %1\n" ).arg( plotted_names[ i ] );
+      ts << QString( "Frame data: average intensity %1\n" ).arg( plotted_names[ i ] );
       ts << "t I(t)\n";
 
       for ( int j = 0; j < (int) plotted_x[ i ].size(); ++j )
