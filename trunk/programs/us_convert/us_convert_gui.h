@@ -213,7 +213,7 @@ class US_ConvertGui : public US_Widgets
       void lambdaPrevClicked ( void );
       void lambdaNextClicked ( void );
       void editRuninfo       ( void );
-      void loadUS3           ( QString dir = "" );
+      void loadUS3           ( void );
       void loadUS3Disk       ( void );
       void loadUS3Disk       ( QString );
       void loadUS3DB         ( void );

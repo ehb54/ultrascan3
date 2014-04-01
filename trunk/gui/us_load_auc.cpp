@@ -53,7 +53,7 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
 
    // Search
    QHBoxLayout* search = new QHBoxLayout;
-   QLabel* lb_search = us_label( tr( "Search" ) );
+   QLabel* lb_search   = us_label( tr( "Search" ) );
    search->addWidget( lb_search );
  
    le_search = us_lineedit( "" );
@@ -62,6 +62,8 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    search->addWidget( le_search );
 
    // Tree
+   QFont tr_font( US_Widgets::fixedFont().family(),
+                  US_GuiSettings::fontSize() );
    tree = new QTreeWidget;
    tree->setAllColumnsShowFocus( true );
    tree->setIndentation        ( 20 );
@@ -71,14 +73,26 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    tree->installEventFilter    ( this );
 
    tree->setPalette( US_GuiSettings::editColor() );
-   tree->setFont   ( QFont( US_GuiSettings::fontFamily(),
-                     US_GuiSettings::fontSize  () ) );
+   tree->setFont   ( tr_font );
 
    QStringList headers;
-   headers << tr( "Run ID" );
+   headers << tr( "Run|Triple" )
+           << tr( "Date" )
+           << tr( "trDbID" )
+           << tr( "Label" );
+   tree->setColumnCount( 4 );
    tree->setHeaderLabels( headers );
+   tree->setSortingEnabled( true );
 
    populate_tree();
+
+   QTextEdit* te_notes = new QTextEdit();
+   te_notes->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
+   te_notes->setTextColor( Qt::blue );
+   te_notes->setText( tr( "Right-mouse-button-click on a list selection"
+                          " for details." ) );
+   int font_ht = QFontMetrics( tr_font ).lineSpacing();
+   te_notes->setMaximumHeight( font_ht + 12 );
 
    // Button Row
    QHBoxLayout* buttons = new QHBoxLayout;
@@ -105,9 +119,10 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    main->addLayout( investigator );
    main->addLayout( search );
    main->addWidget( tree );
+   main->addWidget( te_notes );
    main->addLayout( buttons );
 
-   resize( 600, 400 );
+   resize( 800, 500 );
 }
 
 // Load the selected raw data
@@ -130,27 +145,27 @@ void US_LoadAUC::load( void )
    int nruns  = 0;
    QStringList tripls;
    QStringList runIDs;
-   QStringList labels;
+   QStringList lkeys;
    QString     runID;
 
    for ( int ii = 0; ii < nitems; ii++ )
    {  // Review and record selected list items
       item          = items.at( ii );
-      QString label = item->text( 0 );
+      QString lkey  = item->text( 0 );
       DataDesc ddesc;
 
       if ( item->parent() != NULL )
       {  // Not top-level
-         label      = item->parent()->text( 0 ) + "." + label;
-         ddesc      = datamap[ label ];
+         lkey       = item->parent()->text( 0 ) + "." + lkey;
+         ddesc      = datamap[ lkey ];
          tripls << ddesc.tripID;           // Save selected triples
       }
 
       else
       {  // Top-level
          ntops++;                          // Count top-level items
-         label      = label + "." + item->child( 0 )->text( 0 );
-         ddesc      = datamap[ label ];
+         lkey       = lkey + "." + item->child( 0 )->text( 0 );
+         ddesc      = datamap[ lkey ];
       }
 
       runID         = ddesc.runID;
@@ -191,8 +206,8 @@ qDebug() << "ntops" << ntops << "trips" << tripls.count()
 
       for ( int ii = 1; ii < item->childCount(); ii++ )
       {  // Save any run triples beyond first
-         QString label  = runID + "." + item->child( ii )->text( 0 );
-         sdescs << datamap[ label ];
+         QString lkey   = runID + "." + item->child( ii )->text( 0 );
+         sdescs << datamap[ lkey ];
       }
    }
 
@@ -240,6 +255,7 @@ void US_LoadAUC::populate_tree( void )
    le_search->clear();
    tree     ->clear();
    datamap   .clear();
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    if ( dkdb_cntrls->db() )
    {  // Scan database for AUC
@@ -251,6 +267,9 @@ void US_LoadAUC::populate_tree( void )
       naucf = scan_disk();
    }
 
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
+
    if ( naucf == 0 )
    {
       QMessageBox::information( this,
@@ -260,25 +279,26 @@ void US_LoadAUC::populate_tree( void )
       return;
    }
 
-   QStringList       runIDs;
-   QTreeWidgetItem*  top = NULL;
+   // Populate the tree with top level items sorted
+   QStringList runIDs;
    QList< DataDesc > ddescs = datamap.values();
-//qDebug() << "PopTr: naucf valsize" << naucf << ddescs.size();
+   QTreeWidgetItem* top = NULL;
 
-   // Populate the tree
    for ( int ii = 0; ii < naucf; ii++ )
    {
-      DataDesc ddesc  = ddescs.at( ii );
-      QString  runID  = ddesc.runID;
-      QStringList item   ( ddesc.tripID );
-      QStringList topItem( ddesc.runID );
-//qDebug() << "PopTr:   run trip ii" << ddesc.runID << ddesc.tripID << ii;
+      DataDesc ddesc  = ddescs.at( ii );     // Item description
+      QStringList item( ddesc.tripID );
+      QStringList topItem;
+      topItem << ddesc.runID
+              << QString( ddesc.date ).section( " ", 0, 0 )
+              << QString().sprintf( "%6d", ddesc.DB_id )
+              << ddesc.label;
 
-      if ( ! runIDs.contains( runID ) )
+      if ( ! runIDs.contains( ddesc.runID ) )
       {  // First entry for a run, so preceed with top-level item
          top  = new QTreeWidgetItem( topItem );
          tree->addTopLevelItem( top );
-         runIDs << runID;
+         runIDs << ddesc.runID;
       }
 
       new QTreeWidgetItem( top, item );     // Create 2nd-level tree items
@@ -287,6 +307,9 @@ void US_LoadAUC::populate_tree( void )
    tree->expandAll();
    tree->resizeColumnToContents( 0 );
    tree->collapseAll();
+   tree->sortByColumn( 1, Qt::DescendingOrder );
+qDebug() << "PopTr: naucf valsize" << naucf << datamap.values().size();
+
 }
 
 // Limit displayed tree data based on the search text
@@ -297,11 +320,11 @@ void US_LoadAUC::limit_data( const QString& search )
    for ( int i = 0; i < tree->topLevelItemCount(); i++ )
    {
       QTreeWidgetItem* item  = tree->topLevelItem( i );
-      QString          label = item->text( 0 );
+      QString          lkey  = item->text( 0 );
 
-      // Hide the item if search text exists and the label does not contain it
+      // Hide the item if search text exists and the lkey does not contain it
       item->setHidden( have_search  &&
-                       ! label.contains( search, Qt::CaseInsensitive ) );
+                       ! lkey.contains( search, Qt::CaseInsensitive ) );
    }
 }
 
@@ -351,6 +374,7 @@ bool US_LoadAUC::eventFilter( QObject* obj, QEvent* e )
 
       return false;
    }
+
    else
    {  // Pass all other events to normal handler
       return US_WidgetsDialog::eventFilter( obj, e );
@@ -367,18 +391,20 @@ void US_LoadAUC::show_data_info( QPoint pos )
    QTreeWidgetItem* citem = item->child( 0 );
    bool     toplev = ( pitem == NULL );
    QString  runID  = toplev ? item ->text( 0 ) : pitem->text( 0 );
+   runID           = runID.section( "[", 0, 0 ).simplified();
    QString  tripID = toplev ? citem->text( 0 ) : item ->text( 0 );
-   QString  label  = runID + "." + tripID;
-   DataDesc ddesc  = datamap[ label ];
+   QString  lkey   = runID + "." + tripID;
+   DataDesc ddesc  = datamap[ lkey ];
    QString  dtext  = tr( "Data Information for " );
    dtext          += toplev ? tr( "the first triple of run %1" ).arg( runID )
-                            : tr( "item %1" ).arg( label );
+                            : tr( "item %1" ).arg( lkey );
    dtext           = dtext + "\n"
-      + tr( "\n  Label:                  " ) + label
-      + tr( "\n  Database ID:            " ) + QString::number( ddesc.DB_id )
+      + tr( "\n  List Item Key:          " ) + lkey
+      + tr( "\n  AUC Database ID:        " ) + QString::number( ddesc.DB_id )
       + tr( "\n  AUC Global ID:          " ) + ddesc.rawGUID
       + tr( "\n  Filename:               " ) + ddesc.filename
       + tr( "\n  Last Updated:           " ) + ddesc.date
+      + tr( "\n  Label:                  " ) + ddesc.label
       + tr( "\n  Run ID:                 " ) + runID
       + tr( "\n  Triple ID:              " ) + tripID
       + tr( "\n  Triple Index:           " ) + QString::number( ddesc.tripndx )
@@ -388,7 +414,7 @@ void US_LoadAUC::show_data_info( QPoint pos )
    // Open a dialog and display run/triple information
    US_Editor* eddiag = new US_Editor( US_Editor::LOAD, true, "", this );
    eddiag->setWindowTitle( tr( "Data Information" ) );
-   eddiag->move( this->pos() + pos + QPoint( 100, 100 ) );
+   eddiag->move( this->pos() + pos + QPoint( 500, 100 ) );
    eddiag->resize( 720, 240 );
    eddiag->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
    eddiag->e->setText( dtext );
@@ -418,12 +444,13 @@ int US_LoadAUC::scan_db()
    while ( db.next() )
    {  // Accumulate data description objects from database information
       QString rawDataID = db.value( 0 ).toString();
+      QString label     = db.value( 1 ).toString();
       QString filename  = db.value( 2 ).toString();
       QString date      = db.value( 5 ).toString() + " UTC";
       QString rawGUID   = db.value( 9 ).toString();
       QString runID     = filename.section( ".",  0, -6 );
       QString tripID    = filename.section( ".", -4, -2 );
-      QString label     = runID + "." + tripID;
+      QString lkey      = runID + "." + tripID;
       QString idata     = label + "^" +
                           runID + "^" +
                           tripID + "^" +
@@ -466,8 +493,9 @@ int US_LoadAUC::scan_disk()
          QString     aucfname = subdir + "/" + aucfbase;
          QString     runID    = aucfbase.section( ".",  0, -6 );
          QString     tripID   = aucfbase.section( ".", -4, -2 );
-         QString     label    = runID + "." + tripID;
-//qDebug() << "ScDk: ii aucfbase" << ii << aucfbase << "label" << label;
+         QString     lkey     = runID + "." + tripID;
+         QString     label    = runID;
+//qDebug() << "ScDk: ii aucfbase" << ii << aucfbase << "lkey" << lkey;
          QString     date     = US_Util::toUTCDatetimeText(
              QFileInfo( aucfname ).lastModified().toUTC()
              .toString( Qt::ISODate ), true );
@@ -494,19 +522,27 @@ int US_LoadAUC::scan_disk()
             QString wlen;
             xml.readNext();
 
-            if ( xml.isStartElement()  &&  xml.name() == "dataset" )
+            if ( xml.isStartElement() )
             {
-               atts          = xml.attributes();
-               QString cell  = atts.value( "cell"       ).toString();
-               QString chan  = atts.value( "channel"    ).toString();
-               QString wlen  = atts.value( "wavelength" ).toString();
-               QString trip  = cell + "." + chan + "." + wlen;
-
-               if ( trip == tripID )
+               if ( xml.name() == "dataset" )
                {
-                  rawDataID     = atts.value( "id"         ).toString();
-                  rawGUID       = atts.value( "guid"       ).toString();
-                  break;
+                  atts          = xml.attributes();
+                  QString cell  = atts.value( "cell"       ).toString();
+                  QString chan  = atts.value( "channel"    ).toString();
+                  QString wlen  = atts.value( "wavelength" ).toString();
+                  QString trip  = cell + "." + chan + "." + wlen;
+
+                  if ( trip == tripID )
+                  {
+                     rawDataID     = atts.value( "id"         ).toString();
+                     rawGUID       = atts.value( "guid"       ).toString();
+                  }
+               }
+
+               else if ( xml.name() == "label" )
+               {
+                  xml.readNext();
+                  label         = xml.text().toString();
                }
             }
          }
@@ -554,6 +590,7 @@ void US_LoadAUC::create_descs( QStringList& runIDs, QStringList& infoDs,
       QString rawGUID   = idata.section( "^", 4, 4 );
       QString rawDataID = idata.section( "^", 5, 5 );
       QString date      = idata.section( "^", 6, 6 );
+      QString lkey      = runID + "." + tripID;
       tripndx           = ( runID == prunid ) ? ( tripndx + 1 ) : 1;
       prunid            = runID;
 
@@ -569,21 +606,19 @@ void US_LoadAUC::create_descs( QStringList& runIDs, QStringList& infoDs,
       ddesc.tripknt     = runIDs.count( runID );
       ddesc.tripndx     = tripndx;
 
-//qDebug() << "CrDe: ii tknt" << ii << ddesc.tripknt << "label" << label;
-      if ( datamap.contains( label ) )
-      {  // Handle the case where the label already exists
-         qDebug() << "*** DUPLICATE label" << label << "***";
-         label             = label + "(2)";
+//qDebug() << "CrDe: ii tknt" << ii << ddesc.tripknt << "lkey" << lkey;
+      if ( datamap.contains( lkey ) )
+      {  // Handle the case where the lkey already exists
+         qDebug() << "*** DUPLICATE lkey" << lkey << "***";
+         lkey              = lkey + "(2)";
 
-         if ( datamap.contains( label ) )
+         if ( datamap.contains( lkey ) )
          {  // Handle two duplicates
-            label             = ddesc.label + "(3)";
+            lkey              = lkey.replace( "(2)", "(3)" );
          }
-
-         ddesc.label       = label;
       }
 
-      datamap[ label ]  = ddesc;
+      datamap[ lkey ]   = ddesc;
    }
    return;
 }

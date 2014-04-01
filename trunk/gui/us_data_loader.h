@@ -59,7 +59,9 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
          QString dataGUID;        // data Global Identifier
          QString aucGUID;         // AUC GUID (same as dataGUID for raw)
          QString date;            // date/time last updated
-         int     DB_id;           // database ID number
+         QString elabel;          // Experiment (run) label
+         int     DB_id;           // Edit database ID number
+         int     exp_id;          // Experiment database ID number
          int     auc_id;          // AUC database ID number
          int     tripknt;         // count of triples per run
          int     tripndx;         // index of triple in run
@@ -94,6 +96,7 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       QString&                          description;
       QString                           etype_filt;
 
+   private slots:
       bool load_edit      ( void );
       void describe       ( void );
       void scan_dbase_edit( void );
@@ -101,8 +104,6 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       void pare_to_latest ( void );
       void pare_latest_mwl( void );
       void show_data_info ( QPoint );
-
-   private slots:
       void list_data      ( void );
       void get_person     ( void );
       void update_disk_db(  bool );
@@ -110,6 +111,7 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       void search         ( const QString& );
       void cancelled      ( void );
       void accepted       ( void );
+      void experiment_info( QString&, QString&, QString& );
       void help           ( void )
       { showHelp.show_help( "data_loader.html" ); };
 
