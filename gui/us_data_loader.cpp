@@ -450,7 +450,7 @@ void US_DataLoader::list_data()
    tw_data->clear();
    tw_data->setColumnCount( 4 );
    tw_data->setHeaderLabels( hdrs );
-   tw_data->setSortingEnabled( true );
+   tw_data->setSortingEnabled( false );
    
    QTreeWidgetItem* twi_edit;
    QTreeWidgetItem* twi_runi = NULL;
@@ -531,7 +531,8 @@ void US_DataLoader::list_data()
    tw_data->resizeColumnToContents( 2 );
    tw_data->collapseAll();
    tw_data->setSortingEnabled( true );
-   tw_data->sortByColumn( 1, Qt::DescendingOrder );
+   tw_data->sortByColumn( 0, Qt::AscendingOrder );  // Insure triples in order
+   tw_data->sortByColumn( 1, Qt::DescendingOrder ); // Default latest-top order
 
    // Walk through entries backwards to propagate edit,triple counts
    prlabel = "";
@@ -1186,7 +1187,8 @@ void US_DataLoader::show_data_info( QPoint pos )
    edit->setWindowTitle( tr( "Data Information" ) );
    edit->move( this->pos() + pos + QPoint( 100, 100 ) );
    edit->resize( 700, 350 );
-   edit->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
+   edit->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                            US_GuiSettings::fontSize() ) );
    edit->e->setText( dtext );
    edit->show();
 }
