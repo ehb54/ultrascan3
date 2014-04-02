@@ -65,15 +65,15 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    QFont tr_font( US_Widgets::fixedFont().family(),
                   US_GuiSettings::fontSize() );
    tree = new QTreeWidget;
-   tree->setAllColumnsShowFocus( true );
+   tree->setFrameStyle         ( QFrame::NoFrame );
+   tree->setPalette            ( US_GuiSettings::editColor() );
+   tree->setFont               ( tr_font );
    tree->setIndentation        ( 20 );
    tree->setSelectionBehavior  ( QAbstractItemView::SelectRows );
    tree->setSelectionMode      ( QAbstractItemView::ExtendedSelection );
    tree->setAutoFillBackground ( true );
    tree->installEventFilter    ( this );
 
-   tree->setPalette( US_GuiSettings::editColor() );
-   tree->setFont   ( tr_font );
 
    QStringList headers;
    headers << tr( "Run|Triple" )
@@ -82,7 +82,7 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
            << tr( "Label" );
    tree->setColumnCount( 4 );
    tree->setHeaderLabels( headers );
-   tree->setSortingEnabled( true );
+   tree->setSortingEnabled( false );
 
    populate_tree();
 
@@ -283,6 +283,7 @@ void US_LoadAUC::populate_tree( void )
    QStringList runIDs;
    QList< DataDesc > ddescs = datamap.values();
    QTreeWidgetItem* top = NULL;
+   tree->setSortingEnabled( false );
 
    for ( int ii = 0; ii < naucf; ii++ )
    {
@@ -306,8 +307,12 @@ void US_LoadAUC::populate_tree( void )
 
    tree->expandAll();
    tree->resizeColumnToContents( 0 );
+   tree->resizeColumnToContents( 1 );
+   tree->resizeColumnToContents( 2 );
    tree->collapseAll();
-   tree->sortByColumn( 1, Qt::DescendingOrder );
+   tree->setSortingEnabled( true );
+   tree->sortByColumn( 0, Qt::AscendingOrder );   // Insure triples in order
+   tree->sortByColumn( 1, Qt::DescendingOrder );  // Default latest-on-top
 qDebug() << "PopTr: naucf valsize" << naucf << datamap.values().size();
 
 }
@@ -416,7 +421,8 @@ void US_LoadAUC::show_data_info( QPoint pos )
    eddiag->setWindowTitle( tr( "Data Information" ) );
    eddiag->move( this->pos() + pos + QPoint( 500, 100 ) );
    eddiag->resize( 720, 240 );
-   eddiag->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
+   eddiag->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                              US_GuiSettings::fontSize() ) );
    eddiag->e->setText( dtext );
    eddiag->show();
 }

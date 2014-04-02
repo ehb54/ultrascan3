@@ -2,6 +2,7 @@
 #		copypkg-lnx.sh  - copy ultrascan3 directories to us3pkg/PKGNAME
 
 SRCDIR=$HOME/ultrascan3
+SRCSOMO=$HOME/us3_somo
 DSTDIR=$HOME/us3pkg
 ME=`whoami`
 SYSTYPE=`uname -s`
@@ -72,7 +73,7 @@ for D in etc bin lib us3-update.sh; do
 done
 
 # Remove the SOMO bins
-US3BINS=`(cd ${SRCDIR}/somo/bin;ls)`
+US3BINS=`(cd ${SRCSOMO}/bin;ls)`
 for F in ${US3BINS}; do
   echo "/bin/rm -f ${PKGDIR}/bin/${F}"
   /bin/rm -f ${PKGDIR}/bin/${F}
@@ -87,16 +88,16 @@ for F in ${PKGDIR}/etc/somo*; do
 done
 
 # Copy the SOMO directories
-SDIR=${SRCDIR}/somo/lib
+SDIR=${SRCSOMO}/lib
 DDIR=${PKGDIR}
 echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}
-SDIR=${SRCDIR}/somo/bin
+SDIR=${SRCSOMO}/bin
 DDIR=${PKGDIR}
 echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}
 (cd ${PKGDIR};mkdir somo somo/doc somo/demo somo/test);
-SDIR=${SRCDIR}/somo/doc
+SDIR=${SRCSOMO}/doc
 DDIR=${PKGDIR}/somo
 echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}

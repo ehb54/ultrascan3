@@ -39,7 +39,7 @@ class US_GetRun : public US_WidgetsDialog
    signals:
       //! \brief A signal to tell the parent when the disk/db selection changes.
       //! \param DB  True if DB is now selected
-      void dkdb_changed( bool );
+      void dkdb_changed( bool DB );
 
    private:
       QString&           runID;
