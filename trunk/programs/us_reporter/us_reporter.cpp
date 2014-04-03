@@ -146,7 +146,8 @@ US_Reporter::US_Reporter() : US_Widgets()
    ntrows = 5;
    ntcols = theads.size();
    tw_recs->setHeaderLabels( theads );
-   tw_recs->setFont(  QFont( "monospace", US_GuiSettings::fontSize() - 1 ) );
+   tw_recs->setFont( QFont( US_Widgets::fixedFont().family(),
+                            US_GuiSettings::fontSize() - 1 ) );
    tw_recs->setObjectName( QString( "tree-widget" ) );
    tw_recs->setAutoFillBackground( true );
    tw_recs->installEventFilter   ( this );
@@ -166,6 +167,7 @@ US_Reporter::US_Reporter() : US_Widgets()
    mainLayout->setStretchFactor( leftLayout, 2 );
    mainLayout->setStretchFactor( rghtLayout, 8 );
 
+   resize( 1060, 480 );
    show();
    changed = false;
 }
@@ -282,6 +284,7 @@ void US_Reporter::build_runids()
       }
    }
 
+   cb_runids->setMaxVisibleItems( 20 );
    cb_runids->addItems( sl_runids );   // Populate the Runs combo box
    cb_runids->setCurrentIndex( 0 );
 }
@@ -633,7 +636,7 @@ void US_Reporter::build_tree()
       }
    }
 
-   resize( 1060, 240 );
+   resize( 1060, 480 );
 DbgLv(1) << "WIDGET SIZE" << size();
 
    change_tree = true;
@@ -871,12 +874,9 @@ bool US_Reporter::write_report()
    rptpage  += "  <style type=\"text/css\" >\n";
    rptpage  += "    td { padding-right: 1em; }\n";
    rptpage  += "    body { background-color: white; }\n";
-   rptpage  += "    @media print\n";
+   rptpage  += "    .pagebreak\n";
    rptpage  += "    {\n";
-   rptpage  += "      .page\n";
-   rptpage  += "      {\n";
-   rptpage  += "        page-break-before: always;\n";
-   rptpage  += "      }\n";
+   rptpage  += "      page-break-before: always; border: 1px solid; \n";
    rptpage  += "    }\n";
    rptpage  += "    .parahead\n";
    rptpage  += "    {\n";
@@ -926,7 +926,7 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
    }
 
    // Compose the body of the composite report
-   QString ppageclass = "    <p class=\"page parahead\">\n";
+   QString ppageclass = "    <p class=\"pagebreak parahead\">\n";
    QString pheadclass = "    <p class=\"parahead\">\n";
    QString dtextclass = "\n    <p class=\"datatext\">\n";
    int  jplot   = 0;
@@ -971,10 +971,11 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
          {
             chght = QPixmap( idesc->filepath ).height();
          }
-DbgLv(1) << "  plot.height" << chght << idesc->filename;
+DbgLv(1) << "  plot.height" << chght << idesc->filename << "ph" << phght;
 
          if ( jplot != 1  &&  ii > 0 )
          {  // Previous was 2nd plot on the page or was a non-plot
+//DbgLv(1) << "++jplot" << jplot << "ii" << ii << "NEW PAGE";
             rptpage   += ppageclass;
             jplot      = 1;       // mark as 1st plot on page
          }
@@ -983,6 +984,7 @@ DbgLv(1) << "  plot.height" << chght << idesc->filename;
          {  // Previous was the 1st plot on the page
             if ( ( chght + phght ) < mxpageht )
             {  // If 2 plots will fit on a page, mark this plot as second
+//DbgLv(1) << "++comb.height (NOPAGE)" << (chght+phght) << "mxpageht" << mxpageht;
                rptpage   += pheadclass;
                jplot      = 2;       // mark as 2nd plot on page
             }
@@ -1048,11 +1050,6 @@ DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
 
             chght    = imgsize.height();
 
-         }
-
-         else if ( fileimg.contains( ".png" ) )
-         {  // For PNG, determine the height of the plot
-            chght    = QPixmap( fileimg ).height();
          }
 
          // Embed the plot in the composite report
@@ -1156,15 +1153,14 @@ void US_Reporter::write_pdf()
 {
    ppdfpath = QString( pagepath ).replace( ".html", ".pdf" );
    QPrinter printer( QPrinter::HighResolution );
-//   QPrinter printer( QPrinter::ScreenResolution );
+   printer.setOutputFormat  ( QPrinter::PdfFormat );
    printer.setOutputFileName( ppdfpath );
-//   printer.setFullPage( true );
-   printer.setCreator( "UltraScan" );
-   printer.setDocName( QString( "report_composite.html" ) );
-   printer.setOrientation( QPrinter::Portrait );
-//   printer.setPaperSize( QPrinter::A4 );
-   printer.setPaperSize( QPrinter::A2 );
-   printer.setOutputFormat( QPrinter::PdfFormat );
+//   printer.setFullPage      ( true );
+   printer.setCreator       ( "UltraScan" );
+   printer.setDocName       ( QString( "report_composite.html" ) );
+   printer.setOrientation   ( QPrinter::Portrait );
+   printer.setPaperSize     ( QPrinter::A2 );
+//   printer.setPaperSize     ( QPrinter::Letter );
 
    QString       rpttext;
    QFile         fili( pagepath );
@@ -1174,36 +1170,15 @@ void US_Reporter::write_pdf()
       rpttext = ts.readAll();
       fili.close();
    }
-#ifndef Q_WS_MAC  // Use WebView to produce PDF on Linux,Windows
-   prevwidg = new QWebView( this );
 
-   if ( websetting == NULL )
-   {
-      websetting = prevwidg->settings();
-   }
-   websetting->setFontFamily( QWebSettings::StandardFont,
-                              "serif" );
-   websetting->setFontSize(   QWebSettings::DefaultFontSize,
-                              US_GuiSettings::fontSize() + 2 );
-
-   ld_wait  = true;
-   QUrl pageurl( pagepath );
-   connect( prevwidg, SIGNAL( loadFinished( bool ) ),
-            this,     SLOT(   page_loaded(  bool ) ) );
-   prevwidg->load( pageurl );
-
-   while ( ld_wait )
-   {
-DbgLv(1) << " ++ Load Wait ++";
-      US_Sleep::msleep( 500 );
-      qApp->processEvents();
-   }
-#else             // Use TextDocument to produce PDF on Mac
+   // Use TextDocument to produce PDF
    QString rptpath = US_Settings::reportDir();
    QString cmppath = QString( pagepath ).section( "/", 0, -2 );
    QDir::setCurrent( cmppath );
    QTextDocument document;
    document.setDefaultFont( QFont( "serif", 14 ) );
+   QSizeF pgsize = printer.paperSize( QPrinter::Point );
+   document.setPageSize( pgsize );
    document.setHtml( rpttext );
    document.print( &printer );
 
@@ -1224,49 +1199,6 @@ DbgLv(1) << " ++ Load Wait ++";
             tr( "Unable to (over-)write the file:\n\n" ) + ppdfpath );
    }
    load_ok   = true;
-#endif
-}
-
-// Handle loading complete in web view:  create the PDF
-void US_Reporter::page_loaded( bool ok )
-{
-   load_ok   = ok;
-DbgLv(1) << "PG_LD: loaded OK" << ok;
-
-   if ( ok )
-   {  // HTML loaded:  "print" to a PDF file
-      QPrinter printer( QPrinter::HighResolution );
-      printer.setOutputFileName( ppdfpath );
-      printer.setCreator( "UltraScan" );
-      printer.setDocName( QString( "report_composite.html" ) );
-      printer.setOrientation( QPrinter::Portrait );
-      printer.setPaperSize  ( QPrinter::Letter );
-      prevwidg->print( &printer );
-
-      QString ppdffold = ppdfpath;
-      ppdfpath         = ppdfpath.section( "/", 0, -3 );
-      ppdfpath         = ppdfpath + "/report_composite.pdf";
-      QFile pdff( ppdfpath );
-
-      // Overwrite the PDF in the composite folder with the one
-      //  in the subdirectory where the HTML and components exist
-
-      if ( pdff.exists() )
-         pdff.remove();
-
-      if ( ! QFile::copy( ppdffold , ppdfpath  ) )
-      {
-         QMessageBox::information( this,
-               tr( "UltraScan Error" ),
-               tr( "Unable to (over-)write the file:\n\n" ) +
-               ppdfpath );
-      }
-DbgLv(1) << "PG_LD: ppdffold" << ppdffold;
-DbgLv(1) << "PG_LD: ppdfpath" << ppdfpath;
-DbgLv(1) << "PG_LD: pagepath" << pagepath;
-   }
-
-   ld_wait  = false;
 }
 
 // Count selected reports:  runIDs, reports, htmls, plots
@@ -1354,7 +1286,8 @@ void US_Reporter::item_view()
    editd->setWindowTitle( tr( "Report Tree Item View" ) );
    editd->move( QCursor::pos() + QPoint( 100, 100 ) );
    editd->resize( 600, 500 );
-   editd->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
+   editd->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                             US_GuiSettings::fontSize() ) );
    if ( isHTML )
       editd->e->setHtml( mtext );
    else
@@ -1388,7 +1321,8 @@ void US_Reporter::item_show()
    editd->setWindowTitle( tr( "Report Tree Item Details" ) );
    editd->move( QCursor::pos() + QPoint( 100, 100 ) );
    editd->resize( 600, 500 );
-   editd->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
+   editd->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                             US_GuiSettings::fontSize() ) );
    editd->e->setText( mtext );
    editd->show();
 }
