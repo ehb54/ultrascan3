@@ -123,7 +123,6 @@ class US_Reporter : public US_Widgets
       void sync_db       ( void );
       void copy_logos    ( QString );
       void write_pdf     ( void );
-      void page_loaded   ( bool );
       QString pad_line   ( const QString );
 
       void help          ( void )
