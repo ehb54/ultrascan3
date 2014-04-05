@@ -1,9 +1,0 @@
-#!/usr/bin/perl
-
-$arg = shift || die "usage: mpi_job_to_end id\n";
-
-$US = $ENV{'ULTRASCAN'};
-print `echo mpi_job_to_end $arg > $US/etc/us_gridpipe`;
-
-print "NOTICE: if this job was running, you must execute mpi_restart!\n";
-

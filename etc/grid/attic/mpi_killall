@@ -1,2 +1,0 @@
-unset DISPLAY
-su - apache -c "$ULTRASCAN/bin64/mpi_killall_apache 2>/dev/null"

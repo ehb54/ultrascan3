@@ -1097,7 +1097,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_baseline_start->setPalette( PALET_PUSHB );
    connect(pb_baseline_start, SIGNAL(clicked()), SLOT(baseline_start()));
 
-   pb_baseline_apply = new QPushButton(tr("Compute and subtract baseline"), this);
+   pb_baseline_apply = new QPushButton(tr("Baseline apply"), this);
    pb_baseline_apply->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_baseline_apply->setMinimumHeight(minHeight1);
    pb_baseline_apply->setPalette( PALET_PUSHB );
@@ -1561,6 +1561,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_mode->addWidget( pb_ggauss_start );
    hbl_mode->addWidget( pb_p3d );
    hbl_mode->addWidget( pb_baseline_start );
+   hbl_mode->addWidget( pb_baseline_apply   );
    hbl_mode->addWidget( pb_wheel_start );
    hbl_mode->addWidget( pb_scale );
    hbl_mode->addWidget( pb_guinier );
@@ -1636,7 +1637,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_baseline->addWidget( le_baseline_end_s   );
    hbl_baseline->addWidget( le_baseline_end     );
    hbl_baseline->addWidget( le_baseline_end_e   );
-   hbl_baseline->addWidget( pb_baseline_apply   );
+   //   hbl_baseline->addWidget( pb_baseline_apply   );
 
    Q3BoxLayout *vbl_plot_group = new Q3VBoxLayout(0);
    // vbl_plot_group->addWidget ( plot_dist );
@@ -1770,7 +1771,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    baseline_widgets.push_back( le_baseline_end_s );
    baseline_widgets.push_back( le_baseline_end );
    baseline_widgets.push_back( le_baseline_end_e );
-   baseline_widgets.push_back( pb_baseline_apply );
+   // baseline_widgets.push_back( pb_baseline_apply );
    baseline_widgets.push_back( lbl_blank1 );
    baseline_widgets.push_back( qwtw_wheel );
    baseline_widgets.push_back( lbl_wheel_pos );

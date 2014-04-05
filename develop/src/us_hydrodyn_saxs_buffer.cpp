@@ -8500,6 +8500,8 @@ void US_Hydrodyn_Saxs_Buffer::select_nth()
       parameters.count( "buffer_nth_contains" ) ? parameters[ "buffer_nth_contains" ] : "";
 
    select_these( parameters );
+   lb_files              ->setEnabled( true );
+   lb_created_files      ->setEnabled( true );
 }
 
 double US_Hydrodyn_Saxs_Buffer::tot_intensity( QString &file, double q_min, double q_max )

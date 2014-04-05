@@ -894,7 +894,12 @@ bool US_Saxs_Util::dmd_run( QString run_description )
          {
             cout << "keeping as nmr style pdb\n";
          } else {
-            pdb_out_file = base_pdb + "_" + run_description + QString( "_m-%1" ).arg( models ) + ".pdb";
+            QString omodel = QString( "%1" ).arg( models );
+            while ( omodel.length() < 5 )
+            {
+               omodel = "0" + omodel;
+            } 
+            pdb_out_file = base_pdb + "_" + run_description + QString( "_m-%1" ).arg( omodel ) + ".pdb";
          }
          
          QFile *fo;
