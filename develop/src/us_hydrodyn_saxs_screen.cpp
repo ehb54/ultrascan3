@@ -585,7 +585,7 @@ void US_Hydrodyn_Saxs_Screen::update_font()
 void US_Hydrodyn_Saxs_Screen::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null, this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();
@@ -1810,12 +1810,8 @@ void US_Hydrodyn_Saxs_Screen::save_plot()
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
       saxs_window->our_saxs_options->path_load_saxs_curve;
    saxs_window->select_from_directory_history( use_dir, this );
-   QString filename = Q3FileDialog::getSaveFileName(
-                                                   use_dir,
-                                                   "*.ssc *.SSC",
-                                                   this,
-                                                   "save file dialog",
-                                                   tr("Choose a filename to save the plots") );
+   QString filename = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the plots") , use_dir , "*.ssc *.SSC" );
+
 
 
    if ( filename.isEmpty() )
@@ -1883,7 +1879,7 @@ void US_Hydrodyn_Saxs_Screen::load_plot()
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
       saxs_window->our_saxs_options->path_load_saxs_curve;
    saxs_window->select_from_directory_history( use_dir, this );
-   QString filename = Q3FileDialog::getOpenFileName(use_dir, "*.ssc *.SSC", this);
+   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.ssc *.SSC" );
 
    if ( filename.isEmpty() )
    {

@@ -454,7 +454,7 @@ void US_Hydrodyn_Cluster_Submit::update_font()
 void US_Hydrodyn_Cluster_Submit::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null, this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();

@@ -584,18 +584,13 @@ void US_Hydrodyn_Cluster::add_target()
       existing_items[ lb_target_files->text( i ) ] = true;
    }
 
-   QStringList filenames = Q3FileDialog::getOpenFileNames(
-                                                   "All files (*);;"
+   QStringList filenames = QFileDialog::getOpenFileNames( this , "Set files for grid target" , ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs" , "All files (*);;"
                                                    "ssaxs files (*.ssaxs);;"
                                                    "csv files (*.csv);;"
                                                    "int files [crysol] (*.int);;"
                                                    "dat files [foxs / other] (*.dat);;"
-                                                   "fit files [crysol] (*.fit);;"
-                                                   , ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs"
-                                                   , this
-                                                   , "open file dialog"
-                                                   , "Set files for grid target"
-                                                   );
+                                                   "fit files [crysol] (*.fit)" );
+
 
    QStringList add_filenames;
 
@@ -1445,7 +1440,7 @@ void US_Hydrodyn_Cluster::update_font()
 void US_Hydrodyn_Cluster::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null, this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();

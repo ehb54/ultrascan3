@@ -18,7 +18,7 @@
 #include <QCloseEvent>
 #include "us_mqt.h"
 #include "qfile.h"
-#include "q3filedialog.h"
+#include "qfiledialog.h"
 #include "us_hydrodyn.h"
 #include "qpushbutton.h"
 #include "qmessagebox.h"

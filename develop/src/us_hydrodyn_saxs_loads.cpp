@@ -1264,18 +1264,13 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
          USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
          our_saxs_options->path_load_saxs_curve;
       select_from_directory_history( use_dir, this );
-      filename = Q3FileDialog::getOpenFileName(use_dir, 
-                                              "All files (*);;"
+      filename = QFileDialog::getOpenFileName( this , "Open" , use_dir , "All files (*);;"
                                               "ssaxs files (*.ssaxs);;"
                                               "csv files (*.csv);;"
                                               "int files [crysol] (*.int);;"
                                               "dat files [foxs / other] (*.dat);;"
-                                              "fit files [crysol] (*.fit);;"
-                                              , this
-                                              , "open file dialog"
-                                              , "Open"
-                                              , &load_saxs_sans_selected_filter
-                                              );
+                                              "fit files [crysol] (*.fit)" , &load_saxs_sans_selected_filter );
+
       if ( filename.isEmpty() )
       {
          return;
@@ -1688,16 +1683,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
    QString filename;
    if ( !just_plotted_curves )
    {
-      filenames = Q3FileDialog::getOpenFileNames(
-                                                "All files (*);;"
+      filenames = QFileDialog::getOpenFileNames( this , "Open" , use_dir , "All files (*);;"
                                                 "sprr files (*.sprr_?);;"
-                                                "csv files (*.csv)"
-                                                , use_dir
-                                                , this
-                                                , "open file dialog"
-                                                , "Open"
-                                                , &load_pr_selected_filter
-                                                );
+                                                "csv files (*.csv)" , &load_pr_selected_filter );
+
    }
    if ( filenames.empty() && !just_plotted_curves )
    {
@@ -3246,17 +3235,12 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
          our_saxs_options->path_load_saxs_curve;
       select_from_directory_history( use_dir, this );
-      filename = Q3FileDialog::getOpenFileName(use_dir, 
-                                              "All files (*);;"
+      filename = QFileDialog::getOpenFileName( this , "Open" , use_dir , "All files (*);;"
                                               "ssans files (*.ssans);;"
                                               "csv files (*.csv);;"
                                               "int files [cryson] (*.int);;"
-                                              "fit files [cryson] (*.fit);;"
-                                              , this
-                                              , "open file dialog"
-                                              , "Open"
-                                              , &load_saxs_sans_selected_filter
-                                              );
+                                              "fit files [cryson] (*.fit)" , &load_saxs_sans_selected_filter );
+
       if ( filename.isEmpty() )
       {
          return;

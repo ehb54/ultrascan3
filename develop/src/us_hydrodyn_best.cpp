@@ -584,7 +584,7 @@ void US_Hydrodyn_Best::update_font()
 void US_Hydrodyn_Best::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null,this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();
@@ -661,10 +661,8 @@ void US_Hydrodyn_Best::load()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getOpenFileName(use_dir, "*.csv *.CSV", this,
-                                                   "open file",
-                                                   caption() + tr( " Load CSV from BEST results" )
-                                                   );
+   QString filename = QFileDialog::getOpenFileName( this , caption() + tr( " Load CSV from BEST results" ) , use_dir , "*.csv *.CSV" );
+
 
    if ( filename.isEmpty() )
    {
@@ -1747,10 +1745,8 @@ void US_Hydrodyn_Best::save_results()
    use_dir += QDir::separator() + QFileInfo( loaded_csv_filename ).baseName() + "_results.csv";
    // qDebug( use_dir );
 
-   QString filename = Q3FileDialog::getSaveFileName(use_dir, "*.csv *.CSV", this,
-                                                   caption() + tr( " Save Results" ),
-                                                   tr( "Select a name to save the state" )
-                                                   );
+   QString filename = QFileDialog::getSaveFileName( this , tr( "Select a name to save the state" ) , use_dir , "*.csv *.CSV" );
+
 
    ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
 
@@ -2113,13 +2109,8 @@ void US_Hydrodyn_Best::join_results()
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    do 
    {
-      files = Q3FileDialog::getOpenFileNames(
-                                            "CSV files (*.csv *.CSV)"
-                                            , use_dir
-                                            , this
-                                            , tr( caption() + tr( ": Select CSV results to join" ) )
-                                            , tr( "Select CSV results to join" )
-                                            );
+      files = QFileDialog::getOpenFileNames( this , tr( "Select CSV results to join" ) , use_dir , "CSV files (*.csv *.CSV)" );
+
 
       for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
       {
@@ -2153,12 +2144,8 @@ void US_Hydrodyn_Best::join_results()
 
       ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-      save_file = Q3FileDialog::getSaveFileName( use_dir
-                                                , "CSV files (*.csv *.CSV)"
-                                                , this
-                                                , tr( caption() + tr( ": Select CSV results to join" ) )
-                                                , tr( "Choose a name to save the joined CSV results" )
-                                                );
+      save_file = QFileDialog::getSaveFileName( this , tr( "Choose a name to save the joined CSV results" ) , use_dir , "CSV files (*.csv *.CSV)" );
+
 
 
       if ( save_file.isEmpty() )

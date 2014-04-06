@@ -1028,7 +1028,7 @@ void US_Hydrodyn_Pdb_Tool::save()
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
    QString fn;
-   fn = Q3FileDialog::getSaveFileName( use_dir, "*.pdb *.PDB", this, "save dialog", caption() + tr( ": Save" )  );
+   fn = QFileDialog::getSaveFileName( this , caption() + tr( ": Save" ) , use_dir , "*.pdb *.PDB" );
    if(!fn.isEmpty() )
    {
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( fn );
@@ -1305,12 +1305,8 @@ void US_Hydrodyn_Pdb_Tool::save_csv( Q3ListView *lv )
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getSaveFileName(
-                                                   use_dir,
-                                                   "*.pdb *.PDB",
-                                                   this,
-                                                   "save file dialog",
-                                                   tr("Choose a filename to save the pdb") );
+   QString filename = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the pdb") , use_dir , "*.pdb *.PDB" );
+
    if ( filename.isEmpty() )
    {
       return;
@@ -2232,7 +2228,7 @@ void US_Hydrodyn_Pdb_Tool::load( Q3ListView *lv, QString &filename, bool only_fi
    {
       ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-      filename = Q3FileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+      filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.pdb *.PDB" );
    }
 
    if ( filename.isEmpty() )
@@ -3916,7 +3912,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.pdb *.PDB" );
 
    if ( filename.isEmpty() )
    {
@@ -4135,11 +4131,8 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
 
    QString fn = f.name().replace(QRegExp("\\.(pdb|PDB)$"),"") + ext;
 
-   fn = Q3FileDialog::getSaveFileName( fn, 
-                                      "PDB (*.pdb *.PDB)",
-                                      this,
-                                      "save the models",
-                                      "Choose a name to save the files, the X's will be replaced by the model name" );
+   fn = QFileDialog::getSaveFileName( this , "Choose a name to save the files, the X's will be replaced by the model name" , fn , "PDB (*.pdb *.PDB)" );
+
    
    if ( fn.isEmpty() )
    {
@@ -4289,7 +4282,7 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.pdb *.PDB" );
 
    if ( filename.isEmpty() )
    {
@@ -4712,7 +4705,7 @@ void US_Hydrodyn_Pdb_Tool::h_to_chainX()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.pdb *.PDB" );
 
    if ( filename.isEmpty() )
    {
@@ -4847,13 +4840,8 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
    {
       QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_pdb_dir;
       ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-      files = US_Pdb_Util::sort_pdbs( Q3FileDialog::getOpenFileNames(
-                                                                    "PDB files (*.pdb *.PDB)"
-                                                                    , use_dir
-                                                                    , this
-                                                                    , tr( "US-SOMO: PDB editor : Select PDBs to join" ) 
-                                                                    , tr( "Select PDB files to join, Cancel when done" )
-                                                                    ) );
+      files = US_Pdb_Util::sort_pdbs( QFileDialog::getOpenFileNames( this , tr( "Select PDB files to join, Cancel when done" ) , use_dir , "PDB files (*.pdb *.PDB)" ) );
+
       for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
       {
          if ( !already_listed.count( files[ i ] ) )
@@ -4880,12 +4868,8 @@ void US_Hydrodyn_Pdb_Tool::join_pdbs()
    
    
 
-   QString save_file = Q3FileDialog::getSaveFileName( QFileInfo( join_files.back() ).dirPath() 
-                                                     , "PDB (*.pdb *.PDB)"
-                                                     , this
-                                                     , tr("US-SOMO: PDB editor : Select PDBs to join" ) 
-                                                     , tr( "Choose a name to save the joined PDBs" )
-                                                     );
+   QString save_file = QFileDialog::getSaveFileName( this , tr( "Choose a name to save the joined PDBs" ) , QFileInfo( join_files.back() ).dirPath() , "PDB (*.pdb *.PDB)" );
+
 
    if ( save_file.isEmpty() )
    {
@@ -5179,11 +5163,8 @@ void US_Hydrodyn_Pdb_Tool::renum_pdb()
       return;
    }
 
-   QString foutname = Q3FileDialog::getSaveFileName(QString::null, 
-                                                   "*.pdb *.PDB",
-                                                   this, 
-                                                   "save file dialog", 
-                                                   tr("Choose a filename to save the renumbered pdb") );
+   QString foutname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the renumbered pdb") , QString::null , "*.pdb *.PDB" );
+
    if( foutname.isEmpty() )
    {
       pb_renum_pdb->setEnabled( true );
@@ -6422,11 +6403,8 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
 
    QString fn = f.name().replace(QRegExp("\\.(pdb|PDB)$"),"") + QString( "_ws%1_ss%2%3%4_sr.pdb" ).arg( window_size ).arg( step_size ).arg( skip_waters ? "_nw" : "" ).arg( waters_as_onezies ? "_ww" : "" );
 
-   fn = Q3FileDialog::getSaveFileName( fn, 
-                                      "PDB (*.pdb *.PDB)",
-                                      this,
-                                      "save the models",
-                                      tr( "Choose a name to save the multiple model output file" ) );
+   fn = QFileDialog::getSaveFileName( this , tr( "Choose a name to save the multiple model output file" ) , fn , "PDB (*.pdb *.PDB)" );
+
    
    if ( fn.isEmpty() )
    {
@@ -6640,16 +6618,11 @@ void US_Hydrodyn_Pdb_Tool::do_bm( Q3ListView *lv )
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getSaveFileName(
-                                                   use_dir + QDir::separator() + QFileInfo( 
+   QString filename = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the bead model") , use_dir + QDir::separator() + QFileInfo( 
                                                                                            lv == lv_csv ?
                                                                                            csv1.name :
-                                                                                           csv2[ csv2_pos ].name ).baseName()
-                                                   ,
-                                                   "*.bead_model *.BEAD_MODEL",
-                                                   this,
-                                                   "save file dialog",
-                                                   tr("Choose a filename to save the bead model") );
+                                                                                           csv2[ csv2_pos ].name ).baseName() , "*.bead_model *.BEAD_MODEL" );
+
 
    if ( filename.isEmpty() )
    {

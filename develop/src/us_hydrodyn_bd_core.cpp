@@ -1989,7 +1989,7 @@ void US_Hydrodyn::bd_load()
                                     ) )
       {
       case QMessageBox::Yes : 
-         filename = Q3FileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+         filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
          break;
       case QMessageBox::No : 
          return;
@@ -2000,7 +2000,7 @@ void US_Hydrodyn::bd_load()
          break;
       }
    } else {
-      filename = Q3FileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+      filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
    }
    // check to make sure it is a good browflex file
       
@@ -2185,7 +2185,7 @@ void US_Hydrodyn::bd_edit()
          filename = bd_last_file;
          break;
       case QMessageBox::No : 
-         filename = Q3FileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+         filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
          break;
       case QMessageBox::Cancel :
       default :
@@ -2193,7 +2193,7 @@ void US_Hydrodyn::bd_edit()
          break;
       }
    } else {
-      filename = Q3FileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+      filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
    }
    if ( !filename.isEmpty() )
    {

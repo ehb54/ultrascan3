@@ -14,7 +14,7 @@
 #include "qlineedit.h"
 #include "qfontmetrics.h"
 #include "qfile.h"
-#include "q3filedialog.h"
+#include "qfiledialog.h"
 //Added by qt3to4:
 #include <QCloseEvent>
 #include "us_hydrodyn.h"

@@ -4713,7 +4713,7 @@ void US_Hydrodyn_Saxs::update_font()
 void US_Hydrodyn_Saxs::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null,this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();
@@ -4733,7 +4733,7 @@ void US_Hydrodyn_Saxs::save()
 void US_Hydrodyn_Saxs::select_atom_file()
 {
    QString old_filename = atom_filename;
-   atom_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.atom *.ATOM", this);
+   atom_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + SLASH + "etc" , "*.atom *.ATOM" );
    if (atom_filename.isEmpty())
    {
       atom_filename = old_filename;
@@ -4777,8 +4777,8 @@ void US_Hydrodyn_Saxs::select_atom_file(const QString &filename)
 void US_Hydrodyn_Saxs::select_hybrid_file()
 {
    QString old_filename = hybrid_filename;
-   hybrid_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", 
-                                                  "*.hybrid *.HYBRID", this);
+   hybrid_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + SLASH + "etc" , "*.hybrid *.HYBRID" );
+
    if (hybrid_filename.isEmpty())
    {
       hybrid_filename = old_filename;
@@ -4832,7 +4832,7 @@ void US_Hydrodyn_Saxs::select_saxs_file()
 {
    QString old_filename = saxs_filename;
       
-   saxs_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.saxs_atoms *.SAXS_ATOMS", this);
+   saxs_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + SLASH + "etc" , "*.saxs_atoms *.SAXS_ATOMS" );
    if (saxs_filename.isEmpty())
    {
       saxs_filename = old_filename;
@@ -5681,7 +5681,7 @@ void US_Hydrodyn_Saxs::load_gnom()
 
    select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getOpenFileName(use_dir, "*.out", this);
+   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.out" );
    if (filename.isEmpty())
    {
       return;

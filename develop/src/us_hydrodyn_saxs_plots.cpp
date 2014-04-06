@@ -501,11 +501,8 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
 
                         do {
                            ok = false;
-                           filename = Q3FileDialog::getSaveFileName( org_filename,
-                                                                    "*.saxs_atoms *.SAXS_ATOMS", 
-                                                                    this,
-                                                                    "save file dialog",
-                                                                    tr( "US-SOMO: Compute structure factors : save data" ) );
+                           filename = QFileDialog::getSaveFileName( this , tr( "US-SOMO: Compute structure factors : save data" ) , org_filename , "*.saxs_atoms *.SAXS_ATOMS" );
+
                            cout << QString( "filename is %1\n" ).arg( filename );
                            if ( !filename.isEmpty() )
                            {

@@ -642,13 +642,8 @@ void US_Hydrodyn_Cluster_Best::update_bestmsrradiifile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = Q3FileDialog::getOpenFileName(
-                                                   use_dir,
-                                                   QString::null,
-                                                   this,
-                                                   "open file dialog",
-                                                   tr( "Select a file for MSROLL: manual radii file" )
-                                                   );
+   QString filename = QFileDialog::getOpenFileName( this , tr( "Select a file for MSROLL: manual radii file" ) , use_dir , QString::null );
+
 
    disconnect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    le_bestmsrradiifile->setText( filename );
@@ -664,13 +659,8 @@ void US_Hydrodyn_Cluster_Best::update_bestmsrpatternfile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = Q3FileDialog::getOpenFileName(
-                                                   use_dir,
-                                                   QString::null,
-                                                   this,
-                                                   "open file dialog",
-                                                   tr( "Select a file for MSROLL: manual name pattern file (must also provide radii file above)" )
-                                                   );
+   QString filename = QFileDialog::getOpenFileName( this , tr( "Select a file for MSROLL: manual name pattern file (must also provide radii file above)" ) , use_dir , QString::null );
+
 
    disconnect( le_bestmsrpatternfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    le_bestmsrpatternfile->setText( filename );
@@ -686,13 +676,8 @@ void US_Hydrodyn_Cluster_Best::save()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = Q3FileDialog::getSaveFileName( 
-                                                   use_dir,
-                                                   "*.cluster_best",
-                                                   this,
-                                                   tr( QString( "%1: Save" ).arg( "US-SOMO: BEST cluster interface" ) ),
-                                                   tr( "Save the parameters" ) 
-                                              );
+   QString filename = QFileDialog::getSaveFileName( this , tr( "Save the parameters" ) , use_dir , "*.cluster_best" );
+
 
    if( !filename.isEmpty() )
    {
@@ -721,13 +706,8 @@ void US_Hydrodyn_Cluster_Best::load()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = Q3FileDialog::getOpenFileName( 
-                                                   use_dir,
-                                                   "*.cluster_best",
-                                                   this,
-                                                   tr( QString( "%1: Open" ).arg( "US-SOMO: BEST cluster interface" ) ),
-                                                   tr( "Load parameters" ) 
-                                                  );
+   QString filename = QFileDialog::getOpenFileName( this , tr( "Load parameters" ) , use_dir , "*.cluster_best" );
+
    if( !filename.isEmpty() )
    {
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );

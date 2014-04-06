@@ -463,11 +463,8 @@ void US_Hydrodyn_Saxs_Conc::load()
       raise();
    }
 
-   QString fname = Q3FileDialog::getOpenFileName(
-                                                use_dir,
-                                                "Concentration files (*.sxc *.SXC);;",
-                                                this
-                                                );
+   QString fname = QFileDialog::getOpenFileName( this , caption() , use_dir , "Concentration files (*.sxc *.SXC)" );
+
    if ( fname.isEmpty() )
    {
       return;
@@ -539,12 +536,8 @@ void US_Hydrodyn_Saxs_Conc::save()
       raise();
    }
 
-   QString fname = Q3FileDialog::getSaveFileName(
-                                                use_dir,
-                                                "*.sxc *.SXC",
-                                                this,
-                                                "save file dialog",
-                                                tr("Choose a filename to save the concentrations") );
+   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the concentrations") , use_dir , "*.sxc *.SXC" );
+
    if ( fname.isEmpty() )
    {
       return;

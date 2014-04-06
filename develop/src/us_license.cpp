@@ -470,7 +470,7 @@ void US_License::save()
 
 void US_License::import()
 {
-   Q3FileDialog fd;
+   QFileDialog fd;
    int count=0;
    QFile texfile;
    QString filename, line="";

@@ -297,12 +297,8 @@ void US_Hydrodyn_Saxs_Load_Csv::transpose()
    // pick 
    QString save_file = loaded_filename;
    save_file.replace(".csv","_t.csv");
-   QString fname = Q3FileDialog::getSaveFileName(
-                                                save_file,
-                                                "*.csv",
-                                                this,
-                                                "save file dialog",
-                                                tr("Choose a filename to save the transposed csv file") );
+   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the transposed csv file") , save_file , "*.csv" );
+
    if ( fname.isEmpty() )
    {
       return;
@@ -396,12 +392,8 @@ void US_Hydrodyn_Saxs_Load_Csv::save_selected()
    // pick 
    QString save_file = loaded_filename;
    save_file.replace(".csv","_s.csv");
-   QString fname = Q3FileDialog::getSaveFileName(
-                                                save_file,
-                                                "*.csv",
-                                                this,
-                                                "save file dialog",
-                                                tr("Choose a filename to save the new csv file") );
+   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the new csv file") , save_file , "*.csv" );
+
    if ( fname.isEmpty() )
    {
       return;

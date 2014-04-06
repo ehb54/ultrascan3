@@ -488,7 +488,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_font()
 void US_Hydrodyn_Pdb_Tool_Merge::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null,this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();
@@ -1532,11 +1532,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::chains_to()
 
 void US_Hydrodyn_Pdb_Tool_Merge::target()
 {
-   QString filename = Q3FileDialog::getSaveFileName( "", 
-                                                    "PDB (*.pdb *.PDB)",
-                                                    this,
-                                                    "select target",
-                                                    "Choose a name to save the result" );
+   QString filename = QFileDialog::getSaveFileName( this , "Choose a name to save the result" , "" , "PDB (*.pdb *.PDB)" );
+
 
    if ( !filename.contains( QRegExp( ".pdb$", false ) ) )
    {
@@ -2293,7 +2290,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::load()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir;
 
-   QString filename = Q3FileDialog::getOpenFileName(use_dir, "*.csc *.CSC", this);
+   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.csc *.CSC" );
    
    if ( filename.isEmpty() )
    {
@@ -2373,12 +2370,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::load()
 void US_Hydrodyn_Pdb_Tool_Merge::csv_save()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir;
-   QString filename = Q3FileDialog::getSaveFileName(
-                                                   use_dir,
-                                                   "*.csc *.CSC",
-                                                   this,
-                                                   "save file dialog",
-                                                   tr("Choose a filename to save the data") );
+   QString filename = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the data") , use_dir , "*.csc *.CSC" );
+
 
 
    if ( filename.isEmpty() )

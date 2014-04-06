@@ -202,7 +202,7 @@ void US_Hydrodyn_SasOptionsHydration::set_hydrate_pdb()
 
 void US_Hydrodyn_SasOptionsHydration::default_rotamer_filename()
 {
-   QString rotamer_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.hydrated_rotamer *.HYDRATED_ROTAMER", this);
+   QString rotamer_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + SLASH + "etc" , "*.hydrated_rotamer *.HYDRATED_ROTAMER" );
    if (rotamer_filename.isEmpty())
    {
       return;

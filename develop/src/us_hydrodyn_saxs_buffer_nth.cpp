@@ -1187,12 +1187,8 @@ void US_Hydrodyn_Saxs_Buffer_Nth::save_dat()
    QString use_dir = QDir::currentDirPath();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString s = Q3FileDialog::getExistingDirectory(
-                                                 use_dir,
-                                                 this,
-                                                 "get existing directory",
-                                                 tr( "Choose a directory to save the intensity plots" ),
-                                                 true );
+   QString s = QFileDialog::getExistingDirectory( this , tr( "Choose a directory to save the intensity plots" ) , use_dir , QFileDialog::ShowDirsOnly );
+
    if ( !s.isEmpty() )
    {
       use_dir = s;

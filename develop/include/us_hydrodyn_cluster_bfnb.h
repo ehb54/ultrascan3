@@ -18,7 +18,7 @@
 #include "qfontmetrics.h"
 #include "qcheckbox.h"
 #include "qpushbutton.h"
-#include "q3filedialog.h"
+#include "qfiledialog.h"
 #include "qmessagebox.h"
 #include "qregexp.h"
 #include "us_json.h"

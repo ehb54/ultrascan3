@@ -437,13 +437,10 @@ void US_Hydrodyn_Saxs_Hplc_Conc::load()
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    raise();
 
-   QString fname = Q3FileDialog::getOpenFileName(
-                                                use_dir,
-                                                "Concentration files (*.sbc *.SBC);;"
+   QString fname = QFileDialog::getOpenFileName( this , caption() , use_dir , "Concentration files (*.sbc *.SBC);;"
                                                 "Text files (*.txt *.TXT);;"
-                                                "All Files (*)",
-                                                this
-                                                );
+                                                "All Files (*)" );
+
    if ( fname.isEmpty() )
    {
       return;
@@ -528,12 +525,8 @@ void US_Hydrodyn_Saxs_Hplc_Conc::save()
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    raise();
 
-   QString fname = Q3FileDialog::getSaveFileName(
-                                                use_dir,
-                                                "*.sbc *.SBC",
-                                                this,
-                                                "save file dialog",
-                                                tr("Choose a filename to save the concentrations") );
+   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the concentrations") , use_dir , "*.sbc *.SBC" );
+
    if ( fname.isEmpty() )
    {
       return;

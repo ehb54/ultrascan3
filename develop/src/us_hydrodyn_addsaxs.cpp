@@ -366,7 +366,7 @@ void US_AddSaxs::add()
 void US_AddSaxs::select_file()
 {
    QString old_filename = saxs_filename, str1, str2;
-   saxs_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.saxs_atoms *.SAXS_ATOMS", this);
+   saxs_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.saxs_atoms *.SAXS_ATOMS" );
    if (saxs_filename.isEmpty())
    {
       saxs_filename = old_filename;

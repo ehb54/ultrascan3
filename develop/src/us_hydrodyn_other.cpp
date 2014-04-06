@@ -7855,12 +7855,8 @@ void US_Hydrodyn::save_pdb_csv( csv &csv1 )
 
    QString use_dir = 
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "structures";
-   QString filename = Q3FileDialog::getSaveFileName(
-                                                   use_dir,
-                                                   "*.pdc *.pdc",
-                                                   this,
-                                                   "save file dialog",
-                                                   tr("Choose a filename to save the pdc") );
+   QString filename = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the pdc") , use_dir , "*.pdc *.pdc" );
+
 
 
    if ( filename.isEmpty() )

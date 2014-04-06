@@ -82,7 +82,7 @@ void US_Editor::newDoc(  )
 
 void US_Editor::load(  )
 {
-   QString fn = Q3FileDialog::getOpenFileName(  );
+   QString fn = QFileDialog::getOpenFileName(  );
 
    fileName = fn;
    if ( !fn.isEmpty(  ) )
@@ -116,7 +116,7 @@ void US_Editor::saveAs(  )
 {
    QString fn;
 
-   fn = Q3FileDialog::getSaveFileName( QString::null, QString::null, this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if ( !fn.isEmpty(  ) )
    {
       QString text = e->text(  );
@@ -538,8 +538,8 @@ void TextEdit::fileNew(  )
 void TextEdit::fileOpen(  )
 {
    QString fn =
-      Q3FileDialog::getOpenFileName( QString::null, tr( "All Files (*)" ),
-                                    this );
+      QFileDialog::getOpenFileName( this , caption() , QString::null , tr( "All Files (*)" ) );
+
    if ( !fn.isEmpty(  ) )
       load( fn );
 }
@@ -571,8 +571,8 @@ void TextEdit::fileSaveAs(  )
    if ( !currentEditor(  ) )
       return;
    QString fn =
-      Q3FileDialog::getSaveFileName( QString::null, tr( "All Files (*)" ),
-                                    this );
+      QFileDialog::getSaveFileName( this , caption() , QString::null , tr( "All Files (*)" ) );
+
    if ( !fn.isEmpty(  ) )
    {
       filenames.replace( currentEditor(  ), fn );

@@ -1009,12 +1009,8 @@ void US_Hydrodyn_SasOptionsSaxs::crysol_target()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getOpenFileName(use_dir, 
-                                                   "*.dat *.DAT", 
-                                                   this,
-                                                   caption() + tr( "Select a file for CRYSOL experimental data target" ),
-                                                   caption() + tr( "Select a file for CRYSOL experimental data target" )
-                                                   );
+   QString filename = QFileDialog::getOpenFileName( this , caption() + tr( "Select a file for CRYSOL experimental data target" ) , use_dir , "*.dat *.DAT" );
+
 
 
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_crysol_target" ] = filename;

@@ -948,13 +948,8 @@ void US_Hydrodyn_Cluster_Dammin::update_dammingnomfile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = Q3FileDialog::getOpenFileName(
-                                                   use_dir,
-                                                   QString::null,
-                                                   this,
-                                                   "open file dialog",
-                                                   tr( "Select a file for GNOM format .out file" )
-                                                   );
+   QString filename = QFileDialog::getOpenFileName( this , tr( "Select a file for GNOM format .out file" ) , use_dir , QString::null );
+
 
    disconnect( le_dammingnomfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
    le_dammingnomfile->setText( filename );
@@ -1110,13 +1105,8 @@ void US_Hydrodyn_Cluster_Dammin::save()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = Q3FileDialog::getSaveFileName( 
-                                                   use_dir,
-                                                   "*.cluster_dammin",
-                                                   this,
-                                                   tr( QString( "%1: Save" ).arg( "US-SOMO: DAMMIN cluster interface" ) ),
-                                                   tr( "Save the parameters" ) 
-                                              );
+   QString filename = QFileDialog::getSaveFileName( this , tr( "Save the parameters" ) , use_dir , "*.cluster_dammin" );
+
 
    if( !filename.isEmpty() )
    {
@@ -1145,13 +1135,8 @@ void US_Hydrodyn_Cluster_Dammin::load()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = Q3FileDialog::getOpenFileName( 
-                                                   use_dir,
-                                                   "*.cluster_dammin",
-                                                   this,
-                                                   tr( QString( "%1: Open" ).arg( "US-SOMO: DAMMIN cluster interface" ) ),
-                                                   tr( "Load parameters" ) 
-                                                  );
+   QString filename = QFileDialog::getOpenFileName( this , tr( "Load parameters" ) , use_dir , "*.cluster_dammin" );
+
    if( !filename.isEmpty() )
    {
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );

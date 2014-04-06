@@ -650,7 +650,7 @@ void US_Hydrodyn::anaflex_load()
                                     ) )
       {
       case QMessageBox::Yes : 
-         filename = Q3FileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+         filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
          break;
       case QMessageBox::No : 
          return;
@@ -661,7 +661,7 @@ void US_Hydrodyn::anaflex_load()
          break;
       }
    } else {
-      filename = Q3FileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+      filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
    }
    // check to make sure it is a good anaflex file
    if ( !filename.isEmpty() )
@@ -789,7 +789,7 @@ void US_Hydrodyn::anaflex_edit()
          filename = anaflex_last_file;
          break;
       case QMessageBox::No : 
-         filename = Q3FileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+         filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
          break;
       case QMessageBox::Cancel :
       default :
@@ -797,7 +797,7 @@ void US_Hydrodyn::anaflex_edit()
          break;
       }
    } else {
-      filename = Q3FileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+      filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
    }
    if ( !filename.isEmpty() )
    {
@@ -841,7 +841,7 @@ void US_Hydrodyn::anaflex_load_results()
          filename = anaflex_last_file;
          break;
       case QMessageBox::No : 
-         filename = Q3FileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+         filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
          break;
       case QMessageBox::Cancel :
       default :
@@ -849,7 +849,7 @@ void US_Hydrodyn::anaflex_load_results()
          break;
       }
    } else {
-      filename = Q3FileDialog::getOpenFileName(somo_dir + SLASH + "bd", "*.txt *.TXT", this);
+      filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
    }
    if ( !filename.isEmpty() )
    {

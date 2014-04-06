@@ -14,7 +14,7 @@
 #include "qlineedit.h"
 #include "qfontmetrics.h"
 #include "qpushbutton.h"
-#include "q3filedialog.h"
+#include "qfiledialog.h"
 #include "qmessagebox.h"
 #include "qregexp.h"
 //Added by qt3to4:

@@ -1073,7 +1073,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
 void US_AddResidue::select_residue_file()
 {
    QString old_filename = residue_filename, str1;
-   residue_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.residue *.RESIDUE", this);
+   residue_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.residue *.RESIDUE" );
    if (residue_filename.isEmpty())
    {
       residue_filename = old_filename;
@@ -1142,7 +1142,7 @@ void US_AddResidue::calc_bead_mw(struct residue *res)
 void US_AddResidue::select_atom_file()
 {
    QString old_filename = atom_filename, str1, str2;
-   atom_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.atom *.ATOM", this);
+   atom_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.atom *.ATOM" );
    if (atom_filename.isEmpty())
    {
       atom_filename = old_filename;

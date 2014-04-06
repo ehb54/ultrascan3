@@ -1383,13 +1383,8 @@ void US_Hydrodyn_Cluster_Bfnb::save()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = Q3FileDialog::getSaveFileName( 
-                                                   use_dir,
-                                                   "*.cluster_bfnb",
-                                                   this,
-                                                   tr( QString( "%1: Save" ).arg( "US-SOMO: BNFB cluster interface" ) ),
-                                                   tr( "Save the parameters" ) 
-                                              );
+   QString filename = QFileDialog::getSaveFileName( this , tr( "Save the parameters" ) , use_dir , "*.cluster_bfnb" );
+
 
    if( !filename.isEmpty() )
    {
@@ -1418,13 +1413,8 @@ void US_Hydrodyn_Cluster_Bfnb::load()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = Q3FileDialog::getOpenFileName( 
-                                                   use_dir,
-                                                   "*.cluster_bfnb",
-                                                   this,
-                                                   tr( QString( "%1: Open" ).arg( "US-SOMO: BNFB cluster interface" ) ),
-                                                   tr( "Load parameters" ) 
-                                                  );
+   QString filename = QFileDialog::getOpenFileName( this , tr( "Load parameters" ) , use_dir , "*.cluster_bfnb" );
+
    if( !filename.isEmpty() )
    {
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );

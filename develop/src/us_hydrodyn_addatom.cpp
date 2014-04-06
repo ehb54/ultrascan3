@@ -411,7 +411,7 @@ void US_AddAtom::write_atom_file()
 void US_AddAtom::select_atom_file()
 {
    QString old_filename = atom_filename, str1, str2;
-   atom_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.atom *.ATOM", this);
+   atom_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.atom *.ATOM" );
    if (atom_filename.isEmpty())
    {
       atom_filename = old_filename;
@@ -463,7 +463,7 @@ void US_AddAtom::select_atom_file()
 void US_AddAtom::select_hybrid_file()
 {
    QString old_filename = hybrid_filename, str1, str2;
-   hybrid_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.hybrid *.HYBRID", this);
+   hybrid_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.hybrid *.HYBRID" );
    if (hybrid_filename.isEmpty())
    {
       hybrid_filename = old_filename;
@@ -512,7 +512,7 @@ void US_AddAtom::select_hybrid_file()
 void US_AddAtom::select_saxs_file()
 {
    QString old_filename = saxs_filename, str1, str2;
-   saxs_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.saxs_atoms *.SAXS_ATOMS", this);
+   saxs_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.saxs_atoms *.SAXS_ATOMS" );
    if (saxs_filename.isEmpty())
    {
       saxs_filename = old_filename;

@@ -127,11 +127,8 @@ void US_Hydrodyn_PDB_Visualization::update_filename(const QString &filename)
 
 void US_Hydrodyn_PDB_Visualization::select_filename()
 {
-   QString filename = Q3FileDialog::getOpenFileName(USglobal->config_list.root_dir + "/somo",
-                                                   "RasMol Scripts (*.spt *.SPT)",
-                                                   this,
-                                                   "Open RasMol Script files",
-                                                   "Please select a RasMol Script file...");
+   QString filename = QFileDialog::getOpenFileName( this , "Please select a RasMol Script file..." , USglobal->config_list.root_dir + "/somo" , "RasMol Scripts (*.spt *.SPT)" );
+
    le_filename->setText(QDir::convertSeparators( filename ));   
    (*pdb).filename = filename;
 }

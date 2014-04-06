@@ -874,12 +874,8 @@ void US_Hydrodyn_Batch::add_files()
 
 
 
-   QStringList filenames = Q3FileDialog::getOpenFileNames(
-                                                         "Structures (*.pdb *.PDB *.bead_model *.BEAD_MODEL *.beams *.BEAD_MODEL)",
-                                                         use_dir,
-                                                         this,
-                                                         "Open Structure Files",
-                                                         "Please select a PDB file or files...");
+   QStringList filenames = QFileDialog::getOpenFileNames( this , "Please select a PDB file or files..." , use_dir , "Structures (*.pdb *.PDB *.bead_model *.BEAD_MODEL *.beams *.BEAD_MODEL)" );
+
    map < QString, bool > current_files;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -2416,7 +2412,7 @@ void US_Hydrodyn_Batch::update_font()
 void US_Hydrodyn_Batch::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null,this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();

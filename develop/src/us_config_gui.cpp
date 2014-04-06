@@ -483,8 +483,8 @@ void US_Config_GUI::update_off_button()
 
 void US_Config_GUI::open_browser_dir()
 {
-   QString browser = Q3FileDialog::getOpenFileName(
-                                                  USglobal->config_list.browser, QString::null, 0);
+   QString browser = QFileDialog::getOpenFileName( 0 , caption() , USglobal->config_list.browser , QString::null );
+
 
    if ( browser != "" )
    {
@@ -501,8 +501,8 @@ void US_Config_GUI::update_browser(const QString& newText)
 
 void US_Config_GUI::open_system_dir()
 {
-   QString system = Q3FileDialog::getExistingDirectory(
-                                                      USglobal->config_list.system_dir, 0, 0, QString::null, true);
+   QString system = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.system_dir , QFileDialog::ShowDirsOnly );
+
 
    if ( system != "" )
    {
@@ -519,8 +519,8 @@ void US_Config_GUI::update_system_dir( const QString& newText )
 
 void US_Config_GUI::open_help_dir()
 {
-   QString help = Q3FileDialog::getExistingDirectory(
-                                                    USglobal->config_list.help_dir, 0, 0, QString::null, true);
+   QString help = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.help_dir , QFileDialog::ShowDirsOnly );
+
 
    if ( help != "" )
    {
@@ -543,8 +543,8 @@ void US_Config_GUI::update_temperature_tol( const QString& newText )
 
 void US_Config_GUI::open_result_dir()
 {
-   QString result = Q3FileDialog::getExistingDirectory(
-                                                      USglobal->config_list.result_dir, 0, 0, QString::null, true);
+   QString result = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.result_dir , QFileDialog::ShowDirsOnly );
+
 
    if ( result != "" )
    {
@@ -560,8 +560,8 @@ void US_Config_GUI::update_result_dir(const QString &newText)
 
 void US_Config_GUI::open_html_dir()
 {
-   QString html = Q3FileDialog::getExistingDirectory(
-                                                    USglobal->config_list.html_dir, 0, 0, QString::null, true);
+   QString html = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.html_dir , QFileDialog::ShowDirsOnly );
+
 
    if ( html != "" )
    {
@@ -578,8 +578,8 @@ void US_Config_GUI::update_html_dir( const QString& newText )
 
 void US_Config_GUI::open_tmp_dir()
 {
-   QString tmp = Q3FileDialog::getExistingDirectory(
-                                                   USglobal->config_list.tmp_dir, 0, 0, QString::null, true);
+   QString tmp = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.tmp_dir , QFileDialog::ShowDirsOnly );
+
 
    if ( tmp != "" )
    {
@@ -596,8 +596,8 @@ void US_Config_GUI::update_tmp_dir( const QString& newText )
 
 void US_Config_GUI::open_data_dir()
 {
-   QString data = Q3FileDialog::getExistingDirectory(
-                                                    USglobal->config_list.data_dir, 0, 0, QString::null, true);
+   QString data = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.data_dir , QFileDialog::ShowDirsOnly );
+
    
    if ( data != "" )
    {
@@ -614,8 +614,8 @@ void US_Config_GUI::update_data_dir( const QString& newText )
 
 void US_Config_GUI::open_archive_dir()
 {
-   QString archive = Q3FileDialog::getExistingDirectory(
-                                                       USglobal->config_list.archive_dir, 0, 0, QString::null, true);
+   QString archive = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.archive_dir , QFileDialog::ShowDirsOnly );
+
    
    if ( archive != "" )
    {
@@ -632,8 +632,8 @@ void US_Config_GUI::update_archive_dir( const QString& newText )
 
 void US_Config_GUI::open_root_dir()
 {
-   QString root = Q3FileDialog::getExistingDirectory(
-                                                    USglobal->config_list.root_dir, 0, 0, QString::null, true);
+   QString root = QFileDialog::getExistingDirectory( 0 , QString::null , USglobal->config_list.root_dir , QFileDialog::ShowDirsOnly );
+
 
    if ( root != "" ) 
    {

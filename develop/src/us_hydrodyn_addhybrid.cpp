@@ -315,7 +315,7 @@ void US_AddHybridization::add()
 void US_AddHybridization::select_file()
 {
    QString old_filename = hybrid_filename, str1, str2;
-   hybrid_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.hybrid *.HYBRID", this);
+   hybrid_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.hybrid *.HYBRID" );
    if (hybrid_filename.isEmpty())
    {
       hybrid_filename = old_filename;
@@ -365,7 +365,7 @@ void US_AddHybridization::select_file()
 void US_AddHybridization::select_saxs_file()
 {
    QString old_filename = saxs_filename, str1, str2;
-   saxs_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.saxs_atoms *.SAXS_ATOMS", this);
+   saxs_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.saxs_atoms *.SAXS_ATOMS" );
    if (saxs_filename.isEmpty())
    {
       saxs_filename = old_filename;

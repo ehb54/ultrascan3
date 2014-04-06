@@ -774,7 +774,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_font()
 void US_Hydrodyn_Saxs_Hplc_Svd::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null,this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();
@@ -3508,14 +3508,10 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::setup_save( QString tag, QString & fname )
    ush_win->select_from_directory_history( use_dir, this );
    raise();
 
-   fname = Q3FileDialog::getSaveFileName(
-                                        use_dir,
-                                        "Text files (*.txt *.TXT);;"
+   fname = QFileDialog::getSaveFileName( this , tr( "Select a file name to " ) + tag , use_dir , "Text files (*.txt *.TXT);;"
                                         "CSV files (*.csv *.CSV);;"
-                                        "All Files (*)",
-                                        this,
-                                        caption() + " " + tag,
-                                        tr( "Select a file name to " ) + tag );
+                                        "All Files (*)" );
+
    if ( fname.isEmpty() )
    {
       return false;

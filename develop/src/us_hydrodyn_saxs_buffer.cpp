@@ -1428,7 +1428,7 @@ void US_Hydrodyn_Saxs_Buffer::update_font()
 void US_Hydrodyn_Saxs_Buffer::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null,this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();
@@ -2477,19 +2477,14 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    raise();
    // }
 
-   QStringList filenames = Q3FileDialog::getOpenFileNames(
-                                                         "dat files [foxs / other] (*.dat);;"
+   QStringList filenames = QFileDialog::getOpenFileNames( this , "Add files" , use_dir , "dat files [foxs / other] (*.dat);;"
                                                          "All files (*);;"
                                                          "ssaxs files (*.ssaxs);;"
-                                                         // "csv files (*.csv);;"
-                                                         // "int files [crysol] (*.int);;"
-                                                         // "fit files [crysol] (*.fit);;"
-                                                         "txt files [specify q, I, sigma columns] (*.txt);;"
-                                                         , use_dir
-                                                         , this
-                                                         , "open file dialog"
-                                                         , "Add files" // ? "Set files for grid files"
-                                                         );
+                                                         
+                                                         
+                                                         
+                                                         "txt files [specify q, I, sigma columns] (*.txt)" );
+
    
    QStringList add_filenames;
    
@@ -8103,12 +8098,8 @@ void US_Hydrodyn_Saxs_Buffer::dir_pressed()
 {
    QString use_dir = lbl_dir->text();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString s = Q3FileDialog::getExistingDirectory(
-                                                 use_dir,
-                                                 this,
-                                                 "get existing directory",
-                                                 tr( "Choose a new base directory" ),
-                                                 true );
+   QString s = QFileDialog::getExistingDirectory( this , tr( "Choose a new base directory" ) , use_dir , QFileDialog::ShowDirsOnly );
+
    if ( !s.isEmpty() )
    {
       QDir::setCurrent( s );
@@ -8121,12 +8112,8 @@ void US_Hydrodyn_Saxs_Buffer::created_dir_pressed()
 {
    QString use_dir = lbl_dir->text();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString s = Q3FileDialog::getExistingDirectory(
-                                                 use_dir,
-                                                 this,
-                                                 "get existing directory",
-                                                 tr( "Choose a new base directory for saving files" ),
-                                                 true );
+   QString s = QFileDialog::getExistingDirectory( this , tr( "Choose a new base directory for saving files" ) , use_dir , QFileDialog::ShowDirsOnly );
+
    if ( !s.isEmpty() )
    {
       lbl_created_dir->setText( s );

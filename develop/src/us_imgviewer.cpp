@@ -278,8 +278,8 @@ void US_ImageViewer::updateStatus()
 void US_ImageViewer::saveImage( int item )
 {
    const char* fmt = saveimage->text(item);
-   QString savefilename = Q3FileDialog::getSaveFileName(QString::null, QString::null,
-                                                       this, filename);
+   QString savefilename = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+
    if ( !savefilename.isEmpty() )
       if ( !image.save( savefilename, fmt ) )
          QMessageBox::warning( this, "Save failed", "Error saving file" );
@@ -291,8 +291,8 @@ void US_ImageViewer::saveImage( int item )
 void US_ImageViewer::savePixmap( int item )
 {
    const char* fmt = savepixmap->text(item);
-   QString savefilename = Q3FileDialog::getSaveFileName(QString::null,
-                                                       QString::null, this, filename);
+   QString savefilename = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+
    if ( !savefilename.isEmpty() )
       if ( !pmScaled.save( savefilename, fmt ) )
          QMessageBox::warning( this, "Save failed", "Error saving file" );
@@ -311,9 +311,8 @@ void US_ImageViewer::newWindow()
 */
 void US_ImageViewer::openFile()
 {
-   QString newfilename = Q3FileDialog::getOpenFileName( QString::null,
-                                                       QString::null,
-                                                       this );
+   QString newfilename = QFileDialog::getOpenFileName( this , caption() , QString::null , QString::null );
+
    if ( !newfilename.isEmpty() ) {
       loadImage( newfilename ) ;
       repaint();                      // show image in widget

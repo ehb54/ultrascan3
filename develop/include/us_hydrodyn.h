@@ -4,7 +4,7 @@
 // QT defs:
 
 #include <qfile.h>
-#include <q3filedialog.h>
+#include <qfiledialog.h>
 #include <q3textstream.h>
 #include <qpushbutton.h>
 #include <q3buttongroup.h>

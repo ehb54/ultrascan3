@@ -678,7 +678,7 @@ void US_Hydrodyn_Saxs_1d::update_font()
 void US_Hydrodyn_Saxs_1d::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null,this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();
@@ -2513,7 +2513,7 @@ void US_Hydrodyn_Saxs_1d::save_data()
       I[ i ] /= ( double ) plot_count;
    }
 
-   QString fname = Q3FileDialog::getSaveFileName(QString::null, QString::null,this );
+   QString fname = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    bool ok_to_write = true;
    if ( fname.isEmpty() )
    {
@@ -2685,12 +2685,8 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
          ((US_Hydrodyn *)us_hydrodyn)->somo_dir +
          QDir::separator() + "tmp" + QDir::separator();
 
-      QString fname = Q3FileDialog::getOpenFileName(
-                                                   search_in,
-                                                   "Excluded volume files (*.evm)",
-                                                   this,
-                                                   "open file dialog",
-                                                   "Choose a file to open" );
+      QString fname = QFileDialog::getOpenFileName( this , "Choose a file to open" , search_in , "Excluded volume files (*.evm)" );
+
 
    
       if ( fname.isEmpty() )

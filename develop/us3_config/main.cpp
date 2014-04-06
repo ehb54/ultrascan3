@@ -233,8 +233,8 @@ USconfig_setup::USconfig_setup()
    do
    {
       // Ask for the directory
-      QString dir = Q3FileDialog::getExistingDirectory(
-                                                      QString::null, this, NULL, "Select the UltraScan System Directory" );
+      QString dir = QFileDialog::getExistingDirectory( this , "Select the UltraScan System Directory" , QString::null );
+
    
       // Check it
       if ( exists( dir + "/etc" ) )

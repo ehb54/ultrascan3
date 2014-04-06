@@ -395,7 +395,7 @@ void US_Hydrodyn_Cluster_Dmd::update_font()
 void US_Hydrodyn_Cluster_Dmd::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null,this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();
@@ -673,11 +673,8 @@ void US_Hydrodyn_Cluster_Dmd::load()
 {
    QString use_dir = dmd_dir;
 
-   QString fname = Q3FileDialog::getOpenFileName(
-                                                use_dir,
-                                                "DMD parameter files (*.dmd *.dmd);;",
-                                                this
-                                                );
+   QString fname = QFileDialog::getOpenFileName( this , caption() , use_dir , "DMD parameter files (*.dmd *.dmd)" );
+
    if ( fname.isEmpty() )
    {
       return;
@@ -812,12 +809,8 @@ void US_Hydrodyn_Cluster_Dmd::save_csv()
 {
    QString use_dir = dmd_dir;
 
-   QString fname = Q3FileDialog::getSaveFileName(
-                                                use_dir,
-                                                "*.dmd *.dmd",
-                                                this,
-                                                tr( "US-SOMO : Cluster DMD Setup : Save" ),
-                                                tr("Choose a filename to save the dmd run parameters") );
+   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the dmd run parameters") , use_dir , "*.dmd *.dmd" );
+
    if ( fname.isEmpty() )
    {
       return;

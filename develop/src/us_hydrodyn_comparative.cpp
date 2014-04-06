@@ -2575,12 +2575,8 @@ void US_Hydrodyn_Comparative::load_param()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString fname = Q3FileDialog::getOpenFileName(
-                                                use_dir,
-                                                "*.smp",
-                                                this,
-                                                "save file dialog",
-                                                tr("Choose a filename to load the parameters") );
+   QString fname = QFileDialog::getOpenFileName( this , tr("Choose a filename to load the parameters") , use_dir , "*.smp" );
+
    if ( fname.isEmpty() )
    {
       return;
@@ -2654,12 +2650,8 @@ void US_Hydrodyn_Comparative::save_param()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString fname = Q3FileDialog::getSaveFileName(
-                                                use_dir,
-                                                "*.smp",
-                                                this,
-                                                "save file dialog",
-                                                tr("Choose a filename to save the parameters") );
+   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the parameters") , use_dir , "*.smp" );
+
    if ( fname.isEmpty() )
    {
       return;
@@ -2701,13 +2693,8 @@ void US_Hydrodyn_Comparative::load_csv()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QStringList filenames = Q3FileDialog::getOpenFileNames(
-                                                         "csv files (*.csv)"
-                                                         , use_dir
-                                                         , this
-                                                         , "open file dialog"
-                                                         , "Open"
-                                                         );
+   QStringList filenames = QFileDialog::getOpenFileNames( this , "Open" , use_dir , "csv files (*.csv)" );
+
 
    if ( filenames.empty() )
    {
@@ -3265,12 +3252,8 @@ void US_Hydrodyn_Comparative::save_csv()
    }
    // cout << "use_name: " << use_name << "\n";
 
-   QString fname = Q3FileDialog::getSaveFileName(
-                                                use_name,
-                                                "*.csv",
-                                                this,
-                                                "save file dialog",
-                                                tr("Choose a filename to save the parameters") );
+   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the parameters") , use_name , "*.csv" );
+
    if ( fname.isEmpty() )
    {
       return;
@@ -3288,7 +3271,7 @@ void US_Hydrodyn_Comparative::save_csv()
 void US_Hydrodyn_Comparative::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null,this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();

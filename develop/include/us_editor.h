@@ -6,7 +6,7 @@
 #include <qcolordialog.h>
 #include <Q3ComboBox>
 #include <qfile.h>
-#include <q3filedialog.h>
+#include <qfiledialog.h>
 #include <qfileinfo.h>
 #include <qfontdatabase.h>
 #include <qfontdialog.h>

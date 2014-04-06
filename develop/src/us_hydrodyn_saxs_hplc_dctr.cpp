@@ -179,8 +179,8 @@ void US_Hydrodyn_Saxs_Hplc_Dctr::save()
       USglobal->config_list.root_dir + QDir::separator() + "etc" + 
       QDir::separator() + "somo_hplc_default_dctr.dat" ;
 
-   QString fn = Q3FileDialog::getSaveFileName( use_dir, "*_dctr.dat", this, this->caption() + tr( " Save" ),
-                                              tr( "Select a name to save the detector settings" ) );
+   QString fn = QFileDialog::getSaveFileName( this , tr( "Select a name to save the detector settings" ) , use_dir , "*_dctr.dat" );
+
 
    if ( fn.isEmpty() )
    {

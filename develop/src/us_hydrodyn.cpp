@@ -1572,7 +1572,7 @@ void US_Hydrodyn::pdb_visualization()
 
 void US_Hydrodyn::load_config()
 {
-   QString fname = Q3FileDialog::getOpenFileName ( somo_dir, "*.config", 0, 0, "Please select a SOMO configuration file...", 0, TRUE );
+   QString fname = QFileDialog::getOpenFileName( 0 , "Please select a SOMO configuration file..." , somo_dir , "*.config" , 0 );
    if ( fname == QString::null )
    {
       QColor save_color = editor->color();
@@ -1595,7 +1595,7 @@ void US_Hydrodyn::load_config()
 
 void US_Hydrodyn::write_config()
 {
-   QString fname = Q3FileDialog::getSaveFileName ( somo_dir, "*.config", 0, 0, "Please name your SOMO configuration file...", 0, TRUE );
+   QString fname = QFileDialog::getSaveFileName( 0 , "Please name your SOMO configuration file..." , somo_dir , "*.config" , 0 );
    if (fname.right(7) != ".config")
    {
       fname += ".config";
@@ -1655,7 +1655,7 @@ void US_Hydrodyn::reset()
 void US_Hydrodyn::select_residue_file()
 {
    QString old_filename = residue_filename;
-   residue_filename = Q3FileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.residue *.RESIDUE", this);
+   residue_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.residue *.RESIDUE" );
    if (residue_filename.isEmpty())
    {
       residue_filename = old_filename;
@@ -1817,11 +1817,8 @@ void US_Hydrodyn::load_pdb()
 
    select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getOpenFileName(use_dir,
-                                                   "Structures (*.pdb *.PDB)",
-                                                   this,
-                                                   "Open Structure Files",
-                                                   "Please select a PDB file...");
+   QString filename = QFileDialog::getOpenFileName( this , "Please select a PDB file..." , use_dir , "Structures (*.pdb *.PDB)" );
+
    if ( !filename.isEmpty() )
    {
       path_load_pdb = QFileInfo(filename).dirPath(true);
@@ -2195,7 +2192,7 @@ void US_Hydrodyn::view_pdb()
 
    select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getOpenFileName(use_dir, "*.pdb *.PDB", this);
+   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.pdb *.PDB" );
    
    if (!filename.isEmpty())
    {
@@ -2288,17 +2285,10 @@ void US_Hydrodyn::load_bead_model()
 
    select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getOpenFileName(use_dir
-
-                                                   ,"Bead models (*.bead_model *.BEAD_MODEL);;"
+   QString filename = QFileDialog::getOpenFileName( this , "Open" , use_dir , "Bead models (*.bead_model *.BEAD_MODEL);;"
                                                    "BEAMS (*.beams *.BEAMS);;"
-                                                   "DAMMIN/DAMMIF/DAMAVER (*.pdb)"
+                                                   "DAMMIN/DAMMIF/DAMAVER (*.pdb)" , &bead_model_selected_filter );
 
-                                                   , this
-                                                   , "open file dialog"
-                                                   , "Open"
-                                                   , &bead_model_selected_filter
-                                                   );
 
    if ( !filename.isEmpty() )
    {
@@ -3575,7 +3565,7 @@ void US_Hydrodyn::view_asa()
 
    select_from_directory_history( use_dir, this );
 
-   QString filename = Q3FileDialog::getOpenFileName(use_dir, "*.asa_res *.ASA_RES", this);
+   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.asa_res *.ASA_RES" );
    if (!filename.isEmpty())
    {
       path_view_asa_res = QFileInfo(filename).dirPath(true);
@@ -3611,15 +3601,10 @@ void US_Hydrodyn::view_bead_model()
             
             select_from_directory_history( use_dir, this );
 
-            filename = Q3FileDialog::getOpenFileName(use_dir
-                                                    ,"Bead models (*.bead_model *.BEAD_MODEL);;"
+            filename = QFileDialog::getOpenFileName( this , "Open" , use_dir , "Bead models (*.bead_model *.BEAD_MODEL);;"
                                                     "BEAMS (*.beams *.BEAMS);;"
-                                                    "DAMMIN/DAMMIF (*.pdb)"
-                                                    , this
-                                                    , "open file dialog"
-                                                    , "Open"
-                                                    , &bead_model_selected_filter
-                                                    );
+                                                    "DAMMIN/DAMMIF (*.pdb)" , &bead_model_selected_filter );
+
             if ( !filename.isEmpty() )
             {
                path_view_bead_model = QFileInfo(filename).dirPath(true);
@@ -3639,15 +3624,10 @@ void US_Hydrodyn::view_bead_model()
 
       select_from_directory_history( use_dir, this );
 
-      filename = Q3FileDialog::getOpenFileName(use_dir
-                                              ,"Bead models (*.bead_model *.BEAD_MODEL);;"
+      filename = QFileDialog::getOpenFileName( this , "Open" , use_dir , "Bead models (*.bead_model *.BEAD_MODEL);;"
                                               "BEAMS (*.beams *.BEAMS);;"
-                                              "DAMMIN/DAMMIF (*.pdb)"
-                                              , this
-                                              , "open file dialog"
-                                              , "Open"
-                                              , &bead_model_selected_filter
-                                              );
+                                              "DAMMIN/DAMMIF (*.pdb)" , &bead_model_selected_filter );
+
       if ( !filename.isEmpty() )
       {
          path_view_bead_model = QFileInfo(filename).dirPath(true);
@@ -4025,7 +4005,7 @@ void US_Hydrodyn::open_hydro_results()
             
             select_from_directory_history( use_dir, this );
 
-            filename = Q3FileDialog::getOpenFileName(use_dir, "*.hydro_res *.HYDRO_RES *.zno *.ZNO", this);
+            filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.hydro_res *.HYDRO_RES *.zno *.ZNO" );
 
             if ( !filename.isEmpty() )
             {
@@ -4046,7 +4026,7 @@ void US_Hydrodyn::open_hydro_results()
 
       select_from_directory_history( use_dir, this );
 
-      filename = Q3FileDialog::getOpenFileName(use_dir, "*.hydro_res *.HYDRO_RES", this);
+      filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.hydro_res *.HYDRO_RES" );
 
       if ( !filename.isEmpty() )
       {
@@ -4169,7 +4149,7 @@ void US_Hydrodyn::update_font()
 void US_Hydrodyn::save()
 {
    QString fn;
-   fn = Q3FileDialog::getSaveFileName(QString::null, QString::null,this );
+   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
       QString text = editor->text();
