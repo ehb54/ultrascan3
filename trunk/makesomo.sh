@@ -21,9 +21,9 @@ NBERR=0
 
 if [ $ISWIN -eq 2 ]; then
   # Run revision and qmake in Cygwin window
-  cd $us3/somo/develop
+  cd $us3/../us3_somo/develop
   pwd
-  ./revision.sh
+  ./version.sh
   qmake us_somo.pro
   cp Makefile Makefile-all
   cp Makefile.Release Makefile.R-all
@@ -39,7 +39,7 @@ fi
 
 if [ $ISWIN -eq 1 ]; then
   # Run makes for lib,all in MSYS window
-  cd /c/Users/Admin/Documents/ultrascan3/somo/develop
+  cd /c/Users/Admin/Documents/us3_somo/develop
   pwd
   cp Makefile-lib Makefile
   cp Makefile.R-lib Makefile.Release
@@ -50,32 +50,37 @@ if [ $ISWIN -eq 1 ]; then
   cp Makefile.D-all Makefile.Debug
   make
   echo "MAKE of somo complete"
-  cd ../bin
-  pwd
-  ls -l
+  cd ../
+  ls -l ./bin
+  cp -p bin/* ../ultrascan3/bin/
   exit 0
 fi
 
 # Do makes for Linux,Mac
-cd $us3/somo/develop
-./revision.sh
+cd $us3/../us3_somo
+SOMO3=`pwd`
+cd develop
+sh version.sh
 qmake us_somo.pro
 cp -p Makefile  Makefile-all
 qmake libus_somo.pro
 cp -p Makefile  Makefile-lib
 make -j2 -f Makefile-lib
 make -j2 -f Makefile-all
-ls -lrt ../lib ../bin
-echo ""
-echo "rsync -av $us3/somo/lib $us3"
-rsync -av $us3/somo/lib $us3
+cd $SOMO3
 
 if [ $ISMAC -ne 0 ]; then
   echo "RUN libnames, appnames"
-  cd ../
-  ./bin/libnames.sh
-  ./bin/appnames.sh
+  ./somo_libnames.sh
+  ./somo_appnames.sh
 fi
+
+ls -lrt ./lib ./bin
+echo ""
+echo "rsync -av --exclude .svn $SOMO3/lib $us3"
+rsync -av --exclude .svn $SOMO3/lib $us3
+echo "rsync -av --exclude .svn $SOMO3/bin $us3"
+rsync -av --exclude .svn $SOMO3/bin $us3
 echo ""
 echo "MAKE of somo complete"
 

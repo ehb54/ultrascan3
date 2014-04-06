@@ -4,6 +4,8 @@
 SRCDIR=$HOME/ultrascan3
 SRCSOMO=$HOME/us3_somo
 DSTDIR=$HOME/us3pkg
+SOMOBASE=$HOME/us3_somo
+SOMORHDR=${SOMOBASE}/develop/include/us_revision.h
 ME=`whoami`
 SYSTYPE=`uname -s`
 if [ "${SYSTYPE}" != "Linux" ]; then
@@ -16,6 +18,7 @@ REV=`svn info svn:${SURL}|grep Revision|awk '{print $2}'`
 RSYNC="rsync -av --exclude=.svn"
 REVL=`svn info ${SRCDIR}|grep Revision|awk '{print $2}'`
 VERS=`grep US_Version ${SRCDIR}/utils/us_defines.h|cut -d'"' -f2`
+SREV=`grep Revision ${SOMORHDR}|cut -d \" -f2|awk '{print $2}'`
 
 if [ "${REV}" != "${REVL}" ]; then
   # Abort if source is not latest revision
@@ -46,9 +49,9 @@ QTBINS="assistant"
 TEMP=`which gcc`
 TEMP=`file ${TEMP} | egrep -ci '64-bit|x86-64'`
 if [ ${TEMP} -ne 0 ]; then
-  PKGNAME=ultrascan-Linux64-${VERS}-rev${REV}
+  PKGNAME=us3-Linux64-${VERS}.${REV}-s${SREV}
 else
-  PKGNAME=ultrascan-Linux32-${VERS}-rev${REV}
+  PKGNAME=us3-Linux32-${VERS}.${REV}-s${SREV}
 fi
 PKGDIR=${DSTDIR}/${PKGNAME}
 
@@ -88,21 +91,13 @@ for F in ${PKGDIR}/etc/somo*; do
 done
 
 # Copy the SOMO directories
-SDIR=${SRCSOMO}/lib
-DDIR=${PKGDIR}
-echo "${RSYNC} ${SDIR} ${DDIR}"
-${RSYNC} ${SDIR} ${DDIR}
-SDIR=${SRCSOMO}/bin
-DDIR=${PKGDIR}
-echo "${RSYNC} ${SDIR} ${DDIR}"
-${RSYNC} ${SDIR} ${DDIR}
 (cd ${PKGDIR};mkdir somo somo/doc somo/demo somo/test);
-SDIR=${SRCSOMO}/doc
+SDIR=${SOMOBASE}/doc
 DDIR=${PKGDIR}/somo
 echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}
 
-SOMODIR=$HOME/ultrascan/somo
+SOMODIR=$SOMOBASE/somo
 if [ -d ${SOMODIR} -a -d ${SOMODIR}/demo ]; then
   # Clear out somo/demo so only present contents are copied
   /bin/rm -rf ${PKGDIR}/somo/demo/*

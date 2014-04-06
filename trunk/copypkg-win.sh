@@ -2,7 +2,7 @@
 #   copypkg-win   - copy files for packaging - Windows
 
 SRCDIR=/cygdrive/c/Users/Admin/Documents/ultrascan3
-US2DIR=/cygdrive/c/Users/Admin/Documents/ultrascan2
+SOMOBASE=/cygdrive/c/Users/Admin/Documents/us3_somo
 QTBIN=/cygdrive/c/Qt/4.8.4/bin
 DESTDIR=/cygdrive/c/dist
 SYSTYPE=`uname -o`
@@ -24,8 +24,8 @@ cp -p ${SRCDIR}/lib/*.dll ${SRCDIR}/bin/
 
 echo "Copy somo bins to bin"
 for F in ${SOMOBINS}; do
-  echo "  cp -p ${SRCDIR}/somo/bin/${F} ${SRCDIR}/bin/"
-  cp -p ${SRCDIR}/somo/bin/${F} ${SRCDIR}/bin/
+  echo "  cp -p ${SOMOBASE}/bin/${F} ${SRCDIR}/bin/"
+  cp -p ${SOMOBASE}/bin/${F} ${SRCDIR}/bin/
 done
 
 echo "Copy bin,etc directories"
@@ -51,9 +51,10 @@ else
 fi
 
 echo "Copy somo doc,demo,test directories"
-cp -rp ${SRCDIR}/somo/doc ${DESTDIR}/somo/
-cp -rp ${US2DIR}/somo/demo ${DESTDIR}/somo/
-cp -rp ${US2DIR}/somo/test ${DESTDIR}/somo/
+cp -rp ${SOMOBASE}/doc ${DESTDIR}/somo/
+cp -rp ${SOMOBASE}/somo/demo ${DESTDIR}/somo/
+cp -rp ${SOMOBASE}/somo/test ${DESTDIR}/somo/
+cp -p ${SOMOBASE}/LICENSE.txt ${DESTDIR}/
 
 echo "Copy Qt DLLs to bin"
 for F in ${QTDLLS}; do
