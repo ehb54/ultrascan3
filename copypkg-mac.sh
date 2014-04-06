@@ -4,6 +4,7 @@
 ME=`whoami`
 RSYNC="rsync -av --exclude=.svn"
 SRCDIR=~/us3/ultrascan3
+SOMOBASE=~/us3/us3_somo
 PKGDIR=~/us3/pkg
 PDIRS=""
 SYSTYPE=`uname -s`
@@ -44,12 +45,20 @@ if [ -d ${PKGDIR}/somo/demo ]; then
   /bin/rm -rf ${PKGDIR}/somo/demo/*
 fi
 
-for D in bin demo doc lib saxs structures; do
-  SDIR=${SRCDIR}/somo/${D}
-  DDIR=${PKGDIR}/somo
-  echo "${RSYNC} ${SDIR} ${DDIR}"
-  ${RSYNC} ${SDIR} ${DDIR}
-done
+# Copy somo demo
+SBASE=${SOMOBASE}/somo
+SDIR=${SBASE}/demo
+DDIR=${PKGDIR}/somo
+echo "${RSYNC} ${SDIR} ${DDIR}"
+${RSYNC} ${SDIR} ${DDIR}
+# Copy somo test
+SDIR=${SBASE}/test
+echo "${RSYNC} ${SDIR} ${DDIR}"
+${RSYNC} ${SDIR} ${DDIR}
+# Copy somo doc
+SDIR=${SOMOBASE}/doc
+echo "${RSYNC} ${SDIR} ${DDIR}"
+${RSYNC} ${SDIR} ${DDIR}
 
 SDIR=${SRCDIR}/Frameworks
 DDIR=${PKGDIR}
