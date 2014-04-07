@@ -75,13 +75,24 @@ int main ( int argc, char **argv )
    }
    else  // OK to continue
    {
-   	US_Config_GUI *configuration;
-  		configuration = new US_Config_GUI();
-   	configuration->show();
-   	a.setMainWidget(configuration);
-   	a.setDesktopSettingsAware(false);
-   	return a.exec();
-	}
+      US_Config_GUI *configuration;
+      configuration = new US_Config_GUI();
+      configuration->show();
+      a.setMainWidget(configuration);
+      a.setDesktopSettingsAware(false);
+#ifdef QT4
+      {
+         QString icon = 
+            configuration->USglobal->config_list.system_dir + "/etc/" + "somo3_config_128x128.ico";
+         if ( QFile( icon ).exists() )
+         {
+            a.setWindowIcon( QIcon( icon ) );
+         }
+      }
+#endif
+
+      return a.exec();
+   }
 }
 
 void USconfig_check::debug( const QString& str )

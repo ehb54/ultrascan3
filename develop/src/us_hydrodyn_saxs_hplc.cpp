@@ -865,7 +865,9 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
       QString head = qstring_common_head( filenames, true );
       QString tail = qstring_common_tail( filenames, true );
 
-      // cout << QString( "sort head <%1> tail <%2>\n" ).arg( head ).arg( tail );
+      bool add_dp = head.contains( QRegExp( "\\d_$" ) );
+
+      // qDebug( QString( "sort head <%1> tail <%2>" ).arg( head ).arg( tail ) );
       
       set < QString > used;
 
@@ -875,9 +877,16 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
          if ( rx_cap.search( tmp ) != -1 )
          {
+            // qDebug( QString( "rx_cap search tmp %1 found" ).arg( tmp ) );
             tmp = rx_cap.cap( 2 );
+            // } else {
+            // qDebug( QString( "rx_cap search tmp %1 NOT found" ).arg( tmp ) );
          }
-         // cout << QString( "sort tmp <%1>\n" ).arg( tmp );
+
+         if ( add_dp )
+         {
+            tmp = "0." + tmp;
+         }
 
          if ( used.count( tmp ) )
          {
@@ -890,9 +899,11 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
          sval.x     = tmp.toDouble();
          sval.name  = filenames[ i ];
          svals      .push_back( sval );
+         // qDebug( QString( "sort tmp <%1> xval <%2>" ).arg( tmp ).arg( sval.x ) );
       }
       if ( reorder )
       {
+         // qDebug( "reordered" );
          svals.sort();
 
          filenames.clear();

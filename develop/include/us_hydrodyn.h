@@ -228,8 +228,9 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
 
       map < QString, QString >            gparams;
 
-   private:
       US_Config *USglobal;
+
+   private:
 
       bool residue_widget;
       bool atom_widget;

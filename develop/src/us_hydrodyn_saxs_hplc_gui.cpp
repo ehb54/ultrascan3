@@ -465,6 +465,15 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_show_only_created->setPalette( PALET_PUSHB );
    connect(pb_show_only_created, SIGNAL(clicked()), SLOT(show_only_created()));
 
+   le_dummy = new QLineEdit(this, "le_dummy Line Edit");
+   le_dummy->setText( "" );
+   le_dummy->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_dummy->setPalette( PALET_NORMAL );
+   AUTFBACK( le_dummy );
+   le_dummy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 3));
+   le_dummy->setMaximumHeight( 3 );
+   le_dummy->setEnabled( false );
+
    progress = new Q3ProgressBar(this, "Progress");
    // progress->setMinimumHeight(minHeight1);
    progress->setPalette( PALET_NORMAL );
@@ -763,7 +772,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    qwtw_wheel->setEnabled      ( false );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
 
-   pb_ref = new QPushButton(tr("Ref"), this);
+   pb_ref = new QPushButton(tr("Concentration reference"), this);
    pb_ref->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_ref->setMinimumHeight(minHeight1);
    pb_ref->setPalette( PALET_PUSHB );
@@ -1556,19 +1565,21 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // gl_wheel->addWidget         ( pb_wheel_cancel, 0, 10 );
    // gl_wheel->addWidget         ( pb_wheel_save  , 0, 11 );
 
+   Q3BoxLayout *hbl_top = new Q3HBoxLayout( 0 );
+   hbl_top->addWidget( pb_p3d );
+   hbl_top->addWidget( pb_ref );
+   hbl_top->addWidget( pb_errors );
+   hbl_top->addWidget( pb_wheel_cancel );
+   hbl_top->addWidget( pb_wheel_save );
+
    Q3BoxLayout *hbl_mode = new Q3HBoxLayout( 0 );
    hbl_mode->addWidget( pb_gauss_start );
    hbl_mode->addWidget( pb_ggauss_start );
-   hbl_mode->addWidget( pb_p3d );
    hbl_mode->addWidget( pb_baseline_start );
-   hbl_mode->addWidget( pb_baseline_apply   );
+   hbl_mode->addWidget( pb_baseline_apply );
    hbl_mode->addWidget( pb_wheel_start );
    hbl_mode->addWidget( pb_scale );
    hbl_mode->addWidget( pb_guinier );
-   hbl_mode->addWidget( pb_ref );
-   hbl_mode->addWidget( pb_errors );
-   hbl_mode->addWidget( pb_wheel_cancel );
-   hbl_mode->addWidget( pb_wheel_save );
 
    Q3BoxLayout *vbl_scale = new Q3VBoxLayout( 0 );
    {
@@ -1646,12 +1657,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addLayout ( l_plot_errors );
    vbl_plot_group->addLayout ( gl_wheel );
    vbl_plot_group->addWidget ( lbl_mode_title );
+   vbl_plot_group->addLayout ( hbl_top );
    vbl_plot_group->addLayout ( hbl_mode );
    vbl_plot_group->addLayout ( vbl_scale );
    vbl_plot_group->addLayout ( gl_gauss );
    // vbl_plot_group->addLayout ( hbl_gauss2 );
    vbl_plot_group->addLayout ( gl_gauss2  );
    vbl_plot_group->addLayout ( hbl_baseline );
+   vbl_plot_group->addWidget ( le_dummy );
    vbl_plot_group->addLayout ( hbl_plot_buttons );
 
 //    QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
@@ -1694,6 +1707,9 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
 {
    // plot_widgets;
 
+#ifndef QT4
+   plot_widgets.push_back( le_dummy );
+#endif
    plot_widgets.push_back( pb_select_vis );
    plot_widgets.push_back( pb_remove_vis );
    plot_widgets.push_back( pb_crop_common );
@@ -1799,11 +1815,22 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    timeshift_widgets.push_back( lbl_blank1 );
    timeshift_widgets.push_back( qwtw_wheel );
    timeshift_widgets.push_back( lbl_wheel_pos );
+   // timeshift_widgets.push_back( pb_select_vis );
+   // timeshift_widgets.push_back( pb_remove_vis );
+   // timeshift_widgets.push_back( pb_crop_common );
+   // timeshift_widgets.push_back( pb_crop_vis );
+   // timeshift_widgets.push_back( pb_crop_zero );
+   // timeshift_widgets.push_back( pb_crop_left );
+   // timeshift_widgets.push_back( pb_crop_undo );
+   // timeshift_widgets.push_back( pb_crop_right );
+   // timeshift_widgets.push_back( pb_legend );
+   timeshift_widgets.push_back( le_dummy );
+
 }   
 
 void US_Hydrodyn_Saxs_Hplc::mode_select()
 {
-   QSize cur_size = plot_dist->size();
+   // QSize cur_size = plot_dist->size();
 
    ShowHide::hide_widgets( plot_widgets );
    ShowHide::hide_widgets( gaussian_widgets );
@@ -1850,7 +1877,8 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
    case MODE_SCALE     : mode_title( pb_scale->text() ); ShowHide::hide_widgets( scale_widgets     , false ); break;
    default : qDebug( "mode select error" ); break;
    }
-   plot_dist->resize( cur_size );
+   // plot_dist->resize( cur_size );
+   resize( size() );
 }
 
 void US_Hydrodyn_Saxs_Hplc::mode_select( modes mode )

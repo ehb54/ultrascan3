@@ -363,6 +363,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton  * pb_scale_apply;
       QPushButton  * pb_scale_create;
 
+      QLineEdit    * le_dummy;
+
       set < QString > scale_selected;
 
       bool          order_ascending;

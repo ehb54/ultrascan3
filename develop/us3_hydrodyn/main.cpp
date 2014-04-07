@@ -110,6 +110,16 @@ int main (int argc, char **argv)
    hydrodyn->show();
    a.setMainWidget(hydrodyn);
    a.setDesktopSettingsAware(false);
+#ifdef QT4
+   {
+      QString icon = 
+         hydrodyn->USglobal->config_list.system_dir + "/etc/" + "somo3_icon_128x128.ico";
+      if ( QFile( icon ).exists() )
+      {
+         a.setWindowIcon( QIcon( icon ) );
+      }
+   }
+#endif
    return a.exec();
 }
 
