@@ -8,6 +8,7 @@ revision.target           = us_revision.h
 revision.commands         = sh revision.sh
 revision.depends          = FORCE
 unix:QMAKE_EXTRA_TARGETS += revision
+mac:ICON                  = ../../etc/us3-icon.icns
 
 HEADERS      += us.h            \
                 us_revision.h
