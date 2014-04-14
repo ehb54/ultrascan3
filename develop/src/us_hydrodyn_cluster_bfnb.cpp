@@ -111,7 +111,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    cb_pmallcombinations ->setChecked        ( parameters->count( "pmallcombinations" ) && ( *parameters )[ "pmallcombinations" ] == "true" ? true : false );
    connect( cb_pmallcombinations, SIGNAL( clicked() ), SLOT( set_pmallcombinations() ) );
 
-   lbl_pmrayleighdrho = new QLabel      ( tr( "Sample electron density e/A^3\n(default: protenn average .425)\nProteins: .41-.44, DNA:.59, RNA:.6, Carbs:.49" ), this );
+   lbl_pmrayleighdrho = new QLabel      ( tr( "Sample electron density e/A^3\n(default: protein average .425)\nProteins: .41-.44, DNA:.59, RNA:.6, Carbs:.49" ), this );
    lbl_pmrayleighdrho ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmrayleighdrho ->setMinimumHeight( minHeight1 *  3 );
    lbl_pmrayleighdrho ->setPalette      ( PALET_LABEL );
@@ -122,6 +122,10 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmrayleighdrho = new QLineEdit     ( this, "pmrayleighdrho Line Edit" );
    widgets_main_label.push_back( lbl_pmrayleighdrho );
    widgets_main_label.push_back( le_pmrayleighdrho );
+   if ( !parameters->count( "pmrayleighdrho" ) )
+   {
+      ( *parameters )[ "pmrayleighdrho" ] = ".425";
+   }
    le_pmrayleighdrho ->setText           ( parameters->count( "pmrayleighdrho" ) ? ( *parameters )[ "pmrayleighdrho" ] : "" );
    le_pmrayleighdrho ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_pmrayleighdrho ->setPalette        ( PALET_NORMAL );

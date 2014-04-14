@@ -75,10 +75,13 @@ void US_PM::init_objects()
    object_names          .clear();
    object_m0_parameters  .clear();
    object_parameter_types.clear();
+   object_name_map       .clear();
 
    vector < vector < parameter_type > > tmp_ptv;
    vector < parameter_type >            tmp_pt;
 
+
+   object_name_map[ SPHERE ] = "sphere";
    object_names        .push_back( "sphere" );
    object_m0_parameters.push_back( 1 ); // radius
    {
@@ -102,6 +105,7 @@ void US_PM::init_objects()
    }
 
 
+   object_name_map[ CYLINDER ] = "cylinder";
    object_names        .push_back( "cylinder" );
    object_m0_parameters.push_back( 2 ); // height length
    {
@@ -125,6 +129,7 @@ void US_PM::init_objects()
       object_parameter_types.push_back( tmp_ptv );
    }
 
+   object_name_map[ SPHEROID ] = "spheroid";
    object_names        .push_back( "spheroid" );
    object_m0_parameters.push_back( 2 ); // a, b
    {
@@ -148,6 +153,7 @@ void US_PM::init_objects()
       object_parameter_types.push_back( tmp_ptv );
    }
 
+   object_name_map[ ELLIPSOID ] = "ellipsoid";
    object_names        .push_back( "ellipsoid" );
    object_m0_parameters.push_back( 3 ); // a, b, c
    {
@@ -172,6 +178,7 @@ void US_PM::init_objects()
       object_parameter_types.push_back( tmp_ptv );
    }
 
+   object_name_map[ TORUS ] = "torus";
    object_names        .push_back( "torus" );
    object_m0_parameters.push_back( 2 ); // radius1, radius2
    {
@@ -196,6 +203,7 @@ void US_PM::init_objects()
    }
 
    /* later turn on torus_segment
+   object_name_map[ TORUS_SEGMENT ] = "torus segment";
    object_names        .push_back( "torus_segment" );
    object_m0_parameters.push_back( 3 ); // radius1, radius2, end theta
    object_best_f       .push_back( &US_PM::best_torus_segment );
@@ -227,6 +235,22 @@ void US_PM::init_objects()
    object_type_name[ NORM   ] = "Norm";
    object_type_name[ RADIUS ] = "Radius";
    object_type_name[ ANGLE  ] = "Angle";
+}
+
+QString US_PM::get_name( vector < int > & types )
+{
+   QString result;
+
+   for ( int i = 0; i < (int) types.size(); ++i )
+   {
+      if ( object_name_map.count( (objects) types[ i ] ) )
+      {
+         result += "_" + object_name_map[ (objects) types[ i ] ];
+      } else {
+         result += "_unknown";
+      }
+   }
+   return result;
 }
 
 bool US_PM::create_1_model( int model_pos, vector < double > & params, vector < double > & params_left, set < pm_point > & model )

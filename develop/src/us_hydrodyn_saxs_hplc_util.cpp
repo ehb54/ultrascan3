@@ -2379,7 +2379,30 @@ void US_Hydrodyn_Saxs_Hplc::axis_y()
       delete plot_dist_zoomer;
       plot_dist_zoomer = (ScrollZoomer *) 0;
    }
+
    plot_files();
+   switch( current_mode )
+   {
+   case MODE_PM :
+      {
+         plotted_markers.clear();
+         gauss_add_marker( le_pm_q_start  ->text().toDouble(), Qt::red, tr( "Start" ) );
+         gauss_add_marker( le_pm_q_end    ->text().toDouble(), Qt::red, tr( "End"   ) );
+         plot_dist->replot();
+      }
+      break;
+
+   case MODE_SCALE :
+      {
+         plotted_markers.clear();
+         gauss_add_marker( le_scale_q_start  ->text().toDouble(), Qt::red, tr( "Start") );
+         gauss_add_marker( le_scale_q_end    ->text().toDouble(), Qt::red, tr( "End"  ) );
+         plot_dist->replot();
+      }
+      break;
+   default : break;
+   }
+
    if ( !suppress_replot )
    {
       plot_dist->replot();

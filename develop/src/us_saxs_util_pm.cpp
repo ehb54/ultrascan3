@@ -461,7 +461,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
       {
          errormsg = QString( "Error controlfile line %1 : Unrecognized token %2" )
             .arg( i + 1 )
-            .arg( qsl[ 0 ] );
+            .arg( option );
          return false;
       }
 
@@ -1183,3 +1183,368 @@ bool US_Saxs_Util::run_pm_ok( QString option )
    return true;
 }
          
+// callable version
+
+bool US_Saxs_Util::run_pm( 
+                          map < QString, vector < double > > & produced_q,
+                          map < QString, vector < double > > & produced_I,
+                          map < QString, QString >           & produced_model,
+                          map < QString, QString >           & parameters,
+                          map < QString, vector < double > > & vectors
+                           )
+{
+   output_files          .clear();
+   job_output_files      .clear();
+   write_output_count    = 0;
+   timings               = "";
+   bool srand48_done     = false;
+
+   control_parameters = parameters;
+   control_vectors    = vectors;
+
+   vector < double > params;
+   set < pm_point >  model;
+
+
+   if ( control_parameters.count( "pmrayleighdrho" ) )
+   {
+      if ( !control_vectors.count( "pmq" ) )
+      {
+         errormsg = "pmq must be defined";
+         return false;
+      }
+      if ( !control_parameters.count( "pmgridsize" ) )
+      {
+         errormsg = "pmgridsize must be defined";
+         return false;
+      }
+      if ( !control_parameters.count( "pmbufferedensity" ) )
+      {
+         errormsg = "pmbufferedensity must be defined";
+         return false;
+      }
+      
+      if ( !compute_rayleigh_structure_factors( 
+                                               pow( pow( control_parameters[ "pmgridsize" ].toDouble(), 3e0 ) / M_PI, 1e0/3e0 ),
+                                               control_parameters[ "pmrayleighdrho" ].toDouble(),
+                                               control_vectors   [ "pmq" ],
+                                               control_vectors   [ "pmf" ] ) )
+      {
+         errormsg = QString( "Error computing structurer factors : %1" ).arg( errormsg );
+         return false;
+      }
+      double bed = control_parameters[ "pmbufferedensity" ].toDouble();
+      if ( bed )
+      {
+         double vi = pow( control_parameters[ "pmgridsize" ].toDouble(), 3e0 );
+         double vie = vi * bed;
+         double vi_23_4pi = - pow((double)vi,2.0/3.0) * M_ONE_OVER_4PI;
+         for ( int i = 0; i < (int) control_vectors[ "pmf" ].size(); ++i )
+         {
+            double q = control_vectors[ "pmq" ][ i ];
+            control_vectors[ "pmf" ][ i ] -= vie * exp( vi_23_4pi * q * q );
+         }
+      }
+      
+      cout << "Rayleigh structure factors computed\n";
+         
+      US_Vector::printvector2( "pmq pmf", control_vectors[ "pmq" ], control_vectors[ "pmf" ] );
+
+      if ( control_parameters.count( "pmapproxmaxdimension" ) )
+      {
+         control_parameters.erase( "approx_max_d" );
+
+         if ( !run_pm_ok( "pmapproxmaxdimension" ) )
+         {
+            errormsg = QString( "Error when computing approx max dimension : %1" ).arg( errormsg );
+            return false;
+         }            
+
+         US_PM pm(
+                  control_parameters [ "pmgridsize"     ].toDouble(),
+                  control_parameters [ "pmmaxdimension" ].toInt(),
+                  control_parameters [ "pmharmonics"    ].toUInt(),
+                  control_vectors    [ "pmf"            ],
+                  control_vectors    [ "pmq"            ],
+                  control_vectors    [ "pmi"            ],
+                  control_vectors    [ "pme"            ],
+                  control_parameters [ "pmmemory"       ].toUInt(),
+                  control_parameters [ "pmdebug"        ].toInt()
+                  );
+
+         unsigned int approx_max_d;
+         if ( !pm.approx_max_dimension( params, 
+                                        control_parameters[ "pmapproxmaxdimension" ].toDouble(),
+                                        approx_max_d ) )
+         {
+            return false;
+         }
+         control_parameters[ "approx_max_d" ] = QString( "%1" ).arg( approx_max_d );
+         cout << QString( "approx maxd %1\n" ).arg( control_parameters[ "approx_max_d" ] );
+      }
+
+      if ( control_parameters.count( "pmbestmd0" ) )
+      {
+         cout << "pmbestmd0\n";
+         if ( !run_pm_ok( "pmbestmd0" ) )
+         {
+            errormsg = QString( "Error pmbestmd0: %1" ).arg( errormsg );
+            return false;
+         }            
+
+         if ( control_vectors.count( "pmtypes" ) &&
+              control_vectors[ "pmtypes" ].size() != 1 )
+         {
+            errormsg = QString( "Error pmbestmd0 : pmtypes must have exactly one parameter for pmbestmd0" );
+            return false;
+         }
+
+         if ( control_parameters.count( "pmseed" ) &&
+              control_parameters[ "pmseed" ].toLong() != 0L )
+         {
+            srand48( control_parameters[ "pmseed" ].toLong() );
+            srand48_done = true;
+         } else {
+            if ( !srand48_done )
+            {
+               long int li = ( long int )QTime::currentTime().msec();
+               cout << QString( "to reproduce use random seed %1\n" ).arg( li );
+               srand48( li );
+            }
+            srand48_done = true;
+         }
+
+         US_PM pm(
+                  control_parameters [ "pmgridsize"     ].toDouble(),
+                  control_parameters [ "pmmaxdimension" ].toInt(),
+                  control_parameters [ "pmharmonics"    ].toUInt(),
+                  control_vectors    [ "pmf"            ],
+                  control_vectors    [ "pmq"            ],
+                  control_vectors    [ "pmi"            ],
+                  control_vectors    [ "pme"            ],
+                  control_parameters [ "pmmemory"       ].toUInt(),
+                  control_parameters [ "pmdebug"        ].toInt()
+                  );
+
+         pm.ga_set_params( 
+                          control_parameters[ "pmgapopulation"       ].toUInt(),
+                          control_parameters[ "pmgagenerations"      ].toUInt(),
+                          control_parameters[ "pmgamutate"           ].toDouble(),
+                          control_parameters[ "pmgasamutate"         ].toDouble(),
+                          control_parameters[ "pmgacrossover"        ].toDouble(),
+                          control_parameters[ "pmgaelitism"          ].toUInt(),
+                          control_parameters[ "pmgaearlytermination" ].toUInt()
+                          );
+
+         pm.set_best_delta(
+                           control_parameters[ "pmbestdeltastart"   ].toDouble(),
+                           control_parameters[ "pmbestdeltadivisor" ].toDouble(),
+                           control_parameters[ "pmbestdeltamin"     ].toDouble()
+                           );
+
+         vector < int > types;
+         if ( control_vectors.count( "pmparams" ) )
+         {
+            params = control_vectors[ "pmparams" ];
+         } else {
+            if ( control_vectors.count( "pmtypes" ) )
+            {
+               for ( int i = 0; i < (int) control_vectors[ "pmtypes" ].size(); i++ )
+               {
+                  types.push_back( (int) control_vectors[ "pmtypes" ][ i ] );
+               }
+               pm.zero_params( params, types );
+            } else {
+               errormsg = QString( "Error bestga : pmparams or pmtypes must be defined" );
+               return false;
+            }
+         }
+         if ( !pm.best_md0_ga( 
+                              params,
+                              model,
+                              control_parameters[ "pmbestmd0stepstoga"       ].toUInt(),
+                              control_parameters[ "pmgapointsmax"            ].toUInt(),
+                              control_parameters[ "pmbestfinestconversion"   ].toDouble(),
+                              control_parameters[ "pmbestcoarseconversion"   ].toDouble(),
+                              control_parameters[ "pmbestrefinementrangepct" ].toDouble(),
+                              control_parameters[ "pmbestconversiondivisor"  ].toDouble()
+                              ) )
+         {
+            errormsg = "Error:" + pm.error_msg;
+            return false;
+         }
+
+         pm_ga_fitness_secs  += pm.pm_ga_fitness_secs;
+         pm_ga_fitness_calls += pm.pm_ga_fitness_calls;
+
+         QString outname = control_parameters[ "pmoutname" ] + pm.get_name( types );
+
+         int ext = 0;
+         while ( produced_I.count( outname ) )
+         {
+            outname = control_parameters[ "pmoutname" ] + pm.get_name( types ) + QString( "-%1" ).arg( ++ext );
+         }
+         
+         produced_q[ outname ] = pm.q;
+         produced_I[ outname ].resize( pm.q.size() );
+         
+         if ( !pm.qstring_model( produced_model[ outname ], model, params ) )
+         {
+            errormsg = QString( "Error producing model %1" ).arg( outname );
+            return false;
+         }
+            
+         if ( !pm.compute_I( model, produced_I[ outname ] ) )
+         {
+            errormsg = pm.error_msg;
+            return false;
+         }
+
+         // if ( !pm.write_model( outname, model, params, false ) )
+         // {
+         //    errormsg = QString( "Error writing model %1" ).arg( outname );
+         //    return false;
+         // }
+         // output_files << QString( outname + ".bead_model" );
+         // if ( !pm.write_I    ( outname, model, false ) )
+         // {
+         //    errormsg = QString( "Error writing I data %1" ).arg( outname );
+         //    return false;
+         // }
+         // output_files << QString( outname + ".dat" );
+      }         
+
+      if ( control_parameters.count( "pmbestga" ) )
+      {
+         if ( !run_pm_ok( "pmbestga" ) )
+         {
+            errormsg = QString( "Error pmbestga : %1" ).arg( errormsg );
+            return false;
+         }            
+
+         if ( !control_parameters.count( "approx_max_d" ) &&
+              control_parameters[ "approx_max_d" ].toUInt() == 0 )
+         {
+            errormsg = QString( "Error pmbestga : pmappromxmaxdimension option must be selected prior to pmbestga" );
+            return false;
+         }
+
+         if ( control_parameters.count( "pmseed" ) &&
+              control_parameters[ "pmseed" ].toLong() != 0L )
+         {
+            srand48( control_parameters[ "pmseed" ].toLong() );
+            srand48_done = true;
+         } else {
+            if ( !srand48_done )
+            {
+               long int li = ( long int )QTime::currentTime().msec();
+               cout << QString( "to reproduce use random seed %1\n" ).arg( li );
+               srand48( li );
+            }
+            srand48_done = true;
+         }
+
+         US_PM pm(
+                  control_parameters [ "pmgridsize"     ].toDouble(),
+                  control_parameters [ "approx_max_d"   ].toUInt(),
+                  control_parameters [ "pmharmonics"    ].toUInt(),
+                  control_vectors    [ "pmf"            ],
+                  control_vectors    [ "pmq"            ],
+                  control_vectors    [ "pmi"            ],
+                  control_vectors    [ "pme"            ],
+                  control_parameters [ "pmmemory"       ].toUInt(),
+                  control_parameters [ "pmdebug"        ].toInt()
+                  );
+
+         pm.ga_set_params( 
+                          control_parameters[ "pmgapopulation"       ].toUInt(),
+                          control_parameters[ "pmgagenerations"      ].toUInt(),
+                          control_parameters[ "pmgamutate"           ].toDouble(),
+                          control_parameters[ "pmgasamutate"         ].toDouble(),
+                          control_parameters[ "pmgacrossover"        ].toDouble(),
+                          control_parameters[ "pmgaelitism"          ].toUInt(),
+                          control_parameters[ "pmgaearlytermination" ].toUInt()
+                          );
+
+         pm.set_best_delta(
+                           control_parameters[ "pmbestdeltastart"   ].toDouble(),
+                           control_parameters[ "pmbestdeltadivisor" ].toDouble(),
+                           control_parameters[ "pmbestdeltamin"     ].toDouble()
+                           );
+
+         vector < int > types;
+         if ( control_vectors.count( "pmparams" ) )
+         {
+            params = control_vectors[ "pmparams" ];
+         } else {
+            if ( control_vectors.count( "pmtypes" ) )
+            {
+               for ( int i = 0; i < (int) control_vectors[ "pmtypes" ].size(); i++ )
+               {
+                  types.push_back( (int) control_vectors[ "pmtypes" ][ i ] );
+               }
+               pm.zero_params( params, types );
+            } else {
+               errormsg = QString( "Error pmbestga : pmparams or pmtypes must be defined" );
+               return false;
+            }
+         }
+         if ( !pm.best_ga( 
+                          params,
+                          model,
+                          control_parameters[ "pmgapointsmax"            ].toUInt(),
+                          control_parameters[ "pmbestfinestconversion"   ].toDouble(),
+                          control_parameters[ "pmbestcoarseconversion"   ].toDouble(),
+                          control_parameters[ "pmbestrefinementrangepct" ].toDouble(),
+                          control_parameters[ "pmbestconversiondivisor"  ].toDouble()
+                          ) )
+         {
+            errormsg = "Error:" + pm.error_msg;
+            return false;
+         }
+
+         pm_ga_fitness_secs  += pm.pm_ga_fitness_secs;
+         pm_ga_fitness_calls += pm.pm_ga_fitness_calls;
+
+         QString outname = control_parameters[ "pmoutname" ] + pm.get_name( types );
+
+         int ext = 0;
+         while ( produced_I.count( outname ) )
+         {
+            outname = control_parameters[ "pmoutname" ] + pm.get_name( types ) + QString( "-%1" ).arg( ++ext );
+         }
+         
+         produced_q[ outname ] = pm.q;
+         produced_I[ outname ].resize( pm.q.size() );
+         
+         if ( !pm.qstring_model( produced_model[ outname ], model, params ) )
+         {
+            errormsg = QString( "Error producing model %1" ).arg( outname );
+            return false;
+         }
+            
+         if ( !pm.compute_I( model, produced_I[ outname ] ) )
+         {
+            errormsg = pm.error_msg;
+            return false;
+         }
+
+         // QString outname = control_parameters[ "pmoutname" ];
+         // if ( !pm.write_model( outname, model, params, false ) )
+         // {
+         //    errormsg = QString( "Error writing model %1" ).arg( outname );
+         //    return false;
+         // }
+         // output_files << QString( outname + ".bead_model" );
+
+         // if ( !pm.write_I    ( outname, model, false ) )
+         // {
+         //    errormsg = QString( "Error writing I data %1" ).arg( outname );
+         //    return false;
+         // }
+         // output_files << QString( outname + ".dat" );
+      }         
+   }
+
+   return true;
+}

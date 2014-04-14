@@ -55,6 +55,20 @@ class US_PM
 {
    friend class US_Saxs_Util;
 
+ public:
+
+   enum                                    objects
+      {
+         SPHERE,
+         CYLINDER,
+         SPHEROID,
+         ELLIPSOID,
+         TORUS
+         // TOURS_SEGMENT
+      };
+
+   QString get_name( vector < int > & types );
+
  private:
 
    // stuff for spherical harmonics
@@ -207,18 +221,10 @@ class US_PM
    double                                  theta_min;
    double                                  delta_min;
 
+   map < objects, QString >                object_name_map;
    vector < QString >                      object_names;
    vector < int >                          object_m0_parameters;  // # of params for model_pos = 0
 
-   enum                                    objects
-      {
-         SPHERE,
-         CYLINDER,
-         SPHEROID,
-         ELLIPSOID,
-         TORUS
-         // TOURS_SEGMENT
-      };
                                                             
    enum                                    parameter_type 
       { 
@@ -476,6 +482,8 @@ class US_PM
 
    bool                write_model       ( QString & filename, set < pm_point > & model, bool overwrite = true );
    bool                write_model       ( QString & filename, set < pm_point > & model, vector < double > &params, bool overwrite = true );
+   bool                qstring_model     ( QString & out, set < pm_point > & model );
+   bool                qstring_model     ( QString & out, set < pm_point > & model, vector < double > &params );
    bool                write_I           ( QString & filename, set < pm_point > & model, bool overwrite = true );
 
    QString             tmp_name          ( QString basename, vector < double > & params );

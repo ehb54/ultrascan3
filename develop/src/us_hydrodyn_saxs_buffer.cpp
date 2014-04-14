@@ -2445,6 +2445,16 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
    }
 }
 
+class hplc_sortable_qstring {
+public:
+   double       x;
+   QString      name;
+   bool operator < (const hplc_sortable_qstring& objIn) const
+   {
+      return x < objIn.x;
+   }
+};
+
 void US_Hydrodyn_Saxs_Buffer::add_files()
 {
    map < QString, bool > existing_items;
@@ -2498,6 +2508,92 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
          lbl_created_dir->setText( QDir::currentDirPath() + "/produced" ); 
       }
       editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
+   }
+
+
+   map < QString, double > found_times;
+
+   // #define DEBUG_LOAD_REORDER
+
+   if ( filenames.size() > 1 )
+   {
+      bool reorder = true;
+
+      QRegExp rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
+      rx_cap.setMinimal( true );
+
+      list < hplc_sortable_qstring > svals;
+
+      QString head = qstring_common_head( filenames, true );
+      QString tail = qstring_common_tail( filenames, true );
+
+      bool add_dp = head.contains( QRegExp( "\\d_$" ) );
+
+#ifdef DEBUG_LOAD_REORDER
+      qDebug( QString( "sort head <%1> tail <%2>  dp %3 " ).arg( head ).arg( tail ).arg( add_dp ? "yes" : "no" ) );
+#endif
+      
+      set < QString > used;
+
+      for ( int i = 0; i < (int) filenames.size(); ++i )
+      {
+         QString tmp = filenames[ i ].mid( head.length() );
+         tmp = tmp.mid( 0, tmp.length() - tail.length() );
+         if ( rx_cap.search( tmp ) != -1 )
+         {
+#ifdef DEBUG_LOAD_REORDER
+            qDebug( QString( "rx_cap search tmp %1 found" ).arg( tmp ) );
+#endif
+            tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
+#ifdef DEBUG_LOAD_REORDER
+         } else {
+            qDebug( QString( "rx_cap search tmp %1 NOT found" ).arg( tmp ) );
+#endif
+         }
+
+         if ( add_dp )
+         {
+            tmp = "0." + tmp;
+         }
+
+#ifdef DEBUG_LOAD_REORDER
+         qDebug( QString( "tmp is now %1 double is %2" ).arg( tmp ).arg( tmp.toDouble() ) );
+#endif
+
+         if ( used.count( tmp ) )
+         {
+#ifdef DEBUG_LOAD_REORDER
+            qDebug( QString( "rx_cap used exit <%1>" ).arg( tmp ) );
+#endif
+            reorder = false;
+            break;
+         }
+         used.insert( tmp );
+
+         hplc_sortable_qstring sval;
+         sval.x     = tmp.toDouble();
+         sval.name  = filenames[ i ];
+         svals      .push_back( sval );
+#ifdef DEBUG_LOAD_REORDER
+         qDebug( QString( "sort tmp <%1> xval <%2>" ).arg( tmp ).arg( sval.x ) );
+#endif
+      }
+      if ( reorder )
+      {
+#ifdef DEBUG_LOAD_REORDER
+         qDebug( "reordered" );
+#endif
+         svals.sort();
+
+         filenames.clear();
+         for ( list < hplc_sortable_qstring >::iterator it = svals.begin();
+               it != svals.end();
+               ++it )
+         {
+            filenames << it->name;
+            found_times[ it->name ] = it->x;
+         }
+      }
    }
 
    QString errors;

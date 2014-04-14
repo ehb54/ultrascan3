@@ -548,6 +548,64 @@ void US_Hydrodyn_Saxs_Hplc::closeEvent(QCloseEvent *e)
       }
    }
 
+   {
+      QStringList           model_not_saved_list;
+      map < QString, bool > model_not_saved_map;
+
+      for ( int i = 0; i < (int)lb_model_files->count(); i++ )
+      {
+         if ( models_not_saved.count( lb_model_files->text( i ) ) )
+         {
+            model_not_saved_list << lb_model_files->text( i );
+            model_not_saved_map[ lb_model_files->text( i ) ] = true;
+         }
+      }
+
+      if ( model_not_saved_list.size() )
+      {
+         QStringList qsl;
+         for ( int i = 0; i < (int)model_not_saved_list.size() && i < 15; i++ )
+         {
+            qsl << model_not_saved_list[ i ];
+         }
+
+         if ( qsl.size() < model_not_saved_list.size() )
+         {
+            qsl << QString( tr( "... and %1 more not listed" ) ).arg( model_not_saved_list.size() - qsl.size() );
+         }
+
+         switch ( QMessageBox::warning(this, 
+                                       caption() + tr( " Remove Models" ),
+                                       QString( tr( "Please note:\n\n"
+                                                    "These models were created but not saved as .bead_model files:\n"
+                                                    "%1\n\n"
+                                                    "What would you like to do?\n" ) )
+                                       .arg( qsl.join( "\n" ) ),
+                                       tr( "&Save them now" ), 
+                                       tr( "&Close the window anyway" ), 
+                                       tr( "&Quit from closing" ), 
+                                       0, // Stop == button 0
+                                       0 // Escape == button 0
+                                       ) )
+         {
+         case 0 : // save them now
+            // set the ones listed to selected
+            if ( !model_save( model_not_saved_list ) )
+            {
+               return;
+            }
+         case 1 : // just remove them
+            break;
+         case 2 : // quit
+            disable_updates = false;
+            return;
+            break;
+         }
+
+      }
+   }
+
+
    ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_widget = false;
    ((US_Hydrodyn *)us_hydrodyn)->last_saxs_hplc_csv = current_csv();
    if ( conc_widget )
@@ -849,15 +907,15 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
       editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
 
-   QString errors;
-
    map < QString, double > found_times;
+
+   // #define DEBUG_LOAD_REORDER
 
    if ( filenames.size() > 1 )
    {
       bool reorder = true;
 
-      QRegExp rx_cap( "(\\d+)_(\\d+)" );
+      QRegExp rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
       rx_cap.setMinimal( true );
 
       list < hplc_sortable_qstring > svals;
@@ -867,7 +925,9 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
 
       bool add_dp = head.contains( QRegExp( "\\d_$" ) );
 
-      // qDebug( QString( "sort head <%1> tail <%2>" ).arg( head ).arg( tail ) );
+#ifdef DEBUG_LOAD_REORDER
+      qDebug( QString( "sort head <%1> tail <%2>  dp %3 " ).arg( head ).arg( tail ).arg( add_dp ? "yes" : "no" ) );
+#endif
       
       set < QString > used;
 
@@ -877,10 +937,14 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
          if ( rx_cap.search( tmp ) != -1 )
          {
-            // qDebug( QString( "rx_cap search tmp %1 found" ).arg( tmp ) );
-            tmp = rx_cap.cap( 2 );
-            // } else {
-            // qDebug( QString( "rx_cap search tmp %1 NOT found" ).arg( tmp ) );
+#ifdef DEBUG_LOAD_REORDER
+            qDebug( QString( "rx_cap search tmp %1 found" ).arg( tmp ) );
+#endif
+            tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
+#ifdef DEBUG_LOAD_REORDER
+         } else {
+            qDebug( QString( "rx_cap search tmp %1 NOT found" ).arg( tmp ) );
+#endif
          }
 
          if ( add_dp )
@@ -888,8 +952,15 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
             tmp = "0." + tmp;
          }
 
+#ifdef DEBUG_LOAD_REORDER
+         qDebug( QString( "tmp is now %1 double is %2" ).arg( tmp ).arg( tmp.toDouble() ) );
+#endif
+
          if ( used.count( tmp ) )
          {
+#ifdef DEBUG_LOAD_REORDER
+            qDebug( QString( "rx_cap used exit <%1>" ).arg( tmp ) );
+#endif
             reorder = false;
             break;
          }
@@ -899,11 +970,15 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
          sval.x     = tmp.toDouble();
          sval.name  = filenames[ i ];
          svals      .push_back( sval );
-         // qDebug( QString( "sort tmp <%1> xval <%2>" ).arg( tmp ).arg( sval.x ) );
+#ifdef DEBUG_LOAD_REORDER
+         qDebug( QString( "sort tmp <%1> xval <%2>" ).arg( tmp ).arg( sval.x ) );
+#endif
       }
       if ( reorder )
       {
-         // qDebug( "reordered" );
+#ifdef DEBUG_LOAD_REORDER
+         qDebug( "reordered" );
+#endif
          svals.sort();
 
          filenames.clear();
@@ -917,12 +992,11 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
       }
    }
 
+   QString errors;
+
    for ( int i = 0; i < (int)filenames.size(); i++ )
    {
-      if ( *saxs_widget )
-      {
-         saxs_window->add_to_directory_history( filenames[ i ] );
-      }
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filenames[ i ] );
 
       QString basename = QFileInfo( filenames[ i ] ).baseName( true );
       if ( !existing_items.count( basename ) )

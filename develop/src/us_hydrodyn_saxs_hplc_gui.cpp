@@ -7,6 +7,7 @@
 #include <QLabel>
 #include <QMouseEvent>
 #include <Q3GridLayout>
+#include <Q3TextStream>
 #include <Q3HBoxLayout>
 #include <Q3VBoxLayout>
 #include <Q3Frame>
@@ -464,6 +465,61 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_show_only_created->setMinimumHeight(minHeight1);
    pb_show_only_created->setPalette( PALET_PUSHB );
    connect(pb_show_only_created, SIGNAL(clicked()), SLOT(show_only_created()));
+
+   // models
+
+   lbl_model_files = new QLabel("Model files", this);
+   lbl_model_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_model_files->setMinimumHeight(minHeight1);
+   lbl_model_files->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_model_files );
+   lbl_model_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   model_widgets.push_back( lbl_model_files );
+
+   lb_model_files = new Q3ListBox(this, "model_files model_files listbox" );
+   lb_model_files->setPalette( PALET_NORMAL );
+   AUTFBACK( lb_model_files );
+   lb_model_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lb_model_files->setEnabled(true);
+   lb_model_files->setSelectionMode( Q3ListBox::Extended );
+   lb_model_files->setMinimumHeight( minHeight1 * 2 );
+   connect( lb_model_files, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
+   model_widgets.push_back( lb_model_files );
+
+   pb_model_select_all = new mQPushButton(tr("Select all"), this);
+   pb_model_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_model_select_all->setMinimumHeight(minHeight1);
+   pb_model_select_all->setPalette( PALET_PUSHB );
+   connect(pb_model_select_all, SIGNAL(clicked()), SLOT(model_select_all()));
+   model_widgets.push_back( pb_model_select_all );
+
+   pb_model_text = new QPushButton(tr("Text"), this);
+   pb_model_text->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_model_text->setMinimumHeight(minHeight1);
+   pb_model_text->setPalette( PALET_PUSHB );
+   connect(pb_model_text, SIGNAL(clicked()), SLOT(model_text()));
+   model_widgets.push_back( pb_model_text );
+
+   pb_model_view = new QPushButton(tr("View"), this);
+   pb_model_view->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_model_view->setMinimumHeight(minHeight1);
+   pb_model_view->setPalette( PALET_PUSHB );
+   connect(pb_model_view, SIGNAL(clicked()), SLOT(model_view()));
+   model_widgets.push_back( pb_model_view );
+
+   pb_model_remove = new QPushButton(tr("Remove"), this);
+   pb_model_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_model_remove->setMinimumHeight(minHeight1);
+   pb_model_remove->setPalette( PALET_PUSHB );
+   connect(pb_model_remove, SIGNAL(clicked()), SLOT(model_remove()));
+   model_widgets.push_back( pb_model_remove );
+
+   pb_model_save = new QPushButton(tr("Save"), this);
+   pb_model_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_model_save->setMinimumHeight(minHeight1);
+   pb_model_save->setPalette( PALET_PUSHB );
+   connect(pb_model_save, SIGNAL(clicked()), SLOT(model_save()));
+   model_widgets.push_back( pb_model_save );
 
    le_dummy = new QLineEdit(this, "le_dummy Line Edit");
    le_dummy->setText( "" );
@@ -1298,6 +1354,330 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect(pb_guinier, SIGNAL(clicked()), SLOT(guinier()));
    pb_guinier->setEnabled( false );
 
+
+   // rgc mode
+
+   pb_rgc = new QPushButton(tr("Rg utility"), this);
+   pb_rgc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_rgc->setMinimumHeight(minHeight1);
+   pb_rgc->setPalette( PALET_PUSHB );
+   connect(pb_rgc, SIGNAL(clicked()), SLOT(rgc()));
+   pb_rgc->setEnabled( true );
+
+   lbl_rgc_mw = new QLabel( tr( "MW [kDalton]" ), this );
+   lbl_rgc_mw->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_rgc_mw->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_rgc_mw );
+   lbl_rgc_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_rgc_mw = new mQLineEdit(this, "le_rgc_mw Line Edit");
+   le_rgc_mw->setText( "" );
+   le_rgc_mw->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_rgc_mw->setPalette( PALET_NORMAL );
+   AUTFBACK( le_rgc_mw );
+   le_rgc_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_rgc_mw->setEnabled( true );
+   le_rgc_mw->setValidator( new QDoubleValidator( le_rgc_mw ) );
+   ((QDoubleValidator *)le_rgc_mw->validator())->setBottom( 1 );
+   connect( le_rgc_mw, SIGNAL( textChanged( const QString & ) ), SLOT( rgc_mw_text( const QString & ) ) );
+
+   lbl_rgc_vol = new QLabel( tr( "Volume [A^3]" ), this );
+   lbl_rgc_vol->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_rgc_vol->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_rgc_vol );
+   lbl_rgc_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_rgc_vol = new mQLineEdit(this, "le_rgc_vol Line Edit");
+   le_rgc_vol->setText( "" );
+   le_rgc_vol->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_rgc_vol->setPalette( PALET_NORMAL );
+   AUTFBACK( le_rgc_vol );
+   le_rgc_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_rgc_vol->setEnabled( true );
+   le_rgc_vol->setValidator( new QDoubleValidator( le_rgc_vol ) );
+   // ((QDoubleValidator *)le_rgc_vol->validator())->setBottom( 1 );
+   connect( le_rgc_vol, SIGNAL( textChanged( const QString & ) ), SLOT( rgc_vol_text( const QString & ) ) );
+
+   lbl_rgc_rho = new QLabel( tr( "Density [g/cm^3]" ), this );
+   lbl_rgc_rho->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_rgc_rho->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_rgc_rho );
+   lbl_rgc_rho->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_rgc_rho = new mQLineEdit(this, "le_rgc_rho Line Edit");
+   le_rgc_rho->setText( "1.4" );
+   le_rgc_rho->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_rgc_rho->setPalette( PALET_NORMAL );
+   AUTFBACK( le_rgc_rho );
+   le_rgc_rho->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_rgc_rho->setEnabled( true );
+   le_rgc_rho->setValidator( new QDoubleValidator( le_rgc_rho ) );
+   ((QDoubleValidator *)le_rgc_rho->validator())->setRange( 1.2, 1.5 );
+   connect( le_rgc_rho, SIGNAL( textChanged( const QString & ) ), SLOT( rgc_rho_text( const QString & ) ) );
+
+   rb_rgc_shape_sphere =  new QRadioButton( tr( "Sphere " ), this );
+   rb_rgc_shape_sphere -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_rgc_shape_sphere );
+   rb_rgc_shape_sphere -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_rgc_shape_sphere, SIGNAL( clicked() ), SLOT( rgc_shape() ) );
+
+   rb_rgc_shape_oblate =  new QRadioButton( tr( "Oblate " ), this );
+   rb_rgc_shape_oblate -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_rgc_shape_oblate );
+   rb_rgc_shape_oblate -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_rgc_shape_oblate, SIGNAL( clicked() ), SLOT( rgc_shape() ) );
+
+   rb_rgc_shape_prolate =  new QRadioButton( tr( "Prolate " ), this );
+   rb_rgc_shape_prolate -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_rgc_shape_prolate );
+   rb_rgc_shape_prolate -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_rgc_shape_prolate, SIGNAL( clicked() ), SLOT( rgc_shape() ) );
+
+   rb_rgc_shape_ellipsoid =  new QRadioButton( tr( "Ellipsoid " ), this );
+   rb_rgc_shape_ellipsoid -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_rgc_shape_ellipsoid );
+   rb_rgc_shape_ellipsoid -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_rgc_shape_ellipsoid, SIGNAL( clicked() ), SLOT( rgc_shape() ) );
+
+   bg_rgc_shape = new QButtonGroup( this );
+   bg_pos = 0;
+   bg_rgc_shape->setExclusive(true);
+   bg_rgc_shape->addButton( rb_rgc_shape_sphere, bg_pos++ );
+   bg_rgc_shape->addButton( rb_rgc_shape_oblate, bg_pos++ );
+   bg_rgc_shape->addButton( rb_rgc_shape_prolate, bg_pos++ );
+   bg_rgc_shape->addButton( rb_rgc_shape_ellipsoid, bg_pos++ );
+   rb_rgc_shape_sphere->setChecked( true );
+
+   lbl_rgc_axis = new QLabel( "", this );
+   lbl_rgc_axis->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_rgc_axis->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_rgc_axis );
+   lbl_rgc_axis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_rgc_axis_b = new mQLineEdit(this, "le_rgc_axis_b Line Edit");
+   le_rgc_axis_b->setText( "1" );
+   le_rgc_axis_b->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_rgc_axis_b->setPalette( PALET_NORMAL );
+   AUTFBACK( le_rgc_axis_b );
+   le_rgc_axis_b->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_rgc_axis_b->setEnabled( true );
+   le_rgc_axis_b->setValidator( new QDoubleValidator( 0.01, 1.0, 3, le_rgc_axis_b ) );
+   connect( le_rgc_axis_b, SIGNAL( textChanged( const QString & ) ), SLOT( rgc_axis_b_text( const QString & ) ) );
+
+   le_rgc_axis_c = new mQLineEdit(this, "le_rgc_axis_c Line Edit");
+   le_rgc_axis_c->setText( "1" );
+   le_rgc_axis_c->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_rgc_axis_c->setPalette( PALET_NORMAL );
+   AUTFBACK( le_rgc_axis_c );
+   le_rgc_axis_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_rgc_axis_c->setEnabled( true );
+   le_rgc_axis_c->setValidator( new QDoubleValidator( 0.01, 1.0, 3, le_rgc_axis_c ) );
+   connect( le_rgc_axis_c, SIGNAL( textChanged( const QString & ) ), SLOT( rgc_axis_c_text( const QString & ) ) );
+
+   lbl_rgc_rg = new QLabel( tr( "Rg [A]:" ), this );
+   lbl_rgc_rg->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_rgc_rg->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_rgc_rg );
+   lbl_rgc_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_rgc_rg = new mQLineEdit(this, "le_rgc_rg Line Edit");
+   le_rgc_rg->setText( "" );
+   le_rgc_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_rgc_rg->setPalette( PALET_NORMAL );
+   AUTFBACK( le_rgc_rg );
+   le_rgc_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_rgc_rg->setEnabled( false );
+   le_rgc_rg->setReadOnly( true );
+   connect( le_rgc_rg, SIGNAL( textChanged( const QString & ) ), SLOT( rgc_rg_text( const QString & ) ) );
+
+   lbl_rgc_extents = new QLabel( tr( "Axial extents [A]:" ), this );
+   lbl_rgc_extents->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_rgc_extents->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_rgc_extents );
+   lbl_rgc_extents->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_rgc_extents = new mQLineEdit(this, "le_rgc_extents Line Edit");
+   le_rgc_extents->setText( "" );
+   le_rgc_extents->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_rgc_extents->setPalette( PALET_NORMAL );
+   AUTFBACK( le_rgc_extents );
+   le_rgc_extents->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_rgc_extents->setEnabled( false );
+   le_rgc_extents->setReadOnly( true );
+
+   // pm mode
+
+   pb_pm = new QPushButton(tr("PM"), this);
+   pb_pm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_pm->setMinimumHeight(minHeight1);
+   pb_pm->setPalette( PALET_PUSHB );
+   connect(pb_pm, SIGNAL(clicked()), SLOT(pm()));
+   pb_pm->setEnabled( false );
+
+   rb_pm_shape_sphere =  new QRadioButton( tr( "Sphere " ), this );
+   rb_pm_shape_sphere -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_pm_shape_sphere );
+   rb_pm_shape_sphere -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_pm_shape_sphere, SIGNAL( clicked() ), SLOT( pm_enables() ) );
+
+   rb_pm_shape_spheroid =  new QRadioButton( tr( "Spheroid " ), this );
+   rb_pm_shape_spheroid -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_pm_shape_spheroid );
+   rb_pm_shape_spheroid -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_pm_shape_spheroid, SIGNAL( clicked() ), SLOT( pm_enables() ) );
+
+   rb_pm_shape_ellipsoid =  new QRadioButton( tr( "Ellipsoid " ), this );
+   rb_pm_shape_ellipsoid -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_pm_shape_ellipsoid );
+   rb_pm_shape_ellipsoid -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_pm_shape_ellipsoid, SIGNAL( clicked() ), SLOT( pm_enables() ) );
+
+   rb_pm_shape_cylinder =  new QRadioButton( tr( "Cylinder " ), this );
+   rb_pm_shape_cylinder -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_pm_shape_cylinder );
+   rb_pm_shape_cylinder -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_pm_shape_cylinder, SIGNAL( clicked() ), SLOT( pm_enables() ) );
+
+   rb_pm_shape_torus =  new QRadioButton( tr( "Torus " ), this );
+   rb_pm_shape_torus -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_pm_shape_torus );
+   rb_pm_shape_torus -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_pm_shape_torus, SIGNAL( clicked() ), SLOT( pm_enables() ) );
+
+   bg_pm_shape = new QButtonGroup( this );
+   bg_pos = 0;
+   bg_pm_shape->setExclusive(true);
+   bg_pm_shape->addButton( rb_pm_shape_sphere, bg_pos++ );
+   bg_pm_shape->addButton( rb_pm_shape_spheroid, bg_pos++ );
+   bg_pm_shape->addButton( rb_pm_shape_ellipsoid, bg_pos++ );
+   bg_pm_shape->addButton( rb_pm_shape_cylinder, bg_pos++ );
+   bg_pm_shape->addButton( rb_pm_shape_torus, bg_pos++ );
+   rb_pm_shape_sphere->setChecked( true );
+
+   cb_pm_sd = new QCheckBox(this);
+   cb_pm_sd->setText(tr("SD "));
+   cb_pm_sd->setChecked( true );
+   cb_pm_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_pm_sd->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_pm_sd );
+   connect( cb_pm_sd, SIGNAL( clicked() ), SLOT( pm_enables() ) );
+   cb_pm_sd->hide();
+
+   cb_pm_q_logbin = new QCheckBox(this);
+   cb_pm_q_logbin->setText(tr("log q bins "));
+   cb_pm_q_logbin->setChecked( false );
+   cb_pm_q_logbin->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_pm_q_logbin->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_pm_q_logbin );
+   connect( cb_pm_q_logbin, SIGNAL( clicked() ), SLOT( pm_enables() ) );
+   cb_pm_q_logbin->hide();
+
+   lbl_pm_q_range = new QLabel( tr( "q range for modeling: " ), this );
+   lbl_pm_q_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_pm_q_range->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_pm_q_range );
+   lbl_pm_q_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_pm_q_start = new mQLineEdit(this, "le_pm_q_start Line Edit");
+   le_pm_q_start->setText( "" );
+   le_pm_q_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_pm_q_start->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pm_q_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_pm_q_start->setEnabled( false );
+   le_pm_q_start->setValidator( new QDoubleValidator( le_pm_q_start ) );
+   connect( le_pm_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( pm_q_start_text( const QString & ) ) );
+   connect( le_pm_q_start, SIGNAL( focussed ( bool ) )             , SLOT( pm_q_start_focus( bool ) ) );
+
+   le_pm_q_end = new mQLineEdit(this, "le_pm_q_end Line Edit");
+   le_pm_q_end->setText( "" );
+   le_pm_q_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_pm_q_end->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_pm_q_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_pm_q_end->setEnabled( false );
+   le_pm_q_end->setValidator( new QDoubleValidator( le_pm_q_end ) );
+   connect( le_pm_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( pm_q_end_text( const QString & ) ) );
+   connect( le_pm_q_end, SIGNAL( focussed ( bool ) )             , SLOT( pm_q_end_focus( bool ) ) );
+
+   pb_pm_q_reset = new QPushButton(tr("Reset q range"), this);
+   pb_pm_q_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_pm_q_reset->setMinimumHeight(minHeight1);
+   pb_pm_q_reset->setPalette( PALET_PUSHB );
+   connect(pb_pm_q_reset, SIGNAL(clicked()), SLOT(pm_q_reset()));
+   pb_pm_q_reset->setEnabled( false );
+
+   lbl_pm_samp_e_dens = new QLabel( tr( "Sample e density [e/A^3] (Tp. Prot: .41-.44, DNA:.59: RNA:.6 Carb:.49)" ), this );
+   lbl_pm_samp_e_dens->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_pm_samp_e_dens->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_pm_samp_e_dens );
+   lbl_pm_samp_e_dens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_pm_samp_e_dens = new QLineEdit(this, "le_pm_samp_e_dens Line Edit");
+   le_pm_samp_e_dens->setText( ".425" );
+   le_pm_samp_e_dens->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_pm_samp_e_dens->setPalette( PALET_NORMAL );
+   AUTFBACK( le_pm_samp_e_dens );
+   le_pm_samp_e_dens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_pm_samp_e_dens->setEnabled( false );
+   le_pm_samp_e_dens->setValidator( new QDoubleValidator( le_pm_samp_e_dens ) );
+   connect( le_pm_samp_e_dens, SIGNAL( textChanged( const QString & ) ), SLOT( pm_samp_e_dens_text( const QString & ) ) );
+
+   lbl_pm_buff_e_dens = new QLabel( tr( "Buffer e density [e/A^3]" ), this );
+   lbl_pm_buff_e_dens->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_pm_buff_e_dens->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_pm_buff_e_dens );
+   lbl_pm_buff_e_dens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   
+   le_pm_buff_e_dens = new QLineEdit(this, "le_pm_buff_e_dens Line Edit");
+   le_pm_buff_e_dens->setText( QString( "%1" ).arg((((US_Hydrodyn *)us_hydrodyn)->saxs_options.water_e_density ) ) );
+   le_pm_buff_e_dens->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_pm_buff_e_dens->setPalette( PALET_NORMAL );
+   AUTFBACK( le_pm_buff_e_dens );
+   le_pm_buff_e_dens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_pm_buff_e_dens->setEnabled( false );
+   le_pm_buff_e_dens->setValidator( new QDoubleValidator( le_pm_buff_e_dens ) );
+   connect( le_pm_buff_e_dens, SIGNAL( textChanged( const QString & ) ), SLOT( pm_buff_e_dens_text( const QString & ) ) );
+
+   lbl_pm_grid_size = new QLabel( tr( "min. bead radius [A]" ), this );
+   lbl_pm_grid_size->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_pm_grid_size->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_pm_grid_size );
+   lbl_pm_grid_size->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   
+   le_pm_grid_size = new QLineEdit(this, "le_pm_grid_size Line Edit");
+   le_pm_grid_size->setText( "4" );
+   le_pm_grid_size->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_pm_grid_size->setPalette( PALET_NORMAL );
+   AUTFBACK( le_pm_grid_size );
+   le_pm_grid_size->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_pm_grid_size->setEnabled( false );
+   le_pm_grid_size->setValidator( new QIntValidator( le_pm_grid_size ) );
+   connect( le_pm_grid_size, SIGNAL( textChanged( const QString & ) ), SLOT( pm_grid_size_text( const QString & ) ) );
+
+   lbl_pm_q_pts = new QLabel( tr( " q points every n-th (1=all)" ), this );
+   lbl_pm_q_pts->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_pm_q_pts->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_pm_q_pts );
+   lbl_pm_q_pts->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   
+   le_pm_q_pts = new QLineEdit(this, "le_pm_q_pts Line Edit");
+   le_pm_q_pts->setText( "1" );
+   le_pm_q_pts->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_pm_q_pts->setPalette( PALET_NORMAL );
+   AUTFBACK( le_pm_q_pts );
+   le_pm_q_pts->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_pm_q_pts->setEnabled( false );
+   le_pm_q_pts->setValidator( new QIntValidator( le_pm_q_pts ) );
+   connect( le_pm_q_pts, SIGNAL( textChanged( const QString & ) ), SLOT( pm_q_pts_text( const QString & ) ) );
+
+   pb_pm_run = new QPushButton(tr("Start"), this);
+   pb_pm_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_pm_run->setMinimumHeight(minHeight1);
+   pb_pm_run->setPalette( PALET_PUSHB );
+   connect(pb_pm_run, SIGNAL(clicked()), SLOT(pm_run()));
+   pb_pm_q_reset->setEnabled( false );
+
+   // bottom
+
    pb_help = new QPushButton(tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_help->setMinimumHeight(minHeight1);
@@ -1409,6 +1789,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
       pb_add->hide();
 
+      pb_rgc->hide();
+      pb_pm->hide();
+
       // pb_conc->hide();
       // pb_normalize->hide();
    }
@@ -1514,6 +1897,19 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    created_files_widgets.push_back ( lbl_created_dir );
    created_files_widgets.push_back ( lbl_selected_created );
 
+   Q3BoxLayout *vbl_model = new Q3VBoxLayout( 0 );
+   vbl_model->addWidget( lbl_model_files );
+   vbl_model->addWidget( lb_model_files );
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( pb_model_select_all );
+      hbl->addWidget( pb_model_text );
+      hbl->addWidget( pb_model_view );
+      hbl->addWidget( pb_model_remove );
+      hbl->addWidget( pb_model_save );
+      vbl_model->addLayout( hbl );
+   }      
+
    Q3GridLayout *gl_files = new Q3GridLayout( 0 );
    {
       unsigned int j = 0;
@@ -1538,6 +1934,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       gl_files->addWidget( lbl_selected_created, j, 0 ); j++;
       gl_files->addLayout( hbl_created , j, 0 ); j++;
       gl_files->addLayout( hbl_created_2, j, 0 ); j++;
+      gl_files->addLayout( vbl_model , j, 0 ); j++;
       gl_files->addLayout( vbl_editor_group , j, 0 ); j++;
    }
 
@@ -1579,7 +1976,11 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_mode->addWidget( pb_baseline_apply );
    hbl_mode->addWidget( pb_wheel_start );
    hbl_mode->addWidget( pb_scale );
+   hbl_mode->addWidget( pb_rgc );
+   hbl_mode->addWidget( pb_pm );
    hbl_mode->addWidget( pb_guinier );
+
+   // scale
 
    Q3BoxLayout *vbl_scale = new Q3VBoxLayout( 0 );
    {
@@ -1602,6 +2003,80 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( pb_scale_apply );
       hbl->addWidget( pb_scale_create );
       vbl_scale->addLayout( hbl );
+   }      
+
+   // pm
+   Q3BoxLayout *vbl_pm = new Q3VBoxLayout( 0 );
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( lbl_pm_q_range );
+      hbl->addWidget( le_pm_q_start );
+      hbl->addWidget( le_pm_q_end );
+      hbl->addWidget( pb_pm_q_reset );
+      vbl_pm->addLayout( hbl );
+   }      
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( rb_pm_shape_sphere );
+      hbl->addWidget( rb_pm_shape_spheroid );
+      hbl->addWidget( rb_pm_shape_ellipsoid );
+      hbl->addWidget( rb_pm_shape_cylinder );
+      hbl->addWidget( rb_pm_shape_torus );
+      vbl_pm->addLayout( hbl );
+   }
+
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( cb_pm_sd );
+      hbl->addWidget( cb_pm_q_logbin );
+      hbl->addWidget( lbl_pm_q_pts );
+      hbl->addWidget( le_pm_q_pts );
+      hbl->addWidget( lbl_pm_grid_size );
+      hbl->addWidget( le_pm_grid_size );
+      vbl_pm->addLayout( hbl );
+   }      
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( lbl_pm_samp_e_dens );
+      hbl->addWidget( le_pm_samp_e_dens );
+      hbl->addWidget( lbl_pm_buff_e_dens );
+      hbl->addWidget( le_pm_buff_e_dens );
+      hbl->addWidget( pb_pm_run );
+      vbl_pm->addLayout( hbl );
+   }      
+
+   // rgc
+   Q3BoxLayout *vbl_rgc = new Q3VBoxLayout( 0 );
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( lbl_rgc_mw );
+      hbl->addWidget( le_rgc_mw );
+      hbl->addWidget( lbl_rgc_vol );
+      hbl->addWidget( le_rgc_vol );
+      hbl->addWidget( lbl_rgc_rho );
+      hbl->addWidget( le_rgc_rho );
+      vbl_rgc->addLayout( hbl );
+   }      
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      
+      hbl->addWidget( rb_rgc_shape_sphere );
+      hbl->addWidget( rb_rgc_shape_oblate );
+      hbl->addWidget( rb_rgc_shape_prolate );
+      hbl->addWidget( rb_rgc_shape_ellipsoid );
+      hbl->addWidget( lbl_rgc_axis );
+      hbl->addWidget( le_rgc_axis_b );
+      hbl->addWidget( le_rgc_axis_c );
+      vbl_rgc->addLayout( hbl );
+   }      
+
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( lbl_rgc_rg );
+      hbl->addWidget( le_rgc_rg );
+      hbl->addWidget( lbl_rgc_extents );
+      hbl->addWidget( le_rgc_extents );
+      vbl_rgc->addLayout( hbl );
    }      
 
    Q3GridLayout *gl_gauss = new Q3GridLayout(0);
@@ -1660,11 +2135,15 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addLayout ( hbl_top );
    vbl_plot_group->addLayout ( hbl_mode );
    vbl_plot_group->addLayout ( vbl_scale );
+   vbl_plot_group->addLayout ( vbl_rgc );
+   vbl_plot_group->addLayout ( vbl_pm );
    vbl_plot_group->addLayout ( gl_gauss );
    // vbl_plot_group->addLayout ( hbl_gauss2 );
    vbl_plot_group->addLayout ( gl_gauss2  );
    vbl_plot_group->addLayout ( hbl_baseline );
+
    vbl_plot_group->addWidget ( le_dummy );
+
    vbl_plot_group->addLayout ( hbl_plot_buttons );
 
 //    QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
@@ -1707,7 +2186,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
 {
    // plot_widgets;
 
-#ifndef QT4
+#ifndef qt4
    plot_widgets.push_back( le_dummy );
 #endif
    plot_widgets.push_back( pb_select_vis );
@@ -1826,6 +2305,50 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    // timeshift_widgets.push_back( pb_legend );
    timeshift_widgets.push_back( le_dummy );
 
+   // rgc_widgets;
+   rgc_widgets.push_back( lbl_rgc_mw );
+   rgc_widgets.push_back( le_rgc_mw );
+   rgc_widgets.push_back( lbl_rgc_vol );
+   rgc_widgets.push_back( le_rgc_vol );
+   rgc_widgets.push_back( lbl_rgc_rho );
+   rgc_widgets.push_back( le_rgc_rho );
+   rgc_widgets.push_back( rb_rgc_shape_sphere );
+   rgc_widgets.push_back( rb_rgc_shape_oblate );
+   rgc_widgets.push_back( rb_rgc_shape_prolate );
+   rgc_widgets.push_back( rb_rgc_shape_ellipsoid );
+   rgc_widgets.push_back( lbl_rgc_axis );
+   rgc_widgets.push_back( le_rgc_axis_b );
+   rgc_widgets.push_back( le_rgc_axis_c );
+   rgc_widgets.push_back( lbl_rgc_rg );
+   rgc_widgets.push_back( le_rgc_rg );
+   rgc_widgets.push_back( lbl_rgc_extents );
+   rgc_widgets.push_back( le_rgc_extents );
+
+   // pm_widgets;
+   pm_widgets.push_back( rb_pm_shape_sphere );
+   pm_widgets.push_back( rb_pm_shape_spheroid );
+   pm_widgets.push_back( rb_pm_shape_ellipsoid );
+   pm_widgets.push_back( rb_pm_shape_cylinder );
+   pm_widgets.push_back( rb_pm_shape_torus );
+   pm_widgets.push_back( cb_pm_sd );
+   pm_widgets.push_back( cb_pm_q_logbin );
+   pm_widgets.push_back( lbl_pm_q_range );
+   pm_widgets.push_back( le_pm_q_start );
+   pm_widgets.push_back( le_pm_q_end );
+   pm_widgets.push_back( pb_pm_q_reset );
+   pm_widgets.push_back( lbl_pm_samp_e_dens );
+   pm_widgets.push_back( le_pm_samp_e_dens );
+   pm_widgets.push_back( lbl_pm_buff_e_dens );
+   pm_widgets.push_back( le_pm_buff_e_dens );
+   pm_widgets.push_back( lbl_pm_q_pts );
+   pm_widgets.push_back( le_pm_q_pts );
+   pm_widgets.push_back( lbl_pm_grid_size );
+   pm_widgets.push_back( le_pm_grid_size );
+   pm_widgets.push_back( pb_pm_run );
+   pm_widgets.push_back( lbl_blank1 );
+   pm_widgets.push_back( qwtw_wheel );
+   pm_widgets.push_back( lbl_wheel_pos );
+   pm_widgets.push_back( le_dummy );
 }   
 
 void US_Hydrodyn_Saxs_Hplc::mode_select()
@@ -1842,6 +2365,8 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
    ShowHide::hide_widgets( baseline_widgets );
    ShowHide::hide_widgets( scale_widgets );
    ShowHide::hide_widgets( timeshift_widgets );
+   ShowHide::hide_widgets( rgc_widgets );
+   ShowHide::hide_widgets( pm_widgets );
 
    switch ( current_mode )
    {
@@ -1873,8 +2398,10 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
       break;
 
    case MODE_BASELINE  : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets  , false ); break;
-   case MODE_TIMESHIFT : mode_title( pb_wheel_start->text() ); ShowHide::hide_widgets( timeshift_widgets  , false );break;
-   case MODE_SCALE     : mode_title( pb_scale->text() ); ShowHide::hide_widgets( scale_widgets     , false ); break;
+   case MODE_TIMESHIFT : mode_title( pb_wheel_start->text() );    ShowHide::hide_widgets( timeshift_widgets , false ); break;
+   case MODE_SCALE     : mode_title( pb_scale->text() );          ShowHide::hide_widgets( scale_widgets     , false ); break;
+   case MODE_RGC       : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets       , false ); break;
+   case MODE_PM        : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets        , false ); break;
    default : qDebug( "mode select error" ); break;
    }
    // plot_dist->resize( cur_size );
@@ -1902,7 +2429,14 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
 {
    if ( running )
    {
-      cout << "update_enables return (running)\n";
+      if ( current_mode == MODE_PM )
+      {
+         model_enables();
+         pm_enables();
+         qDebug( "model_enables in update_enables (running)\n" );
+      } else {
+         qDebug( "update_enables return (running)\n" );
+      }
       return;
    }
    // cout << "update_enables\n";
@@ -2089,6 +2623,8 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_axis_y           ->setEnabled( lb_files->numRows() );
 
    pb_scale            ->setEnabled( files_selected_count > 1 && files_compatible );
+   pb_rgc              ->setEnabled( true );
+   pb_pm               ->setEnabled( files_selected_count == 1 && files_compatible && !files_are_time );
 
    // cb_guinier          ->setEnabled( files_selected_count );
    legend_set();
@@ -2163,6 +2699,37 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
          plot_dist->setAxisTitle(QwtPlot::yLeft, title );
       }
    }
+   model_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::model_enables()
+{
+   if ( lb_model_files->count() )
+   {
+      ShowHide::hide_widgets( model_widgets, false );
+      pb_model_select_all->setEnabled( true );
+      lb_model_files     ->setEnabled( true );
+      bool any_model_selected           = false;
+      bool any_model_selected_not_saved = false;
+      for ( int i = 0; i < (int) lb_model_files->count(); ++i )
+      {
+         if ( lb_model_files->isSelected( i ) )
+         {
+            any_model_selected = true;
+            if ( models_not_saved.count( lb_model_files->text( i ) ) )
+            {
+               any_model_selected_not_saved = true;
+               break;
+            }
+         }
+      }
+      pb_model_text  ->setEnabled( any_model_selected );
+      pb_model_view  ->setEnabled( any_model_selected );
+      pb_model_remove->setEnabled( any_model_selected );
+      pb_model_save  ->setEnabled( any_model_selected_not_saved );
+   } else {
+      ShowHide::hide_widgets( model_widgets, true );
+   }      
 }
 
 void US_Hydrodyn_Saxs_Hplc::disable_all()
@@ -2281,4 +2848,408 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_options            ->setEnabled( false );
 
    pb_scale              ->setEnabled( false );
+   pb_rgc                ->setEnabled( false );
+   pb_pm                 ->setEnabled( false );
+
+   le_pm_q_start         ->setEnabled( false );
+   le_pm_q_end           ->setEnabled( false );
+   le_pm_q_pts           ->setEnabled( false );
+   le_pm_grid_size       ->setEnabled( false );
+   le_pm_samp_e_dens     ->setEnabled( false );
+   le_pm_buff_e_dens     ->setEnabled( false );
+   pb_pm_q_reset         ->setEnabled( false );
+
+   lb_model_files        ->setEnabled( false );
+   pb_model_select_all   ->setEnabled( false );
+   pb_model_save         ->setEnabled( false );
+   pb_model_text         ->setEnabled( false );
+   pb_model_view         ->setEnabled( false );
+   pb_model_remove       ->setEnabled( false );
+}
+
+void US_Hydrodyn_Saxs_Hplc::model_select_all()
+{
+   bool all_selected = true;
+   for ( int i = 0; i < lb_model_files->numRows(); i++ )
+   {
+      if ( !lb_model_files->isSelected( i ) )
+      {
+         all_selected = false;
+         break;
+      }
+   }
+
+   disable_updates = true;
+   for ( int i = 0; i < lb_model_files->numRows(); i++ )
+   {
+      lb_model_files->setSelected( i, !all_selected );
+   }
+   disable_updates = false;
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::model_save()
+{
+   disable_all();
+   model_save( MQT::get_lb_qsl( lb_model_files, true ) );
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::model_text()
+{
+   disable_all();
+   model_text( MQT::get_lb_qsl( lb_model_files, true ) );
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::model_view()
+{
+   disable_all();
+   model_view( MQT::get_lb_qsl( lb_model_files, true ) );
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::model_remove()
+{
+   disable_all();
+   model_remove( MQT::get_lb_qsl( lb_model_files, true ) );
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::model_remove( QStringList files )
+{
+   disable_updates = true;
+
+   QStringList           model_not_saved_list;
+   map < QString, bool > model_not_saved_map;
+   map < QString, bool > selected_map;
+
+   for ( int i = 0; i < (int)files.size(); i++ )
+   {
+      QString this_file = files[ i ];
+      selected_map[ this_file ] = true;
+      if ( models_not_saved.count( this_file ) )
+      {
+         model_not_saved_list << this_file;
+         model_not_saved_map[ this_file ] = true;
+      }
+   }
+
+   if ( model_not_saved_list.size() )
+   {
+      QStringList qsl;
+      for ( int i = 0; i < (int)model_not_saved_list.size() && i < 15; i++ )
+      {
+         qsl << model_not_saved_list[ i ];
+      }
+
+      if ( qsl.size() < model_not_saved_list.size() )
+      {
+         qsl << QString( tr( "... and %1 more not listed" ) ).arg( model_not_saved_list.size() - qsl.size() );
+      }
+
+      switch ( QMessageBox::warning(this, 
+                                    caption() + tr( " Remove Models" ),
+                                    QString( tr( "Please note:\n\n"
+                                                 "These models were created but not saved as .bead_model files:\n"
+                                                 "%1\n\n"
+                                                 "What would you like to do?\n" ) )
+                                    .arg( qsl.join( "\n" ) ),
+                                    tr( "&Save them now" ), 
+                                    tr( "&Remove them anyway" ), 
+                                    tr( "&Quit from removing files" ), 
+                                    0, // Stop == button 0
+                                    0 // Escape == button 0
+                                    ) )
+      {
+      case 0 : // save them now
+         // set the ones listed to selected
+         if ( !model_save( model_not_saved_list ) )
+         {
+            return;
+         }
+      case 1 : // just remove them
+         break;
+      case 2 : // quit
+         disable_updates = false;
+         return;
+         break;
+      }
+   }
+
+   // remove them now
+   for ( int i = lb_model_files->numRows(); i >= 0; i-- )
+   {
+      if ( selected_map.count( lb_model_files->text( i ) ) )
+      {
+         models_not_saved.erase( lb_model_files->text( i ) );
+         lb_model_files->removeItem( i );
+      }
+   }
+
+   for ( int i = lb_model_files->numRows() - 1; i >= 0; i-- )
+   {
+      if ( selected_map.count( lb_model_files->text( i ) ) )
+      {
+         editor_msg( "black", QString( tr( "Removed model %1" ) ).arg( lb_model_files->text( i ) ) );
+         models.erase( lb_model_files->text( i ) );
+         lb_model_files->removeItem( i );
+      }
+   }
+
+   update_enables();
+
+}
+
+void US_Hydrodyn_Saxs_Hplc::model_view( QStringList files )
+{
+   // run rasmol on models
+
+   QString tmpd = USglobal->config_list.root_dir + "/somo/saxs/tmp";
+   QDir dir( tmpd );
+   if (!dir.exists())
+   {
+      if ( dir.mkdir( tmpd ) )
+      {
+         editor_msg( "red", QString( tr( "Error: could not create temporary directory %1" ) ).arg( tmpd ) );
+         return;
+      }
+   }
+
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      int bead_count;
+      QStringList qsl0 = QStringList::split( "\n", models[ files[ i ] ] );
+
+      if ( qsl0.size() < 1 )
+      {
+         editor_msg( "red", QString( tr( "Error: insufficient model info for file %1 [a]" ) ).arg( files[ i ] ) );
+         return;
+      }
+         
+      {
+         QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qsl0[ 0 ] );
+         if ( qsl.size() < 1 )
+         {
+            editor_msg( "red", QString( tr( "Error: insufficient model info for file %1 [b]" ) ).arg( files[ i ] ) );
+            return;
+         }
+         bead_count = qsl[ 0 ].toDouble();
+      }
+
+      QString bms;
+      QString spt;
+
+      double scale = 5e0;
+      int linepos    = 0;
+
+      bms += 
+         QString( "%1\n%2\n" ).arg( bead_count ).arg( files[ i ] );
+
+      spt += 
+         QString( "load xyz %1.bms\nselect all\nwireframe off\nset background white\n" ).arg( files[ i ] );
+         
+      for ( int j = 1; j < (int) qsl0.size() && linepos < bead_count; ++j )
+      {
+         bms += "Pb ";
+
+         QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qsl0[ j ] );
+
+         if ( qsl.size() < 4 )
+         {
+            editor_msg( "red", QString( tr( "Error: insufficient model info for file %1 line %2 [c]" ) ).arg( files[ i ] ).arg( linepos ) );
+            return;
+         }
+
+         for ( int i = 0; i < 3; i++ )
+         {
+            bms += QString( " %1" ).arg( qsl[ i ].toDouble() / scale );
+            if ( !linepos )
+            {
+               bms += QString( " %1" ).arg( qsl[ i ].toDouble() / scale );
+            }
+         }
+         bms += "\n";
+
+         ++linepos;
+         spt += QString( "select atomno=%1\nspacefill %2\ncolour redorange\n" )
+            .arg( linepos )
+            .arg( qsl[ 3 ].toDouble() / scale );
+      }         
+
+      {
+         QFile f( tmpd + "/" + files[ i ] + ".spt" );
+         if ( !f.open( QIODevice::WriteOnly ) )
+         {
+            editor_msg( "red", QString( tr( "Error: could not create output file %1" ) ).arg( f.name() ) );
+            return;
+         }
+         Q3TextStream ts( &f );
+         ts << spt;
+         f.close();
+      }
+      {
+         QFile f( tmpd + "/" + files[ i ] + ".bms" );
+         if ( !f.open( QIODevice::WriteOnly ) )
+         {
+            editor_msg( "red", QString( tr( "Error: could not create output file %1" ) ).arg( f.name() ) );
+            return;
+         }
+         Q3TextStream ts( &f );
+         ts << bms;
+         f.close();
+      }
+
+      {
+         QStringList argument;
+#if !defined(WIN32) && !defined(MAC)
+         // maybe we should make this a user defined terminal window?
+         argument.append("xterm");
+         argument.append("-e");
+#endif
+#if defined(BIN64)
+         argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
+#else
+         argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
+#endif
+         argument.append("-script");
+         argument.append( files[ i ] + ".spt" ); 
+         
+         Q3Process * rasmol = new Q3Process;
+         rasmol->setWorkingDirectory( tmpd );
+
+         rasmol->setArguments(argument);
+         if (!rasmol->start())
+         {
+            editor_msg( "red", tr("There was a problem starting RASMOL: check to make sure RASMOL is properly installed" ) );
+            return;
+         }
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::model_text( QStringList files )
+{
+   
+   QString tmpd = USglobal->config_list.root_dir + "/somo/saxs/tmp";
+   QDir dir( tmpd );
+   if (!dir.exists())
+   {
+      if ( dir.mkdir( tmpd ) )
+      {
+         editor_msg( "red", QString( tr( "Error: could not create temporary directory %1" ) ).arg( tmpd ) );
+         return;
+      }
+   }
+
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      QString file = files[ i ] + ".bead_model";
+      QFile f( tmpd + "/" + file );
+      if ( !f.open( QIODevice::WriteOnly ) )
+      {
+         editor_msg( "red", QString( tr( "Error: could not create output file %1" ) ).arg( f.name() ) );
+         return;
+      }
+      Q3TextStream ts( &f );
+      ts << models[ files[ i ] ];
+      f.close();
+
+      TextEdit *edit;
+      edit = new TextEdit( this, f.name() );
+      edit->setFont    ( QFont( "Courier" ) );
+      edit->setPalette ( PALET_NORMAL );
+      AUTFBACK( edit );
+      edit->setGeometry( global_Xpos + 30, global_Ypos + 30, 685, 600 );
+      edit->load( f.name() );
+      edit->show();
+   }
+}
+
+bool US_Hydrodyn_Saxs_Hplc::model_save( QStringList files )
+{
+   bool errors = false;
+   bool overwrite_all = false;
+   bool cancel        = false;
+   for ( int i = 0; i < (int)files.size(); ++i )
+   {
+      if ( !model_save( files[ i ], cancel, overwrite_all ) )
+      {
+         errors = true;
+      }
+      if ( cancel )
+      {
+         editor_msg( "red", tr( "save cancelled" ) );
+         return false;
+         break;
+      }
+   }
+   return !errors;
+}
+
+bool US_Hydrodyn_Saxs_Hplc::model_save( QString file, bool & cancel, bool & overwrite_all )
+{
+   if ( !models.count( file ) )
+   {
+      editor_msg( "red", QString( tr( "Error: no data found for %1" ) ).arg( file ) );
+      return false;
+   } 
+
+   {
+      QDir dir1( lbl_created_dir->text() );
+      if ( !dir1.exists() )
+      {
+         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         {
+            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+         } else {
+            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            return false;
+         }
+      }
+   }         
+
+   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   {
+      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      return false;
+   }
+
+   QString use_filename;
+   if ( f_name.count( file ) && !f_name[ file ].isEmpty() )
+   {
+      use_filename = QFileInfo( f_name[ file ] ).fileName();
+   } else {
+      use_filename = file + ".bead_model";
+   }
+
+   if ( !overwrite_all && QFile::exists( use_filename ) )
+   {
+      use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck2( use_filename, cancel, overwrite_all, 0, this );
+      raise();
+      if ( cancel )
+      {
+         return false;
+      }
+   }
+
+   QFile f( use_filename );
+   if ( !f.open( QIODevice::WriteOnly ) )
+   {
+      editor_msg( "red", QString( tr( "Error: can not open %1 in directory %2 for writing" ) )
+                  .arg( use_filename )
+                  .arg( QDir::current().canonicalPath() )
+                  );
+      return false;
+   }
+
+   Q3TextStream ts( &f );
+
+   ts << models[ file ];
+   f.close();
+   editor_msg( "black", QString( tr( "%1 written as %2" ) )
+               .arg( file )
+               .arg( use_filename ) );
+   models_not_saved.erase( file );
+   return true;
 }

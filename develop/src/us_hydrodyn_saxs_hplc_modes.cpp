@@ -1,5 +1,521 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
+#include "../include/us_pm.h"
+
+// --- PM ----
+
+void US_Hydrodyn_Saxs_Hplc::pm()
+{
+   le_last_focus = (mQLineEdit *) 0;
+
+   bool any_selected = false;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         if ( !any_selected )
+         {
+            wheel_file = lb_files->text( i );
+            any_selected = true;
+            break;
+         }
+      }
+   }
+
+   if ( !any_selected )
+   {
+      editor_msg( "red", tr( "Internal error: no files selected in pm mode" ) );
+      return;
+   }
+
+   if ( !f_qs.count( wheel_file ) )
+   {
+      editor_msg( "red", QString( tr( "Internal error: %1 not found in data" ) ).arg( wheel_file ) );
+      return;
+   }
+
+   if ( f_qs[ wheel_file ].size() < 2 )
+   {
+      editor_msg( "red", QString( tr( "Internal error: %1 almost empty data" ) ).arg( wheel_file ) );
+      return;
+   }
+
+   if ( !f_Is.count( wheel_file ) )
+   {
+      editor_msg( "red", QString( tr( "Internal error: %1 not found in y data" ) ).arg( wheel_file ) );
+      return;
+   }
+
+   if ( !f_Is[ wheel_file ].size() )
+   {
+      editor_msg( "red", QString( tr( "Internal error: %1 empty y data" ) ).arg( wheel_file ) );
+      return;
+   }
+
+   if ( le_pm_q_start->text().isEmpty() ||
+        le_pm_q_start->text() == "0" ||
+        le_pm_q_start->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
+   {
+      disconnect( le_pm_q_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_pm_q_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] ) );
+      connect( le_pm_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( pm_q_start_text( const QString & ) ) );
+   }
+
+   if ( le_pm_q_end->text().isEmpty() ||
+        le_pm_q_end->text() == "0" ||
+        le_pm_q_end->text().toDouble() > f_qs[ wheel_file ].back() )
+   {
+      disconnect( le_pm_q_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_pm_q_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+      connect( le_pm_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( pm_q_end_text( const QString & ) ) );
+   }
+
+   disable_all();
+   mode_select( MODE_PM );
+   pb_rescale     ->setEnabled( true );
+   pb_axis_x      ->setEnabled( true );
+   pb_axis_y      ->setEnabled( true );
+
+   if ( f_errors.count( wheel_file ) && f_errors[ wheel_file ].size() == f_qs[ wheel_file ].size() )
+   {
+      cb_pm_sd->setChecked( true );
+      cb_pm_sd->show();
+   } else {
+      cb_pm_sd->setChecked( false );
+      cb_pm_sd->hide();
+   }
+   cb_pm_q_logbin->hide();
+
+   running       = true;
+
+   pm_enables();
+
+   plotted_markers.clear();
+   gauss_add_marker( le_pm_q_start  ->text().toDouble(), Qt::red, tr( "Start" ) );
+   gauss_add_marker( le_pm_q_end    ->text().toDouble(), Qt::red, tr( "End"   ) );
+   plot_dist->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc::pm_enables()
+{
+   bool shapes_selected = false;
+#ifdef QT4
+   for ( int i = 0; i < (int) bg_pm_shape->buttons().size(); ++i )
+   {
+      if ( ((QRadioButton *)bg_pm_shape->buttons()[ i ]->isChecked() ) )
+      {
+         shapes_selected = true;
+      }
+   }
+#else
+   for ( int i = 0; i < (int) bg_pm_shape->count(); ++i )
+   {
+      if ( ((QRadioButton *)bg_pm_shape->find( i ))->isChecked() )
+      {
+         shapes_selected = true;
+      }
+   }
+#endif
+   pb_wheel_start        ->setEnabled( false );
+   pb_wheel_cancel       ->setEnabled( true );
+   le_pm_q_start         ->setEnabled( true );
+   le_pm_q_end           ->setEnabled( true );
+   le_pm_q_pts           ->setEnabled( true );
+   le_pm_grid_size       ->setEnabled( true );
+   le_pm_samp_e_dens     ->setEnabled( true );
+   le_pm_buff_e_dens     ->setEnabled( true );
+   pb_pm_q_reset         ->setEnabled( true );
+   pb_pm_run             ->setEnabled( shapes_selected );
+
+   model_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::pm_run()
+{
+   disable_all();
+   qApp->processEvents();
+
+   map < QString, QString > run_params;
+   map < QString, vector < double > > run_vectors;
+
+   vector < double > use_q;
+   vector < double > use_I;
+   vector < double > use_e;
+
+   double q_min = le_pm_q_start->text().toDouble();
+   double q_max = le_pm_q_end  ->text().toDouble();
+
+   int pts     = le_pm_q_pts->text().toInt();
+
+   int pts_cnt = 0;
+
+   qDebug( "pm_run 0" );
+   if ( cb_pm_sd->isChecked() )
+   {
+      for ( int i = 0; i < (int) f_qs[ wheel_file ].size(); ++i )
+      {
+         if ( f_qs[ wheel_file ][ i ] >= q_min &&
+              f_qs[ wheel_file ][ i ] <= q_max )
+         {
+            if ( !(pts_cnt++ % pts ) )
+            {
+               use_q.push_back( f_qs    [ wheel_file ][ i ] );
+               use_I.push_back( f_Is    [ wheel_file ][ i ] );
+               use_e.push_back( f_errors[ wheel_file ][ i ] );
+            }
+         }
+      }
+   } else {
+      for ( int i = 0; i < (int) f_qs[ wheel_file ].size(); ++i )
+      {
+         if ( f_qs[ wheel_file ][ i ] >= q_min &&
+              f_qs[ wheel_file ][ i ] <= q_max )
+         {
+            if ( !(pts_cnt++ % pts ) )
+            {
+               use_q.push_back( f_qs[ wheel_file ][ i ] );
+               use_I.push_back( f_Is[ wheel_file ][ i ] );
+            }
+         }
+      }
+   }      
+
+   if ( !use_q.size() )
+   {
+      editor_msg( "red", tr( "PM: no points left in curve" ) );
+      pm_enables();
+      return;
+   }
+
+   qDebug( "pm_run 1" );
+   editor_msg( "blue", QString( tr( "PM: actual q points used %1 q range [%2:%3]" ) ).arg( use_q.size() ).arg( use_q[ 0 ] ).arg( use_q.back() ) );
+
+   run_params[ "pmgridsize"           ] = le_pm_grid_size  ->text();
+   run_params[ "pminq"                ] = le_pm_q_start    ->text();
+   run_params[ "pmaxq"                ] = le_pm_q_end      ->text();
+
+   run_params[ "pmbufferedensity"     ] = le_pm_buff_e_dens->text();
+   run_params[ "pmrayleighdrho"       ] = le_pm_samp_e_dens->text();
+   
+   run_params[ "pmapproxmaxdimension" ] = "10"; // ?
+
+   run_params[ "pmoutname"            ] = wheel_file + "_pm";
+   
+   qDebug( "pm_run 2" );
+
+   if ( rb_pm_shape_sphere->isChecked() )
+   {
+      run_vectors[ "pmtypes" ].push_back( US_PM::SPHERE );
+   }
+   if ( rb_pm_shape_spheroid->isChecked() )
+   {
+      run_vectors[ "pmtypes" ].push_back( US_PM::SPHEROID );
+   }
+   if ( rb_pm_shape_ellipsoid->isChecked() )
+   {
+      run_vectors[ "pmtypes" ].push_back( US_PM::ELLIPSOID );
+   }
+   if ( rb_pm_shape_cylinder->isChecked() )
+   {
+      run_vectors[ "pmtypes" ].push_back( US_PM::CYLINDER );
+   }
+   if ( rb_pm_shape_torus->isChecked() )
+   {
+      run_vectors[ "pmtypes" ].push_back( US_PM::TORUS );
+   }
+   
+   run_vectors[ "pmq" ] = use_q;
+   run_vectors[ "pmi" ] = use_I;
+   if ( cb_pm_sd->isChecked() )
+   {
+      run_vectors[ "pme" ] = use_e;
+   }
+
+   //   run_params[ "pmbestmd0" ] = "";
+   run_params[ "pmbestga" ] = "";
+
+   qDebug( "pm_run 3" );
+   US_Saxs_Util usu;
+   map < QString, vector < double > > produced_q;
+   map < QString, vector < double > > produced_I;
+   map < QString, QString >           produced_model;
+   if ( !usu.run_pm( 
+                    produced_q, 
+                    produced_I,
+                    produced_model,
+                    run_params, 
+                    run_vectors
+                     ) )
+   {
+      editor_msg( "red", usu.errormsg );
+   }
+   qDebug( "pm_run 4" );
+   for ( map < QString, vector < double > >::iterator it = produced_q.begin();
+         it != produced_q.end();
+         ++it )
+   {
+      add_plot( it->first, it->second, produced_I[ it->first ], false, false );
+      lb_model_files->insertItem( last_created_file );
+      models[ last_created_file ] = produced_model[ it->first ];
+      models_not_saved.insert( last_created_file );
+   }
+   qDebug( "pm_run 5" );
+   pm_enables();
+   // add to produced
+}
+
+void US_Hydrodyn_Saxs_Hplc::pm_q_reset()
+{
+   le_pm_q_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ]   ) );
+   le_pm_q_end  ->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+}
+
+void US_Hydrodyn_Saxs_Hplc::pm_grid_size_text( const QString & )
+{
+}
+
+void US_Hydrodyn_Saxs_Hplc::pm_buff_e_dens_text( const QString & )
+{
+}
+
+void US_Hydrodyn_Saxs_Hplc::pm_samp_e_dens_text( const QString & )
+{
+}
+
+void US_Hydrodyn_Saxs_Hplc::pm_q_pts_text( const QString & )
+{
+}
+
+void US_Hydrodyn_Saxs_Hplc::pm_q_start_text( const QString & text )
+{
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
+#else
+   plotted_markers[ 0 ]->setXValue( text.toDouble() );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   plot_dist->replot();
+   pm_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::pm_q_end_text( const QString & text )
+{
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
+#else
+   plotted_markers[ 1 ]->setXValue( text.toDouble() );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   plot_dist->replot();
+   pm_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::pm_q_start_focus( bool hasFocus )
+{
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(), 
+                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_pm_q_start->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::pm_q_end_focus( bool hasFocus )
+{
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(), 
+                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_pm_q_end->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+// --- RGC ---
+
+void US_Hydrodyn_Saxs_Hplc::rgc()
+{
+
+   disable_all();
+   mode_select( MODE_RGC );
+   running       = true;
+   rgc_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::rgc_enables()
+{
+   pb_rgc                ->setEnabled( false );
+   pb_wheel_cancel       ->setEnabled( true );
+
+   if ( rb_rgc_shape_ellipsoid->isChecked() )
+   {
+      le_rgc_axis_b->show();
+      le_rgc_axis_c->show();
+   } else {
+      if ( rb_rgc_shape_oblate->isChecked() ||
+           rb_rgc_shape_prolate->isChecked() )
+      {
+         le_rgc_axis_b->show();
+         le_rgc_axis_c->hide();
+      } else {
+         le_rgc_axis_b->hide();
+         le_rgc_axis_c->hide();
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::rgc_shape()
+{
+   if ( rb_rgc_shape_ellipsoid->isChecked() )
+   {
+      lbl_rgc_axis->setText( tr( " Relative axes 1 > b > c:" ) );
+   } else {
+      if ( rb_rgc_shape_oblate->isChecked() ||
+           rb_rgc_shape_prolate->isChecked() )
+      {
+         lbl_rgc_axis->setText( tr( " Relative axis 1 > b:" ) );
+      } else {
+         lbl_rgc_axis->setText( "" );
+      }
+   }
+   rgc_enables();
+   rgc_calc_rg();
+}
+
+void US_Hydrodyn_Saxs_Hplc::rgc_calc_rg()
+{
+   
+   double V = 0e0;
+   double rho = le_rgc_rho->text().toDouble();
+   if ( rho )
+   {
+      V = ( 1e3 * le_rgc_mw->text().toDouble() / AVOGADRO ) / rho;
+   }
+   // qDebug( QString( "volume %1" ).arg( V ) );
+
+   double abc4o3pi = M_PI * 4e0 / 3e0;
+
+   if ( rb_rgc_shape_ellipsoid->isChecked() )
+   {
+      abc4o3pi *= le_rgc_axis_b->text().toDouble() * le_rgc_axis_c->text().toDouble();
+   } else {
+      if ( rb_rgc_shape_oblate->isChecked() )
+      {
+         abc4o3pi *= le_rgc_axis_b->text().toDouble();
+      } else {
+         if ( rb_rgc_shape_prolate->isChecked() )
+         {
+            abc4o3pi *= le_rgc_axis_b->text().toDouble() * le_rgc_axis_b->text().toDouble();
+         } 
+      }
+   }
+
+   double extent_a = 0e0;
+   if ( abc4o3pi )
+   {
+      extent_a = pow( V / abc4o3pi, (1e0/3e0) );
+   }
+
+   disconnect( le_rgc_vol, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   le_rgc_vol->setText( QString( "%1" ).arg( V * 1e8 * 1e8 * 1e8 ) );
+   connect( le_rgc_vol, SIGNAL( textChanged( const QString & ) ), SLOT( rgc_vol_text( const QString & ) ) );
+
+   // qDebug( QString( "extent_a %1" ).arg( extent_a ) );
+           
+   // ? is this really correct or should it be 2/5 instead of 3/5
+   double Rg = sqrt( 3e0/5e0 ) * extent_a;
+   le_rgc_rg->setText( QString( "%1" ).arg( Rg * 1e8 ) );
+
+   double extent_b = extent_a;
+   double extent_c = extent_a;
+
+   if ( rb_rgc_shape_ellipsoid->isChecked() )
+   {
+      extent_b *= le_rgc_axis_b->text().toDouble();
+      extent_c *= le_rgc_axis_c->text().toDouble();
+   } else {
+      if ( rb_rgc_shape_oblate->isChecked() )
+      {
+         extent_c *= le_rgc_axis_b->text().toDouble();
+      } else  {
+         if ( rb_rgc_shape_prolate->isChecked() )
+         {
+            extent_b *= le_rgc_axis_b->text().toDouble();
+            extent_c *= le_rgc_axis_b->text().toDouble();
+         }
+      }
+   }
+   
+   le_rgc_extents->setText( QString( "%1 : %2 : %3" ).arg( extent_a * 1e8 ).arg( extent_b * 1e8 ).arg( extent_c * 1e8 ) );
+}
+
+void US_Hydrodyn_Saxs_Hplc::rgc_mw_text( const QString & )
+{
+   rgc_calc_rg();
+}
+
+void US_Hydrodyn_Saxs_Hplc::rgc_vol_text( const QString & )
+{
+   double V = le_rgc_vol->text().toDouble();
+   double rho = 0e0; 
+   if ( V )
+   {
+      rho = ( 1e3 * le_rgc_mw->text().toDouble() / AVOGADRO ) / V;
+   }
+
+   disconnect( le_rgc_rho, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+   le_rgc_rho->setText( QString( "%1" ).arg( rho ) );
+   connect( le_rgc_rho, SIGNAL( textChanged( const QString & ) ), SLOT( rgc_rho_text( const QString & ) ) );
+   
+   rgc_calc_rg();
+}
+
+void US_Hydrodyn_Saxs_Hplc::rgc_rho_text( const QString & )
+{
+   rgc_calc_rg();
+}
+
+void US_Hydrodyn_Saxs_Hplc::rgc_axis_b_text( const QString &, bool do_recompute )
+{
+   if ( le_rgc_axis_b->text().toDouble() < le_rgc_axis_c->text().toDouble() )
+   {
+      le_rgc_axis_c->setText( le_rgc_axis_b->text() );
+   }
+   if ( do_recompute )
+   {
+      rgc_calc_rg();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::rgc_axis_c_text( const QString &, bool do_recompute )
+{
+   if ( le_rgc_axis_b->text().toDouble() < le_rgc_axis_c->text().toDouble() )
+   {
+      le_rgc_axis_b->setText( le_rgc_axis_c->text() );
+   }
+   if ( do_recompute )
+   {
+      rgc_calc_rg();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::rgc_rg_text( const QString & )
+{
+}
+
+// --- SCALE ----
 
 void US_Hydrodyn_Saxs_Hplc::scale()
 {
@@ -85,6 +601,8 @@ void US_Hydrodyn_Saxs_Hplc::scale()
    disable_all();
    mode_select( MODE_SCALE );
    pb_rescale     ->setEnabled( true );
+   pb_axis_x      ->setEnabled( true );
+   pb_axis_y      ->setEnabled( true );
 
    scale_applied = false;
 
@@ -635,6 +1153,29 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
       }
       break;
 
+   case MODE_PM :
+      {
+         if ( le_pm_q_start->hasFocus() )
+         {
+            le_last_focus = le_pm_q_start;
+         }
+         if ( le_pm_q_end->hasFocus() )
+         {
+            le_last_focus = le_pm_q_end;
+         }
+
+         if ( !le_last_focus )
+         {
+            // cout << "aw: no last focus in pm mode\n";
+            return;
+         }
+
+         le_last_focus->setText( QString( "%1" ).arg( pos ) );
+
+         lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
+      }
+      break;
+
    case MODE_GAUSSIAN :
       {
          if ( le_gauss_pos->hasFocus() )
@@ -953,6 +1494,20 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
       }
       break;
 
+
+   case MODE_PM :
+      {
+         gauss_delete_markers();
+         plotted_markers.clear();
+         mode_select( MODE_NORMAL );
+         plot_files();
+         rescale();
+      }
+      break;
+
+   case MODE_RGC :
+      break;
+
    default : qDebug( "wheel cancel called in invalid mode" ); break;
    }
 
@@ -983,7 +1538,15 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
    {
    case MODE_SCALE :
       {
-         qDebug( "wheel save mode scale not yet" );
+         // qDebug( "wheel save mode scale not yet" );
+         wheel_cancel();
+         return;
+      }
+      break;
+
+   case MODE_PM :
+      {
+         qDebug( "wheel save mode pm not yet" );
          wheel_cancel();
          return;
       }

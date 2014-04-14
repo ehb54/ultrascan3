@@ -705,6 +705,14 @@ class US_EXTERN US_Saxs_Util
 #endif
       bool run_pm      ( QString controlfile );
       bool run_pm      ( QStringList qsl );
+      bool run_pm      ( 
+                        map < QString, vector < double > > & produced_q,
+                        map < QString, vector < double > > & produced_I,
+                        map < QString, QString >           & produced_model,
+                        map < QString, QString >           & parameters,
+                        map < QString, vector < double > > & vectors
+                         );
+
       bool run_pm_ok   ( QString option );
       QStringList      job_output_files;
       double             pm_ga_fitness_secs;

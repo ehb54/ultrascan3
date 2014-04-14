@@ -584,7 +584,10 @@ void US_Hydrodyn_Cluster::add_target()
       existing_items[ lb_target_files->text( i ) ] = true;
    }
 
-   QStringList filenames = QFileDialog::getOpenFileNames( this , "Set files for grid target" , ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs" , "All files (*);;"
+   QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs";
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+
+   QStringList filenames = QFileDialog::getOpenFileNames( this , "Set files for grid target" , use_dir , "All files (*);;"
                                                    "ssaxs files (*.ssaxs);;"
                                                    "csv files (*.csv);;"
                                                    "int files [crysol] (*.int);;"
@@ -599,6 +602,7 @@ void US_Hydrodyn_Cluster::add_target()
       if ( !existing_items.count( filenames[ i ] ) )
       {
          add_filenames << filenames[ i ];
+         ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filenames[ i ] );
       }
    }
 

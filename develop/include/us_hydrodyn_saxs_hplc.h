@@ -239,6 +239,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       Q3ListBox      *lb_created_files;
       QLabel        *lbl_selected_created;
 
+      // models
+      map < QString, QString > models;
+      set < QString >          models_not_saved;
+
+      QLabel        *lbl_model_files;
+      Q3ListBox      *lb_model_files;
+      QLabel        *lbl_model_created;
+
+      QPushButton   * pb_model_select_all;
+      QPushButton   * pb_model_save;
+      QPushButton   * pb_model_text;
+      QPushButton   * pb_model_view;
+      QPushButton   * pb_model_remove;
+
       QPushButton   *pb_select_all_created;
       QPushButton   *pb_invert_all_created;
       QPushButton   *pb_adjacent_created;
@@ -247,6 +261,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_save_created;
       QPushButton   *pb_show_created;
       QPushButton   *pb_show_only_created;
+
+      void           model_enables();
+      void           model_remove ( QStringList files );
+      bool           model_save   ( QStringList files );
+      bool           model_save   ( QString file, bool & cancel, bool & overwrite_all );
+      void           model_view   ( QStringList files );
+      void           model_text   ( QStringList files );
 
       mQLabel     * lbl_editor;
       QFont         ft;
@@ -363,6 +384,55 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton  * pb_scale_apply;
       QPushButton  * pb_scale_create;
 
+      // rgc util
+
+      QPushButton  * pb_rgc;
+      QLabel       * lbl_rgc_mw;
+      QLineEdit    * le_rgc_mw;
+      QLabel       * lbl_rgc_vol;
+      QLineEdit    * le_rgc_vol;
+      QLabel       * lbl_rgc_rho;
+      QLineEdit    * le_rgc_rho;
+      QLabel       * lbl_rgc_axis;
+      QRadioButton * rb_rgc_shape_sphere;
+      QRadioButton * rb_rgc_shape_oblate;
+      QRadioButton * rb_rgc_shape_prolate;
+      QRadioButton * rb_rgc_shape_ellipsoid;
+      QButtonGroup * bg_rgc_shape;
+      QLineEdit    * le_rgc_axis_b;
+      QLineEdit    * le_rgc_axis_c;
+      QLabel       * lbl_rgc_rg;
+      QLineEdit    * le_rgc_rg;
+      QLabel       * lbl_rgc_extents;
+      QLineEdit    * le_rgc_extents;
+
+      void           rgc_calc_rg();
+
+      // pm
+
+      QPushButton  * pb_pm;
+      QRadioButton * rb_pm_shape_sphere;
+      QRadioButton * rb_pm_shape_spheroid;
+      QRadioButton * rb_pm_shape_ellipsoid;
+      QRadioButton * rb_pm_shape_cylinder;
+      QRadioButton * rb_pm_shape_torus;
+      QButtonGroup * bg_pm_shape;
+      QCheckBox    * cb_pm_sd;
+      QCheckBox    * cb_pm_q_logbin;
+      QLabel       * lbl_pm_q_range;
+      mQLineEdit   * le_pm_q_start;
+      mQLineEdit   * le_pm_q_end;
+      QPushButton  * pb_pm_q_reset;
+      QLabel       * lbl_pm_samp_e_dens;
+      QLineEdit    * le_pm_samp_e_dens;
+      QLabel       * lbl_pm_buff_e_dens;
+      QLineEdit    * le_pm_buff_e_dens;
+      QLabel       * lbl_pm_grid_size;
+      QLineEdit    * le_pm_grid_size;
+      QLabel       * lbl_pm_q_pts;
+      QLineEdit    * le_pm_q_pts;
+      QPushButton  * pb_pm_run;
+      
       QLineEdit    * le_dummy;
 
       set < QString > scale_selected;
@@ -480,6 +550,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < QWidget * >                created_files_widgets;
       vector < QWidget * >                created_files_expert_widgets;
       vector < QWidget * >                editor_widgets;
+      vector < QWidget * >                model_widgets;
+
+      // "mode" widgets
 
       vector < QWidget * >                gaussian_widgets;
       vector < QWidget * >                gaussian_4var_widgets;
@@ -491,6 +564,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < QWidget * >                scale_widgets;
       vector < QWidget * >                timeshift_widgets;
       vector < QWidget * >                plot_widgets;
+      vector < QWidget * >                rgc_widgets;
+      vector < QWidget * >                pm_widgets;
 
       vector < double >                   conc_curve( vector < double > &t,
                                                       unsigned int peak,
@@ -606,6 +681,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
          ,MODE_BASELINE
          ,MODE_TIMESHIFT
          ,MODE_SCALE
+         ,MODE_RGC
+         ,MODE_PM
       };
 
       modes                        current_mode;
@@ -916,7 +993,38 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void set_plot_errors_pct();
       void set_plot_errors_group();
 
+      void rgc                      ();
+      void rgc_enables              ();
+      void rgc_mw_text              ( const QString & );
+      void rgc_vol_text             ( const QString & );
+      void rgc_rho_text             ( const QString & );
+      void rgc_axis_b_text          ( const QString &, bool do_recompute = true );
+      void rgc_axis_c_text          ( const QString &, bool do_recompute = true );
+      void rgc_rg_text              ( const QString & );
+      void rgc_shape                ();
+
+      void pm                       ();
+      void pm_enables               ();
+      void pm_q_start_text          ( const QString & );
+      void pm_q_end_text            ( const QString & );
+      void pm_q_start_focus         ( bool );
+      void pm_q_end_focus           ( bool );
+      void pm_q_reset               ();
+
+      void pm_samp_e_dens_text      ( const QString & );
+      void pm_buff_e_dens_text      ( const QString & );
+      void pm_grid_size_text        ( const QString & );
+      void pm_q_pts_text            ( const QString & );
+
+      void pm_run                   ();
+
       void save_state();
+
+      void model_select_all         ();
+      void model_save               ();
+      void model_view               ();
+      void model_text               ();
+      void model_remove             ();
 
    protected slots:
 

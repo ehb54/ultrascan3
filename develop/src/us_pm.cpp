@@ -502,6 +502,25 @@ bool US_PM::clip_limits( vector < double > & fparams, vector < double > & low_fp
    return clipped;
 }
 
+bool US_PM::qstring_model( QString & out, set < pm_point > & model )
+{
+   double rg = Rg( model );
+   out = qs_bead_model( model );
+   out += "Model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : 10\n";
+   out += QString( "Rg: %1\n" ).arg( rg );
+   return true;
+}
+
+bool US_PM::qstring_model( QString & out, set < pm_point > & model, vector < double > & params )
+{
+   double rg = Rg( model );
+   out = qs_bead_model( model );
+   out += "Model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : 10\n";
+   out += QString( "Rg: %1\n" ).arg( rg );
+   out += list_params( params );
+   return true;
+}
+
 bool US_PM::write_model( QString & filename, set < pm_point > & model, bool overwrite )
 {
    if ( !overwrite )
@@ -540,7 +559,7 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, bool over
    return true;
 }
 
-bool US_PM::write_model( QString & filename, set < pm_point > & model, vector < double > &params, bool overwrite )
+bool US_PM::write_model( QString & filename, set < pm_point > & model, vector < double > & params, bool overwrite )
 {
    if ( !overwrite )
    {
