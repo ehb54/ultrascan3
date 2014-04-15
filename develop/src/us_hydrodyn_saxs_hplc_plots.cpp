@@ -538,12 +538,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
 {
    if ( current_mode == MODE_GUINIER )
    {
-      if ( guinier_plot_errors->isVisible() )
-      {
-         guinier_plot_errors->hide();
-      } else {
-         guinier_plot_errors->show();
-      }
+      ShowHide::hide_widgets( guinier_errors_widgets, guinier_plot_errors->isVisible() );
       return;
    }
 

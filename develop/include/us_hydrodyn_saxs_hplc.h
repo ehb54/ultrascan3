@@ -401,6 +401,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QLabel       * lbl_guinier_qrgmax;
       QLineEdit    * le_guinier_qrgmax;
       QCheckBox    * cb_guinier_sd;
+
+      QRadioButton * rb_guinier_resid_diff;
+      QRadioButton * rb_guinier_resid_sd;
+      QRadioButton * rb_guinier_resid_pct;
+      QButtonGroup * bg_guinier_resid_type;
+
       // QCheckBox    * cb_guinier_repeat;
       // QLineEdit    * le_guinier_repeat_sd_limit;
       // QCheckBox    * cb_guinier_search;
@@ -423,18 +429,23 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, vector < double > >  guinier_e;
       map < QString, vector < double > >  guinier_x;
       map < QString, vector < double > >  guinier_y;
+      map < QString, double >             guinier_a;
+      map < QString, double >             guinier_b;
 
 #ifdef QT4
       map < QString, QwtPlotCurve * >     guinier_curves;
       vector < QwtPlotMarker * >          guinier_markers;
       map < QString, QwtPlotCurve * >     guinier_fit_lines; 
+      map < QString, QwtPlotCurve * >     guinier_error_curves;
 #else
       map < QString, long >               guinier_curves;
       vector < long >                     guinier_markers;
       map < QString, long >               guinier_fit_lines;
+      map < QString, long >               guinier_error_curves;
 #endif
       void           guinier_replot       ();
       void           guinier_analysis     ();
+      void           guinier_residuals    ( bool reset = false );
       void           guinier_range        ();
       void           guinier_range        ( 
                                            double minq2, 
@@ -443,17 +454,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
                                            double maxI
                                             );
 
-      void           guinier_add_marker   ( double pos, 
-                                            QColor color, 
-                                            QString text, 
+      void           guinier_add_marker   (
+                                           QwtPlot * plot,
+                                           double pos, 
+                                           QColor color, 
+                                           QString text, 
 #ifndef QT4
-                                            int 
+                                           int 
 #else
-                                            Qt::Alignment
+                                           Qt::Alignment
 #endif
-                                            align
-                                            = Qt::AlignRight | Qt::AlignTop );
+                                           align
+                                           = Qt::AlignRight | Qt::AlignTop );
       void           guinier_delete_markers();
+      vector < QWidget * > guinier_errors_widgets;
 
       double         guinier_minq;
       double         guinier_maxq;
@@ -1067,6 +1081,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void guinier_qrgmax_text         ( const QString & );
       void guinier_sd                  ();
       void guinier_enables             ();
+      void guinier_residuals_update    ();
 
       void select_vis                  ();
       void remove_vis                  ();

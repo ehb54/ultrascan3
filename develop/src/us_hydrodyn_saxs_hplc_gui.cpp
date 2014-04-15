@@ -1478,6 +1478,32 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    AUTFBACK( cb_guinier_sd );
    connect( cb_guinier_sd, SIGNAL( clicked() ), SLOT( guinier_sd() ) );
 
+   rb_guinier_resid_diff =  new QRadioButton( tr( "Difference" ), this );
+   rb_guinier_resid_diff -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_guinier_resid_diff );
+   rb_guinier_resid_diff -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_guinier_resid_diff, SIGNAL( clicked() ), SLOT( guinier_residuals_update() ) );
+
+   rb_guinier_resid_sd =  new QRadioButton( tr( "Standard deviation" ), this );
+   rb_guinier_resid_sd -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_guinier_resid_sd );
+   rb_guinier_resid_sd -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_guinier_resid_sd, SIGNAL( clicked() ), SLOT( guinier_residuals_update() ) );
+
+   rb_guinier_resid_pct =  new QRadioButton( tr( "Percent" ), this );
+   rb_guinier_resid_pct -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_guinier_resid_pct );
+   rb_guinier_resid_pct -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_guinier_resid_pct, SIGNAL( clicked() ), SLOT( guinier_residuals_update() ) );
+
+   bg_guinier_resid_type = new QButtonGroup( this );
+   bg_pos = 0;
+   bg_guinier_resid_type->setExclusive(true);
+   bg_guinier_resid_type->addButton( rb_guinier_resid_diff, bg_pos++ );
+   bg_guinier_resid_type->addButton( rb_guinier_resid_sd, bg_pos++ );
+   bg_guinier_resid_type->addButton( rb_guinier_resid_pct, bg_pos++ );
+   rb_guinier_resid_diff->setChecked( true );
+
    guinier_plot = new QwtPlot( qs );
 #ifndef QT4
    guinier_plot->enableGridXMin();
@@ -1570,9 +1596,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    guinier_plot_errors->setMargin(USglobal->config_list.margin);
    guinier_plot_errors->setTitle("");
 #ifndef QT4
-   guinier_plot_errors->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
+   guinier_plot_errors->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
-   guinier_plot_errors->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+   guinier_plot_errors->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    guinier_plot_errors->setCanvasBackground(USglobal->global_colors.plot);
 
@@ -2239,6 +2265,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    }      
 
    // guinier
+   Q3BoxLayout *hbl_guinier_resid = new Q3HBoxLayout( 0 );
+   hbl_guinier_resid->addWidget( rb_guinier_resid_diff );
+   hbl_guinier_resid->addWidget( rb_guinier_resid_sd );
+   hbl_guinier_resid->addWidget( rb_guinier_resid_pct );
 
    Q3BoxLayout *vbl_guinier = new Q3VBoxLayout( 0 );
    {
@@ -2389,6 +2419,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // vbl_plot_group->addLayout ( vbl_guinier_plots );
    vbl_plot_group->addWidget ( qs );
    vbl_plot_group->addLayout ( l_plot_errors );
+   vbl_plot_group->addLayout ( hbl_guinier_resid );
    vbl_plot_group->addLayout ( gl_wheel );
    vbl_plot_group->addWidget ( lbl_mode_title );
    vbl_plot_group->addLayout ( hbl_top );
@@ -2582,9 +2613,18 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    guinier_widgets.push_back( cb_guinier_sd );
    guinier_widgets.push_back( guinier_plot );
    guinier_widgets.push_back( guinier_plot_errors );
+   guinier_widgets.push_back( rb_guinier_resid_diff );
+   guinier_widgets.push_back( rb_guinier_resid_sd );
+   guinier_widgets.push_back( rb_guinier_resid_pct );
    guinier_widgets.push_back( lbl_blank1 );
    guinier_widgets.push_back( qwtw_wheel );
    guinier_widgets.push_back( lbl_wheel_pos );
+
+   // not a "mode"
+   guinier_errors_widgets.push_back( guinier_plot_errors );
+   guinier_errors_widgets.push_back( rb_guinier_resid_diff );
+   guinier_errors_widgets.push_back( rb_guinier_resid_sd );
+   guinier_errors_widgets.push_back( rb_guinier_resid_pct );
 
    // rgc_widgets;
    rgc_widgets.push_back( lbl_rgc_mw );
