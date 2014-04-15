@@ -3162,6 +3162,7 @@ void US_Hydrodyn_Saxs::plot_guinier_error_bars( int i, bool cs, bool Rt )
             }
          }
       } else {
+         // rg
          for ( int q = 0; q < ( int ) plotted_q[ i ].size(); ++q )
          {
             e = plotted_I_error[ i ][ q ];

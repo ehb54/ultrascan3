@@ -341,6 +341,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_gauss_as_curves;
 
       QPushButton   *pb_baseline_start;
+
+      QCheckBox     *cb_baseline_start_zero;
       mQLineEdit    *le_baseline_start_s;
       mQLineEdit    *le_baseline_start;
       mQLineEdit    *le_baseline_start_e;
@@ -366,7 +368,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       QLabel        *lbl_mode_title;
       QPushButton   *pb_scale;
-      QPushButton   *pb_guinier;
 
       // scale
 
@@ -383,6 +384,81 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton  * pb_scale_reset;
       QPushButton  * pb_scale_apply;
       QPushButton  * pb_scale_create;
+
+      // Guinier
+
+      QPushButton   *pb_guinier;
+
+      QLabel       * lbl_guinier_q_range;
+      mQLineEdit   * le_guinier_q_start;
+      mQLineEdit   * le_guinier_q_end;
+      QLabel       * lbl_guinier_q2_range;
+      mQLineEdit   * le_guinier_q2_start;
+      mQLineEdit   * le_guinier_q2_end;
+      QLabel       * lbl_guinier_delta_range;
+      mQLineEdit   * le_guinier_delta_start;
+      mQLineEdit   * le_guinier_delta_end;
+      QLabel       * lbl_guinier_qrgmax;
+      QLineEdit    * le_guinier_qrgmax;
+      QCheckBox    * cb_guinier_sd;
+      // QCheckBox    * cb_guinier_repeat;
+      // QLineEdit    * le_guinier_repeat_sd_limit;
+      // QCheckBox    * cb_guinier_search;
+
+      QwtPlot      * guinier_plot;
+      ScrollZoomer * guinier_plot_zoomer;
+#ifdef QT4
+      QwtPlotGrid  * guinier_plot_grid;
+#endif
+
+      QwtPlot      * guinier_plot_errors;
+      ScrollZoomer * guinier_plot_errors_zoomer;
+#ifdef QT4
+      QwtPlotGrid  * guinier_plot_errors_grid;
+#endif
+
+      map < QString, vector < double > >  guinier_q;
+      map < QString, vector < double > >  guinier_q2;
+      map < QString, vector < double > >  guinier_I;
+      map < QString, vector < double > >  guinier_e;
+      map < QString, vector < double > >  guinier_x;
+      map < QString, vector < double > >  guinier_y;
+
+#ifdef QT4
+      map < QString, QwtPlotCurve * >     guinier_curves;
+      vector < QwtPlotMarker * >          guinier_markers;
+      map < QString, QwtPlotCurve * >     guinier_fit_lines; 
+#else
+      map < QString, long >               guinier_curves;
+      vector < long >                     guinier_markers;
+      map < QString, long >               guinier_fit_lines;
+#endif
+      void           guinier_replot       ();
+      void           guinier_analysis     ();
+      void           guinier_range        ();
+      void           guinier_range        ( 
+                                           double minq2, 
+                                           double maxq2,
+                                           double minI, 
+                                           double maxI
+                                            );
+
+      void           guinier_add_marker   ( double pos, 
+                                            QColor color, 
+                                            QString text, 
+#ifndef QT4
+                                            int 
+#else
+                                            Qt::Alignment
+#endif
+                                            align
+                                            = Qt::AlignRight | Qt::AlignTop );
+      void           guinier_delete_markers();
+
+      double         guinier_minq;
+      double         guinier_maxq;
+      double         guinier_minq2;
+      double         guinier_maxq2;
 
       // rgc util
 
@@ -566,6 +642,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < QWidget * >                plot_widgets;
       vector < QWidget * >                rgc_widgets;
       vector < QWidget * >                pm_widgets;
+      vector < QWidget * >                guinier_widgets;
 
       vector < double >                   conc_curve( vector < double > &t,
                                                       unsigned int peak,
@@ -683,6 +760,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
          ,MODE_SCALE
          ,MODE_RGC
          ,MODE_PM
+         ,MODE_GUINIER
       };
 
       modes                        current_mode;
@@ -947,6 +1025,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void baseline_start();
       void baseline_apply();
 
+      void set_baseline_start_zero     ();
+
       void baseline_start_s_text       ( const QString & );
       void baseline_start_text         ( const QString & );
       void baseline_start_e_text       ( const QString & );
@@ -971,20 +1051,35 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void scale_create                ();
       void scale_enables               ();
 
-      void guinier();
+      void guinier                     ();
+      void guinier_q_start_text        ( const QString & );
+      void guinier_q_start_focus       ( bool );
+      void guinier_q_end_text          ( const QString & );
+      void guinier_q_end_focus         ( bool );
+      void guinier_q2_start_text       ( const QString & );
+      void guinier_q2_start_focus      ( bool );
+      void guinier_q2_end_text         ( const QString & );
+      void guinier_q2_end_focus        ( bool );
+      void guinier_delta_start_text    ( const QString & );
+      void guinier_delta_start_focus   ( bool );
+      void guinier_delta_end_text      ( const QString & );
+      void guinier_delta_end_focus     ( bool );
+      void guinier_qrgmax_text         ( const QString & );
+      void guinier_sd                  ();
+      void guinier_enables             ();
 
-      void select_vis();
-      void remove_vis();
-      void crop_left();
-      void crop_common();
-      void crop_vis();
-      void crop_zero();
-      void crop_undo();
-      void crop_right();
-      void legend();
-      void axis_x();
-      void axis_y();
-      void legend_set();
+      void select_vis                  ();
+      void remove_vis                  ();
+      void crop_left                   ();
+      void crop_common                 ();
+      void crop_vis                    ();
+      void crop_zero                   ();
+      void crop_undo                   ();
+      void crop_right                  ();
+      void legend                      ();
+      void axis_x                      ();
+      void axis_y                      ();
+      void legend_set                  ();
 
       void rename_created( Q3ListBoxItem *, const QPoint & );
 

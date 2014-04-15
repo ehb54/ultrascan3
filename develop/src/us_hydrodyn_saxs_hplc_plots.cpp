@@ -536,6 +536,17 @@ void US_Hydrodyn_Saxs_Hplc::plot_errors_jump_markers()
 
 void US_Hydrodyn_Saxs_Hplc::errors()
 {
+   if ( current_mode == MODE_GUINIER )
+   {
+      if ( guinier_plot_errors->isVisible() )
+      {
+         guinier_plot_errors->hide();
+      } else {
+         guinier_plot_errors->show();
+      }
+      return;
+   }
+
    if ( plot_errors->isVisible() )
    {
       hide_widgets( plot_errors_widgets, true );

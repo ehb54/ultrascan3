@@ -638,9 +638,11 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    plot_dist->setAutoLegend( false );
    plot_dist->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
 #else
-   QwtLegend* legend_pd = new QwtLegend;
-   legend_pd->setFrameStyle( Q3Frame::Box | Q3Frame::Sunken );
-   plot_dist->insertLegend( legend_pd, QwtPlot::BottomLegend );
+   {
+      QwtLegend* legend_pd = new QwtLegend;
+      legend_pd->setFrameStyle( Q3Frame::Box | Q3Frame::Sunken );
+      plot_dist->insertLegend( legend_pd, QwtPlot::BottomLegend );
+   }
 #endif
    connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 
@@ -1096,6 +1098,28 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_gauss_as_curves->setEnabled( false );
    connect(pb_gauss_as_curves, SIGNAL(clicked()), SLOT(gauss_as_curves()));
 
+   // baseline
+
+   pb_baseline_start = new QPushButton(tr("Baseline"), this);
+   pb_baseline_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_baseline_start->setMinimumHeight(minHeight1);
+   pb_baseline_start->setPalette( PALET_PUSHB );
+   connect(pb_baseline_start, SIGNAL(clicked()), SLOT(baseline_start()));
+
+   pb_baseline_apply = new QPushButton(tr("Baseline apply"), this);
+   pb_baseline_apply->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_baseline_apply->setMinimumHeight(minHeight1);
+   pb_baseline_apply->setPalette( PALET_PUSHB );
+   connect(pb_baseline_apply, SIGNAL(clicked()), SLOT(baseline_apply()));
+
+   cb_baseline_start_zero = new QCheckBox(this);
+   cb_baseline_start_zero->setText(tr("Zero base  "));
+   cb_baseline_start_zero->setChecked( false );
+   cb_baseline_start_zero->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_baseline_start_zero->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_baseline_start_zero );
+   connect( cb_baseline_start_zero, SIGNAL( clicked() ), SLOT( set_baseline_start_zero() ) );
+
    le_baseline_start_s = new mQLineEdit(this, "le_baseline_start_s Line Edit");
    le_baseline_start_s->setText( "" );
    le_baseline_start_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1156,17 +1180,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
    connect( le_baseline_end_e, SIGNAL( focussed ( bool ) )             , SLOT( baseline_end_e_focus( bool ) ) );
 
-   pb_baseline_start = new QPushButton(tr("Baseline"), this);
-   pb_baseline_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_baseline_start->setMinimumHeight(minHeight1);
-   pb_baseline_start->setPalette( PALET_PUSHB );
-   connect(pb_baseline_start, SIGNAL(clicked()), SLOT(baseline_start()));
-
-   pb_baseline_apply = new QPushButton(tr("Baseline apply"), this);
-   pb_baseline_apply->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
-   pb_baseline_apply->setMinimumHeight(minHeight1);
-   pb_baseline_apply->setPalette( PALET_PUSHB );
-   connect(pb_baseline_apply, SIGNAL(clicked()), SLOT(baseline_apply()));
+   // select
 
    pb_select_vis = new QPushButton(tr("Select Visible"), this);
    pb_select_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -1354,6 +1368,225 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect(pb_guinier, SIGNAL(clicked()), SLOT(guinier()));
    pb_guinier->setEnabled( false );
 
+   lbl_guinier_q_range = new QLabel( tr( "q range: " ), this );
+   lbl_guinier_q_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_guinier_q_range->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_guinier_q_range );
+   lbl_guinier_q_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_guinier_q_start = new mQLineEdit(this, "le_guinier_q_start Line Edit");
+   le_guinier_q_start->setText( "" );
+   le_guinier_q_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_q_start->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_guinier_q_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_guinier_q_start->setEnabled( false );
+   le_guinier_q_start->setValidator( new QDoubleValidator( le_guinier_q_start ) );
+   connect( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_start_text( const QString & ) ) );
+   connect( le_guinier_q_start, SIGNAL( focussed ( bool ) )             , SLOT( guinier_q_start_focus( bool ) ) );
+
+   le_guinier_q_end = new mQLineEdit(this, "le_guinier_q_end Line Edit");
+   le_guinier_q_end->setText( "" );
+   le_guinier_q_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_q_end->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_guinier_q_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_guinier_q_end->setEnabled( false );
+   le_guinier_q_end->setValidator( new QDoubleValidator( le_guinier_q_end ) );
+   connect( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q_end_text( const QString & ) ) );
+   connect( le_guinier_q_end, SIGNAL( focussed ( bool ) )             , SLOT( guinier_q_end_focus( bool ) ) );
+
+   lbl_guinier_q2_range = new QLabel( tr( "q^2 range: " ), this );
+   lbl_guinier_q2_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_guinier_q2_range->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_guinier_q2_range );
+   lbl_guinier_q2_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_guinier_q2_range->hide();
+
+   le_guinier_q2_start = new mQLineEdit(this, "le_guinier_q2_start Line Edit");
+   le_guinier_q2_start->setText( "" );
+   le_guinier_q2_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_q2_start->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_guinier_q2_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_guinier_q2_start->setEnabled( false );
+   le_guinier_q2_start->setValidator( new QDoubleValidator( le_guinier_q2_start ) );
+   le_guinier_q2_start->hide();
+   connect( le_guinier_q2_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q2_start_text( const QString & ) ) );
+   connect( le_guinier_q2_start, SIGNAL( focussed ( bool ) )             , SLOT( guinier_q2_start_focus( bool ) ) );
+
+   le_guinier_q2_end = new mQLineEdit(this, "le_guinier_q2_end Line Edit");
+   le_guinier_q2_end->setText( "" );
+   le_guinier_q2_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_q2_end->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_guinier_q2_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_guinier_q2_end->setEnabled( false );
+   le_guinier_q2_end->setValidator( new QDoubleValidator( le_guinier_q2_end ) );
+   le_guinier_q2_end->hide();
+   connect( le_guinier_q2_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_q2_end_text( const QString & ) ) );
+   connect( le_guinier_q2_end, SIGNAL( focussed ( bool ) )             , SLOT( guinier_q2_end_focus( bool ) ) );
+
+   lbl_guinier_delta_range = new QLabel( tr( " plot extension: " ), this );
+   lbl_guinier_delta_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_guinier_delta_range->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_guinier_delta_range );
+   lbl_guinier_delta_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_guinier_delta_start = new mQLineEdit(this, "le_guinier_delta_start Line Edit");
+   le_guinier_delta_start->setText( "" );
+   le_guinier_delta_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_delta_start->setPalette( PALET_NORMAL );
+   AUTFBACK( le_guinier_delta_start );
+   le_guinier_delta_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_guinier_delta_start->setEnabled( false );
+   le_guinier_delta_start->setValidator( new QDoubleValidator( le_guinier_delta_start ) );
+   connect( le_guinier_delta_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_delta_start_text( const QString & ) ) );
+   connect( le_guinier_delta_start, SIGNAL( focussed ( bool ) )             , SLOT( guinier_delta_start_focus( bool ) ) );
+
+   le_guinier_delta_end = new mQLineEdit(this, "le_guinier_delta_end Line Edit");
+   le_guinier_delta_end->setText( "" );
+   le_guinier_delta_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_delta_end->setPalette( PALET_NORMAL );
+   AUTFBACK( le_guinier_delta_end );
+   le_guinier_delta_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_guinier_delta_end->setEnabled( false );
+   le_guinier_delta_end->setValidator( new QDoubleValidator( le_guinier_delta_end ) );
+   connect( le_guinier_delta_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_delta_end_text( const QString & ) ) );
+   connect( le_guinier_delta_end, SIGNAL( focussed ( bool ) )             , SLOT( guinier_delta_end_focus( bool ) ) );
+
+   lbl_guinier_qrgmax = new QLabel( tr( "q*Rg maximum: " ), this );
+   lbl_guinier_qrgmax->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_guinier_qrgmax->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_guinier_qrgmax );
+   lbl_guinier_qrgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   lbl_guinier_qrgmax->hide();
+
+   le_guinier_qrgmax = new mQLineEdit(this, "le_guinier_qrgmax Line Edit");
+   le_guinier_qrgmax->setText( "1.3" );
+   le_guinier_qrgmax->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_qrgmax->setPalette( PALET_NORMAL );
+   AUTFBACK( le_guinier_qrgmax );
+   le_guinier_qrgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_guinier_qrgmax->setEnabled( true );
+   le_guinier_qrgmax->setValidator( new QDoubleValidator( le_guinier_qrgmax ) );
+   ((QDoubleValidator *)le_guinier_qrgmax->validator())->setBottom( 1 );
+   connect( le_guinier_qrgmax, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_qrgmax_text( const QString & ) ) );
+   le_guinier_qrgmax->hide();
+
+   cb_guinier_sd = new QCheckBox(this);
+   cb_guinier_sd->setText(tr("SD "));
+   cb_guinier_sd->setChecked( true );
+   cb_guinier_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_guinier_sd->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_guinier_sd );
+   connect( cb_guinier_sd, SIGNAL( clicked() ), SLOT( guinier_sd() ) );
+
+   guinier_plot = new QwtPlot( qs );
+#ifndef QT4
+   guinier_plot->enableGridXMin();
+   guinier_plot->enableGridYMin();
+#else
+   guinier_plot_grid = new QwtPlotGrid;
+   guinier_plot_grid->enableXMin( true );
+   guinier_plot_grid->enableYMin( true );
+#endif
+   guinier_plot->setPalette( PALET_NORMAL );
+   AUTFBACK( guinier_plot );
+#ifndef QT4
+   guinier_plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
+   guinier_plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#else
+   guinier_plot_grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   guinier_plot_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   guinier_plot_grid->attach( guinier_plot );
+#endif
+   guinier_plot->setAxisTitle(QwtPlot::xBottom, tr( "q^2 (1/Angstrom^2)" ) );
+   guinier_plot->setAxisTitle(QwtPlot::yLeft, tr("Intensity [a.u.] (log scale)"));
+#ifndef QT4
+   guinier_plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+   guinier_plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   guinier_plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   guinier_plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   guinier_plot->setMargin(USglobal->config_list.margin);
+   guinier_plot->setTitle("");
+#ifndef QT4
+   guinier_plot->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
+#else
+   guinier_plot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+#endif
+   guinier_plot->setCanvasBackground(USglobal->global_colors.plot);
+
+#ifndef QT4
+   guinier_plot->setAutoLegend( false );
+   guinier_plot->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+#else
+   // {
+   //    QwtLegend* legend_pd = new QwtLegend;
+   //    legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   //    guinier_plot->insertLegend( legend_pd, QwtPlot::BottomLegend );
+   // }
+#endif
+   connect( guinier_plot->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
+
+   guinier_plot_errors = new QwtPlot( qs );
+#ifndef QT4
+   guinier_plot_errors->enableGridXMin();
+   guinier_plot_errors->enableGridYMin();
+#else
+   guinier_plot_errors_grid = new QwtPlotGrid;
+   guinier_plot_errors_grid->enableXMin( true );
+   guinier_plot_errors_grid->enableYMin( true );
+#endif
+   guinier_plot_errors->setPalette( PALET_NORMAL );
+   AUTFBACK( guinier_plot_errors );
+#ifndef QT4
+   guinier_plot_errors->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
+   guinier_plot_errors->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#else
+   guinier_plot_errors_grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   guinier_plot_errors_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   guinier_plot_errors_grid->attach( guinier_plot_errors );
+#endif
+   guinier_plot_errors->setAxisTitle(QwtPlot::xBottom, tr( "q^2 (1/Angstrom^2)" ) );
+   guinier_plot_errors->setAxisTitle(QwtPlot::yLeft, tr("Intensity [a.u.] (log scale)"));
+#ifndef QT4
+   guinier_plot_errors->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+   guinier_plot_errors->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot_errors->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   guinier_plot_errors->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot_errors->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   guinier_plot_errors->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot_errors->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   guinier_plot_errors->setMargin(USglobal->config_list.margin);
+   guinier_plot_errors->setTitle("");
+#ifndef QT4
+   guinier_plot_errors->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
+#else
+   guinier_plot_errors->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+#endif
+   guinier_plot_errors->setCanvasBackground(USglobal->global_colors.plot);
+
+#ifndef QT4
+   guinier_plot_errors->setAutoLegend( false );
+   guinier_plot_errors->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+#else
+   // {
+   //    QwtLegend* legend_pd = new QwtLegend;
+   //    legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   //    guinier_plot_errors->insertLegend( legend_pd, QwtPlot::BottomLegend );
+   // }
+#endif
+   connect( guinier_plot_errors->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 
    // rgc mode
 
@@ -2005,6 +2238,30 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       vbl_scale->addLayout( hbl );
    }      
 
+   // guinier
+
+   Q3BoxLayout *vbl_guinier = new Q3VBoxLayout( 0 );
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( lbl_guinier_q_range );
+      hbl->addWidget( le_guinier_q_start );
+      hbl->addWidget( le_guinier_q_end );
+      hbl->addWidget( lbl_guinier_q2_range );
+      hbl->addWidget( le_guinier_q2_start );
+      hbl->addWidget( le_guinier_q2_end );
+      hbl->addWidget( lbl_guinier_delta_range );
+      hbl->addWidget( le_guinier_delta_start );
+      hbl->addWidget( le_guinier_delta_end );
+      hbl->addWidget( cb_guinier_sd );
+      hbl->addWidget( lbl_guinier_qrgmax );
+      hbl->addWidget( le_guinier_qrgmax );
+      vbl_guinier->addLayout( hbl );
+   }      
+
+   // QBoxLayout * vbl_guinier_plots = new QVBoxLayout( 0 );
+   // vbl_guinier_plots->addWidget( guinier_plot );
+   // vbl_guinier_plots->addWidget( guinier_plot_errors );
+
    // pm
    Q3BoxLayout *vbl_pm = new Q3VBoxLayout( 0 );
    {
@@ -2117,6 +2374,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    Q3HBoxLayout *hbl_baseline = new Q3HBoxLayout( 0 );
    // hbl_baseline->addWidget( pb_baseline_start   );
+   hbl_baseline->addWidget( cb_baseline_start_zero );
    hbl_baseline->addWidget( le_baseline_start_s );
    hbl_baseline->addWidget( le_baseline_start   );
    hbl_baseline->addWidget( le_baseline_start_e );
@@ -2128,6 +2386,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    Q3BoxLayout *vbl_plot_group = new Q3VBoxLayout(0);
    // vbl_plot_group->addWidget ( plot_dist );
    // vbl_plot_group->addWidget ( plot_ref );
+   // vbl_plot_group->addLayout ( vbl_guinier_plots );
    vbl_plot_group->addWidget ( qs );
    vbl_plot_group->addLayout ( l_plot_errors );
    vbl_plot_group->addLayout ( gl_wheel );
@@ -2135,6 +2394,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addLayout ( hbl_top );
    vbl_plot_group->addLayout ( hbl_mode );
    vbl_plot_group->addLayout ( vbl_scale );
+   vbl_plot_group->addLayout ( vbl_guinier );
    vbl_plot_group->addLayout ( vbl_rgc );
    vbl_plot_group->addLayout ( vbl_pm );
    vbl_plot_group->addLayout ( gl_gauss );
@@ -2260,6 +2520,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    ggaussian_5var_widgets.push_back( le_gauss_pos_dist2 );
 
    // baseline_widgets;
+   baseline_widgets.push_back( cb_baseline_start_zero );
    baseline_widgets.push_back( le_baseline_start_s );
    baseline_widgets.push_back( le_baseline_start );
    baseline_widgets.push_back( le_baseline_start_e );
@@ -2304,6 +2565,26 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    // timeshift_widgets.push_back( pb_crop_right );
    // timeshift_widgets.push_back( pb_legend );
    timeshift_widgets.push_back( le_dummy );
+
+   // guinier_widgets;
+
+   guinier_widgets.push_back( lbl_guinier_q_range );
+   guinier_widgets.push_back( le_guinier_q_start );
+   guinier_widgets.push_back( le_guinier_q_end );
+   // guinier_widgets.push_back( lbl_guinier_q2_range );
+   // guinier_widgets.push_back( le_guinier_q2_start );
+   // guinier_widgets.push_back( le_guinier_q2_end );
+   guinier_widgets.push_back( lbl_guinier_delta_range );
+   guinier_widgets.push_back( le_guinier_delta_start );
+   guinier_widgets.push_back( le_guinier_delta_end );
+   // guinier_widgets.push_back( lbl_guinier_qrgmax );
+   // guinier_widgets.push_back( le_guinier_qrgmax );
+   guinier_widgets.push_back( cb_guinier_sd );
+   guinier_widgets.push_back( guinier_plot );
+   guinier_widgets.push_back( guinier_plot_errors );
+   guinier_widgets.push_back( lbl_blank1 );
+   guinier_widgets.push_back( qwtw_wheel );
+   guinier_widgets.push_back( lbl_wheel_pos );
 
    // rgc_widgets;
    rgc_widgets.push_back( lbl_rgc_mw );
@@ -2365,6 +2646,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
    ShowHide::hide_widgets( baseline_widgets );
    ShowHide::hide_widgets( scale_widgets );
    ShowHide::hide_widgets( timeshift_widgets );
+   ShowHide::hide_widgets( guinier_widgets );
    ShowHide::hide_widgets( rgc_widgets );
    ShowHide::hide_widgets( pm_widgets );
 
@@ -2400,6 +2682,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
    case MODE_BASELINE  : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets  , false ); break;
    case MODE_TIMESHIFT : mode_title( pb_wheel_start->text() );    ShowHide::hide_widgets( timeshift_widgets , false ); break;
    case MODE_SCALE     : mode_title( pb_scale->text() );          ShowHide::hide_widgets( scale_widgets     , false ); break;
+   case MODE_GUINIER   : mode_title( pb_guinier->text() );        ShowHide::hide_widgets( guinier_widgets   , false ); break;
    case MODE_RGC       : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets       , false ); break;
    case MODE_PM        : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets        , false ); break;
    default : qDebug( "mode select error" ); break;
@@ -2625,6 +2908,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_scale            ->setEnabled( files_selected_count > 1 && files_compatible );
    pb_rgc              ->setEnabled( true );
    pb_pm               ->setEnabled( files_selected_count == 1 && files_compatible && !files_are_time );
+   pb_guinier          ->setEnabled( files_selected_count && files_compatible && !files_are_time );
 
    // cb_guinier          ->setEnabled( files_selected_count );
    legend_set();
