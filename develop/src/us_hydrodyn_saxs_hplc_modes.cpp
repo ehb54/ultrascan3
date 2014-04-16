@@ -786,6 +786,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_residuals( bool reset )
    {
       if ( !guinier_a.count( it->first ) )
       {
+         // qDebug( "no guinier a line" );
          if ( guinier_error_curves.count( it->first ) )
          {
             return guinier_residuals( true );
@@ -945,6 +946,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
    double qstart      = le_guinier_q_start->text().toDouble();
    double qend        = le_guinier_q_end  ->text().toDouble();
+   double q2endvis    = le_guinier_q2_end ->text().toDouble() + le_guinier_delta_end->text().toDouble();
    // double sRgmaxlimit = le_guinier_qrgmax ->text().toDouble();
 
    // int points_min = 2;
@@ -1064,9 +1066,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          guinier_a[ it->first ] = a;
          guinier_b[ it->first ] = b;
          guinier_x[ it->first ].push_back( guinier_q2[ it->first ][ 0 ] );
-         guinier_x[ it->first ].push_back( guinier_q2[ it->first ].back() );
+         guinier_x[ it->first ].push_back( q2endvis );
          guinier_y[ it->first ].push_back( exp( a + b * guinier_q2[ it->first ][ 0 ] ) );
-         guinier_y[ it->first ].push_back( exp( a + b * guinier_q2[ it->first ].back() ) );
+         guinier_y[ it->first ].push_back( exp( a + b * q2endvis ) );
 
          if ( !guinier_fit_lines.count( it->first ) )
          {
@@ -1096,6 +1098,8 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
                                      );
 #endif
          editor_msg( "dark blue", report );
+         // qDebug( QString( "guinier a %1 b %2" ).arg( a ).arg( b ) );
+         US_Vector::printvector2( "guinier x,y:", guinier_x[ it->first ], guinier_y[ it->first ] );
       }
    }
 }
@@ -2115,7 +2119,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply()
 {
    int smoothing = 0;
    bool integral = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] == "true";
-   if ( integral )
+   if ( integral && U_EXPT )
    {
       smoothing = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ].toInt();
    }

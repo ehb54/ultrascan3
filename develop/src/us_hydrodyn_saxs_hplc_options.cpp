@@ -266,22 +266,22 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 
    if ( !parameters->count( "expert_mode" ) )
    {
-      lbl_baseline     ->hide();
-      rb_linear        ->hide();
-      rb_integral      ->hide();
+      // lbl_baseline     ->hide();
+      // rb_linear        ->hide();
+      // rb_integral      ->hide();
       lbl_smooth       ->hide();
       le_smooth        ->hide();
-      lbl_reps         ->hide();
-      le_reps          ->hide();
-      lbl_alpha        ->hide();
-      le_alpha         ->hide();
-      cb_save_bl       ->hide();
+      // lbl_reps         ->hide();
+      // le_reps          ->hide();
+      // lbl_alpha        ->hide();
+      // le_alpha         ->hide();
+      // cb_save_bl       ->hide();
 
-      lbl_gaussian_type->hide();
-      rb_gauss         ->hide();
-      rb_gmg           ->hide();
-      rb_emg           ->hide();
-      rb_emggmg        ->hide();
+      // lbl_gaussian_type->hide();
+      // rb_gauss         ->hide();
+      // rb_gmg           ->hide();
+      // rb_emg           ->hide();
+      // rb_emggmg        ->hide();
    }
 }
 

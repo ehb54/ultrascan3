@@ -1114,7 +1114,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    cb_baseline_start_zero = new QCheckBox(this);
    cb_baseline_start_zero->setText(tr("Zero base  "));
-   cb_baseline_start_zero->setChecked( false );
+   cb_baseline_start_zero->setChecked( true );
    cb_baseline_start_zero->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_baseline_start_zero->setPalette( PALET_NORMAL );
    AUTFBACK( cb_baseline_start_zero );
@@ -2696,13 +2696,13 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
    case MODE_GAUSSIAN  : 
       {
          mode_title( pb_gauss_start->text() );
-         ShowHide::hide_widgets( gaussian_widgets  , false ); break;
+         ShowHide::hide_widgets( gaussian_widgets  , false );
          switch ( gaussian_type_size )
          {
          case 4 : ShowHide::hide_widgets( gaussian_4var_widgets , false ); break;
          case 5 : ShowHide::hide_widgets( gaussian_5var_widgets , false ); break;
          default : break;
-         }            
+         }
       }
       break;
 
