@@ -18,6 +18,8 @@ us3-icon-48x48.ico
 us3-icon-48x48.png
 us3-icon-48x48.xpm
 us3-splash.png
+us3-icon-128x128.png
+us3-icon-128x128.ico
 # List of directories that belong in $ULTRASCAN/etc
 dmd/
 mysql/
