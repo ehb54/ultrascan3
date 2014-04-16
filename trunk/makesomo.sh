@@ -34,6 +34,8 @@ if [ $ISWIN -eq 2 ]; then
   cp Makefile.Debug Makefile.D-lib
   ls -l Make*
   echo "QMAKE complete. Rerun $0 in MSYS (MINGW32) window"
+  cd $us3/../us3_somo/etc
+  cp -p *ico $us3/etc/
   exit 0
 fi
 
@@ -59,6 +61,8 @@ fi
 # Do makes for Linux,Mac
 cd $us3/../us3_somo
 SOMO3=`pwd`
+echo "cp -p $SOMO3/etc/*ico $us3/etc/"
+cp -p $SOMO3/etc/*ico $us3/etc/
 cd develop
 sh version.sh
 qmake us_somo.pro
