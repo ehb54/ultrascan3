@@ -328,25 +328,25 @@ void US_CombineModels::update_disk_db( bool isDB )
 // Select RunID/Edit prefilter of models list
 void US_CombineModels::select_filt( void )
 {
-   pfilts.clear();
-   US_SelectEdits sediag( dkdb_cntrls->db(), runsel, latest, pfilts );
-   sediag.move( this->pos() + QPoint( 200, 200 ) );
-   sediag.exec();
-
-   int nedits    = pfilts.size();
    QString pfmsg;
+   int nedits    = 0;
+   pfilts.clear();
+
+   US_SelectEdits sediag( dkdb_cntrls->db(), pfilts );
+   sediag.move( this->pos() + QPoint( 200, 200 ) );
+   connect( &sediag, SIGNAL( dkdb_changed  ( bool ) ),
+            this,    SLOT  ( update_disk_db( bool ) ) );
+
+   if ( sediag.exec() == QDialog::Accepted )
+      nedits        = pfilts.size();
+   else
+      pfilts.clear();
 
    if ( nedits == 0 )
       pfmsg = tr( "(none chosen)" );
 
-   else if ( runsel )
-      pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );
-
-   else if ( latest )
-      pfmsg = tr( "%1 Latest-Edit prefilter(s)" ).arg( nedits );
-
    else
-      pfmsg = tr( "%1 total Edit prefilter(s) " ).arg( nedits );
+      pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );
 
    le_prefilt->setText( pfmsg );
 }
