@@ -310,11 +310,9 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( pb_close,   SIGNAL( clicked() ),
             this,       SLOT(   close() ) );
 
-   QPalette pa( lb_info1->palette() );
    te_status    = us_textedit( );
-   te_status->setPalette( pa );
-   te_status->setTextBackgroundColor( pa.color( QPalette::Window ) );
-   te_status->setTextColor( pa.color( QPalette::WindowText ) );
+   te_status->setTextBackgroundColor( Qt::white );
+   te_status->setTextColor( Qt::blue );
    dfilname     = "(NONE)";
    stcmline     = tr( "Color Map:  the default w-cyan-magenta-red-black" );
    stdiline     = tr( "The distribution was loaded from the file:" );
@@ -384,7 +382,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    spec->addWidget( pb_view,      s_row,   0, 1, 4 );
    spec->addWidget( pb_help,      s_row,   4, 1, 2 );
    spec->addWidget( pb_close,     s_row++, 6, 1, 2 );
-   spec->addWidget( te_status,    s_row++, 0, 1, 8 );
+   spec->addWidget( te_status,    s_row++, 0, 6, 8 );
 
    // set up plot component window on right side
    xa_title    = tr( "Sedimentation Coefficient corrected for water at 20" )
@@ -2140,27 +2138,27 @@ void US_GA_Initialize::update_disk_db( bool isDB )
 // Select a prefilter for model distribution list
 void US_GA_Initialize::select_prefilt( void )
 {
+   QString pfmsg;
+   int nedits = 0;
    pfilts.clear();
 
-   US_SelectEdits sediag( dkdb_cntrls->db(), runsel, latest, pfilts );
+   US_SelectEdits sediag( dkdb_cntrls->db(), pfilts );
    sediag.move( this->pos() + QPoint( 200, 200 ) );
-   sediag.exec();
+   connect( &sediag, SIGNAL( dkdb_changed  ( bool ) ),
+            this,    SLOT(   update_disk_db( bool ) ) );
 
-   int nedits = pfilts.size();
-   QString pfmsg;
+   if ( sediag.exec() == QDialog::Accepted )
+      nedits     = pfilts.size();
+   else
+      pfilts.clear();
 
    if ( nedits == 0 )
       pfmsg = tr( "(none chosen)" );
 
-   else if ( runsel )
+   else
       pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );
 
-   else if ( latest )
-      pfmsg = tr( "%1 Latest-Edit prefilter(s)" ).arg( nedits );
-
-   else
-      pfmsg = tr( "%1 total Edit prefilter(s)" ).arg( nedits );
-
+DbgLv(1) << "PreFilt: pfilts[0]" << ((nedits>0)?pfilts[0]:"(none)");
    le_prefilt->setText( pfmsg );
 }
 

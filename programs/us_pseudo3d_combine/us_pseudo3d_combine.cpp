@@ -1238,26 +1238,25 @@ void US_Pseudo3D_Combine::update_disk_db( bool isDB )
 // Select a prefilter for model distributions list
 void US_Pseudo3D_Combine::select_prefilt( void )
 {
+   QString pfmsg;
+   int nedits = 0;
    pfilts.clear();
 
-   US_SelectEdits sediag( dkdb_cntrls->db(), runsel, latest, pfilts );
+   US_SelectEdits sediag( dkdb_cntrls->db(), pfilts );
    sediag.move( this->pos() + QPoint( 200, 200 ) );
-   sediag.exec();
+   connect( &sediag, SIGNAL( dkdb_changed  ( bool ) ),
+            this,    SLOT  ( update_disk_db( bool ) ) );
 
-   int nedits    = pfilts.size();
-   QString pfmsg;
+   if ( sediag.exec() == QDialog::Accepted )
+      nedits        = pfilts.size();
+   else
+      pfilts.clear();
 
    if ( nedits == 0 )
       pfmsg = tr( "(no prefilter)" );
 
-   else if ( runsel )
-      pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );
-
-   else if ( latest )
-      pfmsg = tr( "%1 Latest-Edit prefilter(s)" ).arg( nedits );
-
    else
-      pfmsg = tr( "%1 total Edit prefilter(s) " ).arg( nedits );
+      pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );
 
    le_prefilt->setText( pfmsg );
 }
