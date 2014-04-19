@@ -560,6 +560,7 @@ void US_Hydrodyn_Cluster_Config::edit()
                                                 lb_systems->text( i ),
                                                 us_hydrodyn,
                                                 this );
+            US_Hydrodyn::fixWinButtons( hccs );
             hccs->exec();
             delete hccs;
          } else {

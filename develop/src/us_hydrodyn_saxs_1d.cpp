@@ -2429,6 +2429,7 @@ void US_Hydrodyn_Saxs::saxs_1d()
    //   {
 
    US_Hydrodyn_Saxs_1d * uhs1d = new US_Hydrodyn_Saxs_1d( us_hydrodyn );
+   US_Hydrodyn::fixWinButtons( uhs1d );
 
    uhs1d->show();
    //      ((US_Hydrodyn *)us_hydrodyn)->saxs_1d_window = 

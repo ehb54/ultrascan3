@@ -1359,6 +1359,74 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect(pb_scale_create, SIGNAL(clicked()), SLOT(scale_create()));
    pb_scale_create->setEnabled( false );
 
+   // testiq mode
+
+   pb_testiq = new QPushButton(tr("Test I(q)"), this);
+   pb_testiq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_testiq->setMinimumHeight(minHeight1);
+   pb_testiq->setPalette( PALET_PUSHB );
+   connect(pb_testiq, SIGNAL(clicked()), SLOT(testiq()));
+   pb_testiq->setEnabled( false );
+
+   lbl_testiq_q_range = new QLabel( tr( "t range for I(q): " ), this );
+   lbl_testiq_q_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_testiq_q_range->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_testiq_q_range );
+   lbl_testiq_q_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_testiq_q_start = new mQLineEdit(this, "le_testiq_q_start Line Edit");
+   le_testiq_q_start->setText( "" );
+   le_testiq_q_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_testiq_q_start->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_testiq_q_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_testiq_q_start->setEnabled( false );
+   le_testiq_q_start->setValidator( new QDoubleValidator( le_testiq_q_start ) );
+   connect( le_testiq_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( testiq_q_start_text( const QString & ) ) );
+   connect( le_testiq_q_start, SIGNAL( focussed ( bool ) )             , SLOT( testiq_q_start_focus( bool ) ) );
+
+   le_testiq_q_end = new mQLineEdit(this, "le_testiq_q_end Line Edit");
+   le_testiq_q_end->setText( "" );
+   le_testiq_q_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_testiq_q_end->setPalette(QPalette( cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_testiq_q_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_testiq_q_end->setEnabled( false );
+   le_testiq_q_end->setValidator( new QDoubleValidator( le_testiq_q_end ) );
+   connect( le_testiq_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( testiq_q_end_text( const QString & ) ) );
+   connect( le_testiq_q_end, SIGNAL( focussed ( bool ) )             , SLOT( testiq_q_end_focus( bool ) ) );
+
+   cb_testiq_from_gaussian = new QCheckBox(this);
+   cb_testiq_from_gaussian->setText( tr( "as pure Gaussian" ) );
+   cb_testiq_from_gaussian->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_testiq_from_gaussian->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_testiq_from_gaussian );
+   cb_testiq_from_gaussian->setChecked( false );
+
+   hbl_testiq_gaussians = new Q3HBoxLayout( 0 );
+
+   lbl_testiq_gaussians = new QLabel( tr( "I(q) from Gaussian:  " ), this );
+   lbl_testiq_gaussians->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_testiq_gaussians->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_testiq_gaussians );
+   lbl_testiq_gaussians->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   rb_testiq_from_i_t =  new QRadioButton( tr( "None " ), this );
+   rb_testiq_from_i_t -> setPalette      ( PALET_NORMAL );
+   AUTFBACK( rb_testiq_from_i_t );
+   rb_testiq_from_i_t -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   connect( rb_testiq_from_i_t, SIGNAL( clicked() ), SLOT( testiq_gauss_line() ) );
+
+   bg_testiq_gaussians = new QButtonGroup( this );
+   bg_pos = 0;
+   bg_testiq_gaussians->setExclusive( true );
+   bg_testiq_gaussians->addButton( rb_testiq_from_i_t, bg_pos++ );
+
+   pb_testiq_testset = new QPushButton(tr("Create I(q) set"), this);
+   pb_testiq_testset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_testiq_testset->setMinimumHeight(minHeight1);
+   pb_testiq_testset->setPalette( PALET_PUSHB );
+   connect(pb_testiq_testset, SIGNAL(clicked()), SLOT(testiq_testset()));
+   pb_testiq_testset->setEnabled( false );
+
    // guinier mode
 
    pb_guinier = new QPushButton(tr("Guinier"), this);
@@ -2237,6 +2305,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_mode->addWidget( pb_scale );
    hbl_mode->addWidget( pb_rgc );
    hbl_mode->addWidget( pb_pm );
+   hbl_mode->addWidget( pb_testiq );
    hbl_mode->addWidget( pb_guinier );
 
    // scale
@@ -2262,6 +2331,21 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( pb_scale_apply );
       hbl->addWidget( pb_scale_create );
       vbl_scale->addLayout( hbl );
+   }      
+
+   // testiq
+   Q3BoxLayout *vbl_testiq = new Q3VBoxLayout( 0 );
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( lbl_testiq_q_range );
+      hbl->addWidget( le_testiq_q_start );
+      hbl->addWidget( le_testiq_q_end );
+      hbl->addWidget( lbl_testiq_gaussians );
+      hbl->addWidget( rb_testiq_from_i_t );
+      hbl->addLayout( hbl_testiq_gaussians );
+      hbl->addWidget( cb_testiq_from_gaussian );
+      hbl->addWidget( pb_testiq_testset );
+      vbl_testiq->addLayout( hbl );
    }      
 
    // guinier
@@ -2425,6 +2509,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addLayout ( hbl_top );
    vbl_plot_group->addLayout ( hbl_mode );
    vbl_plot_group->addLayout ( vbl_scale );
+   vbl_plot_group->addLayout ( vbl_testiq );
    vbl_plot_group->addLayout ( vbl_guinier );
    vbl_plot_group->addLayout ( vbl_rgc );
    vbl_plot_group->addLayout ( vbl_pm );
@@ -2586,6 +2671,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    timeshift_widgets.push_back( lbl_blank1 );
    timeshift_widgets.push_back( qwtw_wheel );
    timeshift_widgets.push_back( lbl_wheel_pos );
+   timeshift_widgets.push_back( le_dummy );
    // timeshift_widgets.push_back( pb_select_vis );
    // timeshift_widgets.push_back( pb_remove_vis );
    // timeshift_widgets.push_back( pb_crop_common );
@@ -2595,7 +2681,19 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    // timeshift_widgets.push_back( pb_crop_undo );
    // timeshift_widgets.push_back( pb_crop_right );
    // timeshift_widgets.push_back( pb_legend );
-   timeshift_widgets.push_back( le_dummy );
+
+   // testiq_widgets;
+
+   testiq_widgets.push_back( lbl_testiq_q_range );
+   testiq_widgets.push_back( le_testiq_q_start );
+   testiq_widgets.push_back( le_testiq_q_end );
+   testiq_widgets.push_back( lbl_testiq_gaussians );
+   testiq_widgets.push_back( rb_testiq_from_i_t );
+   testiq_widgets.push_back( cb_testiq_from_gaussian );
+   testiq_widgets.push_back( pb_testiq_testset );
+   testiq_widgets.push_back( lbl_blank1 );
+   testiq_widgets.push_back( qwtw_wheel );
+   testiq_widgets.push_back( lbl_wheel_pos );
 
    // guinier_widgets;
 
@@ -2686,6 +2784,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
    ShowHide::hide_widgets( baseline_widgets );
    ShowHide::hide_widgets( scale_widgets );
    ShowHide::hide_widgets( timeshift_widgets );
+   ShowHide::hide_widgets( testiq_widgets );
    ShowHide::hide_widgets( guinier_widgets );
    ShowHide::hide_widgets( rgc_widgets );
    ShowHide::hide_widgets( pm_widgets );
@@ -2722,6 +2821,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
    case MODE_BASELINE  : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets  , false ); break;
    case MODE_TIMESHIFT : mode_title( pb_wheel_start->text() );    ShowHide::hide_widgets( timeshift_widgets , false ); break;
    case MODE_SCALE     : mode_title( pb_scale->text() );          ShowHide::hide_widgets( scale_widgets     , false ); break;
+   case MODE_TESTIQ    : mode_title( pb_testiq->text() );         ShowHide::hide_widgets( testiq_widgets    , false ); break;
    case MODE_GUINIER   : mode_title( pb_guinier->text() );        ShowHide::hide_widgets( guinier_widgets   , false ); break;
    case MODE_RGC       : mode_title( pb_rgc->text() );            ShowHide::hide_widgets( rgc_widgets       , false ); break;
    case MODE_PM        : mode_title( pb_pm->text() );             ShowHide::hide_widgets( pm_widgets        , false ); break;
@@ -2948,6 +3048,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_scale            ->setEnabled( files_selected_count > 1 && files_compatible );
    pb_rgc              ->setEnabled( true );
    pb_pm               ->setEnabled( files_selected_count == 1 && files_compatible && !files_are_time );
+   pb_testiq           ->setEnabled( files_selected_count > 4 && files_compatible && files_are_time );
    pb_guinier          ->setEnabled( files_selected_count && files_compatible && !files_are_time );
 
    // cb_guinier          ->setEnabled( files_selected_count );
@@ -3058,7 +3159,7 @@ void US_Hydrodyn_Saxs_Hplc::model_enables()
 
 void US_Hydrodyn_Saxs_Hplc::disable_all()
 {
-   cout << "disable all\n";
+   // cout << "disable all\n";
    pb_similar_files      ->setEnabled( false );
    pb_conc               ->setEnabled( false );
    pb_clear_files        ->setEnabled( false );
@@ -3174,6 +3275,8 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_scale              ->setEnabled( false );
    pb_rgc                ->setEnabled( false );
    pb_pm                 ->setEnabled( false );
+   pb_testiq             ->setEnabled( false );
+   pb_guinier            ->setEnabled( false );
 
    le_pm_q_start         ->setEnabled( false );
    le_pm_q_end           ->setEnabled( false );

@@ -2675,6 +2675,7 @@ void US_Hydrodyn_Batch::make_movie()
                                         &tc_pointsize,
                                         &black_background
                                         );
+   US_Hydrodyn::fixWinButtons( hbmo );
 
    hbmo->exec();
    delete hbmo;
@@ -3388,6 +3389,7 @@ void US_Hydrodyn_Batch::cluster()
       new US_Hydrodyn_Cluster(
                               us_hydrodyn,
                               this );
+   US_Hydrodyn::fixWinButtons( hc );
    hc->exec();
    delete hc;
 }

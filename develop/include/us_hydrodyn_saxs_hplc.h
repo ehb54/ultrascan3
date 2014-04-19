@@ -22,6 +22,7 @@
 #include <Q3BoxLayout>
 #include <QMouseEvent>
 #include <QCloseEvent>
+#include <Q3HBoxLayout>
 #include "../3dplot/mesh2mainwindow.h"
 
 #ifdef QT4
@@ -367,9 +368,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_axis_y;
 
       QLabel        *lbl_mode_title;
-      QPushButton   *pb_scale;
 
       // scale
+
+      QPushButton   *pb_scale;
 
       QLabel       * lbl_scale_low_high;
       QRadioButton * rb_scale_low;
@@ -384,6 +386,38 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton  * pb_scale_reset;
       QPushButton  * pb_scale_apply;
       QPushButton  * pb_scale_create;
+
+      // testiq
+
+      QPushButton  * pb_testiq;
+
+      QLabel       * lbl_testiq_q_range;
+      mQLineEdit   * le_testiq_q_start;
+      mQLineEdit   * le_testiq_q_end;
+      QPushButton  * pb_testiq_testset;
+
+      QCheckBox    * cb_testiq_from_gaussian;
+
+      QLabel                *    lbl_testiq_gaussians;
+      QButtonGroup          *    bg_testiq_gaussians;
+      QRadioButton          *    rb_testiq_from_i_t;
+      Q3HBoxLayout           *    hbl_testiq_gaussians;
+      vector < QRadioButton * >  rb_testiq_gaussians;
+      
+      bool           testiq_ggaussian_ok;
+
+      set < QString > testiq_selected;
+
+      bool           testiq_make();
+      bool           testiq_active;
+
+      vector < QString >                 testiq_created_names;
+      map < QString, vector < double > > testiq_created_q;
+      map < QString, vector < double > > testiq_created_I;
+      map < QString, vector < double > > testiq_created_e;
+
+      set < QString >                    testiq_original_selection;
+      set < QString >                    testiq_created_scale_names;
 
       // Guinier
 
@@ -443,6 +477,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, long >               guinier_fit_lines;
       map < QString, long >               guinier_error_curves;
 #endif
+      map < QString, QColor >             guinier_colors;
+
       void           guinier_replot       ();
       void           guinier_analysis     ();
       void           guinier_residuals    ( bool reset = false );
@@ -657,6 +693,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < QWidget * >                rgc_widgets;
       vector < QWidget * >                pm_widgets;
       vector < QWidget * >                guinier_widgets;
+      vector < QWidget * >                testiq_widgets;
 
       vector < double >                   conc_curve( vector < double > &t,
                                                       unsigned int peak,
@@ -674,6 +711,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       double                              ggaussian_rmsd();
       bool                                ggaussian_compatible( bool check_against_global = true );
       bool                                ggaussian_compatible( QStringList & files, bool check_against_global = true );
+      bool                                ggaussian_compatible( set < QString > & selected, bool check_against_global = true );
 
       unsigned int                        gaussian_pos;
       void                                update_gauss_pos();
@@ -685,6 +723,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       bool                                opt_repeak_gaussians( QString file );
 
       QStringList                         all_selected_files();
+      set < QString >                     all_selected_files_set();
+      void                                remove_files( set < QString > & fileset );
       QStringList                         all_files();
       QString                             last_selected_file;
 
@@ -738,11 +778,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void                         smooth( QStringList files );
       void                         repeak( QStringList files );
       void                         create_i_of_t( QStringList files );
-      void                         create_i_of_q( QStringList files );
-      void                         create_i_of_q_ng( QStringList files );
+      bool                         create_i_of_q( QStringList files,
+                                                  double t_min = -1e99,
+                                                  double t_max = 1e99 );
+      bool                         create_i_of_q( set < QString > &fileset,
+                                                  double t_min = -1e99,
+                                                  double t_max = 1e99 );
+      bool                         create_i_of_q_ng( QStringList files,
+                                                     double t_min = -1e99,
+                                                     double t_max = 1e99 );
+      bool                         create_i_of_q_ng( set < QString > & fileset,
+                                                     double t_min = -1e99,
+                                                     double t_max = 1e99 );
       QString                      last_created_file;
       void                         zoom_info();
-      void                         clear_files( QStringList files );
+      void                         clear_files( QStringList files, bool quiet = false );
       void                         to_created( QString file );
       void                         add_files( QStringList files );
       bool                         axis_x_log;
@@ -775,6 +825,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
          ,MODE_RGC
          ,MODE_PM
          ,MODE_GUINIER
+         ,MODE_TESTIQ
       };
 
       modes                        current_mode;
@@ -1056,8 +1107,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       void scale                       ();
       void scale_q_start_text          ( const QString & );
-      void scale_q_end_text            ( const QString & );
       void scale_q_start_focus         ( bool );
+      void scale_q_end_text            ( const QString & );
       void scale_q_end_focus           ( bool );
       void scale_q_reset               ();
       void scale_apply                 ();
@@ -1082,6 +1133,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void guinier_sd                  ();
       void guinier_enables             ();
       void guinier_residuals_update    ();
+
+      void testiq                       ();
+      void testiq_q_start_text         ( const QString & );
+      void testiq_q_start_focus        ( bool );
+      void testiq_q_end_text           ( const QString & );
+      void testiq_q_end_focus          ( bool );
+      void testiq_testset              ();
+      void testiq_gauss_line           ();
+      void testiq_enables              ();
 
       void select_vis                  ();
       void remove_vis                  ();

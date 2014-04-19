@@ -1,3 +1,4 @@
+#include "../include/us3_defines.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
 #include "../include/us_pm.h"
@@ -93,7 +94,7 @@ void US_Hydrodyn_Saxs_Hplc::pm()
 
    plotted_markers.clear();
    gauss_add_marker( le_pm_q_start  ->text().toDouble(), Qt::red, tr( "Start" ) );
-   gauss_add_marker( le_pm_q_end    ->text().toDouble(), Qt::red, tr( "End"   ) );
+   gauss_add_marker( le_pm_q_end    ->text().toDouble(), Qt::red, tr( "End"   ), Qt::AlignLeft | Qt::AlignTop );
    plot_dist->replot();
 }
 
@@ -515,22 +516,27 @@ void US_Hydrodyn_Saxs_Hplc::rgc_rg_text( const QString & )
 {
 }
 
-// --- guinier ---
+// --- TESTIQ ----
 
-void US_Hydrodyn_Saxs_Hplc::guinier()
+void US_Hydrodyn_Saxs_Hplc::testiq()
 {
    le_last_focus = (mQLineEdit *) 0;
 
    bool any_selected = false;
 
-   guinier_q           .clear();
-   guinier_q2          .clear();
-   guinier_I           .clear();
-   guinier_e           .clear();
-   guinier_x           .clear();
-   guinier_y           .clear();
-   guinier_a           .clear();
-   guinier_b           .clear();
+   testiq_selected    .clear();
+
+   bool do_rescale = false;
+
+   if ( current_mode == MODE_SCALE )
+   {
+      remove_files( testiq_created_scale_names );
+      set_selected( testiq_original_selection );
+      testiq_created_scale_names.clear();
+      testiq_original_selection.clear();
+      plot_files();
+      do_rescale = true;
+   }
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -539,59 +545,20 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
          if ( !any_selected )
          {
             wheel_file = lb_files->text( i );
-            any_selected = true;
          }
-         QString this_file = lb_files->text( i );
-         guinier_q[ this_file ] = f_qs[ this_file ];
-         guinier_I[ this_file ] = f_Is[ this_file ];
-         guinier_e[ this_file ] = f_errors[ this_file ];
-         for ( int j = 0; j < (int) f_qs[ this_file ].size(); ++j )
+         testiq_selected.insert( lb_files->text( i ) );
+         any_selected = true;
+         if ( !plotted_curves.count( lb_files->text( i ) ) )
          {
-            guinier_q2[ this_file ].push_back( f_qs[ this_file ][ j ] * f_qs[ this_file ][ j ] );
-         }
-
-         if ( !plotted_curves.count( this_file ) )
-         {
-            editor_msg( "red", QString( tr( "Internal error: guinier selected %1, but no plotted curve found" ) ).arg( this_file ) );
+            editor_msg( "red", QString( tr( "Internal error: testiq selected %1, but no plotted curve found" ) ).arg( lb_files->text( i ) ) );
             return;
          }
-
-         if ( !guinier_q[ this_file ].size() )
-         {
-            editor_msg( "red", QString( tr( "Internal error: guinier selected %1, but no data for curve found" ) ).arg( this_file ) );
-            return;
-         }
-            
-         if ( !i )
-         {
-            guinier_minq  = guinier_q [ this_file ][ 0 ];
-            guinier_maxq  = guinier_q [ this_file ].back();
-            guinier_minq2 = guinier_q2[ this_file ][ 0 ];
-            guinier_maxq2 = guinier_q2[ this_file ].back();
-         } else {
-            if ( guinier_minq > guinier_q [ this_file ][ 0 ] )
-            {
-               guinier_minq = guinier_q [ this_file ][ 0 ];
-            }
-            if ( guinier_maxq < guinier_q [ this_file ].back() )
-            {
-               guinier_maxq = guinier_q [ this_file ].back();
-            }
-            if ( guinier_minq2 > guinier_q2[ this_file ][ 0 ] )
-            {
-               guinier_minq2 = guinier_q2[ this_file ][ 0 ];
-            }
-            if ( guinier_maxq2 < guinier_q2[ this_file ].back() )
-            {
-               guinier_maxq2 = guinier_q2[ this_file ].back();
-            }
-         }            
       }
    }
 
    if ( !any_selected )
    {
-      editor_msg( "red", tr( "Internal error: no files selected in guinier mode" ) );
+      editor_msg( "red", tr( "Internal error: no files selected in testiq mode" ) );
       return;
    }
 
@@ -617,6 +584,405 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
    {
       editor_msg( "red", QString( tr( "Internal error: %1 empty y data" ) ).arg( wheel_file ) );
       return;
+   }
+
+   if ( le_testiq_q_start->text().isEmpty() ||
+        le_testiq_q_start->text() == "0" ||
+        le_testiq_q_start->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
+   {
+      disconnect( le_testiq_q_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_testiq_q_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] ) );
+      connect( le_testiq_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( testiq_q_start_text( const QString & ) ) );
+   }
+
+   if ( le_testiq_q_end->text().isEmpty() ||
+        le_testiq_q_end->text() == "0" ||
+        le_testiq_q_end->text().toDouble() > f_qs[ wheel_file ].back() )
+   {
+      disconnect( le_testiq_q_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+      le_testiq_q_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+      connect( le_testiq_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( testiq_q_end_text( const QString & ) ) );
+   }
+
+   disable_all();
+   // plotted_markers.clear();
+   if ( current_mode == MODE_GUINIER ||
+        current_mode == MODE_SCALE )
+   {
+      gauss_delete_markers();
+      plotted_markers.clear();
+      plot_dist->show();
+   }
+      
+   mode_select( MODE_TESTIQ );
+
+   gauss_add_marker( le_testiq_q_start  ->text().toDouble(), Qt::red, tr( "Start") );
+   gauss_add_marker( le_testiq_q_end    ->text().toDouble(), Qt::red, tr( "End"  ), Qt::AlignLeft | Qt::AlignTop );
+
+   if (
+       !unified_ggaussian_ok ||
+       !f_gaussians.count( wheel_file ) ||
+       !f_gaussians[ wheel_file ].size() ||
+       !ggaussian_compatible( testiq_selected, false ) )
+   {
+      lbl_testiq_gaussians   ->hide();
+      rb_testiq_from_i_t     ->hide();
+      rb_testiq_from_i_t     ->setChecked( true );
+   } else {
+      if ( testiq_active )
+      {
+         for ( int i = 0; i < (int) rb_testiq_gaussians.size(); ++i )
+         {
+            rb_testiq_gaussians[ i ]->show();
+         }
+      } else {
+         for ( int i = 0; i < (int) f_gaussians[ wheel_file ].size(); i += gaussian_type_size )
+         {
+            QRadioButton * rb = new QRadioButton( this );
+            rb->setPalette( PALET_NORMAL );
+            AUTFBACK( rb );
+            rb->setFont   ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+            rb->setText   ( QString( "%1 " ).arg( ( i / gaussian_type_size ) + 1 ) );
+            rb->setChecked( false );
+            rb->setEnabled( true );
+            rb->show();
+            rb_testiq_gaussians .push_back( rb );
+            hbl_testiq_gaussians->addWidget( rb );
+            bg_testiq_gaussians ->insert( rb );
+            connect( rb, SIGNAL( clicked() ), SLOT( testiq_gauss_line() ) );
+         }
+         rb_testiq_from_i_t->setChecked( true );
+      }
+      
+      for ( int i = 0; i < (int) unified_ggaussian_gaussians_size; i++ )
+      {
+         gauss_add_marker( unified_ggaussian_params[ common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
+      }
+      testiq_gauss_line();
+   }         
+
+   pb_rescale     ->setEnabled( true );
+   pb_axis_x      ->setEnabled( true );
+   pb_axis_y      ->setEnabled( true );
+
+   running       = true;
+   testiq_active = true;
+
+   testiq_enables();
+
+   // qDebug( suppress_replot ? "suppress_replot on" : "suppress_replot off" );
+   if ( do_rescale )
+   {
+      // qDebug( "testiq mode scale rescale" );
+      rescale();
+   } else {
+      plot_dist->replot();
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::testiq_gauss_line()
+{
+   int line_width = use_line_width < 3 ? ( use_line_width + 1 ) : use_line_width;
+
+   for ( int i = 0; i < (int) rb_testiq_gaussians.size(); ++i )
+   {
+      QPen use_pen = QPen( rb_testiq_gaussians[ i ]->isChecked() ? Qt::magenta : Qt::blue, line_width, Qt::DashDotDotLine );
+         
+#ifdef QT4
+      plotted_markers[ 2 + i ]->setLinePen( use_pen );
+#else
+      plot_dist->setMarkerPen( plotted_markers[ 2 + i ], use_pen );
+#endif
+   }
+   plot_dist->replot();
+   testiq_enables();
+}      
+
+void US_Hydrodyn_Saxs_Hplc::testiq_enables()
+{
+   pb_wheel_start         ->setEnabled( false );
+   pb_wheel_cancel        ->setEnabled( true );
+   le_testiq_q_start      ->setEnabled( true );
+   le_testiq_q_end        ->setEnabled( true );
+   pb_testiq_testset      ->setEnabled( le_testiq_q_start->text().toDouble() + .9999e0 <= le_testiq_q_end->text().toDouble() );
+   pb_guinier             ->setEnabled( le_testiq_q_start->text().toDouble() + .9999e0 <= le_testiq_q_end->text().toDouble() );
+   pb_scale               ->setEnabled( le_testiq_q_start->text().toDouble() + .9999e0 <= le_testiq_q_end->text().toDouble() );
+   if ( rb_testiq_from_i_t->isChecked() )
+   {
+      cb_testiq_from_gaussian->setChecked( false );
+      cb_testiq_from_gaussian->hide();
+   } else {
+      cb_testiq_from_gaussian->show();
+   }
+}
+
+bool US_Hydrodyn_Saxs_Hplc::testiq_make()
+{
+   // todo: make the iq to vectors <> 
+   // used by guinier_testiq() and testiq_testset
+   testiq_created_names.clear();
+   testiq_created_q    .clear();
+   testiq_created_I    .clear();
+   testiq_created_e    .clear();
+
+   if ( cb_testiq_from_gaussian->isVisible() && !rb_testiq_from_i_t->isChecked() )
+   {
+      return create_i_of_q( testiq_selected, le_testiq_q_start->text().toDouble(), le_testiq_q_end->text().toDouble() );
+   } else {
+      return create_i_of_q_ng( testiq_selected, le_testiq_q_start->text().toDouble(), le_testiq_q_end->text().toDouble() );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::testiq_testset()
+{
+   if ( !testiq_make() )
+   {
+      return;
+   }
+   // todo: add to plot
+   for ( int i = 0; i < (int) testiq_created_names.size(); ++i )
+   {
+      QString this_file = testiq_created_names[ i ];
+      add_plot( this_file, 
+                testiq_created_q[ this_file ],
+                testiq_created_I[ this_file ],
+                testiq_created_e[ this_file ],
+                false, false );
+   }
+   testiq_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::testiq_q_start_text( const QString & text )
+{
+   if ( current_mode != MODE_TESTIQ )
+   {
+      return;
+   }
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
+#else
+   plotted_markers[ 0 ]->setXValue( text.toDouble() );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   plot_dist->replot();
+   testiq_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::testiq_q_end_text( const QString & text )
+{
+   if ( current_mode != MODE_TESTIQ )
+   {
+      return;
+   }
+#ifndef QT4
+   plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
+#else
+   plotted_markers[ 1 ]->setXValue( text.toDouble() );
+#endif
+   if ( qwtw_wheel->value() != text.toDouble() )
+   {
+      qwtw_wheel->setValue( text.toDouble() );
+   }
+   plot_dist->replot();
+   testiq_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::testiq_q_start_focus( bool hasFocus )
+{
+   if ( current_mode != MODE_TESTIQ )
+   {
+      return;
+   }
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(), 
+                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_testiq_q_start->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::testiq_q_end_focus( bool hasFocus )
+{
+   if ( current_mode != MODE_TESTIQ )
+   {
+      return;
+   }
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(), 
+                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_testiq_q_end->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+// --- guinier ---
+
+void US_Hydrodyn_Saxs_Hplc::guinier()
+{
+   le_last_focus = (mQLineEdit *) 0;
+
+   bool any_selected = false;
+
+   guinier_q           .clear();
+   guinier_q2          .clear();
+   guinier_I           .clear();
+   guinier_e           .clear();
+   guinier_x           .clear();
+   guinier_y           .clear();
+   guinier_a           .clear();
+   guinier_b           .clear();
+   guinier_colors      .clear();
+
+   if ( current_mode == MODE_TESTIQ )
+   {
+      if ( !testiq_make() )
+      {
+         return;
+      }
+      for ( int i = 0; i < (int) rb_testiq_gaussians.size(); ++i )
+      {
+         rb_testiq_gaussians[ i ]->hide();
+      }
+      for ( int i = 0; i < (int) testiq_created_names.size(); ++i )
+      {
+         any_selected = true;
+         QString this_file = testiq_created_names[ i ];
+         guinier_q[ this_file ] = testiq_created_q[ this_file ];
+         guinier_I[ this_file ] = testiq_created_I[ this_file ];
+         guinier_e[ this_file ] = testiq_created_e[ this_file ];
+         for ( int j = 0; j < (int) guinier_q[ this_file ].size(); ++j )
+         {
+            guinier_q2[ this_file ].push_back( guinier_q[ this_file ][ j ] * guinier_q[ this_file ][ j ] );
+         }
+         guinier_colors[ this_file ] = plot_colors[ i % plot_colors.size() ];
+
+         if ( !i )
+         {
+            guinier_minq  = guinier_q [ this_file ][ 0 ];
+            guinier_maxq  = guinier_q [ this_file ].back();
+            guinier_minq2 = guinier_q2[ this_file ][ 0 ];
+            guinier_maxq2 = guinier_q2[ this_file ].back();
+         } else {
+            if ( guinier_minq > guinier_q [ this_file ][ 0 ] )
+            {
+               guinier_minq = guinier_q [ this_file ][ 0 ];
+            }
+            if ( guinier_maxq < guinier_q [ this_file ].back() )
+            {
+               guinier_maxq = guinier_q [ this_file ].back();
+            }
+            if ( guinier_minq2 > guinier_q2[ this_file ][ 0 ] )
+            {
+               guinier_minq2 = guinier_q2[ this_file ][ 0 ];
+            }
+            if ( guinier_maxq2 < guinier_q2[ this_file ].back() )
+            {
+               guinier_maxq2 = guinier_q2[ this_file ].back();
+            }
+         }            
+      }
+      if ( !any_selected )
+      {
+         editor_msg( "red", tr( "Internal error: no files selected in Guinier mode" ) );
+         return;
+      }
+   } else {
+      for ( int i = 0; i < lb_files->numRows(); i++ )
+      {
+         if ( lb_files->isSelected( i ) )
+         {
+            if ( !any_selected )
+            {
+               wheel_file = lb_files->text( i );
+               any_selected = true;
+            }
+            QString this_file = lb_files->text( i );
+            guinier_q[ this_file ] = f_qs[ this_file ];
+            guinier_I[ this_file ] = f_Is[ this_file ];
+            guinier_e[ this_file ] = f_errors[ this_file ];
+            for ( int j = 0; j < (int) f_qs[ this_file ].size(); ++j )
+            {
+               guinier_q2[ this_file ].push_back( f_qs[ this_file ][ j ] * f_qs[ this_file ][ j ] );
+            }
+
+            if ( !plotted_curves.count( this_file ) )
+            {
+               editor_msg( "red", QString( tr( "Internal error: guinier selected %1, but no plotted curve found" ) ).arg( this_file ) );
+               return;
+            }
+
+            if ( !guinier_q[ this_file ].size() )
+            {
+               editor_msg( "red", QString( tr( "Internal error: guinier selected %1, but no data for curve found" ) ).arg( this_file ) );
+               return;
+            }
+            
+            guinier_colors[ this_file ] = plot_colors[ f_pos[ this_file ] % plot_colors.size() ];
+
+            if ( !i )
+            {
+               guinier_minq  = guinier_q [ this_file ][ 0 ];
+               guinier_maxq  = guinier_q [ this_file ].back();
+               guinier_minq2 = guinier_q2[ this_file ][ 0 ];
+               guinier_maxq2 = guinier_q2[ this_file ].back();
+            } else {
+               if ( guinier_minq > guinier_q [ this_file ][ 0 ] )
+               {
+                  guinier_minq = guinier_q [ this_file ][ 0 ];
+               }
+               if ( guinier_maxq < guinier_q [ this_file ].back() )
+               {
+                  guinier_maxq = guinier_q [ this_file ].back();
+               }
+               if ( guinier_minq2 > guinier_q2[ this_file ][ 0 ] )
+               {
+                  guinier_minq2 = guinier_q2[ this_file ][ 0 ];
+               }
+               if ( guinier_maxq2 < guinier_q2[ this_file ].back() )
+               {
+                  guinier_maxq2 = guinier_q2[ this_file ].back();
+               }
+            }            
+         }
+      }
+      if ( !any_selected )
+      {
+         editor_msg( "red", tr( "Internal error: no files selected in guinier mode" ) );
+         return;
+      }
+
+      if ( !f_qs.count( wheel_file ) )
+      {
+         editor_msg( "red", QString( tr( "Internal error: %1 not found in data" ) ).arg( wheel_file ) );
+         return;
+      }
+
+      if ( f_qs[ wheel_file ].size() < 2 )
+      {
+         editor_msg( "red", QString( tr( "Internal error: %1 almost empty data" ) ).arg( wheel_file ) );
+         return;
+      }
+
+      if ( !f_Is.count( wheel_file ) )
+      {
+         editor_msg( "red", QString( tr( "Internal error: %1 not found in y data" ) ).arg( wheel_file ) );
+         return;
+      }
+
+      if ( !f_Is[ wheel_file ].size() )
+      {
+         editor_msg( "red", QString( tr( "Internal error: %1 empty y data" ) ).arg( wheel_file ) );
+         return;
+      }
    }
 
    if ( le_guinier_q_start->text().isEmpty() ||
@@ -656,6 +1022,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
    disable_all();
    mode_select( MODE_GUINIER );
    plot_dist->hide();
+   if ( testiq_active )
+   {
+      pb_testiq->setEnabled( true );
+   }
    ShowHide::hide_widgets( guinier_errors_widgets );
    
    running       = true;
@@ -809,7 +1179,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_residuals( bool reset )
          continue;
       }
 
-      QPen use_pen = QPen( plot_colors[ f_pos[ it->first ] % plot_colors.size() ], use_line_width, Qt::SolidLine );
+      QPen use_pen = QPen( guinier_colors[ it->first ], use_line_width, Qt::SolidLine );
 
       double a = guinier_a[ it->first ];
       double b = guinier_b[ it->first ];
@@ -1075,12 +1445,12 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 #ifdef QT4
             QwtPlotCurve *curve = new QwtPlotCurve( "fl:" + it->first );
             curve->setStyle ( QwtPlotCurve::Lines );
-            curve->setPen( QPen( plot_colors[ f_pos[ it->first ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+            curve->setPen( QPen( guinier_colors[ it->first ], use_line_width, Qt::SolidLine ) );
             curve->attach( guinier_plot );
 #else
             long curve = guinier_plot->insertCurve( "fl:" + it->first );
             guinier_plot->setCurveStyle ( curve, QwtCurve::Lines );
-            guinier_plot->setCurvePen( curve, QPen( plot_colors[ f_pos[ it->first ] % plot_colors.size() ], use_line_width, SolidLine ) );
+            guinier_plot->setCurvePen( curve, QPen( guinier_colors[ it->first ], use_line_width, SolidLine ) );
 #endif
             guinier_fit_lines[ it->first ] = curve;
          }
@@ -1099,7 +1469,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 #endif
          editor_msg( "dark blue", report );
          // qDebug( QString( "guinier a %1 b %2" ).arg( a ).arg( b ) );
-         US_Vector::printvector2( "guinier x,y:", guinier_x[ it->first ], guinier_y[ it->first ] );
+         // US_Vector::printvector2( "guinier x,y:", guinier_x[ it->first ], guinier_y[ it->first ] );
       }
    }
 }
@@ -1240,7 +1610,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_replot()
          ++it )
    {
       // plot each curve
-      sym.setPen( QPen( plot_colors[ f_pos[ it->first ] % plot_colors.size()] ) );
+      sym.setPen( QPen( guinier_colors[ it->first ] ) );
 #ifndef QT4
       long curve = guinier_plot->insertCurve( it->first );
       guinier_plot->setCurveStyle ( curve, QwtCurve::NoCurve );
@@ -1282,7 +1652,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_replot()
          }
       }
       q_points = ( unsigned int )q.size();
-      QColor use_qc = plot_colors[ f_pos[ it->first ] % plot_colors.size() ];
+      QColor use_qc = guinier_colors[ it->first ];
 #ifndef QT4
       guinier_plot->setCurveData( curve, 
                                   (double *)&( q[ 0 ] ),
@@ -1363,6 +1733,15 @@ void US_Hydrodyn_Saxs_Hplc::guinier_qrgmax_text( const QString & )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_q_start_text( const QString & text )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   if ( guinier_markers.size() != 4 )
+   {
+      editor_msg( "red", QString( "internal error: guinier_q_start_text markers issue size %1" ).arg( guinier_markers.size() ) );
+      return;
+   }
 #ifndef QT4
    guinier_plot       ->setMarkerPos( guinier_markers[ 0 ], text.toDouble() * text.toDouble(), 0e0 );
    guinier_plot_errors->setMarkerPos( guinier_markers[ 2 ], text.toDouble() * text.toDouble(), 0e0 );
@@ -1394,6 +1773,15 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_start_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_q_end_text( const QString & text )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   if ( guinier_markers.size() != 4 )
+   {
+      editor_msg( "red", QString( "internal error: guinier_q_end_text markers issue size %1" ).arg( guinier_markers.size() ) );
+      return;
+   }
 #ifndef QT4
    guinier_plot       ->setMarkerPos( guinier_markers[ 1 ], text.toDouble() * text.toDouble(), 0e0 );
    guinier_plot_errors->setMarkerPos( guinier_markers[ 3 ], text.toDouble() * text.toDouble(), 0e0 );
@@ -1423,6 +1811,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_end_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_q_start_focus( bool hasFocus )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
    if ( hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
@@ -1436,6 +1828,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_start_focus( bool hasFocus )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_q_end_focus( bool hasFocus )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
    if ( hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
@@ -1449,6 +1845,15 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_end_focus( bool hasFocus )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_q2_start_text( const QString & text )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   if ( guinier_markers.size() != 4 )
+   {
+      editor_msg( "red", QString( "internal error: guinier_q2_start_text markers issue size %1" ).arg( guinier_markers.size() ) );
+      return;
+   }
 #ifndef QT4
    guinier_plot       ->setMarkerPos( guinier_markers[ 0 ], text.toDouble(), 0e0 );
    guinier_plot_errors->setMarkerPos( guinier_markers[ 2 ], text.toDouble(), 0e0 );
@@ -1473,6 +1878,15 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_start_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_q2_end_text( const QString & text )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   if ( guinier_markers.size() != 4 )
+   {
+      editor_msg( "red", QString( "internal error: guinier_q2_end_text markers issue size %1" ).arg( guinier_markers.size() ) );
+      return;
+   }
 #ifndef QT4
    guinier_plot       ->setMarkerPos( guinier_markers[ 1 ], text.toDouble(), 0e0 );
    guinier_plot_errors->setMarkerPos( guinier_markers[ 3 ], text.toDouble(), 0e0 );
@@ -1497,6 +1911,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_end_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_q2_start_focus( bool hasFocus )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
    if ( hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
@@ -1510,6 +1928,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_start_focus( bool hasFocus )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_q2_end_focus( bool hasFocus )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
    if ( hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
@@ -1523,6 +1945,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_end_focus( bool hasFocus )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_delta_start_text( const QString & text )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
    if ( qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -1537,6 +1963,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_delta_start_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_delta_end_text( const QString & text )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
    if ( qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
@@ -1551,6 +1981,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_delta_end_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_delta_start_focus( bool hasFocus )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
    if ( hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
@@ -1563,6 +1997,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_delta_start_focus( bool hasFocus )
 
 void US_Hydrodyn_Saxs_Hplc::guinier_delta_end_focus( bool hasFocus )
 {
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
    if ( hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
@@ -2723,6 +3161,38 @@ void US_Hydrodyn_Saxs_Hplc::scale()
    scale_e           .clear();
    scale_last_created.clear();
 
+   if ( current_mode == MODE_TESTIQ )
+   {
+      if ( !testiq_make() ||
+           !testiq_created_names.size() )
+      {
+         return;
+      }
+      for ( int i = 0; i < (int) rb_testiq_gaussians.size(); ++i )
+      {
+         rb_testiq_gaussians[ i ]->hide();
+      }
+      testiq_original_selection = all_selected_files_set();
+      testiq_created_scale_names.clear();
+      gauss_delete_markers();
+      plotted_markers.clear();
+      for ( int i = 0; i < (int) testiq_created_names.size(); ++i )
+      {
+         QString this_file = testiq_created_names[ i ];
+         add_plot( this_file,
+                   testiq_created_q[ this_file ],
+                   testiq_created_I[ this_file ],
+                   testiq_created_e[ this_file ],
+                   false,
+                   false );
+
+         testiq_created_scale_names.insert( last_created_file );
+      }
+      set_selected( testiq_created_scale_names );
+      plot_files();
+      rescale();
+   } 
+
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected( i ) )
@@ -2750,25 +3220,25 @@ void US_Hydrodyn_Saxs_Hplc::scale()
       return;
    }
 
-   if ( !f_qs.count( wheel_file ) )
+   if ( !scale_q.count( wheel_file ) )
    {
       editor_msg( "red", QString( tr( "Internal error: %1 not found in data" ) ).arg( wheel_file ) );
       return;
    }
 
-   if ( f_qs[ wheel_file ].size() < 2 )
+   if ( scale_q[ wheel_file ].size() < 2 )
    {
       editor_msg( "red", QString( tr( "Internal error: %1 almost empty data" ) ).arg( wheel_file ) );
       return;
    }
 
-   if ( !f_Is.count( wheel_file ) )
+   if ( !scale_I.count( wheel_file ) )
    {
       editor_msg( "red", QString( tr( "Internal error: %1 not found in y data" ) ).arg( wheel_file ) );
       return;
    }
 
-   if ( !f_Is[ wheel_file ].size() )
+   if ( !scale_I[ wheel_file ].size() )
    {
       editor_msg( "red", QString( tr( "Internal error: %1 empty y data" ) ).arg( wheel_file ) );
       return;
@@ -2776,24 +3246,40 @@ void US_Hydrodyn_Saxs_Hplc::scale()
 
    if ( le_scale_q_start->text().isEmpty() ||
         le_scale_q_start->text() == "0" ||
-        le_scale_q_start->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
+        le_scale_q_start->text().toDouble() < scale_q[ wheel_file ][ 0 ] ||
+        le_scale_q_start->text().toDouble() > scale_q[ wheel_file ].back()
+        )
    {
       disconnect( le_scale_q_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_scale_q_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] ) );
+      le_scale_q_start->setText( QString( "%1" ).arg( scale_q[ wheel_file ][ 0 ] ) );
       connect( le_scale_q_start, SIGNAL( textChanged( const QString & ) ), SLOT( scale_q_start_text( const QString & ) ) );
    }
 
    if ( le_scale_q_end->text().isEmpty() ||
         le_scale_q_end->text() == "0" ||
-        le_scale_q_end->text().toDouble() > f_qs[ wheel_file ].back() )
+        le_scale_q_end->text().toDouble() < scale_q[ wheel_file ][ 0 ] ||
+        le_scale_q_end->text().toDouble() > scale_q[ wheel_file ].back() )
    {
       disconnect( le_scale_q_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_scale_q_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+      le_scale_q_end->setText( QString( "%1" ).arg( scale_q[ wheel_file ].back() ) );
       connect( le_scale_q_end, SIGNAL( textChanged( const QString & ) ), SLOT( scale_q_end_text( const QString & ) ) );
    }
 
+   // qDebug( QString( "scale: q: [%1:%2] wheelfile %3 [%4:%5]" )
+   //         .arg( le_scale_q_start->text() )
+   //         .arg( le_scale_q_end->text() )
+   //         .arg( wheel_file )
+   //         .arg( scale_q[ wheel_file ][ 0 ] )
+   //         .arg( scale_q[ wheel_file ].back() ) 
+   //         );
+
    disable_all();
    mode_select( MODE_SCALE );
+
+   if ( testiq_active )
+   {
+      pb_testiq->setEnabled( true );
+   }
    pb_rescale     ->setEnabled( true );
    pb_axis_x      ->setEnabled( true );
    pb_axis_y      ->setEnabled( true );
@@ -2806,7 +3292,7 @@ void US_Hydrodyn_Saxs_Hplc::scale()
 
    plotted_markers.clear();
    gauss_add_marker( le_scale_q_start  ->text().toDouble(), Qt::red, tr( "Start") );
-   gauss_add_marker( le_scale_q_end    ->text().toDouble(), Qt::red, tr( "End"  ) );
+   gauss_add_marker( le_scale_q_end    ->text().toDouble(), Qt::red, tr( "End"  ), Qt::AlignLeft | Qt::AlignTop );
    plot_dist->replot();
 }
 
@@ -2872,7 +3358,7 @@ QString US_Hydrodyn_Saxs_Hplc::scale_get_target( bool do_msg )
       tot_i += this_i;
    }
 
-   msg += QString( "\nScale %2 files from q: %2 %3\n" ).arg( scale_selected.size() ).arg( q_min ).arg( q_max );
+   msg += QString( "\nScale %1 files from q: %2 %3\n" ).arg( scale_selected.size() ).arg( q_min ).arg( q_max );
 
    msg += QString( 
                   "minimum total I : %1 %2\n" 
@@ -3124,8 +3610,8 @@ void US_Hydrodyn_Saxs_Hplc::scale_apply()
 
 void US_Hydrodyn_Saxs_Hplc::scale_q_reset()
 {
-   le_scale_q_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ]   ) );
-   le_scale_q_end  ->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+   le_scale_q_start->setText( QString( "%1" ).arg( scale_q[ wheel_file ][ 0 ]   ) );
+   le_scale_q_end  ->setText( QString( "%1" ).arg( scale_q[ wheel_file ].back() ) );
 }
 
 void US_Hydrodyn_Saxs_Hplc::scale_reset()
@@ -3259,6 +3745,10 @@ void US_Hydrodyn_Saxs_Hplc::scale_create()
 
 void US_Hydrodyn_Saxs_Hplc::scale_q_start_text( const QString & text )
 {
+   if ( current_mode != MODE_SCALE )
+   {
+      return;
+   }
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
 #else
@@ -3274,6 +3764,10 @@ void US_Hydrodyn_Saxs_Hplc::scale_q_start_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Hplc::scale_q_end_text( const QString & text )
 {
+   if ( current_mode != MODE_SCALE )
+   {
+      return;
+   }
 #ifndef QT4
    plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
 #else
@@ -3289,11 +3783,15 @@ void US_Hydrodyn_Saxs_Hplc::scale_q_end_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Hplc::scale_q_start_focus( bool hasFocus )
 {
-   if ( hasFocus )
+   if ( current_mode != MODE_SCALE )
+   {
+      return;
+   }
+   if ( hasFocus && scale_q.count( wheel_file ) )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(), 
-                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+      qwtw_wheel->setRange( scale_q[ wheel_file ][ 0 ], scale_q[ wheel_file ].back(), 
+                            ( scale_q[ wheel_file ].back() - scale_q[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_scale_q_start->text().toDouble() );
       qwtw_wheel->setEnabled( true );
@@ -3302,11 +3800,15 @@ void US_Hydrodyn_Saxs_Hplc::scale_q_start_focus( bool hasFocus )
 
 void US_Hydrodyn_Saxs_Hplc::scale_q_end_focus( bool hasFocus )
 {
-   if ( hasFocus )
+   if ( current_mode != MODE_SCALE )
+   {
+      return;
+   }
+   if ( hasFocus && scale_q.count( wheel_file ) )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(), 
-                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+      qwtw_wheel->setRange( scale_q[ wheel_file ][ 0 ], scale_q[ wheel_file ].back(), 
+                            ( scale_q[ wheel_file ].back() - scale_q[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_scale_q_end->text().toDouble() );
       qwtw_wheel->setEnabled( true );
@@ -3319,6 +3821,29 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
    // cout << QString("pos is now %1 wheel step is %2\n").arg(pos, 0, 'f', 8 ).arg( qwtw_wheel->step() );
    switch ( current_mode )
    {
+
+   case MODE_TESTIQ :
+      {
+         if ( le_testiq_q_start->hasFocus() )
+         {
+            le_last_focus = le_testiq_q_start;
+         }
+         if ( le_testiq_q_end->hasFocus() )
+         {
+            le_last_focus = le_testiq_q_end;
+         }
+
+         if ( !le_last_focus )
+         {
+            // cout << "aw: no last focus in testiq mode\n";
+            return;
+         }
+
+         le_last_focus->setText( QString( "%1" ).arg( pos ) );
+
+         lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
+      }
+      break;
 
    case MODE_GUINIER :
       {
@@ -3717,23 +4242,67 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
             set_selected        ( scale_last_created );
             set_created_selected( scale_last_created );
          }
+         plot_files();
+         if ( testiq_active )
+         {
+            remove_files( testiq_created_scale_names );
+            set_selected( testiq_original_selection );
+            testiq_created_scale_names.clear();
+            testiq_original_selection.clear();
+            mode_select( MODE_TESTIQ );
+            return wheel_cancel();
+         }
+         mode_select( MODE_NORMAL );
+         rescale();
+      }
+      break;
+
+   case MODE_TESTIQ :
+      {
+         testiq_created_names.clear();
+         testiq_created_q    .clear();
+         testiq_created_I    .clear();
+         testiq_created_e    .clear();
+
+         for ( int i = 0; i < (int) rb_testiq_gaussians.size(); ++i )
+         {
+            hbl_testiq_gaussians->remove( rb_testiq_gaussians[ i ] );
+            delete rb_testiq_gaussians[ i ];
+         }
+         rb_testiq_gaussians.clear();
+
+         gauss_delete_markers();
+         plotted_markers.clear();
          mode_select( MODE_NORMAL );
          plot_files();
          rescale();
+         testiq_active = false;
       }
       break;
 
    case MODE_GUINIER :
       {
-         guinier_q2.clear();
-         guinier_q.clear();
-         guinier_I.clear();
-         guinier_e.clear();
+         guinier_q           .clear();
+         guinier_q2          .clear();
+         guinier_I           .clear();
+         guinier_e           .clear();
+         guinier_x           .clear();
+         guinier_y           .clear();
+         guinier_a           .clear();
+         guinier_b           .clear();
+         guinier_colors      .clear();
+
          guinier_delete_markers();
          guinier_markers.clear();
          guinier_curves.clear();
-         mode_select( MODE_NORMAL );
          plot_dist->show();
+         if ( testiq_active )
+         {
+            mode_select( MODE_TESTIQ );
+            return wheel_cancel();
+         }
+         mode_select( MODE_NORMAL );
+
          // plot_files();
          // rescale();
       }
@@ -3783,6 +4352,14 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
    case MODE_SCALE :
       {
          // qDebug( "wheel save mode scale not yet" );
+         wheel_cancel();
+         return;
+      }
+      break;
+
+   case MODE_TESTIQ :
+      {
+         // qDebug( "wheel save mode testiq not yet" );
          wheel_cancel();
          return;
       }

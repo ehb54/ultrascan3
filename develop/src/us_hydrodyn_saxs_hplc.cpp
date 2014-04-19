@@ -146,6 +146,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    // baseline_mode  = false;
    // timeshift_mode = false;
    // scale_mode     = false;
+   testiq_active = false;
    mode_select( MODE_NORMAL );
 
    unified_ggaussian_ok = false;
@@ -714,7 +715,21 @@ void US_Hydrodyn_Saxs_Hplc::clear_files()
    clear_files( files );
    update_enables();
 }
-void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files )
+
+
+void US_Hydrodyn_Saxs_Hplc::remove_files( set < QString > & fileset )
+{
+   QStringList files;
+   for ( set < QString >::iterator it = fileset.begin();
+         it != fileset.end();
+         ++it )
+   {
+      files << *it;
+   }
+   return clear_files( files, true );
+}
+
+void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
 {
    disable_updates = true;
 
@@ -733,7 +748,7 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files )
       }
    }
 
-   if ( created_not_saved_list.size() )
+   if ( !quiet && created_not_saved_list.size() )
    {
       QStringList qsl;
       for ( int i = 0; i < (int)created_not_saved_list.size() && i < 15; i++ )
@@ -790,7 +805,10 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files )
    {
       if ( selected_map.count( lb_files->text( i ) ) )
       {
-         editor_msg( "black", QString( tr( "Removed %1" ) ).arg( lb_files->text( i ) ) );
+         if ( !quiet )
+         {
+            editor_msg( "black", QString( tr( "Removed %1" ) ).arg( lb_files->text( i ) ) );
+         }
          if ( lbl_conc_file->text() == lb_files->text( i ) )
          {
             lbl_conc_file->setText( "" );
@@ -6089,18 +6107,20 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_marker( double pos,
 #endif
                                               align )
 {
+   int line_width = use_line_width < 3 ? ( use_line_width + 1 ) : use_line_width;
+
 #ifndef QT4
    long marker = plot_dist->insertMarker();
    plot_dist->setMarkerLineStyle ( marker, QwtMarker::VLine );
    plot_dist->setMarkerPos       ( marker, pos, 0e0 );
    plot_dist->setMarkerLabelAlign( marker, align );
-   plot_dist->setMarkerPen       ( marker, QPen( color, 2, DashDotDotLine));
+   plot_dist->setMarkerPen       ( marker, QPen( color, line_width, DashDotDotLine));
    plot_dist->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold));
    plot_dist->setMarkerLabelText ( marker, text );
 #else
    QwtPlotMarker * marker = new QwtPlotMarker;
    marker->setLineStyle       ( QwtPlotMarker::VLine );
-   marker->setLinePen         ( QPen( color, 2, Qt::DashDotDotLine ) );
+   marker->setLinePen         ( QPen( color, line_width, Qt::DashDotDotLine ) );
    marker->setLabelOrientation( Qt::Horizontal );
    marker->setXValue          ( pos );
    marker->setLabelAlignment  ( align );
@@ -6763,7 +6783,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q()
    }
               
    QStringList files = all_selected_files();
-   gaussians.size() ? create_i_of_q( files ) : create_i_of_q_ng( files );
+   gaussians.size() ? (void) create_i_of_q( files ) : (void) create_i_of_q_ng( files );
 
    update_enables();
 }
@@ -7228,6 +7248,19 @@ QStringList US_Hydrodyn_Saxs_Hplc::all_selected_files()
    return files;
 }
 
+set < QString > US_Hydrodyn_Saxs_Hplc::all_selected_files_set()
+{
+   set < QString > result;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         result.insert( lb_files->text( i ) );
+      }
+   }
+   return result;
+}
+
 QStringList US_Hydrodyn_Saxs_Hplc::all_files()
 {
    QStringList files;
@@ -7254,7 +7287,18 @@ bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( bool check_against_global )
    return ggaussian_compatible( files, check_against_global );
 }
    
-
+bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( set < QString > & selected, bool check_against_global )
+{
+   QStringList files;
+   for ( set < QString >::iterator it = selected.begin();
+         it != selected.end(); 
+         ++it )
+   {
+      files << *it;
+   }
+   return ggaussian_compatible( files, check_against_global );
+}
+      
 bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files, bool check_against_global )
 {
    // see if all the centers match
@@ -7279,7 +7323,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files, bool chec
          any_f_gaussians = true;
          if ( !centers.size() )
          {
-            for ( unsigned int j = 0; j < f_gaussians[ files[ i ] ].size(); j+= gaussian_type_size )
+            for ( unsigned int j = 0; j < f_gaussians[ files[ i ] ].size(); j += gaussian_type_size )
             {
                centers.push_back( f_gaussians[ files[ i ] ][ 1 + j ] );
                widths .push_back( f_gaussians[ files[ i ] ][ 2 + j ] );
@@ -7297,7 +7341,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files, bool chec
             vector < double > tmp_widths;
             vector < double > tmp_dist1s;
             vector < double > tmp_dist2s;
-            for ( unsigned int j = 0; j < f_gaussians[ files[ i ] ].size(); j+= gaussian_type_size )
+            for ( unsigned int j = 0; j < f_gaussians[ files[ i ] ].size(); j += gaussian_type_size )
             {
                tmp_centers.push_back( f_gaussians[ files[ i ] ][ 1 + j ] );
                tmp_widths .push_back( f_gaussians[ files[ i ] ][ 2 + j ] );

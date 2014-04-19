@@ -8372,6 +8372,7 @@ bool US_Hydrodyn::select_from_directory_history( QString &dir, QWidget *parent, 
                                       is_ok,
                                       parent ? parent : this
                                       );
+   US_Hydrodyn::fixWinButtons( usd );
    usd->exec();
    if ( is_ok )
    {

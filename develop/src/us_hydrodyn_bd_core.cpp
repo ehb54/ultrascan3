@@ -2790,6 +2790,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                                                      bd_load_results_solvent_visc,
                                                      &check_fix_overlaps
                                                      );
+            US_Hydrodyn::fixWinButtons( hblro );
             do {
                hblro->exec();
             } while ( psv <= 0.0 );

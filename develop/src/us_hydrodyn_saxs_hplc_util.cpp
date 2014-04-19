@@ -2002,28 +2002,58 @@ void US_Hydrodyn_Saxs_Hplc::axis_y()
       plot_dist_zoomer = (ScrollZoomer *) 0;
    }
 
-   plot_files();
    switch( current_mode )
    {
    case MODE_PM :
       {
+         plot_files();
+         gauss_delete_markers();
          plotted_markers.clear();
          gauss_add_marker( le_pm_q_start  ->text().toDouble(), Qt::red, tr( "Start" ) );
-         gauss_add_marker( le_pm_q_end    ->text().toDouble(), Qt::red, tr( "End"   ) );
+         gauss_add_marker( le_pm_q_end    ->text().toDouble(), Qt::red, tr( "End"   ), Qt::AlignLeft | Qt::AlignTop );
          plot_dist->replot();
+         return;
       }
       break;
 
    case MODE_SCALE :
       {
+         gauss_delete_markers();
          plotted_markers.clear();
          gauss_add_marker( le_scale_q_start  ->text().toDouble(), Qt::red, tr( "Start") );
-         gauss_add_marker( le_scale_q_end    ->text().toDouble(), Qt::red, tr( "End"  ) );
+         gauss_add_marker( le_scale_q_end    ->text().toDouble(), Qt::red, tr( "End"  ), Qt::AlignLeft | Qt::AlignTop );
+         scale_replot();
+         rescale();
          plot_dist->replot();
+         return;
+      }
+      break;
+
+   case MODE_TESTIQ :
+      {
+         plot_files();
+         gauss_delete_markers();
+         plotted_markers.clear();
+         gauss_add_marker( le_testiq_q_start  ->text().toDouble(), Qt::red, tr( "Start") );
+         gauss_add_marker( le_testiq_q_end    ->text().toDouble(), Qt::red, tr( "End"  ), Qt::AlignLeft | Qt::AlignTop  );
+         
+         if ( cb_testiq_from_gaussian->isVisible() )
+         {
+            for ( int i = 0; i < (int) rb_testiq_gaussians.size(); i++ )
+            {
+               gauss_add_marker( unified_ggaussian_params[ common_size * i ], Qt::blue, QString( "%1" ).arg( i + 1 ) );
+            }
+            testiq_gauss_line();
+         }
+
+         plot_dist->replot();
+         return;
       }
       break;
    default : break;
    }
+
+   plot_files();
 
    if ( !suppress_replot )
    {

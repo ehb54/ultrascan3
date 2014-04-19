@@ -25,17 +25,33 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #define UHSH_UV_CONC_FACTOR 1e0
 
 // no gaussians version
-void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
+bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( set < QString > & fileset, double t_min, double t_max )
 {
-   
-   QMessageBox::information( this,
-                             caption() + tr( ": Make I(q)" ),
-                             tr( "I(q) will be made without Gaussians" )
-                             );
+   QStringList files;
+   for ( set < QString >::iterator it = fileset.begin();
+         it != fileset.end();
+         ++it )
+   {
+      files << *it;
+   }
+   return create_i_of_q_ng( files, t_min, t_max );
+}
 
-   // for each selected file
-   // extract q grid from file names
-   editor_msg( "dark blue", tr( "Starting: Make I(q)" ) );
+bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, double t_max )
+{
+   bool mode_testiq = ( current_mode == MODE_TESTIQ );
+
+   if ( !mode_testiq )
+   {
+      QMessageBox::information( this,
+                                caption() + tr( ": Make I(q)" ),
+                                tr( "I(q) will be made without Gaussians" )
+                                );
+
+      // for each selected file
+      // extract q grid from file names
+      editor_msg( "dark blue", tr( "Starting: Make I(q)" ) );
+   }
 
    QString head = qstring_common_head( files, true );
    head = head.replace( QRegExp( "__It_q\\d*_$" ), "" );
@@ -80,7 +96,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
          editor_msg( "red", QString( tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
          progress->reset();
          update_enables();
-         return;
+         return false;
       }
       ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
       if ( used_q.count( ql.back() ) )
@@ -88,7 +104,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
          editor_msg( "red", QString( tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] ) );
          progress->reset();
          update_enables();
-         return;
+         return false;
       }
       used_q[ ql.back() ] = true;
          
@@ -103,22 +119,25 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
       } else {
          for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ files[ i ] ].size(); j++ )
          {
-            I_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_Is[ files[ i ] ][ j ];
-            if ( use_errors && f_errors[ files[ i ] ].size() == f_qs[ files[ i ] ].size() )
+            if ( !mode_testiq || ( f_qs[ files[ i ] ][ j ] >= t_min && f_qs[ files[ i ] ][ j ] <= t_max ) )
             {
-               e_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_errors[ files[ i ] ][ j ];
-            } else {
-               if ( use_errors )
+               I_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_Is[ files[ i ] ][ j ];
+               if ( use_errors && f_errors[ files[ i ] ].size() == f_qs[ files[ i ] ].size() )
                {
-                  use_errors = false;
-                  editor_msg( "dark red", QString( tr( "Notice: missing errors, first noticed in %1, so no errors at all" ) )
-                              .arg( files[ i ] ) );
+                  e_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_errors[ files[ i ] ][ j ];
+               } else {
+                  if ( use_errors )
+                  {
+                     use_errors = false;
+                     editor_msg( "dark red", QString( tr( "Notice: missing errors, first noticed in %1, so no errors at all" ) )
+                                 .arg( files[ i ] ) );
+                  }
                }
-            }
-            if ( !used_t.count( f_qs[ files[ i ] ][ j ] ) )
-            {
-               tl.push_back( f_qs[ files[ i ] ][ j ] );
-               used_t[ f_qs[ files[ i ] ][ j ] ] = true;
+               if ( !used_t.count( f_qs[ files[ i ] ][ j ] ) )
+               {
+                  tl.push_back( f_qs[ files[ i ] ][ j ] );
+                  used_t[ f_qs[ files[ i ] ][ j ] ] = true;
+               }
             }
          }
 
@@ -133,9 +152,12 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
                unsigned int zero_pts = 0;
                for ( unsigned int j = 0; j < ( unsigned int ) f_errors[ files[ i ] ].size(); j++ )
                {
-                  if ( isnan( f_errors[ files[ i ] ][ j ] ) || f_errors[ files[ i ] ][ j ] == 0e0 )
+                  if ( !mode_testiq || ( f_qs[ files[ i ] ][ j ] >= t_min && f_qs[ files[ i ] ][ j ] <= t_max ) )
                   {
-                     zero_pts++;
+                     if ( isnan( f_errors[ files[ i ] ][ j ] ) || f_errors[ files[ i ] ][ j ] == 0e0 )
+                     {
+                        zero_pts++;
+                     }
                   }
                }
                zero_points[ files[ i ] ] = QString( "%1: %2 of %3 points" ).arg( files[ i ] ).arg( zero_pts ).arg( f_errors[ files[ i ] ].size() );
@@ -211,9 +233,12 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
    // for each time, tv[ t ] 
 
    map < QString, bool > current_files;
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   if ( !mode_testiq )
    {
-      current_files[ lb_files->text( i ) ] = true;
+      for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+      {
+         current_files[ lb_files->text( i ) ] = true;
+      }
    }
 
    for ( unsigned int t = 0; t < tv.size(); t++ )
@@ -245,10 +270,10 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
 
       vector < double > I;
       vector < double > e;
-      vector < double > G;
+      // vector < double > G;
 
-      vector < double > I_recon;
-      vector < double > G_recon;
+      // vector < double > I_recon;
+      // vector < double > G_recon;
 
       vector < double > this_used_pcts;
 
@@ -276,7 +301,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
                running = false;
                update_enables();
                progress->reset();
-               return;
+               return false;
             }
 
             if ( !e_values[ tv[ t ] ].count( qv[ i ] ) )
@@ -285,7 +310,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
                running = false;
                update_enables();
                progress->reset();
-               return;
+               return false;
             }
 
             tmp_e = e_values[ tv[ t ] ][ qv[ i ] ];
@@ -295,46 +320,72 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files )
          e      .push_back( tmp_e );
       } // for each file
          
-      lb_created_files->insertItem( name );
-      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-      lb_files->insertItem( name );
-      lb_files->setBottomItem( lb_files->numRows() - 1 );
-      created_files_not_saved[ name ] = true;
+      if ( mode_testiq )
+      {
+         testiq_created_names.push_back( name );
+         testiq_created_q[ name ] = qv;
+         testiq_created_I[ name ] = I;
+         testiq_created_e[ name ] = e;
+      } else {
+         lb_created_files->insertItem( name );
+         lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+         lb_files->insertItem( name );
+         lb_files->setBottomItem( lb_files->numRows() - 1 );
+         created_files_not_saved[ name ] = true;
    
-      vector < QString > use_qv_string = qv_string;
-      vector < double  > use_qv        = qv;
-      vector < double  > use_I         = I;
-      vector < double  > use_e         = e;
+         vector < QString > use_qv_string = qv_string;
+         vector < double  > use_qv        = qv;
+         vector < double  > use_I         = I;
+         vector < double  > use_e         = e;
 
-      f_pos       [ name ] = f_qs.size();
-      f_qs_string [ name ] = qv_string;
-      f_qs        [ name ] = qv;
-      f_Is        [ name ] = I;
-      f_errors    [ name ] = e;
-      f_is_time   [ name ] = false;
-      f_conc      [ name ] = 0e0;
-      f_psv       [ name ] = 0e0;
-      f_I0se      [ name ] = 0e0;
-      f_time      [ name ] = tv[ t ];
-
+         f_pos       [ name ] = f_qs.size();
+         f_qs_string [ name ] = qv_string;
+         f_qs        [ name ] = qv;
+         f_Is        [ name ] = I;
+         f_errors    [ name ] = e;
+         f_is_time   [ name ] = false;
+         f_conc      [ name ] = 0e0;
+         f_psv       [ name ] = 0e0;
+         f_I0se      [ name ] = 0e0;
+         f_time      [ name ] = tv[ t ];
+      }
    } // for each q value
 
-   editor_msg( "dark blue", tr( "Finished: Make I(q)" ) );
+   if ( !mode_testiq )
+   {
+      editor_msg( "dark blue", tr( "Finished: Make I(q)" ) );
+      running = false;
+   }
    progress->setProgress( 1, 1 );
-   running = false;
    update_enables();
+   return true;
 }
 
 
-void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
+bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( set < QString > & fileset, double t_min, double t_max )
+{
+   QStringList files;
+   for ( set < QString >::iterator it = fileset.begin();
+         it != fileset.end();
+         ++it )
+   {
+      files << *it;
+   }
+   return create_i_of_q( files, t_min, t_max );
+}
+
+bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, double t_max )
 {
    // for each selected file
    // extract q grid from file names
-   editor_msg( "dark blue", tr( "Starting: Make I(q)" ) );
+   bool mode_testiq = ( current_mode == MODE_TESTIQ );
 
-   update_csv_conc();
-
+   if ( !mode_testiq )
    {
+      editor_msg( "dark blue", tr( "Starting: Make I(q)" ) );
+
+      update_csv_conc();
+
       QStringList tmp_files;
       for ( unsigned int i = 0; i < (unsigned int) files.size(); i++ )
       {
@@ -353,7 +404,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    if ( !ggaussian_compatible( false ) )
    {
       editor_msg( "red", tr( "NOTICE: Some files selected have Gaussians with varying centers or a different number of Gaussians or centers, Please enter \"Global Gaussians\" with these files selected and then \"Keep\" before pressing \"Make I(q)\"" ) );
-      return;
+      return false;
    }
 
    QRegExp rx_q     ( "_q(\\d+_\\d+)" );
@@ -398,7 +449,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          editor_msg( "red", QString( tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
          progress->reset();
          update_enables();
-         return;
+         return false;
       }
       ql.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
       if ( used_q.count( ql.back() ) )
@@ -406,7 +457,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
          editor_msg( "red", QString( tr( "Error: Duplicate q value in file name for %1" ) ).arg( files[ i ] ) );
          progress->reset();
          update_enables();
-         return;
+         return false;
       }
       used_q[ ql.back() ] = true;
          
@@ -430,22 +481,25 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       } else {
          for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ files[ i ] ].size(); j++ )
          {
-            I_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_Is[ files[ i ] ][ j ];
-            if ( use_errors && f_errors[ files[ i ] ].size() == f_qs[ files[ i ] ].size() )
+            if ( !mode_testiq || ( f_qs[ files[ i ] ][ j ] >= t_min && f_qs[ files[ i ] ][ j ] <= t_max ) )
             {
-               e_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_errors[ files[ i ] ][ j ];
-            } else {
-               if ( use_errors )
+               I_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_Is[ files[ i ] ][ j ];
+               if ( use_errors && f_errors[ files[ i ] ].size() == f_qs[ files[ i ] ].size() )
                {
-                  use_errors = false;
-                  editor_msg( "dark red", QString( tr( "Notice: missing errors, first noticed in %1, so no errors at all" ) )
-                              .arg( files[ i ] ) );
+                  e_values[ f_qs[ files[ i ] ][ j ] ][ ql.back() ] = f_errors[ files[ i ] ][ j ];
+               } else {
+                  if ( use_errors )
+                  {
+                     use_errors = false;
+                     editor_msg( "dark red", QString( tr( "Notice: missing errors, first noticed in %1, so no errors at all" ) )
+                                 .arg( files[ i ] ) );
+                  }
                }
-            }
-            if ( !used_t.count( f_qs[ files[ i ] ][ j ] ) )
-            {
-               tl.push_back( f_qs[ files[ i ] ][ j ] );
-               used_t[ f_qs[ files[ i ] ][ j ] ] = true;
+               if ( !used_t.count( f_qs[ files[ i ] ][ j ] ) )
+               {
+                  tl.push_back( f_qs[ files[ i ] ][ j ] );
+                  used_t[ f_qs[ files[ i ] ][ j ] ] = true;
+               }
             }
          }
 
@@ -547,7 +601,11 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    bool save_sum      = false;
 
    bool sd_from_difference = false;
-   {
+
+   if ( mode_testiq )
+   { 
+      save_gaussians = cb_testiq_from_gaussian->isChecked();
+   } else {
       map < QString, QString > parameters;
       bool no_conc = false;
       if ( bl_count )
@@ -689,7 +747,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       {
          progress->reset();
          update_enables();
-         return;
+         return false;
       }
 
       if ( parameters.count( "make_ng" ) &&
@@ -881,6 +939,15 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
    unsigned int num_of_gauss = ( unsigned int ) gaussians.size() / gaussian_type_size;
 
+   if ( mode_testiq && (unsigned int) rb_testiq_gaussians.size() != num_of_gauss )
+   {
+      editor_msg( "red", QString( tr( "Test I(q) internal error: Gaussian count mismatch %1 %2" ) )
+                  .arg( rb_testiq_gaussians.size() )
+                  .arg( num_of_gauss ) );
+      return false;
+   }
+
+   if ( !mode_testiq )
    {
       QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs" + QDir::separator() + "tmp" +  QDir::separator() + "hplc_frac.csv" );
       if ( f.open ( QIODevice::WriteOnly ) )
@@ -922,9 +989,12 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
    bool reported_gs0 = false;
 
    map < QString, bool > current_files;
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   if ( !mode_testiq )
    {
-      current_files[ lb_files->text( i ) ] = true;
+      for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+      {
+         current_files[ lb_files->text( i ) ] = true;
+      }
    }
 
    for ( unsigned int t = 0; t < tv.size(); t++ )
@@ -943,6 +1013,10 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
 
       for ( unsigned int g = 0; g < num_of_gauss; g++ )
       {
+         if ( mode_testiq && !rb_testiq_gaussians[ g ]->isChecked() )
+         {
+            continue;
+         }
          // build up an I(q)
          double conc_factor = 0e0;
          double norm_factor = 1e0;
@@ -1070,19 +1144,25 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
                if ( !e_values.count( tv[ t ] ) )
                {
                   editor_msg( "red", QString( tr( "Internal error: error values missing t %1" ) ).arg( tv[ t ] ) );
-                  running = false;
+                  if ( !mode_testiq )
+                  {
+                     running = false;
+                  }
                   update_enables();
                   progress->reset();
-                  return;
+                  return false;
                }
 
                if ( !e_values[ tv[ t ] ].count( qv[ i ] ) )
                {
                   editor_msg( "red", QString( tr( "Internal error: error values missing q %1" ) ).arg( qv[ i ] ) );
-                  running = false;
+                  if ( !mode_testiq )
+                  {
+                     running = false;
+                  }
                   update_enables();
                   progress->reset();
-                  return;
+                  return false;
                }
 
                tmp_e = e_values[ tv[ t ] ][ qv[ i ] ];
@@ -1122,32 +1202,35 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             G_recon.push_back( tmp_G_recon );
          } // for each file
          
-         if ( g )
+         if ( !mode_testiq )
          {
-            for ( unsigned int m = 0; m < ( unsigned int ) qv.size(); m++ )
+            if ( g )
             {
-               gsI[ m ]       += I[ m ];
-               gse[ m ]       += e[ m ];
-               gsG[ m ]       += G[ m ];
-               gsI_recon[ m ] += I_recon[ m ];
-               gsG_recon[ m ] += G_recon[ m ];
+               for ( unsigned int m = 0; m < ( unsigned int ) qv.size(); m++ )
+               {
+                  gsI[ m ]       += I[ m ];
+                  gse[ m ]       += e[ m ];
+                  gsG[ m ]       += G[ m ];
+                  gsI_recon[ m ] += I_recon[ m ];
+                  gsG_recon[ m ] += G_recon[ m ];
+               }
+            } else {
+               gsI       = I;
+               gsG       = G;
+               gse       = e;
+               gsI_recon = I_recon;
+               gsG_recon = G_recon;
             }
-         } else {
-            gsI       = I;
-            gsG       = G;
-            gse       = e;
-            gsI_recon = I_recon;
-            gsG_recon = G_recon;
+
+            // add to csv conc stuff?
+
+            lb_created_files->insertItem( name );
+            lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+            lb_files->insertItem( name );
+            lb_files->setBottomItem( lb_files->numRows() - 1 );
+            created_files_not_saved[ name ] = true;
          }
 
-         // add to csv conc stuff?
-
-         lb_created_files->insertItem( name );
-         lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-         lb_files->insertItem( name );
-         lb_files->setBottomItem( lb_files->numRows() - 1 );
-         created_files_not_saved[ name ] = true;
-   
          vector < QString > use_qv_string = qv_string;
          vector < double  > use_qv        = qv;
          vector < double  > use_I         = save_gaussians ? G : I;
@@ -1268,24 +1351,32 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
             }
          }
 
-         f_pos       [ name ] = f_qs.size();
-         f_qs_string [ name ] = use_qv_string;
-         f_qs        [ name ] = use_qv;
-         f_Is        [ name ] = use_I;
-         f_errors    [ name ] = use_e;
-         f_is_time   [ name ] = false;
-         f_conc      [ name ] = conc_factor;
-         f_psv       [ name ] = psv.size() > g ? psv[ g ] : 0e0;
-         f_I0se      [ name ] = I0se;
-         f_time      [ name ] = tv[ t ];
-         if ( conv.size() > g )
+         if ( mode_testiq )
          {
-            f_extc      [ name ] = conv[ g ];
-         }
+            testiq_created_names.push_back( name );
+            testiq_created_q[ name ] = use_qv;
+            testiq_created_I[ name ] = use_I;
+            testiq_created_e[ name ] = use_e;
+         } else {
+            f_pos       [ name ] = f_qs.size();
+            f_qs_string [ name ] = use_qv_string;
+            f_qs        [ name ] = use_qv;
+            f_Is        [ name ] = use_I;
+            f_errors    [ name ] = use_e;
+            f_is_time   [ name ] = false;
+            f_conc      [ name ] = conc_factor;
+            f_psv       [ name ] = psv.size() > g ? psv[ g ] : 0e0;
+            f_I0se      [ name ] = I0se;
+            f_time      [ name ] = tv[ t ];
+            if ( conv.size() > g )
+            {
+               f_extc      [ name ] = conv[ g ];
+            }
 
-         {
-            vector < double > tmp;
-            f_gaussians  [ name ] = tmp;
+            {
+               vector < double > tmp;
+               f_gaussians  [ name ] = tmp;
+            }
          }
       } // for each gaussian
 
@@ -1397,13 +1488,20 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
                }
             }
             
-            f_qs_string[ used_names[ i ] ] = use_qv_string;
-            f_qs       [ used_names[ i ] ] = use_qv;
-            f_Is       [ used_names[ i ] ] = use_I;
-            f_errors   [ used_names[ i ] ] = use_e;
+            if ( mode_testiq )
+            {
+               testiq_created_q[ used_names[ i ] ] = use_qv;
+               testiq_created_I[ used_names[ i ] ] = use_I;
+               testiq_created_e[ used_names[ i ] ] = use_e;
+            } else {
+               f_qs_string[ used_names[ i ] ] = use_qv_string;
+               f_qs       [ used_names[ i ] ] = use_qv;
+               f_Is       [ used_names[ i ] ] = use_I;
+               f_errors   [ used_names[ i ] ] = use_e;
+            }
          }
       }         
-      if ( save_sum )
+      if ( !mode_testiq && save_sum )
       {
          if ( save_gaussians )
          {
@@ -1425,10 +1523,14 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files )
       // add_plot( QString( "sumGr_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG_recon, gse, false, false );
    } // for each q value
 
-   editor_msg( "dark blue", tr( "Finished: Make I(q)" ) );
+   if ( !mode_testiq )
+   {
+      editor_msg( "dark blue", tr( "Finished: Make I(q)" ) );
+      running = false;
+   }
    progress->setProgress( 1, 1 );
-   running = false;
    update_enables();
+   return true;
 }
 
 bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( bool do_init )
@@ -1951,6 +2053,7 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files )
       new US_Hydrodyn_Saxs_Hplc_Fit(
                                     this,
                                     this );
+   US_Hydrodyn::fixWinButtons( hplc_fit_window );
 
    hplc_fit_window->update_hplc = false;
 

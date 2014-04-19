@@ -1571,5 +1571,6 @@ void US_Hydrodyn_Saxs::saxs_xsr()
    }
 
    US_Hydrodyn_Xsr * uhxsr = new US_Hydrodyn_Xsr( ( US_Hydrodyn * ) us_hydrodyn );
+   US_Hydrodyn::fixWinButtons( uhxsr );
    uhxsr->show();
 }

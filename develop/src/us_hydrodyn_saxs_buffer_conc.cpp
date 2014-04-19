@@ -501,6 +501,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::load()
                                                qsl_lines,
                                                csv1,
                                                this );
+      US_Hydrodyn::fixWinButtons( hbscl );
       if ( hbscl->disp_csv.data.size() )
       {
          hbscl->exec();

@@ -69,6 +69,7 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
                                                          &partial,
                                                          this
                                                          );
+      US_Hydrodyn::fixWinButtons( smw );
       do {
          smw->exec();
       } while ( mw <= 0.0 );
