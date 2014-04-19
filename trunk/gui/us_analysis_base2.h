@@ -201,6 +201,8 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       //! Restore excluded scans
       virtual void reset_excludes( void );
 
+      //! Perform smoothing of the data
+      void         smoothing( double );
 
    private:
       double* x_weights;
@@ -214,7 +216,6 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       void boundary_pos  ( double );
       void exclude_from  ( double );
       void exclude_to    ( double );
-      void smoothing     ( double );
       void update_disk_db( bool );
       void set_progress  ( const QString );
       void load_noise    ( int  );

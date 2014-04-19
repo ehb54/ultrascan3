@@ -14,22 +14,15 @@
 
 // Main constructor with flags for edit, latest-edit and local-data
 
-US_SelectEdits::US_SelectEdits( bool dbase, bool& runsel, bool& late,
-   QStringList& edIDs )
- : US_WidgetsDialog( 0, 0 ),
-   sel_run    ( runsel ),
-   sel_late   ( late ),
-   editIDs    ( edIDs )
+US_SelectEdits::US_SelectEdits( bool dbase, QStringList& edIDs )
+ : US_WidgetsDialog( 0, 0 ), editIDs( edIDs )
 {
    sel_db        = dbase;
 
-   setWindowTitle( tr( "Select Run/Edit as Models Pre-Filter (%1)" )
+   setWindowTitle( tr( "Select Run(s) with Edits as Models Pre-Filter (%1)" )
          .arg( sel_db ? "DB" : "Local" ) );
    setPalette    ( US_GuiSettings::frameColor() );
    setMinimumSize( 480, 300 );
-qDebug() << "SE:sel_db" << sel_db;
-qDebug() << "SE:sel_run" << sel_run;
-qDebug() << "SE:sel_late" << sel_late;
 
    // Main layout
    QVBoxLayout* main = new QVBoxLayout( this );
@@ -38,7 +31,12 @@ qDebug() << "SE:sel_late" << sel_late;
 
    // Top layout: buttons and fields above list widget
    QGridLayout* top  = new QGridLayout;
-   int row           = 0;
+   int ddstate       = sel_db ? US_Disk_DB_Controls::DB
+                              : US_Disk_DB_Controls::Disk;
+
+   dkdb_cntrls         = new US_Disk_DB_Controls( ddstate );
+   connect( dkdb_cntrls, SIGNAL( changed       ( bool ) ),
+            this,        SLOT  ( update_disk_db( bool ) ) );
 
    pb_invest           = us_pushbutton( tr( "Select Investigator" ) );
    QString invnum      = QString::number( US_Settings::us_inv_ID() ) + ": ";
@@ -46,36 +44,17 @@ qDebug() << "SE:sel_late" << sel_late;
    le_invest           = us_lineedit( invnum + invusr, 0, true );
    connect( pb_invest, SIGNAL( clicked()    ),
                        SLOT  ( get_person() ) );
-   top->addWidget( pb_invest, row,   0, 1, 1 );
-   top->addWidget( le_invest, row++, 1, 1, 2 );
-
-   QButtonGroup* selButtons = new QButtonGroup( this );
-   QGridLayout* rb1 = us_radiobutton( tr( "by Run ID" ),
-      rb_runid,   sel_run );
-   QGridLayout* rb2 = us_radiobutton( tr( "by Latest Edit" ),
-      rb_latest,  ( ! sel_run && sel_late ) );
-   QGridLayout* rb3 = us_radiobutton( tr( "by Edit"   ),
-      rb_alledit, ( ! sel_run && ! sel_late ) );
-   selButtons->addButton( rb_runid,   0 );
-   selButtons->addButton( rb_latest,  1 );
-   selButtons->addButton( rb_alledit, 2 );
-   top->addLayout( rb1, row,   0 );
-   top->addLayout( rb2, row,   1 );
-   top->addLayout( rb3, row++, 2 );
-   connect( selButtons, SIGNAL( buttonClicked( int ) ),
-                        SLOT  ( list_data()          ) );
-
-
-   // Very light gray, for read-only line edits
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xc0, 0xc0, 0xc0 ) );
 
    // Search line
    QLabel* lb_filtdata = us_label( tr( "Search" ) );
-   top->addWidget( lb_filtdata, row, 0 );
+   le_dfilter          = us_lineedit();
 
-   le_dfilter      = us_lineedit();
-   top->addWidget( le_dfilter, row++, 1, 1, 2 );
+   int row           = 0;
+   top->addLayout( dkdb_cntrls, row++, 0, 1, 4 );
+   top->addWidget( pb_invest,   row,   0, 1, 2 );
+   top->addWidget( le_invest,   row++, 2, 1, 2 );
+   top->addWidget( lb_filtdata, row,   0, 1, 1 );
+   top->addWidget( le_dfilter,  row++, 1, 1, 3 );
 
    connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
                          SLOT  ( search     ( const QString& ) ) );
@@ -84,14 +63,23 @@ qDebug() << "SE:sel_late" << sel_late;
 
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
 
-   // List widget to show data choices
-   lw_data = new QListWidget( this );
-   lw_data->setFrameStyle   ( QFrame::NoFrame );
-   lw_data->setPalette      ( US_GuiSettings::editColor() );
-   lw_data->setFont         ( font );
-   lw_data->setSelectionMode( QAbstractItemView::ExtendedSelection );
+   QStringList headers;
+   headers << "Run" << "Date" << "dbID" << "Label";
+   tw_data = new QTableWidget( 20, 4, this );
+   tw_data->setFrameStyle ( QFrame::NoFrame );
+   tw_data->setPalette    ( US_GuiSettings::editColor() );
+   tw_data->setFont       ( font );
+   tw_data->setSelectionMode    ( QAbstractItemView::ExtendedSelection );
+   tw_data->setSelectionBehavior( QAbstractItemView::SelectRows );
+   tw_data->setHorizontalHeaderLabels( headers );
+   tw_data->verticalHeader()->hide();
+   tw_data->setShowGrid   ( false );
+   tw_data->setColumnWidth( 0, 250 );
+   tw_data->setColumnWidth( 1, 100 );
+   tw_data->setColumnWidth( 2,  50 );
+   tw_data->setColumnWidth( 3, 350 );
 
-   main->addWidget( lw_data );
+   main->addWidget( tw_data );
 
    // Button Row
    QHBoxLayout* buttons = new QHBoxLayout;
@@ -112,41 +100,61 @@ qDebug() << "SE:sel_late" << sel_late;
 
    // List from disk or db source
    list_data();
+   resize( 720, 360 );
 }
 
 void US_SelectEdits::search( const QString& search_string )
 {
-   lw_data->setCurrentItem( NULL );
+   bool have_search = ! search_string.isEmpty();
+   QFont tw_font( US_Widgets::fixedFont().family(),
+                  US_GuiSettings::fontSize() );
+   QFontMetrics* fm = new QFontMetrics( tw_font );
+   int rowht        = fm->height() + 2;
+   tw_data->clearContents();
+   tw_data->setSortingEnabled( false );
 
-   for ( int ii = 0; ii < lw_data->count(); ii++ )
+   for ( int ii = 0; ii < rlabels.size(); ii++ )
    {
-      QListWidgetItem* lwi = lw_data->item( ii );
-      bool hide = ! lwi->text().contains( search_string, Qt::CaseInsensitive ); 
-      lwi->setHidden( hide );
+      QTableWidgetItem* twi;
+      QString  runID   = rlabels.at( ii );
+
+      if ( have_search &&
+           ! runID.contains( search_string, Qt::CaseInsensitive ) )
+         continue;
+
+      twi       = new QTableWidgetItem( runID                   );
+      twi->setFlags( twi->flags() ^ Qt::ItemIsEditable );
+      tw_data->setItem ( ii, 0, twi );
+      twi       = new QTableWidgetItem( runmap[ runID ].date  );
+      twi->setFlags( twi->flags() ^ Qt::ItemIsEditable );
+      tw_data->setItem ( ii, 1, twi );
+      twi       = new QTableWidgetItem( runmap[ runID ].DB_id );
+      twi->setFlags( twi->flags() ^ Qt::ItemIsEditable );
+      tw_data->setItem ( ii, 2, twi );
+      twi       = new QTableWidgetItem( runmap[ runID ].label );
+      twi->setFlags( twi->flags() ^ Qt::ItemIsEditable );
+      tw_data->setItem ( ii, 3, twi );
+
+      tw_data->setRowHeight( ii, rowht );
    }
+
+   tw_data->setSortingEnabled( true );
+   tw_data->sortByColumn( 1, Qt::DescendingOrder );
+   tw_data->resizeColumnsToContents();
+   tw_data->adjustSize();
+   int twwid = size().width() - 4;
+   int twhgt = qMax( height(), tw_data->size().height() );
+   tw_data->resize( twwid, twhgt );
+   qApp->processEvents();
 }
 
 // List data choices (from db or disk)
 void US_SelectEdits::list_data()
 {
-   if ( rb_runid->isChecked() )
-   {
-      sel_run   = true;
-      sel_late  = false;
-   }
-
-   else if ( rb_latest->isChecked() )
-   {
-      sel_run   = false;
-      sel_late  = true;
-   }
-
-   else if ( rb_alledit->isChecked() )
-   {
-      sel_run   = false;
-      sel_late  = false;
-   }
-
+   QFont tw_font( US_Widgets::fixedFont().family(),
+                  US_GuiSettings::fontSize() );
+   QFontMetrics* fm = new QFontMetrics( tw_font );
+   int rowht        = fm->height() + 2;
    editmap.clear();
    rlabels.clear();
 
@@ -159,44 +167,41 @@ void US_SelectEdits::list_data()
       scan_local_edit();
    }
 
-   lw_data->clear();
+   tw_data->clearContents();
 
-   if ( sel_run )
+   if ( rlabels.size() == 0 )
    {
-      if ( rlabels.size() == 0 )
-      {
-         QString clabel = tr( "No data found." );
-         lw_data->addItem( new QListWidgetItem( clabel ) );
-         return;
-      }
-
-      for ( int ii = 0; ii < rlabels.size(); ii++ )
-      {  // Propagate list widget with labels
-         QString  clabel  = rlabels.at( ii );
-
-         lw_data->addItem( new QListWidgetItem( clabel ) );
-      }
+      QString clabel = tr( "No data found." );
+      tw_data->setItem ( 0, 0, new QTableWidgetItem( clabel ) );
+      return;
    }
 
-   else
-   {
-      elabels                   = editmap.keys();
-      QList< EditDesc > edescrs = editmap.values();
+   tw_data->setSortingEnabled( false );
+   tw_data->setRowCount( rlabels.size() );
 
-      if ( elabels.size() == 0 )
-      {
-         QString clabel = tr( "No data found." );
-         lw_data->addItem( new QListWidgetItem( clabel ) );
-         return;
-      }
+   for ( int ii = 0; ii < rlabels.size(); ii++ )
+   {  // Propagate list widget with labels
+      QString  runID   = rlabels.at( ii );
 
-      for ( int ii = 0; ii < elabels.size(); ii++ )
-      {  // Propagate list widget with labels
-         QString  clabel  = elabels.at( ii );
+      tw_data->setItem( ii, 0, new QTableWidgetItem( runID ) );
+      tw_data->setItem( ii, 1,
+                        new QTableWidgetItem( runmap[ runID ].date  ) );
+      tw_data->setItem( ii, 2,
+                        new QTableWidgetItem( runmap[ runID ].DB_id ) );
+      tw_data->setItem( ii, 3,
+                        new QTableWidgetItem( runmap[ runID ].label ) );
 
-         lw_data->addItem( new QListWidgetItem( clabel ) );
-      }
+      tw_data->setRowHeight( ii, rowht );
    }
+
+   tw_data->setSortingEnabled( true );
+   tw_data->sortByColumn( 1, Qt::DescendingOrder );
+   tw_data->resizeColumnsToContents();
+   tw_data->adjustSize();
+   int twwid = size().width() - 4;
+   int twhgt = qMax( height(), tw_data->size().height() );
+   tw_data->resize( twwid, twhgt );
+   qApp->processEvents();
 }
 
 // Cancel button:  no editIDs returned
@@ -210,11 +215,9 @@ void US_SelectEdits::cancelled()
 // Accept button:  set up to return editID pre-filter information
 void US_SelectEdits::accepted()
 {
-qDebug() << "SE:accepted()";
-
    editIDs.clear();
 
-   QList< QListWidgetItem* > selitems = lw_data->selectedItems();
+   QList< QTableWidgetItem* > selitems = tw_data->selectedItems();
 
    if ( selitems.size() == 0 )
    {
@@ -224,41 +227,29 @@ qDebug() << "SE:accepted()";
       return;
    }
 
-   if ( sel_run )
-   {  // Get and return editIDs from selected runID items
-      elabels                   = editmap.keys();
+   // Get and return editIDs from selected runID items
+   elabels                   = editmap.keys();
 
-      for ( int ii = 0; ii < selitems.size(); ii++ )
-      {  // Loop thru selected runIDs
-         QListWidgetItem* lwi_data = selitems.at( ii );
-         QString          rlabel   = lwi_data->text() + " :";
-
-         // Get a list of edit items whose label contains runID label
-         QStringList      elabs    = elabels.filter( rlabel );
-
-         for ( int jj = 0; jj < elabs.size(); jj++ )
-         {  // Return editIDs from each edit in a run
-            QString clabel = elabs[ jj ];
-
-            editIDs << ( sel_db ? editmap[ clabel ].editID
-                                : editmap[ clabel ].editGUID );
-         }
-      }
-   }
-
-   else
-   {  // Get and return editIDs from selected edit items
-      for ( int ii = 0; ii < selitems.size(); ii++ )
+   for ( int ii = 0; ii < selitems.size(); ii++ )
+   {  // Loop thru selected runIDs
+      QTableWidgetItem* twi  = selitems.at( ii );
+      if ( twi->column() != 0 )
       {
-         QListWidgetItem* lwi_data = selitems.at( ii );
-         QString clabel = lwi_data->text();
-qDebug() << "SE:  ii clabel" << ii << clabel;
+         int row  = twi->row();
+         twi      = tw_data->item( row, 0 );
+      }
+      QString     rlabel = twi->text() + " :";
 
-         editIDs << ( sel_db ? editmap[ clabel ].editID
-                             : editmap[ clabel ].editGUID );
+      // Get a list of edit items whose label contains runID label
+      QStringList elabs  = elabels.filter( rlabel );
+
+      for ( int jj = 0; jj < elabs.size(); jj++ )
+      {  // Return editIDs from each edit in a run
+         QString clabel = elabs[ jj ];
+
+         editIDs << editmap[ clabel ].editID;
       }
    }
-qDebug() << "SE: editIDs" << editIDs;
 
    accept();        // Signal that selection was accepted
    close();
@@ -280,9 +271,27 @@ void US_SelectEdits::scan_dbase_edit()
       return;
    }
 
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    QStringList query;
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
 
+   // Build a mapping of rawData labels to raw DB ids
+   QMap< int, QString > rawlabs;
+   query.clear();
+   query << "all_rawDataIDs" << invID;
+
+   db.query( query );
+
+   while ( db.next() )
+   {
+      int     idRaw    = db.value( 0 ).toString().toInt();
+      QString label    = db.value( 1 ).toString();
+      rawlabs[ idRaw ] = label;
+   }
+qDebug() << "ScDB: rawlabs size" << rawlabs.size();
+
+   // Now fill in data description objects for edits
+   query.clear();
    query << "all_editedDataIDs" << invID;
 
 //qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -295,8 +304,11 @@ void US_SelectEdits::scan_dbase_edit()
 //qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       QString descrip  = db.value( 1 ).toString();
       QString filename = db.value( 2 ).toString().replace( "\\", "/" );
+      int     idRaw    = db.value( 3 ).toString().toInt();
+      QString expID    = db.value( 4 ).toString();
       QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
-                         .toDateTime().toString( Qt::ISODate ), true );
+                         .toDateTime().toString( Qt::ISODate ), true )
+                         .section( " ", 0, 0 );
       QString recGUID  = db.value( 9 ).toString();
       QString filebase = filename.section( "/", -1, -1 );
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
@@ -305,22 +317,25 @@ void US_SelectEdits::scan_dbase_edit()
       QString tripID   = filebase.section( ".", -4, -2 );
 
 //qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-      QString label    = runID + " : " + tripID + " : " + editID;
+      QString key      = runID + " : " + tripID + " : " + editID;
 
-      edesc.label      = label;
+      edesc.key        = key;
+      edesc.runID      = runID;
+      edesc.label      = rawlabs[ idRaw ];
       edesc.editID     = recID;
-      edesc.editGUID   = recGUID;
       edesc.date       = date;
+      edesc.DB_id      = expID;
 
-      editmap[ label ] = edesc;
+      editmap[ key ]   = edesc;
 //qDebug() << "ScDB:TM:06: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    }
 //qDebug() << "ScDB:TM:88: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+qDebug() << "ScDB: editmap size" << editmap.size();
 
    build_runids();
 
-   if ( sel_late )
-      pare_to_latest();
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
 //qDebug() << "ScDB:TM:99: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 }
 
@@ -333,10 +348,14 @@ void US_SelectEdits::scan_local_edit( void )
    
    QStringList aucfilt( "*.auc" );
    QStringList edtfilt;
+   QStringList edtfiles;
+   QStringList aucfiles;
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    
    for ( int ii = 0; ii < aucdirs.size(); ii++ )
    {
       QString     subdir   = rdir + "/" + aucdirs.at( ii );
+      QDir dirRun( subdir );
       QStringList aucfiles = QDir( subdir ).entryList( 
             aucfilt, QDir::Files, QDir::Name );
 
@@ -348,12 +367,52 @@ void US_SelectEdits::scan_local_edit( void )
       QString runID     = aucfbase.section( ".",  0, -6 );
       QString subType   = aucfbase.section( ".", -5, -5 );
       QString tripl     = aucfbase.section( ".", -4, -2 );
+      QString explabel  = runID;
+      QString expID     = "";
 
       edtfilt.clear();
-      //edtfilt <<  runID + ".*."  + subType + "." + tripl + ".xml";
+      edtfilt <<  runID + "."  + subType + ".xml";
+      edtfiles          = dirRun.entryList( edtfilt, QDir::Files, QDir::Name );
+      if ( edtfiles.size() != 1 )
+         continue;
+
+      QString expfpath  = subdir + "/" + edtfiles[ 0 ];
+      QFile fileri( expfpath );
+//qDebug() << "ScLo: ii fn" << ii << expfpath;
+
+      if ( fileri.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      {  // Read the experiment XML and get experiment label
+         QXmlStreamReader xml( &fileri );
+         QXmlStreamAttributes attr;
+
+         while( ! xml.atEnd() )
+         {
+            xml.readNext();
+
+            if ( xml.isStartElement() )
+            {
+               if (  xml.name() == "experiment" )
+               {
+                  attr      = xml.attributes();
+                  expID     = attr.value( "id" ).toString();
+//qDebug() << "ScLo:   expID" << expID;
+               }
+
+               else if (  xml.name() == "label" )
+               {
+                  xml.readNext();
+                  explabel  = xml.text().toString();
+                  break;
+               }
+            }
+         }
+
+         fileri.close();
+      }
+
+      edtfilt.clear();
       edtfilt <<  runID + ".*."  + subType + ".*.xml";
-      QStringList edtfiles = QDir( subdir ).entryList( 
-            edtfilt, QDir::Files, QDir::Name );
+      edtfiles          = dirRun.entryList( edtfilt, QDir::Files, QDir::Name );
       edtfiles.sort();
 
       if ( edtfiles.size() < 1 )
@@ -368,15 +427,15 @@ void US_SelectEdits::scan_local_edit( void )
          editID  = ( editID.length() == 12  &&  editID.startsWith( "20" ) ) ?
                    editID.mid( 2 ) : editID;
          QString tripID   = filebase.section( ".", -4, -2 );
-         QString label    = runID + " : " + tripID + " : " + editID;
+         QString key      = runID + " : " + tripID + " : " + editID;
+         QString date     = US_Util::toUTCDatetimeText( QFileInfo( filename )
+            .lastModified().toUTC().toString( Qt::ISODate ), true )
+            .section( " ", 0, 0 );
 
          QFile filei( filename );
 
          if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
             continue;
-
-         QString date = US_Util::toUTCDatetimeText( QFileInfo( filename )
-            .lastModified().toUTC().toString( Qt::ISODate ), true );
          
          QXmlStreamReader xml( &filei );
          QXmlStreamAttributes a;
@@ -398,19 +457,21 @@ void US_SelectEdits::scan_local_edit( void )
 
          filei.close();
 
-         edesc.label      = label;
-         edesc.editID     = QString( "-1" );
-         edesc.editGUID   = recGUID;
+         edesc.key        = key;
+         edesc.runID      = runID;
+         edesc.label      = explabel;
+         edesc.editID     = recGUID;
          edesc.date       = date;
+         edesc.DB_id      = expID;
 
-         editmap[ label ] = edesc;
+         editmap[ key ]   = edesc;
       }
    }
 
    build_runids();
 
-   if ( sel_late )
-      pare_to_latest();
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
 }
 
 // Build the runID list from full edit map
@@ -418,67 +479,22 @@ void US_SelectEdits::build_runids( void )
 {
    elabels          = editmap.keys();
    rlabels.clear();
+   runmap .clear();
 
    for ( int ii = 0; ii < elabels.size(); ii++ )
    {
-      QString clabel = elabels.at( ii ).section( ":", 0, 0 ).simplified();
+      QString ekey   = elabels.at( ii );
+      QString runID  = editmap[ ekey ].runID;
 
-      if ( ! rlabels.contains( clabel ) )
-         rlabels << clabel;
+      if ( ! rlabels.contains( runID ) )
+      {
+         rlabels << runID;
+         runmap[ runID ] = editmap[ ekey ];
+      }
    }
 }
 
 
-// Pare down data description map to only latest edit
-void US_SelectEdits::pare_to_latest( void )
-{
-   for ( int kk = 0; kk < 2; kk++ )  // May need two passes to pare down
-   {
-      QStringList       keys = editmap.keys();
-      QList< EditDesc > vals = editmap.values();
-      int               kchg = 0;
-
-      for ( int ii = 0; ii < keys.size() - 1; ii++ )
-      {
-         int jj = ii + 1;
-
-         QString clabel = keys.at( ii );
-         QString flabel = keys.at( jj );
-
-         QString crunid = clabel.section( " : ", 0, -2 ).simplified();
-         QString frunid = flabel.section( " : ", 0, -2 ).simplified();
-
-         if ( crunid != frunid )
-            continue;
-
-         // This record's label differs from next only by edit code: remove it
-         QString   cdtxt = vals.at( ii ).date;
-         QString   fdtxt = vals.at( jj ).date;
-         QDateTime cdate = QDateTime::fromString( cdtxt, Qt::ISODate );
-         QDateTime fdate = QDateTime::fromString( fdtxt, Qt::ISODate );
-//qDebug() << "PARE ii" << ii << "C,F date" << cdtxt << fdtxt;
-//qDebug() << "  C,F lab" << clabel << flabel;
-//qDebug() << "   (C<=F)" << (cdate<=fdate) << " C,F dt" << cdate << fdate;
-
-         if ( cdate <= fdate )         // Remove the earlier of the two
-         {
-            editmap.remove( clabel );  //  Earlier is earlier in list
-         }
-
-         else
-         {
-            editmap.remove( flabel );  //  Earlier is later in list
-            kchg++;                    //  Mark when early one later in list
-         }
-      }
-
-//qDebug() << "PARE   kchg" << kchg << "kk" << kk;
-      if ( kchg == 0 )   break;        // We're done
-
-      // Need to repeat above when any removed was later in list
-   }
-}
-
 // Investigator button clicked:  get investigator from dialog
 void US_SelectEdits::get_person()
 {
@@ -498,5 +514,34 @@ void US_SelectEdits::update_person( int ID )
    le_invest->setText( number + US_Settings::us_inv_name() );
 
    list_data();
+}
+
+// Slot to handle accept in investigator dialog
+void US_SelectEdits::update_disk_db( bool isDB )
+{
+   emit dkdb_changed( isDB );
+
+   sel_db         = isDB;
+   editmap.clear();
+   rlabels.clear();
+
+   if ( isDB )                // Scan database
+   {
+      scan_dbase_edit();
+      setWindowTitle(
+         tr( "Select Run(s) with Edits as Models Pre-Filter (DB)" ) );
+   }
+   else                       // Scan local disk data
+   {
+      scan_local_edit();
+      setWindowTitle(
+         tr( "Select Run(s) with Edits as Models Pre-Filter (Local)" ) );
+   }
+
+   list_data();
+
+   QString sfilt    = le_dfilter->text();
+   if ( ! sfilt.isEmpty() )
+      search( sfilt );
 }
 

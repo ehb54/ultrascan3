@@ -57,6 +57,10 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
             this,       SLOT(   data_plot()     ) );
    connect( ck_vhw_enh, SIGNAL( toggled( bool ) ),
             this,       SLOT(   data_plot()     ) );
+   connect( pb_save,    SIGNAL( clicked()       ),
+            this,       SLOT(   save_data()     ) );
+   connect( pb_view,    SIGNAL( clicked()       ),
+            this,       SLOT(   view_report()   ) );
 
    int jr = 2;
    parameterLayout->addWidget( pb_dstrpl,  jr,   0, 1, 2 );
@@ -164,11 +168,6 @@ void US_vHW_Enhanced::load( void )
       pb_exclude->setEnabled( false );
       return;
    }
-
-   connect( pb_save,    SIGNAL( clicked() ),
-            this,       SLOT(   save_data() ) );
-   connect( pb_view,    SIGNAL( clicked() ),
-            this,       SLOT(   view_report() ) );
 
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
@@ -1249,11 +1248,11 @@ DbgLv(1) << "groupClick: step" << groupstep
 
          gbanner   = tr( "Group %1: %2 (%3%)" )
                .arg( ngroup ).arg( cgrdata.sed ).arg( cgrdata.percent );
-         label.setText( gbanner );
          label.setFont( QFont( US_GuiSettings::fontFamily(),
-                  -1, QFont::Bold ) );
-         label.setColor( Qt::magenta );
-         label.setBackgroundBrush( QBrush( QColor( 8, 8, 8, 128 ) ) );
+                               US_GuiSettings::fontSize() + 2, QFont::Bold ) );
+         label.setColor( Qt::darkRed );
+         label.setBackgroundBrush( QBrush( QColor( 255, 255, 255, 208 ) ) );
+         label.setText( gbanner );
 
          marker->setValue( 0.0, cgrdata.sed );
          marker->setLabel( label );
@@ -1590,6 +1589,8 @@ void US_vHW_Enhanced::new_triple( int row )
 {
    US_AnalysisBase2::new_triple( row );
    haveZone   = false;
+
+   US_AnalysisBase2::smoothing( ct_smoothing->value() );
 }
 
 void US_vHW_Enhanced::update( int row )
