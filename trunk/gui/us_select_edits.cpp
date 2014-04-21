@@ -245,11 +245,14 @@ void US_SelectEdits::accepted()
 
       for ( int jj = 0; jj < elabs.size(); jj++ )
       {  // Return editIDs from each edit in a run
-         QString clabel = elabs[ jj ];
+         QString editID = editmap[ elabs[ jj ] ].editID;
 
-         editIDs << editmap[ clabel ].editID;
+         if ( ! editIDs.contains( editID ) )
+            editIDs << editID;
       }
    }
+qDebug() << "Acpt: editIDs size" << editIDs.size();
+qDebug() << "Acpt: editIDs" << editIDs;
 
    accept();        // Signal that selection was accepted
    close();
@@ -478,6 +481,7 @@ void US_SelectEdits::scan_local_edit( void )
 void US_SelectEdits::build_runids( void )
 {
    elabels          = editmap.keys();
+qDebug() << "BldR: elabels size" << elabels.size();
    rlabels.clear();
    runmap .clear();
 
@@ -485,13 +489,17 @@ void US_SelectEdits::build_runids( void )
    {
       QString ekey   = elabels.at( ii );
       QString runID  = editmap[ ekey ].runID;
+qDebug() << "BldR:  ii ekey runID" << ii << ekey << runID;
 
       if ( ! rlabels.contains( runID ) )
       {
          rlabels << runID;
          runmap[ runID ] = editmap[ ekey ];
+qDebug() << "BldR:   *UNIQUE* runID";
       }
    }
+qDebug() << "BldR: rlabels size" << rlabels.size();
+qDebug() << "BldR: runmap size" << runmap.size();
 }
 
 
