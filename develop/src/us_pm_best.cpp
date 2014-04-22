@@ -288,7 +288,11 @@ bool US_PM::best_md0(
       return false;
    }
 
-   set_grid_size( coarse_conversion );
+   if ( !set_grid_size( coarse_conversion ) )
+   {
+      return false;
+   }
+
 #if defined( USE_MPI )
    {
       int errorno = -29000;
@@ -378,7 +382,10 @@ bool US_PM::best_md0(
       US_Vector::printvector2( "previous limits after rescaling:", low_fparams, high_fparams );
       US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
 
-      set_grid_size( new_grid_conversion_factor );
+      if ( !set_grid_size( new_grid_conversion_factor ) )
+      {
+         return false;
+      }
 #if defined( USE_MPI )
       {
          int errorno = -29000;
@@ -839,7 +846,10 @@ bool US_PM::best_md0_ga(
       return false;
    }
 
-   set_grid_size( coarse_conversion );
+   if ( !set_grid_size( coarse_conversion ) )
+   {
+      return false;
+   }
 #if defined( USE_MPI )
    {
       int errorno = -29000;
@@ -962,7 +972,10 @@ bool US_PM::best_md0_ga(
 
       US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
 
-      set_grid_size( new_grid_conversion_factor );
+      if ( !set_grid_size( new_grid_conversion_factor ) )
+      {
+         return false;
+      }
 #if defined( USE_MPI )
       {
          int errorno = -29000;
@@ -997,7 +1010,10 @@ bool US_PM::approx_max_dimension(
                                )
 {
    // run a coarse spheroid & use to determine maxd
-   set_grid_size( coarse_conversion );
+   if ( !set_grid_size( coarse_conversion ) )
+   {
+      return false;
+   }
    /* approx_max_dimension runs solely on master
 #if defined( USE_MPI )
    {
@@ -1125,7 +1141,10 @@ bool US_PM::best_ga(
    }
    split( params, types, fparams );
 
-   set_grid_size( coarse_conversion );
+   if ( !set_grid_size( coarse_conversion ) )
+   {
+      return false;
+   }
 #if defined( USE_MPI )
    {
       int errorno = -29000;
@@ -1276,7 +1295,10 @@ bool US_PM::best_ga(
 
       if ( new_grid_conversion_factor != grid_conversion_factor )
       {
-         set_grid_size( new_grid_conversion_factor );
+         if ( !set_grid_size( new_grid_conversion_factor ) )
+         {
+            return false;
+         }
 #if defined( USE_MPI )
          {
             int errorno = -29000;

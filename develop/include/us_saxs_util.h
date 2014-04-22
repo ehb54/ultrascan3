@@ -703,6 +703,11 @@ class US_EXTERN US_Saxs_Util
       set < int >        pm_workers_busy;
 
 #endif
+      QString run_json ( QString & json );
+      bool run_pm      (
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                        );
       bool run_pm      ( QString controlfile );
       bool run_pm      ( QStringList qsl );
       bool run_pm      ( 
@@ -710,8 +715,11 @@ class US_EXTERN US_Saxs_Util
                         map < QString, vector < double > > & produced_I,
                         map < QString, QString >           & produced_model,
                         map < QString, QString >           & parameters,
-                        map < QString, vector < double > > & vectors
+                        map < QString, vector < double > > & vectors,
+                        bool                                 quiet = false
                          );
+      vector < vector < double > >  pmtypes_expand();
+
 
       bool run_pm_ok   ( QString option );
       QStringList      job_output_files;

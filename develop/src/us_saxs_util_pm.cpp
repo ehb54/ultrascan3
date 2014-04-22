@@ -16,6 +16,178 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
+QString US_Saxs_Util::run_json( QString & json )
+{
+   map < QString, QString > parameters = US_Json::split( json );
+   map < QString, QString > results;
+
+   for ( map < QString, QString >::iterator it = parameters.begin();
+         it != parameters.end();
+         ++it )
+   {
+      qDebug( QString( "%1 : %2" ).arg( it->first ).arg( it->second ) );
+      if ( it->first.left( 1 ) == "_" )
+      {
+         results[ it->first ] = it->second;
+      }
+   }
+
+   {
+      QStringList supported;
+      supported
+         << "pmrun";
+      
+      int count = 0;
+      for ( int i = 0; i < (int) supported.size(); ++i )
+      {
+         if ( parameters.count( supported[ i ] ) )
+         {
+            count++;
+         }
+      }
+
+      if ( !count )
+      {
+         results[ "errors" ] = "no supported runtype found in input json";
+         return US_Json::compose( results );
+      }
+      if ( count > 1 )
+      {
+         results[ "errors" ] = "only one run type currently allowed per input json";
+         return US_Json::compose( results );
+      }
+   }
+
+   if ( !run_pm( parameters, results ) )
+   {
+      results[ "errors" ] += " run_pm failed:" + errormsg;
+   }
+   return US_Json::compose( results );
+}
+
+bool US_Saxs_Util::run_pm(
+                          map < QString, QString >           & parameters,
+                          map < QString, QString >           & results
+                          )
+{
+   if ( !parameters.count( "pmfiles" ) )
+   {
+      results[ "errors" ] = "no pmfiles specified";
+      return false;
+   }
+
+   parameters[ "pmfiles" ].replace( "\\/", "/" ).replace( QRegExp( "^\"" ), "" ).replace( QRegExp( "\"$" ), "" );
+   QStringList files;
+
+   {
+      QStringList files_try = QStringList::split( "\",\"", parameters[ "pmfiles" ] );
+      for ( int i = 0; i < (int) files_try.size(); ++i )
+      {
+         qDebug( QString( "file %1" ).arg( files_try[ i ] ) );
+         QFileInfo fi( files_try[ i ] );
+         if ( !fi.exists() )
+         {
+            results[ "errors" ] += QString( " file %1 does not exist." ).arg( files_try[ i ] );
+         } else {
+            if ( !fi.isReadable() )
+            {
+               results[ "errors" ] += QString( " file %1 exists but is not readable." ).arg( files_try[ i ] );
+            } else {
+               files << files_try[ i ];
+            }
+         }
+      }
+   }
+
+   if ( !files.size() )
+   {
+      return false;
+   }
+
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      map < QString, vector < double > > vectors;
+
+      if ( !read_sas_data( files[ i ],
+                           vectors[ "pmq" ],
+                           vectors[ "pmi" ],
+                           vectors[ "pme" ],
+                           errormsg ) )
+      {
+         results[ "errors" ] += " " + errormsg;
+         continue;
+      }
+
+      double pmminq = parameters.count( "pmminq" ) ? parameters[ "pmminq" ].toDouble() : 0e0;
+      double pmmaxq = parameters.count( "pmmaxq" ) ? parameters[ "pmmaxq" ].toDouble() : 7e0;
+      int pmqpoints = parameters.count( "pmqpoints" ) ? parameters[ "pmqpoints" ].toInt() : 5000;
+      bool pmlogbin = parameters.count( "pmlogbin" );
+
+      clip_data( pmminq, 
+                 pmmaxq, 
+                 vectors[ "pmq" ], 
+                 vectors[ "pmi" ],
+                 vectors[ "pme" ] );
+
+      if ( vectors[ "pmq" ].size() < 3 )
+      {
+         results[ "errors" ] += QString( " after q range cropping %1 had less then 3 points of data left" ).arg( files[ i ] );
+         continue;
+      }
+
+      errormsg  = "";
+      noticemsg = "";
+      
+      bin_data( pmqpoints, 
+                pmlogbin, 
+                vectors[ "pmq" ], 
+                vectors[ "pmi" ],
+                vectors[ "pme" ],
+                errormsg, 
+                noticemsg );
+
+      // if ( !noticemsg.isEmpty() )
+      // {
+      //    results[ "notice" ] += " " + noticemsg;
+      // }
+      if ( !errormsg.isEmpty() )
+      {
+         results[ "errors" ] += " " + errormsg;
+         continue;
+      }
+
+      if ( vectors[ "pmq" ].size() < 3 )
+      {
+         results[ "errors" ] += QString( " after binning %1 had less then 3 points of data left" ).arg( files[ i ] );
+         continue;
+      }
+      
+      map < QString, vector < double > > produced_q;
+      map < QString, vector < double > > produced_I;
+      map < QString, QString >           produced_model;
+
+      US_Vector::printvector3( "q,i,e before runpm", vectors[ "pmq" ], vectors[ "pmi" ], vectors[ "pme" ] );
+
+      if ( !run_pm( produced_q,
+                    produced_I,
+                    produced_model,
+                    parameters,
+                    vectors,
+                    true ) )
+      {
+         results[ "errors" ] += QString( " run_pm error %1: %2" ).arg( files[ i ] ).arg( errormsg );
+         continue;
+      }
+   }
+
+   if ( results.count( "errors" ) &&
+        !results[ "errors" ].isEmpty() )
+   {
+      return false;
+   }
+   return true;
+}
+
 static US_Timer usupm_timer;
 
 bool US_Saxs_Util::flush_pm_csv( 
@@ -581,7 +753,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
 
          unsigned int approx_max_d;
          if ( !pm.approx_max_dimension( params, 
-                                        control_parameters[ "pmapproxmaxdimension" ].toDouble(),
+                                        control_parameters[ "pmbestcoarseconversion" ].toDouble(),
                                         approx_max_d ) )
          {
             return false;
@@ -1162,7 +1334,7 @@ bool US_Saxs_Util::run_pm_ok( QString option )
             number_of_params_found++;
          }
       }
-      if ( !number_of_params_found )
+      if ( !number_of_params_found && !control_parameters.count( "pmtypes" ) )
       {
          errormsg = QString( "missing required vector one of: %1" ).arg( qslv_required.join( "," ) );
          return false;
@@ -1190,7 +1362,8 @@ bool US_Saxs_Util::run_pm(
                           map < QString, vector < double > > & produced_I,
                           map < QString, QString >           & produced_model,
                           map < QString, QString >           & parameters,
-                          map < QString, vector < double > > & vectors
+                          map < QString, vector < double > > & vectors,
+                          bool quiet
                            )
 {
    output_files          .clear();
@@ -1205,6 +1378,7 @@ bool US_Saxs_Util::run_pm(
    vector < double > params;
    set < pm_point >  model;
 
+   errormsg = "";
 
    if ( control_parameters.count( "pmrayleighdrho" ) )
    {
@@ -1230,7 +1404,7 @@ bool US_Saxs_Util::run_pm(
                                                control_vectors   [ "pmq" ],
                                                control_vectors   [ "pmf" ] ) )
       {
-         errormsg = QString( "Error computing structurer factors : %1" ).arg( errormsg );
+         errormsg = QString( "Error computing structure factors : %1" ).arg( errormsg );
          return false;
       }
       double bed = control_parameters[ "pmbufferedensity" ].toDouble();
@@ -1260,6 +1434,8 @@ bool US_Saxs_Util::run_pm(
             return false;
          }            
 
+         qDebug( QString( "uspm approxmaxdim %1" ).arg( control_parameters [ "pmgridsize"     ].toDouble() ) );
+
          US_PM pm(
                   control_parameters [ "pmgridsize"     ].toDouble(),
                   control_parameters [ "pmmaxdimension" ].toInt(),
@@ -1273,8 +1449,9 @@ bool US_Saxs_Util::run_pm(
                   );
 
          unsigned int approx_max_d;
+
          if ( !pm.approx_max_dimension( params, 
-                                        control_parameters[ "pmapproxmaxdimension" ].toDouble(),
+                                        control_parameters[ "pmbestcoarseconversion" ].toDouble(),
                                         approx_max_d ) )
          {
             return false;
@@ -1313,6 +1490,8 @@ bool US_Saxs_Util::run_pm(
             }
             srand48_done = true;
          }
+
+         qDebug( QString( "uspm bestmd0 %1" ).arg( control_parameters [ "pmgridsize"     ].toDouble() ) );
 
          US_PM pm(
                   control_parameters [ "pmgridsize"     ].toDouble(),
@@ -1444,6 +1623,8 @@ bool US_Saxs_Util::run_pm(
             srand48_done = true;
          }
 
+         qDebug( QString( "uspm bestga again %1" ).arg( control_parameters [ "pmgridsize"     ].toDouble() ) );
+
          US_PM pm(
                   control_parameters [ "pmgridsize"     ].toDouble(),
                   control_parameters [ "approx_max_d"   ].toUInt(),
@@ -1473,6 +1654,8 @@ bool US_Saxs_Util::run_pm(
                            );
 
          vector < int > types;
+         vector < vector < int > > types_vector;
+
          if ( control_vectors.count( "pmparams" ) )
          {
             params = control_vectors[ "pmparams" ];
@@ -1483,66 +1666,119 @@ bool US_Saxs_Util::run_pm(
                {
                   types.push_back( (int) control_vectors[ "pmtypes" ][ i ] );
                }
-               pm.zero_params( params, types );
+               types_vector.push_back( types );
             } else {
-               errormsg = QString( "Error pmbestga : pmparams or pmtypes must be defined" );
+               if ( control_parameters.count( "pmtypes" ) )
+               {
+                  if ( !pm.expand_types( types_vector
+                                         ,control_parameters[ "pmtypes" ]
+                                         ,( control_parameters.count( "pmincrementally" ) &&
+                                            control_parameters[ "pmincrementally" ] == "on" )
+                                         ,( control_parameters.count( "pmallcombinations" ) &&
+                                            control_parameters[ "pmallcombinations" ] == "on" ) ) 
+                       ||
+                       !types_vector.size() )
+                  {
+                     errormsg = QString( "Error pmbestga : pmtypes string did not expand:" ) + pm.error_msg;
+                     return false;
+                  }
+               } else {
+                  errormsg = QString( "Error pmbestga : pmparams or pmtypes must be defined" );
+                  return false;
+               }
+            }
+         }
+
+         if ( types_vector.size() )
+         {
+            qDebug( QString( "total types %1" ).arg( types_vector.size() ) );
+            for ( int i = 0; i < (int) types_vector.size(); ++i )
+            {
+               types = types_vector[ i ];
+
+               pm.zero_params( params, types );
+
+               if ( !pm.best_ga( 
+                                params,
+                                model,
+                                control_parameters[ "pmgapointsmax"            ].toUInt(),
+                                control_parameters[ "pmbestfinestconversion"   ].toDouble(),
+                                control_parameters[ "pmbestcoarseconversion"   ].toDouble(),
+                                control_parameters[ "pmbestrefinementrangepct" ].toDouble(),
+                                control_parameters[ "pmbestconversiondivisor"  ].toDouble()
+                                 ) )
+               {
+                  errormsg = "Error:" + pm.error_msg;
+                  return false;
+               }
+
+               QString outname = control_parameters[ "pmoutname" ] + pm.get_name( types );
+
+               int ext = 0;
+               while ( produced_I.count( outname ) )
+               {
+                  outname = control_parameters[ "pmoutname" ] + pm.get_name( types ) + QString( "-%1" ).arg( ++ext );
+               }
+         
+               produced_q[ outname ] = pm.q;
+               produced_I[ outname ].resize( pm.q.size() );
+         
+               if ( !pm.qstring_model( produced_model[ outname ], model, params ) )
+               {
+                  errormsg = QString( "Error producing model %1" ).arg( outname );
+                  return false;
+               }
+            
+               if ( !pm.compute_I( model, produced_I[ outname ] ) )
+               {
+                  errormsg = pm.error_msg;
+                  return false;
+               }
+            }
+            pm_ga_fitness_secs  += pm.pm_ga_fitness_secs;
+            pm_ga_fitness_calls += pm.pm_ga_fitness_calls;
+
+         } else {
+            if ( !pm.best_ga( 
+                             params,
+                             model,
+                             control_parameters[ "pmgapointsmax"            ].toUInt(),
+                             control_parameters[ "pmbestfinestconversion"   ].toDouble(),
+                             control_parameters[ "pmbestcoarseconversion"   ].toDouble(),
+                             control_parameters[ "pmbestrefinementrangepct" ].toDouble(),
+                             control_parameters[ "pmbestconversiondivisor"  ].toDouble()
+                              ) )
+            {
+               errormsg = "Error:" + pm.error_msg;
+               return false;
+            }
+
+            pm_ga_fitness_secs  += pm.pm_ga_fitness_secs;
+            pm_ga_fitness_calls += pm.pm_ga_fitness_calls;
+
+            QString outname = control_parameters[ "pmoutname" ] + pm.get_name( types );
+
+            int ext = 0;
+            while ( produced_I.count( outname ) )
+            {
+               outname = control_parameters[ "pmoutname" ] + pm.get_name( types ) + QString( "-%1" ).arg( ++ext );
+            }
+         
+            produced_q[ outname ] = pm.q;
+            produced_I[ outname ].resize( pm.q.size() );
+         
+            if ( !pm.qstring_model( produced_model[ outname ], model, params ) )
+            {
+               errormsg = QString( "Error producing model %1" ).arg( outname );
+               return false;
+            }
+            
+            if ( !pm.compute_I( model, produced_I[ outname ] ) )
+            {
+               errormsg = pm.error_msg;
                return false;
             }
          }
-         if ( !pm.best_ga( 
-                          params,
-                          model,
-                          control_parameters[ "pmgapointsmax"            ].toUInt(),
-                          control_parameters[ "pmbestfinestconversion"   ].toDouble(),
-                          control_parameters[ "pmbestcoarseconversion"   ].toDouble(),
-                          control_parameters[ "pmbestrefinementrangepct" ].toDouble(),
-                          control_parameters[ "pmbestconversiondivisor"  ].toDouble()
-                          ) )
-         {
-            errormsg = "Error:" + pm.error_msg;
-            return false;
-         }
-
-         pm_ga_fitness_secs  += pm.pm_ga_fitness_secs;
-         pm_ga_fitness_calls += pm.pm_ga_fitness_calls;
-
-         QString outname = control_parameters[ "pmoutname" ] + pm.get_name( types );
-
-         int ext = 0;
-         while ( produced_I.count( outname ) )
-         {
-            outname = control_parameters[ "pmoutname" ] + pm.get_name( types ) + QString( "-%1" ).arg( ++ext );
-         }
-         
-         produced_q[ outname ] = pm.q;
-         produced_I[ outname ].resize( pm.q.size() );
-         
-         if ( !pm.qstring_model( produced_model[ outname ], model, params ) )
-         {
-            errormsg = QString( "Error producing model %1" ).arg( outname );
-            return false;
-         }
-            
-         if ( !pm.compute_I( model, produced_I[ outname ] ) )
-         {
-            errormsg = pm.error_msg;
-            return false;
-         }
-
-         // QString outname = control_parameters[ "pmoutname" ];
-         // if ( !pm.write_model( outname, model, params, false ) )
-         // {
-         //    errormsg = QString( "Error writing model %1" ).arg( outname );
-         //    return false;
-         // }
-         // output_files << QString( outname + ".bead_model" );
-
-         // if ( !pm.write_I    ( outname, model, false ) )
-         // {
-         //    errormsg = QString( "Error writing I data %1" ).arg( outname );
-         //    return false;
-         // }
-         // output_files << QString( outname + ".dat" );
       }         
    }
 

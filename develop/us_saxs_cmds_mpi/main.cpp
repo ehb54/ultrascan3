@@ -34,6 +34,8 @@ int main (int argc, char **argv)
                 "              \tperform 1d analysis\n"
                 "pm            \tcontrolfile\n"
                 "              \tperform pm\n"
+                "json          \tjson\n"
+                "              \tprocess commands form json provided as command line argument\n"
                 , argv[0]
                 );
       }
@@ -201,6 +203,28 @@ int main (int argc, char **argv)
       }
       MPI_Finalize();
       exit(0);
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "json" ) 
+   {
+      if ( cmds.size() != 2 ) 
+      {
+         printf(
+                "{\"errors\":\"%s %s incorrect number of arguments\"}\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString      json         = cmds[ p++ ];
+
+      US_Saxs_Util usu;
+      cout << usu.run_json( json ).ascii() << endl;
+      exit( 0 );
    }
    errorbase -= 1000;
 

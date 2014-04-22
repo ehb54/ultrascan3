@@ -63,7 +63,9 @@ class US_PM
          CYLINDER,
          SPHEROID,
          ELLIPSOID,
-         TORUS
+         TORUS,
+         OBJECTS_FIRST = SPHERE,
+         OBJECTS_LAST  = TORUS
          // TOURS_SEGMENT
       };
 
@@ -324,6 +326,21 @@ class US_PM
 
    vector < double >                       last_written_I;
 
+   bool                                    expand_types( 
+                                                        vector < vector < int > > & types_vector,
+                                                        QString                     types,
+                                                        bool                        incrementally,
+                                                        bool                        allcombinations 
+                                                         );
+
+   bool                                    expand_types( 
+                                                        vector < vector < double > > & types_vector,
+                                                        QString                        types,
+                                                        bool                           incrementally,
+                                                        bool                           allcombinations 
+                                                         );
+                                                           
+
  public:
    // note: F needs to be the factors for a volume of size grid_conversion_factor ^ 3
 
@@ -495,8 +512,8 @@ class US_PM
    bool                zero_params       ( vector < double > & params, vector < int > & types );
    bool                random_params     ( vector < double > & params, vector < int > & types, double max_d = 0e0 );
    QString             list_params       ( vector < double > & params );
-   void                reset_grid_size   ( bool quiet = false );
-   void                set_grid_size     ( double grid_conversion_factor, bool quiet = false );
+   bool                reset_grid_size   ( bool quiet = false );
+   bool                set_grid_size     ( double grid_conversion_factor, bool quiet = false );
 
    bool                grid_search       (
                                           vector < double > & params,

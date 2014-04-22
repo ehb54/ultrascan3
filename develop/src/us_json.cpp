@@ -45,7 +45,7 @@ map < QString, QString > US_Json::split( QString qs )
 #if defined( USJ_DEBUG )
          cout << QString( "end json toks %1 %2\n" ).arg( tok1 ).arg( tok2 ).ascii();
 #endif
-         result[ tok1 ] = tok2;
+         result[ tok1.stripWhiteSpace() ] = tok2.stripWhiteSpace();
          tok1 = "";
          tok2 = "";
          in_json = false;
@@ -115,7 +115,7 @@ map < QString, QString > US_Json::split( QString qs )
             result[ "json parsing error" ] = "json error: unexpected ','";
             return result;
          }
-         result[ tok1 ] = tok2;
+         result[ tok1.stripWhiteSpace() ] = tok2.stripWhiteSpace();
          tok1 = "";
          tok2 = "";
          in_tok1 = true;

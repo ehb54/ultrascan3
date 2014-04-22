@@ -8,13 +8,18 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-void US_PM::set_grid_size( double grid_conversion_factor, bool quiet )
+bool US_PM::set_grid_size( double grid_conversion_factor, bool quiet )
 {
    /*
 #if defined( USE_MPI )
    cout << QString( "%1: Set grid size: %2\n" ).arg( myrank ).arg( grid_conversion_factor );
 #endif
    */
+   if ( grid_conversion_factor < 0.5 )
+   {
+      error_msg = QString( "set_grid_size requested size %1 is less than the minimum allowed 0.5" ).arg( grid_conversion_factor );
+      return false;
+   }
 
    // be careful with this routine!
    // have to clear because any rtp data is now invalid
@@ -42,11 +47,12 @@ void US_PM::set_grid_size( double grid_conversion_factor, bool quiet )
       F[ i ] = org_F[ i ] * conv_F;
    }
    max_dimension = org_max_dimension / grid_conversion_factor;
+   return true;
 }
 
-void US_PM::reset_grid_size( bool quiet )
+bool US_PM::reset_grid_size( bool quiet )
 {
-   set_grid_size( org_conversion_factor, quiet );
+   return set_grid_size( org_conversion_factor, quiet );
 }
 
 US_PM::US_PM( 
@@ -1305,5 +1311,157 @@ bool US_PM::join( vector < double > & params, vector < int > & types, vector < d
          params.push_back( fparams[ fpos ] );
       }
    }
+   return true;
+}
+
+static void combo_with_replacement(
+                                   vector < int >            & elems,
+                                   unsigned int                req_len,
+                                   vector < int >            & pos,
+                                   vector < vector < int > > & results,
+                                   unsigned int                depth = 0,
+                                   unsigned int                margin = 0
+                                   )
+{
+   if ( depth >= req_len ) 
+   {
+      vector < int > result( pos.size() );
+      for ( unsigned int ii = 0; ii < (unsigned int)pos.size(); ++ii )
+      {
+         result[ ii ] = elems[ pos[ ii ] ];
+      }
+      results.push_back( result );
+      return;
+   }
+
+   for ( unsigned int ii = margin; ii < (unsigned int) elems.size(); ++ii ) 
+   {
+      pos[ depth ] = ii;
+      combo_with_replacement( elems, req_len, pos, results, depth + 1, ii );
+   }
+   return;
+}
+
+bool  US_PM::expand_types(
+                          vector < vector < double > > & types_vector,
+                          QString                        types,
+                          bool                           incrementally,
+                          bool                           allcombinations 
+                          )
+{
+   types_vector.clear();
+   vector < vector < int > > types_vector_int;
+   bool result = expand_types( types_vector_int, types, incrementally, allcombinations );
+   for ( int i = 0; i < (int) types_vector_int.size(); ++i )
+   {
+      vector < double > tmp_v;
+      for ( int j = 0; j < (int) types_vector_int[ i ].size(); ++j )
+      {
+         tmp_v.push_back( (double) types_vector_int[ i ][ j ] );
+      }
+      types_vector.push_back( tmp_v );
+   }
+   return result;
+}
+
+bool  US_PM::expand_types(
+                          vector < vector < int > > & types_vector,
+                          QString                     types,
+                          bool                        incrementally,
+                          bool                        allcombinations 
+                          )
+{
+   types_vector.clear();
+
+   error_msg = "";
+   QStringList qsl_types = QStringList::split( QRegExp( "(\\s+|(\\s*(,|:)\\s*))" ), types );
+   for ( int i = 0; i < (int) qsl_types.size(); ++i )
+   {
+      if ( qsl_types[ i ].toInt() < OBJECTS_FIRST || 
+           qsl_types[ i ].toInt() > OBJECTS_LAST )
+      {
+         error_msg += QString( " type out of range %1" ).arg( qsl_types[ i ] );
+      }
+   }
+   if ( !error_msg.isEmpty() )
+   {
+      return false;
+   }
+
+   if ( incrementally )
+   {
+      if ( allcombinations )
+      {
+         set < int > types_set;
+
+         for ( int i = 0; i < (int) qsl_types.size(); ++i )
+         {
+            types_set.insert( qsl_types[ i ].toInt() );
+         }
+
+         vector < int > typesv;
+         for ( set < int >::iterator it = types_set.begin();
+               it != types_set.end();
+               it++ )
+         {
+            typesv.push_back( *it );
+         }
+
+         for ( int i = 1; i <= (int) qsl_types.size(); ++i )
+         {
+            vector < int > pos( i );
+            combo_with_replacement( typesv,
+                                    (int)pos.size(),
+                                    pos,
+                                    types_vector );
+         }
+      } else {
+         for ( int i = 0; i < (int) qsl_types.size(); ++i )
+         {
+            vector < int > this_types;
+            for ( int j = 0; j <= i; ++j )
+            {
+               this_types.push_back( qsl_types[ j ].toInt() );
+            }
+            types_vector.push_back( this_types );
+         }
+      }
+   } else {
+      if ( allcombinations )
+      {
+         set < int > types_set;
+
+         for ( int i = 0; i < (int) qsl_types.size(); ++i )
+         {
+            types_set.insert( qsl_types[ i ].toInt() );
+         }
+         vector < int > typesv;
+         for ( set < int >::iterator it = types_set.begin();
+               it != types_set.end();
+               it++ )
+         {
+            typesv.push_back( *it );
+         }
+         vector < int > pos( qsl_types.size() );
+         combo_with_replacement( typesv,
+                                 (int)pos.size(),
+                                 pos,
+                                 types_vector );
+      } else {
+         vector < int > this_types;
+         for ( int i = 0; i < (int) qsl_types.size(); ++i )
+         {
+            this_types.push_back( qsl_types[ i ].toInt() );
+         }
+         types_vector.push_back( this_types );
+      }
+   }
+
+   qDebug( QString( "pm types string %1 %2 %3 size %4\n" )
+           .arg( types )
+           .arg( incrementally   ? "incrementally" : "" )
+           .arg( allcombinations ? "allcombinations" : "" )
+           .arg( types_vector.size() ) );
+
    return true;
 }

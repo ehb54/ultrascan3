@@ -46,6 +46,10 @@ bool US_Saxs_Util::read_sas_data(
       return false;
    }
 
+   q.clear();
+   I.clear();
+   e.clear();
+   
    Q3TextStream ts(&f);
    vector < QString > qv;
    QStringList qsl;

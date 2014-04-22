@@ -42,6 +42,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    QColorGroup cg_red = cg_magenta;
    cg_red.setBrush( QColorGroup::Base, QBrush( QColor( "red" ), Qt::SolidPattern ) );
 
+   lbl_title = new QLabel("Developed by Emre Brookes, Javier Pérez, Patrice Vachette and Mattia Rocco (see J. App. Cryst. 46:1823-1833, 2013)", this);
+   lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_title->setMinimumHeight(minHeight1);
+   lbl_title->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_title );
+   lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
    lbl_files = new mQLabel("Data files", this);
    lbl_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_files->setMinimumHeight(minHeight1);
@@ -1368,7 +1375,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect(pb_testiq, SIGNAL(clicked()), SLOT(testiq()));
    pb_testiq->setEnabled( false );
 
-   lbl_testiq_q_range = new QLabel( tr( "t range for I(q): " ), this );
+   lbl_testiq_q_range = new QLabel( tr( "Time range for I(q): " ), this );
    lbl_testiq_q_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_testiq_q_range->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_testiq_q_range );
@@ -1419,6 +1426,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    bg_pos = 0;
    bg_testiq_gaussians->setExclusive( true );
    bg_testiq_gaussians->addButton( rb_testiq_from_i_t, bg_pos++ );
+
+   pb_testiq_visrange = new QPushButton(tr("Vis. range"), this);
+   pb_testiq_visrange->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_testiq_visrange->setMinimumHeight(minHeight1);
+   pb_testiq_visrange->setPalette( PALET_PUSHB );
+   connect(pb_testiq_visrange, SIGNAL(clicked()), SLOT(testiq_visrange()));
 
    pb_testiq_testset = new QPushButton(tr("Create I(q) set"), this);
    pb_testiq_testset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -1571,6 +1584,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    bg_guinier_resid_type->addButton( rb_guinier_resid_sd, bg_pos++ );
    bg_guinier_resid_type->addButton( rb_guinier_resid_pct, bg_pos++ );
    rb_guinier_resid_diff->setChecked( true );
+
+   lbl_guinier_stats = new QLabel( "", this );
+   lbl_guinier_stats->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+   lbl_guinier_stats->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_guinier_stats );
+   // lbl_guinier_stats->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   lbl_guinier_stats->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
    guinier_plot = new QwtPlot( qs );
 #ifndef QT4
@@ -2344,6 +2364,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( rb_testiq_from_i_t );
       hbl->addLayout( hbl_testiq_gaussians );
       hbl->addWidget( cb_testiq_from_gaussian );
+      hbl->addWidget( pb_testiq_visrange );
       hbl->addWidget( pb_testiq_testset );
       vbl_testiq->addLayout( hbl );
    }      
@@ -2371,6 +2392,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( le_guinier_qrgmax );
       vbl_guinier->addLayout( hbl );
    }      
+   vbl_guinier->addWidget( lbl_guinier_stats );
 
    // QBoxLayout * vbl_guinier_plots = new QVBoxLayout( 0 );
    // vbl_guinier_plots->addWidget( guinier_plot );
@@ -2540,8 +2562,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    gl_bottom->addWidget( pb_cancel   , 0, 3 );
    
    Q3VBoxLayout *background = new Q3VBoxLayout(this);
+   background->addWidget ( lbl_title );
    background->addSpacing( 1 );
-   // background->addWidget ( lbl_title );
    // background->addSpacing( 1 );
    background->addLayout ( gl_files_plot );
    background->addSpacing( 1 );
@@ -2690,6 +2712,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    testiq_widgets.push_back( lbl_testiq_gaussians );
    testiq_widgets.push_back( rb_testiq_from_i_t );
    testiq_widgets.push_back( cb_testiq_from_gaussian );
+   testiq_widgets.push_back( pb_testiq_visrange );
    testiq_widgets.push_back( pb_testiq_testset );
    testiq_widgets.push_back( lbl_blank1 );
    testiq_widgets.push_back( qwtw_wheel );
@@ -2714,6 +2737,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    guinier_widgets.push_back( rb_guinier_resid_diff );
    guinier_widgets.push_back( rb_guinier_resid_sd );
    guinier_widgets.push_back( rb_guinier_resid_pct );
+   guinier_widgets.push_back( lbl_guinier_stats );
    guinier_widgets.push_back( lbl_blank1 );
    guinier_widgets.push_back( qwtw_wheel );
    guinier_widgets.push_back( lbl_wheel_pos );

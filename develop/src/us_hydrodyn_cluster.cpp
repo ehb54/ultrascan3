@@ -3,6 +3,7 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_pm_global.h"
+#include "../include/us_pm.h"
 //Added by qt3to4:
 #include <Q3BoxLayout>
 #include <QLabel>
@@ -4184,8 +4185,8 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
    QStringList qsl_pmtypes = QStringList::split( QRegExp( "(\\s+|(\\s*(,|:)\\s*))" ), pmtypes );
    for ( int i = 0; i < (int) qsl_pmtypes.size(); ++i )
    {
-      if ( qsl_pmtypes[ i ].toInt() < 0 || 
-           qsl_pmtypes[ i ].toInt() > US_PM_MAX_PMTYPE )
+      if ( qsl_pmtypes[ i ].toInt() < US_PM::OBJECTS_FIRST || 
+           qsl_pmtypes[ i ].toInt() > US_PM::OBJECTS_LAST )
       {
          errors += QString( tr( "Method %1 pmtype out of range %2" ) ).arg( methods[ 0 ] ).arg( qsl_pmtypes[ i ] );
       }

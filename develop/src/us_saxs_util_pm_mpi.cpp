@@ -255,7 +255,12 @@ void US_Saxs_Util::pm_mpi_worker()
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }
-            pm->set_grid_size( msg.grid_conversion_factor, true );
+            if ( !pm->set_grid_size( msg.grid_conversion_factor, true ) )
+            {
+               cout << QString( "%1: MPI PM_NEW_GRID_SIZE failed to set grid size %2  pm_mpi_worker()\n" ).arg( myrank ).arg( msg.grid_conversion_factor ) << flush;
+               MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+               exit( errorno - myrank );
+            }
          }
          break;
 

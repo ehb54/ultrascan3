@@ -114,6 +114,8 @@ int main (int argc, char **argv)
              "              \tperform pm (controlfile can be a .tar or .tgz\n"
              "fasta         \tmax_line_length outfile pdb1 {pdb2 ... }\n"
              "              \tconvert listed .pdb's to a fasta formatted outputfile\n"
+             "json          \tjson\n"
+             "              \tprocess commands form json provided as command line argument\n"
              , argv[0]
              );
       exit(-1);
@@ -2273,6 +2275,28 @@ int main (int argc, char **argv)
          exit( errorbase );
       }
       
+      exit( 0 );
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "json" ) 
+   {
+      if ( cmds.size() != 2 ) 
+      {
+         printf(
+                "{\"errors\":\"%s %s incorrect number of arguments\"}\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString      json         = cmds[ p++ ];
+
+      US_Saxs_Util usu;
+      cout << usu.run_json( json ).ascii() << endl;
       exit( 0 );
    }
    errorbase -= 1000;

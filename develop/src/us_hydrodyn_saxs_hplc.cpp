@@ -6066,10 +6066,18 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_text( const QString & text )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
+
    if ( current_mode == MODE_GAUSSIAN )
    {
       replot_gaussian_sum();
+      gaussian_enables();
+   } else {
+      if ( current_mode == MODE_GGAUSSIAN )
+      {
+         ggaussian_enables();
+      }
    }
+
    if ( !suppress_replot )
    {
       plot_dist->replot();
@@ -6090,7 +6098,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_text( const QString & text )
    if ( current_mode == MODE_GAUSSIAN )
    {
       replot_gaussian_sum();
+      gaussian_enables();
+   } else {
+      if ( current_mode == MODE_GGAUSSIAN )
+      {
+         ggaussian_enables();
+      }
    }
+
    if ( !suppress_replot )
    {
       plot_dist->replot();

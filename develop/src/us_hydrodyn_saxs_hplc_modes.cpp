@@ -193,13 +193,13 @@ void US_Hydrodyn_Saxs_Hplc::pm_run()
    editor_msg( "blue", QString( tr( "PM: actual q points used %1 q range [%2:%3]" ) ).arg( use_q.size() ).arg( use_q[ 0 ] ).arg( use_q.back() ) );
 
    run_params[ "pmgridsize"           ] = le_pm_grid_size  ->text();
-   run_params[ "pminq"                ] = le_pm_q_start    ->text();
-   run_params[ "pmaxq"                ] = le_pm_q_end      ->text();
+   run_params[ "pmminq"               ] = le_pm_q_start    ->text();
+   run_params[ "pmmaxq"               ] = le_pm_q_end      ->text();
 
    run_params[ "pmbufferedensity"     ] = le_pm_buff_e_dens->text();
    run_params[ "pmrayleighdrho"       ] = le_pm_samp_e_dens->text();
    
-   run_params[ "pmapproxmaxdimension" ] = "10"; // ?
+   run_params[ "pmapproxmaxdimension" ] = "true";
 
    run_params[ "pmoutname"            ] = wheel_file + "_pm";
    
@@ -731,6 +731,23 @@ bool US_Hydrodyn_Saxs_Hplc::testiq_make()
    } else {
       return create_i_of_q_ng( testiq_selected, le_testiq_q_start->text().toDouble(), le_testiq_q_end->text().toDouble() );
    }
+}
+
+void US_Hydrodyn_Saxs_Hplc::testiq_visrange()
+{
+   if ( plot_dist_zoomer )
+   {
+#ifdef QT4
+      le_testiq_q_start->setText( QString( "%1" ).arg( plot_dist_zoomer->zoomRect().left() ) );
+      le_testiq_q_end  ->setText( QString( "%1" ).arg( plot_dist_zoomer->zoomRect().right() ) );
+#else
+      le_testiq_q_start->setText( QString( "%1" ).arg( plot_dist_zoomer->zoomRect().x1() ) );
+      le_testiq_q_end  ->setText( QString( "%1" ).arg( plot_dist_zoomer->zoomRect().x2() ) );
+#endif
+   } else {
+      le_testiq_q_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] ) );
+      le_testiq_q_end  ->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+   }      
 }
 
 void US_Hydrodyn_Saxs_Hplc::testiq_testset()
@@ -1326,6 +1343,20 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
    editor_msg( "black", "\n" );
 
+   int    count  = 0;
+
+   double i0_avg = 0e0;
+   double i0_min = 1e99;
+   double i0_max = -1e99;
+
+   double rg_avg = 0e0;
+   double rg_min = 1e99;
+   double rg_max = -1e99;
+
+   double qrg_avg = 0e0;
+   double qrg_min = 1e99;
+   double qrg_max = -1e99;
+
    for ( map < QString, vector <double > >::iterator it = guinier_q2.begin();
          it != guinier_q2.end();
          ++it )
@@ -1415,6 +1446,50 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          //             .arg( I0 )
          //             .arg( sRgmax ) 
          //             );
+         if ( !isnan( Rg ) )
+         {
+            if ( !count )
+            {
+               qrg_min = sRgmax;
+               qrg_max = sRgmax;
+               rg_min  = Rg;
+               rg_max  = Rg;
+               i0_min  = I0;
+               i0_max  = I0;
+            } else {
+               if ( qrg_min > sRgmax )
+               {
+                  qrg_min = sRgmax;
+               }
+               if ( qrg_max < sRgmax )
+               {
+                  qrg_max = sRgmax;
+               }
+               if ( rg_min > Rg )
+               {
+                  rg_min = Rg;
+               }
+               if ( rg_max < Rg )
+               {
+                  rg_max = Rg;
+               }
+               if ( i0_min > I0 )
+               {
+                  i0_min = I0;
+               }
+               if ( i0_max < I0 )
+               {
+                  i0_max = I0;
+               }
+            }
+
+            qrg_avg += sRgmax;
+            rg_avg  += Rg;
+            i0_avg  += I0;
+
+            count++;
+         }
+
          QString report =
             QString("%1 ").arg( it->first ) +
             QString( "" )
@@ -1472,6 +1547,40 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          // US_Vector::printvector2( "guinier x,y:", guinier_x[ it->first ], guinier_y[ it->first ] );
       }
    }
+   QString msg;
+   switch ( count )
+   {
+   case 0 : msg = ""; break;
+   case 1 : msg = QString( "q*Rg max %1   Rg %2   I0 %3" ).arg( qrg_avg ).arg( rg_avg ).arg( i0_avg ); break;
+   default :
+      {
+         double countinv = 1e0 / (double) count;
+         qrg_avg *= countinv;
+         rg_avg  *= countinv;
+         i0_avg  *= countinv;
+         msg = QString( "Avg. %1 " ).arg( count );
+         if ( count != ( int ) guinier_q2.size() )
+         {
+            msg += QString( "of %1 " ).arg( guinier_q2.size() );
+         }
+         msg += QString( "" )
+            .sprintf(
+                     "curves  q*Rg max %.3f [%.3f:%.3f]  Rg %.1f [%.1f:%.1f]  I0 %.2e [%.2e:%.2e]"
+                     , qrg_avg
+                     , qrg_min
+                     , qrg_max
+                     , rg_avg
+                     , rg_min
+                     , rg_max
+                     , i0_avg
+                     , i0_min
+                     , i0_max
+                     )
+            ;
+      }
+      break;
+   }
+   lbl_guinier_stats->setText( msg );
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_delete_markers()

@@ -394,6 +394,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QLabel       * lbl_testiq_q_range;
       mQLineEdit   * le_testiq_q_start;
       mQLineEdit   * le_testiq_q_end;
+      QPushButton  * pb_testiq_visrange;
       QPushButton  * pb_testiq_testset;
 
       QCheckBox    * cb_testiq_from_gaussian;
@@ -435,6 +436,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QLabel       * lbl_guinier_qrgmax;
       QLineEdit    * le_guinier_qrgmax;
       QCheckBox    * cb_guinier_sd;
+      QLabel       * lbl_guinier_stats;
 
       QRadioButton * rb_guinier_resid_diff;
       QRadioButton * rb_guinier_resid_sd;
@@ -1139,6 +1141,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void testiq_q_start_focus        ( bool );
       void testiq_q_end_text           ( const QString & );
       void testiq_q_end_focus          ( bool );
+      void testiq_visrange             ();
       void testiq_testset              ();
       void testiq_gauss_line           ();
       void testiq_enables              ();
