@@ -287,8 +287,8 @@ void US_SecondMoment::save( void )
    QString filebase = dir + "/" + d->runID + "/secmo."
       + QString( triples.at( index ) ).replace( " / ", "" ) + ".";
    
-   QString plot1File = filebase + "2ndmoment.svg";
-   QString plot2File = filebase + "velocity.svg";
+   QString plot1File = filebase + "2ndmoment.svgz";
+   QString plot2File = filebase + "velocity.svgz";
    QString textFile  = filebase + "2ndmoment.csv";
    QString htmlFile  = filebase + "report.html";
    QString dsinfFile = QString( filebase ).replace( "/secmo.", "/dsinfo." )

@@ -704,7 +704,8 @@ int US_Report::findTriple( QString searchTriple )
 // For example, dir = /home/user/ultrascan/reports/demo1_veloc
 //     and filename = 2dsa.2A260.tinoise.svg
 US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
-      const QString& filename, US_DB2* db, int idEdit, const QString dataDescription )
+      const QString& filename, US_DB2* db, int idEdit,
+      const QString dataDescription )
 {
    // Parse the directory for the runID
    QStringList parts  = dir.split( "/" );
@@ -749,7 +750,7 @@ US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
 
    // Read an existing triple, or create a new one
    int tripNdx = this->findTriple( newTriple );
-   if ( tripNdx == -1 )
+   if ( tripNdx < 0 )
    {
       // Not found
       status = this->addTriple( newTriple, dataDescription, db );
@@ -777,7 +778,15 @@ US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
    // Now find this document if it already exists
    int docNdx = t.findDocument( newAnal, newSubanal, newDoctype );
 
-   if ( docNdx == -1 )
+if(docNdx<0)
+DbgLv(1) << "Doc::saveDB: NOT FOUND newDoctype" << newDoctype;
+   if ( docNdx < 0  &&  newDoctype.endsWith( "svgz" ) )
+   {  // If SVGZ not found, test for SVG
+      docNdx     = t.findDocument( newAnal, newSubanal, QString( "svg" ) );
+DbgLv(1) << "Doc::saveDB:  NOT FOUND svg docNdx" << docNdx;
+   }
+
+   if ( docNdx < 0 )
    {
       // Not found
       status = t.addDocument( idEdit,
@@ -792,9 +801,11 @@ US_Report::Status US_Report::saveDocumentFromFile( const QString& dir,
 
    else
    {
+DbgLv(1) << "Doc::saveDB: Replace ndx label" << docNdx << newLabel;
       t.docs[ docNdx ].editedDataID = idEdit;
       t.docs[ docNdx ].label        = newLabel;
       t.docs[ docNdx ].filename     = filename;
+      t.docs[ docNdx ].documentType = newDoctype;
 
       status = t.docs[ docNdx ].saveDB( t.tripleID, dir, db );
       if ( status != US_Report::REPORT_OK )

@@ -739,10 +739,10 @@ int US_MwlRawViewer::saveUS3Disk( void )
 
    // Make sure directory is empty
    QDir d( dir );
-   QStringList rmvfilt( "*.svg" );
+   QStringList rmvfilt;
+   rmvfilt << "*.svgz" << "*.png" << "*.svg";
    QStringList rmvfiles = d.entryList( rmvfilt, QDir::Files, QDir::Name );
-   QStringList rmvfilt2( "*.png" );
-   rmvfiles << d.entryList( rmvfilt2, QDir::Files, QDir::Name );
+
    for ( int ii = 0; ii < rmvfiles.size(); ii++ )
       if ( ! d.remove( rmvfiles[ ii ] ) )
          qDebug() << "Unable to remove file" << rmvfiles[ ii ];

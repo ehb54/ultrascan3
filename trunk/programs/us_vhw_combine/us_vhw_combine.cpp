@@ -497,7 +497,7 @@ void US_vHW_Combine::save( void )
    QString runID    = ( oproj == "All" ) ? pdistrs[ 0 ].runID : oproj;
    QString trname   = pdistrs[ 0 ].triple;
    QString fdir     = US_Settings::reportDir() + "/" + runID;
-   QString fnamsvg  = "vHW.0Z9999.combo-distrib.svg";
+   QString fnamsvg  = "vHW.0Z9999.combo-distrib.svgz";
    QString fnampng  = "vHW.0Z9999.combo-distrib.png";
    QString fnamdat  = "vHW.0Z9999.combo-sb-distrib.csv";
    QString fnamlst  = "vHW.0Z9999.combo-list-include.rpt";

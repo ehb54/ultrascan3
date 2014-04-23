@@ -195,7 +195,7 @@ US_RunDetails2::~US_RunDetails2()
    for ( int i = 0; i < triples.size(); i++ )
    {
       QString triple = US_Util::compressed_triple( triples[ i ] );
-      QString filename = dir + "/rundetail." + triple + ".rundetail.svg";
+      QString filename = dir + "/rundetail." + triple + ".rundetail.svgz";
 
       // Calculate the current plot and write it to a file
       lw_triples->setCurrentRow( i );

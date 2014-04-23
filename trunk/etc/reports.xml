@@ -61,6 +61,7 @@
     <extension name="html" label="HTML General Report" mimetype="text/html" />
     <extension name="rpt" label="Plain-text Report" mimetype="text/plain" />
     <extension name="svg" label="SVG Plot" mimetype="image/svg+xml" />
+    <extension name="svgz" label="SVGZ Plot" mimetype="image/svg+xml" />
     <extension name="png" label="PNG Plot" mimetype="image/png" />
     <extension name="dat" label="Text Data Table" mimetype="text/plain" />
     <extension name="csv" label="Comma Separated Values" mimetype="text/csv" />

@@ -549,17 +549,20 @@ QString US_Gzip::make_ofname( const QString& filename, bool decompress )
     QString ofile = filename;
     
     if ( decompress ) 
-    {
-      // Get the gzip suffix if present
-      if ( filename.right( 3 ) != ".gz" ) return QString( "" ); 
-
-      // Strip the .gz
-      // oname might be changed later if infile contains an original name
-      return ofile.left( ofile.length() - 3 );
+    {  // Decompress:  strip ".gz" or change ".svgz" to ".svg"
+       if ( filename.endsWith( ".gz" ) )
+          return ofile.section( ".", 0, 2 );
+       else if ( filename.endsWith( ".svgz" ) )
+          return ofile.section( ".", 0, 2 ) + ".svg";
+       else
+          return QString( "" ); 
     } 
 
     // Compress
-    return ofile + ".gz";
+    if ( filename.endsWith( ".svg" ) )
+       return ofile.section( ".", 0, -2 ) + ".svgz";
+    else
+       return ofile + ".gz";
 }
 
 /////////////////////////////////////

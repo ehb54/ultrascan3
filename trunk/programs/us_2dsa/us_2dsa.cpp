@@ -698,7 +698,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    QString analynode = "/" + analybase + ".";
    QString filebase  = reppath  + analybase + dext + ".";
    QString htmlFile  = filebase + "report.html";
-   QString plot1File = filebase + "velocity.svg";
+   QString plot1File = filebase + "velocity.svgz";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString fitFile   = filebase + "fitmen.dat";
