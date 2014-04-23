@@ -464,10 +464,10 @@ void US_Dcdt::save( void )
       + QString( triples.at( index ) ).replace( " / ", "" ) + ".";
    
    QString htmlFile  = filebase + "report.html";
-   QString plot1File = filebase + "velocity.svg";
-   QString plot2File = filebase + "x-to-radius.svg";
-   QString plot3File = filebase + "x-to-S.svg";
-   QString plot4File = filebase + "average-S.svg";
+   QString plot1File = filebase + "velocity.svgz";
+   QString plot2File = filebase + "x-to-radius.svgz";
+   QString plot3File = filebase + "x-to-S.svgz";
+   QString plot4File = filebase + "average-S.svgz";
    QString textFile  = filebase + "average-S.csv";
    QString dsinfFile = QString( filebase ).replace( "/dcdt.", "/dsinfo." )
                                 + "dataset_info.html";

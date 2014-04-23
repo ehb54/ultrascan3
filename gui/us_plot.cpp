@@ -199,11 +199,11 @@ void US_Plot::svg( void )
 
    QString fileName = QFileDialog::getSaveFileName( plot, 
       tr( "Export File Name" ), reportDir, 
-      tr( "SVG Documents (*.svg)" ) );
+      tr( "SVG Documents (*.svgz)" ) );
 
    if ( ! fileName.isEmpty() )
    {
-      if ( fileName.right( 4 ) != ".svg" ) fileName += ".svg";
+      if ( fileName.right( 5 ) != ".svgz" ) fileName += ".svgz";
 
       US_GuiUtil::save_svg( fileName, plot );
    }

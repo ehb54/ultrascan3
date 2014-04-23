@@ -1495,20 +1495,19 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
    // Loop to parse each file name and write the record to the database
    for ( int ii = 0; ii < files.size(); ii++ )
    {
-      QString fpath = files[ ii ];
-      int     jjp   = fpath.lastIndexOf( "/" );
-      QString pfdir = fpath.left( jjp );
-      QString fname = fpath.mid ( jjp + 1 );
-      int     st    = freport.saveDocumentFromFile( pfdir, fname, dbP,
-                                                    idEdit, tripdesc );
+      QString fpath  = files[ ii ];
+      QString pfdir  = QString( fpath ).section( "/",  0, -2 );
+      QString fname  = QString( fpath ).section( "/", -1, -1 );
+      int     st     = freport.saveDocumentFromFile( pfdir, fname, dbP,
+                                                     idEdit, tripdesc );
 
-      if ( st == US_DB2::OK  &&  fname.endsWith( ".svg" ) )
+      if ( st == US_DB2::OK  &&  fname.contains( ".svg" ) )
       {
-         QString fnpng  = QString( fname ).replace( ".svg", ".png" );
+         QString fnpng  = QString( fname ).section( ".", 0, -2 ) + ".png";
          freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit, tripdesc );
       }
 
-      if ( st != US_DB2::OK )
+      else if ( st != US_DB2::OK )
       {
          qDebug() << "**saveDocument ERROR**:  ii status" << ii << st
             << "filename" << fname;

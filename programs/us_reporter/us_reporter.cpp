@@ -380,7 +380,7 @@ DbgLv(1) << " BD:  naucf" << naucf << "aucfil" << aucfil[0];
 
       else
       {
-         fname = "vHW.0Z9999.combo-distrib.svg";
+         fname = "vHW.0Z9999.combo-distrib.svgz";
          trnam = "0Z9999";
          tripl = "0 / Z / 9999";
          cdesc.label = "Combined Analyses";
@@ -499,10 +499,10 @@ DbgLv(1) << " BD:   nappf" << rafiles.size() << "rafilt" << rafilt[0]
                   rpfname = ( jj2 < 0 ) ? rpfname : rpfnmUp;
                }
 
-               if ( rpfname.endsWith( ".svg" ) )
+               if ( rpfname.contains( ".svg" ) )
                {  // Skip if SVG file has PNG equivalent
-                  QString rpfnpng = QString( rpfname )
-                     .replace( ".svg", ".png" );
+                  QString rpfnpng = QString( rpfname ).section( ".", 0, -2 )
+                                    + ".png";
                   if ( rafiles.indexOf( rpfnpng ) >= 0 )
                      continue;
                }
@@ -963,8 +963,15 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
          if ( idesc->filepath.contains( ".svg" ) )
          {
             QSvgRenderer svgrend;
-            svgrend.load( idesc->filepath );
-            chght = svgrend.defaultSize().height();
+            if ( idesc->filepath.contains( ".svgz" ) )
+            {
+            }
+
+            else
+            {
+               svgrend.load( idesc->filepath );
+               chght = svgrend.defaultSize().height();
+            }
          }
 
          else
@@ -1248,9 +1255,10 @@ DbgLv(1) << "cnt_rpt:  ns rpts,runs,htmls,plots" << nsrpts << nsruns
 // View an individual report file
 void US_Reporter::item_view()
 {
-   QString fileexts = tr( "HTML files (*.html);;PLOT files (*.svg *.png);;"
-                          "Report file (*.rpt);;Data files (*.csv *.dat);;"
-                          "All files (*.*)" );
+   QString fileexts = tr(
+         "HTML files (*.html);;PLOT files (*.svgz *.svg *.png);;"
+         "Report file (*.rpt);;Data files (*.csv *.dat);;"
+         "All files (*.*)" );
    int row = tw_recs->currentItem()->type() - (int)QTreeWidgetItem::UserType;
    cdesc   = adescs.at( row );
    bool    isHTML = true;

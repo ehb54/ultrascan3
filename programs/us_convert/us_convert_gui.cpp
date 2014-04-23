@@ -3088,10 +3088,10 @@ DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
 
    // Make sure directory is empty
    QDir d( dir );
-   QStringList rmvfilt( "*.svg" );
+   QStringList rmvfilt;
+   rmvfilt << "*.svgz" << "*.png" << "*.svg";
    QStringList rmvfiles = d.entryList( rmvfilt, QDir::Files, QDir::Name );
-   QStringList rmvfilt2( "*.png" );
-   rmvfiles << d.entryList( rmvfilt2, QDir::Files, QDir::Name );
+
    for ( int ii = 0; ii < rmvfiles.size(); ii++ )
       if ( ! d.remove( rmvfiles[ ii ] ) )
          qDebug() << "Unable to remove file" << rmvfiles[ ii ];
@@ -3121,7 +3121,7 @@ DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
          triple         = cell + channel + wl;
       }
 
-      QString filename = dir + "/cnvt." + triple + ".raw.svg";
+      QString filename = dir + "/cnvt." + triple + ".raw.svgz";
 
       // Redo current plot and write it to a file
       lw_triple->setCurrentRow( tripListx );

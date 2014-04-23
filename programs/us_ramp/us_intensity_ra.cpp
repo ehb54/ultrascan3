@@ -64,7 +64,7 @@ US_IntensityRa::US_IntensityRa(
    if ( ! QDir( dir ).exists() )      // make sure the directory exists
       QDir().mkdir( dir );
 
-   QString filename = dir + "/cnvt." + ctriple + ".intensity.svg";
+   QString filename = dir + "/cnvt." + ctriple + ".intensity.svgz";
 
    int status = US_GuiUtil::save_plot( filename, data_plot );
    if ( status != 0 )

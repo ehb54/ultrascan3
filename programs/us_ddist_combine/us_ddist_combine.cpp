@@ -628,7 +628,7 @@ void US_DDistr_Combine::save( void )
       sanode2       = "combo-vcdat-mwl";
       sanode3       = "combo-listincl-mwl";
    }
-   QString fnamsvg  = annode + "." + trnode + "." + sanode1 + ".svg"; 
+   QString fnamsvg  = annode + "." + trnode + "." + sanode1 + ".svgz"; 
    QString fnampng  = annode + "." + trnode + "." + sanode1 + ".png"; 
    QString fnamdat  = annode + "." + trnode + "." + sanode2 + ".dat"; 
    QString fnamlst  = annode + "." + trnode + "." + sanode3 + ".rpt"; 

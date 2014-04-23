@@ -599,10 +599,10 @@ QDateTime time0=QDateTime::currentDateTime();
    QString basename  = US_Settings::reportDir() + "/" + edata->runID
       + "/vHW." + tripl + ".";
    QString htmlFile  = basename + "report.html";
-   QString plot1File = basename + "velocity.svg";
-   QString plot2File = basename + "extrap.svg";
-   QString plot3File = basename + "s-c-distrib.svg";
-   QString plot4File = basename + "s-c-histo.svg";
+   QString plot1File = basename + "velocity.svgz";
+   QString plot2File = basename + "extrap.svgz";
+   QString plot3File = basename + "s-c-distrib.svgz";
+   QString plot4File = basename + "s-c-histo.svgz";
    QString dsinfFile = QString( basename ).replace( "/vHW.", "/dsinfo." )
                                 + "dataset_info.html";
 
@@ -1718,13 +1718,13 @@ void US_vHW_Enhanced::copy_data_files( QString plot1File,
       QString plot2File, QString data2File )
 {
    QString tempbase   = US_Settings::tmpDir() + "/vHW.temp.";
-   QString tplot1File = tempbase + "s-c-distrib.svg";
-   QString tplot2File = tempbase + "s-c-histo.svg";
+   QString tplot1File = tempbase + "s-c-distrib.svgz";
+   QString tplot2File = tempbase + "s-c-histo.svgz";
    QString tdata2File = tempbase + "s-c-envelope.csv";
    QString tplot3File = tempbase + "s-c-distrib.png";
    QString tplot4File = tempbase + "s-c-histo.png";
-   QString plot3File  = QString( plot1File ).replace( ".svg", ".png" );
-   QString plot4File  = QString( plot2File ).replace( ".svg", ".png" );
+   QString plot3File  = QString( plot1File ).section( ".", 0, -2 ) + ".png";
+   QString plot4File  = QString( plot2File ).section( ".", 0, -2 ) + ".png";
 
    QFile tfp1( tplot1File );
    QFile tfp2( tplot2File );

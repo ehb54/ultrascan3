@@ -723,7 +723,7 @@ DbgLv(1) << "SV:  Post-write tno rno"
    respath           = respath + "/" + runID + "/";
    QString filebase  = reppath + analysisType + dext + ".";
    QString htmlFile  = filebase + "report.html";
-   QString plot1File = filebase + "velocity.svg";
+   QString plot1File = filebase + "velocity.svgz";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString plot4File = filebase + "mlines.png";

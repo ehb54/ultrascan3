@@ -904,7 +904,7 @@ QDateTime time0=QDateTime::currentDateTime();
    rep_f.close();
    files << htmlFile;
 
-   const QString svgext( ".svg" );
+   const QString svgext( ".svgz" );
    const QString pngext( ".png" );
    const QString csvext( ".csv" );
    QString img01File = basename + "velocity"   + svgext;
@@ -2815,7 +2815,7 @@ QString US_FeMatch::distrib_info() const
 // Write out a plot
 void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
 {
-   if ( filename.endsWith( ".svg" ) )
+   if ( filename.endsWith( ".svgz" )  ||  filename.endsWith( ".svg" ) )
    {  // Save an SVG file and a PNG copy
       if ( US_GuiUtil::save_plot( filename, plot ) != 0 )
          QMessageBox::warning( this, tr( "File Write Error" ),
@@ -3152,9 +3152,9 @@ void US_FeMatch::reportFilesToDB( QStringList& files )
             << "filename" << fname;
       }
 
-      if ( fname.endsWith( "svg" ) )
+      if ( fname.contains( ".svg" ) )
       {
-         QString fnpng = QString( fname ).replace( ".svg", ".png" );
+         QString fnpng = QString( fname ).section( ".", 0, -2 ) + ".png";
          freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit, tripdesc );
       }
    }
