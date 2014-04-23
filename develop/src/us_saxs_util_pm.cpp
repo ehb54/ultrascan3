@@ -10,14 +10,17 @@
 #include <Q3TextStream>
 #endif
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
-
 QString US_Saxs_Util::run_json( QString & json )
 {
+   if ( !us_log )
+   {
+      us_log = new US_Log( "runlog.txt" );
+      us_log->log( "initial json" );
+      us_log->log( json );
+   }
+
+   us_log->datetime( "start run_json" );
+
    map < QString, QString > parameters = US_Json::split( json );
    map < QString, QString > results;
 
@@ -25,11 +28,21 @@ QString US_Saxs_Util::run_json( QString & json )
          it != parameters.end();
          ++it )
    {
-      qDebug( QString( "%1 : %2" ).arg( it->first ).arg( it->second ) );
+      // qDebug( QString( "%1 : %2" ).arg( it->first ).arg( it->second ) );
       if ( it->first.left( 1 ) == "_" )
       {
          results[ it->first ] = it->second;
       }
+   }
+
+   if ( parameters.count( "_udphost" ) &&
+        parameters.count( "_udpport" ) &&
+        parameters.count( "_uuid" ) )
+   {
+      map < QString, QString > msging;
+      msging[ "_uuid" ] = results[ "_uuid" ];
+      us_udp_msg = new US_Udp_Msg( parameters[ "_udphost" ], (Q_UINT16) parameters[ "_udpport" ].toUInt() );
+      us_udp_msg->set_default_json( msging );
    }
 
    {
@@ -58,9 +71,22 @@ QString US_Saxs_Util::run_json( QString & json )
       }
    }
 
+   if ( us_udp_msg )
+   {
+      map < QString, QString > msging;
+      msging[ "status" ] = "started";
+      us_udp_msg->send_json( msging );
+   }
+
    if ( !run_pm( parameters, results ) )
    {
       results[ "errors" ] += " run_pm failed:" + errormsg;
+   }
+   if ( us_log )
+   {
+      us_log->log( "final json" );
+      us_log->log( US_Json::compose( results ) );
+      us_log->datetime( "end run_json" );
    }
    return US_Json::compose( results );
 }
@@ -83,7 +109,7 @@ bool US_Saxs_Util::run_pm(
       QStringList files_try = QStringList::split( "\",\"", parameters[ "pmfiles" ] );
       for ( int i = 0; i < (int) files_try.size(); ++i )
       {
-         qDebug( QString( "file %1" ).arg( files_try[ i ] ) );
+         // qDebug( QString( "file %1" ).arg( files_try[ i ] ) );
          QFileInfo fi( files_try[ i ] );
          if ( !fi.exists() )
          {
@@ -104,8 +130,25 @@ bool US_Saxs_Util::run_pm(
       return false;
    }
 
+   QStringList     models_written;
+   QStringList     dats_written;
+
+   QString         base_dir;
+   if ( parameters.count( "_base_directory" ) )
+   {
+      base_dir = parameters[ "_base_directory" ] + QDir::separator();
+      base_dir.replace( "\\/", "/" );
+   }
+
    for ( int i = 0; i < (int) files.size(); ++i )
    {
+      if ( us_udp_msg )
+      {
+         map < QString, QString > msging;
+         msging[ "status" ] = QString( "processing %1" ).arg( QFileInfo( files[ i ] ).fileName() );
+         us_udp_msg->send_json( msging );
+      }
+
       map < QString, vector < double > > vectors;
 
       if ( !read_sas_data( files[ i ],
@@ -166,19 +209,53 @@ bool US_Saxs_Util::run_pm(
       map < QString, vector < double > > produced_I;
       map < QString, QString >           produced_model;
 
-      US_Vector::printvector3( "q,i,e before runpm", vectors[ "pmq" ], vectors[ "pmi" ], vectors[ "pme" ] );
+      parameters[ "pmoutname" ] = QFileInfo( files[ i ] ).baseName( true );
 
       if ( !run_pm( produced_q,
                     produced_I,
                     produced_model,
                     parameters,
                     vectors,
-                    true ) )
+                    false ) )
       {
          results[ "errors" ] += QString( " run_pm error %1: %2" ).arg( files[ i ] ).arg( errormsg );
          continue;
       }
+
+      for ( map < QString, vector < double > >::iterator it = produced_q.begin();
+            it != produced_q.end();
+            ++it )
+      {
+         QString name = it->first;
+         QString msg;
+         if ( !write_iq( name, msg, it->second, produced_I[ it->first ] ) )
+         {
+            results[ "errors" ] += QString( " write error: %1" ).arg( msg );
+         } else {
+            dats_written << base_dir + name;
+         }
+
+         if ( !US_File_Util::writeuniq( name, msg, it->first, "bead_model", produced_model[ it->first ] ) )
+         {
+            results[ "errors" ] += QString( " write error: %1" ).arg( msg );
+         } else {
+            models_written << base_dir + name;
+         }
+      }
+      if ( us_udp_msg )
+      {
+         map < QString, QString > msging;
+         msging[ "status" ] = QString( "finished %1" ).arg( QFileInfo( files[ i ] ).fileName() );
+         msging[ "models" ] = "[\"" + models_written.join( "\",\"" ) + "\"]";
+         msging[ "dats"   ] = "[\"" + dats_written  .join( "\",\"" ) + "\"]";
+         us_log->log( "msging json" );
+         us_log->log( US_Json::compose( msging ) );
+         us_udp_msg->send_json( msging );
+      }
    }
+
+   results[ "models" ] = "[\"" + models_written.join( "\",\"" ) + "\"]";
+   results[ "dats"   ] = "[\"" + dats_written  .join( "\",\"" ) + "\"]";
 
    if ( results.count( "errors" ) &&
         !results[ "errors" ].isEmpty() )
@@ -212,7 +289,10 @@ bool US_Saxs_Util::flush_pm_csv(
       filename = use_filename;
    }
    
-   cout << "Creating:" << filename << "\n";
+   if ( us_log )
+   {
+      us_log->log( "Creating:" + filename );
+   }
    QFile of( filename );
    if ( !of.open( QIODevice::WriteOnly ) )
    {
@@ -289,14 +369,20 @@ bool US_Saxs_Util::run_pm( QString controlfile )
    if ( qd1 != qd2 )
    {
       ufu.copy( controlfile, QDir::currentDirPath() + QDir::separator() + QFileInfo( controlfile ).fileName() );
-      cout << QString( "copying %1 %2 <%3>\n" )
-         .arg( controlfile )
-         .arg( QDir::currentDirPath() + QDir::separator() + QFileInfo( controlfile ).fileName() )
-         .arg( ufu.errormsg );
+      if ( us_log )
+      {
+         us_log->log( 
+                     QString( "copying %1 %2 <%3>\n" )
+                     .arg( controlfile )
+                     .arg( QDir::currentDirPath() + QDir::separator() + QFileInfo( controlfile ).fileName() )
+                     .arg( ufu.errormsg ) );
+      }
       dest = QFileInfo( controlfile ).fileName();
 
-      cout << QString( "dest is now %1\n" )
-         .arg( dest );
+      if ( us_log )
+      {
+         us_log->log( QString( "dest is now %1\n" ).arg( dest ) );
+      }
    }
 
    bool use_tar = false;
@@ -357,22 +443,29 @@ bool US_Saxs_Util::run_pm( QString controlfile )
       }
    }      
 
-   cout << QString( "control file contains:\n%1\n-------\n" ).arg( qsl.join( "\n" ) ) << endl << flush;
+   if ( us_log )
+   {
+      us_log->log( QString( "control file contains:\n%1\n-------\n" ).arg( qsl.join( "\n" ) ) );
+   }
    usupm_timer.end_timer ( "pm_init" );
    usupm_timer.start_timer ( "pm_run" );
 
    if ( !run_pm( qsl ) )
    {
-      cout << errormsg << endl;
+      if ( us_log )
+      {
+         us_log->log( errormsg );
+      }
    }
 
    usupm_timer.end_timer( "pm_run" );
 
-   cout << 
-      QString( "my output files:<%1>\ncontrolfile %2\n" )
-      .arg( output_files.join( ":" ) ) 
-      .arg( controlfile )
-        << flush;
+   if ( us_log )
+   {
+      us_log->log( QString( "my output files:<%1>\ncontrolfile %2\n" )
+                   .arg( output_files.join( ":" ) ) 
+                   .arg( controlfile ) );
+   }
 
    QString runinfo_base = "runinfo";
 #if defined( USE_MPI )
@@ -421,7 +514,10 @@ bool US_Saxs_Util::run_pm( QString controlfile )
       f.close();
       output_files << runinfo;
    } else {
-      cout << "Warning: could not create timings\n" << flush;
+      if ( us_log )
+      {
+         us_log->log( "Warning: could not create timings\n" );
+      }
    }
 
    if ( use_tar )
@@ -451,7 +547,10 @@ bool US_Saxs_Util::run_pm( QString controlfile )
          QDir ndod;
          if ( !ndod.mkdir( newdir, true ) )
          {
-            cout << QString("Warning: could not create outputData \"%1\" directory\n" ).arg( ndod.path() );
+            if ( us_log )
+            {
+               us_log->log( QString("Warning: could not create outputData \"%1\" directory\n" ).arg( ndod.path() ) );
+            }
          }
          QDir::setCurrent( qs_base_dir );
       }
@@ -459,17 +558,26 @@ bool US_Saxs_Util::run_pm( QString controlfile )
       {
          QString dest = outputData + QDir::separator() + QFileInfo( results_file ).fileName();
          QDir qd;
-         cout << QString("renaming: %1 to %2\n" )
-               .arg( results_file )
-               .arg( dest );
+         if ( us_log )
+         {
+            us_log->log( QString("renaming: %1 to %2\n" )
+                         .arg( results_file )
+                         .arg( dest ) );
+         }
          if ( !qd.rename( results_file, dest ) )
          {
-            cout << QString("Warning: could not rename outputData %1 to %2\n" )
-               .arg( results_file )
-               .arg( dest );
+            if ( us_log )
+            {
+               us_log->log( QString("Warning: could not rename outputData %1 to %2\n" )
+                            .arg( results_file )
+                            .arg( dest ) );
+            }
          }
       } else {
-         cout << QString( "Error: %1 does not exist\n" ).arg( outputData );
+         if ( us_log )
+         {
+            us_log->log( QString( "Error: %1 does not exist\n" ).arg( outputData ) );
+         }
       }
    }
 
@@ -653,17 +761,26 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
       if ( rx_vector.search( option ) != -1 )
       {
          control_vectors[ option ].clear();
-         cout << QString( "qsl currently: %1\n" ).arg( qsl.join( "~" ) );
+         if ( us_log )
+         {
+            us_log->log( QString( "qsl currently: %1\n" ).arg( qsl.join( "~" ) ) );
+         }
          for ( int j = 0; j < (int) qsl.size(); j++ )
          {
             QStringList qsl2 = QStringList::split( QRegExp( "(\\s+|(\\s*(,|:)\\s*))" ), qsl[ j ] );
-            cout << QString( "qsl2 currently: %1\n" ).arg( qsl2.join( "~" ) );
+            if ( us_log )
+            {
+               us_log->log( QString( "qsl2 currently: %1\n" ).arg( qsl2.join( "~" ) ) );
+            }
             for ( int k = 0; k < (int) qsl2.size(); k++ )
             {
                control_vectors[ option ].push_back( qsl2[ k ].toDouble() );
             }
          }
-         US_Vector::printvector( option, control_vectors[ option ] );
+         if ( us_log )
+         {
+            us_log->log( US_Vector::qs_vector( option, control_vectors[ option ] ) );
+         }
       }
 
 
@@ -723,9 +840,12 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             }
          }
 
-         cout << "Rayleigh structure factors computed\n";
+         if ( us_log )
+         {
+            us_log->log( "Rayleigh structure factors computed\n" );
+         }
          
-         US_Vector::printvector2( "pmq pmf", control_vectors[ "pmq" ], control_vectors[ "pmf" ] );
+         // US_Vector::printvector2( "pmq pmf", control_vectors[ "pmq" ], control_vectors[ "pmf" ] );
          continue;
       }                                                  
 
@@ -759,7 +879,10 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             return false;
          }
          control_parameters[ "approx_max_d" ] = QString( "%1" ).arg( approx_max_d );
-         cout << QString( "best maxd %1\n" ).arg( control_parameters[ "approx_max_d" ] );
+         if ( us_log )
+         {
+            us_log->log( QString( "best maxd %1\n" ).arg( control_parameters[ "approx_max_d" ] ) );
+         }
          continue;
       }
 
@@ -787,7 +910,10 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             if ( !srand48_done )
             {
                long int li = ( long int )QTime::currentTime().msec();
-               cout << QString( "to reproduce use random seed %1\n" ).arg( li );
+               if ( us_log )
+               {
+                  us_log->log( QString( "to reproduce use random seed %1\n" ).arg( li ) );
+               }
                srand48( li );
             }
             srand48_done = true;
@@ -858,7 +984,10 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                                              PM_MSG, 
                                              MPI_COMM_WORLD ) )
                {
-                  cout << QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM\n" ).arg( myrank ) << flush;
+                  if ( us_log )
+                  {
+                     us_log->log( QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM\n" ).arg( myrank ) );
+                  }
                   MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                   exit( errorno - myrank );
                }
@@ -870,7 +999,10 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                                              PM_NEW_PM, 
                                              MPI_COMM_WORLD ) )
                {
-                  cout << QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM_DATA\n" ).arg( myrank ) << flush;
+                  if ( us_log )
+                  {
+                     us_log->log( QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM_DATA\n" ).arg( myrank ) );
+                  }
                   MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                   exit( errorno - myrank );
                }
@@ -974,7 +1106,10 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
             if ( !srand48_done )
             {
                long int li = ( long int )QTime::currentTime().msec();
-               cout << QString( "to reproduce use random seed %1\n" ).arg( li );
+               if ( us_log )
+               {
+                  us_log->log( QString( "to reproduce use random seed %1\n" ).arg( li ) );
+               }
                srand48( li );
             }
             srand48_done = true;
@@ -1045,7 +1180,10 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                                              PM_MSG, 
                                              MPI_COMM_WORLD ) )
                {
-                  cout << QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM\n" ).arg( myrank ) << flush;
+                  if ( us_log )
+                  {
+                     us_log->log( QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM\n" ).arg( myrank ) );
+                  }
                   MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                   exit( errorno - myrank );
                }
@@ -1057,7 +1195,10 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                                              PM_NEW_PM, 
                                              MPI_COMM_WORLD ) )
                {
-                  cout << QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM_DATA\n" ).arg( myrank ) << flush;
+                  if ( us_log )
+                  {
+                     us_log->log( QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM_DATA\n" ).arg( myrank ) );
+                  }
                   MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                   exit( errorno - myrank );
                }
@@ -1239,16 +1380,27 @@ bool US_Saxs_Util::run_pm_ok( QString option )
       defaults[ "pmbestdeltadivisor"       ] = "10e0";
       defaults[ "pmbestdeltamin"           ] = "1e-2";
 
+      if ( us_log )
+      {
+         us_log->flushoff();
+      }
       for ( int i = 0; i < (int) default_params.size(); i++ )
       {
          if ( !control_parameters.count( default_params[ i ] ) )
          {
             control_parameters[ default_params[ i ] ] = defaults[ default_params[ i ] ];
-            cout << QString( "Notice: setting '%1' to default value of %2\n" )
-               .arg( default_params[ i ] )
-               .arg( defaults[ default_params[ i ] ] )
-               ;
+            if ( us_log )
+            {
+               us_log->log( QString( "Notice: setting '%1' to default value of %2\n" )
+                             .arg( default_params[ i ] )
+                             .arg( defaults[ default_params[ i ] ] ) )
+                  ;
+            }
          }
+      }
+      if ( us_log )
+      {
+         us_log->flushon();
       }
    }
 
@@ -1341,15 +1493,21 @@ bool US_Saxs_Util::run_pm_ok( QString option )
       }
       if ( number_of_params_found > 1 )
       {
-         cout << "Warning: pmparams superceded pmtypes (both were defined)\n"; 
+         if ( us_log )
+         {
+            us_log->log( "Warning: pmparams superceded pmtypes (both were defined)\n" );
+         }
       }
    }
 
-   for ( map < QString, QString >::iterator it = control_parameters.begin();
-         it != control_parameters.end();
-         it++ )
+   if ( us_log )
    {
-      cout << QString( "\"%1\"\t%2\t%3\n" ).arg( it->first ).arg( it->second ).arg( it->second.toDouble() );
+      for ( map < QString, QString >::iterator it = control_parameters.begin();
+            it != control_parameters.end();
+            it++ )
+      {
+         us_log->log( QString( "\"%1\"\t%2\t%3\n" ).arg( it->first ).arg( it->second ).arg( it->second.toDouble() ) );
+      }
    }
 
    return true;
@@ -1420,9 +1578,11 @@ bool US_Saxs_Util::run_pm(
          }
       }
       
-      cout << "Rayleigh structure factors computed\n";
-         
-      US_Vector::printvector2( "pmq pmf", control_vectors[ "pmq" ], control_vectors[ "pmf" ] );
+      if ( !quiet && us_log )
+      {
+         us_log->log( "Rayleigh structure factors computed\n" );
+         us_log->log( US_Vector::qs_vector2( "pmq pmf", control_vectors[ "pmq" ], control_vectors[ "pmf" ] ) );
+      }
 
       if ( control_parameters.count( "pmapproxmaxdimension" ) )
       {
@@ -1434,7 +1594,10 @@ bool US_Saxs_Util::run_pm(
             return false;
          }            
 
-         qDebug( QString( "uspm approxmaxdim %1" ).arg( control_parameters [ "pmgridsize"     ].toDouble() ) );
+         if ( !quiet && us_log )
+         {
+            us_log->log( QString( "uspm approxmaxdim %1" ).arg( control_parameters [ "pmgridsize"     ].toDouble() ) );
+         }
 
          US_PM pm(
                   control_parameters [ "pmgridsize"     ].toDouble(),
@@ -1457,12 +1620,19 @@ bool US_Saxs_Util::run_pm(
             return false;
          }
          control_parameters[ "approx_max_d" ] = QString( "%1" ).arg( approx_max_d );
-         cout << QString( "approx maxd %1\n" ).arg( control_parameters[ "approx_max_d" ] );
+         if ( !quiet && us_log )
+         {
+            us_log->log( QString( "approx maxd %1\n" ).arg( control_parameters[ "approx_max_d" ] ) );
+         }
       }
 
       if ( control_parameters.count( "pmbestmd0" ) )
       {
-         cout << "pmbestmd0\n";
+         if ( !quiet && us_log )
+         {
+            us_log->log( "pmbestmd0\n" );
+         }
+
          if ( !run_pm_ok( "pmbestmd0" ) )
          {
             errormsg = QString( "Error pmbestmd0: %1" ).arg( errormsg );
@@ -1485,7 +1655,10 @@ bool US_Saxs_Util::run_pm(
             if ( !srand48_done )
             {
                long int li = ( long int )QTime::currentTime().msec();
-               cout << QString( "to reproduce use random seed %1\n" ).arg( li );
+               if ( !quiet && us_log )
+               {
+                  us_log->log( QString( "to reproduce use random seed %1\n" ).arg( li ) );
+               }
                srand48( li );
             }
             srand48_done = true;
@@ -1617,13 +1790,19 @@ bool US_Saxs_Util::run_pm(
             if ( !srand48_done )
             {
                long int li = ( long int )QTime::currentTime().msec();
-               cout << QString( "to reproduce use random seed %1\n" ).arg( li );
+               if ( us_log )
+               {
+                  us_log->log( QString( "to reproduce use random seed %1\n" ).arg( li ) );
+               }
                srand48( li );
             }
             srand48_done = true;
          }
 
-         qDebug( QString( "uspm bestga again %1" ).arg( control_parameters [ "pmgridsize"     ].toDouble() ) );
+         if ( !quiet && us_log )
+         {
+            us_log->log( QString( "uspm bestga again %1" ).arg( control_parameters [ "pmgridsize"     ].toDouble() ) );
+         }
 
          US_PM pm(
                   control_parameters [ "pmgridsize"     ].toDouble(),
@@ -1691,7 +1870,10 @@ bool US_Saxs_Util::run_pm(
 
          if ( types_vector.size() )
          {
-            qDebug( QString( "total types %1" ).arg( types_vector.size() ) );
+            if ( !quiet && us_log )
+            {
+               us_log->log( QString( "total types %1" ).arg( types_vector.size() ) );
+            }
             for ( int i = 0; i < (int) types_vector.size(); ++i )
             {
                types = types_vector[ i ];

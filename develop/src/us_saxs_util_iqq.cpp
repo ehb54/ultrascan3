@@ -1977,7 +1977,10 @@ bool US_Saxs_Util::flush_output()
    
 bool US_Saxs_Util::flush_output_one()
 {
-   cout << "flush output\n";
+   if ( us_log )
+   {
+      us_log->log( "flush output\n" );
+   }
    if ( saxs_inputfile_for_csv.size() &&
         control_parameters.count( "output" ) &&
         control_parameters[ "output" ] == "csv" )
@@ -2034,23 +2037,32 @@ bool US_Saxs_Util::flush_output_one()
                {
                   if ( method_q_pieces[ it->first ].count( saxs_q_for_csv[ i ] ) )
                   {
-                     cout << QString( "multiple pieces for %1 q(%2:%3)\n" )
-                        .arg( it->first )
-                        .arg( saxs_q_for_csv[ i ][ 0 ] )
-                        .arg( saxs_q_for_csv[ i ][ saxs_q_for_csv[ i ].size() - 1 ] );
+                     if ( us_log )
+                     {
+                        us_log->log( QString( "multiple pieces for %1 q(%2:%3)\n" )
+                                     .arg( it->first )
+                                     .arg( saxs_q_for_csv[ i ][ 0 ] )
+                                     .arg( saxs_q_for_csv[ i ][ saxs_q_for_csv[ i ].size() - 1 ] ) );
+                     }
                      method_q_pieces[ it->first ][ saxs_q_for_csv[ i ] ]++;
                   } else {
-                     cout << QString( "additional pieces for %1 q(%2:%3)\n" )
-                        .arg( it->first )
-                        .arg( saxs_q_for_csv[ i ][ 0 ] )
-                        .arg( saxs_q_for_csv[ i ][ saxs_q_for_csv[ i ].size() - 1 ] );
+                     if ( us_log )
+                     {
+                        us_log->log( QString( "additional pieces for %1 q(%2:%3)\n" )
+                                     .arg( it->first )
+                                     .arg( saxs_q_for_csv[ i ][ 0 ] )
+                                     .arg( saxs_q_for_csv[ i ][ saxs_q_for_csv[ i ].size() - 1 ] ) );
+                     }
                      method_q_pieces[ it->first ][ saxs_q_for_csv[ i ] ] = 1;
                   }
                } else {
-                  cout << QString( "first piece for %1 q(%2:%3)\n" )
-                     .arg( it->first )
-                     .arg( saxs_q_for_csv[ i ][ 0 ] )
-                     .arg( saxs_q_for_csv[ i ][ saxs_q_for_csv[ i ].size() - 1 ] );
+                  if ( us_log )
+                  {
+                     us_log->log( QString( "first piece for %1 q(%2:%3)\n" )
+                                  .arg( it->first )
+                                  .arg( saxs_q_for_csv[ i ][ 0 ] )
+                                  .arg( saxs_q_for_csv[ i ][ saxs_q_for_csv[ i ].size() - 1 ] ) );
+                  }
                   map < vector < double >, unsigned int > tmp_q_map;
                   tmp_q_map[ saxs_q_for_csv[ i ] ] = 1;
                   method_q_pieces[ it->first ] = tmp_q_map;
@@ -2067,9 +2079,12 @@ bool US_Saxs_Util::flush_output_one()
       {
          method_piece_pos[ it->first ] = 0;
 
-         cout << QString( "number of pieces of %1 %2\n")
+         if ( us_log )
+         {
+            us_log->log( QString( "number of pieces of %1 %2\n")
             .arg( it->first )
-            .arg( method_q_pieces[ it->first ].size() );
+                         .arg( method_q_pieces[ it->first ].size() ) );
+         }
 
          for (  map < vector < double >, unsigned int >::iterator it2 = method_q_pieces[ it->first ].begin();
                it2 != method_q_pieces[ it->first ].end();
@@ -2207,3 +2222,4 @@ bool US_Saxs_Util::write_timings( QString file, QString msg )
    errormsg = QString( "Error: could not open timing output file %1" ).arg( out_file );
    return false;
 }
+

@@ -36,7 +36,10 @@ bool US_PM::best_md0(
 
    if ( !low_fparams.size() )
    {
-      cerr << "best_md0: notice, setting default range\n";
+      if ( us_log )
+      {
+         us_log->log( "best_md0: notice, setting default range\n" );
+      }
       zero_md0_params( params );
       set_limits( params, low_fparams, high_fparams );
    }

@@ -2,19 +2,17 @@
 //Added by qt3to4:
 #include <Q3TextStream>
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
-
 bool US_PM::set_grid_size( double grid_conversion_factor, bool quiet )
 {
    /*
 #if defined( USE_MPI )
-   cout << QString( "%1: Set grid size: %2\n" ).arg( myrank ).arg( grid_conversion_factor );
+   if ( us_log )
+   {
+      us_log->log( QString( "%1: Set grid size: %2\n" ).arg( myrank ).arg( grid_conversion_factor ) );
+   }
 #endif
    */
+
    if ( grid_conversion_factor < 0.5 )
    {
       error_msg = QString( "set_grid_size requested size %1 is less than the minimum allowed 0.5" ).arg( grid_conversion_factor );
@@ -32,13 +30,13 @@ bool US_PM::set_grid_size( double grid_conversion_factor, bool quiet )
    bead_radius              = pow( cube_size / M_PI, 1e0/3e0 );
    bead_radius_over_2gcf     = ( bead_radius * 5e-1 ) / grid_conversion_factor;
 
-   if ( !quiet )
+   if ( !quiet &&  us_log )
    {
-      cout << QString( "US_PM:cube size   %1\n"
-                       "US_PM:bead radius %2\n" )
-         .arg( cube_size )
-         .arg( bead_radius )
-         ;
+      us_log->log( QString( "US_PM:cube size   %1\n"
+                            "US_PM:bead radius %2\n" )
+                   .arg( cube_size )
+                   .arg( bead_radius )
+                   );
    }
 
    double conv_F = cube_size / org_cube_size;
@@ -65,7 +63,8 @@ US_PM::US_PM(
              vector < double > e,
              unsigned int      max_mem_in_MB,
              int               debug_level,
-             bool              quiet
+             bool              quiet,
+             US_Log          * us_log
              )
 {
    // this->grid_conversion_factor = grid_conversion_factor;
@@ -82,14 +81,26 @@ US_PM::US_PM(
    this->e                      = e;
    this->max_mem_in_MB          = max_mem_in_MB;
    this->debug_level            = debug_level;
+   this->quiet                  = quiet;
+   this->us_log                 = us_log;
+
+   us_log_started               = false;
+   if ( !us_log )
+   {
+      this->us_log = new US_Log( "pmlog.txt", true, QIODevice::Append );
+      us_log_started = true;
+   }
+   this->us_log->datetime( "start us_pm" );
 
    this->max_dimension   = this->max_dimension < USPM_MAX_VAL ? this->max_dimension : USPM_MAX_VAL;
    if ( this->max_dimension != max_dimension )
    {
-      cerr << QString( "Warning: maximum dimension requested %1 exceedes maximum allowed %2, reset to maximum allowed\n" )
-         .arg( max_dimension )
-         .arg( this->max_dimension )
-         .ascii();
+      if ( us_log )
+      {
+         us_log->log( QString( "Warning: maximum dimension requested %1 exceedes maximum allowed %2, reset to maximum allowed\n" )
+                      .arg( max_dimension )
+                      .arg( this->max_dimension ) );
+      }
    }
 
    org_F                        = F;
@@ -165,10 +176,12 @@ US_PM::US_PM(
    {
       A1v0.push_back( Z0 );
    }
-   if ( !quiet )
+   if ( !quiet && us_log )
    {
-      cout << QString( "q_Y_points %1\n" ).arg( q_Y_points );
-      cout << QString( "A1v0 size  %1\n" ).arg( A1v0.size() );
+      us_log->log( 
+                  QString( "q_Y_points %1\n" ).arg( q_Y_points ) +
+                  QString( "A1v0 size  %1\n" ).arg( A1v0.size() )
+                   );
    }
 
    ccY.resize( Y_points );
@@ -196,9 +209,9 @@ US_PM::US_PM(
             break;
          }
       }
-      if ( !quiet && !use_errors && any_non_zero )
+      if ( !quiet && us_log && !use_errors && any_non_zero )
       {
-         cout << "Notice: SD's provided but some were zero, so SD fitting is turned off\n";
+         us_log->log( "Notice: SD's provided but some were zero, so SD fitting is turned off\n" );
       }
    }
 
@@ -229,24 +242,24 @@ US_PM::US_PM(
    max_beads_CYJ =  ( 1024 * 1024 * ( max_mem_in_MB - base_mem ) ) / bytes_per_pm_data;
    max_beads_CA  =  ( 1024 * 1024 * ( max_mem_in_MB - base_mem ) ) / bytes_per_pmc_data;
 
-   if ( !quiet )
+   if ( !quiet && us_log )
    {
-      cout << QString( "bytes per pm_data %1\n" ).arg( bytes_per_pm_data ).ascii();
-      cout << QString( "bytes per pmc data %1\n" ).arg( bytes_per_pmc_data ).ascii();
+      us_log->log( QString( "bytes per pm_data %1\n" ).arg( bytes_per_pm_data ).ascii() );
+      us_log->log( QString( "bytes per pmc data %1\n" ).arg( bytes_per_pmc_data ).ascii() );
 
-      cout << QString( "Memory max %1 MB\n" ).arg( max_mem_in_MB ).ascii();
-      cout << QString( "Memory available %1 MB\n" ).arg( max_mem_in_MB - base_mem ).ascii();
-      cout << QString( "max beads CYJ %1\n" ).arg( max_beads_CYJ ).ascii();
-      cout << QString( "max beads CA %1\n" ).arg( max_beads_CA ).ascii();
+      us_log->log( QString( "Memory max %1 MB\n" ).arg( max_mem_in_MB ).ascii() );
+      us_log->log( QString( "Memory available %1 MB\n" ).arg( max_mem_in_MB - base_mem ).ascii() );
+      us_log->log( QString( "max beads CYJ %1\n" ).arg( max_beads_CYJ ).ascii() );
+      us_log->log( QString( "max beads CA %1\n" ).arg( max_beads_CA ).ascii() );
    }
 
    use_CYJ = false;
 
    set_best_delta();
    init_objects();
-   if ( !quiet )
+   if ( !quiet && us_log )
    {
-      cout << list_object_info();
+      us_log->log( list_object_info() );
    }
    last_best_rmsd_ok = false;
 
@@ -264,6 +277,14 @@ US_PM::~US_PM()
    if ( shs )
    {
       delete shs;
+   }
+   if ( us_log )
+   {
+      us_log->datetime( "end us_pm" );
+      if ( us_log_started )
+      {
+         delete us_log;
+      }
    }
 }
 
@@ -392,9 +413,9 @@ bool US_PM::create_model( vector < double > params, set < pm_point > & model, bo
 
 void US_PM::debug( int level, QString qs )
 {
-   if ( level <= debug_level )
+   if ( us_log && level <= debug_level )
    {
-      cout << qs.ascii() << endl;
+      us_log->log( qs.ascii() );
    }
 }
 
@@ -436,7 +457,10 @@ set < pm_point > US_PM::recenter( set < pm_point > & model )
       result.insert( pmp );
    }
    us_timers.end_timer( "recenter" );
-   cout << us_timers.list_time( "recenter" ).ascii();
+   if ( us_log )
+   {
+      us_log->log( us_timers.list_time( "recenter" ).ascii() );
+   }
    us_timers.clear_timer( "recenter" );
    return result;
 }
@@ -547,7 +571,10 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, bool over
 
    double rg = Rg( model );
 
-   cout << QString( "Creating (%1 beads, Rg %2): %3\n" ).arg( model.size() ).arg( rg ).arg( filename );
+   if ( us_log )
+   {
+      us_log->log( QString( "Creating (%1 beads, Rg %2): %3\n" ).arg( model.size() ).arg( rg ).arg( filename ) );
+   }
 
    QFile of( filename );
    if ( !of.open( QIODevice::WriteOnly ) )
@@ -585,7 +612,10 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, vector < 
 
    double rg = Rg( model );
 
-   cout << QString( "Creating (%1 beads, Rg %2): %3\n" ).arg( model.size() ).arg( rg ).arg( filename );
+   if ( us_log )
+   {
+      us_log->log( QString( "Creating (%1 beads, Rg %2): %3\n" ).arg( model.size() ).arg( rg ).arg( filename ) );
+   }
 
    QFile of( filename );
    if ( !of.open( QIODevice::WriteOnly ) )
@@ -610,7 +640,10 @@ bool US_PM::write_I( QString & filename, set < pm_point > & model, bool overwrit
    vector < double >   I_result( q.size() );
    if ( !compute_I( model, I_result ) )
    {
-      cerr << "write_I:" + error_msg << endl;
+      if ( us_log )
+      {
+         us_log->log( "write_I:" + error_msg );
+      }
       return false;
    }
 
@@ -630,7 +663,10 @@ bool US_PM::write_I( QString & filename, set < pm_point > & model, bool overwrit
       filename += ".dat";
    }
 
-   cout << "Creating:" << filename << "\n";
+   if ( us_log )
+   {
+      us_log->log( "Creating:" + filename + "\n" );
+   }
    QFile of( filename );
 
    if ( !of.open( QIODevice::WriteOnly ) )
@@ -1024,7 +1060,9 @@ bool US_PM::rescale_params( vector < double > & params,
                             double              new_conversion_factor,
                             double              refinement_range_pct )
 {
-   cout << QString( "rescale_params: bead_radius            %1\n"
+   if ( us_log )
+   {
+      us_log->log( QString( "rescale_params: bead_radius            %1\n"
                     "                bead_radius_over_2gcf   %2\n"
                     "                grid_conversion_factor %3\n"
                     "                new_conversion_factor  %4\n" )
@@ -1032,7 +1070,8 @@ bool US_PM::rescale_params( vector < double > & params,
       .arg( bead_radius_over_2gcf )
       .arg( grid_conversion_factor )
       .arg( new_conversion_factor )
-      ;
+                    );
+   }
 
    vector < int >    types;
    vector < double > fparams;
@@ -1457,11 +1496,14 @@ bool  US_PM::expand_types(
       }
    }
 
-   qDebug( QString( "pm types string %1 %2 %3 size %4\n" )
-           .arg( types )
-           .arg( incrementally   ? "incrementally" : "" )
-           .arg( allcombinations ? "allcombinations" : "" )
-           .arg( types_vector.size() ) );
+   if ( us_log )
+   {
+      us_log->log( QString( "pm types string %1 %2 %3 size %4\n" )
+                   .arg( types )
+                   .arg( incrementally   ? "incrementally" : "" )
+                   .arg( allcombinations ? "allcombinations" : "" )
+                   .arg( types_vector.size() ) );
+   }
 
    return true;
 }

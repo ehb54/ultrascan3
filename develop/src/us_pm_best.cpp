@@ -1,11 +1,5 @@
 #include "../include/us_pm.h"
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
-
 #define USPM_BEST_DELTA_MIN 1e-3
 
 // #define USPM_USE_CA 0
@@ -15,7 +9,7 @@ void US_PM::set_best_delta(
                            double best_delta_start,
                            double best_delta_divisor,
                            double best_delta_min
-                           )
+                            )
 {
    this->best_delta_start   = best_delta_start;
    this->best_delta_divisor = best_delta_divisor;
@@ -24,11 +18,14 @@ void US_PM::set_best_delta(
    if ( this->best_delta_min < USPM_BEST_DELTA_MIN )
    {
       this->best_delta_min = USPM_BEST_DELTA_MIN;
-      cout << QString( "Notice: best delta mininimum requested %1 is below hard limit %2, reset to %3\n" )
-         .arg( best_delta_min )
-         .arg( USPM_BEST_DELTA_MIN )
-         .arg( this->best_delta_min )
-         ;
+      if ( us_log )
+      {
+         us_log->log( QString( "Notice: best delta mininimum requested %1 is below hard limit %2, reset to %3\n" )
+                      .arg( best_delta_min )
+                      .arg( USPM_BEST_DELTA_MIN )
+                      .arg( this->best_delta_min )
+                      );
+      }
    }
    best_delta_size_min = 5e-1;
    best_delta_size_max = max_dimension_d;
@@ -76,7 +73,10 @@ bool US_PM::best_vary_one_param(
       prev_model.clear();
       Av.clear();
 
-      cout << QString( "best_vary_one_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+      if ( us_log )
+      {
+         us_log->log( QString( "best_vary_one_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta ) );
+      }
       unsigned int steps_without_change = 0;
       for ( params[ param_to_vary ] = low_limit; params[ param_to_vary ] <= high_limit; params[ param_to_vary ] += delta )
       {
@@ -110,11 +110,14 @@ bool US_PM::best_vary_one_param(
             //                qs += QString( " %1" ).arg( params[ i ] );
             //             }
             //             cout << qs.ascii() << endl;
-            US_Vector::printvector( QString( "best_vary_one_param: %1beads %2 fitness %3, params:" )
-                                    .arg( this_fit < prev_fit ? "**" : "  " )
-                                    .arg( this_model.size() )
-                                    .arg( this_fit ), 
-                                    params );
+            if ( us_log )
+            {
+               us_log->log( US_Vector::qs_vector( QString( "best_vary_one_param: %1beads %2 fitness %3, params:" )
+                                                  .arg( this_fit < prev_fit ? "**" : "  " )
+                                                  .arg( this_model.size() )
+                                                  .arg( this_fit ), 
+                                                  params ) );
+            }
 
             last_fitness_3_pos = last_fitness_2_pos;
             last_fitness_2_pos = last_fitness_1_pos;
@@ -148,7 +151,10 @@ bool US_PM::best_vary_one_param(
             //             cout << qs.ascii() << endl;
             if ( steps_without_change > 100 )
             {
-               cout << "best_vary_one_param: Too many steps without model change, terminating inner loop\n";
+               if ( us_log )
+               {
+                  us_log->log( "best_vary_one_param: Too many steps without model change, terminating inner loop\n" );
+               }
                break;
             }
             steps_without_change++;
@@ -160,7 +166,10 @@ bool US_PM::best_vary_one_param(
       {
          if ( best_size != -1e99 )
          {
-            cout << "best_vary_one_param: found nothing to recenter on, centering on best +/- delta\n";
+            if ( us_log )
+            {
+               us_log->log( "best_vary_one_param: found nothing to recenter on, centering on best +/- delta\n" );
+            }
             last_fitness_3_pos =  best_size - delta;
             if ( last_fitness_3_pos < delta_min )
             {
@@ -168,7 +177,10 @@ bool US_PM::best_vary_one_param(
             }
             last_fitness_1_pos =  best_size + delta;
          } else {
-            cout << "best_vary_one_param: found nothing to recenter on, terminating outer loop\n";
+            if ( us_log )
+            {
+               us_log->log( "best_vary_one_param: found nothing to recenter on, terminating outer loop\n" );
+            }
             break;
          }
       }
@@ -177,14 +189,20 @@ bool US_PM::best_vary_one_param(
       high_limit = last_fitness_1_pos;
       if ( best_size == high_limit )
       {
-         cout << "best_vary_one_param: best found at end, extending interval by 5 delta\n";
+         if ( us_log )
+         {
+            us_log->log( "best_vary_one_param: best found at end, extending interval by 5 delta\n" );
+         }
          high_limit += 5e0 * delta;
       } else {
          delta /= best_delta_divisor;
       }
    }
    best_fitness    = best_fit;
-   US_Vector::printvector( QString( "best_vary_one_param: ----end----- fitness %1, params:" ).arg( best_fitness ), best_params );
+   if ( us_log )
+   {
+      us_log->log( US_Vector::qs_vector( QString( "best_vary_one_param: ----end----- fitness %1, params:" ).arg( best_fitness ), best_params ) );
+   }
    return true;
 }
 
@@ -194,7 +212,7 @@ bool US_PM::best_vary_two_param(
                                 vector < double > & params, 
                                 set < pm_point >  & model,
                                 double            & best_fitness
-                                )
+                                 )
 {
    set < pm_point > this_model;
    use_CYJ = false;
@@ -224,7 +242,10 @@ bool US_PM::best_vary_two_param(
       double last_fitness_3_pos = -1e0;
       prev_fit = 1e99;
 
-      cout << QString( "best_vary_two_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+      if ( us_log )
+      {
+         us_log->log( QString( "best_vary_two_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta ) );
+      }
       for ( params[ param_to_vary_2 ] = low_limit; params[ param_to_vary_2 ] <= high_limit; params[ param_to_vary_2 ] += delta )
       {
          best_vary_one_param( param_to_vary_1, params, this_model, this_fit );
@@ -234,11 +255,14 @@ bool US_PM::best_vary_two_param(
          last_fitness_2_pos = last_fitness_1_pos;
          last_fitness_1_pos = params[ param_to_vary_2 ];
 
-         US_Vector::printvector( QString( "best_vary_two_param: %1beads %2 fitness %3, params:" )
-                                 .arg( this_fit < prev_fit ? "**" : "  " )
-                                 .arg( this_model.size() )
-                                 .arg( this_fit ), 
-                                 params );
+         if ( us_log )
+         {
+            us_log->log( US_Vector::qs_vector( QString( "best_vary_two_param: %1beads %2 fitness %3, params:" )
+                                               .arg( this_fit < prev_fit ? "**" : "  " )
+                                               .arg( this_model.size() )
+                                               .arg( this_fit ), 
+                                               params ) );
+         }
 
          if ( this_fit < prev_fit )
          {
@@ -257,7 +281,10 @@ bool US_PM::best_vary_two_param(
       if ( last_fitness_3_pos < 0e0 ||
            last_fitness_1_pos < 0e0 )
       {
-         cout << "best_vary_two_param: found nothing to recenter on, terminating outer loop\n";
+         if ( us_log )
+         {
+            us_log->log( "best_vary_two_param: found nothing to recenter on, terminating outer loop\n" );
+         }
          break;
       }
       low_limit  = last_fitness_3_pos;
@@ -265,7 +292,10 @@ bool US_PM::best_vary_two_param(
       delta /= best_delta_divisor;
    }
    us_timers.end_timer( qs_timer );
-   cout << us_timers.list_times();
+   if ( us_log )
+   {
+      us_log->log( us_timers.list_times() );
+   }
 
    best_fitness   = best_fit;
    return true;
@@ -280,7 +310,7 @@ bool US_PM::best_md0(
                      double              coarse_conversion,
                      double              refinement_range_pct,
                      double              conversion_divisor
-                     )
+                      )
 {
    if ( !zero_md0_params( params ) )
    {
@@ -309,7 +339,10 @@ bool US_PM::best_md0(
                                        PM_MSG, 
                                        MPI_COMM_WORLD ) )
          {
-            cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+            if ( us_log )
+            {
+               us_log->log( QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) );
+            }
             MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
             exit( errorno - myrank );
          }
@@ -334,18 +367,23 @@ bool US_PM::best_md0(
       // need params[] from best model and ability to set limits for best model
       // have to add to best_*, maybe add general best_model( params )
 
-      cout << "----------------------------------------------------------------------\n";
-      cout << QString( "best_md0: grid cube side: %1\n" ).arg( grid_conversion_factor);
-      cout << "----------------------------------------------------------------------\n";
-      
-      US_Vector::printvector2( "param limits before clipping:", next_low_fparams, next_high_fparams );
+      if ( us_log )
+      {
+         us_log->log( "----------------------------------------------------------------------\n" );
+         us_log->log( QString( "best_md0: grid cube side: %1\n" ).arg( grid_conversion_factor) );
+         us_log->log( "----------------------------------------------------------------------\n" );
+         us_log->log( US_Vector::qs_vector2( "param limits before clipping:", next_low_fparams, next_high_fparams ) );
+      }
 
       clip_limits( next_low_fparams , org_low_fparams, org_high_fparams );
       clip_limits( next_high_fparams, org_low_fparams, org_high_fparams );
       low_fparams  = next_low_fparams;
       high_fparams = next_high_fparams;
 
-      US_Vector::printvector2( "param limits:", low_fparams, high_fparams );
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector2( "param limits:", low_fparams, high_fparams ) );
+      }
 
       if ( !best_md0( params, low_fparams, high_fparams, model ) )
       {
@@ -365,8 +403,11 @@ bool US_PM::best_md0(
          new_grid_conversion_factor = finest_conversion;
       }
  
-      US_Vector::printvector ( "result params:", params );
-      US_Vector::printvector2( "previous limits before rescaling:", low_fparams, high_fparams );
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector ( "result params:", params ) );
+         us_log->log( US_Vector::qs_vector2( "previous limits before rescaling:", low_fparams, high_fparams ) );
+      }
 
       for ( int i = 0; i < (int)low_fparams.size(); i++ )
       {
@@ -379,8 +420,11 @@ bool US_PM::best_md0(
          high_fparams     [ i ] *= grid_conversion_factor / new_grid_conversion_factor;
       }
 
-      US_Vector::printvector2( "previous limits after rescaling:", low_fparams, high_fparams );
-      US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector2( "previous limits after rescaling:", low_fparams, high_fparams ) );
+         us_log->log( US_Vector::qs_vector2( "new limits after rescaling:", next_low_fparams, next_high_fparams ) );
+      }
 
       if ( !set_grid_size( new_grid_conversion_factor ) )
       {
@@ -402,7 +446,10 @@ bool US_PM::best_md0(
                                           PM_MSG, 
                                           MPI_COMM_WORLD ) )
             {
-               cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+               if ( us_log )
+               {
+                  us_log->log( QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) );
+               }
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }
@@ -437,10 +484,13 @@ bool US_PM::best_vary_one_param(
 
    if ( high_limit - low_limit <= best_delta_min )
    {
-      cout << QString( "best_vary_one_param: parameter range %1:%2 is smaller than minimum delta %3, returning average model\n" )
-         .arg( low_limit )
-         .arg( high_limit )
-         .arg( best_delta_min );
+      if ( us_log )
+      {
+         us_log->log( QString( "best_vary_one_param: parameter range %1:%2 is smaller than minimum delta %3, returning average model\n" )
+                      .arg( low_limit )
+                      .arg( high_limit )
+                      .arg( best_delta_min ) );
+      }
       params[ param_to_vary ] = (high_limit + low_limit) / 2e0;
       create_model( params, model );
       compute_I   ( model, I_result );
@@ -472,7 +522,10 @@ bool US_PM::best_vary_one_param(
       double last_fitness_3_pos = -1e99;
       prev_fit = 1e99;
 
-      cout << QString( "best_vary_one_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+      if ( us_log )
+      {
+         us_log->log( QString( "best_vary_one_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta ) );
+      }
       unsigned int steps_without_change = 0;
       for ( params[ param_to_vary ] = low_limit; params[ param_to_vary ] <= high_limit; params[ param_to_vary ] += delta )
       {
@@ -506,11 +559,14 @@ bool US_PM::best_vary_one_param(
             //                qs += QString( " %1" ).arg( params[ i ] );
             //             }
             //             cout << qs.ascii() << endl;
-            US_Vector::printvector( QString( "best_vary_one_param: %1beads %2 fitness %3, params:" )
-                                    .arg( this_fit < prev_fit ? "**" : "  " )
-                                    .arg( this_model.size() )
-                                    .arg( this_fit ), 
-                                    params );
+            if ( us_log )
+            {
+               us_log->log( US_Vector::qs_vector( QString( "best_vary_one_param: %1beads %2 fitness %3, params:" )
+                                                  .arg( this_fit < prev_fit ? "**" : "  " )
+                                                  .arg( this_model.size() )
+                                                  .arg( this_fit ), 
+                                                  params ) );
+            }
 
             last_fitness_3_pos = last_fitness_2_pos;
             last_fitness_2_pos = last_fitness_1_pos;
@@ -544,7 +600,10 @@ bool US_PM::best_vary_one_param(
             //             cout << qs.ascii() << endl;
             if ( steps_without_change > 100 )
             {
-               cout << "best_vary_one_param: Too many steps without model change, terminating inner loop\n";
+               if ( us_log )
+               {
+                  us_log->log( "best_vary_one_param: Too many steps without model change, terminating inner loop\n" );
+               }
                break;
             }
             steps_without_change++;
@@ -556,7 +615,10 @@ bool US_PM::best_vary_one_param(
       {
          if ( best_size != -1e99 )
          {
-            cout << "best_vary_one_param: found nothing to recenter on, centering on best +/- delta\n";
+            if ( us_log )
+            {
+               us_log->log( "best_vary_one_param: found nothing to recenter on, centering on best +/- delta\n" );
+            }
             last_fitness_3_pos =  best_size - delta;
             if ( last_fitness_3_pos < delta_min )
             {
@@ -564,7 +626,10 @@ bool US_PM::best_vary_one_param(
             }
             last_fitness_1_pos =  best_size + delta;
          } else {
-            cout << "best_vary_one_param: found nothing to recenter on, terminating outer loop\n";
+            if ( us_log )
+            {
+               us_log->log( "best_vary_one_param: found nothing to recenter on, terminating outer loop\n" );
+            }
             break;
          }
       }
@@ -573,7 +638,10 @@ bool US_PM::best_vary_one_param(
       high_limit = last_fitness_1_pos;
       if ( best_size == high_limit )
       {
-         cout << "best_vary_one_param: best found at end, extending interval by 20 delta\n";
+         if ( us_log )
+         {
+            us_log->log( "best_vary_one_param: best found at end, extending interval by 20 delta\n" );
+         }
          low_limit = best_size;
          high_limit += 20e0 * delta;
       } else {
@@ -584,7 +652,10 @@ bool US_PM::best_vary_one_param(
    }
    best_fitness    = best_fit;
    params          = best_params;
-   US_Vector::printvector( QString( "best_vary_one_param: ----end----- fitness %1, params:" ).arg( best_fitness ), params );
+   if ( us_log )
+   {
+      us_log->log( US_Vector::qs_vector( QString( "best_vary_one_param: ----end----- fitness %1, params:" ).arg( best_fitness ), params ) );
+   }
    return true;
 }
 
@@ -596,7 +667,7 @@ bool US_PM::best_vary_two_param(
                                 vector < double > & high_fparams,
                                 set < pm_point >  & model,
                                 double            & best_fitness
-                                )
+                                 )
 {
    set < pm_point > this_model;
    use_CYJ = false;
@@ -620,10 +691,13 @@ bool US_PM::best_vary_two_param(
 
    if ( high_limit - low_limit <= best_delta_min )
    {
-      cout << QString( "best_vary_two_param: parameter range %1:%2 is smaller than minimum delta %3, returning average model\n" )
-         .arg( low_limit )
-         .arg( high_limit )
-         .arg( best_delta_min );
+      if ( us_log )
+      {
+         us_log->log( QString( "best_vary_two_param: parameter range %1:%2 is smaller than minimum delta %3, returning average model\n" )
+                      .arg( low_limit )
+                      .arg( high_limit )
+                      .arg( best_delta_min ) );
+      }
       params[ param_to_vary_2 ] = (high_limit + low_limit) / 2e0;
       return best_vary_one_param( param_to_vary_1, params, low_fparams, high_fparams, model, best_fitness );
    }
@@ -647,7 +721,10 @@ bool US_PM::best_vary_two_param(
       double last_fitness_3_pos = -1e0;
       prev_fit = 1e99;
 
-      cout << QString( "best_vary_two_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+      if ( us_log )
+      {
+         us_log->log( QString( "best_vary_two_param: ------------ this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta ) );
+      }
       for ( params[ param_to_vary_2 ] = low_limit; params[ param_to_vary_2 ] <= high_limit; params[ param_to_vary_2 ] += delta )
       {
          best_vary_one_param( param_to_vary_1, params, low_fparams, high_fparams, this_model, this_fit );
@@ -657,11 +734,14 @@ bool US_PM::best_vary_two_param(
          last_fitness_2_pos = last_fitness_1_pos;
          last_fitness_1_pos = params[ param_to_vary_2 ];
 
-         US_Vector::printvector( QString( "best_vary_two_param: %1beads %2 fitness %3, params:" )
-                                 .arg( this_fit < prev_fit ? "**" : "  " )
-                                 .arg( this_model.size() )
-                                 .arg( this_fit ), 
-                                 params );
+         if ( us_log )
+         {
+            us_log->log( US_Vector::qs_vector( QString( "best_vary_two_param: %1beads %2 fitness %3, params:" )
+                                               .arg( this_fit < prev_fit ? "**" : "  " )
+                                               .arg( this_model.size() )
+                                               .arg( this_fit ), 
+                                               params ) );
+         }
 
          if ( this_fit < prev_fit )
          {
@@ -681,7 +761,10 @@ bool US_PM::best_vary_two_param(
       if ( last_fitness_3_pos < 0e0 ||
            last_fitness_1_pos < 0e0 )
       {
-         cout << "best_vary_two_param: found nothing to recenter on, terminating outer loop\n";
+         if ( us_log )
+         {
+            us_log->log( "best_vary_two_param: found nothing to recenter on, terminating outer loop\n" );
+         }
          break;
       }
       low_limit  = last_fitness_3_pos;
@@ -689,11 +772,17 @@ bool US_PM::best_vary_two_param(
       delta /= best_delta_divisor;
    }
    us_timers.end_timer( qs_timer );
-   cout << us_timers.list_times();
+   if ( us_log )
+   {
+      us_log->log( us_timers.list_times() );
+   }
 
    best_fitness   = best_fit;
    params         = best_params;
-   US_Vector::printvector( QString( "best_vary_two_param: ----end----- fitness %1, params:" ).arg( best_fitness ), params );
+   if ( us_log )
+   {
+      us_log->log( US_Vector::qs_vector( QString( "best_vary_two_param: ----end----- fitness %1, params:" ).arg( best_fitness ), params ) );
+   }
    return true;
 }
 
@@ -733,15 +822,21 @@ bool US_PM::grid_search(
    }
 
    // compute # of points
-   US_Vector::printvector2( "grid_search: low, high: ", low_fparams, high_fparams );
-   US_Vector::printvector ( "grid_search: delta: "    , delta );
+   if ( us_log )
+   {
+      us_log->log( US_Vector::qs_vector2( "grid_search: low, high: ", low_fparams, high_fparams ) );
+      us_log->log( US_Vector::qs_vector ( "grid_search: delta: "    , delta ) );
+   }
 
    int points = 1;
    for ( int i = 0; i < (int)low_fparams.size(); i++ )
    {
       points *= 1 + ( high_fparams[ i ] - low_fparams[ i ] ) / delta[ i ];
    }
-   cout << QString( "grid_search: points %1\n" ).arg( points );
+   if ( us_log )
+   {
+      us_log->log( QString( "grid_search: points %1\n" ).arg( points ) );
+   }
 
    for ( int i = 0; i < (int)low_fparams.size(); i++ )
    {
@@ -758,11 +853,14 @@ bool US_PM::grid_search(
       create_model( params, model );
       compute_I( model, I_result );
       double this_fit = fitness2( I_result );
-      US_Vector::printvector( QString( "grid_search: %1fitness2 %2, beads %3 params" )
-                              .arg( this_fit < best_fit ? "**" : "  " )
-                              .arg( this_fit, 0, 'g', 8 )
-                              .arg( model.size() ),
-                              params );
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector( QString( "grid_search: %1fitness2 %2, beads %3 params" )
+                                            .arg( this_fit < best_fit ? "**" : "  " )
+                                            .arg( this_fit, 0, 'g', 8 )
+                                            .arg( model.size() ),
+                                            params ) );
+      }
       for ( int i = 1; i < (int) params.size(); i++ )
       {
          gp += QString( "%1 " ).arg( params[ i ] );
@@ -798,12 +896,18 @@ bool US_PM::grid_search(
    }
    model  = best_model;
    params = best_params;
-   US_Vector::printvector( QString( "grid_search: ++fitness2 %1, beads %2 params" )
-                           .arg( best_fit, 0, 'g', 8 )
-                           .arg( model.size() ),
-                           params );
+   if ( us_log )
+   {
+      us_log->log( US_Vector::qs_vector( QString( "grid_search: ++fitness2 %1, beads %2 params" )
+                                         .arg( best_fit, 0, 'g', 8 )
+                                         .arg( model.size() ),
+                                         params ) );
+   }
 
-   cout << QString( "gnuplot.txt:\n%1" ).arg( gp );
+   if ( us_log )
+   {
+      us_log->log( QString( "gnuplot.txt:\n%1" ).arg( gp ) );
+   }
 
    return true;
 }
@@ -818,21 +922,24 @@ bool US_PM::best_md0_ga(
                         double              coarse_conversion,
                         double              refinement_range_pct,
                         double              conversion_divisor
-                        )
+                         )
 {
-   cout << QString( "best_md0_ga: steps_to_ga            %1\n"
-                    "             points_max             %2\n"
-                    "             finest_conversion      %3\n"
-                    "             coarse_conversion      %4\n"
-                    "             refinement_range_pct   %5\n"
-                    "             conversion_divisor     %6\n" )
-      .arg( steps_to_ga )
-      .arg( points_max )
-      .arg( finest_conversion )
-      .arg( coarse_conversion )
-      .arg( refinement_range_pct )
-      .arg( conversion_divisor )
-      ;
+   if ( us_log )
+   {
+      us_log->log( QString( "best_md0_ga: steps_to_ga            %1\n"
+                            "             points_max             %2\n"
+                            "             finest_conversion      %3\n"
+                            "             coarse_conversion      %4\n"
+                            "             refinement_range_pct   %5\n"
+                            "             conversion_divisor     %6\n" )
+                   .arg( steps_to_ga )
+                   .arg( points_max )
+                   .arg( finest_conversion )
+                   .arg( coarse_conversion )
+                   .arg( refinement_range_pct )
+                   .arg( conversion_divisor )
+                   );
+   }
 
    if ( !steps_to_ga )
    {
@@ -866,7 +973,10 @@ bool US_PM::best_md0_ga(
                                        PM_MSG, 
                                        MPI_COMM_WORLD ) )
          {
-            cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+            if ( us_log )
+            {
+               us_log->log( QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) );
+            }
             MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
             exit( errorno - myrank );
          }
@@ -897,18 +1007,23 @@ bool US_PM::best_md0_ga(
       // need params[] from best model and ability to set limits for best model
       // have to add to best_*, maybe add general best_model( params )
 
-      cout << "-------------------------------------------------------------------------\n";
-      cout << QString( "best_md0_ga: grid cube side: %1\n" ).arg( grid_conversion_factor);
-      cout << "-------------------------------------------------------------------------\n";
-      
-      US_Vector::printvector2( "param limits before clipping:", next_low_fparams, next_high_fparams );
+      if ( us_log )
+      {
+         us_log->log( "-------------------------------------------------------------------------\n" );
+         us_log->log( QString( "best_md0_ga: grid cube side: %1\n" ).arg( grid_conversion_factor) );
+         us_log->log( "-------------------------------------------------------------------------\n" );
+         us_log->log( US_Vector::qs_vector2( "param limits before clipping:", next_low_fparams, next_high_fparams ) );
+      }
 
       clip_limits( next_low_fparams , org_low_fparams, org_high_fparams );
       clip_limits( next_high_fparams, org_low_fparams, org_high_fparams );
       low_fparams  = next_low_fparams;
       high_fparams = next_high_fparams;
 
-      US_Vector::printvector2( "param limits:", low_fparams, high_fparams );
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector2( "param limits:", low_fparams, high_fparams ) );
+      }
 
       if ( steps >= steps_to_ga )
       {
@@ -952,9 +1067,12 @@ bool US_PM::best_md0_ga(
          new_grid_conversion_factor = finest_conversion;
       }
  
-      US_Vector::printvector ( "result params:", params );
-      US_Vector::printvector2( "previous limits before rescaling:", low_fparams, high_fparams );
-      cout << "grid_conversion_factor:" << new_grid_conversion_factor << endl;
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector ( "result params:", params ) );
+         us_log->log( US_Vector::qs_vector2( "previous limits before rescaling:", low_fparams, high_fparams ) );
+         us_log->log( QString( "grid_conversion_factor: %1" ).arg( new_grid_conversion_factor ) );
+      }
 
       if ( !rescale_params( params,
                             next_low_fparams,
@@ -968,9 +1086,15 @@ bool US_PM::best_md0_ga(
       //       rescale_params( types, low_fparams , new_grid_conversion_factor );
       //       rescale_params( types, high_fparams, new_grid_conversion_factor );
 
-      //       US_Vector::printvector2( "previous limits after rescaling:", low_fparams, high_fparams );
+      // if ( us_log )
+      // {
+      //    us_log->log( US_Vector::qs_vector2( "previous limits after rescaling:", low_fparams, high_fparams ) );
+      // }
 
-      US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector2( "new limits after rescaling:", next_low_fparams, next_high_fparams ) );
+      }
 
       if ( !set_grid_size( new_grid_conversion_factor ) )
       {
@@ -992,7 +1116,10 @@ bool US_PM::best_md0_ga(
                                           PM_MSG, 
                                           MPI_COMM_WORLD ) )
             {
-               cout << QString( "%1: MPI send failed in best_md0_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+               if ( us_log )
+               {
+                  us_log->log( QString( "%1: MPI send failed in best_md0_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) );
+               }
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }
@@ -1004,10 +1131,10 @@ bool US_PM::best_md0_ga(
 }
 
 bool US_PM::approx_max_dimension( 
-                               vector < double > & params, 
-                               double              coarse_conversion,
-                               unsigned int      & approx_max_d
-                               )
+                                 vector < double > & params, 
+                                 double              coarse_conversion,
+                                 unsigned int      & approx_max_d
+                                  )
 {
    // run a coarse spheroid & use to determine maxd
    if ( !set_grid_size( coarse_conversion ) )
@@ -1015,8 +1142,8 @@ bool US_PM::approx_max_dimension(
       return false;
    }
    /* approx_max_dimension runs solely on master
-#if defined( USE_MPI )
-   {
+      #if defined( USE_MPI )
+      {
       int errorno = -29000;
       pm_msg msg;
       msg.type = PM_NEW_GRID_SIZE;
@@ -1024,20 +1151,23 @@ bool US_PM::approx_max_dimension(
 
       for ( int i = 1; i < npes; ++i )
       {
-         if ( MPI_SUCCESS != MPI_Send( &msg,
-                                       sizeof( pm_msg ),
-                                       MPI_CHAR, 
-                                       i,
-                                       PM_MSG, 
-                                       MPI_COMM_WORLD ) )
-         {
-            cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
-            MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
-            exit( errorno - myrank );
-         }
+      if ( MPI_SUCCESS != MPI_Send( &msg,
+      sizeof( pm_msg ),
+      MPI_CHAR, 
+      i,
+      PM_MSG, 
+      MPI_COMM_WORLD ) )
+      {
+      if ( us_log )
+      {
+      us_log->log( QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) );
       }
-   }
-#endif
+      MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+      exit( errorno - myrank );
+      }
+      }
+      }
+      #endif
    */
 
    params.resize( 3 );
@@ -1073,8 +1203,8 @@ bool US_PM::approx_max_dimension(
 
    reset_grid_size();
    /* approx_max_dimension runs solely on master
-#if defined( USE_MPI )
-   {
+      #if defined( USE_MPI )
+      {
       int errorno = -29000;
       pm_msg msg;
       msg.type = PM_NEW_GRID_SIZE;
@@ -1082,20 +1212,23 @@ bool US_PM::approx_max_dimension(
 
       for ( int i = 1; i < npes; ++i )
       {
-         if ( MPI_SUCCESS != MPI_Send( &msg,
-                                       sizeof( pm_msg ),
-                                       MPI_CHAR, 
-                                       i,
-                                       PM_MSG, 
-                                       MPI_COMM_WORLD ) )
-         {
-            cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
-            MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
-            exit( errorno - myrank );
-         }
+      if ( MPI_SUCCESS != MPI_Send( &msg,
+      sizeof( pm_msg ),
+      MPI_CHAR, 
+      i,
+      PM_MSG, 
+      MPI_COMM_WORLD ) )
+      {
+      if ( us_log )
+      {
+      us_log->log( QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) );
       }
-   }
-#endif
+      MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+      exit( errorno - myrank );
+      }
+      }
+      }
+      #endif
    */
 
    double d_approx_max_d = fparams[ 0 ] > fparams[ 1 ] ? fparams[ 0 ] : fparams[ 1 ];
@@ -1115,20 +1248,23 @@ bool US_PM::best_ga(
                     double              coarse_conversion,
                     double              refinement_range_pct,
                     double              conversion_divisor
-                    )
+                     )
 {
-   US_Vector::printvector( "best_ga: params", params );
-   cout << QString( "best_ga:     points_max             %1\n"
-                    "             finest_conversion      %2\n"
-                    "             coarse_conversion      %3\n"
-                    "             refinement_range_pct   %4\n"
-                    "             conversion_divisor     %5\n" )
-      .arg( points_max )
-      .arg( finest_conversion )
-      .arg( coarse_conversion )
-      .arg( refinement_range_pct )
-      .arg( conversion_divisor )
-      ;
+   if ( us_log )
+   {
+      us_log->log( US_Vector::qs_vector( "best_ga: params", params ) );
+      us_log->log( QString( "best_ga:     points_max             %1\n"
+                            "             finest_conversion      %2\n"
+                            "             coarse_conversion      %3\n"
+                            "             refinement_range_pct   %4\n"
+                            "             conversion_divisor     %5\n" )
+                   .arg( points_max )
+                   .arg( finest_conversion )
+                   .arg( coarse_conversion )
+                   .arg( refinement_range_pct )
+                   .arg( conversion_divisor )
+                   );
+   }
    
    vector < int >    types;
    vector < double > fparams;
@@ -1161,7 +1297,10 @@ bool US_PM::best_ga(
                                        PM_MSG, 
                                        MPI_COMM_WORLD ) )
          {
-            cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+            if ( us_log )
+            {
+               us_log->log( QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) );
+            }
             MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
             exit( errorno - myrank );
          }
@@ -1175,12 +1314,15 @@ bool US_PM::best_ga(
    vector < double > org_low_fparams;
    vector < double > org_high_fparams;
    set_limits( params, org_low_fparams, org_high_fparams, (double) org_max_dimension / coarse_conversion );
-   cout << QString( "org_max_dimension %1 org_conversion_factor %2 coarse_conversion %3 use_max_d %4\n" )
-      .arg( org_max_dimension )
-      .arg( org_conversion_factor )
-      .arg( coarse_conversion )
-      .arg( (double) org_max_dimension / coarse_conversion )
-      ;
+   if ( us_log )
+   {
+      us_log->log( QString( "org_max_dimension %1 org_conversion_factor %2 coarse_conversion %3 use_max_d %4\n" )
+                   .arg( org_max_dimension )
+                   .arg( org_conversion_factor )
+                   .arg( coarse_conversion )
+                   .arg( (double) org_max_dimension / coarse_conversion )
+                   );
+   }
 
    vector < double > low_fparams  = org_low_fparams;
    vector < double > high_fparams = org_high_fparams;
@@ -1192,8 +1334,11 @@ bool US_PM::best_ga(
    
    unsigned int steps = 0;
    
-   US_Vector::printvector( "best_ga fparams", fparams );
-   US_Vector::printvector( "best_ga types", types );
+   if ( us_log )
+   {
+      us_log->log( US_Vector::qs_vector( "best_ga fparams", fparams ) );
+      us_log->log( US_Vector::qs_vector( "best_ga types", types ) );
+   }
 
    unsigned int ga_sequential_pegged = 0;
 
@@ -1202,18 +1347,23 @@ bool US_PM::best_ga(
       // need params[] from best model and ability to set limits for best model
       // have to add to best_*, maybe add general best_model( params )
 
-      cout << "-------------------------------------------------------------------------\n";
-      cout << QString( "best_ga: grid cube side: %1\n" ).arg( grid_conversion_factor);
-      cout << "-------------------------------------------------------------------------\n";
-      
-      US_Vector::printvector2( "param limits before clipping:", next_low_fparams, next_high_fparams );
+      if ( us_log )
+      {
+         us_log->log( "-------------------------------------------------------------------------\n" );
+         us_log->log( QString( "best_ga: grid cube side: %1\n" ).arg( grid_conversion_factor) );
+         us_log->log( "-------------------------------------------------------------------------\n" );
+         us_log->log( US_Vector::qs_vector2( "param limits before clipping:", next_low_fparams, next_high_fparams ) );
+      }
 
       clip_limits( next_low_fparams , max_low_fparams, max_high_fparams );
       clip_limits( next_high_fparams, max_low_fparams, max_high_fparams );
       low_fparams  = next_low_fparams;
       high_fparams = next_high_fparams;
 
-      US_Vector::printvector2( "param limits:", low_fparams, high_fparams );
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector2( "param limits:", low_fparams, high_fparams ) );
+      }
 
       pm_ga_individual best_individual;
       if ( !ga_run( types, best_individual, points_max, low_fparams, high_fparams ) )
@@ -1243,7 +1393,10 @@ bool US_PM::best_ga(
       {
          if ( ga_sequential_pegged > USPM_SEQ_PEGGED_LIMIT )
          {
-            cout << QString( "Warning: sequential pegged limit %1 reached\n" ).arg( USPM_SEQ_PEGGED_LIMIT );
+            if ( us_log )
+            {
+               us_log->log( QString( "Warning: sequential pegged limit %1 reached\n" ).arg( USPM_SEQ_PEGGED_LIMIT ) );
+            }
          }
          break;
       }
@@ -1254,9 +1407,12 @@ bool US_PM::best_ga(
          new_grid_conversion_factor = finest_conversion;
       }
  
-      US_Vector::printvector ( "result params:", params );
-      US_Vector::printvector2( "previous limits before rescaling:", low_fparams, high_fparams );
-      cout << "grid_conversion_factor:" << new_grid_conversion_factor << endl;
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector ( "result params:", params ) );
+         us_log->log( US_Vector::qs_vector2( "previous limits before rescaling:", low_fparams, high_fparams ) );
+         us_log->log( QString( "grid_conversion_factor: %1" ).arg( new_grid_conversion_factor ) );
+      }
 
       if ( !rescale_params( params,
                             next_low_fparams,
@@ -1291,7 +1447,10 @@ bool US_PM::best_ga(
          }
       }
 
-      US_Vector::printvector2( "new limits after rescaling:", next_low_fparams, next_high_fparams );
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector2( "new limits after rescaling:", next_low_fparams, next_high_fparams ) );
+      }
 
       if ( new_grid_conversion_factor != grid_conversion_factor )
       {
@@ -1315,7 +1474,10 @@ bool US_PM::best_ga(
                                              PM_MSG, 
                                              MPI_COMM_WORLD ) )
                {
-                  cout << QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+                  if ( us_log )
+                  {
+                     us_log->log( QString( "%1: MPI send failed in best_ga() PM_NEW_GRID_SIZE\n" ).arg( myrank ) );
+                  }
                   MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                   exit( errorno - myrank );
                }

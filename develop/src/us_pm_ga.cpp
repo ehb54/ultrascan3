@@ -1,10 +1,5 @@
 #include "../include/us_pm.h"
 
-// note: this program uses cout and/or cerr and this should be replaced
-
-static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
-   return os << qPrintable(str);
-}
 // #define USPMGA_DEBUG
 
 unsigned int US_PM::ga_pop_selection( unsigned int size )
@@ -94,7 +89,10 @@ void US_PM::ga_compute_fitness()
       join( ga_params, ga_types, ga_fparams );
       msg.vsize = ga_params.size();
 
-      // US_Vector::printvector( "ga_compute_fitness: (for) params to send", ga_params );
+      // if ( us_log )
+      // {
+      //    us_log->log( US_Vector::qs_vector( "ga_compute_fitness: (for) params to send", ga_params ) );
+      // }
       fit_calls++;
 
       if ( MPI_SUCCESS != MPI_Send( &msg,
@@ -104,7 +102,10 @@ void US_PM::ga_compute_fitness()
                                     PM_MSG,
                                     MPI_COMM_WORLD ) )
       {
-         cout << QString( "%1: MPI PM_MSG Send failed ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         if ( us_log )
+         {
+            us_log->log( QString( "%1: MPI PM_MSG Send failed ga_compute_fitness()\n" ).arg( myrank ) );
+         }
          MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
          exit( errorno - myrank );
       }         
@@ -116,7 +117,10 @@ void US_PM::ga_compute_fitness()
                                     PM_CALC_FITNESS,
                                     MPI_COMM_WORLD ) )
       {
-         cout << QString( "%1: MPI PM_CALC_FITNESS Send failed ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         if ( us_log )
+         {
+            us_log->log( QString( "%1: MPI PM_CALC_FITNESS Send failed ga_compute_fitness()\n" ).arg( myrank ) );
+         }
          MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
          exit( errorno - myrank );
       }         
@@ -129,7 +133,10 @@ void US_PM::ga_compute_fitness()
    {
       if ( it_pop != ga_pop.end() )
       {
-         cout << QString( "%1: error: ga_compute_fitness() no worker busy but we have more ga_pop?\n" ).arg( myrank ) << flush;
+         if ( us_log )
+         {
+            us_log->log( QString( "%1: error: ga_compute_fitness() no worker busy but we have more ga_pop?\n" ).arg( myrank ) );
+         }
          MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
          exit( errorno - myrank );
       }
@@ -168,7 +175,10 @@ void US_PM::ga_compute_fitness()
                                     MPI_COMM_WORLD,
                                     &mpi_status ) )
       {
-         cout << QString( "%1: MPI PM_FITNESS_RESULT Receive failed in ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         if ( us_log )
+         {
+            us_log->log( QString( "%1: MPI PM_FITNESS_RESULT Receive failed in ga_compute_fitness()\n" ).arg( myrank ) );
+         }
          MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
          exit( errorno - myrank );
       }         
@@ -183,7 +193,10 @@ void US_PM::ga_compute_fitness()
                                     MPI_COMM_WORLD,
                                     &mpi_status2 ) )
       {
-         cout << QString( "%1: MPI PM_FITNESS_RESULT Receive failed in ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         if ( us_log )
+         {
+            us_log->log( QString( "%1: MPI PM_FITNESS_RESULT Receive failed in ga_compute_fitness()\n" ).arg( myrank ) );
+         }
          MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
          exit( errorno - myrank );
       }         
@@ -216,7 +229,10 @@ void US_PM::ga_compute_fitness()
       ga_delta_to_fparams( it_pop->v, ga_fparams );
       join( ga_params, ga_types, ga_fparams );
       msg.vsize = ga_params.size();
-      // US_Vector::printvector( "ga_compute_fitness: (while) params to send", ga_params );
+      // if ( us_log )
+      // {
+      //    us_log->log( US_Vector::qs_vector( "ga_compute_fitness: (while) params to send", ga_params ) );
+      // }
 
       fit_calls++;
 
@@ -227,7 +243,10 @@ void US_PM::ga_compute_fitness()
                                     PM_MSG,
                                     MPI_COMM_WORLD ) )
       {
-         cout << QString( "%1: MPI PM_MSG Send failed ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         if ( us_log )
+         {
+            us_log->log( QString( "%1: MPI PM_MSG Send failed ga_compute_fitness()\n" ).arg( myrank ) );
+         }
          MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
          exit( errorno - myrank );
       }         
@@ -239,7 +258,10 @@ void US_PM::ga_compute_fitness()
                                     PM_CALC_FITNESS,
                                     MPI_COMM_WORLD ) )
       {
-         cout << QString( "%1: MPI PM_CALC_FITNESS Send failed ga_compute_fitness()\n" ).arg( myrank ) << flush;
+         if ( us_log )
+         {
+            us_log->log( QString( "%1: MPI PM_CALC_FITNESS Send failed ga_compute_fitness()\n" ).arg( myrank ) );
+         }
          MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
          exit( errorno - myrank );
       }         
@@ -271,7 +293,10 @@ void US_PM::ga_compute_fitness()
 
 bool US_PM::ga( pm_ga_individual & best_individual )
 {
-   cout << ga_info();
+   if ( us_log )
+   {
+      us_log->log( ga_info() );
+   }
    pm_ga_individual      individual;
 
    individual.v.resize( ga_fparams_size );
@@ -292,7 +317,10 @@ bool US_PM::ga( pm_ga_individual & best_individual )
       }
    } else {
       unsigned int ga_seed_params_size = (unsigned int) ga_seed_params.size();
-      cout << "ga_seeded: " << ga_seed_params_size << endl;
+      if ( us_log )
+      {
+         us_log->log( QString( "ga_seeded: %1" ).arg( ga_seed_params_size ) );
+      }
       for ( unsigned int i = 0; i < ga_seed_params_size; i++ )
       {
          ga_params_to_individual( ga_seed_params[ i ], individual );
@@ -334,8 +362,11 @@ bool US_PM::ga( pm_ga_individual & best_individual )
                   random_normal_sd[ pos ] = 1e0;
                }
             }
-            US_Vector::printvector( "ga points", ga_points );
-            US_Vector::printvector( "random_normal_sd", random_normal_sd );
+            if ( us_log )
+            {
+               us_log->log( US_Vector::qs_vector( "ga points", ga_points ) );
+               us_log->log( US_Vector::qs_vector( "random_normal_sd", random_normal_sd ) );
+            }
          }
 
          map < unsigned int, bool > has_been_duplicated;
@@ -352,22 +383,31 @@ bool US_PM::ga( pm_ga_individual & best_individual )
                gens_with_no_improvement++;
                if ( gens_with_no_improvement >= ga_p.early_termination )
                {
-                  cout << "early termination\n";
+                  if ( us_log )
+                  {
+                     us_log->log( "early termination\n" );
+                  }
                   break;
                }
             }
          }
             
-         cout << QString( "ga_: gen %1 best individual fitness %2 beads %3\n" )
+         if ( us_log )
+         {
+            us_log->log( QString( "ga_: gen %1 best individual fitness %2 beads %3\n" )
             .arg( g )
             .arg( ga_pop.front().fitness )
-            .arg( ga_pop.front().model.size() );
+                         .arg( ga_pop.front().model.size() ) );
+         }
 
          {
             ga_delta_to_fparams( ga_pop.front().v, ga_fparams );
             join( ga_params, ga_types, ga_fparams );
-            cout << US_Vector::qs_vector( "ga_fitness: v", ga_pop.front().v );
-            cout << US_Vector::qs_vector( "ga_fitness: params", ga_params );
+            if ( us_log )
+            {
+               us_log->log( US_Vector::qs_vector( "ga_fitness: v", ga_pop.front().v ) );
+               us_log->log( US_Vector::qs_vector( "ga_fitness: params", ga_params ) );
+            }
          }
 
          unsigned int elitism_count   = 0;
@@ -385,7 +425,10 @@ bool US_PM::ga( pm_ga_individual & best_individual )
             last_pop.push_back( *it );
          }
 
-         cout << QString( "start: ga_pop.size() %1\n" ).arg( last_pop.size() );
+         if ( us_log )
+         {
+            us_log->log( QString( "start: ga_pop.size() %1\n" ).arg( last_pop.size() ) );
+         }
 
          ga_pop.clear();
 
@@ -491,38 +534,47 @@ bool US_PM::ga( pm_ga_individual & best_individual )
             }
          }
 
-         cout << QString( 
-                         "summary counts:\n"
-                         " elitism   %1\n"
-                         " mutate    %2\n"
-                         " sa_mutate %3\n"
-                         " crossover %4\n"
-                         " duplicate %5\n" 
-                         " random    %6\n" 
-                         " total     %7\n" 
-                          )
-            .arg( elitism_count )
-            .arg( mutate_count )
-            .arg( sa_mutate_count )
-            .arg( crossover_count )
-            .arg( duplicate_count )
-            .arg( random_count )
-            .arg( elitism_count + mutate_count + sa_mutate_count + crossover_count + duplicate_count + random_count );
+         if ( us_log )
+         {
+            us_log->log( QString( 
+                                 "summary counts:\n"
+                                 " elitism   %1\n"
+                                 " mutate    %2\n"
+                                 " sa_mutate %3\n"
+                                 " crossover %4\n"
+                                 " duplicate %5\n" 
+                                 " random    %6\n" 
+                                 " total     %7\n" 
+                                  )
+                         .arg( elitism_count )
+                         .arg( mutate_count )
+                         .arg( sa_mutate_count )
+                         .arg( crossover_count )
+                         .arg( duplicate_count )
+                         .arg( random_count )
+                         .arg( elitism_count + mutate_count + sa_mutate_count + crossover_count + duplicate_count + random_count ) );
+         }
       }
    }
    ga_compute_fitness();
    ga_pop.sort();
    best_individual = ga_pop.front();
 
-   cout << QString( "ga_: gen final best individual fitness %1 beads %2\n" )
-      .arg( ga_pop.front().fitness )
-      .arg( ga_pop.front().model.size() );
+   if ( us_log )
+   {
+      us_log->log( QString( "ga_: gen final best individual fitness %1 beads %2\n" )
+                   .arg( ga_pop.front().fitness )
+                   .arg( ga_pop.front().model.size() ) );
+   }
 
    {
       ga_delta_to_fparams( ga_pop.front().v, ga_fparams );
       join( ga_params, ga_types, ga_fparams );
-      cout << US_Vector::qs_vector( "ga_fitness: v", ga_pop.front().v );
-      cout << US_Vector::qs_vector( "ga_fitness: params", ga_params );
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector( "ga_fitness: v", ga_pop.front().v ) );
+         us_log->log( US_Vector::qs_vector( "ga_fitness: params", ga_params ) );
+      }
    }
 
    return true;
@@ -561,7 +613,10 @@ bool US_PM::ga_compute_delta( unsigned int points_max )
    ga_delta .resize( ga_low_fparams.size() );
    ga_points.resize( ga_low_fparams.size() );
 
-   printf( "ga_compute_delta points max %u\n", points_max );
+   if ( us_log )
+   {
+      us_log->log( QString( "ga_compute_delta points max %1" ).arg( points_max ) );
+   }
 
    unsigned int total_pts = 1;
 
@@ -575,10 +630,16 @@ bool US_PM::ga_compute_delta( unsigned int points_max )
          ga_points[ i ] = 1;
       } else {
          ga_delta[ i ] = ( ga_high_fparams[ i ] - ga_low_fparams[ i ] ) / (double) ( points_max - 1 );
-         printf( "ga_compute_delta: ga_delta[ %d ] = %g\n", i, ga_delta[ i ] );
+         if ( us_log )
+         {
+            us_log->log( QString( "ga_compute_delta: ga_delta[ %1 ] = %2\n" ).arg( i ).arg( ga_delta[ i ] ) );
+         }
          if ( ga_delta[ i ] < best_delta_min )
          {
-            printf( "ga_compute_delta: ga_delta[ %d ] < best_delta_min %g\n", i, best_delta_min );
+            if ( us_log )
+            {
+               us_log->log( QString( "ga_compute_delta: ga_delta[ %1 ] < best_delta_min %2" ).arg( i ).arg( best_delta_min ) );
+            }
             ga_delta [ i ] = best_delta_min;
             ga_points[ i ] = ( unsigned int )( 0.5 + ( ga_high_fparams[ i ] - ga_low_fparams[ i ] ) / best_delta_min );
          } else {
@@ -592,14 +653,20 @@ bool US_PM::ga_compute_delta( unsigned int points_max )
       total_pts *= ga_points[ i ];
    }
 
-   cout << "ga_compute_delta: total pts " << total_pts << endl;
-   cout << "ga_compute_delta: last_max_best_delta_min " << pm_ga_last_max_best_delta_min << endl;
-   US_Vector::printvector( "ga_compute_delta: deltas", ga_delta );
-   US_Vector::printvector( "ga_compute_delta: points", ga_points );
+   if ( us_log )
+   {
+      us_log->log( QString( "ga_compute_delta: total pts %1" ).arg( total_pts ) );
+      us_log->log( QString( "ga_compute_delta: last_max_best_delta_min %1 " ).arg( pm_ga_last_max_best_delta_min ) );
+      us_log->log( US_Vector::qs_vector( "ga_compute_delta: deltas", ga_delta ) );
+      us_log->log( US_Vector::qs_vector( "ga_compute_delta: points", ga_points ) );
+   }
 
    if ( total_pts <= ga_p.population * ( ga_p.generations > 2 ? ga_p.generations / 2 : ga_p.generations ) )
    {
-      cout << "ga_compute_delta: points <= population * generations / 2, switching to full grid search\n";
+      if ( us_log )
+      {
+         us_log->log( "ga_compute_delta: points <= population * generations / 2, switching to full grid search\n" );
+      }
       ga_p.population        = total_pts;
       ga_p.generations       = 1;
       ga_p.mutate            = 0e0;
@@ -665,17 +732,26 @@ bool US_PM::ga_refine_limits( unsigned int top_count,
       maxs[ i ] += extend_deltas;
    }
 
-   US_Vector::printvector2( "ga_refine_limits: limits before", ga_low_fparams, ga_high_fparams );
+   if ( us_log )
+   {
+      us_log->log( US_Vector::qs_vector2( "ga_refine_limits: limits before", ga_low_fparams, ga_high_fparams ) );
+   }
 
    ga_delta_to_fparams( mins, ga_low_fparams  );
    ga_delta_to_fparams( maxs, ga_high_fparams );
 
-   US_Vector::printvector2( "ga_refine_limits: limits after", ga_low_fparams, ga_high_fparams );
+   if ( us_log )
+   {
+      us_log->log( US_Vector::qs_vector2( "ga_refine_limits: limits after", ga_low_fparams, ga_high_fparams ) );
+   }
 
    clip_limits( ga_low_fparams, ga_min_low_fparams, ga_max_high_fparams );
    clip_limits( ga_high_fparams, ga_min_low_fparams, ga_max_high_fparams );
 
-   US_Vector::printvector2( "ga_refine_limits: limits after clipping", ga_low_fparams, ga_high_fparams );
+   if ( us_log )
+   {
+      us_log->log( US_Vector::qs_vector2( "ga_refine_limits: limits after clipping", ga_low_fparams, ga_high_fparams ) );
+   }
 
    ga_pop.clear(); // or recompute deltas for those that fall within (?)
 
@@ -719,13 +795,19 @@ bool US_PM::ga_run(
 
    if ( !zero_params( ga_params, types ) )
    {
-      cout << error_msg << endl;
+      if ( us_log )
+      {
+         us_log->log( error_msg );
+      }
       return false;
    }
       
    if ( !set_limits ( ga_params, ga_min_low_fparams, ga_max_high_fparams ) )
    {
-      cout << error_msg << endl;
+      if ( us_log )
+      {
+         us_log->log( error_msg );
+      }
       return false;
    }
 
@@ -751,12 +833,18 @@ bool US_PM::ga_run(
          pm_ga_pegged = true;
       }
    }
-   US_Vector::printvector( "best.v", best_individual.v );
-   US_Vector::printvector( "ga_points", ga_points );
+   if ( us_log )
+   {
+      us_log->log( US_Vector::qs_vector( "best.v", best_individual.v ) );
+      us_log->log( US_Vector::qs_vector( "ga_points", ga_points ) );
+   }
 
    if ( pm_ga_pegged )
    {
-      US_Vector::printvector( "pegged:", pm_ga_peggedv );
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector( "pegged:", pm_ga_peggedv ) );
+      }
    }
    ga_p = ga_p_save;
    ga_seed_params.clear();
@@ -770,7 +858,10 @@ bool US_PM::ga_run(
                    unsigned int        points
                    )
 {
-   cerr << "Warning: ga_run() without limits can create unnecessarrily huge models (i.e. slow!)\n";
+   if ( us_log )
+   {
+      us_log->log( "Warning: ga_run() without limits can create unnecessarrily huge models (i.e. slow!)\n" );
+   }
    vector < double > low_fparams;
    vector < double > high_fparams;
    zero_params( ga_params, types );
@@ -933,7 +1024,10 @@ bool US_PM::ga_fparams_to_individual( vector < double > & fparams, pm_ga_individ
    {
       vector < double > gridded_fparams( ga_fparams_size );
       ga_delta_to_fparams( individual.v, gridded_fparams );
-      US_Vector::printvector2( "ga_fparams_to_individual: org vs gridded", fparams, gridded_fparams );
+      if ( us_log )
+      {
+         us_log->log( US_Vector::qs_vector2( "ga_fparams_to_individual: org vs gridded", fparams, gridded_fparams ) );
+      }
    }
 
    return true;

@@ -47,6 +47,20 @@ US_Saxs_Util::US_Saxs_Util()
    nsa_gsm_setup = false;
    this_rank = 0;
    nsa_mpi = false;
+   us_log = (US_Log *) 0;
+   us_udp_msg = (US_Udp_Msg *) 0;
+}
+
+US_Saxs_Util::~US_Saxs_Util()
+{
+   if ( us_log )
+   {
+      delete us_log;
+   }
+   if ( us_udp_msg )
+   {
+      delete us_udp_msg;
+   }
 }
 
 void US_Saxs_Util::clear()

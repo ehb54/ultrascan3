@@ -1,7 +1,7 @@
 #include "../include/us_file_util.h"
+#include <qregexp.h>
 //Added by qt3to4:
 #include <Q3TextStream>
-
 
 bool US_File_Util::copy( QString from, QString to, bool overwrite )
 {
@@ -173,3 +173,110 @@ bool US_File_Util::read( QString from, QStringList &qsl )
    f.close();
    return true;
 }
+
+bool US_File_Util::writeuniq( QString & outname, QString & msg, QString basename, QString ext, QString & data )
+{
+   outname = basename + "." + ext;
+   int count = 0;
+   while( QFile::exists( outname ) )
+   {
+      outname = QString( "%1-%2.%3" ).arg( basename ).arg( ++count ).arg( ext );
+   }
+
+   QFile f( outname );
+   if ( !f.open( QIODevice::WriteOnly ) )
+   {
+      msg = QString( "could not open file %1 for writing" ).arg( outname );
+      return false;
+   }
+   Q3TextStream ts( &f );
+   ts << data;
+   f.close();
+   return true;
+}
+
+US_Log::US_Log( QString name, bool autoflush, OpenMode mode )
+{
+   this->autoflush = autoflush;
+
+   f.setName( name );
+   if ( !f.open( QIODevice::WriteOnly | mode ) )
+   {
+      error_msg = QString( "Error opening file %1 for writing" ).arg( name );
+      return;
+   }
+   ts = new Q3TextStream( & f );
+}
+
+US_Log::~US_Log()
+{
+   if ( error_msg.isEmpty() )
+   {
+      f.close();
+      delete ts;
+   }
+}
+
+void US_Log::datetime( QString qs )
+{
+   if ( error_msg.isEmpty() )
+   {
+      (*ts) << QDateTime::currentDateTime().toString();
+      if ( !qs.isEmpty() )
+      {
+         (*ts) << " : ";
+      }
+      log( qs );
+   }
+}
+
+void US_Log::time( QString qs )
+{
+   if ( error_msg.isEmpty() )
+   {
+      (*ts) << QTime::currentTime().toString();
+      if ( !qs.isEmpty() )
+      {
+         (*ts) << " : ";
+      }
+      log( qs );
+   }
+}
+
+void US_Log::log( const QString & qs )
+{
+   if ( error_msg.isEmpty() )
+   {
+      (*ts) << qs;
+      if ( !qs.contains( QRegExp( "\\n$" ) ) )
+      {
+         (*ts) << endl;
+      }
+      if ( autoflush )
+      {
+         (*ts) << flush;
+      }
+   }
+}
+
+void US_Log::log( const QStringList & qsl )
+{
+   const QString qs = qsl.join( "\n" );
+   log( qs );
+}
+
+void US_Log::log( const char * c )
+{
+   log( QString( c ) );
+}
+
+void US_Log::flushon()
+{
+   autoflush = true;
+}
+
+void US_Log::flushoff()
+{
+   autoflush = false;
+}
+

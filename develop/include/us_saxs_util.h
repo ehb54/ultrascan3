@@ -24,6 +24,7 @@
 #include "us_saxs_util_nsa.h"
 #include "us_json.h"
 #include "us_timer.h"
+#include "us_file_util.h"
 
 #if defined( WIN32 ) && !defined( MINGW )
 typedef _int16 int16_t;
@@ -101,6 +102,7 @@ class US_EXTERN US_Saxs_Util
       friend class US_Hydrodyn;
 
       US_Saxs_Util();
+      ~US_Saxs_Util();
 
       void   clear      ();
       bool   read       ( QString filename, QString tag );
@@ -703,6 +705,9 @@ class US_EXTERN US_Saxs_Util
       set < int >        pm_workers_busy;
 
 #endif
+      US_Log           * us_log;
+      US_Udp_Msg       * us_udp_msg;
+
       QString run_json ( QString & json );
       bool run_pm      (
                         map < QString, QString >           & parameters,
@@ -1143,6 +1148,7 @@ class US_EXTERN US_Saxs_Util
       bool create_tgz_output( QString filename );
       QString vector_double_to_csv( vector < double > &vd );
       bool write_output( QString model, vector < double > &q, vector < double > &I );
+      static bool write_iq( QString & name, QString &msg, vector < double > &q, vector < double > &I );
       bool flush_output();
       bool flush_output_one();
 

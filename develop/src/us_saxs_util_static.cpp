@@ -11040,3 +11040,33 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
    of.close();
    return true;
 }
+
+bool US_Saxs_Util::write_iq( QString & name, QString &msg, vector < double > &q, vector < double > &I )
+{
+   QString  use_name = name + ".dat";
+   int ext = 0;
+   while( QFile::exists( use_name ) )
+   {
+      use_name = QString( "%1-%2.dat" ).arg( name ).arg( ++ext );
+   }
+
+   name = use_name;
+
+   QFile f( name );
+   if ( !f.open( QIODevice::WriteOnly ) )
+   {
+      msg = QString( "could not open file %1 for writing" ).arg( use_name );
+      return false;
+   }
+
+   Q3TextStream ts( &f );
+   
+   ts << QString( "# US-SOMO iq data from %1\n" ).arg( name );
+
+   for ( int i = 0; i < (int) q.size(); ++i )
+   {
+      ts << QString("").sprintf( "%.6e\t%.6e\n", q[ i ], I[ i ] );
+   }
+   f.close();
+   return true;
+}

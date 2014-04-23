@@ -72,7 +72,10 @@ bool US_PM::best_cylinder( set < pm_point > & model )
       double last_fitness_3_pos = -1e0;
       prev_fit = 1e99;
 
-      cout << QString( "this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+      if ( us_log )
+      {
+         us_log->log( QString( "this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta ) );
+      }
       for ( params[ 2 ] = low_limit; params[ 2 ] <= high_limit; params[ 2 ] += delta )
       {
          best_vary_one_param( 1, params, this_model, this_fit );
@@ -102,7 +105,10 @@ bool US_PM::best_cylinder( set < pm_point > & model )
    }
    us_timers.end_timer( "cylinder try with delta fallback" );
 
-   cout << us_timers.list_times();
+   if ( us_log )
+   {
+      us_log->log( us_timers.list_times() );
+   }
 
    return true;
 }

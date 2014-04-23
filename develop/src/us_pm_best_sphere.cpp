@@ -74,7 +74,10 @@ bool US_PM::best_sphere( set < pm_point > & model )
          create_model( params, this_model );
          compute_I( this_model, I_result );
          this_fit = fitness2( I_result );
-         cout << QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).ascii();
+         if ( us_log )
+         {
+            us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).ascii() );
+         }
          if ( this_fit < prev_fit )
          {
             best_fit = this_fit;
@@ -113,7 +116,10 @@ bool US_PM::best_sphere( set < pm_point > & model )
          prev_model.clear();
          Av.clear();
 
-         cout << QString( "this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+         if ( us_log )
+         {
+            us_log->log( QString( "this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta ) );
+         }
          for ( params[ 1 ] = low_limit; params[ 1 ] <= high_limit; params[ 1 ] += delta )
          {
             bool skip = false;
@@ -128,7 +134,10 @@ bool US_PM::best_sphere( set < pm_point > & model )
             }
             if ( !skip )
             {
-               cout << QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii();
+               if ( us_log )
+               {
+                  us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii() );
+               }
 
                last_fitness_3_pos = last_fitness_2_pos;
                last_fitness_2_pos = last_fitness_1_pos;
@@ -178,7 +187,10 @@ bool US_PM::best_sphere( set < pm_point > & model )
          prev_fit = 1e99;
 
          prev_model.clear();
-         cout << QString( "this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta );
+         if ( us_log )
+         {
+            us_log->log( QString( "this limit %1 %2 delta %3\n" ).arg( low_limit ).arg( high_limit ).arg( delta ) );
+         }
          for ( params[ 1 ] = low_limit; params[ 1 ] <= high_limit; params[ 1 ] += delta )
          {
             bool skip = false;
@@ -194,12 +206,18 @@ bool US_PM::best_sphere( set < pm_point > & model )
                   fitnesses[ params[ 1 ] ] = this_fit;
                } else {
                   skip = true;
-                  // cout << QString( "skipped radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii();
+                  if ( us_log )
+                  {
+                     us_log->log( QString( "skipped radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii() );
+                  }
                }
             }
             if ( !skip )
             {
-               cout << QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii();
+               if ( us_log )
+               {
+                  us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii() );
+               }
 
                last_fitness_3_pos = last_fitness_2_pos;
                last_fitness_2_pos = last_fitness_1_pos;
@@ -244,7 +262,10 @@ bool US_PM::best_sphere( set < pm_point > & model )
       for ( params[ 1 ] = 0.1; params[ 1 ] <= max_dimension_d; params[ 1 ] += 2e0 )
       {
          this_fit = model_fit( params, model, I_result );
-         cout << QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).ascii();
+         if ( us_log )
+         {
+            us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).ascii() );
+         }
          if ( this_fit < prev_fit )
          {
             left_size = prev_size;
@@ -263,7 +284,10 @@ bool US_PM::best_sphere( set < pm_point > & model )
       }
       while ( right_size - left_size > delta )
       {
-         cout << QString( "bisection bracket %1 %2 %3 delta %4\n" ).arg( left_size ).arg( center_size ).arg( right_size ).arg( delta );
+         if ( us_log )
+         {
+            us_log->log( QString( "bisection bracket %1 %2 %3 delta %4\n" ).arg( left_size ).arg( center_size ).arg( right_size ).arg( delta ) );
+         }
 
          // compute parabolic fit
 
@@ -281,7 +305,10 @@ bool US_PM::best_sphere( set < pm_point > & model )
 
          params[ 1 ] = trial_size;
          double trial_fit = model_fit( params, model, I_result );
-         cout << QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( trial_fit ).ascii();
+         if ( us_log )
+         {
+            us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( trial_fit ).ascii() );
+         }
 
          if ( trial_size < center_size )
          {
@@ -293,7 +320,10 @@ bool US_PM::best_sphere( set < pm_point > & model )
          }
          center_size = trial_size;
          center_fit  = trial_fit;
-         cout << QString( "end bisection bracket %1 %2 %3 delta %4\n" ).arg( left_size ).arg( center_size ).arg( right_size ).arg( delta );
+         if ( us_log )
+         {
+            us_log->log( QString( "end bisection bracket %1 %2 %3 delta %4\n" ).arg( left_size ).arg( center_size ).arg( right_size ).arg( delta ) );
+         }
       }         
          
       us_timers.end_timer( "sphere try with CA bisection" );
@@ -315,7 +345,10 @@ bool US_PM::best_sphere( set < pm_point > & model )
             compute_delta_I( this_model, prev_model, Av, I_result );
             prev_model = this_model;
             this_fit = fitness2( I_result );
-            cout << QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).ascii();
+            if ( us_log )
+            {
+               us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).ascii() );
+            }
             if ( this_fit < prev_fit )
             {
                best_fit = this_fit;
@@ -331,7 +364,10 @@ bool US_PM::best_sphere( set < pm_point > & model )
       us_timers.end_timer( "sphere try with Delta" );
    }
 
-   cout << us_timers.list_times();
+if ( us_log )
+ {
+    us_log->log( us_timers.list_times() );
+ }
 
    return true;
 }

@@ -206,3 +206,37 @@ QString US_Json::compose( map < QString, QString > &mqq )
 #endif
    return result;
 }
+
+US_Udp_Msg::US_Udp_Msg( QString host, Q_UINT16 port )
+{
+   this->host = host;
+   this->port = port;
+   qsd = new Q3SocketDevice( Q3SocketDevice::Datagram );
+}
+
+US_Udp_Msg::~US_Udp_Msg()
+{
+   delete qsd;
+}
+
+void US_Udp_Msg::send_json( map < QString, QString > json )
+{
+   for ( map < QString, QString >::iterator it = default_json.begin();
+         it != default_json.end();
+         ++it )
+   {
+      json[ it->first ] = it->second;
+   }
+   QString msg = US_Json::compose( json );
+   send( msg );
+}
+
+void US_Udp_Msg::send( QString & msg )
+{
+   qsd->writeBlock( msg, msg.length(), QHostAddress( host ), port );
+}
+
+void US_Udp_Msg::set_default_json( map < QString, QString > & json )
+{
+   default_json = json;
+}

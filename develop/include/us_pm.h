@@ -354,7 +354,8 @@ class US_PM
                         vector < double > e, 
                         unsigned int      max_mem_in_MB   = 2048,
                         int               debug_level = 0,
-                        bool              quiet = false
+                        bool              quiet = false,
+                        US_Log          * us_log = ( US_Log *)0
                         );
 
    ~US_PM              ();
@@ -363,6 +364,10 @@ class US_PM
    QString             msg_log;
 
    int                 debug_level;
+
+   US_Log            * us_log;
+   bool                us_log_started;
+   bool                quiet;
 
    // params = model type, params required for model type, model type etc.
 

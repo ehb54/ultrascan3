@@ -22,7 +22,10 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > & I_result )
       // really need to check in comparison with previously cached
       if ( model.size() > max_beads_CA )
       {
-         cout << QString( "switching to CYJ mode\n" ).ascii();
+         if ( us_log )
+         {
+            us_log->log( QString( "switching to CYJ mode\n" ).ascii() );
+         }
          pcdata.clear();
          use_CYJ = true;
          return compute_CYJ_I( model, I_result );
@@ -107,14 +110,17 @@ bool US_PM::compute_CYJ_I( set < pm_point > & model, vector < double > &I_result
          }
          pdata[ *it ] = tmp_pm_data;
          /* 
-         cout << QString( "xyz %1 %2 %3 rtp %4 %5 %6\n" )
-            .arg( it->x[ 0 ] )
-            .arg( it->x[ 1 ] )
-            .arg( it->x[ 2 ] )
-            .arg( tmp_pm_data.rtp[ 0 ] )
-            .arg( tmp_pm_data.rtp[ 1 ] )
-            .arg( tmp_pm_data.rtp[ 2 ] )
-            ;
+            if ( us_log )
+{
+us_log->log( QString( "xyz %1 %2 %3 rtp %4 %5 %6\n" )
+.arg( it->x[ 0 ] )
+.arg( it->x[ 1 ] )
+.arg( it->x[ 2 ] )
+.arg( tmp_pm_data.rtp[ 0 ] )
+.arg( tmp_pm_data.rtp[ 1 ] )
+.arg( tmp_pm_data.rtp[ 2 ] )
+);
+}
          */
       } 
       v_pdata.push_back( &pdata[ *it ] );
@@ -147,12 +153,15 @@ bool US_PM::compute_CYJ_I( set < pm_point > & model, vector < double > &I_result
       if ( tmp_pm_data->no_Y )
       {
          /*
-           cout << QString( "point %1 r %2 t %3 p %4\n" )
-           .arg( i )
-           .arg( tmp_pm_data->rtp[ 0 ] )
-           .arg( tmp_pm_data->rtp[ 1 ] )
-           .arg( tmp_pm_data->rtp[ 2 ] )
-           .ascii();
+           if ( us_log )
+{
+us_log->log( QString( "point %1 r %2 t %3 p %4\n" )
+.arg( i )
+.arg( tmp_pm_data->rtp[ 0 ] )
+.arg( tmp_pm_data->rtp[ 1 ] )
+.arg( tmp_pm_data->rtp[ 2 ] )
+.ascii() );
+}
          */
          complex < float > *Yp = &( tmp_pm_data->Y[ 0 ] );
 #if defined( ALT_SH )
@@ -284,7 +293,10 @@ bool US_PM::compute_CYJ_I( set < pm_point > & model, vector < double > &I_result
 #if defined( USE_TIMERS )
    us_timers.end_timer( "sumA" );
    us_timers.end_timer( "combined" );
-   cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
+   if ( us_log )
+   {
+      us_log->log( "list times:\n" + us_timers.list_times() );
+   }
    msg_log += us_timers.list_times( QString( "CI %1 beads : " ).arg( model.size() ) );
 #endif   
    return true;
@@ -389,14 +401,17 @@ bool US_PM::compute_delta_I(
          }
          pdata[ *it ] = tmp_pm_data;
          /* 
-         cout << QString( "xyz %1 %2 %3 rtp %4 %5 %6\n" )
-            .arg( it->x[ 0 ] )
-            .arg( it->x[ 1 ] )
-            .arg( it->x[ 2 ] )
-            .arg( tmp_pm_data.rtp[ 0 ] )
-            .arg( tmp_pm_data.rtp[ 1 ] )
-            .arg( tmp_pm_data.rtp[ 2 ] )
-            ;
+            if ( us_log )
+{
+us_log->log( QString( "xyz %1 %2 %3 rtp %4 %5 %6\n" )
+.arg( it->x[ 0 ] )
+.arg( it->x[ 1 ] )
+.arg( it->x[ 2 ] )
+.arg( tmp_pm_data.rtp[ 0 ] )
+.arg( tmp_pm_data.rtp[ 1 ] )
+.arg( tmp_pm_data.rtp[ 2 ] )
+);
+}
          */
       } 
       v_pdata.push_back( &pdata[ *it ] );
@@ -409,11 +424,14 @@ bool US_PM::compute_delta_I(
    {
       if ( !pdata.count( *it ) )
       {
-         // qDebug( QString( "pdata does not contain %1 %2 %3\n" )
-         //         .arg( it->x[0] )
-         //         .arg( it->x[1] )
-         //         .arg( it->x[2] ) )
-         //    ;
+         // if ( us_log )
+         // {
+         //    us_log->log( QString( "pdata does not contain %1 %2 %3\n" )
+         //                 .arg( it->x[0] )
+         //                 .arg( it->x[1] )
+         //                 .arg( it->x[2] ) 
+         //                 );
+         // }
          exit(-1);
       }
       v_pdata_subtracts.push_back( &pdata[ *it ] );
@@ -443,14 +461,16 @@ bool US_PM::compute_delta_I(
       pm_data *tmp_pm_data = v_pdata[ i ];
       if ( tmp_pm_data->no_Y )
       {
-         /*
-           cout << QString( "point %1 r %2 t %3 p %4\n" )
-           .arg( i )
-           .arg( tmp_pm_data->rtp[ 0 ] )
-           .arg( tmp_pm_data->rtp[ 1 ] )
-           .arg( tmp_pm_data->rtp[ 2 ] )
-           .ascii();
-         */
+         // if ( us_log )
+         // {
+         //    us_log->log( QString( "point %1 r %2 t %3 p %4\n" )
+         //                 .arg( i )
+         //                 .arg( tmp_pm_data->rtp[ 0 ] )
+         //                 .arg( tmp_pm_data->rtp[ 1 ] )
+         //                 .arg( tmp_pm_data->rtp[ 2 ] )
+         //                 .ascii() );
+         // }
+
          complex < float > *Yp = &( tmp_pm_data->Y[ 0 ] );
 
 #if defined( ALT_SH )
@@ -592,7 +612,10 @@ bool US_PM::compute_delta_I(
 #if defined( USE_TIMERS )
    us_timers.end_timer( "dI:sumA" );
    us_timers.end_timer( "dI:combined" );
-   cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
+   if ( us_log )
+   {
+      us_log->log( "list times:\n" + us_timers.list_times() );
+   }
    msg_log += us_timers.list_times( QString( "DI %1 beads : " ).arg( model.size() ) );
 #endif
    return true;
@@ -808,7 +831,10 @@ bool US_PM::compute_CA_I( set < pm_point > & model, vector < double > &I_result 
    us_timers.end_timer( "CA:sumA" );
    us_timers.end_timer( "CA:combined" );
 
-   cout << "list times:\n" << us_timers.list_times().ascii() << endl << flush;
+   if ( us_log )
+   {
+      us_log->log( "list times:\n" + us_timers.list_times() );
+   }
    msg_log += us_timers.list_times( QString( "FCI %1 beads : " ).arg( model.size() ) );
 #endif
    return true;
