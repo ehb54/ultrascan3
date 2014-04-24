@@ -8,10 +8,11 @@
 #include <qregexp.h>
 #include <map>
 #include <q3socketdevice.h> 
+#include "us_extern.h"
 
 using namespace std;
 
-class US_Json
+class US_EXTERN US_Json
 {
  public:
    static map < QString, QString > split( QString );
@@ -19,7 +20,7 @@ class US_Json
 };
 
 
-class US_Udp_Msg
+class US_EXTERN US_Udp_Msg
 {
  public:
    US_Udp_Msg( QString host, Q_UINT16 port );
