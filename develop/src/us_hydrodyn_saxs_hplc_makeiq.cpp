@@ -323,6 +323,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
       if ( mode_testiq )
       {
          testiq_created_names.push_back( name );
+         testiq_created_t[ name ] = tv[ t ];
          testiq_created_q[ name ] = qv;
          testiq_created_I[ name ] = I;
          testiq_created_e[ name ] = e;
@@ -1354,6 +1355,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          if ( mode_testiq )
          {
             testiq_created_names.push_back( name );
+            testiq_created_t[ name ] = tv[ t ];
             testiq_created_q[ name ] = use_qv;
             testiq_created_I[ name ] = use_I;
             testiq_created_e[ name ] = use_e;

@@ -123,6 +123,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
    guinier_plot_zoomer        = (ScrollZoomer *) 0;
    guinier_plot_errors_zoomer = (ScrollZoomer *) 0;
+   guinier_plot_rg_zoomer     = (ScrollZoomer *) 0;
 
    le_last_focus      = (mQLineEdit *) 0;
    

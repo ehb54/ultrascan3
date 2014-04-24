@@ -1449,6 +1449,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect(pb_guinier, SIGNAL(clicked()), SLOT(guinier()));
    pb_guinier->setEnabled( false );
 
+   pb_guinier_plot_rg = new QPushButton(tr("Rg plot"), this);
+   pb_guinier_plot_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_guinier_plot_rg->setMinimumHeight(minHeight1);
+   pb_guinier_plot_rg->setPalette( PALET_PUSHB );
+   pb_guinier_plot_rg->setEnabled( true );
+   connect(pb_guinier_plot_rg, SIGNAL(clicked()), SLOT(guinier_plot_rg_toggle()));
+
    lbl_guinier_q_range = new QLabel( tr( "q range: " ), this );
    lbl_guinier_q_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_guinier_q_range->setPalette( PALET_NORMAL );
@@ -1611,7 +1618,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    guinier_plot_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    guinier_plot_grid->attach( guinier_plot );
 #endif
-   guinier_plot->setAxisTitle(QwtPlot::xBottom, tr( "q^2 (1/Angstrom^2)" ) );
+   guinier_plot->setAxisTitle(QwtPlot::xBottom, tr( "q^2 [1/Angstrom^2]" ) );
    guinier_plot->setAxisTitle(QwtPlot::yLeft, tr("Intensity [a.u.] (log scale)"));
 #ifndef QT4
    guinier_plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
@@ -1647,6 +1654,61 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    connect( guinier_plot->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 
+   guinier_plot_rg = new QwtPlot( qs );
+#ifndef QT4
+   guinier_plot_rg->enableGridXMin();
+   guinier_plot_rg->enableGridYMin();
+#else
+   guinier_plot_rg_grid = new QwtPlotGrid;
+   guinier_plot_rg_grid->enableXMin( true );
+   guinier_plot_rg_grid->enableYMin( true );
+#endif
+   guinier_plot_rg->setPalette( PALET_NORMAL );
+   AUTFBACK( guinier_plot_rg );
+#ifndef QT4
+   guinier_plot_rg->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
+   guinier_plot_rg->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+#else
+   guinier_plot_rg_grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   guinier_plot_rg_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   guinier_plot_rg_grid->attach( guinier_plot_rg );
+#endif
+   guinier_plot_rg->setAxisTitle(QwtPlot::xBottom, tr( "Time [a.u.]" ) );
+   guinier_plot_rg->setAxisTitle(QwtPlot::yLeft, tr("Rg [Angstrom]"));
+#ifndef QT4
+   guinier_plot_rg->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+   guinier_plot_rg->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot_rg->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   guinier_plot_rg->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot_rg->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+#ifndef QT4
+   guinier_plot_rg->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+#endif
+   guinier_plot_rg->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   guinier_plot_rg->setMargin(USglobal->config_list.margin);
+   guinier_plot_rg->setTitle("");
+#ifndef QT4
+   guinier_plot_rg->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
+#else
+   guinier_plot_rg->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
+#endif
+   guinier_plot_rg->setCanvasBackground(USglobal->global_colors.plot);
+
+#ifndef QT4
+   guinier_plot_rg->setAutoLegend( false );
+   guinier_plot_rg->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+#else
+   // {
+   //    QwtLegend* legend_pd = new QwtLegend;
+   //    legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   //    guinier_plot_rg->insertLegend( legend_pd, QwtPlot::BottomLegend );
+   // }
+#endif
+   connect( guinier_plot_rg->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
+
    guinier_plot_errors = new QwtPlot( qs );
 #ifndef QT4
    guinier_plot_errors->enableGridXMin();
@@ -1666,7 +1728,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    guinier_plot_errors_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    guinier_plot_errors_grid->attach( guinier_plot_errors );
 #endif
-   guinier_plot_errors->setAxisTitle(QwtPlot::xBottom, tr( "q^2 (1/Angstrom^2)" ) );
+   guinier_plot_errors->setAxisTitle(QwtPlot::xBottom, tr( "q^2 [1/Angstrom^2]" ) );
    guinier_plot_errors->setAxisTitle(QwtPlot::yLeft, tr("Intensity [a.u.] (log scale)"));
 #ifndef QT4
    guinier_plot_errors->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
@@ -1701,6 +1763,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // }
 #endif
    connect( guinier_plot_errors->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
+
 
    // rgc mode
 
@@ -2312,6 +2375,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    Q3BoxLayout *hbl_top = new Q3HBoxLayout( 0 );
    hbl_top->addWidget( pb_p3d );
    hbl_top->addWidget( pb_ref );
+   hbl_top->addWidget( pb_guinier_plot_rg );
    hbl_top->addWidget( pb_errors );
    hbl_top->addWidget( pb_wheel_cancel );
    hbl_top->addWidget( pb_wheel_save );
@@ -2733,6 +2797,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    // guinier_widgets.push_back( le_guinier_qrgmax );
    guinier_widgets.push_back( cb_guinier_sd );
    guinier_widgets.push_back( guinier_plot );
+   guinier_widgets.push_back( guinier_plot_rg );
    guinier_widgets.push_back( guinier_plot_errors );
    guinier_widgets.push_back( rb_guinier_resid_diff );
    guinier_widgets.push_back( rb_guinier_resid_sd );
@@ -2741,12 +2806,16 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    guinier_widgets.push_back( lbl_blank1 );
    guinier_widgets.push_back( qwtw_wheel );
    guinier_widgets.push_back( lbl_wheel_pos );
+   guinier_widgets.push_back( pb_guinier_plot_rg );
 
    // not a "mode"
    guinier_errors_widgets.push_back( guinier_plot_errors );
    guinier_errors_widgets.push_back( rb_guinier_resid_diff );
    guinier_errors_widgets.push_back( rb_guinier_resid_sd );
    guinier_errors_widgets.push_back( rb_guinier_resid_pct );
+
+   // not a "mode"
+   guinier_rg_widgets.push_back( guinier_plot_rg );
 
    // rgc_widgets;
    rgc_widgets.push_back( lbl_rgc_mw );

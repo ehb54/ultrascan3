@@ -413,6 +413,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       bool           testiq_active;
 
       vector < QString >                 testiq_created_names;
+      map < QString, double >            testiq_created_t;
       map < QString, vector < double > > testiq_created_q;
       map < QString, vector < double > > testiq_created_I;
       map < QString, vector < double > > testiq_created_e;
@@ -443,6 +444,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QRadioButton * rb_guinier_resid_pct;
       QButtonGroup * bg_guinier_resid_type;
 
+      QPushButton  * pb_guinier_plot_rg;
+
       // QCheckBox    * cb_guinier_repeat;
       // QLineEdit    * le_guinier_repeat_sd_limit;
       // QCheckBox    * cb_guinier_search;
@@ -459,6 +462,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QwtPlotGrid  * guinier_plot_errors_grid;
 #endif
 
+      QwtPlot      * guinier_plot_rg;
+      ScrollZoomer * guinier_plot_rg_zoomer;
+#ifdef QT4
+      QwtPlotGrid  * guinier_plot_rg_grid;
+#endif
+
+      vector < QString >                  guinier_names;
       map < QString, vector < double > >  guinier_q;
       map < QString, vector < double > >  guinier_q2;
       map < QString, vector < double > >  guinier_I;
@@ -467,6 +477,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, vector < double > >  guinier_y;
       map < QString, double >             guinier_a;
       map < QString, double >             guinier_b;
+      map < QString, double >             guinier_t;
 
 #ifdef QT4
       map < QString, QwtPlotCurve * >     guinier_curves;
@@ -506,6 +517,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
                                            = Qt::AlignRight | Qt::AlignTop );
       void           guinier_delete_markers();
       vector < QWidget * > guinier_errors_widgets;
+      vector < QWidget * > guinier_rg_widgets;
 
       double         guinier_minq;
       double         guinier_maxq;
@@ -1135,6 +1147,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void guinier_sd                  ();
       void guinier_enables             ();
       void guinier_residuals_update    ();
+      void guinier_plot_rg_toggle      ();
 
       void testiq                       ();
       void testiq_q_start_text         ( const QString & );
