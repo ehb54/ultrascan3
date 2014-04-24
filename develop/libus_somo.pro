@@ -723,7 +723,4 @@ IMAGES = \
   include/textright.xpm \
   include/textunder.xpm
 
-#The following line was inserted by qt3to4
-QT += qt3support 
-#The following line was inserted by qt3to4
-QT +=  opengl 
+QT += qt3support opengl network
