@@ -421,6 +421,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       set < QString >                    testiq_original_selection;
       set < QString >                    testiq_created_scale_names;
 
+      QString                            testiq_it_selected;
+      double                             testiq_it_selected_Imin;
+      double                             testiq_it_selected_Imax;
+
       // Guinier
 
       QPushButton   *pb_guinier;
@@ -478,6 +482,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, double >             guinier_a;
       map < QString, double >             guinier_b;
       map < QString, double >             guinier_t;
+      vector < double >                   guinier_it_t;
+      vector < double >                   guinier_it_I;
+      double                              guinier_it_Imin;
+      double                              guinier_it_Imax;
+      double                              guinier_it_Irange;
 
 #ifdef QT4
       map < QString, QwtPlotCurve * >     guinier_curves;

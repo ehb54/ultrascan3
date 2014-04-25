@@ -518,6 +518,19 @@ void US_Hydrodyn_Saxs_Hplc::rgc_rg_text( const QString & )
 
 // --- TESTIQ ----
 
+class testiq_sortable_double {
+public:
+   double       x;
+   double       Imin;
+   double       Imax;
+   QString      index;
+   bool operator < (const testiq_sortable_double& objIn) const
+   {
+      return x < objIn.x;
+   }
+};
+
+
 void US_Hydrodyn_Saxs_Hplc::testiq()
 {
    le_last_focus = (mQLineEdit *) 0;
@@ -527,6 +540,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq()
    testiq_selected    .clear();
 
    bool do_rescale = false;
+
 
    if ( current_mode == MODE_SCALE )
    {
@@ -612,8 +626,83 @@ void US_Hydrodyn_Saxs_Hplc::testiq()
       gauss_delete_markers();
       plotted_markers.clear();
       plot_dist->show();
-   }
+   } else {
+      testiq_it_selected = "";
       
+      // figure out which testiq_it to select
+      {
+         list < testiq_sortable_double > tsdl;
+         double avg_i = 0e0;
+         double max_i = 0e0;
+
+         for ( set < QString >::iterator it = testiq_selected.begin();
+               it != testiq_selected.end();
+               ++it )
+         {
+            QString this_file = *it;
+            if ( f_Is.count( this_file ) )
+            {
+               testiq_sortable_double tsd;
+               tsd.index = this_file;
+               tsd.x = 0e0;
+               tsd.Imin = 1e99;
+               tsd.Imax = -1e99;
+
+               for ( int j = 0; j < (int) f_Is[ this_file ].size(); ++j )
+               {
+                  double t = f_Is[ this_file ][ j ];
+                  tsd.x += t;
+                  if ( tsd.Imin > t )
+                  {
+                     tsd.Imin = t;
+                  }
+                  if ( tsd.Imax < t )
+                  {
+                     tsd.Imax = t;
+                  }
+               }
+               tsdl.push_back( tsd );
+               avg_i += tsd.x;
+               if ( max_i < tsd.x )
+               {
+                  max_i = tsd.x;
+               }
+            }
+         }
+         if ( tsdl.size() )
+         {
+            avg_i /= (double) tsdl.size();
+         }
+         double thresh = (max_i - avg_i) * 0.70 + avg_i;
+         // qDebug( QString( "testiq thresh %1 max_i %2 avg_i %3" ).arg( thresh ).arg( max_i ).arg( avg_i ) );
+
+         tsdl.sort();
+         tsdl.reverse();
+         
+         for ( list < testiq_sortable_double >::iterator it = tsdl.begin();
+               it != tsdl.end();
+               ++it )
+         {
+            // qDebug( QString( "it loop x %1 index %2 Imin %3 Imax %4" ).arg( it->x ).arg( it->index ).arg( it->Imin ).arg( it->Imax ) );
+            if ( it->x < thresh )
+            {
+               testiq_it_selected      = it->index;
+               testiq_it_selected_Imin = it->Imin;
+               testiq_it_selected_Imax = it->Imax;
+               break;
+            }
+         }
+         if ( testiq_it_selected.isEmpty() && tsdl.size() > 1 )
+         {
+            testiq_it_selected      = tsdl.begin()->index;
+            testiq_it_selected_Imin = tsdl.begin()->Imin;
+            testiq_it_selected_Imax = tsdl.begin()->Imax;
+         }
+      }
+   }
+
+   // qDebug( QString( "testitsel %1 min %2 max %3" ).arg( testiq_it_selected ).arg( testiq_it_selected_Imin ).arg( testiq_it_selected_Imax ) );
+
    mode_select( MODE_TESTIQ );
 
    gauss_add_marker( le_testiq_q_start  ->text().toDouble(), Qt::red, tr( "Start") );
@@ -884,6 +973,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
    guinier_b           .clear();
    guinier_colors      .clear();
 
+   guinier_it_t        .clear();
+   guinier_it_I        .clear();
+
    if ( current_mode == MODE_TESTIQ )
    {
       if ( !testiq_make() )
@@ -894,6 +986,17 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
       {
          rb_testiq_gaussians[ i ]->hide();
       }
+
+      if ( !testiq_it_selected.isEmpty() &&
+           f_qs.count( testiq_it_selected ) )
+      {
+         guinier_it_t      = f_qs[ testiq_it_selected ];
+         guinier_it_I      = f_Is[ testiq_it_selected ];
+         guinier_it_Imin   = testiq_it_selected_Imin;
+         guinier_it_Imax   = testiq_it_selected_Imax;
+         guinier_it_Irange = testiq_it_selected_Imax - testiq_it_selected_Imin;
+      }
+
       for ( int i = 0; i < (int) testiq_created_names.size(); ++i )
       {
          any_selected = true;
@@ -1696,9 +1799,77 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
       guinier_plot_rg->setCurvePen( curve, use_pen );
 #endif
    }
+   double use_min = posmin - 1e0;
+   double use_max = posmax + 1e0;
+   double space = 0.05 * ( rg_max - rg_min ) ;
+
+   if ( rg_x.size() > 1 && guinier_it_t.size() && space > 0e0 )
    {
-      double space = 0.05 * ( rg_max - rg_min ) ;
-      guinier_plot_rg->setAxisScale( QwtPlot::xBottom, posmin - 1e0, posmax + 1e0 );
+      // qDebug( QString( "testiq in rg plot ok use minmax %1 %2" ).arg( use_min ).arg( use_max ) );
+      vector < double > x;
+      vector < double > y;
+
+      double ymin = 1e99;
+      double ymax = -1e99;
+
+      for ( int i = 0; i < (int) guinier_it_t.size(); ++i )
+      {
+         if ( guinier_it_t[ i ] >= use_min &&
+              guinier_it_t[ i ] <= use_max )
+         {
+            x.push_back( guinier_it_t[ i ] );
+            y.push_back( guinier_it_I[ i ] );
+            if ( ymin > guinier_it_I[ i ] )
+            {
+               ymin = guinier_it_I[ i ];
+            } 
+            if ( ymax < guinier_it_I[ i ] )
+            {
+               ymax = guinier_it_I[ i ];
+            } 
+         }
+      }
+      // US_Vector::printvector2( "ref x,y", x, y );
+
+      if ( ymax > ymin )
+      {
+         double scale = (rg_max + 2e0 * space - rg_min ) / ( ymax - ymin );
+
+         // qDebug( QString( "testiq in rg plot scale %1 rg_min %2 rg_max %3 ymin %4 ymax %5 " ).arg( scale ).arg( rg_min ).arg( rg_max ).arg( ymin ).arg( ymax ) );
+
+         for ( int i = 0; i < (int) y.size(); ++i )
+         {
+            y[ i ] -= ymin;
+            y[ i ] *= scale;
+            y[ i ] += rg_min;
+         }
+
+         // QPen use_pen = QPen( plot_colors[ f_pos[ testiq_it_selected ] % plot_colors.size() ], use_line_width, Qt::SolidLine );
+         QPen use_pen = QPen( Qt::green, use_line_width, Qt::SolidLine );
+#ifdef QT4
+         QwtPlotCurve * curve = new QwtPlotCurve( "refitline" );
+         curve->setStyle( QwtPlotCurve::Lines );
+         curve->setData(
+                        (double *)&(x[0]),
+                        (double *)&(y[0]),
+                        x.size() );
+         curve->setPen( use_pen );
+         curve->attach( guinier_plot_rg );
+#else
+         long curve = guinier_plot_rg->insertCurve( "rgline" );
+         guinier_plot_rg->setCurveStyle( curve, QwtCurve::Lines );
+         guinier_plot_rg->setCurveData( curve,
+                                        (double *)&(x[0]),
+                                        (double *)&(y[0]),
+                                        x.size() );
+         guinier_plot_rg->setCurvePen( curve, use_pen );
+#endif
+      }
+   }
+
+
+   {
+      guinier_plot_rg->setAxisScale( QwtPlot::xBottom, use_min, use_max );
       guinier_plot_rg->setAxisScale( QwtPlot::yLeft  , rg_min - space, rg_max + space );
 
       if ( guinier_plot_rg_zoomer )

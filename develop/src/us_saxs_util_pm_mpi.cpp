@@ -65,6 +65,149 @@ ostream & operator << ( ostream& out, const pm_msg& c )
    return out;
 }                   
 
+bool US_Saxs_Util::run_json_mpi( QString & json )
+{
+
+#if defined( USE_AFFINITY )
+   {
+      cpu_set_t  mask;
+      CPU_ZERO( & mask);
+      CPU_SET( myrank, &mask);
+      if ( sched_setaffinity(0, sizeof( mask ), &mask) < 0 ) 
+      {
+         perror("sched_setaffinity");
+      }
+   }
+#endif
+
+   if ( !us_log )
+   {
+      us_log = new US_Log( QString( "runlog-%1.txt" ).arg( myrank ) );
+      us_log->log( "initial json" );
+      us_log->log( json );
+   }
+
+   us_log->datetime( "start run_json" );
+
+   map < QString, QString > parameters = US_Json::split( json );
+   map < QString, QString > results;
+
+   for ( map < QString, QString >::iterator it = parameters.begin();
+         it != parameters.end();
+         ++it )
+   {
+      // qDebug( QString( "%1 : %2" ).arg( it->first ).arg( it->second ) );
+      if ( it->first.left( 1 ) == "_" )
+      {
+         results[ it->first ] = it->second;
+      }
+   }
+
+   if ( !myrank &&
+        parameters.count( "_udphost" ) &&
+        parameters.count( "_udpport" ) &&
+        parameters.count( "_uuid" ) )
+   {
+      map < QString, QString > msging;
+      msging[ "_uuid" ] = results[ "_uuid" ];
+      us_udp_msg = new US_Udp_Msg( parameters[ "_udphost" ], (Q_UINT16) parameters[ "_udpport" ].toUInt() );
+      us_udp_msg->set_default_json( msging );
+   }
+
+   {
+      QStringList supported;
+      supported
+         << "pmrun";
+      
+      int count = 0;
+      for ( int i = 0; i < (int) supported.size(); ++i )
+      {
+         if ( parameters.count( supported[ i ] ) )
+         {
+            count++;
+         }
+      }
+
+      if ( !count )
+      {
+         if ( !myrank )
+         {
+            results[ "errors" ] = "no supported runtype found in input json";
+            cout << MPI_JSON_SNIP_START << US_Json::compose( results ).ascii() << endl << MPI_JSON_SNIP_END << flush;
+         }
+         return true;
+      }
+      if ( count > 1 )
+      {
+         if ( !myrank )
+         {
+            results[ "errors" ] = "only one run type currently allowed per input json";
+            cout << MPI_JSON_SNIP_START << US_Json::compose( results ).ascii() << endl << MPI_JSON_SNIP_END << flush;
+         }
+         return true;
+      }
+   }
+
+   if ( myrank )
+   {
+      if ( us_log )
+      {
+         us_log->datetime( "json pm worker starting" );
+      }
+      pm_mpi_worker();
+      if ( us_log )
+      {
+         us_log->datetime( "json pm worker finished" );
+      }
+      return true;
+   }
+
+   if ( us_udp_msg )
+   {
+      map < QString, QString > msging;
+      msging[ "status" ] = "started";
+      us_udp_msg->send_json( msging );
+   }
+
+   if ( !run_pm( parameters, results ) )
+   {
+      results[ "errors" ] += " run_pm failed:" + errormsg;
+   }
+   if ( us_log )
+   {
+      us_log->log( "final json" );
+      us_log->log( US_Json::compose( results ) );
+      us_log->datetime( "end run_json" );
+   }
+
+   // shutdown
+
+   {
+      pm_msg msg;
+      msg.type = PM_SHUTDOWN;
+      int errorno = -18000;
+
+      for ( int i = 1; i < npes; ++i )
+      {
+         if ( MPI_SUCCESS != MPI_Send( &msg,
+                                       sizeof( pm_msg ),
+                                       MPI_CHAR, 
+                                       i,
+                                       PM_MSG, 
+                                       MPI_COMM_WORLD ) )
+         {
+            us_log->log( QString( "%1: MPI PM_SHUTDOWN failed\n" ).arg( myrank ) );
+            delete us_log;
+            MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+            exit( errorno - myrank );
+         }
+      }
+   }
+
+   cout << MPI_JSON_SNIP_START << US_Json::compose( results ).ascii() << endl << MPI_JSON_SNIP_END << flush;
+   return true;
+}
+
 bool US_Saxs_Util::run_pm_mpi( QString controlfile )
 {
 
@@ -122,7 +265,6 @@ bool US_Saxs_Util::run_pm_mpi( QString controlfile )
    return true;
 }
 
-
 void US_Saxs_Util::pm_mpi_worker()
 {
    MPI_Status mpi_status;
@@ -152,7 +294,10 @@ void US_Saxs_Util::pm_mpi_worker()
      0, 
      MPI_COMM_WORLD ) )
      {
-     cout << QString( "%1: MPI send failed in nsa_ga_worker() initial registry\n" ).arg( myrank ) << flush;
+     if ( us_log )
+     {
+     us_log->log( QString( "%1: MPI send failed in nsa_ga_worker() initial registry\n" ).arg( myrank ) );
+     }
      MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
      exit( errorno - myrank );
      }
@@ -160,7 +305,10 @@ void US_Saxs_Util::pm_mpi_worker()
 
    do 
    {
-      // cout << QString( "%1: worker listening\n" ).arg( myrank ) << flush;
+      // if ( us_log )
+      // {
+      //    us_log->log( QString( "%1: worker listening\n" ).arg( myrank ) );
+      // }
       if ( MPI_SUCCESS != MPI_Recv( &msg,
                                     sizeof( pm_msg ),
                                     MPI_CHAR, 
@@ -169,7 +317,10 @@ void US_Saxs_Util::pm_mpi_worker()
                                     MPI_COMM_WORLD, 
                                     &mpi_status ) )
       {
-         cout << QString( "%1: MPI Initial Receive failed in pm_mpi_worker()\n" ).arg( myrank ) << flush;
+         if ( us_log )
+         {
+            us_log->log( QString( "%1: MPI Initial Receive failed in pm_mpi_worker()\n" ).arg( myrank ) );
+         }
          MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
          exit( errorno - myrank );
       }         
@@ -180,7 +331,10 @@ void US_Saxs_Util::pm_mpi_worker()
       {
       case PM_SHUTDOWN :
          {
-            cout << QString( "%1: worker PM_SHUTDOWN\n" ).arg( myrank ) << flush;
+            if ( us_log )
+            {
+               us_log->log( QString( "%1: worker PM_SHUTDOWN\n" ).arg( myrank ) );
+            }
             MPI_Finalize();
             exit(0);
          }
@@ -188,7 +342,10 @@ void US_Saxs_Util::pm_mpi_worker()
 
       case PM_NEW_PM :
          {
-            // cout << QString( "%1: worker PM_NEW_PM\n" ).arg( myrank ) << flush;
+            // if ( us_log )
+            // {
+            //    us_log->log( QString( "%1: worker PM_NEW_PM\n" ).arg( myrank ) );
+            // }
             if ( pm )
             {
                delete pm;
@@ -210,7 +367,10 @@ void US_Saxs_Util::pm_mpi_worker()
                                           MPI_COMM_WORLD, 
                                           &mpi_status ) )
             {
-               cout << QString( "%1: MPI PM_NEW_PM Receive failed in pm_mpi_worker()\n" ).arg( myrank ) << flush;
+               if ( us_log )
+               {
+                  us_log->log( QString( "%1: MPI PM_NEW_PM Receive failed in pm_mpi_worker()\n" ).arg( myrank ) );
+               }
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }         
@@ -248,16 +408,25 @@ void US_Saxs_Util::pm_mpi_worker()
 
       case PM_NEW_GRID_SIZE:
          {
-            // cout << QString( "%1: worker PM_NEW_GRID_SIZE\n" ).arg( myrank ) << flush;
+            // if ( us_log )
+            // {
+            //    us_log->log( // QString( "%1: worker PM_NEW_GRID_SIZE\n" ).arg( myrank ) );
+            // }
             if ( !pm )
             {
-               cout << QString( "%1: MPI PM_NEW_GRID_SIZE Receive called before PM_NEW_PM  pm_mpi_worker()\n" ).arg( myrank ) << flush;
+               if ( us_log )
+               {
+                  us_log->log( QString( "%1: MPI PM_NEW_GRID_SIZE Receive called before PM_NEW_PM  pm_mpi_worker()\n" ).arg( myrank ) );
+               }
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }
             if ( !pm->set_grid_size( msg.grid_conversion_factor, true ) )
             {
-               cout << QString( "%1: MPI PM_NEW_GRID_SIZE failed to set grid size %2  pm_mpi_worker()\n" ).arg( myrank ).arg( msg.grid_conversion_factor ) << flush;
+               if ( us_log )
+               {
+                  us_log->log( QString( "%1: MPI PM_NEW_GRID_SIZE failed to set grid size %2  pm_mpi_worker()\n" ).arg( myrank ).arg( msg.grid_conversion_factor ) );
+               }
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }
@@ -266,10 +435,16 @@ void US_Saxs_Util::pm_mpi_worker()
 
       case PM_CALC_FITNESS:
          {
-            // cout << QString( "%1: worker PM_CALC_FITNESS\n" ).arg( myrank ) << flush;
+            // if ( us_log )
+            // {
+            //    us_log->log( QString( "%1: worker PM_CALC_FITNESS\n" ).arg( myrank ) );
+            // }
             if ( !pm )
             {
-               cout << QString( "%1: MPI PM_CALC_FITNESS Receive called before PM_NEW_PM  pm_mpi_worker()\n" ).arg( myrank ) << flush;
+               if ( us_log )
+               {
+                  us_log->log( QString( "%1: MPI PM_CALC_FITNESS Receive called before PM_NEW_PM  pm_mpi_worker()\n" ).arg( myrank ) );
+               }
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }
@@ -283,7 +458,10 @@ void US_Saxs_Util::pm_mpi_worker()
                                           MPI_COMM_WORLD, 
                                           &mpi_status ) )
             {
-               cout << QString( "%1: MPI PM_CALC_FITNESS Receive failed in pm_mpi_worker()\n" ).arg( myrank ) << flush;
+               if ( us_log )
+               {
+                  us_log->log( QString( "%1: MPI PM_CALC_FITNESS Receive failed in pm_mpi_worker()\n" ).arg( myrank ) );
+               }
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }         
@@ -295,7 +473,10 @@ void US_Saxs_Util::pm_mpi_worker()
             if ( !pm->create_model( params, model ) ||
                  !pm->compute_I( model, I_result ) )
             {
-               cout << QString( "%1: MPI PM_CALC_FITNESS error %2 in pm_mpi_worker()\n" ).arg( myrank ).arg( pm->error_msg ) << flush;
+               if ( us_log )
+               {
+                  us_log->log( QString( "%1: MPI PM_CALC_FITNESS error %2 in pm_mpi_worker()\n" ).arg( myrank ).arg( pm->error_msg ) );
+               }
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }
@@ -327,7 +508,10 @@ void US_Saxs_Util::pm_mpi_worker()
                                           PM_FITNESS_RESULT,
                                           MPI_COMM_WORLD ) )
             {
-               cout << QString( "%1: MPI PM_CALC_FITNESS Send 1 failed in pm_mpi_worker()\n" ).arg( myrank ) << flush;
+               if ( us_log )
+               {
+                  us_log->log( QString( "%1: MPI PM_CALC_FITNESS Send 1 failed in pm_mpi_worker()\n" ).arg( myrank ) );
+               }
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }         
@@ -339,7 +523,10 @@ void US_Saxs_Util::pm_mpi_worker()
                                           PM_FITNESS_RESULT_MODEL,
                                           MPI_COMM_WORLD ) )
             {
-               cout << QString( "%1: MPI PM_CALC_FITNESS Send 2 failed in pm_mpi_worker()\n" ).arg( myrank ) << flush;
+               if ( us_log )
+               {
+                  us_log->log( QString( "%1: MPI PM_CALC_FITNESS Send 2 failed in pm_mpi_worker()\n" ).arg( myrank ) );
+               }
                MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                exit( errorno - myrank );
             }         
@@ -348,7 +535,10 @@ void US_Saxs_Util::pm_mpi_worker()
 
       default:
          {
-            cout << QString( "%1: MPI Receive unknown message type %2 in pm_mpi_worker()\n" ).arg( myrank ).arg( msg.type ) << flush;
+            if ( us_log )
+            {
+               us_log->log( QString( "%1: MPI Receive unknown message type %2 in pm_mpi_worker()\n" ).arg( myrank ).arg( msg.type ) );
+            }
             MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
             exit( errorno - myrank );
          }         

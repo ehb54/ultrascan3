@@ -37,6 +37,8 @@ typedef unsigned _int32 uint32_t;
 
 #if defined( USE_MPI )
 #  include "us_pm_mpi.h"
+#  define MPI_JSON_SNIP_START "_____json_start_____\n"
+#  define MPI_JSON_SNIP_END   "_____json_end_____\n"
 #endif
 
 #include <complex>
@@ -697,6 +699,7 @@ class US_EXTERN US_Saxs_Util
       bool               run_iq_mpi                        ( QString controlfile );
       bool               run_nsa_mpi                       ( QString controlfile );
       bool               run_1d_mpi                        ( QString controlfile );
+      bool               run_json_mpi                      ( QString & json );
 
       bool               run_pm_mpi                        ( QString controlfile );
       void               pm_mpi_worker                     ();

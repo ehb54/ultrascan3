@@ -1182,7 +1182,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                {
                   if ( us_log )
                   {
-                     us_log->log( QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM\n" ).arg( myrank ) );
+                     us_log->log( QString( "%1: MPI send failed in bestga() PM_NEW_PM\n" ).arg( myrank ) );
                   }
                   MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                   exit( errorno - myrank );
@@ -1197,7 +1197,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
                {
                   if ( us_log )
                   {
-                     us_log->log( QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM_DATA\n" ).arg( myrank ) );
+                     us_log->log( QString( "%1: MPI send failed in bestga() PM_NEW_PM_DATA\n" ).arg( myrank ) );
                   }
                   MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
                   exit( errorno - myrank );
@@ -1678,6 +1678,85 @@ bool US_Saxs_Util::run_pm(
                   control_parameters [ "pmdebug"        ].toInt()
                   );
 
+#if defined( USE_MPI )
+         {
+
+            pm.pm_workers_registered.clear();
+            pm.pm_workers_busy      .clear();
+            pm.pm_workers_waiting   .clear();
+   
+            for ( int i = 1; i < npes; ++i )
+            {
+               pm.pm_workers_registered.insert( i );
+               pm.pm_workers_waiting   .insert( i );
+            }
+
+            pm_msg msg;
+            int errorno                = -28000;
+            msg.type                   = PM_NEW_PM;
+            msg.flags                  = pm.use_errors ? PM_USE_ERRORS : 0;
+            msg.vsize                  = (uint32_t) control_vectors[ "pmq" ].size();
+            msg.grid_conversion_factor = control_parameters[ "pmgridsize" ].toDouble();
+            msg.max_dimension          = (uint32_t) control_parameters[ "pmmaxdimension" ].toUInt();
+            msg.max_harmonics          = (uint32_t) control_parameters[ "pmharmonics" ].toUInt();
+            msg.max_mem_in_MB          = (uint32_t) control_parameters[ "pmmemory" ].toUInt();
+
+            unsigned int tot_vsize = msg.vsize * ( pm.use_errors ? 4 : 3 );
+            vector < double > d( tot_vsize );
+
+            if ( pm.use_errors )
+            {
+               for ( int i = 0; i < msg.vsize; i++ )
+               {
+                  d[ i ]                 = control_vectors[ "pmf" ][ i ];
+                  d[ msg.vsize + i ]     = control_vectors[ "pmq" ][ i ];
+                  d[ 2 * msg.vsize + i ] = control_vectors[ "pmi" ][ i ];
+                  d[ 3 * msg.vsize + i ] = control_vectors[ "pme" ][ i ];
+               }
+            } else {
+               for ( int i = 0; i < msg.vsize; i++ )
+               {
+                  d[ i ]                 = control_vectors[ "pmf" ][ i ];
+                  d[ msg.vsize + i ]     = control_vectors[ "pmq" ][ i ];
+                  d[ 2 * msg.vsize + i ] = control_vectors[ "pmi" ][ i ];
+               }
+            }
+
+            for ( int i = 1; i < npes; ++i )
+            {
+               if ( MPI_SUCCESS != MPI_Send( &msg,
+                                             sizeof( pm_msg ),
+                                             MPI_CHAR, 
+                                             i,
+                                             PM_MSG, 
+                                             MPI_COMM_WORLD ) )
+               {
+                  if ( us_log )
+                  {
+                     us_log->log( QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM\n" ).arg( myrank ) );
+                  }
+                  MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+                  exit( errorno - myrank );
+               }
+
+               if ( MPI_SUCCESS != MPI_Send( &(d[0]),
+                                             tot_vsize * sizeof( double ),
+                                             MPI_CHAR, 
+                                             i,
+                                             PM_NEW_PM, 
+                                             MPI_COMM_WORLD ) )
+               {
+                  if ( us_log )
+                  {
+                     us_log->log( QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM_DATA\n" ).arg( myrank ) );
+                  }
+                  MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+                  exit( errorno - myrank );
+               }
+            }
+         }
+#endif
+
          pm.ga_set_params( 
                           control_parameters[ "pmgapopulation"       ].toUInt(),
                           control_parameters[ "pmgagenerations"      ].toUInt(),
@@ -1815,6 +1894,85 @@ bool US_Saxs_Util::run_pm(
                   control_parameters [ "pmmemory"       ].toUInt(),
                   control_parameters [ "pmdebug"        ].toInt()
                   );
+
+#if defined( USE_MPI )
+         {
+
+            pm.pm_workers_registered.clear();
+            pm.pm_workers_busy      .clear();
+            pm.pm_workers_waiting   .clear();
+   
+            for ( int i = 1; i < npes; ++i )
+            {
+               pm.pm_workers_registered.insert( i );
+               pm.pm_workers_waiting   .insert( i );
+            }
+
+            pm_msg msg;
+            int errorno                = -28000;
+            msg.type                   = PM_NEW_PM;
+            msg.flags                  = pm.use_errors ? PM_USE_ERRORS : 0;
+            msg.vsize                  = (uint32_t) control_vectors[ "pmq" ].size();
+            msg.grid_conversion_factor = control_parameters[ "pmgridsize" ].toDouble();
+            msg.max_dimension          = (uint32_t) control_parameters[ "pmmaxdimension" ].toUInt();
+            msg.max_harmonics          = (uint32_t) control_parameters[ "pmharmonics" ].toUInt();
+            msg.max_mem_in_MB          = (uint32_t) control_parameters[ "pmmemory" ].toUInt();
+
+            unsigned int tot_vsize = msg.vsize * ( pm.use_errors ? 4 : 3 );
+            vector < double > d( tot_vsize );
+
+            if ( pm.use_errors )
+            {
+               for ( int i = 0; i < msg.vsize; i++ )
+               {
+                  d[ i ]                 = control_vectors[ "pmf" ][ i ];
+                  d[ msg.vsize + i ]     = control_vectors[ "pmq" ][ i ];
+                  d[ 2 * msg.vsize + i ] = control_vectors[ "pmi" ][ i ];
+                  d[ 3 * msg.vsize + i ] = control_vectors[ "pme" ][ i ];
+               }
+            } else {
+               for ( int i = 0; i < msg.vsize; i++ )
+               {
+                  d[ i ]                 = control_vectors[ "pmf" ][ i ];
+                  d[ msg.vsize + i ]     = control_vectors[ "pmq" ][ i ];
+                  d[ 2 * msg.vsize + i ] = control_vectors[ "pmi" ][ i ];
+               }
+            }
+
+            for ( int i = 1; i < npes; ++i )
+            {
+               if ( MPI_SUCCESS != MPI_Send( &msg,
+                                             sizeof( pm_msg ),
+                                             MPI_CHAR, 
+                                             i,
+                                             PM_MSG, 
+                                             MPI_COMM_WORLD ) )
+               {
+                  if ( us_log )
+                  {
+                     us_log->log( QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM\n" ).arg( myrank ) );
+                  }
+                  MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+                  exit( errorno - myrank );
+               }
+
+               if ( MPI_SUCCESS != MPI_Send( &(d[0]),
+                                             tot_vsize * sizeof( double ),
+                                             MPI_CHAR, 
+                                             i,
+                                             PM_NEW_PM, 
+                                             MPI_COMM_WORLD ) )
+               {
+                  if ( us_log )
+                  {
+                     us_log->log( QString( "%1: MPI send failed in best_md0_ga() PM_NEW_PM_DATA\n" ).arg( myrank ) );
+                  }
+                  MPI_Abort( MPI_COMM_WORLD, errorno - myrank );
+                  exit( errorno - myrank );
+               }
+            }
+         }
+#endif
 
          pm.ga_set_params( 
                           control_parameters[ "pmgapopulation"       ].toUInt(),

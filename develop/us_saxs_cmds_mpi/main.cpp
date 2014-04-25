@@ -210,11 +210,17 @@ int main (int argc, char **argv)
    {
       if ( cmds.size() != 2 ) 
       {
-         printf(
-                "{\"errors\":\"%s %s incorrect number of arguments\"}\n"
-                , argv[0]
-                , argv[1]
-                );
+         if ( !myrank )
+         {
+            printf(
+                   "%s{\"errors\":\"%s %s incorrect number of arguments\"}\n%s"
+                   , MPI_JSON_SNIP_START
+                   , argv[0]
+                   , argv[1]
+                   , MPI_JSON_SNIP_END
+                   );
+         }
+         MPI_Finalize();
          exit( errorbase );
       }
       errorbase--;
@@ -223,7 +229,17 @@ int main (int argc, char **argv)
       QString      json         = cmds[ p++ ];
 
       US_Saxs_Util usu;
-      cout << usu.run_json( json ).ascii() << endl;
+      if ( !usu.run_json_mpi( json ) )
+      {
+         if ( !myrank )
+         {
+            printf( "%s{\"errors\":\"mpi run failed\"}\n%s"
+                    , MPI_JSON_SNIP_START
+                    , MPI_JSON_SNIP_END
+                    );
+         }
+      }
+      MPI_Finalize();
       exit( 0 );
    }
    errorbase -= 1000;
