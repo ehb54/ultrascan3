@@ -1045,10 +1045,10 @@ void US_ModelLoader::compress_list( void )
       QString cReqID  = desc.reqGUID;             // current request GUID
       QString cEdiID  = desc.editGUID;            // current edit GUID
       // protect against missing or dummy GUIDs causing false grouping
-      cReqID  = ( cReqID.length() < 16  ||  cReqID.startsWith( "000" ) ) ?
-                QString::number( ii ) : cReqID;
-      cEdiID  = ( cEdiID.length() < 36  ||  cEdiID.startsWith( "000" ) ) ?
-                QString::number( ii ) : cEdiID;
+      cReqID  = ( cReqID.length() < 16  ||  cReqID.startsWith( "00000000-" ) )
+                ? QString::number( ii ) : cReqID;
+      cEdiID  = ( cEdiID.length() < 36  ||  cEdiID.startsWith( "00000000-" ) )
+                ? QString::number( ii ) : cEdiID;
       // Protect against global mc Global/nonGlobal pairs
       cReqID  = desc.description.startsWith( "Global" ) ?
                 ( cReqID + "-G" ) : cReqID;
