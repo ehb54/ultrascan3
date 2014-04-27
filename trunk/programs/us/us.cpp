@@ -159,6 +159,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_DCDT     , tr( "&Time Derivative" ),                 velocity );
   addMenu(  P_FEMA     , tr( "&FE Model Viewer" ),                 velocity );
   addMenu(  P_PSEUDO3D , tr( "&Combine Pseudo-3D Distributions" ), velocity );
+  addMenu(  P_RAMP     , tr( "Speed &Ramp Analysis" ),             velocity );
   
 #ifdef EQUI_MENU
   QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );

@@ -93,8 +93,26 @@ qDebug() << "LdDk:  RawMwl" << isRawMwl << "efilt" << efilt;
 
       int         nfiles = efiles.count();
 //qDebug() << "LdDk:   ii" << ii << "run" << rdirs[ii] << "count" << nfiles;
-      if ( nfiles < 1  ||  ( ! isRawMwl  &&  nfiles < 17 ) )
+      if ( nfiles < 17 )             // Definitely not MWL
          continue;
+
+      if ( ! isRawMwl )
+      {  // For US3 openAUC, count wavelengths
+         QStringList wavelns;
+
+         for ( int jj = 0; jj < nfiles; jj++ )
+         {
+            QString waveln = QString( efiles[ jj ] ).section( ".", -2, -2 );
+            if ( ! wavelns.contains( waveln ) )
+               wavelns << waveln;
+            if ( wavelns.count() > 2 )  break;
+         }
+qDebug() << "LdDk:   ii" << ii << "run" << rdirs[ii] << "nwaveln"
+ << wavelns.count();
+
+         if ( wavelns.count() < 2 )  // Unique wavelengths count says non MWL
+            continue;
+      }
 
       QString     rfn    = wdir + "/" + efiles[ 0 ];
       QString     date   = US_Util::toUTCDatetimeText(
