@@ -8,6 +8,8 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
+#include "us_mwl_data.h"
+#include "us_dataIO.h"
 
 class US_MwlRawViewer : public US_Widgets
 {
@@ -15,70 +17,66 @@ class US_MwlRawViewer : public US_Widgets
 
   public:
 
-     //! Class that contains the header information of an mwrs file
-     class MwlHeader
-     {
-        public:
-           double   temperature;
-           double   omega2t;
-           double   radius_start;
-           double   radius_step;
-           int      icell;
-           int      ichann;
-           int      nscans;
-           int      rotor_speed;
-           int      elaps_time;
-           int      npoints;
-           int      nwaveln;
-           QChar    cell;
-           QChar    channel;
-     };
-
      //! \brief  Generic constructor for the US_MwlRawViewer() program.
      US_MwlRawViewer();
 
   private:
-     QVector< double >               orig_wvlns;
-     QVector< double >               curr_wvlns;
+     QVector< double >              curr_adata; //!< Current averaged data
 
-     QVector< QVector< double > >    orig_reads;
-     QVector< QVector< double > >    curr_reads;
+     QVector< QVector< double > >   curr_cdata; //!< Current avg. comp. data
+     QVector< QVector< double > >   prev_cdata; //!< Previous avg. comp. data
 
-     QVector< int >                  curr_lavgs;
+     QVector< US_DataIO::RawData >  allData;    //!< All AUC raw data
 
-     QList< MwlHeader >              mwl_headers;
+     QVector< double > pltxvals;    //!< Current plot's X (wvl/rad) values
+     QVector< double > radii;       //!< Loaded radii
+     QVector< int >    lambdas;     //!< Loaded wavelengths
+     QVector< int >    curr_recxs;  //!< Current avg. component rec. indexes
+     QVector< int >    prev_recxs;  //!< Previous avg. component rec. indexes
 
-     QStringList                     mwl_fpaths;
-     QStringList                     mwl_fnames;
-     QStringList                     cellchans;
-     QStringList                     wavelens;
+     QList< int >      excludes;    //!< List of scans to exclude
+
+     US_MwlData     mwl_data;       //!< Raw MWL (.mwrs) data loaded
+
+     QStringList    mwl_fnames;     //!< List of names of files loaded
+     QStringList    cellchans;      //!< List of cell/channel values present
 
      US_Help        showHelp;
      US_PlotPicker* picker;
 
+     QLabel*        lb_pltrec;
+
      QLineEdit*     le_runID;
      QLineEdit*     le_dir;
-     QLineEdit*     le_nbrscans;
-     QLineEdit*     le_iwavcnt;
-     QLineEdit*     le_owavcnt;
-     QLineEdit*     le_wvlrange;
-     QLineEdit*     le_radpts;
-     QLineEdit*     le_radstart;
-     QLineEdit*     le_radstep;
+     QLineEdit*     le_status;
 
-     QComboBox*     cmb_pltwavln;
+     QComboBox*     cb_cellchn;
+     QComboBox*     cb_rstart;
+     QComboBox*     cb_rend;
+     QComboBox*     cb_lstart;
+     QComboBox*     cb_lend;
+     QComboBox*     cb_pltrec;
 
-     QwtCounter*    ct_avggcnt;
+     QwtCounter*    ct_recavg;
+     QwtCounter*    ct_from;
+     QwtCounter*    ct_to;
 
-     QListWidget*   lw_cellchn;                  // cell, channel
+     QCheckBox*     ck_xwavlen;
 
-     QPushButton*   pb_import;
-     QPushButton*   pb_loadUS3;
+     QPushButton*   pb_loadMwl;
+     QPushButton*   pb_loadAUC;
+     QPushButton*   pb_reset;
      QPushButton*   pb_details;
-     QPushButton*   pb_saveUS3;
      QPushButton*   pb_prev;
      QPushButton*   pb_next;
-     QPushButton*   pb_reset;
+     QPushButton*   pb_exclude;
+     QPushButton*   pb_include;
+     QPushButton*   pb_plot2d;
+     QPushButton*   pb_movie2d;
+     QPushButton*   pb_plot3d;
+     QPushButton*   pb_movie3d;
+     QPushButton*   pb_svplot;
+     QPushButton*   pb_svmovie;
 
      QwtPlot*       data_plot;
      QwtPlotGrid*   grid;
@@ -86,55 +84,82 @@ class US_MwlRawViewer : public US_Widgets
      QString        currentDir;
      QString        runID;
 
-     int            currCellCh;
      int            nscan;
      int            ncell;
      int            nchan;
      int            ncellch;
-     int            nfiles;
-     int            nwlorig;
-     int            ntriplo;
-     int            nwaveln;
-     int            ntripls;
-     int            lavgg;
-     int            npoints;
-     int            nradpt;
+     int            ntriple;
+     int            nlambda;
+     int            npoint;
+     int            ntpoint;
+     int            navgrec;
+     int            dbg_level;
+     int            ccx;
+     int            lmb_start;
+     int            lmb_end;
+     int            recx;
+     int            lmbxs;
+     int            lmbxe;
+     int            radxs;
+     int            radxe;
+     int            klambda;
+     int            kradii;
+     int            kscan;
+     int            krecs;
+     int            kpoint;
+     int            ktpoint;
+     int            trpxs;
 
-     void   reset        ( void );
-     void   enableSaveBtn( void );
-     void   setCellChInfo( void );
-     void   focus        ( int, int );
-     bool   read         ( void );
-     bool   read         ( QString dir );
-     bool   convert      ( void );
-     void   plot_current ( void );
-     void   plot_titles  ( void );
-     void   plot_all     ( void );
-     void   read_header  ( QDataStream&, MwlHeader& );
-     void   read_wavelns ( QDataStream&, QVector< double >&, int& );
-     void   read_rdata   ( QDataStream&, QVector< double >&, int&, int& );
-     int    iword        ( char* ); 
-     int    hword        ( char* ); 
-     float  fword        ( char* ); 
-     double dword        ( char* ); 
-     void   averageWavlen( int ); 
+     bool           is_wrecs;
+     bool           have_rngs;
+
+     double         last_xmin;
+     double         last_xmax;
+     double         last_rmin;
+     double         last_rmax;
+     double         last_lmin;
+     double         last_lmax;
+     double         last_ymin;
+     double         last_ymax;
+     double         rad_start;
+     double         rad_end;
 
   private slots:
-     void import         ( QString dir = "" );
-     void enableControls ( void );
-     void loadUS3        ( QString dir = "" );
-     void loadUS3Disk    ( void );
-     void loadUS3Disk    ( QString );
-     void runDetails     ( void );
-     void changeCellCh   ( void );
-     void changeLambda   ( double );
-     void changeWaveln   ( void   );
-     void saveUS3        ( void );
-     int  saveUS3Disk    ( void );
-     void resetAll       ( void );
-     void prevWvpl       ( void );
-     void nextWvpl       ( void );
-     void help           ( void )
+     void   reset          ( void );
+     void   setCellChInfo  ( void );
+     void   load_mwl_raw   ( void );
+     void   load_auc_mwl   ( void );
+     void   plot_current   ( void );
+     void   plot_titles    ( void );
+     void   plot_all       ( void );
+     void   build_cmp_data ( void );
+     void   build_avg_data ( void );
+     void   build_rec_data ( const int, QVector< double >& );
+     void   enableControls ( void );
+     void   runDetails     ( void );
+     void   changeCellCh   ( void );
+     void   changeRadius   ( void );
+     void   changeLambda   ( void );
+     void   changeAverage  ( void );
+     void   changeRecord   ( void );
+     void   changeRectype  ( bool );
+     void   show_2d_movie  ( void );
+     void   plot_3d        ( void );
+     void   show_3d_movie  ( void );
+     void   save_plot      ( void );
+     void   save_movie     ( void );
+     void   resetAll       ( void );
+     void   prevPlot       ( void );
+     void   nextPlot       ( void );
+     void   compute_ranges ( void );
+     void   connect_ranges ( bool );
+     void   exclude_from   ( double );
+     void   exclude_to     ( double );
+     void   exclude_scans  ( void );
+     void   include_scans  ( void );
+     int    dvec_index     ( QVector< double >&, const double );
+     void   help           ( void )
      { showHelp.show_help( "mwlr_viewer.html" ); };
 };
 #endif
+

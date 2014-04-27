@@ -963,20 +963,13 @@ DbgLv(1) << " Post copy_logos hsclogo" << hsclogo;
          if ( idesc->filepath.contains( ".svg" ) )
          {
             QSvgRenderer svgrend;
-            if ( idesc->filepath.contains( ".svgz" ) )
-            {
-            }
-
-            else
-            {
-               svgrend.load( idesc->filepath );
-               chght = svgrend.defaultSize().height();
-            }
+            svgrend.load( idesc->filepath );
+            chght      = svgrend.defaultSize().height();
          }
 
          else
          {
-            chght = QPixmap( idesc->filepath ).height();
+            chght      = QPixmap( idesc->filepath ).height();
          }
 DbgLv(1) << "  plot.height" << chght << idesc->filename << "ph" << phght;
 
@@ -1034,17 +1027,17 @@ DbgLv(1) << "++comb.height" << (chght+phght) << "NEW PAGE" << idesc->filename;
          QString fileimg = idesc->filename;
 
          if ( fileimg.contains( ".svg" ) )
-         {  // For SVG, create a PNG equivalent
+         {  // For SVG[Z], create a PNG equivalent
             QSvgRenderer svgrend;
-            QString   pathsvg = idesc->filepath;
-            QString   filesvg = idesc->filename;
-                      fileimg = QString( filesvg ).replace( ".svg", ".png" );
-            QString   pathimg = pagedir + "/" + fileimg;
+            QString pathsvg = idesc->filepath;
+            QString filesvg = idesc->filename;
+            fileimg         = QString( filesvg ).section( ".", 0, -2 ) + ".png";
+            QString pathimg = pagedir + "/" + fileimg;
             svgrend.load( pathsvg );
-            QSize     imgsize = svgrend.defaultSize();
-            QPixmap   pixmap( imgsize );
+            QSize   imgsize = svgrend.defaultSize();
+            QPixmap pixmap( imgsize );
             pixmap.fill( Qt::white );
-            QPainter  pa( &pixmap );
+            QPainter pa( &pixmap );
             svgrend.render( &pa );            // Render the SVG to a pixmap
 DbgLv(1) << " size" << imgsize << " filesvg" << filesvg;
 DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
