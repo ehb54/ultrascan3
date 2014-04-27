@@ -126,7 +126,6 @@ class US_MwlRawViewer : public US_Widgets
 
   private slots:
      void   reset          ( void );
-     void   setCellChInfo  ( void );
      void   load_mwl_raw   ( void );
      void   load_auc_mwl   ( void );
      void   plot_current   ( void );
