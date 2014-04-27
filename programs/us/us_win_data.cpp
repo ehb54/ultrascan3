@@ -14,7 +14,7 @@ namespace US_WinData
     P_SECOND,       P_DCDT,                // Velocity Menu
     P_VHWE,         P_2DSA,         P_PCSA,
     P_GAINIT,       P_FEMA,         P_PSEUDO3D,
-    P_GRIDEDIT,
+    P_GRIDEDIT,     P_RAMP,
 
     P_EQGLOBFIT,                           // Equilibrium Menu
 
@@ -127,6 +127,11 @@ namespace US_WinData
     { P_GRIDEDIT, 0, 0, "us_grid_editor",
       QObject::tr( "Loading 2DSA Custom Grid Editor" ),
       QObject::tr( "Custom Grid Editor for 2DSA" )
+    },
+    
+    { P_RAMP,     0, 0, "us_ramp",
+      QObject::tr( "Loading Speed Ramp Analysis" ),
+      QObject::tr( "Speed Ramp Analysis Program" )
     },
     
     { P_EQGLOBFIT, 0, 0, "us_globalequil",
