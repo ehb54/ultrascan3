@@ -23,7 +23,7 @@ namespace US_WinData
     P_CONVERT,      P_EXPORT,              // Utilities menu
     P_FITMEN,       P_COLORGRAD,    P_RPTGEN,
     P_ROTORCAL,     P_LICENSE,      P_VHWCOMB,
-    P_DDCOMB,       P_GLOMODL,
+    P_DDCOMB,       P_GLOMODL,      P_VIEWMWL,
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
     P_SASSOC,       P_MODEL1,       P_MODEL2,
@@ -187,6 +187,11 @@ namespace US_WinData
     { P_GLOMODL,   0, 0, "us_combine_models",
       QObject::tr( "Loading Create Global Model"          ),
       QObject::tr( "Global from Combined Models Program"  )
+    },
+    
+    { P_VIEWMWL,   0, 0, "us_mwlr_viewer",
+      QObject::tr( "Loading View Multiwavelength Data"    ),
+      QObject::tr( "View Multiwavelength Data Program"    )
     },
     
     { P_ASTFEM,    0, 0, "us_astfem_sim",

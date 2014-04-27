@@ -1,12 +1,12 @@
 #include <QApplication>
 
+#include "us_mwlr_viewer.h"
+#include "us_mwl_run.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_run_details2.h"
-#include "us_mwlr_viewer.h"
 #include "us_plot.h"
 #include "us_math2.h"
 #include "us_db2.h"
@@ -17,10 +17,15 @@
 #include "us_gui_util.h"
 #include "us_util.h"
 #include "us_editor.h"
+#include "us_images.h"
 
 #ifdef WIN32
 #include <float.h>
 #define isnan _isnan
+#endif
+
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
 int main( int argc, char* argv[] )
@@ -31,136 +36,210 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
    
-   US_MwlRawViewer w;
-   w.show();                   //!< \memberof QWidget
+   US_MwlRawViewer ww;
+   ww.show();                  //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
 
 US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
 {
+   const QChar chlamb( 955 );
 
    setWindowTitle( tr( "Multi-Wavelength Raw Data Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
-   QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
-   QFontMetrics fm( font );
-   int fhigh    = fm.lineSpacing();
 
    QGridLayout* settings = new QGridLayout;
 
-   lavgg        = 10;
+   //navgrec      = 11;
+   navgrec      = 1;
+   dbg_level    = US_Settings::us_debug();
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   int fwid     = fmet.maxWidth();
+   int lwid     = fwid * 4;
+   int swid     = lwid + fwid;
 
-   // Load the run
-   QLabel*      lb_run       = us_banner( tr( "Load the Run" ) );
+   // Load controls     
+   QLabel*      lb_run      = us_banner( tr( "Load the Run" ) );
+                pb_loadMwl  = us_pushbutton( tr( "Load Raw MWL Data" ) );
+                pb_loadAUC  = us_pushbutton( tr( "Load AUC MWL Data" ) );
+                pb_reset    = us_pushbutton( tr( "Reset Data" ) );
+                pb_details  = us_pushbutton( tr( "Data Details" ), false );
 
-   // Define the GUI elements
-                pb_import    = us_pushbutton( tr( "Import MWL Run" ) );
-                pb_details   = us_pushbutton( tr( "Run Details" ), false );
+   QLabel*      lb_dir      = us_label( tr( "Directory" ), -1 );
+                le_dir      = us_lineedit( "", -1, true );
 
-   QLabel*      lb_dir       = us_label( tr( "Directory" ), -1 );
-                le_dir       = us_lineedit( "", -1, true );
+   QLabel*      lb_runID    = us_label( tr( "Run ID:" ), -1 );
+                le_runID    = us_lineedit( "", -1, true );
 
-   QLabel*      lb_runID     = us_label( tr( "Run ID:" ), -1 );
-                le_runID     = us_lineedit( "", -1, true );
+   QLabel*      lb_cellchn  = us_label( tr( "Cell / Channel" ), -1 );
+                cb_cellchn  = us_comboBox();
 
-   QLabel*      lb_cellchn   = us_label( tr( "Cell / Channel" ), -1 );
-                lw_cellchn   = us_listwidget();
-   lw_cellchn->resize( fhigh * 5, lw_cellchn->width() );
+   int rhgt     = le_runID->height();
+   QLabel*      lb_recavg   = us_label( tr( "Record Average:" ), -1 );
+                ct_recavg   = us_counter( 1, 1, 100, 1 );
+   ct_recavg->setStep( 1.0 );
+   ct_recavg->setFont( sfont );
+   ct_recavg->setMinimumWidth( lwid );
+   ct_recavg->resize( rhgt, swid );
+   ct_recavg->setValue( navgrec );
 
-   QLabel*      lb_iwavcnt   = us_label( tr( "Input Wavelengths:" ) );
-                le_iwavcnt   = us_lineedit( "1118", -1, true );
+   // Plot Range controls     
+   QLabel*      lb_prcntls  = us_banner( tr( "Plot Range Controls" ) );
+   QLabel*      lb_rstart   = us_label( tr( "Radius Start:"   ), -1 );
+                cb_rstart   = us_comboBox();
+   QLabel*      lb_rend     = us_label( tr( "Radius End:"     ), -1 );
+                cb_rend     = us_comboBox();
+   QLabel*      lb_lstart   = us_label( tr( "%1 Start:"   ).arg( chlamb ), -1 );
+                cb_lstart   = us_comboBox();
+   QLabel*      lb_lend     = us_label( tr( "%1 End:"     ).arg( chlamb ), -1 );
+                cb_lend     = us_comboBox();
+                lb_pltrec   = us_label( tr( "Plot (W nm)" ) );
+                cb_pltrec   = us_comboBox();
 
-   QLabel*      lb_owavcnt   = us_label( tr( "Output Wavelengths:" ) );
-                le_owavcnt   = us_lineedit( "112",  -1, true );
+                pb_prev     = us_pushbutton( tr( "Previous" ) );
+                pb_next     = us_pushbutton( tr( "Next" ) );
+   pb_prev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
+   pb_next->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+   us_checkbox( tr( "X-axis Wavelength" ), ck_xwavlen, false );
 
-   QLabel*      lb_avggcnt   = us_label( tr( "Lambda Average:" ) );
-                ct_avggcnt   = us_counter( 2, 1, 100, 10 );
-   ct_avggcnt->setStep( 1.0 );
+   // Scan controls     
+   QLabel*      lb_scanctl  = us_banner( tr( "Scan Control" ) );
+   QLabel*      lb_from     = us_label( tr( "From:" ) );
+   QLabel*      lb_to       = us_label( tr( "To:" ) );
+                ct_from     = us_counter( 2, 0, 500, 1 );
+                ct_to       = us_counter( 2, 0, 500, 1 );
+                pb_exclude  = us_pushbutton( tr( "Exclude Scan Range" ) );
+                pb_include  = us_pushbutton( tr( "Include All Scans"  ) );
+   ct_from  ->setFont( sfont );
+   ct_from  ->setMinimumWidth( lwid );
+   ct_from  ->resize( rhgt, swid );
+   ct_to    ->setFont( sfont );
+   ct_to    ->setMinimumWidth( lwid );
+   ct_to    ->resize( rhgt, swid );
+   ct_from  ->setValue( 0 );
+   ct_to    ->setValue( 0 );
 
-   QLabel*      lb_wvlrange  = us_label( tr( "Wavelength Range:" ) );
-                le_wvlrange  = us_lineedit( "250.0 to 650.1", -1, true );
+   // Advanced Plotting controls
+   QLabel*      lb_advplot  = us_banner( tr( "Advanced Plotting Control" ) );
+                pb_plot2d   = us_pushbutton( tr( "Refresh 2D Plot" ) );
+                pb_movie2d  = us_pushbutton( tr( "Show 2D Movie"   ) );
+                pb_plot3d   = us_pushbutton( tr( "Plot 3D"         ) );
+                pb_movie3d  = us_pushbutton( tr( "Show 3D Movie"   ) );
+                pb_svplot   = us_pushbutton( tr( "Save Plot(s)"    ) );
+                pb_svmovie  = us_pushbutton( tr( "Save Movie(s)"   ) );
 
-   QLabel*      lb_radpts    = us_label( tr( "Radius Points:" ) );
-                le_radpts    = us_lineedit( "281", -1, true );
+   // Status and standard pushbuttons
+   QLabel*      lb_status   = us_banner( tr( "Status" ) );
+                le_status   = us_lineedit( "", -1, true );
+   QPalette stpal;
+   stpal.setColor( QPalette::Text, Qt::white );
+   stpal.setColor( QPalette::Base, Qt::blue  );
+   le_status->setPalette( stpal );
 
-   QLabel*      lb_radstart  = us_label( tr( "Radius Start:" ) );
-                le_radstart  = us_lineedit( "6.5", -1, true );
+   QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
+   QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
 
-   QLabel*      lb_radstep   = us_label( tr( "Radius Step:" ) );
-                le_radstep   = us_lineedit( "0.005", -1, true );
-
-   QLabel*      lb_nbrscans  = us_label( tr( "Scans per Wavelength:" ) );
-                le_nbrscans  = us_lineedit( "20", -1, true );
-
-   QLabel*      lb_pltwavln  = us_label( tr( "Wavelength to Plot:" ) );
-                cmb_pltwavln = us_comboBox();
-
-                pb_prev      = us_pushbutton( tr( "Previous Wavelength" ) );
-                pb_next      = us_pushbutton( tr( "Next Wavelength" ) );
-
-   // Standard pushbuttons
-                pb_reset     = us_pushbutton( tr( "Reset" ) );
-   QPushButton* pb_help      = us_pushbutton( tr( "Help" ) );
-                pb_saveUS3   = us_pushbutton( tr( "Save" ) );
-   QPushButton* pb_close     = us_pushbutton( tr( "Close" ) );
-
-   connect( pb_details,   SIGNAL( clicked()    ),
-            this,         SLOT(   runDetails() ) );
-   connect( lw_cellchn,   SIGNAL( currentRowChanged ( int  ) ),
-            this,         SLOT  ( changeCellCh(            ) ) );
-   connect( ct_avggcnt,   SIGNAL( valueChanged( double     ) ),
-            this,         SLOT  ( changeLambda( double     ) ) );
-   connect( cmb_pltwavln, SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeWaveln(            ) ) );
-   connect( pb_import,    SIGNAL( clicked()  ),
-            this,         SLOT(   import()   ) );
-   connect( pb_prev,      SIGNAL( clicked()  ),
-            this,         SLOT(   prevWvpl() ) );
-   connect( pb_next,      SIGNAL( clicked()  ),
-            this,         SLOT(   nextWvpl() ) );
+   connect( pb_loadMwl,   SIGNAL( clicked()      ),
+            this,         SLOT  ( load_mwl_raw() ) );
+   connect( pb_loadAUC,   SIGNAL( clicked()      ),
+            this,         SLOT  ( load_auc_mwl() ) );
    connect( pb_reset,     SIGNAL( clicked()  ),
-            this,         SLOT(   resetAll() ) );
+            this,         SLOT  ( resetAll() ) );
+   connect( pb_details,   SIGNAL( clicked()    ),
+            this,         SLOT  ( runDetails() ) );
+   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeCellCh( )            ) );
+   connect( cb_rstart,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeRadius( )            ) );
+   connect( cb_rend,      SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeRadius( )            ) );
+   connect( cb_lstart,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeLambda( )            ) );
+   connect( cb_lend,      SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeLambda( )            ) );
+   connect( ct_recavg,    SIGNAL( valueChanged( double     ) ),
+            this,         SLOT  ( changeAverage()            ) );
+   connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeRecord( )            ) );
+   connect( ck_xwavlen,   SIGNAL( toggled      ( bool ) ),
+            this,         SLOT  ( changeRectype( bool ) ) );
+   connect( pb_prev,      SIGNAL( clicked()  ),
+            this,         SLOT  ( prevPlot() ) );
+   connect( pb_next,      SIGNAL( clicked()  ),
+            this,         SLOT  ( nextPlot() ) );
+   connect( ct_from,      SIGNAL( valueChanged( double ) ),
+            this,         SLOT  ( exclude_from( double ) ) );
+   connect( ct_to,        SIGNAL( valueChanged( double ) ),
+            this,         SLOT  ( exclude_to  ( double ) ) );
+   connect( pb_exclude,   SIGNAL( clicked()       ),
+            this,         SLOT  ( exclude_scans() ) );
+   connect( pb_include,   SIGNAL( clicked()       ),
+            this,         SLOT  ( include_scans() ) );
+   connect( pb_plot2d,    SIGNAL( clicked()       ),
+            this,         SLOT  ( changeRecord()  ) );
+   connect( pb_movie2d,   SIGNAL( clicked()       ),
+            this,         SLOT  ( show_2d_movie() ) );
+   connect( pb_plot3d,    SIGNAL( clicked()       ),
+            this,         SLOT  ( plot_3d()       ) );
+   connect( pb_movie3d,   SIGNAL( clicked()       ),
+            this,         SLOT  ( show_3d_movie() ) );
+   connect( pb_svplot,    SIGNAL( clicked()       ),
+            this,         SLOT  ( save_plot()     ) );
+   connect( pb_svmovie,   SIGNAL( clicked()       ),
+            this,         SLOT  ( save_movie()    ) );
    connect( pb_help,      SIGNAL( clicked()  ),
-            this,         SLOT(    help()    ) );
-   connect( pb_saveUS3,   SIGNAL( clicked()  ),
-            this,         SLOT(   saveUS3()  ) );
+            this,         SLOT  ( help()     ) );
    connect( pb_close,     SIGNAL( clicked()  ),
-            this,         SLOT(   close()    ) );
+            this,         SLOT  ( close()    ) );
 
    // Do the left-side layout
    int row = 0;
-   settings->addWidget( lb_run,        row++, 0, 1, 4 );
-   settings->addWidget( lb_dir,        row++, 0, 1, 4 );
-   settings->addWidget( le_dir,        row++, 0, 1, 4 );
-   settings->addWidget( lb_runID,      row,   0, 1, 1 );
-   settings->addWidget( le_runID,      row++, 1, 1, 3 );
-   settings->addWidget( pb_import,     row,   0, 1, 2 );
-   settings->addWidget( pb_details,    row++, 2, 1, 2 );
-   settings->addWidget( lb_cellchn,    row,   0, 1, 2 );
-   settings->addWidget( lw_cellchn,    row++, 2, 1, 2 );
-   settings->addWidget( lb_iwavcnt,    row,   0, 1, 2 );
-   settings->addWidget( le_iwavcnt,    row++, 2, 1, 2 );
-   settings->addWidget( lb_owavcnt,    row,   0, 1, 2 );
-   settings->addWidget( le_owavcnt,    row++, 2, 1, 2 );
-   settings->addWidget( lb_avggcnt,    row,   0, 1, 2 );
-   settings->addWidget( ct_avggcnt,    row++, 2, 1, 2 );
-   settings->addWidget( lb_wvlrange,   row,   0, 1, 2 );
-   settings->addWidget( le_wvlrange,   row++, 2, 1, 2 );
-   settings->addWidget( lb_radpts,     row,   0, 1, 2 );
-   settings->addWidget( le_radpts,     row++, 2, 1, 2 );
-   settings->addWidget( lb_radstart,   row,   0, 1, 2 );
-   settings->addWidget( le_radstart,   row++, 2, 1, 2 );
-   settings->addWidget( lb_radstep,    row,   0, 1, 2 );
-   settings->addWidget( le_radstep,    row++, 2, 1, 2 );
-   settings->addWidget( lb_nbrscans,   row,   0, 1, 2 );
-   settings->addWidget( le_nbrscans,   row++, 2, 1, 2 );
-   settings->addWidget( lb_pltwavln,   row,   0, 1, 2 );
-   settings->addWidget( cmb_pltwavln,  row++, 2, 1, 2 );
-   settings->addWidget( pb_prev,       row,   0, 1, 2 );
-   settings->addWidget( pb_next,       row++, 2, 1, 2 );
-   settings->addWidget( pb_reset,      row,   0, 1, 1 );
-   settings->addWidget( pb_help,       row,   1, 1, 1 );
-   settings->addWidget( pb_saveUS3,    row,   2, 1, 1 );
-   settings->addWidget( pb_close,      row++, 3, 1, 1 );
+   settings->addWidget( lb_run,        row++, 0, 1, 8 );
+   settings->addWidget( lb_dir,        row++, 0, 1, 8 );
+   settings->addWidget( le_dir,        row++, 0, 1, 8 );
+   settings->addWidget( lb_runID,      row,   0, 1, 2 );
+   settings->addWidget( le_runID,      row++, 2, 1, 6 );
+   settings->addWidget( pb_loadMwl,    row,   0, 1, 4 );
+   settings->addWidget( pb_loadAUC,    row++, 4, 1, 4 );
+   settings->addWidget( pb_reset,      row,   0, 1, 4 );
+   settings->addWidget( pb_details,    row++, 4, 1, 4 );
+   settings->addWidget( lb_cellchn,    row,   0, 1, 4 );
+   settings->addWidget( cb_cellchn,    row++, 4, 1, 4 );
+   settings->addWidget( lb_prcntls,    row++, 0, 1, 8 );
+   settings->addWidget( lb_rstart,     row,   0, 1, 2 );
+   settings->addWidget( cb_rstart,     row,   2, 1, 2 );
+   settings->addWidget( lb_rend,       row,   4, 1, 2 );
+   settings->addWidget( cb_rend,       row++, 6, 1, 2 );
+   settings->addWidget( lb_lstart,     row,   0, 1, 2 );
+   settings->addWidget( cb_lstart,     row,   2, 1, 2 );
+   settings->addWidget( lb_lend,       row,   4, 1, 2 );
+   settings->addWidget( cb_lend,       row++, 6, 1, 2 );
+   settings->addWidget( lb_recavg,     row,   0, 1, 2 );
+   settings->addWidget( ct_recavg,     row,   2, 1, 2 );
+   settings->addWidget( ck_xwavlen,    row++, 4, 1, 4 );
+   settings->addWidget( lb_pltrec,     row,   0, 1, 2 );
+   settings->addWidget( cb_pltrec,     row,   2, 1, 2 );
+   settings->addWidget( pb_prev,       row,   4, 1, 2 );
+   settings->addWidget( pb_next,       row++, 6, 1, 2 );
+   settings->addWidget( lb_advplot,    row++, 0, 1, 8 );
+   settings->addWidget( pb_plot2d,     row,   0, 1, 4 );
+   settings->addWidget( pb_movie2d,    row++, 4, 1, 4 );
+   settings->addWidget( pb_plot3d,     row,   0, 1, 4 );
+   settings->addWidget( pb_movie3d,    row++, 4, 1, 4 );
+   settings->addWidget( pb_svplot,     row,   0, 1, 4 );
+   settings->addWidget( pb_svmovie,    row++, 4, 1, 4 );
+   settings->addWidget( lb_scanctl,    row++, 0, 1, 8 );
+   settings->addWidget( lb_from,       row,   0, 1, 1 );
+   settings->addWidget( ct_from,       row,   1, 1, 3 );
+   settings->addWidget( lb_to,         row,   4, 1, 1 );
+   settings->addWidget( ct_to,         row++, 5, 1, 3 );
+   settings->addWidget( pb_exclude,    row,   0, 1, 4 );
+   settings->addWidget( pb_include,    row++, 4, 1, 4 );
+   settings->addWidget( lb_status,     row++, 0, 1, 8 );
+   settings->addWidget( le_status,     row++, 0, 1, 8 );
+   settings->addWidget( pb_help,       row,   0, 1, 4 );
+   settings->addWidget( pb_close,      row++, 4, 1, 4 );
 
    // Plot layout for the right side of window
    QBoxLayout* plot = new US_Plot( data_plot,
@@ -203,25 +282,53 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
 
    reset();
    adjustSize();
-   lw_cellchn->resize( fhigh * 5, lw_cellchn->width() );
 }
 
 void US_MwlRawViewer::reset( void )
 {
-   lw_cellchn->disconnect();
-   lw_cellchn->clear();
+   cb_cellchn->disconnect();
+   cb_cellchn->clear();
    le_dir    ->setText( "" );
    le_runID  ->setText( "" );
 
-   pb_import ->setEnabled( true  );
-   pb_saveUS3->setEnabled( false );
+   pb_loadMwl->setEnabled( true );
+   pb_loadAUC->setEnabled( true );
    pb_details->setEnabled( false );
+   cb_cellchn->setEnabled( false );
+   cb_rstart ->setEnabled( false );
+   cb_rend   ->setEnabled( false );
+   cb_lstart ->setEnabled( false );
+   cb_lend   ->setEnabled( false );
+   ct_recavg ->setEnabled( false );
+   ck_xwavlen->setEnabled( false );
+   cb_pltrec ->setEnabled( false );
+   pb_prev   ->setEnabled( false );
+   pb_next   ->setEnabled( false );
+   ct_from   ->setEnabled( false );
+   ct_to     ->setEnabled( false );
+   pb_exclude->setEnabled( false );
+   pb_include->setEnabled( false );
+   pb_reset  ->setEnabled( false );
+   ct_from   ->setEnabled( false );
+   ct_to     ->setEnabled( false );
+   pb_exclude->setEnabled( false );
+   pb_include->setEnabled( false );
+   pb_plot2d ->setEnabled( false );
+   pb_movie2d->setEnabled( false );
+   pb_plot3d ->setEnabled( false );
+   pb_movie3d->setEnabled( false );
+   pb_svplot ->setEnabled( false );
+   pb_svmovie->setEnabled( false );
 
    // Clear any data structures
-   orig_wvlns.clear();
-   orig_reads.clear();
-   curr_wvlns.clear();
-   curr_reads.clear();
+   lambdas   .clear();
+   radii     .clear();
+   allData   .clear();
+   curr_adata.clear();
+   curr_cdata.clear();
+   prev_cdata.clear();
+   curr_recxs.clear();
+   prev_recxs.clear();
 
    data_plot->detachItems();
    picker   ->disconnect();
@@ -229,20 +336,30 @@ void US_MwlRawViewer::reset( void )
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
    grid          = us_grid( data_plot );
    data_plot->replot();
-   connect( lw_cellchn,   SIGNAL( currentRowChanged ( int  ) ),
+   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeCellCh(            ) ) );
+
+   last_xmin       = -1.0;
+   last_rmin       = -1.0;
+   last_lmin       = -1.0;
+   last_ymin       = -1.0;
+
+   mwl_data.clear();
 }
 
 void US_MwlRawViewer::resetAll( void )
 {
-   int status = QMessageBox::information( this,
-            tr( "New Data Warning" ),
-            tr( "This will erase all data currently on the screen, and " 
-                "reset the program to its starting condition. No hard-drive "
-                "data or database information will be affected. Proceed? " ),
-            tr( "&OK" ), tr( "&Cancel" ),
-            0, 0, 1 );
-   if ( status != 0 ) return;
+   if ( allData.size() > 0 )
+   {
+      int status = QMessageBox::information( this,
+               tr( "New Data Warning" ),
+               tr( "This will erase all data currently on the screen, and " 
+                   "reset the program to its starting condition. No hard-drive "
+                   "data or database information will be affected. Proceed? " ),
+               tr( "&OK" ), tr( "&Cancel" ),
+               0, 0, 1 );
+      if ( status != 0 ) return;
+   }
 
    reset();
 
@@ -250,93 +367,216 @@ void US_MwlRawViewer::resetAll( void )
    data_plot->setTitle( tr( "Intensity Data" ) );
 }
 
-// User pressed the import data button
-void US_MwlRawViewer::import( QString dir )
-{
-   bool success = false;
-
-   if ( dir.isEmpty() )
-      success = read();                // Read the legacy data
-
-   else
-      success = read( dir );
-
-qDebug() << "IMP: read success" << success;
-}
-
 
 // Enable the common dialog controls when there is data
 void US_MwlRawViewer::enableControls( void )
 {
-   if ( orig_reads.size() == 0 )
+   if ( allData.size() == 0 )
+   {  // If no data yet, just reset
       reset();
-
-   else
-   {
-      // Ok to enable some buttons now
-      pb_details     ->setEnabled( true );
-
-      // Disable load buttons if there is data
-      pb_import        ->setEnabled( false );
-      pb_loadUS3       ->setEnabled( false );
-      
-      // Let's calculate if we're eligible to copy this triple info to all
-      // or to save it
-      // We have to check against GUID's, because solutions won't have
-      // solutionID's yet if they are created as needed offline
-      QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-
-      enableSaveBtn();
+      return;
    }
+
+   // Enable and disable controls now
+   pb_loadMwl->setEnabled( false );
+   pb_loadAUC->setEnabled( false );
+   pb_reset  ->setEnabled( true );
+   pb_details->setEnabled( true );
+   cb_cellchn->setEnabled( true );
+   cb_rstart ->setEnabled( true );
+   cb_rend   ->setEnabled( true );
+   cb_lstart ->setEnabled( true );
+   cb_lend   ->setEnabled( true );
+   ct_recavg ->setEnabled( true );
+   ck_xwavlen->setEnabled( true );
+   cb_pltrec ->setEnabled( true );
+   pb_prev   ->setEnabled( true );
+   pb_next   ->setEnabled( true );
+   pb_plot2d ->setEnabled( true );
+#if 0
+   ct_from   ->setEnabled( true );
+   ct_to     ->setEnabled( true );
+   pb_exclude->setEnabled( true );
+   pb_include->setEnabled( true );
+   pb_movie2d->setEnabled( true );
+   pb_plot3d ->setEnabled( true );
+   pb_movie3d->setEnabled( true );
+   pb_svplot ->setEnabled( true );
+   pb_svmovie->setEnabled( true );
+#endif
+
+   ncellch     = cellchans.size();
+   nlambda     = lambdas  .size();
+   nscan       = allData[ 0 ].scanCount();
+   npoint      = allData[ 0 ].pointCount();
+   ntpoint     = nscan * npoint;
+   QStringList slrads;
+   QStringList sllmbs;
+
+   for ( int jj = 0; jj < npoint; jj++ )
+      slrads << QString().sprintf( "%.3f", radii[ jj ] );
+
+   for ( int jj = 0; jj < nlambda; jj++ )
+      sllmbs << QString::number( lambdas[ jj ] );
+
+   connect_ranges( false );
+   cb_cellchn->clear();
+   cb_rstart ->clear();
+   cb_rend   ->clear();
+   cb_lstart ->clear();
+   cb_lend   ->clear();
+   cb_pltrec ->clear();
+
+   cb_cellchn->addItems( cellchans );
+   cb_rstart ->addItems( slrads );
+   cb_rend   ->addItems( slrads );
+   cb_lstart ->addItems( sllmbs );
+   cb_lend   ->addItems( sllmbs );
+   cb_pltrec ->addItems( sllmbs );
+
+   cb_cellchn->setCurrentIndex( 0 );
+   cb_rstart ->setCurrentIndex( 0 );
+   cb_rend   ->setCurrentIndex( npoint - 1 );
+   cb_lstart ->setCurrentIndex( 0 );
+   cb_lend   ->setCurrentIndex( nlambda - 1 );
+   connect_ranges( true );
+
+   have_rngs  = false;
+   compute_ranges( );
+
+   cb_pltrec ->setCurrentIndex( nlambda / 2 );
+   cb_cellchn->setCurrentIndex( 0 );
+   ct_from   ->setMaxValue( nscan );
+   ct_to     ->setMaxValue( nscan );
+   changeCellCh( );
 }
 
-// Enable the "save" button, if appropriate
-// Let's use the same logic to populate the todo list too
-void US_MwlRawViewer::enableSaveBtn( void )
+// Load MWL raw (.mwrs) data
+void US_MwlRawViewer::load_mwl_raw( )
 {
-   bool completed = true;
+   // Ask for data directory
+#if 0
+   QString dir = QFileDialog::getExistingDirectory( this, 
+         tr( "Raw Data Directory" ),
+         US_Settings::importDir(),
+         QFileDialog::DontResolveSymlinks );
+#endif
+   QString dir = "";
+   US_MwlRun lddiag( dir, true );
+   if ( lddiag.exec() == QDialog::Rejected )
+      return;
 
-   // Have we filled out all the c/c/w info?
-   // Check GUIDs, because solutionID's may not be present yet.
-  
-   // If we made it here, user can save
-   pb_saveUS3 ->setEnabled( completed );
+   // Restore area beneath dialog
+   qApp->processEvents();
+   if ( dir.isEmpty() ) return;
+   dir.replace( "\\", "/" );  // WIN32 issue
+
+   // Get mwl file names
+   QDir dirdir( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
+   dirdir.makeAbsolute();
+   if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
+
+   // See if we need to fix the runID
+   QStringList components = dir.split( "/", QString::SkipEmptyParts );
+   QString runType   = "RI";
+   QString new_runID = components.last();
+   QRegExp rx( "[^A-Za-z0-9_-]" );
+
+   int pos = 0;
+   bool runID_changed = false;
+   while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+   {
+      new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
+      runID_changed = true;
+   }
+
+   // Let the user know if the runID name has changed
+   if ( runID_changed )
+   {
+      QMessageBox::warning( this,
+            tr( "RunID Name Changed" ),
+            tr( "The runID name has been changed. It may consist only "
+                "of alphanumeric \ncharacters, the underscore, and the "
+                "hyphen. New runID: " ) + new_runID );
+   }
+
+   // Set the runID and directory
+   runID       = new_runID;
+   le_runID->setText( runID );
+   le_dir  ->setText( dir );
+   currentDir  = QString( dir );
+
+   // Read the data
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
+   le_status->setText( tr( "Reading Raw MWL data ..." ) );
+
+   mwl_data.import_data( currentDir, le_status );
+
+   // Build the AUC equivalent
+   mwl_data.build_rawData( allData );
+
+   QApplication::restoreOverrideCursor();
+   QStringList mwl_fnames = dirdir.entryList( QStringList( "*.mwrs" ),
+         QDir::Files, QDir::Name );
+   mwl_fnames.sort();
+   ntriple     = mwl_fnames.size();
+   runID       = new_runID;
+   ncellch     = mwl_data.cellchannels( cellchans );
+   radii.clear();
+   radii << allData[ 0 ].xvalues;
+   nscan       = allData[ 0 ].scanCount();
+   npoint      = allData[ 0 ].pointCount();
+
+DbgLv(1) << "RD: mwr ntriple" << ntriple;
+DbgLv(1) << "RD: ncellch" << ncellch;
+DbgLv(1) << "RD: nscan" << nscan << "npoint" << npoint;
+DbgLv(1) << "RD:   rvS rvE" << radii[0] << radii[npoint-1];
+   cb_cellchn->disconnect();
+   cb_cellchn->clear();
+   cb_cellchn->addItems( cellchans );
+   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeCellCh(            ) ) );
+//   le_nbrscans->setText( QString::number( nscan ) );
+
+   nlambda      = mwl_data.lambdas_raw( lambdas );
+   int wvlo     = lambdas[ 0 ];
+   int wvhi     = lambdas[ nlambda - 1 ];
+DbgLv(1) << "RD: nwl wvlo wvhi" << nlambda << wvlo << wvhi;
+   ntriple      = nlambda * ncellch;  // Number triples
+   ntpoint      = npoint  * nscan;    // Number radius points per triple
+DbgLv(1) << "RD: allData size" << allData.size();
+
+   // Ok to enable some buttons now
+   enableControls();
+
 }
 
-// Function to load US3 data
-void US_MwlRawViewer::loadUS3( QString dir )
+// Load AUC multi-wavelength data
+void US_MwlRawViewer::load_auc_mwl( )
 {
-   if ( dir.isEmpty() )
-      loadUS3Disk();
+   int status = 0;
+   resetAll();
 
-   else
-      loadUS3Disk( dir );
-}
-
-void US_MwlRawViewer::loadUS3Disk( void )
-{
+#if 0
    // Ask for data directory
    QString dir = QFileDialog::getExistingDirectory( this, 
          tr( "US3 Raw MWL Data Directory" ),
          US_Settings::resultDir(),
          QFileDialog::DontResolveSymlinks );
+#endif
+   QString dir = "";
+   US_MwlRun lddiag( dir, false );
+   if ( lddiag.exec() == QDialog::Rejected )
+      return;
    
    // Restore area beneath dialog
    qApp->processEvents();
 
    if ( dir.isEmpty() ) return; 
    
-   dir.replace( "\\", "/" );  // WIN32 issue
-   if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
-
-   loadUS3Disk( dir );
-}
-
-void US_MwlRawViewer::loadUS3Disk( QString dir )
-{
-   int status = 0;
-   resetAll();
-
+   dir.replace( "\\", "/" );                 // WIN32 issue
+   if ( dir.right( 1 ) != "/" ) dir += "/";  // Ensure trailing '/'
+   
    // Check the runID
    QStringList components =  dir.split( "/", QString::SkipEmptyParts );  
    QString new_runID = components.last();
@@ -374,25 +614,76 @@ void US_MwlRawViewer::loadUS3Disk( QString dir )
                 "Disk status: " ) + QString::number( status ) ); 
    }
 
+   // Load the AUC data
+   le_status->setText( tr( "Reading AUC Mwl data ..." ) );
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
+   QDir dirdir( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
+   dirdir.makeAbsolute();
+   if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
+   QStringList mwl_fnames = dirdir.entryList( QStringList( "*.auc" ),
+         QDir::Files, QDir::Name );
+   mwl_fnames.sort();
+   ntriple     = mwl_fnames.size();
+   runID       = new_runID;
+   cellchans.clear();
+   lambdas  .clear();
+DbgLv(1) << "RD: mwr ntriple" << ntriple;
+
+   for ( int ii = 0; ii < ntriple; ii++ )
+   {
+      QString mwrfname = mwl_fnames.at( ii );
+      QString mwrfpath = currentDir + "/" + mwrfname;
+      US_DataIO::RawData  rdata;
+
+      US_DataIO::readRawData( mwrfpath, rdata );
+
+      allData << rdata;
+
+      QString cell     = QString::number( rdata.cell );
+      QString chan     = QString( rdata.channel );
+      int lambda       = qRound( rdata.scanData[ 0 ].wavelength );
+      QString wavl     = QString::number( lambda );
+      QString celchn   = cell + " / " + chan;
+
+      if ( ! cellchans.contains( celchn ) )
+         cellchans << celchn;
+
+      if ( ! lambdas.contains( lambda ) )
+         lambdas   << lambda;
+
+      le_status->setText( tr( "Data in for triple %1 of %2" )
+                          .arg( ii + 1 ).arg( ntriple ) );
+      qApp->processEvents();
+   }
+
+   radii.clear();
+   radii << allData[ 0 ].xvalues;
+
+   ntriple     = mwl_fnames.size();
+   ncellch     = cellchans .size();
+   nlambda     = lambdas   .size();
+   nscan       = allData[ 0 ].scanCount();
+   npoint      = allData[ 0 ].pointCount();
+   ntpoint     = nscan * npoint;
+DbgLv(1) << "RD: mwr ncellch nlambda nscan npoint"
+ << ncellch << nlambda << nscan << npoint;
+DbgLv(1) << "RD:   rvS rvE" << radii[0] << radii[npoint-1];
+   le_status->setText( tr( "All %1 raw AUCs have been loaded." )
+                       .arg( ntriple ) );
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
+
+   ct_from->setMaxValue( nscan );
+   ct_to  ->setMaxValue( nscan );
+
    // Ok to enable some buttons now
    enableControls();
 
    pb_details     ->setEnabled( true );
-
-   enableSaveBtn();
 }
 
 void US_MwlRawViewer::runDetails( void )
 {
-   // Loop to insure all wavelengths have been averaged
-   int saveccc   = currCellCh;
-
-   for ( currCellCh = 0; currCellCh < ncellch; currCellCh++ )
-      for ( int wavx = 0; wavx < nwaveln; wavx++ )
-         averageWavlen( wavx );
-
-   currCellCh    = saveccc;
-
    // Initialize statistics for data
    double ofdmax  = -1e99;
    double o90max  = -1e99;
@@ -438,29 +729,31 @@ void US_MwlRawViewer::runDetails( void )
    bool   wv2     = false;
    bool   wv3     = false;
    int    awvlo   = 0;
-   int    awvmd   = nwaveln / 2;
-   int    awvhi   = nwaveln - 1;
+   int    awvmd   = nlambda / 2;
+   int    awvhi   = nlambda - 1;
    int    owvlo   = 0;
-   int    owvhi   = nwlorig - 1;
-   double wvvmid  = curr_wvlns[ nwaveln / 2 ];
-   int    owvmd   = orig_wvlns.indexOf( wvvmid );
-   int    rplo    = ( npoints * 5 ) / 100;
-   int    rphi    = npoints - rplo;
+   int    owvhi   = nlambda - 1;
+   double wvvmid  = lambdas[ nlambda / 2 ];
+   int    owvmd   = lambdas.indexOf( wvvmid );
+   int    rplo    = ( npoint * 5 ) / 100;
+   int    rphi    = npoint - rplo;
    double rdata   = 0.0;
    int    wvx     = 0;
    int    rpx     = 0;
 
    // Accumulate statistics for original data
-   for ( int ii = 0; ii < ntriplo; ii++ )
+   for ( int ii = 0; ii < ntriple; ii++ )
    {
       wv1      = ( wvx == owvlo );
       wv2      = ( wvx == owvmd );
       wv3      = ( wvx == owvhi );
       rpx      = 0;
+      int scx  = 0;
+      int rdx  = 0;
 
-      for ( int jj = 0; jj < nradpt; jj++ )
+      for ( int jj = 0; jj < ntpoint; jj++ )
       {
-         rdata    = orig_reads[ ii ][ jj ];
+         rdata    = allData[ ii ].reading( scx, rdx );
          ofdmin   = qMin( ofdmin, rdata );
          ofdmax   = qMax( ofdmax, rdata );
          ofdavg  += rdata;
@@ -494,11 +787,11 @@ void US_MwlRawViewer::runDetails( void )
             }
          }
          rpx++;
-         if ( rpx >= npoints )
+         if ( rpx >= npoint )
             rpx      = 0;
       }
       wvx++;
-      if ( wvx >= nwlorig )
+      if ( wvx >= nlambda )
          wvx      = 0;
    }
 
@@ -506,16 +799,18 @@ void US_MwlRawViewer::runDetails( void )
    wvx     = 0;
    rpx     = 0;
 
-   for ( int ii = 0; ii < ntripls; ii++ )
+   for ( int ii = 0; ii < ntriple; ii++ )
    {
       wv1      = ( wvx == awvlo );
       wv2      = ( wvx == awvmd );
       wv3      = ( wvx == awvhi );
       rpx      = 0;
+      int scx  = 0;
+      int rdx  = 0;
 
-      for ( int jj = 0; jj < nradpt; jj++ )
+      for ( int jj = 0; jj < ntpoint; jj++ )
       {
-         rdata    = curr_reads[ ii ][ jj ];
+         rdata    = allData[ ii ].reading( scx, rdx );
          afdmin   = qMin( afdmin, rdata );
          afdmax   = qMax( afdmax, rdata );
          afdavg  += rdata;
@@ -549,11 +844,11 @@ void US_MwlRawViewer::runDetails( void )
             }
          }
          rpx++;
-         if ( rpx >= npoints )
+         if ( rpx >= npoint )
             rpx      = 0;
       }
       wvx++;
-      if ( wvx >= nwaveln )
+      if ( wvx >= nlambda )
          wvx      = 0;
    }
 
@@ -568,24 +863,24 @@ void US_MwlRawViewer::runDetails( void )
    aw1avg        /= (double)aw1knt;
    aw2avg        /= (double)aw2knt;
    aw3avg        /= (double)aw3knt;
-   double s1tem   = mwl_headers[ 0 ].temperature;
-   double s1rot   = mwl_headers[ 0 ].rotor_speed;
-   double s1omg   = mwl_headers[ 0 ].omega2t;
-   double s1etm   = mwl_headers[ 0 ].elaps_time;
-   int    lfx     = nfiles - 1;
-   double s2tem   = mwl_headers[ lfx ].temperature;
-   double s2rot   = mwl_headers[ lfx ].rotor_speed;
-   double s2omg   = mwl_headers[ lfx ].omega2t;
-   double s2etm   = mwl_headers[ lfx ].elaps_time;
-   double owvmin  = orig_wvlns[ 0 ];
-   double owvmax  = orig_wvlns[ nwlorig - 1 ];
-   double owvain  = ( owvmax - owvmin ) / (double)( nwlorig - 1 );
-   double awvain  = ( owvmax - owvmin ) / (double)( nwaveln - 1 );
+   int    lx      = ntriple - 1;
+   double s1tem   = allData[  0 ].scanData[ 0 ].temperature;
+   double s1rot   = allData[  0 ].scanData[ 0 ].rpm;
+   double s1omg   = allData[  0 ].scanData[ 0 ].omega2t;
+   double s1etm   = allData[  0 ].scanData[ 0 ].seconds;
+   double s2tem   = allData[ lx ].scanData[ 0 ].temperature;
+   double s2rot   = allData[ lx ].scanData[ 0 ].rpm;
+   double s2omg   = allData[ lx ].scanData[ 0 ].omega2t;
+   double s2etm   = allData[ lx ].scanData[ 0 ].seconds;
+   double owvmin  = lambdas[ 0 ];
+   double owvmax  = lambdas[ nlambda - 1 ];
+   double owvain  = ( owvmax - owvmin ) / (double)( nlambda - 1 );
+   double awvain  = ( owvmax - owvmin ) / (double)( nlambda - 1 );
    double wavv1   = owvmin;
-   double wavv2   = orig_wvlns[ owvmd ];
+   double wavv2   = lambdas[ owvmd ];
    double wavv3   = owvmax;
-   QString ffname = mwl_fnames[ 0 ];
-   QString lfname = mwl_fnames[ lfx ];
+   QString ffname = mwl_fnames[  0 ];
+   QString lfname = mwl_fnames[ lx ];
    QString msg = tr( "Multi-Wavelength Statistics for RunID %1,\n" )
       .arg( runID );
    msg += tr( " from Directory %1\n\n" ).arg( currentDir );
@@ -593,7 +888,7 @@ void US_MwlRawViewer::runDetails( void )
    msg += tr( "   First File Name:              %1\n" ).arg( ffname ); 
    msg += tr( "   Last File Name:               %1\n" ).arg( lfname ); 
    msg += tr( "   Scans:                        %1\n" ).arg( nscan );
-   msg += tr( "   Radius Data Points:           %1\n" ).arg( npoints );
+   msg += tr( "   Radius Data Points:           %1\n" ).arg( npoint );
    msg += tr( "Values for 1st Cell/Channel Scan 1.\n" );
    msg += tr( "   Temperature                   %1\n" ).arg( s1tem );
    msg += tr( "   Omega^2T                      %1\n" ).arg( s1omg );
@@ -605,12 +900,12 @@ void US_MwlRawViewer::runDetails( void )
    msg += tr( "   Elapsed Time                  %1\n" ).arg( s2etm );
    msg += tr( "   RotorSpeed                    %1\n" ).arg( s2rot );
    msg += tr( "Original Data Wavelengths.\n" );
-   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( nwlorig );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( nlambda );
    msg += tr( "   Minimum:                      %1\n" ).arg( owvmin );
    msg += tr( "   Maximum:                      %1\n" ).arg( owvmax );
    msg += tr( "   Average Increment:            %1\n" ).arg( owvain );
-   msg += tr( "%1-point Averaged Data Wavelengths.\n" ).arg( lavgg );
-   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( nwaveln );
+   msg += tr( "%1-point Averaged Data Wavelengths.\n" ).arg( navgrec );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( klambda );
    msg += tr( "   Minimum:                      %1\n" ).arg( owvmin );
    msg += tr( "   Maximum:                      %1\n" ).arg( owvmax );
    msg += tr( "   Average Increment:            %1\n" ).arg( awvain );
@@ -618,7 +913,7 @@ void US_MwlRawViewer::runDetails( void )
    msg += tr( "   Minimum:                      %1\n" ).arg( ofdmin );
    msg += tr( "   Maximum:                      %1\n" ).arg( ofdmax );
    msg += tr( "   Average:                      %1\n" ).arg( ofdavg );
-   msg += tr( "%1-point Averaged Full Intensity Data.\n" ).arg( lavgg );
+   msg += tr( "%1-point Averaged Full Intensity Data.\n" ).arg( navgrec );
    msg += tr( "   Minimum:                      %1\n" ).arg( afdmin );
    msg += tr( "   Maximum:                      %1\n" ).arg( afdmax );
    msg += tr( "   Average:                      %1\n" ).arg( afdavg );
@@ -626,7 +921,7 @@ void US_MwlRawViewer::runDetails( void )
    msg += tr( "   Minimum:                      %1\n" ).arg( o90min );
    msg += tr( "   Maximum:                      %1\n" ).arg( o90max );
    msg += tr( "   Average:                      %1\n" ).arg( o90avg );
-   msg += tr( "%1-point Averaged Middle 90% Intensity Data.\n" ).arg( lavgg );
+   msg += tr( "%1-point Averaged Middle 90% Intensity Data.\n" ).arg( navgrec );
    msg += tr( "   Minimum:                      %1\n" ).arg( a90min );
    msg += tr( "   Maximum:                      %1\n" ).arg( a90max );
    msg += tr( "   Average:                      %1\n" ).arg( a90avg );
@@ -636,7 +931,7 @@ void US_MwlRawViewer::runDetails( void )
    msg += tr( "   Maximum:                      %1\n" ).arg( ow1max );
    msg += tr( "   Average:                      %1\n" ).arg( ow1avg );
    msg += tr( "%1 nm %2-point Averaged Middle 90% Intensity Data.\n" )
-      .arg( wavv1 ).arg( lavgg );
+      .arg( wavv1 ).arg( navgrec );
    msg += tr( "   Minimum:                      %1\n" ).arg( aw1min );
    msg += tr( "   Maximum:                      %1\n" ).arg( aw1max );
    msg += tr( "   Average:                      %1\n" ).arg( aw1avg );
@@ -646,7 +941,7 @@ void US_MwlRawViewer::runDetails( void )
    msg += tr( "   Maximum:                      %1\n" ).arg( ow2max );
    msg += tr( "   Average:                      %1\n" ).arg( ow2avg );
    msg += tr( "%1 nm %2-point Averaged Middle 90% Intensity Data.\n" )
-      .arg( wavv2 ).arg( lavgg );
+      .arg( wavv2 ).arg( navgrec );
    msg += tr( "   Minimum:                      %1\n" ).arg( aw2min );
    msg += tr( "   Maximum:                      %1\n" ).arg( aw2max );
    msg += tr( "   Average:                      %1\n" ).arg( aw2avg );
@@ -656,7 +951,7 @@ void US_MwlRawViewer::runDetails( void )
    msg += tr( "   Maximum:                      %1\n" ).arg( ow3max );
    msg += tr( "   Average:                      %1\n" ).arg( ow3avg );
    msg += tr( "%1 nm %2-point Averaged Middle 90% Intensity Data.\n" )
-      .arg( wavv3 ).arg( lavgg );
+      .arg( wavv3 ).arg( navgrec );
    msg += tr( "   Minimum:                      %1\n" ).arg( aw3min );
    msg += tr( "   Maximum:                      %1\n" ).arg( aw3max );
    msg += tr( "   Average:                      %1\n" ).arg( aw3avg );
@@ -674,290 +969,26 @@ void US_MwlRawViewer::runDetails( void )
 
 void US_MwlRawViewer::changeCellCh( void )
 {
-qDebug() << "changeCellCh";
    // Match the description to find the correct triple in memory
-   QString cellch = lw_cellchn->currentItem()->text();
-   QString cell   = cellch.section( "/", 0, 0 ).simplified();
-   QString chan   = cellch.section( "/", 1, 1 ).simplified();
-   int     icell  = cell.toInt() - 1;
-   int     ichan  = QString( "ABCDEFGH" ).indexOf( chan );
-   currCellCh     = icell * nchan + ichan;
+   QString cellch = cb_cellchn->currentText();
+DbgLv(1) << "chgCellCh:  cellch" << cellch;
    
-   ct_avggcnt->setValue( lavgg );
-   changeLambda( lavgg );
+//   changeLambda();
 }
 
 void US_MwlRawViewer::setCellChInfo( void )
 {
    // Load them into the list box
-   lw_cellchn->clear();
-   currCellCh     = -1;          // indicates that it hasn't been selected yet
+   cb_cellchn->clear();
+   ccx            = -1;          // indicates that it hasn't been selected yet
 
-   QListWidgetItem* item = lw_cellchn->item( 0 );   // select the item at row 0
-   lw_cellchn->setItemSelected( item, true );
+   cb_cellchn->setCurrentIndex( 0 );
 }
 
-// Function to save US3 data
-void US_MwlRawViewer::saveUS3( void )
-{
-      saveUS3Disk();
-}
-
-int US_MwlRawViewer::saveUS3Disk( void )
-{
-
-   QDir        writeDir( US_Settings::resultDir() );
-   QString     dirname = writeDir.absolutePath() + "/" + runID + "/";
-
-   if ( ! writeDir.exists( runID ) )
-   {
-      if ( ! writeDir.mkpath( dirname ) )
-      {
-         QMessageBox::information( this,
-               tr( "Error" ),
-               tr( "Cannot write to " ) + writeDir.absolutePath() );
-         return 1;
-      }
-   }
-
-   // How many files should have been written?
-   int fileCount = 0;
-
-   // Status is OK
-   QMessageBox::information( this,
-         tr( "Success" ),
-         QString::number( fileCount ) + " " + 
-         runID + tr( " files written." ) );
-  
-   // Save the main plots
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   QString dir    = US_Settings::reportDir() + "/" + runID;
-   if ( ! QDir( dir ).exists() )      // make sure the directory exists
-      QDir().mkdir( dir );
-   int saveccc    = currCellCh;
-   data_plot->setVisible( false );
-
-   // Make sure directory is empty
-   QDir d( dir );
-   QStringList rmvfilt;
-   rmvfilt << "*.svgz" << "*.png" << "*.svg";
-   QStringList rmvfiles = d.entryList( rmvfilt, QDir::Files, QDir::Name );
-
-   for ( int ii = 0; ii < rmvfiles.size(); ii++ )
-      if ( ! d.remove( rmvfiles[ ii ] ) )
-         qDebug() << "Unable to remove file" << rmvfiles[ ii ];
-
-   // Restore original plot
-   currCellCh     = saveccc;
-   plot_current();
-   data_plot->setVisible( true );
-   QApplication::restoreOverrideCursor();
-
-   return( 0 );
-}
-
-bool US_MwlRawViewer::read( void )
-{
-   // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this, 
-         tr( "Raw Data Directory" ),
-         US_Settings::dataDir() + "/mwl",
-         QFileDialog::DontResolveSymlinks );
-
-   // Restore area beneath dialog
-   qApp->processEvents();
-
-   if ( dir.isEmpty() ) return( false ); 
-
-   dir.replace( "\\", "/" );  // WIN32 issue
-
-   return( read( dir ) );
-}
-
-bool US_MwlRawViewer::read( QString dir )
-{
-   // Get mwl file names
-   QDir dirdir( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
-   dirdir.makeAbsolute();
-   if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
-
-   // See if we need to fix the runID
-   QStringList components = dir.split( "/", QString::SkipEmptyParts );
-   QString new_runID = components.last();
-   QRegExp rx( "[^A-Za-z0-9_-]" );
-
-   int pos = 0;
-   bool runID_changed = false;
-   while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
-   {
-      new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
-      runID_changed = true;
-   }
-
-   // Let the user know if the runID name has changed
-   if ( runID_changed )
-   {
-      QMessageBox::warning( this,
-            tr( "RunID Name Changed" ),
-            tr( "The runID name has been changed. It may consist only "
-                "of alphanumeric \ncharacters, the underscore, and the "
-                "hyphen. New runID: " ) + new_runID );
-   }
-
-   // Set the runID and directory
-   runID       = new_runID;
-   le_runID->setText( runID );
-   le_dir  ->setText( dir );
-   currentDir  = QString( dir );
-
-   // Read the data
-   QStringList mwrfiles = dirdir.entryList( QStringList( "*.mwrs" ),
-         QDir::Files, QDir::Name );
-   QStringList cells;
-   QStringList chans;
-   nscan    = -1;
-   mwrfiles.sort();
-   nfiles   = mwrfiles.size();
-qDebug() << "RD: mwr nfiles" << nfiles;
-
-   for ( int ii = 0; ii < nfiles; ii++ )
-   {
-      QString mwrfname = mwrfiles.at( ii );
-      QString mwrfpath = dir + "/" + mwrfname;
-      QString acell    = mwrfname.section( ".", -5, -5 );
-      QString chann    = mwrfname.section( ".", -4, -4 );
-      QString adesc    = mwrfname.section( ".", -3, -3 );
-      QString ascan    = mwrfname.section( ".", -2, -2 );
-      if ( !cells.contains( acell ) )  cells << acell;
-      if ( !chans.contains( chann ) )  chans << chann;
-      int     scann    = ascan.toInt();
-              nscan    = qMax( nscan, scann );
-
-      mwl_fnames << mwrfname;
-      mwl_fpaths << mwrfpath;
-   }
-
-   nscan++;
-   ncell    = cells.size();
-   nchan    = chans.size();
-   ncellch  = ncell * nchan;
-qDebug() << "RD: cells size" << ncell;
-qDebug() << "RD: chans size" << nchan;
-qDebug() << "RD: nscan" << nscan;
-   cells   .sort();
-   chans   .sort();
-   lw_cellchn->clear();
-   cellchans  .clear();
-
-   for ( int ii = 0; ii < ncell; ii++ )
-   {
-      for ( int jj = 0; jj < nchan; jj++ )
-      {
-         QString celchn = cells[ ii ] + " / " + chans[ jj ];
-qDebug() << "RD: ii jj celchn" << ii << jj << celchn;
-         lw_cellchn->addItem( celchn );
-         cellchans << celchn;
-      }
-   }
-
-qDebug() << "RD:  le_ns Text" << le_nbrscans->text();
-   le_nbrscans->setText( QString::number( nscan ) );
-
-   orig_wvlns.clear();
-qDebug() << "RD:  le_ns setText return";
-
-   // Read in all the headers
-   for ( int ii = 0; ii < nfiles; ii++ )
-   {
-      QString mwlfp = mwl_fpaths[ ii ];
-      QString mwlfn = mwl_fnames[ ii ];
-qDebug() << "RD:   ii" << ii << "filename" << mwlfn;
-      QFile fi( mwlfp );
-      if ( ! fi.open( QIODevice::ReadOnly ) )
-      {
-         qDebug() << "*ERROR* Unable to open" << mwlfn;
-         qDebug() << mwlfp;
-         return ( false );
-      }
-      QDataStream ds( &fi );
-      MwlHeader   hd;
-      read_header( ds, hd );
-      mwl_headers << hd;
-qDebug() << "RD:     hd: cell chan icell ichann npoints nwaveln" << hd.cell
- << hd.channel << hd.icell << hd.ichann << hd.npoints << hd.nwaveln;
-
-      if ( ii == 0 )
-      { // At the first file, read in the wavelengths
-         nwlorig     = hd.nwaveln;
-         npoints     = hd.npoints;
-         ntriplo     = nwlorig * ncellch;  // Number triples
-         nradpt      = npoints * nscan;    // Number radius points per triple
-         nwaveln     = nwlorig;
-         ntripls     = ntriplo;
-
-         read_wavelns( ds, orig_wvlns, nwlorig );
-int mm=nwlorig/2;
-int nn=nwlorig-1;
-qDebug() << "RD:     wv: wv0 wvm wvn "
- << orig_wvlns[0] << orig_wvlns[mm] << orig_wvlns[nn];
-
-         // And initialize the data vector
-qDebug() << "RD:     nradpt ntripls" << nradpt << ntripls;
-         QVector< double > wave_reads( nradpt, 0.0 );
-         orig_reads.reserve( ntripls );
-         for ( int tx = 0; tx < ntripls; tx++ )
-            orig_reads << wave_reads;
-      }
-      else
-      { // Otherwise, skip over wavelengths
-         ds.skipRawData( hd.nwaveln * 2 );
-      }
-
-      int ccx   = hd.icell * nchan + hd.ichann;
-      int tripx = ccx * nwlorig;
-      int scnx  = mwlfn.section( ".", -2, -2 ).toInt() * npoints;
-qDebug() << "RD: ccx scnx tripx" << ccx << scnx << tripx;
-
-      // Now read in data
-
-      for ( int wavx = 0; wavx < nwaveln; wavx++ )
-      {
-         read_rdata( ds, orig_reads[ tripx ], scnx, npoints );
-if(wavx<3||(wavx+4)>nwaveln)
-qDebug() << "RD:      wavx tripx" << wavx << tripx << "scnx" << scnx;
-         tripx++;
-      }
-   }
-
-   double wvlo  = orig_wvlns[ 0 ];
-   double wvhi  = orig_wvlns[ nwlorig - 1 ];
-   double rdlo  = mwl_headers[ 0 ].radius_start;
-   double rdinc = mwl_headers[ 0 ].radius_step;
-   lavgg        = 10;
-   nwaveln      = qRound( (double)nwlorig / (double) lavgg );
-   le_iwavcnt ->setText( QString::number( nwlorig ) );
-   le_owavcnt ->setText( QString::number( nwaveln ) );
-   le_wvlrange->setText( QString::number( wvlo ) + " to " +
-                         QString::number( wvhi ) );
-   le_radpts  ->setText( QString::number( npoints ) );
-   le_radstart->setText( QString::number( rdlo  ) );
-   le_radstep ->setText( QString::number( rdinc ) );
-   le_nbrscans->setText( QString::number( nscan ) );
-
-   lw_cellchn->setCurrentRow( 0 );
-   changeCellCh( );
-
-   return( true );
-}
-
-bool US_MwlRawViewer::convert( void )
-{
-   return ( true );
-}
-
+// Plot the current data record
 void US_MwlRawViewer::plot_current( void )
 {
-   if ( orig_reads.size() == 0 )
+   if ( allData.size() == 0 )
       return;
 
    plot_titles();
@@ -965,20 +996,21 @@ void US_MwlRawViewer::plot_current( void )
    plot_all();
 }
 
+// Compose plot titles for the current record
 void US_MwlRawViewer::plot_titles( void )
 {
-   QString cellch   = lw_cellchn->currentItem()->text();
-   int     wvx      = cmb_pltwavln->currentIndex();
-   double  wavl     = curr_wvlns[ wvx ];
-   QString waveln   = QString::number( wavl );
-   QString wl       = QString::number( qRound( wavl ) );
-   QString triple   = cellch + " / " + wl;
+   QString cellch   = cb_cellchn ->currentText();
+   QString cell     = cellch.section( "/", 0, 0 ).simplified();
+   QString chan     = cellch.section( "/", 1, 1 ).simplified();
+   QString wavl     = cb_pltrec->currentText();
 
    // Plot Title and legends
    QString title    = "Radial Intensity Data\nRun ID: " + runID +
-              "    Triple: " + triple;
-   QString xLegend  = "Radius (in cm)";
-   QString yLegend  = "Radial Intensity at " + waveln + " nm";
+                      "\n    Cell: " + cell + "  Channel: " + chan +
+                      ( is_wrecs ? "  Wavelength: " : "  Radius: " ) + wavl;
+   QString xLegend  = is_wrecs ? "Radius (in cm)" : "Wavelength (in nm)";
+   QString yLegend  = "Radial Intensity at " + wavl +
+                      ( is_wrecs ? " nm" : " cm" );
 
    data_plot->setTitle( title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   yLegend );
@@ -986,265 +1018,453 @@ void US_MwlRawViewer::plot_titles( void )
 
 }
 
+// Draw scan curves for the current plot record
 void US_MwlRawViewer::plot_all( void )
 {
    data_plot->detachItems();
    grid           = us_grid( data_plot );
 
-   QVector< double > rvec( npoints );
-   QVector< double > vvec( npoints );
+   compute_ranges();
+
+   build_avg_data();
+
+DbgLv(1) << "PltA: kpoint" << kpoint << "datsize" << curr_adata.size();
+   QVector< double > rvec( kpoint );
+   QVector< double > vvec( kpoint );
    double* rr     = rvec.data();
    double* vv     = vvec.data();
 
-   double  radstr = mwl_headers[ 0 ].radius_start;
-   double  radinc = mwl_headers[ 0 ].radius_step;
-   int     wvx    = cmb_pltwavln->currentIndex();
-   int     trx    = currCellCh * nwaveln + wvx;
-   double  radval = radstr;
-   double  readvl = 0.0;
-   int     rdx    = 0;
+   int     scan_from = (int)ct_from->value();
+   int     scan_to   = (int)ct_to  ->value();
+   QPen    pen_red ( Qt::red );
+   QPen    pen_plot( US_GuiSettings::plotCurve() );
+   int     rdx       = 0;
 
-   for ( int ii = 0; ii < nscan; ii++ )
+   for ( int ptx = 0; ptx < kpoint; ptx++ )
+      rr[ ptx ]       = pltxvals[ ptx ];
+
+   for ( int scx = 0; scx < kscan; scx++ )
    {
-      radval         = radstr;
-
-      for ( int jj = 0; jj < npoints; jj++ )
+      for ( int ptx = 0; ptx < kpoint; ptx++ )
       {
-         readvl         = curr_reads[ trx ][ rdx++ ];
-         rr[ jj ]       = radval;
-         vv[ jj ]       = readvl;
-         radval        += radinc;
+         vv[ ptx ]       = curr_adata[ rdx++ ];
       }
 
-      QString title = tr( "Raw Data at scan " ) + QString::number( ii );
+      QString       title = tr( "Raw Data at scan " ) + QString::number( scx );
+      QwtPlotCurve* curv  = us_curve( data_plot, title );
 
-      QwtPlotCurve* curv = us_curve( data_plot, title );
-      curv->setData( rr, vv, npoints );
+      if ( scx >= scan_to  ||  scx <= scan_from )
+         curv->setPen( pen_plot );
+      else
+         curv->setPen( pen_red  );
 
+      curv->setData( rr, vv, kpoint );
+DbgLv(1) << "PltA:   scx" << scx << "rr0 vv0 rrn vvn"
+ << rr[0] << rr[kpoint-1] << vv[0] << vv[kpoint-1];
    }
 
-   data_plot->setAxisAutoScale( QwtPlot::yLeft   );
-   data_plot->setAxisAutoScale( QwtPlot::xBottom );
+DbgLv(1) << "PltA: last_xmin" << last_xmin;
+   if ( last_xmin < 0.0 )
+   {  // If first time, use auto scale to set plot ranges
+      data_plot->setAxisAutoScale( QwtPlot::yLeft   );
+      data_plot->setAxisAutoScale( QwtPlot::xBottom );
+   }
+
+   else
+   {  // After first time, use the same plot ranges as set before
+      data_plot->setAxisScale( QwtPlot::xBottom, last_xmin, last_xmax );
+      data_plot->setAxisScale( QwtPlot::yLeft  , last_ymin, last_ymax );
+   }
    
    data_plot->replot();
+   
+   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+   last_xmin      = sdx->lowerBound();
+   last_xmax      = sdx->upperBound();
+   last_ymin      = sdy->lowerBound();
+   last_ymax      = sdy->upperBound();
+DbgLv(1) << "PltA: xlo xhi" << last_xmin << last_xmax
+ << "ylo yhi" << last_ymin << last_ymax;
    pb_details->setEnabled( true );
 }
 
-void US_MwlRawViewer::read_header( QDataStream& ds, MwlHeader& head )
+// Slot to handle a change in start or end radius
+void US_MwlRawViewer::changeRadius()
 {
-   char cbuf[ 28 ];
-
-   //ds.readRawData( cbuf, 26 );
-   ds.readRawData( cbuf, 24 );
-
-   head.cell         = QChar( '0' | cbuf[ 0 ] );
-   head.channel      = QChar( cbuf[ 1 ] );
-   head.icell        = QString( head.cell ).toInt() - 1;
-   head.ichann       = QString( "ABCDEFGH" ).indexOf( head.channel );
-   head.nscans       = hword( cbuf + 2 );
-   head.rotor_speed  = (double)( hword( cbuf + 4 ) );
-   head.temperature  = (double)( hword( cbuf + 6 ) ) / 10.0;
-   head.omega2t      = dword( cbuf + 8 );
-   head.elaps_time   = iword( cbuf + 12 );
-   head.npoints      = hword( cbuf + 16 );
-   head.radius_start = (double)( hword( cbuf + 18 ) ) / 1000.0;
-   head.radius_step  = (double)( hword( cbuf + 20 ) ) / 10000.0;
-   //head.nwaveln      = iword( cbuf + 22 );
-   head.nwaveln      = hword( cbuf + 22 );
+DbgLv(1) << "chgRadius";
 }
 
-int US_MwlRawViewer::hword( char* cc )
+// Slot to handle a change in start or end lambda
+void US_MwlRawViewer::changeLambda()
 {
-   unsigned char* cbuf = (unsigned char*)cc;
-   int j0 = (int)cbuf[ 0 ] & 255;
-   int j1 = (int)cbuf[ 1 ] & 255;
-   return ( ( j0 << 8 ) | j1 );
-}
+DbgLv(1) << "chgLambda";
+#if 0
+   cb_pltrec->disconnect();
 
-int US_MwlRawViewer::iword( char* cbuf )
-{
-   int j0 = hword( cbuf );
-   int j1 = hword( cbuf + 2 );
-   return ( ( j0 << 16 ) | j1 );
-}
+   nlambda     = lambdas.size();
+   int slambda = cb_lstart->currentText().toInt();
+   int elambda = cb_lend  ->currentText().toInt();
+   int wvxs    = lambdas.indexOf( slambda );
+   int wvxe    = lambdas.indexOf( elambda ) + 1;
+   cb_pltrec->clear();
 
-float US_MwlRawViewer::fword( char* cbuf )
-{
-   int    ivalue = iword( cbuf );
-   int*   iptr   = &ivalue;
-   float* fptr   = (float*)iptr;
-   return *fptr;
-}
+   for ( int wvx = wvxs; wvx < wvxe; wvx++ )
+   {  // Build the list of wavelengths that are within range
+      QString citem    = QString::number( lambdas[ wvx ] );
 
-double US_MwlRawViewer::dword( char* cbuf )
-{
-   float fvalue  = fword( cbuf );
-   return (double)fvalue;
-}
-
-void US_MwlRawViewer::read_wavelns( QDataStream& ds,
-      QVector< double >& wavelns, int& nwvpts )
-{
-   char cbuf[ 4 ];
-
-   wavelns.reserve( nwvpts );
-
-   for ( int ii = 0; ii < nwvpts; ii++ )
-   {
-      //ds.readRawData( cbuf, 4 );
-      //int    ivalue = iword( cbuf );
-      //double wavln  = (double)ivalue / 10.0;
-      ds.readRawData( cbuf, 2 );
-      double wavln  = (double)hword( cbuf );
-      wavelns << wavln;
+      cb_pltrec->addItem( citem );
    }
-}
-
-void US_MwlRawViewer::read_rdata( QDataStream& ds,
-      QVector< double >& reads, int& scnx, int& npoints )
-{
-   char cbuf[ 4 ];
-   int  kk      = scnx;
-
-   for ( int ii = 0; ii < npoints; ii++ )
-   {
-      ds.readRawData( cbuf, 4 );
-      int    ivalue = iword( cbuf );
-      double rreadv = (double)ivalue / 1000.0;
-      reads[ kk++ ] = rreadv;
-   }
+#endif
 }
  
-void US_MwlRawViewer::changeLambda( double value )
+// Slot to handle a change in the plot record
+void US_MwlRawViewer::changeRecord( void )
 {
-qDebug() << "changeLambda";
-   cmb_pltwavln->disconnect();
+   recx           = cb_pltrec->currentIndex();
+DbgLv(1) << "chgRec: recx" << recx;
 
-   lavgg       = value;
-   nwaveln     = qRound( (double)nwlorig / lavgg );
-   le_owavcnt->setText( QString::number( nwaveln ) );
-   curr_wvlns.fill( 0.0, nwaveln );
-   int pknt    = cmb_pltwavln->count();
-   int prex    = cmb_pltwavln->currentIndex();
-   int curx    = ( pknt == 0 ) ? ( nwaveln / 2 ) : ( prex * nwaveln / pknt );
-   cmb_pltwavln->clear();
-
-   double winc = (double)( nwlorig - 1 ) / (double)( nwaveln - 1 );
-   double wcur = 0.0;
-
-   for ( int kk = 0; kk < nwaveln; kk++ )
-   { // Construct wavelength array at lambda increment from original
-      int ii           = qRound( wcur );
-      curr_wvlns[ kk ] = orig_wvlns[ ii ];
-      QString citem    = QString::number( curr_wvlns[ kk ] );
-      wcur            += winc;
-
-      cmb_pltwavln->addItem( citem );
-   }
-
-   // Initially construct the reduced data, unaveraged
-   ntripls     = nwaveln * ncellch;  // Number triples
-   curr_lavgs.resize( ntripls );
-   curr_reads.resize( ntripls );
-qDebug() << "  chgLmb nwaveln ntripls" << nwaveln << ntripls;
-   int wvx     = 0;
-   int ccx     = 0;
-
-   for ( int kk = 0; kk < ntripls; kk++ )
-   {
-      double wavl = curr_wvlns[ wvx ];
-      int    wvxo = orig_wvlns.indexOf( wavl );
-      int    trxo = ccx * nwaveln + wvxo;
-      int    trx  = ccx * nwaveln + wvx;
-
-      curr_lavgs[ trx ]  = 0;
-      curr_reads[ trx ]  = orig_reads[ trxo ];
-
-      if ( (++wvx) >= nwaveln )
-      {
-         wvx         = 0;
-         ccx++;
-      }
-   }
-
-   // Select wavelength in current list that is closest to previous selection
-qDebug() << "  chgLmb wavln-curx" << curx;
-   connect( cmb_pltwavln, SIGNAL( currentIndexChanged( int ) ),
-            this,         SLOT  ( changeWaveln(            ) ) );
-
-   cmb_pltwavln->setCurrentIndex( curx );
-   if ( curx == prex )
-      changeWaveln();
-}
- 
-void US_MwlRawViewer::changeWaveln( void )
-{
-qDebug() << "changeWaveln";
-   int    wvx    = cmb_pltwavln->currentIndex();
-
-   // Average at the current wavelength if not already done
-   averageWavlen( wvx );
+   // Insure we have averaged data
+   build_avg_data();
 
    // Plot what we have
    plot_current();
 
-   pb_prev->setEnabled( ( wvx > 0 ) );
-   pb_next->setEnabled( ( wvx < ( nwaveln -1 ) ) );
+   pb_prev->setEnabled( ( recx > 0 ) );
+   pb_next->setEnabled( ( recx < ( krecs -1 ) ) );
 }
 
-void US_MwlRawViewer::prevWvpl( void )
+// Slot to handle a change in the plot record type
+void US_MwlRawViewer::changeRectype( bool wlnrec )
 {
-   int wvx = cmb_pltwavln->currentIndex() - 1;
+DbgLv(1) << "chgRtype: wlnrec" << wlnrec;
+}
 
-   if ( wvx < 1 )
+// Slot to handle a click to go to the previous record
+void US_MwlRawViewer::prevPlot( void )
+{
+   int pltrx      = cb_pltrec->currentIndex() - 1;
+
+   if ( pltrx < 1 )
    {
-      wvx     = 0;
+      pltrx          = 0;
       pb_prev->setEnabled( false );
    }
 
-   cmb_pltwavln->setCurrentIndex( wvx );
+   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+   last_xmin      = sdx->lowerBound();
+   last_xmax      = sdx->upperBound();
+   last_ymin      = sdy->lowerBound();
+   last_ymax      = sdy->upperBound();
+
+   cb_pltrec->setCurrentIndex( pltrx );
 }
 
-void US_MwlRawViewer::nextWvpl( void )
+// Slot to handle a click to go to the next record
+void US_MwlRawViewer::nextPlot( void )
 {
-   int wvx = cmb_pltwavln->currentIndex() + 1;
+   int pltrx      = cb_pltrec->currentIndex() + 1;
 
-   if ( ( wvx + 2 ) > nwaveln )
+   if ( ( pltrx + 2 ) > nlambda )
    {
-      wvx     = nwaveln - 1;
+      pltrx          = nlambda - 1;
       pb_next->setEnabled( false );
    }
 
-   cmb_pltwavln->setCurrentIndex( wvx );
+   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+   last_xmin      = sdx->lowerBound();
+   last_xmax      = sdx->upperBound();
+   last_ymin      = sdy->lowerBound();
+   last_ymax      = sdy->upperBound();
+
+   cb_pltrec->setCurrentIndex( pltrx );
 }
 
-void US_MwlRawViewer::averageWavlen( int wvx )
+// Slot to handle a change in the number of averaging points
+void US_MwlRawViewer::changeAverage()
 {
-   double wavl   = curr_wvlns[ wvx ];
-   int    trx    = currCellCh * nwaveln + wvx;
-   int    wvxo   = orig_wvlns.indexOf( wavl );
-   int    navgg  = curr_lavgs[ trx ];
+DbgLv(1) << "chgAvg:";
+   prev_recxs.clear();
+   prev_cdata.clear();
+   changeRecord();
+}
 
-   if ( navgg != lavgg )
-   { // Not currently averaged, so do so
-      int    wvlo   = qMax( ( wvxo - lavgg / 2 ), 0       );
-      int    wvhi   = qMin( ( wvlo + lavgg     ), nwlorig );
-      int    trxos  = currCellCh * nwlorig + wvlo;
-      double wcsum  = (double)( wvhi - wvlo );
+// Build the component data vectors for averaging
+void US_MwlRawViewer::build_cmp_data()
+{
+   compute_ranges();                 // Insure we have current plot ranges
 
-      for ( int ii = 0; ii < nradpt; ii++ )
+   QVector< double > fillv;
+   curr_recxs.clear();
+   curr_cdata.clear();
+   navgrec       = ct_recavg->value();
+   int kavgc     = navgrec;
+   int kavgh     = kavgc / 2;
+   int arxs      = recx - kavgh;
+   int arxe      = recx + kavgh;
+   arxs          = qMax( arxs, 0 );
+   arxe          = qMin( arxe, krecs - 1 ) + 1;
+   kavgc         = arxe - arxs;
+   curr_cdata.fill( fillv, kavgc );  // Initialize component datas
+DbgLv(1) << "BldC: kavgc" << kavgc << "arxs arxe" << arxs << arxe;
+   int jrx       = 0;
+
+   for ( int krx = arxs; krx < arxe; krx++, jrx++ )
+   {
+      int prx       = prev_recxs.indexOf( krx );
+DbgLv(1) << "BldC:   krx" << krx << "prx" << prx;
+
+      if ( prx < 0 )
       {
-         int    trxo   = trxos;
-         double wvsum  = 0.0;
-         for ( int jj = wvlo; jj < wvhi; jj++ )
+         build_rec_data( krx, curr_cdata[ jrx ] );
+      }
+      else
+      {
+         curr_cdata[ jrx ] = prev_cdata[ prx ];
+      }
+
+      curr_recxs << krx;
+   }
+
+   prev_recxs = curr_recxs;
+   prev_cdata = curr_cdata;
+
+}
+
+// Build the averaged data vector for the current plot record
+void US_MwlRawViewer::build_avg_data()
+{
+   build_cmp_data();        // Build components for averaging
+
+   int kavgc     = curr_recxs.size();
+   double avgscl = 1.0 / (double)kavgc;
+DbgLv(1) << "BldA: kavgc" << kavgc << "ktpoint" << ktpoint;
+DbgLv(1) << "BldA:  cd size" << curr_cdata.size();
+DbgLv(1) << "BldA:  cd0 size" << curr_cdata[0].size();
+int nn=curr_cdata.size()-1;
+DbgLv(1) << "BldA:  cdn size" << curr_cdata[nn].size();
+
+   curr_adata.clear();
+
+   for ( int ptx = 0; ptx < ktpoint; ptx++ )
+   {
+      double dsum   = 0.0;
+
+      for ( int rcx = 0; rcx < kavgc; rcx++ )
+      {
+         dsum       += curr_cdata[ rcx ][ ptx ];
+if(ptx==(ktpoint/2))
+DbgLv(1) << "BldA:   ptx rcx" << ptx << rcx << "cdat dsum"
+ << curr_cdata[rcx][ptx] << dsum;
+      }
+
+      curr_adata << ( dsum * avgscl );
+   }
+DbgLv(1) << "BldA:  curr_adata size" << curr_adata.size();
+}
+
+// Build a record data vector
+void US_MwlRawViewer::build_rec_data( const int recx,
+                                      QVector< double >& rdata )
+{
+   compute_ranges();
+
+   rdata.clear();
+   kscan      = 0;
+
+DbgLv(1) << "BldR:     recx" << recx;
+   if ( is_wrecs )
+   {  // Build data values for wavelength record with x-axis radius
+      krecs      = klambda;
+      kpoint     = kradii;
+      int trpx   = trpxs + lmbxs + recx;
+DbgLv(1) << "BldR:      trx rxs rxe nscan" << trpx << radxs << radxe << nscan;
+   if ( is_wrecs )
+
+      for ( int scnx = 0; scnx < nscan; scnx++ )
+      {
+         if ( excludes.contains( scnx ) )  continue;
+
+         for ( int radx = radxs; radx < radxe; radx++ )
          {
-            wvsum        += orig_reads[ trxo++ ][ ii ];
+            rdata << allData[ trpx ].reading( scnx, radx );
          }
 
-         curr_reads[ trx ][ ii ] = wvsum / wcsum;
+         kscan++;
       }
-      
-      curr_lavgs[ trx ]   = lavgg;
+DbgLv(1) << "BldR:      kscan" << kscan << "rd size" << rdata.size();
    }
+
+   else
+   {  // Build data values for radius record with x-axis wavelength
+      krecs      = kradii;
+      kpoint     = klambda;
+      int wavxs  = trpxs + lmbxs;
+      int wavxe  = trpxs + lmbxe;
+
+      for ( int scnx = 0; scnx < nscan; scnx++ )
+      {
+         if ( excludes.contains( scnx ) )  continue;
+
+         for ( int wavx = wavxs; wavx < wavxe; wavx++ )
+         {
+            rdata << allData[ wavx ].reading( scnx, recx );
+         }
+
+         kscan++;
+      }
+   }
+
+   ktpoint    = kscan * kpoint;
+}
+
+// Compute the plot range indexes implied by current settings
+void US_MwlRawViewer::compute_ranges()
+{
+   if ( have_rngs )         // If we just did this computation, return now
+      return;
+
+   ccx        = cb_cellchn->currentIndex();            // Cell/Channel index
+   rad_start  = cb_rstart ->currentText().toDouble();  // Radius start
+   rad_end    = cb_rend   ->currentText().toDouble();  // Radius end
+   lmb_start  = cb_lstart ->currentText().toInt();     // Lambda start
+   lmb_end    = cb_lend   ->currentText().toInt();     // Lambda end
+   recx       = cb_pltrec ->currentIndex();            // Plot record index
+   lmbxs      = lambdas.indexOf( lmb_start );          // Lambda start index
+   lmbxe      = lambdas.indexOf( lmb_end   ) + 1;      // Lambda end index
+   radxs      = dvec_index( radii, rad_start );        // Radius start index
+   radxe      = dvec_index( radii, rad_end   ) + 1;    // Radius end index
+DbgLv(1) << "cmpR:  rS rE rxS rxE" << rad_start << rad_end << radxs << radxe;
+DbgLv(1) << "cmpR:   rvS rvE" << radii[radxs] << radii[radxe-1];
+   klambda    = lmbxe - lmbxs;                         // Count of plot lambdas
+   kradii     = radxe - radxs;                         // Count of plot radii
+   kscan      = nscan - excludes.size();               // Count included scans
+   trpxs      = ccx * nlambda;                         // Start triple index
+   pltxvals.clear();
+   if ( is_wrecs )
+   {
+      krecs      = klambda;                            // Count of plot recs 
+      kpoint     = kradii;                             // Count of plot points
+      for ( int jj = radxs; jj < radxe; jj++ )
+         pltxvals << radii[ jj ];                      // Plot X values
+DbgLv(1) << "cmpR:  pxS pxE" << pltxvals[0] << pltxvals[kpoint-1];
+   }
+   else
+   {
+      krecs      = kradii;                             // Count of plot recs 
+      kpoint     = klambda;                            // Count of plot points
+      for ( int jj = lmbxs; jj < lmbxe; jj++ )
+         pltxvals << (double)lambdas[ jj ];            // Plot X values
+   }
+   ktpoint    = kscan * kpoint;                        // Total plot data points
+   have_rngs  = true;                                  // Mark ranges computed
+DbgLv(1) << "cmpR:  is_wrecs" << is_wrecs << "kpoint" << kpoint;
+}
+
+// Connect or Disconnect plot-range related controls
+void US_MwlRawViewer::connect_ranges( bool conn )
+{
+   if ( conn )
+   {  // Connect the range-related controls
+      connect( cb_cellchn, SIGNAL( currentIndexChanged( int ) ),
+               this,       SLOT  ( changeCellCh(            ) ) );
+      connect( cb_rstart,  SIGNAL( currentIndexChanged( int ) ),
+               this,       SLOT  ( changeRadius(            ) ) );
+      connect( cb_rend,    SIGNAL( currentIndexChanged( int ) ),
+               this,       SLOT  ( changeRadius(            ) ) );
+      connect( cb_lstart,  SIGNAL( currentIndexChanged( int ) ),
+               this,       SLOT  ( changeLambda(            ) ) );
+      connect( cb_lend,    SIGNAL( currentIndexChanged( int ) ),
+               this,       SLOT  ( changeLambda(            ) ) );
+      connect( cb_pltrec,  SIGNAL( currentIndexChanged( int ) ),
+               this,       SLOT  ( changeRecord(            ) ) );
+   }
+
+   else
+   {  // Disconnect the range-related controls
+      cb_cellchn->disconnect();
+      cb_rstart ->disconnect();
+      cb_rend   ->disconnect();
+      cb_lstart ->disconnect();
+      cb_lend   ->disconnect();
+      cb_pltrec ->disconnect();
+   }
+}
+
+// Slot to handle a change in scan exclude "from" value
+void US_MwlRawViewer::exclude_from( double )
+{
+}
+
+// Slot to handle a change in scan exclude "to" value
+void US_MwlRawViewer::exclude_to( double )
+{
+}
+
+// Slot to handle click of Exclude Scan Range
+void US_MwlRawViewer::exclude_scans()
+{
+}
+
+// Slot to handle click of Include All (restore of all scans)
+void US_MwlRawViewer::include_scans()
+{
+   excludes.clear();
+}
+
+// Slot to show a 2-D movie
+void US_MwlRawViewer::show_2d_movie()
+{
+DbgLv(1) << "Show 2D Movie";
+}
+
+// Slot to open a dialog for 3-D plotting
+void US_MwlRawViewer::plot_3d()
+{
+DbgLv(1) << "Plot 3De";
+}
+
+// Slot to show a 3-D movie
+void US_MwlRawViewer::show_3d_movie()
+{
+DbgLv(1) << "Show 3D Movie";
+}
+
+// Slot to save the current plot
+void US_MwlRawViewer::save_plot()
+{
+DbgLv(1) << "Save Plot";
+}
+
+// Slot to save the current cell's movie(s)
+void US_MwlRawViewer::save_movie()
+{
+DbgLv(1) << "Save Movie";
+}
+
+// Utility to find an index in a QVector<double> to a value epsilon match
+int US_MwlRawViewer::dvec_index( QVector< double >& dvec, const double dval )
+{
+   const double eps   = 1.e-4;
+
+   int indx    = dvec.indexOf( dval );
+
+   if ( indx < 0 )
+   {
+      for ( int jj = 0; jj < dvec.size(); jj++ )
+      {
+         double ddif     = qAbs( dvec[ jj ] - dval );
+
+         if ( ddif < eps )
+         {  // If vector value matches within epsilon, break and return
+            indx            = jj;
+            break;
+         }
+      }
+   }
+
+   return indx;
 }
 
