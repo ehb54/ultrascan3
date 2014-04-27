@@ -50,8 +50,8 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
 
    QGridLayout* settings = new QGridLayout;
 
-   //navgrec      = 11;
-   navgrec      = 1;
+   navgrec      = 11;
+   is_wrecs     = true;
    dbg_level    = US_Settings::us_debug();
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );
@@ -454,12 +454,6 @@ void US_MwlRawViewer::enableControls( void )
 void US_MwlRawViewer::load_mwl_raw( )
 {
    // Ask for data directory
-#if 0
-   QString dir = QFileDialog::getExistingDirectory( this, 
-         tr( "Raw Data Directory" ),
-         US_Settings::importDir(),
-         QFileDialog::DontResolveSymlinks );
-#endif
    QString dir = "";
    US_MwlRun lddiag( dir, true );
    if ( lddiag.exec() == QDialog::Rejected )
@@ -555,13 +549,6 @@ void US_MwlRawViewer::load_auc_mwl( )
    int status = 0;
    resetAll();
 
-#if 0
-   // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this, 
-         tr( "US3 Raw MWL Data Directory" ),
-         US_Settings::resultDir(),
-         QFileDialog::DontResolveSymlinks );
-#endif
    QString dir = "";
    US_MwlRun lddiag( dir, false );
    if ( lddiag.exec() == QDialog::Rejected )
@@ -1021,15 +1008,6 @@ DbgLv(1) << "chgCC: trxs trxe" << trxs << trxe << "xmin xmax ymin ymax"
  << last_xmin << last_xmax << last_ymin << last_ymax;
 }
 
-void US_MwlRawViewer::setCellChInfo( void )
-{
-   // Load them into the list box
-   cb_cellchn->clear();
-   ccx            = -1;          // indicates that it hasn't been selected yet
-
-   cb_cellchn->setCurrentIndex( 0 );
-}
-
 // Plot the current data record
 void US_MwlRawViewer::plot_current( void )
 {
@@ -1256,10 +1234,11 @@ void US_MwlRawViewer::prevPlot( void )
 void US_MwlRawViewer::nextPlot( void )
 {
    int pltrx      = cb_pltrec->currentIndex() + 1;
+   int nitems     = cb_pltrec->count();
 
-   if ( ( pltrx + 2 ) > nlambda )
+   if ( ( pltrx + 2 ) > nitems )
    {
-      pltrx          = nlambda - 1;
+      pltrx          = nitems - 1;
       pb_next->setEnabled( false );
    }
 
