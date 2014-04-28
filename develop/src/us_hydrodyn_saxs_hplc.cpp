@@ -3431,6 +3431,15 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
    update_enables();
 }
 
+void US_Hydrodyn_Saxs_Hplc::test_i_of_t()
+{
+   QStringList files = all_selected_files();
+   if ( check_zi_window( files ) )
+   {
+      editor_msg( "blue", QString( tr( "Test I(t) ok" ) ) );
+   }
+}
+
 bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files )
 {
    int window = ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_zi_window" ].toInt();

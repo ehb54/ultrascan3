@@ -328,6 +328,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_create_i_of_t->setPalette( PALET_PUSHB );
    connect(pb_create_i_of_t, SIGNAL(clicked()), SLOT(create_i_of_t()));
 
+   pb_test_i_of_t = new QPushButton(tr("Test I(t)"), this);
+   pb_test_i_of_t->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_test_i_of_t->setMinimumHeight(minHeight1);
+   pb_test_i_of_t->setPalette( PALET_PUSHB );
+   connect(pb_test_i_of_t, SIGNAL(clicked()), SLOT(test_i_of_t()));
+
    pb_create_i_of_q = new QPushButton(tr("Make I(q)"), this);
    pb_create_i_of_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_create_i_of_q->setMinimumHeight(minHeight1);
@@ -2236,6 +2242,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_4->addWidget ( pb_repeak );
    hbl_file_buttons_4->addWidget ( pb_svd );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_t );
+   hbl_file_buttons_4->addWidget ( pb_test_i_of_t );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_q );
 
    files_widgets.push_back ( pb_smooth );
@@ -3062,6 +3069,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
+   pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
    pb_conc_file          ->setEnabled( files_selected_count == 1 );
    pb_detector           ->setEnabled( true );

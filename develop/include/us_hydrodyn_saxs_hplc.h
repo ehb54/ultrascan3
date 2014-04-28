@@ -218,6 +218,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_repeak;
       QPushButton   *pb_svd;
       QPushButton   *pb_create_i_of_t;
+      QPushButton   *pb_test_i_of_t;
       QPushButton   *pb_create_i_of_q;
 
 
@@ -801,6 +802,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void                         smooth( QStringList files );
       void                         repeak( QStringList files );
       void                         create_i_of_t( QStringList files );
+      void                         test_i_of_t( QStringList files );
       bool                         create_i_of_q( QStringList files,
                                                   double t_min = -1e99,
                                                   double t_max = 1e99 );
@@ -1028,6 +1030,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void svd();
       void repeak();
       void create_i_of_t();
+      void test_i_of_t();
       void create_i_of_q();
       void set_conc_file();
       void set_detector();
