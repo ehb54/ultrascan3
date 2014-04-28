@@ -448,6 +448,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    hbl = new Q3HBoxLayout( 0 );
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_save );
+   hbl->addSpacing( 4 );
    hbl->addWidget( pb_load );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );

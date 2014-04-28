@@ -64,7 +64,8 @@ US_PM::US_PM(
              unsigned int      max_mem_in_MB,
              int               debug_level,
              bool              quiet,
-             US_Log          * us_log
+             US_Log          * us_log,
+             US_Udp_Msg      * us_udp_msg
              )
 {
    // this->grid_conversion_factor = grid_conversion_factor;
@@ -83,6 +84,7 @@ US_PM::US_PM(
    this->debug_level            = debug_level;
    this->quiet                  = quiet;
    this->us_log                 = us_log;
+   this->us_udp_msg             = us_udp_msg;
 
    us_log_started               = false;
    if ( !us_log )

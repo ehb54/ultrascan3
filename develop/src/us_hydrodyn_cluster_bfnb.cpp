@@ -26,7 +26,7 @@ US_Hydrodyn_Cluster_Bfnb::US_Hydrodyn_Cluster_Bfnb(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: BNFB cluster interface" ) );
+   setCaption( tr( "US-SOMO: Parsimonious Modeling" ) );
 
    setupGUI();
 
@@ -44,7 +44,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( tr( "US-SOMO: BNFB cluster interface" ), this );
+   lbl_title =  new QLabel      ( tr( "US-SOMO: Parsimonious Modeling" ), this );
    lbl_title -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
@@ -52,7 +52,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    AUTFBACK( lbl_title );
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
-   lbl_credits_1 =  new QLabel      ( "Cite: Brookes, E. BFNB 2013", this );
+   lbl_credits_1 =  new QLabel      ( "Cite: Brookes, E. Parsimonious Spatial Modeling from Small Angle Scattering Intensity Data of Biological Macromolecules, 2014", this );
    lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_credits_1 -> setMinimumHeight( minHeight1 );
    lbl_credits_1 -> setPalette      ( PALET_LABEL );
@@ -124,7 +124,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    widgets_main_label.push_back( le_pmrayleighdrho );
    if ( !parameters->count( "pmrayleighdrho" ) )
    {
-      ( *parameters )[ "pmrayleighdrho" ] = ".425";
+      ( *parameters )[ "pmrayleighdrho" ] = "0.425";
    }
    le_pmrayleighdrho ->setText           ( parameters->count( "pmrayleighdrho" ) ? ( *parameters )[ "pmrayleighdrho" ] : "" );
    le_pmrayleighdrho ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
@@ -987,6 +987,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    hbl = new Q3HBoxLayout( 0 );
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_save );
+   hbl->addSpacing( 4 );
    hbl->addWidget( pb_load );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
@@ -1401,7 +1402,7 @@ void US_Hydrodyn_Cluster_Bfnb::save()
       if ( !f.open( QIODevice::WriteOnly ) )
       {
          QMessageBox::information( this,
-                                   tr( QString( "%1: Save" ).arg( "US-SOMO: BNFB cluster interface" ) ),
+                                   tr( QString( "%1: Save" ).arg( "US-SOMO: Parsimonious Modeling" ) ),
                                    QString( tr( "Could not open file %1 for writing" ) )
                                    .arg( filename ) 
                                    );
@@ -1427,7 +1428,7 @@ void US_Hydrodyn_Cluster_Bfnb::load()
       {
           QMessageBox::information( 
                                     this,
-                                    tr( QString( "%1: Open" ).arg( "US-SOMO: BNFB cluster interface" ) ),
+                                    tr( QString( "%1: Open" ).arg( "US-SOMO: Parsimonious Modeling" ) ),
                                     QString( tr( "Could not open file %1 for reading" ) )
                                     .arg( filename ) 
                                     );

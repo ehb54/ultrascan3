@@ -291,7 +291,10 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    cb_bestmsrusesomoradii ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    cb_bestmsrusesomoradii ->setMinimumWidth  ( QFontMetrics( cb_bestmsrusesomoradii->font() ).maxWidth() * 41 );
 
-   widgets_opt_label.push_back( cb_bestmsrusesomoradii );
+   if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   {
+      widgets_opt_label.push_back( cb_bestmsrusesomoradii );
+   }
    cb_bestmsrusesomoradii ->setChecked        ( parameters->count( "bestmsrusesomoradii" ) && ( *parameters )[ "bestmsrusesomoradii" ] == "true" ? true : false );
    connect( cb_bestmsrusesomoradii, SIGNAL( clicked() ), SLOT( set_bestmsrusesomoradii() ) );
 
@@ -460,11 +463,16 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    hbl = new Q3HBoxLayout( 0 );
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_save );
+   hbl->addSpacing( 4 );
    hbl->addWidget( pb_load );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
    hbl = new Q3HBoxLayout( 0 );
    hbl->addSpacing( 4 );
+   if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
+   {
+      cb_bestmsrusesomoradii->hide();
+   }
 
 
    Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );

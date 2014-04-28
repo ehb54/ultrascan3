@@ -12,6 +12,8 @@
 
 QString US_Saxs_Util::run_json( QString & json )
 {
+   // note: alternate version for mpi in in run_json_mpi() in us_saxs_util_pm_mpi.cpp
+
    if ( !us_log )
    {
       us_log = new US_Log( "runlog.txt" );
@@ -1538,6 +1540,10 @@ bool US_Saxs_Util::run_pm(
 
    errormsg = "";
 
+   // bool use_errors = 
+   //    control_vectors[ "pme" ].size() == control_vectors[ "pmq" ].size() &&
+   //    !is_nonzero_vector( control_vectors[ "pme" ] );
+
    if ( control_parameters.count( "pmrayleighdrho" ) )
    {
       if ( !control_vectors.count( "pmq" ) )
@@ -1599,6 +1605,14 @@ bool US_Saxs_Util::run_pm(
             us_log->log( QString( "uspm approxmaxdim %1" ).arg( control_parameters [ "pmgridsize"     ].toDouble() ) );
          }
 
+         if ( us_udp_msg )
+         {
+            map < QString, QString > msging;
+            msging[ "status" ] = 
+               QString( "computing approximate maximum dimension of %1" )
+               .arg( control_parameters.count( "pmoutname" ) ? control_parameters[ "pmoutname" ] : "unknown" );
+            us_udp_msg->send_json( msging );
+         }
          US_PM pm(
                   control_parameters [ "pmgridsize"     ].toDouble(),
                   control_parameters [ "pmmaxdimension" ].toInt(),
@@ -1618,6 +1632,15 @@ bool US_Saxs_Util::run_pm(
                                         approx_max_d ) )
          {
             return false;
+         }
+         if ( us_udp_msg )
+         {
+            map < QString, QString > msging;
+            msging[ "status" ] = 
+               QString( "approximate maximum dimension of %1 is %2" )
+               .arg( control_parameters.count( "pmoutname" ) ? control_parameters[ "pmoutname" ] : "unknown" )
+               .arg( approx_max_d );
+            us_udp_msg->send_json( msging );
          }
          control_parameters[ "approx_max_d" ] = QString( "%1" ).arg( approx_max_d );
          if ( !quiet && us_log )
@@ -2038,6 +2061,17 @@ bool US_Saxs_Util::run_pm(
 
                pm.zero_params( params, types );
 
+               if ( us_udp_msg )
+               {
+                  map < QString, QString > msging;
+                  msging[ "status" ] = 
+                     QString( "start GA for %1%2" )
+                     .arg( control_parameters.count( "pmoutname" ) ? control_parameters[ "pmoutname" ] : "unknown" )
+                     .arg( pm.get_name( types ) )
+                     ;
+                  us_udp_msg->send_json( msging );
+               }
+
                if ( !pm.best_ga( 
                                 params,
                                 model,
@@ -2074,6 +2108,41 @@ bool US_Saxs_Util::run_pm(
                   errormsg = pm.error_msg;
                   return false;
                }
+               if ( us_udp_msg )
+               {
+                  map < QString, QString > msging;
+                  double a = 0e0;
+                  double chi2 = 0e0;
+                  bool fitok = 
+                     pm.use_errors ?
+                     scaling_fit( 
+                                 produced_I[ outname ],
+                                 control_vectors[ "pmi" ],
+                                 control_vectors[ "pme" ],
+                                 a,
+                                 chi2 ) 
+                     :
+                     scaling_fit( 
+                                 produced_I[ outname ],
+                                 control_vectors[ "pmi" ],
+                                 a,
+                                 chi2 )
+                     ;
+                              
+                  msging[ "status" ] = 
+                     QString( "end GA for %1%2 model%3" )
+                     .arg( control_parameters.count( "pmoutname" ) ? control_parameters[ "pmoutname" ] : "unknown" )
+                     .arg( pm.get_name( types ) )
+                     .arg( fitok ? 
+                           QString( " %1 %2" )
+                           .arg( pm.use_errors ? "nchi" : "rmsd" )
+                           .arg( pm.use_errors ? chi2 / ( control_vectors[ "pmq" ].size() - 1) 
+                                 : chi2, 0, 'g', 4 )  : QString( "" ) )
+                     ;
+                  us_udp_msg->send_json( msging );
+               }
+               
+
             }
             pm_ga_fitness_secs  += pm.pm_ga_fitness_secs;
             pm_ga_fitness_calls += pm.pm_ga_fitness_calls;

@@ -67,6 +67,7 @@ ostream & operator << ( ostream& out, const pm_msg& c )
 
 bool US_Saxs_Util::run_json_mpi( QString & json )
 {
+   // note: alternate version for non-mpi in in run_json() in us_saxs_util_pm.cpp
 
 #if defined( USE_AFFINITY )
    {

@@ -68,6 +68,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       
       QLabel       *                          lbl_other_options;
       QCheckBox    *                          cb_csv_transposed;
+      QLabel *                                lbl_zi_window;
+      QLineEdit *                             le_zi_window;
 
       QPushButton  *                          pb_quit;
       QPushButton  *                          pb_help;

@@ -2125,6 +2125,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_bl_smooth"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"   ];
    parameters[ "hplc_bl_reps"     ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"     ];
    parameters[ "hplc_bl_alpha"    ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"    ];
+   parameters[ "hplc_zi_window"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"   ];
 
    parameters[ "hplc_csv_transposed" ] = 
       (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) ?
@@ -2148,6 +2149,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"   ] = parameters[ "hplc_bl_smooth"   ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"     ] = parameters[ "hplc_bl_reps"     ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"    ] = parameters[ "hplc_bl_alpha"    ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"   ] = parameters[ "hplc_zi_window"    ];
 
    // maybe ask (warn) here if gaussian data structures have data
 

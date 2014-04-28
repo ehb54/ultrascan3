@@ -189,6 +189,25 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    cb_csv_transposed->setPalette( PALET_NORMAL );
    AUTFBACK( cb_csv_transposed );
 
+   lbl_zi_window =  new QLabel      ( tr( "I(t) negative integral check window :" ), this );
+   lbl_zi_window -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_zi_window -> setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zi_window );
+   lbl_zi_window -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_zi_window = new QLineEdit(this, "le_zi_window Line Edit");
+   le_zi_window->setText( (*parameters)[ "hplc_zi_window" ] );
+   le_zi_window->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_zi_window->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zi_window );
+   le_zi_window->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QIntValidator *qdv = new QIntValidator( 5, 200, le_zi_window );
+      le_zi_window->setValidator( qdv );
+   }
+   connect( le_zi_window, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_zi_window->setMinimumWidth( 60 );
+
    pb_quit =  new QPushButton ( tr( "Quit" ), this );
    pb_quit -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_quit -> setMinimumHeight( minHeight1 );
@@ -234,6 +253,13 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    background->addWidget( rb_emggmg );
    background->addWidget( lbl_other_options );
    background->addWidget( cb_csv_transposed );
+
+   Q3GridLayout *gl_other = new Q3GridLayout( 0 );
+
+   gl_other->addWidget         ( lbl_zi_window , 0, 0 );
+   gl_other->addWidget         ( le_zi_window  , 0, 1 );
+
+   background->addLayout( gl_other );
 
    if ( !parameters->count( "gaussian_type" ) )
    {
@@ -294,12 +320,13 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
 {
    (*parameters)[ "ok" ] = "true";
 
-   (*parameters)[ "hplc_bl_linear"   ]   = rb_linear  ->isChecked() ? "true" : "false";
-   (*parameters)[ "hplc_bl_integral" ]   = rb_integral->isChecked() ? "true" : "false";
-   (*parameters)[ "hplc_bl_save"     ]   = cb_save_bl ->isChecked() ? "true" : "false";
-   (*parameters)[ "hplc_bl_smooth"   ]   = le_smooth  ->text();
-   (*parameters)[ "hplc_bl_reps"     ]   = le_reps    ->text();
-   (*parameters)[ "hplc_bl_alpha"    ]   = le_alpha   ->text();
+   (*parameters)[ "hplc_bl_linear"       ] = rb_linear      ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_bl_integral"     ] = rb_integral    ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_bl_save"         ] = cb_save_bl     ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_bl_smooth"       ] = le_smooth      ->text();
+   (*parameters)[ "hplc_bl_reps"         ] = le_reps        ->text();
+   (*parameters)[ "hplc_bl_alpha"        ] = le_alpha       ->text();
+   (*parameters)[ "hplc_zi_window"       ] = le_zi_window   ->text();
 
    if ( rb_gauss->isChecked() )
    {

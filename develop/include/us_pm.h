@@ -355,7 +355,8 @@ class US_PM
                         unsigned int      max_mem_in_MB   = 2048,
                         int               debug_level = 0,
                         bool              quiet = false,
-                        US_Log          * us_log = ( US_Log *)0
+                        US_Log          * us_log     = (US_Log *)0,
+                        US_Udp_Msg      * us_upd_msg = (US_Udp_Msg *)0
                         );
 
    ~US_PM              ();
@@ -367,6 +368,7 @@ class US_PM
 
    US_Log            * us_log;
    bool                us_log_started;
+   US_Udp_Msg        * us_udp_msg;
    bool                quiet;
 
    // params = model type, params required for model type, model type etc.

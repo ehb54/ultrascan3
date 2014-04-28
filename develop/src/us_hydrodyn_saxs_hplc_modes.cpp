@@ -1732,8 +1732,33 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
                guinier_plot_rg->setCurveSymbol( curve, rg_sym );
                guinier_plot_rg->setCurveData( curve, & pos, & Rg, 1 );
 #endif
-               rg_x.push_back( pos );
-               rg_y.push_back( Rg );
+               rg_x .push_back( pos );
+               rg_y .push_back( Rg );
+            }
+
+            {
+               double x[2];
+               double y[2];
+               
+               x[ 0 ] = x[ 1 ] = pos;
+               y[ 0 ] = Rg - sigb;
+               y[ 1 ] = Rg + sigb;
+
+               QPen use_pen = QPen( guinier_colors[ this_name ], use_line_width, Qt::SolidLine );
+#ifdef QT4
+               QwtPlotCurve *curve = new QwtPlotCurve( this_name + "_sd" );
+               curve->setStyle ( QwtPlotCurve::Lines );
+               curve->setData( x, y, 2 );
+               curve->setPen( use_pen );
+               curve->attach( guinier_plot_rg );
+#else
+               long curve = guinier_plot_rg->insertCurve( this_name + "_sd" );
+               guinier_plot_rg->setCurveStyle ( curve, QwtCurve::Lines );
+               guinier_plot_rg->setCurveData( curve, x, y, 2 );
+               guinier_plot_rg->setCurvePen( curve, use_pen );
+#endif
+               rg_x .push_back( pos );
+               rg_y .push_back( Rg );
             }
          }
 
@@ -1808,6 +1833,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
       // qDebug( QString( "testiq in rg plot ok use minmax %1 %2" ).arg( use_min ).arg( use_max ) );
       vector < double > x;
       vector < double > y;
+      vector < double > y2 = guinier_it_I;
 
       double ymin = 1e99;
       double ymax = -1e99;
@@ -1833,16 +1859,23 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
       if ( ymax > ymin )
       {
-         double scale = (rg_max + 2e0 * space - rg_min ) / ( ymax - ymin );
+         double scale = ( rg_max - rg_min ) / ( ymax - ymin );
 
          // qDebug( QString( "testiq in rg plot scale %1 rg_min %2 rg_max %3 ymin %4 ymax %5 " ).arg( scale ).arg( rg_min ).arg( rg_max ).arg( ymin ).arg( ymax ) );
 
-         for ( int i = 0; i < (int) y.size(); ++i )
+         for ( int i = 0; i < (int) y2.size(); ++i )
          {
-            y[ i ] -= ymin;
-            y[ i ] *= scale;
-            y[ i ] += rg_min;
+            y2[ i ] -= ymin;
+            y2[ i ] *= scale;
+            y2[ i ] += rg_min;
          }
+
+         // for ( int i = 0; i < (int) y.size(); ++i )
+         // {
+         //    y[ i ] -= ymin;
+         //    y[ i ] *= scale;
+         //    y[ i ] += rg_min;
+         // }
 
          // QPen use_pen = QPen( plot_colors[ f_pos[ testiq_it_selected ] % plot_colors.size() ], use_line_width, Qt::SolidLine );
          QPen use_pen = QPen( Qt::green, use_line_width, Qt::SolidLine );
@@ -1850,18 +1883,18 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          QwtPlotCurve * curve = new QwtPlotCurve( "refitline" );
          curve->setStyle( QwtPlotCurve::Lines );
          curve->setData(
-                        (double *)&(x[0]),
-                        (double *)&(y[0]),
-                        x.size() );
+                        (double *)&(guinier_it_t[0]),
+                        (double *)&(y2[0]),
+                        guinier_it_t.size() );
          curve->setPen( use_pen );
          curve->attach( guinier_plot_rg );
 #else
          long curve = guinier_plot_rg->insertCurve( "rgline" );
          guinier_plot_rg->setCurveStyle( curve, QwtCurve::Lines );
          guinier_plot_rg->setCurveData( curve,
-                                        (double *)&(x[0]),
-                                        (double *)&(y[0]),
-                                        x.size() );
+                                        (double *)&(guinier_it_t[0]),
+                                        (double *)&(y2[0]),
+                                        guinier_it_t.size() );
          guinier_plot_rg->setCurvePen( curve, use_pen );
 #endif
       }
@@ -2038,7 +2071,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_replot()
       vector < double > q;
       vector < double > I;
       vector < double > e;
-      bool use_error = ( guinier_q[ it->first ].size() == guinier_q[ it->first ].size() );
+      bool use_error = ( guinier_q[ it->first ].size() == guinier_e[ it->first ].size() );
       for ( unsigned int i = 0; i < q_points; i++ )
       {
          if ( guinier_I [ it->first ][ i ] > 0e0 )
@@ -2428,12 +2461,13 @@ void US_Hydrodyn_Saxs_Hplc::guinier_delta_end_focus( bool hasFocus )
 // --- baseline ---
 void US_Hydrodyn_Saxs_Hplc::baseline_start()
 {
-   org_baseline_start_s = le_baseline_start_s->text().toDouble();
-   org_baseline_start   = le_baseline_start  ->text().toDouble();
-   org_baseline_start_e = le_baseline_start_e->text().toDouble();
-   org_baseline_end_s   = le_baseline_end_s  ->text().toDouble();
-   org_baseline_end     = le_baseline_end    ->text().toDouble();
-   org_baseline_end_e   = le_baseline_end_e  ->text().toDouble();
+   org_baseline_start_s     = le_baseline_start_s    ->text().toDouble();
+   org_baseline_start       = le_baseline_start      ->text().toDouble();
+   org_baseline_start_e     = le_baseline_start_e    ->text().toDouble();
+   org_baseline_end_s       = le_baseline_end_s      ->text().toDouble();
+   org_baseline_end         = le_baseline_end        ->text().toDouble();
+   org_baseline_end_e       = le_baseline_end_e      ->text().toDouble();
+   org_baseline_start_zero  = cb_baseline_start_zero ->isChecked();
 
    le_last_focus = (mQLineEdit *) 0;
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -2554,7 +2588,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
                                     le_baseline_start_e->text().toDouble() != org_baseline_start_e ||
                                     le_baseline_end_s  ->text().toDouble() != org_baseline_end_s   ||
                                     le_baseline_end    ->text().toDouble() != org_baseline_end     ||   
-                                    le_baseline_end_e  ->text().toDouble() != org_baseline_end_e
+                                    le_baseline_end_e  ->text().toDouble() != org_baseline_end_e   ||
+                                    cb_baseline_start_zero->isChecked()    != org_baseline_start_zero
                                     );
    cb_baseline_start_zero ->setEnabled( true );
    if ( cb_baseline_start_zero->isChecked() )
@@ -3031,6 +3066,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
    double end_e   = le_baseline_end_e  ->text().toDouble();
 
    // redo this to compute from best linear fit over ranges
+   QStringList messages;
 
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
@@ -3045,6 +3081,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
 
       vector < double > end_q;
       vector < double > end_I;
+
 
       {
          unsigned int j = 0;
@@ -3211,6 +3248,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
       int ext = 0;
       QString bl_name = files[ i ];
 
+
       if ( integral )
       {
          double delta_bl = end_y - start_y;
@@ -3221,7 +3259,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
             if ( !usu.smooth( f_Is[ files[ i ] ], bl_I, smoothing ) )
             {
                bl_I = f_Is[ files[ i ] ];
-               editor_msg( "red", QString( tr( "Error: smoothing error on %1" ) ).arg( files[ i ] ) );
+               messages << QString( tr( "Error: smoothing error on %1" ) ).arg( files[ i ] );
+               editor_msg( "red", messages.back() );
             }
          }
          vector < double > new_I = f_Is[ files[ i ] ];
@@ -3302,7 +3341,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
                {
                   new_I[ j ] = f_Is[ files[ i ] ][ j ] - bl[ j ];
                }
-               editor_msg( "dark red", QString( tr( "Warning: the integral of %1 was less than or equal to zero => constant baseline" ) ).arg( files[ i ] ) );
+               messages << QString( tr( "Warning: the integral of %1 was less than or equal to zero => constant baseline" ) ).arg( files[ i ] );
+               editor_msg( "dark red", messages.back() );
             }
 
             if ( save_bl )
@@ -3368,6 +3408,32 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
          f_gaussians  [ bl_name ] = tmp;
       }
       editor_msg( "gray", QString( "Created %1\n" ).arg( bl_name ) );
+   }
+
+   if ( messages.size() )
+   {
+      QStringList qsl;
+      for ( int i = 0; i < (int)messages.size() && i < 15; i++ )
+      {
+         qsl << messages[ i ];
+      }
+
+      if ( qsl.size() < messages.size() )
+      {
+         qsl << QString( tr( "... and %1 more not listed" ) ).arg( messages.size() - qsl.size() );
+      }
+
+      QMessageBox::warning(
+                           this,
+                           this->caption() + tr(": Baseline apply" ),
+                           QString( tr( "Please note:\n\n"
+                                        "These errors were produced when performing the baseline correction\n"
+                                        "%1\n"
+                                        ) )
+                           .arg( qsl.join( "\n" ) ),
+                           QMessageBox::Ok | QMessageBox::Default,
+                           QMessageBox::NoButton
+                           );
    }
 
    disable_updates = true;

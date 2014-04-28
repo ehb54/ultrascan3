@@ -572,6 +572,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    hbl = new Q3HBoxLayout( 0 );
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_save );
+   hbl->addSpacing( 4 );
    hbl->addWidget( pb_load );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );

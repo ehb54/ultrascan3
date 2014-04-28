@@ -888,6 +888,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       double                       baseline_intercept;
       double                       baseline_slope;
+      bool                         org_baseline_start_zero;
       double                       org_baseline_start_s;
       double                       org_baseline_start;
       double                       org_baseline_start_e;
@@ -986,6 +987,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QString                      scale_applied_target;
 
       void                         scale_replot();
+
+      bool                         check_zi_window( QStringList & files );
 
    private slots:
 

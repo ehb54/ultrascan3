@@ -95,6 +95,10 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] = "false";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_zi_window" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window" ] = "25";
+   }
 
    gaussian_type = 
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gaussian_type" ) ?
@@ -3361,6 +3365,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
       current_files[ lb_files->text( i ) ] = true;
    }
 
+   QStringList created_files;
 
    for ( unsigned int i = 0; i < ( unsigned int )q.size(); i++ )
    {
@@ -3420,8 +3425,94 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
          vector < double > tmp;
          f_gaussians  [ fname ] = tmp;
       }
+      created_files << fname;
    }      
+   (void) check_zi_window( created_files );
    update_enables();
+}
+
+bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files )
+{
+   int window = ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_zi_window" ].toInt();
+
+   if ( !files.size() )
+   {
+      return true;
+   }
+
+   if ( window >= (int) f_qs[ files[ 0 ] ].size() )
+   {
+      QMessageBox::warning(
+                           this,
+                           this->caption() + tr(": I(t) negative integral window test" ),
+                           QString( tr(
+                                       "The created I(t) curves have fewer time points (%1) than the negative integral window size (%2)\n"
+                                       "The negative integral window test will not be performed.\n"
+                                       "You may wish to decrease this value in 'Options'.\n"
+                                       "Having a negative region likely means problems with buffer subtraction which should be corrected before *any* analysis is done.\n"
+                                       ) )
+                           .arg( f_qs[ files[ 0 ] ].size() )
+                           .arg( window ),
+                           QMessageBox::Ok | QMessageBox::Default,
+                           QMessageBox::NoButton
+                           );
+      return false;
+   }
+
+   QStringList messages;
+
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      QString this_file = files[ i ];
+      int pts = (int) f_qs[ this_file ].size();
+      for ( int j = 0; j < pts; ++j )
+      {
+         if ( j + window < pts )
+         {
+            double integral = 0e0;
+            for ( int k = 0; k < window; ++k )
+            {
+               integral += f_Is[ this_file ][ j + k ];
+            }
+            if ( integral < 0e0 )
+            {
+               messages << QString( "%1 negative integral region" ).arg( this_file );
+               break;
+            }
+         }
+      }
+   }
+
+   if ( messages.size() )
+   {
+      QStringList qsl;
+      for ( int i = 0; i < (int)messages.size() && i < 15; i++ )
+      {
+         qsl << messages[ i ];
+      }
+
+      if ( qsl.size() < messages.size() )
+      {
+         qsl << QString( tr( "... and %1 more not listed" ) ).arg( messages.size() - qsl.size() );
+      }
+
+      QMessageBox::warning(
+                           this,
+                           this->caption() + tr(": I(t) negative integral window test" ),
+                           QString( tr( "Please note:\n\n"
+                                        "These files have failed the negative integral window test of size %1\n"
+                                        "%2\n\n"
+                                        "Having a negative region likely means problems with buffer subtraction which should be corrected before *any* analysis is done.\n"                                             
+                                        ) )
+                           .arg( window )
+                           .arg( qsl.join( "\n" ) ),
+                           QMessageBox::Ok | QMessageBox::Default,
+                           QMessageBox::NoButton
+                           );
+      return false;
+   }
+   
+   return true;
 }
 
 bool US_Hydrodyn_Saxs_Hplc::all_selected_have_nonzero_conc()
