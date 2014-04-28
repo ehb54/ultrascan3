@@ -119,6 +119,8 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
    ct_to    ->resize( rhgt, swid );
    ct_from  ->setValue( 0 );
    ct_to    ->setValue( 0 );
+   ct_from  ->setStep ( 1 );
+   ct_to    ->setStep ( 1 );
 
    // Advanced Plotting controls
    QLabel*      lb_advplot  = us_banner( tr( "Advanced Plotting Control" ) );
@@ -131,7 +133,7 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
 
    // Status and standard pushbuttons
    QLabel*      lb_status   = us_banner( tr( "Status" ) );
-                le_status   = us_lineedit( "", -1, true );
+                le_status   = us_lineedit( tr( "(no data loaded)" ), -1, true );
    QPalette stpal;
    stpal.setColor( QPalette::Text, Qt::white );
    stpal.setColor( QPalette::Base, Qt::blue  );
@@ -140,6 +142,7 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
 
+   // Signals and Slots
    connect( pb_loadMwl,   SIGNAL( clicked()      ),
             this,         SLOT  ( load_mwl_raw() ) );
    connect( pb_loadAUC,   SIGNAL( clicked()      ),
@@ -256,7 +259,7 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
 
    picker = new US_PlotPicker( data_plot );
-   picker ->setRubberBand    ( QwtPicker::VLineRubberBand );
+   picker->setRubberBand     ( QwtPicker::VLineRubberBand );
    picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
                                Qt::LeftButton, Qt::ControlModifier );
 
@@ -324,6 +327,7 @@ void US_MwlRawViewer::reset( void )
    lambdas   .clear();
    radii     .clear();
    allData   .clear();
+   excludes  .clear();
    curr_adata.clear();
    curr_cdata.clear();
    prev_cdata.clear();
@@ -345,6 +349,7 @@ void US_MwlRawViewer::reset( void )
    last_ymin       = -1.0;
 
    mwl_data.clear();
+   le_status->setText( tr( "(no data loaded)" ) );
 }
 
 void US_MwlRawViewer::resetAll( void )
@@ -368,7 +373,7 @@ void US_MwlRawViewer::resetAll( void )
 }
 
 
-// Enable the common dialog controls when there is data
+// Enable the common dialog controls based on the presence of data
 void US_MwlRawViewer::enableControls( void )
 {
    if ( allData.size() == 0 )
@@ -393,12 +398,12 @@ void US_MwlRawViewer::enableControls( void )
    pb_prev   ->setEnabled( true );
    pb_next   ->setEnabled( true );
    pb_plot2d ->setEnabled( true );
-#if 0
+   pb_movie2d->setEnabled( true );
    ct_from   ->setEnabled( true );
    ct_to     ->setEnabled( true );
    pb_exclude->setEnabled( true );
+#if 0
    pb_include->setEnabled( true );
-   pb_movie2d->setEnabled( true );
    pb_plot3d ->setEnabled( true );
    pb_movie3d->setEnabled( true );
    pb_svplot ->setEnabled( true );
@@ -444,10 +449,13 @@ void US_MwlRawViewer::enableControls( void )
    have_rngs  = false;
    compute_ranges( );
 
-   cb_pltrec ->setCurrentIndex( nlambda / 2 );
-   cb_cellchn->setCurrentIndex( 0 );
    ct_from   ->setMaxValue( nscan );
    ct_to     ->setMaxValue( nscan );
+   cb_cellchn->setCurrentIndex( 0 );
+   cb_pltrec ->setCurrentIndex( nlambda / 2 );
+   qApp->processEvents();
+
+   changeCellCh();                          // Force a plot initialize
 }
 
 // Load MWL raw (.mwrs) data
@@ -529,7 +537,6 @@ DbgLv(1) << "RD:   rvS rvE" << radii[0] << radii[npoint-1];
    cb_cellchn->addItems( cellchans );
    connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeCellCh(            ) ) );
-//   le_nbrscans->setText( QString::number( nscan ) );
 
    nlambda      = mwl_data.lambdas_raw( lambdas );
    int wvlo     = lambdas[ 0 ];
@@ -543,7 +550,7 @@ DbgLv(1) << "RD: allData size" << allData.size();
    enableControls();
 }
 
-// Load AUC multi-wavelength data
+// Load US3 AUC multi-wavelength data
 void US_MwlRawViewer::load_auc_mwl( )
 {
    int status = 0;
@@ -624,11 +631,9 @@ DbgLv(1) << "RD: mwr ntriple" << ntriple;
 
       allData << rdata;
 
-      QString cell     = QString::number( rdata.cell );
-      QString chan     = QString( rdata.channel );
+      QString celchn   = QString::number( rdata.cell ) + " / " +
+                         QString( rdata.channel );
       int lambda       = qRound( rdata.scanData[ 0 ].wavelength );
-      QString wavl     = QString::number( lambda );
-      QString celchn   = cell + " / " + chan;
 
       if ( ! cellchans.contains( celchn ) )
          cellchans << celchn;
@@ -724,6 +729,9 @@ void US_MwlRawViewer::runDetails( void )
    int    wvx     = 0;
    int    rpx     = 0;
 DbgLv(1) << "DDet: nlambda ntriple ntpoint" << nlambda << ntriple << ntpoint;
+   le_status->setText( tr( "Computing data statistics..." ) );
+   qApp->processEvents();
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
 
    // Accumulate statistics for original data
    for ( int ii = 0; ii < ntriple; ii++ )
@@ -733,11 +741,10 @@ DbgLv(1) << "DDet: nlambda ntriple ntpoint" << nlambda << ntriple << ntpoint;
       wv3      = ( wvx == owvhi );
       rpx      = 0;
       int scx  = 0;
-      int rdx  = 0;
 
       for ( int jj = 0; jj < ntpoint; jj++ )
       {
-         rdata    = allData[ ii ].reading( scx, rdx );
+         rdata    = allData[ ii ].reading( scx, rpx );
          ofdmin   = qMin( ofdmin, rdata );
          ofdmax   = qMax( ofdmax, rdata );
          ofdavg  += rdata;
@@ -781,6 +788,9 @@ DbgLv(1) << "DDet: nlambda ntriple ntpoint" << nlambda << ntriple << ntpoint;
 DbgLv(1) << "DDet:  ow3min ow3avg" << ow3min << ow3avg;
 
    // Accumulate statistics for averaged data
+   double avsc    = 1.0;
+   int    nha1    = navgrec / 2;
+   int    nha2    = navgrec - nha1;
    wvx     = 0;
    rpx     = 0;
 
@@ -791,11 +801,22 @@ DbgLv(1) << "DDet:  ow3min ow3avg" << ow3min << ow3avg;
       wv3      = ( wvx == awvhi );
       rpx      = 0;
       int scx  = 0;
-      int rdx  = 0;
+      int wvxs = wvx - nha1;
+      int wvxe = wvx + nha2;
+      int chof = ( ii / nlambda ) * nlambda;
+      wvxs     = qMax( wvxs, 0 );
+      wvxe     = qMin( wvxe, nlambda );
+      wvxe     = qMax( wvxe, ( wvxs + 1 ) );
+      wvxs    += chof;
+      wvxe    += chof;
+      avsc     = 1.0 / (double)( wvxe - wvxs );
 
       for ( int jj = 0; jj < ntpoint; jj++ )
       {
-         rdata    = allData[ ii ].reading( scx, rdx );
+         rdata    = 0.0;
+         for ( int kk = wvxs; kk < wvxe; kk++ )
+            rdata   += allData[ kk ].reading( scx, rpx );
+         rdata   *= avsc;
          afdmin   = qMin( afdmin, rdata );
          afdmax   = qMax( afdmax, rdata );
          afdavg  += rdata;
@@ -837,6 +858,10 @@ DbgLv(1) << "DDet:  ow3min ow3avg" << ow3min << ow3avg;
          wvx      = 0;
    }
 DbgLv(1) << "DDet:  aw3min aw3avg" << aw3min << aw3avg;
+   le_status->setText( tr( "Data statistics have been computed." ) );
+   qApp->processEvents();
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
 
    // Now build the report text string
    ofdavg        /= (double)ofdknt;
@@ -972,7 +997,7 @@ DbgLv(1) << "chgCellCh:  cellch" << cellch;
    int trxs      = ccx * nlambda;
    int trxe      = trxs + nlambda;
    if ( is_wrecs )
-   {
+   {  // For wavelength records, X bounds are radius bounds
       last_xmin     = allData[ trxs ].xvalues[ 0 ];
       last_xmax     = last_xmin;
       US_DataIO::RawData* edata = &allData[ trxs ];
@@ -983,7 +1008,7 @@ DbgLv(1) << "chgCellCh:  cellch" << cellch;
       }
    }
    else
-   {
+   {  // For radius records, X bounds are lambda bounds
       last_xmin     = lambdas[ 0 ];
       last_xmax     = lambdas[ nlambda - 1 ];
    }
@@ -992,7 +1017,7 @@ DbgLv(1) << "chgCellCh:  cellch" << cellch;
    last_ymax     = last_ymin;
 
    for ( int trx = trxs; trx < trxe; trx++ )
-   {
+   {  // Accumulate Y bounds, the amplitude bounds
       US_DataIO::RawData* edata = &allData[ trx ];
 
       for ( int scx = 0; scx < nscan; scx++ )
@@ -1006,6 +1031,13 @@ DbgLv(1) << "chgCellCh:  cellch" << cellch;
    }
 DbgLv(1) << "chgCC: trxs trxe" << trxs << trxe << "xmin xmax ymin ymax"
  << last_xmin << last_xmax << last_ymin << last_ymax;
+
+   curr_cdata.clear();
+   prev_cdata.clear();
+   curr_recxs.clear();
+   prev_recxs.clear();
+
+   changeRecord();
 }
 
 // Plot the current data record
@@ -1014,9 +1046,9 @@ void US_MwlRawViewer::plot_current( void )
    if ( allData.size() == 0 )
       return;
 
-   plot_titles();
+   plot_titles();     // Set the titles
 
-   plot_all();
+   plot_all();        // Plot the data
 }
 
 // Compose plot titles for the current record
@@ -1025,15 +1057,27 @@ void US_MwlRawViewer::plot_titles( void )
    QString cellch   = cb_cellchn ->currentText();
    QString cell     = cellch.section( "/", 0, 0 ).simplified();
    QString chan     = cellch.section( "/", 1, 1 ).simplified();
-   QString wavl     = cb_pltrec->currentText();
+   QString prec     = cb_pltrec->currentText();
 
    // Plot Title and legends
    QString title    = "Radial Intensity Data\nRun ID: " + runID +
-                      "\n    Cell: " + cell + "  Channel: " + chan +
-                      ( is_wrecs ? "  Wavelength: " : "  Radius: " ) + wavl;
-   QString xLegend  = is_wrecs ? "Radius (in cm)" : "Wavelength (in nm)";
-   QString yLegend  = "Radial Intensity at " + wavl +
-                      ( is_wrecs ? " nm" : " cm" );
+                      "\n    Cell: " + cell + "  Channel: " + chan;
+   QString xLegend;
+   QString yLegend  = "Radial Intensity at " + prec;
+
+   if ( is_wrecs )
+   {
+      title           += QString( "  Wavelength: " ) + prec;
+      xLegend          = QString( "Radius (in cm)" );
+      yLegend         += QString( " nm" );
+   }
+
+   else
+   {
+      title           += QString( "  Radius: " ) + prec;
+      xLegend          = QString( "Wavelength (in nm)" );
+      yLegend         += QString( " cm" );
+   }
 
    data_plot->setTitle( title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   yLegend );
@@ -1047,11 +1091,13 @@ void US_MwlRawViewer::plot_all( void )
    data_plot->detachItems();
    grid           = us_grid( data_plot );
 
+   // Make sure ranges are set up, then build an averaged data vector
    compute_ranges();
 
    build_avg_data();
 
 DbgLv(1) << "PltA: kpoint" << kpoint << "datsize" << curr_adata.size();
+   // Build the X,Y vectors
    QVector< double > rvec( kpoint );
    QVector< double > vvec( kpoint );
    double* rr     = rvec.data();
@@ -1059,29 +1105,34 @@ DbgLv(1) << "PltA: kpoint" << kpoint << "datsize" << curr_adata.size();
 
    int     scan_from = (int)ct_from->value();
    int     scan_to   = (int)ct_to  ->value();
+   int     scan_nbr  = 0;
    QPen    pen_red ( Qt::red );
    QPen    pen_plot( US_GuiSettings::plotCurve() );
    int     rdx       = 0;
 
-   for ( int ptx = 0; ptx < kpoint; ptx++ )
+   for ( int ptx = 0; ptx < kpoint; ptx++ )   // One-time build of X vector
       rr[ ptx ]       = pltxvals[ ptx ];
 
-   for ( int scx = 0; scx < kscan; scx++ )
+   for ( int scnx = 0; scnx < nscan; scnx++ ) // Build Y vector for each scan
    {
+      if ( excludes.contains( scnx ) )  continue;
+
       for ( int ptx = 0; ptx < kpoint; ptx++ )
       {
          vv[ ptx ]       = curr_adata[ rdx++ ];
       }
 
-      QString       title = tr( "Raw Data at scan " ) + QString::number( scx );
+      scan_nbr++;
+      QString       title = tr( "Raw Data at scan " )
+                            + QString::number( scan_nbr );
       QwtPlotCurve* curv  = us_curve( data_plot, title );
 
-      if ( scx >= scan_to  ||  scx <= scan_from )
-         curv->setPen( pen_plot );
+      if ( scan_nbr > scan_to  ||  scan_nbr < scan_from )
+         curv->setPen( pen_plot );            // Normal pen
       else
-         curv->setPen( pen_red  );
+         curv->setPen( pen_red  );            // Scan-focus pen
 
-      curv->setData( rr, vv, kpoint );
+      curv->setData( rr, vv, kpoint );        // Build a scan curve
 //DbgLv(1) << "PltA:   scx" << scx << "rr0 vv0 rrn vvn"
 // << rr[0] << rr[kpoint-1] << vv[0] << vv[kpoint-1];
    }
@@ -1098,9 +1149,11 @@ DbgLv(1) << "PltA: last_xmin" << last_xmin;
       data_plot->setAxisScale( QwtPlot::xBottom, last_xmin, last_xmax );
       data_plot->setAxisScale( QwtPlot::yLeft  , last_ymin, last_ymax );
    }
-   
+
+   // Draw the plot
    data_plot->replot();
-   
+
+   // Pick up the actual bounds plotted (including any Config changes)
    QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
    last_xmin      = sdx->lowerBound();
@@ -1109,7 +1162,6 @@ DbgLv(1) << "PltA: last_xmin" << last_xmin;
    last_ymax      = sdy->upperBound();
 DbgLv(1) << "PltA: xlo xhi" << last_xmin << last_xmax
  << "ylo yhi" << last_ymin << last_ymax;
-   pb_details->setEnabled( true );
 }
 
 // Slot to handle a change in start or end radius
@@ -1117,10 +1169,10 @@ void US_MwlRawViewer::changeRadius()
 {
 DbgLv(1) << "chgRadius";
    have_rngs  = false;
-   compute_ranges();
+   compute_ranges();                        // Recompute ranges
 
    if ( !is_wrecs )
-   {
+   {  // For radius records, we need to reset the plot record list
       cb_pltrec->disconnect();
       cb_pltrec->clear();
 
@@ -1134,8 +1186,11 @@ DbgLv(1) << "chgRadius";
       connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
                this,         SLOT  ( changeRecord( )            ) );
 
-      cb_pltrec->setCurrentIndex( ( radxe - radxs ) / 2 );
+      recx           = ( radxe - radxs ) / 2;
+      cb_pltrec->setCurrentIndex( recx );
    }
+
+   build_avg_data();                        // Rebuild initial averaged data
 }
 
 // Slot to handle a change in start or end lambda
@@ -1143,10 +1198,10 @@ void US_MwlRawViewer::changeLambda()
 {
 DbgLv(1) << "chgLambda";
    have_rngs  = false;
-   compute_ranges();
+   compute_ranges();                        // Recompute ranges
 
    if ( is_wrecs )
-   {
+   {  // For wavelength records, we need to reset the plot record list
       cb_pltrec->disconnect();
       cb_pltrec->clear();
 
@@ -1160,11 +1215,11 @@ DbgLv(1) << "chgLambda";
       connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
                this,         SLOT  ( changeRecord( )            ) );
 
-      cb_pltrec->setCurrentIndex( ( lmbxe - lmbxs ) / 2 );
+      recx           = ( lmbxe - lmbxs ) / 2;
+      cb_pltrec->setCurrentIndex( recx );
    }
 
-   build_avg_data();
-
+   build_avg_data();                        // Rebuild initial averaged data
 }
  
 // Slot to handle a change in the plot record
@@ -1173,14 +1228,15 @@ void US_MwlRawViewer::changeRecord( void )
    recx           = cb_pltrec->currentIndex();
 DbgLv(1) << "chgRec: recx" << recx;
 
-   // Insure we have averaged data
+   // Insure we have averaged data for this record
    build_avg_data();
 
    // Plot what we have
    plot_current();
 
-   pb_prev->setEnabled( ( recx > 0 ) );
-   pb_next->setEnabled( ( recx < ( krecs -1 ) ) );
+   le_status->setText( lb_pltrec->text() + ": " + cb_pltrec->currentText() );
+   pb_prev  ->setEnabled( ( recx > 0 ) );
+   pb_next  ->setEnabled( ( recx < ( krecs -1 ) ) );
 }
 
 // Slot to handle a change in the plot record type
@@ -1190,23 +1246,23 @@ DbgLv(1) << "chgRtype: wlnrec" << wlnrec;
    have_rngs  = false;
    is_wrecs   = ! wlnrec;
 
-   compute_ranges();
-   prev_recxs.clear();
+   compute_ranges();                        // Recompute ranges for new type
+   prev_recxs.clear();                      // Reset averaging components
    prev_cdata.clear();
-   changeCellCh();
+   changeCellCh();                          // Force a plot initialize
 
    if ( is_wrecs )
-   {
+   {  // Change record button title and reset for lambda record
       lb_pltrec->setText( tr( "Plot (W nm)" ) );
       changeLambda();
    }
    else
-   {
+   {  // Change record button title and reset for radius record
       lb_pltrec->setText( tr( "Plot (R cm)" ) );
       changeRadius();
    }
 
-   plot_current();
+   plot_current();                          // Plot initial record of this type
 }
 
 // Slot to handle a click to go to the previous record
@@ -1261,132 +1317,141 @@ DbgLv(1) << "chgAvg:";
    changeRecord();
 }
 
-// Build the component data vectors for averaging
+// Build the component data vectors for averaging.
+//  The vector of data record readings vectors spans a window of records
+//  around the current record. Its size is usually the number of averaging
+//  points, but is less at either end of the records range.
 void US_MwlRawViewer::build_cmp_data()
 {
-   compute_ranges();                 // Insure we have current plot ranges
+   compute_ranges();                    // Insure we have current plot ranges
 
    QVector< double > fillv;
    curr_recxs.clear();
    curr_cdata.clear();
-   navgrec       = ct_recavg->value();
-   int kavgc     = navgrec;
-   int kavgh     = kavgc / 2;
-   int arxs      = recx - kavgh;
-   int arxe      = recx + kavgh;
-   arxs          = qMax( arxs, 0 );
-   arxe          = qMin( arxe, krecs - 1 ) + 1;
-   kavgc         = arxe - arxs;
-   curr_cdata.fill( fillv, kavgc );  // Initialize component datas
+   navgrec       = ct_recavg->value();  // Usual number of averaging records
+   int kavgc     = navgrec;             // Actual count
+   int kavgh     = kavgc / 2;           // Half count
+   int arxs      = recx - kavgh;        // Record start index
+   int arxe      = recx + kavgh;        // Record end index
+   arxs          = qMax( arxs, 0 );                // Start at least 0
+   arxe          = qMin( arxe, krecs - 1 ) + 1;    // End at most range count
+   arxe          = qMax( arxe, ( arxs + 1 ) );
+   kavgc         = arxe - arxs;         // Actual averaging count
+   curr_cdata.fill( fillv, kavgc );     // Initialize component datas
 DbgLv(1) << "BldC: kavgc" << kavgc << "arxs arxe" << arxs << arxe;
    int jrx       = 0;
 
    for ( int krx = arxs; krx < arxe; krx++, jrx++ )
-   {
+   {  // Build or move component records
       int prx       = prev_recxs.indexOf( krx );
 DbgLv(1) << "BldC:   krx" << krx << "prx" << prx;
 
       if ( prx < 0 )
-      {
+      {  // Previous components missing this one, so build a new one
          build_rec_data( krx, curr_cdata[ jrx ] );
       }
       else
-      {
+      {  // Previous components had this one, so just copy to new location
          curr_cdata[ jrx ] = prev_cdata[ prx ];
       }
 
-      curr_recxs << krx;
+      curr_recxs << krx;                // Keep components indexes
    }
 
-   prev_recxs = curr_recxs;
-   prev_cdata = curr_cdata;
+   prev_recxs = curr_recxs;             // Preserve indexes for next time
+   prev_cdata = curr_cdata;             // Preserve data for next time
 
 }
 
 // Build the averaged data vector for the current plot record
+//   Detect the actual number of component records, sum at each data point,
+//   then obtain the averaged point.
 void US_MwlRawViewer::build_avg_data()
 {
-   build_cmp_data();        // Build components for averaging
+   build_cmp_data();                     // Build components for averaging
 
-   int kavgc     = curr_recxs.size();
-   double avgscl = 1.0 / (double)kavgc;
+   int kavgc     = curr_recxs.size();    // Actual count of components
+   double avgscl = 1.0 / (double)kavgc;  // Averaging scale factor
 DbgLv(1) << "BldA: kavgc" << kavgc << "ktpoint" << ktpoint;
 DbgLv(1) << "BldA:  cd size" << curr_cdata.size();
 DbgLv(1) << "BldA:  cd0 size" << curr_cdata[0].size();
 int nn=curr_cdata.size()-1;
 DbgLv(1) << "BldA:  cdn size" << curr_cdata[nn].size();
 
-   curr_adata.clear();
+   curr_adata.clear();                   // Initial averaged data
 
    for ( int ptx = 0; ptx < ktpoint; ptx++ )
-   {
+   {  // Compute the average at each data point
       double dsum   = 0.0;
 
       for ( int rcx = 0; rcx < kavgc; rcx++ )
-      {
+      {  // Build a data point sum across all components
          dsum       += curr_cdata[ rcx ][ ptx ];
 if(ptx==(ktpoint/2))
 DbgLv(1) << "BldA:   ptx rcx" << ptx << rcx << "cdat dsum"
  << curr_cdata[rcx][ptx] << dsum;
       }
 
-      curr_adata << ( dsum * avgscl );
+      curr_adata << ( dsum * avgscl );   // Store the average data point
    }
 DbgLv(1) << "BldA:  curr_adata size" << curr_adata.size();
 }
 
-// Build a record data vector
+// Build a record data vector.
+//   This routine is called when necessary to build an averaging component
+//   at a specified record. The output flat vector of doubles has successive
+//   data points across the current X range, for non-excluded scans.
 void US_MwlRawViewer::build_rec_data( const int recx,
                                       QVector< double >& rdata )
 {
-   compute_ranges();
+   compute_ranges();                     // Compute record and data ranges
 
-   rdata.clear();
-   kscan      = 0;
+   rdata.clear();                        // Initialize the data vector
+   kscan      = 0;                       // Count of actual produced scans
 
 DbgLv(1) << "BldR:     recx" << recx;
    if ( is_wrecs )
    {  // Build data values for wavelength record with x-axis radius
-      krecs      = klambda;
-      kpoint     = kradii;
-      int trpx   = trpxs + lmbxs + recx;
+      krecs      = klambda;              // Count of wavelength records
+      kpoint     = kradii;               // Count of radius points per scan
+      int trpx   = trpxs + lmbxs + recx; // Triple index of record
 DbgLv(1) << "BldR:      trx rxs rxe nscan" << trpx << radxs << radxe << nscan;
 
       for ( int scnx = 0; scnx < nscan; scnx++ )
-      {
+      {  // Examine all scans, but only store for included ones
          if ( excludes.contains( scnx ) )  continue;
 
          for ( int radx = radxs; radx < radxe; radx++ )
-         {
+         {  // Save a data point for each radius (input=triple is constant)
             rdata << allData[ trpx ].reading( scnx, radx );
          }
 
-         kscan++;
+         kscan++;                        // Bump count of produced scans
       }
 DbgLv(1) << "BldR:      kscan" << kscan << "rd size" << rdata.size();
    }
 
    else
    {  // Build data values for radius record with x-axis wavelength
-      krecs      = kradii;
-      kpoint     = klambda;
-      int wavxs  = trpxs + lmbxs;
-      int wavxe  = trpxs + lmbxe;
+      krecs      = kradii;               // Count of radius records
+      kpoint     = klambda;              // Count of wavelength points per scan
+      int wavxs  = trpxs + lmbxs;        // Start wavelength index in triples
+      int wavxe  = trpxs + lmbxe;        // End wavelength index in triples
 
       for ( int scnx = 0; scnx < nscan; scnx++ )
-      {
+      {  // Examine all scans, but only store for included ones
          if ( excludes.contains( scnx ) )  continue;
 
          for ( int wavx = wavxs; wavx < wavxe; wavx++ )
-         {
+         {  // Save a data point for each wavelength (radius=record is constant)
             rdata << allData[ wavx ].reading( scnx, recx );
          }
 
-         kscan++;
+         kscan++;                        // Bump count of produced scans
       }
    }
 
-   ktpoint    = kscan * kpoint;
+   ktpoint    = kscan * kpoint;          // Count of total data points
 }
 
 // Compute the plot range indexes implied by current settings
@@ -1463,30 +1528,103 @@ void US_MwlRawViewer::connect_ranges( bool conn )
 }
 
 // Slot to handle a change in scan exclude "from" value
-void US_MwlRawViewer::exclude_from( double )
+void US_MwlRawViewer::exclude_from( double sfr )
 {
+   int scan_from  = (int)sfr;
+   int scan_to    = (int)ct_to  ->value();
+
+   if ( scan_to < scan_from )
+   {
+      ct_to  ->disconnect();
+      ct_to  ->setValue( scan_from );
+
+      connect( ct_to,        SIGNAL( valueChanged( double ) ),
+               this,         SLOT  ( exclude_to  ( double ) ) );
+   }
+
+   plot_current();
 }
 
 // Slot to handle a change in scan exclude "to" value
-void US_MwlRawViewer::exclude_to( double )
+void US_MwlRawViewer::exclude_to( double sto )
 {
+   int scan_to    = (int)sto;
+   int scan_from  = (int)ct_from->value();
+
+   if ( scan_from > scan_to )
+   {
+      ct_from->disconnect();
+      ct_from->setValue( scan_to );
+
+      connect( ct_from,      SIGNAL( valueChanged( double ) ),
+               this,         SLOT  ( exclude_from( double ) ) );
+   }
+
+   plot_current();
 }
 
 // Slot to handle click of Exclude Scan Range
 void US_MwlRawViewer::exclude_scans()
 {
+   int scan_from  = (int)ct_from->value();
+   int scan_to    = (int)ct_to  ->value();
+   int scan_knt   = 1;
+
+   for ( int scnx = 0; scnx < nscan; scnx++ )
+   {
+      if ( excludes.contains( scnx ) )  continue;
+
+      if ( scan_knt >= scan_from  &&  scan_knt <= scan_to )
+         excludes << scnx;
+
+      scan_knt++;
+   }
+
+   curr_cdata.clear();
+   prev_cdata.clear();
+   curr_recxs.clear();
+   prev_recxs.clear();
+   kscan      = nscan - excludes.count();
+DbgLv(1) << "Excl: kscan" << kscan;
+   ct_to     ->setValue( 0 );
+   ct_from   ->setMaxValue( kscan );
+   ct_to     ->setMaxValue( kscan );
+   pb_include->setEnabled( true );
 }
 
 // Slot to handle click of Include All (restore of all scans)
 void US_MwlRawViewer::include_scans()
 {
    excludes.clear();
+
+   kscan      = nscan;
+   ktpoint    = kscan * kpoint;
+   curr_cdata.clear();                 // Reset averaging data
+   prev_cdata.clear();
+   curr_recxs.clear();
+   prev_recxs.clear();
+   ct_to     ->setValue( 0 );
+   changeRecord();                     // Force replot
+
+   pb_include->setEnabled( false );
 }
 
 // Slot to show a 2-D movie
 void US_MwlRawViewer::show_2d_movie()
 {
 DbgLv(1) << "Show 2D Movie";
+   // Loop to plot each record in the current cell
+   int krecs       = cb_pltrec->count();
+   int svrec       = recx;                  // Save currently plotted record
+
+   for ( int prx = 0; prx < krecs; prx++ )
+   {
+      cb_pltrec->setCurrentIndex( prx );    // Plot each record in the range
+      qApp->processEvents();
+   }
+
+   cb_pltrec->setCurrentIndex( svrec );     // Restore previous plot record
+   qApp->processEvents();
 }
 
 // Slot to open a dialog for 3-D plotting
