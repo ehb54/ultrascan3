@@ -451,6 +451,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       QPushButton  * pb_guinier_plot_rg;
 
+      QLabel       * lbl_guinier_rg_t_range;
+      mQLineEdit   * le_guinier_rg_t_start;
+      mQLineEdit   * le_guinier_rg_t_end;
+
+      QLabel       * lbl_guinier_rg_rg_range;
+      mQLineEdit   * le_guinier_rg_rg_start;
+      mQLineEdit   * le_guinier_rg_rg_end;
+
+      QCheckBox    * cb_guinier_lock_rg_range;
+
       // QCheckBox    * cb_guinier_repeat;
       // QLineEdit    * le_guinier_repeat_sd_limit;
       // QCheckBox    * cb_guinier_search;
@@ -533,6 +543,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       double         guinier_maxq;
       double         guinier_minq2;
       double         guinier_maxq2;
+      double         guinier_mint;
+      double         guinier_maxt;
 
       // rgc util
 
@@ -748,7 +760,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       QStringList                         all_selected_files();
       set < QString >                     all_selected_files_set();
-      void                                remove_files( set < QString > & fileset );
+      void                                remove_files( set < QString > & fileset, bool replot = false );
       QStringList                         all_files();
       QString                             last_selected_file;
 
@@ -802,7 +814,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void                         smooth( QStringList files );
       void                         repeak( QStringList files );
       void                         create_i_of_t( QStringList files );
-      void                         test_i_of_t( QStringList files );
       bool                         create_i_of_q( QStringList files,
                                                   double t_min = -1e99,
                                                   double t_max = 1e99 );
@@ -990,7 +1001,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       void                         scale_replot();
 
-      bool                         check_zi_window( QStringList & files );
+      bool                         check_zi_window         ( QStringList & files );
+      void                         check_discard_it_sd_mult( QStringList & files, bool optionally_discard = false );
 
    private slots:
 
@@ -1163,6 +1175,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void guinier_enables             ();
       void guinier_residuals_update    ();
       void guinier_plot_rg_toggle      ();
+      void guinier_rg_t_start_text        ( const QString & );
+      void guinier_rg_t_start_focus       ( bool );
+      void guinier_rg_t_end_text          ( const QString & );
+      void guinier_rg_t_end_focus         ( bool );
+      void guinier_rg_rg_start_text        ( const QString & );
+      void guinier_rg_rg_start_focus       ( bool );
+      void guinier_rg_rg_end_text          ( const QString & );
+      void guinier_rg_rg_end_focus         ( bool );
 
       void testiq                       ();
       void testiq_q_start_text         ( const QString & );

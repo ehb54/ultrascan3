@@ -1,11 +1,11 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_saxs_hplc_options.h"
 //Added by qt3to4:
-#include <Q3GridLayout>
 #include <Q3HBoxLayout>
-#include <Q3VBoxLayout>
-#include <QLabel>
 #include <QCloseEvent>
+#include <Q3GridLayout>
+#include <QLabel>
+#include <Q3VBoxLayout>
 
 US_Hydrodyn_Saxs_Hplc_Options::US_Hydrodyn_Saxs_Hplc_Options(
                                                              map < QString, QString > * parameters,
@@ -208,6 +208,27 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( le_zi_window, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_zi_window->setMinimumWidth( 60 );
 
+   cb_discard_it_sd_mult = new QCheckBox(this);
+   cb_discard_it_sd_mult->setText(tr( "On Make I(t), discard I(t) with no signal above std. dev. multiplied by: "));
+   cb_discard_it_sd_mult->setEnabled( true );
+   cb_discard_it_sd_mult->setChecked( (*parameters)[ "hplc_cb_discard_it_sd_mult" ] == "true" );
+   cb_discard_it_sd_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_discard_it_sd_mult->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_discard_it_sd_mult );
+
+   le_discard_it_sd_mult = new QLineEdit(this, "le_discard_it_sd_mult Line Edit");
+   le_discard_it_sd_mult->setText( (*parameters)[ "hplc_discard_it_sd_mult" ] );
+   le_discard_it_sd_mult->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_discard_it_sd_mult->setPalette( PALET_NORMAL );
+   AUTFBACK( le_discard_it_sd_mult );
+   le_discard_it_sd_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 1, 20, 3, le_discard_it_sd_mult );
+      le_discard_it_sd_mult->setValidator( qdv );
+   }
+   connect( le_discard_it_sd_mult, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_discard_it_sd_mult->setMinimumWidth( 60 );
+
    pb_quit =  new QPushButton ( tr( "Quit" ), this );
    pb_quit -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_quit -> setMinimumHeight( minHeight1 );
@@ -258,6 +279,9 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 
    gl_other->addWidget         ( lbl_zi_window , 0, 0 );
    gl_other->addWidget         ( le_zi_window  , 0, 1 );
+
+   gl_other->addWidget         ( cb_discard_it_sd_mult , 1, 0 );
+   gl_other->addWidget         ( le_discard_it_sd_mult , 1, 1 );
 
    background->addLayout( gl_other );
 
@@ -320,13 +344,15 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
 {
    (*parameters)[ "ok" ] = "true";
 
-   (*parameters)[ "hplc_bl_linear"       ] = rb_linear      ->isChecked() ? "true" : "false";
-   (*parameters)[ "hplc_bl_integral"     ] = rb_integral    ->isChecked() ? "true" : "false";
-   (*parameters)[ "hplc_bl_save"         ] = cb_save_bl     ->isChecked() ? "true" : "false";
-   (*parameters)[ "hplc_bl_smooth"       ] = le_smooth      ->text();
-   (*parameters)[ "hplc_bl_reps"         ] = le_reps        ->text();
-   (*parameters)[ "hplc_bl_alpha"        ] = le_alpha       ->text();
-   (*parameters)[ "hplc_zi_window"       ] = le_zi_window   ->text();
+   (*parameters)[ "hplc_bl_linear"               ] = rb_linear              ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_bl_integral"             ] = rb_integral            ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_bl_save"                 ] = cb_save_bl             ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_bl_smooth"               ] = le_smooth              ->text();
+   (*parameters)[ "hplc_bl_reps"                 ] = le_reps                ->text();
+   (*parameters)[ "hplc_bl_alpha"                ] = le_alpha               ->text();
+   (*parameters)[ "hplc_zi_window"               ] = le_zi_window           ->text();
+   (*parameters)[ "hplc_cb_discard_it_sd_mult"   ] = cb_discard_it_sd_mult  ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_discard_it_sd_mult"      ] = le_discard_it_sd_mult  ->text();
 
    if ( rb_gauss->isChecked() )
    {

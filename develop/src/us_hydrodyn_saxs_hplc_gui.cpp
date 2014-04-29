@@ -1715,6 +1715,69 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    connect( guinier_plot_rg->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 
+   lbl_guinier_rg_t_range = new QLabel( tr( "Time range for Rg plot: " ), this );
+   lbl_guinier_rg_t_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_guinier_rg_t_range->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_guinier_rg_t_range );
+   lbl_guinier_rg_t_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_guinier_rg_t_start = new mQLineEdit(this, "le_guinier_rg_t_start Line Edit");
+   le_guinier_rg_t_start->setText( "" );
+   le_guinier_rg_t_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_rg_t_start->setPalette( PALET_NORMAL );
+   AUTFBACK( le_guinier_rg_t_start );
+   le_guinier_rg_t_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_guinier_rg_t_start->setEnabled( false );
+   le_guinier_rg_t_start->setValidator( new QDoubleValidator( le_guinier_rg_t_start ) );
+   connect( le_guinier_rg_t_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_rg_t_start_text( const QString & ) ) );
+   connect( le_guinier_rg_t_start, SIGNAL( focussed ( bool ) )             , SLOT( guinier_rg_t_start_focus( bool ) ) );
+
+   le_guinier_rg_t_end = new mQLineEdit(this, "le_guinier_rg_t_end Line Edit");
+   le_guinier_rg_t_end->setText( "" );
+   le_guinier_rg_t_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_rg_t_end->setPalette( PALET_NORMAL );
+   AUTFBACK( le_guinier_rg_t_end );
+   le_guinier_rg_t_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_guinier_rg_t_end->setEnabled( false );
+   le_guinier_rg_t_end->setValidator( new QDoubleValidator( le_guinier_rg_t_end ) );
+   connect( le_guinier_rg_t_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_rg_t_end_text( const QString & ) ) );
+   connect( le_guinier_rg_t_end, SIGNAL( focussed ( bool ) )             , SLOT( guinier_rg_t_end_focus( bool ) ) );
+
+   lbl_guinier_rg_rg_range = new QLabel( tr( "Rg range: " ), this );
+   lbl_guinier_rg_rg_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_guinier_rg_rg_range->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_guinier_rg_rg_range );
+   lbl_guinier_rg_rg_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_guinier_rg_rg_start = new mQLineEdit(this, "le_guinier_rg_rg_start Line Edit");
+   le_guinier_rg_rg_start->setText( "" );
+   le_guinier_rg_rg_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_rg_rg_start->setPalette( PALET_NORMAL );
+   AUTFBACK( le_guinier_rg_rg_start );
+   le_guinier_rg_rg_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_guinier_rg_rg_start->setEnabled( false );
+   le_guinier_rg_rg_start->setValidator( new QDoubleValidator( le_guinier_rg_rg_start ) );
+   connect( le_guinier_rg_rg_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_rg_rg_start_text( const QString & ) ) );
+   connect( le_guinier_rg_rg_start, SIGNAL( focussed ( bool ) )             , SLOT( guinier_rg_rg_start_focus( bool ) ) );
+
+   le_guinier_rg_rg_end = new mQLineEdit(this, "le_guinier_rg_rg_end Line Edit");
+   le_guinier_rg_rg_end->setText( "" );
+   le_guinier_rg_rg_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_rg_rg_end->setPalette( PALET_NORMAL );
+   AUTFBACK( le_guinier_rg_rg_end );
+   le_guinier_rg_rg_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_guinier_rg_rg_end->setEnabled( false );
+   le_guinier_rg_rg_end->setValidator( new QDoubleValidator( le_guinier_rg_rg_end ) );
+   connect( le_guinier_rg_rg_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_rg_rg_end_text( const QString & ) ) );
+   connect( le_guinier_rg_rg_end, SIGNAL( focussed ( bool ) )             , SLOT( guinier_rg_rg_end_focus( bool ) ) );
+
+   cb_guinier_lock_rg_range = new QCheckBox(this);
+   cb_guinier_lock_rg_range->setText(tr("Lock range"));
+   cb_guinier_lock_rg_range->setChecked( false );
+   cb_guinier_lock_rg_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_guinier_lock_rg_range->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_guinier_lock_rg_range );
+
    guinier_plot_errors = new QwtPlot( qs );
 #ifndef QT4
    guinier_plot_errors->enableGridXMin();
@@ -2449,6 +2512,18 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    Q3BoxLayout *vbl_guinier = new Q3VBoxLayout( 0 );
    {
       Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( lbl_guinier_rg_t_range );
+      hbl->addWidget( le_guinier_rg_t_start );
+      hbl->addWidget( le_guinier_rg_t_end );
+      hbl->addWidget( lbl_guinier_rg_rg_range );
+      hbl->addWidget( le_guinier_rg_rg_start );
+      hbl->addWidget( le_guinier_rg_rg_end );
+      hbl->addWidget( cb_guinier_lock_rg_range );
+      vbl_guinier->addLayout( hbl );
+   }      
+      
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
       hbl->addWidget( lbl_guinier_q_range );
       hbl->addWidget( le_guinier_q_start );
       hbl->addWidget( le_guinier_q_end );
@@ -2814,6 +2889,14 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    guinier_widgets.push_back( qwtw_wheel );
    guinier_widgets.push_back( lbl_wheel_pos );
    guinier_widgets.push_back( pb_guinier_plot_rg );
+   guinier_widgets.push_back( lbl_guinier_rg_t_range );
+   guinier_widgets.push_back( le_guinier_rg_t_start );
+   guinier_widgets.push_back( le_guinier_rg_t_end );
+   guinier_widgets.push_back( lbl_guinier_rg_rg_range );
+   guinier_widgets.push_back( le_guinier_rg_rg_start );
+   guinier_widgets.push_back( le_guinier_rg_rg_end );
+   guinier_widgets.push_back( cb_guinier_lock_rg_range );
+
 
    // not a "mode"
    guinier_errors_widgets.push_back( guinier_plot_errors );
@@ -2823,6 +2906,13 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
 
    // not a "mode"
    guinier_rg_widgets.push_back( guinier_plot_rg );
+   guinier_rg_widgets.push_back( lbl_guinier_rg_t_range );
+   guinier_rg_widgets.push_back( le_guinier_rg_t_start );
+   guinier_rg_widgets.push_back( le_guinier_rg_t_end );
+   guinier_rg_widgets.push_back( lbl_guinier_rg_rg_range );
+   guinier_rg_widgets.push_back( le_guinier_rg_rg_start );
+   guinier_rg_widgets.push_back( le_guinier_rg_rg_end );
+   guinier_rg_widgets.push_back( cb_guinier_lock_rg_range );
 
    // rgc_widgets;
    rgc_widgets.push_back( lbl_rgc_mw );

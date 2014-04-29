@@ -987,6 +987,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
          rb_testiq_gaussians[ i ]->hide();
       }
 
+      guinier_mint = -1e0;
+      guinier_maxt = 1e0;
+
       if ( !testiq_it_selected.isEmpty() &&
            f_qs.count( testiq_it_selected ) )
       {
@@ -995,6 +998,8 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
          guinier_it_Imin   = testiq_it_selected_Imin;
          guinier_it_Imax   = testiq_it_selected_Imax;
          guinier_it_Irange = testiq_it_selected_Imax - testiq_it_selected_Imin;
+         guinier_mint      = guinier_it_t[ 0 ] - 1;
+         guinier_maxt      = guinier_it_t.back() + 1;
       }
 
       for ( int i = 0; i < (int) testiq_created_names.size(); ++i )
@@ -1044,6 +1049,8 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
       }
    } else {
       double pos = 0e0;
+      guinier_mint = -1e0;
+      guinier_maxt = 1e0;
       for ( int i = 0; i < lb_files->numRows(); i++ )
       {
          if ( lb_files->isSelected( i ) )
@@ -1104,6 +1111,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
             }            
          }
       }
+
+      guinier_maxt = pos + 1;
+
       if ( !any_selected )
       {
          editor_msg( "red", tr( "Internal error: no files selected in guinier mode" ) );
@@ -1507,6 +1517,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    double qrg_min = 1e99;
    double qrg_max = -1e99;
 
+   double rg_sd_min = 1e99;
+   double rg_sd_max = -1e99;
+
    guinier_plot_rg->clear();
    QwtSymbol rg_sym;
    rg_sym.setStyle( QwtSymbol::Diamond );
@@ -1624,12 +1637,14 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          {
             if ( !count )
             {
-               qrg_min = sRgmax;
-               qrg_max = sRgmax;
-               rg_min  = Rg;
-               rg_max  = Rg;
-               i0_min  = I0;
-               i0_max  = I0;
+               qrg_min   = sRgmax;
+               qrg_max   = sRgmax;
+               rg_min    = Rg;
+               rg_max    = Rg;
+               i0_min    = I0;
+               i0_max    = I0;
+               rg_sd_min = Rg;
+               rg_sd_max = Rg;
             } else {
                if ( qrg_min > sRgmax )
                {
@@ -1654,6 +1669,26 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
                if ( i0_max < I0 )
                {
                   i0_max = I0;
+               }
+               if ( isnan( siga ) || (unsigned int) usu->wave[ "hplc" ].q.size() < 3 )
+               {
+                  if ( rg_sd_min > Rg )
+                  {
+                     rg_sd_min = Rg;
+                  }
+                  if ( rg_sd_max < Rg )
+                  {
+                     rg_sd_max = Rg;
+                  }
+               } else {
+                  if ( rg_sd_min > Rg - siga )
+                  {
+                     rg_sd_min = Rg - siga;
+                  }
+                  if ( rg_sd_max < Rg + siga )
+                  {
+                     rg_sd_max = Rg + siga;
+                  }
                }
             }
 
@@ -1826,7 +1861,15 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    }
    double use_min = posmin - 1e0;
    double use_max = posmax + 1e0;
-   double space = 0.05 * ( rg_max - rg_min ) ;
+   double space = 0.05 * ( rg_sd_max - rg_sd_min ) ;
+   // qDebug( QString( "space %1 rg_max %2 rg_sd_max %3 rg_min %4 rg_sd_min %5 count %6" )
+   //         .arg( space )
+   //         .arg( rg_max )
+   //         .arg( rg_sd_max )
+   //         .arg( rg_min )
+   //         .arg( rg_sd_min )
+   //         .arg( count )
+   //         );
 
    if ( rg_x.size() > 1 && guinier_it_t.size() && space > 0e0 )
    {
@@ -1837,6 +1880,12 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
       double ymin = 1e99;
       double ymax = -1e99;
+
+      if ( cb_guinier_lock_rg_range->isChecked() )
+      {
+         use_min = le_guinier_rg_t_start->text().toDouble();
+         use_max = le_guinier_rg_t_end->text().toDouble();
+      }
 
       for ( int i = 0; i < (int) guinier_it_t.size(); ++i )
       {
@@ -1859,16 +1908,28 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
       if ( ymax > ymin )
       {
-         double scale = ( rg_max - rg_min ) / ( ymax - ymin );
+         if ( cb_guinier_lock_rg_range->isChecked() )
+         {
+            double mint = le_guinier_rg_rg_start->text().toDouble();
+            double maxt = le_guinier_rg_rg_end->text().toDouble();
+            double scale = ( maxt - mint ) / ( ymax - ymin );
+            for ( int i = 0; i < (int) y2.size(); ++i )
+            {
+               y2[ i ] -= ymin;
+               y2[ i ] *= scale;
+               y2[ i ] += mint;
+            }
+         } else {
+            double scale = ( rg_sd_max - rg_sd_min ) / ( ymax - ymin );
+            for ( int i = 0; i < (int) y2.size(); ++i )
+            {
+               y2[ i ] -= ymin;
+               y2[ i ] *= scale;
+               y2[ i ] += rg_sd_min;
+            }
+         }
 
          // qDebug( QString( "testiq in rg plot scale %1 rg_min %2 rg_max %3 ymin %4 ymax %5 " ).arg( scale ).arg( rg_min ).arg( rg_max ).arg( ymin ).arg( ymax ) );
-
-         for ( int i = 0; i < (int) y2.size(); ++i )
-         {
-            y2[ i ] -= ymin;
-            y2[ i ] *= scale;
-            y2[ i ] += rg_min;
-         }
 
          // for ( int i = 0; i < (int) y.size(); ++i )
          // {
@@ -1902,8 +1963,27 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
 
    {
-      guinier_plot_rg->setAxisScale( QwtPlot::xBottom, use_min, use_max );
-      guinier_plot_rg->setAxisScale( QwtPlot::yLeft  , rg_min - space, rg_max + space );
+      if ( cb_guinier_lock_rg_range->isChecked() )
+      {
+         guinier_plot_rg->setAxisScale( QwtPlot::xBottom, le_guinier_rg_t_start->text().toDouble(), le_guinier_rg_t_end->text().toDouble() );
+         guinier_plot_rg->setAxisScale( QwtPlot::yLeft  , le_guinier_rg_rg_start->text().toDouble(), le_guinier_rg_rg_end->text().toDouble() );
+      } else {
+         guinier_plot_rg->setAxisScale( QwtPlot::xBottom, use_min, use_max );
+         guinier_plot_rg->setAxisScale( QwtPlot::yLeft  , rg_sd_min - space, rg_sd_max + space );
+         
+         disconnect( le_guinier_rg_t_start , SIGNAL( textChanged( const QString & ) ), 0, 0 );
+         disconnect( le_guinier_rg_t_end   , SIGNAL( textChanged( const QString & ) ), 0, 0 );
+         disconnect( le_guinier_rg_rg_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
+         disconnect( le_guinier_rg_rg_end  , SIGNAL( textChanged( const QString & ) ), 0, 0 );
+         le_guinier_rg_t_start ->setText( QString( "%1" ).arg( use_min ) );
+         le_guinier_rg_t_end   ->setText( QString( "%1" ).arg( use_max ) );
+         le_guinier_rg_rg_start->setText( QString( "%1" ).arg( rg_sd_min - space ) );
+         le_guinier_rg_rg_end  ->setText( QString( "%1" ).arg( rg_sd_max + space ) );
+         connect( le_guinier_rg_t_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_rg_t_start_text( const QString & ) ) );
+         connect( le_guinier_rg_t_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_rg_t_end_text( const QString & ) ) );
+         connect( le_guinier_rg_rg_start, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_rg_rg_start_text( const QString & ) ) );
+         connect( le_guinier_rg_rg_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_rg_rg_end_text( const QString & ) ) );
+      }
 
       if ( guinier_plot_rg_zoomer )
       {
@@ -2171,6 +2251,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_enables()
    le_guinier_delta_end   -> setEnabled( true );
    le_guinier_qrgmax      -> setEnabled( true );
    pb_guinier_plot_rg     -> setEnabled( guinier_q.size() > 1 );
+   le_guinier_rg_t_start  -> setEnabled( true );
+   le_guinier_rg_t_end    -> setEnabled( true );
+   le_guinier_rg_rg_start -> setEnabled( true );
+   le_guinier_rg_rg_end   -> setEnabled( true );
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_qrgmax_text( const QString & )
@@ -2457,6 +2541,151 @@ void US_Hydrodyn_Saxs_Hplc::guinier_delta_end_focus( bool hasFocus )
    }
 }
 
+void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_start_text( const QString & text )
+{
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   guinier_plot_rg->setAxisScale( QwtPlot::xBottom, text.toDouble(), le_guinier_rg_t_end->text().toDouble() );
+   guinier_plot_rg->replot();
+   if ( guinier_plot_rg_zoomer )
+   {
+      delete guinier_plot_rg_zoomer;
+   }
+   guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
+   guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
+   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+}
+
+void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_end_text( const QString & text )
+{
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   guinier_plot_rg->setAxisScale( QwtPlot::xBottom, le_guinier_rg_t_start->text().toDouble(), text.toDouble() );
+   guinier_plot_rg->replot();
+   if ( guinier_plot_rg_zoomer )
+   {
+      delete guinier_plot_rg_zoomer;
+   }
+   guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
+   guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
+   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+}
+
+void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_start_focus( bool hasFocus )
+{
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( guinier_mint, guinier_maxt,
+                            ( guinier_maxt - guinier_mint ) / UHSH_G_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_guinier_rg_t_start->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_end_focus( bool hasFocus )
+{
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( guinier_mint, guinier_maxt,
+                            ( guinier_maxt - guinier_mint ) / UHSH_G_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_guinier_rg_t_end->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_start_text( const QString & text )
+{
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   guinier_plot_rg->setAxisScale( QwtPlot::yLeft, text.toDouble(), le_guinier_rg_rg_end->text().toDouble() );
+   guinier_plot_rg->replot();
+   if ( guinier_plot_rg_zoomer )
+   {
+      delete guinier_plot_rg_zoomer;
+   }
+   guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
+   guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
+   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+}
+
+void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_end_text( const QString & text )
+{
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   guinier_plot_rg->setAxisScale( QwtPlot::yLeft, le_guinier_rg_rg_start->text().toDouble(), text.toDouble() );
+   guinier_plot_rg->replot();
+   if ( guinier_plot_rg_zoomer )
+   {
+      delete guinier_plot_rg_zoomer;
+   }
+   guinier_plot_rg_zoomer = new ScrollZoomer(guinier_plot_rg->canvas());
+   guinier_plot_rg_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
+   guinier_plot_rg_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+}
+
+#define UHSH_MAX_RG 1000
+
+void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_start_focus( bool hasFocus )
+{
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( 0, UHSH_MAX_RG,
+                            UHSH_MAX_RG  / UHSH_G_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_guinier_rg_rg_start->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_end_focus( bool hasFocus )
+{
+   if ( current_mode != MODE_GUINIER )
+   {
+      return;
+   }
+   if ( hasFocus )
+   {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( 0, UHSH_MAX_RG,
+                            UHSH_MAX_RG  / UHSH_G_WHEEL_RES );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( le_guinier_rg_rg_end->text().toDouble() );
+      qwtw_wheel->setEnabled( true );
+   }
+}
 
 // --- baseline ---
 void US_Hydrodyn_Saxs_Hplc::baseline_start()
@@ -4382,6 +4611,22 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
          if ( le_guinier_delta_end->hasFocus() )
          {
             le_last_focus = le_guinier_delta_end;
+         }
+         if ( le_guinier_rg_t_start->hasFocus() )
+         {
+            le_last_focus = le_guinier_rg_t_start;
+         }
+         if ( le_guinier_rg_t_end->hasFocus() )
+         {
+            le_last_focus = le_guinier_rg_t_end;
+         }
+         if ( le_guinier_rg_rg_start->hasFocus() )
+         {
+            le_last_focus = le_guinier_rg_rg_start;
+         }
+         if ( le_guinier_rg_rg_end->hasFocus() )
+         {
+            le_last_focus = le_guinier_rg_rg_end;
          }
 
          if ( !le_last_focus )

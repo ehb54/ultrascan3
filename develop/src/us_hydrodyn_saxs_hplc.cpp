@@ -99,6 +99,14 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window" ] = "25";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_discard_it_sd_mult" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_discard_it_sd_mult" ] = "2";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_discard_it_sd_mult" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult" ] = "false";
+   }
 
    gaussian_type = 
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gaussian_type" ) ?
@@ -722,7 +730,7 @@ void US_Hydrodyn_Saxs_Hplc::clear_files()
 }
 
 
-void US_Hydrodyn_Saxs_Hplc::remove_files( set < QString > & fileset )
+void US_Hydrodyn_Saxs_Hplc::remove_files( set < QString > & fileset, bool replot )
 {
    QStringList files;
    for ( set < QString >::iterator it = fileset.begin();
@@ -731,7 +739,11 @@ void US_Hydrodyn_Saxs_Hplc::remove_files( set < QString > & fileset )
    {
       files << *it;
    }
-   return clear_files( files, true );
+   clear_files( files, true );
+   if ( replot )
+   {
+      plot_files();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
@@ -3427,17 +3439,21 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
       }
       created_files << fname;
    }      
+   check_discard_it_sd_mult( created_files );
    (void) check_zi_window( created_files );
    update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc::test_i_of_t()
 {
+   disable_all();
    QStringList files = all_selected_files();
+   check_discard_it_sd_mult( files, true );
    if ( check_zi_window( files ) )
    {
       editor_msg( "blue", QString( tr( "Test I(t) ok" ) ) );
    }
+   update_enables();
 }
 
 bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files )
@@ -3522,6 +3538,105 @@ bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files )
    }
    
    return true;
+}
+
+void US_Hydrodyn_Saxs_Hplc::check_discard_it_sd_mult( QStringList & files, bool optionally_discard )
+{
+   if ( ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_cb_discard_it_sd_mult" ] != "true" ||
+        !files.size() )
+   {
+      return;
+   }
+
+   double mult = ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_discard_it_sd_mult" ].toDouble();
+
+   QStringList removefiles;
+   QStringList keepfiles;
+   set < QString > removefileset;
+
+   for ( int i = 0; i < (int) files.size(); ++i )
+   {
+      QString this_file = files[ i ];
+      bool skip = true;
+
+      if ( f_errors[ this_file ].size() == f_qs[ this_file ].size() )
+      {
+         for ( int j = 0; j < (int) f_qs[ this_file ].size(); ++j )
+         {
+            if ( f_Is[ this_file ][ j ] > mult * f_errors[ this_file ][ j ] )
+            {
+               skip = false;
+               break;
+            }
+         }
+
+         if ( skip )
+         {
+            removefiles << this_file;
+            removefileset.insert( this_file );
+         } else {
+            keepfiles << this_file;
+         }
+      }
+   }
+
+   if ( removefiles.size() )
+   {
+      QStringList qsl;
+      for ( int i = 0; i < (int)removefiles.size() && i < 15; i++ )
+      {
+         qsl << removefiles[ i ];
+      }
+
+      if ( qsl.size() < removefiles.size() )
+      {
+         qsl << QString( tr( "... and %1 more not listed" ) ).arg( removefiles.size() - qsl.size() );
+      }
+
+      if ( optionally_discard )
+      {
+         switch ( QMessageBox::question(this, 
+                                        this->caption() + tr(": Test I(t), discard I(t)" ),
+                                        QString( tr( "Please note:\n\n"
+                                                     "Make I(t), discard I(t) with no signal above std. dev. multiplied by %1\n"
+                                                     "These curves have been marked to discard\n"
+                                                     "%2\n\n"
+                                                     "What would you like to do?"
+                                                     ) )
+                                        .arg( mult )
+                                        .arg( qsl.join( "\n" ) ),
+                                        tr( "&Discard" ), 
+                                        tr( "&Keep" ),
+                                        QString::null,
+                                        1, // Stop == button 0
+                                        1 // Escape == button 0
+                                        ) )
+         {
+         case 0 : // discard
+            break;
+         case 1 : // keep
+            return;
+            break;
+         }  
+      } else {
+         QMessageBox::information(
+                                  this,
+                                  this->caption() + tr(": Make I(t), discard I(t)" ),
+                                  QString( tr( "Please note:\n\n"
+                                               "Make I(t), discard I(t) with no signal above std. dev. multiplied by %1\n"
+                                               "These curves will be discarded\n"
+                                               "%2\n\n"
+                                               ) )
+                                  .arg( mult )
+                                  .arg( qsl.join( "\n" ) ),
+                                  QMessageBox::Ok | QMessageBox::Default,
+                                  QMessageBox::NoButton
+                                  );
+      }
+      remove_files( removefileset, optionally_discard );
+      files = keepfiles;
+   }
+   return;
 }
 
 bool US_Hydrodyn_Saxs_Hplc::all_selected_have_nonzero_conc()

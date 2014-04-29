@@ -2119,13 +2119,15 @@ void US_Hydrodyn_Saxs_Hplc::options()
       parameters[ "expert_mode" ] = "true";
    }
    
-   parameters[ "hplc_bl_linear"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear"   ];
-   parameters[ "hplc_bl_integral" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ];
-   parameters[ "hplc_bl_save"     ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save"     ];
-   parameters[ "hplc_bl_smooth"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"   ];
-   parameters[ "hplc_bl_reps"     ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"     ];
-   parameters[ "hplc_bl_alpha"    ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"    ];
-   parameters[ "hplc_zi_window"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"   ];
+   parameters[ "hplc_bl_linear"             ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear"                ];
+   parameters[ "hplc_bl_integral"           ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral"              ];
+   parameters[ "hplc_bl_save"               ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save"                  ];
+   parameters[ "hplc_bl_smooth"             ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"                ];
+   parameters[ "hplc_bl_reps"               ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"                  ];
+   parameters[ "hplc_bl_alpha"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"                 ];
+   parameters[ "hplc_zi_window"             ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"                ];
+   parameters[ "hplc_discard_it_sd_mult"    ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_discard_it_sd_mult"       ];
+   parameters[ "hplc_cb_discard_it_sd_mult" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult"    ];
 
    parameters[ "hplc_csv_transposed" ] = 
       (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) ?
@@ -2143,13 +2145,15 @@ void US_Hydrodyn_Saxs_Hplc::options()
       return;
    }
 
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear"   ] = parameters[ "hplc_bl_linear"   ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] = parameters[ "hplc_bl_integral" ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save"     ] = parameters[ "hplc_bl_save"     ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"   ] = parameters[ "hplc_bl_smooth"   ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"     ] = parameters[ "hplc_bl_reps"     ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"    ] = parameters[ "hplc_bl_alpha"    ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"   ] = parameters[ "hplc_zi_window"    ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear"             ] = parameters[ "hplc_bl_linear"                ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral"           ] = parameters[ "hplc_bl_integral"              ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save"               ] = parameters[ "hplc_bl_save"                  ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"             ] = parameters[ "hplc_bl_smooth"                ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"               ] = parameters[ "hplc_bl_reps"                  ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"              ] = parameters[ "hplc_bl_alpha"                 ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"             ] = parameters[ "hplc_zi_window"                ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_discard_it_sd_mult"    ] = parameters[ "hplc_discard_it_sd_mult"       ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult" ] = parameters[ "hplc_cb_discard_it_sd_mult"    ];
 
    // maybe ask (warn) here if gaussian data structures have data
 
