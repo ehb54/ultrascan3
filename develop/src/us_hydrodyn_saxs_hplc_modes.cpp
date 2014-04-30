@@ -995,6 +995,14 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
       {
          guinier_it_t      = f_qs[ testiq_it_selected ];
          guinier_it_I      = f_Is[ testiq_it_selected ];
+         
+         if ( !rb_testiq_from_i_t->isChecked() && 
+              f_gaussians.count( testiq_it_selected ) &&
+              f_gaussians[ testiq_it_selected ].size() &&
+              (int) f_gaussians[ testiq_it_selected ].size() == gaussian_type_size * (int) ( (int) f_gaussians[ testiq_it_selected ].size() / gaussian_type_size ) )
+         {
+            guinier_it_I = compute_gaussian_sum( guinier_it_t, f_gaussians[ testiq_it_selected ] );
+         }
          guinier_it_Imin   = testiq_it_selected_Imin;
          guinier_it_Imax   = testiq_it_selected_Imax;
          guinier_it_Irange = testiq_it_selected_Imax - testiq_it_selected_Imin;
@@ -1996,6 +2004,38 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 #endif
    }
       
+   if ( testiq_active && rb_testiq_gaussians.size() )
+   {
+      for ( int i = 0; i < (int) unified_ggaussian_gaussians_size; i++ )
+      {
+         int line_width = use_line_width < 3 ? ( use_line_width + 1 ) : use_line_width;
+         double pos = unified_ggaussian_params[ common_size * i  ];
+         QString text = QString( "%1" ).arg( i + 1 );
+         QColor color = rb_testiq_gaussians[ i ]->isChecked() ? Qt::magenta : Qt::blue;
+#ifdef QT4
+         QwtPlotMarker * marker = new QwtPlotMarker;
+         marker->setLineStyle       ( QwtPlotMarker::VLine );
+         marker->setLinePen         ( QPen( color, line_width, Qt::DashDotDotLine ) );
+         marker->setLabelOrientation( Qt::Horizontal );
+         marker->setXValue          ( pos );
+         marker->setLabelAlignment  ( Qt::AlignRight | Qt::AlignTop );
+         {
+            QwtText qwtt( text );
+            qwtt.setFont( QFont("Helvetica", 11, QFont::Bold ) );
+            marker->setLabel           ( qwtt );
+         }
+         marker->attach             ( guinier_plot_rg );
+#else
+         long marker = guinier_plot_rg->insertMarker();
+         guinier_plot_rg->setMarkerLineStyle ( marker, QwtMarker::VLine );
+         guinier_plot_rg->setMarkerPos       ( marker, pos, 0e0 );
+         guinier_plot_rg->setMarkerLabelAlign( marker,  Qt::AlignRight | Qt::AlignTop );
+         guinier_plot_rg->setMarkerPen       ( marker, QPen( color, line_width, DashDotDotLine));
+         guinier_plot_rg->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold));
+         guinier_plot_rg->setMarkerLabelText ( marker, text );
+#endif
+      }
+   }
    guinier_plot_rg->replot();
 }
 
