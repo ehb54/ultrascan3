@@ -48,6 +48,7 @@ HEADERS      = \
                us_passwd.h              \
                us_plot.h                \
                us_plot3d.h              \
+               us_plot3d_xyz.h          \
                us_predict1.h            \
                us_project_gui.h         \
                us_properties.h          \
@@ -89,6 +90,7 @@ SOURCES      = \
                us_passwd.cpp              \
                us_plot.cpp                \
                us_plot3d.cpp              \
+               us_plot3d_xyz.cpp          \
                us_predict1.cpp            \
                us_project_gui.cpp         \
                us_properties.cpp          \

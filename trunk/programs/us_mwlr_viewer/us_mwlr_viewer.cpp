@@ -2,6 +2,7 @@
 
 #include "us_mwlr_viewer.h"
 #include "us_mwl_run.h"
+#include "us_mwl_pltctrl.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_util.h"
@@ -50,9 +51,11 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
 
    QGridLayout* settings = new QGridLayout;
 
-   navgrec      = 11;
+   navgrec      = 10;
    is_wrecs     = true;
    dbg_level    = US_Settings::us_debug();
+   p3d_ctld     = NULL;
+   p3d_pltw     = NULL;
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );
    int fwid     = fmet.maxWidth();
@@ -180,7 +183,7 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
    connect( pb_include,   SIGNAL( clicked()       ),
             this,         SLOT  ( include_scans() ) );
    connect( pb_plot2d,    SIGNAL( clicked()       ),
-            this,         SLOT  ( changeRecord()  ) );
+            this,         SLOT  ( changeCellCh()  ) );
    connect( pb_movie2d,   SIGNAL( clicked()       ),
             this,         SLOT  ( show_2d_movie() ) );
    connect( pb_plot3d,    SIGNAL( clicked()       ),
@@ -402,9 +405,8 @@ void US_MwlRawViewer::enableControls( void )
    ct_from   ->setEnabled( true );
    ct_to     ->setEnabled( true );
    pb_exclude->setEnabled( true );
-#if 0
-   pb_include->setEnabled( true );
    pb_plot3d ->setEnabled( true );
+#if 0
    pb_movie3d->setEnabled( true );
    pb_svplot ->setEnabled( true );
    pb_svmovie->setEnabled( true );
@@ -1580,15 +1582,22 @@ void US_MwlRawViewer::exclude_scans()
       scan_knt++;
    }
 
+   qSort( excludes );
    curr_cdata.clear();
    prev_cdata.clear();
    curr_recxs.clear();
    prev_recxs.clear();
    kscan      = nscan - excludes.count();
 DbgLv(1) << "Excl: kscan" << kscan;
-   ct_to     ->setValue( 0 );
+   ct_from   ->disconnect();
+   ct_to     ->disconnect();
    ct_from   ->setMaxValue( kscan );
    ct_to     ->setMaxValue( kscan );
+   connect( ct_from,      SIGNAL( valueChanged( double ) ),
+            this,         SLOT  ( exclude_from( double ) ) );
+   connect( ct_to,        SIGNAL( valueChanged( double ) ),
+            this,         SLOT  ( exclude_to  ( double ) ) );
+   ct_to     ->setValue( 0 );
    pb_include->setEnabled( true );
 }
 
@@ -1599,6 +1608,7 @@ void US_MwlRawViewer::include_scans()
 
    kscan      = nscan;
    ktpoint    = kscan * kpoint;
+DbgLv(1) << "Incl: nscan" << nscan << "kscn ecnt" << kscan << excludes.count();
    curr_cdata.clear();                 // Reset averaging data
    prev_cdata.clear();
    curr_recxs.clear();
@@ -1606,6 +1616,15 @@ void US_MwlRawViewer::include_scans()
    ct_to     ->setValue( 0 );
    changeRecord();                     // Force replot
 
+   ct_from   ->disconnect();
+   ct_to     ->disconnect();
+   ct_from   ->setMaxValue( kscan );
+   ct_to     ->setMaxValue( kscan );
+   connect( ct_from,      SIGNAL( valueChanged( double ) ),
+            this,         SLOT  ( exclude_from( double ) ) );
+   connect( ct_to,        SIGNAL( valueChanged( double ) ),
+            this,         SLOT  ( exclude_to  ( double ) ) );
+   ct_to     ->setValue( 0 );
    pb_include->setEnabled( false );
 }
 
@@ -1630,13 +1649,98 @@ DbgLv(1) << "Show 2D Movie";
 // Slot to open a dialog for 3-D plotting
 void US_MwlRawViewer::plot_3d()
 {
-DbgLv(1) << "Plot 3De";
+DbgLv(1) << "Plt3D";
+   build_xyz_data( xyzdat );
+
+DbgLv(1) << "Plt3D:  open MPC";
+   if ( p3d_ctld == NULL )
+   {
+      p3d_pltw     = NULL;
+      p3d_ctld     = new US_MwlPlotControl( this, &xyzdat );
+      p3d_ctld->show();
+      connect( p3d_ctld, SIGNAL( has_closed()     ),
+               this,     SLOT  ( p3dctrl_closed() ) );
+   }
+
+   else
+   {
+      p3d_ctld->setFocus();
+      p3d_ctld->do_3dplot();
+      p3d_pltw     = p3d_ctld->widget_3dplot();
+      if ( p3d_pltw != NULL )
+         p3d_pltw->reloadData( &xyzdat );
+   }
+
+   pb_movie3d->setEnabled( true );
 }
 
 // Slot to show a 3-D movie
 void US_MwlRawViewer::show_3d_movie()
 {
 DbgLv(1) << "Show 3D Movie";
+   if ( p3d_ctld == NULL )
+   {  // This should not happen, but disallow Show 3D Movie if no plot opened
+      return;
+   }
+
+   p3d_pltw     = p3d_ctld->widget_3dplot();    // Main 3D plot window
+
+   if ( p3d_pltw == NULL )
+   {  // If the dialog is opened
+      QMessageBox::warning( this,
+            tr( "3-D Plot Window Not Opened" ),
+            tr( "You cannot start a 3-D movie until you have first"
+                " opened the small plot control dialog by clicking"
+                " on the \"Plot 3D\" button in this program's main"
+                " window. From that control dialog you must click"
+                " on the \"3D Plot\" button to open the 3-D plotting"
+                " window.\n\nYou should insure that scale and"
+                " orientation are correct for the current plot, as"
+                " these will be in force for each movie frame."
+                " You may then again click on \"Show 3D Movie\"." ) );
+      return;
+   }
+
+   // Determine the range of scans that will be in the movie
+   int fscnx    = -1;
+   int lscnx    = -1;
+   int krscan   = 0;
+   int scan_fr  = (int)ct_from->value();
+   int scan_to  = (int)ct_to  ->value();
+   scan_fr      = ( scan_to < 1 ) ?     1 : scan_fr;
+   scan_to      = ( scan_to < 1 ) ? kscan : scan_to;
+   int scan_knt = 0;
+
+   for ( int scnx = 0; scnx < nscan; scnx++ )
+   {
+      if ( excludes.contains( scnx ) )  continue;
+
+      scan_knt++;               // Non-excluded count
+
+      if ( scan_knt < scan_fr  ||  scan_knt > scan_to )  continue;
+
+      krscan++;                 // In-range count
+
+      if ( fscnx < 0 )
+         fscnx        = scnx;   // First in-range
+      lscnx        = scnx;      // Last in-range
+   }
+
+   // Loop to show movie frames for each included scan that is in range
+   for ( int scnx = fscnx; scnx <= lscnx; scnx++ )
+   {
+      if ( excludes.contains( scnx ) )  continue;
+
+      build_xyz_data( xyzdat, scnx );    // Build data for this scan
+
+      p3d_pltw->reloadData( &xyzdat );   // Load the data in the plot window
+      p3d_ctld->do_3dplot();             // Do the plot
+
+      le_status->setText( tr( "Of %1 scans (%2 included in range),"
+                              " showing:   Scan %3" )
+                          .arg( nscan ).arg( krscan ).arg( scnx + 1 ) );
+      qApp->processEvents();
+   }
 }
 
 // Slot to save the current plot
@@ -1656,12 +1760,13 @@ int US_MwlRawViewer::dvec_index( QVector< double >& dvec, const double dval )
 {
    const double eps   = 1.e-4;
 
-   int indx    = dvec.indexOf( dval );
+   int indx    = dvec.indexOf( dval );   // Try to find an exact match
 
    if ( indx < 0 )
-   {
+   {  // If no exact match was found, look for a match within epsilon
+
       for ( int jj = 0; jj < dvec.size(); jj++ )
-      {
+      {  // Search doubles vector
          double ddif     = qAbs( dvec[ jj ] - dval );
 
          if ( ddif < eps )
@@ -1673,5 +1778,132 @@ int US_MwlRawViewer::dvec_index( QVector< double >& dvec, const double dval )
    }
 
    return indx;
+}
+
+// Build XYZ data vector for 3D plot
+int US_MwlRawViewer::build_xyz_data( QVector< QVector3D >& xyzd, int scan )
+{
+   // Insure we have ranges set
+   compute_ranges();
+
+   // Initialize counters
+   int k3dtot   = 0;
+   int scnx     = scan;
+   int scan_fr  = (int)ct_from->value();
+   int scan_to  = (int)ct_to  ->value();
+   scan_fr      = ( scan_to < 1 ) ?     1 : scan_fr;
+   scan_to      = ( scan_to < 1 ) ? kscan : scan_to;
+   int scan_knt = 1;
+   if ( excludes.count() > 0 )  qSort( excludes );
+
+   // Get index of scan for which to build
+   if ( scan < 0 )
+   {  // If no scan given, compute index of first included scan in given range
+      for ( scnx = 0; scnx < nscan; scnx++ )
+      {
+         if ( excludes.contains( scnx ) )  continue;
+
+         if ( scan_knt >= scan_fr )
+            break;
+
+         scan_knt++;
+      }
+   }
+
+   else
+   {  // If scan given, insure it is included and in given range
+      for ( scnx = 0; scnx < nscan; scnx++ )
+      {
+         if ( excludes.contains( scnx ) )  continue;
+
+         if ( scan_knt >= scan_fr  &&  scan_knt <= scan_to  &&  scnx == scan )
+            break;
+
+         scan_knt++;
+      }
+   }
+
+   if ( scnx >= nscan )
+   {
+      qDebug() << "BldXYZ: *ERROR* scan invalid:" << scan << nscan;
+      return k3dtot;
+   }
+
+   QVector< int    > lmb3d;
+   QVector< double > rad3d;
+
+   // Build the list of lambda to plot
+   for ( int lmbx = lmbxs; lmbx < lmbxe; lmbx++ )
+      lmb3d << lambdas[ lmbx ];
+
+   // Build the list of radii to plot
+   for ( int radx = radxs; radx < radxe; radx++ )
+      rad3d << radii[ radx ];
+
+   k3dlamb      = lmb3d.count();                          // Lambda plot count
+   k3drads      = rad3d.count();                          // Radius plot count
+DbgLv(1) << "Bxyz: lambda count" << k3dlamb << "range"
+ << lmb3d[0] << lmb3d[k3dlamb-1];
+DbgLv(1) << "Bxyz: radius count" << k3drads << "range"
+ << rad3d[0] << rad3d[k3drads-1];
+   int nhavg    = navgrec / 2;                            // Half avg. points
+   int wvx      = lmbxs;                                  // True lambda index
+DbgLv(1) << "Bxyz:  navg" << navgrec << "trpxs wvx" << trpxs << wvx;
+   xyzd.clear();
+
+   // Now build the data points
+   for ( int klx = 0; klx < k3dlamb; klx++, wvx++ )
+   {  // Outer loop is lambdas
+      int lambda   = lmb3d[ klx ];                        // Lambda value
+      int wvxs     = qMax( ( wvx  - nhavg   ), 0 );       // Start for avg.
+      int wvxe     = qMin( ( wvxs + navgrec ), nlambda ); // End for avg.
+      int kavgc    = wvxe - wvxs;                         // True avg. count
+      int trxs     = trpxs + wvxs;                        // Triple start
+      int trxe     = trpxs + wvxe;                        // Triple end
+      int rdx      = radxs;                               // True radius index
+      double yval  = (double)lambda;                      // Y is lambda
+
+      for ( int krx = 0; krx < k3drads; krx++, rdx++ )
+      {
+         double xval  = rad3d[ krx ];                     // X is radius
+         double zval  = 0.0;                              // Initial Z sum
+
+         for ( int trx = trxs; trx < trxe; trx++ )        // WvLn range Z sum
+            zval        += allData[ trx ].reading( scnx, rdx );
+
+         zval        /= (double)kavgc;                    // Averaged Z value
+
+         xyzd << QVector3D( xval, yval, zval );           // Store X,Y,Z point
+DbgLv(2) << "Bxyz:    k" << xyzd.count() << "x y z" << xval << yval << zval;
+      }
+   }
+
+   k3dtot       = xyzd.count();
+int i=k3drads-1;
+int j=i+1;
+int k=j+1;
+int h=i/2;
+int m=k3dtot-2;
+int n=m+1;
+DbgLv(1) << "Bxyz: k3dtot" << k3dtot << "k3l k3r" << k3dlamb << k3drads;
+DbgLv(1) << "Bxyz:  xyz0" << xyzd[0] << 0;
+DbgLv(1) << "Bxyz:  xyz1" << xyzd[1] << 1;
+DbgLv(1) << "Bxyz:  xyzh" << xyzd[h] << h;
+DbgLv(1) << "Bxyz:  xyzi" << xyzd[i] << i;
+DbgLv(1) << "Bxyz:  xyzj" << xyzd[j] << j;
+DbgLv(1) << "Bxyz:  xyzj" << xyzd[k] << k;
+DbgLv(1) << "Bxyz:  xyzm" << xyzd[m] << m;
+DbgLv(1) << "Bxyz:  xyzn" << xyzd[n] << n;
+
+   return k3dtot;
+}
+
+// Slot to handle the close of the 3D plot control dialog
+void US_MwlRawViewer::p3dctrl_closed()
+{
+   p3d_ctld     = NULL;
+   p3d_pltw     = NULL;
+
+   pb_movie3d->setEnabled( false );
 }
 
