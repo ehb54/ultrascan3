@@ -9,6 +9,8 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_mwl_data.h"
+#include "us_plot3d_xyz.h"
+#include "us_mwl_pltctrl.h"
 #include "us_dataIO.h"
 
 class US_MwlRawViewer : public US_Widgets
@@ -21,12 +23,19 @@ class US_MwlRawViewer : public US_Widgets
      US_MwlRawViewer();
 
   private:
-     QVector< double >              curr_adata; //!< Current averaged data
+     QPointer< US_MwlPlotControl >   p3d_ctld;   //!< Pointer to 3D control
+     QPointer< US_Plot3Dxyz >        p3d_pltw;   //!< Pointer to 3D plot window
 
-     QVector< QVector< double > >   curr_cdata; //!< Current avg. comp. data
-     QVector< QVector< double > >   prev_cdata; //!< Previous avg. comp. data
+     QVector< double >               curr_adata; //!< Current averaged data
 
-     QVector< US_DataIO::RawData >  allData;    //!< All AUC raw data
+     QVector< QVector< double > >    curr_cdata; //!< Current avg. comp. data
+     QVector< QVector< double > >    prev_cdata; //!< Previous avg. comp. data
+
+     QVector< QVector3D >            xyzdat;     //!< Current 3D data vector
+     QVector< QVector< QVector3D > > xyzdats;    //!< All 3D plot data vectors
+     QVector< double >               yvals3d;    //!< Y values for 3D plot
+
+     QVector< US_DataIO::RawData >   allData;    //!< All AUC raw data
 
      QVector< double > pltxvals;    //!< Current plot's X (wvl/rad) values
      QVector< double > radii;       //!< Loaded radii
@@ -109,6 +118,10 @@ class US_MwlRawViewer : public US_Widgets
      int            kpoint;
      int            ktpoint;
      int            trpxs;
+     int            k3dscan;
+     int            k3dlamb;
+     int            k3drads;
+     int            k3dsize;
 
      bool           is_wrecs;
      bool           have_rngs;
@@ -157,6 +170,8 @@ class US_MwlRawViewer : public US_Widgets
      void   exclude_scans  ( void );
      void   include_scans  ( void );
      int    dvec_index     ( QVector< double >&, const double );
+     int    build_xyz_data ( QVector< QVector3D >&, int = -1 );
+     void   p3dctrl_closed ( void );
      void   help           ( void )
      { showHelp.show_help( "mwlr_viewer.html" ); };
 };
