@@ -443,6 +443,12 @@ DbgLv(1) << "P3D:sR:  xmin xmax" << xmin << xmax
  << " ymin ymax" << ymin << ymax << " zmin zmax" << zmin << zmax;
 }
 
+// Public function to reset the plot title
+void US_Plot3Dxyz::setPlotTitle( QString pltt )
+{
+   dataWidget->setTitle( pltt );
+}
+
 // Public function to set internal variables from plot control parameters
 void US_Plot3Dxyz::setParameters( int a_gridy, int a_gridx,
       double x_scale, double y_scale, double z_scale,
@@ -849,9 +855,9 @@ DbgLv(1) << "P3D:rP:  xscl yscl" << x_scale << y_scale;
 //   double xtic1     = 1.0 / (  5.0 * x_scale );
 //   double ytic1     = 1.0 / ( 20.0 * y_scale );
 //   double ztic1     = 1.0 / ( 20.0 * z_scale );
-   double xtic1     = 0.32;
-   double ytic1     = 0.04;
-   double ztic1     = 0.04;
+   double xtic1     = 0.04;
+   double ytic1     = 0.02;
+   double ztic1     = 0.02;
    double xtic2     = xtic1 * 0.4;
    double ytic2     = ytic1 * 0.4;
    double ztic2     = ztic1 * 0.4;
@@ -870,10 +876,10 @@ DbgLv(1) << "P3D:rP:  xtic1 ytic1 ztic1" << xtic1 << ytic1 << ztic1;
    dataWidget->coordinates()->axes[Z3].setLabelString( zatitle );
    dataWidget->coordinates()->axes[Z4].setLabelString( zatitle );
 DbgLv(1) << "P3D:rp:  xatitle yatitle" << xatitle << yatitle;
-   //dataWidget->coordinates()->axes[X1].setTicLength( xtic1, xtic2 );
-   //dataWidget->coordinates()->axes[X2].setTicLength( xtic1, xtic2 );
-   //dataWidget->coordinates()->axes[X3].setTicLength( xtic1, xtic2 );
-   //dataWidget->coordinates()->axes[X4].setTicLength( xtic1, xtic2 );
+   dataWidget->coordinates()->axes[X1].setTicLength( xtic1, xtic2 );
+   dataWidget->coordinates()->axes[X2].setTicLength( xtic1, xtic2 );
+   dataWidget->coordinates()->axes[X3].setTicLength( xtic1, xtic2 );
+   dataWidget->coordinates()->axes[X4].setTicLength( xtic1, xtic2 );
    dataWidget->coordinates()->axes[Y1].setTicLength( ytic1, ytic2 );
    dataWidget->coordinates()->axes[Y2].setTicLength( ytic1, ytic2 );
    dataWidget->coordinates()->axes[Y3].setTicLength( ytic1, ytic2 );
@@ -1832,7 +1838,7 @@ void US_Plot3Dxyz::clear_2dvect( QVector< QVector< double > >& vec )
    if ( ncol < 1 )   return;
 
    for ( int ii = 0; ii < ncol; ii++ )
-      vec[ 0 ].clear();
+      vec[ ii ].clear();
 
    vec.clear();
 }
@@ -1844,7 +1850,7 @@ void US_Plot3Dxyz::clear_2dvect( QVector< QVector< Triple > >& vec )
    if ( ncol < 1 )   return;
 
    for ( int ii = 0; ii < ncol; ii++ )
-      vec[ 0 ].clear();
+      vec[ ii ].clear();
 
    vec.clear();
 }

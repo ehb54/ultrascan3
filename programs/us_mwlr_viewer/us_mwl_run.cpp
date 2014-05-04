@@ -146,6 +146,16 @@ void US_MwlRun::select( void )
 {
    int ndx = tw ->currentRow();
 
+   if ( ndx < 0 )
+   {
+      QMessageBox::information( this, tr( "No Run Selected" ),
+             tr( "You have not selected a run to load."
+                 " To cancel loading, click on the \"Cancel\" button."
+                 " Otherwise, make a selection in the list before"
+                 " clicking on the \"Select\" button" ) );
+      return;
+   }
+
    runID   = resdir + tw ->item( ndx, 0 )->text();
 qDebug() << "MwlRun:  accept : runID" << runID;
    accept();

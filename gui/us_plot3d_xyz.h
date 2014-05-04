@@ -40,6 +40,10 @@ class US_GUI_EXTERN US_Plot3Dxyz : public QMainWindow
       //! \param zat   Z annotation title
       void setTitles    ( QString, QString, QString, QString, QString );
 
+      //! \brief Public function to reset the plot title
+      //! \param pltt  Plot title
+      void setPlotTitle ( QString );
+
       //! \brief Public function to set plot control parameters
       //! \param a_gridx  Grid resolution in the X direction
       //! \param a_gridy  Grid resolution in the Y direction

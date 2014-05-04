@@ -1,6 +1,6 @@
 include( ../../gui.pri )
 
-QT           += xml
+QT           += opengl
 
 TARGET        = us_mwlr_viewer
 
