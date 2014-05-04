@@ -44,53 +44,26 @@ class US_MwlPlotControl : public US_WidgetsDialog
       QGridLayout*  controlsLayout;
       QHBoxLayout*  buttonsLayout;
 
-      QwtCounter*   ct_gridreso;
-      QwtCounter*   ct_peaksmoo;
-      QwtCounter*   ct_peakwidth;
       QwtCounter*   ct_zscalefac;
       QwtCounter*   ct_rxscale;
       QwtCounter*   ct_ryscale;
 
       QCheckBox*    ck_yrevrs;
 
-      QVector< QCheckBox* >    xCheck;
-      QVector< QCheckBox* >    yCheck;
-
       QWidget*                 wparent;
       QPointer< US_Plot3Dxyz > plot3d_w;
       QVector< QVector3D >*    xyzdat;
 
-      double zscale;
-      double rxscale;
-      double ryscale;
-      double gridres;
-      double pksmooth;
-      double pkwidth;
+      double        zscale;
+      double        rxscale;
+      double        ryscale;
 
    protected:
       US_Help       showHelp;
 
    private slots:
-      void xmwtCheck( bool );
-      void ymwtCheck( bool );
-      void xsedCheck( bool );
-      void ysedCheck( bool );
-      void xdifCheck( bool );
-      void ydifCheck( bool );
-      void xfcoCheck( bool );
-      void yfcoCheck( bool );
-      void xfraCheck( bool );
-      void yfraCheck( bool );
-      void xvbaCheck( bool );
-      void yvbaCheck( bool );
-      void checkSet(  bool, bool, int );
-      void zscal_value( double );
-      void gridr_value( double );
-      void peaks_value( double );
-      void peakw_value( double );
       void plot3_btn( void );
       void close_all( void );
-      int  dimensionType( QVector< QCheckBox* >& );
 
       void help     ( void )
       { showHelp.show_help( "mwlr_view_pltctrl.html" ); };

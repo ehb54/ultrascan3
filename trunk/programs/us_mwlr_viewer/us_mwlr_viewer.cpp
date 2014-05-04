@@ -258,7 +258,7 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
 
-   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.8, 7.2 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
 
    picker = new US_PlotPicker( data_plot );
@@ -339,7 +339,7 @@ void US_MwlRawViewer::reset( void )
 
    data_plot->detachItems();
    picker   ->disconnect();
-   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.8, 7.2 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
    grid          = us_grid( data_plot );
    data_plot->replot();
@@ -347,9 +347,9 @@ void US_MwlRawViewer::reset( void )
             this,         SLOT  ( changeCellCh(            ) ) );
 
    last_xmin       = -1.0;
-   last_rmin       = -1.0;
-   last_lmin       = -1.0;
+   last_xmax       = -1.0;
    last_ymin       = -1.0;
+   last_ymax       = -1.0;
 
    mwl_data.clear();
    le_status->setText( tr( "(no data loaded)" ) );
@@ -406,11 +406,8 @@ void US_MwlRawViewer::enableControls( void )
    ct_to     ->setEnabled( true );
    pb_exclude->setEnabled( true );
    pb_plot3d ->setEnabled( true );
-#if 0
-   pb_movie3d->setEnabled( true );
    pb_svplot ->setEnabled( true );
    pb_svmovie->setEnabled( true );
-#endif
 
    ncellch     = cellchans.size();
    nlambda     = lambdas  .size();
@@ -518,6 +515,7 @@ void US_MwlRawViewer::load_mwl_raw( )
    // Build the AUC equivalent
    mwl_data.build_rawData( allData );
 
+   QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
    mwl_fnames = dirdir.entryList( QStringList( "*.mwrs" ),
                                   QDir::Files, QDir::Name );
@@ -661,6 +659,7 @@ DbgLv(1) << "RD: mwr ncellch nlambda nscan npoint"
 DbgLv(1) << "RD:   rvS rvE" << radii[0] << radii[npoint-1];
    le_status->setText( tr( "All %1 raw AUCs have been loaded." )
                        .arg( ntriple ) );
+   QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
    qApp->processEvents();
 
@@ -990,48 +989,66 @@ void US_MwlRawViewer::changeCellCh( void )
 {
    // Match the description to find the correct triple in memory
    QString cellch = cb_cellchn->currentText();
-DbgLv(1) << "chgCellCh:  cellch" << cellch;
+DbgLv(1) << "chgCC:  cellch" << cellch << "last_xmin" << last_xmin;
    if ( allData.size() < 1 )
       return;
 
-   // If new cell, accumulate data bounds
-   ccx           = cb_cellchn->currentIndex();
-   int trxs      = ccx * nlambda;
-   int trxe      = trxs + nlambda;
-   if ( is_wrecs )
-   {  // For wavelength records, X bounds are radius bounds
-      last_xmin     = allData[ trxs ].xvalues[ 0 ];
-      last_xmax     = last_xmin;
-      US_DataIO::RawData* edata = &allData[ trxs ];
-      for ( int ptx = 0; ptx < npoint; ptx++ )
-      {
-         last_xmin  = qMin( last_xmin, edata->xvalues[ ptx ] );
-         last_xmax  = qMax( last_xmax, edata->xvalues[ ptx ] );
-      }
-   }
-   else
-   {  // For radius records, X bounds are lambda bounds
-      last_xmin     = lambdas[ 0 ];
-      last_xmax     = lambdas[ nlambda - 1 ];
-   }
+   if ( last_xmin < 0.0 )
+   {  // If first time plotting any data, detect actual data bounds
+      have_rngs     = false;
+      compute_ranges();
 
-   last_ymin     = allData[ trxs ].reading( 0, 0 );
-   last_ymax     = last_ymin;
+      int trxs      = trpxs + lmbxs;
+      int trxe      = trpxs + lmbxe;
 
-   for ( int trx = trxs; trx < trxe; trx++ )
-   {  // Accumulate Y bounds, the amplitude bounds
-      US_DataIO::RawData* edata = &allData[ trx ];
+      if ( is_wrecs )
+      {  // For wavelength records, X bounds are radius bounds
+         last_xmin     = allData[ trxs ].xvalues[ radxs ];
+         last_xmax     = last_xmin;
+         US_DataIO::RawData* edata = &allData[ trxs ];
 
-      for ( int scx = 0; scx < nscan; scx++ )
-      {
-         for ( int ptx = 0; ptx < npoint; ptx++ )
+         for ( int rdx = radxs; rdx < radxe; rdx++ )
          {
-            last_ymin  = qMin( last_ymin, edata->reading( scx, ptx ) );
-            last_ymax  = qMax( last_ymax, edata->reading( scx, ptx ) );
+            last_xmin  = qMin( last_xmin, edata->xvalues[ rdx ] );
+            last_xmax  = qMax( last_xmax, edata->xvalues[ rdx ] );
          }
       }
+
+      else
+      {  // For radius records, X bounds are lambda bounds
+         last_xmin     = lambdas[ lmbxs ];
+         last_xmax     = lambdas[ lmbxe ];
+      }
+
+      last_ymin     = allData[ trxs ].reading( 0, 0 );
+      last_ymax     = last_ymin;
+
+      for ( int trx = trxs; trx < trxe; trx++ )
+      {  // Accumulate Y bounds, the amplitude bounds
+         US_DataIO::RawData* edata = &allData[ trx ];
+
+         for ( int scx = 0; scx < nscan; scx++ )
+         {
+            for ( int rdx = radxs; rdx < radxe; rdx++ )
+            {
+               last_ymin  = qMin( last_ymin, edata->reading( scx, rdx ) );
+               last_ymax  = qMax( last_ymax, edata->reading( scx, rdx ) );
+            }
+         }
+      }
+DbgLv(1) << "chgCC: trxs trxe" << trxs << trxe;
    }
-DbgLv(1) << "chgCC: trxs trxe" << trxs << trxe << "xmin xmax ymin ymax"
+
+   else
+   {  // After first time, detect what has been already set
+      QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
+      QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+      last_xmin      = sdx->lowerBound();
+      last_xmax      = sdx->upperBound();
+      last_ymin      = sdy->lowerBound();
+      last_ymax      = sdy->upperBound();
+   }
+DbgLv(1) << "chgCC:  xmin xmax ymin ymax"
  << last_xmin << last_xmax << last_ymin << last_ymax;
 
    curr_cdata.clear();
@@ -1039,6 +1056,7 @@ DbgLv(1) << "chgCC: trxs trxe" << trxs << trxe << "xmin xmax ymin ymax"
    curr_recxs.clear();
    prev_recxs.clear();
 
+   have_rngs  = false;
    changeRecord();
 }
 
@@ -1229,6 +1247,7 @@ void US_MwlRawViewer::changeRecord( void )
 {
    recx           = cb_pltrec->currentIndex();
 DbgLv(1) << "chgRec: recx" << recx;
+   bool plt_one   = ! le_status->text().contains( tr( "saving" ) );
 
    // Insure we have averaged data for this record
    build_avg_data();
@@ -1236,7 +1255,9 @@ DbgLv(1) << "chgRec: recx" << recx;
    // Plot what we have
    plot_current();
 
-   le_status->setText( lb_pltrec->text() + ": " + cb_pltrec->currentText() );
+   // Update status text (if not part of movie save) and set prev/next arrows
+   if ( plt_one )
+      le_status->setText( lb_pltrec->text() + ": " + cb_pltrec->currentText() );
    pb_prev  ->setEnabled( ( recx > 0 ) );
    pb_next  ->setEnabled( ( recx < ( krecs -1 ) ) );
 }
@@ -1256,13 +1277,20 @@ DbgLv(1) << "chgRtype: wlnrec" << wlnrec;
    if ( is_wrecs )
    {  // Change record button title and reset for lambda record
       lb_pltrec->setText( tr( "Plot (W nm)" ) );
-      changeLambda();
+      changeLambda();                       // Change to lambda records
+      last_xmin  = rad_start;               // Change X limits
+      last_xmax  = rad_end;
    }
    else
    {  // Change record button title and reset for radius record
       lb_pltrec->setText( tr( "Plot (R cm)" ) );
-      changeRadius();
+      changeRadius();                       // Change to radius records
+      last_xmin  = (double)lmb_start;       // Change X limits
+      last_xmax  = (double)lmb_end;
    }
+
+   // Since X has changed, reset the plot X scale
+   data_plot->setAxisScale( QwtPlot::xBottom, last_xmin, last_xmax );
 
    plot_current();                          // Plot initial record of this type
 }
@@ -1635,6 +1663,7 @@ DbgLv(1) << "Show 2D Movie";
    // Loop to plot each record in the current cell
    int krecs       = cb_pltrec->count();
    int svrec       = recx;                  // Save currently plotted record
+   changeCellCh();                          // Force save of scales
 
    for ( int prx = 0; prx < krecs; prx++ )
    {
@@ -1658,6 +1687,20 @@ DbgLv(1) << "Plt3D:  open MPC";
       p3d_pltw     = NULL;
       p3d_ctld     = new US_MwlPlotControl( this, &xyzdat );
       p3d_ctld->show();
+      // Position near one corner of the desktop
+      int mx       = x();
+      int my       = y();
+      int nmx      = width();
+      int nmy      = height();
+      int ndx      = qApp->desktop()->width();
+      int ndy      = qApp->desktop()->height();
+      int mmx      = mx + nmx / 2;
+      int mmy      = my + nmy / 2;
+      int ncx      = p3d_ctld->width();
+      int ncy      = p3d_ctld->height();
+      int cx       = ( mmx > ( ndx / 2 ) ) ? 20 : ( ndx - ncx - 20 );
+      int cy       = ( mmy > ( ndy / 2 ) ) ? 20 : ( ndy - ncy - 20 );
+      p3d_ctld->move( cx, cy );
       connect( p3d_ctld, SIGNAL( has_closed()     ),
                this,     SLOT  ( p3dctrl_closed() ) );
    }
@@ -1666,9 +1709,19 @@ DbgLv(1) << "Plt3D:  open MPC";
    {
       p3d_ctld->setFocus();
       p3d_ctld->do_3dplot();
+
       p3d_pltw     = p3d_ctld->widget_3dplot();
+
       if ( p3d_pltw != NULL )
+      {
          p3d_pltw->reloadData( &xyzdat );
+
+         int scan_nbr   = live_scan( );
+         QString ptitle = tr( "MWL 3-D Plot, Scan " )
+                        + QString::number( scan_nbr );
+
+         p3d_pltw->setPlotTitle( ptitle );
+      }
    }
 
    pb_movie3d->setEnabled( true );
@@ -1677,7 +1730,7 @@ DbgLv(1) << "Plt3D:  open MPC";
 // Slot to show a 3-D movie
 void US_MwlRawViewer::show_3d_movie()
 {
-DbgLv(1) << "Show 3D Movie";
+//DbgLv(1) << "sh3M: Show 3D Movie";
    if ( p3d_ctld == NULL )
    {  // This should not happen, but disallow Show 3D Movie if no plot opened
       return;
@@ -1705,26 +1758,17 @@ DbgLv(1) << "Show 3D Movie";
    int fscnx    = -1;
    int lscnx    = -1;
    int krscan   = 0;
-   int scan_fr  = (int)ct_from->value();
-   int scan_to  = (int)ct_to  ->value();
-   scan_fr      = ( scan_to < 1 ) ?     1 : scan_fr;
-   scan_to      = ( scan_to < 1 ) ? kscan : scan_to;
-   int scan_knt = 0;
 
-   for ( int scnx = 0; scnx < nscan; scnx++ )
-   {
-      if ( excludes.contains( scnx ) )  continue;
+   live_scan( &fscnx, &lscnx, &krscan );
+DbgLv(1) << "sh3M:  fscnx lscnx krscan" << fscnx << lscnx << krscan;
 
-      scan_knt++;               // Non-excluded count
-
-      if ( scan_knt < scan_fr  ||  scan_knt > scan_to )  continue;
-
-      krscan++;                 // In-range count
-
-      if ( fscnx < 0 )
-         fscnx        = scnx;   // First in-range
-      lscnx        = scnx;      // Last in-range
-   }
+   QString statmsg  = ( nscan == krscan )
+                    ? tr( "Of %1 scans, showing:   Scan " ).arg( nscan )
+                    : tr( "Of %1 in-range, included scans (%2 total),"
+                          " showing:   Scan " ).arg( krscan ).arg( nscan );
+   QString ptbase   = tr( "MWL 3-D Plot, Scan SSS" );
+   QString ptitle   = tr( "MWL 3-D Plot, Scan 1" );
+   QString str_scan;
 
    // Loop to show movie frames for each included scan that is in range
    for ( int scnx = fscnx; scnx <= lscnx; scnx++ )
@@ -1734,11 +1778,14 @@ DbgLv(1) << "Show 3D Movie";
       build_xyz_data( xyzdat, scnx );    // Build data for this scan
 
       p3d_pltw->reloadData( &xyzdat );   // Load the data in the plot window
-      p3d_ctld->do_3dplot();             // Do the plot
+//      p3d_ctld->do_3dplot();             // Do the plot
+      str_scan         = QString::number( ( scnx + 1 ) );
+      ptitle           = QString( ptbase ).replace( "SSS", str_scan );
+      p3d_pltw->setPlotTitle( ptitle );  // Reset the title for scan_nbr
+      p3d_pltw->replot();                // Do the plot
+DbgLv(1) << "sh3M:    scnx ptitle" << scnx << ptitle;
 
-      le_status->setText( tr( "Of %1 scans (%2 included in range),"
-                              " showing:   Scan %3" )
-                          .arg( nscan ).arg( krscan ).arg( scnx + 1 ) );
+      le_status->setText( statmsg + str_scan );
       qApp->processEvents();
    }
 }
@@ -1747,12 +1794,232 @@ DbgLv(1) << "Show 3D Movie";
 void US_MwlRawViewer::save_plot()
 {
 DbgLv(1) << "Save Plot";
+   QString savedir = US_Settings::reportDir() + "/" + runID;
+   QDir().mkpath( savedir );
+   savedir         = savedir.replace( "\\", "/" ) + "/";
+   QString fname2d = runID + ( ck_xwavlen->isChecked()
+                   ? ".radRec_RRRRR_2D.png"
+                   : ".lmbRec_RRRRR_2D.png" );
+   QString fname3d = runID + ".Scan_SSSS_3D.png";
+   p3d_pltw        = ( p3d_ctld == NULL ) ? NULL : p3d_ctld->widget_3dplot();
+   int nfiles      = ( p3d_pltw != NULL ) ? 2 : 1;
+
+   if ( nfiles == 2 )
+   {  // If there is a 3D window, first save a PNG of that window
+      int scan_fr     = (int)ct_from->value();
+      int scan_to     = (int)ct_to  ->value();
+      scan_fr         = ( scan_to < 1 ) ?     1 : scan_fr;
+      int scan_knt    = 0;
+      int scan_nbr    = 1;
+
+      for ( int scnx = 0; scnx < nscan; scnx++ )
+      {
+         if ( excludes.contains( scnx ) )   continue;
+         scan_knt++;            // Non-excluded count
+         if ( scan_knt < scan_fr )          continue;
+         scan_nbr        = scnx + 1;
+         break;
+      }
+
+      p3d_pltw->replot();                // Do the plot
+      QString s_scan  = QString().sprintf( "%04d", scan_nbr );
+      fname3d         = fname3d.replace( "SSSS", s_scan  );
+      QString fpath3d = savedir + fname3d;
+
+      p3d_pltw->save_plot( fpath3d, QString( "png" ) );
+   }
+
+   // Always save a PNG of the 2-D plot
+   QString ccr     = cb_cellchn->currentText().remove( " / " );
+   QString rec_str = ccr + cb_pltrec->currentText().remove( "." );
+   fname2d         = fname2d.replace( "RRRRR", rec_str );
+   QString fpath2d = savedir + fname2d;
+
+   US_GuiUtil::save_png( fpath2d, data_plot );
+
+   // Report the file(s) saved
+   QString mtitle  = ( nfiles == 1 )
+                   ? tr( "Plot File Saved" )
+                   : tr( "Plot Files Saved" );
+   QString msg     = tr( "In the directory\n     %1,\n\n" ).arg( savedir );
+   if ( nfiles == 1 )
+      msg            += tr( "File\n    %1 was saved." ).arg( fname2d );
+   else
+      msg            += tr( "Files\n    %1 ;  and\n    %2\nwere saved." )
+                        .arg( fname3d ).arg( fname2d );
+
+   QMessageBox::information( this, mtitle, msg );
 }
 
 // Slot to save the current cell's movie(s)
 void US_MwlRawViewer::save_movie()
 {
+   bool save_2d   = true;
+   bool save_3d   = ( p3d_pltw != NULL );
+
 DbgLv(1) << "Save Movie";
+   if ( save_3d )
+   {  // If there is a 3D window, ask the user which movies to run
+      QMessageBox msgBox( this );
+      msgBox.setWindowTitle( tr( "Multiple Possible Movie Saves" ) );
+      msgBox.setTextFormat( Qt::RichText );
+      msgBox.setText(
+         tr( "A 3-D plot window is opened, so you may save both a "
+             "3-D movie and a 2-D one; or you may choose to save "
+             "only one.<br/><br/>Save both?<ul>"
+             "<li><b>Yes</b> to save both movies;</li>"
+             "<li><b>No</b> to save just the 3-D movie;</li>"
+             "<li><b>Cancel</b> to cancel any save in order "
+             "to edit/close the 3-D window.</li></ul>" ) );
+      msgBox.addButton( QMessageBox::Yes );
+      msgBox.addButton( QMessageBox::No );
+      msgBox.addButton( QMessageBox::Cancel );
+      msgBox.setDefaultButton( QMessageBox::Yes );
+      int stat = msgBox.exec();
+
+      save_3d        = ( stat != QMessageBox::Cancel );
+      save_2d        = ( stat == QMessageBox::Yes );
+   }
+
+   if ( save_3d )
+      save_3d_movie();
+
+   if ( save_2d )
+      save_2d_movie();
+}
+
+// Slot to save the current cell's 2-D movie
+void US_MwlRawViewer::save_2d_movie()
+{
+DbgLv(1) << "Save 2D Movie";
+   // Loop to plot each record in the cell and save an image to file
+   int krecs       = cb_pltrec->count();
+   int svrec       = recx;                  // Save currently plotted record
+   QStringList fnames;
+   QString savedir = US_Settings::reportDir() + "/" + runID;
+   QDir().mkpath( savedir );
+   savedir         = savedir.replace( "\\", "/" ) + "/";
+   QString bfname  = runID + ( ck_xwavlen->isChecked()
+                   ? ".radRec_RRRRR_2D_frame_XXXXX.png"
+                   : ".lmbRec_RRRRR_2D_frame_XXXXX.png" );
+   QString ccr     = cb_cellchn->currentText().remove( " / " );
+   QString bstat   = tr( "Of %1 records, saving record " ).arg( krecs );
+   le_status->setText( bstat );
+
+   for ( int prx = 0; prx < krecs; prx++ )
+   {
+      cb_pltrec->setCurrentIndex( prx );    // Plot each record in the range
+      qApp->processEvents();
+
+      QString rec_str = ccr + cb_pltrec->currentText().remove( "." );
+      QString frm_str = QString().sprintf( "%05d", ( prx + 1 ) );
+      QString fname   = QString( bfname ).replace( "RRRRR", rec_str )
+                                         .replace( "XXXXX", frm_str );
+      QString fpath   = savedir + fname;
+
+      le_status->setText( bstat + rec_str + ", frame " + frm_str );
+
+      US_GuiUtil::save_png( fpath, data_plot );
+      fnames << fname;
+   }
+
+   cb_pltrec->setCurrentIndex( svrec );     // Restore previous plot record
+   qApp->processEvents();
+
+   QMessageBox::information( this, tr( "Frame Files Saved" ),
+      tr( "In the directory\n     %1,\n\n%2 2-D movie frame files"
+          " were saved:\n     %3\n     ...\n     %4 ." )
+      .arg( savedir ).arg( krecs ).arg( fnames[ 0 ] )
+      .arg( fnames[ krecs - 1 ] ) );
+}
+
+// Slot to save the current cell's 3-D movie
+void US_MwlRawViewer::save_3d_movie()
+{
+DbgLv(1) << "Save 3-D Movie";
+   if ( p3d_ctld == NULL )
+   {  // This should not happen, but disallow Save 3D Movie if no plot opened
+      return;
+   }
+
+   p3d_pltw     = p3d_ctld->widget_3dplot();    // Main 3D plot window
+
+   if ( p3d_pltw == NULL )
+   {  // If the plot window is not opened, explain what to do
+      QMessageBox::warning( this,
+            tr( "3-D Plot Window Not Opened" ),
+            tr( "You cannot save a 3-D movie until you have first"
+                " opened a 3-D plotting window by clicking on the"
+                " \"3D Plot\" button in the small plot control"
+                " dialog.\n\nYou should insure that scale and"
+                " orientation are correct for the current plot, as"
+                " these will be in force for each movie frame."
+                " You may then again click on \"Save Movie(s)\"." ) );
+      return;
+   }
+
+   // Determine the range of scans that will be in the movie
+   int fscnx;
+   int lscnx;
+   int krscan;
+
+   live_scan( &fscnx, &lscnx, &krscan );
+
+   // Get the save directory and base file name for saved image files
+   QStringList ffnames;
+   QString imgtype( "png" );
+   QString ptbase   = tr( "MWL 3-D Plot, Scan SSS" );
+   QString statmsg  = tr( "Of %1 included in-range scans,"
+                          " saving:   Scan " ).arg( krscan );
+   QString savedir  = US_Settings::reportDir() + "/" + runID;
+   QDir().mkpath( savedir );
+   savedir          = savedir.replace( "\\", "/" ) + "/";
+   QString bfname   = runID + ".Scan_SSSS_3D_frame_XXXX.png";
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
+   int kframe       = 0;
+
+   // Loop to save movie frames for each included scan that is in range
+   for ( int scnx = fscnx; scnx <= lscnx; scnx++ )
+   {
+      if ( excludes.contains( scnx ) )  continue;
+
+      build_xyz_data( xyzdat, scnx );    // Build data for this scan
+
+      p3d_pltw->reloadData( &xyzdat );   // Load the data in the plot window
+
+      kframe++;
+      int scan_nbr     = scnx + 1;
+      QString t_scan   = QString::number( scan_nbr );
+      QString ptitle   = QString( ptbase ).replace( "SSS", t_scan );
+      p3d_pltw->setPlotTitle( ptitle );  // Reset the title for scan_nbr
+      p3d_pltw->replot();                // Do the plot
+
+      le_status->setText( statmsg + t_scan );
+      qApp->processEvents();
+
+      // Create a frame file for just-completed plot and save its name
+      QString s_scan   = QString().sprintf( "%04d", scan_nbr );
+      QString s_frame  = QString().sprintf( "%04d", kframe   );
+      QString fname    = QString( bfname ).replace( "SSSS", s_scan  )
+                                          .replace( "XXXX", s_frame );
+      QString fpath    = savedir + fname;
+
+      p3d_pltw->save_plot( fpath, imgtype );
+
+      ffnames << fname;
+      qApp->processEvents();
+   }
+
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
+
+   // Report the frame files saved
+   QMessageBox::information( this,
+      tr( "Frame Files Saved" ),
+      tr( "In the directory\n     %1,\n\n%2 3-D movie frame files"
+          " were saved:\n     %3\n     ...\n     %4 ." )
+      .arg( savedir ).arg( kframe ).arg( ffnames[ 0 ] )
+      .arg( ffnames[ kframe - 1 ] ) );
 }
 
 // Utility to find an index in a QVector<double> to a value epsilon match
@@ -1905,5 +2172,39 @@ void US_MwlRawViewer::p3dctrl_closed()
    p3d_pltw     = NULL;
 
    pb_movie3d->setEnabled( false );
+}
+
+// Utility to return first live scan number; plus optionally indexes and count
+int US_MwlRawViewer::live_scan( int* fsP, int* lsP, int* ksP )
+{
+   int fscnx    = -1;
+   int lscnx    = -1;
+   int krscan   = 0;
+   int scan_fr  = (int)ct_from->value();
+   int scan_to  = (int)ct_to  ->value();
+   scan_fr      = ( scan_to < 1 ) ?     1 : scan_fr;
+   scan_to      = ( scan_to < 1 ) ? nscan : scan_to;
+   int scan_knt = 0;
+
+   for ( int scnx = 0; scnx < nscan; scnx++ )
+   {
+      if ( excludes.contains( scnx ) )  continue;
+
+      scan_knt++;               // Non-excluded count
+
+      if ( scan_knt < scan_fr  ||  scan_knt > scan_to )  continue;
+
+      krscan++;                 // In-range count
+
+      if ( fscnx < 0 )
+         fscnx        = scnx;   // First in-range
+      lscnx        = scnx;      // Last in-range
+   }
+
+   if ( fsP != NULL )     *fsP = fscnx;
+   if ( lsP != NULL )     *lsP = lscnx;
+   if ( ksP != NULL )     *ksP = krscan;
+
+   return ( fscnx + 1 );
 }
 

@@ -128,10 +128,6 @@ class US_MwlRawViewer : public US_Widgets
 
      double         last_xmin;
      double         last_xmax;
-     double         last_rmin;
-     double         last_rmax;
-     double         last_lmin;
-     double         last_lmax;
      double         last_ymin;
      double         last_ymax;
      double         rad_start;
@@ -160,6 +156,8 @@ class US_MwlRawViewer : public US_Widgets
      void   show_3d_movie  ( void );
      void   save_plot      ( void );
      void   save_movie     ( void );
+     void   save_2d_movie  ( void );
+     void   save_3d_movie  ( void );
      void   resetAll       ( void );
      void   prevPlot       ( void );
      void   nextPlot       ( void );
@@ -172,6 +170,7 @@ class US_MwlRawViewer : public US_Widgets
      int    dvec_index     ( QVector< double >&, const double );
      int    build_xyz_data ( QVector< QVector3D >&, int = -1 );
      void   p3dctrl_closed ( void );
+     int    live_scan      ( int* = 0, int* = 0, int* = 0 );
      void   help           ( void )
      { showHelp.show_help( "mwlr_viewer.html" ); };
 };
