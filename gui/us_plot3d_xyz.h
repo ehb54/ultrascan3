@@ -63,7 +63,8 @@ class US_GUI_EXTERN US_Plot3Dxyz : public QMainWindow
       void calculateData( void );
 
       //! \brief Public function to replot the 3D data
-      void replot       ( void );
+      //! \param hold_color A flag of whether to hold colors constant
+      void replot       ( bool = false );
 
       //! \brief Public function to return the data widget pointer
       //! \return Pointer to the GL data widget

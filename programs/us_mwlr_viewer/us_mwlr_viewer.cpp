@@ -133,6 +133,7 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
                 pb_movie3d  = us_pushbutton( tr( "Show 3D Movie"   ) );
                 pb_svplot   = us_pushbutton( tr( "Save Plot(s)"    ) );
                 pb_svmovie  = us_pushbutton( tr( "Save Movie(s)"   ) );
+   us_checkbox( tr( "Hold 3D Movie Colors Constant" ), ck_hcolorc, false );
 
    // Status and standard pushbuttons
    QLabel*      lb_status   = us_banner( tr( "Status" ) );
@@ -235,6 +236,7 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
    settings->addWidget( pb_movie3d,    row++, 4, 1, 4 );
    settings->addWidget( pb_svplot,     row,   0, 1, 4 );
    settings->addWidget( pb_svmovie,    row++, 4, 1, 4 );
+   settings->addWidget( ck_hcolorc,    row++, 0, 1, 8 );
    settings->addWidget( lb_scanctl,    row++, 0, 1, 8 );
    settings->addWidget( lb_from,       row,   0, 1, 1 );
    settings->addWidget( ct_from,       row,   1, 1, 3 );
@@ -325,6 +327,7 @@ void US_MwlRawViewer::reset( void )
    pb_movie3d->setEnabled( false );
    pb_svplot ->setEnabled( false );
    pb_svmovie->setEnabled( false );
+   ck_hcolorc->setEnabled( false );
 
    // Clear any data structures
    lambdas   .clear();
@@ -408,6 +411,7 @@ void US_MwlRawViewer::enableControls( void )
    pb_plot3d ->setEnabled( true );
    pb_svplot ->setEnabled( true );
    pb_svmovie->setEnabled( true );
+   ck_hcolorc->setEnabled( true );
 
    ncellch     = cellchans.size();
    nlambda     = lambdas  .size();
@@ -1721,6 +1725,7 @@ DbgLv(1) << "Plt3D:  open MPC";
                         + QString::number( scan_nbr );
 
          p3d_pltw->setPlotTitle( ptitle );
+         p3d_pltw->replot();
       }
    }
 
@@ -1730,6 +1735,8 @@ DbgLv(1) << "Plt3D:  open MPC";
 // Slot to show a 3-D movie
 void US_MwlRawViewer::show_3d_movie()
 {
+   bool hold_color = ck_hcolorc->isChecked();
+
 //DbgLv(1) << "sh3M: Show 3D Movie";
    if ( p3d_ctld == NULL )
    {  // This should not happen, but disallow Show 3D Movie if no plot opened
@@ -1782,7 +1789,7 @@ DbgLv(1) << "sh3M:  fscnx lscnx krscan" << fscnx << lscnx << krscan;
       str_scan         = QString::number( ( scnx + 1 ) );
       ptitle           = QString( ptbase ).replace( "SSS", str_scan );
       p3d_pltw->setPlotTitle( ptitle );  // Reset the title for scan_nbr
-      p3d_pltw->replot();                // Do the plot
+      p3d_pltw->replot( hold_color );    // Do the plot
 DbgLv(1) << "sh3M:    scnx ptitle" << scnx << ptitle;
 
       le_status->setText( statmsg + str_scan );
@@ -1937,6 +1944,8 @@ DbgLv(1) << "Save 2D Movie";
 void US_MwlRawViewer::save_3d_movie()
 {
 DbgLv(1) << "Save 3-D Movie";
+   bool hold_color = ck_hcolorc->isChecked();
+
    if ( p3d_ctld == NULL )
    {  // This should not happen, but disallow Save 3D Movie if no plot opened
       return;
@@ -1992,7 +2001,7 @@ DbgLv(1) << "Save 3-D Movie";
       QString t_scan   = QString::number( scan_nbr );
       QString ptitle   = QString( ptbase ).replace( "SSS", t_scan );
       p3d_pltw->setPlotTitle( ptitle );  // Reset the title for scan_nbr
-      p3d_pltw->replot();                // Do the plot
+      p3d_pltw->replot( hold_color );    // Do the plot
 
       le_status->setText( statmsg + t_scan );
       qApp->processEvents();

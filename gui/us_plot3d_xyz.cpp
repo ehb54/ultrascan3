@@ -682,7 +682,7 @@ DbgLv(1) << "  nxd nyd" << nxd << nyd;
    }
 }
 
-void US_Plot3Dxyz::replot()
+void US_Plot3Dxyz::replot( bool hold_color )
 {
    unsigned int kcols = (unsigned int)ncols;
    unsigned int krows = (unsigned int)nrows;
@@ -737,6 +737,14 @@ DbgLv(1) << "P3D:replot: wdata0 size" << tdata[0].size();
                wdata[ ii ][ jj ] = tdata[ ii ][ jj ];
          }
       }
+
+      if ( hold_color )
+      {  // If hold-colors option is on, use point with max to hold colors
+         double xval       = wdata[ lcol ][ 0 ].x;
+         double yval       = wdata[ lcol ][ 0 ].y;
+         wdata[ lcol ][ 0 ]= Triple( xval, yval, zmax );
+      }
+
 int m=nrows-1;
 int n=ncols-1;
 DbgLv(1) << "P3D:replot: wdata[0][0]" << wdata[0][0].x << wdata[0][0].y
