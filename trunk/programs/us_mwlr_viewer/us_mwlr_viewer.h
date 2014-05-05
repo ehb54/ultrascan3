@@ -71,6 +71,7 @@ class US_MwlRawViewer : public US_Widgets
      QwtCounter*    ct_to;
 
      QCheckBox*     ck_xwavlen;
+     QCheckBox*     ck_hcolorc;
 
      QPushButton*   pb_loadMwl;
      QPushButton*   pb_loadAUC;
