@@ -33,12 +33,8 @@ for D in Developer etc bin lib; do
 done
 chmod g+w ${DDIR}/etc
 
-for F in ${PKGDIR}/ultrascan3/etc/somo*; do
-  if [ `echo ${F}|grep -ic 'new$'` -eq 0 ]; then
-    # If not '*/etc/somo*.new', remove it
-    /bin/rm -f ${F}
-  fi
-done
+# Remove any somo*prev* files in etc/
+rm -f ${PKGDIR}/etc/somo*prev*
 
 if [ -d ${PKGDIR}/somo/demo ]; then
   # Clear out somo/demo so only present contents are copied
