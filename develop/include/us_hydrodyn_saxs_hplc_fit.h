@@ -78,6 +78,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       QCheckBox     *cb_pct_dist2;
       QLineEdit     *le_pct_dist2;
       QCheckBox     *cb_pct_dist2_from_init;
+
+      QCheckBox     *cb_comm_dist1;
+      QCheckBox     *cb_comm_dist2;
       
       QLabel        *lbl_fix_curves;
       // QLineEdit     *le_fix_curves;

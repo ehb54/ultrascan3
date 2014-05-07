@@ -1004,6 +1004,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       bool                         check_zi_window         ( QStringList & files );
       void                         check_discard_it_sd_mult( QStringList & files, bool optionally_discard = false );
 
+      bool                         started_in_expert_mode;
+
    private slots:
 
       void setupGUI();
@@ -1203,7 +1205,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void crop_undo                   ();
       void crop_right                  ();
       void legend                      ();
-      void axis_x                      ();
+      void axis_x                      ( bool nochange = false, bool no_replot = false );
       void axis_y                      ();
       void legend_set                  ();
 

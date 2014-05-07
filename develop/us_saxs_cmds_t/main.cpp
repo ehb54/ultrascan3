@@ -107,7 +107,15 @@ int main (int argc, char **argv)
              "reverse       \toutfile infile\n"
              "              \treverses row order\n"
              "range         \toutfile infile col min max\n"
-             "              \treverses row order\n"
+             "              \nselects rows whose 'col' has values between min and max inclusive\n"
+             "scale         \toutfile infile col mult\n"
+             "              \tmultiplies column 'col' by multiplier\n"
+             "ijoin         \toutfile infile1 infile2 col1 col2 col2add\n"
+             "              \tinterpolates data in infile2 col2 to grid of infile1 col1 and joins col2add to outfile\n"
+             "clip          \toutfile infile col min max\n"
+             "              \tremove rows whose 'col' has values less or equal to min or greater than or equal to max\n"
+             "info          \tinfile1\n"
+             "              \tprints summary info about file\n"
              "pmtest        \toutfile testfile\n"
              "              \ttest parsimonious models write model to outfile\n"
              "pm            \tcontrolfile\n"
@@ -1794,10 +1802,15 @@ int main (int argc, char **argv)
 
       US_Multi_Column mc1( infile1 );
       US_Multi_Column mc2( infile2 );
-      if ( !mc1.read() ||
-           !mc2.read() )
+      if ( !mc1.read() )
       {
          cout << mc1.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+      if ( !mc2.read() )
+      {
+         cout << mc2.errormsg << endl;
          exit( errorbase );
       }
       errorbase--;
@@ -2183,6 +2196,157 @@ int main (int argc, char **argv)
       US_Multi_Column mc( infile );
       if ( !mc.read  () ||
            !mc.range( col, min, max ) ||
+           !mc.write ( outfile, true ) )
+      {
+         cout << mc.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+      cout << mc.info();
+      exit( 0 );
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "scale" ) 
+   {
+      if ( cmds.size() != 5 ) 
+      {
+         printf(
+                "usage: %s %s outfile infile col mult\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString      outfile         = cmds[ p++ ];
+      QString      infile          = cmds[ p++ ];
+      unsigned int col             = cmds[ p++ ].toUInt();
+      double       mult            = cmds[ p++ ].toDouble();
+
+      US_Multi_Column mc( infile );
+      if ( !mc.read  () ||
+           !mc.scale ( col, mult ) ||
+           !mc.write ( outfile, true ) )
+      {
+         cout << mc.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+      cout << mc.info();
+      exit( 0 );
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "ijoin" ) 
+   {
+      if ( cmds.size() != 7 ) 
+      {
+         printf(
+                "usage: %s %s outfile infile1 infile2 col1 col2 col2add\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString      outfile         = cmds[ p++ ];
+      QString      infile1         = cmds[ p++ ];
+      QString      infile2         = cmds[ p++ ];
+      unsigned int col1            = cmds[ p++ ].toUInt();
+      unsigned int col2            = cmds[ p++ ].toUInt();
+      unsigned int col2add         = cmds[ p++ ].toUInt();
+
+      US_Multi_Column mc1( infile1 );
+      US_Multi_Column mc2( infile2 );
+
+      if ( !mc1.read() )
+      {
+         cout << mc1.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+      if ( !mc2.read() )
+      {
+         cout << mc2.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+
+      cout << mc1.info();
+      cout << mc2.info();
+
+      US_Multi_Column mco;
+
+      if ( !mco.ijoin( mc1, mc2, col1, col2, col2add ) ||
+           !mco.write( outfile, true ) )
+      {
+         cout << mco.errormsg << endl;
+         exit( errorbase );
+      }
+
+      errorbase--;
+      cout << mco.info();
+      exit( 0 );
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "info" ) 
+   {
+      if ( cmds.size() != 2 ) 
+      {
+         printf(
+                "usage: %s %s infile\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString      infile          = cmds[ p++ ];
+
+      US_Multi_Column mc( infile );
+      if ( !mc.read() )
+      {
+         cout << mc.errormsg << endl;
+         exit( errorbase );
+      }
+      errorbase--;
+      cout << mc.info();
+      cout << mc.cinfo();
+      exit( 0 );
+   }
+   errorbase -= 1000;
+
+   if ( cmds[0].lower() == "clip" ) 
+   {
+      if ( cmds.size() != 6 ) 
+      {
+         printf(
+                "usage: %s %s outfile infile col min max\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit( errorbase );
+      }
+      errorbase--;
+
+      int p = 1;
+      QString      outfile         = cmds[ p++ ];
+      QString      infile          = cmds[ p++ ];
+      unsigned int col             = cmds[ p++ ].toUInt();
+      double       min             = cmds[ p++ ].toDouble();
+      double       max             = cmds[ p++ ].toDouble();
+
+      US_Multi_Column mc( infile );
+      if ( !mc.read  () ||
+           !mc.clip  ( col, min, max ) ||
            !mc.write ( outfile, true ) )
       {
          cout << mc.errormsg << endl;

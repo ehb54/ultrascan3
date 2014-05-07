@@ -2,11 +2,12 @@
 #define US_MULTI_COLUMN_H
 
 #include "us_saxs_util.h"
-//Added by qt3to4:
-#include <Q3TextStream>
 #ifdef QT4
 # include "qdebug.h"
 #endif
+#include "us_vector.h"
+//Added by qt3to4:
+#include <Q3TextStream>
 
 #ifdef WIN32
 # if !defined( QT4 )
@@ -54,6 +55,55 @@ class US_Multi_Column
             .arg( header.size() )
             .arg( data.size() )
             .arg( data.size() > 0 ? data[ 0 ].size() : 0 );
+      }
+
+   QString cinfo() 
+      {
+         QString qs;
+         for ( int i = 0; i < (int) header.size(); ++i )
+         {
+            double sum = 0e0;
+            double min = 0e0;
+            double max = 0e0;
+            double avg = 0e0;
+            if ( data.size() )
+            {
+               for ( int j = 0; j < (int) data.size(); ++j )
+               {
+                  double tmp = data[ j ][ i ];
+                  sum += tmp;
+                  if ( !j )
+                  {
+                     min = tmp;
+                     max = tmp;
+                  } else {
+                     if ( min > tmp )
+                     {
+                        min = tmp;
+                     }
+                     if ( max < tmp )
+                     {
+                        max = tmp;
+                     }
+                  }
+               }
+               avg = sum / (double) data.size();
+               qs += QString( "column %1: '%2' min %3 max %4 avg %5 sum %6\n" )
+                  .arg( i + 1 )
+                  .arg( header[ i ] )
+                  .arg( min )
+                  .arg( max )
+                  .arg( avg )
+                  .arg( sum )
+                  ;                  
+            } else {
+               qs += QString( "column %1: '%2' (data empty)\n" )
+                  .arg( i + 1 )
+                  .arg( header[ i ] )
+                  ;
+            }
+         }
+         return qs;
       }
 
    void    clear() 
@@ -1094,7 +1144,7 @@ class US_Multi_Column
 
          vector < vector < double > > new_data;
 
-         for( unsigned int i = 1; i < (unsigned int) data.size(); i++ )
+         for( unsigned int i = 0; i < (unsigned int) data.size(); i++ )
          {
             if ( data[ i ][ col ] >= min && 
                  data[ i ][ col ] <= max )
@@ -1106,6 +1156,193 @@ class US_Multi_Column
          data = new_data;
          return true;
       }      
+
+   bool scale( unsigned int col, double mult )
+      {
+         errormsg = "";
+         if ( !col )
+         {
+            errormsg = QString( "Error: scale: %1, col must be nonzero" ).arg( filename );
+            return false;
+         }
+
+         if ( !data.size() )
+         {
+            errormsg = QString( "Error: scale: %1 has no data" ).arg( filename );
+            return false;
+         }
+
+         if ( (unsigned int) data[ 0 ].size() < col )
+         {
+            errormsg = QString( "Error: scale: %1 has %2 columns and column %3 requested" )
+               .arg( filename )
+               .arg( data[ 0 ].size() )
+               .arg( col )
+               ;
+            return false;
+         }
+
+         col--;
+
+         for( unsigned int i = 0; i < (unsigned int) data.size(); i++ )
+         {
+            data[ i ][ col ] *= mult;
+         }
+
+         qDebug( QString( "scale %1" ).arg( mult ) );
+            
+         return true;
+      }      
+
+
+   bool clip( unsigned int col, double min, double max )
+      {
+         errormsg = "";
+         if ( !col )
+         {
+            errormsg = QString( "Error: clip: %1, col must be nonzero" ).arg( filename );
+            return false;
+         }
+
+         if ( !data.size() )
+         {
+            errormsg = QString( "Error: clip: %1 has no data" ).arg( filename );
+            return false;
+         }
+
+         if ( (unsigned int) data[ 0 ].size() < col )
+         {
+            errormsg = QString( "Error: clip: %1 has %2 columns and column %3 requested" )
+               .arg( filename )
+               .arg( data[ 0 ].size() )
+               .arg( col )
+               ;
+            return false;
+         }
+
+         col--;
+
+         vector < vector < double > > new_data;
+
+         for( unsigned int i = 0; i < (unsigned int) data.size(); i++ )
+         {
+            if ( data[ i ][ col ] > min && 
+                 data[ i ][ col ] < max )
+            {
+               new_data.push_back( data[ i ] );
+            }
+         }
+            
+         data = new_data;
+         return true;
+      }      
+
+   bool ijoin( US_Multi_Column & mc1,
+               US_Multi_Column & mc2,
+               unsigned int      col1,
+               unsigned int      col2,
+               unsigned int      col2add )
+      {
+         errormsg = "";
+         if ( !col1 || !col2 || !col2add )
+         {
+            errormsg = QString( "Error: ijoin: %1, cols must be nonzero" ).arg( filename );
+            return false;
+         }
+
+         if ( !mc1.data.size() )
+         {
+            errormsg = QString( "Error: ijoin: %1 has no data" ).arg( mc1.filename );
+            return false;
+         }
+
+         if ( !mc2.data.size() )
+         {
+            errormsg = QString( "Error: ijoin: %1 has no data" ).arg( mc2.filename );
+            return false;
+         }
+
+         if ( (unsigned int) mc1.data[ 0 ].size() < col1 )
+         {
+            errormsg = QString( "Error: ijoin: %1 has %2 columns and column %3 requested" )
+               .arg( mc1.filename )
+               .arg( mc1.data[ 0 ].size() )
+               .arg( col1 )
+               ;
+            return false;
+         }
+         if ( (unsigned int) mc2.data[ 0 ].size() < col2 )
+         {
+            errormsg = QString( "Error: ijoin: %1 has %2 columns and column %3 requested" )
+               .arg( mc2.filename )
+               .arg( mc2.data[ 0 ].size() )
+               .arg( col2 )
+               ;
+            return false;
+         }
+         if ( (unsigned int) mc2.data[ 0 ].size() < col2add )
+         {
+            errormsg = QString( "Error: ijoin: %1 has %2 columns and column %3 requested" )
+               .arg( mc2.filename )
+               .arg( mc2.data[ 0 ].size() )
+               .arg( col2add )
+               ;
+            return false;
+         }
+         if ( col2 == col2add )
+         {
+            errormsg = QString( "Error: ijoin: %1 col2 %2 and col2add %3 can not be identical" )
+               .arg( mc2.filename )
+               .arg( col2 )
+               .arg( col2add )
+               ;
+            return false;
+         }
+
+         col1--;
+         col2--;
+         col2add--;
+
+         // interpolate col2 w/col2add to col1 (crop zeros?)
+         US_Saxs_Util usu;
+
+         vector < double > new_data;
+         vector < double > to_grid;
+         vector < double > from_grid;
+         vector < double > from_data;
+
+         for( unsigned int i = 0; i < (unsigned int) mc1.data.size(); i++ )
+         {
+            to_grid.push_back( mc1.data[ i ][ col1 ] );
+         }
+
+         for( unsigned int i = 0; i < (unsigned int) mc2.data.size(); i++ )
+         {
+            from_grid.push_back( mc2.data[ i ][ col2    ] );
+            from_data.push_back( mc2.data[ i ][ col2add ] );
+         }
+
+         // US_Vector::printvector3( "to grid, from grid, from data", to_grid, from_grid, from_data );
+
+         if ( !usu.interpolate( new_data, to_grid, from_grid, from_data ) )
+         {
+            errormsg = usu.errormsg;
+            return false;
+         }
+
+         // US_Vector::printvector2( "to grid, new_data", to_grid, new_data );
+
+         header = mc1.header;
+         header .push_back( mc2.header[ col2add ] );
+         data   = mc1.data;
+         for( unsigned int i = 0; i < (unsigned int) data.size(); i++ )
+         {
+            data[ i ].push_back( new_data[ i ] );
+         }
+
+         return true;
+      }      
+
 
    bool sort( unsigned int col )
       {

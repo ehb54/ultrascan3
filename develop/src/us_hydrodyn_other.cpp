@@ -5394,11 +5394,15 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "guinier_qRtmax" ]                     = "1";
    gparams[ "guinier_electron_nucleon_ratio" ]     = "1.87e0";
 
-   gparams[ "hplc_bl_linear"   ]                   = "false";
-   gparams[ "hplc_bl_integral" ]                   = "true";
-   gparams[ "hplc_bl_save"     ]                   = "false";
-   gparams[ "hplc_bl_smooth"   ]                   = "0";
-   gparams[ "hplc_bl_reps"     ]                   = "5";
+   gparams[ "hplc_bl_linear"             ]         = "false";
+   gparams[ "hplc_bl_integral"           ]         = "true";
+   gparams[ "hplc_bl_save"               ]         = "false";
+   gparams[ "hplc_bl_smooth"             ]         = "0";
+   gparams[ "hplc_bl_reps"               ]         = "5";
+   gparams[ "hplc_bl_reps"               ]         = "5";
+   gparams[ "hplc_zi_window"             ]         = "25";
+   gparams[ "hplc_discard_it_sd_mult"    ]         = "2";
+   gparams[ "hplc_cb_discard_it_sd_mult" ]         = "false";
 }
 
 void US_Hydrodyn::set_default()

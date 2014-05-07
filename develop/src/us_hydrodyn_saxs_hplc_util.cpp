@@ -2061,7 +2061,7 @@ void US_Hydrodyn_Saxs_Hplc::axis_y()
    }
 }
 
-void US_Hydrodyn_Saxs_Hplc::axis_x()
+void US_Hydrodyn_Saxs_Hplc::axis_x( bool nochange, bool no_replot )
 {
    QStringList selected_files;
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -2086,7 +2086,11 @@ void US_Hydrodyn_Saxs_Hplc::axis_x()
       }
    }
 
-   axis_x_log = !axis_x_log;
+   if ( !nochange )
+   {
+      axis_x_log = !axis_x_log;
+   }
+
    if ( axis_x_log )
    {
       plot_dist->setAxisTitle(QwtPlot::xBottom,  title + tr(" (log scale)") );
@@ -2104,7 +2108,7 @@ void US_Hydrodyn_Saxs_Hplc::axis_x()
       plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
 #endif
    }
-   if ( !suppress_replot )
+   if ( !suppress_replot && !no_replot )
    {
       plot_dist->replot();
    }

@@ -72,11 +72,11 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_linear" ) )
    {
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear" ] = "true";
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear" ] = "false";
    }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_integral" ) )
    {
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] = "false";
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] = "true";
    }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_save" ) )
    {
@@ -84,16 +84,16 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_smooth" ) )
    {
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ] = "10";
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ] = "0";
    }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_reps" ) )
    {
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps" ] = "1";
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps" ] = "5";
    }
    if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear" ] == "true" &&
         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] == "true" )
    {
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] = "false";
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear" ] = "false";
    }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_zi_window" ) )
    {
@@ -3490,19 +3490,48 @@ bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files )
    {
       QString this_file = files[ i ];
       int pts = (int) f_qs[ this_file ].size();
-      for ( int j = 0; j < pts; ++j )
+      bool use_errors = ( f_errors.count( this_file ) && f_qs[ this_file ].size() == f_errors[ this_file ].size() );
+
+      if ( use_errors )
       {
-         if ( j + window < pts )
+         for ( int j = 0; j < pts; ++j )
          {
-            double integral = 0e0;
-            for ( int k = 0; k < window; ++k )
+            if ( j + window < pts )
             {
-               integral += f_Is[ this_file ][ j + k ];
+               double integral = 0e0;
+               double sdsum    = 0e0;
+               for ( int k = 0; k < window; ++k )
+               {
+                  integral += f_Is    [ this_file ][ j + k ];
+                  sdsum    += f_errors[ this_file ][ j + k ];
+               }
+               if ( integral < -sdsum )
+               {
+                  messages << QString( "%1 negative integral region %2 below negative sum of S.D. %3" )
+                     .arg( this_file )
+                     .arg( integral )
+                     .arg( -sdsum );
+                  break;
+               }
             }
-            if ( integral < 0e0 )
+         }
+      } else {
+         for ( int j = 0; j < pts; ++j )
+         {
+            if ( j + window < pts )
             {
-               messages << QString( "%1 negative integral region" ).arg( this_file );
-               break;
+               double integral = 0e0;
+               for ( int k = 0; k < window; ++k )
+               {
+                  integral += f_Is[ this_file ][ j + k ];
+               }
+               if ( integral < 0e0 )
+               {
+                  messages << QString( "%1 negative integral region %2" )
+                     .arg( this_file )
+                     .arg( integral );
+                  break;
+               }
             }
          }
       }

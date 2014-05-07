@@ -548,6 +548,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq()
       set_selected( testiq_original_selection );
       testiq_created_scale_names.clear();
       testiq_original_selection.clear();
+      axis_x( true, true );
       plot_files();
       do_rescale = true;
    }
@@ -2841,6 +2842,24 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start()
       connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
    }
 
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] == "true" )
+   {
+      cb_baseline_start_zero->setChecked( true );
+      cb_baseline_start_zero->hide();
+   } else {
+      cb_baseline_start_zero->setChecked( false );
+      cb_baseline_start_zero->show();
+      QMessageBox::warning(this, 
+                           caption(),
+                           QString( tr( "Please note:\n\n"
+                                        "You are utilizing the linear baseline method.\n"
+                                        "This method compensates for a systematic drift and can distort/hide the effects of capillary fouling.\n"
+                                        "The linear baseline correction does not have an explicit physical basis and should be applied with care\n"
+                                        "and only in the case of \"small-amplitude\" corrections as compared to the experimental uncertainty.\n" ) ),
+                           QMessageBox::Ok | QMessageBox::Default,
+                           QMessageBox::NoButton
+                           );
+   }
    baseline_init_markers();
    replot_baseline();
    disable_all();
@@ -2892,6 +2911,19 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
 
 void US_Hydrodyn_Saxs_Hplc::set_baseline_start_zero()
 {
+   if ( !cb_baseline_start_zero->isChecked() )
+   {
+      // QMessageBox::warning(
+      //                      this,
+      //                      this->caption() + tr(": Baseline setup: nonzero starting offset" ),
+      //                      tr(
+      //                         "Having a non zero starting offset likely means problems with buffer subtraction which should be corrected before *any* analysis is done.\n"
+      //                         ),
+      //                      QMessageBox::Ok | QMessageBox::Default,
+      //                      QMessageBox::NoButton
+      //                      );
+   }      
+
    if ( cb_baseline_start_zero->isChecked() &&
         ( le_baseline_start_s->hasFocus() ||
           le_baseline_start  ->hasFocus() ||
@@ -3567,7 +3599,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
                }
             }
 
-            if ( I_tot > 0e0 )
+            if ( I_tot > 0e0 && delta_bl > 0e0 )
             {
                alpha = delta_bl / I_tot;
 
@@ -3610,8 +3642,23 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
                {
                   new_I[ j ] = f_Is[ files[ i ] ][ j ] - bl[ j ];
                }
-               messages << QString( tr( "Warning: the integral of %1 was less than or equal to zero => constant baseline" ) ).arg( files[ i ] );
-               editor_msg( "dark red", messages.back() );
+               if ( I_tot < 0e0 && delta_bl < 0e0 )
+               {
+                  messages << QString( tr( "Warning: the overall change in baseline of %1 is negative (%2) and the integral is less than zero => constant baseline" ) ).arg( files[ i ] ).arg( delta_bl );
+                  editor_msg( "dark red", messages.back() );
+               } else {
+                  if ( I_tot <= 0e0 && delta_bl > 0e0 )
+                  {
+                     messages << QString( tr( "Warning: the integral of %1 was less than or equal to zero => constant baseline" ) ).arg( files[ i ] );
+                     editor_msg( "dark red", messages.back() );
+                  } else {
+                     if ( delta_bl < 0e0 && I_tot > 0e0 )
+                     {
+                        messages << QString( tr( "Warning: the overall change in baseline of %1 is negative (%2) => constant baseline" ) ).arg( files[ i ] ).arg( delta_bl );
+                        editor_msg( "dark red", messages.back() );
+                     }
+                  }
+               }
             }
 
             if ( save_bl )
@@ -3970,6 +4017,7 @@ void US_Hydrodyn_Saxs_Hplc::scale()
          testiq_created_scale_names.insert( last_created_file );
       }
       set_selected( testiq_created_scale_names );
+      axis_x( true, true );
       plot_files();
       rescale();
    } 
@@ -4353,7 +4401,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_apply()
                scale_e[ *it ][ i ] *= k[ *it ];
             }
          }
-         fit_msg += QString( "%1 : " ).arg( *it );
+         fit_msg += QString( "%1 : scale %2 " ).arg( *it ).arg( k[ *it ] );
          if ( do_chi2_fitting )
          {
             // usu.calc_chisq_prob( 0.5 * target_I.size() - ( do_scale_linear_offset ? 2 : 1 ),

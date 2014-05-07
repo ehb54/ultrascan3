@@ -20,6 +20,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    int minHeight1 = 24;
    int minHeight3 = 25;
 
+   started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
+
    QColorGroup cg_magenta = USglobal->global_colors.cg_normal;
    cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
 
@@ -2804,7 +2806,15 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    ggaussian_5var_widgets.push_back( le_gauss_pos_dist2 );
 
    // baseline_widgets;
-   baseline_widgets.push_back( cb_baseline_start_zero );
+
+   if ( started_in_expert_mode )
+   {
+      baseline_widgets.push_back( cb_baseline_start_zero );
+   } else {
+      cb_baseline_start_zero->setChecked( true );
+      cb_baseline_start_zero->hide();
+   }
+
    baseline_widgets.push_back( le_baseline_start_s );
    baseline_widgets.push_back( le_baseline_start );
    baseline_widgets.push_back( le_baseline_start_e );
