@@ -75,20 +75,8 @@ for D in etc bin lib us3-update.sh; do
   ${RSYNC} ${SDIR} ${DDIR}
 done
 
-# Remove the SOMO bins
-US3BINS=`(cd ${SRCSOMO}/bin;ls)`
-for F in ${US3BINS}; do
-  echo "/bin/rm -f ${PKGDIR}/bin/${F}"
-  /bin/rm -f ${PKGDIR}/bin/${F}
-done
-
-# Leave only *.new files in etc/somo
-for F in ${PKGDIR}/etc/somo*; do
-  if [ `echo ${F} | grep -ic '.new$'` -eq 0 ]; then
-    # Remove any etc/somo* that does not end in '.new'
-    /bin/rm -f ${F}
-  fi
-done
+# Remove any somo*prev* files in etc/
+rm -f ${PKGDIR}/etc/somo*prev*
 
 # Copy the SOMO directories
 (cd ${PKGDIR};mkdir somo somo/doc somo/demo somo/test);
