@@ -664,6 +664,9 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    {
       cb_comm_dist1->hide();
       cb_comm_dist2->hide();
+   } else {
+      cb_comm_dist1->setChecked( dist1_active );
+      cb_comm_dist2->setChecked( dist2_active );
    }
 }
 
@@ -1509,7 +1512,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
               ( cb_comm_dist1->isChecked() && i ) )
          {
             HFIT::param_pos   .push_back( HFIT::fixed_params.size() );
-            if ( i && cb_comm_dist1->isChecked() )
+            if ( i && cb_comm_dist1->isChecked() && !fixed_curves.count( pos + 1 ) )
             {
                HFIT::fixed_params.push_back( hplc_win->gaussians[ 3 + 0 ] );
                HFIT::comm_backref[ HFIT::param_fixed.size() ] = comm_dist_1_var_pos;
@@ -1570,7 +1573,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
                  ( cb_comm_dist2->isChecked() && i ) )
             {
                HFIT::param_pos   .push_back( HFIT::fixed_params.size() );
-               if ( i && cb_comm_dist2->isChecked() )
+               if ( i && cb_comm_dist2->isChecked() && !fixed_curves.count( pos + 1 ) )
                {
                   HFIT::fixed_params.push_back( hplc_win->gaussians[ 4 + 0 ] );
                   HFIT::comm_backref[ HFIT::param_fixed.size() ] = comm_dist_2_var_pos;

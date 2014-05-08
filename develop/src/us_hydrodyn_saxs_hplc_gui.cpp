@@ -2807,14 +2807,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
 
    // baseline_widgets;
 
-   if ( started_in_expert_mode )
-   {
-      baseline_widgets.push_back( cb_baseline_start_zero );
-   } else {
-      cb_baseline_start_zero->setChecked( true );
-      cb_baseline_start_zero->hide();
-   }
-
+   baseline_widgets.push_back( cb_baseline_start_zero );
    baseline_widgets.push_back( le_baseline_start_s );
    baseline_widgets.push_back( le_baseline_start );
    baseline_widgets.push_back( le_baseline_start_e );
