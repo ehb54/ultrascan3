@@ -514,6 +514,33 @@ void US_Hydrodyn_Saxs_Hplc::set_detector()
    }
 */
 
+bool US_Hydrodyn_Saxs_Hplc::height_wheel_file( double &val, double pos )
+{
+   if ( current_mode != MODE_GAUSSIAN )
+   {
+      return false;
+   }
+   QString errormsg;
+   return US_Saxs_Util::static_apply_natural_spline( 
+                                                    height_natural_spline_x,
+                                                    height_natural_spline_y,
+                                                    height_natural_spline_y2,
+                                                    pos,
+                                                    val,
+                                                    errormsg );
+}
+
+void US_Hydrodyn_Saxs_Hplc::gauss_match_amplitude()
+{
+   if ( current_mode != MODE_GAUSSIAN )
+   {
+      return;
+   }
+   if ( cb_gauss_match_amplitude->isChecked() )
+   {
+      gauss_pos_text( le_gauss_pos->text() );
+   }
+}
 
 bool US_Hydrodyn_Saxs_Hplc::opt_repeak_gaussians( QString file )
 {

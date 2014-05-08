@@ -10,6 +10,7 @@
 #include <Q3GridLayout>
 #include <Q3Frame>
 #include <Q3VBoxLayout>
+#include <Q3BoxLayout>
 #include <QCloseEvent>
 // #include <assert.h>
 
@@ -382,6 +383,24 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    AUTFBACK( cb_pct_dist2_from_init );
    connect(cb_pct_dist2_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
+   cb_comm_dist1 = new QCheckBox(this);
+   cb_comm_dist1->setText(tr(" Common distortion 1" ) );
+   cb_comm_dist1->setEnabled(true);
+   cb_comm_dist1->setChecked( false );
+   cb_comm_dist1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_comm_dist1->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_comm_dist1 );
+   connect(cb_comm_dist1, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   cb_comm_dist2 = new QCheckBox(this);
+   cb_comm_dist2->setText(tr(" Common distortion 2" ) );
+   cb_comm_dist2->setEnabled(true);
+   cb_comm_dist2->setChecked( false );
+   cb_comm_dist2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_comm_dist2->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_comm_dist2 );
+   connect(cb_comm_dist2, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
    lbl_fix_curves = new QLabel(tr(" Fix Gaussians: "), this);
    lbl_fix_curves->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    // lbl_fix_curves->setMinimumHeight(minHeight1);
@@ -580,6 +599,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    gl_main->addWidget( cb_pct_dist2_from_init , row, 3 );
    row++;
 
+   {
+      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( cb_comm_dist1 );
+      hbl->addWidget( cb_comm_dist2 );
+      gl_main->addMultiCellLayout( hbl, row, row, 0, 3 );
+      row++;
+   }
+
    gl_main->addWidget         ( lbl_fix_curves, row, 0 );
    // gl_main->addMultiCellWidget( le_fix_curves , row, row, 1, 3 );
    Q3HBoxLayout *hbl_fix_curves = new Q3HBoxLayout;
@@ -654,6 +681,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
       cb_pct_dist1->hide();
       le_pct_dist1->hide();
       cb_pct_dist1_from_init->hide();
+      cb_comm_dist1->hide();
    }      
    if ( !dist2_active )
    {
@@ -662,7 +690,16 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
       le_pct_dist2->hide();
       cb_pct_dist2->hide();
       cb_pct_dist2_from_init->hide();
+      cb_comm_dist2->hide();
    }      
+   if ( cb_fix_curves.size() < 2 )
+   {
+      cb_comm_dist1->hide();
+      cb_comm_dist2->hide();
+   } else {
+      cb_comm_dist1->setChecked( dist1_active );
+      cb_comm_dist2->setChecked( dist2_active );
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::cancel()
@@ -755,6 +792,8 @@ namespace HFIT_GLOBAL
    vector < bool         > param_fixed;    
    vector < double       > param_min;      // minimum values for variable params
    vector < double       > param_max;      // maximum values for variable params
+
+   map < unsigned int, unsigned int > comm_backref; // back reference to variable param position of 1st usage
 
    vector < double       > unified_q;                        // copy from hplc win
    vector < unsigned int > unified_ggaussian_param_index;    // copy from hplc win
@@ -1628,6 +1667,12 @@ namespace HFIT_GLOBAL
       US_Vector::printvector( "param_fixed ", param_fixed  );
       US_Vector::printvector( "param_min   ", param_min    );
       US_Vector::printvector( "param_max   ", param_max    );
+      for ( map < unsigned int, unsigned int >::iterator it = comm_backref.begin();
+            it != comm_backref.end();
+            ++it )
+      {
+         cout << QString( "backref pos %1 to %2\n" ).arg( it->first ).arg( it->second );
+      }
    }
 };
 
@@ -1637,6 +1682,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
    HFIT_GLOBAL::init_params                       .clear();
    HFIT_GLOBAL::base_params                       .clear();
    HFIT_GLOBAL::fixed_params                      .clear();
+   HFIT_GLOBAL::comm_backref                      .clear();
    HFIT_GLOBAL::param_pos                         .clear();
    HFIT_GLOBAL::param_fixed                       .clear();
    HFIT_GLOBAL::param_min                         .clear();

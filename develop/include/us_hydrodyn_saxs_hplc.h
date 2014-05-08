@@ -336,6 +336,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       mQLineEdit    *le_gauss_fit_end;
       QPushButton   *pb_gauss_save;
 
+      QCheckBox     *cb_gauss_match_amplitude;
+
       QPushButton   *pb_ggauss_start;
       QPushButton   *pb_ggauss_rmsd;
       QPushButton   *pb_ggauss_results;
@@ -1006,6 +1008,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       bool                         started_in_expert_mode;
 
+      bool                         height_wheel_file( double &val, double pos );  // computes local height in gauss mode
+
+      vector < double >            height_natural_spline_x;
+      vector < double >            height_natural_spline_y;
+      vector < double >            height_natural_spline_y2;
+
    private slots:
 
       void setupGUI();
@@ -1110,6 +1118,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void gauss_pos_dist2_text        ( const QString & );
       void gauss_fit_start_text        ( const QString & );
       void gauss_fit_end_text          ( const QString & );
+      void gauss_match_amplitude       ();
 
       void gauss_pos_focus             ( bool );
       void gauss_pos_width_focus       ( bool );

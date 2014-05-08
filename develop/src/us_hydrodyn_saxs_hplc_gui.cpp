@@ -1005,6 +1005,15 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( le_gauss_pos_dist2, SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_dist2_text( const QString & ) ) );
    connect( le_gauss_pos_dist2, SIGNAL( focussed ( bool ) )             , SLOT( gauss_pos_dist2_focus( bool ) ) );
 
+   cb_gauss_match_amplitude = new QCheckBox(this);
+   cb_gauss_match_amplitude->setText(tr("Match "));
+   cb_gauss_match_amplitude->setEnabled( true );
+   cb_gauss_match_amplitude->setChecked( false );
+   cb_gauss_match_amplitude->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_gauss_match_amplitude->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_gauss_match_amplitude );
+   connect( cb_gauss_match_amplitude, SIGNAL( clicked() ), SLOT( gauss_match_amplitude() ) );
+
    cb_sd_weight = new QCheckBox(this);
    cb_sd_weight->setText(tr("SD  "));
    cb_sd_weight->setEnabled( true );
@@ -2623,26 +2632,24 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    Q3GridLayout *gl_gauss = new Q3GridLayout(0);
    { 
       int ofs = 1;
-      // gl_gauss->addMultiCellWidget( pb_gauss_start      , 0, 0, 0, ofs++ );
-      // gl_gauss->addWidget         ( pb_p3d              , 0, ofs++ );
-      gl_gauss->addWidget         ( pb_gauss_clear      , 0, ofs++ );
-      gl_gauss->addWidget         ( pb_gauss_new        , 0, ofs++ );
-      gl_gauss->addWidget         ( pb_gauss_delete     , 0, ofs++ );
-      gl_gauss->addWidget         ( pb_gauss_prev       , 0, ofs++ );
-      gl_gauss->addWidget         ( lbl_gauss_pos       , 0, ofs++ );
-      gl_gauss->addWidget         ( pb_gauss_next       , 0, ofs++ );
-      gl_gauss->addWidget         ( le_gauss_pos        , 0, ofs++ );
-      gl_gauss->addWidget         ( le_gauss_pos_width  , 0, ofs++ );
-      gl_gauss->addWidget         ( le_gauss_pos_height , 0, ofs++ );
-      gl_gauss->addWidget         ( le_gauss_pos_dist1  , 0, ofs++ );
-      gl_gauss->addWidget         ( le_gauss_pos_dist2  , 0, ofs++ );
-      gl_gauss->addWidget         ( pb_gauss_save       , 0, ofs++ );
+      gl_gauss->addWidget         ( pb_gauss_clear              , 0, ofs++ );
+      gl_gauss->addWidget         ( pb_gauss_new                , 0, ofs++ );
+      gl_gauss->addWidget         ( pb_gauss_delete             , 0, ofs++ );
+      gl_gauss->addWidget         ( pb_gauss_prev               , 0, ofs++ );
+      gl_gauss->addWidget         ( lbl_gauss_pos               , 0, ofs++ );
+      gl_gauss->addWidget         ( pb_gauss_next               , 0, ofs++ );
+      gl_gauss->addWidget         ( cb_gauss_match_amplitude    , 0, ofs++ );
+      gl_gauss->addWidget         ( le_gauss_pos                , 0, ofs++ );
+      gl_gauss->addWidget         ( le_gauss_pos_width          , 0, ofs++ );
+      gl_gauss->addWidget         ( le_gauss_pos_height         , 0, ofs++ );
+      gl_gauss->addWidget         ( le_gauss_pos_dist1          , 0, ofs++ );
+      gl_gauss->addWidget         ( le_gauss_pos_dist2          , 0, ofs++ );
+      gl_gauss->addWidget         ( pb_gauss_save               , 0, ofs++ );
    }
 
    Q3GridLayout *gl_gauss2 = new Q3GridLayout(0);
    { 
       int ofs = 1;
-      // gl_gauss2->addMultiCellWidget( pb_ggauss_start     , 0, 0, 0, ofs++ );
       gl_gauss2->addWidget         ( cb_sd_weight        , 0, ofs++ );
       gl_gauss2->addWidget         ( cb_fix_width        , 0, ofs++ );
       gl_gauss2->addWidget         ( cb_fix_dist1        , 0, ofs++ );
@@ -2754,6 +2761,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    gaussian_widgets.push_back( lbl_gauss_pos );
    gaussian_widgets.push_back( pb_gauss_next );
    gaussian_widgets.push_back( cb_sd_weight );
+   gaussian_widgets.push_back( cb_gauss_match_amplitude );
    gaussian_widgets.push_back( pb_gauss_fit );
    gaussian_widgets.push_back( lbl_gauss_fit );
    gaussian_widgets.push_back( le_gauss_pos );

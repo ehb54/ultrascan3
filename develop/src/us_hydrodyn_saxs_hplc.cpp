@@ -5882,6 +5882,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_start()
          cb_plot_errors_sd->hide();
       }
    }
+   cb_gauss_match_amplitude->setChecked( false );
+   height_natural_spline_x = f_qs[ wheel_file ];
+   height_natural_spline_y = f_Is[ wheel_file ];
+   height_natural_spline_y2.clear();
+
+   US_Saxs_Util::natural_spline( height_natural_spline_x,
+                                 height_natural_spline_y,
+                                 height_natural_spline_y2 );
    gaussian_enables();
 }
       
@@ -6090,8 +6098,16 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
    {
       if ( current_mode == MODE_GAUSSIAN )
       {
-         cout << QString( "gauss_pos_text <%1>, pos %2 size %3\n" ).arg( text ).arg( gaussian_pos ).arg( gaussians.size() );
+         // cout << QString( "gauss_pos_text <%1>, pos %2 size %3\n" ).arg( text ).arg( gaussian_pos ).arg( gaussians.size() );
          gaussians[ 1 + gaussian_type_size * gaussian_pos ] = text.toDouble();
+         if ( cb_gauss_match_amplitude->isChecked() )
+         {
+            double val;
+            if ( height_wheel_file( val, gaussians[ 1 + gaussian_type_size * gaussian_pos ] ) )
+            {
+               le_gauss_pos_height->setText( QString( "%1" ).arg( val ) );
+            }
+         }
       } else {
          if ( cb_fix_width->isChecked() )
          {
@@ -6972,6 +6988,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
    shf->exec();
    delete shf;
    
+   cb_gauss_match_amplitude->setChecked( false );
    qwtw_wheel->setEnabled( true );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    return;
