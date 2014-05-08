@@ -70,6 +70,7 @@
       <li> <a href="vhw_combine.html">Combine Distribution Plots (vHW)</a> </li>
       <li> <a href="ddist_combine.html">Combine Discrete Distributions</a> </li>
       <li> <a href="combine_models.html">Create Global Model</a> </li>
+      <li> <a href="mwlr_viewer.html">Multi-Wavelength Raw Viewer</a> </li>
     </ul>
   </li>
   

@@ -1,0 +1,237 @@
+[% INCLUDE header.us3/
+   title = 'US3 Multi-Wavelength Raw Data Viewer'
+%]
+
+    <h2> <i>UltraScan</i> Multi-Wavelength Raw Data Viewer: </h2>
+
+    <p> This module presents options for viewing multi-wavelength data
+    for purposes of quality control. The user may, in this way, identify
+    any problems in the experiment and get a sense of the wavelength,
+    radial, and intensity ranges represented.</p>
+
+    <p> Two types of input may be loaded for viewing.</p>
+
+    <ul>
+      <li><b>Raw MWL</b> The unprocessed .mwrs files of a run.</li>
+      <li><b>US3 MWL</b> The already imported US3 .auc files for an
+      experiment.</li>
+    </ul>
+
+    <h3> Process:</h3>
+
+    <ul>
+       <li>
+          <b>Load MWL Data:</b> Load multi-wavelength data to view by
+          clicking on "Load Raw MWL Data" or "Load US3 MWL Data", depending
+          on the available or desired data type.
+       </li>
+
+       <li>
+          <b>Define 2-D Plot and Ranges:</b> Set radius and lambda ranges;
+          determine averaging count; choose the X-axis (radius or lambda);
+          and possibly use the plot window Config option to refine the
+          resulting 2-dimensional plot.
+       </li>
+
+       <li>
+          <b>Show a 2-D Movie:</b> Once a 2-D plot and its ranges have been
+          established, show a 2-D movie of all lambda/radius records to
+          view the progression of data through record ranges.
+       </li>
+
+       <li>
+          <b>Show and Refine 3-D Plot:</b> Click on "Plot 3D" to bring up
+          a control window. Within that dialog, choose scales and bring up
+          a 3-D plot window. Continue to refine scales and orientation until
+          the 3-D plot is as desired.
+       </li>
+
+       <li>
+          <b>Show a 3-D Movie:</b> Once a 3-D plot, with its scales and
+          orientation, has been established, show a 3-D movie to see the
+          change in data over time (scans). Note that scans may be excluded
+          and a range of scans chosen to refine this movie.
+       </li>
+
+       <li>
+          <b>Save Plots and Movies:</b> When plots and movies are all in
+          a desired and informative state, you may save the plots and save
+          frame files from the movies for processing by external imaging
+          software.
+       </li>
+    </ul>
+
+    <h3> Main Window: </h3>
+    <p> The main MWLR_Viewer window is shown here in the state it appears
+    after loading US3 MWL data.</p>
+
+    <img src="images/mwlr_viewer.png" alt="MWLR_Viewer Main Window"/>
+
+    <h3> Elements and Functions:</h3>
+
+    <ul>
+       <li>
+          <b>Directory:</b> A text box to the right of this label shows
+          the full path to currently loaded data.
+       </li>
+
+       <li>
+          <b>Run ID:</b> A text box to the right of this label shows
+          the currently loaded data's run identifier.
+       </li>
+
+       <li>
+          <b>Load Raw MWL Data</b> Click here and, in the resulting
+          <a href="mwlr_view_load.html">Load Data Dialog</a>, select a run
+          from the <b>imports</b> directory that contains a set of
+          <b>.mwrs</b> files to load.
+       </li>
+
+       <li>
+          <b>Load US3 MWL Data</b> Click here and, in the resulting
+          <a href="mwlr_view_load.html">Load Data Dialog</a>, select a run
+          from the <b>results</b> directory that contains a set of already
+          imported <b>.auc</b> files to load.
+       </li>
+
+       <li>
+          <b>Reset Data</b> Clear data and plots in preparation for loading
+          a new data set.
+       </li>
+
+       <li>
+          <b>Data Details</b> Click on this button to bring up a text dialog
+          that shows details about the currently loaded data.
+       </li>
+
+       <li>
+          <b>Cell / Channel</b> Select the Cell/Channel of data to view.
+       </li>
+
+       <li>
+          <b>Radius Start:</b> Select the start radius in cm. from the list of
+          available radius values.
+       </li>
+
+       <li>
+          <b>Radius End:</b> Select the end radius in cm. from the list of
+          available radius values.
+       </li>
+
+       <li>
+          <b>&lambda; Start:</b> Select the start lambda in nm. from the list of
+          available wavelength values.
+       </li>
+
+       <li>
+          <b>&lambda; End:</b> Select the end lambda in nm. from the list of
+          available wavelength values.
+       </li>
+
+       <li>
+          <b>Record Average:</b> Select the number of wavelength records over
+          which to compute an average for each record.
+       </li>
+
+       <li>
+          <b>X-axis Wavelength</b> Check this box to change the plot to one in
+          which the X-axis is wavelength and records are radius records.
+       </li>
+
+       <li>
+          <b>Plot (W nm)</b> [ or <b>Plot (R cm)</b> ] Select the identifier of the
+          lambda or radius record to plot.
+       </li>
+
+       <li>
+          <b>Previous</b> Click to plot the previous lambda/radius record.
+       </li>
+
+       <li>
+          <b>Next</b> Click to plot the next lambda/radius record.
+       </li>
+
+       <li>
+          <b>Refresh 2D Plot</b> Click this button to replot the 2-D plot after
+          any changes in controls or ranges.
+       </li>
+
+       <li>
+          <b>Show 2D Movie</b> Click here to begin a 2-D movie over the lambda/radius
+          record range.
+       </li>
+
+       <li>
+          <b>Plot 3D</b> Click to open a
+          <a href="mwlr_view_pltctrl.html">3D Plot Control Dialog</a>,
+          from which a
+          <a href="images/mwlr_view_3dplot.png">3D Plot Window</a>
+          may be opened or replotted. Note that if a 3D Plot Window is already
+          opened and scan ranges have been changed, this button can be clicked
+          to re-plot the 3D Plot for the new first scan.
+       </li>
+
+       <li>
+          <b>Show 3D Movie</b> Click here to begin a 3-D movie over the scan range.
+       </li>
+
+       <li>
+          <b>Save Plot(s)</b> Click this button to save the current 2-D and/or
+          3-D plot.
+       </li>
+
+       <li>
+          <b>Save Movie(s)</b> Click here to re-play 2-D and/or 3-D movies and
+          save the PNG files of each frame in the reports directory.
+       </li>
+
+       <li>
+          <b>Hold 3D Movie Colors Constant</b> Check this box before beginning
+          a 3-D movie in order to preserve the correspondence of colors in
+          the currently selected color map to the maximum amplitude range.
+          By default, colors are mapped to each frame's amplitude range.
+       </li>
+
+       <li>
+          <b>From:</b> Select the first scan of a scan range focus.
+       </li>
+
+       <li>
+          <b>To:</b> Select the last scan of a scan range focus. The
+          "from" and "to" values may be used to exclude bad scan curves
+          or to limit the range of a 3-D plot or movie.
+       </li>
+
+       <li>
+          <b>Exclude Scan Range</b> Click on this button to exclude the
+          currently selected range of scans.
+       </li>
+
+       <li>
+          <b>Include All Scans</b> Click this button to revert to the full
+          range of data scans.
+       </li>
+
+       <li>
+          <b>Status</b> The text box below this banner shows the current
+          status of the ongoing or just-completed process.
+       </li>
+
+       <li>
+          <b>Help</b> Click to show this help documentation.
+       </li>
+
+       <li>
+          <b>Close</b> Click to close the MWLR viewer.
+       </li>
+    </ul>
+
+    <h3> Alternate Record and X-axis:</h3>
+    <p> The default 2-D plot and movie frames is of wavelength records with radius
+    as the X axis. You may change to radius records with lambda as the X axis by
+    checking the <b>X-axis Wavelength</b> box. With this checked, the main window
+    would be similar to the following.</p>
+
+    <img src="images/mwlr_viewer_xwavl.png" alt="Viewer Main X=lambda Window"/>
+
+[% INCLUDE footer.us3 %]
