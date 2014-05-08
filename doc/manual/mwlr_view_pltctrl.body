@@ -1,0 +1,65 @@
+[% INCLUDE header.us3/
+   title = 'US3 MWL View 3D Plot Control'
+%]
+
+    <h2> <i>UltraScan</i> MWL Viewer 3-D Plot Control: </h2>
+
+    <p> This small dialog launches a 3-dimensional MWL plot and allows
+    setting of the basic initial controls of that plot.</p>
+
+    <img src="images/mwlr_view_pltctrl.png" alt="Viewer 3D Plot Control"/>
+
+    <h3> Functions:</h3>
+
+    <ul>
+       <li>
+          <b>Z Scale Factor:</b> Select the scale factor to apply to
+          the Z (intensity) axis of the plot.
+       </li>
+
+       <li>
+          <b>Relative X Scale:</b> Select the scale factor to apply to
+          the X (radius) axis of the plot.
+       </li>
+
+       <li>
+          <b>Relative Y Scale:</b> Select the scale factor to apply to
+          the Y (lambda) axis of the plot.
+       </li>
+
+       <li>
+          <b>Reverse Y</b> Check this box to change the default Y
+          orientation (low lambda in back) to one in which the lambdas
+          are oriented from low lambda in front to high lambda in back.
+       </li>
+
+       <li>
+          <b>3D Plot</b> Click this button initially to bring up the 3-D
+          plot. Thereafter, this button can be clicked to re-plot after
+          changes to scale or orientation controls.
+       </li>
+
+       <li>
+          <b>Help</b> Click to bring up this documentation.
+       </li>
+
+       <li>
+          <b>Close</b> Click to close the 3-D plot window and the
+          control dialog.
+       </li>
+    </ul>
+
+    <h3> 3-dimensional Plot Window:</h3>
+    <p> The image below is of the 3-D plot window shown or modified with
+    the <b>3D Plot</b> control button. </p>
+
+    <img src="images/mwlr_view_3dplot.png" alt="Viewer 3D Plot Window"/>
+
+    <p> There are many, many plot control options within the 3D Plot Window.
+    They will not be detailed here. The user is encouraged to explore the
+    GUI elements and the use of the mouse. It is simply pointed out that
+    moving the cursor with the left mouse button held down re-orients the
+    plot and that the "Std" button in the lower left returns orientation
+    to the default state.</p>
+
+[% INCLUDE footer.us3 %]

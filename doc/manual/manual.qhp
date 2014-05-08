@@ -55,6 +55,7 @@
             <keyword id="m3" name="model-loader"  ref="load_model_distrib.html"/>
             <keyword id="m4" name="model-shapes"  ref="predict1.html"/>
             <keyword id="m5" name="model-shapes2" ref="predict2.html"/>
+            <keyword id="m6" name="mwlr-viewer"   ref="mwlr_viewer.html"/>
             <keyword id="n1" name="noise-loader"  ref="load_noise.html"/>
             <keyword id="p1" name="password"      ref="master_pw.html"/>
             <keyword id="p2" name="pcsa"          ref="pcsa.html"/>
@@ -336,6 +337,15 @@
 
             <file>time_derivative.html</file>
             <file>images/time_derivative.png</file>
+
+            <file>mwlr_viewer.html</file>
+            <file>mwlr_view_pltctrl.html</file>
+            <file>mwlr_view_load.html</file>
+            <file>images/mwlr_viewer.png</file>
+            <file>images/mwlr_viewer_xwavl.png</file>
+            <file>images/mwlr_view_load.png</file>
+            <file>images/mwlr_view_pltctrl.png</file>
+            <file>images/mwlr_view_3dplot.png</file>
 
         </files>
     </filterSection>

@@ -1,0 +1,61 @@
+[% INCLUDE header.us3/
+   title = 'US3 MWL Data Loader'
+%]
+
+    <h2> <i>UltraScan</i> MWL Data Loader: </h2>
+
+    <p> This dialog presents a list of run directories from which to
+    select MWL data to load. One of two types of data may be loaded.</p>
+
+    <ul>
+      <li><b>Raw MWL</b> The unprocessed .mwrs files of a run.</li>
+      <li><b>US3 MWL</b> The already imported US3 .auc files for an
+      experiment.</li>
+    </ul>
+
+    <h3> Dialog Window: </h3>
+    <p> The sample image here results from the main MWLR viewer
+    <b>Load Raw MWL Data</b/> being clicked. A very similar dialog is
+    shown when <b>Load US3 MWL Data</b/> is clicked.</p>
+
+    <img src="images/mwlr_view_load.png" alt="MWLR_Viewer Load Dialog"/>
+
+    <h3>Functions:</h3>
+
+    <ul>
+       <li>
+          <b>Search</b> The text box to the right of this label may be
+          filled with any identifying characters to use in filtering the
+          Run fields of the main list. Search substrings are case insensitive.
+       </li>
+
+       <li>
+          <b>Run</b> This header may be clicked to sort or change sort
+          order of list items by run ID.
+       </li>
+
+       <li>
+          <b>Date</b> This header may be clicked to sort or change sort
+          order of list items by date.
+       </li>
+
+       <li>
+          <b>Count of .mwrs</b> (or <b>Count of .auc</b>) This header may
+          be clicked to sort or change sort order of list items by
+          count of data files in the directory.
+       </li>
+
+       <li>
+          <b>Cancel</b> Click here to cancel any selection and close the
+          dialog.
+       </li>
+
+       <li>
+          <b>Select</b> After selecting a run row in the list, click this
+          button to close the dialog and return the selected run to the
+          caller.
+       </li>
+
+    </ul>
+
+[% INCLUDE footer.us3 %]
