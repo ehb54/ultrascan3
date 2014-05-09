@@ -491,7 +491,8 @@ void US_License::update( void )
                   + "&licensetype=" + licensetype;
   //qDebug() << "requesting update";
   // Send request
-  QString      url      = "http://ultrascan.uthscsa.edu/update-license.php";
+//  QString      url      = "http://ultrascan.uthscsa.edu/update-license.php";
+  QString      url      = "http://129.111.140.167/update-license.php";
   US_HttpPost* transmit = new US_HttpPost( url, req );
   connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
            this,     SLOT  ( update_response      ( const QString& ) ) );

@@ -474,12 +474,13 @@ void US_MwlData::read_rdata( QDataStream& ds, QVector< double >& rvs,
 {
    char cbuf[ 4 ];
    int  kk      = scnx;
+   double rscl  = ( evers > 1.2 ) ? 1.0 : 0.001;  // Scale 1.0 or 1/1000
 
    for ( int ii = 0; ii < npoint; ii++ )
-   { // Pick up each 4-byte value, convert to double and divide by 1000
+   { // Pick up each 4-byte value, convert to double and possibly scale
       ds.readRawData( cbuf, 4 );
       int    ival  = iword( cbuf );
-      double rvv   = (double)ival / 1000.0;
+      double rvv   = (double)ival * rscl;
       rvs[ kk++ ]  = rvv;
    }
 }
