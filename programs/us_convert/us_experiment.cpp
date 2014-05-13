@@ -191,6 +191,7 @@ int US_Experiment::readFromDB( QString runID, US_DB2* db,
       invID              = db->value( 14 ).toInt();
       opticalSystem      = db->value( 15 ).toString().toAscii();
       xmlFile            = db->value( 16 ).toString().toAscii();
+qDebug() << "Exp:rdDB: ExpInfRun: xmlFile size" << xmlFile.size();
    }
 
    else if ( db->lastErrno() == US_DB2::NOROWS )
@@ -265,7 +266,32 @@ int US_Experiment::readFromDB( QString runID, US_DB2* db,
    RIProfile.clear();
    if ( opticalSystem == "RI" )
    {
+      // If we have a profile from DB, make sure there is a local copy
+qDebug() << "Exp:rdDB: xmlFile size" << xmlFile.size();
+      if ( xmlFile.size() > 0 )
+      {
+         QDir    readDir( US_Settings::resultDir() );
+         QString RIPfname = readDir.absolutePath() + "/" + runID + "/"
+                            + runID + ".RIProfile.xml";
+qDebug() << "Exp:rdDB: RIPfname" << RIPfname;
+
+         QFile rfo( RIPfname );
+qDebug() << "Exp:rdDB: rfo exists" << rfo.exists();
+qDebug() << "Exp:rdDB: rfo size" << rfo.size();
+
+         if ( ! rfo.exists()  ||  rfo.size() == 0 )
+         {  // Need to make a local copy
+            if ( rfo.open( QIODevice::WriteOnly ) )
+            {
+qDebug() << "Exp:rdDB: rfo OPENED  xmlFile size" << xmlFile.size();
+               rfo.write( xmlFile );
+               rfo.close();
+            }
+         }
+      }
+
       int status = importRIxml( xmlFile );
+qDebug() << "Exp:rdDB: importRIxml status" << status;
 
       if ( status != US_Convert::OK )
       {
@@ -274,6 +300,7 @@ int US_Experiment::readFromDB( QString runID, US_DB2* db,
          RIProfile.clear();
          return US_DB2::ERROR;
       }
+
    }
 
    // If this is multi-speed, get speed steps for the experiment

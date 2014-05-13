@@ -131,14 +131,13 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_spikes;
       QPushButton*       pb_invert;
       QPushButton*       pb_write;
-      QPushButton*       pb_writemwl;
       QPushButton*       pb_residuals;
       QPushButton*       pb_priorEdits;
       QPushButton*       pb_reviewep;
       QPushButton*       pb_nexttrip;
       QPushButton*       pb_float;
       QPushButton*       pb_undo;
-                        
+
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
       QComboBox*         cb_triple;
@@ -176,6 +175,8 @@ class US_Edit : public US_Widgets
       QRadioButton*      rb_custom;
       QRadioButton*      rb_radius;
       QRadioButton*      rb_waveln;
+
+      QCheckBox*         ck_writemwl;
 
       QGridLayout*       lo_lrange;
       QGridLayout*       lo_custom;
