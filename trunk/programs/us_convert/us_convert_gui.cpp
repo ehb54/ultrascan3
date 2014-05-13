@@ -202,8 +202,11 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    pb_cancelref        = us_pushbutton( tr( "Undo Reference Scans" ), false );
    // Define intensity profile
    pb_intensity        = us_pushbutton( tr( "Show Intensity Profile" ), false );
-   // Drop scan
-   pb_dropScan         = us_pushbutton( tr( "Drop Selected Triples" ), false );
+   // Drop Triples or Channel or Cell/Channel
+   pb_dropTrips        = us_pushbutton( tr( "Drop Selected Triples" ), false );
+   pb_dropChan         = us_pushbutton( tr( "Drop Selected Channel" ), false );
+   pb_dropCelch        = us_pushbutton( tr( "Drop Cell/Channel"     ), false );
+   // Document solutio
    QLabel* lb_solution = us_label(      tr( "Solution:" ) );
    le_solutionDesc     = us_lineedit(   "", 1, true );
    // Scan Controls
@@ -269,7 +272,9 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    ccw      ->addWidget( pb_reference,    row,   4, 1,  4 );
    ccw      ->addWidget( pb_cancelref,    row++, 8, 1,  4 );
    ccw      ->addWidget( pb_intensity,    row,   4, 1,  4 );
-   ccw      ->addWidget( pb_dropScan,     row++, 8, 1,  4 );
+   ccw      ->addWidget( pb_dropTrips,    row++, 8, 1,  4 );
+   ccw      ->addWidget( pb_dropChan,     row,   0, 1,  6 );
+   ccw      ->addWidget( pb_dropCelch,    row++, 6, 1,  6 );
    ccw      ->addWidget( lb_solution,     row,   0, 1,  3 );
    ccw      ->addWidget( le_solutionDesc, row++, 3, 1,  9 );
    ccw      ->addWidget( lb_status,       row,   0, 1,  2 );
@@ -357,8 +362,12 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                             SLOT(   cancel_reference() ) );
    connect( pb_intensity,   SIGNAL( clicked()          ),
                             SLOT(   show_intensity()   ) );
-   connect( pb_dropScan,    SIGNAL( clicked()          ),
+   connect( pb_dropTrips,   SIGNAL( clicked()          ),
                             SLOT(   drop_reference()   ) );
+   connect( pb_dropChan,    SIGNAL( clicked()          ),
+                            SLOT(   drop_channel()     ) );
+   connect( pb_dropCelch,   SIGNAL( clicked()          ),
+                            SLOT(   drop_cellchan()    ) );
    connect( pb_exclude,     SIGNAL( clicked()          ),
                             SLOT(   exclude_scans()    ) );
    connect( pb_include,     SIGNAL( clicked()  ),
@@ -415,7 +424,9 @@ void US_ConvertGui::reset( void )
    pb_details    ->setEnabled( false );
    pb_intensity  ->setEnabled( false );
    pb_cancelref  ->setEnabled( false );
-   pb_dropScan   ->setEnabled( false );
+   pb_dropTrips  ->setEnabled( false );
+   pb_dropChan   ->setEnabled( false );
+   pb_dropCelch  ->setEnabled( false );
    pb_solution   ->setEnabled( false );
    pb_editRuninfo->setEnabled( false );
    pb_applyAll   ->setEnabled( false );
@@ -942,7 +953,10 @@ DbgLv(1) << "CGui: enabCtl: have-data" << allData.size() << all_tripinfo.size();
       for ( int i = 0; i < all_tripinfo.size(); i++ )
          if ( ! all_tripinfo[ i ].excluded ) currentScanCount++;
 
-      pb_dropScan    ->setEnabled( currentScanCount > 1 );
+      bool drops      = ( currentScanCount > 1 );
+      pb_dropTrips   ->setEnabled( drops );
+      pb_dropChan    ->setEnabled( drops && isMwl );
+      pb_dropCelch   ->setEnabled( drops && isMwl );
 
       if ( runType == "RI" )
          pb_reference->setEnabled( ! referenceDefined );
@@ -1985,7 +1999,17 @@ void US_ConvertGui::changeDescription( void )
 
    else
    {
-      outData[ tripDatax ]->description = le_description->text().trimmed();
+      QString chdesc  = le_description->text().trimmed();
+      outData[ tripDatax ]->description = chdesc;
+
+      if ( isMwl )
+      {  // Propagate description to all triples of channel
+         out_chaninfo[ tripListx ].description   = chdesc;
+         int trxs        = out_chandatx[ tripListx ];
+         int trxe        = trxs + nlambda;
+         for ( int trx = trxs; trx < trxe; trx++ )
+            outData[ trx ]->description = chdesc;
+      }
    }
 }
 
@@ -2737,12 +2761,12 @@ DbgLv(1) << "DelTrip: selected size" << selsiz;
    {
       for ( int ss = 0; ss < selsiz; ss++ )
       {  // Mark selected triples as excluded
-         int jdx    = all_triples.indexOf( selected[ ss ] );
+         int trx    = all_triples.indexOf( selected[ ss ] );
 
-         if ( jdx >= 0 )
+         if ( trx >= 0 )
          {
-            all_tripinfo[ jdx ].excluded = true;
-DbgLv(1) << "DelTrip:  EXCLUDED ss jdx" << ss << jdx;
+            all_tripinfo[ trx ].excluded = true;
+DbgLv(1) << "DelTrip:  EXCLUDED ss trx sel" << ss << trx << selected[ss];
          }
       }
 
@@ -2753,54 +2777,85 @@ DbgLv(1) << "DelTrip: bldout  RTN";
 
       if ( isMwl )
       {  // For MWL, rebuild wavelength controls
-         int ntrip    = out_tripinfo.count();
-DbgLv(1) << "DelTrip: ntrip" << ntrip;
-         int ccx      = out_tripinfo[ 0 ].channelID - 1;
-DbgLv(1) << "DelTrip:  st ccx" << ccx;
-         int wvx      = 0;
-         exp_lambdas.clear();
-
-         for ( int trx = 0; trx < ntrip; trx++ )
-         {  // Loop to add non-excluded wavelengths
-            int ichan    = out_tripinfo[ trx ].channelID - 1;
-            int iwavl    = out_triples [ trx ].section( " / ", 2, 2 ).toInt();
-DbgLv(1) << "DelTrip: trx ichan ccx iwavl" << trx << ichan << ccx << iwavl;
-
-            if ( ichan != ccx )
-            {  // If a new channel, store the previous channel's lambda list
-               mwl_data.set_lambdas( exp_lambdas, ccx );
-DbgLv(1) << "DelTrip:   trx ichan ccx iwavl nlam" << trx << ichan << ccx
- << iwavl << exp_lambdas.count() << wvx;
-               wvx       = 0;
-               exp_lambdas.clear();
-               ccx       = ichan;
-            }
-
-            exp_lambdas << iwavl;
-            wvx++;
-         }
-
-         // Store the last channel's lambdas
-         mwl_data.set_lambdas( exp_lambdas, ccx );
-DbgLv(1) << "DelTrip:    ccx nlam" << ccx << exp_lambdas.count();
-         mwl_connect( false );
-
-         // Set controls for the first cell/channel in the list
-         nlambda      = mwl_data.lambdas( exp_lambdas, 0 );
-         slambda      = exp_lambdas[ 0 ];
-         elambda      = exp_lambdas[ nlambda - 1 ];
-
-DbgLv(1) << "DelTrip:     ccx nlam" << 0 << exp_lambdas.count();
-         cb_lambstrt->setCurrentIndex( all_lambdas.indexOf( slambda ) );
-         cb_lambstop->setCurrentIndex( all_lambdas.indexOf( elambda ) );
-         cb_lambplot->setCurrentIndex( nlambda / 2 );
-         mwl_connect( true );
-
-         reset_lambdas();      // Make sure internal MWL lambdas are right
+         build_lambda_ctrl();
       }
 
       setTripleInfo();         // Review new triple information
    }
+
+   plot_titles();              // Output a plot of the current data
+   plot_all();
+}
+
+// Drop the triples for the selected channel
+void US_ConvertGui::drop_channel()
+{
+   QString chann  = lw_triple->currentItem()->text()
+                    .section( "/", 1, 1 ).simplified();
+   int status     = QMessageBox::information( this,
+      tr( "Drop Triples with Selected Channel" ),
+      tr( "You have selected a list item that implies you wish to"
+          " drop triples that have channel '%1'\n\n"
+          "If that is what you intend, click \"Proceed\".\n\n"
+          "Otherwise, you should \"Cancel\".\n" ).arg( chann ),
+      tr( "&Proceed" ), tr( "&Cancel" ) );
+
+   if ( status != 0 ) return;
+
+   for ( int trx = 0; trx < all_triples.size(); trx++ )
+   {  // Mark matching triples as excluded
+      QString tchan = QString( all_triples[ trx ] )
+                      .section( "/", 1, 1 ).simplified();
+
+      if ( tchan == chann )
+      {
+         all_tripinfo[ trx ].excluded = true;
+DbgLv(1) << "DelChan:  EXCLUDED chn trx" << chann << trx;
+      }
+   }
+
+   build_output_data();        // Rebuild the output data controls
+
+   build_lambda_ctrl();        // Rebuild lambda controls
+
+   setTripleInfo();            // Review new triple information
+
+   plot_titles();              // Output a plot of the current data
+   plot_all();
+}
+
+// Drop the triples for the selected cell/channel
+void US_ConvertGui::drop_cellchan()
+{
+   QString celchn = lw_triple->currentItem()->text()
+                    .section( "/", 0, 1 ).simplified();
+   int status     = QMessageBox::information( this,
+      tr( "Drop Triples of Selected Cell/Channel" ),
+      tr( "You have selected a list item that implies you wish to"
+          " drop all triples from cell/channel \"%1\"\n\n"
+          "If that is what you intend, click \"Proceed\".\n\n"
+          "Otherwise, you should \"Cancel\".\n" ).arg( celchn ),
+      tr( "&Proceed" ), tr( "&Cancel" ) );
+
+   if ( status != 0 ) return;
+
+   for ( int trx = 0; trx < all_triples.size(); trx++ )
+   {  // Mark matching triples as excluded
+      QString tcelchn = QString( all_triples[ trx ] )
+                        .section( "/", 0, 1 ).simplified();
+
+      if ( tcelchn == celchn )
+      {
+         all_tripinfo[ trx ].excluded = true;
+DbgLv(1) << "DelChan:  EXCLUDED cc trx" << celchn << trx;
+      }
+   }
+
+   build_output_data();        // Rebuild the output data controls
+
+   build_lambda_ctrl();        // Rebuild lambda controls
+
+   setTripleInfo();            // Review new triple information
 
    plot_titles();              // Output a plot of the current data
    plot_all();
@@ -4038,18 +4093,20 @@ void US_ConvertGui::lambdaNextClicked( )
 // Show or hide MWL controls
 void US_ConvertGui::show_mwl_control( bool show )
 {
-   lb_mwlctrl ->setVisible( show );
-   lb_lambstrt->setVisible( show );
-   cb_lambstrt->setVisible( show );
-   lb_lambstop->setVisible( show );
-   cb_lambstop->setVisible( show );
-   lb_lambplot->setVisible( show );
-   cb_lambplot->setVisible( show );
-   pb_lambprev->setVisible( show );
-   pb_lambnext->setVisible( show );
+   lb_mwlctrl  ->setVisible( show );
+   lb_lambstrt ->setVisible( show );
+   cb_lambstrt ->setVisible( show );
+   lb_lambstop ->setVisible( show );
+   cb_lambstop ->setVisible( show );
+   lb_lambplot ->setVisible( show );
+   cb_lambplot ->setVisible( show );
+   pb_lambprev ->setVisible( show );
+   pb_lambnext ->setVisible( show );
+   pb_dropChan ->setVisible( show );
+   pb_dropCelch->setVisible( show );
 
-   pb_exclude ->setVisible( !show );
-   pb_include ->setVisible( !show );
+   pb_exclude  ->setVisible( !show );
+   pb_include  ->setVisible( !show );
 
    adjustSize();
 }
@@ -4710,3 +4767,60 @@ DbgLv(1) << "wTSdb:   upload status" << status;
    return status;
 }
 
+// Build lambda controls
+void US_ConvertGui::build_lambda_ctrl()
+{
+   if ( ! isMwl )
+      return;
+
+   // For MWL, rebuild wavelength controls
+   int ntrip    = out_tripinfo.count();
+DbgLv(1) << "BldLCtr: ntrip" << ntrip;
+   int ccx      = out_tripinfo[ 0 ].channelID - 1;
+DbgLv(1) << "BldLCtr:  st ccx" << ccx;
+   int wvx      = 0;
+   int ccxo     = 0;
+   exp_lambdas.clear();
+
+   for ( int trx = 0; trx < ntrip; trx++ )
+   {  // Loop to add non-excluded wavelengths
+      int ichan    = out_tripinfo[ trx ].channelID - 1;
+      int iwavl    = out_triples [ trx ].section( " / ", 2, 2 ).toInt();
+DbgLv(1) << "BldLCtr: trx ichan ccx iwavl" << trx << ichan << ccx << iwavl;
+
+      if ( ichan != ccx )
+      {  // If a new channel, store the previous channel's lambda list
+         mwl_data.set_lambdas( exp_lambdas, ccxo );
+DbgLv(1) << "BldLCtr:   trx ichan ccx ccxo iwavl nlam" << trx << ichan << ccx
+ << ccxo << iwavl << exp_lambdas.count() << wvx;
+         wvx       = 0;
+         exp_lambdas.clear();
+
+         ccx       = ichan;
+         ccxo++;
+      }
+
+      exp_lambdas << iwavl;
+      wvx++;
+   }
+
+   // Store the last channel's lambdas
+   mwl_data.set_lambdas( exp_lambdas, ccxo );
+DbgLv(1) << "BldLCtr:    ccxo nlam" << ccxo << exp_lambdas.count();
+   mwl_connect( false );
+
+   // Set controls for the currently selected cell/channel in the list
+   tripListx    = lw_triple->currentRow();
+   nlambda      = mwl_data.lambdas( exp_lambdas, tripListx );
+   slambda      = exp_lambdas[ 0 ];
+   elambda      = exp_lambdas[ nlambda - 1 ];
+
+DbgLv(1) << "BldLCtr:     ccx nlam" << 0 << exp_lambdas.count();
+   cb_lambstrt->setCurrentIndex( all_lambdas.indexOf( slambda ) );
+   cb_lambstop->setCurrentIndex( all_lambdas.indexOf( elambda ) );
+   cb_lambplot->setCurrentIndex( nlambda / 2 );
+   mwl_connect( true );
+
+   reset_lambdas();      // Make sure internal MWL lambdas are right
+
+}

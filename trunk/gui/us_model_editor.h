@@ -5,7 +5,6 @@
 #include <QtGui>
 
 #include "us_widgets_dialog.h"
-#include "us_femglobal.h"
 #include "us_help.h"
 #include "us_predict1.h"
 

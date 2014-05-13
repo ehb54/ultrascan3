@@ -110,7 +110,9 @@ class US_ConvertGui : public US_Widgets
       QPushButton*  pb_reference;
       QPushButton*  pb_intensity;
       QPushButton*  pb_cancelref;
-      QPushButton*  pb_dropScan;
+      QPushButton*  pb_dropTrips;
+      QPushButton*  pb_dropChan;
+      QPushButton*  pb_dropCelch;
       QPushButton*  pb_saveUS3;
 
       US_SelectBox*  cb_centerpiece;
@@ -238,6 +240,8 @@ class US_ConvertGui : public US_Widgets
       void show_intensity    ( void );
       void cancel_reference  ( void );
       void drop_reference    ( void );
+      void drop_channel      ( void );
+      void drop_cellchan     ( void );
       void saveUS3           ( void );
       int  saveUS3Disk       ( void );
       void saveUS3DB         ( void );
@@ -251,6 +255,7 @@ class US_ConvertGui : public US_Widgets
       void mwl_setup         ( void );
       void init_output_data  ( void );
       void build_output_data ( void );
+      void build_lambda_ctrl ( void );
       void connectTolerance  ( bool );
       int  countSpeeds       ( QVector< int >&, int* );
       int  writeTimeStateDisk( void );

@@ -263,7 +263,9 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_nexttrip->setVisible( false );
    pb_float       = us_pushbutton( tr( "Mark Data as Floating" ),     false );
    pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
-   pb_writemwl    = us_pushbutton( tr( "Save to all Wavelengths" ),   false );
+   QLayout* lo_writemwl
+                  = us_checkbox( tr( "Save to all Wavelengths" ), ck_writemwl,
+                                                                  true );
 
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
    connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
@@ -292,7 +294,6 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    connect( pb_nexttrip,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
    connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
    connect( pb_write,        SIGNAL( clicked() ), SLOT( write()     ) );
-   connect( pb_writemwl,     SIGNAL( clicked() ), SLOT( write_mwl() ) );
 
    // Lay out specs widgets and layouts
    int s_row = 0;
@@ -360,7 +361,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    specs->addWidget( pb_nexttrip,     s_row++, 2, 1, 2 );
    specs->addWidget( pb_float,        s_row,   0, 1, 2 );
    specs->addWidget( pb_write,        s_row++, 2, 1, 2 );
-   specs->addWidget( pb_writemwl,     s_row++, 2, 1, 2 );
+   specs->addLayout( lo_writemwl,     s_row++, 2, 1, 2 );
 
    // Button rows
    QBoxLayout*  buttons   = new QHBoxLayout;
@@ -500,7 +501,7 @@ void US_Edit::reset( void )
    
    pb_float       ->setEnabled( false );
    pb_write       ->setEnabled( false );
-   pb_writemwl    ->setEnabled( false );
+   ck_writemwl    ->setEnabled( false );
 
    // Remove icons
    pb_meniscus    ->setIcon( QIcon() );
@@ -513,8 +514,6 @@ void US_Edit::reset( void )
    pb_invert      ->setIcon( QIcon() );
 
    pb_float       ->setIcon( QIcon() );
-   pb_write       ->setIcon( QIcon() );
-   pb_writemwl    ->setIcon( QIcon() );
 
    editLabel     .clear();
    data.scanData .clear();
@@ -1659,7 +1658,7 @@ DbgLv(1) << "AGap:  plot_range()";
                   else
                   {
                      pb_write   ->setEnabled( true );
-                     pb_writemwl->setEnabled( true );
+                     ck_writemwl->setEnabled( true );
                      pb_reviewep->setEnabled( true );
                      pb_nexttrip->setEnabled( true );
                      step         = FINISHED;
@@ -1686,7 +1685,7 @@ DbgLv(1) << "AGap:  plot_range()";
             {
                all_edits = true;
                pb_write   ->setEnabled( true );
-               pb_writemwl->setEnabled( true );
+               ck_writemwl->setEnabled( true );
                changes_made = all_edits;
             }
          }
@@ -1707,7 +1706,7 @@ DbgLv(1) << "AGap:  plot_range()";
          pb_plateau ->setIcon( check );
          ct_to->setValue( 0.0 );  // Uncolor all scans
          pb_write      ->setEnabled( true );
-         pb_writemwl   ->setEnabled( isMwl );
+         ck_writemwl   ->setEnabled( isMwl );
          changes_made = true;
          next_step();
          break;
@@ -1744,7 +1743,7 @@ DbgLv(1) << "AGap:  plot_range()";
          }
 
          pb_write      ->setEnabled( true );
-         pb_writemwl   ->setEnabled( isMwl );
+         ck_writemwl   ->setEnabled( isMwl );
          changes_made = true;
          next_step();
          break;
@@ -1859,8 +1858,7 @@ void US_Edit::set_meniscus( void )
    pb_plateau  ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
-   pb_writemwl ->setEnabled( all_edits && isMwl );
-   pb_write    ->setIcon( QIcon() );
+   ck_writemwl ->setEnabled( all_edits && isMwl );
 
    changes_made = all_edits;
 DbgLv(1) << "set_meniscus -- changes_made" << changes_made;
@@ -1904,8 +1902,7 @@ void US_Edit::set_airGap( void )
    pb_plateau  ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
-   pb_writemwl ->setEnabled( all_edits && isMwl );
-   pb_write    ->setIcon( QIcon() );;
+   ck_writemwl ->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
 
    spikes = false;
@@ -1935,8 +1932,7 @@ void US_Edit::set_dataRange( void )
    pb_plateau  ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
-   pb_writemwl ->setEnabled( all_edits && isMwl );
-   pb_write    ->setIcon( QIcon() );;
+   ck_writemwl ->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
 
    spikes = false;
@@ -1966,8 +1962,7 @@ void US_Edit::set_plateau( void )
 
    pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
-   pb_writemwl ->setEnabled( all_edits && isMwl );
-   pb_write    ->setIcon( QIcon() );;
+   ck_writemwl ->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
 
    plot_range();
@@ -3023,9 +3018,7 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax;
    pb_invert   ->setEnabled( true );
    pb_undo     ->setEnabled( true );
    pb_write    ->setEnabled( all_edits );
-   pb_writemwl ->setEnabled( all_edits && isMwl );
-   pb_write    ->setIcon   ( all_edits          ? check : QIcon() );
-   pb_writemwl ->setIcon   ( all_edits && isMwl ? check : QIcon() );
+   ck_writemwl ->setEnabled( all_edits && isMwl );
    all_edits    = false;
    changes_made = all_edits;
 
@@ -3176,10 +3169,18 @@ void US_Edit::floating( void )
 void US_Edit::write( void )
 { 
    if ( !expIsEquil )
-   {  // non-Equilibrium:  write single current edit
-      triple_index = cb_triple->currentIndex();
+   {  // non-Equilibrium:  write single current edit (if "all" unchecked)
+      if ( ck_writemwl->isChecked() )
+      {  // Write edits for all triples in the current cell/channel
+         write_mwl();
+      }
 
-      write_triple();
+      else
+      {  // Write single triple's edit
+         triple_index = cb_triple->currentIndex();
+
+         write_triple();
+      }
    }
 
    else
@@ -3195,9 +3196,7 @@ void US_Edit::write( void )
 
    changes_made = false;
    pb_write    ->setEnabled( false );
-   pb_writemwl ->setEnabled( false );
-   pb_write    ->setIcon   ( check );
-   pb_writemwl ->setIcon   ( check );
+   ck_writemwl ->setEnabled( false );
 }
 
 // Save edits for a triple
@@ -3553,7 +3552,7 @@ DbgLv(1) << "parsGUID rawGUID" << parameters.dataGUID << uuid;
 
    pb_undo    ->setEnabled( true  );
    pb_write   ->setEnabled( true  );
-   pb_writemwl->setEnabled( isMwl );
+   ck_writemwl->setEnabled( isMwl );
 
    changes_made= false;
    plot_range();
@@ -3856,7 +3855,7 @@ void US_Edit::prior_equil( void )
 
    pb_undo    ->setEnabled( true );
    pb_write   ->setEnabled( true );
-   pb_writemwl->setEnabled( isMwl );
+   ck_writemwl->setEnabled( isMwl );
 
    cndxt       = ( cndxt < 0 ) ? 0 : cndxt;
    cndxs       = ( cndxs < 0 ) ? 0 : cndxs;
@@ -3871,7 +3870,7 @@ void US_Edit::prior_equil( void )
 
    all_edits    = all_edits_done();
    pb_write   ->setEnabled( all_edits );
-   pb_writemwl->setEnabled( all_edits && isMwl );
+   ck_writemwl->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
 
    review_edits();
@@ -4002,7 +4001,7 @@ void US_Edit::show_mwl_controls( bool show )
    pb_rarrow  ->setVisible( show );
    pb_custom  ->setVisible( show );
    pb_incall  ->setVisible( show );
-   pb_writemwl->setVisible( show );
+   ck_writemwl->setVisible( show );
 
    lo_lrange->itemAtPosition( 0, 0 )->widget()->setVisible( show );
    lo_lrange->itemAtPosition( 0, 1 )->widget()->setVisible( show );
@@ -4562,9 +4561,7 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
    QApplication::restoreOverrideCursor();
    changes_made = false;
    pb_write    ->setEnabled( false );
-   pb_writemwl ->setEnabled( false );
-   pb_write    ->setIcon   ( check );
-   pb_writemwl ->setIcon   ( check );
+   ck_writemwl ->setEnabled( false );
    le_info->setText( saved_info );
    qApp->processEvents();
 DbgLv(1) << "EDT:WrMwl: DONE";
