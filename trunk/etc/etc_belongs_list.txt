@@ -21,6 +21,26 @@ us3-splash.png
 us3-icon-128x128.png
 us3-icon-128x128.ico
 us3-icon.icns
+best.radii
+black-blue.map
+black-green.map
+black-red.map
+black-yellow.map
+blue-black.map
+color-bw.map
+color.map
+color-white-blue.map
+cyan-purple-red-black.map
+flash-combined-no-text.png
+green-black.map
+mw.json
+rainbow-white.map
+red-black.map
+ultra.xpm
+us3_config.icns
+us3_config.iconset
+vdw.json
+yellow-black.map
 # List of directories that belong in $ULTRASCAN/etc
 dmd/
 mysql/
