@@ -1815,7 +1815,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    switch ( count )
    {
    case 0 : msg = ""; break;
-   case 1 : msg = QString( "q*Rg max %1   Rg %2   I0 %3" ).arg( qrg_avg ).arg( rg_avg ).arg( i0_avg ); break;
+   case 1 : msg = QString( "qmax*Rg %1   Rg %2   I0 %3" ).arg( qrg_avg ).arg( rg_avg ).arg( i0_avg ); break;
    default :
       {
          double countinv = 1e0 / (double) count;
@@ -1829,7 +1829,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          }
          msg += QString( "" )
             .sprintf(
-                     "curves  q*Rg max %.3f [%.3f:%.3f]  Rg %.1f [%.1f:%.1f]  I0 %.2e [%.2e:%.2e]"
+                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f [%.1f:%.1f]  I0 %.2e [%.2e:%.2e]"
                      , qrg_avg
                      , qrg_min
                      , qrg_max
@@ -2171,6 +2171,26 @@ void US_Hydrodyn_Saxs_Hplc::guinier_replot()
    sym.setSize(6);
    sym.setBrush(Qt::white);
 
+   bool do_error_bars = true;
+
+   {
+      int totpts = 0;
+      for ( map < QString, vector <double > >::iterator it = guinier_q2.begin();
+            it != guinier_q2.end();
+            ++it )
+      {
+         bool use_error = ( guinier_q[ it->first ].size() == guinier_e[ it->first ].size() );
+         if ( use_error )
+         {
+            totpts += (int) it->second.size();
+         }
+      }
+      if ( totpts > 10000 )
+      {
+         do_error_bars = false;
+      }
+   }
+
    for ( map < QString, vector <double > >::iterator it = guinier_q2.begin();
          it != guinier_q2.end();
          ++it )
@@ -2237,7 +2257,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_replot()
       curve->attach( guinier_plot );
 #endif
 
-      if ( use_error )
+      if ( do_error_bars && use_error )
       {
          vector < double > x( 2 );
          vector < double > y( 2 );
@@ -2272,7 +2292,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_replot()
 #endif
          }
       }
-   }         
+   }        
 
    guinier_analysis();
    guinier_residuals();

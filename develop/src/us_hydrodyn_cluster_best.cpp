@@ -497,7 +497,7 @@ void US_Hydrodyn_Cluster_Best::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/best.html");
+   online_help->show_help("manual/somo_BEST_setup.html");
 }
 
 void US_Hydrodyn_Cluster_Best::closeEvent( QCloseEvent *e )

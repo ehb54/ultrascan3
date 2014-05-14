@@ -992,7 +992,12 @@ namespace HFIT_GLOBAL
          {
             if ( param_fixed[ fix_base ] )
             {
-               dist1 = fixed_params[ param_pos[ fix_base ] ];
+               if ( comm_backref.count( fix_base ) )
+               {
+                  dist1 = par[ comm_backref[ fix_base ] ];
+               } else {
+                  dist1 = fixed_params[ param_pos[ fix_base ] ];
+               }
             } else {
                dist1 = par         [ param_pos[ fix_base ] ];
                if ( dist1 < param_min[ param_pos[ fix_base ] ] ||
@@ -1005,7 +1010,12 @@ namespace HFIT_GLOBAL
          } else {
             if ( param_fixed[ var_base ] )
             {
-               dist1 = fixed_params[ param_pos[ var_base ] ];
+               if ( comm_backref.count( var_base ) )
+               {
+                  dist1 = par[ comm_backref[ var_base ] ];
+               } else {
+                  dist1 = fixed_params[ param_pos[ var_base ] ];
+               }
             } else {
                dist1 = par         [ param_pos[ var_base ] ];
                if ( dist1 < param_min[ param_pos[ var_base ] ] ||
@@ -1165,7 +1175,12 @@ namespace HFIT_GLOBAL
          {
             if ( param_fixed[ fix_base ] )
             {
-               dist1 = fixed_params[ param_pos[ fix_base ] ];
+               if ( comm_backref.count( fix_base ) )
+               {
+                  dist1 = par[ comm_backref[ fix_base ] ];
+               } else {
+                  dist1 = fixed_params[ param_pos[ fix_base ] ];
+               }
             } else {
                dist1 = par         [ param_pos[ fix_base ] ];
                if ( dist1 < param_min[ param_pos[ fix_base ] ] ||
@@ -1178,7 +1193,12 @@ namespace HFIT_GLOBAL
          } else {
             if ( param_fixed[ var_base ] )
             {
-               dist1 = fixed_params[ param_pos[ var_base ] ];
+               if ( comm_backref.count( var_base ) )
+               {
+                  dist1 = par[ comm_backref[ var_base ] ];
+               } else {
+                  dist1 = fixed_params[ param_pos[ var_base ] ];
+               }
             } else {
                dist1 = par         [ param_pos[ var_base ] ];
                if ( dist1 < param_min[ param_pos[ var_base ] ] ||
@@ -1312,7 +1332,12 @@ namespace HFIT_GLOBAL
          {
             if ( param_fixed[ fix_base ] )
             {
-               dist1 = fixed_params[ param_pos[ fix_base ] ];
+               if ( comm_backref.count( fix_base ) )
+               {
+                  dist1 = par[ comm_backref[ fix_base ] ];
+               } else {
+                  dist1 = fixed_params[ param_pos[ fix_base ] ];
+               }
             } else {
                dist1 = par         [ param_pos[ fix_base ] ];
                if ( dist1 < param_min[ param_pos[ fix_base ] ] ||
@@ -1325,7 +1350,12 @@ namespace HFIT_GLOBAL
          } else {
             if ( param_fixed[ var_base ] )
             {
-               dist1 = fixed_params[ param_pos[ var_base ] ];
+               if ( comm_backref.count( var_base ) )
+               {
+                  dist1 = par[ comm_backref[ var_base ] ];
+               } else {
+                  dist1 = fixed_params[ param_pos[ var_base ] ];
+               }
             } else {
                dist1 = par         [ param_pos[ var_base ] ];
                if ( dist1 < param_min[ param_pos[ var_base ] ] ||
@@ -1342,7 +1372,12 @@ namespace HFIT_GLOBAL
          {
             if ( param_fixed[ fix_base ] )
             {
-               dist2 = fixed_params[ param_pos[ fix_base ] ];
+               if ( comm_backref.count( fix_base ) )
+               {
+                  dist2 = par[ comm_backref[ fix_base ] ];
+               } else {
+                  dist2 = fixed_params[ param_pos[ fix_base ] ];
+               }
             } else {
                dist2 = par         [ param_pos[ fix_base ] ];
                if ( dist2 < param_min[ param_pos[ fix_base ] ] ||
@@ -1355,7 +1390,12 @@ namespace HFIT_GLOBAL
          } else {
             if ( param_fixed[ var_base ] )
             {
-               dist2 = fixed_params[ param_pos[ var_base ] ];
+               if ( comm_backref.count( var_base ) )
+               {
+                  dist2 = par[ comm_backref[ var_base ] ];
+               } else {
+                  dist2 = fixed_params[ param_pos[ var_base ] ];
+               }
             } else {
                dist2 = par         [ param_pos[ var_base ] ];
                if ( dist2 < param_min[ param_pos[ var_base ] ] ||
@@ -1746,6 +1786,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
 
    double base_val;
 
+   unsigned int comm_dist_1_var_pos = 0;
+   unsigned int comm_dist_2_var_pos = 0;
+
    // layout of unified gaussian_params
    // common portion (shared by all): f=center{,width}{,dist1}{,dist2}
    // f1,f2,...,fn
@@ -1781,7 +1824,8 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
    {
       // centers always first, always common
 
-      unsigned int ofs = common_size * i;
+      unsigned int ofs      = common_size * i;
+      unsigned int this_ofs = 0;
 
       if ( cb_fix_center->isChecked() ||
            fixed_curves.count( i ) )
@@ -1817,6 +1861,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
          HFIT_GLOBAL::param_max   .push_back( max );
       }
       ofs++;
+      this_ofs++;
 
       if ( hplc_win->cb_fix_width->isChecked() ) // if widths are common
       {
@@ -1862,17 +1907,30 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             HFIT_GLOBAL::param_max   .push_back( max );
          }
          ofs++;
+         this_ofs++;
       }
 
       if ( dist1_active && hplc_win->cb_fix_dist1->isChecked() ) // if dist1s are common
       {
          if ( cb_fix_dist1->isChecked() ||
-              fixed_curves.count( i ) )
+              fixed_curves.count( i ) ||
+              ( cb_comm_dist1->isChecked() && i ) )
          {
             HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
-            HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+            if ( i && cb_comm_dist1->isChecked() && !fixed_curves.count( i ) )
+            {
+               HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ this_ofs ] );
+               HFIT_GLOBAL::comm_backref[ HFIT_GLOBAL::param_fixed.size() ] = comm_dist_1_var_pos;
+            } else {
+               HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+            }
             HFIT_GLOBAL::param_fixed .push_back( true );
          } else {
+            if ( cb_comm_dist1->isChecked() )
+            {
+               comm_dist_1_var_pos = HFIT_GLOBAL::init_params.size();
+            }
+
             HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
 
             if ( cb_pct_dist1_from_init->isChecked() )
@@ -1912,18 +1970,33 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
 
             HFIT_GLOBAL::param_min   .push_back( min );
             HFIT_GLOBAL::param_max   .push_back( max );
+
          }
+
          ofs++;
+         this_ofs++;
 
          if ( dist2_active && hplc_win->cb_fix_dist2->isChecked() ) // if dist2s are common
          {
             if ( cb_fix_dist2->isChecked() ||
-                 fixed_curves.count( i ) )
+                 fixed_curves.count( i )  ||
+                 ( cb_comm_dist2->isChecked() && i ) )
             {
                HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
-               HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+               if ( i && cb_comm_dist2->isChecked() && !fixed_curves.count( i ) )
+               {
+                  HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ this_ofs ] );
+                  HFIT_GLOBAL::comm_backref[ HFIT_GLOBAL::param_fixed.size() ] = comm_dist_2_var_pos;
+               } else {
+                  HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+               }
                HFIT_GLOBAL::param_fixed .push_back( true );
             } else {
+               if ( cb_comm_dist2->isChecked() )
+               {
+                  comm_dist_2_var_pos = HFIT_GLOBAL::init_params.size();
+               }
+
                HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
 
                if ( cb_pct_dist2_from_init->isChecked() )
@@ -1965,6 +2038,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                HFIT_GLOBAL::param_max   .push_back( max );
             }
             ofs++;
+            this_ofs++;
          }
       }
    }
@@ -1977,6 +2051,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
    for ( unsigned int f = 0; f < hplc_win->unified_ggaussian_curves; f++ )
    {
       unsigned int ofs = base_ofs + f * per_file_size * hplc_win->unified_ggaussian_gaussians_size;
+      unsigned int this_ofs = base_ofs;
 
       for ( unsigned int i = 0; i < hplc_win->unified_ggaussian_gaussians_size; i++ )
       {
@@ -2028,6 +2103,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             HFIT_GLOBAL::param_max   .push_back( max );
          }
          ofs++;
+         this_ofs++;
 
          if ( !hplc_win->cb_fix_width->isChecked() ) // if widths are not common
          {
@@ -2073,17 +2149,30 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                HFIT_GLOBAL::param_max   .push_back( max );
             }
             ofs++;
+            this_ofs++;
          }
 
          if ( dist1_active && !hplc_win->cb_fix_dist1->isChecked() ) // if dist1s are not common
          {
             if ( cb_fix_dist1->isChecked() ||
-                 fixed_curves.count( i ) )
+                 fixed_curves.count( i ) ||
+                 ( cb_comm_dist1->isChecked() && i ) )
             {
                HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
-               HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+               if ( i && cb_comm_dist1->isChecked() && !fixed_curves.count( i ) )
+               {
+                  HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ this_ofs ] );
+                  HFIT_GLOBAL::comm_backref[ HFIT_GLOBAL::param_fixed.size() ] = comm_dist_1_var_pos;
+               } else {
+                  HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+               }
                HFIT_GLOBAL::param_fixed .push_back( true );
             } else {
+               if ( cb_comm_dist1->isChecked() )
+               {
+                  comm_dist_1_var_pos = HFIT_GLOBAL::init_params.size();
+               }
+
                HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
 
                if ( cb_pct_dist1_from_init->isChecked() )
@@ -2117,15 +2206,28 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                HFIT_GLOBAL::param_max   .push_back( max );
             }
             ofs++;
+            this_ofs++;
             if ( dist2_active && !hplc_win->cb_fix_dist2->isChecked() ) // if dist2s are common
             {
                if ( cb_fix_dist2->isChecked() ||
-                    fixed_curves.count( i ) )
+                    fixed_curves.count( i ) ||
+                 ( cb_comm_dist2->isChecked() && i ) )
                {
                   HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
-                  HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+                  if ( i && cb_comm_dist2->isChecked() && !fixed_curves.count( i ) )
+                  {
+                     HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ this_ofs ] );
+                     HFIT_GLOBAL::comm_backref[ HFIT_GLOBAL::param_fixed.size() ] = comm_dist_2_var_pos;
+                  } else {
+                     HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ ofs ] );
+                  }
                   HFIT_GLOBAL::param_fixed .push_back( true );
                } else {
+                  if ( cb_comm_dist2->isChecked() )
+                  {
+                     comm_dist_2_var_pos = HFIT_GLOBAL::init_params.size();
+                  }
+
                   HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::init_params.size() );
 
                   if ( cb_pct_dist2_from_init->isChecked() )
@@ -2167,6 +2269,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                   HFIT_GLOBAL::param_max   .push_back( max );
                }
                ofs++;
+               this_ofs++;
             }
          }
       } // each gaussian i
@@ -2459,7 +2562,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
    }
    */
 
-   // HFIT_GLOBAL::list_params();
+   HFIT_GLOBAL::list_params();
 
    // US_Vector::printvector( "is_common", is_common );
 
@@ -2534,8 +2637,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
       {
          cout << QString( "NOTICE: gsums within tolernace %1\n" ).arg( TOL );
       } else {
-         // US_Vector::printvector( "gsum", gsum );
-         // US_Vector::printvector( "gsumf", gsumf );
+         US_Vector::printvector( "gsum", gsum );
+         US_Vector::printvector( "gsumf", gsumf );
          cout << "WARNING: gsums don't match\n";
          cout << QString( "WARNING: gsums OUTSIDE tolernace %1\n" ).arg( TOL );
       }
@@ -2580,9 +2683,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
    {
       for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
       {
-         if ( !HFIT_GLOBAL::param_fixed[ i ] )
+         if ( !HFIT_GLOBAL::param_fixed[ i ] ||
+              HFIT_GLOBAL::comm_backref.count( i ) )
          {
-            hplc_win->unified_ggaussian_params[ i ] = par[ HFIT_GLOBAL::param_pos[ i ] ];
+            hplc_win->unified_ggaussian_params[ i ] = par[ 
+                                                          HFIT_GLOBAL::comm_backref.count( i ) ?
+                                                          HFIT_GLOBAL::comm_backref[ i ] :
+                                                          HFIT_GLOBAL::param_pos[ i ] 
+                                                           ];
          }
       }
       double new_rmsd = hplc_win->ggaussian_rmsd();
@@ -2591,7 +2699,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
       gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
       if ( update_hplc )
       {
-         cout << QString( "new rmsd: %1" ).arg( new_rmsd, 0, 'g', 5 );
+         cout << QString( "new rmsd: %1\n" ).arg( new_rmsd, 0, 'g', 5 );
          hplc_win->lbl_gauss_fit->setText( QString( "%1" ).arg( new_rmsd, 0, 'g', 5 ) );
       }
    } else {
@@ -2645,9 +2753,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_sd()
    {
       for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
       {
-         if ( !HFIT_GLOBAL::param_fixed[ i ] )
+         if ( !HFIT_GLOBAL::param_fixed[ i ] ||
+              HFIT_GLOBAL::comm_backref.count( i ) )
          {
-            hplc_win->gaussians[ i ] = v->d[ HFIT_GLOBAL::param_pos[ i ] ];
+            hplc_win->gaussians[ i ] = v->d[
+                                            HFIT_GLOBAL::comm_backref.count( i ) ?
+                                            HFIT_GLOBAL::comm_backref[ i ] :
+                                            HFIT_GLOBAL::param_pos[ i ]  
+                                             ];
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );
@@ -2706,9 +2819,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_ih()
    {
       for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
       {
-         if ( !HFIT_GLOBAL::param_fixed[ i ] )
+         if ( !HFIT_GLOBAL::param_fixed[ i ] ||
+              HFIT_GLOBAL::comm_backref.count( i ) )
          {
-            hplc_win->gaussians[ i ] = v->d[ HFIT_GLOBAL::param_pos[ i ] ];
+            hplc_win->gaussians[ i ] = v->d[
+                                            HFIT_GLOBAL::comm_backref.count( i ) ?
+                                            HFIT_GLOBAL::comm_backref[ i ] :
+                                            HFIT_GLOBAL::param_pos[ i ]  
+                                             ];
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );
@@ -2768,9 +2886,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::gsm_cg()
    {
       for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
       {
-         if ( !HFIT_GLOBAL::param_fixed[ i ] )
+         if ( !HFIT_GLOBAL::param_fixed[ i ] ||
+              HFIT_GLOBAL::comm_backref.count( i ) )
          {
-            hplc_win->gaussians[ i ] = v->d[ HFIT_GLOBAL::param_pos[ i ] ];
+            hplc_win->gaussians[ i ] = v->d[
+                                            HFIT_GLOBAL::comm_backref.count( i ) ?
+                                            HFIT_GLOBAL::comm_backref[ i ] :
+                                            HFIT_GLOBAL::param_pos[ i ]
+                                             ];
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );
@@ -2824,9 +2947,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::ga()
 
       for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
       {
-         if ( !HFIT_GLOBAL::param_fixed[ i ] )
+         if ( !HFIT_GLOBAL::param_fixed[ i ] ||
+              HFIT_GLOBAL::comm_backref.count( i ) )
          {
-            hplc_win->gaussians[ i ] = par[ HFIT_GLOBAL::param_pos[ i ] ];
+            hplc_win->gaussians[ i ] = par[ 
+                                            HFIT_GLOBAL::comm_backref.count( i ) ?
+                                            HFIT_GLOBAL::comm_backref[ i ] :
+                                            HFIT_GLOBAL::param_pos[ i ]  
+                                             ];
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );
@@ -2953,9 +3081,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::grid()
 
       for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
       {
-         if ( !HFIT_GLOBAL::param_fixed[ i ] )
+         if ( !HFIT_GLOBAL::param_fixed[ i ] ||
+              HFIT_GLOBAL::comm_backref.count( i ) )
          {
-            hplc_win->gaussians[ i ] = par[ HFIT_GLOBAL::param_pos[ i ] ];
+            hplc_win->gaussians[ i ] = par[ 
+                                            HFIT_GLOBAL::comm_backref.count( i ) ?
+                                            HFIT_GLOBAL::comm_backref[ i ] :
+                                            HFIT_GLOBAL::param_pos[ i ]  
+                                             ];
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );

@@ -6109,14 +6109,29 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
             }
          }
       } else {
-         if ( cb_fix_width->isChecked() )
+         if ( current_mode == MODE_GGAUSSIAN )
          {
-            unified_ggaussian_params[ 0 + 2 * gaussian_pos ] = text.toDouble();
-
-            if ( plotted_hlines.size() > gaussian_pos )
+            unsigned int common_size   = 1; // center always fixed 
+   
+            if ( cb_fix_width->isChecked() )
             {
-               double center = unified_ggaussian_params[ 2 * gaussian_pos + 0 ];
-               double width  = unified_ggaussian_params[ 2 * gaussian_pos + 1 ];
+               common_size++;
+            }
+            if ( dist1_active && cb_fix_dist1->isChecked() )
+            {
+               common_size++;
+            }
+            if ( dist2_active && cb_fix_dist2->isChecked() )
+            {
+               common_size++;
+            }
+
+            unified_ggaussian_params[ 0 + common_size * gaussian_pos ] = text.toDouble();
+
+            if ( cb_fix_width->isChecked() && plotted_hlines.size() > gaussian_pos )
+            {
+               double center = unified_ggaussian_params[ common_size * gaussian_pos + 0 ];
+               double width  = unified_ggaussian_params[ common_size * gaussian_pos + 1 ];
                double fwhm   = 2.354820045e0 * width;
 
                vector < double > x( 2 );
@@ -6133,14 +6148,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
                y[ 0 ] = use_max_height / 3e0 + ( use_max_height * (double) gaussian_pos / 100e0 );
                y[ 1 ] = y[ 0 ];
 
-               cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
-                  .arg( center )
-                  .arg( width )
-                  .arg( x[0] )
-                  .arg( y[0] )
-                  .arg( x[1] )
-                  .arg( y[1] )
-                  ;
+               // cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
+               //    .arg( center )
+               //    .arg( width )
+               //    .arg( x[0] )
+               //    .arg( y[0] )
+               //    .arg( x[1] )
+               //    .arg( y[1] )
+               //    ;
 #ifndef QT4
                plot_dist->setCurveData( plotted_hlines[ gaussian_pos ],
                                         (double *)&x[ 0 ],
@@ -6155,8 +6170,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
                                                        );
 #endif
             }
-         } else {
-            unified_ggaussian_params[ gaussian_pos ] = text.toDouble();
          }
       }
       
@@ -6191,15 +6204,31 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_text( const QString & text )
       {
          gaussians[ 2 + gaussian_type_size * gaussian_pos ] = text.toDouble();
       } else {
-         if ( current_mode == MODE_GGAUSSIAN && 
+         if ( current_mode == MODE_GGAUSSIAN &&
               cb_fix_width->isChecked() )
          {
-            unified_ggaussian_params[ 1 + 2 * gaussian_pos ] = text.toDouble();
+
+            unsigned int common_size   = 1; // center always fixed 
+   
+            if ( cb_fix_width->isChecked() )
+            {
+               common_size++;
+            }
+            if ( dist1_active && cb_fix_dist1->isChecked() )
+            {
+               common_size++;
+            }
+            if ( dist2_active && cb_fix_dist2->isChecked() )
+            {
+               common_size++;
+            }
+
+            unified_ggaussian_params[ common_size * gaussian_pos + 1 ] = text.toDouble();
 
             if ( plotted_hlines.size() > gaussian_pos )
             {
-               double center = unified_ggaussian_params[ 2 * gaussian_pos + 0 ];
-               double width  = unified_ggaussian_params[ 2 * gaussian_pos + 1 ];
+               double center = unified_ggaussian_params[ common_size * gaussian_pos + 0 ];
+               double width  = unified_ggaussian_params[ common_size * gaussian_pos + 1 ];
                double fwhm   = 2.354820045e0 * width;
 
                double use_max_height = gauss_max_height;
@@ -6216,14 +6245,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_text( const QString & text )
                y[ 0 ] = use_max_height / 3e0 + ( use_max_height * (double) gaussian_pos / 100e0 );
                y[ 1 ] = y[ 0 ];
 
-               cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
-                  .arg( center )
-                  .arg( width )
-                  .arg( x[0] )
-                  .arg( y[0] )
-                  .arg( x[1] )
-                  .arg( y[1] )
-                  ;
+               // cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
+               //    .arg( center )
+               //    .arg( width )
+               //    .arg( x[0] )
+               //    .arg( y[0] )
+               //    .arg( x[1] )
+               //    .arg( y[1] )
+               //    ;
 #ifndef QT4
                plot_dist->setCurveData( plotted_hlines[ gaussian_pos ],
                                         (double *)&x[ 0 ],
@@ -6282,18 +6311,42 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist1_text( const QString & text )
 {
    if ( gaussians.size() )
    {
-      gaussians[ 3 + gaussian_type_size * gaussian_pos ] = text.toDouble();
-      if ( qwtw_wheel->value() != text.toDouble() )
+      if ( current_mode == MODE_GAUSSIAN )
       {
-         disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-         qwtw_wheel->setValue( text.toDouble() );
-         connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-      }
-      gauss_replot_gaussian();
-      if ( !suppress_replot )
-      {
-         plot_dist->replot();
-      }
+         gaussians[ 3 + gaussian_type_size * gaussian_pos ] = text.toDouble();
+         if ( qwtw_wheel->value() != text.toDouble() )
+         {
+            disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+            qwtw_wheel->setValue( text.toDouble() );
+            connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+         }
+         gauss_replot_gaussian();
+         if ( !suppress_replot )
+         {
+            plot_dist->replot();
+         }
+      } else {
+         if ( current_mode == MODE_GGAUSSIAN )
+         {
+            unsigned int common_size   = 1; // center always fixed 
+            unsigned int ofs           = 1; // starts with center
+   
+            if ( cb_fix_width->isChecked() )
+            {
+               common_size++;
+               ofs++;
+            }
+            if ( dist1_active && cb_fix_dist1->isChecked() )
+            {
+               common_size++;
+            }
+            if ( dist2_active && cb_fix_dist2->isChecked() )
+            {
+               common_size++;
+            }
+            unified_ggaussian_params[ ofs + common_size * gaussian_pos ] = text.toDouble();
+         }
+      }         
    }
 }
 
@@ -6301,18 +6354,43 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist2_text( const QString & text )
 {
    if ( gaussians.size() )
    {
-      gaussians[ 4 + gaussian_type_size * gaussian_pos ] = text.toDouble();
-      if ( qwtw_wheel->value() != text.toDouble() )
+      if ( current_mode == MODE_GAUSSIAN )
       {
-         disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-         qwtw_wheel->setValue( text.toDouble() );
-         connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-      }
-      gauss_replot_gaussian();
-      if ( !suppress_replot )
-      {
-         plot_dist->replot();
-      }
+         gaussians[ 4 + gaussian_type_size * gaussian_pos ] = text.toDouble();
+         if ( qwtw_wheel->value() != text.toDouble() )
+         {
+            disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+            qwtw_wheel->setValue( text.toDouble() );
+            connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+         }
+         gauss_replot_gaussian();
+         if ( !suppress_replot )
+         {
+            plot_dist->replot();
+         }
+      } else {
+         if ( current_mode == MODE_GGAUSSIAN )
+         {
+            unsigned int common_size   = 1; // center always fixed 
+            unsigned int ofs           = 1; // starts with center
+   
+            if ( cb_fix_width->isChecked() )
+            {
+               common_size++;
+               ofs++;
+            }
+            if ( dist1_active && cb_fix_dist1->isChecked() )
+            {
+               common_size++;
+               ofs++;
+            }
+            if ( dist2_active && cb_fix_dist2->isChecked() )
+            {
+               common_size++;
+            }
+            unified_ggaussian_params[ ofs + common_size * gaussian_pos ] = text.toDouble();
+         }
+      }         
    }
 }
 
@@ -6428,14 +6506,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_hline( double center, double width )
    y[ 0 ] = use_max_height / 3e0 + ( use_max_height * (double) plotted_hlines.size() / 100e0 );
    y[ 1 ] = y[ 0 ];
 
-   cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
-      .arg( center )
-      .arg( width )
-      .arg( x[0] )
-      .arg( y[0] )
-      .arg( x[1] )
-      .arg( y[1] )
-      ;
+   // cout << QString( "add_hline %1 %2 (%3,%4) (%5,%6)\n" )
+   //    .arg( center )
+   //    .arg( width )
+   //    .arg( x[0] )
+   //    .arg( y[0] )
+   //    .arg( x[1] )
+   //    .arg( y[1] )
+   //    ;
 
 #ifndef QT4
    long curve;
