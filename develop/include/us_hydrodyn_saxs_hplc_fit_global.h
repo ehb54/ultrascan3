@@ -191,6 +191,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
    private slots:
 
       void update_enables();
+      void update_common();
 
       void restore();
       void undo();
@@ -223,6 +224,8 @@ namespace HFIT_GLOBAL
    extern vector < bool         > param_fixed;    
    extern vector < double       > param_min;      // minimum values for variable params
    extern vector < double       > param_max;      // maximum values for variable params
+
+   extern map < unsigned int, unsigned int > comm_backref; // back reference to variable param position of 1st usage
 
    extern bool                    use_errors;
 

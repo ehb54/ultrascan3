@@ -42,6 +42,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
    public:
       US_Hydrodyn_Saxs_Hplc_Fit(
                                 US_Hydrodyn_Saxs_Hplc *hplc_win,
+                                bool set_comm_dist = true,
                                 QWidget *p = 0, 
                                 const char *name = 0
                                 );
@@ -202,9 +203,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       bool          dist1_active;
       bool          dist2_active;
 
+      bool          set_comm_dist;
+
    private slots:
 
       void update_enables();
+      void update_common();
 
       void restore();
       void undo();
@@ -243,6 +247,8 @@ namespace HFIT
    extern vector < bool         > param_fixed;    
    extern vector < double       > param_min;      // minimum values for variable params
    extern vector < double       > param_max;      // maximum values for variable params
+
+   extern map < unsigned int, unsigned int > comm_backref; // back reference to variable param position of 1st usage
 
    extern bool                    use_errors;
 

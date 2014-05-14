@@ -4902,6 +4902,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
       {
          if ( current_mode == MODE_GGAUSSIAN )
          {
+            // qDebug( QString( "gg adjust_wheel value %1" ).arg( pos ) );
             lbl_gauss_fit ->setText( "?" );
             plot_errors      ->clear();
             if ( !suppress_replot )

@@ -5671,6 +5671,8 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
    } else {
       // global gaussian mode
       {
+         // qDebug( QString( "pos ggm common_size %1 gauss pos %2" ).arg( common_size ).arg( gaussian_pos ) );
+         // US_Vector::printvector( "unified_ggaussian_params", unified_ggaussian_params );
          unsigned int ofs = 0;
 
          lbl_gauss_pos      ->setText( QString( " %1 of %2 " ).arg( gaussian_pos + 1 ).arg( gaussians.size() / gaussian_type_size ) );
@@ -5704,26 +5706,31 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
             ofs++;
          }
 
-         if ( le_gauss_pos->hasFocus() ||
-              !( 
-                ( cb_fix_width->isChecked() && le_gauss_pos_width ->hasFocus() ) ||
-                ( dist1_active && cb_fix_dist1->isChecked() && le_gauss_pos_dist1 ->hasFocus() ) ||
-                ( dist2_active && cb_fix_dist2->isChecked() && le_gauss_pos_dist2 ->hasFocus() ) ||
-                le_gauss_fit_start ->hasFocus() ||
-                le_gauss_fit_end   ->hasFocus() ) )
+         if ( le_gauss_pos->hasFocus() )
+// ||
+//               !( 
+//                 ( cb_fix_width->isChecked() && le_gauss_pos_width ->hasFocus() ) ||
+//                 ( dist1_active && cb_fix_dist1->isChecked() && le_gauss_pos_dist1 ->hasFocus() ) ||
+//                 ( dist2_active && cb_fix_dist2->isChecked() && le_gauss_pos_dist2 ->hasFocus() ) ||
+//                 le_gauss_fit_start ->hasFocus() ||
+//                 le_gauss_fit_end   ->hasFocus() ) )
          {
+            // qDebug( QString( "pos ggm update wheel gauss pos to %1" ).arg( le_gauss_pos->text() ) );
             qwtw_wheel   ->setValue( le_gauss_pos->text().toDouble() );
          }
          if ( cb_fix_width->isChecked() && le_gauss_pos_width->hasFocus() )
          {
+            // qDebug( "pos ggm update wheel gauss width" );
             qwtw_wheel   ->setValue( le_gauss_pos_width->text().toDouble() );
          }
          if ( dist1_active && cb_fix_dist1->isChecked() && le_gauss_pos_dist1->hasFocus() )
          {
+            // qDebug( "pos ggm update wheel gauss dist1" );
             qwtw_wheel   ->setValue( le_gauss_pos_dist1->text().toDouble() );
          }
          if ( dist2_active && cb_fix_dist2->isChecked() && le_gauss_pos_dist2->hasFocus() )
          {
+            // qDebug( "pos ggm update wheel gauss dist2" );
             qwtw_wheel   ->setValue( le_gauss_pos_dist2->text().toDouble() );
          }
 
@@ -6222,6 +6229,8 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_text( const QString & text )
             {
                common_size++;
             }
+
+            // qDebug( QString( "gauss_pos_width_text common size %1 gaussian_pos %2" ).arg( common_size ).arg( gaussian_pos ) );
 
             unified_ggaussian_params[ common_size * gaussian_pos + 1 ] = text.toDouble();
 
@@ -7061,6 +7070,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
    US_Hydrodyn_Saxs_Hplc_Fit *shf = 
       new US_Hydrodyn_Saxs_Hplc_Fit(
                                     this,
+                                    true,
                                     this );
    US_Hydrodyn::fixWinButtons( shf );
    shf->exec();
@@ -7855,6 +7865,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_rmsd()
    if ( ggauss_recompute() )
    {
       lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
+      pb_ggauss_rmsd->setEnabled( false );
    }
 }
 

@@ -1905,10 +1905,10 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
       }
    }
 
-   //    US_Vector::printvector( "q_start", unified_ggaussian_q_start );
-   //    US_Vector::printvector( "q_end"  , unified_ggaussian_q_end   );
+   // US_Vector::printvector( "q_start", unified_ggaussian_q_start );
+   // US_Vector::printvector( "q_end"  , unified_ggaussian_q_end   );
 
-   pb_ggauss_rmsd->setEnabled( false );
+   // pb_ggauss_rmsd->setEnabled( false );
    return true;
 }
 
@@ -2054,7 +2054,9 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files )
    US_Hydrodyn_Saxs_Hplc_Fit *hplc_fit_window = 
       new US_Hydrodyn_Saxs_Hplc_Fit(
                                     this,
-                                    this );
+                                    false,
+                                    this
+                                    );
    US_Hydrodyn::fixWinButtons( hplc_fit_window );
 
    hplc_fit_window->update_hplc = false;

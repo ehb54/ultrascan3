@@ -1742,7 +1742,12 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMG( our_vector *v )
 
       if ( HFIT::param_fixed[ i ] )
       {
-         dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         if ( HFIT::comm_backref.count( i ) )
+         {
+            dist1 = v->d              [ HFIT::comm_backref[ i ] ];
+         } else {
+            dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         }               
       } else {
          dist1 = v->d         [ HFIT::param_pos[ i ] ];
          if ( dist1 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
@@ -1894,7 +1899,12 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_GMG( our_vector *v )
 
       if ( HFIT::param_fixed[ i ] )
       {
-         dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         if ( HFIT::comm_backref.count( i ) )
+         {
+            dist1 = v->d              [ HFIT::comm_backref[ i ] ];
+         } else {
+            dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         }               
       } else {
          dist1 = v->d         [ HFIT::param_pos[ i ] ];
          if ( dist1 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
@@ -2016,7 +2026,12 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
 
       if ( HFIT::param_fixed[ i ] )
       {
-         dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         if ( HFIT::comm_backref.count( i ) )
+         {
+            dist1 = v->d              [ HFIT::comm_backref[ i ] ];
+         } else {
+            dist1 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         }               
       } else {
          dist1 = v->d         [ HFIT::param_pos[ i ] ];
          if ( dist1 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||
@@ -2030,7 +2045,12 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
 
       if ( HFIT::param_fixed[ i ] )
       {
-         dist2 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         if ( HFIT::comm_backref.count( i ) )
+         {
+            dist2 = v->d              [ HFIT::comm_backref[ i ] ];
+         } else {
+            dist2 = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         }               
       } else {
          dist2 = v->d         [ HFIT::param_pos[ i ] ];
          if ( dist2 < HFIT::param_min[ HFIT::param_pos[ i ] ] ||

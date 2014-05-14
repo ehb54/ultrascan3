@@ -146,7 +146,8 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
       }
    }
 
-   update_enables();
+   update_common();
+   // update_enables();
 }
 
 US_Hydrodyn_Saxs_Hplc_Fit_Global::~US_Hydrodyn_Saxs_Hplc_Fit_Global()
@@ -390,7 +391,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    cb_comm_dist1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_comm_dist1->setPalette( PALET_NORMAL );
    AUTFBACK( cb_comm_dist1 );
-   connect(cb_comm_dist1, SIGNAL( clicked() ), SLOT( update_enables() ) );
+   connect(cb_comm_dist1, SIGNAL( clicked() ), SLOT( update_common() ) );
 
    cb_comm_dist2 = new QCheckBox(this);
    cb_comm_dist2->setText(tr(" Common distortion 2" ) );
@@ -399,7 +400,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    cb_comm_dist2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_comm_dist2->setPalette( PALET_NORMAL );
    AUTFBACK( cb_comm_dist2 );
-   connect(cb_comm_dist2, SIGNAL( clicked() ), SLOT( update_enables() ) );
+   connect(cb_comm_dist2, SIGNAL( clicked() ), SLOT( update_common() ) );
 
    lbl_fix_curves = new QLabel(tr(" Fix Gaussians: "), this);
    lbl_fix_curves->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
@@ -719,6 +720,40 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::closeEvent(QCloseEvent *e)
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_common()
+{
+   if ( !setup_run() )
+   {
+      update_enables();
+      return;
+   }
+
+   vector < double > save_unified_ggaussians = hplc_win->unified_ggaussian_params;
+
+   for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
+   {
+      if ( !HFIT_GLOBAL::param_fixed[ i ] ||
+           HFIT_GLOBAL::comm_backref.count( i ) )
+      {
+         hplc_win->unified_ggaussian_params[ i ] = HFIT_GLOBAL::init_params[ 
+                                                                            HFIT_GLOBAL::comm_backref.count( i ) ?
+                                                                            HFIT_GLOBAL::comm_backref[ i ] :
+                                                                            HFIT_GLOBAL::param_pos[ i ] 
+                                                                             ];
+      }
+   }
+   if ( save_unified_ggaussians != hplc_win->unified_ggaussian_params )
+   {
+      hplc_win->lbl_gauss_fit->setText( "?" );
+      hplc_win->pb_ggauss_rmsd->setEnabled( true );
+      gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
+      hplc_win->gauss_init_markers();
+      hplc_win->update_gauss_pos();
+   }
+   // hplc_win->pb_ggauss_rmsd->setEnabled( true );
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_enables()
@@ -2562,7 +2597,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
    }
    */
 
-   HFIT_GLOBAL::list_params();
+   // HFIT_GLOBAL::list_params();
 
    // US_Vector::printvector( "is_common", is_common );
 
@@ -2576,6 +2611,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 {
+   update_common();
    running = true;
    update_enables();
    // setup_run();
@@ -2611,41 +2647,69 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
       }
    }
 
+   /* maybe no longer need
+   vector < double > save_unified_ggaussians = hplc_win->unified_ggaussian_params;
+
+   for ( unsigned int i = 0; i < HFIT_GLOBAL::param_fixed.size(); i++ )
+   {
+      if ( !HFIT_GLOBAL::param_fixed[ i ] ||
+           HFIT_GLOBAL::comm_backref.count( i ) )
+      {
+         hplc_win->unified_ggaussian_params[ i ] = HFIT_GLOBAL::init_params[ 
+                                                                            HFIT_GLOBAL::comm_backref.count( i ) ?
+                                                                            HFIT_GLOBAL::comm_backref[ i ] :
+                                                                            HFIT_GLOBAL::param_pos[ i ] 
+                                                                             ];
+      }
+   }
+
+   hplc_win->gauss_init_markers();
+   hplc_win->update_gauss_pos();
+   */
+
    double org_rmsd = hplc_win->ggaussian_rmsd();
 
    vector < double > gsum  = hplc_win->compute_ggaussian_gaussian_sum();
    vector < double > gsumf( t.size() );
+
 
    for ( unsigned int i = 0; i < ( unsigned int ) t.size(); i++ )
    {
       gsumf[ i ] = (*HFIT_GLOBAL::compute_gaussian_f)( t[ i ], &HFIT_GLOBAL::init_params[ 0 ] );
    }
 
-   if ( gsum != gsumf )
+   /* hplc_win->unified_ggaussian_params = save_unified_ggaussians; */
+
+   if ( use_errors )
    {
-      bool tol_ok = true;
-#define TOL 1e-5
-      for ( unsigned int i = 0; i < (unsigned int)gsum.size(); ++i )
-      {
-         if ( fabs( gsum[ i ] - gsumf[ i ] ) > TOL )
-         {
-            tol_ok = false;
-            break;
-         }
-      }
-      if ( tol_ok )
-      {
-         cout << QString( "NOTICE: gsums within tolernace %1\n" ).arg( TOL );
-      } else {
-         US_Vector::printvector( "gsum", gsum );
-         US_Vector::printvector( "gsumf", gsumf );
-         cout << "WARNING: gsums don't match\n";
-         cout << QString( "WARNING: gsums OUTSIDE tolernace %1\n" ).arg( TOL );
-      }
-#undef TOL
+      cout << "gsums check skipped when errors on" << endl;
    } else {
-      // US_Vector::printvector( "gsum", gsum );
-      cout << "gsums match\n";
+      if ( gsum != gsumf )
+      {
+         bool tol_ok = true;
+#define TOL 1e-5
+         for ( unsigned int i = 0; i < (unsigned int)gsum.size(); ++i )
+         {
+            if ( fabs( gsum[ i ] - gsumf[ i ] ) > TOL )
+            {
+               tol_ok = false;
+               break;
+            }
+         }
+         if ( tol_ok )
+         {
+            cout << QString( "NOTICE: gsums within tolernace %1\n" ).arg( TOL );
+         } else {
+            // US_Vector::printvector( "gsum", gsum );
+            // US_Vector::printvector( "gsumf", gsumf );
+            cout << "WARNING: gsums don't match\n";
+            cout << QString( "WARNING: gsums OUTSIDE tolernace %1\n" ).arg( TOL );
+         }
+#undef TOL
+      } else {
+         // US_Vector::printvector( "gsum", gsum );
+         cout << "gsums match\n";
+      }
    }
 
    // hplc_win->add_ggaussian_curve( "lm_start", gsumf );
@@ -2701,16 +2765,17 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
       {
          cout << QString( "new rmsd: %1\n" ).arg( new_rmsd, 0, 'g', 5 );
          hplc_win->lbl_gauss_fit->setText( QString( "%1" ).arg( new_rmsd, 0, 'g', 5 ) );
+         hplc_win->pb_ggauss_rmsd->setEnabled( false );
       }
    } else {
       cout << "no improvement, reverting to original values\n";
    }
       
-   if ( update_hplc )
-   {
-      hplc_win->gauss_init_markers();
-      hplc_win->update_gauss_pos();
-   }
+   // if ( update_hplc )
+   // {
+   hplc_win->gauss_init_markers();
+   hplc_win->update_gauss_pos();
+   // }
    running = false;
    update_enables();
 }
