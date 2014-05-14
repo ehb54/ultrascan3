@@ -46,9 +46,9 @@ QTLIBS=" \
 QTBINS="assistant"
 
 # Determine if this is 32-bit or 64-bit
-TEMP=`which gcc`
-TEMP=`file ${TEMP} | egrep -ci '64-bit|x86-64'`
-if [ ${TEMP} -ne 0 ]; then
+IS64=`which gcc`
+IS64=`file ${IS64} | egrep -ci '64-bit|x86-64'`
+if [ ${IS64} -ne 0 ]; then
   PKGNAME=us3-Linux64-${VERS}.${REV}-s${SREV}
 else
   PKGNAME=us3-Linux32-${VERS}.${REV}-s${SREV}
@@ -165,6 +165,12 @@ strip ${PKGDIR}/lib/lib*
 cd ${PKGDIR}
 find ./ -name '.svn' | xargs rm -Rf
 ls -lF
+
+# If 64-bit, create bin64, lib64 links
+if [ ${IS64} -ne 0 ]; then
+  ln -s bin bin64
+  ln -s lib lib64
+fi
 
 # Create the package archive and display it
 cd ${DSTDIR}
