@@ -67,6 +67,8 @@ class US_Edit : public US_Widgets
       double             invert;
       double             plateau;
 
+      QChar              chlamb;
+
       QList< int >       sd_offs;        // Speed data offsets, ea. triple
       QList< int >       sd_knts;        // Speed data counts, ea. triple
       QList< int >       includes;       // Scan includes, current triple
@@ -186,6 +188,7 @@ class US_Edit : public US_Widgets
       bool               isMwl;
       bool               xaxis_radius;
       bool               lsel_range;
+      bool               lrng_bycell;
 
       int                dlambda;
       int                slambda;
@@ -194,6 +197,7 @@ class US_Edit : public US_Widgets
       int                plotndx;
       int                nwaveln;
       int                nwavelo;
+      int                maxwavl;
       int                nrpoint;
       int                ncelchn;
       int                ntriple;
@@ -205,6 +209,9 @@ class US_Edit : public US_Widgets
       QVector< double >  expd_radii;
       QVector< int >     expi_wvlns;
       QVector< int >     rawi_wvlns;
+      QVector< int >     toti_wvlns;
+
+      QVector< QVector< int > >     wavelns_i;
 
       QVector< QVector< double > >  rdata;
 
@@ -293,6 +300,7 @@ class US_Edit : public US_Widgets
       int  index_data        ( int = -1 );
       int  like_edit_files   ( QString, QStringList&, US_DB2* );
       int  apply_edits       ( US_DataIO::EditValues parameters );
+      int  lambdas_by_cell   ( int = -1 );
                              
       void reset             ( void );
       void reset_triple      ( void );
