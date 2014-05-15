@@ -51,6 +51,7 @@ class US_GUI_EXTERN US_LoadAUC : public US_WidgetsDialog
             QString filename;        // File name
             QString rawGUID;         // Raw data global identifier string
             QString date;            // Date/time last updated
+            QString dcheck;          // Data checksum+size
             int     DB_id;           // Database ID number
             int     tripknt;         // Count of triples per run
             int     tripndx;         // Index of triple in run

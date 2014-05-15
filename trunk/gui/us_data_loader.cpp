@@ -282,13 +282,14 @@ bool US_DataLoader::load_edit( void )
       QStringList query;
       QString  prvfname = "";
       QString  efn      = "";
-      QString  tempdir  = US_Settings::tmpDir() + "/";
-      QDir dir;
-      if ( ! dir.exists( tempdir ) )
-         dir.mkpath( tempdir );
+      bool     dnld_auc = true;
+      bool     dnld_edt = true;
+
       // Read first selection from DB, then generate a map of AUCfile::idAUC
       ddesc             = datamap[ dlabels[ indexes[ 0 ] ] ];
       QString  recID    = QString::number( ddesc.DB_id );
+      QString  runID    = ddesc.runID;
+      QString  uresdir  = US_Settings::resultDir() + "/" + runID + "/";
       QString message = tr( "Browsing AUC data..." );
       emit progress( message );
       qApp->processEvents();
@@ -322,35 +323,45 @@ bool US_DataLoader::load_edit( void )
          QString  aucfn    = ddesc.runID + "."
                              + filename.section( ".", -5, -3 )
                              + "." + clambda + ".auc";
-         QString  afn      = tempdir + aucfn;
+         QString  afn      = uresdir + aucfn;
          int      idAUC    = ddesc.auc_id;
+         efn               = uresdir + dscfname;
 
          QString message = tr( "Loading triple " ) + triple;
          emit progress( message );
          qApp->processEvents();
 
-         db.readBlobFromDB( afn, "download_aucData", idAUC );
-         qApp->processEvents();
+
+         if ( QFile( afn ).exists() )
+         {  // AUC file exists, so only download if checksum mismatch
+            QString  fcheck   = US_Util::md5sum_file( afn );
+            dnld_auc          = ( fcheck != ddesc.acheck );
+         }
+qDebug() << "LdEd: dnld_auc" << dnld_auc << "afn" << afn;
+
+         if ( dnld_auc )
+            db.readBlobFromDB( afn, "download_aucData", idAUC );
 
          if ( dscfname != prvfname )
          {
-            efn      = tempdir + prvfname;
-            QFile( efn ).remove();
+            efn      = uresdir + dscfname;
             prvfname = dscfname;
-            efn      = tempdir + dscfname;
-            db.readBlobFromDB( efn, "download_editData", idRec );
-            qApp->processEvents();
+            dnld_edt = true;
+
+            if ( QFile( efn ).exists() )
+            {  // Edit XML file exists, so only download if checksum mismatch
+               QString  fcheck   = US_Util::md5sum_file( efn );
+               dnld_edt          = ( fcheck != ddesc.echeck );
+            }
+
+            if ( dnld_edt )
+               db.readBlobFromDB( efn, "download_editData", idRec );
          }
 
-         US_DataIO::loadData( tempdir, filename, editedData, rawData );
+         qApp->processEvents();
 
-         QFile( afn ).remove();
+         US_DataIO::loadData( uresdir, filename, editedData, rawData );
       }
-
-      QFile efile( efn );
-
-      if ( efile.exists() )
-         efile.remove();
    }
 
    QApplication::restoreOverrideCursor();
@@ -651,8 +662,11 @@ void US_DataLoader::scan_dbase_edit()
       QString  rLabel   = db.value( 1 ).toString();
       QString  aFname   = db.value( 2 ).toString();
       QString  expID    = db.value( 3 ).toString();
+      QString  cksum    = db.value( 6 ).toString();
+      QString  recsize  = db.value( 7 ).toString();
       QString  aucGUID  = db.value( 9 ).toString();
-      aucIDs[ aFname ]  = aucID + "^" + aucGUID + "^" + expID + "^" + rLabel;
+      aucIDs[ aFname ]  = aucID + "^" + aucGUID + "^" + expID + "^" + rLabel
+                                + "^" + cksum + " " + recsize;
    }
 
 //qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -675,6 +689,8 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       QString parID    = db.value( 3 ).toString();
       QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
                          .toDateTime().toString( Qt::ISODate ), true );
+      QString cksum    = db.value( 6 ).toString();
+      QString recsize  = db.value( 7 ).toString();
       QString recGUID  = db.value( 9 ).toString();
       edtIDs << recID;
       editpars << descrip;
@@ -682,6 +698,7 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       editpars << parID;
       editpars << date;
       editpars << recGUID;
+      editpars << cksum + " " + recsize;
    }
 
    // Now loop through the list of edit entries, building description records
@@ -697,6 +714,7 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       QString parID    = editpars[ kp++ ];
       QString date     = editpars[ kp++ ];
       QString recGUID  = editpars[ kp++ ];
+      QString echeck   = editpars[ kp++ ];
 
       QString filebase = filename.section( "/", -1, -1 );
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
@@ -711,6 +729,7 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       QString aucGUID  = aucIDs[ aucfname ].section( "^", 1, 1 );
       int     idExp    = aucIDs[ aucfname ].section( "^", 2, 2 ).toInt();
       QString elabel   = aucIDs[ aucfname ].section( "^", 3, 3 );
+      QString acheck   = aucIDs[ aucfname ].section( "^", 4, 4 );
       if ( isMwl )
       {
          idAUC            = 0;
@@ -736,6 +755,8 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       ddesc.exp_id     = idExp;
       ddesc.auc_id     = idAUC;
       ddesc.date       = date;
+      ddesc.acheck     = acheck;
+      ddesc.echeck     = echeck;
       ddesc.tripknt    = 1;
       ddesc.tripndx    = 1;
       ddesc.editknt    = 1;
@@ -781,6 +802,7 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
          }
 
          filei.close();
+         filei.remove();
 
          QString otripID  = tripID;
          QString odescrip = descrip;
@@ -948,6 +970,7 @@ void US_DataLoader::scan_local_edit( void )
          ddesc.exp_id     = expID.toInt();
          ddesc.auc_id     = -1;
          ddesc.date       = date;
+         ddesc.acheck     = US_Util::md5sum_file( filename );
          ddesc.tripknt    = 1;
          ddesc.tripndx    = 1;
          ddesc.editknt    = 1;
