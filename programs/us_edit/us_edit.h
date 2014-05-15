@@ -184,6 +184,7 @@ class US_Edit : public US_Widgets
       QGridLayout*       lo_custom;
       QGridLayout*       lo_radius;
       QGridLayout*       lo_waveln;
+      QGridLayout*       lo_writemwl;
 
       bool               isMwl;
       bool               xaxis_radius;

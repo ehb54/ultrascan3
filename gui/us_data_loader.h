@@ -59,6 +59,8 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
          QString dataGUID;        // data Global Identifier
          QString aucGUID;         // AUC GUID (same as dataGUID for raw)
          QString date;            // date/time last updated
+         QString acheck;          // checksum + size of auc record
+         QString echeck;          // checksum + size of edit record
          QString elabel;          // Experiment (run) label
          int     DB_id;           // Edit database ID number
          int     exp_id;          // Experiment database ID number

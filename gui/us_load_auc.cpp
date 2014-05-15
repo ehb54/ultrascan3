@@ -454,6 +454,8 @@ int US_LoadAUC::scan_db()
       QString filename  = db.value( 2 ).toString();
       QString date      = db.value( 5 ).toString() + " UTC";
       QString rawGUID   = db.value( 9 ).toString();
+      QString cksum     = db.value( 6 ).toString();
+      QString recsize   = db.value( 7 ).toString();
       QString runID     = filename.section( ".",  0, -6 );
       QString tripID    = filename.section( ".", -4, -2 );
       QString lkey      = runID + "." + tripID;
@@ -463,7 +465,8 @@ int US_LoadAUC::scan_db()
                           filename + "^" +
                           rawGUID + "^" +
                           rawDataID + "^" +
-                          date;
+                          date + "^" +
+                          cksum + " " + recsize;
 
       runIDs << runID;    // Save each run
       infoDs << idata;    // Save concatenated description string
@@ -596,6 +599,7 @@ void US_LoadAUC::create_descs( QStringList& runIDs, QStringList& infoDs,
       QString rawGUID   = idata.section( "^", 4, 4 );
       QString rawDataID = idata.section( "^", 5, 5 );
       QString date      = idata.section( "^", 6, 6 );
+      QString dcheck    = idata.section( "^", 7, 7 );
       QString lkey      = runID + "." + tripID;
       tripndx           = ( runID == prunid ) ? ( tripndx + 1 ) : 1;
       prunid            = runID;
@@ -608,6 +612,7 @@ void US_LoadAUC::create_descs( QStringList& runIDs, QStringList& infoDs,
       ddesc.filename    = filename;
       ddesc.rawGUID     = rawGUID;
       ddesc.date        = date;
+      ddesc.dcheck      = dcheck;
       ddesc.DB_id       = rawDataID.toInt();
       ddesc.tripknt     = runIDs.count( runID );
       ddesc.tripndx     = tripndx;
@@ -632,8 +637,6 @@ void US_LoadAUC::create_descs( QStringList& runIDs, QStringList& infoDs,
 // Load the data from the database
 void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
 {
-   QStringList tempfiles;
-
    int     nerr  = 0;
    QString emsg;
    QString rdir  = US_Settings::resultDir();
@@ -666,36 +669,31 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
       QString  filename  = workingDir + "/" + filebase;
       QString  tempname  = tdir       + "/" + filebase;
       QString  triple    = ddesc.tripID.replace( ".", " / " );
+      QString  dcheck    = ddesc.dcheck;
+      bool     dload_auc = true;
+      int      stat      = 0;
 
-      // Compare the date-time stamps of DB and Local Disk records.
-      // If the local is newer than DB, download to a TMP directory.
-      // Otherwise, replace the local file with the dowloaded DB record.
-      QString  ddate     = ddesc.date;
-      QString  fdate     = US_Util::toUTCDatetimeText(
-                           QFileInfo( filename ).lastModified().toUTC()
-                           .toString( Qt::ISODate ), true );
-qDebug() << "LdDB: ii" << ii << "ddate" << ddate << "fdate" << fdate;
-qDebug() << "LdDB:   (ddate<fdate)" << (ddate<fdate);
-
-      if ( ddate < fdate )
-      {  // Download to TMP directory and record for later deletion
-         filename           = tempname;
-         tempfiles << filename;
-qDebug() << "LdDB:     filename==tempname" << filename;
+      if ( QFile( filename ).exists() )
+      {  // AUC file exists, do only download if checksum+size mismatch
+         QString  fcheck    = US_Util::md5sum_file( filename );
+         dload_auc          = ( fcheck != dcheck );
       }
 
       emit progress( tr( "Loading triple " ) + triple );
       qApp->processEvents();
 
-      // Download the DB record to a file
-      db.readBlobFromDB( filename, "download_aucData", idRaw );
-      int stat           = db.lastErrno();
-
-      if ( stat != US_DB2::OK )
+      // Download the DB record to a file (if need be)
+      if ( dload_auc )
       {
-         nerr++;
-         emsg += tr( "Error (%1) downloading to file %2\n" )
-                 .arg( stat ).arg( filebase );
+         db.readBlobFromDB( filename, "download_aucData", idRaw );
+         int stat           = db.lastErrno();
+
+         if ( stat != US_DB2::OK )
+         {
+            nerr++;
+            emsg += tr( "Error (%1) downloading to file %2\n" )
+                    .arg( stat ).arg( filebase );
+         }
       }
 
       // Read the raw record to memory
@@ -711,13 +709,6 @@ qDebug() << "LdDB:     filename==tempname" << filename;
       // Accumulate lists of data and triples
       rawList << rdata;
       triples << triple;
-   }
-
-   // Delete any temporary files that we have created
-   for ( int ii = 0; ii < tempfiles.count(); ii++ )
-   {
-      QFile::remove( tempfiles.at( ii ) );
-      qDebug() << "Removed:" << tempfiles.at( ii );
    }
 }
 
