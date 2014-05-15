@@ -59,11 +59,13 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
 
    QRegExp rx_q     ( "_q(\\d+_\\d+)" );
    QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
 
    vector < QString > q_string;
    vector < double  > q;
 
    bool         any_bl = false;
+   bool         any_bi = false;
 
    // get q 
 
@@ -111,6 +113,10 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
       if ( rx_bl.search( files[ i ] ) != -1 )
       {
          any_bl = true;
+      }
+      if ( rx_bi.search( files[ i ] ) != -1 )
+      {
+         any_bi = true;
       }
 
       if ( !f_qs.count( files[ i ] ) )
@@ -248,7 +254,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
       // build up an I(q)
 
       QString name = head + QString( "%1%2" )
-         .arg( any_bl ? "_bs" : "" )
+         .arg( (any_bl || any_bi) ? "_bs" : "" )
          .arg( pad_zeros( tv[ t ], (int) tv.size() ) )
          .replace( ".", "_" )
          ;
@@ -410,6 +416,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
    QRegExp rx_q     ( "_q(\\d+_\\d+)" );
    QRegExp rx_bl    ( "-bl(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
+   QRegExp rx_bi    ( "-bi(.\\d*_\\d+(|e.\\d+))-(.\\d*_\\d+(|e.\\d+))s" );
 
    vector < QString > q_string;
    vector < double  > q;
@@ -417,6 +424,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    vector < double  > bl_intercept;
 
    bool         any_bl = false;
+   bool         any_bi = false;
    unsigned int bl_count = 0;
 
    // get q and bl
@@ -474,6 +482,11 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          cout << QString( "bl for file %1 slope %2 intercept %3\n" ).arg( i ).arg( bl_slope.back(), 0, 'g', 8 ).arg( bl_intercept.back(), 0, 'g', 8 ).ascii();
          bl_count++;
          any_bl = true;
+      }
+
+      if ( rx_bl.search( files[ i ] ) != -1 )
+      {
+         any_bi = true;
       }
 
       if ( !f_qs.count( files[ i ] ) )
@@ -1068,7 +1081,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
          QString name = head + QString( "%1%2%3_pk%4%5_t%6" )
             .arg( save_gaussians  ? "_G" : "" )
-            .arg( any_bl   ? "_bs" : "" )
+            .arg( (any_bl || any_bi)   ? "_bs" : "" )
             .arg( bl_count ? "ba" : "" )
             .arg( g + 1 )
             .arg( normalize_by_conc ? 
@@ -1507,13 +1520,13 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       {
          if ( save_gaussians )
          {
-            add_plot( QString( "sumG%1_T%2" ).arg( any_bl ? "_bs" : "" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG, gse, false, false );
+            add_plot( QString( "sumG%1_T%2" ).arg( (any_bl || any_bi) ? "_bs" : "" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG, gse, false, false );
             if ( any_bl )
             {
                add_plot( QString( "sumG_bsba_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG_recon, gse, false, false );
             }
          } else {
-            add_plot( QString( "sumI%1_T%2" ).arg( any_bl ? "_bs" : "" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI, gse, false, false );
+            add_plot( QString( "sumI%1_T%2" ).arg( (any_bl || any_bi) ? "_bs" : "" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI, gse, false, false );
             if ( any_bl )
             {
                add_plot( QString( "sumI_bsba_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI_recon, gse, false, false );
@@ -1574,23 +1587,29 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    per_file_size = 0;
    is_common.clear();
    offset.clear();
+   describe_unified_common   = "";
+   describe_unified_per_file = "";
 
    // height:
    is_common.push_back( false           );  // height always variable
    offset   .push_back( per_file_size++ );  // first variable entry
+   describe_unified_per_file += "height ";
 
    // center
    is_common.push_back( true            );  // center always common
    offset   .push_back( common_size++   );  // first common entry
+   describe_unified_common += "center ";
 
    // width
    if ( cb_fix_width->isChecked() )
    {
       is_common.push_back( true );
       offset   .push_back( common_size++   );  // first common entry
+      describe_unified_common += "width ";
    } else {
       is_common.push_back( false );
       offset   .push_back( per_file_size++ );  // first variable entry
+      describe_unified_per_file += "width ";
    }
 
    if ( dist1_active )
@@ -1599,9 +1618,11 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
       {
          is_common.push_back( true );
          offset   .push_back( common_size++   );  // first common entry
+         describe_unified_common += "dist1 ";
       } else {
          is_common.push_back( false );
          offset   .push_back( per_file_size++ );  // first variable entry
+         describe_unified_per_file += "dist1 ";
       }
       if ( dist2_active )
       {
@@ -1609,9 +1630,11 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
          {
             is_common.push_back( true );
             offset   .push_back( common_size++   );  // first common entry
+            describe_unified_common += "dist2 ";
          } else {
             is_common.push_back( false );
             offset   .push_back( per_file_size++ );  // first variable entry
+            describe_unified_per_file += "dist2 ";
          }
       }
    }

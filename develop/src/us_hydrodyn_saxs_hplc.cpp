@@ -74,10 +74,10 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear" ] = "false";
    }
-   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_integral" ) )
-   {
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] = "true";
-   }
+   //   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_integral" ) )
+   //   {
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] = "true";
+   //   }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_save" ) )
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save" ] = "false";

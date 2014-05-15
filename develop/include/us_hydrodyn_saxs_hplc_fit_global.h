@@ -16,6 +16,7 @@
 #include <qprinter.h>
 #include <q3table.h>
 //Added by qt3to4:
+#include <Q3HBoxLayout>
 #include <QCloseEvent>
 
 //standard C and C++ defs:
@@ -112,6 +113,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       QPushButton   *pb_ga;
       QPushButton   *pb_grid;
 
+      QCheckBox     *cb_test_mode;
+      QLabel        *lbl_test_info;
+      Q3HBoxLayout   *hbl_test;
+      vector < QWidget * > test_widgets;
+      QPushButton   *pb_test;
+      QwtPlot       * plot_test;
+      ScrollZoomer  * plot_test_zoomer;
+#ifdef QT4
+      QwtPlotGrid   * grid_test;
+      QwtPlotCurve  * test_curve;
+#else
+      long            test_curve;
+#endif
+
       Q3ProgressBar  *progress;
       QPushButton   *pb_stop;
 
@@ -160,7 +175,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       double dot_our_vector(our_vector *v1, our_vector *v2);
       void mult_our_matrix_vmv(our_vector *vd, our_matrix *m, our_vector *vs);
       void our_vector_test();
-
+      void update_test_info();
 
       double        gsm_delta;
       double        gsm_delta2_r;
@@ -202,6 +217,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       void gsm_cg();
       void ga();
       void grid();
+      void test_mode();
+      void test();
 
       void stop();
 
@@ -238,6 +255,7 @@ namespace HFIT_GLOBAL
    extern unsigned int            common_size;
    extern vector < bool >         is_common;
    void list_params();
+   QString qs_params();
 };
 
 #ifdef WIN32

@@ -3743,7 +3743,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
          vector < double > tmp;
          f_gaussians  [ bl_name ] = tmp;
       }
-      editor_msg( "gray", QString( "Created %1\n" ).arg( bl_name ) );
+      editor_msg( "dark gray", QString( "Created %1\n" ).arg( bl_name ) );
    }
 
    if ( messages.size() )

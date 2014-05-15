@@ -1014,6 +1014,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < double >            height_natural_spline_y;
       vector < double >            height_natural_spline_y2;
 
+      QString                      describe_unified_common;
+      QString                      describe_unified_per_file;
+
    private slots:
 
       void setupGUI();
