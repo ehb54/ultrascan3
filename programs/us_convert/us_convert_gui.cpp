@@ -192,20 +192,20 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    cb_centerpiece -> load();
 
    // External program to enter solution information
-   pb_solution         = us_pushbutton( tr( "Manage Solutions" ), false );
-   pb_applyAll         = us_pushbutton( tr( "Apply to All" ), false );
+   pb_solution         = us_pushbutton( tr( "Manage Solutions"       ), false );
+   pb_applyAll         = us_pushbutton( tr( "Apply to All"           ), false );
    // Defining data subsets
-   pb_define           = us_pushbutton( tr( "Define Subsets" ), false );
-   pb_process          = us_pushbutton( tr( "Process Subsets" ) , false );
+   pb_define           = us_pushbutton( tr( "Define Subsets"         ), false );
+   pb_process          = us_pushbutton( tr( "Process Subsets"        ), false );
    // Choosing reference channel
    pb_reference        = us_pushbutton( tr( "Define Reference Scans" ), false );
-   pb_cancelref        = us_pushbutton( tr( "Undo Reference Scans" ), false );
+   pb_cancelref        = us_pushbutton( tr( "Undo Reference Scans"   ), false );
    // Define intensity profile
    pb_intensity        = us_pushbutton( tr( "Show Intensity Profile" ), false );
    // Drop Triples or Channel or Cell/Channel
-   pb_dropTrips        = us_pushbutton( tr( "Drop Selected Triples" ), false );
-   pb_dropChan         = us_pushbutton( tr( "Drop Selected Channel" ), false );
-   pb_dropCelch        = us_pushbutton( tr( "Drop Cell/Channel"     ), false );
+   pb_dropTrips        = us_pushbutton( tr( "Drop Selected Triples"  ), false );
+   pb_dropCelch        = us_pushbutton( tr( "Drop Selected Data"     ), false );
+   pb_dropChan         = us_pushbutton( tr( "Drop All Channel 'A's"  ), false );
    // Document solutio
    QLabel* lb_solution = us_label(      tr( "Solution:" ) );
    le_solutionDesc     = us_lineedit(   "", 1, true );
@@ -217,14 +217,14 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    ct_from             = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_from->setStep( 1 );
    // Scan focus to
-   lb_to               = us_label(      tr( "Scan Focus to:" ), 0 );
+   lb_to               = us_label(      tr( "Scan Focus to:"   ), 0 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
    ct_to->setStep( 1 );
 
    // Exclude and Include pushbuttons
    pb_exclude          = us_pushbutton( tr( "Exclude Scan(s)" ), false );
-   pb_include          = us_pushbutton( tr( "Include All" ), false );
+   pb_include          = us_pushbutton( tr( "Include All"     ), false );
    pb_include ->setEnabled( false );
    // Standard pushbuttons
    QPushButton* pb_reset  = us_pushbutton( tr( "Reset" ) );
@@ -262,7 +262,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    ccw      ->addWidget( lb_triple,       row++, 0, 1, 12 );
    ccw      ->addWidget( lb_description,  row,   0, 1,  3 );
    ccw      ->addWidget( le_description,  row++, 3, 1,  9 );
-   ccw      ->addWidget( lw_triple,       row,   0, 6,  4 );
+   ccw      ->addWidget( lw_triple,       row,   0, 7,  4 );
    ccw      ->addWidget( lb_ccwinfo,      row++, 4, 1,  8 );
    ccw      ->addWidget( cb_centerpiece,  row++, 4, 1,  8 );
    ccw      ->addWidget( pb_solution,     row,   4, 1,  4 );
@@ -273,8 +273,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    ccw      ->addWidget( pb_cancelref,    row++, 8, 1,  4 );
    ccw      ->addWidget( pb_intensity,    row,   4, 1,  4 );
    ccw      ->addWidget( pb_dropTrips,    row++, 8, 1,  4 );
-   ccw      ->addWidget( pb_dropChan,     row,   0, 1,  6 );
-   ccw      ->addWidget( pb_dropCelch,    row++, 6, 1,  6 );
+   ccw      ->addWidget( pb_dropCelch,    row,   4, 1,  4 );
+   ccw      ->addWidget( pb_dropChan,     row++, 8, 1,  4 );
    ccw      ->addWidget( lb_solution,     row,   0, 1,  3 );
    ccw      ->addWidget( le_solutionDesc, row++, 3, 1,  9 );
    ccw      ->addWidget( lb_status,       row,   0, 1,  2 );
@@ -364,10 +364,10 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                             SLOT(   show_intensity()   ) );
    connect( pb_dropTrips,   SIGNAL( clicked()          ),
                             SLOT(   drop_reference()   ) );
-   connect( pb_dropChan,    SIGNAL( clicked()          ),
-                            SLOT(   drop_channel()     ) );
    connect( pb_dropCelch,   SIGNAL( clicked()          ),
                             SLOT(   drop_cellchan()    ) );
+   connect( pb_dropChan,    SIGNAL( clicked()          ),
+                            SLOT(   drop_channel()     ) );
    connect( pb_exclude,     SIGNAL( clicked()          ),
                             SLOT(   exclude_scans()    ) );
    connect( pb_include,     SIGNAL( clicked()  ),
@@ -425,8 +425,8 @@ void US_ConvertGui::reset( void )
    pb_intensity  ->setEnabled( false );
    pb_cancelref  ->setEnabled( false );
    pb_dropTrips  ->setEnabled( false );
-   pb_dropChan   ->setEnabled( false );
    pb_dropCelch  ->setEnabled( false );
+   pb_dropChan   ->setEnabled( false );
    pb_solution   ->setEnabled( false );
    pb_editRuninfo->setEnabled( false );
    pb_applyAll   ->setEnabled( false );
@@ -955,8 +955,8 @@ DbgLv(1) << "CGui: enabCtl: have-data" << allData.size() << all_tripinfo.size();
 
       bool drops      = ( currentScanCount > 1 );
       pb_dropTrips   ->setEnabled( drops );
-      pb_dropChan    ->setEnabled( drops && isMwl );
       pb_dropCelch   ->setEnabled( drops && isMwl );
+      pb_dropChan    ->setEnabled( drops && isMwl );
 
       if ( runType == "RI" )
          pb_reference->setEnabled( ! referenceDefined );
@@ -2015,6 +2015,10 @@ void US_ConvertGui::changeDescription( void )
 
 void US_ConvertGui::changeTriple()
 {
+   QString chann  = lw_triple->currentItem()->text()
+                    .section( "/", 1, 1 ).simplified();
+   pb_dropChan    ->setText( tr( "Drop All Channel '%1's" ).arg( chann ) );
+
    triple_index( );
 DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx;
 
@@ -2122,6 +2126,13 @@ DbgLv(1) << " sTI: NOT Mwl";
    lw_triple->setCurrentRow( tripListx );
    connect( lw_triple, SIGNAL( itemSelectionChanged() ),
                        SLOT  ( changeTriple        () ) );
+
+   if ( ntrips > 0 )
+   {
+      QString chann  = lw_triple->currentItem()->text()
+                       .section( "/", 1, 1 ).simplified();
+      pb_dropChan    ->setText( tr( "Drop All Channel '%1's" ).arg( chann ) );
+   }
 }
 
 void US_ConvertGui::checkTemperature( void )
@@ -4102,8 +4113,8 @@ void US_ConvertGui::show_mwl_control( bool show )
    cb_lambplot ->setVisible( show );
    pb_lambprev ->setVisible( show );
    pb_lambnext ->setVisible( show );
-   pb_dropChan ->setVisible( show );
    pb_dropCelch->setVisible( show );
+   pb_dropChan ->setVisible( show );
 
    pb_exclude  ->setVisible( !show );
    pb_include  ->setVisible( !show );

@@ -54,6 +54,7 @@ US_Edit::US_Edit() : US_Widgets()
    v_line       = NULL;
    dbg_level    = US_Settings::us_debug();
    dbP          = NULL;
+   chlamb       = QChar( 955 );
 
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -120,7 +121,6 @@ US_Edit::US_Edit() : US_Widgets()
    int rhgt = ct_gaps->height();
    int lwid = fwid * 4;
    int swid = lwid + fwid;
-   const QChar chlamb( 955 );
    lb_mwlctl       = us_banner( tr( "Wavelength Controls" ) );
    QButtonGroup* r_group = new QButtonGroup( this );
    QButtonGroup* x_group = new QButtonGroup( this );
@@ -874,8 +874,15 @@ void US_Edit::load( void )
 DbgLv(1) << "rawc_wvlns size" << rawc_wvlns.size() << nwaveln;
 DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
    rawc_wvlns.sort();
+   rawi_wvlns.clear();
+   toti_wvlns.clear();
+
    for ( int wvx = 0; wvx < nwaveln; wvx++ )
-      rawi_wvlns << rawc_wvlns[ wvx ].toInt();
+   {
+      int iwavl    = rawc_wvlns[ wvx ].toInt();
+      rawi_wvlns << iwavl;
+      toti_wvlns << iwavl;
+   }
 
    workingDir   = workingDir + "/";
    QString file = workingDir + runtype + ".xml";
@@ -1109,16 +1116,53 @@ DbgLv(1) << " triples    size" << ntriple;
    editFnames.fill( "none", ntriple );
 
    isMwl        = ( nwaveln > 2 );
-DbgLv(1) << "LD(): nwaveln isMwl" << nwaveln << isMwl << rawi_wvlns.size();
+   lrng_bycell  = false;         // Assume initially cell lambdas all the same
+DbgLv(1) << "LD(): isMwl" << isMwl << "nwaveln" << nwaveln << toti_wvlns.size();
 
    if ( isMwl )
    {  // Set values related to MultiWaveLength
-      const QChar chlamb( 955 );
       connect_mwl_ctrls( false );
-DbgLv(1) << "IS-MWL: wvlns size" << rawc_wvlns.size();
+
+      // Load the internal object that keeps track of MWL data
+DbgLv(1) << "IS-MWL:   load_mwl begun";
+      mwl_data.load_mwl( allData );
+DbgLv(1) << "IS-MWL:   load_mwl complete";
+
+      // Initial export lambdas are input lambdas: save the input lists
+      ncelchn      = mwl_data.countOf( "cellchann" );
+      maxwavl      = rawc_wvlns.size();
+DbgLv(1) << "IS-MWL: max wvlns size" << maxwavl;
+      wavelns_i.clear();
+
+      for ( int ccx = 0; ccx < ncelchn; ccx++ )
+      {  // Save lambdas for each cell; flag if any cell-to-cell differences
+         QVector< int > wvs;
+         nwavelo      = mwl_data.lambdas( wvs, ccx );
+         wavelns_i << wvs;
+
+         if ( nwavelo != maxwavl )
+         {
+            lrng_bycell  = true;           // Flag based on count difference
+         }
+
+         else
+         {
+            for ( int wvx = 0; wvx < nwaveln; wvx++ )
+            {
+               if ( wvs[ wvx ] != toti_wvlns[ wvx ] )
+               {
+                  lrng_bycell  = true;     // Flag based on value difference
+                  break;
+               }
+            }
+         }
+      } // END: cell scan loop
+
+      lambdas_by_cell( 0 );
+
       nwavelo      = nwaveln;
-      slambda      = rawi_wvlns[ 0 ];
-      elambda      = rawi_wvlns[ nwaveln - 1 ];
+      slambda      = toti_wvlns[ 0 ];
+      elambda      = toti_wvlns[ nwaveln - 1 ];
       dlambda      = 1;
       le_ltrng ->setText( tr( "%1 raw: %2 %3 to %4" )
          .arg( nwaveln ).arg( chlamb ).arg( slambda ).arg( elambda ) );
@@ -1126,10 +1170,6 @@ DbgLv(1) << "IS-MWL: wvlns size" << rawc_wvlns.size();
                               " raw index increment %5" )
          .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda )
          .arg( dlambda ) );
-
-      // Load the internal object that keeps track of MWL data
-      mwl_data.load_mwl( allData );
-DbgLv(1) << "IS-MWL:   load_mwl complete";
 
       expd_radii .clear();
       expc_wvlns .clear();
@@ -1160,7 +1200,7 @@ DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
       nrpoint       = edata->pointCount();
       int nscan     = edata->scanCount();
       int ndset     = ncelchn * nrpoint;
-      int ndpoint   = nscan * nwavelo;
+      int ndpoint   = nscan * maxwavl;
 DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
  << ndset << ndpoint;
 
@@ -1187,25 +1227,34 @@ DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
       //   contains (nscan * nrpoint) data points.
       // The output has (ncelchn * nrpoint) data sets, each of which
       //   contains (nscan * nwaveln) data points.
-      for ( int trx = 0; trx < ntriple; trx++ )
+      int trx       = 0;
+
+      for ( int ccx = 0; ccx < ncelchn; ccx++ )
       {  // Handle each triple of AUC data
-         edata         = &allData[ trx ];
-         int ccx       = trx / nwaveln;
-         int wvx       = trx - ccx * nwaveln;
+         lambdas_by_cell( ccx );                      // Lambdas in cell
+
+         for ( int jwx = 0; jwx < nwaveln; jwx++ )
+         {  // Each wavelength in the current cell
+            edata         = &allData[ trx ];               // Triple data
+            int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
+            int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
 DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
-         for ( int scx = 0; scx < nscan; scx++ )
-         {  // Handle each scan of a triple
-            US_DataIO::Scan* scan  = &edata->scanData[ scx ];
-            int    odx    = ccx * nrpoint;         // Output dataset index
-            int    opx    = scx * nwaveln + wvx;   // Output point index
-//DbgLv(1) << "IS-MWL:    scx odx opx" << scx << odx << opx;
-            for ( int rax = 0; rax < nrpoint; rax++ )
-            {  // Store each radius data point as a wavelength point in a scan
-               rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
-            } // END: radius points loop
-         } // END: scans loop
-      } // END: input triples loop
+            for ( int scx = 0; scx < nscan; scx++ )
+            {  // Each scan of a triple
+               US_DataIO::Scan* scan  = &edata->scanData[ scx ];
+               int odx       = ccx * nrpoint;         // Output dataset index
+               int opx       = scx * maxwavl + wvx;   // Output point index
+DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
+               for ( int rax = 0; rax < nrpoint; rax++ )
+               {  // Store ea. radius data point as a wavelength point in a scan
+                  rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
+               } // END: radius points loop
+            } // END: scans loop
+
+            trx++;
+         } // END: input triples loop
+      } // END: input celchn loop
 DbgLv(1) << "IS-MWL:    Triples loop complete";
 
 DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
@@ -2505,7 +2554,7 @@ DbgLv(1) << "PlMwl:  retn fr replot()";
    ct_to  ->setMinValue( 0.0 );
    ct_to  ->setMaxValue(  data.scanData.size() );
 
-   pick     ->disconnect();
+   pick   ->disconnect();
    connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                   SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
 }
@@ -2985,9 +3034,31 @@ DbgLv(1) << "EDT:NewTr: trip,data index" << triple_index << data_index;
 
    if ( isMwl )
    {  // MWL:  restore the wavelengths for the newly selected triple
+      if ( lrng_bycell )
+      {  // Restore raw lambdas for an individual cell
+         connect_mwl_ctrls( false );
+         lambdas_by_cell();
+         cb_lstart->clear();
+         cb_lend  ->clear();
+         cb_lstart->addItems( rawc_wvlns );
+         cb_lend  ->addItems( rawc_wvlns );
+         cb_lstart->setCurrentIndex( 0 );
+         cb_lend  ->setCurrentIndex( nwaveln - 1 );
+         slambda      = rawi_wvlns[ 0 ];
+         elambda      = rawi_wvlns[ nwaveln - 1 ];
+         dlambda      = 1;
+         le_ltrng ->setText( tr( "%1 raw: %2 %3 to %4" )
+            .arg( nwaveln ).arg( chlamb ).arg( slambda ).arg( elambda ) );
+         connect_mwl_ctrls( true );
+      }
+
       QVector< int > wvs;
       mwl_data.lambdas( wvs, triple_index );
       lambda_new_list ( wvs );
+      le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
+                              " raw index increment %5" )
+         .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda )
+         .arg( dlambda ) );
 DbgLv(1) << "EDT:NewTr:  nwavelo" << nwavelo;
    }
 
@@ -4141,10 +4212,14 @@ void US_Edit::reset_plot_lambdas()
    slambda        = cb_lstart->currentText().toInt();
    elambda        = cb_lend  ->currentText().toInt();
    int     plambd = cb_lplot ->currentText().toInt();
-   int     strtx  = cb_lstart->currentIndex();
-   int     endx   = cb_lend  ->currentIndex() + 1;
+   int     strtx  = rawi_wvlns.indexOf( slambda );
+   int     endx   = rawi_wvlns.indexOf( elambda ) + 1;
    int     plotx  = cb_lplot ->currentIndex();
-DbgLv(1) << "rpl: dl sl el px" << dlambda << slambda << elambda << plotx;
+DbgLv(1) << "rpl: dl sl el px" << dlambda << slambda << elambda << plotx
+ << "sx ex nr" << strtx << endx << rawc_wvlns.size();
+DbgLv(1) << "rpl: trx" << triple_index << cb_triple->currentIndex();
+DbgLv(1) << "rpl: rcw 0 1 m n" << rawc_wvlns[0] << rawc_wvlns[1]
+ << rawc_wvlns[nwaveln-2] << rawc_wvlns[nwaveln-1];
    expc_wvlns.clear();
    expi_wvlns.clear();
 
@@ -4173,15 +4248,16 @@ DbgLv(1) << "rpl:    pl1 pln" << expi_wvlns[0] << expi_wvlns[nwavelo-1];
    }
 
    // Report export lambda range
-   const QChar chlamb( 955 );
    le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4," )
       .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda )
       + ( lsel_range ? tr( " raw index increment %1." ).arg( dlambda )
                      : tr( " from custom selections." ) ) );
 
-   mwl_data.set_lambdas( expi_wvlns );
+   mwl_data.set_lambdas( expi_wvlns, triple_index );
+DbgLv(1) << "rpl: set_lambdas() complete.  trx" << triple_index;
 
    reset_outData();
+DbgLv(1) << "rpl: reset_outData() complete";
 }
 
 // X-axis has been changed to Radius or Wavelength
@@ -4303,6 +4379,8 @@ DbgLv(1) << "lambda_plot_next  clicked";
 void US_Edit::lambda_custom_list()
 {
 DbgLv(1) << "lambda_custom_list  clicked";
+   lambdas_by_cell();
+
    US_SelectLambdas* sel_lambd = new US_SelectLambdas( rawi_wvlns );
 
    connect( sel_lambd, SIGNAL( new_lambda_list( QVector< int > ) ),
@@ -4325,7 +4403,6 @@ DbgLv(1) << "  lambda_custom_list  ACCEPTED";
       }
 
       // Report export lambda range
-      const QChar chlamb( 955 );
       le_lxrng ->setText( tr( "%1 MWL exports: %2 %3 to %4,"
                               " from custom selections." )
          .arg( nwavelo ).arg( chlamb ).arg( slambda ).arg( elambda ) );
@@ -4340,15 +4417,29 @@ void US_Edit::lambda_new_list( QVector< int > newlams )
    slambda     = expi_wvlns[ 0 ];
    elambda     = expi_wvlns[ nwavelo - 1 ];
    expc_wvlns.clear();
+DbgLv(1) << "EDT:lnl: nnssee" << nwavelo << expi_wvlns.size() << slambda
+ << newlams[0] << elambda << newlams[nwavelo-1];
 
    for ( int ii = 0; ii < nwavelo; ii++ )
       expc_wvlns << QString::number( expi_wvlns[ ii ] );
+
+   connect_mwl_ctrls( false );
+   cb_lplot ->clear();
+   cb_lplot ->addItems( expc_wvlns );
+   int strtx   = rawi_wvlns.indexOf( slambda );
+   int endx    = rawi_wvlns.indexOf( elambda );
+   cb_lstart->setCurrentIndex( strtx );
+   cb_lend  ->setCurrentIndex( endx  );
+   cb_lplot ->setCurrentIndex( nwavelo / 2 );
+   connect_mwl_ctrls( true );
 }
 
 // Include-all-lambda has been clicked
 void US_Edit::lambda_include_all()
 {
 DbgLv(1) << "lambda_include_all  clicked";
+   lambdas_by_cell();
+
    nwavelo     = nwaveln;
    expc_wvlns  = rawc_wvlns;
    expi_wvlns  = rawi_wvlns;
@@ -5159,18 +5250,50 @@ void US_Edit::reset_outData()
 
    outData.clear();
    QVector< int > ex_wvlns;
+   int ccoff   = 0;
+DbgLv(1) << "rsoD: aDa size" << allData.size() << "ncelchn" << ncelchn;
 
-   for ( int ccx = 0; ccx < ntriple; ccx++ )
+   for ( int ccx = 0; ccx < ncelchn; ccx++ )
    {
+      lambdas_by_cell( ccx );
+       
       int kwvln   = mwl_data.lambdas( ex_wvlns, ccx );
-      int ccoff   = ccx * nwaveln;
+DbgLv(1) << "rsoD: ccx kwv" << ccx << kwvln << ex_wvlns.size()
+ << "nwv ccoff" << nwaveln << ccoff;
 
       for ( int wvo = 0; wvo < kwvln; wvo++ )
       {
          int iwavl   = ex_wvlns[ wvo ];
          int idatx   = ccoff + rawi_wvlns.indexOf( iwavl );
+//DbgLv(1) << "rsoD:   wvo" << wvo << "wavl datx" << iwavl << idatx;
          outData << &allData[ idatx ];
       }
+
+      ccoff      += nwaveln;
+//DbgLv(1) << "rsoD:        ccx ccoff" << ccx << ccoff;
    }
+DbgLv(1) << "rsoD:  final ccoff" << ccoff << "aDa size" << allData.size()
+ << "oDa size" << outData.size();
+}
+
+// Get input wavelengths vector for the current cell
+int US_Edit::lambdas_by_cell( int trx )
+{
+   int ccx     = ( trx < 0 ) ? triple_index : trx;
+   nwaveln     = rawi_wvlns.count();
+
+   if ( lrng_bycell )
+   {
+      rawi_wvlns = wavelns_i[ ccx ];
+      nwaveln    = rawi_wvlns.count();
+      rawc_wvlns.clear();
+
+      for ( int wvx = 0; wvx < nwaveln; wvx++ )
+      {
+         rawc_wvlns << QString::number( rawi_wvlns[ wvx ] );
+      }
+   }
+
+   return nwaveln;
 }
 
