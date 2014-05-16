@@ -287,7 +287,7 @@ void US_GetRun::deleteRun( void )
    if ( status != 0 ) return;
 
    int ndx = tw ->currentRow();
-   QString expID = tw ->item( ndx, 0 )->text();
+   QString expID = tw ->item( ndx, 2 )->text();
 
    // Let's make sure it's not a calibration experiment in use
    QStringList q( "count_calibration_experiments " );
@@ -331,12 +331,14 @@ void US_GetRun::deleteRun( void )
    q << "delete_experiment"
      << expID ;
    status = db.statusQuery( q );
+qDebug() << "GetRun:delRun: del_exp stat" << status;
 
    if ( status != US_DB2::OK )
    {
       QMessageBox::information( this,
-            tr( "Error" ),
-            db.lastError() + " (" + status + ")\n" );
+            tr( "Error / Warning" ),
+            db.lastError() + tr( " (error=%1, expID=%2)" )
+            .arg( status ).arg( expID ) );
    }
 }
 
