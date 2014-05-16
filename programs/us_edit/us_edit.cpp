@@ -263,8 +263,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    pb_nexttrip->setVisible( false );
    pb_float       = us_pushbutton( tr( "Mark Data as Floating" ),     false );
    pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
-   lo_writemwl    = us_checkbox( tr( "Save to all Wavelengths" ), ck_writemwl,
-                                                                  true );
+   lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
+                                   ck_writemwl, true );
 
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
    connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
@@ -1755,7 +1755,6 @@ DbgLv(1) << "AGap:  plot_range()";
          ct_to->setValue( 0.0 );  // Uncolor all scans
          pb_write      ->setEnabled( true );
          ck_writemwl   ->setEnabled( isMwl );
-         ck_writemwl   ->setVisible( isMwl );
          changes_made = true;
          next_step();
          break;
@@ -1793,7 +1792,6 @@ DbgLv(1) << "AGap:  plot_range()";
 
          pb_write      ->setEnabled( true );
          ck_writemwl   ->setEnabled( isMwl );
-         ck_writemwl   ->setVisible( isMwl );
          changes_made = true;
          next_step();
          break;
@@ -1909,7 +1907,6 @@ void US_Edit::set_meniscus( void )
    pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
-   ck_writemwl ->setVisible( isMwl );
 
    changes_made = all_edits;
 DbgLv(1) << "set_meniscus -- changes_made" << changes_made;
@@ -1954,7 +1951,6 @@ void US_Edit::set_airGap( void )
    pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
-   ck_writemwl ->setVisible( isMwl );
    changes_made = all_edits;
 
    spikes = false;
@@ -1985,7 +1981,6 @@ void US_Edit::set_dataRange( void )
    pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
-   ck_writemwl ->setVisible( isMwl );
    changes_made = all_edits;
 
    spikes = false;
@@ -2016,7 +2011,6 @@ void US_Edit::set_plateau( void )
    pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
-   ck_writemwl ->setVisible( isMwl );
    changes_made = all_edits;
 
    plot_range();
@@ -3095,7 +3089,6 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax;
    pb_undo     ->setEnabled( true );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
-   ck_writemwl ->setVisible( isMwl );
    all_edits    = false;
    changes_made = all_edits;
 
@@ -4078,16 +4071,17 @@ void US_Edit::show_mwl_controls( bool show )
    pb_rarrow  ->setVisible( show );
    pb_custom  ->setVisible( show );
    pb_incall  ->setVisible( show );
-   ck_writemwl->setVisible( show );
 
-   lo_lrange->itemAtPosition( 0, 0 )->widget()->setVisible( show );
-   lo_lrange->itemAtPosition( 0, 1 )->widget()->setVisible( show );
-   lo_custom->itemAtPosition( 0, 0 )->widget()->setVisible( show );
-   lo_custom->itemAtPosition( 0, 1 )->widget()->setVisible( show );
-   lo_radius->itemAtPosition( 0, 0 )->widget()->setVisible( show );
-   lo_radius->itemAtPosition( 0, 1 )->widget()->setVisible( show );
-   lo_waveln->itemAtPosition( 0, 0 )->widget()->setVisible( show );
-   lo_waveln->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+   lo_lrange  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+   lo_lrange  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+   lo_custom  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+   lo_custom  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+   lo_radius  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+   lo_radius  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+   lo_waveln  ->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+   lo_waveln  ->itemAtPosition( 0, 1 )->widget()->setVisible( show );
+   lo_writemwl->itemAtPosition( 0, 0 )->widget()->setVisible( show );
+   lo_writemwl->itemAtPosition( 0, 1 )->widget()->setVisible( show );
 
    adjustSize();
 }
