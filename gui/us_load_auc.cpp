@@ -640,7 +640,6 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
    int     nerr  = 0;
    QString emsg;
    QString rdir  = US_Settings::resultDir();
-   QString tdir  = US_Settings::tmpDir();
    QString runID = sdescs.count() > 0 ? sdescs.at( 0 ).runID : "";
    workingDir    = rdir + "/" + runID;
    rawList.clear();
@@ -667,7 +666,6 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
       int      idRaw     = ddesc.DB_id;
       QString  filebase  = ddesc.filename;
       QString  filename  = workingDir + "/" + filebase;
-      QString  tempname  = tdir       + "/" + filebase;
       QString  triple    = ddesc.tripID.replace( ".", " / " );
       QString  dcheck    = ddesc.dcheck;
       bool     dload_auc = true;
