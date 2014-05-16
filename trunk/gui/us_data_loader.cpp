@@ -289,8 +289,10 @@ bool US_DataLoader::load_edit( void )
       ddesc             = datamap[ dlabels[ indexes[ 0 ] ] ];
       QString  recID    = QString::number( ddesc.DB_id );
       QString  runID    = ddesc.runID;
-      QString  uresdir  = US_Settings::resultDir() + "/" + runID + "/";
-      QString message = tr( "Browsing AUC data..." );
+      QString  rdir     = US_Settings::resultDir();
+      QString  uresdir  = rdir + "/" + runID + "/";
+      QDir( rdir ).mkpath( runID );
+      QString  message  = tr( "Browsing AUC data..." );
       emit progress( message );
       qApp->processEvents();
 
