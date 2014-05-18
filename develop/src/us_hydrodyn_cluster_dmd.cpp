@@ -339,7 +339,7 @@ void US_Hydrodyn_Cluster_Dmd::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_cluster_dmd.html");
+   online_help->show_help("manual/somo/somo_cluster_dmd.html");
 }
 
 void US_Hydrodyn_Cluster_Dmd::closeEvent(QCloseEvent *e)

@@ -413,7 +413,7 @@ void US_Hydrodyn_Cluster_Submit::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_cluster_submit.html");
+   online_help->show_help("manual/somo/somo_cluster_submit.html");
 }
 
 void US_Hydrodyn_Cluster_Submit::closeEvent(QCloseEvent *e)

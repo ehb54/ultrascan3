@@ -715,7 +715,7 @@ void US_AddAtom::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_addatom.html");
+   online_help->show_help("manual/somo/somo_addatom.html");
 }
 
 void US_AddAtom::delete_atom()

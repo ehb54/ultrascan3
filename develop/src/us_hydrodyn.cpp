@@ -4109,7 +4109,7 @@ void US_Hydrodyn::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo.html");
+   online_help->show_help("manual/somo/somo.html");
 }
 
 void US_Hydrodyn::stop_calc()

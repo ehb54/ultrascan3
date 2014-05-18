@@ -275,7 +275,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_saxs_buffer_conc.html");
+   online_help->show_help("manual/somo/somo_saxs_buffer_conc.html");
 }
 
 void US_Hydrodyn_Saxs_Buffer_Conc::closeEvent(QCloseEvent *e)

@@ -186,7 +186,7 @@ void US_Hydrodyn_Bead_Output::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_bead_output.html");
+   online_help->show_help("manual/somo/somo_bead_output.html");
 }
 
 void US_Hydrodyn_Bead_Output::closeEvent(QCloseEvent *e)

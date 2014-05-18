@@ -276,7 +276,7 @@ void US_Hydrodyn_BD_Load_Results_Opts::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_bd_load_results_opts.html");
+   online_help->show_help("manual/somo/somo_bd_load_results_opts.html");
 }
 
 void US_Hydrodyn_BD_Load_Results_Opts::update_solvent_name(const QString &str)

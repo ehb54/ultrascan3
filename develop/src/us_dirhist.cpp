@@ -194,7 +194,7 @@ void US_Dirhist::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_dirhist.html");
+   online_help->show_help("manual/somo/somo_dirhist.html");
 }
 
 void US_Dirhist::closeEvent(QCloseEvent *e)

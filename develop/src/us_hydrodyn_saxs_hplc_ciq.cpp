@@ -442,7 +442,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/saxs_hplc_ciq.html");
+   online_help->show_help("manual/somo/saxs_hplc_ciq.html");
 }
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::closeEvent( QCloseEvent *e )

@@ -380,7 +380,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/saxs_hplc_options.html");
+   online_help->show_help("manual/somo/saxs_hplc_options.html");
 }
 
 void US_Hydrodyn_Saxs_Hplc_Options::closeEvent( QCloseEvent *e )

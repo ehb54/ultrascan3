@@ -228,8 +228,8 @@ void US_Hydrodyn_SasOptionsXsr::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   // online_help->show_help("manual/somo_sas_options_xsr.html");
-   online_help->show_help("manual/somo_saxs_options.html");
+   // online_help->show_help("manual/somo/somo_sas_options_xsr.html");
+   online_help->show_help("manual/somo/somo_saxs_options.html");
 }
 
 void US_Hydrodyn_SasOptionsXsr::closeEvent(QCloseEvent *e)

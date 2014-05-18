@@ -225,7 +225,7 @@ void US_Hydrodyn_PDB_Parsing::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_pdb_parsing.html");
+   online_help->show_help("manual/somo/somo_pdb_parsing.html");
 }
 
 void US_Hydrodyn_PDB_Parsing::closeEvent(QCloseEvent *e)

@@ -143,7 +143,7 @@ void US_Hydrodyn_Csv_Viewer::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_csv_viewer.html");
+   online_help->show_help("manual/somo/somo_csv_viewer.html");
 }
 
 void US_Hydrodyn_Csv_Viewer::closeEvent(QCloseEvent *e)

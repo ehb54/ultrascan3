@@ -1683,7 +1683,7 @@ void US_Hydrodyn_Comparative::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_comparative.html");
+   online_help->show_help("manual/somo/somo_comparative.html");
 }
 
 void US_Hydrodyn_Comparative::closeEvent(QCloseEvent *e)

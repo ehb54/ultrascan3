@@ -174,7 +174,7 @@ void US_Hydrodyn_Saxs_Hplc_Bl::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/saxs_hplc_bl.html");
+   online_help->show_help("manual/somo/saxs_hplc_bl.html");
 }
 
 void US_Hydrodyn_Saxs_Hplc_Bl::closeEvent( QCloseEvent *e )

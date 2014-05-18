@@ -555,7 +555,7 @@ void US_Hydrodyn_Misc::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_misc.html");
+   online_help->show_help("manual/somo/somo_misc.html");
 }
 
 void US_Hydrodyn_Misc::update_hydrovol(double val)

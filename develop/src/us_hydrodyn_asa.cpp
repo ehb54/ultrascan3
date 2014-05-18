@@ -384,7 +384,7 @@ void US_Hydrodyn_ASA::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_asa.html");
+   online_help->show_help("manual/somo/somo_asa.html");
 }
 
 void US_Hydrodyn_ASA::closeEvent(QCloseEvent *e)

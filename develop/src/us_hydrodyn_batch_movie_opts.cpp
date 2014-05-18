@@ -309,7 +309,7 @@ void US_Hydrodyn_Batch_Movie_Opts::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_batch_movie_opts.html");
+   online_help->show_help("manual/somo/somo_batch_movie_opts.html");
 }
 
 void US_Hydrodyn_Batch_Movie_Opts::update_title(const QString &str)

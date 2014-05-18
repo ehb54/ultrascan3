@@ -457,7 +457,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_pdb_editor_merge.html");
+   online_help->show_help("manual/somo/somo_pdb_editor_merge.html");
 }
 
 void US_Hydrodyn_Pdb_Tool_Merge::closeEvent(QCloseEvent *e)

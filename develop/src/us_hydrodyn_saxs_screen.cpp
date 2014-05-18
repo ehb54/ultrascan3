@@ -531,7 +531,7 @@ void US_Hydrodyn_Saxs_Screen::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_saxs_screen.html");
+   online_help->show_help("manual/somo/somo_saxs_screen.html");
 }
 
 void US_Hydrodyn_Saxs_Screen::closeEvent(QCloseEvent *e)

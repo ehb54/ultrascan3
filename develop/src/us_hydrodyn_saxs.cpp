@@ -1940,7 +1940,7 @@ void US_Hydrodyn_Saxs::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_saxs.html");
+   online_help->show_help("manual/somo/somo_saxs.html");
 }
 
 void US_Hydrodyn_Saxs::stop()

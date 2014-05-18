@@ -792,7 +792,7 @@ void US_Hydrodyn_Batch::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_batch.html");
+   online_help->show_help("manual/somo/somo_batch.html");
 }
 
 void US_Hydrodyn_Batch::closeEvent(QCloseEvent *e)

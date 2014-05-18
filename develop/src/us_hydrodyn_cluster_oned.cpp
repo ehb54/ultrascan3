@@ -478,7 +478,7 @@ void US_Hydrodyn_Cluster_Oned::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/oned.html");
+   online_help->show_help("manual/somo/oned.html");
 }
 
 void US_Hydrodyn_Cluster_Oned::closeEvent( QCloseEvent *e )

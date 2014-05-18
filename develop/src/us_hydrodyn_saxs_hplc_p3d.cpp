@@ -145,7 +145,7 @@ void US_Hydrodyn_Saxs_Hplc_P3d::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/saxs_hplc_p3d.html");
+   online_help->show_help("manual/somo/saxs_hplc_p3d.html");
 }
 
 void US_Hydrodyn_Saxs_Hplc_P3d::closeEvent( QCloseEvent *e )

@@ -602,7 +602,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/bfnb_nsa.html");
+   online_help->show_help("manual/somo/bfnb_nsa.html");
 }
 
 void US_Hydrodyn_Cluster_Bfnb_Nsa::closeEvent( QCloseEvent *e )

@@ -1017,7 +1017,7 @@ void US_Hydrodyn_Cluster_Bfnb::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/bfnb.html");
+   online_help->show_help("manual/somo/bfnb.html");
 }
 
 void US_Hydrodyn_Cluster_Bfnb::closeEvent( QCloseEvent *e )

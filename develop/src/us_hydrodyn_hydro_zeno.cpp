@@ -231,7 +231,7 @@ void US_Hydrodyn_Hydro_Zeno::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_hydro_zeno.html");
+   online_help->show_help("manual/somo/somo_hydro_zeno.html");
 }
 
 void US_Hydrodyn_Hydro_Zeno::closeEvent(QCloseEvent *e)

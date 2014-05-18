@@ -166,7 +166,7 @@ void US_Hydrodyn_Dammin_Opts::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_dammin_opts.html");
+   online_help->show_help("manual/somo/somo_dammin_opts.html");
 }
 
 void US_Hydrodyn_Dammin_Opts::update_psv(const QString &str)

@@ -531,6 +531,6 @@ void US_AddHybridization::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_addhybridization.html");
+   online_help->show_help("manual/somo/somo_addhybridization.html");
 }
 

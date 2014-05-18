@@ -397,7 +397,7 @@ void US_Hydrodyn_Results::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_results.html");
+   online_help->show_help("manual/somo/somo_results.html");
 }
 
 void US_Hydrodyn_Results::load_results()

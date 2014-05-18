@@ -182,7 +182,7 @@ void US_Hydrodyn_DMD_Options::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_dmd_options.html");
+   online_help->show_help("manual/somo/somo_dmd_options.html");
 }
 
 void US_Hydrodyn_DMD_Options::closeEvent(QCloseEvent *e)

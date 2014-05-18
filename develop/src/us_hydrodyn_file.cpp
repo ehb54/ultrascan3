@@ -172,7 +172,7 @@ void US_Hydrodyn_File::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_file.html");
+   online_help->show_help("manual/somo/somo_file.html");
 }
 
 void US_Hydrodyn_File::overwrite()

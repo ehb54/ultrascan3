@@ -1379,7 +1379,7 @@ void US_Hydrodyn_BD_Options::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_bd_options.html");
+   online_help->show_help("manual/somo/somo_bd_options.html");
 }
 
 void US_Hydrodyn_BD_Options::closeEvent(QCloseEvent *e)

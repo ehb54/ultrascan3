@@ -313,7 +313,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_saxs_hplc_movie.html");
+   online_help->show_help("manual/somo/somo_saxs_hplc_movie.html");
 }
 
 void US_Hydrodyn_Saxs_Hplc_Movie::closeEvent(QCloseEvent *e)

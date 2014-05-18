@@ -515,7 +515,7 @@ void US_Hydrodyn_Best::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/somo_BEST_Analysis.html");
+   online_help->show_help("manual/somo/somo_BEST_Analysis.html");
 }
 
 void US_Hydrodyn_Best::closeEvent( QCloseEvent *e )

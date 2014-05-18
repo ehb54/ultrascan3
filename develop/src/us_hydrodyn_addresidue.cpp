@@ -1497,7 +1497,7 @@ void US_AddResidue::help()
    {
       online_help = new US_Help(this);
    }
-   online_help->show_help("manual/somo_residue.html");
+   online_help->show_help("manual/somo/somo_residue.html");
 }
 
 void US_AddResidue::reset()

@@ -934,7 +934,7 @@ void US_Hydrodyn_Cluster_Dammin::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/dammin.html");
+   online_help->show_help("manual/somo/dammin.html");
 }
 
 void US_Hydrodyn_Cluster_Dammin::closeEvent( QCloseEvent *e )

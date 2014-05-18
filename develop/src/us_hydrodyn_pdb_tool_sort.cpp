@@ -191,7 +191,7 @@ void US_Hydrodyn_Pdb_Tool_Sort::help()
 {
    US_Help *online_help;
    online_help = new US_Help( this );
-   online_help->show_help("manual/pdb_tool_sort.html");
+   online_help->show_help("manual/somo/pdb_tool_sort.html");
 }
 
 void US_Hydrodyn_Pdb_Tool_Sort::closeEvent( QCloseEvent *e )

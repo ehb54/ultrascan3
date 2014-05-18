@@ -686,7 +686,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_saxs_hplc_fit.html");
+   online_help->show_help("manual/somo/somo_saxs_hplc_fit.html");
 }
 
 void US_Hydrodyn_Saxs_Hplc_Fit::closeEvent(QCloseEvent *e)

@@ -341,7 +341,7 @@ void US_Hydrodyn_Saxs_Search::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_SAXS_search.html");
+   online_help->show_help("manual/somo/somo_SAXS_search.html");
 }
 
 void US_Hydrodyn_Saxs_Search::closeEvent(QCloseEvent *e)

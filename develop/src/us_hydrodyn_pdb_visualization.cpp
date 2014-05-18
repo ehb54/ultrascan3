@@ -142,7 +142,7 @@ void US_Hydrodyn_PDB_Visualization::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_pdb_visualization.html");
+   online_help->show_help("manual/somo/somo_pdb_visualization.html");
 }
 
 void US_Hydrodyn_PDB_Visualization::closeEvent(QCloseEvent *e)

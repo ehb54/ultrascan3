@@ -127,7 +127,7 @@ void US_Hydrodyn_Cluster_Config_Server::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_cluster_config.html");
+   online_help->show_help("manual/somo/somo_cluster_config.html");
 }
 
 void US_Hydrodyn_Cluster_Config_Server::closeEvent(QCloseEvent *e)

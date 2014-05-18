@@ -582,7 +582,7 @@ void US_Hydrodyn_Hydro::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_hydro.html");
+   online_help->show_help("manual/somo/somo_hydro.html");
 }
 
 void US_Hydrodyn_Hydro::closeEvent(QCloseEvent *e)

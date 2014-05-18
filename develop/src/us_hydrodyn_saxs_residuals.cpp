@@ -253,7 +253,7 @@ void US_Hydrodyn_Saxs_Residuals::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_saxs_residuals.html");
+   online_help->show_help("manual/somo/somo_saxs_residuals.html");
 }
 
 void US_Hydrodyn_Saxs_Residuals::closeEvent( QCloseEvent *e )

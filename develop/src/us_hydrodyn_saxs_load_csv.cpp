@@ -453,7 +453,7 @@ void US_Hydrodyn_Saxs_Load_Csv::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_saxs_load_csv.html");
+   online_help->show_help("manual/somo/somo_saxs_load_csv.html");
 }
 
 void US_Hydrodyn_Saxs_Load_Csv::update_selected()

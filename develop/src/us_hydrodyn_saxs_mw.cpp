@@ -157,7 +157,7 @@ void US_Hydrodyn_Saxs_Mw::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_saxs_mw.html");
+   online_help->show_help("manual/somo/somo_saxs_mw.html");
 }
 
 void US_Hydrodyn_Saxs_Mw::update_mw(const QString &str)

@@ -587,7 +587,7 @@ void US_Hydrodyn_Saxs_2d::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_saxs_2d.html");
+   online_help->show_help("manual/somo/somo_saxs_2d.html");
 }
 
 void US_Hydrodyn_Saxs_2d::closeEvent( QCloseEvent *e )

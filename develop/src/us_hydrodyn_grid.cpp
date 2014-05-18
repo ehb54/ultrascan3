@@ -295,7 +295,7 @@ void US_Hydrodyn_Grid::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_grid.html");
+   online_help->show_help("manual/somo/somo_grid.html");
 }
 
 void US_Hydrodyn_Grid::closeEvent(QCloseEvent *e)

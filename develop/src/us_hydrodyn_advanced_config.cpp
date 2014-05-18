@@ -223,7 +223,7 @@ void US_Hydrodyn_AdvancedConfig::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help("manual/somo_advanced_config.html");
+   online_help->show_help("manual/somo/somo_advanced_config.html");
 }
 
 void US_Hydrodyn_AdvancedConfig::closeEvent(QCloseEvent *e)
