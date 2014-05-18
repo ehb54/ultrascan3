@@ -22,16 +22,23 @@
 <center>
 <h2>
 SOMO HPLC-SAXS Module Gaussian Fit:</h2></center>
-<h3><center>Last updated: October 2013 </center></h3><p>
+<h3><center>Last updated: May 2014 </center></h3><p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_GaussFit.png" ALT="SOMO HPLC-SAXS Gaussian Fit panel">
 </center>
 <p>
 
-This pop-up panel will appear when the <b><i>Fit</i></b> button is pressed in the main <b>HPLC-SAXS</b> module.<p>
+This pop-up panel will appear when the <b><i>Fit</i></b> button is pressed in the main <b>HPLC-SAXS</b> module. The panel shown above refers to operations with symmetrical, non-distorted Gaussians. If distorted Gaussians are used, the panel will contain additional fields/checkboxes, as shown below for the EMG+GMG function:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_GaussFit1.png" ALT="SOMO HPLC-SAXS Gaussian Fit with distorsions panel">
+</center>
+<p>
 
 The first three lines in the <b>Fit</b> panel control the centers, widths, and amplitudes of the Gaussians. For each of these parameters, it is possible to fix them to the initial values (<i>checkboxes</i> on the left side), or to allow a % variation (default: <b>5%</b>) from either the initial values (if the rightmost <i>checkboxes</i> are selected) or based on each cycle of iterations-generated values.<p>
+
+Importantly, since for the most common situation of different aggregation states of similar species eluting from the HPLC column one can safely assume that each peak will present a similar distorsion, by default the <b><i>Fit</i></b> module will present one or two (depending on the type of distorted Gaussian function) extra checkboxes called <i>Common distorsion #</i>, already selected. They can be deselected to test the effect of allowing different distorsions for every Gaussian peak. Notice that when you have fixed gaussian(s) and you have <i>Common distortion</i> set, the distortions will only be common to the non-fixed curves.<p>
 
 It is possible to also individually fix each Gaussian by selecting the corresponding <i>checkbox</i> on the <b><i>Fix Gaussians</i></b> line; the program will automatically present as many <i>checkboxes</i> as are the input Gaussians.<p>
 
@@ -64,7 +71,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on October 31, 2013.
+Last modified on May 15, 2014.
 </font>
 </body>
 </html>

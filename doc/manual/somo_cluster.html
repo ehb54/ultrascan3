@@ -39,7 +39,7 @@ Cluster usage is a work in progress and errors in cluster jobs are currently not
 
 <hr>
 <center>
-<td><img SRC="somo-cluster.png" ALT="SOMO Cluster Access Module"></td>
+<td><img SRC="somo-cluster_new.png" ALT="SOMO Cluster Access Module"></td>
 </center>
 <p>
 This module allows to pack files into structured .tar archives for submission to local/remote (super)computing cluster(s).
@@ -66,18 +66,27 @@ will result in less time taken to run the job, but may take
 more time waiting before the resources are available to run the job.
 <p>
 
-Write the output filename in the <i>Output base name
-(job identifier)</i> field. The system will check for the existance of
-identically-named jobs and will refuse to proceed until an unique name
-is inserted.<p> For <b>DMD</b> jobs, the <b><i>DMD settings
-button</i></b> will open up the DMD <a
-href="somo_cluster_dmd.html">set-up panel</a>. <p> The <b><i>Advanced
-options</i></b> button will open up another pop-up window where
-multiple I(<i>q</i>) vs. <i>q</i> methods and other features can be
-selected (see <a
-href="somo_cluster_advanced_options.html">here</a>).<p> <hr> <center>
+Write the output filename in the <i>Output base name (job identifier)</i> field. The system will check for the existance of identically-named jobs and will refuse to proceed until an unique name is inserted.<p>
+
+For <b>DMD</b> jobs, the <b><i>DMD settings button</i></b> will open up the DMD <a href="somo_cluster_dmd.html">set-up panel</a>. <p>
+
+The <b><i>Other methods</i></b> button will open up a pop-up panel where currently (April 2014) only the <b>BEST</b> hydrodynamic computations method can be selected (default: unselected). <p>
+
+<center>
+<img SRC="somo_cluster_other_options.png" ALT="SOMO Cluster Other Options panel">
+</center>
+<p>
+
+Pressing <a href="somo_BEST_setup.html"><b><i>BEST</i></b></a> will open the <b>BEST</b> settings page. Pressing <b><i>Close</i></b> will return to the cluster module main panel.<p>
+
+The <b><i>Advanced options</i></b> button will open up another pop-up window where multiple I(<i>q</i>) vs. <i>q</i> methods and other features can be
+selected (see <a href="somo_cluster_advanced_options.html">here</a>).<p>
+
+<hr>
+<center>
 <td><img SRC="somo-cluster1.png" ALT="SOMO Cluster Access
-Module"></td> </center><p> By pressing the <b><i>Create cluster job
+Module"></td>
+</center><p> By pressing the <b><i>Create cluster job
 package</i></b> button, the .tar archive is prepared, with the
 intermediate operations reported in light grey in the progress window
 (see above).<p> The job submission to a cluster is then done by
@@ -110,7 +119,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 18, 2012
+Last modified on April 24, 2014
 </font>
 </body>
 </html>

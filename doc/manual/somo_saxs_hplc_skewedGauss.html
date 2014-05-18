@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO HPLC-SAXS Module - Gaussians with distorsion(s) Help</title>
+	<link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO HPLC-SAXS Module: Gaussians with distorsion(s) operations</h2></center>
+<h3><center>Last updated: May 2014 </center></h3><p>
+
+This manual part describes the Gaussian analysis and decomposition operations using non symmetrical (skewed, distorted) Gaussians. The dataset we will use as an example is the same HPLC-SAXS analysis of Aldolase that is used to demonstrate the linear baseline operations (see <a href=somo_saxs_hplc_linear_baselines.html>here</a>):<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian1.png" ALT="SOMO HPLC-SAXS Skewed Gaussians 1">
+</center>
+<p>
+
+The type of distorted Gaussian to be utilized is chosen in the Options panel accessed by pressing the <b><i>Options</b></i> button:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_EMG_option.png" ALT="SOMO HPLC-SAXS HPLC-SAXS Options: EMG">
+</center>
+<p>
+
+We will start with the Exponentially modified Gaussian (EMG) function. After selecting it and returning to the <b><i>HPLC-SAXS</i></b> main panel, a <b><i>EMG</b></i> button will replace the default <b><i>Gaussians</i></b> button. Pressing it will bring up the EMG settings:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian2.png" ALT="SOMO HPLC-SAXS Skewed Gaussians 2">
+</center>
+<p>
+
+Since an <b><i>SVD</i></b> analysis (see <a href=somo_saxs_hplc_svd.html>here</a>) on this dataset (not shown) indicated that four components were at least needed to describe it, four EMG Gaussians are initally positioned: 
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian3.png" ALT="SOMO HPLC-SAXS Skewed Gaussians 3">
+</center>
+<p>
+
+Note that four fields are now present in the third commands row. The first three are the center, width and amplitude of each Gaussian, as in normal Gaussian operation, while the fourth is the EMG Gaussian distorsion (set to 0 at the beginning). All other commands are identical as for normal Gaussian operations. Once the intial set of EMG Gaussians is positioned, pressing <b><i>Fit</i></b> will bring up again the <b><i>Gaussian Fit</b></i> module:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_GaussFit2.png" ALT="SOMO HPLC-SAXS Skewed Gaussians Fit EMG">
+</center>
+<p>
+
+Note that in respect to the normal Gaussians operation, there is an additional distorsion field with its checkboxes (<i>Fix distortion 1</i>, <i>% variation</i>, and <i>From initial value</i>), and a <i>Common distorsion 1</i> checkbox. The latter is selected by default, because it is assumed that similar species will have similar distorsions on eluting from the column. This makes the Gaussian fitting more robust. If necessary, once an initial round of fitting is performed, this constraint can be released, to verify if any further improvements are possible while still keeping resonable peak shapes for all Gaussians.<p>
+
+As with normal Gaussain operation, it is advisable to do a first fit while keeping the <i>Fix Gaussian centers</i> checkbox selected:
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian4.png" ALT="SOMO HPLC-SAXS Skewed Gaussians 4">
+</center>
+<p>
+
+Followed by a round with the centers restrained by the <i>% variation 5 from initial value</i>:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian5.png" ALT="SOMO HPLC-SAXS Skewed Gaussians 5">
+</center>
+<p>
+
+Bringing in the SD and releasing all constraints but the <i>Common distorsion</i> produces a slightly improved fit:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian6a.jpg" ALT="SOMO HPLC-SAXS Skewed Gaussians 6">
+</center>
+<p>
+
+Releasing also the <i>Common distorsion</i> will produce a further small improvement in the fit, but at the cost of a highly unlikely situation with EMG Gaussian #1 extending for a long range:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian7.png" ALT="SOMO HPLC-SAXS Skewed Gaussians 7">
+</center>
+<p>
+
+We can perform the same analysis using the <b><i>Half-Gaussian modified Gaussian</i></b> function:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian8.png" ALT="SOMO HPLC-SAXS Skewed Gaussians GMG">
+</center>
+<p>
+
+As can be seen from the fit &chi;<sup>2</sup> (next to the <b><i>Fit</i></b> button), this function performs worse for this dataset. A function combining the EMG and GMG Gaussians (<b><i>EMG+GMG</i></b>) can be also tested. The correstonding <b><i>Fit</i></b> module will present extra fields:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_GaussFit1.png" ALT="SOMO HPLC-SAXS Gaussian Fit with distorsions panel">
+</center>
+<p>
+
+see <a href=somo_saxs_hplc_fit.html>here</a> for a complete description description of the <b><i>Fit</b></i> module. The results of the EMG+GMG fitting are shown below:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian9.jpg" ALT="SOMO HPLC-SAXS Skewed Gaussians 9">
+</center>
+<p>
+
+As can be seen, there is a small improvement versus using the EMG Gaussians alone. We will then proceed with this set, first by doing <b><i>Global Gaussians</i></b> on a subset:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian10.png" ALT="SOMO HPLC-SAXS Skewed Gaussians 10">
+</center>
+<p>
+
+And then proceeding with <b><i>Global fit</i></b>:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian11.png" ALT="SOMO HPLC-SAXS Skewed Gaussians global fit">
+</center>
+<p>
+
+Here, by looking at the <b><i>Residuals</i></b>, the fit appears to be not optimal, but the apparently large residuals especially around the main peak are due to the very low SD associated with the data, amplifying the discrepancies. After propagating the EMG+GMG Gaussians to all chromatogram with <b><i>Global Gaussians</i></b>, we can check the results on a single chromatogram:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian12.png" ALT="SOMO HPLC-SAXS Skewed Gaussians final gaussian">
+</center>
+<p>
+
+where the goodness of the reconstructed curve (yellow) superimposed to the original data (cyan) can be appreciated notwithstanding the not optimal residuals plot.<p>
+
+
+<p>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:emre@biochem.uthscsa.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.uthscsa.edu">http://somo.uthscsa.edu</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on May 15, 2014.
+</font>
+</body>
+</html>
