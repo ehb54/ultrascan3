@@ -2473,3 +2473,67 @@ void US_Hydrodyn_Saxs_Hplc::set_created_selected( set < QString > & to_select, b
       plot_files();
    }
 }
+
+void US_Hydrodyn_Saxs_Hplc::artificial_gaussians()
+{
+   // based upon gaussian mode, generate a bunch of I(t) with an arbitrary center, width and distortions
+
+   bool any_selected = false;
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         if ( !any_selected )
+         {
+            wheel_file = lb_files->text( i );
+            any_selected = true;
+            break;
+         }
+      }
+   }
+
+   if ( !any_selected )
+   {
+      return;
+   }
+
+   vector < double > t( 200 );
+   for ( int i = 0; i < (int) t.size(); ++i )
+   {
+      t[ i ] = (double) i + 1;
+   }
+
+   vector < double > g( gaussian_type_size );
+
+   g[ 1 ] = ( (double) t.size() ) / 2e0;
+   g[ 2 ] = 5e0;
+
+   if ( dist1_active )
+   {
+      g[ 3 ] = 25e0;
+   }
+   if ( dist2_active )
+   {
+      g[ 4 ] = -10e0;
+   }
+
+   vector < double > gs;
+
+   for ( int i = 0; i < (int) f_Is[ wheel_file ].size(); ++i )
+   {
+      g[ 0 ] = f_Is[ wheel_file ][ i ];
+
+      gs = compute_gaussian( t, g );
+      add_plot( 
+               QString( "%1_ag_%2_q%3" )
+               .arg( wheel_file )
+               .arg( QString( "%1" ).arg( gaussian_type_tag ).lower().replace( "+", "" ) )
+               .arg( f_qs[ wheel_file ][ i ] ).replace( ".", "_" ),
+               t,
+               compute_gaussian( t, g ),
+               true,
+               false );
+   }
+   update_enables();
+}

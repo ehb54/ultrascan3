@@ -28,7 +28,7 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
                                                      const char *name
                                                      ) : QDialog(p, name)
 {
-   qDebug( "hf0" );
+   // qDebug( "hf0" );
    this->hplc_win      = hplc_win;
    this->set_comm_dist = set_comm_dist;
 
@@ -58,12 +58,12 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
       break;
    }
 
-   qDebug( "hf1" );
+   // qDebug( "hf1" );
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
 
-   qDebug( "hf2" );
+   // qDebug( "hf2" );
    gaussians_undo.clear();
    gaussians_undo.push_back( hplc_win->gaussians );
 
@@ -71,9 +71,9 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
 
    setGeometry(global_Xpos, global_Ypos, 0, 0 );
 
-   qDebug( "hf3" );
+   // qDebug( "hf3" );
    set_comm_dist ? update_common() : update_enables();
-   qDebug( "hf4" );
+   // qDebug( "hf4" );
    // update_enables();
 }
 
@@ -729,19 +729,19 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_common()
 
 void US_Hydrodyn_Saxs_Hplc_Fit::update_enables()
 {
-   puts( "hf: ue()" );
+   // puts( "hf: ue()" );
    bool run_ok = setup_run();
-   cout << QString( "fit::fix center %1\n"
-                    "fit::fix width  %2\n"
-                    "fit::fix height %3\n"
-                    "fit::fix dist1  %4\n"
-                    "fit::fix dist2  %5\n" )
-      .arg( cb_fix_center->isChecked() ? "true" : "false" )
-      .arg( cb_fix_width->isChecked() ? "true" : "false" )
-      .arg( cb_fix_amplitude->isChecked() ? "true" : "false" )
-      .arg( cb_fix_dist1->isChecked() ? "true" : "false" )
-      .arg( cb_fix_dist2->isChecked() ? "true" : "false" )
-      ;
+   // cout << QString( "fit::fix center %1\n"
+   //                  "fit::fix width  %2\n"
+   //                  "fit::fix height %3\n"
+   //                  "fit::fix dist1  %4\n"
+   //                  "fit::fix dist2  %5\n" )
+   //    .arg( cb_fix_center->isChecked() ? "true" : "false" )
+   //    .arg( cb_fix_width->isChecked() ? "true" : "false" )
+   //    .arg( cb_fix_amplitude->isChecked() ? "true" : "false" )
+   //    .arg( cb_fix_dist1->isChecked() ? "true" : "false" )
+   //    .arg( cb_fix_dist2->isChecked() ? "true" : "false" )
+   //    ;
 
    cb_fix_center                ->setEnabled( !running );
    cb_pct_center                ->setEnabled( !running && !cb_fix_center->isChecked() );
@@ -1668,7 +1668,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
       }
    }
 
-   HFIT::list_params();
+   // HFIT::list_params();
 
    if ( !HFIT::init_params.size() )
    {
@@ -1682,8 +1682,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
 {
    update_common();
    setup_run();
-   puts( "lm" );
-   cout << "gauss fit start\n";
+   // puts( "lm" );
+   // cout << "gauss fit start\n";
 
    LM::lm_control_struct control = LM::lm_control_double;
    control.printflags = 0; // 3; // monitor status (+1) and parameters (+2)
@@ -1755,7 +1755,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
 
    vector < double > par = HFIT::init_params;
    // US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
-   cout << QString( "par start (rmsd %1)\n" ).arg( org_rmsd ).ascii();
+   // cout << QString( "par start (rmsd %1)\n" ).arg( org_rmsd ).ascii();
 
    // LM::qpb  = ( QProgressBar * )0;
    // LM::qApp = ( QApplication * )0;
@@ -1776,7 +1776,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
    }
 
    // US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
-   cout << QString( "par fit (rmsd %1)\n" ).arg( status.fnorm ).ascii();
+   // cout << QString( "par fit (rmsd %1)\n" ).arg( status.fnorm ).ascii();
 
    if ( org_rmsd > status.fnorm )
    {

@@ -383,6 +383,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( set < QString > & fileset, double t_m
 
 bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, double t_max )
 {
+   // qDebug( "ciq 0" );
    // for each selected file
    // extract q grid from file names
    bool mode_testiq = ( current_mode == MODE_TESTIQ );
@@ -479,7 +480,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          // cout << QString( "bl_cap 2 <%1>\n" ).arg( rx_bl.cap( 3 ) );
          bl_slope    .push_back( rx_bl.cap( 1 ).replace( "_", "." ).toDouble() );
          bl_intercept.push_back( rx_bl.cap( 3 ).replace( "_", "." ).toDouble() );
-         cout << QString( "bl for file %1 slope %2 intercept %3\n" ).arg( i ).arg( bl_slope.back(), 0, 'g', 8 ).arg( bl_intercept.back(), 0, 'g', 8 ).ascii();
+         // cout << QString( "bl for file %1 slope %2 intercept %3\n" ).arg( i ).arg( bl_slope.back(), 0, 'g', 8 ).arg( bl_intercept.back(), 0, 'g', 8 ).ascii();
          bl_count++;
          any_bl = true;
       }
@@ -619,6 +620,9 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    if ( mode_testiq )
    { 
       save_gaussians = cb_testiq_from_gaussian->isChecked();
+      // qDebug( QString( "ciq mode testiq save_gaussians %1 %2" ).arg( save_gaussians ? "true" : "false" ).arg( bl_count ) );
+      bl_count = 0;
+      // qDebug( QString( "now ciq mode testiq save_gaussians %1 %2" ).arg( save_gaussians ? "true" : "false" ).arg( bl_count ) );
    } else {
       map < QString, QString > parameters;
       bool no_conc = false;
@@ -917,6 +921,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             }
          }
 
+         // US_Vector::printvector( QString( "file %1 gaussian %2 params" ).arg( files[ i ] ).arg( 1 + ( j / gaussian_type_size ) ), tmp_g );
+
          vector < double > tmp = compute_gaussian( tv, tmp_g );
          tmp_v.push_back( tmp );
          if ( j )
@@ -932,7 +938,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          tmp_area.push_back( tmp_g[ 0 ] * tmp_g[ 2 ] * M_SQRT2PI );
          tmp_area_sum += tmp_area.back();
 
-         // add_plot( QString( "fg_%1_g%2" ).arg( i ).arg( j / gaussian_type_size ), tv, tmp, true, false );
+         // add_plot( QString( "%1_fg_g%2" ).arg( files[ i ] ).arg( 1 + ( j / gaussian_type_size ) ), tv, tmp, true, false );
 
       }
       fg.push_back( tmp_v );
@@ -1031,12 +1037,14 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          {
             continue;
          }
+         // qDebug( QString( "ciq create g loop t %1 g %2 go on" ).arg( t ).arg( g + 1 ) );
          // build up an I(q)
          double conc_factor = 0e0;
          double norm_factor = 1e0;
          QString qs_fwhm;
          if ( ( conc_ok || normalize_by_conc ) && concs[ g ][ t ] > 0e0 )
          {
+            // qDebug( QString( "ciq conc stuff" ) );
             conc_factor = concs[ g ][ t ];
             norm_factor = 1e0 / conc_factor;
 
@@ -1140,6 +1148,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             double tmp_e       = 0e0;
             double tmp_G       = fg[ i ][ g ][ t ];
 
+            // qDebug( QString( "ciq: pulling tmp_G i %1 g %2 t %3" ).arg( i ).arg( g + 1 ).arg( t ) );
+
             double frac_of_gaussian_sum;
             if ( fs[ i ][ t ] == 0e0 )
             {
@@ -1155,6 +1165,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
             if ( use_errors )
             {
+               // qDebug( QString( "ciq: use errors" ) );
+               
                if ( !e_values.count( tv[ t ] ) )
                {
                   editor_msg( "red", QString( tr( "Internal error: error values missing t %1" ) ).arg( tv[ t ] ) );
@@ -1249,6 +1261,13 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          vector < double  > use_qv        = qv;
          vector < double  > use_I         = save_gaussians ? G : I;
          vector < double  > use_e         = e;
+
+         // add_plot( QString( "testG" ),
+         //           qv, 
+         //           use_I, 
+         //           use_e,
+         //           false, 
+         //           false );
 
          if ( conc_ok )
          {
@@ -1857,7 +1876,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
    }
 
    unsigned int per_file_size = gaussian_type_size - common_size;
-   cout << QString( "ggauss_recompute: common_size: %1 per_file_size %2\n" ).arg( common_size ).arg( per_file_size );
+   // cout << QString( "ggauss_recompute: common_size: %1 per_file_size %2\n" ).arg( common_size ).arg( per_file_size );
 
    for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
    {
@@ -2008,7 +2027,7 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
    {
       gauss_max_height *= 20e0;
    }
-   cout << QString( "compute_f_gaussians():gauss_max_height for %1 is %2\n" ).arg( file ).arg( gauss_max_height );
+   // cout << QString( "compute_f_gaussians():gauss_max_height for %1 is %2\n" ).arg( file ).arg( gauss_max_height );
 
    // printvector( "cfg: org_gauss 2", org_gaussians );
    gaussians = org_gaussians;
@@ -2017,17 +2036,17 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       gaussians[ 0 + i ] *= scale;
    }
 
-   US_Vector::printvector( "cfg: gaussians", gaussians );
+   // US_Vector::printvector( "cfg: gaussians", gaussians );
 
-   double gmax2 = compute_gaussian_peak( file, gaussians );
+   // double gmax2 = compute_gaussian_peak( file, gaussians );
 
-   cout << QString( "cfg: %1 org_gaussian peak %2, curve peak %3, scaling %4 new gaussian peak %5\n" )
-      .arg( file )
-      .arg( gmax )
-      .arg( peak )
-      .arg( scale )
-      .arg( gmax2 )
-      ;
+   // cout << QString( "cfg: %1 org_gaussian peak %2, curve peak %3, scaling %4 new gaussian peak %5\n" )
+   //    .arg( file )
+   //    .arg( gmax )
+   //    .arg( peak )
+   //    .arg( scale )
+   //    .arg( gmax2 )
+   //    ;
 
    // now setup and fit
    wheel_file = file;

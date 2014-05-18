@@ -192,6 +192,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_to_saxs;
       QPushButton   *pb_view;
       QPushButton   *pb_movie;
+      QPushButton   *pb_ag;
       QPushButton   *pb_rescale;
 
       QPushButton   *pb_stack_push_all;
@@ -1017,6 +1018,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QString                      describe_unified_common;
       QString                      describe_unified_per_file;
 
+      void                         ggauss_msg_common( vector < map < int, set < double > > > & check_common );
+      QStringList                  gaussian_param_text;
+
    private slots:
 
       void setupGUI();
@@ -1260,6 +1264,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void model_view               ();
       void model_text               ();
       void model_remove             ();
+
+      void artificial_gaussians     ();
 
    protected slots:
 

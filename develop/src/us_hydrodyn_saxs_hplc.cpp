@@ -17,7 +17,7 @@
 #include <Q3TextStream>
 #include <Q3Frame>
 
-#define JAC_VERSION
+// #define JAC_VERSION
 
 #define SLASH QDir::separator()
 
@@ -56,6 +56,14 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 {
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
+
+   gaussian_param_text
+      << "amplitude"
+      << "center"
+      << "width"
+      << "distortion-1"
+      << "distortion-2"
+      ;
 
 #if defined( JAC_VERSION )
    gaussian_type = GAUSS;
@@ -2109,8 +2117,37 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       return false;
    }
 
-   if ( ext == "dat" && qv[ 0 ].contains( " Gaussians" ) )
+   if ( ext == "dat" && qv[ 0 ].contains( QRegExp( " (Gauss|EMG\\+GMG|EMG|GMG)" ) ) )
    {
+      gaussian_types new_g = gaussian_type;
+      if ( qv[ 0 ].contains( " Gauss" ) )
+      {
+         new_g = GAUSS;
+      }
+      if ( qv[ 0 ].contains( " EMG" ) )
+      {
+         new_g = EMG;
+      }
+      if ( qv[ 0 ].contains( " GMG" ) )
+      {
+         new_g = GMG;
+      }
+      if ( qv[ 0 ].contains( " EMG+GMG" ) )
+      {
+         new_g = EMGGMG;
+      }
+      if ( gaussian_type != new_g )
+      {
+         gaussian_type = new_g;
+         unified_ggaussian_ok = false;
+         f_gaussians.clear();
+         gaussians.clear();
+         org_gaussians.clear();
+         org_f_gaussians.clear();
+         update_gauss_mode();
+         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
+      }
+
       gaussians.clear();
       int i = 1;
       QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
@@ -2135,26 +2172,43 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       connect( le_gauss_fit_end, SIGNAL( focussed ( bool ) )             , SLOT( gauss_fit_end_focus( bool ) ) );
 
 
-      if ( qv[ 0 ].contains( "Multiple Gaussians" ) )
+      if ( qv[ 0 ].contains( QRegExp( "Multiple (Gauss|EMG\\+GMG|EMG|GMG)" ) ) )
       {
-         cout << "multiple gaussians\n";
+         // cout << "multiple gaussians\n";
 
          QString           this_gaussian;
-         QRegExp           rx_gname( "^Gaussians (.*)$" ); 
+         QRegExp           rx_gname( "^(?:Gauss|EMG\\+GMG|EMG|GMG) (.*)$" ); 
          vector < double > g;
          unsigned int      loaded  = 0;
          unsigned int      skipped = 0;
+
+         vector < map < int, set < double > > > check_common;
 
          for ( i = 2; i < (int) qv.size(); i++ )
          {
             if ( rx_gname.search( qv[ i ] ) != -1 )
             {
-               cout << QString( "mg: found %1\n" ).arg( rx_gname.cap( 1 ) );
+               // cout << QString( "mg: found %1\n" ).arg( rx_gname.cap( 1 ) );
                // new file specific gaussian
                if ( g.size() && !this_gaussian.isEmpty() )
                {
                   f_gaussians[ this_gaussian ] = g;
                   gaussians = g;
+
+                  int this_gn_count = (int)( g.size() / gaussian_type_size );
+                  if ( (int) check_common.size() < this_gn_count )
+                  {
+                     check_common.resize( this_gn_count );
+                  }
+                  for ( int gn = 0; gn < this_gn_count; ++gn )
+                  {
+                     int pos = gn * gaussian_type_size;
+                     for ( int k = 0; k < gaussian_type_size; ++k )
+                     {
+                        check_common[ gn ][ k ].insert( g[ pos + k ] );
+                     }
+                  }
+
                   loaded++;
                }
                g.clear();
@@ -2162,7 +2216,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
                if ( !f_qs.count( this_gaussian ) )
                {
                   skipped++;
-                  editor_msg( "red", QString( tr( "Gaussians for file %1 present but the file is not loaded, please load the file first" ) ).arg( this_gaussian ) );
+                  editor_msg( "red", QString( tr( "%1 for file %2 present but the file is not loaded, please load the file first" ) ).arg( gaussian_type_tag ).arg( this_gaussian ) );
                   this_gaussian = "";
                }
                continue;
@@ -2174,7 +2228,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          
                if ( (int) tokens.size() != gaussian_type_size )
                {
-                  errormsg = QString("Error: Multiple Gaussian file %1 incorrect format line %2").arg( filename ).arg( i + 1 );
+                  errormsg = QString("Error: Multiple %1 file %2 incorrect format line %3").arg( gaussian_type_tag ).arg( filename ).arg( i + 1 );
                   return false;
                }
 
@@ -2188,13 +2242,27 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          {
             f_gaussians[ this_gaussian ] = g;
             gaussians = g;
+            int this_gn_count = (int)( g.size() / gaussian_type_size );
+            if ( (int) check_common.size() < this_gn_count )
+            {
+               check_common.resize( this_gn_count );
+            }
+            for ( int gn = 0; gn < this_gn_count; ++gn )
+            {
+               int pos = gn * gaussian_type_size;
+               for ( int k = 0; k < gaussian_type_size; ++k )
+               {
+                  check_common[ gn ][ k ].insert( g[ pos + k ] );
+               }
+            }
             loaded++;
             g.clear();
          }
-         editor_msg( "black", QString( "Gaussians for %1 files loaded from %2" ).arg( loaded ).arg( filename ) );
+         ggauss_msg_common( check_common );
+         editor_msg( "black", QString( "%1 for %2 files loaded from %3" ).arg( gaussian_type_tag ).arg( loaded ).arg( filename ) );
          if ( skipped )
          {
-            editor_msg( "red" , QString( "WARNING: Gaussians for %1 files SKIPPED from %2" ).arg( skipped ).arg( filename ) );
+            editor_msg( "red" , QString( "WARNING: %1 for %2 files SKIPPED from %3" ).arg( gaussian_type_tag ).arg( skipped ).arg( filename ) );
          }
       } else {
          for ( i = 2; i < (int) qv.size(); i++ )
@@ -6003,7 +6071,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_save()
 
    if ( current_mode == MODE_GAUSSIAN )
    {
-      QString use_filename = wheel_file + "-gauss.dat";
+      QString use_filename = wheel_file + "-" + QString( "%1" ).arg( gaussian_type_tag ).lower().replace( "+", "" ) + ".dat";
    
       if ( QFile::exists( use_filename ) )
       {
@@ -6019,7 +6087,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_save()
 
       Q3TextStream ts( &f );
 
-      ts << QString( "US-SOMO Hplc Gaussians: %1\n" ).arg( wheel_file );
+      ts << QString( "US-SOMO Hplc %1: %2\n" ).arg( gaussian_type_tag ).arg( wheel_file );
 
       ts << QString( "%1 %2\n" )
          .arg( le_gauss_fit_start->text() )
@@ -6040,7 +6108,15 @@ void US_Hydrodyn_Saxs_Hplc::gauss_save()
    } else {
       if ( unified_ggaussian_ok )
       {
-         QString use_filename = wheel_file + "-mgauss.dat";
+         map < QString, vector < double > > save_f_gaussians = f_gaussians;
+         if ( !unified_ggaussian_to_f_gaussians() )
+         {
+            editor_msg( "red", tr( "could not save Gaussians" ) );
+            f_gaussians = save_f_gaussians;
+            return;
+         }
+
+         QString use_filename = wheel_file + "-m" + QString( "%1" ).arg( gaussian_type_tag ).lower().replace( "+", "" ) + ".dat";
    
          if ( QFile::exists( use_filename ) )
          {
@@ -6056,47 +6132,96 @@ void US_Hydrodyn_Saxs_Hplc::gauss_save()
 
          Q3TextStream ts( &f );
 
-         ts << QString( "US-SOMO Hplc Multiple Gaussians: %1\n").arg( wheel_file );
+         ts << QString( "US-SOMO Hplc Multiple %1: %2\n").arg( gaussian_type_tag ).arg( wheel_file );
 
          ts << QString( "%1 %2\n" ).arg( le_gauss_fit_start->text() ).arg( le_gauss_fit_end->text() );
 
-
+         vector < map < int, set < double > > > check_common( unified_ggaussian_gaussians_size );
+         // ^^ [gauss-number][ parameter ] values
+      
          for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
          {
-            ts << QString( "Gaussians %1\n" ).arg( unified_ggaussian_files[ i ] );
+            ts << QString( "%1 %2\n" ).arg( gaussian_type_tag ).arg( unified_ggaussian_files[ i ] );
 
-
-            if ( cb_fix_width->isChecked() )
+            for ( unsigned int j = 0, gn = 0; 
+                  j < ( unsigned int ) f_gaussians[ unified_ggaussian_files[ i ] ].size();
+                  j += gaussian_type_size, ++gn )
             {
-               unsigned int  index = 2 * unified_ggaussian_gaussians_size + i * unified_ggaussian_gaussians_size;
-               for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
+               for ( int k = 0; k < gaussian_type_size; ++k )
                {
-                  ts << 
-                     QString( "%1 %2 %3\n" )
-                     .arg( unified_ggaussian_params[ index + j + 0 ], 0, 'g', 10 )
-                     .arg( unified_ggaussian_params[ 2 * j + 0 ]                , 0, 'g', 10 )
-                     .arg( unified_ggaussian_params[ 2 * j + 1 ], 0, 'g', 10 )
-                     ;
+                  ts << QString( "%1 " ).arg( f_gaussians[ unified_ggaussian_files[ i ] ][ k + j ], 0, 'g', 10 );
+                  check_common[ gn ][ k ].insert( f_gaussians[ unified_ggaussian_files[ i ] ][ k + j ] );
                }
-            } else {
-               unsigned int  index = unified_ggaussian_gaussians_size + i * 2 * unified_ggaussian_gaussians_size;
-               for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
-               {
-                  ts << 
-                     QString( "%1 %2 %3\n" )
-                     .arg( unified_ggaussian_params[ index + 2 * j + 0 ], 0, 'g', 10 )
-                     .arg( unified_ggaussian_params[ j ]                , 0, 'g', 10 )
-                     .arg( unified_ggaussian_params[ index + 2 * j + 1 ], 0, 'g', 10 )
-                     ;
-               }
-            }               
+               ts << "\n";
+            }
+
+            // if ( cb_fix_width->isChecked() )
+            // {
+            //    unsigned int  index = 2 * unified_ggaussian_gaussians_size + i * unified_ggaussian_gaussians_size;
+            //    for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
+            //    {
+            //       ts << 
+            //          QString( "%1 %2 %3\n" )
+            //          .arg( unified_ggaussian_params[ index + j + 0 ], 0, 'g', 10 )
+            //          .arg( unified_ggaussian_params[ 2 * j + 0 ]                , 0, 'g', 10 )
+            //          .arg( unified_ggaussian_params[ 2 * j + 1 ], 0, 'g', 10 )
+            //          ;
+            //    }
+            // } else {
+            //    unsigned int  index = unified_ggaussian_gaussians_size + i * 2 * unified_ggaussian_gaussians_size;
+            //    for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
+            //    {
+            //       ts << 
+            //          QString( "%1 %2 %3\n" )
+            //          .arg( unified_ggaussian_params[ index + 2 * j + 0 ], 0, 'g', 10 )
+            //          .arg( unified_ggaussian_params[ j ]                , 0, 'g', 10 )
+            //          .arg( unified_ggaussian_params[ index + 2 * j + 1 ], 0, 'g', 10 )
+            //          ;
+            //    }
+            // }               
          }
 
          f.close();
+         ggauss_msg_common( check_common );
+
+         f_gaussians = save_f_gaussians;
          editor_msg( "black", QString( tr( "Gaussians written as %1" ) )
                      .arg( use_filename ) );
       }
    }      
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_msg_common( vector < map < int, set < double > > > & check_common )
+{
+   for ( int i = 0; i < (int) check_common.size(); ++i )
+   {
+      for ( map < int, set < double > >::iterator it = check_common[ i ].begin();
+            it != check_common[ i ].end();
+            ++it )
+      {
+         QString msg = 
+            QString( "%1 %2 %3 %4 unique value%5" )
+            .arg( gaussian_type_tag )
+            .arg( i + 1 )
+            .arg( gaussian_param_text[ it->first ] )
+            .arg( it->second.size() )
+            .arg( it->second.size() > 1 ? "s" : "" )
+            ;
+         int count = 0;
+         for ( set < double >::iterator it2 = it->second.begin();
+               it2 != it->second.end() && count < 5;
+               ++it2, ++count )
+         {
+            msg += QString( " %1" ).arg( *it2 );
+         }
+         if ( count == 5 )
+         {
+            msg += " ...";
+         }
+            
+         editor_msg( it->second.size() > 1 ? "blue" : "black", msg );
+      }
+   }  
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
@@ -7981,6 +8106,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
 
          for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
          {
+            vector < double > tmp_g;
             for ( int k = 0; k < gaussian_type_size; ++k )
             {
                if ( is_common[ k ] )
@@ -7989,90 +8115,22 @@ void US_Hydrodyn_Saxs_Hplc::gauss_as_curves()
                } else {
                   g.push_back( unified_ggaussian_params[ offset[ k ] + per_file_size * j + index ] );
                }
+               tmp_g.push_back( g.back() );
             }               
-            for ( unsigned int j = 0; j < ( unsigned int ) g.size(); j+= gaussian_type_size )
-            {
-               vector < double > tmp_g( gaussian_type_size );
-               for ( int k = 0; k < gaussian_type_size; k++ )
-               {
-                  tmp_g[ k ] = g[ k + j ];
-               }
-               add_plot( unified_ggaussian_files[ i ] + QString( "_pk%1" ).arg( ( j / gaussian_type_size ) + 1 ),
-                         f_qs[ unified_ggaussian_files[ i ] ],
-                         compute_gaussian( f_qs[ unified_ggaussian_files[ i ] ], tmp_g ),
-                         true,
-                         false );
-            }
-            if ( ( unsigned int ) gaussians.size() / gaussian_type_size > 1 )
-            {
-               add_plot( unified_ggaussian_files[ i ] + QString( "_pksum" ),
-                         f_qs[ unified_ggaussian_files[ i ] ],
-                         compute_gaussian_sum( f_qs[ unified_ggaussian_files[ i ] ], g ),
-                         true,
-                         false );
-            }
+            add_plot( unified_ggaussian_files[ i ] + QString( "_pk%1" ).arg( j + 1 ),
+                      f_qs[ unified_ggaussian_files[ i ] ],
+                      compute_gaussian( f_qs[ unified_ggaussian_files[ i ] ], tmp_g ),
+                      true,
+                      false );
          }
-         
-         /* old way
-
-         if ( cb_fix_width->isChecked() )
+         if ( ( unsigned int ) gaussians.size() / gaussian_type_size > 1 )
          {
-         unsigned int  index = 2 * unified_ggaussian_gaussians_size + i * unified_ggaussian_gaussians_size;
-
-         for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
-         {
-         g.push_back( unified_ggaussian_params[ index + j + 0 ] );
-         g.push_back( unified_ggaussian_params[ 2 * j + 0 ] );
-         g.push_back( unified_ggaussian_params[ 2 * j + 1 ] );
+            add_plot( unified_ggaussian_files[ i ] + QString( "_pksum" ),
+                      f_qs[ unified_ggaussian_files[ i ] ],
+                      compute_gaussian_sum( f_qs[ unified_ggaussian_files[ i ] ], g ),
+                      true,
+                      false );
          }
-         for ( unsigned int j = 0; j < ( unsigned int ) g.size(); j+= gaussian_type_size )
-         {
-         vector < double > tmp_g( gaussian_type_size );
-         for ( int k = 0; k < gaussian_type_size; k++ )
-         {
-         tmp_g[ k ] = g[ k + j ];
-         }
-         add_plot( unified_ggaussian_files[ i ] + QString( "_pk%1" ).arg( ( j / gaussian_type_size ) + 1 ),
-         f_qs[ unified_ggaussian_files[ i ] ],
-         compute_gaussian( f_qs[ unified_ggaussian_files[ i ] ], tmp_g ),
-         true,
-         false );
-         }
-         add_plot( unified_ggaussian_files[ i ] + QString( "_pksum" ),
-         f_qs[ unified_ggaussian_files[ i ] ],
-         compute_gaussian_sum( f_qs[ unified_ggaussian_files[ i ] ], g ),
-         true,
-         false );
-         } else {
-         unsigned int  index = unified_ggaussian_gaussians_size + i * 2 * unified_ggaussian_gaussians_size;
-
-         for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
-         {
-         g.push_back( unified_ggaussian_params[ index + 2 * j + 0 ] );
-         g.push_back( unified_ggaussian_params[ j ] );
-         g.push_back( unified_ggaussian_params[ index + 2 * j + 1 ] );
-         }
-         for ( unsigned int j = 0; j < ( unsigned int ) g.size(); j+= gaussian_type_size )
-         {
-         vector < double > tmp_g( gaussian_type_size );
-         for ( int k = 0; k < gaussian_type_size; k++ )
-         {
-         tmp_g[ k ] = g[ k + j ];
-         }
-         add_plot( unified_ggaussian_files[ i ] + QString( "_pk%1" ).arg( ( j / gaussian_type_size ) + 1 ),
-         f_qs[ unified_ggaussian_files[ i ] ],
-         compute_gaussian( f_qs[ unified_ggaussian_files[ i ] ], tmp_g ),
-         true,
-         false );
-         }
-         add_plot( unified_ggaussian_files[ i ] + QString( "_pksum" ),
-         f_qs[ unified_ggaussian_files[ i ] ],
-         compute_gaussian_sum( f_qs[ unified_ggaussian_files[ i ] ], g ),
-         true,
-         false );
-         }
-
-         */
       }
    }
 }
@@ -8347,7 +8405,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
 
 void US_Hydrodyn_Saxs_Hplc::update_gauss_mode()
 {
-   cout << QString( "update_gauss_mode <%1>\n" ).arg( gaussian_type );
+   // cout << QString( "update_gauss_mode <%1>\n" ).arg( gaussian_type );
    switch ( gaussian_type )
    {
    case EMGGMG :

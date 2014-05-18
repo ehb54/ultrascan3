@@ -210,6 +210,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_rescale->setPalette( PALET_PUSHB );
    connect(pb_rescale, SIGNAL(clicked()), SLOT(rescale()));
 
+   pb_ag = new QPushButton(tr("AG"), this);
+   pb_ag->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_ag->setMinimumHeight(minHeight1);
+   pb_ag->setPalette( PALET_PUSHB );
+   connect( pb_ag, SIGNAL( clicked() ), SLOT( artificial_gaussians() ) );
+
    pb_stack_push_all = new QPushButton(tr("Psh"), this);
    pb_stack_push_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_stack_push_all->setMinimumHeight(minHeight1);
@@ -2219,6 +2225,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // hbl_file_buttons_2->addWidget ( pb_to_saxs );
    hbl_file_buttons_2->addWidget ( pb_view );
    hbl_file_buttons_2->addWidget ( pb_movie );
+   hbl_file_buttons_2->addWidget ( pb_ag );
    hbl_file_buttons_2->addWidget ( pb_axis_x );
    hbl_file_buttons_2->addWidget ( pb_axis_y );
    hbl_file_buttons_2->addWidget ( pb_rescale );
@@ -2282,6 +2289,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       pb_rgc->hide();
       pb_pm->hide();
 
+      pb_ag->hide();
+
       // pb_conc->hide();
       // pb_normalize->hide();
    }
@@ -2310,6 +2319,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_widgets.push_back ( pb_to_saxs );
    files_widgets.push_back ( pb_line_width );
    files_widgets.push_back ( pb_color_rotate );
+   files_expert_widgets.push_back ( pb_ag );
 
    Q3BoxLayout *hbl_file_buttons_4 = new Q3HBoxLayout( 0 );
    hbl_file_buttons_4->addWidget ( pb_smooth );
@@ -2323,6 +2333,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_widgets.push_back ( pb_repeak );
    files_widgets.push_back ( pb_svd );
    files_widgets.push_back ( pb_create_i_of_t );
+   files_widgets.push_back ( pb_test_i_of_t );
    files_widgets.push_back ( pb_create_i_of_q );
 
    Q3BoxLayout *hbl_conc_file = new Q3HBoxLayout( 0 );
@@ -3057,9 +3068,9 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       {
          model_enables();
          pm_enables();
-         qDebug( "model_enables in update_enables (running)\n" );
-      } else {
-         qDebug( "update_enables return (running)\n" );
+      //    qDebug( "model_enables in update_enables (running)\n" );
+      // } else {
+      //    qDebug( "update_enables return (running)\n" );
       }
       return;
    }
@@ -3200,6 +3211,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
    pb_movie              ->setEnabled( files_selected_count > 1 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
+   pb_ag                 ->setEnabled( files_selected_count == 1 && files_compatible && !files_are_time );
 
    pb_select_all_created ->setEnabled( lb_created_files->numRows() > 0 );
    pb_invert_all_created ->setEnabled( lb_created_files->numRows() > 0 );
@@ -3388,6 +3400,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_to_saxs            ->setEnabled( false );
    pb_view               ->setEnabled( false );
    pb_movie              ->setEnabled( false );
+   pb_ag                 ->setEnabled( false );
    pb_rescale            ->setEnabled( false );
    pb_select_all_created ->setEnabled( false );
    pb_adjacent_created   ->setEnabled( false );
@@ -3494,6 +3507,9 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_model_text         ->setEnabled( false );
    pb_model_view         ->setEnabled( false );
    pb_model_remove       ->setEnabled( false );
+
+   pb_testiq_visrange    ->setEnabled( false );
+   pb_testiq_testset     ->setEnabled( false );
 }
 
 void US_Hydrodyn_Saxs_Hplc::model_select_all()

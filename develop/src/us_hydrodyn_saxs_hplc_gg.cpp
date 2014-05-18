@@ -75,8 +75,8 @@ bool US_Hydrodyn_Saxs_Hplc::unified_ggaussian_to_f_gaussians()
    }
    */
 
-   US_Vector::printvector( "unified_ggaussian_to_f_gaussians is_common", is_common );
-   US_Vector::printvector( "unified_ggaussian_to_f_gaussians offset"   , offset    );
+   // US_Vector::printvector( "unified_ggaussian_to_f_gaussians is_common", is_common );
+   // US_Vector::printvector( "unified_ggaussian_to_f_gaussians offset"   , offset    );
 
    if ( common_size + per_file_size != (unsigned int)gaussian_type_size )
    {

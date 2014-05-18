@@ -794,6 +794,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq_enables()
    pb_wheel_cancel        ->setEnabled( true );
    le_testiq_q_start      ->setEnabled( true );
    le_testiq_q_end        ->setEnabled( true );
+   pb_testiq_visrange     ->setEnabled( true );
    pb_testiq_testset      ->setEnabled( le_testiq_q_start->text().toDouble() + .9999e0 <= le_testiq_q_end->text().toDouble() );
    pb_guinier             ->setEnabled( le_testiq_q_start->text().toDouble() + .9999e0 <= le_testiq_q_end->text().toDouble() );
    pb_scale               ->setEnabled( le_testiq_q_start->text().toDouble() + .9999e0 <= le_testiq_q_end->text().toDouble() );
@@ -868,6 +869,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq_testset()
 {
    if ( !testiq_make() )
    {
+      testiq_enables();
       return;
    }
    // todo: add to plot
@@ -1871,6 +1873,13 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    double use_min = posmin - 1e0;
    double use_max = posmax + 1e0;
    double space = 0.05 * ( rg_sd_max - rg_sd_min ) ;
+   bool alt_space = false;
+   if ( space < rg_sd_max * 0.005 )
+   {
+      // qDebug( "alt space" );
+      alt_space = true;
+      space = rg_sd_max * 0.005;
+   }
    // qDebug( QString( "space %1 rg_max %2 rg_sd_max %3 rg_min %4 rg_sd_min %5 count %6" )
    //         .arg( space )
    //         .arg( rg_max )
@@ -1929,12 +1938,26 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
                y2[ i ] += mint;
             }
          } else {
-            double scale = ( rg_sd_max - rg_sd_min ) / ( ymax - ymin );
-            for ( int i = 0; i < (int) y2.size(); ++i )
+            if ( alt_space )
             {
-               y2[ i ] -= ymin;
-               y2[ i ] *= scale;
-               y2[ i ] += rg_sd_min;
+               double total_range = ( space * 2e0 + rg_sd_max - rg_sd_min );
+               double use_range = total_range * .95;
+               double scale = use_range / ( ymax - ymin );
+               double base = ( rg_sd_min - space ) + 0.025 * total_range;
+               for ( int i = 0; i < (int) y2.size(); ++i )
+               {
+                  y2[ i ] -= ymin;
+                  y2[ i ] *= scale;
+                  y2[ i ] += base;
+               }
+            } else {
+               double scale = ( rg_sd_max - rg_sd_min ) / ( ymax - ymin );
+               for ( int i = 0; i < (int) y2.size(); ++i )
+               {
+                  y2[ i ] -= ymin;
+                  y2[ i ] *= scale;
+                  y2[ i ] += rg_sd_min;
+               }
             }
          }
 
