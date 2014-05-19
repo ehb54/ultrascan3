@@ -2815,7 +2815,7 @@ QString US_FeMatch::distrib_info() const
 // Write out a plot
 void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
 {
-   if ( filename.endsWith( ".svgz" )  ||  filename.endsWith( ".svg" ) )
+   if ( filename.contains( ".svg" ) )
    {  // Save an SVG file and a PNG copy
       if ( US_GuiUtil::save_plot( filename, plot ) != 0 )
          QMessageBox::warning( this, tr( "File Write Error" ),
@@ -3145,6 +3145,7 @@ void US_FeMatch::reportFilesToDB( QStringList& files )
       QString fname = files[ ii ].mid( files[ ii ].lastIndexOf( "/" ) + 1 );
       int st = freport.saveDocumentFromFile( pfdir, fname, dbP, idEdit,
                                              tripdesc );
+DbgLv(1) << "Rpt: ii" << ii << "fname" << fname << "st" << st;
 
       if ( st != US_DB2::OK )
       {
@@ -3156,6 +3157,7 @@ void US_FeMatch::reportFilesToDB( QStringList& files )
       {
          QString fnpng = QString( fname ).section( ".", 0, -2 ) + ".png";
          freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit, tripdesc );
+DbgLv(1) << "Rpt:   fnpng" << fnpng << "fsize" << QFile(pfdir+"/"+fname).size();
       }
    }
 }

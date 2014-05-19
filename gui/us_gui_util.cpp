@@ -14,7 +14,7 @@ int US_GuiUtil::save_plot( const QString& filename, const QwtPlot* plot )
    {  // Save the file as SVG, then save a PNG version
       save_svg( filename, plot );
 
-      QString fnamepng  = QString( filename ).replace( ".svg", ".png" );
+      QString fnamepng  = QString( filename ).section( ".", 0, -2 ) + ".png";
       save_png( fnamepng, plot );
    }
 
