@@ -387,6 +387,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    // for each selected file
    // extract q grid from file names
    bool mode_testiq = ( current_mode == MODE_TESTIQ );
+   // bool force_errors_from_org = false;
 
    if ( !mode_testiq )
    {
@@ -1195,7 +1196,10 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             }
             
             tmp_I *= frac_of_gaussian_sum;
+            // if ( !force_errors_from_org )
+            // {
             tmp_e *= frac_of_gaussian_sum;
+            // }
 
             if ( sd_from_difference )
             {

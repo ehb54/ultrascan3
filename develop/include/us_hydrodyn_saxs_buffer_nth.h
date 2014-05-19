@@ -13,6 +13,12 @@
 
 using namespace std;
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
 class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
 {
    Q_OBJECT
@@ -180,5 +186,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
 
       void                                    closeEvent( QCloseEvent * );
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif

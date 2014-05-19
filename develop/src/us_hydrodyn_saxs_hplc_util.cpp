@@ -2506,6 +2506,13 @@ void US_Hydrodyn_Saxs_Hplc::artificial_gaussians()
 
    vector < double > g( gaussian_type_size );
 
+   bool ipe = 
+      ( QMessageBox::Yes == QMessageBox::question(this, 
+                                                  caption() + tr( ": Artificial Gaussians" ),
+                                                  tr( "Add intensity proportional errors?" ),
+                                                  QMessageBox::Yes,
+                                                  QMessageBox::No ) );
+
    g[ 1 ] = ( (double) t.size() ) / 2e0;
    g[ 2 ] = 5e0;
 
@@ -2525,13 +2532,31 @@ void US_Hydrodyn_Saxs_Hplc::artificial_gaussians()
       g[ 0 ] = f_Is[ wheel_file ][ i ];
 
       gs = compute_gaussian( t, g );
+
+      vector < double > I = compute_gaussian( t, g );
+
+      vector < double > e( I.size() );
+      if ( ipe )
+      {
+         for ( int j = 0; j < (int) I.size(); ++j )
+         {
+            e[ j ] = I[ j ] * .01;
+         }
+      } else {
+         for ( int j = 0; j < (int) I.size(); ++j )
+         {
+            e[ j ] = .01 * f_Is[ wheel_file ][ 0 ];
+         }
+      }
+
       add_plot( 
                QString( "%1_ag_%2_q%3" )
                .arg( wheel_file )
                .arg( QString( "%1" ).arg( gaussian_type_tag ).lower().replace( "+", "" ) )
                .arg( f_qs[ wheel_file ][ i ] ).replace( ".", "_" ),
                t,
-               compute_gaussian( t, g ),
+               I,
+               e,
                true,
                false );
    }
