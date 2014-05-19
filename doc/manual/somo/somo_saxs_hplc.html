@@ -88,7 +88,7 @@ Each time the <b><i>Width</i></b> button is pressed, it increments the data line
 
 <b><i>Make I(t)</i></b> is one of the crucial operations in the <b><i>HPLC-SAXS</i></b> module. It allows to generate a series of "chromatograms" (<i>I(t)</i> vs. <i>t</i>, where <i>t</i> can be real elution time or frame number) for each <i>q</i>-value present in the original data files (see below).<p>
 
-<b><i>Test I(t)</i></b> will perform a test to ascertain if a particular set of <i>I</i>(<i>t</i>) vs. <i>t</i> "chromatograms" contain useful data, on the basis of a comparison between the signal and its associated SD. This test could be automatically performed each time an  <i>I</i>(<i>q</i>) vs. <i>q</i> dataset is converted into an <i>I</i>(<i>t</i>) vs. <i>t</i> dataset by selecting its relative checkbox and the SD factor in the <b><i>Options</i></b> menu accessible from the button provided at the bottom of this window (see more below).<p>
+<b><i>Test I(t)</i></b> will perform a test to ascertain if a particular set of <i>I</i>(<i>t</i>) vs. <i>t</i> "chromatograms" contain useful data, on the basis of a comparison between the signal and its associated SD. This test could be automatically performed each time an  <i>I</i>(<i>q</i>) vs. <i>q</i> dataset is converted into an <i>I</i>(<i>t</i>) vs. <i>t</i> dataset by selecting its relative checkbox and the SD factor in the <b><i>Options</i></b> menu accessible from the button provided at the bottom of this window (see <a href=saxs_hplc_options.html>here</a>).<p>
 
 <b><i>Make I(q)</b></i> is the other crucial operation in the <b><i>HPLC-SAXS</i></b> module. It allows to re-generate <i>I</i>(<i>q</i>) vs. <i>q</i> files for each frame after data treatment in frame- (or time-) space.<p>
 
@@ -103,7 +103,7 @@ Each time the <b><i>Width</i></b> button is pressed, it increments the data line
 <p>
 
 Since a typical HPLC-SAXS experiment produces a series of <i>I(q)</i> vs. <i>q</i> data collected at some time interval ("frames"), they can be inserted in a 2D matrix where each line corresponds to a frame number (or time value) and the columns contain the intensities <i>I(q)</i> and their associated SDs at the various scattering angles <i>q</i>. It is then a simple operation to generate another matrix where the lines correspond to the <i>q</i>-values and each column contains the intensities <i>I(t)</i> (and their associated SDs) corresponding to each frame number (or time value). A new data set consisting of <i>I(t)</i> vs. <i>t</i> "chromatograms" for each <i>q</i>-value can then be generated.<br>
-In the image above, the original <i>I(q)</i> vs. <i>q</i> data shown in the first image of this Help section have been transformed to <i>I(t)</i> vs. <i>t</i> data by pressing the <b><i>Make I(t)</i></b> button after selecting all files. The <i>q</i> values are now part of the resulting filenames. Since the <i><b>On Make I(t), discard I(t) with no signal above st. dev. multiplied by</i></b> "4" was selected in the <i><b>Options</i></b> menu (see below), the following <i>Warning message</i> appeared:<p>
+In the image above, the original <i>I(q)</i> vs. <i>q</i> data shown in the first image of this Help section have been transformed to <i>I(t)</i> vs. <i>t</i> data by pressing the <b><i>Make I(t)</i></b> button after selecting all files. The <i>q</i> values are now part of the resulting filenames. Since the <i><b>On Make I(t), discard I(t) with no signal above st. dev. multiplied by</i></b> "4" was selected in the <i><b>Options</i></b> menu (see <a href=saxs_hplc_options.html>here</a>), the following <i>Warning message</i> appeared:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_discard_warning.png" ALT="SOMO HPLC-SAXS discard I(t) files warning">
@@ -152,87 +152,7 @@ The last line of the left-side panels contains the <i><b>Help</i></b> and <i><b>
 </center>
 <p>
 
-The first set of options deals with <b><i>baseline removal</b></i>
-tools. By deafult, the <b>US-SOMO <i>HPLC-SAXS</i></b> module will
-utilize an <b><i>Integral of I(t) baseline removal</i></b>
-tool. 
-The method is based upon the assumption that capillary fouling deposits are formed
-in proportion to the sample intensity while exposed to the beam (and that the buffer is not responsible).
-We have developed a mathematical model of this condition and implemented it as
-the <a name="integral"></a>integral baseline procedure.  This is an iterative procedure and the number
-of steps can be set in the <i>Maximum iterations:</i> field (default: <b>5</b> iterations). 
-As part of this procedure, the <i>alpha</i> value corresponds to
-the intensity fouling deposits constant  and an early termination criteria 
-can be defined here which will stop the iterative procedure when 
-the difference in <i>alpha</i> between iterations is less than or
-equal to the <i>alpha early termination limit</i> field.
-<br>  The program will generate a baseline at each iterative step. By selecting
-the <b><i>Produce separate baseline curves</i></b> checkbox, each
-baseline will be generated and can be shown in the graphics
-window. This could be helpful to check if the integral baseline tool
-has reached convergence. However, it should be deselected before
-applying the integral baseline tool to multiple files, to avoid the
-unnecessary generation of many baseline files.<br>  For special needs
-or very minor baseline correction requirements, the original linear
-baseline implementation (Brookes et al., J. App. Cryst. 46:1823-1833,
-2013) is available by selecting the <b><i>Linear baseline
-removal</i></b> checkbox. A description of the linear baseline removal
-tool can be
-found <a href=somo_saxs_hplc_linear_baselines.html>here</a>)<p>
-
-The next set of options deals with the <b><i>Gaussian mode</b></i> available. Four alternative checkboxes are available:<p>
-<ul>
-<li>
-<b><i>Standard Gaussian</i></b>. This will generate symmetrical Gaussians (default option).<p>
-<li>
-<b><i>GMG (Half-Gaussian modified Gaussian)</i></b>. This will generate skewed Gaussians according to this equation:.
-
-<p><center>
-<img SRC="GMG.png" ALT="SOMO HPLC-SAXS commands">
-</center>
-<p>
-
-where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, and <i>a<sub>3</sub></i> are the <i>area</i>, <i>center</i>, <i>width</i>, and <i>distorsion</i>, respectively, of the half-Gaussian modified Gaussian(s).<p>
-
-<li>
-<b><i>EMC (Exponentially modified Gaussian)</i></b>. This will generate skewed Gaussians according to this equation:.
-
-<p><center>
-<img SRC="EMG.png" ALT="SOMO HPLC-SAXS commands">
-</center>
-<p>
-
-where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, and <i>a<sub>3</sub></i> are the <i>area</i>, <i>center</i>, <i>width</i>, and <i>distorsion</i>, respectively, of the exponentially modified Gaussian(s).<p>
-
-<li>
-<b><i>EMG+GMG</i></b>. This will generate skewed Gaussians according to this equation:.
-
-<p><center>
-<img SRC="EMG_GMG.png" ALT="SOMO HPLC-SAXS commands">
-</center>
-<p>
-
-where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, <i>a<sub>3</sub></i>, and <i>a<sub>4</sub></i> are the <i>area</i>, <i>center</i>, <i>width</i>, <i>distorsion 1</i>, and <i>distorsion 2</i>, respectively, of the exponentially + half-Gaussian modified Gaussian(s).<p>
-</ul>
-
-In the <i><b>Miscellaneous options</i></b> section there is the option of saving the °.csv files in transposed format, by selecting the <b><i>Save CSV transposed</b></i> checkbox.<p>
-
-
-It is followed by the <i><b>I(t) negative integral check
-window</i></b> field, where the sliding window size for the negative
-integral test can be set (<b>default: 25</b>).  As described
-previously, this is the size of a sliding window over adjacent
-frames. If the sum of <i>I</i>(<i>t</i>) values within the window is less than the
-negative of sum of the corresponding SD values, the <i>I</i>(<i>t</i>)  curve will be
-identified and dropped during the <b><i>Make I(t)</i></b> and optionally
-dropped during the <b><i>Test I(t)</i></b> procedures.
-<p>
-
-
-The last line contains the checkbox for the <b><i>On Make I(t),
-discard I(t) with no signal above std. dev. multiplied by:</b></i> and
-its associated field (<b>default: checked</b> with <b>4</b> as the
-multiplier value). This tests whether or not there is any point in the <i>I</i>(<i>t</i>) curve where the <i>I</i>(<i>t</i>) value is greater than the SD of the point of <i>I</i>(<i>t</i>) multiplied by this field. If the test fails, the <i>I</i>(<i>t</i>) curve is assumed to contain no signal and is dropped with an appropriate messagebox.<p>
+See <a href=saxs_hplc_options.html>here</a> for a description of this module.<p>
 
 <hr><p>
 Below the <b>US-SOMO <i>HPLC-SAXS</i></b> module graphics panel there are a series of buttons for performing several operations on the files displayed, some of which will become available only when multiple files are selected, or a region of the graph is zoomed, while others will become available only when single files are selected:<p>
@@ -294,10 +214,10 @@ Pressing <b><i>Keep</i></b> once a reasonable end region has been defined will k
 </center>
 <p>
 
-After pressing <b><i>Keep</i></b>, the <b><i>Baseline apply</i></b> button becomes available. Pressing it will apply the integral procedure to the selected chromatogram(s). Each resulting baseline-subtracted chromatogram will have a "-bi" added after the <i>q</i> value and an "-s" at the end of the filename to indicate that an integral baseline subtraction was applied (if a linear baseline option is used, the first label will be "-bl"). The numerical value of the overall change in baseline and the alpha value (for an explanation alpha see the <a href="#integral">integral baseline procedure</a>) are also added to the filename of the produced files, as shown in the <b><i>Data files</i></b> panel. 
+After pressing <b><i>Keep</i></b>, the <b><i>Baseline apply</i></b> button becomes available. Pressing it will apply the integral procedure to the selected chromatogram(s). Each resulting baseline-subtracted chromatogram will have a "-bi" added after the <i>q</i> value and an "-s" at the end of the filename to indicate that an integral baseline subtraction was applied (if a linear baseline option is used, the first label will be "-bl"). The numerical value of the overall change in baseline and the alpha value (for an explanation alpha see <a href=saxs_hplc_options.html>here</a>) are also added to the filename of the produced files, as shown in the <b><i>Data files</i></b> panel. 
 
 It is best to first check the results on the initial chromatogram used to set the baseline parameters, and to select the <b><i>Produce separate baseline
-curves</i></b> checkbox in the <b><i>Options</i></b> menu (see above). In this way, the convergenge of the integral baseline removal procedure can be tested.<br>  In the example shown above, the original curve at <i>q</i>=0.00680487 &Aring;<sup>-1</sup> (green) is compared with the baseline subtracted curve (pink), and superimposed are the five baseline curves produced by the iterative integral baseline subtraction procedure (from light green to purple; see legend for all the colors). As can be seen, the convergence in this case is reached by the 2<sup>nd</sup> iteration. It is then best to check the integral baseline subtraction results on a few files at higher <i>q</i> values than the first selected, to verify that consistent results are obtained. Subsequently, the <b><i>Produce separate baseline curves</i></b> checkbox in the <b><i>Options</i></b> menu (see above) should be deselected, and a set of <i>I</i>(<i>t</i>) curves starting from the lowest <i>q</i> value used to test the procedure up to an intermediate <i>q</i> value should be selected, and the <b><i>Baseline apply</i></b> button should be pressed again. This will produce a set of baseline subtracted curves still missing the lower <i>q</i>, more noisy <i>I</i>(<i>t</i>) datasets, and the higher <i>q</i>, less intense <i>I</i>(<i>t</i>) datasets, as shown in the image below, where the <i>q</i> range is from 0.00403252 to 0.0400725 &Aring;<sup>-1</sup>:<p>
+curves</i></b> checkbox in the <b><i>Options</i></b> menu (see <a href=saxs_hplc_options.html>here</a>). In this way, the convergenge of the integral baseline removal procedure can be tested.<br>  In the example shown above, the original curve at <i>q</i>=0.00680487 &Aring;<sup>-1</sup> (green) is compared with the baseline subtracted curve (pink), and superimposed are the five baseline curves produced by the iterative integral baseline subtraction procedure (from light green to purple; see legend for all the colors). As can be seen, the convergence in this case is reached by the 2<sup>nd</sup> iteration. It is then best to check the integral baseline subtraction results on a few files at higher <i>q</i> values than the first selected, to verify that consistent results are obtained. Subsequently, the <b><i>Produce separate baseline curves</i></b> checkbox in the <b><i>Options</i></b> menu (see <a href=saxs_hplc_options.html>here</a>) should be deselected, and a set of <i>I</i>(<i>t</i>) curves starting from the lowest <i>q</i> value used to test the procedure up to an intermediate <i>q</i> value should be selected, and the <b><i>Baseline apply</i></b> button should be pressed again. This will produce a set of baseline subtracted curves still missing the lower <i>q</i>, more noisy <i>I</i>(<i>t</i>) datasets, and the higher <i>q</i>, less intense <i>I</i>(<i>t</i>) datasets, as shown in the image below, where the <i>q</i> range is from 0.00403252 to 0.0400725 &Aring;<sup>-1</sup>:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_integral_baselines.png" ALT="SOMO HPLC-SAXS integral baseline applied">
@@ -475,7 +395,7 @@ Before proceeding to Gaussian analysis (whose theory can be seen <a href=saxs_hp
 </center>
 <p>
 
-The baseline-subtracted data can be subjected to Gaussian analysis by first selecting a single chromatogram, and then pressing the <b><i>Gaussians</b></i> button. By default, the <b>US-SOMO <i>HPLC-SAXS</i></b> module will consider symmetrical Gaussians, but distorted Gaussian functions are also availble and can be selected from the <b><i>Options</b></i> menu (see above). An example of a data processing with non-symmetrical Gaussians is presented <a href=somo_saxs_hplc_skewedGauss.html><b>here</b></a>.<p>
+The baseline-subtracted data can be subjected to Gaussian analysis by first selecting a single chromatogram, and then pressing the <b><i>Gaussians</b></i> button. By default, the <b>US-SOMO <i>HPLC-SAXS</i></b> module will consider symmetrical Gaussians, but distorted Gaussian functions are also availble and can be selected from the <b><i>Options</b></i> menu (see <a href=saxs_hplc_options.html>here</a>). An example of a data processing with non-symmetrical Gaussians is presented <a href=somo_saxs_hplc_skewedGauss.html><b>here</b></a>.<p>
 On pressing <b><i>Gaussians</i></b>, two new rows will appear at the bottom of the graphics window. If a previously-generated set of Gaussians was present or loaded from file, the Gaussians will show up under the peak(s) together with vertical lines indicating their centers.<p>
 
 <b><i>Clear</i></b> will remove them, and allow to start a new analysis.<p>
@@ -821,7 +741,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 14, 2014.
+Last modified on May 19, 2014.
 </font>
 </body>
 </html>
