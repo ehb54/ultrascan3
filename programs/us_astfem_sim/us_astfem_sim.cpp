@@ -1087,8 +1087,8 @@ void US_Astfem_Sim::dump_mfem_initial( US_Model::MfemInitial& mfem )
 
 void US_Astfem_Sim::dump_association( US_Model::Association& as )
 {
-   qDebug() << "keq" << as.k_eq;
-   qDebug() << "koff" << as.k_off;
+   qDebug() << "k_assoc" << as.k_assoc;
+   qDebug() << "k_off" << as.k_off;
    qDebug() << "rcomps list size " << as.rcomps.size();
    qDebug() << "rcomps list " << as.rcomps;
    qDebug() << "stoichs list size " << as.stoichs.size();

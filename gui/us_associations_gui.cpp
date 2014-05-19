@@ -132,10 +132,10 @@ void US_AssociationsGui::populate( void )
       US_Model::Association* as    = &model.associations[ i ];
       
       // First set koff and keq
-      QString s = QString::number( as->k_eq,  'e', 4 );
+      QString s = QString::number( as->k_assoc, 'e', 4 );
       tw->setItem( i, 5, new QTableWidgetItem( s ) );
 
-              s = QString::number( as->k_off, 'e', 4 );
+              s = QString::number( as->k_off,   'e', 4 );
       tw->setItem( i, 6, new QTableWidgetItem( s ) );
 
 
@@ -271,10 +271,10 @@ void US_AssociationsGui::complete( void )
 
       // If koff and keq are not set, the default is zero
       item = tw->item( i, 5 );
-      if ( item != 0 ) association.k_eq  = item->text().toDouble();
+      if ( item != 0 ) association.k_assoc  = item->text().toDouble();
 
       item = tw->item( i, 6 );
-      if ( item != 0 ) association.k_off = item->text().toDouble();
+      if ( item != 0 ) association.k_off    = item->text().toDouble();
 
       QWidget* w = tw->cellWidget( i, 1 );
       

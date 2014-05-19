@@ -343,6 +343,7 @@ qDebug() << "LdEd: dnld_auc" << dnld_auc << "afn" << afn;
 
          if ( dnld_auc )
             db.readBlobFromDB( afn, "download_aucData", idAUC );
+qDebug() << "LdEd:  dnld_auc DONE" << dscfname << prvfname;
 
          if ( dscfname != prvfname )
          {
@@ -356,13 +357,17 @@ qDebug() << "LdEd: dnld_auc" << dnld_auc << "afn" << afn;
                dnld_edt          = ( fcheck != ddesc.echeck );
             }
 
+qDebug() << "LdEd: dnld_edt" << dnld_edt << "efn" << efn;
             if ( dnld_edt )
                db.readBlobFromDB( efn, "download_editData", idRec );
+qDebug() << "LdEd: dnld_edt DONE";
          }
 
          qApp->processEvents();
 
+qDebug() << "LdEd: loadData uresdir filename" << uresdir << filename;
          US_DataIO::loadData( uresdir, filename, editedData, rawData );
+qDebug() << "LdEd: loadData DONE";
       }
    }
 
