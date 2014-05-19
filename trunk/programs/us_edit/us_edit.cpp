@@ -788,6 +788,7 @@ void US_Edit::load( void )
    if ( dialog->exec() == QDialog::Rejected )  return;
 
    runID = workingDir.section( "/", -1, -1 );
+DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
    sData     .clear();
    sd_offs   .clear();
    sd_knts   .clear();
@@ -838,6 +839,7 @@ void US_Edit::load( void )
    }
 
    QString runtype = runID + "." + dataType;
+DbgLv(1) << "Ld: runtype" << runtype;
    nwaveln         = 0;
    ncelchn         = 0;
    outData.clear();
@@ -3364,11 +3366,10 @@ void US_Edit::write_triple( void )
    QString filename = files[ idax ];
 DbgLv(1) << "EDT:WrTripl: tripindex" << triple_index << "idax" << idax
  << "filename" << filename;
-   int     index    = filename.indexOf( '.' ) + 1;
-   filename.insert( index, editLabel + "." );
+   QString rpart    = filename.section( ".",  0, -6 );
+   QString tpart    = filename.section( ".", -5, -2 );
+   filename         = rpart + "." + editLabel + "." + tpart + ".xml";
    QString wvpart   = "";
-
-   filename.replace( QRegExp( "auc$" ), "xml" );
 DbgLv(1) << "EDT:WrTripl:  filename" << filename;
 
    if ( expType.isEmpty()  ||
@@ -3703,7 +3704,7 @@ void US_Edit::prior_equil( void )
       filename          = filenames[ index ];
       int     dataID    = editDataIDs[ index ].toInt();
 
-      QString editLabel = filename.section( ".", 1, 1 );
+      QString editLabel = filename.section( ".", -6, -6 );
       filename          = workingDir + filename;
       db.readBlobFromDB( filename, "download_editData", dataID );
 
@@ -3730,7 +3731,7 @@ void US_Edit::prior_equil( void )
          {
             dataID      = db.value( 0 ).toString().toInt();
             filename    = db.value( 2 ).toString();
-            QString elb = filename.section( ".", 1, 1 );
+            QString elb = filename.section( ".", -6, -6 );
             
             if ( elb == editLabel )
             {
@@ -3763,14 +3764,14 @@ void US_Edit::prior_equil( void )
       if ( filename.isEmpty() ) return; 
 
       filename          = filename.replace( "\\", "/" );
-      QString editLabel = filename.section( "/", -1, -1 ).section( ".", 1, 1 );
-      QString runID     = filename.section( "/", -1, -1 ).section( ".", 0, 0 );
+      QString editLabel = filename.section( "/", -1, -1 ).section( ".", -6, -6 );
+      QString runID     = filename.section( "/", -1, -1 ).section( ".",  0, -7 );
 
       for ( int ii = 0; ii < files.size(); ii++ )
       {
          filename          = files[ ii ];
          filename          = runID + "." + editLabel + "."
-                             + filename.section( ".", 1, -2 ) + ".xml";
+                             + filename.section( ".", -5, -2 ) + ".xml";
          filename          = workingDir + filename;
 
          if ( QFile( filename ).exists() )

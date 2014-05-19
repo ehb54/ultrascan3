@@ -2473,9 +2473,9 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
    // Special case:  self-association  n A <--> An
    if ( num_comp == 2 )       // Only 2 components and one association rule
    {
-      int    st0 = af_params.association[ 0 ].stoichs[ 0 ];
-      int    st1 = af_params.association[ 0 ].stoichs[ 1 ];
-      double keq = af_params.association[ 0 ].k_eq;
+      int    st0     = af_params.association[ 0 ].stoichs[ 0 ];
+      int    st1     = af_params.association[ 0 ].stoichs[ 1 ];
+      double k_assoc = af_params.association[ 0 ].k_assoc;
 #ifndef NO_DB
       emit current_component( -Npts );
 #endif
@@ -2487,13 +2487,13 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
 //DbgLv(2) << "RSA:  j st0 st1" << j << st0 << st1;
 
           if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
-             c1 = ( sqrt( 1.0 + 4.0 * keq * ct ) - 1.0 ) / ( 2.0 * keq );
+             c1 = ( sqrt( 1.0 + 4.0 * k_assoc * ct ) - 1.0 ) / ( 2.0 * k_assoc );
 
           else if ( st0 == 3 && st1 == -1 )           // mono <--> trimer
-             c1 = US_AstfemMath::cube_root( -ct / keq, 1.0 / keq, 0.0 );
+             c1 = US_AstfemMath::cube_root( -ct / k_assoc, 1.0 / k_assoc, 0.0 );
 
           else if ( st0 > 3 && st1 == -1 )           // mono <--> n-mer
-             c1 = US_AstfemMath::find_C1_mono_Nmer( st0, keq, ct );
+             c1 = US_AstfemMath::find_C1_mono_Nmer( st0, k_assoc, ct );
 
           else
           {
@@ -2502,7 +2502,7 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
              return;
           }
 
-          double c2 = keq * pow( c1, (double)st0 );
+          double c2 = k_assoc * pow( c1, (double)st0 );
 
           if ( af_params.role[ 0 ].stoichs[ 0 ] > 0 )    // c1=reactant
           {
@@ -2639,19 +2639,19 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
        double uhat;
 
        // Current rule used
-       int    rule = rg[ af_params.rg_index ].association[ 0 ];
-       int    st0  = system.associations[ rule ].stoichs[ 0 ];
-       int    st1  = system.associations[ rule ].stoichs[ 1 ];
-       double keq  = system.associations[ rule ].k_eq;
-       double koff = system.associations[ rule ].k_off;
+       int    rule     = rg[ af_params.rg_index ].association[ 0 ];
+       int    st0      = system.associations[ rule ].stoichs[ 0 ];
+       int    st1      = system.associations[ rule ].stoichs[ 1 ];
+       double k_assoc  = system.associations[ rule ].k_assoc;
+       double k_off    = system.associations[ rule ].k_off;
 
        for ( int j = 0; j < Npts; j++ )
        {
           double ct = C1[ 0 ][ j ] + C1[ 1 ][ j ];
 
-          double dva = timeStep * koff * keq;
-          double dvb = timeStep * koff + 2.;
-          double dvc = timeStep * koff * ct + 2.0 * C1[ 0 ][ j ];
+          double dva = timeStep * k_off * k_assoc;
+          double dvb = timeStep * k_off + 2.;
+          double dvc = timeStep * k_off * ct + 2.0 * C1[ 0 ][ j ];
 
           if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
              uhat = 2 * dvc / ( dvb + sqrt( dvb * dvb + 4 * dva * dvc ) );
@@ -2766,8 +2766,8 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
     for ( int m = 0; m < num_rule; m++ )
     {
        US_Model::Association* as = &af_params.association[ m ];
-       double k_1        = as->k_off;
-       double k1         = as->k_eq * k_1;
+       double k_off      = as->k_off;
+       double k_on       = as->k_assoc * k_off;
        double Q_reactant = 1.0;
        double Q_product  = 1.0;
 
@@ -2794,7 +2794,7 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
           }
        }
 
-       Q[ m ] = k1 * Q_reactant - k_1 * Q_product;
+       Q[ m ] = k_on * Q_reactant - k_off * Q_product;
     }
 
     for ( int i = 0; i < num_comp; i++ )
@@ -2825,8 +2825,8 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
    for ( int m = 0; m < num_rule; m++ )
    {
       US_Model::Association* as = &af_params.association[ m ];
-      double k_1  = as->k_off;
-      double k1   = as->k_eq * k_1;
+      double k_off  = as->k_off;
+      double k_on   = as->k_assoc * k_off;
 
       for ( int j = 0; j < num_comp; j++ )
       {
@@ -2869,7 +2869,7 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
             }
          }
 
-         QC[ m ][ j ] = k1 * Q_reactant * deriv_r - k_1 * Q_product * deriv_p;
+         QC[ m ][ j ] = k_on * Q_reactant * deriv_r - k_off * Q_product * deriv_p;
       }  // C_j
    }    // m-rule
 

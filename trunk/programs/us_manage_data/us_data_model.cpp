@@ -2040,8 +2040,9 @@ QString US_DataModel::model_type( QString modxml )
    jj       = modxml.indexOf( " analysisType=" );
    imtype   = ( jj < 1 ) ? 0 : modxml.mid( jj ).section( quo, 1, 1 ).toInt();
 
-   // count of associations is count of k_eq attributes present
-   nassoc   = modxml.count( "k_eq=" );
+   // count of associations is count of k_assoc attributes present
+   nassoc   = modxml.count( "k_assoc=" );
+   nassoc   = ( nassoc == 0 ) ? modxml.count( "k_eq=" ) : nassoc;
 
    // global type number from type attribute
    jj       = modxml.indexOf( " globalType=" );

@@ -85,6 +85,9 @@ DDIR=${PKGDIR}/somo
 echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}
 
+# Remove the somo/doc/manual/attic directory
+rm -rf ${PKGDIR}/somo/doc/manual/attic
+
 SOMODIR=$SOMOBASE/somo
 if [ -d ${SOMODIR} -a -d ${SOMODIR}/demo ]; then
   # Clear out somo/demo so only present contents are copied

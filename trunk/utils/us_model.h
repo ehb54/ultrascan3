@@ -22,7 +22,7 @@ class US_UTIL_EXTERN US_Model
 
       //! The type of analysis used with the model
       enum AnalysisType { MANUAL, TWODSA, TWODSA_MW, GA, GA_MW, PCSA,
-                          COFS, FE, CUSTOMGRID };
+                          COFS, FE, CUSTOMGRID, DISCRETEGA };
 
       //! The type of global analysis used with the model
       enum GlobalType { NONE, MENISCUS, GLOBAL, SUPERGLOBAL };
@@ -43,7 +43,7 @@ class US_UTIL_EXTERN US_Model
       GlobalType   global;      //!< Global params used for model generation
 
 		//! An integer to define the number of subgrids for a CUSTOMGRID needed
-		//! for the 2DSA initialization
+		//! for the 2DSA initialization or output components for DISCRETEGA
 		int		  subGrids;
 
       //! An index into components (-1 means none).  Generally buffer data 
@@ -193,8 +193,8 @@ class US_UTIL_EXTERN US_Model
       {
          public:
          Association();
-         double k_eq;             //!< Equilibrium Constant
-         double k_off;            //!< Dissociation Constant 
+         double k_assoc;          //!< Association Constant
+         double k_off;            //!< K_Off Rate Constant 
          QVector< int > rcomps;   //!< List of all system components
                                   //!<  involved in this reaction
          QVector< int > stoichs;  //!< List of Stoichiometry values of

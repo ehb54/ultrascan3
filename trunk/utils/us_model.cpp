@@ -58,15 +58,15 @@ bool US_Model::SimulationComponent::operator==
 
 US_Model::Association::Association()
 {
-   k_eq  = 0.0;
-   k_off = 0.0;
+   k_assoc   = 0.0;
+   k_off     = 0.0;
    rcomps .clear();
    stoichs.clear();
 }
 
 bool US_Model::Association::operator== ( const Association& a ) const
 {
-   if ( k_eq    != a.k_eq    ) return false;
+   if ( k_assoc != a.k_assoc ) return false;
    if ( k_off   != a.k_off   ) return false;
    if ( rcomps  != a.rcomps  ) return false;
    if ( stoichs != a.stoichs ) return false;
@@ -374,7 +374,8 @@ QString US_Model::typeText( void )
       { COFS,        QObject::tr( "COFS"        ) },
       { FE,          QObject::tr( "FE"          ) },
       { PCSA,        QObject::tr( "PCSA"        ) },
-      { CUSTOMGRID,  QObject::tr( "CUSTOMGRID"  ) }
+      { CUSTOMGRID,  QObject::tr( "CUSTOMGRID"  ) },
+      { DISCRETEGA,  QObject::tr( "DISCRETE-GA" ) }
    };
 
    const int ntmap = sizeof( tmap ) / sizeof( tmap[ 0 ] );
@@ -662,8 +663,17 @@ void US_Model::mfem_scans( QXmlStreamReader& xml, SimulationComponent& sc )
 void US_Model::get_associations( QXmlStreamReader& xml, Association& as )
 {
    QXmlStreamAttributes a = xml.attributes();
-   as.k_eq  = a.value( "k_eq"  ).toString().toDouble();
-   as.k_off = a.value( "k_off" ).toString().toDouble();
+   QString skassoc = a.value( "k_assoc"   ).toString();
+   QString skeq    = a.value( "k_eq"      ).toString();
+   QString skoff   = a.value( "k_off"     ).toString();
+
+   if ( ! skassoc.isEmpty() )
+      as.k_assoc      = skassoc.toDouble();
+   else if ( ! skeq.isEmpty() )
+      as.k_assoc      = skeq.toDouble();
+
+   if ( ! skoff.isEmpty() )
+      as.k_off        = skoff.toDouble();
 
    while ( ! xml.atEnd() )
    {
@@ -913,8 +923,8 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
    {
       Association* as = &associations[ i ];
       xml.writeStartElement( "association" );
-      xml.writeAttribute( "k_eq",  QString::number( as->k_eq  ) );
-      xml.writeAttribute( "k_off", QString::number( as->k_off ) );
+      xml.writeAttribute( "k_assoc", QString::number( as->k_assoc ) );
+      xml.writeAttribute( "k_off",   QString::number( as->k_off   ) );
 
       for ( int j = 0; j < as->rcomps.size(); j++ )
       {

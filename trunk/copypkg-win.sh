@@ -51,6 +51,8 @@ cp -rp ${SOMOBASE}/doc ${DESTDIR}/somo/
 cp -rp ${SOMOBASE}/somo/demo ${DESTDIR}/somo/
 cp -rp ${SOMOBASE}/somo/test ${DESTDIR}/somo/
 cp -p ${SOMOBASE}/LICENSE.txt ${DESTDIR}/
+# Remove somo/doc/manual/attic directory
+rm -rf ${DESTDIR}/somo/doc/manual/attic
 
 echo "Copy Qt DLLs to bin"
 for F in ${QTDLLS}; do
