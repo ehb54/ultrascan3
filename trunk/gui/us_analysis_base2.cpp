@@ -1500,11 +1500,13 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
       QString fname  = QString( fpath ).section( "/", -1, -1 );
       int     st     = freport.saveDocumentFromFile( pfdir, fname, dbP,
                                                      idEdit, tripdesc );
+qDebug() << "Rpt: ii" << ii << "fname" << fname << "st" << st;
 
       if ( st == US_DB2::OK  &&  fname.contains( ".svg" ) )
       {
          QString fnpng  = QString( fname ).section( ".", 0, -2 ) + ".png";
          freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit, tripdesc );
+qDebug() << "Rpt:   fnpng" << fnpng << "fsize" << QFile(pfdir+"/"+fnpng).size();
       }
 
       else if ( st != US_DB2::OK )
