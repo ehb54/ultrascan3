@@ -41,7 +41,7 @@ The first checkbox <i>Resulting I(q) created as a percent of the original I(q) (
 The second checkbox <i>Create sum of peak curves</i> allows to check that the individual Gaussian will add back up reconstructing the original <i>I(q)</i> vs. <i>q</i> curves. If checked, their point-wise sum can also be saved, as either <i>sum(I)</i> (reconstructed values) and <i>sum(G)</i> (pure Gaussians) curves. If <i>linear</i> baselines were established and subtracted, two sums will be produced, without and with baseline back-addition (default: <b>unchecked</b>).(<i>Integral</i> baseline add-back is not currently available).<p>
 
 <li>
-<i>Compute standard deviations as a difference between the sum of Gaussians and original I(q)</i>. In all cases, the original errors associated with each <i>I(q)</i> vs. <i>q</i> point in each frame will assigned %-wise to each point in the resulting decomposed <i>I(q)</i> vs. <i>q</i> curves for each frame. Alternatively, if this checkbox is checked, and only if the % of the original data are chosen for saving, a new set of errors can be computed, and assigned %-wise to each point in the decomposed <i>I(q)</i> vs. <i>q</i> curves, by point-wise calculating the difference between the sum of the Gaussians (with baseline added) and the original curve (default: <b>unchecked</b>).<p>
+<i>Compute standard deviations as a difference between the sum of Gaussians and original I(q)</i>. In all cases, the original errors associated with each <i>I(q)</i> vs. <i>q</i> point in each frame will assigned %-wise to each point in the resulting decomposed <i>I(q)</i> vs. <i>q</i> curves for each frame <span style="color:#CC0000">(Note: a full re-evaluation of the SD treatment is pending as of May 2014)</span>. Alternatively, if this checkbox is checked, and only if the % of the original data are chosen for saving, a new set of errors can be computed, and assigned %-wise to each point in the decomposed <i>I(q)</i> vs. <i>q</i> curves, by point-wise calculating the difference between the sum of the Gaussians (with baseline added) and the original curve (default: <b>unchecked</b>).<p>
 </ul>
 
 If some of the <i>I(t)</i> data have zero SD, an additional line will be present in this panel, as shown above.<p>
@@ -86,7 +86,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 15, 2014.
+Last modified on May 20, 2014.
 </font>
 </body>
 </html>
