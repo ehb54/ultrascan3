@@ -58,6 +58,7 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
 
    le_mlfilt = us_lineedit( "" );
    main->addWidget( le_mlfilt, row++, 1 );
+   connect( le_mlfilt, SIGNAL( editingFinished() ), SLOT( list_models() ) );
 
    QPushButton* pb_models = us_pushbutton( tr( "List Available Models" ) );
    connect( pb_models, SIGNAL( clicked() ), SLOT( list_models() ) );
