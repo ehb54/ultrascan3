@@ -3,9 +3,10 @@
 #include "../include/us_version.h"
 #ifdef QT4
 #include <QtCore>
+#endif
+#include <qregexp.h>
 //Added by qt3to4:
 #include <Q3TextStream>
-#endif
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -484,14 +485,16 @@ void US_Config::setDefault()
    // Set system directory
    if ( ultrascan == "" )
    {
-      QString warning = tr( "Error:" ), message;
-      message = tr( "The required environment variable ULTRASCAN is not set.\n"
-                    "Please add it and restart the program.  Exiting." );
-      cerr << warning << "\n" << message << endl;
-      emit errorMessage(warning, message);
-      exit( -1 );
+      ultrascan = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+      // QString warning = tr( "Error:" ), message;
+      // message = tr( "The required environment variable ULTRASCAN is not set.\n"
+      //               "Please add it and restart the program.  Exiting." );
+      // cerr << warning << "\n" << message << endl;
+      // emit errorMessage(warning, message);
+      // exit( -1 );
    }
 
+   qDebug( QString( "ultrascan %1\n" ).arg( ultrascan ) );
    config_list.system_dir = QDir::convertSeparators( ultrascan );
 #endif
 
