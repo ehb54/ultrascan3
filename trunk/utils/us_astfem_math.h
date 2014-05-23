@@ -361,7 +361,7 @@ class US_UTIL_EXTERN US_AstfemMath
       {
          public:
          int            comp_index; //!< index of this component
-         QVector< int > rcomps;     //!< assoc index where this component occurs
+         QVector< int > assocs;     //!< assoc indexes where component occurs
          QVector< int > stoichs;    //!< stoichiometry of each component in 
                                     //!< each assoc., index is linked to assoc.;
                                     //!< sign: +ve.->reactant, -ve.->product.
@@ -371,11 +371,11 @@ class US_UTIL_EXTERN US_AstfemMath
       class AstFemParameters
       {
          public:
-         int simpoints; //!< The number of datapoints for the simulation
+         int    simpoints;        //!< number of datapoints for the simulation
 
-         QVector< double > s;       //!< sedimentation coefficient
-         QVector< double > D;       //!< Diffusion coefficient
-         QVector< double > kext;    //!< extinction coefficient
+         QVector< double > s;     //!< sedimentation coefficient
+         QVector< double > D;     //!< Diffusion coefficient
+         QVector< double > kext;  //!< extinction coefficient
          QVector< ComponentRole > role; //!< role of each component
                                         //!<  in various reactions
          double pathlength;       //!< path length of centerpiece;

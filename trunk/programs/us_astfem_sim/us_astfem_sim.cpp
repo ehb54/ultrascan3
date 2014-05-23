@@ -328,7 +328,7 @@ void US_Astfem_Sim::set_parameters( void )
 
 void US_Astfem_Sim::stop_simulation( void )
 {
-   stopFlag = ! stopFlag;
+   stopFlag  = true;
 
    if ( astfem_rsa )
       astfem_rsa->setStopFlag( stopFlag );
@@ -453,7 +453,7 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
    progress->reset();
    lcd_component->display( 0 );
 
-   stopFlag = false;
+   stopFlag  = false;
    
    simparams.mesh_radius.clear();
    simparams.firstScanIsConcentration = false;
@@ -489,6 +489,7 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       astfem_rsa->setTimeCorrection( time_correctionFlag );
       astfem_rsa->setStopFlag( stopFlag );
    
+      astfem_rsa->set_debug_flag( dbg_level );
       astfem_rsa->calculate( sim_data );
 
       if ( dbg_level > 0 )
@@ -501,6 +502,7 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
          int jhi=0;
          int nscn=sim_data.scanCount();
          int ncvl=sim_data.pointCount();
+
          for ( int ii=0; ii<nscn; ii++ )
          {
             double t0=sim_data.scanData[ii].seconds;

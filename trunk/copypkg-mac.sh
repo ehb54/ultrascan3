@@ -53,9 +53,9 @@ echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}
 # Copy somo doc
 SDIR=${SOMOBASE}/doc
+/bin/rm -rf ${SDIR}/manual/attic
 echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}
-/bin/rm -rf ${SDIR}/manual/attic
 
 SDIR=${SRCDIR}/Frameworks
 DDIR=${PKGDIR}

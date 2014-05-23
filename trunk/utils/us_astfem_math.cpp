@@ -853,9 +853,9 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
    double Rx[ 4 ];
    double Qx[ 3 ], Qy[ 3 ];
    double Tx[ 3 ], Ty[ 3 ];
-   double StifL[ 3 ][ 2 ];
-   double StifR[ 4 ][ 2 ];
-   double Lam [ 28 ][ 4 ];
+   double** StifL;
+   double** StifR;
+   double** Lam;
    double DJac;
    double phiL [ 3 ];
    double phiLx[ 3 ];
@@ -878,12 +878,13 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
    Rx[ 2 ] = vx[4];
    Rx[ 3 ] = vx[3];
 
-   zero_2d( 3, 2, (double**)StifL );
-   zero_2d( 4, 2, (double**)StifR );
-   hh = vx[3] - vx[2];
-   slope = (vx[3] - vx[5])/dt;
-   npts = 28;
-   zero_2d  ( npts, 4, (double**)Lam );
+   initialize_2d( 3, 2, &StifL );
+   initialize_2d( 4, 2, &StifR );
+
+   hh      = vx[ 3 ] - vx[ 2 ];
+   slope   = ( vx[ 3 ] - vx[ 5 ] ) / dt;
+   npts    = 28;
+   initialize_2d( npts, 4, &Lam );
    DefineFkp( npts,    (double**)Lam );
 
    //
@@ -897,17 +898,19 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
    {
       x_gauss = Lam[k][0] * Qx[0] + Lam[k][1] * Qx[1] + Lam[k][2] * Qx[2];
       y_gauss = Lam[k][0] * Qy[0] + Lam[k][1] * Qy[1] + Lam[k][2] * Qy[2];
-      DJac = 2.0 * AreaT( Qx, Qy );
+      DJac    = 2.0 * AreaT( Qx, Qy );
 
-      xn1 = x_gauss + slope * ( dt - y_gauss ); // trace-forward point at t_n+1 from (x_g, y_g)
+      // trace-forward point at t_n+1 from (x_g, y_g)
+      xn1     = x_gauss + slope * ( dt - y_gauss );
 
       //
       // find phi, phi_x, phi_y on L and C at (x,y)
       //
 
       BasisTR( Lx, Ly, x_gauss, y_gauss, phiL, phiLx, phiLy);
-      phiC  = ( xn1 - vx[2] )/hh;      // hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
-      phiCx = 1./hh;
+      // hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
+      phiC    = ( xn1 - vx[ 2 ] ) / hh;
+      phiCx   = 1. / hh;
 
       for (i=0; i<3; i++)
       {
@@ -963,6 +966,8 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
       }
    }
 
+   clear_2d( npts, Lam );
+
    for ( i = 0; i < 2; i++ )
    {
       Stif[ 0 ][ i ] = StifL[ 0 ][ i ] + StifR[ 0 ][ i ];
@@ -972,6 +977,8 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
       Stif[ 4 ][ i ] =                   StifR[ 2 ][ i ];
    }
 
+   clear_2d( 3, StifL );
+   clear_2d( 4, StifR );
 }
 
 void US_AstfemMath::IntQTm( double* vx, double D, double sw2, 
@@ -987,10 +994,10 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
    double Qx[ 4 ], Qy[ 4 ];
    double Tx[ 3 ], Ty[ 3 ];
    double DJac;
-   double StifL[ 4 ][ 2 ];
-   double StifR[ 4 ][ 2 ];
-   double Lam [ 28 ][ 4 ];
-   double Gs  [ 25 ][ 3 ];
+   double** StifL;
+   double** StifR;
+   double** Lam;
+   double** Gs;
    double phiL [ 4 ];
    double phiLx[ 4 ];
    double phiLy[ 4 ];
@@ -1016,8 +1023,8 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
    Rx[ 2 ] = vx[ 5 ];
    Rx[ 3 ] = vx[ 4 ];
 
-   zero_2d( 4, 2, (double**)StifL );
-   zero_2d( 4, 2, (double**)StifR );
+   initialize_2d( 4, 2, &StifL );
+   initialize_2d( 4, 2, &StifR );
 
    //
    // integration over element Q :
@@ -1032,8 +1039,8 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
    Qy[ 2 ] = dt;
    Qy[ 3 ] = dt; // vertices of left T
 
-   npts = 5 * 5;
-   zero_2d       ( npts, 3, (double**)Gs );
+   npts    = 5 * 5;
+   initialize_2d( 25, 3, &Gs );
    DefineGaussian( 5,       (double**)Gs );
 
    double psi[  4 ];
@@ -1082,6 +1089,8 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
       }
    }
 
+   clear_2d( npts, Gs );
+
    //
    // integration over T:
    //
@@ -1094,7 +1103,7 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
    Ty[ 2 ] = dt;
 
    npts = 28;
-   zero_2d  ( npts, 4, (double**)Lam );
+   initialize_2d( npts, 4, &Lam );
    DefineFkp( npts,    (double**)Lam );
 
    for ( k = 0; k < npts; k++ )
@@ -1126,6 +1135,8 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
       }
    }
 
+   clear_2d( npts, Lam );
+
    for ( i = 0; i < 2; i++ )
    {
       Stif[ 0 ][ i ] = StifL[ 0 ][ i ];
@@ -1136,6 +1147,8 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
       Stif[ 5 ][ i ] =                   StifR[ 2 ][ i ];
    }
 
+   clear_2d( 4, StifL );
+   clear_2d( 4, StifR );
 }
 
 
@@ -1152,10 +1165,10 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
    double Qx[ 4 ], Qy[ 4 ];
    double Tx[ 3 ], Ty[ 3 ];
    double DJac;
-   double StifL[ 4 ][ 2 ];
-   double StifR[ 4 ][ 2 ];
-   double Gs  [ 25 ][ 3 ];
-   double Lam [ 28 ][ 4 ];
+   double** StifL;
+   double** StifR;
+   double** Gs;
+   double** Lam;
    double phiL [ 4 ];
    double phiLx[ 4 ];
    double phiLy[ 4 ];
@@ -1184,8 +1197,8 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
    Ry[ 1 ] = 0.0;
    Ry[ 2 ] = dt;
 
-   zero_2d( 4, 2, (double**)StifL );
-   zero_2d( 4, 2, (double**)StifR );
+   initialize_2d( 4, 2, &StifL );
+   initialize_2d( 4, 2, &StifR );
 
    //
    // integration over element Q
@@ -1200,8 +1213,8 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
    Qy[ 2 ] = dt;
    Qy[ 3 ] = dt;
 
-   npts = 5 * 5;
-   zero_2d       ( npts, 3, (double**)Gs );
+   npts    = 5 * 5;
+   initialize_2d( npts, 3, &Gs );
    DefineGaussian( 5,       (double**)Gs );
 
    double psi[ 4 ], psi1[ 4 ], psi2[ 4 ], jac[ 4 ];
@@ -1249,6 +1262,8 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
       }
    }
 
+   clear_2d( npts, Gs );
+
    //
    // integration over T:
    //
@@ -1260,8 +1275,8 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
    Ty[ 1 ] = 0.0;
    Ty[ 2 ] = dt;
 
-   npts = 28;
-   zero_2d  ( npts, 4, (double**)Lam );
+   npts    = 28;
+   initialize_2d( npts, 4, &Lam );
    DefineFkp( npts,    (double**)Lam );
 
    for ( k = 0; k < npts; k++ )
@@ -1293,6 +1308,8 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
       }
    }
 
+   clear_2d( npts, Lam );
+
    for ( i = 0; i < 2; i++ )
    {
       Stif[ 0 ][ i ] = StifL[ 0 ][ i ];
@@ -1302,6 +1319,8 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
       Stif[ 4 ][ i ] = StifL[ 2 ][ i ] + StifR[ 2 ][ i ];
    }
 
+   clear_2d( 4, StifL );
+   clear_2d( 4, StifR );
 }
 
 void US_AstfemMath::IntQTn1( double* vx, double D, double sw2, 
@@ -1313,8 +1332,8 @@ void US_AstfemMath::IntQTn1( double* vx, double D, double sw2,
    double x_gauss, y_gauss, dval;
    double Lx[ 3 ], Ly[ 3 ];
    double Tx[ 3 ], Ty[ 3 ];
-   double StifR[ 4 ][ 2 ];
-   double Lam [ 28 ][ 4 ];
+   double** StifR;
+   double** Lam;
    double DJac;
    double phiL [ 4 ];
    double phiLx[ 4 ];
@@ -1328,7 +1347,7 @@ void US_AstfemMath::IntQTn1( double* vx, double D, double sw2,
    Ly[ 1 ] = 0.0;
    Ly[ 2 ] = dt;
 
-   zero_2d( 4, 2, (double**)StifR );
+   initialize_2d( 4, 2, &StifR );
 
    //
    // integration over T:
@@ -1341,9 +1360,9 @@ void US_AstfemMath::IntQTn1( double* vx, double D, double sw2,
    Ty[ 1 ] = 0.0;
    Ty[ 2 ] = dt;
 
-   npts = 28;
-   zero_2d  ( npts, 4, (double**)Lam );
-   DefineFkp( npts,    (double**)Lam );
+   npts    = 28;
+   initialize_2d( npts, 4, &Lam );
+   DefineFkp( npts, Lam );
 
    for ( k = 0; k < npts; k++ )
    {
@@ -1375,6 +1394,8 @@ void US_AstfemMath::IntQTn1( double* vx, double D, double sw2,
       Stif[ 2 ][ i ] = StifR[ 2 ][ i ];
    }
 
+   clear_2d( npts, Lam );
+   clear_2d( 4, StifR );
 }
 
 void US_AstfemMath::DefineFkp( int npts, double** Lam )

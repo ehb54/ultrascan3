@@ -347,6 +347,7 @@ DbgLv(1) << "RSA:PO:    Accel nradi" << nradi << "CT0size" << CT0.radius.size();
                calculate_ni( current_speed, step_speed,
                              CT0, simdata, true );
 
+               qApp->processEvents();
                if ( stopFlag ) return 1;
 
                // Add the acceleration time:
@@ -436,6 +437,7 @@ DbgLv(1) << "RSA: B:cc step" << cc << step << ": c0 cm cn"
             calculate_ni( step_speed, step_speed,
                           CT0, simdata, false );
 
+            qApp->processEvents();
             if ( stopFlag ) return 1;
 
             // Set the current time to the last scan of this speed step
@@ -539,7 +541,7 @@ DbgLv(2) << "RSA:    jj index" << jj << index;
          af_params.local_index[ index ] = jj;
 
          cr.comp_index        = index;
-         cr.rcomps .clear();
+         cr.assocs .clear();
          cr.stoichs.clear();
 
          af_params.role[ jj ] =  cr;  // Add jj'th rule
@@ -560,7 +562,7 @@ DbgLv(2) << "RSA:      rr af-index as-react" << rr
                     as->rcomps[ rr ] )
                {
                   // local index for the rule
-                  af_params.role[ jj ].rcomps .append( aa );
+                  af_params.role[ jj ].assocs .append( aa );
                   af_params.role[ jj ].stoichs.append( as->stoichs[ rr ] );
                   break;
                }
@@ -675,6 +677,7 @@ QDateTime clcSt5 = QDateTime::currentDateTime();
             qApp->processEvents();
 #endif
 
+            qApp->processEvents();
             if ( stopFlag ) return 1;
          }  // End of for acceleration
 
@@ -758,7 +761,6 @@ DbgLv(2) << "RSA:    current_time" << current_time << "fscan lscan"
 #ifndef NO_DB
          qApp->processEvents();
 #endif
-
          if ( stopFlag ) return 1;
       } // Speed step loop
 #ifdef TIMING_RA
@@ -1600,6 +1602,7 @@ ttT6+=(clcSt6.msecsTo(clcSt7));
 #ifndef NO_DB
       if ( show_movie )
       {
+         qApp->processEvents();
          if ( stopFlag ) break;
 
          emit new_scan( &x, C0 );
@@ -2482,41 +2485,43 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
 
       for ( int j = 0; j < Npts; j++ )
       {
-          double c1 = 0.0;
-          double ct = C0[ 0 ].concentration[ j ] + C0[ 1 ].concentration[ j ] ;
+         double c1 = 0.0;
+         double ct = C0[ 0 ].concentration[ j ] + C0[ 1 ].concentration[ j ] ;
 //DbgLv(2) << "RSA:  j st0 st1" << j << st0 << st1;
 
-          if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
-             c1 = ( sqrt( 1.0 + 4.0 * k_assoc * ct ) - 1.0 ) / ( 2.0 * k_assoc );
+         if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
+            c1 = ( sqrt( 1.0 + 4.0 * k_assoc * ct ) - 1.0 ) / ( 2.0 * k_assoc );
 
-          else if ( st0 == 3 && st1 == -1 )           // mono <--> trimer
-             c1 = US_AstfemMath::cube_root( -ct / k_assoc, 1.0 / k_assoc, 0.0 );
+         else if ( st0 == 3 && st1 == -1 )           // mono <--> trimer
+            c1 = US_AstfemMath::cube_root( -ct / k_assoc, 1.0 / k_assoc, 0.0 );
 
-          else if ( st0 > 3 && st1 == -1 )           // mono <--> n-mer
-             c1 = US_AstfemMath::find_C1_mono_Nmer( st0, k_assoc, ct );
+         else if ( st0 > 3 && st1 == -1 )           // mono <--> n-mer
+            c1 = US_AstfemMath::find_C1_mono_Nmer( st0, k_assoc, ct );
 
-          else
-          {
-             DbgErr() << "Warning: invalid stoichiometry in decompose()"
-                      << "  st0 st1 c1" << st0 << st1 << c1;
-             return;
-          }
+         else
+         {
+            DbgErr() << "Warning: invalid stoichiometry in decompose()"
+                     << "  st0 st1 c1" << st0 << st1 << c1;
+            return;
+         }
 
-          double c2 = k_assoc * pow( c1, (double)st0 );
+         double c2 = k_assoc * pow( c1, (double)st0 );
 
-          if ( af_params.role[ 0 ].stoichs[ 0 ] > 0 )    // c1=reactant
-          {
-              C0[ 0 ].concentration[ j ] = c1 ;
-              C0[ 1 ].concentration[ j ] = c2 ;
-          }
-          else
-          {
-              C0[ 0 ].concentration[ j ] = c2 ;          // c1=product
-              C0[ 1 ].concentration[ j ] = c1 ;
-          }
+         if ( af_params.role[ 0 ].stoichs[ 0 ] > 0 )    // c1=reactant
+         {
+            C0[ 0 ].concentration[ j ] = c1 ;
+            C0[ 1 ].concentration[ j ] = c2 ;
+         }
+         else
+         {
+            C0[ 0 ].concentration[ j ] = c2 ;          // c1=product
+            C0[ 1 ].concentration[ j ] = c1 ;
+         }
 #ifndef NO_DB
-          emit current_component( j + 1 );
+         emit current_component( j + 1 );
 #endif
+         qApp->processEvents();
+         if ( stopFlag )  break;
       }
 DbgLv(2) << "RSA:  decompose NCOMP=2 return";
       return;
@@ -2533,8 +2538,8 @@ DbgLv(2) << "RSA:  decompose NCOMP=2 return";
    {
       for( int j = 0; j < Npts; j++ )
       {
-          C1[ i ][ j ] = C0[ i ].concentration[ j ];
-          C2[ i ][ j ] = C1[ i ][ j ];
+         C1[ i ][ j ] = C0[ i ].concentration[ j ];
+         C2[ i ][ j ] = C1[ i ][ j ];
       }
    }
 
@@ -2546,15 +2551,16 @@ DbgLv(2) << "RSA:  decompose NCOMP=2 return";
    // Get minimum k
    for ( int i = 0; i < af_params.association.size(); i++ )
    {
-      if ( k_min > af_params.association[ i ].k_off )
-           k_min = af_params.association[ i ].k_off;
+      k_min           = qMin( k_min, af_params.association[ i ].k_off );
    }
 
-   if ( k_min < 1.0e-12 ) k_min = 1.0e-12;
+   k_min           = qMin( k_min, 1.0e-12 );
 
    // Max number of time steps to get to equilibrium
    const int time_max     = 100;
    double    timeStepSize = - log( 1.0e-7 ) / ( k_min * time_max );
+DbgLv(1) << "RSA:  decompose k_min time_max timeStepSize"
+ << k_min << time_max << timeStepSize;
 
    // time loop
 #ifndef NO_DB
@@ -2575,6 +2581,8 @@ DbgLv(2) << "RSA:  decompose NCOMP=2 return";
 #endif
 
       ReactionOneStep_Euler_imp( Npts, C1, timeStepSize );
+
+      if ( stopFlag )  break;
 
       double diff = 0.0;
       double ct   = 0.0;
@@ -2632,6 +2640,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
       int Npts, double** C1, double timeStep )
 {
    int num_comp = af_params.role.size();
+DbgLv(2) << "RSA:Eul: Npts timeStep" << Npts << timeStep;
 
    // Special case:  self-association  n A <--> An
    if ( num_comp == 2 )       // only  2 components and one association rule
@@ -2688,7 +2697,6 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
 
    double** A;
 
-DbgLv(1) << "RSA: newX3 num_comp" << num_comp;
    QVector< double >  y0Vec( num_comp );
    QVector< double >  dnVec( num_comp );
    QVector< double >  bbVec( num_comp );
@@ -2716,8 +2724,12 @@ DbgLv(1) << "RSA: newX3 num_comp" << num_comp;
          for ( int i = 0; i < num_comp; i++ )
             y0[ i ] = C1[ i ][ j ] + delta_n[ i ];
 
+qDebug() << "RSA:Eul: j" << j << "iter" << iter << " y0[0]" << y0[0];
          Reaction_dydt( y0, b );                  // b=dy/dt
+qDebug() << "RSA:Eul:   post-dydt y0[0]" << y0[0] << "b0" << b[0];
          Reaction_dfdy( y0, A );                  // A=df/dy
+qDebug() << "RSA:Eul:    post-dfdy y0[0]" << y0[0] << "A00" << A[0][0]
+ << "A[n][n]" << A[num_comp-1][num_comp-1];
 
          for ( int i = 0; i < num_comp; i++ )
          {
@@ -2751,6 +2763,10 @@ DbgLv(1) << "RSA: newX3 num_comp" << num_comp;
       for ( int i = 0; i < num_comp; i++ ) C1[ i ][ j ] += delta_n[ i ];
 
    } // End of j (pts)
+int nn=num_comp-1;
+int mm=Npts-1;
+DbgLv(2) << "RSA: ReaEul: C1[0][0] C1[N][M]" << C1[0][0] << C1[nn][mm]
+ << "delta_n[M]" << delta_n[mm] << "b[M]" << b[mm];
 
    US_AstfemMath::clear_2d( num_comp, A );
 }
@@ -2770,6 +2786,7 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
        double k_on       = as->k_assoc * k_off;
        double Q_reactant = 1.0;
        double Q_product  = 1.0;
+//DbgLv(2) << "RSA:ReDydt: m k_off k_on" << m << k_off << k_on;
 
        for ( int n = 0; n < as->rcomps.size(); n++ )
        {
@@ -2783,6 +2800,9 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
 
           // extinction coefficient of n'th component
           double extn   = af_params.kext[ rgp->GroupComponent[ ind_cn ] ];
+//if(m==0)
+//DbgLv(2) << "RSA:ReDydt: n ind_cn rstoi react extn" << n << ind_cn << rstoi
+// << react << extn;
 
           if ( react > 0 ) // comp[n] here is reactant
           {
@@ -2802,14 +2822,15 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
        yt[ i ] = 0.0;
        US_AstfemMath::ComponentRole* cr = &af_params.role[ i ];
 
-       for ( int m = 0; m < cr->rcomps.size(); m++ )
+       for ( int m = 0; m < cr->assocs.size(); m++ )
        {
-          yt[ i ] -= ( (double)cr->stoichs[ m ] * Q[ cr->rcomps[ m ] ] );
+          yt[ i ] -= ( (double)cr->stoichs[ m ] * Q[ cr->assocs[ m ] ] );
        }
 
        // convert molar into signal concentration
        yt[ i ] *= af_params.kext[ rgp->GroupComponent[ i ] ];
     }
+DbgLv(2) << "RSA:ReDydt: yt[0] yt[n]" << yt[0] << yt[num_comp-1];
 }
 
 void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
@@ -2869,7 +2890,8 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
             }
          }
 
-         QC[ m ][ j ] = k_on * Q_reactant * deriv_r - k_off * Q_product * deriv_p;
+         QC[ m ][ j ] = k_on  * Q_reactant * deriv_r
+                      - k_off * Q_product  * deriv_p;
       }  // C_j
    }    // m-rule
 
@@ -2881,10 +2903,10 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
       {
          dfdy[ i ][ j ] = 0.0;
 
-         for ( int m = 0; m < cr->rcomps.size(); m++ )
+         for ( int m = 0; m < cr->assocs.size(); m++ )
          {
             dfdy[ i ][ j ] -= ( (double)cr->stoichs[ m ]
-                              *  QC[ cr->rcomps[ m ] ][ j ] );
+                              *  QC[ cr->assocs[ m ] ][ j ] );
          }
 
          // convert molar into signal concentration
@@ -2916,13 +2938,11 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    nu.clear();
    nu.reserve( Mcomp );
 
-DbgLv(2) << "RSA:     cra2: Mcomp" << Mcomp;
    for ( int i = 0; i < Mcomp; i++ )
    {
       double sw2 = af_params.s[ i ] * sq( rpm_stop * M_PI / 30 );
       nu .append( sw2 / af_params.D[ i ] );
    }
-DbgLv(2) << "RSA:     cra2:  nu[Nx]" << nu[nu.size()-1];
 
    mesh_gen( nu, simparams.meshType );
 
@@ -3084,7 +3104,8 @@ DbgLv(2) << "RSA:     cra2:  nu[Nx]" << nu[nu.size()-1];
    }
 
    // Total concentration at current and next time step
-DbgLv(1) << "RSA: newX3 Nx" << Nx;
+DbgLv(2) << "RSA: newX3 Nx" << Nx << "C0[0] C0[mc]"
+ << C0[0][0] << C0[Mcomp-1][0] << C0[0][Nx-1] << C0[Mcomp-1][Nx-1];
    QVector< double > CT0vec( Nx );
    QVector< double > CT1vec( Nx );
    QVector< double > rhVec ( Nx );
@@ -3099,6 +3120,7 @@ DbgLv(1) << "RSA: newX3 Nx" << Nx;
 
        CT1[ j ] = CT0[ j ];
    }
+DbgLv(2) << "RSA: newX3  CT0 CTn" << CT1[0] << CT1[Nx-1];
 
    // Time evolution
    double* right_hand_side = rhVec.data();
@@ -3356,7 +3378,6 @@ DbgLv(2) << "TMS:RSA:ra: time omegast" << simscan.time << simscan.omega_s_t
 #endif
 
    } // time loop
-DbgLv(2) << "RSA:     cra2:  NN" << NN;
 
    for ( int i = 0; i < Mcomp; i++ )
    {
