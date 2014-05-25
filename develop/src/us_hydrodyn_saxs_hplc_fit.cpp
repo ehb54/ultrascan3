@@ -775,6 +775,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_enables()
 
    cb_comm_dist1                ->setEnabled( !running && !cb_fix_dist1->isChecked() );
    cb_comm_dist2                ->setEnabled( !running && !cb_fix_dist2->isChecked() );
+   if ( !running && cb_fix_dist1->isChecked() )
+   {
+      cb_comm_dist1                ->setChecked( false );
+   }
+   if ( !running && cb_fix_dist2->isChecked() )
+   {
+      cb_comm_dist2                ->setChecked( false );
+   }
 
    // le_fix_curves            ->setEnabled( !running );
    le_epsilon               ->setEnabled( !running );
