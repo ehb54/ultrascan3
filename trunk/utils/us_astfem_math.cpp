@@ -894,6 +894,10 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
    Qx[ 1 ] = vx[3];
    Qx[ 2 ] = vx[2];
 
+   Qy[ 0 ] = 0.0;
+   Qy[ 1 ] = dt;
+   Qy[ 2 ] = dt;
+
    for (k=0; k<npts; k++)
    {
       x_gauss = Lam[k][0] * Qx[0] + Lam[k][1] * Qx[1] + Lam[k][2] * Qx[2];
