@@ -6,8 +6,9 @@ US_HttpPost::US_HttpPost( const QString& url, const QString& request ) : QObject
   QNetworkAccessManager* manager = new QNetworkAccessManager( this );
   QNetworkRequest        httpPost;
   
-  httpPost.setUrl( url );
-
+  httpPost.setHeader( QNetworkRequest::ContentTypeHeader, 
+                      QString( "application/x-www-form-urlencoded" ) );
+  httpPost.setUrl( QUrl( url ) );
 
   reply = manager->post( httpPost, request.toAscii().data() );
     
