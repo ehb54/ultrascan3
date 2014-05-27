@@ -64,7 +64,7 @@ class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
 
       QListWidget* lw_components;
       QPushButton* pb_load_c0;
-      QComboBox*   cmb_shape;
+      QComboBox*   cb_shape;
 
       QLineEdit*   le_vbar;
       QLineEdit*   le_mw;
@@ -74,19 +74,22 @@ class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
       QLineEdit*   le_f_f0;
       QLineEdit*   le_extinction;
       QLineEdit*   le_wavelength;
-      QLineEdit*   le_analyteConc;
-      QLineEdit*   le_molar;
+      QLineEdit*   le_sigConc;
+      QLineEdit*   le_molConc;
       QLineEdit*   le_sigma;
       QLineEdit*   le_delta;
       QLineEdit*   le_guid;
       QLineEdit*   le_description;
                   
-      QCheckBox*   cb_mw;
-      QCheckBox*   cb_s;
-      QCheckBox*   cb_D;
-      QCheckBox*   cb_f;
-      QCheckBox*   cb_f_f0;
-      QCheckBox*   cb_co_sed;
+      QCheckBox*   ck_isProd;
+      QCheckBox*   ck_sigConc;
+      QCheckBox*   ck_molConc;
+      QCheckBox*   ck_mw;
+      QCheckBox*   ck_s;
+      QCheckBox*   ck_D;
+      QCheckBox*   ck_f;
+      QCheckBox*   ck_f_f0;
+      QCheckBox*   ck_co_sed;
 
       QwtCounter*  ct_oligomer;
 
@@ -119,5 +122,6 @@ class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
       void del_component ( void );
       void edit_component( void );
       void edit_vbar     ( void );
+      void edit_analyte  ( void );
 };
 #endif

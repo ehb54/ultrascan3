@@ -39,6 +39,7 @@ class US_GUI_EXTERN US_AssociationsGui : public US_WidgetsDialog
       void new_row      ( void );
       void populate     ( void );
       void set_component( int, int, int );
+      bool combine_reactants( US_Model::Association* );
 
    private slots:
       void changed      ( int, int );

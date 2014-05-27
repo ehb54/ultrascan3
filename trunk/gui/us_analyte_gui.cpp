@@ -443,7 +443,10 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    main->addLayout( buttons, row, 0, 1, 3 );
 
    if ( guid.size() == 0 )
+   {
       reset();
+   }
+
    else
    {
       int result;
@@ -469,6 +472,16 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
 
       if ( result == US_DB2::OK )
          populate();
+      else
+      {
+         QMessageBox::warning( this,
+            tr( "Analyte Missing" ),
+            tr( "No Analyte was found " )
+            + ( disk_controls->db()
+               ? tr( "in the database" )
+               : tr( "on local disk" ) )
+            + tr( ", with a GUID of\n" ) + guid );
+      }
 
       QString strVBar = QString::number( analyte.vbar20, 'f', 4 );
       le_protein_vbar20->setText( strVBar );
@@ -731,6 +744,7 @@ void US_AnalyteGui::set_analyte_type( int type )
 void US_AnalyteGui::close( void )
 {
    bool changed = ! ( analyte == saved_analyte );
+
    if ( analyte.analyteGUID.size() != 36  ||  changed )
    {
       int response = QMessageBox::question( this,
