@@ -66,13 +66,17 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
   
    QStringList headers;
    headers << "" << "Analyte 1" << "Analyte 2" << "<==>" << "Product" 
-           << "K_association\n(molar units)" << "K_off Rate\n(1/sec)";
-   tw->setMinimumWidth( 580 );
+           << "K_dissociation\n(molar units)" << "K_off Rate\n(1/sec)";
+   int flwidth = fm->width( "8888.3456e+00" );
+   tw->setMinimumWidth( flwidth * 5 + 100 );
    tw->setRowHeight(   0, fm->height() + 4 );
-   tw->setColumnWidth( 0, fm->width( "D"          ) + 6 );
-   tw->setColumnWidth( 3, fm->width( "<==>"       ) - 2 );
-   tw->setColumnWidth( 5, fm->width( "1.1234e+00" ) + 6 );
-   tw->setColumnWidth( 6, fm->width( "1.1234e+00" ) + 6 );
+   tw->setColumnWidth( 0, fm->width( "D" ) + 6 );
+   tw->setColumnWidth( 1, flwidth );
+   tw->setColumnWidth( 2, flwidth );
+   tw->setColumnWidth( 3, fm->width( "<==>" ) - 2 );
+   tw->setColumnWidth( 4, flwidth );
+   tw->setColumnWidth( 5, flwidth );
+   tw->setColumnWidth( 6, flwidth );
 
    new_row();
 
@@ -98,7 +102,7 @@ US_AssociationsGui::US_AssociationsGui( US_Model& current_model )
       "* Drag a component from the upper list and drop it in an"
       " Analyte or Product cell.\n"
       "* Set the stoichiometry counter to the left of each component.\n"
-      "* Enter values for K_association and K_off Rate in their text cells.\n"
+      "* Enter values for K_dissociation and K_off Rate in their text cells.\n"
       "* Click on the \"D\" on the left side of any row to delete that row.\n"
       "* Click the \"Accept\" button when all equations are as desired." ) );
    main->addWidget( te_help, row, 0, 5, 2 );
@@ -132,7 +136,8 @@ void US_AssociationsGui::populate( void )
       US_Model::Association* as    = &model.associations[ i ];
       
       // First set koff and keq
-      QString s = QString::number( as->k_assoc, 'e', 4 );
+      double kd = as->k_assoc != 0.0 ? ( 1.0 / as->k_assoc ) : 0.0;
+      QString s = QString::number( kd, 'e', 4 );
       tw->setItem( i, 5, new QTableWidgetItem( s ) );
 
               s = QString::number( as->k_off,   'e', 4 );
@@ -265,13 +270,18 @@ void US_AssociationsGui::complete( void )
       int         index;
       int         count;
       int         koligo;
+      double      k_dissa;
       
       US_Model::Association association;
       QTableWidgetItem*     item;
 
       // If koff and keq are not set, the default is zero
       item = tw->item( i, 5 );
-      if ( item != 0 ) association.k_assoc  = item->text().toDouble();
+      if ( item != 0 )
+      {
+         k_dissa              = item->text().toDouble();
+         association.k_assoc  = k_dissa != 0.0 ? ( 1.0 / k_dissa ) : 0.0;
+      }
 
       item = tw->item( i, 6 );
       if ( item != 0 ) association.k_off    = item->text().toDouble();
