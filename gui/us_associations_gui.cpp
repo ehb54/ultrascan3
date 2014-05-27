@@ -353,6 +353,15 @@ void US_AssociationsGui::complete( void )
          return;
       }
 
+      if ( combine_reactants( &association ) )
+      {
+         QMessageBox::information( this,
+               tr( "Combined Identical Reactants" ),
+               tr( "In association %1, two identical reactants"
+                   " have been combined into a single one, with"
+                   " double the stoichiometry value." ).arg( i + 1 ) );
+      }
+
       associations << association;
    }
 
@@ -362,3 +371,34 @@ void US_AssociationsGui::complete( void )
    emit done();
    close();
 }
+
+// Combine any identical reactants
+bool US_AssociationsGui::combine_reactants( US_Model::Association* as )
+{
+   bool combined  = false;
+
+   if ( as->rcomps.size() == 3  &&  as->stoichs[ 1 ] > 0 )
+   {  // 2 reactants and a product:  check if reactants are identical
+      int comp1      = as->rcomps[ 0 ];
+      int comp2      = as->rcomps[ 1 ];
+      int stoi1      = as->stoichs[ 0 ];
+      int stoi2      = as->stoichs[ 1 ];
+
+      combined       = ( comp1 == comp2  &&  stoi1 == stoi2 );
+
+      if ( combined )
+      {  // Identical reactants:  combine and double stoichiometry
+         comp2            = as->rcomps [ 2 ];  // Product component
+         stoi2            = as->stoichs[ 2 ];  // Product stoichiometry
+         as->rcomps .resize( 2 );              // Single reactant and product
+         as->stoichs.resize( 2 );
+         as->rcomps [ 0 ] = comp1;             // Reactant component
+         as->stoichs[ 0 ] = stoi1 * 2;         // Doubled reactant stoich.
+         as->rcomps [ 1 ] = comp2;             // Product component
+         as->stoichs[ 1 ] = stoi2;             // Product stoichiometry
+      }
+   }
+
+   return combined;
+}
+

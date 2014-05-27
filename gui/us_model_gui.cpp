@@ -158,10 +158,10 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
       desc.modelGUID   = model.modelGUID;
       desc.editGUID    = model.editGUID;
 
-      working_model = model;
+      working_model    = model;
       model_descriptions << desc;
       show_model_desc();
-      recent_row    = 0;
+      recent_row       = 0;
 
       le_description->setText( model.description );
       le_wavelength ->setText( QString::number( model.wavelength, 'f', 1 ) );
@@ -341,12 +341,12 @@ void US_ModelGui::select_model( QListWidgetItem* item )
    recent_row    = index;
 
    // Populate 
-   le_description    ->setText( model.description );
-   le_wavelength     ->setText( QString::number( model.wavelength, 'f', 1 ) );
+   le_description->setText( model.description );
+   le_wavelength ->setText( QString::number( model.wavelength, 'f', 1 ) );
 
-   le_guid           ->setText( model.modelGUID );
+   le_guid       ->setText( model.modelGUID );
 
-   cb_optics         ->setCurrentIndex( model.optics );
+   cb_optics     ->setCurrentIndex( model.optics );
 }
 
 void US_ModelGui::delete_model( void )

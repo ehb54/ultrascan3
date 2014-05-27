@@ -31,43 +31,24 @@ US_Properties::US_Properties( US_Model& mod, int access )
    check = QIcon( US_Settings::appBaseDir() + "/etc/check.png" );
 
    // Grid
-   QGridLayout* main = new QGridLayout( this );
+   QGridLayout* main      = new QGridLayout( this );
    main->setSpacing( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
 
-   int row = 0;
-
-   QPushButton* pb_new = us_pushbutton( tr( "New Analyte" ) );
-   connect( pb_new, SIGNAL( clicked() ), SLOT( newAnalyte() ) );
-   main->addWidget( pb_new, row, 0 );
-
+   QPushButton* pb_new    = us_pushbutton( tr( "New Analyte" ) );
    QPushButton* pb_delete = us_pushbutton( tr( "Remove Current Analyte" ) );
-   connect( pb_delete, SIGNAL( clicked() ), SLOT( del_component() ) );
-   main->addWidget( pb_delete, row++, 1 );
-
-   QLabel* lb_desc = us_label( tr( "Analyte Description:" ) );
-   main->addWidget( lb_desc, row, 0 );
-
-   le_description = us_lineedit( "" );
-   connect( le_description, SIGNAL( editingFinished() ), 
-                            SLOT  ( edit_component () ) );
-   main->addWidget( le_description, row++, 1 );
+   QPushButton* pb_edit   = us_pushbutton( tr( "Edit Current Analyte" ) );
+   QLabel*      lb_desc   = us_label( tr( "Analyte Description:" ) );
+   le_description         = us_lineedit( "" );
 
    // Components List Box
-   lw_components = new US_ListWidget;
-   connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
-                           SLOT  ( update           ( int  ) ) );
-   main->addWidget( lw_components, row, 0, 2, 4 );
-   row += 4;
+   lw_components          = new US_ListWidget;
 
    // Row
-   QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
-   main->addWidget( lb_guid, row, 0 );
-
-   le_guid = us_lineedit( "" );
+   QLabel*      lb_guid   = us_label( tr( "Global Identifier:" ) );
+   le_guid                = us_lineedit( "" );
    le_guid->setPalette ( gray );
    le_guid->setReadOnly( true );
-   main->addWidget( le_guid, row++, 1 );
 
    if ( US_Settings::us_debug() == 0 )
    {
@@ -76,166 +57,206 @@ US_Properties::US_Properties( US_Model& mod, int access )
    }
 
    // Row
-   QLabel* lb_vbar = us_label( tr( "Vbar at 20 " ) + DEGC + " (ml/g):" );
-   main->addWidget( lb_vbar, row, 0 );
-
-   le_vbar = us_lineedit( "" );
-   connect( le_vbar, SIGNAL( editingFinished() ), 
-                     SLOT  ( edit_vbar      () ) );
-   main->addWidget( le_vbar, row++, 1 );
+   QLabel* lb_vbar        = us_label( tr( "Vbar at 20 " ) + DEGC + " (ml/g):" );
+   le_vbar                = us_lineedit( "" );
 
    // Row
-   QLabel* lb_extinction =  us_label( tr( "Extinction (optical units)/Wavelength:" ) );
-   main->addWidget( lb_extinction, row, 0 );
+   QLabel* lb_extinction  =  us_label( tr( "Extinction (optical units):" ) );
+   QLabel* lb_wavelength  =  us_label( tr( "Wavelength (nm):" ) );
 
-   QHBoxLayout* extinction = new QHBoxLayout;
-   extinction->setSpacing( 0 );
-
-   le_extinction = us_lineedit( "" );
-   connect( le_extinction, SIGNAL( editingFinished() ), SLOT( set_molar() ) );
-   extinction->addWidget( le_extinction );
+   le_extinction          = us_lineedit( "" );
 
    le_wavelength = us_lineedit( QString::number( model.wavelength, 'f', 1 ) );
    le_wavelength->setMinimumWidth( 80 );
    le_wavelength->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Preferred );
    le_wavelength->setPalette ( gray );
    le_wavelength->setReadOnly( true );
-   extinction->addWidget( le_wavelength );
-
-   main->addLayout( extinction, row++, 1 );
 
    // Row
-   QLabel* lb_molar = us_label( tr( "Molar Concentration:" ) );
-   main->addWidget( lb_molar, row, 0 );
-
-   le_molar = us_lineedit( "" );
-   le_molar->setPalette ( gray );
-   le_molar->setReadOnly( true );
-   main->addWidget( le_molar, row++, 1 );
+   QGridLayout* lo_sigConc = us_checkbox( 
+      tr( "Signal Concentration:" ), ck_sigConc, true  );
+   le_sigConc              = us_lineedit( "" );
+   QGridLayout* lo_isProd  = us_checkbox( 
+      tr( "Analyte is a Product" ),  ck_isProd,  false );
 
    // Row
-   QLabel* lb_analyteConc = us_label( tr( "Analyte Signal Concentration:" ) );
-   main->addWidget( lb_analyteConc, row, 0 );
-
-   le_analyteConc = us_lineedit( "" );
-   connect( le_analyteConc, SIGNAL( editingFinished() ), SLOT( set_molar() ) );
-   main->addWidget( le_analyteConc, row++, 1 );
-
-   // Row
-   QPushButton* pb_sim = us_pushbutton( tr( "Simulate s and D" ) );
-   connect( pb_sim, SIGNAL( clicked() ), SLOT( simulate() ) );
-   main->addWidget( pb_sim, row, 0 );
-
-   cmb_shape = us_comboBox();
-   cmb_shape->addItem( tr( "Sphere"            ), US_Model::SPHERE  );
-   cmb_shape->addItem( tr( "Prolate Ellipsoid" ), US_Model::PROLATE );
-   cmb_shape->addItem( tr( "Oblate Ellipsoid"  ), US_Model::OBLATE  );
-   cmb_shape->addItem( tr( "Rod"               ), US_Model::ROD     );
-   connect( cmb_shape, SIGNAL( currentIndexChanged( int ) ),
-                       SLOT  ( select_shape       ( int ) ) );
-   main->addWidget( cmb_shape, row++, 1 );
+   QGridLayout* lo_molConc = us_checkbox( 
+      tr( "Molar Concentration:" ),  ck_molConc, false );
+   le_molConc              = us_lineedit( "", 0, true );
+   ck_sigConc->setChecked( true  );
+   ck_molConc->setChecked( false );
 
    // Row
-   QGridLayout* mw_layout = us_checkbox( 
-      tr( "Molecular Wt. (mw) / Oligomer" ), cb_mw, true );
-   connect( cb_mw, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
-   main->addLayout( mw_layout, row, 0 );
+   QPushButton* pb_sim     = us_pushbutton( tr( "Simulate s and D" ) );
 
-   QHBoxLayout* mw_layout2 = new QHBoxLayout;
+   cb_shape                = us_comboBox();
+   cb_shape->addItem( tr( "Sphere"            ), US_Model::SPHERE  );
+   cb_shape->addItem( tr( "Prolate Ellipsoid" ), US_Model::PROLATE );
+   cb_shape->addItem( tr( "Oblate Ellipsoid"  ), US_Model::OBLATE  );
+   cb_shape->addItem( tr( "Rod"               ), US_Model::ROD     );
 
-   le_mw = us_lineedit( "" );
-   connect( le_mw, SIGNAL( editingFinished() ), SLOT( calculate() ) );
+   // Row
+   QGridLayout* lo_mw      = us_checkbox( 
+      tr( "Molecular Wt. (mw,S20W)" ), ck_mw, true );
+
+   QLabel* lb_oligomer     = us_label( tr( "Oligomer:" ) );
+
+   le_mw                   = us_lineedit( "" );
    le_mw->setPalette ( gray );
    le_mw->setReadOnly( true );
-   mw_layout2->addWidget( le_mw );
 
-   ct_oligomer = us_counter( 1, 1.0, 10.0, 1.0 );
+   ct_oligomer              = us_counter( 1, 1.0, 9.0, 1.0 );
    ct_oligomer->setStep( 1.0 );
-   connect( ct_oligomer, SIGNAL( valueChanged ( double ) ), 
-                         SLOT  ( set_oligomer ( double ) ) );
-   mw_layout2->addWidget( ct_oligomer );
-
-   main->addLayout( mw_layout2, row++, 1 );
+   QFontMetrics fmet( font() );
+   int fwid    = fmet.maxWidth();
+   int rhgt    = ct_oligomer->height();
+   int cminw   = fwid;
+   int csizw   = cminw + fwid * 2;
+   ct_oligomer->setMinimumWidth( cminw );
+   ct_oligomer->resize( csizw, rhgt );
 
    // Row
-   QGridLayout* f_f0_layout = 
-      us_checkbox( tr( "Frictional Ratio (f/f0) (20W)" ), cb_f_f0, true );
-   
-   connect( cb_f_f0, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
-   main->addLayout( f_f0_layout, row, 0 );
+   QGridLayout* lo_f_f0     = 
+      us_checkbox( tr( "Frictional Ratio (f/f0,20W)" ), ck_f_f0, true );
 
-   le_f_f0 = us_lineedit( "n/a" );
-   connect( le_f_f0, SIGNAL( editingFinished () ), SLOT( calculate() ) );
-   main->addWidget( le_f_f0, row++, 1 );
+   le_f_f0                  = us_lineedit( "n/a" );
    le_f_f0->setPalette ( gray );
    le_f_f0->setReadOnly( true );
    
    // Row 
-   QGridLayout* s_layout = us_checkbox(
-      tr( "Sedimentation Coeff. (s) (20W)" ), cb_s );
-   connect( cb_s, SIGNAL( toggled( bool ) ), SLOT( calculate( bool) ) );
-   main->addLayout( s_layout, row, 0 );
-
-   le_s = us_lineedit( "1e-13" );
-   connect( le_s, SIGNAL( editingFinished () ), SLOT( calculate() ) );
-   main->addWidget( le_s, row++, 1 );
+   QGridLayout* lo_s        = us_checkbox(
+      tr( "Sedimentation Coeff. (s,20W)" ), ck_s );
+   le_s                     = us_lineedit( "1e-13" );
 
    // Row
-   QGridLayout* D_layout = us_checkbox(
-      tr( "Diffusion Coeff. (D) (20W)" ), cb_D );
-   connect( cb_D, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
-   main->addLayout( D_layout, row, 0 );
+   QGridLayout* lo_D        = us_checkbox(
+      tr( "Diffusion Coeff. (D,20W)" ), ck_D );
 
-   le_D = us_lineedit( "2e-7" );
-   connect( le_D, SIGNAL( editingFinished () ), SLOT( calculate() ) );
-   main->addWidget( le_D, row++, 1 );
+   le_D                     = us_lineedit( "2e-7" );
 
    // Row
-   QGridLayout* f_layout = us_checkbox(
-      tr( "Frictional Coeff. (f) (20W)" ), cb_f );
-   connect( cb_f, SIGNAL( toggled( bool ) ), SLOT( calculate( bool ) ) );
-   main->addLayout( f_layout, row, 0 );
-
-   le_f = us_lineedit( "n/a" );
+   QGridLayout* lo_f        = us_checkbox(
+      tr( "Frictional Coeff. (f,20W)" ), ck_f );
+   le_f                     = us_lineedit( "n/a" );
    le_f->setPalette ( gray );
    le_f->setReadOnly( true );
-   connect( le_f, SIGNAL( editingFinished () ), SLOT( calculate() ) );
-   main->addWidget( le_f, row++, 1 );
 
    // Row
-   QLabel* lb_sigma = us_label(
+   QLabel* lb_sigma         = us_label(
       tr( "Conc. Dependency of s (<span>&sigma;</span>):" ) );
-   main->addWidget( lb_sigma, row, 0 );
 
-   le_sigma = us_lineedit( "" );
-   main->addWidget( le_sigma, row++, 1 );
+   le_sigma                 = us_lineedit( "" );
 
    // Row
-   QLabel* lb_delta = us_label(
+   QLabel* lb_delta         = us_label(
       tr( "Conc. Dependency of D (<span>&delta;</span>):" ) );
-   main->addWidget( lb_delta, row, 0 );
-
-   le_delta = us_lineedit( "" );
-   main->addWidget( le_delta, row++, 1 );
+   le_delta                 = us_lineedit( "" );
 
    // Row
-   pb_load_c0 = us_pushbutton( tr( "Load C0 from File" ) );
-   connect( pb_load_c0, SIGNAL( clicked() ), SLOT( load_c0() ) );
-   main->addWidget( pb_load_c0, row, 0 );
+   pb_load_c0               = us_pushbutton( tr( "Load C0 from File" ) );
 
-   QGridLayout* co_sed_layout = us_checkbox(
-      tr( "Co-sedimenting Solute" ), cb_co_sed );
-   connect( cb_co_sed, SIGNAL( stateChanged( int ) ), SLOT( co_sed( int ) ) );
-   main->addLayout( co_sed_layout, row++, 1 );
+   QGridLayout* lo_co_sed   = us_checkbox(
+      tr( "Co-sedimenting Solute" ), ck_co_sed );
    
    // Pushbuttons
-   QPushButton* pb_close = us_pushbutton( tr( "Cancel") );
-   main->addWidget( pb_close, row, 0 );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   QPushButton* pb_close    = us_pushbutton( tr( "Cancel" ) );
+   QPushButton* pb_accept   = us_pushbutton( tr( "Accept" ) );
 
-   QPushButton* pb_accept = us_pushbutton( tr( "Accept") );
-   main->addWidget( pb_accept, row++, 1 );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( acceptProp() ) );
+   // Main layout
+   int row = 0;
+   main->addWidget( pb_new,         row,   0, 1, 2 );
+   main->addWidget( pb_delete,      row,   2, 1, 2 );
+   main->addWidget( pb_edit,        row++, 4, 1, 2 );
+   main->addWidget( lb_desc,        row,   0, 1, 2 );
+   main->addWidget( le_description, row++, 2, 1, 4 );
+   main->addWidget( lw_components,  row,   0, 4, 6 ); row += 4;
+   main->addWidget( lb_guid,        row,   0, 1, 2 );
+   main->addWidget( le_guid,        row++, 2, 1, 4 );
+   main->addWidget( lb_vbar,        row,   0, 1, 2 );
+   main->addWidget( le_vbar,        row++, 2, 1, 1 );
+   main->addWidget( lb_extinction,  row,   0, 1, 2 );
+   main->addWidget( le_extinction,  row,   2, 1, 1 );
+   main->addWidget( lb_wavelength,  row,   3, 1, 2 );
+   main->addWidget( le_wavelength,  row++, 5, 1, 1 );
+   main->addLayout( lo_molConc,     row,   0, 1, 2 );
+   main->addWidget( le_molConc,     row++, 2, 1, 1 );
+   main->addLayout( lo_sigConc,     row,   0, 1, 2 );
+   main->addWidget( le_sigConc,     row,   2, 1, 1 );
+   main->addLayout( lo_isProd,      row++, 3, 1, 3 );
+   main->addWidget( pb_sim,         row,   0, 1, 2 );
+   main->addWidget( cb_shape,       row++, 2, 1, 4 );
+   main->addLayout( lo_mw,          row,   0, 1, 2 );
+   main->addWidget( le_mw,          row,   2, 1, 1 );
+   main->addWidget( lb_oligomer,    row,   3, 1, 2 );
+   main->addWidget( ct_oligomer,    row++, 5, 1, 1 );
+   main->addLayout( lo_f_f0,        row,   0, 1, 2 );
+   main->addWidget( le_f_f0,        row++, 2, 1, 1 );
+   main->addLayout( lo_s,           row,   0, 1, 2 );
+   main->addWidget( le_s,           row++, 2, 1, 1 );
+   main->addLayout( lo_D,           row,   0, 1, 2 );
+   main->addWidget( le_D,           row++, 2, 1, 1 );
+   main->addLayout( lo_f,           row,   0, 1, 2 );
+   main->addWidget( le_f,           row++, 2, 1, 1 );
+   main->addWidget( lb_sigma,       row,   0, 1, 2 );
+   main->addWidget( le_sigma,       row,   2, 1, 1 );
+   main->addWidget( lb_delta,       row,   3, 1, 2 );
+   main->addWidget( le_delta,       row++, 5, 1, 1 );
+   main->addWidget( pb_load_c0,     row,   0, 1, 3 );
+   main->addLayout( lo_co_sed,      row++, 3, 1, 3 );
+   main->addWidget( pb_close,       row,   0, 1, 3 );
+   main->addWidget( pb_accept,      row++, 3, 1, 3 );
+
+   // Signal-Slot connections
+   connect( pb_new,         SIGNAL( clicked()       ), 
+                            SLOT(   newAnalyte()    ) );
+   connect( pb_delete,      SIGNAL( clicked()       ), 
+                            SLOT(   del_component() ) );
+   connect( pb_edit,        SIGNAL( clicked()       ), 
+                            SLOT(   edit_analyte()  ) );
+   connect( le_description, SIGNAL( editingFinished() ), 
+                            SLOT  ( edit_component () ) );
+   connect( lw_components,  SIGNAL( currentRowChanged( int  ) ),
+                            SLOT  ( update           ( int  ) ) );
+   connect( le_vbar,        SIGNAL( editingFinished() ), 
+                            SLOT  ( edit_vbar      () ) );
+   connect( le_extinction,  SIGNAL( editingFinished() ), 
+                            SLOT(   set_molar()       ) );
+   connect( le_sigConc,     SIGNAL( editingFinished() ), 
+                            SLOT(   set_molar()       ) );
+   connect( pb_sim,         SIGNAL( clicked()  ), 
+                            SLOT(   simulate() ) );
+   connect( cb_shape,       SIGNAL( currentIndexChanged( int ) ),
+                            SLOT  ( select_shape       ( int ) ) );
+   connect( ck_mw,          SIGNAL( toggled(   bool ) ), 
+                            SLOT(   calculate( bool ) ) );
+   connect( le_mw,          SIGNAL( editingFinished() ), 
+                            SLOT(   calculate()       ) );
+   connect( ct_oligomer,    SIGNAL( valueChanged ( double ) ), 
+                            SLOT  ( set_oligomer ( double ) ) );
+   connect( ck_f_f0,        SIGNAL( toggled(   bool )  ), 
+                            SLOT(   calculate( bool )  ) );
+   connect( le_f_f0,        SIGNAL( editingFinished () ), 
+                            SLOT(   calculate()        ) );
+   connect( ck_s,           SIGNAL( toggled(   bool )  ), 
+                            SLOT(   calculate( bool)   ) );
+   connect( le_s,           SIGNAL( editingFinished()  ), 
+                            SLOT(   calculate()        ) );
+   connect( ck_D,           SIGNAL( toggled(   bool )  ), 
+                            SLOT(   calculate( bool )  ) );
+   connect( le_D,           SIGNAL( editingFinished()  ), 
+                            SLOT(   calculate()        ) );
+   connect( ck_f,           SIGNAL( toggled(   bool )  ), 
+                            SLOT(   calculate( bool )  ) );
+   connect( le_f,           SIGNAL( editingFinished () ), 
+                            SLOT(   calculate()        ) );
+   connect( pb_load_c0,     SIGNAL( clicked() ), 
+                            SLOT(   load_c0() ) );
+   connect( ck_co_sed,      SIGNAL( stateChanged( int ) ), 
+                            SLOT(   co_sed( int )       ) );
+   connect( pb_close,       SIGNAL( clicked()    ), 
+                            SLOT(   close()      ) );
+   connect( pb_accept,      SIGNAL( clicked()    ), 
+                            SLOT(   acceptProp() ) );
 
    clear_entries();
    update_lw();
@@ -244,43 +265,43 @@ US_Properties::US_Properties( US_Model& mod, int access )
 
 void US_Properties::clear_entries( void )
 {
-   le_guid       ->clear();
-   le_vbar       ->clear();
-   le_extinction ->clear();
-   le_molar      ->clear();
-   le_analyteConc->clear();
-   le_mw         ->clear();
-   le_s          ->clear();
-   le_D          ->clear();
-   le_f          ->clear();
-   le_f_f0       ->clear();
-   le_sigma      ->clear();
-   le_delta      ->clear();
+   le_guid      ->clear();
+   le_vbar      ->clear();
+   le_extinction->clear();
+   le_molConc   ->clear();
+   le_sigConc   ->clear();
+   le_mw        ->clear();
+   le_s         ->clear();
+   le_D         ->clear();
+   le_f         ->clear();
+   le_f_f0      ->clear();
+   le_sigma     ->clear();
+   le_delta     ->clear();
 
-   cmb_shape  ->setCurrentIndex( 0 );
+   cb_shape   ->setCurrentIndex( 0 );
    ct_oligomer->setValue( 1.0 );
    pb_load_c0 ->setIcon( QIcon() );
-   cb_co_sed  ->setChecked( false );
+   ck_co_sed  ->setChecked( false );
 
    if ( oldRow == (-2) )
    {
-      le_vbar       ->setEnabled( false );
-      le_extinction ->setEnabled( false );
-      le_analyteConc->setEnabled( false );
-      le_mw         ->setEnabled( false );
-      le_f_f0       ->setEnabled( false );
-      le_s          ->setEnabled( false );
-      le_D          ->setEnabled( false );
-      le_f          ->setEnabled( false );
-      le_sigma      ->setEnabled( false );
-      le_delta      ->setEnabled( false );
-      ct_oligomer   ->setEnabled( false );
-      cb_co_sed     ->setEnabled( false );
-      cb_mw         ->setEnabled( false );
-      cb_f_f0       ->setEnabled( false );
-      cb_s          ->setEnabled( false );
-      cb_D          ->setEnabled( false );
-      cb_f          ->setEnabled( false );
+      le_vbar      ->setEnabled( false );
+      le_extinction->setEnabled( false );
+      le_sigConc   ->setEnabled( false );
+      le_mw        ->setEnabled( false );
+      le_f_f0      ->setEnabled( false );
+      le_s         ->setEnabled( false );
+      le_D         ->setEnabled( false );
+      le_f         ->setEnabled( false );
+      le_sigma     ->setEnabled( false );
+      le_delta     ->setEnabled( false );
+      ct_oligomer  ->setEnabled( false );
+      ck_co_sed    ->setEnabled( false );
+      ck_mw        ->setEnabled( false );
+      ck_f_f0      ->setEnabled( false );
+      ck_s         ->setEnabled( false );
+      ck_D         ->setEnabled( false );
+      ck_f         ->setEnabled( false );
    }
 }
 
@@ -293,6 +314,8 @@ void US_Properties::newAnalyte( void )
 
    US_Model::SimulationComponent sc;
    model.components << sc;
+   int last = model.components.size() - 1;
+   lw_components->setCurrentRow( last );
 
    US_AnalyteGui* dialog =
       new US_AnalyteGui( true, QString(), db_access );
@@ -306,7 +329,6 @@ void US_Properties::newAnalyte( void )
    // If accepted, work is done by update_analyte
    if ( dialog->exec() == QDialog::Rejected )
    {
-      int last = model.components.size() - 1;
       update_lw();
 
       lw_components->setCurrentRow( last );  // Runs update() via signal
@@ -317,9 +339,20 @@ void US_Properties::newAnalyte( void )
 void US_Properties::update_analyte( US_Analyte new_analyte )
 {
    analyte  = new_analyte;
-   int last = model.components.size() - 1;
+   int last = lw_components->currentRow();
+
+   if ( last < 0 )
+      last     = model.components.count() - 1;
+
    update( 0 );
-   
+
+   if ( model.wavelength == 0.0 )
+   {  // If model has no wavelength, set it from the analyte
+      QList< double > keys = analyte.extinction.keys();
+      if ( keys.length() > 0 )
+         model.wavelength = keys[ 0 ];
+   }
+
    US_Model::SimulationComponent* sc = &model.components[ last ];
 
    sc->name        = analyte.description;
@@ -380,8 +413,7 @@ void US_Properties::set_oligomer( double oligomer )
    sc->mw *= oligomer;             // Now adjust for new oligomer count
    le_mw->setText( QString::number( sc->mw, 'e', 3 ) );
 
-   if ( ! cb_mw->isChecked() )
-      enable( le_mw, true, gray );
+   us_setReadOnly( le_mw, !ck_mw->isChecked() );
 
    sc->extinction /= sc->oligomer;
    sc->extinction *= oligomer;
@@ -404,26 +436,26 @@ void US_Properties::set_oligomer( double oligomer )
 
    if ( oligomer > 1.0 )
    {  // if oligomer count greater than 1, must check MW and frictional ratio
-      if ( ! ( cb_mw->isChecked() && cb_f_f0->isChecked() ) )
+      if ( ! ( ck_mw->isChecked() && ck_f_f0->isChecked() ) )
       {  // mw,f_f0 not both checked, so make it so
-         cb_mw  ->setChecked( true  );
-         cb_f_f0->setChecked( true  );
-         cb_s   ->setChecked( false );
-         cb_D   ->setChecked( false );
-         cb_f   ->setChecked( false );
+         ck_mw  ->setChecked( true  );
+         ck_f_f0->setChecked( true  );
+         ck_s   ->setChecked( false );
+         ck_D   ->setChecked( false );
+         ck_f   ->setChecked( false );
          checkbox();
       }
 
-      enable( le_mw, true, gray );  // MW entry always disabled w oligomer > 1
+      us_setReadOnly( le_mw, true); // MW entry always disabled w oligomer > 1
    }
 
-   bool mwuck = ! cb_mw->isChecked();
-   bool scck  = cb_s ->isChecked();
+   bool mwuck = ! ck_mw->isChecked();
+   bool scck  = ck_s ->isChecked();
 
    if ( mwuck )
    {  // if MW unchecked, fake it for re-calculate coeffs phase
-     cb_mw->setChecked( true  );
-     cb_s ->setChecked( false );
+     ck_mw->setChecked( true  );
+     ck_s ->setChecked( false );
    }
 
    inUpdate  = false;
@@ -436,8 +468,8 @@ void US_Properties::set_oligomer( double oligomer )
    if ( mwuck )
    {  // if MW was unchecked, restore check state to pre-calc state
       inUpdate  = true;
-      cb_mw->setChecked( false );
-      cb_s ->setChecked( scck );
+      ck_mw->setChecked( false );
+      ck_s ->setChecked( scck );
       checkbox();
       inUpdate  = false;
    }
@@ -634,14 +666,14 @@ void US_Properties::set_molar( void )
    US_Model::SimulationComponent* sc = &model.components[ row ];
 
    double extinction = le_extinction ->text().toDouble();
-   double signalConc = le_analyteConc->text().toDouble();
+   double signalConc = le_sigConc    ->text().toDouble();
 
    if ( extinction > 0.0 )
       sc->molar_concentration = signalConc / extinction;
    else
       sc->molar_concentration = 0.0;
 
-   le_molar->setText( QString::number( sc->molar_concentration, 'e', 4 ) );
+   le_molConc->setText( QString::number( sc->molar_concentration, 'e', 4 ) );
 }
 
 void US_Properties::clear_guid( void )
@@ -677,13 +709,13 @@ void US_Properties::save_changes( int row )
    sc->extinction = le_extinction->text().toDouble();
 
    // Molar concentration
-   sc->molar_concentration = le_molar->text().toDouble();
+   sc->molar_concentration  = le_molConc->text().toDouble();
    
    //  Signal concentration
-   sc->signal_concentration = le_analyteConc->text().toDouble();
+   sc->signal_concentration = le_sigConc->text().toDouble();
 
    // Shape
-   switch ( cmb_shape->currentIndex() )
+   switch ( cb_shape->currentIndex() )
    {
       case US_Model::SPHERE : 
          sc->shape = US_Model::SPHERE; break;
@@ -698,7 +730,7 @@ void US_Properties::save_changes( int row )
          sc->shape = US_Model::ROD; break;
    }
    
-   int shape = cmb_shape->itemData( cmb_shape->currentIndex() ).toInt();
+   int shape = cb_shape->itemData( cb_shape->currentIndex() ).toInt();
    sc->shape = ( US_Model::ShapeType ) shape;
    
    // Characteristics
@@ -720,7 +752,7 @@ void US_Properties::update( int /* row */ )
    {
       le_vbar       ->setEnabled( true );
       le_extinction ->setEnabled( true );
-      le_analyteConc->setEnabled( true );
+      le_sigConc    ->setEnabled( true );
       le_mw         ->setEnabled( true );
       le_f_f0       ->setEnabled( true );
       le_s          ->setEnabled( true );
@@ -729,9 +761,9 @@ void US_Properties::update( int /* row */ )
       le_sigma      ->setEnabled( true );
       le_delta      ->setEnabled( true );
       ct_oligomer   ->setEnabled( true );
-      cb_co_sed     ->setEnabled( true );
-      cb_mw         ->setEnabled( true );
-      cb_f_f0       ->setEnabled( true );
+      ck_co_sed     ->setEnabled( true );
+      ck_mw         ->setEnabled( true );
+      ck_f_f0       ->setEnabled( true );
       oldRow = -1;
    }
 
@@ -763,8 +795,8 @@ void US_Properties::update( int /* row */ )
    // Set extinction and concentration
    le_extinction ->setText( QString::number( sc->extinction, 'e', 4 ));
 
-   le_molar      ->setText( QString::number( sc->molar_concentration, 'e', 4 ));
-   le_analyteConc->setText( QString::number( sc->signal_concentration,'e', 4 ));
+   le_molConc    ->setText( QString::number( sc->molar_concentration, 'e', 4 ));
+   le_sigConc    ->setText( QString::number( sc->signal_concentration,'e', 4 ));
    
    // Update hydro data
    hydro_data.mw          = sc->mw;
@@ -778,10 +810,10 @@ void US_Properties::update( int /* row */ )
    // Set shape
    switch ( sc->shape )
    {
-      case US_Model::SPHERE : cmb_shape->setCurrentIndex( 0 ); break;
-      case US_Model::PROLATE: cmb_shape->setCurrentIndex( 1 ); break;
-      case US_Model::OBLATE : cmb_shape->setCurrentIndex( 2 ); break;
-      default:                cmb_shape->setCurrentIndex( 3 ); break;
+      case US_Model::SPHERE : cb_shape->setCurrentIndex( 0 ); break;
+      case US_Model::PROLATE: cb_shape->setCurrentIndex( 1 ); break;
+      case US_Model::OBLATE : cb_shape->setCurrentIndex( 2 ); break;
+      default:                cb_shape->setCurrentIndex( 3 ); break;
    }
 
    // Set characteristics
@@ -797,8 +829,8 @@ void US_Properties::update( int /* row */ )
    ( sc->c0.radius.size() > 0 ) ? pb_load_c0->setIcon( check )
                                 : pb_load_c0->setIcon( QIcon() );
    // Set co-sedimenting solute
-   ( row == model.coSedSolute ) ? cb_co_sed->setChecked( true  )
-                                : cb_co_sed->setChecked( false );
+   ( row == model.coSedSolute ) ? ck_co_sed->setChecked( true  )
+                                : ck_co_sed->setChecked( false );
 
    ct_oligomer->setValue( sc->oligomer );
    inUpdate = false;
@@ -908,8 +940,8 @@ void US_Properties::new_hydro( US_Analyte ad )
    sc->axial_ratio = hydro_data.axial_ratio;
    
    // Set f/f0, s, D, and f for shape
-   cmb_shape->setEnabled( true );
-   int shape = cmb_shape->itemData( cmb_shape->currentIndex() ).toInt();
+   cb_shape->setEnabled( true );
+   int shape = cb_shape->itemData( cb_shape->currentIndex() ).toInt();
    select_shape( shape );
 
    inUpdate = true;
@@ -928,31 +960,22 @@ void US_Properties::checkbox( void )
 {
    if ( countChecks() != 2 )
    {
-      enable( le_mw  , false, gray );
-      enable( le_s   , false, gray );
-      enable( le_D   , false, gray );
-      enable( le_f   , false, gray );
-      enable( le_f_f0, false, gray );
+      us_setReadOnly( le_mw  , false );
+      us_setReadOnly( le_s   , false );
+      us_setReadOnly( le_D   , false );
+      us_setReadOnly( le_f   , false );
+      us_setReadOnly( le_f_f0, false );
       return;
    }
 
-   ( cb_mw  ->isChecked() ) ? enable( le_mw,   false, normal ) 
-                            : enable( le_mw,   true , gray   );
-   
-   ( cb_s   ->isChecked() ) ? enable( le_s,    false, normal ) 
-                            : enable( le_s,    true , gray   );
-   
-   ( cb_D   ->isChecked() ) ? enable( le_D,    false, normal ) 
-                            : enable( le_D,    true , gray   );
-   
-   ( cb_f   ->isChecked() ) ? enable( le_f,    false, normal ) 
-                            : enable( le_f,    true , gray   );
-   
-   ( cb_f_f0->isChecked() ) ? enable( le_f_f0, false, normal ) 
-                            : enable( le_f_f0, true , gray   );
+   us_setReadOnly( le_mw  , !ck_mw  ->isChecked() );
+   us_setReadOnly( le_s   , !ck_s   ->isChecked() );
+   us_setReadOnly( le_D   , !ck_D   ->isChecked() );
+   us_setReadOnly( le_f   , !ck_f   ->isChecked() );
+   us_setReadOnly( le_f_f0, !ck_f_f0->isChecked() );
 
    if ( (int)ct_oligomer->value() > 1 )
-      enable( le_mw,   true,  gray   );
+      us_setReadOnly( le_mw  , true  );
 }
 
 void US_Properties::enable( QLineEdit* le, bool status, const QPalette& p )
@@ -964,21 +987,21 @@ void US_Properties::enable( QLineEdit* le, bool status, const QPalette& p )
 int US_Properties::countChecks( void )
 {
    int checked = 0;
-   if ( cb_mw  ->isChecked() ) checked++;
-   if ( cb_s   ->isChecked() ) checked++;
-   if ( cb_D   ->isChecked() ) checked++;
-   if ( cb_f   ->isChecked() ) checked++;
-   if ( cb_f_f0->isChecked() ) checked++;
+   if ( ck_mw  ->isChecked() ) checked++;
+   if ( ck_s   ->isChecked() ) checked++;
+   if ( ck_D   ->isChecked() ) checked++;
+   if ( ck_f   ->isChecked() ) checked++;
+   if ( ck_f_f0->isChecked() ) checked++;
    return checked;
 }
 
 void US_Properties::setInvalid( void )
 {
-   if ( ! cb_mw  ->isChecked() ) le_mw  ->setText( tr( "n/a" ) );
-   if ( ! cb_s   ->isChecked() ) le_s   ->setText( tr( "n/a" ) );
-   if ( ! cb_D   ->isChecked() ) le_D   ->setText( tr( "n/a" ) );
-   if ( ! cb_f   ->isChecked() ) le_f   ->setText( tr( "n/a" ) );
-   if ( ! cb_f_f0->isChecked() ) le_f_f0->setText( tr( "n/a" ) );
+   if ( ! ck_mw  ->isChecked() ) le_mw  ->setText( tr( "n/a" ) );
+   if ( ! ck_s   ->isChecked() ) le_s   ->setText( tr( "n/a" ) );
+   if ( ! ck_D   ->isChecked() ) le_D   ->setText( tr( "n/a" ) );
+   if ( ! ck_f   ->isChecked() ) le_f   ->setText( tr( "n/a" ) );
+   if ( ! ck_f_f0->isChecked() ) le_f_f0->setText( tr( "n/a" ) );
    checkbox();
 }
 
@@ -1000,9 +1023,9 @@ void US_Properties::co_sed( int new_state )
 
          if ( response == QMessageBox::No )
          {
-             cb_co_sed->disconnect();
-             cb_co_sed->setChecked( false );
-             connect( cb_co_sed, SIGNAL( stateChanged( int ) ), 
+             ck_co_sed->disconnect();
+             ck_co_sed->setChecked( false );
+             connect( ck_co_sed, SIGNAL( stateChanged( int ) ), 
                                  SLOT  ( co_sed      ( int ) ) );
              return;
          }
@@ -1031,7 +1054,7 @@ bool US_Properties::keep_standard( void )
       analyte.extinction  .clear();
       analyte.refraction  .clear();
       analyte.fluorescence.clear();
-      cmb_shape->setEnabled( false );
+      cb_shape->setEnabled( false );
       return false;
    }
 
@@ -1058,28 +1081,28 @@ void US_Properties::calculate( void )
    // Exactly two checkboxes must be set
    if ( countChecks() < 2 )
    {
-      cb_mw  ->setEnabled( true );
-      cb_f_f0->setEnabled( true );
-      cb_f   ->setEnabled( true );
-      cb_s   ->setEnabled( true );
-      cb_D   ->setEnabled( true );
+      ck_mw  ->setEnabled( true );
+      ck_f_f0->setEnabled( true );
+      ck_f   ->setEnabled( true );
+      ck_s   ->setEnabled( true );
+      ck_D   ->setEnabled( true );
       return;
    }
 
    // disable all check boxes except for the two set
-   cb_mw  ->setEnabled( cb_mw  ->isChecked() );
-   cb_f_f0->setEnabled( cb_f_f0->isChecked() );
-   cb_f   ->setEnabled( cb_f   ->isChecked() );
-   cb_s   ->setEnabled( cb_s   ->isChecked() );
-   cb_D   ->setEnabled( cb_D   ->isChecked() );
+   ck_mw  ->setEnabled( ck_mw  ->isChecked() );
+   ck_f_f0->setEnabled( ck_f_f0->isChecked() );
+   ck_f   ->setEnabled( ck_f   ->isChecked() );
+   ck_s   ->setEnabled( ck_s   ->isChecked() );
+   ck_D   ->setEnabled( ck_D   ->isChecked() );
    
    // set values for checked boxes; clear others
-   sc->mw   = cb_mw  ->isChecked() ? le_mw  ->text().toDouble() :
+   sc->mw   = ck_mw  ->isChecked() ? le_mw  ->text().toDouble() :
                          ( chgStoi ? sc->mw : 0.0 );
-   sc->f_f0 = cb_f_f0->isChecked() ? le_f_f0->text().toDouble() : 0.0;
-   sc->f    = cb_f   ->isChecked() ? le_f   ->text().toDouble() : 0.0;
-   sc->s    = cb_s   ->isChecked() ? le_s   ->text().toDouble() : 0.0;
-   sc->D    = cb_D   ->isChecked() ? le_D   ->text().toDouble() : 0.0;
+   sc->f_f0 = ck_f_f0->isChecked() ? le_f_f0->text().toDouble() : 0.0;
+   sc->f    = ck_f   ->isChecked() ? le_f   ->text().toDouble() : 0.0;
+   sc->s    = ck_s   ->isChecked() ? le_s   ->text().toDouble() : 0.0;
+   sc->D    = ck_D   ->isChecked() ? le_D   ->text().toDouble() : 0.0;
 
    // re-calculate coefficients based on the two that are set
    US_Model::calc_coefficients( model.components[ row ] );
@@ -1090,11 +1113,52 @@ void US_Properties::calculate( void )
    le_s   ->setText( QString::number( sc->s   , 'e', 4 ) );
    le_D   ->setText( QString::number( sc->D   , 'e', 4 ) );
    le_f   ->setText( QString::number( sc->f   , 'e', 4 ) );
+
+   // search to see if present component is a product
+   bool is_prod  = false;
+
+   for ( int ii = 0; ii < model.associations.count(); ii++ )
+   {
+      US_Model::Association * as = &model.associations[ ii ];
+
+      for ( int jj = 0; jj < as->rcomps.count(); jj++ )
+      {
+         if ( as->rcomps[ jj ] == row   &&  as->stoichs[ jj ] < 0 )
+         {
+            is_prod  = true;
+            le_sigConc->setText( "0.0" );
+            break;
+         }
+      }
+   }
+
+   ck_isProd ->setChecked( is_prod );
+   le_sigConc->setEnabled( ! is_prod );
 }
 
 void US_Properties::source_changed( bool db )
 {
    emit use_db( db );  // Just pass on the signal
    qApp->processEvents();
+}
+
+// Slot to edit the currently selected analyte
+void US_Properties::edit_analyte()
+{
+   int row       = lw_components->currentRow();
+   QString aguid = le_guid->text();
+   if ( aguid.isEmpty() )
+      aguid         = model.components[ row ].analyteGUID;
+
+   US_AnalyteGui* dialog = new US_AnalyteGui( true, aguid, db_access );
+
+   connect( dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
+                    SLOT  ( update_analyte( US_Analyte ) ) );
+
+   connect( dialog, SIGNAL( use_db        ( bool ) ), 
+                    SLOT  ( source_changed( bool ) ) );
+
+   // If accepted, work is done by update_analyte
+   dialog->exec();
 }
 
