@@ -21,6 +21,7 @@ bool US_MwlData::import_data( QString& mwldir, QLineEdit* lestat )
    bool status  = true;
    cur_dir      = mwldir;
    le_status    = lestat;
+   evers        = 0.0;
 DbgLv(1) << "MwDa: cur_dir" << cur_dir;
 
    QDir ddir( cur_dir, "*", QDir::Name, QDir::Files | QDir::Readable );
@@ -31,6 +32,17 @@ DbgLv(1) << "MwDa: cur_dir" << cur_dir;
 DbgLv(1) << "MwDa: evers" << evers;
 
    int kcelchn  = cellchans.count();
+
+   if ( kcelchn == 0 )
+   {
+      QMessageBox::critical( 0,
+            tr( "No XML File Found" ),
+            tr( "No XML file was found in directory \"%1\".\n"
+                "No import of MWRS data is possible without"
+                " such a file." ).arg( cur_dir ) );
+      return false;
+   }
+
    cellchans.clear();
    QString old_runID  = runID;
 
@@ -883,6 +895,12 @@ void US_MwlData::read_runxml( QDir ddir, QString curdir )
    if ( nxfile > 1 )
    {
       qDebug() << "*ERROR* '*.mwrs.xml' count > 1" << nxfile << curdir;
+      return;
+   }
+
+   else if ( nxfile == 0 )
+   {
+      qDebug() << "*ERROR* '*.mwrs.xml' does not exist in " << curdir;
       return;
    }
 
