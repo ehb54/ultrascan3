@@ -568,7 +568,8 @@ void US_Grid_Editor::save( void )
    }
    else
    {
-      QString fnamo = US_Model::get_filename( modelPath, modelGuid );
+      bool newFile;
+      QString fnamo = US_Model::get_filename( modelPath, modelGuid, newFile );
       code = model.write( fnamo );
    }
 

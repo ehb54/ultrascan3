@@ -124,8 +124,12 @@ class US_UTIL_EXTERN US_Model
       //! \brief Find a model file on the disk
       //! \param path  The full path of the directory to search
       //! \param guid  The GUID of the desired model
-      //! \return The file name of the model. 
-      static QString get_filename( const QString&, const QString& );
+      //! \param newFile A reference to a boolean variable.  Sets false
+      //!                if the model exist, true otherwise.
+      //! \return The file name of the model. If newFile is true, the name
+      //!         is the next in the M????????.xml numeric sequence
+      //!         but does not yet exist.
+      static QString get_filename( const QString&, const QString&, bool& );
 
       //! Model type text
       //! \returns    - A short text string describing the type of model

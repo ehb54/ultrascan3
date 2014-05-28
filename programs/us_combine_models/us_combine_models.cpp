@@ -307,9 +307,10 @@ qDebug() << "SAVE:      DB";
 
    else
    {
+      bool newFile;
       QString mdlpath;
       US_Model::model_path( mdlpath );
-      QString fnamo = US_Model::get_filename( mdlpath, mdlguid );
+      QString fnamo = US_Model::get_filename( mdlpath, mdlguid, newFile );
       cmodel.write( fnamo );
 qDebug() << "SAVE:      fnamo" << fnamo;
    }
