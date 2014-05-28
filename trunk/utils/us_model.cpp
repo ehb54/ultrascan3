@@ -777,7 +777,8 @@ qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.si
 qDebug() << "model writedb message" << message << "wstat" << wstat;
       QString path;
       model_path( path );
-      QString filename = get_filename( path, modelGUID );
+      bool newFile;
+      QString filename = get_filename( path, modelGUID, newFile );
       write( filename );
 
       return wstat;
@@ -946,12 +947,13 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
    xml.writeEndDocument();
 }
 
-QString US_Model::get_filename( const QString& path, const QString& guid )
+QString US_Model::get_filename( const QString& path, const QString& guid, bool& newFile )
 {
    QDir f( path );
    QStringList filter( "M???????.xml" );
    QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
    QString fnamo;
+   newFile   = true;
 
    for ( int i = 0; i < f_names.size(); i++ )
    {
@@ -973,7 +975,8 @@ QString US_Model::get_filename( const QString& path, const QString& guid )
 
                if ( a.value( "modelGUID" ).toString() == guid )
                {  // Break when we have found a file with a matching GUID
-                  fnamo = path + "/" + f_names[ i ];
+                  fnamo   = path + "/" + f_names[ i ];
+                  newFile = false;
                   break;
                }
             }
@@ -983,7 +986,7 @@ QString US_Model::get_filename( const QString& path, const QString& guid )
       m_file.close();
    }
 
-   if ( fnamo.isEmpty() )
+   if ( newFile )
    {  // No matching-GUID file, so look for a break in the number sequence
       int number = ( f_names.size() > 0 ) ?       // Last used file number
          f_names.last().mid( 1, 7 ).toInt() : 0;  // and default last sequence

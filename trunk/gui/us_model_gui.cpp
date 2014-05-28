@@ -366,7 +366,7 @@ void US_ModelGui::delete_model( void )
 
       // If guid matches one we already have, use that filename
       // otherwise create a new filename.
-      QString fn = US_Model::get_filename( path, le_guid->text() );
+      QString fn = US_Model::get_filename( path, le_guid->text(), newFile );
       if ( newFile ) return;
 
       QFile::remove( fn );
@@ -557,11 +557,13 @@ void US_ModelGui::save_model( void )
          le_guid->setText( US_Util::new_guid() );
 
       model.modelGUID = le_guid->text();
+qDebug() << "MdlSv: path" << path << "guid" << model.modelGUID;
 
       // If guid matches one we already have, use that filename
       // otherwise create a new filename.
-      QString fn = US_Model::get_filename( path, le_guid->text() );
+      QString fn = US_Model::get_filename( path, le_guid->text(), newFile );
       QFile   file( fn );
+qDebug() << "MdlSv:  fn" << fn;
 
       if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
@@ -595,15 +597,19 @@ void US_ModelGui::save_model( void )
          QMessageBox::information( this,
             tr( "Model Written" ),
             tr( "The model has been %1 in the database." ).arg( model.message ) );
-         
+
          working_model = model;
          le_guid->setText( model.modelGUID   );
       }
       else
+      {
          QMessageBox::information( this,
             tr( "Database Error" ),
             tr( "The model could not be saved:\n" ) + model.message );
+         return;
+      }
    }
+
    model_saved = true;
 }
 
