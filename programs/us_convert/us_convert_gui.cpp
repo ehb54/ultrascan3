@@ -743,7 +743,18 @@ DbgLv(1) << "CGui:iM: IN";
    le_status->setText( tr( "Importing MWL data ..." ) );
    qApp->processEvents();
 DbgLv(1) << "CGui:iM: import_data";
-   mwl_data.import_data( currentDir, le_status );
+   isMwl       = mwl_data.import_data( currentDir, le_status );
+
+   if ( !isMwl )
+   {  // Return immediately if there were MWL import problems
+      qApp->processEvents();
+      QApplication::restoreOverrideCursor();
+      QApplication::restoreOverrideCursor();
+      le_status->setText( tr( "MWL import error (no data loaded)" ) );
+      qApp->processEvents();
+      return;
+   }
+
 DbgLv(1) << "CGui:iM:  RTN: import_data";
    isMwl       = true;
    runType     = "RI";
