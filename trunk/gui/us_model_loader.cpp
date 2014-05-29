@@ -151,7 +151,7 @@ qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
    QLabel*      lb_advopts = us_banner( tr( "Advanced Model List Options" ) );
    lb_advopts->setMaximumHeight( le_mfilter->height() );
 
-   QGridLayout* lo_single  = us_checkbox( tr( "Singles of -MC Composite" ),
+   QGridLayout* lo_single  = us_checkbox( tr( "Monte Carlo Singles" ),
                                           ck_single,  do_single );
    QGridLayout* lo_edit    = us_checkbox( tr( "Filter by Edit" ),
                                           ck_edit,    do_edit   );
@@ -448,7 +448,7 @@ qDebug() << "=listsing= jj mfilt mpart" << jj << mfilt << mpart.pattern();
    }
 qDebug() << "listall" << listall << "do_manual" << do_manual;
 qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
-         
+
    if ( loadDB )
    {  // Model list from DB
       US_Passwd   pw;
@@ -474,6 +474,7 @@ qDebug() << " md count" << countMD;
 //      query << "count_models" << invID;
 //      int countDB = db.statusQuery( query );
 //qDebug() << " db count" << countDB;
+      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
       if ( countMD > 0  &&  countMD == countSD )
       {
@@ -583,6 +584,8 @@ QDateTime time4=QDateTime::currentDateTime();
 qDebug() << "Timing: DB-read" << time0.msecsTo(time3) << time2.msecsTo(time3);
 qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
       }
+
+      QApplication::restoreOverrideCursor();
    }
 
    else
@@ -1214,6 +1217,9 @@ void US_ModelLoader::change_single( bool cksing )
 void US_ModelLoader::change_edit( bool ckedit )
 {
    do_edit   = ckedit;
+   do_manual = ck_manual->isChecked();
+   db_id1    = -2;  // flag re-list when list-edit flag changes
+   db_id2    = -2;
 
    list_models();
 }
@@ -1222,10 +1228,13 @@ void US_ModelLoader::change_edit( bool ckedit )
 void US_ModelLoader::change_manual( bool ckmanu )
 {
    do_manual = ckmanu;
+   db_id1    = -2;  // flag re-list when list-manual flag changes
+   db_id2    = -2;
 
    if ( do_manual )
    {  // If manual now checked, turn off edit
       ck_edit  ->setChecked( false );
+      do_edit   = false;
    }
 
    list_models();
