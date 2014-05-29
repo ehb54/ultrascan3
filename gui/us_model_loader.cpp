@@ -106,8 +106,22 @@ qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
    pb_filtmodels   = us_pushbutton( tr( "Search" ) );
    connect( pb_filtmodels, SIGNAL( clicked() ),
             this,          SLOT( list_models() ) );
+
+   do_single  = false;
+   do_edit    = ( editIDs.size() > 0  ||  !editGUID.isEmpty() );
+   do_manual  = false;
+
+   if ( ! dsearch.isEmpty() )
+   {  // If an input search string is given, look for special flags
+      do_single  = dsearch.contains( "=s" );
+      do_manual  = dsearch.contains( "=m" );
+      do_edit    = do_manual ? false : do_edit;
+      dsearch.replace( "=m ", "" ).simplified();
+      dsearch.replace( "=m",  "" ).simplified();
+   }
+
    le_mfilter      = us_lineedit( "", -1, false );
-   dsearch         = dsearch.isEmpty() ? QString( "" ) : dsearch;
+   //dsearch         = dsearch.isEmpty() ? QString( "" ) : dsearch;
    le_mfilter->setText( dsearch );
    connect( le_mfilter,    SIGNAL( returnPressed() ),
             this,          SLOT(   list_models()   ) );
@@ -131,6 +145,32 @@ qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
 
    lw_models->installEventFilter( this );
    main->addWidget( lw_models );
+
+   // Advanced Model List Options
+   QGridLayout* advtypes   = new QGridLayout;
+   QLabel*      lb_advopts = us_banner( tr( "Advanced Model List Options" ) );
+   lb_advopts->setMaximumHeight( le_mfilter->height() );
+
+   QGridLayout* lo_single  = us_checkbox( tr( "Singles of -MC Composite" ),
+                                          ck_single,  do_single );
+   QGridLayout* lo_edit    = us_checkbox( tr( "Filter by Edit" ),
+                                          ck_edit,    do_edit   );
+   QGridLayout* lo_manual  = us_checkbox( tr( "Custom/Global Only" ),
+                                          ck_manual,  do_manual );
+   int arow   = 0;
+   advtypes->addWidget( lb_advopts, arow++, 0, 1, 3 );
+   advtypes->addLayout( lo_single,  arow,   0, 1, 1 );
+   advtypes->addLayout( lo_edit,    arow,   1, 1, 1 );
+   advtypes->addLayout( lo_manual,  arow++, 2, 1, 1 );
+
+   connect( ck_single, SIGNAL( toggled      ( bool ) ),
+                       SLOT  ( change_single( bool ) ) );
+   connect( ck_edit,   SIGNAL( toggled      ( bool ) ),
+                       SLOT  ( change_edit  ( bool ) ) );
+   connect( ck_manual, SIGNAL( toggled      ( bool ) ),
+                       SLOT  ( change_manual( bool ) ) );
+
+   main->addLayout( advtypes );
 
    // Button Row
    QHBoxLayout* buttons = new QHBoxLayout;
@@ -361,22 +401,24 @@ QDateTime time2=QDateTime::currentDateTime();
    le_mfilter->disconnect( SIGNAL( textChanged( const QString& ) ) );
    bool listall  = mfilt.isEmpty();          // unfiltered?
    bool listdesc = !listall;                 // description filtered?
-   bool listedit = !listall;                 // edit filtered?
-   bool listsing = false;                    // show singles of MC groups?
+   bool listedit = do_edit;                  // edit filtered?
+   bool listsing = do_single;                // show singles of MC groups?
    QRegExp mpart = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
    model_descriptions.clear();               // clear model descriptions
 
    if ( listdesc )
    {  // filter is not empty
-      listedit = mfilt.contains( "=edit" );  // edit filtered?
+      listedit = mfilt.contains( "=e" );     // edit filtered?
+      listedit = listedit | do_edit;
       listdesc = !listedit;                  // description filtered?
       listsing = mfilt.contains( "=s" );     // show singles of MC groups?
+      listsing = listsing | do_single;
 
       if ( listedit  &&  editGUID.isEmpty() )
       {  // disallow edit filter if no edit GUID has been given
          QMessageBox::information( this,
                tr( "Edit GUID Problem" ),
-               tr( "No Edit GUID was given.\n\"=edit\" reset to blank." ) );
+               tr( "No Edit GUID was given.\n\"=e\" reset to blank." ) );
          listall  = true;
          listdesc = false;
          listedit = false;
@@ -404,7 +446,7 @@ qDebug() << "=listsing= jj mfilt mpart" << jj << mfilt << mpart.pattern();
       else if ( singprev )
          db_id1 = -2;     // flag re-list when list-singles flag changes
    }
-qDebug() << "listall" << listall;
+qDebug() << "listall" << listall << "do_manual" << do_manual;
 qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
          
    if ( loadDB )
@@ -458,9 +500,9 @@ qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
             db.query( query );
             db.next();
             editID = db.value( 0 ).toString();
-            if ( !editID.isEmpty()  &&  dsearch == "=edit" )
+            if ( !editID.isEmpty()  &&  dsearch.contains( "=e" ) )
             {
-               dsearch = "";
+               dsearch = dsearch.replace( "=e", "" ).simplified();
                le_mfilter->setText( dsearch );
             }
          }
@@ -471,11 +513,11 @@ qDebug() << "        edit GUID,ID" << editGUID << editID;
 qDebug() << "     ii nedits" << ii << nedits;
             query.clear();
 time1=QDateTime::currentDateTime();
-            if ( nedits > 0 )
+            if ( listedit && nedits > 0 )
                query << "get_model_desc_by_editID"
                      << invID << editIDs[ ii ];
 
-            else if ( !editID.isEmpty() )
+            else if ( listedit && !editID.isEmpty() )
                query << "get_model_desc_by_editID"
                      << invID << editID;
 
@@ -507,6 +549,25 @@ qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
                                      + tr( " : empty description )" );
                }
 //qDebug() << "   desc" << desc.description << "DB_id" << desc.DB_id;
+
+               if ( do_manual )
+               {  // If MANUAL, select only type Custom or Global
+                  bool skip_it     = true;
+
+                  if ( desc.description.contains( "-GL" )     ||
+                       desc.description.contains( "Custom" )  ||
+                       desc.description.contains( "Discrete" ) )
+                     skip_it          = false;
+
+                  else if ( ! desc.description.contains( "2DSA" )  &&
+                            ! desc.description.contains( "PCSA" )  &&
+                            ! desc.description.contains( "GA"   ) )
+                     skip_it          = false;
+qDebug() << "   desc" << desc.description << "skip_it" << skip_it;
+
+                  if ( skip_it )
+                     continue;
+               }
 
                all_model_descrips << desc;   // add to full models list
             }
@@ -545,13 +606,13 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
          QXmlStreamAttributes attr;
 
          all_model_descrips.clear();
-         int nedits        = editIDs.size();
+         int nedits     = editIDs.size();
 
-         if ( nedits == 0  &&  ! editGUID.isEmpty() )
+         if ( do_edit  &&   nedits == 0  &&  ! editGUID.isEmpty() )
          {
-            if ( !editGUID.isEmpty()  &&  dsearch == "=edit" )
+            if ( !editGUID.isEmpty()  &&  dsearch.contains( "=e" ) )
             {
-               dsearch = "";
+               dsearch        = dsearch.replace( "=e", "" ).simplified();
                le_mfilter->setText( dsearch );
             }
          }
@@ -559,7 +620,7 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
          for ( int ii = 0; ii < f_names.size(); ii++ )
          {
             QString fname( path + "/" + f_names[ ii ] );
-//qDebug() << "fname" << f_names[ii];
+//qDebug() << "fname" << f_names[ii] << "do_manual" << do_manual;
             QFile   m_file( fname );
 
             if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
@@ -576,8 +637,9 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
                   attr             = xml.attributes();
                   QString edGUID   = attr.value( "editGUID"    ).toString();
 
-                  if ( ( nedits > 0  &&  ! editIDs.contains( edGUID ) )  ||
-                       ( !editGUID.isEmpty()  &&  edGUID != editGUID ) )
+                  if ( do_edit  &&
+                       ( ( nedits > 0  &&  ! editIDs.contains( edGUID ) )  ||
+                         ( !editGUID.isEmpty()  &&  edGUID != editGUID ) ) )
                      continue;
 
                   ModelDesc desc;
@@ -589,6 +651,8 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
                   desc.reqGUID     = attr.value( "requestGUID" ).toString();
                   QString mCarl    = attr.value( "monteCarlo"  ).toString();
                   desc.iterations  = mCarl.toInt() == 0 ?  0 : 1;
+                  QString aType    = attr.value( "analysisType" ).toString();
+                  QString gType    = attr.value( "globalType"   ).toString();
 
                   if ( desc.description.simplified().length() < 2 )
                   {
@@ -603,6 +667,19 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
 //qDebug() << "   edgid" << editGUID;
 //}
 //*DEBUG
+                  if ( do_manual )
+                  {  // If MANUAL, select only type Custom or Global
+                     int iaType    = aType.toInt();
+                     int igType    = gType.toInt();
+//qDebug() << "   iaType igType" << iaType << igType;
+                     if ( iaType != US_Model::MANUAL      &&
+                          iaType != US_Model::CUSTOMGRID  &&
+                          iaType != US_Model::DISCRETEGA  &&
+                          igType != US_Model::GLOBAL      &&
+                          igType != US_Model::SUPERGLOBAL )  
+                        continue;
+                  }
+
 
                   all_model_descrips << desc;   // add to full models list
                   break;
@@ -1124,4 +1201,34 @@ void US_ModelLoader::msearch( const QString& search_string )
 
    list_models();
 }
+
+// Slot to re-list models after change in Single checkbox
+void US_ModelLoader::change_single( bool cksing )
+{
+   do_single = cksing;
+
+   list_models();
+}
+
+// Slot to re-list models after change in Edit checkbox
+void US_ModelLoader::change_edit( bool ckedit )
+{
+   do_edit   = ckedit;
+
+   list_models();
+}
+
+// Slot to re-list models after change in Manual checkbox
+void US_ModelLoader::change_manual( bool ckmanu )
+{
+   do_manual = ckmanu;
+
+   if ( do_manual )
+   {  // If manual now checked, turn off edit
+      ck_edit  ->setChecked( false );
+   }
+
+   list_models();
+}
+
 
