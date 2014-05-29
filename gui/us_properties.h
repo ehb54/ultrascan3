@@ -11,6 +11,7 @@
 #include "us_analyte_gui.h"
 #include "us_buffer.h"
 #include "us_model_gui.h"
+#include "us_help.h"
 #include "us_extern.h"
 
 //! \brief A class to manage analytes in a model
@@ -42,6 +43,8 @@ class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
    private:
       // Passed parameters
       US_Model&  model;
+
+      US_Help    showhelp;
 
       int        investigator;
       int        oldRow;
@@ -125,5 +128,7 @@ class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
       void edit_component( void );
       void edit_vbar     ( void );
       void edit_analyte  ( void );
+      void help          ( void )
+      { showhelp.show_help( "components.html" ); };
 };
 #endif

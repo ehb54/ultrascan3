@@ -243,6 +243,21 @@ void US_Solution::saveToDisk( void )
       return;
    }
 
+   if ( commonVbar20 == 0          ||
+        solutionDesc.isEmpty()     ||
+        buffer.GUID.isEmpty()      ||
+        buffer.bufferID.isEmpty()  ||
+        buffer.bufferID.toInt() < 1 )
+   {
+      qDebug() << "Error: Solution cannot be written to disk,"
+               << " due to invalid values:";
+      qDebug() << "  commonVbar20" << commonVbar20;
+      qDebug() << "  solutionDesc" << solutionDesc;
+      qDebug() << "  bufferGUID" << buffer.GUID;
+      qDebug() << "  bufferID" << buffer.bufferID;
+      return;
+   }
+
    // Generate xml
    QXmlStreamWriter xml;
    xml.setDevice( &file );
