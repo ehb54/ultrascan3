@@ -504,7 +504,7 @@ DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
    pb_details  ->setEnabled( true );
    pb_loadmodel->setEnabled( true );
    pb_exclude  ->setEnabled( true );
-   mfilter     = QString( "=edit" );
+   mfilter     = QString( "=e" );
 
    ct_from->disconnect();
    ct_from->setValue( 0 );
@@ -1588,6 +1588,13 @@ void US_FeMatch::load_model( )
 
    // load model
    bool loadDB = dkdb_cntrls->db();
+
+   if ( dataList[ drow ].channel == "S" )
+   {  // Set up for "manual" model list option for simulated data
+      if ( ! mfilter.contains( "=m" ) )
+         mfilter     = "=m " + mfilter.replace( "=e", "" ).simplified();
+   }
+
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    US_ModelLoader dialog( loadDB, mfilter, model,
@@ -1623,7 +1630,8 @@ DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
    ri_noise.count = 0;
 
    // see if there are any noise files to load
-   load_noise();
+   if ( ! model.editGUID.isEmpty() )
+      load_noise();
 
    pb_advanced ->setEnabled( true );
    pb_simumodel->setEnabled( true );

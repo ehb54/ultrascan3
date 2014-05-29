@@ -118,6 +118,8 @@ class US_GUI_EXTERN US_Properties : public US_WidgetsDialog
       void set_molar     ( void );
       void set_oligomer  ( double );
       void source_changed( bool );
+      void check_molar   ( bool );
+      void check_signal  ( bool );
            
       void del_component ( void );
       void edit_component( void );

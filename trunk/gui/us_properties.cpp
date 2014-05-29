@@ -23,10 +23,6 @@ US_Properties::US_Properties( US_Model& mod, int access )
 
    normal = US_GuiSettings::editColor();
 
-   // Very light gray
-   gray = normal;
-   gray.setColor( QPalette::Base, QColor( 0xd0, 0xd0, 0xd0 ) );
-   
    // Initialize the check icon
    check = QIcon( US_Settings::appBaseDir() + "/etc/check.png" );
 
@@ -47,8 +43,7 @@ US_Properties::US_Properties( US_Model& mod, int access )
    // Row
    QLabel*      lb_guid   = us_label( tr( "Global Identifier:" ) );
    le_guid                = us_lineedit( "" );
-   le_guid->setPalette ( gray );
-   le_guid->setReadOnly( true );
+   us_setReadOnly( le_guid, true );
 
    if ( US_Settings::us_debug() == 0 )
    {
@@ -61,16 +56,15 @@ US_Properties::US_Properties( US_Model& mod, int access )
    le_vbar                = us_lineedit( "" );
 
    // Row
-   QLabel* lb_extinction  =  us_label( tr( "Extinction (optical units):" ) );
-   QLabel* lb_wavelength  =  us_label( tr( "Wavelength (nm):" ) );
+   QLabel* lb_extinction  = us_label( tr( "Extinction (OD/(mol*cm)):" ) );
+   QLabel* lb_wavelength  = us_label( tr( "Wavelength (nm):" ) );
 
    le_extinction          = us_lineedit( "" );
 
    le_wavelength = us_lineedit( QString::number( model.wavelength, 'f', 1 ) );
    le_wavelength->setMinimumWidth( 80 );
    le_wavelength->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Preferred );
-   le_wavelength->setPalette ( gray );
-   le_wavelength->setReadOnly( true );
+   us_setReadOnly( le_wavelength, true );
 
    // Row
    QGridLayout* lo_sigConc = us_checkbox( 
@@ -102,8 +96,7 @@ US_Properties::US_Properties( US_Model& mod, int access )
    QLabel* lb_oligomer     = us_label( tr( "Oligomer:" ) );
 
    le_mw                   = us_lineedit( "" );
-   le_mw->setPalette ( gray );
-   le_mw->setReadOnly( true );
+   us_setReadOnly( le_mw, true );
 
    ct_oligomer              = us_counter( 1, 1.0, 9.0, 1.0 );
    ct_oligomer->setStep( 1.0 );
@@ -120,8 +113,7 @@ US_Properties::US_Properties( US_Model& mod, int access )
       us_checkbox( tr( "Frictional Ratio (f/f0,20W)" ), ck_f_f0, true );
 
    le_f_f0                  = us_lineedit( "n/a" );
-   le_f_f0->setPalette ( gray );
-   le_f_f0->setReadOnly( true );
+   us_setReadOnly( le_f_f0, true );
    
    // Row 
    QGridLayout* lo_s        = us_checkbox(
@@ -138,8 +130,7 @@ US_Properties::US_Properties( US_Model& mod, int access )
    QGridLayout* lo_f        = us_checkbox(
       tr( "Frictional Coeff. (f,20W)" ), ck_f );
    le_f                     = us_lineedit( "n/a" );
-   le_f->setPalette ( gray );
-   le_f->setReadOnly( true );
+   us_setReadOnly( le_f, true );
 
    // Row
    QLabel* lb_sigma         = us_label(
@@ -221,6 +212,10 @@ US_Properties::US_Properties( US_Model& mod, int access )
                             SLOT  ( edit_vbar      () ) );
    connect( le_extinction,  SIGNAL( editingFinished() ), 
                             SLOT(   set_molar()       ) );
+   connect( ck_molConc,     SIGNAL( toggled(      bool ) ), 
+                            SLOT(   check_molar(  bool ) ) );
+   connect( ck_sigConc,     SIGNAL( toggled(      bool ) ), 
+                            SLOT(   check_signal( bool ) ) );
    connect( le_sigConc,     SIGNAL( editingFinished() ), 
                             SLOT(   set_molar()       ) );
    connect( pb_sim,         SIGNAL( clicked()  ), 
@@ -360,8 +355,12 @@ void US_Properties::update_analyte( US_Analyte new_analyte )
    sc->mw          = analyte.mw;
    sc->vbar20      = analyte.vbar20;
    sc->extinction  = analyte.extinction[ model.wavelength ];
+qDebug() << "Prop: updAna: extinc" << sc->extinction;
 
-   le_guid->setText( sc->analyteGUID );
+   le_extinction->setText( QString::number( sc->extinction ) );
+   set_molar();
+
+   le_guid      ->setText( sc->analyteGUID );
    update_lw();
 
    lw_components->setCurrentRow( last );  // Runs update() via signal
@@ -419,7 +418,7 @@ void US_Properties::set_oligomer( double oligomer )
    sc->extinction *= oligomer;
    le_extinction->setText( QString::number( sc->extinction, 'e', 4 ) );
 
-   sc->oligomer = (int) oligomer;
+   sc->oligomer    = (int) oligomer;
 
    //hydro_data.mw          = sc->mw;
    hydro_data.mw          = le_mw->text().toDouble();
@@ -700,13 +699,13 @@ void US_Properties::save_changes( int row )
    if ( le_guid->text().isEmpty() ) 
       sc->analyteGUID.clear();
    else
-     sc->analyteGUID = le_guid->text();
+      sc->analyteGUID = le_guid->text();
 
    // vbar
-   sc->vbar20 = le_vbar->text().toDouble();
+   sc->vbar20               = le_vbar->text().toDouble();
 
    // Extinction
-   sc->extinction = le_extinction->text().toDouble();
+   sc->extinction           = le_extinction->text().toDouble();
 
    // Molar concentration
    sc->molar_concentration  = le_molConc->text().toDouble();
@@ -1134,6 +1133,7 @@ void US_Properties::calculate( void )
 
    ck_isProd ->setChecked( is_prod );
    le_sigConc->setEnabled( ! is_prod );
+   us_setReadOnly( le_sigConc, is_prod );
 }
 
 void US_Properties::source_changed( bool db )
@@ -1160,5 +1160,33 @@ void US_Properties::edit_analyte()
 
    // If accepted, work is done by update_analyte
    dialog->exec();
+}
+
+// Slot to make adjustments with molar check changed
+void US_Properties::check_molar( bool chkd )
+{
+   // Set read-only states of concentration edits
+   us_setReadOnly( le_molConc, !chkd );
+   us_setReadOnly( le_sigConc,  chkd );
+
+   // Flip check state of signal to opposite of molar
+   ck_sigConc->disconnect();
+   ck_sigConc->setChecked( !chkd );
+   connect( ck_sigConc, SIGNAL( toggled(      bool ) ), 
+                        SLOT(   check_signal( bool ) ) );
+}
+
+// Slot to make adjustments with signal check changed
+void US_Properties::check_signal( bool chkd )
+{
+   // Set read-only states of concentration edits
+   us_setReadOnly( le_sigConc, !chkd );
+   us_setReadOnly( le_molConc,  chkd );
+
+   // Flip check state of molar to opposite of signal
+   ck_molConc->disconnect();
+   ck_molConc->setChecked( !chkd );
+   connect( ck_molConc, SIGNAL( toggled(      bool ) ), 
+                        SLOT(   check_molar(  bool ) ) );
 }
 

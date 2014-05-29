@@ -108,6 +108,10 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       QLineEdit*           le_investigator;
       QLineEdit*           le_mfilter;
 
+      QCheckBox*           ck_single;
+      QCheckBox*           ck_edit;
+      QCheckBox*           ck_manual;
+
       US_Disk_DB_Controls* dkdb_cntrls;
 
       US_ListWidget*       lw_models;
@@ -117,6 +121,9 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       int                  db_id2;
 
       bool                 singprev;
+      bool                 do_single;
+      bool                 do_edit;
+      bool                 do_manual;
 
       QString              reqGUID;
 
@@ -155,6 +162,9 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       void dup_singles(   void );
       void cancelled(     void );
       void accepted(      void );
+      void change_single( bool );
+      void change_edit  ( bool );
+      void change_manual( bool );
 
       void help  (        void )
       { showHelp.show_help( "load_model_distrib.html" ); };
