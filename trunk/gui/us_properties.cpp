@@ -150,6 +150,7 @@ US_Properties::US_Properties( US_Model& mod, int access )
       tr( "Co-sedimenting Solute" ), ck_co_sed );
    
    // Pushbuttons
+   QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close    = us_pushbutton( tr( "Cancel" ) );
    QPushButton* pb_accept   = us_pushbutton( tr( "Accept" ) );
 
@@ -194,8 +195,9 @@ US_Properties::US_Properties( US_Model& mod, int access )
    main->addWidget( le_delta,       row++, 5, 1, 1 );
    main->addWidget( pb_load_c0,     row,   0, 1, 3 );
    main->addLayout( lo_co_sed,      row++, 3, 1, 3 );
-   main->addWidget( pb_close,       row,   0, 1, 3 );
-   main->addWidget( pb_accept,      row++, 3, 1, 3 );
+   main->addWidget( pb_help,        row,   0, 1, 2 );
+   main->addWidget( pb_close,       row,   2, 1, 2 );
+   main->addWidget( pb_accept,      row++, 4, 1, 2 );
 
    // Signal-Slot connections
    connect( pb_new,         SIGNAL( clicked()       ), 
@@ -248,6 +250,8 @@ US_Properties::US_Properties( US_Model& mod, int access )
                             SLOT(   load_c0() ) );
    connect( ck_co_sed,      SIGNAL( stateChanged( int ) ), 
                             SLOT(   co_sed( int )       ) );
+   connect( pb_help,        SIGNAL( clicked()    ), 
+                            SLOT(   help()       ) );
    connect( pb_close,       SIGNAL( clicked()    ), 
                             SLOT(   close()      ) );
    connect( pb_accept,      SIGNAL( clicked()    ), 

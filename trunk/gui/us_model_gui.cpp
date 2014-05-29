@@ -43,77 +43,77 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
    
-   main->addWidget( pb_investigator, row, 0 );
+   main->addWidget( pb_investigator, row, 0, 1, 1 );
 
    le_investigator = us_lineedit( );
    le_investigator->setPalette ( gray );
    le_investigator->setReadOnly( true );
-   main->addWidget( le_investigator, row++, 1 );
+   main->addWidget( le_investigator, row++, 1, 1, 3 );
    
    disk_controls = new US_Disk_DB_Controls;
-   main->addLayout( disk_controls, row++, 0, 1, 2 );
+   main->addLayout( disk_controls, row++, 0, 1, 4 );
 
    QLabel* lb_mlfilt = us_label( tr( "List Filter:" ) );
-   main->addWidget( lb_mlfilt, row, 0 );
+   main->addWidget( lb_mlfilt, row, 0, 1, 1 );
 
    le_mlfilt = us_lineedit( "" );
-   main->addWidget( le_mlfilt, row++, 1 );
+   main->addWidget( le_mlfilt, row++, 1, 1, 3 );
    connect( le_mlfilt, SIGNAL( editingFinished() ), SLOT( list_models() ) );
 
    QPushButton* pb_models = us_pushbutton( tr( "List Available Models" ) );
    connect( pb_models, SIGNAL( clicked() ), SLOT( list_models() ) );
-   main->addWidget( pb_models, row, 0 );
+   main->addWidget( pb_models, row, 0, 1, 2 );
 
    QPushButton* pb_new = us_pushbutton( tr( "Create New Model" ) );
-   main->addWidget( pb_new, row++, 1 );
+   main->addWidget( pb_new, row++, 2, 1, 2 );
    connect( pb_new,         SIGNAL( clicked()   ),
                             SLOT(   new_model() ) );
 
    QLabel* lb_description = us_label( tr( "Model Description:" ) );
-   main->addWidget( lb_description, row, 0 );
+   main->addWidget( lb_description, row, 0, 1, 1 );
 
    le_description = us_lineedit( "" );
    connect( le_description, SIGNAL( editingFinished () ),
                             SLOT  ( edit_description() ) );
-   main->addWidget( le_description, row++, 1 );
+   main->addWidget( le_description, row++, 1, 1, 3 );
 
    // Models List Box
    lw_models = new US_ListWidget;
    connect( lw_models, SIGNAL( itemClicked ( QListWidgetItem* ) ),
                        SLOT  ( select_model( QListWidgetItem* ) ) );
 
-   main->addWidget( lw_models, row, 0, 5, 2 );
+   main->addWidget( lw_models, row, 0, 5, 4 );
    row += 5;
 
    QPushButton* pb_components = us_pushbutton( tr( "Manage Components" ) );
    connect( pb_components, SIGNAL( clicked() ), SLOT( manage_components() ) );
-   main->addWidget( pb_components, row, 0 );
+   main->addWidget( pb_components, row, 0, 1, 2 );
 
    QPushButton* pb_associations = us_pushbutton( tr( "Manage Associations" ) );
    connect( pb_associations, SIGNAL( clicked() ), SLOT( associations() ) );
-   main->addWidget( pb_associations, row++, 1 );
+   main->addWidget( pb_associations, row++, 2, 1, 2 );
 
    QLabel* lb_wavelength = us_label( tr( "Wavelength:" ) );
-   main->addWidget( lb_wavelength, row, 0 );
+   main->addWidget( lb_wavelength, row, 0, 1, 1 );
 
    le_wavelength = us_lineedit( );
-   main->addWidget( le_wavelength, row++, 1 );
+   main->addWidget( le_wavelength, row, 1, 1, 1 );
 
    QLabel* lb_optics = us_label( tr( "Optical System:" ) );
-   main->addWidget( lb_optics, row, 0 );
+   main->addWidget( lb_optics, row, 2, 1, 1 );
 
    cb_optics = us_comboBox();
    cb_optics->addItem( tr( "Absorbance"   ), ABSORBANCE   );
    cb_optics->addItem( tr( "Interference" ), INTERFERENCE );
    cb_optics->addItem( tr( "Fluorescence" ), FLUORESCENCE );
-   main->addWidget( cb_optics, row++, 1 );
+   main->addWidget( cb_optics, row++, 3, 1, 1 );
 
    QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
-   main->addWidget( lb_guid, row, 0 );
+   main->addWidget( lb_guid, row, 0, 1, 1 );
 
    le_guid = us_lineedit( "" );
    le_guid->setPalette( gray );
-   main->addWidget( le_guid, row++, 1 );
+   main->addWidget( le_guid, row++, 1, 1, 3 );
 
    if ( US_Settings::us_debug() == 0 )
    {
@@ -123,11 +123,11 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
  
    pb_save   = us_pushbutton( tr( "Save / Update Model" ) );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save_model() ) );
-   main->addWidget( pb_save,   row,   0 );
+   main->addWidget( pb_save,   row,   0, 1, 2 );
 
    pb_delete = us_pushbutton( tr( "Delete Selected Model" ) );
    connect( pb_delete, SIGNAL( clicked() ), SLOT( delete_model() ) );
-   main->addWidget( pb_delete, row++, 1 );
+   main->addWidget( pb_delete, row++, 2, 1, 2 );
 
    pb_save  ->setEnabled( false );
    pb_delete->setEnabled( false );
@@ -171,7 +171,7 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    }
 
    check_db();
-   resize( 600, 600 );
+   resize( 500, 600 );
 }
 
 void US_ModelGui::new_model( void )
