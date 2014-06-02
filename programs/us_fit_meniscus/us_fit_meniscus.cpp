@@ -437,6 +437,7 @@ void US_FitMeniscus::plot_data( void )
 void US_FitMeniscus::edit_update( void )
 {
    QString fn = filedir + "/" + fname_edit;
+   idEdit     = 0;
    QFile filei( fn );
    QString edtext;
    QStringList edtexts;
@@ -574,6 +575,8 @@ DbgLv(1) << " eupd:      mlsx mlnn" << mlsx << mlnn;
 
          rmv_mdls = ( response == QMessageBox::Yes );
       }
+
+      idEdit        = 0;
    }  // END: apply to all wavelengths
 
    if ( rmv_mdls )
@@ -980,7 +983,7 @@ DbgLv(1) << "updDbEd: edGUID" << edGUID;
    query << "get_editID" << edGUID;
    db.query( query );
    db.next();
-   int     idEdit   = db.value( 0 ).toString().toInt();
+   idEdit           = db.value( 0 ).toString().toInt();
 DbgLv(1) << "updDbEd: idEdit" << idEdit;
    db.writeBlobToDB( efilepath, "upload_editData", idEdit );
 
@@ -1135,12 +1138,19 @@ DbgLv(1) << "RmvMod:  minMdif lkModx" << minMdif << lkModx;
    {
       ModelDesc dmodd;
       QString   invID = QString::number( US_Settings::us_inv_ID() );
+      QString   edtID = QString::number( idEdit );
       US_Passwd pw;
       US_DB2 db( pw.getPasswd() );
       QStringList query;
       QStringList modIDs;
 
-      query << "get_model_desc" << invID;
+      if ( idEdit > 0 )
+         query << "get_model_desc_by_editID" << invID << edtID;
+
+      else
+         query << "get_model_desc" << invID;
+
+DbgLv(1) << "RmvMod:  idEdit" << idEdit << "query" << query;
       db.query( query );
 
       while( db.next() )
@@ -1609,7 +1619,13 @@ DbgLv(1) << "NIE: edtIDs-size" << edtIDs.size();
 if ( edtIDs.size() > 0 ) DbgLv(1) << "NIE: edtName0" << edtNams[0];
 
       query.clear();
-      query << "get_noise_desc" << invID;
+
+      if ( edtIDs.size() == 1 )
+         query << "get_noise_desc_by_editID" << invID << edtIDs[ 0 ];
+
+      else
+         query << "get_noise_desc" << invID;
+
       db.query( query );
 
       while( db.next() )

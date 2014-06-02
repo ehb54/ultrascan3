@@ -93,6 +93,7 @@ class US_FitMeniscus : public US_Widgets
       QStringList          edtfiles;
 
       int                  nedtfs;
+      int                  idEdit;
       int                  dbg_level;
    private slots:
       void reset    (      void );
