@@ -324,19 +324,31 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    double meniscus_start = data_sets[ 0 ]->run_data.meniscus 
                          - meniscus_range / 2.0;
    
-   double dm = ( meniscus_points > 1 ) ? meniscus_range / ( meniscus_points - 1 ): 0.0;
+   double dm             = ( meniscus_points > 1 )
+                         ? meniscus_range / ( meniscus_points - 1 ): 0.0;
 
    for ( int i = 0; i < meniscus_points; i++ )
    {
-      meniscus_values[ i ] = meniscus_start + dm * i;
+      meniscus_values[ i ]  = meniscus_start + dm * i;
    }
 
    // Get lower limit of data and last (largest) meniscus value
-   double start_range   = data_sets[ 0 ]->run_data.radius( 0 );
-   double last_meniscus = meniscus_values[ meniscus_points - 1 ];
+   double start_range    = data_sets[ 0 ]->run_data.radius( 0 );
+   double last_meniscus  = meniscus_values[ meniscus_points - 1 ];
 
    if ( last_meniscus >= start_range )
    {
+      if ( my_rank == 0 )
+      {
+         qDebug() << "*ERROR* Meniscus value extends into data";
+         qDebug() << " data meniscus" << data_sets[0]->run_data.meniscus;
+         qDebug() << " meniscus_start" << meniscus_start;
+         qDebug() << " meniscus_range" << meniscus_range;
+         qDebug() << " meniscus_points" << meniscus_points;
+         qDebug() << " dm" << dm;
+         qDebug() << " last_meniscus" << last_meniscus;
+         qDebug() << " left_data" << start_range;
+      }
       abort( "Meniscus value extends into data" );
    }
 

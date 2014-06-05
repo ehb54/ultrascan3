@@ -116,13 +116,14 @@ qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
       do_single  = dsearch.contains( "=s" );
       do_manual  = dsearch.contains( "=m" );
       do_edit    = do_manual ? false : do_edit;
-      dsearch.replace( "=m ", "" ).simplified();
-      dsearch.replace( "=m",  "" ).simplified();
+      dsearch    = dsearch.replace( "=e",  "" ).simplified();
+      dsearch    = dsearch.replace( "=s",  "" ).simplified();
+      dsearch    = dsearch.replace( "=m",  "" ).simplified();
    }
+qDebug() << "Bld: single" << do_single << " manual" << do_manual
+ << " edit" << do_edit << " dsearch" << dsearch;
 
-   le_mfilter      = us_lineedit( "", -1, false );
-   //dsearch         = dsearch.isEmpty() ? QString( "" ) : dsearch;
-   le_mfilter->setText( dsearch );
+   le_mfilter      = us_lineedit( dsearch, -1, false );
    connect( le_mfilter,    SIGNAL( returnPressed() ),
             this,          SLOT(   list_models()   ) );
    connect( le_mfilter,    SIGNAL( textChanged( const QString& ) ),
@@ -399,46 +400,31 @@ QDateTime time1=QDateTime::currentDateTime();
 QDateTime time2=QDateTime::currentDateTime();
    QString mfilt = le_mfilter->text();
    le_mfilter->disconnect( SIGNAL( textChanged( const QString& ) ) );
-   bool listall  = mfilt.isEmpty();          // unfiltered?
-   bool listdesc = !listall;                 // description filtered?
+   bool listdesc = !mfilt.isEmpty();         // description filtered?
    bool listedit = do_edit;                  // edit filtered?
    bool listsing = do_single;                // show singles of MC groups?
+   bool listall  = !listdesc;                // unfiltered by description?
    QRegExp mpart = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
    model_descriptions.clear();               // clear model descriptions
+qDebug() << "LM: desc single edit" << listdesc << listsing << listedit
+ << "editGUID" << editGUID << "nedits" << editIDs.size();
 
    if ( listdesc )
    {  // filter is not empty
-      listedit = mfilt.contains( "=e" );     // edit filtered?
-      listedit = listedit | do_edit;
-      listdesc = !listedit;                  // description filtered?
-      listsing = mfilt.contains( "=s" );     // show singles of MC groups?
-      listsing = listsing | do_single;
+      listedit      = listedit | do_edit;
 
-      if ( listedit  &&  editGUID.isEmpty() )
+      if ( listedit  &&  ! do_edit )
       {  // disallow edit filter if no edit GUID has been given
          QMessageBox::information( this,
                tr( "Edit GUID Problem" ),
-               tr( "No Edit GUID was given.\n\"=e\" reset to blank." ) );
+               tr( "No Edit GUID(s) given.\nEdit filter turned off." ) );
          listall  = true;
          listdesc = false;
          listedit = false;
-         le_mfilter->setText( "" );
       }
 
       if ( listsing )
       {  // if showing MC singles, re-check for filtering
-         if ( mfilt.contains( "=s" )  &&  !listedit )
-         {  // a filter can be added after "=s "
-            int jj   = mfilt.indexOf( "=s" );
-            mfilt    = ( jj == 0 ) ? 
-                       mfilt.mid( jj + 3 ).simplified() :
-                       mfilt.left( jj ).simplified();
-            listdesc = !mfilt.isEmpty();
-            listall  = !listdesc;
-            mpart    = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
-qDebug() << "=listsing= jj mfilt mpart" << jj << mfilt << mpart.pattern();
-         }
-
          if ( !singprev )
             db_id1 = -2;  // flag re-list when list-singles flag changes
       }
@@ -486,12 +472,12 @@ qDebug() << "  db_id1 db_id2" << db_id1 << db_id2;
 
       if ( countMD == 0  ||  kid1 != db_id1  ||  kid2 != db_id2 )
       { // only re-fetch all-models list if we don't yet have it
-         db_id1            = kid1;  // save start,end all_models IDs
-         db_id2            = kid2;
+         db_id1         = kid1;  // save start,end all_models IDs
+         db_id2         = kid2;
 qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
          all_model_descrips.clear();
          query.clear();
-         int nedits        = editIDs.size();
+         int nedits     = editIDs.size();
          QString editID = "";
 
          if ( nedits == 0  &&  ! editGUID.isEmpty() )
@@ -500,31 +486,29 @@ qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
             query << "get_editID" << editGUID;
             db.query( query );
             db.next();
-            editID = db.value( 0 ).toString();
-            if ( !editID.isEmpty()  &&  dsearch.contains( "=e" ) )
-            {
-               dsearch = dsearch.replace( "=e", "" ).simplified();
-               le_mfilter->setText( dsearch );
-            }
+            editID         = db.value( 0 ).toString();
          }
 qDebug() << "        edit GUID,ID" << editGUID << editID;
 
-         for ( int ii = 0; ii < qMax( nedits, 1 ); ii++ )
+         int kedits     = listedit ? qMax( nedits, 1 ) : 1;
+
+         for ( int ii = 0; ii < kedits; ii++ )
          {
-qDebug() << "     ii nedits" << ii << nedits;
+qDebug() << "     ii kedits nedits" << ii << kedits << nedits;
             query.clear();
 time1=QDateTime::currentDateTime();
-            if ( listedit && nedits > 0 )
+            if ( listedit  &&  nedits > 0 )
                query << "get_model_desc_by_editID"
                      << invID << editIDs[ ii ];
 
-            else if ( listedit && !editID.isEmpty() )
+            else if ( listedit  &&  !editID.isEmpty() )
                query << "get_model_desc_by_editID"
                      << invID << editID;
 
             else
                query << "get_model_desc" << invID;
 
+qDebug() << " query" << query;
             db.query( query );
 qDebug() << " NumRows" << db.numRows();
 time2=QDateTime::currentDateTime();
@@ -610,15 +594,6 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
 
          all_model_descrips.clear();
          int nedits     = editIDs.size();
-
-         if ( do_edit  &&   nedits == 0  &&  ! editGUID.isEmpty() )
-         {
-            if ( !editGUID.isEmpty()  &&  dsearch.contains( "=e" ) )
-            {
-               dsearch        = dsearch.replace( "=e", "" ).simplified();
-               le_mfilter->setText( dsearch );
-            }
-         }
 
          for ( int ii = 0; ii < f_names.size(); ii++ )
          {
@@ -708,30 +683,15 @@ QDateTime time5=QDateTime::currentDateTime();
 qDebug() << "Timing: Time5" << time0.msecsTo(time5) << time2.msecsTo(time5);
 
    if ( listall )
-   {
+   {  // No filtering or filter by edit already done
       for ( int jj = 0; jj < all_model_descrips.size(); jj++ )
       {
          model_descriptions << all_model_descrips[ jj ];
       }
    }
 
-   else if ( listedit )
-   {
-      for ( int jj = 0; jj < all_model_descrips.size(); jj++ )
-      {
-         if ( all_model_descrips[ jj ].editGUID.contains( editGUID ) )
-         {  // edit filter matches
-            model_descriptions << all_model_descrips[ jj ];
-//ModelDesc desc = all_model_descrips[jj];
-//qDebug() << " ddesc" << desc.description;
-//qDebug() << "   degid" << desc.editGUID;
-//qDebug() << "   edgid" << editGUID;
-         }
-      }
-   }
-
-   else if ( listdesc )
-   {
+   else
+   {  // Filter by model description sub-string
       for ( int jj = 0; jj < all_model_descrips.size(); jj++ )
       {
          if ( all_model_descrips[ jj ].description.contains( mpart  ) )
@@ -845,6 +805,18 @@ void US_ModelLoader::accepted()
          odescrs << description( ii );
       }
    }
+
+   // Return search string that reflects current state
+   dsearch    = le_mfilter->text();
+
+   if ( do_edit )
+      dsearch    = "=e " + dsearch;
+   if ( do_single )
+      dsearch    = "=s " + dsearch;
+   if ( do_manual )
+      dsearch    = "=m " + dsearch;
+
+   dsearch    = dsearch.simplified();
 
    accept();        // signal that selection was accepted
    close();
