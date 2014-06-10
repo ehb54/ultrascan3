@@ -902,7 +902,7 @@ QDateTime time0=QDateTime::currentDateTime();
    write_report( ts );
 
    rep_f.close();
-   files << htmlFile;
+   update_filelist( files, htmlFile );
 
    const QString svgext( ".svgz" );
    const QString pngext( ".png" );
@@ -931,7 +931,7 @@ DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
 
    // Save image files from main window
    write_plot( img01File, data_plot2 );
-   files << img01File;
+   update_filelist( files, img01File );
 
    int     p1type = type_distrib() - 1;
            p1type = ( p1type < 0 ) ? 9 : p1type;
@@ -954,56 +954,56 @@ DbgLv(1) << "p1type" << p1type << "p1file" << p1file;
       distrib_plot_resids();
       write_plot( img02File, data_plot1 );
    }
-   files << img02File;
+   update_filelist( files, img02File );
 
    if ( p1type != 0 )
    {
       distrib_plot_stick( 0 );
       write_plot( img03File, data_plot1 );
    }
-   files << img03File;
+   update_filelist( files, img03File );
 
    if ( p1type != 1 )
    {
       distrib_plot_stick( 1 );
       write_plot( img04File, data_plot1 );
    }
-   files << img04File;
+   update_filelist( files, img04File );
 
    if ( p1type != 2 )
    {
       distrib_plot_stick( 2 );
       write_plot( img05File, data_plot1 );
    }
-   files << img05File;
+   update_filelist( files, img05File );
 
    if ( p1type != 3  &&  p1type != 5 )
    {
       distrib_plot_2d( ( cnstvb ? 3 : 5 ) );
       write_plot( img06File, data_plot1 );
    }
-   files << img06File;
+   update_filelist( files, img06File );
 
    if ( p1type != 4  &&  p1type != 6 )
    {
       distrib_plot_2d( ( cnstvb ? 4 : 6 ) );
       write_plot( img07File, data_plot1 );
    }
-   files << img07File;
+   update_filelist( files, img07File );
 
    if ( p1type != 7 )
    {
       distrib_plot_2d(    7 );
       write_plot( img08File, data_plot1 );
    }
-   files << img08File;
+   update_filelist( files, img08File );
 
    if ( p1type != 8 )
    {
       distrib_plot_2d(    8 );
       write_plot( img09File, data_plot1 );
    }
-   files << img09File;
+   update_filelist( files, img09File );
 
 DbgLv(1) << "(9)p1type" << p1type;
    // Restore upper plot displayed before saves
@@ -1015,12 +1015,12 @@ DbgLv(1) << "(9)p1type" << p1type;
    if ( eplotcd != 0 )
    {
       write_plot( img10File, NULL );
-      files << img10File;
+      update_filelist( files, img10File );
    }
 
    // save residual bitmap
    write_plot( img11File, NULL );
-   files << img11File;
+   update_filelist( files, img11File );
 
    // save any noise plots
    if ( ti_noise.count > 0 )
@@ -1035,7 +1035,7 @@ DbgLv(1) << "(9)p1type" << p1type;
       resplotd->set_plot( 1 );
       QwtPlot* nois_plot = resplotd->rp_data_plot2();
       write_plot( img12File, nois_plot );
-      files << img12File;
+      update_filelist( files, img12File );
    }
 
    if ( ri_noise.count > 0 )
@@ -1050,12 +1050,12 @@ DbgLv(1) << "(9)p1type" << p1type;
       resplotd->set_plot( 2 );
       QwtPlot* nois_plot = resplotd->rp_data_plot2();
       write_plot( img13File, nois_plot );
-      files << img13File;
+      update_filelist( files, img13File );
    }
 
    // Create the model distributions table CSV
    model_table( mdistFile );
-   files << mdistFile;
+   update_filelist( files, mdistFile );
 
    // report the files created
    QString umsg     = tr( "In directory " )
@@ -3147,26 +3147,12 @@ void US_FeMatch::reportFilesToDB( QStringList& files )
    US_Report freport;
    freport.runID  = runID;
 
-   // Loop to parse each file name and write the record to the database
-   for ( int ii = 0; ii < files.size(); ii++ )
+   int st = freport.saveFileDocuments( pfdir, files, dbP, idEdit,
+                                       tripdesc );
+
+   if ( st != US_DB2::OK )
    {
-      QString fname = files[ ii ].mid( files[ ii ].lastIndexOf( "/" ) + 1 );
-      int st = freport.saveDocumentFromFile( pfdir, fname, dbP, idEdit,
-                                             tripdesc );
-DbgLv(1) << "Rpt: ii" << ii << "fname" << fname << "st" << st;
-
-      if ( st != US_DB2::OK )
-      {
-         qDebug() << "**saveDocument ERROR**: ii status" << ii << st
-            << "filename" << fname;
-      }
-
-      if ( fname.contains( ".svg" ) )
-      {
-         QString fnpng = QString( fname ).section( ".", 0, -2 ) + ".png";
-         freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit, tripdesc );
-DbgLv(1) << "Rpt:   fnpng" << fnpng << "fsize" << QFile(pfdir+"/"+fname).size();
-      }
+      qDebug() << "*ERROR* saveFileDocuments, status" << st;
    }
 }
 
@@ -3265,5 +3251,14 @@ void US_FeMatch::model_table( QString mdtFile )
             dquote + QString().sprintf( "%5.2f %%",
                perc )                                 + dquote + endln;
    }
+}
+
+// Update report file list, including adding PNG for each SVGZ
+void US_FeMatch::update_filelist( QStringList& flist, const QString fname )
+{
+   flist << fname;
+
+   if ( fname.contains( ".svg" ) )
+      flist << QString( fname ).section( ".", 0, -2 ) + ".png";
 }
 

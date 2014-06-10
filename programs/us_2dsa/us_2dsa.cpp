@@ -771,7 +771,10 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
                + plot2File + "\n"
                + plot3File + "\n";
    QStringList repfiles;
-   repfiles << htmlFile << plot1File << plot2File << plot3File;
+   update_filelist( repfiles, htmlFile  );
+   update_filelist( repfiles, plot1File );
+   update_filelist( repfiles, plot2File );
+   update_filelist( repfiles, plot3File );
 
    // Add fit files if fit-meniscus
    if ( fitMeni )
@@ -787,7 +790,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          ts << fitstr;
          rep_f.close();
          wmsg = wmsg + fitFile  + "\n";
-         repfiles << fitFile;
+         update_filelist( repfiles, fitFile );
       }
 
       if ( res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -800,7 +803,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    }
 
    wmsg = wmsg + dsinfFile + "\n";
-   repfiles << dsinfFile;
+   update_filelist( repfiles, dsinfFile );
 
    if ( disk_controls->db() )
    {  // Write report files to the database

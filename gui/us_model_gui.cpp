@@ -20,100 +20,54 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    
    model_descriptions.clear();
 
-   // Very light gray
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-
    working_model = model;
    model_saved   = true;
   
-   recent_row   = -1;
-   investigator = -1;
+   recent_row    = -1;
+   investigator  = -1;
 
    QGridLayout* main = new QGridLayout( this );
    main->setContentsMargins( 2, 2, 2, 2 );
    main->setSpacing        ( 2 );
 
-   int row = 0;
-   
    // Start widgets
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( get_person() ) );
 
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
    
-   main->addWidget( pb_investigator, row, 0, 1, 1 );
-
-   le_investigator = us_lineedit( );
-   le_investigator->setPalette ( gray );
-   le_investigator->setReadOnly( true );
-   main->addWidget( le_investigator, row++, 1, 1, 3 );
+   le_investigator   = us_lineedit( "", 0, true );
    
-   disk_controls = new US_Disk_DB_Controls;
-   main->addLayout( disk_controls, row++, 0, 1, 4 );
+   dkdb_cntrls       = new US_Disk_DB_Controls;
 
    QLabel* lb_mlfilt = us_label( tr( "List Filter:" ) );
-   main->addWidget( lb_mlfilt, row, 0, 1, 1 );
-
-   le_mlfilt = us_lineedit( "" );
-   main->addWidget( le_mlfilt, row++, 1, 1, 3 );
-   connect( le_mlfilt, SIGNAL( editingFinished() ), SLOT( list_models() ) );
+   le_mlfilt         = us_lineedit( "" );
+   le_nlines         = us_lineedit( "", 0, true );
 
    QPushButton* pb_models = us_pushbutton( tr( "List Available Models" ) );
-   connect( pb_models, SIGNAL( clicked() ), SLOT( list_models() ) );
-   main->addWidget( pb_models, row, 0, 1, 2 );
-
-   QPushButton* pb_new = us_pushbutton( tr( "Create New Model" ) );
-   main->addWidget( pb_new, row++, 2, 1, 2 );
-   connect( pb_new,         SIGNAL( clicked()   ),
-                            SLOT(   new_model() ) );
+   QPushButton* pb_new    = us_pushbutton( tr( "Create New Model" ) );
 
    QLabel* lb_description = us_label( tr( "Model Description:" ) );
-   main->addWidget( lb_description, row, 0, 1, 1 );
-
-   le_description = us_lineedit( "" );
-   connect( le_description, SIGNAL( editingFinished () ),
-                            SLOT  ( edit_description() ) );
-   main->addWidget( le_description, row++, 1, 1, 3 );
+   le_description         = us_lineedit( "" );
 
    // Models List Box
-   lw_models = new US_ListWidget;
-   connect( lw_models, SIGNAL( itemClicked ( QListWidgetItem* ) ),
-                       SLOT  ( select_model( QListWidgetItem* ) ) );
+   lw_models              = us_listwidget();
 
-   main->addWidget( lw_models, row, 0, 5, 4 );
-   row += 5;
-
-   QPushButton* pb_components = us_pushbutton( tr( "Manage Components" ) );
-   connect( pb_components, SIGNAL( clicked() ), SLOT( manage_components() ) );
-   main->addWidget( pb_components, row, 0, 1, 2 );
-
+   QPushButton* pb_components   = us_pushbutton( tr( "Manage Components" ) );
    QPushButton* pb_associations = us_pushbutton( tr( "Manage Associations" ) );
-   connect( pb_associations, SIGNAL( clicked() ), SLOT( associations() ) );
-   main->addWidget( pb_associations, row++, 2, 1, 2 );
 
-   QLabel* lb_wavelength = us_label( tr( "Wavelength:" ) );
-   main->addWidget( lb_wavelength, row, 0, 1, 1 );
+   QLabel* lb_wavelength  = us_label( tr( "Wavelength:" ) );
+   le_wavelength          = us_lineedit( );
 
-   le_wavelength = us_lineedit( );
-   main->addWidget( le_wavelength, row, 1, 1, 1 );
-
-   QLabel* lb_optics = us_label( tr( "Optical System:" ) );
-   main->addWidget( lb_optics, row, 2, 1, 1 );
+   QLabel* lb_optics      = us_label( tr( "Optical System:" ) );
 
    cb_optics = us_comboBox();
    cb_optics->addItem( tr( "Absorbance"   ), ABSORBANCE   );
    cb_optics->addItem( tr( "Interference" ), INTERFERENCE );
    cb_optics->addItem( tr( "Fluorescence" ), FLUORESCENCE );
-   main->addWidget( cb_optics, row++, 3, 1, 1 );
 
-   QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
-   main->addWidget( lb_guid, row, 0, 1, 1 );
-
-   le_guid = us_lineedit( "" );
-   le_guid->setPalette( gray );
-   main->addWidget( le_guid, row++, 1, 1, 3 );
+   QLabel* lb_guid        = us_label( tr( "Global Identifier:" ) );
+   le_guid                = us_lineedit( "", 0, true );
 
    if ( US_Settings::us_debug() == 0 )
    {
@@ -122,34 +76,74 @@ US_ModelGui::US_ModelGui( US_Model& current_model )
    }
  
    pb_save   = us_pushbutton( tr( "Save / Update Model" ) );
-   connect( pb_save, SIGNAL( clicked() ), SLOT( save_model() ) );
-   main->addWidget( pb_save,   row,   0, 1, 2 );
-
    pb_delete = us_pushbutton( tr( "Delete Selected Model" ) );
-   connect( pb_delete, SIGNAL( clicked() ), SLOT( delete_model() ) );
-   main->addWidget( pb_delete, row++, 2, 1, 2 );
-
    pb_save  ->setEnabled( false );
    pb_delete->setEnabled( false );
+
 
    // Pushbuttons
-   QBoxLayout* buttonbox = new QHBoxLayout;
-
-   QPushButton* pb_help = us_pushbutton( tr( "Help") );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help()) );
+   QBoxLayout* buttonbox   = new QHBoxLayout;
+   QPushButton* pb_help    = us_pushbutton( tr( "Help") );
+   QPushButton* pb_close   = us_pushbutton( tr( "Cancel") );
+   QPushButton* pb_accept  = us_pushbutton( tr( "Accept") );
    buttonbox->addWidget( pb_help );
-
-   QPushButton* pb_close = us_pushbutton( tr( "Cancel") );
    buttonbox->addWidget( pb_close );
-   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
-
-   QPushButton* pb_accept = us_pushbutton( tr( "Accept") );
    buttonbox->addWidget( pb_accept );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept_model()) );
 
-   main->addLayout( buttonbox, row++, 0, 1, 4 );
+   int row = 0;
+   main->addWidget( pb_investigator, row,   0, 1, 1 );
+   main->addWidget( le_investigator, row++, 1, 1, 3 );
+   main->addLayout( dkdb_cntrls,     row++, 0, 1, 4 );
+   main->addWidget( lb_mlfilt,       row,   0, 1, 1 );
+   main->addWidget( le_mlfilt,       row,   1, 1, 2 );
+   main->addWidget( le_nlines,       row++, 3, 1, 1 );
+   main->addWidget( pb_models,       row,   0, 1, 2 );
+   main->addWidget( pb_new,          row++, 2, 1, 2 );
+   main->addWidget( lb_description,  row,   0, 1, 1 );
+   main->addWidget( le_description,  row++, 1, 1, 3 );
+   main->addWidget( lw_models,       row,   0, 5, 4 ); row += 5;
+   main->addWidget( pb_components,   row,   0, 1, 2 );
+   main->addWidget( pb_associations, row++, 2, 1, 2 );
+   main->addWidget( lb_wavelength,   row,   0, 1, 1 );
+   main->addWidget( le_wavelength,   row,   1, 1, 1 );
+   main->addWidget( lb_optics,       row,   2, 1, 1 );
+   main->addWidget( cb_optics,       row++, 3, 1, 1 );
+   main->addWidget( lb_guid,         row,   0, 1, 1 );
+   main->addWidget( le_guid,         row++, 1, 1, 3 );
+   main->addWidget( pb_save,         row,   0, 1, 2 );
+   main->addWidget( pb_delete,       row++, 2, 1, 2 );
+   main->addLayout( buttonbox,       row++, 0, 1, 4 );
 
-   if ( model.description != "New Model" )
+   connect( pb_investigator, SIGNAL( clicked()           ),
+                             SLOT(   get_person()        ) );
+   connect( dkdb_cntrls,     SIGNAL( changed    ( bool ) ),
+                             SLOT(   upd_disk_db( bool ) ) );
+   connect( le_mlfilt,       SIGNAL( editingFinished()   ),
+                             SLOT(   filter_changed()    ) );
+   connect( pb_models,       SIGNAL( clicked()           ),
+                             SLOT(   list_models()       ) );
+   connect( pb_new,          SIGNAL( clicked()           ),
+                             SLOT(   new_model()         ) );
+   connect( le_description,  SIGNAL( editingFinished ()  ),
+                             SLOT  ( edit_description()  ) );
+   connect( pb_components,   SIGNAL( clicked()           ),
+                             SLOT(   manage_components() ) );
+   connect( pb_associations, SIGNAL( clicked()           ),
+                             SLOT(   associations()      ) );
+   connect( pb_save,         SIGNAL( clicked()           ),
+                             SLOT(   save_model()        ) );
+   connect( pb_delete,       SIGNAL( clicked()           ),
+                             SLOT(   delete_model()      ) );
+   connect( pb_help,         SIGNAL( clicked()           ),
+                             SLOT(   help()              ) );
+   connect( pb_close,        SIGNAL( clicked()           ),
+                             SLOT(   close()             ) );
+   connect( pb_accept,       SIGNAL( clicked()           ),
+                             SLOT(   accept_model()      ) );
+   connect( lw_models, SIGNAL( itemClicked ( QListWidgetItem* ) ),
+                       SLOT  ( select_model( QListWidgetItem* ) ) );
+
+   if ( !model.description.isEmpty()  &&  model.description != "New Model" )
    {  // if re-loading a previous model, list that model
       ModelDesc desc;
       desc.description = model.description;
@@ -201,12 +195,12 @@ void US_ModelGui::new_model( void )
    // Account for sorting
    int last = model_descriptions.size() - 1;
 
-   for ( int i = 0; i < lw_models->count(); i++ )
+   for ( int ii = 0; ii < lw_models->count(); ii++ )
    {
-      if ( lw_models->item( i )->type() - QListWidgetItem::UserType == last )
+      if ( lw_models->item( ii )->type() - QListWidgetItem::UserType == last )
       {
-         lw_models->setCurrentRow( i );
-         recent_row = i;
+         lw_models->setCurrentRow( ii );
+         recent_row = ii;
          break;
       }
    }
@@ -215,17 +209,28 @@ void US_ModelGui::new_model( void )
 void US_ModelGui::show_model_desc( void )
 {
    lw_models->clear();
+   QString mfilt    = le_mlfilt->text();
+   bool    listdesc = !mfilt.isEmpty();
+qDebug() << "ShMDsc: mfilt listdesc" << mfilt << listdesc;
+   QRegExp mpart    = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
-   for ( int i = 0; i < model_descriptions.size(); i++ )
+   for ( int ii = 0; ii < model_descriptions.size(); ii++ )
    {
-      QString desc = model_descriptions[ i ].description;
+      QString desc = model_descriptions[ ii ].description;
+
+      // If filtering, exclude non-matching items
+      if ( listdesc  &&  !desc.contains( mpart ) )
+         continue;
+
       // Add a type value to the lw_item that is the position of the item
       // in the model_description list plus the Qt minimum value
       // for custom types.
-      new QListWidgetItem( desc, lw_models, i + QListWidgetItem::UserType );
+      new QListWidgetItem( desc, lw_models, ii + QListWidgetItem::UserType );
    }
 
    lw_models->sortItems();
+   QApplication::restoreOverrideCursor();
 }
 
 bool US_ModelGui::ignore_changes( void )
@@ -267,11 +272,11 @@ void US_ModelGui::edit_description( void )
    show_model_desc();
 
    // Re-select row (it was sorted)
-   for ( int i = 0; i < model_descriptions.size(); i++ )
+   for ( int ii = 0; ii < model_descriptions.size(); ii++ )
    {
-      if ( lw_models->item( i )->type() - QListWidgetItem::UserType == index )
+      if ( lw_models->item( ii )->type() - QListWidgetItem::UserType == index )
       {
-         lw_models->setCurrentRow( i );
+         lw_models->setCurrentRow( ii );
          break;
       }
    }
@@ -279,8 +284,10 @@ void US_ModelGui::edit_description( void )
 
 void US_ModelGui::select_model( QListWidgetItem* item )
 {
+qDebug() << "SelMdl: IN";
    if ( ! ignore_changes() ) 
    {
+qDebug() << "SelMdl:  ignore_changes FALSE";
       // Reset to last row;
       item -> listWidget()->setCurrentRow( recent_row );
       return;
@@ -293,6 +300,7 @@ void US_ModelGui::select_model( QListWidgetItem* item )
    int     index = item->listWidget()-> currentRow();
    QString mdesc = item->text();
    int     modlx = modelIndex( mdesc, model_descriptions );
+qDebug() << "SelMdl:  index modlx" << index << modlx << "mdesc" << mdesc;
    
    // For the case of the user clicking on "New Model"
    if ( model_descriptions[ modlx ].modelGUID.isEmpty() )
@@ -304,17 +312,8 @@ void US_ModelGui::select_model( QListWidgetItem* item )
       return;
    }
 
-   QString        file;
-
-   if ( ! disk_controls->db() ) // Load from disk
-   {
-      file = model_descriptions[ modlx ].filename;
-      if ( file.isEmpty() ) return;
-      
-      model.load( file );
-   }
-   else // Load from db
-   {
+   if ( dkdb_cntrls->db() )
+   {  // Load from database
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
 
@@ -326,6 +325,16 @@ void US_ModelGui::select_model( QListWidgetItem* item )
 
       QString modelID = model_descriptions[ modlx ].DB_id;
       model.load( modelID, &db );
+   }
+
+   else
+   {  // Load from local disk
+      QString filename  = model_descriptions[ modlx ].filename;
+      
+      if ( filename.isEmpty() )
+         return;
+      else
+         model.load( filename );
    }
 
    if ( mdesc != "New Model" )
@@ -351,15 +360,18 @@ void US_ModelGui::select_model( QListWidgetItem* item )
 
 void US_ModelGui::delete_model( void )
 {
-   int row = lw_models->currentRow();
+   int     row   = lw_models->currentRow();
    if ( row < 0 ) return;
 
-   ModelDesc md = model_descriptions.takeAt( row );
+   QString mdesc = lw_models->item( row )->text();
+   int     modlx = modelIndex( mdesc, model_descriptions );
+   ModelDesc md  = model_descriptions.takeAt( modlx );
+
    show_model_desc();
 
    // Delete from DB or disk
 
-   if ( ! disk_controls->db() )
+   if ( ! dkdb_cntrls->db() )
    {
       QString path;
       if ( ! US_Model::model_path( path ) ) return;
@@ -401,7 +413,7 @@ bool US_ModelGui::status_query( const QStringList& q )
 
 void US_ModelGui::check_db( void )
 {
-   if ( disk_controls->db() )
+   if ( dkdb_cntrls->db() )
    {
       QStringList DB = US_Settings::defaultDB();
 
@@ -457,6 +469,7 @@ void US_ModelGui::get_person( void )
 void US_ModelGui::manage_components( void )
 {
    int index = lw_models->currentRow();
+qDebug() << "MngCmp: index" << index;
 
    if ( index < 0 )
    {
@@ -467,8 +480,8 @@ void US_ModelGui::manage_components( void )
       return;
    }
 
-   int dbdisk  = disk_controls->db() ? US_Disk_DB_Controls::DB
-                                     : US_Disk_DB_Controls::Disk;
+   int dbdisk  = dkdb_cntrls->db() ? US_Disk_DB_Controls::DB
+                                   : US_Disk_DB_Controls::Disk;
    working_model = model;
 
    US_Properties* dialog = new US_Properties( working_model, dbdisk );
@@ -547,7 +560,7 @@ void US_ModelGui::save_model( void )
 
    model.wavelength = le_wavelength->text().toDouble();
 
-   if ( ! disk_controls->db() )
+   if ( ! dkdb_cntrls->db() )
    {
       QString path;
       if ( ! US_Model::model_path( path ) ) return;
@@ -639,10 +652,10 @@ bool US_ModelGui::verify_model( void )
 
 int US_ModelGui::modelIndex( QString mdesc, QList< ModelDesc > mds )
 {
-   for ( int i = 0; i < mds.size(); i++ )
+   for ( int ii = 0; ii < mds.size(); ii++ )
    {
-      if ( mdesc == mds[ i ].description )
-         return i;
+      if ( mdesc == mds[ ii ].description )
+         return ii;
    }
 
    return -1;
@@ -650,133 +663,170 @@ int US_ModelGui::modelIndex( QString mdesc, QList< ModelDesc > mds )
 
 void US_ModelGui::source_changed( bool db )
 {
-   ( db ) ? disk_controls->set_db() : disk_controls->set_disk();
+qDebug() << "SrcChg: db" << db;
+   if ( db ) 
+      dkdb_cntrls->set_db();
+   else
+      dkdb_cntrls->set_disk();
+
+   model_descriptions.clear();
+
    list_models();
+
+   qApp->processEvents();
+}
+
+// Slot to handle change in list filter
+void US_ModelGui::filter_changed()
+{
+qDebug() << "FltChg: mfilt" << le_mlfilt->text();
+   list_models();
+}
+
+// Slot to handle change in disk/db selection
+void US_ModelGui::upd_disk_db( bool db )
+{
+qDebug() << "UpdDDb: db" << db;
+   model_descriptions.clear();
+
+   list_models();
+
    qApp->processEvents();
 }
 
 
 void US_ModelGui::list_models( void )
 {
+qDebug() << "LsMdl: IN";
    if ( ! ignore_changes() ) return;
 
    QString path;
    if ( ! US_Model::model_path( path ) ) return;
 
-   model_descriptions.clear();
+qDebug() << "LsMdl: path" << path;
    le_description->clear();
-   QString mfilt = le_mlfilt->text();
-   bool    listall = mfilt.isEmpty();
-   QRegExp mpart;
-   if ( ! listall )
-      mpart           = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
 
-   if ( ! disk_controls->db() )
-   {
-      QDir f( path );
-      QStringList filter( "M*.xml" );
-      QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
+   if ( model_descriptions.count() == 0 )
+   {  // No model descriptions, so get them all
+      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
-      QXmlStreamAttributes a;
-
-      for ( int i = 0; i < f_names.size(); i++ )
+      if ( ! dkdb_cntrls->db() )
       {
-         QFile m_file( path + "/" + f_names[ i ] );
+         QDir f( path );
+         QStringList filter( "M*.xml" );
+         QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
 
-         if ( ! m_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
+         QXmlStreamAttributes a;
 
-         QXmlStreamReader xml( &m_file );
-
-         while ( ! xml.atEnd() )
+         for ( int ii = 0; ii < f_names.size(); ii++ )
          {
-            xml.readNext();
+            QFile m_file( path + "/" + f_names[ ii ] );
 
-            if ( xml.isStartElement() )
+            if ( ! m_file.open( QIODevice::ReadOnly | QIODevice::Text) )
+               continue;
+
+            QXmlStreamReader xml( &m_file );
+
+            while ( ! xml.atEnd() )
             {
-               if ( xml.name() == "model" )
+               xml.readNext();
+
+               if ( xml.isStartElement() )
                {
-                  ModelDesc md;
-                  a                = xml.attributes();
-                  md.description = a.value( "description" ).toString();
-                  md.modelGUID   = a.value( "modelGUID"        ).toString();
-                  md.editGUID    = a.value( "editGUID"    ).toString();
-                  md.filename    = path + "/" + f_names[ i ];
-                  md.DB_id       = -1;
-                  if ( listall  ||  md.description.contains( mpart ) )
+                  if ( xml.name() == "model" )
+                  {
+                     ModelDesc md;
+                     a                = xml.attributes();
+                     md.description = a.value( "description" ).toString();
+                     md.modelGUID   = a.value( "modelGUID"   ).toString();
+                     md.editGUID    = a.value( "editGUID"    ).toString();
+                     md.filename    = path + "/" + f_names[ ii ];
+                     md.DB_id       = -1;
                      model_descriptions << md;
-                  break;
+                     break;
+                  }
                }
             }
+
+            m_file.close();
+         }
+      }
+
+      else  // DB Access
+      {
+         if ( investigator < 0 )
+         {
+            QMessageBox::information( this,
+               tr( "Investigator not set" ),
+               tr( "Please select an investigator first." ) );
+            return;
          }
 
-         m_file.close();
-      }
-   }
-
-   else  // DB Access
-   {
-      if ( investigator < 0 )
-      {
-         QMessageBox::information( this,
-            tr( "Investigator not set" ),
-            tr( "Please select an investigator first." ) );
-         return;
-      }
+         US_Passwd pw;
+         US_DB2    db( pw.getPasswd() );
 
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
+         if ( db.lastErrno() != US_DB2::OK )
+         {
+            connect_error( db.lastError() );
+            return;
+         }
 
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         connect_error( db.lastError() );
-         return;
-      }
+         QStringList q;
+         q << "get_model_desc" << QString::number( investigator );
 
-      QStringList q;
-      q << "get_model_desc" << QString::number( investigator );
+         db.query( q );
 
-      db.query( q );
+         while ( db.next() )
+         {
+            ModelDesc md;
 
-      while ( db.next() )
-      {
-         ModelDesc md;
+            md.DB_id       = db.value( 0 ).toString();
+            md.modelGUID   = db.value( 1 ).toString();
+            md.description = db.value( 2 ).toString();
+            md.editGUID    = db.value( 5 ).toString();
+            md.filename.clear();
 
-         md.DB_id       = db.value( 0 ).toString();
-         md.modelGUID   = db.value( 1 ).toString();
-         md.description = db.value( 2 ).toString();
-         md.editGUID    = db.value( 5 ).toString();
-         md.filename.clear();
-
-         if ( listall  ||  md.description.contains( mpart ) )
             model_descriptions << md;
+         }
       }
+      QApplication::restoreOverrideCursor();
+      QApplication::restoreOverrideCursor();
    }
  
+   qApp->processEvents();
    int olhgt  = lw_models->height();  // old list dimensions before any change
    int olwid  = lw_models->width();
+qDebug() << "LsMdl: old h,w" << olhgt << olwid;
 
    show_model_desc();                 // re-do list of model descriptions
  
-   int nlines = model_descriptions.size();
+   int nmodls = model_descriptions.size();
+   int nlines = lw_models->count();
+qDebug() << "LsMdl: nmodls" << nmodls << "nlines" << nlines;
+   le_nlines->setText( nlines == 1 ? tr( "1 list item" )
+                                   : tr( "%1 list items" ).arg( nlines ) );
+   qApp->processEvents();
 
    if ( nlines == 0 )
       lw_models->addItem( "No models found." );
 
    else
    {  // Resize to show reasonable portion of list
-      nlines     = min( nlines, 13 );               // show at most 13 lines,
-      nlines     = min( nlines, 5 );                //   and no less than 5
+      nlines     = qMin( nlines, 13 );              // show at most 13 lines,
+      nlines     = qMin( nlines, 5 );               //   and no less than 5
 
       QFontMetrics fm = lw_models->fontMetrics(); 
       int height = nlines * fm.lineSpacing();       // list height needed
       int width  = fm.maxWidth() * 20;              // list width needed
       
-      height     = max( height, olhgt );            // max of old,new height
-      width      = max( width,  olwid );            // max of old,new width
+      height     = qMax( height, olhgt );           // max of old,new height
+      width      = qMax( width,  olwid );           // max of old,new width
       
       height     = this->height() + height - olhgt; // bump by difference in
       width      = this->width()  + width  - olwid; //   old,new list size
       
       resize( width, height );                      //   new total dialog size
    }
+qDebug() << "LsMdl: END";
 }
+

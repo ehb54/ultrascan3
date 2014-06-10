@@ -204,6 +204,9 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       //! Perform smoothing of the data
       void         smoothing( double );
 
+      //! Update the list of report files
+      void         update_filelist( QStringList&, const QString );
+
    private:
       double* x_weights;
       double* y_weights;

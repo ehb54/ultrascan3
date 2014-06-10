@@ -658,15 +658,15 @@ DbgLv(1) << "(T)PLOT ENV save: plot3File" << plot3File;
    files << plot3File;
    files << plot4File;
    files << dsinfFile;
-   repfiles << htmlFile;
-   repfiles << plot1File;
-   repfiles << plot2File;
-   repfiles << plot3File;
-   repfiles << plot4File;
-   repfiles << dsinfFile;
-   repfiles << data0File;
-   repfiles << data1File;
-   repfiles << data2File;
+   update_filelist( repfiles, htmlFile  );
+   update_filelist( repfiles, plot1File );
+   update_filelist( repfiles, plot2File );
+   update_filelist( repfiles, plot3File );
+   update_filelist( repfiles, plot4File );
+   update_filelist( repfiles, dsinfFile );
+   update_filelist( repfiles, data0File );
+   update_filelist( repfiles, data1File );
+   update_filelist( repfiles, data2File );
 
    // Report files created to the user
    QString wmsg = tr( "In directories\n%1,\n%2;\nwrote:\n\n" )

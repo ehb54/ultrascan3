@@ -358,7 +358,11 @@ void US_SecondMoment::save( void )
 
    sm_data.close();
    QStringList repfiles;
-   repfiles << htmlFile << plot1File << plot2File << textFile << dsinfFile;
+   update_filelist( repfiles, htmlFile  );
+   update_filelist( repfiles, plot1File );
+   update_filelist( repfiles, plot2File );
+   update_filelist( repfiles, textFile  );
+   update_filelist( repfiles, dsinfFile );
 
    // Tell user
    htmlFile  = htmlFile .mid( htmlFile .lastIndexOf( "/" ) + 1 );

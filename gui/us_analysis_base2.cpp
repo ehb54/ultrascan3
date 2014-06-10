@@ -1477,10 +1477,11 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
 {
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
-   US_DB2*     dbP = &db;
+   US_DB2*     dbP  = &db;
    QStringList query;
    US_DataIO::EditedData* edata = &dataList[ lw_triples->currentRow() ];
    QString tripdesc = edata->description;
+   QString pfdir    = QString( files[ 0 ] ).section( "/", 0, -2 );
 
    // Get the ID of the EditedData DB record associated with the report
    query << "get_editID" << edata->editGUID;
@@ -1492,28 +1493,13 @@ void US_AnalysisBase2::reportFilesToDB( QStringList& files )
    US_Report freport;
    freport.runID  = runID;
 
-   // Loop to parse each file name and write the record to the database
-   for ( int ii = 0; ii < files.size(); ii++ )
+   // Write all report records to the database
+   int st = freport.saveFileDocuments( pfdir, files, dbP,
+                                       idEdit, tripdesc );
+
+   if ( st != US_DB2::OK )
    {
-      QString fpath  = files[ ii ];
-      QString pfdir  = QString( fpath ).section( "/",  0, -2 );
-      QString fname  = QString( fpath ).section( "/", -1, -1 );
-      int     st     = freport.saveDocumentFromFile( pfdir, fname, dbP,
-                                                     idEdit, tripdesc );
-qDebug() << "Rpt: ii" << ii << "fname" << fname << "st" << st;
-
-      if ( st == US_DB2::OK  &&  fname.contains( ".svg" ) )
-      {
-         QString fnpng  = QString( fname ).section( ".", 0, -2 ) + ".png";
-         freport.saveDocumentFromFile( pfdir, fnpng, dbP, idEdit, tripdesc );
-qDebug() << "Rpt:   fnpng" << fnpng << "fsize" << QFile(pfdir+"/"+fnpng).size();
-      }
-
-      else if ( st != US_DB2::OK )
-      {
-         qDebug() << "**saveDocument ERROR**:  ii status" << ii << st
-            << "filename" << fname;
-      }
+      qDebug() << "*ERROR* saveFileDocuments, status" << st;
    }
 }
 
@@ -1543,5 +1529,15 @@ bool US_AnalysisBase2::write_dset_report( QString& dsfname )
 
    f_rep.close();
    return is_ok;
+}
+
+// Update report files list, including adding PNG for each SVGZ
+void US_AnalysisBase2::update_filelist( QStringList& flist,
+                                        const QString fname )
+{
+   flist << fname;
+
+   if ( fname.contains( ".svg" ) )
+      flist << QString( fname ).section( ".", 0, -2 ) + ".png";
 }
 
