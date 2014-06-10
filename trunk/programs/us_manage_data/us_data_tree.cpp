@@ -695,6 +695,7 @@ DbgLv(2) << "DT: i_details row" << irow;
       mtext = mtext + 
          tr( "  Content Checks : " ) + cont1 + "\n" +
              "                   "   + cont2 + "\n";
+#if 0
 if (cdesc.recType==3 && cont1!=cont2) {
 US_Passwd pw;
 US_DB2* dbP = new US_DB2( pw.getPasswd() );
@@ -714,6 +715,7 @@ model2.update_coefficients();
 model1.write(fname3);
 model2.write(fname4);
 }
+#endif
    }
 
    // display the text dialog

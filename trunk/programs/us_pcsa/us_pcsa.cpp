@@ -780,7 +780,11 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
                + plot3File + "\n"
                + plot4File + "\n";
    QStringList repfiles;
-   repfiles << htmlFile << plot1File << plot2File << plot3File << plot4File;
+   update_filelist( repfiles, htmlFile  );
+   update_filelist( repfiles, plot1File );
+   update_filelist( repfiles, plot2File );
+   update_filelist( repfiles, plot3File );
+   update_filelist( repfiles, plot4File );
 
    if ( disk_controls->db() )
    {  // Write report files to the database

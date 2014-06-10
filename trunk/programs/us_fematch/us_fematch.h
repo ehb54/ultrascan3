@@ -217,6 +217,7 @@ class US_FeMatch : public US_Widgets
       void    update_progress( int );
       void    reportFilesToDB( QStringList& );
       void    show_results   ( void );
+      void    update_filelist( QStringList&, const QString );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };

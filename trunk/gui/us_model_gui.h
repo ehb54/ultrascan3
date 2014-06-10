@@ -56,19 +56,20 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
       QList< ModelDesc > model_descriptions;
 
       QLineEdit*     le_mlfilt;              
+      QLineEdit*     le_nlines;              
       QLineEdit*     le_description;              
       QLineEdit*     le_investigator;
       QLineEdit*     le_wavelength;
       QLineEdit*     le_guid;
 
-      US_ListWidget* lw_models;
+      QListWidget*   lw_models;
 
       QPushButton*   pb_save;
       QPushButton*   pb_delete;
 
       QComboBox*     cb_optics;
-                    
-      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
+ 
+      US_Disk_DB_Controls* dkdb_cntrls; //!< Radiobuttons for disk/db choice
 
       bool    verify_model   ( void );
       bool    status_query   ( const QStringList& );
@@ -92,6 +93,8 @@ class US_GUI_EXTERN US_ModelGui : public US_WidgetsDialog
       void associations      ( void );
       void update_assoc      ( void );
       void source_changed    ( bool );
+      void filter_changed    ( void );
+      void upd_disk_db       ( bool );
       int  modelIndex        ( QString, QList< ModelDesc > );
 
       void help( void ){ showhelp.show_help( "model_editor.html" ); };

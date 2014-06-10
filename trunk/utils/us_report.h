@@ -185,10 +185,10 @@ class US_UTIL_EXTERN US_Report
          */
          int           findDocument( QString, QString, QString );
 
-         //! \brief    Resets the class variables to their default values
+         //! \brief  Resets the class variables to their default values
          void          reset ( void );
                        
-         //! \brief    Displays the contents of the class variables in qDebug() statements
+         //! \brief  Displays the contents of the class variables in qDebug()s
          void          show  ( void );
    
          private:
@@ -197,7 +197,7 @@ class US_UTIL_EXTERN US_Report
 
       int     ID;            //!< The ID of this global report structure
       QString GUID;          //!< The GUID of this global report structure
-      int     experimentID;  //!< The experimentID that this triple was derived from
+      int     experimentID;  //!< The experimentID from which triple is derived
       QString runID;         //!< The runID that identifies this experiment
       QString title;         //!< The title of the report
       QString html;          //!< Some introductory html that would appear 
@@ -205,101 +205,104 @@ class US_UTIL_EXTERN US_Report
       QVector< ReportTriple > triples; //!< The report triple
       ReportTypes rTypes;    //!< Persistent structure of report type mappings
           
-      /*!  \brief Generic constructor for the US_Report class.
-      */  
+      //!  \brief Generic constructor for the US_Report class.
       US_Report();
           
       //!  A destructor.
       ~US_Report() {};
              
-      /*! \brief    Function to read an entire report structure from the DB,
-                    except for the document content itself
-
-          \param    new_runID The runID of the associated experiment
-          \param    db For database access, an open database connection
-          \return   One of the US_Report error codes
-      */
-      Status        readDB( QString, US_DB2* = 0 );
+      //! \brief    Function to read an entire report structure from the DB,
+      //!           except for the document content itself
+      //! \param    new_runID The runID of the associated experiment
+      //! \param    db For database access, an open database connection
+      //! \param    new_triple The triple string for associated documents
+      //! \return   One of the US_Report error codes
+      Status        readDB( QString, US_DB2* = 0, QString = "" );
       
-      /*! \brief    Function to save the global report information to db
-
-          \param    db For database access, an open database connection
-          \return   One of the US_Report error codes
-      */
+      //! \brief    Function to save the global report information to db
+      //  \param    db For database access, an open database connection
+      //  \returns  One of the US_Report error codes
       Status        saveDB( US_DB2* = 0 );
 
-      /*! \brief    Function to add a new empty triple record to the report
-
-          \param    triple          The triple identifying which channel
-          \param    dataDescription The data description from the original file
-          \param    db For database access, an open database connection
-          \return   One of the US_Report error codes
-      */
+      //! \brief    Function to add a new empty triple record to the report
+      //! \param    triple          The triple identifying which channel
+      //! \param    dataDescription The data description from the original file
+      //! \param    db For database access, an open database connection
+      //! \returns  One of the US_Report error codes
       Status        addTriple( QString, QString = "", US_DB2* = 0 );
 
-      /*! \brief    Function to add or replace an entire triple
-
-          \param    t  A US_Report::ReportTriple object
-          \param    db For database access, an open database connection
-          \return   One of the US_Report error codes
-      */
+      //! \brief    Function to add or replace an entire triple
+      //! \param    t  A US_Report::ReportTriple object
+      //! \param    db For database access, an open database connection
+      //! \returns  One of the US_Report error codes
       Status        addTriple( US_Report::ReportTriple , US_DB2* = 0 );
 
-      /*! \brief    Function to save the entire report structure to db
-
-          \param    dir The directory where the document contents file is located
-          \param    db For database access, an open database connection
-          \return   One of the US_Report error codes
-      */
+      //! \brief    Function to save the entire report structure to db
+      //! \param    dir The directory where the document contents file is
+      //!               located
+      //! \param    db For database access, an open database connection
+      //! \returns  One of the US_Report error codes
       Status        saveAllToDB( QString, US_DB2* = 0 );
 
-      /*! \brief    Function to delete a report triple from the DB, along with all documents
-
-          \param    ndx The index into the triples QVector of the report triple to delete
-          \param    db For database access, an open database connection
-      */
+      //! \brief  Function to delete a report triple from the DB,
+      //!         along with all documents
+      //! \param  ndx The index into the triples QVector of the report triple
+      //!             to delete
+      //! \param  db For database access, an open database connection
+      //! \returns  One of the US_Report error codes
       Status        removeTriple( int, US_DB2* = 0 );
 
-      /*! \brief    Function to locate a triple record using the triple string
-
-          \param    searchTriple The triple identifying which channel
-          \return   The index into the QVector triples that matches the triple string,
-                    or -1 if no match
-      */
+      //! \brief Function to locate a triple record using the triple string
+      //! \param    searchTriple The triple identifying which channel
+      //! \returns  The index into the QVector triples that matches the triple
+      //!           string, or -1 if no match
       int           findTriple( QString );
 
-      /*! \brief    Store a single reportDocument record based on info in filename
-          \param    dir      The directory where the report file is located. This is
-                             required to end with the runID, for example, 
-                             dir = "/home/user/ultrascan/reports/demo1_veloc"
-          \param    filename Base file name of the local report document file. This
-                             file should be named as follows:
-                             analysis.triple.subAnalysis.docType --- for example,
-                             2dsa.2A260.tinoise.svg
-          \param    db       For database access, an open database connection
-          \param    idEdit   ID of EditedData with which document is associated.
-          \param    dataDescription The data description from the first line of the
-                             original file, in case adding new triple
-          \return   One of the US_Report error codes
-      */
-      Status        saveDocumentFromFile( const QString&, const QString&,
-                                          US_DB2*, int = 1, const QString = "" );
+      //! \brief Store a single reportDocument record based on filename info.
+      //! \param    dir      The directory where the report file is located.
+      //!                    The is required to end with the runID, e.g.,
+      //!                    dir = "/home/user/ultrascan/reports/demo1_veloc"
+      //! \param    filename Base file name of the local report document file.
+      //!                    This file should be named as follows:
+      //!                    analysis.triple.subAnalysis.docType --- e.g.,
+      //!                    2dsa.2A260.tinoise.svg
+      //! \param    db       For database access, an open database connection
+      //! \param    idEdit   ID of EditedData with which document is associated.
+      //! \param    dataDescription The data description from the first line of
+      //!                    the original file, in case adding new triple
+      //! \returns  One of the US_Report error codes
+      Status       saveDocumentFromFile( const QString&, const QString&,
+                                         US_DB2*, int = 1, const QString = "" );
 
-      /*! \brief    Function to delete the specified report from the DB
-          
-          \param    reportID The database reportID of the report to delete
-          \param    db For database access, an open database connection
-      */  
-      Status        removeReport( int, US_DB2* = 0 );
-          
-      //! \brief    Resets the class variables to default values
-      void          reset();
+      //! \brief Store multiple reportDocument records from the same triple.
+      //! \param  dir      The directory where the report file is located.
+      //!                  The is required to end with the runID, e.g.,
+      //!                  dir = "/home/user/ultrascan/reports/demo1_veloc"
+      //! \param  filepaths Base file paths of the local report document files.
+      //!                   These file should be named as follows:
+      //!                   analysis.triple.subAnalysis.docType --- e.g.,
+      //!                   2dsa.2A260.tinoise.svg
+      //! \param  db        For database access, an open database connection
+      //! \param  idEdit    ID of EditedData with which docs are associated.
+      //! \param  dataDescription The data description from the first line of
+      //!                         the original file, in case adding new triple
+      //! \returns  One of the US_Report error codes
+      Status       saveFileDocuments   ( const QString&, const QStringList&,
+                                         US_DB2*, int = 1, const QString = "" );
 
-      //! \brief    Displays the contents of the class variables in qDebug() statements
-      void          show ( void );
+      //! \brief Function to delete the specified report from the DB
+      //! \param    reportID The database reportID of the report to delete
+      //! \param    db       For database access, an open database connection
+      Status       removeReport( int, US_DB2* = 0 );
+
+      //! \brief Resets the class variables to default values
+      void         reset();
+
+      //! \brief Displays the contents of the class variables in qDebug()'s
+      void         show ( void );
 
       private:
-      int           dbg_level;     //!< Debug level value
+      int          dbg_level;     //!< Debug level value
 };
 
 #endif
