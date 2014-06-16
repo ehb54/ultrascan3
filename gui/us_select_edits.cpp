@@ -281,7 +281,7 @@ void US_SelectEdits::scan_dbase_edit()
    // Build a mapping of rawData labels to raw DB ids
    QMap< int, QString > rawlabs;
    query.clear();
-   query << "all_rawDataIDs" << invID;
+   query << "get_rawData_desc" << invID;
 
    db.query( query );
 

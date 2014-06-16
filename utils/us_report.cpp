@@ -864,8 +864,11 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
    if ( nfiles < 1 )
       return US_Report::MISC_ERROR;
 
-   QString filepath   = filepaths[ 0 ];
-   QString filename   = QString( filepath ).section( "/", -1, -1 );
+   QStringList filenames;
+   for ( int jj = 0; jj < nfiles; jj++ )
+      filenames << QString( filepaths[ jj ] ).section( "/", -1, -1 );
+
+   QString filename   = filenames[ 0 ];
    QString newTriple  = filename.section( '.', -3, -3 );
    newTriple          = US_Util::expanded_triple( newTriple, false );
 
@@ -914,6 +917,7 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
    // Build a list of documents already assigned to the triple
    QStringList  tdnames;
    QList< int > tdNdxs;
+   QString filepath;
    QString dirfile    = dir.endsWith( "/" ) ? dir : ( dir + "/" );
    int     ntdocs     = trip->docs.count();
    int     idTrip     = trip->tripleID;
@@ -921,10 +925,9 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
    for ( int ii = 0; ii < ntdocs; ii++ )
    {
       filename           = trip->docs[ ii ].filename;
-      filepath           = dirfile + filename;
       int tidEdit        = trip->docs[ ii ].editedDataID;
 
-      if ( tidEdit == idEdit  &&  filepaths.contains( filepath ) )
+      if ( tidEdit == idEdit  &&  filenames.contains( filename ) )
       {
          tdnames << filename;
          tdNdxs  << ii;
@@ -936,8 +939,7 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
    {
       for ( int ii = 0; ii < nfiles; ii++ )
       {  // Examine each specified file name
-         filepath           = filepaths[ ii ];
-         filename           = QString( filepath ).section( "/", -1, -1 );
+         filename           = filenames[ ii ];
 
          if ( !tdnames.contains( filename ) )
          {  // This document is new and needs to be added to the triple's list
@@ -992,7 +994,7 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
    for ( int ii = 0; ii < nfiles; ii++ )
    {
       filepath           = filepaths[ ii ];
-      filename           = QString( filepath ).section( "/", -1, -1 );
+      filename           = filenames[ ii ];
       int tdnamx         = tdnames.indexOf( filename );
 
       if ( tdnamx < 0 )

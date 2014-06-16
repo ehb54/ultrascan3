@@ -1116,7 +1116,7 @@ DbgLv(1) << " triples    size" << ntriple;
    editIDs   .fill( "",     ntriple );
    editFnames.fill( "none", ntriple );
 
-   isMwl        = ( nwaveln > 2 );
+   isMwl        = ( nwaveln > 2  &&  ntriple > 8 );
    lrng_bycell  = false;         // Assume initially cell lambdas all the same
 DbgLv(1) << "LD(): isMwl" << isMwl << "nwaveln" << nwaveln << toti_wvlns.size();
 
@@ -1478,7 +1478,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
          else
          {
             // Sometime we get two clicks
-            if ( fabs( p.x() - meniscus_left ) < 0.005 ) return;
+            if ( qAbs( p.x() - meniscus_left ) < 0.005 ) return;
 
             double meniscus_right = p.x();
             
@@ -1558,7 +1558,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
          else
          {
             // Sometime we get two clicks
-            if ( fabs( p.x() - airGap_left ) < 0.020 ) return;
+            if ( qAbs( p.x() - airGap_left ) < 0.020 ) return;
 
             airGap_right = p.x();
 
@@ -1609,6 +1609,13 @@ DbgLv(1) << "AGap:  plot_range()";
                delete v_line;
                v_line = NULL;
             }
+
+            if ( p.x() <= meniscus )
+            {
+               le_dataRange->setText( tr( "**overlaps meniscus**" ) );
+               break;
+            }
+
             range_left = p.x();
             draw_vline( range_left );
             break;
@@ -1616,7 +1623,7 @@ DbgLv(1) << "AGap:  plot_range()";
          else
          {
             // Sometime we get two clicks
-            if ( fabs( p.x() - range_left ) < 0.020 ) return;
+            if ( qAbs( p.x() - range_left ) < 0.020 ) return;
 
             range_right = p.x();
 
@@ -1743,6 +1750,12 @@ DbgLv(1) << "AGap:  plot_range()";
          break;
 
       case PLATEAU:
+
+         if ( p.x() > range_right )
+         {
+            le_plateau->setText( tr( "**beyond data end**" ) );
+            break;
+         }
 
          plateau = p.x();
 
@@ -2086,13 +2099,13 @@ void US_Edit::plot_all( void )
 
       for ( int j = 0; j < size; j++ )
       {
-         r[ j ] = data.xvalues[ j ];
-         v[ j ] = s  ->rvalues[ j ] * invert;
+         r[ j ]      = data.xvalues[ j ];
+         v[ j ]      = s  ->rvalues[ j ] * invert;
 
-         maxR = max( maxR, r[ j ] );
-         minR = min( minR, r[ j ] );
-         maxV = max( maxV, v[ j ] );
-         minV = min( minV, v[ j ] );
+         maxR        = qMax( maxR, r[ j ] );
+         minR        = qMin( minR, r[ j ] );
+         maxV        = qMax( maxV, v[ j ] );
+         minV        = qMin( minV, v[ j ] );
       }
 
       QString title = tr( "Raw Data at " )
@@ -2201,8 +2214,8 @@ DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
          c->setBrush( QBrush( Qt::cyan ) );
          c->setPen(   QPen(   Qt::cyan ) );
          c->setData( r, v, 5 );
-         minR = min( minR, r[ 0 ] );
-         minV = min( minV, v[ 0 ] );
+         minR       = qMin( minR, r[ 0 ] );
+         minV       = qMin( minV, v[ 0 ] );
       }
       
       int     count  = 0;
@@ -2212,10 +2225,10 @@ DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
          r[ count ] = data.xvalues[ j ];
          v[ count ] = s  ->rvalues[ j ] * invert;
 
-         maxR = max( maxR, r[ count ] );
-         minR = min( minR, r[ count ] );
-         maxV = max( maxV, v[ count ] );
-         minV = min( minV, v[ count ] );
+         maxR       = qMax( maxR, r[ count ] );
+         minR       = qMin( minR, r[ count ] );
+         maxV       = qMax( maxV, v[ count ] );
+         minV       = qMin( minV, v[ count ] );
 
          count++;
       }
@@ -2273,10 +2286,10 @@ void US_Edit::plot_last( void )
       r[ count ] = data.xvalues[ j ];
       v[ count ] = s  ->rvalues[ j ] * invert;
 
-      maxR = max( maxR, r[ count ] );
-      minR = min( minR, r[ count ] );
-      maxV = max( maxV, v[ count ] );
-      minV = min( minV, v[ count ] );
+      maxR       = qMax( maxR, r[ count ] );
+      minR       = qMin( minR, r[ count ] );
+      maxV       = qMax( maxV, v[ count ] );
+      minV       = qMin( minV, v[ count ] );
 
       count++;
    }
@@ -2338,10 +2351,10 @@ void US_Edit::plot_scan( void )
          r[ count ] = data.xvalues[ jj ];
          v[ count ] = s  ->rvalues[ jj ] * invert;
 
-         maxR = max( maxR, r[ count ] );
-         minR = min( minR, r[ count ] );
-         maxV = max( maxV, v[ count ] );
-         minV = min( minV, v[ count ] );
+         maxR       = qMax( maxR, r[ count ] );
+         minR       = qMin( minR, r[ count ] );
+         maxV       = qMax( maxV, v[ count ] );
+         minV       = qMin( minV, v[ count ] );
 
          count++;
       }
@@ -3318,6 +3331,27 @@ void US_Edit::write_triple( void )
             tr( "Data missing" ),
             tr( "You must define the " ) + s 
             + tr( " before writing the edit profile." ) );
+      return;
+   }
+
+   // Check if meniscus and plateau are consistent with the data range
+   if ( meniscus >= range_left )
+   {
+      QMessageBox::critical( this,
+            tr( "Meniscus/Data_Left Inconsistent" ),
+            tr( "The specified Meniscus (%1) extends into the "
+                "Data Range (%2 to %3). Correct the Meniscus/Data_Left" )
+            .arg( meniscus ).arg( range_left ).arg( range_right ) );
+      return;
+   }
+
+   if ( plateau >= range_right )
+   {
+      QMessageBox::critical( this,
+            tr( "Plateau/Data_Right Inconsistent" ),
+            tr( "The specified Plateau (%1) is outside of the "
+                "Data Range (%2 to %3). Correct the Meniscus/Data_Right" )
+            .arg( plateau ).arg( range_left ).arg( range_right ) );
       return;
    }
 

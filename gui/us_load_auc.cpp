@@ -443,7 +443,7 @@ int US_LoadAUC::scan_db()
       return naucf;
    }
 
-   QStringList q( "all_rawDataIDs" );
+   QStringList q( "get_rawData_desc" );
    q << QString::number( personID );
    db.query( q );
 
@@ -453,9 +453,7 @@ int US_LoadAUC::scan_db()
       QString label     = db.value( 1 ).toString();
       QString filename  = db.value( 2 ).toString();
       QString date      = db.value( 5 ).toString() + " UTC";
-      QString rawGUID   = db.value( 9 ).toString();
-      QString cksum     = db.value( 6 ).toString();
-      QString recsize   = db.value( 7 ).toString();
+      QString rawGUID   = db.value( 7 ).toString();
       QString runID     = filename.section( ".",  0, -6 );
       QString tripID    = filename.section( ".", -4, -2 );
       QString lkey      = runID + "." + tripID;
@@ -465,8 +463,7 @@ int US_LoadAUC::scan_db()
                           filename + "^" +
                           rawGUID + "^" +
                           rawDataID + "^" +
-                          date + "^" +
-                          cksum + " " + recsize;
+                          date;
 
       runIDs << runID;    // Save each run
       infoDs << idata;    // Save concatenated description string
@@ -674,6 +671,18 @@ void US_LoadAUC::load_db( QList< DataDesc >& sdescs )
       if ( QFile( filename ).exists() )
       {  // AUC file exists, do only download if checksum+size mismatch
          QString  fcheck    = US_Util::md5sum_file( filename );
+
+         if ( dcheck.isEmpty() )
+         {
+            QStringList query;
+            query << "get_rawData" << QString::number( idRaw );
+            db.query( query );
+            db.next();
+            ddesc.dcheck       = db.value( 8 ).toString() + " " +
+                                 db.value( 9 ).toString();
+            dcheck             = ddesc.dcheck;
+         }
+
          dload_auc          = ( fcheck != dcheck );
       }
 
