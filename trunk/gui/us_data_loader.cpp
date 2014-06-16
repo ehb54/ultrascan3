@@ -295,6 +295,7 @@ bool US_DataLoader::load_edit( void )
       QString  message  = tr( "Browsing AUC data..." );
       emit progress( message );
       qApp->processEvents();
+qDebug() << "LdEd:TM:10: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
       for ( int ii = 0; ii < indexes.size(); ii++ )
       {  // Read in each of the edits that was selected
@@ -337,6 +338,20 @@ bool US_DataLoader::load_edit( void )
          if ( QFile( afn ).exists() )
          {  // AUC file exists, so only download if checksum mismatch
             QString  fcheck   = US_Util::md5sum_file( afn );
+
+            if ( ddesc.acheck.isEmpty() )
+            {  // No database checksum+size, so get it
+               QString aucID    = QString::number( idAUC );
+               query.clear();
+               query << "get_rawData" << aucID;
+               db.query( query );
+               db.next();
+               ddesc.acheck     = db.value( 8 ).toString() + " " +
+                                  db.value( 9 ).toString();
+            }
+qDebug() << "LdEd: fcheck" << fcheck;
+qDebug() << "LdEd: acheck" << ddesc.acheck;
+
             dnld_auc          = ( fcheck != ddesc.acheck );
          }
 qDebug() << "LdEd: dnld_auc" << dnld_auc << "afn" << afn;
@@ -368,8 +383,9 @@ qDebug() << "LdEd: dnld_edt DONE";
 qDebug() << "LdEd: loadData uresdir filename" << uresdir << filename;
          US_DataIO::loadData( uresdir, filename, editedData, rawData );
 qDebug() << "LdEd: loadData DONE";
-      }
-   }
+      }  // END: edits loop
+qDebug() << "LdEd:TM:11: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   }  // END: Load from DB
 
    QApplication::restoreOverrideCursor();
    double                 dt = 0.0;
@@ -633,7 +649,7 @@ void US_DataLoader::accepted()
 // Scan database for edit sets
 void US_DataLoader::scan_dbase_edit()
 {
-//qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
 
@@ -659,9 +675,18 @@ void US_DataLoader::scan_dbase_edit()
 
    // Accumulate a map of AUC filenames and IDs
    QMap< QString, QString > aucIDs;
+qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    query.clear();
+#if 1
+#define USE_RAW_DESC
+#endif
+#ifdef USE_RAW_DESC
+   query << "get_rawData_desc" << invID;
+#else
    query << "all_rawDataIDs" << invID;
+#endif
    db.query( query );
+qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    while( db.next() )
    {  // Accumulate a mapping of AUC Filename to DB ID
@@ -669,18 +694,25 @@ void US_DataLoader::scan_dbase_edit()
       QString  rLabel   = db.value( 1 ).toString();
       QString  aFname   = db.value( 2 ).toString();
       QString  expID    = db.value( 3 ).toString();
-      QString  cksum    = db.value( 6 ).toString();
-      QString  recsize  = db.value( 7 ).toString();
+#ifdef USE_RAW_DESC
+      QString  aucGUID  = db.value( 7 ).toString();
+      aucIDs[ aFname ]  = aucID + "^" + aucGUID + "^" + expID + "^" + rLabel;
+#else
+      QString  acheck   = db.value( 6 ).toString() + " " +
+                          db.value( 7 ).toString();
+acheck="";
       QString  aucGUID  = db.value( 9 ).toString();
       aucIDs[ aFname ]  = aucID + "^" + aucGUID + "^" + expID + "^" + rLabel
-                                + "^" + cksum + " " + recsize;
+                                + "^" + acheck;
+#endif
    }
 
-//qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    QStringList editpars;
    query.clear();
    query << "all_editedDataIDs" << invID;
    db.query( query );
+qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
 
    // Edit record parameters from the DB are first accumulated,
@@ -707,9 +739,11 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       editpars << recGUID;
       editpars << cksum + " " + recsize;
    }
+qDebug() << "ScDB:TM:05: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    // Now loop through the list of edit entries, building description records
    int nedit = edtIDs.size();
+qDebug() << "ScDB: nedit" << nedit;
    int kp    = 0;
    for ( int ii = 0; ii < nedit; ii++ )
    {
@@ -736,7 +770,7 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       QString aucGUID  = aucIDs[ aucfname ].section( "^", 1, 1 );
       int     idExp    = aucIDs[ aucfname ].section( "^", 2, 2 ).toInt();
       QString elabel   = aucIDs[ aucfname ].section( "^", 3, 3 );
-      QString acheck   = aucIDs[ aucfname ].section( "^", 4, 4 );
+      QString acheck   = aucIDs[ aucfname ].section( "^", 4, 4 ).simplified();
       if ( isMwl )
       {
          idAUC            = 0;
@@ -843,11 +877,11 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
 //qDebug() << "ScDB:TM:06: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 //qDebug() << "ScDB:   descrip" << descrip;
    } // END: loop to read DB edit records
-//qDebug() << "ScDB:TM:88: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+qDebug() << "ScDB:TM:08: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    if ( latest )
       pare_to_latest();
-//qDebug() << "ScDB:TM:99: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+qDebug() << "ScDB:TM:09: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 }
 
 // Scan local disk for edit sets
