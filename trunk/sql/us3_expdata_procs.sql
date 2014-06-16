@@ -280,6 +280,93 @@ BEGIN
 
 END$$
 
+-- Get a list of rawData descriptions that belong to this user (no cksum,size)
+DROP PROCEDURE IF EXISTS get_rawData_desc$$
+CREATE PROCEDURE get_rawData_desc ( p_personGUID   CHAR(36),
+                                    p_password     VARCHAR(80),
+                                    p_ID           INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_rawData INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get more info
+    IF ( count_rawData( p_personGUID, p_password, p_ID ) < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+  
+      IF ( p_ID > 0 ) THEN
+        SELECT     rawDataID, rawData.label, rawData.filename,
+                   rawData.experimentID, rawData.solutionID, 
+                   timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
+                   experimentPerson.personID,
+                   rawDataGUID, rawData.comment, experiment.experimentGUID
+        FROM       rawData, experiment, experimentPerson
+        WHERE      experimentPerson.personID = p_ID
+        AND        experiment.experimentID = experimentPerson.experimentID
+        AND        rawData.experimentID = experiment.experimentID
+        ORDER BY   rawData.lastUpdated DESC;
+
+      ELSE
+        SELECT     rawDataID, rawData.label, rawData.filename,
+                   rawData.experimentID, rawData.solutionID,
+                   timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
+                   experimentPerson.personID,
+                   rawDataGUID, rawData.comment, experiment.experimentGUID
+        FROM       rawData, experiment, experimentPerson
+        WHERE      experiment.experimentID = experimentPerson.experimentID
+        AND        rawData.experimentID = experiment.experimentID
+        ORDER BY   rawData.lastUpdated DESC;
+
+      END IF;
+
+    END IF;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
+      -- Uh oh, can't do that
+      SET @US3_LAST_ERRNO = @NOTPERMITTED;
+      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view this experiment';
+     
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSEIF ( count_experiments( p_personGUID, p_password, @US3_ID ) < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      -- Ok, user wants his own info
+      SELECT @OK AS status;
+
+      SELECT     rawDataID, rawData.label, rawData.filename,
+                 rawData.experimentID, rawData.solutionID, 
+                 timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
+                 experimentPerson.personID,
+                 rawDataGUID, rawData.comment, experiment.experimentGUID
+      FROM       rawData, experiment, experimentPerson
+      WHERE      experimentPerson.personID = @US3_ID
+      AND        experiment.experimentID = experimentPerson.experimentID
+      AND        rawData.experimentID = experiment.experimentID
+      ORDER BY   rawData.lastUpdated DESC;
+
+    END IF;
+
+  END IF;
+
+END$$
+
 -- INSERTs new rawData information about one c/c/w combination in an experiment
 DROP PROCEDURE IF EXISTS new_rawData$$
 CREATE PROCEDURE new_rawData ( p_personGUID   CHAR(36),
