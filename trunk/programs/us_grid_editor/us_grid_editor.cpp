@@ -197,7 +197,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_zVal->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_zVal     = us_counter( 3, 0.01, 3.0, 0.001 );
-   ct_zVal->setStep( 1 );
+   ct_zVal->setStep ( 1 );
+   ct_zVal->setValue( 0.72 );
    connect( ct_zVal, SIGNAL( valueChanged( double ) ),
          this,       SLOT(   update_zVal ( double ) ) );
 
@@ -393,13 +394,13 @@ qDebug() << "set yRes" << yRes;
    ck_show_final_grid->setChecked( false );
    ck_show_sub_grid  ->setEnabled( false );
    ck_show_sub_grid  ->setChecked( false );
-   ct_xRes->setEnabled( true );
-   ct_yRes->setEnabled( true );
-   ct_xMin->setEnabled( true );
-   ct_yMin->setEnabled( true );
-   ct_xMax->setEnabled( true );
-   ct_yMax->setEnabled( true );
-   ct_zVal->setEnabled( true );
+   ct_xRes  ->setEnabled( true );
+   ct_yRes  ->setEnabled( true );
+   ct_xMin  ->setEnabled( true );
+   ct_yMin  ->setEnabled( true );
+   ct_xMax  ->setEnabled( true );
+   ct_yMax  ->setEnabled( true );
+   ct_zVal  ->setEnabled( true );
    rb_x_s   ->setEnabled( true );
    rb_x_ff0 ->setEnabled( false );
    rb_x_mw  ->setEnabled( true );
@@ -420,10 +421,10 @@ qDebug() << "set yRes" << yRes;
 
    select_x_axis( plot_x );
    select_y_axis( plot_y );
-   select_fixed( cb_fixed->currentText() );
+   select_fixed ( cb_fixed->currentText() );
 
-   select_plot( selected_plot );
-   update_plot();
+   select_plot  ( selected_plot );
+   update_plot  ();
 }
 
 // save the grid data
@@ -436,6 +437,7 @@ void US_Grid_Editor::save( void )
    QDateTime now_time = QDateTime::currentDateTime ();
    QList< double > xvals;
    QList< double > yvals;
+   QList< double > zvals;
    double          gridinc = 1.0 / (double)subGrids;
    int             indexsg = 1;
    bool flag;
@@ -451,59 +453,50 @@ void US_Grid_Editor::save( void )
    double ffmin      = 1e99;
    double ffmax      = -1e99;
    sc.signal_concentration = 1.0;
-   for (int i=0; i<final_grid.size(); i++)
-   {
-      flag      = true;
-      sc.s      = final_grid[i].s * 1.0e-13;
-      sc.D      = final_grid[i].D;
-      sc.f      = final_grid[i].f;
-      sc.f_f0   = final_grid[i].ff0;
-      sc.vbar20 = final_grid[i].vbar;
-      sc.mw     = final_grid[i].mw;
 
-      double xval = ( plot_x == 0 ) ? sc.s : sc.mw;
-      double yval = ( plot_y == 0 ) ? sc.f_f0 : sc.vbar20;
-      int indexx = xvals.indexOf( xval );
-      if ( indexx < 0 )  { indexx = xvals.size(); xvals << xval; }
-      int indexy = yvals.indexOf( yval );
-      if ( indexy < 0 )  { indexy = yvals.size(); yvals << yval; }
-      sc.name   = QString().sprintf( "X%3.3dY%3.3d", indexx + 1, indexy + 1 );
+   for ( int ii = 0; ii < final_grid.size(); ii++ )
+   {
+      flag        = true;
+      sc.s        = final_grid[ ii ].s * 1.0e-13;
+      sc.D        = final_grid[ ii ].D;
+      sc.f        = final_grid[ ii ].f;
+      sc.f_f0     = final_grid[ ii ].ff0;
+      sc.vbar20   = final_grid[ ii ].vbar;
+      sc.mw       = final_grid[ ii ].mw;
+
+      double xval = grid_value( final_grid[ ii ], plot_x );
+      double yval = grid_value( final_grid[ ii ], plot_y );
+      double zval = grid_value( final_grid[ ii ], plot_z );
+      int indexx  = xvals.indexOf( xval ) + 1;
+      int indexy  = yvals.indexOf( yval ) + 1;
+      int indexz  = zvals.indexOf( zval ) + 1;
+      if ( indexx < 1 )  { indexx = xvals.size() + 1; xvals << xval; }
+      if ( indexy < 1 )  { indexy = yvals.size() + 1; yvals << yval; }
+      if ( indexz < 1 )  { indexz = zvals.size() + 1; zvals << zval; }
+      sc.name     = QString().sprintf( "X%3.3dY%3.3dZ%2.2d",
+                                       indexx, indexy, indexz );
       sc.signal_concentration = gridinc * (double)indexsg;
       if ( (++indexsg) > subGrids )  indexsg = 1;
 
-      for (int j=0; j<model.components.size(); j++)
+      for ( int jj = 0; jj < model.components.size(); jj++ )
       {
          vbmin     = qMin( vbmin, sc.vbar20 );  // Accumulate vbar,f/f0 extents
          vbmax     = qMax( vbmax, sc.vbar20 );
          ffmin     = qMin( ffmin, sc.f_f0   );
          ffmax     = qMax( ffmax, sc.f_f0   );
 
-         sc.mw     = final_grid[i].mw;
-         if ( sc.s      == model.components[j].s    &&
-              sc.f_f0   == model.components[j].f_f0 &&
-              sc.vbar20 == model.components[j].vbar20 )
+         if ( sc.s      == model.components[ jj ].s     &&
+              sc.f_f0   == model.components[ jj ].f_f0  &&
+              sc.mw     == model.components[ jj ].mw    &&
+              sc.vbar20 == model.components[ jj ].vbar20 )
          {
             flag = false;
             break; // don't add a component that is already in the model
          }
       }
 
-      if (flag) model.components.push_back(sc);
+      if ( flag ) model.components.push_back(sc);
    }
-
-#if 0
-   // Test for, report, and abort when both vbar and f/f0 vary
-   if ( ffmin != ffmax  &&  vbmin != vbmax )
-   {
-      QMessageBox::critical( this, tr( "Invalid Model" ),
-         tr( "The final grid contains solute points where both\n"
-             "vbar and f/f0 vary. This is not allowed.\n"
-             "Please re-create a final grid where only one of\n"
-             "these varies. Perhaps the problem is in component\n"
-             "subgrids that are incompatible." ) );
-      return;
-   }
-#endif
 
    // Open a dialog that reports and allows modification of description
    QMessageBox mbox;
@@ -615,16 +608,13 @@ void US_Grid_Editor::update_xMin( double dval )
 {
    xMin    = dval;
    ct_xMax->disconnect();
-   if (plot_x == ATTR_S ) // x axis is for sed. coeff.
-   {
-      ct_xMax->setRange(xMin, 10000.0, 0.1);
-   }
-   else if (plot_x == ATTR_W ) // x axis is for mw.
-   {
-      ct_xMax->setRange(xMin, 1e10, 1000.0);
-   }
+   ct_xMax->setMinValue( xMin );
+
    connect( ct_xMax, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_xMax ( double ) ) );
+
+   validate_ff0();
+
    update_plot();
 }
 
@@ -633,16 +623,13 @@ void US_Grid_Editor::update_xMax( double dval )
 {
    xMax    = dval;
    ct_xMin->disconnect();
-   if (plot_x == ATTR_S ) // x axis is for sed. coeff.
-   {
-      ct_xMin->setRange(-10000.0, xMax, 0.1);
-   }
-   else if (plot_x == ATTR_W ) // x axis s for mw.
-   {
-      ct_xMin->setRange(0.0, xMax, 1000.0);
-   }
+   ct_xMin->setMaxValue( xMax );
+
    connect( ct_xMin, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_xMin ( double ) ) );
+
+   validate_ff0();
+
    update_plot();
 }
 
@@ -650,17 +637,15 @@ void US_Grid_Editor::update_xMax( double dval )
 void US_Grid_Editor::update_yMin( double dval )
 {
    yMin    = dval;
+qDebug() << "update_yMin" << yMin;
    ct_yMax->disconnect();
-   if (plot_y == ATTR_K ) // y axis is for f/f0.
-   {
-      ct_yMax->setRange(yMin, 50.0, 0.1);
-   }
-   else if (plot_y == ATTR_V ) // x axis is for vbar.
-   {
-      ct_yMax->setRange(yMin, 3.0, 0.01);
-   }
+   ct_yMax->setMinValue( yMin );
+
    connect( ct_yMax, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_yMax( double ) ) );
+            this,    SLOT  ( update_yMax ( double ) ) );
+
+   validate_ff0();
+
    update_plot();
 }
 
@@ -668,17 +653,15 @@ void US_Grid_Editor::update_yMin( double dval )
 void US_Grid_Editor::update_yMax( double dval )
 {
    yMax    = dval;
+qDebug() << "update_yMax" << yMax;
    ct_yMin->disconnect();
-   if (plot_y == ATTR_K ) // y axis is for f/f0.
-   {
-      ct_yMin->setRange(1.0, yMax, 0.1);
-   }
-   else if (plot_y == ATTR_V ) // y axis is for vbar.
-   {
-      ct_yMin->setRange(0.01, yMax, 0.01);
-   }
+   ct_yMin->setMaxValue( yMax );
+
    connect( ct_yMin, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_yMin( double ) ) );
+            this,    SLOT  ( update_yMin ( double ) ) );
+
+   validate_ff0();
+
    update_plot();
 }
 
@@ -686,18 +669,15 @@ void US_Grid_Editor::update_yMax( double dval )
 void US_Grid_Editor::update_zVal( double dval )
 {
    zVal    = dval;
-   if (plot_y == ATTR_V )
-   {
-      vbar = zVal;
-   }
-   if (plot_y == ATTR_K )
-   {
-      ff0  = zVal;
-   }
+   vbar    = ( plot_y == ATTR_V ) ? zVal : vbar;
+   ff0     = ( plot_y == ATTR_K ) ? zVal : ff0;
+
+   validate_ff0();
+
    update_plot();
 }
 
-// Select a partialGrid from all grids combined in the final grid for highlighting:
+// Select a partialGrid from all subgrids in the final grid for highlighting
 void US_Grid_Editor::update_partialGrid( double dval )
 {
    partialGrid = (int) dval;
@@ -979,6 +959,8 @@ qDebug() << "  cg3)yRes" << yRes;
    double yval       = yMin;
    int    nxvals     = (int)xRes;
    int    nyvals     = (int)yRes;
+   int    nerr_w     = 0;
+   int    nerr_k     = 0;
    bool   comp_ok    = true;
 qDebug() << "calc_g: zVal nx ny" << zVal << nxvals << nyvals
  << "xMin xMax xinc" << xMin << xMax << xinc
@@ -1022,7 +1004,7 @@ qDebug() << "calc_g:  CG2";
 
          for ( int jj = 0; jj < nyvals; jj++ )
          {
-            tmp_point.ff0  = yval;
+            tmp_point.ff0     = yval;
             yval             += yinc;
 
             if ( set_comp_skv( tmp_point ) )
@@ -1030,6 +1012,8 @@ qDebug() << "calc_g:  CG2";
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
          }
       }
 qDebug() << "  cg5)yRes" << yRes;
@@ -1037,6 +1021,8 @@ qDebug() << "  cg5)yRes" << yRes;
                                                        ///////////////
    else if ( plot_x == ATTR_S  &&  plot_y == ATTR_W )  // s and mw   
    {                                                   ///////////////
+      int lstiek = -1;
+      int lstjek = -1;
       for ( int ii = 0; ii < nxvals; ii++ )
       {
          tmp_point.s       = xval;
@@ -1053,8 +1039,22 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+            {
+               nerr_k++;
+               lstiek          = ii;
+               lstjek          = jj;
+qDebug() << "    ii jj" << ii << jj << "s w k" << tmp_point.s << tmp_point.mw
+ << tmp_point.ff0;
+            }
          }
       }
+qDebug() << "  (0)ff0" << current_grid[0].ff0;
+qDebug() << "  (n)ff0" << current_grid[nxvals*nyvals-1].ff0;
+qDebug() << "   lstiek lstjek" << lstiek << lstjek << "nxy" << nxvals << nyvals;
    }
                                                        ///////////////
    else if ( plot_x == ATTR_S  &&  plot_y == ATTR_V )  // s and vbar   
@@ -1084,6 +1084,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1106,6 +1111,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1128,6 +1138,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1150,6 +1165,8 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
          }
       }
    }
@@ -1172,6 +1189,8 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
          }
       }
    }
@@ -1203,6 +1222,8 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
          }
       }
    }
@@ -1225,6 +1246,8 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
          }
       }
    }
@@ -1247,6 +1270,8 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
          }
       }
    }
@@ -1269,6 +1294,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1291,6 +1321,8 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
          }
       }
    }
@@ -1322,6 +1354,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1344,6 +1381,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1366,6 +1408,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1397,6 +1444,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1428,6 +1480,8 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
          }
       }
    }
@@ -1459,6 +1513,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1490,6 +1549,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1521,6 +1585,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1543,6 +1612,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1565,6 +1639,8 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
          }
       }
    }
@@ -1587,6 +1663,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1618,6 +1699,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1640,6 +1726,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1662,6 +1753,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1684,6 +1780,8 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
          }
       }
    }
@@ -1706,6 +1804,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1737,6 +1840,11 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
@@ -1759,15 +1867,21 @@ qDebug() << "  cg5)yRes" << yRes;
                current_grid << tmp_point;
                set_minmax( tmp_point );
             }
+            else
+               nerr_w++;
+
+            if ( tmp_point.ff0 < 1.0 )
+               nerr_k++;
          }
       }
    }
 qDebug() << "calc_g:  xval yval" << xval << yval
  << "gsize" << current_grid.size();
 
-   if ( current_grid.size() == 0 )
+   if ( nerr_w > 0  ||  nerr_k > 0  ||  current_grid.size() == 0 )
    {
       QString wmsg;
+
       if ( plot_x != ATTR_V  &&  plot_y != ATTR_V  &&  plot_z != ATTR_V )
       {
          wmsg = tr( "Presently, one of the axes or the fixed attribute "
@@ -1775,7 +1889,8 @@ qDebug() << "calc_g:  xval yval" << xval << yval
                     "select the Axis types and Fixed attribute so that "
                     "one of them is Partial Specific Volume." );
       }
-      else
+
+      else if ( nerr_w > 0 )
       {
          wmsg = tr( "You have selected a nonsensical parameter setting. "
                     "The product of the sedimentation coefficient, s, "
@@ -1783,6 +1898,19 @@ qDebug() << "calc_g:  xval yval" << xval << yval
                     "must be positive. Please examine your settings for "
                     "the sedimentation coefficient range, the density, "
                     "and the partial specific volume before proceeding." );
+      }
+
+      else if ( nerr_k > 0 )
+      {
+         wmsg = tr( "You have selected a set of parameter settings that "
+                    "result in f/f0 value(s) less than 1. "
+                    "Please adjust the fixed value or ranges so that "
+                    "the frictional ratio is at least 1." );
+      }
+
+      else
+      {
+         wmsg = tr( "Grid size is zero" );
       }
 
       QMessageBox::warning( this,
@@ -2005,6 +2133,8 @@ void US_Grid_Editor::select_x_axis( int ival )
    connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
             this,     SLOT  ( select_fixed( const QString& ) ) );
 
+   validate_ff0();
+
    update_plot();
 }
 
@@ -2013,7 +2143,7 @@ void US_Grid_Editor::select_y_axis( int ival )
 {
    // Axis types                   s    f/f0      mw   vbar     D     f
    const double  yvmns[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
-   const double  yvmxs[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
+   const double  yvmxs[] = {     10.0,   4.0,   1e+6,  0.80, 1e-7, 1e-7 };
    const double  ymins[] = { -10000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
    const double  ymaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 1e-5, 1e-5 };
    const double  yincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9 };
@@ -2074,6 +2204,8 @@ void US_Grid_Editor::select_y_axis( int ival )
    connect( cb_fixed, SIGNAL( activated   ( const QString& ) ),
             this,     SLOT  ( select_fixed( const QString& ) ) );
 
+   validate_ff0();
+
    update_plot();
 }
 
@@ -2084,7 +2216,7 @@ void US_Grid_Editor::select_fixed( const QString& fixstr )
    const double  zmins[] = { -10000.0,   1.0,    0.0,  0.01, 1e+6, 1e+6 };
    const double  zmaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 1e+8, 1e+6 };
    const double  zincs[] = {     0.01,  0.01, 1000.0, 0.001, 1e+5, 1e+5 };
-   const double  zvals[] = {     5.00,   2.0,   1e+5,  0.72, 1e+7, 1e+7 };
+   //const double  zvals[] = {     5.00,   2.0,   1e+5,  0.72, 1e+7, 1e+7 };
 
    plot_z   = fixstr.contains( tr( "Partial S" ) ) ? ATTR_V : 0;
    plot_z   = fixstr.contains( tr( "nal Ratio" ) ) ? ATTR_K : plot_z;
@@ -2095,9 +2227,10 @@ void US_Grid_Editor::select_fixed( const QString& fixstr )
 qDebug() << "SelFix: " << fixstr << "plot_z" << plot_z;
 
    ct_zVal->setRange( zmins[ plot_z ], zmaxs[ plot_z ], zincs[ plot_z ] );
-   ct_zVal->setValue( zvals[ plot_z ] );
+   //ct_zVal->setValue( zvals[ plot_z ] );
    lb_zVal->setText( fixstr );
 
+   validate_ff0();
 }
 
 // activated when the "Show Final Grid" Checkbox is set
@@ -2248,9 +2381,13 @@ bool US_Grid_Editor::set_comp_swv( struct gridpoint& gpoint )
    gpoint.f      = ssgn * gpoint.mw * buoy / ( sval * AVOGADRO );
    double volume = vbar * gpoint.mw / AVOGADRO;
    double sphere = pow( volume * VOL_FAC, THIRD );
-   gpoint.ff0    = gpoint.f / ( sphere * SPH_FAC );
-   gpoint.f0     = gpoint.f / qMax( 1.0, gpoint.ff0 );
+   gpoint.f0     = sphere * SPH_FAC;
+   gpoint.f0     = ( gpoint.f0 == 0.0 ) ? 1.0 : gpoint.f0;
+   gpoint.ff0    = gpoint.f / gpoint.f0;
+   gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
    bool   is_ok  = check_grid_point( buoy, gpoint );
+//qDebug() << "comp_swv s w v k" << gpoint.s << gpoint.mw << gpoint.vbar
+// << gpoint.ff0;
 
    return is_ok;
 }
@@ -2303,6 +2440,7 @@ bool US_Grid_Editor::set_comp_svf( struct gridpoint& gpoint )
    double volume = vbar * gpoint.mw / AVOGADRO;
    double sphere = pow( volume * VOL_FAC, THIRD );
    gpoint.ff0    = gpoint.f / ( sphere * SPH_FAC );
+   gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
    gpoint.f0     = gpoint.f / qMax( 1.0, gpoint.ff0 );
    bool   is_ok  = check_grid_point( buoy, gpoint );
 
@@ -2315,6 +2453,7 @@ bool US_Grid_Editor::set_comp_sdf( struct gridpoint& gpoint )
    double buoy   = 1.0 - vbar * density;
 qDebug() << "comp_sdf buoy" << buoy;
    bool   is_ok  = check_grid_point( buoy, gpoint );
+   gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
 
    return is_ok;
 }
@@ -2439,6 +2578,7 @@ bool US_Grid_Editor::set_comp_wdf( struct gridpoint& gpoint )
    double vbar   = gpoint.vbar;
    double buoy   = 1.0 - vbar * density;
 qDebug() << "comp_wdf buoy" << buoy;
+   gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
    bool   is_ok  = check_grid_point( buoy, gpoint );
 
    return is_ok;
@@ -2449,12 +2589,13 @@ bool US_Grid_Editor::set_comp_vdf( struct gridpoint& gpoint )
    double vbar   = gpoint.vbar;
    double buoy   = 1.0 - vbar * density;
 qDebug() << "comp_vdf buoy" << buoy;
+   gpoint.ff0    = qRound( gpoint.ff0 * 1.0e+5 ) * 1.0e-5;
    bool   is_ok  = check_grid_point( buoy, gpoint );
 
    return is_ok;
 }
 
-// Check the validity of a grip point
+// Check the validity of a grid point
 bool US_Grid_Editor::check_grid_point( double buoy, struct gridpoint& gpoint )
 {
    bool is_ok = true;
@@ -2465,6 +2606,237 @@ bool US_Grid_Editor::check_grid_point( double buoy, struct gridpoint& gpoint )
    {  // If point is nonsensical, flag it and mark molecular weight negative
       gpoint.mw  = -1.0;
       is_ok      = false;
+   }
+
+   return is_ok;
+}
+
+// Adjust value/ranges so that f/f0 is not less than 1
+bool US_Grid_Editor::validate_ff0()
+{
+   bool is_ok     = true;
+
+   if ( plot_x == ATTR_K  ||  plot_y == ATTR_K  ||  plot_z == ATTR_K )
+   {  // If one of the attributes is f/f0, no need for checking
+      return is_ok;
+   }
+
+   struct gridpoint zpoint;
+   struct gridpoint tmp_point;
+   xMin           = ct_xMin->value();
+   xMax           = ct_xMax->value();
+   yMin           = ct_yMin->value();
+   yMax           = ct_yMax->value();
+qDebug() << "valFF0: xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
+   zVal           = ct_zVal->value();
+   clear_grid( zpoint );
+   set_grid_value( zpoint,    plot_z, zVal );
+   // Get f/f0 for xMin,yMin
+   tmp_point      = zpoint;
+   set_grid_value( tmp_point, plot_x, xMin );
+   set_grid_value( tmp_point, plot_y, yMin );
+   complete_comp ( tmp_point );
+   double ffx1y1  = tmp_point.ff0;
+   // Get f/f0 for xMin,yMax
+   tmp_point      = zpoint;
+   set_grid_value( tmp_point, plot_x, xMin );
+   set_grid_value( tmp_point, plot_y, yMax );
+   complete_comp ( tmp_point );
+   double ffx1y2  = tmp_point.ff0;
+   // Get f/f0 for xMax,yMin
+   tmp_point      = zpoint;
+   set_grid_value( tmp_point, plot_x, xMax );
+   set_grid_value( tmp_point, plot_y, yMin );
+   complete_comp ( tmp_point );
+   double ffx2y1  = tmp_point.ff0;
+   // Get f/f0 for xMax,yMax
+   tmp_point      = zpoint;
+   set_grid_value( tmp_point, plot_x, xMax );
+   set_grid_value( tmp_point, plot_y, yMax );
+   complete_comp ( tmp_point );
+   double ffx2y2  = tmp_point.ff0;
+   // Get overall minimum f/f0
+   double ff0min  = qMin( ffx1y1, ffx1y2 );
+   ff0min         = qMin( ff0min, ffx2y1 );
+   ff0min         = qMin( ff0min, ffx2y2 );
+qDebug() << "valFF0: zVal xMin yMin ff0" << zVal << xMin << yMin << ffx1y1;
+qDebug() << "valFF0:      xMin yMax ff0   " << xMin << yMax << ffx1y2;
+qDebug() << "valFF0:      xMax yMin ff0   " << xMax << yMin << ffx2y1;
+qDebug() << "valFF0:      xMax yMax ff0   " << xMax << yMax << ffx2y2;
+
+   if ( ff0min < 1.0 )
+   {  // Ranges include values that set f/f0 less than 1:  must adjust ranges
+
+      if ( plot_x == ATTR_W  ||  plot_x == ATTR_F )
+      {  // Adjust the X range (if MW or f)
+         ct_xMin->disconnect();
+         ct_xMax->disconnect();
+         tmp_point      = zpoint;
+         set_grid_value( tmp_point, ATTR_K, 1.0  );
+
+         if ( ffx1y1 < ffx1y2 )
+         {  // Increasing Y means increasing f/f0, so get X for k=1,ymin
+            set_grid_value( tmp_point, plot_y, yMin );
+            complete_comp ( tmp_point );
+            double xVal    = grid_value( tmp_point, plot_x );
+
+            if ( ffx1y1 < ffx2y1 )
+            {  // Increasing X means increasing f/f0, so set lower limit
+qDebug() << "valFF0:  (1xMin)xVal" << xVal;
+               ct_xMin->setMinValue( xVal );
+               ct_xMax->setMinValue( xVal );
+            }
+
+            else
+            {  // Increasing X means decreasing f/f0, so set upper limit
+qDebug() << "valFF0:  (2xMin)xVal" << xVal;
+               ct_xMin->setMaxValue( xVal );
+               ct_xMax->setMaxValue( xVal );
+            }
+         }
+
+         else
+         {  // Increasing Y means decreasing f/f0, so get X for k=1,ymax
+            set_grid_value( tmp_point, plot_y, yMax );
+            complete_comp ( tmp_point );
+            double xVal    = grid_value( tmp_point, plot_x );
+
+            if ( ffx1y1 < ffx2y1 )
+            {  // Increasing X means increasing f/f0, so set lower limit
+qDebug() << "valFF0:  (3xMin)xVal" << xVal;
+               ct_xMin->setMinValue( xVal );
+               ct_xMax->setMinValue( xVal );
+            }
+
+            else
+            {  // Increasing X means decreasing f/f0, so set upper limit
+qDebug() << "valFF0:  (4xMin)xVal" << xVal;
+               ct_xMin->setMaxValue( xVal );
+               ct_xMax->setMaxValue( xVal );
+            }
+         }
+
+         connect( ct_xMin, SIGNAL( valueChanged( double ) ),
+                  this,    SLOT  ( update_xMin ( double ) ) );
+         connect( ct_xMax, SIGNAL( valueChanged( double ) ),
+                  this,    SLOT  ( update_xMax ( double ) ) );
+      }
+
+      if ( plot_y == ATTR_W  ||  plot_y == ATTR_F )
+      {  // Adjust the Y range (if MW or f)
+         ct_yMin->disconnect();
+         ct_yMax->disconnect();
+         tmp_point      = zpoint;
+         set_grid_value( tmp_point, ATTR_K, 1.0  );
+
+         if ( ffx1y1 < ffx2y1 )
+         {  // Increasing X means increasing f/f0, so get Y for k=1,xmin
+            set_grid_value( tmp_point, plot_x, xMin );
+            complete_comp ( tmp_point );
+            double yVal    = grid_value( tmp_point, plot_y );
+
+            if ( ffx1y1 < ffx1y2 )
+            {  // Increasing Y means increasing f/f0, so set lower limit
+qDebug() << "valFF0:  (5yMin)yVal" << yVal;
+               ct_yMin->setMinValue( yVal );
+               ct_yMax->setMinValue( yVal );
+            }
+
+            else
+            {  // Increasing Y means decreasing f/f0, so set upper limit
+qDebug() << "valFF0:  (6yMax)yVal" << yVal;
+               ct_yMin->setMaxValue( yVal );
+               ct_yMax->setMaxValue( yVal );
+            }
+         }
+
+         else
+         {  // Increasing X means decreasing f/f0, so get y for k=1,xmax
+            set_grid_value( tmp_point, plot_x, xMax );
+            complete_comp ( tmp_point );
+            double yVal    = grid_value( tmp_point, plot_y );
+
+            if ( ffx1y1 < ffx1y2 )
+            {  // Increasing Y means increasing f/f0, so set lower limit
+qDebug() << "valFF0:  (7yMin)yVal" << yVal;
+               ct_yMin->setMinValue( yVal );
+               ct_yMax->setMinValue( yVal );
+            }
+
+            else
+            {  // Increasing Y means decreasing f/f0, so set upper limit
+qDebug() << "valFF0:  (8yMax)yVal" << yVal;
+               ct_yMin->setMaxValue( yVal );
+               ct_yMax->setMaxValue( yVal );
+            }
+         }
+
+         connect( ct_yMin, SIGNAL( valueChanged( double ) ),
+                  this,    SLOT  ( update_yMin ( double ) ) );
+         connect( ct_yMax, SIGNAL( valueChanged( double ) ),
+                  this,    SLOT  ( update_yMax ( double ) ) );
+      }
+   }
+
+   xMin           = ct_xMin->value();
+   xMax           = ct_xMax->value();
+   yMin           = ct_yMin->value();
+   yMax           = ct_yMax->value();
+qDebug() << "valFF0: (out)xMin xMax yMin yMax" << xMin << xMax << yMin << yMax;
+
+   return is_ok;
+}
+
+// Clear a gridpoint structure
+void US_Grid_Editor::clear_grid( struct gridpoint& gpoint )
+{
+   gpoint.s      = 0.0;
+   gpoint.ff0    = 0.0;
+   gpoint.mw     = 0.0;
+   gpoint.vbar   = 0.0;
+   gpoint.D      = 0.0;
+   gpoint.f      = 0.0;
+}
+
+// Set a gridpoint value of the selected type
+void US_Grid_Editor::set_grid_value( struct gridpoint& gpoint, int atype,
+                                     double gvalue )
+{
+   if      ( atype == ATTR_S )
+      gpoint.s      = gvalue;
+   else if ( atype == ATTR_K )
+      gpoint.ff0    = gvalue;
+   else if ( atype == ATTR_W )
+      gpoint.mw     = gvalue;
+   else if ( atype == ATTR_V )
+      gpoint.vbar   = gvalue;
+   else if ( atype == ATTR_D )
+      gpoint.D      = gvalue;
+   else if ( atype == ATTR_F )
+      gpoint.f      = gvalue;
+}
+
+// Complete component where 3 attributes are given
+bool US_Grid_Editor::complete_comp( struct gridpoint& gpoint )
+{
+   US_Model::SimulationComponent sc;
+   sc.s          = gpoint.s * 1.0e-13;
+   sc.f_f0       = gpoint.ff0;
+   sc.mw         = gpoint.mw;
+   sc.vbar20     = gpoint.vbar;
+   sc.D          = gpoint.D;
+   sc.f          = gpoint.f;
+
+   bool is_ok    = US_Model::calc_coefficients( sc );
+
+   if ( is_ok )
+   {
+      gpoint.s      = sc.s * 1.0e+13;
+      gpoint.ff0    = sc.f_f0;
+      gpoint.mw     = sc.mw;
+      gpoint.vbar   = sc.vbar20;
+      gpoint.D      = sc.D;
+      gpoint.f      = sc.f;
    }
 
    return is_ok;
