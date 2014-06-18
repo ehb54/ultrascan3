@@ -204,6 +204,10 @@ class US_Grid_Editor : public US_Widgets
       bool set_comp_wdf( struct gridpoint& );
       bool set_comp_vdf( struct gridpoint& );
       bool check_grid_point( double, struct gridpoint& );
+      bool validate_ff0    ( void );
+      void clear_grid      ( struct gridpoint& );
+      void set_grid_value  ( struct gridpoint&, const int, const double );
+      bool complete_comp   ( struct gridpoint& );
 };
 
 #endif
