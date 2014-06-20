@@ -7185,6 +7185,12 @@ void US_Hydrodyn::calc_mw()
    QFile       vvv_file;
    Q3TextStream vvv_ts;
 
+   bool do_scol = ( gparams.count( "save_csv_on_load_pdb" ) &&
+                    gparams[ "save_csv_on_load_pdb" ] == "true" );
+
+   QFile       scol_file;
+   Q3TextStream scol_ts;
+
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
       editor->append( QString(tr("\nModel: %1 vbar %2 cm^3/g\n") )
@@ -7222,6 +7228,19 @@ void US_Hydrodyn::calc_mw()
             }
          }
 
+         if ( do_scol )
+         {
+            scol_file.setName( somo_dir + SLASH + "tmp" + SLASH + project + QString( "_%1.csv" ).arg( model_vector[i].model_id ) );
+            if ( !scol_file.open( QIODevice::WriteOnly ) )
+            {
+               editor_msg( "red", QString( tr( "Error: save as CSV on load PDB requested but can not open %1 for writing" ) ).arg( scol_file.name() ) );
+               do_scol = false;
+            } else {
+               scol_ts.setDevice( &scol_file );
+               scol_ts << "\"Atom number\",\"Atom name\",\"Residue number\",\"Residue name\",\"Radius\",\"Mass [Da]\",\"x\",\"y\",\"z\"\n";
+            }
+         }
+
          for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) 
          {
             double chain_excl_vol          = 0.0;
@@ -7242,6 +7261,21 @@ void US_Hydrodyn::calc_mw()
                         .arg( this_atom->coordinate.axis[ 1 ] )
                         .arg( this_atom->coordinate.axis[ 2 ] )
                         .arg( this_atom->radius );
+                  }
+
+                  if ( do_scol )
+                  {
+                     scol_ts << QString( "%1,%2,%3,%4,%5,%6,%7,%8,%9\n" )
+                        .arg( this_atom->serial )
+                        .arg( this_atom->name )
+                        .arg( this_atom->resSeq )
+                        .arg( this_atom->resName )
+                        .arg( this_atom->radius )
+                        .arg( this_atom->mw )
+                        .arg( this_atom->coordinate.axis[ 0 ] )
+                        .arg( this_atom->coordinate.axis[ 1 ] )
+                        .arg( this_atom->coordinate.axis[ 2 ] )
+                        ;
                   }
 
                   // printf("model %u chain %u atom %u mw %g\n",
@@ -7375,6 +7409,13 @@ void US_Hydrodyn::calc_mw()
                         .arg( asa.vvv_grid_dR )
                         .arg( volume )
                         .arg( surf )
+                        );
+         }
+         if ( do_scol )
+         {
+            scol_file.close();
+            editor_msg( "blue",
+                        QString( "Created CSV atomic file: %1" ).arg( scol_file.name() )
                         );
          }
       }

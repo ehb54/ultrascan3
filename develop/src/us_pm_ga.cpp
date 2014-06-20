@@ -592,6 +592,8 @@ bool US_PM::ga_state_ok()
    {
       if ( ga_low_fparams[ i ] > ga_high_fparams[ i ] )
       {
+         // US_Vector::printvector2( QString( "low fparams > high fparams @ %1" ).arg( i ), ga_low_fparams, ga_high_fparams );
+
          error_msg = "ga_state_ok: not ok, low fparams > high fparams";
          return false;
       }
@@ -622,6 +624,11 @@ bool US_PM::ga_compute_delta( unsigned int points_max )
 
    pm_ga_last_max_best_delta_min = 0e0;
 
+   // if ( us_log )
+   // {
+   //    us_log->log( US_Vector::qs_vector2( "ga_compute_delta low high", ga_low_fparams, ga_high_fparams ) );
+   // }
+
    for ( int i = 0; i < (int) ga_low_fparams.size(); i++ )
    {
       if ( ga_low_fparams[ i ] == ga_high_fparams[ i ] )
@@ -642,6 +649,11 @@ bool US_PM::ga_compute_delta( unsigned int points_max )
             }
             ga_delta [ i ] = best_delta_min;
             ga_points[ i ] = ( unsigned int )( 0.5 + ( ga_high_fparams[ i ] - ga_low_fparams[ i ] ) / best_delta_min );
+            if ( ga_points[ i ] == 0 )
+            {
+               ga_delta [ i ] = 0e0;
+               ga_points[ i ] = 1;
+            }
          } else {
             ga_points[ i ] = points_max;
          }
@@ -650,7 +662,23 @@ bool US_PM::ga_compute_delta( unsigned int points_max )
             pm_ga_last_max_best_delta_min = ga_delta[ i ];
          }
       }
-      total_pts *= ga_points[ i ];
+      if ( ga_points[ i ] > 0 && total_pts > INT_MAX / ga_points[ i ] ) 
+      {
+         // overflow, set to MAX_INT
+         us_log->log( "overflow detected\n" );
+         total_pts = INT_MAX;
+      } else {
+         if ( ga_points[ i ] > 0 )
+         {
+            total_pts *= ga_points[ i ];
+         }
+      }
+
+      // if ( us_log )
+      // {
+      //    us_log->log( QString( "ga_points[ %1 ] = %2 total pts %3\n" )
+      //                 .arg( i ).arg( ga_points[ i ] ).arg( total_pts ) );
+      // }
    }
 
    if ( us_log )

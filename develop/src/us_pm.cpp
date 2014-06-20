@@ -861,6 +861,17 @@ QString US_PM::physical_stats( set < pm_point > & model )
    last_physical_stats[ "result centers bounding box size y" ] = QString( "%1" ).arg( pmax.axis[ 1 ] - pmin.axis[ 1 ] );
    last_physical_stats[ "result centers bounding box size z" ] = QString( "%1" ).arg( pmax.axis[ 2 ] - pmin.axis[ 2 ] );
 
+   double approx_Dmax = prmax.axis[ 0 ] - prmin.axis[ 0 ];
+   for ( int i = 1; i < 3; ++i )
+   {
+      if ( approx_Dmax < prmax.axis[ i ] - prmin.axis[ i ] )
+      {
+         approx_Dmax = prmax.axis[ i ] - prmin.axis[ i ];
+      }
+   }
+   last_physical_stats[ "approx. Dmax" ] = QString( "%1" ).arg( approx_Dmax );
+   last_physical_stats[ "approx. Shannon channels" ] = QString( "%1" ).arg( approx_Dmax * q.back() / M_PI );
+
    last_physical_stats[ "result centers axial ratios x:z" ] = QString( "%1" )
       .arg( ( pmax.axis[ 0 ] - pmin.axis[ 0 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) );
    last_physical_stats[ "result centers axial ratios x:y" ] = QString( "%1" )
@@ -918,6 +929,9 @@ QString US_PM::physical_stats( set < pm_point > & model )
       .arg( ( prmax.axis[ 0 ] - prmin.axis[ 0 ] ) / ( prmax.axis[ 2 ] - prmin.axis[ 2 ] ) )
       .arg( ( prmax.axis[ 0 ] - prmin.axis[ 0 ] ) / ( prmax.axis[ 1 ] - prmin.axis[ 1 ] ) )
       .arg( ( prmax.axis[ 1 ] - prmin.axis[ 1 ] ) / ( prmax.axis[ 2 ] - prmin.axis[ 2 ] ) );
+
+   qs += QString( "approx. Dmax %1\n" ).arg( approx_Dmax );
+   qs += QString( "approx. Shannon channels %1\n" ).arg( approx_Dmax * q.back() / M_PI );
 
    return qs;
 }
@@ -1107,6 +1121,12 @@ bool US_PM::rescale_params( vector < double > & params,
             low_fparams [ fpos ] = fparams[ fpos ] * ( 1e0 - refinement_range_pct / 100e0 );
             high_fparams[ fpos ] = fparams[ fpos ] * ( 1e0 + refinement_range_pct / 100e0 );
             break;
+         }
+         if ( low_fparams[ fpos ] > high_fparams[ fpos ] )
+         {
+            double tmp = low_fparams[ fpos ];
+            low_fparams [ fpos ] = high_fparams[ fpos ];
+            high_fparams[ fpos ] = tmp;
          }
       }
    }

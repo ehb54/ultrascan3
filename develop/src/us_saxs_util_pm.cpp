@@ -2134,10 +2134,14 @@ bool US_Saxs_Util::run_pm(
                      .arg( control_parameters.count( "pmoutname" ) ? control_parameters[ "pmoutname" ] : "unknown" )
                      .arg( pm.get_name( types ) )
                      .arg( fitok ? 
-                           QString( " %1 %2" )
+                           QString( " %1 %2  Params %3  Shannon channels %4" )
                            .arg( pm.use_errors ? "nchi" : "rmsd" )
                            .arg( pm.use_errors ? chi2 / ( control_vectors[ "pmq" ].size() - 1) 
-                                 : chi2, 0, 'g', 4 )  : QString( "" ) )
+                                 : chi2, 0, 'g', 4 )
+                           .arg( params.size() )
+                           .arg( pm.last_physical_stats.count( "approx. Shannon channels" ) ? 
+                                 pm.last_physical_stats[ "approx. Shannon channels" ] : QString( "?" ) )
+                           : QString( "" ) )
                      ;
                   us_udp_msg->send_json( msging );
                }

@@ -41,7 +41,7 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   bg_misc = new Q3ButtonGroup(4, Qt::Vertical, "Miscellaneous parsing options:", this);
+   bg_misc = new Q3ButtonGroup( 5, Qt::Vertical, "Miscellaneous parsing options:", this);
    bg_misc->setExclusive(false);
 
    cb_skip_hydrogen = new QCheckBox(bg_misc);
@@ -83,6 +83,17 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
    cb_find_sh->setPalette( PALET_NORMAL );
    AUTFBACK( cb_find_sh );
    connect(cb_find_sh, SIGNAL(clicked()), this, SLOT(find_sh()));
+
+   cb_save_csv_on_load = new QCheckBox(bg_misc);
+   cb_save_csv_on_load->setText(tr(" Save CSV on load PDB"));
+   cb_save_csv_on_load->setEnabled( true );
+   cb_save_csv_on_load->setChecked( ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "save_csv_on_load_pdb" ) &&
+                                    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "save_csv_on_load_pdb" ] == "true" );
+   cb_save_csv_on_load->setMinimumHeight(minHeight1);
+   cb_save_csv_on_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_save_csv_on_load->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_save_csv_on_load );
+   connect(cb_save_csv_on_load, SIGNAL(clicked()), this, SLOT(save_csv_on_load()));
 
    bg_residues = new Q3ButtonGroup(3, Qt::Vertical, "If non-coded residues are found:", this);
    bg_residues->setExclusive(true);
@@ -195,6 +206,11 @@ void US_Hydrodyn_PDB_Parsing::find_sh()
 {
    (*pdb).find_sh = cb_find_sh->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_PDB_Parsing::save_csv_on_load()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "save_csv_on_load_pdb" ] = cb_save_csv_on_load->isChecked() ? "true" : "false";
 }
 
 void US_Hydrodyn_PDB_Parsing::residue(int val)

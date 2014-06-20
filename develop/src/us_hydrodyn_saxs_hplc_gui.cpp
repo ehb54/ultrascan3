@@ -2001,6 +2001,21 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_rgc_extents->setEnabled( false );
    le_rgc_extents->setReadOnly( true );
 
+   lbl_rgc_g_qrange = new QLabel( tr( "Guinier range q [1/A]:" ), this );
+   lbl_rgc_g_qrange->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
+   lbl_rgc_g_qrange->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_rgc_g_qrange );
+   lbl_rgc_g_qrange->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   le_rgc_g_qrange = new mQLineEdit(this, "le_rgc_g_qrange Line Edit");
+   le_rgc_g_qrange->setText( "" );
+   le_rgc_g_qrange->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_rgc_g_qrange->setPalette( PALET_NORMAL );
+   AUTFBACK( le_rgc_g_qrange );
+   le_rgc_g_qrange->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_rgc_g_qrange->setEnabled( false );
+   le_rgc_g_qrange->setReadOnly( true );
+
    // pm mode
 
    pb_pm = new QPushButton(tr("PM"), this);
@@ -2637,6 +2652,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( le_rgc_rg );
       hbl->addWidget( lbl_rgc_extents );
       hbl->addWidget( le_rgc_extents );
+      hbl->addWidget( lbl_rgc_g_qrange );
+      hbl->addWidget( le_rgc_g_qrange );
       vbl_rgc->addLayout( hbl );
    }      
 
@@ -2954,6 +2971,8 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    rgc_widgets.push_back( le_rgc_rg );
    rgc_widgets.push_back( lbl_rgc_extents );
    rgc_widgets.push_back( le_rgc_extents );
+   rgc_widgets.push_back( lbl_rgc_g_qrange );
+   rgc_widgets.push_back( le_rgc_g_qrange );
 
    // pm_widgets;
    pm_widgets.push_back( rb_pm_shape_sphere );

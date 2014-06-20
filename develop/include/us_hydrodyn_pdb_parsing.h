@@ -52,7 +52,7 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public Q3Frame
       
       struct pdb_parsing *pdb;
       bool *pdb_parsing_widget;
-                void *us_hydrodyn;
+      void *us_hydrodyn;
       
       US_Config *USglobal;
 
@@ -69,6 +69,7 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public Q3Frame
       QCheckBox *cb_skip_water;
       QCheckBox *cb_alternate;
       QCheckBox *cb_find_sh;
+      QCheckBox *cb_save_csv_on_load;
       QCheckBox *cb_residue_stop;
       QCheckBox *cb_residue_skip;
       QCheckBox *cb_residue_auto;
@@ -83,6 +84,7 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public Q3Frame
       void skip_water();
       void alternate();
       void find_sh();
+      void save_csv_on_load();
       void residue(int);
       void atom(int);
       void cancel();

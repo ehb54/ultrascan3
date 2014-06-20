@@ -570,6 +570,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QLineEdit    * le_rgc_rg;
       QLabel       * lbl_rgc_extents;
       QLineEdit    * le_rgc_extents;
+      QLabel       * lbl_rgc_g_qrange;
+      QLineEdit    * le_rgc_g_qrange;
 
       void           rgc_calc_rg();
 

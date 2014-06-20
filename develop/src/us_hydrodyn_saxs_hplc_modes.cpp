@@ -460,6 +460,10 @@ void US_Hydrodyn_Saxs_Hplc::rgc_calc_rg()
    }
    
    le_rgc_extents->setText( QString( "%1 : %2 : %3" ).arg( extent_a * 1e8 ).arg( extent_b * 1e8 ).arg( extent_c * 1e8 ) );
+
+   le_rgc_g_qrange->setText( QString( "%1 : %2" )
+                             .arg( 1.3e0 / ( 2e0 * Rg * 1e8 ), 0, 'g', 3 )
+                             .arg( 1.3e0 / ( Rg * 1e8 ), 0, 'g', 3 ) );
 }
 
 void US_Hydrodyn_Saxs_Hplc::rgc_mw_text( const QString & )
@@ -3397,6 +3401,27 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, in
          save_bl = false;
          break;
       case 2 : // quit
+         return;
+         break;
+      }
+   }
+
+   if ( integral && reps < 5 )
+   {
+      switch ( QMessageBox::warning(this, 
+                                    caption(),
+                                    QString( tr( "Please note:\n\n"
+                                                 "You have selected the integral baseline method with maximum iterations of %1\n"
+                                                 "It is recommended that a minimum of 5 iterations be used to approach convergence\n"
+                                                 "What would you like to do?\n" ) )
+                                    .arg( reps ),
+                                    tr( "&Continue anyway" ), 
+                                    tr( "&Quit" )
+                                    ) )
+      {
+      case 0 : // continue
+         break;
+      case 1 : // quit
          return;
          break;
       }
