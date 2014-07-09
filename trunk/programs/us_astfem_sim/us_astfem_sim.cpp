@@ -160,7 +160,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    lb_component->setAlignment ( Qt::AlignCenter );
    completion->addWidget( lb_component );
 
-   lcd_component = us_lcd( 2, 0 );
+   lcd_component = us_lcd( 7, 0 );
    completion->addWidget( lcd_component );
 
    lb_progress   = us_label( tr( "% Completed:" ) );
