@@ -700,7 +700,7 @@ CREATE PROCEDURE delete_HPCRequest ( p_personGUID   CHAR(36),
 
 BEGIN
   DECLARE l_investigatorGUID CHAR(36);
-  DECLARE l_method           ENUM('2DSA','2DSA_MW','GA','GA_MW','GA_SC');
+  DECLARE l_method           ENUM('2DSA','2DSA_MW','GA','GA_MW','GA_SC','DMGA');
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -771,6 +771,10 @@ BEGIN
         ON        ( GA_Settings.GA_SettingsID = HPCSoluteData.GA_SettingsID )
       WHERE       HPCAnalysisRequestID = p_requestID;
 
+    ELSEIF ( l_method = 'DMGA' ) THEN
+      DELETE FROM DMGA_Settings
+      WHERE       HPCAnalysisRequestID = p_requestID;
+  
     END IF;
 
     -- Finally, the parent HPC table

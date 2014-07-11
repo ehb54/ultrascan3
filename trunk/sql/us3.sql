@@ -1138,6 +1138,37 @@ ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table structure for table DMGA_Settings
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS DMGA_Settings;
+
+CREATE TABLE IF NOT EXISTS DMGA_Settings (
+  DMGA_SettingsID int(11) NOT NULL AUTO_INCREMENT,
+  HPCAnalysisRequestID int(11) NOT NULL,
+  DC_modelID int(11) NOT NULL,    -- maps to model with 'DMGA_Constr..' description
+  montecarlo_value int(11) NOT NULL default '0',
+  demes_value int(11) NOT NULL default '31',
+  genes_value int(11) NOT NULL default '100',
+  generations_value int(11) NOT NULL default '100',
+  crossover_value int(11) NOT NULL default '50',
+  mutation_value int(11) NOT NULL default '50',
+  plague_value int(11) NOT NULL default '4',
+  elitism_value int(11) NOT NULL default '2',
+  migration_value int(11) NOT NULL default '3',
+  regularization_value double NOT NULL default '5',
+  seed_value int(11) NOT NULL default '0',
+  conc_threshold FLOAT NOT NULL DEFAULT 1E-6,
+  PRIMARY KEY  (DMGA_SettingsID),
+  INDEX ndx_DMGA_Settings_HPCAnalysisRequestID (HPCAnalysisRequestID ASC),
+  CONSTRAINT fk_DMGA_Settings_HPCAnalysisRequestID
+    FOREIGN KEY (HPCAnalysisRequestID)
+    REFERENCES HPCAnalysisRequest (HPCAnalysisRequestID)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION )
+ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table structure for table HPCSoluteData
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS HPCSoluteData;
