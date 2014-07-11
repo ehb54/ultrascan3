@@ -22,7 +22,7 @@ class US_UTIL_EXTERN US_Model
 
       //! The type of analysis used with the model
       enum AnalysisType { MANUAL, TWODSA, TWODSA_MW, GA, GA_MW, PCSA,
-                          COFS, FE, CUSTOMGRID, DISCRETEGA };
+                          COFS, FE, CUSTOMGRID, DMGA, DMGA_CONSTR };
 
       //! The type of global analysis used with the model
       enum GlobalType { NONE, MENISCUS, GLOBAL, SUPERGLOBAL };

@@ -375,7 +375,8 @@ QString US_Model::typeText( void )
       { FE,          QObject::tr( "FE"          ) },
       { PCSA,        QObject::tr( "PCSA"        ) },
       { CUSTOMGRID,  QObject::tr( "CUSTOMGRID"  ) },
-      { DISCRETEGA,  QObject::tr( "DISCRETE-GA" ) }
+      { DMGA,        QObject::tr( "DMGA"        ) },
+      { DMGA_CONSTR, QObject::tr( "DMGA_CONSTR" ) }
    };
 
    const int ntmap = sizeof( tmap ) / sizeof( tmap[ 0 ] );

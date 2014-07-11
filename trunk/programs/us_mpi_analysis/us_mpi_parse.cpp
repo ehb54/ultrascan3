@@ -49,6 +49,11 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
                attr_z         = ATTR_K;
             }
 
+            else if ( parameters.contains( "DMGA_model" ) )
+            {  // Flag Custom Grid model input
+               d->model_file  = parameters[ "DMGA_model" ];
+            }
+
             else if ( ! parameters[ "ztype" ].isEmpty() )
             {  // Flag generic x,y model with fixed "z"
                QStringList s_attrs;
@@ -198,7 +203,7 @@ if (my_rank==0) DbgLv(0) << "PF:   rnd xymnmx" << b.x_min << b.x_max << b.y_min 
 
                   buckets << b;
                }
-               else if ( name == "CG_model" )
+               else if ( name == "CG_model"  ||  name == "DMGA_model" )
                {
                   parameters[ name ]        = a.value( "filename" ).toString();
                }
