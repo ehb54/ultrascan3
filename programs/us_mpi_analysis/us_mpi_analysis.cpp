@@ -613,6 +613,14 @@ void US_MPI_Analysis::start( void )
           ga_worker();
    }
 
+   else if ( analysis_type.startsWith( "DMGA" ) )
+   {
+      if ( my_rank == 0 ) 
+          dmga_master();
+      else
+          dmga_worker();
+   }
+
    int exit_status = 0;
 
    // Pack results

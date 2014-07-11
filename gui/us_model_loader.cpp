@@ -99,7 +99,7 @@ qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
             this,            SLOT(   get_person()    ) );
 
    int inv = US_Settings::us_inv_ID();
-   QString number = ( inv > 0 ) ? QString::number( inv ) + ": " : "";
+   QString number  = ( inv > 0 ) ? QString::number( inv ) + ": " : "";
    le_investigator = us_lineedit( number + US_Settings::us_inv_name(),
          0, true );
 
@@ -107,21 +107,32 @@ qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
    connect( pb_filtmodels, SIGNAL( clicked() ),
             this,          SLOT( list_models() ) );
 
-   do_single  = false;
-   do_edit    = ( editIDs.size() > 0  ||  !editGUID.isEmpty() );
-   do_manual  = false;
+   QString edGUID  = editGUID;
+   do_single       = false;
+   can_edit        = ( editIDs.size() > 0  ||  !editGUID.isEmpty() );
+   do_edit         = can_edit;
+   do_manual       = false;
+   do_unasgn       = false;
 
    if ( ! dsearch.isEmpty() )
    {  // If an input search string is given, look for special flags
-      do_single  = dsearch.contains( "=s" );
-      do_manual  = dsearch.contains( "=m" );
-      do_edit    = do_manual ? false : do_edit;
-      dsearch    = dsearch.replace( "=e",  "" ).simplified();
-      dsearch    = dsearch.replace( "=s",  "" ).simplified();
-      dsearch    = dsearch.replace( "=m",  "" ).simplified();
+      do_single       = dsearch.contains( "=s" );
+      do_manual       = dsearch.contains( "=m" );
+      do_unasgn       = dsearch.contains( "=u" );
+
+      if ( ( do_manual || do_unasgn )  &&  can_edit )
+      {
+         edGUID          = ( editIDs.size() > 0 ) ? editIDs[ 0 ] : edGUID;
+         do_edit         = ( edGUID == "1" );
+      }
+
+      dsearch         = dsearch.replace( "=e",  "" ).simplified();
+      dsearch         = dsearch.replace( "=s",  "" ).simplified();
+      dsearch         = dsearch.replace( "=m",  "" ).simplified();
+      dsearch         = dsearch.replace( "=u",  "" ).simplified();
    }
 qDebug() << "Bld: single" << do_single << " manual" << do_manual
- << " edit" << do_edit << " dsearch" << dsearch;
+ << " edit" << do_edit << " unasgn" << do_unasgn << " dsearch" << dsearch;
 
    le_mfilter      = us_lineedit( dsearch, -1, false );
    connect( le_mfilter,    SIGNAL( returnPressed() ),
@@ -156,20 +167,20 @@ qDebug() << "Bld: single" << do_single << " manual" << do_manual
                                           ck_single,  do_single );
    QGridLayout* lo_edit    = us_checkbox( tr( "Filter by Edit" ),
                                           ck_edit,    do_edit   );
-   QGridLayout* lo_manual  = us_checkbox( tr( "Custom/Global Only" ),
-                                          ck_manual,  do_manual );
+   QGridLayout* lo_unasgn  = us_checkbox( tr( "Edit-Unassigned Only" ),
+                                          ck_unasgn,  do_unasgn || do_manual );
    int arow   = 0;
    advtypes->addWidget( lb_advopts, arow++, 0, 1, 3 );
    advtypes->addLayout( lo_single,  arow,   0, 1, 1 );
    advtypes->addLayout( lo_edit,    arow,   1, 1, 1 );
-   advtypes->addLayout( lo_manual,  arow++, 2, 1, 1 );
+   advtypes->addLayout( lo_unasgn,  arow++, 2, 1, 1 );
 
    connect( ck_single, SIGNAL( toggled      ( bool ) ),
                        SLOT  ( change_single( bool ) ) );
    connect( ck_edit,   SIGNAL( toggled      ( bool ) ),
                        SLOT  ( change_edit  ( bool ) ) );
-   connect( ck_manual, SIGNAL( toggled      ( bool ) ),
-                       SLOT  ( change_manual( bool ) ) );
+   connect( ck_unasgn, SIGNAL( toggled      ( bool ) ),
+                       SLOT  ( change_unasgn( bool ) ) );
 
    main->addLayout( advtypes );
 
@@ -398,6 +409,7 @@ qDebug() << "LIST_MODELS";
 QDateTime time0=QDateTime::currentDateTime();
 QDateTime time1=QDateTime::currentDateTime();
 QDateTime time2=QDateTime::currentDateTime();
+   const QString uaGUID( "00000000-0000-0000-0000-000000000000" );
    QString mfilt = le_mfilter->text();
    le_mfilter->disconnect( SIGNAL( textChanged( const QString& ) ) );
    bool listdesc = !mfilt.isEmpty();         // description filtered?
@@ -413,7 +425,7 @@ qDebug() << "LM: desc single edit" << listdesc << listsing << listedit
    {  // filter is not empty
       listedit      = listedit | do_edit;
 
-      if ( listedit  &&  ! do_edit )
+      if ( listedit  &&  ! can_edit )
       {  // disallow edit filter if no edit GUID has been given
          QMessageBox::information( this,
                tr( "Edit GUID Problem" ),
@@ -478,15 +490,18 @@ qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
          all_model_descrips.clear();
          query.clear();
          int nedits     = editIDs.size();
-         QString editID = "";
+         QString editID = editGUID;
 
          if ( nedits == 0  &&  ! editGUID.isEmpty() )
          {
-            query.clear();
-            query << "get_editID" << editGUID;
-            db.query( query );
-            db.next();
-            editID         = db.value( 0 ).toString();
+            if ( editID != "1" )
+            {
+               query.clear();
+               query << "get_editID" << editGUID;
+               db.query( query );
+               db.next();
+               editID         = db.value( 0 ).toString();
+            }
          }
 qDebug() << "        edit GUID,ID" << editGUID << editID;
 
@@ -497,13 +512,13 @@ qDebug() << "        edit GUID,ID" << editGUID << editID;
 qDebug() << "     ii kedits nedits" << ii << kedits << nedits;
             query.clear();
 time1=QDateTime::currentDateTime();
-            if ( listedit  &&  nedits > 0 )
-               query << "get_model_desc_by_editID"
-                     << invID << editIDs[ ii ];
 
-            else if ( listedit  &&  !editID.isEmpty() )
+            if ( listedit  &&  can_edit )
+            {
+               editID        = nedits > 0 ? editIDs[ ii ] : editID;
                query << "get_model_desc_by_editID"
                      << invID << editID;
+            }
 
             else
                query << "get_model_desc" << invID;
@@ -527,6 +542,7 @@ qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
                                                   .section( "_",  0,  3 );
                desc.iterations  = ( desc.description.contains( "-MC" )
                                  && desc.description.contains( "_mc" ) ) ? 1: 0;
+               bool skip_it     = false;
 
                if ( desc.description.simplified().length() < 2 )
                {
@@ -536,28 +552,33 @@ qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
 //qDebug() << "   desc" << desc.description << "DB_id" << desc.DB_id;
 
                if ( do_manual )
-               {  // If MANUAL, select only type Custom or Global
-                  bool skip_it     = true;
+               {  // If MANUAL, select only type Manual
+                  skip_it          = ( desc.editGUID != uaGUID );
 
-                  if ( desc.description.contains( "-GL" )     ||
-                       desc.description.contains( "Custom" )  ||
-                       desc.description.contains( "Discrete" ) )
-                     skip_it          = false;
-
-                  else if ( ! desc.description.contains( "2DSA" )  &&
-                            ! desc.description.contains( "PCSA" )  &&
-                            ! desc.description.contains( "GA"   ) )
-                     skip_it          = false;
-qDebug() << "   desc" << desc.description << "skip_it" << skip_it;
-
-                  if ( skip_it )
-                     continue;
+                  if ( desc.description.contains( "2DSA" )  ||
+                       desc.description.contains( "PCSA" )  ||
+                       desc.description.contains( "GA"   )  ||
+                       desc.description.contains( "-GL" )   ||
+                       desc.description.contains( "Custom" ) )
+                     skip_it          = true;
+qDebug() << "   (m)desc" << desc.description << "skip_it" << skip_it;
                }
+
+               else if ( do_unasgn )
+               {  // If UnAssigned, select only type Manual/Custom/Global
+                  skip_it          = ( desc.editGUID != uaGUID );
+qDebug() << "   (u)desc" << desc.description << "skip_it" << skip_it;
+               }
+
+               if ( skip_it )
+                  continue;
 
                all_model_descrips << desc;   // add to full models list
             }
          }
 QDateTime time3=QDateTime::currentDateTime();
+qDebug() << "a_m size" << all_model_descrips.size()
+ << "m_d size" << model_descriptions.size();
 
          if ( !listsing )
             compress_list();          // default: compress MC groups
@@ -565,6 +586,7 @@ QDateTime time3=QDateTime::currentDateTime();
          else
             dup_singles();            // duplicate model list as singles
 QDateTime time4=QDateTime::currentDateTime();
+qDebug() << " (2)m_d size" << model_descriptions.size();
 qDebug() << "Timing: DB-read" << time0.msecsTo(time3) << time2.msecsTo(time3);
 qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
       }
@@ -646,7 +668,15 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
 //}
 //*DEBUG
                   if ( do_manual )
-                  {  // If MANUAL, select only type Custom or Global
+                  {  // If MANUAL, select only type Manual
+                     int iaType    = aType.toInt();
+//qDebug() << "   iaType igType" << iaType << igType;
+                     if ( iaType != US_Model::MANUAL )
+                        continue;
+                  }
+
+                  else if ( do_unasgn )
+                  {  // If UnAssigned, select only type Manual/Custom/Global
                      int iaType    = aType.toInt();
                      int igType    = gType.toInt();
 //qDebug() << "   iaType igType" << iaType << igType;
@@ -657,7 +687,6 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
                           igType != US_Model::SUPERGLOBAL )  
                         continue;
                   }
-
 
                   all_model_descrips << desc;   // add to full models list
                   break;
@@ -681,6 +710,7 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
    // possibly pare down models list based on search field
 QDateTime time5=QDateTime::currentDateTime();
 qDebug() << "Timing: Time5" << time0.msecsTo(time5) << time2.msecsTo(time5);
+qDebug() << " (3)m_d size" << model_descriptions.size();
 
    if ( listall )
    {  // No filtering or filter by edit already done
@@ -703,6 +733,7 @@ qDebug() << "Timing: Time5" << time0.msecsTo(time5) << time2.msecsTo(time5);
          }
       }
    }
+qDebug() << " (4)m_d size" << model_descriptions.size();
 
    lw_models->disconnect( SIGNAL( currentRowChanged( int ) ) );
    lw_models->clear();
@@ -813,6 +844,8 @@ void US_ModelLoader::accepted()
       dsearch    = "=e " + dsearch;
    if ( do_single )
       dsearch    = "=s " + dsearch;
+   if ( do_unasgn )
+      dsearch    = "=u " + dsearch;
    if ( do_manual )
       dsearch    = "=m " + dsearch;
 
@@ -1189,24 +1222,31 @@ void US_ModelLoader::change_single( bool cksing )
 void US_ModelLoader::change_edit( bool ckedit )
 {
    do_edit   = ckedit;
-   do_manual = ck_manual->isChecked();
+   do_unasgn = ck_unasgn->isChecked();
    db_id1    = -2;  // flag re-list when list-edit flag changes
    db_id2    = -2;
 
    list_models();
 }
 
-// Slot to re-list models after change in Manual checkbox
-void US_ModelLoader::change_manual( bool ckmanu )
+// Slot to re-list models after change in Unassigned checkbox
+void US_ModelLoader::change_unasgn( bool ckunasgn )
 {
-   do_manual = ckmanu;
-   db_id1    = -2;  // flag re-list when list-manual flag changes
+   do_unasgn = ckunasgn;
+   db_id1    = -2;  // flag re-list when list-unasgn flag changes
    db_id2    = -2;
 
-   if ( do_manual )
-   {  // If manual now checked, turn off edit
-      ck_edit  ->setChecked( false );
+   if ( do_unasgn )
+   {  // If unassigned now checked, turn off edit (unless id=1)
       do_edit   = false;
+
+      if ( can_edit )
+      {
+         QString edGUID  = ( editIDs.size() > 0 ) ? editIDs[ 0 ] : editGUID;
+         do_edit         = ( edGUID == "1" );
+      }
+
+      ck_edit  ->setChecked( do_edit );
    }
 
    list_models();

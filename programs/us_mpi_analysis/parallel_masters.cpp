@@ -420,6 +420,11 @@ DbgLv(1) << "  MASTER:   Recv'd from super. (g r m)" << my_group << group_rank
    {
       pm_ga_master();
    }
+
+   else if ( analysis_type.startsWith( "DMGA" ) )
+   {
+      pm_dmga_master();
+   }
 }
 
 // Parallel-masters worker within a group
@@ -666,6 +671,207 @@ void US_MPI_Analysis::pm_ga_master( void )
    max_depth           = 0;
    calculated_solutes.clear();
 //DbgLv(1) << "master start GA" << startTime;
+
+   // Set noise and debug flags
+   simulation_values.noisflag   = 0;
+   simulation_values.dbg_level  = dbg_level;
+   simulation_values.dbg_timing = dbg_timing;
+DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
+
+   // Initialize best fitness
+   best_genes  .reserve( gcores_count );
+   best_fitness.reserve( gcores_count );
+
+   Fitness empty_fitness;
+   empty_fitness.fitness = LARGE;
+
+   Gene working_gene( buckets.count(), US_Solute() );
+
+   // Initialize arrays
+   for ( int i = 0; i < gcores_count; i++ )
+   {
+      best_genes << working_gene;
+
+      empty_fitness.index = i;
+      best_fitness << empty_fitness;
+   }
+
+   QDateTime time = QDateTime::currentDateTime();
+
+   // Handle Monte Carlo iterations.  There will always be at least 1.
+   while ( true )
+   {
+      // Get MC iteration index from supervisor
+      int iter       = 1;
+      int super      = 0;
+      MPI_Status status;
+
+      MPI_Recv( &iter,
+                1,
+                MPI_INT,
+                super,
+                MPI_ANY_TAG,
+                MPI_COMM_WORLD,
+                &status );
+
+      int tag        = status.MPI_TAG;
+DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
+      switch ( tag )
+      {
+         case STARTLAST:
+            mc_iterations = iter;
+
+         case STARTITER:
+            mc_iteration  = iter;
+            break;
+
+         default:
+            DbgLv(0) << "Unknown message to PMG Master" << tag;
+            break;
+      }
+
+      ga_master_loop();
+
+      qSort( best_fitness );
+      simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
+
+      int nisols      = simulation_values.solutes.size();
+
+      solutes_from_gene( simulation_values.solutes, nisols );
+
+DbgLv(1) << "GaMast: sols size" << simulation_values.solutes.size()
+ << "buck size" << buckets.size();
+DbgLv(1) << "GaMast:   dset size" << data_sets.size();
+DbgLv(1) << "GaMast:   sol0.s" << simulation_values.solutes[0].s;
+      calc_residuals( 0, data_sets.size(), simulation_values );
+
+DbgLv(1) << "GaMast:    calc_resids return";
+
+      // Write out the model, but skip if not 1st of iteration 1
+      bool do_write = ( mc_iteration > 1 ) ||
+                      ( mc_iteration == 1  &&  my_group == 0 );
+DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
+   << "variance" << simulation_values.variance << "my_group" << my_group;
+
+      qSort( simulation_values.solutes );
+
+      // Convert given solute points to s,k for model output
+      double vbar20  = data_sets[ 0 ]->vbar20;
+      QList< int > attrxs;
+      attrxs << attr_x << attr_y << attr_z;
+      bool   have_s  = ( attrxs.indexOf( ATTR_S ) >= 0 );
+      bool   have_k  = ( attrxs.indexOf( ATTR_K ) >= 0 );
+      bool   have_w  = ( attrxs.indexOf( ATTR_W ) >= 0 );
+      bool   have_d  = ( attrxs.indexOf( ATTR_D ) >= 0 );
+      bool   have_f  = ( attrxs.indexOf( ATTR_F ) >= 0 );
+      bool   vary_v  = ( attr_z != ATTR_V );
+
+      for ( int gg = 0; gg < simulation_values.solutes.size(); gg++ )
+      {
+         US_Solute* solu = &simulation_values.solutes[ gg ];
+         US_Model::SimulationComponent mcomp;
+         mcomp.s         = have_s ? solu->s : 0.0;
+         mcomp.f_f0      = have_k ? solu->k : 0.0;
+         mcomp.mw        = have_w ? solu->d : 0.0;
+         mcomp.vbar20    = vary_v ? solu->v : vbar20;
+         mcomp.D         = have_d ? solu->d : 0.0;
+         mcomp.f         = have_f ? solu->d : 0.0;
+
+         US_Model::calc_coefficients( mcomp );
+
+         solu->s         = mcomp.s;
+         solu->k         = mcomp.f_f0;
+         solu->v         = mcomp.vbar20;
+      }
+
+      calculated_solutes.clear();
+      calculated_solutes << simulation_values.solutes;
+
+      if ( do_write )
+      {
+
+         if ( data_sets.size() == 1 )
+         {
+            write_output();
+         }
+         else
+         {
+            write_global();
+         }
+      }
+
+      if ( my_group == 0 )
+      {  // Update the tar file of outputs in case of an aborted run
+         QDir        d( "." );
+         QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
+         files.removeOne( "analysis-results.tar" );
+         US_Tar tar;
+         tar.create( "analysis-results.tar", files );
+      }
+
+      if ( mc_iteration < mc_iterations )
+      {  // Before last iteration:  check if max is reset based on time limit
+         time_mc_iterations();    // Test if near time limit
+
+         tag     = ( mc_iteration < mc_iterations ) ?
+                   DONEITER : DONELAST;
+      }
+
+      else
+      {  // Mark that max iterations reached
+         tag     = DONELAST;
+      }
+
+      // Tell the supervisor that an iteration is done
+      iter    = (int)maxrss;
+DbgLv(1) << "GaMast:  iter done: maxrss" << iter << "tag" << tag << DONELAST;
+
+      MPI_Send( &iter,
+                1,
+                MPI_INT,
+                super,
+                tag,
+                MPI_COMM_WORLD );
+
+DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
+      if ( mc_iteration < mc_iterations )
+      {     // Set up for next iteration
+         if ( mc_iteration == 1 ) 
+         {    // Set scaled_data the first time
+            scaled_data = simulation_values.sim_data;
+         }
+
+         set_gaMonteCarlo();
+      }
+
+      else  // Break out of the loop if all iterations have been done
+         break;
+
+   }  // END:  MC iterations loop
+
+
+   MPI_Job job;
+
+   // Send finish to workers ( in the tag )
+   for ( int worker = 1; worker <= my_workers; worker++ )
+   {
+      MPI_Send( &job,              // MPI #0
+                sizeof( job ),
+                MPI_BYTE,
+                worker,
+                FINISHED,
+                my_communicator );
+   }            
+}
+
+// Parallel-masters version of DMGA group master
+void US_MPI_Analysis::pm_dmga_master( void )
+{
+   current_dataset     = 0;
+   datasets_to_process = data_sets.size();
+   max_depth           = 0;
+   calculated_solutes.clear();
+//DbgLv(1) << "master start DMGA" << startTime;
 
    // Set noise and debug flags
    simulation_values.noisflag   = 0;

@@ -1589,11 +1589,13 @@ void US_FeMatch::load_model( )
    // load model
    bool loadDB = dkdb_cntrls->db();
 
+#if 0
    if ( dataList[ drow ].channel == "S" )
    {  // Set up for "manual" model list option for simulated data
       if ( ! mfilter.contains( "=m" ) )
          mfilter     = "=m " + mfilter.replace( "=e", "" ).simplified();
    }
+#endif
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 

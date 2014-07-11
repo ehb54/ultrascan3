@@ -481,14 +481,28 @@ void US_SelectEdits::scan_local_edit( void )
 void US_SelectEdits::build_runids( void )
 {
    elabels          = editmap.keys();
+
+   // Add "unassigned" entry
+   QString runID    = "Unassigned";
+   QString ekey     = runID + " : 0.Z.280 : 1";
+   edesc.key        = ekey;
+   edesc.runID      = runID;
+   edesc.label      = "Manual/Custom/Global";
+   edesc.editID     = "1";
+   edesc.date       = "2011/01/01";
+   edesc.DB_id      = "0";
+   elabels << ekey;
+   editmap[ ekey ]  = edesc;
+
+   // Build the runID list
 qDebug() << "BldR: elabels size" << elabels.size();
    rlabels.clear();
    runmap .clear();
 
    for ( int ii = 0; ii < elabels.size(); ii++ )
    {
-      QString ekey   = elabels.at( ii );
-      QString runID  = editmap[ ekey ].runID;
+      ekey           = elabels.at( ii );
+      runID          = editmap[ ekey ].runID;
 qDebug() << "BldR:  ii ekey runID" << ii << ekey << runID;
 
       if ( ! rlabels.contains( runID ) )

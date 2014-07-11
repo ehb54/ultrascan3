@@ -12,6 +12,7 @@
 #include "us_solve_sim.h"
 #include "us_vector.h"
 #include "us_math2.h"
+#include "us_dmga_constr.h"
 
 #define SIMULATION       US_SolveSim::Simulation
 #define DATASET          US_SolveSim::DataSet
@@ -293,6 +294,7 @@ class US_MPI_Analysis : public QObject
     void     stats_output      ( int, int, int, QDateTime, QDateTime, QDateTime );
     void     pm_2dsa_master    ( void );
     void     pm_ga_master      ( void );
+    void     pm_dmga_master    ( void );
     int      ready_worker      ( void );
     int      low_working_depth ( void );
     void     cache_result      ( Result& );
@@ -344,6 +346,17 @@ class US_MPI_Analysis : public QObject
                                  double, int );
     void   build_component( US_Model::SimulationComponent&,
                             US_Math2::SolutionData&, double, double );
+
+    // DMGA Master
+    void dmga_master       ( void );
+    void dmga_master_loop  ( void );
+    void dmga_global_fit   ( void );
+    void set_dmgaMonteCarlo( void );
+
+    // DMGA Worker
+    void   dmga_worker     ( void );
+    void   dmga_worker_loop( void );
+    Gene   new_dmga_gene   ( void );
 
     // Debug
     void dump_buckets( void );

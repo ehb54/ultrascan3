@@ -24,6 +24,8 @@ SOURCES      += us_mpi_analysis.cpp  \
                 2dsa_worker.cpp      \
                 ga_master.cpp        \
                 ga_worker.cpp        \
+                dmga_master.cpp      \
+                dmga_worker.cpp      \
                 parallel_masters.cpp \
                 us_mpi_parse.cpp
 

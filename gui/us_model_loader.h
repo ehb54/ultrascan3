@@ -110,7 +110,7 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
 
       QCheckBox*           ck_single;
       QCheckBox*           ck_edit;
-      QCheckBox*           ck_manual;
+      QCheckBox*           ck_unasgn;
 
       US_Disk_DB_Controls* dkdb_cntrls;
 
@@ -123,7 +123,9 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       bool                 singprev;
       bool                 do_single;
       bool                 do_edit;
+      bool                 do_unasgn;
       bool                 do_manual;
+      bool                 can_edit;
 
       QString              reqGUID;
 
@@ -164,7 +166,7 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       void accepted(      void );
       void change_single( bool );
       void change_edit  ( bool );
-      void change_manual( bool );
+      void change_unasgn( bool );
 
       void help  (        void )
       { showHelp.show_help( "load_model_distrib.html" ); };
