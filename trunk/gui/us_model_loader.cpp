@@ -682,7 +682,7 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
 //qDebug() << "   iaType igType" << iaType << igType;
                      if ( iaType != US_Model::MANUAL      &&
                           iaType != US_Model::CUSTOMGRID  &&
-                          iaType != US_Model::DISCRETEGA  &&
+                          iaType != US_Model::DMGA_CONSTR &&
                           igType != US_Model::GLOBAL      &&
                           igType != US_Model::SUPERGLOBAL )  
                         continue;
