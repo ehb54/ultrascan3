@@ -28,6 +28,8 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \param db         Pointer to opened database connection or NULL
    //! \param rawdata    Data structure of raw data that contains run info.
    //! \param incl_speed Flag to include speed steps in update
+   //! \param runID      Run ID string
+   //! \param dataType   Data type string ("RA", "RI", ...)
    void initFromData( US_DB2*, US_DataIO::RawData&, bool = true, 
 		   QString = "",  QString = "");
 
