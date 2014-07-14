@@ -24,6 +24,14 @@ class US_UTIL_EXTERN US_SimulationParameters
    US_SimulationParameters();
 
    //! \brief A function to update the simulation parameters to match 
+   //! an experiment's raw data.
+   //! \param db         Pointer to opened database connection or NULL
+   //! \param rawdata    Data structure of raw data that contains run info.
+   //! \param incl_speed Flag to include speed steps in update
+   void initFromData( US_DB2*, US_DataIO::RawData&, bool = true, 
+		   QString = "",  QString = "");
+
+   //! \brief A function to update the simulation parameters to match 
    //! an experiment's edited data.
    //! \param db         Pointer to opened database connection or NULL
    //! \param editdata   Data structure of edited data that contains run info.
