@@ -425,8 +425,10 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
          }
       }
 
-qDebug() << "MATHi: s_time l_time" << s_time << e_time
+qDebug() << "MATHi: s_time e_time" << s_time << e_time
  << "fscan lscan" << fscan << lscan;
+      fscan         = ( fscan < 0 ) ?      0 : fscan;
+      lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
    }
    else // Use omega^2t integral for interpolation
    {

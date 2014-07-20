@@ -58,7 +58,7 @@ bool US_Model::SimulationComponent::operator==
 
 US_Model::Association::Association()
 {
-   k_assoc   = 0.0;
+   k_d       = 0.0;
    k_off     = 0.0;
    rcomps .clear();
    stoichs.clear();
@@ -66,7 +66,7 @@ US_Model::Association::Association()
 
 bool US_Model::Association::operator== ( const Association& a ) const
 {
-   if ( k_assoc != a.k_assoc ) return false;
+   if ( k_d     != a.k_d     ) return false;
    if ( k_off   != a.k_off   ) return false;
    if ( rcomps  != a.rcomps  ) return false;
    if ( stoichs != a.stoichs ) return false;
@@ -664,14 +664,22 @@ void US_Model::mfem_scans( QXmlStreamReader& xml, SimulationComponent& sc )
 void US_Model::get_associations( QXmlStreamReader& xml, Association& as )
 {
    QXmlStreamAttributes a = xml.attributes();
-   QString skassoc = a.value( "k_assoc"   ).toString();
-   QString skeq    = a.value( "k_eq"      ).toString();
-   QString skoff   = a.value( "k_off"     ).toString();
+   QString skassoc = a.value( "k_assoc" ).toString();
+   QString skeq    = a.value( "k_eq"    ).toString();
+   QString skdisso = a.value( "K_d"     ).toString();
+   QString skoff   = a.value( "k_off"   ).toString();
 
-   if ( ! skassoc.isEmpty() )
-      as.k_assoc      = skassoc.toDouble();
-   else if ( ! skeq.isEmpty() )
-      as.k_assoc      = skeq.toDouble();
+   if ( ! skdisso.isEmpty() )
+      as.k_d          = skdisso.toDouble();
+   else
+   {
+      double k_assoc  = 0.0;
+      if ( ! skassoc.isEmpty() )
+         k_assoc         = skassoc.toDouble();
+      else if ( ! skeq.isEmpty() )
+         k_assoc         = skeq.toDouble();
+      as.k_d          = ( k_assoc != 0.0 ) ? ( 1.0 / k_assoc ) : 0.0;
+   }
 
    if ( ! skoff.isEmpty() )
       as.k_off        = skoff.toDouble();
@@ -925,8 +933,8 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
    {
       Association* as = &associations[ i ];
       xml.writeStartElement( "association" );
-      xml.writeAttribute( "k_assoc", QString::number( as->k_assoc ) );
-      xml.writeAttribute( "k_off",   QString::number( as->k_off   ) );
+      xml.writeAttribute( "K_d",     QString::number( as->k_d   ) );
+      xml.writeAttribute( "k_off",   QString::number( as->k_off ) );
 
       for ( int j = 0; j < as->rcomps.size(); j++ )
       {

@@ -472,7 +472,9 @@ DbgLv(1) << "SaltD: asim_data avg.temp." << asim_data->average_temperature();
 
    US_Astfem_RSA* astfem = new US_Astfem_RSA( model, simparms );
 
-   astfem->setTimeInterpolation( true );
+   //astfem->setTimeInterpolation( true );
+   astfem->setTimeInterpolation( false );
+   astfem->set_debug_flag( dbg_level );
 
    for ( int i = 0; i < Nt; i++ )
       for ( j = 0; j < Nx; j++ )
@@ -485,7 +487,13 @@ DbgLv(1) << "SaltD: comp0 s d s_conc" << model.components[0].s
 DbgLv(1) << "SaltD:fem: m b  s D  rpm" << simparms.meniscus << simparms.bottom
    << model.components[0].s << model.components[0].D
    << simparms.speed_step[0].rotorspeed;
-DbgLv(1) << "SaltD: (0)Nt Nx" << Nt << Nx << "temp" << sa_data.scanData[0].temperature;
+DbgLv(1) << "SaltD: (0)Nt Nx" << Nt << Nx << "temperature" << sa_data.scanData[0].temperature;
+if(dbg_level>0) {
+ qDebug() << "SaltD: model";
+ model.debug();
+ qDebug() << "SaltD: simparms:";
+ simparms.debug();
+}
 
    astfem->set_simout_flag( true );         // set flag to output raw simulation
 
@@ -714,7 +722,7 @@ int US_LammAstfvm::solve_component( int compx )
    int jt    = 0; 
    int nts   = af_data.scan.size();            // nbr. output times (scans)
    int kt    = 0; 
-   int ncs   = af_data.scan[ 0 ].conc.size();  // nbr. concentrations each scan
+   int ncs   = af_data.radius.size();          // nbr. concentrations each scan
    int N0;
    int N1;
    int N0u;
@@ -846,6 +854,8 @@ DbgLv(1) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
    {  // get output radius vector
       rads[ jj ] = af_data.radius[ jj ];
    }
+DbgLv(1) << "LAsc:  r0 rn ncs rsiz" << rads[0] << rads[ncs-1]
+   << ncs << af_data.radius.size() << rads.size();
 
 #ifndef NO_DB
    int    ktinc = 5;                        // signal progress every 5th scan
@@ -1902,12 +1912,15 @@ void US_LammAstfvm::load_mfem_data( US_DataIO::RawData&      edata,
 #endif
 #if 1
       if ( zeroout )
-         fscan->conc.fill( 0.0 ); // if so specified, set concentrations to zero
+         fscan->conc.fill( 0.0, nconc ); // if so specified, set concentrations to zero
 
       else                        // Otherwise, copy concentrations
          fscan->conc        = edata.scanData[ ii ].rvalues;
    }
    fdata.radius       = edata.xvalues;
+int nn=fdata.radius.size() - 1;
+int mm=nn/2;
+DbgLv(1) << "LdDa:  n r0 rm rn" << nn << fdata.radius[0] << fdata.radius[mm] << fdata.radius[nn];
 #endif
 }
 

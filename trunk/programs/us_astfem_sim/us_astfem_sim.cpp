@@ -454,7 +454,7 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
    lcd_component->display( 0 );
 
    stopFlag  = false;
-   
+
    simparams.mesh_radius.clear();
    simparams.firstScanIsConcentration = false;
 
@@ -1089,7 +1089,7 @@ void US_Astfem_Sim::dump_mfem_initial( US_Model::MfemInitial& mfem )
 
 void US_Astfem_Sim::dump_association( US_Model::Association& as )
 {
-   qDebug() << "k_assoc" << as.k_assoc;
+   qDebug() << "k_d" << as.k_d;
    qDebug() << "k_off" << as.k_off;
    qDebug() << "rcomps list size " << as.rcomps.size();
    qDebug() << "rcomps list " << as.rcomps;

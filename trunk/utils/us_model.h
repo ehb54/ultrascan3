@@ -197,7 +197,7 @@ class US_UTIL_EXTERN US_Model
       {
          public:
          Association();
-         double k_assoc;          //!< Association Constant
+         double k_d;              //!< Dissociation Constant
          double k_off;            //!< K_Off Rate Constant 
          QVector< int > rcomps;   //!< List of all system components
                                   //!<  involved in this reaction
