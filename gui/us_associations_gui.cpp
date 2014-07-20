@@ -135,12 +135,11 @@ void US_AssociationsGui::populate( void )
       int                    index = 0;
       US_Model::Association* as    = &model.associations[ i ];
       
-      // First set koff and keq
-      double kd = as->k_assoc != 0.0 ? ( 1.0 / as->k_assoc ) : 0.0;
-      QString s = QString::number( kd, 'e', 4 );
+      // First set K_d and k_off
+      QString s = QString::number( as->k_d,   'e', 4 );
       tw->setItem( i, 5, new QTableWidgetItem( s ) );
 
-              s = QString::number( as->k_off,   'e', 4 );
+              s = QString::number( as->k_off, 'e', 4 );
       tw->setItem( i, 6, new QTableWidgetItem( s ) );
 
 
@@ -270,21 +269,16 @@ void US_AssociationsGui::complete( void )
       int         index;
       int         count;
       int         koligo;
-      double      k_dissa;
       
       US_Model::Association association;
       QTableWidgetItem*     item;
 
-      // If koff and keq are not set, the default is zero
+      // If Kd and koff are not set, the default is zero
       item = tw->item( i, 5 );
-      if ( item != 0 )
-      {
-         k_dissa              = item->text().toDouble();
-         association.k_assoc  = k_dissa != 0.0 ? ( 1.0 / k_dissa ) : 0.0;
-      }
+      if ( item != 0 ) association.k_d   = item->text().toDouble();
 
       item = tw->item( i, 6 );
-      if ( item != 0 ) association.k_off    = item->text().toDouble();
+      if ( item != 0 ) association.k_off = item->text().toDouble();
 
       QWidget* w = tw->cellWidget( i, 1 );
       
