@@ -11,6 +11,7 @@
 #include "us_math2.h"
 #include "us_defines.h"
 #include "us_clipdata.h"
+#include "us_gui_util.h"
 #include "us_model_gui.h"
 #include "us_buffer_gui.h"
 #include "us_util.h"
@@ -68,13 +69,18 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    connect ( pb_simParms, SIGNAL( clicked() ), SLOT( sim_parameters() ) );
    buttonbox->addWidget( pb_simParms );
 
-   QGridLayout* movie = us_checkbox( "Show Movie", cb_movie, movieFlag );
+   QGridLayout* movie = us_checkbox( "Show Movie", ck_movie, movieFlag );
    buttonbox->addLayout( movie );
 
-   QGridLayout* timeCorr = us_checkbox( "Use Time Correction", cb_timeCorr,
+   QGridLayout* lo_svmovie = us_checkbox( "Save Movie", ck_savemovie, false );
+   connect( ck_savemovie, SIGNAL( toggled          ( bool ) ),
+                          SLOT(   update_save_movie( bool ) ) );
+   buttonbox->addLayout( lo_svmovie );
+
+   QGridLayout* timeCorr = us_checkbox( "Use Time Correction", ck_timeCorr,
          time_correctionFlag );
    
-   connect( cb_timeCorr, SIGNAL( clicked() ), SLOT( update_time_corr() ) );
+   connect( ck_timeCorr, SIGNAL( clicked() ), SLOT( update_time_corr() ) );
    buttonbox->addLayout( timeCorr );
 
    pb_start = us_pushbutton( tr( "Start Simulation" ), false );
@@ -332,6 +338,9 @@ void US_Astfem_Sim::stop_simulation( void )
 
    if ( astfem_rsa )
       astfem_rsa->setStopFlag( stopFlag );
+
+   if ( astfvm )
+      astfvm    ->setStopFlag( stopFlag );
 }
 
 void US_Astfem_Sim::start_simulation( void )
@@ -340,6 +349,7 @@ void US_Astfem_Sim::start_simulation( void )
    moviePlot->clear();
    moviePlot->replot();
    curve_count = 0;
+   image_count = 0;
    double rpm  = simparams.speed_step[ 0 ].rotorspeed;
 
    scanPlot->clear();
@@ -483,7 +493,7 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       connect( astfem_rsa, SIGNAL( calc_done( void ) ), 
                            SLOT  ( calc_over( void ) ) );
 
-      astfem_rsa->set_movie_flag( cb_movie->isChecked() );
+      astfem_rsa->set_movie_flag( ck_movie->isChecked() );
  
       astfem_rsa->setTimeInterpolation( false ); 
       astfem_rsa->setTimeCorrection( time_correctionFlag );
@@ -547,14 +557,17 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       connect( astfvm, SIGNAL( calc_done( void ) ), 
                        SLOT  ( calc_over( void ) ) );
 
-      connect( astfvm, SIGNAL( comp_progress(    int ) ), 
-                       SLOT  ( update_component( int ) ) );
+      connect( astfvm, SIGNAL( new_scan( QVector< double >*, double* ) ), 
+                    SLOT( update_movie_plot( QVector< double >*, double* ) ) );
+      connect( astfvm, SIGNAL( new_time   ( double ) ), 
+                       SLOT  ( update_time( double ) ) );
 
       // initialize LCD with component "1"
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( 1 );
 
       astfvm->set_buffer( buffer );
+      astfvm->setMovieFlag( ck_movie->isChecked() );
 
       // solve using ASTFVM
       int rc = astfvm->calculate( sim_data );
@@ -642,6 +655,18 @@ void US_Astfem_Sim::finish( void )
    pb_stop   ->setEnabled( false  );
    pb_start  ->setEnabled( true );
    pb_saveSim->setEnabled( true );
+
+   if ( astfem_rsa )
+   {
+      delete astfem_rsa;
+      astfem_rsa  = NULL;
+   }
+
+   if ( astfvm )
+   {
+      delete astfvm;
+      astfvm      = NULL;
+   }
 }
 
 void US_Astfem_Sim::ri_noise( void )
@@ -1011,11 +1036,28 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
 {
    moviePlot->clear();
    double total_c = 0.0;
+   double yscale  = 0.0;
 
-   for ( int i = 0; i < system.components.size(); i++ )
-      total_c += system.components[ i ].signal_concentration;
+   if ( simparams.meshType != US_SimulationParameters::ASTFVM  ||
+        system.coSedSolute < 0 )
+   {  // Get total concentration of all components
+      for ( int ii = 0; ii < system.components.size(); ii++ )
+         total_c += system.components[ ii ].signal_concentration;
 
-   moviePlot->setAxisScale( QwtPlot::yLeft, 0, total_c * 2.0 );
+      yscale         = total_c * 2.0;
+   }
+   else
+   {  // Get total concentration of non-cosed components
+      for ( int ii = 0; ii < system.components.size(); ii++ )
+      {
+         if ( ii != system.coSedSolute )
+            total_c += system.components[ ii ].signal_concentration;
+      }
+
+      yscale         = total_c * 4.0;
+   }
+
+   moviePlot->setAxisScale( QwtPlot::yLeft, 0, yscale );
 	moviePlot->setAxisAutoScale( QwtPlot::xBottom );
    
    double* r = new double [ x->size() ];
@@ -1030,6 +1072,15 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
    curve->attach( moviePlot );
    
    moviePlot->replot();
+
+   if ( save_movie )
+   {
+      QPixmap pmap;
+      image_count++;
+      imageName = imagedir + QString().sprintf( "frame%05d.png", image_count );
+      US_GuiUtil::save_png( imageName, moviePlot );
+   }
+
    qApp->processEvents();
 //int k=x->size()-1;
 //int h=x->size()/2;
@@ -1037,6 +1088,31 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
 //   << c[0] << c[h] << c[k];
    
    delete [] r;
+}
+
+// slot to update movie plot
+void US_Astfem_Sim::update_save_movie( bool ckd )
+{
+DbgLv(1) << "SIM: update_save_movie" << ckd;
+   save_movie   = ckd;
+
+   if ( save_movie )
+   {
+      imagedir   = QFileDialog::getExistingDirectory( this,
+            tr( "Select or create a movie frames directory" ),
+            US_Settings::tmpDir() );
+DbgLv(1) << "SIM:  upd_sv_movie: imagedir" << imagedir;
+
+      if ( imagedir.isEmpty() )
+      {
+         imagedir   = US_Settings::tmpDir() + "/movies";
+         QDir().mkpath( imagedir );
+      }
+
+      if ( ! imagedir.endsWith( "/" ) )
+         imagedir   = imagedir + "/";
+DbgLv(1) << "SIM:  upd_sv_movie:   imagedir" << imagedir;
+   }
 }
 
 void US_Astfem_Sim::dump_system( void )

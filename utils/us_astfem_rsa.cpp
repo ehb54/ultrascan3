@@ -61,8 +61,15 @@ static int totT7=0;
 static int totT8=0;
 #endif
 
-   af_params.first_speed = simparams.speed_step[ 0 ].rotorspeed;
    af_params.simpoints   = simparams.simpoints;
+   af_params.pathlength  = simparams.cp_pathlen;
+   af_params.dt          = 1.0;
+   af_params.time_steps  = simparams.simpoints;
+   af_params.first_speed = simparams.speed_step[ 0 ].rotorspeed;
+   af_params.omega_s     = sq( (double)af_params.first_speed * M_PI / 30.0 );
+   af_params.start_om2t  = af_params.omega_s;
+   af_params.current_meniscus = simparams.meniscus;
+   af_params.current_bottom   = simparams.bottom;
 
    load_mfem_data( exp_data, af_data );
 
@@ -1878,7 +1885,8 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
    Nx = x.size();
    xA = x.data();
 DbgLv(1) << "RSA: ***COMPUTED Nx" << Nx << "simpts" << af_params.simpoints
- << "omg2t s0 dt" << af_params.omega_s << af_params.s[0] << af_params.dt;
+ << "omg2t" << af_params.omega_s << "s0" << af_params.s[0]
+ << "dt" << af_params.dt;
 }
 
 //////////////////////////////////////////////////////////////%

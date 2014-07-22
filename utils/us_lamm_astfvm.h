@@ -147,6 +147,14 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! \param Opt     Mesh refinement option flag: 1/0 for yes/no.
       void SetMeshRefineOpt( int );
 
+      //! \brief Set stop flag
+      //! \param flag    Flag for whether to stop
+      void setStopFlag ( bool );
+
+      //! \brief Set a flag for whether to emit signals for movie mode.
+      //! \param flag    Flag for whether or not to operate in show-movie mode.
+      void setMovieFlag( bool );
+
    signals:
       //! \brief Signal calculation start and give maximum steps
       //! \param nsteps Number of expected total calculation progress steps
@@ -163,6 +171,14 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
       //! \param icomp Current component begun (1,...)
       void comp_progress( int icomp );
 
+      //! \brief Signal that calculation step is complete.
+      //! The connected slot receives the radius vector and concentration
+      //! array from loops in calculate functions.
+      void new_scan     ( QVector< double >*, double* );
+
+      //! \brief Signal component progress, giving running component number
+      //! The connected slot receives the scan time value from calc. functions.a
+      void new_time     ( double );
 
    private:
 
@@ -199,6 +215,9 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
 
       int     comp_x;          // current component index
       int     dbg_level;       // debug level
+
+      bool    stopFlag;        // flag to stop processing
+      bool    movieFlag;       // flag to operate in show-movie mode
 
       double  param_m;         // m of cell (meniscus)
       double  param_b;         // b of cell (bottom)

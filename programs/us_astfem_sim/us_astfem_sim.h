@@ -35,13 +35,18 @@ class US_Astfem_Sim : public US_Widgets
    private:
       bool           stopFlag;
       bool           movieFlag;
+      bool           save_movie;
       bool           time_correctionFlag;
-      int            curve_count;
       double         total_conc;
+      int            curve_count;
+      int            image_count;
       int            dbg_level;
+      QString        imagedir;
+      QString        imageName;
       
-      QCheckBox*     cb_movie;
-      QCheckBox*     cb_timeCorr;
+      QCheckBox*     ck_movie;
+      QCheckBox*     ck_savemovie;
+      QCheckBox*     ck_timeCorr;
                     
       QPushButton*   pb_saveExp;
       QPushButton*   pb_saveSim;
@@ -118,6 +123,7 @@ class US_Astfem_Sim : public US_Widgets
       void calc_over       ( void );
       
       void update_movie_plot( QVector< double >*, double* );
+      void update_save_movie( bool );
 
       void update_time     ( double time )        
          { lcd_time ->display( time  ); };
@@ -129,7 +135,7 @@ class US_Astfem_Sim : public US_Widgets
          { showhelp.show_help( "manual/astfem_sim.html" ); }; 
 
       void update_time_corr( void )
-         { time_correctionFlag = cb_timeCorr->isChecked(); };
+         { time_correctionFlag = ck_timeCorr->isChecked(); };
 };                                                                   
 #endif                                                               
                                                                      
