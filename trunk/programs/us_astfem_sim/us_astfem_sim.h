@@ -126,7 +126,7 @@ class US_Astfem_Sim : public US_Widgets
       void update_save_movie( bool );
 
       void update_time     ( double time )        
-         { lcd_time ->display( time  ); };
+         { lcd_time ->display( (int)time  ); };
       
       void update_speed    ( int speed )
          { lcd_speed->display( (int) speed ); };

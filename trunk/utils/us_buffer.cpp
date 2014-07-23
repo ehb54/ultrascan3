@@ -73,7 +73,7 @@ void US_BufferComponent::getAllFromHD(
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
    {
       // Fail quietly
-      //qDebug() << "Cannot open file " << US_Settings::appBaseDir() + "/etc/bufferComponents.xml";
+      qDebug() << "Cannot open file " << US_Settings::appBaseDir() + "/etc/bufferComponents.xml";
       return;
    }
 

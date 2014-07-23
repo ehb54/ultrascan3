@@ -1481,11 +1481,10 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
    double  Cm     = 0.0;
    double  rho;
    double  visc;
+   //double  vbar   = 0.251;
    //double  vbar   = 0.72;      // 0.251; 
    //double  vbar   = model.components[ 0 ].vbar20;
    double  vbar   = model.components[ comp_x ].vbar20;
-//vbar=0.72;
-   //double  vbar   = 0.251;
 QTime timer;
 static int kst1=0;
 static int kst2=0;
@@ -1512,7 +1511,7 @@ static int kst2=0;
       case 2:      // co-sedimenting
          //** salt-protein
 timer.start();
-vbar=0.73;
+
          Csalt = new double [ Nv ];
   
          saltdata->InterpolateCSalt( Nv, x, t, Csalt );    // Csalt at (x, t)
@@ -1524,15 +1523,12 @@ double rhoe=0.0;
 double vis0=0.0;
 double vism=0.0;
 double vise=0.0;
-double rK = 0.998234 + 6e-6;
-double vK = 1.00194 - 0.00078;
-            double sA     = param_s * 1.00194 / ( 1.0 - vbar_w * rho_w );
+            double sA     = param_s * 1.00194 / ( 1.0 - vbar * rho_w );
             double dA     = param_D * Tempt * 1.00194 / 293.15;
             double Cmrt   = 0.0;
             double Cmsq   = 0.0;
             double Cmcu   = 0.0;
             double Cmqu   = 0.0;
-//                   vbar   = vbar_salt;
            
             for ( j = 0; j < Nv; j++ )
             {
@@ -1547,13 +1543,6 @@ double vK = 1.00194 - 0.00078;
                //D_adj[j] =(Tempt*1.00194)/(293.15*visc) * param_D;
       
                Cm         = Csalt[ j ];             // Salt concentration
-#if 1
-               rho  = 0.998234 + Cm*( 12.68641e-2 + Cm*( 1.27445e-3 + 
-                       Cm*( -11.954e-4 + Cm*258.866e-6 ) ) ) + 6.e-6;
-               visc = 1.00194 - 19.4104e-3*sqrt(Cm) + Cm*( -4.07863e-2 + 
-                       Cm*( 11.5489e-3  + Cm*(-21.774e-4) ) ) - 0.00078;
-#endif
-#if 0
                Cmrt       = sqrt( Cm );             //  and powers of it
                Cmsq       = Cm * Cm;
                Cmcu       = Cm * Cmsq;
@@ -1572,19 +1561,10 @@ double vK = 1.00194 - 0.00078;
                             + Cmsq * v_coeff[ 3 ]
                             + Cmcu * v_coeff[ 4 ]
                             + Cmqu * v_coeff[ 5 ];
-#endif
-#if 1
-               s_adj[j] =(1.0-vbar*rho)*1.00194/((1.0-vbar*rho_w)*visc)*param_s;
-               D_adj[j] =(Tempt*1.00194)/(293.15*visc) * param_D;
-#endif
-#if 0
-            //double sA     = param_s * 1.00194 / ( 1.0 - vbar_w * rho_w );
-            double sA     = param_s * 1.00194 / ( 1.0 - vbar * rho_w );
-            double dA     = param_D * Tempt * 1.00194 / 293.15;
+
                s_adj[ j ] = sA * ( 1.0 - vbar * rho ) / visc;
 
                D_adj[ j ] = dA / visc;
-#endif
 
 if(j==0){rho0=rho;vis0=visc;}
 if(j==Nv/2){rhom=rho;vism=visc;}
