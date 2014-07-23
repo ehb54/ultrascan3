@@ -565,6 +565,7 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       // initialize LCD with component "1"
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( 1 );
+      lcd_speed    ->display( (int)rpm );
 
       astfvm->set_buffer( buffer );
       astfvm->setMovieFlag( ck_movie->isChecked() );
