@@ -26,8 +26,10 @@ DbgLv(1) << "PC(WT): Thread created";
 // worker thread destructor
 WorkerThreadPc::~WorkerThreadPc()
 {
-   //if ( solvesim != NULL )
-   //   delete solvesim;
+#if 1
+   if ( solvesim != NULL )
+      delete solvesim;
+#endif
 
 DbgLv(1) << "PC(WT):   Thread destroy - (1)finished?" << isFinished() << thrn;
    if ( ! wait( 2000 ) )
@@ -143,15 +145,18 @@ DbgLv(1) << phdr << "depth" << depth;
    if ( depth == 0 )
    {  // Fit task:  do full compute of model
       solvesim            = new US_SolveSim( dsets, thrn, true );
+DbgLv(1) << phdr << " A)dsets size" << dsets.size();
 
       sim_vals.solutes    = solutes_i;
       sim_vals.noisflag   = noisflag;
       sim_vals.dbg_level  = dbg_level;
       sim_vals.dbg_timing = US_Settings::debug_match( "pcsaTiming" );
+DbgLv(1) << phdr << " B)sols_i size" << solutes_i.size();
 
       solvesim->calc_residuals( 0, 1, sim_vals );
 
       solutes_c           = sim_vals.solutes;
+DbgLv(1) << phdr << " C)sols_c size" << solutes_c.size();
       ti_noise.values     = sim_vals.ti_noise;
       ri_noise.values     = sim_vals.ri_noise;
 DbgLv(1) << phdr << "sim,res ptCounts" << sim_vals.sim_data.pointCount()
