@@ -1,0 +1,374 @@
+//! \file us_dmga_init.cpp
+
+#include <QApplication>
+
+#include "us_dmga_init.h"
+#include "us_constraints_edit.h"
+#include "us_model_loader.h"
+#include "us_license_t.h"
+#include "us_license.h"
+#include "us_settings.h"
+#include "us_gui_settings.h"
+#include "us_math2.h"
+#include "us_matrix.h"
+#include "us_constants.h"
+#include "us_passwd.h"
+#include "us_report.h"
+#include "us_investigator.h"
+#include "us_util.h"
+#include "us_passwd.h"
+#include "us_associations_gui.h"
+#include "us_settings.h"
+#include "us_gui_settings.h"
+#include "us_constants.h"
+#include "us_model.h"
+
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
+// main program
+int main( int argc, char* argv[] )
+{
+   QApplication application( argc, argv );
+
+   #include "main1.inc"
+
+   // License is OK.  Start up.
+   
+   US_DMGA_Init w;
+   w.show();                   //!< \memberof QWidget
+   return application.exec();  //!< \memberof QApplication
+}
+
+// US_DMGA_Init class constructor
+US_DMGA_Init::US_DMGA_Init() : US_Widgets()
+{
+   // set up the GUI
+
+   setWindowTitle( tr( "Discrete Genetic Algorithm Initialization" ) );
+   setPalette( US_GuiSettings::frameColor() );
+
+   dbg_level = US_Settings::us_debug();
+
+   // Grid
+   QGridLayout* main = new QGridLayout( this );
+   main->setSpacing( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+   int dataloc       = US_Settings::default_data_location();
+
+   // Disk/DB
+   dkdb_cntrls            = new US_Disk_DB_Controls( dataloc );
+   // Model and constraints
+   QLabel* lb_modcnst     = us_banner(     tr( "Model and Constraints" ) );
+   pb_loadmodel           = us_pushbutton( tr( "Load Base Model" ) );
+   pb_loadconstr          = us_pushbutton( tr( "Load Constraints" ) );
+   pb_defmodel            = us_pushbutton( tr( "Define Base Model" ) );
+   pb_defconstr           = us_pushbutton( tr( "Define Constraints" ) );
+   pb_savemodel           = us_pushbutton( tr( "Save Base Model" ) );
+   pb_saveconstr          = us_pushbutton( tr( "Save Constraints" ) );
+
+   // General control
+   QLabel* lb_gencntrl    = us_banner(     tr( "General Control" ) );
+   pb_help                = us_pushbutton( tr( "Help" ) );
+   pb_close               = us_pushbutton( tr( "Close" ) );
+   le_status              = us_lineedit( tr( "(no model/constraints loaded)" ),
+                                         1, true );
+   QPalette stpal;
+   stpal.setColor( QPalette::Text, Qt::white );
+   stpal.setColor( QPalette::Base, Qt::blue  );
+   le_status->setPalette( stpal );
+
+   // Layout
+   int row = 0;
+   main->addLayout( dkdb_cntrls,    row++,  0, 1, 4 );
+   main->addWidget( lb_modcnst,     row++,  0, 1, 4 );
+   main->addWidget( pb_loadmodel,   row,    0, 1, 2 );
+   main->addWidget( pb_loadconstr,  row++,  2, 1, 2 );
+   main->addWidget( pb_defmodel,    row,    0, 1, 2 );
+   main->addWidget( pb_defconstr,   row++,  2, 1, 2 );
+   main->addWidget( pb_savemodel,   row,    0, 1, 2 );
+   main->addWidget( pb_saveconstr,  row++,  2, 1, 2 );
+
+   main->addWidget( lb_gencntrl,    row++,  0, 1, 4 );
+   main->addWidget( le_status,      row++,  0, 1, 4 );
+   main->addWidget( pb_help,        row,    0, 1, 2 );
+   main->addWidget( pb_close,       row++,  2, 1, 2 );
+
+   // Signals and slots
+   connect( pb_loadmodel,   SIGNAL( clicked           () ), 
+                            SLOT  ( load_model        () ) );
+   connect( pb_loadconstr,  SIGNAL( clicked           () ), 
+                            SLOT  ( load_constraints  () ) );
+   connect( pb_defmodel,    SIGNAL( clicked           () ), 
+                            SLOT  ( define_model      () ) );
+   connect( pb_defconstr,   SIGNAL( clicked           () ), 
+                            SLOT  ( define_constraints() ) );
+   connect( pb_savemodel,   SIGNAL( clicked           () ), 
+                            SLOT  ( save_model        () ) );
+   connect( pb_saveconstr,  SIGNAL( clicked           () ), 
+                            SLOT  ( save_constraints  () ) );
+   connect( pb_help,        SIGNAL( clicked   () ), 
+                            SLOT  ( help      () ) );
+   connect( pb_close,       SIGNAL( clicked   () ), 
+                            SLOT  ( close     () ) );
+
+   resize( 500, 200 );
+
+   const int sctmms = 1000;             // Delay 1 second to start model scan
+   sctm_id          = startTimer( sctmms );
+   le_status->setText( tr( "Scanning models for unassigned edits" ) );
+   qApp->processEvents();
+}
+
+// US_DMGA_Init class destructor
+US_DMGA_Init::~US_DMGA_Init()
+{
+   constraints.init_constraints();
+
+   attribs    .clear();
+   flt_attrs  .clear();
+}
+
+// Load an existing base model
+void US_DMGA_Init::load_model( void )
+{
+DbgLv(1) << "dGA:load_model";
+   le_status->setText( tr( "Loading a list of base models" ) );
+   qApp->processEvents();
+   bool     loadDB = dkdb_cntrls->db();
+   QString  mfilt  = "=m";
+   QString  mdesc  = "";
+   QString  eGUID  = "";
+//mfilt="";
+//eGUID="00000000-0000-0000-0000-000000000000";
+   US_ModelLoader mldiag( loadDB, mfilt, bmodel, mdesc, eGUID );
+
+   connect( &mldiag, SIGNAL( changed       ( bool ) ),
+                     SLOT  ( update_disk_db( bool ) ) );
+
+   if ( mldiag.exec() == QDialog::Accepted )
+   {
+      le_status->setText( tr( "A base model has been loaded." ) );
+      constraints.load_base_model( &bmodel );
+   }
+   else
+   {
+      le_status->setText( tr( "No base model was loaded." ) );
+   }
+
+   qApp->processEvents();
+}
+
+// Define a base model
+void US_DMGA_Init::define_model( void )
+{
+DbgLv(1) << "dGA:define_model";
+   US_ModelGui* mddiag = new US_ModelGui( bmodel );
+   le_status->setText( tr( "Editing or creating a base model" ) );
+   qApp->processEvents();
+
+   connect( mddiag,  SIGNAL( valueChanged  ( US_Model ) ),
+                     SLOT  ( new_base_model( US_Model ) ) );
+
+   mddiag->exec();
+
+   if ( bmodel.components.size() > 0 )
+   {
+      le_status->setText( tr( "A base model has been created or edited." ) );
+      constraints.load_base_model( &bmodel );
+   }
+   else
+   {
+      le_status->setText( tr( "No base model was defined." ) );
+   }
+
+   qApp->processEvents();
+}
+
+// Load an existing constraints model
+void US_DMGA_Init::load_constraints( void )
+{
+DbgLv(1) << "dGA:load_constraints";
+
+   bool     loadDB = dkdb_cntrls->db();
+   QString  mfilt  = "=u";
+   QString  mdesc  = "";
+   QString  eGUID  = "1";
+//mfilt="";
+//eGUID="00000000-0000-0000-0000-000000000000";
+   US_ModelLoader mldiag( loadDB, mfilt, cmodel, mdesc, eGUID );
+
+   connect( &mldiag, SIGNAL( changed       ( bool ) ),
+                     SLOT  ( update_disk_db( bool ) ) );
+   mldiag.exec();
+
+   US_ConstraintsEdit cediag( cmodel );
+   le_status->setText( tr( "Loading a list of existing constraints models" ) );
+   qApp->processEvents();
+
+   if ( cediag.exec() == QDialog::Accepted )
+   {
+      le_status->setText( tr( "A constraints model has been loaded." ) );
+      constraints.load_constraints( &cmodel );
+   }
+
+   else
+   {
+      le_status->setText( tr( "No constraints model was loaded." ) );
+   }
+
+   qApp->processEvents();
+}
+
+// Define a constraints model
+void US_DMGA_Init::define_constraints( void )
+{
+DbgLv(1) << "dGA:define_constraints";
+   if ( cmodel.components.size() == 0 )
+   {
+      cmodel          = bmodel;
+//      cmodel.analysis = US_Model::DMGA_CONSTR;
+//      for ( int ii = 0; ii < cmodel.components.size(); ii++ )
+//         cmodel.components[ ii ].name = "000V" + cmodel.components[ ii ].name;
+   }
+
+   US_ConstraintsEdit cediag( cmodel );
+
+   le_status->setText( tr( "Editor to define a constraints model" ) );
+   qApp->processEvents();
+
+   if ( cediag.exec() == QDialog::Accepted )
+   {
+      le_status->setText( tr( "A constraints model has been defined." ) );
+      constraints.load_constraints( &cmodel );
+   }
+
+   else
+   {
+      le_status->setText( tr( "No constraints model was defined." ) );
+   }
+
+   qApp->processEvents();
+}
+
+// Save a defined base model
+void US_DMGA_Init::save_model( void )
+{
+DbgLv(1) << "dGA:save_model";
+}
+
+// Save a defined constraints model
+void US_DMGA_Init::save_constraints( void )
+{
+DbgLv(1) << "dGA:save_constraints";
+}
+
+// Slot to handle a dialog change in the disk/db selection
+void US_DMGA_Init::update_disk_db( bool isDB )
+{
+   if ( isDB )
+      dkdb_cntrls->set_db();
+   else
+      dkdb_cntrls->set_disk();
+}
+
+// Slot to handle a model changed in the model editor
+void US_DMGA_Init::new_base_model( US_Model new_model )
+{
+   bmodel          = new_model;
+}
+
+// Protected slot to filter timer event and handle model-scan delay
+void US_DMGA_Init::timerEvent( QTimerEvent* event )
+{
+   const QString uaeditID( "1" );
+   int tm_id       = event->timerId();
+DbgLv(1) << "dGA:tmEv: tm_id" << tm_id << sctm_id;
+
+   if ( tm_id != sctm_id )
+   {  // If other than scan delay, pass it on to the normal handler
+      QObject::timerEvent( event );
+      return;
+   }
+
+   // Otherwise, count and display models with unassigned edit
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   qApp->processEvents();
+   QTime       timer;
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+   QStringList mdlIDs;
+   QStringList qry;
+   QString     invID    = QString::number( US_Settings::us_inv_ID() );
+   timer.start();
+   qry << "count_models_by_editID" << invID << uaeditID;
+   int numodel     = db.functionQuery( qry );
+   int ndmodel     = 0;
+   int nmmodel     = 0;
+   int ncmodel     = 0;
+   int nlmodel     = 0;
+DbgLv(1) << " Timing(count_models)" << timer.elapsed();
+
+   if ( numodel > 0 )
+   {
+      qry.clear();
+      qry << "get_model_desc_by_editID" << invID << uaeditID;
+      db.query( qry );
+
+      while ( db.next() )
+      {
+         QString mdlID   = db.value( 0 ).toString();
+         QString mdesc   = db.value( 2 ).toString();
+         QString edtGID  = db.value( 5 ).toString();
+         int     edtID   = db.value( 6 ).toString().toInt();
+         if ( !mdesc.contains( "Custom" ) )
+         {
+            mdlIDs << mdlID;
+            nlmodel++;
+         }
+DbgLv(1) << " mdlID" << mdlID << "mdesc" << mdesc << "editID" << edtID
+ << "editGUID" << edtGID;
+      }
+DbgLv(1) << " Timing(get_model_desc)" << timer.elapsed();
+
+      QString atypeMan = QString::number( US_Model::MANUAL );
+      QString atypeCgr = QString::number( US_Model::CUSTOMGRID );
+      QString atypeDga = QString::number( US_Model::DMGA_CONSTR );
+DbgLv(1) << "  Atype Man Cgr Dga" << atypeMan << atypeCgr << atypeDga;
+
+      for ( int ii = 0; ii < nlmodel; ii++ )
+      {
+         QString mdlID   = mdlIDs[ ii ];
+         qry.clear();
+         qry << "get_model_info" << mdlID;
+         db.query( qry );
+         db.next();
+         QString xmlmdl  = db.value( 2 ).toString();
+         int     jj      = xmlmdl.indexOf( "analysisType=" );
+         QString atype   = xmlmdl.mid( jj, 40 ).section( "\"", 1, 1 );
+DbgLv(1) << "   mdlID" << mdlID << "atype" << atype << "jj" << jj;
+
+         if ( atype == atypeDga )
+            ndmodel++;
+         else if ( atype == atypeCgr )
+            ncmodel++;
+         else if ( atype == atypeMan )
+            nmmodel++;
+      }
+DbgLv(1) << " Timing(get_model_info)" << timer.elapsed();
+   }
+DbgLv(1) << " numodel" << numodel << "ndmodel ncmodel nmmodel"
+ << ndmodel << ncmodel << nmmodel;
+
+   le_status->setText( tr( "%1 unassigned-edit models found"
+                           " (%2 Manual, %3 DMGA)" )
+                       .arg( numodel ).arg( nmmodel ).arg( ndmodel ) );
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
+
+   killTimer( tm_id );
+   return;
+}
+

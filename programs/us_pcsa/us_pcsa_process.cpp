@@ -100,7 +100,7 @@ DbgLv(1) << "PC(pcsaProc): start_fit()";
 DbgLv(1) << "PC: alf alpha lm fx scn"
    << alf << alpha << alpha_lm << alpha_fx << alpha_scn;
    errMsg      = tr( "NO ERROR: start" );
-   maxrss      = 0;
+   //maxrss      = 0;
    varimin     = 9.e+9;
    minvarx     = 99999;
 
@@ -598,7 +598,7 @@ void US_pcsaProcess::submit_job( WorkPacketPc& wtask, int thrx )
    connect( wthr, SIGNAL( work_complete( WorkerThreadPc* ) ),
             this, SLOT(   process_job(   WorkerThreadPc* ) ) );
 DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx
- << "sk ek" << wtask.str_k << wtask.end_k;
+ << "sk ek" << wtask.str_k << wtask.end_k << "maxrss" << maxrss;
 
    wthr->start();
 }
@@ -1946,9 +1946,16 @@ double US_pcsaProcess::evaluate_model( QList< US_SolveSim::DataSet* >& dsets,
    }
 
    // Do astfem fit, mostly to get an RMSD
+#if 1
    US_SolveSim* solvesim = new US_SolveSim( dsets, 0, false );
 
    solvesim->calc_residuals( 0, 1, sim_vals );
+#endif
+#if 0
+   US_SolveSim solvesim( dsets, 0, false );
+
+   solvesim.calc_residuals( 0, 1, sim_vals );
+#endif
 
    // Construct a rudimentary model from computed solutes and save it
    dset->model          = US_Model();
