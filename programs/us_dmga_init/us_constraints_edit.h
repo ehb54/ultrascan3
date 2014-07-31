@@ -15,7 +15,7 @@
 
 //! \brief A window to edit a discreteGA constraints model
 
-class US_GUI_EXTERN US_ConstraintsEdit : public US_WidgetsDialog
+class US_ConstraintsEdit : public US_WidgetsDialog
 {
    Q_OBJECT
 

@@ -36,7 +36,7 @@ class US_UTIL_EXTERN US_dmGA_Constraints
       };
 
       //! \brief Float constraint object with type and range
-      class Constraint
+      class US_UTIL_EXTERN Constraint
       {
          public:
          AttribType  atype;    //!< Component/Association attribute type
