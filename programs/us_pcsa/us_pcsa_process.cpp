@@ -1874,9 +1874,10 @@ DbgLv(1) << " ElLim: ADJUST SIGM: m0p1 m0p1h" << m0p1 << m0p1h
    int nmr        = mrecs.size();
    int nelite     = qRound( efrac * nmr );          // Elite is top 10%
    int maxel      = nmr / 2;
-   int minel      = qMin( maxel, 7 );
+   int minel      = qMin( maxel, 4 );
    nelite         = qMin( nelite, maxel );          // At most half of all
-   nelite         = qMax( nelite, minel );          // At least 7
+   nelite         = qMax( nelite, minel );          // At least 4
+   nelite        -= 2;                              // Less 2 for compare
 DbgLv(0) << " ElLim: nmr nelite nmtasks" << nmr << nelite << nmtasks;
 DbgLv(1) << " ElLim: in minkv maxkv" << minkv << maxkv;
 DbgLv(1) << " ElLim: in min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;

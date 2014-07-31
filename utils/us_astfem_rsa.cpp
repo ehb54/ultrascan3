@@ -190,7 +190,7 @@ DbgLv(2) << "RSA:  cc aa current_assoc" << cc << aa << current_assoc;
          initialize_conc( cc, CT0, true );
 int nc0=CT0.concentration.size()-1;
 int mc0=nc0/2;
-DbgLv(1) << "RSA: s0 i_conc cc step lsc" << cc << 0 << 0 << ": c0 cm cn"
+DbgLv(2) << "RSA: s0 i_conc cc step lsc" << cc << 0 << 0 << ": c0 cm cn"
    << CT0.concentration[0] << CT0.concentration[mc0] << CT0.concentration[nc0];
 
          af_params.s   .resize( 1 );
@@ -229,7 +229,7 @@ QDateTime clcSt2 = QDateTime::currentDateTime();
             bool in_step = ( ed->scan[ fscan ].time <= sp->time_last  &&
                              ed->scan[ lscan ].time >= sp->time_first );
 
-DbgLv(1) << "RSA:PO: STEP NSTEP" << step << nstep
+DbgLv(2) << "RSA:PO: STEP NSTEP" << step << nstep
  << "ETIMEF ETIMEL" << ed->scan[fscan].time << ed->scan[lscan].time
  << "STIMEF STIMEL" << sp->time_first << sp->time_last;
             // For multi-speed, break out once speed step is beyond data
@@ -247,7 +247,7 @@ DbgLv(1) << "RSA:PO: STEP NSTEP" << step << nstep
             ed->meniscus = af_params.current_meniscus;
             ed->bottom   = af_params.current_bottom;
             accel_time   = 0.0;
-DbgLv(1) << "RSA:PO: FSCAN TIME1" << fscan << time1 << "cc step" << cc << step
+DbgLv(2) << "RSA:PO: FSCAN TIME1" << fscan << time1 << "cc step" << cc << step
    << "menisc bott" << ed->meniscus << ed->bottom;
 
             // We need to simulate acceleration
@@ -293,7 +293,7 @@ DbgLv(1) << "RSA:PO: FSCAN TIME1" << fscan << time1 << "cc step" << cc << step
 
                double drtm  = delay - accel_time;
                double wfac  = af_params.dt * sq( M_PI / 30.0 );
-DbgLv(1) << "RSA:PO: time0 time1 omeg0 omeg1"
+DbgLv(2) << "RSA:PO: time0 time1 omeg0 omeg1"
  << time0 << time1 << omeg0 << omeg1 << "delay atime" << delay << accel_time;
                double dw2   = 0.0;
                double dt2   = accel_time / af_params.dt;
@@ -361,7 +361,7 @@ DbgLv(1) << "RSA: S:cc step" << cc << step << ": c0 cm cn"
                   af_params.start_time += dt1;
                   af_params.start_om2t += dw1;
                   af_params.time_steps  = svnpts;
-DbgLv(1) << "RSA:PO:    Accel nradi" << nradi << "CT0size" << CT0.radius.size();
+DbgLv(2) << "RSA:PO:    Accel nradi" << nradi << "CT0size" << CT0.radius.size();
                }
 
                // Calculate the simulation for the acceleration zone
@@ -456,7 +456,7 @@ totT3+=(clcSt3.msecsTo(clcSt4));
 //            current_time  = time1;
 nc0=CT0.concentration.size()-1;
 mc0=nc0/2;
-DbgLv(1) << "RSA: B:cc step" << cc << step << ": c0 cm cn"
+DbgLv(2) << "RSA: B:cc step" << cc << step << ": c0 cm cn"
    << CT0.concentration[0] << CT0.concentration[mc0] << CT0.concentration[nc0];
 
             // Calculate the simulation for the bulk of the speed step
@@ -497,7 +497,7 @@ totT4+=(clcSt4.msecsTo(clcSt5));
 //               US_AstfemMath::interpolate( *ed, simdata, use_time,
 //                                           fscan, ++lscan );
                US_AstfemMath::interpolate( *ed, simdata, use_time );
-DbgLv(1) << "RSA:T     INTERP in step" << step;
+DbgLv(2) << "RSA:T     INTERP in step" << step;
             }
 
             if ( !simout_flag )
@@ -516,12 +516,12 @@ DbgLv(1) << "RSA:T     INTERP in step" << step;
 #ifdef TIMING_RA
 totT5+=(clcSt5.msecsTo(QDateTime::currentDateTime()));
 #endif
-DbgLv(1) << "RSA: step=" << step << "tsteps sttime" << af_params.time_steps
+DbgLv(2) << "RSA: step=" << step << "tsteps sttime" << af_params.time_steps
  << current_time << "bottoms" << simparams.bottom_position
  << simparams.bottom << af_params.current_bottom << "sp" << current_speed;
 nc0=CT0.concentration.size()-1;
 mc0=nc0/2;
-DbgLv(1) << "RSA: E:cc step" << cc << step << ": c0 cm cn"
+DbgLv(2) << "RSA: E:cc step" << cc << step << ": c0 cm cn"
    << CT0.concentration[0] << CT0.concentration[mc0] << CT0.concentration[nc0];
 //            af_params.first_speed = current_speed;
 
@@ -831,14 +831,14 @@ totT6+=(clcSt6.msecsTo(clcSt7));
                                    sp = &simparams.speed_step[ step ];
          US_AstfemMath::MfemData*  ed = &af_data;
          int nscans = ed->scan.size();
-DbgLv(1) << "RSA: TimeCorr step" << step << "nscans" << nscans;
+DbgLv(2) << "RSA: TimeCorr step" << step << "nscans" << nscans;
 
          if ( nstep > 1 )
          {  // For multi-speed, skip steps outside experimental scan range
             int fscan  = 0;
             int lscan  = nscans - 1;
-DbgLv(1) << "RSA: TimeCorr  nscans fscan lscan" << nscans << fscan << lscan;
-DbgLv(1) << "RSA: TimeCorr   stimef stimel" << sp->time_first << sp->time_last
+DbgLv(2) << "RSA: TimeCorr  nscans fscan lscan" << nscans << fscan << lscan;
+DbgLv(2) << "RSA: TimeCorr   stimef stimel" << sp->time_first << sp->time_last
    << "etimef etimel" << ed->scan[ fscan ].time << ed->scan[ lscan ].time;
 
             if ( ed->scan[ fscan ].time > sp->time_last )
@@ -875,7 +875,7 @@ DbgLv(1) << "RSA: TimeCorr   stimef stimel" << sp->time_first << sp->time_last
 
                correction = -intercept / slope;
             }
-DbgLv(1) << "RSA: TimeCorr   correction" << correction << "nscans" << nscans;
+DbgLv(2) << "RSA: TimeCorr   correction" << correction << "nscans" << nscans;
 
             for ( int ii = 0; ii < nscans; ii++ )
                ed->scan[ ii ].time -= correction;
@@ -911,7 +911,7 @@ if((ncalls%TIMING_RA_INC)<1) {
   << totT1 << totT2 << totT3 << totT4 << totT5 << totT6 << totT7 << totT8;
 }
 #endif
-DbgLv(1) << "ASTFEM CALC DONE";
+DbgLv(2) << "ASTFEM CALC DONE";
    return 0;
 }
 
@@ -1198,7 +1198,7 @@ DbgLv(2) << "RSA:   menisc base lwid" << af_params.current_meniscus << base << l
             CT0.concentration[ j ] +=
                sc->signal_concentration * exp( -pow( base, 4.0 ) );
 if(j<2||j>(CT0.concentration.size()-3)||j==(CT0.concentration.size()/40))
-DbgLv(1) << "RSA:  j base conc" << j << base << CT0.concentration[j];
+DbgLv(2) << "RSA:  j base conc" << j << base << CT0.concentration[j];
 if(mxct<CT0.concentration[j]) {mxct=CT0.concentration[j];jmxc=j;}
          }
       }
@@ -1344,7 +1344,7 @@ QDateTime clcSt9 = clcSt0;
    nu .append( sw2 / af_params.D[ 0 ] );
 
    mesh_gen( nu, simparams.meshType );
-DbgLv(1) << "RSA: mesh_gen size" << nu.count() << "accel" << accel;
+DbgLv(2) << "RSA: mesh_gen size" << nu.count() << "accel" << accel;
 
    // Refine left hand side (when s > 0) or right hand side (when s < 0)
    //  for acceleration
@@ -1377,8 +1377,8 @@ DbgLv(1) << "RSA: mesh_gen size" << nu.count() << "accel" << accel;
       mesh_gen_RefL( j + 1, 4 * j );
    }
 
-DbgLv(1) << "RSA: simdat radsize scnsize" << simdata.radius.size()
- << simdata.scan.size() << "Nx" << Nx;
+//DbgLv(2) << "RSA: simdat radsize scnsize" << simdata.radius.size()
+// << simdata.scan.size() << "Nx" << Nx;
    simdata.radius.clear();
    simdata.scan  .clear();
    simdata.radius.reserve( Nx );
@@ -1427,7 +1427,7 @@ ttT1+=(clcSt1.msecsTo(clcSt2));
    {
       sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
 
-DbgLv(1) << "RSA: fixedGrid s0" << fixedGrid << af_params.s[0];
+//DbgLv(2) << "RSA: fixedGrid s0" << fixedGrid << af_params.s[0];
       if ( fixedGrid )
       {
          ComputeCoefMatrixFixedMesh  ( af_params.D[ 0 ], sw2, CA, CB );
@@ -1499,9 +1499,9 @@ ttT2+=(clcSt2.msecsTo(clcSt3));
    C1 = C1Vec.data();
 
    // Interpolate the given C_init vector on the new C0 grid
-DbgLv(1) << "RSA: interp C0";
+//DbgLv(2) << "RSA: interp C0";
    US_AstfemMath::interpolate_C0( C_init, C0, x );
-DbgLv(1) << "RSA: interp C0  RTN";
+//DbgLv(2) << "RSA: interp C0  RTN";
 
    // Time evolution
    double* right_hand_side = rhVec.data();
@@ -1520,13 +1520,13 @@ clcSt3 = QDateTime::currentDateTime();
    int    nisteps     = ntsteps + 3;
 //   int    ltsteps     = ntsteps - 1;
    int    ltsteps     = ntsteps;
-DbgLv(1) << "RSA: nisteps" << nisteps;
+//DbgLv(2) << "RSA: nisteps" << nisteps;
    simdata.scan  .reserve( nisteps );
 
    // Calculate all time steps (plus a little overlap)
    for ( int ii = 0; ii < nisteps; ii++ )
    {
-DbgLv(1) << "RSA:     ii nisteps" << ii << nisteps;
+//DbgLv(2) << "RSA:     ii nisteps" << ii << nisteps;
 #ifdef TIMING_NI
 clcSt4 = QDateTime::currentDateTime();
 ttT3+=(clcSt3.msecsTo(clcSt4));
@@ -1539,7 +1539,7 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
       emit current_speed( (int) rpm_current );
 #endif
 
-DbgLv(1) << "RSA:           (2) ii" << ii << "accel" << accel;
+//DbgLv(2) << "RSA:           (2) ii" << ii << "accel" << accel;
       if ( accel ) // Then we have acceleration
       {
          double rpm_ratio = sq( rpm_current / rpm_stop );
@@ -1560,7 +1560,7 @@ DbgLv(1) << "RSA:           (2) ii" << ii << "accel" << accel;
             }
          }
       }
-DbgLv(1) << "RSA:           (3) ii" << ii;
+//DbgLv(2) << "RSA:           (3) ii" << ii;
 
       simscan.rpm   = (int) rpm_current;
       simscan.time  = af_params.start_time + ii * af_params.dt;
@@ -1580,15 +1580,16 @@ DbgLv(2) << "TMS:RSA:ni: time omega_s_t" << simscan.time << simscan.omega_s_t
 
       simscan.conc.clear();
       simscan.conc.reserve( Nx );
-DbgLv(1) << "RSA: Nx C0size" << Nx << C0Vec.size() << "step-scan"
+DbgLv(2) << "RSA: Nx C0size" << Nx << C0Vec.size() << "step-scan"
  << simdata.scan.size() << "rss-now" << US_Memory::rss_now();
 
       for ( int jj = 0; jj < Nx; jj++ )
          simscan.conc.append( C0[ jj ] );
 
-DbgLv(1) << "RSA:           (4) ii" << ii;
+//DbgLv(2) << "RSA:           (4) ii" << ii << "simdata scans"
+//   << simdata.scan.size();
       simdata.scan.append( simscan );
-DbgLv(1) << "RSA:           (5) ii" << ii;
+//DbgLv(2) << "RSA:           (5) ii" << ii;
 if(ii==0) DbgLv(1) << "TMS:RSA:ni:  Scan Added";
 #ifdef TIMING_NI
 clcSt5 = QDateTime::currentDateTime();
@@ -1646,23 +1647,23 @@ ttT4+=(clcSt4.msecsTo(clcSt5));
             right_hand_side[ jj ] = -CB[ 0 ][ jj ] * C0[ jj ];
          }
       }
-DbgLv(1) << "RSA:           (6) ii" << ii;
+//DbgLv(2) << "RSA:           (6) ii" << ii;
 
 #ifdef TIMING_NI
 clcSt6 = QDateTime::currentDateTime();
 ttT5+=(clcSt5.msecsTo(clcSt6));
 #endif
-DbgLv(1) << "RSA: tridiag";
+//DbgLv(2) << "RSA: tridiag";
       US_AstfemMath::tridiag( CA[0], CA[1], CA[2], right_hand_side, C1, Nx );
-DbgLv(1) << "RSA: tridiag    RTN";
+//DbgLv(2) << "RSA: tridiag    RTN";
 #ifdef TIMING_NI
 clcSt7 = QDateTime::currentDateTime();
 ttT6+=(clcSt6.msecsTo(clcSt7));
 #endif
 
-DbgLv(1) << "RSA: C1size C0size" << C1Vec.size() << C0Vec.size();
+//DbgLv(2) << "RSA: C1size C0size" << C1Vec.size() << C0Vec.size();
       for ( int jj = 0; jj < Nx; jj++ ) C0[ jj ] = C1[ jj ];
-DbgLv(1) << "RSA:           (7) ii" << ii;
+//DbgLv(2) << "RSA:           (7) ii" << ii;
 
 #ifndef NO_DB
       if ( show_movie )
@@ -1680,7 +1681,7 @@ clcSt3 = QDateTime::currentDateTime();
 ttT7+=(clcSt7.msecsTo(clcSt3));
 #endif
 
-DbgLv(1) << "RSA:   ii ltsteps" << ii << ltsteps;
+//DbgLv(2) << "RSA:   ii ltsteps" << ii << ltsteps;
       if ( ii == ltsteps )
       {
          C_init.radius       .clear();
@@ -1739,7 +1740,7 @@ if((nccall%1000)==0) {
   << p5 << p6 << p7 << p8;
 }
 #endif
-DbgLv(1) << "RSA: CALC_NI END - simdata scans points rss"
+DbgLv(2) << "RSA: CALC_NI END - simdata scans points rss"
  << simdata.scan.size() << simdata.scan[0].conc.size() << US_Memory::rss_now();
 
    return 0;
@@ -1884,7 +1885,7 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
    Nx = x.size();
    xA = x.data();
-DbgLv(1) << "RSA: ***COMPUTED Nx" << Nx << "simpts" << af_params.simpoints
+DbgLv(2) << "RSA: ***COMPUTED Nx" << Nx << "simpts" << af_params.simpoints
  << "omg2t" << af_params.omega_s << "s0" << af_params.s[0]
  << "dt" << af_params.dt;
 }
@@ -2631,7 +2632,7 @@ DbgLv(2) << "RSA:  decompose NCOMP=2 return";
    // Max number of time steps to get to equilibrium
    const int time_max     = 100;
    double    timeStepSize = - log( 1.0e-7 ) / ( k_min * time_max );
-DbgLv(1) << "RSA:  decompose k_min time_max timeStepSize"
+DbgLv(2) << "RSA:  decompose k_min time_max timeStepSize"
  << k_min << time_max << timeStepSize;
 
    // time loop
