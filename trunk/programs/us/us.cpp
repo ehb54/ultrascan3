@@ -155,6 +155,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
                                                                    velocity );
 #endif
   addMenu(  P_GAINIT   , tr( "&Initialize Genetic Algorithm" ),    velocity );
+  addMenu(  P_DMGAINIT , tr( "&Initialize Discrete Model Genetic Algorithm" ),
+                                                                   velocity );
   addMenu(  P_SECOND   , tr( "&Second Moment" ),                   velocity );
   addMenu(  P_DCDT     , tr( "&Time Derivative" ),                 velocity );
   addMenu(  P_FEMA     , tr( "&FE Model Viewer" ),                 velocity );

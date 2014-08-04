@@ -14,11 +14,13 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
+const QString notapl = QObject::tr( "n/a" );
+
 // Constructor of dialog for editing discreteGA constraints
 US_ConstraintsEdit::US_ConstraintsEdit( US_Model& current_model )
-   : US_WidgetsDialog( 0, 0 ), model( current_model )
+   : US_WidgetsDialog( 0, 0 ), cmodel( current_model )
 {
-   const QString notapl = tr( "n/a" );
+//   const QString notapl = tr( "n/a" );
    setWindowTitle   ( "Discrete Model GA Constraints Editor" );
    setPalette       ( US_GuiSettings::frameColor() );
    setWindowModality( Qt::WindowModal );
@@ -113,7 +115,7 @@ DbgLv(1) << "cnG:main: le_vals defined";
    ck_flt_D               = new QCheckBox( "", this );
    ck_flt_f               = new QCheckBox( "", this );
    ck_flt_conc            = new QCheckBox( "", this );
-   ck_flt_vbar->setChecked( true  );
+   ck_flt_vbar->setChecked( false );
    ck_flt_mw  ->setChecked( false );
    ck_log_mw  ->setChecked( true  );
    ck_flt_ff0 ->setChecked( false );
@@ -122,12 +124,12 @@ DbgLv(1) << "cnG:main: le_vals defined";
    ck_flt_f   ->setChecked( false );
    ck_flt_conc->setChecked( false );
    ck_flt_vbar->setEnabled( true  );
-   ck_flt_mw  ->setEnabled( false );
-   ck_log_mw  ->setEnabled( false );
-   ck_flt_ff0 ->setEnabled( false );
-   ck_flt_s   ->setEnabled( false );
-   ck_flt_D   ->setEnabled( false );
-   ck_flt_f   ->setEnabled( false );
+   ck_flt_mw  ->setEnabled( true  );
+   ck_log_mw  ->setEnabled( true  );
+   ck_flt_ff0 ->setEnabled( true  );
+   ck_flt_s   ->setEnabled( true  );
+   ck_flt_D   ->setEnabled( true  );
+   ck_flt_f   ->setEnabled( true  );
    ck_flt_conc->setEnabled( true  );
 DbgLv(1) << "cnG:main: flt/log defined";
 
@@ -136,7 +138,7 @@ DbgLv(1) << "cnG:main: flt/log defined";
    QLabel* lb_wavelength  =  us_label(
          tr( "Wavelength (nm):" ) );
    le_extinction = us_lineedit( "" );
-   le_wavelength = us_lineedit( QString::number( model.wavelength, 'f', 1 ) );
+   le_wavelength = us_lineedit( QString::number( cmodel.wavelength, 'f', 1 ) );
    le_wavelength->setMinimumWidth( 80 );
    le_wavelength->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Preferred );
    us_setReadOnly( le_wavelength, true );
@@ -186,7 +188,7 @@ DbgLv(1) << "cnG:main: flt/log defined";
    ck_log_koff->setEnabled( true  );
 DbgLv(1) << "cnG:main: assocs  defined";
 
-   QPushButton* pb_close = us_pushbutton( tr( "Cancel") );
+   QPushButton* pb_close  = us_pushbutton( tr( "Cancel") );
    QPushButton* pb_accept = us_pushbutton( tr( "Accept") );
 DbgLv(1) << "cnG:main: elements defined";
 
@@ -282,24 +284,24 @@ DbgLv(1) << "cnG:main: connections made";
    const QString clets( "ABCDEFGHIJ" );
 
    // Populate the lists from the model
-   if ( model.analysis == US_Model::DMGA_CONSTR )
+   if ( cmodel.analysis == US_Model::DMGA_CONSTR )
    {  // Constraints model
-      constraints.load_constraints( &model );
+      constraints.load_constraints( &cmodel );
 DbgLv(1) << "cnG:main:  cmodel load rtn";
-      for ( int ii = 0; ii < model.components.size(); ii++ )
+      for ( int ii = 0; ii < cmodel.components.size(); ii++ )
       {
          QString prenm  = QString( clets ).mid( ii, 1 ) + " ";
-         QString flgnm  = QString( model.components[ ii ].name ).left( 4 );
-         QString name   = QString( model.components[ ii ].name ).mid( 4 );
+         QString flgnm  = QString( cmodel.components[ ii ].name ).left( 4 );
+         QString name   = QString( cmodel.components[ ii ].name ).mid( 4 );
          lw_comps->addItem( prenm + name );
 
          if ( ! flgnm.contains( "V" ) )  ii++;
       }
 
-      for ( int ii = 0; ii < model.associations.size(); ii += 2 )
+      for ( int ii = 0; ii < cmodel.associations.size(); ii += 2 )
       {
-         QVector< int > rcomps  = model.associations[ ii ].rcomps;
-         QVector< int > stoichs = model.associations[ ii ].stoichs;
+         QVector< int > rcomps  = cmodel.associations[ ii ].rcomps;
+         QVector< int > stoichs = cmodel.associations[ ii ].stoichs;
          int     nrc    = rcomps.size();
          int     rc1    = ( nrc > 0 ) ? rcomps [ 0 ] : 0;
          int     rc2    = ( nrc > 1 ) ? rcomps [ 1 ] : 0;
@@ -307,9 +309,9 @@ DbgLv(1) << "cnG:main:  cmodel load rtn";
          int     st1    = ( nrc > 0 ) ? stoichs[ 0 ] : 1;
          int     st2    = ( nrc > 1 ) ? stoichs[ 1 ] : 1;
          int     st3    = ( nrc > 2 ) ? stoichs[ 2 ] : 1;
-         int     ol1    = model.components[ rc1 ].oligomer;
-         int     ol2    = model.components[ rc2 ].oligomer;
-         int     ol3    = model.components[ rc3 ].oligomer;
+         int     ol1    = cmodel.components[ rc1 ].oligomer;
+         int     ol2    = cmodel.components[ rc2 ].oligomer;
+         int     ol3    = cmodel.components[ rc3 ].oligomer;
          QString name;
          if ( rcomps.size() == 2 )
          {
@@ -349,19 +351,19 @@ DbgLv(1) << "cnG:main:  cmodel load rtn";
 
    else
    {  // Base model
-      constraints.load_base_model( &model );
+      constraints.load_base_model( &cmodel );
 DbgLv(1) << "cnG:main:  bmodel load rtn";
-      for ( int ii = 0; ii < model.components.size(); ii++ )
+      for ( int ii = 0; ii < cmodel.components.size(); ii++ )
       {
          QString prenm  = QString( "ABCDEFGHIJ" ).mid( ii, 1 ) + " ";
-         QString name   = model.components[ ii ].name;
+         QString name   = cmodel.components[ ii ].name;
          lw_comps->addItem( prenm + name );
       }
 
-      for ( int ii = 0; ii < model.associations.size(); ii++ )
+      for ( int ii = 0; ii < cmodel.associations.size(); ii++ )
       {
-         QVector< int > rcomps  = model.associations[ ii ].rcomps;
-         QVector< int > stoichs = model.associations[ ii ].stoichs;
+         QVector< int > rcomps  = cmodel.associations[ ii ].rcomps;
+         QVector< int > stoichs = cmodel.associations[ ii ].stoichs;
          int     nrc    = rcomps.size();
          int     rc1    = ( nrc > 0 ) ? rcomps [ 0 ] : 0;
          int     rc2    = ( nrc > 1 ) ? rcomps [ 1 ] : 0;
@@ -369,9 +371,9 @@ DbgLv(1) << "cnG:main:  bmodel load rtn";
          int     st1    = ( nrc > 0 ) ? stoichs[ 0 ] : 1;
          int     st2    = ( nrc > 1 ) ? stoichs[ 1 ] : 1;
          int     st3    = ( nrc > 2 ) ? stoichs[ 2 ] : 1;
-         int     ol1    = model.components[ rc1 ].oligomer;
-         int     ol2    = model.components[ rc2 ].oligomer;
-         int     ol3    = model.components[ rc3 ].oligomer;
+         int     ol1    = cmodel.components[ rc1 ].oligomer;
+         int     ol2    = cmodel.components[ rc2 ].oligomer;
+         int     ol3    = cmodel.components[ rc3 ].oligomer;
          QString name;
 
          if ( rcomps.size() == 2 )
@@ -434,7 +436,7 @@ DbgLv(1) << "cnG:main:  bmodel load rtn";
 
 DbgLv(1) << "cnG:main:  set comp row";
    lw_comps ->setCurrentRow( 0 );
-   lw_assocs->setCurrentRow( model.associations.size() > 0 ? 0 : -1 );
+   lw_assocs->setCurrentRow( cmodel.associations.size() > 0 ? 0 : -1 );
 
    comps_connect ( true );
    assocs_connect( true );
@@ -444,23 +446,6 @@ DbgLv(1) << "cnG:main:  m size" << size() << "fwide fhigh" << fwide << fhigh;
    int mhigh = ( bmhigh * fhigh ) / bfhigh;
    resize( mwide, mhigh );
 DbgLv(1) << "cnG:main:  m size" << size();
-}
-
-void US_ConstraintsEdit::edit_vbar( void )
-{
-int row=0;
-
-   US_Model::SimulationComponent* sc = &model.components[ row ];
-
-   if ( keep_standard() )  // Change from standard values?
-   {
-      le_val_vbar->setText( QString::number( sc->vbar20, 'e', 4 ) );
-      return;
-   }
-
-   sc->vbar20 = le_val_vbar->text().toDouble();
-
-   calculate();
 }
 
 void US_ConstraintsEdit::load_c0( void )
@@ -481,7 +466,7 @@ int row=0;
 
       if ( response == QMessageBox::Yes )
       {
-         US_Model::SimulationComponent* sc = &model.components[ row ];
+         US_Model::SimulationComponent* sc = &cmodel.components[ row ];
 
          sc->c0.radius       .clear();
          sc->c0.concentration.clear();
@@ -518,7 +503,7 @@ int row=0;
 //         int row = lw_comps->currentRow();
 int row=0;
 
-         US_Model::SimulationComponent* sc = &model.components[ row ];
+         US_Model::SimulationComponent* sc = &cmodel.components[ row ];
 
          sc->c0.radius       .clear();
          sc->c0.concentration.clear();
@@ -557,7 +542,7 @@ void US_ConstraintsEdit::set_molar( void )
    int row = lw_comps->currentRow();
    if ( row < 0 ) return;
 
-   US_Model::SimulationComponent* sc = &model.components[ row ];
+   US_Model::SimulationComponent* sc = &cmodel.components[ row ];
 
    double extinction = le_extinction->text().toDouble();
    double signalConc = le_val_conc  ->text().toDouble();
@@ -568,68 +553,14 @@ void US_ConstraintsEdit::set_molar( void )
       sc->molar_concentration = 0.0;
 }
 
-void US_ConstraintsEdit::clear_guid( void )
-{
-}
-
-void US_ConstraintsEdit::save_changes( int /*row*/ )
-{
-}
-
 void US_ConstraintsEdit::acceptProp( void ) 
 {
+DbgLv(1) << "cnG:accept";
+   constraints.get_constr_model( &cmodel );
+DbgLv(1) << "cnG: get_cmo RTN";
+
    accept();
    close();
-}
-
-void US_ConstraintsEdit::checkbox( void )
-{
-   if ( countChecks() != 2 )
-   {
-      enable( le_val_mw , false, gray );
-      enable( le_val_s  , false, gray );
-      enable( le_val_D  , false, gray );
-      enable( le_val_f  , false, gray );
-      enable( le_val_ff0, false, gray );
-      return;
-   }
-
-   ( ck_sel_mw  ->isChecked() ) ? enable( le_val_mw,  false, normal ) 
-                                : enable( le_val_mw,  true , gray   );
-   
-   ( ck_sel_s   ->isChecked() ) ? enable( le_val_s,   false, normal ) 
-                                : enable( le_val_s,   true , gray   );
-   
-   ( ck_sel_D   ->isChecked() ) ? enable( le_val_D,   false, normal ) 
-                                : enable( le_val_D,   true , gray   );
-   
-   ( ck_sel_f   ->isChecked() ) ? enable( le_val_f,   false, normal ) 
-                                : enable( le_val_f,   true , gray   );
-   
-   ( ck_sel_ff0 ->isChecked() ) ? enable( le_val_ff0, false, normal ) 
-                                : enable( le_val_ff0, true , gray   );
-}
-
-void US_ConstraintsEdit::enable( QLineEdit* le, bool status, const QPalette& /*p*/ )
-{
-   us_setReadOnly( le, status );
-   //le->setReadOnly( status );
-   //le->setPalette ( p );
-}
-
-int US_ConstraintsEdit::countChecks( void )
-{
-   int checked = 0;
-   if ( ck_sel_mw  ->isChecked() ) checked++;
-   if ( ck_sel_s   ->isChecked() ) checked++;
-   if ( ck_sel_D   ->isChecked() ) checked++;
-   if ( ck_sel_f   ->isChecked() ) checked++;
-   if ( ck_sel_ff0 ->isChecked() ) checked++;
-   return checked;
-}
-
-void US_ConstraintsEdit::setInvalid( void )
-{
 }
 
 void US_ConstraintsEdit::co_sed( int new_state )
@@ -640,7 +571,7 @@ void US_ConstraintsEdit::co_sed( int new_state )
    {
       int row = lw_comps->currentRow();
 
-      if ( model.coSedSolute != -1 )
+      if ( cmodel.coSedSolute != -1 )
       {
          int response = QMessageBox::question( this,
             tr( "Change co-sedimenting solute?" ),
@@ -657,86 +588,10 @@ void US_ConstraintsEdit::co_sed( int new_state )
              return;
          }
       }
-      model.coSedSolute = row;
+      cmodel.coSedSolute = row;
    }
    else
-      model.coSedSolute = -1;
-}
-
-bool US_ConstraintsEdit::keep_standard( void )
-{
-
-   int response = QMessageBox::question( this,
-         tr( "Changing Standard Value" ),
-         tr( "You are changing a value that does not correspond\n" 
-             "with a saved analyte.\n\n"
-             "Continue?" ),
-         QMessageBox::Yes, QMessageBox::No );
-
-   if ( response == QMessageBox::Yes )
-   {
-      //le_wavelength->clear();
-      analyte.extinction  .clear();
-      analyte.refraction  .clear();
-      analyte.fluorescence.clear();
-      return false;
-   }
-
-   return true;
-}
-
-void US_ConstraintsEdit::calculate( void )
-{
-   int    row  = lw_comps->currentRow();
-
-   if ( inUpdate  ||  row < 0 )
-      return;
-
-   US_Model::SimulationComponent* sc = &model.components[ row ];
-
-   checkbox();
-
-   // First do some sanity checking
-   double vbar = le_val_vbar->text().toDouble();
-
-   if ( row < 0  ||  vbar <= 0.0 )
-      return;
-
-   // Exactly two checkboxes must be set
-   if ( countChecks() < 2 )
-   {
-      ck_sel_mw  ->setEnabled( true );
-      ck_sel_ff0 ->setEnabled( true );
-      ck_sel_f   ->setEnabled( true );
-      ck_sel_s   ->setEnabled( true );
-      ck_sel_D   ->setEnabled( true );
-      return;
-   }
-
-   // disable all check boxes except for the two set
-   ck_sel_mw  ->setEnabled( ck_sel_mw  ->isChecked() );
-   ck_sel_ff0 ->setEnabled( ck_sel_ff0 ->isChecked() );
-   ck_sel_f   ->setEnabled( ck_sel_f   ->isChecked() );
-   ck_sel_s   ->setEnabled( ck_sel_s   ->isChecked() );
-   ck_sel_D   ->setEnabled( ck_sel_D   ->isChecked() );
-   
-   // set values for checked boxes; clear others
-   sc->mw   = ck_sel_mw  ->isChecked() ? le_val_mw ->text().toDouble() :
-                         ( chgStoi ? sc->mw : 0.0 );
-   sc->f_f0 = ck_sel_ff0 ->isChecked() ? le_val_ff0->text().toDouble() : 0.0;
-   sc->f    = ck_sel_f   ->isChecked() ? le_val_f  ->text().toDouble() : 0.0;
-   sc->s    = ck_sel_s   ->isChecked() ? le_val_s  ->text().toDouble() : 0.0;
-   sc->D    = ck_sel_D   ->isChecked() ? le_val_D  ->text().toDouble() : 0.0;
-
-   // re-calculate coefficients based on the two that are set
-   US_Model::calc_coefficients( model.components[ row ] );
-
-   // fill in text boxes with given and calculated coefficients
-   le_val_mw ->setText( QString::number( sc->mw  , 'e', 3 ) );
-   le_val_ff0->setText( QString::number( sc->f_f0, 'e', 3 ) );
-   le_val_s  ->setText( QString::number( sc->s   , 'e', 4 ) );
-   le_val_D  ->setText( QString::number( sc->D   , 'e', 4 ) );
-   le_val_f  ->setText( QString::number( sc->f   , 'e', 4 ) );
+      cmodel.coSedSolute = -1;
 }
 
 void US_ConstraintsEdit::source_changed( bool db )
@@ -756,30 +611,35 @@ void US_ConstraintsEdit::check_mw  ( bool checked )
 DbgLv(1) << "cnG:check_mw   checked" << checked;
    ck_flt_mw  ->setEnabled( checked );
    ck_log_mw  ->setEnabled( checked );
+   check_selects();
 }
 
 void US_ConstraintsEdit::check_ff0 ( bool checked )
 {
 DbgLv(1) << "cnG:check_ff0  checked" << checked;
    ck_flt_ff0 ->setEnabled( checked );
+   check_selects();
 }
 
 void US_ConstraintsEdit::check_s   ( bool checked )
 {
 DbgLv(1) << "cnG:check_s    checked" << checked;
    ck_flt_s   ->setEnabled( checked );
+   check_selects();
 }
 
 void US_ConstraintsEdit::check_D   ( bool checked )
 {
 DbgLv(1) << "cnG:check_D    checked" << checked;
    ck_flt_D   ->setEnabled( checked );
+   check_selects();
 }
 
 void US_ConstraintsEdit::check_f   ( bool checked )
 {
 DbgLv(1) << "cnG:check_f    checked" << checked;
    ck_flt_f   ->setEnabled( checked );
+   check_selects();
 }
 
 void US_ConstraintsEdit::float_mw  ( bool floats )
@@ -849,8 +709,6 @@ void US_ConstraintsEdit::comps_connect( bool c_on )
 {
    if ( c_on )
    {  // Turn connections on
-      connect( ck_sel_vbar,    SIGNAL( toggled   ( bool ) ), 
-                               SLOT  ( check_vbar( bool ) ) );
       connect( ck_flt_vbar,    SIGNAL( toggled   ( bool ) ), 
                                SLOT  ( float_vbar( bool ) ) );
       connect( ck_sel_mw,      SIGNAL( toggled   ( bool ) ), 
@@ -880,7 +738,6 @@ void US_ConstraintsEdit::comps_connect( bool c_on )
    }
    else
    {  // Turn connections off
-      ck_sel_vbar->disconnect();
       ck_flt_vbar->disconnect();
       ck_sel_mw  ->disconnect();
       ck_flt_mw  ->disconnect();
@@ -893,7 +750,6 @@ void US_ConstraintsEdit::comps_connect( bool c_on )
       ck_flt_D   ->disconnect();
       ck_sel_f   ->disconnect();
       ck_flt_f   ->disconnect();
-      ck_sel_conc->disconnect();
       ck_flt_conc->disconnect();
    }
 }
@@ -936,12 +792,12 @@ int US_ConstraintsEdit::count_checks()
 void US_ConstraintsEdit::component_select( int srow )
 {
 DbgLv(1) << "cnG: component_select  row" << srow << crow;
-   const QString notapl = tr( "n/a" );
+//   const QString notapl = tr( "n/a" );
    QVector< US_dmGA_Constraints::Constraint > cnsv;
 
    if ( srow < 0 )  return;
 
-   if ( srow != crow  &&  crow >= 0 )
+   if (  crow >= 0 )
    {  // Save settings from previous component screen
       save_comp_settings( crow, cnsv );
 
@@ -949,6 +805,8 @@ DbgLv(1) << "cnG:   update_constraints call";
       constraints.update_constraints( cnsv );
 DbgLv(1) << "cnG:   update_constraints  rtn";
    }
+
+   if ( srow == crow )  return;
 
    // Get constraints for new component
    crow     = srow;
@@ -958,12 +816,17 @@ DbgLv(1) << "cnG:   comp_constraints  rtn";
    //QListWidgetItem* item = lw_comps->item( crow );
 
    // Initialize component attribute GUI elements
-   ck_sel_vbar ->setChecked( false );
-   ck_sel_mw   ->setChecked( false );
-   ck_sel_ff0  ->setChecked( false );
-   ck_sel_s    ->setChecked( false );
-   ck_sel_D    ->setChecked( false );
-   ck_sel_f    ->setChecked( false );
+   ck_sel_vbar->setChecked( false );
+   ck_sel_mw  ->setChecked( false );
+   ck_sel_ff0 ->setChecked( false );
+   ck_sel_s   ->setChecked( false );
+   ck_sel_D   ->setChecked( false );
+   ck_sel_f   ->setChecked( false );
+   ck_sel_mw  ->setEnabled( false );
+   ck_sel_ff0 ->setEnabled( false );
+   ck_sel_s   ->setEnabled( false );
+   ck_sel_D   ->setEnabled( false );
+   ck_sel_f   ->setEnabled( false );
    us_setReadOnly( le_val_vbar, true );
    us_setReadOnly( le_min_vbar, true );
    us_setReadOnly( le_max_vbar, true );
@@ -985,13 +848,14 @@ DbgLv(1) << "cnG:   comp_constraints  rtn";
    us_setReadOnly( le_val_conc, true );
    us_setReadOnly( le_min_conc, true );
    us_setReadOnly( le_max_conc, true );
-   ck_flt_vbar->setEnabled( false );
+   ck_flt_vbar->setEnabled( true  );
    ck_flt_mw  ->setEnabled( false );
    ck_flt_ff0 ->setEnabled( false );
    ck_flt_s   ->setEnabled( false );
    ck_flt_D   ->setEnabled( false );
    ck_flt_f   ->setEnabled( false );
-   ck_flt_conc->setEnabled( false );
+   ck_flt_conc->setEnabled( true  );
+   comps_connect( false );
 
    // Populate component attribute values
    for ( int ii = 0; ii < cnsv.size(); ii++ )
@@ -1004,48 +868,63 @@ DbgLv(1) << "cnG:cmp_sel: ii atype" << ii << cnsv[ii].atype;
          ck_sel_vbar->setChecked( true );
          check_value( cnsv[ ii ], le_val_vbar, le_min_vbar, le_max_vbar );
          ck_flt_vbar->setChecked( floats );
+         ck_flt_vbar->setEnabled( true   );
       }
       if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_MW )
       {
          ck_sel_mw  ->setChecked( true );
+         ck_sel_mw  ->setEnabled( true   );
          check_value( cnsv[ ii ], le_val_mw, le_min_mw, le_max_mw );
          ck_flt_mw  ->setChecked( floats );
          ck_log_mw  ->setChecked( cnsv[ ii ].logscl );
+         ck_flt_mw  ->setEnabled( true   );
+         ck_log_mw  ->setEnabled( true   );
       }
       if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_FF0  )
       {
          ck_sel_ff0 ->setChecked( true );
+         ck_sel_ff0 ->setEnabled( true   );
          check_value( cnsv[ ii ], le_val_ff0, le_min_ff0, le_max_ff0 );
          ck_flt_ff0 ->setChecked( floats );
+         ck_flt_ff0 ->setEnabled( true   );
       }
       if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_S    )
       {
          ck_sel_s   ->setChecked( true );
+         ck_sel_s   ->setEnabled( true   );
          check_value( cnsv[ ii ], le_val_s, le_min_s, le_max_s );
          ck_flt_s   ->setChecked( floats );
+         ck_flt_s   ->setEnabled( true   );
       }
       if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_D    )
       {
          ck_sel_D   ->setChecked( true );
+         ck_sel_D   ->setEnabled( true   );
          check_value( cnsv[ ii ], le_val_D, le_min_D, le_max_D );
-         ck_flt_D ->setChecked( floats );
+         ck_flt_D   ->setChecked( floats );
+         ck_flt_D   ->setEnabled( true   );
       }
       if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_F    )
       {
          ck_sel_f   ->setChecked( true );
+         ck_sel_f   ->setEnabled( true   );
          check_value( cnsv[ ii ], le_val_f, le_min_f, le_max_f );
          ck_flt_f   ->setChecked( floats );
+         ck_flt_f   ->setEnabled( true   );
       }
       if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_CONC )
       {
          check_value( cnsv[ ii ], le_val_conc, le_min_conc, le_max_conc );
          ck_flt_conc->setChecked( floats );
+         ck_flt_conc->setEnabled( true   );
       }
       if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_EXT  )
       {
          le_extinction->setText( QString::number( cnsv[ ii ].low  ) );
       }
    }
+
+   comps_connect( true );
 }
 
 // Slot to populate association attribute values after association change
@@ -1053,7 +932,7 @@ void US_ConstraintsEdit::association_select( int srow )
 {
 DbgLv(1) << "cnG: association_select  row" << srow << arow;
    QVector< US_dmGA_Constraints::Constraint > cnsv;
-   const QString notapl = tr( "n/a" );
+//   const QString notapl = tr( "n/a" );
 
    if ( srow < 0 )  return;
 
@@ -1103,90 +982,100 @@ DbgLv(1) << "cnG: svcs: save_comp_settings  crow" << crow;
    bool floats      = false;
    int  kselect     = 0;
 
+   // Save any s selection
    if ( ck_sel_s   ->isChecked() )
    {
       floats           = ck_flt_s   ->isChecked();
       cnse.atype       = US_dmGA_Constraints::ATYPE_S;
       cnse.low         = le_val_s   ->text().toDouble();
+      cnse.low         = floats ? le_min_s   ->text().toDouble() : cnse.low;
       cnse.high        = floats ? le_max_s   ->text().toDouble() : cnse.low;
       cnse.floats      = floats;
       cnse.logscl      = false;
       cnsv << cnse;
       kselect++;
-DbgLv(1) << "cnG: svcs:  ks" << kselect << "S";
+DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "S";
    }
+   // Save any f/f0 selection
    if ( ck_sel_ff0 ->isChecked() )
    {
       floats           = ck_flt_ff0 ->isChecked();
       cnse.atype       = US_dmGA_Constraints::ATYPE_FF0;
       cnse.low         = le_val_ff0 ->text().toDouble();
+      cnse.low         = floats ? le_min_ff0 ->text().toDouble() : cnse.low;
       cnse.high        = floats ? le_max_ff0 ->text().toDouble() : cnse.low;
       cnse.floats      = floats;
       cnse.logscl      = false;
       cnsv << cnse;
       kselect++;
-DbgLv(1) << "cnG: svcs:  ks" << kselect << "FF0";
+DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "FF0";
    }
+   // Save any mw selection
    if ( ck_sel_mw  ->isChecked() )
    {
       floats           = ck_flt_mw  ->isChecked();
       cnse.atype       = US_dmGA_Constraints::ATYPE_MW;
       cnse.low         = le_val_mw  ->text().toDouble();
+      cnse.low         = floats ? le_min_mw  ->text().toDouble() : cnse.low;
       cnse.high        = floats ? le_max_mw  ->text().toDouble() : cnse.low;
       cnse.floats      = floats;
       cnse.logscl      = ck_log_mw  ->isChecked();
       cnsv << cnse;
       kselect++;
-DbgLv(1) << "cnG: svcs:  ks" << kselect << "MW";
+DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "MW";
    }
+   // Save any D selection
    if ( ck_sel_D   ->isChecked() )
    {
       floats           = ck_flt_D   ->isChecked();
       cnse.atype       = US_dmGA_Constraints::ATYPE_D;
       cnse.low         = le_val_D   ->text().toDouble();
+      cnse.low         = floats ? le_min_D   ->text().toDouble() : cnse.low;
       cnse.high        = floats ? le_max_D   ->text().toDouble() : cnse.low;
       cnse.floats      = floats;
       cnse.logscl      = false;
       cnsv << cnse;
       kselect++;
-DbgLv(1) << "cnG: svcs:  ks" << kselect << "D";
+DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "D";
    }
+   // Save any f selection
    if ( ck_sel_f   ->isChecked() )
    {
       floats           = ck_flt_f   ->isChecked();
       cnse.atype       = US_dmGA_Constraints::ATYPE_F;
       cnse.low         = le_val_f   ->text().toDouble();
+      cnse.low         = floats ? le_min_f   ->text().toDouble() : cnse.low;
       cnse.high        = floats ? le_max_f   ->text().toDouble() : cnse.low;
       cnse.floats      = floats;
       cnse.logscl      = false;
       cnsv << cnse;
       kselect++;
-DbgLv(1) << "cnG: svcs:  ks" << kselect << "F";
+DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "F";
    }
-   if ( ck_sel_vbar->isChecked() )
-   {
-      floats           = ck_flt_vbar->isChecked();
-      cnse.atype       = US_dmGA_Constraints::ATYPE_VBAR;
-      cnse.low         = le_val_vbar->text().toDouble();
-      cnse.high        = floats ? le_max_vbar->text().toDouble() : cnse.low;
-      cnse.floats      = floats;
-      cnse.logscl      = false;
-      cnsv << cnse;
-      kselect++;
-DbgLv(1) << "cnG: svcs:  ks" << kselect << "VBAR";
-   }
-   if ( ck_sel_conc->isChecked() )
-   {
-      floats           = ck_flt_conc->isChecked();
-      cnse.atype       = US_dmGA_Constraints::ATYPE_CONC;
-      cnse.low         = le_val_conc->text().toDouble();
-      cnse.high        = floats ? le_max_conc->text().toDouble() : cnse.low;
-      cnse.floats      = floats;
-      cnse.logscl      = false;
-      cnsv << cnse;
-      kselect++;
-DbgLv(1) << "cnG: svcs:  ks" << kselect << "CONC";
-   }
+
+   // Save the vbar constraints
+   floats           = ck_flt_vbar->isChecked();
+   cnse.atype       = US_dmGA_Constraints::ATYPE_VBAR;
+   cnse.low         = le_val_vbar->text().toDouble();
+   cnse.low         = floats ? le_min_vbar->text().toDouble() : cnse.low;
+   cnse.high        = floats ? le_max_vbar->text().toDouble() : cnse.low;
+   cnse.floats      = floats;
+   cnse.logscl      = false;
+   cnsv << cnse;
+   kselect++;
+DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "VBAR";
+
+   // Save the concentration constraints
+   floats           = ck_flt_conc->isChecked();
+   cnse.atype       = US_dmGA_Constraints::ATYPE_CONC;
+   cnse.low         = le_val_conc->text().toDouble();
+   cnse.low         = floats ? le_min_conc->text().toDouble() : cnse.low;
+   cnse.high        = floats ? le_max_conc->text().toDouble() : cnse.low;
+   cnse.floats      = floats;
+   cnse.logscl      = false;
+   cnsv << cnse;
+   kselect++;
+DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "CONC";
 
    // There should be a total of 4 checked
    if ( kselect != 4 )
@@ -1194,7 +1083,17 @@ DbgLv(1) << "cnG: svcs:  ks" << kselect << "CONC";
       qDebug() << "*ERROR* dmGA_Init: component" << cnse.mcompx + 1
                << "has" << kselect << "attributes selected (SB 4)";
    }
-DbgLv(1) << "cnG: svcs: cnsv size" << cnsv.size();
+
+   // Add one more entry for extinction
+   cnse.atype       = US_dmGA_Constraints::ATYPE_EXT;
+   cnse.low         = le_extinction->text().toDouble();
+   cnse.high        = cnse.low;
+   cnse.floats      = false;
+   cnse.logscl      = false;
+   cnsv << cnse;
+   kselect++;
+DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << cnse.floats << "EXT"
+ << "cnsv size" << cnsv.size();
 }
 
 // Internal function to save current page's association settings
@@ -1208,22 +1107,25 @@ void US_ConstraintsEdit::save_assoc_settings( int arow,
    cnse.low         = le_val_kd  ->text().toDouble();
    cnse.high        = floats ? le_max_kd  ->text().toDouble() : cnse.low;
    cnse.floats      = floats;
-   cnse.logscl      = floats;
+   cnse.logscl      = ck_log_kd  ->isChecked();
    cnsv << cnse;
+DbgLv(1) << "cnG: svas:  ks 1  flt" << floats << "KD";
 
-   floats           = ck_flt_kd  ->isChecked();
+   floats           = ck_flt_koff->isChecked();
    cnse.atype       = US_dmGA_Constraints::ATYPE_KOFF;
    cnse.low         = le_val_koff->text().toDouble();
    cnse.high        = floats ? le_max_koff->text().toDouble() : cnse.low;
    cnse.floats      = floats;
-   cnse.logscl      = floats;
+   cnse.logscl      = ck_log_koff->isChecked();
    cnsv << cnse;
+DbgLv(1) << "cnG: svas:  ks 2  flt" << floats << "KOFF";
 }
 
+// Switch between value and low,high based on float check
 void US_ConstraintsEdit::float_par( bool floats,
       QLineEdit* le_val, QLineEdit* le_min, QLineEdit* le_max )
 {
-   const QString notapl = tr( "n/a" );
+//   const QString notapl = tr( "n/a" );
    bool fixed  = !floats;
 
 DbgLv(1) << "cnG:float_par floats" << floats;
@@ -1257,11 +1159,12 @@ DbgLv(1) << "cnG:float_par vmin vmax" << vmin << vmax;
    us_setReadOnly( le_max, fixed  );
 }
 
+// Set value and low,high states based on constraints entry
 void US_ConstraintsEdit::check_value(
       const US_dmGA_Constraints::Constraint cnse,
       QLineEdit* le_val, QLineEdit* le_min, QLineEdit* le_max  )
 {
-   const QString notapl = tr( "n/a" );
+//   const QString notapl = tr( "n/a" );
    bool floats  = cnse.floats;
    bool fixed   = !floats;
 DbgLv(1) << "cnG:check_value: floats" << floats;
@@ -1273,5 +1176,286 @@ DbgLv(1) << "cnG:check_value: floats" << floats;
    us_setReadOnly( le_val, floats );
    us_setReadOnly( le_min, fixed  );
    us_setReadOnly( le_max, fixed  );
+}
+
+// Set state of selectable component attributes based on overall picture
+void US_ConstraintsEdit::check_selects()
+{
+//   const QString notapl = tr( "n/a" );
+   int kcheck    = count_checks();
+   bool ckd_mw   = ck_sel_mw  ->isChecked();
+   bool ckd_ff0  = ck_sel_ff0 ->isChecked();
+   bool ckd_s    = ck_sel_s   ->isChecked();
+   bool ckd_D    = ck_sel_D   ->isChecked();
+   bool ckd_f    = ck_sel_f   ->isChecked();
+   bool flt_vbar = ck_flt_vbar->isChecked();
+   bool flt_mw   = ck_flt_mw  ->isChecked();
+   bool flt_ff0  = ck_flt_ff0 ->isChecked();
+   bool flt_s    = ck_flt_s   ->isChecked();
+   bool flt_D    = ck_flt_D   ->isChecked();
+   bool flt_f    = ck_flt_f   ->isChecked();
+   bool flt_any  = flt_vbar || flt_mw || flt_ff0 ||  flt_s || flt_D || flt_f;
+
+   // Enable/Disable based on selected state
+   us_setReadOnly( le_val_mw , ( !ckd_mw  ||  flt_mw  ) );
+   us_setReadOnly( le_min_mw , (  ckd_mw  || !flt_mw  ) );
+   us_setReadOnly( le_max_mw , (  ckd_mw  || !flt_mw  ) );
+   us_setReadOnly( le_val_ff0, ( !ckd_ff0 ||  flt_ff0 ) );
+   us_setReadOnly( le_min_ff0, (  ckd_ff0 || !flt_ff0 ) );
+   us_setReadOnly( le_max_ff0, (  ckd_ff0 || !flt_ff0 ) );
+   us_setReadOnly( le_val_s  , ( !ckd_s   ||  flt_s   ) );
+   us_setReadOnly( le_min_s  , (  ckd_s   || !flt_s   ) );
+   us_setReadOnly( le_max_s  , (  ckd_s   || !flt_s   ) );
+   us_setReadOnly( le_val_D  , ( !ckd_D   ||  flt_D   ) );
+   us_setReadOnly( le_min_D  , (  ckd_D   || !flt_D   ) );
+   us_setReadOnly( le_max_D  , (  ckd_D   || !flt_D   ) );
+   us_setReadOnly( le_val_f  , ( !ckd_f   ||  flt_f   ) );
+   us_setReadOnly( le_min_f  , (  ckd_f   || !flt_f   ) );
+   us_setReadOnly( le_max_f  , (  ckd_f   || !flt_f   ) );
+
+   if ( kcheck == 2 )
+   {  // Right number of attributes are selected
+      int ksel      = 0;
+      US_Model::SimulationComponent scva;
+      scva.vbar20   = 0.0;
+      scva.mw       = 0.0;
+      scva.s        = 0.0;
+      scva.D        = 0.0;
+      scva.f        = 0.0;
+      scva.f_f0     = 0.0;
+      US_Model::SimulationComponent scll = scva;
+      US_Model::SimulationComponent schh = scva;
+      US_Model::SimulationComponent sclh = scva;
+      US_Model::SimulationComponent schl = scva;
+DbgLv(1) << "cnG:ck_sels: ff0 B0" << scva.f_f0;
+      // Set the selected component values
+      scva.vbar20   = le_val_vbar->text().toDouble();
+      scll.vbar20   = le_min_vbar->text().toDouble();
+      schl.vbar20   = le_max_vbar->text().toDouble();
+      if ( flt_vbar )
+      {
+         scva.vbar20   = ( scll.vbar20 + schh.vbar20 ) * 0.5;
+      }
+      else
+      {
+         scll.vbar20   = scva.vbar20 * 0.9;
+         schh.vbar20   = scva.vbar20 * 1.1;
+      }
+      sclh.vbar20   = scll.vbar20;
+      schh.vbar20   = schl.vbar20;
+DbgLv(1) << "cnG:ck_sels: ff0 B1" << scva.f_f0;
+      if ( ckd_mw  )
+      {
+         scva.mw       = le_val_mw ->text().toDouble();
+         scll.mw       = le_min_mw ->text().toDouble();
+         schh.mw       = le_max_mw ->text().toDouble();
+         if ( flt_mw )
+         {
+            scva.mw       = ( scll.mw + schh.mw ) * 0.5;
+         }
+         else
+         {
+            scll.mw       = scva.mw * 0.9;
+            schh.mw       = scva.mw * 1.1;
+         }
+         sclh.mw       = scll.mw;
+         schl.mw       = schh.mw;
+         ksel++;
+      }
+      if ( ckd_ff0 )
+      {
+         scva.f_f0     = le_val_ff0->text().toDouble();
+         scll.f_f0     = le_min_ff0->text().toDouble();
+         schh.f_f0     = le_max_ff0->text().toDouble();
+         if ( flt_ff0 )
+         {
+            scva.f_f0     = ( scll.f_f0 + schh.f_f0 ) * 0.5;
+         }
+         else
+         {
+            scll.f_f0     = scva.f_f0 * 0.9;
+            schh.f_f0     = scva.f_f0 * 1.1;
+         }
+         sclh.f_f0     = ( ksel == 0 ) ? scll.f_f0 : schh.f_f0;
+         schl.f_f0     = ( ksel == 0 ) ? schh.f_f0 : scll.f_f0;
+         ksel++;
+      }
+DbgLv(1) << "cnG:ck_sels: ff0 B3" << scva.f_f0;
+      if ( ckd_s   )
+      {
+         scva.s        = le_val_s  ->text().toDouble();
+         scll.s        = le_min_s  ->text().toDouble();
+         schh.s        = le_max_s  ->text().toDouble();
+         if ( flt_s )
+         {
+            scva.s        = ( scll.s + schh.s ) * 0.5;
+         }
+         else
+         {
+            scll.s        = scva.s * 0.9;
+            schh.s        = scva.s * 1.1;
+         }
+         sclh.s        = ( ksel == 0 ) ? scll.s    : schh.s   ;
+         schl.s        = ( ksel == 0 ) ? schh.s    : scll.s   ;
+         ksel++;
+      }
+      if ( ckd_D   )
+      {
+         scva.D        = le_val_D  ->text().toDouble();
+         scll.D        = le_min_D  ->text().toDouble();
+         schh.D        = le_max_D  ->text().toDouble();
+         if ( flt_D )
+         {
+            scva.D        = ( scll.D + schh.D ) * 0.5;
+         }
+         else
+         {
+            scll.D        = scva.D * 0.9;
+            schh.D        = scva.D * 1.1;
+         }
+         sclh.D        = ( ksel == 0 ) ? scll.D    : schh.D   ;
+         schl.D        = ( ksel == 0 ) ? schh.D    : scll.D   ;
+         ksel++;
+      }
+DbgLv(1) << "cnG:ck_sels: ff0 B6" << scva.f_f0;
+      if ( ckd_f   )
+      {
+         scva.f        = le_val_f  ->text().toDouble();
+         scll.f        = le_min_f  ->text().toDouble();
+         schh.f        = le_max_f  ->text().toDouble();
+         if ( flt_f  )
+         {
+            scva.f        = ( scll.f + schh.f ) * 0.5;
+         }
+         else
+         {
+            scll.f        = scva.f * 0.9;
+            schh.f        = scva.f * 1.1;
+         }
+         sclh.f        = ( ksel == 0 ) ? scll.f    : schh.f   ;
+         schl.f        = ( ksel == 0 ) ? schh.f    : scll.f   ;
+         ksel++;
+      }
+
+      // Compute unselected values
+DbgLv(1) << "cnG:ck_sels: ff0 BEF" << scva.f_f0 << scll.f_f0 << schh.f_f0
+ << sclh.f_f0 << schl.f_f0;
+      US_Model::calc_coefficients( scva );
+      US_Model::calc_coefficients( scll );
+      US_Model::calc_coefficients( schh );
+      US_Model::calc_coefficients( sclh );
+      US_Model::calc_coefficients( schl );
+DbgLv(1) << "cnG:ck_sels: ff0 AFT" << scva.f_f0 << scll.f_f0 << schh.f_f0
+ << sclh.f_f0 << schl.f_f0;
+
+      // Fill unselected attribute value fields
+      comps_connect( false );
+      if ( !ckd_mw  )
+      {
+         double vmin   = qMin( scll.mw, sclh.mw );
+         double vmax   = qMax( scll.mw, sclh.mw );
+         vmin          = qMin( vmin, qMin( schh.mw, schl.mw ) );
+         vmax          = qMax( vmax, qMax( schh.mw, schl.mw ) );
+         le_val_mw ->setText( QString::number( scva.mw ) );
+         if ( flt_any )
+         {
+            le_min_mw ->setText( QString::number( vmin ) );
+            le_max_mw ->setText( QString::number( vmax ) );
+         }
+         else
+         {
+            le_min_mw ->setText( notapl );
+            le_max_mw ->setText( notapl );
+         }
+      }
+      if ( !ckd_ff0 )
+      {
+         double vmin   = qMin( scll.f_f0, sclh.f_f0 );
+         double vmax   = qMax( scll.f_f0, sclh.f_f0 );
+         vmin          = qMin( vmin, qMin( schh.f_f0, schl.f_f0 ) );
+         vmax          = qMax( vmax, qMax( schh.f_f0, schl.f_f0 ) );
+         le_val_ff0->setText( QString::number( scva.f_f0 ) );
+         if ( flt_any )
+         {
+            le_min_ff0->setText( QString::number( vmin ) );
+            le_max_ff0->setText( QString::number( vmax ) );
+         }
+         else
+         {
+            le_min_ff0->setText( notapl );
+            le_max_ff0->setText( notapl );
+         }
+      }
+      if ( !ckd_s   )
+      {
+         double vmin   = qMin( scll.s, sclh.s );
+         double vmax   = qMax( scll.s, sclh.s );
+         vmin          = qMin( vmin, qMin( schh.s, schl.s ) );
+         vmax          = qMax( vmax, qMax( schh.s, schl.s ) );
+         le_val_s  ->setText( QString::number( scva.s ) );
+         if ( flt_any )
+         {
+            le_min_s  ->setText( QString::number( vmin ) );
+            le_max_s  ->setText( QString::number( vmax ) );
+         }
+         else
+         {
+            le_min_s  ->setText( notapl );
+            le_max_s  ->setText( notapl );
+         }
+      }
+      if ( !ckd_D   )
+      {
+         double vmin   = qMin( scll.D, sclh.D );
+         double vmax   = qMax( scll.D, sclh.D );
+         vmin          = qMin( vmin, qMin( schh.D, schl.D ) );
+         vmax          = qMax( vmax, qMax( schh.D, schl.D ) );
+         le_val_D  ->setText( QString::number( scva.D ) );
+         if ( flt_any )
+         {
+            le_min_D  ->setText( QString::number( vmin ) );
+            le_max_D  ->setText( QString::number( vmax ) );
+         }
+         else
+         {
+            le_min_D  ->setText( notapl );
+            le_max_D  ->setText( notapl );
+         }
+      }
+      if ( !ckd_f   )
+      {
+         double vmin   = qMin( scll.f, sclh.f );
+         double vmax   = qMax( scll.f, sclh.f );
+         vmin          = qMin( vmin, qMin( schh.f, schl.f ) );
+         vmax          = qMax( vmax, qMax( schh.f, schl.f ) );
+         le_val_f  ->setText( QString::number( scva.f ) );
+         if ( flt_any )
+         {
+            le_min_f  ->setText( QString::number( vmin ) );
+            le_max_f  ->setText( QString::number( vmax ) );
+         }
+         else
+         {
+            le_min_f  ->setText( notapl );
+            le_max_f  ->setText( notapl );
+         }
+      }
+      comps_connect( true  );
+      // Only enable checks to be unchecked
+      ck_sel_mw ->setEnabled( ckd_mw  );
+      ck_sel_ff0->setEnabled( ckd_ff0 );
+      ck_sel_s  ->setEnabled( ckd_s   );
+      ck_sel_D  ->setEnabled( ckd_D   );
+      ck_sel_f  ->setEnabled( ckd_f   );
+   }
+
+   else
+   {  // Attribute newly unselected, enable ability to check a different one
+      ck_sel_mw ->setEnabled( true );
+      ck_sel_ff0->setEnabled( true );
+      ck_sel_s  ->setEnabled( true );
+      ck_sel_D  ->setEnabled( true );
+      ck_sel_f  ->setEnabled( true );
+   }
 }
 
