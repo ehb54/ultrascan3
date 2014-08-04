@@ -192,20 +192,21 @@ void US_DMGA_Init::load_constraints( void )
 DbgLv(1) << "dGA:load_constraints";
 
    bool     loadDB = dkdb_cntrls->db();
-   QString  mfilt  = "=u";
+   QString  mfilt  = "=u Constr";
    QString  mdesc  = "";
-   QString  eGUID  = "1";
-//mfilt="";
+   QString  eGUID  = "";
 //eGUID="00000000-0000-0000-0000-000000000000";
+   le_status->setText( tr( "Loading a list of existing constraints models" ) );
+   qApp->processEvents();
+
    US_ModelLoader mldiag( loadDB, mfilt, cmodel, mdesc, eGUID );
 
    connect( &mldiag, SIGNAL( changed       ( bool ) ),
                      SLOT  ( update_disk_db( bool ) ) );
-   mldiag.exec();
+   if ( mldiag.exec() != QDialog::Accepted )
+      return;
 
    US_ConstraintsEdit cediag( cmodel );
-   le_status->setText( tr( "Loading a list of existing constraints models" ) );
-   qApp->processEvents();
 
    if ( cediag.exec() == QDialog::Accepted )
    {
@@ -241,7 +242,8 @@ DbgLv(1) << "dGA:define_constraints";
    if ( cediag.exec() == QDialog::Accepted )
    {
       le_status->setText( tr( "A constraints model has been defined." ) );
-      constraints.load_constraints( &cmodel );
+      //constraints.load_constraints( &cmodel );
+      //constraints.get_constr_model( &cmodel );
    }
 
    else
@@ -262,6 +264,96 @@ DbgLv(1) << "dGA:save_model";
 void US_DMGA_Init::save_constraints( void )
 {
 DbgLv(1) << "dGA:save_constraints";
+   QString now       = QDateTime::currentDateTime()
+                       .toUTC().toString( "yyyyMMdd-hhmm" );
+   QString ftype     = QString( "-DMGA_Constraints" );
+   QString suffix    = "";
+   QString fext      = ".model";
+   QString cmfdesc   = now + ftype + suffix + fext;
+   QString modelPath;
+   US_Model::model_path( modelPath );
+   QString modelGuid = US_Util::new_guid();
+
+   QString msg1         = tr( "A Discrete Model Genetic Algorithm Constraints"
+                              " model has been created. It's description is:" )
+      + "<br/><b>" + cmfdesc + "</b>.<br/><br/"
+      + tr( "Click:<br/><br/>"
+            "  <b>OK</b>     to output the model as is;<br/>"
+            "  <b>Edit</b>   to append custom test to the name;<br/>"
+            "  <b>Cancel</b> to abort the model save.<br/>" );
+
+   QMessageBox mbox;
+   mbox.setWindowTitle( tr( "Save Constraints Model" ) );
+   mbox.setText       ( msg1 );
+   QPushButton *pb_ok   = mbox.addButton( tr( "OK" ),
+         QMessageBox::YesRole );
+   QPushButton *pb_edit = mbox.addButton( tr( "Edit" ),
+         QMessageBox::AcceptRole );
+   QPushButton *pb_canc = mbox.addButton( tr( "Cancel" ),
+         QMessageBox::RejectRole );
+   mbox.setEscapeButton ( pb_canc );
+   mbox.setDefaultButton( pb_ok   );
+
+   mbox.exec();
+
+   if ( mbox.clickedButton() == pb_canc )  return;
+   if ( mbox.clickedButton() == pb_edit )
+   {  // Open another dialog to get a custom name prefix
+      bool   ok;
+      QString msg2      = tr( "Enter optional suffix text to the"
+                              " model description.<br/> Use alphumeric"
+                              " characters, underscores, or hyphens<br/>"
+                              " (no spaces).  Enter 1 to 20 characters." );
+      suffix            = QInputDialog::getText( this,
+            tr( "Model Description Suffix" ),
+            msg2,
+            QLineEdit::Normal,
+            suffix,
+            &ok );
+
+      if ( !ok )  return;
+
+      suffix.remove( QRegExp( "[^\\w\\d_-]" ) );
+
+      if ( suffix.length() > 20 )  suffix = suffix.left( 20 );
+      cmfdesc           = now + ftype + suffix + fext;
+   }
+
+   // Output the constraints model
+   cmodel.description   = cmfdesc;
+   int code;
+
+   if ( dkdb_cntrls->db() )
+   {
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+
+      code           = cmodel.write( &db );
+   }
+   else
+   {
+      bool newFile;
+      QString fnameo = US_Model::get_filename( modelPath, modelGuid, newFile );
+      code           = cmodel.write( fnameo );
+   }
+
+   QString mtitle    = tr( "Constraints Model Saving ..." );
+
+   if ( code == US_DB2::OK )
+   {
+      QString destination = dkdb_cntrls->db() ?
+                            tr( "local disk and database." ) :
+                            tr( "local disk." );
+      QMessageBox::information( this, mtitle,
+            tr( "The file \"" ) + cmodel.description
+          + tr( "\"\n was successfully saved to " ) + destination );
+   }
+   else
+   {
+      QMessageBox::warning( this, mtitle,
+            tr( "Writing the file \"" ) + cmodel.description
+          + tr( "\"\n resulted in error code %1 ." ).arg( code ) );
+   }
 }
 
 // Slot to handle a dialog change in the disk/db selection

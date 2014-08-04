@@ -34,7 +34,7 @@ class US_ConstraintsEdit : public US_WidgetsDialog
 
    private:
       // Passed parameters
-      US_Model   model;
+      US_Model&  cmodel;
 
       US_Help    showhelp;
 
@@ -131,37 +131,29 @@ class US_ConstraintsEdit : public US_WidgetsDialog
 
       QwtCounter*  ct_oligomer;
 
-      void setInvalid    ( void );
-      int  countChecks   ( void );
-      void enable        ( QLineEdit*, bool, const QPalette& );
-      void clear_guid    ( void );
-      void save_changes  ( int );
-      void checkbox      ( void );
-      bool keep_standard ( void );
 
 	private slots:
-      void float_vbar( bool );
       void check_mw  ( bool );
-      void float_mw  ( bool );
-      void logsc_mw  ( bool );
       void check_ff0 ( bool );
-      void float_ff0 ( bool );
       void check_s   ( bool );
-      void float_s   ( bool );
       void check_D   ( bool );
-      void float_D   ( bool );
       void check_f   ( bool );
+      void float_vbar( bool );
+      void float_mw  ( bool );
+      void float_ff0 ( bool );
+      void float_s   ( bool );
+      void float_D   ( bool );
       void float_f   ( bool );
       void float_conc( bool );
       void float_kd  ( bool );
-      void logsc_kd  ( bool );
       void float_koff( bool );
+      void logsc_mw  ( bool );
+      void logsc_kd  ( bool );
       void logsc_koff( bool );
-      void comps_connect   ( bool );
-      void assocs_connect  ( bool );
-      int  count_checks    ( void );
-      void calculate     ( void );
-      void calculate     ( bool ) { calculate(); };
+      void comps_connect ( bool );
+      void assocs_connect( bool );
+      int  count_checks  ( void );
+      void check_selects ( void );
       void acceptProp    ( void );
       void load_c0       ( void );
       void co_sed        ( int );
@@ -177,7 +169,6 @@ class US_ConstraintsEdit : public US_WidgetsDialog
       void float_par( bool, QLineEdit*, QLineEdit*, QLineEdit* );
       void check_value( const US_dmGA_Constraints::Constraint,
                         QLineEdit*, QLineEdit*, QLineEdit* );
-      void edit_vbar     ( void );
       void help( void ){ showhelp.show_help( "dga_init_constr.html" ); };
 };
 #endif

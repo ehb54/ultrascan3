@@ -42,6 +42,7 @@ US_dmGA_Constraints::~US_dmGA_Constraints()
 void US_dmGA_Constraints::load_base_model( US_Model* bmodelP )
 {
    bmodel         = *bmodelP;
+   cmodel         = bmodel;
 
    constraints_from_base();    // Constraints from base model
    model_from_constraints();   // Constraints model from constraints
@@ -66,7 +67,7 @@ int US_dmGA_Constraints::update_constraints( QVector< Constraint >& cnsv )
    int mcompx     = cnsv[ 0 ].mcompx; // Initial component index
    int fcx        = -1;               // First update component index
    int ncompc     = 0;                // Count of old comp/assoc constraints
-DbgLv(1) << "upd_cns: mcompx" << mcompx << "nupdc" << nupdc;
+DbgLv(1) << "dgC:upd_cns: mcompx" << mcompx << "nupdc" << nupdc;
 
    if ( cnsv[ 0 ].atype < ATYPE_KD )
    {  // Count old constraints for specified component
@@ -77,7 +78,7 @@ DbgLv(1) << "upd_cns: mcompx" << mcompx << "nupdc" << nupdc;
    {  // Count old constraints for specified association
       ncompc         = count_asso_constraints( mcompx, &fcx, NULL );
    }
-DbgLv(1) << "upd_cns: ncompc" << ncompc;
+DbgLv(1) << "dgC:upd_cns: ncompc" << ncompc << "fcx" << fcx;
 
    // Replace old constraint entries with the updates
    if ( nupdc == ncompc )
@@ -87,6 +88,9 @@ DbgLv(1) << "upd_cns: ncompc" << ncompc;
       // Replace old constraint entries with the updates
       for ( int ii = 0; ii < nupdc; ii++, kk++ )
          attribs[ kk ] = cnsv[ ii ];
+DbgLv(1) << "dgC:upd_cns:   att" << fcx << "flt" << attribs[fcx].floats; 
+DbgLv(1) << "dgC:upd_cns:   att" << fcx+1 << "flt" << attribs[fcx+1].floats; 
+DbgLv(1) << "dgC:upd_cns:   att" << fcx+2 << "flt" << attribs[fcx+2].floats; 
    }
 
    else if ( nupdc < ncompc )
@@ -122,6 +126,7 @@ DbgLv(1) << "upd_cns: ncompc" << ncompc;
          attribs[ kk ] = cnsv[ ii ];
    }
 
+DbgLv(1) << "dgC:upd_cns: nctot" << nctot;
    return nctot;
 }
 
@@ -130,7 +135,7 @@ void US_dmGA_Constraints::load_constraints( QVector< Constraint >& cnsv )
 {
    attribs        = cnsv;        // Set new constraints vector
 
-DbgLv(1) << "ld_cns: cnsvsz" << cnsv.size();
+DbgLv(1) << "dgC:ld_cns: cnsvsz" << cnsv.size();
    model_from_constraints();     // Build the constraints model
 }
 
@@ -144,7 +149,7 @@ void US_dmGA_Constraints::init_constraints()
 int US_dmGA_Constraints::add_constraint( AttribType atype, int mcompx,
       double low, double high, bool floats, bool logscl )
 {
-DbgLv(1) << "add_cns: atype" << atype;
+DbgLv(1) << "dgC:add_cns: atype" << atype;
    Constraint cns;
    cns.atype      = atype;                    // Attribute type
    cns.mcompx     = mcompx;                   // Component/Assoc index
@@ -155,6 +160,7 @@ DbgLv(1) << "add_cns: atype" << atype;
 
    attribs << cns;                            // Add the constraints entry
  
+DbgLv(1) << "dgC:add_cns:  attrsz" << attribs.size();
    return attribs.size();                     // Return updated vector's count
 }
 
@@ -176,6 +182,10 @@ bool US_dmGA_Constraints::get_base_model( US_Model* bmodelP )
 bool US_dmGA_Constraints::get_constr_model( US_Model* cmodelP )
 {
    bool is_ok     = false;
+
+DbgLv(1) << "dgC:get_cmo:  attrsz" << attribs.size();
+   model_from_constraints();
+DbgLv(1) << "dgC:get_cmo:  rtn";
 
    if ( cmodel.components.size() > 0  &&  cmodelP != NULL )
    {
@@ -212,14 +222,14 @@ bool US_dmGA_Constraints::get_work_model( US_Model* wmodelP )
 int US_dmGA_Constraints::comp_constraints( int compx,
       QVector< Constraint >* cnsvP, int* kfltP )
 {
-DbgLv(1) << "cmp_cns: compx" << compx << "attrsz" << attribs.size();
+DbgLv(1) << "dgC:cmp_cns: compx" << compx << "attrsz" << attribs.size();
    int kattrib    = 0;                        // Count of comp's attributes
    int kfloat     = 0;                        // Count of comp's floats
    QVector< Constraint > cnsv;                // Work constraints vector
 
    for ( int ii = 0; ii < attribs.size(); ii++ )
    {
-DbgLv(1) << "cmp_cns:  ii atype" << ii << attribs[ii].atype;
+DbgLv(1) << "dgC:cmp_cns:  ii atype" << ii << attribs[ii].atype;
       if ( attribs[ ii ].atype >= ATYPE_KD )
          break;                               // Done if to associations
 
@@ -231,7 +241,7 @@ DbgLv(1) << "cmp_cns:  ii atype" << ii << attribs[ii].atype;
       if ( attribs[ ii ].floats )
          kfloat++;                            // Bump attrib's floats count
    }
-DbgLv(1) << "cmp_cns: ka kf cnssz" << kattrib << kfloat << cnsv.size();
+DbgLv(1) << "dgC:cmp_cns: ka kf cnssz" << kattrib << kfloat << cnsv.size();
 
    if ( cnsvP != NULL )
       *cnsvP         = cnsv;                  // Return constraints vector
@@ -249,6 +259,7 @@ int US_dmGA_Constraints::assoc_constraints( int assox,
    int kattrib    = 0;                        // Count of assoc's attributes
    int kfloat     = 0;                        // Count of assoc's floats
    QVector< Constraint > cnsv;                // Work constraints vector
+DbgLv(1) << "dgC:ass_cns: assox" << assox << "attrsz" << attribs.size();
 
    for ( int ii = 0; ii < attribs.size(); ii++ )
    {
@@ -317,6 +328,7 @@ double US_dmGA_Constraints::fetch_attrib( US_Model::SimulationComponent& sc,
    else if ( atype == ATYPE_EXT  )
       xval        = sc.extinction;
 
+DbgLv(1) << "dgC:f_att(c): atype xval" << atype << xval;
    return xval;
 }
 
@@ -331,6 +343,7 @@ double US_dmGA_Constraints::fetch_attrib( US_Model::Association& as,
    else if ( atype == ATYPE_KOFF )
       xval        = as.k_off;
 
+DbgLv(1) << "dgC:f_att(a): atype xval" << atype << xval;
    return xval;
 }
 
@@ -386,22 +399,22 @@ void US_dmGA_Constraints::constraints_from_model()
    double  ylow   = 0.0;
    double  zlow   = 0.0;
    double  clow   = 0.0;
-DbgLv(1) << "cnsfrmo: mdl cmp size" << cmodel.components.size();
+DbgLv(1) << "dgC:cnsfrmo: mdl cmp size" << cmodel.components.size();
 
    for ( int ii = 0; ii < cmodel.components.size(); ii++ )
    {  // Scan constraints model components (solutes)
       pcname         = cname;
       US_Model::SimulationComponent* sc  = &cmodel.components[ ii ];
-      // Extract type flag from first 4 characters of analyte name
-      // For example, "000V" for all fixed;
-      //              "0Y0L" for Y low;
-      //              "0Y0H" for Y high;
-      //              "XY0L" for X,Y low;
-      //              "XY0H" for X,Y high;
-      //              "X0zH" for X,Z high, with Z on log scale;
-      QString tflag  = QString( sc->name ).left( 4 );
+      // Extract type flag from first 5 characters of analyte name
+      // For example, "000V_" for all fixed;
+      //              "0Y0L_" for Y low;
+      //              "0Y0H_" for Y high;
+      //              "XY0L_" for X,Y low;
+      //              "XY0H_" for X,Y high;
+      //              "X0zH_" for X,Z high, with Z on log scale;
+      QString tflag  = QString( sc->name ).left( 5 );
       // Extract base analyte name
-      cname          = QString( sc->name ).mid( 4 );
+      cname          = QString( sc->name ).mid( 5 );
       // Get component attribute values (non-zero are the selected ones)
       double sval    = sc->s;
       double kval    = sc->f_f0;
@@ -409,12 +422,13 @@ DbgLv(1) << "cnsfrmo: mdl cmp size" << cmodel.components.size();
       double dval    = sc->D;
       double fval    = sc->f;
       double vval    = sc->vbar20;
-DbgLv(1) << "cnsfrmo:  ii" << ii << "s k w d f v" << sval << kval << wval
+DbgLv(1) << "dgC:cnsfrmo:  ii" << ii << "s k w d f v" << sval << kval << wval
    << dval << fval << vval;
       double xval    = 0.0;
       double yval    = 0.0;
       double zval    = 0.0;
       double cval    = sc->signal_concentration;
+      double eval    = sc->extinction;
 
       // Get X type and value
       if ( sval != 0.0 )
@@ -518,6 +532,10 @@ DbgLv(1) << "cnsfrmo:  ii" << ii << "s k w d f v" << sval << kval << wval
          attr.low       = cval;
          attr.high      = attr.low;
          attribs << attr;             // Save concentration constraint
+         attr.atype     = ATYPE_EXT;
+         attr.low       = eval;
+         attr.high      = attr.low;
+         attribs << attr;             // Save extinction constraint
       }  // END: all fixed
 
       else
@@ -671,8 +689,7 @@ DbgLv(1) << "cnsfrmo:  ii" << ii << "s k w d f v" << sval << kval << wval
          attribs << attr;             // Save k_Off attribute constraint
 
          // Bump total number of float attributes when appropriate
-         nfloat        += ( flt_d ? 1 : 0 );
-         nfloat        += ( flt_o ? 1 : 0 );
+         nfloat        += ( ( flt_d ? 1 : 0 ) + ( flt_o ? 1 : 0 ) );
       } // END: 1 or 2 floating
 
    } // END: associations loop
@@ -682,7 +699,7 @@ DbgLv(1) << "cnsfrmo:  ii" << ii << "s k w d f v" << sval << kval << wval
 //  from the vector of constraints
 void US_dmGA_Constraints::model_from_constraints()
 {
-   const QString pname_fix( "000V" );
+   const QString pname_fix( "000V_" );
    if ( attribs.size() < 1 )
    {
       qDebug() << "*ERROR* Unable to build a constraints model from an"
@@ -694,6 +711,8 @@ void US_dmGA_Constraints::model_from_constraints()
    QList< int > cflts;
    QList< int > andxs;
    QList< int > aflts;
+   cmodel.analysis   = US_Model::DMGA_CONSTR;
+   cmodel.editGUID   = QString( "00000000-0000-0000-0000-000000000000" );
    cmodel.components  .clear();
    cmodel.associations.clear();
    nfloat         = 0;
@@ -713,12 +732,14 @@ void US_dmGA_Constraints::model_from_constraints()
       mcompx         = attribs[ ii ].mcompx;
       bool floats    = attribs[ ii ].floats;
       nfloat        += ( floats ? 1 : 0 );
-DbgLv(1) << "modfrcn:scn:   ii mcompx" << ii << mcompx << "atype" << atype;
+DbgLv(1) << "dgC:modfrcn:scn:   ii" << ii << "  mcompx" << mcompx
+   << "atype" << atype << "floats" << floats;
 
       if ( atype < ATYPE_KD )
       {  // Component attribute
-         nbcomp         = qMax( nbcomp, ( mcompx + 1 ) );
-         ncflt         += ( floats ? 0 : 1 );
+         //nbcomp         = qMax( nbcomp, ( mcompx + 1 ) );
+         nbcomp++;
+         ncflt         += ( floats ? 1 : 0 );
          if ( cndxs.contains( mcompx ) )
          {  // Component previously seen
             if ( floats )
@@ -733,7 +754,8 @@ DbgLv(1) << "modfrcn:scn:   ii mcompx" << ii << mcompx << "atype" << atype;
 
       else
       {  // Association attribute
-         nbassoc        = qMax( nbassoc, ( mcompx + 1 ) );
+         //nbassoc        = qMax( nbassoc, ( mcompx + 1 ) );
+         nbassoc++;
          naflt         += ( floats ? 1 : 0 );
          if ( andxs.contains( mcompx ) )
          {  // Association previously seen
@@ -746,11 +768,13 @@ DbgLv(1) << "modfrcn:scn:   ii mcompx" << ii << mcompx << "atype" << atype;
             aflts << ( floats ? 1 : 0 );
          }
       } // END: association attribute
+DbgLv(1) << "dgC:modfrcn:scn:    ii nbc nba" << ii << nbcomp << nbassoc;
    } // END: constraints scan loop
 
    nccomp         = nbcomp  + ncflt;
    ncassoc        = nbassoc * 2;
-DbgLv(1) << "modfrcn: ncc nca" << nccomp << ncassoc;
+DbgLv(1) << "dgC:modfrcn: ncc nca" << nccomp << ncassoc << "nbc ncf"
+   << nbcomp << ncflt << "nba" << nbassoc << "nf" << nfloat;
    mcompx         = attribs[ 0 ].mcompx;
    int kfloat     = 0;
    int kcompo     = 0;
@@ -779,8 +803,8 @@ DbgLv(1) << "modfrcn: ncc nca" << nccomp << ncassoc;
       double xhigh   = attribs[ ii ].high;
       bool floats    = attribs[ ii ].floats;
       bool logscl    = attribs[ ii ].logscl;
-DbgLv(1) << "modfrcn:cre:   ii" << ii << "mcompx pmcomx" << mcompx << pmcomx
-   << "atype" << atype;
+DbgLv(1) << "dgC:modfrcn:cre:   ii" << ii << "mcx pmcx" << mcompx << pmcomx
+   << "typ" << atype << "flt" << floats << "lo,hi" << xlow << xhigh;
 
       if ( mcompx != pmcomx )
       {  // Initialize component or association for new base component
@@ -790,17 +814,19 @@ DbgLv(1) << "modfrcn:cre:   ii" << ii << "mcompx pmcomx" << mcompx << pmcomx
             {  // If no floats in component, just output one record
                sc1.name       = pname + QString( sc1.name );
                cmodel.components << sc1;
-DbgLv(1) << "modfrcn:cre:    ii" << ii << "sc1.mw" << sc1.mw;
+DbgLv(1) << "dgC:modfrcn:cre:    ii" << ii << "sc1.name" << sc1.name;
             }
 
             else
             {  // If components had any floats, output low,high records
-               pname          = QString( pname ).left( 3 ) + "L";
+               pname          = QString( pname ).left( 3 ) + "L_";
                sc1.name       = pname + QString( sc1.name );
                cmodel.components << sc1;
-               pname          = QString( pname ).left( 3 ) + "H";
+               pname          = QString( pname ).left( 3 ) + "H_";
                sc2.name       = pname + QString( sc2.name );
                cmodel.components << sc2;
+DbgLv(1) << "dgC:modfrcn:cre:    ii" << ii << "sc1.name" << sc1.name;
+DbgLv(1) << "dgC:modfrcn:cre:    ii" << ii << "sc2.name" << sc2.name;
             }
 
             // Initialize for new component
@@ -818,11 +844,44 @@ DbgLv(1) << "modfrcn:cre:    ii" << ii << "sc1.mw" << sc1.mw;
 
          else
          {  // New association
+            AttribType ptype = attribs[ ii - 1 ].atype;
+            if ( ptype < ATYPE_KD )
+            {  // Save last component entry
+               if ( kfloat == 0 )
+               {  // If no floats in component, just output one record
+                  sc1.name       = pname + QString( sc1.name );
+                  cmodel.components << sc1;
+DbgLv(1) << "dgC:modfrcn:cre:    ii" << ii << "sc1.name" << sc1.name;
+               }
+
+               else
+               {  // If components had any floats, output low,high records
+                  pname          = QString( pname ).left( 3 ) + "L_";
+                  sc1.name       = pname + QString( sc1.name );
+                  cmodel.components << sc1;
+                  pname          = QString( pname ).left( 3 ) + "H_";
+                  sc2.name       = pname + QString( sc2.name );
+                  cmodel.components << sc2;
+DbgLv(1) << "dgC:modfrcn:cre:    ii" << ii << "sc1.name" << sc1.name;
+DbgLv(1) << "dgC:modfrcn:cre:    ii" << ii << "sc2.name" << sc2.name;
+               }
+            }
+
+            else
+            {  // Save last association entry
+               cmodel.associations << as1;
+               cmodel.associations << as2;
+            }
+
             as1            = bmodel.associations[ mcompx ];
             as2            = as1;
             kassoc         = 0;
          }
       }
+
+      // Accumulate float count
+      kfloat        += ( floats ? 1 : 0 );
+DbgLv(1) << "dgC:modfrcn:cre:      kfloat" << kfloat;
 
       // Handle the current constraint
 
@@ -837,22 +896,28 @@ DbgLv(1) << "modfrcn:cre:    ii" << ii << "sc1.mw" << sc1.mw;
             if ( kcompo == 1 )
             {  // "x**L" or "X**L"
                QString xf    = logscl ? "x" : "X";
-               pname         = xf + "00L";
+               pname         = xf + "00L_";
             }
             else if ( kcompo == 2 )
             {  // "*y*L" or "*Y*L"
                QString yf    = logscl ? "y" : "Y";
-               pname         = QString( pname ).left( 1 ) + yf + "0L";
+               pname         = QString( pname ).left( 1 ) + yf + "0L_";
             }
             else if ( kcompo == 3 )
             {  // "**zL" or "**ZL"
                QString zf    = logscl ? "z" : "Z";
-               pname         = QString( pname ).left( 2 ) + zf + "L";
+               pname         = QString( pname ).left( 2 ) + zf + "L_";
             }
             else
             {  // "***L"
-               pname         = QString( pname ).left( 3 ) + "L";
+               pname         = QString( pname ).left( 3 ) + "L_";
             }
+         }
+
+         else
+         {  // For non-float, duplicate low,high as value
+            store_attrib( sc1, atype, xlow );
+            store_attrib( sc2, atype, xlow );
          }
       }
 
@@ -867,6 +932,8 @@ DbgLv(1) << "modfrcn:cre:    ii" << ii << "sc1.mw" << sc1.mw;
          }
 
          kassoc++;
+DbgLv(1) << "dgC:modfrcn:cre:      kassoc" << kassoc << "cmasz"
+ << cmodel.associations.size();
       }
    } // END: component,association composition loop
 
@@ -881,15 +948,28 @@ DbgLv(1) << "modfrcn:cre:    ii" << ii << "sc1.mw" << sc1.mw;
 
       else
       {  // If components had any floats, output low,high records
-         pname          = QString( pname ).left( 3 ) + "L";
+         pname          = QString( pname ).left( 3 ) + "L_";
          sc1.name       = pname + QString( sc1.name );
          cmodel.components << sc1;
-         pname          = QString( pname ).left( 3 ) + "H";
+         pname          = QString( pname ).left( 3 ) + "H_";
          sc2.name       = pname + QString( sc2.name );
          cmodel.components << sc2;
       }
    }
-DbgLv(1) << "modfrcn:cre:    0 sc1.mw" << cmodel.components[0].mw;
+
+   else
+   {  // Save last association entry
+      cmodel.associations << as1;
+      cmodel.associations << as2;
+   }
+DbgLv(1) << "dgC:modfrcn:cre:    0 sc1.mw" << cmodel.components[0].mw;
+DbgLv(1) << "dgC:modfrcn:cre:    0 sc1.name" << cmodel.components[0].name;
+DbgLv(1) << "dgC:modfrcn:cre:     att0 type flt" << attribs[0].atype
+ << attribs[0].floats;
+DbgLv(1) << "dgC:modfrcn:cre:     att1 type flt" << attribs[1].atype
+ << attribs[1].floats;
+DbgLv(1) << "dgC:modfrcn:cre:     att2 type flt" << attribs[2].atype
+ << attribs[2].floats;
 }
 
 // Internal utility to build an initial constraints from a base model
@@ -902,20 +982,20 @@ void US_dmGA_Constraints::constraints_from_base()
    }
 
    Constraint attr;
+   attr.floats = false;
+   attr.logscl = false;
    attribs.clear();            // Initialize constraints attributes
-   nfloat         = 0;         //  and counts
-   nbcomp         = 0;
-   nccomp         = 0;
-   nbassoc        = 0;
-   ncassoc        = 0;
+   nfloat      = 0;            //  and counts
+   nbcomp      = 0;
+   nccomp      = 0;
+   nbassoc     = 0;
+   ncassoc     = 0;
 
    for ( int ii = 0; ii < bmodel.components.size(); ii++ )
    {  // Scan constraints model components (solutes)
       US_Model::SimulationComponent* sc  = &bmodel.components[ ii ];
       // Get component attribute values (non-zero are the selected ones)
       attr.mcompx = ii;
-      attr.floats = false;
-      attr.logscl = false;
       attr.atype  = ATYPE_S;
       attr.low    = sc->s;
       attr.high   = attr.low;
@@ -953,8 +1033,6 @@ void US_dmGA_Constraints::constraints_from_base()
       US_Model::Association* as1 = &bmodel.associations[ ii ];
 
       attr.mcompx    = ii;
-      attr.floats    = false;
-      attr.logscl    = false;
       attr.atype     = ATYPE_KD;
       attr.low       = as1->k_d;
       attr.high      = attr.low;
@@ -964,15 +1042,15 @@ void US_dmGA_Constraints::constraints_from_base()
       attr.high      = attr.low;
       attribs << attr;             // Save k_Off attribute constraint
    } // END: associations loop
-DbgLv(1) << "cnfrbas: attr2 atype" << attribs[2].atype;
+DbgLv(1) << "dgC:cnfrbas: attr2 atype" << attribs[2].atype;
 }
 
 // Internal utility to count constraints for a given component
-int US_dmGA_Constraints::count_comp_constraints( int mcx, int* fcxP,
+int US_dmGA_Constraints::count_comp_constraints( int mcx, int* faxP,
       int* countfP )
 {
    int kconstr  = 0;              // Count of component constraints
-   int fcompx   = -1;             // First matching component index
+   int fattrx   = -1;             // First matching attribute index
    int kfloat   = 0;              // Count of floats for this component
 
    for ( int ii = 0; ii < attribs.size(); ii++ )
@@ -986,15 +1064,17 @@ int US_dmGA_Constraints::count_comp_constraints( int mcx, int* fcxP,
          continue;                // Skip all non-matching component indecies
 
       kconstr++;                  // Bump constraints count
-      if ( fcompx < 0 )
-         fcompx       = mcompx;   // Save first index of a match
+      if ( fattrx < 0 )
+         fattrx       = ii;       // Save first index of a match
 
       if ( attribs[ ii ].floats )
          kfloat++;                // Bump count if this attribute floats
+DbgLv(1) << "dgC:ccc: ii" << ii << "kconstr" << kconstr << "fattrx kfloat"
+ << fattrx << kfloat;
    }
 
-   if ( fcxP != NULL )
-      *fcxP        = fcompx;      // Return first constraints index of match
+   if ( faxP != NULL )
+      *faxP        = fattrx;      // Return first constraints index of match
 
    if ( countfP != NULL )
       *countfP     = kfloat;      // Return count of floats for this component
@@ -1007,7 +1087,7 @@ int US_dmGA_Constraints::count_asso_constraints( int msx, int* faxP,
       int* countfP )
 {
    int kconstr  = 0;              // Count of association constraints
-   int fassox   = -1;             // First matching association index
+   int fattrx   = -1;             // First matching attribute index
    int kfloat   = 0;              // Count of floats for this association
 
    for ( int ii = 0; ii < attribs.size(); ii++ )
@@ -1021,15 +1101,15 @@ int US_dmGA_Constraints::count_asso_constraints( int msx, int* faxP,
          continue;                // Skip all non-matching association indecies
 
       kconstr++;                  // Bump constraints count
-      if ( fassox < 0 )
-         fassox       = massox;   // Save first index of a match
+      if ( fattrx < 0 )
+         fattrx       = ii;       // Save first index of a match
 
       if ( attribs[ ii ].floats )
          kfloat++;                // Bump count if this attribute floats
    }
 
    if ( faxP != NULL )
-      *faxP        = fassox;      // Return first constraints index of match
+      *faxP        = fattrx;      // Return first constraints index of match
 
    if ( countfP != NULL )
       *countfP     = kfloat;      // Return count of floats for this association

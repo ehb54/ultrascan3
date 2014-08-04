@@ -13,8 +13,8 @@ namespace US_WinData
     
     P_SECOND,       P_DCDT,                // Velocity Menu
     P_VHWE,         P_2DSA,         P_PCSA,
-    P_GAINIT,       P_FEMA,         P_PSEUDO3D,
-    P_GRIDEDIT,     P_RAMP,
+    P_GAINIT,       P_DMGAINIT,     P_FEMA,
+    P_PSEUDO3D,     P_GRIDEDIT,     P_RAMP,
 
     P_EQGLOBFIT,                           // Equilibrium Menu
 
@@ -112,6 +112,11 @@ namespace US_WinData
     { P_GAINIT,  0, 0, "us_ga_init",
       QObject::tr( "Loading Genetic Algorithm Initialize" ),
       QObject::tr( "Genetic Algorithm Initialize Program" )
+    },
+    
+    { P_DMGAINIT, 0, 0, "us_dmga_init",
+      QObject::tr( "Loading Discrete Model GA Initialize" ),
+      QObject::tr( "Discrete Model GA Initialize Program" )
     },
     
     { P_FEMA,    0, 0, "us_fematch",

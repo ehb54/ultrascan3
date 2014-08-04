@@ -79,7 +79,8 @@ void US_MwlRun::load_files( void )
    QStringList rdirs = QDir( resdir ).entryList(
          QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
 qDebug() << "LdDk:  rdirs count" << rdirs.count() << "resdir" << resdir;
-qDebug() << "LdDk:  RawMwl" << isRawMwl << "efilt" << efilt;
+qDebug() << "LdDk:  RawMwl" << isRawMwl << "efilt" << efilt << "rdirscount"
+ << rdirs.count();
    resdir            = resdir + "/";
    QStringList runids;
 
@@ -92,8 +93,8 @@ qDebug() << "LdDk:  RawMwl" << isRawMwl << "efilt" << efilt;
                                                    QDir::Name );
 
       int         nfiles = efiles.count();
-//qDebug() << "LdDk:   ii" << ii << "run" << rdirs[ii] << "count" << nfiles;
-      if ( nfiles < 17 )             // Definitely not MWL
+qDebug() << "LdDk:   ii" << ii << "run" << rdirs[ii] << "count" << nfiles;
+      if ( nfiles < 2 )              // Definitely not MWL
          continue;
 
       if ( ! isRawMwl )

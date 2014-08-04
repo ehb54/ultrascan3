@@ -63,6 +63,7 @@ DbgLv(1) << "MwDa: evers" << evers;
    QStringList chans;
    cells.clear();
    nscan         = -1;
+   int scnmin    = 99999;
    mwrfs.sort();
    nfile         = mwrfs.size();
    le_status->setText( QString( "%1 files from %2 ..." )
@@ -83,13 +84,14 @@ DbgLv(1) << "MwDa: nfile" << nfile;
       if ( !chans.contains( chann ) )  chans << chann;
 
       int     scann   = ascan.toInt();
-      nscan           = qMax( nscan, scann );
+      nscan           = qMax( nscan,  scann );
+      scnmin          = qMin( scnmin, scann );
 
       fnames << fname;
       fpaths << fpath;
    }
 
-   nscan++;
+   nscan       = ( nscan - scnmin ) + 1;
    ncell       = cells.size();
    nchan       = chans.size();
 DbgLv(1) << "MwDa: nscan ncell nchan" << nscan << ncell << nchan;
@@ -175,7 +177,7 @@ DbgLv(1) << "MwDa:   ri_readings CREATED size" << ri_readings.size();
 
       int ccx    = hd.icell * nchan + hd.ichan;
       int tripx  = ccx * nlamb_i;
-      int scnx   = fname.section( ".", -2, -2 ).toInt() * npoint;
+      int scnx   = ( fname.section( ".", -2, -2 ).toInt() - scnmin ) * npoint;
 //DbgLv(1) << "MwDa:  PREPARE rdata ccx tripx scnx" << ccx << tripx << scnx;
 //DbgLv(1) << "MwDa:  PREPARE   icell ichan nchan" << hd.icell << hd.ichan
 // << nchan << "channel" << hd.channel;
@@ -501,7 +503,7 @@ void US_MwlData::read_rdata( QDataStream& ds, QVector< double >& rvs,
 int US_MwlData::set_lambdas( int start, int end, int ccx )
 {
    set_celchnx( ccx );
-qDebug() << "SetLamb  s/e" << start << end;
+DbgLv(1) << "SetLamb  s/e" << start << end;
    if ( ex_wavelns[ curccx ].count() == 0 )
    {  // If out list is empty, build from input
       slambda       = ( start > 0 ) ? start : ri_wavelns[ 0 ];
@@ -518,7 +520,7 @@ qDebug() << "SetLamb  s/e" << start << end;
       {  // Duplicate lambdas from the range of raw lambdas
          ex_wavelns[ curccx ] << ri_wavelns[ wvx++ ];
       }
-qDebug() << "SetLamb  (2)n" << nlambda << wvxs << wvxe << wvx;
+DbgLv(1) << "SetLamb  (2)n" << nlambda << wvxs << wvxe << wvx;
    }
 
    else
@@ -530,14 +532,14 @@ qDebug() << "SetLamb  (2)n" << nlambda << wvxs << wvxe << wvx;
       slambda       = ( start > 0 ) ? start : old_start;
       elambda       = ( end   > 0 ) ? end   : old_end;
       ex_wavelns[ curccx ].clear();
-qDebug() << "SetLamb  (3)n" << nlambda << slambda << elambda << "ccx" << curccx;
+DbgLv(1) << "SetLamb  (3)n" << nlambda << slambda << elambda << "ccx" << curccx;
 
       // Set up export lambdas
       int    wvxs   = wkwaves.indexOf( slambda );
       int    wvxe   = wkwaves.indexOf( elambda );
              wvxe   = ( wvxe < 0 ) ? ( nlambda - 1 ) : wvxe;
       int    wvx    = wvxs;
-qDebug() << "SetLamb   wvxs wvxe" << wvxs << wvxe;
+DbgLv(1) << "SetLamb   wvxs wvxe" << wvxs << wvxe;
 
       if ( slambda < old_start )
       {  // If start is before old list, grab some from the original input
@@ -557,13 +559,13 @@ qDebug() << "SetLamb   wvxs wvxe" << wvxs << wvxe;
          ex_wavelns[ curccx ] << wkwaves[ wvx++ ];
       }
 
-qDebug() << "SetLamb   elambda old_end" << elambda << old_end;
+DbgLv(1) << "SetLamb   elambda old_end" << elambda << old_end;
       if ( elambda > old_end )
       {  // If end is after old list, append some from the original list
          wvxs       = indexOfLambda( old_end ) + 1;
          wvxe       = indexOfLambda( elambda );
          old_end    = ri_wavelns[ wvxs++ ];
-qDebug() << "SetLamb     wvx s,e" << wvxs << wvxe << "old_end" << old_end;
+DbgLv(1) << "SetLamb     wvx s,e" << wvxs << wvxe << "old_end" << old_end;
 
          while ( old_end <= elambda )
          {
@@ -573,14 +575,14 @@ qDebug() << "SetLamb     wvx s,e" << wvxs << wvxe << "old_end" << old_end;
          }
       }
 
-qDebug() << "SetLamb  (4)n" << nlambda << wvxs << wvxe << wvx;
+DbgLv(1) << "SetLamb  (4)n" << nlambda << wvxs << wvxe << wvx;
    }
 
    nlambda       = ex_wavelns[ curccx ].count();
    slambda       = ex_wavelns[ curccx ][ 0 ];
    elambda       = ex_wavelns[ curccx ][ nlambda - 1 ];
    ntriple       = nlambda * ncelchn;
-qDebug() << "SetLamb    s/e/n" << slambda << elambda << nlambda;
+DbgLv(1) << "SetLamb    s/e/n" << slambda << elambda << nlambda;
    return nlambda;
 }
 
@@ -640,7 +642,7 @@ int US_MwlData::build_rawData( QVector< US_DataIO::RawData >& allData )
    s_rpms.clear();
    a_rpms.clear();
    d_rpms.clear();
-qDebug() << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint
+DbgLv(1) << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint
  << "  evers" << evers;
 
    for ( int ii = 0; ii < npoint; ii++ )
@@ -648,7 +650,7 @@ qDebug() << "BldRawD radv radi" << rad_val << rad_inc << "npoint" << npoint
       xout << rad_val;
       rad_val  += rad_inc;
    }
-qDebug() << "BldRawD   xout size ntrip" << xout.size() << npoint << ntrip_i;
+DbgLv(1) << "BldRawD   xout size ntrip" << xout.size() << npoint << ntrip_i;
 
    // Set up the interpolated byte array (all zeroes)
    int    nbytei   = ( npoint + 7 ) / 8;
@@ -660,13 +662,13 @@ qDebug() << "BldRawD   xout size ntrip" << xout.size() << npoint << ntrip_i;
    int    ccx      = 0;
    int    wvx      = 0;
    int    hdx      = 0;
-qDebug() << "BldRawD szs: ccd" << ccdescs.size() << "hdrs" << headers.size()
+DbgLv(1) << "BldRawD szs: ccd" << ccdescs.size() << "hdrs" << headers.size()
  << "rds" << ri_readings.size() << ri_readings[0].size()
  << "wvs" << ri_wavelns.size() << "nli nlo" << nlamb_i << nlambda;
 
    for ( int trx = 0; trx < ntrip_i; trx++ )
    {
-qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
+DbgLv(1) << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
       US_DataIO::RawData rdata;
       QString uuid_str  = US_Util::new_guid();
       US_Util::uuid_parse( uuid_str, (unsigned char*)rdata.rawGUID );
@@ -690,6 +692,7 @@ qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
       double rpm_avg    = 0.0;
       double rpm_stdd   = 0.0;
       rdata.description = ccdescs.at( ccx );
+DbgLv(1) << "BldRawD      hdx" << hdx << "hdsize" << headers.size();
 
       for ( int scx = 0; scx < nscan; scx++ )
       {  // Set scan values
@@ -746,7 +749,7 @@ qDebug() << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
          rpm_sum          += scan.rpm;
 //*DEBUG*
 if(trx==0) {
-qDebug() << "BldRawD      scx" << scx << "jhx" << jhx
+DbgLv(1) << "BldRawD      scx" << scx << "jhx" << jhx
  << "seconds" << scan.seconds << "rpm" << scan.rpm 
  << "speed step" << kspstep << nspstep+1;
 }
@@ -816,12 +819,12 @@ qDebug() << "BldRawD      scx" << scx << "jhx" << jhx
       }
 //*DEBUG*
 if(trx==0) {
- qDebug() << "BldRawD trx=" << trx << "rpm_min rpm_max rpm_avg rpm_set"
+ DbgLv(1) << "BldRawD trx=" << trx << "rpm_min rpm_max rpm_avg rpm_set"
     << rpm_min << rpm_max << rpm_avg << rpm_set << "speed steps" << nspstep;
 }
 //*DEBUG*
 
-qDebug() << "BldRawD     trx" << trx << " saving allData...";
+DbgLv(1) << "BldRawD     trx" << trx << " saving allData...";
       allData << rdata;               // Append triple data to the array
       le_status->setText( tr( "Of %1 raw AUCs, built %2" )
           .arg( ntriple ).arg( trx + 1 ) );
@@ -834,14 +837,14 @@ qDebug() << "BldRawD     trx" << trx << " saving allData...";
          wvx  = 0;
          hdx  = ccx * nscan;
       }
-qDebug() << "BldRawD   ccx wvx hdx" << ccx << wvx << hdx << headers.size();
+DbgLv(1) << "BldRawD   ccx wvx hdx" << ccx << wvx << hdx << headers.size();
    } // END: triple loop
 
    le_status->setText( tr( "All %1 raw AUCs have been build." )
                        .arg( ntriple ) );
    qApp->processEvents();
 
-qDebug() << "BldRawD  DONE ntriple" << ntriple << ntrip_i;
+DbgLv(1) << "BldRawD  DONE ntriple" << ntriple << ntrip_i;
    return ntriple;
 }
 
@@ -961,7 +964,7 @@ void US_MwlData::read_runxml( QDir ddir, QString curdir )
 // Set the current cell/channel index
 int US_MwlData::set_celchnx( int ccx )
 {
-//qDebug() << "SetCCX" << ccx;
+//DbgLv(1) << "SetCCX" << ccx;
    curccx    = qMax( 0, qMin( ccx, ( ncelchn - 1 ) ) );
 
    return curccx;
