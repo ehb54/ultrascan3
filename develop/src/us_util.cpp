@@ -297,6 +297,10 @@ void getFooter(QString *footer)
 
 QString getToken(QString *str, const QString &separator)
 {
+// beginning from the left, look for the separator and 
+// copy the left portion into token (to be returned as
+// QString) and return the remaining string on the right
+// without the separator in *str.
    int pos;
    QString token;
    pos = str->find(separator, 0, false);

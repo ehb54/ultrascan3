@@ -4481,7 +4481,8 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo)
    {
       result += result.length() ? "-" : "";
 
-      if ( asa.calculation )
+      if ( ( asa.calculation && somo ) ||
+           ( grid.enable_asa && !somo ) )
       {
          result += QString("A%1").arg(somo ? asa.threshold : asa.grid_threshold);
       }

@@ -6566,6 +6566,17 @@ QString US_Hydrodyn::default_differences_load_pdb()
       str += QString(base + sub + "Find free SH, change residue coding: %1.\n")
          .arg(pdb_parse.find_sh ? "Selected" : "Not selected");
    }
+   if ( pdb_parse.find_sh != default_pdb_parse.find_sh )
+   {
+      str += QString(base + sub + "Find free SH, change residue coding: %1.\n")
+         .arg(pdb_parse.find_sh ? "Selected" : "Not selected");
+   }
+
+   if ( gparams[ "save_csv_on_load_pdb" ] != default_gparams[ "save_csv_on_load_pdb" ] )
+   {
+      str += QString(base + sub + "Save CSV on load PDB: %1\n")
+         .arg( gparams[ "save_csv_on_load_pdb" ] == "true" ? "Selected" : "Not selected");
+   }
    if ( pdb_parse.missing_residues != default_pdb_parse.missing_residues )
    {
       QString opt = "Unknown state";

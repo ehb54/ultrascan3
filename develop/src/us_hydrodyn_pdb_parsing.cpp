@@ -211,6 +211,7 @@ void US_Hydrodyn_PDB_Parsing::find_sh()
 void US_Hydrodyn_PDB_Parsing::save_csv_on_load()
 {
    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "save_csv_on_load_pdb" ] = cb_save_csv_on_load->isChecked() ? "true" : "false";
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_PDB_Parsing::residue(int val)
