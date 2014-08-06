@@ -167,6 +167,7 @@ class US_UTIL_EXTERN US_dmGA_Constraints
       void constraints_from_model( void );       // Build constraints from model
       void constraints_from_base ( void );       // Build constraints from base
       void model_from_constraints( void );       // Build model from constraints
+      bool base_from_cmodel      ( void );       // Build base from c. model
       int  count_comp_constraints( int, int*, int* );  // Count comp. constraints
       int  count_asso_constraints( int, int*, int* );  // Count assoc. constraints
       bool init_work_model       ( void );       // Build initial work model
