@@ -76,7 +76,7 @@ class US_DMGA_Init : public US_Widgets
       void save_constraints  ( void );
       void update_disk_db    ( bool );
       void new_base_model    ( US_Model );
-      void help( void ){ showhelp.show_help( "dga_init.html" ); };
+      void help( void ){ showhelp.show_help( "dmga_init.html" ); };
 
    protected:
       virtual void timerEvent( QTimerEvent* );

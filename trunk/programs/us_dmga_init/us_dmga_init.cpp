@@ -67,6 +67,8 @@ US_DMGA_Init::US_DMGA_Init() : US_Widgets()
    pb_defconstr           = us_pushbutton( tr( "Define Constraints" ) );
    pb_savemodel           = us_pushbutton( tr( "Save Base Model" ) );
    pb_saveconstr          = us_pushbutton( tr( "Save Constraints" ) );
+   pb_savemodel ->setEnabled( false );
+   pb_saveconstr->setEnabled( false );
 
    // General control
    QLabel* lb_gencntrl    = us_banner(     tr( "General Control" ) );
@@ -96,6 +98,8 @@ US_DMGA_Init::US_DMGA_Init() : US_Widgets()
    main->addWidget( pb_close,       row++,  2, 1, 2 );
 
    // Signals and slots
+   connect( dkdb_cntrls,    SIGNAL( changed       ( bool ) ), 
+                            SLOT  ( update_disk_db( bool ) ) );
    connect( pb_loadmodel,   SIGNAL( clicked           () ), 
                             SLOT  ( load_model        () ) );
    connect( pb_loadconstr,  SIGNAL( clicked           () ), 
@@ -151,6 +155,7 @@ DbgLv(1) << "dGA:load_model";
    {
       le_status->setText( tr( "A base model has been loaded." ) );
       constraints.load_base_model( &bmodel );
+      pb_savemodel->setEnabled( true );
    }
    else
    {
@@ -177,6 +182,7 @@ DbgLv(1) << "dGA:define_model";
    {
       le_status->setText( tr( "A base model has been created or edited." ) );
       constraints.load_base_model( &bmodel );
+      pb_savemodel->setEnabled( true );
    }
    else
    {
@@ -195,7 +201,6 @@ DbgLv(1) << "dGA:load_constraints";
    QString  mfilt  = "=u Constr";
    QString  mdesc  = "";
    QString  eGUID  = "";
-//eGUID="00000000-0000-0000-0000-000000000000";
    le_status->setText( tr( "Loading a list of existing constraints models" ) );
    qApp->processEvents();
 
@@ -206,12 +211,14 @@ DbgLv(1) << "dGA:load_constraints";
    if ( mldiag.exec() != QDialog::Accepted )
       return;
 
+DbgLv(1) << "dGA:load_constraints model comps" << cmodel.components.size();
    US_ConstraintsEdit cediag( cmodel );
 
    if ( cediag.exec() == QDialog::Accepted )
    {
       le_status->setText( tr( "A constraints model has been loaded." ) );
       constraints.load_constraints( &cmodel );
+      pb_saveconstr->setEnabled( true );
    }
 
    else
@@ -227,11 +234,9 @@ void US_DMGA_Init::define_constraints( void )
 {
 DbgLv(1) << "dGA:define_constraints";
    if ( cmodel.components.size() == 0 )
-   {
-      cmodel          = bmodel;
-//      cmodel.analysis = US_Model::DMGA_CONSTR;
-//      for ( int ii = 0; ii < cmodel.components.size(); ii++ )
-//         cmodel.components[ ii ].name = "000V" + cmodel.components[ ii ].name;
+   {  // If no constraints model, point to the base model
+      cmodel           = bmodel;
+      cmodel.modelGUID = US_Util::new_guid();
    }
 
    US_ConstraintsEdit cediag( cmodel );
@@ -242,8 +247,8 @@ DbgLv(1) << "dGA:define_constraints";
    if ( cediag.exec() == QDialog::Accepted )
    {
       le_status->setText( tr( "A constraints model has been defined." ) );
-      //constraints.load_constraints( &cmodel );
-      //constraints.get_constr_model( &cmodel );
+      constraints.load_constraints( &cmodel );
+      pb_saveconstr->setEnabled( true );
    }
 
    else
@@ -258,6 +263,76 @@ DbgLv(1) << "dGA:define_constraints";
 void US_DMGA_Init::save_model( void )
 {
 DbgLv(1) << "dGA:save_model";
+   QString msg1         = tr( "A Base Model has been loaded or created."
+                              " It's description is:" )
+      + "<br/>&nbsp;&nbsp;<b>" + bmodel.description + "</b>.<br/><br/>"
+      + tr( "It may be saved as it is or you may modify the description"
+            " or other attributes by clicking the <b>Cancel</b> button"
+            " here and clicking the <b>Define Base Model</b> in the"
+            " main dialog. The model may also be updated or saved within"
+            " the resulting dialog.<br/><br/>"
+            "&nbsp;&nbsp;Click:<br/>"
+            "<b>OK</b><br/>&nbsp;&nbsp;to output the model as is;<br/>"
+            "<b>Cancel</b><br/>&nbsp;&nbsp;to abort the model save.<br/>" );
+
+   QMessageBox mbox;
+   mbox.setWindowTitle( tr( "Save Current Base Model" ) );
+   mbox.setText       ( msg1 );
+   QPushButton *pb_ok   = mbox.addButton( tr( "OK" ),
+         QMessageBox::YesRole );
+   QPushButton *pb_canc = mbox.addButton( tr( "Cancel" ),
+         QMessageBox::RejectRole );
+   mbox.setEscapeButton ( pb_canc );
+   mbox.setDefaultButton( pb_ok   );
+
+   mbox.exec();
+
+   if ( mbox.clickedButton() == pb_canc )  return;
+
+   // Output the base model
+   int code;
+
+   if ( dkdb_cntrls->db() )
+   {  // Write to DB and local
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+
+      code           = bmodel.write( &db );
+   }
+   else
+   {  // Write to local disk only
+      bool newFile;
+      QString modelPath;
+      US_Model::model_path( modelPath );
+      QString modelGuid   = bmodel.modelGUID;
+
+      if ( modelGuid.isEmpty() )
+      {
+         modelGuid        = US_Util::new_guid();
+         bmodel.modelGUID = modelGuid;
+      }
+
+      QString fnameo = US_Model::get_filename( modelPath, modelGuid, newFile );
+      code           = bmodel.write( fnameo );
+   }
+
+   QString mtitle    = tr( "Base Model Saving ..." );
+
+   if ( code == US_DB2::OK )
+   {
+      QString destination = dkdb_cntrls->db() ?
+                            tr( "local disk and database." ) :
+                            tr( "local disk." );
+      QMessageBox::information( this, mtitle,
+            tr( "The file \"" ) + cmodel.description
+          + tr( "\"\n was successfully saved to " ) + destination );
+   }
+   else
+   {
+      QMessageBox::warning( this, mtitle,
+            tr( "Writing the file \"" ) + cmodel.description
+          + tr( "\"\n resulted in error code %1 ." ).arg( code ) );
+   }
 }
 
 // Save a defined constraints model
@@ -274,12 +349,15 @@ DbgLv(1) << "dGA:save_constraints";
    US_Model::model_path( modelPath );
    QString modelGuid = US_Util::new_guid();
 
+   if ( cmodel.modelGUID  ==  bmodel.modelGUID )
+      cmodel.modelGUID  = modelGuid;
+
    QString msg1         = tr( "A Discrete Model Genetic Algorithm Constraints"
                               " model has been created. It's description is:" )
       + "<br/><b>" + cmfdesc + "</b>.<br/><br/"
       + tr( "Click:<br/><br/>"
             "  <b>OK</b>     to output the model as is;<br/>"
-            "  <b>Edit</b>   to append custom test to the name;<br/>"
+            "  <b>Edit</b>   to append custom text to the name;<br/>"
             "  <b>Cancel</b> to abort the model save.<br/>" );
 
    QMessageBox mbox;
@@ -320,6 +398,7 @@ DbgLv(1) << "dGA:save_constraints";
    }
 
    // Output the constraints model
+   cmodel.analysis      = US_Model::DMGA_CONSTR;
    cmodel.description   = cmfdesc;
    int code;
 
@@ -363,6 +442,10 @@ void US_DMGA_Init::update_disk_db( bool isDB )
       dkdb_cntrls->set_db();
    else
       dkdb_cntrls->set_disk();
+
+   sctm_id          = startTimer( 1000 );
+   le_status->setText( tr( "Scanning models for unassigned edits" ) );
+   qApp->processEvents();
 }
 
 // Slot to handle a model changed in the model editor
@@ -378,7 +461,7 @@ void US_DMGA_Init::timerEvent( QTimerEvent* event )
    int tm_id       = event->timerId();
 DbgLv(1) << "dGA:tmEv: tm_id" << tm_id << sctm_id;
 
-   if ( tm_id != sctm_id )
+   if ( tm_id != sctm_id  )
    {  // If other than scan delay, pass it on to the normal handler
       QObject::timerEvent( event );
       return;
@@ -386,76 +469,130 @@ DbgLv(1) << "dGA:tmEv: tm_id" << tm_id << sctm_id;
 
    // Otherwise, count and display models with unassigned edit
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   QString atypeMan = QString::number( US_Model::MANUAL );
+   QString atypeCgr = QString::number( US_Model::CUSTOMGRID );
+   QString atypeDga = QString::number( US_Model::DMGA_CONSTR );
+DbgLv(1) << "  Atype Man Cgr Dga" << atypeMan << atypeCgr << atypeDga;
    qApp->processEvents();
    QTime       timer;
-   US_Passwd   pw;
-   US_DB2      db( pw.getPasswd() );
    QStringList mdlIDs;
-   QStringList qry;
    QString     invID    = QString::number( US_Settings::us_inv_ID() );
    timer.start();
-   qry << "count_models_by_editID" << invID << uaeditID;
-   int numodel     = db.functionQuery( qry );
+   int numodel     = 0;
    int ndmodel     = 0;
    int nmmodel     = 0;
    int ncmodel     = 0;
    int nlmodel     = 0;
 DbgLv(1) << " Timing(count_models)" << timer.elapsed();
+   if ( dkdb_cntrls->db() )
+   {  // Scan models in the database
+      US_Passwd   pw;
+      US_DB2      db( pw.getPasswd() );
+      QStringList qry;
+      qry << "count_models_by_editID" << invID << uaeditID;
+      numodel         = db.functionQuery( qry );
 
-   if ( numodel > 0 )
-   {
-      qry.clear();
-      qry << "get_model_desc_by_editID" << invID << uaeditID;
-      db.query( qry );
+      if ( numodel > 0 )
+      {  // If there are models unassigned to edits, scan them
+         qry.clear();
+         qry << "get_model_desc_by_editID" << invID << uaeditID;
+         db.query( qry );
 
-      while ( db.next() )
-      {
-         QString mdlID   = db.value( 0 ).toString();
-         QString mdesc   = db.value( 2 ).toString();
-         QString edtGID  = db.value( 5 ).toString();
-         int     edtID   = db.value( 6 ).toString().toInt();
-         if ( !mdesc.contains( "Custom" ) )
+         while ( db.next() )
          {
-            mdlIDs << mdlID;
-            nlmodel++;
-         }
+            QString mdlID   = db.value( 0 ).toString();
+            QString mdesc   = db.value( 2 ).toString();
+            QString edtGID  = db.value( 5 ).toString();
+            int     edtID   = db.value( 6 ).toString().toInt();
+
+            if ( !mdesc.contains( "Custom" ) )
+            {
+               mdlIDs << mdlID;
+               nlmodel++;
+            }
 DbgLv(1) << " mdlID" << mdlID << "mdesc" << mdesc << "editID" << edtID
  << "editGUID" << edtGID;
-      }
+         }
 DbgLv(1) << " Timing(get_model_desc)" << timer.elapsed();
 
-      QString atypeMan = QString::number( US_Model::MANUAL );
-      QString atypeCgr = QString::number( US_Model::CUSTOMGRID );
-      QString atypeDga = QString::number( US_Model::DMGA_CONSTR );
-DbgLv(1) << "  Atype Man Cgr Dga" << atypeMan << atypeCgr << atypeDga;
-
-      for ( int ii = 0; ii < nlmodel; ii++ )
-      {
-         QString mdlID   = mdlIDs[ ii ];
-         qry.clear();
-         qry << "get_model_info" << mdlID;
-         db.query( qry );
-         db.next();
-         QString xmlmdl  = db.value( 2 ).toString();
-         int     jj      = xmlmdl.indexOf( "analysisType=" );
-         QString atype   = xmlmdl.mid( jj, 40 ).section( "\"", 1, 1 );
+         // Scan to parse analysis types
+         for ( int ii = 0; ii < nlmodel; ii++ )
+         {
+            QString mdlID   = mdlIDs[ ii ];
+            qry.clear();
+            qry << "get_model_info" << mdlID;
+            db.query( qry );
+            db.next();
+            QString xmlmdl  = db.value( 2 ).toString();
+            int     jj      = xmlmdl.indexOf( "analysisType=" );
+            QString atype   = xmlmdl.mid( jj, 40 ).section( "\"", 1, 1 );
 DbgLv(1) << "   mdlID" << mdlID << "atype" << atype << "jj" << jj;
 
-         if ( atype == atypeDga )
-            ndmodel++;
-         else if ( atype == atypeCgr )
-            ncmodel++;
-         else if ( atype == atypeMan )
-            nmmodel++;
-      }
+            if ( atype == atypeDga )
+               ndmodel++;
+            else if ( atype == atypeCgr )
+               ncmodel++;
+            else if ( atype == atypeMan )
+               nmmodel++;
+         }
 DbgLv(1) << " Timing(get_model_info)" << timer.elapsed();
+      }
    }
+
+   else
+   {  // Scan local disk models
+      const QString uaGUID( "00000000-0000-0000-0000-000000000000" );
+      QString path = US_Settings::dataDir() + "/models";
+      QDir    dir;
+      if ( !dir.exists( path ) )
+         dir.mkpath( path );
+      dir          = QDir( path );
+      QStringList mfilt( "M*.xml" );
+      QStringList f_names = dir.entryList( mfilt, QDir::Files, QDir::Name );
+      QXmlStreamAttributes attr;
+
+      for ( int ii = 0; ii < f_names.size(); ii++ )
+      {
+         QString fname( path + "/" + f_names[ ii ] );
+         QFile   m_file( fname );
+         if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            continue;
+         QXmlStreamReader xml( &m_file );
+
+         while( ! xml.atEnd() )
+         {
+            xml.readNext();
+            if ( xml.isStartElement()  &&  xml.name() == "model" )
+            {
+               attr             = xml.attributes();
+               QString edGUID   = attr.value( "editGUID"     ).toString();
+
+               if ( ! edGUID.isEmpty()  &&  edGUID != uaGUID )
+                  continue;
+
+               numodel++;
+
+               QString atype    = attr.value( "analysisType" ).toString();
+
+               if ( atype == atypeDga )
+                  ndmodel++;
+               else if ( atype == atypeCgr )
+                  ncmodel++;
+               else if ( atype == atypeMan )
+                  nmmodel++;
+            }
+         }
+
+         m_file.close();
+      }
+   }
+
 DbgLv(1) << " numodel" << numodel << "ndmodel ncmodel nmmodel"
  << ndmodel << ncmodel << nmmodel;
 
    le_status->setText( tr( "%1 unassigned-edit models found"
-                           " (%2 Manual, %3 DMGA)" )
-                       .arg( numodel ).arg( nmmodel ).arg( ndmodel ) );
+                           " (%2 Manual, %3 DMGA, %4 CGrid)" )
+      .arg( numodel ).arg( nmmodel ).arg( ndmodel ).arg( ncmodel ) );
    QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
    qApp->processEvents();

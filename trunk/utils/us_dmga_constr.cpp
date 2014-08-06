@@ -20,6 +20,7 @@ US_dmGA_Constraints::US_dmGA_Constraints( US_Model* imodel )
          cmodel         = *imodel;
 
          constraints_from_model();   // Constraints from constraints model
+         base_from_cmodel();         // Base from constraints model
       }
 
       else
@@ -54,6 +55,7 @@ void US_dmGA_Constraints::load_constraints( US_Model* cmodelP )
    cmodel         = *cmodelP;
 
    constraints_from_model();   // Constraints from constraints model
+   base_from_cmodel();         // Base from constraints model
 }
 
 // Update constraints with new values for a component or association
@@ -511,6 +513,8 @@ DbgLv(1) << "dgC:cnsfrmo:  ii" << ii << "s k w d f v" << sval << kval << wval
          zval           = vval;
       }
 
+DbgLv(1) << "dgC:cnsfrmo:    tflag" << tflag << "xa ya za" << x_attr
+   << y_attr << z_attr;
       if ( tflag.contains( "V" ) )
       {  // All fixed attributes
          attr.atype     = x_attr;
@@ -544,6 +548,7 @@ DbgLv(1) << "dgC:cnsfrmo:  ii" << ii << "s k w d f v" << sval << kval << wval
          bool log_x  = tflag.contains( "x" );
          bool log_y  = tflag.contains( "y" );
          bool log_z  = tflag.contains( "z" );
+DbgLv(1) << "dgC:cnsfrmo:     is_low" << is_low;
 
          if ( is_low )
          {  // First of two:  just get low values
@@ -572,6 +577,7 @@ DbgLv(1) << "dgC:cnsfrmo:  ii" << ii << "s k w d f v" << sval << kval << wval
                nfloat++;
             }
             attribs << attr;          // Save X attribute constraint
+DbgLv(1) << "dgC:cnsfrmo:      xattr xlow xhigh" << x_attr << xlow << xval;
 
             attr.atype  = y_attr;
             attr.low    = ylow;
@@ -588,7 +594,9 @@ DbgLv(1) << "dgC:cnsfrmo:  ii" << ii << "s k w d f v" << sval << kval << wval
                nfloat++;
             }
             attribs << attr;          // Save Y attribute constraint
+DbgLv(1) << "dgC:cnsfrmo:      yattr ylow yhigh" << y_attr << ylow << yval;
 
+            attr.atype  = z_attr;
             attr.low    = zlow;
             attr.high   = zval;
             if ( zval == zlow )
@@ -603,7 +611,9 @@ DbgLv(1) << "dgC:cnsfrmo:  ii" << ii << "s k w d f v" << sval << kval << wval
                nfloat++;
             }
             attribs << attr;          // Save Z attribute constraint
+DbgLv(1) << "dgC:cnsfrmo:      zattr zlow zhigh" << z_attr << zlow << zval;
 
+            attr.atype  = ATYPE_CONC;
             attr.low    = clow;
             attr.high   = cval;
             attr.logscl = false;
@@ -776,12 +786,15 @@ DbgLv(1) << "dgC:modfrcn:scn:    ii nbc nba" << ii << nbcomp << nbassoc;
 DbgLv(1) << "dgC:modfrcn: ncc nca" << nccomp << ncassoc << "nbc ncf"
    << nbcomp << ncflt << "nba" << nbassoc << "nf" << nfloat;
    mcompx         = attribs[ 0 ].mcompx;
+DbgLv(1) << "dgC:modfrcn:  bmodel compsz assosz"
+ << bmodel.components.size() << bmodel.associations.size();
    int kfloat     = 0;
    int kcompo     = 0;
    int kassoc     = 0;
    int pmcomx     = mcompx;
    QString pname  = pname_fix;
-   US_Model::SimulationComponent sc1 = bmodel.components[ 0 ];
+   US_Model::SimulationComponent sc1;
+   sc1            = bmodel.components[ 0 ];
    sc1.mw         = 0.0;
    sc1.s          = 0.0;
    sc1.D          = 0.0;
@@ -1125,18 +1138,27 @@ bool US_dmGA_Constraints::init_work_model()
    US_Model::SimulationComponent sc1, sc2;
    US_Model::Association         as1, as2;
 
-   if ( cmodel.components.size() < 1  ||  bmodel.components.size() < 1 )
+   if ( cmodel.components.size() < 1 )
    {
+DbgLv(1) << "dgC:inwkmdl:  CMODEL EMPTY";
       return false;
    }
 
    wmodel       = bmodel;
-   int kk       = 0;
+   if ( bmodel.components.size() == 0 )
+   {
+DbgLv(1) << "dgC:inwkmdl:  nbcomp nbassoc" << nbcomp << nbassoc;
+      wmodel       = cmodel;
+   }
+
+   wmodel.components  .clear();
+   wmodel.associations.clear();
 
    for ( int ii = 0; ii < cmodel.components.size(); ii++ )
    {
       int kconstr  = comp_constraints( ii, &cnsv, &kfloat );
       sc1          = cmodel.components[ ii ];
+      sc1.name     = QString( sc1.name ).mid( 5 );
 
       if ( kfloat > 0 )
       {  // Floats:  loop to find values half-way through ranges
@@ -1163,12 +1185,10 @@ bool US_dmGA_Constraints::init_work_model()
                store_attrib( sc1, x_attr, xval );
             }
          }
-
-         wmodel.components[ kk ] = sc1;
       }
-   }
 
-   kk           = 0;
+      wmodel.components << sc1;
+   }
 
    for ( int ii = 0; ii < cmodel.associations.size(); ii++ )
    {
@@ -1186,6 +1206,7 @@ bool US_dmGA_Constraints::init_work_model()
                x_attr       = cnsv[ jj ].atype;
                double xval  = fetch_attrib( as1, x_attr );
                double xval2 = fetch_attrib( as2, x_attr );
+
                if ( cnsv[ jj ].logscl )
                {  // Treat range as logarithmic
                   xval         = log( xval );
@@ -1193,6 +1214,7 @@ bool US_dmGA_Constraints::init_work_model()
                   xval         = ( xval + xval2 ) * 0.5;
                   xval         = exp( xval );
                }
+
                else
                {  // Treat range as linear
                   xval         = ( xval + xval2 ) * 0.5;
@@ -1200,9 +1222,74 @@ bool US_dmGA_Constraints::init_work_model()
                store_attrib( as1, x_attr, xval );
             }
          }
-
-         wmodel.associations[ kk ] = as1;
       }
+
+      wmodel.associations << as1;
+   }
+
+   if ( bmodel.components.size() == 0 )
+      bmodel       = wmodel;
+
+   return true;
+}
+
+// Internal utility to build the base model from the constraints model
+bool US_dmGA_Constraints::base_from_cmodel()
+{
+   if ( cmodel.components.size() < 1 )
+   {
+DbgLv(1) << "dgC:basefrcm:  CMODEL EMPTY";
+      return false;
+   }
+
+   US_Model::SimulationComponent sc1, sc2;
+   US_Model::Association         as1, as2;
+
+   bmodel       = cmodel;
+   bmodel.analysis     = US_Model::MANUAL;
+   bmodel.description  = QString( cmodel.description ).replace(
+                         "DMGA_Constraints", "DMGA_Base" );
+   bmodel.editGUID     = "";
+   bmodel.components  .clear();
+   bmodel.associations.clear();
+
+   for ( int ii = 0; ii < cmodel.components.size(); ii++ )
+   {
+      sc1          = cmodel.components[ ii ];
+      QString anam = sc1.name;
+      QString aflg = QString( anam ).left( 4 );
+      sc1.name     = QString( anam ).mid( 5 );
+
+      if ( ! aflg.contains( "V" ) )
+      {  // If float pair, get mid-way attribute values
+         sc2          = cmodel.components[ ++ii ];
+         sc1.vbar20   = ( sc1.vbar20 + sc2.vbar20 ) * 0.5;
+         sc1.s        = ( sc1.s      + sc2.s      ) * 0.5;
+         sc1.f_f0     = ( sc1.f_f0   + sc2.f_f0   ) * 0.5;
+         sc1.mw       = ( sc1.mw     + sc2.mw     ) * 0.5;
+         sc1.D        = ( sc1.D      + sc2.D      ) * 0.5;
+         sc1.f        = ( sc1.f      + sc2.f      ) * 0.5;
+         sc1.signal_concentration
+                      = ( sc1.signal_concentration +
+                          sc2.signal_concentration ) * 0.5;
+      }
+
+      // Calculate unselected coefficients
+      US_Model::calc_coefficients( sc1 );
+
+      bmodel.components << sc1;
+   }
+
+   // Loop to combine association pairs by averaging
+   for ( int ii = 0; ii < cmodel.associations.size(); ii += 2 )
+   {
+      as1          = cmodel.associations[ ii ];
+      as2          = cmodel.associations[ ii + 1 ];
+
+      as1.k_d      = ( as1.k_d   + as2.k_d   ) * 0.5;
+      as1.k_off    = ( as1.k_off + as2.k_off ) * 0.5;
+
+      bmodel.associations << as1;
    }
 
    return true;
