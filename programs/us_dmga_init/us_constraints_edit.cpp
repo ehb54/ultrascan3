@@ -189,8 +189,9 @@ pb_load_c0->setEnabled(false);
    ck_log_koff->setEnabled( true  );
 DbgLv(1) << "cnG:main: assocs  defined";
 
-   QPushButton* pb_close  = us_pushbutton( tr( "Cancel") );
-                pb_accept = us_pushbutton( tr( "Accept") );
+   QPushButton* pb_help   = us_pushbutton( tr( "Help"   ) );
+   QPushButton* pb_close  = us_pushbutton( tr( "Cancel" ) );
+                pb_accept = us_pushbutton( tr( "Accept" ) );
 DbgLv(1) << "cnG:main: elements defined";
 
    int row = 0;
@@ -268,8 +269,9 @@ DbgLv(1) << "cnG:main: elements defined";
    main->addWidget( le_max_koff,    row,    8, 1,  2 );
    main->addWidget( ck_flt_koff,    row,   10, 1,  1 );
    main->addWidget( ck_log_koff,    row++, 11, 1,  1 );
-   main->addWidget( pb_close,       row,    0, 1,  6 );
-   main->addWidget( pb_accept,      row++,  6, 1,  6 );
+   main->addWidget( pb_help,        row,    0, 1,  4 );
+   main->addWidget( pb_close,       row,    4, 1,  4 );
+   main->addWidget( pb_accept,      row++,  8, 1,  4 );
 
    connect( le_extinction,  SIGNAL( editingFinished() ), 
                             SLOT  ( set_molar      () ) );
@@ -277,6 +279,8 @@ DbgLv(1) << "cnG:main: elements defined";
                             SLOT  ( load_c0() ) );
    connect( ck_co_sed,      SIGNAL( stateChanged( int ) ), 
                             SLOT  ( co_sed      ( int ) ) );
+   connect( pb_help,        SIGNAL( clicked   () ), 
+                            SLOT  ( help      () ) );
    connect( pb_close,       SIGNAL( clicked   () ), 
                             SLOT  ( close     () ) );
    connect( pb_accept,      SIGNAL( clicked   () ), 

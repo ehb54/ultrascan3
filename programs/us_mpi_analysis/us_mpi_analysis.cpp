@@ -26,19 +26,20 @@ int main( int argc, char* argv[] )
 US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
 {
    // Command line special parameter keys
-   const QString wallkey( "-walltime" );
-   const QString pmgckey( "-pmgc" );
+   const QString wallkey ( "-walltime" );
+   const QString pmgckey ( "-mgroupcount" );
    // Alternate versions of those keys
    const QString wallkey2( "-WallTimeLimit" );
    const QString pmgckey2( "-MGroupCount" );
    const QString wallkey3( "-wallTimeLimit" );
-   const QString pmgckey3( "-mGroupCount" );
+   const QString pmgckey3( "-pmgc" );
 
    MPI_Comm_size( MPI_COMM_WORLD, &proc_count );
    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
 
    dbg_level    = 0;
    dbg_timing   = FALSE;
+   maxrss       = 0L;
    QString tarfile;
    QString jxmlfili;
    task_params[ "walltime"    ] = "1440";
@@ -143,7 +144,6 @@ DbgLv(0) << "CmdArg: jxmlfili" << jxmlfili;
 
    startTime      = QDateTime::currentDateTime();
    analysisDate   = startTime.toUTC().toString( "yyMMddhhmm" );
-   maxrss         = 0;
    set_count      = 0;
    iterations     = 1;
 
@@ -214,8 +214,9 @@ DbgLv(0) << "  jfiles size" << jfiles.size() << "jxmlfile" << jxmlfile;
    {  // Save submit time
       submitTime      = QFileInfo( tarfile ).lastModified();
 DbgLv(0) << "submitTime " << submitTime
- << " parallel-masters count" << task_params["mgroupcount"].toInt()
+ << " mgroupcount" << task_params["mgroupcount"].toInt()
  << " walltime" << task_params["walltime"].toInt();
+
       printf( "Us_Mpi_Analysis %s has started.\n", REVISION );
    }
 
@@ -225,9 +226,9 @@ DbgLv(0) << "submitTime " << submitTime
    send_udp( msg_start );   // Can't send udp message until xmlfile is parsed
 
    // Read data 
-   for ( int i = 0; i < data_sets.size(); i++ )
+   for ( int ii = 0; ii < data_sets.size(); ii++ )
    {
-      US_SolveSim::DataSet* dset = data_sets[ i ];
+      US_SolveSim::DataSet* dset = data_sets[ ii ];
 
       try
       {
@@ -250,21 +251,21 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
       }
 //DbgLv(0) << "Good DATA. rank" << my_rank;
 
-      for ( int j = 0; j < dset->noise_files.size(); j++ )
+      for ( int jj = 0; jj < dset->noise_files.size(); jj++ )
       {
           US_Noise noise;
 
-          int err = noise.load( dset->noise_files[ j ] );
+          int err = noise.load( dset->noise_files[ jj ] );
 
           if ( err != 0 )
           {
-             QString msg = "Bad noise file " + dset->noise_files[ j ];
+             QString msg = "Bad noise file " + dset->noise_files[ jj ];
              abort( msg );
           }
 
           if ( noise.apply_to_data( dset->run_data  ) != 0 )
           {
-             QString msg = "Bad noise file " + dset->noise_files[ j ];
+             QString msg = "Bad noise file " + dset->noise_files[ jj ];
              abort( msg );
           }
       }
@@ -382,8 +383,8 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
       sd.vbar20    = ds->vbar20;
       sd.vbar      = ds->vbartb;
 if ( my_rank == 0 )
- DbgLv(0) << "density/viscosity/comm vbar20/commvbar"
-  << sd.density << sd.viscosity << sd.vbar20 << sd.vbar;
+ DbgLv(0) << "density/viscosity/comm vbar20/commvbar/compress"
+  << sd.density << sd.viscosity << sd.vbar20 << sd.vbar << ds->compress;
 
       US_Math2::data_correction( ds->temperature, sd );
 

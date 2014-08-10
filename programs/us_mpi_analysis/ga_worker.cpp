@@ -424,7 +424,7 @@ sim.dbg_level = qMax(0,dbg_level-1);
 
 DbgLv(2) << "get_fitness: nisols" << nisols << "key" << key;
    if ( fitness_map.contains( key ) )
-   {  // We are already have a match to this key, so use its fitness value
+   {  // We already have a match to this key, so use its fitness value
       fitness_hits++;
 DbgLv(2) << "get_fitness: HIT!  new hits" << fitness_hits;
       return fitness_map.value( key );
@@ -536,12 +536,14 @@ int US_MPI_Analysis::u_random( int modulo )
 int US_MPI_Analysis::e_random( void )
 {
    // Exponential distribution
-   double              rand    = US_Math2::ranf();
-   const double        divisor = 8;  // Parameterize?
-   static const double beta    = parameters[ "population" ].toDouble() / divisor;
+   double       randx   = US_Math2::ranf();
+   const double divisor = 8;  // Parameterize?
+   static const double
+                beta    = parameters[ "population" ].toDouble() / divisor;
+   int          gnsize  = ( buckets.size() > 0 ) ? genes.size() : dgenes.size();
 
-   int gene_index = (int)( -log( 1.0 - rand ) * beta );
-   if ( gene_index >= genes.size() ) gene_index = genes.size() - 1;
+   int gene_index = (int)( -log( 1.0 - randx ) * beta );
+       gene_index = qMin( ( gnsize - 1 ), qMax( 0, gene_index ) );
    
    return gene_index;
 }
@@ -1194,8 +1196,8 @@ DRTiming << "   MMIZE:  t1 t2 t3 t4 t5 t6"
 }
 
 // Set vector values to the scaled sums of two vectors
-void US_MPI_Analysis::vector_scaled_sum( US_Vector& cc, US_Vector& aa, double sa,
-      US_Vector&bb, double sb )
+void US_MPI_Analysis::vector_scaled_sum( US_Vector& cc,
+      US_Vector& aa, double sa, US_Vector& bb, double sb )
 {
    int sizec = qMin( cc.size(), qMin( aa.size(), bb.size() ) );
 

@@ -595,11 +595,26 @@ void US_MPI_Analysis::write_output( void )
 {
    US_SolveSim::Simulation sim = simulation_values;
 
-   double     save_meniscus = meniscus_value;
-   sim.solutes  = calculated_solutes[ max_depth ]; 
-   int mxdssz   = sim.solutes.size();
+   double save_meniscus = meniscus_value;
    US_Model::AnalysisType mdl_type = analysis_type.startsWith( "2DSA" ) ?
                                      US_Model::TWODSA : US_Model::GA;
+   int mxdssz   = -1;
+
+   if ( !analysis_type.startsWith( "DMGA" ) )
+   {
+      sim.solutes  = calculated_solutes[ max_depth ]; 
+      mxdssz       = sim.solutes.size();
+   }
+   else
+   {  // Handle DMGA need for dummy solutes
+      QVector< US_Solute > solvec;
+      mdl_type     = US_Model::DMGA;
+      max_depth    = 0;
+      calculated_solutes.clear();
+      calculated_solutes << solvec;
+      sim.solutes  = solvec;
+DbgLv(1) << "MAST: wrout: mdl_type DMGA";
+   }
 
    if ( mxdssz == 0 )
    { // Handle the case of a zero-solute final model
@@ -626,9 +641,12 @@ void US_MPI_Analysis::write_output( void )
    }
 
    meniscus_value  = meniscus_values[ meniscus_run ];
-   qSort( sim.solutes );
+   if ( mdl_type != US_Model::DMGA )
+   {
+      qSort( sim.solutes );
 DbgLv(1) << "WrO: mciter mxdepth" << mc_iteration+1 << max_depth << "calcsols size"
  << calculated_solutes[max_depth].size() << "simvsols size" << sim.solutes.size();
+   }
 
    write_model( sim, mdl_type );
    meniscus_value  = save_meniscus;
@@ -648,7 +666,9 @@ void US_MPI_Analysis::write_global( void )
 
    US_Model::AnalysisType mdl_type = analysis_type.startsWith( "2DSA" ) ?
                                      US_Model::TWODSA : US_Model::GA;
-   int nsolutes = sim.solutes.size();
+   if ( analysis_type.startsWith( "DMGA" ) )
+      mdl_type     = US_Model::DMGA;
+   int nsolutes = mdl_type != US_Model::DMGA ? sim.solutes.size() : -1;
 
    if ( nsolutes == 0 )
    { // Handle the case of a zero-solute final model
@@ -725,7 +745,7 @@ DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
       }
    }
 
-   else
+   else if ( mdl_type == US_Model::GA )
    {  // GA:  Compute and output each dataset model
       int ksolutes         = 0;
 
@@ -743,6 +763,10 @@ DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
          write_model( wksim_vals, mdl_type );
 DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
       }
+   }
+
+   else if ( mdl_type == US_Model::DMGA )
+   {  // DMGA:  Compute and output each dataset model
    }
 
    current_dataset      = 0;
