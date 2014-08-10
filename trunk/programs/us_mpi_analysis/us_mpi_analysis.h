@@ -362,31 +362,32 @@ class US_MPI_Analysis : public QObject
                             US_Math2::SolutionData&, double, double );
 
     // DMGA Master
-    void   dmga_master       ( void );
-    void   dmga_master_loop  ( void );
-    void   dmga_global_fit   ( void );
-    void   set_dmgaMonteCarlo( void );
-    void   marker_from_dgene ( QVector< double >&, DGene& );
-    void   dgene_from_marker ( QVector< double >&, DGene& );
-    void   dgenes_to_marker  ( QVector< double >&, QList< DGene >&,
-                               const int, const int );
-    void   marker_to_dgenes  ( QVector< double >&, QList< DGene >&,
-                               const int, const int );
-    bool   store_attr_value  ( double&, US_Model&,
-                               US_dmGA_Constraints::AttribType&, int& );
-    bool   fetch_attr_value  ( double&, US_Model&,
-                               US_dmGA_Constraints::AttribType&, int& );
+    void   dmga_master         ( void );
+    void   dmga_master_loop    ( void );
+    void   dmga_global_fit     ( void );
+    void   set_dmga_gaussians  ( void );
+    void   set_dmga_MonteCarlo ( void );
+    void   marker_from_dgene   ( QVector< double >&, DGene& );
+    void   dgene_from_marker   ( QVector< double >&, DGene& );
+    void   dgenes_to_marker    ( QVector< double >&, QList< DGene >&,
+                                 const int, const int );
+    void   marker_to_dgenes    ( QVector< double >&, QList< DGene >&,
+                                 const int, const int );
+    bool   store_attr_value    ( double&, US_Model&,
+                                 US_dmGA_Constraints::AttribType&, int& );
+    bool   fetch_attr_value    ( double&, US_Model&,
+                                 US_dmGA_Constraints::AttribType&, int& );
 
     // DMGA Worker
-    void    dmga_worker      ( void );
-    void    dmga_worker_loop ( void );
-    DGene   new_dmga_gene    ( void );
-    void    mutate_dgene     ( DGene& );
-    void    cross_dgene      ( DGene&, QList< DGene > );
-    int     migrate_dgenes   ( void );
-    double  minimize_dg      ( DGene&, double );
-    double  get_fitness_dg   ( DGene& );
-    QString dgene_key        ( DGene& );
+    void    dmga_worker        ( void );
+    void    dmga_worker_loop   ( void );
+    DGene   new_dmga_gene      ( void );
+    void    mutate_dgene       ( DGene& );
+    void    cross_dgene        ( DGene&, QList< DGene > );
+    int     migrate_dgenes     ( void );
+    double  minimize_dmga      ( DGene&, double );
+    double  get_fitness_dmga   ( DGene& );
+    QString dgene_key          ( DGene& );
     void    calc_residuals_dmga( int, int, SIMULATION&, DGene& );
 
     // Debug

@@ -282,14 +282,14 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 
    // Set some minimums
    max_iterations  = parameters[ "max_iterations" ].toInt();
-   max_iterations  = max( max_iterations, 1 );
+   max_iterations  = qMax( max_iterations, 1 );
 
    mc_iterations   = parameters[ "mc_iterations" ].toInt();
-   mc_iterations   = max( mc_iterations, 1 );
+   mc_iterations   = qMax( mc_iterations, 1 );
 
    meniscus_range  = parameters[ "meniscus_range"  ].toDouble();
    meniscus_points = parameters[ "meniscus_points" ].toInt();
-   meniscus_points = max( meniscus_points, 1 );
+   meniscus_points = qMax( meniscus_points, 1 );
    meniscus_range  = ( meniscus_points > 1 ) ? meniscus_range : 0.0;
 
    // Do some parameter checking

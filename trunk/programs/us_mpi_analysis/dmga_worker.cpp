@@ -228,7 +228,7 @@ DbTimMsg("Worker start rank/generation/elapsed-secs");
       for ( int ii = 0; ii < population; ii++ )
       {
          fitness[ ii ].index   = ii;
-         fitness[ ii ].fitness = get_fitness_dg( dgenes[ ii ] );
+         fitness[ ii ].fitness = get_fitness_dmga( dgenes[ ii ] );
       }
 
       // Sort fitness
@@ -242,8 +242,8 @@ DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
          << ": At last generation minimize.";
 DbTimMsg("Worker before gsm rank/generation/elapsed");
 
-         fitness[ 0 ].fitness = minimize_dg( dgenes[ fitness[ 0 ].index ], 
-                                             fitness[ 0 ].fitness );
+         fitness[ 0 ].fitness = minimize_dmga( dgenes[ fitness[ 0 ].index ], 
+                                               fitness[ 0 ].fitness );
 DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
          << ":   last generation minimize fitness=" << fitness[0].fitness;
 DbTimMsg("Worker after gsm rank/generation/elapsed");
@@ -257,7 +257,7 @@ dump_fitness( fitness );
       msg.generation = generation;
       dgene          = dgenes[ fitness[ 0 ].index ];
       marker_from_dgene( dgmarker, dgene );
-      msg.size       = dgmsize;
+      msg.size       = nfloatc;
       msg.fitness    = fitness[ 0 ].fitness;
 
       MPI_Send( &msg,                                // to MPI #1
@@ -268,7 +268,7 @@ dump_fitness( fitness );
                 my_communicator );
 
       MPI_Send( dgmarker.data(),                     // to MPI #2
-                dgmsize,
+                nfloatc,
                 MPI_DOUBLE,
                 MPI_Job::MASTER,
                 GENE,
@@ -574,7 +574,7 @@ DbgLv(1) << my_rank << "dg:migrdg: immigres size" << immigres.size() << "doubles
 
 // Find the minimum fitness value close to a discrete GA gene using
 //  inverse hessian minimization
-double US_MPI_Analysis::minimize_dg( DGene& dgene, double fitness )
+double US_MPI_Analysis::minimize_dmga( DGene& dgene, double fitness )
 {
    double fitnout  = fitness;
 DbgLv(1) << "dg:minimize dgene comps" << dgene.components.size() << fitness;
@@ -582,7 +582,7 @@ DbgLv(1) << "dg:minimize dgene comps" << dgene.components.size() << fitness;
 }
 
 // Get the fitness value for a discrete GA Gene
-double US_MPI_Analysis::get_fitness_dg( DGene& dgene )
+double US_MPI_Analysis::get_fitness_dmga( DGene& dgene )
 {
    QString fkey    = dgene_key( dgene );   // Get an identifying key string
 
