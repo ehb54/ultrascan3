@@ -345,12 +345,10 @@ DbgLv(1) << "dGA:save_constraints";
    QString suffix    = "";
    QString fext      = ".model";
    QString cmfdesc   = now + ftype + suffix + fext;
+   QString modelGuid = US_Util::new_guid();
    QString modelPath;
    US_Model::model_path( modelPath );
-   QString modelGuid = US_Util::new_guid();
 
-   if ( cmodel.modelGUID  ==  bmodel.modelGUID )
-      cmodel.modelGUID  = modelGuid;
 
    QString msg1         = tr( "A Discrete Model Genetic Algorithm Constraints"
                               " model has been created. It's description is:" )
@@ -400,6 +398,7 @@ DbgLv(1) << "dGA:save_constraints";
    // Output the constraints model
    cmodel.analysis      = US_Model::DMGA_CONSTR;
    cmodel.description   = cmfdesc;
+   cmodel.modelGUID     = modelGuid;
    int code;
 
    if ( dkdb_cntrls->db() )

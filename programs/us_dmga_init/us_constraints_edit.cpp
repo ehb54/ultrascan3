@@ -566,8 +566,10 @@ void US_ConstraintsEdit::acceptProp( void )
 DbgLv(1) << "cnG:accept";
    QVector< US_dmGA_Constraints::Constraint > cnsv;
    save_comp_settings ( crow, cnsv );        // Save current page
+   constraints.update_constraints( cnsv );   // Update comp constraints
+   cnsv.clear();
    save_assoc_settings( arow, cnsv );
-   constraints.update_constraints( cnsv );   // Update constraints
+   constraints.update_constraints( cnsv );   // Update assoc constraints
    constraints.get_constr_model( &cmodel );  // Get equivalent model
 DbgLv(1) << "cnG: get_cmo RTN";
 
@@ -860,7 +862,7 @@ DbgLv(1) << "cnG:   comp_constraints  rtn";
    us_setReadOnly( le_val_conc, true );
    us_setReadOnly( le_min_conc, true );
    us_setReadOnly( le_max_conc, true );
-   comps_connect( false );
+   comps_connect ( false );
    ck_flt_vbar->setEnabled( true  );
    ck_flt_mw  ->setEnabled( false );
    ck_flt_ff0 ->setEnabled( false );
@@ -958,10 +960,13 @@ DbgLv(1) << "cnG: association_select  row" << srow << arow;
    // Get constraints for new association
    arow     = srow;
    constraints.assoc_constraints( arow, &cnsv, NULL );
+   assocs_connect( false );
 
    // Populate association attribute values
    ck_flt_kd  ->setChecked( false );
    ck_flt_koff->setChecked( false );
+   ck_log_kd  ->setChecked( false );
+   ck_log_koff->setChecked( false );
 
    for ( int ii = 0; ii < cnsv.size(); ii++ )
    {
@@ -982,6 +987,8 @@ DbgLv(1) << "cnG: association_select  row" << srow << arow;
          ck_log_koff->setChecked( logscl );
       }
    }
+
+   assocs_connect( true );
 }
 
 // Internal function to save current page's component settings
@@ -1117,6 +1124,7 @@ void US_ConstraintsEdit::save_assoc_settings( int arow,
    cnse.mcompx      = arow;
    cnse.atype       = US_dmGA_Constraints::ATYPE_KD;
    cnse.low         = le_val_kd  ->text().toDouble();
+   cnse.low         = floats ? le_min_kd  ->text().toDouble() : cnse.low;
    cnse.high        = floats ? le_max_kd  ->text().toDouble() : cnse.low;
    cnse.floats      = floats;
    cnse.logscl      = ck_log_kd  ->isChecked();
@@ -1126,6 +1134,7 @@ DbgLv(1) << "cnG: svas:  ks 1  flt" << floats << "KD";
    floats           = ck_flt_koff->isChecked();
    cnse.atype       = US_dmGA_Constraints::ATYPE_KOFF;
    cnse.low         = le_val_koff->text().toDouble();
+   cnse.low         = floats ? le_min_koff->text().toDouble() : cnse.low;
    cnse.high        = floats ? le_max_koff->text().toDouble() : cnse.low;
    cnse.floats      = floats;
    cnse.logscl      = ck_log_koff->isChecked();
@@ -1193,7 +1202,8 @@ void US_ConstraintsEdit::check_value(
 //   const QString notapl = tr( "n/a" );
    bool floats  = cnse.floats;
    bool fixed   = !floats;
-DbgLv(1) << "cnG:check_value: floats" << floats;
+DbgLv(1) << "cnG:check_value: floats" << floats << "atype" << cnse.atype
+         << "low high" << cnse.low << cnse.high;
 
    le_val->setText( fixed  ? QString::number( cnse.low  ) : notapl );
    le_min->setText( floats ? QString::number( cnse.low  ) : notapl );

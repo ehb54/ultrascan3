@@ -275,6 +275,7 @@ DbgLv(1) << "dgC:ass_cns: assox" << assox << "attrsz" << attribs.size();
       cnsv << attribs[ ii ];                  // Save attribute for assoc
       if ( attribs[ ii ].floats )
          kfloat++;                            // Bump attrib's floats count
+DbgLv(1) << "dgC:ass_cns:  ii" << ii << "kattrib kfloat" << kattrib << kfloat;
    }
 
    if ( cnsvP != NULL )
@@ -672,6 +673,7 @@ DbgLv(1) << "dgC:cnsfrmo:      zattr zlow zhigh" << z_attr << zlow << zval;
          attr.high      = attr.low;
          attr.logscl    = false;
          attribs << attr;             // Save k_Off attribute constraint
+DbgLv(1) << "dgC:cnsfrmo: assoc fixed dval oval" << dval << oval;
       } // END: all fixed
 
       else
@@ -700,6 +702,8 @@ DbgLv(1) << "dgC:cnsfrmo:      zattr zlow zhigh" << z_attr << zlow << zval;
 
          // Bump total number of float attributes when appropriate
          nfloat        += ( ( flt_d ? 1 : 0 ) + ( flt_o ? 1 : 0 ) );
+DbgLv(1) << "dgC:cnsfrmo: assoc float dlow dhigh olow ohigh"
+         << dval << dhigh << oval << ohigh << "nfloat" << nfloat;
       } // END: 1 or 2 floating
 
    } // END: associations loop
@@ -801,9 +805,10 @@ DbgLv(1) << "dgC:modfrcn:  bmodel compsz assosz"
    sc1.f          = 0.0;
    sc1.f_f0       = 0.0;
    US_Model::SimulationComponent sc2 = sc1;
-   US_Model::Association         as1, as2;
+   US_Model::Association         as1;
    if ( bmodel.associations.size() > 0 )
       as1            = bmodel.associations[ 0 ];
+   US_Model::Association         as2 = as1;
 
    // Now, loop to create the components and associations of the model
 

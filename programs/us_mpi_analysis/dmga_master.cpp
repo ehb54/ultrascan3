@@ -120,7 +120,7 @@ DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
             time_mc_iterations();
 
 DbgLv(1) << "GaMast:    set_gaMC call";
-            set_dmgaMonteCarlo();
+            set_dmga_MonteCarlo();
 DbgLv(1) << "GaMast:    set_gaMC  return";
          }
          else
@@ -236,7 +236,7 @@ DbgLv(1) << "dmga_master start loop:  gcores_count fitsize" << gcores_count
             // Get the best gene for the current generation from the worker
 DbgLv(1) << "  MAST: work" << worker << "Recv#2 dgmsize" << dgmsize;
             MPI_Recv( dgmarker.data(),                 // MPI #2
-                      dgmsize,
+                      nfloatc,
                       MPI_DOUBLE,  
                       worker,
                       GENE,
@@ -471,25 +471,40 @@ void US_MPI_Analysis::dmga_global_fit( void )
    }
 }
 
-// Set up next MonteCarlo iteration for dmGA
-void US_MPI_Analysis::set_dmgaMonteCarlo( void ) 
+// Use DMGA residuals as the standard deviation for varying data in MonteCarlo
+void US_MPI_Analysis::set_dmga_gaussians( void ) 
 {
-DbgLv(1) << "sgMC: mciter" << mc_iteration;
-   // This is almost the same as 2dsa set_monteCarlo
+   sigmas.clear();
+   res_data    = &simulation_values.residuals;
+   int ks      = 0;
+
+   for ( int ee = 0; ee < data_sets.size(); ee++ )
+   {
+      int nscan   = data_sets[ ee ]->run_data.scanCount();
+      int npoint  = data_sets[ ee ]->run_data.pointCount();
+
+      // Place the residuals magnitudes into a single vector for convenience
+      for ( int ss = 0; ss < nscan; ss++, ks++ )
+      {
+         for ( int rr = 0; rr < npoint; rr++ )
+         {
+            sigmas << qAbs( res_data->value( ks, rr ) );
+         }
+      }
+   }
+}
+
+// Set up next MonteCarlo iteration for dmGA
+void US_MPI_Analysis::set_dmga_MonteCarlo( void ) 
+{
+DbgLv(1) << "sdMC: mciter" << mc_iteration;
+   // This is almost the same as ga set_monteCarlo
    if ( mc_iteration == 1 )
    {
-      //meniscus_values << -1.0;
       max_depth   = 0;  // Make the datasets compatible
       calculated_solutes.clear();
-      calculated_solutes << best_genes[ best_fitness[ 0 ].index ];
-      int ncsols  = calculated_solutes[ 0 ].size();
-DbgLv(1) << "sgMC: bfgenes stored" << ncsols;
 
-      solutes_from_gene( calculated_solutes[ 0 ], ncsols );
-
-DbgLv(1) << "sgMC:  sol0 s" << calculated_solutes[0][0].s;
-      set_gaussians();
-DbgLv(1) << "sgMC: gaussians set";
+      set_dmga_gaussians();
    }
 
    mc_data.resize( total_points );
@@ -497,24 +512,25 @@ DbgLv(1) << "sgMC: gaussians set";
 
    // Get a randomized variation of the concentrations
    // Use a gaussian distribution with the residual as the standard deviation
-   for ( int e = 0; e < data_sets.size(); e++ )
+   for ( int ee = 0; ee < data_sets.size(); ee++ )
    {
-      US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
+      US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
 
-      int scan_count    = data->scanCount();
-      int radius_points = data->pointCount();
+      int scan_count    = edata->scanCount();
+      int radius_points = edata->pointCount();
 
-      for ( int s = 0; s < scan_count; s++ )
+      for ( int ss = 0; ss < scan_count; ss++ )
       {
-         for ( int r = 0; r < radius_points; r++ )
+         for ( int rr = 0; rr < radius_points; rr++ )
          {
             double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
-            mc_data[ index ] = scaled_data.value( s, r ) + variation;
+            mc_data[ index ] = scaled_data.value( ss, rr ) + variation;
             index++;
          }
       }
    }
-DbgLv(1) << "sgMC: mc_data set index" << index;
+DbgLv(1) << "sdMC: mc_data set index" << index
+         << "total_points" << total_points;
 
    // Broadcast Monte Carlo data to all workers
    MPI_Job job;
@@ -522,7 +538,6 @@ DbgLv(1) << "sgMC: mc_data set index" << index;
    job.length         = total_points;
    job.dataset_offset = 0;
    job.dataset_count  = data_sets.size();
-DbgLv(1) << "sgMC: MPI send my_workers" << my_workers;
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
@@ -537,10 +552,8 @@ DbgLv(1) << "sgMC: MPI send my_workers" << my_workers;
    }
 
    // Get everybody synced up
-DbgLv(1) << "sgMC: MPI Barrier";
    MPI_Barrier( my_communicator );
 
-DbgLv(1) << "sgMC: MPI Bcast";
    MPI_Bcast( mc_data.data(),   // MPI #10
               total_points, 
               MPI_DOUBLE, 
