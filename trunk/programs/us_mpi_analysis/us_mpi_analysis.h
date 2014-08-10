@@ -6,16 +6,17 @@
 #include <mpi.h>
 
 #include "us_model.h"
+#include "us_dmga_constr.h"
 #include "us_dataIO.h"
 #include "us_noise.h"
 #include "us_simparms.h"
 #include "us_solve_sim.h"
 #include "us_vector.h"
 #include "us_math2.h"
-#include "us_dmga_constr.h"
 
 #define SIMULATION       US_SolveSim::Simulation
 #define DATASET          US_SolveSim::DataSet
+#define DGene            US_Model
 
 #define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
 #define DbTiming if(dbg_timing)qDebug()   //!< debug-timing-conditioned qDebug()
@@ -51,6 +52,7 @@ class US_MPI_Analysis : public QObject
     int                 dbg_level;
     bool                dbg_timing;
     bool                glob_runid;
+    bool                do_astfem;
     MPI_Comm            my_communicator;
 
     int                 current_dataset;      // For global fit
@@ -219,6 +221,18 @@ class US_MPI_Analysis : public QObject
     QList< SIMULATION >       sim_values;
     QMap < QString, double >  fitness_map;
     int                       fitness_hits;
+    QList< DGene >            dgenes;
+    QList< DGene >            best_dgenes;  // Size is number of workers
+    US_dmGA_Constraints       constraints;
+    US_Model                  wmodel;
+    DGene                     dgene;
+    QVector< double >         dgmarker;
+    QVector< US_dmGA_Constraints::Constraint >  cns_flt;
+    int                       nfloatc;
+    int                       ncompc;
+    int                       nassocc;
+    int                       nfvari;
+    int                       dgmsize;
 
     class Fitness
     {
@@ -305,7 +319,7 @@ class US_MPI_Analysis : public QObject
     // Worker
     void     _2dsa_worker      ( void );
 
-    void     calc_residuals    ( int, int, SIMULATION& );
+    void     calc_residuals     ( int, int, SIMULATION& );
 
     // GA Master
     void ga_master       ( void );
@@ -317,7 +331,7 @@ class US_MPI_Analysis : public QObject
     void   ga_worker     ( void );
     void   ga_worker_loop( void );
     Gene   new_gene      ( void );
-    void   init_fitness  ( void );
+    //void   init_fitness  ( void );
     void   mutate_s      ( US_Solute&, int );
     void   mutate_k      ( US_Solute&, int );
     void   mutate_gene   ( Gene& );
@@ -348,15 +362,32 @@ class US_MPI_Analysis : public QObject
                             US_Math2::SolutionData&, double, double );
 
     // DMGA Master
-    void dmga_master       ( void );
-    void dmga_master_loop  ( void );
-    void dmga_global_fit   ( void );
-    void set_dmgaMonteCarlo( void );
+    void   dmga_master       ( void );
+    void   dmga_master_loop  ( void );
+    void   dmga_global_fit   ( void );
+    void   set_dmgaMonteCarlo( void );
+    void   marker_from_dgene ( QVector< double >&, DGene& );
+    void   dgene_from_marker ( QVector< double >&, DGene& );
+    void   dgenes_to_marker  ( QVector< double >&, QList< DGene >&,
+                               const int, const int );
+    void   marker_to_dgenes  ( QVector< double >&, QList< DGene >&,
+                               const int, const int );
+    bool   store_attr_value  ( double&, US_Model&,
+                               US_dmGA_Constraints::AttribType&, int& );
+    bool   fetch_attr_value  ( double&, US_Model&,
+                               US_dmGA_Constraints::AttribType&, int& );
 
     // DMGA Worker
-    void   dmga_worker     ( void );
-    void   dmga_worker_loop( void );
-    Gene   new_dmga_gene   ( void );
+    void    dmga_worker      ( void );
+    void    dmga_worker_loop ( void );
+    DGene   new_dmga_gene    ( void );
+    void    mutate_dgene     ( DGene& );
+    void    cross_dgene      ( DGene&, QList< DGene > );
+    int     migrate_dgenes   ( void );
+    double  minimize_dg      ( DGene&, double );
+    double  get_fitness_dg   ( DGene& );
+    QString dgene_key        ( DGene& );
+    void    calc_residuals_dmga( int, int, SIMULATION&, DGene& );
 
     // Debug
     void dump_buckets( void );

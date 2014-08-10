@@ -40,6 +40,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
             US_Solution             solution_rec; //!< Solution record
             double                  viscosity;    //!< Solution buffer viscosity
             double                  density;      //!< Solution buffer density
+            double                  compress;     //!< Sol.buff. compressibility
             double                  temperature;  //!< Average run temperature
 
             double            vbar20;             //!< VBar at 20 degrees C

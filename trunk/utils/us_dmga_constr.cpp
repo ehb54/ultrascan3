@@ -1190,14 +1190,14 @@ DbgLv(1) << "dgC:inwkmdl:  nbcomp nbassoc" << nbcomp << nbassoc;
       wmodel.components << sc1;
    }
 
-   for ( int ii = 0; ii < cmodel.associations.size(); ii++ )
+   for ( int ii = 0; ii < cmodel.associations.size(); ii += 2 )
    {
       int kconstr  = assoc_constraints( ii, &cnsv, &kfloat );
       as1          = cmodel.associations[ ii ];
 
       if ( kfloat > 0 )
       {  // Floats:  loop to find values half-way through ranges
-         as2          = cmodel.associations[ ++ii ];
+         as2          = cmodel.associations[ ii + 1 ];
 
          for ( int jj = 0; jj < kconstr; jj++ )
          {

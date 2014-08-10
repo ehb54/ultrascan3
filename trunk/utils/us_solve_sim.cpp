@@ -338,16 +338,20 @@ DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
             model.components[ 0 ].D   /= dset->D20w_correction;
 
             // Initialize simulation data with the experiment's grid
+DbgLv(2) << "   CR:111  rss now" << US_Memory::rss_now() << "cc" << cc;
             US_AstfemMath::initSimData( simdat, *edata, 0.0 );
+DbgLv(2) << "   CR:112  rss now" << US_Memory::rss_now() << "cc" << cc;
 if (dbg_level>1 && thrnrank<2 && cc==0) {
  model.debug(); dset->simparams.debug(); }
 
             // Calculate Astfem_RSA solution (Lamm equations)
             US_Astfem_RSA astfem_rsa( model, dset->simparams );
+DbgLv(2) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
 
             astfem_rsa.set_debug_flag( dbg_level );
 
             astfem_rsa.calculate( simdat );
+DbgLv(2) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
             if ( abort ) return;
 
             if ( banddthr )
@@ -359,6 +363,7 @@ if (dbg_level>1 && thrnrank<2 && cc==0) {
             }
 
             simulations << simdat;   // Save simulation (each dataset,solute)
+DbgLv(2) << "   CR:115  rss now" << US_Memory::rss_now() << "cc" << cc;
 
             // Populate the A matrix for the NNLS routine with simulation
 DbgLv(1) << "   CR: A fill kodl" << kodl;
@@ -368,6 +373,7 @@ int ks=kk;
                for ( int ss = 0; ss < nscans; ss++ )
                   for ( int rr = 0; rr < npoints; rr++ )
                      nnls_a[ kk++ ] = simdat.value( ss, rr );
+DbgLv(2) << "   CR:116  rss now" << US_Memory::rss_now() << "cc" << cc;
 //if(lim_offs>1&&(thrnrank==1||thrnrank==11))
 DbgLv(1) << "CR: ks kk" << ks << kk
  << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[kk-2] << nnls_a[kk-1]
@@ -649,6 +655,7 @@ DbgLv(1) << "   CR:BF nsol ksol" << nsolutes << ksols;
 
    int kstodo = nsolutes / 50;          // Set steps count for NNLS
    kstodo     = max( kstodo, 2 );
+DbgLv(2) << "   CR:200  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 
 DebugTime("BEG:clcr-nn");
    if ( calc_ti )
@@ -763,6 +770,7 @@ DbgLv(1) << "  noise small NNLS";
    else
    {  // No TI or RI noise
       if ( abort ) return;
+DbgLv(2) << "   CR:210  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 
       if ( ASave != NULL  &&  BSave != NULL )
       {
@@ -773,6 +781,7 @@ DbgLv(1) << "CR: sv_nnls_a size" << sv_nnls_a.size() << nnls_a.size();
 
       US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
                       nnls_b.data(), nnls_x.data() );
+DbgLv(2) << "   CR:211  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR: narows nsolutes" << narows << nsolutes;
 if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR:  a0 a1 b0 b1"
  << nnls_a[0] << nnls_a[1] << nnls_b[0] << nnls_b[1];
@@ -786,7 +795,8 @@ if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR:  a0 a1 b0 b1"
    }  // End of core calculations
 
    sim_vals.maxrss = US_Memory::rss_max( sim_vals.maxrss );
-DbgLv(1) << "   CR:na  rss now,max" << US_Memory::rss_now() << sim_vals.maxrss;
+//DbgLv(1) << "   CR:na  rss now,max" << US_Memory::rss_now() << sim_vals.maxrss;
+DbgLv(1) << "   CR:na  rss now,max" << US_Memory::rss_now() << sim_vals.maxrss << &sim_vals;
 
    nnls_a.clear();
    nnls_b.clear();
@@ -821,6 +831,7 @@ DbgLv(1) << "CR:     ss jscan" << ss << jscan << "ee kscans nscans" << ee << ksc
             sim_vals.sim_data.scanData[ jscan++ ] = tdata.scanData[ ss ];
          }
       }
+DbgLv(2) << "   CR:221  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
    }
 if(lim_offs>1&&(thrnrank==1||thrnrank==11))
 DbgLv(1) << "CR:       jscan kscans" << jscan << kscans;
@@ -863,6 +874,7 @@ DbgLv(1) << "CR:    ee sim_ix np ns scnx" << ee << sim_ix << npoints << nscans <
                      ( soluval * idata->value( ss, rr ) );
                }
             }
+DbgLv(2) << "   CR:231  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 //*DEBUG*
 int ss=nscans/2;
 int rr=npoints/2;
@@ -894,6 +906,7 @@ if (soluval>100.0) {
    US_DataIO::RawData*     sdata = &sim_vals.sim_data;
    US_DataIO::RawData*     resid = &sim_vals.residuals;
    sim_vals.residuals            = *sdata;
+DbgLv(2) << "   CR:301  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 
    // Calculate residuals and rmsd values
    for ( int ee = offset; ee < lim_offs; ee++, kdsx++ )
@@ -956,6 +969,7 @@ DbgLv(1) << "CR:     kk variance" <<  sim_vals.variances[kk];
          sim_vals.solutes[ kk++ ] = sim_vals.solutes[ cc ];
       }
    }
+DbgLv(2) << "   CR:310  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 
    // Truncate solutes at non-zero count
    sim_vals.solutes.resize( qMax( kk, 1 ) );
@@ -981,6 +995,7 @@ DbgLv(1) << "CR:     nsolutes" << nsolutes;
    {
       xnorm += sq( sim_vals.solutes[ jj ].c );
    }
+DbgLv(2) << "   CR:320  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 
    sim_vals.xnormsq = xnorm;
 DbgLv(1) << "CR:       xnormsq" << xnorm;
@@ -1081,6 +1096,7 @@ DbgLv(1) << "CR: ASv: sv_nnls_a size" << sv_nnls_a.size() << ASave->size();
          }
       }
    }
+DbgLv(2) << "   CR:777  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
          
 DebugTime("END:calcres");
 }

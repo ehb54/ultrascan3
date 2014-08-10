@@ -49,9 +49,9 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
                attr_z         = ATTR_K;
             }
 
-            else if ( parameters.contains( "DMGA_model" ) )
-            {  // Flag Custom Grid model input
-               d->model_file  = parameters[ "DMGA_model" ];
+            else if ( parameters.contains( "DC_model" ) )
+            {  // Flag DMGA_Constraints model input
+               d->model_file  = parameters[ "DC_model" ];
             }
 
             else if ( ! parameters[ "ztype" ].isEmpty() )
@@ -203,9 +203,10 @@ if (my_rank==0) DbgLv(0) << "PF:   rnd xymnmx" << b.x_min << b.x_max << b.y_min 
 
                   buckets << b;
                }
-               else if ( name == "CG_model"  ||  name == "DMGA_model" )
+               else if ( name == "CG_model"  ||  name == "DC_model" )
                {
                   parameters[ name ]        = a.value( "filename" ).toString();
+if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
                }
                else if ( name == "bucket_fixed" )
                {
@@ -295,6 +296,12 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
       {
          a                    = xml.attributes();
          dataset->viscosity   = a.value( "value" ).toString().toDouble();
+      }
+
+      if ( xml.name() == "compress" )
+      {
+         a                    = xml.attributes();
+         dataset->compress    = a.value( "value" ).toString().toDouble();
       }
 
       if ( xml.name() == "rotor_stretch" )
@@ -408,6 +415,7 @@ void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml,
          QXmlStreamAttributes a        = xml.attributes();
          dataset->density   = a.value( "density"   ).toString().toDouble();
          dataset->viscosity = a.value( "viscosity" ).toString().toDouble();
+         dataset->compress  = a.value( "compress"  ).toString().toDouble();
          dataset->manual    = a.value( "manual"    ).toString().toInt();
       }
 

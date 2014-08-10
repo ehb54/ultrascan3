@@ -554,33 +554,40 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
                                    US_Model::AnalysisType         type,
                                    bool                           glob_sols )
 {
-   US_DataIO::EditedData* data = &data_sets[ current_dataset ]->run_data;
+   US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
 
    // Fill in and write out the model file
    US_Model model;
 
+DbgLv(1) << "wrMo: type" << type << "(DMGA)" << US_Model::DMGA;
+   if ( type == US_Model::DMGA )
+   {  // For discrete GA, get the already constructed model
+      model             = data_sets[ 0 ]->model;
+DbgLv(1) << "wrMo:  model comps" << model.components.size();
+   }
+
    model.monteCarlo  = mc_iterations > 1;
-   model.wavelength  = data->wavelength.toDouble();
+   model.wavelength  = edata->wavelength.toDouble();
    model.modelGUID   = US_Util::new_guid();
-   model.editGUID    = data->editGUID;
+   model.editGUID    = edata->editGUID;
    model.requestGUID = requestGUID;
-   model.dataDescrip = data->description;
+   model.dataDescrip = edata->description;
    //model.optics      = ???  How to get this?  Is is needed?
    model.analysis    = type;
-   QString runID     = data->runID;
+   QString runID     = edata->runID;
 
    if ( meniscus_points > 1 ) 
-      model.global = US_Model::MENISCUS;
+      model.global      = US_Model::MENISCUS;
 
    else if ( data_sets.size() > 1 )
    {
-      model.global = US_Model::GLOBAL;
+      model.global      = US_Model::GLOBAL;
       if ( glob_sols )
-         runID        = "Global-" + runID;
+         runID             = "Global-" + runID;
    }
 
    else
-      model.global = US_Model::NONE; 
+      model.global      = US_Model::NONE; 
 
    model.meniscus    = meniscus_value;
    model.variance    = sim.variance;
@@ -598,8 +605,8 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
    //      
    //       recordType: ri_noise, ti_noise, model
 
-   QString tripleID = data->cell + data->channel + data->wavelength;
-   QString dates    = "e" + data->editID + "_a" + analysisDate;
+   QString tripleID = edata->cell + edata->channel + edata->wavelength;
+   QString dates    = "e" + edata->editID + "_a" + analysisDate;
 DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
 
    QString iterID;
@@ -620,37 +627,41 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
    int     stype     = data_sets[ current_dataset ]->solute_type;
    double  vbar20    = data_sets[ current_dataset ]->vbar20;
-DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
- << "attr_z vbar20 sol0.v" << attr_z << vbar20 << sim.solutes[0].v;
 
    model.description = runID + "." + tripleID + "." + analyID + ".model";
 DbgLv(1) << "wrMo: model descr" << model.description;
 
    // Save as class variable for later reference
-   modelGUID = model.modelGUID;
+   modelGUID         = model.modelGUID;
 
-   for ( int i = 0; i < sim.solutes.size(); i++ )
-   {
-      const US_Solute* solute = &sim.solutes[ i ];
+   if ( type != US_Model::DMGA )
+   {  // For non-DMGA, construct the model from solutes
+      for ( int i = 0; i < sim.solutes.size(); i++ )
+      {
+         const US_Solute* solute = &sim.solutes[ i ];
 
-      US_Model::SimulationComponent component;
-      component.s                    = solute->s;
-      component.f_f0                 = solute->k;
-      component.signal_concentration = solute->c;
-      component.name                 = QString().sprintf( "SC%04d", i + 1 );
-      component.vbar20               = (attr_z == ATTR_V) ? vbar20 : solute->v;
+         US_Model::SimulationComponent component;
+         component.s                    = solute->s;
+         component.f_f0                 = solute->k;
+         component.signal_concentration = solute->c;
+         component.name                 = QString().sprintf( "SC%04d", i + 1 );
+         component.vbar20               = (attr_z == ATTR_V) ? vbar20 : solute->v;
 
-      US_Model::calc_coefficients( component );
-      model.components << component;
+         US_Model::calc_coefficients( component );
+         model.components << component;
+      }
    }
+DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
+ << "attr_z vbar20 mco0.v" << attr_z << vbar20 << model.components[0].vbar20;
 
-   QString fn = data->runID + "." + id + "." + model.modelGUID + ".xml";
-   int lenfn  = fn.length();
+   QString fn        = edata->runID + "." + id + "." + model.modelGUID + ".xml";
+   int lenfn         = fn.length();
+
    if ( lenfn > 99 )
    { // Insure a model file name less than 100 characters in length (tar limit)
-      int lenri  = data->runID.length() + 99 - lenfn;
-      fn         = data->runID.left( lenri )
-                   + "." + id + "." + model.modelGUID + ".xml";
+      int lenri         = edata->runID.length() + 99 - lenfn;
+      fn                = edata->runID.left( lenri )
+                          + "." + id + "." + model.modelGUID + ".xml";
    }
 
    model.write( fn );                // Output the model to a file
@@ -658,15 +669,15 @@ DbgLv(1) << "wrMo: model descr" << model.description;
    data_sets[ current_dataset ]->model = model;    // Save the model in case needed for noise
 
    // Add the file name of the model file to the output list
-   QFile f( "analysis_files.txt" );
+   QFile fileo( "analysis_files.txt" );
 
-   if ( ! f.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append ) )
+   if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append ) )
    {
       abort( "Could not open 'analysis_files.txt' for writing" );
       return;
    }
 
-   QTextStream out( &f );
+   QTextStream tsout( &fileo );
 
    QString meniscus = QString::number( meniscus_value, 'e', 4 );
    QString variance = QString::number( sim.variance,   'e', 4 );
@@ -675,17 +686,17 @@ DbgLv(1) << "wrMo: model descr" << model.description;
    mc_iter     = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
 
    if ( meniscus_run > 0 ) 
-       run = meniscus_run + 1;
+       run        = meniscus_run + 1;
    else if ( mc_iterations > 0 )
-       run = mc_iter;
+       run        = mc_iter;
 
    QString runstring = "Run: " + QString::number( run ) + " " + tripleID;
 
-   out << fn << ";meniscus_value=" << meniscus_value
-             << ";MC_iteration="   << mc_iter
-             << ";variance="       << sim.variance
-             << ";run="            << runstring
-             << "\n";
-   f.close();
+   tsout << fn << ";meniscus_value=" << meniscus_value
+               << ";MC_iteration="   << mc_iter
+               << ";variance="       << sim.variance
+               << ";run="            << runstring
+               << "\n";
+   fileo.close();
 }
 

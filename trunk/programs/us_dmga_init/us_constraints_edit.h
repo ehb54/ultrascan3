@@ -7,6 +7,7 @@
 #include "us_extern.h"
 #include "us_dmga_constr.h"
 #include "us_widgets_dialog.h"
+#include "us_help.h"
 #include "us_model.h"
 #include "us_predict1.h"
 #include "us_analyte_gui.h"
@@ -34,6 +35,8 @@ class US_ConstraintsEdit : public US_WidgetsDialog
    private:
       // Passed parameters
       US_Model&  cmodel;
+
+      US_Help    showhelp;
 
       US_dmGA_Constraints                        constraints;
 
@@ -167,5 +170,6 @@ class US_ConstraintsEdit : public US_WidgetsDialog
       void float_par( bool, QLineEdit*, QLineEdit*, QLineEdit* );
       void check_value( const US_dmGA_Constraints::Constraint,
                         QLineEdit*, QLineEdit*, QLineEdit* );
+      void help( void ){ showhelp.show_help( "dmga_init_constr.html" ); };
 };
 #endif

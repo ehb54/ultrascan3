@@ -7,35 +7,63 @@ void US_MPI_Analysis::dmga_master( void )
 {
    current_dataset     = 0;
    datasets_to_process = data_sets.size();
-if(my_rank>=0)
-abort("DMGA_MASTER not yet implemented");
+//if(my_rank>=0)
+//abort("DMGA_MASTER not yet implemented");
    max_depth           = 0;
    calculated_solutes.clear();
 
    // Set noise and debug flags
-   simulation_values.noisflag   = parameters[ "tinoise_option" ].toInt() > 0 ?
-                                  1 : 0;
-   simulation_values.noisflag  += parameters[ "rinoise_option" ].toInt() > 0 ?
-                                  2 : 0;
+   simulation_values.noisflag   = 0;
    simulation_values.dbg_level  = dbg_level;
    simulation_values.dbg_timing = dbg_timing;
 DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
+   if ( data_sets.size() == 1 )
+   {
+      US_AstfemMath::initSimData( simulation_values.sim_data,
+                                  data_sets[ 0 ]->run_data, 0.0 );
+      US_AstfemMath::initSimData( simulation_values.residuals,
+                                  data_sets[ 0 ]->run_data, 0.0 );
+   }
+   else
+   {
+      int ntscan        = data_sets[ 0 ]->run_data.scanCount();
+      for ( int ii = 1; ii < data_sets.size(); ii++ )
+         ntscan           += data_sets[ ii ]->run_data.scanCount();
+      simulation_values.sim_data .scanData.resize( ntscan );
+      simulation_values.residuals.scanData.resize( ntscan );
+   }
+
    // Initialize best fitness
-   best_genes  .reserve( gcores_count );
+   best_dgenes .reserve( gcores_count );
    best_fitness.reserve( gcores_count );
+
+   // Read in the constraints model and build constraints
+   QString cmfname  = "../" + parameters[ "DC_model" ];
+   wmodel.load( cmfname );                  // Load the constraints model
+   constraints.load_constraints( &wmodel ); // Build the constraints object
+   constraints.get_work_model  ( &wmodel ); // Get the base work model
+DbgLv(1) << "dmga_master: cmfname" << cmfname;
+DbgLv(1) << "dmga_master: wmodel #comps" << wmodel.components.size();
 
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
-
-   Gene working_gene( buckets.count(), US_Solute() );
+   dgene                 = wmodel;
+   nfloatc               = constraints.float_constraints( &cns_flt );
+   nfvari                = ( 1 << nfloatc ) - 1;
+   dgmarker.resize( nfloatc );
+   dgmsize               = nfloatc * sizeof( double );
+   do_astfem             = ( wmodel.components[ 0 ].sigma == 0.0  &&
+                             wmodel.components[ 0 ].delta == 0.0  &&
+                             wmodel.coSedSolute < 0  &&
+                             data_sets[ 0 ]->compress == 0.0 );
 
    // Initialize arrays
-   for ( int i = 0; i < gcores_count; i++ )
+   for ( int ii = 0; ii < gcores_count; ii++ )
    {
-      best_genes << working_gene;
+      best_dgenes << dgene;
 
-      empty_fitness.index = i;
+      empty_fitness.index = ii;
       best_fitness << empty_fitness;
    }
 
@@ -44,71 +72,36 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    // Handle Monte Carlo iterations.  There will always be at least 1.
    while ( true )
    {
+      // Compute all generations of an MC iteration
+
       dmga_master_loop();
 
+      // Get the best-fit gene
+
       qSort( best_fitness );
-      simulation_values.solutes = best_genes[ best_fitness[ 0 ].index ];
-      int nisols      = simulation_values.solutes.size();
-DbgLv(1) << "GaMast: sols size" << nisols << "buck size" << buckets.size()
- << "dset size" << data_sets.size();
-DbgLv(1) << "GaMast:  sol0.s .k .v .d" << simulation_values.solutes[0].s
- << simulation_values.solutes[0].k << simulation_values.solutes[0].v
- << simulation_values.solutes[0].d;
+DbgLv(1) << "GaMast: EOML: fitness sorted  bfx" << best_fitness[0].index
+         << "bestdg size" << best_dgenes.size();
+      dgene   = best_dgenes[ best_fitness[ 0 ].index ];
 
-      solutes_from_gene( simulation_values.solutes, nisols );
-DbgLv(1) << "GaMast:   osol0.s .k .v .d" << simulation_values.solutes[0].s
- << simulation_values.solutes[0].k << simulation_values.solutes[0].v
- << simulation_values.solutes[0].d;
+      // Compute the variance (fitness) for the final best-fit model
 
-      calc_residuals( 0, data_sets.size(), simulation_values );
-DbgLv(1) << "GaMast:    calc_resids return - calcsize vari"
- << simulation_values.solutes.size() << simulation_values.variance;
-DbgLv(1) << "GaMast:    csol0.s .k .v .d" << simulation_values.solutes[0].s
- << simulation_values.solutes[0].k << simulation_values.solutes[0].v
- << simulation_values.solutes[0].d;
+DbgLv(1) << "GaMast: EOML: call calc_residuals";
+      calc_residuals_dmga( 0, data_sets.size(), simulation_values, dgene );
+DbgLv(1) << "GaMast: EOML: variance" << simulation_values.variance;
 
-      qSort( simulation_values.solutes );
-
-      // Convert given solute points to s,k for model output
-      double vbar20  = data_sets[ 0 ]->vbar20;
-      QList< int > attrxs;
-      attrxs << attr_x << attr_y << attr_z;
-      bool   have_s  = ( attrxs.indexOf( ATTR_S ) >= 0 );
-      bool   have_k  = ( attrxs.indexOf( ATTR_K ) >= 0 );
-      bool   have_w  = ( attrxs.indexOf( ATTR_W ) >= 0 );
-      bool   have_d  = ( attrxs.indexOf( ATTR_D ) >= 0 );
-      bool   have_f  = ( attrxs.indexOf( ATTR_F ) >= 0 );
-      bool   vary_v  = ( attr_z != ATTR_V );
-
-      for ( int gg = 0; gg < simulation_values.solutes.size(); gg++ )
-      {
-         US_Solute* solu   = &simulation_values.solutes[ gg ];
-         US_Model::SimulationComponent mcomp;
-         mcomp.s        = have_s ? solu->s : 0.0;
-         mcomp.f_f0     = have_k ? solu->k : 0.0;
-         mcomp.mw       = have_w ? solu->d : 0.0;
-         mcomp.vbar20   = vary_v ? solu->v : vbar20;
-         mcomp.D        = have_d ? solu->d : 0.0;
-         mcomp.f        = have_f ? solu->d : 0.0;
-
-         US_Model::calc_coefficients( mcomp );
-
-         solu->s        = mcomp.s;
-         solu->k        = mcomp.f_f0;
-         solu->v        = mcomp.vbar20;
-      }
-         
-      calculated_solutes.clear();
-      calculated_solutes << simulation_values.solutes;
+      // Output the model
 
       if ( data_sets.size() == 1 )
-      {
+      {  // Output the single-data model
+DbgLv(1) << "GaMast: EOML: CALL write_output";
          write_output();
       }
       else
-      {
+      {  // Output the global model
          write_global();
       }
+
+      // Handle any MonteCarlo iteration logic
 
 DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
       mc_iteration++;
@@ -127,7 +120,7 @@ DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
             time_mc_iterations();
 
 DbgLv(1) << "GaMast:    set_gaMC call";
-            set_gaMonteCarlo();
+            set_dmgaMonteCarlo();
 DbgLv(1) << "GaMast:    set_gaMC  return";
          }
          else
@@ -158,8 +151,6 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
 
 void US_MPI_Analysis::dmga_master_loop( void )
 {
-//   static const double fit_div        = 1.0e-9;
-//   static const double fit_mul        = 1.0e+9;
    static const double DIGIT_FIT      = 1.0e+4;
    static const int    max_same_count = my_workers * 5;
    static const int    min_generation = 10;
@@ -179,14 +170,14 @@ DbgLv(1) << "dmga_master start loop:  gcores_count fitsize" << gcores_count
       best_fitness[ i ].index   = i;
    }
 
-   QList  < Gene > emigres;      // Holds genes passed as emmigrants
-   QVector< int  > v_generations( gcores_count, 0 ); 
-   int             sum = 0;
-   int             avg = 0;
-   long            rsstotal = 0L;
-   double          fit_power      = 5;
-   double          fit_digit      = 1.0e4;
-   double          fitness_round  = 1.0e5;
+   QList  < DGene > emigres;     // Holds genes passed as emmigrants
+   QVector< int   > v_generations( gcores_count, 0 ); 
+   int    sum      = 0;
+   int    avg      = 0;
+   long   rsstotal = 0L;
+   double fit_power      = 5;
+   double fit_digit      = 1.0e4;
+   double fitness_round  = 1.0e5;
 
 
    while ( workers > 0 )
@@ -204,9 +195,6 @@ DbgLv(1) << "dmga_master start loop:  gcores_count fitsize" << gcores_count
                 &status );
 
       worker = status.MPI_SOURCE;
-
-QString g;
-QString s;
 
       max_rss();
 
@@ -246,14 +234,19 @@ QString s;
             }
 
             // Get the best gene for the current generation from the worker
-            MPI_Recv( best_genes[ worker ].data(),     // MPI #2
-                      buckets.size() * solute_doubles,
+DbgLv(1) << "  MAST: work" << worker << "Recv#2 dgmsize" << dgmsize;
+            MPI_Recv( dgmarker.data(),                 // MPI #2
+                      dgmsize,
                       MPI_DOUBLE,  
                       worker,
                       GENE,
                       my_communicator,
                       MPI_STATUS_IGNORE );
 
+DbgLv(1) << "  MAST: work" << worker << " dgm size" << dgmarker.size()
+         << "bestdg size" << best_dgenes.size();
+            dgene_from_marker( dgmarker, dgene );
+            best_dgenes[ worker ]  = dgene;
             max_rss();
 
             // Compute a current-deme best fitness value that is rounded
@@ -269,10 +262,7 @@ DbgLv(1) << "  MAST: work" << worker << "fit msg,round,bestw,besto"
             // Set deme's best fitness
             if ( fitness_round < best_fitness[ worker ].fitness )
                best_fitness[ worker ].fitness = fitness_round;
-g = "";
-for ( int i = 0; i < buckets.size(); i++ )
-  g += s.sprintf( "(%.3f,%.3f)", best_genes[ worker ][ i ].s, best_genes[ worker ][ i ].k);
-DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << g;
+DbgLv(1) << "master: worker/fitness/best gene" << worker <<  msg.fitness << dgene_key( best_dgenes[worker] );
 
             if ( ! early_termination )
             {  // Handle normal pre-early-termination updates
@@ -310,7 +300,8 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
  << " early_term?" << early_termination;
 
             // Tell the worker to either stop or continue
-            tag = early_termination ? FINISHED : GENERATION; 
+            tag            = early_termination ? FINISHED : GENERATION; 
+DbgLv(1) << "dgmast: Send#3 tag" << tag << "( FINISHED,GENERATION" << FINISHED << GENERATION << " )";
 
             MPI_Send( &msg,            // MPI #3
                       0,               // Only interested in the tag 
@@ -321,17 +312,18 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
             break;
 
          case FINISHED:
+DbgLv(1) << "dgmast: Recv FINISH msg.size rsstotal" << msg.size << rsstotal;
             rsstotal += (long)msg.size;
             workers--;
             break;
 
          case EMMIGRATE:
          {
-            // First get a set of genes as a concatenated vector.  
-            int               gene_count    = msg.size;
-            int               doubles_count = gene_count * buckets.size() * 
-                                              solute_doubles;
+            // First get a set of genes as a concatenated marker vector.
+            int gene_count    = msg.size;
+            int doubles_count = gene_count * nfloatc;
             QVector< double > emmigrants( doubles_count ) ;
+DbgLv(1) << "dgmast: Recv#4 EMMIG: gene_count doubles_count" << gene_count << doubles_count;
 
             MPI_Recv( emmigrants.data(),  // MPI #4
                       doubles_count,
@@ -342,23 +334,11 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
                       MPI_STATUS_IGNORE );
 
             // Add the genes to the emmigres list
-            int solute = 0;
-            int solinc = solute_doubles - 2;
+            int emgx          = emigres.size();
+DbgLv(1) << "dgmast: Recv#4 EMMIG: emgx" << emgx;
+            marker_to_dgenes( emmigrants, emigres, emgx, gene_count );
+DbgLv(1) << "dgmast: Recv#4 EMMIG: emigres size" << emigres.size();
 
-            for ( int i = 0; i < gene_count; i++ )
-            {
-               Gene gene;
-
-               for ( int b = 0; b < buckets.size(); b++ )
-               {
-                  double s = emmigrants[ solute++ ];
-                  double k = emmigrants[ solute++ ];
-                  gene << US_Solute( s, k );
-                  solute  += solinc; // Concentration, Vbar, DiffCoeff
-               }
-
-               emigres << gene;
-            }
 //*DEBUG*
 //if(emigres[0][0].s<0.0)
 // DbgLv(0) << "MAST: **GENE s" << emigres[0][0].s << " Emigrant";
@@ -370,14 +350,28 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
             if ( emigres.size() < gene_count * 5 ) doubles_count = 0;
 
             // Get immigrants from emmigres
-            QVector< US_Solute > immigrants;
+            QVector< double > immigrants;
+            dgmarker.resize( nfloatc );
 
             if ( doubles_count > 0 )
             {
-               // Prepare a vector of concatenated genes from the emmigrant list
-               for ( int i = 0; i < gene_count; i++ )
-                  immigrants += emigres.takeAt( u_random( emigres.size() ) );
+               // Prepare a marker vector from the emmigrant list
+               for ( int ii = 0; ii < gene_count; ii++ )
+               {
+                  dgene       = emigres.takeAt( u_random( emigres.size() ) );
+
+                  marker_from_dgene( dgmarker, dgene );
+
+                  immigrants += dgmarker;
+               }
             }
+            else
+            {
+DbgLv(1) << "dgmast: Send#5 IMMIG: count==0 migr data" << immigrants.data();
+               immigrants.resize( 1 );
+            }
+DbgLv(1) << "dgmast: Send#5 IMMIG: immigrants size" << immigrants.size() << "doubles_count" << doubles_count
+         << "migr data" << immigrants.data();
 
             MPI_Send( immigrants.data(),   // MPI #5
                       doubles_count,
@@ -385,6 +379,7 @@ DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
                       worker,
                       IMMIGRATE,
                       my_communicator );
+DbgLv(1) << "dgmast:   Send#5 IMMIG: complete";
 //*DEBUG*
 //if(immigrants[0].s<0.0)
 // DbgLv(0) << "MAST: **GENE s" << immigrants[0].s << " Immigrant-to-send";
@@ -476,6 +471,7 @@ void US_MPI_Analysis::dmga_global_fit( void )
    }
 }
 
+// Set up next MonteCarlo iteration for dmGA
 void US_MPI_Analysis::set_dmgaMonteCarlo( void ) 
 {
 DbgLv(1) << "sgMC: mciter" << mc_iteration;
@@ -550,5 +546,188 @@ DbgLv(1) << "sgMC: MPI Bcast";
               MPI_DOUBLE, 
               MPI_Job::MASTER, 
               my_communicator );
+}
+
+// Get a marker vector of doubles from a dmga gene (model)
+void US_MPI_Analysis::marker_from_dgene( QVector< double >& dgm, DGene& dg )
+{
+   // Fetch the current value for each floating attribute and store in marker
+   for ( int ii = 0; ii < nfloatc; ii++ )
+   {
+      fetch_attr_value( dgm[ ii ], dg, cns_flt[ ii ].atype,
+                        cns_flt[ ii ].mcompx );
+   }
+}
+
+// Get a dmga gene (model) from a marker vector of doubles
+void US_MPI_Analysis::dgene_from_marker( QVector< double >& dgm, DGene& dg )
+{
+   // Initial gene is the base work model
+   dg          = wmodel;
+
+   // Store the current value for each floating attribute into the gene
+   for ( int ii = 0; ii < nfloatc; ii++ )
+   {
+      store_attr_value( dgm[ ii ], dg, cns_flt[ ii ].atype,
+                        cns_flt[ ii ].mcompx );
+   }
+}
+
+// Get a marker vector of doubles from multiple dmga genes (models)
+void US_MPI_Analysis::dgenes_to_marker( QVector< double >& dgm,
+      QList< DGene >& dgenes, const int stgx, const int ngenes )
+{
+   int mx       = 0;            // Initial marker index
+   int gx       = stgx;         // Initial genes index
+   DGene wkgene = wmodel;       // Base gene
+
+   for ( int kg = 0; kg < ngenes; kg++ )
+   {  // Fetch each gene and store its float attribute values
+      wkgene        = dgenes[ gx++ ];
+
+      for ( int ii = 0; ii < nfloatc; ii++ )
+      {  // Fetch each gene float attribute value into the marker vector
+         fetch_attr_value( dgm[ mx++ ], wkgene, cns_flt[ ii ].atype,
+                           cns_flt[ ii ].mcompx );
+      }
+   }
+}
+
+// Get multiple dmga genes (models) from a marker vector of doubles
+void US_MPI_Analysis::marker_to_dgenes( QVector< double >& dgm,
+      QList< DGene >& dgenes, const int stgx, const int ngenes )
+{
+   int mx       = 0;               // Initial marker index
+   int gx       = stgx;            // Initial genes index
+   int igsize   = dgenes.size();   // Initial genes list size
+   DGene wkgene = wmodel;          // Base gene
+
+   for ( int kg = 0; kg < ngenes; kg++ )
+   {  // Build and store each gene
+
+      for ( int ii = 0; ii < nfloatc; ii++, gx++ )
+      {  // Store each float attribute value into the gene
+         store_attr_value( dgm[ mx++ ], wkgene, cns_flt[ ii ].atype,
+                           cns_flt[ ii ].mcompx );
+      }
+
+      if ( gx >= igsize )
+      {
+         dgenes << wkgene;         // Append the constructed gene
+         igsize++;
+      }
+      else
+         dgenes[ gx ] = wkgene;    // Store the constructed gene
+   }
+}
+
+// Store a component/association attribute value
+bool US_MPI_Analysis::store_attr_value( double& aval, US_Model& model,
+      US_dmGA_Constraints::AttribType& atype, int& mcompx )
+{
+   bool is_ok  = true;
+   US_Model::SimulationComponent* sc = NULL;
+   US_Model::Association*         as = NULL;
+
+   if ( atype < US_dmGA_Constraints::ATYPE_KD )
+      sc  = &model.components  [ mcompx ];
+   else
+      as  = &model.associations[ mcompx ];
+
+   switch( atype )
+   {
+      case US_dmGA_Constraints::ATYPE_S:
+         sc->s                    = aval;
+         break;
+      case US_dmGA_Constraints::ATYPE_FF0:
+         sc->f_f0                 = aval;
+         break;
+      case US_dmGA_Constraints::ATYPE_MW:
+         sc->mw                   = aval;
+         break;
+      case US_dmGA_Constraints::ATYPE_D:
+         sc->D                    = aval;
+         break;
+      case US_dmGA_Constraints::ATYPE_F:
+         sc->f                    = aval;
+         break;
+      case US_dmGA_Constraints::ATYPE_VBAR:
+         sc->vbar20               = aval;
+         break;
+      case US_dmGA_Constraints::ATYPE_CONC:
+         sc->signal_concentration = aval;
+         if ( sc->extinction != 0.0 )
+            sc->molar_concentration  = aval / sc->extinction;
+         break;
+      case US_dmGA_Constraints::ATYPE_EXT:
+         sc->extinction           = aval;
+         if ( aval != 0.0 )
+            sc->molar_concentration  = sc->signal_concentration / aval;
+         break;
+      case US_dmGA_Constraints::ATYPE_KD:
+         as->k_d                  = aval;
+         break;
+      case US_dmGA_Constraints::ATYPE_KOFF:
+         as->k_off                = aval;
+         break;
+      default:
+         is_ok    = false;
+         break;
+   }
+
+   return is_ok;
+}
+
+// Fetch a component/association attribute value
+bool US_MPI_Analysis::fetch_attr_value( double& aval, US_Model& model,
+      US_dmGA_Constraints::AttribType& atype, int& mcompx )
+{
+   bool is_ok  = true;
+   US_Model::SimulationComponent* sc = NULL;
+   US_Model::Association*         as = NULL;
+
+   if ( atype < US_dmGA_Constraints::ATYPE_KD )
+      sc  = &model.components  [ mcompx ];
+   else
+      as  = &model.associations[ mcompx ];
+
+   switch( atype )
+   {
+      case US_dmGA_Constraints::ATYPE_S:
+         aval    = sc->s;
+         break;
+      case US_dmGA_Constraints::ATYPE_FF0:
+         aval    = sc->f_f0;
+         break;
+      case US_dmGA_Constraints::ATYPE_MW:
+         aval    = sc->mw;
+         break;
+      case US_dmGA_Constraints::ATYPE_D:
+         aval    = sc->D;
+         break;
+      case US_dmGA_Constraints::ATYPE_F:
+         aval    = sc->f;
+         break;
+      case US_dmGA_Constraints::ATYPE_VBAR:
+         aval    = sc->vbar20;
+         break;
+      case US_dmGA_Constraints::ATYPE_CONC:
+         aval    = sc->signal_concentration;
+         break;
+      case US_dmGA_Constraints::ATYPE_EXT:
+         aval    = sc->extinction;
+         break;
+      case US_dmGA_Constraints::ATYPE_KD:
+         aval    = as->k_d;
+         break;
+      case US_dmGA_Constraints::ATYPE_KOFF:
+         aval    = as->k_off;
+         break;
+      default:
+         is_ok    = false;
+         break;
+   }
+
+   return is_ok;
 }
 
