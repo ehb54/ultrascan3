@@ -82,7 +82,8 @@ void US_MPI_Analysis::ga_worker( void )
          case FINISHED: 
             finished = true;
             DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
-               << fitness_hits << "fitness hits" << "  maxrss" << maxrss;
+               << fitness_hits << "fitness hits of" << fitness_count
+               << " fitness checks   maxrss" << maxrss;
             break;
 
          case UPDATE:   
@@ -179,7 +180,8 @@ void US_MPI_Analysis::ga_worker_loop( void )
    int deme_nbr    = my_rank - grp_nbr * gcores_count;
 
    fitness_map.clear();
-   fitness_hits = 0;
+   fitness_hits    = 0;
+   fitness_count   = 0;
 
    max_rss();
 
@@ -412,6 +414,7 @@ sim.dbg_level = qMax(0,dbg_level-1);
    sim.solutes = gene;
    qSort( sim.solutes );
 
+   fitness_count++;
    int     nisols = gene.size();
    QString key    = "";
    QString str;

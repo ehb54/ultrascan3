@@ -117,7 +117,8 @@ DbgLv(1) << my_rank << "dmgw: job offs count len" << dataset << count << length
          case FINISHED: 
             finished = true;
             DbgLv(0) << "    Deme" << grp_nbr << deme_nbr << ":"
-               << fitness_hits << "fitness hits" << "  maxrss" << maxrss;
+               << fitness_hits << "fitness hits of" << fitness_count
+               << "fitness checks   maxrss" << maxrss;
             break;
 
          case UPDATE:   
@@ -212,7 +213,8 @@ void US_MPI_Analysis::dmga_worker_loop( void )
    int deme_nbr    = my_rank - grp_nbr * gcores_count;
 
    fitness_map.clear();
-   fitness_hits = 0;
+   fitness_count   = 0;
+   fitness_hits    = 0;
 
    max_rss();
 
@@ -572,19 +574,410 @@ DbgLv(1) << my_rank << "dg:migrdg: immigres size" << immigres.size() << "doubles
    return mgenes_count;
 }
 
+// Get fitness from a vector  (used in inverse hessian)
+double US_MPI_Analysis::get_fitness_v_dmga( US_Vector& vv, US_Vector& zz )
+{
+   int vsize  = vv.size();
+   dgmarker.resize( vsize );
+
+   // Convert from US_Vector to Gene
+
+   for ( int ii = 0; ii < vsize; ii++ )
+   {  // De-normalize values and put into marker QVector<double>
+      dgmarker[ ii ]  = vv[ ii ] / zz[ ii ];
+   }
+
+   dgene_from_marker( dgmarker, dgene );
+
+   // Compute and return the fitness
+
+   return get_fitness_dmga( dgene );
+}
+
+// Compute a derivatives vector  (an inversion hessian step)
+void US_MPI_Analysis::lamm_gsm_df_dmga( US_Vector& vv, US_Vector& vd,
+                                        US_Vector& zz )
+{
+   static const double hh       = 0.01;
+   static const double h2_recip = 0.5 / hh;
+
+   // Work with a temporary vector
+   US_Vector tt = vv;
+
+   for ( int ii = 0; ii < tt.size(); ii++ )
+   {
+      double save = tt[ ii ];
+
+      tt.assign( ii, save - hh );
+      double y0   = get_fitness_v_dmga( tt, zz );  // Calc fitness value -h
+
+      tt.assign( ii, save + hh );
+      double y2   = get_fitness_v_dmga( tt, zz );  // Calc fitness value +h
+
+      vd.assign( ii, ( y2 - y0 ) * h2_recip );     // The derivative
+      tt.assign( ii, save );
+   }
+}
+
 // Find the minimum fitness value close to a discrete GA gene using
 //  inverse hessian minimization
 double US_MPI_Analysis::minimize_dmga( DGene& dgene, double fitness )
 {
-   double fitnout  = fitness;
-DbgLv(1) << "dg:minimize dgene comps" << dgene.components.size() << fitness;
-   return fitnout;
+DbgLv(1) << my_rank << "dg:IHM:minimize dgene comps" << dgene.components.size() << fitness;
+   int vsize     = nfloatc;
+   US_Vector vv( vsize );  // Input values
+   US_Vector uu( vsize );  // Vector of derivatives
+   US_Vector zz( vsize );  // Vector of normalizing factors
+
+   // Create hessian as identity matrix
+   QVector< QVector< double > > hessian( vsize );
+
+   for ( int ii = 0; ii < vsize; ii++ ) 
+   {
+      hessian[ ii ]       = QVector< double >( vsize, 0.0 );
+      hessian[ ii ][ ii ] = 1.0;
+   }
+
+   dgmarker.resize( vsize );
+   marker_from_dgene( dgmarker, dgene );
+
+   // Convert gene to array of normalized doubles and save normalizing factors
+   for ( int ii = 0; ii < vsize; ii++ )
+   {
+      double vval   = dgmarker[ ii ];
+      double vpwr   = (double)qFloor( log10( vval ) );
+      double vnorm  = pow( 10.0, -vpwr );
+      vv.assign( ii, vval * vnorm );
+      zz.assign( ii, vnorm );
+DbgLv(1) << my_rank << "dg:IHM:  ii" << ii << "vval vnorm" << vval << vnorm
+         << "vpwr" << vpwr << "vvi" << vv[ii];
+   }
+
+   lamm_gsm_df_dmga( vv, uu, zz );   // uu is vector of derivatives
+
+   static const double epsilon_f      = 1.0e-7;
+   static const int    max_iterations = 20;
+   int    iteration      = 0;
+   double epsilon        = epsilon_f * fitness * 4.0;
+   bool   neg_cnstr      = ( vv[ 0 ] < 0.1 );  // Negative constraint?
+
+   while ( uu.L2norm() >= epsilon_f  && iteration < max_iterations )
+   {
+      iteration++;
+      if ( fitness == 0.0 ) break;
+
+      US_Vector v_s1 = vv;
+      double g_s1    = fitness;
+      double s1      = 0.0;
+      double s2      = 0.5;
+      double s3      = 1.0;
+DbgLv(1) << my_rank << "dg:IHM:   iteration" << iteration << "fitness" << fitness;
+
+      // v_s2 = vv - uu * s2
+      US_Vector v_s2( vsize );
+      vector_scaled_sum( v_s2, uu, -s2, vv );
+
+      if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
+      {
+         v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+      }
+
+      double g_s2 = get_fitness_v_dmga( v_s2, zz );
+DbgLv(1) << my_rank << "dg:IHM: g_s2" << g_s2 << "s2" << s2 << "epsilon" << epsilon;
+
+      // Cut down until we have a decrease
+      while ( s2 > epsilon  &&  g_s2 > g_s1 )
+      {
+         s3  = s2;
+         s2 *= 0.5;
+         // v_s2 = vv - uu * s2
+         vector_scaled_sum( v_s2, uu, -s2, vv );
+
+         if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
+         {
+            v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+         }
+
+         g_s2 = get_fitness_v_dmga( v_s2, zz );
+      }
+DbgLv(1) << my_rank << "dg:IHM:  g_s2" << g_s2;
+
+      // Test for initial decrease
+      if ( s2 <= epsilon  ||  ( s3 - s2 ) < epsilon ) break;
+
+      US_Vector v_s3( vsize );
+
+      // v_s3 = vv - uu * s3
+      vector_scaled_sum( v_s3, uu, -s3, vv );
+
+      if ( neg_cnstr  &&  v_s3[ 0 ] < 0.1 )
+      {
+         v_s3.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+      }
+
+      double g_s3 = get_fitness_v_dmga( v_s3, zz );
+
+      int              reps     = 0;
+      static const int max_reps = 100;
+
+      while ( ( ( s2 - s1 ) > epsilon )  &&
+              ( ( s3 - s2 ) > epsilon )  &&
+              ( reps++ < max_reps ) )
+      {
+         double s1_s2 = 1.0 / ( s1 - s2 );
+         double s1_s3 = 1.0 / ( s1 - s3 );
+         double s2_s3 = 1.0 / ( s2 - s3 );
+
+         double s1_2 = sq( s1 );
+         double s2_2 = sq( s2 );
+         double s3_2 = sq( s3 );
+
+         double aa = ( ( g_s1 - g_s3 ) * s1_s3 -
+                       ( g_s2 - g_s3 ) * s2_s3
+                     ) * s1_s2;
+
+         double bb = ( g_s3 * ( s2_2 - s1_2 ) +
+                       g_s2 * ( s1_2 - s3_2 ) +
+                       g_s1 * ( s3_2 - s2_2 )
+                     ) *
+                     s1_s2 * s1_s3 * s2_s3;
+
+         static const double max_a = 1.0e-25;
+
+         if ( qAbs( aa ) < max_a )
+         {
+            // Restore gene from array of normalized doubles
+            for ( int ii = 0; ii < vsize; ii++ )
+            {
+               dgmarker[ ii ] = vv[ ii ] / zz[ ii ];
+            }
+
+            dgene_from_marker( dgmarker, dgene );
+
+            return fitness;
+         }
+
+         double xx        = -bb / ( 2.0 * aa );
+         double prev_g_s2 = g_s2;
+
+         if ( xx < s1 )
+         {
+            if ( xx < ( s1 + s1 - s2 ) ) // Keep it close
+            {
+               xx = s1 + s1 - s2;             // xx <- s1 + ds
+               if ( xx < 0 ) xx = s1 / 2.0;
+            }
+
+            if ( xx < 0 )  //  Wrong direction!
+            {
+               if ( s1 < 0 ) s1 = 0.0;
+               xx = 0;
+            }
+
+            // OK, take xx, s1, s2 
+            v_s3  = v_s2;
+            g_s3  = g_s2;                  // 3 <- 2
+            s3    = s2;
+            v_s2  = v_s1;
+            g_s2  = g_s1;
+            s2    = s1;                    // 2 <- 1
+            s1    = xx;                    // 1 <- xx
+ 
+            // v_s1 = vv - uu * s1
+            vector_scaled_sum( v_s1, uu, -s1, vv );
+ 
+            if ( neg_cnstr  &&  v_s1[ 0 ] < 0.1 )
+            {
+               v_s1.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+            }
+
+            g_s1 = get_fitness_v_dmga( v_s1, zz ); 
+         }
+         else if ( xx < s2 ) // Take s1, xx, s2
+         {
+            v_s3  = v_s2;
+            g_s3  = g_s2;             // 3 <- 2
+            s3    = s2;
+            s2    = xx;               // 2 <- xx
+
+            // v_s2 = vv - uu * s2
+            vector_scaled_sum( v_s2, uu, -s2, vv );
+
+            if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
+            {
+               v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+            }
+
+            g_s2 = get_fitness_v_dmga( v_s2, zz );
+         }
+         else if ( xx < s3 )  // Take s2, xx, s3
+         {
+            v_s1  = v_s2;
+            g_s1  = g_s2;
+            s1    = s2;              // 2 <- 1
+            s2    = xx;              // 2 <- xx
+
+            // v_s2 = vv - uu * s2
+            vector_scaled_sum( v_s2, uu, -s2, vv );
+
+            if ( neg_cnstr  &&  v_s2[ 0 ] < 0.1 )
+            {
+               v_s2.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+            }
+
+            g_s2 = get_fitness_v_dmga( v_s2, zz );
+         }
+         else  // xx >= s3
+         {
+            if ( xx > ( s3 + s3 - s2 ) ) // if xx > s3 + ds/2
+            { 
+               // v_s4 = vv - uu * xx
+               US_Vector v_s4( vsize );
+               vector_scaled_sum( v_s4, uu, -xx, vv );
+
+               if ( neg_cnstr  &&  v_s4[ 0 ] < 0.1 )
+               {
+                  v_s4.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+               }
+
+               double g_s4 = get_fitness_v_dmga( v_s4, zz );
+
+               if ( g_s4 > g_s2  &&  g_s4 > g_s3  &&  g_s4 > g_s1 ) 
+               {
+                  xx = s3 + s3 - s2;   // xx = s3 + ds/2
+               }
+            }
+
+            // Take s2, s3, xx 
+            v_s1  = v_s2;
+            g_s1  = g_s2;            // 1 <- 2
+            s1    = s2;
+            v_s2  = v_s3;
+            g_s2  = g_s3;
+            s2    = s3;              // 2 <- 3
+            s3    = xx;              // 3 <- xx
+
+            // v_s3 = vv - uu * s3
+            vector_scaled_sum( v_s3, uu, -s3, vv );
+
+            if ( neg_cnstr  &&  v_s3[ 0 ] < 0.1 )
+            {
+               v_s3.assign( 0, 0.1 + u_random( 100 ) * 0.001 );
+            }
+
+            g_s3 = get_fitness_v_dmga( v_s3, zz );
+         }
+
+         if ( qAbs( prev_g_s2 - g_s2 ) < epsilon ) break;
+      }  // end of inner loop
+
+      US_Vector v_p( vsize );
+
+      if ( g_s2 < g_s3  &&  g_s2 < g_s1 )
+      {
+         v_p     = v_s2;
+         fitness = g_s2;
+      }
+      else if ( g_s1 < g_s3 )
+      {
+         v_p     = v_s1;
+         fitness = g_s1;
+      }
+      else
+      {
+         v_p     = v_s3;
+         fitness = g_s3;
+      }
+      
+      US_Vector v_g( vsize );            // Vector of derivatives
+      lamm_gsm_df_dmga( v_p, v_g, zz );  // New gradient in v_g (old in uu) 
+
+      US_Vector v_dx( vsize );
+      // v_dx = v_p - vv
+      vector_scaled_sum( v_dx, vv, -1.0, v_p );
+
+
+      vv = v_p;                      // vv   = v_p
+
+      // dgradient  v_dg = v_g - uu
+      US_Vector v_dg( vsize );
+      vector_scaled_sum( v_dg, uu, -1.0, v_g );
+
+      US_Vector v_hdg( vsize );
+
+      // v_hdg = hessian * v_dg ( matrix * vector )
+      for ( int ii = 0; ii < vsize; ii++ )
+      {
+         double dotprod = 0.0;
+
+         for ( int jj = 0; jj < vsize; jj++ )
+            dotprod += ( hessian[ ii ][ jj ] * v_dg[ jj ] );
+
+         v_hdg.assign( ii, dotprod );
+      }
+
+      double fac   = v_dg.dot( v_dx  );
+      double fae   = v_dg.dot( v_hdg );
+      double sumdg = v_dg.dot( v_dg  );
+      double sumxi = v_dx.dot( v_dx  );
+
+      if ( fac > sqrt( epsilon * sumdg * sumxi ) )
+      {
+         fac        = 1.0 / fac;
+         double fad = 1.0 / fae;
+
+         for ( int ii = 0; ii < vsize; ii++ )
+         {
+            v_dg.assign( ii, fac * v_dx[ ii ] - fad * v_hdg[ ii ] );
+         }
+
+         for ( int ii = 0; ii < vsize; ii++ )
+         {
+            for ( int jj = ii; jj < vsize; jj++ )
+            {
+               hessian[ ii ][ jj ] +=
+                  fac * v_dx [ ii ] * v_dx [ jj ] -
+                  fad * v_hdg[ ii ] * v_hdg[ jj ] +
+                  fae * v_dg [ ii ] * v_dg [ jj ];
+
+                 // It's a symmetrical matrix
+                 hessian[ jj ][ ii ] = hessian[ ii ][ jj ];
+            }
+         }
+      }
+
+      // uu = hessian * v_g ( matrix * vector )
+      for ( int ii = 0; ii < vsize; ii++ )
+      {
+         double dotprod = 0.0;
+
+         for ( int jj = 0; jj < vsize; jj++ )
+            dotprod    += ( hessian[ ii ][ jj ] * v_g[ jj ] );
+
+         uu.assign( ii, dotprod );
+      }
+
+   }  // end while ( uu.L2norm() > epsilon )
+
+   // Restore gene from array of normalized doubles
+   for ( int ii = 0; ii < vsize; ii++ )
+   {
+      dgmarker[ ii ] = vv[ ii ] / zz[ ii ];
+DbgLv(1) << my_rank << "dg:IHM: ii" << ii << "vvi zzi dgmi"
+         << vv[ii] << zz[ii] << dgmarker[ii];
+   }
+
+   dgene_from_marker( dgmarker, dgene );
+DbgLv(1) << my_rank << "dg:IHM: FITNESS" << fitness;
+
+   return fitness;
 }
 
 // Get the fitness value for a discrete GA Gene
 double US_MPI_Analysis::get_fitness_dmga( DGene& dgene )
 {
    QString fkey    = dgene_key( dgene );   // Get an identifying key string
+   fitness_count++;
 
    if ( fitness_map.contains( fkey ) )
    {  // We already have a match to this key, so use its fitness value

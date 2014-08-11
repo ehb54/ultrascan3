@@ -44,6 +44,7 @@ void US_dmGA_Constraints::load_base_model( US_Model* bmodelP )
 {
    bmodel         = *bmodelP;
    cmodel         = bmodel;
+   dbg_level      = US_Settings::us_debug();
 
    constraints_from_base();    // Constraints from base model
    model_from_constraints();   // Constraints model from constraints
@@ -53,6 +54,7 @@ void US_dmGA_Constraints::load_base_model( US_Model* bmodelP )
 void US_dmGA_Constraints::load_constraints( US_Model* cmodelP )
 {
    cmodel         = *cmodelP;
+   dbg_level      = US_Settings::us_debug();
 
    constraints_from_model();   // Constraints from constraints model
    base_from_cmodel();         // Base from constraints model
@@ -136,6 +138,7 @@ DbgLv(1) << "dgC:upd_cns: nctot" << nctot;
 void US_dmGA_Constraints::load_constraints( QVector< Constraint >& cnsv )
 {
    attribs        = cnsv;        // Set new constraints vector
+   dbg_level      = US_Settings::us_debug();
 
 DbgLv(1) << "dgC:ld_cns: cnsvsz" << cnsv.size();
    model_from_constraints();     // Build the constraints model
@@ -144,6 +147,7 @@ DbgLv(1) << "dgC:ld_cns: cnsvsz" << cnsv.size();
 // Initialize the constraints vector
 void US_dmGA_Constraints::init_constraints()
 {
+   dbg_level      = US_Settings::us_debug();
    attribs.clear();              // Clear the constraints vector
 }
 
@@ -207,16 +211,19 @@ bool US_dmGA_Constraints::get_work_model( US_Model* wmodelP )
    {
       *wmodelP       = wmodel;
       is_ok          = true;
+DbgLv(1) << "dgC:GWM:  EXISTING wmodel";
    }
 
    else if ( cmodel.components.size() > 0 )
    {
+DbgLv(1) << "dgC:GWM:  CALL init_work_model";
       init_work_model();
 
       *wmodelP       = wmodel;
       is_ok          = true;
    }
 
+DbgLv(1) << "dgC:GWM: is_ok" << is_ok;
    return is_ok;
 }
 
@@ -1142,6 +1149,7 @@ bool US_dmGA_Constraints::init_work_model()
    int kfloat   = 0;              // Count of work model floats per attrib
    US_Model::SimulationComponent sc1, sc2;
    US_Model::Association         as1, as2;
+   dbg_level    = US_Settings::us_debug();
 
    if ( cmodel.components.size() < 1 )
    {
@@ -1158,12 +1166,15 @@ DbgLv(1) << "dgC:inwkmdl:  nbcomp nbassoc" << nbcomp << nbassoc;
 
    wmodel.components  .clear();
    wmodel.associations.clear();
+   int mcompx   = 0;              // Initial output comp/assoc index
 
    for ( int ii = 0; ii < cmodel.components.size(); ii++ )
    {
-      int kconstr  = comp_constraints( ii, &cnsv, &kfloat );
+      int kconstr  = comp_constraints( mcompx, &cnsv, &kfloat );
       sc1          = cmodel.components[ ii ];
       sc1.name     = QString( sc1.name ).mid( 5 );
+DbgLv(1) << "dgC:inwkmdl:   ii" << ii << "mcompx" << mcompx
+         << "kconstr kfloat" << kconstr << kfloat;
 
       if ( kfloat > 0 )
       {  // Floats:  loop to find values half-way through ranges
@@ -1192,12 +1203,17 @@ DbgLv(1) << "dgC:inwkmdl:  nbcomp nbassoc" << nbcomp << nbassoc;
          }
       }
 
+DbgLv(1) << "dgC:inwkmdl:     out sc1  xval0" << fetch_attrib(sc1,cnsv[0].atype)
+         << "mcompx" << mcompx;
       wmodel.components << sc1;
+      mcompx++;
    }
+
+   mcompx       = 0;
 
    for ( int ii = 0; ii < cmodel.associations.size(); ii += 2 )
    {
-      int kconstr  = assoc_constraints( ii, &cnsv, &kfloat );
+      int kconstr  = assoc_constraints( mcompx, &cnsv, &kfloat );
       as1          = cmodel.associations[ ii ];
 
       if ( kfloat > 0 )
@@ -1230,6 +1246,9 @@ DbgLv(1) << "dgC:inwkmdl:  nbcomp nbassoc" << nbcomp << nbassoc;
       }
 
       wmodel.associations << as1;
+DbgLv(1) << "dgC:inwkmdl:     out as1  xval0" << fetch_attrib(as1,cnsv[0].atype)
+         << "mcompx" << mcompx;
+      mcompx++;
    }
 
    if ( bmodel.components.size() == 0 )
