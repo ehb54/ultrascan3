@@ -385,8 +385,10 @@ class US_MPI_Analysis : public QObject
     void    mutate_dgene       ( DGene& );
     void    cross_dgene        ( DGene&, QList< DGene > );
     int     migrate_dgenes     ( void );
-    double  minimize_dmga      ( DGene&, double );
     double  get_fitness_dmga   ( DGene& );
+    double  get_fitness_v_dmga ( US_Vector&, US_Vector& );
+    void    lamm_gsm_df_dmga   ( US_Vector&, US_Vector&, US_Vector& );
+    double  minimize_dmga      ( DGene&, double );
     QString dgene_key          ( DGene& );
     void    calc_residuals_dmga( int, int, SIMULATION&, DGene& );
 

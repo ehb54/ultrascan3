@@ -43,8 +43,8 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    wmodel.load( cmfname );                  // Load the constraints model
    constraints.load_constraints( &wmodel ); // Build the constraints object
    constraints.get_work_model  ( &wmodel ); // Get the base work model
-DbgLv(1) << "dmga_master: cmfname" << cmfname;
-DbgLv(1) << "dmga_master: wmodel #comps" << wmodel.components.size();
+DbgLv(0) << "dmga_master: cmfname" << cmfname;
+DbgLv(0) << "dmga_master: wmodel #comps" << wmodel.components.size();
 
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
