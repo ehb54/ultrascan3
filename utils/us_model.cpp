@@ -451,6 +451,46 @@ bool US_Model::constant_vbar( void )
    return ( ( valmax - valmin ) < 1.0e-4 );
 }
 
+// Flag whether a model component is a reactant
+bool US_Model::is_reactant( const int compx )
+{
+   bool is_react  = false;
+
+   for ( int ii = 0; ii < associations.size(); ii++ )
+   {
+      Association* as   = &associations[ ii ];
+      int          rcx  = as->rcomps.indexOf( compx );
+
+      if ( rcx >= 0   &&  as->stoichs[ rcx ] >= 0 )
+      {
+         is_react       = true;
+         break;
+      }
+   }
+
+   return is_react;
+}
+
+// Flag whether a model component is a product of a reaction
+bool US_Model::is_product( const int compx )
+{
+   bool is_prod   = false;
+
+   for ( int ii = 0; ii < associations.size(); ii++ )
+   {
+      Association* as   = &associations[ ii ];
+      int          rcx  = as->rcomps.indexOf( compx );
+
+      if ( rcx >= 0   &&  as->stoichs[ rcx ] < 0 )
+      {
+         is_prod        = true;
+         break;
+      }
+   }
+
+   return is_prod;
+}
+
 int US_Model::load( bool db_access, const QString& guid, US_DB2* db )
 {
    if ( db_access ) return load_db  ( guid, db );

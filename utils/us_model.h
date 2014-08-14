@@ -143,6 +143,16 @@ class US_UTIL_EXTERN US_Model
       //! \returns - A boolean flag of whether component vbar's are constant
       bool constant_vbar( void );
 
+      //! Flag if a specified component is a reactant
+      //! \param compx Index of component to interrogate
+      //! \returns     A boolean flag whether specified component is a reactant
+      bool is_reactant( const int compx );
+
+      //! Flag if a specified component is a product of a reaction
+      //! \param compx Index of component to interrogate
+      //! \returns     A boolean flag whether specified component is a product
+      bool is_product ( const int compx );
+
       //! Dump model data for debugging
       void debug( void );
 

@@ -142,7 +142,14 @@ DbgLv(1) << "cnG:main: flt/log defined";
    le_wavelength->setMinimumWidth( 80 );
    le_wavelength->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Preferred );
    us_setReadOnly( le_wavelength, true );
-   //QHBoxLayout* extinction = new QHBoxLayout;
+
+   QLabel*      lb_oligomer   = us_label( tr( "Oligomer" ) );
+                le_oligomer   = us_lineedit( "" );
+   QGridLayout* isreac_layout = us_checkbox( tr( "Is Reactant" ), ck_isreact );
+   QGridLayout* isprod_layout = us_checkbox( tr( "Is Product"  ), ck_isprod  );
+   us_setReadOnly( le_oligomer, true );
+   ck_isreact->setEnabled( false );
+   ck_isprod ->setEnabled( false );
 
    // Advanced parameters
    QLabel* lb_sigma = us_label(
@@ -243,6 +250,10 @@ DbgLv(1) << "cnG:main: elements defined";
    main->addWidget( le_extinction,  row,    4, 1,  2 );
    main->addWidget( lb_wavelength,  row,    6, 1,  4 );
    main->addWidget( le_wavelength,  row++, 10, 1,  2 );
+   main->addWidget( lb_oligomer,    row,    0, 1,  4 );
+   main->addWidget( le_oligomer,    row,    4, 1,  2 );
+   main->addLayout( isreac_layout,  row,    6, 1,  3 );
+   main->addLayout( isprod_layout,  row++,  9, 1,  3 );
    main->addWidget( lb_sigma,       row,    0, 1,  6 );
    main->addWidget( le_sigma,       row,    6, 1,  2 );
    main->addLayout( co_sed_layout,  row++,  8, 1,  4 );
@@ -288,18 +299,21 @@ DbgLv(1) << "cnG:main: elements defined";
    pb_accept->setEnabled( false );
 DbgLv(1) << "cnG:main: connections made";
    const QString clets( "ABCDEFGHIJ" );
+   lcompx.clear();
 
    // Populate the lists from the model
    if ( cmodel.analysis == US_Model::DMGA_CONSTR )
    {  // Constraints model
       constraints.load_constraints( &cmodel );
+      int kk         = 0;
 DbgLv(1) << "cnG:main:  cmodel load rtn";
-      for ( int ii = 0; ii < cmodel.components.size(); ii++ )
+      for ( int ii = 0; ii < cmodel.components.size(); ii++, kk++ )
       {
-         QString prenm  = QString( clets ).mid( ii, 1 ) + " ";
+         QString prenm  = QString( clets ).mid( kk, 1 ) + " ";
          QString flgnm  = QString( cmodel.components[ ii ].name ).left( 4 );
          QString name   = QString( cmodel.components[ ii ].name ).mid( 4 );
          lw_comps->addItem( prenm + name );
+         lcompx << ii;
 
          if ( ! flgnm.contains( "V" ) )  ii++;
       }
@@ -315,9 +329,10 @@ DbgLv(1) << "cnG:main:  cmodel load rtn";
          int     st1    = ( nrc > 0 ) ? stoichs[ 0 ] : 1;
          int     st2    = ( nrc > 1 ) ? stoichs[ 1 ] : 1;
          int     st3    = ( nrc > 2 ) ? stoichs[ 2 ] : 1;
-         int     ol1    = cmodel.components[ rc1 ].oligomer;
-         int     ol2    = cmodel.components[ rc2 ].oligomer;
-         int     ol3    = cmodel.components[ rc3 ].oligomer;
+         int     ol1    = cmodel.components[ lcompx[ rc1 ] ].oligomer;
+         int     ol2    = cmodel.components[ lcompx[ rc2 ] ].oligomer;
+         int     ol3    = cmodel.components[ lcompx[ rc3 ] ].oligomer;
+
          QString name;
          if ( rcomps.size() == 2 )
          {
@@ -363,9 +378,10 @@ DbgLv(1) << "cnG:main:  cmodel load rtn";
 DbgLv(1) << "cnG:main:  bmodel load rtn";
       for ( int ii = 0; ii < cmodel.components.size(); ii++ )
       {
-         QString prenm  = QString( "ABCDEFGHIJ" ).mid( ii, 1 ) + " ";
+         QString prenm  = QString( clets ).mid( ii, 1 ) + " ";
          QString name   = cmodel.components[ ii ].name;
          lw_comps->addItem( prenm + name );
+         lcompx << ii;
       }
 
       for ( int ii = 0; ii < cmodel.associations.size(); ii++ )
@@ -549,8 +565,9 @@ void US_ConstraintsEdit::set_molar( void )
 {
    int row = lw_comps->currentRow();
    if ( row < 0 ) return;
+   int mcx = lcompx[ row ];
 
-   US_Model::SimulationComponent* sc = &cmodel.components[ row ];
+   US_Model::SimulationComponent* sc = &cmodel.components[ mcx ];
 
    double extinction = le_extinction->text().toDouble();
    double signalConc = le_val_conc  ->text().toDouble();
@@ -564,7 +581,7 @@ void US_ConstraintsEdit::set_molar( void )
 void US_ConstraintsEdit::acceptProp( void ) 
 {
 DbgLv(1) << "cnG:accept";
-   QVector< US_dmGA_Constraints::Constraint > cnsv;
+   QVector< C_CONSTRAINT > cnsv;
    save_comp_settings ( crow, cnsv );        // Save current page
    constraints.update_constraints( cnsv );   // Update comp constraints
    cnsv.clear();
@@ -807,7 +824,7 @@ void US_ConstraintsEdit::component_select( int srow )
 {
 DbgLv(1) << "cnG: component_select  row" << srow << crow;
 //   const QString notapl = tr( "n/a" );
-   QVector< US_dmGA_Constraints::Constraint > cnsv;
+   QVector< C_CONSTRAINT > cnsv;
 
    if ( srow < 0 )  return;
 
@@ -826,6 +843,149 @@ DbgLv(1) << "cnG:   update_constraints  rtn";
    crow     = srow;
 DbgLv(1) << "cnG:   comp_constraints call";
    constraints.comp_constraints( crow, &cnsv, NULL );
+   bool is_prod   = cmodel.is_product( crow );
+   bool not_prod  = ! is_prod;
+
+   if ( is_prod )
+   {  // Impose various restrictions for product component
+      QVector< C_CONSTRAINT > old_cnsv = cnsv;
+      cnsv.clear();
+
+      // First scan associations to determine the reactant values
+      double vval    = 0.0;       // vbar sum
+      double cval    = 0.0;       // concentration value
+      double wval    = 0.0;       // weight sum
+      int    nreact  = 0;
+
+      for ( int ii = 0; ii < cmodel.associations.size(); ii++ )
+      {
+         US_Model::Association* as1  = &cmodel.associations[ ii ];
+         QVector< int >* rcomps      = &as1->rcomps;
+         if ( rcomps->at( 0 ) < 0 )  continue;
+
+         if ( rcomps->contains( crow ) )
+         {
+            QVector< int >* stoichs     = &as1->stoichs;
+DbgLv(1) << "cnG:    ii" << ii << "rc-cont-crow: rcsize stsize"
+ << rcomps->size() << stoichs->size();
+
+            for ( int jj = 0; jj < rcomps->size(); jj++ )
+            {
+               int rc1       = rcomps ->at( jj );
+               int st1       = stoichs->at( jj );
+DbgLv(1) << "cnG:      jj" << jj << "rc1" << rc1 << "st1" << st1;
+               if ( rc1 > 0  &&  st1 > 0 )
+               {
+                  // Get reactant's constraints
+                  QVector< C_CONSTRAINT > rcnsv;
+                  constraints.comp_constraints( rc1, &rcnsv, NULL );
+
+                  nreact++;
+                  int mcx       = lcompx[ rc1 ];
+                  double vbar   = constr_value( C_ATYPE_VBAR, rcnsv );
+                  double mw     = constr_value( C_ATYPE_MW,   rcnsv );
+                  double conc   = constr_value( C_ATYPE_CONC, rcnsv );
+                  double rwt    = mw * (double)st1;
+                  cval          = ( cval == 0.0 ) ? conc : cval;
+                  vval         += ( vbar * rwt );
+                  wval         += rwt;
+DbgLv(1) << "cnG:      mcx" << mcx << "cval,vval,wval" << cval << vval << wval;
+               }
+            }
+         }
+      }
+
+      vval         /= wval;
+      bool miss_vb  = true;
+      bool miss_co  = true;
+      bool miss_mw  = true;
+      bool miss_ff  = true;
+      C_CONSTRAINT cnse;
+
+      // Replace product constraints with appropriate ones
+
+      for ( int ii = 0; ii < old_cnsv.size(); ii++ )
+      {
+         cnse           = old_cnsv[ ii ];
+         C_ATYPE atype  = cnse.atype;
+
+         if      ( atype == C_ATYPE_VBAR )
+         {  // Replace vbar 
+            cnse.low    = vval;
+            cnse.high   = vval;
+            cnse.floats = false;
+            cnsv << cnse;
+            miss_vb     = false;
+         }
+
+         else if ( atype == C_ATYPE_MW )
+         {  // Replace mw 
+            cnse.low    = wval;
+            cnse.high   = wval;
+            cnse.floats = false;
+            cnsv << cnse;
+            miss_mw     = false;
+         }
+
+         else if ( atype == C_ATYPE_FF0 )
+         {  // Just copy f/f0 as is
+            cnsv << cnse;
+            miss_ff     = false;
+         }
+
+         else if ( atype == C_ATYPE_CONC )
+         {  // Replace concentration 
+            cnse.low    = cval;
+            cnse.high   = cval;
+            cnse.floats = false;
+            cnsv << cnse;
+            miss_co     = false;
+         }
+      }
+DbgLv(1) << "cnG: miss_vb,mw,ff,co" << miss_vb << miss_mw << miss_ff << miss_co;
+
+      // Insure product constraints includes needed values
+      if ( miss_vb )
+      {  // Supply missing vbar constraint
+         cnse.atype  = C_ATYPE_VBAR;
+         cnse.low    = vval;
+         cnse.high   = vval;
+         cnse.floats = false;
+         cnse.logscl = false;
+         cnsv << cnse;
+      }
+
+      if ( miss_mw )
+      {  // Supply missing mw constraint
+         cnse.atype  = C_ATYPE_MW;
+         cnse.low    = wval;
+         cnse.high   = wval;
+         cnse.floats = false;
+         cnse.logscl = false;
+         cnsv << cnse;
+      }
+
+      if ( miss_ff )
+      {  // Supply missing f/f0 constraint
+         cnse.atype  = C_ATYPE_FF0;
+         cnse.low    = 1.8;
+         cnse.high   = cnse.low;
+         cnse.floats = false;
+         cnse.logscl = false;
+         cnsv << cnse;
+      }
+
+      if ( miss_co )
+      {  // Supply missing concentration constraint
+         cnse.atype  = C_ATYPE_CONC;
+         cnse.low    = cval;
+         cnse.high   = cval;
+         cnse.floats = false;
+         cnse.logscl = false;
+         cnsv << cnse;
+      }
+   }
+
 DbgLv(1) << "cnG:   comp_constraints  rtn";
    //QListWidgetItem* item = lw_comps->item( crow );
 
@@ -863,13 +1023,13 @@ DbgLv(1) << "cnG:   comp_constraints  rtn";
    us_setReadOnly( le_min_conc, true );
    us_setReadOnly( le_max_conc, true );
    comps_connect ( false );
-   ck_flt_vbar->setEnabled( true  );
+   ck_flt_vbar->setEnabled( not_prod );
    ck_flt_mw  ->setEnabled( false );
    ck_flt_ff0 ->setEnabled( false );
    ck_flt_s   ->setEnabled( false );
    ck_flt_D   ->setEnabled( false );
    ck_flt_f   ->setEnabled( false );
-   ck_flt_conc->setEnabled( true  );
+   ck_flt_conc->setEnabled( not_prod );
 
    // Populate component attribute values
    for ( int ii = 0; ii < cnsv.size(); ii++ )
@@ -877,66 +1037,85 @@ DbgLv(1) << "cnG:   comp_constraints  rtn";
       bool floats  = cnsv[ ii ].floats;
 
 DbgLv(1) << "cnG:cmp_sel: ii" << ii << "atype" << cnsv[ii].atype << "fl" << floats;
-      if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_VBAR )
+      if ( cnsv[ ii ].atype == C_ATYPE_VBAR )
       {
          ck_sel_vbar->setChecked( true );
+         ck_sel_vbar->setEnabled( not_prod );
          check_value( cnsv[ ii ], le_val_vbar, le_min_vbar, le_max_vbar );
          ck_flt_vbar->setChecked( floats );
-         ck_flt_vbar->setEnabled( true   );
+         ck_flt_vbar->setEnabled( not_prod );
       }
-      if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_MW )
+      if ( cnsv[ ii ].atype == C_ATYPE_MW )
       {
          ck_sel_mw  ->setChecked( true );
-         ck_sel_mw  ->setEnabled( true   );
+         ck_sel_mw  ->setEnabled( not_prod );
          check_value( cnsv[ ii ], le_val_mw, le_min_mw, le_max_mw );
          ck_flt_mw  ->setChecked( floats );
          ck_log_mw  ->setChecked( cnsv[ ii ].logscl );
-         ck_flt_mw  ->setEnabled( true   );
-         ck_log_mw  ->setEnabled( true   );
+         ck_flt_mw  ->setEnabled( not_prod );
+         ck_log_mw  ->setEnabled( not_prod );
       }
-      if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_FF0  )
+      if ( cnsv[ ii ].atype == C_ATYPE_FF0  )
       {
          ck_sel_ff0 ->setChecked( true );
-         ck_sel_ff0 ->setEnabled( true   );
+         ck_sel_ff0 ->setEnabled( not_prod );
          check_value( cnsv[ ii ], le_val_ff0, le_min_ff0, le_max_ff0 );
          ck_flt_ff0 ->setChecked( floats );
-         ck_flt_ff0 ->setEnabled( true   );
+         ck_flt_ff0 ->setEnabled( true );
       }
-      if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_S    )
+      if ( cnsv[ ii ].atype == C_ATYPE_S    )
       {
          ck_sel_s   ->setChecked( true );
-         ck_sel_s   ->setEnabled( true   );
+         ck_sel_s   ->setEnabled( not_prod );
          check_value( cnsv[ ii ], le_val_s, le_min_s, le_max_s );
          ck_flt_s   ->setChecked( floats );
-         ck_flt_s   ->setEnabled( true   );
+         ck_flt_s   ->setEnabled( not_prod );
       }
-      if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_D    )
+      if ( cnsv[ ii ].atype == C_ATYPE_D    )
       {
          ck_sel_D   ->setChecked( true );
-         ck_sel_D   ->setEnabled( true   );
+         ck_sel_D   ->setEnabled( not_prod );
          check_value( cnsv[ ii ], le_val_D, le_min_D, le_max_D );
          ck_flt_D   ->setChecked( floats );
-         ck_flt_D   ->setEnabled( true   );
+         ck_flt_D   ->setEnabled( not_prod );
       }
-      if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_F    )
+      if ( cnsv[ ii ].atype == C_ATYPE_F    )
       {
          ck_sel_f   ->setChecked( true );
-         ck_sel_f   ->setEnabled( true   );
+         ck_sel_f   ->setEnabled( not_prod );
          check_value( cnsv[ ii ], le_val_f, le_min_f, le_max_f );
          ck_flt_f   ->setChecked( floats );
          ck_flt_f   ->setEnabled( true   );
       }
-      if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_CONC )
+      if ( cnsv[ ii ].atype == C_ATYPE_CONC )
       {
          check_value( cnsv[ ii ], le_val_conc, le_min_conc, le_max_conc );
          ck_flt_conc->setChecked( floats );
-         ck_flt_conc->setEnabled( true   );
+         ck_flt_conc->setEnabled( not_prod );
       }
-      if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_EXT  )
+      if ( cnsv[ ii ].atype == C_ATYPE_EXT  )
       {
          le_extinction->setText( QString::number( cnsv[ ii ].low  ) );
       }
+      if ( is_prod )
+      {
+         us_setReadOnly( le_val_vbar, true );
+         us_setReadOnly( le_min_vbar, true  );
+         us_setReadOnly( le_max_vbar, true  );
+         us_setReadOnly( le_val_mw,   true );
+         us_setReadOnly( le_min_mw,   true  );
+         us_setReadOnly( le_max_mw,   true  );
+         us_setReadOnly( le_val_conc, true );
+         us_setReadOnly( le_min_conc, true  );
+         us_setReadOnly( le_max_conc, true  );
+      }
    }
+
+   // Set oligomer and reactant,product flags
+   le_oligomer->setText( QString::number(
+                   cmodel.components[ lcompx[ crow ] ].oligomer ) );
+   ck_isreact ->setChecked( cmodel.is_reactant( crow ) );
+   ck_isprod  ->setChecked( cmodel.is_product ( crow ) );
 
    comps_connect( true );
 }
@@ -945,7 +1124,7 @@ DbgLv(1) << "cnG:cmp_sel: ii" << ii << "atype" << cnsv[ii].atype << "fl" << floa
 void US_ConstraintsEdit::association_select( int srow )
 {
 DbgLv(1) << "cnG: association_select  row" << srow << arow;
-   QVector< US_dmGA_Constraints::Constraint > cnsv;
+   QVector< C_CONSTRAINT > cnsv;
 //   const QString notapl = tr( "n/a" );
 
    if ( srow < 0 )  return;
@@ -973,14 +1152,14 @@ DbgLv(1) << "cnG: association_select  row" << srow << arow;
       bool floats = cnsv[ ii ].floats;
       bool logscl = cnsv[ ii ].logscl;
 
-      if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_KD   )
+      if ( cnsv[ ii ].atype == C_ATYPE_KD   )
       {
          check_value( cnsv[ ii ], le_val_kd, le_min_kd, le_max_kd );
          ck_flt_kd  ->setChecked( floats );
          ck_log_kd  ->setChecked( logscl );
       }
 
-      if ( cnsv[ ii ].atype == US_dmGA_Constraints::ATYPE_KOFF )
+      if ( cnsv[ ii ].atype == C_ATYPE_KOFF )
       {
          check_value( cnsv[ ii ], le_val_koff, le_min_koff, le_max_koff );
          ck_flt_koff->setChecked( floats );
@@ -993,10 +1172,10 @@ DbgLv(1) << "cnG: association_select  row" << srow << arow;
 
 // Internal function to save current page's component settings
 void US_ConstraintsEdit::save_comp_settings( int crow,
-      QVector< US_dmGA_Constraints::Constraint >& cnsv )
+      QVector< C_CONSTRAINT >& cnsv )
 {
 DbgLv(1) << "cnG: svcs: save_comp_settings  crow" << crow;
-   US_dmGA_Constraints::Constraint cnse;
+   C_CONSTRAINT cnse;
    cnse.mcompx      = crow;
    bool floats      = false;
    int  kselect     = 0;
@@ -1005,7 +1184,7 @@ DbgLv(1) << "cnG: svcs: save_comp_settings  crow" << crow;
    if ( ck_sel_s   ->isChecked() )
    {
       floats           = ck_flt_s   ->isChecked();
-      cnse.atype       = US_dmGA_Constraints::ATYPE_S;
+      cnse.atype       = C_ATYPE_S;
       cnse.low         = le_val_s   ->text().toDouble();
       cnse.low         = floats ? le_min_s   ->text().toDouble() : cnse.low;
       cnse.high        = floats ? le_max_s   ->text().toDouble() : cnse.low;
@@ -1019,7 +1198,7 @@ DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "S";
    if ( ck_sel_ff0 ->isChecked() )
    {
       floats           = ck_flt_ff0 ->isChecked();
-      cnse.atype       = US_dmGA_Constraints::ATYPE_FF0;
+      cnse.atype       = C_ATYPE_FF0;
       cnse.low         = le_val_ff0 ->text().toDouble();
       cnse.low         = floats ? le_min_ff0 ->text().toDouble() : cnse.low;
       cnse.high        = floats ? le_max_ff0 ->text().toDouble() : cnse.low;
@@ -1033,7 +1212,7 @@ DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "FF0";
    if ( ck_sel_mw  ->isChecked() )
    {
       floats           = ck_flt_mw  ->isChecked();
-      cnse.atype       = US_dmGA_Constraints::ATYPE_MW;
+      cnse.atype       = C_ATYPE_MW;
       cnse.low         = le_val_mw  ->text().toDouble();
       cnse.low         = floats ? le_min_mw  ->text().toDouble() : cnse.low;
       cnse.high        = floats ? le_max_mw  ->text().toDouble() : cnse.low;
@@ -1047,7 +1226,7 @@ DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "MW";
    if ( ck_sel_D   ->isChecked() )
    {
       floats           = ck_flt_D   ->isChecked();
-      cnse.atype       = US_dmGA_Constraints::ATYPE_D;
+      cnse.atype       = C_ATYPE_D;
       cnse.low         = le_val_D   ->text().toDouble();
       cnse.low         = floats ? le_min_D   ->text().toDouble() : cnse.low;
       cnse.high        = floats ? le_max_D   ->text().toDouble() : cnse.low;
@@ -1061,7 +1240,7 @@ DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "D";
    if ( ck_sel_f   ->isChecked() )
    {
       floats           = ck_flt_f   ->isChecked();
-      cnse.atype       = US_dmGA_Constraints::ATYPE_F;
+      cnse.atype       = C_ATYPE_F;
       cnse.low         = le_val_f   ->text().toDouble();
       cnse.low         = floats ? le_min_f   ->text().toDouble() : cnse.low;
       cnse.high        = floats ? le_max_f   ->text().toDouble() : cnse.low;
@@ -1074,7 +1253,7 @@ DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "F";
 
    // Save the vbar constraints
    floats           = ck_flt_vbar->isChecked();
-   cnse.atype       = US_dmGA_Constraints::ATYPE_VBAR;
+   cnse.atype       = C_ATYPE_VBAR;
    cnse.low         = le_val_vbar->text().toDouble();
    cnse.low         = floats ? le_min_vbar->text().toDouble() : cnse.low;
    cnse.high        = floats ? le_max_vbar->text().toDouble() : cnse.low;
@@ -1086,7 +1265,7 @@ DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "VBAR";
 
    // Save the concentration constraints
    floats           = ck_flt_conc->isChecked();
-   cnse.atype       = US_dmGA_Constraints::ATYPE_CONC;
+   cnse.atype       = C_ATYPE_CONC;
    cnse.low         = le_val_conc->text().toDouble();
    cnse.low         = floats ? le_min_conc->text().toDouble() : cnse.low;
    cnse.high        = floats ? le_max_conc->text().toDouble() : cnse.low;
@@ -1104,7 +1283,7 @@ DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << floats << "CONC";
    }
 
    // Add one more entry for extinction
-   cnse.atype       = US_dmGA_Constraints::ATYPE_EXT;
+   cnse.atype       = C_ATYPE_EXT;
    cnse.low         = le_extinction->text().toDouble();
    cnse.high        = cnse.low;
    cnse.floats      = false;
@@ -1117,12 +1296,12 @@ DbgLv(1) << "cnG: svcs:  ks" << kselect << "flt" << cnse.floats << "EXT"
 
 // Internal function to save current page's association settings
 void US_ConstraintsEdit::save_assoc_settings( int arow,
-      QVector< US_dmGA_Constraints::Constraint >& cnsv )
+      QVector< C_CONSTRAINT >& cnsv )
 {
-   US_dmGA_Constraints::Constraint cnse;
+   C_CONSTRAINT cnse;
    bool floats      = ck_flt_kd  ->isChecked();
    cnse.mcompx      = arow;
-   cnse.atype       = US_dmGA_Constraints::ATYPE_KD;
+   cnse.atype       = C_ATYPE_KD;
    cnse.low         = le_val_kd  ->text().toDouble();
    cnse.low         = floats ? le_min_kd  ->text().toDouble() : cnse.low;
    cnse.high        = floats ? le_max_kd  ->text().toDouble() : cnse.low;
@@ -1132,7 +1311,7 @@ void US_ConstraintsEdit::save_assoc_settings( int arow,
 DbgLv(1) << "cnG: svas:  ks 1  flt" << floats << "KD";
 
    floats           = ck_flt_koff->isChecked();
-   cnse.atype       = US_dmGA_Constraints::ATYPE_KOFF;
+   cnse.atype       = C_ATYPE_KOFF;
    cnse.low         = le_val_koff->text().toDouble();
    cnse.low         = floats ? le_min_koff->text().toDouble() : cnse.low;
    cnse.high        = floats ? le_max_koff->text().toDouble() : cnse.low;
@@ -1195,8 +1374,7 @@ DbgLv(1) << "cnG:float_par   vmin vmax" << vmin << vmax;
 }
 
 // Set value and low,high states based on constraints entry
-void US_ConstraintsEdit::check_value(
-      const US_dmGA_Constraints::Constraint cnse,
+void US_ConstraintsEdit::check_value( const C_CONSTRAINT cnse,
       QLineEdit* le_val, QLineEdit* le_min, QLineEdit* le_max  )
 {
 //   const QString notapl = tr( "n/a" );
@@ -1503,5 +1681,28 @@ DbgLv(1) << "cnG:ck_sels: ff0 AFT" << scva.f_f0 << scll.f_f0 << schh.f_f0
       ck_sel_D  ->setEnabled( true );
       ck_sel_f  ->setEnabled( true );
    }
+}
+
+// Get the value of a specified type in a constraints record
+double US_ConstraintsEdit::constr_value( const C_ATYPE atype,
+                                         QVector< C_CONSTRAINT >& cnsv )
+{
+   double cval  = 0.0;
+
+   for ( int ii = 0; ii < cnsv.size(); ii++ )
+   {
+      if ( cnsv[ ii ].atype == atype )
+      {  // Found the type:  return its value or range average
+         double cmin  = cnsv[ ii ].low;
+         double cmax  = cnsv[ ii ].high;
+         cval         = cnsv[ ii ].logscl
+                      ? exp( ( log( cmin ) + log( cmax ) ) * 0.5 )
+                      : ( ( cmin + cmax ) * 0.5 );
+         break;
+      }
+   }
+
+   return cval;
+
 }
 

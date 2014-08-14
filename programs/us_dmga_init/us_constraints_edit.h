@@ -13,6 +13,20 @@
 #include "us_analyte_gui.h"
 #include "us_buffer.h"
 
+#define O_CONSTRAINTS  US_dmGA_Constraints
+#define C_CONSTRAINT   US_dmGA_Constraints::Constraint
+#define C_ATYPE        US_dmGA_Constraints::AttribType
+#define C_ATYPE_VBAR   US_dmGA_Constraints::ATYPE_VBAR
+#define C_ATYPE_MW     US_dmGA_Constraints::ATYPE_MW
+#define C_ATYPE_FF0    US_dmGA_Constraints::ATYPE_FF0
+#define C_ATYPE_S      US_dmGA_Constraints::ATYPE_S
+#define C_ATYPE_D      US_dmGA_Constraints::ATYPE_D
+#define C_ATYPE_F      US_dmGA_Constraints::ATYPE_F
+#define C_ATYPE_CONC   US_dmGA_Constraints::ATYPE_CONC
+#define C_ATYPE_EXT    US_dmGA_Constraints::ATYPE_EXT
+#define C_ATYPE_KD     US_dmGA_Constraints::ATYPE_KD
+#define C_ATYPE_KOFF   US_dmGA_Constraints::ATYPE_KOFF
+
 //! \brief A window to edit a discreteGA constraints model
 
 class US_ConstraintsEdit : public US_WidgetsDialog
@@ -38,11 +52,11 @@ class US_ConstraintsEdit : public US_WidgetsDialog
 
       US_Help    showhelp;
 
-      US_dmGA_Constraints                        constraints;
+      O_CONSTRAINTS            constraints;
 
-      QVector< US_dmGA_Constraints::Constraint > attribs;
-      QVector< US_dmGA_Constraints::Constraint > flt_attrs;
-      QVector< US_dmGA_Constraints::Constraint > wrk_attrs;
+      QVector< C_CONSTRAINT >  attribs;
+      QVector< C_CONSTRAINT >  flt_attrs;
+      QVector< C_CONSTRAINT >  wrk_attrs;
 
       int        investigator;
       int        oldRow;
@@ -68,6 +82,8 @@ class US_ConstraintsEdit : public US_WidgetsDialog
 
       QListWidget* lw_comps;
       QListWidget* lw_assocs;
+
+      QList< int > lcompx;
 
       QPushButton* pb_accept;
       QPushButton* pb_load_c0;
@@ -95,6 +111,7 @@ class US_ConstraintsEdit : public US_WidgetsDialog
       QLineEdit*   le_max_conc;
       QLineEdit*   le_extinction;
       QLineEdit*   le_wavelength;
+      QLineEdit*   le_oligomer;
       QLineEdit*   le_analyteConc;
       QLineEdit*   le_molar;
       QLineEdit*   le_lbl_kd;
@@ -129,9 +146,8 @@ class US_ConstraintsEdit : public US_WidgetsDialog
       QCheckBox*   ck_log_kd;
       QCheckBox*   ck_log_koff;
       QCheckBox*   ck_co_sed;
-
-      QwtCounter*  ct_oligomer;
-
+      QCheckBox*   ck_isreact;
+      QCheckBox*   ck_isprod;
 
 	private slots:
       void check_mw  ( bool );
@@ -151,6 +167,7 @@ class US_ConstraintsEdit : public US_WidgetsDialog
       void logsc_mw  ( bool );
       void logsc_kd  ( bool );
       void logsc_koff( bool );
+
       void comps_connect ( bool );
       void assocs_connect( bool );
       int  count_checks  ( void );
@@ -160,16 +177,16 @@ class US_ConstraintsEdit : public US_WidgetsDialog
       void co_sed        ( int );
       void set_molar     ( void );
       void source_changed( bool );
+
       void component_select   ( int );
       void association_select ( int );
-      void save_comp_settings ( int,
-                                QVector< US_dmGA_Constraints::Constraint >& );
-      void save_assoc_settings( int,
-                                QVector< US_dmGA_Constraints::Constraint >& );
-           
-      void float_par( bool, QLineEdit*, QLineEdit*, QLineEdit* );
-      void check_value( const US_dmGA_Constraints::Constraint,
-                        QLineEdit*, QLineEdit*, QLineEdit* );
+      void save_comp_settings ( int, QVector< C_CONSTRAINT >& );
+      void save_assoc_settings( int, QVector< C_CONSTRAINT >& );
+
+      void float_par     ( bool, QLineEdit*, QLineEdit*, QLineEdit* );
+      void check_value   ( const C_CONSTRAINT,
+                           QLineEdit*, QLineEdit*, QLineEdit* );
+      double constr_value( const C_ATYPE, QVector< C_CONSTRAINT >& );
       void help( void ){ showhelp.show_help( "dmga_init_constr.html" ); };
 };
 #endif

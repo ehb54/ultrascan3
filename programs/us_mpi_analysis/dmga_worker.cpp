@@ -1019,19 +1019,6 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
       US_SolveSim::Simulation& sim_vals, DGene& dgene )
 {
    int lim_offs    = offset + dset_count;
-   int ntotal      = 0;
-   int ntpoint     = 0;
-   int ntscan      = 0;
-
-   for ( int ee = offset; ee < lim_offs; ee++ )
-   {  // Count scan,point totals for all data sets
-      US_SolveSim::DataSet*  dset   = data_sets[ ee ];
-      int npoints     = dset->run_data.xvalues.size();
-      int nscans      = dset->run_data.scanData.size();
-      ntotal         += ( nscans * npoints );
-      ntpoint        += npoints;
-      ntscan         += nscans;
-   }
 
    US_DataIO::RawData* sdata = &sim_vals.sim_data;
    US_DataIO::RawData* resid = &sim_vals.residuals;
@@ -1040,24 +1027,24 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
    // Compute simulations for all data sets with the given model
    for ( int ee = offset; ee < lim_offs; ee++ )
    {
+      US_Model               model;
+      US_Math2::SolutionData sd;
       US_SolveSim::DataSet*  dset   = data_sets[ ee ];
       US_DataIO::EditedData* edata  = &dset->run_data;
       US_DataIO::RawData     simdat;
-      int nscans      = dset->run_data.scanData.size();
+      int nscans      = dset->run_data.scanCount();
 
       // Initialize simulation data with experiment's grid
       US_AstfemMath::initSimData( simdat, *edata, 0.0 );
 
       // Create experimental-space model from DGene for the data set
 
-      US_Math2::SolutionData sd;            // Set up data corrections
-      double avtemp   = dset->temperature;
+      double avtemp   = dset->temperature;  // Set up data corrections
       sd.viscosity    = dset->viscosity;
       sd.density      = dset->density;
       sd.manual       = dset->manual;
 
-      US_Model model  = dgene;              // Get base model
-      model.update_coefficients();          // Compute missing coefficients
+      model_from_dgene( model, dgene );     // Compute apply model from base
 
       if ( ee == offset )
          data_sets[ 0 ]->model = model;     // Save the s20w model
@@ -1134,6 +1121,6 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
       }
    }
 
-   sim_vals.variance = variance / (double)ntotal;
+   sim_vals.variance = variance / (double)total_points;
 }
 
