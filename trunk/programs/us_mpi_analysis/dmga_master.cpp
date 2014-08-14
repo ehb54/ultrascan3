@@ -751,7 +751,6 @@ void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene )
 
    model.update_coefficients();    // Compute missing coefficients
 
-#if 1
    for ( int ii = 0; ii < model.associations.size(); ii++ )
    {  // Modify some coefficients based on associations
       US_Model::Association* as  = &model.associations[ ii ];
@@ -767,34 +766,27 @@ void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene )
       double ff0p   = qMax( 1.0, model.components[ rcp ].f_f0 );
       model.components[ rcp ] = dgene.components[ rcp ]; // Raw product comp
 if(my_rank<2)
-DbgLv(0) << my_rank << "MoFrGe: ii" << ii
-         << "nrco,rc1,rc2,rcp" << nrco << rc1 << rc2 << rcp
-         << "st1,st2,stp" << st1 << st2 << stp;
+DbgLv(1) << my_rank << "MFG: ii" << ii << "nrco,rc1,rc2,rcp"
+ << nrco << rc1 << rc2 << rcp << "st1,st2,stp" << st1 << st2 << stp;
 
       // Reset concentration for reactant(s) and product
       double cval   = model.components[ rc1 ].signal_concentration;
-if(my_rank<2)
-DbgLv(0) << my_rank << "MoFrGe:   orig cval wval vval" << cval
- << model.components[rcp].mw << model.components[rcp].vbar20;
-//      cval         /= ( ( rc1 == rc2 ) ? 2.0 : 3.0 );    // Reactant concens.
-
       model.components[ rc2 ].signal_concentration  = cval;
       model.components[ rcp ].signal_concentration  = cval;
+if(my_rank<2)
+DbgLv(1) << my_rank << "MFG:   orig cval wval vval" << cval
+ << model.components[rcp].mw << model.components[rcp].vbar20;
 
       // Reset molecular weight and vbar for product
       double wval   = model.components[ rc1 ].mw * (double)st1;
       double vval   = model.components[ rc1 ].vbar20 * wval;
       double wsum   = wval;
-if(my_rank<2)
-DbgLv(1) << my_rank << "MoFrGe:   r1 wval vval" << wval << vval;
 
       if ( nrco > 2 )
       {
          wval          = model.components[ rc2 ].mw * (double)st2;
          vval         += model.components[ rc2 ].vbar20 * wval;
          wsum         += wval;
-if(my_rank<2)
-DbgLv(1) << my_rank << "MoFrGe:   r2 wval vval" << wval << vval;
       }
 
       model.components[ rcp ].vbar20  = vval / wsum;
@@ -807,10 +799,9 @@ DbgLv(1) << my_rank << "MoFrGe:   r2 wval vval" << wval << vval;
       // Recompute coefficients with specified mw
       model.calc_coefficients( model.components[ rcp ] );
 if(my_rank<2)
-DbgLv(0) << my_rank << "MoFrGe:     rcp" << rcp << "c.s c.k c.mw c.vb"
-         << model.components[rcp].s << model.components[rcp].f_f0
-         << model.components[rcp].mw << model.components[rcp].vbar20;
+DbgLv(1) << my_rank << "MFG:     rcp" << rcp << "c.s c.k c.mw c.vb"
+ << model.components[rcp].s << model.components[rcp].f_f0
+ << model.components[rcp].mw << model.components[rcp].vbar20;
    }
-#endif
 }
 
