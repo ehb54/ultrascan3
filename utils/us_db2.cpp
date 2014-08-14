@@ -76,13 +76,16 @@ bool US_DB2::test_db_connection(
       return false;
    }
 
+   QString uhost  = host.section( ":", 0, 0 ).simplified();
+   int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
+
    bool status = mysql_real_connect( 
                  conn,
-                 host    .toAscii(), 
+                 uhost   .toAscii(), 
                  user    .toAscii(), 
                  password.toAscii(), 
                  dbname  .toAscii(), 
-                 0, NULL, CLIENT_MULTI_STATEMENTS );
+                 uport, NULL, CLIENT_MULTI_STATEMENTS );
  
    if ( ! status )
       error = QString( "Test connection open error\n" ) + mysql_error( conn );
@@ -122,13 +125,16 @@ bool US_DB2::test_secure_connection(
                   NULL,
                   "AES128-SHA" );
 
+   QString uhost  = host.section( ":", 0, 0 ).simplified();
+   int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
+
    bool status = mysql_real_connect( 
                  db,
-                 host    .toAscii(), 
+                 uhost   .toAscii(), 
                  user    .toAscii(), 
                  password.toAscii(), 
                  dbname  .toAscii(), 
-                 0, NULL, CLIENT_MULTI_STATEMENTS );
+                 uport, NULL, CLIENT_MULTI_STATEMENTS );
  
    if ( ! status )
    {
@@ -188,16 +194,20 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
                      NULL,
                      "AES128-SHA" );
 
-      // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and multiple
-      //   result sets from a single stored procedure. It is required for any 
-      //   stored procedure that returns result sets.
+      // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
+      //   multiple result sets from a single stored procedure. It is required
+      //   for any stored procedure that returns result sets.
+      QString uhost  = host.section( ":", 0, 0 ).simplified();
+      int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
+//qDebug() << "DB: connect uport" << uport << "uhost" << uhost;
+
       connected = mysql_real_connect( 
                   db,
-                  host    .toAscii(), 
+                  uhost   .toAscii(), 
                   user    .toAscii(), 
                   password.toAscii(), 
                   dbname  .toAscii(), 
-                  0, NULL, CLIENT_MULTI_STATEMENTS );
+                  uport, NULL, CLIENT_MULTI_STATEMENTS );
  
    }
 
@@ -287,16 +297,19 @@ bool US_DB2::connect(
                      NULL,
                      "AES128-SHA" );
 
-      // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and multiple
-      //   result sets from a single stored procedure. It is required for any 
-      //   stored procedure that returns result sets.
+      // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and
+      //   multiple result sets from a single stored procedure. It is required
+      //   for any stored procedure that returns result sets.
+      QString uhost  = host.section( ":", 0, 0 ).simplified();
+      int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
+
       connected = mysql_real_connect( 
                   db,
-                  host    .toAscii(), 
+                  uhost   .toAscii(), 
                   user    .toAscii(), 
                   password.toAscii(), 
                   dbname  .toAscii(), 
-                  0, NULL, CLIENT_MULTI_STATEMENTS );
+                  uport, NULL, CLIENT_MULTI_STATEMENTS );
    }
 
    catch ( std::exception &e )
