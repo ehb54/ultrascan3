@@ -744,3 +744,73 @@ bool US_MPI_Analysis::fetch_attr_value( double& aval, US_Model& model,
    return is_ok;
 }
 
+// Get an apply-ready model from a dmga gene
+void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene )
+{
+   model        = dgene;           // Initialize the model
+
+   model.update_coefficients();    // Compute missing coefficients
+
+#if 1
+   for ( int ii = 0; ii < model.associations.size(); ii++ )
+   {  // Modify some coefficients based on associations
+      US_Model::Association* as  = &model.associations[ ii ];
+
+      int nrco      = as->rcomps.size();                 // Components involved
+      int rpx       = nrco - 1;                          // Last comp index
+      int rc1       = as->rcomps[ 0 ];                   // Comp indexes
+      int rc2       = nrco == 2 ? rc1 : as->rcomps[ 1 ];
+      int rcp       = as->rcomps[ rpx ];
+      int st1       = as->stoichs[ 0 ];                  // Stoichiometries
+      int st2       = qAbs( as->stoichs[ 1 ] );
+      int stp       = qAbs( as->stoichs[ rpx ] );
+      double ff0p   = qMax( 1.0, model.components[ rcp ].f_f0 );
+      model.components[ rcp ] = dgene.components[ rcp ]; // Raw product comp
+if(my_rank<2)
+DbgLv(0) << my_rank << "MoFrGe: ii" << ii
+         << "nrco,rc1,rc2,rcp" << nrco << rc1 << rc2 << rcp
+         << "st1,st2,stp" << st1 << st2 << stp;
+
+      // Reset concentration for reactant(s) and product
+      double cval   = model.components[ rc1 ].signal_concentration;
+if(my_rank<2)
+DbgLv(0) << my_rank << "MoFrGe:   orig cval wval vval" << cval
+ << model.components[rcp].mw << model.components[rcp].vbar20;
+//      cval         /= ( ( rc1 == rc2 ) ? 2.0 : 3.0 );    // Reactant concens.
+
+      model.components[ rc2 ].signal_concentration  = cval;
+      model.components[ rcp ].signal_concentration  = cval;
+
+      // Reset molecular weight and vbar for product
+      double wval   = model.components[ rc1 ].mw * (double)st1;
+      double vval   = model.components[ rc1 ].vbar20 * wval;
+      double wsum   = wval;
+if(my_rank<2)
+DbgLv(1) << my_rank << "MoFrGe:   r1 wval vval" << wval << vval;
+
+      if ( nrco > 2 )
+      {
+         wval          = model.components[ rc2 ].mw * (double)st2;
+         vval         += model.components[ rc2 ].vbar20 * wval;
+         wsum         += wval;
+if(my_rank<2)
+DbgLv(1) << my_rank << "MoFrGe:   r2 wval vval" << wval << vval;
+      }
+
+      model.components[ rcp ].vbar20  = vval / wsum;
+      model.components[ rcp ].mw      = wval;
+      model.components[ rcp ].f_f0    = ff0p;
+      model.components[ rcp ].s       = 0.0;
+      model.components[ rcp ].D       = 0.0;
+      model.components[ rcp ].f       = 0.0;
+
+      // Recompute coefficients with specified mw
+      model.calc_coefficients( model.components[ rcp ] );
+if(my_rank<2)
+DbgLv(0) << my_rank << "MoFrGe:     rcp" << rcp << "c.s c.k c.mw c.vb"
+         << model.components[rcp].s << model.components[rcp].f_f0
+         << model.components[rcp].mw << model.components[rcp].vbar20;
+   }
+#endif
+}
+

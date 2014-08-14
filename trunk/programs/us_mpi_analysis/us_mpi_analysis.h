@@ -362,21 +362,22 @@ class US_MPI_Analysis : public QObject
                             US_Math2::SolutionData&, double, double );
 
     // DMGA Master
-    void   dmga_master         ( void );
-    void   dmga_master_loop    ( void );
-    void   dmga_global_fit     ( void );
-    void   set_dmga_gaussians  ( void );
-    void   set_dmga_MonteCarlo ( void );
-    void   marker_from_dgene   ( QVector< double >&, DGene& );
-    void   dgene_from_marker   ( QVector< double >&, DGene& );
-    void   dgenes_to_marker    ( QVector< double >&, QList< DGene >&,
+    void    dmga_master        ( void );
+    void    dmga_master_loop   ( void );
+    void    dmga_global_fit    ( void );
+    void    set_dmga_gaussians ( void );
+    void    set_dmga_MonteCarlo( void );
+    void    marker_from_dgene  ( QVector< double >&, DGene& );
+    void    dgene_from_marker  ( QVector< double >&, DGene& );
+    void    dgenes_to_marker   ( QVector< double >&, QList< DGene >&,
                                  const int, const int );
-    void   marker_to_dgenes    ( QVector< double >&, QList< DGene >&,
+    void    marker_to_dgenes   ( QVector< double >&, QList< DGene >&,
                                  const int, const int );
-    bool   store_attr_value    ( double&, US_Model&,
+    bool    store_attr_value   ( double&, US_Model&,
                                  US_dmGA_Constraints::AttribType&, int& );
-    bool   fetch_attr_value    ( double&, US_Model&,
+    bool    fetch_attr_value   ( double&, US_Model&,
                                  US_dmGA_Constraints::AttribType&, int& );
+    void    model_from_dgene   ( US_Model&, DGene& dgene );
 
     // DMGA Worker
     void    dmga_worker        ( void );
