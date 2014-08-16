@@ -852,9 +852,10 @@ DbgLv(1) << "cnG:   comp_constraints call";
       cnsv.clear();
 
       // First scan associations to determine the reactant values
-      double vval    = 0.0;       // vbar sum
+      double vsum    = 0.0;       // vbar sum
       double cval    = 0.0;       // concentration value
-      double wval    = 0.0;       // weight sum
+      double wsum    = 0.0;       // weight sum
+      double esum    = 0.0;       // extinction sum
       int    nreact  = 0;
 
       for ( int ii = 0; ii < cmodel.associations.size(); ii++ )
@@ -885,17 +886,19 @@ DbgLv(1) << "cnG:      jj" << jj << "rc1" << rc1 << "st1" << st1;
                   double vbar   = constr_value( C_ATYPE_VBAR, rcnsv );
                   double mw     = constr_value( C_ATYPE_MW,   rcnsv );
                   double conc   = constr_value( C_ATYPE_CONC, rcnsv );
-                  double rwt    = mw * (double)st1;
+                  double extinc = constr_value( C_ATYPE_EXT,  rcnsv );
+                  double wval   = mw * (double)st1;
                   cval          = ( cval == 0.0 ) ? conc : cval;
-                  vval         += ( vbar * rwt );
-                  wval         += rwt;
-DbgLv(1) << "cnG:      mcx" << mcx << "cval,vval,wval" << cval << vval << wval;
+                  vsum         += ( vbar * wval );
+                  wsum         += wval;
+                  esum         += extinc;
+DbgLv(1) << "cnG:      mcx" << mcx << "cval,vsum,wsum" << cval << vsum << wsum;
                }
             }
          }
       }
 
-      vval         /= wval;
+      vsum         /= wsum;
       bool miss_vb  = true;
       bool miss_co  = true;
       bool miss_mw  = true;
@@ -911,8 +914,8 @@ DbgLv(1) << "cnG:      mcx" << mcx << "cval,vval,wval" << cval << vval << wval;
 
          if      ( atype == C_ATYPE_VBAR )
          {  // Replace vbar 
-            cnse.low    = vval;
-            cnse.high   = vval;
+            cnse.low    = vsum;
+            cnse.high   = cnse.low;
             cnse.floats = false;
             cnsv << cnse;
             miss_vb     = false;
@@ -920,8 +923,8 @@ DbgLv(1) << "cnG:      mcx" << mcx << "cval,vval,wval" << cval << vval << wval;
 
          else if ( atype == C_ATYPE_MW )
          {  // Replace mw 
-            cnse.low    = wval;
-            cnse.high   = wval;
+            cnse.low    = wsum;
+            cnse.high   = cnse.low;
             cnse.floats = false;
             cnsv << cnse;
             miss_mw     = false;
@@ -936,11 +939,20 @@ DbgLv(1) << "cnG:      mcx" << mcx << "cval,vval,wval" << cval << vval << wval;
          else if ( atype == C_ATYPE_CONC )
          {  // Replace concentration 
             cnse.low    = cval;
-            cnse.high   = cval;
+            cnse.high   = cnse.low;
             cnse.floats = false;
             cnsv << cnse;
             miss_co     = false;
          }
+
+         else if ( atype == C_ATYPE_EXT )
+         {  // Replace extinction
+            cnse.low    = esum;
+            cnse.high   = cnse.low;
+            cnse.floats = false;
+            cnsv << cnse;
+         }
+
       }
 DbgLv(1) << "cnG: miss_vb,mw,ff,co" << miss_vb << miss_mw << miss_ff << miss_co;
 
@@ -948,8 +960,8 @@ DbgLv(1) << "cnG: miss_vb,mw,ff,co" << miss_vb << miss_mw << miss_ff << miss_co;
       if ( miss_vb )
       {  // Supply missing vbar constraint
          cnse.atype  = C_ATYPE_VBAR;
-         cnse.low    = vval;
-         cnse.high   = vval;
+         cnse.low    = vsum;
+         cnse.high   = cnse.low;
          cnse.floats = false;
          cnse.logscl = false;
          cnsv << cnse;
@@ -958,8 +970,8 @@ DbgLv(1) << "cnG: miss_vb,mw,ff,co" << miss_vb << miss_mw << miss_ff << miss_co;
       if ( miss_mw )
       {  // Supply missing mw constraint
          cnse.atype  = C_ATYPE_MW;
-         cnse.low    = wval;
-         cnse.high   = wval;
+         cnse.low    = wsum;
+         cnse.high   = cnse.low;
          cnse.floats = false;
          cnse.logscl = false;
          cnsv << cnse;

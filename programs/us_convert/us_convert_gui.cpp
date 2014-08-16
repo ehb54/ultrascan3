@@ -3616,26 +3616,24 @@ DbgLv(1) << "CGui:gI: ntotf" << ntotf;
    {
       QString fname = files[ jj ];
 
-      if ( fname.endsWith( ".mwrs" ) )
+      if (      fname.endsWith( ".mwrs" ) )
          nmwrs++;
 
       else if ( fname.endsWith( ".auc" ) )
          nauc++;
 
-      else
+      else if ( fname.endsWith( "time_state.xml" ) )
       {
-         nother++;
-         if ( fname.endsWith( "time_state.xml" ) )
-         {
-            ntxml++;
-            txmlFname     = fname;
-         }
-         else if ( fname.endsWith( "time_state.tmst" ) )
-         {
-            ntmst++;
-            tmstFname     = fname;
-         }
+         ntxml++;
+         txmlFname     = fname;
       }
+      else if ( fname.endsWith( "time_state.tmst" ) )
+      {
+         ntmst++;
+         tmstFname     = fname;
+      }
+      else
+         nother++;
    }
 DbgLv(1) << "CGui:gI: nmwrs nauc nother" << nmwrs << nauc << nother;
 

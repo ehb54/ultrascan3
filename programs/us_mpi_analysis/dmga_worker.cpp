@@ -21,8 +21,8 @@ void US_MPI_Analysis::dmga_worker( void )
    current_dataset     = 0;
    datasets_to_process = data_sets.size();
    QStringList keys    = parameters.keys();
-   s_grid              = ( keys.contains( "s_grid" ) )
-                         ? parameters[ "s_grid" ].toInt() : 100;
+   p_grid              = ( keys.contains( "p_grid" ) )
+                         ? parameters[ "p_grid" ].toInt() : 100;
    buckets.clear();
 
    simulation_values.noisflag   = 0;
@@ -428,9 +428,10 @@ void US_MPI_Analysis::mutate_dgene( DGene& dgene )
 {
    // Get a random mask that selects which float attributes to vary
    int smask     = u_random( nfvari ) + 1;
-   double extn_s = (double)( s_grid - 1 );
-   double sigma  = extn_s / ( 6.0 * ( log2( generation + 2 ) ) );
-DbgLv(1) << my_rank << "dg:mutg: smask s_grid sigma" << smask << s_grid << sigma;
+   // Compute the sigma based on parameter grid and generation
+   double extn_p = (double)( p_grid - 1 );
+   double sigma  = extn_p / ( 6.0 * ( log2( generation + 2 ) ) );
+DbgLv(1) << my_rank << "dg:mutg: smask p_grid sigma" << smask << p_grid << sigma;
 
    // Loop thru float attributes, varying the selected ones
    for ( int ii = 0; ii < nfloatc; ii++ )
@@ -463,7 +464,7 @@ DbgLv(1) << my_rank << "dg:mutg:  ii" << ii
       // Mutate the value
       double xx     = US_Math2::box_muller( 0.0, sigma );
       double delta  = qRound( xx );
-      vv           += ( delta * ( vh - vl ) / extn_s );
+      vv           += ( delta * ( vh - vl ) / extn_p );
       vv            = qMax( vv, vl );
       vv            = qMin( vv, vh );
       vv            = logscl ? exp( vv ) : vv;
@@ -1050,7 +1051,7 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
          data_sets[ 0 ]->model = model;     // Save the s20w model
 
       for ( int cc = 0; cc < model.components.size(); cc++ )
-      {  // Loop to perform data corrections to s and D
+      {  // Loop to perform data corrections to s and D (experimental space)
          sd.vbar20       = model.components[ cc ].vbar20;
          sd.vbar         = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
          US_Math2::data_correction( avtemp, sd );
@@ -1122,5 +1123,7 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
    }
 
    sim_vals.variance = variance / (double)total_points;
+if(my_rank==0)
+DbgLv(1) << my_rank << "CR: variance" << sim_vals.variance << variance << total_points;
 }
 
