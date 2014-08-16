@@ -117,9 +117,9 @@ DbgLv(1) << "cnG:main: le_vals defined";
    ck_flt_conc            = new QCheckBox( "", this );
    ck_flt_vbar->setChecked( false );
    ck_flt_mw  ->setChecked( false );
-   ck_log_mw  ->setChecked( true  );
+   ck_log_mw  ->setChecked( false );
    ck_flt_ff0 ->setChecked( false );
-   ck_flt_s   ->setChecked( true  );
+   ck_flt_s   ->setChecked( false );
    ck_flt_D   ->setChecked( false );
    ck_flt_f   ->setChecked( false );
    ck_flt_conc->setChecked( false );
@@ -841,8 +841,9 @@ DbgLv(1) << "cnG:   update_constraints  rtn";
 
    // Get constraints for new component
    crow     = srow;
-DbgLv(1) << "cnG:   comp_constraints call";
+DbgLv(1) << "cnG:   comp_constraints call  row" << crow;
    constraints.comp_constraints( crow, &cnsv, NULL );
+DbgLv(1) << "cnG:   comp_constraints rtn   cnsv size" << cnsv.size();
    bool is_prod   = cmodel.is_product( crow );
    bool not_prod  = ! is_prod;
 
@@ -850,6 +851,7 @@ DbgLv(1) << "cnG:   comp_constraints call";
    {  // Impose various restrictions for product component
       QVector< C_CONSTRAINT > old_cnsv = cnsv;
       cnsv.clear();
+DbgLv(1) << "cnG:   IS_PROD";
 
       // First scan associations to determine the reactant values
       double vsum    = 0.0;       // vbar sum
@@ -998,16 +1000,18 @@ DbgLv(1) << "cnG: miss_vb,mw,ff,co" << miss_vb << miss_mw << miss_ff << miss_co;
       }
    }
 
+   comps_connect ( false );
 DbgLv(1) << "cnG:   comp_constraints  rtn";
    //QListWidgetItem* item = lw_comps->item( crow );
 
    // Initialize component attribute GUI elements
-   ck_sel_vbar->setChecked( false );
+   ck_sel_vbar->setChecked( true  );
    ck_sel_mw  ->setChecked( false );
    ck_sel_ff0 ->setChecked( false );
    ck_sel_s   ->setChecked( false );
    ck_sel_D   ->setChecked( false );
    ck_sel_f   ->setChecked( false );
+   ck_sel_conc->setChecked( true  );
    ck_sel_mw  ->setEnabled( false );
    ck_sel_ff0 ->setEnabled( false );
    ck_sel_s   ->setEnabled( false );
@@ -1034,7 +1038,6 @@ DbgLv(1) << "cnG:   comp_constraints  rtn";
    us_setReadOnly( le_val_conc, true );
    us_setReadOnly( le_min_conc, true );
    us_setReadOnly( le_max_conc, true );
-   comps_connect ( false );
    ck_flt_vbar->setEnabled( not_prod );
    ck_flt_mw  ->setEnabled( false );
    ck_flt_ff0 ->setEnabled( false );
@@ -1052,7 +1055,7 @@ DbgLv(1) << "cnG:cmp_sel: ii" << ii << "atype" << cnsv[ii].atype << "fl" << floa
       if ( cnsv[ ii ].atype == C_ATYPE_VBAR )
       {
          ck_sel_vbar->setChecked( true );
-         ck_sel_vbar->setEnabled( not_prod );
+         ck_sel_vbar->setEnabled( false );
          check_value( cnsv[ ii ], le_val_vbar, le_min_vbar, le_max_vbar );
          ck_flt_vbar->setChecked( floats );
          ck_flt_vbar->setEnabled( not_prod );
@@ -1421,6 +1424,7 @@ void US_ConstraintsEdit::check_selects()
    bool flt_D    = ck_flt_D   ->isChecked();
    bool flt_f    = ck_flt_f   ->isChecked();
    bool flt_any  = flt_vbar || flt_mw || flt_ff0 ||  flt_s || flt_D || flt_f;
+DbgLv(1) << "cnG:check_selects kcheck" << kcheck << "flt_any" << flt_any;
 
    // Enable/Disable based on selected state
    us_setReadOnly( le_val_mw , ( !ckd_mw  ||  flt_mw  ) );
@@ -1458,7 +1462,7 @@ DbgLv(1) << "cnG:ck_sels: ff0 B0" << scva.f_f0;
       // Set the selected component values
       scva.vbar20   = le_val_vbar->text().toDouble();
       scll.vbar20   = le_min_vbar->text().toDouble();
-      schl.vbar20   = le_max_vbar->text().toDouble();
+      schh.vbar20   = le_max_vbar->text().toDouble();
 
       if ( flt_vbar )
       {
@@ -1470,7 +1474,7 @@ DbgLv(1) << "cnG:ck_sels: ff0 B0" << scva.f_f0;
          schh.vbar20   = scva.vbar20 * 1.1;
       }
       sclh.vbar20   = scll.vbar20;
-      schh.vbar20   = schl.vbar20;
+      schl.vbar20   = schh.vbar20;
 DbgLv(1) << "cnG:ck_sels: ff0 B1" << scva.f_f0;
 
       if ( ckd_mw  )
@@ -1572,7 +1576,7 @@ DbgLv(1) << "cnG:ck_sels: ff0 B6" << scva.f_f0;
 
       // Compute unselected values
 DbgLv(1) << "cnG:ck_sels: ff0 BEF" << scva.f_f0 << scll.f_f0 << schh.f_f0
- << sclh.f_f0 << schl.f_f0;
+ << sclh.f_f0 << schl.f_f0 << "ksel" << ksel;
       US_Model::calc_coefficients( scva );
       US_Model::calc_coefficients( scll );
       US_Model::calc_coefficients( schh );
@@ -1637,6 +1641,7 @@ DbgLv(1) << "cnG:ck_sels: ff0 AFT" << scva.f_f0 << scll.f_f0 << schh.f_f0
             le_min_s  ->setText( notapl );
             le_max_s  ->setText( notapl );
          }
+DbgLv(1) << "cnG:check_selects !CKD_S  flt_any" << flt_any;
       }
 
       if ( !ckd_D   )
@@ -1693,6 +1698,7 @@ DbgLv(1) << "cnG:ck_sels: ff0 AFT" << scva.f_f0 << scll.f_f0 << schh.f_f0
       ck_sel_D  ->setEnabled( true );
       ck_sel_f  ->setEnabled( true );
    }
+DbgLv(1) << "cnG:check_selects   END";
 }
 
 // Get the value of a specified type in a constraints record

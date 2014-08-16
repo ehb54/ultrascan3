@@ -36,8 +36,8 @@ DbgLv(1) << "MwDa: evers" << evers;
    if ( kcelchn == 0 )
    {
       QMessageBox::critical( 0,
-            tr( "No XML File Found" ),
-            tr( "No XML file was found in directory \"%1\".\n"
+            tr( "No mwrs XML File Found" ),
+            tr( "No proper mwrs XML file was found in directory \"%1\".\n"
                 "No import of MWRS data is possible without"
                 " such a file." ).arg( cur_dir ) );
       return false;

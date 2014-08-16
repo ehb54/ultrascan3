@@ -8,8 +8,8 @@
 // The constructor initializes the base or constraints model
 US_dmGA_Constraints::US_dmGA_Constraints( US_Model* imodel )
 {
-   x_attr         = ATYPE_S;
-   y_attr         = ATYPE_FF0;
+   x_attr         = ATYPE_FF0;
+   y_attr         = ATYPE_MW;
    z_attr         = ATYPE_VBAR;
    dbg_level      = US_Settings::us_debug();
 
@@ -1021,15 +1021,15 @@ void US_dmGA_Constraints::constraints_from_base()
       US_Model::SimulationComponent* sc  = &bmodel.components[ ii ];
       // Get component attribute values (non-zero are the selected ones)
       attr.mcompx = ii;
-      attr.atype  = ATYPE_S;
-      attr.low    = sc->s;
-      attr.high   = attr.low;
-      attribs << attr;                // Save s attribute constraint
-
       attr.atype  = ATYPE_FF0;
       attr.low    = sc->f_f0;
       attr.high   = attr.low;
       attribs << attr;                // Save f_f0 attribute constraint
+
+      attr.atype  = ATYPE_MW;
+      attr.low    = sc->mw;
+      attr.high   = attr.low;
+      attribs << attr;                // Save mw attribute constraint
 
       attr.atype  = ATYPE_VBAR;
       attr.low    = sc->vbar20;
