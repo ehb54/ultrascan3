@@ -877,7 +877,7 @@ DbgLv(1) << "cnG:    ii" << ii << "rc-cont-crow: rcsize stsize"
                int rc1       = rcomps ->at( jj );
                int st1       = stoichs->at( jj );
 DbgLv(1) << "cnG:      jj" << jj << "rc1" << rc1 << "st1" << st1;
-               if ( rc1 > 0  &&  st1 > 0 )
+               if ( rc1 >= 0  &&  st1 > 0 )
                {
                   // Get reactant's constraints
                   QVector< C_CONSTRAINT > rcnsv;
@@ -1073,7 +1073,7 @@ DbgLv(1) << "cnG:cmp_sel: ii" << ii << "atype" << cnsv[ii].atype << "fl" << floa
       if ( cnsv[ ii ].atype == C_ATYPE_FF0  )
       {
          ck_sel_ff0 ->setChecked( true );
-         ck_sel_ff0 ->setEnabled( not_prod );
+         ck_sel_ff0 ->setEnabled( true );
          check_value( cnsv[ ii ], le_val_ff0, le_min_ff0, le_max_ff0 );
          ck_flt_ff0 ->setChecked( floats );
          ck_flt_ff0 ->setEnabled( true );
