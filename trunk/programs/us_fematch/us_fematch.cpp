@@ -1659,8 +1659,9 @@ DbgLv(1) << "Fem:Adj: manual" << manual << solution.manual << solution_rec.buffe
 
    double scorrec  = solution.s20w_correction;
    double dcorrec  = solution.D20w_correction;
-   // Set constant-vbar flag
-   cnstvb         = model.constant_vbar();
+   // Set constant-vbar and constant-ff0 flags
+   cnstvb          = model.constant_vbar();
+   cnstff          = model.constant_ff0();
 
    US_Math2::SolutionData sd;
    sd.density      = solution.density;
@@ -2695,13 +2696,16 @@ QString US_FeMatch::distrib_info() const
    if ( ncomp == 0 )
       return "";
 
+   QString mdla = model_loaded.description
+                  .section( ".", -2, -2 ).section( "_", 1, -1 );
+   if ( mdla.isEmpty() )
+      mdla         = model_loaded.description.section( ".", 0, -2 );
+
    QString mstr = "\n" + indent( 4 )
                   + tr( "<h3>Data Analysis Settings:</h3>\n" )
                   + indent( 4 ) + "<table>\n";
 
-   mstr += table_row( tr( "Model Analysis:" ),
-                      model_loaded.description
-                      .section( ".", -2, -2 ).section( "_", 1, -1 ) );
+   mstr += table_row( tr( "Model Analysis:" ), mdla );
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),
@@ -2741,19 +2745,19 @@ QString US_FeMatch::distrib_info() const
                       QString().sprintf( "%6.4e", ( sum_D  / sum_c ) ) );
    mstr += table_row( tr( "W.A. Molecular Weight:" ),
                       QString().sprintf( "%6.4e", ( sum_mw / sum_c ) ) );
+   if ( ! cnstff )
+      mstr += table_row( tr( "Weight Average f/f0:" ),
+                         QString::number( ( sum_k / sum_c ) ) );
    if ( ! cnstvb )
       mstr += table_row( tr( "Weight Average vbar20:" ),
                          QString::number( ( sum_v / sum_c ) ) );
-   else
-      mstr += table_row( tr( "Weight Average f/f0:" ),
-                         QString::number( ( sum_k / sum_c ) ) );
    mstr += table_row( tr( "Total Concentration:" ),
                       QString().sprintf( "%6.4e", sum_c ) );
 
    if ( cnstvb )
       mstr += table_row( tr( "Constant vbar20:" ),
                          QString::number( minv ) );
-   else
+   else if ( cnstff )
       mstr += table_row( tr( "Constant f/f0:" ),
                          QString::number( mink ) );
    mstr += indent( 4 ) + "</table>\n";
@@ -2789,7 +2793,7 @@ QString US_FeMatch::distrib_info() const
       }
    }
 
-   else
+   else if ( cnstff )
    {  // Constant-f/f0, varying vbar
       mstr += table_row( tr( "Molec. Wt." ), tr( "S Apparent" ),
                          tr( "S 20,W" ),     tr( "D Apparent" ),
@@ -2814,6 +2818,64 @@ QString US_FeMatch::distrib_info() const
                QString().sprintf( "%10.4e",
                   model_loaded.components[ ii ].vbar20 ),
                QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
+      }
+   }
+
+   else
+   {  // Neither vbar nor f/f0 are constant
+      mstr += table_row( tr( "Molec. Wt." ), tr( "S Apparent" ),
+                         tr( "S 20,W" ),     tr( "D 20,W"     ),
+                         tr( "f / f0" ),     tr( "Vbar20" ),
+                         tr( "Concentration" ) );
+
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {
+         double conc = model_loaded.components[ ii ].signal_concentration;
+         double perc = 100.0 * conc / sum_c;
+         mstr       += table_row(
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].mw     ),
+               QString().sprintf( "%10.4e",
+                  model       .components[ ii ].s      ),
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].s      ),
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].D      ),
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].f_f0 ),
+               QString().sprintf( "%10.4e",
+                  model_loaded.components[ ii ].vbar20 ),
+               QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
+      }
+   }
+
+   // Show associations information if present
+   if ( model_loaded.associations.size() > 0 )
+   {
+      mstr += indent( 4 ) + "</table>\n" + indent( 4 );
+      mstr += tr( "<h3>Reversible Associations Information:</h3>\n" );
+      mstr += indent( 4 ) + "<table>\n";
+      mstr += table_row( tr( "Reactant 1" ), tr( "Reactant 2" ),
+                         tr( "Product"    ), tr( "K_dissociation"  ),
+                         tr( "k_offset Rate" ) );
+
+      for ( int ii = 0; ii < model_loaded.associations.size(); ii++ )
+      {
+         US_Model::Association as1 = model.associations[ ii ];
+         double k_d    = as1.k_d;
+         double k_off  = as1.k_off;
+         QString reac1 = tr( "component %1" ).arg( as1.rcomps[ 0 ] + 1 );
+         QString reac2 = tr( "(none)" );
+         QString prod  = tr( "component %1" ).arg( as1.rcomps[ 1 ] + 1 );
+         if ( as1.rcomps.size() > 2 )
+         {
+            reac2         = prod;
+            prod          = tr( "component %1" ).arg( as1.rcomps[ 2 ] + 1 );
+         }
+
+         mstr       += table_row( reac1, reac2, prod,
+                                  QString().sprintf( "%10.4e", k_d   ),
+                                  QString().sprintf( "%10.4e", k_off ) );
       }
    }
 

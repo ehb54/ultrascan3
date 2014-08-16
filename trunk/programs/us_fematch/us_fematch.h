@@ -106,6 +106,7 @@ class US_FeMatch : public US_Widgets
       bool          dataLatest;
       bool          buffLoaded;
       bool          cnstvb;
+      bool          cnstff;
       bool          exp_steps;
 
       QString       run_name;

@@ -81,7 +81,16 @@ DbgLv(0) << "dmga_master: wmodel #comps" << wmodel.components.size();
       qSort( best_fitness );
 DbgLv(1) << "GaMast: EOML: fitness sorted  bfx" << best_fitness[0].index
          << "bestdg size" << best_dgenes.size();
-      dgene   = best_dgenes[ best_fitness[ 0 ].index ];
+
+      Fitness* bfit  = &best_fitness[ 0 ];
+      DbgLv(0) << "Last generation best RMSD" << sqrt( bfit->fitness );
+#if 0
+      double fitness = bfit->fitness;
+      dgene          = best_dgenes[ bfit->index ];
+      bfit->fitness  = minimize_dmga( dgene, fitness );
+      DbgLv(0) << "Post-minimization RMSD" << sqrt( bfit->fitness );
+      best_dgenes[ bfit->index ] = dgene;
+#endif
 
       // Compute the variance (fitness) for the final best-fit model
 
@@ -128,6 +137,7 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
       }
       else
       {
+DbgLv(1) << "GaMast: FFrmsd: variance" << simulation_values.variance;
          qDebug() << "Final Fit RMSD" << sqrt( simulation_values.variance );
          break;
       }
@@ -772,31 +782,35 @@ DbgLv(1) << my_rank << "MFG: ii" << ii << "nrco,rc1,rc2,rcp"
       // Reset concentration for reactant(s) and product
       double cval   = model.components[ rc1 ].signal_concentration;
       model.components[ rc2 ].signal_concentration  = cval;
-      model.components[ rcp ].signal_concentration  = cval;
+      //model.components[ rcp ].signal_concentration  = cval;
+      model.components[ rcp ].signal_concentration  = 0.0;
 if(my_rank<2)
 DbgLv(1) << my_rank << "MFG:   orig cval wval vval" << cval
  << model.components[rcp].mw << model.components[rcp].vbar20;
 
       // Reset molecular weight and vbar for product
-      double wval   = model.components[ rc1 ].mw * (double)st1;
-      double vval   = model.components[ rc1 ].vbar20 * wval;
+      double wval   = model.components[ rc1 ].mw         * (double)st1;
+      double vsum   = model.components[ rc1 ].vbar20     * wval;
+      double esum   = model.components[ rc1 ].extinction * (double)st1;
       double wsum   = wval;
 
       if ( nrco > 2 )
       {
-         wval          = model.components[ rc2 ].mw * (double)st2;
-         vval         += model.components[ rc2 ].vbar20 * wval;
+         wval          = model.components[ rc2 ].mw         * (double)st2;
+         vsum         += model.components[ rc2 ].vbar20     * wval;
+         esum         += model.components[ rc2 ].extinction * (double)st2;
          wsum         += wval;
       }
 
-      model.components[ rcp ].vbar20  = vval / wsum;
-      model.components[ rcp ].mw      = wval;
-      model.components[ rcp ].f_f0    = ff0p;
-      model.components[ rcp ].s       = 0.0;
-      model.components[ rcp ].D       = 0.0;
-      model.components[ rcp ].f       = 0.0;
+      model.components[ rcp ].vbar20     = vsum / wsum;
+      model.components[ rcp ].mw         = wsum;
+      model.components[ rcp ].f_f0       = ff0p;
+      model.components[ rcp ].s          = 0.0;
+      model.components[ rcp ].D          = 0.0;
+      model.components[ rcp ].f          = 0.0;
+      model.components[ rcp ].extinction = esum;
 
-      // Recompute coefficients with specified mw
+      // Recompute coefficients with specified vbar,mw,f/f0
       model.calc_coefficients( model.components[ rcp ] );
 if(my_rank<2)
 DbgLv(1) << my_rank << "MFG:     rcp" << rcp << "c.s c.k c.mw c.vb"
