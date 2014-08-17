@@ -52,7 +52,6 @@ DbgLv(0) << "dmga_master: wmodel #comps" << wmodel.components.size();
    nfloatc               = constraints.float_constraints( &cns_flt );
    nfvari                = ( 1 << nfloatc ) - 1;
    dgmarker.resize( nfloatc );
-   dgmsize               = nfloatc * sizeof( double );
    do_astfem             = ( wmodel.components[ 0 ].sigma == 0.0  &&
                              wmodel.components[ 0 ].delta == 0.0  &&
                              wmodel.coSedSolute < 0  &&
@@ -244,7 +243,7 @@ DbgLv(1) << "dmga_master start loop:  gcores_count fitsize" << gcores_count
             }
 
             // Get the best gene for the current generation from the worker
-DbgLv(1) << "  MAST: work" << worker << "Recv#2 dgmsize" << dgmsize;
+DbgLv(1) << "  MAST: work" << worker << "Recv#2 nfloatc" << nfloatc;
             MPI_Recv( dgmarker.data(),                 // MPI #2
                       nfloatc,
                       MPI_DOUBLE,  

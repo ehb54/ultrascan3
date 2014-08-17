@@ -233,7 +233,6 @@ class US_MPI_Analysis : public QObject
     int                       ncompc;
     int                       nassocc;
     int                       nfvari;
-    int                       dgmsize;
 
     class Fitness
     {

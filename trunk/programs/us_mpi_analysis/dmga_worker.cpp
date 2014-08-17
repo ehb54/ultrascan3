@@ -73,13 +73,12 @@ DbgLv(1) << my_rank << "dmga_worker: wmodel #comps" << wmodel.components.size();
    //  itself can be formed by initializing with the base model (wmodel)
    //  and then setting the floating attribute values from the marker vector.
    dgmarker.resize( nfloatc );
-   dgmsize             = nfloatc * sizeof( double );
    do_astfem           = ( wmodel.components[ 0 ].sigma == 0.0  &&
                            wmodel.components[ 0 ].delta == 0.0  &&
                            wmodel.coSedSolute < 0  &&
                            data_sets[ 0 ]->compress == 0.0 );
-DbgLv(1) << my_rank << "dmga_worker: nfloatc nfvari dgmsize do_astfem"
- << nfloatc << nfvari << dgmsize << do_astfem;
+DbgLv(1) << my_rank << "dmga_worker: nfloatc nfvari do_astfem"
+ << nfloatc << nfvari << do_astfem;
 
    while ( ! finished )
    {
@@ -187,7 +186,9 @@ void US_MPI_Analysis::dmga_worker_loop( void )
 
    // Build the first generation of genes
    for ( int ii = 0; ii < population; ii++ )
+   {
       dgenes << new_dmga_gene();
+   }
 
    fitness.reserve( population );
 
@@ -231,6 +232,8 @@ DbTimMsg("Worker start rank/generation/elapsed-secs");
       {
          fitness[ ii ].index   = ii;
          fitness[ ii ].fitness = get_fitness_dmga( dgenes[ ii ] );
+DbgLv(1) << my_rank << "dg:getf:  ii" << ii << "  fitness"
+ << fitness[ii].fitness;
       }
 
       // Sort fitness
@@ -994,7 +997,8 @@ double US_MPI_Analysis::get_fitness_dmga( DGene& dgene )
    double fitness  = sim.variance;         // Get the computed fitness
    fitness_map.insert( fkey, fitness );    // Add it the fitness map
 
-//DbgLv(1) << "dg:get_fit fitness" << fitness;
+//DbgLv(1) << "dg:get_fit fitness" << fitness << "count hits"
+// << fitness_count << fitness_hits;
    return fitness;
 }
 
@@ -1059,12 +1063,18 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
          model.components[ cc ].s  /= sd.s20w_correction;
          model.components[ cc ].D  /= sd.D20w_correction;
       }
+if(my_rank<2 && dbg_level>0) {
+DbgLv(1) << my_rank << "CR: SIMPARAMS DUMP";
+dset->simparams.debug();
+DbgLv(1) << my_rank << "CR: MODEL DUMP";
+model.debug(); }
 
       // Compute the simulation
 
       if ( do_astfem )
       {  // Calculate simulation for FEM (ideal) case
          US_Astfem_RSA astfem_rsa( model, dset->simparams );
+         astfem_rsa.set_debug_flag( dbg_level );
          astfem_rsa.calculate( simdat );
       }
 

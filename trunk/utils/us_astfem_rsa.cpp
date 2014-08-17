@@ -3039,12 +3039,6 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       bool accel )
 {
    int Mcomp = af_params.s.size();
-   xA        = x.data();
-
-   simdata.radius.clear();
-   simdata.scan  .clear();
-   simdata.radius.reserve( Nx );
-   simdata.scan  .reserve( Nx );
 
    US_AstfemMath::MfemScan simscan;
 
@@ -3060,6 +3054,13 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    }
 
    mesh_gen( nu, simparams.meshType );
+
+   simdata.radius.clear();
+   simdata.scan  .clear();
+   simdata.radius.reserve( Nx );
+   simdata.scan  .reserve( Nx );
+   xA        = x.data();
+DbgLv(2) << "RSA:_ra2: Mcomp Nx" << Mcomp << Nx << "x size" << x.size();
 
    bool   fixedGrid = ( simparams.gridType == US_SimulationParameters::FIXED );
    double meniscus  = af_params.current_meniscus;
