@@ -918,7 +918,6 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    nfloatc               = constraints.float_constraints( &cns_flt );
    nfvari                = ( 1 << nfloatc ) - 1;
    dgmarker.resize( nfloatc );
-   dgmsize               = nfloatc * sizeof( double );
    do_astfem             = ( wmodel.components[ 0 ].sigma == 0.0  &&
                              wmodel.components[ 0 ].delta == 0.0  &&
                              wmodel.coSedSolute < 0  &&
