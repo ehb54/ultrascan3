@@ -864,6 +864,7 @@ DbgLv(1) << "cnG:   IS_PROD";
       {
          US_Model::Association* as1  = &cmodel.associations[ ii ];
          QVector< int >* rcomps      = &as1->rcomps;
+DbgLv(1) << "cnG:    ii" << ii << "rc0" << rcomps->at(0) << "crow" << crow;
          if ( rcomps->at( 0 ) < 0 )  continue;
 
          if ( rcomps->contains( crow ) )
@@ -897,6 +898,8 @@ DbgLv(1) << "cnG:      jj" << jj << "rc1" << rc1 << "st1" << st1;
 DbgLv(1) << "cnG:      mcx" << mcx << "cval,vsum,wsum" << cval << vsum << wsum;
                }
             }
+
+            break;
          }
       }
 
