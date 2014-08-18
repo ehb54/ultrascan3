@@ -103,7 +103,7 @@ DbgLv(2) << "RSA:   sbottom acbottom" << simparams.bottom
  << af_params.current_bottom;
    af_data.meniscus = simparams.meniscus;
    af_data.bottom   = af_params.current_bottom;
-
+// cv = component vector
    for ( int cc = 0; cc < size_cv; cc++ )
    {
 #ifdef TIMING_RA
@@ -2552,6 +2552,9 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
       int    st1     = af_params.association[ 0 ].stoichs[ 1 ];
       double k_d     = af_params.association[ 0 ].k_d;
       double k_assoc = ( k_d != 0.0 ) ? ( 1.0 / k_d ) : 0.0;
+      // fix the next line to make it general
+      double ext_M   = af_params.kext[ 0 ]; // extinction coefficient for the monomer, corrected for pathlength
+      double ext_Msq = ext_M * ext_M; 
 #ifndef NO_DB
       emit current_component( -Npts );
 #endif
@@ -2563,7 +2566,8 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
 //DbgLv(2) << "RSA:  j st0 st1" << j << st0 << st1;
 
          if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
-            c1 = ( sqrt( 1.0 + 4.0 * k_assoc * ct ) - 1.0 ) / ( 2.0 * k_assoc );
+            c1 = ( sqrt( ext_Msq + 4.0 * k_assoc * ct * ext_Msq) - ext_M ) / ( 2.0 * k_assoc * ext_Msq);
+            // old version: c1 = ( sqrt( 1.0 + 4.0 * k_assoc * ct ) - 1.0 ) / ( 2.0 * k_assoc );
 
          else if ( st0 == 3 && st1 == -1 )           // mono <--> trimer
             c1 = US_AstfemMath::cube_root( -ct / k_assoc, 1.0 / k_assoc, 0.0 );
