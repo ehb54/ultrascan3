@@ -1045,7 +1045,7 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
       for ( int ii = 0; ii < system.components.size(); ii++ )
          total_c += system.components[ ii ].signal_concentration;
 
-      yscale         = total_c * 2.0;
+      yscale         = total_c * 3.0;
    }
    else
    {  // Get total concentration of non-cosed components
@@ -1055,10 +1055,11 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
             total_c += system.components[ ii ].signal_concentration;
       }
 
-      yscale         = total_c * 4.0;
+      yscale         = total_c * 7.0;
    }
 
    moviePlot->setAxisScale( QwtPlot::yLeft, 0, yscale );
+   //moviePlot->setAxisAutoScale( QwtPlot::yLeft );
 	moviePlot->setAxisAutoScale( QwtPlot::xBottom );
    
    double* r = new double [ x->size() ];
@@ -1068,7 +1069,7 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
    QwtPlotCurve* curve = 
       new QwtPlotCurve( "Scan Number " + QString::number( curve_count++ ) );
 
-   curve->setPen( QPen( Qt::yellow ) );
+   curve->setPen( QPen( Qt::yellow, 3 ) );
    curve->setData( r, c, x->size() );
    curve->attach( moviePlot );
    

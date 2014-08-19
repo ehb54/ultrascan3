@@ -199,7 +199,8 @@ DbgLv(2) << "RSA: s0 i_conc cc step lsc" << cc << 0 << 0 << ": c0 cm cn"
 
          af_params.s   [ 0 ] = sc->s;
          af_params.D   [ 0 ] = sc->D;
-         af_params.kext[ 0 ] = sc->extinction;
+         //af_params.kext[ 0 ] = sc->extinction;
+         af_params.kext[ 0 ] = sc->extinction * af_params.pathlength;
 #ifdef TIMING_RA
 totT1+=(clcSt1.msecsTo(QDateTime::currentDateTime()));
 #endif
@@ -568,7 +569,9 @@ DbgLv(2) << "RSA:    jj index" << jj << index;
          US_Model::SimulationComponent* sc = &system.components[ index ];
          af_params.s   [ jj ] = sc->s;
          af_params.D   [ jj ] = sc->D;
-         af_params.kext[ jj ] = sc->extinction;
+         af_params.kext[ jj ] = sc->extinction * af_params.pathlength;
+//DbgLv(0) << "RSA:  group jj" << group << jj << "extinct kext pathlen"
+// << sc->extinction << af_params.kext[jj] << af_params.pathlength;
 
          // Global to local index
          af_params.local_index[ index ] = jj;
@@ -2543,7 +2546,7 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
 
    // Note: all components must be defined on the same radial grids
    int Npts = C0[ 0 ].radius.size();
-DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
+//DbgLv(0) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
 
    // Special case:  self-association  n A <--> An
    if ( num_comp == 2 )       // Only 2 components and one association rule
@@ -2555,6 +2558,8 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
       // fix the next line to make it general
       double ext_M   = af_params.kext[ 0 ]; // extinction coefficient for the monomer, corrected for pathlength
       double ext_Msq = ext_M * ext_M; 
+      k_assoc /= ext_M;
+//DbgLv(0) << "RSA: decompose() ext_M" << ext_M;
 #ifndef NO_DB
       emit current_component( -Npts );
 #endif
@@ -2566,8 +2571,8 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
 //DbgLv(2) << "RSA:  j st0 st1" << j << st0 << st1;
 
          if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
-            c1 = ( sqrt( ext_Msq + 4.0 * k_assoc * ct * ext_Msq) - ext_M ) / ( 2.0 * k_assoc * ext_Msq);
-            // old version: c1 = ( sqrt( 1.0 + 4.0 * k_assoc * ct ) - 1.0 ) / ( 2.0 * k_assoc );
+            //c1 = ( sqrt( ext_Msq + 4.0 * k_assoc * ct * ext_Msq) - ext_M ) / ( 2.0 * k_assoc * ext_Msq);
+            c1 = ( sqrt( 1.0 + 4.0 * k_assoc * ct ) - 1.0 ) / ( 2.0 * k_assoc );
 
          else if ( st0 == 3 && st1 == -1 )           // mono <--> trimer
             c1 = US_AstfemMath::cube_root( -ct / k_assoc, 1.0 / k_assoc, 0.0 );
@@ -2583,6 +2588,7 @@ DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
          }
 
          double c2 = k_assoc * pow( c1, (double)st0 );
+//DbgLv(0) << "RSA: decompose()  j" << j << "c1 c2 ct Ka" << c1 << c2 << ct << k_assoc;
 
          if ( af_params.role[ 0 ].stoichs[ 0 ] > 0 )    // c1=reactant
          {
@@ -2890,24 +2896,25 @@ DbgLv(2) << "RSA:Eul: rule" << rule << "st0 st1 k_assoc k_off"
 
 void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
 {
-    US_AstfemMath::ReactionGroup* rgp = &rg[ af_params.rg_index ];
-    int     num_comp  = rgp->GroupComponent.size();
-    int     num_rule  = rgp->association.size();
-    QVector< double > qqVec( num_rule );
-    double* Q         = qqVec.data();
+   US_AstfemMath::ReactionGroup* rgp = &rg[ af_params.rg_index ];
+   int     num_comp  = rgp->GroupComponent.size();
+   int     num_rule  = rgp->association.size();
+   QVector< double > qqVec( num_rule );
+   double* Q         = qqVec.data();
 
-    for ( int m = 0; m < num_rule; m++ )
-    {
-       US_Model::Association* as = &af_params.association[ m ];
-       double k_off      = as->k_off;
-       double k_assoc    = ( as->k_d != 0.0 ) ? ( 1.0 / as->k_d ) : 0.0;
-       double k_on       = k_assoc * k_off;
-       double Q_reactant = 1.0;
-       double Q_product  = 1.0;
+   for ( int m = 0; m < num_rule; m++ )
+   {
+      US_Model::Association* as = &af_params.association[ m ];
+      double k_off      = as->k_off;
+      double k_assoc    = ( as->k_d != 0.0 ) ? ( 1.0 / as->k_d ) : 0.0;
+             k_assoc   /= af_params.kext[ as->rcomps[ 0 ] ];
+      double k_on       = k_assoc * k_off;
+      double Q_reactant = 1.0;
+      double Q_product  = 1.0;
 //DbgLv(2) << "RSA:ReDydt: m k_off k_on" << m << k_off << k_on;
 
-       for ( int n = 0; n < as->rcomps.size(); n++ )
-       {
+      for ( int n = 0; n < as->rcomps.size(); n++ )
+      {
           // local index of the n-th component in assoc[rule]
           int    ind_cn = as->rcomps[ n ] ;
 
@@ -2966,6 +2973,7 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
       US_Model::Association* as = &af_params.association[ m ];
       double k_off   = as->k_off;
       double k_assoc = ( as->k_d != 0.0 ) ? ( 1.0 / as->k_d ) : 0.0;
+             k_assoc /= af_params.kext[ as->rcomps[ 0 ] ];
       double k_on    = k_assoc * k_off;
 
       for ( int j = 0; j < num_comp; j++ )
