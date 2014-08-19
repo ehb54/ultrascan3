@@ -2557,7 +2557,7 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
       double k_assoc = ( k_d != 0.0 ) ? ( 1.0 / k_d ) : 0.0;
       // fix the next line to make it general
       double ext_M   = af_params.kext[ 0 ]; // extinction coefficient for the monomer, corrected for pathlength
-      double ext_Msq = ext_M * ext_M; 
+      //double ext_Msq = ext_M * ext_M; 
       k_assoc /= ext_M;
 //DbgLv(0) << "RSA: decompose() ext_M" << ext_M;
 #ifndef NO_DB
@@ -2734,8 +2734,10 @@ DbgLv(2) << "RSA:Eul: Npts timeStep" << Npts << timeStep;
       int    rule     = rg[ af_params.rg_index ].association[ 0 ];
       int    st0      = system.associations[ rule ].stoichs[ 0 ];
       int    st1      = system.associations[ rule ].stoichs[ 1 ];
+      double extn     = af_params.kext[ system.associations[rule].rcomps[0] ];
       double k_d      = system.associations[ rule ].k_d;
       double k_assoc  = ( k_d == 0.0 ) ? 0.0 : ( 1.0 / k_d );
+             k_assoc /= extn;
       double k_off    = system.associations[ rule ].k_off;
 DbgLv(2) << "RSA:Eul: rule" << rule << "st0 st1 k_assoc k_off"
  << st0 << st1 << k_assoc << k_off;
@@ -3261,6 +3263,8 @@ DbgLv(2) << "RSA: newX3  CT0 CTn" << CT1[0] << CT1[Nx-1];
    int     stepinc = 1000;
    int     stepmax = ( NN + 2 ) / stepinc + 1;
    bool    repprog = stepmax > 1;
+   w2t_integral    = 0.0;
+
    if ( repprog )
    {
       emit current_component( -stepmax );

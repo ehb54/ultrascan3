@@ -520,6 +520,9 @@ time1=QDateTime::currentDateTime();
                      << invID << editID;
             }
 
+            else if ( do_manual || do_unasgn )
+               query << "get_model_desc_by_editID" << invID << "1";
+
             else
                query << "get_model_desc" << invID;
 
