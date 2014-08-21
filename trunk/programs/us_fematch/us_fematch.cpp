@@ -2857,7 +2857,7 @@ QString US_FeMatch::distrib_info() const
       mstr += indent( 4 ) + "<table>\n";
       mstr += table_row( tr( "Reactant 1" ), tr( "Reactant 2" ),
                          tr( "Product"    ), tr( "K_dissociation"  ),
-                         tr( "k_offset Rate" ) );
+                         tr( "k_off Rate" ) );
 
       for ( int ii = 0; ii < model_loaded.associations.size(); ii++ )
       {

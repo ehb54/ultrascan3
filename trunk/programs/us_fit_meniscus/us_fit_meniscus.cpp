@@ -456,6 +456,12 @@ void US_FitMeniscus::edit_update( void )
    int  mvsx     = 0;
    int  mvcn     = 0;
    int  mlnn     = 0;
+   int  llsx     = 0;
+   int  leqx     = 0;
+   int  lvsx     = 0;
+   int  lvcn     = 0;
+   double menv   = 0.0;
+   double lefv   = 0.0;
    QString mmsg  = "";
 
    if ( ! all_wvl )
@@ -465,11 +471,28 @@ void US_FitMeniscus::edit_update( void )
          edtext += ts.readLine() + "\n";
       filei.close();
 
+      menv     = le_fit->text().toDouble();
       mlsx     = edtext.indexOf( "<meniscus radius=" );
       if ( mlsx < 0 )  return;
       meqx     = edtext.indexOf( "=\"", mlsx );
       mvsx     = meqx + 2;
       mvcn     = edtext.indexOf( "\"",  mvsx + 1 ) - mvsx;
+      llsx     = edtext.indexOf( "<data_range left=" );
+      if ( llsx < 0 )  return;
+      leqx     = edtext.indexOf( "=\"", llsx );
+      lvsx     = leqx + 2;
+      lvcn     = edtext.indexOf( "\"",  lvsx + 1 ) - lvsx;
+      lefv     = edtext.mid( lvsx, lvcn ).toDouble();
+DbgLv(1) << " eupd:  menv" << menv << "lefv" << lefv;
+
+      if ( menv >= lefv )
+      {
+         QMessageBox::warning( this, tr( "Meniscus within Data Range" ),
+            tr( "The selected Meniscus value, %1 , extends into the data"
+                " range whose left-side value is %2 . This Edit update"
+                " cannot be performed!" ).arg( menv ).arg( lefv ) );
+         return;
+      }
 
       edtext   = edtext.replace( mvsx, mvcn, le_fit->text() );
       mlnn     = edtext.indexOf( ">", mlsx ) - mlsx + 1;
@@ -511,6 +534,7 @@ void US_FitMeniscus::edit_update( void )
    else
    {  // Apply to all wavelengths in a cell/channel
       QString dmsg  = "";
+      menv     = le_fit->text().toDouble();
 DbgLv(1) << " eupd: AppWvl: nedtfs" << nedtfs;
       QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -534,6 +558,21 @@ DbgLv(1) << " eupd:     jj" << jj << "fn" << fn;
          meqx     = edtext.indexOf( "=\"", mlsx );
          mvsx     = meqx + 2;
          mvcn     = edtext.indexOf( "\"",  mvsx + 1 ) - mvsx;
+         llsx     = edtext.indexOf( "<data_range left=" );
+         if ( llsx < 0 )  continue;
+         leqx     = edtext.indexOf( "=\"", llsx );
+         lvsx     = leqx + 2;
+         lvcn     = edtext.indexOf( "\"",  lvsx + 1 ) - lvsx;
+         lefv     = edtext.mid( lvsx, lvcn ).toDouble();
+
+         if ( menv >= lefv )
+         {
+            QMessageBox::warning( this, tr( "Meniscus within Data Range" ),
+               tr( "The selected Meniscus value, %1 , extends into the data"
+                   " range whose left-side value is %2 . This Edit update"
+                   " cannot be performed!" ).arg( menv ).arg( lefv ) );
+            continue;
+         }
 
          edtext   = edtext.replace( mvsx, mvcn, le_fit->text() );
          mlnn     = edtext.indexOf( ">", mlsx ) - mlsx + 1;

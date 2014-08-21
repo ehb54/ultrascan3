@@ -7,8 +7,6 @@ void US_MPI_Analysis::dmga_master( void )
 {
    current_dataset     = 0;
    datasets_to_process = data_sets.size();
-//if(my_rank>=0)
-//abort("DMGA_MASTER not yet implemented");
    max_depth           = 0;
    calculated_solutes.clear();
 
@@ -44,18 +42,149 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    constraints.load_constraints( &wmodel ); // Build the constraints object
    constraints.get_work_model  ( &wmodel ); // Get the base work model
 DbgLv(0) << "dmga_master: cmfname" << cmfname;
-DbgLv(0) << "dmga_master: wmodel #comps" << wmodel.components.size();
+DbgLv(0) << "dmga_master: wmodel #comps" << wmodel.components.size()
+ << "#assoc" << wmodel.associations.size();
+
+   // Report on the constraints attribute values and ranges
+
+   DbgLv(0) << parameters[ "DC_model" ] << "Constraints --";
+
+   QString attrtype = tr( "UNKNOWN" );
+   US_dmGA_Constraints::AttribType atype;
+   QVector< US_dmGA_Constraints::Constraint > cnsv;
+
+   for ( int mcompx = 0; mcompx < wmodel.components.size(); mcompx++ )
+   {
+      int compno  = mcompx + 1;
+      int ncompc  = constraints.comp_constraints( mcompx, &cnsv, NULL );
+
+      DbgLv(0) << "  Component" << compno << ":";
+//DbgLv(0) << "mcompx ncompc c0atype" << mcompx << ncompc << cnsv[0].atype
+// << "_FF0" << US_dmGA_Constraints::ATYPE_FF0;
+
+      for ( int cx = 0; cx < ncompc; cx++ )
+      {
+         atype       = cnsv[ cx ].atype;
+//DbgLv(0) << " cx" << cx << "atype" << atype;
+         bool floats = cnsv[ cx ].floats;
+         bool logscl = cnsv[ cx ].logscl;
+         double vmin = cnsv[ cx ].low;
+         double vmax = cnsv[ cx ].high;
+         attrtype    = tr( "UNKNOWN" );
+//DbgLv(0) << "  cx" << cx << "fl ls mn mx" << floats << logscl << vmin << vmax;
+
+         if      ( atype == US_dmGA_Constraints::ATYPE_S    )
+            attrtype = tr( "Segmentation Coefficient" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_FF0  )
+            attrtype = tr( "Frictional Ratio" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_MW   )
+            attrtype = tr( "Molecular Weight" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_D    )
+            attrtype = tr( "Diffusion Coefficient" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_F    )
+            attrtype = tr( "Frictional Coefficient" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_VBAR )
+            attrtype = tr( "Vbar (Specific Density)" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_CONC )
+            attrtype = tr( "Signal Concentration" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_EXT  )
+            attrtype = tr( "Extinction" );
+
+//DbgLv(0) << "  cx" << cx << "attrtype" << attrtype;
+         if ( floats )
+         {
+//DbgLv(0) << "      FLOATS";
+            if ( logscl )
+            {
+//DbgLv(0) << "       LOGSCL";
+               DbgLv(0) << "    " << attrtype << "floats from "
+                        << vmin << "to" << vmax << "(log scale)";
+            }
+            else
+            {
+//DbgLv(0) << "       !LOGSCL";
+               DbgLv(0) << "    " << attrtype << "floats from "
+                        << vmin << "to" << vmax;
+            }
+         }
+         else
+         {
+//DbgLv(0) << "      !FLOATS";
+            DbgLv(0) << "    " << attrtype << "is fixed at "
+                     << vmin;
+         }
+      }
+   }
+
+   for ( int assocx = 0; assocx < wmodel.associations.size(); assocx++ )
+   {
+      int compno  = assocx + 1;
+      int nassoc  = constraints.assoc_constraints( assocx, &cnsv, NULL );
+      int ncomp   = wmodel.associations[ assocx ].rcomps.size();
+
+      DbgLv(0) << "  Reaction" << compno << ":";
+
+      if ( ncomp == 2 )
+      {
+         DbgLv(0) << "    Reactant is component"
+                  << wmodel.associations[ assocx ].rcomps[ 0 ] + 1
+                  << ", Product is component"
+                  << wmodel.associations[ assocx ].rcomps[ 1 ] + 1;
+      }
+
+      else
+      {
+         DbgLv(0) << "    Reactants are components"
+                  << wmodel.associations[ assocx ].rcomps[ 0 ] + 1
+                  << " and" << wmodel.associations[ assocx ].rcomps[ 1 ] + 1
+                  << ", Product is component"
+                  << wmodel.associations[ assocx ].rcomps[ 2 ] + 1;
+      }
+
+      for ( int rx = 0; rx < nassoc; rx++ )
+      {
+         atype       = cnsv[ rx ].atype;
+         bool floats = cnsv[ rx ].floats;
+         bool logscl = cnsv[ rx ].logscl;
+         double vmin = cnsv[ rx ].low;
+         double vmax = cnsv[ rx ].high;
+         attrtype    = tr( "UNKNOWN" );
+
+         if      ( atype == US_dmGA_Constraints::ATYPE_KD   )
+            attrtype = tr( "K_Dissociation" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_KOFF )
+            attrtype = tr( "k_Off Rate" );
+
+         if ( floats )
+         {
+            if ( logscl )
+               DbgLv(0) << "    " << attrtype << "floats from "
+                        << vmin << "to" << vmax << "(log scale)";
+            else
+               DbgLv(0) << "    " << attrtype << "floats from "
+                        << vmin << "to" << vmax;
+         }
+         else
+            DbgLv(0) << "    " << attrtype << "is fixed at "
+                     << vmin;
+      }
+   }
+DbgLv(0) << " wmodel as1 K_d k_off" << wmodel.associations[0].k_d
+ << wmodel.associations[0].k_off;
 
    Fitness empty_fitness;
    empty_fitness.fitness = LARGE;
-   dgene                 = wmodel;
-   nfloatc               = constraints.float_constraints( &cns_flt );
-   nfvari                = ( 1 << nfloatc ) - 1;
+   // Get base Gene and set up mutation controls
+   dgene      = wmodel;
+   nfloatc    = constraints.float_constraints( &cns_flt );
+   nfvari     = ( 1 << nfloatc ) - 1;
    dgmarker.resize( nfloatc );
-   do_astfem             = ( wmodel.components[ 0 ].sigma == 0.0  &&
-                             wmodel.components[ 0 ].delta == 0.0  &&
-                             wmodel.coSedSolute < 0  &&
-                             data_sets[ 0 ]->compress == 0.0 );
+   do_astfem  = ( wmodel.components[ 0 ].sigma == 0.0  &&
+                  wmodel.components[ 0 ].delta == 0.0  &&
+                  wmodel.coSedSolute < 0  &&
+                  data_sets[ 0 ]->compress == 0.0 );
+//DbgLv(0) << " wmodel DUMP";
+//wmodel.debug();
 
    // Initialize arrays
    for ( int ii = 0; ii < gcores_count; ii++ )
@@ -143,6 +272,88 @@ DbgLv(1) << "GaMast: FFrmsd: variance" << simulation_values.variance;
    }
 
    DbgLv(0) << my_rank << ": Master signalling FINISHED to all Demes";
+
+   // Report on the attribute values in the final model
+
+   US_Model* fmodel = &data_sets[ 0 ]->model;
+   DbgLv(0) << fmodel->description
+            << "Final Model Attribute Values --";
+
+   for ( int mcompx = 0; mcompx < fmodel->components.size(); mcompx++ )
+   {
+      int compno  = mcompx + 1;
+      int ncompc  = constraints.comp_constraints( mcompx, &cnsv, NULL );
+
+      DbgLv(0) << "  Component" << compno << ":";
+
+      for ( int cx = 0; cx < ncompc; cx++ )
+      {
+         atype       = cnsv[ cx ].atype;
+
+         if      ( atype == US_dmGA_Constraints::ATYPE_S    )
+            attrtype = tr( "Segmentation Coefficient" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_FF0  )
+            attrtype = tr( "Frictional Ratio" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_MW   )
+            attrtype = tr( "Molecular Weight" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_D    )
+            attrtype = tr( "Diffusion Coefficient" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_F    )
+            attrtype = tr( "Frictional Coefficient" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_VBAR )
+            attrtype = tr( "Vbar (Specific Density)" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_CONC )
+            attrtype = tr( "Signal Concentration" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_EXT  )
+            attrtype = tr( "Extinction" );
+
+         double aval = constraints.fetch_attrib( fmodel->components[ mcompx ],
+                                                 atype );
+         DbgLv(0) << "    " << attrtype << "has a value of"
+                  << aval;
+      }
+   }
+
+   for ( int assocx = 0; assocx < fmodel->associations.size(); assocx++ )
+   {
+      int compno  = assocx + 1;
+      int nassoc  = constraints.assoc_constraints( assocx, &cnsv, NULL );
+      int ncomp   = fmodel->associations[ assocx ].rcomps.size();
+
+      DbgLv(0) << "  Reaction" << compno << ":";
+
+      if ( ncomp == 2 )
+      {
+         DbgLv(0) << "    Reactant is component"
+                  << fmodel->associations[ assocx ].rcomps[ 0 ] + 1
+                  << ", Product is component"
+                  << fmodel->associations[ assocx ].rcomps[ 1 ] + 1;
+      }
+
+      else
+      {
+         DbgLv(0) << "    Reactants are components"
+                  << fmodel->associations[ assocx ].rcomps[ 0 ] + 1
+                  << " and" << fmodel->associations[ assocx ].rcomps[ 1 ] + 1
+                  << ", Product is component"
+                  << fmodel->associations[ assocx ].rcomps[ 2 ] + 1;
+      }
+
+      for ( int rx = 0; rx < nassoc; rx++ )
+      {
+         atype       = cnsv[ rx ].atype;
+
+         if      ( atype == US_dmGA_Constraints::ATYPE_KD   )
+            attrtype = tr( "K_Dissociation" );
+         else if ( atype == US_dmGA_Constraints::ATYPE_KOFF )
+            attrtype = tr( "k_Off Rate" );
+
+         double aval = constraints.fetch_attrib( fmodel->associations[ assocx ],
+                                                 atype );
+         DbgLv(0) << "    " << attrtype << "has a value of"
+                  << aval;
+      }
+   }
 
    MPI_Job job;
 
