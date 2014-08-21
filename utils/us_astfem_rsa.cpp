@@ -2546,7 +2546,7 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
 
    // Note: all components must be defined on the same radial grids
    int Npts = C0[ 0 ].radius.size();
-//DbgLv(0) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
+//DbgLv(2) << "RSA: decompose() num_comp Npts" << num_comp << Npts;
 
    // Special case:  self-association  n A <--> An
    if ( num_comp == 2 )       // Only 2 components and one association rule
@@ -2555,11 +2555,11 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
       int    st1     = af_params.association[ 0 ].stoichs[ 1 ];
       double k_d     = af_params.association[ 0 ].k_d;
       double k_assoc = ( k_d != 0.0 ) ? ( 1.0 / k_d ) : 0.0;
-      // fix the next line to make it general
-      double ext_M   = af_params.kext[ 0 ]; // extinction coefficient for the monomer, corrected for pathlength
-      //double ext_Msq = ext_M * ext_M; 
-      k_assoc /= ext_M;
-//DbgLv(0) << "RSA: decompose() ext_M" << ext_M;
+      // Extinction coefficient for the monomer, corrected for pathlength
+      double ext_M   = af_params.kext[ 0 ];
+      // K_association converted from signal to molar units
+      k_assoc       /= ext_M;
+DbgLv(2) << "RSA: decompose() ext_M" << ext_M << "k_assoc" << k_assoc;
 #ifndef NO_DB
       emit current_component( -Npts );
 #endif
@@ -2571,8 +2571,11 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
 //DbgLv(2) << "RSA:  j st0 st1" << j << st0 << st1;
 
          if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
+         {
+            //double ext_Msq = ext_M * ext_M; 
             //c1 = ( sqrt( ext_Msq + 4.0 * k_assoc * ct * ext_Msq) - ext_M ) / ( 2.0 * k_assoc * ext_Msq);
             c1 = ( sqrt( 1.0 + 4.0 * k_assoc * ct ) - 1.0 ) / ( 2.0 * k_assoc );
+         }
 
          else if ( st0 == 3 && st1 == -1 )           // mono <--> trimer
             c1 = US_AstfemMath::cube_root( -ct / k_assoc, 1.0 / k_assoc, 0.0 );
@@ -2736,8 +2739,7 @@ DbgLv(2) << "RSA:Eul: Npts timeStep" << Npts << timeStep;
       int    st1      = system.associations[ rule ].stoichs[ 1 ];
       double extn     = af_params.kext[ system.associations[rule].rcomps[0] ];
       double k_d      = system.associations[ rule ].k_d;
-      double k_assoc  = ( k_d == 0.0 ) ? 0.0 : ( 1.0 / k_d );
-             k_assoc /= extn;
+      double k_assoc  = ( k_d == 0.0 ) ? 0.0 : ( 1.0 / ( k_d * extn ) );
       double k_off    = system.associations[ rule ].k_off;
 DbgLv(2) << "RSA:Eul: rule" << rule << "st0 st1 k_assoc k_off"
  << st0 << st1 << k_assoc << k_off;
@@ -2917,46 +2919,46 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
 
       for ( int n = 0; n < as->rcomps.size(); n++ )
       {
-          // local index of the n-th component in assoc[rule]
-          int    ind_cn = as->rcomps[ n ] ;
+         // local index of the n-th component in assoc[rule]
+         int    ind_cn = as->rcomps[ n ] ;
 
-          // stoichiometry of n-th component in the rule
-          int    kstoi  = as->stoichs[ n ] ;
-          int    react  = ( kstoi < 0 ) ? -1 : 1;
-          double rstoi  = (double)qAbs( kstoi );
+         // stoichiometry of n-th component in the rule
+         int    kstoi  = as->stoichs[ n ] ;
+         int    react  = ( kstoi < 0 ) ? -1 : 1;
+         double rstoi  = (double)qAbs( kstoi );
 
-          // extinction coefficient of n'th component
-          double extn   = af_params.kext[ rgp->GroupComponent[ ind_cn ] ];
+         // extinction coefficient of n'th component
+         double extn   = af_params.kext[ rgp->GroupComponent[ ind_cn ] ];
 //if(m==0)
 //DbgLv(2) << "RSA:ReDydt: n ind_cn rstoi react extn" << n << ind_cn << rstoi
 // << react << extn;
 
-          if ( react > 0 ) // comp[n] here is reactant
-          {
-             Q_reactant *= pow( y0[ ind_cn ] / extn, rstoi );
-          }
-          else             // comp[n] here is product
-          {
-             Q_product  *= pow( y0[ ind_cn ] / extn, rstoi );
-          }
-       }
+         if ( react > 0 ) // comp[n] here is reactant
+         {
+            Q_reactant *= pow( y0[ ind_cn ] / extn, rstoi );
+         }
+         else             // comp[n] here is product
+         {
+            Q_product  *= pow( y0[ ind_cn ] / extn, rstoi );
+         }
+      }
 
-       Q[ m ] = k_on * Q_reactant - k_off * Q_product;
-    }
+      Q[ m ] = k_on * Q_reactant - k_off * Q_product;
+   }
 
-    for ( int i = 0; i < num_comp; i++ )
-    {
-       yt[ i ] = 0.0;
-       US_AstfemMath::ComponentRole* cr = &af_params.role[ i ];
+   for ( int i = 0; i < num_comp; i++ )
+   {
+      yt[ i ] = 0.0;
+      US_AstfemMath::ComponentRole* cr = &af_params.role[ i ];
 
-       for ( int m = 0; m < cr->assocs.size(); m++ )
-       {
-          yt[ i ] -= ( (double)cr->stoichs[ m ] * Q[ cr->assocs[ m ] ] );
-       }
+      for ( int m = 0; m < cr->assocs.size(); m++ )
+      {
+         yt[ i ] -= ( (double)cr->stoichs[ m ] * Q[ cr->assocs[ m ] ] );
+      }
 
-       // convert molar into signal concentration
-       yt[ i ] *= af_params.kext[ rgp->GroupComponent[ i ] ];
-    }
+      // convert molar into signal concentration
+      yt[ i ] *= af_params.kext[ rgp->GroupComponent[ i ] ];
+   }
 DbgLv(2) << "RSA:ReDydt: yt[0] yt[n]" << yt[0] << yt[num_comp-1];
 }
 

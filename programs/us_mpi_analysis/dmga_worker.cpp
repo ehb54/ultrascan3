@@ -79,6 +79,8 @@ DbgLv(1) << my_rank << "dmga_worker: wmodel #comps" << wmodel.components.size();
                            data_sets[ 0 ]->compress == 0.0 );
 DbgLv(1) << my_rank << "dmga_worker: nfloatc nfvari do_astfem"
  << nfloatc << nfvari << do_astfem;
+//DbgLv(0) << my_rank << "dmga_worker: wmodel DUMP";
+//wmodel.debug();
 
    while ( ! finished )
    {
@@ -419,11 +421,42 @@ DbTimMsg("  +++Worker after generation loop");
 // Create a new discrete GA Gene
 DGene US_MPI_Analysis::new_dmga_gene( void )
 {
-   DGene geneout = wmodel;      // Initialize gene to base model
+   DGene gene_new   = wmodel;   // Initialize gene to base model
+   double extn_p    = (double)( p_grid - 1 );  // Par grid extent
 
-   mutate_dgene( geneout );     // Perform a random mutation
+   // Loop thru float attributes, getting random values for each
+   for ( int ii = 0; ii < nfloatc; ii++ )
+   {
+      // Get the current attribute characteristics
+      US_dmGA_Constraints::AttribType
+           atype    = cns_flt[ ii ].atype;
+      int  mcompx   = cns_flt[ ii ].mcompx;
+      bool logscl   = cns_flt[ ii ].logscl;
+      double vmin   = cns_flt[ ii ].low;
+      double vmax   = cns_flt[ ii ].high;
+DbgLv(1) << my_rank << "dg:newg:  ii" << ii
+         << "vmin vmax" << vmin << vmax;
 
-   return geneout;              // Then return the new gene
+      if ( logscl )
+      {  // Convert low,high to log scale
+         vmin          = log( vmin );
+         vmax          = log( vmax );
+      }
+
+      // Get a value somewhere in the range
+      double delta  = (double)u_random( p_grid );
+      double aval   = vmin + ( ( vmax - vmin ) * delta / extn_p );
+      aval          = qMax( vmin, qMin( vmax, aval ) );
+      // If need be, convert value back from log
+      aval          = logscl ? exp( aval ) : aval;
+DbgLv(1) << my_rank << "dg:newg:   ii" << ii << "p_grid" << p_grid
+         << "delta" << delta << "aval" << aval;
+
+      // Update the new attribute value
+      store_attr_value( aval, gene_new, atype, mcompx );
+   }
+
+   return gene_new;             // Then return the new gene
 }
 
 // Mutate a discrete GA Gene
@@ -1075,6 +1108,7 @@ model.debug(); }
       {  // Calculate simulation for FEM (ideal) case
          US_Astfem_RSA astfem_rsa( model, dset->simparams );
          astfem_rsa.set_debug_flag( dbg_level );
+astfem_rsa.set_debug_flag( my_rank<2?dbg_level:(-1) );
          astfem_rsa.calculate( simdat );
       }
 
