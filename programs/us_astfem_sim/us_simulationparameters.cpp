@@ -179,6 +179,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_selected_speed->setIncSteps( QwtCounter::Button1, 1 );
    cnt_selected_speed->setIncSteps( QwtCounter::Button2, 1 );
    cnt_selected_speed->setIncSteps( QwtCounter::Button3, 1 );
+   cnt_selected_speed->setValue( sp->rotorspeed );
    main->addWidget( cnt_selected_speed, row++, 3, 1, 1 );
 
    // Right Column
@@ -219,7 +220,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
 
    cnt_meniscus = us_counter( 3, 1.0, 10.0, simparams.meniscus );
    cnt_meniscus->setStep    ( 0.001 );
-   cnt_meniscus->setValue   ( 5.8 );
+   cnt_meniscus->setValue   ( simparams.meniscus );
    cnt_meniscus->setIncSteps( QwtCounter::Button1,   1 );
    cnt_meniscus->setIncSteps( QwtCounter::Button2,  10 );
    cnt_meniscus->setIncSteps( QwtCounter::Button3, 100 );
@@ -232,9 +233,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    QLabel* lb_bottom = us_label( tr( "Bottom of Cell Position (cm):" ) );
    main->addWidget( lb_bottom, row, 4, 1, 3 );
 
-   cnt_bottom = us_counter( 3, 3.8, 30.0, simparams.bottom );
+   cnt_bottom = us_counter( 3, 3.8, 30.0, simparams.bottom_position );
    cnt_bottom->setStep    ( 0.001 );
-   cnt_bottom->setValue   ( 7.20  );
+   cnt_bottom->setValue   ( simparams.bottom_position );
    cnt_bottom->setIncSteps( QwtCounter::Button1,   1 );
    cnt_bottom->setIncSteps( QwtCounter::Button2,  10 );
    cnt_bottom->setIncSteps( QwtCounter::Button3, 100 );
@@ -249,6 +250,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
 
    cnt_simpoints = us_counter( 3, 50, 10000, 200 );
    cnt_simpoints->setStep    ( 10 );
+   cnt_simpoints->setValue( simparams.simpoints );
 
    main->addWidget( cnt_simpoints, row++, 7, 1, 1 );
    connect( cnt_simpoints, SIGNAL( valueChanged    ( double ) ), 
@@ -323,6 +325,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_temperature->setIncSteps( QwtCounter::Button1,   1 );
    cnt_temperature->setIncSteps( QwtCounter::Button2,  10 );
    cnt_temperature->setIncSteps( QwtCounter::Button3, 100 );
+   cnt_temperature->setValue   ( simparams.temperature );
    main->addWidget( cnt_temperature, row++, 7, 1, 1 );
    connect( cnt_temperature, SIGNAL( valueChanged( double ) ), 
                              SLOT  ( update_temp(  double ) ) );
@@ -447,6 +450,7 @@ void US_SimulationParametersGui::revert( void )
    simparams.rnoise            = simparams_backup.rnoise;
    simparams.tinoise           = simparams_backup.tinoise;
    simparams.rinoise           = simparams_backup.rinoise;
+   simparams.bottom_position   = simparams_backup.bottom_position;
 
    reject();
 }

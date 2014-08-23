@@ -183,6 +183,7 @@ DbgLv(0) << " wmodel as1 K_d k_off" << wmodel.associations[0].k_d
                   wmodel.components[ 0 ].delta == 0.0  &&
                   wmodel.coSedSolute < 0  &&
                   data_sets[ 0 ]->compress == 0.0 );
+   lfvari.fill( 0, nfvari );
 //DbgLv(0) << " wmodel DUMP";
 //wmodel.debug();
 
@@ -212,13 +213,19 @@ DbgLv(1) << "GaMast: EOML: fitness sorted  bfx" << best_fitness[0].index
 
       Fitness* bfit  = &best_fitness[ 0 ];
       DbgLv(0) << "Last generation best RMSD" << sqrt( bfit->fitness );
-#if 0
-      double fitness = bfit->fitness;
-      dgene          = best_dgenes[ bfit->index ];
-      bfit->fitness  = minimize_dmga( dgene, fitness );
-      DbgLv(0) << "Post-minimization RMSD" << sqrt( bfit->fitness );
-      best_dgenes[ bfit->index ] = dgene;
-#endif
+
+      if ( minimize_opt == 2 )
+      {  // If gradient search method for all terminations, minimize now
+         in_gsm         = TRUE;
+         double fitness = bfit->fitness;
+         dgene          = best_dgenes[ bfit->index ];
+
+         bfit->fitness  = minimize_dmga( dgene, fitness );
+
+         DbgLv(0) << "Post-minimization RMSD" << sqrt( bfit->fitness );
+         best_dgenes[ bfit->index ] = dgene;
+         in_gsm         = FALSE;
+      }
 
       // Compute the variance (fitness) for the final best-fit model
 
@@ -276,6 +283,76 @@ DbgLv(1) << "GaMast: FFrmsd: variance" << simulation_values.variance;
    // Report on the attribute values in the final model
 
    US_Model* fmodel = &data_sets[ 0 ]->model;
+//*DEBUG
+double vsum=0.0;
+for (int ii=0; ii<simulation_values.sim_data.scanCount(); ii++)
+ for (int jj=0; jj<simulation_values.sim_data.pointCount(); jj++ )
+  vsum += sq(simulation_values.sim_data.value(ii,jj));
+DbgLv(0) << "VSUM=" << vsum;
+int hh=simulation_values.sim_data.pointCount()/2;
+int ss=simulation_values.sim_data.scanCount();
+DbgLv(0) << "SDAT 0-3"
+ << simulation_values.sim_data.value(0,hh)
+ << simulation_values.sim_data.value(1,hh)
+ << simulation_values.sim_data.value(2,hh)
+ << simulation_values.sim_data.value(3,hh);
+DbgLv(0) << "SDAT *-n"
+ << simulation_values.sim_data.value(ss-4,hh)
+ << simulation_values.sim_data.value(ss-3,hh)
+ << simulation_values.sim_data.value(ss-2,hh)
+ << simulation_values.sim_data.value(ss-1,hh);
+DbgLv(0) << "MDL comp1 s,k,w,D,f"
+ << fmodel->components[0].s    / data_sets[0]->s20w_correction
+ << fmodel->components[0].f_f0
+ << fmodel->components[0].mw
+ << fmodel->components[0].D    / data_sets[0]->D20w_correction
+ << fmodel->components[0].f;
+DbgLv(0) << "MDL comp2 s,k,w,D,f"
+ << fmodel->components[1].s    / data_sets[0]->s20w_correction
+ << fmodel->components[1].f_f0
+ << fmodel->components[1].mw
+ << fmodel->components[1].D    / data_sets[0]->D20w_correction
+ << fmodel->components[1].f;
+DbgLv(0) << "MDL asoc1 Kd,koff"
+ << fmodel->associations[0].k_d
+ << fmodel->associations[0].k_off;
+DbgLv(0) << "DS dens visc manual temp"
+ << data_sets[0]->density
+ << data_sets[0]->viscosity
+ << data_sets[0]->manual
+ << data_sets[0]->temperature;
+US_SimulationParameters* simpar = &data_sets[0]->simparams;
+DbgLv(0) << "SIMP simpt mType gType rreso menis"
+ << simpar->simpoints
+ << simpar->meshType
+ << simpar->gridType
+ << simpar->radial_resolution
+ << simpar->meniscus;
+DbgLv(0) << "SIMP bott temp rnoise tinoise rinoise"
+ << simpar->bottom
+ << simpar->temperature
+ << simpar->rnoise
+ << simpar->tinoise
+ << simpar->rinoise;
+DbgLv(0) << "SIMP bform bvol bottpos rcoeffs"
+ << simpar->band_forming
+ << simpar->band_volume
+ << simpar->bottom_position
+ << simpar->rotorcoeffs[0]
+ << simpar->rotorcoeffs[1];
+US_SimulationParameters::SpeedProfile* spstep = &simpar->speed_step[0];
+DbgLv(0) << "STEP0 durmin dlymin w2tf w2tl timf timl"
+ << spstep->duration_minutes
+ << spstep->delay_minutes
+ << spstep->w2t_first
+ << spstep->w2t_last
+ << spstep->time_first
+ << spstep->time_last;
+DbgLv(0) << "STEP0 speed accel accelf"
+ << spstep->rotorspeed
+ << spstep->acceleration
+ << spstep->acceleration_flag; 
+//*DEBUG
    DbgLv(0) << fmodel->description
             << "Final Model Attribute Values --";
 
@@ -970,6 +1047,22 @@ void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene )
    model        = dgene;           // Initialize the model
 
    model.update_coefficients();    // Compute missing coefficients
+//*DEBUG*
+if(my_rank<1) {
+DbgLv(2) << my_rank << "MFG:g-comp1 s,k,w,d,f"
+ << dgene.components[0].s
+ << dgene.components[0].f_f0
+ << dgene.components[0].mw
+ << dgene.components[0].D
+ << dgene.components[0].f;
+DbgLv(2) << my_rank << "MFG:m-comp1 s,k,w,d,f"
+ << model.components[0].s
+ << model.components[0].f_f0
+ << model.components[0].mw
+ << model.components[0].D
+ << model.components[0].f;
+}
+//*DEBUG*
 
    for ( int ii = 0; ii < model.associations.size(); ii++ )
    {  // Modify some coefficients based on associations

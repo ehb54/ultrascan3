@@ -89,7 +89,8 @@ class US_SimulationParametersGui : public US_WidgetsDialog
          { simparams.meniscus    = meniscus; };
 
       void update_bottom        ( double bottom )
-         { simparams.bottom      = bottom; };
+         { simparams.bottom      = bottom;
+           simparams.bottom_position = bottom; };
 
       void update_simpoints     ( double simpoints )
          { simparams.simpoints   = (int) simpoints; };

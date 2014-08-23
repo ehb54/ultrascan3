@@ -75,11 +75,18 @@ static int totT8=0;
 
    int npts      = af_data.scan[ 0 ].conc.size();
    initial_npts  = ( initial_npts < npts ) ? initial_npts : npts;
-DbgLv(2) << "RSA: rotorspeed" << af_params.first_speed;
-DbgLv(2) << "RSA: simpoints" << af_params.simpoints;
+DbgLv(2) << "RSA: AP.rotorspeed" << af_params.first_speed;
+DbgLv(2) << "RSA: AP.simpoints" << af_params.simpoints;
+DbgLv(2) << "RSA: AP.pathlength" << af_params.pathlength;
+DbgLv(2) << "RSA: AP.time_steps" << af_params.time_steps;
+DbgLv(2) << "RSA: AP.first_speed" << af_params.first_speed;
+DbgLv(2) << "RSA: AP.omega_s" << af_params.omega_s;
+DbgLv(2) << "RSA: AP.current_meniscus" << af_params.current_meniscus;
+DbgLv(2) << "RSA: AP.current_bottom" << af_params.current_bottom;
+DbgLv(2) << "RSA: AP.start_om2t" << af_params.start_om2t;
 DbgLv(2) << "RSA:  scan0size" << npts;
 DbgLv(2) << "RSA:  af_c0size" << initial_npts;
-   update_assocv();
+//   update_assocv();
    initialize_rg();  // Reaction group
 //*DEBUG*
 if(dbg_level>1)
@@ -101,7 +108,7 @@ if(dbg_level>1)
    adjust_limits( af_params.first_speed );
 DbgLv(2) << "RSA:   sbottom acbottom" << simparams.bottom
  << af_params.current_bottom;
-   af_data.meniscus = simparams.meniscus;
+   af_data.meniscus = af_params.current_meniscus;
    af_data.bottom   = af_params.current_bottom;
 // cv = component vector
    for ( int cc = 0; cc < size_cv; cc++ )
@@ -444,6 +451,7 @@ DbgLv(1) << "RSA: ***COMPUTED simpoints:" << af_params.simpoints
             af_params.time_steps = qRound( duration / af_params.dt );
             af_params.start_time = current_time;
             af_params.start_om2t = current_om2t;
+DbgLv(2) << "RSA: (2)AP.start_om2t" << af_params.start_om2t;
 //            af_params.dt         = duration / ( af_params.time_steps - 1 );
             af_params.dt         = duration / (double)af_params.time_steps;
 if(af_params.time_steps>10000)
@@ -619,6 +627,7 @@ DbgLv(2) << "RSA:     aa rr rcn" << aa << rr << as->rcomps[rr];
 
       current_time  = 0.0;
       current_speed = 0.0;
+DbgLv(2) << "RSA: (3)AP.start_om2t" << af_params.start_om2t;
       w2t_integral  = af_params.start_om2t;
       last_time     = af_params.start_time;
 
@@ -749,9 +758,11 @@ DbgLv(1) << "RSA: ***COMPUTED(2) omega_s:" << af_params.omega_s << "step_speed"
 
          if ( af_params.dt > duration )
          {
+double dtsv=af_params.dt;
             af_params.dt        = duration;
             af_params.simpoints = 1 +
                (int)( lg_bm_rat / ( s_omg_fac * af_params.dt ) );
+DbgLv(1) << "RSA: ***CORRECTED(2) dt:" << duration << dtsv << af_params.simpoints;
          }
 
          if ( af_params.simpoints > 10000 )
@@ -1333,6 +1344,7 @@ QDateTime clcSt9 = clcSt0;
 
    simdata.radius.clear();
    simdata.scan  .clear();
+DbgLv(2) << "RSA: (4)AP.start_om2t" << af_params.start_om2t;
    w2t_integral  = af_params.start_om2t;
    last_time     = af_params.start_time;
 
@@ -1387,7 +1399,8 @@ DbgLv(2) << "RSA: mesh_gen size" << nu.count() << "accel" << accel;
    simdata.radius.reserve( Nx );
 //   simdata.scan  .reserve( Nx );
 
-   for ( int i = 0; i < Nx; i++ ) simdata.radius .append( xA[ i ] );
+   for ( int i = 0; i < Nx; i++ )
+      simdata.radius .append( xA[ i ] );
 
    // Initialize the coefficient matrices
 
@@ -1704,6 +1717,8 @@ clcSt8 = QDateTime::currentDateTime();
 #endif
 
 #ifndef NO_DB
+   emit new_time( simscan.time );
+   qApp->processEvents();
    US_AstfemMath::clear_2d( 3, CA );
    US_AstfemMath::clear_2d( 3, CB );
 
@@ -1839,13 +1854,13 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
                f.close();
 
-               if ( qAbs( xA[ 0 ] - m ) > 1.0e7 )
+               if ( qAbs( x[ 0 ] - m ) > 1.0e7 )
                {
                   DbgErr() << "The meniscus from the mesh file does not"
                      " match the set meniscus - using Claverie Mesh instead\n";
                }
 
-               if ( qAbs( xA[ x.size() - 1 ] - b ) > 1.0e7 )
+               if ( qAbs( x[ x.size() - 1 ] - b ) > 1.0e7 )
                {
                   DbgErr() << "The cell bottom from the mesh file does not"
                      " match the set cell bottom - using Claverie Mesh"
@@ -2746,17 +2761,19 @@ DbgLv(2) << "RSA:Eul: rule" << rule << "st0 st1 k_assoc k_off"
 
       for ( int j = 0; j < Npts; j++ )
       {
-         double ct = C1[ 0 ][ j ] + C1[ 1 ][ j ];
-
+         double ct  = C1[ 0 ][ j ] + C1[ 1 ][ j ];
          double dva = timeStep * k_off * k_assoc;
          double dvb = timeStep * k_off + 2.;
          double dvc = timeStep * k_off * ct + 2.0 * C1[ 0 ][ j ];
-//DbgLv(2) << "RSA:Eul:   j ct" << j << ct << "dva dvb dvc" << dva << dvb << dvc;
+if((j+9)>Npts)
+DbgLv(2) << "RSA:Eul:   j ct" << j << ct << "dva dvb dvc" << dva << dvb << dvc;
 
          if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
          {
             uhat = 2 * dvc / ( dvb + sqrt( dvb * dvb + 4 * dva * dvc ) );
-//DbgLv(2) << "RSA:Eul:    mono-dimer uhat" << uhat;
+if((j+9)>Npts)
+DbgLv(2) << "RSA:Eul:    mono-dimer uhat" << uhat
+ << "C1[0][j] C1[1][j]" << C1[0][j] << C1[1][j];
          }
 
          else if ( st0 == 3 && st1 == -1 )           // mono <--> trimer
@@ -3082,7 +3099,6 @@ DbgLv(2) << "RSA:_ra2: Mcomp Nx" << Mcomp << Nx << "x size" << x.size();
    double meniscus  = af_params.current_meniscus;
    double bottom    = af_params.current_bottom;
    int    NN        = af_params.time_steps;
-   double dt        = af_params.dt;
 
    // Refine left hand side (when s_max>0) or
    // right hand side (when s<0) for acceleration
@@ -3099,7 +3115,7 @@ DbgLv(2) << "RSA:_ra2: Mcomp Nx" << Mcomp << Nx << "x size" << x.size();
       {
          int   j;
          double sw2 = s_max * sq( rpm_stop * M_PI / 30 );
-         xc         = meniscus + sw2 * ( NN * dt ) / 3;
+         xc         = meniscus + sw2 * ( NN * af_params.dt ) / 3;
 
          for ( j = 0; j < Nx - 3; j++ )
          {
@@ -3113,7 +3129,7 @@ DbgLv(2) << "RSA:_ra2: Mcomp Nx" << Mcomp << Nx << "x size" << x.size();
          // s_min corresponds to fastest component
          int   j;
          double sw2 = s_min * sq( rpm_stop * M_PI / 30 );
-         xc         = bottom + sw2 * ( NN * dt) / 3;
+         xc         = bottom + sw2 * ( NN * af_params.dt ) / 3;
 
          for ( j = 0; j < Nx - 3; j++ )
          {
@@ -3129,7 +3145,8 @@ DbgLv(2) << "RSA:_ra2: Mcomp Nx" << Mcomp << Nx << "x size" << x.size();
       }
    }
 
-   for ( int i = 0; i < Nx; i++ ) simdata.radius .append( xA[ i ] );
+   for ( int i = 0; i < Nx; i++ )
+      simdata.radius .append( xA[ i ] );
 
    // Stiffness matrix on left hand side
    // CA[0...Ms-1][4][0...Nx-1]
@@ -3190,17 +3207,18 @@ DbgLv(2) << "RSA:_ra2: Mcomp Nx" << Mcomp << Nx << "x size" << x.size();
 
                QVector< double > xbvec( Nx );
                double* xb       = xbvec.data();
-               double sqb       = sq( bottom );
-               xb[ 0 ]          = meniscus;
+               double sqb       = sq( af_params.current_bottom );
+               xb[ 0 ]          = af_params.current_meniscus;
 
                for ( int j = 1; j < Nx; j++ )
                {
                   double dval  = 0.1 * exp( sw2D *
                      ( sq( 0.5 * ( xA[ j - 1 ] + xA[ j ] ) ) - sqb ) / 2.0 );
 
-                  double alpha = af_params.s[ i ] / s_max * ( 1 - dval ) + dval;
+                  double alpha = af_params.s[ i ] / s_max
+                                 * ( 1.0 - dval ) + dval;
                   xb[ j ]      = ( pow( xA[ j - 1 ], alpha ) *
-                                   pow( xA[ j     ], ( 1 - alpha) ) );
+                                   pow( xA[ j     ], ( 1.0 - alpha ) ) );
                }
 
                GlobalStiff( xb, CA[ i ], CB[ i ], af_params.D[ i ], sw2 );
@@ -3234,10 +3252,10 @@ DbgLv(2) << "RSA: smin>0:GlStf: CA[0]:" << CA[0][0][0] << CA[0][1][0]
    // Here we need the interpolate the initial partial
    // concentration onto new grid x[j]
 
-   for( int i = 0; i < Mcomp; i++ )
+   for( int ii = 0; ii < Mcomp; ii++ )
    {
       // Interpolate the given C_init vector on the new C0 grid
-      US_AstfemMath::interpolate_C0( C_init[ i ], C0[ i ], x );
+      US_AstfemMath::interpolate_C0( C_init[ ii ], C0[ ii ], x );
    }
 
    // Total concentration at current and next time step
@@ -3249,13 +3267,14 @@ DbgLv(2) << "RSA: newX3 Nx" << Nx << "C0[00] C0[m0] C0[0n] C0[mn]"
    double* CT0 = CT0vec.data();
    double* CT1 = CT1vec.data();
 
-   for ( int j = 0; j < Nx; j++ )
+   for ( int jj = 0; jj < Nx; jj++ )
    {
-       CT0[ j ] = 0.0;
+       CT0[ jj ] = 0.0;
 
-       for ( int i = 0; i < Mcomp; i++ )  CT0[ j ] += C0[ i ][ j ];
+       for ( int ii = 0; ii < Mcomp; ii++ )
+          CT0[ jj ] += C0[ ii ][ jj ];
 
-       CT1[ j ] = CT0[ j ];
+       CT1[ jj ] = CT0[ jj ];
    }
 DbgLv(2) << "RSA: newX3  CT0 CTn" << CT1[0] << CT1[Nx-1];
 
@@ -3265,7 +3284,6 @@ DbgLv(2) << "RSA: newX3  CT0 CTn" << CT1[0] << CT1[Nx-1];
    int     stepinc = 1000;
    int     stepmax = ( NN + 2 ) / stepinc + 1;
    bool    repprog = stepmax > 1;
-   w2t_integral    = 0.0;
 
    if ( repprog )
    {
@@ -3273,6 +3291,8 @@ DbgLv(2) << "RSA: newX3  CT0 CTn" << CT1[0] << CT1[Nx-1];
       emit current_component( 0 );
    }
 #endif
+DbgLv(2) << "RSA: (5)AP.start_om2t" << af_params.start_om2t;
+   last_time       = af_params.start_time;
 
    for ( int kkk = 0; kkk < NN + 2; kkk += 2 )   // two steps in together
    {
@@ -3283,7 +3303,7 @@ DbgLv(2) << "RSA: newX3  CT0 CTn" << CT1[0] << CT1[Nx-1];
       emit current_speed( (int) rpm_current);
 #endif
 
-      simscan.time      = af_params.start_time + kkk * dt;
+      simscan.time      = af_params.start_time + kkk * af_params.dt;
       simscan.rpm       = (int) rpm_current;
       w2t_integral     += ( ( simscan.time - last_time )
                             * sq( rpm_current * M_PI / 30 ) );
@@ -3294,8 +3314,11 @@ DbgLv(2) << "TMS:RSA:ra: time omegast" << simscan.time << simscan.omega_s_t
 
       simscan.conc.clear();
       simscan.conc.reserve( Nx );
+DbgLv(2) << "RSA: Nx CT0size" << Nx << CT0vec.size() << "step-scan"
+ << simdata.scan.size() << "rss-now" << US_Memory::rss_now();
 
-      for ( int j = 0; j < Nx; j++ ) simscan.conc .append( CT0[ j ] );
+      for ( int jj = 0; jj < Nx; jj++ )
+         simscan.conc.append( CT0[ jj ] );
 DbgLv(2) << "TMS:RSA:ra:  kkk" << kkk << "CT0[0] CT0[n]"
  << CT0[0] << CT0[Nx-1] << "accel fixedGrid" << accel << fixedGrid;
 
@@ -3367,9 +3390,9 @@ DbgLv(2) << "TMS:RSA:ra:  kkk" << kkk << "CT0[0] CT0[n]"
 
             for ( int j = 2; j < Nx - 1; j++ )
             {
-               right_hand_side[ j ] = - CB[ i ] [0 ][ j ] * C0[ i ][ j - 2 ]
-                                      - CB[ i ] [1 ][ j ] * C0[ i ][ j - 1 ]
-                                      - CB[ i ] [2 ][ j ] * C0[ i ][ j     ]
+               right_hand_side[ j ] = - CB[ i ][ 0 ][ j ] * C0[ i ][ j - 2 ]
+                                      - CB[ i ][ 1 ][ j ] * C0[ i ][ j - 1 ]
+                                      - CB[ i ][ 2 ][ j ] * C0[ i ][ j     ]
                                       - CB[ i ][ 3 ][ j ] * C0[ i ][ j + 1 ];
             }
 
@@ -3403,9 +3426,9 @@ DbgLv(2) << "TMS:RSA:ra:  kkk" << kkk << "CT0[0] CT0[n]"
       //
       // Finite reaction rate: linear interpolation of instantaneous reaction
 
-//DbgLv(2) << "TMS:RSA:ra:   C1[00] C1[0n] C1[m0] C1[1n]"
-// << C1[0][0] << C1[0][Nx-1] << C1[Mcomp-1][0] << C1[Mcomp-1][Nx-1];
-      ReactionOneStep_Euler_imp( Nx, C1, 2 * dt );
+DbgLv(2) << "TMS:RSA:ra:   C1[00] C1[0n] C1[m0] C1[mn]"
+ << C1[0][0] << C1[0][Nx-1] << C1[Mcomp-1][0] << C1[Mcomp-1][Nx-1];
+      ReactionOneStep_Euler_imp( Nx, C1, 2 * af_params.dt );
 
       // For next half time-step in SNI operator splitting scheme
 
@@ -3529,8 +3552,6 @@ DbgLv(2) << "TMS:RSA:ra:  kkk" << kkk << "CT0[0] CT0[n]"
          emit new_scan( &x, CT0 );
          emit new_time( simscan.time );
          qApp->processEvents();
-         //US_Sleep::msleep( 10 ); // 10 ms to let the display update.
-         //US_Sleep::msleep( 1 );  // 1 ms to let the display update.
       }
 
       if ( repprog  &&  ( ( kkk + 1 ) & stepinc ) == 0 )
@@ -3540,6 +3561,11 @@ DbgLv(2) << "TMS:RSA:ra:  kkk" << kkk << "CT0[0] CT0[n]"
 #endif
 
    } // time loop
+
+#ifndef NO_DB
+   emit new_time( simscan.time );
+   qApp->processEvents();
+#endif
 
    for ( int i = 0; i < Mcomp; i++ )
    {

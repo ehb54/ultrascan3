@@ -229,10 +229,13 @@ class US_MPI_Analysis : public QObject
     DGene                     dgene;
     QVector< double >         dgmarker;
     QVector< US_dmGA_Constraints::Constraint >  cns_flt;
+    QVector< int >            lfvari;
     int                       nfloatc;
     int                       ncompc;
     int                       nassocc;
     int                       nfvari;
+    int                       minimize_opt;
+    bool                      in_gsm;
 
     class Fitness
     {
