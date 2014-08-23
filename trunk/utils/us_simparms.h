@@ -143,7 +143,7 @@ class US_UTIL_EXTERN US_SimulationParameters
                                 //!< For multiple speeds, the user must measure 
                                 //!< the meniscus at the first constant speed 
                                 //!< and use that to initialize the routine
-   double    bottom;            //!< Bottom of cell position w/o rotor stretch
+   double    bottom;            //!< Bottom of cell position with rotor stretch
    double    temperature;       //!< Temperature in degrees centigrade
    double    rnoise;            //!< Random noise
    double    tinoise;           //!< Time invariant noise
@@ -151,7 +151,7 @@ class US_UTIL_EXTERN US_SimulationParameters
    bool      band_forming;      //!< True for band-forming centerpieces
    double    band_volume;       //!< Loading volume (of lamella) in a 
                                 //!< Band-forming centerpiece
-   double    bottom_position;   //!< Bottom position from centerpiece,channel
+   double    bottom_position;   //!< Bottom at rest from centerpiece,channel
    QString   rotorCalID;        //!< Rotor calibration identifier in DB/XML
    double    rotorcoeffs[ 2 ];  //!< Rotor coefficients for stretch calculation
 

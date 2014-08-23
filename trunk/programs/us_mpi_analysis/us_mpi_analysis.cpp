@@ -40,6 +40,8 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
    dbg_level    = 0;
    dbg_timing   = FALSE;
    maxrss       = 0L;
+   minimize_opt = 2;
+   in_gsm       = FALSE;
    QString tarfile;
    QString jxmlfili;
    task_params[ "walltime"    ] = "1440";
@@ -366,6 +368,8 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    p_mutate_sk             = parameters[ "p_mutate_sk"    ].toDouble();
    regularization          = parameters[ "regularization" ].toDouble();
    concentration_threshold = parameters[ "conc_threshold" ].toDouble();
+   minimize_opt            = parameters[ "minimize_opt"   ].toInt();
+minimize_opt=(minimize_opt==0?2:minimize_opt);
    beta                    = (double)population / 8.0;
    total_points            = 0;
 

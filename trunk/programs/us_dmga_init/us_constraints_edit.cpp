@@ -886,16 +886,17 @@ DbgLv(1) << "cnG:      jj" << jj << "rc1" << rc1 << "st1" << st1;
 
                   nreact++;
                   int mcx       = lcompx[ rc1 ];
-                  double vbar   = constr_value( C_ATYPE_VBAR, rcnsv );
-                  double mw     = constr_value( C_ATYPE_MW,   rcnsv );
+                  double rst1   = (double)st1;
+                  double mw     = constr_value( C_ATYPE_MW,   rcnsv ) * rst1;
+                  double vbar   = constr_value( C_ATYPE_VBAR, rcnsv ) * mw;
                   double conc   = constr_value( C_ATYPE_CONC, rcnsv );
-                  double extinc = constr_value( C_ATYPE_EXT,  rcnsv );
-                  double wval   = mw * (double)st1;
+                  double extinc = constr_value( C_ATYPE_EXT,  rcnsv ) * rst1;
                   cval          = ( cval == 0.0 ) ? conc : cval;
-                  vsum         += ( vbar * wval );
-                  wsum         += wval;
+                  vsum         += vbar;
+                  wsum         += mw;
                   esum         += extinc;
-DbgLv(1) << "cnG:      mcx" << mcx << "cval,vsum,wsum" << cval << vsum << wsum;
+DbgLv(1) << "cnG:      mcx" << mcx << "cval,vsum,wsum,esum"
+ << cval << vsum << wsum << esum;
                }
             }
 

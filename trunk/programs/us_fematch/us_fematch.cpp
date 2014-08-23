@@ -821,6 +821,76 @@ DbgLv(1) << "     Sim plot rmsd kpts" << rmsd << kpts;
       le_variance->setText( QString::number( rmsd ) );
       rmsd        = sqrt( rmsd );
       le_rmsd    ->setText( QString::number( rmsd ) );
+//*DEBUG
+double vsum=0.0;
+for(int ii=0; ii<scanCount; ii++)
+ for(int jj=0; jj<points; jj++)
+    vsum += sq(sdata->value(ii,jj));
+DbgLv(1) << "VSUM=" << vsum;
+int hh=sdata->pointCount()/2;
+int ss=sdata->scanCount();
+DbgLv(1) << "SDAT 0-3"
+ << sdata->value(0,hh)
+ << sdata->value(1,hh)
+ << sdata->value(2,hh)
+ << sdata->value(3,hh);
+DbgLv(1) << "SDAT *-n"
+ << sdata->value(ss-4,hh)
+ << sdata->value(ss-3,hh)
+ << sdata->value(ss-2,hh)
+ << sdata->value(ss-1,hh);
+DbgLv(1) << "MDL comp 1 s,k,w,D,f"
+ << model.components[0].s
+ << model.components[0].f_f0
+ << model.components[0].mw
+ << model.components[0].D
+ << model.components[0].f;
+DbgLv(1) << "MDL comp 2 s,k,w,D,f"
+ << model.components[1].s
+ << model.components[1].f_f0
+ << model.components[1].mw
+ << model.components[1].D
+ << model.components[1].f;
+DbgLv(1) << "MDL asoc 1 Kd,koff"
+ << model.associations[0].k_d
+ << model.associations[0].k_off;
+DbgLv(1) << "DS dens visc manual temp"
+ << density
+ << viscosity
+ << manual
+ << edata->average_temperature();
+US_SimulationParameters* simpar = &simparams;
+DbgLv(1) << "SIMP simpt mType gType rreso menis"
+ << simpar->simpoints
+ << simpar->meshType
+ << simpar->gridType
+ << simpar->radial_resolution
+ << simpar->meniscus;
+DbgLv(1) << "SIMP bott temp rnoise tinoise rinoise"
+ << simpar->bottom
+ << simpar->temperature
+ << simpar->rnoise
+ << simpar->tinoise
+ << simpar->rinoise;
+DbgLv(1) << "SIMP bform bvol bottpos rcoeffs"
+ << simpar->band_forming
+ << simpar->band_volume
+ << simpar->bottom_position
+ << simpar->rotorcoeffs[0]
+ << simpar->rotorcoeffs[1];
+US_SimulationParameters::SpeedProfile* spstep = &simpar->speed_step[0];
+DbgLv(1) << "STEP0 durmin dlymin w2tf w2tl timf timl"
+ << spstep->duration_minutes
+ << spstep->delay_minutes
+ << spstep->w2t_first
+ << spstep->w2t_last
+ << spstep->time_first
+ << spstep->time_last;
+DbgLv(1) << "STEP0 speed accel accelf"
+ << spstep->rotorspeed
+ << spstep->acceleration
+ << spstep->acceleration_flag;
+//*DEBUG
    }
 
    else
@@ -2025,6 +2095,7 @@ DbgLv(1) << " nthread ntc ncomp" << nthread << ntc << ncomp;
 DbgLv(1) << " afrsa calc";
 //astfem_rsa->setTimeInterpolation( true );
 //astfem_rsa->setTimeCorrection( true );
+astfem_rsa->set_debug_flag(2);
 
          astfem_rsa->calculate( *sdata );
       }

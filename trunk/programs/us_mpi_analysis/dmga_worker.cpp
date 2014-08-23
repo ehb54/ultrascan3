@@ -65,6 +65,7 @@ DbgLv(1) << my_rank << "dmga_worker: wmodel #comps" << wmodel.components.size();
    nfloatc             = constraints.float_constraints( &cns_flt );
    // Compute the number of possible float combinations
    nfvari              = ( 1 << nfloatc ) - 1;
+   lfvari.fill( 0, nfvari );
    // Set up a working marker vector for a single gene.
    // Note: the "marker" is a simple vector of doubles, consisting of the
    //  attribute values that are unique to each gene. That is, only the
@@ -79,7 +80,7 @@ DbgLv(1) << my_rank << "dmga_worker: wmodel #comps" << wmodel.components.size();
                            data_sets[ 0 ]->compress == 0.0 );
 DbgLv(1) << my_rank << "dmga_worker: nfloatc nfvari do_astfem"
  << nfloatc << nfvari << do_astfem;
-//DbgLv(0) << my_rank << "dmga_worker: wmodel DUMP";
+//DbgLv(1) << my_rank << "dmga_worker: wmodel DUMP";
 //wmodel.debug();
 
    while ( ! finished )
@@ -97,6 +98,10 @@ DbgLv(1) << my_rank << "dmga_worker: nfloatc nfvari do_astfem"
                 FINISHED,
                 my_communicator );
 DbgLv(1) << my_rank << "dmgw: FIN sent";
+if(my_rank<2) {
+DbgLv(1) << my_rank << "lfvari  n" << nfvari << lfvari.size();
+for (int ii=0; ii<nfvari; ii++ )
+ DbgLv(1) << my_rank << "  smask" << ii + 1 << "count" << lfvari[ii]; }
 
       MPI_Recv( &job,          // Find out what to do next
                 sizeof( job ), // from MPI #0, MPI #7, MPI #9
@@ -248,12 +253,14 @@ DbTimMsg("Worker after get_fitness loop + sort");
 DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
          << ": At last generation minimize.";
 DbTimMsg("Worker before gsm rank/generation/elapsed");
+         in_gsm        = TRUE;
 
          fitness[ 0 ].fitness = minimize_dmga( dgenes[ fitness[ 0 ].index ], 
                                                fitness[ 0 ].fitness );
 DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
          << ":   last generation minimize fitness=" << fitness[0].fitness;
 DbTimMsg("Worker after gsm rank/generation/elapsed");
+         in_gsm        = FALSE;
       }
 
       max_rss();
@@ -462,11 +469,18 @@ DbgLv(1) << my_rank << "dg:newg:   ii" << ii << "p_grid" << p_grid
 // Mutate a discrete GA Gene
 void US_MPI_Analysis::mutate_dgene( DGene& dgene )
 {
+   const double basef    = 6.0;
+   //const double basef    = 4.0;
+   const double sigfact  = 20.0;
+   //const double sigfact  = 10.0;
    // Get a random mask that selects which float attributes to vary
-   int smask     = u_random( nfvari ) + 1;
+   int smask       = u_random( nfvari ) + 1;
    // Compute the sigma based on parameter grid and generation
-   double extn_p = (double)( p_grid - 1 );
-   double sigma  = extn_p / ( 6.0 * ( log2( generation + 2 ) ) );
+   double extn_p   = (double)( p_grid - 1 );
+   double genterm  = (double)generation * mutate_sigma / sigfact + 2.0;
+   double sigma    = extn_p / ( basef * ( log2( genterm ) ) );
+   // Bump the count of hits for each unique smask (floats combination)
+   lfvari[ smask - 1 ]++;
 DbgLv(1) << my_rank << "dg:mutg: smask p_grid sigma" << smask << p_grid << sigma;
 
    // Loop thru float attributes, varying the selected ones
@@ -631,7 +645,7 @@ double US_MPI_Analysis::get_fitness_v_dmga( US_Vector& vv, US_Vector& zz )
    return get_fitness_dmga( dgene );
 }
 
-// Compute a derivatives vector  (an inversion hessian step)
+// Compute a derivatives vector  (an inverse hessian minimization step)
 void US_MPI_Analysis::lamm_gsm_df_dmga( US_Vector& vv, US_Vector& vd,
                                         US_Vector& zz )
 {
@@ -1070,15 +1084,14 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
       US_SolveSim::DataSet*  dset   = data_sets[ ee ];
       US_DataIO::EditedData* edata  = &dset->run_data;
       US_DataIO::RawData     simdat;
-      int nscans      = dset->run_data.scanCount();
+      int nscans      = edata->scanCount();
 
       // Initialize simulation data with experiment's grid
       US_AstfemMath::initSimData( simdat, *edata, 0.0 );
 
       // Create experimental-space model from DGene for the data set
 
-      double avtemp   = dset->temperature;  // Set up data corrections
-      sd.viscosity    = dset->viscosity;
+      sd.viscosity    = dset->viscosity;    // Set up data corrections
       sd.density      = dset->density;
       sd.manual       = dset->manual;
 
@@ -1090,8 +1103,8 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
       for ( int cc = 0; cc < model.components.size(); cc++ )
       {  // Loop to perform data corrections to s and D (experimental space)
          sd.vbar20       = model.components[ cc ].vbar20;
-         sd.vbar         = US_Math2::adjust_vbar20( sd.vbar20, avtemp );
-         US_Math2::data_correction( avtemp, sd );
+         sd.vbar         = US_Math2::adjust_vbar20( sd.vbar20, dset->temperature );
+         US_Math2::data_correction( dset->temperature, sd );
 
          model.components[ cc ].s  /= sd.s20w_correction;
          model.components[ cc ].D  /= sd.D20w_correction;
@@ -1099,6 +1112,8 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
 if(my_rank<2 && dbg_level>0) {
 DbgLv(1) << my_rank << "CR: SIMPARAMS DUMP";
 dset->simparams.debug();
+DbgLv(1) << my_rank << "CR: dens visc scorr dcorr"
+ << sd.density << sd.viscosity << sd.s20w_correction << sd.D20w_correction;
 DbgLv(1) << my_rank << "CR: MODEL DUMP";
 model.debug(); }
 
@@ -1107,8 +1122,15 @@ model.debug(); }
       if ( do_astfem )
       {  // Calculate simulation for FEM (ideal) case
          US_Astfem_RSA astfem_rsa( model, dset->simparams );
-         astfem_rsa.set_debug_flag( dbg_level );
-astfem_rsa.set_debug_flag( my_rank<2?dbg_level:(-1) );
+         astfem_rsa.set_debug_flag( my_rank < 2 ? dbg_level : (-1) );
+//*DEBUG
+if(my_rank<1) {
+int dbg_flg=in_gsm?(-1):dbg_level;
+//DbgLv(0) << my_rank << "CR: call ASTFEM CALC";
+astfem_rsa.set_debug_flag(dbg_flg);
+}
+//*DEBUG
+
          astfem_rsa.calculate( simdat );
       }
 
@@ -1168,6 +1190,6 @@ astfem_rsa.set_debug_flag( my_rank<2?dbg_level:(-1) );
 
    sim_vals.variance = variance / (double)total_points;
 if(my_rank==0)
-DbgLv(1) << my_rank << "CR: variance" << sim_vals.variance << variance << total_points;
+DbgLv(0) << my_rank << "CR: variance" << sim_vals.variance << variance << total_points;
 }
 
