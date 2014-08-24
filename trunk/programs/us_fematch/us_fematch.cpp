@@ -845,12 +845,14 @@ DbgLv(1) << "MDL comp 1 s,k,w,D,f"
  << model.components[0].mw
  << model.components[0].D
  << model.components[0].f;
+if(model.components.size()>1)
 DbgLv(1) << "MDL comp 2 s,k,w,D,f"
  << model.components[1].s
  << model.components[1].f_f0
  << model.components[1].mw
  << model.components[1].D
  << model.components[1].f;
+if(model.associations.size()>0)
 DbgLv(1) << "MDL asoc 1 Kd,koff"
  << model.associations[0].k_d
  << model.associations[0].k_off;
@@ -2095,7 +2097,8 @@ DbgLv(1) << " nthread ntc ncomp" << nthread << ntc << ncomp;
 DbgLv(1) << " afrsa calc";
 //astfem_rsa->setTimeInterpolation( true );
 //astfem_rsa->setTimeCorrection( true );
-astfem_rsa->set_debug_flag(2);
+         astfem_rsa->set_debug_flag( dbg_level );
+//astfem_rsa->set_debug_flag(2);
 
          astfem_rsa->calculate( *sdata );
       }
