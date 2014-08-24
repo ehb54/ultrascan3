@@ -309,14 +309,15 @@ double eom1=edata->scanData[0].omega2t;
 int etm2=edata->scanData[nesc-1].seconds;
 double eom2=edata->scanData[nesc-1].omega2t;
 int nssp=speed_steps.count();
-int nssc=speed_steps[nssp-1].scans;
-int stm1=speed_steps[nssp-1].time_first;
-double som1=speed_steps[nssp-1].w2t_first;
-int stm2=speed_steps[nssp-1].time_last;
-double som2=speed_steps[nssp-1].w2t_last;
+int nssc=(nssp<1)?0:speed_steps[nssp-1].scans;
 DbgLv(1) << "LD:sp: nesc nssp nssc" << nesc << nssp << nssc;
 DbgLv(1) << "LD:sp:  etm1 etm2 eom1 eom2" << etm1 << etm2 << eom1 << eom2;
-DbgLv(1) << "LD:sp:  stm1 stm2 som1 som2" << stm1 << stm2 << som1 << som2;
+if(nssp>0) {
+ int stm1=speed_steps[nssp-1].time_first;
+ double som1=speed_steps[nssp-1].w2t_first;
+ int stm2=speed_steps[nssp-1].time_last;
+ double som2=speed_steps[nssp-1].w2t_last;
+ DbgLv(1) << "LD:sp:  stm1 stm2 som1 som2" << stm1 << stm2 << som1 << som2; }
 
 }
 
