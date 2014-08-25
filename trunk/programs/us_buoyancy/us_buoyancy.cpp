@@ -16,6 +16,7 @@
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_constants.h"
+#include "us_simparms.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -40,6 +41,11 @@ int main( int argc, char* argv[] )
 // Constructor
 US_Buoyancy::US_Buoyancy() : US_Widgets()
 {
+   // initialize gradient forming material to 65% Nycodenz (weight/vol):
+   MW=821;
+   vbar=0.4831;
+   dens_0 = 1.2294;
+
    total_speeds = 0;
    v_line       = NULL;
    dbg_level    = US_Settings::us_debug();
@@ -100,7 +106,7 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    specs->addWidget( pb_details, s_row++, 2, 1, 2 );
 
    // Row 3
-   QLabel* lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
+   QLabel* lb_triple = us_label( tr( "Cell / Channel / Wavelength:" ), -1 );
    specs->addWidget( lb_triple, s_row, 0, 1, 2 );
 
    cb_triple = us_comboBox();
@@ -108,7 +114,7 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
                        SLOT  ( new_triple         ( int ) ) );
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
 
-   lbl_rpms   = us_label( tr( "Speed Step (RPM) of triple" ), -1 );
+   lbl_rpms   = us_label( tr( "Speed Step (RPM) of triple:" ), -1 );
    cb_rpms   = us_comboBox();
    specs->addWidget( lbl_rpms,   s_row,   0, 1, 2 );
    specs->addWidget( cb_rpms,   s_row++, 2, 1, 2 );
@@ -124,7 +130,25 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    specs->addWidget( ct_selectScan, s_row++, 2, 1, 2 );
 	connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
 	         SLOT  ( plot_scan( double ) ) );
+	
+    // Solution info:
+   QLabel* lbl_dens_0 = us_label( tr( "Loading Density (g/ml):" ), -1 );
+   specs->addWidget( lbl_dens_0, s_row, 0, 1, 2 );
+   le_dens_0 = us_lineedit( QString::number(dens_0) );
+   specs->addWidget( le_dens_0, s_row++, 2, 1, 2 );
+   connect (le_dens_0, SIGNAL( editingFinished (void)), this, SLOT (update_dens_0(void)));
 
+   QLabel* lbl_vbar = us_label( tr( "Gradient Mat. vbar (ml/g):" ), -1 );
+   specs->addWidget( lbl_vbar, s_row, 0, 1, 2 );
+   le_vbar = us_lineedit( QString::number( vbar ) );
+   specs->addWidget( le_vbar, s_row++, 2, 1, 2 );
+   connect (le_vbar, SIGNAL( editingFinished (void)), this, SLOT (update_vbar(void)));
+
+   QLabel* lbl_MW = us_label( tr( "Gradient Mat. MW (g/mol):" ), -1 );
+   specs->addWidget( lbl_MW, s_row, 0, 1, 2 );
+   le_MW = us_lineedit( QString::number( MW ) );
+   specs->addWidget( le_MW, s_row++, 2, 1, 2 );
+   connect (le_MW, SIGNAL( editingFinished (void)), this, SLOT (update_MW(void)));
 
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
@@ -220,14 +244,29 @@ void US_Buoyancy::load( void )
    dataType = QString( QChar( data.type[ 0 ] ) )
             + QString( QChar( data.type[ 1 ] ) );
 
-
-   for ( int ii = 0; ii < triples.size(); ii++ )
-   {  // Generate file names
-      QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
-      QString file   = runID + "." + dataType + "." + triple + ".auc";
-      files << file;
+   simparams.resize(triples.size());
+   if (isLocal)
+   {
+      for ( int ii = 0; ii < triples.size(); ii++ )
+      {  // Generate file names
+         QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
+         QString file   = runID + "." + dataType + "." + triple + ".auc";
+         files << file;
+         simparams[ii].initFromData( NULL, allData[ii], true, runID, dataType);
+      }
    }
-
+   else
+   {
+      US_Passwd pw;
+      US_DB2  db( pw.getPasswd() );
+      for ( int ii = 0; ii < triples.size(); ii++ )
+      {  // Generate file names
+         QString triple = QString( triples.at( ii ) ).replace( " / ", "." );
+         QString file   = runID + "." + dataType + "." + triple + ".auc";
+         files << file;
+         simparams[ii].initFromData( &db, allData[ii], true, runID, dataType);
+      }
+   }
    QString file = workingDir + "/" + runID + "." + dataType + ".xml";
    expType = "";
    QFile xf( file );
@@ -277,17 +316,17 @@ void US_Buoyancy::load( void )
                    expType.mid(  1 ).toLower();
    }
    expIsBuoyancy = ( expType.compare( "Buoyancy", Qt::CaseInsensitive ) == 0 );
-	if (expIsBuoyancy)
-	{
-		update_speedData();
-		pick     ->disconnect();
-		connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
-                     SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
-
-		plot_scan( current_scan );
-
-		connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ),
-                          SLOT  ( new_rpmval         ( int ) ) );
+   if (expIsBuoyancy)
+   {
+      US_Passwd pw;
+      US_DB2  db( pw.getPasswd() );
+      update_speedData();
+      pick     ->disconnect();
+      connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+              SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+      plot_scan( current_scan );
+      connect( cb_rpms,   SIGNAL( currentIndexChanged( int ) ),
+              SLOT  ( new_rpmval         ( int ) ) );
    }
    else
    {  // non-Equilibrium
@@ -546,6 +585,21 @@ void US_Buoyancy::new_rpmval( int index )
    QString srpm = cb_rpms->itemText( index );
    set_meniscus();
    plot_scan( current_scan );
+}
+
+void US_Buoyancy::update_dens_0 ( void )
+{
+	dens_0 = (double) le_dens_0->text().toDouble();
+}
+
+void US_Buoyancy::update_vbar ( void )
+{
+	vbar = (double) le_vbar->text().toDouble();
+}
+
+void US_Buoyancy::update_MW ( void )
+{
+	MW = (double) le_MW->text().toDouble();
 }
 
 void US_Buoyancy::set_meniscus( void )
