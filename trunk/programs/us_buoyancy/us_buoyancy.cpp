@@ -17,6 +17,7 @@
 #include "us_db2.h"
 #include "us_constants.h"
 #include "us_simparms.h"
+#include "us_constants.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -42,14 +43,29 @@ int main( int argc, char* argv[] )
 US_Buoyancy::US_Buoyancy() : US_Widgets()
 {
    // initialize gradient forming material to 65% Nycodenz (weight/vol):
-   MW=821;
-   vbar=0.4831;
-   dens_0 = 1.2294;
+
+   bottom = 0.0;
+   bottom_calc = 0.0;
 
    total_speeds = 0;
    v_line       = NULL;
    dbg_level    = US_Settings::us_debug();
-	current_scan = 1;
+   current_scan = 1;
+   current_rpm  = 0.0;
+   tmp_dpoint.name = "";
+   tmp_dpoint.description = "";
+   tmp_dpoint.dataset = "";
+   tmp_dpoint.peakPosition = 0.0;
+   tmp_dpoint.peakDensity = 0.0;
+   tmp_dpoint.peakVbar = 0.0;
+   tmp_dpoint.temperature = 0.0;
+   tmp_dpoint.bufferDensity = 0.998234;
+   tmp_dpoint.meniscus = 0.0;
+   tmp_dpoint.bottom = 0.0;
+   tmp_dpoint.speed = 0.0;
+   tmp_dpoint.gradientMW = 821.0;
+   tmp_dpoint.gradientVbar = 0.4831;
+   tmp_dpoint.gradientC0 = 1.2294;
 
    setWindowTitle( tr( "Buoyancy Equilibrium Data Analysis" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -60,7 +76,7 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
 
    // Put the Run Info across the entire window
    QHBoxLayout* runInfo = new QHBoxLayout();
-   QLabel* lb_info = us_label( tr( "Run Info:" ), -1 );
+   QLabel* lb_info = us_label( tr( "Dataset Info:" ), -1 );
    runInfo->addWidget( lb_info );
 
    le_info = us_lineedit( "", 1, true );
@@ -128,32 +144,113 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    ct_selectScan->setStep( 1 );
    ct_selectScan->setValue   ( current_scan );
    specs->addWidget( ct_selectScan, s_row++, 2, 1, 2 );
-	connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
-	         SLOT  ( plot_scan( double ) ) );
-	
+   connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
+            SLOT  ( plot_scan( double ) ) );
+
+   QButtonGroup* bg_points = new QButtonGroup( this );
+
+   QGridLayout* box1 = us_radiobutton( tr( "Select meniscus" ), rb_meniscus );
+   QGridLayout* box2 = us_radiobutton( tr( "Select peak position" ), rb_datapoint );
+
+   rb_meniscus->setChecked( true );
+   rb_datapoint->setChecked( false );
+   rb_meniscus->setEnabled( false );
+   rb_datapoint->setEnabled( false );
+   bg_points->addButton( rb_meniscus );
+   bg_points->addButton( rb_datapoint );
+   specs->addLayout( box1, s_row, 0, 1, 2 );
+   specs->addLayout( box2, s_row++, 2, 1, 2 );
+
+   QLabel* lbl_meniscus = us_label( tr( "Meniscus Position (cm):" ), -1 );
+   specs->addWidget( lbl_meniscus, s_row, 0, 1, 2 );
+   le_meniscus = us_lineedit(  "0.0"  );
+   specs->addWidget( le_meniscus, s_row++, 2, 1, 2 );
+   connect (le_meniscus, SIGNAL( editingFinished (void)), this,
+            SLOT (update_meniscus(void)));
+
+   QLabel* lbl_stretch = us_label( tr( "Rotor Stretch (cm):" ), -1 );
+   specs->addWidget( lbl_stretch, s_row, 0, 1, 2 );
+   le_stretch = us_lineedit( "0.0" );
+   specs->addWidget( le_stretch, s_row++, 2, 1, 2 );
+
+   QLabel* lbl_bottom = us_label( tr( "Centerpiece Bottom (cm):" ), -1 );
+   specs->addWidget( lbl_bottom, s_row, 0, 1, 2 );
+   le_bottom = us_lineedit( QString::number(bottom) );
+   specs->addWidget( le_bottom, s_row++, 2, 1, 2 );
+   connect (le_bottom, SIGNAL( editingFinished (void)), this,
+            SLOT (update_bottom(void)));
+
+   QLabel* lbl_bottom_calc = us_label( tr( "Speed-corrected Bottom (cm):" ), -1 );
+   specs->addWidget( lbl_bottom_calc, s_row, 0, 1, 2 );
+   le_bottom_calc = us_lineedit( QString::number( bottom_calc ) );
+   specs->addWidget( le_bottom_calc, s_row++, 2, 1, 2 );
+   connect (le_bottom_calc, SIGNAL( editingFinished (void)), this,
+            SLOT (update_bottom_calc(void)));
+
     // Solution info:
    QLabel* lbl_dens_0 = us_label( tr( "Loading Density (g/ml):" ), -1 );
    specs->addWidget( lbl_dens_0, s_row, 0, 1, 2 );
-   le_dens_0 = us_lineedit( QString::number(dens_0) );
+   le_dens_0 = us_lineedit( QString::number(tmp_dpoint.gradientC0) );
    specs->addWidget( le_dens_0, s_row++, 2, 1, 2 );
-   connect (le_dens_0, SIGNAL( editingFinished (void)), this, SLOT (update_dens_0(void)));
+   connect (le_dens_0, SIGNAL( editingFinished (void)), this,
+            SLOT (update_dens_0(void)));
+
+   QLabel* lbl_buffer_density = us_label( tr( "Buffer Density (g/ml):" ), -1 );
+   specs->addWidget( lbl_buffer_density, s_row, 0, 1, 2 );
+   le_buffer_density = us_lineedit( QString::number(tmp_dpoint.bufferDensity) );
+   specs->addWidget( le_buffer_density, s_row++, 2, 1, 2 );
+   connect (le_buffer_density, SIGNAL( editingFinished (void)), this,
+            SLOT ( update_bufferDensity( void ) ));
 
    QLabel* lbl_vbar = us_label( tr( "Gradient Mat. vbar (ml/g):" ), -1 );
    specs->addWidget( lbl_vbar, s_row, 0, 1, 2 );
-   le_vbar = us_lineedit( QString::number( vbar ) );
+   le_vbar = us_lineedit( QString::number( tmp_dpoint.gradientVbar ) );
    specs->addWidget( le_vbar, s_row++, 2, 1, 2 );
-   connect (le_vbar, SIGNAL( editingFinished (void)), this, SLOT (update_vbar(void)));
+   connect (le_vbar, SIGNAL( editingFinished (void)), this,
+            SLOT (update_vbar(void)));
 
    QLabel* lbl_MW = us_label( tr( "Gradient Mat. MW (g/mol):" ), -1 );
    specs->addWidget( lbl_MW, s_row, 0, 1, 2 );
-   le_MW = us_lineedit( QString::number( MW ) );
+   le_MW = us_lineedit( QString::number( tmp_dpoint.gradientMW ) );
    specs->addWidget( le_MW, s_row++, 2, 1, 2 );
-   connect (le_MW, SIGNAL( editingFinished (void)), this, SLOT (update_MW(void)));
+   connect (le_MW, SIGNAL( editingFinished (void)), this,
+            SLOT (update_MW(void)));
+
+   QLabel* lbl_temperature = us_label( tr( "Temperature (°C):" ), -1 );
+   specs->addWidget( lbl_temperature, s_row, 0, 1, 2 );
+   le_temperature = us_lineedit( QString::number( tmp_dpoint.temperature ) );
+   specs->addWidget( le_temperature, s_row++, 2, 1, 2 );
+
+   QLabel* lbl_peakName = us_label( tr( "Peak name/label:" ), -1 );
+   specs->addWidget( lbl_peakName, s_row, 0, 1, 2 );
+   le_peakName = us_lineedit( tmp_dpoint.name );
+   specs->addWidget( le_peakName, s_row++, 2, 1, 2 );
+   connect (le_peakName, SIGNAL( editingFinished (void)), this,
+            SLOT (update_peakName(void)));
+
+   QLabel* lbl_peakPosition = us_label( tr( "Peak Position (cm):" ), -1 );
+   specs->addWidget( lbl_peakPosition, s_row, 0, 1, 2 );
+   le_peakPosition = us_lineedit( QString::number( tmp_dpoint.peakPosition ) );
+   specs->addWidget( le_peakPosition, s_row++, 2, 1, 2 );
+
+   QLabel* lbl_peakDensity = us_label( tr( "Peak Density (g/ml):" ), -1 );
+   specs->addWidget( lbl_peakDensity, s_row, 0, 1, 2 );
+   le_peakDensity = us_lineedit( QString::number( tmp_dpoint.peakDensity ) );
+   specs->addWidget( le_peakDensity, s_row++, 2, 1, 2 );
+
+   QLabel* lbl_peakVbar = us_label( tr( "Peak vbar (ml/g):" ), -1 );
+   specs->addWidget( lbl_peakVbar, s_row, 0, 1, 2 );
+   le_peakVbar = us_lineedit( QString::number( tmp_dpoint.peakVbar ) );
+   specs->addWidget( le_peakVbar, s_row++, 2, 1, 2 );
 
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
 
-   pb_write = us_pushbutton( tr( "Save Datapoint" ), false );
+   pb_save = us_pushbutton( tr( "Save Datapoint" ), false );
+   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+   specs->addWidget( pb_save, s_row, 0, 1, 2 );
+
+   pb_write = us_pushbutton( tr( "Write Report" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
    specs->addWidget( pb_write, s_row++, 2, 1, 2 );
 
@@ -202,10 +299,75 @@ void US_Buoyancy::new_triple( int index )
 {
    current_triple = index;
    data = allData[ index ];
-	plot_scan( current_scan );
-   set_meniscus();
+   le_info->setText( runID + ": " + allData[index].description );
+   tmp_dpoint.description = allData[index].description;
+   tmp_dpoint.dataset = runID;
+   plot_scan( current_scan );
 }
 
+void US_Buoyancy::update_fields( void )
+{
+   QString str;
+
+   current_stretch = calc_stretch();
+   str.setNum( current_stretch );
+   le_stretch->setText( str );
+
+   if ( meniscus[current_triple] != 0 )
+   {
+      tmp_dpoint.meniscus = meniscus[current_triple] + current_stretch;
+      str.setNum( tmp_dpoint.meniscus );
+      le_meniscus->setText( str );
+   }
+   else
+   {
+      le_meniscus->setText( "0.0" );
+      rb_meniscus ->setChecked( true  );
+      rb_meniscus ->setEnabled( false );
+      rb_datapoint->setEnabled( false );
+   }
+   str.setNum( simparams[current_triple].bottom_position );
+   le_bottom->setText( str );
+   tmp_dpoint.bottom = simparams[current_triple].bottom_position + current_stretch;
+   str.setNum( tmp_dpoint.bottom );
+   le_bottom_calc->setText( str );
+   str.setNum( tmp_dpoint.temperature );
+   le_temperature->setText( str );
+   calc_points();
+}
+
+// Load an AUC data set
+void US_Buoyancy::calc_points( void )
+{
+   
+   QString str;
+   if (tmp_dpoint.peakPosition != 0.0)
+   {
+      double omega_s, C, C0, r2, k1, k2, k3, k4;
+      omega_s = pow( current_rpm * M_PI/30.0, 2.0 );
+      C0 = tmp_dpoint.gradientC0 - tmp_dpoint.bufferDensity; //subtract buffer density from nycodenz density
+      r2 = pow( tmp_dpoint.bottom, 2.0 ) - pow( tmp_dpoint.meniscus, 2.0);
+      k1 = tmp_dpoint.gradientMW * omega_s/( 2.0 * R * (tmp_dpoint.temperature + 273.15) );
+      k4 = 1.0 - tmp_dpoint.gradientVbar * tmp_dpoint.bufferDensity;
+      k2 = exp( k1 * ( k4 ) * (pow( tmp_dpoint.peakPosition, 2.0 ) - pow( tmp_dpoint.meniscus, 2.0 ) ) );
+      k3 = exp( k1 * ( k4 ) * r2);
+      C  = k1 * k4 * C0 *r2 * k2/( k3 - 1.0 ) + tmp_dpoint.bufferDensity;
+      str.setNum( C );
+      le_peakDensity->setText( str );
+      str.setNum( 1.0/C );
+      le_peakVbar->setText( str );
+      str.setNum( tmp_dpoint.peakPosition );
+      le_peakPosition->setText( str );
+      pb_save->setEnabled( true );
+   }
+   else
+   {
+      le_peakDensity->setText( "0" );
+      le_peakVbar->setText( "0" );
+      le_peakPosition->setText( "0" );
+      pb_save->setEnabled( false );
+   }
+}
 
 // Load an AUC data set
 void US_Buoyancy::load( void )
@@ -238,13 +400,19 @@ void US_Buoyancy::load( void )
                        SLOT  ( new_triple         ( int ) ) );
    current_triple = 0;
 
-   le_info->setText( runID );
+   le_info->setText( runID + ": " + allData[0].description );
 
    data     = allData[ 0 ];
    dataType = QString( QChar( data.type[ 0 ] ) )
             + QString( QChar( data.type[ 1 ] ) );
 
    simparams.resize(triples.size());
+   meniscus.resize(triples.size());
+
+   for (int ii=0; ii<triples.size(); ii++)
+   {
+      meniscus[ii] = 0.0;
+   }
    if (isLocal)
    {
       for ( int ii = 0; ii < triples.size(); ii++ )
@@ -330,10 +498,10 @@ void US_Buoyancy::load( void )
    }
    else
    {  // non-Equilibrium
-		     QMessageBox::warning( this, tr( "Wrong Type of Data" ),
-			tr( "This analysis program requires data of type \"Buoyancy\".\n"
-			    "Please load a different dataset with the correct type.") );
-			return;
+           QMessageBox::warning( this, tr( "Wrong Type of Data" ),
+         tr( "This analysis program requires data of type \"Buoyancy\".\n"
+             "Please load a different dataset with the correct type.") );
+         return;
    }
    // Enable pushbuttons
    pb_details   ->setEnabled( true );
@@ -359,8 +527,65 @@ void US_Buoyancy::load( void )
                 + " " + DEGC + tr( ". The accuracy of experimental\n"
                 "results may be affected significantly." ) );
    }
+   QString str;
+   str.setNum(simparams[current_triple].bottom_position);
+   le_bottom->setText( str );
 }
 
+// Handle a mouse click according to the current pick step
+void US_Buoyancy::mouse( const QwtDoublePoint& p )
+{
+   double maximum = -1.0e99;
+   if ( rb_meniscus->isChecked() )
+   {
+      QString str;
+      str.setNum( p.x() );
+      le_meniscus->setText( str );
+      // the internally stored meniscus position is adjusted to the theoretical rest position
+      meniscus[current_triple]  = p.x() - calc_stretch();
+      tmp_dpoint.meniscus = p.x();
+      rb_meniscus->setEnabled( true );
+      rb_datapoint->setEnabled( true );
+   }
+   else
+   {
+      tmp_dpoint.peakPosition = p.x();
+      pb_write->setEnabled( true );
+      calc_points();
+   }
+   // Un-zoom
+   if ( plot->btnZoom->isChecked() )
+   {
+      plot->btnZoom->setChecked( false );
+   }
+   draw_vline( p.x() );
+   data_plot->replot();
+
+   // Remove the left line
+   if ( v_line != NULL )
+   {
+       v_line->detach();
+       delete v_line;
+       v_line = NULL;
+    }
+
+    marker = new QwtPlotMarker;
+    QBrush brush( Qt::white );
+    QPen   pen  ( brush, 2.0 );
+
+    marker->setValue( p.x(), maximum );
+    marker->setSymbol( QwtSymbol(
+                        QwtSymbol::Cross,
+                        brush,
+                        pen,
+                        QSize ( 8, 8 ) ) );
+
+    marker->attach( data_plot );
+    data_plot->replot();
+    marker->detach();
+    delete marker;
+    marker = NULL;
+}
 
 // Display run details
 void US_Buoyancy::details( void )
@@ -397,15 +622,15 @@ void US_Buoyancy::reset( void )
    ct_selectScan->setMinValue( 0 );
    ct_selectScan->setMaxValue( 0 );
    ct_selectScan->setValue   ( 0 );
-	connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
-	         SLOT  ( plot_scan( double ) ) );
+   connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
+            SLOT  ( plot_scan( double ) ) );
 
    cb_triple->disconnect();
 
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );
    v_line = NULL;
-   pick     ->disconnect();
+   pick->disconnect();
 
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
@@ -413,16 +638,22 @@ void US_Buoyancy::reset( void )
    data_plot->replot();
 
    // Disable pushbuttons
-   pb_details     ->setEnabled( false );
-   pb_write       ->setEnabled( false );
+   pb_details  ->setEnabled( false );
+   pb_write    ->setEnabled( false );
+   pb_save     ->setEnabled( false );
+   rb_meniscus ->setEnabled( false );
+   rb_datapoint->setEnabled( false );
 
    // Remove icons
 
-   data.scanData .clear();
-   trip_rpms     .clear();
-   triples       .clear();
-   cb_rpms      ->disconnect();
-   cb_rpms      ->clear();
+   dpoint        .clear();
+   allData        .clear();
+   meniscus       .clear();
+   data.scanData  .clear();
+   trip_rpms      .clear();
+   triples        .clear();
+   cb_rpms       ->disconnect();
+   cb_rpms       ->clear();
 }
 
 // Select DB investigator// Private slot to update disk/db control with dialog changes it
@@ -437,7 +668,7 @@ void US_Buoyancy::update_disk_db( bool isDB )
 // Plot a single scan curve
 void US_Buoyancy::plot_scan( double scan_number )
 {
-		  // current scan is global
+        // current scan is global
    current_scan = (int) scan_number;
    int    rsize = data.pointCount();
    int    ssize = data.scanCount();
@@ -456,6 +687,7 @@ void US_Buoyancy::plot_scan( double scan_number )
    double minV  =  1.0e99;
    int maxscan = 0;
    QString srpm = cb_rpms->currentText();
+   current_rpm = srpm.toDouble();
 
    // Plot only the currently selected scan(s)
    //
@@ -463,17 +695,16 @@ void US_Buoyancy::plot_scan( double scan_number )
    {
       US_DataIO::Scan* s = &data.scanData[ ii ];
 
-      QString arpm       = QString::number( s->rpm );
-
+      QString arpm        = QString::number( s->rpm );
 
       //how many scans are included in the current set of speeds? Increment maxscan...
       if ( arpm == srpm ) 
       {
-	      maxscan++;
+         maxscan++;
       }
       else 
       {
-	      continue;
+         continue;
       }
       count = 0;
 
@@ -496,7 +727,11 @@ void US_Buoyancy::plot_scan( double scan_number )
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setData( r, v, count );
-      if (ii == current_scan - 1 ) c->setPen( QPen( Qt::red ) );
+      if (ii == current_scan - 1 )
+      { // set the temperature to the currently highlighted scan:
+         tmp_dpoint.temperature = s->temperature;
+         c->setPen( QPen( Qt::red ) );
+      }
 
       // Reset the scan curves within the new limits
       double padR = ( maxR - minR ) / 30.0;
@@ -510,43 +745,7 @@ void US_Buoyancy::plot_scan( double scan_number )
    ct_selectScan->setMaxValue( maxscan );
 
    data_plot->replot();
-}
-
-
-// Handle a mouse click according to the current pick step
-void US_Buoyancy::mouse( const QwtDoublePoint& /*p*/ )
-{
-   double maximum = -1.0e99;
-//   double xpoint  = p.x();
-            // Un-zoom
-            if ( plot->btnZoom->isChecked() )
-               plot->btnZoom->setChecked( false );
-
-            draw_vline( meniscus );
-
-            data_plot->replot();
-
-            // Remove the left line
-            if ( v_line != NULL )
-            {
-               v_line->detach();
-               delete v_line;
-               v_line = NULL;
-            }
-            marker = new QwtPlotMarker;
-            QBrush brush( Qt::white );
-            QPen   pen  ( brush, 2.0 );
-
-            marker->setValue( meniscus, maximum );
-            marker->setSymbol( QwtSymbol(
-                        QwtSymbol::Cross,
-                        brush,
-                        pen,
-                        QSize ( 8, 8 ) ) );
-
-            marker->attach( data_plot );
-         data_plot->replot();
-
+   update_fields();
 }
 
 // Draw a vertical pick line
@@ -574,98 +773,146 @@ void US_Buoyancy::draw_vline( double radius )
    data_plot->replot();
 }
 
+void US_Buoyancy::save( void )
+{
+   dpoint.append( tmp_dpoint );
+}
+
 void US_Buoyancy::write( void )
 {
+   QTextEdit* te = new QTextEdit( 0 ); 
+   for (int i=0; i<dpoint.size(); i++)
+   {
+      te->append("Report:");
+   }
+   te->show();
 }
 
 // Select a new speed within a triple
 void US_Buoyancy::new_rpmval( int index )
 {
-		  qDebug() << "rpmval: " << index;
-   QString srpm = cb_rpms->itemText( index );
-   set_meniscus();
+   QString srpm = cb_rpms->itemText( index ), str;
+   qDebug() << "rpmval: " << srpm;
+   current_rpm = srpm.toDouble();
+   current_stretch = calc_stretch();
+   str.setNum( calc_stretch() );
+   le_stretch->setText( str );
+   if ( meniscus[current_triple] != 0 )
+   {
+      str.setNum( meniscus[current_triple] + current_stretch );
+      le_meniscus->setText( str );
+   }
    plot_scan( current_scan );
+}
+
+void US_Buoyancy::update_bottom ( void )
+{
+   bottom = (double) le_bottom->text().toDouble();
+}
+
+void US_Buoyancy::update_bottom_calc ( void )
+{
+   bottom_calc = (double) le_bottom_calc->text().toDouble();
 }
 
 void US_Buoyancy::update_dens_0 ( void )
 {
-	dens_0 = (double) le_dens_0->text().toDouble();
+   tmp_dpoint.gradientC0 = (double) le_dens_0->text().toDouble();
 }
 
 void US_Buoyancy::update_vbar ( void )
 {
-	vbar = (double) le_vbar->text().toDouble();
+   tmp_dpoint.gradientVbar = (double) le_vbar->text().toDouble();
 }
 
 void US_Buoyancy::update_MW ( void )
 {
-	MW = (double) le_MW->text().toDouble();
+   tmp_dpoint.gradientMW = (double) le_MW->text().toDouble();
 }
 
-void US_Buoyancy::set_meniscus( void )
+void US_Buoyancy::update_bufferDensity ( void )
 {
+   tmp_dpoint.bufferDensity = (double) le_buffer_density->text().toDouble();
+}
+
+void US_Buoyancy::update_peakName ( void )
+{
+   tmp_dpoint.name = le_peakName->text();
+}
+
+// this function lets the user edit the meniscus position
+void US_Buoyancy::update_meniscus( void )
+{
+   meniscus[current_triple] = (double) le_meniscus->text().toDouble() - current_stretch;
 }
 
 void US_Buoyancy::update_speedData( void )
 {
-	sData.clear();
-	US_DataIO::SpeedData ssDat;
-	int ksd    = 0;
-	for ( int jd = 0; jd < allData.size(); jd++ )
-	{
-		data  = allData[ jd ];
-		sd_offs << ksd;
+   sData.clear();
+   US_DataIO::SpeedData ssDat;
+   int ksd    = 0;
+   for ( int jd = 0; jd < allData.size(); jd++ )
+   {
+      data  = allData[ jd ];
+      sd_offs << ksd;
 
-		if ( jd > 0 )
-			sd_knts << ( ksd - sd_offs[ jd - 1 ] );
+      if ( jd > 0 )
+         sd_knts << ( ksd - sd_offs[ jd - 1 ] );
 
-		trip_rpms.clear();
+      trip_rpms.clear();
 
-		for ( int ii = 0; ii < data.scanData.size(); ii++ )
-		{
-			double  drpm = data.scanData[ ii ].rpm;
-			QString arpm = QString::number( drpm );
-			if ( ! trip_rpms.contains( arpm ) )
-			{
-				trip_rpms << arpm;
-				ssDat.first_scan = ii + 1;
-				ssDat.scan_count = 1;
-				ssDat.speed      = drpm;
-				ssDat.meniscus   = 0.0;
-				ssDat.dataLeft   = 0.0;
-				ssDat.dataRight  = 0.0;
-				sData << ssDat;
-				ksd++;
-			}
+      for ( int ii = 0; ii < data.scanData.size(); ii++ )
+      {
+         double  drpm = data.scanData[ ii ].rpm;
+         QString arpm = QString::number( drpm );
+         if ( ! trip_rpms.contains( arpm ) )
+         {
+            trip_rpms << arpm;
+            ssDat.first_scan = ii + 1;
+            ssDat.scan_count = 1;
+            ssDat.speed      = drpm;
+            ssDat.meniscus   = 0.0;
+            ssDat.dataLeft   = 0.0;
+            ssDat.dataRight  = 0.0;
+            sData << ssDat;
+            ksd++;
+         }
 
-			else
-			{
-				int jj = trip_rpms.indexOf( arpm );
-				ssDat  = sData[ jj ];
-				ssDat.scan_count++;
-				sData[ jj ].scan_count++;
-			}
-		}
+         else
+         {
+            int jj = trip_rpms.indexOf( arpm );
+            ssDat  = sData[ jj ];
+            ssDat.scan_count++;
+            sData[ jj ].scan_count++;
+         }
+      }
 
-		if ( jd == 0 )
-			cb_rpms->addItems( trip_rpms );
+      if ( jd == 0 )
+         cb_rpms->addItems( trip_rpms );
 
-		total_speeds += trip_rpms.size();
-	}
+      total_speeds += trip_rpms.size();
+   }
 
-	sd_knts << ( ksd - sd_offs[ allData.size() - 1 ] );
+   sd_knts << ( ksd - sd_offs[ allData.size() - 1 ] );
 
-	if ( allData.size() > 1 )
-	{
-		data   = allData[ current_triple ];
-		ksd    = sd_knts[ current_triple ];
-		trip_rpms.clear();
-		cb_rpms ->clear();
-		for ( int ii = 0; ii < ksd; ii++ )
-		{
-			QString arpm = QString::number( sData[ ii ].speed );
-			trip_rpms << arpm;
-		}
-		cb_rpms->addItems( trip_rpms );
-	}
+   if ( allData.size() > 1 )
+   {
+      data   = allData[ current_triple ];
+      ksd    = sd_knts[ current_triple ];
+      trip_rpms.clear();
+      cb_rpms ->clear();
+      for ( int ii = 0; ii < ksd; ii++ )
+      {
+         QString arpm = QString::number( sData[ ii ].speed );
+         trip_rpms << arpm;
+      }
+      cb_rpms->addItems( trip_rpms );
+   }
+}
+
+double US_Buoyancy::calc_stretch( )
+{
+   return ( simparams[current_triple].rotorcoeffs[ 0 ]
+		   * current_rpm + simparams[current_triple].rotorcoeffs[ 1 ]
+		   * pow( current_rpm, 2.0 ) );
 }
