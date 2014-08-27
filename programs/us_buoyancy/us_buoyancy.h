@@ -12,6 +12,14 @@
 #include "us_dataIO.h"
 #include "us_simparms.h"
 
+struct DataPoint
+{
+   QString name, description, dataset;
+   double peakPosition, peakDensity, peakVbar, temperature, bufferDensity;
+   double meniscus, bottom, speed, gradientMW, gradientC0, gradientVbar;
+};
+
+
 class US_Buoyancy : public US_Widgets
 {
 	Q_OBJECT
@@ -21,9 +29,17 @@ class US_Buoyancy : public US_Widgets
 
 	private:
 
-      US_DataIO::RawData            data;
-      QVector< US_DataIO::RawData > allData;
-      QList< US_DataIO::SpeedData > sData;
+
+      US_DataIO::RawData               data;
+      QList   < US_DataIO::SpeedData > sData;
+      QVector < US_DataIO::RawData >   allData;
+      QVector < double >               meniscus;
+      QVector < DataPoint >            dpoint;
+      
+
+      QRadioButton*      rb_meniscus;
+      QRadioButton*      rb_datapoint;
+      DataPoint          tmp_dpoint;
 
       int                current_triple;
       int                current_scan;
@@ -32,10 +48,11 @@ class US_Buoyancy : public US_Widgets
 
       bool               expIsBuoyancy;
 
-      double             meniscus;
-      double             dens_0;
-      double             vbar;
-      double             MW;
+      double             bottom;
+      double             bottom_calc;
+      double             current_rpm;
+      double             current_stretch;
+      double             current_point; // contains x coordinate picked by the user
 
       QList< int >       sd_offs;    // speed data offsets, ea. triple
       QList< int >       sd_knts;    // speed data counts, ea. triple
@@ -63,15 +80,35 @@ class US_Buoyancy : public US_Widgets
       US_Plot*           plot;
 
       QLabel*            lbl_rpms;
+      QLabel*            lbl_stretch;
       QLabel*            lbl_dens_0;
+      QLabel*            lbl_bottom;
+      QLabel*            lbl_bottom_calc;
       QLabel*            lbl_vbar;
       QLabel*            lbl_MW;
+      QLabel*            lbl_meniscus;
+      QLabel*            lbl_temperature;
+      QLabel*            lbl_peakVbar;
+      QLabel*            lbl_peakPosition;
+      QLabel*            lbl_peakDensity;
+      QLabel*            lbl_peakName;
+      QLabel*            lbl_buffer_density;
 
       QLineEdit*         le_info;
+      QLineEdit*         le_stretch;
       QLineEdit*         le_investigator;
       QLineEdit*         le_dens_0;
+      QLineEdit*         le_bottom;
+      QLineEdit*         le_bottom_calc;
       QLineEdit*         le_vbar;
       QLineEdit*         le_MW;
+      QLineEdit*         le_meniscus;
+      QLineEdit*         le_temperature;
+      QLineEdit*         le_peakVbar;
+      QLineEdit*         le_peakPosition;
+      QLineEdit*         le_peakDensity;
+      QLineEdit*         le_peakName;
+      QLineEdit*         le_buffer_density;
 
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
@@ -79,27 +116,36 @@ class US_Buoyancy : public US_Widgets
       QComboBox*         cb_rpms;
 
       QPushButton*       pb_write;
+      QPushButton*       pb_save;
 
       QwtCounter*        ct_selectScan;
 
 private slots:
-	void draw_vline        ( double );
-	void mouse             ( const QwtDoublePoint& );
-	void sel_investigator  ( void );
-	void update_disk_db    ( bool );
-	void load              ( void );
-	void details           ( void );
-	void new_triple        ( int  );
-	void plot_scan         ( double );
-	void write             ( void );
-	void reset             ( void );
-	void new_rpmval        ( int  );
-	void set_meniscus      ( void );
-	void update_speedData  ( void );
-	void update_dens_0     ( void );
-	void update_vbar       ( void );
-	void update_MW         ( void );
-	void help              ( void )
-      { showHelp.show_help( "manual/us_buoyancy.html" ); };
+	double calc_stretch       ( void );
+	void draw_vline           ( double );
+	void mouse                ( const QwtDoublePoint& );
+	void sel_investigator     ( void );
+	void update_disk_db       ( bool );
+	void load                 ( void );
+	void details              ( void );
+	void new_triple           ( int  );
+	void plot_scan            ( double );
+	void write                ( void );
+        void save                 ( void );
+	void reset                ( void );
+        void calc_points          ( void );
+	void new_rpmval           ( int  );
+	void update_fields        ( void );
+        void update_speedData     ( void );
+	void update_dens_0        ( void );
+        void update_bufferDensity ( void );
+	void update_bottom        ( void );
+	void update_bottom_calc   ( void );
+	void update_vbar          ( void );
+	void update_MW            ( void );
+        void update_peakName      ( void );
+	void update_meniscus      ( void );
+	void help                 ( void )
+        { showHelp.show_help( "manual/us_buoyancy.html" ); };
 };
 #endif
