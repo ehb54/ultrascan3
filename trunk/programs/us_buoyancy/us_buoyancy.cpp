@@ -401,6 +401,9 @@ void US_Buoyancy::load( void )
    current_triple = 0;
 
    le_info->setText( runID + ": " + allData[0].description );
+   tmp_dpoint.description = allData[0].description;
+   tmp_dpoint.dataset = runID;
+
 
    data     = allData[ 0 ];
    dataType = QString( QChar( data.type[ 0 ] ) )
@@ -775,16 +778,58 @@ void US_Buoyancy::draw_vline( double radius )
 
 void US_Buoyancy::save( void )
 {
+   tmp_dpoint.name = le_peakName->text();
+//   tmp_dpoint.description = ;
+//   tmp_dpoint.dataset = "";
+   tmp_dpoint.triple = cb_triple->currentText();
+   tmp_dpoint.stretch = current_stretch;
+   tmp_dpoint.centerpiece = simparams[current_triple].bottom_position;
+   tmp_dpoint.peakPosition = le_peakPosition->text().toDouble();
+   tmp_dpoint.peakDensity = le_peakDensity->text().toDouble();
+   tmp_dpoint.peakVbar = le_peakVbar->text().toDouble();
+//   tmp_dpoint.temperature = 0.0;
+   tmp_dpoint.bufferDensity = le_buffer_density->text().toDouble();
+   tmp_dpoint.meniscus = le_meniscus->text().toDouble();
+   tmp_dpoint.bottom = le_bottom_calc->text().toDouble();
+   tmp_dpoint.speed = cb_rpms->currentText().toDouble();
+   tmp_dpoint.gradientMW = le_MW->text().toDouble();
+   tmp_dpoint.gradientVbar = le_vbar->text().toDouble();
+   tmp_dpoint.gradientC0 = le_dens_0->text().toDouble();
    dpoint.append( tmp_dpoint );
 }
 
 void US_Buoyancy::write( void )
 {
-   QTextEdit* te = new QTextEdit( 0 ); 
+   QString str, str2;
+   te = new US_Editor( US_Editor::LOAD, false, "results/*.rpt*", 0, 0 );
+   te->e->setFontFamily("Arial");
+   te->e->setFontPointSize( 13 );
+   te->e->append("UltraScan Buoyant Density Equilibrium Analysis Report:\n");
+   te->e->setFontPointSize( 11 );
    for (int i=0; i<dpoint.size(); i++)
    {
-      te->append("Report:");
+      te->e->append("Peak " + str.setNum( i+1 ) + " (" + dpoint[i].name +
+      " from experiment \"" + dpoint[i].dataset + "\"):" );
+      te->e->append( "Sample location:\t" + dpoint[i].triple );
+      te->e->append( "Sample description:\t" + dpoint[i].description );
+      te->e->append( "Rotor speed:\t" + str.setNum( dpoint[i].speed ) + " rpm, (Rotor stretch: "
+      + str2.setNum( dpoint[i].stretch) + " cm)" );
+      te->e->append( "Peak position:\t" + str.setNum( dpoint[i].peakPosition ) + " cm");
+      te->e->append( "Peak density:\t" + str.setNum( dpoint[i].peakDensity ) + " g/ml");
+      te->e->append( "Peak vbar:\t\t" + str.setNum( dpoint[i].peakVbar ) + " ml/g");
+      te->e->append( "Buffer density:\t" + str.setNum( dpoint[i].bufferDensity ) + " g/ml");
+      te->e->append( "Meniscus position:\t" + str.setNum( dpoint[i].meniscus ) + " cm");
+      te->e->append( "Bottom of cell:\t" + str.setNum( dpoint[i].bottom ) +
+      " cm (Centerpiece bottom at rest: " + str2.setNum( dpoint[i].centerpiece ) + " cm)" );
+      te->e->append( "Temperature:\t" + str.setNum( dpoint[i].temperature ) + " °C");
+      te->e->append( "Gradient-forming\nmaterial details:");
+      te->e->append( "Molecular weight:\t" + str.setNum( dpoint[i].gradientMW ) + " g/mol" );
+      te->e->append( "Loading density:\t" + str.setNum( dpoint[i].gradientC0 ) + " g/mol" );
+      te->e->append( "vbar:\t\t" + str.setNum( dpoint[i].gradientVbar ) + " ml/g" );
+      te->e->append("\n");
    }
+   te->setMinimumHeight( 400 );
+   te->setMinimumWidth( 600 );
    te->show();
 }
 

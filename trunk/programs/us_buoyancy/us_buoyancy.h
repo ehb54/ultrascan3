@@ -11,12 +11,13 @@
 #include "us_plot.h"
 #include "us_dataIO.h"
 #include "us_simparms.h"
+#include "us_editor.h"
 
 struct DataPoint
 {
-   QString name, description, dataset;
-   double peakPosition, peakDensity, peakVbar, temperature, bufferDensity;
-   double meniscus, bottom, speed, gradientMW, gradientC0, gradientVbar;
+   QString name, description, dataset, triple;
+   double peakPosition, peakDensity, peakVbar, temperature, bufferDensity, centerpiece;
+   double meniscus, bottom, speed, gradientMW, gradientC0, gradientVbar, stretch;
 };
 
 
@@ -58,6 +59,8 @@ class US_Buoyancy : public US_Widgets
       QList< int >       sd_knts;    // speed data counts, ea. triple
 
       US_Help            showHelp;
+      US_Editor*         te;
+      
       QVector <US_SimulationParameters> simparams;
 
       QString            workingDir;
