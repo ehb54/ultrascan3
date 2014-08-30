@@ -114,6 +114,18 @@ class US_UTIL_EXTERN US_Util
       //! returns        Boolean flag if this is i'th time.
       static bool ithTime( int = 10000 );
 
+      //! \brief Return a flag if an XML attribute string implies true/false.
+      //!
+      //! \param xmlattr XML attribute string ("T", "F", "1", "0").
+      //! returns        Boolean flag if the implied boolean is true or false.
+      static bool bool_flag( const QString );
+
+      //! \brief Return an XML attribute string for true or false.
+      //!
+      //! \param boolval Boolean value to represent as an XML attribute string.
+      //! returns        XML attribute string representation ("0" or "1").
+      static QString bool_string( const bool );
+
    private:
       static unsigned char hex2int( unsigned char c );
 };

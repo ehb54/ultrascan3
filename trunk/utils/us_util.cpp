@@ -216,3 +216,15 @@ bool US_Util::ithTime( int timeinc )
    return ( rannum == 1 );
 }
 
+// Return a flag if an XML attribute string represents true or false.
+bool US_Util::bool_flag( const QString xmlattr )
+{
+   return ( !xmlattr.isEmpty()  &&  ( xmlattr == "1"  ||  xmlattr == "T" ) );
+}
+
+// Return an XML attribute string to represent true or false.
+QString US_Util::bool_string( const bool boolval )
+{
+   return QString( boolval ? "1" : "0" );
+}
+
