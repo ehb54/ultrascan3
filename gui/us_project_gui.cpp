@@ -514,8 +514,8 @@ void US_ProjectGui::saveDescription( const QString& )
 {
    project.projectDesc = generalTab->le_projectDesc->text();
 
-   // Find the description in the lw
-   if ( generalTab->lw_projects->currentItem() > 0 ) // Make sure an item is selected first
+   // Find the description in the lw; first making sure an item is selected
+   if ( generalTab->lw_projects->currentRow() > 0 )
    {
       QListWidgetItem* item = generalTab->lw_projects->currentItem();
       item->setText( project.projectDesc );

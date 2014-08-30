@@ -2892,10 +2892,12 @@ void US_ConvertGui::saveUS3( void )
    int nspeeds  = countSpeeds( speeds, &notrips );
    int nitrips  = allData.count();
    int kotrips  = nitrips * nspeeds;
+   bool is_buoy = ExpData.expType.contains( "buoyancy", Qt::CaseInsensitive );
+DbgLv(1) << "SV: ExpData.expType" << ExpData.expType << "is_buoy" << is_buoy;
 DbgLv(1) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
 DbgLv(1) << "SV:  speeds" << speeds;
 
-   if ( nspeeds < 2  ||  notrips != kotrips )
+   if ( nspeeds < 2  ||  notrips != kotrips  ||  is_buoy )
    {  // For single-speed data, save current triples
       if ( disk_controls->db() )
          saveUS3DB();          // Save AUCs to disk then DB
@@ -2919,6 +2921,7 @@ DbgLv(1) << "SV:  speeds" << speeds;
       QVector< US_DataIO::RawData > oriData = allData;  // Save original data
       QVector< double > oriRIPro = ExpData.RIProfile;   // Save original RI Pro
       int     nripro    = ExpData.RIProfile.count();
+if(nripro>(-2)) return;
       uchar uuid[ 16 ];
 //      saveStatus        = NOT_SAVED;
 
