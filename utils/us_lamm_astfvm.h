@@ -113,7 +113,10 @@ class US_UTIL_EXTERN US_LammAstfvm : public QObject
             double  t1;       // 2nd time intervals in use.
             double* Cs0;      // salt concentration for the 1st time interval
             double* Cs1;      // salt concentration for the 2nd time interval
-            int     dbg_level;       // debug level
+            int     dbg_level;          // debug level
+            QVector< double > xsVec;    // Vector for xs
+            QVector< double > Cs0Vec;   // Vector for Cs0
+            QVector< double > Cs1Vec;   // Vector for Cs1
       };
 
       //! \brief Create Lamm equations AST Finite Volume Method solver

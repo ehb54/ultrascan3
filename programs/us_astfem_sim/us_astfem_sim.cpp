@@ -43,7 +43,9 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 
    stopFlag            = false;
    movieFlag           = false;
+   save_movie          = false;
    time_correctionFlag = false;
+   imagedir            = US_Settings::tmpDir() + "/movies";
 
    astfem_rsa          = NULL;
    astfvm              = NULL;
@@ -435,7 +437,8 @@ void US_Astfem_Sim::start_simulation( void )
          w2t_sum        = current_time * w2t;
       double w2t_inc = increment * w2t;
 //      current_time  += ( delay - increment );
-DbgLv(2) << "SIM curtime dur incr" << current_time << duration << increment;
+DbgLv(2) << "SIM curtime dur incr" << current_time << duration << increment
+ << "w2t w2tsum" << w2t << w2t_sum;
 
       for ( int jj = 0; jj < sp->scans; jj++ )
       {
@@ -447,7 +450,8 @@ DbgLv(2) << "SIM curtime dur incr" << current_time << duration << increment;
          current_time += increment;
 
          scan_number++;
-DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
+DbgLv(2) << "SIM   scan time omega2t" << scan_number << scan->seconds
+ << scan->omega2t;
       }
 
       int j1           = scan_number - sp->scans;
@@ -496,6 +500,7 @@ DbgLv(2) << "SIM   scan time" << scan_number << scan->seconds;
       astfem_rsa->set_movie_flag( ck_movie->isChecked() );
  
       astfem_rsa->setTimeInterpolation( false ); 
+astfem_rsa->setTimeInterpolation( true ); 
       astfem_rsa->setTimeCorrection( time_correctionFlag );
       astfem_rsa->setStopFlag( stopFlag );
    
@@ -823,7 +828,8 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
 
    for ( int ii = 0; ii < total_scans; ii++ )
    {  // Accumulate the maximum computed OD value
-      maxc = qMax( maxc, sim_data.value( ii, kk ) );
+      for ( int kk = 0; kk < old_points; kk++ )
+         maxc = qMax( maxc, sim_data.value( ii, kk ) );
    }
 
    // Compute a data threshold that is scan 1's plateau reading times 3
@@ -862,6 +868,7 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
    }
 
    double dthresh  = s1plat * 3.0;
+DbgLv(1) << "Sim:SV: maxc s1plat dthresh" << maxc << s1plat << dthresh;
 
    // If the overall maximum reading exceeds the threshold,
    //  limit OD values in all scans to the threshold
@@ -902,6 +909,12 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
                 "The pre-threshold-limit maximum OD\n"
                 "value was %4 ." )
             .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
+   }
+
+   else
+   {  // If scan 1 plateau is greater that half max, limit it
+      s1plat          = qMin( s1plat, ( maxc * 0.5 ) );
+DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
    }
 
    //US_ClipData* cd = new US_ClipData( maxc, b, m, total_conc );

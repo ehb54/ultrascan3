@@ -439,18 +439,15 @@ US_LammAstfvm::SaltData::SaltData( US_Model                amodel,
                                    US_SimulationParameters asparms,
                                    US_DataIO::RawData*     asim_data )
 {
-   int j;
-
    dbg_level  = US_Settings::us_debug();
    model      = amodel;
    simparms   = asparms;
    sa_data    = *asim_data;
-DbgLv(1) << "SaltD: sa_data avg.temp." << sa_data.average_temperature();
-DbgLv(1) << "SaltD: asim_data avg.temp." << asim_data->average_temperature();
+DbgLv(2) << "SaltD: sa_data avg.temp." << sa_data.average_temperature();
+DbgLv(2) << "SaltD: asim_data avg.temp." << asim_data->average_temperature();
 
-   Nt         = sa_data.scanData.size();
-//   Nx         = sa_data.x.size();
-   Nx         = sa_data.xvalues.size();
+   Nt         = sa_data.scanCount();
+   Nx         = sa_data.pointCount();
 
    model.components.resize( 1 );
    model.components[ 0 ] = amodel.components[ amodel.coSedSolute ];
@@ -469,7 +466,8 @@ DbgLv(1) << "SaltD: asim_data avg.temp." << asim_data->average_temperature();
    simparms.radial_resolution =
       ( sa_data.radius( Nx - 1 ) - sa_data.radius( 0 ) ) / (double)( Nx - 1 );
    simparms.firstScanIsConcentration = false;
-
+DbgLv(2) << "SaltD: Nx" << Nx << "r0 rn ri" << sa_data.radius( 0 )
+ << sa_data.radius( Nx - 1 ) << simparms.radial_resolution;
 
    US_Astfem_RSA* astfem = new US_Astfem_RSA( model, simparms );
 
@@ -477,18 +475,18 @@ DbgLv(1) << "SaltD: asim_data avg.temp." << asim_data->average_temperature();
    astfem->setTimeInterpolation( false );
    astfem->set_debug_flag( dbg_level );
 
-   for ( int i = 0; i < Nt; i++ )
-      for ( j = 0; j < Nx; j++ )
-         sa_data.setValue( i, j, 0.0 );
+   for ( int ii = 0; ii < Nt; ii++ )
+      for ( int jj = 0; jj < Nx; jj++ )
+         sa_data.setValue( ii, jj, 0.0 );
 
-DbgLv(1) << "SaltD: model comps" << model.components.size();
-DbgLv(1) << "SaltD: amodel comps" << amodel.components.size();
-DbgLv(1) << "SaltD: comp0 s d s_conc" << model.components[0].s
+DbgLv(2) << "SaltD: model comps" << model.components.size();
+DbgLv(2) << "SaltD: amodel comps" << amodel.components.size();
+DbgLv(2) << "SaltD: comp0 s d s_conc" << model.components[0].s
  << model.components[0].D << model.components[0].signal_concentration;
-DbgLv(1) << "SaltD:fem: m b  s D  rpm" << simparms.meniscus << simparms.bottom
+DbgLv(2) << "SaltD:fem: m b  s D  rpm" << simparms.meniscus << simparms.bottom
    << model.components[0].s << model.components[0].D
    << simparms.speed_step[0].rotorspeed;
-DbgLv(1) << "SaltD: (0)Nt Nx" << Nt << Nx << "temperature" << sa_data.scanData[0].temperature;
+DbgLv(2) << "SaltD: (0)Nt Nx" << Nt << Nx << "temperature" << sa_data.scanData[0].temperature;
 if(dbg_level>0) {
  qDebug() << "SaltD: model";
  model.debug();
@@ -497,20 +495,76 @@ if(dbg_level>0) {
 }
 
    astfem->set_simout_flag( true );         // set flag to output raw simulation
+DbgLv(2) << "SaltD: (2)Nx" << Nx << "r0 r1 rm rn" << sa_data.radius(0)
+ << sa_data.radius(1) << sa_data.radius(Nx-2) << sa_data.radius(Nx-1);
 
    astfem->calculate( sa_data );            // solve equations to create data
 
-   Nt         = sa_data.scanData.size();
-//   Nx         = sa_data.x.size();
-   Nx         = sa_data.xvalues.size();
+   Nt         = sa_data.scanCount();
+   Nx         = sa_data.pointCount();
 
-DbgLv(1) << "SaltD: Nt Nx" << Nt << Nx << "temp" << sa_data.scanData[0].temperature;
-DbgLv(1) << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
+DbgLv(2) << "SaltD: (3)Nx" << Nx << "r0 r1 rm rn" << sa_data.radius(0)
+ << sa_data.radius(1) << sa_data.radius(Nx-2) << sa_data.radius(Nx-1);
+DbgLv(2) << "SaltD: Nt Nx" << Nt << Nx << "temp" << sa_data.scanData[0].temperature;
+DbgLv(2) << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
  << sa_data.scanData[0].omega2t;
+   // Limit salt amplitudes to reasonable values
+   const double maxsalt = 1e100;
+   const double minsalt = -9e99;
+   const double minsala = 1e-100;
+   const double minsaln = -1e-100;
+   int nchg   = 0;
+   for ( int ii = 0; ii < Nt; ii++ )
+   {
+      for ( int jj = 0; jj < Nx; jj++ )
+      {
+         double saltv  = sa_data.value( ii, jj );
+         double salta  = qAbs( saltv );
+if(ii<2 && (jj+3)>Nx)
+DbgLv(2) << "SaltD:  ii jj" << ii << jj << "saltv salta" << saltv << salta;
 
-   xs         = new double [ Nx ];
-   Cs0        = new double [ Nx ];
-   Cs1        = new double [ Nx ];
+         if ( saltv != saltv )
+         {  // Nan!!!
+            nchg++;
+            if ( jj > 0 )
+            {
+               saltv         = sa_data.value( ii, jj - 1 );
+            }
+            else
+            {
+               saltv         = saltv > 0 ? maxsalt : minsalt;
+            }
+            sa_data.setValue( ii, jj, saltv );
+DbgLv(2) << "SaltD:  salt *NaN* ii jj adj-saltv" << ii << jj << saltv;
+         }
+
+         else if ( salta > maxsalt  ||  saltv < minsalt )
+         {  // Amplitude too large
+            nchg++;
+            salta         = qMin( maxsalt, qMax( minsalt, salta ) );
+            saltv         = saltv > 0 ? salta : -salta;
+            sa_data.setValue( ii, jj, saltv );
+         }
+
+         else if ( salta < minsala )
+         {  // Amplitude too small
+            nchg++;
+            saltv         = saltv > 0 ? minsala : minsaln;
+            sa_data.setValue( ii, jj, saltv );
+         }
+      }
+   }
+DbgLv(2) << "SaltD:  salt ampl limit changes" << nchg;
+
+   //xs         = new double [ Nx ];
+   //Cs0        = new double [ Nx ];
+   //Cs1        = new double [ Nx ];
+   xsVec .fill( 0.0, Nx );
+   Cs0Vec.fill( 0.0, Nx );
+   Cs1Vec.fill( 0.0, Nx );
+   xs         = xsVec .data();
+   Cs0        = Cs0Vec.data();
+   Cs1        = Cs1Vec.data();
 
    if ( dbg_level > 2 )
    { // save a copy of the salt data set so that it may be plotted for QC
@@ -524,17 +578,22 @@ DbgLv(1) << "SaltD: sa sc0 sec omg" << sa_data.scanData[0].seconds
 
    delete astfem;                           // astfem solver no longer needed
 
-   for ( j = 0; j < Nx; j++ )
+   for ( int jj = 0; jj < Nx; jj++ )
    {  // set salt radius array
-      xs[ j ]    = sa_data.radius( j );
+      xs[ jj ]     = sa_data.radius( jj );
    }
+DbgLv(2) << "SaltD:  Nx" << Nx << "xs sme" << xs[0] << xs[1] << xs[2]
+ << xs[Nx/2-1] << xs[Nx/2] << xs[Nx-2+1] << xs[Nx-3] << xs[Nx-2] << xs[Nx-1];
 };
 
 US_LammAstfvm::SaltData::~SaltData()
 {
-   delete [] xs;
-   delete [] Cs0;
-   delete [] Cs1;
+   //delete [] xs;
+   //delete [] Cs0;
+   //delete [] Cs1;
+   xsVec .clear();
+   Cs0Vec.clear();
+   Cs1Vec.clear();
 };
 
 void US_LammAstfvm::SaltData::initSalt()
@@ -542,7 +601,7 @@ void US_LammAstfvm::SaltData::initSalt()
    t0         = sa_data.scanData[ 0 ].seconds; // times of 1st 2 salt scans
    t1         = sa_data.scanData[ 1 ].seconds;
    scn        = 2;                             // index to next scan to use
-   Nt         = sa_data.scanData.size() - 2;   // scan count less two used here
+   Nt         = sa_data.scanCount() - 2;       // scan count less two used here
         
    for ( int j = 0; j < Nx; j++ )
    {  // get 1st two salt arrays from 1st two salt scans
@@ -551,16 +610,18 @@ void US_LammAstfvm::SaltData::initSalt()
    }
 int k=Nx/2;
 int n=Nx-1;
-DbgLv(1) << "initSalt: t0 t1" << t0 << t1;
-DbgLv(1) << "initSalt:  xs Cs0 Cs1 j" << xs[0] << Cs0[0] << Cs1[0] << 0;
-DbgLv(1) << "initSalt:  xs Cs0 Cs1 j" << xs[k] << Cs0[k] << Cs1[k] << k;
-DbgLv(1) << "initSalt:  xs Cs0 Cs1 j" << xs[n] << Cs0[n] << Cs1[n] << n;
+DbgLv(2) << "initSalt: t0 t1" << t0 << t1;
+DbgLv(2) << "initSalt:  xs Cs0 Cs1 j" << xs[0] << Cs0[0] << Cs1[0] << 0;
+DbgLv(2) << "initSalt:  xs Cs0 Cs1 j" << xs[k] << Cs0[k] << Cs1[k] << k;
+DbgLv(2) << "initSalt:  xs Cs0 Cs1 j" << xs[n] << Cs0[n] << Cs1[n] << n;
 }
 
 void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
    double *Csalt )
 {
    double* tmp;
+DbgLv(2) << "SaltD:ntrp:  N t t1 Nt Nx" << N << t << t1 << Nt << Nx
+ << "Cs0N Cs1N" << Cs0[Nx-1] << Cs1[Nx-1];
 
    while ( ( t1 < t ) && ( Nt > 0 ) ) 
    {  // walk down salt scans until we are straddling desired time value
@@ -576,9 +637,9 @@ void US_LammAstfvm::SaltData::InterpolateCSalt( int N, double *x, double t,
 
       Nt --;             // Nt = time level left
       scn++;
-DbgLv(3) << "SaltD:     intrp 0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
+DbgLv(3) << "SaltD:ntrp:      0 t 1" << t0 << t << t1 << "  N s" << Nt << scn;
    }
-DbgLv(3) << "SaltD:  intrp t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
+DbgLv(2) << "SaltD:ntrp:   t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
 
    // interpolate between t0 and t1
    double et1 = ( t - t0 ) / ( t1 - t0 );
@@ -589,6 +650,7 @@ DbgLv(3) << "SaltD:  intrp t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
    // interpolate between xs[k-1] and xs[k]
    int k  = 1;
    int Lx = Nx - 1;
+int knan=0;
 
    for ( int j = 0; j < N; j++ )      // loop for all x[m]
    {
@@ -604,9 +666,21 @@ DbgLv(3) << "SaltD:  intrp t0 t t1" << t0 << t << t1 << "  Nt scn" << Nt << scn;
       // interpolate linearly in both time and radius
       Csalt[ j ] = et0 * ( xim * Cs0[ m ] + xik * Cs0[ k ] )
                 +  et1 * ( xim * Cs1[ m ] + xik * Cs1[ k ] );
+//*DEBUG
+double csj=Csalt[j];
+if(csj!=csj) {
+knan++;
+if(knan<20)
+DbgLv(2) << "SaltD:ntrp: j,k,xj,xsm,xsk" << j << k << xj << xs[m] << xs[k]
+ << "xim xik" << xim << xik << "Csaltj" << Csalt[j] << csj;
+}
+//*DEBUG
    }
 
-DbgLv(3) << "SaltD:    Csalt0 CsaltN" << Csalt[0] << Csalt[N-1];
+DbgLv(2) << "SaltD:ntrp:  scn" << scn << "N Nx" << N << Nx
+ << "Csalt0 CsaltM CsaltN" << Csalt[0] << Csalt[N/2] << Csalt[N-1];
+DbgLv(2) << "SaltD:ntrp:    Cs00 Cs0M Cs0N" << Cs0[0] << Cs0[Nx/2] << Cs0[Nx-1];
+DbgLv(2) << "SaltD:ntrp:    Cs10 Cs1M Cs1N" << Cs1[0] << Cs1[Nx/2] << Cs1[Nx-1];
 }
 
 
@@ -624,13 +698,13 @@ US_LammAstfvm::US_LammAstfvm( US_Model&                rmodel,
    double  speed   = simparams.speed_step[ 0 ].rotorspeed;
    double* coefs   = simparams.rotorcoeffs;
    double  stretch = coefs[ 0 ] * speed + coefs[ 1 ] * sq( speed );
-   param_m  = simparams.meniscus;
-   param_b  = simparams.bottom;
-   param_w2 = sq( speed * M_PI / 30.0 );
-DbgLv(1) << "LFvm: m b w2 strtch" << param_m  << param_b << param_w2 << stretch;
-   param_m -= stretch;
-   param_b += stretch;
-DbgLv(1) << "LFvm:  m b" << param_m  << param_b;
+   param_m         = simparams.meniscus;
+   param_b         = simparams.bottom;
+   param_w2        = sq( speed * M_PI / 30.0 );
+DbgLv(2) << "LFvm: m b w2 strtch" << param_m << param_b << param_w2 << stretch;
+   param_m        -= stretch;
+   param_b        += stretch;
+DbgLv(2) << "LFvm:  m b" << param_m << param_b;
 
    MeshSpeedFactor = 1;    // default mesh moving option
    MeshRefineOpt   = 1;    // default mesh refinement option
@@ -758,10 +832,10 @@ int US_LammAstfvm::solve_component( int compx )
       ntc        = (int)( solut_t / dt ) + 1;
    }
 
-DbgLv(1) << "LAsc:  CX=" << comp_x
+DbgLv(2) << "LAsc:  CX=" << comp_x
  << "  ntcc ntc nts ncs nicase" << ntcc << ntc << nts << ncs << NonIdealCaseNo;
-DbgLv(1) << "LAsc:    tot_t dt sol_t" << total_t << dt << solut_t;
-DbgLv(1) << "LAsc:     b m s w2" << param_b << param_m << param_s << param_w2;
+DbgLv(2) << "LAsc:    tot_t dt sol_t" << total_t << dt << solut_t;
+DbgLv(2) << "LAsc:     m b s w2" << param_m << param_b << param_s << param_w2;
 
    if ( NonIdealCaseNo == 2 )
    {  // co-sedimenting
@@ -769,6 +843,7 @@ DbgLv(1) << "LAsc:     b m s w2" << param_b << param_m << param_s << param_w2;
       {  // if this component is the salt, skip solving for it
          if ( comp_x == 0 )
          {
+DbgLv(2) << "NonIdeal2: new saltdata  comp_x" << comp_x;
             saltdata  = new SaltData( model, simparams, auc_data );
             vbar_salt = model.components[ 0 ].vbar20;
          }
@@ -797,7 +872,7 @@ DbgLv(1) << "LAsc:     b m s w2" << param_b << param_m << param_s << param_w2;
    {
       SetNonIdealCase_1( model.components[ comp_x ].sigma,
                          model.components[ comp_x ].delta );
-DbgLv(1) << "LAsc:   sigma delta" << model.components[comp_x].sigma
+DbgLv(2) << "LAsc:   sigma delta" << model.components[comp_x].sigma
  << model.components[comp_x].delta << "  comp_x" << comp_x;
    }
 
@@ -856,15 +931,26 @@ timer.start();
       u0[ kk ]   = ( u0[ kk - 1 ] + u0[ kk + 1 ] ) * 0.5;
       u1[ kk ]   = u0[ kk ];
    }
-DbgLv(1) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
+DbgLv(2) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
    << u0[N0u-3] << u0[N0u-2] << u0[N0u-1];
 
    for ( int jj = 0; jj < ncs; jj++ )
    {  // get output radius vector
       rads[ jj ] = af_data.radius[ jj ];
    }
-DbgLv(1) << "LAsc:  r0 rn ncs rsiz" << rads[0] << rads[ncs-1]
+DbgLv(2) << "LAsc:  r0 rn ncs rsiz" << rads[0] << rads[ncs-1]
    << ncs << af_data.radius.size() << rads.size();
+
+   const double u0max = 1e+100;
+   const double u0min = -u0max;
+
+   for ( int jj = 0; jj < N0u; jj++ )
+   {
+      u0[ jj ]    = qMin( u0max, qMax( u0min, u0[ jj ] ) );
+      u1[ jj ]    = qMin( u0max, qMax( u0min, u1[ jj ] ) );
+   }
+DbgLv(2) << "LAsc:   u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
+   << u0[N0u-3] << u0[N0u-2] << u0[N0u-1];
 
 #ifndef NO_DB
    int    ktinc = 5;                        // signal progress every 5th scan
@@ -872,7 +958,7 @@ DbgLv(1) << "LAsc:  r0 rn ncs rsiz" << rads[0] << rads[ncs-1]
       ktinc        = qMax( 2, ( ( nts + 5000 ) / 10000 ) );
    if ( nts < 100 )
       ktinc        = 1;
-DbgLv(1) << "LAsc:   nts ktinc" << nts << ktinc;
+DbgLv(2) << "LAsc:   nts ktinc" << nts << ktinc;
 #endif
    double ts;
    double u_ttl;
@@ -904,9 +990,9 @@ timer.restart();
       if ( dbg_level > 0  &&  ( ( jt / 10 ) * 10 ) == jt )
       {
          u_ttl = IntQs( x0, u0, 0, -1, N0-2, 1 );
-DbgLv(1) << "LAsc:    jt,kt,t0=" << jt << kt << t0 << " Nv=" << N0
+DbgLv(2) << "LAsc:    jt,kt,t0=" << jt << kt << t0 << " Nv=" << N0
    << "u_ttl=" << u_ttl;
-DbgLv(1) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
+DbgLv(2) << "LAsc:  u0 0,1,2...,N" << u0[0] << u0[1] << u0[2]
    << u0[N0u-3] << u0[N0u-2] << u0[N0u-1];
          tso << QString().sprintf( "%12.5e %d %12.5e\n", t0, N0, u_ttl );
          for ( int j=0; j<N0; j++ )
@@ -963,25 +1049,25 @@ ktime5+=timer.restart();
          double f0 = ( t1 - ts ) / ( t1 - t0 );       // fraction of conc0
          double f1 = ( ts - t0 ) / ( t1 - t0 );       // fraction of conc1
 
-DbgLv(1) << "LAsc: call qI  t0 ts t1" << t0 << ts << t1;
+DbgLv(2) << "LAsc: call qI  t0 ts t1" << t0 << ts << t1;
          // do quadratic interpolation to fill out concentrations at time t0
          quadInterpolate( x0, u0, N0, rads, conc0 );
 
          // do quadratic interpolation to fill out concentrations at time t1
          quadInterpolate( x1, u1, N1, rads, conc1 );
-DbgLv(1) << "LAsc:  x0[0] x0[H] x0[N]" << x0[0] << x0[N0/2] << x0[N0-1];
-DbgLv(1) << "LAsc:  x1[0] x1[H] x1[N]" << x1[0] << x1[N1/2] << x1[N1-1];
-DbgLv(1) << "LAsc:   r[0]  r[H]  r[N]" << rads[0] << rads[ncs/2] << rads[ncs-1];
-DbgLv(1) << "LAsc:  u0[0] u0[H] u0[N]" << u0[0] << u0[N0u/2] << u0[N1u-1];
-DbgLv(1) << "LAsc:  u1[0] u1[H] u1[N]" << u1[0] << u1[N1u/2] << u1[N1u-1];
-DbgLv(1) << "LAsc:  c0[0] c0[H] c0[N]"
+DbgLv(2) << "LAsc:  x0[0] x0[H] x0[N]" << x0[0] << x0[N0/2] << x0[N0-1];
+DbgLv(2) << "LAsc:  x1[0] x1[H] x1[N]" << x1[0] << x1[N1/2] << x1[N1-1];
+DbgLv(2) << "LAsc:   r[0]  r[H]  r[N]" << rads[0] << rads[ncs/2] << rads[ncs-1];
+DbgLv(2) << "LAsc:  u0[0] u0[H] u0[N]" << u0[0] << u0[N0u/2] << u0[N1u-1];
+DbgLv(2) << "LAsc:  u1[0] u1[H] u1[N]" << u1[0] << u1[N1u/2] << u1[N1u-1];
+DbgLv(2) << "LAsc:  c0[0] c0[H] c0[N]"
  << conc0[0] << conc0[ncs/2] << conc0[ncs-1];
-DbgLv(1) << "LAsc:  c1[0] c1[H] c1[N]"
+DbgLv(2) << "LAsc:  c1[0] c1[H] c1[N]"
  << conc1[0] << conc1[ncs/2] << conc1[ncs-1];
          double utt0 = IntQs( x0, u0, 0, -1, N0-2, 1 );
          double utt1 = IntQs( x1, u1, 0, -1, N1-2, 1 );
-DbgLv(1) << "LAsc:   utt0 utt1" << utt0 << utt1;
-DbgLv(1) << "LAsc:stopFlag" << stopFlag;
+DbgLv(2) << "LAsc:   utt0 utt1" << utt0 << utt1;
+DbgLv(2) << "LAsc:stopFlag" << stopFlag;
 
          double cmax = 0.0;
          double rmax = 0.0;
@@ -998,8 +1084,8 @@ DbgLv(1) << "LAsc:stopFlag" << stopFlag;
                rmax = af_data.radius[ jj ];
             }
          }
-DbgLv(1) << "LAsc: t=" << ts << "Cmax=" << cmax << " r=" << rmax;
-DbgLv(1) << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
+DbgLv(2) << "LAsc: t=" << ts << "Cmax=" << cmax << " r=" << rmax;
+DbgLv(2) << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
  << af_data.scan[kt].conc[ncs/2] << af_data.scan[kt].conc[ncs-1] << kt;
 
          istep++;  // bump progress step
@@ -1008,7 +1094,7 @@ DbgLv(1) << "LAsc:   co[0] co[H] co[N]  kt" << af_data.scan[kt].conc[0]
          if ( ( ( kt / ktinc ) * ktinc ) == kt  ||  ( kt + 1 ) == nts )
          {  // signal progress at every "ktinc'th" scan or final one
             emit calc_progress( istep );
-DbgLv(1) << "LAsc: istep" << istep;
+DbgLv(2) << "LAsc: istep" << istep;
             qApp->processEvents();
          }
 #endif
@@ -1090,7 +1176,7 @@ DbgLv(1) << "LAsc: istep" << istep;
    delete [] u1;
    delete msh;
 ktime6+=timer.elapsed();
-DbgLv(1) << "compx" << comp_x << "times 1-6"
+DbgLv(2) << "compx" << comp_x << "times 1-6"
  << ktime1 << ktime2 << ktime3 << ktime4 << ktime5 << ktime6;
    return 0;
 }
@@ -1101,9 +1187,9 @@ void US_LammAstfvm::set_buffer( US_Buffer buffer )
    compressib  = buffer.compressibility;
 
    buffer.compositeCoeffs( d_coeff, v_coeff );
-DbgLv(1) << "buff d_coeff" << d_coeff[0] << d_coeff[1] << d_coeff[2]
+DbgLv(2) << "buff d_coeff" << d_coeff[0] << d_coeff[1] << d_coeff[2]
    << d_coeff[3] << d_coeff[4] << d_coeff[5];
-DbgLv(1) << "buff v_coeff" << v_coeff[0] << v_coeff[1] << v_coeff[2]
+DbgLv(2) << "buff v_coeff" << v_coeff[0] << v_coeff[1] << v_coeff[2]
    << v_coeff[3] << v_coeff[4] << v_coeff[5];
 }
 
@@ -1117,10 +1203,12 @@ void US_LammAstfvm::SetNonIdealCase_2( )
 {
    if ( comp_x == 0 )
    {
+DbgLv(2) << "NonIdeal2: create saltdata";
       saltdata  = new SaltData( model, simparams, auc_data );
       vbar_salt = model.components[ 0 ].vbar20;
    }
 
+DbgLv(2) << "NonIdeal2: initSalt  comp_x" << comp_x;
    saltdata->initSalt();
 }
 
@@ -1248,7 +1336,11 @@ DbgLv(2) << "  xg0 0 1 M Nm N" << xg0[0] << xg0[1] << xg0[Ng/2]
    {
       int    cnt  = 1;
 
-      while ( xg0[ j ] < bl  ) { j++; cnt++; }
+      while ( xg0[ j ] < bl  &&  ( j + 1 ) < Ng )
+      {
+         j++;
+         cnt++;
+      }
 
       double br   = qMin( xg0[ j ], param_b );
 
@@ -1260,7 +1352,8 @@ DbgLv(2) << "  xg0 0 1 M Nm N" << xg0[0] << xg0[1] << xg0[Ng/2]
 
       bl = br;
    }
-DbgLv(2) << "   xg0 N" << xg0[Ng-1] << "Ng" << Ng;
+DbgLv(2) << "   xg0 0 1 M Nm N" << xg0[0] << xg0[1] << xg0[Ng/2]
+   << xg0[Ng-2] << xg0[Ng-1] << "Ng" << Ng;
 ktim2+=timer.restart();
 
    // calculate Flux(phi, t+dt) at all xg1
@@ -1476,7 +1569,8 @@ void US_LammAstfvm::AdjustSD( double t, int Nv, double *x, double *u,
    const double  Tempt  = 293.15;    // temperature in K
    const double  vbar_w = 0.72;
    const double  rho_w  = 0.998234;  //  density of water
-   int     j;
+   int     jj;
+   QVector< double > CsaltVec( Nv );
    double* Csalt;
    double  Cm     = 0.0;
    double  rho;
@@ -1493,18 +1587,18 @@ static int kst2=0;
    {
       case 0:      // ideal, s=s_0, D=D_0
 
-         for ( j = 0; j < Nv; j++ ) 
+         for ( jj = 0; jj < Nv; jj++ ) 
          {
-            s_adj[ j ] = param_s ;
-            D_adj[ j ] = param_D ;
+            s_adj[ jj ] = param_s ;
+            D_adj[ jj ] = param_D ;
          }
          break;
 
       case 1:      // concentration dependent
-         for ( j = 0; j < Nv; j++ ) 
+         for ( jj = 0; jj < Nv; jj++ ) 
          {
-            s_adj[ j ] = param_s / ( 1. + sigma * u[ j ] / x[ j ] );
-            D_adj[ j ] = param_D / ( 1. + delta * u[ j ] / x[ j ] );
+            s_adj[ jj ] = param_s / ( 1. + sigma * u[ jj ] / x[ jj ] );
+            D_adj[ jj ] = param_D / ( 1. + delta * u[ jj ] / x[ jj ] );
          }
          break;
 
@@ -1512,8 +1606,10 @@ static int kst2=0;
          //** salt-protein
 timer.start();
 
-         Csalt = new double [ Nv ];
+         CsaltVec.resize( Nv );
+         Csalt   = CsaltVec.data();
   
+DbgLv(2) << "NonIdeal2: ntrp Salt";
          saltdata->InterpolateCSalt( Nv, x, t, Csalt );    // Csalt at (x, t)
 kst1+=timer.restart();
          {
@@ -1523,6 +1619,9 @@ double rhoe=0.0;
 double vis0=0.0;
 double vism=0.0;
 double vise=0.0;
+double cms0=0.0;
+double cmsm=0.0;
+double cmse=0.0;
             double sA     = param_s * 1.00194 / ( 1.0 - vbar * rho_w );
             double dA     = param_D * Tempt * 1.00194 / 293.15;
             double Cmrt   = 0.0;
@@ -1530,7 +1629,7 @@ double vise=0.0;
             double Cmcu   = 0.0;
             double Cmqu   = 0.0;
            
-            for ( j = 0; j < Nv; j++ )
+            for ( jj = 0; jj < Nv; jj++ )
             {
                // The calculations below are a more efficient version of the
                //  following original computations:
@@ -1542,7 +1641,7 @@ double vise=0.0;
                //s_adj[j] =(1-vbar*rho)*1.00194/((1-vbar_w*rho_w)*visc)*param_s;
                //D_adj[j] =(Tempt*1.00194)/(293.15*visc) * param_D;
       
-               Cm         = Csalt[ j ];             // Salt concentration
+               Cm         = Csalt[ jj ];            // Salt concentration
                Cmrt       = sqrt( Cm );             //  and powers of it
                Cmsq       = Cm * Cm;
                Cmcu       = Cm * Cmsq;
@@ -1561,20 +1660,23 @@ double vise=0.0;
                             + Cmsq * v_coeff[ 3 ]
                             + Cmcu * v_coeff[ 4 ]
                             + Cmqu * v_coeff[ 5 ];
+               visc       = qAbs( visc );
 
-               s_adj[ j ] = sA * ( 1.0 - vbar * rho ) / visc;
+               s_adj[ jj ] = sA * ( 1.0 - vbar * rho ) / visc;
 
-               D_adj[ j ] = dA / visc;
+               D_adj[ jj ] = dA / visc;
+               //D_adj[ jj ] = qAbs( dA / visc );
 
-if(j==0){rho0=rho;vis0=visc;}
-if(j==Nv/2){rhom=rho;vism=visc;}
-if(j==Nv-1){rhoe=rho;vise=visc;}
+if(jj==0){rho0=rho;vis0=visc;cms0=Cm;}
+if(jj==Nv/2){rhom=rho;vism=visc;cmsm=Cm;}
+if(jj==Nv-1){rhoe=rho;vise=visc;cmse=Cm;}
             }
 DbgLv(2) << "AdjSD:   Csalt0 CsaltN Cm" << Csalt[0] << Csalt[Nv-1] << Cm;
 DbgLv(2) << "AdjSD:    sadj 0 m n" << s_adj[0] << s_adj[Nv/2] << s_adj[Nv-1];
 DbgLv(2) << "AdjSD:    Dadj 0 m n" << D_adj[0] << D_adj[Nv/2] << D_adj[Nv-1];
 DbgLv(2) << "AdjSD:     rho 0,m,e" << rho0 << rhom << rhoe;
 DbgLv(2) << "AdjSD:     visc 0,m,e" << vis0 << vism << vise;
+DbgLv(2) << "AdjSD:     Cm   0,m,e" << cms0 << cmsm << cmse;
 DbgLv(2) << "AdjSD:      vbar vbar_w rho_w" << vbar << vbar_w << rho_w;
 DbgLv(2) << "AdjSD:       cmrt cm^2 cm^3 cm^4" << Cmrt << Cmsq << Cmcu << Cmqu;
 DbgLv(2) << "AdjSD:        d_coeff[0] rho" << d_coeff[0] << rhoe;
@@ -1583,7 +1685,6 @@ DbgLv(2) << "AdjSD:        v_coeff[0] vis" << v_coeff[0] << vise;
 
 kst2+=timer.restart();
 DbgLv(3) << "AdjSD:  times 1 2" << kst1 << kst2;
-         delete [] Csalt;
          break;
 
       case 3:      // compressibility
@@ -1953,7 +2054,7 @@ void US_LammAstfvm::load_mfem_data( US_DataIO::RawData&      edata,
    fdata.radius       = edata.xvalues;
 int nn=fdata.radius.size() - 1;
 int mm=nn/2;
-DbgLv(1) << "LdDa:  n r0 rm rn" << nn << fdata.radius[0] << fdata.radius[mm] << fdata.radius[nn];
+DbgLv(2) << "LdDa:  n r0 rm rn" << nn << fdata.radius[0] << fdata.radius[mm] << fdata.radius[nn];
 #endif
 }
 
@@ -1987,13 +2088,13 @@ void US_LammAstfvm::setStopFlag( bool flag )
 {
    stopFlag  = flag;
    qApp->processEvents();
-DbgLv(1) << "setStopFlag" << stopFlag;
+DbgLv(2) << "setStopFlag" << stopFlag;
 }
 
 void US_LammAstfvm::setMovieFlag( bool flag )
 {
    movieFlag = flag;
    qApp->processEvents();
-DbgLv(1) << "setMovieFlag" << movieFlag;
+DbgLv(2) << "setMovieFlag" << movieFlag;
 }
 
