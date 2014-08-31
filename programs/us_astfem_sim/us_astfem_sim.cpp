@@ -638,8 +638,11 @@ void US_Astfem_Sim::finish( void )
 {
    total_conc = 0.0;
 
-   for ( int i = 0; i < system.components.size(); i++ )
-      total_conc += system.components[ i ].signal_concentration;
+   for ( int ii = 0; ii < system.components.size(); ii++ )
+   {
+      if ( ii != system.coSedSolute )
+         total_conc += system.components[ ii ].signal_concentration;
+   }
 
 //DbgLv(1) << "FIN: comp size" << system.components.size();
 //DbgLv(1) << "FIN:  total_conc" << total_conc;
@@ -824,7 +827,6 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
    double maxc        = 0.0;
    int    total_scans = sim_data.scanCount();
    int    old_points  = sim_data.pointCount();
-   int    kk          = old_points - 1;
 
    for ( int ii = 0; ii < total_scans; ii++ )
    {  // Accumulate the maximum computed OD value
@@ -867,8 +869,20 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
       s1plat         += ( conc * exp( oterm * sval ) );
    }
 
-   double dthresh  = s1plat * 3.0;
-DbgLv(1) << "Sim:SV: maxc s1plat dthresh" << maxc << s1plat << dthresh;
+   double dthresh  = maxc;
+DbgLv(1) << "Sim:SV: maxc" << maxc << "s1plat" << s1plat
+   << "dthresh" << dthresh << "total_conc" << total_conc;
+   double maxrad   = brad;
+   s1plat          = qMin( s1plat, ( dthresh * 0.5 ) );
+DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
+
+   US_ClipData* cd = new US_ClipData( dthresh, maxrad, mrad, total_conc );
+
+   if ( ! cd->exec() )
+   {
+      maxrad         = brad;
+      dthresh        = maxc;
+   }
 
    // If the overall maximum reading exceeds the threshold,
    //  limit OD values in all scans to the threshold
@@ -904,28 +918,21 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
       QMessageBox::information( this,
             tr( "OD Values Threshold Limited" ),
             tr( "%1 readings in %2 scans were reset\n"
-                "to a threshold value of %3 ,\n"
-                "3 times the scan 1 plateau value.\n"
+                "to a threshold value of %3 .\n"
                 "The pre-threshold-limit maximum OD\n"
                 "value was %4 ." )
             .arg( nchange ).arg( nmodscn ).arg( dthresh ).arg( maxc ) );
    }
 
-   else
-   {  // If scan 1 plateau is greater that half max, limit it
-      s1plat          = qMin( s1plat, ( maxc * 0.5 ) );
-DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
-   }
 
-   //US_ClipData* cd = new US_ClipData( maxc, b, m, total_conc );
-   //if ( ! cd->exec() ) return;
-   
+   points             = (int)( ( maxrad - mrad ) / grid_res ) + 31;
+
    progress->setMaximum( total_scans );
    progress->reset();
  
    QVector< double > tconc_v( points );
-   double* temp_conc   = tconc_v.data();
-   double  rad         = mrad - 30.0 * grid_res;
+   double* temp_conc  = tconc_v.data();
+   double  rad        = mrad - 30.0 * grid_res;
    sim_data.xvalues.resize( points );
    lb_progress->setText( "Writing..." );
    
