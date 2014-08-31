@@ -471,8 +471,7 @@ DbgLv(1) << "SP:cSS: scan" << (ii+1) << "rpm time omega2t"
       {  // RPM has changed, so need to create speed step for previous scans
          time2               = (*scans)[ ii - 1 ].seconds;
          w2t2                = (*scans)[ ii - 1 ].omega2t;
-//         step_secs           = time2 - time1 + delay_secs;
-         step_secs           = time2 - time1;
+         step_secs           = time2 - time1 + delay_secs;
          sp.duration_hours   = (int)( step_secs / 3600.0 );
          sp.duration_minutes = ( step_secs / 60.0 )
                                - ( (double)sp.duration_hours * 60.0 );
@@ -515,8 +514,7 @@ DbgLv(1) << "SP:cSS:       sp set avg sdev" << sp.set_speed << sp.avg_speed
    // Set final (only?) speed step
    time2               = (*scans)[ scanCount - 1 ].seconds;
    w2t2                = (*scans)[ scanCount - 1 ].omega2t;
-//   step_secs           = time2 - time1 + delay_secs;
-   step_secs           = time2 - time1;
+   step_secs           = time2 - time1 + delay_secs;
    sp.duration_hours   = (int)( step_secs / 3600.0 );
    sp.duration_minutes = ( step_secs / 60.0 )
                          - ( (double)sp.duration_hours * 60.0 );

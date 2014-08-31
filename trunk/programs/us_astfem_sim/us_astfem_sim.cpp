@@ -414,8 +414,7 @@ void US_Astfem_Sim::start_simulation( void )
    double w2t_sum      = 0.0;
    double delay        = simparams.speed_step[ 0 ].delay_hours * 3600.0
                        + simparams.speed_step[ 0 ].delay_minutes * 60.0;
-   double current_time = delay;
-//   double current_time = 0.0;
+   double current_time = 0.0;
    double duration;
    double increment    = 0.0;
    int    scan_number  = 0;
@@ -431,19 +430,18 @@ void US_Astfem_Sim::start_simulation( void )
 
       delay          = sp->delay_hours    * 3600. + sp->delay_minutes    * 60.;
       duration       = sp->duration_hours * 3600. + sp->duration_minutes * 60.;
-//      increment      = ( duration - delay ) / (double)( sp->scans - 1 );
-      increment      = duration / (double)( sp->scans - 1 );
+      increment      = ( duration - delay ) / (double)( sp->scans - 1 );
+
       if ( ii == 0 )
          w2t_sum        = current_time * w2t;
       double w2t_inc = increment * w2t;
-//      current_time  += ( delay - increment );
+      current_time  += delay;
 DbgLv(2) << "SIM curtime dur incr" << current_time << duration << increment
  << "w2t w2tsum" << w2t << w2t_sum;
 
       for ( int jj = 0; jj < sp->scans; jj++ )
       {
          US_DataIO::Scan* scan = &sim_data.scanData[ scan_number ];
-//         current_time += increment;
          scan->seconds = (double)qRound( current_time );
          scan->omega2t = w2t_sum;
          w2t_sum      += w2t_inc;
