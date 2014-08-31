@@ -273,6 +273,18 @@ DbgLv(2) << "RSA:PO: FSCAN TIME1" << fscan << time1 << "cc step" << cc << step
                //   twice the number of points
                af_params.dt         = 1.0;
                af_params.simpoints  = 2 * simparams.simpoints;
+DbgLv(2) << "RSA: AP during ACCELERATION";
+DbgLv(2) << "RSA: AP.rotorspeed" << af_params.first_speed;
+DbgLv(2) << "RSA: AP.simpoints" << af_params.simpoints;
+DbgLv(2) << "RSA: AP.pathlength" << af_params.pathlength;
+DbgLv(2) << "RSA: AP.time_steps" << af_params.time_steps;
+DbgLv(2) << "RSA: AP.first_speed" << af_params.first_speed;
+DbgLv(2) << "RSA: AP.omega_s" << af_params.omega_s;
+DbgLv(2) << "RSA: AP.current_meniscus" << af_params.current_meniscus;
+DbgLv(2) << "RSA: AP.current_bottom" << af_params.current_bottom;
+DbgLv(2) << "RSA: AP.start_om2t" << af_params.start_om2t;
+DbgLv(2) << "RSA:  scan0size" << npts;
+DbgLv(2) << "RSA:  af_c0size" << initial_npts;
                accel_time           = af_params.dt * af_params.time_steps;
                delay                = time1 - time0;
 
@@ -759,6 +771,7 @@ DbgLv(2) << "RSA:(5) nr5" << nr4 << "r sme"
          }  // End of for acceleration
 
          duration      = time2 - time0;
+         delay         = time1 - time0;
          //duration      = ( sp->duration_hours * 3600.
          //                + sp->duration_minutes * 60. );
 
@@ -1996,37 +2009,40 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
    Hstar.reserve( af_params.s.size() );
    Nf   .reserve( af_params.s.size() );
 
-   double m  = af_params.current_meniscus;
-   double b  = af_params.current_bottom;
-   int    Np = af_params.simpoints;
+   double meniscus = af_params.current_meniscus;
+   double bottom   = af_params.current_bottom;
+   int    Np       = af_params.simpoints;
 
    int    IndLayer = 0;         // number of layers for grids in steep region
    double uth      = 1.0 / Np;  // threshold of u for steep region
-   double bmsqd    = sq( b ) - sq( m );
-   double uth2     = uth * 2.0;
+   double bmsqdf   = ( sq( bottom ) - sq( meniscus ) ) / ( uth * 2.0 );
    double Npm1     = (double)( Np - 1 );
    double Npm2     = Npm1 - 1.0;
-   double Nprat    = Npm2 / Npm1;
-   double bmrat    = b / m;
-   double bmrlog   = log( bmrat );
+   double Npratio  = Npm2 / Npm1;
+   double bmratio  = bottom / meniscus;
+   double mbratio  = meniscus / bottom;
+   double bmrlog   = log( bmratio );
    double k2log    = log( 2.0   );
-   double bmNpow   = pow( bmrat, Nprat );
-   double bmdiff   = b - m * bmNpow;
+   double bmNpow   = pow( bmratio, Npratio );
+   double bmdiff   = bottom - meniscus * bmNpow;
    const double PIhalf   = M_PI / 2.0;
+DbgLv(2) << "RSA:  msg_pos: nu0" << nu[0] << "nu1" << nu[1] << "Np" << Np << "uth" << uth;
+DbgLv(2) << "RSA:  msg_pos:  m " << meniscus << " b " << bottom << " bmsqdf" << bmsqdf;
 
    for ( int i = 0; i < af_params.s.size(); i++ ) // Markers for steep regions
    {
-      double tmp_xc = b - ( 1.0 / ( nu[ i ] * b ) ) *
-         log( nu[ i ] * bmsqd ) / uth2;
+      double tmp_xc   = bottom - ( 1.0 / ( nu[ i ] * bottom ) )
+                                 * log( nu[ i ] * bmsqdf );
 
       // # of pts for i-th layer
-      int tmp_Nf = (int) ( PIhalf * ( b - tmp_xc )
-            * nu[ i ] * b / 2.0 + 0.5 ) + 1;
+      int tmp_Nf      = (int) ( PIhalf * ( bottom - tmp_xc )
+                        * nu[ i ] * bottom / 2.0 + 0.5 ) + 1;
 
       // Step required by Pac(i) < 1
-      tmp_Hstar = ( b - tmp_xc ) / tmp_Nf * PIhalf;
+      tmp_Hstar       = ( bottom - tmp_xc ) / tmp_Nf * PIhalf;
 
-      if ( ( tmp_xc > m ) && ( bmdiff > tmp_Hstar ) )
+DbgLv(2) << "RSA:  msg_pos: i " << i << "txc" << tmp_xc << "tNf" << tmp_Nf << "tHs" << tmp_Hstar;
+      if ( ( tmp_xc > meniscus ) && ( bmdiff > tmp_Hstar ) )
       {
          xc    .append( tmp_xc );
          Nf    .append( tmp_Nf );
@@ -2035,7 +2051,7 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
       }
    }
 
-   xc .append( b );
+   xc .append( bottom );
 
    int indp = 0;   // Index for a grid point
 
@@ -2060,7 +2076,7 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
 
                for ( int j = 0; j <= Mp - 1; j++ )
                {
-                  double xi = (double) j / (double) Mp;
+                  double xi    = (double) j / (double) Mp;
                   y .append( xci + alpha * xi + beta * sq( xi ) );
                   indp++;
                }
@@ -2073,7 +2089,7 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
             for ( int j = 0; j <= Nf[ i ] - 1; j++ )
             {
                indp++;
-               y .append( xci + ( b - xci ) *
+               y .append( xci + ( bottom - xci ) *
                     sin( j / ( Nf[ i ] - 1.0 ) * PIhalf ) );
 
                if ( y[ indp - 1 ] > xcip )   break;
@@ -2084,20 +2100,21 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
 
    if ( indp < 2 )
    {  // IndLayer==0  or  indp count less than 2
-      x .append( m );
+      x .append( meniscus );
 
       // Add one more point to Schuck's grids
       for ( int k = 1; k < Np - 1 ; k++ )
       { // Schuck's mesh
-         x .append( m * pow( bmrat, (double) k / Npm1 ) );
+         x .append( meniscus * pow( bmratio, (double) k / Npm1 ) );
       }
 
-      x .append( b );
+      x .append( bottom );
    }
 
    else
    {  // IndLayer>0  and  indp greater than 1
       int NfTotal = indp;
+DbgLv(2) << "RSA:  msg_pos: IndL>0  x sz" << x.size();
 
       // Reverse the order of y
       int jj = 0;
@@ -2116,17 +2133,17 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
       double Hf     = y[ NfTotal - 2 ] - y[ NfTotal - 1 ];
 
       // Number of pts in trans region
-      int Nm        = (int)( log( b / ( Npm1 * Hf ) * bmrlog ) / k2log ) + 1;
+      int Nm        = (int)( log( bottom / ( Npm1 * Hf ) * bmrlog ) / k2log ) + 1;
 
       double xa     = y[ NfTotal - 1 ] - Hf * ( pow( 2.0, (double)Nm ) - 1.0 );
 
-      int Js        = (int)( Npm1 * log( xa / m ) / bmrlog );
+      int Js        = (int)( Npm1 * log( xa / meniscus ) / bmrlog );
 
       // xa is  modified so that y[ NfTotal - Nm ] matches xa exactly
-      xa            = m * pow( bmrat, ( (double)Js / (double)Npm1 ) );
+      xa            = meniscus * pow( bmratio, ( (double)Js / (double)Npm1 ) );
 
       double tmp_xc = y[ NfTotal - 1 ];
-      double HL     = xa * ( 1.0 - m / b );
+      double HL     = xa * ( 1.0 - mbratio );
       double HR     = y[ NfTotal - 2 ] - y[ NfTotal - 1 ];
 
       int Mp        = (int)( ( tmp_xc - xa ) * 2.0 / ( HL + HR ) ) + 1;
@@ -2144,22 +2161,24 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
       }
 
       Nm      = Mp;
+DbgLv(2) << "RSA:  msg_pos: IndL>0  Js" << Js << "NfTotal" << NfTotal << "Nm" << Nm;
 
       // Regular region
-      x .append( m );
+      x .append( meniscus );
       yary    = y.data();
 
       for ( int j = 1; j <= Js; j++ )
-         x .append( m * pow( bmrat, ( (double)j / (double)Npm1 ) ) );
+         x .append( meniscus * pow( bmratio, ( (double)j / (double)Npm1 ) ) );
 
       for ( int j = NfTotal + Nm - 2; j >=0; j-- )
          x .append( yary[ j ] );
+DbgLv(2) << "RSA:  msg_pos: IndL>0  y sz" << y.size() << "Mp" << Mp << "Nm" << Nm << "x sz" << x.size();
    }
 
    xA      = x.data();
 int mm=x.size()/2;
 int ee=x.size()-1;
-DbgLv(2) << "RSA:mgs_pos: xA sme" << x[0] << x[1] << x[2]
+DbgLv(2) << "RSA:  mgs_pos: xA sme" << x[0] << x[1] << x[2]
  << x[mm-1] << x[mm] << x[mm+1] << x[mm+2] << x[ee-2] << x[ee-1] << x[ee];
 }
 
@@ -2187,11 +2206,11 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
    double b  = af_params.current_bottom;
    int    Np = af_params.simpoints;
 
-   double uth    = 1.0 / Np;   // Threshold of u for steep region
-   double nu0    = qAbs( nu[ 0 ] );
-   double bmrlog = log( b / m );
-   double mbrat  = m / b;
-   double Npm1   = (double)( Np - 1 );
+   double uth     = 1.0 / Np;   // Threshold of u for steep region
+   double nu0     = qAbs( nu[ 0 ] );
+   double bmrlog  = log( b / m );
+   double mbratio = m / b;
+   double Npm1    = (double)( Np - 1 );
 
    x .reserve( Np );
    yr.reserve( Np );
@@ -2221,8 +2240,8 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 
    yr .append( m );
 
-   if ( b * ( pow( mbrat, ( Np - 3.5 ) / Npm1 )
-            - pow( mbrat, ( Np - 2.5 ) / Npm1 ) ) < Hstar || Nf <= 2 )
+   if ( b * ( pow( mbratio, ( Np - 3.5 ) / Npm1 )
+            - pow( mbratio, ( Np - 2.5 ) / Npm1 ) ) < Hstar || Nf <= 2 )
    {
       double* yrA = yr.data();
 
