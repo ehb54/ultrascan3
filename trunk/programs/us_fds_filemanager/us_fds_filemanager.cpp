@@ -48,6 +48,7 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
    runInfo->addWidget( lb_info );
 
    le_info = us_lineedit( "", 1, true );
+   le_info->setReadOnly(true);
    runInfo->addWidget( le_info );
 
    top->addLayout( runInfo );
@@ -65,7 +66,9 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
    QPushButton* pb_load = us_pushbutton( tr( "Load Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    specs->addWidget( pb_load, s_row, 0, 1, 1 );
+
    le_directory = us_lineedit( "" );
+   le_directory->setReadOnly(true);
    specs->addWidget( le_directory, s_row++, 1, 1, 3 );
 
    QLabel* lbl_progress = us_label( tr( "Progress:" ), -1 );
@@ -87,15 +90,22 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
    cb_rpms = us_comboBox();
    specs->addWidget( cb_rpms,   s_row++, 2, 1, 2 );
 
-   lbl_gains = us_label( tr( "Gain Setting::" ), -1 );
+   lbl_gains = us_label( tr( "Gain Setting:" ), -1 );
    specs->addWidget( lbl_gains,   s_row,   0, 1, 2 );
 
    cb_gains = us_comboBox();
    specs->addWidget( cb_gains,   s_row++, 2, 1, 2 );
 
+   lbl_scans = us_label( tr( "Scans in active Selection:" ), -1 );
+   specs->addWidget( lbl_scans,   s_row,   0, 1, 2 );
+
+   le_scans = us_lineedit( "" );
+   le_scans->setReadOnly(true);
+   specs->addWidget( le_scans, s_row++, 2, 1, 2 );
+
    // Scans focus from:
    lbl_from = us_label( tr( "Scan Focus from:" ), 0 );
-   lbl_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   lbl_from->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    specs->addWidget( lbl_from,   s_row,   0, 1, 2 );
 
    ct_from = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
@@ -106,7 +116,7 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
 
    // Scan focus to
    lbl_to = us_label( tr( "Scan Focus to:" ), 0 );
-   lbl_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   lbl_to->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    specs->addWidget( lbl_to,   s_row,   0, 1, 2 );
 
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
@@ -116,28 +126,46 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
                      SLOT  ( focus_to     ( double ) ) );
 
    // Exclude and Include pushbuttons
-   pb_exclude = us_pushbutton( tr( "Exclude Scan(s)" ), false );
+   pb_exclude = us_pushbutton( tr( "Delete marked Scan(s)" ), false );
    specs->addWidget( pb_exclude,   s_row, 0, 1, 2 );
-   pb_include = us_pushbutton( tr( "Include All"     ), false );
-   specs->addWidget( pb_include,   s_row++, 2, 1, 2 );
-   pb_include ->setEnabled( false );
    connect( pb_exclude,     SIGNAL( clicked()          ),
                             SLOT(   exclude_scans()    ) );
-   connect( pb_include,     SIGNAL( clicked()  ),
-                            SLOT(   include_scans()  ) );
 
+   pb_delete_all = us_pushbutton( tr( "Delete all Scans" ), false );
+   specs->addWidget( pb_delete_all,   s_row++, 2, 1, 2 );
+   connect( pb_delete_all,  SIGNAL( clicked()          ),
+                            SLOT(   delete_all() ) );
+
+   pb_save_first = us_pushbutton( tr( "Save first Scan" ), false );
+   specs->addWidget( pb_save_first,   s_row, 0, 1, 2 );
+   pb_save_first ->setEnabled( false );
+   connect( pb_save_first,  SIGNAL( clicked()  ),
+                            SLOT( save_first() ) );
+
+   pb_save_last = us_pushbutton( tr( "Save last Scan" ), false );
+   specs->addWidget( pb_save_last,   s_row++, 2, 1, 2 );
+   pb_save_last ->setEnabled( false );
+   connect( pb_save_last,  SIGNAL( clicked()  ),
+                            SLOT( save_last() ) );
+
+   pb_save_first_and_last = us_pushbutton( tr( "Save first and last  Scan" ), false );
+   specs->addWidget( pb_save_first_and_last, s_row++, 0, 1, 4 );
+   pb_save_first_and_last ->setEnabled( false );
+   connect( pb_save_first_and_last,  SIGNAL( clicked()  ),
+                            SLOT( save_first_and_last() ) );
+
+   pb_undo = us_pushbutton( tr( "Undo last Delete" ), false );
+   specs->addWidget( pb_undo,   s_row, 0, 1, 2 );
+   pb_undo ->setEnabled( false );
+   connect( pb_undo, SIGNAL( clicked() ),
+                     SLOT( undo() ) );
+
+   pb_write = us_pushbutton( tr( "Write File Selection" ), false );
+   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
+   specs->addWidget( pb_write, s_row++, 2, 1, 2 );
 
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
-
-/*
-   QPushButton* pb_load = us_pushbutton( tr( "Load Data" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
-   specs->addWidget( pb_load, s_row, 0, 1, 2 );
-*/
-   pb_save = us_pushbutton( tr( "Save selected files" ), false );
-   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
-   specs->addWidget( pb_save, s_row++, 2, 1, 2 );
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
@@ -153,14 +181,12 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
 
    // Plot layout on right side of window
    plot = new US_Plot( data_plot,
-         tr( "Absorbance Data" ),
-         tr( "Radius (in cm)" ), tr( "Absorbance" ) );
+         tr( "Fluorescence Data" ),
+         tr( "Radius (in cm)" ), tr( "Fluorescence Intensity" ) );
 
    data_plot->setMinimumSize( 600, 400 );
-
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft  , true );
-
 
    left->addLayout( specs );
    left->addStretch();
@@ -201,10 +227,10 @@ void US_FDS_FileManager::load( void )
    if ( source_dir.right( 1 ) != "/" ) source_dir += "/";  // Ensure trailing "/"
    files = QDir( readDir ).entryList(
          QDir::Files | QDir::NoDotAndDotDot, QDir::Name );
-   qDebug() << "calling  parse_files()";
    parse_files();
 }
 
+// parse all selected files into scaninfo
 void US_FDS_FileManager::parse_files( void )
 {
    cb_triple->disconnect();
@@ -214,7 +240,6 @@ void US_FDS_FileManager::parse_files( void )
    QStringList tokens, triplelist;
    int i;
    triplelist.clear();
-   qDebug() << "starting to load " << files.size() << " files...";
    for ( i=0; i<files.size(); i++)
    {
       tmp_scaninfo.filename = files.at(i);
@@ -273,7 +298,6 @@ void US_FDS_FileManager::parse_files( void )
    cb_triple->addItems( triplelist );
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ),
                        SLOT  ( select_triple ( int ) ) );
-   qDebug() << "calling  select_triple(" << cb_triple->currentIndex() << ")";
    select_triple(cb_triple->currentIndex());
 }
 
@@ -298,7 +322,6 @@ void US_FDS_FileManager::select_triple( int index )
    cb_rpms->addItems(rpmlist);
    connect( cb_rpms, SIGNAL( currentIndexChanged( int ) ),
                        SLOT  ( select_rpm ( int ) ) );
-   qDebug() << "calling  select_rpm(" << cb_rpms->currentIndex() << ")";
    select_rpm(cb_rpms->currentIndex());
 }
 
@@ -331,116 +354,259 @@ void US_FDS_FileManager::select_rpm( int index )
 
 void US_FDS_FileManager::select_gain( int index )
 {
+   QString str, str1, str2, str3;
    current_gain = index;
+   ct_from->disconnect();
+   ct_to->disconnect();
+   to = 0;
+   from = 0;
+   ct_from->setValue(0.0);
+   ct_to  ->setValue(0.0);
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+   le_info->setText( "Loaded " + str.setNum(scaninfo.size()) + " scans containing "
+   + str1.setNum(cb_triple->count()) 
+   + " triples. The current triple (" + cb_triple->currentText() + ") contains " 
+   + str2.setNum(cb_rpms->count()) + " speed(s) and " 
+   + str3.setNum(cb_gains->count()) + " gain setting(s)." );
    plot_scans();
 }
 
 // Plot a single scan curve
 void US_FDS_FileManager::plot_scans( void )
 {
-   qDebug() << "entering plot_scans";
    QString str1;
-   plotindex.clear();
+   QList < QwtPlotCurve * > c;
+   c.clear();
+   scanindex.clear();
    data_plot->clear();
    for (int i=0; i<scaninfo.size(); i++)
    {
-      if (scaninfo[i].triple    == cb_triple->currentText()
-         && scaninfo[i].rpm     == cb_rpms->currentText().toInt()
-         && scaninfo[i].gainset == cb_gains->currentText()
+      if (  scaninfo[i].triple  == cb_triple->currentText()
+         && scaninfo[i].rpm     == cb_rpms  ->currentText().toInt()
+         && scaninfo[i].gainset == cb_gains ->currentText()
          && scaninfo[i].include )
       {
-         plotindex.append(i);
+         scanindex.append(i);
       }
    }
+   ct_from->setMaxValue( scanindex.size() );
+   ct_to->setMaxValue( scanindex.size() );
    int npts;
-   QList < QwtPlotCurve * > c;
    QwtPlotCurve *curve;
    c.clear();
-   for (int i=0; i<plotindex.size(); i++)
+   le_scans->setText( str1.setNum( scanindex.size() ) + " scans" );
+   for (int i=0; i<scanindex.size(); i++)
    {
-      npts = scaninfo[plotindex[i]].x.size();
+      npts = scaninfo[scanindex[i]].x.size();
       double x[npts], y[npts];
       for (int j=0; j<npts; j++)
       {
-         x[j] = scaninfo[plotindex[i]].x.at(j);
-         y[j] = scaninfo[plotindex[i]].y.at(j);
+         x[j] = scaninfo[scanindex[i]].x.at(j);
+         y[j] = scaninfo[scanindex[i]].y.at(j);
       }
       str1.setNum( i+1 );
-      qDebug() << "str1, i: " << str1 << i;
       curve = us_curve( data_plot, "Scan " + str1 );
       curve->setData( x, y, npts );
       c.append( curve );
-/*      if (i == current_scan - 1 )
-      { // set the temperature to the currently highlighted scan:
-         tmp_dpoint.temperature = s->temperature;
-         c->setPen( QPen( Qt::red ) );
+      if ( from == 0 && to == 0 )
+      { // all scans are yellow
+         curve->setPen( QPen( Qt::yellow ) );
       }
-*/
+      else if (i >= from-1 && i <= to-1 )
+      {
+         curve->setPen( QPen( Qt::red ) );
+      }
+      else
+      {
+         curve->setPen( QPen( Qt::yellow ) );
+      }
       data_plot->setAxisAutoScale( QwtPlot::yLeft );
       data_plot->setAxisAutoScale( QwtPlot::xBottom );
    }
-//   ct_selectScan->setMinValue( 1 );
-//   ct_selectScan->setMaxValue( maxscan );
    data_plot->replot();
+   if (c.size() > 1)
+   {
+      pb_delete_all         ->setEnabled ( true );
+      pb_save_first         ->setEnabled ( true );
+      pb_save_last          ->setEnabled ( true );
+      pb_save_first_and_last->setEnabled ( true );
+   }
+   else if (c.size() == 1)
+   {
+      pb_delete_all         ->setEnabled ( true  );
+      pb_save_first         ->setEnabled ( false );
+      pb_save_last          ->setEnabled ( false );
+      pb_save_first_and_last->setEnabled ( false );
+   }
+   else if (c.size() == 0)
+   {
+      pb_delete_all         ->setEnabled ( false );
+      pb_save_first         ->setEnabled ( false );
+      pb_save_last          ->setEnabled ( false );
+      pb_save_first_and_last->setEnabled ( false );
+   }
+   pb_write->setEnabled ( true );
 }
 
 // Reset parameters to their defaults
 void US_FDS_FileManager::reset( void )
 {
-   le_info     ->setText( "" );
-
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
+   data_plot->clear();
    data_plot->replot();
 
-   pb_save->setEnabled( false );
-   ct_from->disconnect();
    ct_from->setMinValue( 0 );
    ct_from->setMaxValue( 0 );
    ct_from->setValue   ( 0 );
+   ct_to  ->setMinValue( 0 );
+   ct_to  ->setMaxValue( 0 );
+   ct_to  ->setValue   ( 0 );
 
-   ct_to   ->disconnect();
-   ct_to   ->setMinValue( 0 );
-   ct_to   ->setMaxValue( 0 );
-   ct_to   ->setValue   ( 0 );
+   progress    ->setValue(0);
+   cb_triple   ->clear();
+   cb_rpms     ->clear();
+   cb_gains    ->clear();
+   scaninfo     .clear();
+   scanindex    .clear();
+   tmp_scanindex.clear();
 
+   pb_delete_all         ->setEnabled ( false );
+   pb_save_first         ->setEnabled ( false );
+   pb_save_last          ->setEnabled ( false );
+   pb_save_first_and_last->setEnabled ( false );
+   pb_write              ->setEnabled ( false );
+   pb_undo               ->setEnabled ( false );
 
-   scaninfo  .clear();
-   cb_triple->clear();
-   cb_rpms  ->clear();
-   cb_gains ->clear();
+   le_scans    ->setText( "" );
+   le_directory->setText( "" );
+   le_info     ->setText( "" );
 }
 
-void US_FDS_FileManager::include_scans( void )
+// undo the latest delete action
+void US_FDS_FileManager::undo( void )
 {
+   for (int i=0; i<tmp_scanindex.size(); i++)
+   {
+      scaninfo[tmp_scanindex[i]].include = true;
+   }
+   pb_undo->setEnabled( false );
+   tmp_scanindex.clear();
+   for (int i=0; i<scanindex.size(); i++)
+   {
+      tmp_scanindex.append( scanindex.at(i) );
+   }
+   plot_scans();
 }
 
+// activate the undo button once a delete action was performed
+void US_FDS_FileManager::activate_undo( void )
+{
+   pb_undo->setEnabled( true );
+   tmp_scanindex = scanindex;
+   plot_scans();
+}
+
+// delete all scans shown in the plot area
+void US_FDS_FileManager::delete_all( void )
+{
+   for (int i=0; i<scanindex.size(); i++)
+   {
+      scaninfo[scanindex[i]].include = false;
+   }
+   activate_undo();
+}
+
+// only save the first scan, delete all others shown (for initial meniscus)
+void US_FDS_FileManager::save_first( void )
+{
+   for (int i=1; i<scanindex.size(); i++)
+   {
+      scaninfo[scanindex[i]].include = false;
+   }
+   activate_undo();
+}
+
+// save the last scan only, delete all others shown on screen (last one is at equilibrium)
+void US_FDS_FileManager::save_last(void)
+{
+   for (int i=0; i<scanindex.size() - 1; i++)
+   {
+      scaninfo[scanindex[i]].include = false;
+   }
+   activate_undo();
+}
+
+// for first speed, the first scan is useful for meniscus, the last is at equilibrium
+void US_FDS_FileManager::save_first_and_last( void )
+{
+   for (int i=1; i<scanindex.size()-1; i++)
+   {
+      scaninfo[scanindex[i]].include = false;
+   }
+   activate_undo();
+}
+
+// exclude only the visually selected (highlighted) scans
 void US_FDS_FileManager::exclude_scans( void )
 {
+   for (int i=0; i<scanindex.size(); i++)
+   {
+      if ( from == 0 && to == 0 )
+      { // include all scans (should never happen)
+         scaninfo[scanindex[i]].include = true;
+      }
+      else if (i >= from-1 && i <= to-1 )
+      {
+         scaninfo[scanindex[i]].include = false;
+      }
+      else
+      {
+         scaninfo[scanindex[i]].include = true;
+      }
+   }
+
+   from = 0;
+   to   = 0;
+
+   ct_from->disconnect();
+   ct_from->setValue( 0.0 );
+   ct_to  ->disconnect();
+   ct_to  ->setValue( 0.0 );
+
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+   pb_exclude->setEnabled( false );
+   activate_undo();
 }
 
+// sets the scan focus for the start of the excluded scan range
 void US_FDS_FileManager::focus_from( double scan )
 {
-   int from = (int)scan;
-   int to   = (int)ct_to->value();
+   from = (int) scan;
+   to   = (int) ct_to->value();
 
    if ( from > to )
    {
       ct_to->disconnect();
       ct_to->setValue( scan );
       to = from;
-
       connect( ct_to, SIGNAL( valueChanged ( double ) ),
                       SLOT  ( focus_to     ( double ) ) );
    }
-
    focus( from, to );
 }
 
+// sets the scan focus for the end of the excluded scan range
 void US_FDS_FileManager::focus_to( double scan )
 {
-   int to   = (int)scan;
-   int from = (int)ct_from->value();
+   to   = (int) scan;
+   from = (int) ct_from->value();
 
    if ( from > to )
    {
@@ -451,30 +617,103 @@ void US_FDS_FileManager::focus_to( double scan )
       connect( ct_from, SIGNAL( valueChanged ( double ) ),
                         SLOT  ( focus_from   ( double ) ) );
    }
-
    focus( from, to );
 }
 
+// function for activating the exclude button
 void US_FDS_FileManager::focus( int from, int to )
 {
    if ( from == 0 && to == 0 )
    {
       pb_exclude->setEnabled( false );
-      pb_include->setEnabled( false );
    }
    else
    {
       pb_exclude->setEnabled( true );
-      pb_include->setEnabled( true );
    }
-
-   QList< int > focus;  // We don't care if -1 is in the list
-   for ( int i = from - 1; i <= to - 1; i++ ) focus << i;
-
-   //set_colors( focus );
-
+   plot_scans();
 }
 
-void US_FDS_FileManager::save( void )
+// write all remaining files to a new directory with successive filenames
+void US_FDS_FileManager::write( void )
 {
+   int i, j;
+   QFileDialog fd;
+   QString target_dir;
+   fd.setFileMode(QFileDialog::Directory);
+   target_dir = fd.getExistingDirectory( this,
+         tr( "Please select or create an output directory for the ordered fluorescence data (ANY EXISITNG DATA WILL BE DELETED!!):" ),
+         US_Settings::importDir(),
+         QFileDialog::DontResolveSymlinks);
+
+   target_dir.replace( "\\", "/" );
+
+   if ( target_dir.isEmpty() )      // If no directory chosen, return now
+   {
+      return;
+   }
+   else
+   {
+      le_info->setText( "Writing all files to " + target_dir);
+      QDir target(target_dir);
+      target.remove("*");
+   }
+   if ( target_dir.right( 1 ) != "/" ) target_dir += "/";  // Ensure trailing "/"
+   QStringList triples;
+   QString filename, str1, str2;
+   TripleIndex tmp_tripleCounts;
+   triples.clear();
+   tripleCounts.clear();
+   for ( i=0; i<scaninfo.size(); i++ )
+   {
+      if ( scaninfo[i].include )
+      { // filter out the triples that are not excluded
+         triples << scaninfo[i].triple;
+      }
+   }
+   triples.removeDuplicates(); // get a simple list
+   for ( i=0; i<triples.size(); i++ )
+   {
+      tmp_tripleCounts.name = triples.at(i);
+      tmp_tripleCounts.index = 0;
+      tripleCounts.append( tmp_tripleCounts );
+   }
+   progress->setValue(0);
+   QFile f;
+   for ( i=0; i<scaninfo.size(); i++)
+   {
+      if ( scaninfo[i].include )
+      {// increment filename and write to new location
+         j = 0;
+         while ( scaninfo[i].triple != tripleCounts[j].name ) j++;
+         tripleCounts[j].index ++;
+         if (tripleCounts[j].index < 10)
+         {
+            filename = target_dir + scaninfo.at(i).channel + "0000"
+            + str1.setNum(tripleCounts[j].index) + ".FI" + str2.setNum( scaninfo.at(i).cell );
+         }
+         else if (tripleCounts[j].index > 9 && tripleCounts[j].index < 100)
+         {
+            filename = target_dir + scaninfo.at(i).channel + "000"
+            + str1.setNum(tripleCounts[j].index) + ".FI" + str2.setNum( scaninfo.at(i).cell );
+         }
+         else if (tripleCounts[j].index > 99 && tripleCounts[j].index < 1000)
+         {
+            filename = target_dir + scaninfo.at(i).channel + "00"
+            + str1.setNum(tripleCounts[j].index) + ".FI" + str2.setNum( scaninfo.at(i).cell );
+         }
+         else if (tripleCounts[j].index > 999 && tripleCounts[j].index < 10000)
+         {
+            filename = target_dir + scaninfo.at(i).channel + "0"
+            + str1.setNum(tripleCounts[j].index) + ".FI" + str2.setNum( scaninfo.at(i).cell );
+         }
+         else if (tripleCounts[j].index > 9999 && tripleCounts[j].index < 100000)
+         {
+            filename = target_dir + scaninfo.at(i).channel
+            + str1.setNum(tripleCounts[j].index) + ".FI" + str2.setNum( scaninfo.at(i).cell );
+         }
+         f.copy( source_dir + scaninfo.at(i).filename, filename );
+         progress->setValue(100 * (i+1)/scaninfo.size());
+      }
+   }
 }
