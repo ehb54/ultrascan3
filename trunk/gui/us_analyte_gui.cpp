@@ -264,13 +264,13 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    grid1->setSpacing        ( 2 );
    grid1->setContentsMargins( 2, 2, 2, 2 );
    
-   QGridLayout* box1 = us_checkbox( tr( "Double Stranded" ), cb_stranded, true );
-   QGridLayout* box2 = us_checkbox( tr( "Complement Only" ), cb_mw_only );
+   QGridLayout* box1 = us_checkbox( tr( "Double Stranded" ), ck_stranded, true );
+   QGridLayout* box2 = us_checkbox( tr( "Complement Only" ), ck_mw_only );
    grid1->addLayout( box1, 0, 0 );
    grid1->addLayout( box2, 1, 0 );
-   connect( cb_stranded, SIGNAL( toggled        ( bool ) ), 
+   connect( ck_stranded, SIGNAL( toggled        ( bool ) ), 
                          SLOT  ( update_stranded( bool ) ) );
-   connect( cb_mw_only , SIGNAL( toggled        ( bool ) ), 
+   connect( ck_mw_only , SIGNAL( toggled        ( bool ) ), 
                          SLOT  ( update_mw_only ( bool ) ) );
    
    QVBoxLayout* stretch1 = new QVBoxLayout;
@@ -396,19 +396,23 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    carbs_info->setContentsMargins( 2, 2, 2, 2 );
 
    QLabel* lb_carbs_mw = us_label( tr( "MW <small>(Daltons)</small>:" ) );
-   carbs_info->addWidget( lb_carbs_mw, 0, 0 );
+   carbs_info->addWidget( lb_carbs_mw,   0, 0 );
 
    le_carbs_mw = us_lineedit( "" );
-   carbs_info->addWidget( le_carbs_mw, 0, 1, 1, 3 );
+   carbs_info->addWidget( le_carbs_mw,   0, 1 );
 
    QLabel* lb_carbs_vbar = us_label( 
          tr( "VBar<small>(cm<sup>3</sup>/g)</small>:" ) );
-   carbs_info->addWidget( lb_carbs_vbar, 1, 0 );
+   carbs_info->addWidget( lb_carbs_vbar, 0, 2 );
 
    le_carbs_vbar = us_lineedit( "" );
-   carbs_info->addWidget( le_carbs_vbar, 1, 1, 1, 3 );
+   carbs_info->addWidget( le_carbs_vbar, 0, 3 );
 
-   main->addWidget( carbs_widget, row, 0, 1, 3 ); 
+   QGridLayout* box7 = us_checkbox( tr( "Gradient-Forming" ),
+                                    ck_grad_form, false );
+   carbs_info->addLayout( box7,          1, 0, 1, 2 );
+
+   main->addWidget( carbs_widget, row, 0, 2, 3 ); 
    carbs_widget->setVisible( false );
 
    row += 4;
@@ -605,6 +609,8 @@ void US_AnalyteGui::populate( void )
 {
    le_description->setText( analyte.description );
    le_guid       ->setText( analyte.analyteGUID );
+qDebug() << "AnG: populate  desc" << analyte.description;
+qDebug() << "AnG: populate  type" << analyte.type;
 
    if ( analyte.type == US_Analyte::PROTEIN )
    {
@@ -652,8 +658,8 @@ void US_AnalyteGui::populate( void )
            : rb_dna->setChecked( true );
 
       inReset = true;
-      cb_stranded->setChecked( analyte.doubleStranded );
-      cb_mw_only ->setChecked( analyte.complement );
+      ck_stranded->setChecked( analyte.doubleStranded );
+      ck_mw_only ->setChecked( analyte.complement );
 
       ( analyte._3prime ) ? rb_3_hydroxyl ->setChecked( true )
                           : rb_3_phosphate->setChecked( true );
@@ -673,7 +679,9 @@ void US_AnalyteGui::populate( void )
 
    else if ( analyte.type == US_Analyte::CARBOHYDRATE )  
    {
-      rb_carb->setChecked( true );
+qDebug() << "AnG: populate  grad_form" << analyte.grad_form;
+      rb_carb     ->setChecked( true );
+      ck_grad_form->setChecked( analyte.grad_form );
    }
 }
 
@@ -827,6 +835,7 @@ void US_AnalyteGui::reset( void )
    le_protein_mw      ->clear();
    le_protein_vbar20  ->clear();
    le_protein_vbar    ->clear();
+   ck_grad_form       ->setChecked( false );
    
    if ( ! signal_wanted ) le_protein_temp->setText( "20.0" );
 
@@ -838,8 +847,8 @@ void US_AnalyteGui::reset( void )
    ct_magnesium       ->setValue( 0.0 );
    ct_calcium         ->setValue( 0.0 );
                       
-   cb_stranded        ->setChecked( true );
-   cb_mw_only         ->setChecked( false );
+   ck_stranded        ->setChecked( true );
+   ck_mw_only         ->setChecked( false );
                       
    rb_3_hydroxyl      ->setChecked( true );
    rb_5_hydroxyl      ->setChecked( true );
@@ -1003,14 +1012,14 @@ void US_AnalyteGui::update_sequence( QString seq )
 void US_AnalyteGui::update_stranded( bool checked )
 {
    if ( inReset ) return;
-   if ( checked ) cb_mw_only->setChecked( false );
+   if ( checked ) ck_mw_only->setChecked( false );
    update_nucleotide();
 }
 
 void US_AnalyteGui::update_mw_only( bool checked )
 {
    if ( inReset ) return;
-   if ( checked ) cb_stranded->setChecked( false );
+   if ( checked ) ck_stranded->setChecked( false );
    update_nucleotide();
 }
 
@@ -1033,8 +1042,8 @@ void US_AnalyteGui::update_nucleotide( void )
    parse_dna();
 
    bool isDNA             = rb_dna       ->isChecked();
-   analyte.doubleStranded = cb_stranded  ->isChecked();
-   analyte.complement     = cb_mw_only   ->isChecked();
+   analyte.doubleStranded = ck_stranded  ->isChecked();
+   analyte.complement     = ck_mw_only   ->isChecked();
    analyte._3prime        = rb_3_hydroxyl->isChecked();
    analyte._5prime        = rb_5_hydroxyl->isChecked();
 
@@ -1734,6 +1743,7 @@ void US_AnalyteGui::select_analyte( QListWidgetItem* /* item */ )
       return;
    }
 
+qDebug() << "AnG: select_analyte  desc" << analyte.description;
    populate();
    le_protein_vbar20->setText( QString::number( analyte.vbar20, 'f', 4 ) );
    le_nucle_vbar    ->setText( QString::number( analyte.vbar20, 'f', 4 ) );
@@ -1840,8 +1850,9 @@ void US_AnalyteGui::save( void )
 
    else if ( analyte.type == US_Analyte::CARBOHYDRATE )
    {
-      analyte.mw     = le_carbs_mw  ->text().toDouble();
-      analyte.vbar20 = le_carbs_vbar->text().toDouble();
+      analyte.mw        = le_carbs_mw  ->text().toDouble();
+      analyte.vbar20    = le_carbs_vbar->text().toDouble();
+      analyte.grad_form = ck_grad_form ->isChecked();
    }
 
    else

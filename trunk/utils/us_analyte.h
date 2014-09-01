@@ -27,6 +27,7 @@ class US_UTIL_EXTERN US_Analyte
       QString           analyteGUID;    //!< Global identifier of the analyte
       QString           sequence;       //!< Coded sequnce of analyte
       analyte_t         type;           //!< The type of analyte
+      bool              grad_form;      //!< Flag if gradient-forming
 
       // The following values are valid for DNA/RNA only
       bool              doubleStranded; //!< Single or double stranded analyte?

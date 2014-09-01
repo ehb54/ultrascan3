@@ -786,15 +786,8 @@ void US_BufferGui::update_buffer( void )
 buffer.compressibility = 0.0;
    buffer.manual          = ( cb_manual->isChecked() );
    int manx               = buffer.description.indexOf( "  [M]" );
-
-   if ( buffer.manual )
-      buffer.description     = manx > 0
-                             ? buffer.description
-                             : buffer.description + "  [M]";
-   else
-      buffer.description     = manx > 0
-                             ? buffer.description.left( manx ).simplified()
-                             : buffer.description;
+   if ( manx > 0 )
+      buffer.description     = buffer.description.left( manx ).simplified();
 
    // These are updated in other places
    //buffer.component
@@ -975,7 +968,7 @@ void US_BufferGui::save_db( void )
       return;
    }
 
-   buffer.manual          = ( cb_manual->isChecked() );
+   buffer.manual          = cb_manual->isChecked();
    QString private_buffer = ( cb_shared->isChecked() ) ? "0" : "1";
 
    int idBuf = buffer.saveToDB( &db, private_buffer );
@@ -1081,8 +1074,9 @@ void US_BufferGui::add_component( void )
 {
    // We are modifying the buffer, nothing should be selected in the DB list
    lw_buffer_db->clearSelection();
+   int              row     = lw_ingredients->currentRow();
    
-   if ( lw_ingredients->currentItem() < 0 )
+   if ( row < 0 )
    {
       QMessageBox::information( this, 
             tr( "Attention" ),
@@ -1097,7 +1091,6 @@ void US_BufferGui::add_component( void )
 
    QString          s;
    bool             newItem = true;
-   int              row     = lw_ingredients->currentRow();
    QListWidgetItem* item    = lw_ingredients->item( row );
    QString          index   = QString::number( item->type() );
 

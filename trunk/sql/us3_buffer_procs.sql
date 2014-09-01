@@ -131,6 +131,7 @@ CREATE PROCEDURE new_buffer ( p_personGUID      CHAR(36),
                               p_pH              FLOAT,
                               p_density         FLOAT,
                               p_viscosity       FLOAT,
+                              p_manual          TINYINT,
                               p_private         TINYINT,
                               p_ownerID         INT )
   MODIFIES SQL DATA
@@ -160,7 +161,8 @@ BEGIN
       compressibility = p_compressibility,
       pH              = p_pH,
       density         = p_density,
-      viscosity       = p_viscosity;
+      viscosity       = p_viscosity,
+      manual          = p_manual;
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
@@ -195,6 +197,7 @@ CREATE PROCEDURE update_buffer ( p_personGUID      CHAR(36),
                                  p_pH              FLOAT,
                                  p_density         FLOAT,
                                  p_viscosity       FLOAT,
+                                 p_manual          TINYINT,
                                  p_private         TINYINT )
   MODIFIES SQL DATA
 
@@ -214,7 +217,8 @@ BEGIN
       compressibility = p_compressibility,
       pH              = p_pH,
       density         = p_density,
-      viscosity       = p_viscosity
+      viscosity       = p_viscosity,
+      manual          = p_manual
     WHERE bufferID    = p_bufferID;
 
     IF ( not_found = 1 ) THEN
@@ -397,7 +401,8 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   bufferGUID, description, compressibility, pH, viscosity, density, personID, private
+      SELECT   bufferGUID, description, compressibility, pH, viscosity,
+               density, manual, personID, private
       FROM     buffer b, bufferPerson bp
       WHERE    b.bufferID = bp.bufferID
       AND      b.bufferID = p_bufferID;
@@ -525,7 +530,8 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   units, description, viscosity, density
+      SELECT   units, description, viscosity, density, c_range,
+               gradientForming
       FROM     bufferComponent
       WHERE    bufferComponentID = p_componentID;
 

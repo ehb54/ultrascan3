@@ -4,6 +4,7 @@
 #include "us_settings.h"
 #include "us_math2.h"
 #include "us_datafiles.h"
+#include "us_util.h"
 
 #define DEBUG_QUERY qDebug() << "Q" << q << "Err" << db->lastErrno() << db->lastError(); //!< Debug print showing DB query string and error returns
 
@@ -15,6 +16,7 @@ US_Analyte::US_Analyte()
    analyteGUID    .clear();
    sequence       .clear();
    type           = PROTEIN;
+   grad_form      = false;
 
    // Placeholders for DNA/RNA
    doubleStranded = true;
@@ -44,6 +46,7 @@ bool US_Analyte::operator== ( const US_Analyte& a ) const
    if ( extinction   != a.extinction   ) return false;
    if ( refraction   != a.refraction   ) return false;
    if ( fluorescence != a.fluorescence ) return false;
+   if ( grad_form    != a.grad_form    ) return false;
 
    if ( type == DNA  || type == RNA )
    {
@@ -122,6 +125,8 @@ DEBUG_QUERY;
    description = db->value( 4 ).toString();
    // We don't need spectrum  -- db->value( 5 ).toString();
    mw          = db->value( 6 ).toString().toDouble();
+   grad_form   = ( type == CARBOHYDRATE ) ?
+                 US_Util::bool_flag( db->value( 7 ).toString() ) : false;
 
    q.clear();
    q << "get_nucleotide_info" << analyteID;
@@ -129,10 +134,10 @@ DEBUG_QUERY;
 DEBUG_QUERY;
    db->next();
    
-   doubleStranded = db->value( 0 ).toString().toInt();
-   complement     = db->value( 1 ).toString().toInt();
-   _3prime        = db->value( 2 ).toString().toInt();
-   _5prime        = db->value( 3 ).toString().toInt();
+   doubleStranded = US_Util::bool_flag( db->value( 0 ).toString() );
+   complement     = US_Util::bool_flag( db->value( 1 ).toString() );
+   _3prime        = US_Util::bool_flag( db->value( 2 ).toString() );
+   _5prime        = US_Util::bool_flag( db->value( 3 ).toString() );
    sodium         = db->value( 4 ).toString().toDouble();
    potassium      = db->value( 5 ).toString().toDouble();
    lithium        = db->value( 6 ).toString().toDouble();
@@ -268,20 +273,22 @@ int US_Analyte::read_analyte( const QString& filename )
             // Set type
             if ( type_string == "PROTEIN" )
             {
-               type   = PROTEIN;
+               type        = PROTEIN;
             }
 
             else if ( type_string == "DNA"  ||  type_string == "RNA" )
             {
-               type   = ( type_string == "DNA" ) ? DNA : RNA;
+               type        = ( type_string == "DNA" ) ? DNA : RNA;
             }
 
             else if ( type_string == "CARBOHYDRATE" )
             {
-               type   = CARBOHYDRATE;
+               type        = CARBOHYDRATE;
             }
 
-            mw     = a.value( "mw" ).toString().toDouble();
+            mw          = a.value( "mw" ).toString().toDouble();
+            grad_form   = US_Util::bool_flag(
+                          a.value( "gradient_forming" ).toString() );
          }
 
          else if ( xml.name() == "sequence" )
@@ -304,10 +311,14 @@ int US_Analyte::read_analyte( const QString& filename )
             }
             else if ( type == DNA  ||  type == RNA )
             {
-               doubleStranded = ( a.value( "stranded"           ).toString() == "T" );
-               complement     = ( a.value( "complement_only"    ).toString() == "T" );
-               _3prime        = ( a.value( "ThreePrimeHydroxyl" ).toString() == "T" );
-               _5prime        = ( a.value( "FivePrimeHydroxyl"  ).toString() == "T" );
+               doubleStranded = US_Util::bool_flag(
+                                a.value( "stranded"           ).toString() );
+               complement     = US_Util::bool_flag(
+                                a.value( "complement_only"    ).toString() );
+               _3prime        = US_Util::bool_flag(
+                                a.value( "ThreePrimeHydroxyl" ).toString() );
+               _5prime        = US_Util::bool_flag(
+                                a.value( "FivePrimeHydroxyl"  ).toString() );
 
                sodium         = a.value( "sodium"    ).toString().toDouble();
                potassium      = a.value( "potassium" ).toString().toDouble();
@@ -526,17 +537,16 @@ int US_Analyte::write_disk( const QString& filename )
          else
             xml.writeAttribute( "type", "RNA" );
 
-         b = ( doubleStranded ) ? "T" : "F";
-         xml.writeAttribute( "stranded", b );
-
-         b = ( complement ) ? "T" : "F";
-         xml.writeAttribute( "complement_only", b );
-
-         b = ( _3prime ) ? "T" : "F";
-         xml.writeAttribute( "ThreePrimeHydroxyl", b );
-
-         b = ( _5prime ) ? "T" : "F";
-         xml.writeAttribute( "FivePrimeHydroxyl", b );
+         xml.writeAttribute( "type", ( type == US_Analyte::DNA ) ?
+                                     QString( "DNA" ) : QString( "RNA" ) );
+         xml.writeAttribute( "stranded",
+                                     US_Util::bool_string( doubleStranded ) );
+         xml.writeAttribute( "complement_only",
+                                     US_Util::bool_string( complement ) );
+         xml.writeAttribute( "ThreePrimeHydroxyl",
+                                     US_Util::bool_string( _3prime ) );
+         xml.writeAttribute( "FivePrimeHydroxyl",
+                                     US_Util::bool_string( _5prime ) );
 
          xml.writeAttribute( "sodium",    QString::number( sodium    ) );
          xml.writeAttribute( "potassium", QString::number( potassium ) );
@@ -547,8 +557,10 @@ int US_Analyte::write_disk( const QString& filename )
          break;
 
       case US_Analyte::CARBOHYDRATE:
-         xml.writeAttribute( "type", "CARBOHYDRATE" );
-         xml.writeAttribute( "vbar20", QString::number( vbar20 ) );
+         xml.writeAttribute( "type",      "CARBOHYDRATE" );
+         xml.writeAttribute( "vbar20",    QString::number( vbar20 ) );
+         xml.writeAttribute( "gradient_forming",
+                                          US_Util::bool_string( grad_form ) );
          break;
    }
 
@@ -787,6 +799,7 @@ DEBUG_QUERY;
    q << description;
    q << spectrum;
    q << QString::number( mw );
+   q << US_Util::bool_string( grad_form );
 
    if ( insert )
       q << QString::number( US_Settings::us_inv_ID() );
@@ -872,6 +885,7 @@ void US_Analyte::dump( void )
    qDebug() << "li    :" << lithium        ;
    qDebug() << "mg    :" << magnesium      ;
    qDebug() << "ca    :" << calcium        ;
+   qDebug() << "grad_f:" << grad_form      ;
 
    qDebug() << "extinction";
    foreach( double wl, extinction.keys() )

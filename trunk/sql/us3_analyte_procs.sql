@@ -133,6 +133,7 @@ CREATE PROCEDURE new_analyte ( p_personGUID  CHAR(36),
                                p_description TEXT,
                                p_spectrum    TEXT,
                                p_mweight     FLOAT,
+                               p_gradform    TINYINT,
                                p_ownerID     INT )
   MODIFIES SQL DATA
 
@@ -162,7 +163,8 @@ BEGIN
       vbar        = p_vbar,
       description = p_description,
       spectrum    = p_spectrum,
-      molecularWeight = p_mweight ;
+      molecularWeight = p_mweight,
+      gradientForming = p_gradform ;
 
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
@@ -197,7 +199,8 @@ CREATE PROCEDURE update_analyte ( p_personGUID  CHAR(36),
                                   p_vbar        FLOAT,
                                   p_description TEXT,
                                   p_spectrum    TEXT,
-                                  p_mweight     FLOAT )
+                                  p_mweight     FLOAT,
+                                  p_gradform    TINYINT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -217,7 +220,8 @@ BEGIN
       vbar        = p_vbar,
       description = p_description,
       spectrum    = p_spectrum,
-      molecularWeight = p_mweight 
+      molecularWeight = p_mweight,
+      gradientForming = p_gradform
     WHERE analyteID = p_analyteID;
 
     IF ( not_found = 1 ) THEN
@@ -309,14 +313,14 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   a.analyteID, description, type
+        SELECT   a.analyteID, description, type, gradientForming
         FROM     analyte a, analytePerson
         WHERE    a.analyteID = analytePerson.analyteID
         AND      analytePerson.personID = p_ID
         ORDER BY a.analyteID DESC;
    
       ELSE
-        SELECT   a.analyteID, description, type
+        SELECT   a.analyteID, description, type, gradientForming
         FROM     analyte a, analytePerson
         WHERE    a.analyteID = analytePerson.analyteID
         ORDER BY a.analyteID DESC;
@@ -385,7 +389,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   analyteGUID, type, sequence, vbar, description, spectrum, molecularWeight, personID 
+      SELECT   analyteGUID, type, sequence, vbar, description, spectrum, molecularWeight, gradientForming, personID 
       FROM     analyte a, analytePerson ap
       WHERE    a.analyteID = ap.analyteID
       AND      a.analyteID = p_analyteID;

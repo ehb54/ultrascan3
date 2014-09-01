@@ -4,6 +4,7 @@
 #include "us_constants.h"
 #include "us_db2.h"
 #include "us_datafiles.h"
+#include "us_util.h"
 
 void US_BufferComponent::getAllFromDB( const QString& masterPW, 
          QMap< QString, US_BufferComponent >& componentList )
@@ -48,19 +49,21 @@ void US_BufferComponent::getInfoFromDB( US_DB2* db )
    name              = db->value( 1 ).toString();
    QString viscosity = db->value( 2 ).toString();
    QString density   = db->value( 3 ).toString();
+   range             = db->value( 4 ).toString();
+   grad_form         = US_Util::bool_flag( db->value( 5 ).toString() );
 
-   QStringList sl = viscosity.split( " " );
+   QStringList sl    = viscosity.split( " " );
 
    for ( int i = 0; i < 6 ; i++ )
-      visc_coeff[ i ] = sl[ i ].toDouble();
+      visc_coeff[ i ]   = sl[ i ].toDouble();
 
    sl = density.split( " " );
 
    for ( int i = 0; i < 6 ; i++ )
-      dens_coeff[ i ] = sl[ i ].toDouble();
+      dens_coeff[ i ]   = sl[ i ].toDouble();
 
-   sl    = sl.mid( 6 );  // Remove coefficients
-   range = sl.join( " " );
+   sl                = sl.mid( 6 );  // Remove coefficients
+   range             = range.isEmpty() ? sl.join( " " ) : range;
 }
 
 void US_BufferComponent::getAllFromHD( 
@@ -68,12 +71,13 @@ void US_BufferComponent::getAllFromHD(
 {
    componentList.clear();
 
-   QFile   file( US_Settings::appBaseDir() + "/etc/bufferComponents.xml" );
+   QString fname  = US_Settings::appBaseDir() + "/etc/bufferComponents.xml";
+   QFile   file( fname );
 
    if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
    {
       // Fail quietly
-      qDebug() << "Cannot open file " << US_Settings::appBaseDir() + "/etc/bufferComponents.xml";
+      qDebug() << "Cannot open file " << fname;
       return;
    }
 
@@ -104,6 +108,8 @@ void US_BufferComponent::component(
    bc.name        = a.value( "name"  ).toString();
    bc.unit        = a.value( "unit"  ).toString();
    bc.range       = a.value( "range" ).toString();
+   bc.grad_form   = US_Util::bool_flag(
+                    a.value( "gradient_forming" ).toString() );
 
    while ( ! xml.atEnd() )
    {
@@ -169,6 +175,8 @@ void US_BufferComponent::putAllToHD(
       xml.writeAttribute( "name" , componentList[ key ].name );
       xml.writeAttribute( "unit" , componentList[ key ].unit );
       xml.writeAttribute( "range", componentList[ key ].range );
+      xml.writeAttribute( "gradient_forming",
+             US_Util::bool_string( componentList[ key ].grad_form ) );
 
       QString factor;
       QString value;
@@ -313,8 +321,8 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
    xml.writeAttribute( "density"    , QString::number( density  , 'f', 6 ) );
    xml.writeAttribute( "viscosity"  , QString::number( viscosity, 'f', 5 ) );
    xml.writeAttribute( "compressibility", 
-      QString::number( compressibility, 'e', 4 ) );
-   xml.writeAttribute( "manual"     , manual ? "1" : "0" );
+                                QString::number( compressibility, 'e', 4 ) );
+   xml.writeAttribute( "manual"     , US_Util::bool_string( manual ) );
 
    for ( int i = 0; i < component.size(); i++ )
    {
@@ -384,13 +392,14 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
    pH              = db->value( 3 ).toString().toDouble();
    viscosity       = db->value( 4 ).toString().toDouble();
    density         = db->value( 5 ).toString().toDouble();
-   manual          = false;
    int manx        = description.indexOf( "  [M]" );
    if ( manx > 0 )
    {
       manual          = true;
       description     = description.left( manx ).simplified();
    }
+   else
+      manual          = US_Util::bool_flag( db->value( 6 ).toString() );
 
    component    .clear();
    componentIDs .clear();
@@ -441,9 +450,7 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
    QString descrip  = description;
    int     manx     = descrip.indexOf( "  [M]" );
 
-   if ( manual  &&  manx < 0 )
-      descrip          = descrip + "  [M]";
-   else if ( ! manual  &&  manx > 0 )
+   if ( manx > 0 )
       descrip          = descrip.left( manx ).simplified();
 //qDebug() << "get_bufferID-stat" << status;
 
@@ -463,6 +470,7 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
         << QString::number( pH             , 'f', 4 )
         << QString::number( density        , 'f', 6 )
         << QString::number( viscosity      , 'f', 5 )
+        << US_Util::bool_string( manual )
         << private_buffer                              // Private
         << QString::number( US_Settings::us_inv_ID() );
 
@@ -493,6 +501,7 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
         << QString::number( pH             , 'f', 4 )
         << QString::number( density        , 'f', 6 )
         << QString::number( viscosity      , 'f', 5 )
+        << US_Util::bool_string( manual )
         << private_buffer;                             // Private
 
       db->statusQuery( q );
@@ -593,8 +602,7 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
    pH              = a.value( "ph"          ).toString().toDouble();
    density         = a.value( "density"     ).toString().toDouble();
    viscosity       = a.value( "viscosity"   ).toString().toDouble();
-   QString manu    = a.value( "manual"      ).toString();
-   manual          = ( !manu.isEmpty()  &&  manu == "1" );
+   manual          = US_Util::bool_flag( a.value( "manual" ).toString() );
 
    concentration.clear();
    componentIDs .clear();
