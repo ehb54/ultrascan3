@@ -11,12 +11,17 @@
 struct ScanInfo
 {
    int voltage, gain, range, rpm, cell, lambda;
-   QString filename, triple, contents, date, time, channel, gainset;
+   QString filename, triple, date, time, channel, gainset;
    double omega_s, seconds;
    bool include;
    QVector <double> x, y;
 };
 
+struct TripleIndex
+{
+   QString name;
+   int index;
+};
 
 class US_FDS_FileManager : public US_Widgets
 {
@@ -30,13 +35,15 @@ class US_FDS_FileManager : public US_Widgets
       QStringList        files;
       QString            source_dir;
       QVector < ScanInfo >  scaninfo;
-      QVector < int >    plotindex; // contains the index to the scaninfo 
-                                    // object that corresponds to each scan
+      QList < int >      scanindex;     // contains the index to the scaninfo object that corresponds to each scan
+      QList < int >      tmp_scanindex; // copy of plotindex to be used for undo
+      QList < TripleIndex >  tripleCounts;
       ScanInfo           tmp_scaninfo;
       int                current_rpm;
       int                current_triple;
       int                current_scan;
       int                current_gain;
+      int                from, to;
 
       US_Help            showHelp;
       QString            workingDir;
@@ -49,17 +56,23 @@ class US_FDS_FileManager : public US_Widgets
       QLabel             *lbl_progress;
       QLabel             *lbl_from;
       QLabel             *lbl_to;
+      QLabel             *lbl_scans;
 
       QLineEdit          *le_info;
       QLineEdit          *le_directory;
+      QLineEdit          *le_scans;
 
       QComboBox          *cb_triple;
       QComboBox          *cb_rpms;
       QComboBox          *cb_gains;
 
-      QPushButton        *pb_save;
+      QPushButton        *pb_write;
       QPushButton        *pb_exclude;
-      QPushButton        *pb_include;
+      QPushButton        *pb_undo;
+      QPushButton        *pb_delete_all;
+      QPushButton        *pb_save_first;
+      QPushButton        *pb_save_last;
+      QPushButton        *pb_save_first_and_last;
 
       QwtCounter         *ct_to;
       QwtCounter         *ct_from;
@@ -73,11 +86,16 @@ private slots:
       void focus_to             ( double );
       void focus                ( int, int );
       void reset                ( void );
-      void save                 ( void );
-      void include_scans        ( void );
+      void write                ( void );
+      void undo                 ( void );
       void exclude_scans        ( void );
+      void delete_all           ( void );
+      void save_first           ( void );
+      void save_last            ( void );
+      void save_first_and_last  ( void );
       void plot_scans           ( void );
       void parse_files          ( void );
+      void activate_undo        ( void );
       void help                 ( void )
       { showHelp.show_help( "manual/us_fds_filemanager.html" ); };
 };
