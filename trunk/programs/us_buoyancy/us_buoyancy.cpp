@@ -508,6 +508,30 @@ void US_Buoyancy::load( void )
    }
    // Enable pushbuttons
    pb_details   ->setEnabled( true );
+   QString str1, str2;
+   
+   if ( dataType == "FI")
+   {
+      str1 = "Fluorescence Data";
+      str2 = "Fluorescence Intensity";
+   }
+   else if ( dataType == "RI")
+   {
+      str1 = "Absorbance Data";
+      str2 = "Absorbance";
+   }
+   else if ( dataType == "RA")
+   {
+      str1 = "Absorbance Data";
+      str2 = "Absorbance";
+   }
+   else if ( dataType == "IP")
+   {
+      str1 = "Interference Data";
+      str2 = "Fringes";
+   }
+   data_plot->setTitle( str1 );
+   data_plot->setAxisTitle( QwtPlot::yLeft, str2 );
 
    // Temperature check
    double             dt = 0.0;
