@@ -318,18 +318,18 @@ void US_Plot3Dxyz::setTitles( QString wndt, QString pltt,
                               QString xat, QString yat, QString zat )
 {
    const double VROUND = 10.0;
-//   const double VROUND = 100.0;
-//   const double VROUND = 1.0;
-   const double VNEGOF = (1.0/VROUND);
    const double MAX_ANNO = (99.9/VROUND);
 //   const double MAX_ANNO = (999.0/VROUND);
+#if 0
+   const double VNEGOF = (1.0/VROUND);
+   double xround = VROUND;
+   double yround = VROUND;
+#endif
    int    nidpt  = xyzdat->count();
    int    powrz;
    double xval;
    double yval;
    double zval;
-   double xround = VROUND;
-   double yround = VROUND;
 
    // Set internal type-flag variables
    setWindowTitle( wndt );

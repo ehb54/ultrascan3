@@ -133,8 +133,9 @@ class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
       QRadioButton* rb_rna;
       QRadioButton* rb_carb;
 
-      QCheckBox*    cb_stranded;
-      QCheckBox*    cb_mw_only;
+      QCheckBox*    ck_stranded;
+      QCheckBox*    ck_mw_only;
+      QCheckBox*    ck_grad_form;
       QRadioButton* rb_3_hydroxyl;
       QRadioButton* rb_3_phosphate;
       QRadioButton* rb_5_hydroxyl;
