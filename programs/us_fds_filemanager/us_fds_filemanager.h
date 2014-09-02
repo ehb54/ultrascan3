@@ -34,6 +34,8 @@ class US_FDS_FileManager : public US_Widgets
       QProgressBar       *progress;
       QStringList        files;
       QString            source_dir;
+      QString            undo_triple;
+      QString            prefix;
       QVector < ScanInfo >  scaninfo;
       QList < int >      scanindex;     // contains the index to the scaninfo object that corresponds to each scan
       QList < int >      tmp_scanindex; // copy of plotindex to be used for undo
@@ -57,6 +59,7 @@ class US_FDS_FileManager : public US_Widgets
       QLabel             *lbl_from;
       QLabel             *lbl_to;
       QLabel             *lbl_scans;
+      QLabel             *lbl_prefix;
 
       QLineEdit          *le_info;
       QLineEdit          *le_directory;
@@ -70,12 +73,14 @@ class US_FDS_FileManager : public US_Widgets
       QPushButton        *pb_exclude;
       QPushButton        *pb_undo;
       QPushButton        *pb_delete_all;
+      QPushButton        *pb_delete_triple;
       QPushButton        *pb_save_first;
       QPushButton        *pb_save_last;
       QPushButton        *pb_save_first_and_last;
 
       QwtCounter         *ct_to;
       QwtCounter         *ct_from;
+      QwtCounter         *ct_prefix;
 
 private slots:
       void load                 ( void );
@@ -84,18 +89,21 @@ private slots:
       void select_gain          ( int  );
       void focus_from           ( double );
       void focus_to             ( double );
+      void update_prefix        ( double );
       void focus                ( int, int );
       void reset                ( void );
       void write                ( void );
       void undo                 ( void );
       void exclude_scans        ( void );
       void delete_all           ( void );
+      void delete_triple        ( void );
       void save_first           ( void );
       void save_last            ( void );
       void save_first_and_last  ( void );
       void plot_scans           ( void );
       void parse_files          ( void );
       void activate_undo        ( void );
+      void activate_undo        ( QString );
       void help                 ( void )
       { showHelp.show_help( "manual/us_fds_filemanager.html" ); };
 };
