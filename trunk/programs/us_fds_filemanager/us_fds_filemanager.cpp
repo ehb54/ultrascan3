@@ -104,8 +104,8 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
    specs->addWidget( le_scans, s_row++, 2, 1, 2 );
 
    // Scans focus from:
-   lbl_from = us_label( tr( "Scan Focus from:" ), 0 );
-   lbl_from->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   lbl_from = us_label( tr( "Scan Focus from:" ), -1 );
+   //lbl_from->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    specs->addWidget( lbl_from,   s_row,   0, 1, 2 );
 
    ct_from = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
@@ -115,8 +115,8 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
                      SLOT  ( focus_from   ( double ) ) );
 
    // Scan focus to
-   lbl_to = us_label( tr( "Scan Focus to:" ), 0 );
-   lbl_to->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   lbl_to = us_label( tr( "Scan Focus to:" ), -1 );
+   //lbl_to->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    specs->addWidget( lbl_to,   s_row,   0, 1, 2 );
 
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
@@ -148,11 +148,17 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
    connect( pb_save_last,  SIGNAL( clicked()  ),
                             SLOT( save_last() ) );
 
-   pb_save_first_and_last = us_pushbutton( tr( "Save first and last  Scan" ), false );
-   specs->addWidget( pb_save_first_and_last, s_row++, 0, 1, 4 );
+   pb_save_first_and_last = us_pushbutton( tr( "Save first and last Scan" ), false );
+   specs->addWidget( pb_save_first_and_last, s_row, 0, 1, 2 );
    pb_save_first_and_last ->setEnabled( false );
    connect( pb_save_first_and_last,  SIGNAL( clicked()  ),
                             SLOT( save_first_and_last() ) );
+
+   pb_delete_triple = us_pushbutton( tr( "Delete Triple" ), false );
+   specs->addWidget( pb_delete_triple, s_row++, 2, 1, 2 );
+   pb_delete_triple ->setEnabled( false );
+   connect( pb_delete_triple,  SIGNAL( clicked()  ),
+                            SLOT( delete_triple() ) );
 
    pb_undo = us_pushbutton( tr( "Undo last Delete" ), false );
    specs->addWidget( pb_undo,   s_row, 0, 1, 2 );
@@ -160,9 +166,20 @@ US_FDS_FileManager::US_FDS_FileManager() : US_Widgets()
    connect( pb_undo, SIGNAL( clicked() ),
                      SLOT( undo() ) );
 
-   pb_write = us_pushbutton( tr( "Write File Selection" ), false );
+   pb_write = us_pushbutton( tr( "Export File Selection" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
    specs->addWidget( pb_write, s_row++, 2, 1, 2 );
+
+   // Modify export prefix:
+   lbl_prefix = us_label( tr( "Prefix for export Filename:" ), -1 );
+   //lbl_prefix->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   specs->addWidget( lbl_prefix,   s_row,   0, 1, 2 );
+
+   ct_prefix = us_counter ( 3, 0.0, 10000.0 ); 
+   ct_prefix->setStep( 1 );
+   specs->addWidget( ct_prefix,   s_row++, 2, 1, 2 );
+   connect( ct_prefix, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( update_prefix( double ) ) );
 
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
@@ -293,6 +310,14 @@ void US_FDS_FileManager::parse_files( void )
       progress->setValue( 100 * ( i+1.0 )/files.size() );
       scaninfo.append(tmp_scaninfo);
    }
+   if (scaninfo.size() == 0)
+   {
+       QMessageBox::warning (this, tr( "Attention:" ),
+            tr( "The selected directory does not contain fluorescence files...\n"
+                "Please try again." ),
+            QMessageBox::Ok );
+       return;
+   }
    triplelist.removeDuplicates();
    triplelist.sort();
    cb_triple->addItems( triplelist );
@@ -397,7 +422,14 @@ void US_FDS_FileManager::plot_scans( void )
    int npts;
    QwtPlotCurve *curve;
    c.clear();
-   le_scans->setText( str1.setNum( scanindex.size() ) + " scans" );
+   if (scanindex.size() == 1)
+   {
+      le_scans->setText( "1 scan" );
+   }
+   else
+   {
+      le_scans->setText( str1.setNum( scanindex.size() ) + " scans" );
+   }
    for (int i=0; i<scanindex.size(); i++)
    {
       npts = scaninfo[scanindex[i]].x.size();
@@ -433,6 +465,7 @@ void US_FDS_FileManager::plot_scans( void )
       pb_save_first         ->setEnabled ( true );
       pb_save_last          ->setEnabled ( true );
       pb_save_first_and_last->setEnabled ( true );
+      pb_delete_triple      ->setEnabled ( true );
    }
    else if (c.size() == 1)
    {
@@ -440,6 +473,7 @@ void US_FDS_FileManager::plot_scans( void )
       pb_save_first         ->setEnabled ( false );
       pb_save_last          ->setEnabled ( false );
       pb_save_first_and_last->setEnabled ( false );
+      pb_delete_triple      ->setEnabled ( true );
    }
    else if (c.size() == 0)
    {
@@ -447,6 +481,7 @@ void US_FDS_FileManager::plot_scans( void )
       pb_save_first         ->setEnabled ( false );
       pb_save_last          ->setEnabled ( false );
       pb_save_first_and_last->setEnabled ( false );
+      pb_delete_triple      ->setEnabled ( true );
    }
    pb_write->setEnabled ( true );
 }
@@ -459,12 +494,15 @@ void US_FDS_FileManager::reset( void )
    data_plot->clear();
    data_plot->replot();
 
-   ct_from->setMinValue( 0 );
-   ct_from->setMaxValue( 0 );
-   ct_from->setValue   ( 0 );
-   ct_to  ->setMinValue( 0 );
-   ct_to  ->setMaxValue( 0 );
-   ct_to  ->setValue   ( 0 );
+   ct_from  ->setMinValue( 0 );
+   ct_from  ->setMaxValue( 0 );
+   ct_from  ->setValue   ( 0 );
+   ct_to    ->setMinValue( 0 );
+   ct_to    ->setMaxValue( 0 );
+   ct_to    ->setValue   ( 0 );
+   ct_prefix->setValue   ( 0 );
+
+   prefix = "";
 
    progress    ->setValue(0);
    cb_triple   ->clear();
@@ -489,15 +527,28 @@ void US_FDS_FileManager::reset( void )
 // undo the latest delete action
 void US_FDS_FileManager::undo( void )
 {
-   for (int i=0; i<tmp_scanindex.size(); i++)
+   if (undo_triple == "")
    {
-      scaninfo[tmp_scanindex[i]].include = true;
+      for (int i=0; i<tmp_scanindex.size(); i++)
+      {
+         scaninfo[tmp_scanindex[i]].include = true;
+      }
+      pb_undo->setEnabled( false );
+      tmp_scanindex.clear();
+      for (int i=0; i<scanindex.size(); i++)
+      {
+         tmp_scanindex.append( scanindex.at(i) );
+      }
    }
-   pb_undo->setEnabled( false );
-   tmp_scanindex.clear();
-   for (int i=0; i<scanindex.size(); i++)
-   {
-      tmp_scanindex.append( scanindex.at(i) );
+   else
+   {// add back entire triple:
+      for (int i=0; i<scaninfo.size(); i++)
+      {
+         if (scaninfo.at(i).triple == undo_triple)
+         {
+            scaninfo[i].include = true;
+         }
+      }
    }
    plot_scans();
 }
@@ -506,7 +557,15 @@ void US_FDS_FileManager::undo( void )
 void US_FDS_FileManager::activate_undo( void )
 {
    pb_undo->setEnabled( true );
+   undo_triple = ""; // reset when delete other than delete_triple was performed.
    tmp_scanindex = scanindex;
+   plot_scans();
+}
+
+void US_FDS_FileManager::activate_undo( QString triple )
+{
+   pb_undo->setEnabled( true );
+   undo_triple = triple;
    plot_scans();
 }
 
@@ -548,6 +607,19 @@ void US_FDS_FileManager::save_first_and_last( void )
       scaninfo[scanindex[i]].include = false;
    }
    activate_undo();
+}
+
+// Delete all scans belonging to a particular triple
+void US_FDS_FileManager::delete_triple( void )
+{
+   for (int i=0; i<scaninfo.size(); i++)
+   {
+      if (scaninfo.at(i).triple == cb_triple->currentText())
+      {
+         scaninfo[i].include = false;
+      }
+   }
+   activate_undo(cb_triple->currentText());
 }
 
 // exclude only the visually selected (highlighted) scans
@@ -634,6 +706,21 @@ void US_FDS_FileManager::focus( int from, int to )
    plot_scans();
 }
 
+// function for updating the prefix for export filenames:
+void US_FDS_FileManager::update_prefix( double val )
+{
+   QString str;
+   prefix = str.setNum( val );
+   if ( prefix == "0" )
+   {
+      prefix = "";
+   }
+   else
+   {
+      prefix = prefix + "_";
+   }
+}
+
 // write all remaining files to a new directory with successive filenames
 void US_FDS_FileManager::write( void )
 {
@@ -689,31 +776,37 @@ void US_FDS_FileManager::write( void )
          tripleCounts[j].index ++;
          if (tripleCounts[j].index < 10)
          {
-            filename = target_dir + scaninfo.at(i).channel + "0000"
+            filename = target_dir + prefix + scaninfo.at(i).channel + "0000"
             + str1.setNum(tripleCounts[j].index) + ".FI" + str2.setNum( scaninfo.at(i).cell );
          }
          else if (tripleCounts[j].index > 9 && tripleCounts[j].index < 100)
          {
-            filename = target_dir + scaninfo.at(i).channel + "000"
+            filename = target_dir + prefix + scaninfo.at(i).channel + "000"
             + str1.setNum(tripleCounts[j].index) + ".FI" + str2.setNum( scaninfo.at(i).cell );
          }
          else if (tripleCounts[j].index > 99 && tripleCounts[j].index < 1000)
          {
-            filename = target_dir + scaninfo.at(i).channel + "00"
+            filename = target_dir + prefix + scaninfo.at(i).channel + "00"
             + str1.setNum(tripleCounts[j].index) + ".FI" + str2.setNum( scaninfo.at(i).cell );
          }
          else if (tripleCounts[j].index > 999 && tripleCounts[j].index < 10000)
          {
-            filename = target_dir + scaninfo.at(i).channel + "0"
+            filename = target_dir + prefix + scaninfo.at(i).channel + "0"
             + str1.setNum(tripleCounts[j].index) + ".FI" + str2.setNum( scaninfo.at(i).cell );
          }
          else if (tripleCounts[j].index > 9999 && tripleCounts[j].index < 100000)
          {
-            filename = target_dir + scaninfo.at(i).channel
+            filename = target_dir + prefix + scaninfo.at(i).channel
             + str1.setNum(tripleCounts[j].index) + ".FI" + str2.setNum( scaninfo.at(i).cell );
          }
-         f.copy( source_dir + scaninfo.at(i).filename, filename );
-         progress->setValue(100 * (i+1)/scaninfo.size());
+         if ( !f.copy( source_dir + scaninfo.at(i).filename, filename ) )
+         {
+            str1 = tr("The file:\n\n   ") + filename + tr("\n\nalready exists in:\n\n   ") + target_dir + "\n\n"
+                + tr("Please use a different directory or prefix, or create a new directory and try again.");
+            QMessageBox::warning (this, tr( "Attention:" ), str1, QMessageBox::Ok );
+            return;
+         }
       }
+      progress->setValue(100 * (i+1)/scaninfo.size());
    }
 }
