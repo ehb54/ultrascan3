@@ -288,14 +288,15 @@ bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
 
       dbP->next();
       QString ddesc = dbP->value( 1 ).toString();
-      QString ddens = dbP->value( 5 ).toString();
-      QString dvisc = dbP->value( 4 ).toString();
       QString dcomp = dbP->value( 2 ).toString();
+      QString dvisc = dbP->value( 4 ).toString();
+      QString ddens = dbP->value( 5 ).toString();
+      QString dmanu = dbP->value( 6 ).toString();
       density       = ddens.isEmpty() ? density   : ddens;
       viscosity     = dvisc.isEmpty() ? viscosity : dvisc;
       compress      = dcomp.isEmpty() ? compress  : dcomp;
-      manual        = ( ! ddesc.isEmpty()  &&  ddesc.contains( "  [M]" ) )
-                      ? "1" : "0";
+      manual        = dmanu.isEmpty() ? manual    :
+                      ddesc.contains( "  [M]" ) ? "1" : dmanu;
       bufvals       = true;
    }
    else
@@ -340,14 +341,15 @@ bool US_SolutionVals::bufvals_db( US_DB2*dbP, QString& bufId,
 
          dbP->next();
          QString ddesc = dbP->value( 1 ).toString();
-         QString ddens = dbP->value( 5 ).toString();
-         QString dvisc = dbP->value( 4 ).toString();
          QString dcomp = dbP->value( 2 ).toString();
+         QString dvisc = dbP->value( 4 ).toString();
+         QString ddens = dbP->value( 5 ).toString();
+         QString dmanu = dbP->value( 6 ).toString();
          density       = ddens.isEmpty() ? density   : ddens;
          viscosity     = dvisc.isEmpty() ? viscosity : dvisc;
          compress      = dcomp.isEmpty() ? compress  : dcomp;
-         manual        = ( ! ddesc.isEmpty()  &&  ddesc.contains( "  [M]" ) )
-                         ? "1" : "0";
+         manual        = dmanu.isEmpty() ? manual    :
+                         ddesc.contains( "  [M]" ) ? "1" : dmanu;
          bufvals       = true;
       }
    }
@@ -372,6 +374,7 @@ bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
    QString bvisc;
    QString bcomp;
    QString bmanu;
+   QString bdesc;
 
    for ( int ii = 0; ii < names.size(); ii++ )
    {
@@ -392,7 +395,7 @@ bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
             QXmlStreamAttributes ats = xml.attributes();
             QString bid   = ats.value( "id"          ).toString();
             QString bguid = ats.value( "guid"        ).toString();
-            QString bdesc = ats.value( "description" ).toString();
+            bdesc         = ats.value( "description" ).toString();
             bid           = bid  .isEmpty() ? "EMPTY" : bid;
             bguid         = bguid.isEmpty() ? "EMPTY" : bguid;
             bdesc         = bdesc.isEmpty() ? "EMPTY" : bdesc;
@@ -407,6 +410,8 @@ bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
                density   = bdens.isEmpty() ? density   : bdens;
                viscosity = bvisc.isEmpty() ? viscosity : bvisc;
                compress  = bcomp.isEmpty() ? compress  : bcomp;
+               manual    = bmanu.isEmpty() ? manual    :
+                           bdesc.contains( "  [M]" ) ? "1" : bmanu;
                bufvals   = true;
             }
 
@@ -432,7 +437,8 @@ bool US_SolutionVals::bufvals_disk( QString& bufId, QString& bufGuid,
       density   = bdens.isEmpty() ? density   : bdens;
       viscosity = bvisc.isEmpty() ? viscosity : bvisc;
       compress  = bcomp.isEmpty() ? compress  : bcomp;
-      manual    = bmanu.isEmpty() ? manual    : bmanu;
+      manual    = bmanu.isEmpty() ? manual    :
+                  bdesc.contains( "  [M]" ) ? "1" : bmanu;
       bufvals   = true;
    }
 
