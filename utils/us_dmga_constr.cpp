@@ -235,10 +235,12 @@ DbgLv(1) << "dgC:cmp_cns: compx" << compx << "attrsz" << attribs.size();
    int kattrib    = 0;                        // Count of comp's attributes
    int kfloat     = 0;                        // Count of comp's floats
    QVector< Constraint > cnsv;                // Work constraints vector
+   cnsv.clear();
 
    for ( int ii = 0; ii < attribs.size(); ii++ )
    {
-DbgLv(1) << "dgC:cmp_cns:  ii atype" << ii << attribs[ii].atype;
+DbgLv(1) << "dgC:cmp_cns:  ii" << ii << "atype" << attribs[ii].atype
+ << "mcompx" << attribs[ii].mcompx;
       if ( attribs[ ii ].atype >= ATYPE_KD )
          break;                               // Done if to associations
 
@@ -544,10 +546,6 @@ DbgLv(1) << "dgC:cnsfrmo:    tflag" << tflag << "xa ya za" << x_attr
          attr.low       = cval;
          attr.high      = attr.low;
          attribs << attr;             // Save concentration constraint
-         attr.atype     = ATYPE_EXT;
-         attr.low       = eval;
-         attr.high      = attr.low;
-         attribs << attr;             // Save extinction constraint
       }  // END: all fixed
 
       else
@@ -641,7 +639,7 @@ DbgLv(1) << "dgC:cnsfrmo:      zattr zlow zhigh" << z_attr << zlow << zval;
 
       // Store extinction value
       attr.atype  = ATYPE_EXT;
-      attr.low    = sc->extinction;
+      attr.low    = eval;
       attr.high   = attr.low;
       attr.floats = false;
       attr.logscl = false;

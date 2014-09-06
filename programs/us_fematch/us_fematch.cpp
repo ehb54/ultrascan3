@@ -1174,7 +1174,7 @@ void US_FeMatch::view_report( )
    US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true, "", this );
    editd->setWindowTitle( tr( "Report:  FE Match Model Simulation" ) );
    editd->move( this->pos() + QPoint( 100, 100 ) );
-   editd->resize( 780, 700 );
+   editd->resize( 800, 700 );
    editd->e->setFont( QFont( US_GuiSettings::fontFamily(),
                              US_GuiSettings::fontSize() ) );
    editd->e->setHtml( mtext );
@@ -2096,7 +2096,7 @@ DbgLv(1) << " nthread ntc ncomp" << nthread << ntc << ncomp;
                   this,       SLOT(   update_progress(   int ) ) );
 DbgLv(1) << " afrsa calc";
 //astfem_rsa->setTimeInterpolation( true );
-//astfem_rsa->setTimeCorrection( true );
+//astfem_rsa->setTimeCorrection( false );
          astfem_rsa->set_debug_flag( dbg_level );
 //astfem_rsa->set_debug_flag(2);
 

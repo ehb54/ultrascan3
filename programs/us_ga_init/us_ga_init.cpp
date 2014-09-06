@@ -518,6 +518,7 @@ void US_GA_Initialize::reset( void )
    cmapname   = tr( "Default Color Map: w-cyan-magenta-red-black" );
 
    monte_carlo = false;
+   is_saved   = false;
    pb_reset  ->setEnabled( false );
 }
 
@@ -774,6 +775,7 @@ void US_GA_Initialize::resetSb( void )
    lw_sbin_data->clear();     // clear solute bucket data
    soludata->clearBuckets();
    sxset    = 0;
+   is_saved = false;
 
    erase_buckets( true );     // erase bucket rectangles from plot and delete
 
@@ -1847,15 +1849,12 @@ void US_GA_Initialize::getMouseUp( const QwtDoublePoint& p )
    nibuks++;
    ct_nisols->setValue( (double)nibuks );
 
-   if ( nibuks > 0 )
-      pb_save   ->setEnabled( attr_x == ATTR_V  ||
-                              attr_y == ATTR_V  ||
-                              attr_z == ATTR_V );
-   if ( nibuks > 1 )
-   {
-      pb_ckovrlp->setEnabled( true );
-      pb_view   ->setEnabled( true );
-   }
+   pb_save   ->setEnabled( attr_x == ATTR_V  ||
+                           attr_y == ATTR_V  ||
+                           attr_z == ATTR_V );
+   pb_view   ->setEnabled( true );
+   pb_ckovrlp->setEnabled( nibuks > 1 );
+   is_saved = false;
 }
 
 // draw a bucket rectangle by index and top-left,bottom-right points

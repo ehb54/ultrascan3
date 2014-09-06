@@ -230,11 +230,13 @@ class US_MPI_Analysis : public QObject
     QVector< double >         dgmarker;
     QVector< US_dmGA_Constraints::Constraint >  cns_flt;
     QVector< int >            lfvari;
+    double                    base_sig;
     int                       nfloatc;
     int                       ncompc;
     int                       nassocc;
     int                       nfvari;
     int                       minimize_opt;
+    int                       g_redo_inc;
     bool                      in_gsm;
 
     class Fitness
@@ -285,6 +287,7 @@ class US_MPI_Analysis : public QObject
     void     send_udp      ( const QString& );
     void     abort         ( const QString&, int=-1 );
     long int max_rss       ( void );
+    QString  par_key_value ( const QString, const QString );
 
     Gene     create_solutes( double, double, double,
                              double, double, double );
