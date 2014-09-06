@@ -18,11 +18,22 @@ QDateTime elapsedd = QDateTime::currentDateTime();
 
 void US_MPI_Analysis::dmga_worker( void )
 {
+   static const double BASE_SIG = 0.2;
+   static const int    GR_INCR  = 10;
    current_dataset     = 0;
    datasets_to_process = data_sets.size();
    QStringList keys    = parameters.keys();
    p_grid              = ( keys.contains( "p_grid" ) )
                          ? parameters[ "p_grid" ].toInt() : 100;
+   QString dbgtext     = parameters[ "debug_text" ];
+   QString s_bsig      = par_key_value( dbgtext, "base_sig" );
+   QString s_grinc     = par_key_value( dbgtext, "g_redo_inc" );
+   base_sig            = s_bsig .isEmpty() ? BASE_SIG : s_bsig .toDouble();
+   g_redo_inc          = s_grinc.isEmpty() ? GR_INCR  : s_grinc.toInt();
+if(my_rank==1)
+DbgLv(0) << my_rank << "dmga_worker: base_sig" << base_sig
+ << "g_redo_inc" << g_redo_inc;
+
    buckets.clear();
 
    simulation_values.noisflag   = 0;
@@ -217,7 +228,7 @@ void US_MPI_Analysis::dmga_worker_loop( void )
    int p_mutate    = mutation;
    int p_crossover = p_mutate + crossover;
    int p_plague    = p_crossover + plague;
-   int grp_nbr     = ( my_rank / gcores_count );
+   int grp_nbr     = my_rank / gcores_count;
    int deme_nbr    = my_rank - grp_nbr * gcores_count;
 
    fitness_map.clear();
@@ -266,8 +277,10 @@ DbTimMsg("Worker after gsm rank/generation/elapsed");
       max_rss();
 
       // Send best gene to master
-DbgLv(1) << "Best gene to master: gen" << generation << "worker" << deme_nbr;
-dump_fitness( fitness );
+if((deme_nbr%10)==1) {
+ DbgLv(1) << "Best gene to master: gen" << generation << "worker" << deme_nbr
+  << "fitness" << fitness[0].fitness;
+dump_fitness( fitness ); }
       msg.generation = generation;
       dgene          = dgenes[ fitness[ 0 ].index ];
       marker_from_dgene( dgmarker, dgene );
@@ -381,8 +394,49 @@ DbgLv(1) << "gw:" << my_rank << ":  Dup cleaned: f0 f1 fit0 fit1"
       // Re-sort
       qSort( fitness );
 DbgLv(1) << "gw:" << my_rank << ": fitness sorted";
-      
+
       QList< DGene > old_genes = dgenes;
+      int gener_save  = generation;
+
+      if ( generation > 0   &&  ( generation % g_redo_inc ) == 0 )
+      {  // Set up to re-do initial genes after minimization
+         double fit0  = fitness[ 0 ].fitness;
+         fitness[ 0 ].fitness = minimize_dmga( dgenes[ fitness[ 0 ].index ], 
+                                               fitness[ 0 ].fitness );
+         double fit1  = fitness[ 0 ].fitness;
+         dgene        = dgenes[ fitness[ 0 ].index ];
+         old_genes[0] = dgene;
+         double aval;
+
+         for ( int ii = 0; ii < nfloatc; ii++ )
+         {  // Insure all the new gene attribute values are inside range
+            US_dmGA_Constraints::AttribType
+                 atype    = cns_flt[ ii ].atype;
+            int  mcompx   = cns_flt[ ii ].mcompx;
+            double vmin   = cns_flt[ ii ].low;
+            double vmax   = cns_flt[ ii ].high;
+            fetch_attr_value( aval, dgene, atype, mcompx );
+
+            if ( aval < vmin  ||  aval > vmax )
+            {
+if((my_rank%10)==1)
+DbgLv(0) << "gw:" << my_rank << ": re-do : ii" << ii
+ << "aval vmin vmax" << aval << vmin << vmax;
+               aval          = qMax( vmin, qMin( vmax, aval ) );
+               store_attr_value( aval, dgene, atype, mcompx );
+            }
+         }
+
+         p_mutate     = p_plague;
+
+         for ( int gg = 0; gg < population; gg++ )
+            old_genes[ gg ] = dgene;
+if((my_rank%10)==1)
+DbgLv(0) << "gw:" << my_rank << ": re-do genes at gen" << generation
+ << "gen fitness" << fit0 << "post-min fitness" << fit1;
+
+         generation   = 0;
+      }
 
       // Create new generation from old
       // First copy elite genes
@@ -419,6 +473,8 @@ DbgLv(1) << "gw:" << my_rank << ":  gg" << gg << "gene_index" << gene_index
       }
 DbTimMsg("Worker after elitism loop");
 
+      generation   = gener_save;
+      p_mutate     = mutation;
       max_rss();
 
    }  // End of generation loop
@@ -469,19 +525,17 @@ DbgLv(1) << my_rank << "dg:newg:   ii" << ii << "p_grid" << p_grid
 // Mutate a discrete GA Gene
 void US_MPI_Analysis::mutate_dgene( DGene& dgene )
 {
-   const double basef    = 6.0;
-   //const double basef    = 4.0;
-   const double sigfact  = 20.0;
-   //const double sigfact  = 10.0;
+   const double extn_p   = (double)( p_grid - 1 );
+   const double sigfact  = pow( 10.0, ( mutate_sigma * 0.1 ) );
    // Get a random mask that selects which float attributes to vary
    int smask       = u_random( nfvari ) + 1;
    // Compute the sigma based on parameter grid and generation
-   double extn_p   = (double)( p_grid - 1 );
-   double genterm  = (double)generation * mutate_sigma / sigfact + 2.0;
-   double sigma    = extn_p / ( basef * ( log2( genterm ) ) );
+   double genterm  = log2( (double)generation * sigfact + 2.0 );
+   double sigma    = base_sig * extn_p / genterm;
    // Bump the count of hits for each unique smask (floats combination)
    lfvari[ smask - 1 ]++;
 DbgLv(1) << my_rank << "dg:mutg: smask p_grid sigma" << smask << p_grid << sigma;
+//if(my_rank==11) DbgLv(0) << my_rank << "dg:mutg: smask p_grid sigma" << smask << p_grid << sigma;
 
    // Loop thru float attributes, varying the selected ones
    for ( int ii = 0; ii < nfloatc; ii++ )
@@ -1190,6 +1244,19 @@ astfem_rsa.set_debug_flag(dbg_flg);
 
    sim_vals.variance = variance / (double)total_points;
 if(my_rank==0)
-DbgLv(0) << my_rank << "CR: variance" << sim_vals.variance << variance << total_points;
+DbgLv(1) << my_rank << "CR: variance" << sim_vals.variance << variance << total_points;
+}
+
+// Get the value part of a "key value " substring
+QString US_MPI_Analysis::par_key_value( const QString kvtext, const QString key )
+{
+   QString value( "" );
+   int keyx   = kvtext.indexOf( key );
+   value      = ( keyx < 0 ) ? value
+                : QString( kvtext ).mid( keyx ).section( " ", 1, 1 );
+if(my_rank<2)
+DbgLv(0) << my_rank << ": p_k_v  key" << key << "value" << value << "kvtext" << kvtext;
+
+   return value;
 }
 

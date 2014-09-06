@@ -41,8 +41,8 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    wmodel.load( cmfname );                  // Load the constraints model
    constraints.load_constraints( &wmodel ); // Build the constraints object
    constraints.get_work_model  ( &wmodel ); // Get the base work model
-DbgLv(0) << "dmga_master: cmfname" << cmfname;
-DbgLv(0) << "dmga_master: wmodel #comps" << wmodel.components.size()
+DbgLv(1) << "dmga_master: cmfname" << cmfname;
+DbgLv(1) << "dmga_master: wmodel #comps" << wmodel.components.size()
  << "#assoc" << wmodel.associations.size();
 
    // Report on the constraints attribute values and ranges
@@ -353,8 +353,8 @@ DbgLv(0) << "STEP0 speed accel accelf"
  << spstep->acceleration
  << spstep->acceleration_flag; 
 //*DEBUG
-   DbgLv(0) << fmodel->description
-            << "Final Model Attribute Values --";
+   DbgLv(0) << fmodel->description;
+   DbgLv(0) << " Final Model Attribute Values --";
 
    for ( int mcompx = 0; mcompx < fmodel->components.size(); mcompx++ )
    {
@@ -362,27 +362,31 @@ DbgLv(0) << "STEP0 speed accel accelf"
       int ncompc  = constraints.comp_constraints( mcompx, &cnsv, NULL );
 
       DbgLv(0) << "  Component" << compno << ":";
+//DbgLv(0) << "   mcompx" << mcompx << "ncompc" << ncompc;
+//DbgLv(0) << "   at[n-2] at[n-1]" << cnsv[ncompc-2].atype << cnsv[ncompc-1].atype;
 
       for ( int cx = 0; cx < ncompc; cx++ )
       {
          atype       = cnsv[ cx ].atype;
 
          if      ( atype == US_dmGA_Constraints::ATYPE_S    )
-            attrtype = tr( "Segmentation Coefficient" );
+            attrtype    = tr( "Segmentation Coefficient" );
          else if ( atype == US_dmGA_Constraints::ATYPE_FF0  )
-            attrtype = tr( "Frictional Ratio" );
+            attrtype    = tr( "Frictional Ratio" );
          else if ( atype == US_dmGA_Constraints::ATYPE_MW   )
-            attrtype = tr( "Molecular Weight" );
+            attrtype    = tr( "Molecular Weight" );
          else if ( atype == US_dmGA_Constraints::ATYPE_D    )
-            attrtype = tr( "Diffusion Coefficient" );
+            attrtype    = tr( "Diffusion Coefficient" );
          else if ( atype == US_dmGA_Constraints::ATYPE_F    )
-            attrtype = tr( "Frictional Coefficient" );
+            attrtype    = tr( "Frictional Coefficient" );
          else if ( atype == US_dmGA_Constraints::ATYPE_VBAR )
-            attrtype = tr( "Vbar (Specific Density)" );
+            attrtype    = tr( "Vbar (Specific Density)" );
          else if ( atype == US_dmGA_Constraints::ATYPE_CONC )
-            attrtype = tr( "Signal Concentration" );
+            attrtype    = tr( "Signal Concentration" );
          else if ( atype == US_dmGA_Constraints::ATYPE_EXT  )
-            attrtype = tr( "Extinction" );
+            attrtype    = tr( "Extinction" );
+         else
+            attrtype    = tr( "Unknown" );
 
          double aval = constraints.fetch_attrib( fmodel->components[ mcompx ],
                                                  atype );
@@ -449,16 +453,29 @@ DbgLv(0) << "STEP0 speed accel accelf"
 void US_MPI_Analysis::dmga_master_loop( void )
 {
    static const double DIGIT_FIT      = 1.0e+4;
-   static const int    max_same_count = my_workers * 5;
    static const int    min_generation = 10;
+   static const int    _KS_BASE_      = 6;
+   static const int    _KS_STEP_      = 3;
+   QString dbgtext   = parameters[ "debug_text" ];
+   QString s_ksbase  = par_key_value( dbgtext, "ksame_base" );
+   QString s_ksstep  = par_key_value( dbgtext, "ksame_step" );
+   int ks_base       = s_ksbase.isEmpty() ? _KS_BASE_ : s_ksbase.toInt();
+   int ks_step       = s_ksstep.isEmpty() ? _KS_STEP_ : s_ksstep.toInt();
+   ks_base           = qMax( 2, ks_base );
+   ks_step           = qMax( 1, ks_step );
+//   static const int    max_same_count = my_workers * 5;
+   int    max_same_count       = ( ks_base + ( nfloatc / ks_step ) * ks_step )
+                                 * my_workers;
    int    avg_generation       = 0;
    bool   early_termination    = false;
    int    fitness_same_count   = 0;
    double best_overall_fitness = LARGE;
    int    tag;
-   int    workers              = my_workers;
+   int    workers  = my_workers;
 DbgLv(1) << "dmga_master start loop:  gcores_count fitsize" << gcores_count
    << best_fitness.size() << "best_overall" << best_overall_fitness;
+DbgLv(0) << "dmga_master start loop:  nfloatc max_same_count"
+    << nfloatc << max_same_count << "ks_base ks_step" << ks_base << ks_step;
 
    // Reset best fitness for each worker
    for ( int i = 0; i < gcores_count; i++ )
@@ -592,7 +609,11 @@ DbgLv(1) << "  MAST: work" << worker << "fit besto,round" << best_overall_fitnes
                }
 
             }
-DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
+//DbgLv(1) << "  best_overall_fitness" << best_overall_fitness
+// << "fitness_same_count" << fitness_same_count
+// << " early_term?" << early_termination;
+if((worker%10)==1)
+DbgLv(1) << worker << ": best_overall_fitness" << best_overall_fitness
  << "fitness_same_count" << fitness_same_count
  << " early_term?" << early_termination;
 
