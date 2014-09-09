@@ -247,7 +247,7 @@ void US_Solution::saveToDisk( void )
         solutionDesc.isEmpty()     ||
         buffer.GUID.isEmpty()      ||
         buffer.bufferID.isEmpty()  ||
-        buffer.bufferID.toInt() < 1 )
+        buffer.bufferID.toInt() < 0 )
    {
       qDebug() << "Error: Solution cannot be written to disk,"
                << " due to invalid values:";

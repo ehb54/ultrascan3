@@ -298,7 +298,6 @@ void US_Buffer::putSpectrum( US_DB2* db, const QString& type ) const
 bool US_Buffer::writeToDisk( const QString& filename ) const
 {
    QFile file( filename );
-   
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
    {
        qDebug() << "Cannot open file for writing: " << filename;
@@ -314,7 +313,7 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
    xml.writeAttribute   ( "version", "1.0" );
    
    xml.writeStartElement( "buffer" );
-   xml.writeAttribute( "id"         , bufferID );
+   xml.writeAttribute( "id"         , "0" ); // buffers written to disk get bufferID "0"
    xml.writeAttribute( "guid"       , GUID     );
    xml.writeAttribute( "description", description );
    xml.writeAttribute( "ph"         , QString::number( pH       , 'f', 5 ) );

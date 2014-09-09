@@ -153,8 +153,8 @@ US_SolutionGui::US_SolutionGui(
    main->addWidget( lb_solutionDesc, row++, 1, 1, 2 );
 
    le_solutionDesc = us_lineedit( "", 1 );
-   connect( le_solutionDesc, SIGNAL( textEdited      ( const QString&   ) ),
-                             SLOT  ( saveDescription ( const QString&   ) ) );
+   connect( le_solutionDesc, SIGNAL( editingFinished () ),
+                             SLOT  ( saveDescription () ) );
    main->addWidget( le_solutionDesc, row++, 1, 1, 2 );
 
    QLabel* lb_commonVbar20 = us_label( tr( "Common VBar (20C):" ) );
@@ -948,7 +948,7 @@ void US_SolutionGui::saveAmount( double amount )
 }
 
 // Function to update the description associated with the current solution
-void US_SolutionGui::saveDescription( const QString& )
+void US_SolutionGui::saveDescription()
 {
    solution.solutionDesc = le_solutionDesc ->text();
    changed = true;

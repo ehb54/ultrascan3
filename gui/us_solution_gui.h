@@ -151,7 +151,7 @@ class US_GUI_EXTERN US_SolutionGui : public US_WidgetsDialog
       void selectBuffer       ( void );
       void assignBuffer       ( US_Buffer );
       void saveAmount         ( double );
-      void saveDescription    ( const QString& );
+      void saveDescription    ( void );
       void saveTemperature    ( const QString& );
       void saveNotes          ( void );
       void newSolution        ( void );
