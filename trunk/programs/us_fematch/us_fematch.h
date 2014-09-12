@@ -67,6 +67,14 @@ class US_FeMatch : public US_Widgets
 
       QCheckBox*    ck_edit;
 
+      QRadioButton* rb_curmod;
+      QRadioButton* rb_mean;
+      QRadioButton* rb_median;
+      QRadioButton* rb_mode;
+
+      QPushButton*  pb_nextm;
+
+      QwtCounter*   ct_model;
       QwtCounter*   ct_from;
       QwtCounter*   ct_to;
 
@@ -100,6 +108,7 @@ class US_FeMatch : public US_Widgets
       int           dbg_level;
       int           nthread;
       int           thrdone;
+      int           mc_iters;
 
       bool          dataLoaded;
       bool          haveSim;
@@ -129,9 +138,13 @@ class US_FeMatch : public US_Widgets
 
       US_Model                    model;
       US_Model                    model_loaded;
+      US_Model                    model_mean;
+      US_Model                    model_median;
+      US_Model                    model_mode;
       US_Noise                    ri_noise;
       US_Noise                    ti_noise;
       US_Solution                 solution_rec;
+      QList< US_Model >           models;
 
       QVector< SP_SPEEDPROFILE >     speed_steps;
 
@@ -219,6 +232,10 @@ class US_FeMatch : public US_Widgets
       void    reportFilesToDB( QStringList& );
       void    show_results   ( void );
       void    update_filelist( QStringList&, const QString );
+      void    curmod_clicked ( bool );
+      void    modbtn_clicked ( bool );
+      void    next_model     ( void );
+      void    update_mc_model( void );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };

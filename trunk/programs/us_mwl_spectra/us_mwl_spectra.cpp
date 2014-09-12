@@ -1,0 +1,1040 @@
+//! \file us_mwl_spectra.cpp
+#include <QApplication>
+
+#include "us_mwl_spectra.h"
+#include "us_mwls_pltctl.h"
+#include "us_license_t.h"
+#include "us_license.h"
+#include "us_select_edits.h"
+#include "us_util.h"
+#include "us_settings.h"
+#include "us_gui_settings.h"
+#include "us_plot.h"
+#include "us_math2.h"
+#include "us_db2.h"
+#include "us_passwd.h"
+#include "us_investigator.h"
+#include "us_constants.h"
+#include "us_report.h"
+#include "us_gui_util.h"
+#include "us_util.h"
+#include "us_sleep.h"
+#include "us_editor.h"
+#include "us_images.h"
+
+#ifdef WIN32
+#include <float.h>
+#define isnan _isnan
+#endif
+
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
+int main( int argc, char* argv[] )
+{
+   QApplication application( argc, argv );
+
+   #include "main1.inc"
+
+   // License is OK.  Start up.
+   
+   US_MwlSpectra ww;
+   ww.show();                  //!< \memberof QWidget
+   return application.exec();  //!< \memberof QApplication
+}
+
+US_MwlSpectra::US_MwlSpectra() : US_Widgets()
+{
+   const QChar chlamb( 955 );
+
+   setWindowTitle( tr( "Multi-Wavelength S Spectra Viewer" ) );
+   setPalette( US_GuiSettings::frameColor() );
+
+   QGridLayout* settings = new QGridLayout;
+
+   nsmooth      = 1;
+   dbg_level    = US_Settings::us_debug();
+   mfilter      = "";
+   p3d_ctld     = NULL;
+   p3d_pltw     = NULL;
+   runID        = "";
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   int fwid     = fmet.maxWidth();
+   int lwid     = fwid * 3;
+
+   // Disk/DB controls
+   dkdb_cntrls  = new US_Disk_DB_Controls(
+                     US_Settings::default_data_location() );
+
+   // Load controls     
+   QLabel*      lb_run      = us_banner    ( tr( "Load the Models" ) );
+                pb_prefilt  = us_pushbutton( tr( "Select PreFilter" ) );
+                pb_loaddis  = us_pushbutton( tr( "Load Distributions" ) );
+                pb_reset    = us_pushbutton( tr( "Reset Data" ) );
+                pb_details  = us_pushbutton( tr( "Data Details" ), false );
+
+   int rhgt     = pb_prefilt->height();
+   QLabel*      lb_smooth   = us_label( tr( "%1 Gaussian Smooth Points:" )
+                                        .arg( chlamb),
+                                        -1 );
+                ct_smooth   = us_counter( 1, 1, 100, 1 );
+   ct_smooth->setStep( 1.0 );
+   ct_smooth->setFont( sfont );
+   ct_smooth->setMinimumWidth( fwid );
+   ct_smooth->resize( rhgt, lwid );
+   ct_smooth->setValue( nsmooth );
+
+   // Plot Range controls     
+   QLabel*      lb_prcntls  = us_banner( tr( "Plot Range Controls" ) );
+   QLabel*      lb_sstart   = us_label( tr( "S Start:"   ), -1 );
+                cb_sstart   = us_comboBox();
+   QLabel*      lb_send     = us_label( tr( "S End:"     ), -1 );
+                cb_send     = us_comboBox();
+   QLabel*      lb_lstart   = us_label( tr( "%1 Start:"   ).arg( chlamb ), -1 );
+                cb_lstart   = us_comboBox();
+   QLabel*      lb_lend     = us_label( tr( "%1 End:"     ).arg( chlamb ), -1 );
+                cb_lend     = us_comboBox();
+                lb_pltrec   = us_label( tr( "S x 10^13:" ) );
+                cb_pltrec   = us_comboBox();
+   cb_pltrec ->addItem( "1.00" );
+   cb_pltrec ->addItem( "1.10" );
+
+                pb_prev     = us_pushbutton( tr( "Previous" ) );
+                pb_next     = us_pushbutton( tr( "Next" ) );
+   pb_prev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
+   pb_next->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+
+   // Advanced Plotting controls
+   QLabel*      lb_advplot  = us_banner( tr( "Advanced Plotting Control" ) );
+                pb_plot2d   = us_pushbutton( tr( "Refresh 2D Plot" ) );
+                pb_movie2d  = us_pushbutton( tr( "Show 2D Movie"   ) );
+                pb_plot3d   = us_pushbutton( tr( "Plot 3D"         ) );
+                pb_svplot   = us_pushbutton( tr( "Save Plot(s)"    ) );
+                pb_svmovie  = us_pushbutton( tr( "Save Movie"      ) );
+   QLabel*      lb_delay    = us_label( tr( "Delay" ) );
+                ct_delay    = us_counter( 1, 0.1, 10.0, 0.1 );
+   ct_delay ->setStep( 0.1 );
+   ct_delay ->setFont( sfont );
+   ct_delay ->setMinimumWidth( fwid );
+   ct_delay ->resize( rhgt, lwid );
+   ct_delay ->setValue( 1.0 );
+
+   // Status and standard pushbuttons
+   QLabel*      lb_status   = us_banner( tr( "Status" ) );
+                le_status   = us_lineedit( tr( "(no data loaded)" ), -1, true );
+   QPalette stpal;
+   stpal.setColor( QPalette::Text, Qt::white );
+   stpal.setColor( QPalette::Base, Qt::blue  );
+   le_status->setPalette( stpal );
+
+   QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
+   QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
+
+   // Signals and Slots
+   connect( pb_prefilt,   SIGNAL( clicked()        ),
+            this,         SLOT  ( select_prefilt() ) );
+   connect( pb_loaddis,   SIGNAL( clicked()        ),
+            this,         SLOT  ( load_distro()    ) );
+   connect( pb_reset,     SIGNAL( clicked()  ),
+            this,         SLOT  ( resetAll() ) );
+   connect( pb_details,   SIGNAL( clicked()    ),
+            this,         SLOT  ( runDetails() ) );
+   connect( cb_sstart,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeSedcoeff( )            ) );
+   connect( cb_send,      SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeSedcoeff( )            ) );
+   connect( cb_lstart,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeLambda( )            ) );
+   connect( cb_lend,      SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeLambda( )            ) );
+   connect( ct_smooth,    SIGNAL( valueChanged( double     ) ),
+            this,         SLOT  ( changeSmooth()             ) );
+   connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeRecord( )            ) );
+   connect( pb_prev,      SIGNAL( clicked()  ),
+            this,         SLOT  ( prevPlot() ) );
+   connect( pb_next,      SIGNAL( clicked()  ),
+            this,         SLOT  ( nextPlot() ) );
+   connect( pb_plot2d,    SIGNAL( clicked()       ),
+            this,         SLOT  ( changeRecord()  ) );
+   connect( pb_movie2d,   SIGNAL( clicked()       ),
+            this,         SLOT  ( show_2d_movie() ) );
+   connect( pb_plot3d,    SIGNAL( clicked()       ),
+            this,         SLOT  ( plot_3d()       ) );
+   connect( pb_svmovie,   SIGNAL( clicked()       ),
+            this,         SLOT  ( save_movie()    ) );
+   connect( pb_help,      SIGNAL( clicked()  ),
+            this,         SLOT  ( help()     ) );
+   connect( pb_close,     SIGNAL( clicked()  ),
+            this,         SLOT  ( close()    ) );
+
+   // Do the left-side layout
+   int row = 0;
+   settings->addLayout( dkdb_cntrls,   row++, 0, 1, 8 );
+   settings->addWidget( lb_run,        row++, 0, 1, 8 );
+   settings->addWidget( pb_prefilt,    row,   0, 1, 4 );
+   settings->addWidget( pb_loaddis,    row++, 4, 1, 4 );
+   settings->addWidget( pb_reset,      row,   0, 1, 4 );
+   settings->addWidget( pb_details,    row++, 4, 1, 4 );
+   settings->addWidget( lb_prcntls,    row++, 0, 1, 8 );
+   settings->addWidget( lb_sstart,     row,   0, 1, 2 );
+   settings->addWidget( cb_sstart,     row,   2, 1, 2 );
+   settings->addWidget( lb_send,       row,   4, 1, 2 );
+   settings->addWidget( cb_send,       row++, 6, 1, 2 );
+   settings->addWidget( lb_lstart,     row,   0, 1, 2 );
+   settings->addWidget( cb_lstart,     row,   2, 1, 2 );
+   settings->addWidget( lb_lend,       row,   4, 1, 2 );
+   settings->addWidget( cb_lend,       row++, 6, 1, 2 );
+   settings->addWidget( lb_smooth,     row,   0, 1, 4 );
+   settings->addWidget( ct_smooth,     row++, 4, 1, 2 );
+   settings->addWidget( lb_pltrec,     row,   0, 1, 2 );
+   settings->addWidget( cb_pltrec,     row,   2, 1, 2 );
+   settings->addWidget( pb_prev,       row,   4, 1, 2 );
+   settings->addWidget( pb_next,       row++, 6, 1, 2 );
+   settings->addWidget( lb_advplot,    row++, 0, 1, 8 );
+   settings->addWidget( pb_plot2d,     row,   0, 1, 4 );
+   settings->addWidget( pb_movie2d,    row++, 4, 1, 4 );
+   settings->addWidget( pb_plot3d,     row,   0, 1, 4 );
+   settings->addWidget( lb_delay,      row,   4, 1, 2 );
+   settings->addWidget( ct_delay,      row++, 6, 1, 2 );
+   settings->addWidget( pb_svplot,     row,   0, 1, 4 );
+   settings->addWidget( pb_svmovie,    row++, 4, 1, 4 );
+   settings->addWidget( lb_status,     row++, 0, 1, 8 );
+   settings->addWidget( le_status,     row++, 0, 1, 8 );
+   settings->addWidget( pb_help,       row,   0, 1, 4 );
+   settings->addWidget( pb_close,      row++, 4, 1, 4 );
+
+   // Plot layout for the right side of window
+   QBoxLayout* plot = new US_Plot( data_plot,
+                                   tr( "S Record Spectrum Data"
+                                       "\nS (x 10^13) :  1.12" ),
+                                   tr( "Wavelength (nm)" ), 
+                                   tr( "Concentration (OD)" ) );
+
+   data_plot->setMinimumSize( 600, 400 );
+
+   data_plot->enableAxis( QwtPlot::xBottom, true );
+   data_plot->enableAxis( QwtPlot::yLeft  , true );
+
+   data_plot->setAxisScale( QwtPlot::xBottom, 230, 450 );
+   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
+
+   picker = new US_PlotPicker( data_plot );
+   picker->setRubberBand     ( QwtPicker::VLineRubberBand );
+   picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
+                               Qt::LeftButton, Qt::ControlModifier );
+
+   // Now let's assemble the page
+
+   QVBoxLayout* left     = new QVBoxLayout;
+   QVBoxLayout* right    = new QVBoxLayout;
+   QHBoxLayout* main     = new QHBoxLayout( this );
+
+   left ->addLayout( settings );
+   right->addLayout( plot );
+
+   main->setSpacing         ( 2 );
+   main->setContentsMargins ( 2, 2, 2, 2 );
+   main->addLayout( left );
+   main->addLayout( right );
+   main->setStretch( 0, 2 );
+   main->setStretch( 1, 4 );
+
+   reset();
+   adjustSize();
+}
+
+// Completely reset GUI element states and all data
+void US_MwlSpectra::reset( void )
+{
+   pb_prefilt->setEnabled( true );
+   pb_loaddis->setEnabled( true );
+   pb_details->setEnabled( false );
+   cb_sstart ->setEnabled( false );
+   cb_send   ->setEnabled( false );
+   cb_lstart ->setEnabled( false );
+   cb_lend   ->setEnabled( false );
+   ct_smooth ->setEnabled( false );
+   cb_pltrec ->setEnabled( false );
+   pb_prev   ->setEnabled( false );
+   pb_next   ->setEnabled( false );
+   pb_reset  ->setEnabled( false );
+   pb_plot2d ->setEnabled( false );
+   pb_movie2d->setEnabled( false );
+   pb_plot3d ->setEnabled( false );
+   pb_svplot ->setEnabled( false );
+   pb_svmovie->setEnabled( false );
+
+   // Clear any data structures
+   lambdas   .clear();
+   sedcoes   .clear();
+
+   data_plot->detachItems();
+   picker   ->disconnect();
+   data_plot->setAxisScale( QwtPlot::xBottom, 230, 450 );
+   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
+   grid          = us_grid( data_plot );
+   data_plot->replot();
+
+   last_xmin       = -1.0;
+   last_xmax       = -1.0;
+   last_ymin       = -1.0;
+   last_ymax       = -1.0;
+
+   le_status->setText( tr( "(no distributions loaded)" ) );
+}
+
+// Slot to reset
+void US_MwlSpectra::resetAll( void )
+{
+   if ( mdlxyz.count() > 0 )
+   {
+      int status = QMessageBox::information( this,
+               tr( "New Data Warning" ),
+               tr( "This will erase all data currently on the screen, and " 
+                   "reset the program to its starting condition. No hard-drive "
+                   "data or database information will be affected. Proceed? " ),
+               tr( "&OK" ), tr( "&Cancel" ),
+               0, 0, 1 );
+      if ( status != 0 ) return;
+   }
+
+   reset();
+
+   runID           = "";
+   data_plot->setTitle( tr( "S Record Spectrum Data"
+                            "\nS (x 10^13) :  1.00" ) );
+}
+
+
+// Enable the common dialog controls based on the presence of data
+void US_MwlSpectra::enableControls( void )
+{
+   if ( mdlxyz.count() == 0 )
+   {  // If no data yet, just reset
+      reset();
+      return;
+   }
+
+   // Enable and disable controls now
+   pb_prefilt->setEnabled( false );
+   pb_loaddis->setEnabled( false );
+   pb_reset  ->setEnabled( true );
+   pb_details->setEnabled( true );
+   cb_sstart ->setEnabled( true );
+   cb_send   ->setEnabled( true );
+   cb_lstart ->setEnabled( true );
+   cb_lend   ->setEnabled( true );
+   ct_smooth ->setEnabled( true );
+   cb_pltrec ->setEnabled( true );
+   pb_prev   ->setEnabled( true );
+   pb_next   ->setEnabled( true );
+   pb_plot2d ->setEnabled( true );
+   pb_movie2d->setEnabled( true );
+   pb_plot3d ->setEnabled( true );
+   pb_svplot ->setEnabled( true );
+   pb_svmovie->setEnabled( true );
+
+   nlambda     = lambdas .count();
+   nsedcos     = sedcoes .count();
+   ntpoint     = nlambda * nsedcos;
+   QStringList slscos;
+   QStringList sllmbs;
+
+   for ( int jj = 0; jj < nsedcos; jj++ )
+      slscos << QString::number( sedcoes[ jj ] );
+
+   for ( int jj = 0; jj < nlambda; jj++ )
+      sllmbs << QString::number( lambdas[ jj ] );
+
+   connect_ranges( false );
+   cb_sstart ->clear();
+   cb_send   ->clear();
+   cb_lstart ->clear();
+   cb_lend   ->clear();
+   cb_pltrec ->clear();
+
+   cb_sstart ->addItems( slscos );
+   cb_send   ->addItems( slscos );
+   cb_lstart ->addItems( sllmbs );
+   cb_lend   ->addItems( sllmbs );
+   cb_pltrec ->addItems( slscos );
+
+   cb_sstart ->setCurrentIndex( 0 );
+   cb_send   ->setCurrentIndex( nsedcos - 1 );
+   cb_lstart ->setCurrentIndex( 0 );
+   cb_lend   ->setCurrentIndex( nlambda - 1 );
+   connect_ranges( true );
+
+   have_rngs    = false;
+   compute_ranges( );
+
+   // Force a plot initialize
+   cb_pltrec ->setCurrentIndex( nlambda / 2 );
+   qApp->processEvents();
+}
+
+// Select raw/edit run(s) as model prefilter
+void US_MwlSpectra::select_prefilt( )
+{
+   pfilts.clear();
+
+   US_SelectEdits sediag( dkdb_cntrls->db(), pfilts );
+   sediag.move( this->pos() + QPoint( 200, 200 ) );
+   connect( &sediag, SIGNAL( dkdb_changed  ( bool ) ),
+            this,    SLOT  ( update_disk_db( bool ) ) );
+
+   if ( sediag.exec() != QDialog::Accepted )
+      pfilts.clear();
+}
+
+// Load model distribution(s)
+void US_MwlSpectra::load_distro( )
+{
+   // Get models and model descriptions
+   QList< US_Model > models;
+   bool loadDB = dkdb_cntrls->db();
+
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   US_ModelLoader lddiag( loadDB, mfilter, models, mdescs, pfilts );
+   lddiag.move( this->pos() + QPoint( 200, 200 ) );
+
+   connect( &lddiag, SIGNAL( changed       ( bool ) ),
+            this,    SLOT  ( update_disk_db( bool ) ) );
+   QApplication::restoreOverrideCursor();
+
+   if ( lddiag.exec() != QDialog::Accepted )
+      return;   // No selection made
+
+   // Load all models and build preliminary vectors
+
+   mdlxyz .clear();
+   xyzdat .clear();
+   lambdas.clear();
+   sedcoes.clear();
+   wl_min        = 1e+39;
+   wl_max        = 1e-39;
+   se_min        = 1e+39;
+   se_max        = 1e-39;
+   co_min        = 1e+39;
+   co_max        = 1e-39;
+   nipoint       = 0;
+   nnpoint       = 0;
+   ntpoint       = 0;
+
+   resetAll();
+
+   for ( int jj = 0; jj < models.count(); jj++ )
+   {  // Load each selected distribution model
+      load_distro( models[ jj ], mdescs[ jj ] );
+   }
+
+   // Sort points and build normalized concentrations
+
+   qSort( sedcoes );
+   qSort( lambdas );
+   nsedcos       = sedcoes.count();
+   nlambda       = lambdas.count();
+   nipoint       = mdlxyz .count();
+DbgLv(1) << "LD: nlambda" << nlambda << "nsedcos" << nsedcos
+  << "nipoint" << nipoint;
+   nc_max        = 0;
+   cn_max        = 0.0;
+   QVector3D vecdat( 0.0, 0.0, 0.0 );
+   static const double SED_EPS = 0.001;
+
+   for ( int jj = 0; jj < nsedcos; jj++ )
+   {
+      double sedco  = sedcoes[ jj ];
+DbgLv(1) << "LD:  jj" << jj << "sedco" << sedco;
+
+      for ( int ii = 0; ii < nlambda; ii++ )
+      {
+         int lambda    = lambdas[ ii ];
+         double waveln = (double)lambda;
+DbgLv(1) << "LD:    ii" << ii << "lambda" << lambda;
+         double conc   = 0.0;
+         double csum   = 0.0;
+         int nconcs    = 0;
+
+         for ( int kk = 0; kk < nipoint; kk++ )
+         {
+if(kk<2||(kk+3)>nipoint)
+DbgLv(1) << "LD:      kk" << kk << "X,Y" << mdlxyz[kk].x() << mdlxyz[kk].y();
+            double delta_s   = qAbs( ( mdlxyz[ kk ].y() - sedco ) / sedco );
+            if ( mdlxyz[ kk ].y() == sedco  &&  mdlxyz[ kk ].x() == waveln )
+            {
+               nconcs++;
+               csum          += mdlxyz[ kk ].z();
+            }
+else if ( mdlxyz[kk].x()==waveln && delta_s < SED_EPS )
+{
+ DbgLv(1) << "LD:      kk" << kk << "**Y,S" << mdlxyz[kk].y() << sedco
+  << "x,z" << mdlxyz[kk].x() << mdlxyz[kk].z() << "dS" << delta_s;
+               nconcs++;
+               csum          += mdlxyz[ kk ].z();
+}
+         }
+
+         if ( nconcs > 0 )
+         {
+            conc          = csum / (double)nconcs;
+            nc_max        = qMax( nc_max, nconcs );
+            cn_max        = qMax( cn_max, conc );
+            nnpoint++;
+if(nconcs>5||conc>1000.0)
+DbgLv(1) << "LD: **nc_max cn_max" << nc_max << cn_max << "nconcs conc"
+ << nconcs << conc << "jj,ii" << jj << ii << "s wl" << sedco << lambda;
+         }
+
+         else
+         {
+            conc           = 0.0;
+         }
+
+         xyzdat << QVector3D( waveln, sedco, conc );
+DbgLv(1) << "LD:     nconcs" << nconcs;
+      }
+   }
+
+   ntpoint       = xyzdat  .count();
+DbgLv(1) << "LD: nipoint" << nipoint << "nnpoint" << nnpoint << "ntpoint"
+ << ntpoint << "nc_max" << nc_max << "cn_max" << cn_max;
+   int kdx       = 0;
+
+   // Create the 2-D concentration vectors for each sed.coeff.
+   for ( int jj = 0; jj < nsedcos; jj++ )
+   {
+      QVector< double > cvect;
+
+      for ( int ii = 0; ii < nlambda; ii++ )
+      {
+         cvect << xyzdat[ kdx++ ].z();
+      }
+
+      // Save the concentration vector for lambdas of this sedcoeff
+      concdat << cvect;
+   }
+DbgLv(1) << "LD: concdat size" << concdat.size() << nsedcos;
+
+   // Ok to enable some buttons now
+   enableControls();
+}
+
+// Load distributions from a single model
+void US_MwlSpectra::load_distro( const US_Model model, const QString mdescr )
+{
+   QString mdesc = mdescr.section( mdescr.left( 1 ), 1, 1 );
+   int lambda    = qRound( model.wavelength );
+
+   if ( lambda < 1 )
+   {  // If model has no wavelength, get it from the description
+      mdesc         = mdesc.endsWith( "model" ) ? mdesc : model.description;
+      lambda        = mdesc.section( ".", -3, -3 ).mid( 2 ).toInt();
+   }
+
+   if ( runID.isEmpty() )
+   {
+      runID         = mdesc.section( ".", -4, -4 );
+   }
+
+   double waveln = (double)lambda;
+   wl_min        = qMin( wl_min, waveln );
+   wl_max        = qMax( wl_max, waveln );
+   if ( ! lambdas.contains( lambda ) )
+      lambdas << lambda;
+
+   for ( int jj = 0; jj < model.components.size(); jj++ )
+   {
+      double sedc   = model.components[ jj ].s * 1e+13;
+      double conc   = model.components[ jj ].signal_concentration;
+      se_min        = qMin( se_min, sedc );
+      se_max        = qMax( se_max, sedc );
+      co_min        = qMin( co_min, conc );
+      co_max        = qMax( co_max, conc );
+
+      mdlxyz  << QVector3D( waveln, sedc, conc );
+if(conc>1000.0)
+DbgLv(1) << "LD: **co_max" << co_max << "conc" << conc << "jj" << jj
+ << "lambda sedc" << lambda << sedc << "mdesc" << mdesc;
+
+      if ( ! sedcoes.contains( sedc ) )
+         sedcoes << sedc;
+   }
+}
+
+// Display detailed information about the data
+void US_MwlSpectra::runDetails( void )
+{
+   int nmodels   = mdescs.count();
+   int lmx       = nmodels - 1;
+   QString fmd   = mdescs[   0 ].section( mdescs[   0 ].left( 1 ), 1, 1 );
+   QString lmd   = mdescs[ lmx ].section( mdescs[ lmx ].left( 1 ), 1, 1 );
+
+   QString msg = tr( "Multi-Wavelength Statistics for RunID %1 --\n\n" )
+      .arg( runID );
+   msg += tr( "General Models Values and Counts.\n" );
+   msg += tr( "   First Model Description:      %1\n" ).arg( fmd );
+   msg += tr( "   Last Model Description:       %1\n" ).arg( lmd );
+   msg += tr( "   Models Loaded:                %1\n" ).arg( nmodels ); 
+   msg += tr( "   Sedimentation Coefficients:   %1\n" ).arg( nsedcos );
+   msg += tr( "   Wavelengths:                  %1\n" ).arg( nlambda );
+   msg += tr( "   Total Loaded Points:          %1\n" ).arg( nipoint );
+   msg += tr( "\nNormalized Composite Input Grid.\n" );
+   msg += tr( "   Points after Normalizing:     %1\n" ).arg( nnpoint );
+   msg += tr( "   Maximum Single-Bin Points:    %1\n" ).arg( nc_max );
+   msg += tr( "Padded Full S x Lambda Grid.\n" );
+   msg += tr( "   Grid Points:                  %1\n" ).arg( ntpoint );
+   msg += tr( "   Minimum Sedimentation Coeff.: %1\n" ).arg( se_min );
+   msg += tr( "   Maximum Sedimentation Coeff.: %1\n" ).arg( se_max );
+   msg += tr( "   Minimum Wavelength (nm):      %1\n" ).arg( wl_min );
+   msg += tr( "   Maximum Wavelength (nm):      %1\n" ).arg( wl_max );
+   msg += tr( "   Minimum Concentration (OD):   %1\n" ).arg( co_min );
+   msg += tr( "   Maximum Concentration (OD):   %1\n" ).arg( co_max );
+   msg += tr( "Current Plotting Controls.\n" );
+   msg += tr( "   Start Sedimentation Coeff.:   %1\n" ).arg( sed_start );
+   msg += tr( "   End Sedimentation Coeff.:     %1\n" ).arg( sed_end );
+   msg += tr( "   Start Wavelength:             %1\n" ).arg( lmb_start );
+   msg += tr( "   End Wavelength:               %1\n" ).arg( lmb_end );
+
+   // Open the dialog and display the report text
+   US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true );
+   editd->setWindowTitle( tr( "Multi-Wavelength Spectra Statistics" ) );
+   editd->move( pos() + QPoint( 200, 200 ) );
+   editd->resize( 600, 500 );
+   editd->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                             US_GuiSettings::fontSize() ) );
+   editd->e->setText( msg );
+   editd->show();
+}
+
+// Plot the current data record
+void US_MwlSpectra::plot_current( void )
+{
+   if ( mdlxyz.count() == 0 )
+      return;
+
+   plot_titles();     // Set the titles
+
+   plot_all();        // Plot the data
+}
+
+// Compose plot titles for the current record
+void US_MwlSpectra::plot_titles( void )
+{
+   QString prec     = cb_pltrec->currentText();
+
+   // Plot Title
+   QString title = tr( "Sedimentation Coefficient Spectrum\n"
+                       "Run ID :  " ) + runID + "\ns (x 10^13) :  " + prec;
+
+   data_plot->setTitle( title );
+}
+
+// Draw wavelength,concentration curves for the current sedcoeff plot record
+void US_MwlSpectra::plot_all( void )
+{
+   data_plot->detachItems();
+   grid         = us_grid( data_plot );
+
+   // Make sure ranges are set up, then build a smoothed data vector
+   have_rngs    = false;
+   compute_ranges();
+
+   US_Math2::gaussian_smoothing( pltyvals, nsmooth );
+
+int knz=0;
+double cmx=0.0;
+for(int ii=0;ii<kpoint;ii++)
+{ double cvl=pltyvals[ii];if(cvl!=0.0) knz++; cmx=qMax(cmx,cvl); }
+DbgLv(1) << "PltA: kpoint" << kpoint << "knz" << knz << "cmx" << cmx;
+   // Point to the X,Y vectors
+   double* rr   = pltxvals.data();
+   double* vv   = pltyvals.data();
+
+   QPen          pen_plot( US_GuiSettings::plotCurve() );
+   QString       title  = tr( "s=%1 sindex=%2" ).arg( sed_plot ).arg( sedxp );
+   QwtPlotCurve* curv   = us_curve( data_plot, title );
+
+   curv->setPen( pen_plot );            // Normal pen
+
+   curv->setData( rr, vv, kpoint );     // Build a sed.coeff. curve
+//DbgLv(1) << "PltA:   scx" << scx << "rr0 vv0 rrn vvn"
+// << rr[0] << rr[kpoint-1] << vv[0] << vv[kpoint-1];
+
+DbgLv(1) << "PltA: last_xmin" << last_xmin;
+   if ( last_xmin < 0.0 )
+   {  // If first time, set scales based on actual values present
+      last_xmin    = lmb_start;         // Set X limits
+      last_xmax    = lmb_end;
+      last_ymin    = 0.0;               // Set Y limits
+      last_ymax    = co_max; 
+      data_plot->setAxisScale( QwtPlot::xBottom, last_xmin, last_xmax );
+      data_plot->setAxisScale( QwtPlot::yLeft  , last_ymin, last_ymax );
+   }
+
+   else
+   {  // After first time, use the same plot ranges as set before
+      data_plot->setAxisScale( QwtPlot::xBottom, last_xmin, last_xmax );
+      data_plot->setAxisScale( QwtPlot::yLeft  , last_ymin, last_ymax );
+   }
+
+   // Draw the plot
+   data_plot->replot();
+
+   // Pick up the actual bounds plotted (including any Config changes)
+   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+   last_xmin      = sdx->lowerBound();
+   last_xmax      = sdx->upperBound();
+   last_ymin      = sdy->lowerBound();
+   last_ymax      = sdy->upperBound();
+DbgLv(1) << "PltA: xlo xhi" << last_xmin << last_xmax
+ << "ylo yhi" << last_ymin << last_ymax;
+}
+
+// Slot to handle a change in start or end sedimentation coefficient
+void US_MwlSpectra::changeSedcoeff()
+{
+DbgLv(1) << "chgRadius";
+   have_rngs    = false;
+   compute_ranges();                        // Recompute ranges
+}
+
+// Slot to handle a change in start or end lambda
+void US_MwlSpectra::changeLambda()
+{
+DbgLv(1) << "chgLambda";
+   have_rngs    = false;
+   compute_ranges();                        // Recompute ranges
+}
+ 
+// Slot to handle a change in the plot record
+void US_MwlSpectra::changeRecord( void )
+{
+   recx           = cb_pltrec->currentIndex();
+DbgLv(1) << "chgRec: recx" << recx;
+   bool plt_one   = ! le_status->text().contains( tr( "saving" ) );
+
+   // Plot what we have
+   plot_current();
+
+   // Update status text (if not part of movie save) and set prev/next arrows
+   if ( plt_one )
+      le_status->setText( lb_pltrec->text() + " " + cb_pltrec->currentText() );
+   int lrecx       = cb_pltrec->count() - 1;
+   pb_prev  ->setEnabled( ( recx > 0 ) );
+   pb_next  ->setEnabled( ( recx < lrecx ) );
+}
+
+// Slot to handle a click to go to the previous record
+void US_MwlSpectra::prevPlot( void )
+{
+   int pltrx      = cb_pltrec->currentIndex() - 1;
+
+   if ( pltrx < 1 )
+   {
+      pltrx          = 0;
+      pb_prev->setEnabled( false );
+   }
+
+   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+   last_xmin      = sdx->lowerBound();
+   last_xmax      = sdx->upperBound();
+   last_ymin      = sdy->lowerBound();
+   last_ymax      = sdy->upperBound();
+
+   cb_pltrec->setCurrentIndex( pltrx );
+}
+
+// Slot to handle a click to go to the next record
+void US_MwlSpectra::nextPlot( void )
+{
+   int pltrx      = cb_pltrec->currentIndex() + 1;
+   int nitems     = cb_pltrec->count();
+
+   if ( ( pltrx + 2 ) > nitems )
+   {
+      pltrx          = nitems - 1;
+      pb_next->setEnabled( false );
+   }
+
+   QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+   last_xmin      = sdx->lowerBound();
+   last_xmax      = sdx->upperBound();
+   last_ymin      = sdy->lowerBound();
+   last_ymax      = sdy->upperBound();
+
+   cb_pltrec->setCurrentIndex( pltrx );
+}
+
+// Slot to handle a change in the number of smoothing points
+void US_MwlSpectra::changeSmooth()
+{
+DbgLv(1) << "chgSmooth:";
+   nsmooth        = ct_smooth->value();
+
+   plot_all();
+}
+
+// Compute the plot range indexes implied by current settings
+void US_MwlSpectra::compute_ranges()
+{
+   if ( have_rngs )         // If we just did this computation, return now
+      return;
+
+   sed_start  = cb_sstart ->currentText().toDouble();  // Sedcoeff start
+   sed_end    = cb_send   ->currentText().toDouble();  // Sedcoeff end
+   lmb_start  = cb_lstart ->currentText().toInt();     // Lambda start
+   lmb_end    = cb_lend   ->currentText().toInt();     // Lambda end
+   sed_plot   = cb_pltrec ->currentText().toDouble();  // Sedcoeff plot record
+   lmbxs      = lambdas.indexOf( lmb_start );          // Lambda start index
+   lmbxe      = lambdas.indexOf( lmb_end   ) + 1;      // Lambda end index
+   sedxs      = dvec_index( sedcoes, sed_start );      // SedCoef start index
+   sedxe      = dvec_index( sedcoes, sed_end   ) + 1;  // SedCoef end index
+   sedxp      = dvec_index( sedcoes, sed_plot  );      // SedCoef plot rec index
+   recx       = cb_pltrec->currentIndex();             // Index in plot sedcos
+DbgLv(1) << "cmpR:  sS sE sxS sxE" << sed_start << sed_end << sedxs << sedxe
+ << "sxP rx" << sedxp << recx;
+   klambda    = lmbxe - lmbxs;                         // Count of plot lambdas
+   ksedcos    = sedxe - sedxs;                         // Count of plot sedcos
+   kpoint     = klambda;                               // Plot x,y points
+   pltxvals.clear();
+   pltyvals.clear();
+
+   // Get lambda values in current plot range
+   for ( int ii = lmbxs; ii < lmbxe; ii++ )
+      pltxvals << (double)lambdas[ ii ];
+
+   // Get concentrations from current sedcoeff record, in current lambda range
+   for ( int ii = lmbxs; ii < lmbxe; ii++ )
+      pltyvals << concdat[ sedxp ][ ii ];
+
+   have_rngs  = true;                                  // Mark ranges computed
+}
+
+// Connect or Disconnect plot-range related controls
+void US_MwlSpectra::connect_ranges( bool conn )
+{
+   if ( conn )
+   {  // Connect the range-related controls
+      connect( cb_sstart,  SIGNAL( currentIndexChanged( int ) ),
+               this,       SLOT  ( changeSedcoeff(          ) ) );
+      connect( cb_send,    SIGNAL( currentIndexChanged( int ) ),
+               this,       SLOT  ( changeSedcoeff(          ) ) );
+      connect( cb_lstart,  SIGNAL( currentIndexChanged( int ) ),
+               this,       SLOT  ( changeLambda(            ) ) );
+      connect( cb_lend,    SIGNAL( currentIndexChanged( int ) ),
+               this,       SLOT  ( changeLambda(            ) ) );
+      connect( cb_pltrec,  SIGNAL( currentIndexChanged( int ) ),
+               this,       SLOT  ( changeRecord(            ) ) );
+   }
+
+   else
+   {  // Disconnect the range-related controls
+      cb_sstart ->disconnect();
+      cb_send   ->disconnect();
+      cb_lstart ->disconnect();
+      cb_lend   ->disconnect();
+      cb_pltrec ->disconnect();
+   }
+}
+
+// Slot to show a 2-D movie
+void US_MwlSpectra::show_2d_movie()
+{
+DbgLv(1) << "Show 2D Movie";
+   // Loop to plot each record in the current cell
+   int krecs       = cb_pltrec->count();
+   int svrec       = recx;                  // Save currently plotted record
+   int mdelay      = (int)qRound( ct_delay->value() * 1000.0 );
+
+   for ( int prx = 0; prx < krecs; prx++ )
+   {
+      cb_pltrec->setCurrentIndex( prx );    // Plot each record in the range
+      qApp->processEvents();
+      US_Sleep::msleep( mdelay );           // Delay between frames
+   }
+
+   cb_pltrec->setCurrentIndex( svrec );     // Restore previous plot record
+   qApp->processEvents();
+}
+
+// Slot to open a dialog for 3-D plotting
+void US_MwlSpectra::plot_3d()
+{
+DbgLv(1) << "Plt3D";
+   if ( p3d_ctld == NULL )
+   {
+      p3d_pltw     = NULL;
+      p3d_ctld     = new US_MwlSPlotControl( this, &xyzdat );
+      p3d_ctld->show();
+      // Position near one corner of the desktop
+      int mx       = x();
+      int my       = y();
+      int nmx      = width();
+      int nmy      = height();
+      int ndx      = qApp->desktop()->width();
+      int ndy      = qApp->desktop()->height();
+      int mmx      = mx + nmx / 2;
+      int mmy      = my + nmy / 2;
+      int ncx      = p3d_ctld->width();
+      int ncy      = p3d_ctld->height();
+      int cx       = ( mmx > ( ndx / 2 ) ) ? 20 : ( ndx - ncx - 20 );
+      int cy       = ( mmy > ( ndy / 2 ) ) ? 20 : ( ndy - ncy - 20 );
+      p3d_ctld->move( cx, cy );
+      connect( p3d_ctld, SIGNAL( has_closed()     ),
+               this,     SLOT  ( p3dctrl_closed() ) );
+   }
+
+   else
+   {
+      p3d_ctld->setFocus();
+      p3d_ctld->do_3dplot();
+
+      p3d_pltw     = p3d_ctld->widget_3dplot();
+
+      if ( p3d_pltw != NULL )
+      {
+         p3d_pltw->reloadData( &xyzdat );
+
+         QString ptitle = tr( "MWL 3-D Plot" );
+
+         p3d_pltw->setPlotTitle( ptitle );
+         p3d_pltw->replot();
+      }
+   }
+
+}
+
+// Slot to save the current plot
+void US_MwlSpectra::save_plot()
+{
+DbgLv(1) << "Save Plot";
+   QString savedir = US_Settings::reportDir() + "/" + runID;
+   QDir().mkpath( savedir );
+   savedir         = savedir.replace( "\\", "/" ) + "/";
+   QString fname2d = runID + ".radRec_RRRRR_2D.png";
+   QString fname3d = runID + ".Scan_SSSS_3D.png";
+   p3d_pltw        = ( p3d_ctld == NULL ) ? NULL : p3d_ctld->widget_3dplot();
+   int nfiles      = ( p3d_pltw != NULL ) ? 2 : 1;
+   int scan_nbr    = 1;
+
+   if ( nfiles == 2 )
+   {  // If there is a 3D window, first save a PNG of that window
+
+      p3d_pltw->replot();                // Do the plot
+      QString s_scan  = QString().sprintf( "%04d", scan_nbr );
+      fname3d         = fname3d.replace( "SSSS", s_scan  );
+      QString fpath3d = savedir + fname3d;
+
+      p3d_pltw->save_plot( fpath3d, QString( "png" ) );
+   }
+
+   // Always save a PNG of the 2-D plot
+   QString ccr     = "1/A/280";
+   QString rec_str = ccr + cb_pltrec->currentText().remove( "." );
+   fname2d         = fname2d.replace( "RRRRR", rec_str );
+   QString fpath2d = savedir + fname2d;
+
+   US_GuiUtil::save_png( fpath2d, data_plot );
+
+   // Report the file(s) saved
+   QString mtitle  = ( nfiles == 1 )
+                   ? tr( "Plot File Saved" )
+                   : tr( "Plot Files Saved" );
+   QString msg     = tr( "In the directory\n     %1,\n\n" ).arg( savedir );
+   if ( nfiles == 1 )
+      msg            += tr( "File\n    %1 was saved." ).arg( fname2d );
+   else
+      msg            += tr( "Files\n    %1 ;  and\n    %2\nwere saved." )
+                        .arg( fname3d ).arg( fname2d );
+
+   QMessageBox::information( this, mtitle, msg );
+}
+
+// Slot to save the current movie
+void US_MwlSpectra::save_movie()
+{
+DbgLv(1) << "Save 2D Movie";
+   // Loop to plot each record in the cell and save an image to file
+   int krecs       = cb_pltrec->count();
+   int svrec       = recx;                  // Save currently plotted record
+   QStringList fnames;
+   QString savedir = US_Settings::reportDir() + "/" + runID;
+   QDir().mkpath( savedir );
+   savedir         = savedir.replace( "\\", "/" ) + "/";
+   QString bfname  = runID + ".2D_frame_XXXXX.png";
+   QString bstat   = tr( "Of %1 records, saving frame " ).arg( krecs );
+   le_status->setText( bstat );
+
+   for ( int prx = 0; prx < krecs; prx++ )
+   {
+      cb_pltrec->setCurrentIndex( prx );    // Plot each record in the range
+      qApp->processEvents();
+
+      QString frm_str = QString().sprintf( "%05d", ( prx + 1 ) );
+      QString fname   = QString( bfname ).replace( "XXXXX", frm_str );
+      QString fpath   = savedir + fname;
+
+      le_status->setText( bstat + frm_str );
+
+      US_GuiUtil::save_png( fpath, data_plot );
+      fnames << fname;
+   }
+
+   cb_pltrec->setCurrentIndex( svrec );     // Restore previous plot record
+   qApp->processEvents();
+
+   QMessageBox::information( this, tr( "Frame Files Saved" ),
+      tr( "In the directory\n     %1,\n\n%2 2-D movie frame files"
+          " were saved:\n     %3\n     ...\n     %4 ." )
+      .arg( savedir ).arg( krecs ).arg( fnames[ 0 ] )
+      .arg( fnames[ krecs - 1 ] ) );
+}
+
+// Utility to find an index in a QVector<double> to a value epsilon match
+int US_MwlSpectra::dvec_index( QVector< double >& dvec, const double dval )
+{
+   const double eps   = 1.e-4;
+
+   int indx    = dvec.indexOf( dval );   // Try to find an exact match
+
+   if ( indx < 0 )
+   {  // If no exact match was found, look for a match within epsilon
+
+      for ( int jj = 0; jj < dvec.size(); jj++ )
+      {  // Search doubles vector
+         double ddif     = qAbs( dvec[ jj ] - dval );
+
+         if ( ddif < eps )
+         {  // If vector value matches within epsilon, break and return
+            indx            = jj;
+            break;
+         }
+      }
+   }
+
+   return indx;
+}
+
+// Slot to handle the close of the 3D plot control dialog
+void US_MwlSpectra::p3dctrl_closed()
+{
+   p3d_ctld     = NULL;
+   p3d_pltw     = NULL;
+}
+
+// Reset Disk/DB controls whenever the data source is changed in any dialog
+void US_MwlSpectra::update_disk_db( bool isDB )
+{
+   if ( isDB )
+      dkdb_cntrls->set_db();
+   else
+      dkdb_cntrls->set_disk();
+}
+
