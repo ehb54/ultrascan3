@@ -310,11 +310,65 @@ us_setReadOnly( le_compress, true );
    progressLayout->addWidget( lb_progress );
    progressLayout->addWidget( progress    );
 
+   // Optional MC controls
+   QVBoxLayout* mcctlLayout  = new QVBoxLayout();
+   QHBoxLayout* mosbox       = new QHBoxLayout();
+                rb_curmod    = new QRadioButton();
+                rb_mean      = new QRadioButton();
+                rb_median    = new QRadioButton();
+                rb_mode      = new QRadioButton();
+   QGridLayout* rl_curmod    = us_radiobutton( tr("Current Model"), rb_curmod );
+   QGridLayout* rl_mean      = us_radiobutton( tr( "Mean" ),   rb_mean );
+   QGridLayout* rl_median    = us_radiobutton( tr( "Median" ), rb_median );
+   QGridLayout* rl_mode      = us_radiobutton( tr( "Mode" ),   rb_mode );
+   QGroupBox* gb_msim        = new QGroupBox();
+   mcctlLayout->setContentsMargins( 0, 0, 0, 0 );
+   gb_msim    ->setContentsMargins( 0, 2, 0, 2 );
+   mosbox     ->setContentsMargins( 0, 0, 0, 0 );
+   mosbox     ->setSpacing( 2 );
+   gb_msim    ->setFlat( true );
+   gb_msim    ->setPalette( US_GuiSettings::frameColor() );
+   gb_msim    ->setAutoFillBackground( true );
+               pb_nextm      = us_pushbutton( tr( "Next Model" ) );
+               ct_model      = us_counter( 2, 1, 200, 1 );
+   ct_model->setStep( 1 );
+   ct_model->setFixedWidth( pwid );
+   gb_msim->setLayout( mosbox );
+   mosbox ->addLayout( rl_curmod );
+   mosbox ->addLayout( rl_mode   );
+   mosbox ->addLayout( rl_mean   );
+   mosbox ->addLayout( rl_median );
+   mosbox ->addWidget( pb_nextm );
+   mosbox ->addWidget( ct_model );
+   mcctlLayout->addWidget( gb_msim );
+
+   rb_mean ->setChecked( true  );
+   pb_nextm->setEnabled( false );
+   ct_model->setEnabled( false );
+   gb_msim ->setVisible( false );
+
+   connect( rb_curmod,   SIGNAL( toggled        ( bool ) ),
+            this,        SLOT(   curmod_clicked ( bool ) ) );
+   connect( rb_mean,     SIGNAL( toggled        ( bool ) ),
+            this,        SLOT(   modbtn_clicked ( bool ) ) );
+   connect( rb_median,   SIGNAL( toggled        ( bool ) ),
+            this,        SLOT(   modbtn_clicked ( bool ) ) );
+   connect( rb_mode,     SIGNAL( toggled        ( bool ) ),
+            this,        SLOT(   modbtn_clicked ( bool ) ) );
+   connect( pb_nextm,    SIGNAL( clicked        ()       ),
+            this,        SLOT(   next_model     ()       ) );
+   connect( ct_model,    SIGNAL( valueChanged   ( double ) ),
+            this,        SLOT(   update_mc_model()       ) );
+
+   // Lay out the right side (plots and provisional MC controls
    rightLayout->addLayout( plotLayout1 );
+   rightLayout->addLayout( mcctlLayout );
    rightLayout->addLayout( plotLayout2 );
    rightLayout->setStretchFactor( plotLayout1, 2 );
+   rightLayout->setStretchFactor( mcctlLayout, 0 );
    rightLayout->setStretchFactor( plotLayout2, 3 );
 
+   // Lay out the main window
    mainLayout->addLayout( leftLayout  );
    mainLayout->addLayout( rightLayout );
    mainLayout->setStretchFactor( leftLayout, 3 );
@@ -3399,4 +3453,62 @@ void US_FeMatch::update_filelist( QStringList& flist, const QString fname )
    if ( fname.contains( ".svg" ) )
       flist << QString( fname ).section( ".", 0, -2 ) + ".png";
 }
+
+// Slot to react to Current Model radio button click
+void US_FeMatch::curmod_clicked( bool is_on )
+{
+   // Enable/Disable Next button and model index counter
+   pb_nextm  ->setEnabled( is_on );
+   ct_model  ->setEnabled( is_on );
+
+   if ( is_on )
+   {  // Current Model turned on:  update model
+      update_mc_model();
+   }
+}
+
+// Slot to react to Mean/Median/Mode button clicked
+void US_FeMatch::modbtn_clicked( bool is_on )
+{
+   if ( is_on )
+   {  // Button has been turned on:  update model
+      update_mc_model();
+   }
+}
+
+// Slot to react to the Next button being clicked
+void US_FeMatch::next_model()
+{
+   int mc_iter    = (int)ct_model->value() + 1;
+
+   if ( mc_iter <= mc_iters )
+   {
+      ct_model->setValue( mc_iter );
+   }
+
+   else
+   {
+      ct_model->setValue( 1 );
+   }
+}
+
+// Update the MC model based on type of model selected
+void US_FeMatch::update_mc_model()
+{
+   if      ( rb_curmod->isChecked() )
+   {  // The model is the currently selected MC iteration model
+   }
+
+   else if ( rb_mean  ->isChecked() )
+   {  // The model is the mean of all iteration models
+   }
+
+   else if ( rb_median->isChecked() )
+   {  // The model is the median of all iteration models
+   }
+
+   else if ( rb_mode  ->isChecked() )
+   {  // The model is the mode of all iteration models
+   }
+ }
 
