@@ -44,7 +44,7 @@ qDebug() << "PCtrl: xyzdat count" << xyzdat->count();
    QPushButton* pb_close     = us_pushbutton( tr( "Close" ) );
 
    QLayout*     lo_yrevrs    = us_checkbox( tr( "Reverse Y" ), ck_yrevrs,
-                                            false );
+                                            true );
 
                 ct_zscalefac = us_counter( 3, 0.01, 1000, 0.01 );
                 ct_rxscale   = us_counter( 3, 0.01, 1000, 0.01 );
@@ -121,7 +121,7 @@ qDebug() << "PCtrl:  plot3_btn";
    QString wtitle  = tr( "Multiwavelength 3-Dimensional Viewer" );
    QString ptitle  = tr( "MWL 3-D Plot, Spectra" );
    QString xatitle = tr( "Lambda(nm)" );
-   QString yatitle = tr( "Sed.Coeff.(x 10^-13)" );
+   QString yatitle = tr( "Sed.Coeff.(x 10^13)" );
    QString zatitle = tr( "Intensity" );
    zscale          = ct_zscalefac->value();
    rxscale         = ct_rxscale  ->value();
@@ -159,6 +159,9 @@ qDebug() << "PCtrl:  plot3_btn: scales" << rxscale << ryscale << zscale;
    }
 
    // Set plot window parameters; do initial plot; and make it visible
+   zscale         *= 8000.0;
+   rxscale        *= 100.0;
+   ryscale        *= 100.0;
    plot3d_w->setTitles    ( wtitle, ptitle, xatitle, yatitle, zatitle );
    plot3d_w->setParameters( ncol, nrow, rxscale, ryscale, zscale );
    plot3d_w->replot       ( );

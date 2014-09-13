@@ -29,6 +29,7 @@ class US_MwlSpectra : public US_Widgets
 
      QVector< QVector3D >           mdlxyz;      //!< Models 3D data vector
      QVector< QVector3D >           xyzdat;      //!< Normalized 3D data vector
+     QVector< QVector3D >           p3dxyz;      //!< Plot-3D data vector
      QVector< QVector< double > >   concdat;     //!< All 2D plot data vectors
      QVector< double >              yvals3d;     //!< Y values for 3D plot
 
@@ -142,7 +143,14 @@ class US_MwlSpectra : public US_Widgets
      void   connect_ranges ( bool );
      void   update_disk_db ( bool );
      int    dvec_index     ( QVector< double >&, const double );
+     bool   dvirt_equal    ( const double, const double );
      void   p3dctrl_closed ( void );
+     void   bld_stats      ( double, double, double, QVector< int >&,
+                             QVector< double >&, QVector< double >&,
+                             QVector< double >&, QVector< double >& );
+     void   final_stats    ( QVector< int >&,    QVector< double >&,
+                             QVector< double >&, QVector< double >&,
+                             QVector< double >& );
      void   help           ( void )
      { showHelp.show_help( "mwl_spectra.html" ); };
 };
