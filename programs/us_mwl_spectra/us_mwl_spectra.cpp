@@ -163,6 +163,8 @@ US_MwlSpectra::US_MwlSpectra() : US_Widgets()
             this,         SLOT  ( show_2d_movie() ) );
    connect( pb_plot3d,    SIGNAL( clicked()       ),
             this,         SLOT  ( plot_3d()       ) );
+   connect( pb_svplot,    SIGNAL( clicked()       ),
+            this,         SLOT  ( save_plot()     ) );
    connect( pb_svmovie,   SIGNAL( clicked()       ),
             this,         SLOT  ( save_movie()    ) );
    connect( pb_help,      SIGNAL( clicked()  ),
@@ -442,8 +444,6 @@ DbgLv(1) << "LD: nlambda" << nlambda << "nsedcos" << nsedcos
   << "nipoint" << nipoint;
    nc_max        = 0;
    cn_max        = 0.0;
-   QVector3D vecdat( 0.0, 0.0, 0.0 );
-   static const double SED_EPS = 0.001;
 
    for ( int jj = 0; jj < nsedcos; jj++ )
    {
@@ -452,9 +452,8 @@ DbgLv(1) << "LD:  jj" << jj << "sedco" << sedco;
 
       for ( int ii = 0; ii < nlambda; ii++ )
       {
-         int lambda    = lambdas[ ii ];
-         double waveln = (double)lambda;
-DbgLv(1) << "LD:    ii" << ii << "lambda" << lambda;
+         double waveln = (double)lambdas[ ii ];
+DbgLv(1) << "LD:    ii" << ii << "waveln" << waveln;
          double conc   = 0.0;
          double csum   = 0.0;
          int nconcs    = 0;
@@ -463,19 +462,12 @@ DbgLv(1) << "LD:    ii" << ii << "lambda" << lambda;
          {
 if(kk<2||(kk+3)>nipoint)
 DbgLv(1) << "LD:      kk" << kk << "X,Y" << mdlxyz[kk].x() << mdlxyz[kk].y();
-            double delta_s   = qAbs( ( mdlxyz[ kk ].y() - sedco ) / sedco );
-            if ( mdlxyz[ kk ].y() == sedco  &&  mdlxyz[ kk ].x() == waveln )
+            if ( dvirt_equal( mdlxyz[ kk ].y(), sedco )  &&
+                 dvirt_equal( mdlxyz[ kk ].x(), waveln ) )
             {
                nconcs++;
                csum          += mdlxyz[ kk ].z();
             }
-else if ( mdlxyz[kk].x()==waveln && delta_s < SED_EPS )
-{
- DbgLv(1) << "LD:      kk" << kk << "**Y,S" << mdlxyz[kk].y() << sedco
-  << "x,z" << mdlxyz[kk].x() << mdlxyz[kk].z() << "dS" << delta_s;
-               nconcs++;
-               csum          += mdlxyz[ kk ].z();
-}
          }
 
          if ( nconcs > 0 )
@@ -486,7 +478,7 @@ else if ( mdlxyz[kk].x()==waveln && delta_s < SED_EPS )
             nnpoint++;
 if(nconcs>5||conc>1000.0)
 DbgLv(1) << "LD: **nc_max cn_max" << nc_max << cn_max << "nconcs conc"
- << nconcs << conc << "jj,ii" << jj << ii << "s wl" << sedco << lambda;
+ << nconcs << conc << "jj,ii" << jj << ii << "s wl" << sedco << waveln;
          }
 
          else
@@ -568,12 +560,178 @@ DbgLv(1) << "LD: **co_max" << co_max << "conc" << conc << "jj" << jj
 // Display detailed information about the data
 void US_MwlSpectra::runDetails( void )
 {
-   int nmodels   = mdescs.count();
-   int lmx       = nmodels - 1;
-   QString fmd   = mdescs[   0 ].section( mdescs[   0 ].left( 1 ), 1, 1 );
-   QString lmd   = mdescs[ lmx ].section( mdescs[ lmx ].left( 1 ), 1, 1 );
+   // Set base values
+   int nmodels     = mdescs.count();
+   int lmx         = nmodels - 1;
+   QString fmd     = mdescs[   0 ].section( mdescs[   0 ].left( 1 ), 1, 1 );
+   QString lmd     = mdescs[ lmx ].section( mdescs[ lmx ].left( 1 ), 1, 1 );
 
-   QString msg = tr( "Multi-Wavelength Statistics for RunID %1 --\n\n" )
+   // Accumulate statistics for whole, selected sedcoeffs, selected lambdas
+   double wln1     = (double)lambdas[ 0 ];
+   double wln2     = (double)lambdas[ nlambda / 4 ];
+   double wln3     = (double)lambdas[ nlambda / 2 ];
+   double wln4     = (double)lambdas[ ( nlambda * 3 ) / 4 ];
+   double wln5     = (double)lambdas[ nlambda - 1 ];
+   double sed1     = sedcoes[ 0 ];
+   double sed2     = sedcoes[ nsedcos / 4 ];
+   double sed3     = sedcoes[ nsedcos / 2 ];
+   double sed4     = sedcoes[ ( nsedcos * 3 ) / 4 ];
+   double sed5     = sedcoes[ nsedcos - 1 ];
+   QVector< int    > istaa;
+   QVector< double > dstaa;
+   QVector< double > lmbsa;
+   QVector< double > sedsa;
+   QVector< double > consa;
+   QVector< int    > istaw1;
+   QVector< double > dstaw1;
+   QVector< double > lmbsw1;
+   QVector< double > sedsw1;
+   QVector< double > consw1;
+   QVector< int    > istaw2;
+   QVector< double > dstaw2;
+   QVector< double > lmbsw2;
+   QVector< double > sedsw2;
+   QVector< double > consw2;
+   QVector< int    > istaw3;
+   QVector< double > dstaw3;
+   QVector< double > lmbsw3;
+   QVector< double > sedsw3;
+   QVector< double > consw3;
+   QVector< int    > istaw4;
+   QVector< double > dstaw4;
+   QVector< double > lmbsw4;
+   QVector< double > sedsw4;
+   QVector< double > consw4;
+   QVector< int    > istaw5;
+   QVector< double > dstaw5;
+   QVector< double > lmbsw5;
+   QVector< double > sedsw5;
+   QVector< double > consw5;
+   QVector< int    > istas1;
+   QVector< double > dstas1;
+   QVector< double > lmbss1;
+   QVector< double > sedss1;
+   QVector< double > conss1;
+   QVector< int    > istas2;
+   QVector< double > dstas2;
+   QVector< double > lmbss2;
+   QVector< double > sedss2;
+   QVector< double > conss2;
+   QVector< int    > istas3;
+   QVector< double > dstas3;
+   QVector< double > lmbss3;
+   QVector< double > sedss3;
+   QVector< double > conss3;
+   QVector< int    > istas4;
+   QVector< double > dstas4;
+   QVector< double > lmbss4;
+   QVector< double > sedss4;
+   QVector< double > conss4;
+   QVector< int    > istas5;
+   QVector< double > dstas5;
+   QVector< double > lmbss5;
+   QVector< double > sedss5;
+   QVector< double > conss5;
+
+   istaa .fill( 0, 3 );
+   dstaa .fill( 0.0, 10 );
+   istaw1.fill( 0, 3 );
+   dstaw1.fill( 0.0, 10 );
+   istaw2.fill( 0, 3 );
+   dstaw2.fill( 0.0, 10 );
+   istaw3.fill( 0, 3 );
+   dstaw3.fill( 0.0, 10 );
+   istaw4.fill( 0, 3 );
+   dstaw4.fill( 0.0, 10 );
+   istaw5.fill( 0, 3 );
+   dstaw5.fill( 0.0, 10 );
+   istas1.fill( 0, 3 );
+   dstas1.fill( 0.0, 10 );
+   istas2.fill( 0, 3 );
+   dstas2.fill( 0.0, 10 );
+   istas3.fill( 0, 3 );
+   dstas3.fill( 0.0, 10 );
+   istas4.fill( 0, 3 );
+   dstas4.fill( 0.0, 10 );
+   istas5.fill( 0, 3 );
+   dstas5.fill( 0.0, 10 );
+
+   for ( int ii = 0; ii < mdlxyz.count(); ii++ )
+   {
+      double wlnv     = mdlxyz[ ii ].x();
+      double sedv     = mdlxyz[ ii ].y();
+      double conv     = mdlxyz[ ii ].z();
+
+      if ( conv == 0.0 )  continue;
+
+      bld_stats( wlnv, sedv, conv, istaa, dstaa, lmbsa, sedsa, consa );
+
+      if ( dvirt_equal( wlnv, wln1 ) )
+      {
+         bld_stats( wlnv, sedv, conv, istaw1, dstaw1, lmbsw1, sedsw1, consw1 );
+      }
+
+      else if ( dvirt_equal( wlnv, wln2 ) )
+      {
+         bld_stats( wlnv, sedv, conv, istaw2, dstaw2, lmbsw2, sedsw2, consw2 );
+      }
+
+      else if ( dvirt_equal( wlnv, wln3 ) )
+      {
+         bld_stats( wlnv, sedv, conv, istaw3, dstaw3, lmbsw3, sedsw3, consw3 );
+      }
+
+      else if ( dvirt_equal( wlnv, wln4 ) )
+      {
+         bld_stats( wlnv, sedv, conv, istaw4, dstaw4, lmbsw4, sedsw4, consw4 );
+      }
+
+      else if ( dvirt_equal( wlnv, wln5 ) )
+      {
+         bld_stats( wlnv, sedv, conv, istaw5, dstaw5, lmbsw5, sedsw5, consw5 );
+      }
+
+      if ( dvirt_equal( sedv, sed1 ) )
+      {
+         bld_stats( wlnv, sedv, conv, istas1, dstas1, lmbss1, sedss1, conss1 );
+      }
+
+      else if ( dvirt_equal( sedv, sed2 ) )
+      {
+         bld_stats( wlnv, sedv, conv, istas2, dstas2, lmbss2, sedss2, conss2 );
+      }
+
+      else if ( dvirt_equal( sedv, sed3 ) )
+      {
+         bld_stats( wlnv, sedv, conv, istas3, dstas3, lmbss3, sedss3, conss3 );
+      }
+
+      else if ( dvirt_equal( sedv, sed4 ) )
+      {
+         bld_stats( wlnv, sedv, conv, istas4, dstas4, lmbss4, sedss4, conss4 );
+      }
+
+      else if ( dvirt_equal( sedv, sed5 ) )
+      {
+         bld_stats( wlnv, sedv, conv, istas5, dstas5, lmbss5, sedss5, conss5 );
+      }
+   }
+
+   // Complete statistical values
+   final_stats( istaa,  dstaa,  lmbsa,  sedsa,  consa );
+   final_stats( istaw1, dstaw1, lmbsw1, sedsw1, consw1 );
+   final_stats( istaw2, dstaw2, lmbsw2, sedsw2, consw2 );
+   final_stats( istaw3, dstaw3, lmbsw3, sedsw3, consw3 );
+   final_stats( istaw4, dstaw4, lmbsw4, sedsw4, consw4 );
+   final_stats( istaw5, dstaw5, lmbsw5, sedsw5, consw5 );
+   final_stats( istas1, dstas1, lmbss1, sedss1, conss1 );
+   final_stats( istas2, dstas2, lmbss2, sedss2, conss2 );
+   final_stats( istas3, dstas3, lmbss3, sedss3, conss3 );
+   final_stats( istas4, dstas4, lmbss4, sedss4, conss4 );
+   final_stats( istas5, dstas5, lmbss5, sedss5, conss5 );
+
+   // Construct the report text
+   QString msg     = tr( "Multi-Wavelength Statistics for RunID %1 --\n\n" )
       .arg( runID );
    msg += tr( "General Models Values and Counts.\n" );
    msg += tr( "   First Model Description:      %1\n" ).arg( fmd );
@@ -598,6 +756,161 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "   End Sedimentation Coeff.:     %1\n" ).arg( sed_end );
    msg += tr( "   Start Wavelength:             %1\n" ).arg( lmb_start );
    msg += tr( "   End Wavelength:               %1\n" ).arg( lmb_end );
+
+   msg += tr( "\nStatistical Details for the Full Model set.\n" );
+   msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaa[ 0 ] );
+   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaa[ 1 ] );
+   msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaa[ 2 ] );
+   msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaa[ 0 ] );
+   msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaa[ 1 ] );
+   msg += tr( "   Mean Concentration:           %1\n" ).arg( dstaa[ 4 ] );
+   msg += tr( "   Median Concentration:         %1\n" ).arg( dstaa[ 9 ] );
+   msg += tr( "   Mean Wavelength:              %1\n" ).arg( dstaa[ 2 ] );
+   msg += tr( "   Median Wavelength:            %1\n" ).arg( dstaa[ 7 ] );
+   msg += tr( "   Weighted Avg. Wavelength:     %1\n" ).arg( dstaa[ 5 ] );
+   msg += tr( "   Mean Sed. Coeff.:             %1\n" ).arg( dstaa[ 3 ] );
+   msg += tr( "   Median Sed. Coeff.:           %1\n" ).arg( dstaa[ 8 ] );
+   msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaa[ 6 ] );
+   msg += tr( "\nStatistical Details for Wavelength %1 .\n" ).arg( wln1 );
+   msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaw1[ 0 ] );
+   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaw1[ 1 ] );
+   msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaw1[ 2 ] );
+   msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaw1[ 0 ] );
+   msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaw1[ 1 ] );
+   msg += tr( "   Mean Concentration:           %1\n" ).arg( dstaw1[ 4 ] );
+   msg += tr( "   Median Concentration:         %1\n" ).arg( dstaw1[ 9 ] );
+   msg += tr( "   Mean Wavelength:              %1\n" ).arg( dstaw1[ 2 ] );
+   msg += tr( "   Median Wavelength:            %1\n" ).arg( dstaw1[ 7 ] );
+   msg += tr( "   Weighted Avg. Wavelength:     %1\n" ).arg( dstaw1[ 5 ] );
+   msg += tr( "   Mean Sed. Coeff.:             %1\n" ).arg( dstaw1[ 3 ] );
+   msg += tr( "   Median Sed. Coeff.:           %1\n" ).arg( dstaw1[ 8 ] );
+   msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaw1[ 6 ] );
+   msg += tr( "Statistical Details for Wavelength %1 .\n" ).arg( wln2 );
+   msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaw2[ 0 ] );
+   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaw2[ 1 ] );
+   msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaw2[ 2 ] );
+   msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaw2[ 0 ] );
+   msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaw2[ 1 ] );
+   msg += tr( "   Mean Concentration:           %1\n" ).arg( dstaw2[ 4 ] );
+   msg += tr( "   Median Concentration:         %1\n" ).arg( dstaw2[ 9 ] );
+   msg += tr( "   Mean Wavelength:              %1\n" ).arg( dstaw2[ 2 ] );
+   msg += tr( "   Median Wavelength:            %1\n" ).arg( dstaw2[ 7 ] );
+   msg += tr( "   Weighted Avg. Wavelength:     %1\n" ).arg( dstaw2[ 5 ] );
+   msg += tr( "   Mean Sed. Coeff.:             %1\n" ).arg( dstaw2[ 3 ] );
+   msg += tr( "   Median Sed. Coeff.:           %1\n" ).arg( dstaw2[ 8 ] );
+   msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaw2[ 6 ] );
+   msg += tr( "Statistical Details for Wavelength %1 .\n" ).arg( wln3 );
+   msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaw3[ 0 ] );
+   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaw3[ 1 ] );
+   msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaw3[ 2 ] );
+   msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaw3[ 0 ] );
+   msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaw3[ 1 ] );
+   msg += tr( "   Mean Concentration:           %1\n" ).arg( dstaw3[ 4 ] );
+   msg += tr( "   Median Concentration:         %1\n" ).arg( dstaw3[ 9 ] );
+   msg += tr( "   Mean Wavelength:              %1\n" ).arg( dstaw3[ 2 ] );
+   msg += tr( "   Median Wavelength:            %1\n" ).arg( dstaw3[ 7 ] );
+   msg += tr( "   Weighted Avg. Wavelength:     %1\n" ).arg( dstaw3[ 5 ] );
+   msg += tr( "   Mean Sed. Coeff.:             %1\n" ).arg( dstaw3[ 3 ] );
+   msg += tr( "   Median Sed. Coeff.:           %1\n" ).arg( dstaw3[ 8 ] );
+   msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaw3[ 6 ] );
+   msg += tr( "Statistical Details for Wavelength %1 .\n" ).arg( wln4 );
+   msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaw4[ 0 ] );
+   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaw4[ 1 ] );
+   msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaw4[ 2 ] );
+   msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaw4[ 0 ] );
+   msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaw4[ 1 ] );
+   msg += tr( "   Mean Concentration:           %1\n" ).arg( dstaw4[ 4 ] );
+   msg += tr( "   Median Concentration:         %1\n" ).arg( dstaw4[ 9 ] );
+   msg += tr( "   Mean Wavelength:              %1\n" ).arg( dstaw4[ 2 ] );
+   msg += tr( "   Median Wavelength:            %1\n" ).arg( dstaw4[ 7 ] );
+   msg += tr( "   Weighted Avg. Wavelength:     %1\n" ).arg( dstaw4[ 5 ] );
+   msg += tr( "   Mean Sed. Coeff.:             %1\n" ).arg( dstaw4[ 3 ] );
+   msg += tr( "   Median Sed. Coeff.:           %1\n" ).arg( dstaw4[ 8 ] );
+   msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaw4[ 6 ] );
+   msg += tr( "Statistical Details for Wavelength %1 .\n" ).arg( wln5 );
+   msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaw5[ 0 ] );
+   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaw5[ 1 ] );
+   msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaw5[ 2 ] );
+   msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaw5[ 0 ] );
+   msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaw5[ 1 ] );
+   msg += tr( "   Mean Concentration:           %1\n" ).arg( dstaw5[ 4 ] );
+   msg += tr( "   Median Concentration:         %1\n" ).arg( dstaw5[ 9 ] );
+   msg += tr( "   Mean Wavelength:              %1\n" ).arg( dstaw5[ 2 ] );
+   msg += tr( "   Median Wavelength:            %1\n" ).arg( dstaw5[ 7 ] );
+   msg += tr( "   Weighted Avg. Wavelength:     %1\n" ).arg( dstaw5[ 5 ] );
+   msg += tr( "   Mean Sed. Coeff.:             %1\n" ).arg( dstaw5[ 3 ] );
+   msg += tr( "   Median Sed. Coeff.:           %1\n" ).arg( dstaw5[ 8 ] );
+   msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaw5[ 6 ] );
+   msg += tr( "\nStatistical Details for Sed.Coeff. %1 .\n" ).arg( sed1 );
+   msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istas1[ 0 ] );
+   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istas1[ 1 ] );
+   msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istas1[ 2 ] );
+   msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstas1[ 0 ] );
+   msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstas1[ 1 ] );
+   msg += tr( "   Mean Concentration:           %1\n" ).arg( dstas1[ 4 ] );
+   msg += tr( "   Median Concentration:         %1\n" ).arg( dstas1[ 9 ] );
+   msg += tr( "   Mean Wavelength:              %1\n" ).arg( dstas1[ 2 ] );
+   msg += tr( "   Median Wavelength:            %1\n" ).arg( dstas1[ 7 ] );
+   msg += tr( "   Weighted Avg. Wavelength:     %1\n" ).arg( dstas1[ 5 ] );
+   msg += tr( "   Mean Sed. Coeff.:             %1\n" ).arg( dstas1[ 3 ] );
+   msg += tr( "   Median Sed. Coeff.:           %1\n" ).arg( dstas1[ 8 ] );
+   msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstas1[ 6 ] );
+   msg += tr( "Statistical Details for Sed.Coeff. %1 .\n" ).arg( sed2 );
+   msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istas2[ 0 ] );
+   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istas2[ 1 ] );
+   msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istas2[ 2 ] );
+   msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstas2[ 0 ] );
+   msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstas2[ 1 ] );
+   msg += tr( "   Mean Concentration:           %1\n" ).arg( dstas2[ 4 ] );
+   msg += tr( "   Median Concentration:         %1\n" ).arg( dstas2[ 9 ] );
+   msg += tr( "   Mean Wavelength:              %1\n" ).arg( dstas2[ 2 ] );
+   msg += tr( "   Median Wavelength:            %1\n" ).arg( dstas2[ 7 ] );
+   msg += tr( "   Weighted Avg. Wavelength:     %1\n" ).arg( dstas2[ 5 ] );
+   msg += tr( "   Mean Sed. Coeff.:             %1\n" ).arg( dstas2[ 3 ] );
+   msg += tr( "   Median Sed. Coeff.:           %1\n" ).arg( dstas2[ 8 ] );
+   msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstas2[ 6 ] );
+   msg += tr( "Statistical Details for Sed.Coeff. %1 .\n" ).arg( sed3 );
+   msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istas3[ 0 ] );
+   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istas3[ 1 ] );
+   msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istas3[ 2 ] );
+   msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstas3[ 0 ] );
+   msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstas3[ 1 ] );
+   msg += tr( "   Mean Concentration:           %1\n" ).arg( dstas3[ 4 ] );
+   msg += tr( "   Median Concentration:         %1\n" ).arg( dstas3[ 9 ] );
+   msg += tr( "   Mean Wavelength:              %1\n" ).arg( dstas3[ 2 ] );
+   msg += tr( "   Median Wavelength:            %1\n" ).arg( dstas3[ 7 ] );
+   msg += tr( "   Weighted Avg. Wavelength:     %1\n" ).arg( dstas3[ 5 ] );
+   msg += tr( "   Mean Sed. Coeff.:             %1\n" ).arg( dstas3[ 3 ] );
+   msg += tr( "   Median Sed. Coeff.:           %1\n" ).arg( dstas3[ 8 ] );
+   msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstas3[ 6 ] );
+   msg += tr( "Statistical Details for Sed.Coeff. %1 .\n" ).arg( sed4 );
+   msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istas4[ 0 ] );
+   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istas4[ 1 ] );
+   msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istas4[ 2 ] );
+   msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstas4[ 0 ] );
+   msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstas4[ 1 ] );
+   msg += tr( "   Mean Concentration:           %1\n" ).arg( dstas4[ 4 ] );
+   msg += tr( "   Median Concentration:         %1\n" ).arg( dstas4[ 9 ] );
+   msg += tr( "   Mean Wavelength:              %1\n" ).arg( dstas4[ 2 ] );
+   msg += tr( "   Median Wavelength:            %1\n" ).arg( dstas4[ 7 ] );
+   msg += tr( "   Weighted Avg. Wavelength:     %1\n" ).arg( dstas4[ 5 ] );
+   msg += tr( "   Mean Sed. Coeff.:             %1\n" ).arg( dstas4[ 3 ] );
+   msg += tr( "   Median Sed. Coeff.:           %1\n" ).arg( dstas4[ 8 ] );
+   msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstas4[ 6 ] );
+   msg += tr( "Statistical Details for Sed.Coeff. %1 .\n" ).arg( sed5 );
+   msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istas5[ 0 ] );
+   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istas5[ 1 ] );
+   msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istas5[ 2 ] );
+   msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstas5[ 0 ] );
+   msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstas5[ 1 ] );
+   msg += tr( "   Mean Concentration:           %1\n" ).arg( dstas5[ 4 ] );
+   msg += tr( "   Median Concentration:         %1\n" ).arg( dstas5[ 9 ] );
+   msg += tr( "   Mean Wavelength:              %1\n" ).arg( dstas5[ 2 ] );
+   msg += tr( "   Median Wavelength:            %1\n" ).arg( dstas5[ 7 ] );
+   msg += tr( "   Weighted Avg. Wavelength:     %1\n" ).arg( dstas5[ 5 ] );
+   msg += tr( "   Mean Sed. Coeff.:             %1\n" ).arg( dstas5[ 3 ] );
+   msg += tr( "   Median Sed. Coeff.:           %1\n" ).arg( dstas5[ 8 ] );
+   msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstas5[ 6 ] );
 
    // Open the dialog and display the report text
    US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true );
@@ -698,17 +1011,41 @@ DbgLv(1) << "PltA: xlo xhi" << last_xmin << last_xmax
 // Slot to handle a change in start or end sedimentation coefficient
 void US_MwlSpectra::changeSedcoeff()
 {
-DbgLv(1) << "chgRadius";
+DbgLv(1) << "chgSedcoeff";
+   // Recompute ranges
    have_rngs    = false;
-   compute_ranges();                        // Recompute ranges
+   compute_ranges();
+
+   // Re-do the list of plot records
+   connect_ranges( false );
+   cb_pltrec->clear();
+
+   for ( int jj = sedxs; jj < sedxe; jj++ )
+      cb_pltrec->addItem( QString::number( sedcoes[ jj ] ) );
+
+   // Recompute ranges
+   have_rngs    = false;
+   compute_ranges();
+
+   // Reset the current plot record
+   sedxp      = dvec_index( sedcoes, sed_plot  );
+   sedxp      = qMax( sedxs, qMin( sedxe, sedxp ) );
+   connect_ranges( true );
+   cb_pltrec->setCurrentIndex( sedxp );
+
 }
 
 // Slot to handle a change in start or end lambda
 void US_MwlSpectra::changeLambda()
 {
 DbgLv(1) << "chgLambda";
+   // Recompute ranges
    have_rngs    = false;
-   compute_ranges();                        // Recompute ranges
+   compute_ranges();
+
+   // Reset plot X limits
+   last_xmin    = lmb_start;
+   last_xmax    = lmb_end;
 }
  
 // Slot to handle a change in the plot record
@@ -724,9 +1061,8 @@ DbgLv(1) << "chgRec: recx" << recx;
    // Update status text (if not part of movie save) and set prev/next arrows
    if ( plt_one )
       le_status->setText( lb_pltrec->text() + " " + cb_pltrec->currentText() );
-   int lrecx       = cb_pltrec->count() - 1;
    pb_prev  ->setEnabled( ( recx > 0 ) );
-   pb_next  ->setEnabled( ( recx < lrecx ) );
+   pb_next  ->setEnabled( ( recx < ( cb_pltrec->count() - 1 ) ) );
 }
 
 // Slot to handle a click to go to the previous record
@@ -798,13 +1134,22 @@ void US_MwlSpectra::compute_ranges()
    sedxe      = dvec_index( sedcoes, sed_end   ) + 1;  // SedCoef end index
    sedxp      = dvec_index( sedcoes, sed_plot  );      // SedCoef plot rec index
    recx       = cb_pltrec->currentIndex();             // Index in plot sedcos
-DbgLv(1) << "cmpR:  sS sE sxS sxE" << sed_start << sed_end << sedxs << sedxe
- << "sxP rx" << sedxp << recx;
    klambda    = lmbxe - lmbxs;                         // Count of plot lambdas
    ksedcos    = sedxe - sedxs;                         // Count of plot sedcos
    kpoint     = klambda;                               // Plot x,y points
    pltxvals.clear();
    pltyvals.clear();
+
+   if ( sedxp < 0  ||  recx < 0 )
+   {
+DbgLv(1) << "cmpR:  (1)sS sE sxS sxE" << sed_start << sed_end << sedxs << sedxe
+ << "sxP rx sP" << sedxp << recx << sed_plot;
+      sed_plot   = qMax( sed_start, qMin( sed_end, sed_plot ) );
+      sedxp      = dvec_index( sedcoes, sed_plot );
+      recx       = sedxp - sedxs;
+   }
+DbgLv(1) << "cmpR:  sS sE sxS sxE" << sed_start << sed_end << sedxs << sedxe
+ << "sxP rx sP" << sedxp << recx << sed_plot;
 
    // Get lambda values in current plot range
    for ( int ii = lmbxs; ii < lmbxe; ii++ )
@@ -868,10 +1213,43 @@ DbgLv(1) << "Show 2D Movie";
 void US_MwlSpectra::plot_3d()
 {
 DbgLv(1) << "Plt3D";
+   // Create a 3D plot version of the data with ranges and smoothing
+
+   compute_ranges();
+
+   p3dxyz.clear();
+
+   // Create the 2-D concentration vectors for each sed.coeff.
+   for ( int jj = sedxs; jj < sedxe; jj++ )
+   {
+      QVector< double > cvect;
+      int jd        = jj * nlambda;
+      double sedv   = xyzdat[ jd ].y();
+
+      for ( int ii = lmbxs; ii < lmbxe; ii++ )
+      {  // Create the concentration vector for this sed.coeff.
+         cvect << xyzdat[ jd + ii ].z();
+      }
+
+      // Smooth the vector
+      US_Math2::gaussian_smoothing( cvect, nsmooth );
+      jd           += lmbxs;
+
+      // Output the XYZ points with smoothed concentrations
+      for ( int ii = 0; ii < cvect.count(); ii++, jd++ )
+      {
+         double wlnv  = xyzdat[ jd ].x();
+         double conv  = cvect [ ii ];
+
+         p3dxyz << QVector3D( wlnv, sedv, conv );
+      }
+   }
+
+   // Open a 3D plot or reference an opened one, then send data
    if ( p3d_ctld == NULL )
    {
       p3d_pltw     = NULL;
-      p3d_ctld     = new US_MwlSPlotControl( this, &xyzdat );
+      p3d_ctld     = new US_MwlSPlotControl( this, &p3dxyz );
       p3d_ctld->show();
       // Position near one corner of the desktop
       int mx       = x();
@@ -900,7 +1278,7 @@ DbgLv(1) << "Plt3D";
 
       if ( p3d_pltw != NULL )
       {
-         p3d_pltw->reloadData( &xyzdat );
+         p3d_pltw->reloadData( &p3dxyz );
 
          QString ptitle = tr( "MWL 3-D Plot" );
 
@@ -918,26 +1296,22 @@ DbgLv(1) << "Save Plot";
    QString savedir = US_Settings::reportDir() + "/" + runID;
    QDir().mkpath( savedir );
    savedir         = savedir.replace( "\\", "/" ) + "/";
-   QString fname2d = runID + ".radRec_RRRRR_2D.png";
-   QString fname3d = runID + ".Scan_SSSS_3D.png";
+   QString fname2d = runID + ".SSpectra_sedRec_RRRRR_2D.png";
+   QString fname3d = runID + ".SSpectra_3D.png";
    p3d_pltw        = ( p3d_ctld == NULL ) ? NULL : p3d_ctld->widget_3dplot();
    int nfiles      = ( p3d_pltw != NULL ) ? 2 : 1;
-   int scan_nbr    = 1;
 
    if ( nfiles == 2 )
    {  // If there is a 3D window, first save a PNG of that window
 
       p3d_pltw->replot();                // Do the plot
-      QString s_scan  = QString().sprintf( "%04d", scan_nbr );
-      fname3d         = fname3d.replace( "SSSS", s_scan  );
       QString fpath3d = savedir + fname3d;
 
       p3d_pltw->save_plot( fpath3d, QString( "png" ) );
    }
 
    // Always save a PNG of the 2-D plot
-   QString ccr     = "1/A/280";
-   QString rec_str = ccr + cb_pltrec->currentText().remove( "." );
+   QString rec_str = cb_pltrec->currentText().replace( ".", "p" );
    fname2d         = fname2d.replace( "RRRRR", rec_str );
    QString fpath2d = savedir + fname2d;
 
@@ -1022,6 +1396,14 @@ int US_MwlSpectra::dvec_index( QVector< double >& dvec, const double dval )
    return indx;
 }
 
+// Utility to flag if two doubles are "virtually" equal
+bool US_MwlSpectra::dvirt_equal( const double d1, const double d2)
+{
+   const double eps   = 1.e-4;
+
+   return ( qAbs( ( d1 - d2 ) / d2 ) < eps );
+}
+
 // Slot to handle the close of the 3D plot control dialog
 void US_MwlSpectra::p3dctrl_closed()
 {
@@ -1036,5 +1418,62 @@ void US_MwlSpectra::update_disk_db( bool isDB )
       dkdb_cntrls->set_db();
    else
       dkdb_cntrls->set_disk();
+}
+
+// Utility to compute statistics for all or specific record
+void US_MwlSpectra::bld_stats( double wlnv, double sedv, double conv,
+      QVector< int >& istats, QVector< double >& dstats,
+      QVector< double >& lwlns, QVector< double >& lseds,
+      QVector< double >& lcons )
+{
+   if ( conv == 0.0 )  return;
+
+   // Bump non-zero count and counts of sed,lmb
+   istats[ 0 ]++;
+   istats[ 1 ] += lwlns.contains( wlnv ) ? 0 : 1;
+   istats[ 2 ] += lseds.contains( sedv ) ? 0 : 1;
+
+   // Get concentration min,max and accumulate sums for means
+   dstats[ 0 ]  = ( istats[ 0 ] == 1 ) ? conv : qMin( dstats[ 0 ], conv );
+   dstats[ 1 ]  = ( istats[ 0 ] == 1 ) ? conv : qMax( dstats[ 1 ], conv );
+   dstats[ 2 ] += wlnv;
+   dstats[ 3 ] += sedv;
+   dstats[ 4 ] += conv;
+
+   // Accumulate weighted sums
+   dstats[ 5 ] += ( wlnv * conv );
+   dstats[ 6 ] += ( sedv * conv );
+
+   // Add values to record lists
+   lwlns << wlnv;
+   lseds << sedv;
+   lcons << conv;
+}
+
+// Utility to finalize statistical computations for a record
+void US_MwlSpectra::final_stats( QVector< int >& istats,
+      QVector< double >& dstats, QVector< double >& lwlns,
+      QVector< double >& lseds, QVector< double >& lcons )
+{
+   // istats 0-2:  nnz, nwvl, nsed
+   // dstats 0-4:  minc, maxc, wmean, smean, cmean,
+   //        5-9:  wwavg, swavg, mediw, medis, medic
+   
+   // Complete averages
+   double dnnz        = (double)istats[ 0 ];
+   double ctot        = dstats[ 4 ];
+   dstats[ 2 ]       /= dnnz;
+   dstats[ 3 ]       /= dnnz;
+   dstats[ 4 ]       /= dnnz;
+   dstats[ 5 ]       /= ctot;
+   dstats[ 6 ]       /= ctot;
+
+   // Sort value lists and compute medians
+   qSort( lwlns );
+   qSort( lseds );
+   qSort( lcons );
+   dstats[ 7 ]        = lwlns[ lwlns.count() / 2 ];
+   dstats[ 8 ]        = lseds[ lseds.count() / 2 ];
+   dstats[ 9 ]        = lcons[ lcons.count() / 2 ];
 }
 

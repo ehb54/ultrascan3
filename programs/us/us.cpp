@@ -186,6 +186,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_DDCOMB   , tr( "Combine &Discrete Distributions"   ), utilities );
   addMenu(  P_GLOMODL ,  tr( "Create Global &Model"              ), utilities );
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), utilities );
+  addMenu(  P_VIEWMSS ,  tr( "View Multiwavelength &S-Spectra"   ), utilities );
 
   QMenu* simulation  = new QMenu( tr( "S&imulation" ),  this );
   addMenu(  P_ASTFEM, tr( "&Finite Element Simulation (ASTFEM)" ), simulation );

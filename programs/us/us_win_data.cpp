@@ -24,6 +24,7 @@ namespace US_WinData
     P_FITMEN,       P_COLORGRAD,    P_RPTGEN,
     P_ROTORCAL,     P_LICENSE,      P_VHWCOMB,
     P_DDCOMB,       P_GLOMODL,      P_VIEWMWL,
+    P_VIEWMSS,
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
     P_SASSOC,       P_MODEL1,       P_MODEL2,
@@ -202,6 +203,11 @@ namespace US_WinData
     { P_VIEWMWL,   0, 0, "us_mwlr_viewer",
       QObject::tr( "Loading View Multiwavelength Data"    ),
       QObject::tr( "View Multiwavelength Data Program"    )
+    },
+    
+    { P_VIEWMSS,   0, 0, "us_mwl_spectra",
+      QObject::tr( "Loading View Multiwavelength S-Spectra"  ),
+      QObject::tr( "View Multiwavelength S-Spectra Program"  )
     },
     
     { P_ASTFEM,    0, 0, "us_astfem_sim",
