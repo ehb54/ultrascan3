@@ -1616,7 +1616,7 @@ DbgLv(1) << "AGap:  plot_range()";
                break;
             }
 
-            range_left = p.x();
+            range_left  = radius_indexed( p.x() );
             draw_vline( range_left );
             break;
          }
@@ -1625,7 +1625,7 @@ DbgLv(1) << "AGap:  plot_range()";
             // Sometime we get two clicks
             if ( qAbs( p.x() - range_left ) < 0.020 ) return;
 
-            range_right = p.x();
+            range_right = radius_indexed( p.x() );
 
             if ( range_right < range_left )
                swap_double( range_left, range_right );
@@ -1757,7 +1757,7 @@ DbgLv(1) << "AGap:  plot_range()";
             break;
          }
 
-         plateau = p.x();
+         plateau = radius_indexed( p.x() );
 
          // Display the data (localize str)
          {
@@ -5330,5 +5330,11 @@ int US_Edit::lambdas_by_cell( int trx )
    }
 
    return nwaveln;
+}
+
+// Return the radius value at the radius index nearest a given radius
+double US_Edit::radius_indexed( const double radi )
+{
+   return data.radius( data.xindex( radi ) );
 }
 

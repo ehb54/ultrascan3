@@ -302,6 +302,7 @@ class US_Edit : public US_Widgets
       int  like_edit_files   ( QString, QStringList&, US_DB2* );
       int  apply_edits       ( US_DataIO::EditValues parameters );
       int  lambdas_by_cell   ( int = -1 );
+      double radius_indexed  ( const double );
                              
       void reset             ( void );
       void reset_triple      ( void );

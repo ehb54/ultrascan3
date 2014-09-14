@@ -759,7 +759,7 @@ void US_MwlSpectra::runDetails( void )
 
    msg += tr( "\nStatistical Details for the Full Model set.\n" );
    msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaa[ 0 ] );
-   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaa[ 1 ] );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( istaa[ 1 ] );
    msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaa[ 2 ] );
    msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaa[ 0 ] );
    msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaa[ 1 ] );
@@ -773,7 +773,7 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaa[ 6 ] );
    msg += tr( "\nStatistical Details for Wavelength %1 .\n" ).arg( wln1 );
    msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaw1[ 0 ] );
-   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaw1[ 1 ] );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( istaw1[ 1 ] );
    msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaw1[ 2 ] );
    msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaw1[ 0 ] );
    msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaw1[ 1 ] );
@@ -787,7 +787,7 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaw1[ 6 ] );
    msg += tr( "Statistical Details for Wavelength %1 .\n" ).arg( wln2 );
    msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaw2[ 0 ] );
-   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaw2[ 1 ] );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( istaw2[ 1 ] );
    msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaw2[ 2 ] );
    msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaw2[ 0 ] );
    msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaw2[ 1 ] );
@@ -801,7 +801,7 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaw2[ 6 ] );
    msg += tr( "Statistical Details for Wavelength %1 .\n" ).arg( wln3 );
    msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaw3[ 0 ] );
-   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaw3[ 1 ] );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( istaw3[ 1 ] );
    msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaw3[ 2 ] );
    msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaw3[ 0 ] );
    msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaw3[ 1 ] );
@@ -815,7 +815,7 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaw3[ 6 ] );
    msg += tr( "Statistical Details for Wavelength %1 .\n" ).arg( wln4 );
    msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaw4[ 0 ] );
-   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaw4[ 1 ] );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( istaw4[ 1 ] );
    msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaw4[ 2 ] );
    msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaw4[ 0 ] );
    msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaw4[ 1 ] );
@@ -829,7 +829,7 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaw4[ 6 ] );
    msg += tr( "Statistical Details for Wavelength %1 .\n" ).arg( wln5 );
    msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istaw5[ 0 ] );
-   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istaw5[ 1 ] );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( istaw5[ 1 ] );
    msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istaw5[ 2 ] );
    msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstaw5[ 0 ] );
    msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstaw5[ 1 ] );
@@ -843,7 +843,7 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstaw5[ 6 ] );
    msg += tr( "\nStatistical Details for Sed.Coeff. %1 .\n" ).arg( sed1 );
    msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istas1[ 0 ] );
-   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istas1[ 1 ] );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( istas1[ 1 ] );
    msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istas1[ 2 ] );
    msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstas1[ 0 ] );
    msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstas1[ 1 ] );
@@ -857,7 +857,7 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstas1[ 6 ] );
    msg += tr( "Statistical Details for Sed.Coeff. %1 .\n" ).arg( sed2 );
    msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istas2[ 0 ] );
-   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istas2[ 1 ] );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( istas2[ 1 ] );
    msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istas2[ 2 ] );
    msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstas2[ 0 ] );
    msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstas2[ 1 ] );
@@ -871,7 +871,7 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstas2[ 6 ] );
    msg += tr( "Statistical Details for Sed.Coeff. %1 .\n" ).arg( sed3 );
    msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istas3[ 0 ] );
-   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istas3[ 1 ] );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( istas3[ 1 ] );
    msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istas3[ 2 ] );
    msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstas3[ 0 ] );
    msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstas3[ 1 ] );
@@ -885,7 +885,7 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstas3[ 6 ] );
    msg += tr( "Statistical Details for Sed.Coeff. %1 .\n" ).arg( sed4 );
    msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istas4[ 0 ] );
-   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istas4[ 1 ] );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( istas4[ 1 ] );
    msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istas4[ 2 ] );
    msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstas4[ 0 ] );
    msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstas4[ 1 ] );
@@ -899,7 +899,7 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "   Weighted Avg. Sed. Coeff.:    %1\n" ).arg( dstas4[ 6 ] );
    msg += tr( "Statistical Details for Sed.Coeff. %1 .\n" ).arg( sed5 );
    msg += tr( "   Total Non-Zero Count:         %1\n" ).arg( istas5[ 0 ] );
-   msg += tr( "   Count of Wavelenths:          %1\n" ).arg( istas5[ 1 ] );
+   msg += tr( "   Count of Wavelengths:         %1\n" ).arg( istas5[ 1 ] );
    msg += tr( "   Count of Sed. Coeffs.:        %1\n" ).arg( istas5[ 2 ] );
    msg += tr( "   Minimum Concentration:        %1\n" ).arg( dstas5[ 0 ] );
    msg += tr( "   Maximum Concentration:        %1\n" ).arg( dstas5[ 1 ] );
@@ -1280,7 +1280,7 @@ DbgLv(1) << "Plt3D";
       {
          p3d_pltw->reloadData( &p3dxyz );
 
-         QString ptitle = tr( "MWL 3-D Plot" );
+         QString ptitle = tr( "MWL 3-D Plot, Spectra" );
 
          p3d_pltw->setPlotTitle( ptitle );
          p3d_pltw->replot();
