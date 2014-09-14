@@ -43,6 +43,7 @@
             <keyword id="e4" name="export-legacy" ref="export_legacy.html"/>
             <keyword id="f1" name="fe-model"      ref="fe_match.html"/>
             <keyword id="f2" name="fit-meniscus"  ref="fit_meniscus.html"/>
+            <keyword id="f3" name="fds-fileman"   ref="us_fds_filemanager.html"/>
             <keyword id="g1" name="ga-initialize" ref="ga_initialize.html"/>
             <keyword id="g2" name="global-model"  ref="combine_models.html"/>
             <keyword id="g3" name="gradient"      ref="colorgradient.html"/>
@@ -326,6 +327,13 @@
             <file>images/fit_meniscus.png</file>
             <file>images/fit_men-load.png</file>
             <file>images/fit_men-editupd.png</file>
+
+	    <file>us_fds_filemanager.html</file>
+	    <file>images/us_fds_filemanager-0.png</file>
+	    <file>images/us_fds_filemanager-1.png</file>
+	    <file>images/us_fds_filemanager-2.png</file>
+	    <file>images/us_fds_filemanager-3.png</file>
+	    <file>images/us_fds_filemanager-4.png</file>
 
             <file>load_auc.html</file>
             <file>images/load_auc.png</file>

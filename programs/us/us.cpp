@@ -177,6 +177,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   QMenu* utilities   = new QMenu( tr( "&Utilities" ),   this );
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
   addMenu(  P_EXPORT   , tr( "&Export OpenAUC Data"              ), utilities );
+  addMenu(  P_FDSMAN   , tr( "FDS File &Manager"                 ), utilities );
   addMenu(  P_FITMEN   , tr( "&Fit Meniscus"                     ), utilities );
   addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator"         ), utilities );
   addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );
