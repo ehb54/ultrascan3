@@ -20,7 +20,7 @@ namespace US_WinData
 
     P_GLOBFITEQ,                           // Global Fit Menu
 
-    P_CONVERT,      P_EXPORT,              // Utilities menu
+    P_CONVERT,      P_EXPORT,       P_FDSMAN, //Utilities menu
     P_FITMEN,       P_COLORGRAD,    P_RPTGEN,
     P_ROTORCAL,     P_LICENSE,      P_VHWCOMB,
     P_DDCOMB,       P_GLOMODL,      P_VIEWMWL,
@@ -158,6 +158,11 @@ namespace US_WinData
     { P_EXPORT,   1, 0, "us_export",
       QObject::tr( "Loading OpenAUC Data Export Routine" ),
       QObject::tr( "OpenAUC Data Export Program" )
+    },
+    
+    { P_FDSMAN,   1, 0, "us_fds_filemanager",
+      QObject::tr( "Loading Fluorescence Data File Manager" ),
+      QObject::tr( "Fluorescence Data File Manager Program" )
     },
     
     { P_FITMEN,   0, 0, "us_fit_meniscus",
