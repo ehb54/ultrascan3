@@ -118,11 +118,11 @@ US_Plot3Dxyz* US_MwlSPlotControl::widget_3dplot( void )
 void US_MwlSPlotControl::plot3_btn()
 {
 qDebug() << "PCtrl:  plot3_btn";
-   QString wtitle  = tr( "Multiwavelength 3-Dimensional Viewer" );
+   QString wtitle  = tr( "Multiwavelength 3-D Spectra Viewer" );
    QString ptitle  = tr( "MWL 3-D Plot, Spectra" );
    QString xatitle = tr( "Lambda(nm)" );
-   QString yatitle = tr( "Sed.Coeff.(x 10^13)" );
-   QString zatitle = tr( "Intensity" );
+   QString yatitle = tr( "Sed.Coeff.(*e+13)" );
+   QString zatitle = tr( "Concen." );
    zscale          = ct_zscalefac->value();
    rxscale         = ct_rxscale  ->value();
    ryscale         = ct_ryscale  ->value();
