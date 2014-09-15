@@ -396,7 +396,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    te_pctl_help  = us_textedit( );
    te_pctl_help->setText( tr(
       "Please load a sedimentation coefficient or molecular weight"
-      " distribution to initialize the genetic algorithm s-value or vw-value"
+      " distribution to initialize the genetic algorithm s-value or mw-value"
       " range. The distribution should have a good resolution over the"
       " sedimentation or weight coefficients. This distribution will be "
       " used to initialize all experiments used in the run, so the"
@@ -1404,8 +1404,8 @@ DbgLv(1) << "MC" << monte_carlo << " iters" << mc_iters;
       // sort and reduce distributions
       sdistro   = &xy_distro;
       psdsiz    = sdistro->size();
-      sort_distro( sk_distro, true );
-      sort_distro( xy_distro, true );
+      sort_distro( sk_distro, false );
+      sort_distro( xy_distro, true  );
 DbgLv(1) << "Solute psdsiz sdsiz xdsiz" << psdsiz << sk_distro.size()
  << xy_distro.size();
 for ( int jj=0;jj<sk_distro.size();jj++ ) {

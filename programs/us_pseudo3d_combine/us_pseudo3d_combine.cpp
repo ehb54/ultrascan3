@@ -845,13 +845,14 @@ DbgLv(1) << "LD:  analys_name" << tsys.analys_name;
    plt_zmax_co = -1e+8;
    plt_zmin_zp = 100.0;
    plt_zmax_zp = 0.0;
+   int nsolmc  = model.components.size();
 
    // read in and set distribution s,k,c,... values
    if ( tsys.distro_type != (int)US_Model::COFS )
    {
       double tot_conc = 0.0;
 
-      for ( int jj = 0; jj < model.components.size(); jj++ )
+      for ( int jj = 0; jj < nsolmc; jj++ )
       {
          sol_sk.s  = model.components[ jj ].s * 1.0e13;
          sol_sk.k  = model.components[ jj ].f_f0;
@@ -885,17 +886,17 @@ DbgLv(1) << "LD:  analys_name" << tsys.analys_name;
 DbgLv(1) << "LD: zmin zmax totconc" << plt_zmin_co << plt_zmax_co << tot_conc;
 
       // sort and reduce distributions
-      sort_distro( tsys.sk_distro, true );
-      sort_distro( tsys.xy_distro, true );
+      sort_distro( tsys.sk_distro, false );
+      sort_distro( tsys.xy_distro, true  );
       int nsolsk = tsys.sk_distro.size();
       int nsolxy = tsys.xy_distro.size();
-DbgLv(1) << "LD: nsolsk nsolxy" << nsolsk << nsolxy;
+DbgLv(1) << "LD: nsolsk nsolxy nsolmc" << nsolsk << nsolxy << nsolmc;
       tsys.sk_distro_zp.clear();
       tsys.xy_distro_zp.clear();
 
       // Create Z-as-percentage version of distributions
 
-      for ( int jj = 0; jj < model.components.size(); jj++ )
+      for ( int jj = 0; jj < nsolmc; jj++ )
       {
          double cozpc;
 
@@ -1402,6 +1403,7 @@ void US_Pseudo3D_Combine::build_xy_distro()
 
    // Create Z-as-percentage version of xy distribution
    int    nsolxy = tsys->xy_distro.size();
+DbgLv(1) << "Bld: nsolsk nsolxy" << nsolsk << nsolxy;
    tsys->xy_distro_zp.clear();
 
    for ( int ii = 0; ii < nsolxy; ii++ )
