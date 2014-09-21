@@ -970,7 +970,8 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
       bool reorder = true;
 
       QRegExp rx_cap( "(\\d+)_(\\d+)(\\D|$)" );
-      rx_cap.setMinimal( true );
+      QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+      // rx_cap.setMinimal( true );
 
       list < hplc_sortable_qstring > svals;
 
@@ -989,6 +990,12 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
       {
          QString tmp = filenames[ i ].mid( head.length() );
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
+
+         if ( rx_clear_nonnumeric.search( tmp ) != -1 )
+         {
+            tmp = rx_clear_nonnumeric.cap( 1 );
+         }
+
          if ( rx_cap.search( tmp ) != -1 )
          {
 #ifdef DEBUG_LOAD_REORDER
@@ -1025,7 +1032,7 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
          sval.name  = filenames[ i ];
          svals      .push_back( sval );
 #ifdef DEBUG_LOAD_REORDER
-         qDebug( QString( "sort tmp <%1> xval <%2>" ).arg( tmp ).arg( sval.x ) );
+         qDebug( QString( "sort %1 tmp <%2> xval <%3>" ).arg( sval.name ).arg( tmp ).arg( sval.x ) );
 #endif
       }
       if ( reorder )
@@ -3405,6 +3412,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
    list < double >      ql;
 
    QRegExp rx_cap( "(\\d+)_(\\d+)" );
+   QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
+   // rx_cap.setMinimal( true );
 
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
@@ -3414,12 +3423,19 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
       } else {
          QString tmp = files[ i ].mid( head.length() );
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
+         if ( rx_clear_nonnumeric.search( tmp ) != -1 )
+         {
+            tmp = rx_clear_nonnumeric.cap( 1 );
+         }
+
          if ( rx_cap.search( tmp ) != -1 )
          {
-            tmp = rx_cap.cap( 2 );
+            tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
          }
          double timestamp = tmp.toDouble();
-         
+#ifdef DEBUG_LOAD_REORDER
+         qDebug( QString( "%1 tmp %2 value %3" ).arg( files[ i ] ).arg( tmp ).arg( timestamp ) );
+#endif
          for ( unsigned int j = 0; j < ( unsigned int ) f_qs[ files[ i ] ].size(); j++ )
          {
             I_values[ timestamp ][ f_qs[ files[ i ] ][ j ] ] = f_Is[ files[ i ] ][ j ];
