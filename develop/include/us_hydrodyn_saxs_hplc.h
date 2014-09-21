@@ -442,7 +442,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QLabel       * lbl_guinier_delta_range;
       mQLineEdit   * le_guinier_delta_start;
       mQLineEdit   * le_guinier_delta_end;
-      QLabel       * lbl_guinier_qrgmax;
+      QCheckBox    * cb_guinier_qrgmax;
       QLineEdit    * le_guinier_qrgmax;
       QCheckBox    * cb_guinier_sd;
       QLabel       * lbl_guinier_stats;
@@ -463,6 +463,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       mQLineEdit   * le_guinier_rg_rg_end;
 
       QCheckBox    * cb_guinier_lock_rg_range;
+      QPushButton  * pb_guinier_replot;
 
       // QCheckBox    * cb_guinier_repeat;
       // QLineEdit    * le_guinier_repeat_sd_limit;
@@ -515,7 +516,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 #endif
       map < QString, QColor >             guinier_colors;
 
-      void           guinier_replot       ();
       void           guinier_analysis     ();
       void           guinier_residuals    ( bool reset = false );
       void           guinier_range        ();
@@ -1178,6 +1178,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void scale_enables               ();
 
       void guinier                     ();
+      void guinier_replot              ();
       void guinier_q_start_text        ( const QString & );
       void guinier_q_start_focus       ( bool );
       void guinier_q_end_text          ( const QString & );
@@ -1191,6 +1192,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void guinier_delta_end_text      ( const QString & );
       void guinier_delta_end_focus     ( bool );
       void guinier_qrgmax_text         ( const QString & );
+      void guinier_qrgmax              ();
       void guinier_sd                  ();
       void guinier_enables             ();
       void guinier_residuals_update    ();

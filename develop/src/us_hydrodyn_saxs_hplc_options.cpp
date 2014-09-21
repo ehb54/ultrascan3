@@ -229,6 +229,27 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( le_discard_it_sd_mult, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_discard_it_sd_mult->setMinimumWidth( 60 );
 
+   cb_guinier_qrgmax = new QCheckBox(this);
+   cb_guinier_qrgmax->setText( tr( "Limit Guinier Maximum q*Rg" ) );
+   cb_guinier_qrgmax->setEnabled( true );
+   cb_guinier_qrgmax->setChecked( (*parameters)[ "hplc_cb_guinier_qrgmax" ] == "true" );
+   cb_guinier_qrgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_guinier_qrgmax->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_guinier_qrgmax );
+
+   le_guinier_qrgmax = new QLineEdit(this, "le_guinier_qrgmax Line Edit");
+   le_guinier_qrgmax->setText( (*parameters)[ "hplc_guinier_qrgmax" ] );
+   le_guinier_qrgmax->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_qrgmax->setPalette( PALET_NORMAL );
+   AUTFBACK( le_guinier_qrgmax );
+   le_guinier_qrgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 1, 20, 3, le_guinier_qrgmax );
+      le_guinier_qrgmax->setValidator( qdv );
+   }
+   connect( le_guinier_qrgmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_guinier_qrgmax->setMinimumWidth( 60 );
+
    pb_quit =  new QPushButton ( tr( "Quit" ), this );
    pb_quit -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_quit -> setMinimumHeight( minHeight1 );
@@ -282,6 +303,9 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 
    gl_other->addWidget         ( cb_discard_it_sd_mult , 1, 0 );
    gl_other->addWidget         ( le_discard_it_sd_mult , 1, 1 );
+
+   gl_other->addWidget         ( cb_guinier_qrgmax , 2, 0 );
+   gl_other->addWidget         ( le_guinier_qrgmax , 2, 1 );
 
    background->addLayout( gl_other );
 
@@ -353,6 +377,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    (*parameters)[ "hplc_zi_window"               ] = le_zi_window           ->text();
    (*parameters)[ "hplc_cb_discard_it_sd_mult"   ] = cb_discard_it_sd_mult  ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_discard_it_sd_mult"      ] = le_discard_it_sd_mult  ->text();
+   (*parameters)[ "hplc_cb_guinier_qrgmax"       ] = cb_guinier_qrgmax      ->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_guinier_qrgmax"          ] = le_guinier_qrgmax      ->text();
 
    if ( rb_gauss->isChecked() )
    {

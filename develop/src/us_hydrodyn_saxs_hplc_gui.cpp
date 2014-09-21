@@ -1562,15 +1562,19 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( le_guinier_delta_end, SIGNAL( textChanged( const QString & ) ), SLOT( guinier_delta_end_text( const QString & ) ) );
    connect( le_guinier_delta_end, SIGNAL( focussed ( bool ) )             , SLOT( guinier_delta_end_focus( bool ) ) );
 
-   lbl_guinier_qrgmax = new QLabel( tr( "q*Rg maximum: " ), this );
-   lbl_guinier_qrgmax->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
-   lbl_guinier_qrgmax->setPalette( PALET_NORMAL );
-   AUTFBACK( lbl_guinier_qrgmax );
-   lbl_guinier_qrgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   lbl_guinier_qrgmax->hide();
+   cb_guinier_qrgmax = new QCheckBox( this );
+   cb_guinier_qrgmax->setText( tr( "qmax*Rg limit: " ) );
+   cb_guinier_qrgmax->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_guinier_qrgmax );
+   cb_guinier_qrgmax->setChecked( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_guinier_qrgmax" ) &&
+                                  (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_guinier_qrgmax" ] == "true" );
+   cb_guinier_qrgmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   cb_guinier_qrgmax->hide();
+   connect( cb_guinier_qrgmax, SIGNAL( clicked() ), SLOT( guinier_qrgmax() ) );
 
    le_guinier_qrgmax = new mQLineEdit(this, "le_guinier_qrgmax Line Edit");
-   le_guinier_qrgmax->setText( "1.3" );
+   le_guinier_qrgmax->setText( (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_guinier_qrgmax" ) ?
+                               (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_guinier_qrgmax" ] : "1.3" );
    le_guinier_qrgmax->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_guinier_qrgmax->setPalette( PALET_NORMAL );
    AUTFBACK( le_guinier_qrgmax );
@@ -1794,6 +1798,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    cb_guinier_lock_rg_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_guinier_lock_rg_range->setPalette( PALET_NORMAL );
    AUTFBACK( cb_guinier_lock_rg_range );
+
+   pb_guinier_replot = new QPushButton(tr("Replot"), this);
+   pb_guinier_replot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_guinier_replot->setMinimumHeight(minHeight1);
+   pb_guinier_replot->setPalette( PALET_PUSHB );
+   pb_guinier_replot->setEnabled( true );
+   connect(pb_guinier_replot, SIGNAL(clicked()), SLOT(guinier_replot()));
 
    guinier_plot_errors = new QwtPlot( qs );
 #ifndef QT4
@@ -2556,6 +2567,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( le_guinier_rg_rg_start );
       hbl->addWidget( le_guinier_rg_rg_end );
       hbl->addWidget( cb_guinier_lock_rg_range );
+      hbl->addWidget( pb_guinier_replot );
       vbl_guinier->addLayout( hbl );
    }      
       
@@ -2571,7 +2583,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       hbl->addWidget( le_guinier_delta_start );
       hbl->addWidget( le_guinier_delta_end );
       hbl->addWidget( cb_guinier_sd );
-      hbl->addWidget( lbl_guinier_qrgmax );
+      hbl->addWidget( cb_guinier_qrgmax );
       hbl->addWidget( le_guinier_qrgmax );
       vbl_guinier->addLayout( hbl );
    }      
@@ -2914,8 +2926,8 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    guinier_widgets.push_back( lbl_guinier_delta_range );
    guinier_widgets.push_back( le_guinier_delta_start );
    guinier_widgets.push_back( le_guinier_delta_end );
-   // guinier_widgets.push_back( lbl_guinier_qrgmax );
-   // guinier_widgets.push_back( le_guinier_qrgmax );
+   guinier_widgets.push_back( cb_guinier_qrgmax );
+   guinier_widgets.push_back( le_guinier_qrgmax );
    guinier_widgets.push_back( cb_guinier_sd );
    guinier_widgets.push_back( guinier_plot );
    guinier_widgets.push_back( guinier_plot_rg );
@@ -2935,7 +2947,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    guinier_widgets.push_back( le_guinier_rg_rg_start );
    guinier_widgets.push_back( le_guinier_rg_rg_end );
    guinier_widgets.push_back( cb_guinier_lock_rg_range );
-
+   guinier_widgets.push_back( pb_guinier_replot );
 
    // not a "mode"
    guinier_errors_widgets.push_back( guinier_plot_errors );
@@ -2952,6 +2964,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    guinier_rg_widgets.push_back( le_guinier_rg_rg_start );
    guinier_rg_widgets.push_back( le_guinier_rg_rg_end );
    guinier_rg_widgets.push_back( cb_guinier_lock_rg_range );
+   guinier_rg_widgets.push_back( pb_guinier_replot );
 
    // rgc_widgets;
    rgc_widgets.push_back( lbl_rgc_mw );

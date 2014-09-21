@@ -75,6 +75,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QCheckBox *                             cb_discard_it_sd_mult;
       QLineEdit *                             le_discard_it_sd_mult;
 
+      QCheckBox *                             cb_guinier_qrgmax;
+      QLineEdit *                             le_guinier_qrgmax;
+
       QPushButton  *                          pb_quit;
       QPushButton  *                          pb_help;
       QPushButton  *                          pb_ok;

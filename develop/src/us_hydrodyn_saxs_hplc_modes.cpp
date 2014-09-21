@@ -1509,7 +1509,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    double qstart      = le_guinier_q_start->text().toDouble();
    double qend        = le_guinier_q_end  ->text().toDouble();
    double q2endvis    = le_guinier_q2_end ->text().toDouble() + le_guinier_delta_end->text().toDouble();
-   // double sRgmaxlimit = le_guinier_qrgmax ->text().toDouble();
+   double sRgmaxlimit = le_guinier_qrgmax ->text().toDouble();
 
    // int points_min = 2;
 
@@ -1521,10 +1521,12 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    int    count  = 0;
 
    double i0_avg = 0e0;
+   double i0_sum2 = 0e0;
    double i0_min = 1e99;
    double i0_max = -1e99;
 
    double rg_avg = 0e0;
+   double rg_sum2 = 0e0;
    double rg_min = 1e99;
    double rg_max = -1e99;
 
@@ -1550,8 +1552,18 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    //       it != guinier_q2.end();
    //       ++it )
    // {
+
+   bool do_decrease = cb_guinier_qrgmax->isChecked();
+
+   // if ( do_decrease )
+   // {
+   //    qDebug( "do decrease on" );
+   // }
+
    for ( int i = 0; i < (int) guinier_names.size(); ++i )
    {
+      do_decrease = cb_guinier_qrgmax->isChecked();
+
       QString this_name = guinier_names[ i ];
       double pos = guinier_t[ this_name ];
       if ( posmin > pos )
@@ -1563,84 +1575,129 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          posmax = pos;
       }
 
-      guinier_x[ this_name ].clear();
-      guinier_y[ this_name ].clear();
-      guinier_a.erase( this_name );
-      guinier_b.erase( this_name );
+      unsigned int pts_decrease = 0;
 
-      usu->wave["hplc"].q.clear();
-      usu->wave["hplc"].r.clear();
-      usu->wave["hplc"].s.clear();
-
+      bool computed_rg = false;
       bool use_SD_weighting = cb_guinier_sd->isChecked();
-      if ( guinier_e[ this_name ].size() != guinier_q[ this_name ].size() )
-      {
-         // any_sd_off = true;
-         // editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are not fully present" ) )
-         //             .arg( this_name ) );
-         use_SD_weighting = false;
-      } else {
+
+      do {
+
+         computed_rg = false;
+
+         guinier_x[ this_name ].clear();
+         guinier_y[ this_name ].clear();
+         guinier_a.erase( this_name );
+         guinier_b.erase( this_name );
+
+         usu->wave["hplc"].q.clear();
+         usu->wave["hplc"].r.clear();
+         usu->wave["hplc"].s.clear();
+
+         use_SD_weighting = cb_guinier_sd->isChecked();
+         if ( guinier_e[ this_name ].size() != guinier_q[ this_name ].size() )
+         {
+            // any_sd_off = true;
+            // editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are not fully present" ) )
+            //             .arg( this_name ) );
+            use_SD_weighting = false;
+         } else {
+            for ( int j = 0; j < (int) guinier_q[ this_name ].size(); j++ )
+            {
+               if ( guinier_q[ this_name ][ j ] >= qstart &&
+                    guinier_q[ this_name ][ j ] <= qend )
+               {
+                  if ( guinier_e[ this_name ][ j ] <= 0e0 )
+                  {
+                     // any_sd_off = true;
+                     // editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since at least one SD is zero or negative in the selected q range" ) )
+                     //             .arg( this_name) );
+                     use_SD_weighting = false;
+                     break;
+                  }
+               }
+            }
+         }
+
          for ( int j = 0; j < (int) guinier_q[ this_name ].size(); j++ )
          {
             if ( guinier_q[ this_name ][ j ] >= qstart &&
                  guinier_q[ this_name ][ j ] <= qend )
             {
-               if ( guinier_e[ this_name ][ j ] <= 0e0 )
+               usu->wave[ "hplc" ].q.push_back( guinier_q[ this_name ][ j ] );
+               usu->wave[ "hplc" ].r.push_back( guinier_I[ this_name ][ j ] );
+               if ( use_SD_weighting )
                {
-                  // any_sd_off = true;
-                  // editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since at least one SD is zero or negative in the selected q range" ) )
-                  //             .arg( this_name) );
-                  use_SD_weighting = false;
-                  break;
+                  usu->wave[ "hplc" ].s.push_back( guinier_e[ this_name ][ j ] );
                }
             }
          }
-      }
 
-      for ( int j = 0; j < (int) guinier_q[ this_name ].size(); j++ )
-      {
-         if ( guinier_q[ this_name ][ j ] >= qstart &&
-              guinier_q[ this_name ][ j ] <= qend )
+         if ( pts_decrease )
          {
-            usu->wave[ "hplc" ].q.push_back( guinier_q[ this_name ][ j ] );
-            usu->wave[ "hplc" ].r.push_back( guinier_I[ this_name ][ j ] );
+            if ( (int) usu->wave[ "hplc" ].q.size() - (int) pts_decrease < 5 )
+            {
+               editor_msg( "dark red", QString( tr( "%1 too few points left %2 after %3 points removed for qRgmax limit" ) )
+                           .arg( this_name )
+                           .arg( (int) usu->wave[ "hplc" ].q.size() - (int) pts_decrease )
+                           .arg( pts_decrease ) 
+                           );
+               break;
+            }
+
+            usu->wave[ "hplc" ].q.resize( usu->wave[ "hplc" ].q.size() - pts_decrease );
+            usu->wave[ "hplc" ].r.resize( usu->wave[ "hplc" ].q.size() );
             if ( use_SD_weighting )
             {
-               usu->wave[ "hplc" ].s.push_back( guinier_e[ this_name ][ j ] );
+               usu->wave[ "hplc" ].s.resize( usu->wave[ "hplc" ].q.size() );
             }
          }
-      }
 
-      unsigned int pstart = 0;
-      unsigned int pend   = usu->wave[ "hplc" ].q.size() ? usu->wave[ "hplc" ].q.size() - 1 : 0;
+         unsigned int pstart = 0;
+         unsigned int pend   = usu->wave[ "hplc" ].q.size() ? usu->wave[ "hplc" ].q.size() - 1 : 0;
 
-      if ( 
-          !usu->guinier_plot(
-                             "hplcrg",
-                             "hplc"
-                             )   ||
-          !usu->guinier_fit(
-                            this_log,
-                            "hplcrg", 
-                            pstart,
-                            pend,
-                            a,
-                            b,
-                            siga,
-                            sigb,
-                            chi2,
-                            Rg,
-                            I0,
-                            smax, // don't know why these are flipped
-                            smin,
-                            sRgmin,
-                            sRgmax
-                            ) )
+         computed_rg = 
+            usu->guinier_plot(
+                              "hplcrg",
+                              "hplc"
+                              )   &&
+            usu->guinier_fit(
+                             this_log,
+                             "hplcrg", 
+                             pstart,
+                             pend,
+                             a,
+                             b,
+                             siga,
+                             sigb,
+                             chi2,
+                             Rg,
+                             I0,
+                             smax, // don't know why these are flipped
+                             smin,
+                             sRgmin,
+                             sRgmax
+                             );
+         if ( !computed_rg )
+         {
+            editor_msg( "dark red", QString( "%1 could not compute Rg" ).arg( this_name ) );
+            break;
+         }
+
+         // qDebug( QString( "%1 decrease check sRgmax %2 sRgmaxlimit %3 %4" ).arg( this_name ).arg( sRgmax ).arg( sRgmaxlimit )
+         //         .arg( do_decrease ? "do_decrease on before check" : "do_decrease off before check" ) );
+         do_decrease = do_decrease && ( sRgmax > sRgmaxlimit );
+         if ( do_decrease )
+         {
+            pts_decrease++;
+         //    qDebug( QString( "%1 decreasing %2" ).arg( this_name ).arg( pts_decrease ) );
+         // } else {
+         //    qDebug( "no decrease needed" );
+         }
+      } while ( do_decrease );
+         
+
+      if ( computed_rg )
       {
-         // editor->append(QString("Error performing Guinier analysis on %1\n" + usu->errormsg + "\n")
-         // .arg(qsl_plotted_iq_names[i]));
-         editor_msg( "dark red", QString( "%1 could not compute Rg" ).arg( this_name ) );
-      } else {
          // editor_msg( "blue", 
          //             QString( "%1 Rg %2 I0 %3 points %4 qRgmax %5" )
          //             .arg( this_name )
@@ -1709,7 +1766,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
             qrg_avg += sRgmax;
             rg_avg  += Rg;
+            rg_sum2 += Rg * Rg;
             i0_avg  += I0;
+            i0_sum2 += I0 * I0;
 
             count++;
          }
@@ -1825,24 +1884,32 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    default :
       {
          double countinv = 1e0 / (double) count;
+         double countm1inv = 1e0 / ((double) count - 1 );
+         double rg_sd = sqrt( countm1inv * ( rg_sum2 - countinv * rg_avg * rg_avg ) );
+         double i0_sd = sqrt( countm1inv * ( i0_sum2 - countinv * i0_avg * i0_avg ) );
+
          qrg_avg *= countinv;
          rg_avg  *= countinv;
          i0_avg  *= countinv;
+
          msg = QString( "Avg. %1 " ).arg( count );
          if ( count != ( int ) guinier_q2.size() )
          {
+
             msg += QString( "of %1 " ).arg( guinier_q2.size() );
          }
          msg += QString( "" )
             .sprintf(
-                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f [%.1f:%.1f]  I0 %.2e [%.2e:%.2e]"
+                     "curves  qmax*Rg %.3f [%.3f:%.3f]  Rg %.1f (%.1f) [%.1f:%.1f]  I0 %.2e (%.2e) [%.2e:%.2e]"
                      , qrg_avg
                      , qrg_min
                      , qrg_max
                      , rg_avg
+                     , rg_sd
                      , rg_min
                      , rg_max
                      , i0_avg
+                     , i0_sd
                      , i0_min
                      , i0_max
                      )
@@ -2345,8 +2412,17 @@ void US_Hydrodyn_Saxs_Hplc::guinier_enables()
    le_guinier_rg_rg_end   -> setEnabled( true );
 }
 
+void US_Hydrodyn_Saxs_Hplc::guinier_qrgmax()
+{
+   guinier_analysis();
+}
+
 void US_Hydrodyn_Saxs_Hplc::guinier_qrgmax_text( const QString & )
 {
+   if ( cb_guinier_qrgmax->isChecked() )
+   {
+      guinier_analysis();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_q_start_text( const QString & text )

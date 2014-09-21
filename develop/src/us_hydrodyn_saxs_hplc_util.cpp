@@ -2159,6 +2159,8 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_zi_window"             ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"                ];
    parameters[ "hplc_discard_it_sd_mult"    ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_discard_it_sd_mult"       ];
    parameters[ "hplc_cb_discard_it_sd_mult" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult"    ];
+   parameters[ "hplc_guinier_qrgmax"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_guinier_qrgmax"           ];
+   parameters[ "hplc_cb_guinier_qrgmax"     ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_guinier_qrgmax"        ];
 
    parameters[ "hplc_csv_transposed" ] = 
       (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) ?
@@ -2185,6 +2187,8 @@ void US_Hydrodyn_Saxs_Hplc::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"             ] = parameters[ "hplc_zi_window"                ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_discard_it_sd_mult"    ] = parameters[ "hplc_discard_it_sd_mult"       ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult" ] = parameters[ "hplc_cb_discard_it_sd_mult"    ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_guinier_qrgmax"        ] = parameters[ "hplc_guinier_qrgmax"           ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_guinier_qrgmax"     ] = parameters[ "hplc_cb_guinier_qrgmax"        ];
 
    // maybe ask (warn) here if gaussian data structures have data
 
@@ -2216,6 +2220,10 @@ void US_Hydrodyn_Saxs_Hplc::options()
       update_gauss_mode();
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
    }
+
+   cb_guinier_qrgmax->setChecked( parameters[ "hplc_cb_guinier_qrgmax" ] == "true" );
+   le_guinier_qrgmax->setText( parameters[ "hplc_guinier_qrgmax" ] );
+
    update_enables();
 }
 

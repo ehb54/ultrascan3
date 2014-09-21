@@ -115,6 +115,14 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult" ] = "false";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_guinier_qrgmax" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_guinier_qrgmax" ] = "true";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_guinier_qrgmax" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_guinier_qrgmax" ] = "1.3";
+   }
 
    gaussian_type = 
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gaussian_type" ) ?
