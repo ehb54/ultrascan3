@@ -3542,6 +3542,9 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
 
    pb_testiq_visrange    ->setEnabled( false );
    pb_testiq_testset     ->setEnabled( false );
+
+   pb_test_i_of_t        ->setEnabled( false );
+   pb_guinier_plot_rg    ->setEnabled( false );
 }
 
 void US_Hydrodyn_Saxs_Hplc::model_select_all()

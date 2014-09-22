@@ -1203,10 +1203,6 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
    disable_all();
    mode_select( MODE_GUINIER );
    plot_dist->hide();
-   if ( testiq_active )
-   {
-      pb_testiq->setEnabled( true );
-   }
    ShowHide::hide_widgets( guinier_errors_widgets );
    ShowHide::hide_widgets( guinier_rg_widgets );
    
@@ -1258,10 +1254,11 @@ void US_Hydrodyn_Saxs_Hplc::guinier_add_marker(
 
 void US_Hydrodyn_Saxs_Hplc::guinier_sd()
 {
+   disable_all();
    guinier_replot();
    guinier_plot->replot();
-   guinier_analysis();
-   guinier_residuals();
+   //   guinier_analysis();
+   //   guinier_residuals();
    guinier_plot_errors->replot();
    guinier_enables();
 }
@@ -1562,6 +1559,8 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 
    for ( int i = 0; i < (int) guinier_names.size(); ++i )
    {
+      progress->setProgress( i, guinier_names.size() );
+
       do_decrease = cb_guinier_qrgmax->isChecked();
 
       QString this_name = guinier_names[ i ];
@@ -2132,6 +2131,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
       }
    }
    guinier_plot_rg->replot();
+   progress->setProgress( 1, 1 );
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_delete_markers()
@@ -2410,18 +2410,26 @@ void US_Hydrodyn_Saxs_Hplc::guinier_enables()
    le_guinier_rg_t_end    -> setEnabled( true );
    le_guinier_rg_rg_start -> setEnabled( true );
    le_guinier_rg_rg_end   -> setEnabled( true );
+   if ( testiq_active )
+   {
+      pb_testiq->setEnabled( true );
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_qrgmax()
 {
+   disable_all();
+   qApp->processEvents();
    guinier_analysis();
+   guinier_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_qrgmax_text( const QString & )
 {
    if ( cb_guinier_qrgmax->isChecked() )
    {
-      guinier_analysis();
+      cb_guinier_qrgmax->setChecked( false );
+      guinier_qrgmax();
    }
 }
 
