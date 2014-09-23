@@ -1507,7 +1507,8 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    double qend        = le_guinier_q_end  ->text().toDouble();
    double q2endvis    = le_guinier_q2_end ->text().toDouble() + le_guinier_delta_end->text().toDouble();
    double sRgmaxlimit = le_guinier_qrgmax ->text().toDouble();
-
+   double use_q2endvis = q2endvis;
+   
    // int points_min = 2;
 
    // bool any_sd_off = false;
@@ -1551,6 +1552,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    // {
 
    bool do_decrease = cb_guinier_qrgmax->isChecked();
+   bool start_do_decrease = do_decrease;
 
    // if ( do_decrease )
    // {
@@ -1561,7 +1563,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    {
       progress->setProgress( i, guinier_names.size() );
 
-      do_decrease = cb_guinier_qrgmax->isChecked();
+      do_decrease = start_do_decrease;
 
       QString this_name = guinier_names[ i ];
       double pos = guinier_t[ this_name ];
@@ -1793,9 +1795,16 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          guinier_a[ this_name ] = a;
          guinier_b[ this_name ] = b;
          guinier_x[ this_name ].push_back( guinier_q2[ this_name ][ 0 ] );
-         guinier_x[ this_name ].push_back( q2endvis );
+
+         if ( start_do_decrease && Rg )
+         {
+            use_q2endvis = sRgmax / Rg;
+            use_q2endvis *= use_q2endvis;
+         }
+         
+         guinier_x[ this_name ].push_back( use_q2endvis );
          guinier_y[ this_name ].push_back( exp( a + b * guinier_q2[ this_name ][ 0 ] ) );
-         guinier_y[ this_name ].push_back( exp( a + b * q2endvis ) );
+         guinier_y[ this_name ].push_back( exp( a + b * use_q2endvis ) );
 
          if ( !isnan( Rg ) )
          {
@@ -2130,8 +2139,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
 #endif
       }
    }
-   guinier_plot_rg->replot();
-   progress->setProgress( 1, 1 );
+   guinier_plot    ->replot();
+   guinier_plot_rg ->replot();
+   progress        ->setProgress( 1, 1 );
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_delete_markers()
