@@ -1595,12 +1595,41 @@ void US_Hydrodyn::load_config()
 
 void US_Hydrodyn::write_config()
 {
-   QString fname = QFileDialog::getSaveFileName( 0 , "Please name your SOMO configuration file..." , somo_dir , "*.config" , 0 );
+   QString fname = USglobal->config_list.root_dir + "/etc/somo.config";
+   switch (
+           QMessageBox::question(
+                                 this,
+                                 caption() + tr(": Save configuration "),
+                                 tr( "Save the current configuration as 'startup' configuration?" ),
+                                 QMessageBox::Yes, 
+                                 QMessageBox::No,
+                                 QMessageBox::Cancel
+                                 ) )
+   {
+   case QMessageBox::Cancel :
+      return;
+      break;
+   case QMessageBox::Yes : 
+      break;
+   case QMessageBox::No : 
+      fname = QFileDialog::getSaveFileName( 0 , "Please name your SOMO configuration file..." , somo_dir , "*.config" , 0 );
+      break;
+   default :
+      return;
+      break;
+   }
+
+   if ( fname.isEmpty() )
+   {
+      return;
+   }
+
    if (fname.right(7) != ".config")
    {
       fname += ".config";
    }
-   write_config(fname);
+
+   write_config( fname );
 }
 
 void US_Hydrodyn::do_reset()

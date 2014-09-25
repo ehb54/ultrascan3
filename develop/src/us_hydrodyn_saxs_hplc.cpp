@@ -978,13 +978,24 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
       QString head = qstring_common_head( filenames, true );
       QString tail = qstring_common_tail( filenames, true );
 
-      bool add_dp = head.contains( QRegExp( "\\d_$" ) );
+      bool do_prepend          = false;
+      QString prepend_tmp = "";
+      {
+         QRegExp rx_dp( "_q(\\d)_$" );
+         if ( rx_dp.search( head ) != -1 )
+         {
+            prepend_tmp = rx_dp.cap( 1 ) + ".";
+            do_prepend = true;
+         }
+      }
 
 #ifdef DEBUG_LOAD_REORDER
-      qDebug( QString( "sort head <%1> tail <%2>  dp %3 " ).arg( head ).arg( tail ).arg( add_dp ? "yes" : "no" ) );
+      qDebug( QString( "sort head <%1> tail <%2>  prepend %3 <%4>" ).arg( head ).arg( tail ).arg( do_prepend ? "yes" : "no" ) . arg( prepend_tmp ) );
 #endif
       
       set < QString > used;
+
+      bool added_dp = false;
 
       for ( int i = 0; i < (int) filenames.size(); ++i )
       {
@@ -996,21 +1007,32 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
             tmp = rx_clear_nonnumeric.cap( 1 );
          }
 
+         added_dp = false;
+
          if ( rx_cap.search( tmp ) != -1 )
          {
 #ifdef DEBUG_LOAD_REORDER
             qDebug( QString( "rx_cap search tmp %1 found" ).arg( tmp ) );
 #endif
             tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
+            added_dp = true;
 #ifdef DEBUG_LOAD_REORDER
          } else {
             qDebug( QString( "rx_cap search tmp %1 NOT found" ).arg( tmp ) );
 #endif
          }
 
-         if ( add_dp )
+         if ( do_prepend )
          {
-            tmp = "0." + tmp;
+            if ( added_dp )
+            {
+               QMessageBox::warning( this, 
+                                     caption()+ tr( ": Add files" ),
+                                     tr( "I am having a problem decoding the frame numbers or q values from the file names\n"
+                                         "Please email a list of the file names you are trying to load to emre@biochem.uthscsa.edu" ) );
+               return;
+            }
+            tmp = prepend_tmp + tmp;
          }
 
 #ifdef DEBUG_LOAD_REORDER
