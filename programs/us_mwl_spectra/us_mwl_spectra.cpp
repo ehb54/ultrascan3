@@ -53,7 +53,7 @@ US_MwlSpectra::US_MwlSpectra() : US_Widgets()
 
    QGridLayout* settings = new QGridLayout;
 
-   nsmooth      = 1;
+   nsmooth      = 3;
    dbg_level    = US_Settings::us_debug();
    mfilter      = "";
    p3d_ctld     = NULL;
@@ -119,7 +119,7 @@ US_MwlSpectra::US_MwlSpectra() : US_Widgets()
    ct_delay ->setFont( sfont );
    ct_delay ->setMinimumWidth( fwid );
    ct_delay ->resize( rhgt, lwid );
-   ct_delay ->setValue( 1.0 );
+   ct_delay ->setValue( 0.5 );
 
    // Status and standard pushbuttons
    QLabel*      lb_status   = us_banner( tr( "Status" ) );
@@ -743,6 +743,7 @@ void US_MwlSpectra::runDetails( void )
    msg += tr( "\nNormalized Composite Input Grid.\n" );
    msg += tr( "   Points after Normalizing:     %1\n" ).arg( nnpoint );
    msg += tr( "   Maximum Single-Bin Points:    %1\n" ).arg( nc_max );
+   msg += tr( "   Maximum Concentration (OD):   %1\n" ).arg( cn_max );
    msg += tr( "Padded Full S x Lambda Grid.\n" );
    msg += tr( "   Grid Points:                  %1\n" ).arg( ntpoint );
    msg += tr( "   Minimum Sedimentation Coeff.: %1\n" ).arg( se_min );
@@ -983,7 +984,7 @@ DbgLv(1) << "PltA: last_xmin" << last_xmin;
       last_xmin    = lmb_start;         // Set X limits
       last_xmax    = lmb_end;
       last_ymin    = 0.0;               // Set Y limits
-      last_ymax    = co_max; 
+      last_ymax    = cn_max; 
       data_plot->setAxisScale( QwtPlot::xBottom, last_xmin, last_xmax );
       data_plot->setAxisScale( QwtPlot::yLeft  , last_ymin, last_ymax );
    }
