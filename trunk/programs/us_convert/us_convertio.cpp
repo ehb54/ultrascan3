@@ -195,14 +195,15 @@ qDebug() << "cvio:WrRDB: trx" << trx << "soluGUID"
          << QString::number( triple->solution.solutionID )
          << QString::number( channelID );
       status = db->statusQuery( q );
-//qDebug() << "cvio:WrRDB: newExp id solID chnID" << ExpData.expID
-// << triple->solution.solutionID << channelID;
+qDebug() << "cvio:WrRDB: newExp id solID chnID" << ExpData.expID
+ << triple->solution.solutionID << channelID;
       if ( status != US_DB2::OK )
       {
-         error += "MySQL error associating experiment "   + 
-                  QString::number( ExpData.expID ) + "\n" +
-                  " with solution " + triple->solution.solutionGUID + "\n" +
-                  status + " " + db->lastError() + "\n";
+         error += QObject::tr( "MySQL error associating experiment %1\n"
+                               " with solution %2\n"
+                               " code: %3  error: %4\n" )
+                  .arg( ExpData.expID ).arg( triple->solution.solutionGUID )
+                  .arg( status ).arg( db->lastError() );
       }
    }
 

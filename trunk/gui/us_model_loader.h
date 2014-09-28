@@ -76,6 +76,7 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       QStringList&         editIDs;   // input editIDs list argument
       bool                 multi;     // flag if multiple models can be selected
       QString              editGUID;  // edit GUID to possibly match
+      US_DB2*              dbP;       // pointer to a database connection
 
       US_Help showHelp;
 

@@ -83,6 +83,7 @@ qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
    // Top layout: buttons and fields above list widget
    QGridLayout* top  = new QGridLayout( );
    singprev          = false;
+   dbP               = NULL;
 
    int iload         = loadDB ? US_Disk_DB_Controls::DB
                               : US_Disk_DB_Controls::Disk;
@@ -219,21 +220,24 @@ int US_ModelLoader::load_model( US_Model& model, int index )
 
    if ( loadDB )
    {
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
-
-      if ( ( rc = db.lastErrno() ) != US_DB2::OK )
+      if ( dbP == NULL )
       {
-         QMessageBox::information( this,
-               tr( "DB Connection Problem" ),
-               tr( "There was an error connecting to the database:\n" )
-               + db.lastError() );
-         return rc;
+         US_Passwd pw;
+         dbP         = new US_DB2( pw.getPasswd() );
+
+         if ( ( rc = dbP->lastErrno() ) != US_DB2::OK )
+         {
+            QMessageBox::information( this,
+                  tr( "DB Connection Problem" ),
+                  tr( "There was an error connecting to the database:\n" )
+                  + dbP->lastError() );
+            return rc;
+         }
       }
 
       QString   modelID  = model_descriptions[ index ].DB_id;
 
-      rc   = model.load( modelID, &db );
+      rc   = model.load( modelID, dbP );
    }
 
    else
@@ -245,8 +249,6 @@ int US_ModelLoader::load_model( US_Model& model, int index )
 
    if ( model_descriptions[ index ].iterations > 1 )
    {  // Multiple model load
-      US_Passwd pw;
-      US_DB2* dbP = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
 
       int nm = model_descriptions[ index ].iterations;
       int kk = model_descriptions[ index ].asd_index;
@@ -371,6 +373,7 @@ void US_ModelLoader::select_diskdb()
 {
    // Disable investigator field if from disk or normal user; Enable otherwise
    loadDB       = dkdb_cntrls->db();
+   dbP          = loadDB ? dbP : NULL;
    pb_investigator->setEnabled( loadDB && ( US_Settings::us_inv_level() > 0 ) );
 
    // Signal model-loader caller that Disk/DB source has changed
@@ -449,16 +452,19 @@ qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
 
    if ( loadDB )
    {  // Model list from DB
-      US_Passwd   pw;
-      US_DB2      db( pw.getPasswd() );
-
-      if ( db.lastErrno() != US_DB2::OK )
+      if ( dbP == NULL )
       {
-         QMessageBox::information( this,
-               tr( "DB Connection Problem" ),
-               tr( "There was an error connecting to the database:\n" )
-               + db.lastError() );
-         return;
+         US_Passwd   pw;
+         dbP         = new US_DB2( pw.getPasswd() );
+
+         if ( dbP->lastErrno() != US_DB2::OK )
+         {
+            QMessageBox::information( this,
+                  tr( "DB Connection Problem" ),
+                  tr( "There was an error connecting to the database:\n" )
+                  + dbP->lastError() );
+            return;
+         }
       }
 
       QStringList query;
@@ -470,7 +476,7 @@ qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
       int kid2    = -3;
 qDebug() << " md count" << countMD;
 //      query << "count_models" << invID;
-//      int countDB = db.statusQuery( query );
+//      int countDB = dbP->statusQuery( query );
 //qDebug() << " db count" << countDB;
       QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -498,9 +504,9 @@ qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
             {
                query.clear();
                query << "get_editID" << editGUID;
-               db.query( query );
-               db.next();
-               editID         = db.value( 0 ).toString();
+               dbP->query( query );
+               dbP->next();
+               editID         = dbP->value( 0 ).toString();
             }
          }
 qDebug() << "        edit GUID,ID" << editGUID << editID;
@@ -527,18 +533,18 @@ time1=QDateTime::currentDateTime();
                query << "get_model_desc" << invID;
 
 qDebug() << " query" << query;
-            db.query( query );
-qDebug() << " NumRows" << db.numRows();
+            dbP->query( query );
+qDebug() << " NumRows" << dbP->numRows();
 time2=QDateTime::currentDateTime();
 qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
 
-            while ( db.next() )
+            while ( dbP->next() )
             {
                ModelDesc desc;
-               desc.DB_id       = db.value( 0 ).toString();
-               desc.modelGUID   = db.value( 1 ).toString();
-               desc.description = db.value( 2 ).toString();
-               desc.editGUID    = db.value( 5 ).toString();
+               desc.DB_id       = dbP->value( 0 ).toString();
+               desc.modelGUID   = dbP->value( 1 ).toString();
+               desc.description = dbP->value( 2 ).toString();
+               desc.editGUID    = dbP->value( 5 ).toString();
 
                desc.filename.clear();
                desc.reqGUID     = desc.description.section( ".", -2, -2 )
@@ -831,6 +837,7 @@ void US_ModelLoader::accepted()
       omodels.clear();
       odescrs.clear();
 
+QDateTime time1=QDateTime::currentDateTime();
       for ( int ii = 0; ii < modelsCount; ii++ )
       {
          load_model( model, ii );
@@ -838,6 +845,9 @@ void US_ModelLoader::accepted()
          omodels << model;
          odescrs << description( ii );
       }
+QDateTime time2=QDateTime::currentDateTime();
+qDebug() << "Timing: accept-load: mcount" << modelsCount
+ << "time(ms)" << time1.msecsTo(time2);
    }
 
    // Return search string that reflects current state
