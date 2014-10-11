@@ -500,9 +500,10 @@ DbgLv(1) << " eupd:  menv" << menv << "lefv" << lefv;
       QFile fileo( fn );
 
       if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
          return;
+      }
 
-      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
       QTextStream tso( &fileo );
       tso << edtext;
       fileo.close();
@@ -596,6 +597,8 @@ DbgLv(1) << " eupd:      mlsx mlnn" << mlsx << mlnn;
 
       }  // END: wavelengths loop
 
+      QApplication::restoreOverrideCursor();
+      QApplication::restoreOverrideCursor();
       mmsg     = tr( "In file directory\n    " ) + filedir + " ,\n" +
                  tr( "file\n    " ) + fname_edit + "\n" +
                  tr( "has been modified with the line:\n    " ) + 
@@ -623,8 +626,6 @@ DbgLv(1) << " eupd:      mlsx mlnn" << mlsx << mlnn;
 DbgLv(1) << " call Remove Models";
      remove_models();
    }
-
-   QApplication::restoreOverrideCursor();
 
    if ( ! confirm )
    {
@@ -997,6 +998,7 @@ DbgLv(1) << "Number of FM EXISTING sets: " << nfexss;
    }
 
    le_status->setText( msg );
+   QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
 }
 
@@ -1474,6 +1476,7 @@ DbgLv(1) << "RmvMod: 1st rmv-mod: jj modDesc" << jj << modDesc;
          }
       }
       QApplication::restoreOverrideCursor();
+      QApplication::restoreOverrideCursor();
 
       nlnois             = nlrnoi + ( nlrnoi > nlrmod ? 2 : 1 );
       ndnois             = ndrnoi + ( ndrnoi > ndrmod ? 2 : 1 );
@@ -1569,9 +1572,9 @@ DbgLv(1) << "  Delete: " << recID << recFname.section("/",-1,-1) << recDesc;
    else
    {  // No models were found!!! (huh!!!)
 DbgLv(1) << "**NO local/dbase models-to-remove were found!!!!";
-      QApplication::restoreOverrideCursor();
    }
 
+   QApplication::restoreOverrideCursor();
    return;
 }
 

@@ -487,11 +487,7 @@ void US_MPI_Analysis::time_mc_iterations()
          << mc_iterations << ", due to max. time restrictions.";
 
       // Just to be sure, create tar file right now
-      QDir        d( "." );
-      QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
-      files.removeOne( "analysis-results.tar" );
-      US_Tar tar;
-      tar.create( "analysis-results.tar", files );
+      update_outputs();
    }
 
    return;
@@ -807,11 +803,7 @@ DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
 
       if ( my_group == 0 )
       {  // Update the tar file of outputs in case of an aborted run
-         QDir        d( "." );
-         QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
-         files.removeOne( "analysis-results.tar" );
-         US_Tar tar;
-         tar.create( "analysis-results.tar", files );
+         update_outputs();
       }
 
       if ( mc_iteration < mc_iterations )
@@ -1000,11 +992,7 @@ DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
 
       if ( my_group == 0 )
       {  // Update the tar file of outputs in case of an aborted run
-         QDir        d( "." );
-         QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
-         files.removeOne( "analysis-results.tar" );
-         US_Tar tar;
-         tar.create( "analysis-results.tar", files );
+         update_outputs();
       }
 
       if ( mc_iteration < mc_iterations )

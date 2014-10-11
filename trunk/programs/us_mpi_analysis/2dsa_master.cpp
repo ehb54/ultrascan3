@@ -1,6 +1,7 @@
 #include "us_mpi_analysis.h"
 #include "us_math2.h"
 #include "us_util.h"
+#include "us_tar.h"
 #include "us_astfem_rsa.h"
 #include "us_simparms.h"
 #include "us_constants.h"
@@ -49,18 +50,19 @@ void US_MPI_Analysis::_2dsa_master( void )
             "Iteration: "    + QString::number( iterations );
 
          if ( datasets_to_process > 1 )
-            progress     += "; Datasets: " + QString::number( datasets_to_process );
+            progress     += "; Datasets: "
+                            + QString::number( datasets_to_process );
          else
-            progress     += "; Dataset: " + QString::number( current_dataset + 1 );
+            progress     += "; Dataset: "
+                            + QString::number( current_dataset + 1 );
 
          if ( mc_iterations > 1 )
-            progress     +=
-               "; MonteCarlo: " + QString::number( mc_iteration + 1 );
+            progress     += "; MonteCarlo: "
+                            + QString::number( mc_iteration + 1 );
          else
-            progress     +=
-               "; Meniscus: "   + 
-                 QString::number( meniscus_value, 'f', 3 ) +
-                 QString( " Run %1 of %2" ).arg( meniscus_run + 1 )
+            progress     += "; Meniscus: "
+               + QString::number( meniscus_value, 'f', 3 )
+               + QString( " Run %1 of %2" ).arg( meniscus_run + 1 )
                                            .arg( meniscus_values.size() );
 
          send_udp( progress );
@@ -101,8 +103,8 @@ int rr=kr/2;
 DbgLv(1) << " master loop-BOT: ds" << current_dataset+1 << "data l m h"
  << edat->value(10,10) << edat->value(ss,rr) << edat->value(ks,kr);
 
-         // Manage multiple data sets
-         if ( data_sets.size() > 1  &&  datasets_to_process == 1 )
+         // Manage multiple data sets in global fit
+         if ( is_global_fit  &&  datasets_to_process == 1 )
          {
             global_fit();
          }
@@ -110,11 +112,11 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
 
          if ( ! job_queue.isEmpty() ) continue;
 
-         if ( data_sets.size() == 1 )
-            write_output();
+         if ( is_global_fit )
+            write_global();
 
          else
-            write_global();
+            write_output();
 
          // Fit meniscus 
          if ( ( meniscus_run + 1 ) < meniscus_values.size() )
@@ -149,6 +151,21 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
          }
 
          if ( ! job_queue.isEmpty() ) continue;
+
+         if ( is_composite_job )
+         {  // Composite job:  update outputs in TAR and bump dataset count
+            current_dataset++;
+
+            update_outputs();
+
+            DbgLv(0) << my_rank << ": Dataset" << current_dataset
+                     << " : model was output.";
+            send_udp( "Dataset " + QString::number( current_dataset )
+                    + " : analysis complete." );
+
+            if ( current_dataset < count_datasets )
+               continue;
+         }
 
          shutdown_all();  // All done
          break;           // Break out of main loop.
@@ -399,9 +416,9 @@ DbgLv(1) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentrat
    dset_calc_solutes << calculated_solutes[ max_depth ];
    current_dataset++;
    
-   if ( current_dataset >= data_sets.size() )
+   if ( current_dataset >= count_datasets )
    {  // If all datasets have been scaled, do all datasets from now on
-      datasets_to_process = data_sets.size();
+      datasets_to_process = count_datasets;
       current_dataset     = 0;
    }
 
@@ -887,6 +904,11 @@ if (dd==0) { DbgLv(1) << "Mast: submit: worker" << worker << "  sols"
  << job.mpi_job.length << "mciter cds" << mc_iteration << current_dataset << " depth" << dd; }
 else { DbgLv(1) << "Mast: submit:     worker" << worker << "  sols"
  << job.mpi_job.length << "mciter cds" << mc_iteration << current_dataset << " depth" << dd; }
+DbgLv(1) << "Mast: submit: len sol offs cnt" 
+ << job.mpi_job.length
+ << job.mpi_job.solution
+ << job.mpi_job.dataset_offset
+ << job.mpi_job.dataset_count;
 
    // Tell worker that solutes are coming
    MPI_Send( &job.mpi_job, 
@@ -895,6 +917,7 @@ else { DbgLv(1) << "Mast: submit:     worker" << worker << "  sols"
        worker,      // Send to system that needs work
        MPI_Job::MASTER,
        my_communicator );
+DbgLv(1) << "Mast: submit: send #1";
 
    // Send solutes
    MPI_Send( job.solutes.data(), 
@@ -903,6 +926,7 @@ else { DbgLv(1) << "Mast: submit:     worker" << worker << "  sols"
        worker,       // to worker
        MPI_Job::MASTER,
        my_communicator );
+DbgLv(1) << "Mast: submit: send #2";
 }
 
 // Add a job to the queue, maintaining depth order
@@ -1184,11 +1208,162 @@ DbgLv(1) << "Mast:   WARNING: LAST depth and no worker ready!";
 
 }
 
-/////////////////////
+// Write model output at the end of an iteration
+void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim, 
+                                   US_Model::AnalysisType         type,
+                                   bool                           glob_sols )
+{
+   US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
+
+   // Fill in and write out the model file
+   US_Model model;
+
+DbgLv(1) << "wrMo: type" << type << "(DMGA)" << US_Model::DMGA;
+   if ( type == US_Model::DMGA )
+   {  // For discrete GA, get the already constructed model
+      model             = data_sets[ 0 ]->model;
+DbgLv(1) << "wrMo:  model comps" << model.components.size();
+   }
+
+   model.monteCarlo  = mc_iterations > 1;
+   model.wavelength  = edata->wavelength.toDouble();
+   model.modelGUID   = US_Util::new_guid();
+   model.editGUID    = edata->editGUID;
+   model.requestGUID = requestGUID;
+   model.dataDescrip = edata->description;
+   //model.optics      = ???  How to get this?  Is is needed?
+   model.analysis    = type;
+   QString runID     = edata->runID;
+
+   if ( meniscus_points > 1 ) 
+      model.global      = US_Model::MENISCUS;
+
+   else if ( is_global_fit )
+   {
+      model.global      = US_Model::GLOBAL;
+      if ( glob_sols )
+         runID             = "Global-" + runID;
+   }
+
+   else
+      model.global      = US_Model::NONE; 
+
+   model.meniscus    = meniscus_value;
+   model.variance    = sim.variance;
+
+   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .model
+   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .ri_noise
+   // demo1.veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_i01-m62345.ri_noise
+   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_mc001     .model
+   // runID.tripleID.analysisID.recordType
+   //    analysisID = editID_analysisDate_analysisType_requestID_iterID (underscores)
+   //       editID:     
+   //       requestID: from lims or 'local' 
+   //       analysisType : 2DSA GA others
+   //       iterID:       'i01-m62345' for meniscus, mc001 for monte carlo, i01 default 
+   //      
+   //       recordType: ri_noise, ti_noise, model
+
+   QString tripleID = edata->cell + edata->channel + edata->wavelength;
+   QString dates    = "e" + edata->editID + "_a" + analysisDate;
+DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
+
+   QString iterID;
+   int mc_iter      = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
+
+   if ( mc_iterations > 1 )
+      iterID.sprintf( "mc%04d", mc_iter );
+   else if (  meniscus_points > 1 )
+      iterID.sprintf( "i%02d-m%05d", 
+              meniscus_run + 1,
+              (int)(meniscus_value * 10000 ) );
+   else
+      iterID = "i01";
+
+   QString id        = model.typeText();
+   if ( analysis_type.contains( "CG" ) )
+      id                = id.replace( "2DSA", "2DSA-CG" );
+   QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
+   int     stype     = data_sets[ current_dataset ]->solute_type;
+   double  vbar20    = data_sets[ current_dataset ]->vbar20;
+
+   model.description = runID + "." + tripleID + "." + analyID + ".model";
+DbgLv(1) << "wrMo: model descr" << model.description;
+
+   // Save as class variable for later reference
+   modelGUID         = model.modelGUID;
+
+   if ( type != US_Model::DMGA )
+   {  // For non-DMGA, construct the model from solutes
+      for ( int i = 0; i < sim.solutes.size(); i++ )
+      {
+         const US_Solute* solute = &sim.solutes[ i ];
+
+         US_Model::SimulationComponent component;
+         component.s                    = solute->s;
+         component.f_f0                 = solute->k;
+         component.signal_concentration = solute->c;
+         component.name                 = QString().sprintf( "SC%04d", i + 1 );
+         component.vbar20               = (attr_z == ATTR_V) ? vbar20 : solute->v;
+
+         US_Model::calc_coefficients( component );
+         model.components << component;
+      }
+   }
+DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
+ << "attr_z vbar20 mco0.v" << attr_z << vbar20 << model.components[0].vbar20;
+
+   QString fn        = edata->runID + "." + id + "." + model.modelGUID + ".xml";
+   int lenfn         = fn.length();
+
+   if ( lenfn > 99 )
+   { // Insure a model file name less than 100 characters in length (tar limit)
+      int lenri         = edata->runID.length() + 99 - lenfn;
+      fn                = edata->runID.left( lenri )
+                          + "." + id + "." + model.modelGUID + ".xml";
+   }
+
+   model.write( fn );                // Output the model to a file
+
+   data_sets[ current_dataset ]->model = model;    // Save the model in case needed for noise
+
+   // Add the file name of the model file to the output list
+   QFile fileo( "analysis_files.txt" );
+
+   if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append ) )
+   {
+      abort( "Could not open 'analysis_files.txt' for writing" );
+      return;
+   }
+
+   QTextStream tsout( &fileo );
+
+   QString meniscus = QString::number( meniscus_value, 'e', 4 );
+   QString variance = QString::number( sim.variance,   'e', 4 );
+
+   int run     = 1;
+   mc_iter     = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
+
+   if ( meniscus_run > 0 ) 
+       run        = meniscus_run + 1;
+   else if ( mc_iterations > 0 )
+       run        = mc_iter;
+
+   QString runstring = "Run: " + QString::number( run ) + " " + tripleID;
+
+   tsout << fn << ";meniscus_value=" << meniscus_value
+               << ";MC_iteration="   << mc_iter
+               << ";variance="       << sim.variance
+               << ";run="            << runstring
+               << "\n";
+   fileo.close();
+}
+
+// Write noise output at the end of an iteration
 void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type, 
                                    const QVector< double >& noise_data )
 {
-   US_DataIO::EditedData* data = &data_sets[ 0 ]->run_data;
+   US_DataIO::EditedData* data = &data_sets[ current_dataset ]->run_data;
 
    QString  type_name;
    US_Noise noise;
@@ -1255,7 +1430,7 @@ void US_MPI_Analysis::write_noise( US_Noise::NoiseType      type,
    // the input noise was applied.
 
    US_Noise         input_noise;
-   QList< QString > noise_filenames = data_sets[ 0 ]->noise_files;
+   QList< QString > noise_filenames = data_sets[ current_dataset ]->noise_files;
 
    for ( int j = 0; j < noise_filenames.size(); j++ )
    {
@@ -1332,5 +1507,16 @@ void US_MPI_Analysis::cache_result( Result& result )
    // If no higher depth cached, append new result to the end
    cached_results << result;
    return;
+}
+
+// Update the output TAR file after composite job output has been produced
+void US_MPI_Analysis::update_outputs()
+{
+   QDir odir( "." );
+   QStringList files = odir.entryList( QStringList( "*" ), QDir::Files );
+   files.removeOne( "analysis-results.tar" );
+
+   US_Tar tar;
+   tar.create( "analysis-results.tar", files );
 }
 

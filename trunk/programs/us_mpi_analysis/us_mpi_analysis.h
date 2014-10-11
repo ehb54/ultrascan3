@@ -53,11 +53,15 @@ class US_MPI_Analysis : public QObject
     bool                dbg_timing;
     bool                glob_runid;
     bool                do_astfem;
+    bool                is_global_fit;
+    bool                is_composite_job;
+
     MPI_Comm            my_communicator;
 
-    int                 current_dataset;      // For global fit
-    int                 datasets_to_process;  // For global fit
+    int                 current_dataset;      // For global fit or composite
+    int                 datasets_to_process;  // For global fit or composite
     int                 count_calc_residuals; // Simple counter
+    int                 count_datasets;
 
     int                 population;
     int                 generations;
@@ -321,6 +325,7 @@ class US_MPI_Analysis : public QObject
     void     process_solutes   ( int&, int&, QVector< US_Solute >& );
     void     dset_matrices     ( int, int,
                                  QVector< double >&, QVector< double >& );
+    void     update_outputs    ( void );
 
     // Worker
     void     _2dsa_worker      ( void );

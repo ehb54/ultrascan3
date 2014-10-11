@@ -133,8 +133,9 @@ bool US_SolveSim::checkGridSize( QList< DataSet* >& data_sets,
                  "Related data and simulation parameters include:\n"
                  "   Maximum speed = %1 RPM ;\n"
                  "   Maximum S value = %2 x 1e-13 ;\n"
-                 "   Computed grid time steps and radius points = %3 ." )
-              .arg( rpm_max ).arg( s_show ).arg( tsteps );
+                 "   Computed grid time steps and radius points  = %3 ;\n"
+                 "   Program-imposed grid time steps upper limit = %4 ." )
+              .arg( rpm_max ).arg( s_show ).arg( tsteps ).arg( tstep_max );
    }
 
    return too_large;

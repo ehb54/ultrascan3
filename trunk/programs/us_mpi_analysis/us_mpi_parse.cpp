@@ -98,144 +98,153 @@ if (my_rank==0) DbgLv(0) << "PF: solute_type" << d->solute_type
 
 void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )
 {
-   QXmlStreamAttributes a;
+   QXmlStreamAttributes attr;
+   QString xname;
    QString ytype;
 
    while ( ! xml.atEnd() )
    {
       xml.readNext();
+      xname       = xml.name().toString();
 
-      if ( xml.isEndElement()  &&  xml.name() == "job" ) break;
+      if ( xml.isEndElement()  &&  xname == "job" ) break;
 
-      if ( xml.isStartElement()  &&  xml.name() == "cluster" )
+      if ( xml.isStartElement() )
       {
-         a       = xml.attributes();
-         cluster = a.value( "shortname" ).toString();
-      }
+         attr        = xml.attributes();
 
-      if ( xml.isStartElement()  &&  xml.name() == "name" )
-      {
-         a       = xml.attributes();
-         db_name = a.value( "value" ).toString();
-      }
-
-      if ( xml.isStartElement()  &&  xml.name() == "udp" )
-      {
-         a      = xml.attributes();
-         server = QHostAddress( a.value( "server" ).toString() );
-         port   = (quint16)a.value( "port" ).toString().toInt();
-      }
-
-      if ( xml.isStartElement()  &&  xml.name() == "request" )
-      {
-         a       = xml.attributes();
-         QString s;
-         requestID   = s.sprintf( "%06d", a.value( "id" ).toString().toInt() );
-         requestGUID = a.value( "guid" ).toString();
-      }
-
-      if ( xml.isStartElement()  &&  xml.name() == "jobParameters" )
-      {
-         while ( ! xml.atEnd() )
+         if ( xname == "cluster" )
          {
-            xml.readNext();
-            QString name = xml.name().toString();
+            cluster     = attr.value( "shortname" ).toString();
+         }
 
-            if ( xml.isEndElement()  &&  name == "jobParameters" ) break;
+         else if ( xname == "name" )
+         {
+            db_name     = attr.value( "value" ).toString();
+         }
 
-            if ( xml.isStartElement() )
+         else if ( xname == "udp" )
+         {
+            server     = QHostAddress( attr.value( "server" ).toString() );
+            port       = (quint16)attr.value( "port" ).toString().toInt();
+         }
+
+         else if ( xname == "global_fit" )
+         {
+            parameters[ xname ] = attr.value( "value" ).toString();
+         }
+
+         else if ( xname == "request" )
+         {
+            QString ss;
+            requestID   = ss.sprintf( "%06d",
+                             attr.value( "id" ).toString().toInt() );
+            requestGUID = attr.value( "guid" ).toString();
+         }
+
+         else if ( xname == "jobParameters" )
+         {
+            while ( ! xml.atEnd() )
             {
-               a       = xml.attributes();
+               xml.readNext();
+               QString name = xml.name().toString();
 
-               if ( name == "bucket" )
-               { // Get bucket coordinates; try to forestall round-off problems
-                  QString ytyp0 = QString( "ff0" );
-                  Bucket b;
-                  QString stxmn = a.value( "x_min"    ).toString();
-                  QString stxmx = a.value( "x_max"    ).toString();
-                  QString stymn = a.value( "y_min"    ).toString();
-                  QString stymx = a.value( "y_max"    ).toString();
-                  QString stfmn = a.value( "ff0_min"  ).toString();
-                  QString stfmx = a.value( "ff0_max"  ).toString();
-                  QString stvmn = a.value( "vbar_min" ).toString();
-                  QString stvmx = a.value( "vbar_max" ).toString();
-                  double xmin   = stxmn.toDouble();
-                  double xmax   = stxmx.toDouble();
-                  double ymin   = stymn.toDouble();
-                  double ymax   = stymx.toDouble();
+               if ( xml.isEndElement()  &&  name == "jobParameters" ) break;
 
-                  if ( stxmx.isEmpty() )
-                  {
-                     xmin       = a.value( "s_min"   ).toString().toDouble();
-                     xmax       = a.value( "s_max"   ).toString().toDouble();
-                     if ( !stfmx.isEmpty() )
+               if ( xml.isStartElement() )
+               {
+                  attr    = xml.attributes();
+
+                  if ( name == "bucket" )
+                  { // Get bucket coords; try to forestall round-off problems
+                     QString ytyp0 = QString( "ff0" );
+                     Bucket b;
+                     QString stxmn = attr.value( "x_min"    ).toString();
+                     QString stxmx = attr.value( "x_max"    ).toString();
+                     QString stymn = attr.value( "y_min"    ).toString();
+                     QString stymx = attr.value( "y_max"    ).toString();
+                     QString stfmn = attr.value( "ff0_min"  ).toString();
+                     QString stfmx = attr.value( "ff0_max"  ).toString();
+                     QString stvmn = attr.value( "vbar_min" ).toString();
+                     QString stvmx = attr.value( "vbar_max" ).toString();
+                     double xmin   = stxmn.toDouble();
+                     double xmax   = stxmx.toDouble();
+                     double ymin   = stymn.toDouble();
+                     double ymax   = stymx.toDouble();
+
+                     if ( stxmx.isEmpty() )
                      {
-                        ymin    = stfmn.toDouble();
-                        ymax    = stfmx.toDouble();
-                        ytyp0   = QString( "ff0" );
+                        xmin       = attr.value( "s_min").toString().toDouble();
+                        xmax       = attr.value( "s_max").toString().toDouble();
+                        if ( !stfmx.isEmpty() )
+                        {
+                           ymin    = stfmn.toDouble();
+                           ymax    = stfmx.toDouble();
+                           ytyp0   = QString( "ff0" );
+                        }
+                        else if ( !stvmx.isEmpty() )
+                        {
+                           ymin    = stvmn.toDouble();
+                           ymax    = stvmx.toDouble();
+                           ytyp0   = QString( "vbar" );
+                        }
                      }
-                     else if ( !stvmx.isEmpty() )
+
+                     if ( ytype.isEmpty() )
                      {
-                        ymin    = stvmn.toDouble();
-                        ymax    = stvmx.toDouble();
-                        ytyp0   = QString( "vbar" );
+                        ytype      = ytyp0;
+                        parameters[ "ytype" ]     = ytype;
                      }
-                  }
 
-                  if ( ytype.isEmpty() )
-                  {
-                     ytype      = ytyp0;
-                     parameters[ "ytype" ]     = ytype;
-                  }
-
-                  // Try to forestall round-off problems
+                     // Try to forestall round-off problems
 if (my_rank==0) DbgLv(0) << "PF: xymnmx" << xmin << xmax << ymin << ymax;
-                  int xpwr      = (int)qFloor( log10( xmax ) ) - 6;
-                  int ypwr      = (int)qFloor( log10( ymax ) ) - 6;
-                  double xinc   = pow( 10.0, xpwr );
-                  double yinc   = pow( 10.0, ypwr );
+                     int xpwr      = (int)qFloor( log10( xmax ) ) - 6;
+                     int ypwr      = (int)qFloor( log10( ymax ) ) - 6;
+                     double xinc   = pow( 10.0, xpwr );
+                     double yinc   = pow( 10.0, ypwr );
 if (my_rank==0) DbgLv(0) << "PF:  xp yp xi yi" << xpwr << ypwr << xinc << yinc;
-                  b.x_min       = qRound64( xmin / xinc ) * xinc;
-                  b.x_max       = qRound64( xmax / xinc ) * xinc;
-                  b.y_min       = qRound64( ymin / yinc ) * yinc;
-                  b.y_max       = qRound64( ymax / yinc ) * yinc;
+                     b.x_min       = qRound64( xmin / xinc ) * xinc;
+                     b.x_max       = qRound64( xmax / xinc ) * xinc;
+                     b.y_min       = qRound64( ymin / yinc ) * yinc;
+                     b.y_max       = qRound64( ymax / yinc ) * yinc;
 if (my_rank==0) DbgLv(0) << "PF:   rnd xymnmx" << b.x_min << b.x_max << b.y_min << b.y_max;
 
-                  buckets << b;
-               }
-               else if ( name == "CG_model"  ||  name == "DC_model" )
-               {
-                  parameters[ name ]        = a.value( "filename" ).toString();
+                     buckets << b;
+                  }
+                  else if ( name == "CG_model"  ||  name == "DC_model" )
+                  {
+                     parameters[ name ]    = attr.value( "filename").toString();
 if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
                }
-               else if ( name == "bucket_fixed" )
-               {
-                  parameters[ name ]        = a.value( "value" ).toString();
-                  parameters[ "xtype" ]     = a.value( "xtype" ).toString();
-                  parameters[ "ytype" ]     = a.value( "ytype" ).toString();
-                  parameters[ "ztype" ]     = a.value( "fixedtype" ).toString();
-                  ytype                     = parameters[ "ytype" ];
-               }
-               else
-               {
-                  parameters[ name ]        = a.value( "value" ).toString();
+                  else if ( name == "bucket_fixed" )
+                  {
+                     parameters[ name ]    = attr.value( "value" ).toString();
+                     parameters[ "xtype" ] = attr.value( "xtype" ).toString();
+                     parameters[ "ytype" ] = attr.value( "ytype" ).toString();
+                     parameters[ "ztype" ] = attr.value("fixedtype").toString();
+                     ytype                 = parameters[ "ytype" ];
+                  }
+                  else
+                  {
+                     parameters[ name ]    = attr.value( "value" ).toString();
+                  }
                }
             }
          }
       }
+
+      if ( parameters.contains( "debug_level" ) )
+         dbg_level  = parameters[ "debug_level" ].toInt();
+
+      else
+         dbg_level  = 0;
+
+//      US_Settings::set_us_debug( dbg_level );
+      int dbglv = ( my_rank < 2 || my_rank == 15 ) ? dbg_level : 0;
+      US_Settings::set_us_debug( dbglv );
+      dbg_timing = ( parameters.contains( "debug_timings" )
+                 &&  parameters[ "debug_timings" ].toInt() != 0 );
    }
-
-   if ( parameters.contains( "debug_level" ) )
-      dbg_level  = parameters[ "debug_level" ].toInt();
-
-   else
-      dbg_level  = 0;
-
-//   US_Settings::set_us_debug( dbg_level );
-   int dbglv = ( my_rank < 2 || my_rank == 15 ) ? dbg_level : 0;
-   US_Settings::set_us_debug( dbglv );
-   dbg_timing = ( parameters.contains( "debug_timings" )
-              &&  parameters[ "debug_timings" ].toInt() != 0 );
 }
 
 void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
@@ -260,55 +269,48 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
       if ( xml.name() == "solution" )
          parse_solution( xml, dataset ); 
 
+      a                  = xml.attributes();
       if ( xml.name() == "simpoints" )
       {
-         a                  = xml.attributes();
          dataset->simparams.simpoints
                             = a.value( "value" ).toString().toInt();
       }
 
       if ( xml.name() == "band_volume" )
       {
-         a                  = xml.attributes();
          dataset->simparams.band_volume
                             = a.value( "value" ).toString().toDouble();
       }
 
       if ( xml.name() == "radial_grid" )
       {
-         a                  = xml.attributes();
          dataset->simparams.meshType = (US_SimulationParameters::MeshType)
                               a.value( "value" ).toString().toInt();
       }
 
       if ( xml.name() == "time_grid" )
       {
-         a                  = xml.attributes();
          dataset->simparams.gridType = (US_SimulationParameters::GridType)
                               a.value( "value" ).toString().toInt();
       }
 
       if ( xml.name() == "density" )
       {
-         a                    = xml.attributes();
          dataset->density     = a.value( "value" ).toString().toDouble();
       }
 
       if ( xml.name() == "viscosity" )
       {
-         a                    = xml.attributes();
          dataset->viscosity   = a.value( "value" ).toString().toDouble();
       }
 
       if ( xml.name() == "compress" )
       {
-         a                    = xml.attributes();
          dataset->compress    = a.value( "value" ).toString().toDouble();
       }
 
       if ( xml.name() == "rotor_stretch" )
       {
-         a                    = xml.attributes();
          QStringList stretch  = 
             a.value( "value" ).toString().split( " ", QString::SkipEmptyParts );
 
@@ -318,14 +320,12 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
 
       if ( xml.name() == "centerpiece_bottom" )
       {
-         a                      = xml.attributes();
          dataset->centerpiece_bottom
                                 = a.value( "value" ).toString().toDouble();
       }
 
       if ( xml.name() == "centerpiece_shape" )
       {
-         a                      = xml.attributes();
          QString shape          = a.value( "value" ).toString();
          QStringList shapes;
          shapes << "sector"
@@ -341,21 +341,18 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
 
       if ( xml.name() == "centerpiece_angle" )
       {
-         a                      = xml.attributes();
          dataset->simparams.cp_angle
                                 = a.value( "value" ).toString().toDouble();
       }
 
       if ( xml.name() == "centerpiece_pathlength" )
       {
-         a                      = xml.attributes();
          dataset->simparams.cp_pathlen
                                 = a.value( "value" ).toString().toDouble();
       }
 
       if ( xml.name() == "centerpiece_width" )
       {
-         a                      = xml.attributes();
          dataset->simparams.cp_width
                                 = a.value( "value" ).toString().toDouble();
       }
