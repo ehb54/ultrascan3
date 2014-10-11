@@ -22,7 +22,7 @@ void US_MPI_Analysis::_2dsa_worker( void )
                 MPI_Job::MASTER,
                 MPI_Job::READY,
                 my_communicator ); // let master know we are ready
-if(my_rank==1)
+//if(my_rank==1)
 DbgLv(1) << "w:" << my_rank << ": ready sent";
 
       // Blocking -- Wait for instructions
@@ -33,7 +33,7 @@ DbgLv(1) << "w:" << my_rank << ": ready sent";
                 MPI_Job::TAG0,
                 my_communicator,
                 &status );        // status not used
-if(my_rank==1)
+//if(my_rank==1)
 DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
  << "command" << job.command;
 
@@ -41,6 +41,7 @@ DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
       int offset         = job.dataset_offset;
       int dataset_count  = job.dataset_count;
       int job_length     = job.length;
+DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
 
       data_sets[ offset ]->run_data.meniscus  = meniscus_value;
       data_sets[ offset ]->simparams.meniscus = meniscus_value;
@@ -51,7 +52,6 @@ DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
          case MPI_Job::PROCESS:  // Process solutes
             {
                US_SolveSim::Simulation simulation_values;
-
                simulation_values.noisflag    =
                   parameters[ "tinoise_option" ].toInt() > 0 ?  1 : 0;
                simulation_values.noisflag   +=
@@ -60,7 +60,7 @@ DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
                simulation_values.dbg_timing  = dbg_timing;
 
 //DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
-if(my_rank==1)
+//if(my_rank==1)
 DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
                simulation_values.solutes.resize( job.length );
 
@@ -74,7 +74,7 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
 
                max_rss();
 //*DEBUG*
-if(dbg_level>0 && my_rank==1)
+//if(dbg_level>0 && my_rank==1)
 //if(my_rank==1)
 {
  int nn = simulation_values.solutes.size() - 1;
@@ -158,7 +158,7 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
                int  mc_iter    = job.solution;
 
                //if ( dataset_count > 0  &&  mc_iter < 4 )
-               if ( dataset_count > 0  &&  mc_iter < 3  &&  my_rank < 3 )
+               if ( is_global_fit  &&  mc_iter < 3  &&  my_rank < 3 )
                {  // For global fits, check the memory requirements
                   long memused    = max_rss();
                   long memdata    = job_length * sizeof( double );
@@ -230,7 +230,7 @@ double dsum=0.0;
                           my_communicator );
 
 
-               if ( data_sets.size() > 1  &&  dataset_count == 1 )
+               if ( is_global_fit  &&  dataset_count == 1 )
                {  // For global update to scaled data, extra value is new ODlimit
                   job_length--;
                   data_sets[ offset ]->run_data.ODlimit = mc_data[ job_length ];

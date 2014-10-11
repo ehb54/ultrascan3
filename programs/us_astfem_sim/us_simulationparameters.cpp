@@ -305,7 +305,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    QLabel* lb_rinoise = us_label( tr( "Radially Invar. Noise (% Conc.):" ) );
    main->addWidget( lb_rinoise, row, 4, 1, 3 );
 
-   cnt_rinoise = us_counter( 3, 0, 10, simparams.tinoise );
+   cnt_rinoise = us_counter( 3, 0, 10, simparams.rinoise );
    cnt_rinoise->setStep    ( 0.01 );
    cnt_rinoise->setIncSteps( QwtCounter::Button1,   1 );
    cnt_rinoise->setIncSteps( QwtCounter::Button2,  10 );

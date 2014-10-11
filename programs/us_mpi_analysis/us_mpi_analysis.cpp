@@ -3,6 +3,7 @@
 #include "us_tar.h"
 #include "us_memory.h"
 #include "us_sleep.h"
+#include "us_util.h"
 #include "us_revision.h"
 
 #include <mpi.h>
@@ -234,19 +235,22 @@ DbgLv(0) << "submitTime " << submitTime
 
       try
       {
-         int result = US_DataIO::loadData( ".", dset->edit_file, dset->run_data );
+         int result = US_DataIO::loadData( ".", dset->edit_file,
+                                                dset->run_data );
 
          if ( result != US_DataIO::OK ) throw result;
       }
       catch ( int error )
       {
-         QString msg = "Bad data file " + dset->auc_file + " " + dset->edit_file;
+         QString msg = "Bad data file " + dset->auc_file + " "
+                                        + dset->edit_file;
 DbgLv(0) << "BAD DATA. error" << error << "rank" << my_rank;
          abort( msg, error );
       }
       catch ( US_DataIO::ioError error )
       {
-         QString msg = "Bad data file " + dset->auc_file + " " + dset->edit_file;
+         QString msg = "Bad data file " + dset->auc_file + " "
+                                        + dset->edit_file;
 DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 //if(proc_count!=16)
          abort( msg, error );
@@ -273,7 +277,8 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
       }
 
       dset->temperature = dset->run_data.average_temperature();
-      dset->vbartb = US_Math2::calcCommonVbar( dset->solution_rec, dset->temperature );
+      dset->vbartb = US_Math2::calcCommonVbar( dset->solution_rec,
+                                               dset->temperature );
 
       if ( dset->centerpiece_bottom == 7.3 )
          abort( "The bottom is set to the invalid default value of 7.3" );
@@ -295,9 +300,17 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    meniscus_range  = ( meniscus_points > 1 ) ? meniscus_range : 0.0;
 
    // Do some parameter checking
-   bool global_fit = data_sets.size() > 1;
+   count_datasets     = data_sets.size();
+   is_global_fit      = US_Util::bool_flag( parameters[ "global_fit" ] );
+   is_composite_job   = ( count_datasets > 1  &&  ! is_global_fit );
+   if ( my_rank == 0 )
+   {
+      DbgLv(0) << " count_datasets   " << count_datasets;
+      DbgLv(0) << " is_global_fit    " << is_global_fit;
+      DbgLv(0) << " is_composite_job " << is_composite_job;
+   }
 
-   if ( global_fit  &&  meniscus_points > 1 )
+   if ( count_datasets > 1  &&  meniscus_points > 1 )
    {
       abort( "Meniscus fit is not compatible with multiple data sets" );
    }
@@ -315,7 +328,7 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
       abort( "Monte Carlo iteration is not compatible with noise computation" );
    }
 
-   if ( global_fit && noise )
+   if ( is_global_fit && noise )
    {
       abort( "Global fit is not compatible with noise computation" );
    }

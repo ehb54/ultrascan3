@@ -416,6 +416,15 @@ float US_MwlData::fword( char* cbuf )
    int    ival  = iword( cbuf );
    int*   iptr  = &ival;
    float* fptr  = (float*)iptr;
+#ifdef Q_WS_X11
+// The following code is necessary to counter a compiler bug on 64-bit Linux
+if(sizeof(long)==8)
+{
+static int kk=0;
+if(((++kk)%1000)==1)
+qDebug() << "fval" << *fptr << "   kk" << kk;
+}
+#endif
    return *fptr;
 }
 
@@ -429,7 +438,8 @@ double US_MwlData::dword( char* cbuf )
 // Utility to read an MWL header from a data stream
 void US_MwlData::read_header( QDataStream& ds, DataHdr& hd )
 {
-   char cbuf[ 28 ];
+   char  chary[ 28 ];
+   char* cbuf       = (char*)chary;
 
    int nhbyte       = ( evers == 1.0 ) ? 24 : 26;
    ds.readRawData( cbuf, nhbyte );
@@ -1007,7 +1017,7 @@ DbgLv(1) << "MwDa:uSS: nsteps" << nsteps << speedsteps.size() << s_rpms.size();
 
    for ( int jj = 0; jj < nsteps; jj++ )
    {
-      speedsteps[ jj ].set_speed     = s_rpms[ jj ];
+      speedsteps[ jj ].set_speed     = (int)s_rpms[ jj ];
       speedsteps[ jj ].avg_speed     = a_rpms[ jj ];
       speedsteps[ jj ].speed_stddev  = d_rpms[ jj ];
       speedsteps[ jj ].rotorspeed    = qRound( a_rpms[ jj ] );

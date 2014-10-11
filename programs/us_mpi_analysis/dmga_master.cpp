@@ -158,15 +158,21 @@ DbgLv(1) << "dmga_master: wmodel #comps" << wmodel.components.size()
          if ( floats )
          {
             if ( logscl )
+            {
                DbgLv(0) << "    " << attrtype << "floats from "
                         << vmin << "to" << vmax << "(log scale)";
+            }
             else
+            {
                DbgLv(0) << "    " << attrtype << "floats from "
                         << vmin << "to" << vmax;
+            }
          }
          else
+         {
             DbgLv(0) << "    " << attrtype << "is fixed at "
                      << vmin;
+         }
       }
    }
 DbgLv(0) << " wmodel as1 K_d k_off" << wmodel.associations[0].k_d

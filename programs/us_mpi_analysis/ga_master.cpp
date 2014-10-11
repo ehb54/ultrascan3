@@ -6,7 +6,7 @@
 void US_MPI_Analysis::ga_master( void )
 {
    current_dataset     = 0;
-   datasets_to_process = data_sets.size();
+   datasets_to_process = count_datasets;
    max_depth           = 0;
    calculated_solutes.clear();
 
@@ -99,13 +99,13 @@ DbgLv(1) << "GaMast:    csol0.s .k .v .d" << simulation_values.solutes[0].s
       calculated_solutes.clear();
       calculated_solutes << simulation_values.solutes;
 
-      if ( data_sets.size() == 1 )
+      if ( is_global_fit )
       {
-         write_output();
+         write_global();
       }
       else
       {
-         write_global();
+         write_output();
       }
 
 DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
@@ -134,6 +134,22 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
       else
       {
          qDebug() << "Final Fit RMSD" << sqrt( simulation_values.variance );
+
+         if ( is_composite_job )
+         {
+            DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
+                     << " : model output.";
+            send_udp( "Dataset " + QString::number( current_dataset + 1 )
+                    + " : analysis complete." );
+
+            update_outputs();
+
+            current_dataset++;
+            if ( current_dataset < count_datasets )
+            {
+               continue;
+            }
+         }
          break;
       }
    }
@@ -228,7 +244,7 @@ QString s;
                QString progress =
                   "Avg. Generation: "  + QString::number( avg_generation );
 
-               if ( data_sets.size() > 1 )
+               if ( count_datasets > 1 )
                {
                   if ( datasets_to_process == 1 )
                      progress += "; Dataset: "
@@ -467,9 +483,9 @@ void US_MPI_Analysis::ga_global_fit( void )
    current_dataset++;
    
    // If all datasets have been scaled, do all datasets from now on
-   if ( current_dataset >= data_sets.size() )
+   if ( current_dataset >= count_datasets )
    {
-      datasets_to_process = data_sets.size();
+      datasets_to_process = count_datasets;
       current_dataset     = 0;
    }
 }
@@ -499,7 +515,7 @@ DbgLv(1) << "sgMC: gaussians set";
 
    // Get a randomized variation of the concentrations
    // Use a gaussian distribution with the residual as the standard deviation
-   for ( int e = 0; e < data_sets.size(); e++ )
+   for ( int e = 0; e < count_datasets; e++ )
    {
       US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
 
@@ -523,7 +539,7 @@ DbgLv(1) << "sgMC: mc_data set index" << index;
    job.command        = MPI_Job::NEWDATA;
    job.length         = total_points;
    job.dataset_offset = 0;
-   job.dataset_count  = data_sets.size();
+   job.dataset_count  = count_datasets;
 DbgLv(1) << "sgMC: MPI send my_workers" << my_workers;
 
    // Tell each worker that new data coming
@@ -548,155 +564,5 @@ DbgLv(1) << "sgMC: MPI Bcast";
               MPI_DOUBLE, 
               MPI_Job::MASTER, 
               my_communicator );
-}
-
-void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim, 
-                                   US_Model::AnalysisType         type,
-                                   bool                           glob_sols )
-{
-   US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-
-   // Fill in and write out the model file
-   US_Model model;
-
-DbgLv(1) << "wrMo: type" << type << "(DMGA)" << US_Model::DMGA;
-   if ( type == US_Model::DMGA )
-   {  // For discrete GA, get the already constructed model
-      model             = data_sets[ 0 ]->model;
-DbgLv(1) << "wrMo:  model comps" << model.components.size();
-   }
-
-   model.monteCarlo  = mc_iterations > 1;
-   model.wavelength  = edata->wavelength.toDouble();
-   model.modelGUID   = US_Util::new_guid();
-   model.editGUID    = edata->editGUID;
-   model.requestGUID = requestGUID;
-   model.dataDescrip = edata->description;
-   //model.optics      = ???  How to get this?  Is is needed?
-   model.analysis    = type;
-   QString runID     = edata->runID;
-
-   if ( meniscus_points > 1 ) 
-      model.global      = US_Model::MENISCUS;
-
-   else if ( data_sets.size() > 1 )
-   {
-      model.global      = US_Model::GLOBAL;
-      if ( glob_sols )
-         runID             = "Global-" + runID;
-   }
-
-   else
-      model.global      = US_Model::NONE; 
-
-   model.meniscus    = meniscus_value;
-   model.variance    = sim.variance;
-
-   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .model
-   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA us3-0000003           .ri_noise
-   // demo1.veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_i01-m62345.ri_noise
-   // demo1_veloc. 1A999. e201101171200_a201101171400_2DSA_us3-0000003_mc001     .model
-   // runID.tripleID.analysisID.recordType
-   //    analysisID = editID_analysisDate_analysisType_requestID_iterID (underscores)
-   //       editID:     
-   //       requestID: from lims or 'local' 
-   //       analysisType : 2DSA GA others
-   //       iterID:       'i01-m62345' for meniscus, mc001 for monte carlo, i01 default 
-   //      
-   //       recordType: ri_noise, ti_noise, model
-
-   QString tripleID = edata->cell + edata->channel + edata->wavelength;
-   QString dates    = "e" + edata->editID + "_a" + analysisDate;
-DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
-
-   QString iterID;
-   int mc_iter      = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
-
-   if ( mc_iterations > 1 )
-      iterID.sprintf( "mc%04d", mc_iter );
-   else if (  meniscus_points > 1 )
-      iterID.sprintf( "i%02d-m%05d", 
-              meniscus_run + 1,
-              (int)(meniscus_value * 10000 ) );
-   else
-      iterID = "i01";
-
-   QString id        = model.typeText();
-   if ( analysis_type.contains( "CG" ) )
-      id                = id.replace( "2DSA", "2DSA-CG" );
-   QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
-   int     stype     = data_sets[ current_dataset ]->solute_type;
-   double  vbar20    = data_sets[ current_dataset ]->vbar20;
-
-   model.description = runID + "." + tripleID + "." + analyID + ".model";
-DbgLv(1) << "wrMo: model descr" << model.description;
-
-   // Save as class variable for later reference
-   modelGUID         = model.modelGUID;
-
-   if ( type != US_Model::DMGA )
-   {  // For non-DMGA, construct the model from solutes
-      for ( int i = 0; i < sim.solutes.size(); i++ )
-      {
-         const US_Solute* solute = &sim.solutes[ i ];
-
-         US_Model::SimulationComponent component;
-         component.s                    = solute->s;
-         component.f_f0                 = solute->k;
-         component.signal_concentration = solute->c;
-         component.name                 = QString().sprintf( "SC%04d", i + 1 );
-         component.vbar20               = (attr_z == ATTR_V) ? vbar20 : solute->v;
-
-         US_Model::calc_coefficients( component );
-         model.components << component;
-      }
-   }
-DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
- << "attr_z vbar20 mco0.v" << attr_z << vbar20 << model.components[0].vbar20;
-
-   QString fn        = edata->runID + "." + id + "." + model.modelGUID + ".xml";
-   int lenfn         = fn.length();
-
-   if ( lenfn > 99 )
-   { // Insure a model file name less than 100 characters in length (tar limit)
-      int lenri         = edata->runID.length() + 99 - lenfn;
-      fn                = edata->runID.left( lenri )
-                          + "." + id + "." + model.modelGUID + ".xml";
-   }
-
-   model.write( fn );                // Output the model to a file
-
-   data_sets[ current_dataset ]->model = model;    // Save the model in case needed for noise
-
-   // Add the file name of the model file to the output list
-   QFile fileo( "analysis_files.txt" );
-
-   if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append ) )
-   {
-      abort( "Could not open 'analysis_files.txt' for writing" );
-      return;
-   }
-
-   QTextStream tsout( &fileo );
-
-   QString meniscus = QString::number( meniscus_value, 'e', 4 );
-   QString variance = QString::number( sim.variance,   'e', 4 );
-
-   int run     = 1;
-   mc_iter     = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
-
-   if ( meniscus_run > 0 ) 
-       run        = meniscus_run + 1;
-   else if ( mc_iterations > 0 )
-       run        = mc_iter;
-
-   QString runstring = "Run: " + QString::number( run ) + " " + tripleID;
-
-   tsout << fn << ";meniscus_value=" << meniscus_value
-               << ";MC_iteration="   << mc_iter
-               << ";variance="       << sim.variance
-               << ";run="            << runstring
-               << "\n";
-   fileo.close();
 }
 
