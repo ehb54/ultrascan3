@@ -241,7 +241,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    // OD Limit
    lb_odlim       = us_label( tr( "OD Limit:" ), -1 );
-   odlimit        = 1.5;
+   odlimit        = 1.8;
    ct_odlim       = us_counter( 3, 0.1, 50000.0, odlimit );
    ct_odlim ->setFont( font );
    ct_odlim ->setStep( 0.01 );
@@ -949,7 +949,7 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
    expIsDiff  = ( expType.compare( "Diffusion",   Qt::CaseInsensitive ) == 0 );
    expIsOther = ( !expIsVelo  &&  !expIsEquil  &&  !expIsDiff );
    expType    = expIsOther ? "Other" : expType;
-   odlimit    = 1.5;
+   odlimit    = 1.8;
    init_includes();
 
    if ( expIsEquil )
@@ -1266,7 +1266,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                           SLOT  ( new_triple         ( int ) ) );
 
-      odlimit   = 0.8;
+      odlimit   = 1.8;
 
       connect_mwl_ctrls( true );
 
