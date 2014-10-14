@@ -59,11 +59,15 @@ void US_MPI_Analysis::_2dsa_master( void )
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "
                             + QString::number( mc_iteration + 1 );
-         else
+
+         else if ( meniscus_values.size() > 1 )
             progress     += "; Meniscus: "
                + QString::number( meniscus_value, 'f', 3 )
                + QString( " Run %1 of %2" ).arg( meniscus_run + 1 )
                                            .arg( meniscus_values.size() );
+         else
+            progress     += "; RMSD: "
+               + QString::number( sqrt( simulation_values.variance ) );
 
          send_udp( progress );
 
@@ -155,16 +159,33 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
          if ( is_composite_job )
          {  // Composite job:  update outputs in TAR and bump dataset count
             current_dataset++;
+            dset_calc_solutes << calculated_solutes[ max_depth ];
 
             update_outputs();
 
-            DbgLv(0) << my_rank << ": Dataset" << current_dataset
-                     << " : model was output.";
-            send_udp( "Dataset " + QString::number( current_dataset )
-                    + " : analysis complete." );
+            if ( simulation_values.noisflag == 0 )
+            {
+               DbgLv(0) << my_rank << ": Dataset" << current_dataset
+                        << " :  model was output.";
+            }
+            else
+            {
+               DbgLv(0) << my_rank << ": Dataset" << current_dataset
+                        << " :  model/noise(s) were output.";
+            }
 
             if ( current_dataset < count_datasets )
+            {
+               for ( int ii = 1; ii < gcores_count; ii++ )
+                  worker_status[ ii ] = READY;
+
+               fill_queue();
+
+               for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
+                  calculated_solutes[ ii ].clear();
+
                continue;
+            }
          }
 
          shutdown_all();  // All done

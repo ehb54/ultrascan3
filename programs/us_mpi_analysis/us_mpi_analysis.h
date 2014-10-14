@@ -315,7 +315,8 @@ class US_MPI_Analysis : public QObject
     void     global_fit        ( void );
     void     write_model       ( const SIMULATION&, US_Model::AnalysisType,
                                  bool = false );
-    void     stats_output      ( int, int, int, QDateTime, QDateTime, QDateTime );
+    void     stats_output      ( int, int, int,
+                                 QDateTime, QDateTime, QDateTime );
     void     pm_2dsa_master    ( void );
     void     pm_ga_master      ( void );
     void     pm_dmga_master    ( void );
@@ -360,12 +361,6 @@ class US_MPI_Analysis : public QObject
 
     void   vector_scaled_sum   ( US_Vector&, US_Vector&, double,
                                  US_Vector&, double = 1.0 );
-    void   pmasters_start      ( void );
-    void   task_parse          ( const QString& );
-    void   pmasters_supervisor ( void );
-    void   pmasters_master     ( void );
-    void   pmasters_worker     ( void );
-    void   time_mc_iterations  ( void );
     void   solutes_from_gene   ( Gene&, int );
     void   set_comp_attrib     ( US_Model::SimulationComponent&,
                                  double, int );
@@ -404,10 +399,26 @@ class US_MPI_Analysis : public QObject
     QString dgene_key          ( DGene& );
     void    calc_residuals_dmga( int, int, SIMULATION&, DGene& );
 
+    // Parallel Masters
+    void    pmasters_start     ( void );
+    void    task_parse         ( const QString& );
+    void    pmasters_supervisor( void );
+    void    pmasters_master    ( void );
+    void    pmasters_worker    ( void );
+    void    time_mc_iterations ( void );
+    void    pm_cjobs_start     ( void );
+    void    pm_cjobs_supervisor( void );
+    void    pm_cjobs_master    ( void );
+    void    pm_cjobs_worker    ( void );
+    void    time_datasets_left ( void );
+    void    pm_2dsa_cjmast     ( void );
+    void    pm_ga_cjmast       ( void );
+    void    pm_dmga_cjmast     ( void );
+
     // Debug
-    void dump_buckets( void );
-    void dump_genes  ( int );
-    void dump_fitness( const QList< Fitness >& );
+    void    dump_buckets( void );
+    void    dump_genes  ( int );
+    void    dump_fitness( const QList< Fitness >& );
 };
 #endif
 
