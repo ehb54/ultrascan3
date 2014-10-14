@@ -827,11 +827,11 @@ CREATE TABLE IF NOT EXISTS HPCAnalysisRequest (
   submitterGUID CHAR(36) NOT NULL,        -- maps to person.personGUID
   email VARCHAR(128) DEFAULT NULL,        -- could have multiple comma-separated
   experimentID int(11) NULL,
-  requestXMLFile text NULL ,
+  requestXMLFile longtext NULL ,
   editXMLFilename varchar(255) NOT NULL default '',
   submitTime datetime NOT NULL default '0000-00-00 00:00:00',
   clusterName varchar(80) default NULL,
-  method enum('2DSA','2DSA_CG','2DSA_MW','GA','GA_MW','GA_SC') NOT NULL default '2DSA',
+  method enum('2DSA','2DSA_CG','2DSA_MW','GA','GA_MW','GA_SC','DMGA') NOT NULL default '2DSA',
   PRIMARY KEY (HPCAnalysisRequestID) )
 ENGINE=InnoDB;
 

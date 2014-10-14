@@ -4494,6 +4494,11 @@ DbgLv(1) << "od_radius_limit  value" << value;
    odlimit     = value;
 
    plot_mwl();
+
+   all_edits    = all_edits_done();
+   pb_write   ->setEnabled( all_edits );
+   ck_writemwl->setEnabled( all_edits && isMwl );
+   changes_made = true;
 }
 
 // Write edit to all wavelengths of the current cell/channel

@@ -589,8 +589,17 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: s_max" << s_max << "attr_x,y,z"
    // Determine masters-group count and related controls
    mgroup_count = task_params[ "mgroupcount" ].toInt();
    max_walltime = task_params[ "walltime"    ].toInt();
-   if ( mc_iterations < 2  ||  mgroup_count > ( mc_iterations + 2 ) )
-      mgroup_count = 1;
+
+   if ( is_composite_job )
+   {
+      if ( count_datasets < 2  ||  mgroup_count > ( count_datasets + 2 ) )
+         mgroup_count = 1;
+   }
+   else
+   {
+      if ( mc_iterations < 2  ||  mgroup_count > ( mc_iterations + 2 ) )
+         mgroup_count = 1;
+   }
 
    mgroup_count = qMax( 1, mgroup_count );
    gcores_count = proc_count / mgroup_count;
@@ -598,8 +607,11 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: s_max" << s_max << "attr_x,y,z"
    if ( mgroup_count < 2 )
       start();                  // Start standard job
    
+   else if ( is_composite_job )
+      pm_cjobs_start();         // Start parallel-masters job (composite)
+
    else
-      pmasters_start();         // Start parallel-masters job
+      pmasters_start();         // Start parallel-masters job (mc_iters)
 }
 
 // Main function  (single master group)
