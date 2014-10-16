@@ -161,12 +161,12 @@ DbgLv(1) << "SUPER:     UDPmsg:" << QString(msg);
 
          case DONELAST:  // Dataset done and it was the last in group
             islast   = true;
-DbgLv(0) << "SUPER:     DONELAST";
+DbgLv(1) << "SUPER:     DONELAST";
             break;
 
          case DONEITER:  // Dataset done
 //            islast   = ( ittest >= count_datasets ) ? true : islast;
-DbgLv(0) << "SUPER:     DONEITER  islast" << islast << "ittest currds cntds"
+DbgLv(1) << "SUPER:     DONEITER  islast" << islast << "ittest currds cntds"
          << ittest << current_dataset << count_datasets;
             break;
 
@@ -194,7 +194,7 @@ DbgLv(0) << "SUPER:     DONEITER  islast" << islast << "ittest currds cntds"
       int jgroup  = ( mgroup < 0 ) ? kgroup : mgroup; // Ready master index
       mstates[ kgroup ] = READY;                      // Mark current as ready
       int nileft  = mstates.count( WORKING );         // Masters left working
-DbgLv(0) << "SUPER: mgr kgr jgr" << mgroup << kgroup << jgroup
+DbgLv(1) << "SUPER: mgr kgr jgr" << mgroup << kgroup << jgroup
  << "left dsets dset" << nileft << count_datasets << current_dataset;
       int kdset   = ( current_dataset / mgroup_count ) * mgroup_count;
 
@@ -207,7 +207,7 @@ DbgLv(1) << "SUPER:  (A)maxrssma" << maxrssma << "iwork" << iwork;
          if ( nileft == 0 )
          {                                     // All are complete
             count_datasets = kdset + mgroup_count;
-DbgLv(0) << "SUPER: nileft==0  count_datasets" << count_datasets;
+DbgLv(1) << "SUPER: nileft==0  count_datasets" << count_datasets;
             break;
          }
 
@@ -223,7 +223,7 @@ DbgLv(0) << "SUPER: nileft==0  count_datasets" << count_datasets;
       tag         = ( ittest < count_datasets ) ? STARTITER : STARTLAST;
       master      = ( jgroup == 0 ) ? 1 : ( jgroup * gcores_count );
 
-DbgLv(0) << "SUPER:  Send curr_ds cnt_ds" << current_dataset << count_datasets
+DbgLv(1) << "SUPER:  Send curr_ds cnt_ds" << current_dataset << count_datasets
          << "gr ma tg" << jgroup << master << tag;
       MPI_Send( &current_dataset,
                 1,
@@ -464,7 +464,8 @@ DbgLv(1) << "master start 2DSA" << startTime;
             "; Dataset: "    + QString::number( current_dataset + 1 );
 
          if ( mc_iterations > 1 )
-            progress     += "; MonteCarlo: " + QString::number( mc_iteration );
+            progress     += "; MonteCarlo: "
+                            + QString::number( mc_iteration + 1 );
 
          else if ( menisc_size > 1 )
             progress     += "; Meniscus: "
@@ -575,7 +576,7 @@ DbgLv(1) << "master start 2DSA" << startTime;
                          &status );
 
                tag      = status.MPI_TAG;
-DbgLv(0) << "CJ_MAST Recv tag" << tag << "iter" << iter;
+DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
 
                if ( tag == STARTLAST )
                   count_datasets  = iter + 1;
@@ -587,6 +588,7 @@ DbgLv(0) << "CJ_MAST Recv tag" << tag << "iter" << iter;
                }
 
                current_dataset  = iter;
+               mc_iteration     = 0;
 
                for ( int ii = 1; ii < gcores_count; ii++ )
                   worker_status[ ii ] = READY;
