@@ -65,7 +65,7 @@ void US_MPI_Analysis::pm_cjobs_supervisor()
    MPI_Status     status;
    long int       maxrssma = 0L;
 
-   current_dataset = 1;
+   current_dataset = 0;
    int  master  = 1;
    int  iwork   = 0;
    int  tag;
@@ -132,6 +132,7 @@ DbgLv(1) << "SUPER: wait on iter done/udp";
       bool udpmsg = false;
       bool islast = false;
       int  isize  = 0;
+      int  ittest = current_dataset + mgroup_count;
       master      = status.MPI_SOURCE;
       tag         = status.MPI_TAG;
       QByteArray msg;
@@ -160,9 +161,13 @@ DbgLv(1) << "SUPER:     UDPmsg:" << QString(msg);
 
          case DONELAST:  // Dataset done and it was the last in group
             islast   = true;
+DbgLv(0) << "SUPER:     DONELAST";
+            break;
 
          case DONEITER:  // Dataset done
-            islast   = ( mc_iteration >= mc_iterations ) ? true : islast;
+//            islast   = ( ittest >= count_datasets ) ? true : islast;
+DbgLv(0) << "SUPER:     DONEITER  islast" << islast << "ittest currds cntds"
+         << ittest << current_dataset << count_datasets;
             break;
 
          default:
@@ -172,7 +177,7 @@ DbgLv(1) << "SUPER:     UDPmsg:" << QString(msg);
 
       if ( udpmsg )  continue;                // Loop for next master message
 
-      // If here, the message was a signal that an group iteration is complete.
+      // If here, the message was a signal that a group iteration is complete.
       // Most commonly, the group master that just completed an iteration
       //   is sent the next iteration to begin.
       // As the total iterations nears the limit, the message tag used may be
@@ -182,15 +187,16 @@ DbgLv(1) << "SUPER:     UDPmsg:" << QString(msg);
       // The data received with a done-iteration message is the max memory
       //   used in the master group.
 
-      master     = status.MPI_SOURCE;        // Master that has completed
-      int kgroup = master / gcores_count;    // Group to which master belongs
-      int mgroup = mstates.indexOf( READY ); // Find next ready master
+      master      = status.MPI_SOURCE;         // Master that has completed
+      int kgroup  = master / gcores_count;     // Group to which master belongs
+      int mgroup  = mstates.indexOf( READY );  // Find next ready master
 
-      int jgroup = ( mgroup < 0 ) ? kgroup : mgroup; // Ready master index
-      mstates[ kgroup ] = READY;                     // Mark current as ready
-      int nileft = mstates.count( WORKING );         // Iterations left working
-DbgLv(1) << "SUPER: mgr kgr jgr" << mgroup << kgroup << jgroup
- << "left iter iters" << nileft << count_datasets << current_dataset;
+      int jgroup  = ( mgroup < 0 ) ? kgroup : mgroup; // Ready master index
+      mstates[ kgroup ] = READY;                      // Mark current as ready
+      int nileft  = mstates.count( WORKING );         // Masters left working
+DbgLv(0) << "SUPER: mgr kgr jgr" << mgroup << kgroup << jgroup
+ << "left dsets dset" << nileft << count_datasets << current_dataset;
+      int kdset   = ( current_dataset / mgroup_count ) * mgroup_count;
 
       if ( islast )    
       {  // Just finished was last dataset for that group
@@ -199,8 +205,9 @@ DbgLv(1) << "SUPER: mgr kgr jgr" << mgroup << kgroup << jgroup
 DbgLv(1) << "SUPER:  (A)maxrssma" << maxrssma << "iwork" << iwork;
 
          if ( nileft == 0 )
-         {
-            count_datasets = current_dataset;  // All are complete
+         {                                     // All are complete
+            count_datasets = kdset + mgroup_count;
+DbgLv(0) << "SUPER: nileft==0  count_datasets" << count_datasets;
             break;
          }
 
@@ -212,16 +219,13 @@ DbgLv(1) << "SUPER:  (A)maxrssma" << maxrssma << "iwork" << iwork;
       // Alert the next available master to do an iteration. Use a
       //   different tag when it is to be the last iteration for a group.
       // This enables the master and its workers to do normal shutdown.
-      int iter_wk = ++current_dataset;     // Next iteration to do
-      tag         = STARTITER;             // Flag as normal iteration
-
-      if ( current_dataset > ( count_datasets - mgroup_count ) )
-         tag         = STARTLAST;          // Flag as last iter for group
-
+      ittest      = current_dataset + mgroup_count;
+      tag         = ( ittest < count_datasets ) ? STARTITER : STARTLAST;
       master      = ( jgroup == 0 ) ? 1 : ( jgroup * gcores_count );
 
-DbgLv(1) << "SUPER:  Send next iter" << iter_wk << "gr ma tg" << jgroup << master << tag;
-      MPI_Send( &iter_wk,
+DbgLv(0) << "SUPER:  Send curr_ds cnt_ds" << current_dataset << count_datasets
+         << "gr ma tg" << jgroup << master << tag;
+      MPI_Send( &current_dataset,
                 1,
                 MPI_INT,
                 master,
@@ -230,6 +234,8 @@ DbgLv(1) << "SUPER:  Send next iter" << iter_wk << "gr ma tg" << jgroup << maste
 
       mstates[ jgroup ] = WORKING;         // Mark group as busy
       max_rss();                           // Memory use of supervisor
+
+      current_dataset++;
    }
 
    // In the parallel-masters case, the supervisor handles end-of-job
@@ -251,7 +257,7 @@ DbgLv(1) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
    int maxrssmb  = qRound( (double)maxrss / 1024.0 );
    int kc_iters  = data_sets.size();
 
-   if ( current_dataset < kc_iters )
+   if ( count_datasets < kc_iters )
    {
       send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
             + " MB,  total run seconds " + QString::number( cputime )
@@ -384,7 +390,7 @@ void US_MPI_Analysis::time_datasets_left()
 
       QString msg = tr( "Dataset count reduced from %1 to %2, "
                         "due to max. time restrictions." )
-         .arg( old_dsiters ).arg( count_datasets );
+                    .arg( old_dsiters ).arg( count_datasets );
       send_udp( msg );
 
       DbgLv(0) << "  Specified Maximum Wall-time minutes:" << max_walltime;
@@ -429,6 +435,7 @@ DbgLv(1) << "master start 2DSA" << startTime;
              &status );
 
    int tag      = status.MPI_TAG;
+   int ittest   = current_dataset + mgroup_count;
 
    while ( true )
    {
@@ -451,35 +458,78 @@ DbgLv(1) << "master start 2DSA" << startTime;
       // All done with the pass if no jobs are ready or running
       if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
       {
+         int menisc_size  = meniscus_values.size();
          QString progress = 
             "Iteration: "    + QString::number( iterations ) +
-            "; Dataset: "    + QString::number( current_dataset + 1 ) +
-            "; Meniscus: (Run 1 of 1)" +
-            "; MonteCarlo: " + QString::number( mc_iteration );
+            "; Dataset: "    + QString::number( current_dataset + 1 );
+
+         if ( mc_iterations > 1 )
+            progress     += "; MonteCarlo: " + QString::number( mc_iteration );
+
+         else if ( menisc_size > 1 )
+            progress     += "; Meniscus: "
+               + QString::number( meniscus_value, 'f', 3 )
+               + tr( "Run %1 of %2" ).arg( meniscus_run + 1 )
+                                     .arg( menisc_size );
+
+         else
+            progress     += "; RMSD: "
+               + QString::number( sqrt( simulation_values.variance ) );
 
          send_udp( progress );
 
-         // Manage multiple data sets
-         if ( data_sets.size() > 1  &&  datasets_to_process == 1 )
+         // Iterative refinement
+         if ( max_iterations > 1 )
          {
-            global_fit();
+            if ( iterations == 1 )
+               qDebug() << "  == Refinement Iterations for Dataset"
+                        << current_dataset + 1 << "==";
+
+            qDebug() << "Iterations:" << iterations << " Variance:"
+                     << simulation_values.variance << "RMSD:"
+                     << sqrt( simulation_values.variance );
+
+            iterate();
          }
 
          if ( ! job_queue.isEmpty() ) continue;
 
-         // Write out the model, but skip if not 1st of iteration 1
+         // Write out the model and, possibly, noise(s)
          max_rss();
-         bool do_write = ( mc_iteration > 1 ) ||
-                         ( mc_iteration == 1  &&  my_group == 0 );
-DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
-   << "variance" << simulation_values.variance << "my_group" << my_group;
 
-         qSort( simulation_values.solutes );
+         write_output();
 
-         if ( do_write )
-            write_model( simulation_values, US_Model::TWODSA );
+         // Fit meniscus
+         if ( ( meniscus_run + 1 ) < meniscus_values.size() )
+         {
+            set_meniscus();
+         }
 
-         if ( current_dataset >= count_datasets )
+         if ( ! job_queue.isEmpty() ) continue;
+
+         // Monte Carlo
+         mc_iteration++;
+
+         if ( mc_iterations > 1 )
+         {  // Recompute final fit to get simulation and residual
+            wksim_vals          = simulation_values;
+            wksim_vals.solutes  = calculated_solutes[ max_depth ];
+
+            calc_residuals( current_dataset, 1, wksim_vals );
+
+            simulation_values   = wksim_vals;
+
+            if ( mc_iteration < mc_iterations )
+            {
+               set_monteCarlo();
+            }
+         }
+
+         if ( ! job_queue.isEmpty() ) continue;
+
+         ittest       = current_dataset + mgroup_count;
+
+         if ( ittest  >= count_datasets )
          {
             for ( int jj = 1; jj <= my_workers; jj++ )
                maxrss += work_rss[ jj ];
@@ -487,8 +537,7 @@ DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
 
          // Tell the supervisor that an iteration is done
          iter    = (int)maxrss;
-         tag     = ( current_dataset < count_datasets ) ?
-                   DONEITER : DONELAST;
+         tag     = ( ittest < count_datasets ) ? DONEITER : DONELAST;
 
          MPI_Send( &iter,
                    1,
@@ -499,13 +548,24 @@ DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
 
          if ( current_dataset < count_datasets )
          {
+            update_outputs();
+
+            if ( simulation_values.noisflag == 0 )
+            {
+               DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
+                        << " : model was output.";
+            }
+            else
+            {
+               DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
+                        << " : model/noise(s) were output.";
+            }
+
             time_datasets_left();
 
-            if ( mc_iteration < mc_iterations )
+            if ( ittest < count_datasets )
             {
-               set_monteCarlo();
-
-               // Get new Monte Carlo iteration index from supervisor
+               // Get new dataset index from supervisor
                MPI_Recv( &iter,
                          1,
                          MPI_INT,
@@ -515,9 +575,10 @@ DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
                          &status );
 
                tag      = status.MPI_TAG;
+DbgLv(0) << "CJ_MAST Recv tag" << tag << "iter" << iter;
 
                if ( tag == STARTLAST )
-                  mc_iterations = iter;
+                  count_datasets  = iter + 1;
 
                else if ( tag != STARTITER )
                {
@@ -525,7 +586,17 @@ DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
                   continue;
                }
 
-               mc_iteration  = iter;
+               current_dataset  = iter;
+
+               for ( int ii = 1; ii < gcores_count; ii++ )
+                  worker_status[ ii ] = READY;
+
+               fill_queue();
+
+               for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
+                  calculated_solutes[ ii ].clear();
+
+               continue;
             }
          }
 
