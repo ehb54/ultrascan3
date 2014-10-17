@@ -326,7 +326,7 @@ class US_MPI_Analysis : public QObject
     void     process_solutes   ( int&, int&, QVector< US_Solute >& );
     void     dset_matrices     ( int, int,
                                  QVector< double >&, QVector< double >& );
-    void     update_outputs    ( void );
+    void     update_outputs    ( bool = false );
 
     // Worker
     void     _2dsa_worker      ( void );

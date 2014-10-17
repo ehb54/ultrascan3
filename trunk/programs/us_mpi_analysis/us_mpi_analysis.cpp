@@ -700,20 +700,8 @@ void US_MPI_Analysis::start( void )
       stats_output( walltime, cputime, maxrssmb,
             submitTime, startTime, endTime );
 
-      // Build list and archive of output files
-      QDir        d( "." );
-      QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
-      files.removeOne( "analysis-results.tar" );
-
-      US_Tar tar;
-      tar.create( "analysis-results.tar", files );
-
-      printf( "Us_Mpi_Analysis has finished successfully.\n" );
-      fflush( stdout );
-
-      // Remove the files we just put into the tar archive
-      QString file;
-      foreach( file, files ) d.remove( file );
+      // Create archive file of outputs and remove other output files
+      update_outputs( true );
    }
 
    MPI_Finalize();
@@ -774,6 +762,12 @@ void US_MPI_Analysis::abort( const QString& message, int error )
    }
 
    MPI_Barrier( MPI_COMM_WORLD );     // Sync everybody up so stdout msg first
+
+   if ( my_rank == 0 )
+   {  // Create archive file of outputs and remove other output files
+      update_outputs( true );
+   }
+
    DbgLv(0) << my_rank << ": " << message;
    MPI_Abort( MPI_COMM_WORLD, error );
    exit( error );
