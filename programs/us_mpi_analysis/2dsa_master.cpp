@@ -1344,14 +1344,17 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
                           + "." + id + "." + model.modelGUID + ".xml";
    }
 
-   model.write( fn );                // Output the model to a file
+   // Output the model to a file
+   model.write( fn );
 
-   data_sets[ current_dataset ]->model = model;    // Save the model in case needed for noise
+   // Save the model in case needed for noise
+   data_sets[ current_dataset ]->model = model;
 
    // Add the file name of the model file to the output list
    QFile fileo( "analysis_files.txt" );
 
-   if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append ) )
+   if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text
+                                           | QIODevice::Append ) )
    {
       abort( "Could not open 'analysis_files.txt' for writing" );
       return;
@@ -1531,13 +1534,21 @@ void US_MPI_Analysis::cache_result( Result& result )
 }
 
 // Update the output TAR file after composite job output has been produced
-void US_MPI_Analysis::update_outputs()
+void US_MPI_Analysis::update_outputs( bool rmvfiles )
 {
+   // Get a list of output files, minus any TAR file
    QDir odir( "." );
    QStringList files = odir.entryList( QStringList( "*" ), QDir::Files );
    files.removeOne( "analysis-results.tar" );
 
+   // Create the archive file containing all outputs
    US_Tar tar;
    tar.create( "analysis-results.tar", files );
+
+   if ( rmvfiles )
+   {  // Remove the files we just put into the tar archive
+      QString file;
+      foreach( file, files ) odir.remove( file );
+   }
 }
 

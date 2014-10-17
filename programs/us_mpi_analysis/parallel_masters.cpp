@@ -362,17 +362,8 @@ DbgLv(1) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
    stats_output( walltime, cputime, maxrssmb,
          submitTime, startTime, endTime );
 
-   // Build list and archive of output files
-   QDir        d( "." );
-   QStringList files = d.entryList( QStringList( "*" ), QDir::Files );
-   files.removeOne( "analysis-results.tar" );
-
-   US_Tar tar;
-   tar.create( "analysis-results.tar", files );
-
-   // Remove the files we just put into the tar archive
-   QString file;
-   foreach( file, files ) d.remove( file );
+   // Create output archive and remove other output files
+   update_outputs( true );
 }
 
 // Parallel-masters master within a group
