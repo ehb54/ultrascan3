@@ -310,9 +310,9 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
       DbgLv(0) << " is_composite_job " << is_composite_job;
    }
 
-   if ( count_datasets > 1  &&  meniscus_points > 1 )
+   if ( is_global_fit  &&  meniscus_points > 1 )
    {
-      abort( "Meniscus fit is not compatible with multiple data sets" );
+      abort( "Meniscus fit is not compatible with global fit" );
    }
 
    if ( meniscus_points > 1  &&  mc_iterations > 1 )
