@@ -328,7 +328,7 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
       abort( "Monte Carlo iteration is not compatible with noise computation" );
    }
 
-   if ( is_global_fit && noise )
+   if ( is_global_fit  &&  noise )
    {
       abort( "Global fit is not compatible with noise computation" );
    }

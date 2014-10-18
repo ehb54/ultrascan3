@@ -125,6 +125,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     int                thrnrank;      // Thread number or processor rank (1,...)
     bool               signal_wanted; // Flag whether to emit progress signals
 
+    int                d_offs;        // Current data offset
     int                noisflag;      // Calc-noise flag (0-3 for no|ti|ri|both)
     int                dbg_level;     // Debug level
     bool               dbg_timing;    // Flag whether to print timings

@@ -46,6 +46,8 @@ void US_MPI_Analysis::_2dsa_master( void )
       // All done with the pass if no jobs are ready or running
       if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
       {
+         US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
+         QString tripleID = edata->cell + edata->channel + edata->wavelength;
          QString progress = 
             "Iteration: "    + QString::number( iterations );
 
@@ -54,7 +56,8 @@ void US_MPI_Analysis::_2dsa_master( void )
                             + QString::number( datasets_to_process );
          else
             progress     += "; Dataset: "
-                            + QString::number( current_dataset + 1 );
+                            + QString::number( current_dataset + 1 )
+                            + " ( " + tripleID + " ) ";
 
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "
@@ -131,10 +134,9 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
          if ( ! job_queue.isEmpty() ) continue;
 
          // Monte Carlo
-         mc_iteration++;
-
          if ( mc_iterations > 1 )
          {  // Recompute final fit to get simulation and residual
+            mc_iteration++;
             wksim_vals           = simulation_values;
             wksim_vals.solutes   = calculated_solutes[ max_depth ]; 
 
@@ -158,6 +160,8 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
 
          if ( is_composite_job )
          {  // Composite job:  update outputs in TAR and bump dataset count
+            QString tripleID = QString( data_sets[ current_dataset ]->model
+                               .description ).section( ".", -2, -2 );
             current_dataset++;
             dset_calc_solutes << calculated_solutes[ max_depth ];
 
@@ -166,11 +170,13 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
             if ( simulation_values.noisflag == 0 )
             {
                DbgLv(0) << my_rank << ": Dataset" << current_dataset
+                        << "(" << tripleID << ")"
                         << " :  model was output.";
             }
             else
             {
                DbgLv(0) << my_rank << ": Dataset" << current_dataset
+                        << "(" << tripleID << ")"
                         << " :  model/noise(s) were output.";
             }
 
