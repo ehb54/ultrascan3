@@ -166,6 +166,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    int nrinois   = 0;                             // RI noise value count
    double alphad = sim_vals.alpha;                // Alpha for diagonal
    int lim_offs  = offset + dataset_count;        // Offset limit
+   d_offs        = offset;                        // Initial data offset
 #if 0
 #ifdef NO_DB
    US_Settings::set_us_debug( dbg_level );
@@ -237,7 +238,7 @@ if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mfac"
    if ( banddthr )
    {  // If band forming, hold data within thresholds
 //mfactex=mfactor;
-      wdata          = data_sets[ 0 ]->run_data;
+      wdata          = data_sets[ d_offs ]->run_data;
       data_threshold( &wdata, zerothr, linethr, maxod, mfactex );
    }
 
@@ -1112,9 +1113,9 @@ void US_SolveSim::abort_work()
 void US_SolveSim::compute_a_tilde( QVector< double >& a_tilde,
                                    const QVector< double >& nnls_b )
 {
-   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
-   int    npoints  = edata->xvalues.size();
-   int    nscans   = edata->scanData.size();
+   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
+   int    npoints  = edata->pointCount();
+   int    nscans   = edata->scanCount();
    int    jb       = 0;
    double avgscale = 1.0 / (double)npoints;
 
@@ -1133,9 +1134,9 @@ void US_SolveSim::compute_L_tildes( int                      nrinois,
                                     QVector< double >&       L_tildes,
                                     const QVector< double >& nnls_a )
 {
-   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
-   int    npoints  = edata->xvalues.size();
-   int    nscans   = edata->scanData.size();
+   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
+   int    npoints  = edata->pointCount();
+   int    nscans   = edata->scanCount();
    double avgscale = 1.0 / (double)npoints;
    int    a_index  = 0;
 
@@ -1157,9 +1158,9 @@ void US_SolveSim::compute_L_tildes( int                      nrinois,
 void US_SolveSim::compute_L_tilde( QVector< double >&       L_tilde,
                                    const QVector< double >& L )
 {
-   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
-   int    npoints  = edata->xvalues.size();
-   int    nscans   = edata->scanData.size();
+   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
+   int    npoints  = edata->pointCount();
+   int    nscans   = edata->scanCount();
    double avgscale = 1.0 / (double)npoints;
    int    index    = 0;
 
@@ -1178,9 +1179,9 @@ void US_SolveSim::compute_L( int                      ntotal,
                              const QVector< double >& nnls_a,
                              const QVector< double >& nnls_x )
 {
-   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
-   int npoints = edata->xvalues.size();
-   int nscans  = edata->scanData.size();
+   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
+   int    npoints  = edata->pointCount();
+   int    nscans   = edata->scanCount();
 
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
@@ -1213,9 +1214,9 @@ void US_SolveSim::ri_small_a_and_b( int                      nsolutes,
                                     const QVector< double >& nnls_b )
 {
 DebugTime("BEG:ri_smab");
-   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
-   int npoints = edata->xvalues.size();
-   int nscans  = edata->scanData.size();
+   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
+   int npoints = edata->pointCount();
+   int nscans  = edata->scanCount();
    int kstodo  = sq( nsolutes ) / 10;   // progress steps to report
    int incprg  = nsolutes / 20;         // increment between reports
    incprg      = max( incprg,  1 );
@@ -1312,9 +1313,9 @@ void US_SolveSim::ti_small_a_and_b( int                      nsolutes,
                                     const QVector< double >& nnls_b )
 {
 DebugTime("BEG:ti-smab");
-   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
-   int npoints = edata->xvalues.size();
-   int nscans  = edata->scanData.size();
+   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
+   int npoints = edata->pointCount();
+   int nscans  = edata->scanCount();
    int kstodo  = sq( nsolutes ) / 10;   // progress steps to report
    int incprg  = nsolutes / 20;         // increment between reports
    incprg      = max( incprg,  1 );
@@ -1402,9 +1403,9 @@ void US_SolveSim::compute_L_bar( QVector< double >&       L_bar,
                                  const QVector< double >& L,
                                  const QVector< double >& L_tilde )
 {
-   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
-   int npoints = edata->xvalues.size();
-   int nscans  = edata->scanData.size();
+   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
+   int npoints = edata->pointCount();
+   int nscans  = edata->scanCount();
    double avgscale = 1.0 / (double)nscans;
 
    for ( int rr = 0; rr < npoints; rr++)
@@ -1422,9 +1423,9 @@ void US_SolveSim::compute_a_bar( QVector< double >&       a_bar,
                                  const QVector< double >& a_tilde,
                                  const QVector< double >& nnls_b )
 {
-   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
-   int npoints = edata->xvalues.size();
-   int nscans  = edata->scanData.size();
+   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
+   int npoints = edata->pointCount();
+   int nscans  = edata->scanCount();
    double avgscale = 1.0 / (double)nscans;
 
    for ( int rr = 0; rr < npoints; rr++ )
@@ -1451,9 +1452,9 @@ void US_SolveSim::compute_L_bars( int                      nsolutes,
                                   const QVector< double >& nnls_a,
                                   const QVector< double >& L_tildes )
 {
-   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
-   int npoints = edata->xvalues.size();
-   int nscans  = edata->scanData.size();
+   US_DataIO::EditedData* edata = &data_sets[ d_offs ]->run_data;
+   int npoints = edata->pointCount();
+   int nscans  = edata->scanCount();
    double avgscale = 1.0 / (double)nscans;
 
    for ( int cc = 0; cc < nsolutes; cc++ )
@@ -1498,8 +1499,8 @@ bool US_SolveSim::data_threshold( US_DataIO::RawData* sdata,
    int    nzset   = 0;
    int    nntrp   = 0;
    int    nclip   = 0;
-   int    npoints = sdata->xvalues.size();
-   int    nscans  = sdata->scanData.size();
+   int    npoints = sdata->pointCount();
+   int    nscans  = sdata->scanCount();
    double clipout = mfactor * maxod;
    double thrfact = mfactor / (double)( linethr - zerothr );
 double maxs=0.0;
@@ -1557,8 +1558,8 @@ bool US_SolveSim::data_threshold( US_DataIO::EditedData* edata,
       double zerothr, double linethr, double maxod, double mfactor )
 {
    int    nnzro   = 0;
-   int    npoints = edata->xvalues.size();
-   int    nscans  = edata->scanData.size();
+   int    npoints = edata->pointCount();
+   int    nscans  = edata->scanCount();
    double clipout = mfactor * maxod;
    double thrfact = mfactor / (double)( linethr - zerothr );
 
