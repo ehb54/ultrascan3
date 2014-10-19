@@ -182,6 +182,10 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
 
             if ( current_dataset < count_datasets )
             {
+               meniscus_run    = 0;
+               iterations      = 1;
+               mc_iteration    = 0;
+
                for ( int ii = 1; ii < gcores_count; ii++ )
                   worker_status[ ii ] = READY;
 
@@ -1296,7 +1300,8 @@ DbgLv(1) << "wrMo:  model comps" << model.components.size();
 DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
 
    QString iterID;
-   int mc_iter      = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
+   int mc_iter      = ( mgroup_count < 2  ||  is_composite_job ) 
+                      ? ( mc_iteration + 1 ) : mc_iteration;
 
    if ( mc_iterations > 1 )
       iterID.sprintf( "mc%04d", mc_iter );
