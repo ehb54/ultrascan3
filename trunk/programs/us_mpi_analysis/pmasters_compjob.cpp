@@ -449,10 +449,13 @@ DbgLv(1) << "master start 2DSA" << startTime;
       // All done with the pass if no jobs are ready or running
       if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
       {
+         US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
+         QString tripleID = edata->cell + edata->channel + edata->wavelength;
          int menisc_size  = meniscus_values.size();
          QString progress = 
             "Iteration: "    + QString::number( iterations ) +
-            "; Dataset: "    + QString::number( current_dataset + 1 );
+            "; Dataset: "    + QString::number( current_dataset + 1 ) +
+            " ( " + tripleID + " ) ";
 
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "
@@ -580,6 +583,8 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
 
                current_dataset  = iter;
                mc_iteration     = 0;
+               iterations       = 1;
+               meniscus_run     = 0;
 
                for ( int ii = 1; ii < gcores_count; ii++ )
                   worker_status[ ii ] = READY;
