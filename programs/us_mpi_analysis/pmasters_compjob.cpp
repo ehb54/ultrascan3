@@ -431,6 +431,9 @@ DbgLv(1) << "master start 2DSA" << startTime;
    while ( true )
    {
       int worker;
+      meniscus_value   = meniscus_values.size() == 1 ?
+                         data_sets[ current_dataset ]->run_data.meniscus :
+                         meniscus_values[ meniscus_run ];
 //if ( max_depth > 1 )
 // DbgLv(1) << " master loop-TOP:  jq-empty?" << job_queue.isEmpty() << "   areReady?" << worker_status.contains(READY)
 //    << "  areWorking?" << worker_status.contains(WORKING);
@@ -441,7 +444,9 @@ DbgLv(1) << "master start 2DSA" << startTime;
          worker    = ready_worker();
 
          _2dsa_Job job           = job_queue.takeFirst();
+
          submit( job, worker );
+
          worker_depth [ worker ] = job.mpi_job.depth;
          worker_status[ worker ] = WORKING;
       }
