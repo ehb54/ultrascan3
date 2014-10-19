@@ -508,10 +508,10 @@ DbgLv(1) << "master start 2DSA" << startTime;
          if ( ! job_queue.isEmpty() ) continue;
 
          // Monte Carlo
-         mc_iteration++;
-
          if ( mc_iterations > 1 )
          {  // Recompute final fit to get simulation and residual
+            mc_iteration++;
+
             wksim_vals          = simulation_values;
             wksim_vals.solutes  = calculated_solutes[ max_depth ];
 
