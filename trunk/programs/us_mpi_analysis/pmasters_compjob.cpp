@@ -365,19 +365,20 @@ void US_MPI_Analysis::time_datasets_left()
       return;                      // Don't bother until current_dataset 4
 
    QDateTime currTime  = QDateTime::currentDateTime();
+   int curr_iter       = current_dataset + 1;
    int mins_so_far     = ( startTime.secsTo( currTime ) + 59 ) / 60;
    int mins_left_allow = max_walltime - mins_so_far;
-   int ds_iters_left   = ( mins_left_allow * mc_iteration ) / mins_so_far;
+   int ds_iters_left   = ( mins_left_allow * curr_iter ) / mins_so_far;
    ds_iters_left       = ( ds_iters_left / mgroup_count ) * mgroup_count;
-   int ds_iters_estim  = current_dataset + ds_iters_left;
+   int ds_iters_estim  = curr_iter + ds_iters_left;
 
    if ( ds_iters_estim < count_datasets  &&  ds_iters_left < 4 )
    {  // In danger of exceeding allowed time:   reduce count of datasets
       int old_dsiters     = count_datasets;
-      count_datasets      = qMax( current_dataset, ds_iters_estim - 2 );
-      int ac_iters_left   = count_datasets - current_dataset;
+      count_datasets      = qMax( curr_iter, ds_iters_estim - 2 );
+      int ac_iters_left   = count_datasets - curr_iter;
       ac_iters_left       = ( ac_iters_left / mgroup_count ) * mgroup_count;
-      count_datasets      = current_dataset + ac_iters_left;
+      count_datasets      = curr_iter + ac_iters_left;
 
       QString msg = tr( "Dataset count reduced from %1 to %2, "
                         "due to max. time restrictions." )
@@ -387,7 +388,7 @@ void US_MPI_Analysis::time_datasets_left()
       DbgLv(0) << "  Specified Maximum Wall-time minutes:" << max_walltime;
       DbgLv(0) << "  Number of minutes used so far:      " << mins_so_far;
       DbgLv(0) << "  Allowed minutes remaining:          " << mins_left_allow;
-      DbgLv(0) << "  Dataset processed so far:           " << current_dataset;
+      DbgLv(0) << "  Dataset processed so far:           " << curr_iter;
       DbgLv(0) << "  Estimated allowed datasets left:    " << ds_iters_left;
       DbgLv(0) << "  Actual adjusted datasets left:      " << ac_iters_left;
       DbgLv(0) << "Datasets reduced from" << old_dsiters << "to"
