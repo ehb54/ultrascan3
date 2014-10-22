@@ -341,6 +341,14 @@ DbgLv(1) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
    int maxrssmb  = qRound( (double)maxrss / 1024.0 );
    int kc_iters  = parameters[ "mc_iterations" ].toInt();
 
+   // Output job statistics
+   stats_output( walltime, cputime, maxrssmb,
+         submitTime, startTime, endTime );
+
+   // Create output archive and remove other output files
+   update_outputs( true );
+
+   // Send 'Finished' message
    if ( mc_iterations < kc_iters )
    {
       send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
@@ -358,12 +366,6 @@ DbgLv(1) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
       DbgLv(0) << "Finished:  maxrss " << maxrssmb
                << "MB,  total run seconds " << cputime;
    }
-
-   stats_output( walltime, cputime, maxrssmb,
-         submitTime, startTime, endTime );
-
-   // Create output archive and remove other output files
-   update_outputs( true );
 }
 
 // Parallel-masters master within a group

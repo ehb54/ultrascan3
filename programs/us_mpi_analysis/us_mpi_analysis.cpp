@@ -672,13 +672,20 @@ void US_MPI_Analysis::start( void )
          }
       }
 
-      // Send message and build file with run-time statistics
+      // Build file with run-time statistics
       int  walltime = qRound(
          submitTime.msecsTo( endTime ) / 1000.0 );
       int  cputime  = qRound(
          startTime .msecsTo( endTime ) / 1000.0 );
       int  maxrssmb = qRound( (double)maxrss / 1024.0 );
 
+      stats_output( walltime, cputime, maxrssmb,
+            submitTime, startTime, endTime );
+
+      // Create archive file of outputs and remove other output files
+      update_outputs( true );
+
+      // Send "Finished" message.
       if ( reduced_iter )
       {
          send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
@@ -696,12 +703,6 @@ void US_MPI_Analysis::start( void )
          DbgLv(0) << "Finished:  maxrss " << maxrssmb
                   << "MB,  total run seconds " << cputime;
       }
-
-      stats_output( walltime, cputime, maxrssmb,
-            submitTime, startTime, endTime );
-
-      // Create archive file of outputs and remove other output files
-      update_outputs( true );
    }
 
    MPI_Finalize();
