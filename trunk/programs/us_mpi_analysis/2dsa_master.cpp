@@ -161,7 +161,7 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
          if ( is_composite_job )
          {  // Composite job:  update outputs in TAR and bump dataset count
             QString tripleID = QString( data_sets[ current_dataset ]->model
-                               .description ).section( ".", -2, -2 );
+                               .description ).section( ".", -3, -3 );
             current_dataset++;
             dset_calc_solutes << calculated_solutes[ max_depth ];
 

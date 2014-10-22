@@ -257,6 +257,13 @@ DbgLv(1) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
    int maxrssmb  = qRound( (double)maxrss / 1024.0 );
    int kc_iters  = data_sets.size();
 
+   stats_output( walltime, cputime, maxrssmb,
+         submitTime, startTime, endTime );
+
+   // Create output archive file and remove other output files
+   update_outputs( true );
+
+   // Send 'Finished' message.
    if ( count_datasets < kc_iters )
    {
       send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
@@ -274,12 +281,6 @@ DbgLv(1) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
       DbgLv(0) << "Finished:  maxrss " << maxrssmb
                << "MB,  total run seconds " << cputime;
    }
-
-   stats_output( walltime, cputime, maxrssmb,
-         submitTime, startTime, endTime );
-
-   // Create output archive file and remove other output files
-   update_outputs( true );
 }
 
 // Parallel-masters master within a group
@@ -551,14 +552,20 @@ DbgLv(1) << "master start 2DSA" << startTime;
          {
             update_outputs();
 
+            US_DataIO::EditedData* edata
+                             = &data_sets[ current_dataset ]->run_data;
+            QString tripleID = edata->cell + edata->channel + edata->wavelength;
+
             if ( simulation_values.noisflag == 0 )
             {
                DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
+                        << "(" << tripleID << ")"
                         << " : model was output.";
             }
             else
             {
                DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
+                        << "(" << tripleID << ")"
                         << " : model/noise(s) were output.";
             }
 
