@@ -782,7 +782,10 @@ void US_MPI_Analysis::stats_output( int walltime, int cputime, int maxrssmb,
    QFile   file( fname );
 
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      DbgLv(0) << "*WARNING* Unable to open job_statistics.xml file for write.";
       return;
+   }
 
    QString sSubmitTime = submitTime.toString( Qt::ISODate ).replace( "T", " " );
    QString sStartTime  = startTime .toString( Qt::ISODate ).replace( "T", " " );

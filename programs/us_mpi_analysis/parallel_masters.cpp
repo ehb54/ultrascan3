@@ -156,7 +156,7 @@ void US_MPI_Analysis::pmasters_supervisor()
    MPI_Status     status;
    long int       maxrssma = 0L;
 
-   mc_iteration = 1;
+   mc_iteration = 0;
    int  master  = 1;
    int  iwork   = 0;
    int  tag;
@@ -169,6 +169,7 @@ void US_MPI_Analysis::pmasters_supervisor()
 
    for ( int ii = 0; ii < mgroup_count; ii++ )
    {
+      mc_iteration++;
       master = ( ii == 0 ) ? 1 : ( ii * gcores_count );   // Master world rank
 
 DbgLv(1) << "SUPER: master msgs" << master << "analysisDate" << analysisDate;
@@ -447,8 +448,8 @@ void US_MPI_Analysis::pmasters_worker()
 // Test time for MC iterations left; compare to walltime
 void US_MPI_Analysis::time_mc_iterations()
 {
-   if ( mc_iteration < 4 )
-      return;                      // Don't bother until MC iteration 4
+   if ( mc_iteration < ( mgroup_count * 4 ) )
+      return;                      // Don't bother until MC iteration pass 4
 
    QDateTime currTime  = QDateTime::currentDateTime();
    int mins_so_far     = ( startTime.secsTo( currTime ) + 59 ) / 60;
@@ -480,7 +481,8 @@ void US_MPI_Analysis::time_mc_iterations()
          << mc_iterations << ", due to max. time restrictions.";
 
       // Just to be sure, create tar file right now
-      update_outputs();
+      if ( my_group == 0 )
+         update_outputs();
    }
 
    return;
@@ -551,17 +553,14 @@ DbgLv(1) << "master start 2DSA" << startTime;
 
          if ( ! job_queue.isEmpty() ) continue;
 
-         // Write out the model, but skip if not 1st of iteration 1
+         // Write out the model
          max_rss();
-         bool do_write = ( mc_iteration > 1 ) ||
-                         ( mc_iteration == 1  &&  my_group == 0 );
-DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
+DbgLv(1) << "2dMast:    mc_iter" << mc_iteration
    << "variance" << simulation_values.variance << "my_group" << my_group;
 
          qSort( simulation_values.solutes );
 
-         if ( do_write )
-            write_model( simulation_values, US_Model::TWODSA );
+         write_model( simulation_values, US_Model::TWODSA );
 
          if ( mc_iteration >= mc_iterations )
          {
@@ -741,10 +740,8 @@ DbgLv(1) << "GaMast:   sol0.s" << simulation_values.solutes[0].s;
 
 DbgLv(1) << "GaMast:    calc_resids return";
 
-      // Write out the model, but skip if not 1st of iteration 1
-      bool do_write = ( mc_iteration > 1 ) ||
-                      ( mc_iteration == 1  &&  my_group == 0 );
-DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
+      // Write out the model
+DbgLv(1) << "2dMast:    mc_iter" << mc_iteration
    << "variance" << simulation_values.variance << "my_group" << my_group;
 
       qSort( simulation_values.solutes );
@@ -781,17 +778,13 @@ DbgLv(1) << "2dMast:    do_write" << do_write << "mc_iter" << mc_iteration
       calculated_solutes.clear();
       calculated_solutes << simulation_values.solutes;
 
-      if ( do_write )
+      if ( data_sets.size() == 1 )
       {
-
-         if ( data_sets.size() == 1 )
-         {
-            write_output();
-         }
-         else
-         {
-            write_global();
-         }
+         write_output();
+      }
+      else
+      {
+         write_global();
       }
 
       if ( my_group == 0 )
@@ -826,7 +819,7 @@ DbgLv(1) << "GaMast:  iter done: maxrss" << iter << "tag" << tag << DONELAST;
 DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
       if ( mc_iteration < mc_iterations )
       {     // Set up for next iteration
-         if ( mc_iteration == 1 ) 
+         if ( mc_iteration <= mgroup_count ) 
          {    // Set scaled_data the first time
             scaled_data = simulation_values.sim_data;
          }
@@ -964,23 +957,15 @@ DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
 
       calc_residuals_dmga( 0, data_sets.size(), simulation_values, dgene );
 
-      // Output the model
+      // Write out the model
 
-      // Write out the model, but skip if not 1st of iteration 1
-      bool do_write = ( mc_iteration > 1 ) ||
-                      ( mc_iteration == 1  &&  my_group == 0 );
-
-      if ( do_write )
-      {
-
-         if ( data_sets.size() == 1 )
-         {  // Output the single-data model
-            write_output();
-         }
-         else
-         {  // Output the global model
-            write_global();
-         }
+      if ( data_sets.size() == 1 )
+      {  // Output the single-data model
+         write_output();
+      }
+      else
+      {  // Output the global model
+         write_global();
       }
 
       if ( my_group == 0 )
@@ -1015,7 +1000,7 @@ DbgLv(1) << "GaMast:  iter done: maxrss" << iter << "tag" << tag << DONELAST;
 DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
       if ( mc_iteration < mc_iterations )
       {     // Set up for next iteration
-         if ( mc_iteration == 1 ) 
+         if ( mc_iteration <= mgroup_count )
          {    // Set scaled_data the first time
             scaled_data = simulation_values.sim_data;
          }
