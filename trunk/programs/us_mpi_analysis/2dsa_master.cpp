@@ -1550,6 +1550,14 @@ void US_MPI_Analysis::update_outputs( bool rmvfiles )
    // Get a list of output files, minus any TAR file
    QDir odir( "." );
    QStringList files = odir.entryList( QStringList( "*" ), QDir::Files );
+
+   if ( files.size() == 1  &&  files[ 0 ] == "analysis-results.tar" )
+   {  // If the tar file exists alone, do nothing here
+DbgLv(0) << my_rank << ": A single output file, the archive, already exists!!!";
+      return;
+   }
+
+   // Otherwise, remove the tar file from the list of output files
    files.removeOne( "analysis-results.tar" );
 
    // Create the archive file containing all outputs
@@ -1558,6 +1566,7 @@ void US_MPI_Analysis::update_outputs( bool rmvfiles )
 
    if ( rmvfiles )
    {  // Remove the files we just put into the tar archive
+DbgLv(0) << my_rank << ": All output files except the archive are now removed.";
       QString file;
       foreach( file, files ) odir.remove( file );
    }

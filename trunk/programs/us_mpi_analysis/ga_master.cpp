@@ -117,7 +117,7 @@ DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
          if ( mc_iteration < mc_iterations )
          {
             // Set scaled_data the first time
-            if ( mc_iteration == 1 ) 
+            if ( mc_iteration <= mgroup_count )
             {
                scaled_data = simulation_values.sim_data;
             }
@@ -494,7 +494,7 @@ void US_MPI_Analysis::set_gaMonteCarlo( void )
 {
 DbgLv(1) << "sgMC: mciter" << mc_iteration;
    // This is almost the same as 2dsa set_monteCarlo
-   if ( mc_iteration == 1 )
+   if ( mc_iteration <= mgroup_count )
    {
       //meniscus_values << -1.0;
       max_depth   = 0;  // Make the datasets compatible

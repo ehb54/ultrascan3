@@ -396,7 +396,8 @@ void US_MPI_Analysis::time_datasets_left()
          << count_datasets << ", due to max. time restrictions.";
 
       // Just to be sure, create tar file right now
-      update_outputs();
+      if ( my_group == 0 )
+         update_outputs();
    }
 
    return;
@@ -550,7 +551,12 @@ DbgLv(1) << "master start 2DSA" << startTime;
 
          if ( current_dataset < count_datasets )
          {
-            update_outputs();
+            if ( my_group == 0 )
+            {  // If group 0 master, create an intermediate archive
+               update_outputs();
+               DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
+                        << " : Intermediate archive was created.";
+            }
 
             US_DataIO::EditedData* edata
                              = &data_sets[ current_dataset ]->run_data;
