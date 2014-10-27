@@ -678,6 +678,7 @@ void US_MPI_Analysis::start( void )
       int  cputime  = qRound(
          startTime .msecsTo( endTime ) / 1000.0 );
       int  maxrssmb = qRound( (double)maxrss / 1024.0 );
+      int kc_iters  = data_sets.size();
 
       stats_output( walltime, cputime, maxrssmb,
             submitTime, startTime, endTime );
@@ -686,7 +687,17 @@ void US_MPI_Analysis::start( void )
       update_outputs( true );
 
       // Send "Finished" message.
-      if ( reduced_iter )
+      if ( count_datasets < kc_iters )
+      {
+         send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
+               + " MB,  total run seconds " + QString::number( cputime )
+               + "  (Reduced Datasets Count)" );
+         DbgLv(0) << "Finished:  maxrss " << maxrssmb
+                  << "MB,  total run seconds " << cputime
+                  << "  (Reduced Datasets Count)";
+      }
+
+      else if ( reduced_iter )
       {
          send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
                + " MB,  total run seconds " + QString::number( cputime )
@@ -694,6 +705,7 @@ void US_MPI_Analysis::start( void )
          DbgLv(0) << "Finished:  maxrss " << maxrssmb
                   << "MB,  total run seconds " << cputime
                   << "  (Reduced MC Iterations)";
+
       }
 
       else

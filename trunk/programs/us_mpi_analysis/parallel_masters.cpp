@@ -451,6 +451,9 @@ void US_MPI_Analysis::time_mc_iterations()
    if ( mc_iteration < ( mgroup_count * 4 ) )
       return;                      // Don't bother until MC iteration pass 4
 
+   if ( is_composite_job )
+      return;                      // Don't check MC iteration if composite
+
    QDateTime currTime  = QDateTime::currentDateTime();
    int mins_so_far     = ( startTime.secsTo( currTime ) + 59 ) / 60;
    int mins_left_allow = max_walltime - mins_so_far;

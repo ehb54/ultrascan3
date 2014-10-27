@@ -199,19 +199,20 @@ void US_Dcdt::data_plot( void )
       double dt          = thisScan->seconds - prevScan->seconds;
       double plateau     = thisScan->plateau;
       double prevPlateau = prevScan->plateau;
+      plateau            = thisScan->rvalues[ d->xindex( plateau     ) ];
+      prevPlateau        = thisScan->rvalues[ d->xindex( prevPlateau ) ];
 
       double meniscus    = d->meniscus;
       double omega       = thisScan->rpm * M_PI / 30.0;
 
       int    size        = 0;
       bool   started     = false;
+      int    js_point    = d->xindex( lower_limit );
 
-      for ( int j = 0; j < points; j++ )
+      for ( int j = js_point; j < points; j++ )
       {
          double currentV  = thisScan->rvalues[ j ];
          double previousV = prevScan->rvalues[ j ];
-
-         if ( currentV < lower_limit ) continue;
 
          if ( ! started )
          {
