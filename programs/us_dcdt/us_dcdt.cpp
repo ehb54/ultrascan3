@@ -77,10 +77,10 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
 
    ct_boundaryPos    ->disconnect();
    ct_boundaryPos    ->setMaxValue( 90.0 );
-   ct_boundaryPos    ->setValue   ( 0.0 );
+   ct_boundaryPos    ->setValue   ( 0.0  );
    ct_boundaryPercent->disconnect();
-   ct_boundaryPercent->setValue   ( 9000.0 );
-   ct_boundaryPercent->setEnabled ( false );
+   ct_boundaryPercent->setValue   ( 100.0 );
+   ct_boundaryPercent->setEnabled ( true  );
    ct_boundaryPercent->setVisible ( false );
    connect( ct_boundaryPos,     SIGNAL ( valueChanged ( double ) ),
 			        SLOT   ( boundary_pos ( double ) ) );
@@ -139,8 +139,23 @@ void US_Dcdt::set_graph( int button )
 
 void US_Dcdt::data_plot( void )
 {
+   // Set upper limit so plot marks plateaus
+   ct_boundaryPos    ->disconnect();
+   ct_boundaryPercent->disconnect();
+   ct_boundaryPercent->setMaxValue( 100.0 );
+   ct_boundaryPercent->setValue   ( 100.0 - ct_boundaryPos->value() );
+
+   // Do scans plot
    US_AnalysisBase2::data_plot();
 
+   // Restore boundary limits
+   ct_boundaryPercent->setMaxValue( 100.0 );
+   ct_boundaryPercent->setValue   ( 100.0 - ct_boundaryPos->value() );
+   ct_boundaryPos    ->setMaxValue( 100.0 );
+   connect( ct_boundaryPos, SIGNAL ( valueChanged ( double ) ),
+			                   SLOT   ( boundary_pos ( double ) ) );
+
+   // Start setting up dcdt plot
    int                    index  = lw_triples->currentRow();
    US_DataIO::EditedData* d      = &dataList[ index ];
 
@@ -199,20 +214,19 @@ void US_Dcdt::data_plot( void )
       double dt          = thisScan->seconds - prevScan->seconds;
       double plateau     = thisScan->plateau;
       double prevPlateau = prevScan->plateau;
-      plateau            = thisScan->rvalues[ d->xindex( plateau     ) ];
-      prevPlateau        = thisScan->rvalues[ d->xindex( prevPlateau ) ];
 
       double meniscus    = d->meniscus;
       double omega       = thisScan->rpm * M_PI / 30.0;
 
       int    size        = 0;
       bool   started     = false;
-      int    js_point    = d->xindex( lower_limit );
 
-      for ( int j = js_point; j < points; j++ )
+      for ( int j = 0; j < points; j++ )
       {
          double currentV  = thisScan->rvalues[ j ];
          double previousV = prevScan->rvalues[ j ];
+
+         if ( currentV < lower_limit ) continue;
 
          if ( ! started )
          {
@@ -290,7 +304,7 @@ void US_Dcdt::data_plot( void )
          while ( sValues[ i ][ k ] < avgS[ j ] ) 
          {
             k++;
-            if ( k == arraySizes[ i ] ) goto next; // Skip rest of scans
+            if ( k >= arraySizes[ i ] ) goto next; // Skip rest of scans
          }
 
          // Interpolate and apply y = mx + b
