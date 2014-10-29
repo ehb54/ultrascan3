@@ -350,6 +350,9 @@ DbgLv(1) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
    update_outputs( true );
 
    // Send 'Finished' message
+   printf( "Us_Mpi_Analysis has finished successfully.\n" );
+   fflush( stdout );
+
    if ( mc_iterations < kc_iters )
    {
       send_udp( "Finished:  maxrss " + QString::number( maxrssmb )
