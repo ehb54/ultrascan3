@@ -1178,6 +1178,8 @@ QString US_AnalysisBase2::scan_info( void ) const
 
    for ( int i = 0; i < d->scanData.size(); i++ )
    {
+      if ( excludedScans.contains( i ) ) continue;
+
       QString s1;
       QString s2;
       QString s3;

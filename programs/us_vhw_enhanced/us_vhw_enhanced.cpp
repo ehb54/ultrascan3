@@ -1875,10 +1875,10 @@ DbgLv(1) << " k,fit-slope point: " << jj << xx << yy << " raw slope" << csy[jj];
 
    // Now find the spot where the derivative of the fit crosses zero
    double prevy = fsy[ 1 ];
-   double maxd  = -1e+30;
    double dfac  = 1.0 / qAbs( fsy[ kf - 1 ] - prevy );  // norm. deriv. factor
    double prevd = ( prevy - fsy[ 0 ] ) * dfac;  // normalized derivative
    jrelp        = -1;
+   int kdecr    = 0;
 
 DbgLv(1) << "Fitted slopes derivative points:";
    for ( int jj = 2; jj < kf; jj++ )
@@ -1894,7 +1894,7 @@ DbgLv(1) << "  k" << jj << " x fslo" << currx << curry << " deriv" << currd;
            ( currd < 0.0  &&  prevd > 0.0 ) )
       {  // Zero point or zero crossing
          jrelp    = jj - 1;
-DbgLv(1) << "    Z-CROSS";
+DbgLv(1) << "    Z-CROSS jrelp" << jrelp;
 if (dbg_level>=1 ) { for ( int mm = jj + 1; mm < kf; mm++ ) {
  prevy = curry; prevd = currd;
  currx = csx[mm]; curry = fsy[mm];
@@ -1904,18 +1904,37 @@ if (dbg_level>=1 ) { for ( int mm = jj + 1; mm < kf; mm++ ) {
          break;
       }
 
-      if ( currd > maxd )
-      {  // Maximum derivative value
-         maxd     = currd;
-         jrelp    = jj;
-DbgLv(1) << "    MAXD" << maxd;
+      if ( prevy < 0.0  &&  curry < prevy )
+      {  // Count consecutive decreases in negative slopes
+         kdecr++;
+         if ( kdecr > 2 )
+         {  // 3rd consecutive decrease in negative slope, break at this point
+            jrelp    = jj;
+DbgLv(1) << "    KDECR>2  jrelp prevy curry" << jrelp << prevy << curry;
+            break;
+         }
       }
+
+      else
+      {  // Reset count of consecutive decreasing negative slopes
+         kdecr        = 0;
+      }
+
       prevy      = curry;
       prevd      = currd;
    }
 
+DbgLv(1) << "    JRELP" << jrelp << "KF" << kf;
+   if ( jrelp < 0  ||  jrelp > ( kf - 2 ) )
+   {
+      jrelp      = min( 2, ( kf - 1 ) );
+DbgLv(1) << "     NO z-cross/k-decr, so default jrelp" << jrelp;
+   }
+
+
    // Do final fit to the determined number of leading points
    krelp         = (int)csx[ jrelp ];
+DbgLv(1) << "   jrelp krelp" << jrelp << krelp;
 
    US_Math2::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, krelp );
 DbgLv(1) << " KRELP" << krelp << "   slope intcp sigma"
