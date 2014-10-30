@@ -503,8 +503,19 @@ DbgLv(1) << "sMC: max_depth" << max_depth << "calcsols size" << calculated_solut
                << QString::number( fitrmsd, 'f', 7 );
    }
 
+   US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
+   int ds_points     = total_points;
+   int ds_start      = 0;
+   int ds_end        = count_datasets;
+
+   if ( is_composite_job )
+   {
+      ds_points         = edata->scanCount() * edata->pointCount();
+      ds_start          = current_dataset;
+      ds_end            = ds_start + datasets_to_process;
+   }
 DbgLv(1) << "sMC: totpts" << total_points << "mc_iter" << mc_iteration;
-   mc_data.resize( total_points );
+   mc_data.resize( ds_points );
    int    index      = 0;
    int    scnx       = 0;
    double varrmsd    = 0.0;
@@ -515,12 +526,11 @@ DbgLv(1) << "sMC: totpts" << total_points << "mc_iter" << mc_iteration;
 
    // Get a randomized variation of the concentrations
    // Use a gaussian distribution with the residual as the standard deviation
-   for ( int ee = 0; ee < data_sets.size(); ee++ )
+   for ( int ee = ds_start; ee < ds_end; ee++ )
    {
-      US_DataIO::EditedData* data = &data_sets[ ee ]->run_data;
-
-      int scan_count    = data->scanCount();
-      int radius_points = data->pointCount();
+      edata             = &data_sets[ ee ]->run_data;
+      int scan_count    = edata->scanCount();
+      int radius_points = edata->pointCount();
 int indxh=((scan_count/2)*radius_points)+(radius_points/2);
 
       for ( int ss = 0; ss < scan_count; ss++, scnx++ )
@@ -545,7 +555,7 @@ DbgLv(1) << "sMC:  index" << index << "sdat" << sim_data1.value(ss,rr)
    }
 DbgLv(1) << "sMC:   mcdata sum" << datasum;
 
-   varrmsd          = sqrt( varrmsd / (double)( total_points ) );
+   varrmsd          = sqrt( varrmsd / (double)( ds_points ) );
    qDebug() << "  Box_Muller Variation RMSD"
             << QString::number( varrmsd, 'f', 7 )
             << "  for MC_Iteration" << mc_iteration + 1;
@@ -556,11 +566,11 @@ DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
    // Broadcast Monte Carlo data to all workers
    MPI_Job newdata;
    newdata.command        = MPI_Job::NEWDATA;
-   newdata.length         = total_points;
+   newdata.length         = ds_points;
    newdata.solution       = mc_iteration + 1;
    newdata.meniscus_value = data_sets[ 0 ]->run_data.meniscus;
-   newdata.dataset_offset = 0;
-   newdata.dataset_count  = data_sets.size();
+   newdata.dataset_offset = ds_start;
+   newdata.dataset_count  = ds_end - ds_start;
 
    // Tell each worker that new data coming
    // Can't use a broadcast because the worker is expecting a Send
@@ -581,7 +591,7 @@ DbgLv(1) << "sMC: MPI Barrier";
 
 DbgLv(1) << "sMC: MPI Bcast";
    MPI_Bcast( mc_data.data(), 
-              total_points, 
+              ds_points, 
               MPI_DOUBLE, 
               MPI_Job::MASTER, 
               my_communicator );
@@ -598,7 +608,17 @@ DbgLv(1) << "sMC: MPI Bcast";
 //  data in Monte Carlo iterations
 void US_MPI_Analysis::set_gaussians( void )
 {
-   US_DataIO::EditedData* edata;
+   US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
+   int ds_start      = 0;
+   int ds_end        = count_datasets;
+   int ds_count      = count_datasets;
+
+   if ( is_composite_job )
+   {
+      ds_start          = current_dataset;
+      ds_end            = ds_start + datasets_to_process;
+      ds_count          = datasets_to_process;
+   }
 DbgLv(1) << "sGA: calcsols size mxdpth" << calculated_solutes.size() << max_depth;
 
    simulation_values.solutes = calculated_solutes[ max_depth ];
@@ -608,17 +628,17 @@ DbgLv(1) << "sGA:   sol0.s solM.s" << simulation_values.solutes[0].s
  << simulation_values.solutes[mm].s << "  M=" << mm;;
 DbgLv(1) << "sGA:     solM.k" << simulation_values.solutes[mm].k;
 DbgLv(1) << "sGA:     solM.c" << simulation_values.solutes[mm].c;
-edata = &data_sets[0]->run_data;
+edata = &data_sets[ds_start]->run_data;
 DbgLv(1) << "sGA:    edata scans points" << edata->scanCount() << edata->pointCount();
 
-   calc_residuals( 0, data_sets.size(), simulation_values );
+   calc_residuals( ds_start, ds_count, simulation_values );
 
    sigmas.clear();
    res_data          = &simulation_values.residuals;
    int scnx          = 0;
 DbgLv(1) << "sGA:  resids scans points" << res_data->scanCount() << res_data->pointCount();
 
-   for ( int ee = 0; ee < data_sets.size(); ee++ )
+   for ( int ee = ds_start; ee < ds_end; ee++ )
    {
       edata             = &data_sets[ ee ]->run_data;
       int scan_count    = edata->scanCount();
