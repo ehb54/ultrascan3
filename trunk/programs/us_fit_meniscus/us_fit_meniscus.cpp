@@ -604,7 +604,7 @@ DbgLv(1) << " eupd:      mlsx mlnn" << mlsx << mlnn;
                  tr( "has been modified with the line:\n    " ) + 
                  edtext.mid( mlsx, mlnn ) +
                  tr( "\n\n%1 other cell/channel files were"
-                     " simularly modified." ).arg( nedtfs - 1 ) + dmsg;
+                     " similarly modified." ).arg( nedtfs - 1 ) + dmsg;
    
       if ( confirm )
       {  // Confirm at each update step
