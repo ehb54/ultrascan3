@@ -444,6 +444,7 @@ DbgLv(1) << "LD: nlambda" << nlambda << "nsedcos" << nsedcos
   << "nipoint" << nipoint;
    nc_max        = 0;
    cn_max        = 0.0;
+   double scalen = 1.0 / (double)models.count();  // Normalizing scale factor
 
    for ( int jj = 0; jj < nsedcos; jj++ )
    {
@@ -471,8 +472,8 @@ DbgLv(1) << "LD:      kk" << kk << "X,Y" << mdlxyz[kk].x() << mdlxyz[kk].y();
          }
 
          if ( nconcs > 0 )
-         {
-            conc          = csum / (double)nconcs;
+         {  // Normalize concentration by dividing sum by number of models
+            conc          = csum * scalen;
             nc_max        = qMax( nc_max, nconcs );
             cn_max        = qMax( cn_max, conc );
             nnpoint++;
