@@ -90,12 +90,13 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
          QString editGUID;      // edit GUID
          QString reqGUID;       // request GUID
          int     iterations;    // Monte Carlo iterations
-         int     asd_index;     // all-single-descriptions index
+         int     rec_index;     // model record list index
       };
 
       QList< ModelDesc >   model_descriptions; // listed models
-      QList< ModelDesc >   all_model_descrips; // all models/groups
-      QList< ModelDesc >   all_single_descrs;  // all single models
+      QList< ModelDesc >   model_descrs_recs;  // models from records
+      QList< ModelDesc >   model_descrs_sings; // models with singles
+      QList< ModelDesc >   model_descrs_ufilt; // models list unfiltered
 
       US_Model             model;
       QList< US_Model >    wmodels;
@@ -161,8 +162,8 @@ class US_GUI_EXTERN US_ModelLoader : public US_WidgetsDialog
       void update_person( int  );
       void list_models (  void );
       void msearch(       const QString& );
-      void compress_list( void );
-      void dup_singles(   void );
+      void records_list ( void );
+      void singles_list ( void );
       void cancelled(     void );
       void accepted(      void );
       void change_single( bool );

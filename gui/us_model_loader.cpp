@@ -73,7 +73,7 @@ qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
    setMinimumSize( 320, 300 );
 
    model_descriptions.clear();
-   all_model_descrips.clear();
+   model_descrs_recs .clear();
 
    // Main layout
    QVBoxLayout* main = new QVBoxLayout( this );
@@ -235,9 +235,11 @@ int US_ModelLoader::load_model( US_Model& model, int index )
          }
       }
 
+qDebug() << "LdM: index" << index << "descsz" << model_descriptions.size();
       QString   modelID  = model_descriptions[ index ].DB_id;
 
       rc   = model.load( modelID, dbP );
+qDebug() << "LdM:  model load rc" << rc;
    }
 
    else
@@ -247,102 +249,6 @@ int US_ModelLoader::load_model( US_Model& model, int index )
       rc   = model.load( filename );
    }
 
-   if ( model_descriptions[ index ].iterations > 1 )
-   {  // Multiple model load
-
-      int nm = model_descriptions[ index ].iterations;
-      int kk = model_descriptions[ index ].asd_index;
-
-      for ( int ii = 1; ii < nm; ii++ )
-      {
-         US_Model model2;
-
-         if ( loadDB )
-         {
-            QString modelID  = all_single_descrs[ ++kk ].DB_id;
-            rc   = model2.load( modelID, dbP );
-         }
-
-         else
-         {
-            QString filename = all_single_descrs[ ++kk ].filename;
-            rc   = model2.load( filename );
-         }
-
-         // Append group member's components to the original
-         model.components << model2.components;
-      }
-
-      double scfactor = 1.0 / (double)nm;
-      QStringList sklist;
-      QStringList skvals;
-      QVector< US_Model::SimulationComponent > comps;
-//qDebug() << "ML: nm scfactor" << nm << scfactor;
-
-      // Do a scan to determine if constant vbar
-      double vbarmax = model.components[ 0 ].vbar20;
-      double vbarmin = vbarmax;
-
-      for ( int ii = 0; ii < model.components.size(); ii++ )
-      {
-         vbarmax = qMax( vbarmax, model.components[ ii ].vbar20 );
-         vbarmin = qMin( vbarmin, model.components[ ii ].vbar20 );
-      }
-
-      bool cnst_vbar = ( vbarmax == vbarmin );
-
-      for ( int ii = 0; ii < model.components.size(); ii++ )
-      {
-         QString skval;
-         comps << model.components[ ii ];
-
-         if ( cnst_vbar )
-         {
-            skval = QString().sprintf( "%9.4e %9.4e",
-               model.components[ ii ].s, model.components[ ii ].f_f0 );
-         }
-         else
-         {
-            skval = QString().sprintf( "%9.4e %9.4e",
-               model.components[ ii ].s, model.components[ ii ].vbar20 );
-         }
-         sklist << skval;
-
-         if ( ! skvals.contains( skval ) )
-            skvals << skval;
-//qDebug() << "ML:   ii skval" << ii << skval;
-      }
-
-      int nskl = sklist.size();
-      int nskv = skvals.size();
-//qDebug() << "ML:  sizes sklist,skvals" << nskl << nskv;
-      model.components.clear();
-      skvals.sort();
-
-      for ( int ii = 0; ii < nskv; ii++ )
-      {
-         QString skval = skvals[ ii ];
-         double  conc  = 0.0;
-         int nd = 0;
-         int kk = 0;
-
-         for ( int jj = 0; jj < nskl; jj++ )
-         {
-            if ( skval == sklist[ jj ] )
-            {
-               conc += comps[ jj ].signal_concentration;
-               kk    = jj;
-               nd++;
-            }
-         }
-
-         comps[ kk ].signal_concentration = conc * scfactor;
-//qDebug() << "ML:   ii skval" << ii << skval << "nd conc" << nd << conc;
-         model.components << comps[ kk ];
-      }
-
-   }
-         
    return rc;
 }
 
@@ -423,6 +329,9 @@ QDateTime time2=QDateTime::currentDateTime();
    model_descriptions.clear();               // clear model descriptions
 qDebug() << "LM: desc single edit" << listdesc << listsing << listedit
  << "editGUID" << editGUID << "nedits" << editIDs.size();
+   int kmmnew    = 0;
+   int kmmold    = 0;
+   int kmmmod    = 0;
 
    if ( listdesc )
    {  // filter is not empty
@@ -470,30 +379,30 @@ qDebug() << "  listdesc listedit listsing" << listdesc << listedit << listsing;
       QStringList query;
       QString     invID = le_investigator->text().section( ":", 0, 0 );
 
-      int countMD = all_model_descrips.size();
-      int countSD = all_single_descrs .size();
+      int countRD = model_descrs_recs .size();
+      int countSD = model_descrs_sings.size();
       int kid1    = -3;
       int kid2    = -3;
-qDebug() << " md count" << countMD;
+qDebug() << " rd count" << countRD;
 //      query << "count_models" << invID;
 //      int countDB = dbP->statusQuery( query );
 //qDebug() << " db count" << countDB;
       QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
-      if ( countMD > 0  &&  countMD == countSD )
+      if ( countRD > 0  &&  countRD == countSD )
       {
-         kid1 = all_model_descrips[ 0           ].DB_id.toInt();
-         kid2 = all_model_descrips[ countMD - 1 ].DB_id.toInt();
+         kid1 = model_descrs_recs[ 0           ].DB_id.toInt();
+         kid2 = model_descrs_recs[ countRD - 1 ].DB_id.toInt();
       }
 qDebug() << "  kid1 kid2" << kid1 << kid2;
 qDebug() << "  db_id1 db_id2" << db_id1 << db_id2;
 
-      if ( countMD == 0  ||  kid1 != db_id1  ||  kid2 != db_id2 )
+      if ( countRD == 0  ||  kid1 != db_id1  ||  kid2 != db_id2 )
       { // only re-fetch all-models list if we don't yet have it
          db_id1         = kid1;  // save start,end all_models IDs
          db_id2         = kid2;
 qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
-         all_model_descrips.clear();
+         model_descrs_recs.clear();
          query.clear();
          int nedits     = editIDs.size();
          QString editID = editGUID;
@@ -582,18 +491,36 @@ qDebug() << "   (u)desc" << desc.description << "skip_it" << skip_it;
                if ( skip_it )
                   continue;
 
-               all_model_descrips << desc;   // add to full models list
+qDebug() << "   desc.iters" << desc.iterations;
+               if ( desc.iterations > 0 )
+               {  // Accumulate counts for MC models
+                  kmmmod++;
+                  int mcndx        = desc.description.indexOf( "_mc" );
+qDebug() << "     mcndx" << mcndx << "descr" << desc.description;
+                  if ( desc.description.contains( "_mcN" ) )
+                  {
+                     kmmnew++;
+                     int nimods       = QString( desc.description )
+                                        .mid( mcndx + 4, 3 ).toInt();
+                     desc.iterations  = nimods;
+qDebug() << "     desc.iters(nimods)" << desc.iterations;
+                  }
+
+                  else if ( desc.description.contains( "_mc0001" ) )
+                     kmmold++;
+               }
+
+               model_descrs_recs << desc;   // add to full models list
             }
          }
 QDateTime time3=QDateTime::currentDateTime();
-qDebug() << "a_m size" << all_model_descrips.size()
+qDebug() << "a_m size" << model_descrs_recs.size()
  << "m_d size" << model_descriptions.size();
-
          if ( !listsing )
-            compress_list();          // default: compress MC groups
+            records_list();         // Default: list based on model records
 
          else
-            dup_singles();            // duplicate model list as singles
+            singles_list();         // List expanded to include singles
 QDateTime time4=QDateTime::currentDateTime();
 qDebug() << " (2)m_d size" << model_descriptions.size();
 qDebug() << "Timing: DB-read" << time0.msecsTo(time3) << time2.msecsTo(time3);
@@ -616,25 +543,27 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
       // Examine all "M*xml" files in models directory
       QStringList filter( "M*.xml" );
       QStringList f_names = dir.entryList( filter, QDir::Files, QDir::Name );
-//qDebug() << "   md size" << all_model_descrips.size();
-//qDebug() << "   fn size" << f_names.size();
+qDebug() << "   md size" << model_descrs_recs.size();
+qDebug() << "   fn size" << f_names.size();
 
-      if ( f_names.size() != all_model_descrips.size()  ||  !listsing )
+      if ( f_names.size() != model_descrs_recs.size()  ||  !listsing )
       { // only re-fetch all-models list if we don't yet have it
          QXmlStreamAttributes attr;
 
-         all_model_descrips.clear();
+         model_descrs_recs.clear();
          int nedits     = editIDs.size();
+qDebug() << "nedits" << nedits << "editGUID" << editGUID;
 
          for ( int ii = 0; ii < f_names.size(); ii++ )
          {
             QString fname( path + "/" + f_names[ ii ] );
-//qDebug() << "fname" << f_names[ii] << "do_manual" << do_manual;
+qDebug() << "fname" << f_names[ii] << "do_manual" << do_manual;
             QFile   m_file( fname );
 
             if ( !m_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
                continue;
 
+            int nimods     = 0;
             QXmlStreamReader xml( &m_file );
 
             while ( ! xml.atEnd() )
@@ -645,11 +574,20 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
                {  // Pick up model attributes for description
                   attr             = xml.attributes();
                   QString edGUID   = attr.value( "editGUID"    ).toString();
+                  QString mCarl    = attr.value( "monteCarlo"  ).toString();
+                  int iters        = mCarl.toInt();
 
                   if ( do_edit  &&
                        ( ( nedits > 0  &&  ! editIDs.contains( edGUID ) )  ||
                          ( !editGUID.isEmpty()  &&  edGUID != editGUID ) ) )
                      continue;
+
+qDebug() << "  nimods" << nimods << "edGUID" << edGUID << "iters" << iters;
+                  if ( iters > 0 )
+                  {
+                     nimods++;
+                     if ( nimods > 1 )  continue;
+                  }
 
                   ModelDesc desc;
                   desc.description = attr.value( "description" ).toString();
@@ -658,8 +596,7 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
                   desc.DB_id       = "-1";
                   desc.editGUID    = edGUID;
                   desc.reqGUID     = attr.value( "requestGUID" ).toString();
-                  QString mCarl    = attr.value( "monteCarlo"  ).toString();
-                  desc.iterations  = mCarl.toInt() == 0 ?  0 : 1;
+                  desc.iterations  = iters;
                   QString aType    = attr.value( "analysisType" ).toString();
                   QString gType    = attr.value( "globalType"   ).toString();
 
@@ -697,8 +634,38 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
                         continue;
                   }
 
-                  all_model_descrips << desc;   // add to full models list
-                  break;
+                  if ( iters > 0 )
+                  {  // Accumulate counts for MC models
+                     kmmmod++;
+                     if ( desc.description.contains( "_mc0001" ) )
+                        kmmold++;
+qDebug() << "      kmmmod" << kmmmod << "kmmold" << kmmold;
+//if(kmmold==0) qDebug() << "       desc=" << desc.description;
+                  }
+
+                  model_descrs_recs << desc;   // add to full models list
+
+                  if ( iters == 0 )
+                     break;
+               }
+
+               else if ( xml.isEndElement() && xml.name() == "ModelData" )
+               {  // Handle end of XML for possible multi-model composite
+                  if ( nimods > 1 )
+                  {  // If composite MC, get and delete last description
+                     ModelDesc desc   = model_descrs_recs.takeLast();
+                     int mcndx        = desc.description.indexOf( "_mc0" );
+                     desc.description =
+                          QString( desc.description ).left( mcndx )
+                        + QString().sprintf( "mcN%03i", nimods )
+                        + QString( desc.description ).mid( mcndx + 7 );
+                     desc.iterations  = nimods;
+
+                     // Restore modified description to full models list
+                     model_descrs_recs << desc;
+                     kmmnew++;
+                     kmmold--;
+                  }
                }
             }
 
@@ -706,15 +673,26 @@ qDebug() << "Timing: Compress" << time3.msecsTo(time4) << time2.msecsTo(time4);
          }
 
          if ( !listsing )
-            compress_list();       // default: compress MC groups
+            records_list();         // Default: list from model records
 
          else
-            dup_singles();         // duplicate model list as singles
+            singles_list();         // List expanded to include singles
       }
-      db_id1            = -2;      // flag all_models start,end IDs unknown
+      db_id1            = -2;       // Flag all_models start,end IDs unknown
       db_id2            = -2;
    }
-
+ 
+   if ( kmmold > 0 )
+   {
+      QString msg = tr( "%1 MC model sets are old-style separate models\n"
+                        "%2 MC models are new-style composite models\n"
+                        "%3 total MC model records currently exist.\n"
+                        "The old-style models should be converted\n"
+                        "  or deleted." )
+                    .arg( kmmold).arg( kmmnew ).arg( kmmmod );
+      QMessageBox::information( this,
+            tr( "Deprecated MC Model Types Exist" ), msg ); 
+   }
 
    // possibly pare down models list based on search field
 QDateTime time5=QDateTime::currentDateTime();
@@ -723,20 +701,20 @@ qDebug() << " (3)m_d size" << model_descriptions.size();
 
    if ( listall )
    {  // No filtering or filter by edit already done
-      for ( int jj = 0; jj < all_model_descrips.size(); jj++ )
+      for ( int jj = 0; jj < model_descrs_recs.size(); jj++ )
       {
-         model_descriptions << all_model_descrips[ jj ];
+         model_descriptions << model_descrs_ufilt[ jj ];
       }
    }
 
    else
    {  // Filter by model description sub-string
-      for ( int jj = 0; jj < all_model_descrips.size(); jj++ )
+      for ( int jj = 0; jj < model_descrs_recs.size(); jj++ )
       {
-         if ( all_model_descrips[ jj ].description.contains( mpart  ) )
+         if ( model_descrs_recs[ jj ].description.contains( mpart  ) )
          {  // description filter matches
-            model_descriptions << all_model_descrips[ jj ];
-//ModelDesc desc = all_model_descrips[jj];
+            model_descriptions << model_descrs_ufilt[ jj ];
+//ModelDesc desc = model_descrs_recs[jj];
 //qDebug() << " ddesc" << desc.description << jj;
 //qDebug() << "   mpart" << mpart.pattern();
          }
@@ -826,9 +804,12 @@ void US_ModelLoader::accepted()
       return;
    }
 
+qDebug() << "ACC: multi" << multi;
    if ( ! multi )
    {  // in single-select mode, load the model and set the description
+qDebug() << "ACC: load... (single)";
       load_model( omodel, 0 );
+qDebug() << "ACC: ...loaded (single)";
       odescr     = description( 0 );
    }
 
@@ -838,6 +819,7 @@ void US_ModelLoader::accepted()
       odescrs.clear();
 
 QDateTime time1=QDateTime::currentDateTime();
+qDebug() << "ACC: load... (multi) mCnt" << modelsCount;
       for ( int ii = 0; ii < modelsCount; ii++ )
       {
          load_model( model, ii );
@@ -845,6 +827,7 @@ QDateTime time1=QDateTime::currentDateTime();
          omodels << model;
          odescrs << description( ii );
       }
+qDebug() << "ACC: ...loaded (multi)";
 QDateTime time2=QDateTime::currentDateTime();
 qDebug() << "Timing: accept-load: mcount" << modelsCount
  << "time(ms)" << time1.msecsTo(time2);
@@ -1124,92 +1107,45 @@ void US_ModelLoader::show_model_info( QPoint pos )
    edit->show();
 }
 
-// Compress all-models description list for MC groups
-void US_ModelLoader::compress_list( void )
+// Duplicate the models-from-records list to the full unfiltered list
+void US_ModelLoader::records_list( void )
 {
-   // First, produce a sorted singles copy of all-descriptions list
-   dup_singles();
+   model_descrs_ufilt = model_descrs_recs;
+}
 
-   // Now, produce all-models list with only first singles of groups
-   all_model_descrips.clear();
-   int     kiter  = 0;          // count of MC iterations in group
-   QString pReqID = "";         // previous request GUID
-   QString pEdiID = "";         // previous edit GUID
+// Expand the models to include singles in the full unfiltered list
+void US_ModelLoader::singles_list( void )
+{
+   model_descrs_ufilt.clear();           // Clear the unfiltered models list
 
-//qDebug() << "compress_list:";
-   for ( int ii = 0; ii < all_single_descrs.size(); ii++ )
-   {  // review each single model description
-      ModelDesc desc  = all_single_descrs[ ii ];  // model description object
-      QString cReqID  = desc.reqGUID;             // current request GUID
-      QString cEdiID  = desc.editGUID;            // current edit GUID
-      // protect against missing or dummy GUIDs causing false grouping
-      cReqID  = ( cReqID.length() < 16  ||  cReqID.startsWith( "00000000-" ) )
-                ? QString::number( ii ) : cReqID;
-      cEdiID  = ( cEdiID.length() < 36  ||  cEdiID.startsWith( "00000000-" ) )
-                ? QString::number( ii ) : cEdiID;
-      // Protect against global mc Global/nonGlobal pairs
-      cReqID  = desc.description.startsWith( "Global" ) ?
-                ( cReqID + "-G" ) : cReqID;
-//qDebug() << " c_l ii desc" << ii << desc.description << " kiter" << kiter;
+   for ( int ii = 0; ii < model_descrs_recs.size(); ii++ )
+   {  // Duplicate/expand each model record to the unfiltered models list
+      ModelDesc mdesc     = model_descrs_recs[ ii ];
+      mdesc.rec_index     = ii;
+      int mindx           = mdesc.description.indexOf( "_mcN" );
 
-      if ( kiter > 0  && ( cReqID != pReqID || cEdiID != pEdiID ) )
-      {  // previous was end of group:  update the iterations count
-         all_model_descrips.last().iterations = kiter;
-//qDebug() << " KITER MC" << kiter;
-         kiter = 0;
-      }
-
-      if ( desc.iterations == 0 )
-      {  // not monte carlo:  copy the model description as is
-         all_model_descrips << desc;
-         kiter = 0;
+      if ( mindx < 0 )
+      {  // For non-MC-composite, just duplicate
+         model_descrs_ufilt << mdesc;
       }
 
       else
-      {  // monte carlo:  bump iterations count and copy if first
-         if ( ++kiter == 1 )
-            all_model_descrips << desc;
+      {  // For MC-composite, expand to all the single iteration models
+         QString cdtext      = mdesc.description;
+         QString cmiter      = QString( cdtext ).mid( mindx, 7 );
+         int niters          = QString( cmiter ).mid( 4 ).toInt();
+         mdesc.iterations    = niters;
+
+         for ( int jj = 1; jj <= niters; jj++ )
+         {  // Create and append a description for each iteration model
+            QString imiter      = QString().sprintf( "_mc%04d", jj );
+            ModelDesc idesc     = mdesc;
+            idesc.description   = QString( cdtext ).replace( cmiter, imiter );
+         
+            model_descrs_ufilt << idesc;
+         }
       }
-
-      pReqID  = cReqID;      // save request,edit GUIDs for next pass
-      pEdiID  = cEdiID;
    }
-
-   if ( kiter > 0  )
-   {  // last was end of MC group:  update the iterations count
-      all_model_descrips.last().iterations = kiter;
-//qDebug() << " KITER MC" << kiter;
-   }
-}
-
-// Duplicate all-models description list to show singles in MC groups
-void US_ModelLoader::dup_singles( void )
-{
-   QStringList descrs;
-   QStringList sdescs;
-
-   for ( int ii = 0; ii < all_model_descrips.size(); ii++ )
-   { // create duplicate lists of concatenated descripion+GUID
-      descrs << all_model_descrips[ ii ].description + "^"
-             +  all_model_descrips[ ii ].modelGUID;
-      sdescs << all_model_descrips[ ii ].description + "^"
-             +  all_model_descrips[ ii ].modelGUID;
-   }
-
-   sdescs.sort();                // create a sorted version of desc+guid list
-   all_single_descrs.clear();    // clear all-singles list
-
-   for ( int ii = 0; ii < descrs.size(); ii++ )
-   {  // find sorted entry in unsorted list; append that full model description
-      int jj = descrs.indexOf( sdescs[ ii ] );
-      ModelDesc desc  = all_model_descrips[ jj ];
-      desc.asd_index  = ii; 
-
-      all_single_descrs << desc;
-   }
-
-   // copy sorted all-singles list to all-models list
-   all_model_descrips = all_single_descrs;
 }
 
 // Slot to re-list models when search text has changed

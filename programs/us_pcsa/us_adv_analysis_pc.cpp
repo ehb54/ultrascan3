@@ -1144,6 +1144,14 @@ void US_AdvAnalysisPc::start_montecarlo()
       return;
 
 DbgLv(1) << "start_montecarlo";
+//* TEMPORARILY DISALLOWED
+QMessageBox::warning( this, tr( "Monte Carlo CURRENTLY DISALLOWED" ),
+   tr( "Desktop Monte Carlo runs are temporarily disallowed.\n"
+       "Code will be added shortly to correct this.\n\n"
+       "A new format for composite MC models will soon be\n"
+       "produced from this desktop application." ) );
+if(ct_mciters->value()>0)  return;
+//* TEMPORARILY DISALLOWED
    wdata          = dset0->run_data;
    edata          = &wdata;
    mciters        = (int)ct_mciters->value();

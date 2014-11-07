@@ -9,9 +9,12 @@
 class US_UTIL_EXTERN US_Model
 {
    public:
+      //! \brief Constructor for the US_Model class
       US_Model();
 
+      //! \brief Simulation component (solute/analyte) class
       class SimulationComponent;
+      //! \brief Reversible association class
       class Association;
 
       //! Enumeration of the general shapes of molecules
@@ -41,14 +44,16 @@ class US_UTIL_EXTERN US_Model
       OpticsType   optics;      //!< The optics used for the data acquisition
       AnalysisType analysis;    //!< The analysis used with this model
       GlobalType   global;      //!< Global params used for model generation
+      QStringList  mcixmls;     //!< Component MC iteration XML contents
+      int          nmcixs;      //!< Number of MC component xmls (iterations)
 
 		//! An integer to define the number of subgrids for a CUSTOMGRID needed
 		//! for the 2DSA initialization or output components for DISCRETEGA
-		int		  subGrids;
+		int		    subGrids;
 
       //! An index into components (-1 means none).  Generally buffer data 
       //! in the form of a component that affects the data readings.
-      int        coSedSolute;  
+      int          coSedSolute;  
 
       //! The components being analyzed
       QVector< SimulationComponent > components;
@@ -58,7 +63,7 @@ class US_UTIL_EXTERN US_Model
 
       QString message;  //!< Used internally for communication
 
-      //! Read a model from the disk or database
+      //! \brief Read a model from the disk or database
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
       //!                    should be searched for the model
       //! \param guid      - The guid of the model to be loaded
@@ -66,14 +71,14 @@ class US_UTIL_EXTERN US_Model
       //! \returns         - The \ref US_DB2 return code for the operation
       int load( bool, const QString&, US_DB2* = 0 );
 
-      //! An overloaded function to read a model from a database
+      //! \brief An overloaded function to read a model from a database
       //! \param id        - Database ModelID
       //! \param db        - For DB access, pointer to open database connection
       //! \returns         - The \ref US_DB2 return code for the operation
       int load( const QString&, US_DB2* ); 
 
 
-      //! An overloaded function to read a model from the disk
+      //! \brief An overloaded function to read a model from the disk
       //! \param filename  The name, including full path, of the analyte file
       //! \returns         - The \ref US_DB2 return code for the operation
       int load( const QString& );  
@@ -85,7 +90,7 @@ class US_UTIL_EXTERN US_Model
       inline bool operator!= ( const US_Model& m )
          const { return ! operator==(m); }
 
-      //! Write a model to the disk or database
+      //! \brief Write a model to the disk or database
       //! \param db_access - A flag to indicate if the DB (true) or disk (false)
       //!                    should be used to save the model
       //! \param filename  - The filename (with path) where the xml file
@@ -94,32 +99,33 @@ class US_UTIL_EXTERN US_Model
       //! \returns         - The \ref US_DB2 return code for the operation
       int write( bool, const QString&, US_DB2* = 0 );
 
-      //! An overloaded function to write a model to the DB
+      //! \brief An overloaded function to write a model to the DB
       //! \param db        - A pointer to an open database connection 
       //! \returns         - The \ref US_DB2 return code for the operation
       int write( US_DB2* );
 
-      //! An overloaded function to write a model to a file on disk
+      //! \brief An overloaded function to write a model to a file on disk
       //! \param filename  - The filename to write
       //! \returns         - The \ref US_DB2 return code for the operation
       int write( const QString& );
 
-      //! Update any missing analyte coefficient values
+      //! \brief Update any missing analyte coefficient values
       //! \returns    - Success if values already existed or were successfully
       //!               filled in by calculations.
       bool update_coefficients( void );
 
-      //! Calculate any missing coefficient values in an analyte component
+      //! \brief Calculate any missing coefficient values in an analyte component
       //! \returns    - Success if values already existed or were successfully
       //!               filled in by calculations.
       static bool calc_coefficients( SimulationComponent& );
 
-      //! Model directory path existence test and creation
-      //! \param path - A reference to the directory path on the disk where
-      //!               model files are to be written
+      //! \brief Model directory path existence test and creation
+      //! \param path    - A reference to the directory path on the disk
+      //!                  where model files are to be written
+      //! \param is_perm - An optional flag if the files are non-temporary
       //! \returns    - Success if the path is found or created and failure
       //!               if the path cannot be created
-      static bool       model_path( QString& );
+      static bool model_path( QString&, bool = true );
 
       //! \brief Find a model file on the disk
       //! \param path  The full path of the directory to search
@@ -131,29 +137,40 @@ class US_UTIL_EXTERN US_Model
       //!         but does not yet exist.
       static QString get_filename( const QString&, const QString&, bool& );
 
-      //! Model type text
+      //! \brief Create or append to a composite MC model file
+      //! \param mcfiles A list of MC iteration files to concatenate
+      //! \param rmvi    Flag to remove iteration files
+      //! \return The file name of the created/appended model.
+      static QString composite_mc_file( QStringList&, const bool );
+
+      //! \brief Model type text
       //! \returns    - A short text string describing the type of model
       QString typeText( void );
 
-      //! Flag constant f/f0
+      //! \brief Flag constant f/f0
       //! \returns - A boolean flag of whether component f/f0's are constant
       bool constant_ff0( void );
 
-      //! Flag constant vbar
+      //! \brief Flag constant vbar
       //! \returns - A boolean flag of whether component vbar's are constant
       bool constant_vbar( void );
 
-      //! Flag if a specified component is a reactant
+      //! \brief Flag if a specified component is a reactant
       //! \param compx Index of component to interrogate
       //! \returns     A boolean flag whether specified component is a reactant
       bool is_reactant( const int compx );
 
-      //! Flag if a specified component is a product of a reaction
+      //! \brief Flag if a specified component is a product of a reaction
       //! \param compx Index of component to interrogate
       //! \returns     A boolean flag whether specified component is a product
       bool is_product ( const int compx );
 
-      //! Dump model data for debugging
+      //! \brief Get count and list of MonteCarlo iteration xml contents
+      //! \param mcixs Reference for return of MC xml contents
+      //! \returns     Count of MC iteration xml content strings
+      int  mc_iter_xmls( QStringList& );
+
+      //! \brief Dump model data for debugging
       void debug( void );
 
       //! A class representing the initial concentration distribution of a
@@ -165,6 +182,7 @@ class US_UTIL_EXTERN US_Model
          QVector< double > concentration; //!< The concentration values
       };
 
+      //! \brief Simulation component (solute/analyte) class
       //! Each analyte in the model is a component.  A sedimenting solute
       //! can also be a component.
       class US_UTIL_EXTERN SimulationComponent
@@ -202,6 +220,7 @@ class US_UTIL_EXTERN US_Model
                                     //!< user-defined initial concentration grid
       };
 
+      //! \brief Reversible association class
       //! The chemical constants associated with a reaction.
       class US_UTIL_EXTERN Association
       {
@@ -225,13 +244,23 @@ class US_UTIL_EXTERN US_Model
 
    private:
 
+      //! \brief Load a model from the database
       int  load_db         ( const QString&, US_DB2* );
+      //! \brief Load a model from a local disk file
       int  load_disk       ( const QString& );
+      //! \brief Parse and load an initial concentration vector
       void mfem_scans      ( QXmlStreamReader&, SimulationComponent& );
+      //! \brief Parse the associations part of a model XML
       void get_associations( QXmlStreamReader&, Association& );
                            
+      //! \brief Load a model from an XML stream
       int  load_stream     ( QXmlStreamReader& );
+      //! \brief Load a multi-iteration model from a text stream
+      int  load_multi_model( QTextStream&      );
+      //! \brief Write to an XML stream
       void write_stream    ( QXmlStreamWriter& );
+      //! \brief Write to a multiple model text stream
+      void write_mm_stream ( QTextStream&      );
 
 };
 #endif

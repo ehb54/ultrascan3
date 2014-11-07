@@ -74,6 +74,7 @@ bool US_Model::Association::operator== ( const Association& a ) const
    return true;
 }
 
+// Model constructor
 US_Model::US_Model()
 {
    monteCarlo      = false;
@@ -86,6 +87,7 @@ US_Model::US_Model()
    optics          = ABSORBANCE;
    analysis        = MANUAL;
    global          = NONE;
+   nmcixs          = 0;
 
    coSedSolute     = -1;
    modelGUID   .clear();
@@ -94,8 +96,10 @@ US_Model::US_Model()
    components  .clear();
    associations.clear();
    dataDescrip .clear();
+   mcixmls     .clear();
 }
 
+// Equality operator
 bool US_Model::operator== ( const US_Model& m ) const
 {
    if ( monteCarlo      != m.monteCarlo      ) return false;
@@ -339,10 +343,14 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
 }
 
 // Test the existence of the models directory path and create it if need be
-bool US_Model::model_path( QString& path )
+bool US_Model::model_path( QString& path, bool is_perm )
 {
+#ifdef NO_DB
+   path = is_perm ? "" : "";
+#else
    QDir dir;
-   path = US_Settings::dataDir() + "/models";
+   path = is_perm ? US_Settings::dataDir() + "/models"
+                  : US_Settings::tmpDir() + "/temp_models";
 
    if ( ! dir.exists( path ) )
    {
@@ -351,6 +359,7 @@ bool US_Model::model_path( QString& path )
          return false;
       }
    }
+#endif
 
    return true;
 }
@@ -491,6 +500,7 @@ bool US_Model::is_product( const int compx )
    return is_prod;
 }
 
+// Load a model from DB or local file
 int US_Model::load( bool db_access, const QString& guid, US_DB2* db )
 {
    if ( db_access ) return load_db  ( guid, db );
@@ -506,7 +516,7 @@ int US_Model::load_disk( const QString& guid )
 
    if ( ! model_path( path ) )
    {
-      message = QObject::tr ( "Could not create analyte directory" );
+      message = QObject::tr ( "Could not create model directory" );
       return error;
    }
 
@@ -551,6 +561,7 @@ int US_Model::load_disk( const QString& guid )
    return error;
 }
 
+// Load a model from a local file
 int US_Model::load( const QString& filename )
 {
    QFile file( filename );
@@ -561,10 +572,22 @@ int US_Model::load( const QString& filename )
    QXmlStreamReader xml( &file );
    
    int result = load_stream( xml );
+
+   if ( result == US_DB2::NO_MODEL  &&  monteCarlo )
+   {  // Handle a multi-model stream
+      file.close();
+      file.open( QIODevice::ReadOnly | QIODevice::Text);
+
+      QTextStream tsi( &file );
+
+      result     = load_multi_model( tsi );
+   }
+
    file.close();
    return result;
 }
 
+// Load a model from an XML stream
 int US_Model::load_stream( QXmlStreamReader& xml )
 {
    QString coSedStr;
@@ -574,7 +597,8 @@ int US_Model::load_stream( QXmlStreamReader& xml )
    associations.clear();
 
    QXmlStreamAttributes a;
-   bool                 read_next = true;
+   bool read_next = true;
+   int  nmtag     = 0;
 
    while ( ! xml.atEnd() )
    {
@@ -585,6 +609,13 @@ int US_Model::load_stream( QXmlStreamReader& xml )
       {
          if ( xml.name() == "model" )
          {
+            nmtag++;
+
+            if ( nmtag > 1 )
+            {  // A second model tag:  return to handle multi-model stream
+               return US_DB2::NO_MODEL;
+            }
+
             a = xml.attributes();
 
             QString mcst    = a.value( "monteCarlo"     ).toString();
@@ -680,6 +711,146 @@ int US_Model::load_stream( QXmlStreamReader& xml )
    return US_DB2::OK;
 }
 
+// Load from a multiple-model stream and create an MC composite model
+int US_Model::load_multi_model( QTextStream& tsi )
+{
+   int result    = US_DB2::OK;
+   QString mline, mdesc, mcont;
+   nmcixs        = 0;
+   mcixmls.clear();
+
+   // Read and save the first three XML lines
+   QString line1 = tsi.readLine() + "\n";
+   QString line2 = tsi.readLine() + "\n";
+   QString line3 = tsi.readLine() + "\n";
+
+   // Read remaining lines and save description,contents of all models
+   while ( ! tsi.atEnd() )
+   {
+      mline         = tsi.readLine();
+      if ( mline.contains( "</ModelData>" ) )
+         break;
+
+      if ( mline.contains( "<model " ) )
+      {  // At model tag, create initial contents
+         mcont         = line1 + line2 + line3 + mline + "\n";
+         // Parse description and save it, if first iteration
+         if ( nmcixs == 1 )
+         {
+            int idx       = qMax( mline.indexOf( "description=" ), 0 );
+            mdesc         = QString( mline ).mid( idx, 99 ).section( "\"", 1, 1 );
+         }
+      }
+
+      else if ( mline.contains( "</model>" ) )
+      {  // At end of model section, save a model content and bump count
+         mcont         = mcont + mline + "\n</ModelData>\n";
+         mcixmls << mcont;
+         nmcixs++;
+      }
+
+      else
+      {  // For any other type of line, add it to contents;
+         mcont         = mcont + mline + "\n";
+      }
+   }
+
+   QVector< SimulationComponent >  mmcomps;
+   QVector< Association >          mmassos;
+   int ncnstv    = 0;
+   int ncnstk    = 0;
+
+   // Build composite components and associations
+   for ( int ii = 0; ii < nmcixs; ii++ )
+   {
+      mcont            = mcixmls[ ii ];
+      QXmlStreamReader xml( mcont );
+      load_stream( xml );
+
+      mmcomps << components;
+      mmassos << associations;
+
+      if ( constant_vbar() )  ncnstv++;
+      if ( constant_ff0()  )  ncnstk++;
+   }
+
+   // Compress and scale components to only unique solute points
+
+   components  .clear();
+   associations.clear();
+   double sclnrm = 1.0 / (double)nmcixs;    // Scale for concentrations
+   bool cnst_vb  = ( ncnstv >= ncnstk );    // Flag for constant vbar
+   QStringList sklist;                      // List of all solute points
+   QStringList skvals;                      // List of unique solute points
+
+   for ( int ii = 0; ii < mmcomps.size(); ii++ )
+   {  // Build list of solute point strings and list of unique ones
+      double sval   = mmcomps[ ii ].s * 1.0e+13;
+      double kval   = cnst_vb ? mmcomps[ ii ].f_f0 : mmcomps[ ii ].vbar20;
+      QString skval = QString().sprintf( "%10.4f %8.5f", sval, kval );
+      sklist << skval; 
+      if ( ! skvals.contains( skval ) )
+         skvals << skval;
+   }
+
+   int nskl      = sklist.size();
+   int nskv      = skvals.size();
+   skvals.sort();                     // Sort solute points
+   SimulationComponent scomp;
+
+   for ( int ii = 0; ii < nskv; ii ++ )
+   {  // Average concentration at each unique solute point
+      QString skval = skvals[ ii ];   // Identifying solute point string
+      double conc   = 0.0;
+
+      for ( int jj = 0; jj < nskl; jj++ )
+      {  // Search all solute points
+         if ( skval == sklist[ jj ] )
+         {  // If a match, sum the concentration
+            scomp      = mmcomps[ jj ];
+            conc      += scomp.signal_concentration;
+         }
+      }
+
+      scomp.name                 = QString().sprintf( "SC%04d", ii + 1 );
+      scomp.signal_concentration = conc * sclnrm;
+      components << scomp;
+   }
+
+   if ( mmassos.size() > 0 )
+      associations << mmassos[ 0 ];
+
+   QString mdsc1 = QString( mdesc ).section( ".",  0, -3 );
+   QString mdsc2 = QString( mdesc ).section( ".", -2, -2 )
+                                   .section( "_",  0, -2 );
+   QString mdsc3 = QString( mdesc ).section( ".", -1, -1 );
+   QString miter = QString().sprintf( "_mcN%03i", nmcixs );
+   description   = mdsc1 + "." + mdsc2 + miter + "." + mdsc3;
+
+   return result;
+}
+
+// Write a multiple-model stream
+void US_Model::write_mm_stream( QTextStream& tso )
+{
+   if ( ! monteCarlo  ||  nmcixs < 1 )     // Do nothing if no MC iterations
+      return;
+
+   // Build an output stream from MC iteration input streams
+   for ( int ii = 0; ii < nmcixs; ii++ )
+   {
+      QString mlines = mcixmls[ ii ];
+
+      // Limit contents to <model>...</model> except for first and last
+      int flx        = ( ii == 0 ) ? 0 : 3;
+      int llx        = ( ( ii + 1 ) < nmcixs ) ? -3 : -2;
+      QString mcont  = mlines.section( "\n", flx, llx ) + "\n";
+      // Concatenate to output stream
+      tso << mcont;
+   }
+}
+
+// Read scan C0 values from an XML stream
 void US_Model::mfem_scans( QXmlStreamReader& xml, SimulationComponent& sc )
 {
    while ( ! xml.atEnd() )
@@ -701,6 +872,7 @@ void US_Model::mfem_scans( QXmlStreamReader& xml, SimulationComponent& sc )
    }
 }
 
+// Get associations from an XML stream
 void US_Model::get_associations( QXmlStreamReader& xml, Association& as )
 {
    QXmlStreamAttributes a = xml.attributes();
@@ -743,6 +915,7 @@ void US_Model::get_associations( QXmlStreamReader& xml, Association& as )
    }
 }
 
+// Load a model from DB (by GUID)
 int US_Model::load_db( const QString& guid, US_DB2* db )
 {
    QStringList q;
@@ -757,6 +930,7 @@ int US_Model::load_db( const QString& guid, US_DB2* db )
    return load( id, db );
 }
 
+// Load a model from DB (by DB id)
 int US_Model::load( const QString& id, US_DB2* db )
 {
    QStringList q;
@@ -769,70 +943,93 @@ int US_Model::load( const QString& id, US_DB2* db )
    db->next();
    QByteArray contents = db->value( 2 ).toString().toAscii();
 
-   // Write the model file to an array in memory
+   // Read the model file into an array in memory
    QXmlStreamReader xml( contents );
-   return load_stream( xml );
+   
+   int result = load_stream( xml );
+
+   if ( result == US_DB2::NO_MODEL  &&  monteCarlo )
+   {  // Handle a multi-model stream
+      QTextStream tsi( contents );
+
+      result     = load_multi_model( tsi );
+   }
+
+   return result;
 }
 
+// Write a model to DB or local file
 int US_Model::write( bool db_access, const QString& filename, US_DB2* db )
 {
    if ( db_access ) return write( db );
    else             return write( filename );
 }
 
+// Write a model DB record
 int US_Model::write( US_DB2* db )
 {
-      // Create the model xml file in a stream
-      QByteArray temporary;
-      QByteArray contents;
-      
+   // Create the model xml file in a stream
+   QByteArray temporary;
+   QByteArray contents;
+
+   if ( ! monteCarlo  ||  nmcixs < 1 )
+   {
       QXmlStreamWriter xml( &temporary );
       write_stream( xml );
-      db->mysqlEscapeString( contents, temporary, temporary.size() );
+   }
+
+   else
+   {
+      QTextStream tso( &temporary );
+      write_mm_stream( tso );
+   }
+
+   db->mysqlEscapeString( contents, temporary, temporary.size() );
 qDebug() << "model writedb contsize tempsize" << contents.size() << temporary.size();
 
-      QStringList q;
+   QStringList q;
 
-      // Generate a guid if necessary
-      // The guid may be valid from a disk read, but is not in the DB
-      if ( modelGUID.size() != 36 ) modelGUID = US_Util::new_guid();
+   // Generate a guid if necessary
+   // The guid may be valid from a disk read, but is not in the DB
+   if ( modelGUID.size() != 36 ) modelGUID = US_Util::new_guid();
 
-      q << "get_modelID" << modelGUID;
+   q << "get_modelID" << modelGUID;
       
-      db->query( q );
-      
-      QString meni = QString::number( meniscus );
-      QString vari = QString::number( variance );
+   db->query( q );
+    
+   QString meni = QString::number( meniscus );
+   QString vari = QString::number( variance );
      
-      if ( db->lastErrno() != US_DB2::OK )
-      {
-         q.clear();
-         q << "new_model" << modelGUID << description << contents
-           << vari << meni << editGUID
-           << QString::number( US_Settings::us_inv_ID() );
-         message = QObject::tr( "created" );
-      }
-      else
-      {
-         db->next();
-         QString id = db->value( 0 ).toString();
-         q.clear();
-         q << "update_model" << id << description << contents
-           << vari << meni << editGUID;
-         message = QObject::tr( "updated" );
-      }
+   if ( db->lastErrno() != US_DB2::OK )
+   {
+      q.clear();
+      q << "new_model" << modelGUID << description << contents
+        << vari << meni << editGUID
+        << QString::number( US_Settings::us_inv_ID() );
+      message = QObject::tr( "created" );
+   }
+   else
+   {
+      db->next();
+      QString id = db->value( 0 ).toString();
+      q.clear();
+      q << "update_model" << id << description << contents
+        << vari << meni << editGUID;
+      message = QObject::tr( "updated" );
+   }
 
-      int wstat = db->statusQuery( q );
+   int wstat = db->statusQuery( q );
 qDebug() << "model writedb message" << message << "wstat" << wstat;
-      QString path;
-      model_path( path );
-      bool newFile;
-      QString filename = get_filename( path, modelGUID, newFile );
-      write( filename );
+   QString path;
+   model_path( path );
+   bool newFile;
+   QString filename = get_filename( path, modelGUID, newFile );
+   write( filename );
 
-      return wstat;
+   return wstat;
 }
 
+// Write a model file
 int US_Model::write( const QString& filename )
 {
    QFile file( filename );
@@ -840,13 +1037,24 @@ int US_Model::write( const QString& filename )
    if ( ! file.open( QIODevice::WriteOnly | QIODevice::Text) )
       return US_DB2::ERROR;
 
-   QXmlStreamWriter xml( &file );
-   write_stream( xml );
+   if ( ! monteCarlo  ||  nmcixs < 1 )
+   {
+      QXmlStreamWriter xml( &file );
+      write_stream( xml );
+   }
+
+   else
+   {
+      QTextStream tso( &file );
+      write_mm_stream( tso );
+   }
+
    file.close();
 
    return US_DB2::OK;
 }
 
+// Write to an XML stream
 void US_Model::write_stream( QXmlStreamWriter& xml )
 {
    if ( modelGUID.size() != 36 )
@@ -996,7 +1204,9 @@ void US_Model::write_stream( QXmlStreamWriter& xml )
    xml.writeEndDocument();
 }
 
-QString US_Model::get_filename( const QString& path, const QString& guid, bool& newFile )
+// Get the name of a model file with matching GUID (if any)
+QString US_Model::get_filename( const QString& path, const QString& guid,
+                                bool& newFile )
 {
    QDir f( path );
    QStringList filter( "M???????.xml" );
@@ -1058,6 +1268,287 @@ QString US_Model::get_filename( const QString& path, const QString& guid, bool& 
    return fnamo;
 }
 
+// Create or append to a composite MC model file for a single triple
+QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
+{
+   const QChar dquo( '"' );
+   QString empty_str( "" );
+   QString cmfname  = empty_str;
+   int mc_iters     = mcfiles.size();
+   int mc_comps     = 0;
+
+   // Return an empty name if the list is empty
+   if ( mc_iters < 1 )                  return cmfname;
+
+   cmfname          = mcfiles[ 0 ];
+   bool name_desc   = cmfname.contains( ".mc" );
+
+   // Return the name of an existing composite if it is all of the list
+   if ( mc_iters == 1 )
+   {
+      if ( cmfname.contains( ".mcN" ) )
+                                        return cmfname;
+      if ( ! name_desc )
+      {  // If no ".mc" in file name, must check description in contents
+         QFile filei( cmfname );
+         if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
+         {
+            qDebug() << "**MC iteration file open error**";
+                                        return empty_str;
+         }
+
+         QTextStream tsi( &filei );
+         QString mcont   = tsi.readAll();
+         filei.close();
+         int jj          = qMax( 0, mcont.indexOf( "description=" ) );
+         QString mdesc   = QString( mcont ).mid( jj, 99 ).section( dquo, 1, 1 );
+         if ( mcont.contains( ".mcN" ) )
+                                        return cmfname;
+      }
+   }
+
+   // Otherwise, scan the MC iteration file names
+   for ( int ii = 0; ii < mcfiles.size(); ii++ )
+   {
+      if ( name_desc )
+      {  // Handle a file whose name tells that it is a composite
+         if ( mcfiles[ ii ].contains( ".mcN" ) )
+         {  // For composite, bump composite count, decrement iters, save name
+            mc_comps++;
+            mc_iters--;
+            cmfname          = mcfiles[ ii ];
+         }
+      }
+      else
+      {  // Handle a file whose description tells that it is a composite
+         QFile filei( mcfiles[ ii ] );
+         if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
+            continue;
+         QTextStream tsi( &filei );
+         QString mcont  = tsi.readAll();
+         filei.close();
+         int jj         = qMax( 0, mcont.indexOf( "description=" ) );
+         QString mdesc  = QString( mcont ).mid( jj, 99 ).section( dquo, 1, 1 );
+         if ( mcont.contains( ".mcN" ) )
+         {  // For composite, bump composite count, decrement iters, save name
+            mc_comps++;
+            mc_iters--;
+            cmfname          = mcfiles[ ii ];
+         }
+      }
+   }
+
+   if ( mc_comps > 1  ||  mc_iters < 1 )
+   {  // Return now if we don't have 0 or 1 composite, plus some iter models
+      qDebug() << "**" << mc_comps << "MC composites, and" << mc_iters
+               << "MC iterations **";
+                                        return empty_str;
+   }
+
+   QString mditer   = QString().sprintf( ".mcN%03i", mc_iters );
+
+   if ( mc_comps == 0 )
+   {  // No composite exists, so create one from the iteration models
+      cmfname          = mcfiles[ 0 ];
+      QFile filei( mcfiles[ 0 ] );
+      if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
+      {
+         qDebug() << "**MC iteration file open error**";
+                                        return empty_str;
+      }
+      QTextStream tsi( &filei );
+      QString mcont    = tsi.readAll();
+      filei.close();
+      int jj           = qMax( 0, mcont.indexOf( "modelGUID=" ) );
+      QString mcguid   = QString( mcont ).mid( jj, 99 ).section( dquo, 1, 1 );
+
+      if ( ! name_desc )
+      {  // No description in name ("M00...xml"), so determine composite name
+         if ( rmvi )
+         {  // Removing iteration files, so reuse first name for composite
+            filei.remove();
+         }
+
+         else
+         {  // If not removing iteration files, get a new name for composite
+            bool newFile     = true;
+            QString path     = QString( cmfname ).section( "/", 0, -2 );
+            mcguid           = US_Util::new_guid();
+            cmfname          = get_filename( path, mcguid, newFile );
+         }
+      }
+
+      else
+      {  // Description in name, so create a new name with iters count in it
+         cmfname          = QString( cmfname ).section( ".", 0, -4 )
+                            + mditer + ".model.xml";
+      }
+
+      QFile fileo( cmfname );
+      if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         qDebug() << "**MC composite file open error**";
+                                        return empty_str;
+      }
+
+      // Output contents of first iteration model except last line
+      QTextStream tso( &fileo );
+      jj               = qMax( 0, mcont.indexOf( "modelGUID=" ) );
+      QString miguid   = QString( mcont ).mid( jj, 99 ).section( dquo, 1, 1 );
+      if ( miguid != mcguid )
+         mcont.replace( miguid, mcguid );
+      int flx        = 0;
+      int llx        = ( mc_iters > 1 ) ? -3 : -2;
+      tso << mcont.section( "\n", flx, llx ) << "\n";
+      flx            = 3;
+
+      // Output <model>...</model> for 2nd thru last iteration model
+      for ( int ii = 1; ii < mc_iters; ii++ )
+      {
+         QFile filei( mcfiles[ ii ] );
+         if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
+            continue;
+         QTextStream tsi( &filei );
+         mcont          = tsi.readAll();
+         filei.close();
+         jj             = qMax( 0, mcont.indexOf( "modelGUID=" ) );
+         QString miguid = QString( mcont ).mid( jj, 99 ).section( dquo, 1, 1 );
+         if ( miguid != mcguid )
+            mcont.replace( miguid, mcguid );
+         llx            = ( ( ii + 1 ) < mc_iters ) ? -3 : -2;
+         tso << mcont.section( "\n", flx, llx ) << "\n";
+      }
+
+      fileo.close();
+   }
+
+   else
+   {  // A composite exists, so append to it from new iteration models
+      QFile filei( cmfname );
+      if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
+      {
+         qDebug() << "**MC composite file open error**";
+                                        return empty_str;
+      }
+      // Read in contents of existing composite model; skip last line
+      QTextStream tsi( &filei );
+      QString mcont    = tsi.readAll();
+      filei.close();
+      mcont            = mcont.section( "\n", 0, -3 ) + "\n";
+      int jj           = qMax( 0, mcont.indexOf( "modelGUID=" ) );
+      QString mcguid   = QString( mcont ).mid( jj, 99 ).section( dquo, 1, 1 );
+
+      if ( name_desc )
+      {  // Name has description, so see if it needs to be renamed
+         QString moiter   = QString( cmfname ).section( ".", -3, -3 );
+         if ( moiter != mditer )
+         {  // Iterations changes (almost always), so rename is necessary
+            cmfname          = QString( cmfname ).section( ".", 0, -4 )
+                             + mditer + "."
+                             + QString( cmfname ).section( ".", -2, -1 );
+            filei.rename( cmfname );
+         }
+         else
+         {  // No name change (unlikely), so must delete and re-create
+            filei.remove();
+         }
+      }
+
+      else
+      {  // Name has no description, so no renaming necessary and just recreate
+         filei.remove();
+      }
+
+      QFile fileo( cmfname );
+      if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         qDebug() << "**MC composite file open error**";
+                                        return empty_str;
+      }
+
+      // Output contents of previous composite except for last line
+      QTextStream tso( &fileo );
+      int flx        = 0;
+      int llx        = -3;
+      tso << mcont.section( "\n", flx, llx ) << "\n";
+      flx            = 3;
+
+      // Append <model>...</model> of all new iteration models
+      for ( int ii = 0; ii < mc_iters; ii++ )
+      {
+         QFile filei( mcfiles[ ii ] );
+         if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
+            continue;
+         QTextStream tsi( &filei );
+         mcont          = tsi.readAll();
+         filei.close();
+         jj             = qMax( 0, mcont.indexOf( "modelGUID=" ) );
+         QString miguid = QString( mcont ).mid( jj, 99 ).section( dquo, 1, 1 );
+         if ( miguid != mcguid )
+            mcont.replace( miguid, mcguid );
+         llx            = ( ( ii + 1 ) < mc_iters ) ? -3 : -2;
+         tso << mcont.section( "\n", flx, llx ) << "\n";
+      }
+
+      fileo.close();
+   }
+
+   if ( rmvi )
+   {  // If so requested, remove the MC iteration files
+      if ( mc_comps == 0 )
+      {  // If list is all iteration files, remove them all
+         for ( int ii = 0; ii < mcfiles.size(); ii++ )
+         {  // Delete unless file name was reused for composite
+            if ( mcfiles[ 0 ] != cmfname )
+               QFile( mcfiles[ ii ] ).remove();
+         }
+      }
+
+      else if ( name_desc )
+      {  // If list has composite, name has description;  selectively delete
+         for ( int ii = 0; ii < mcfiles.size(); ii++ )
+         {  // Delete iteration files (not composite)
+            if ( ! mcfiles[ ii ].contains( ".mcN" ) )
+               QFile( mcfiles[ ii ] ).remove();
+         }
+      }
+
+      else
+      {  // If no description in file names, delete based on descr. content
+         for ( int ii = 0; ii < mcfiles.size(); ii++ )
+         {  // Delete iteration files (not composite)
+            if ( mcfiles[ ii ] == cmfname )
+               continue;
+            QFile filei( mcfiles[ ii ] );
+            if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text) )
+            {
+               qDebug() << "**MC iteration file open error**";
+                                        continue;
+            }
+
+            QTextStream tsi( &filei );
+            QString mcont  = tsi.readAll();
+            filei.close();
+            int jj         = qMax( 0, mcont.indexOf( "description=" ) );
+            QString mdesc  = QString(mcont).mid( jj, 99 ).section( dquo, 1, 1 );
+            if ( ! mdesc.contains( ".mcN" ) )
+               QFile( mcfiles[ ii ] ).remove();
+         }
+      }
+   }
+
+   return cmfname;
+}
+
+// Get MC iteration xml content strings
+int US_Model::mc_iter_xmls( QStringList& mcixs )
+{
+   int kixmls   = mcixmls.size();
+   mcixs        = mcixmls;
+   return kixmls;
+}
+
+// Output debug print model details
 void US_Model::debug( void )
 {
    qDebug() << "model dump";
