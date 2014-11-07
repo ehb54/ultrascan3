@@ -358,7 +358,7 @@ if(dbg_level>0)
   QString mdes=aDescrs[ii].section("\t",2,2);
   QString ddes=aDescrs[ii].section("\t",3,3);
   bool iter=mdes.contains("-MC_");
-  if(iter&&!mdes.contains("_mc0001")) continue;
+  if(iter&&!mdes.contains("_mcN")) continue;
   mdes="..."+mdes.section(".",1,-1);
   DbgLv(1) << "  ii" << ii << "mrun" << mrun << "mgid" << mgid
    << "mdes" << mdes << "iter" << iter << "ddes" << ddes;
@@ -1031,41 +1031,9 @@ DbgLv(1) << "FID:  ncomps" << ncomps;
    if ( ncomps == 0 )
    {  // Model not yet loaded, so load it now
       ddesc.model.load( isDB, ddesc.mGUID, db );
-      int niters = 1;
 
-      if ( ddesc.iters > 0 )
-      {  // An MC model, so concatenate the remaining MC iteration models
-         QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-         te_status->setText(
-               tr( "Building a composite of Monte Carlo distributions..." ) );
-         qApp->processEvents();
-         US_Model model2;
-         int     kk     = mdescr.lastIndexOf( "_mc0001" );
-         QString pdescr = mdescr.left( kk );  // Description prefix
-
-         for ( int jj = 0; jj < aDescrs.count(); jj++ )
-         {
-            QString aGUID  = aDescrs[ jj ].section( "\t", 1, 1 );
-            QString adescr = aDescrs[ jj ].section( "\t", 2, 2 );
-
-            // Test for the same description prefix, but not iteration 1
-            if ( adescr.startsWith( pdescr )  &&  ddesc.mGUID != aGUID )
-            {  // We've found a model that is an iteration:  add it in
-               model2.load( isDB, aGUID, db );
-               ddesc.model.components << model2.components;
-               niters++;
-            }
-         }
-         QApplication::restoreOverrideCursor();
-      }
-
-      ncomps = ddesc.model.components.size();     // Composite components
+      ncomps         = ddesc.model.components.size();   // Composite components
 DbgLv(1) << "FID:  (2)ncomps" << ncomps;
-
-      // Scale the composite components
-      scale_montecarlo( ddesc.model, niters );
-      ncomps = ddesc.model.components.size();     // Adjusted components
-
    }
 DbgLv(1) << "FID:  (3)ncomps" << ncomps;
 
@@ -1368,8 +1336,8 @@ void US_DDistr_Combine::update_distros()
       dd.mdescr    = mdes;
       dd.ddescr    = ddes;
       dd.iters     = mdes.contains( "-MC_" ) ? 1 : 0;
-      if ( dd.iters != 0  &&  ! mdes.contains( "_mc0001" ) )  continue;
-      if ( distro_by_mguid( mgid ) >= 0 )                     continue;
+      if ( dd.iters != 0  &&  ! mdes.contains( "_mcN" ) )  continue;
+      if ( distro_by_mguid( mgid ) >= 0 )                  continue;
 
       dd.xvals.clear();
       dd.yvals.clear();
@@ -1530,57 +1498,6 @@ void US_DDistr_Combine::ltypeChanged()
       list_distributions();
 
       reset_plot();
-   }
-}
-
-// Scale Monte Carlo concentrations
-void US_DDistr_Combine::scale_montecarlo( US_Model& model, int niters )
-{
-   double scfactor = 1.0 / (double)niters;
-   QStringList sklist;
-   QStringList skvals;
-   QVector< US_Model::SimulationComponent > comps;
-   int         ncomps = model.components.size();
-
-   for ( int ii = 0; ii < ncomps; ii++ )
-   {  // Build list of values and list of unique values
-      comps << model.components[ ii ];
-      QString skval = QString().sprintf( "%9.4e %9.4e",
-            comps[ ii ].s, comps[ ii ].f_f0 );
-      sklist << skval;
-
-      if ( ! skvals.contains( skval ) )
-         skvals << skval;
-   }
-
-   int nlist = sklist.size();
-   int nuniq = skvals.size();
-DbgLv(1) << "scMC: niters ncomps nlist nuniq"
- << niters << ncomps << nlist << nuniq;
-
-   // Clear original components and sort the unique s,f_f0 values
-   model.components.clear();
-   skvals.sort();
-
-   for ( int ii = 0; ii < nuniq; ii++ )
-   {  // Loop to sum on each unique s,f/f0 point
-      QString skval = skvals[ ii ];
-      double  conc  = 0.0;
-      int     kk    = 0;
-
-      for ( int jj = 0; jj < nlist; jj++ )
-      {  // Loop in full list, summing all matches to this point
-         if ( skval == sklist[ jj ] )
-         {  // Sum concentration and keep last index
-            conc    += comps[ jj ].signal_concentration;
-            kk       = jj;
-         }
-      }
-
-      // Replace concentration with sum scaled by number of iterations
-      comps[ kk ].signal_concentration = conc * scfactor;
-      // Store this adjusted component in the new vector
-      model.components << comps[ kk ];
    }
 }
 

@@ -362,14 +362,28 @@ timer.start();
                   if ( !ddmap.contains( eGUID ) )
                      ddmap[ eGUID ] = ddesc;
                }
-                  
+
+               // Modify the description field of any MonteCarlo
+               if ( mdesc.contains( "-MC" ) )
+               {
+                  kk            = mdesc.indexOf( "_mc0" );
+                  if ( kk > 0 )
+                  {
+                     int niters    = attr.value( "MCIteration" ).toString()
+                                                                .toInt();
+                     mdesc         = QString( mdesc ).left( kk ) +
+                                     QString().sprintf( "_mcN%03d", niters ) +
+                                     QString( mdesc ).mid( kk + 7 );
+                  }
+               }
+
                // Save run ID and model string of RunID+GUID+Description
                QString odesc  = runid + "\t" + mGUID + "\t" + mdesc
                                       + "\t" + ddesc;
                mRunIDs << runid;
                mEdtIDs << eGUID;
                wDescrs << odesc;
-if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc0001")))
+if((dbg_level>0) && (!mdesc.contains("-MC_")||mdesc.contains("_mc")))
  DbgLv(1) << "ScLo: odesc" << odesc;
             }
 
