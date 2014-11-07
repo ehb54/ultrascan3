@@ -360,7 +360,21 @@ void US_AnalysisControl2D::checkMeniscus( bool checked )
 void US_AnalysisControl2D::checkMonteCar( bool checked )
 {
    if ( checked )
+   {
+//* TEMPORARILY DISALLOWED
+QMessageBox::warning( this, tr( "Monte Carlo CURRENTLY DISALLOWED" ),
+   tr( "Desktop Monte Carlo runs are temporarily disallowed.\n"
+       "Code will be added shortly to correct this.\n\n"
+       "A new format for composite MC models will soon be\n"
+       "produced from this desktop application." ) );
+ck_mcarlo->disconnect();
+ck_mcarlo->setChecked( false );
+connect( ck_mcarlo, SIGNAL( toggled( bool ) ),
+         this,  SLOT( checkMonteCar( bool ) ) );
+if(!ck_mcarlo->isChecked()) return;
+//* TEMPORARILY DISALLOWED
       uncheck_optimize( 3 );
+   }
 
    optimize_options();
 }

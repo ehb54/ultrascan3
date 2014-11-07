@@ -1276,9 +1276,12 @@ DbgLv(1) << "wrMo: type" << type << "(DMGA)" << US_Model::DMGA;
 DbgLv(1) << "wrMo:  model comps" << model.components.size();
    }
 
+   int mc_iter       = ( mgroup_count < 2  ||  is_composite_job ) 
+                       ? ( mc_iteration + 1 ) : mc_iteration;
    model.monteCarlo  = mc_iterations > 1;
    model.wavelength  = edata->wavelength.toDouble();
-   model.modelGUID   = US_Util::new_guid();
+   model.modelGUID   = ( ! model.monteCarlo  ||  mc_iter == 1 )
+                       ? US_Util::new_guid() : modelGUID;
    model.editGUID    = edata->editGUID;
    model.requestGUID = requestGUID;
    model.dataDescrip = edata->description;
@@ -1315,13 +1318,10 @@ DbgLv(1) << "wrMo:  model comps" << model.components.size();
    //      
    //       recordType: ri_noise, ti_noise, model
 
-   QString tripleID = edata->cell + edata->channel + edata->wavelength;
-   QString dates    = "e" + edata->editID + "_a" + analysisDate;
+   QString tripleID  = edata->cell + edata->channel + edata->wavelength;
+   QString dates     = "e" + edata->editID + "_a" + analysisDate;
 DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
-
    QString iterID;
-   int mc_iter      = ( mgroup_count < 2  ||  is_composite_job ) 
-                      ? ( mc_iteration + 1 ) : mc_iteration;
 
    if ( mc_iterations > 1 )
       iterID.sprintf( "mc%04d", mc_iter );
@@ -1332,6 +1332,7 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    else
       iterID = "i01";
 
+   QString mdlid     = tripleID + "." + iterID;
    QString id        = model.typeText();
    if ( analysis_type.contains( "CG" ) )
       id                = id.replace( "2DSA", "2DSA-CG" );
@@ -1352,11 +1353,11 @@ DbgLv(1) << "wrMo: model descr" << model.description;
          const US_Solute* solute = &sim.solutes[ i ];
 
          US_Model::SimulationComponent component;
-         component.s                    = solute->s;
-         component.f_f0                 = solute->k;
+         component.s       = solute->s;
+         component.f_f0    = solute->k;
+         component.name    = QString().sprintf( "SC%04d", i + 1 );
+         component.vbar20  = (attr_z == ATTR_V) ? vbar20 : solute->v;
          component.signal_concentration = solute->c;
-         component.name                 = QString().sprintf( "SC%04d", i + 1 );
-         component.vbar20               = (attr_z == ATTR_V) ? vbar20 : solute->v;
 
          US_Model::calc_coefficients( component );
          model.components << component;
@@ -1365,14 +1366,15 @@ DbgLv(1) << "wrMo: model descr" << model.description;
 DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
  << "attr_z vbar20 mco0.v" << attr_z << vbar20 << model.components[0].vbar20;
 
-   QString fn        = edata->runID + "." + id + "." + model.modelGUID + ".xml";
+   QString fext      = model.monteCarlo ? ".mdl.tmp" : ".model.xml";
+   QString fileid    = "." + id + "." + mdlid + fext;
+   QString fn        = edata->runID + fileid;
    int lenfn         = fn.length();
 
    if ( lenfn > 99 )
    { // Insure a model file name less than 100 characters in length (tar limit)
       int lenri         = edata->runID.length() + 99 - lenfn;
-      fn                = edata->runID.left( lenri )
-                          + "." + id + "." + model.modelGUID + ".xml";
+      fn                = edata->runID.left( lenri ) + fileid;
    }
 
    // Output the model to a file
@@ -1397,7 +1399,6 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
    QString variance = QString::number( sim.variance,   'e', 4 );
 
    int run     = 1;
-   mc_iter     = mgroup_count < 2 ? ( mc_iteration + 1 ) : mc_iteration;
 
    if ( meniscus_run > 0 ) 
        run        = meniscus_run + 1;
@@ -1565,7 +1566,7 @@ void US_MPI_Analysis::cache_result( Result& result )
 }
 
 // Update the output TAR file after composite job output has been produced
-void US_MPI_Analysis::update_outputs( bool rmvfiles )
+void US_MPI_Analysis::update_outputs( bool is_final )
 {
    // Get a list of output files, minus any TAR file
    QDir odir( "." );
@@ -1580,11 +1581,87 @@ DbgLv(0) << my_rank << ": A single output file, the archive, already exists!!!";
    // Otherwise, remove the tar file from the list of output files
    files.removeOne( "analysis-results.tar" );
 
+   // Sort file list
+   files.sort();
+
+   // For Monte Carlo, replace component temporary model files with
+   //  concatenated model files
+   if ( mc_iterations > 1 )
+   {
+      QStringList mfilt;
+      mfilt << "*.mdl.tmp" << "*.model.xml";
+      QStringList mfiles = odir.entryList( mfilt, QDir::Files );
+      QStringList mtrips;
+      mfiles.sort();
+
+      // First scan for unique triples
+      for ( int ii = 0; ii < mfiles.size(); ii++ )
+      {
+         QString mftrip     = QString( mfiles[ ii ] ).section( ".", 0, -4 );
+         if ( ! mtrips.contains( mftrip ) )
+            mtrips << mftrip;
+      }
+
+      // Open text file for appending composite file names
+      QFile fileo( "analysis_files.txt" );
+      if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text
+                                              | QIODevice::Append ) )
+      {
+         abort( "Could not open 'analysis_files.txt' for writing" );
+         return;
+      }
+      QTextStream tsout( &fileo );
+
+      // For each triple, build or update a composite model file
+      for ( int ii = 0; ii < mtrips.size(); ii++ )
+      {
+         // Build a list of model files relating to this triple
+         QString mftrip   = mtrips[ ii ];
+         QString tripleID = QString( mftrip ).section( ".", -1, -1 );
+         QStringList mfilt;
+         mfilt << mftrip + ".mc*";
+         QStringList mtfiles = odir.entryList( mfilt, QDir::Files );
+
+         // Build a composite model file and get its name
+         QString cmfname  = US_Model::composite_mc_file( mtfiles, true );
+DbgLv(0) << my_rank << ": ii" << ii << "mftrip" << mftrip << "cmfname" << cmfname;
+
+         // Remove iteration (non-composite) files from the list
+         for ( int jj = 0; jj < mtfiles.size(); jj++ )
+         {
+            if ( mtfiles[ jj ] != cmfname )
+               files.removeOne( mtfiles[ jj ] );
+         }
+
+         // Add the composite file name to the list if need be
+         if ( ! files.contains( cmfname ) )
+            files << cmfname;
+DbgLv(0) << my_rank << ":     files.size" << files.size();
+
+         // Add composite name to text file
+         US_Model model2;
+DbgLv(0) << my_rank << ":      model2.load(" << cmfname;
+         model2.load( cmfname );
+DbgLv(0) << my_rank << ":       model2.description" << model2.description;
+         QString runstring = "Run: " + QString::number( ii + 1 )
+                             + " " + tripleID;
+         tsout <<  cmfname 
+               << ";meniscus_value=" << model2.meniscus
+               << ";MC_iteration="   << mc_iterations
+               << ";variance="       << model2.variance
+               << ";run="            << runstring
+               << "\n";
+      }
+
+      fileo.close();
+   }
+
    // Create the archive file containing all outputs
    US_Tar tar;
    tar.create( "analysis-results.tar", files );
 
-   if ( rmvfiles )
+   // If this is the final call, remove all but the archive file
+   if ( is_final )
    {  // Remove the files we just put into the tar archive
 DbgLv(0) << my_rank << ": All output files except the archive are now removed.";
       QString file;
