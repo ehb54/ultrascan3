@@ -554,7 +554,7 @@ DbgLv(1) << "master start 2DSA" << startTime;
 
          if ( current_dataset < count_datasets )
          {
-            if ( my_group == 0 )
+            if ( my_group == 0  &&   ittest < count_datasets )
             {  // If group 0 master, create an intermediate archive
                update_outputs();
                DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
