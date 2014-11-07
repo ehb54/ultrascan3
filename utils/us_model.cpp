@@ -576,7 +576,7 @@ int US_Model::load( const QString& filename )
    if ( result == US_DB2::NO_MODEL  &&  monteCarlo )
    {  // Handle a multi-model stream
       file.close();
-      file.open( QIODevice::ReadOnly | QIODevice::Text);
+      file.open( QIODevice::ReadOnly | QIODevice::Text );
 
       QTextStream tsi( &file );
 
@@ -735,7 +735,7 @@ int US_Model::load_multi_model( QTextStream& tsi )
       {  // At model tag, create initial contents
          mcont         = line1 + line2 + line3 + mline + "\n";
          // Parse description and save it, if first iteration
-         if ( nmcixs == 1 )
+         if ( nmcixs == 0 )
          {
             int idx       = qMax( mline.indexOf( "description=" ), 0 );
             mdesc         = QString( mline ).mid( idx, 99 ).section( "\"", 1, 1 );
@@ -1440,7 +1440,9 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
 
       if ( name_desc )
       {  // Name has description, so see if it needs to be renamed
-         QString moiter   = QString( cmfname ).section( ".", -3, -3 );
+         QString moiter   = "." + QString( cmfname ).section( ".", -3, -3 );
+         int mc_ittot     = QString( moiter ).mid( 4 ).toInt() + mc_iters;
+         mditer           = QString().sprintf( ".mcN%03i", mc_ittot );
          if ( moiter != mditer )
          {  // Iterations changes (almost always), so rename is necessary
             cmfname          = QString( cmfname ).section( ".", 0, -4 )

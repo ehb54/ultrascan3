@@ -1588,18 +1588,34 @@ DbgLv(0) << my_rank << ": A single output file, the archive, already exists!!!";
    //  concatenated model files
    if ( mc_iterations > 1 )
    {
+      // Get a list of model files currently present
       QStringList mfilt;
       mfilt << "*.mdl.tmp" << "*.model.xml";
       QStringList mfiles = odir.entryList( mfilt, QDir::Files );
       QStringList mtrips;
       mfiles.sort();
 
-      // First scan for unique triples
+      // Scan for unique triples
       for ( int ii = 0; ii < mfiles.size(); ii++ )
       {
          QString mftrip     = QString( mfiles[ ii ] ).section( ".", 0, -4 );
          if ( ! mtrips.contains( mftrip ) )
             mtrips << mftrip;
+      }
+
+      // Get a list of files in the text file
+      QStringList tfiles;
+      QFile filet( "analysis_files.txt" );
+      if ( filet.open( QIODevice::ReadOnly | QIODevice::Text ) )
+      {
+         QTextStream tstxt( &filet );
+         while ( ! tstxt.atEnd() )
+         {
+            QString line       = tstxt.readLine();
+            QString fname      = line.section( ";", 0, 0 );
+            tfiles << fname;
+         }
+         filet.close();
       }
 
       // Open text file for appending composite file names
@@ -1638,8 +1654,14 @@ DbgLv(0) << my_rank << ": ii" << ii << "mftrip" << mftrip << "cmfname" << cmfnam
          {
             files << cmfname;
 DbgLv(0) << my_rank << ":     files.size" << files.size();
+         }
 
-            // Add composite name to text file
+         // Add composite name to text file if need be
+         int f_iters      = QString( cmfname ).section( ".", -3, -3 )
+                            .mid( 3 ).toInt();
+         if ( ! tfiles.contains( cmfname )  &&
+              ( is_final  ||  f_iters == mc_iterations ) )
+         {
             US_Model model2;
 DbgLv(0) << my_rank << ":      model2.load(" << cmfname;
             model2.load( cmfname );
@@ -1650,8 +1672,7 @@ DbgLv(0) << my_rank << ":       model2.description" << model2.description;
                   << ";meniscus_value=" << model2.meniscus
                   << ";MC_iteration="   << mc_iterations
                   << ";variance="       << model2.variance
-                  << ";run="            << runstring
-                  << "\n";
+                  << ";run="            << runstring << "\n";
          }
       }
 
