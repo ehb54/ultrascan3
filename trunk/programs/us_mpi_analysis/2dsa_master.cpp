@@ -1635,22 +1635,24 @@ DbgLv(0) << my_rank << ": ii" << ii << "mftrip" << mftrip << "cmfname" << cmfnam
 
          // Add the composite file name to the list if need be
          if ( ! files.contains( cmfname ) )
+         {
             files << cmfname;
 DbgLv(0) << my_rank << ":     files.size" << files.size();
 
-         // Add composite name to text file
-         US_Model model2;
+            // Add composite name to text file
+            US_Model model2;
 DbgLv(0) << my_rank << ":      model2.load(" << cmfname;
-         model2.load( cmfname );
+            model2.load( cmfname );
 DbgLv(0) << my_rank << ":       model2.description" << model2.description;
-         QString runstring = "Run: " + QString::number( ii + 1 )
-                             + " " + tripleID;
-         tsout <<  cmfname 
-               << ";meniscus_value=" << model2.meniscus
-               << ";MC_iteration="   << mc_iterations
-               << ";variance="       << model2.variance
-               << ";run="            << runstring
-               << "\n";
+            QString runstring = "Run: " + QString::number( ii + 1 )
+                                + " " + tripleID;
+            tsout <<  cmfname 
+                  << ";meniscus_value=" << model2.meniscus
+                  << ";MC_iteration="   << mc_iterations
+                  << ";variance="       << model2.variance
+                  << ";run="            << runstring
+                  << "\n";
+         }
       }
 
       fileo.close();
