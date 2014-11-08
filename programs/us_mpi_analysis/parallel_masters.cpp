@@ -793,7 +793,7 @@ DbgLv(1) << "2dMast:    mc_iter" << mc_iteration
          write_global();
       }
 
-      if ( my_group == 0 )
+      if ( my_group == 0  &&  ( mc_iteration + mgroup_count ) < mc_iterations )
       {  // Update the tar file of outputs in case of an aborted run
          update_outputs();
       }
