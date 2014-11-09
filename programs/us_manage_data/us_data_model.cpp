@@ -521,6 +521,7 @@ DbgLv(2) << "BrDb:     edt  id eGID rGID label date"
 DbgLv(1) << "BrDb: EDT loop done";
 
    // get model IDs
+   const int _M_LARGE_ = 65000;     // Model large size indicating CUSTOMGRID
    QStringList  tmodels;
    QList< int > tmodnxs;
    lb_status->setText ( tr( "Reading Models" ) );
@@ -574,11 +575,15 @@ DbgLv(2) << "BrDb: MOD id" << recID << " desc" << descript;
          if ( label.length() > 40 )
             label = label.left( 13 ) + "..." + label.right( 24 );
 
-         QString subType   = descript.section( ".", -2, -2 ).section( "_", 2, 2 );
+         // Get the sub-analysis-type
+         QString subType   = descript.section( ".", -2, -2 ).section( "_",2,2 );
 
-         if ( recsize.toInt() > 65000  ||  descript.contains( "CustomGrid" ) )
+         // Set as CUSTOMGRID if so marked or large non-MC
+         if ( descript.contains( "CustomGrid" )  ||
+              ( !descript.contains( "_mc" )  && recsize.toInt() > _M_LARGE_ ) )
             subType           = "CUSTOMGRID";
 
+         // If empty subtype, mark as MANUAL
          else if ( subType.isEmpty() )
             subType           = "MANUAL";
 
