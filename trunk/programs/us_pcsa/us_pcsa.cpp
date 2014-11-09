@@ -484,7 +484,7 @@ DbgLv(1) << "SV: analysisType" << analysisType;
 
    QString reppath  = US_Settings::reportDir();
    QString respath  = US_Settings::resultDir();
-   QString tmppath  = US_Settings::tmpDir();
+   QString tmppath  = US_Settings::tmpDir() + "/";
    QString mdlpath;
    QString noipath;
    int     knois    = min( ti_noise.count, 1 ) 
@@ -526,14 +526,17 @@ DbgLv(1) << "SV: analysisType" << analysisType;
    US_DB2*     dbP      = def_local ? NULL : new US_DB2( pw.getPasswd() );
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
+   mdlpath             += "/";
+   noipath             += "/";
    QStringList mfilt( "M*.xml" );
    QStringList nfilt( "N*.xml" );
    QStringList mdnams   =  dirm.entryList( mfilt, QDir::Files, QDir::Name );
    QStringList ndnams   =  dirn.entryList( nfilt, QDir::Files, QDir::Name );
    QStringList mnames;
    QStringList nnames;
+   QStringList tnames;
    QString     mname    = "M0000000.xml";
-   QString     mname1   = "M0000000.xml";
+   QString     tname    = mname;
    QString     nname    = "N0000000.xml";
    int         indx     = 1;
    int         kmodels  = 0;
@@ -583,7 +586,7 @@ DbgLv(1) << "SV: variance" << variance;
    {  // Output the single non-MC model
 DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
       model.description = descbase + iterID + ".model";
-      mname             = mdlpath + "/" + mname;
+      mname             = mdlpath + mnames[ 0 ];
       model.modelGUID   = US_Util::new_guid();
       model.editGUID    = edata->editGUID;
       model.requestGUID = reqGUID;
@@ -596,11 +599,12 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
       for ( int cc = 0; cc < model.components.size(); cc++ )
          model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
 
-      // output the model
+      // Output the model
       if ( dbP != NULL )
          model.write( dbP );
       else
          model.write( mname );
+
 DbgLv(1) << "SV: Post-wrdb tno tni"
  << ti_noise.values[0] << ti_noise_in.values[0];
    }
@@ -613,22 +617,36 @@ DbgLv(1) << "SV: MC models  mciters" << mciters;
          iterID            = QString().sprintf( "mc%04d", jmc + 1 );
          model             = mrecs_mc[ jmc ].model;
          model.description = descbase + iterID + ".model";
-         mname             = mdlpath + "/" + mnames[ jmc ];
+         tname             = tmppath + descbase + iterID + ".mdl.tmp";
          model.modelGUID   = US_Util::new_guid();
          model.editGUID    = edata->editGUID;
          model.requestGUID = reqGUID;
          model.analysis    = US_Model::PCSA;
 
-DbgLv(1) << "SV: MC models   jmc" << jmc << "write" << mnames[jmc];
-         // output the model
-         if ( dbP != NULL )
-            model.write( dbP );
-         else
-            model.write( mname );
-DbgLv(1) << "SV: MC models     write complete";
+DbgLv(1) << "SV: MC models   jmc" << jmc << "write" << tname;
+         // Output the model
+         model.write( tname );
 
-         if ( jmc == 0 )
-            mname1            = mname;
+         tnames << tname;
+      }
+
+      // Now output the composite model
+      tname             = US_Model::composite_mc_file( tnames, true );
+      mname             = mdlpath + mnames[ 0 ];
+DbgLv(1) << "SV: MC models     write complete  mname" << mname;
+      QFile tfile( tname );
+      if ( dbP != NULL )
+      {  // DB:  load, write to DB, delete
+         model.load( tname );
+         model.write( dbP );
+         tfile.remove();
+DbgLv(1) << "SV: MC models     write DB from tname" << tname;
+      }
+
+      else
+      {  // Local: rename created file to models directory
+         tfile.rename( mname );
+DbgLv(1) << "SV: MC models     write Local by rename tname" << tname;
       }
    }
 
@@ -641,7 +659,7 @@ DbgLv(1) << "SV: MC models     write complete";
       ti_noise.type        = US_Noise::TI;
       ti_noise.modelGUID   = model.modelGUID;
       ti_noise.noiseGUID   = US_Util::new_guid();
-      nname                = noipath + "/" + nnames[ kk++ ];
+      nname                = noipath + nnames[ kk++ ];
       int nicount          = ti_noise_in.count;
 DbgLv(1) << "SV:  TI nicount" << nicount;
 
@@ -681,7 +699,7 @@ DbgLv(1) << "SV:  Post-sum tno" << ti_noise.values[0];
       ri_noise.type        = US_Noise::RI;
       ri_noise.modelGUID   = model.modelGUID;
       ri_noise.noiseGUID   = US_Util::new_guid();
-      nname                = noipath + "/" + nnames[ kk++ ];
+      nname                = noipath + nnames[ kk++ ];
       int nicount          = ri_noise_in.count;
 DbgLv(1) << "SV:  RI nicount" << nicount;
 
@@ -712,7 +730,7 @@ DbgLv(1) << "SV:  Post-sum rno" << ri_noise.values[0];
    }
 DbgLv(1) << "SV:  Post-write tno rno"
  << ti_noise.values[0] << ri_noise.values[0];
-
+ 
    if ( dbP != NULL )
    {
       delete dbP;
@@ -727,7 +745,7 @@ DbgLv(1) << "SV:  Post-write tno rno"
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString plot4File = filebase + "mlines.png";
-   QString ptmp4File = tmppath  + "/PCSA" + dext + ".mlines."
+   QString ptmp4File = tmppath  + "PCSA" + dext + ".mlines."
                        + QString::number( getpid() ) + ".png";
 DbgLv(1) << "mlines ptmp4File" << ptmp4File;
 
@@ -752,24 +770,17 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
    
    // use a dialog to tell the user what we've output
    QString wmsg = tr( "Wrote:\n" );
-
-   if ( mciters < 2 )
-      wmsg  = wmsg + mname + "\n";             // list only model file
-
-   else                                        // list 1st and last model files
-      wmsg   = wmsg + mname1 + "\n" + " ... ( "
-               + QString::number( mciters - 2 ) + tr( " files unshown )\n" )
-               + mname + "\n";
+   wmsg        += mname + "\n";                 // List the model file
 
    if ( knois > 0 )
    {
-      nname = noipath + "/" + nnames[ 0 ];     // list 1st noise file(s)
-      wmsg  = wmsg + nname + "\n";
+      nname  = noipath + nnames[ 0 ];           // List 1st noise file(s)
+      wmsg   = wmsg + nname + "\n";
 
       if ( knois > 1 )
       {
-         nname = noipath + "/" + nnames[ 1 ];
-         wmsg  = wmsg + nname + "\n";
+         nname  = noipath + nnames[ 1 ];
+         wmsg   = wmsg + nname + "\n";
       }
    }
 

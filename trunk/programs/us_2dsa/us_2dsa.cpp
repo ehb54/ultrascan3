@@ -538,14 +538,18 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    US_DB2*     dbP      = loadDB ? new US_DB2( pw.getPasswd() ): NULL;
    QDir        dirm( mdlpath );
    QDir        dirn( noipath );
+   mdlpath             += "/";
+   noipath             += "/";
    QStringList mfilt( "M*.xml" );
    QStringList nfilt( "N*.xml" );
    QStringList mdnams   =  dirm.entryList( mfilt, QDir::Files, QDir::Name );
    QStringList ndnams   =  dirn.entryList( nfilt, QDir::Files, QDir::Name );
    QStringList mnames;
    QStringList nnames;
+   QStringList tnames;
    QString     mname    = "M0000000.xml";
    QString     nname    = "N0000000.xml";
+   QString     tmppath  = US_Settings::tmpDir() + "/";
    int         indx     = 1;
    int         kmodels  = 0;
    int         knoises  = 0;
@@ -604,7 +608,10 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 
       // fill in actual model parameters needed for output
       model.description = descbase + iterID + ".model";
-      mname             = mdlpath + "/" + mnames[ jj ];
+      mname             = QString( model.description );
+      mname             = montCar ?
+                          tmppath + mname.replace( ".model", ".mdl.tmp" ) :
+                          mdlpath + mnames[ jj ];
       model.modelGUID   = US_Util::new_guid();
       model.editGUID    = edata->editGUID;
       model.requestGUID = reqGUID;
@@ -618,10 +625,13 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
 
       // output the model
-      if ( dbP != NULL )
-         model.write( dbP );
-      else
+      if ( dbP == NULL  ||  montCar )
          model.write( mname );
+      else
+         model.write( dbP );
+
+      if ( montCar )
+         tnames << mname;
 
       int kk  = jj * knois;
 
@@ -632,7 +642,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          ti_noise.type        = US_Noise::TI;
          ti_noise.modelGUID   = model.modelGUID;
          ti_noise.noiseGUID   = US_Util::new_guid();
-         nname                = noipath + "/" + nnames[ kk++ ];
+         nname                = noipath + nnames[ kk++ ];
          int nicount          = ti_noise_in.count;
 
          if ( nicount > 0 )   // Sum in any input noise
@@ -661,7 +671,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
          ri_noise.type        = US_Noise::RI;
          ri_noise.modelGUID   = model.modelGUID;
          ri_noise.noiseGUID   = US_Util::new_guid();
-         nname                = noipath + "/" + nnames[ kk++ ];
+         nname                = noipath + nnames[ kk++ ];
          int nicount          = ri_noise_in.count;
 
          if ( nicount > 0 )   // Sum in any input noise
@@ -686,6 +696,26 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
 //tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
 //rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
 //DbgLv(1) << "  Post-sum tno rno" << tino << rino;
+   mname          = mdlpath + mnames[ 0 ];
+
+   if ( montCar )
+   {  // For Monte Carlo, create a composite of MC iteration files
+      QString tname  = US_Model::composite_mc_file( tnames, true );
+      tnames[ 0 ]    = tname;
+      QFile( tname ).rename( mname );    // Move/rename to model directory
+
+      if ( dbP != NULL )
+      {  // If DB, load and store in the database
+         model.load( tname );
+         model.write( dbP );
+      }
+   }
+
+   else
+   {  // For non-MC, save the model name for message to follow
+      tnames.clear();
+      tnames << mname;
+   }
 
    if ( dbP != NULL )
    {
@@ -728,39 +758,39 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    // use a dialog to tell the user what we've output
    QString wmsg = tr( "Wrote:\n" );
 
-   mname = mdlpath + "/" + mnames[ 0 ];
+   mname = loadDB ? tnames[ 0 ] : mdlpath + mnames[ 0 ];
    wmsg  = wmsg + mname + "\n";                // list 1st (only?) model file
 
    if ( knois > 0 )
    {
-      nname = noipath + "/" + nnames[ 0 ];     // list 1st noise file(s)
+      nname = noipath + nnames[ 0 ];           // list 1st noise file(s)
       wmsg  = wmsg + nname + "\n";
 
       if ( knois > 1 )
       {
-         nname = noipath + "/" + nnames[ 1 ];
+         nname = noipath + nnames[ 1 ];
          wmsg  = wmsg + nname + "\n";
       }
    }
 
-   if ( nmodels > 1 )
+   if ( nmodels > 1  &&  ! montCar )
    {
       int kk = ( nmodels - 2 ) * ( knois + 1 );
       wmsg   = wmsg + " ...  ( "
                     + QString::number( kk ) + tr( " files unshown )\n" );
       kk     = nmodels - 1;
-      mname  = mdlpath + "/" + mnames[ kk ];   // list last model file
+      mname  = mdlpath + mnames[ kk ];         // list last model file
       wmsg   = wmsg + mname + "\n";
 
       if ( knois > 0 )
       {                                        // list last noise file(s)
          kk    *= knois;
-         nname  = noipath + "/" + nnames[ kk++ ];
+         nname  = noipath + nnames[ kk++ ];
          wmsg   = wmsg + nname + "\n";
 
          if ( knois > 1 )
          {
-            nname  = noipath + "/" + nnames[ kk ];
+            nname  = noipath + nnames[ kk ];
             wmsg   = wmsg + nname + "\n";
          }
       }
