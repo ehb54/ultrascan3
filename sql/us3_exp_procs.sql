@@ -422,14 +422,14 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   e.experimentID, runID, type, runType
+        SELECT   e.experimentID, runID, type, runType, label
         FROM     experiment e, experimentPerson p
         WHERE    e.experimentID = p.experimentID
         AND      p.personID = p_ID
         ORDER BY runID;
    
       ELSE
-        SELECT   e.experimentID, runID, type, runType
+        SELECT   e.experimentID, runID, type, runType, label
         FROM     experiment e, experimentPerson p
         WHERE    e.experimentID = p.experimentID
         ORDER BY runID;

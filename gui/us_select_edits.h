@@ -44,7 +44,7 @@ class US_GUI_EXTERN US_SelectEdits : public US_WidgetsDialog
          QString label;           //!< Experiment label
          QString editID;          //!< Edit ID (DB) or GUID (Local)
          QString date;            //!< Updated-date
-         QString DB_id;           //!< Database ID of run ("-1" if local)
+         QString DB_id;           //!< Database ID of experiment
       };
 
       QMap< QString, EditDesc > editmap;  //!< map of labels,data-desc-objs

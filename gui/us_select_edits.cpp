@@ -278,20 +278,20 @@ void US_SelectEdits::scan_dbase_edit()
    QStringList query;
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
 
-   // Build a mapping of rawData labels to raw DB ids
-   QMap< int, QString > rawlabs;
+   // Build a mapping of experiment labels to experiment DB ids
+   QMap< QString, QString > explabs;
    query.clear();
-   query << "get_rawData_desc" << invID;
+   query << "get_experiment_desc" << invID;
 
    db.query( query );
 
    while ( db.next() )
    {
-      int     idRaw    = db.value( 0 ).toString().toInt();
-      QString label    = db.value( 1 ).toString();
-      rawlabs[ idRaw ] = label;
+      QString expID    = db.value( 0 ).toString();
+      QString label    = db.value( 4 ).toString();
+      explabs[ expID ] = label;
    }
-qDebug() << "ScDB: rawlabs size" << rawlabs.size();
+qDebug() << "ScDB: explabs size" << explabs.size();
 
    // Now fill in data description objects for edits
    query.clear();
@@ -307,7 +307,6 @@ qDebug() << "ScDB: rawlabs size" << rawlabs.size();
 //qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       QString descrip  = db.value( 1 ).toString();
       QString filename = db.value( 2 ).toString().replace( "\\", "/" );
-      int     idRaw    = db.value( 3 ).toString().toInt();
       QString expID    = db.value( 4 ).toString();
       QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
                          .toDateTime().toString( Qt::ISODate ), true )
@@ -324,7 +323,8 @@ qDebug() << "ScDB: rawlabs size" << rawlabs.size();
 
       edesc.key        = key;
       edesc.runID      = runID;
-      edesc.label      = rawlabs[ idRaw ];
+      edesc.label      = explabs[ expID ];
+qDebug() << "edesc key" << key << "expID" << expID << "label" << edesc.label;
       edesc.editID     = recID;
       edesc.date       = date;
       edesc.DB_id      = expID;
