@@ -18,7 +18,7 @@
 #include "us_report.h"
 #include "us_constants.h"
 
-#define PA_TMDIS_MS 2000  // default Plotall time per distro in milliseconds
+#define PA_TMDIS_MS 500   // default Plotall time per distro in milliseconds
 
 // main program
 int main( int argc, char* argv[] )
@@ -116,7 +116,10 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( ck_conloop, SIGNAL( clicked() ),
             this,       SLOT( select_conloop() ) );
 
-   us_checkbox( tr( "Z as Percentage" ), ck_zpcent, false );
+   us_checkbox( tr( "Z as Percentage" ), ck_zpcent,  false );
+
+   us_checkbox( tr( "Save Plot(s)"    ), ck_savepl,  false );
+   us_checkbox( tr( "Local Save Only" ), ck_locsave, true  );
 
    lb_plt_kmin   = us_label( tr( "Plot Limit f/f0 Minimum:" ) );
    lb_plt_kmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
@@ -155,8 +158,9 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    ct_plt_dlay   = us_counter( 3, 0.1, 30.0, 0.0 );
    ct_plt_dlay->setStep( 0.1 );
-   QSettings settings( "UltraScan3", "UltraScan" );
-   patm_dlay     = settings.value( "slideDelay", PA_TMDIS_MS ).toInt();
+//   QSettings settings( "UltraScan3", "UltraScan" );
+//   patm_dlay     = settings.value( "slideDelay", PA_TMDIS_MS ).toInt();
+   patm_dlay     = PA_TMDIS_MS;
    ct_plt_dlay->setValue( (double)( patm_dlay ) / 1000.0 );
 
    QLabel* lb_curr_distr = us_label( tr( "Current Distro:" ) );
@@ -301,6 +305,8 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    spec->addWidget( ck_autoscz,    s_row++, 4, 1, 4 );
    spec->addWidget( ck_conloop,    s_row,   0, 1, 4 );
    spec->addWidget( ck_zpcent,     s_row++, 4, 1, 4 );
+   spec->addWidget( ck_savepl,     s_row,   0, 1, 4 );
+   spec->addWidget( ck_locsave,    s_row++, 4, 1, 4 );
    spec->addWidget( lb_plt_kmin,   s_row,   0, 1, 4 );
    spec->addWidget( ct_plt_kmin,   s_row++, 4, 1, 4 );
    spec->addWidget( lb_plt_kmax,   s_row,   0, 1, 4 );
@@ -390,7 +396,7 @@ void US_Pseudo3D_Combine::reset( void )
    data_plot->detachItems( QwtPlotItem::Rtti_PlotSpectrogram );
    data_plot->replot();
  
-   need_save  = true;
+   need_save  = false;
 
    plot_x     = ATTR_S;
    plot_y     = ATTR_K;
@@ -415,6 +421,8 @@ void US_Pseudo3D_Combine::reset( void )
    ck_autoscz->setChecked( auto_scz );
    cont_loop  = false;
    ck_conloop->setChecked( cont_loop );
+   ck_savepl ->setChecked( false     );
+   ck_locsave->setChecked( true      );
 
    plt_kmin   = 0.8;
    plt_kmax   = 4.2;
@@ -590,15 +598,9 @@ void US_Pseudo3D_Combine::plot_data( void )
    QString dtext  = tr( "Run:  " ) + tsys->run_name
          + " (" + tsys->method + ")\n    " + tsys->analys_name;
 
-   //bool sv_plot = ( looping && ck_conloop->isChecked() ) ? false : true;
-   bool sv_plot = need_save;
+   bool sv_plot = ck_savepl->isChecked()  &&
+                  ( ( looping  &&  !ck_conloop->isChecked() ) || !looping );
 DbgLv(2) << "(1) sv_plot" << sv_plot << "looping" << looping;
-
-   if ( tsys->method.contains( "-MC" ) )
-   {  // Test if some MC should be skipped
-      sv_plot   = sv_plot && tsys->monte_carlo;   // Only plot if MC composite
-DbgLv(2) << "(2)   sv_plot" << sv_plot;
-   }
 
 DbgLv(2) << "(3)   need_save sv_plot" << need_save << sv_plot;
    //if ( need_save  &&  sv_plot )
@@ -625,7 +627,7 @@ DbgLv(2) << "(3)   need_save sv_plot" << need_save << sv_plot;
       dtext          = dtext + tr( "\nPLOT %1 SAVED to local" )
          .arg( curr_distr + 1 );
 
-      if ( dkdb_cntrls->db() )
+      if ( dkdb_cntrls->db()  &&  !ck_locsave->isChecked() )
       {  // Save a copy to the database
 QDateTime time0=QDateTime::currentDateTime();
          US_Passwd   pw;
@@ -751,7 +753,7 @@ void US_Pseudo3D_Combine::select_conloop()
    {
       pb_pltall->setText( tr( "Plot All Distros in a Loop" ) );
       dtext          = dtext +
-         tr( "\nWith continuous loop, plot files only saved during 1st pass." );
+         tr( "\nWith continuous loop, plot files are not saved." );
    }
    else
       pb_pltall->setText( tr( "Plot All Distros" ) );
@@ -777,13 +779,16 @@ void US_Pseudo3D_Combine::load_distro()
    if ( dialog.exec() != QDialog::Accepted )
       return;  // no selection made
 
+   need_save  = false;
+
    for ( int jj = 0; jj < models.count(); jj++ )
    {  // load each selected distribution model
       load_distro( models[ jj ], mdescs[ jj ] );
    }
 
-   need_save  = true;
-   plot_data();
+   curr_distr = 0;
+   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
+   ct_curr_distr->setValue( curr_distr + 1 );
    pb_rmvdist->setEnabled( models.count() > 0 );
 }
 
@@ -1019,14 +1024,14 @@ void US_Pseudo3D_Combine::plotall()
    if ( curr_distr == system.size() )
       curr_distr--;
 
-   need_save  = true;
+   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
 }
 
 // Stop the distros-plotting loop
 void US_Pseudo3D_Combine::stop()
 {
    looping    = false;
-   need_save  = true;
+   need_save  = ck_savepl->isChecked()  &&  !cont_loop;
 }
 
 void US_Pseudo3D_Combine::set_limits()
@@ -1225,7 +1230,7 @@ void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
       killTimer( tm_id );
       pb_stopplt->setEnabled( false );
       curr_distr = ( curr_distr > maxsiz ) ? maxsiz : curr_distr;
-      need_save  = true;
+      need_save  = ck_savepl->isChecked()  &&  !cont_loop;
    }
    ct_curr_distr->setValue( curr_distr + 1 );
 }
