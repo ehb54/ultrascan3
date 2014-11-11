@@ -106,6 +106,8 @@ class US_Pseudo3D_Combine : public US_Widgets
       QCheckBox*    ck_plot_sv;
       QCheckBox*    ck_plot_wv;
       QCheckBox*    ck_zpcent;
+      QCheckBox*    ck_savepl;
+      QCheckBox*    ck_locsave;
 
       QRadioButton* rb_x_s;
       QRadioButton* rb_x_ff0;
