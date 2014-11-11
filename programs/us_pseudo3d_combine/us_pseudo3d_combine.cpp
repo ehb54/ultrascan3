@@ -18,7 +18,7 @@
 #include "us_report.h"
 #include "us_constants.h"
 
-#define PA_TMDIS_MS 500   // default Plotall time per distro in milliseconds
+#define PA_TMDIS_MS 0   // default Plotall time per distro in milliseconds
 
 // main program
 int main( int argc, char* argv[] )
@@ -156,7 +156,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    QLabel* lb_plt_dlay   = us_label( tr( "Plot Loop Delay Seconds:" ) );
    lb_plt_dlay->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_plt_dlay   = us_counter( 3, 0.1, 30.0, 0.0 );
+   ct_plt_dlay   = us_counter( 3, 0.0, 30.0, 0.0 );
    ct_plt_dlay->setStep( 0.1 );
 //   QSettings settings( "UltraScan3", "UltraScan" );
 //   patm_dlay     = settings.value( "slideDelay", PA_TMDIS_MS ).toInt();
