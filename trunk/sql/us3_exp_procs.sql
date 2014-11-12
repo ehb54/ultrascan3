@@ -422,14 +422,16 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   e.experimentID, runID, type, runType, label
+        SELECT   e.experimentID, runID, type, runType, label,
+                 timestamp2UTC( dateUpdated ) AS UTC_dateUpdated
         FROM     experiment e, experimentPerson p
         WHERE    e.experimentID = p.experimentID
         AND      p.personID = p_ID
         ORDER BY runID;
    
       ELSE
-        SELECT   e.experimentID, runID, type, runType, label
+        SELECT   e.experimentID, runID, type, runType, label,
+                 timestamp2UTC( dateUpdated ) AS UTC_dateUpdated
         FROM     experiment e, experimentPerson p
         WHERE    e.experimentID = p.experimentID
         ORDER BY runID;
@@ -499,7 +501,7 @@ BEGIN
 
       SELECT   experimentGUID, projectID, runID, labID, instrumentID, 
                operatorID, rotorID, rotorCalibrationID, type, runTemp, label, comment, 
-               centrifugeProtocol, timestamp2UTC( dateUpdated) AS UTC_dateUpdated, 
+               centrifugeProtocol, timestamp2UTC( dateUpdated ) AS UTC_dateUpdated, 
                personID, runType, RIProfile
       FROM     experiment e, experimentPerson ep
       WHERE    e.experimentID = ep.experimentID
@@ -558,8 +560,8 @@ BEGIN
 
       SELECT projectID, ep.experimentID, experimentGUID, labID, instrumentID, 
              operatorID, rotorID, rotorCalibrationID, type, runTemp, label, comment, 
-             centrifugeProtocol, dateUpdated, personID,
-             runType, RIProfile
+             centrifugeProtocol, timestamp2UTC( dateUpdated ) AS UTC_dateUpdated, 
+             personID, runType, RIProfile
       FROM   experiment exp, experimentPerson ep
       WHERE  exp.experimentID   = ep.experimentID
       AND    ep.personID        = p_ID
@@ -586,8 +588,8 @@ BEGIN
 
       SELECT projectID, ep.experimentID, experimentGUID, labID, instrumentID, 
              operatorID, rotorID, rotorCalibrationID, type, runTemp, label, comment, 
-             centrifugeProtocol, dateUpdated, personID,
-             runType, RIProfile
+             centrifugeProtocol, timestamp2UTC( dateUpdated ) AS UTC_dateUpdated, 
+             personID, runType, RIProfile
       FROM   experiment exp, experimentPerson ep
       WHERE  exp.experimentID   = ep.experimentID
       AND    ep.personID        = @US3_ID

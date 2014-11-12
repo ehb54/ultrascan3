@@ -3,7 +3,7 @@
 #include <QApplication>
 
 #include "us_ga_init.h"
-#include "us_select_edits.h"
+#include "us_select_runs.h"
 #include "us_model_loader.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -2133,31 +2133,34 @@ void US_GA_Initialize::update_disk_db( bool isDB )
 {
    isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
 }
-
 // Select a prefilter for model distribution list
 void US_GA_Initialize::select_prefilt( void )
 {
    QString pfmsg;
-   int nedits = 0;
+   int nruns = 0;
    pfilts.clear();
 
-   US_SelectEdits sediag( dkdb_cntrls->db(), pfilts );
-   sediag.move( this->pos() + QPoint( 200, 200 ) );
-   connect( &sediag, SIGNAL( dkdb_changed  ( bool ) ),
+   US_SelectRuns srdiag( dkdb_cntrls->db(), pfilts );
+   srdiag.move( this->pos() + QPoint( 200, 200 ) );
+   connect( &srdiag, SIGNAL( dkdb_changed  ( bool ) ),
             this,    SLOT(   update_disk_db( bool ) ) );
 
-   if ( sediag.exec() == QDialog::Accepted )
-      nedits     = pfilts.size();
+   if ( srdiag.exec() == QDialog::Accepted )
+      nruns      = pfilts.size();
    else
       pfilts.clear();
 
-   if ( nedits == 0 )
+   if ( nruns == 0 )
       pfmsg = tr( "(none chosen)" );
 
-   else
-      pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );
+   else if ( nruns > 1 )
+      pfmsg = tr( "RunID prefilter - %1 run(s)" ).arg( nruns );
 
-DbgLv(1) << "PreFilt: pfilts[0]" << ((nedits>0)?pfilts[0]:"(none)");
+   else
+      pfmsg = tr( "RunID prefilter - 1 run: " ) +
+              QString( pfilts[ 0 ] ).left( 8 ) + "...";
+
+DbgLv(1) << "PreFilt: pfilts[0]" << ((nruns>0)?pfilts[0]:"(none)");
    le_prefilt->setText( pfmsg );
 }
 

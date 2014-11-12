@@ -57,6 +57,7 @@ HEADERS      = \
                us_run_details2.h        \
                us_sassoc.h              \
                us_select_edits.h        \
+               us_select_runs.h         \
                us_solution_gui.h        \
                us_spectrodata.h         \
                us_table.h               \
@@ -99,6 +100,7 @@ SOURCES      = \
                us_run_details2.cpp        \
                us_sassoc.cpp              \
                us_select_edits.cpp        \
+               us_select_runs.cpp         \
                us_solution_gui.cpp        \
                us_spectrodata.cpp         \
                us_table.cpp               \

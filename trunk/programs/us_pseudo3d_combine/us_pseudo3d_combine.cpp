@@ -5,7 +5,7 @@
 #include "us_pseudo3d_combine.h"
 #include "us_spectrodata.h"
 #include "us_remove_distros.h"
-#include "us_select_edits.h"
+#include "us_select_runs.h"
 #include "us_model.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -1245,24 +1245,29 @@ void US_Pseudo3D_Combine::update_disk_db( bool isDB )
 void US_Pseudo3D_Combine::select_prefilt( void )
 {
    QString pfmsg;
-   int nedits = 0;
+   int nruns  = 0;
    pfilts.clear();
 
-   US_SelectEdits sediag( dkdb_cntrls->db(), pfilts );
-   sediag.move( this->pos() + QPoint( 200, 200 ) );
-   connect( &sediag, SIGNAL( dkdb_changed  ( bool ) ),
+   US_SelectRuns srdiag( dkdb_cntrls->db(), pfilts );
+   srdiag.move( this->pos() + QPoint( 200, 200 ) );
+   connect( &srdiag, SIGNAL( dkdb_changed  ( bool ) ),
             this,    SLOT  ( update_disk_db( bool ) ) );
 
-   if ( sediag.exec() == QDialog::Accepted )
-      nedits        = pfilts.size();
+   if ( srdiag.exec() == QDialog::Accepted )
+      nruns         = pfilts.size();
    else
       pfilts.clear();
 
-   if ( nedits == 0 )
+   if ( nruns == 0 )
       pfmsg = tr( "(no prefilter)" );
 
+   else if ( nruns > 1 )
+      pfmsg = tr( "RunID prefilter - %1 runs: " ).arg( nruns )
+              + QString( pfilts[ 0 ] ).left( 20 ) + "*, ...";
+
    else
-      pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );
+      pfmsg = tr( "RunID prefilter - 1 run: " )
+              + QString( pfilts[ 0 ] ).left( 20 ) + " ...";
 
    le_prefilt->setText( pfmsg );
 }

@@ -5,7 +5,7 @@
 #include "us_mwls_pltctl.h"
 #include "us_license_t.h"
 #include "us_license.h"
-#include "us_select_edits.h"
+#include "us_select_runs.h"
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -383,12 +383,12 @@ void US_MwlSpectra::select_prefilt( )
 {
    pfilts.clear();
 
-   US_SelectEdits sediag( dkdb_cntrls->db(), pfilts );
-   sediag.move( this->pos() + QPoint( 200, 200 ) );
-   connect( &sediag, SIGNAL( dkdb_changed  ( bool ) ),
+   US_SelectRuns srdiag( dkdb_cntrls->db(), pfilts );
+   srdiag.move( this->pos() + QPoint( 200, 200 ) );
+   connect( &srdiag, SIGNAL( dkdb_changed  ( bool ) ),
             this,    SLOT  ( update_disk_db( bool ) ) );
 
-   if ( sediag.exec() != QDialog::Accepted )
+   if ( srdiag.exec() != QDialog::Accepted )
       pfilts.clear();
 }
 

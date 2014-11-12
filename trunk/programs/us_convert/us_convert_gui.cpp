@@ -1109,6 +1109,12 @@ DbgLv(1) << " enabCtl: tLx infsz" << tripListx << out_chaninfo.count();
         ( ExpData.label.isEmpty() )           ||
         ( ! rx.exactMatch( ExpData.project.projectGUID ) ) )
    {
+      if ( ! referenceDefined )
+      {
+         count++;
+         lw_todoinfo->addItem( QString::number( count )
+               + tr( ": Modify run ID (optional)" ) );
+      }
       count++;
       lw_todoinfo->addItem( QString::number( count )
             + tr( ": Edit run information" ) );
@@ -1220,6 +1226,8 @@ void US_ConvertGui::runIDChanged( void )
 
    // If the runID has changed, a number of other things need to change too,
    // for instance GUID's.
+   if ( referenceDefined )
+      cancel_reference();
    ExpData.clear();
    foreach( US_Convert::TripleInfo tripinfo, all_tripinfo )
       tripinfo.clear();
@@ -2441,11 +2449,13 @@ void US_ConvertGui::start_reference( const QwtDoublePoint& p )
 // Select end point of reference scan in intensity data
 void US_ConvertGui::process_reference( const QwtDoublePoint& p )
 {
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-
    // Just in case we get a second click message right away
    if ( fabs( p.x() - reference_start ) < 0.005 ) return;
 
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+   le_status->setText( tr( "The reference scans are being defined..." ) );
+   qApp->processEvents();
    reference_end = p.x();
    draw_vline( reference_end );
    data_plot->replot();
@@ -2483,6 +2493,7 @@ void US_ConvertGui::process_reference( const QwtDoublePoint& p )
    referenceDefined = true;
 DbgLv(1) << "CGui: (6)referDef=" << referenceDefined;
    enableSaveBtn();
+   enableRunIDControl( false );
    le_status->setText( tr( "The reference scans have been defined." ) );
    qApp->processEvents();
 }
@@ -2679,6 +2690,9 @@ DbgLv(1) << "CGui: show_intensity  scn1 scnn" << scan_nbrs[0]
 // Un-do reference scans apply
 void US_ConvertGui::cancel_reference( void )
 {
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   le_status->setText( tr( "The reference scans are being canceled..." ) );
+   qApp->processEvents();
    int wvoff    = 0;
    int rscans   = ExpData.RI_nscans;
 
@@ -2755,6 +2769,7 @@ DbgLv(1) << "CGui: (8)referDef=" << referenceDefined;
    enableSaveBtn();
 
    le_status->setText( tr( "The reference scans have been canceled." ) );
+   QApplication::restoreOverrideCursor();
    qApp->processEvents();
 }
 
