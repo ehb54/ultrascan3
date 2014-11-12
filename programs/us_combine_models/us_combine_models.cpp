@@ -10,7 +10,7 @@
 #include "us_license.h"
 #include "us_passwd.h"
 #include "us_editor.h"
-#include "us_select_edits.h"
+#include "us_select_runs.h"
 #include "us_model_loader.h"
 #include "us_db2.h"
 #include "us_util.h"
@@ -61,8 +61,8 @@ US_CombineModels::US_CombineModels() : US_Widgets()
    mainLayout->addWidget( lb_main,     row++, 0, 1, 4 );
    mainLayout->addWidget( lw_models,   row++, 0, 1, 4 );
    mainLayout->addLayout( dkdb_cntrls, row++, 0, 1, 4 );
-   mainLayout->addWidget( pb_prefilt,  row,   0, 1, 2 );
-   mainLayout->addWidget( le_prefilt,  row++, 2, 1, 2 );
+   mainLayout->addWidget( pb_prefilt,  row,   0, 1, 1 );
+   mainLayout->addWidget( le_prefilt,  row++, 1, 1, 3 );
    mainLayout->addWidget( pb_add,      row,   0, 1, 2 );
    mainLayout->addWidget( pb_reset,    row++, 2, 1, 2 );
    mainLayout->addWidget( pb_save,     row,   0, 1, 2 );
@@ -85,9 +85,9 @@ US_CombineModels::US_CombineModels() : US_Widgets()
    lw_models ->setToolTip(
       tr( "List of models to combine for a global model" ) );
    pb_prefilt->setToolTip(
-      tr( "Choose RunIDs/Edits to pre-filter the models list" ) );
+      tr( "Choose RunIDs to pre-filter the models list" ) );
    le_prefilt->setToolTip(
-      tr( "Chosen RunIDs/Edits pre-filter to the models list" ) );
+      tr( "Chosen RunID pre-filter to the models list" ) );
    pb_add    ->setToolTip(
       tr( "Add to the list of component models" ) );
    pb_reset  ->setToolTip(
@@ -330,24 +330,29 @@ void US_CombineModels::update_disk_db( bool isDB )
 void US_CombineModels::select_filt( void )
 {
    QString pfmsg;
-   int nedits    = 0;
+   int nruns     = 0;
    pfilts.clear();
 
-   US_SelectEdits sediag( dkdb_cntrls->db(), pfilts );
-   sediag.move( this->pos() + QPoint( 200, 200 ) );
-   connect( &sediag, SIGNAL( dkdb_changed  ( bool ) ),
+   US_SelectRuns srdiag( dkdb_cntrls->db(), pfilts );
+   srdiag.move( this->pos() + QPoint( 200, 200 ) );
+   connect( &srdiag, SIGNAL( dkdb_changed  ( bool ) ),
             this,    SLOT  ( update_disk_db( bool ) ) );
 
-   if ( sediag.exec() == QDialog::Accepted )
-      nedits        = pfilts.size();
+   if ( srdiag.exec() == QDialog::Accepted )
+      nruns         = pfilts.size();
    else
       pfilts.clear();
 
-   if ( nedits == 0 )
+   if ( nruns == 0 )
       pfmsg = tr( "(none chosen)" );
 
+   else if ( nruns == 1 )
+      pfmsg = tr( "RunID prefilter - 1 run: " )
+              + QString( pfilts[ 0 ] ).left( 20 ) + "...";
+
    else
-      pfmsg = tr( "Run ID prefilter - %1 edit(s)" ).arg( nedits );
+      pfmsg = tr( "RunID prefilter - %1 runs: " ).arg( nruns )
+              + QString( pfilts[ 0 ] ).left( 20 ) + "*,...";
 
    le_prefilt->setText( pfmsg );
 }

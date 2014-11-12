@@ -15,7 +15,7 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
       US_Model& amodel, QString& adescr, const QString eGUID )
   :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
    omodel( amodel ), odescr( adescr ), omodels( wmodels ), odescrs( mdescrs ),
-   editIDs( weditIDs )
+   runIDs( wrunIDs )
 {
    multi    = false;
    editGUID = eGUID;
@@ -23,12 +23,12 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
    build_dialog();
 }
 
-// Alternate constructor for loading a single model (with editIDs)
+// Alternate constructor for loading a single model (with runIDs)
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
-      US_Model& amodel, QString& adescr, QStringList& aeditIDs )
+      US_Model& amodel, QString& adescr, QStringList& arunIDs )
   :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
    omodel( amodel ), odescr( adescr ), omodels( wmodels ), odescrs( mdescrs ),
-   editIDs( aeditIDs )
+   runIDs( arunIDs )
 {
    multi    = false;
    editGUID = "";
@@ -39,10 +39,10 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 // Alternate constructor that allows loading multiple models
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
    QList< US_Model >& amodels, QStringList& adescrs,
-   QStringList& aeditIDs )
+   QStringList& arunIDs )
    :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
    omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ),
-   editIDs( aeditIDs )
+   runIDs( arunIDs )
 {
    multi    = true;
    editGUID = "";
@@ -50,12 +50,12 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
    build_dialog();
 }
 
-// Alternate constructor that allows loading multiple models (no editIDs list)
+// Alternate constructor that allows loading multiple models (no runIDs list)
 US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
    QList< US_Model >& amodels, QStringList& adescrs )
    :US_WidgetsDialog( 0, 0 ), loadDB( dbSrc ), dsearch( search ),
    omodel( model ), odescr( search ), omodels( amodels ), odescrs( adescrs ),
-   editIDs( weditIDs )
+   runIDs( wrunIDs )
 {
    multi    = true;
    editGUID = "";
@@ -66,7 +66,7 @@ US_ModelLoader::US_ModelLoader( bool dbSrc, QString& search,
 // Main shared method to build the model loader dialog
 void US_ModelLoader::build_dialog( void )
 {
-qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
+qDebug() << "ML:BD: runIDs empty" << runIDs.isEmpty();
    setWindowTitle( multi ? tr( "Load Distribution Model(s)" )
                          : tr( "Load Distribution Model" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -110,8 +110,10 @@ qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
 
    QString edGUID  = editGUID;
    do_single       = false;
-   can_edit        = ( editIDs.size() > 0  ||  !editGUID.isEmpty() );
+   can_edit        = !editGUID.isEmpty();
+   can_run         = ( runIDs.size() > 0 );
    do_edit         = can_edit;
+   do_run          = can_run;
    do_manual       = false;
    do_unasgn       = false;
 
@@ -123,7 +125,6 @@ qDebug() << "ML:BD: editIDs empty" << editIDs.isEmpty();
 
       if ( ( do_manual || do_unasgn )  &&  can_edit )
       {
-         edGUID          = ( editIDs.size() > 0 ) ? editIDs[ 0 ] : edGUID;
          do_edit         = ( edGUID == "1" );
       }
 
@@ -166,8 +167,8 @@ qDebug() << "Bld: single" << do_single << " manual" << do_manual
 
    QGridLayout* lo_single  = us_checkbox( tr( "Monte Carlo Singles" ),
                                           ck_single,  do_single );
-   QGridLayout* lo_edit    = us_checkbox( tr( "Filter by Edit" ),
-                                          ck_edit,    do_edit   );
+   QGridLayout* lo_edit    = us_checkbox( tr( "Filter by Edit/Run" ),
+                                          ck_edit,    do_edit || do_run );
    QGridLayout* lo_unasgn  = us_checkbox( tr( "Edit-Unassigned Only" ),
                                           ck_unasgn,  do_unasgn || do_manual );
    int arow   = 0;
@@ -322,13 +323,13 @@ QDateTime time2=QDateTime::currentDateTime();
    QString mfilt = le_mfilter->text();
    le_mfilter->disconnect( SIGNAL( textChanged( const QString& ) ) );
    bool listdesc = !mfilt.isEmpty();         // description filtered?
-   bool listedit = do_edit;                  // edit filtered?
+   bool listedit = do_edit || do_run;        // edit filtered?
    bool listsing = do_single;                // show singles of MC groups?
    bool listall  = !listdesc;                // unfiltered by description?
    QRegExp mpart = QRegExp( ".*" + mfilt + ".*", Qt::CaseInsensitive );
    model_descriptions.clear();               // clear model descriptions
 qDebug() << "LM: desc single edit" << listdesc << listsing << listedit
- << "editGUID" << editGUID << "nedits" << editIDs.size();
+ << "editGUID" << editGUID << "nruns" << runIDs.size();
    int kmmnew    = 0;
    int kmmold    = 0;
    int kmmmod    = 0;
@@ -337,11 +338,11 @@ qDebug() << "LM: desc single edit" << listdesc << listsing << listedit
    {  // filter is not empty
       listedit      = listedit | do_edit;
 
-      if ( listedit  &&  ! can_edit )
-      {  // disallow edit filter if no edit GUID has been given
+      if ( listedit  &&  ! can_edit   &&  ! can_run )
+      {  // disallow edit filter if no edit GUID and no runs have been given
          QMessageBox::information( this,
                tr( "Edit GUID Problem" ),
-               tr( "No Edit GUID(s) given.\nEdit filter turned off." ) );
+               tr( "No EditGUID/runIDs given.\nEdit filter turned off." ) );
          listall  = true;
          listdesc = false;
          listedit = false;
@@ -404,10 +405,10 @@ qDebug() << "  db_id1 db_id2" << db_id1 << db_id2;
 qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
          model_descrs_recs.clear();
          query.clear();
-         int nedits     = editIDs.size();
+         int nruns      = runIDs.size();
          QString editID = editGUID;
 
-         if ( nedits == 0  &&  ! editGUID.isEmpty() )
+         if ( nruns == 0  &&  ! editGUID.isEmpty() )
          {
             if ( editID != "1" )
             {
@@ -420,19 +421,115 @@ qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
          }
 qDebug() << "        edit GUID,ID" << editGUID << editID;
 
-         int kedits     = listedit ? qMax( nedits, 1 ) : 1;
-
-         for ( int ii = 0; ii < kedits; ii++ )
+#if 0
+         //int kedits     = listedit ? qMax( nedits, 1 ) : 1;
+         query.clear();
+         query << "all_editedDataIDs" << invID;
+         QStringList edGUIDs;
+         dbP->query( query );
+         while ( dbP->next() )
          {
-qDebug() << "     ii kedits nedits" << ii << kedits << nedits;
+            QString eID      = dbP->value( 0 ).toString();
+            QString eGUID    = dbP->value( 9 ).toString();
+            if ( editIDs.contains( eID ) )
+               edGUIDs << eGUID;
+         }
+
+         query.clear();
+         query << "get_model_desc" << invID;
+         dbP->query( query );
+time2=QDateTime::currentDateTime();
+qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
+
+         while ( dbP->next() )
+         {
+            ModelDesc desc;
+            desc.DB_id       = dbP->value( 0 ).toString();
+            desc.modelGUID   = dbP->value( 1 ).toString();
+            desc.description = dbP->value( 2 ).toString();
+            desc.editGUID    = dbP->value( 5 ).toString();
+
+            desc.filename.clear();
+            desc.reqGUID     = desc.description.section( ".", -2, -2 )
+                                               .section( "_",  0,  3 );
+            desc.iterations  = ( desc.description.contains( "-MC" )
+                              && desc.description.contains( "_mc" ) ) ? 1: 0;
+            bool skip_it     = false;
+
+            if ( desc.description.simplified().length() < 2 )
+            {
+               desc.description = " ( ID " + desc.DB_id
+                                  + tr( " : empty description )" );
+            }
+//qDebug() << "   desc" << desc.description << "DB_id" << desc.DB_id;
+
+            if ( do_manual )
+            {  // If MANUAL, select only type Manual
+               skip_it          = ( desc.editGUID != uaGUID );
+
+               if ( desc.description.contains( "2DSA" )  ||
+                    desc.description.contains( "PCSA" )  ||
+                    desc.description.contains( "GA"   )  ||
+                    desc.description.contains( "-GL" )   ||
+                    desc.description.contains( "Custom" ) )
+                  skip_it          = true;
+qDebug() << "   (m)desc" << desc.description << "skip_it" << skip_it;
+             }
+
+            else if ( do_unasgn )
+            {  // If UnAssigned, select only type Manual/Custom/Global
+               skip_it          = ( desc.editGUID != uaGUID );
+qDebug() << "   (u)desc" << desc.description << "skip_it" << skip_it;
+            }
+
+            else if ( listedit &&  !edGUIDs.contains( desc.editGUID ) )
+               skip_it          = true;
+
+            if ( skip_it )
+               continue;
+
+qDebug() << "   desc.iters" << desc.iterations;
+            if ( desc.iterations > 0 )
+            {  // Accumulate counts for MC models
+               kmmmod++;
+               int mcndx        = desc.description.indexOf( "_mc" );
+qDebug() << "     mcndx" << mcndx << "descr" << desc.description;
+               if ( desc.description.contains( "_mcN" ) )
+               {
+                  kmmnew++;
+                  int nimods       = QString( desc.description )
+                                     .mid( mcndx + 4, 3 ).toInt();
+                  desc.iterations  = nimods;
+qDebug() << "     desc.iters(nimods)" << desc.iterations;
+               }
+
+               else if ( desc.description.contains( "_mc0001" ) )
+                  kmmold++;
+            }
+
+            model_descrs_recs << desc;   // add to full models list
+         }
+#endif
+#if 1
+         int kruns      = listedit ? qMax( nruns, 1 ) : 1;
+qDebug() << "    kruns listedit" << kruns << listedit;
+
+         for ( int ii = 0; ii < kruns; ii++ )
+         {
+qDebug() << "     ii kruns nruns" << ii << kruns << nruns;
             query.clear();
 time1=QDateTime::currentDateTime();
 
             if ( listedit  &&  can_edit )
             {
-               editID        = nedits > 0 ? editIDs[ ii ] : editID;
                query << "get_model_desc_by_editID"
                      << invID << editID;
+            }
+
+            else if ( listedit  &&  can_run )
+            {
+               query << "get_model_desc_by_runID"
+                     << invID << runIDs[ ii ];
             }
 
             else if ( do_manual || do_unasgn )
@@ -513,6 +610,7 @@ qDebug() << "     desc.iters(nimods)" << desc.iterations;
                model_descrs_recs << desc;   // add to full models list
             }
          }
+#endif
 QDateTime time3=QDateTime::currentDateTime();
 qDebug() << "a_m size" << model_descrs_recs.size()
  << "m_d size" << model_descriptions.size();
@@ -551,8 +649,8 @@ qDebug() << "   fn size" << f_names.size();
          QXmlStreamAttributes attr;
 
          model_descrs_recs.clear();
-         int nedits     = editIDs.size();
-qDebug() << "nedits" << nedits << "editGUID" << editGUID;
+         int nruns      = runIDs.size();
+qDebug() << "nruns" << nruns << "editGUID" << editGUID;
 
          for ( int ii = 0; ii < f_names.size(); ii++ )
          {
@@ -574,12 +672,18 @@ qDebug() << "fname" << f_names[ii] << "do_manual" << do_manual;
                {  // Pick up model attributes for description
                   attr             = xml.attributes();
                   QString edGUID   = attr.value( "editGUID"    ).toString();
+                  QString descript = attr.value( "description" ).toString();
+                  QString runID    = QString( descript ).section( ".", 0, -4);
                   QString mCarl    = attr.value( "monteCarlo"  ).toString();
                   int iters        = mCarl.toInt();
 
-                  if ( do_edit  &&
-                       ( ( nedits > 0  &&  ! editIDs.contains( edGUID ) )  ||
-                         ( !editGUID.isEmpty()  &&  edGUID != editGUID ) ) )
+                  bool skip_it     = false;
+
+                  if ( do_edit  &&  edGUID != editGUID )
+                     skip_it          = true;
+                  if ( do_run  &&  !runIDs.contains( runID ) )
+                     skip_it          = true;
+                  if ( skip_it )
                      continue;
 
 qDebug() << "  nimods" << nimods << "edGUID" << edGUID << "iters" << iters;
@@ -590,7 +694,7 @@ qDebug() << "  nimods" << nimods << "edGUID" << edGUID << "iters" << iters;
                   }
 
                   ModelDesc desc;
-                  desc.description = attr.value( "description" ).toString();
+                  desc.description = descript;
                   desc.modelGUID   = attr.value( "modelGUID"   ).toString();
                   desc.filename    = fname;
                   desc.DB_id       = "-1";
@@ -701,7 +805,7 @@ qDebug() << " (3)m_d size" << model_descriptions.size();
 
    if ( listall )
    {  // No filtering or filter by edit already done
-      for ( int jj = 0; jj < model_descrs_recs.size(); jj++ )
+      for ( int jj = 0; jj < model_descrs_ufilt.size(); jj++ )
       {
          model_descriptions << model_descrs_ufilt[ jj ];
       }
@@ -709,7 +813,7 @@ qDebug() << " (3)m_d size" << model_descriptions.size();
 
    else
    {  // Filter by model description sub-string
-      for ( int jj = 0; jj < model_descrs_recs.size(); jj++ )
+      for ( int jj = 0; jj < model_descrs_ufilt.size(); jj++ )
       {
          if ( model_descrs_recs[ jj ].description.contains( mpart  ) )
          {  // description filter matches
@@ -1123,6 +1227,7 @@ void US_ModelLoader::singles_list( void )
       ModelDesc mdesc     = model_descrs_recs[ ii ];
       mdesc.rec_index     = ii;
       int mindx           = mdesc.description.indexOf( "_mcN" );
+qDebug() << "SL: ii" << ii << "mindx" << mindx;
 
       if ( mindx < 0 )
       {  // For non-MC-composite, just duplicate
@@ -1135,12 +1240,14 @@ void US_ModelLoader::singles_list( void )
          QString cmiter      = QString( cdtext ).mid( mindx, 7 );
          int niters          = QString( cmiter ).mid( 4 ).toInt();
          mdesc.iterations    = niters;
+qDebug() << "SL:   niters" << niters << "cmiter" << cmiter;
 
          for ( int jj = 1; jj <= niters; jj++ )
          {  // Create and append a description for each iteration model
             QString imiter      = QString().sprintf( "_mc%04d", jj );
             ModelDesc idesc     = mdesc;
             idesc.description   = QString( cdtext ).replace( cmiter, imiter );
+qDebug() << "SL:     jj" << jj << "imiter" << imiter;
          
             model_descrs_ufilt << idesc;
          }
@@ -1191,8 +1298,7 @@ void US_ModelLoader::change_unasgn( bool ckunasgn )
 
       if ( can_edit )
       {
-         QString edGUID  = ( editIDs.size() > 0 ) ? editIDs[ 0 ] : editGUID;
-         do_edit         = ( edGUID == "1" );
+         do_edit         = ( editGUID == "1" );
       }
 
       ck_edit  ->setChecked( do_edit );
