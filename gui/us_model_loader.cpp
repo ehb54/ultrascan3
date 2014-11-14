@@ -343,9 +343,9 @@ qDebug() << "LM: desc single edit" << listdesc << listsing << listedit
          QMessageBox::information( this,
                tr( "Edit GUID Problem" ),
                tr( "No EditGUID/runIDs given.\nEdit filter turned off." ) );
-         listall  = true;
-         listdesc = false;
          listedit = false;
+         listdesc = listsing;
+         listall  = !listdesc;
       }
 
       if ( listsing )
@@ -421,96 +421,6 @@ qDebug() << "        db_id1 db_id2" << db_id1 << db_id2;
          }
 qDebug() << "        edit GUID,ID" << editGUID << editID;
 
-#if 0
-         //int kedits     = listedit ? qMax( nedits, 1 ) : 1;
-         query.clear();
-         query << "all_editedDataIDs" << invID;
-         QStringList edGUIDs;
-         dbP->query( query );
-         while ( dbP->next() )
-         {
-            QString eID      = dbP->value( 0 ).toString();
-            QString eGUID    = dbP->value( 9 ).toString();
-            if ( editIDs.contains( eID ) )
-               edGUIDs << eGUID;
-         }
-
-         query.clear();
-         query << "get_model_desc" << invID;
-         dbP->query( query );
-time2=QDateTime::currentDateTime();
-qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
-
-         while ( dbP->next() )
-         {
-            ModelDesc desc;
-            desc.DB_id       = dbP->value( 0 ).toString();
-            desc.modelGUID   = dbP->value( 1 ).toString();
-            desc.description = dbP->value( 2 ).toString();
-            desc.editGUID    = dbP->value( 5 ).toString();
-
-            desc.filename.clear();
-            desc.reqGUID     = desc.description.section( ".", -2, -2 )
-                                               .section( "_",  0,  3 );
-            desc.iterations  = ( desc.description.contains( "-MC" )
-                              && desc.description.contains( "_mc" ) ) ? 1: 0;
-            bool skip_it     = false;
-
-            if ( desc.description.simplified().length() < 2 )
-            {
-               desc.description = " ( ID " + desc.DB_id
-                                  + tr( " : empty description )" );
-            }
-//qDebug() << "   desc" << desc.description << "DB_id" << desc.DB_id;
-
-            if ( do_manual )
-            {  // If MANUAL, select only type Manual
-               skip_it          = ( desc.editGUID != uaGUID );
-
-               if ( desc.description.contains( "2DSA" )  ||
-                    desc.description.contains( "PCSA" )  ||
-                    desc.description.contains( "GA"   )  ||
-                    desc.description.contains( "-GL" )   ||
-                    desc.description.contains( "Custom" ) )
-                  skip_it          = true;
-qDebug() << "   (m)desc" << desc.description << "skip_it" << skip_it;
-             }
-
-            else if ( do_unasgn )
-            {  // If UnAssigned, select only type Manual/Custom/Global
-               skip_it          = ( desc.editGUID != uaGUID );
-qDebug() << "   (u)desc" << desc.description << "skip_it" << skip_it;
-            }
-
-            else if ( listedit &&  !edGUIDs.contains( desc.editGUID ) )
-               skip_it          = true;
-
-            if ( skip_it )
-               continue;
-
-qDebug() << "   desc.iters" << desc.iterations;
-            if ( desc.iterations > 0 )
-            {  // Accumulate counts for MC models
-               kmmmod++;
-               int mcndx        = desc.description.indexOf( "_mc" );
-qDebug() << "     mcndx" << mcndx << "descr" << desc.description;
-               if ( desc.description.contains( "_mcN" ) )
-               {
-                  kmmnew++;
-                  int nimods       = QString( desc.description )
-                                     .mid( mcndx + 4, 3 ).toInt();
-                  desc.iterations  = nimods;
-qDebug() << "     desc.iters(nimods)" << desc.iterations;
-               }
-
-               else if ( desc.description.contains( "_mc0001" ) )
-                  kmmold++;
-            }
-
-            model_descrs_recs << desc;   // add to full models list
-         }
-#endif
-#if 1
          int kruns      = listedit ? qMax( nruns, 1 ) : 1;
 qDebug() << "    kruns listedit" << kruns << listedit;
 
@@ -610,10 +520,10 @@ qDebug() << "     desc.iters(nimods)" << desc.iterations;
                model_descrs_recs << desc;   // add to full models list
             }
          }
-#endif
 QDateTime time3=QDateTime::currentDateTime();
 qDebug() << "a_m size" << model_descrs_recs.size()
  << "m_d size" << model_descriptions.size();
+
          if ( !listsing )
             records_list();         // Default: list based on model records
 
@@ -677,13 +587,9 @@ qDebug() << "fname" << f_names[ii] << "do_manual" << do_manual;
                   QString mCarl    = attr.value( "monteCarlo"  ).toString();
                   int iters        = mCarl.toInt();
 
-                  bool skip_it     = false;
-
-                  if ( do_edit  &&  edGUID != editGUID )
-                     skip_it          = true;
-                  if ( do_run  &&  !runIDs.contains( runID ) )
-                     skip_it          = true;
-                  if ( skip_it )
+                  // Skip save if filtering and edit/run mismatch
+                  if ( ( do_edit  &&  edGUID != editGUID )  ||
+                       ( do_run   &&  !runIDs.contains( runID ) ) )
                      continue;
 
 qDebug() << "  nimods" << nimods << "edGUID" << edGUID << "iters" << iters;

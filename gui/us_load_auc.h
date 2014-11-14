@@ -66,21 +66,27 @@ class US_GUI_EXTERN US_LoadAUC : public US_WidgetsDialog
       US_Help      showHelp;
 
       int          personID;
+      bool         sel_run;
+      QString      runID_sel;
       QTreeWidget* tree;
       QPushButton* pb_invest;
       QLineEdit*   le_invest;
       QLineEdit*   le_search;
+      QTextEdit*   te_notes;
 
       void populate_tree      ( void );       
       void show_data_info     ( QPoint );
       int  scan_db            ( void );
       int  scan_disk          ( void );
+      int  scan_run_db        ( void );
+      int  scan_run_disk      ( void );
       void create_descs       ( QStringList&, QStringList&, int );
       void load_db            ( QList< DataDesc >& );
       void load_disk          ( QList< DataDesc >& );
 
    private slots:
       void    load               ( void );
+      void    fill_in            ( void );
       void    expand             ( void );
       void    collapse           ( void );
       void    sel_investigator   ( void );

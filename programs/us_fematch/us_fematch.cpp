@@ -722,15 +722,16 @@ void US_FeMatch::data_plot( void )
    if ( !dataLoaded )
       return;
 
-   int drow    = lw_triples->currentRow();
-   edata       = &dataList[ drow ];
+   int drow          = lw_triples->currentRow();
+   edata             = &dataList[ drow ];
+   QString triple    = QString( triples.at( drow ) ).replace( " / ", "/" );
    QString                            dataType = tr( "Absorbance" );
    if ( edata->dataType == "RI" )     dataType = tr( "Intensity" );
    if ( edata->dataType == "WI" )     dataType = tr( "Intensity" );
    if ( edata->dataType == "IP" )     dataType = tr( "Interference" );
    if ( edata->dataType == "FI" )     dataType = tr( "Fluourescence" );
    data_plot2->setTitle(
-      tr( "Velocity Data for " ) + edata->runID );
+      tr( "Velocity Data for " ) + triple + " of\n" + edata->runID );
    data_plot2->setAxisTitle( QwtPlot::yLeft,
       dataType + tr( " at " ) + edata->wavelength + tr( " nm" ) );
    data_plot2->setAxisTitle( QwtPlot::xBottom,
@@ -1356,7 +1357,7 @@ void US_FeMatch::distrib_type( )
 // Do stick type distribution plot
 void US_FeMatch::distrib_plot_stick( int type )
 {
-   QString pltitle = tr( "Run " ) + edata->runID + tr( ": Cell " )
+   QString pltitle = tr( "Run " ) + edata->runID + tr( " :\nCell " )
       + edata->cell + " (" + edata->wavelength + " nm)";
    QString xatitle;
    QString yatitle = tr( "Rel. Concentr." );
@@ -1445,7 +1446,7 @@ void US_FeMatch::distrib_plot_stick( int type )
 // Do 2d type distribution plot
 void US_FeMatch::distrib_plot_2d( int type )
 {
-   QString pltitle = tr( "Run " ) + edata->runID + tr( ": Cell " )
+   QString pltitle = tr( "Run " ) + edata->runID + tr( " :\nCell " )
       + edata->cell + " (" + edata->wavelength + " nm)";
    QString yatitle;
    QString xatitle;
@@ -1574,7 +1575,7 @@ void US_FeMatch::distrib_plot_2d( int type )
 // Do residuals type distribution plot
 void US_FeMatch::distrib_plot_resids( )
 {
-   QString pltitle = tr( "Run " ) + edata->runID + tr( ": Cell " )
+   QString pltitle = tr( "Run " ) + edata->runID + tr( " :\nCell " )
       + edata->cell + " (" + edata->wavelength + " nm)" + tr( "\nResiduals" );
    QString yatitle = tr( "OD Difference" );
    QString xatitle = tr( "Radius (cm)" );

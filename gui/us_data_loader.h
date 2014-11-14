@@ -47,48 +47,51 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
    private:
       US_Help showHelp;
 
-      class DataDesc   // description of each data set in the list presented
+      class DataDesc   // Description of each data set in the list presented
       {
          public:
-         QString runID;           // run identifier string
-         QString tripID;          // triple identifier string
-         QString editID;          // edit identifier string
-         QString label;           // identifying label for choice list
-         QString descript;        // full descriptive string
-         QString filename;        // file name
-         QString dataGUID;        // data Global Identifier
+         QString runID;           // Run identifier string
+         QString tripID;          // Triple identifier string
+         QString editID;          // Edit identifier string
+         QString label;           // Identifying label for choice list
+         QString descript;        // Full descriptive string
+         QString filename;        // File name
+         QString dataGUID;        // Data Global Identifier
          QString aucGUID;         // AUC GUID (same as dataGUID for raw)
-         QString date;            // date/time last updated
-         QString acheck;          // checksum + size of auc record
-         QString echeck;          // checksum + size of edit record
+         QString date;            // Date/time last updated
+         QString acheck;          // Checksum + size of auc record
+         QString echeck;          // Checksum + size of edit record
          QString elabel;          // Experiment (run) label
          int     DB_id;           // Edit database ID number
          int     exp_id;          // Experiment database ID number
          int     auc_id;          // AUC database ID number
-         int     tripknt;         // count of triples per run
-         int     tripndx;         // index of triple in run
-         int     editknt;         // count of edits per triple
-         int     editndx;         // index of edit in triple
-         bool    isEdit;          // flag:  is this edit? False->raw
-         bool    isLatest;        // flag:  are edits latest ones
+         int     tripknt;         // Count of triples per run
+         int     tripndx;         // Index of triple in run
+         int     editknt;         // Count of edits per triple
+         int     editndx;         // Index of edit in triple
+         bool    isEdit;          // Flag:  is this edit? False->raw
+         bool    isLatest;        // Flag:  are edits latest ones
       };
 
-      QMap< QString, DataDesc > datamap;  // map of labels,data-desc-objs
+      QMap< QString, DataDesc > datamap;  // Map of labels,data-desc-objs
 
-      DataDesc       ddesc;       // current selected data's description object
-      QStringList    dlabels;     // keys for datamap
+      DataDesc       ddesc;       // Current selected data's description object
+      QStringList    dlabels;     // Keys for datamap
 
-      QPushButton*   pb_invest;   // investigator button
+      QPushButton*   pb_invest;   // Investigator button
 
-      QLineEdit*     le_invest;   // investigator text entry
-      QLineEdit*     le_dfilter;  // data search filter text entry
+      QLineEdit*     le_invest;   // Investigator text entry
+      QLineEdit*     le_dfilter;  // Data search filter text entry
 
-      QTreeWidget*   tw_data;     // data list widget
+      QTextEdit*     te_notes;    // Notes text entry
+      QTreeWidget*   tw_data;     // Data list widget
 
-      bool           latest;      // current use-lastest-edit flag
+      bool           latest;      // Current use-lastest-edit flag
+      bool           sel_run;     // Run-is-selected flag
 
-      QString        dsearch;     // current data search string
-      QString        dinvtext;    // current data investigator string
+      QString        dsearch;     // Current data search string
+      QString        dinvtext;    // Current data investigator string
+      QString        runID_sel;   // Currently selected run
 
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
@@ -103,6 +106,8 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       void describe       ( void );
       void scan_dbase_edit( void );
       void scan_local_edit( void );
+      void scan_dbase_runs( void );
+      void scan_local_runs( void );
       void pare_to_latest ( void );
       void pare_latest_mwl( void );
       void show_data_info ( QPoint );
@@ -112,6 +117,7 @@ class US_GUI_EXTERN US_DataLoader : public US_WidgetsDialog
       void update_person  ( int  );
       void search         ( const QString& );
       void cancelled      ( void );
+      void selected       ( void );
       void accepted       ( void );
       void experiment_info( QString&, QString&, QString& );
       void help           ( void )
