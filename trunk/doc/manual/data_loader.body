@@ -13,7 +13,7 @@
     field allows the list to be pared down to those of interest. After a data
     set is selected in the list, a Load button passes experiment data to the
     caller.</p>
-    
+
     <table>
       <tr>
         <td>
@@ -25,7 +25,7 @@
               <b>Database</b> Check this radio button to generate a list from
               the database.
             </li>
-            
+
             <li>
               <b>Local Disk</b> Check this radio button to generate an edit
               list from local disk */ultrascan/results files.
@@ -38,33 +38,41 @@
               and select one. This button is disabled for normal non-privileged
               users and whenever Local Disk is selected.
             </li>
-            
+
             <li>
               <b>(investigator text)</b> This read-only text box displays the
               current investigator ID, last name, and first name.
             </li>
-            
+
             <li>
               <b>Search</b> As characters are entered in the text box to the
               right of the Search label, the list of data sets is modified to
               consist of matching entries. A blank field restores the full
               list. Note that the search is case-insensitive.
             </li>
-            
+
             <li>
               <b>(data list)</b> The list of data descriptions is generated
               either from local disk or db. Click on an entry to indicate
               your choice of edited data to load.
             </li>
-            
+
             <li>
               <b>Help</b> Click to bring up this documentation.
             </li>
-            
+
             <li>
               <b>Cancel</b> Click to close the dialog with no choices made.
             </li>
-            
+
+            <li>
+              <b>Show Edits</b> Click to transform the data list from showing
+              only runs to showing a data tree with triple and edit children.
+              If no Run List entry is selected, the entire data tree will be
+              transformed. If a Run is selected, only that run with its
+              triple and edit descendants will be shown.
+            </li>
+
             <li>
               <b>Load</b> Click to accept the choice(s) highlighted in the
               data list and pass data back to the caller.

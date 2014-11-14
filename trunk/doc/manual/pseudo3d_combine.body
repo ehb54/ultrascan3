@@ -135,12 +135,12 @@
 
             <li>
               <b>Select PreFilter(s)</b> Open a
-              <a href="select_edits.html">Models Pre-Filter dialog</a>
-              to select Run or Edit IDs on which to pre-filter lists of models
+              <a href="select_runs.html">Models Pre-Filter dialog</a>
+              to select Run IDs on which to pre-filter lists of models
               for loading. This can significantly reduce model loading time,
               particularly with large model counts in the database. The text
               box to the right of this button will display a summary of
-              runs or edits selected as pre-filters.
+              runs selected as pre-filters.
             </li>
 
             <li>
