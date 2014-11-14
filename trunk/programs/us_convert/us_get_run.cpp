@@ -106,31 +106,21 @@ qDebug() << "LdDb: IN";
       return;
    }
 
-   // Get all the experiment ID's
-   QStringList expIDs;
-   expIDs.clear();
+   // Get information we want about all experiments
+   runInfo.clear();
    QStringList q( "get_experiment_desc" );
    q << QString::number( US_Settings::us_inv_ID() );
    db.query( q );
+
    while( db.next() )
-      expIDs << db.value( 0 ).toString();
-qDebug() << "LdDb:  expIDs count" << expIDs.count();
-
-   // Now get information we want about each experiment
-   runInfo.clear();
-   foreach ( QString expID, expIDs )
    {
-      q.clear();
-      q  << QString( "get_experiment_info" )
-         << expID;
-      db.query( q );
-      db.next();
-
       RunInfo rr;
-      rr.ID     = expID.toInt();
-      rr.date   = db.value( 13 ).toString().section( " ", 0, 0 ).simplified();
-      rr.runID  = db.value(  2 ).toString();
-      rr.label  = db.value( 10 ).toString();
+      rr.ID     = db.value( 0 ).toString().toInt();
+      rr.runID  = db.value( 1 ).toString();
+      rr.label  = db.value( 4 ).toString();
+      rr.date   = US_Util::toUTCDatetimeText( db.value( 5 )
+                  .toDateTime().toString( Qt::ISODate ), true )
+                  .section( " ", 0, 0 ).simplified();
 //qDebug() << "expID" << expID << "ID date runID label"
 // << rr.ID << rr.date << rr.runID << rr.label;
 

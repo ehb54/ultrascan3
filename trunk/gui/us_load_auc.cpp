@@ -78,21 +78,22 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    QStringList headers;
    headers << tr( "Run|Triple" )
            << tr( "Date" )
-           << tr( "trDbID" )
+           << tr( "DbID" )
            << tr( "Label" );
    tree->setColumnCount( 4 );
    tree->setHeaderLabels( headers );
    tree->setSortingEnabled( false );
 
-   populate_tree();
-
-   QTextEdit* te_notes = new QTextEdit();
+   te_notes            = new QTextEdit();
    te_notes->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
    te_notes->setTextColor( Qt::blue );
    te_notes->setText( tr( "Right-mouse-button-click on a list selection"
                           " for details." ) );
    int font_ht = QFontMetrics( tr_font ).lineSpacing();
-   te_notes->setMaximumHeight( font_ht + 12 );
+   te_notes->setMaximumHeight( font_ht * 2 + 12 );
+
+   sel_run    = false;
+   populate_tree();
 
    // Button Row
    QHBoxLayout* buttons = new QHBoxLayout;
@@ -101,19 +102,22 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    QPushButton* pb_collapse = us_pushbutton( tr( "Collapse All" ) );
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_cancel   = us_pushbutton( tr( "Cancel" ) );
+   QPushButton* pb_fillin   = us_pushbutton( tr( "Fill In" ) );
    QPushButton* pb_accept   = us_pushbutton( tr( "Load" ) );
 
    buttons->addWidget( pb_expand );
    buttons->addWidget( pb_collapse );
    buttons->addWidget( pb_help );
    buttons->addWidget( pb_cancel );
+   buttons->addWidget( pb_fillin );
    buttons->addWidget( pb_accept );
 
-   connect( pb_expand,   SIGNAL( clicked() ), SLOT( expand() ) );
+   connect( pb_expand,   SIGNAL( clicked() ), SLOT( expand()   ) );
    connect( pb_collapse, SIGNAL( clicked() ), SLOT( collapse() ) );
-   connect( pb_help,     SIGNAL( clicked() ), SLOT( help() ) );
-   connect( pb_cancel,   SIGNAL( clicked() ), SLOT( reject() ) );
-   connect( pb_accept,   SIGNAL( clicked() ), SLOT( load() ) );
+   connect( pb_help,     SIGNAL( clicked() ), SLOT( help()     ) );
+   connect( pb_cancel,   SIGNAL( clicked() ), SLOT( reject()   ) );
+   connect( pb_fillin,   SIGNAL( clicked() ), SLOT( fill_in()  ) );
+   connect( pb_accept,   SIGNAL( clicked() ), SLOT( load()     ) );
 
    main->addLayout( dkdb_cntrls );
    main->addLayout( investigator );
@@ -130,6 +134,7 @@ void US_LoadAUC::load( void )
 {
    QList< QTreeWidgetItem* > items = tree->selectedItems();
    int nitems = items.count();
+   QList< DataDesc >  sdescs;
 
    if ( nitems == 0 )
    {
@@ -139,8 +144,59 @@ void US_LoadAUC::load( void )
       return;
    }
 
-   QList< DataDesc >  sdescs;
+   // If we are here after a whole-run load at stage 1 (top-level only),
+   //  then we fill out the data map for the selected run and load all AUCS.
+   if ( ! sel_run )
+   {
+      QTreeWidgetItem* item  = items[ 0 ];
+
+      while ( item->parent() != NULL )
+         item          = item->parent();
+
+      runID_sel     = item->text( 0 );         // Get the selected run ID
+      sel_run       = true;                    // Mark that a run is selected
+      datamap.clear();
+qDebug() << "Ed:Ld: runID_sel" << runID_sel;
+
+      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+      te_notes->setText( tr( "Gathering information on raw triples for"
+                             " run ID\n\"%1\"..." ).arg( runID_sel ) );
+      qApp->processEvents();
+      qApp->processEvents();
+
+      if ( dkdb_cntrls->db() )
+      {  // Scan database for AUC then load all of them
+         scan_db();
+
+         sdescs    = datamap.values();
+         te_notes->setText( tr( "Loading data from Database ..." )  );
+         qApp->processEvents();
+         qApp->processEvents();
+
+         load_db( sdescs );
+      }
+
+      else
+      {  // Scan local files for AUC then load all of them
+         scan_disk();
+
+         sdescs    = datamap.values();
+         te_notes->setText( tr( "Loading data from Local Disk ..." )  );
+         qApp->processEvents();
+         qApp->processEvents();
+
+         load_disk( sdescs );
+      }
+
+      QApplication::restoreOverrideCursor();
+      QApplication::restoreOverrideCursor();
+
+      accept();
+      return;
+   }
+
    QTreeWidgetItem*   item = items.at( 0 );
+qDebug() << "Ed:Ld: nitems" << items.size();
    int ntops  = 0;
    int nruns  = 0;
    QStringList tripls;
@@ -179,7 +235,7 @@ void US_LoadAUC::load( void )
       // Save a description of the selected item
       sdescs << ddesc;
    }
-qDebug() << "ntops" << ntops << "trips" << tripls.count()
+qDebug() << "Ed:Ld: ntops" << ntops << "trips" << tripls.count()
  << "nitems" << nitems << "nruns" << nruns;
 
    // Verify that selections are consistent
@@ -213,6 +269,9 @@ qDebug() << "ntops" << ntops << "trips" << tripls.count()
 
    // Load the actual data from DB or Disk
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   te_notes->setText( tr( "Loading data from " ) +
+                      ( dkdb_cntrls->db() ? tr("Database") : tr("Local Disk") )
+                      + " ..." );
 
    if ( dkdb_cntrls->db() )
       load_db  ( sdescs );
@@ -256,17 +315,45 @@ void US_LoadAUC::populate_tree( void )
    tree     ->clear();
    datamap   .clear();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+qDebug() << "Ed:Ptree: sel_run" << sel_run;
 
-   if ( dkdb_cntrls->db() )
-   {  // Scan database for AUC
-      naucf = scan_db();
+   if ( sel_run )
+   {  // A run has been selected, so scan for AUCs
+      if ( dkdb_cntrls->db() )
+      {  // Scan database for AUC
+         naucf = scan_db();
+      }
+
+      else
+      {  // Scan local files for AUC
+         naucf = scan_disk();
+      }
+
+      te_notes->setText( tr( "Right-mouse-button-click on a list selection"
+                             " for details.\n"
+                             "Select triples and click on \"Load\""
+                             " to load selected data." ) );
    }
 
    else
-   {  // Scan local files for AUC
-      naucf = scan_disk();
+   {  // No run is selected, so scan for runs
+      if ( dkdb_cntrls->db() )
+      {  // Scan database for runs
+         naucf = scan_run_db();
+      }
+
+      else
+      {  // Scan local files for runs
+         naucf = scan_run_disk();
+      }
+
+      te_notes->setText( tr( "Select a run, then click on \"Fill In\""
+                             " to fill in triples;\n"
+                             "or click on \"Load\" to load all triples"
+                             " data for the selected run." ) );
    }
 
+   qApp->processEvents();
    QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
 
@@ -353,6 +440,36 @@ void US_LoadAUC::collapse( void )
    }
 }
 
+// Fill in tree (AUC) children for a selected run
+void US_LoadAUC::fill_in( void )
+{
+   QList< QTreeWidgetItem* > selitems = tree->selectedItems();
+
+   if ( selitems.size() < 1 )
+   {  // "Fill In" with no run selected:  build full data tree
+      runID_sel    = "";
+      te_notes->setText( tr( "Reading AUC information to fully populate"
+                             " the list data tree..." ) );
+   }
+
+   else
+   {  // "Fill In" with run selected:  build a data tree for the selected run
+      QTreeWidgetItem* twi = selitems[ 0 ];
+      while ( twi->parent() != NULL )
+         twi          = twi->parent();
+
+      runID_sel    = twi->text( 0 );
+      te_notes->setText( tr( "Reading AUC information for run \"%1\",\n"
+                             " to populate its list data tree..." )
+                         .arg( runID_sel ) );
+   }
+
+   qApp->processEvents();
+   sel_run      = true;
+
+   populate_tree();
+}
+
 // Signal to the caller that Disk/DB choice has changed and repopulate tree
 void US_LoadAUC::update_disk_db( bool db )
 {
@@ -430,7 +547,8 @@ void US_LoadAUC::show_data_info( QPoint pos )
 // Scan for AUC entries in the database
 int US_LoadAUC::scan_db()
 {
-   int         naucf = 0;
+   int  naucf        = 0;
+   bool rfilter      = ! runID_sel.isEmpty();
    QStringList runIDs;
    QStringList infoDs;
    US_Passwd   pw;
@@ -455,6 +573,10 @@ int US_LoadAUC::scan_db()
       QString date      = db.value( 5 ).toString() + " UTC";
       QString rawGUID   = db.value( 7 ).toString();
       QString runID     = filename.section( ".",  0, -6 );
+
+      if ( rfilter  &&  runID != runID_sel )
+         continue;
+
       QString tripID    = filename.section( ".", -4, -2 );
       QString lkey      = runID + "." + tripID;
       QString idata     = label + "^" +
@@ -479,8 +601,9 @@ int US_LoadAUC::scan_db()
 // Scan for AUC files on local disk
 int US_LoadAUC::scan_disk()
 {
-   int         naucf    = 0;
-   QString     rdir     = US_Settings::resultDir();
+   int     naucf    = 0;
+   bool    rfilter  = ! runID_sel.isEmpty();
+   QString rdir     = US_Settings::resultDir();
    QStringList aucfilt( "*.auc" );
    QStringList runIDs;
    QStringList infoDs;
@@ -490,8 +613,18 @@ int US_LoadAUC::scan_disk()
    for ( int ii = 0; ii < aucdirs.size(); ii++ )
    {
       QString     subdir   = rdir + "/" + aucdirs.at( ii );
+//qDebug() << "ScDk: ii" << ii << "subdir" << subdir;
       QStringList aucfiles = QDir( subdir ).entryList(
             aucfilt, QDir::Files, QDir::Name );
+
+      if ( aucfiles.size() < 1 )
+         continue;
+
+      QString aucfbase     = aucfiles.at( 0 );
+      QString runID        = QString( aucfiles.at( 0 ) ).section( ".",  0, -6 );
+
+      if ( rfilter  &&  runID != runID_sel )
+         continue;
 
       for ( int jj = 0; jj < aucfiles.size(); jj++ )
       {
@@ -501,7 +634,7 @@ int US_LoadAUC::scan_disk()
          QString     tripID   = aucfbase.section( ".", -4, -2 );
          QString     lkey     = runID + "." + tripID;
          QString     label    = runID;
-//qDebug() << "ScDk: ii aucfbase" << ii << aucfbase << "lkey" << lkey;
+//qDebug() << "ScDk:   jj" << jj << "lkey" << lkey;
          QString     date     = US_Util::toUTCDatetimeText(
              QFileInfo( aucfname ).lastModified().toUTC()
              .toString( Qt::ISODate ), true );
@@ -573,6 +706,157 @@ int US_LoadAUC::scan_disk()
    create_descs( runIDs, infoDs, naucf );
 
    return naucf;
+}
+
+// Scan for Run entries in the database
+int US_LoadAUC::scan_run_db()
+{
+   int nruns         = 0;
+   QStringList runIDs;
+   QStringList infoDs;
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+        tr( "Could not connect to database\n" ) + db.lastError() );
+      return nruns;
+   }
+
+   QString rawGUID   = "(unknown)";
+   QString tripID    = "0.A.999";
+   QString filename  = "(unknown)";
+   QStringList q( "get_experiment_desc" );
+   q << QString::number( personID );
+   db.query( q );
+
+   while ( db.next() )
+   {  // Accumulate data description objects from database information
+      QString rawDataID = db.value( 0 ).toString();
+      QString runID     = db.value( 1 ).toString();
+      QString label     = db.value( 4 ).toString();
+      QString date      = db.value( 5 ).toString() + " UTC";
+
+      QString lkey      = runID + "." + tripID;
+      QString idata     = label + "^" +
+                          runID + "^" +
+                          tripID + "^" +
+                          filename + "^" +
+                          rawGUID + "^" +
+                          rawDataID + "^" +
+                          date;
+
+      runIDs << runID;    // Save each run
+      infoDs << idata;    // Save concatenated description string
+      nruns++;
+   }
+
+   // Create the data descriptions map
+   create_descs( runIDs, infoDs, nruns );
+   return nruns;
+}
+
+// Scan for Run entries on the local disk
+int US_LoadAUC::scan_run_disk()
+{
+   int nruns         = 0;
+   QString rawGUID   = "(unknown)";
+   QString tripID    = "0.A.999";
+   QString filename  = "(unknown)";
+   QString     rdir     = US_Settings::resultDir();
+   QStringList aucfilt( "*.auc" );
+   QStringList runIDs;
+   QStringList infoDs;
+   QStringList aucdirs  = QDir( rdir ).entryList(
+         QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
+
+   for ( int ii = 0; ii < aucdirs.size(); ii++ )
+   {
+      QString     subdir   = rdir + "/" + aucdirs.at( ii );
+      QStringList aucfiles = QDir( subdir ).entryList(
+            aucfilt, QDir::Files, QDir::Name );
+
+      if ( aucfiles.size() < 1 )
+         continue;
+
+      QString     aucfbase = aucfiles.at( 0 );
+      QString     aucfname = subdir + "/" + aucfbase;
+      QString     runID    = aucfbase.section( ".",  0, -6 );
+      QString     tripID   = aucfbase.section( ".", -4, -2 );
+      QString     lkey     = runID + "." + tripID;
+      QString     label    = runID;
+//qDebug() << "ScDk: ii aucfbase" << ii << aucfbase << "lkey" << lkey;
+      QString     date     = US_Util::toUTCDatetimeText(
+          QFileInfo( aucfname ).lastModified().toUTC()
+          .toString( Qt::ISODate ), true );
+
+      QString     xmlfbase = aucfbase.section( ".",  0, -5 ) + ".xml";
+      QString     xmlfname = subdir + "/" + xmlfbase;
+      QFile filei( xmlfname );
+//qDebug() << "ScDk:  xmlfbase" << xmlfbase;
+
+      if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         continue;
+
+      QString     rawGUID;
+      QString     rawDataID;
+      QXmlStreamReader xml( &filei );
+      QXmlStreamAttributes atts;
+
+      while ( ! xml.atEnd() )
+      {
+         QString rID;
+         QString rGUID;
+         QString cell;
+         QString chan;
+         QString wlen;
+         xml.readNext();
+
+         if ( xml.isStartElement() )
+         {
+            if ( xml.name() == "dataset" )
+            {
+               atts          = xml.attributes();
+               QString cell  = atts.value( "cell"       ).toString();
+               QString chan  = atts.value( "channel"    ).toString();
+               QString wlen  = atts.value( "wavelength" ).toString();
+               QString trip  = cell + "." + chan + "." + wlen;
+
+               if ( trip == tripID )
+               {
+                  rawDataID     = atts.value( "id"         ).toString();
+                  rawGUID       = atts.value( "guid"       ).toString();
+               }
+            }
+
+            else if ( xml.name() == "label" )
+            {
+               xml.readNext();
+               label         = xml.text().toString();
+            }
+         }
+      }
+
+      filei.close();
+      QString idata     = label + "^" +
+                          runID + "^" +
+                          tripID + "^" +
+                          aucfbase + "^" +
+                          rawGUID + "^" +
+                          rawDataID + "^" +
+                          date;
+      runIDs << runID;    // Save each run
+      infoDs << idata;    // Save concatenated description string
+      nruns++;
+//qDebug() << "ScDk: run" << runID << "naucf" << naucf << "label" << label;
+   }
+//qDebug() << "ScDk:   naucf" << naucf << "runs" << runIDs.size();
+
+   // Create the data descriptions map
+   create_descs( runIDs, infoDs, nruns );
+
+   return nruns;
 }
 
 // Create the data descriptions map with indecies and counts

@@ -41,42 +41,36 @@ US_DataLoader::US_DataLoader(
    main->setSpacing        ( 2 );
 
    // Top layout: buttons and fields above list widget
-   QGridLayout* top  = new QGridLayout;
-   int row           = 0;
+   QGridLayout* top    = new QGridLayout;
+   int row             = 0;
 
    // Disk/ DB
-   disk_controls = new US_Disk_DB_Controls( local );
+   disk_controls       = new US_Disk_DB_Controls( local );
    connect( disk_controls, SIGNAL( changed     ( bool ) ),
                            SLOT( update_disk_db( bool ) ) );
    top->addLayout( disk_controls, row++, 0, 1, 2 );
 
    // Investigator
    // Only enable the investigator button for privileged users
-   pb_invest = us_pushbutton( tr( "Select Investigator" ) );
-
-   int invlev = US_Settings::us_inv_level();
+   pb_invest           = us_pushbutton( tr( "Select Investigator" ) );
+   int invlev          = US_Settings::us_inv_level();
    pb_invest->setEnabled( ( invlev > 0 )  && disk_controls->db() );
    connect( pb_invest, SIGNAL( clicked() ), SLOT( get_person() ) );
    top->addWidget( pb_invest, row, 0 );
 
-   // Very light gray, for read-only line edits
-   QPalette gray = US_GuiSettings::editColor();
-   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   QString inv_name    = ( ( invlev > 0 )
+                         ? QString::number( US_Settings::us_inv_ID() ) + ": "
+                         : "" ) + US_Settings::us_inv_name();
 
-   QString name = ( invlev > 0 )
-                  ? QString::number( US_Settings::us_inv_ID() ) + ": "
-                  : "";
-
-   le_invest = us_lineedit( name + US_Settings::us_inv_name() );
-   le_invest->setPalette ( gray );
-   le_invest->setReadOnly( true );
+   le_invest           = us_lineedit( inv_name );
+   us_setReadOnly( le_invest, true );
    top->addWidget( le_invest, row++, 1 );
 
    // Search line
    QLabel* lb_filtdata = us_label( tr( "Search" ) );
    top->addWidget( lb_filtdata, row, 0 );
 
-   le_dfilter      = us_lineedit();
+   le_dfilter          = us_lineedit();
    top->addWidget( le_dfilter, row++, 1 );
 
    connect( le_dfilter,  SIGNAL( textChanged( const QString& ) ),
@@ -97,35 +91,42 @@ US_DataLoader::US_DataLoader(
    main->addWidget( tw_data );
 
    // Notes
-   QTextEdit* te_notes  = new QTextEdit();
+   te_notes             = new QTextEdit();
    te_notes->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
    te_notes->setTextColor( Qt::blue );
    te_notes->setText( tr( "Right-mouse-button-click on a list selection"
                           " for details." ) );
    int font_ht          = QFontMetrics( tw_font ).lineSpacing();
-   te_notes->setMaximumHeight( font_ht + 12 );
+   te_notes->setMaximumHeight( font_ht * 2 + 12 );
    main->addWidget( te_notes );
 
    // Button Row
    QHBoxLayout* buttons   = new QHBoxLayout;
-   QPushButton* pb_help   = us_pushbutton( tr( "Help"   ) );
-   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()      ) );
+   QPushButton* pb_help   = us_pushbutton( tr( "Help"    ) );
+   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel"  ) );
+   QPushButton* pb_fillin = us_pushbutton( tr( "Fill In" ) );
+   QPushButton* pb_accept = us_pushbutton( tr( "Load"    ) );
    buttons->addWidget( pb_help );
-   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
    buttons->addWidget( pb_cancel );
-   QPushButton* pb_accept = us_pushbutton( tr( "Load"   ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted()  ) );
+   buttons->addWidget( pb_fillin );
    buttons->addWidget( pb_accept );
+   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()      ) );
+   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
+   connect( pb_fillin, SIGNAL( clicked() ), SLOT( selected()  ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted()  ) );
 
    main->addLayout( buttons );
 
    // List from disk or db source
+   sel_run    = false;
    etype_filt = etype_filt.isEmpty() ? "velocity" : etype_filt.toLower();
-   list_data();
+
+   list_data();                // Populate an initial (runs) list
+
    resize( 720, 500 );
 }
 
+// Re-display the list after a change in the search field
 void US_DataLoader::search( const QString& search_string )
 {
    tw_data->setCurrentItem( NULL );
@@ -155,7 +156,11 @@ bool US_DataLoader::load_edit( void )
    foreach ( twi, selections )
    {
       while ( twi->parent() != NULL ) twi = twi->parent();
-      if ( ! topLevel.contains( twi ) ) topLevel << twi;
+      if ( ! topLevel.contains( twi ) )
+         topLevel << twi;
+
+      if ( ! sel_run )
+         break;
    }
 
    if ( topLevel.size() > 1 )
@@ -166,28 +171,71 @@ bool US_DataLoader::load_edit( void )
       return false;
    }
 
+   // If we are here after a whole-run load at stage 1 (top-level only),
+   //  then we must first fill out the data map for the selected run.
+   if ( ! sel_run )
+   {
+//qDebug() << "LdEd: sel_run=false : scan edits";
+      QTreeWidgetItem* twi  = selections[ 0 ];
+
+      while ( twi->parent() != NULL )
+         twi          = twi->parent();
+
+      runID_sel    = twi->text( 0 );     // Get the selected run ID
+      sel_run      = true;               // Mark run selected
+      datamap.clear();
+      dlabels.clear();
+
+      QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+      te_notes->setText( tr( "Gathering information on triples and edits"
+                             " for run ID\n\"%1\"..." ).arg( runID_sel ) );
+      qApp->processEvents();
+      qApp->processEvents();
+//qDebug() << "LdEd: gath info... message noted";
+
+      if ( disk_controls->db() )         // Scan database data
+      {
+         scan_dbase_edit();
+      }
+      else                               // Scan local disk data
+      {
+         scan_local_edit();
+      }
+//qDebug() << "LdEd: scan edit complete";
+
+      QApplication::restoreOverrideCursor();
+      QApplication::restoreOverrideCursor();
+      qApp->processEvents();
+      dlabels      = datamap.keys();     // Get keys for new mappings
+      sel_run      = false;              // Mark full edits data tree
+   }
+
    // Get a list of data to load
    int          index;
    QList< int > indexes;
 
-   foreach ( twi, selections )
-   {
-      index = twi->type();
-      if ( ! indexes.contains( index ) ) indexes << index;
-   }
-
-   // Disallow multiple EditIDs from the same triple
-   foreach ( index, indexes )
-   {
-      QString key    = dlabels[ index ];
-      QString triple = QString( datamap[ key ].tripID ).replace( ".", " / " );
-
-      if ( triples.contains( triple ) )
+   if ( selections.size() > 1  ||  selections[ 0 ]->parent() != NULL )
+   {  // Multiple selections, so test that they are valid
+      foreach ( twi, selections )
       {
-         QMessageBox::warning( this,
-               tr( "Invalid Selection" ),
-               tr( "Only one edit from each triple may be selected." ) );
-         return false;
+         index = twi->type();
+         if ( ! indexes.contains( index ) ) indexes << index;
+      }
+
+      // Disallow multiple EditIDs from the same triple
+      foreach ( index, indexes )
+      {
+         QString key    = dlabels[ index ];
+         QString triple = QString( datamap[ key ].tripID )
+                          .replace( ".", " / " );
+
+         if ( triples.contains( triple ) )
+         {
+            QMessageBox::warning( this,
+                  tr( "Invalid Selection" ),
+                  tr( "Only one edit from each triple may be selected." ) );
+            return false;
+         }
       }
    }
 
@@ -196,20 +244,37 @@ bool US_DataLoader::load_edit( void )
 
    if ( selections.size() == 1  &&  selections[ 0 ]->parent() == NULL )
    {
+qDebug() << "LdEd: Only 1 top-level item  dlabsize" << dlabels.size();
       indexes.clear();
-      twi = selections[ 0 ];
 
-      for ( int i = 0; i < twi->childCount(); i++ )
+      if ( sel_run )
       {
-         QTreeWidgetItem* child = twi->child( i );
-         if ( child == NULL ) continue;
+         twi = selections[ 0 ];
 
-         // Get type of grandchild
-         indexes << child->child( 0 )->type();
+         for ( int i = 0; i < twi->childCount(); i++ )
+         {
+            QTreeWidgetItem* child = twi->child( i );
+            if ( child == NULL ) continue;
+
+            // Get type (label index) of grandchild
+            indexes << child->child( 0 )->type();
+         }
+      }
+
+      else
+      {
+         for ( int ii = 0; ii < dlabels.size(); ii++ )
+            indexes << ii;
       }
    }
+else
+qDebug() << "LdEd: selsz" << selections.size() << "dlabsz" << dlabels.size();
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+   te_notes->setText( tr( "Loading data from " ) +
+                      ( disk_controls->db() ? "Database" : "Local Disk" ) +
+                      " ..." );
+   qApp->processEvents();
 
    if ( ! disk_controls->db() ) // Load files from local disk
    { 
@@ -263,7 +328,8 @@ bool US_DataLoader::load_edit( void )
          }
       }
    }
-   else // Load data from database
+
+   else                         // Load data from database
    { 
       US_Passwd   pw;
       US_DB2      db( pw.getPasswd() );
@@ -287,6 +353,7 @@ bool US_DataLoader::load_edit( void )
 
       // Read first selection from DB, then generate a map of AUCfile::idAUC
       ddesc             = datamap[ dlabels[ indexes[ 0 ] ] ];
+qDebug() << "LdEd: ndx0" << indexes[0] << "dlab0" << dlabels[indexes[0]];
       QString  recID    = QString::number( ddesc.DB_id );
       QString  runID    = ddesc.runID;
       QString  rdir     = US_Settings::resultDir();
@@ -304,6 +371,7 @@ qDebug() << "LdEd:TM:10: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
          int      idRec    = ddesc.DB_id;
          QString  dtriple  = ddesc.tripID;
          QString  triple   = QString( dtriple ).replace( ".", " / " );
+qDebug() << "LdEd:  ii" << ii << "ndxii" << indexes[ii] << "triple" << triple;
 
          triples << triple;
 
@@ -329,11 +397,11 @@ qDebug() << "LdEd:TM:10: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
          QString  afn      = uresdir + aucfn;
          int      idAUC    = ddesc.auc_id;
          efn               = uresdir + dscfname;
+         dnld_auc          = true;
 
-         QString message = tr( "Loading triple " ) + triple;
+         QString message   = tr( "Loading triple " ) + triple;
          emit progress( message );
          qApp->processEvents();
-
 
          if ( QFile( afn ).exists() )
          {  // AUC file exists, so only download if checksum mismatch
@@ -342,12 +410,16 @@ qDebug() << "LdEd:TM:10: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
             if ( ddesc.acheck.isEmpty() )
             {  // No database checksum+size, so get it
                QString aucID    = QString::number( idAUC );
+qDebug() << "LdEd: was-empty, aucID" << aucID << idAUC;
                query.clear();
                query << "get_rawData" << aucID;
                db.query( query );
+qDebug() << "LdEd: w-e, num_rows" << db.numRows();
                db.next();
+qDebug() << "LdEd: w-e, dberr" << db.lastErrno() << US_DB2::OK;
                ddesc.acheck     = db.value( 8 ).toString() + " " +
                                   db.value( 9 ).toString();
+qDebug() << "LdEd: was-empty, now acheck" << ddesc.acheck;
             }
 qDebug() << "LdEd: fcheck" << fcheck;
 qDebug() << "LdEd: acheck" << ddesc.acheck;
@@ -357,14 +429,16 @@ qDebug() << "LdEd: acheck" << ddesc.acheck;
 qDebug() << "LdEd: dnld_auc" << dnld_auc << "afn" << afn;
 
          if ( dnld_auc )
+         {
             db.readBlobFromDB( afn, "download_aucData", idAUC );
 qDebug() << "LdEd:  dnld_auc DONE" << dscfname << prvfname;
+         }
 
          if ( dscfname != prvfname )
          {
-            efn      = uresdir + dscfname;
-            prvfname = dscfname;
-            dnld_edt = true;
+            efn               = uresdir + dscfname;
+            prvfname          = dscfname;
+            dnld_edt          = true;
 
             if ( QFile( efn ).exists() )
             {  // Edit XML file exists, so only download if checksum mismatch
@@ -388,13 +462,13 @@ qDebug() << "LdEd:TM:11: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    }  // END: Load from DB
 
    QApplication::restoreOverrideCursor();
-   double                 dt = 0.0;
+   double dt    = 0.0;
    US_DataIO::EditedData ed;
 
    foreach( ed, editedData )
    {
       double delta = ed.temperature_spread();
-      dt = ( dt < delta ) ? delta : dt;
+      dt           = ( dt < delta ) ? delta : dt;
    }
 
    if ( dt > US_Settings::tempTolerance() )
@@ -466,29 +540,55 @@ void US_DataLoader::list_data()
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    datamap.clear();
 
-   if ( disk_controls->db() ) // Scan database data
-   {
-      scan_dbase_edit();
+   if ( sel_run )
+   {  // A run has been selected, so scan for edits
+      if ( disk_controls->db() ) // Scan database data
+      {
+         scan_dbase_edit();
+      }
+      else                       // Scan local disk data
+      {
+         scan_local_edit();
+      }
+
+      te_notes->setText( tr( "Right-mouse-button-click on a list selection"
+                             " for details.\n"
+                             "Select triples/edits and click on \"Load\""
+                             " to load selected data." ) );
    }
-   else                       // Scan local disk data
-   {
-      scan_local_edit();
+   else
+   {  // No run is selected, so scan for runs
+      if ( disk_controls->db() ) // Scan database data
+      {
+         scan_dbase_runs();
+      }
+      else                       // Scan local disk data
+      {
+         scan_local_runs();
+      }
+
+      te_notes->setText( tr( "Select a run, then click on \"Fill In\""
+                             " to fill in triples and edits;\n"
+                             "or click on \"Load\" to load all triples"
+                             " data for the selected run." ) );
    }
 
+   // Start building the data tree
+   qApp->processEvents();
    QStringList crlabels;
    QStringList hdrs;
    hdrs << tr( "Run|Triple|Edit" )
         << tr( "Date" )
-        << tr( "edDbID" )
+        << tr( "DbID" )
         << tr( "Label" );
    tw_data->clear();
    tw_data->setColumnCount( 4 );
    tw_data->setHeaderLabels( hdrs );
    tw_data->setSortingEnabled( false );
    
-   QTreeWidgetItem* twi_edit;
+   QTreeWidgetItem* twi_edit = NULL;
    QTreeWidgetItem* twi_runi = NULL;
-   QTreeWidgetItem* twi_trip;
+   QTreeWidgetItem* twi_trip = NULL;
 
    dlabels                   = datamap.keys();
    QList< DataDesc > ddescrs = datamap.values();
@@ -624,6 +724,37 @@ void US_DataLoader::cancelled()
    close();
 }
 
+// Select button:  fill in list tree for selected run
+void US_DataLoader::selected()
+{
+   QList< QTreeWidgetItem* > selitems = tw_data->selectedItems();
+
+   if ( selitems.size() < 1 )
+   {  // "Fill In" with no run selected:  build full data tree
+      runID_sel    = "";
+      te_notes->setText( tr( "Reading edit information to fully populate"
+                             " the list data tree..." ) );
+   }
+
+   else
+   {  // "Fill In" with run selected:  build a data tree for the selected run
+      QTreeWidgetItem* twi  = selitems[ 0 ];
+
+      while ( twi->parent() != NULL )
+         twi          = twi->parent();
+
+      runID_sel    = twi->text( 0 );
+      te_notes->setText( tr( "Reading edit information for run \"%1\",\n"
+                             " to populate its list data tree..." )
+                         .arg( runID_sel ) );
+   }
+
+   qApp->processEvents();
+   sel_run      = true;
+
+   list_data();
+}
+
 // Accept button:  set up to return data information
 void US_DataLoader::accepted()
 {
@@ -662,7 +793,8 @@ qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
       return;
    }
 
-   bool     tfilter  = ( etype_filt != "none" );
+   bool     tfilter  = ( etype_filt != "none" );     // Type filtering?
+   bool     rfilter  = ( ! runID_sel.isEmpty() );    // Run filtering?
    QString  tempdir  = US_Settings::tmpDir() + "/";
    QDir dir;
    if ( ! dir.exists( tempdir ) )
@@ -677,34 +809,25 @@ qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    QMap< QString, QString > aucIDs;
 qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    query.clear();
-#if 1
-#define USE_RAW_DESC
-#endif
-#ifdef USE_RAW_DESC
    query << "get_rawData_desc" << invID;
-#else
-   query << "all_rawDataIDs" << invID;
-#endif
    db.query( query );
 qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
    while( db.next() )
    {  // Accumulate a mapping of AUC Filename to DB ID
-      QString  aucID    = db.value( 0 ).toString();
-      QString  rLabel   = db.value( 1 ).toString();
-      QString  aFname   = db.value( 2 ).toString();
-      QString  expID    = db.value( 3 ).toString();
-#ifdef USE_RAW_DESC
-      QString  aucGUID  = db.value( 7 ).toString();
+      QString rLabel    = db.value( 1 ).toString();
+      QString aFname    = db.value( 2 ).toString();
+      QString runID     = QString( aFname ).section( ".", 0, -6 );
+
+//qDebug() << "ScDB:  rf" << rfilter << "rID rIDs" << runID << runID_sel;
+      if ( rfilter  &&  runID != runID_sel )
+         continue;
+
+      QString aucID     = db.value( 0 ).toString();
+      QString expID     = db.value( 3 ).toString();
+      QString aucGUID   = db.value( 7 ).toString();
       aucIDs[ aFname ]  = aucID + "^" + aucGUID + "^" + expID + "^" + rLabel;
-#else
-      QString  acheck   = db.value( 6 ).toString() + " " +
-                          db.value( 7 ).toString();
-acheck="";
-      QString  aucGUID  = db.value( 9 ).toString();
-      aucIDs[ aFname ]  = aucID + "^" + aucGUID + "^" + expID + "^" + rLabel
-                                + "^" + acheck;
-#endif
+//qDebug() << "ScDB:  aucIDs" << aucIDs[aFname] << "aF" << aFname;
    }
 
 qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
@@ -719,18 +842,28 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
    //  since we may need to download the content blob for some entries (MWL)
    while ( db.next() )
    {  // Accumulate edit record parameters from DB
-      QString recID    = db.value( 0 ).toString();
       QString etype    = db.value( 8 ).toString().toLower();
+
       if ( tfilter  &&  etype != etype_filt )
          continue;
+
+      QString recID    = db.value( 0 ).toString();
       QString descrip  = db.value( 1 ).toString();
       QString filename = db.value( 2 ).toString().replace( "\\", "/" );
+      QString filebase = filename.section( "/", -1, -1 );
+      QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
+                         : descrip;
+
+      if ( rfilter  &&  runID != runID_sel )
+         continue;
+
       QString parID    = db.value( 3 ).toString();
       QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
                          .toDateTime().toString( Qt::ISODate ), true );
       QString cksum    = db.value( 6 ).toString();
       QString recsize  = db.value( 7 ).toString();
       QString recGUID  = db.value( 9 ).toString();
+
       edtIDs << recID;
       editpars << descrip;
       editpars << filename;
@@ -860,6 +993,7 @@ qDebug() << "ScDB: nedit" << nedit;
             idAUC         = aucEntr.section( "^", 0, 0 ).toInt();
             parGUID       = aucEntr.section( "^", 1, 1 );
             idExp         = aucEntr.section( "^", 2, 2 ).toInt();
+
             ddesc.tripID       = tripID;
             ddesc.editID       = editID + "@" + elambda;
             ddesc.descript     = descrip;
@@ -870,7 +1004,7 @@ qDebug() << "ScDB: nedit" << nedit;
             ddesc.tripndx      = ii + 1;
             datamap[ descrip ] = ddesc;
          }
-      } // END: isMWL=true
+      } // END: isMwl=true
 
       else
          datamap[ descrip ] = ddesc;
@@ -889,8 +1023,9 @@ void US_DataLoader::scan_local_edit( void )
 {
    setWindowTitle( tr( "Load Edited Data from Local Disk" ) );
 
-   bool        tfilter = ( etype_filt != "none" );
-   QString     rdir    = US_Settings::resultDir();
+   bool    tfilter     = ( etype_filt != "none" );
+   bool    rfilter     = ( ! runID_sel.isEmpty() );
+   QString rdir        = US_Settings::resultDir();
    QStringList aucdirs = QDir( rdir ).entryList( 
          QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
    
@@ -908,17 +1043,20 @@ void US_DataLoader::scan_local_edit( void )
       if ( aucfiles.size() < 1 )
          continue;
 
-      experiment_info( subdir, elabel, expID );
-
       QString aucfbase  = aucfiles.at( 0 );
       QString aucfname  = subdir + "/" + aucfbase;
       QString runID     = aucfbase.section( ".",  0, -6 );
+
+      if ( rfilter  &&  runID != runID_sel )
+         continue;
+
+      experiment_info( subdir, elabel, expID );
+
       QString subType   = aucfbase.section( ".", -5, -5 );
       QString tripl     = aucfbase.section( ".", -4, -2 );
       QString auclamb   = tripl   .section( ".",  2,  2 );
 
       edtfilt.clear();
-      //edtfilt <<  runID + ".*."  + subType + "." + tripl + ".xml";
       edtfilt <<  runID + ".*."  + subType + ".*.xml";
       QStringList edtfiles = QDir( subdir ).entryList( 
             edtfilt, QDir::Files, QDir::Name );
@@ -1046,6 +1184,207 @@ void US_DataLoader::scan_local_edit( void )
 
    if ( latest )
       pare_to_latest();
+}
+
+// Scan database for runs
+void US_DataLoader::scan_dbase_runs()
+{
+qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   US_Passwd   pw;
+   US_DB2      db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+         tr( "DB Connection Problem" ),
+         tr( "There was an error connecting to the database:\n" )
+         + db.lastError() );
+      return;
+   }
+
+   QStringList query;
+   QString     invID  = QString::number( US_Settings::us_inv_ID() );
+
+   setWindowTitle( tr( "Load Edited Data from DB" ) );
+
+   // Accumulate a map of runs to dates,IDs,labels
+   QMap< QString, QString > runinfo;
+qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   query.clear();
+   query << "get_experiment_desc" << invID;
+   db.query( query );
+qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+   ddesc.tripID     = "1A999";           // Dummy edit description settings
+   ddesc.editID     = "2001011230";
+   ddesc.filename   = "(unknown)";
+   ddesc.dataGUID   = "(unknown)";
+   ddesc.aucGUID    = "(unknown)";
+   ddesc.acheck     = "";
+   ddesc.auc_id     = -1;
+   ddesc.tripknt    = 1;
+   ddesc.tripndx    = 1;
+   ddesc.editknt    = 1;
+   ddesc.editndx    = 1;
+   ddesc.isEdit     = false;
+   ddesc.isLatest   = latest;
+
+   while( db.next() )
+   {  // Accumulate a mapping of data descriptions to runs
+      QString expID    = db.value( 0 ).toString();
+      QString runID    = db.value( 1 ).toString();
+      QString label    = db.value( 4 ).toString();
+      QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
+                         .toDateTime().toString( Qt::ISODate ), true );
+
+      ddesc.runID      = runID;
+      ddesc.label      = label;
+      ddesc.descript   = label;
+      ddesc.elabel     = label;
+      ddesc.exp_id     = expID.toInt();
+      ddesc.DB_id      = ddesc.exp_id;
+      ddesc.date       = date;
+
+      datamap[ runID ] = ddesc;
+   }
+
+qDebug() << "ScDB:TM:09: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+}
+
+// Scan local disk for runs
+void US_DataLoader::scan_local_runs( void )
+{
+   setWindowTitle( tr( "Load Edited Data from Local Disk" ) );
+
+   bool        tfilter = ( etype_filt != "none" );
+   QString     rdir    = US_Settings::resultDir();
+   QStringList aucdirs = QDir( rdir ).entryList( 
+         QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
+
+   QStringList aucfilt( "*.auc" );
+   QStringList edtfilt;
+   QString elabel;
+   QString expID;
+
+   ddesc.tripID     = "1A999";           // Dummy edit description settings
+   ddesc.editID     = "2001011230";
+   ddesc.filename   = "(unknown)";
+   ddesc.dataGUID   = "(unknown)";
+   ddesc.aucGUID    = "(unknown)";
+   ddesc.acheck     = "";
+   ddesc.DB_id      = -1;
+   ddesc.auc_id     = -1;
+   ddesc.tripknt    = 1;
+   ddesc.tripndx    = 1;
+   ddesc.editknt    = 1;
+   ddesc.editndx    = 1;
+   ddesc.isEdit     = false;
+   ddesc.isLatest   = latest;
+   
+   for ( int ii = 0; ii < aucdirs.size(); ii++ )
+   {
+      QString     subdir   = rdir + "/" + aucdirs.at( ii );
+      QStringList aucfiles = QDir( subdir ).entryList( 
+            aucfilt, QDir::Files, QDir::Name );
+
+      if ( aucfiles.size() < 1 )
+         continue;
+
+      experiment_info( subdir, elabel, expID );
+
+      QString aucfbase  = aucfiles.at( 0 );
+      QString aucfname  = subdir + "/" + aucfbase;
+      QString runID     = aucfbase.section( ".",  0, -6 );
+      QString subType   = aucfbase.section( ".", -5, -5 );
+      QString tripl     = aucfbase.section( ".", -4, -2 );
+      QString auclamb   = tripl   .section( ".",  2,  2 );
+
+      edtfilt.clear();
+      edtfilt <<  runID + ".*."  + subType + ".*.xml";
+      QStringList edtfiles = QDir( subdir ).entryList( 
+            edtfilt, QDir::Files, QDir::Name );
+      edtfiles.sort();
+
+      if ( edtfiles.size() < 1 )
+         continue;
+
+      QStringList mwlambds;
+      QString filebase = edtfiles.at( 0 );
+      QString filename = subdir + "/" + filebase;
+      QString editID   = filebase.section( ".", -6, -6 );
+      editID  = ( editID.length() == 12  &&  editID.startsWith( "20" ) ) ?
+                editID.mid( 2 ) : editID;
+      QString tripID   = filebase.section( ".", -4, -2 );
+      QString edtlamb  = tripID  .section( ".",  2,  2 );
+      QString label    = runID;
+      QString descrip  = runID + "." + tripID + "." + editID;
+      QString baselabl = label;
+
+      QFile filei( filename );
+
+      if ( ! filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         continue;
+
+      QString date = US_Util::toUTCDatetimeText( QFileInfo( filename )
+         .lastModified().toUTC().toString( Qt::ISODate ), true );
+         
+      QXmlStreamReader xml( &filei );
+      QXmlStreamAttributes a;
+      QString recGUID;
+      QString parGUID;
+      QString expType;
+      QString elambda;
+      bool    isMwl   = edtlamb.contains( "-" );
+
+      while( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement() )
+         {
+            if ( xml.name() == "editGUID" )
+            {
+               a         = xml.attributes();
+               recGUID   = a.value( "value" ).toString();
+            }
+
+            else if ( xml.name() == "rawDataGUID" )
+            {
+               a         = xml.attributes();
+               parGUID   = a.value( "value" ).toString();
+            }
+
+            else if ( xml.name() == "experiment" )
+            {
+               a         = xml.attributes();
+               expType   = a.value( "type" ).toString().toLower();
+            }
+
+            if ( isMwl   &&  xml.name() == "lambda" )
+            {
+               a         = xml.attributes();
+               elambda   = a.value( "value" ).toString();
+               mwlambds << elambda;
+//qDebug() << "DLdr:    elambda" << elambda;
+            }
+         }
+      }
+
+      filei.close();
+
+      // If type filtering, ignore runIDs that do not match experiment type
+      if ( tfilter  &&  expType != etype_filt )
+            continue;
+
+      ddesc.runID      = runID;
+      ddesc.label      = label;
+      ddesc.descript   = descrip;
+      ddesc.aucGUID    = parGUID;
+      ddesc.elabel     = elabel;
+      ddesc.exp_id     = expID.toInt();
+      ddesc.date       = date;
+
+      datamap[ descrip ] = ddesc;
+   }
 }
 
 // Pare down data description map to only latest edit
