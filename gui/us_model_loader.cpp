@@ -707,7 +707,7 @@ qDebug() << "      kmmmod" << kmmmod << "kmmold" << kmmold;
    // possibly pare down models list based on search field
 QDateTime time5=QDateTime::currentDateTime();
 qDebug() << "Timing: Time5" << time0.msecsTo(time5) << time2.msecsTo(time5);
-qDebug() << " (3)m_d size" << model_descriptions.size();
+qDebug() << " (3)m_d_u size" << model_descrs_ufilt.size();
 
    if ( listall )
    {  // No filtering or filter by edit already done
@@ -721,7 +721,7 @@ qDebug() << " (3)m_d size" << model_descriptions.size();
    {  // Filter by model description sub-string
       for ( int jj = 0; jj < model_descrs_ufilt.size(); jj++ )
       {
-         if ( model_descrs_recs[ jj ].description.contains( mpart  ) )
+         if ( model_descrs_ufilt[ jj ].description.contains( mpart ) )
          {  // description filter matches
             model_descriptions << model_descrs_ufilt[ jj ];
 //ModelDesc desc = model_descrs_recs[jj];

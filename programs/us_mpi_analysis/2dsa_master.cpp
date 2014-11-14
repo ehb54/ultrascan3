@@ -186,6 +186,23 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
                iterations      = 1;
                mc_iteration    = 0;
 
+               if ( meniscus_points > 1 )
+               {  // Reset the range of fit-meniscus points for this data set
+                  US_DataIO::EditedData* edata
+                                  = &data_sets[ current_dataset ]->run_data;
+                  double menstr   = edata->meniscus - meniscus_range / 2.0;
+                  double deltmen  = meniscus_range / ( meniscus_points - 1.0 );
+                  double datstr   = edata->radius( 0 );
+                  double menend   = menstr + meniscus_range - deltmen;
+                  if ( menend >= datstr )
+                  {  // Adjust first meniscus so range remains below data range
+                     menend          = datstr - deltmen / 2.0;
+                     menstr          = menend - meniscus_range + deltmen;
+                  }
+                  for ( int ii = 0; ii < meniscus_points; ii++ )
+                     meniscus_values[ ii ] = menstr + deltmen * ii;
+               }
+
                for ( int ii = 1; ii < gcores_count; ii++ )
                   worker_status[ ii ] = READY;
 
@@ -1217,11 +1234,11 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
         csol_size > rsol_size )
    {
       _2dsa_Job job;
-      job.solutes                = calculated_solutes[ depth ];
-      job.mpi_job.depth          = next_depth;
-      meniscus_value             = meniscus_values.size() == 1 ?
-                                   data_sets[ current_dataset ]->run_data.meniscus :
-                                   meniscus_values[ meniscus_run ];
+      job.solutes          = calculated_solutes[ depth ];
+      job.mpi_job.depth    = next_depth;
+      meniscus_value       = ( meniscus_values.size() == 1 )
+                           ? data_sets[ current_dataset ]->run_data.meniscus
+                           : meniscus_values[ meniscus_run ];
       qSort( job.solutes );
 DbgLv(1) << "Mast:   queue LAST ns=" << job.solutes.size() << "  d=" << depth+1
  << max_depth << "  nsvs=" << simulation_values.solutes.size();

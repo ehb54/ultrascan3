@@ -102,17 +102,17 @@ US_DataLoader::US_DataLoader(
 
    // Button Row
    QHBoxLayout* buttons   = new QHBoxLayout;
-   QPushButton* pb_help   = us_pushbutton( tr( "Help"    ) );
-   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel"  ) );
-   QPushButton* pb_fillin = us_pushbutton( tr( "Fill In" ) );
-   QPushButton* pb_accept = us_pushbutton( tr( "Load"    ) );
+   QPushButton* pb_help   = us_pushbutton( tr( "Help"       ) );
+   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel"     ) );
+   QPushButton* pb_shedit = us_pushbutton( tr( "Show Edits" ) );
+   QPushButton* pb_accept = us_pushbutton( tr( "Load"       ) );
    buttons->addWidget( pb_help );
    buttons->addWidget( pb_cancel );
-   buttons->addWidget( pb_fillin );
+   buttons->addWidget( pb_shedit );
    buttons->addWidget( pb_accept );
    connect( pb_help,   SIGNAL( clicked() ), SLOT( help()      ) );
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancelled() ) );
-   connect( pb_fillin, SIGNAL( clicked() ), SLOT( selected()  ) );
+   connect( pb_shedit, SIGNAL( clicked() ), SLOT( selected()  ) );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted()  ) );
 
    main->addLayout( buttons );
@@ -567,17 +567,17 @@ void US_DataLoader::list_data()
          scan_local_runs();
       }
 
-      te_notes->setText( tr( "Select a run, then click on \"Fill In\""
+      te_notes->setText( tr( "Select a run, then click on \"Show Edits\""
                              " to fill in triples and edits;\n"
-                             "or click on \"Load\" to load all triples"
-                             " data for the selected run." ) );
+                             "or click on \"Load\" to load all the latest"
+                             " edits of triples for the selected run." ) );
    }
 
    // Start building the data tree
    qApp->processEvents();
    QStringList crlabels;
    QStringList hdrs;
-   hdrs << tr( "Run|Triple|Edit" )
+   hdrs << ( sel_run ? tr( "Run|Triple|Edit" ) : tr( "Run" ) )
         << tr( "Date" )
         << tr( "DbID" )
         << tr( "Label" );
@@ -627,8 +627,11 @@ void US_DataLoader::list_data()
          twi_runi = new QTreeWidgetItem( crlabels, ii );
          tw_data->addTopLevelItem( twi_runi );
 
-         twi_trip = new QTreeWidgetItem( QStringList( ctlabel ), ii );
-         twi_runi->addChild( twi_trip );
+         if ( sel_run ) 
+         {  // If in show-edits mode, add a triple child
+            twi_trip = new QTreeWidgetItem( QStringList( ctlabel ), ii );
+            twi_runi->addChild( twi_trip );
+         }
          
          prlabel  = crlabel;
          ptlabel  = ctlabel;
@@ -648,9 +651,12 @@ void US_DataLoader::list_data()
          ndxe++;
       }
 
-      // Always add an edit child of triple
-      twi_edit = new QTreeWidgetItem( QStringList( celabel ), ii );
-      twi_trip->addChild( twi_edit );
+      // Always add an edit child of triple (if in show-edits mode)
+      if ( sel_run ) 
+      {
+         twi_edit = new QTreeWidgetItem( QStringList( celabel ), ii );
+         twi_trip->addChild( twi_edit );
+      }
 
       ddesc.tripknt     = ndxt;
       ddesc.tripndx     = ndxt;
@@ -730,14 +736,14 @@ void US_DataLoader::selected()
    QList< QTreeWidgetItem* > selitems = tw_data->selectedItems();
 
    if ( selitems.size() < 1 )
-   {  // "Fill In" with no run selected:  build full data tree
+   {  // "Show Edits" with no run selected:  build full data tree
       runID_sel    = "";
       te_notes->setText( tr( "Reading edit information to fully populate"
                              " the list data tree..." ) );
    }
 
    else
-   {  // "Fill In" with run selected:  build a data tree for the selected run
+   {  // "Show Edits" with run selected:  build a data tree for the selected run
       QTreeWidgetItem* twi  = selitems[ 0 ];
 
       while ( twi->parent() != NULL )
@@ -1205,7 +1211,7 @@ qDebug() << "ScDB:TM:00: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    QStringList query;
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
 
-   setWindowTitle( tr( "Load Edited Data from DB" ) );
+   setWindowTitle( tr( "Load Run Data from DB" ) );
 
    // Accumulate a map of runs to dates,IDs,labels
    QMap< QString, QString > runinfo;
@@ -1214,11 +1220,11 @@ qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    query << "get_experiment_desc" << invID;
    db.query( query );
 qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
-   ddesc.tripID     = "1A999";           // Dummy edit description settings
-   ddesc.editID     = "2001011230";
-   ddesc.filename   = "(unknown)";
-   ddesc.dataGUID   = "(unknown)";
-   ddesc.aucGUID    = "(unknown)";
+   ddesc.tripID     = "undetermined";    // Dummy edit description settings
+   ddesc.editID     = "undetermined";
+   ddesc.filename   = "undetermined";
+   ddesc.dataGUID   = "undetermined";
+   ddesc.aucGUID    = "undetermined";
    ddesc.acheck     = "";
    ddesc.auc_id     = -1;
    ddesc.tripknt    = 1;
@@ -1253,7 +1259,7 @@ qDebug() << "ScDB:TM:09: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 // Scan local disk for runs
 void US_DataLoader::scan_local_runs( void )
 {
-   setWindowTitle( tr( "Load Edited Data from Local Disk" ) );
+   setWindowTitle( tr( "Load Run Data from Local Disk" ) );
 
    bool        tfilter = ( etype_filt != "none" );
    QString     rdir    = US_Settings::resultDir();
@@ -1265,11 +1271,11 @@ void US_DataLoader::scan_local_runs( void )
    QString elabel;
    QString expID;
 
-   ddesc.tripID     = "1A999";           // Dummy edit description settings
-   ddesc.editID     = "2001011230";
-   ddesc.filename   = "(unknown)";
-   ddesc.dataGUID   = "(unknown)";
-   ddesc.aucGUID    = "(unknown)";
+   ddesc.tripID     = "undetermined";    // Dummy edit description settings
+   ddesc.editID     = "undetermined";
+   ddesc.filename   = "undetermined";
+   ddesc.dataGUID   = "undetermined";
+   ddesc.aucGUID    = "undetermined";
    ddesc.acheck     = "";
    ddesc.DB_id      = -1;
    ddesc.auc_id     = -1;

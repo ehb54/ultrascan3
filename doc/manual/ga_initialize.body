@@ -66,23 +66,23 @@
        </li>
 
        <li>
-          <b>Plot Limit f/f0 min:</b> Choose the lower plot limit for f/f0
-          (or vbar).
+          <b>Plot Limit s Min:</b> Choose the lower plot limit for sedimentation
+          (or other X).
        </li>
 
        <li>
-          <b>Plot Limit f/f0 max:</b> Choose upper lower plot limit for f/f0
-          (or vbar).
+          <b>Plot Limit s Max:</b> Choose the upper plot limit for sedimentation
+          (or other X).
        </li>
 
        <li>
-          <b>Plot Limit s min:</b> Choose the lower plot limit for sedimentation
-          (or MW).
+          <b>Plot Limit f/f0 Min:</b> Choose the lower plot limit for f/f0
+          (or other Y).
        </li>
 
        <li>
-          <b>Plot Limit s max:</b> Choose the upper plot limit for sedimentation
-          (or MW).
+          <b>Plot Limit f/f0 Max:</b> Choose upper lower plot limit for f/f0
+          (or other Y).
        </li>
 
        <li>
@@ -97,23 +97,13 @@
        </li>
 
        <li>
-          <b>Plot f/f0 vs s</b> Select to plot f/f0 versus sedimentation
-          coefficient corrected for water at 20<span>&deg;</span>Celsius.
+          <b>Plot X:</b> Select one of the radio buttons to the right of this
+          label to choose the X dimension of 3-D plots.
        </li>
 
        <li>
-          <b>Plot f/f0 vs MW</b> Select to plot f/f0 versus molecular weight
-          (Dalton).
-       </li>
-
-       <li>
-          <b>Plot vbar vs s</b> Select to plot vbar versus sedimentation
-          coefficient corrected for water at 20<span>&deg;</span>Celsius.
-       </li>
-
-       <li>
-          <b>Plot vbar vs MW</b> Select to plot vbar versus molecular weight
-          (Dalton).
+          <b>Plot Y:</b> Select one of the radio buttons to the right of this
+          label to choose the Y dimension of 3-D plots.
        </li>
 
        <li>
@@ -122,6 +112,16 @@
 
        <li>
           <b>Local Disk</b> Select to specify data input from local disk.
+       </li>
+
+       <li>
+          <b>Select PreFilter(s)</b> Open a
+          <a href="select_runs.html">Models Pre-Filter dialog</a>
+          to select Run IDs on which to pre-filter lists of models
+          for loading. This can significantly reduce model loading time,
+          particularly with large model counts in the database. The text
+          box to the right of this button will display a summary of
+          runs selected as pre-filters.                                     
        </li>
 
        <li>
@@ -161,9 +161,9 @@
        </li>
 
        <li>
-          <b>Shrink Solute Bins</b> When a Monte Carlo distribution has been
-          loaded, this option causes bins to shrink to the smallest size
-          encompassing all the input solute points originally corraled.
+          <b>Check for Bin Overlaps / Sort</b> Click this button to check that no
+          drawn bins overlap and to sort bins so they are ordered by the X,Y
+          upper-left vertex.
        </li>
 
        <li>
@@ -188,6 +188,11 @@
           <b>Save:</b> Output a file with Genetic Algorithm data based on
           generated bins. If a Monte Carlo distribution was loaded, also
           generate a text file with detailed analysis.
+       </li>
+
+       <li>
+          <b>View Statistics:</b> View a text dialog that shows detailed
+          statistics on drawn bin points.
        </li>
 
        <li>
