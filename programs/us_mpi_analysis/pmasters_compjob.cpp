@@ -608,6 +608,23 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
                iterations       = 1;
                meniscus_run     = 0;
 
+               if ( meniscus_points > 1 )
+               {  // Reset the range of fit-meniscus points for this data set
+                  US_DataIO::EditedData* edata
+                                  = &data_sets[ current_dataset ]->run_data;
+                  double men_str  = edata->meniscus - meniscus_range / 2.0;
+                  double men_inc  = meniscus_range / ( meniscus_points - 1.0 );
+                  double dat_str  = edata->radius( 0 );
+                  double men_end  = men_str + meniscus_range - men_inc;
+                  if ( men_end >= dat_str )
+                  {  // Adjust first meniscus so range remains below data range
+                     men_end         = dat_str - men_inc / 2.0;
+                     men_str         = men_end - meniscus_range + men_inc;
+                  }
+                  for ( int ii = 0; ii < meniscus_points; ii++ )
+                     meniscus_values[ ii ] = men_str + men_inc * ii;
+               }
+
                for ( int ii = 1; ii < gcores_count; ii++ )
                   worker_status[ ii ] = READY;
 
