@@ -98,25 +98,25 @@ US_LoadAUC::US_LoadAUC( bool local, QVector< US_DataIO::RawData >& rData,
    // Button Row
    QHBoxLayout* buttons = new QHBoxLayout;
 
-   QPushButton* pb_expand   = us_pushbutton( tr( "Expand All" ) );
+   QPushButton* pb_expand   = us_pushbutton( tr( "Expand All"   ) );
    QPushButton* pb_collapse = us_pushbutton( tr( "Collapse All" ) );
-   QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
-   QPushButton* pb_cancel   = us_pushbutton( tr( "Cancel" ) );
-   QPushButton* pb_fillin   = us_pushbutton( tr( "Fill In" ) );
-   QPushButton* pb_accept   = us_pushbutton( tr( "Load" ) );
+   QPushButton* pb_help     = us_pushbutton( tr( "Help"         ) );
+   QPushButton* pb_cancel   = us_pushbutton( tr( "Cancel"       ) );
+   QPushButton* pb_shedits  = us_pushbutton( tr( "Show Triples" ) );
+   QPushButton* pb_accept   = us_pushbutton( tr( "Load"         ) );
 
    buttons->addWidget( pb_expand );
    buttons->addWidget( pb_collapse );
    buttons->addWidget( pb_help );
    buttons->addWidget( pb_cancel );
-   buttons->addWidget( pb_fillin );
+   buttons->addWidget( pb_shedits );
    buttons->addWidget( pb_accept );
 
    connect( pb_expand,   SIGNAL( clicked() ), SLOT( expand()   ) );
    connect( pb_collapse, SIGNAL( clicked() ), SLOT( collapse() ) );
    connect( pb_help,     SIGNAL( clicked() ), SLOT( help()     ) );
    connect( pb_cancel,   SIGNAL( clicked() ), SLOT( reject()   ) );
-   connect( pb_fillin,   SIGNAL( clicked() ), SLOT( fill_in()  ) );
+   connect( pb_shedits,  SIGNAL( clicked() ), SLOT( fill_in()  ) );
    connect( pb_accept,   SIGNAL( clicked() ), SLOT( load()     ) );
 
    main->addLayout( dkdb_cntrls );
@@ -332,7 +332,7 @@ qDebug() << "Ed:Ptree: sel_run" << sel_run;
       te_notes->setText( tr( "Right-mouse-button-click on a list selection"
                              " for details.\n"
                              "Select triples and click on \"Load\""
-                             " to load selected data." ) );
+                             " to load selected AUC data." ) );
    }
 
    else
@@ -347,10 +347,10 @@ qDebug() << "Ed:Ptree: sel_run" << sel_run;
          naucf = scan_run_disk();
       }
 
-      te_notes->setText( tr( "Select a run, then click on \"Fill In\""
+      te_notes->setText( tr( "Select a run, then click on \"Show Triples\""
                              " to fill in triples;\n"
                              "or click on \"Load\" to load all triples"
-                             " data for the selected run." ) );
+                             " AUC data for the selected run." ) );
    }
 
    qApp->processEvents();
@@ -370,6 +370,13 @@ qDebug() << "Ed:Ptree: sel_run" << sel_run;
    QStringList runIDs;
    QList< DataDesc > ddescs = datamap.values();
    QTreeWidgetItem* top = NULL;
+   QStringList headers;
+   headers << ( sel_run ? tr( "Run|Triple" ) : tr( "Run" ) )
+           << tr( "Date" )
+           << tr( "DbID" )
+           << tr( "Label" );
+   tree->setColumnCount( 4 );
+   tree->setHeaderLabels( headers );
    tree->setSortingEnabled( false );
 
    for ( int ii = 0; ii < naucf; ii++ )
@@ -389,14 +396,14 @@ qDebug() << "Ed:Ptree: sel_run" << sel_run;
          runIDs << ddesc.runID;
       }
 
-      new QTreeWidgetItem( top, item );     // Create 2nd-level tree items
+      // If in auc mode, create a 2nd-level tree item
+      if ( sel_run )
+         new QTreeWidgetItem( top, item );
    }
 
-   tree->expandAll();
    tree->resizeColumnToContents( 0 );
    tree->resizeColumnToContents( 1 );
    tree->resizeColumnToContents( 2 );
-   tree->collapseAll();
    tree->setSortingEnabled( true );
    tree->sortByColumn( 0, Qt::AscendingOrder );   // Insure triples in order
    tree->sortByColumn( 1, Qt::DescendingOrder );  // Default latest-on-top
@@ -446,14 +453,14 @@ void US_LoadAUC::fill_in( void )
    QList< QTreeWidgetItem* > selitems = tree->selectedItems();
 
    if ( selitems.size() < 1 )
-   {  // "Fill In" with no run selected:  build full data tree
+   {  // "Show Triples" with no run selected:  build full data tree
       runID_sel    = "";
       te_notes->setText( tr( "Reading AUC information to fully populate"
                              " the list data tree..." ) );
    }
 
    else
-   {  // "Fill In" with run selected:  build a data tree for the selected run
+   {  // "Show Triples" with run selected:  build a data tree for selected run
       QTreeWidgetItem* twi = selitems[ 0 ];
       while ( twi->parent() != NULL )
          twi          = twi->parent();
