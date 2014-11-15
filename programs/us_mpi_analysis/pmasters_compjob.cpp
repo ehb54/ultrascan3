@@ -434,6 +434,22 @@ DbgLv(1) << "master start 2DSA" << startTime;
    int tag      = status.MPI_TAG;
    int ittest   = current_dataset + mgroup_count;
 
+   if ( meniscus_points > 1 )
+   {  // Reset the range of fit-meniscus points for this data set
+      US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
+      double men_str  = edata->meniscus - meniscus_range / 2.0;
+      double men_inc  = meniscus_range / ( meniscus_points - 1.0 );
+      double dat_str  = edata->radius( 0 );
+      double men_end  = men_str + meniscus_range - men_inc;
+      if ( men_end >= dat_str )
+      {  // Adjust first meniscus so range remains below data range
+         men_end         = dat_str - men_inc / 2.0;
+         men_str         = men_end - meniscus_range + men_inc;
+      }
+      for ( int ii = 0; ii < meniscus_points; ii++ )
+         meniscus_values[ ii ] = men_str + men_inc * ii;
+   }
+
    while ( true )
    {
       int worker;
@@ -466,7 +482,7 @@ DbgLv(1) << "master start 2DSA" << startTime;
          QString progress = 
             "Iteration: "    + QString::number( iterations ) +
             "; Dataset: "    + QString::number( current_dataset + 1 ) +
-            " ( " + tripleID + " ) ";
+            " (" + tripleID + ")";
 
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "
@@ -475,8 +491,8 @@ DbgLv(1) << "master start 2DSA" << startTime;
          else if ( menisc_size > 1 )
             progress     += "; Meniscus: "
                + QString::number( meniscus_value, 'f', 3 )
-               + tr( "Run %1 of %2" ).arg( meniscus_run + 1 )
-                                     .arg( menisc_size );
+               + tr( " (%1 of %2)" ).arg( meniscus_run + 1 )
+                                    .arg( menisc_size );
 
          else
             progress     += "; RMSD: "

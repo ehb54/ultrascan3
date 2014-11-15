@@ -57,7 +57,7 @@ void US_MPI_Analysis::_2dsa_master( void )
          else
             progress     += "; Dataset: "
                             + QString::number( current_dataset + 1 )
-                            + " ( " + tripleID + " ) ";
+                            + " (" + tripleID + ")";
 
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "
@@ -66,8 +66,8 @@ void US_MPI_Analysis::_2dsa_master( void )
          else if ( meniscus_values.size() > 1 )
             progress     += "; Meniscus: "
                + QString::number( meniscus_value, 'f', 3 )
-               + QString( " Run %1 of %2" ).arg( meniscus_run + 1 )
-                                           .arg( meniscus_values.size() );
+               + tr( " (%1 of %2)" ).arg( meniscus_run + 1 )
+                                    .arg( meniscus_values.size() );
          else
             progress     += "; RMSD: "
                + QString::number( sqrt( simulation_values.variance ) );
