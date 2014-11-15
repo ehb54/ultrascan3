@@ -119,6 +119,7 @@ void US_Editor::load( void )
 
      e->setPlainText( text );
      emit US_EditorLoadComplete( filename );
+     file_directory = filename.section( "/", 0, -2 );
   }
   else
      QMessageBox::information( this,

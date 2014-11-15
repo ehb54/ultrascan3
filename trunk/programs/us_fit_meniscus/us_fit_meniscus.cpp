@@ -971,31 +971,23 @@ DbgLv(1) << "Number of FM ADD      sets: " << nfadds;
 DbgLv(1) << "Number of FM EXISTING sets: " << nfexss;
 
    // Report
-   QString msg = tr( "Scan complete: " );
+   QString msg = tr( "File" );
+   int nftota  = nfadds + nfrpls;
 
-   if ( nfadds == 1  ||  nfrpls == 1 )
-   {
-      msg += tr( "File %1" ).arg( fnamesv );
+   if      ( nfadds == 1  &&  nfrpls == 0 )
+      msg += tr( " added: " );
 
-      if ( nfrpls == 0 )
-         msg += tr( " added." );
-
-      else if ( nfadds == 0 )
-         msg += tr( " updated." );
-
-      else
-         msg += tr( " last added or replaced." );
-   }
+   else if ( nfadds == 0  &&  nfrpls == 1 )
+      msg += tr( " updated: " );
 
    else if ( nfadds == 0  &&  nfrpls == 0 )
-   {
-      msg += tr( "No new fit files were created." );
-   }
+      msg  = tr( "No new fit files were created." );
 
    else
-   {
-      msg += tr( "File %1 was the last added or replaced." ).arg( fnamesv );
-   }
+      msg  = tr( "Last of %1 added/updated: " ).arg( nftota );
+
+   if ( nftota > 0 )
+      msg += fnamesv;
 
    le_status->setText( msg );
    QApplication::restoreOverrideCursor();
