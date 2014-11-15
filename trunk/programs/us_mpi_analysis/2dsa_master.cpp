@@ -190,17 +190,17 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
                {  // Reset the range of fit-meniscus points for this data set
                   US_DataIO::EditedData* edata
                                   = &data_sets[ current_dataset ]->run_data;
-                  double menstr   = edata->meniscus - meniscus_range / 2.0;
-                  double deltmen  = meniscus_range / ( meniscus_points - 1.0 );
-                  double datstr   = edata->radius( 0 );
-                  double menend   = menstr + meniscus_range - deltmen;
-                  if ( menend >= datstr )
+                  double men_str  = edata->meniscus - meniscus_range / 2.0;
+                  double men_inc  = meniscus_range / ( meniscus_points - 1.0 );
+                  double dat_str  = edata->radius( 0 );
+                  double men_end  = men_str + meniscus_range - men_inc;
+                  if ( men_end >= dat_str )
                   {  // Adjust first meniscus so range remains below data range
-                     menend          = datstr - deltmen / 2.0;
-                     menstr          = menend - meniscus_range + deltmen;
+                     men_end         = dat_str - men_inc / 2.0;
+                     men_str         = men_end - meniscus_range + men_inc;
                   }
                   for ( int ii = 0; ii < meniscus_points; ii++ )
-                     meniscus_values[ ii ] = menstr + deltmen * ii;
+                     meniscus_values[ ii ] = men_str + men_inc * ii;
                }
 
                for ( int ii = 1; ii < gcores_count; ii++ )
