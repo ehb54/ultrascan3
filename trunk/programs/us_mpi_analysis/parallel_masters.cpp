@@ -350,7 +350,15 @@ DbgLv(1) << "SUPER:  maxrss maxrssma" << maxrss << maxrssma;
    update_outputs( true );
 
    // Send 'Finished' message
-   printf( "Us_Mpi_Analysis has finished successfully.\n" );
+   int wt_hr      = walltime / 3600;
+   int wt_min     = ( walltime - wt_hr * 3600 ) / 60;
+   int wt_sec     = walltime - wt_hr * 3600 - wt_min * 60;
+   int ct_hr      = cputime / 3600;
+   int ct_min     = ( cputime - ct_hr * 3600 ) / 60;
+   int ct_sec     = cputime - ct_hr * 3600 - ct_min * 60;
+   printf( "Us_Mpi_Analysis has finished successfully"
+           " (%dh-%dm-%ds %dh-%dm-%ds).\n"
+           , wt_hr, wt_min, wt_sec, ct_hr, ct_min, ct_sec );
    fflush( stdout );
 
    if ( mc_iterations < kc_iters )
