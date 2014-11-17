@@ -130,7 +130,12 @@ void US_DataModel::getTriples( QStringList& triples, QString runID )
 
    // Browse raw data with matching runID to accumulate triples
    QStringList query;
-   query << "all_rawDataIDs" << invID;
+   query << "get_experiment_info_by_runID" << runID << invID;
+   db->query( query );
+   db->next();
+   QString     expID    = db->value( 1 ).toString();
+
+   query << "get_rawDataIDs" << expID;
    db->query( query );
 
    while ( db->next() )
@@ -175,6 +180,11 @@ DbgLv(1) << "gTr: db+local triples" << triples.size();
 // Set run and triple filters
 void US_DataModel::setFilters( QString a_runf, QString a_tripf, QString a_srcf )
 {
+   if ( filt_run != a_runf  ||
+        filt_triple != a_tripf  ||
+        filt_source != a_srcf )
+      chgrows.clear();     // Reset changed rows if any filters changed
+
    filt_run    = a_runf;   // Filter string for runID
    filt_triple = a_tripf;  // Filter string for triple
    filt_source = a_srcf;   // Filter string for source (DB/local)
@@ -252,12 +262,13 @@ int US_DataModel::recCountLoc()
 // scan the database for R/E/M/N data sets
 void US_DataModel::scan_dbase( )
 {
+   const int max_qrec = 200;
    QStringList rawIDs;
-   QStringList rawGUIDs;
    QStringList edtIDs;
    QStringList modIDs;
-   QStringList modDescs;
    QStringList noiIDs;
+   QStringList rawGUIDs;
+   QStringList modDescs;
    QStringList query;
    QMap< QString, int > edtMap;
    QString     dmyGUID  = "00000000-0000-0000-0000-000000000000";
@@ -266,6 +277,9 @@ void US_DataModel::scan_dbase( )
    QString     contents;
    int         irecID;
    int         istep = 0;
+   int         nstep = 1;
+   progress->setMaximum( nstep );
+   progress->setValue  ( istep );
 
    if ( ! filt_source.isEmpty()  &&  filt_source == "Local Only" )
    {  // If source filter is "Local-only", skip DB scan
@@ -322,118 +336,319 @@ DbgLv(2) << "  " << expID << expGUID << runID << label << comment << date;
 QDateTime basetime=QDateTime::currentDateTime();
 
    // Count raws, edits, models, noises
-   query.clear();
-   query << "count_rawData" << invID;
-   int nraws   = db->functionQuery( query );
-DbgLv(2) << "BrDb: count_rawData err" << db->lastError();
+   rawIDs  .clear();
+   edtIDs  .clear();
+   modIDs  .clear();
+   noiIDs  .clear();
+   bool rfilt  = ( ! filt_run   .isEmpty()  &&  filt_run    != "ALL" );
+   bool tfilt  = ( ! filt_triple.isEmpty()  &&  filt_triple != "ALL" );
 
-   query.clear();
-   query << "count_editedData" << invID;
-   int nedts   = db->functionQuery( query );
-DbgLv(2) << "BrDb: count_editedData err" << db->lastError();
+   QString expID;
+   QString expGUID;
+   int nraws   = 0;
+   int nedts   = 0;
+   int nmods   = 0;
+   int nnois   = 0;
 
-   query.clear();
-   query << "count_models" << invID;
-   int nmods   = db->functionQuery( query );
-DbgLv(2) << "BrDb: count_models err" << db->lastError();
+   if ( rfilt )
+   {  // Count records when run/triple filtering
+DbgLv(1) << "BrDb:  filt'd Count start" << nowTime();
+      query << "get_experiment_info_by_runID" << filt_run << invID;
+      db->query( query );
+      db->next();
+      expID       = db->value( 1 ).toString();
+      expGUID     = db->value( 2 ).toString();
 
-   query.clear();
-   query << "count_noise" << invID;
-   int nnois   = db->functionQuery( query );
-DbgLv(2) << "BrDb: count_noise err" << db->lastError();
+      query.clear();
+      query << "count_rawData_by_experiment" << expID;
+      nraws       = db->functionQuery( query );
+DbgLv(1) << "BrDb: nraws" << nraws;
+      rawIDs  .reserve( nraws );
 
-   int nstep   = nraws + nedts + nmods + nnois;
+DbgLv(1) << "BrDb:  Count raws" << nowTime();
+      query.clear();
+      query << "get_rawDataIDs" << expID;
+      db->query( query );
+      nraws       = 0;
+      while ( db->next() )
+      {
+         QString rawID     = db->value( 0 ).toString();
+         QString filename  = db->value( 2 ).toString().replace( "\\", "/" );
+         QString filebase  = filename.section( "/", -1, -1 );
+         QString triple    = filebase.section( ".", -4, -2 );
+         if ( tfilt  &&  triple != filt_triple )  continue;
+         rawIDs << rawID;
+         nraws++;
+      }
+DbgLv(1) << "BrDb: nraws" << nraws;
+
+DbgLv(1) << "BrDb:  Count edits" << nowTime();
+      if ( nraws < max_qrec )
+      {
+         for ( int ii = 0; ii < nraws; ii++ )
+         {
+            QString rawID     = rawIDs[ ii ];
+            query.clear();
+            query << "get_editedDataIDs" << rawID;
+            db->query( query );
+            while ( db->next() )
+            {
+               QString edtID     = db->value( 0 ).toString();
+               QString filename  = db->value( 2 ).toString()
+                                   .replace( "\\", "/" );
+               QString filebase  = filename.section( "/", -1, -1 );
+               QString triple    = filebase.section( ".", -4, -2 );
+               if ( tfilt  &&  triple != filt_triple )  continue;
+               edtIDs << edtID;
+               nedts++;
+            }
+         }
+      }
+
+      else
+      {
+         query.clear();
+         query << "all_editedDataIDs" << invID;
+         db->query( query );
+         while ( db->next() )
+         {
+            QString edtID     = db->value( 0 ).toString();
+            QString expIDed   = db->value( 4 ).toString();
+            if ( expIDed != expID )                  continue;
+            QString filename  = db->value( 2 ).toString().replace( "\\", "/" );
+            QString filebase  = filename.section( "/", -1, -1 );
+            QString triple    = filebase.section( ".", -4, -2 );
+            if ( tfilt  &&  triple != filt_triple )  continue;
+            edtIDs << edtID;
+            nedts++;
+         }
+      }
+DbgLv(1) << "BrDb: nedts" << nedts;
+
+DbgLv(1) << "BrDb:  Count models,noises" << nowTime();
+      if ( nedts < max_qrec )
+      {
+         for ( int ii = 0; ii < nedts; ii++ )
+         {
+            QString edtID     = edtIDs[ ii ];
+            query.clear();
+            query << "get_model_desc_by_editID" << invID << edtID;
+            db->query( query );
+            while ( db->next() )
+            {
+               QString modID     = db->value( 0 ).toString();
+               modIDs << modID;
+               nmods++;
+            }
+            query.clear();
+            query << "get_noise_desc_by_editID" << invID << edtID;
+            db->query( query );
+            while ( db->next() )
+            {
+               QString noiID     = db->value( 0 ).toString();
+               noiIDs << noiID;
+               nnois++;
+            }
+         }
+      }
+
+      else
+      {
+         query.clear();
+         query << "get_model_desc" << invID;
+         db->query( query );
+         while ( db->next() )
+         {
+            QString modID     = db->value( 0 ).toString();
+            QString edtID     = db->value( 6 ).toString();
+            if ( edtIDs.contains( edtID ) )
+            {
+               modIDs << modID;
+               nmods++;
+            }
+         }
+         query.clear();
+         query << "get_noise_desc" << invID;
+         db->query( query );
+         while ( db->next() )
+         {
+            QString noiID     = db->value( 0 ).toString();
+            QString edtID     = db->value( 2 ).toString();
+            if ( edtIDs.contains( edtID ) )
+            {
+               noiIDs << noiID;
+               nnois++;
+            }
+         }
+      }
+DbgLv(1) << "BrDb: nmods" << nmods << "nnois" << nnois;
+   }
+
+   else
+   {  // Count records when not run/triple filtering
+      query.clear();
+      query << "count_rawData" << invID;
+      nraws       = db->functionQuery( query );
+DbgLv(1) << "BrDb: nraws" << nraws;
+
+      query.clear();
+      query << "count_editedData" << invID;
+      nedts       = db->functionQuery( query );
+DbgLv(1) << "BrDb: nedts" << nedts;
+
+      query.clear();
+      query << "count_models" << invID;
+      nmods       = db->functionQuery( query );
+DbgLv(1) << "BrDb: nmods" << nmods;
+
+      query.clear();
+      query << "count_noise" << invID;
+      nnois       = db->functionQuery( query );
+DbgLv(1) << "BrDb: nnois" << nnois;
+   }
+
+   nstep       = nraws + nedts + nmods + nnois;
    int incre   = nraws + nedts;
+DbgLv(1) << "BrDb:  nstep" << nstep << "incre" << incre;
+   incre       = qMax( incre, 1 );
    incre       = ( nmods + nnois + incre - 1 ) / ( incre * 4 );
    incre       = qMax( incre, 1 );
+DbgLv(1) << "BrDb:   incre" << incre;
    nstep      += ( nraws + nedts ) * ( incre - 1 );
-nstep=(nstep<1)?1000:nstep;
+   nstep       = qMax( nstep, 1 );
+   istep       = 0;
+DbgLv(1) << "BrDb:   nstep" << nstep;
+//nstep=(nstep<1)?1000:nstep;
    progress->setMaximum( nstep );
+   progress->setValue  ( istep );
    qApp->processEvents();
 DbgLv(1) << "BrDb: # steps raws edts mods nois" << nstep << nraws << nedts
  << nmods << nnois << "incre" << incre;
 DbgLv(1) << "BrDb:  count time:"
  << basetime.msecsTo(QDateTime::currentDateTime())/1000.0;
 
-   rawIDs  .reserve( nraws );
-   rawGUIDs.reserve( nraws );
-   edtIDs  .reserve( nedts );
-   modIDs  .reserve( nmods );
-   modDescs.reserve( nmods );
-   noiIDs  .reserve( nnois );
+   if ( !rfilt )
+   {
+      rawIDs  .reserve( nraws );
+      edtIDs  .reserve( nedts );
+      modIDs  .reserve( nmods );
+      noiIDs  .reserve( nnois );
+   }
 
-   bool rfilt  = ( ! filt_run   .isEmpty()  &&  filt_run    != "ALL" );
-   bool tfilt  = ( ! filt_triple.isEmpty()  &&  filt_triple != "ALL" );
+   rawGUIDs.reserve( nraws );
+   modDescs.reserve( nmods );
 
    // get raw data IDs
    lb_status->setText( tr( "Reading Raws" ) );
    qApp->processEvents();
-   query.clear();
-   query << "all_rawDataIDs" << invID;
-   db->query( query );
+   int nqry     = rfilt ? rawIDs.size() : qMin( nraws, 1 );
+   bool rfilt_q = rfilt && ( nqry < max_qrec );
+   nqry         = rfilt_q ? nqry : qMin( nraws, 1 );
 
-   while ( db->next() )
-   {  // Read Raw records
-      recID             = db->value( 0 ).toString();
-      irecID            = recID.toInt();
-      QString label     = db->value( 1 ).toString();
-      QString filename  = db->value( 2 ).toString().replace( "\\", "/" );
-      QString filebase  = filename.section( "/", -1, -1 );
-      QString runID     = filebase.section( ".", 0, 0 );
+DbgLv(1) << "BrDb:  Query Raws" << nowTime() << "nqry" << nqry;
+   for ( int jq = 0; jq < nqry; jq++ )
+   {
+      QString rawID;
+      query.clear();
+      if ( rfilt_q )
+      {
+         rawID             = rawIDs[ jq ];
+         query << "get_rawData" << rawID;
+      }
+      else
+      {
+         query << "all_rawDataIDs" << invID;
+      }
+      db->query( query );
 
-      if ( rfilt  &&  runID != filt_run )  continue;
+      while ( db->next() )
+      {  // Read Raw records
+         recID             = db->value( 0 ).toString();
+         QString label     = db->value( 1 ).toString();
+         QString filename  = db->value( 2 ).toString().replace( "\\", "/" );
+         QString filebase  = filename.section( "/", -1, -1 );
+         QString runID     = filebase.section( ".", 0, 0 );
+         QString triple    = filebase.section( ".", -4, -2 );
 
-      QString experID   = db->value( 3 ).toString();
-      QString date      = US_Util::toUTCDatetimeText( db->value( 5 )
-                          .toDateTime().toString( Qt::ISODate ), true );
-      QString cksum     = db->value( 6 ).toString();
-      QString recsize   = db->value( 7 ).toString();
-              rawGUID   = db->value( 9 ).toString();
-      QString comment   = db->value( 10 ).toString();
-DbgLv(2) << "BrDb: RAW id" << recID << " expID" << experID
- << " solID" << db->value(4).toString();
-      QString subType   = "";
-      contents          = cksum + " " + recsize;
+         if ( rfilt  &&  runID  != filt_run )     continue;
+         if ( tfilt  &&  triple != filt_triple )  continue;
 
-      if ( comment.isEmpty() )
-         comment        = filename.section( ".", 0, -2 );
+         QString experID;
+         QString date;
+         QString cksum;
+         QString recsize;
+         QString comment;
 
-      if ( ! label.contains( "." ) )
-         label          = filename.section( ".", 0, -2 );
+         if ( rfilt_q )
+         {
+            recID             = rawID;
+            experID           = db->value( 4 ).toString();
+            date              = US_Util::toUTCDatetimeText( db->value( 7 )
+                                .toDateTime().toString( Qt::ISODate ), true );
+            cksum             = db->value( 8 ).toString();
+            recsize           = db->value( 9 ).toString();
+            rawGUID           = db->value( 0 ).toString();
+            comment           = db->value( 3 ).toString();
+         }
 
-      rawIDs   << recID;
-      rawGUIDs << rawGUID;
+         else
+         {
+            experID           = db->value( 3 ).toString();
+            date              = US_Util::toUTCDatetimeText( db->value( 5 )
+                                .toDateTime().toString( Qt::ISODate ), true );
+            cksum             = db->value( 6 ).toString();
+            recsize           = db->value( 7 ).toString();
+            rawGUID           = db->value( 9 ).toString();
+            comment           = db->value( 10 ).toString();
+            expGUID           = db->value( 11 ).toString();
+         }
 
-      QString expGUID   = db->value( 11 ).toString();
+         irecID            = recID.toInt();
+DbgLv(1) << "BrDb: RAW id" << recID << " expID" << experID;
+         QString subType   = "";
+         contents          = cksum + " " + recsize;
+
+         if ( comment.isEmpty() )
+            comment        = filename.section( ".", 0, -2 );
+
+         if ( ! label.contains( "." ) )
+            label          = filename.section( ".", 0, -2 );
+
+         if ( ! rfilt )
+            rawIDs   << recID;
+
+         rawGUIDs << rawGUID;
+
 DbgLv(2) << "BrDb:     raw expGid" << expGUID;
 DbgLv(2) << "BrDb:      label filename comment" << label << filename << comment;
 
 //DbgLv(2) << "BrDb:       (R)contents" << contents;
 
-      cdesc.recordID    = irecID;
-      cdesc.recType     = 1;
-      cdesc.subType     = subType;
-      cdesc.recState    = REC_DB;
-      cdesc.dataGUID    = rawGUID.simplified();
-      cdesc.parentGUID  = expGUID.simplified();
-      cdesc.parentID    = experID.toInt();
-      cdesc.filename    = filename;
-      cdesc.contents    = contents;
-      cdesc.label       = label;
-      cdesc.description = comment;
-      cdesc.filemodDate = "";
-      cdesc.lastmodDate = date;
+         cdesc.recordID    = irecID;
+         cdesc.recType     = 1;
+         cdesc.subType     = subType;
+         cdesc.recState    = REC_DB;
+         cdesc.dataGUID    = rawGUID.simplified();
+         cdesc.parentGUID  = expGUID.simplified();
+         cdesc.parentID    = experID.toInt();
+         cdesc.filename    = filename;
+         cdesc.contents    = contents;
+         cdesc.label       = label;
+         cdesc.description = comment;
+         cdesc.filemodDate = "";
+         cdesc.lastmodDate = date;
 
-      if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
-         cdesc.dataGUID    = US_Util::new_guid();
+         if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
+            cdesc.dataGUID    = US_Util::new_guid();
 
-      cdesc.parentGUID  = cdesc.parentGUID.length() == 36 ?
-                          cdesc.parentGUID : dmyGUID;
+         cdesc.parentGUID  = cdesc.parentGUID.length() == 36 ?
+                             cdesc.parentGUID : dmyGUID;
 
-      ddescs << cdesc;
-      istep            += incre;
-      progress->setValue( istep );
-      qApp->processEvents();
+         ddescs << cdesc;
+         istep            += incre;
+         progress->setValue( istep );
+         qApp->processEvents();
+      }
    }
 
    int kraw    = rawIDs.size();
@@ -445,78 +660,129 @@ DbgLv(2) << "BrDb:      label filename comment" << label << filename << comment;
    // get edited data IDs
    lb_status->setText( tr( "Reading Edits" ) );
    qApp->processEvents();
-   query.clear();
-   query << "all_editedDataIDs" << invID;
-   db->query( query );
+   nqry         = rfilt ? edtIDs.size() : qMin( nedts, 1 );
+   rfilt_q      = rfilt && ( nqry < max_qrec );
+   nqry         = rfilt_q ? nqry : qMin( nedts, 1 );
 
-   while ( db->next() )
-   {  // get edited data information from DB
-      recID             = db->value( 0 ).toString();
-      irecID            = recID.toInt();
+DbgLv(1) << "BrDb:  Query Edits" << nowTime() << "nqry" << nqry;
+   for ( int jq = 0; jq < nqry; jq++ )
+   {
+      QString edtID;
+      query.clear();
+      if ( rfilt_q )
+      {
+         edtID             = edtIDs[ jq ];
+         query << "get_editedData" << edtID;
+      }
+      else
+      {
+         query << "all_editedDataIDs" << invID;
+      }
+      db->query( query );
 
+      while ( db->next() )
+      {  // Read Edit records
+         QString label;
+         QString filename;
+         QString filebase;
+         QString runID;
+         QString triple;
+         QString experID;
+         QString date;
+         QString cksum;
+         QString recsize;
+         QString comment;
+         QString rawID;
+         QString editGUID;
+
+         if ( rfilt_q )
+         {
+            recID             = edtID;
+            rawID             = db->value( 0 ).toString();
+            editGUID          = db->value( 1 ).toString();
+            label             = db->value( 2 ).toString();
+            filename          = db->value( 3 ).toString().replace( "\\", "/" );
+            filebase          = filename.section( "/", -1, -1 );
+            date              = US_Util::toUTCDatetimeText( db->value( 5 )
+                                .toDateTime().toString( Qt::ISODate ), true );
+            comment           = db->value( 4 ).toString();
+            cksum             = db->value( 6 ).toString();
+            recsize           = db->value( 7 ).toString();
+            runID             = filebase.section( ".", 0, 0 );
+            triple            = filebase.section( ".", -4, -2 );
+            if ( runID  != filt_run )                continue;
+            if ( tfilt  &&  triple != filt_triple )  continue;
+         }
+         else
+         {
+            recID             = db->value( 0 ).toString();
+            label             = db->value( 1 ).toString();
+            filename          = db->value( 2 ).toString().replace( "\\", "/" );
+            filebase          = filename.section( "/", -1, -1 );
+            rawID             = db->value( 3 ).toString();
+            expID             = db->value( 4 ).toString();
+            date              = US_Util::toUTCDatetimeText( db->value( 5 )
+                                .toDateTime().toString( Qt::ISODate ), true );
+            cksum             = db->value( 6 ).toString();
+            recsize           = db->value( 7 ).toString();
+            editGUID          = db->value( 9 ).toString();
+            comment           = "";
+            runID             = filebase.section( ".", 0, 0 );
+            triple            = filebase.section( ".", -4, -2 );
+            if ( rfilt  &&  runID  != filt_run )     continue;
+            if ( tfilt  &&  triple != filt_triple )  continue;
+         }
+
+         irecID            = recID.toInt();
 DbgLv(2) << "BrDb: EDT id" << recID << " raID" << db->value(3).toString()
  << " expID" << db->value(4).toString();
-      QString label     = db->value( 1 ).toString();
-      QString filename  = db->value( 2 ).toString().replace( "\\", "/" );
-      QString filebase  = filename.section( "/", -1, -1 );
-      QString rawID     = db->value( 3 ).toString();
-      int     ndxRaw    = rawIDs.indexOf( rawID );
+         int ndxRaw        = rawIDs.indexOf( rawID );
+         if (  ndxRaw < 0 )  continue;
+         rawGUID           = rawGUIDs.at( ndxRaw );
 
-      if ( rfilt  &&  ndxRaw < 0 )  continue;
+         if ( ! rfilt )
+            edtIDs << recID;
 
-              rawGUID   = rawGUIDs.at( ndxRaw );
-      QString triple    = filebase.section( ".", -4, -2 );
-
-      if ( tfilt  &&  triple != filt_triple )  continue;
-
-      edtIDs << recID;
-
-      QString expID     = db->value( 4 ).toString();
-      QString comment   = "";
-      QString date      = US_Util::toUTCDatetimeText( db->value( 5 )
-                          .toDateTime().toString( Qt::ISODate ), true );
-      QString cksum     = db->value( 6 ).toString();
-      QString recsize   = db->value( 7 ).toString();
-      QString editGUID  = db->value( 9 ).toString();
-      QString subType   = filebase.section( ".", 2, 2 );
-      contents          = cksum + " " + recsize;
+         QString subType   = filebase.section( ".", 2, 2 );
+         contents          = cksum + " " + recsize;
 DbgLv(2) << "BrDb:     edt  id eGID rGID label date"
  << irecID << editGUID << rawGUID << label << date;
 //DbgLv(2) << "BrDb:       (E)contents" << contents;
 
-      if ( ! filename.contains( "/" ) )
-         filename          = US_Settings::resultDir() + "/"
-                             + filename.section( ".", 0, 0 ) + "/"
-                             + filename;
+         if ( ! filename.contains( "/" ) )
+            filename          = US_Settings::resultDir() + "/"
+                                + filename.section( ".", 0, 0 ) + "/"
+                                + filename;
 //DbgLv(2) << "BrDb:       fname" << filename;
 
-      cdesc.recordID    = irecID;
-      cdesc.recType     = 2;
-      cdesc.subType     = subType;
-      cdesc.recState    = REC_DB;
-      cdesc.dataGUID    = editGUID.simplified();
-      cdesc.parentGUID  = rawGUID.simplified();
-      cdesc.parentID    = rawID.toInt();
-      cdesc.filename    = filename;
-      cdesc.contents    = contents;
-      cdesc.description = ( comment.isEmpty() ) ?
-                          filebase.section( ".", 0, 2 ) :
-                          comment;
-      cdesc.label       = cdesc.description;
-      cdesc.filemodDate = "";
-      cdesc.lastmodDate = date;
+         cdesc.recordID    = irecID;
+         cdesc.recType     = 2;
+         cdesc.subType     = subType;
+         cdesc.recState    = REC_DB;
+         cdesc.dataGUID    = editGUID.simplified();
+         cdesc.parentGUID  = rawGUID.simplified();
+         cdesc.parentID    = rawID.toInt();
+         cdesc.filename    = filename;
+         cdesc.contents    = contents;
+         cdesc.description = ( comment.isEmpty() ) ?
+                             filebase.section( ".", 0, 2 ) :
+                             comment;
+         cdesc.label       = cdesc.description;
+         cdesc.filemodDate = "";
+         cdesc.lastmodDate = date;
 
-      if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
-         cdesc.dataGUID    = US_Util::new_guid();
+         if ( cdesc.dataGUID.length() != 36  ||  cdesc.dataGUID == dmyGUID )
+            cdesc.dataGUID    = US_Util::new_guid();
 
-      cdesc.parentGUID  = cdesc.parentGUID.simplified().length() == 36 ?
-                          cdesc.parentGUID.simplified() : dmyGUID;
-      edtMap[ cdesc.dataGUID ] = cdesc.recordID;    // save edit ID for GUID
+         cdesc.parentGUID  = cdesc.parentGUID.simplified().length() == 36 ?
+                             cdesc.parentGUID.simplified() : dmyGUID;
+         edtMap[ cdesc.dataGUID ] = cdesc.recordID;    // save edit ID for GUID
 
-      ddescs << cdesc;
-      istep            += incre;
-      progress->setValue( istep );
-      qApp->processEvents();
+         ddescs << cdesc;
+         istep            += incre;
+         progress->setValue( istep );
+         qApp->processEvents();
+      }
    }
 DbgLv(1) << "BrDb: EDT loop done";
 
@@ -528,30 +794,39 @@ DbgLv(1) << "BrDb: EDT loop done";
    progress ->setValue( istep );
    qApp->processEvents();
 DbgLv(1) << "BrDb: Reading Models";
-   int nqry     = rfilt ? edtIDs.size() : 1;
+   nqry         = rfilt ? edtIDs.size() : 1;
+   rfilt_q      = rfilt && ( nqry < max_qrec );
+   nqry         = rfilt_q ? nqry : qMin( nedts, 1 );
 
+DbgLv(1) << "BrDb:  Query Models" << nowTime();
    for ( int jq = 0; jq < nqry; jq++ )
    {
       query.clear();
 
-      if ( rfilt )
+      if ( rfilt_q )
          query << "get_model_desc_by_editID" << invID << edtIDs[ jq ];
       else
          query << "get_model_desc" << invID;
 
-DbgLv(1) << "BrDb:  Query Models" << nowTime();
+DbgLv(2) << "BrDb:  Query Models" << nowTime();
 int kmdl=0;
       db->query( query );
-DbgLv(1) << "BrDb:  Query Return" << nowTime();
+DbgLv(2) << "BrDb:  Query Return" << nowTime();
 
       while ( db->next() )
       {  // get model information from DB
          recID             = db->value( 0 ).toString();
+         QString editID    = db->value( 6 ).toString();
 if( (++kmdl) == 1 )
-DbgLv(1) << "BrDb:  First Model " << nowTime();
-         modIDs << recID;
-         irecID            = recID.toInt();
+DbgLv(2) << "BrDb:  First Model " << nowTime();
+         if ( rfilt )
+         {
+            if ( ! edtIDs.contains( editID ) )   continue;
+         }
+         else
+            modIDs << recID;
 
+         irecID            = recID.toInt();
          QString modelGUID = db->value( 1 ).toString();
          QString descript  = db->value( 2 ).toString();
          modDescs << descript;
@@ -563,7 +838,6 @@ DbgLv(1) << "BrDb:  First Model " << nowTime();
          }
 
          QString editGUID  = db->value( 5 ).toString();
-         QString editID    = db->value( 6 ).toString();
 DbgLv(2) << "BrDb: MOD id" << recID << " edID" << editID << " edGID" << editGUID;
 DbgLv(2) << "BrDb: MOD id" << recID << " desc" << descript;
          QString date      = US_Util::toUTCDatetimeText( db->value( 7 )
@@ -614,7 +888,7 @@ DbgLv(2) << "BrDb: MOD id" << recID << " desc" << descript;
          qApp->processEvents();
       }
    }
-DbgLv(1) << "BrDb:  Last  Model " << nowTime();
+DbgLv(2) << "BrDb:  Last  Model " << nowTime();
 
    // Get noise IDs
    QStringList  tnoises;
@@ -626,22 +900,27 @@ DbgLv(1) << "BrDb:  Last  Model " << nowTime();
    {
       query.clear();
 
-      if ( rfilt )
+      if ( rfilt_q )
          query << "get_noise_desc_by_editID" << invID << edtIDs[ jq ];
       else
          query << "get_noise_desc" << invID;
 
-DbgLv(1) << "BrDb:  Query Noises" << nowTime();
+DbgLv(2) << "BrDb:  Query Noises" << nowTime();
       db->query( query );
 
       while ( db->next() )
       {  // Get noise information from DB
          recID             = db->value( 0 ).toString();
          irecID            = recID.toInt();
-         noiIDs << recID;
+         QString editID    = db->value( 2 ).toString();
+         if ( rfilt )
+         {
+            if ( ! edtIDs.contains( editID ) )   continue;
+         }
+         else
+            noiIDs << recID;
 
          QString noiseGUID = db->value( 1 ).toString();
-         QString editID    = db->value( 2 ).toString();
          QString modelID   = db->value( 3 ).toString();
          QString noiseType = db->value( 4 ).toString();
          QString modelGUID = db->value( 5 ).toString();
@@ -706,7 +985,7 @@ DbgLv(2) << "BrDb:       noi id nGID dsc typ noityp"
          progress->setValue( ++istep );
          qApp->processEvents();
       }
-DbgLv(1) << "BrDb:  Noise IDs" << nowTime() << "size" << noiIDs.size();
+DbgLv(2) << "BrDb:  Noise IDs" << nowTime() << "size" << noiIDs.size();
    }
 
    for ( int ii = 0; ii < tmodels.size(); ii++ )
@@ -799,13 +1078,65 @@ void US_DataModel::scan_local( )
       .entryList( noifilt, QDir::Files, QDir::Name );
    int         ktask   = 0;
    int         naucd   = aucdirs.size();
+   int         nedtf   = naucd * 3;
    int         nmodf   = modfils.size();
    int         nnoif   = noifils.size();
-   int         nstep   = naucd * 4 + nmodf + nnoif;
-DbgLv(1) << "BrLoc:  nau nmo nno nst" << naucd << nmodf << nnoif << nstep;
-   aucfilt << ( tfilt ? "*." + filt_triple + ".auc" : "*.auc" );
-DbgLv(1) << "BrLoc:   aucfilt" << aucfilt;
-   edtfilt << "*.xml";
+   QString aucpatt     = "*.auc";
+   QString edtpatt     = "*.xml";
+
+   if ( rfilt )
+   {  // If run filtering, count actual files that match
+      nedtf               = 0;
+      nmodf               = 0;
+      nnoif               = 0;
+
+      for ( int ii = 0; ii < naucd; ii++ )
+      {
+         QString     subdir   = rdir + aucdirs.at( ii );
+         edtpatt              = tfilt ?
+                                filt_run + ".*" + filt_triple + ".xml" :
+                                filt_run + ".*.xml";
+         edtfilt.clear();
+         edtfilt << edtpatt;
+         QStringList edtfiles = QDir( subdir )
+            .entryList( edtfilt, QDir::Files, QDir::Name );
+         nedtf               += edtfiles.size();
+         aucpatt              = tfilt ?
+                                filt_run + ".*" + filt_triple + ".auc" :
+                                filt_run + ".*.auc";
+      }
+
+      for ( int ii = 0; ii < modfils.size(); ii++ )
+      {
+         US_Model  model;
+         QString   modfil     = dirm + "/" + modfils.at( ii );
+         model.load( modfil );
+         QString   mdesc      = model.description;
+         if ( ! mdesc.startsWith( filt_run ) )              continue;
+         if ( tfilt  &&  ! mdesc.contains( filt_triple ) )  continue;
+         nmodf++;
+      }
+
+      for ( int ii = 0; ii < noifils.size(); ii++ )
+      {
+         US_Noise  noise;
+         QString   noifil     = dirn + "/" + noifils.at( ii );
+         noise.load( noifil );
+         QString   ndesc      = noise.description;
+         if ( ! ndesc.startsWith( filt_run ) )              continue;
+         if ( tfilt  &&  ! ndesc.contains( filt_triple ) )  continue;
+         nnoif++;
+      }
+   }
+
+   int         nstep   = naucd + nedtf + nmodf + nnoif;
+DbgLv(1) << "BrLoc:  naucd nedtf nmodf nnoif nstep"
+ << naucd << nedtf << nmodf << nnoif << nstep;
+   aucfilt.clear();
+   edtfilt.clear();
+   aucfilt << aucpatt;
+   edtfilt << edtpatt;
+DbgLv(1) << "BrLoc:   aucfilt" << aucfilt << "edtfilt" << edtfilt;
    rdir    = rdir + "/";
    lb_status->setText( tr( "Reading Local-Disk Data..." ) );
    progress->setMaximum( nstep );
@@ -1346,6 +1677,7 @@ DbgLv(2) << "SrtD:  Orph(nme)" << nowTime();
    int nstep   = orphn.size() + orphm.size() + orphe.size();
    int istep   = 0;
    progress->setMaximum( nstep );
+   progress->setValue  ( istep );
    qApp->processEvents();
 DbgLv(2) << "(1) orphan: N size M size" << orphn.size() << orphm.size();
    for ( int ii = 0; ii < orphn.size(); ii++ )
@@ -1605,11 +1937,10 @@ DbgLv(1) << "sort/dumy: count REMN" << countR << countE << countM << countN;
    lb_status->setText( tr( "Building Sorted Trees..." ) );
    istep       = 0;
    progress->setMaximum( countR );
+   progress->setValue  ( istep  );
    qApp->processEvents();
 
    // rebuild the description vector with sorted trees
-   istep      = 0;
-
    for ( int ii = 0; ii < countR; ii++ )
    {  // loop to output sorted Raw records
       QString recr = sortr[ ii ];
