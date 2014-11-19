@@ -694,7 +694,7 @@ void US_MPI_Analysis::start( void )
       int ct_min     = ( cputime - ct_hr * 3600 ) / 60;
       int ct_sec     = cputime - ct_hr * 3600 - ct_min * 60;
       printf( "Us_Mpi_Analysis has finished successfully"
-              " (%dh-%dm-%ds %dh-%dm-%ds).\n"
+              " (Wall=%d:%02d:%02d Cpu=%d:%02d:%02d).\n"
               , wt_hr, wt_min, wt_sec, ct_hr, ct_min, ct_sec );
       fflush( stdout );
 

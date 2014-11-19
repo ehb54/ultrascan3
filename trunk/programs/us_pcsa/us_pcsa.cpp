@@ -471,6 +471,9 @@ DbgLv(1) << "SV: model_stats size" << model_stats.size();
    else if ( curvType.contains( "Horizontal L" ) )
       analysisType      = "PCSA-HL";
 
+   if ( model.alphaRP != 0.0 )
+      analysisType      = analysisType + "-TR";
+
    if ( mciters > 1 )
       analysisType      = analysisType + "-MC";
 DbgLv(1) << "SV: analysisType" << analysisType;
@@ -1103,11 +1106,13 @@ DbgLv(1) << "ModStats1" << model_stats[ 1 ];
 void US_pcsa::write_report( QTextStream& ts )
 {
    QString curvtype = model_stats[ 1 ];
+   QString hdr      = tr( "Parametrically Constrained Spectrum Analysis" )
+                      + "<br/>( " + curvtype + " )";
 
-   ts << html_header( QString( "US_pcsa" ),
-           tr( "Parametrically Constrained Spectrum Analysis" )
-           + "<br/>( " + curvtype + " )",
-           edata );
+   if ( model.alphaRP > 0.0 )
+      hdr             += "<br/>- Tihhonov Regularization";
+
+   ts << html_header( QString( "US_pcsa" ), hdr, edata );
    ts << model_statistics();
    ts << distrib_info();
    ts << indent( 2 ) + "</body>\n</html>\n";
