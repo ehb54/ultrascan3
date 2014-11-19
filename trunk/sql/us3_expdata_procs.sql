@@ -367,6 +367,80 @@ BEGIN
 
 END$$
 
+-- Get a list of rawData descriptions for a specified runID (no cksum,size)
+DROP PROCEDURE IF EXISTS get_raw_desc_by_runID$$
+CREATE PROCEDURE get_raw_desc_by_runID ( p_personGUID   CHAR(36),
+                                         p_password     VARCHAR(80),
+                                         p_runID        VARCHAR(60) )
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE count_rawData INT;
+  DECLARE run_pattern VARCHAR(64);
+
+  CALL config();
+  SET run_pattern = CONCAT( p_runID, '.%' );
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_rawData
+  FROM       rawData
+  WHERE      filename LIKE run_pattern;
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get more info
+    IF ( count_rawData < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+  
+      SELECT     rawDataID, rawData.label, rawData.filename,
+                 rawData.experimentID, rawData.solutionID, 
+                 timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
+                 experimentPerson.personID,
+                 rawDataGUID, rawData.comment, experiment.experimentGUID
+      FROM       rawData, experiment, experimentPerson
+      WHERE      rawData.filename LIKE run_pattern
+      AND        experiment.experimentID = experimentPerson.experimentID
+      AND        rawData.experimentID = experiment.experimentID
+      ORDER BY   rawData.lastUpdated DESC;
+
+    END IF;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    -- Ok, user wants his own info
+    IF ( count_rawData < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT     rawDataID, rawData.label, rawData.filename,
+                 rawData.experimentID, rawData.solutionID, 
+                 timestamp2UTC( rawData.lastUpdated) AS UTC_lastUpdated, 
+                 experimentPerson.personID,
+                 rawDataGUID, rawData.comment, experiment.experimentGUID
+      FROM       rawData, experiment, experimentPerson
+      WHERE      experimentPerson.personID = @US3_ID
+      AND        rawData.filename LIKE run_pattern
+      AND        experiment.experimentID = experimentPerson.experimentID
+      AND        rawData.experimentID = experiment.experimentID
+      ORDER BY   rawData.lastUpdated DESC;
+
+    END IF;
+  END IF;
+
+END$$
+
 -- INSERTs new rawData information about one c/c/w combination in an experiment
 DROP PROCEDURE IF EXISTS new_rawData$$
 CREATE PROCEDURE new_rawData ( p_personGUID   CHAR(36),
@@ -941,6 +1015,82 @@ BEGIN
                  experiment.type, editedData.editGUID
       FROM       editedData, rawData, experiment, experimentPerson
       WHERE      experimentPerson.personID = @US3_ID
+      AND        experiment.experimentID = experimentPerson.experimentID
+      AND        rawData.experimentID = experiment.experimentID
+      AND        editedData.rawDataID = rawData.rawDataID
+      ORDER BY   editedData.lastUpdated DESC;
+
+    END IF;
+
+  END IF;
+
+END$$
+
+-- Get a list of editData descriptions for a specified runID
+DROP PROCEDURE IF EXISTS get_edit_desc_by_runID$$
+CREATE PROCEDURE get_edit_desc_by_runID ( p_personGUID   CHAR(36),
+                                          p_password     VARCHAR(80),
+                                          p_runID        VARCHAR(60) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_editData INT;
+  DECLARE run_pattern VARCHAR(64);
+
+  CALL config();
+  SET run_pattern = CONCAT( p_runID, '.%' );
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT    COUNT(*)
+  INTO      count_editData
+  FROM      editedData
+  WHERE     filename LIKE run_pattern;
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get more info
+    IF ( count_editData < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+  
+      SELECT     editedDataID, editedData.label, editedData.filename,
+                 editedData.rawDataID, rawData.experimentID,
+                 timestamp2UTC( editedData.lastUpdated) AS UTC_lastUpdated, 
+                 MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size,
+                 experiment.type, editedData.editGUID
+      FROM       editedData, rawData, experiment, experimentPerson
+      WHERE      experiment.experimentID = experimentPerson.experimentID
+      AND        editedData.filename LIKE run_pattern
+      AND        rawData.experimentID = experiment.experimentID
+      AND        editedData.rawDataID = rawData.rawDataID
+      ORDER BY   editedData.lastUpdated DESC;
+
+    END IF;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_editData < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      -- Ok, user wants his own info
+      SELECT @OK AS status;
+
+      SELECT     editedDataID, editedData.label, editedData.filename,
+                 editedData.rawDataID, rawData.experimentID, 
+                 timestamp2UTC( editedData.lastUpdated) AS UTC_lastUpdated, 
+                 MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size,
+                 experiment.type, editedData.editGUID
+      FROM       editedData, rawData, experiment, experimentPerson
+      WHERE      experimentPerson.personID = @US3_ID
+      AND        editedData.filename LIKE run_pattern
       AND        experiment.experimentID = experimentPerson.experimentID
       AND        rawData.experimentID = experiment.experimentID
       AND        editedData.rawDataID = rawData.rawDataID
