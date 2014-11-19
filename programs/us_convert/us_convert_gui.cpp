@@ -745,6 +745,16 @@ DbgLv(1) << "CGui:iM: IN";
 DbgLv(1) << "CGui:iM: import_data";
    isMwl       = mwl_data.import_data( currentDir, le_status );
 
+   if ( !isMwl  &&  le_status->text().contains( tr( "duplicate" ) ) )
+   {  // If import problem was duplicate wavelengths, report it.
+      QMessageBox::warning( this,
+            tr( "Duplicate Wavelengths" ),
+            tr( "Duplicate wavelengths were encountered in the import"
+                " of the Multi-WaveLength data.\n\n"
+                "All duplicate triples were skipped." ) );
+      isMwl       = true;
+   }
+         
    if ( !isMwl )
    {  // Return immediately if there were MWL import problems
       qApp->processEvents();

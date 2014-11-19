@@ -2095,13 +2095,14 @@ DbgLv(1) << "CFin:model: desc analys vari" << model.description
  << model.analysis << model.variance;
 
    // Replace the top model with the new regularized best model
+   model.alphaRP  = alpha;
    mrec.model     = model;
    mrecs[ 0 ]     = mrec;
 
    // Report new variance
    emit progress_update( mrec.variance ); 
    QApplication::restoreOverrideCursor();
-DbgLv(0) << "LMf: recomputed variance rmsd" << mrec.variance << rmsd;
+DbgLv(0) << "CFin: recomputed variance rmsd" << mrec.variance << rmsd;
 }
 
 // Restart the curve grid iteration sequence

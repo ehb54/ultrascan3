@@ -19,6 +19,7 @@ DbgLv(0) << "MwDa: dbg_level" << dbg_level;
 bool US_MwlData::import_data( QString& mwldir, QLineEdit* lestat )
 {
    bool status  = true;
+   int nlmb_dup = 0;
    cur_dir      = mwldir;
    le_status    = lestat;
    evers        = 0.0;
@@ -146,25 +147,52 @@ DbgLv(1) << "MwDa: nscan ncell nchan" << nscan << ncell << nchan;
          ntriple     = ntrip_i;
          npoint      = hd.npoint;
          npointt     = npoint  * nscan;
+         slambda     = 0;
 DbgLv(1) << "MwDa: npoint nlambda" << npoint << nlambda;
 
          read_lambdas( ds, ri_wavelns, nlamb_i );
+
+         // Test for duplicate wavelengths
+         for ( int jj = 1; jj < nlamb_i; jj++ )
+         {
+            if ( ri_wavelns[ jj ] == ri_wavelns[ jj - 1 ] )
+            {  // Mark dup with zero value for now; and bump dupl. count
+               ri_wavelns[ jj - 1 ] = 0;
+               nlmb_dup++;
+DbgLv(1) << "MwDa:   jj" << jj << "ndup lmb" << nlmb_dup << ri_wavelns[jj]; 
+            }
+            else if ( slambda == 0 )
+            {  // Save start non-duplicate lambda
+               slambda              = ri_wavelns[ jj - 1 ];
+            }
+         }
 DbgLv(1) << "MwDa:   read_lambdas COMPLETE";
-         slambda     = ri_wavelns[ 0 ];
+         slambda     = ( slambda == 0 ) ? ri_wavelns[ 0 ] : slambda;
          elambda     = ri_wavelns[ nlamb_i - 1 ];
+         nlambda     = nlamb_i - nlmb_dup;
+         ntriple     = nlambda * ncelchn;
 int ww=nlamb_i-1;
 DbgLv(1) << "MwDa:    w0 w1 w3 wi wj wk" << ri_wavelns[0] << ri_wavelns[1]
  << ri_wavelns[2] << ri_wavelns[ww-2] << ri_wavelns[ww-1] << ri_wavelns[ww];
-         le_status->setText( QString( "%1 wavelengths ..." )
-             .arg( nlamb_i ) );
+         if ( nlmb_dup == 0 )
+         {
+            le_status->setText( tr( "%1 wavelengths ..." )
+                                .arg( nlamb_i ) );
+         }
+         else
+         {
+            le_status->setText( tr( "%1 wavelengths ..."
+                                    " (%2 duplicate(s) removed)" )
+                                .arg( nlambda ).arg( nlmb_dup ) );
+         }
          qApp->processEvents();
 
          // And initialize the data vector
          QVector< double > wave_reads( npointt, 0.0 );
          ri_readings.clear  ();
-         ri_readings.reserve( ntrip_i );
+         ri_readings.reserve( ntriple );
 
-         for ( int tx = 0; tx < ntrip_i; tx++ )
+         for ( int tx = 0; tx < ntriple; tx++ )
          {
             ri_readings << wave_reads;
          }
@@ -176,7 +204,7 @@ DbgLv(1) << "MwDa:   ri_readings CREATED size" << ri_readings.size();
       }
 
       int ccx    = hd.icell * nchan + hd.ichan;
-      int tripx  = ccx * nlamb_i;
+      int tripx  = ccx * nlambda;
       int scnx   = ( fname.section( ".", -2, -2 ).toInt() - scnmin ) * npoint;
 //DbgLv(1) << "MwDa:  PREPARE rdata ccx tripx scnx" << ccx << tripx << scnx;
 //DbgLv(1) << "MwDa:  PREPARE   icell ichan nchan" << hd.icell << hd.ichan
@@ -185,7 +213,10 @@ DbgLv(1) << "MwDa:   ri_readings CREATED size" << ri_readings.size();
       // Read in the radius point data
       for ( int wavx = 0; wavx < nlamb_i; wavx++ )
       {
-         read_rdata( ds, ri_readings[ tripx++ ], scnx, npoint );
+         if ( ri_wavelns[ wavx ] > 0 )
+            read_rdata( ds, ri_readings[ tripx++ ], scnx, npoint );
+         else
+            ds.skipRawData( npoint * 4 );
       }
 
       le_status->setText( QString( "Data in for triple %1, scan %2 ..." )
@@ -198,9 +229,29 @@ DbgLv(1) << "MwDa: wv0 wvm wvn" << ri_wavelns[0]
  << ri_wavelns[nlamb_i/2] << ri_wavelns[nlamb_i-1];
 DbgLv(1) << "MwDa: da20,40" << ri_readings[20][40] << "m+40 n-40"
  << ri_readings[20][npointt/2+40] << ri_readings[20][npointt-41];
-   le_status->setText(
-      QString( "Initial MWL import from %1 files is complete." )
-      .arg( nfile ) );
+   if ( nlmb_dup == 0 )
+   {
+      le_status->setText( tr( "Initial MWL import from %1 files is complete." )
+                          .arg( nfile ) );
+   }
+   else
+   {
+      le_status->setText( tr( "Initial MWL import from %1 files is complete."
+                              " (%2 duplicate(s) encountered!)" )
+                          .arg( nfile ).arg( nlmb_dup ) );
+      int kk     = 0;
+
+      for ( int ii = 0; ii < nlamb_i; ii++ )
+      {
+         if ( ri_wavelns[ ii ] > 0 )
+            ri_wavelns[ kk++ ] = ri_wavelns[ ii ];
+      }
+
+      ri_wavelns.resize( nlambda );
+      nlamb_i    = nlambda;
+      ntrip_i    = ntriple;
+      status     = false;
+   }
    qApp->processEvents();
 
    // Initialize the wavelengths lists for all channels

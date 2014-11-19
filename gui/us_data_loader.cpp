@@ -838,45 +838,94 @@ qDebug() << "ScDB:TM:02: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 
 qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    QStringList editpars;
-   query.clear();
-   query << "all_editedDataIDs" << invID;
-   db.query( query );
+
+   if ( rfilter  &&  aucIDs.size() < 20 )
+   {
+      QStringList aucvals = aucIDs.values();
+      for ( int ii = 0; ii < aucvals.size(); ii++ )
+      {
+         QString aucval    = aucvals[ ii ];
+         QString aucID     = aucval.section( "^", 0, 0 );
+         QString expID     = aucval.section( "^", 1, 1 );
+         
+         query.clear();
+         query << "get_editedDataIDs" << aucID;
+         db.query( query );
+         while ( db.next() )
+         {
+            edtIDs << db.value( 0 ).toString();
+         }
+      }
+qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
+
+      for ( int ii = 0; ii < edtIDs.size(); ii++ )
+      {
+         QString edtID     = edtIDs[ ii ];
+         query.clear();
+         query << "get_editedData" << edtID;
+         db.query( query );
+         db.next();
+
+         QString rawID    = db.value( 0 ).toString();
+         QString edtGUID  = db.value( 1 ).toString();
+         QString descrip  = db.value( 2 ).toString();
+         QString filename = db.value( 3 ).toString().replace( "\\", "/" );
+         QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
+                            .toDateTime().toString( Qt::ISODate ), true );
+         QString cksum    = db.value( 6 ).toString();
+         QString recsize  = db.value( 7 ).toString();
+
+         editpars << descrip;
+         editpars << filename;
+         editpars << rawID;
+         editpars << date;
+         editpars << edtGUID;
+         editpars << cksum + " " + recsize;
+      }
+   }
+
+   else
+   {
+      query.clear();
+      query << "all_editedDataIDs" << invID;
+      db.query( query );
 qDebug() << "ScDB:TM:04: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
 
-   // Edit record parameters from the DB are first accumulated,
-   //  since we may need to download the content blob for some entries (MWL)
-   while ( db.next() )
-   {  // Accumulate edit record parameters from DB
-      QString etype    = db.value( 8 ).toString().toLower();
+      // Edit record parameters from the DB are first accumulated,
+      //  since we may need to download the content blob for some entries (MWL)
+      while ( db.next() )
+      {  // Accumulate edit record parameters from DB
+         QString etype    = db.value( 8 ).toString().toLower();
 
-      if ( tfilter  &&  etype != etype_filt )
-         continue;
+         if ( tfilter  &&  etype != etype_filt )
+            continue;
 
-      QString recID    = db.value( 0 ).toString();
-      QString descrip  = db.value( 1 ).toString();
-      QString filename = db.value( 2 ).toString().replace( "\\", "/" );
-      QString filebase = filename.section( "/", -1, -1 );
-      QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
-                         : descrip;
+         QString recID    = db.value( 0 ).toString();
+         QString descrip  = db.value( 1 ).toString();
+         QString filename = db.value( 2 ).toString().replace( "\\", "/" );
+         QString filebase = filename.section( "/", -1, -1 );
+         QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
+                            : descrip;
 
-      if ( rfilter  &&  runID != runID_sel )
-         continue;
+         if ( rfilter  &&  runID != runID_sel )
+            continue;
 
-      QString parID    = db.value( 3 ).toString();
-      QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
-                         .toDateTime().toString( Qt::ISODate ), true );
-      QString cksum    = db.value( 6 ).toString();
-      QString recsize  = db.value( 7 ).toString();
-      QString recGUID  = db.value( 9 ).toString();
+         QString parID    = db.value( 3 ).toString();
+         QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
+                            .toDateTime().toString( Qt::ISODate ), true );
+         QString cksum    = db.value( 6 ).toString();
+         QString recsize  = db.value( 7 ).toString();
+         QString recGUID  = db.value( 9 ).toString();
 
-      edtIDs << recID;
-      editpars << descrip;
-      editpars << filename;
-      editpars << parID;
-      editpars << date;
-      editpars << recGUID;
-      editpars << cksum + " " + recsize;
+         edtIDs << recID;
+         editpars << descrip;
+         editpars << filename;
+         editpars << parID;
+         editpars << date;
+         editpars << recGUID;
+         editpars << cksum + " " + recsize;
+      }
    }
 qDebug() << "ScDB:TM:05: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
 

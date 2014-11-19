@@ -10,7 +10,7 @@
     <application name="2DSA-FM"
       label="2-Dimensional Spectrum Analysis with Fit Meniscus" />
     <application name="2DSA-MW"
-      label="2-D Spectrum Analysis with Molec. Weight constraints" />
+      label="2-D Spectrum Analysis with Molecular Weight constraints" />
     <application name="2DSA-MW-MC"
       label="2-D Spectrum Analysis with MW constraints - Monte Carlo" />
     <application name="PCSA"
@@ -18,19 +18,27 @@
     <application name="PCSA-SL"
       label="Parametrically Constrained Spectrum Analysis (Straight Line)" />
     <application name="PCSA-IS"
-      label="Parametrically Constrained Spectrum Analysis (Incr. Sigmoid)" />
+      label="Parametrically Constrained Spectrum Analysis (Increasing Sigmoid)" />
     <application name="PCSA-DS"
-      label="Parametrically Constrained Spectrum Analysis (Decr. Sigmoid)" />
+      label="Parametrically Constrained Spectrum Analysis (Decreasing Sigmoid)" />
     <application name="PCSA-HL"
       label="Parametrically Constrained Spectrum Analysis (Horizontal Line)" />
     <application name="PCSA-SL-MC"
-      label="Parametr. Constr. Spectr. Analysis (Str. Line) - Monte Carlo" />
+      label="Parametrically Constrained Spectrum Analysis (Straight Line) - Monte Carlo" />
     <application name="PCSA-IS-MC"
-      label="Parametr. Constr. Spectr. Analysis (Inc. Sig.) - Monte Carlo" />
+      label="Parametrically Constrained Spectrum Analysis (Increasing Sigmoid) - Monte Carlo" />
     <application name="PCSA-DS-MC"
-      label="Parametr. Constr. Spectr. Analysis (Dec. Sig.) - Monte Carlo" />
+      label="Parametrically Constrained Spectrum Analysis (Decreasing Sigmoid) - Monte Carlo" />
     <application name="PCSA-HL-MC"
-      label="Parametr. Constr. Spectr. Analysis (Hor. Line) - Monte Carlo" />
+      label="Parametrically Constrained Spectrum Analysis (Horizontal Line) - Monte Carlo" />
+    <application name="PCSA-SL-TR"
+      label="Parametrically Constrained Spectrum Analysis (Straight Line) - Tikhonov Regularization" />
+    <application name="PCSA-IS-TR"
+      label="Parametrically Constrained Spectrum Analysis (Increasing Sigmoid) - Tikhonov Regularization" />
+    <application name="PCSA-DS-TR"
+      label="Parametrically Constrained Spectrum Analysis (Decreasing Sigmoid) - Tikhonov Regularization" />
+    <application name="PCSA-HL-TR"
+      label="Parametrically Constrained Spectrum Analysis (Horizontal Line) - Tikhonov Regularization" />
     <application name="2DSA-GL"
       label="2-D Spectrum Analysis - Global" />
     <application name="2DSA-GL-MC"
@@ -85,9 +93,9 @@
     <report name="x-to-S" label="g*(s)-to-s" />
     <report name="average-S" label="average-g*(s)-to-s" />
     <report name="extrap" label="vHW Extrapolation" />
-    <report name="s-c-distrib" label="Sedimentation Coeff. Distribution" />
-    <report name="s-c-histo" label="Sedimentation Coeff. Histogram" />
-    <report name="s-c-envelope" label="Sedimentation Coeff. Envelope" />
+    <report name="s-c-distrib" label="Sedimentation Coefficient Distribution" />
+    <report name="s-c-histo" label="Sedimentation Coefficient Histogram" />
+    <report name="s-c-envelope" label="Sedimentation Coefficient Envelope" />
     <report name="2ndmoment" label="Second Moment" />
     <report name="diagnostics" label="Scan Diagnostics" />
     <report name="scan_check" label="Scan Fit Check" />
@@ -95,7 +103,7 @@
     <report name="eqfit" label="Equilibrium Fit Analysis" />
     <report name="ga_stats" label="Genetic Algorithm Statistics" />
     <report name="statistics" label="Solute Integration Statistics" />
-    <report name="combo-distrib" label="Sed. Coeff. Combo Distribution" />
+    <report name="combo-distrib" label="Sedimentation Coefficient Combo Distribution" />
     <report name="combo-sb-distrib" label="Combo Svalue-Boundary Data Table" />
     <report name="combo-list-include" label="Combo List of Included Sets" />
     <report name="pseudo3d_s_ff0" label="Pseudo3d s_vs_ff0 Distribution" />
@@ -138,18 +146,18 @@
     <report name="combo-distrib-ff0" label="Combo Frictional Ratio Bar Plot" />
     <report name="combo-distrib-vbar" label="Combo Vbar Bar Plot" />
     <report name="combo-distrib-mwl" label="Combo Molecular Weight Log Bar Plot" />
-    <report name="combo-vcdat-s" label="Combo Sed. Coeff. XValue-Concen. Data" />
-    <report name="combo-vcdat-mw" label="Combo Molec. Wt. XValue-Concen. Data" />
-    <report name="combo-vcdat-d" label="Combo Diff. Coeff. XValue-Concen. Data" />
-    <report name="combo-vcdat-ff0" label="Combo f/f0 XValue-Concen. Data" />
-    <report name="combo-vcdat-vbar" label="Combo Vbar XValue-Concen. Data" />
-    <report name="combo-vcdat-mwl" label="Combo Molec. Wt. LogXValue-Concen. Data" />
-    <report name="combo-listincl-s" label="Combo Sed. Coeff. List of Included Sets" />
-    <report name="combo-listincl-mw" label="Combo Molec. Wt. List of Included Sets" />
-    <report name="combo-listincl-d" label="Combo Diff. Coeff. List of Included Sets" />
+    <report name="combo-vcdat-s" label="Combo Sedimentation Coefficient XValue-Concentration Data" />
+    <report name="combo-vcdat-mw" label="Combo Molecular Weight XValue-Concentration Data" />
+    <report name="combo-vcdat-d" label="Combo Diffusion Coefficient XValue-Concentration Data" />
+    <report name="combo-vcdat-ff0" label="Combo f/f0 XValue-Concentration Data" />
+    <report name="combo-vcdat-vbar" label="Combo Vbar XValue-Concentration Data" />
+    <report name="combo-vcdat-mwl" label="Combo Molecular Weight LogXValue-Concentration Data" />
+    <report name="combo-listincl-s" label="Combo Sedimentation Coefficient List of Included Sets" />
+    <report name="combo-listincl-mw" label="Combo Molecular Weight List of Included Sets" />
+    <report name="combo-listincl-d" label="Combo Diffusion Coefficient List of Included Sets" />
     <report name="combo-listincl-ff0" label="Combo f/f0 List of Included Sets" />
     <report name="combo-listincl-vbar" label="Combo Vbar List of Included Sets" />
-    <report name="combo-listincl-mwl" label="Combo Molec. Wt. Log List of Included Sets" />
+    <report name="combo-listincl-mwl" label="Combo Molecular Weight Log List of Included Sets" />
     <report name="mlines" label="Model Lines Plot" />
     <report name="mdistr_tab" label="Model Distributions Table" />
 </US_Reports>
