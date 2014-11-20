@@ -568,9 +568,16 @@ int US_LoadAUC::scan_db()
       return naucf;
    }
 
-   QStringList q( "get_rawData_desc" );
-   q << QString::number( personID );
-   db.query( q );
+   QStringList query;
+   QString idInv     = QString::number( personID );
+   QString label     = db.value( 1 ).toString();
+
+   if ( rfilter )
+      query << "get_raw_desc_by_runID" << runID_sel;
+   else
+      query << "get_rawData_desc" << idInv;
+
+   db.query( query );
 
    while ( db.next() )
    {  // Accumulate data description objects from database information
@@ -578,10 +585,11 @@ int US_LoadAUC::scan_db()
       QString label     = db.value( 1 ).toString();
       QString filename  = db.value( 2 ).toString();
       QString date      = db.value( 5 ).toString() + " UTC";
+      QString rawPers   = db.value( 6 ).toString();
       QString rawGUID   = db.value( 7 ).toString();
       QString runID     = filename.section( ".",  0, -6 );
 
-      if ( rfilter  &&  runID != runID_sel )
+      if ( rfilter  &&  rawPers != idInv )
          continue;
 
       QString tripID    = filename.section( ".", -4, -2 );
@@ -597,6 +605,9 @@ int US_LoadAUC::scan_db()
       runIDs << runID;    // Save each run
       infoDs << idata;    // Save concatenated description string
       naucf++;
+if(rfilter)
+qDebug() << "LdA: naucf" << naucf << "runID" << runID << "idata" << idata
+ << "rawPers" << rawPers << "idInv" << idInv;
    }
 
    // Create the data descriptions map
