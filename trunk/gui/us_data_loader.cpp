@@ -603,6 +603,8 @@ void US_DataLoader::list_data()
       QString clabel = tr( "No data found." );
       twi_runi = new QTreeWidgetItem( QStringList( clabel), 0 );
       tw_data->addTopLevelItem( twi_runi );
+      QApplication::restoreOverrideCursor();
+      QApplication::restoreOverrideCursor();
       return;
    }
 
