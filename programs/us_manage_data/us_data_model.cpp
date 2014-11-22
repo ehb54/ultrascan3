@@ -135,13 +135,16 @@ void US_DataModel::getTriples( QStringList& triples, QString runID )
    db->next();
    QString     expID    = db->value( 1 ).toString();
 
+   query.clear();
    query << "get_rawDataIDs" << expID;
    db->query( query );
+DbgLv(1) << "gTr: runID" << runID << "expID" << expID;
 
    while ( db->next() )
    {
       QString     fname    = db->value( 2 ).toString().section( "/", -1, -1 );
       QString     rrID     = fname.section( ".",  0,  0 );
+//DbgLv(1) << "gTr:  rrID" << rrID << "fname" << fname;
 
       if ( rrID == runID )
       { // Matching runID, so add triple (if need be)
@@ -267,10 +270,10 @@ void US_DataModel::scan_dbase( )
    QStringList edtIDs;
    QStringList modIDs;
    QStringList noiIDs;
-   QStringList rawGUIDs;
    QStringList modDescs;
    QStringList query;
    QMap< QString, int > edtMap;
+   QMap< QString, QString > rawGUIDs;
    QString     dmyGUID  = "00000000-0000-0000-0000-000000000000";
    QString     recID;
    QString     rawGUID;
@@ -353,6 +356,7 @@ QDateTime basetime=QDateTime::currentDateTime();
    if ( rfilt )
    {  // Count records when run/triple filtering
 DbgLv(1) << "BrDb:  filt'd Count start" << nowTime();
+      query.clear();
       query << "get_experiment_info_by_runID" << filt_run << invID;
       db->query( query );
       db->next();
@@ -535,7 +539,6 @@ DbgLv(1) << "BrDb:  count time:"
       noiIDs  .reserve( nnois );
    }
 
-   rawGUIDs.reserve( nraws );
    modDescs.reserve( nmods );
 
    // get raw data IDs
@@ -603,6 +606,7 @@ DbgLv(1) << "BrDb:  Query Raws" << nowTime() << "nqry" << nqry;
             expGUID           = db->value( 11 ).toString();
          }
 
+         rawGUIDs[ recID ] = rawGUID;
          irecID            = recID.toInt();
 DbgLv(1) << "BrDb: RAW id" << recID << " expID" << experID;
          QString subType   = "";
@@ -616,8 +620,6 @@ DbgLv(1) << "BrDb: RAW id" << recID << " expID" << experID;
 
          if ( ! rfilt )
             rawIDs   << recID;
-
-         rawGUIDs << rawGUID;
 
 DbgLv(2) << "BrDb:     raw expGid" << expGUID;
 DbgLv(2) << "BrDb:      label filename comment" << label << filename << comment;
@@ -736,9 +738,7 @@ DbgLv(1) << "BrDb:  Query Edits" << nowTime() << "nqry" << nqry;
          irecID            = recID.toInt();
 DbgLv(2) << "BrDb: EDT id" << recID << " raID" << db->value(3).toString()
  << " expID" << db->value(4).toString();
-         int ndxRaw        = rawIDs.indexOf( rawID );
-         if (  ndxRaw < 0 )  continue;
-         rawGUID           = rawGUIDs.at( ndxRaw );
+         rawGUID           = rawGUIDs[ rawID ];
 
          if ( ! rfilt )
             edtIDs << recID;

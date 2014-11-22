@@ -103,10 +103,10 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
          QString rawDataID = db->value( 0 ).toString();
 
          DbgLv(1) << "editUpld: rawDataID" << rawDataID;
-         query.clear();
 
          if ( idData < 0 )
          {
+            query.clear();
             query << "new_editedData" << rawDataID << editGUID << runID
                << filename << cdesc.description;
             db->query( query );
@@ -115,6 +115,7 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
             DbgLv(1) << "editUpld: NEW idData" << idData << editID;
          }
 
+         query.clear();
          query << "update_editedData" << editID << rawDataID << editGUID
             << label << filename << cdesc.description;
          db->query( query );
