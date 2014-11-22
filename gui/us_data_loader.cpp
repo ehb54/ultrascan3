@@ -819,7 +819,7 @@ qDebug() << "ScDB:TM:01: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    query.clear();
 
    if ( rfilter )
-      query << "get_raw_desc_by_runID" << runID_sel;
+      query << "get_raw_desc_by_runID" << invID << runID_sel;
    else
       query << "get_rawData_desc" << invID;
 
@@ -842,7 +842,7 @@ qDebug() << "ScDB:TM:03: " << QTime::currentTime().toString("hh:mm:ss:zzzz");
    query.clear();
 
    if ( rfilter )
-      query << "get_edit_desc_by_runID" << runID_sel;
+      query << "get_edit_desc_by_runID" << invID << runID_sel;
    else
       query << "all_editedDataIDs" << invID;
 
@@ -866,9 +866,9 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
                          : descrip;
 
-      if ( rfilter  &&  runID != runID_sel )
-         continue;
-
+//      if ( rfilter  &&  runID != runID_sel )
+//         continue;
+//
       QString parID    = db.value( 3 ).toString();
       QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
                          .toDateTime().toString( Qt::ISODate ), true );

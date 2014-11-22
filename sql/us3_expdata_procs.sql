@@ -371,6 +371,7 @@ END$$
 DROP PROCEDURE IF EXISTS get_raw_desc_by_runID$$
 CREATE PROCEDURE get_raw_desc_by_runID ( p_personGUID   CHAR(36),
                                          p_password     VARCHAR(80),
+                                         p_ID           INT,
                                          p_runID        VARCHAR(60) )
   READS SQL DATA
 
@@ -389,7 +390,14 @@ BEGIN
   FROM       rawData
   WHERE      filename LIKE run_pattern;
 
-  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( p_ID <= 0 ) THEN
+    -- Gotta have a real ID
+    SET @US3_LAST_ERRNO = @EMPTY;
+    SET @US3_LAST_ERROR = 'MySQL: The ID cannot be 0';
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
     IF ( count_rawData < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
@@ -406,7 +414,8 @@ BEGIN
                  experimentPerson.personID,
                  rawDataGUID, rawData.comment, experiment.experimentGUID
       FROM       rawData, experiment, experimentPerson
-      WHERE      rawData.filename LIKE run_pattern
+      WHERE      experimentPerson.personID = p_ID
+      AND        rawData.filename LIKE run_pattern
       AND        experiment.experimentID = experimentPerson.experimentID
       AND        rawData.experimentID = experiment.experimentID
       ORDER BY   rawData.lastUpdated DESC;
@@ -415,7 +424,14 @@ BEGIN
 
   ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     -- Ok, user wants his own info
-    IF ( count_rawData < 1 ) THEN
+    IF ( (p_ID != 0) && (p_ID != @US3_ID ) ) THEN
+      -- Uh oh, can't do that
+      SET @US3_LAST_ERRNO = @NOTPERMITTED;
+      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view this model';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSEIF ( count_rawData < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
@@ -1030,6 +1046,7 @@ END$$
 DROP PROCEDURE IF EXISTS get_edit_desc_by_runID$$
 CREATE PROCEDURE get_edit_desc_by_runID ( p_personGUID   CHAR(36),
                                           p_password     VARCHAR(80),
+                                          p_ID           INT,
                                           p_runID        VARCHAR(60) )
   READS SQL DATA
 
@@ -1047,7 +1064,13 @@ BEGIN
   FROM      editedData
   WHERE     filename LIKE run_pattern;
 
-  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( p_ID <= 0 ) THEN
+      SET @US3_LAST_ERRNO = @EMPTY;
+      SET @US3_LAST_ERROR = 'MySQL: The ID cannot be 0';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
     -- This is an admin; he can get more info
     IF ( count_editData < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
@@ -1064,7 +1087,8 @@ BEGIN
                  MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size,
                  experiment.type, editedData.editGUID
       FROM       editedData, rawData, experiment, experimentPerson
-      WHERE      experiment.experimentID = experimentPerson.experimentID
+      WHERE      experimentPerson.experimentID = p_ID
+      AND        experiment.experimentID = experimentPerson.experimentID
       AND        editedData.filename LIKE run_pattern
       AND        rawData.experimentID = experiment.experimentID
       AND        editedData.rawDataID = rawData.rawDataID
@@ -1073,7 +1097,12 @@ BEGIN
     END IF;
 
   ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
-    IF ( count_editData < 1 ) THEN
+    IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
+      -- Uh oh, can't do that
+      SET @US3_LAST_ERRNO = @NOTPERMITTED;
+      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view those edits';
+     
+    ELSEIF ( count_editData < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
    
