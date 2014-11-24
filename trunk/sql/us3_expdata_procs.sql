@@ -1087,7 +1087,7 @@ BEGIN
                  MD5( editedData.data ) AS checksum, LENGTH( editedData.data ) AS size,
                  experiment.type, editedData.editGUID
       FROM       editedData, rawData, experiment, experimentPerson
-      WHERE      experimentPerson.experimentID = p_ID
+      WHERE      experimentPerson.personID = p_ID
       AND        experiment.experimentID = experimentPerson.experimentID
       AND        editedData.filename LIKE run_pattern
       AND        rawData.experimentID = experiment.experimentID
