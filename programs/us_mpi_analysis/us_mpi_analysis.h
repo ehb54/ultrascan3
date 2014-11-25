@@ -7,6 +7,7 @@
 
 #include "us_model.h"
 #include "us_dmga_constr.h"
+#include "us_pcsa_modelrec.h"
 #include "us_dataIO.h"
 #include "us_noise.h"
 #include "us_simparms.h"
@@ -78,7 +79,7 @@ class US_MPI_Analysis : public QObject
     double              p_mutate_s;
     double              p_mutate_k;
     double              p_mutate_sk;
-    double              beta;
+    double              alpha;
 
     long int            maxrss;
     static const int    min_experiment_size      = 100;
@@ -112,6 +113,10 @@ class US_MPI_Analysis : public QObject
     US_DataIO::RawData* sim_data;        // Populated in calc_residuals
     US_DataIO::RawData  sim_data1;       // Simulation for mc iteration 1
     US_DataIO::RawData  scaled_data;     // Populated after global fit
+
+    US_ModelRecord             mrec;     // Work PCSA model record
+    QVector< US_ModelRecord >  mrecs;    // PCSA model records (curves)
+    QMap< QString, int >       cTypeMap; // Curve type mapping ('SL'->1,...)
 
     QHostAddress        server;
     quint16             port;
@@ -167,14 +172,14 @@ class US_MPI_Analysis : public QObject
     QList< QVector< US_Solute > >  orig_solutes;
     QVector< US_Solute >           ljob_solutes;
 
-    class _2dsa_Job
+    class Sa_Job
     {
        public:
           MPI_Job              mpi_job;
           QVector< US_Solute > solutes;
     };
 
-    QList< _2dsa_Job > job_queue;
+    QList< Sa_Job > job_queue;
 
     static const double LARGE          = 1.e39;
     static const int    solute_doubles = sizeof( US_Solute ) / sizeof( double );
@@ -301,8 +306,9 @@ class US_MPI_Analysis : public QObject
 
     // Master
     void     _2dsa_master      ( void );
-    void     submit            ( _2dsa_Job&, int );
-    void     add_to_queue      ( _2dsa_Job& );
+    void     submit            ( Sa_Job&, int );
+    void     submit_pcsa       ( Sa_Job&, int );
+    void     add_to_queue      ( Sa_Job& );
     void     process_results   ( int, const int* );
     void     shutdown_all      ( void );
     void     write_noise       ( US_Noise::NoiseType, const QVector< double>& );
@@ -399,6 +405,13 @@ class US_MPI_Analysis : public QObject
     QString dgene_key          ( DGene& );
     void    calc_residuals_dmga( int, int, SIMULATION&, DGene& );
 
+    // PCSA Master
+    void    pcsa_master        ( void );
+    void    init_pcsa_solutes  ( void );
+
+    // PCSA Worker
+    void    pcsa_worker        ( void );
+
     // Parallel Masters
     void    pmasters_start     ( void );
     void    task_parse         ( const QString& );
@@ -414,6 +427,7 @@ class US_MPI_Analysis : public QObject
     void    pm_2dsa_cjmast     ( void );
     void    pm_ga_cjmast       ( void );
     void    pm_dmga_cjmast     ( void );
+    void    pm_pcsa_cjmast     ( void );
 
     // Debug
     void    dump_buckets( void );

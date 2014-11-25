@@ -37,7 +37,7 @@ void US_MPI_Analysis::_2dsa_master( void )
       {
          worker    = ready_worker();
 
-         _2dsa_Job job           = job_queue.takeFirst();
+         Sa_Job job              = job_queue.takeFirst();
          submit( job, worker );
          worker_depth [ worker ] = job.mpi_job.depth;
          worker_status[ worker ] = WORKING;
@@ -371,7 +371,7 @@ void US_MPI_Analysis::fill_queue( void )
    {
       max_experiment_size = qMax( max_experiment_size,
                                   orig_solutes[ i ].size() );
-      _2dsa_Job job;
+      Sa_Job job;
       job.solutes         = orig_solutes[ i ];
       job_queue << job;
    }
@@ -490,7 +490,7 @@ void US_MPI_Analysis::set_meniscus( void )
    // We incremented meniscus_run above.  Just rerun from the beginning.
    for ( int i = 0; i < orig_solutes.size(); i++ )
    {
-      _2dsa_Job job;
+      Sa_Job job;
       job.solutes = orig_solutes[ i ];
 
       job_queue << job;
@@ -895,7 +895,7 @@ void US_MPI_Analysis::iterate( void )
    previous_values.solutes  = simulation_values.solutes;
 
    // Set up for another round at depth 0
-   _2dsa_Job job;
+   Sa_Job job;
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
    job.mpi_job.meniscus_value = meniscus_value;
@@ -959,7 +959,7 @@ DbgLv(1) << "2dsa master shutdown : worker" << i << " upd. maxrss" << maxrss
 }
 
 /////////////////////
-void US_MPI_Analysis::submit( _2dsa_Job& job, int worker )
+void US_MPI_Analysis::submit( Sa_Job& job, int worker )
 {
    job.mpi_job.command        = MPI_Job::PROCESS;
    job.mpi_job.length         = job.solutes.size(); 
@@ -998,7 +998,7 @@ DbgLv(1) << "Mast: submit: send #2";
 }
 
 // Add a job to the queue, maintaining depth order
-void US_MPI_Analysis::add_to_queue( _2dsa_Job& job )
+void US_MPI_Analysis::add_to_queue( Sa_Job& job )
 {
    int jdepth = job.mpi_job.depth;
 
@@ -1135,7 +1135,7 @@ DbgLv(1) << "Mast:    process_solutes:      worker" << worker
    if ( new_size > max_experiment_size )
    {
       // Put current solutes on queue at depth + 1
-      _2dsa_Job job;
+      Sa_Job job;
       job.solutes                = calculated_solutes[ depth ];
       job.mpi_job.depth          = next_depth;
       job.mpi_job.dataset_offset = current_dataset;
@@ -1197,7 +1197,7 @@ DbgLv(1) << "Mast:    NEW max_exp_size" << max_experiment_size
       if ( ! working && ! queued && remainder > 0 )
       { // Submit a job with remaining calculated solutes from an earlier depth
          int next_d                 = d + 1;
-         _2dsa_Job job;
+         Sa_Job job;
          job.solutes                = calculated_solutes[ d ];
          job.mpi_job.depth          = next_d;
          job.mpi_job.dataset_offset = current_dataset;
@@ -1233,7 +1233,7 @@ DbgLv(1) << "Mast:   queue REMAINDER" << remainder << " d=" << d+1;
         ! working              &&
         csol_size > rsol_size )
    {
-      _2dsa_Job job;
+      Sa_Job job;
       job.solutes          = calculated_solutes[ depth ];
       job.mpi_job.depth    = next_depth;
       meniscus_value       = ( meniscus_values.size() == 1 )

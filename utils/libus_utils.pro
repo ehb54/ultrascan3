@@ -44,6 +44,7 @@ HEADERS      = us_analyte.h       \
                us_memory.h        \
                us_model.h         \
                us_noise.h         \
+               us_pcsa_modelrec.h \
                us_project.h       \
                us_report.h        \
                us_rotor.h         \
@@ -82,6 +83,7 @@ SOURCES      = us_analyte.cpp       \
                us_memory.cpp        \
                us_model.cpp         \
                us_noise.cpp         \
+               us_pcsa_modelrec.cpp \
                us_project.cpp       \
                us_report.cpp        \
                us_rotor.cpp         \

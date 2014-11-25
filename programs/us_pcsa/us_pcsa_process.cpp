@@ -279,7 +279,7 @@ DbgLv(1) << "PC(pcsaProc): final_fit()";
 }
 
 // Slot to handle the low-variance record of fixed final calculated solutes
-void US_pcsaProcess::process_fxfinal( ModelRecord& mrec )
+void US_pcsaProcess::process_fxfinal( US_ModelRecord& mrec )
 {
    if ( abort ) return;
 
@@ -477,7 +477,7 @@ bool US_pcsaProcess::get_results( US_DataIO::RawData*     da_sim,
                                   US_Noise*               da_rin,
                                   int&                    bm_ndx,
                                   QStringList&            modstats,
-                                  QVector< ModelRecord >& p_mrecs )
+                                  QVector< US_ModelRecord >& p_mrecs )
 {
    bool all_ok      = true;
    model.alphaRP    = alpha;
@@ -516,13 +516,13 @@ DbgLv(1) << "PC:GR:   RTN";
 }
 
 // Public slot to get best model record in preparation for an alpha scan
-void US_pcsaProcess::get_mrec( ModelRecord& p_mrec )
+void US_pcsaProcess::get_mrec( US_ModelRecord& p_mrec )
 {
    p_mrec      = mrecs[ 0 ];              // Copy best model record
 }
 
 // Replace the top-spot model record
-void US_pcsaProcess::put_mrec( ModelRecord& a_mrec )
+void US_pcsaProcess::put_mrec( US_ModelRecord& a_mrec )
 {
    mrecs[ 0 ]  = a_mrec;                  // Copy best model record
 
@@ -533,7 +533,7 @@ void US_pcsaProcess::put_mrec( ModelRecord& a_mrec )
 }
 
 // Replace the model records list and related variables after file load
-void US_pcsaProcess::put_mrecs( QVector< ModelRecord >& a_mrecs )
+void US_pcsaProcess::put_mrecs( QVector< US_ModelRecord >& a_mrecs )
 {
    mrecs       = a_mrecs;                 // Copy model records list
    int nmrecs  = mrecs.size();
@@ -627,7 +627,7 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
    double variance = wresult.sim_vals.variance;
 
    // Save variance and model record for this task result
-   ModelRecord mrec;
+   US_ModelRecord mrec;
    mrec.taskx      = taskx;
    mrec.str_k      = wresult.str_k;
    mrec.end_k      = wresult.end_k;
@@ -825,11 +825,11 @@ DbgLv(1) << "SLMO: slo sup klo kup nkp res" << slo << sup << klo << kup
 
    // Compute straight-line model records
    if ( ctp == 0 )
-      nmodels = ModelRecord::compute_slines( slo, sup, klo, kup, nkp,
-                                             res, parlims, mrecs );
+      nmodels = US_ModelRecord::compute_slines( slo, sup, klo, kup, nkp,
+                                                res, parlims, mrecs );
    else if ( ctp == 3 )
-      nmodels = ModelRecord::compute_hlines( slo, sup, klo, kup, nkp,
-                                             res, parlims, mrecs );
+      nmodels = US_ModelRecord::compute_hlines( slo, sup, klo, kup, nkp,
+                                                res, parlims, mrecs );
 
    // Update the solutes with vbar and add to task solutes list
    for ( int ii = 0; ii < nmodels; ii++ )
@@ -858,7 +858,7 @@ DbgLv(1) << "SGMO: ctp slo sup klo kup nkp nlp" << ctp << slo << sup
    orig_sols.clear();
 
    // Compute sigmoid model records
-   int nmodels = ModelRecord::compute_sigmoids( ctp, slo, sup, klo, kup,
+   int nmodels = US_ModelRecord::compute_sigmoids( ctp, slo, sup, klo, kup,
                                                 nkp, nlpts, parlims, mrecs );
 
    // Update the solutes with vbar and add to task solutes list
@@ -879,7 +879,7 @@ DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
 }
 
 // Generate the strings of model statistics for a report
-void US_pcsaProcess::model_statistics( QVector< ModelRecord >& mrecs,
+void US_pcsaProcess::model_statistics( QVector< US_ModelRecord >& mrecs,
                                        QStringList&            modstats )
 {
    const char* ctp[] = { "Straight Line",
@@ -1663,7 +1663,7 @@ DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
    emit message_update( fmsg, true );
 
    // Replace best model in vector and build out model more completely
-   ModelRecord mrec = mrecs[ 0 ];
+   US_ModelRecord mrec = mrecs[ 0 ];
    US_SimulationParameters* spar = &dset->simparams;
    int  jsp       = 0;
 
@@ -1836,7 +1836,7 @@ DbgLv(0) << "LMf: recomputed variance rmsd" << cvari << crmsd;
 
 }
 
-void US_pcsaProcess::elite_limits( QVector< ModelRecord >& mrecs,
+void US_pcsaProcess::elite_limits( QVector< US_ModelRecord >& mrecs,
       double& minkv, double& maxkv, double& minp1, double& maxp1,
       double& minp2, double& maxp2 )
 {
@@ -2036,7 +2036,7 @@ DbgLv(1) << "CFin: alpha" << alpha << "mrecs size" << mrecs.size();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    QTime ftimer;
    ftimer.start();
-   ModelRecord mrec   = mrecs[ 0 ];
+   US_ModelRecord mrec   = mrecs[ 0 ];
    model              = mrec.model;
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisflag;

@@ -13,7 +13,7 @@
 
 // Constructor:  Regularization Parameter Scan widget
 US_RpScan::US_RpScan( QList< US_SolveSim::DataSet* >&dsets,
-      ModelRecord& mr, int& thr, double& alf, QWidget* p )
+      US_ModelRecord& mr, int& thr, double& alf, QWidget* p )
    : US_WidgetsDialog( p, 0 ), dsets( dsets ), mrec( mr ), nthr( thr ),
    alpha( alf )
 {

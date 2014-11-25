@@ -7,7 +7,7 @@
 #include "us_noise_loader.h"
 #include "us_resplot_pc.h"
 #include "us_mlplot.h"
-#include "us_model_record.h"
+#include "us_pcsa_modelrec.h"
 #include "us_db2.h"
 #include "us_astfem_rsa.h"
 #include "us_model.h"
@@ -54,8 +54,8 @@ class US_pcsa : public US_AnalysisBase2
       US_Noise*                   mw_ri_noise();
       QPointer< QTextEdit >       mw_status_text();
       QStringList*                mw_model_stats();
-      QVector< ModelRecord >*     mw_mrecs();
-      QVector< ModelRecord >*     mw_mrecs_mc();
+      QVector< US_ModelRecord >*  mw_mrecs();
+      QVector< US_ModelRecord >*  mw_mrecs_mc();
       int*                        mw_base_rss();
 
    private:
@@ -78,16 +78,12 @@ class US_pcsa : public US_AnalysisBase2
       QPointer< US_AnalysisControlPc >  analcd;
       QPointer< US_MLinesPlot >         mlplotd;
 
-      QVector< ModelRecord >          mrecs;
-      QVector< ModelRecord >          mrecs_mc;
+      QVector< US_ModelRecord >         mrecs;
+      QVector< US_ModelRecord >         mrecs_mc;
 
       US_Model             model;
       US_Noise             ri_noise_in;
       US_Noise             ti_noise_in;
-//
-//      QList< US_Model >    models;
-//      QList< US_Noise >    ti_noises;
-//      QList< US_Noise >    ri_noises;
 
       QStringList          model_stats;
 

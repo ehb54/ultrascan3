@@ -6,8 +6,9 @@
 #include "us_gui_settings.h"
 
 // constructor:  enhanced plot control widget
-US_AdvAnalysisPc::US_AdvAnalysisPc( QVector< ModelRecord >* p_mrs, const int nth,
-    US_SolveSim::DataSet* ds0, QWidget* p ) : US_WidgetsDialog( p, 0 )
+US_AdvAnalysisPc::US_AdvAnalysisPc( QVector< US_ModelRecord >* p_mrs,
+    const int nth, US_SolveSim::DataSet* ds0, QWidget* p )
+    : US_WidgetsDialog( p, 0 )
 {
    p_mrecs        = p_mrs;
    nthr           = nth;
@@ -288,7 +289,7 @@ DbgLv(1) << "Post-resize size" << size();
 }
 
 // Return state flag from advanced actions and, possibly, MC models
-int US_AdvAnalysisPc::advanced_results( QVector< ModelRecord >* p_mrecsmc )
+int US_AdvAnalysisPc::advanced_results( QVector< US_ModelRecord >* p_mrecsmc )
 {
    // Set state flag reflecting new-bfm, new-mrs, montecarlo
    int state    = bfm_new ?           msk_bfnew   : 0;
@@ -685,7 +686,7 @@ else DbgLv(1) << "store_mrecs - FILE NAME *NOT* EMPTY" << store_file;
 
    for ( int mr = 0; mr < nmrecs; mr++ )
    {
-      ModelRecord mrec = mrecs[ mr ];
+      US_ModelRecord mrec = mrecs[ mr ];
       int    kisols    = mrec.isolutes.size();
       int    ncsols    = mrec.csolutes.size();
       xmlo.writeStartElement( "modelrecord" );
@@ -1152,7 +1153,7 @@ DbgLv(1) << "start_montecarlo";
    ksiters        = 0;
    kciters        = 0;
    mrecs_mc.clear();
-   ModelRecord          mrec_mc = mrec;
+   US_ModelRecord       mrec_mc = mrec;
    US_SolveSim::DataSet dset    = *dset0;
    QList< US_SolveSim::DataSet* > dsets;
    dsets << &dset;
@@ -1373,7 +1374,7 @@ void US_AdvAnalysisPc::process_job( WorkerThreadPc* wthr )
    WorkPacketPc wresult;
    wthr->get_result( wresult );
 
-   ModelRecord mrec_mc = mrecs_mc[ 0 ];
+   US_ModelRecord mrec_mc = mrecs_mc[ 0 ];
    mrec_mc.variance = wresult.sim_vals.variance;
    mrec_mc.rmsd     = sqrt( mrec_mc.variance );
    mrec_mc.csolutes = wresult.sim_vals.solutes;
@@ -1598,7 +1599,7 @@ void US_AdvAnalysisPc::under_construct( QString proc )
 }
 
 // Re-generate the input solute curve points for a model record
-void US_AdvAnalysisPc::curve_isolutes( ModelRecord& mrec )
+void US_AdvAnalysisPc::curve_isolutes( US_ModelRecord& mrec )
 {
    int    nisols  = mrec.isolutes.size();
    int    ctype   = mrec.ctype;
@@ -1790,9 +1791,9 @@ void US_AdvAnalysisPc::show_stat( QTextEdit* tedit, const QString msg,
 }
 
 // Set the fitting control counters from model records
-void US_AdvAnalysisPc::set_fittings( QVector< ModelRecord >& s_mrecs )
+void US_AdvAnalysisPc::set_fittings( QVector< US_ModelRecord >& s_mrecs )
 {
-   ModelRecord s_mrec = s_mrecs[ 0 ];
+   US_ModelRecord s_mrec = s_mrecs[ 0 ];
    nisols       = s_mrec.isolutes.size();
    nmrecs       = s_mrecs.size();
    double smin  = s_mrec.smin;

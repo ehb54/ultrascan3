@@ -7,7 +7,7 @@
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_pcsa_process.h"
-#include "us_model_record.h"
+#include "us_pcsa_modelrec.h"
 #include "us_plot.h"
 #include "us_help.h"
 
@@ -27,22 +27,22 @@ class US_AdvAnalysisPc : public US_WidgetsDialog
       //! \param nth     Number of threads to use
       //! \param ds0     Pointer to first dataset record
       //! \param p       Pointer to the parent of this widget
-      US_AdvAnalysisPc( QVector< ModelRecord >*, const int,
+      US_AdvAnalysisPc( QVector< US_ModelRecord >*, const int,
                         US_SolveSim::DataSet*, QWidget* p = 0 );
 
       //! \brief Return flag of advanced analysis state and possibly MC models
       //! \param p_mrecsmc  Pointer for return of MC model records if appropo
       //! \return           Flag with or'd state (1=new-bfm, 2=new-mrs, 4=mc)
-      int advanced_results( QVector< ModelRecord >* );
+      int advanced_results( QVector< US_ModelRecord >* );
 
    private:
-      QVector< ModelRecord >*  p_mrecs;
-      QVector< ModelRecord >   mrecs0;
-      QVector< ModelRecord >   mrecs;
-      QVector< ModelRecord >   mrecs_mc;
+      QVector< US_ModelRecord >*       p_mrecs;
+      QVector< US_ModelRecord >        mrecs0;
+      QVector< US_ModelRecord >        mrecs;
+      QVector< US_ModelRecord >        mrecs_mc;
 
-      ModelRecord              mrec0;
-      ModelRecord              mrec;
+      US_ModelRecord           mrec0;
+      US_ModelRecord           mrec;
 
       US_SolveSim::DataSet*    dset0;
 
@@ -145,12 +145,12 @@ class US_AdvAnalysisPc : public US_WidgetsDialog
       void process_job     ( WorkerThreadPc* );
       void montecarlo_done ( void );
       void under_construct ( QString );
-      void curve_isolutes  ( ModelRecord& );
+      void curve_isolutes  ( US_ModelRecord& );
       void bfm_model       ( void );
       void stat_mrecs      ( const QString, bool = false, int = 0 );
       void stat_bfm        ( const QString, bool = false, int = 0 );
       void show_stat       ( QTextEdit*, const QString, bool = false, int = 0 );
-      void set_fittings    ( QVector< ModelRecord >& );
+      void set_fittings    ( QVector< US_ModelRecord >& );
       bool mrecs_required  ( const QString );
       bool bfm_incompat    ( const QString );
 

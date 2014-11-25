@@ -384,7 +384,8 @@ DbgLv(1) << "RP:PD (5)smin smax" << smin << smax;
 }
 
 // Public slot to set a pointer to a model to use in the plot for highlights
-void US_MLinesPlot::setModel( US_Model* a_model, QVector< ModelRecord >& mrs )
+void US_MLinesPlot::setModel( US_Model* a_model,
+                               QVector< US_ModelRecord >& mrs )
 {
    model   = a_model;
    mrecs   = mrs;

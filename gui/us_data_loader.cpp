@@ -865,10 +865,6 @@ qDebug() << "ScDB: tfilter etype_filt" << tfilter << etype_filt;
       QString filebase = filename.section( "/", -1, -1 );
       QString runID    = descrip.isEmpty() ? filebase.section( ".", 0, -7 )
                          : descrip;
-
-//      if ( rfilter  &&  runID != runID_sel )
-//         continue;
-//
       QString parID    = db.value( 3 ).toString();
       QString date     = US_Util::toUTCDatetimeText( db.value( 5 )
                          .toDateTime().toString( Qt::ISODate ), true );

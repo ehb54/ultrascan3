@@ -10,7 +10,7 @@
 #include "us_plot.h"
 #include "us_solve_sim.h"
 #include "us_plot.h"
-#include "us_model_record.h"
+#include "us_pcsa_modelrec.h"
 #include "us_worker_pc.h"
 #include "us_help.h"
 #include "qwt_plot_marker.h"
@@ -23,12 +23,12 @@ class US_RpScan : public US_WidgetsDialog
 
    public:
       //! \brief Regularization Parameter Scan constructor
-      US_RpScan( QList< US_SolveSim::DataSet* >&, ModelRecord&, int&,
+      US_RpScan( QList< US_SolveSim::DataSet* >&, US_ModelRecord&, int&,
                  double&, QWidget* p = 0 );
 
    private:
       QList< US_SolveSim::DataSet* >&  dsets;
-      ModelRecord&                     mrec;
+      US_ModelRecord&                  mrec;
       int&                             nthr;
       double&                          alpha;
 
