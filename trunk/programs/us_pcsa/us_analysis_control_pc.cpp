@@ -123,8 +123,8 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_varcount  = us_counter( 2,      3,   200,    6 );
    ct_gfiters   = us_counter( 2,      1,    20,    3 );
    ct_gfthresh  = us_counter( 3,  1.e-6, 1.e-2, 1e-4 );
-   ct_lmmxcall  = us_counter( 2,      0,   200,  100 );
-   ct_cresolu   = us_counter( 2,     20,   501,  101 );
+   ct_lmmxcall  = us_counter( 2,      0,   200,    0 );
+   ct_cresolu   = us_counter( 2,     20,   501,  100 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_tralpha   = us_counter( 3,      0,   100,    0 );
    ct_lolimits->setStep(  0.1 );
@@ -819,7 +819,7 @@ DbgLv(1) << "AC:cp: stage" << stage;
 
    if ( stage == 7 )
    { // If an alpha scan can now be done, report L-M info and mark scan-ready
-      ModelRecord mrec;
+      US_ModelRecord mrec;
       processor->get_mrec( mrec );
       double vari   = mrec.variance;
       double rmsd   = mrec.rmsd;
@@ -905,19 +905,19 @@ void US_AnalysisControlPc::compute()
 
    if ( ctype == 0 )
    {
-      ModelRecord::compute_slines( smin, smax, fmin, fmax, nkpts, nlpts,
+      US_ModelRecord::compute_slines( smin, smax, fmin, fmax, nkpts, nlpts,
             parlims, mrecs );
    }
    else if ( ctype == 1  ||  ctype == 2 )
    {
-      ModelRecord::compute_sigmoids( ctype, smin, smax, fmin, fmax,
+      US_ModelRecord::compute_sigmoids( ctype, smin, smax, fmin, fmax,
             nkpts, nlpts, parlims, mrecs );
    }
    else if ( ctype == 3 )
    {
       nlmodl         = nkpts;
 
-      ModelRecord::compute_hlines( smin, smax, fmin, fmax, nkpts, nlpts,
+      US_ModelRecord::compute_hlines( smin, smax, fmin, fmax, nkpts, nlpts,
             parlims, mrecs );
    }
 
@@ -1009,7 +1009,7 @@ void US_AnalysisControlPc::fit_final( void )
 // Set flags and open the dialog to do an Alpha scan
 void US_AnalysisControlPc::scan_alpha( void )
 {
-   ModelRecord mrec;
+   US_ModelRecord mrec;
    need_fit        = false;
    need_final      = false;
 
@@ -1118,7 +1118,7 @@ void US_AnalysisControlPc::fitpars_connect( bool reconn )
 // Recompute the top model record after change to resolution points
 void US_AnalysisControlPc::recompute_mrec()
 {
-   ModelRecord mrec  = mrecs[ 0 ];
+   US_ModelRecord mrec  = mrecs[ 0 ];
 int nn=mrec.isolutes.size()-1;
 int mm=mrec.isolutes.size()/2;
 DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()

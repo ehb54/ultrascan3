@@ -540,9 +540,9 @@ int US_MPI_Analysis::e_random( void )
 {
    // Exponential distribution
    double       randx   = US_Math2::ranf();
-   const double divisor = 8;  // Parameterize?
+   const double divisor = 8.0;  // Parameterize?
    static const double
-                beta    = parameters[ "population" ].toDouble() / divisor;
+                beta    = population / divisor;
    int          gnsize  = ( buckets.size() > 0 ) ? genes.size() : dgenes.size();
 
    int gene_index = (int)( -log( 1.0 - randx ) * beta );

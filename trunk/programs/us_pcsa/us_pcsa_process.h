@@ -14,7 +14,7 @@
 #include "us_db2.h"
 #include "us_solute.h"
 #include "us_worker_pc.h"
-#include "us_model_record.h"
+#include "us_pcsa_modelrec.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -74,19 +74,19 @@ class US_pcsaProcess : public QObject
       //! \returns         Success flag:  true if successful
       bool get_results( US_DataIO::RawData*, US_DataIO::RawData*,
                         US_Model*, US_Noise*, US_Noise*, int&,
-                        QStringList&, QVector< ModelRecord >& );
+                        QStringList&, QVector< US_ModelRecord >& );
 
       //! \brief Get best mrec result needed for an alpha scan
       //! \param p_mrec  Model record
-      void get_mrec( ModelRecord& );
+      void get_mrec( US_ModelRecord& );
 
       //! \brief Replace best mrec in internal mrecs list
       //! \param a_mrec  Model record
-      void put_mrec( ModelRecord& );
+      void put_mrec( US_ModelRecord& );
 
       //! \brief Replace internal mrecs list
       //! \param a_mrecs Model records list
-      void put_mrecs( QVector< ModelRecord >& );
+      void put_mrecs( QVector< US_ModelRecord >& );
 
       //! \brief Stop a fit that is in progress
       void stop_fit(       void );
@@ -120,7 +120,7 @@ private:
       QList< WorkerThreadPc* >   wthreads;   // worker threads
       QList< WorkPacketPc >      job_queue;  // job queue
 
-      QVector< ModelRecord >     mrecs;      // model records for each task
+      QVector< US_ModelRecord >  mrecs;      // model records for each task
 
       QVector< int >             wkstates;   // worker thread states
 
@@ -187,15 +187,15 @@ private:
       int  slmodels        ( int, double, double, double, double, int, int );
       int  sigmodels       ( int, double, double, double, double, int, int );
       void process_job     ( WorkerThreadPc* );
-      void process_fxfinal ( ModelRecord&  );
+      void process_fxfinal ( US_ModelRecord&  );
       void submit_job      ( WorkPacketPc&, int );
       void free_worker     ( int  );
-      void model_statistics( QVector< ModelRecord >&, QStringList& );
+      void model_statistics( QVector< US_ModelRecord >&, QStringList& );
       QString pmessage_head( void );
       WorkPacketPc next_job( void );
       void LevMarq_fit     ( void );
       void compute_final   ( void );
-      void elite_limits    ( QVector< ModelRecord >&, double&, double&,
+      void elite_limits    ( QVector< US_ModelRecord >&, double&, double&,
                              double&, double&, double&, double& );
       void restart_fit     ( void );
       static double evaluate_model( QList< US_SolveSim::DataSet* >&,

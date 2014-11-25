@@ -830,8 +830,8 @@ US_Noise*                 US_pcsa::mw_ti_noise()     { return &ti_noise;      }
 US_Noise*                 US_pcsa::mw_ri_noise()     { return &ri_noise;      }
 QPointer< QTextEdit   >   US_pcsa::mw_status_text()  { return te_status;      }
 QStringList*              US_pcsa::mw_model_stats()  { return &model_stats;   }
-QVector< ModelRecord >*   US_pcsa::mw_mrecs()        { return &mrecs;         }
-QVector< ModelRecord >*   US_pcsa::mw_mrecs_mc()     { return &mrecs_mc;      }
+QVector< US_ModelRecord >* US_pcsa::mw_mrecs()       { return &mrecs;         }
+QVector< US_ModelRecord >* US_pcsa::mw_mrecs_mc()    { return &mrecs_mc;      }
 int*                      US_pcsa::mw_base_rss()     { return &baserss;       }
 
 // Open residuals plot window

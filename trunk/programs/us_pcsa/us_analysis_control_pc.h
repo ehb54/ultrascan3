@@ -62,8 +62,8 @@ class US_AnalysisControlPc : public US_WidgetsDialog
 
       QList< US_SolveSim::DataSet* >&  dsets;
 
-      QVector< ModelRecord >           mrecs;
-      QVector< ModelRecord >           mrecs_mc;
+      QVector< US_ModelRecord >        mrecs;
+      QVector< US_ModelRecord >        mrecs_mc;
 
       US_DataIO::EditedData*           edata;
       US_DataIO::RawData*              sdata;
@@ -74,8 +74,8 @@ class US_AnalysisControlPc : public US_WidgetsDialog
       US_SimulationParameters*         sparms;
       QPointer< QTextEdit    >         mw_stattext;
       QStringList*                     mw_modstats;
-      QVector< ModelRecord >*          mw_mrecs;
-      QVector< ModelRecord >*          mw_mrecs_mc;
+      QVector< US_ModelRecord >*       mw_mrecs;
+      QVector< US_ModelRecord >*       mw_mrecs_mc;
       int*                             mw_baserss;
 
       QWidget*                         parentw;

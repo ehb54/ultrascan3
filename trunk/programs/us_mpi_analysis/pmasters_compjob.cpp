@@ -344,6 +344,11 @@ DbgLv(1) << "  MASTER:   Recv'd from super. (g r m)" << my_group << group_rank
    {
       pm_dmga_cjmast();
    }
+
+   else if ( analysis_type.startsWith( "PCSA" ) )
+   {
+      pm_pcsa_cjmast();
+   }
 }
 
 // Parallel-masters worker within a group
@@ -362,6 +367,11 @@ void US_MPI_Analysis::pm_cjobs_worker()
    else if ( analysis_type.startsWith( "DMGA" ) )
    {
       dmga_worker();
+   }
+
+   else if ( analysis_type.startsWith( "PCSA" ) )
+   {
+      pcsa_worker();
    }
 
    else
@@ -473,7 +483,7 @@ DbgLv(1) << "master start 2DSA" << startTime;
       {
          worker    = ready_worker();
 
-         _2dsa_Job job           = job_queue.takeFirst();
+         Sa_Job job              = job_queue.takeFirst();
 
          submit( job, worker );
 
@@ -1088,5 +1098,260 @@ DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
                 FINISHED,
                 my_communicator );
    }            
+}
+
+// Parallel-masters version of group PCSA master
+void US_MPI_Analysis::pm_pcsa_cjmast( void )
+{
+DbgLv(1) << "master start 2DSA" << startTime;
+   init_solutes();
+   fill_queue();
+
+   work_rss.resize( gcores_count );
+
+   current_dataset     = 0;
+   datasets_to_process = 1;  // Process one dataset at a time for now
+
+   int super    = 0;
+   int iter     = current_dataset;
+   MPI_Status status;
+
+   // Get 1st dataset from supervisor
+   MPI_Recv( &current_dataset,
+             1,
+             MPI_INT,
+             super,
+             MPI_ANY_TAG,
+             MPI_COMM_WORLD,
+             &status );
+
+   int tag      = status.MPI_TAG;
+   int ittest   = current_dataset + mgroup_count;
+
+   while ( true )
+   {
+      int worker;
+      meniscus_value   = data_sets[ current_dataset ]->run_data.meniscus;
+//if ( max_depth > 1 )
+// DbgLv(1) << " master loop-TOP:  jq-empty?" << job_queue.isEmpty() << "   areReady?" << worker_status.contains(READY)
+//    << "  areWorking?" << worker_status.contains(WORKING);
+
+      // Give the jobs to the workers
+      while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
+      {
+         worker    = ready_worker();
+
+         Sa_Job job              = job_queue.takeFirst();
+
+         submit( job, worker );
+
+         worker_depth [ worker ] = job.mpi_job.depth;
+         worker_status[ worker ] = WORKING;
+      }
+
+      // All done with the pass if no jobs are ready or running
+      if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
+      {
+         US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
+         QString tripleID = edata->cell + edata->channel + edata->wavelength;
+         int menisc_size  = meniscus_values.size();
+         QString progress = 
+            "Iteration: "    + QString::number( iterations ) +
+            "; Dataset: "    + QString::number( current_dataset + 1 ) +
+            " (" + tripleID + ")";
+
+         if ( mc_iterations > 1 )
+            progress     += "; MonteCarlo: "
+                            + QString::number( mc_iteration + 1 );
+
+         else if ( menisc_size > 1 )
+            progress     += "; Meniscus: "
+               + QString::number( meniscus_value, 'f', 3 )
+               + tr( " (%1 of %2)" ).arg( meniscus_run + 1 )
+                                    .arg( menisc_size );
+
+         else
+            progress     += "; RMSD: "
+               + QString::number( sqrt( simulation_values.variance ) );
+
+         send_udp( progress );
+
+         // Iterative refinement
+         if ( max_iterations > 1 )
+         {
+            if ( iterations == 1 )
+               qDebug() << "  == Refinement Iterations for Dataset"
+                        << current_dataset + 1 << "==";
+
+            qDebug() << "Iterations:" << iterations << " Variance:"
+                     << simulation_values.variance << "RMSD:"
+                     << sqrt( simulation_values.variance );
+
+            iterate();
+         }
+
+         if ( ! job_queue.isEmpty() ) continue;
+
+         // Write out the model and, possibly, noise(s)
+         max_rss();
+
+         write_output();
+
+         // Fit meniscus
+         if ( ( meniscus_run + 1 ) < meniscus_values.size() )
+         {
+            set_meniscus();
+         }
+
+         if ( ! job_queue.isEmpty() ) continue;
+
+         // Monte Carlo
+         if ( mc_iterations > 1 )
+         {  // Recompute final fit to get simulation and residual
+            mc_iteration++;
+
+            wksim_vals          = simulation_values;
+            wksim_vals.solutes  = calculated_solutes[ max_depth ];
+
+            calc_residuals( current_dataset, 1, wksim_vals );
+
+            simulation_values   = wksim_vals;
+
+            if ( mc_iteration < mc_iterations )
+            {
+               set_monteCarlo();
+            }
+         }
+
+         if ( ! job_queue.isEmpty() ) continue;
+
+         ittest       = current_dataset + mgroup_count;
+
+         if ( ittest  >= count_datasets )
+         {
+            for ( int jj = 1; jj <= my_workers; jj++ )
+               maxrss += work_rss[ jj ];
+         }
+
+         // Tell the supervisor that an iteration is done
+         iter    = (int)maxrss;
+         tag     = ( ittest < count_datasets ) ? DONEITER : DONELAST;
+
+         MPI_Send( &iter,
+                   1,
+                   MPI_INT,
+                   super,
+                   tag,
+                   MPI_COMM_WORLD );
+
+         if ( current_dataset < count_datasets )
+         {
+            if ( my_group == 0  &&   ittest < count_datasets )
+            {  // If group 0 master, create an intermediate archive
+               update_outputs();
+               DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
+                        << " : Intermediate archive was created.";
+            }
+
+            US_DataIO::EditedData* edata
+                             = &data_sets[ current_dataset ]->run_data;
+            QString tripleID = edata->cell + edata->channel + edata->wavelength;
+
+            if ( simulation_values.noisflag == 0 )
+            {
+               DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
+                        << "(" << tripleID << ")"
+                        << " : model was output.";
+            }
+            else
+            {
+               DbgLv(0) << my_rank << ": Dataset" << current_dataset + 1
+                        << "(" << tripleID << ")"
+                        << " : model/noise(s) were output.";
+            }
+
+            time_datasets_left();
+
+            if ( ittest < count_datasets )
+            {
+               // Get new dataset index from supervisor
+               MPI_Recv( &iter,
+                         1,
+                         MPI_INT,
+                         super,
+                         MPI_ANY_TAG,
+                         MPI_COMM_WORLD,
+                         &status );
+
+               tag      = status.MPI_TAG;
+DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
+
+               if ( tag == STARTLAST )
+                  count_datasets  = iter + 1;
+
+               else if ( tag != STARTITER )
+               {
+                  DbgLv(0) << "Unexpected tag in PMG 2DSA Master" << tag;
+                  continue;
+               }
+
+               current_dataset  = iter;
+               mc_iteration     = 0;
+               iterations       = 1;
+
+               for ( int ii = 1; ii < gcores_count; ii++ )
+                  worker_status[ ii ] = READY;
+
+               fill_queue();
+
+               for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
+                  calculated_solutes[ ii ].clear();
+
+               continue;
+            }
+         }
+
+         if ( ! job_queue.isEmpty() ) continue;
+
+         shutdown_all();  // All done
+         break;           // Break out of main loop.
+      }
+
+      // Wait for worker to send a message
+      int        size[ 4 ];
+
+      MPI_Recv( &size, 
+                4, 
+                MPI_INT,
+                MPI_ANY_SOURCE,
+                MPI_ANY_TAG,
+                my_communicator,
+                &status);
+
+      worker = status.MPI_SOURCE;
+
+//if ( max_depth > 0 )
+// DbgLv(1) << " PMG master loop-BOTTOM:   status TAG" << status.MPI_TAG
+//  << MPI_Job::READY << MPI_Job::RESULTS << "  source" << status.MPI_SOURCE;
+      switch( status.MPI_TAG )
+      {
+         case MPI_Job::READY:   // Ready for work
+            worker_status[ worker ] = READY;
+            break;
+
+         case MPI_Job::RESULTS: // Return solute data
+            process_results( worker, size );
+            work_rss[ worker ] = size[ 3 ];
+            break;
+
+         default:  // Should never happen
+            QString msg =  "Master 2DSA:  Received invalid status " +
+                           QString::number( status.MPI_TAG );
+            abort( msg );
+            break;
+      }
+
+      max_rss();
+   }
 }
 

@@ -542,7 +542,7 @@ DbgLv(1) << "master start 2DSA" << startTime;
       {
          worker    = ready_worker();
 
-         _2dsa_Job job           = job_queue.takeFirst();
+         Sa_Job job              = job_queue.takeFirst();
          submit( job, worker );
          worker_depth [ worker ] = job.mpi_job.depth;
          worker_status[ worker ] = WORKING;

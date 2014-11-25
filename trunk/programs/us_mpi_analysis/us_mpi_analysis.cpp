@@ -383,7 +383,6 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    concentration_threshold = parameters[ "conc_threshold" ].toDouble();
    minimize_opt            = parameters[ "minimize_opt"   ].toInt();
 minimize_opt=(minimize_opt==0?2:minimize_opt);
-   beta                    = (double)population / 8.0;
    total_points            = 0;
 
    // Calculate s, D corrections for calc_residuals; simulation parameters
@@ -649,6 +648,20 @@ void US_MPI_Analysis::start( void )
           dmga_master();
       else
           dmga_worker();
+   }
+
+   else if ( analysis_type.startsWith( "PCSA" ) )
+   {
+      cTypeMap[ "SL"  ] = 1;
+      cTypeMap[ "IS"  ] = 2;
+      cTypeMap[ "DS"  ] = 4;
+      cTypeMap[ "All" ] = 7;
+      cTypeMap[ "HL"  ] = 8;
+
+      if ( my_rank == 0 ) 
+          pcsa_master();
+      else
+          pcsa_worker();
    }
 
    int exit_status = 0;

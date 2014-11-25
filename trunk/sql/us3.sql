@@ -816,6 +816,29 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table pcsa_modelrecs
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS pcsa_modelrecs ;
+
+CREATE  TABLE IF NOT EXISTS pcsa_modelrecs (
+  mrecsID int(11) NOT NULL AUTO_INCREMENT ,
+  editedDataID int(11) NOT NULL DEFAULT 1,
+  modelID int(11) NOT NULL DEFAULT 0,
+  mrecsGUID CHAR(36) NOT NULL UNIQUE ,
+  description VARCHAR(160) NULL DEFAULT NULL, -- includes 80 for runID and 80 for other
+  xml LONGTEXT NULL DEFAULT NULL ,
+  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
+  PRIMARY KEY (mrecsID) ,
+  INDEX ndx_mrecs_editedDataID (editedDataID ASC) ,
+  CONSTRAINT fk_mrecs_editDataID
+    FOREIGN KEY (editedDataID )
+    REFERENCES editedData (editedDataID )
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table structure for table HPCAnalysisRequest
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS HPCAnalysisRequest;
@@ -930,8 +953,8 @@ DROP TABLE IF EXISTS HPCAnalysisResultData;
 CREATE TABLE IF NOT EXISTS HPCAnalysisResultData (
   HPCAnalysisResultDataID INT(11) NOT NULL AUTO_INCREMENT,
   HPCAnalysisResultID INT(11) NOT NULL,
-  HPCAnalysisResultType enum( 'model', 'noise' ),
-  resultID INT(11) NOT NULL,          -- could be a noiseID or a modelID
+  HPCAnalysisResultType enum( 'model', 'noise', 'job_stats', 'mrecs', 'unknown' ) NOT NULL default 'unknown',
+  resultID INT(11) NOT NULL,          -- could be a modelID,noiseID,mrecsID
   PRIMARY KEY (HPCAnalysisResultDataID),
   INDEX ndx_HPCAnalysisResultData_HPCAnalysisResultID (HPCAnalysisResultID ASC),
   CONSTRAINT fk_HPCAnalysisResultData_HPCAnalysisResultID

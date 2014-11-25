@@ -11,7 +11,7 @@
 #include "us_noise.h"
 #include "us_plot.h"
 #include "us_model.h"
-#include "us_model_record.h"
+#include "us_pcsa_modelrec.h"
 #include "us_help.h"
 #include "qwt_color_map.h"
 
@@ -34,7 +34,7 @@ class US_MLinesPlot : public US_WidgetsDialog
       US_MLinesPlot( double&, double&, double&, double&,
                      int&, int&, int&, int& );
 
-      void setModel ( US_Model*, QVector< ModelRecord >& );
+      void setModel ( US_Model*, QVector< US_ModelRecord >& );
       void plot_data( void );
 
    private:
@@ -84,12 +84,12 @@ class US_MLinesPlot : public US_WidgetsDialog
 
       QPushButton*  pb_colmap;
 
-      QVector< ModelRecord > mrecs;
-      QVector< QColor >      cs_colors;
-      QwtLinearColorMap*     colormap;
-      QString                cmapname;
+      QVector< US_ModelRecord > mrecs;
+      QVector< QColor >         cs_colors;
+      QwtLinearColorMap*        colormap;
+      QString                   cmapname;
 
-      US_Model*              model;
+      US_Model*                 model;
 
       int           dbg_level;
       int           nmodel;
