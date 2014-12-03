@@ -365,7 +365,7 @@ bool US_Model::model_path( QString& path, bool is_perm )
 }
 
 // Short text string describing the model type
-QString US_Model::typeText( void )
+QString US_Model::typeText( int subtype )
 {
    struct typemap
    {
@@ -416,11 +416,28 @@ QString US_Model::typeText( void )
 
          if ( analysis == PCSA )            // Add sub-type (SL,IS,DS,HL) to PCSA
          {
-            int kk   = description.indexOf( "_PCSA" );
-            if ( kk > 0 )  // Append "-SL"|"-IS"|"-DS"|"-HL"
-               tdesc    = tdesc + description.mid( kk + 5, 3 );
-            else           // By default, assume "-IS"
-               tdesc    = tdesc + "-IS";
+            if ( subtype > 0 )
+            {  // Append sub-type based on a given flag
+               if (      subtype == 1 )
+                  tdesc    = tdesc + "-SL";
+               else if ( subtype == 2 )
+                  tdesc    = tdesc + "-IS";
+               else if ( subtype == 4 )
+                  tdesc    = tdesc + "-DS";
+               else if ( subtype == 8 )
+                  tdesc    = tdesc + "-HL";
+               else
+                  tdesc    = tdesc + "-IS";
+            }
+
+            else
+            {  // Append sub-type based on already-created description
+               int kk   = description.indexOf( "_PCSA" );
+               if ( kk > 0 )  // Append "-SL"|"-IS"|"-DS"|"-HL"
+                  tdesc    = tdesc + description.mid( kk + 5, 3 );
+               else           // By default, assume "-IS"
+                  tdesc    = tdesc + "-IS";
+            }
          }
 
          if ( monteCarlo )                  // Monte Carlo subtype

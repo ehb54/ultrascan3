@@ -28,7 +28,7 @@ class US_UTIL_EXTERN US_DataIO
       //!  A constant value that identifies the format of the auc raw data.
       //!  Internal programs use this value to determine if the format of the
       //!  file is known.
-      static const uint format_version = 4;
+      static const uint format_version = 5;
 
       //! \brief Beckman Raw data scan
       //!

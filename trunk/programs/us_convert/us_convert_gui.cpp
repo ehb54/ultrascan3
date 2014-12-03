@@ -503,6 +503,9 @@ DbgLv(1) << "CGui: (1)referDef=" << referenceDefined;
 
 void US_ConvertGui::resetAll( void )
 {
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
+
    if ( allData.size() > 0 )
    {  // Output warning when resetting (but only if we have data)
       int status = QMessageBox::information( this,
@@ -638,7 +641,9 @@ DbgLv(1) << "CGui:IMP: IN";
    if ( ! success ) return;
 
    // Initialize export data pointers vector
-   init_output_data();
+   success = init_output_data();
+
+   if ( ! success ) return;
 
    setTripleInfo();
 
@@ -694,13 +699,14 @@ void US_ConvertGui::reimport( void )
       // Figure out all the triple combinations and convert data
       success = convert();
 
+      if ( success )
+         success = init_output_data();
+
       if ( ! success )
       {
          QApplication::restoreOverrideCursor();
          return;
       }
-
-      init_output_data();
 
       setTripleInfo();
    }
@@ -803,7 +809,8 @@ DbgLv(1) << "CGui:iM: set_lambd sl el" << slambda << elambda;
 DbgLv(1) << "CGui:iM: buildraw";
    mwl_data.build_rawData ( allData );
 DbgLv(1) << "CGui:iM: init_out";
-   init_output_data();
+   if ( ! init_output_data() )
+      return;
 
    le_status->setText( tr( "Building Lambda list ..." ) );
    qApp->processEvents();
@@ -901,7 +908,9 @@ void US_ConvertGui::importAUC( void )
    le_runID ->setText( runID );
    scanTolerance = 5.0;
 
-   init_output_data();
+   if ( ! init_output_data() )
+      return;
+
    setTripleInfo();
    le_description -> setText( allData[ 0 ].description );
    init_excludes();
@@ -1559,7 +1568,9 @@ DbgLv(1) << "CGui: (5)referDef=" << referenceDefined;
    qApp->processEvents();
 
    // Initialize export data pointers vector
-   init_output_data();
+   if ( ! init_output_data() )
+      return;
+
 DbgLv(1) << "CGui: ldUS3Dk: fromIOD: sz(trinfo)" << all_tripinfo.count();
 
    // Copy solution and centerpiece info to channel vectors
@@ -2383,7 +2394,8 @@ DbgLv(1) << "CGui:pSS: split CALL";
    subsets.clear();
 
    // Reinitialize some things
-   init_output_data();
+   if ( ! init_output_data() )
+      return;
    setTripleInfo();
    init_excludes();
    enableControls();
@@ -4414,8 +4426,9 @@ void US_ConvertGui::mwl_setup()
 }
 
 // Initialize output data pointers and lists
-void US_ConvertGui::init_output_data()
+bool US_ConvertGui::init_output_data()
 {
+   bool success   = true;
    bool have_trip = ( all_tripinfo.size() == allData.size() );
 DbgLv(1) << "CGui:IOD: have_trip" << have_trip;
    if ( ! have_trip )
@@ -4491,6 +4504,7 @@ DbgLv(1) << "CGui:IOD:   rSS nspeed" << nspeed;
    {
       US_SimulationParameters::computeSpeedSteps( &allData[ 0 ].scanData,
                                                   speedsteps );
+      nspeedc          = speedsteps.size();
       nspeed           = nspeedc;
    }
 DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
@@ -4503,13 +4517,22 @@ DbgLv(1) << "CGui:IOD:  isMwl" << isMwl << "c.count t.count"
    if ( isMwl )
    {  // If MWL, update speed steps
 DbgLv(1) << "CGui:IOD:   updSS call";
-//      nspeed        = mwl_data.update_speedsteps( speedsteps );
       QVector< SP_SPEEDPROFILE > testss;
-      int nstest    = (nspeedc > 0) ? mwl_data.update_speedsteps( testss ) : 0;
+      int nstest    = mwl_data.update_speedsteps( testss );
       if ( nstest > 0 )
       {
          nspeed        = nstest;
          speedsteps    = testss;
+      }
+      else if ( nstest < 0 )
+      {
+         QMessageBox::critical( this,
+            tr( "Invalid MWL Speedsteps" ),
+            tr( "The \"set_speed\" values in MWRS files have"
+                " resulted in too many speed steps or steps"
+                " where speeds decrease.\n\nImport is ABORTED!!" ) );
+         success       = false;
+         resetAll();
       }
 DbgLv(1) << "CGui:IOD:    updSS nspeed nstest nspeedc"
  << nspeed << nstest << nspeedc;
@@ -4526,6 +4549,8 @@ DbgLv(1) << "CGui:IOD:    updSS nspeed nstest nspeedc"
 DbgLv(1) << "CGui:IOD:   nspeed" << nspeed << "sp0.rspeed sp0.avspeed"
  << nspeed << speedsteps[0].rotorspeed << speedsteps[0].avg_speed;
    }
+
+   return success;
 DbgLv(1) << "CGui:IOD: RETURN";
 }
 

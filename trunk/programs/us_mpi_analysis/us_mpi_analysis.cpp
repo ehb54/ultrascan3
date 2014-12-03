@@ -657,6 +657,7 @@ void US_MPI_Analysis::start( void )
       cTypeMap[ "DS"  ] = 4;
       cTypeMap[ "All" ] = 7;
       cTypeMap[ "HL"  ] = 8;
+if (my_rank==0) DbgLv(0) << "PCSA: cTypeMap" << cTypeMap;
 
       if ( my_rank == 0 ) 
           pcsa_master();

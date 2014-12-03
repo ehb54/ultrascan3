@@ -10,14 +10,14 @@ void US_MPI_Analysis::_2dsa_worker( void )
    MPI_Job     job;
    MPI_Status  status;
 
-   // Use 3 here because the master will be reading 3 with the
+   // Use 4 here because the master will be reading 4 with the
    // same instruction when reading ::READY or ::RESULTS.
-   int x[ 3 ];
+   int x[ 4 ];
 
    while ( repeat_loop )
    {
       MPI_Send( x, // Basically don't care
-                3,
+                4,
                 MPI_INT,
                 MPI_Job::MASTER,
                 MPI_Job::READY,

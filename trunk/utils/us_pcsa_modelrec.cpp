@@ -7,6 +7,7 @@
 US_ModelRecord::US_ModelRecord( void )
 {
    taskx      = -1;
+   ctype      = 0;
    str_k      = 0.0;
    end_k      = 0.0;
    par1       = 0.0;
@@ -40,14 +41,13 @@ int US_ModelRecord::compute_slines( double& smin, double& smax,
       double& fmin, double& fmax, int& nkpts, int& nlpts,
       double* parlims, QVector< US_ModelRecord >& mrecs )
 {
-   mrecs.clear();
    US_ModelRecord mrec;
+   mrec.ctype    = 1;
 
    double  prng  = (double)( nlpts - 1 );
    double  krng  = (double)( nkpts - 1 );
    double  xrng  = smax - smin;
    double  xinc  = xrng / prng;
-   double  ystr  = fmin;
    if ( parlims[ 0 ] < 0.0 )
    {
       parlims[ 0 ] = fmin;
@@ -59,13 +59,13 @@ int US_ModelRecord::compute_slines( double& smin, double& smax,
    double  yshi  = parlims[ 1 ];
    double  yelo  = parlims[ 2 ];
    double  yehi  = parlims[ 3 ];
+   double  vbar  = parlims[ 4 ];
    double  ysinc = ( yshi - yslo ) / krng;
    double  yeinc = ( yehi - yelo ) / krng;
-           ystr  = yslo;
+   double  ystr  = yslo;
 
-   int     mndx  = 0;
+   int     mndx  = mrecs.size();
    int     nmodl = nkpts * nkpts;
-   mrecs.reserve( nmodl );
 
    // Generate straight lines
    for ( int ii = 0; ii < nkpts; ii++ )
@@ -79,7 +79,7 @@ int US_ModelRecord::compute_slines( double& smin, double& smax,
          double yinc = ( yend - ystr ) / prng; 
 
          mrec.isolutes.clear();
-         US_Solute isol;
+         US_Solute isol( 0.0, 0.0, 0.0, vbar );
 
          for ( int kk = 0; kk < nlpts; kk++ )
          { // Loop over points on a line
@@ -125,9 +125,10 @@ int US_ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
    double  p1up = parlims[ 1 ];
    double  p2lo = parlims[ 2 ];
    double  p2up = parlims[ 3 ];
+   double  vbar = parlims[ 4 ];
 
-   mrecs.clear();
    US_ModelRecord mrec;
+   mrec.ctype   = ctype;
 
    double srng  = smax - smin;
    double p1llg = log( p1lo );
@@ -137,17 +138,16 @@ int US_ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
    double p1inc = ( p1ulg - p1llg ) / krng;
    double p2inc = ( p2up  - p2lo  ) / krng;
    double xinc  = 1.0 / prng;
-   double kstr  = fmin;
+   double kstr  = fmin;               // Start,Diff of 'IS'
    double kdif  = fmax - fmin;
-   if ( ctype == 2 )
+   if ( ctype == 4 )
    {
-      kstr         = fmax;
+      kstr         = fmax;            // Start,Diff of 'DS'
       kdif         = -kdif;
    }
    double p1vlg = p1llg;
-   int    mndx  = 0;
+   int    mndx  = mrecs.size();
    int    nmodl = nkpts * nkpts;
-   mrecs.reserve( nmodl );
 
    for ( int ii = 0; ii < nkpts; ii++ )
    { // Loop over par1 values (logarithmic progression)
@@ -163,7 +163,7 @@ int US_ModelRecord::compute_sigmoids( int& ctype, double& smin, double& smax,
          double sval  = smin;
 
          mrec.isolutes.clear();
-         US_Solute isol;
+         US_Solute isol( 0.0, 0.0, 0.0, vbar );
 
          for ( int kk = 0; kk < nlpts; kk++ )
          { // Loop over points on a curve
@@ -201,8 +201,8 @@ int US_ModelRecord::compute_hlines( double& smin, double& smax,
       double& fmin, double& fmax, int& nkpts, int& nlpts,
       double* parlims, QVector< US_ModelRecord >& mrecs )
 {
-   mrecs.clear();
    US_ModelRecord mrec;
+   mrec.ctype    = 8;
 
    double  krng  = (double)( nkpts - 1 );
    double  prng  = (double)( nlpts - 1 );
@@ -218,8 +218,8 @@ int US_ModelRecord::compute_hlines( double& smin, double& smax,
 
    double  yval  = parlims[ 0 ];
    double  yinc  = ( parlims[ 1 ] - yval ) / krng;
-   int     mndx  = 0;
-   mrecs.reserve( nkpts );
+   double  vbar  = parlims[ 4 ];
+   int     mndx  = mrecs.size();
 
    // Generate horizontal lines
    for ( int ii = 0; ii < nkpts; ii++ )
@@ -227,7 +227,7 @@ int US_ModelRecord::compute_hlines( double& smin, double& smax,
       double xval = smin;
 
       mrec.isolutes.clear();
-      US_Solute isol;
+      US_Solute isol( 0.0, 0.0, 0.0, vbar );
 
       for ( int kk = 0; kk < nlpts; kk++ )
       { // Loop over points on a line
@@ -253,7 +253,7 @@ int US_ModelRecord::compute_hlines( double& smin, double& smax,
 
 // Static public function to load model records from an XML stream
 int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
-   QVector< US_ModelRecord >& mrecs,
+   QVector< US_ModelRecord >& mrecs, QString& descr,
    int& ctype, double& smin, double& smax, double& kmin, double& kmax )
 {
    int nmrecs      = 0;
@@ -293,13 +293,12 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
             mrec.smax        = smax;
             mrec.kmin        = kmin;
             mrec.kmax        = kmax;
-            QString s_rID    = attrs.value( "mrecID"    ).toString();
-            QString s_eID    = attrs.value( "editID"    ).toString();
-            QString s_mID    = attrs.value( "modelID"   ).toString();
-            mrec.mrecGUID    = attrs.value( "mrecGUID"  ).toString();
-            mrec.editGUID    = attrs.value( "editGUID"  ).toString();
-            mrec.modelGUID   = attrs.value( "modelGUID" ).toString();
-            mrec.mrecID      = s_rID.isEmpty() ? 0 : s_rID.toInt();
+            descr            = attrs.value( "description" ).toString();
+            QString s_eID    = attrs.value( "editID"      ).toString();
+            QString s_mID    = attrs.value( "modelID"     ).toString();
+            mrec.mrecGUID    = attrs.value( "mrecGUID"    ).toString();
+            mrec.editGUID    = attrs.value( "editGUID"    ).toString();
+            mrec.modelGUID   = attrs.value( "modelGUID"   ).toString();
             mrec.editID      = s_eID.isEmpty() ? 0 : s_eID.toInt();
             mrec.modelID     = s_mID.isEmpty() ? 0 : s_mID.toInt();
          }
@@ -309,7 +308,7 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
             QString s_type   = attrs.value( "type" ).toString();
             mrec.ctype       = sctypes.contains( s_type ) ?
                                ctypes[ s_type ] : 0;
-            mrec.taskx       = attrs.value( "smin"    ).toString().toInt();
+            mrec.taskx       = attrs.value( "taskx"   ).toString().toInt();
             mrec.str_k       = attrs.value( "start_k" ).toString().toDouble();
             mrec.end_k       = attrs.value( "end_k"   ).toString().toDouble();
             mrec.par1        = attrs.value( "par1"    ).toString().toDouble();
@@ -365,13 +364,13 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
 
 // Static public function to write model records to an XML stream
 int US_ModelRecord::write_modelrecs( QXmlStreamWriter& xml,
-   QVector< US_ModelRecord >& mrecs,
+   QVector< US_ModelRecord >& mrecs, QString& descr,
    int& ctype, double& smin, double& smax, double& kmin, double& kmax )
 {
    int nmrecs      = mrecs.size();
    US_ModelRecord mrec;
    mrec            = mrecs[ 0 ];
-   ctype           = mrec.ctype;
+   ctype           = ( ctype == 0 ) ? mrec.ctype : ctype;
    smin            = mrec.smin;
    smax            = mrec.smax;
    kmin            = mrec.kmin;
@@ -383,16 +382,17 @@ int US_ModelRecord::write_modelrecs( QXmlStreamWriter& xml,
    xml.writeCharacters( "\n" );
    xml.writeStartElement( "modelrecords" );
    xml.writeAttribute( "version",      "1.1" );
+   xml.writeAttribute( "description",  descr );
    xml.writeAttribute( "type",         QString::number( ctype )  );
    xml.writeAttribute( "smin",         QString::number( smin )   );
-   xml.writeAttribute( "smin",         QString::number( smin )   );
+   xml.writeAttribute( "smax",         QString::number( smax )   );
+   xml.writeAttribute( "kmin",         QString::number( kmin )   );
+   xml.writeAttribute( "kmax",         QString::number( kmax )   );
    xml.writeAttribute( "curve_points", QString::number( nisols ) );
-   if ( mrec.mrecID > 0 )
-      xml.writeAttribute( "mrecID",    QString::number( mrec.mrecID )  );
    if ( mrec.editID > 0 )
-      xml.writeAttribute( "editID",    QString::number( mrec.modelID ) );
+      xml.writeAttribute( "editID",    QString::number( mrec.editID ) );
    if ( mrec.modelID > 0  )
-      xml.writeAttribute( "modelID",   QString::number( mrec.mrecID )  );
+      xml.writeAttribute( "modelID",   QString::number( mrec.modelID )  );
    if ( ! mrec.mrecGUID.isEmpty() )
       xml.writeAttribute( "mrecGUID",  mrec.mrecGUID  );
    if ( ! mrec.editGUID.isEmpty() )
@@ -407,6 +407,7 @@ int US_ModelRecord::write_modelrecs( QXmlStreamWriter& xml,
       int ncsols      = mrec.csolutes.size();
       xml.writeStartElement( "modelrecord" );
       xml.writeAttribute( "taskx",        QString::number( mrec.taskx )  );
+      xml.writeAttribute( "type",         QString::number( mrec.ctype )  );
       xml.writeAttribute( "start_k",      QString::number( mrec.str_k )  );
       xml.writeAttribute( "end_k",        QString::number( mrec.end_k )  );
       xml.writeAttribute( "par1",         QString::number( mrec.par1  )  );
@@ -417,10 +418,8 @@ int US_ModelRecord::write_modelrecs( QXmlStreamWriter& xml,
 
       if ( mr == 0 )
       {
-         if ( mrec.mrecID > 0 )
-            xml.writeAttribute( "mrecID",    QString::number( mrec.mrecID )  );
          if ( mrec.editID > 0 )
-            xml.writeAttribute( "editID",    QString::number( mrec.modelID ) );
+            xml.writeAttribute( "editID",    QString::number( mrec.editID ) );
          if ( ! mrec.mrecGUID.isEmpty() )
             xml.writeAttribute( "mrecGUID",  mrec.mrecGUID  );
          if ( ! mrec.editGUID.isEmpty() )
@@ -428,12 +427,13 @@ int US_ModelRecord::write_modelrecs( QXmlStreamWriter& xml,
       }
 
       if ( mrec.modelID > 0  )
-         xml.writeAttribute( "modelID",   QString::number( mrec.mrecID )  );
+         xml.writeAttribute( "modelID",   QString::number( mrec.modelID )  );
       if ( ! mrec.modelGUID.isEmpty() )
          xml.writeAttribute( "modelGUID", mrec.modelGUID );
 
       for ( int cc = 0; cc < ncsols; cc++ )
       {
+         xml.writeStartElement( "c_solute" );
          double sval     = mrec.csolutes[ cc ].s * 1.e13;
          xml.writeAttribute( "s", QString::number( sval ) );
          xml.writeAttribute( "k", QString::number( mrec.csolutes[ cc ].k ) );

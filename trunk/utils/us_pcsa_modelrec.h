@@ -110,6 +110,7 @@ class US_UTIL_EXTERN US_ModelRecord
       //! \brief Static public function to load model records from an XML stream
       //! \param xml     XML stream from which to load model records
       //! \param mrecs   Reference for generated model records vector
+      //! \param descr   Ref. for model records description string
       //! \param ctype   Ref. for curve type flag: 1/2/4/7/8->SL/IS/DS/All/HL
       //! \param smin    Ref. for s-value minimum
       //! \param smax    Ref. for s-value maximum
@@ -117,12 +118,13 @@ class US_UTIL_EXTERN US_ModelRecord
       //! \param kmax    Ref. for k-value (f/f0) maximum
       //! \returns       Number of model line records generated
       static int load_modelrecs ( QXmlStreamReader& xml,
-                                  QVector< US_ModelRecord >&,
+                                  QVector< US_ModelRecord >&, QString&,
                                   int&, double&, double&, double&, double& );
 
       //! \brief Static public function to write model records to an XML stream
       //! \param xml     XML stream to which to write model records
       //! \param mrecs   Model records vector to represent in XML
+      //! \param descr   Ref. for model records description string
       //! \param ctype   Ref. for curve type flag: 1/2/4/7/8->SL/IS/DS/All/HL
       //! \param smin    Ref. for s-value minimum
       //! \param smax    Ref. for s-value maximum
@@ -130,7 +132,7 @@ class US_UTIL_EXTERN US_ModelRecord
       //! \param kmax    Ref. for k-value (f/f0) maximum
       //! \returns       Number of model line records generated
       static int write_modelrecs( QXmlStreamWriter& xml,
-                                  QVector< US_ModelRecord >&,
+                                  QVector< US_ModelRecord >&, QString&,
                                   int&, double&, double&, double&, double& );
 
 

@@ -11,6 +11,8 @@
 #include "us_revision.h"
 #include "us_sleep.h"
 #include "us_images.h"
+#include "us_passwd.h"
+#include "us_db2.h"
 
 #if 0
 #define EQUI_MENU
@@ -258,6 +260,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
 
   splash();
   statusBar()->showMessage( tr( "Ready" ) );
+
+  notice_check();              // Check for any notices pending
 }
 
 US_Win::~US_Win()
@@ -366,8 +370,14 @@ qDebug() << "PROCESS   status" << status << "e-stderr len" << estderr.length();
 
 void US_Win::launch( int index )
 {
-  index -= P_CONFIG;
-  QString pname = p[ index ].name;
+   static const int trig_secs=3600;
+//   static const int trig_secs=30;
+   index        -= P_CONFIG;
+   QString pname = p[ index ].name;
+
+   // At each launch, check for notices if last check was over 24 hours ago
+   if ( ln_time.secsTo( QDateTime::currentDateTime() ) > trig_secs )
+      notice_check();
 
   if ( p[ index ].maxRunCount <= p[ index ].currentRunCount && 
        p[ index ].maxRunCount > 0 ) 
@@ -678,5 +688,130 @@ void US_Win::apply_prefs()
    bigframe->setPalette( US_GuiSettings::frameColor() );
 
    show();
+}
+
+// Check for posted US3 notices
+bool US_Win::notice_check()
+{
+   bool do_abort     = false;                         // Default: no abort
+   int  level        = 0;                             // Max level: information
+   ln_time           = QDateTime::currentDateTime();  // Reset last notice time
+
+   if ( US_Settings::default_data_location() == 2 )
+      return do_abort;      // If default data location is Disk, do not bother
+
+//do_abort=true;
+//level=2;
+   // Query notice table in the us3_notice database
+   US_Passwd pw;
+   US_DB2    db;
+   QString   host  ( "uslims3.uthscsa.edu" );
+   QString   dbname( "us3_notice" );
+   QString   user  ( "us3_notice" );
+   QString   passwd( "us3_notice" );
+   QString   errmsg;
+   QStringList defaultDB = US_Settings::defaultDB();
+   if ( defaultDB.size() > 3 )
+      host           = defaultDB.at( 3 );
+
+   if ( ! db.connect( host, dbname, user, passwd, errmsg  ) )
+   {
+qDebug() << "US:NOTE: Unable to connect" << errmsg;
+      return do_abort;
+   }
+
+   QString query( "SELECT type, revision, message, lastUpdated"
+                  " FROM us3_notice.notice;" );
+   db.rawQuery( query );
+
+   // If no notices in the database, return now with no notice pop-up
+   if ( db.lastErrno() != US_DB2::OK  ||  db.numRows() == 0 )
+   {
+qDebug() << "US:NOTE: No DB notices" << db.lastError()
+ << "numRows" << db.numRows();
+      return do_abort; 
+   }
+
+   // Otherwise accumulate notices and associated type,revision,time
+   QStringList  msgs;
+   QStringList  types;
+   QStringList  revs;
+   QList< int > irevs;
+   QDateTime   time_d;
+   int    nnotice   = 0;
+   int    nn_info   = 0;
+   int    nn_warn   = 0;
+   int    nn_crit   = 0;
+   int    i_rev     = 0;
+
+   while ( db.next() )
+   {
+      nnotice++;
+
+      QString type     = db.value( 0 ).toString();
+      QString mrev     = db.value( 1 ).toString();
+      QString msg      = db.value( 2 ).toString();
+
+      if ( type == "info" )       nn_info++;
+      else if ( type == "warn" )  nn_warn++;
+      else if ( type == "crit" )  nn_crit++;
+
+      int    m_rev     = mrev.section( '.', 0, 0 ).toInt() * 100000
+                       + mrev.section( '.', 1, 1 ).toInt() * 10000
+                       + mrev.section( '.', 2, 2 ).toInt();
+      i_rev            = qMax( i_rev,  m_rev  );
+
+      if ( nnotice == 1 )
+        time_d           = db.value( 3 ).toDateTime().toUTC();
+
+      types << type;
+      revs  << mrev;
+      irevs << i_rev;
+      msgs  << msg;
+   }
+
+   // If current revision is at or beyond max in records, skip pop-up
+   QString srev     = US_Version;
+   int    s_rev     = srev.section( '.', 0, 0 ).toInt() * 100000
+                    + srev.section( '.', 1, 1 ).toInt() * 10000
+                    + QString( REVISION ).toInt();
+
+   if ( s_rev >= i_rev )
+      return do_abort;
+
+   // Build notice message
+   level             = ( nn_warn > 0 ) ? 1 : level;
+   level             = ( nn_crit > 0 ) ? 2 : level;
+   QString msg_note  = tr( "UltraScan III notices posted  (" ) 
+                     + time_d.toString( "yyyy/MM/dd" ) + "):\n\n";
+
+   for ( int ii = 0; ii < nnotice; ii++ )
+   {
+      if ( irevs[ ii ] <= s_rev )    continue;
+
+      msg_note         += "[" + types[ ii ] + " " + revs[ ii ] + "] "
+                       + msgs[ ii ] + "\n";
+
+      if ( types[ ii ] == "crit" )   do_abort = true;
+   }
+
+   if ( do_abort )
+   {
+      msg_note         += tr( "\n\n*** US3 Abort: UPDATE REQUIRED!!! ***\n" );
+   }
+
+   // Display notices at level of highest level currently set
+   if (      level == 0 )
+      QMessageBox::information( this, tr( "US3 Notices" ), msg_note );
+   else if ( level == 1 )
+      QMessageBox::warning    ( this, tr( "US3 Notices" ), msg_note );
+   else if ( level == 2 )
+      QMessageBox::critical   ( this, tr( "US3 Notices" ), msg_note );
+
+   // Abort if that is indicated
+   if ( do_abort )
+      exit( -77 );
+
+   return do_abort;
 }
 

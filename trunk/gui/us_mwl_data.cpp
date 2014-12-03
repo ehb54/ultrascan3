@@ -277,6 +277,7 @@ void US_MwlData::load_mwl( QVector< US_DataIO::RawData >& allData )
    nscan    = allData[ 0 ].scanCount();
    npoint   = allData[ 0 ].pointCount();
    npointt  = npoint * nscan;
+DbgLv(1) << "MwDa:LdMw: nfile" << nfile << "nscan npoint" << nscan << npoint;
 
    ri_readings.clear();
    ri_wavelns .clear();
@@ -285,16 +286,40 @@ void US_MwlData::load_mwl( QVector< US_DataIO::RawData >& allData )
    cellchans  .clear();
    ccdescs    .clear();
    triples    .clear();
+#if 0
+   QString cech_p      = "";
+   int iwvl_p          = 0;
+#endif
 
    for ( int trx = 0; trx < nfile; trx++ )
    {
       US_DataIO::RawData* edata = &allData[ trx ];
 
-      QString cell        = QString::number( edata->cell );
+      int     icell       = edata->cell;
+      QString cell        = QString::number( icell );
       QString chan        = QString( edata->channel );
-      int     iwvl        = qRound( edata->scanData[ 0 ].wavelength );
-      QString wavl        = QString::number( iwvl );
       QString celchn      = cell + " / " + chan;
+      int     iwvl        = qRound( edata->scanData[ 0 ].wavelength );
+#if 0
+      int     kwvl        = iwvl;
+
+      if ( iwvl < 300  &&  iwvl_p > 655  &&  celchn == cech_p )
+      {  // Handle wavelength wrap-around for values > 835 
+         iwvl               += 655;
+DbgLv(1) << "MwDa:L  trx" << trx << "kwvl iwvl_p iwvl cech cech_p"
+ << kwvl << iwvl_p << iwvl << celchn << cech_p;
+         double wvlen        = (double)iwvl;
+
+         for ( int jj = 0; jj < edata->scanCount(); jj++ )
+         {
+            edata->scanData[ jj ].wavelength = wvlen;
+         }
+      }
+
+      cech_p              = celchn;
+      iwvl_p              = iwvl;
+#endif
+      QString wavl        = QString::number( iwvl );
       QString triple      = celchn + " / " + wavl;
 
       if ( ! cells.contains( cell ) )
@@ -316,6 +341,13 @@ void US_MwlData::load_mwl( QVector< US_DataIO::RawData >& allData )
       {
          ri_wavelns << iwvl;
       }
+else if ( chans.size() < 2 )
+{
+int wx=ri_wavelns.indexOf(iwvl);
+QString tripd=triples[wx];
+DbgLv(1) << "MwDa:L  trx" << trx << "duplicate iwvl" << iwvl << triple
+ << "dup wx" << wx << "trip[wx]" << tripd;
+}
 
       for ( int ss = 0; ss < nscan; ss++ )
       {
@@ -329,9 +361,21 @@ void US_MwlData::load_mwl( QVector< US_DataIO::RawData >& allData )
    nlamb_i  = ri_wavelns.size();;
    nlambda  = nlamb_i;
    slambda  = ri_wavelns[ 0 ];
+DbgLv(1) << "MwDa:LdMw: ncell nchan nlambda" << ncell << nchan << nlambda;
+DbgLv(1) << "MwDa:LdMw:   ncelchn ntriple" << ncelchn << ntriple;
+int klam=ntriple/ncelchn;
+if(nlambda>(klam+2))
+ DbgLv(1) << "MwDa:LdMw:   wl k.."
+  << ri_wavelns[klam-2]
+  << ri_wavelns[klam-1]
+  << ri_wavelns[klam  ]
+  << ri_wavelns[klam+1]
+  << ri_wavelns[klam+2];
 
    if ( ( nlambda * ncelchn ) == ntriple )
    {  // If all cells have same wavelengths, just duplicate list
+DbgLv(1) << "MwDa:LdMw:   All Cells Same #Wavelengths";
+DbgLv(1) << "MwDa:LdMw:    ri_wavelns size" << ri_wavelns.size();
       for ( int ccx = 0; ccx < ncelchn; ccx++ )
       {
          ex_wavelns << ri_wavelns;
@@ -341,6 +385,7 @@ void US_MwlData::load_mwl( QVector< US_DataIO::RawData >& allData )
    else
    {  // If wavelength lists vary, we must build them carefully
       QVector< int > wvs;
+DbgLv(1) << "MwDa:LdMw:   All Cells NOT Same #Wavelengths";
 
       for ( int ccx = 0; ccx < ncelchn; ccx++ )
       {  // First fill with empty vectors
@@ -353,6 +398,7 @@ void US_MwlData::load_mwl( QVector< US_DataIO::RawData >& allData )
          QString celchn  = triple.section( " / ", 0, 1 );
          int     iwvl    = triple.section( " / ", 2, 2 ).toInt();
          int     ccx     = cellchans.indexOf( celchn );
+//DbgLv(1) << "MwDa:LdMw:    trx" << trx << "ccx" << ccx << "celchn" << celchn;
 
          if ( ccx < 0 )
          {
@@ -363,6 +409,7 @@ void US_MwlData::load_mwl( QVector< US_DataIO::RawData >& allData )
          ex_wavelns[ ccx ] << iwvl;
       }
    }
+DbgLv(1) << "MwDa:LdMw:   wlns size" << ex_wavelns.size();
 }
 
 // Return a readings values vector for a given triple, scan
@@ -768,6 +815,7 @@ DbgLv(1) << "BldRawD      hdx" << hdx << "hdsize" << headers.size();
          scan.delta_r      = rad_inc;
          scan.rvalues.reserve( npoint );
          scan.interpolated = interpo;
+
          if ( scx > 0  &&  scan.rpm != r_rpms[ scx - 1 ] )
             kspstep++;
 
@@ -788,16 +836,17 @@ DbgLv(1) << "BldRawD      hdx" << hdx << "hdsize" << headers.size();
 
             // Compute standard deviation of speeds and save step values
             rpm_stdd          = sqrt( rpm_stdd  ) / (double)kscan;
-            a_rpms << rpm_avg;
-            s_rpms << rpm_setp;
-            d_rpms << rpm_stdd;
+            if ( trx == 0 )
+            {
+               a_rpms << rpm_avg;
+               s_rpms << rpm_setp;
+               d_rpms << rpm_stdd;
+            }
 
             // Reinitialize for next speed step
             kscx              = scx;
             kscan             = 1;
             rpm_sum           = 0.0;
-            rpm_min           = scan.rpm;
-            rpm_max           = scan.rpm;
          }
          else
          {  // Bump scan count in a speed step
@@ -811,11 +860,12 @@ DbgLv(1) << "BldRawD      hdx" << hdx << "hdsize" << headers.size();
 //*DEBUG*
 if(trx==0) {
 DbgLv(1) << "BldRawD      scx" << scx << "jhx" << jhx
- << "seconds" << scan.seconds << "rpm" << scan.rpm 
+ << "seconds" << scan.seconds << "rpm" << scan.rpm << "ss" << rpm_set
  << "speed step" << kspstep << nspstep+1;
 }
 //*DEBUG*
-         r_rpms << scan.rpm;
+         if ( trx == 0 )
+            r_rpms << scan.rpm;
          jhx++;
 
          for ( int kk = 0; kk < npoint; kk++ )
@@ -863,19 +913,22 @@ DbgLv(1) << "BldRawD      scx" << scx << "jhx" << jhx
       // Compute standard deviation of speeds and update step values
       rpm_stdd          = sqrt( rpm_stdd  ) / (double)kscan;
 
-      a_rpms << rpm_avg;
-      s_rpms << rpm_set;
-      d_rpms << rpm_stdd;
+      if ( trx == 0 )
+      {
+         a_rpms << rpm_avg;
+         s_rpms << rpm_set;
+         d_rpms << rpm_stdd;
 
-      if ( evers > 1.0 )
-      {  // In newer data, a set_speed may differ from the average
-         if ( qAbs( rpm_avg - rpm_set ) > 10.0 )
-         {
-            QMessageBox::warning( 0,
-                  tr( "Set/Average Speed Difference" ),
-                  tr( "The stored set_speed (%1) and the average of"
-                      " recorded rotor_speeds (%2) differ"
-                      " significantly!" ).arg( rpm_set ).arg( rpm_avg ) );
+         if ( evers > 1.0 )
+         {  // In newer data, a set_speed may differ from the average
+            if ( qAbs( rpm_avg - rpm_set ) > 10.0 )
+            {
+               QMessageBox::warning( 0,
+                     tr( "Set/Average Speed Difference" ),
+                     tr( "The stored set_speed (%1) and the average of"
+                         " recorded rotor_speeds (%2) differ"
+                         " significantly!" ).arg( rpm_set ).arg( rpm_avg ) );
+            }
          }
       }
 //*DEBUG*
@@ -1063,17 +1116,32 @@ int US_MwlData::data_index( QString clambda, QString celchn )
 // Update the speed profile for the current MWL data
 int US_MwlData::update_speedsteps( QVector< SP_SPEEDPROFILE >& speedsteps )
 {
-   int nsteps  = qMin( speedsteps.size(), s_rpms.size() );
+//   int nsteps  = qMin( speedsteps.size(), s_rpms.size() );
+   int nsteps  = s_rpms.size();
 DbgLv(1) << "MwDa:uSS: nsteps" << nsteps << speedsteps.size() << s_rpms.size();
-
-   for ( int jj = 0; jj < nsteps; jj++ )
+   if ( nsteps > 0 )
    {
-      speedsteps[ jj ].set_speed     = (int)s_rpms[ jj ];
-      speedsteps[ jj ].avg_speed     = a_rpms[ jj ];
-      speedsteps[ jj ].speed_stddev  = d_rpms[ jj ];
-      speedsteps[ jj ].rotorspeed    = qRound( a_rpms[ jj ] );
-DbgLv(1) << "MwDa:uSS:   jj" << "set_speed avg_speed speed_stddev"
+      int kdecr   = 0;
+      const int mxstep = 10;
+      speedsteps.resize( nsteps );
+
+      for ( int jj = 0; jj < nsteps; jj++ )
+      {
+         speedsteps[ jj ].set_speed     = (int)s_rpms[ jj ];
+         speedsteps[ jj ].avg_speed     = a_rpms[ jj ];
+         speedsteps[ jj ].speed_stddev  = d_rpms[ jj ];
+         speedsteps[ jj ].rotorspeed    = qRound( a_rpms[ jj ] );
+DbgLv(1) << "MwDa:uSS:   jj" << jj << "set_speed avg_speed speed_stddev"
  << s_rpms[ jj ] << a_rpms[ jj ] << d_rpms[ jj ];
+         if ( jj > 0  && 
+             speedsteps[ jj ].set_speed < speedsteps[ jj - 1 ].set_speed )
+            kdecr++;
+      }
+
+      if ( kdecr > 0 )
+         nsteps      = -1;
+      if ( nsteps > mxstep )
+         nsteps      = -2;
    }
 
    return nsteps;

@@ -475,6 +475,10 @@ void US_LoadAUC::fill_in( void )
    sel_run      = true;
 
    populate_tree();
+
+   expand();
+   tree->resizeColumnToContents( 0 );
+   collapse();
 }
 
 // Signal to the caller that Disk/DB choice has changed and repopulate tree
