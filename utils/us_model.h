@@ -144,8 +144,9 @@ class US_UTIL_EXTERN US_Model
       static QString composite_mc_file( QStringList&, const bool );
 
       //! \brief Model type text
+      //! \param subtype Optional PCSA subtype (1,2,4...->SL,IS,DS...)
       //! \returns    - A short text string describing the type of model
-      QString typeText( void );
+      QString typeText( int = 0 );
 
       //! \brief Flag constant f/f0
       //! \returns - A boolean flag of whether component f/f0's are constant

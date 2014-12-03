@@ -179,7 +179,7 @@ class US_MPI_Analysis : public QObject
           QVector< US_Solute > solutes;
     };
 
-    QList< Sa_Job > job_queue;
+    QList< Sa_Job >               job_queue;
 
     static const double LARGE          = 1.e39;
     static const int    solute_doubles = sizeof( US_Solute ) / sizeof( double );
@@ -333,6 +333,7 @@ class US_MPI_Analysis : public QObject
     void     dset_matrices     ( int, int,
                                  QVector< double >&, QVector< double >& );
     void     update_outputs    ( bool = false );
+    US_Model::AnalysisType model_type( const QString );
 
     // Worker
     void     _2dsa_worker      ( void );
@@ -406,11 +407,18 @@ class US_MPI_Analysis : public QObject
     void    calc_residuals_dmga( int, int, SIMULATION&, DGene& );
 
     // PCSA Master
-    void    pcsa_master        ( void );
-    void    init_pcsa_solutes  ( void );
+    void    pcsa_master         ( void );
+    void    init_pcsa_solutes   ( void );
+    void    process_pcsa_results( const int, const int* );
+    void    process_pcsa_solutes( Result& );
+    void    write_mrecs         ( void );
+    void    iterate_pcsa        ( void );
+    void    tikreg_pcsa         ( void );
+    void    montecarlo_pcsa     ( void );
+
 
     // PCSA Worker
-    void    pcsa_worker        ( void );
+    void    pcsa_worker         ( void );
 
     // Parallel Masters
     void    pmasters_start     ( void );

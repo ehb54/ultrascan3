@@ -68,7 +68,6 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    SpeedProfile sp;
 
    int     dbg_level   = US_Settings::us_debug();
-   double  rpm         = rawdata.scanData[ 0 ].rpm;
    int     cp_id       = 0;
    QString channel     = QChar(rawdata.channel);
    int     iechan      = QString( "ABCDEFGH" ).indexOf( channel );
@@ -136,6 +135,7 @@ DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
       computeSpeedSteps( &rawdata.scanData, speed_step );
 
 #ifndef NO_DB
+   double  rpm         = rawdata.scanData[ 0 ].rpm;
    if ( db != NULL )
    {  // If reading from the database, get rotor,centerpiece info from DB
       int         stat_db = 0;
@@ -233,7 +233,6 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    SpeedProfile sp;
 
    int     dbg_level   = US_Settings::us_debug();
-   double  rpm         = editdata.scanData[ 0 ].rpm;
    int     cp_id       = 0;
    QString channel     = editdata.channel;
    int     iechan      = QString( "ABCDEFGH" ).indexOf( channel );
@@ -302,6 +301,7 @@ DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
       computeSpeedSteps( &editdata.scanData, speed_step );
 
 #ifndef NO_DB
+   double  rpm         = editdata.scanData[ 0 ].rpm;
    if ( db != NULL )
    {  // If reading from the database, get rotor,centerpiece info from DB
       int         stat_db = 0;
@@ -454,20 +454,15 @@ DbgLv(1) << "SP:cSS: scan" << 1 << "rpm time omega2t"
 
    for ( int ii = 1; ii < scanCount; ii++ )
    {  // Loop to build speed steps where RPM changes
+      rpm              = rpmnext;
       rpmnext          = (*scans)[ ii ].rpm;
+      // Get set_speeds, the speeds rounded to nearest 100
+      int ss_next      = qRound( rpmnext * 0.01 ) * 100;
+      int ss_curr      = qRound( rpm     * 0.01 ) * 100;
 DbgLv(1) << "SP:cSS: scan" << (ii+1) << "rpm time omega2t"
  << rpmnext << qRound((*scans)[ii].seconds) << (*scans)[ii].omega2t;
 
-      if ( rpm != rpmnext  &&  ( qAbs( rpm - rpmnext ) / rpm ) < 0.005 )
-      {  // Ignore apparent speed-step if the rpm change is small & for 1 scan
-         if ( ii == ( scanCount - 1 )  ||
-              rpm == (*scans)[ ii + 1 ].rpm )
-            rpmnext = rpm;
-         if ( ii == 1 )
-            rpm     = rpmnext;
-      }
-
-      if ( rpm != rpmnext )
+      if ( ss_curr != ss_next )
       {  // RPM has changed, so need to create speed step for previous scans
          time2               = (*scans)[ ii - 1 ].seconds;
          w2t2                = (*scans)[ ii - 1 ].omega2t;

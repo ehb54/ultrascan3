@@ -681,25 +681,46 @@ void US_MPI_Analysis::write_output( void )
    US_SolveSim::Simulation sim = simulation_values;
 
    double save_meniscus = meniscus_value;
-   US_Model::AnalysisType mdl_type = analysis_type.startsWith( "2DSA" ) ?
-                                     US_Model::TWODSA : US_Model::GA;
+   US_Model::AnalysisType mdl_type = model_type( analysis_type );
    int mxdssz   = -1;
 
-   if ( !analysis_type.startsWith( "DMGA" ) )
+   if ( mdl_type == US_Model::TWODSA  ||  mdl_type == US_Model::GA )
    {
       sim.solutes  = calculated_solutes[ max_depth ]; 
       mxdssz       = sim.solutes.size();
    }
-   else
+
+   else if ( mdl_type == US_Model::DMGA )
    {  // Handle DMGA need for dummy solutes
       QVector< US_Solute > solvec;
-      mdl_type     = US_Model::DMGA;
       max_depth    = 0;
       calculated_solutes.clear();
       calculated_solutes << solvec;
       sim.solutes  = solvec;
 DbgLv(1) << "MAST: wrout: mdl_type DMGA";
    }
+
+   else if ( mdl_type == US_Model::PCSA )
+   {  // PCSA: Order model records and pick best model
+      max_depth    = 0;
+      qSort( mrecs );
+//*DEBUG*
+DbgLv(1) << "MAST: wrout: mdl_type PCSA  mrecs size" << mrecs.size();
+if(dbg_level>0)
+{
+ for(int jj=0;jj<mrecs.size();jj++)
+ {
+  DbgLv(1) << "M:wo: jj" << jj << "typ tx" << mrecs[jj].ctype << mrecs[jj].taskx << "isz csz"
+   << mrecs[jj].isolutes.size() << mrecs[jj].csolutes.size() << "rmsd" << mrecs[jj].rmsd
+   << "sk ek" << mrecs[jj].str_k << mrecs[jj].end_k
+   << "p1 p2" << mrecs[jj].par1 << mrecs[jj].par2;
+ }
+}
+//*DEBUG*
+      sim.solutes  = mrecs[ 0 ].csolutes;
+      mxdssz       = sim.solutes.size();
+   }
+DbgLv(1) << "WrO: mxdssz" << mxdssz;
 
    if ( mxdssz == 0 )
    { // Handle the case of a zero-solute final model
@@ -725,35 +746,39 @@ DbgLv(1) << "MAST: wrout: mdl_type DMGA";
       }
    }
 
-   meniscus_value  = meniscus_values[ meniscus_run ];
+DbgLv(1) << "WrO: meniscus_run" << meniscus_run << "mvsz" << meniscus_values.size();
+   meniscus_value  = meniscus_run < meniscus_values.size() 
+                     ? meniscus_values[ meniscus_run ] : save_meniscus;
    if ( mdl_type != US_Model::DMGA )
    {
+DbgLv(1) << "WrO: qSort solutes  sssz" << sim.solutes.size();
       qSort( sim.solutes );
-DbgLv(1) << "WrO: mciter mxdepth" << mc_iteration+1 << max_depth << "calcsols size"
- << calculated_solutes[max_depth].size() << "simvsols size" << sim.solutes.size();
    }
 
+DbgLv(1) << "WrO: wr_model  mdl_type" << mdl_type;
    write_model( sim, mdl_type );
    meniscus_value  = save_meniscus;
 
+DbgLv(1) << "WrO: wr_noise";
    if (  parameters[ "tinoise_option" ].toInt() > 0 )
       write_noise( US_Noise::TI, sim.ti_noise );
 
    if (  parameters[ "rinoise_option" ].toInt() > 0 )
       write_noise( US_Noise::RI, sim.ri_noise );
+
+DbgLv(1) << "WrO: wr_mrecs";
+   if ( mdl_type == US_Model::PCSA )
+      write_mrecs();
 }
 
 // Write global model outputs at the end of an iteration
 void US_MPI_Analysis::write_global( void )
 {
-   US_SolveSim::Simulation  sim  = simulation_values;
-   US_SolveSim::Simulation* gsim = &simulation_values;
+   US_SolveSim::Simulation  sim      = simulation_values;
+   US_SolveSim::Simulation* gsim     = &simulation_values;
+   US_Model::AnalysisType   mdl_type = model_type( analysis_type );
 
-   US_Model::AnalysisType mdl_type = analysis_type.startsWith( "2DSA" ) ?
-                                     US_Model::TWODSA : US_Model::GA;
-   if ( analysis_type.startsWith( "DMGA" ) )
-      mdl_type     = US_Model::DMGA;
-   int nsolutes = mdl_type != US_Model::DMGA ? sim.solutes.size() : -1;
+   int nsolutes = ( mdl_type != US_Model::DMGA ) ? sim.solutes.size() : -1;
 
    if ( nsolutes == 0 )
    { // Handle the case of a zero-solute final model
@@ -1285,8 +1310,10 @@ void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim,
 
    // Fill in and write out the model file
    US_Model model;
+   int subtype       = ( type == US_Model::PCSA ) ? mrecs[ 0 ].ctype : 0;
 
-DbgLv(1) << "wrMo: type" << type << "(DMGA)" << US_Model::DMGA;
+DbgLv(1) << "wrMo: type" << type << "(DMGA=" << US_Model::DMGA << ") (PCSA="
+ << US_Model::PCSA << ") subtype=" << subtype;
    if ( type == US_Model::DMGA )
    {  // For discrete GA, get the already constructed model
       model             = data_sets[ 0 ]->model;
@@ -1350,7 +1377,7 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
       iterID = "i01";
 
    QString mdlid     = tripleID + "." + iterID;
-   QString id        = model.typeText();
+   QString id        = model.typeText( subtype );
    if ( analysis_type.contains( "CG" ) )
       id                = id.replace( "2DSA", "2DSA-CG" );
    QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
@@ -1708,5 +1735,20 @@ DbgLv(0) << my_rank << ": All output files except the archive are now removed.";
       QString file;
       foreach( file, files ) odir.remove( file );
    }
+}
+
+// Return the model type flag for a given analysis type string
+US_Model::AnalysisType US_MPI_Analysis::model_type( const QString a_type )
+{
+   US_Model::AnalysisType
+      m_type      = US_Model::TWODSA;
+   if (      a_type.startsWith( "GA" ) )
+      m_type      = US_Model::GA;
+   else if ( a_type.startsWith( "DMGA" ) )
+      m_type      = US_Model::DMGA;
+   else if ( a_type.startsWith( "PCSA" ) )
+      m_type      = US_Model::PCSA;
+
+   return m_type;
 }
 

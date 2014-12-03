@@ -447,7 +447,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const Scan&       data,
    write( ds, ui.c, 4, crc );
 
    // Encoded wavelength
-   si = (quint16)qRound( ( data.wavelength - 180.0 ) * 100.0 );
+   si = (quint16)qRound( data.wavelength * 10.0 );
    qToLittleEndian<quint16>( si, ui.u );
 //qDebug() << "DIO: wvln si" << data.wavelength << si
 // << "ui.c" << (int)ui.c[0] << (int)ui.c[1];
@@ -517,7 +517,10 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
       unsigned char ver[ 2 ];
       read( ds, (char*) ver, 2, crc );
       quint32 version = ( ( ver[ 0 ] & 0x0f ) << 8 ) | ( ver[ 1 ] & 0x0f );
-      if ( version != format_version ) throw BAD_VERSION;
+//      if ( version != format_version ) throw BAD_VERSION;
+      if ( version > format_version ) throw BAD_VERSION;
+
+      bool wvlf_new  = ( version > (quint32)4 );
 
       // Read and get the file type
       char type[ 3 ];
@@ -640,7 +643,10 @@ int US_DataIO::readRawData( const QString& file, RawData& data )
 
          // Wavelength
          read( ds, si.c, 2, crc );
-         sc.wavelength = qFromLittleEndian( si.I ) / 100.0 + 180.0;
+         if ( wvlf_new )
+            sc.wavelength = qFromLittleEndian( si.I ) / 10.0;
+         else
+            sc.wavelength = qFromLittleEndian( si.I ) / 100.0 + 180.0;
 
          // Delta_r
          read( ds, u1.c, 4, crc );

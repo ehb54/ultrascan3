@@ -253,7 +253,7 @@ class US_ConvertGui : public US_Widgets
       void mwl_connect       ( bool );
       void reset_lambdas     ( void );
       void mwl_setup         ( void );
-      void init_output_data  ( void );
+      bool init_output_data  ( void );
       void build_output_data ( void );
       void build_lambda_ctrl ( void );
       void connectTolerance  ( bool );

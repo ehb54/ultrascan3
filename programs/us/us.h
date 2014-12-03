@@ -30,13 +30,15 @@ private:
   QLabel*    smallframe;
   QLabel*    splash_shadow;
   US_Help    showhelp;
+  QDateTime  ln_time;                // Last notice-check time
   
   void addMenu( int, const QString&, QMenu* );
   void splash ( void );
   void logo   ( int );
   void help   ( int );
   void launch ( int );
-  void apply_prefs( void );
+  void apply_prefs ( void );
+  bool notice_check( void );
 
   struct procData
   {

@@ -9,15 +9,16 @@ void US_MPI_Analysis::pcsa_worker( void )
    bool repeat_loop = true;
    MPI_Job     job;
    MPI_Status  status;
+DbgLv(1) << "w:" << my_rank << ": pcsa_worker IN";
 
-   // Use 3 here because the master will be reading 3 with the
+   // Use 4 here because the master will be reading 4 with the
    // same instruction when reading ::READY or ::RESULTS.
-   int x[ 3 ];
+   int x[ 4 ];
 
    while ( repeat_loop )
    {
       MPI_Send( x, // Basically don't care
-                3,
+                4,
                 MPI_INT,
                 MPI_Job::MASTER,
                 MPI_Job::READY,
@@ -42,7 +43,8 @@ DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
       int dataset_count  = job.dataset_count;
       int job_length     = job.length;
       meniscus_value     = data_sets[ offset ]->run_data.meniscus;
-DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count;
+DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count
+ << "alpha" << alpha << "menisc" << meniscus_value;
 
       data_sets[ offset ]->simparams.meniscus = meniscus_value;
 
@@ -94,6 +96,18 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
 
                calc_residuals( offset, dataset_count, simulation_values );
 
+//*DEBUG*
+//if(my_rank==1)
+{
+ int nn = simulation_values.solutes.size() - 1;
+ int mm = nn/2;
+ DbgLv(1) << "w:" << my_rank << ": nso"
+  << simulation_values.solutes.size() << "c:sol0 solm soln"
+  << simulation_values.solutes[0].s << simulation_values.solutes[0].k
+  << simulation_values.solutes[mm].s << simulation_values.solutes[mm].k
+  << simulation_values.solutes[nn].s << simulation_values.solutes[nn].k;
+}
+//*DEBUG*
                // Tell master we are sending back results
                int size[ 4 ] = { simulation_values.solutes.size(),
                                  simulation_values.ti_noise.size(),

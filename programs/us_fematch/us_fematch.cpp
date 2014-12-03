@@ -2437,16 +2437,16 @@ QString US_FeMatch::text_model( US_Model model, int width )
             break;
 
          case (int)US_Model::PCSA:
-            title = tr( "Parametrically Constrained Spectrum Analysis " );
+            title = tr( "Parametrically Constrained Spectrum Analysis\n" );
 
             if ( stitle.contains( "-SL" ) )
                title += tr( "(Straight Line)" );
 
             else if ( stitle.contains( "-IS" ) )
-               title += tr( "(Incr. Sigmoid)" );
+               title += tr( "(Increasing Sigmoid)" );
 
             else if ( stitle.contains( "-DS" ) )
-               title += tr( "(Decr. Sigmoid)" );
+               title += tr( "(Decreasing Sigmoid)" );
 
             else if ( stitle.contains( "-HL" ) )
                title += tr( "(Horizontal Line)" );
