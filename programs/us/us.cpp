@@ -789,7 +789,7 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
    {
       if ( irevs[ ii ] <= s_rev )    continue;
 
-      msg_note         += "[" + types[ ii ] + " " + revs[ ii ] + "] "
+      msg_note         += types[ ii ] + " for release " + revs[ ii ] + ":\n\n"
                        + msgs[ ii ] + "\n";
 
       if ( types[ ii ] == "crit" )   do_abort = true;
