@@ -719,6 +719,8 @@ if(dbg_level>0)
 //*DEBUG*
       sim.solutes  = mrecs[ 0 ].csolutes;
       mxdssz       = sim.solutes.size();
+      sim.ti_noise = mrecs[ 0 ].ti_noise;
+      sim.ri_noise = mrecs[ 0 ].ri_noise;
    }
 DbgLv(1) << "WrO: mxdssz" << mxdssz;
 
