@@ -778,7 +778,7 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
    int    s_rev     = QString( srev ).replace( ".", "" ).toInt();
 
 qDebug() << "s_rev i_rev" << s_rev << i_rev << "srev" << srev;
-   if ( s_rev >= i_rev )
+   if ( s_rev > i_rev )
       return do_abort;
 
    // Build notice message
