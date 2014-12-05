@@ -760,9 +760,7 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
       else if ( type == "warn" )  nn_warn++;
       else if ( type == "crit" )  nn_crit++;
 
-      int    m_rev     = mrev.section( '.', 0, 0 ).toInt() * 100000
-                       + mrev.section( '.', 1, 1 ).toInt() * 10000
-                       + mrev.section( '.', 2, 2 ).toInt();
+      int    m_rev     = QString( mrev ).replace( ".", "" ).toInt();
       i_rev            = qMax( i_rev,  m_rev  );
 
       if ( nnotice == 1 )
@@ -775,11 +773,11 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
    }
 
    // If current revision is at or beyond max in records, skip pop-up
-   QString srev     = US_Version;
-   int    s_rev     = srev.section( '.', 0, 0 ).toInt() * 100000
-                    + srev.section( '.', 1, 1 ).toInt() * 10000
-                    + QString( REVISION ).toInt();
+   QString srev     = US_Version  + "."
+                    + QString( REVISION ).section( ":", 1, 1 ).simplified();
+   int    s_rev     = QString( srev ).replace( ".", "" ).toInt();
 
+qDebug() << "s_rev i_rev" << s_rev << i_rev << "srev" << srev;
    if ( s_rev >= i_rev )
       return do_abort;
 
@@ -791,8 +789,9 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
 
    for ( int ii = 0; ii < nnotice; ii++ )
    {
-      // Skip messages from earlier or equal to current revision
-      if ( irevs[ ii ] <= s_rev )    continue;
+      // Skip messages for warn/crit same revision or any earlier than current
+      if ( ( irevs[ ii ] == s_rev  &&  types[ ii ] != "info" )  ||
+           irevs[ ii ] < s_rev )     continue;
 
       // Add current message to full text
       msg_note         += typeMap[ types[ ii ] ] + " for release "
