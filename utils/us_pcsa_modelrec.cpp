@@ -8,12 +8,25 @@ US_ModelRecord::US_ModelRecord( void )
 {
    taskx      = -1;
    ctype      = 0;
+   mrecID     = 0;
+   editID     = 0;
+   modelID    = 0;
    str_k      = 0.0;
    end_k      = 0.0;
    par1       = 0.0;
    par2       = 0.0;
    variance   = 9999.9;
    rmsd       = 9999.9;
+   smin       = 0.0;
+   smax       = 0.0;
+   kmin       = 0.0;
+   kmax       = 0.0;
+   mrecGUID   = "";
+   editGUID   = "";
+   modelGUID  = "";
+   isolutes.clear();
+   csolutes.clear();
+   clear_data();
 }
 
 // Model record destructor

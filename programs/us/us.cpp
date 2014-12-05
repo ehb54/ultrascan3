@@ -738,6 +738,10 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
    QStringList  revs;
    QList< int > irevs;
    QDateTime   time_d;
+   QMap< QString, QString > typeMap;
+   typeMap[ "info" ] = tr( "Information" );
+   typeMap[ "warn" ] = tr( "Warning"     );
+   typeMap[ "crit" ] = tr( "Critical"    );
    int    nnotice   = 0;
    int    nn_info   = 0;
    int    nn_warn   = 0;
@@ -766,7 +770,7 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
 
       types << type;
       revs  << mrev;
-      irevs << i_rev;
+      irevs << m_rev;
       msgs  << msg;
    }
 
@@ -787,16 +791,20 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
 
    for ( int ii = 0; ii < nnotice; ii++ )
    {
+      // Skip messages from earlier or equal to current revision
       if ( irevs[ ii ] <= s_rev )    continue;
 
-      msg_note         += types[ ii ] + " for release " + revs[ ii ] + ":\n\n"
+      // Add current message to full text
+      msg_note         += typeMap[ types[ ii ] ] + " for release "
+                       + revs[ ii ] + ":\n\n"
                        + msgs[ ii ] + "\n";
 
+      // Critical from later revision than current means an abort
       if ( types[ ii ] == "crit" )   do_abort = true;
    }
 
    if ( do_abort )
-   {
+   {  // Append an additional note if an abort is happening
       msg_note         += tr( "\n\n*** US3 Abort: UPDATE REQUIRED!!! ***\n" );
    }
 
