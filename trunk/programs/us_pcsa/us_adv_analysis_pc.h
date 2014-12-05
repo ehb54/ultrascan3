@@ -156,7 +156,7 @@ class US_AdvAnalysisPc : public US_WidgetsDialog
 
       void select          ( void );
       void cancel          ( void );
-//      void load_model      ( void );
+      void test_db_mrecs   ( void );
 
       void help     ( void )
       { showHelp.show_help( "pcsa_advanced.html" ); };

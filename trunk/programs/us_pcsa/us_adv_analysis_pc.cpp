@@ -4,6 +4,7 @@
 #include "us_adv_analysis_pc.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_passwd.h"
 
 // constructor:  enhanced plot control widget
 US_AdvAnalysisPc::US_AdvAnalysisPc( QVector< US_ModelRecord >* p_mrs,
@@ -422,6 +423,9 @@ DbgLv(1) << "load_mrecs";
 
    if ( load_file.isEmpty() )
    {
+#if 1
+      test_db_mrecs();
+#endif
       return;
    }
 
@@ -1905,5 +1909,170 @@ DbgLv(1) << "AA:BI:  (5)inCompat" << inCompat;
    }
 
    return inCompat;
+}
+
+// Test procedures for handling pcsa_modelrecs table
+void US_AdvAnalysisPc::test_db_mrecs()
+{
+   US_Passwd pw;
+   US_DB2* dbP      = new US_DB2( pw.getPasswd() );
+   int     mrID1    = -1;
+   QString invID    = QString::number( US_Settings::us_inv_ID() );
+   QStringList qry;
+
+   qry.clear();
+   qry << "count_mrecs" << invID;
+qDebug() << "QRY:" << qry;
+   int nmrec        = dbP->functionQuery( qry );
+qDebug() << " nmrec" << nmrec;
+qDebug() << "  nm stat" << dbP->lastErrno() << dbP->lastError();
+
+   qry.clear();
+   qry << "get_mrecs_desc" << invID;
+qDebug() << "QRY:" << qry;
+   dbP->query( qry );
+   if ( dbP->lastErrno() == US_DB2::OK )
+   {
+qDebug() << " numRows" << dbP->numRows();
+qDebug() << "  nR stat" << dbP->lastErrno() << dbP->lastError();
+      while ( dbP->next() )
+      {
+         int     mrID     = dbP->value( 0 ).toInt();
+         mrID1            = ( mrID1 < 0 ) ? mrID : mrID1;
+         QString mrGUID   = dbP->value( 1 ).toString();
+         int     edID     = dbP->value( 2 ).toInt();
+         QString edGUID   = dbP->value( 3 ).toString();
+         int     moID     = dbP->value( 4 ).toInt();
+         QString moGUID   = dbP->value( 5 ).toString();
+         QString descr    = dbP->value( 6 ).toString();
+         QString cksm     = dbP->value( 7 ).toString();
+         QString size     = dbP->value( 8 ).toString();
+         QString utime    = dbP->value( 9 ).toString();
+qDebug() << "  mrID mrGUID" << mrID << mrGUID;
+qDebug() << "   edID edGUID" << edID << edGUID;
+qDebug() << "   moID moGUID" << moID << moGUID;
+qDebug() << "   desc"        << descr;
+qDebug() << "   cksm size"   << cksm << size;
+qDebug() << "   utime"       << utime;
+      }
+   }
+
+   qry.clear();
+   qry << "get_mrecs_desc" << "0";
+qDebug() << "QRY:" << qry;
+   dbP->query( qry );
+   if ( dbP->lastErrno() == US_DB2::OK )
+   {
+qDebug() << " numRows" << dbP->numRows();
+qDebug() << "  nR stat" << dbP->lastErrno() << dbP->lastError();
+      while ( dbP->next() )
+      {
+         int     mrID     = dbP->value( 0 ).toInt();
+         QString mrGUID   = dbP->value( 1 ).toString();
+         int     edID     = dbP->value( 2 ).toInt();
+         QString edGUID   = dbP->value( 3 ).toString();
+         int     moID     = dbP->value( 4 ).toInt();
+         QString moGUID   = dbP->value( 5 ).toString();
+         QString descr    = dbP->value( 6 ).toString();
+         QString cksm     = dbP->value( 7 ).toString();
+         QString size     = dbP->value( 8 ).toString();
+         QString utime    = dbP->value( 9 ).toString();
+qDebug() << "  mrID mrGUID" << mrID << mrGUID;
+qDebug() << "   edID edGUID" << edID << edGUID;
+qDebug() << "   moID moGUID" << moID << moGUID;
+qDebug() << "   desc"        << descr;
+qDebug() << "   cksm size"   << cksm << size;
+qDebug() << "   utime"       << utime;
+      }
+   }
+
+   else
+   {
+qDebug() << " *ERROR*" << dbP->lastErrno() << dbP->lastError();
+   }
+
+   qry.clear();
+   QString edGUID   = dset0->run_data.editGUID;
+   qry << "get_editID" << edGUID;
+qDebug() << "QRY:" << qry;
+   dbP->query( qry );
+   QString editID   = dbP->value( 0 ).toString();
+qDebug() << " editID edGUID" << editID << edGUID;
+
+   qry.clear();
+   qry << "count_mrecs_by_editID" << invID << editID;
+qDebug() << "QRY:" << qry;
+   int nmredt       = dbP->functionQuery( qry );
+qDebug() << " nmredt" << nmredt;
+qDebug() << "  nm stat" << dbP->lastErrno() << dbP->lastError();
+
+   qry.clear();
+   qry << "get_mrecs_desc_by_editID" << invID << editID;
+qDebug() << "QRY:" << qry;
+   dbP->query( qry );
+   if ( dbP->lastErrno() == US_DB2::OK )
+   {
+qDebug() << " numRows" << dbP->numRows();
+qDebug() << "  nR stat" << dbP->lastErrno() << dbP->lastError();
+      while ( dbP->next() )
+      {
+         int     mrID     = dbP->value( 0 ).toInt();
+         QString mrGUID   = dbP->value( 1 ).toString();
+         int     edID     = dbP->value( 2 ).toInt();
+         QString edGUID   = dbP->value( 3 ).toString();
+         int     moID     = dbP->value( 4 ).toInt();
+         QString moGUID   = dbP->value( 5 ).toString();
+         QString descr    = dbP->value( 6 ).toString();
+         QString cksm     = dbP->value( 7 ).toString();
+         QString size     = dbP->value( 8 ).toString();
+         QString utime    = dbP->value( 9 ).toString();
+qDebug() << "  mrID mrGUID" << mrID << mrGUID;
+qDebug() << "   edID edGUID" << edID << edGUID;
+qDebug() << "   moID moGUID" << moID << moGUID;
+qDebug() << "   desc"        << descr;
+qDebug() << "   cksm size"   << cksm << size;
+qDebug() << "   utime"       << utime;
+      }
+   }
+
+   else
+   {
+qDebug() << " *ERROR*" << dbP->lastErrno() << dbP->lastError();
+   }
+
+   qry.clear();
+   qry << "get_mrecs_info" << QString::number( mrID1 );
+qDebug() << "QRY:" << qry;
+   dbP->query( qry );
+   if ( dbP->lastErrno() == US_DB2::OK )
+   {
+qDebug() << " numRows" << dbP->numRows();
+qDebug() << "  nR stat" << dbP->lastErrno() << dbP->lastError();
+      dbP->next();
+      QString mrGUID   = dbP->value( 0 ).toString();
+      QString xmlstr   = dbP->value( 1 ).toString();
+      int     edID     = dbP->value( 2 ).toInt();
+      QString edGUID   = dbP->value( 3 ).toString();
+      int     moID     = dbP->value( 4 ).toInt();
+      QString moGUID   = dbP->value( 5 ).toString();
+      QString descr    = dbP->value( 6 ).toString();
+      QString cksm     = dbP->value( 7 ).toString();
+      int     xsize    = dbP->value( 8 ).toInt();
+      QString utime    = dbP->value( 9 ).toString();
+qDebug() << "  mrID mrGUID" << mrID1 << mrGUID;
+qDebug() << "   edID edGUID" << edID << edGUID;
+qDebug() << "   moID moGUID" << moID << moGUID;
+qDebug() << "   desc"        << descr;
+qDebug() << "   cksm size"   << cksm << xsize << "xml len" << xmlstr.length();
+      QString xmls1    = QString( xmlstr ).left ( 1600 );
+      QString xmls2    = QString( xmlstr ).right( 1600 );
+qDebug() << "==== XML1"  << xmls1 << "XML1 ======";
+qDebug() << "==== XML2"  << xmls2 << "XML2 ======";
+   }
+
+   else
+   {
+qDebug() << " *ERROR*" << dbP->lastErrno() << dbP->lastError();
+   }
 }
 
