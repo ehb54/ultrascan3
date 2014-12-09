@@ -23,6 +23,7 @@ US_AnalysisControlPc::US_AnalysisControlPc(
    bmndx          = -1;
    mlnplotd       = 0;
    fitpars        = QString();
+   ctypes << CTYPE_SL << CTYPE_IS << CTYPE_DS << CTYPE_HL << CTYPE_ALL;
 
    if ( parentw )
    {  // Get pointers to needed objects from the main
@@ -367,7 +368,7 @@ void US_AnalysisControlPc::start()
    le_minvari  ->setText( "0.000e-05" );
    le_minrmsd  ->setText( "0.0000" );
 
-   int    typ    = cb_curvtype->currentIndex();
+   int    typ    = ctypes[ cb_curvtype->currentIndex() ];
    double slo    = ct_lolimits->value();
    double sup    = ct_uplimits->value();
    double klo    = ct_lolimitk->value();
@@ -584,7 +585,7 @@ DbgLv(1) << "AC:advanced: get_results";
          int    nmrecs = mrecs.size();
          int    nmtsks = ( mrecs[ 0 ].taskx == mrecs[ 1 ].taskx )
                        ? ( nmrecs - 1 ) : nmrecs;
-         nkpts         = ( ctype != 3 )
+         nkpts         = ( ctype != CTYPE_HL )
                        ? qRound( sqrt( (double)nmtsks ) ) : nmtsks;
          int    strec  = nmrecs - nmtsks;
          nlpts         = mrecs[ strec ].isolutes.size();
@@ -613,7 +614,7 @@ DbgLv(1) << "AC:advanced: get_results";
 
          fitpars_connect( false );
 
-         cb_curvtype->setCurrentIndex( ctype );
+         cb_curvtype->setCurrentIndex( ctypes.indexOf( ctype ) );
          ct_lolimits->setValue( smin  );
          ct_uplimits->setValue( smax  );
          ct_lolimitk->setValue( fmin  );
@@ -717,11 +718,12 @@ DbgLv(1) << "RESO_CHANGE: need_fit" << need_fit
 // Handle change in curve type
 void US_AnalysisControlPc::type_change()
 {
-   ctype   = cb_curvtype->currentIndex();
-DbgLv(1) << "TYPE_CHANGE: ctype" << ctype;
+   ctypex  = cb_curvtype->currentIndex();
+   ctype   = ctypes[ ctypex ];
+DbgLv(1) << "TYPE_CHANGE: ctypex" << ctypex << "ctype" << ctype;
 
-   if ( ctype == 3 )
-      ct_varcount->setValue( 101 );
+   if ( ctype == CTYPE_HL )
+      ct_varcount->setValue( 100 );
    else
       ct_varcount->setValue( 6 );
 
@@ -892,7 +894,8 @@ void US_AnalysisControlPc::compute()
 {
    double parlims[ 4 ];
 
-   ctype   = cb_curvtype->currentIndex();
+   ctypex  = cb_curvtype->currentIndex();
+   ctype   = ctypes[ ctypex ];
    smin    = ct_lolimits->value();
    smax    = ct_uplimits->value();
    fmin    = ct_lolimitk->value();
@@ -903,17 +906,17 @@ void US_AnalysisControlPc::compute()
    parlims[ 0 ]   = -1.0;
    int    nlmodl  = nkpts * nkpts;
 
-   if ( ctype == 0 )
+   if ( ctype == CTYPE_SL )
    {
       US_ModelRecord::compute_slines( smin, smax, fmin, fmax, nkpts, nlpts,
             parlims, mrecs );
    }
-   else if ( ctype == 1  ||  ctype == 2 )
+   else if ( ctype == CTYPE_IS  ||  ctype == CTYPE_DS )
    {
       US_ModelRecord::compute_sigmoids( ctype, smin, smax, fmin, fmax,
             nkpts, nlpts, parlims, mrecs );
    }
-   else if ( ctype == 3 )
+   else if ( ctype == CTYPE_HL )
    {
       nlmodl         = nkpts;
 
@@ -923,7 +926,7 @@ void US_AnalysisControlPc::compute()
 
    QString amsg   =
       tr( "The number of test models is %1,\n" ).arg( nlmodl );
-   if ( ctype < 3 )
+   if ( ctype != 8 )
    {
       amsg       += tr( " derived from the square of %1 variation points,\n" )
                     .arg( nkpts );
@@ -943,7 +946,8 @@ DbgLv(1) << "CM: need_fit" << need_fit;
 // slot to launch a plot dialog showing model lines
 void US_AnalysisControlPc::plot_lines()
 {
-   ctype   = cb_curvtype->currentIndex();
+   ctypex  = cb_curvtype->currentIndex();
+   ctype   = ctypes[ ctypex ];
    smin    = ct_lolimits->value();
    smax    = ct_uplimits->value();
    fmin    = ct_lolimitk->value();
@@ -1132,7 +1136,8 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
    fmin          = ct_lolimitk->value();
    fmax          = ct_uplimitk->value();
    nlpts         = (int)ct_cresolu ->value();
-   ctype         = cb_curvtype->currentIndex();
+   ctypex        = cb_curvtype->currentIndex();
+   ctype         = ctypes[ ctypex ];
    mrec.ctype    = ctype;
    mrec.smin     = smin;
    mrec.smax     = smax;
@@ -1145,7 +1150,7 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
    double prng   = (double)( nlpts - 1 );
    double xrng   = smax - smin;
 
-   if ( ctype == 0 )
+   if ( ctype == CTYPE_SL )
    {
       double xval   = smin;
       double xinc   = xrng / prng;
@@ -1162,17 +1167,12 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
       } // END: points-per-line loop
    }
 
-   else if ( ctype == 1  ||  ctype == 2 )
+   else if ( ctype == CTYPE_IS  ||  ctype == CTYPE_DS )
    {
       double xrng   = smax - smin;
-      double kstr   = fmin;
+      double kstr   = ( ctype == CTYPE_IS ) ? fmin : fmax;
       double kdif   = fmax - fmin;
-      if ( ctype == 2 )
-      {
-         kstr          = fmax;
-         kdif          = -kdif;
-      }
-
+      kdif          = ( ctype == CTYPE_IS ) ? kdif : -kdif;
       double xval   = 0.0;
       double xinc   = 1.0 / prng;
       double p1rt   = sqrt( 2.0 * par1 );
@@ -1189,7 +1189,7 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
       } // END: points-on-curve loop
    }
 
-   else if ( ctype == 3 )
+   else if ( ctype == CTYPE_HL )
    {
       double xval   = smin;
       double xinc   = xrng / prng;

@@ -2,6 +2,7 @@
 
 #include "us_pcsa.h"
 #include "us_adv_analysis_pc.h"
+#include "us_mrecs_loader.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_passwd.h"
@@ -198,7 +199,7 @@ DbgLv(1) << "AA: populate mreclistLayout";
    bfm_new      = false;
    mrs_new      = false;
    mc_done      = false;
-   ctype        = 1;
+   ctype        = CTYPE_IS;
    nisols       = 0;
    ncsols       = ( nmrecs > 0 ) ? mrecs[ 0 ].csolutes.size() : 0;
 
@@ -283,7 +284,7 @@ DbgLv(1) << "AA: connect buttons";
    connect( pb_accept,   SIGNAL( clicked() ),
             this,        SLOT(   select()  ) );
 
-   curvtypeChanged( ctype );
+   curvtypeChanged( 1 );
    resize( 780, 400 );
 DbgLv(1) << "Post-resize size" << size();
    qApp->processEvents();
@@ -346,18 +347,22 @@ void US_AdvAnalysisPc::curvtypeChanged( int ivalue )
 {
 DbgLv(1) << "curvtypeChanged" << ivalue;
    ctype          = ivalue;
-   bool is_sigm   = ( ctype == 1 || ctype == 2 );
+   ctype          = ( ivalue == 0 ) ? CTYPE_SL : ctype;
+   ctype          = ( ivalue == 1 ) ? CTYPE_IS : ctype;
+   ctype          = ( ivalue == 2 ) ? CTYPE_DS : ctype;
+   ctype          = ( ivalue == 3 ) ? CTYPE_HL : ctype;
+   bool is_sigm   = ( ctype == CTYPE_IS || ctype == CTYPE_DS );
    bool is_line   = ! is_sigm;
 
    lb_sigmpar1->setVisible( is_sigm );
    ct_sigmpar1->setVisible( is_sigm );
    lb_sigmpar2->setVisible( is_sigm );
    ct_sigmpar2->setVisible( is_sigm );
-   lb_k_strpt ->setVisible( ctype == 0 );
-   ct_k_strpt ->setVisible( ctype == 0 );
+   lb_k_strpt ->setVisible( ctype == CTYPE_SL );
+   ct_k_strpt ->setVisible( ctype == CTYPE_SL );
    lb_k_endpt ->setVisible( is_line );
    ct_k_endpt ->setVisible( is_line );
-   if ( ctype == 3 )
+   if ( ctype == CTYPE_HL )
       lb_k_endpt->setText( tr( "Line f/f0 End Points:" ) );
 }
 
@@ -413,180 +418,49 @@ DbgLv(1) << "mciterChanged" << value;
 // Slot to load a model records list from disk
 void US_AdvAnalysisPc::load_mrecs()
 {
-DbgLv(1) << "load_mrecs";
-   // Query and get the file for loading
-   QString load_file  = store_dir + "/pcsa-mrs-old_mrecs.xml";
-   load_file        = QFileDialog::getOpenFileName( this,
-      tr( "Select XML File Name for Model Records Load" ), store_dir,
-      tr( "Model Records files (*pcsa-mrs-*.xml);;"
-          "Any XML files (*.xml);;Any files (*)" ) );
+   bool loadDB      = dset0->requestID.contains( "DB" );
+   QString mrdesc;
+   QString edGUID   = dset0->run_data.editGUID;
+   QString dsearch  = "";
+   QString runID    = dset0->run_data.runID;
+DbgLv(1) << "load_mrecs  loadDB" << loadDB << "reqID" << dset0->requestID;
 
-   if ( load_file.isEmpty() )
+   US_MrecsLoader mrldDiag( loadDB, dsearch, mrecs, mrdesc,
+                            edGUID, runID );
+
+   if ( mrldDiag.exec() == QDialog::Accepted )
    {
-#if 1
-      test_db_mrecs();
-#endif
-      return;
+DbgLv(1) << "mrldDiag.exec==accepted  mrdesc=" << mrdesc;
+   }
+   else
+   {
+DbgLv(1) << "mrldDiag.exec==rejected";
    }
 
-   load_file        = load_file.replace( "\\", "/" );
-   QString fdir     = load_file.section( "/",  0, -2 ) + "/";
-   QString fname    = load_file.section( "/", -1, -1 );
-
-   // Open the specified input file
-   QFile filei( load_file );
-
-   if ( !filei.open( QIODevice::ReadOnly  ) )
-   {
-      QMessageBox::critical( this, tr( "Open Error" ),
-         tr( "Cannot open file %1 ." ).arg( load_file ) );
-      return;
-   }
-
-   // Read in and parse the XML file to generate a new mrecs list
-   mrecs.clear();
-   int    ctype     = cb_curvtype->currentIndex();
-   int    nisols    = 0;
-   int    kisols    = 0;
-   int    nmrecs    = 0;
-   double smin      = 1e99;
-   double smax      = -1e99;
-   double kmin      = 1e99;
-   double kmax      = -1e99;
-   bool   is_mrsf   = false;
-   QString xmlname  = "";
-   QXmlStreamReader xmli( &filei );
-
-   while ( ! xmli.atEnd() )
-   {
-      xmli.readNext();
-
-      if ( xmli.isComment() )
-      {  // Verify DOCTYPE PcsaModelRecords
-         QString comm     = xmli.text().toString();
-//DbgLv(1) << "LM:xml: comm" << comm;
-
-         if ( comm.contains( "PcsaModelRecords" ) )
-            is_mrsf          = true;
-
-         else
-         {
-            QMessageBox::critical( this, tr( "File Type Error" ),
-               tr( "File \"%1\" is not a PcsaModelRecords XML file." )
-               .arg( fname ) );
-            filei.close();
-            return;
-         }
-      }
-
-      xmlname          = xmli.name().toString();
-
-      if ( xmli.isStartElement() )
-      {
-//DbgLv(1) << "LM:xml: start name" << xmlname;
-         QXmlStreamAttributes xattrs = xmli.attributes();
-
-         if ( xmlname == "modelrecords" )
-         {
-            ctype            = xattrs.value( "type" ).toString().toInt();
-            smin             = xattrs.value( "smin" ).toString().toDouble();
-            smax             = xattrs.value( "smax" ).toString().toDouble();
-            kmin             = xattrs.value( "kmin" ).toString().toDouble();
-            kmax             = xattrs.value( "kmax" ).toString().toDouble();
-            nisols           = xattrs.value( "curve_points" )
-                               .toString().toInt();
-            mrec.ctype       = ctype;
-            mrec.smin        = smin;
-            mrec.smax        = smax;
-            mrec.kmin        = kmin;
-            mrec.kmax        = kmax;
-//DbgLv(1) << "LM:xml:   nisols" << nisols << "kmin kmax" << kmin << kmax;
-         }
-
-         else if ( xmlname == "modelrecord" )
-         {
-            mrec.taskx       = xattrs.value( "taskx"   ).toString().toInt();
-            mrec.str_k       = xattrs.value( "start_k" ).toString().toDouble();
-            mrec.end_k       = xattrs.value( "end_k"   ).toString().toDouble();
-            mrec.par1        = xattrs.value( "par1"    ).toString().toDouble();
-            mrec.par2        = xattrs.value( "par2"    ).toString().toDouble();
-            mrec.rmsd        = xattrs.value( "rmsd"    ).toString().toDouble();
-            QString cvpt     = xattrs.value( "curve_points" ).toString();
-            kisols           = cvpt.isEmpty() ? nisols : cvpt.toInt();
-            mrec.isolutes.resize( kisols );
-            mrec.csolutes.clear();
-            ncsols           = 0;
-            kmin             = qMin( kmin, mrec.str_k );
-            kmax             = qMax( kmax, mrec.end_k );
-//DbgLv(1) << "LM:xml:    nmrecs" << nmrecs << "kisols" << kisols
-// << "kmin kmax" << kmin << kmax;
-         }
-
-         else if ( xmlname == "c_solute" )
-         {
-            US_Solute csolute;
-            csolute.s        = xattrs.value( "s" ).toString().toDouble();
-            csolute.k        = xattrs.value( "k" ).toString().toDouble();
-            csolute.c        = xattrs.value( "c" ).toString().toDouble();
-            smin             = qMin( smin, csolute.s );
-            smax             = qMax( smax, csolute.s );
-            kmin             = qMin( kmin, csolute.k );
-            kmax             = qMax( kmax, csolute.k );
-            csolute.s       *= 1.e-13;
-
-            mrec.csolutes << csolute;
-            ncsols++;
-         }
-      }
-
-      else if ( xmli.isEndElement()  &&  xmlname == "modelrecord" )
-      {
-         mrecs << mrec;
-         nmrecs++;
-//DbgLv(1) << "LM:xml: End rec name" << xmlname << "nm" << nmrecs
-// << "ncsols" << ncsols << "csize" << mrec.csolutes.size();
-         mrec.csolutes.clear();
-      }
-   }
-DbgLv(1) << "LM:xml: End ALL: nmrecs" << nmrecs << "last ncsols" << ncsols;
-
-   if ( xmli.hasError() )
-   {
-      QMessageBox::critical( this, tr( "XML Invalid" ),
-         tr( "File \"%1\" is not a valid XML file." ).arg( fname ) );
-   }
-
-   else if ( ! is_mrsf )
-   {
-      QMessageBox::critical( this, tr( "File Type Error" ),
-         tr( "File \"%1\" is not a PcsaModelRecords XML file." )
-         .arg( fname ) );
-   }
-
-   filei.close();
-
-   // Report on loaded file
-   stat_mrecs(
-      tr( "Model Records have been loaded from file\n"
-          "  \"%1\", of directory\n  \"%2\".\n"
-          "There are %3  %4-solute records." )
-      .arg( fname ).arg( fdir).arg( nmrecs ).arg( nisols ) );
+//*DEBUG*
+test_db_mrecs();
+//*DEBUG*
 
    // Re-generate curve points for every model record
+   double smin      = mrecs[ 0 ].smin;
+   double smax      = mrecs[ 0 ].smax;
+   double kmin      = mrecs[ 0 ].kmin;
+   double kmax      = mrecs[ 0 ].kmax;
+
    for ( int mr = 0; mr < nmrecs; mr++ )
    {
+      mrecs[ mr ].smin = smin;
+      mrecs[ mr ].smax = smax;
+      mrecs[ mr ].kmin = kmin;
+      mrecs[ mr ].kmax = kmax;
+
       curve_isolutes( mrecs[ mr ] );
    }
 
    mrec             = mrecs[ 0 ];
+   ctype            = mrec.ctype;
    ncsols           = mrec.csolutes.size();
-   const char* ctp[] = { "Straight Line",
-                         "Increasing Sigmoid",
-                         "Decreasing Sigmoid",
-                         "Horizontal Line [ C(s) ]",
-                         "?UNKNOWN?"
-                       };
-   QString sctype   = QString( ctp[ ctype ] );
+   QString sctype   = US_ModelRecord::ctype_text( ctype );
 
    // Build the model that goes along with the BFM
    bfm_model();
@@ -610,7 +484,6 @@ DbgLv(1) << "LM:xml: End ALL: nmrecs" << nmrecs << "last ncsols" << ncsols;
 void US_AdvAnalysisPc::store_mrecs()
 {
 DbgLv(1) << "store_mrecs";
-//under_construct( "Store Model Records" );
    // Test and return immediately if valid mrecs still required
    if ( mrecs_required( "Store Model Records" ) )
       return;
@@ -667,57 +540,16 @@ else DbgLv(1) << "store_mrecs - FILE NAME *NOT* EMPTY" << store_file;
    }
 
    // Write out the XML file
-   int    ctype     = mrecs[ 0 ].ctype;
-   int    nisols    = (int)ct_crpoints->value();
-   int    nmrecs    = mrecs.size();
+   ctype            = mrecs[ 0 ].v_ctype;
    double smin      = mrecs[ 0 ].smin;
    double smax      = mrecs[ 0 ].smax;
    double kmin      = mrecs[ 0 ].kmin;
    double kmax      = mrecs[ 0 ].kmax;
    QXmlStreamWriter xmlo( &fileo );
-   xmlo.setAutoFormatting( true );
-   xmlo.writeStartDocument( "1.0" );
-   xmlo.writeComment( "DOCTYPE PcsaModelRecords" );
-   xmlo.writeCharacters( "\n" );
-   xmlo.writeStartElement( "modelrecords" );
-   xmlo.writeAttribute( "version",      "1.0" );
-   xmlo.writeAttribute( "type",         QString::number( ctype  ) );
-   xmlo.writeAttribute( "smin",         QString::number( smin  ) ); 
-   xmlo.writeAttribute( "smax",         QString::number( smax  ) ); 
-   xmlo.writeAttribute( "kmin",         QString::number( kmin  ) ); 
-   xmlo.writeAttribute( "kmax",         QString::number( kmax  ) ); 
-   xmlo.writeAttribute( "curve_points", QString::number( nisols ) ); 
+   QString mrdesc;
 
-   for ( int mr = 0; mr < nmrecs; mr++ )
-   {
-      US_ModelRecord mrec = mrecs[ mr ];
-      int    kisols    = mrec.isolutes.size();
-      int    ncsols    = mrec.csolutes.size();
-      xmlo.writeStartElement( "modelrecord" );
-      xmlo.writeAttribute( "taskx",   QString::number( mrec.taskx ) );
-      xmlo.writeAttribute( "start_k", QString::number( mrec.str_k ) );
-      xmlo.writeAttribute( "end_k",   QString::number( mrec.end_k ) );
-      xmlo.writeAttribute( "par1",    QString::number( mrec.par1  ) );
-      xmlo.writeAttribute( "par2",    QString::number( mrec.par2  ) );
-      xmlo.writeAttribute( "rmsd",    QString::number( mrec.rmsd  ) );
-      if ( kisols != nisols )
-         xmlo.writeAttribute( "curve_points", QString::number( kisols ) );
-
-      for ( int cc = 0; cc < ncsols; cc++ )
-      {
-         xmlo.writeStartElement( "c_solute" );
-         double sval      = mrec.csolutes[ cc ].s * 1.e13;
-         xmlo.writeAttribute( "s", QString::number( sval ) );
-         xmlo.writeAttribute( "k", QString::number( mrec.csolutes[ cc ].k ) );
-         xmlo.writeAttribute( "c", QString::number( mrec.csolutes[ cc ].c ) );
-         xmlo.writeEndElement();
-      }
-
-      xmlo.writeEndElement();
-   }
-
-   xmlo.writeEndElement();
-   xmlo.writeEndDocument();
+   US_ModelRecord::write_modelrecs( xmlo, mrecs, mrdesc,
+                                    ctype, smin, smax, kmin, kmax );
    fileo.close();
 
    // Report on saved file
@@ -858,13 +690,7 @@ DbgLv(1) << "LM:xml: End ALL: nmrecs" << nmrecs << "last ncsols" << ncsols;
    // Re-generate curve points for the model
    curve_isolutes( mrec );
 
-   const char* ctp[] = { "Straight Line",
-                         "Increasing Sigmoid",
-                         "Decreasing Sigmoid",
-                         "Horizontal Line [ C(s) ]",
-                         "?UNKNOWN?"
-                       };
-   QString sctype   = QString( ctp[ mrec.ctype ] );
+   QString sctype   = US_ModelRecord::ctype_text( mrec.ctype );
 
    // Build the model that goes along with the BFM
    bfm_model();
@@ -939,7 +765,7 @@ DbgLv(1) << "store_bfm";
    }
 
    // Write out the XML file
-   int    ctype     = mrec.ctype;
+   ctype            = mrec.ctype;
 //   int    nisols    = (int)ct_crpoints->value();
    int    kisols    = mrec.isolutes.size();
    int    ncsols    = mrec.csolutes.size();
@@ -1058,8 +884,12 @@ DbgLv(1) << "build_bfm";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    stat_bfm( tr( "A new Best Final Model is being built ..." ) );
 
-   ctype          = cb_curvtype->currentIndex();
    QString sctype = cb_curvtype->currentText();
+   int ctypex     = cb_curvtype->currentIndex();
+   ctype          = ( ctypex == 0 ) ? CTYPE_SL : CTYPE_NONE;
+   ctype          = ( ctypex == 1 ) ? CTYPE_IS : ctype;
+   ctype          = ( ctypex == 2 ) ? CTYPE_DS : ctype;
+   ctype          = ( ctypex == 3 ) ? CTYPE_HL : ctype;
    double smin    = ct_s_lower ->value();
    double smax    = ct_s_upper ->value();
    double kmin    = ct_k_lower ->value();
@@ -1071,14 +901,14 @@ DbgLv(1) << "build_bfm";
    mrec.kmax      = kmax;
 
    // Set parameters for the specific curve to use
-   if ( ctype == 0 )
+   if ( ctype == CTYPE_SL )
    {
       mrec.str_k     = ct_k_strpt ->value();
       mrec.end_k     = ct_k_endpt ->value();
       mrec.par1      = mrec.str_k;
       mrec.par2      = ( mrec.str_k - mrec.end_k ) / ( smax - smin );
    }
-   else if ( ctype == 1  ||  ctype == 2 )
+   else if ( ctype == CTYPE_IS  ||  ctype == CTYPE_DS )
    {
       mrec.str_k     = kmin;
       mrec.end_k     = kmax;
@@ -1086,7 +916,7 @@ DbgLv(1) << "build_bfm";
       mrec.par2      = ct_sigmpar2->value();
    }
 
-   else if ( ctype == 3 )
+   else if ( ctype == CTYPE_HL )
    {
       mrec.end_k     = ct_k_endpt ->value();
       mrec.str_k     = mrec.end_k;
@@ -1114,7 +944,6 @@ DbgLv(1) << "build_bfm";
    mrec.csolutes  = sim_vals.solutes;
 
    ncsols         = mrec.csolutes.size();
-   ctype          = cb_curvtype->currentIndex();
 
    // Build the model that goes along with the BFM
    bfm_model();
@@ -1620,7 +1449,7 @@ void US_AdvAnalysisPc::curve_isolutes( US_ModelRecord& mrec )
    double xval    = 0.0;
 DbgLv(1) << "AA:CP: xinc" << xinc << "ctype" << ctype;
 
-   if ( ctype == 1 )       // Increasing Sigmoid
+   if ( ctype == CTYPE_IS )       // Increasing Sigmoid
    {
       double kdif    = kmax - kmin;
       double p1rt    = sqrt( 2.0 * par1 );
@@ -1636,7 +1465,7 @@ DbgLv(1) << "AA:CP: xinc" << xinc << "ctype" << ctype;
       }
    }
 
-   else if ( ctype == 0 )  // Straight Line
+   else if ( ctype == CTYPE_SL )  // Straight Line
    {
       double kval    = mrec.str_k;
       double kinc    = ( mrec.end_k - mrec.str_k ) / prng;
@@ -1652,7 +1481,7 @@ DbgLv(1) << "AA:CP: xinc" << xinc << "ctype" << ctype;
 DbgLv(1) << "AA:CP:  ni" << nisols << "last kv" << kval;
    }
 
-   else if ( ctype == 2 )  // Decreasing Sigmoid
+   else if ( ctype == CTYPE_DS )  // Decreasing Sigmoid
    {
       double kdif    = kmin - kmax;
       double p1rt    = sqrt( 2.0 * par1 );
@@ -1668,7 +1497,7 @@ DbgLv(1) << "AA:CP:  ni" << nisols << "last kv" << kval;
       }
    }
 
-   else if ( ctype == 3 )  // Horizontal Line
+   else if ( ctype == CTYPE_HL )  // Horizontal Line
    {
       double kval    = mrec.end_k;
       double sval    = smin;
@@ -1800,6 +1629,7 @@ void US_AdvAnalysisPc::set_fittings( QVector< US_ModelRecord >& s_mrecs )
    US_ModelRecord s_mrec = s_mrecs[ 0 ];
    nisols       = s_mrec.isolutes.size();
    nmrecs       = s_mrecs.size();
+   int    ctype = s_mrec.ctype;
    double smin  = s_mrec.smin;
    double smax  = s_mrec.smax;
    double kmin  = s_mrec.kmin;
@@ -1828,7 +1658,12 @@ DbgLv(1) << "AA:SF: ctype s,k min,max" << ctype << smin << smax
       }
    }
 
-   cb_curvtype->setCurrentIndex( ctype );
+   int ctypex   = 0;
+   ctypex       = ( ctype == CTYPE_SL ) ? 0 : ctypex;
+   ctypex       = ( ctype == CTYPE_IS ) ? 1 : ctypex;
+   ctypex       = ( ctype == CTYPE_DS ) ? 2 : ctypex;
+   ctypex       = ( ctype == CTYPE_HL ) ? 3 : ctypex;
+   cb_curvtype->setCurrentIndex( ctypex );
    ct_s_lower ->setValue( smin );
    ct_s_upper ->setValue( smax );
    ct_k_lower ->setValue( kmin );
@@ -1891,10 +1726,20 @@ DbgLv(1) << "AA:BI:  (5)inCompat" << inCompat;
                              "Increasing Sigmoid",
                              "Decreasing Sigmoid",
                              "Horizontal Line" };
-      QString fpars    = QString( ctps[ ftype ] )
+      int ftx          = ftype;
+      ftx              = ( ftype == CTYPE_SL ) ? 0 : ftx;
+      ftx              = ( ftype == CTYPE_IS ) ? 1 : ftx;
+      ftx              = ( ftype == CTYPE_DS ) ? 2 : ftx;
+      ftx              = ( ftype == CTYPE_HL ) ? 3 : ftx;
+      int rtx          = rtype;
+      rtx              = ( rtype == CTYPE_SL ) ? 0 : rtx;
+      rtx              = ( rtype == CTYPE_IS ) ? 1 : rtx;
+      rtx              = ( rtype == CTYPE_DS ) ? 2 : rtx;
+      rtx              = ( rtype == CTYPE_HL ) ? 3 : rtx;
+      QString fpars    = QString( ctps[ ftx ] )
          + tr( " ; s %1 to %2 ; f/f0 %3 to %4" )
          .arg( fsmin ).arg( fsmax ).arg( fkmin ).arg( fkmax );
-      QString rpars    = QString( ctps[ rtype ] )
+      QString rpars    = QString( ctps[ rtx ] )
          + tr( " ; s %1 to %2 ; f/f0 %3 to %4" )
          .arg( rsmin ).arg( rsmax ).arg( rkmin ).arg( rkmax );
 

@@ -62,7 +62,7 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& slo,
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
-   nmodel       = ( ctype != 3 ) ? ( nkpts * nkpts ) : nkpts;
+   nmodel       = ( ctype != CTYPE_HL ) ? ( nkpts * nkpts ) : nkpts;
    neline       = qMax( 2, nmodel / 10 );
    nsline       = qMax( 1, neline / 4  );
    nvline       = nmodel;
@@ -142,10 +142,13 @@ DbgLv(1) << "RP:  csizw cminw tsizw" << csizw << cminw << tsizw;
    pltctrlsLayout->addWidget( pb_colmap,   row,   0, 1, 2 );
    pltctrlsLayout->addWidget( le_colmap,   row++, 2, 1, 4 );
 //   row         += 7;
-   if      ( ctype == 0 ) le_mtype->setText( tr( "Straight Line" ) );
-   else if ( ctype == 1 ) le_mtype->setText( tr( "Increasing Sigmoid" ) );
-   else if ( ctype == 2 ) le_mtype->setText( tr( "Decreasing Sigmoid" ) );
-   else if ( ctype == 3 ) le_mtype->setText( tr( "Horizontal Line [C(s)]" ) );
+   QString s_type   = tr( "Unknown" );
+   if      ( ctype == CTYPE_SL )  s_type = tr( "Straight Line" );
+   else if ( ctype == CTYPE_IS )  s_type = tr( "Increasing Sigmoid" );
+   else if ( ctype == CTYPE_DS )  s_type = tr( "Decreasing Sigmoid" );
+   else if ( ctype == CTYPE_HL )  s_type = tr( "Horizontal Line [C(s)]" );
+   else if ( ctype == CTYPE_ALL ) s_type = tr( "All (SL + IS + DS)" );
+   le_mtype->setText( s_type );
 
    // Hide the color items for now
    showColorItems( false );
@@ -311,7 +314,7 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
 
          int klpts   = mrecs[ ii ].isolutes.size();
 
-         if ( ctype == 0 )
+         if ( ctype == CTYPE_SL  ||  ctype == CTYPE_HL )
          { // For straight line, just draw from start to end
             klpts       = 2;
             xx[ 0 ]     = smin;

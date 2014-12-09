@@ -290,7 +290,7 @@ DbgLv(1) << "  init_pcsa_sols: call compute_slines  nkpts" << nkpts;
 DbgLv(1) << "  init_pcsa_sols:  compute_slines: mrecs sz" << mrecs.size();
    }
 
-   else if ( s_ctyp == "IS"  ||  s_ctyp == "DS" )
+   else if ( ctype == CTYPE_IS  ||  ctype == CTYPE_DS )
    {
       mrecs.reserve( nkpto );
 DbgLv(1) << "  init_pcsa_sols: call compute_sigmoids  nkpts" << nkpts;
@@ -299,7 +299,7 @@ DbgLv(1) << "  init_pcsa_sols: call compute_sigmoids  nkpts" << nkpts;
 DbgLv(1) << "  init_pcsa_sols:  compute_sigmoids: mrecs sz" << mrecs.size();
    }
 
-   else if ( s_ctyp == "HL" )
+   else if ( ctype == CTYPE_HL )
    {
       nkpto             = nkpts;
       mrecs.reserve( nkpto );
@@ -307,12 +307,12 @@ DbgLv(1) << "  init_pcsa_sols:  compute_sigmoids: mrecs sz" << mrecs.size();
             nkpts, nlpts, parlims, mrecs );
    }
 
-   else if ( s_ctyp == "All" )
+   else if ( ctype == CTYPE_ALL )
    {
       nkpto            *= 3;
       QVector< US_ModelRecord > mrecs2;
-      int ctype1        = cTypeMap[ "IS" ];
-      int ctype2        = cTypeMap[ "DS" ];
+      int ctype1        = CTYPE_IS;
+      int ctype2        = CTYPE_DS;
       double *parlims1  = parlims + 5;
       double *parlims2  = parlims + 10;
       parlims1[ 0 ]     = parlims[ 0 ];
@@ -488,7 +488,7 @@ DbgLv(1) << "pcsa:wrmr:  editGUID=" << mrecs[0].editGUID
 //   int    tikreg         = parameters[ "tikreg_option" ].toInt();
 //   double tr_alpha       = parameters[ "tikreg_alpha"  ].toDouble();
 //   tr_alpha              = ( tikreg == 1 ) ? tr_alpha : 0.0;
-   if ( ctype != 7 )
+   if ( ctype != CTYPE_ALL )
       mrecs[ 0 ].ctype      = ctype;
    mrecs[ 0 ].smin       = s_min;
    mrecs[ 0 ].smax       = s_max;
@@ -597,9 +597,9 @@ DbgLv(1) << "iter_p: ncurve" << ncurve << "nelite" << nelite;
 
    // Scan previous mrecs to determine range across elite (top 10%) records
 
-   if ( ctype != 7 )
+   if ( ctype != CTYPE_ALL )
    {  // All non-combination records
-      ncurve            = ( ctype == 8 ) ? nkpts : ncurve;
+      ncurve            = ( ctype == CTYPE_HL ) ? nkpts : ncurve;
       nelite            = ( ncurve * 10 + 50 ) / 100;
 
       for ( int ii = 0; ii < nelite; ii++ )
@@ -618,7 +618,7 @@ DbgLv(1) << "iter_p: ncurve" << ncurve << "nelite" << nelite;
          maxp2             = qMax( maxp2, par2  );
       }
 
-      if ( ctype == 1  ||  ctype == 8 )
+      if ( ctype == CTYPE_SL  ||  ctype == CTYPE_HL )
       {  // Line types
          parlims[ 0 ]      = qMax( ff0_min, qMin( minsk, ( skbest - kpinc ) ) );
          parlims[ 1 ]      = qMin( ff0_max, qMax( maxsk, ( skbest + kpinc ) ) );
@@ -631,7 +631,7 @@ DbgLv(1) << "iter_p: ncurve" << ncurve << "nelite" << nelite;
          parlims[ 0 ]      = qMax( 0.001, qMin( minp1, ( p1best - p1inc ) ) );
          parlims[ 1 ]      = qMin( 0.500, qMax( maxp1, ( p1best + p1inc ) ) );
          parlims[ 2 ]      = qMax( 0.000, qMin( minp2, ( p2best - p2inc ) ) );
-         parlims[ 3 ]      = qMin( 1.001, qMax( maxp2, ( p2best + p2inc ) ) );
+         parlims[ 3 ]      = qMin( 1.000, qMax( maxp2, ( p2best + p2inc ) ) );
       }
 DbgLv(1) << "iter_p: parlims"
  << parlims[0] << parlims[1] << parlims[2] << parlims[3] << parlims[4];
@@ -677,7 +677,7 @@ DbgLv(1) << "iter_p: parlims"
          double par1       = mrecs[ ii ].par1;
          double par2       = mrecs[ ii ].par2;
 
-         if ( ctype == 1 )
+         if ( ctype == CTYPE_SL )
          {
             if ( kstype == 0 )
             {
@@ -700,7 +700,7 @@ DbgLv(1) << "iter_p: parlims"
             if ( kelite >= nelite )  break;
          }
 
-         else if ( ctype == 2 )
+         else if ( ctype == CTYPE_IS )
          {
             if ( kitype == 0 )
             {
@@ -723,7 +723,7 @@ DbgLv(1) << "iter_p: parlims"
             if ( kelite >= nelite )  break;
          }
 
-         else if ( ctype == 4 )
+         else if ( ctype == CTYPE_DS )
          {
             if ( kdtype == 0 )
             {
@@ -774,28 +774,28 @@ DbgLv(1) << "iter_p: parlims3"
    mrecs       .clear();
    mrecs       .reserve( ncurve );
 
-   if ( ctype == 1 )
+   if ( ctype == CTYPE_SL )
    {  // Straight Line
       US_ModelRecord::compute_slines( s_min, s_max, ff0_min, ff0_max,
             nkpts, nlpts, parlims, mrecs );
    }
 
-   else if ( ctype == 2  ||  ctype == 4 )
+   else if ( ctype == CTYPE_IS  ||  ctype == CTYPE_DS )
    {  // Sigmoid
       US_ModelRecord::compute_sigmoids( ctype, s_min, s_max, ff0_min, ff0_max,
             nkpts, nlpts, parlims, mrecs );
    }
 
-   else if ( ctype == 8 )
+   else if ( ctype == CTYPE_HL )
    {  // Horizontal Line
       US_ModelRecord::compute_hlines( s_min, s_max, ff0_min, ff0_max,
             nkpts, nlpts, parlims, mrecs );
    }
 
-   else if ( ctype == 7 )
+   else if ( ctype == CTYPE_ALL )
    {  // Mix of SL, IS, DS
-      int ctype1        = cTypeMap[ "IS" ];
-      int ctype2        = cTypeMap[ "DS" ];
+      int ctype1        = CTYPE_IS:
+      int ctype2        = CTYPE_DS:
       double *parlims1  = parlims + 5;
       double *parlims2  = parlims + 10;
       US_ModelRecord::compute_slines( s_min, s_max, ff0_min, ff0_max,

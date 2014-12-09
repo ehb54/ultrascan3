@@ -126,6 +126,7 @@ private:
 
       QList< QVector< US_Solute > > orig_sols;  // input solutes
 
+      QVector< double >          rmsds;      // gfit iteration RMSDs
       US_DataIO::EditedData*     edata;      // experimental data (mc_iter)
       US_DataIO::RawData         sdata;      // simulation data
       US_DataIO::RawData         rdata;      // residuals data

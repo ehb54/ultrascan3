@@ -29,7 +29,7 @@ US_pcsaProcess::US_pcsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    nscans           = edata->scanCount();
    npoints          = edata->pointCount();
    cresolu          = 100;
-   curvtype         = 0;
+   curvtype         = CTYPE_NONE;
    nmtasks          = 0;
    kctask           = 0;
    kstask           = 0;
@@ -108,6 +108,7 @@ DbgLv(1) << "PC: alf alpha lm fx scn"
    wthreads .clear();
    job_queue.clear();
 
+   rmsds    .clear();
    orig_sols.clear();
    mrecs    .clear();
 
@@ -123,13 +124,13 @@ DbgLv(1) << "STR_STR: nowmem" << memmb << "kthr ksol" << nthreads << cresolu;
    nscans      = edata->scanCount();
    npoints     = edata->pointCount();
 
-   if ( curvtype == 0  ||  curvtype == 3 )
+   if ( curvtype == CTYPE_SL  ||  curvtype == CTYPE_HL )
    { // Determine models for straight-line curves
       nmtasks     = slmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,
                               cresolu );
    }
 
-   else if ( curvtype == 1  ||  curvtype == 2 )
+   else if ( curvtype == CTYPE_IS  ||  curvtype == CTYPE_DS )
    { // Determine models for sigmoid curves
       nmtasks     = sigmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,
                                cresolu );
@@ -407,7 +408,7 @@ DbgLv(1) << "FIN_FIN: maxmem" << memmb << "kthr ksol" << nthreads << ksol;
            QString::number( memmb ) + " MB\n\n" +
            tr( "The best model (RMSD=%1, %2 solutes, index %3) is:\n" )
            .arg( mrec.rmsd ).arg( nsolutes ).arg( mrec.taskx );
-   if ( curvtype == 0 )
+   if ( curvtype == CTYPE_SL )
    {
       double slopel = (double)( mrec.end_k - mrec.str_k ) 
                     / (double)( suplim     - slolim     );
@@ -415,19 +416,21 @@ DbgLv(1) << "FIN_FIN: maxmem" << memmb << "kthr ksol" << nthreads << ksol;
               .arg( slolim ).arg( mrec.str_k ).arg( suplim ).arg( mrec.end_k )
               .arg( slopel );
    }
-   else if ( curvtype == 1  ||  curvtype == 2 )
+   else if ( curvtype == CTYPE_IS  ||  curvtype == CTYPE_DS )
    {
       pmsg += tr( "  the curve with par1=%1 and par2=%2." )
               .arg( mrec.par1 ).arg( mrec.par2 );
 DbgLv(1) << "FIN_FIN: par1,par2" << mrec.par1 << mrec.par2;
    }
 
-   else if ( curvtype == 3 )
+   else if ( curvtype == CTYPE_HL )
    {
       pmsg += tr( "  the line from s,f/f0  %1, %2  to %3, %4." )
               .arg( slolim ).arg( mrec.str_k ).arg( suplim ).arg( mrec.end_k );
    }
-   emit message_update( pmsg, false );          // signal final message
+
+   // Signal final message
+   emit message_update( pmessage_head() + pmsg, false );
 
 DbgLv(1) << "FIN_FIN: Run Time: hr min sec" << ktimeh << ktimem << ktimes;
 DbgLv(1) << "FIN_FIN: maxrss memmb nthr" << maxrss << memmb << nthreads
@@ -439,6 +442,7 @@ DbgLv(1) << "FIN_FIN:    alpha_fx" << alpha_fx;
    rd_frac       = ( fi_iter > 1 ) ?
                    qAbs( ( pfi_rmsd - cfi_rmsd ) / pfi_rmsd ) :
                    rd_thresh * 2;
+   rmsds << cfi_rmsd;
 DbgLv(1) << "FIN_FIN:    rd_frac rd_thresh" << rd_frac << rd_thresh;
 
    if ( fi_iter < fi_itermax  &&  rd_frac > rd_thresh )
@@ -569,7 +573,7 @@ DbgLv(1) << "PC:putMRs: nmrecs" << nmrecs;
 
    nmtasks     = ( mrecs[ 0 ].taskx == mrecs[ 1 ].taskx )
                ? ( nmrecs - 1 ) : nmrecs;
-   nkpts       = ( curvtype != 3 )
+   nkpts       = ( curvtype != CTYPE_HL )
                ? ( qRound( sqrt( (double)nmtasks ) ) )
                : nmtasks;
    alpha       = 0.0;
@@ -781,16 +785,28 @@ void US_pcsaProcess::free_worker( int tx )
 
 QString US_pcsaProcess::pmessage_head()
 {
-   const char* ctp[] = { "Straight Line",
+   const char* ctp[] = { "None",
+                         "Straight Line",
                          "Increasing Sigmoid",
+                         "Unknown-3",
                          "Decreasing Sigmoid",
+                         "Unknown-5",
+                         "Unknown-6",
+                         "All (SL+IS+DS)",
                          "Horizontal Line [ C(s) ]",
                          "?UNKNOWN?"
                        };
    QString ctype = QString( ctp[ curvtype ] );
-   return tr( "Analysis of %1 %2 %3-solute models.\n"
-              "Grid Fit Iteration %4.\n" )
-          .arg( nmtasks ).arg( ctype ).arg( cresolu ).arg( fi_iter );
+   QString hmsg  = tr( "Analysis of %1 %2 %3-solute models.\n" )
+                   .arg( nmtasks ).arg( ctype ).arg( cresolu );
+
+   for ( int ii = 1; ii < fi_iter; ii++ )
+      hmsg         += tr( "Iteration %1 had a best RMSD of %2 ;\n" )
+                      .arg( ii ).arg( rmsds[ ii - 1 ] );
+
+   hmsg         += tr( "Grid Fit Iteration %1.\n" ).arg( fi_iter );
+
+   return hmsg;
 }
 
 // Get next job from queue, insuring we get the lowest depth
@@ -824,10 +840,10 @@ DbgLv(1) << "SLMO: slo sup klo kup nkp res" << slo << sup << klo << kup
    orig_sols.clear();
 
    // Compute straight-line model records
-   if ( ctp == 0 )
+   if ( ctp == CTYPE_SL )
       nmodels = US_ModelRecord::compute_slines( slo, sup, klo, kup, nkp,
                                                 res, parlims, mrecs );
-   else if ( ctp == 3 )
+   else if ( ctp == CTYPE_HL )
       nmodels = US_ModelRecord::compute_hlines( slo, sup, klo, kup, nkp,
                                                 res, parlims, mrecs );
 
@@ -945,7 +961,7 @@ DbgLv(1) << "PC:MS: nmtasks mrssiz nbmods" << nmtasks << mrecs.size() << nbmods;
    double str_k  = mrecs[ 0 ].str_k;
    double end_k  = mrecs[ 0 ].end_k;
 
-   if ( curvtype == 0  ||  curvtype == 3 )
+   if ( curvtype == CTYPE_SL  ||  curvtype == CTYPE_HL )
    {
       double slope  = ( end_k - str_k ) / ( suplim - slolim );
       double kincr  = ( kuplim - klolim ) / (double)( nkpts - 1 );
@@ -1460,16 +1476,18 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
    static double tarray[ 3 ] = { 0.0, 1.0, 2.0 };
    static double yarray[ 3 ] = { 0.0, 0.0, 0.0 };
    static double parray[ 20 ];
-   bool   LnType = ( curvtype == 0  ||  curvtype == 3 );
+   bool   LnType = ( curvtype == CTYPE_SL  ||  curvtype == CTYPE_HL );
    double minkv  = kuplim;
    double maxkv  = klolim;
-   double maxsl  = ( kuplim - klolim ) / ( suplim - slolim );
-   double minsl  = -maxsl;
+#if 0
+   double minsl  = ( kuplim - klolim ) / ( suplim - slolim );
+   double maxsl  = -minsl;
+#endif
    double minp1  = LnType ? minkv : 0.5;
    double maxp1  = LnType ? maxkv : 0.001;
-   double minp2  = LnType ? maxsl : 1.0;
-   double maxp2  = LnType ? minsl : 0.0;
-   int    npar   = ( curvtype != 3 ) ? n_par : 1;
+   double minp2  = LnType ? minkv : 1.0;
+   double maxp2  = LnType ? maxkv : 0.0;
+   int    npar   = ( curvtype != CTYPE_HL ) ? n_par : 1;
    control.maxcall      = lmmxcall / ( npar + 1 );
    lm_done       = false;
    // Start timer for L-M progress bar, based on estimated duration
@@ -1486,7 +1504,13 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
    emit message_update( tr( "\nNow refining the best model with a "
                             "Levenberg-Marquardt fit ...\n" ), true );
 
+#if 0
    elite_limits( mrecs, minkv, maxkv, minp1, maxp1, minp2, maxp2 );
+#endif
+#if 1
+   US_ModelRecord::elite_limits( mrecs, curvtype, minkv, maxkv,
+                                 minp1, maxp1, minp2, maxp2 );
+#endif
 #if 0
 const double par1lo=0.001;
 const double par1up=0.5;
@@ -1530,7 +1554,7 @@ DbgLv(1) << "LMf:  ppar2" << ppar[4] << dsets[0] << curvtype << ppar[5];
 DbgLv(1) << "LMf:  alpha" << alpha_lm << par[14];
    timer.start();              // start a timer to measure run time
 
-   if ( curvtype == 0 )
+   if ( curvtype == CTYPE_SL )
    { // Fit with Levenberg-Marquardt for straight-line curves
       control.ftol     = 1.e-5;
       control.xtol     = 1.e-5;
@@ -1556,7 +1580,7 @@ DbgLv(0) << "   lmcfit xs,ys xe,ye rmsd" << slolim << ys << suplim << ye
  << rmsd << "ncsol" << nsol;
    }
 
-   else if ( curvtype == 1 )
+   else if ( curvtype == CTYPE_IS )
    { // Fit with Levenberg-Marquardt for increasing-sigmoid curves
       //control.ftol     = 30.0 * DBL_EPSILON;
       control.ftol     = 1.0e-5;
@@ -1581,7 +1605,7 @@ int    nsol = dsets[0]->model.components.size();
 DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol; 
    }
 
-   else if ( curvtype == 2 )
+   else if ( curvtype == CTYPE_DS )
    { // Fit with Levenberg-Marquardt for decreasing-sigmoid curves
       control.ftol     = 1.e-16;
       control.xtol     = 1.e-16;
@@ -1604,7 +1628,7 @@ int    nsol = dsets[0]->model.components.size();
 DbgLv(0) << "   lmcfit rmsd" << rmsd << "#solutes" << nsol; 
    }
 
-   else if ( curvtype == 3 )
+   else if ( curvtype == CTYPE_HL )
    { // Fit with Levenberg-Marquardt for horizontal-line curves
       control.ftol     = 1.e-5;
       control.xtol     = 1.e-5;
@@ -1667,13 +1691,13 @@ DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
    US_SimulationParameters* spar = &dset->simparams;
    int  jsp       = 0;
 
-   if ( curvtype == 0 )
+   if ( curvtype == CTYPE_SL )
    {
       mrec.str_k     = par[ 0 ];
       mrec.end_k     = par[ 0 ] + par[ 1 ] * ( suplim -slolim );
    }
 
-   else if ( curvtype == 3 )
+   else if ( curvtype == CTYPE_HL )
    {
       mrec.str_k     = par[ 0 ];
       mrec.end_k     = par[ 0 ];
@@ -1849,15 +1873,20 @@ void US_pcsaProcess::elite_limits( QVector< US_ModelRecord >& mrecs,
    double m0p1h   = m0p1;
    double m0p2l   = m0p2;
    double m0p2h   = m0p2;
-   if ( curvtype == 0  ||  curvtype == 3 )
+   bool ln_type   = false;
+
+   if ( curvtype == CTYPE_SL  ||  curvtype == CTYPE_HL )
    {  // Possibly adjust initial par1,par2 limits for lines
+      ln_type        = true;
+      m0p1           = mrecs[ 0 ].str_k;
+      m0p2           = mrecs[ 0 ].end_k;
       m0p1l          = ( m0p1 > klolim ) ? m0p1 : ( m0p1 * 1.0001 );
       m0p1h          = ( m0p1 < kuplim ) ? m0p1 : ( m0p1 * 0.9991 );
-      m0p2l          = ( m0p2 > 0.0    ) ? m0p2 : 0.0001;
-      m0p2h          = m0p2 * 1.0001;
+      m0p2l          = ( m0p2 > klolim ) ? m0p2 : ( m0p2 * 1.0001 );
+      m0p2h          = ( m0p2 < kuplim ) ? m0p2 : ( m0p2 * 0.9991 );
    }
 
-   if ( curvtype == 1  ||  curvtype == 2 )
+   if ( curvtype == CTYPE_IS  ||  curvtype == CTYPE_DS )
    {  // Possibly adjust initial par1,par2 limits for sigmoids
       double dif1    = m0p1 - 0.001;
       double dif2    = m0p1 - 0.500;
@@ -1889,8 +1918,8 @@ DbgLv(1) << " ElLim: in m0p1l,m0p1h,m0p2l,m0p2h" << m0p1l << m0p1h
    {
       double str_k   = mrecs[ ii ].str_k;
       double end_k   = mrecs[ ii ].end_k;
-      double par1    = mrecs[ ii ].par1;
-      double par2    = mrecs[ ii ].par2;
+      double par1    = ln_type ? str_k : mrecs[ ii ].par1;
+      double par2    = ln_type ? end_k : mrecs[ ii ].par2;
 if(ii<3||(ii+4)>nelite)
 DbgLv(1) << " ElLim:   ii" << ii << "par1 par2" << par1 << par2
  << "str_k end_k" << str_k << end_k << "rmsd" << mrecs[ii].rmsd;
@@ -1902,12 +1931,6 @@ DbgLv(1) << " ElLim:   ii" << ii << "par1 par2" << par1 << par2
       maxp1          = qMax( maxp1, par1  );
       minp2          = qMin( minp2, par2  );
       maxp2          = qMax( maxp2, par2  );
-
-      if ( curvtype == 3 )
-      {  // Effectively skip par2 comparisons for Horizontal Lines
-         minp2          = m0p2l - 1.0;
-         maxp2          = m0p2h + 1.0;
-      }
 
       // We want to break out of the min,max scan loop if the sorted index
       // exceeds the elite count. But we continue in the loop if we have not
@@ -1922,11 +1945,6 @@ DbgLv(1) << " ElLim:    minp1 maxp1 m0p1" << minp1 << maxp1 << m0p1
          break;
    }
 
-   if ( curvtype == 3 )
-   {
-      minp2          = 0.0;
-      maxp2          = 0.0;
-   }
 DbgLv(0) << " ElLim: out minkv maxkv" << minkv << maxkv;
 DbgLv(0) << " ElLim: out min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
 }
@@ -1947,16 +1965,8 @@ double US_pcsaProcess::evaluate_model( QList< US_SolveSim::DataSet* >& dsets,
    }
 
    // Do astfem fit, mostly to get an RMSD
-#if 1
    US_SolveSim* solvesim = new US_SolveSim( dsets, 0, false );
-
    solvesim->calc_residuals( 0, 1, sim_vals );
-#endif
-#if 0
-   US_SolveSim solvesim( dsets, 0, false );
-
-   solvesim.calc_residuals( 0, 1, sim_vals );
-#endif
 
    // Construct a rudimentary model from computed solutes and save it
    dset->model          = US_Model();
@@ -2108,12 +2118,15 @@ DbgLv(0) << "CFin: recomputed variance rmsd" << mrec.variance << rmsd;
 // Restart the curve grid iteration sequence
 void US_pcsaProcess::restart_fit()
 {
-   bool   LnType = ( curvtype == 0  ||  curvtype == 3 );
-   bool   SgType = ( curvtype == 1  ||  curvtype == 2 );
+#if 0
+   bool   LnType = ( curvtype == CTYPE_SL  ||  curvtype == CTYPE_HL );
+   bool   SgType = ( curvtype == CTYPE_IS  ||  curvtype == CTYPE_DS );
+#endif
    errMsg        = tr( "NO ERROR: start" );
    maxrss        = 0;
    varimin       = 9.e+9;
    minvarx       = 99999;
+   double vbar20 = dsets[ 0 ]->vbar20;
 DbgLv(1) << "RF: nmr" << mrecs.size() << "cfi_rmsd" << cfi_rmsd;
 
    wkstates .resize(  nthreads );
@@ -2128,99 +2141,23 @@ DbgLv(1) << "RF: sll sul" << slolim << suplim
 
    fi_iter++;
 
-   double minkv  = kuplim;
-   double maxkv  = klolim;
-   double maxsl  = ( kuplim - klolim ) / ( suplim - slolim );
-   double minsl  = -maxsl;
-   double minp1  = LnType ? minkv : 0.5;
-   double maxp1  = LnType ? maxkv : 0.001;
-   double minp2  = LnType ? maxsl : 1.0;
-   double maxp2  = LnType ? minsl : 0.0;
-   double p1best = mrecs[ 0 ].par1;
-   double p2best = mrecs[ 0 ].par2;
-DbgLv(1) << "RF: 2)nmr" << mrecs.size() << "iter rd_frac" << fi_iter << rd_frac;
+   US_ModelRecord::recompute_mrecs( curvtype, slolim, suplim, klolim, kuplim,
+                                    nkpts, cresolu, parlims, mrecs );
 
-   elite_limits( mrecs, minkv, maxkv, minp1, maxp1, minp2, maxp2 );
+   // Update the solutes with vbar and add to task solutes list
+   for ( int ii = 0; ii < mrecs.size(); ii++ )
+   {
+      QVector< US_Solute >* isols = &mrecs[ ii ].isolutes;
 
-   parlims[ 0 ]  = minp1;
-   parlims[ 1 ]  = maxp1;
-   parlims[ 2 ]  = minp2;
-   parlims[ 3 ]  = maxp2;
+      for ( int jj = 0; jj < isols->size(); jj++ )
+      {
+         (*isols)[ jj ].v    = vbar20;
+      }
 
-   // experiment data dimensions
-   nscans      = edata->scanCount();
-   npoints     = edata->pointCount();
-   mrecs    .clear();
-
-   if ( LnType )
-   { // Determine models for straight-line or horizontal-line curves
-      double xrng   = suplim - slolim;
-      double yslo   = qMax( minp1, minkv );
-      double yshi   = qMin( maxp1, maxkv );
-      double yelo   = yslo + minp2 * xrng;
-             yelo   = qMax( yelo,  minkv );
-             yelo   = qMin( yelo,  maxkv );
-      double yehi   = yshi + maxp2 * xrng;
-             yehi   = qMax( yehi,  minkv );
-             yehi   = qMin( yehi,  maxkv );
-      parlims[ 0 ]  = yslo;
-      parlims[ 1 ]  = yshi;
-      parlims[ 2 ]  = yelo;
-      parlims[ 3 ]  = yehi;
-DbgLv(1) << "RF: slin: mmk mmp1 mmp2" << minkv << maxkv << minp1 << maxp1
- << minp2 << maxp2;
-DbgLv(1) << "RF: slin:  plims0-3: yslo,yshi:" << yslo << yshi
- << "yelo,yehi" << yelo << yehi;
-
-      nmtasks     = slmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,
-                              cresolu );
+      orig_sols << *isols;
    }
-
-   else if ( SgType )
-   { // Determine models for sigmoid curves
-DbgLv(1) << "RF: sigm: nkpts" << nkpts;
-      minp1         = parlims[ 0 ];
-      maxp1         = parlims[ 1 ];
-      minp2         = parlims[ 2 ];
-      maxp2         = parlims[ 3 ];
-DbgLv(1) << "RF: sigm:  mnmx p1 p2" << minp1 << maxp1 << minp2 << maxp2;
-      // Recompute the new min,max so that the old best is a point
-      //  on the new grid to be tested
-      double krng   = (double)( nkpts - 1 );
-      double p1rng  = maxp1 - minp1;
-      double p2rng  = maxp2 - minp2;
-      double p1inc  = p1rng / krng;
-      double p2inc  = p2rng / krng;
-      double p1dif  = qMax( p1inc, ( p1best - minp1 ) );
-      double p2dif  = qMax( p2inc, ( p2best - minp2 ) );
-      p1dif         = qFloor( p1dif / p1inc ) * p1inc;
-      p2dif         = qFloor( p2dif / p2inc ) * p2inc;
-DbgLv(1) << "RF: sigm:  p12 rng" << p1rng << p2rng << "p12 inc"
- << p1inc << p2inc << "p12 dif" << p1dif << p2dif;
-      minp1         = p1best - p1dif;
-      minp1         = ( minp1 < 0.001 ) ? ( minp1 + p1inc ) : minp1;
-      maxp1         = minp1 + p1inc * krng;
-      minp2         = p2best - p2dif;
-      minp2         = ( minp2 < 0.000 ) ? ( minp2 + p2inc ) : minp2;
-      maxp2         = minp2 + p2inc * krng;
-      minp1         = qMax( 0.001, minp1 );
-      maxp1         = qMin( 0.500, maxp1 );
-      minp2         = qMax( 0.000, minp2 );
-      maxp2         = qMin( 1.000, maxp2 );
-DbgLv(1) << "RF: sigm:  p1,p2 best" << p1best << p2best;
-DbgLv(1) << "RF: sigm:    mnmx p1 p2" << minp1 << maxp1 << minp2 << maxp2;
-      parlims[ 0 ]  = minp1;
-      parlims[ 1 ]  = maxp1;
-      parlims[ 2 ]  = minp2;
-      parlims[ 3 ]  = maxp2;
-
-      nmtasks     = sigmodels( curvtype, slolim, suplim, klolim, kuplim, nkpts,
-                               cresolu );
-DbgLv(1) << "RF: sigm: nmtasks" << nmtasks;
-   }
-
-   else
-      nmtasks     = 0;
+DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size()
+ << "nmodels" << mrecs.size();
 
    kcsteps     = 0;
    nctotal     = nmtasks;
