@@ -15,9 +15,8 @@
 
 #define VEC_MRECS QVector< US_ModelRecord >
 
-/*! \brief A dialog class to select a model and load its distribution data
-*/
-class US_GUI_EXTERN US_MrecsLoader : public US_WidgetsDialog
+//! \brief A dialog class to select a model and load its distribution data
+class US_MrecsLoader : public US_WidgetsDialog
 {
    Q_OBJECT
 
