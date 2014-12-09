@@ -258,10 +258,10 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   help       ->setFont( mfont );
 #endif
 
-  splash();
-  statusBar()->showMessage( tr( "Ready" ) );
+   splash();
+   statusBar()->showMessage( tr( "Ready" ) );
 
-  notice_check();              // Check for any notices pending
+   notice_check();              // Check for any notices pending
 }
 
 US_Win::~US_Win()
@@ -371,7 +371,7 @@ qDebug() << "PROCESS   status" << status << "e-stderr len" << estderr.length();
 void US_Win::launch( int index )
 {
    static const int trig_secs=3600;
-//   static const int trig_secs=30;
+//   static const int trig_secs=3;
    index        -= P_CONFIG;
    QString pname = p[ index ].name;
 
@@ -695,6 +695,7 @@ bool US_Win::notice_check()
 {
    bool do_abort     = false;                         // Default: no abort
    int  level        = 0;                             // Max level: information
+   QDateTime pn_time = ln_time;                       // Previous check time
    ln_time           = QDateTime::currentDateTime();  // Reset last notice time
 
    if ( US_Settings::default_data_location() == 2 )
@@ -755,6 +756,7 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
       QString type     = db.value( 0 ).toString();
       QString mrev     = db.value( 1 ).toString();
       QString msg      = db.value( 2 ).toString();
+      QDateTime time_m = db.value( 3 ).toDateTime();
 
       if ( type == "info" )       nn_info++;
       else if ( type == "warn" )  nn_warn++;
@@ -764,7 +766,14 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
       i_rev            = qMax( i_rev,  m_rev  );
 
       if ( nnotice == 1 )
-        time_d           = db.value( 3 ).toDateTime().toUTC();
+      {
+        time_d           = time_m;
+      }
+      else
+      {
+        time_d           = time_m.secsTo( time_d ) > 0
+                           ? time_d : time_m;
+      }
 
       types << type;
       revs  << mrev;
@@ -779,6 +788,12 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
 
 qDebug() << "s_rev i_rev" << s_rev << i_rev << "srev" << srev;
    if ( s_rev > i_rev )
+      return do_abort;
+
+   // If lastest message time earlier than last notice time, skip pop-up
+   int n_dif        = (int)time_d.secsTo( pn_time );
+qDebug() << " n_dif" << n_dif << "time_d" << time_d << "pn_time" << pn_time;
+   if ( n_dif > 0 )
       return do_abort;
 
    // Build notice message

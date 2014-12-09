@@ -20,6 +20,7 @@ HEADERS       = us_pcsa.h                \
                 us_adv_analysis_pc.h     \
                 us_pcsa_process.h        \
                 us_rpscan.h              \
+                us_mrecs_loader.h        \
                 us_worker_pc.h
 
 SOURCES       = us_pcsa.cpp                \
@@ -30,5 +31,6 @@ SOURCES       = us_pcsa.cpp                \
                 us_adv_analysis_pc.cpp     \
                 us_pcsa_process.cpp        \
                 us_rpscan.cpp              \
+                us_mrecs_loader.cpp        \
                 us_worker_pc.cpp
 

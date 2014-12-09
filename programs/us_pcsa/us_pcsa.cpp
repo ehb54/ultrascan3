@@ -911,6 +911,7 @@ void US_pcsa::open_fitcntl()
    if ( exp_steps )
       dset.simparams.speed_step  = speed_steps;
 
+   dset.requestID          = disk_controls->db() ? "DB" : "Disk";
    dset.run_data           = dataList[ drow ];
    dset.solute_type        = 0;
    dset.viscosity          = viscosity;

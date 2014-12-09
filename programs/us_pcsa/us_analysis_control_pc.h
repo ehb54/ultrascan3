@@ -41,6 +41,7 @@ class US_AnalysisControlPc : public US_WidgetsDialog
       int           nkpts;
       int           nlpts;
       int           ctype;
+      int           ctypex;
       int           nlmodl;
 
       double        smin;
@@ -77,6 +78,7 @@ class US_AnalysisControlPc : public US_WidgetsDialog
       QVector< US_ModelRecord >*       mw_mrecs;
       QVector< US_ModelRecord >*       mw_mrecs_mc;
       int*                             mw_baserss;
+      QVector< int >                   ctypes;
 
       QWidget*                         parentw;
       QWidget*                         main_widg;
