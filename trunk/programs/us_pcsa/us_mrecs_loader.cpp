@@ -85,7 +85,7 @@ qDebug() << "Bld: edit" << do_edit << " dsearch" << dsearch;
    QPushButton* pb_cancel   = us_pushbutton( tr( "Cancel" ) );
                 pb_accept   = us_pushbutton( tr( "Accept" ) );
 
-   connect( pb_delete,  SIGNAL( clicked() ), this, SLOT( help()            ) );
+   connect( pb_delete,  SIGNAL( clicked() ), this, SLOT( delete_mrecs()    ) );
    connect( pb_details, SIGNAL( clicked() ), this, SLOT( show_mrecs_info() ) );
    connect( pb_help,    SIGNAL( clicked() ), this, SLOT( help()            ) );
    connect( pb_cancel,  SIGNAL( clicked() ), this, SLOT( cancelled()       ) );
@@ -661,7 +661,6 @@ qDebug() << "ACC: sel_row mdx" << sel_row << mdx;
 
    // Load the mrecs and set the description
 qDebug() << "ACC: load... (single)";
-//   load_mrecs( omrecs, 0 );
    load_mrecs( omrecs, mdx );
 qDebug() << "ACC: ...loaded (single)";
    odescr     = concat_description( mdx );
@@ -813,5 +812,90 @@ void US_MrecsLoader::row_selected( int row )
    pb_details->setEnabled( true );
    pb_delete ->setEnabled( true );
    pb_accept ->setEnabled( true );
+}
+
+// Slot to delete an mrecs entry
+void US_MrecsLoader::delete_mrecs()
+{
+   if ( ( sel_row = lw_vmrecs->currentRow() ) < 0 )
+      return;
+
+   QString mdesc    = lw_vmrecs->currentItem()->text();
+   int  mdx         = mrecsIndex( mdesc, mrecs_descriptions );
+
+   if ( loadDB )
+   {  // Delete an entry from the database
+      if ( dbP == NULL )
+      {
+         US_Passwd pw;
+         dbP         = new US_DB2( pw.getPasswd() );
+
+         if ( dbP->lastErrno() != US_DB2::OK )
+         {
+            QMessageBox::critical( this,
+                  tr( "DB Connection Problem" ),
+                  tr( "There was an error connecting to the database:\n" )
+                  + dbP->lastError() );
+            return;
+         }
+      }
+
+      QString mrecsID  = mrecs_descriptions[ mdx ].DB_id;
+      QStringList qry;
+      qry.clear();
+      qry << "delete_mrecs" << mrecsID;
+
+      if ( dbP->statusQuery( qry ) == 0 )
+      {
+         QMessageBox::information( this,
+            tr( "Successful DB Delete" ),
+            tr( "The mrecs record '%1' has been deleted from the database." )
+            .arg( mdesc ) );
+
+         list_vmrecs();
+      }
+
+      else
+      {
+         QMessageBox::critical( this,
+            tr( "DB Delete Problem" ),
+            tr( "There was an error deleting an entry from the database:\n" )
+            + dbP->lastError() );
+      }
+   }
+
+   else
+   {  // Delete a local file
+      QString fpath    = mrecs_descriptions[ mdx ].filename;
+      QFile filemr( fpath );
+      if ( filemr.exists() )
+      {
+         if ( filemr.remove() )
+         {
+            QMessageBox::information( this,
+               tr( "Successful Local File Delete" ),
+               tr( "The mrecs file '%1' has been deleted." )
+               .arg( fpath ) );
+
+            list_vmrecs();
+         }
+
+         else
+         {
+            QMessageBox::critical( this,
+               tr( "Error in Local File Delete" ),
+               tr( "The mrecs file '%1' was not deleted"
+                   " due to a remove error." ).arg( fpath ) );
+         }
+      }
+
+      else
+      {
+         QMessageBox::critical( this,
+            tr( "Error in Local File Delete" ),
+            tr( "The mrecs file '%1' was not deleted."
+                " It did not exist." ).arg( fpath ) );
+      }
+   }
 }
 

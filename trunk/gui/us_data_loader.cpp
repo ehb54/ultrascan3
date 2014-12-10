@@ -270,6 +270,17 @@ qDebug() << "LdEd: Only 1 top-level item  dlabsize" << dlabels.size();
 else
 qDebug() << "LdEd: selsz" << selections.size() << "dlabsz" << dlabels.size();
 
+   if ( indexes.size() < 1 )
+   { 
+      twi = selections[ 0 ];
+      QMessageBox::warning( this,
+            tr( "No Edits Available" ),
+            tr( "No Edit children exist for selected run"
+                " '%1'. The run will be hidden." ).arg( runID_sel ) );
+      twi->setHidden( true );
+      return false;
+   }
+
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    te_notes->setText( tr( "Loading data from " ) +
                       ( disk_controls->db() ? "Database" : "Local Disk" ) +

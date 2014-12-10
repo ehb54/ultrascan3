@@ -112,6 +112,7 @@ class US_MrecsLoader : public US_WidgetsDialog
       void accepted       ( void );
       void change_edit    ( bool );
       void row_selected   ( int  );
+      void delete_mrecs   ( void );
 
       void help  (        void )
       { showHelp.show_help( "load_modelrecs.html" ); };

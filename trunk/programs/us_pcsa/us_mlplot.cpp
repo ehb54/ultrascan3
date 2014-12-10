@@ -62,7 +62,8 @@ US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& slo,
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
 
-   nmodel       = ( ctype != CTYPE_HL ) ? ( nkpts * nkpts ) : nkpts;
+   nmodel       = ( ctype != CTYPE_HL  ) ? ( nkpts * nkpts ) : nkpts;
+   nmodel       = ( ctype != CTYPE_ALL ) ? nmodel : nmodel * 3;
    neline       = qMax( 2, nmodel / 10 );
    nsline       = qMax( 1, neline / 4  );
    nvline       = nmodel;

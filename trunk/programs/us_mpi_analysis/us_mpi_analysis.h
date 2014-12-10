@@ -116,7 +116,6 @@ class US_MPI_Analysis : public QObject
 
     US_ModelRecord             mrec;     // Work PCSA model record
     QVector< US_ModelRecord >  mrecs;    // PCSA model records (curves)
-    QMap< QString, int >       cTypeMap; // Curve type mapping ('SL'->1,...)
 
     QHostAddress        server;
     quint16             port;
@@ -415,6 +414,9 @@ class US_MPI_Analysis : public QObject
     void    iterate_pcsa        ( void );
     void    tikreg_pcsa         ( void );
     void    montecarlo_pcsa     ( void );
+    void    filter_mrecs        ( const int, QVector< US_ModelRecord >&,
+                                             QVector< US_ModelRecord >& );
+    void    clean_mrecs         ( QVector< US_ModelRecord >& );
 
 
     // PCSA Worker

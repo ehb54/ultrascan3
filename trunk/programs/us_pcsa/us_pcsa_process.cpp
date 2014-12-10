@@ -543,7 +543,7 @@ void US_pcsaProcess::put_mrecs( QVector< US_ModelRecord >& a_mrecs )
    int nmrecs  = mrecs.size();
    int ntinoi  = mrecs[ 0 ].ti_noise.count();
    int nrinoi  = mrecs[ 0 ].ri_noise.count();
-DbgLv(1) << "PC:putMRs: nmrecs" << nmrecs;
+DbgLv(1) << "PC:putMRs: nmrecs" << nmrecs << "rmsd" << mrecs[0].rmsd;
 
    if ( nmrecs < 1 )
       return;
@@ -556,6 +556,8 @@ DbgLv(1) << "PC:putMRs: nmrecs" << nmrecs;
    klolim      = mrecs[ 0 ].kmin;
    kuplim      = mrecs[ 0 ].kmax;
    curvtype    = mrecs[ 0 ].ctype;
+   int v_ctype = mrecs[ 0 ].v_ctype;
+DbgLv(1) << "PC:putMRs:  ctype v_ctype" << curvtype << v_ctype;
 
    if ( ntinoi > 0 )
    {
@@ -572,12 +574,16 @@ DbgLv(1) << "PC:putMRs: nmrecs" << nmrecs;
    }
 
    nmtasks     = ( mrecs[ 0 ].taskx == mrecs[ 1 ].taskx )
-               ? ( nmrecs - 1 ) : nmrecs;
+               ? ( nmrecs - 1 )  : nmrecs;
+   nmtasks     = ( mrecs[ 1 ].taskx == mrecs[ 2 ].taskx )
+               ? ( nmtasks - 1 ) : nmtasks;
+   nkpts       = ( v_ctype != CTYPE_ALL ) ? nmtasks : ( nmtasks / 3 );
    nkpts       = ( curvtype != CTYPE_HL )
-               ? ( qRound( sqrt( (double)nmtasks ) ) )
-               : nmtasks;
+               ? ( qRound( sqrt( (double)nkpts ) ) )
+               : nkpts;
    alpha       = 0.0;
 DbgLv(1) << "PC:putMRs:  nkpts nmtasks" << nkpts << nmtasks;
+DbgLv(1) << "PC:putMRs:   m0 rmsd" << mrecs[0].rmsd;
 
    for ( int ii = 0; ii < nmrecs; ii++ )
    {

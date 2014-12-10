@@ -501,6 +501,7 @@ DbgLv(1) << "AC:advanced dialog exec() return - ACCEPTED";
       double   varif  = mrsupd ? mrecs[ 0 ].variance : 0.0;
       int      mciter = mmcupd ? mrecs_mc.size() : 0;
 DbgLv(1) << "AC:advanced dialog state=" << state << "mainw" << mainw;
+DbgLv(1) << "AC:adv:(1)rmsd" << mrecs[0].rmsd;
 
       if ( ck_tinoise->isChecked()  ||  ck_rinoise->isChecked() )
       {
@@ -524,6 +525,7 @@ DbgLv(1) << "AC:advanced dialog state=" << state << "mainw" << mainw;
          *rdata          = mrecs[ 0 ].residuals;
          *mw_mrecs_mc    = mrecs_mc;
       }
+DbgLv(1) << "AC:adv:(2)rmsd" << mrecs[0].rmsd;
 
       if ( mmcupd )
       {
@@ -556,6 +558,7 @@ DbgLv(1) << "AC:advanced: mrec0 sols" << mrecs[0].csolutes.size()
          le_minvari->setText( QString::number( varif ) );
          le_minrmsd->setText( QString::number( rmsdf ) );
       }
+DbgLv(1) << "AC:adv:(3)rmsd" << mrecs[0].rmsd;
 
       if ( state != 0 )
       {  // Where advanced controls have made changes, copy them
@@ -569,6 +572,7 @@ DbgLv(1) << "AC:advanced: mrec0 sols" << mrecs[0].csolutes.size()
          need_fit      = false;
          need_final    = true;
          bmndx         = mrecs[ 0 ].taskx;
+DbgLv(1) << "AC:adv:(4)rmsd" << mrecs[0].rmsd;
 
          if ( processor == 0 )
          {
@@ -576,18 +580,23 @@ DbgLv(1) << "AC:advanced: mrec0 sols" << mrecs[0].csolutes.size()
          }
 
 DbgLv(1) << "AC:advanced: put_mrecs";
+DbgLv(1) << "AC:adv:putm: rmsd" << mrecs[0].rmsd;
          processor->put_mrecs( mrecs );
 DbgLv(1) << "AC:advanced: get_results";
          processor->get_results( sdata, rdata, model, ti_noise, ri_noise,
                bmndx, *mw_modstats, mrecs );
 
          ctype         = mrecs[ 0 ].ctype;
-         int    nmrecs = mrecs.size();
-         int    nmtsks = ( mrecs[ 0 ].taskx == mrecs[ 1 ].taskx )
+         int v_ctype   = mrecs[ 0 ].v_ctype;
+         int nmrecs    = mrecs.size();
+         int nmtsks    = ( mrecs[ 0 ].taskx == mrecs[ 1 ].taskx )
                        ? ( nmrecs - 1 ) : nmrecs;
+         nmtsks        = ( mrecs[ 1 ].taskx == mrecs[ 2 ].taskx )
+                       ? ( nmrecs - 1 ) : nmrecs;
+         int strec     = nmrecs - nmtsks;
+         nkpts         = ( v_ctype != CTYPE_ALL ) ? nmtsks : ( nmtsks / 3 );
          nkpts         = ( ctype != CTYPE_HL )
-                       ? qRound( sqrt( (double)nmtsks ) ) : nmtsks;
-         int    strec  = nmrecs - nmtsks;
+                       ? qRound( sqrt( (double)nkpts ) ) : nkpts;
          nlpts         = mrecs[ strec ].isolutes.size();
          smin          = mrecs[ strec ].smin;
          smax          = mrecs[ strec ].smax;
@@ -954,6 +963,9 @@ void US_AnalysisControlPc::plot_lines()
    fmax    = ct_uplimitk->value();
    nlpts   = (int)ct_cresolu ->value();
    nkpts   = (int)ct_varcount->value();
+
+   if ( mrecs[ 0 ].v_ctype == CTYPE_ALL )
+      ctype   = CTYPE_ALL;
 
 DbgLv(1) << "PL: mlnplotd" << mlnplotd;
    if ( mlnplotd != 0 )

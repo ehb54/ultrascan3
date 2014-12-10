@@ -317,9 +317,17 @@ DbgLv(1) << "advanced_results - state=" << state;
 // Accept button clicked
 void US_AdvAnalysisPc::select()
 {
+DbgLv(1) << "AA:Accept: mrs_new" << mrs_new << "p_mrecs" << p_mrecs;
    if ( mrs_new  &&  p_mrecs != 0 )
    {  // If model records are new, return them to the caller
       *p_mrecs     = mrecs;
+DbgLv(1) << "AA:Accept: mr mnmx s k"
+ << p_mrecs->at(0).smin
+ << p_mrecs->at(0).smax
+ << p_mrecs->at(0).kmin
+ << p_mrecs->at(0).kmax;
+DbgLv(1) << "AA:Accept: mr-size mr0-RMSD" << p_mrecs->size()
+ << p_mrecs->at(9).rmsd;
    }
 
    if ( ! mc_done )
@@ -415,7 +423,7 @@ DbgLv(1) << "mciterChanged" << value;
    mciters           = (int)value;
 }
 
-// Slot to load a model records list from disk
+// Slot to load a model records list from database or disk
 void US_AdvAnalysisPc::load_mrecs()
 {
    bool loadDB      = dset0->requestID.contains( "DB" );
@@ -428,24 +436,23 @@ DbgLv(1) << "load_mrecs  loadDB" << loadDB << "reqID" << dset0->requestID;
    US_MrecsLoader mrldDiag( loadDB, dsearch, mrecs, mrdesc,
                             edGUID, runID );
 
-   if ( mrldDiag.exec() == QDialog::Accepted )
-   {
-DbgLv(1) << "mrldDiag.exec==accepted  mrdesc=" << mrdesc;
-   }
-   else
+   if ( mrldDiag.exec() != QDialog::Accepted )
    {
 DbgLv(1) << "mrldDiag.exec==rejected";
-   }
-
 //*DEBUG*
 test_db_mrecs();
 //*DEBUG*
+      return;
+   }
 
    // Re-generate curve points for every model record
+   nmrecs           = mrecs.size();
    double smin      = mrecs[ 0 ].smin;
    double smax      = mrecs[ 0 ].smax;
    double kmin      = mrecs[ 0 ].kmin;
    double kmax      = mrecs[ 0 ].kmax;
+DbgLv(1) << "mrldDiag post-accept smin smax kmin kmax"
+ << smin << smax << kmin << kmax << "nmrecs" << nmrecs;
 
    for ( int mr = 0; mr < nmrecs; mr++ )
    {
@@ -458,7 +465,7 @@ test_db_mrecs();
    }
 
    mrec             = mrecs[ 0 ];
-   ctype            = mrec.ctype;
+   ctype            = mrec.v_ctype;
    ncsols           = mrec.csolutes.size();
    QString sctype   = US_ModelRecord::ctype_text( ctype );
 
@@ -1651,10 +1658,14 @@ DbgLv(1) << "AA:SF: ctype s,k min,max" << ctype << smin << smax
 
       for ( int jj = 0; jj < nisols; jj++ )
       {
-         smin         = qMin( smin, s_mrec.isolutes[ jj ].s * 1.e13 );
-         smax         = qMax( smax, s_mrec.isolutes[ jj ].s * 1.e13 );
-         kmin         = qMin( kmin, s_mrec.isolutes[ jj ].k );
-         kmax         = qMax( kmax, s_mrec.isolutes[ jj ].k );
+         double sval  = s_mrec.isolutes[ jj ].s * 1.e13;
+         double kval  = s_mrec.isolutes[ jj ].k;
+         smin         = qMin( smin, sval );
+         smax         = qMax( smax, sval );
+         kmin         = qMin( kmin, kval );
+         kmax         = qMax( kmax, kval );
+if(sval==0.0 || kval==0.0)
+DbgLv(1) << "AA:SF:   ii jj ni" << ii << jj << nisols << "s k" << sval << kval;
       }
    }
 
