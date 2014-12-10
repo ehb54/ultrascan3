@@ -20,8 +20,6 @@ DbgLv(1) << "pcsa_mast: fill_queue complete";
 
    work_rss.resize( gcores_count );
 
-   dset_calc_solutes.clear();
-
    max_iterations      = parameters[ "gfit_iterations" ].toInt();
    int kcurve          = 0;
 
@@ -115,6 +113,8 @@ int ss=ks/2;
 int rr=kr/2;
 DbgLv(1) << " master loop-BOT: ds" << current_dataset+1 << "data l m h"
  << edat->value(10,10) << edat->value(ss,rr) << edat->value(ks,kr);
+         // Clean up mrecs of any empty-calculated-solutes records
+         clean_mrecs( mrecs );
 
          // Manage multiple data sets in global fit
          if ( is_global_fit  &&  datasets_to_process == 1 )
@@ -163,7 +163,6 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
             QString tripleID = QString( data_sets[ current_dataset ]->model
                                .description ).section( ".", -3, -3 );
             current_dataset++;
-            dset_calc_solutes << calculated_solutes[ 0 ];
 
             update_outputs();
 
@@ -265,7 +264,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    double tr_alpha   = parameters[ "tikreg_alpha"    ].toDouble();
    tr_alpha          = ( tikreg == 1 ) ? tr_alpha : 0.0;
    QString s_ctyp    = parameters[ "curve_type" ];
-   int    ctype      = cTypeMap[ s_ctyp ];
+   int    ctype      = US_ModelRecord::ctype_flag( s_ctyp );
    int    nkpts      = parameters[ "vars_count"      ].toInt();
    int    nkpto      = sq( nkpts );
    int    nlpts      = parameters[ "curves_points"   ].toInt();
@@ -281,7 +280,7 @@ DbgLv(1) << "  init_pcsa_sols: currds" << current_dataset << "vbar" << vbar20;
    mrecs.clear();
 DbgLv(1) << "  init_pcsa_sols: s_ctyp" << s_ctyp << "ctype" << ctype;
 
-   if ( s_ctyp == "SL" )
+   if ( ctype == CTYPE_SL )
    {
       mrecs.reserve( nkpto );
 DbgLv(1) << "  init_pcsa_sols: call compute_slines  nkpts" << nkpts;
@@ -480,7 +479,7 @@ DbgLv(1) << "pcsa:wrmr:  editGUID=" << mrecs[0].editGUID
    QString s_desc        = QString( modelP->description )
                            .replace( ".model", ".mrecs" );
    QString s_ctyp        = parameters[ "curve_type" ];
-   int    ctype          = cTypeMap[ s_ctyp ];
+   int    ctype          = US_ModelRecord::ctype_flag( s_ctyp );
    double s_min          = parameters[ "s_min"         ].toDouble();
    double s_max          = parameters[ "s_max"         ].toDouble();
    double ff0_min        = parameters[ "ff0_min"       ].toDouble();
@@ -567,7 +566,7 @@ DbgLv(1) << "iter_p: rmsd_c rmsd_l" << rmsd_curr << rmsd_last
    double ff0_min    = parameters[ "ff0_min"         ].toDouble();
    double ff0_max    = parameters[ "ff0_max"         ].toDouble();
    QString s_ctyp    = parameters[ "curve_type" ];
-   int    ctype      = cTypeMap[ s_ctyp ];
+   int    ctype      = US_ModelRecord::ctype_flag( s_ctyp );
    int    nkpts      = parameters[ "vars_count"      ].toInt();
    int    nlpts      = parameters[ "curves_points"   ].toInt();
    double vbar20     = data_sets[ current_dataset ]->vbar20;
@@ -575,192 +574,72 @@ DbgLv(1) << "iter_p: rmsd_c rmsd_l" << rmsd_curr << rmsd_last
    double *parlims   = (double*)pararry;
    parlims[ 0 ]      = -1.0;
    parlims[ 4 ]      = vbar20;
-   double minsk      = ff0_max;
-   double maxsk      = ff0_min;
-   double minek      = minsk;
-   double maxek      = maxsk;
-   double minp1      = 0.5;
-   double maxp1      = 0.001;
-   double minp2      = 1.0;
-   double maxp2      = 0.0;
-   double skbest     = mrecs[ 0 ].str_k;
-   double ekbest     = mrecs[ 0 ].end_k;
-   double p1best     = mrecs[ 0 ].par1;
-   double p2best     = mrecs[ 0 ].par2;
-   double ptrng      = (double)( nkpts - 1 );
-   double kpinc      = ( ff0_max - ff0_min ) / ptrng;
-   double p1inc      = ( 0.5 - 0.001 ) / ptrng;
-   double p2inc      = 1.0 / ptrng;
    int    ncurve     = sq( nkpts );
-   int    nelite     = ( ncurve * 10 + 50 ) / 100;
-DbgLv(1) << "iter_p: ncurve" << ncurve << "nelite" << nelite;
+DbgLv(1) << "iter_p: ncurve" << ncurve;
 
-   // Scan previous mrecs to determine range across elite (top 10%) records
+   // Recompute mrecs to cover the range of the elite (top 10%) records
 
    if ( ctype != CTYPE_ALL )
-   {  // All non-combination records
-      ncurve            = ( ctype == CTYPE_HL ) ? nkpts : ncurve;
-      nelite            = ( ncurve * 10 + 50 ) / 100;
+   {  // All non-combination records:  re-compute with narrower limits
 
-      for ( int ii = 0; ii < nelite; ii++ )
-      {
-         double str_k      = mrecs[ ii ].str_k;
-         double end_k      = mrecs[ ii ].end_k;
-         double par1       = mrecs[ ii ].par1;
-         double par2       = mrecs[ ii ].par2;
-         minsk             = qMin( minsk, str_k );
-         maxsk             = qMax( maxsk, str_k );
-         minek             = qMin( minek, end_k );
-         maxek             = qMax( maxek, end_k );
-         minp1             = qMin( minp1, par1  );
-         maxp1             = qMax( maxp1, par1  );
-         minp2             = qMin( minp2, par2  );
-         maxp2             = qMax( maxp2, par2  );
-      }
-
-      if ( ctype == CTYPE_SL  ||  ctype == CTYPE_HL )
-      {  // Line types
-         parlims[ 0 ]      = qMax( ff0_min, qMin( minsk, ( skbest - kpinc ) ) );
-         parlims[ 1 ]      = qMin( ff0_max, qMax( maxsk, ( skbest + kpinc ) ) );
-         parlims[ 2 ]      = qMax( ff0_min, qMin( minek, ( ekbest - kpinc ) ) );
-         parlims[ 3 ]      = qMin( ff0_max, qMax( maxek, ( ekbest + kpinc ) ) );
-      }
-
-      else
-      {  // Sigmoid types
-         parlims[ 0 ]      = qMax( 0.001, qMin( minp1, ( p1best - p1inc ) ) );
-         parlims[ 1 ]      = qMin( 0.500, qMax( maxp1, ( p1best + p1inc ) ) );
-         parlims[ 2 ]      = qMax( 0.000, qMin( minp2, ( p2best - p2inc ) ) );
-         parlims[ 3 ]      = qMin( 1.000, qMax( maxp2, ( p2best + p2inc ) ) );
-      }
+      US_ModelRecord::recompute_mrecs( ctype, s_min, s_max, ff0_min, ff0_max,
+                                       nkpts, nlpts, parlims, mrecs );
 DbgLv(1) << "iter_p: parlims"
  << parlims[0] << parlims[1] << parlims[2] << parlims[3] << parlims[4];
    }  // END: non-combo records
 
    else
    {  // Records that are a mix of SL,IS,DS
-      ncurve           *= 3;
-      int kstype        = 0;
-      int kitype        = 0;
-      int kdtype        = 0;
-      int kelite        = 0;
-      double minski     = minsk;
-      double maxski     = maxsk;
-      double mineki     = minek;
-      double maxeki     = maxek;
-      double minp1i     = minp1;
-      double maxp1i     = maxp1;
-      double minp2i     = minp2;
-      double maxp2i     = maxp2;
-      double minskd     = minsk;
-      double maxskd     = maxsk;
-      double minekd     = minek;
-      double maxekd     = maxek;
-      double minp1d     = minp1;
-      double maxp1d     = maxp1;
-      double minp2d     = minp2;
-      double maxp2d     = maxp2;
-      double skbesti    = skbest;
-      double ekbesti    = ekbest;
-      double p1besti    = p1best;
-      double p2besti    = p2best;
-      double skbestd    = skbest;
-      double ekbestd    = ekbest;
-      double p1bestd    = p1best;
-      double p2bestd    = p2best;
+      QVector< US_ModelRecord > mrecs_sl;
+      QVector< US_ModelRecord > mrecs_is;
+      QVector< US_ModelRecord > mrecs_ds;
+      double* plims_sl  = parlims;
+      double* plims_is  = plims_sl + 5;
+      double* plims_ds  = plims_is + 5;
 
-      for ( int ii = 0; ii < ncurve; ii++ )
+      // Separate entries by curve type
+      filter_mrecs( CTYPE_SL, mrecs, mrecs_sl );
+      filter_mrecs( CTYPE_IS, mrecs, mrecs_is );
+      filter_mrecs( CTYPE_DS, mrecs, mrecs_ds );
+
+      // Recompute each curve type with narrower limits
+      ctype             = CTYPE_SL;
+      US_ModelRecord::recompute_mrecs( ctype, s_min, s_max, ff0_min, ff0_max,
+                                       nkpts, nlpts, plims_sl, mrecs_sl );
+
+      ctype             = CTYPE_IS;
+      US_ModelRecord::recompute_mrecs( ctype, s_min, s_max, ff0_min, ff0_max,
+                                       nkpts, nlpts, plims_is, mrecs_is );
+
+      ctype             = CTYPE_DS;
+      US_ModelRecord::recompute_mrecs( ctype, s_min, s_max, ff0_min, ff0_max,
+                                       nkpts, nlpts, plims_ds, mrecs_ds );
+
+      // Re-combine into a single vector
+      int kk            = 0;
+
+      for ( int ii = 0; ii < ncurve; ii++, kk++ )
       {
-         int    ctype      = mrecs[ ii ].ctype;
-         double str_k      = mrecs[ ii ].str_k;
-         double end_k      = mrecs[ ii ].end_k;
-         double par1       = mrecs[ ii ].par1;
-         double par2       = mrecs[ ii ].par2;
-
-         if ( ctype == CTYPE_SL )
-         {
-            if ( kstype == 0 )
-            {
-               skbest            = str_k;
-               ekbest            = end_k;
-               p1best            = par1;
-               p2best            = par2;
-            }
-            if ( kstype >= nelite )  continue;
-            kstype++;
-            minsk             = qMin( minsk, str_k );
-            maxsk             = qMax( maxsk, str_k );
-            minek             = qMin( minek, end_k );
-            maxek             = qMax( maxek, end_k );
-            minp1             = qMin( minp1, par1  );
-            maxp1             = qMax( maxp1, par1  );
-            minp2             = qMin( minp2, par2  );
-            maxp2             = qMax( maxp2, par2  );
-            kelite++;
-            if ( kelite >= nelite )  break;
-         }
-
-         else if ( ctype == CTYPE_IS )
-         {
-            if ( kitype == 0 )
-            {
-               skbesti           = str_k;
-               ekbesti           = end_k;
-               p1besti           = par1;
-               p2besti           = par2;
-            }
-            if ( kitype >= nelite )  continue;
-            kitype++;
-            minski            = qMin( minski, str_k );
-            maxski            = qMax( maxski, str_k );
-            mineki            = qMin( mineki, end_k );
-            maxeki            = qMax( maxeki, end_k );
-            minp1i            = qMin( minp1i, par1  );
-            maxp1i            = qMax( maxp1i, par1  );
-            minp2i            = qMin( minp2i, par2  );
-            maxp2i            = qMax( maxp2i, par2  );
-            kelite++;
-            if ( kelite >= nelite )  break;
-         }
-
-         else if ( ctype == CTYPE_DS )
-         {
-            if ( kdtype == 0 )
-            {
-               skbestd           = str_k;
-               ekbestd           = end_k;
-               p1bestd           = par1;
-               p2bestd           = par2;
-            }
-            if ( kdtype >= nelite )  continue;
-            kdtype++;
-            minskd            = qMin( minskd, str_k );
-            maxskd            = qMax( maxskd, str_k );
-            minekd            = qMin( minekd, end_k );
-            maxekd            = qMax( maxekd, end_k );
-            minp1d            = qMin( minp1d, par1  );
-            maxp1d            = qMax( maxp1d, par1  );
-            minp2d            = qMin( minp2d, par2  );
-            maxp2d            = qMax( maxp2d, par2  );
-            kelite++;
-            if ( kelite >= nelite )  break;
-         }
+         mrecs[ kk ]       = mrecs_sl[ ii ];
+         mrecs[ kk ].taskx = kk;
       }
 
-      parlims[ 0 ]      = qMax( ff0_min, qMin( minsk, ( skbest - kpinc ) ) );
-      parlims[ 1 ]      = qMin( ff0_max, qMax( maxsk, ( skbest + kpinc ) ) );
-      parlims[ 2 ]      = qMax( ff0_min, qMin( minek, ( ekbest - kpinc ) ) );
-      parlims[ 3 ]      = qMin( ff0_max, qMax( maxek, ( ekbest + kpinc ) ) );
-      parlims[ 5 ]      = qMax( 0.001, qMin( minp1i, ( p1besti - p1inc ) ) );
-      parlims[ 6 ]      = qMin( 0.500, qMax( maxp1i, ( p1besti + p1inc ) ) );
-      parlims[ 7 ]      = qMax( 0.000, qMin( minp2i, ( p2besti - p2inc ) ) );
-      parlims[ 8 ]      = qMin( 1.001, qMax( maxp2i, ( p2besti + p2inc ) ) );
-      parlims[ 9 ]      = parlims[ 4 ];
-      parlims[ 10 ]     = qMax( 0.001, qMin( minp1d, ( p1bestd - p1inc ) ) );
-      parlims[ 11 ]     = qMin( 0.500, qMax( maxp1d, ( p1bestd + p1inc ) ) );
-      parlims[ 12 ]     = qMax( 0.000, qMin( minp2d, ( p2bestd - p2inc ) ) );
-      parlims[ 13 ]     = qMin( 1.001, qMax( maxp2d, ( p2bestd + p2inc ) ) );
-      parlims[ 14 ]     = parlims[ 4 ];
+      for ( int ii = 0; ii < ncurve; ii++, kk++ )
+      {
+         mrecs[ kk ]       = mrecs_is[ ii ];
+         mrecs[ kk ].taskx = kk;
+      }
+
+      for ( int ii = 0; ii < ncurve; ii++, kk++ )
+      {
+         mrecs[ kk ]       = mrecs_ds[ ii ];
+         mrecs[ kk ].taskx = kk;
+      }
+
+      ctype             = CTYPE_ALL;
+      mrecs[0].v_ctype  = ctype;          // Vector curve type is "All"
+      plims_is[ 4 ]     = parlims[ 4 ];   // Set vbar20 for all types
+      plims_ds[ 4 ]     = parlims[ 4 ];
 DbgLv(1) << "iter_p: parlims"
  << parlims[0] << parlims[1] << parlims[2] << parlims[3] << parlims[4];
 DbgLv(1) << "iter_p: parlims2"
@@ -769,43 +648,9 @@ DbgLv(1) << "iter_p: parlims3"
  << parlims[10] << parlims[11] << parlims[12] << parlims[13] << parlims[14];
    }  // END:  records a mix of SL,IS,DS
 
-   // Now re-compute model lines
+   // Now reset original solutes and fill queue
    orig_solutes.clear();
-   mrecs       .clear();
-   mrecs       .reserve( ncurve );
 
-   if ( ctype == CTYPE_SL )
-   {  // Straight Line
-      US_ModelRecord::compute_slines( s_min, s_max, ff0_min, ff0_max,
-            nkpts, nlpts, parlims, mrecs );
-   }
-
-   else if ( ctype == CTYPE_IS  ||  ctype == CTYPE_DS )
-   {  // Sigmoid
-      US_ModelRecord::compute_sigmoids( ctype, s_min, s_max, ff0_min, ff0_max,
-            nkpts, nlpts, parlims, mrecs );
-   }
-
-   else if ( ctype == CTYPE_HL )
-   {  // Horizontal Line
-      US_ModelRecord::compute_hlines( s_min, s_max, ff0_min, ff0_max,
-            nkpts, nlpts, parlims, mrecs );
-   }
-
-   else if ( ctype == CTYPE_ALL )
-   {  // Mix of SL, IS, DS
-      int ctype1        = CTYPE_IS:
-      int ctype2        = CTYPE_DS:
-      double *parlims1  = parlims + 5;
-      double *parlims2  = parlims + 10;
-      US_ModelRecord::compute_slines( s_min, s_max, ff0_min, ff0_max,
-            nkpts, nlpts, parlims,  mrecs );
-      US_ModelRecord::compute_sigmoids( ctype1, s_min, s_max, ff0_min, ff0_max,
-            nkpts, nlpts, parlims1, mrecs );
-      US_ModelRecord::compute_sigmoids( ctype2, s_min, s_max, ff0_min, ff0_max,
-            nkpts, nlpts, parlims2, mrecs );
-   }
-  
    for ( int ii = 0; ii < mrecs.size(); ii++ )
    {
       orig_solutes << mrecs[ ii ].isolutes;
@@ -838,5 +683,105 @@ void US_MPI_Analysis::montecarlo_pcsa()
 qDebug() << "Currently-unimplemented PCSA Monte Carlo iterations is skipped";
 printf(  "Currently-unimplemented PCSA Monte Carlo iterations is skipped\n" );
 //*TEMP*
+}
+
+// Filter model records by a specified curve type
+void US_MPI_Analysis::filter_mrecs( const int ctype,
+      QVector< US_ModelRecord >& mrecs_a, QVector< US_ModelRecord >& mrecs_t )
+{
+   int namrec        = mrecs_a.size();
+   int ntmrec        = namrec / 3;
+   mrecs_t.clear();
+   mrecs_t.reserve( ntmrec );
+
+   for ( int ii = 0; ii < namrec; ii++ )
+      if ( mrecs_a[ ii ].ctype == ctype )
+         mrecs_t << mrecs_a[ ii ];
+}
+
+// Clean up model records to handle records with empty calculated solutes
+void US_MPI_Analysis::clean_mrecs( QVector< US_ModelRecord >& mrecs )
+{
+   // First get index to last good
+   int nmrec         = mrecs.size();
+   int lmrec         = nmrec - 1;
+   int goodx         = 0;
+
+   for ( int ii = lmrec; ii > 1; ii-- )
+   {
+      if ( mrecs[ ii ].csolutes.size() != 0 )
+      {
+         goodx             = ii;
+         break;
+      }
+   }
+
+   // If last overall is good, return with no change to records
+   if ( goodx == lmrec )
+      return;
+
+DbgLv(0) << " master:clean_mrecs: goodx lmrec" << goodx << lmrec;
+   if ( mrecs[ 0 ].v_ctype != CTYPE_ALL )
+   {  // If records of one type, just duplicate solutes from last good
+      for ( int ii = goodx + 1; ii < nmrec; ii++ )
+      {
+         mrecs[ ii ].csolutes = mrecs[ goodx ].csolutes;
+         mrecs[ ii ].rmsd     = mrecs[ goodx ].rmsd;
+      }
+   }
+
+   else
+   {  // If mixed records, duplicate solutes from last of each type
+      int gx_sl         = 0;
+      int gx_is         = 0;
+      int gx_ds         = 0;
+      int ktype         = 0;
+
+      // Get indexes of last-good for each type
+      for ( int ii = goodx; ii > 1; ii-- )
+      {
+         if ( mrecs[ ii ].ctype == CTYPE_SL )
+         {
+            if ( gx_sl > 0 )   continue;
+            gx_sl             = ii;
+            ktype++;
+         }
+         else if ( mrecs[ ii ].ctype == CTYPE_IS )
+         {
+            if ( gx_is > 0 )   continue;
+            gx_is             = ii;
+            ktype++;
+         }
+         else if ( mrecs[ ii ].ctype == CTYPE_DS )
+         {
+            if ( gx_ds > 0 )   continue;
+            gx_ds             = ii;
+            ktype++;
+         }
+
+         if ( ktype >= 3 )  break;
+      }
+
+      // Then replace each type with last good of that type
+      for ( int ii = goodx + 1; ii < nmrec; ii++ )
+      {
+         if ( mrecs[ ii ].ctype == CTYPE_SL )
+         {
+            mrecs[ ii ].csolutes = mrecs[ gx_sl ].csolutes;
+            mrecs[ ii ].rmsd     = mrecs[ gx_sl ].rmsd;
+         }
+         else if ( mrecs[ ii ].ctype == CTYPE_IS )
+         {
+            mrecs[ ii ].csolutes = mrecs[ gx_is ].csolutes;
+            mrecs[ ii ].rmsd     = mrecs[ gx_is ].rmsd;
+         }
+         else if ( mrecs[ ii ].ctype == CTYPE_DS )
+         {
+            mrecs[ ii ].csolutes = mrecs[ gx_ds ].csolutes;
+            mrecs[ ii ].rmsd     = mrecs[ gx_ds ].rmsd;
+         }
+      }
+
+   }
 }
 

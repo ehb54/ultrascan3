@@ -749,7 +749,8 @@ void US_FitMeniscus::scan_dbase()
       lmtime.setTimeSpec( Qt::UTC );
       QString ansysID    = descript.section( '.', -2, -2 );
       QString iterID     = ansysID .section( '_', -1, -1 );
-DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus;
+DbgLv(1) << "DbSc:   modelID vari meni" << modelID << variance << meniscus
+ << "ansysID" << ansysID << "iterID" << iterID;
 
       if ( ansysID.contains( "2DSA-FM" )  ||  iterID.contains( fmIter ) )
       {  // Model from meniscus fit, so save information
@@ -778,6 +779,8 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
          mDescrs << mdescr;
       }
    }
+DbgLv(1) << "DbSc: tmodels size" << tmodels.size() << "ted sizes"
+ << tedGIDs.size() << tedIDs.size();
 
    for ( int ii = 0; ii < tmodels.size(); ii++ )
    {  // Review models with truncated descriptions
@@ -842,12 +845,14 @@ DbgLv(1) << "DbSc:    *FIT* " << descript;
    }
 
    nfmods     = mDescrs.size();
-DbgLv(1) << " pre:D0" <<  mDescrs[0].description;
-DbgLv(1) << " pre:Dn" <<  mDescrs[nfmods-1].description;
-   qSort( mDescrs );
 DbgLv(1) << "Number of FM models found: " << nfmods;
+if(nfmods>0) {
+DbgLv(1) << " pre:D0" <<  mDescrs[0].description;
+DbgLv(1) << " pre:Dn" <<  mDescrs[nfmods-1].description; }
+   qSort( mDescrs );
+if(nfmods>0) {
 DbgLv(1) << " sorted:D0" <<  mDescrs[0].description;
-DbgLv(1) << " sorted:Dn" <<  mDescrs[nfmods-1].description;
+DbgLv(1) << " sorted:Dn" <<  mDescrs[nfmods-1].description; }
 
    // Scan local files to see what fit table files already exist
 
