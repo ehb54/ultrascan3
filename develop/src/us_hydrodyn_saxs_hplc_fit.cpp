@@ -1373,6 +1373,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 
    map < unsigned int, bool > fixed_curves;
 
+
    switch ( gaussian_type )
    {
    case US_Hydrodyn_Saxs_Hplc::EMGGMG :
@@ -1418,6 +1419,8 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
    {
       return false;
    }
+
+   double dist = ( ( US_Hydrodyn * )(hplc_win->us_hydrodyn) )->gparams[ "hplc_dist_max" ].toDouble();
 
    double base_val;
 
@@ -1585,21 +1588,21 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             HFIT::param_fixed .push_back( false );
 
             double ofs;
-            double min = -50e0;
-            double max = 50e0;
+            double min = -dist;
+            double max = dist;
             if ( cb_pct_dist1->isChecked() )
             {
                ofs = base_val * le_pct_dist1->text().toDouble() / 100.0;
                min = base_val - ofs;
                max = base_val + ofs;
             }
-            if ( min < -50e0 )
+            if ( min < -dist )
             {
-               min = -50e0;
+               min = -dist;
             }
-            if ( max > 50e0 )
+            if ( max > dist )
             {
-               max = 50e0;
+               max = dist;
             }
             if ( max < min )
             {
@@ -1647,21 +1650,21 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
                HFIT::param_fixed .push_back( false );
 
                double ofs;
-               double min = -50e0;
-               double max = 50e0;
+               double min = -dist;
+               double max = dist;
                if ( cb_pct_dist2->isChecked() )
                {
                   ofs = base_val * le_pct_dist2->text().toDouble() / 100.0;
                   min = base_val - ofs;
                   max = base_val + ofs;
                }
-               if ( min < -50e0 )
+               if ( min < -dist )
                {
-                  min = -50e0;
+                  min = -dist;
                }
-               if ( max > 50e0 )
+               if ( max > dist )
                {
-                  max = 50e0;
+                  max = dist;
                }
                if ( max < min )
                {

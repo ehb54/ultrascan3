@@ -204,7 +204,17 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_movie->setPalette( PALET_PUSHB );
    connect(pb_movie, SIGNAL(clicked()), SLOT(movie()));
 
-   pb_rescale = new QPushButton(tr("Rescale"), this);
+   cb_eb = new QCheckBox(this);
+   cb_eb->setText(tr("E "));
+   cb_eb->setMaximumWidth ( minHeight1 * 3 );
+   cb_eb->setChecked( false );
+   cb_eb->setMinimumHeight( minHeight1 );
+   cb_eb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   cb_eb->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_eb );
+   connect( cb_eb, SIGNAL( clicked() ), SLOT( set_eb() ) );
+
+   pb_rescale = new QPushButton(tr("Scale"), this);
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_rescale->setMinimumHeight(minHeight1);
    pb_rescale->setPalette( PALET_PUSHB );
@@ -1319,6 +1329,15 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    bg_scale_low_high->addButton( rb_scale_high, bg_pos++ );
    rb_scale_high->setChecked( true );
    
+   cb_scale_scroll = new QCheckBox(this);
+   cb_scale_scroll->setText(tr("Scroll "));
+   cb_scale_scroll->setChecked( false );
+   cb_scale_scroll->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_scale_scroll->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_scale_scroll );
+   connect( cb_scale_scroll, SIGNAL( clicked() ), SLOT( scale_scroll() ) );
+   cb_scale_scroll->hide();
+
    cb_scale_sd = new QCheckBox(this);
    cb_scale_sd->setText(tr("SD "));
    cb_scale_sd->setChecked( true );
@@ -1478,6 +1497,15 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_guinier_plot_rg->setPalette( PALET_PUSHB );
    pb_guinier_plot_rg->setEnabled( true );
    connect(pb_guinier_plot_rg, SIGNAL(clicked()), SLOT(guinier_plot_rg_toggle()));
+
+   cb_guinier_scroll = new QCheckBox(this);
+   cb_guinier_scroll->setText(tr("Scroll "));
+   cb_guinier_scroll->setChecked( false );
+   cb_guinier_scroll->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_guinier_scroll->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_guinier_scroll );
+   connect( cb_guinier_scroll, SIGNAL( clicked() ), SLOT( guinier_scroll() ) );
+   cb_guinier_scroll->hide();
 
    lbl_guinier_q_range = new QLabel( tr( "q range: " ), this );
    lbl_guinier_q_range->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
@@ -2252,6 +2280,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_view );
    hbl_file_buttons_2->addWidget ( pb_movie );
    hbl_file_buttons_2->addWidget ( pb_ag );
+   hbl_file_buttons_2->addWidget ( cb_eb );
    hbl_file_buttons_2->addWidget ( pb_axis_x );
    hbl_file_buttons_2->addWidget ( pb_axis_y );
    hbl_file_buttons_2->addWidget ( pb_rescale );
@@ -2262,6 +2291,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_widgets.push_back ( pb_select_nth );
    files_widgets.push_back ( pb_view );
    files_widgets.push_back ( pb_movie );
+   files_widgets.push_back ( cb_eb );
    files_widgets.push_back ( pb_axis_x );
    files_widgets.push_back ( pb_axis_y );
    files_widgets.push_back ( pb_rescale );
@@ -2515,6 +2545,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    Q3BoxLayout *vbl_scale = new Q3VBoxLayout( 0 );
    {
       Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( cb_scale_scroll );
       hbl->addWidget( lbl_scale_q_range );
       hbl->addWidget( le_scale_q_start );
       hbl->addWidget( le_scale_q_end );
@@ -2573,6 +2604,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       
    {
       Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( cb_guinier_scroll );
       hbl->addWidget( lbl_guinier_q_range );
       hbl->addWidget( le_guinier_q_start );
       hbl->addWidget( le_guinier_q_end );
@@ -2873,6 +2905,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    scale_widgets.push_back( rb_scale_low );
    scale_widgets.push_back( rb_scale_high );
    // scale_widgets.push_back( cb_scale_sd );
+   scale_widgets.push_back( cb_scale_scroll );
    scale_widgets.push_back( cb_scale_save_intp );
    scale_widgets.push_back( lbl_scale_q_range );
    scale_widgets.push_back( le_scale_q_start );
@@ -2917,6 +2950,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
 
    // guinier_widgets;
 
+   guinier_widgets.push_back( cb_guinier_scroll );
    guinier_widgets.push_back( lbl_guinier_q_range );
    guinier_widgets.push_back( le_guinier_q_start );
    guinier_widgets.push_back( le_guinier_q_end );
@@ -3211,7 +3245,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_repeak             ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time );
-   pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
+   pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
    pb_test_i_of_t        ->setEnabled( files_selected_count && files_compatible && files_are_time );
    pb_create_i_of_q      ->setEnabled( files_selected_count > 1 && files_compatible && files_are_time /* && gaussians.size() */ );
@@ -3242,6 +3276,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_to_saxs            ->setEnabled( files_selected_count && files_compatible && !files_are_time );
    pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
    pb_movie              ->setEnabled( files_selected_count > 1 );
+   cb_eb                 ->setEnabled( files_selected_count > 0 && files_selected_count < 10 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
    pb_ag                 ->setEnabled( files_selected_count == 1 && files_compatible && !files_are_time );
 
@@ -3287,7 +3322,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
-   pb_legend           ->setEnabled( lb_files->numRows() && files_selected_count <= 20 );
+   pb_legend           ->setEnabled( lb_files->numRows() && files_selected_count <= 20 && !cb_eb->isChecked() );
    pb_axis_x           ->setEnabled( lb_files->numRows() );
    pb_axis_y           ->setEnabled( lb_files->numRows() );
 
@@ -3371,6 +3406,13 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       }
    }
    model_enables();
+
+   if ( cb_eb->isChecked() &&
+        !cb_eb->isEnabled() )
+   {
+      cb_eb->setChecked( false );
+      set_eb();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::model_enables()
@@ -3433,6 +3475,7 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_view               ->setEnabled( false );
    pb_movie              ->setEnabled( false );
    pb_ag                 ->setEnabled( false );
+   cb_eb                 ->setEnabled( false );
    pb_rescale            ->setEnabled( false );
    pb_select_all_created ->setEnabled( false );
    pb_adjacent_created   ->setEnabled( false );

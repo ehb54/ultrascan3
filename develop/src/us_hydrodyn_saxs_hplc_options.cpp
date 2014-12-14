@@ -250,6 +250,25 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( le_guinier_qrgmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_guinier_qrgmax->setMinimumWidth( 60 );
 
+   lbl_dist_max =  new QLabel      ( tr( "Maximum absolute value of EMG and GMG distortions:" ), this );
+   lbl_dist_max -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_dist_max -> setPalette( PALET_LABEL );
+   AUTFBACK( lbl_dist_max );
+   lbl_dist_max -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_dist_max = new QLineEdit(this, "le_dist_max Line Edit");
+   le_dist_max->setText( (*parameters)[ "hplc_dist_max" ] );
+   le_dist_max->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_dist_max->setPalette( PALET_NORMAL );
+   AUTFBACK( le_dist_max );
+   le_dist_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 10, 1000, 1, le_dist_max );
+      le_dist_max->setValidator( qdv );
+   }
+   connect( le_dist_max, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_dist_max->setMinimumWidth( 60 );
+
    pb_quit =  new QPushButton ( tr( "Quit" ), this );
    pb_quit -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_quit -> setMinimumHeight( minHeight1 );
@@ -293,21 +312,31 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    background->addWidget( rb_gmg );
    background->addWidget( rb_emg );
    background->addWidget( rb_emggmg );
+   {
+      Q3GridLayout *gl_other = new Q3GridLayout( 0 );
+      gl_other->addWidget         ( lbl_dist_max , 0, 0 );
+      gl_other->addWidget         ( le_dist_max  , 0, 1 );
+      background->addLayout( gl_other );
+   }
+
+
    background->addWidget( lbl_other_options );
    background->addWidget( cb_csv_transposed );
 
-   Q3GridLayout *gl_other = new Q3GridLayout( 0 );
+   {
+      Q3GridLayout *gl_other = new Q3GridLayout( 0 );
 
-   gl_other->addWidget         ( lbl_zi_window , 0, 0 );
-   gl_other->addWidget         ( le_zi_window  , 0, 1 );
+      gl_other->addWidget         ( lbl_zi_window , 0, 0 );
+      gl_other->addWidget         ( le_zi_window  , 0, 1 );
 
-   gl_other->addWidget         ( cb_discard_it_sd_mult , 1, 0 );
-   gl_other->addWidget         ( le_discard_it_sd_mult , 1, 1 );
+      gl_other->addWidget         ( cb_discard_it_sd_mult , 1, 0 );
+      gl_other->addWidget         ( le_discard_it_sd_mult , 1, 1 );
 
-   gl_other->addWidget         ( cb_guinier_qrgmax , 2, 0 );
-   gl_other->addWidget         ( le_guinier_qrgmax , 2, 1 );
+      gl_other->addWidget         ( cb_guinier_qrgmax , 2, 0 );
+      gl_other->addWidget         ( le_guinier_qrgmax , 2, 1 );
 
-   background->addLayout( gl_other );
+      background->addLayout( gl_other );
+   }
 
    if ( !parameters->count( "gaussian_type" ) )
    {
@@ -379,6 +408,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    (*parameters)[ "hplc_discard_it_sd_mult"      ] = le_discard_it_sd_mult  ->text();
    (*parameters)[ "hplc_cb_guinier_qrgmax"       ] = cb_guinier_qrgmax      ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_guinier_qrgmax"          ] = le_guinier_qrgmax      ->text();
+   (*parameters)[ "hplc_dist_max"                ] = le_dist_max            ->text();
 
    if ( rb_gauss->isChecked() )
    {

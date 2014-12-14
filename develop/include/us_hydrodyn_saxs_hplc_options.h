@@ -4,8 +4,8 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs_hplc.h"
 //Added by qt3to4:
-#include <QCloseEvent>
 #include <QLabel>
+#include <QCloseEvent>
 
 using namespace std;
 
@@ -66,6 +66,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QRadioButton *                          rb_emg;
       QRadioButton *                          rb_emggmg;
       
+      QLabel *                                lbl_dist_max;
+      QLineEdit *                             le_dist_max;
+
+
       QLabel       *                          lbl_other_options;
       QCheckBox    *                          cb_csv_transposed;
 

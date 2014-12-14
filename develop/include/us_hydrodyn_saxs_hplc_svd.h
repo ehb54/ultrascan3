@@ -188,7 +188,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public Q3Frame
 #else
       map < QString, long >               plotted_curves;
 #endif
-      void                         add_i_of_t( QString source, QStringList files, bool do_update_enables = true );
+      void                         add_i_of_q_or_t( QString source, QStringList files, bool do_update_enables = true );
       void                         rescale( bool do_update_enables = true );
 
       bool                         svd_F_nonzero;
@@ -245,6 +245,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public Q3Frame
       set < QString >              plot_errors_reference;
 
       bool                         setup_save( QString tag, QString & fname );
+
+      bool                         mode_i_of_t;
 
    private slots:
 

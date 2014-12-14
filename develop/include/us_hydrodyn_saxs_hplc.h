@@ -193,6 +193,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_view;
       QPushButton   *pb_movie;
       QPushButton   *pb_ag;
+      QCheckBox     *cb_eb;
       QPushButton   *pb_rescale;
 
       QPushButton   *pb_stack_push_all;
@@ -383,6 +384,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QButtonGroup * bg_scale_low_high;
       QCheckBox    * cb_scale_sd;
       QCheckBox    * cb_scale_save_intp;
+      QCheckBox    * cb_scale_scroll;
       QLabel       * lbl_scale_q_range;
       mQLineEdit   * le_scale_q_start;
       mQLineEdit   * le_scale_q_end;
@@ -432,6 +434,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       // Guinier
 
       QPushButton   *pb_guinier;
+
+      QCheckBox    * cb_guinier_scroll;
 
       QLabel       * lbl_guinier_q_range;
       mQLineEdit   * le_guinier_q_start;
@@ -487,6 +491,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QwtPlotGrid  * guinier_plot_rg_grid;
 #endif
 
+      int                                 guinier_scroll_pos;
+      void                                guinier_scroll_highlight( int pos );
+
       vector < QString >                  guinier_names;
       map < QString, vector < double > >  guinier_q;
       map < QString, vector < double > >  guinier_q2;
@@ -502,17 +509,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       double                              guinier_it_Imin;
       double                              guinier_it_Imax;
       double                              guinier_it_Irange;
+      map < QString, QString >            guinier_report;
 
 #ifdef QT4
       map < QString, QwtPlotCurve * >     guinier_curves;
       vector < QwtPlotMarker * >          guinier_markers;
       map < QString, QwtPlotCurve * >     guinier_fit_lines; 
       map < QString, QwtPlotCurve * >     guinier_error_curves;
+      map < QString, vector < QwtPlotCurve * > >  guinier_errorbar_curves;
+      map < QString, QwtPlotCurve * >     guinier_rg_curves;
 #else
       map < QString, long >               guinier_curves;
       vector < long >                     guinier_markers;
       map < QString, long >               guinier_fit_lines;
       map < QString, long >               guinier_error_curves;
+      map < QString, vector < long > >    guinier_errorbar_curves;
+      map < QString, long >               guinier_rg_curves;
 #endif
       map < QString, QColor >             guinier_colors;
 
@@ -602,7 +614,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       
       QLineEdit    * le_dummy;
 
-      set < QString > scale_selected;
+      set < QString >     scale_selected;
+      vector < QString >  scale_scroll_selected;
+      int                 scale_scroll_pos;
+      void                scale_scroll_highlight( int pos );
 
       bool          order_ascending;
 
@@ -1003,8 +1018,19 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, vector <double > > scale_I;
       map < QString, vector <double > > scale_e;
       QString                      scale_applied_target;
+      void                         scale_update_plot_errors();
+
+      vector < double >            scale_spline_x;
+      vector < double >            scale_spline_y;
+      vector < double >            scale_spline_y2;
 
       void                         scale_replot();
+
+#ifdef QT4
+      map < QString, QwtPlotCurve * >     scale_plotted_errors;
+#else
+      map < QString, long >               scale_plotted_errors;
+#endif
 
       bool                         check_zi_window         ( QStringList & files );
       void                         check_discard_it_sd_mult( QStringList & files, bool optionally_discard = false );
@@ -1052,6 +1078,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void to_saxs();
       void view();
       void movie();
+      void set_eb();
       void rescale();
       void conc_avg();
       void normalize();
@@ -1176,6 +1203,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void scale_reset                 ();
       void scale_create                ();
       void scale_enables               ();
+      void scale_scroll                ();
 
       void guinier                     ();
       void guinier_replot              ();
@@ -1197,14 +1225,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void guinier_enables             ();
       void guinier_residuals_update    ();
       void guinier_plot_rg_toggle      ();
-      void guinier_rg_t_start_text        ( const QString & );
-      void guinier_rg_t_start_focus       ( bool );
-      void guinier_rg_t_end_text          ( const QString & );
-      void guinier_rg_t_end_focus         ( bool );
-      void guinier_rg_rg_start_text        ( const QString & );
-      void guinier_rg_rg_start_focus       ( bool );
-      void guinier_rg_rg_end_text          ( const QString & );
-      void guinier_rg_rg_end_focus         ( bool );
+      void guinier_rg_t_start_text     ( const QString & );
+      void guinier_rg_t_start_focus    ( bool );
+      void guinier_rg_t_end_text       ( const QString & );
+      void guinier_rg_t_end_focus      ( bool );
+      void guinier_rg_rg_start_text    ( const QString & );
+      void guinier_rg_rg_start_focus   ( bool );
+      void guinier_rg_rg_end_text      ( const QString & );
+      void guinier_rg_rg_end_focus     ( bool );
+      void guinier_scroll              ();
+
 
       void testiq                       ();
       void testiq_q_start_text         ( const QString & );

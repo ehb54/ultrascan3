@@ -545,6 +545,9 @@ void US_Hydrodyn_Saxs_Hplc::testiq()
 
    bool do_rescale = false;
 
+   plot_errors->clear();
+   plot_errors->replot();
+   hide_widgets( plot_errors_widgets, true );
 
    if ( current_mode == MODE_SCALE )
    {
@@ -983,6 +986,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
    guinier_it_t        .clear();
    guinier_it_I        .clear();
 
+   guinier_report      .clear();
+   guinier_rg_curves   .clear();
+
    if ( current_mode == MODE_TESTIQ )
    {
       if ( !testiq_make() )
@@ -1201,6 +1207,8 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
    }
 
    disable_all();
+   cb_guinier_scroll->setChecked( false );
+   guinier_scroll_pos = -1;
    mode_select( MODE_GUINIER );
    plot_dist->hide();
    ShowHide::hide_widgets( guinier_errors_widgets );
@@ -1212,6 +1220,275 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
    guinier_plot->replot();
    guinier_residuals( true );
    guinier_plot_errors->replot();
+   guinier_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::guinier_scroll_highlight( int pos )
+{
+   QwtSymbol sym;
+
+   QString showname = guinier_names[ pos ];
+   QString hidename = guinier_names[ guinier_scroll_pos ];
+
+#ifndef QT4
+   //   guinier_plot->setCurveStyle( guinier_curves[ hidename ], QwtCurve::NoCurve );
+   //   guinier_plot->setCurveStyle( guinier_curves[ showname ], QwtCurve::Lines );
+
+   sym = guinier_plot->curveSymbol( guinier_curves[ hidename ] );
+   sym.setStyle( QwtSymbol::None );
+   guinier_plot->setCurveSymbol( guinier_curves[ hidename ], sym );
+
+   sym = guinier_plot->curveSymbol( guinier_curves[ showname ] );
+   sym.setStyle( QwtSymbol::Diamond );
+   guinier_plot->setCurveSymbol( guinier_curves[ showname ], sym );
+
+   if ( guinier_errorbar_curves.count( hidename ) )
+   {
+      for ( int j = 0; j < (int) guinier_errorbar_curves[ hidename ].size(); ++j )
+      {
+         guinier_plot->setCurveStyle( guinier_errorbar_curves[ hidename ][ j ], QwtCurve::NoCurve );
+      }
+   }
+
+   if ( guinier_errorbar_curves.count( showname ) )
+   {
+      for ( int j = 0; j < (int) guinier_errorbar_curves[ showname ].size(); ++j )
+      {
+         guinier_plot->setCurveStyle( guinier_errorbar_curves[ showname ][ j ], QwtCurve::Lines );
+      }
+   }
+
+   guinier_plot->setCurveStyle( guinier_fit_lines[ hidename ], QwtCurve::NoCurve );
+   guinier_plot->setCurveStyle( guinier_fit_lines[ showname ], QwtCurve::Lines );
+
+   if ( guinier_error_curves.count( hidename ) )
+   {
+      guinier_plot_errors->setCurveStyle( guinier_error_curves[ hidename ], QwtCurve::NoCurve );
+   }
+   if ( guinier_error_curves.count( showname ) )
+   {
+      guinier_plot_errors->setCurveStyle( guinier_error_curves[ showname ], QwtCurve::Sticks );
+   }
+
+   if ( guinier_rg_curves.count( hidename ) )
+   {
+      sym = guinier_plot_rg->curveSymbol( guinier_rg_curves[ hidename ] );
+      sym.setStyle( QwtSymbol::Diamond );
+      guinier_plot_rg->setCurveSymbol( guinier_rg_curves[ hidename ], sym );
+   }
+   if ( guinier_rg_curves.count( showname ) )
+   {
+      sym = guinier_plot_rg->curveSymbol( guinier_rg_curves[ showname ] );
+      sym.setStyle( QwtSymbol::Rect );
+      guinier_plot_rg->setCurveSymbol( guinier_rg_curves[ showname ], sym );
+   }
+#else
+   // guinier_curves[ hidename ]->setStyle( QwtPlotCurve::NoCurve );
+   // guinier_curves[ showname ]->setStyle( QwtPlotCurve::Lines );
+
+   sym = guinier_curves[ hidename ]->symbol();
+   sym.setStyle( QwtSymbol::NoSymbol );
+   guinier_curves[ hidename ]->setSymbol( sym );
+
+   sym = guinier_curves[ showname ]->symbol();
+   sym.setStyle( QwtSymbol::Diamond );
+   guinier_curves[ showname ]->setSymbol( sym );
+
+   if ( guinier_errorbar_curves.count( hidename ) )
+   {
+      for ( int j = 0; j < (int) guinier_errorbar_curves[ hidename ].size(); ++j )
+      {
+         guinier_errorbar_curves[ hidename ][ j ]->setStyle( QwtPlotCurve::NoCurve );
+      }
+   }
+
+   if ( guinier_errorbar_curves.count( showname ) )
+   {
+      for ( int j = 0; j < (int) guinier_errorbar_curves[ showname ].size(); ++j )
+      {
+         guinier_errorbar_curves[ showname ][ j ]->setStyle( QwtPlotCurve::Lines );
+      }
+   }
+
+   guinier_fit_lines[ hidename ]->setStyle( QwtPlotCurve::NoCurve );
+   guinier_fit_lines[ showname ]->setStyle( QwtPlotCurve::Lines );
+
+   if ( guinier_error_curves.count( hidename ) )
+   {
+      guinier_error_curves[ hidename ]->setStyle( QwtPlotCurve::NoCurve );
+   }
+   if ( guinier_error_curves.count( showname ) )
+   {
+      guinier_error_curves[ showname ]->setStyle( QwtPlotCurve::Sticks );
+   }
+
+   if ( guinier_rg_curves.count( hidename ) )
+   {
+      sym = guinier_rg_curves[ hidename ]->symbol();
+      sym.setStyle( QwtSymbol::Diamond );
+      guinier_rg_curves[ hidename ]->setSymbol( sym );
+   }
+   if ( guinier_rg_curves.count( showname ) )
+   {
+      sym = guinier_rg_curves[ showname ]->symbol();
+      sym.setStyle( QwtSymbol::Rect );
+      guinier_rg_curves[ showname ]->setSymbol( sym );
+   }
+
+#endif
+   guinier_scroll_pos = pos;
+   guinier_plot       ->replot();
+   guinier_plot_errors->replot();
+   guinier_plot_rg    ->replot();
+   if ( guinier_report.count( showname ) )
+   {
+      editor_msg( "dark blue", guinier_report[ showname ] );
+   } else {
+      editor_msg( "dark red", QString( tr( "No Guinier information for %1" ) ).arg( showname ) );
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::guinier_scroll()
+{
+   //   qDebug( "--- guinier_scroll() ---" );
+   QwtSymbol sym;
+
+   if ( le_last_focus && !cb_guinier_scroll->isChecked() )
+   {
+      le_last_focus->clearFocus();
+      cb_guinier_scroll->setChecked( true );
+   }
+
+   if ( cb_guinier_scroll->isChecked() )
+   {
+      //      qDebug( "--- guinier_scroll():isChecked ---" );
+      le_last_focus = ( mQLineEdit * )0;
+      qwtw_wheel->setEnabled( false );
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+
+      for ( int i = 0; i < (int) guinier_names.size(); ++i )
+      {
+         QString name = guinier_names[ i ];
+#ifndef QT4
+         // guinier_plot->setCurveStyle( guinier_curves[ name ], QwtCurve::NoCurve );
+
+         sym = guinier_plot->curveSymbol( guinier_curves[ name ] );
+         sym.setStyle( QwtSymbol::None );
+         guinier_plot->setCurveSymbol( guinier_curves[ name ], sym );
+         if ( guinier_errorbar_curves.count( name ) )
+         {
+            for ( int j = 0; j < (int) guinier_errorbar_curves[ name ].size(); ++j )
+            {
+               guinier_plot->setCurveStyle( guinier_errorbar_curves[ name ][ j ], QwtCurve::NoCurve );
+            }
+         }
+
+         guinier_plot->setCurveStyle( guinier_fit_lines[ name ], QwtCurve::NoCurve );
+
+         guinier_plot_errors->setCurveStyle( guinier_error_curves[ name ], QwtCurve::NoCurve );
+
+#else
+         // guinier_curves[ name ]->setStyle( QwtPlotCurve::NoCurve );
+
+         sym = guinier_curves[ name ]->symbol();
+         sym.setStyle( QwtSymbol::NoSymbol );
+         guinier_curves[ name ]->setSymbol( sym );
+
+         if ( guinier_errorbar_curves.count( name ) )
+         {
+            for ( int j = 0; j < (int) guinier_errorbar_curves[ name ].size(); ++j )
+            {
+               guinier_errorbar_curves[ name ][ j ]->setStyle( QwtPlotCurve::NoCurve );
+            }
+         }
+
+         guinier_fit_lines[ name ]->setStyle( QwtPlotCurve::NoCurve );
+
+         guinier_error_curves[ name ]->setStyle( QwtPlotCurve::NoCurve );
+#endif
+      }
+      if ( guinier_scroll_pos < 0 )
+      {
+         guinier_scroll_pos = 0;
+      } 
+      if ( guinier_scroll_pos >= (int) guinier_names.size() )
+      {
+         guinier_scroll_pos = (int) guinier_names.size() - 1;
+      }
+
+      qwtw_wheel->setRange( 0, guinier_names.size() - 1, 1 );
+      qwtw_wheel->setValue( guinier_scroll_pos );
+      lbl_wheel_pos->setText( QString( "%1" ).arg( guinier_names[ guinier_scroll_pos ] ) );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setEnabled( true );
+      guinier_scroll_highlight( guinier_scroll_pos );
+   } else {
+      // go thru all displayed curves, turn on
+      le_last_focus = ( mQLineEdit * )0;
+      qwtw_wheel->setEnabled( false );
+      lbl_wheel_pos->setText( "" );
+
+      for ( int i = 0; i < (int) guinier_names.size(); ++i )
+      {
+         QString name = guinier_names[ i ];
+#ifndef QT4
+         // guinier_plot->setCurveStyle( guinier_curves[ name ], QwtCurve::Lines );
+
+         sym = guinier_plot->curveSymbol( guinier_curves[ name ] );
+         sym.setStyle( QwtSymbol::Diamond );
+         guinier_plot->setCurveSymbol( guinier_curves[ name ], sym );
+         if ( guinier_errorbar_curves.count( name ) )
+         {
+            for ( int j = 0; j < (int) guinier_errorbar_curves[ name ].size(); ++j )
+            {
+               guinier_plot->setCurveStyle( guinier_errorbar_curves[ name ][ j ], QwtCurve::Lines );
+            }
+         }
+
+         guinier_plot->setCurveStyle( guinier_fit_lines[ name ], QwtCurve::Lines );
+         if ( guinier_error_curves.count( name ) )
+         {
+            guinier_plot_errors->setCurveStyle( guinier_error_curves[ name ], QwtCurve::Sticks );
+         }
+
+         if ( guinier_rg_curves.count( name ) )
+         {
+            sym = guinier_plot_rg->curveSymbol( guinier_rg_curves[ name ] );
+            sym.setStyle( QwtSymbol::Diamond );
+            guinier_plot_rg->setCurveSymbol( guinier_rg_curves[ name ], sym );
+         }
+#else
+         // guinier_curves[ name ]->setStyle(  QwtPlotCurve::Lines );
+
+         sym = guinier_curves[ name ]->symbol();
+         sym.setStyle( QwtSymbol::Diamond );
+         guinier_curves[ name ]->setSymbol( sym );
+         if ( guinier_errorbar_curves.count( name ) )
+         {
+            for ( int j = 0; j < (int) guinier_errorbar_curves[ name ].size(); ++j )
+            {
+               guinier_errorbar_curves[ name ][ j ]->setStyle( QwtPlotCurve::Lines );
+            }
+         }
+
+         guinier_fit_lines[ name ]->setStyle( QwtPlotCurve::Lines );
+         if ( guinier_error_curves.count( name ) )
+         {
+             guinier_error_curves[ name ]->setStyle( QwtPlotCurve::Sticks );
+         }
+
+         if ( guinier_rg_curves.count( name ) )
+         {
+             sym = guinier_rg_curves[ name ]->symbol();
+             sym.setStyle( QwtSymbol::Diamond );
+             guinier_rg_curves[ name ]->setSymbol( sym );
+         }
+#endif
+      }
+      guinier_plot       ->replot();
+      guinier_plot_errors->replot();
+      guinier_plot_rg    ->replot();
+   }
    guinier_enables();
 }
 
@@ -1436,13 +1713,13 @@ void US_Hydrodyn_Saxs_Hplc::guinier_residuals( bool reset )
       } else {
 #ifdef QT4
          curve = new QwtPlotCurve( "errors" );
-         curve->setStyle( QwtPlotCurve::Lines );
+         //         curve->setStyle( QwtPlotCurve::Lines );
          curve->setPen( use_pen );
          curve->setStyle( QwtPlotCurve::Sticks );
          curve->attach( guinier_plot_errors );
 #else
          curve = guinier_plot_errors->insertCurve( "errors" );
-         guinier_plot_errors->setCurveStyle( curve, QwtCurve::Lines );
+         //         guinier_plot_errors->setCurveStyle( curve, QwtCurve::Lines );
          guinier_plot_errors->setCurvePen( curve, use_pen );
          guinier_plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
 #endif
@@ -1536,9 +1813,12 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
    double rg_sd_max = -1e99;
 
    guinier_plot_rg->clear();
+   guinier_rg_curves.clear();
    QwtSymbol rg_sym;
    rg_sym.setStyle( QwtSymbol::Diamond );
-   rg_sym.setSize( 10 );
+   rg_sym.setSize( 4 * use_line_width + 1 );
+
+   guinier_report     .clear();
 
    double posmin = 1e99;
    double posmax = -1e99;
@@ -1637,11 +1917,14 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          {
             if ( (int) usu->wave[ "hplc" ].q.size() - (int) pts_decrease < 5 )
             {
-               editor_msg( "dark red", QString( tr( "%1 too few points left %2 after %3 points removed for qRgmax limit" ) )
-                           .arg( this_name )
-                           .arg( (int) usu->wave[ "hplc" ].q.size() - (int) pts_decrease )
-                           .arg( pts_decrease ) 
-                           );
+               if ( !cb_guinier_scroll->isChecked() || i == guinier_scroll_pos )
+               {
+                  editor_msg( "dark red", QString( tr( "%1 too few points left %2 after %3 points removed for qRgmax limit" ) )
+                              .arg( this_name )
+                              .arg( (int) usu->wave[ "hplc" ].q.size() - (int) pts_decrease )
+                              .arg( pts_decrease ) 
+                              );
+               }
                break;
             }
 
@@ -1680,7 +1963,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
                              );
          if ( !computed_rg )
          {
-            editor_msg( "dark red", QString( "%1 could not compute Rg" ).arg( this_name ) );
+            if ( !cb_guinier_scroll->isChecked() || i == guinier_scroll_pos )
+            {
+               editor_msg( "dark red", QString( "%1 could not compute Rg" ).arg( this_name ) );
+            }
             break;
          }
 
@@ -1792,6 +2078,8 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
             tr( use_SD_weighting ? "SD  on" : "SD OFF" )
             ;
 
+         guinier_report[ this_name ] = report;
+
          guinier_a[ this_name ] = a;
          guinier_b[ this_name ] = b;
          guinier_x[ this_name ].push_back( guinier_q2[ this_name ][ 0 ] );
@@ -1805,6 +2093,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          guinier_x[ this_name ].push_back( use_q2endvis );
          guinier_y[ this_name ].push_back( exp( a + b * guinier_q2[ this_name ][ 0 ] ) );
          guinier_y[ this_name ].push_back( exp( a + b * use_q2endvis ) );
+
 
          if ( !isnan( Rg ) )
          {
@@ -1849,6 +2138,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
                guinier_plot_rg->setCurveSymbol( curve, rg_sym );
                guinier_plot_rg->setCurveData( curve, & pos, & Rg, 1 );
 #endif
+               guinier_rg_curves[ this_name ] = curve;
                rg_x .push_back( pos );
                rg_y .push_back( Rg );
             }
@@ -1879,7 +2169,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
             }
          }
 
-         editor_msg( "dark blue", report );
+         if ( !cb_guinier_scroll->isChecked() || i == guinier_scroll_pos )
+         {
+             editor_msg( "dark blue", report );
+         }
          // qDebug( QString( "guinier a %1 b %2" ).arg( a ).arg( b ) );
          // US_Vector::printvector2( "guinier x,y:", guinier_x[ this_name ], guinier_y[ this_name ] );
       }
@@ -2250,6 +2543,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_replot()
    guinier_curves.clear();
    guinier_markers.clear();
    guinier_fit_lines.clear();
+   guinier_errorbar_curves.clear();
    guinier_plot->clear();
    guinier_add_marker( guinier_plot,        le_guinier_q2_start  ->text().toDouble(), Qt::red, tr( "Start") );
    guinier_add_marker( guinier_plot,        le_guinier_q2_end    ->text().toDouble(), Qt::red, tr( "End"  ), Qt::AlignLeft | Qt::AlignTop );
@@ -2394,6 +2688,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_replot()
                                         2 );
             guinier_plot->setCurvePen( curve, use_pen );
 #endif
+            guinier_errorbar_curves[ it->first ].push_back( curve );
          }
       }
    }        
@@ -2408,10 +2703,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_enables()
    pb_guinier             -> setEnabled( false );
    pb_errors              -> setEnabled( true );
    pb_wheel_cancel        -> setEnabled( true );
-   le_guinier_q_start     -> setEnabled( true );
-   le_guinier_q_end       -> setEnabled( true );
-   le_guinier_q2_start    -> setEnabled( true );
-   le_guinier_q2_end      -> setEnabled( true );
+   le_guinier_q_start     -> setEnabled( true ); // !cb_guinier_scroll->isChecked() );
+   le_guinier_q_end       -> setEnabled( true ); // !cb_guinier_scroll->isChecked() );
+   le_guinier_q2_start    -> setEnabled( true ); // !cb_guinier_scroll->isChecked() );
+   le_guinier_q2_end      -> setEnabled( true ); // !cb_guinier_scroll->isChecked() );
    le_guinier_delta_start -> setEnabled( true );
    le_guinier_delta_end   -> setEnabled( true );
    le_guinier_qrgmax      -> setEnabled( true );
@@ -2529,6 +2824,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_start_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_guinier_q_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( guinier_minq, guinier_maxq,
                             ( guinier_maxq - guinier_minq ) / UHSH_G_WHEEL_RES );
@@ -2546,6 +2842,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_end_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_guinier_q_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( guinier_minq, guinier_maxq,
                             ( guinier_maxq - guinier_minq ) / UHSH_G_WHEEL_RES );
@@ -2629,6 +2926,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_start_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_guinier_q2_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( guinier_minq2, guinier_maxq2,
                             ( guinier_maxq2 - guinier_minq2 ) / UHSH_G_WHEEL_RES );
@@ -2646,6 +2944,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_end_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_guinier_q2_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( guinier_minq2, guinier_maxq2,
                             ( guinier_maxq2 - guinier_minq2 ) / UHSH_G_WHEEL_RES );
@@ -2699,6 +2998,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_delta_start_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_guinier_delta_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( 0e0, guinier_maxq2, guinier_maxq2 / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -2715,6 +3015,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_delta_end_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_guinier_delta_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( 0e0, guinier_maxq2, guinier_maxq2 / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -2769,6 +3070,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_start_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_guinier_rg_t_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( guinier_mint, guinier_maxt,
                             ( guinier_maxt - guinier_mint ) / UHSH_G_WHEEL_RES );
@@ -2786,6 +3088,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_end_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_guinier_rg_t_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( guinier_mint, guinier_maxt,
                             ( guinier_maxt - guinier_mint ) / UHSH_G_WHEEL_RES );
@@ -2843,6 +3146,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_start_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_guinier_rg_rg_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( 0, UHSH_MAX_RG,
                             UHSH_MAX_RG  / UHSH_G_WHEEL_RES );
@@ -2860,6 +3164,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_end_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_guinier_rg_rg_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( 0, UHSH_MAX_RG,
                             UHSH_MAX_RG  / UHSH_G_WHEEL_RES );
@@ -2872,6 +3177,11 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_end_focus( bool hasFocus )
 // --- baseline ---
 void US_Hydrodyn_Saxs_Hplc::baseline_start()
 {
+   if ( axis_y_log )
+   {
+      axis_y();
+   }
+
    org_baseline_start_s     = le_baseline_start_s    ->text().toDouble();
    org_baseline_start       = le_baseline_start      ->text().toDouble();
    org_baseline_start_e     = le_baseline_start_e    ->text().toDouble();
@@ -4150,6 +4460,9 @@ void US_Hydrodyn_Saxs_Hplc::scale()
    scale_I           .clear();
    scale_e           .clear();
    scale_last_created.clear();
+   scale_spline_x    .clear();
+   scale_spline_y    .clear();
+   scale_spline_y2   .clear();
 
    if ( current_mode == MODE_TESTIQ )
    {
@@ -4265,6 +4578,9 @@ void US_Hydrodyn_Saxs_Hplc::scale()
    //         );
 
    disable_all();
+   cb_scale_scroll->setChecked( false );
+   scale_scroll_pos = -1;
+
    mode_select( MODE_SCALE );
 
    if ( testiq_active )
@@ -4285,10 +4601,254 @@ void US_Hydrodyn_Saxs_Hplc::scale()
    gauss_add_marker( le_scale_q_start  ->text().toDouble(), Qt::red, tr( "Start") );
    gauss_add_marker( le_scale_q_end    ->text().toDouble(), Qt::red, tr( "End"  ), Qt::AlignLeft | Qt::AlignTop );
    plot_dist->replot();
+
+   if ( plot_errors_zoomer )
+   {
+      delete plot_errors_zoomer;
+      plot_errors_zoomer = (ScrollZoomer *) 0;
+   }
+
+   scale_plotted_errors.clear();
+   plot_errors->clear();
+   plot_errors->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc::scale_scroll_highlight( int pos )
+{
+   // if ( pos >= (int) scale_scroll_selected.size() )
+   // {
+   //    pos = (int) scale_scroll_selected.size() - 1;
+   // }
+#ifndef QT4
+   plot_dist->setCurveStyle( plotted_curves[ scale_scroll_selected[ scale_scroll_pos ] ], QwtCurve::NoCurve );
+   plot_dist->setCurveStyle( plotted_curves[ scale_scroll_selected[ pos ] ], QwtCurve::Lines );
+   if ( scale_plotted_errors.count( scale_scroll_selected[ scale_scroll_pos ] ) )
+   {
+      plot_errors->setCurveStyle( scale_plotted_errors[ scale_scroll_selected[ scale_scroll_pos ] ], QwtCurve::NoCurve );
+   }
+   if ( scale_plotted_errors.count( scale_scroll_selected[ pos ] ) )
+   {
+      plot_errors->setCurveStyle( scale_plotted_errors[ scale_scroll_selected[ pos ] ], QwtCurve::Lines );
+   }
+#else
+   plotted_curves[ scale_scroll_selected[ scale_scroll_pos ] ]->setStyle( QwtPlotCurve::NoCurve );
+   plotted_curves[ scale_scroll_selected[ pos ] ]->setStyle( QwtPlotCurve::Lines );
+   if ( scale_plotted_errors.count( scale_scroll_selected[ scale_scroll_pos ] ) )
+   {
+      scale_plotted_errors[ scale_scroll_selected[ scale_scroll_pos ] ]->setStyle( QwtPlotCurve::NoCurve );
+   }
+   if ( scale_plotted_errors.count( scale_scroll_selected[ pos ] ) )
+   {
+      scale_plotted_errors[ scale_scroll_selected[ pos ] ]->setStyle( QwtPlotCurve::Lines );
+   }
+#endif
+   plot_dist->replot();
+   scale_scroll_pos = pos;
+   plot_errors->replot();
+}
+
+void US_Hydrodyn_Saxs_Hplc::scale_scroll()
+{
+   // qDebug( "--- scale_scroll() ---" );
+   if ( le_last_focus && !cb_scale_scroll->isChecked() )
+   {
+      le_last_focus->clearFocus();
+      cb_scale_scroll->setChecked( true );
+   }
+
+   if ( cb_scale_scroll->isChecked() )
+   {
+      le_last_focus = ( mQLineEdit * )0;
+      scale_scroll_selected.clear();
+      for ( set < QString >::iterator it = scale_selected.begin();
+            it != scale_selected.end();
+            ++it )
+      {
+         scale_scroll_selected.push_back( *it );
+#ifndef QT4
+         plot_dist->setCurveStyle( plotted_curves[ *it ], QwtCurve::NoCurve );
+         plot_errors->setCurveStyle( scale_plotted_errors[ *it ], QwtCurve::NoCurve );
+#else
+         plotted_curves[ *it ]->setStyle( QwtPlotCurve::NoCurve );
+         scale_plotted_errors[ *it ]->setStyle( QwtPlotCurve::NoCurve );
+#endif
+      }
+      if ( scale_scroll_pos < 0 )
+      {
+         scale_scroll_pos = 0;
+      } 
+      if ( scale_scroll_pos >= (int) scale_scroll_selected.size() )
+      {
+         scale_scroll_pos = (int) scale_scroll_selected.size() - 1;
+      }
+
+      qwtw_wheel->setEnabled( false );
+      qwtw_wheel->setRange( 0, scale_scroll_selected.size() - 1, 1 );
+      qwtw_wheel->setValue( scale_scroll_pos );
+      lbl_wheel_pos->setText( QString( "%1" ).arg( scale_scroll_selected[ scale_scroll_pos ] ) );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setEnabled( true );
+      scale_scroll_highlight( scale_scroll_pos );
+   } else {
+      // go thru all displayed curves, turn on
+      for ( set < QString >::iterator it = scale_selected.begin();
+            it != scale_selected.end();
+            ++it )
+      {
+#ifndef QT4
+         plot_dist->setCurveStyle( plotted_curves[ *it ], QwtCurve::Lines );
+         if ( scale_plotted_errors.count( *it ) )
+         {
+            plot_errors->setCurveStyle( scale_plotted_errors[ *it ], QwtCurve::Lines );
+         }
+#else
+         plotted_curves[ *it ]->setStyle( QwtPlotCurve::Lines );
+         if ( scale_plotted_errors.count( *it ) )
+         {
+             scale_plotted_errors[ *it ]->setStyle( QwtPlotCurve::Lines );
+         }
+#endif
+      }
+      lbl_wheel_pos->setText( "" );
+      le_last_focus = ( mQLineEdit * )0;
+      qwtw_wheel->setEnabled( false );
+      plot_dist->replot();
+      plot_errors->replot();
+   }
+   scale_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::scale_update_plot_errors()
+{
+   // qDebug( "--- scale_update_plot_errors() ---" );
+
+   if ( !scale_applied || !scale_spline_x.size() )
+   {
+      scale_plotted_errors.clear();
+      plot_errors->clear();
+      plot_errors->replot();
+      return;
+   }
+
+   plot_errors->clear();
+
+   double q_min = scale_q[ scale_applied_target ][ 0 ];
+   double q_max = scale_q[ scale_applied_target ].back();
+
+   // double qs_min = scale_spline_x[ 0 ];
+   // double qs_max = scale_spline_x.back();
+
+   vector < double > this_q;
+   vector < double > this_diff;
+   double    y;
+
+   // qDebug( US_Vector::qs_vector2( QString( "spline avg target %1" ).arg( scale_applied_target ), scale_spline_x, scale_spline_y ) );
+
+   double diff_ymin = 1e99;
+   double diff_ymax = -1e99;
+
+   // qDebug( QString( "q  min %1 max %2" ).arg( q_min ).arg( q_max ) );
+   // qDebug( QString( "qs min %1 max %2" ).arg( qs_min ).arg( qs_max ) );
+
+   bool hide = cb_scale_scroll->isChecked();
+
+   for ( set < QString >::iterator it = scale_selected.begin();
+         it != scale_selected.end();
+         ++it )
+   {
+      this_q   .clear();
+      this_diff.clear();
+
+      for ( int i = 0; i < (int) scale_q[ *it ].size(); ++i )
+      {
+         if ( scale_q[ *it ][ i ] >= q_min &&
+              scale_q[ *it ][ i ] <= q_max )
+         {
+            if ( usu->apply_natural_spline( scale_spline_x,
+                                            scale_spline_y,
+                                            scale_spline_y2,
+                                            scale_q[ *it ][ i ],
+                                            y ) )
+            {
+               this_q   .push_back( scale_q[ *it ][ i ] );
+               this_diff.push_back( y - scale_I[ *it ][ i ] );
+               if ( diff_ymin > this_diff.back() )
+               {
+                  diff_ymin = this_diff.back();
+               }
+               if ( diff_ymax < this_diff.back() )
+               {
+                  diff_ymax = this_diff.back();
+               }
+            }
+         }
+      }
+
+#ifdef QT4
+      QwtPlotCurve *curve = new QwtPlotCurve( *it );
+      curve->setStyle( hide ? QwtPlotCurve::NoCurve : QwtPlotCurve::Lines );
+      curve->setPen( QPen( plot_colors[ f_pos[ *it ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+      curve->setData(
+                     (double *)&this_q   [ 0 ],
+                     (double *)&this_diff[ 0 ],
+                     this_q.size()
+                     );
+      curve->attach( plot_errors );
+#else
+      long curve;
+      curve = plot_errors->insertCurve( *it );
+      plot_errors->setCurveStyle( curve, hide ? QwtPlotCurve::NoCurve : QwtPlotCurve::Lines );
+      plot_errors->setCurvePen( curve, QPen( plot_colors[ f_pos[ *it ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+      plot_errors->setCurveData( curve,
+                                 (double *)&this_q   [ 0 ],
+                                 (double *)&this_diff[ 0 ],
+                                 this_q.size()
+                                 );
+#endif
+      scale_plotted_errors[ *it ] = curve;
+      // qDebug( US_Vector::qs_vector2( QString( "diff plot %1" ).arg( *it ), this_q, this_diff ) );
+   }
+
+   plot_errors->setAxisScale( QwtPlot::yLeft  , diff_ymin * 1.1e0 , diff_ymax * 1.1e0 );
+
+   if ( plot_dist_zoomer )
+   {
+#ifndef QT4
+      double minx = plot_dist_zoomer->zoomRect().x1();
+      double maxx = plot_dist_zoomer->zoomRect().x2();
+#else
+      double minx = plot_dist_zoomer->zoomRect().left();
+      double maxx = plot_dist_zoomer->zoomRect().right();
+#endif
+      plot_errors->setAxisScale( QwtPlot::xBottom, minx, maxx );
+   } else {
+      plot_errors->setAxisScale( QwtPlot::xBottom, q_min, q_max );
+   }
+
+   if ( plot_errors_zoomer )
+   {
+      delete plot_errors_zoomer;
+      plot_errors_zoomer = (ScrollZoomer *) 0;
+   }
+
+   plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
+   plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
+   plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+   // connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
+
+   if ( hide )
+   {
+      scale_scroll_highlight( scale_scroll_pos );
+   } else {
+      plot_errors->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::scale_enables()
 {
+   pb_errors             ->setEnabled( true );
    pb_wheel_start        ->setEnabled( false );
    pb_wheel_cancel       ->setEnabled( true );
    rb_scale_high         ->setEnabled( true );
@@ -4299,6 +4859,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_enables()
    pb_scale_reset        ->setEnabled( true );
    pb_scale_apply        ->setEnabled( true );
    pb_scale_create       ->setEnabled( scale_applied );
+   cb_scale_scroll       ->setEnabled( true );
 }
 
 QString US_Hydrodyn_Saxs_Hplc::scale_get_target( bool do_msg )
@@ -4373,6 +4934,8 @@ QString US_Hydrodyn_Saxs_Hplc::scale_get_target( bool do_msg )
 
 void US_Hydrodyn_Saxs_Hplc::scale_apply()
 {
+   // qDebug( "---- scale apply ----" );
+
    QString target = scale_get_target( true );
    if ( target.isEmpty() )
    {
@@ -4496,6 +5059,8 @@ void US_Hydrodyn_Saxs_Hplc::scale_apply()
    map < QString, double > k;
    map < QString, double > chi2;
 
+   vector < double > average_scaled_I = scale_I[ target ];
+
    for ( set < QString >::iterator it = scale_selected.begin();
          it != scale_selected.end();
          ++it )
@@ -4516,6 +5081,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_apply()
          k   [ *it ] = 1e0;
          chi2[ *it ] = 9e99;
 
+         
          if ( our_saxs_options->iqq_scale_nnls )
          {
             usu->nnls_fit( 
@@ -4543,8 +5109,24 @@ void US_Hydrodyn_Saxs_Hplc::scale_apply()
                                  );
             }
          }
+
+         for ( int i = 0; i < (int) average_scaled_I.size(); ++i )
+         {
+            average_scaled_I[ i ] += scale_I[ *it ][ i ] * k[ *it ];
+         }
       }
    }
+   for ( int i = 0; i < (int) average_scaled_I.size(); ++i )
+   {
+      average_scaled_I[ i ] /= (double) scale_selected.size();
+   }
+
+   // qDebug( US_Vector::qs_vector2( "scale_q[ target ], average_scaled_I", scale_q[ target ], average_scaled_I ) );
+
+   scale_spline_x = scale_q[ target ];
+   scale_spline_y = average_scaled_I;
+
+   usu->natural_spline( scale_spline_x, scale_spline_y, scale_spline_y2 );
 
    QString fit_msg = "";
 
@@ -4563,6 +5145,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_apply()
                scale_e[ *it ][ i ] *= k[ *it ];
             }
          }
+         // qDebug( US_Vector::qs_vector2( QString( "%1 scale_q, scale_I" ).arg( *it ), scale_q[ *it ], scale_I[ *it ] ) );
          fit_msg += QString( "%1 : scale %2 " ).arg( *it ).arg( k[ *it ] );
          if ( do_chi2_fitting )
          {
@@ -4585,6 +5168,8 @@ void US_Hydrodyn_Saxs_Hplc::scale_apply()
             fit_msg += QString( "RMSD = %1" ).arg( chi2[ *it ], 5 );
          }
          fit_msg += "\n";
+      // } else {
+      //    qDebug( US_Vector::qs_vector2( QString( "%1 scale_q, scale_I" ).arg( *it ), scale_q[ *it ], scale_I[ *it ] ) );
       }         
    }
 
@@ -4595,6 +5180,8 @@ void US_Hydrodyn_Saxs_Hplc::scale_apply()
    scale_applied_q_max  = q_max;
    scale_applied_target = target;
    scale_applied        = true;
+
+   scale_update_plot_errors();
 
    scale_enables();
 }
@@ -4618,6 +5205,13 @@ void US_Hydrodyn_Saxs_Hplc::scale_reset()
    scale_replot();
    scale_applied = false;
    scale_enables();
+
+   scale_spline_x    .clear();
+   scale_spline_y    .clear();
+   scale_spline_y2   .clear();
+
+   plot_errors->clear();
+   plot_errors->replot();
 }
 
 void US_Hydrodyn_Saxs_Hplc::scale_replot()
@@ -4780,6 +5374,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_q_start_focus( bool hasFocus )
    }
    if ( hasFocus && scale_q.count( wheel_file ) )
    {
+      le_last_focus = le_scale_q_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( scale_q[ wheel_file ][ 0 ], scale_q[ wheel_file ].back(), 
                             ( scale_q[ wheel_file ].back() - scale_q[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
@@ -4797,6 +5392,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_q_end_focus( bool hasFocus )
    }
    if ( hasFocus && scale_q.count( wheel_file ) )
    {
+      le_last_focus = le_scale_q_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( scale_q[ wheel_file ][ 0 ], scale_q[ wheel_file ].back(), 
                             ( scale_q[ wheel_file ].back() - scale_q[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
@@ -4838,79 +5434,95 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
 
    case MODE_GUINIER :
       {
-         if ( le_guinier_q_start->hasFocus() )
+         if ( !le_last_focus && cb_guinier_scroll->isChecked() )
          {
-            le_last_focus = le_guinier_q_start;
-         }
-         if ( le_guinier_q_end->hasFocus() )
-         {
-            le_last_focus = le_guinier_q_end;
-         }
-         if ( le_guinier_q2_start->hasFocus() )
-         {
-            le_last_focus = le_guinier_q2_start;
-         }
-         if ( le_guinier_q2_end->hasFocus() )
-         {
-            le_last_focus = le_guinier_q2_end;
-         }
-         if ( le_guinier_delta_start->hasFocus() )
-         {
-            le_last_focus = le_guinier_delta_start;
-         }
-         if ( le_guinier_delta_end->hasFocus() )
-         {
-            le_last_focus = le_guinier_delta_end;
-         }
-         if ( le_guinier_rg_t_start->hasFocus() )
-         {
-            le_last_focus = le_guinier_rg_t_start;
-         }
-         if ( le_guinier_rg_t_end->hasFocus() )
-         {
-            le_last_focus = le_guinier_rg_t_end;
-         }
-         if ( le_guinier_rg_rg_start->hasFocus() )
-         {
-            le_last_focus = le_guinier_rg_rg_start;
-         }
-         if ( le_guinier_rg_rg_end->hasFocus() )
-         {
-            le_last_focus = le_guinier_rg_rg_end;
-         }
+         // qDebug( QString( "guinier scroll is checked value %1" ).arg( pos ) );
+            lbl_wheel_pos->setText( QString( "%1" ).arg( guinier_names[ pos ] ) );
+            guinier_scroll_highlight( pos );
+         } else {
 
-         if ( !le_last_focus )
-         {
-            // cout << "aw: no last focus in guinier mode\n";
-            return;
+            if ( le_guinier_q_start->hasFocus() )
+            {
+               le_last_focus = le_guinier_q_start;
+            }
+            if ( le_guinier_q_end->hasFocus() )
+            {
+               le_last_focus = le_guinier_q_end;
+            }
+            if ( le_guinier_q2_start->hasFocus() )
+            {
+               le_last_focus = le_guinier_q2_start;
+            }
+            if ( le_guinier_q2_end->hasFocus() )
+            {
+               le_last_focus = le_guinier_q2_end;
+            }
+            if ( le_guinier_delta_start->hasFocus() )
+            {
+               le_last_focus = le_guinier_delta_start;
+            }
+            if ( le_guinier_delta_end->hasFocus() )
+            {
+               le_last_focus = le_guinier_delta_end;
+            }
+            if ( le_guinier_rg_t_start->hasFocus() )
+            {
+               le_last_focus = le_guinier_rg_t_start;
+            }
+            if ( le_guinier_rg_t_end->hasFocus() )
+            {
+               le_last_focus = le_guinier_rg_t_end;
+            }
+            if ( le_guinier_rg_rg_start->hasFocus() )
+            {
+               le_last_focus = le_guinier_rg_rg_start;
+            }
+            if ( le_guinier_rg_rg_end->hasFocus() )
+            {
+               le_last_focus = le_guinier_rg_rg_end;
+            }
+
+            if ( !le_last_focus )
+            {
+               // qDebug( "aw: no last focus in guinier mode\n" );
+               return;
+            }
+
+            le_last_focus->setText( QString( "%1" ).arg( pos ) );
+
+            lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
          }
-
-         le_last_focus->setText( QString( "%1" ).arg( pos ) );
-
-         lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
       }
       break;
 
    case MODE_SCALE :
       {
-         if ( le_scale_q_start->hasFocus() )
+         if ( !le_last_focus && cb_scale_scroll->isChecked() )
          {
-            le_last_focus = le_scale_q_start;
-         }
-         if ( le_scale_q_end->hasFocus() )
-         {
-            le_last_focus = le_scale_q_end;
-         }
+            // qDebug( QString( "scale scroll is checked value %1" ).arg( pos ) );
+            lbl_wheel_pos->setText( QString( "%1" ).arg( scale_scroll_selected[ pos ] ) );
+            scale_scroll_highlight( pos );
+         } else {
 
-         if ( !le_last_focus )
-         {
-            // cout << "aw: no last focus in scale mode\n";
-            return;
+            if ( le_scale_q_start->hasFocus() )
+            {
+               le_last_focus = le_scale_q_start;
+            }
+            if ( le_scale_q_end->hasFocus() )
+            {
+               le_last_focus = le_scale_q_end;
+            }
+
+            if ( !le_last_focus )
+            {
+               // cout << "aw: no last focus in scale mode\n";
+               return;
+            }
+
+            le_last_focus->setText( QString( "%1" ).arg( pos ) );
+
+            lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
          }
-
-         le_last_focus->setText( QString( "%1" ).arg( pos ) );
-
-         lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
       }
       break;
 
@@ -5300,9 +5912,11 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
          guinier_b           .clear();
          guinier_colors      .clear();
 
+         guinier_report      .clear();
          guinier_delete_markers();
          guinier_markers.clear();
          guinier_curves.clear();
+         guinier_errorbar_curves.clear();
          plot_dist->show();
          if ( testiq_active )
          {

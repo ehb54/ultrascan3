@@ -35,6 +35,7 @@ class US_Vector
    static QString qs_vector2( QString qs, vector < double > x, vector < double > y, int digits = 8 );
    static QString qs_vector2( QString qs, vector < int > x, vector < int > y );
    static QString qs_vector( QString qs, vector < bool > x );
+   static QString qs_vector3( QString qs, vector < double > x, vector < double > y, vector < double > z, int digits = 8 );
 
    static vector < double > intersection( vector < double > &x, vector < double > &y );
    static vector < double > intersection( vector < vector < double > > &x );

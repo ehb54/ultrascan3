@@ -123,6 +123,10 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_guinier_qrgmax" ] = "1.3";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_dist_max" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max" ] = "50.0";
+   }
 
    gaussian_type = 
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gaussian_type" ) ?
@@ -1271,219 +1275,7 @@ void US_Hydrodyn_Saxs_Hplc::add_files( QStringList filenames )
    update_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc::plot_files()
-{
-   // puts( "plot_files" );
-   plot_dist->clear();
-   //bool any_selected = false;
-   double minx = 0e0;
-   double maxx = 1e0;
-   double miny = 0e0;
-   double maxy = 1e0;
 
-   double file_minx;
-   double file_maxx;
-   double file_miny;
-   double file_maxy;
-   
-   bool first = true;
-
-   plotted_curves.clear();
-
-   int asfs = (int) all_selected_files().size();
-
-   if ( asfs > 20 &&
-#ifndef QT4
-        plot_dist->autoLegend() 
-#else
-        legend_vis
-#endif
-        )
-   {
-      legend();
-   }
-
-   if ( asfs == 1 )
-   {
-      update_ref();
-   }
-
-   for ( int i = 0; i < lb_files->numRows(); i++ )
-   {
-      if ( lb_files->isSelected( i ) )
-      {
-         //any_selected = true;
-         if ( plot_file( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
-         {
-            if ( first )
-            {
-               minx = file_minx;
-               maxx = file_maxx;
-               miny = file_miny;
-               maxy = file_maxy;
-               first = false;
-            } else {
-               if ( file_minx < minx )
-               {
-                  minx = file_minx;
-               }
-               if ( file_maxx > maxx )
-               {
-                  maxx = file_maxx;
-               }
-               if ( file_miny < miny )
-               {
-                  miny = file_miny;
-               }
-               if ( file_maxy > maxy )
-               {
-                  maxy = file_maxy;
-               }
-            }
-         }
-      } else {
-         if ( get_min_max( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
-         {
-            if ( first )
-            {
-               minx = file_minx;
-               maxx = file_maxx;
-               miny = file_miny;
-               maxy = file_maxy;
-               first = false;
-            } else {
-               if ( file_minx < minx )
-               {
-                  minx = file_minx;
-               }
-               if ( file_maxx > maxx )
-               {
-                  maxx = file_maxx;
-               }
-               if ( file_miny < miny )
-               {
-                  miny = file_miny;
-               }
-               if ( file_maxy > maxy )
-               {
-                  maxy = file_maxy;
-               }
-            }
-         }
-      }
-   }
-
-   // cout << QString( "plot range x [%1:%2] y [%3:%4]\n" ).arg(minx).arg(maxx).arg(miny).arg(maxy);
-
-   // enable zooming
-   
-   if ( !plot_dist_zoomer )
-   {
-      // puts( "redoing zoomer" );
-      plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
-      plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
-      plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
-      plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
-      plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
-#endif
-      connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
-   }
-   
-   legend_set();
-   if ( !suppress_replot )
-   {
-      plot_dist->replot();
-   }
-}
-
-bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
-                                       double &minx,
-                                       double &maxx,
-                                       double &miny,
-                                       double &maxy )
-{
-   if ( !f_qs_string .count( file ) ||
-        !f_qs        .count( file ) ||
-        !f_Is        .count( file ) ||
-        !f_pos       .count( file ) )
-   {
-      editor_msg( "red", QString( tr( "Internal error: request to plot %1, but not found in data" ) ).arg( file ) );
-      return false;
-   }
-
-   get_min_max( file, minx, maxx, miny, maxy );
-
-#ifndef QT4
-   long Iq = plot_dist->insertCurve( file );
-   plotted_curves[ file ] = Iq;
-   plot_dist->setCurveStyle( Iq, QwtCurve::Lines );
-#else
-   QwtPlotCurve *curve = new QwtPlotCurve( file );
-   plotted_curves[ file ] = curve;
-   curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-   unsigned int q_points = f_qs[ file ].size();
-
-   if ( !axis_y_log )
-   {
-#ifndef QT4
-      plot_dist->setCurveData( Iq, 
-                               /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                               (double *)&( f_qs[ file ][ 0 ] ),
-                               (double *)&( f_Is[ file ][ 0 ] ),
-                               q_points
-                               );
-      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
-#else
-      curve->setData(
-                     /* cb_guinier->isChecked() ?
-                        (double *)&(plotted_q2[p][0]) : */
-                     (double *)&( f_qs[ file ][ 0 ] ),
-                     (double *)&( f_Is[ file ][ 0 ] ),
-                     q_points
-                     );
-
-      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-      curve->attach( plot_dist );
-#endif
-   } else {
-      vector < double > q;
-      vector < double > I;
-      for ( unsigned int i = 0; i < q_points; i++ )
-      {
-         if ( f_Is[ file ][ i ] > 0e0 )
-         {
-            q.push_back( f_qs[ file ][ i ] );
-            I.push_back( f_Is[ file ][ i ] );
-         }
-      }
-      q_points = ( unsigned int )q.size();
-#ifndef QT4
-      plot_dist->setCurveData( Iq, 
-                               /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                               (double *)&( q[ 0 ] ),
-                               (double *)&( I[ 0 ] ),
-                               q_points
-                               );
-      plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
-#else
-      curve->setData(
-                     /* cb_guinier->isChecked() ?
-                        (double *)&(plotted_q2[p][0]) : */
-                     (double *)&( q[ 0 ] ),
-                     (double *)&( I[ 0 ] ),
-                     q_points
-                     );
-
-      curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-      curve->attach( plot_dist );
-#endif
-   }
-            
-   return true;
-}
 
 void US_Hydrodyn_Saxs_Hplc::update_files()
 {
@@ -1492,136 +1284,6 @@ void US_Hydrodyn_Saxs_Hplc::update_files()
       plot_files();
       update_enables();
    }
-}
-
-bool US_Hydrodyn_Saxs_Hplc::get_min_max( QString file,
-                                         double &minx,
-                                         double &maxx,
-                                         double &miny,
-                                         double &maxy )
-{
-   if ( current_mode == MODE_SCALE )
-   {
-      //    qDebug( QString("get min max mode scale %1" ).arg( file ) );
-      if ( !scale_q     .count( file ) ||
-           !scale_I     .count( file ) ||
-           !f_pos       .count( file ) )
-      {
-         // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
-         return false;
-      }
-
-      minx = scale_q[ file ][ 0 ];
-      maxx = scale_q[ file ].back();
-
-      miny = scale_I[ file ][ 0 ];
-      maxy = scale_I[ file ][ 0 ];
-      if ( axis_y_log )
-      {
-         unsigned int i = 0;
-         while ( miny <= 0e0 && i < scale_I[ file ].size() )
-         {
-            miny = scale_I[ file ][ i ];
-            maxy = scale_I[ file ][ i ];
-            minx = scale_q[ file ][ i ];
-            maxx = scale_q[ file ][ i ];
-            i++;
-         }
-         for ( ; i < scale_I[ file ].size(); i++ )
-         {
-            if ( miny > scale_I[ file ][ i ] && scale_I[ file ][ i ] > 0e0 )
-            {
-               miny = scale_I[ file ][ i ];
-            }
-            if ( maxy < scale_I[ file ][ i ] )
-            {
-               maxy = scale_I[ file ][ i ];
-            }
-            if ( maxx < scale_q[ file ][ i ] )
-            {
-               maxx = scale_q[ file ][ i ];
-            }
-         }
-         if ( miny <= 0e0 )
-         {
-            miny = 1e0;
-         }
-         // printf( "miny %g\n", miny );
-      } else {
-         for ( unsigned int i = 1; i < scale_I[ file ].size(); i++ )
-         {
-            if ( miny > scale_I[ file ][ i ] )
-            {
-               miny = scale_I[ file ][ i ];
-            }
-            if ( maxy < scale_I[ file ][ i ] )
-            {
-               maxy = scale_I[ file ][ i ];
-            }
-         }
-      }
-      // qDebug( QString("get min max mode scale %1 x %2:%3 x %4:%5" ).arg( file ).arg( minx ).arg( maxx ).arg( miny ).arg( maxy ) );
-   } else {
-      if ( !f_qs_string .count( file ) ||
-           !f_qs        .count( file ) ||
-           !f_Is        .count( file ) ||
-           !f_pos       .count( file ) )
-      {
-         // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
-         return false;
-      }
-
-      minx = f_qs[ file ][ 0 ];
-      maxx = f_qs[ file ].back();
-
-      miny = f_Is[ file ][ 0 ];
-      maxy = f_Is[ file ][ 0 ];
-      if ( axis_y_log )
-      {
-         unsigned int i = 0;
-         while ( miny <= 0e0 && i < f_Is[ file ].size() )
-         {
-            miny = f_Is[ file ][ i ];
-            maxy = f_Is[ file ][ i ];
-            minx = f_qs[ file ][ i ];
-            maxx = f_qs[ file ][ i ];
-            i++;
-         }
-         for ( ; i < f_Is[ file ].size(); i++ )
-         {
-            if ( miny > f_Is[ file ][ i ] && f_Is[ file ][ i ] > 0e0 )
-            {
-               miny = f_Is[ file ][ i ];
-            }
-            if ( maxy < f_Is[ file ][ i ] )
-            {
-               maxy = f_Is[ file ][ i ];
-            }
-            if ( maxx < f_qs[ file ][ i ] )
-            {
-               maxx = f_qs[ file ][ i ];
-            }
-         }
-         if ( miny <= 0e0 )
-         {
-            miny = 1e0;
-         }
-         // printf( "miny %g\n", miny );
-      } else {
-         for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
-         {
-            if ( miny > f_Is[ file ][ i ] )
-            {
-               miny = f_Is[ file ][ i ];
-            }
-            if ( maxy < f_Is[ file ][ i ] )
-            {
-               maxy = f_Is[ file ][ i ];
-            }
-         }
-      }
-   }
-   return true;
 }
 
 void US_Hydrodyn_Saxs_Hplc::invert()
@@ -6989,9 +6651,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist1_focus( bool hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
-      qwtw_wheel->setRange( -50e0,
-                            50e0,
-                            100e0 / UHSH_WHEEL_RES );
+      double dist = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max" ].toDouble();
+      qwtw_wheel->setRange( -dist,
+                            dist,
+                            2e0*dist / UHSH_WHEEL_RES );
       qwtw_wheel->setValue( le_gauss_pos_dist1->text().toDouble() );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    }
@@ -7004,9 +6667,10 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist2_focus( bool hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
-      qwtw_wheel->setRange( -50e0,
-                            50e0,
-                            100e0 / UHSH_WHEEL_RES );
+      double dist = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max" ].toDouble();
+      qwtw_wheel->setRange( -dist,
+                            dist,
+                            2e0*dist / UHSH_WHEEL_RES );
       qwtw_wheel->setValue( le_gauss_pos_dist2->text().toDouble() );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    }

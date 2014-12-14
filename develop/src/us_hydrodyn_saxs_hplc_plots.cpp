@@ -235,6 +235,11 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
                                                 vector < double > &fit, 
                                                 vector < double > &errors )
 {
+   if ( current_mode == MODE_SCALE )
+   {
+      return scale_update_plot_errors();
+   }
+
    plot_errors->clear();
 
    plot_errors_grid   = grid;
@@ -546,18 +551,55 @@ void US_Hydrodyn_Saxs_Hplc::errors()
    {
       hide_widgets( plot_errors_widgets, true );
    } else {
-      if ( current_mode == MODE_GGAUSSIAN )
+      switch( current_mode )
       {
-         hide_widgets( plot_errors_widgets, false );
-         if ( !unified_ggaussian_use_errors )
+      case MODE_GGAUSSIAN:
          {
-            disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
-            cb_plot_errors_sd->setChecked( false );
-            connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
-            cb_plot_errors_sd->hide();
+            hide_widgets( plot_errors_widgets, false );
+            if ( !unified_ggaussian_use_errors )
+            {
+               disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
+               cb_plot_errors_sd->setChecked( false );
+               connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
+               cb_plot_errors_sd->hide();
+            }
          }
-      } else {
-         if ( current_mode == MODE_GAUSSIAN )
+         break;
+
+      case MODE_SCALE :
+         {
+            hide_widgets( plot_errors_widgets, false );
+            cb_plot_errors_group  ->hide();
+            cb_plot_errors_pct    ->hide();
+            cb_plot_errors_sd     ->hide();
+            cb_plot_errors_rev    ->hide();
+
+            // QStringList files = all_selected_files();
+            // bool use_errors = true;
+            // for ( int i = 0; i < (int) files.size(); ++i )
+            // {
+            //    qDebug( files[ i ] );
+            //    if ( !f_errors.count( files[ i ] ) ||
+            //         !is_nonzero_vector( f_errors[ files[ i ] ] ) ||
+            //         f_errors[ files[ i ] ].size() != f_Is[ files[ i ] ].size() )
+            //    {
+            //       use_errors = false;
+            //       break;
+            //    }
+            // }
+               
+            // if ( !use_errors )
+            // {
+            //    disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
+            //    cb_plot_errors_sd->setChecked( false );
+            //    connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
+            //    cb_plot_errors_sd->hide();
+            // }
+               
+         }
+         break;
+
+      case MODE_GAUSSIAN :
          {
             hide_widgets( plot_errors_widgets, false );
             cb_plot_errors_group->hide();
@@ -569,8 +611,11 @@ void US_Hydrodyn_Saxs_Hplc::errors()
                connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
                cb_plot_errors_sd->hide();
             }
+         }
+         break;
 
-         } else {
+      default :
+         {
             // compare 2 files
             QStringList files = all_selected_files();
             if ( files.size() > 2 )
@@ -608,6 +653,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
                cb_plot_errors_sd->hide();
             }
          }   
+         break;
       }
    }
 }
@@ -641,3 +687,513 @@ void US_Hydrodyn_Saxs_Hplc::errors_multi_file( QStringList files )
       return;
    }
 }
+
+void US_Hydrodyn_Saxs_Hplc::set_eb()
+{
+   plot_files();
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::plot_files()
+{
+   // puts( "plot_files" );
+   plot_dist->clear();
+   //bool any_selected = false;
+   double minx = 0e0;
+   double maxx = 1e0;
+   double miny = 0e0;
+   double maxy = 1e0;
+
+   double file_minx;
+   double file_maxx;
+   double file_miny;
+   double file_maxy;
+   
+   bool first = true;
+
+   plotted_curves.clear();
+
+   int asfs = (int) all_selected_files().size();
+
+
+   if ( cb_eb->isChecked() && asfs > 9 )
+   {
+      cb_eb->setChecked( false );
+   }
+
+   if ( ( asfs > 20 ||
+      cb_eb->isChecked() )
+      &&
+#ifndef QT4
+        plot_dist->autoLegend() 
+#else
+        legend_vis
+#endif
+        )
+   {
+      legend();
+   }
+
+   if ( asfs == 1 )
+   {
+      update_ref();
+   }
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         //any_selected = true;
+         if ( plot_file( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
+         {
+            if ( first )
+            {
+               minx = file_minx;
+               maxx = file_maxx;
+               miny = file_miny;
+               maxy = file_maxy;
+               first = false;
+            } else {
+               if ( file_minx < minx )
+               {
+                  minx = file_minx;
+               }
+               if ( file_maxx > maxx )
+               {
+                  maxx = file_maxx;
+               }
+               if ( file_miny < miny )
+               {
+                  miny = file_miny;
+               }
+               if ( file_maxy > maxy )
+               {
+                  maxy = file_maxy;
+               }
+            }
+         }
+      } else {
+         if ( get_min_max( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
+         {
+            if ( first )
+            {
+               minx = file_minx;
+               maxx = file_maxx;
+               miny = file_miny;
+               maxy = file_maxy;
+               first = false;
+            } else {
+               if ( file_minx < minx )
+               {
+                  minx = file_minx;
+               }
+               if ( file_maxx > maxx )
+               {
+                  maxx = file_maxx;
+               }
+               if ( file_miny < miny )
+               {
+                  miny = file_miny;
+               }
+               if ( file_maxy > maxy )
+               {
+                  maxy = file_maxy;
+               }
+            }
+         }
+      }
+   }
+
+   // cout << QString( "plot range x [%1:%2] y [%3:%4]\n" ).arg(minx).arg(maxx).arg(miny).arg(maxy);
+
+   // enable zooming
+   
+   if ( !plot_dist_zoomer )
+   {
+      // puts( "redoing zoomer" );
+      plot_dist->setAxisScale( QwtPlot::xBottom, minx, maxx );
+      plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
+      plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
+      plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
+#ifndef QT4
+      plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
+#endif
+      connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
+   }
+   
+   legend_set();
+   if ( !suppress_replot )
+   {
+      plot_dist->replot();
+   }
+}
+
+bool US_Hydrodyn_Saxs_Hplc::get_min_max( QString file,
+                                         double &minx,
+                                         double &maxx,
+                                         double &miny,
+                                         double &maxy )
+{
+   if ( current_mode == MODE_SCALE )
+   {
+      //    qDebug( QString("get min max mode scale %1" ).arg( file ) );
+      if ( !scale_q     .count( file ) ||
+           !scale_I     .count( file ) ||
+           !f_pos       .count( file ) )
+      {
+         // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
+         return false;
+      }
+
+      minx = scale_q[ file ][ 0 ];
+      maxx = scale_q[ file ].back();
+
+      miny = scale_I[ file ][ 0 ];
+      maxy = scale_I[ file ][ 0 ];
+      if ( axis_y_log )
+      {
+         unsigned int i = 0;
+         while ( miny <= 0e0 && i < scale_I[ file ].size() )
+         {
+            miny = scale_I[ file ][ i ];
+            maxy = scale_I[ file ][ i ];
+            minx = scale_q[ file ][ i ];
+            maxx = scale_q[ file ][ i ];
+            i++;
+         }
+         for ( ; i < scale_I[ file ].size(); i++ )
+         {
+            if ( miny > scale_I[ file ][ i ] && scale_I[ file ][ i ] > 0e0 )
+            {
+               miny = scale_I[ file ][ i ];
+            }
+            if ( maxy < scale_I[ file ][ i ] )
+            {
+               maxy = scale_I[ file ][ i ];
+            }
+            if ( maxx < scale_q[ file ][ i ] )
+            {
+               maxx = scale_q[ file ][ i ];
+            }
+         }
+         if ( miny <= 0e0 )
+         {
+            miny = 1e0;
+         }
+         // printf( "miny %g\n", miny );
+      } else {
+         for ( unsigned int i = 1; i < scale_I[ file ].size(); i++ )
+         {
+            if ( miny > scale_I[ file ][ i ] )
+            {
+               miny = scale_I[ file ][ i ];
+            }
+            if ( maxy < scale_I[ file ][ i ] )
+            {
+               maxy = scale_I[ file ][ i ];
+            }
+         }
+      }
+      // qDebug( QString("get min max mode scale %1 x %2:%3 x %4:%5" ).arg( file ).arg( minx ).arg( maxx ).arg( miny ).arg( maxy ) );
+   } else {
+      if ( !f_qs_string .count( file ) ||
+           !f_qs        .count( file ) ||
+           !f_Is        .count( file ) ||
+           !f_pos       .count( file ) )
+      {
+         // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
+         return false;
+      }
+
+      minx = f_qs[ file ][ 0 ];
+      maxx = f_qs[ file ].back();
+
+      miny = f_Is[ file ][ 0 ];
+      maxy = f_Is[ file ][ 0 ];
+      if ( axis_y_log )
+      {
+         unsigned int i = 0;
+         while ( miny <= 0e0 && i < f_Is[ file ].size() )
+         {
+            miny = f_Is[ file ][ i ];
+            maxy = f_Is[ file ][ i ];
+            minx = f_qs[ file ][ i ];
+            maxx = f_qs[ file ][ i ];
+            i++;
+         }
+         for ( ; i < f_Is[ file ].size(); i++ )
+         {
+            if ( miny > f_Is[ file ][ i ] && f_Is[ file ][ i ] > 0e0 )
+            {
+               miny = f_Is[ file ][ i ];
+            }
+            if ( maxy < f_Is[ file ][ i ] )
+            {
+               maxy = f_Is[ file ][ i ];
+            }
+            if ( maxx < f_qs[ file ][ i ] )
+            {
+               maxx = f_qs[ file ][ i ];
+            }
+         }
+         if ( miny <= 0e0 )
+         {
+            miny = 1e0;
+         }
+         // printf( "miny %g\n", miny );
+      } else {
+         for ( unsigned int i = 1; i < f_Is[ file ].size(); i++ )
+         {
+            if ( miny > f_Is[ file ][ i ] )
+            {
+               miny = f_Is[ file ][ i ];
+            }
+            if ( maxy < f_Is[ file ][ i ] )
+            {
+               maxy = f_Is[ file ][ i ];
+            }
+         }
+      }
+   }
+   return true;
+}
+
+bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
+                                       double &minx,
+                                       double &maxx,
+                                       double &miny,
+                                       double &maxy )
+{
+   if ( !f_qs_string .count( file ) ||
+        !f_qs        .count( file ) ||
+        !f_Is        .count( file ) ||
+        !f_pos       .count( file ) )
+   {
+      editor_msg( "red", QString( tr( "Internal error: request to plot %1, but not found in data" ) ).arg( file ) );
+      return false;
+   }
+
+   get_min_max( file, minx, maxx, miny, maxy );
+
+#ifndef QT4
+   long Iq = plot_dist->insertCurve( file );
+   plotted_curves[ file ] = Iq;
+   plot_dist->setCurveStyle( Iq, QwtCurve::Lines );
+#else
+   QwtPlotCurve *curve = new QwtPlotCurve( file );
+   plotted_curves[ file ] = curve;
+   curve->setStyle( QwtPlotCurve::Lines );
+#endif
+
+   unsigned int q_points = f_qs[ file ].size();
+
+   bool use_error = cb_eb->isChecked() && ( f_errors[ file ].size() == q_points );
+   double x[ 2 ];
+   double y[ 2 ];
+
+   if ( use_error )
+   {
+      QwtSymbol symbol;
+      symbol.setStyle( QwtSymbol::Diamond );
+      symbol.setSize( 1 + use_line_width * 5 );
+      symbol.setBrush( Qt::NoBrush ); // plot_colors[ f_pos[ file ] % plot_colors.size() ] );
+
+      if ( !axis_y_log )
+      {
+#ifndef QT4
+         plot_dist->setCurveData( Iq, 
+                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                                  (double *)&( f_qs[ file ][ 0 ] ),
+                                  (double *)&( f_Is[ file ][ 0 ] ),
+                                  q_points
+                                  );
+         plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
+         plot_dist->setCurveStyle( Iq, QwtCurve::NoCurve );
+         symbol.setPen  ( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         plot_dist->setCurveSymbol( Iq, symbol );
+#else
+         curve->setData(
+                        /* cb_guinier->isChecked() ?
+                           (double *)&(plotted_q2[p][0]) : */
+                        (double *)&( f_qs[ file ][ 0 ] ),
+                        (double *)&( f_Is[ file ][ 0 ] ),
+                        q_points
+                        );
+
+         curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         curve->setStyle( QwtPlotCurve::NoCurve );
+         symbol.setPen  ( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         curve->setSymbol( symbol );
+         curve->attach( plot_dist );
+#endif
+
+         for ( unsigned int i = 0; i < q_points; i++ )
+         {
+#ifndef QT4
+            long Iqeb = plot_dist->insertCurve( file );
+            plot_dist->setCurveStyle( Iqeb, QwtCurve::Lines );
+#else
+            QwtPlotCurve *curveeb = new QwtPlotCurve( file );
+            curveeb->setStyle( QwtPlotCurve::Lines );
+#endif
+            x[ 0 ] = f_qs[ file ][ i ];
+            x[ 1 ] = x[ 0 ];
+            y[ 0 ] = f_Is[ file ][ i ] - f_errors[ file ][ i ];
+            y[ 1 ] = f_Is[ file ][ i ] + f_errors[ file ][ i ];
+
+#ifndef QT4
+            plot_dist->setCurveData( Iqeb, 
+                                     (double *)&( x[ 0 ] ),
+                                     (double *)&( y[ 0 ] ),
+                                     2
+                                     );
+            plot_dist->setCurvePen( Iqeb, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
+#else
+            curveeb->setData(
+                             (double *)&( x[ 0 ] ),
+                             (double *)&( y[ 0 ] ),
+                             2
+                             );
+
+            curveeb->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+            curveeb->attach( plot_dist );
+#endif
+         }            
+
+      } else {
+         vector < double > q;
+         vector < double > I;
+         vector < double > e;
+         for ( unsigned int i = 0; i < q_points; i++ )
+         {
+            if ( f_Is[ file ][ i ] - f_errors[ file ][ i ] > 0e0 )
+            {
+               q.push_back( f_qs[ file ][ i ] );
+               I.push_back( f_Is[ file ][ i ] );
+               e.push_back( f_errors[ file ][ i ] );
+            }
+         }
+         q_points = ( unsigned int )q.size();
+#ifndef QT4
+         plot_dist->setCurveData( Iq, 
+                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                                  (double *)&( q[ 0 ] ),
+                                  (double *)&( I[ 0 ] ),
+                                  q_points
+                                  );
+         plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
+         plot_dist->setCurveStyle( Iq, QwtCurve::NoCurve );
+         symbol.setPen  ( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         // symbol.setBrush( plot_colors[ f_pos[ file ] % plot_colors.size() ] );
+         plot_dist->setCurveSymbol( Iq, symbol );
+#else
+         curve->setData(
+                        /* cb_guinier->isChecked() ?
+                           (double *)&(plotted_q2[p][0]) : */
+                        (double *)&( q[ 0 ] ),
+                        (double *)&( I[ 0 ] ),
+                        q_points
+                        );
+
+         curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         curve->setStyle( QwtPlotCurve::NoCurve );
+         symbol.setPen  ( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         // symbol.setBrush( plot_colors[ f_pos[ file ] % plot_colors.size() ] );
+         curve->setSymbol( symbol );
+         curve->attach( plot_dist );
+#endif
+         for ( unsigned int i = 0; i < q_points; i++ )
+         {
+#ifndef QT4
+            long Iqeb = plot_dist->insertCurve( file );
+            plot_dist->setCurveStyle( Iqeb, QwtCurve::Lines );
+#else
+            QwtPlotCurve *curveeb = new QwtPlotCurve( file );
+            curveeb->setStyle( QwtPlotCurve::Lines );
+#endif
+
+            x[ 0 ] = q[ i ];
+            x[ 1 ] = x[ 0 ];
+            y[ 0 ] = I[ i ] - e[ i ];
+            y[ 1 ] = I[ i ] + e[ i ];
+
+#ifndef QT4
+            plot_dist->setCurveData( Iqeb, 
+                                     (double *)&( x[ 0 ] ),
+                                     (double *)&( y[ 0 ] ),
+                                     2
+                                     );
+            plot_dist->setCurvePen( Iqeb, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
+#else
+            curveeb->setData(
+                           (double *)&( x[ 0 ] ),
+                           (double *)&( y[ 0 ] ),
+                           2
+                           );
+
+            curveeb->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+            curveeb->attach( plot_dist );
+#endif
+         }            
+      }
+
+   } else {
+      if ( !axis_y_log )
+      {
+#ifndef QT4
+         plot_dist->setCurveData( Iq, 
+                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                                  (double *)&( f_qs[ file ][ 0 ] ),
+                                  (double *)&( f_Is[ file ][ 0 ] ),
+                                  q_points
+                                  );
+         plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
+#else
+         curve->setData(
+                        /* cb_guinier->isChecked() ?
+                           (double *)&(plotted_q2[p][0]) : */
+                        (double *)&( f_qs[ file ][ 0 ] ),
+                        (double *)&( f_Is[ file ][ 0 ] ),
+                        q_points
+                        );
+
+         curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         curve->attach( plot_dist );
+#endif
+      } else {
+         vector < double > q;
+         vector < double > I;
+         for ( unsigned int i = 0; i < q_points; i++ )
+         {
+            if ( f_Is[ file ][ i ] > 0e0 )
+            {
+               q.push_back( f_qs[ file ][ i ] );
+               I.push_back( f_Is[ file ][ i ] );
+            }
+         }
+         q_points = ( unsigned int )q.size();
+#ifndef QT4
+         plot_dist->setCurveData( Iq, 
+                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
+                                  (double *)&( q[ 0 ] ),
+                                  (double *)&( I[ 0 ] ),
+                                  q_points
+                                  );
+         plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
+#else
+         curve->setData(
+                        /* cb_guinier->isChecked() ?
+                           (double *)&(plotted_q2[p][0]) : */
+                        (double *)&( q[ 0 ] ),
+                        (double *)&( I[ 0 ] ),
+                        q_points
+                        );
+
+         curve->setPen( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         curve->attach( plot_dist );
+#endif
+      }
+   }            
+   return true;
+}
+

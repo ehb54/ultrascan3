@@ -2161,6 +2161,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_cb_discard_it_sd_mult" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult"    ];
    parameters[ "hplc_guinier_qrgmax"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_guinier_qrgmax"           ];
    parameters[ "hplc_cb_guinier_qrgmax"     ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_guinier_qrgmax"        ];
+   parameters[ "hplc_dist_max"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max"                 ];
 
    parameters[ "hplc_csv_transposed" ] = 
       (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) ?
@@ -2189,6 +2190,7 @@ void US_Hydrodyn_Saxs_Hplc::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult" ] = parameters[ "hplc_cb_discard_it_sd_mult"    ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_guinier_qrgmax"        ] = parameters[ "hplc_guinier_qrgmax"           ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_guinier_qrgmax"     ] = parameters[ "hplc_cb_guinier_qrgmax"        ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max"              ] = parameters[ "hplc_dist_max"                 ];
 
    // maybe ask (warn) here if gaussian data structures have data
 

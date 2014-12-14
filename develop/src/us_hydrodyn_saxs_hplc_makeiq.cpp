@@ -1198,7 +1198,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             tmp_I *= frac_of_gaussian_sum;
             // if ( !force_errors_from_org )
             // {
-            tmp_e *= frac_of_gaussian_sum;
+            // 141212 (change error mode ... propagate original errors)  tmp_e *= frac_of_gaussian_sum;
             // }
 
             if ( sd_from_difference )
@@ -1420,6 +1420,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
       if ( sd_from_difference )
       {
+         // NEVER CURRENTLY IN TESTIQ MODE ... POSSIBLY LATER
          vector < double >  total_e;
          for ( unsigned int i = 0; i < gsG.size(); i++ )
          {
@@ -1437,9 +1438,21 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             
             // US_Vector::printvector( QString( "used_pcts for %1" ).arg( used_names[ i ] ), used_pcts[ i ] );
 
-            for ( unsigned int j = 0; j < ( unsigned int ) use_e.size(); j++ )
+            if ( use_errors )
             {
-               use_e[ j ] *= used_pcts[ i ][ j ];
+               for ( unsigned int j = 0; j < ( unsigned int ) use_e.size(); j++ )
+               {
+                  use_e[ j ] *= used_pcts[ i ][ j ];
+                  use_e[ j ] = sqrt( 
+                                    use_e[ j ] * use_e[ j ] +
+                                    f_errors[ used_names[ i ] ][ j ] * f_errors[ used_names[ i ] ][ j ] 
+                                     );
+               }
+            } else {
+               for ( unsigned int j = 0; j < ( unsigned int ) use_e.size(); j++ )
+               {
+                  use_e[ j ] *= used_pcts[ i ][ j ];
+               }               
             }
 
             // US_Vector::printvector( "use_e", use_e );

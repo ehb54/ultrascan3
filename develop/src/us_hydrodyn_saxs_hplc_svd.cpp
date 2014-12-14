@@ -56,6 +56,16 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    QStringList original_data;
 
+   mode_i_of_t = false;
+
+   {
+      QString this_name = hplc_selected_files[ 0 ];
+      if( hplc_win->f_is_time[ this_name ] )
+      {
+         mode_i_of_t = true;
+      }
+   }
+
    for ( int i = 0; i < (int) hplc_selected_files.size(); ++i )
    {
       QString this_name = hplc_selected_files[ i ];
@@ -66,7 +76,7 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
       f_qs       [ this_name ] = hplc_win->f_qs       [ this_name ];
       f_Is       [ this_name ] = hplc_win->f_Is       [ this_name ];
       f_errors   [ this_name ] = hplc_win->f_errors   [ this_name ];
-      f_is_time  [ this_name ] = false;  // must all be I(q)
+      f_is_time  [ this_name ] = mode_i_of_t;  // false;  // must all be I(q)
    }
 
    subset_data.insert( original_data.join( "\n" ) );
@@ -98,7 +108,7 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    show();
 
-   add_i_of_t( tr( "Original data" ), original_data );
+   add_i_of_q_or_t( tr( "Original data" ), original_data );
 }
 
 US_Hydrodyn_Saxs_Hplc_Svd::~US_Hydrodyn_Saxs_Hplc_Svd()
@@ -136,8 +146,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect(lv_data, SIGNAL(selectionChanged()), SLOT( data_selection_changed() ));
 
    Q3ListViewItem *element = new Q3ListViewItem( lv_data, QString( tr( "Original data" ) ) );
-   Q3ListViewItem *iq = new Q3ListViewItem( element, "I(q)" );
-   /* QListViewItem *it = */ new Q3ListViewItem( element, iq, "I(t)" );
+   Q3ListViewItem *iq = new Q3ListViewItem( element, mode_i_of_t ? "I(t)" : "I(q)" );
+   /* QListViewItem *it = */ new Q3ListViewItem( element, iq, mode_i_of_t ? "I(q)" : "I(t)" );
 
    Q3ListViewItem *lvi = iq;
 
@@ -388,8 +398,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    connect( cb_plot_errors_group, SIGNAL( clicked() ), SLOT( set_plot_errors_group() ) );
    errors_widgets.push_back( cb_plot_errors_group );
 
-   iq_it_state = false;
-   pb_iq_it = new QPushButton( tr("Show I(t)"), this);
+   iq_it_state = mode_i_of_t;
+   pb_iq_it = new QPushButton( tr( mode_i_of_t ? "Show I(q)" : "Show I(t)" ), this);
    pb_iq_it->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_iq_it->setMinimumHeight(minHeight1);
    pb_iq_it->setPalette( PALET_PUSHB );
@@ -1281,7 +1291,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::iq_it()
    rmsd_plot = false;
    chi_plot  = false;
    iq_it_state = !iq_it_state;
-   pb_iq_it->setText( tr( iq_it_state ? "Show I(q)" : "Show I(t)" ) );
+   pb_iq_it->setText( mode_i_of_t ? 
+                      tr( iq_it_state ? "Show I(t)" : "Show I(q)" ) :
+                      tr( iq_it_state ? "Show I(q)" : "Show I(t)" )
+                      );
    axis_x_title();
    axis_y_title();
    
@@ -1425,7 +1438,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
    // le_t_end       ->setEnabled( false );
    lb_ev              ->setEnabled( lb_ev->count() );
 
-   pb_svd             ->setEnabled( files.size() && !iq_it_state && sources.size() == 1 );
+   pb_svd             ->setEnabled( files.size() && mode_i_of_t == iq_it_state && sources.size() == 1 );
    pb_stop            ->setEnabled( false );
    pb_svd_plot        ->setEnabled( lb_ev->count() );
    pb_svd_save        ->setEnabled( lb_ev->count() );
@@ -1758,9 +1771,9 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plotted_matches_selected()
    return plotted == selected;
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_t( QString source, QStringList files, bool do_update_enables )
+void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList files, bool do_update_enables )
 {
-   editor_msg( "blue", QString( tr(  "Making I(t) for source %1" ) ).arg( source ) );
+   editor_msg( "blue", QString( tr(  "Making I(%1) for source %2" ) ).arg( mode_i_of_t ? "q" : "t" ).arg( source ) );
 
    Q3ListViewItem * source_item = get_source_item( source );
 
@@ -1797,13 +1810,26 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_t( QString source, QStringList files, b
       }
    }
 
-   if ( !i_t_child )
+   if ( mode_i_of_t )
    {
-      if ( i_q_child )
+      if ( !i_q_child )
       {
-         i_t_child = new Q3ListViewItem( source_item, i_q_child,  "I(t)" );
-      } else {
-         i_t_child = new Q3ListViewItem( source_item, source_item,  "I(t)" );
+         if ( i_t_child )
+         {
+            i_q_child = new Q3ListViewItem( source_item, i_t_child,  "I(q)" );
+         } else {
+            i_q_child = new Q3ListViewItem( source_item, source_item,  "I(q)" );
+         }
+      }
+   } else {
+      if ( !i_t_child )
+      {
+         if ( i_q_child )
+         {
+            i_t_child = new Q3ListViewItem( source_item, i_q_child,  "I(t)" );
+         } else {
+            i_t_child = new Q3ListViewItem( source_item, source_item,  "I(t)" );
+         }
       }
    }
 
@@ -1864,11 +1890,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_t( QString source, QStringList files, b
 
    set < QString > current_files = get_current_files();
 
-   Q3ListViewItem * lvi = i_t_child;
+   Q3ListViewItem * lvi = mode_i_of_t ? i_q_child : i_t_child;
 
    for ( unsigned int i = 0; i < ( unsigned int )q.size(); i++ )
    {
-      QString basename = QString( "%1_It_q%2" ).arg( head ).arg( q[ i ] );
+      QString basename = QString( "%1_I%2_%3%4" ).arg( head ).arg( mode_i_of_t ? "q" : "t" ).arg( mode_i_of_t ? "t" : "q" ).arg( q[ i ] );
       basename.replace( ".", "_" );
       
       unsigned int ext = 0;
@@ -1906,20 +1932,20 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_t( QString source, QStringList files, b
          }
       }
 
-      lvi = new Q3ListViewItem( i_t_child, lvi, fname );
+      lvi = new Q3ListViewItem( mode_i_of_t ? i_q_child : i_t_child, lvi, fname );
    
       f_pos       [ fname ] = f_qs.size();
       f_qs_string [ fname ] = t_qs;
       f_qs        [ fname ] = t;
       f_Is        [ fname ] = I;
       f_errors    [ fname ] = e;
-      f_is_time   [ fname ] = true;
+      f_is_time   [ fname ] = !mode_i_of_t;
    }      
    if ( do_update_enables )
    {
       update_enables();
    }
-   editor_msg( "blue", QString( tr(  "Done making I(t) for source %1" ) ).arg( source ) );
+   editor_msg( "blue", QString( tr(  "Done making I(%1) for source %2" ) ).arg( mode_i_of_t ? "q" : "t" ).arg( source ) );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::rescale( bool do_update_enables )
@@ -2509,7 +2535,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
       }
    }
 
-   Q3ListViewItem * iqs = new Q3ListViewItem( lvi, lv_data->lastItem(), "I(q)" );
+   Q3ListViewItem * iqs = new Q3ListViewItem( lvi, lv_data->lastItem(), mode_i_of_t ? "I(t)" : "I(q)" );
 
    // add I(q)
    // contained in columns of F, reference file names from last_svd_data
@@ -2586,7 +2612,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
       f_qs       [ this_name ] = q;
       f_Is       [ this_name ] = I;
       f_errors   [ this_name ] = e;
-      f_is_time  [ this_name ] = false;  // must all be I(q)
+      f_is_time  [ this_name ] = mode_i_of_t;
    }
 
    last_recon_rmsd = sqrt( rmsd2 ) / ( n * m - 1e0 );
@@ -2598,7 +2624,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
       // new QListViewItem( lvi, lvinext, QString( "Chi %1" ).arg( last_recon_chi ) );
    }      
 
-   add_i_of_t( name, final_files, false );
+   add_i_of_q_or_t( name, final_files, false );
 }
 
 double US_Hydrodyn_Saxs_Hplc_Svd::vmin( vector < double > &x )
@@ -2824,7 +2850,7 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::add_subset_data( QStringList files )
 
    // copy over I(q), ignore SVs, rmsd since these are not computed
 
-   Q3ListViewItem * iqs = new Q3ListViewItem( lvi, lv_data->lastItem(), "I(q)" );
+   Q3ListViewItem * iqs = new Q3ListViewItem( lvi, lv_data->lastItem(), mode_i_of_t ? "I(t)" : "I(q)" );
 
    QString head = hplc_win->qstring_common_head( files, true );
    QString tag  = head;
@@ -2861,7 +2887,7 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::add_subset_data( QStringList files )
       f_qs       [ this_name ] = f_qs[ files[ i ] ];
       f_Is       [ this_name ] = f_Is[ files[ i ] ];
       f_errors   [ this_name ] = f_errors[ files[ i ] ];
-      f_is_time  [ this_name ] = false;  // must all be I(q)
+      f_is_time  [ this_name ] = mode_i_of_t;
    }
 
    disconnect(lv_data, SIGNAL(selectionChanged()), 0, 0 );
@@ -2869,7 +2895,7 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::add_subset_data( QStringList files )
    lvi->setSelected( true );
    connect(lv_data, SIGNAL(selectionChanged()), SLOT( data_selection_changed() ));
 
-   add_i_of_t( name, result, false );
+   add_i_of_q_or_t( name, result, false );
 
    return result;
 }

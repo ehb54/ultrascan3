@@ -4572,7 +4572,9 @@ bool US_Hydrodyn_Cluster::additional_processing(
                // result = batch_window->screen_bead_model( file );
             }
             if (  (*cluster_additional_methods_options_selected).count( method ) &&
-                  (*cluster_additional_methods_options_selected)[ method ].count( "bestrcoalautominmax" ) )
+                  (*cluster_additional_methods_options_selected)[ method ].count( "bestrcoalautominmax" ) &&
+                  (*cluster_additional_methods_options_selected)[ method ][ "bestrcoalautominmax" ] == "true" 
+                  )
             {
                int maxtriangles = (int) ( 30 * sqrt( mw ) );
                int mintriangles = (int) ( 18 * sqrt( mw ) );

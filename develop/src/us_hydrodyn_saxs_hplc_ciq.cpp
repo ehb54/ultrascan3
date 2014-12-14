@@ -78,7 +78,10 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    AUTFBACK( cb_save_sum );
 
    cb_sd_source = new QCheckBox(this);
-   cb_sd_source->setText( tr( "Compute standard deviations as a difference between the sum of Gaussians and original I(q)" ) );
+   cb_sd_source->setText( tr (
+                              // "Compute standard deviations as a difference between the sum of Gaussians and original I(q)"
+                              "Add SD computed %-wise from the difference between the sum of Gaussians and the original I(q)"
+                              ) );
    cb_sd_source->setEnabled( true );
    cb_sd_source->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_sd_source->setPalette( PALET_NORMAL );
