@@ -20,6 +20,8 @@ DbgLv(1) << "pcsa_mast: fill_queue complete";
 
    work_rss.resize( gcores_count );
 
+   alpha               = 0.0;
+   mc_iterations       = 0;
    max_iterations      = parameters[ "gfit_iterations" ].toInt();
    int kcurve          = 0;
 
@@ -56,7 +58,21 @@ DbgLv(1) << "pcsa_mast:   submit_pcsa kc" << kcurve;
          qSort( mrecs );
          US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
          QString tripleID = edata->cell + edata->channel + edata->wavelength;
-         QString progress = 
+
+         simulation_values.variance   = mrecs[ 0 ].variance;
+         simulation_values.solutes    = mrecs[ 0 ].csolutes;
+         simulation_values.ti_noise   = mrecs[ 0 ].ti_noise;
+         simulation_values.ri_noise   = mrecs[ 0 ].ri_noise;
+//*DEBUG*
+wksim_vals          = simulation_values;
+wksim_vals.solutes  = mrecs[ 0 ].isolutes;
+calc_residuals( current_dataset, 1, wksim_vals );
+DbgLv(0) << "final-mr0: variance1 variance2" << simulation_values.variance << wksim_vals.variance;
+DbgLv(0) << "final-mr0: csolsize1 csolsize2" << simulation_values.solutes.size() << wksim_vals.solutes.size();
+//*DEBUG*
+
+
+         QString progress =
             "Iteration: "    + QString::number( iterations );
 
          if ( datasets_to_process > 1 )
@@ -133,7 +149,15 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
 
          if ( ! job_queue.isEmpty() ) continue;
 
+         // Save information from best model
+         pcsa_best_model();
+
+         // Tikhonov Regularization
+         tikreg_pcsa();
+
          // Monte Carlo
+         montecarlo_pcsa();
+
          if ( mc_iterations > 1 )
          {  // Recompute final fit to get simulation and residual
             mc_iteration++;
@@ -260,9 +284,6 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
    double s_max      = parameters[ "s_max"           ].toDouble();
    double ff0_min    = parameters[ "ff0_min"         ].toDouble();
    double ff0_max    = parameters[ "ff0_max"         ].toDouble();
-   int    tikreg     = parameters[ "tikreg_option"   ].toInt();
-   double tr_alpha   = parameters[ "tikreg_alpha"    ].toDouble();
-   tr_alpha          = ( tikreg == 1 ) ? tr_alpha : 0.0;
    QString s_ctyp    = parameters[ "curve_type" ];
    int    ctype      = US_ModelRecord::ctype_flag( s_ctyp );
    int    nkpts      = parameters[ "vars_count"      ].toInt();
@@ -339,7 +360,7 @@ void US_MPI_Analysis::submit_pcsa( Sa_Job& job, int worker )
 {
    job.mpi_job.command        = MPI_Job::PROCESS;
    job.mpi_job.length         = job.solutes.size(); 
-   job.mpi_job.meniscus_value = alpha;
+   job.mpi_job.meniscus_value = 0.0;
    job.mpi_job.solution       = mc_iteration;
    job.mpi_job.dataset_offset = current_dataset;
    job.mpi_job.dataset_count  = datasets_to_process;
@@ -484,9 +505,6 @@ DbgLv(1) << "pcsa:wrmr:  editGUID=" << mrecs[0].editGUID
    double s_max          = parameters[ "s_max"         ].toDouble();
    double ff0_min        = parameters[ "ff0_min"       ].toDouble();
    double ff0_max        = parameters[ "ff0_max"       ].toDouble();
-//   int    tikreg         = parameters[ "tikreg_option" ].toInt();
-//   double tr_alpha       = parameters[ "tikreg_alpha"  ].toDouble();
-//   tr_alpha              = ( tikreg == 1 ) ? tr_alpha : 0.0;
    if ( ctype != CTYPE_ALL )
       mrecs[ 0 ].ctype      = ctype;
    mrecs[ 0 ].smin       = s_min;
@@ -670,19 +688,96 @@ DbgLv(1) << "iter_p: parlims3"
 // Engineer Tikhonov Regularization for PCSA
 void US_MPI_Analysis::tikreg_pcsa()
 {
+   int tikreg          = parameters[ "tikreg_option"   ].toInt();
+DbgLv(0) << "tikr: tikreg" << tikreg;
+
+   if ( tikreg == 0 )  return;
+
 //*TEMP*
-qDebug() << "Currently-unimplemented PCSA Tikhonov Regularization is skipped";
-printf(  "Currently-unimplemented PCSA Tikhonov Regularization is skipped\n" );
+//qDebug() << "Currently-unimplemented PCSA Tikhonov Regularization is skipped";
+//printf(  "Currently-unimplemented PCSA Tikhonov Regularization is skipped\n" );
 //*TEMP*
+   alpha               = parameters[ "tikreg_alpha" ].toDouble();
+
+   if ( tikreg == 2 )
+      alpha_scan();
+
+   wksim_vals          = simulation_values;
+   wksim_vals.solutes  = mrecs[ 0 ].isolutes;
+   wksim_vals.alpha    = alpha;
+   wksim_vals.noisflag = 0;
+   wksim_vals.ri_noise.clear();
+   wksim_vals.ri_noise.clear();
+DbgLv(0) << "tikr: alpha" << alpha;
+
+   calc_residuals( current_dataset, 1, wksim_vals );
+
+   mrec                = mrecs[ 1 ];
+   mrec.csolutes       = wksim_vals.solutes;
+   mrec.variance       = wksim_vals.variance;
+   mrec.rmsd           = sqrt( mrec.variance );
+   mrec.sim_data       = wksim_vals.sim_data;
+   mrec.residuals      = wksim_vals.residuals;
+   mrecs[ 1 ]          = mrec;
+
+   write_pcsa_aux_model( 0 );
+
+   qDebug() << "Tikhonov Regularization RMSD" << mrec.rmsd;
+DbgLv(0) << "tikr: RMSD" << mrec.rmsd << "csol size" << mrec.csolutes.size();
+
+   US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
+   QString tripleID    = edata->cell + edata->channel + edata->wavelength;
+   QString progress    =
+            "Regularization: " + QString::number( wksim_vals.alpha );
+
+   if ( datasets_to_process > 1 )
+      progress     += "; Datasets: "
+                      + QString::number( datasets_to_process );
+   else
+      progress     += "; Dataset: "
+                      + QString::number( current_dataset + 1 )
+                      + " (" + tripleID + ")";
+
+   progress     += "; RMSD: " + QString::number( mrec.rmsd );
+
+   send_udp( progress );
 }
 
 // Engineer Monte Carlo for PCSA
 void US_MPI_Analysis::montecarlo_pcsa()
 {
+   mc_iterations     = parameters[ "mc_iterations" ].toInt();
+
+   if ( mc_iterations < 2 )  return;
+
+   mc_iteration      = 1;
 //*TEMP*
 qDebug() << "Currently-unimplemented PCSA Monte Carlo iterations is skipped";
 printf(  "Currently-unimplemented PCSA Monte Carlo iterations is skipped\n" );
 //*TEMP*
+#if 0
+            mc_iteration++;
+            wksim_vals           = simulation_values;
+            wksim_vals.solutes   = calculated_solutes[ 0 ]; 
+
+            calc_residuals( 0, data_sets.size(), wksim_vals );
+
+            qDebug() << "Base-Sim RMSD" << sqrt( simulation_values.variance )
+                     << "  Exp-Sim RMSD" << sqrt( wksim_vals.variance )
+                     << "  of MC_Iteration" << mc_iteration;
+            max_iterations              = 1;
+            simulation_values           = wksim_vals;
+
+            if ( mc_iteration < mc_iterations )
+            {
+               time_mc_iterations();
+
+               set_monteCarlo();
+            }
+
+      write_pcsa_aux_model( mc_iteration );
+
+#endif
 }
 
 // Filter model records by a specified curve type
@@ -781,7 +876,424 @@ DbgLv(0) << " master:clean_mrecs: goodx lmrec" << goodx << lmrec;
             mrecs[ ii ].rmsd     = mrecs[ gx_ds ].rmsd;
          }
       }
-
    }
+}
+
+// Save best pre-regularization/pre-montecarlo model and model record;
+//  and insert place-holders for any regularization and/or montecarlo
+void US_MPI_Analysis::pcsa_best_model()
+{
+   US_Model mdummy;
+   mrec              = mrecs[ 0 ];
+   simulation_values.solutes  = mrec.isolutes;
+   //simulation_values.ti_noise = mrec.ti_noise;
+   //simulation_values.ri_noise = mrec.ri_noise;
+   simulation_values.ti_noise.clear();
+   simulation_values.ri_noise.clear();
+
+   calc_residuals( current_dataset, 1, simulation_values );
+
+   mrec.csolutes     = simulation_values.solutes;
+   mrec.variance     = simulation_values.variance;
+   mrec.rmsd         = sqrt( mrec.variance );
+   mrec.model        = data_sets[ current_dataset ]->model;
+   mrec.sim_data     = simulation_values.sim_data;
+   mrec.residuals    = simulation_values.residuals;
+   mrec.ti_noise     = simulation_values.ti_noise;
+   mrec.ri_noise     = simulation_values.ri_noise;
+DbgLv(0) << "bestm: RMSD" << mrec.rmsd;
+
+   mrecs[ 0 ]        = mrec;
+
+   int tikreg        = parameters[ "tikreg_option" ].toInt();
+   mc_iterations     = parameters[ "mc_iterations" ].toInt();
+   int noiflg        = simulation_values.noisflag;
+DbgLv(0) << "bestm: tikreg mciters" << tikreg << mc_iterations;
+
+   if ( tikreg != 0 )
+   {
+      int nadd          = ( mc_iterations > 1 ) ? 2 : 1;
+      mrecs.insert( 1, nadd, mrec );
+
+      mrecs[ 1 ].model    = mdummy;
+      mrecs[ 1 ].csolutes .clear();
+      mrecs[ 1 ].ti_noise .clear();
+      mrecs[ 1 ].ri_noise .clear();
+      mrecs[ 1 ].mrecGUID .clear();
+      mrecs[ 1 ].mrecGUID .clear();
+      mrecs[ 1 ].modelGUID.clear();
+
+      if ( nadd > 1 )
+      {
+         mrecs[ 2 ].model    = mdummy;
+         mrecs[ 2 ].csolutes .clear();
+         mrecs[ 2 ].ti_noise .clear();
+         mrecs[ 2 ].ri_noise .clear();
+         mrecs[ 2 ].mrecGUID .clear();
+         mrecs[ 2 ].mrecGUID .clear();
+         mrecs[ 2 ].modelGUID.clear();
+      }
+   }
+
+   else if ( mc_iterations > 1 )
+   {
+      mrecs.insert( 1, 1, mrec );
+      mrecs[ 1 ].model    = mdummy;
+      mrecs[ 1 ].csolutes .clear();
+      mrecs[ 1 ].ti_noise .clear();
+      mrecs[ 1 ].ri_noise .clear();
+      mrecs[ 1 ].mrecGUID .clear();
+      mrecs[ 1 ].mrecGUID .clear();
+      mrecs[ 1 ].modelGUID.clear();
+   }
+
+   if ( ( tikreg != 0  ||  mc_iterations > 1 )  &&
+        ( noiflg != 0 ) )
+   {  // Apply computed noise to data
+      US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
+      double vnoise     = 0.0;
+      int nscan         = edata->scanCount();
+      int npoint        = edata->pointCount();
+      int rcount        = mrec.ti_noise.size();
+      int scount        = mrec.ri_noise.size();
+DbgLv(0) << "bestm: noise apply ns np sc rc" << nscan << npoint << scount << rcount;
+      npoint            = ( noiflg & 1 ) > 0 ? npoint : rcount;
+      nscan             = ( noiflg & 2 ) > 0 ? nscan  : scount;
+
+      if ( rcount != npoint  ||  scount != nscan )
+      {
+         qDebug() << "*ERROR* noise count(s) do not match data dimensions!";
+         return;
+      }
+
+      if ( ( noiflg & 1 ) > 0 )
+      {  // Apply ti noise
+DbgLv(0) << "bestm: noise flag" << noiflg << "TI_NOISE apply";
+         for ( int jj = 0; jj < rcount; jj++ )
+         {  // Get constant noise value for each reading and apply to scans
+            vnoise            = -1.0 * mrec.ti_noise[ jj ];
+            for ( int ii = 0; ii < scount; ii++ )
+            {  // Apply to all scans at reading position
+               edata->scanData[ ii ].rvalues[ jj ] += vnoise;
+            }
+         }
+      }
+
+      if ( ( noiflg & 2 ) > 0 )
+      {  // Apply ri noise
+DbgLv(0) << "bestm: noise flag" << noiflg << "RI_NOISE apply";
+         for ( int ii = 0; ii < scount; ii++ )
+         {  // Get constant noise value for each scan and apply to readings
+            vnoise            = -1.0 * mrec.ri_noise[ ii ];
+            for ( int jj = 0; jj < rcount; jj++ )
+            {  // Apply to all readings at scan position
+               edata->scanData[ ii ].rvalues[ jj ] += vnoise;
+            }
+         }
+      }
+   }
+}
+
+// Write a PCSA auxiliary (TR/MC) model and potentially model records
+void US_MPI_Analysis::write_pcsa_aux_model( int iter )
+{
+   double vbar20       = data_sets[ current_dataset ]->vbar20;
+   wmodel              = mrecs[ 0 ].model;
+   wmodel.modelGUID    = US_Util::new_guid();
+   wmodel.variance     = wksim_vals.variance;
+   QString mdesc       = wmodel.description;
+   QString runID       = QString( mdesc ).section( ".",  0, -4 );
+   QString tripID      = QString( mdesc ).section( ".", -3, -3 );
+   QString asysID      = QString( mdesc ).section( ".", -2, -2 );
+   QString typeExt     = QString( ".model" );
+   QString dates       = QString( asysID ).section( "_", 0, 1 );
+   QString atype       = QString( asysID ).section( "_", 2, 2 );
+   QString reqID       = QString( asysID ).section( "_", 3, 3 );
+   QString iterID      = "i01" ;
+   if ( iter == 0 )
+   {
+      atype              += "-TR";
+      wmodel.alphaRP      = alpha;
+      mrecs[ 1 ].modelGUID = wmodel.modelGUID;
+   }
+   else
+   {
+      atype              += "-MC";
+      iterID              = QString().sprintf( "mc%04d", iter );
+      int jj              = ( mrecs[ 2 ].taskx == mrecs[ 0 ].taskx ) ? 2 : 1;
+      mrecs[ jj ].modelGUID = wmodel.modelGUID;
+   }
+   asysID              = dates + "_" + atype + "_" + reqID + "_" + iterID;
+   mdesc               = runID + "." + tripID + "." + asysID + typeExt;
+   wmodel.description  = mdesc;
+   wmodel.components.clear();
+DbgLv(0) << "wraux: mdesc" << mdesc;
+
+   for ( int ii = 0; ii < wksim_vals.solutes.size(); ii++ )
+   {
+      const US_Solute* solute = &wksim_vals.solutes[ ii ];
+      US_Model::SimulationComponent component;
+      component.s         = solute->s;
+      component.f_f0      = solute->k;
+      component.name      = QString().sprintf( "SC%04d", ii + 1 );
+      component.vbar20    = vbar20;
+      component.signal_concentration = solute->c;
+
+      US_Model::calc_coefficients( component );
+
+      wmodel.components << component;
+   }
+
+   mrec.model          = wmodel;
+   QString fext        = ( iter == 0 ) ? ".model.xml" : ".mdl.tmp";
+   QString fileid      = "." + atype + "." + tripID + "." + iterID + fext;
+   QString fn          = runID + fileid;
+   int lenfn           = fn.length();
+
+   if ( lenfn > 99 )
+   {
+      int lenri           = runID.length() + 99 - lenfn;
+      fn                  = QString( runID ).left( lenri ) + fileid;
+   }
+
+   // Output the model to a file
+   wmodel.write( fn );
+
+   // Add the model file name to the output list
+   QFile fileo( "analysis_files.txt" );
+
+   if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text
+                                           | QIODevice::Append ) )
+   {
+      abort( "Could not open 'analysis_files.txt' for writing" );
+      return;
+   }
+
+   QTextStream tsout( &fileo );
+
+   tsout << fn
+         << ";meniscus_value=" << meniscus_value
+         << ";MC_iteration="   << iter
+         << ";variance="       << wmodel.variance
+         << ";run= Run: 1"     << tripID << "\n";
+
+    fileo.close();
+
+    // If final regularization or final MC iter model, write model records
+    if ( ( iter == 0  &&  mc_iterations < 2 )  ||
+         ( iter > 0   &&  iter >= mc_iterations ) )
+    {
+       write_mrecs();
+    }
+}
+
+// Scan alphas
+void US_MPI_Analysis::alpha_scan()
+{
+   const double salpha   = 0.10;
+   const double ealpha   = 0.90;
+   const double dalpha   = 0.01;
+   const double roundv   = dalpha * 0.05;
+   const double alphadef = salpha + ( ealpha - salpha ) * 0.25; 
+   int nalpha    = qRound( ( ealpha - salpha ) / dalpha ) + 1;
+   QVector< double >  alphas;
+   QVector< double >  varias;
+   QVector< double >  xnorms;
+   QVector< double >  sv_nnls_a;
+   QVector< double >  sv_nnls_b;
+   alphas.clear();
+   varias.clear();
+   xnorms.clear();
+   alphas.reserve( nalpha );
+   varias.reserve( nalpha );
+   xnorms.reserve( nalpha );
+
+   double varmx  = 0.0;
+   double xnomx  = 0.0;
+   double v_vari = 0.0;
+   double v_xnsq = 0.0;
+   double calpha = salpha;
+
+   for ( int ja = 0; ja < nalpha; ja++ )
+   {  // Loop to populate alpha scan arrays with preliminary values
+      alphas << calpha;
+      varias << v_vari;
+      xnorms << v_xnsq;
+      calpha += dalpha;
+   }
+
+   // Do alpha scan
+   QVector< double > csolutes;
+   sv_nnls_a.clear();
+   sv_nnls_b.clear();
+   mrec          = mrecs[ 0 ];
+   int nscans    = data_sets[ current_dataset ]->run_data.scanCount();
+   int npoints   = data_sets[ current_dataset ]->run_data.pointCount();
+   int nisols    = mrec.isolutes.size();
+
+   for ( int ja = 0; ja < nalpha; ja++ )
+   {  // Loop to evaluate each alpha in the specified range
+      calpha             = alphas[ ja ];
+
+      if ( ja == 0 )
+      {  // For the first one do a full compute and save the A,B matrices
+         US_SolveSim::Simulation sim_vals;
+         sim_vals.alpha     = calpha;
+         sim_vals.solutes   = mrec.isolutes;
+
+         US_SolveSim* solvesim = new US_SolveSim( data_sets, 0, false );
+
+         solvesim->calc_residuals( current_dataset, 1, sim_vals, true,
+               &sv_nnls_a, &sv_nnls_b );
+
+         v_vari             = sim_vals.variance;
+         v_xnsq             = sim_vals.xnormsq;
+      }
+
+      else
+      {  // After 1st, regularize by modifying A matrix diagonal, then NNLS
+         apply_alpha( calpha, &sv_nnls_a, &sv_nnls_b,
+                      nscans, npoints, nisols, v_vari, v_xnsq );
+      }
+
+      varias[ ja ]       = v_vari;
+      xnorms[ ja ]       = v_xnsq;
+      varmx              = qMax( varmx, v_vari );
+      xnomx              = qMax( xnomx, v_xnsq );
+DbgLv(1) << "a v x" << calpha << v_vari << v_xnsq;
+   }
+
+   sv_nnls_a.clear();
+   sv_nnls_b.clear();
+
+   int lgv        = 0  - (int)qFloor( log10( varmx ) );
+   int lgx        = -1 - (int)qFloor( log10( xnomx ) );
+   double vscl    = qPow( 10.0, lgv );
+   double xscl    = qPow( 10.0, lgx );
+DbgLv(1) << "Log-varia Log-xnorm" << lgv << lgx << "vscl xscl" << vscl << xscl;
+
+   for ( int ja = 0; ja < nalpha; ja++ )
+   {  // Scale the variance,normsq points
+      varias[ ja ] *= vscl;
+      xnorms[ ja ] *= xscl;
+   }
+
+   // Compute lines that hint at the elbow point of the curve
+   double* xx    = varias.data();
+   double* yy    = xnorms.data();
+   double  xa[ 5 ];
+   double  ya[ 5 ];
+   double* xe    = (double*)xa;
+   double* ye    = (double*)ya;
+   double  slope; double slop2;
+   double  intcp; double intc2;
+   double  sigma; double  corre;
+   double  xlipt; double ylipt; double xcipt; double ycipt;
+   int  nlp  = 5;
+
+   // Compute a line fitted to the first few main curve points
+   while ( nlp < nalpha )
+   {
+      double avg  = US_Math2::linefit( &xx, &yy, &slope, &intcp,
+                                       &sigma, &corre, nlp );
+DbgLv(1) << "ASCN:H1:  avg" << avg << "nlp" << nlp;
+DbgLv(1) << "ASCN:H1:   sl" << slope << "in" << intcp << "sg" << sigma
+   << "co" << corre;
+      if ( slope < 1e99  &&  slope > (-1e99) )
+         break;
+
+      nlp      += 2;
+   }
+
+   // Compute a line fitted to the last few main curve points
+   int je    = nalpha - 1;
+   for ( int jj = 0; jj < 5; jj++, je-- )
+   {
+      xe[ jj ]  = xx[ je ];
+      ye[ jj ]  = yy[ je ];
+   }
+
+   US_Math2::linefit( &xe, &ye, &slop2, &intc2, &sigma, &corre, 5 );
+
+   // Find the intersection point for the 2 fitted lines
+   US_Math2::intersect( slope, intcp, slop2, intc2, &xlipt, &ylipt );
+
+   // Find the curve point nearest to the intersection point;
+   //  then compute a line from intersection to nearest curve point.
+   US_Math2::nearest_curve_point( xx, yy, nalpha, true, xlipt, ylipt,
+         &xcipt, &ycipt, alphas.data(), &alpha );
+
+   // Do a sanity check. If the intersection point is outside the
+   // rectangle that encloses the curve, we likely have an aberrant curve.
+   // So, forget elbow fit and default alpha.
+   double xcvp1  = xx[ 0 ];
+   double ycvp1  = yy[ 0 ];
+   double xcvp2  = xx[ je ];
+   double ycvp2  = yy[ je ];
+   bool good_fit = ( xlipt >= xcvp1  &&  ylipt <= ycvp1  &&
+                     xlipt <= xcvp2  &&  ylipt >= ycvp2 );
+DbgLv(1) << "ASCN:T4:   cv: x1,y1" << xcvp1 << ycvp1
+ << "x2,y2" << xcvp2 << ycvp2 << " good_fit" << good_fit;
+
+   alpha         = (double)qRound( alpha / roundv ) * roundv;
+   alpha         = good_fit ? alpha : alphadef;
+}
+
+void US_MPI_Analysis::apply_alpha( const double alpha, QVector< double >* psv_nnls_a,
+      QVector< double >* psv_nnls_b, const int nscans, const int npoints,
+      const int nisols, double& variance, double& xnormsq )
+{
+   int ntotal   = nscans * npoints;
+   int narows   = ntotal + nisols;
+   int ncsols   = 0;
+       variance = 0.0;
+       xnormsq  = 0.0;
+   QVector< double > nnls_a = *psv_nnls_a;
+   QVector< double > nnls_b = *psv_nnls_b;
+   QVector< double > nnls_x;
+   QVector< double > simdat;
+   nnls_x.fill( 0.0, nisols );
+   simdat.fill( 0.0, ntotal );
+
+   // Replace alpha in the diagonal of the lower square of A
+   int dx       = ntotal;
+   int dinc     = ntotal + nisols + 1;
+
+   for ( int cc = 0; cc < nisols; cc++ )
+   {
+      nnls_a[ dx ] = alpha;
+      dx          += dinc;
+   }
+
+   // Compute the X vector using NNLS
+   US_Math2::nnls( nnls_a.data(), narows, narows, nisols,
+                   nnls_b.data(), nnls_x.data() );
+
+   // Construct the output solutes and the implied simulation and xnorm-sq
+   for ( int cc = 0; cc < nisols; cc++ )
+   {
+      double soluval  = nnls_x[ cc ];   // Computed concentration, this solute
+
+      if ( soluval > 0.0 )
+      {
+         xnormsq     += sq( soluval );
+         ncsols++;
+         int aa       = cc * narows;
+
+         for ( int kk = 0; kk < ntotal; kk++ )
+         {
+            simdat[ kk ]   += ( soluval * (*psv_nnls_a)[ aa++ ] );
+         }
+      }
+   }
+
+   // Calculate the sum for the variance computation
+   for ( int kk = 0; kk < ntotal; kk++ )
+   {
+      variance    += sq( ( (*psv_nnls_b)[ kk ] - simdat[ kk ] ) );
+   }
+
+   // Return computed variance and xnorm-sq
+   variance    /= (double)ntotal;
 }
 

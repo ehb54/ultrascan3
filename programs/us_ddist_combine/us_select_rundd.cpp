@@ -248,7 +248,6 @@ void US_SelectRunDD::scan_dbase_runs()
    count_seld = 0;
    rlabels.clear();
    runIDs .clear();
-   expIDs .clear();
 
    if ( db.lastErrno() != US_DB2::OK )
    {
@@ -271,40 +270,19 @@ timer.start();
 
    while ( db.next() )
    {  // Get a list of all runs in the database
-      QString expid    = db.value( 0 ).toString();
       QString runid    = db.value( 1 ).toString();
-DbgLv(1) << "ScDB:     runid" << runid << "expid" << expid;
+DbgLv(1) << "ScDB:     runid" << runid;
 
       if ( ! runIDs.contains( runid ) )
       {
          count_allr++;
          rlabels << runid;     // Save run ID to list of selectable runs
          runIDs  << runid;     // Save run ID to list of total runs
-         expIDs  << expid;     // Save experiment ID to list for total runs
       }
    }
 DbgLv(1) << "ScDB:count_allr" << count_allr;
 DbgLv(1) << "ScDB:scan time(1)" << timer.elapsed();
 
-   // Scan edited data, getting runs and experiments for edits
-   query.clear();
-   query << "all_editedDataIDs" << invID;
-   db.query( query );
-
-   while ( db.next() )
-   {
-      QString edtid    = db.value( 0 ).toString();
-      QString rawid    = db.value( 3 ).toString();
-      QString expid    = db.value( 4 ).toString();
-      int     kk       = expIDs.indexOf( expid );
-      QString runid    = ( kk >=0 ) ? runIDs[ kk ] : "";
-      edtIDs  << edtid;
-      erunIDs << runid;
-      eexpIDs << expid;
-   }
-DbgLv(1) << "ScDB:scan time(2)" << timer.elapsed();
-
-   rlabels  = runIDs;
    mcounted = false;
 DbgLv(1) << "ScDB:counts: runIDs" << runIDs.count() << "rlabels" << rlabels.count();
 DbgLv(1) << "ScDB:scan time(9)" << timer.elapsed();
@@ -558,16 +536,12 @@ void US_SelectRunDD::scan_dbase_models()
 
 QTime timer;
 timer.start();
-   // Accumulate model information for edits present
-   for ( int ee = 0; ee < edtIDs.count(); ee++ )
+   // Accumulate model information for runs present
+   for ( int rr = 0; rr < runIDs.count(); rr++ )
    {
-      QString edtid    = edtIDs [ ee ];
-      QString runid    = erunIDs[ ee ];
-      if ( ! runIDs.contains( runid ) )
-         continue;
-
+      QString runid    = runIDs[ rr ];
       query.clear();
-      query << "get_model_desc_by_editID" << invID << edtid;
+      query << "get_model_desc_by_runID" << invID << runid;
       db.query( query );
 
       while( db.next() )
@@ -575,6 +549,7 @@ timer.start();
          QString mdlid    = db.value( 0 ).toString();
          QString mdlGid   = db.value( 1 ).toString();
          QString mdesc    = db.value( 2 ).toString();
+         QString edtid    = db.value( 6 ).toString();
          int     kk       = mdesc.lastIndexOf( ".model" );
          mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
          mmIDs   << mdlid;
@@ -668,9 +643,7 @@ void US_SelectRunDD::count_models()
 
    US_Passwd   pw;
    US_DB2      db( pw.getPasswd() );
-   redtKnts.clear();
    rmodKnts.clear();
-   emodKnts.clear();
    QStringList query;
    QString invID    = QString::number( US_Settings::us_inv_ID() );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
@@ -679,41 +652,18 @@ void US_SelectRunDD::count_models()
 QTime timer;
 timer.start();
 
-   // Scan saved edits, adding model counts
-   for ( int ee = 0; ee < edtIDs.count(); ee++ )
-   {
-      QString edtid    = edtIDs[ ee ];
-      query.clear();
-      query << "count_models_by_editID" << invID << edtid;
-      int     nemods   = db.functionQuery( query );
-      emodKnts << nemods;
-   }
-DbgLv(1) << "KntM:scan time(1)" << timer.elapsed();
-
    // Build run edit and run model counts lists
    for ( int rr = 0; rr < runIDs.count(); rr++ )
    {
       QString runid    = runIDs[ rr ];
-      int     nredts   = 0;
-      int     nrmods   = 0;
+      query.clear();
+      query << "count_models_by_runID" << invID << runid;
+      int nrmods       = db.functionQuery( query );
 
-      for ( int ee = 0; ee < edtIDs.count(); ee++ )
-      {
-         QString edtid    = edtIDs [ ee ];
-         QString erunid   = erunIDs[ ee ];
-
-         if ( erunid == runid )
-         {
-            nredts++;
-            nrmods       += emodKnts[ ee ];
-         }
-      }
-
-      redtKnts << nredts;
       rmodKnts << nrmods;
    }
-DbgLv(1) << "KntM:  counts: runIDs redtKnts rmodKnts"
- << runIDs.count() << redtKnts.count() << rmodKnts.count();
+DbgLv(1) << "KntM:  counts: runIDs rmodKnts"
+ << runIDs.count() << rmodKnts.count();
 DbgLv(1) << "KntM:scan time(2)" << timer.elapsed();
 
    // Reduce the run list to only those with associated models

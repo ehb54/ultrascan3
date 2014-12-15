@@ -54,16 +54,10 @@ class US_SelectRunDD : public US_WidgetsDialog
 
       QString              dsearch;     // Current data search string
 
-      QStringList          expIDs;      // Experiment IDs
-      QStringList          edtIDs;      // Edit IDs
-      QStringList          erunIDs;     // Edit run IDs
-      QStringList          eexpIDs;     // Edit experiment IDs
       QStringList          rlabels;     // Run ID labels
       QStringList          wDescrs;     // Working model descriptions
 
-      QList< int >         redtKnts;    // Edit counts for runs
       QList< int >         rmodKnts;    // Model counts for runs
-      QList< int >         emodKnts;    // Model counts for edits
 
       int                  count_allr;  // Count of all user runs
       int                  count_list;  // Count of discrete distribution runs

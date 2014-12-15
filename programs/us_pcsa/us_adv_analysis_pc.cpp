@@ -470,7 +470,9 @@ DbgLv(1) << "mrldDiag post-accept smin smax kmin kmax"
    QString sctype   = US_ModelRecord::ctype_text( ctype );
 
    // Build the model that goes along with the BFM
+DbgLv(1) << "pre-bfm-model mr0 rmsd" << mrec.rmsd;
    bfm_model();
+DbgLv(1) << "post-bfm-model mr0 rmsd" << mrec.rmsd << mrecs[0].rmsd;
 
    stat_bfm(
       tr( "A new Best Final Model derives from the top spot\n"
@@ -480,6 +482,7 @@ DbgLv(1) << "mrldDiag post-accept smin smax kmin kmax"
       .arg( sctype ).arg( ncsols ).arg( mrec.rmsd ) );
 
    set_fittings( mrecs );
+DbgLv(1) << "post-set-fittings mr0 rmsd" << mrecs[0].rmsd;
 
    bfm_new          = true;
    mrs_new          = true;
@@ -1536,6 +1539,7 @@ void US_AdvAnalysisPc::bfm_model( void )
    modela         = model;                // Model for application (corrected)
    double sfactor = 1.0 / dset0->s20w_correction;
    double dfactor = 1.0 / dset0->D20w_correction;
+   double rmsdsv  = mrec.rmsd;
 
    // Build the model that goes along with the new composite model record
    for ( int cc = 0; cc < ncsols; cc++ )
@@ -1579,6 +1583,29 @@ void US_AdvAnalysisPc::bfm_model( void )
    }
 
    varia         /= (double)( nscans * npoints );
+   double rmsd    = sqrt( varia );
+
+   if ( rmsd > rmsdsv  &&  rmsd > mrecs[ 3 ].rmsd )
+   {  // Computed rmsd too high:  must have skipped noise, so ignore
+      mrecs[ 0 ].sim_data  = mrec.sim_data;
+      mrecs[ 0 ].residuals = mrec.residuals;
+      mrec           = mrecs[ 0 ];
+      model          = mrec.model;
+
+      if ( ! mrec.modelGUID.isEmpty() )
+      {  // If possible, load the model referred to in best model record
+         US_Passwd pw;
+         bool loadDB    = dset0->requestID.contains( "DB" );
+         US_DB2* dbP    = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
+
+         model.load( loadDB, mrec.modelGUID, dbP );
+
+         mrec.model     = model;
+         mrecs[ 0 ]     = mrec;
+      }
+      return;
+   }
+
    mrec.variance  = varia;
    mrec.rmsd      = sqrt( varia );
    mrec.model     = model;

@@ -96,6 +96,10 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QLayout* lo_pcsaslmc = us_checkbox( tr( "PCSA-SL-MC" ), ck_pcsaslmc, false );
    QLayout* lo_pcsadsmc = us_checkbox( tr( "PCSA-DS-MC" ), ck_pcsadsmc, false );
    QLayout* lo_pcsahlmc = us_checkbox( tr( "PCSA-HL-MC" ), ck_pcsahlmc, false );
+   QLayout* lo_pcsaistr = us_checkbox( tr( "PCSA-IS-TR" ), ck_pcsaistr, false );
+   QLayout* lo_pcsasltr = us_checkbox( tr( "PCSA-SL-TR" ), ck_pcsasltr, false );
+   QLayout* lo_pcsadstr = us_checkbox( tr( "PCSA-DS-TR" ), ck_pcsadstr, false );
+   QLayout* lo_pcsahltr = us_checkbox( tr( "PCSA-HL-TR" ), ck_pcsahltr, false );
    QLayout* lo_dmga     = us_checkbox( tr( "DMGA" ),       ck_dmga,     false );
    QLayout* lo_dmgamc   = us_checkbox( tr( "DMGA-MC" ),    ck_dmgamc,   false );
    QLayout* lo_dmgara   = us_checkbox( tr( "DMGA-RA" ),    ck_dmgara,   false );
@@ -161,6 +165,10 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_pcsaslmc,  row,   2, 1, 2 );
    leftLayout->addLayout( lo_pcsadsmc,  row,   4, 1, 2 );
    leftLayout->addLayout( lo_pcsahlmc,  row++, 6, 1, 2 );
+   leftLayout->addLayout( lo_pcsaistr,  row,   0, 1, 2 );
+   leftLayout->addLayout( lo_pcsasltr,  row,   2, 1, 2 );
+   leftLayout->addLayout( lo_pcsadstr,  row,   4, 1, 2 );
+   leftLayout->addLayout( lo_pcsahltr,  row++, 6, 1, 2 );
    leftLayout->addLayout( lo_dmga,      row,   0, 1, 2 );
    leftLayout->addLayout( lo_dmgamc,    row,   2, 1, 2 );
    leftLayout->addLayout( lo_dmgara,    row,   4, 1, 2 );
@@ -253,6 +261,14 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    connect( ck_pcsadsmc, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_pcsahlmc, SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_pcsaistr, SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_pcsasltr, SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_pcsadstr, SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_pcsahltr, SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_dtall,    SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   allMethodChanged( int ) ) );
@@ -419,6 +435,10 @@ if(dbg_level>0)
    bool hv_pcsaslmc = methods.contains( "PCSA-SL-MC" );
    bool hv_pcsadsmc = methods.contains( "PCSA-DS-MC" );
    bool hv_pcsahlmc = methods.contains( "PCSA-HL-MC" );
+   bool hv_pcsaistr = methods.contains( "PCSA-IS-TR" );
+   bool hv_pcsasltr = methods.contains( "PCSA-SL-TR" );
+   bool hv_pcsadstr = methods.contains( "PCSA-DS-TR" );
+   bool hv_pcsahltr = methods.contains( "PCSA-HL-TR" );
    bool hv_dmga     = methods.contains( "DMGA"       );
    bool hv_dmgamc   = methods.contains( "DMGA-MC"    );
    bool hv_dmgara   = methods.contains( "DMGA-RA"    );
@@ -450,6 +470,10 @@ if(dbg_level>0)
    ck_pcsaslmc->setEnabled( hv_pcsaslmc );
    ck_pcsadsmc->setEnabled( hv_pcsadsmc );
    ck_pcsahlmc->setEnabled( hv_pcsahlmc );
+   ck_pcsaistr->setEnabled( hv_pcsaistr );
+   ck_pcsasltr->setEnabled( hv_pcsasltr );
+   ck_pcsadstr->setEnabled( hv_pcsadstr );
+   ck_pcsahltr->setEnabled( hv_pcsahltr );
    ck_dmga    ->setEnabled( hv_dmga     );
    ck_dmgamc  ->setEnabled( hv_dmgamc   );
    ck_dmgara  ->setEnabled( hv_dmgara   );
@@ -481,6 +505,10 @@ if(dbg_level>0)
    ck_pcsaslmc->setChecked( hv_pcsaslmc );
    ck_pcsadsmc->setChecked( hv_pcsadsmc );
    ck_pcsahlmc->setChecked( hv_pcsahlmc );
+   ck_pcsaistr->setChecked( hv_pcsaistr );
+   ck_pcsasltr->setChecked( hv_pcsasltr );
+   ck_pcsadstr->setChecked( hv_pcsadstr );
+   ck_pcsahltr->setChecked( hv_pcsahltr );
    ck_dmga    ->setChecked( hv_dmga     );
    ck_dmgamc  ->setChecked( hv_dmgamc   );
    ck_dmgara  ->setChecked( hv_dmgara   );
@@ -849,6 +877,10 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
       if ( ck_pcsaslmc->isChecked() )  methods << "PCSA-SL-MC";
       if ( ck_pcsadsmc->isChecked() )  methods << "PCSA-DS-MC";
       if ( ck_pcsahlmc->isChecked() )  methods << "PCSA-HL-MC";
+      if ( ck_pcsaistr->isChecked() )  methods << "PCSA-IS-TR";
+      if ( ck_pcsasltr->isChecked() )  methods << "PCSA-SL-TR";
+      if ( ck_pcsadstr->isChecked() )  methods << "PCSA-DS-TR";
+      if ( ck_pcsahltr->isChecked() )  methods << "PCSA-HL-TR";
       if ( ck_dmga    ->isChecked() )  methods << "DMGA";
       if ( ck_dmgamc  ->isChecked() )  methods << "DMGA-MC";
       if ( ck_dmgara  ->isChecked() )  methods << "DMGA-RA";
@@ -870,9 +902,11 @@ DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
          if ( mfilter )
          {  // If method-filtering, skip any item whose method is not checked
             QString meth = mdesc.section( ".", -1, -1 ).section( "_", -3, -3 );
+DbgLv(1) << "RunIDSel:    meth" << meth;
             if ( ! methods.contains( meth ) )  continue;
          }
 
+DbgLv(1) << "RunIDSel:     added: ddesc" << ddesc;
          lw_models->addItem( distribID( mdesc, ddesc ) );
       }
    }
@@ -1387,6 +1421,10 @@ void US_DDistr_Combine::allMethodChanged( int state )
       ck_pcsaslmc->setChecked( ck_pcsaslmc->isEnabled() );
       ck_pcsadsmc->setChecked( ck_pcsadsmc->isEnabled() );
       ck_pcsahlmc->setChecked( ck_pcsahlmc->isEnabled() );
+      ck_pcsaistr->setChecked( ck_pcsaistr->isEnabled() );
+      ck_pcsasltr->setChecked( ck_pcsasltr->isEnabled() );
+      ck_pcsadstr->setChecked( ck_pcsadstr->isEnabled() );
+      ck_pcsahltr->setChecked( ck_pcsahltr->isEnabled() );
       ck_dmga    ->setChecked( ck_dmga    ->isEnabled() );
       ck_dmgamc  ->setChecked( ck_dmgamc  ->isEnabled() );
       ck_dmgara  ->setChecked( ck_dmgara  ->isEnabled() );

@@ -116,6 +116,7 @@ class US_MPI_Analysis : public QObject
 
     US_ModelRecord             mrec;     // Work PCSA model record
     QVector< US_ModelRecord >  mrecs;    // PCSA model records (curves)
+    QStringList         cm_files;        // PCSA MC component models files
 
     QHostAddress        server;
     quint16             port;
@@ -145,8 +146,8 @@ class US_MPI_Analysis : public QObject
             static const int MASTER = 0;
             static const int TAG3   = 3;
 
-            enum Command { IDLE, PROCESS, WAIT, SHUTDOWN, NEWDATA };
-            enum Status  { TAG0, READY, RESULTS };
+            enum Command { IDLE, PROCESS, WAIT, SHUTDOWN, NEWDATA, PROCESS_MC };
+            enum Status  { TAG0, READY, RESULTS, RESULTS_MC };
 
             int     solution;
             int     length;
@@ -414,9 +415,14 @@ class US_MPI_Analysis : public QObject
     void    iterate_pcsa        ( void );
     void    tikreg_pcsa         ( void );
     void    montecarlo_pcsa     ( void );
+    void    pcsa_best_model     ( void );
+    void    write_pcsa_aux_model( const int );
     void    filter_mrecs        ( const int, QVector< US_ModelRecord >&,
                                              QVector< US_ModelRecord >& );
     void    clean_mrecs         ( QVector< US_ModelRecord >& );
+    void    alpha_scan          ( void );
+    void    apply_alpha( const double, QVector< double >*, QVector< double >*,
+                         const int, const int, const int, double&, double& );
 
 
     // PCSA Worker
