@@ -13954,7 +13954,7 @@ bool US_Hydrodyn::calc_zeno()
                                          batch_window->save_batch_active);
                if ( saveParams && create_hydro_res )
                {
-                  QString fname = this_data.results.name + ".csv";
+                  QString fname = this_data.results.name + ".zeno.csv";
                   FILE *of = fopen(fname, "wb");
                   if ( of )
                   {
