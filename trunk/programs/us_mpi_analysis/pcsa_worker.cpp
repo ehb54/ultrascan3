@@ -38,13 +38,12 @@ DbgLv(1) << "w:" << my_rank << ": ready sent";
 DbgLv(1) << "w:" << my_rank << ": job_recvd  length" << job.length
  << "command" << job.command;
 
-      double alpha       = job.meniscus_value;
       int offset         = job.dataset_offset;
       int dataset_count  = job.dataset_count;
       int job_length     = job.length;
       meniscus_value     = data_sets[ offset ]->run_data.meniscus;
 DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count
- << "alpha" << alpha << "menisc" << meniscus_value;
+ << "menisc" << meniscus_value;
 
       data_sets[ offset ]->simparams.meniscus = meniscus_value;
 
@@ -54,11 +53,9 @@ DbgLv(1) << "w:" << my_rank << ": offs cnt" << offset << dataset_count
          case MPI_Job::PROCESS:  // Process solutes
             {
                US_SolveSim::Simulation simulation_values;
-               simulation_values.alpha       = alpha;
                simulation_values.noisflag    =
-                  parameters[ "tinoise_option" ].toInt() > 0 ?  1 : 0;
-               simulation_values.noisflag   +=
-                  parameters[ "rinoise_option" ].toInt() > 0 ?  2 : 0;
+                    ( parameters[ "tinoise_option" ].toInt() > 0 ? 1 : 0 )
+                  + ( parameters[ "rinoise_option" ].toInt() > 0 ? 2 : 0 );
                simulation_values.dbg_level   = dbg_level;
                simulation_values.dbg_timing  = dbg_timing;
 

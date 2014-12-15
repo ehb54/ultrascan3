@@ -770,7 +770,13 @@ DbgLv(1) << "WrO: wr_noise";
 
 DbgLv(1) << "WrO: wr_mrecs";
    if ( mdl_type == US_Model::PCSA )
-      write_mrecs();
+   {  // Output mrecs for PCSA, if we have a final mrecs vector
+      int tikreg   = parameters[ "tikreg_option" ].toInt();
+      int mc_iters = parameters[ "mc_iterations" ].toInt();
+
+      if ( tikreg == 0  &&  mc_iters < 2 )
+         write_mrecs();
+   }
 }
 
 // Write global model outputs at the end of an iteration

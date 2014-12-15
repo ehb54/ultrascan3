@@ -810,7 +810,7 @@ qDebug() << " n_dif" << n_dif << "time_d" << time_d << "pn_time" << pn_time;
 
       // Add current message to full text
       msg_note         += typeMap[ types[ ii ] ] + " for release "
-                       + revs[ ii ] + ":\n\n"
+                       + revs[ ii ] + ":\n"
                        + msgs[ ii ] + "\n";
 
       // Critical from later revision than current means an abort

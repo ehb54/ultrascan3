@@ -264,11 +264,18 @@ DbgLv(1) << "RP:PD mrecs size" << mrecs.size() << nmodl;
       data_plot1->setAxisTitle( QwtPlot::yRight, tr( "RMSD" ) );
       data_plot1->setAxisScale( QwtPlot::yRight, rmsd_best, rmsd_elite );
 
-      QColor c_white( Qt::white );                    // Color white
+      QColor c_white ( Qt::white );                   // Color white
+      QColor c_yellow( Qt::yellow );                  // Color yellow
+      QColor c_cyan  ( Qt::cyan );                    // Color cyan
       QPen   pen_best( colormap->color2(), 3 );       // Pen for best line
       QPen   pen_gray( QColor(  64,  64,  64 ), 1 );  // Pen for gray lines
       int    eloffs   = neline - 1;                   // Elite count offset
       double elrange  = (double)eloffs;               // Elite line count range
+      int    blnx     = 0;
+      if ( mrecs[ 1 ].taskx == mrecs[ 0 ].taskx )
+         blnx            = 1;
+      if ( mrecs[ 2 ].taskx == mrecs[ 0 ].taskx )
+         blnx            = 2;
 
       // Determine maximum concentration in models with solutes to display
       double max_conc = 0.0;
@@ -290,15 +297,16 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
          if ( ii >= nvline )
             continue;
 //DbgLv(1) << "RP:PD    ii" << ii << "rmsd_rec" << mrecs[ii].rmsd;
+         bool   do_curv  = true;
 
-         if ( ii == 0 )
+         if ( ii == blnx )
          { // Best:  color with top color and use wider line
             title   = tr( "Best Curve " ) + QString::number( ii );
             curv    = us_curve( data_plot1, title );
             curv->setPen  ( pen_best );    // Red
          }
 
-         else if ( ii < neline )
+         else if ( ii < neline  &&  ii > blnx )
          { // Elite:  color according to position in elite range
             title   = tr( "Elite Curve " ) + QString::number( ii );
             curv    = us_curve( data_plot1, title );
@@ -306,11 +314,16 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
             curv->setPen( QPen( positionColor( position ), 2 ) );
          }
 
-         else
+         else if ( ii > blnx )
          { // Non-elite:  color gray
             title   = tr( "Curve " ) + QString::number( ii );
             curv    = us_curve( data_plot1, title );
             curv->setPen( pen_gray );
+         }
+
+         else
+         {
+            do_curv = false;
          }
 
          int klpts   = mrecs[ ii ].isolutes.size();
@@ -336,33 +349,47 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
          }
 
 //DbgLv(1) << "RP:PD   klpts" << klpts;
-         curv->setData ( xx, yy, klpts );
+         if ( do_curv )
+            curv->setData ( xx, yy, klpts );
 
          if ( ii < nsline )
          { // If within solutes-lines count, plot the solute points
-            int ncomp   = mrecs[ ii ].csolutes.size();
+            int ncomp     = mrecs[ ii ].csolutes.size();
+            QColor c_symb = c_white;      // Predominant solutes symbol color
+            int szdmin    = 2;            //  and likely minimum size
+            if ( ii == 1  &&  mrecs[ 1 ].taskx == mrecs[ 0 ].taskx )
+            {
+               c_symb        = c_yellow;  // Differint symbol color for TR/MC
+               szdmin        = 3;         //  and different minimum size
+            }
+            if ( ii == 2  &&  mrecs[ 2 ].taskx == mrecs[ 0 ].taskx )
+            {
+               c_symb        = c_cyan;    // Differint symbol color for TR/MC
+               szdmin        = 3;         //  and different minimum size
+            }
+
             for ( int kk = 0; kk < ncomp; kk++ )
             {
                double xv   = mrecs[ ii ].csolutes[ kk ].s * 1.0e+13;
                double yv   = mrecs[ ii ].csolutes[ kk ].k;
                double cv   = mrecs[ ii ].csolutes[ kk ].c;
                double cfra = cv / max_conc;
-               int    szd  = qMax( 2, qRound( 9.0 * cfra ) );
+               int    szd  = qMax( szdmin, qRound( 9.0 * cfra ) );
                title       = tr( "Solute Curve " ) + QString::number( ii )
                              + " Point " + QString::number( kk );
                curv        = us_curve( data_plot1, title );
                QwtSymbol symbol;
-               symbol.setPen  ( c_white );
+               symbol.setPen  ( c_symb );
                symbol.setSize ( szd );
                symbol.setStyle( QwtSymbol::Ellipse );
-               symbol.setBrush( c_white );
+               symbol.setBrush( c_symb );
 
                curv->setStyle ( QwtPlotCurve::NoCurve );
                curv->setSymbol( symbol );
                curv->setData  ( &xv, &yv, 1 );
             }
-//DbgLv(1) << "RP:PD       ncomp" << ncomp << "x0 y0 xn yn"
-// << xx[0] << yy[0] << xx[ncomp-1] << yy[ncomp-1];
+DbgLv(1) << "RP:PD       ncomp" << ncomp << "x0 y0 xn yn"
+ << xx[0] << yy[0] << xx[ncomp-1] << yy[ncomp-1];
          }
       } // END: models loop
 DbgLv(1) << "RP:PD (5)smin smax" << smin << smax;
