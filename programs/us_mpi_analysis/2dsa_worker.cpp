@@ -107,7 +107,7 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
  << "nsscan" << simulation_values.sim_data.scanCount();
 }
 //*DEBUG*
-               MPI_Send( &size,
+               MPI_Send( size,
                          4,
                          MPI_INT,
                          MPI_Job::MASTER,
