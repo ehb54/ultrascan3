@@ -33,7 +33,6 @@ DbgLv(1) << "pcsa_mast: fill_queue complete";
 // DbgLv(1) << " master loop-TOP:  jq-empty?" << job_queue.isEmpty() << "   areReady?" << worker_status.contains(READY)
 //    << "  areWorking?" << worker_status.contains(WORKING);
 
-//DbgTime() << "test submit";
       // Give the jobs to the workers
       while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
       {
@@ -42,13 +41,8 @@ DbgLv(1) << "pcsa_mast: fill_queue complete";
          Sa_Job job              = job_queue.takeFirst();
          job.mpi_job.depth       = kcurve++;
 DbgLv(1) << "pcsa_mast:   submit_pcsa kc" << kcurve;
-//DbgTime() << "submit_pcsa  worker" << worker << "worknext" << worknext << my_workers;
 
          submit_pcsa( job, worker );
-
-         worker_depth [ worker ] = job.mpi_job.depth;
-         worker_status[ worker ] = WORKING;
-//DbgTime() << "submit_pcsa  rtn: depth" << job.mpi_job.depth;
       }
 
       // All done with the pass if no jobs are ready or running
@@ -67,8 +61,16 @@ DbgLv(1) << "pcsa_mast:   submit_pcsa kc" << kcurve;
 wksim_vals          = simulation_values;
 wksim_vals.solutes  = mrecs[ 0 ].isolutes;
 calc_residuals( current_dataset, 1, wksim_vals );
-DbgLv(0) << "final-mr0: variance1 variance2" << simulation_values.variance << wksim_vals.variance;
-DbgLv(0) << "final-mr0: csolsize1 csolsize2" << simulation_values.solutes.size() << wksim_vals.solutes.size();
+DbgLv(1) << "final-mr0: variance1 variance2" << simulation_values.variance << wksim_vals.variance;
+DbgLv(1) << "final-mr0: csolsize1 csolsize2" << simulation_values.solutes.size() << wksim_vals.solutes.size();
+DbgLv(1) << "final-mr0: worker_status" << worker_status;
+int ki=worker_status.count(INIT);
+int kw=worker_status.count(WORKING);
+int kr=worker_status.count(READY);
+int km=mrecs.size();
+int kg=0;
+for(int jm=0; jm<km; jm++ ) if(mrecs[jm].rmsd<1.0) kg++;
+DbgLv(1) << "final-mr0: ki kw kr" << ki << kw << kr << "km kg" << km << kg;
 //*DEBUG*
 
 
@@ -100,12 +102,12 @@ DbgLv(0) << "final-mr0: csolsize1 csolsize2" << simulation_values.solutes.size()
             {
                if ( datasets_to_process == 1 )
                {
-                  qDebug() << "   == Refinement Iterations for Dataset"
+                  qDebug() << "   == Grid-Fit Iterations for Dataset"
                      << current_dataset + 1 << "==";
                }
                else
                {
-                  qDebug() << "   == Refinement Iterations for Datasets 1 to"
+                  qDebug() << "   == Grid-Fit Iterations for Datasets 1 to"
                      << datasets_to_process << "==";
                }
             }
@@ -124,11 +126,11 @@ DbgLv(1) << " master loop-BOT: dssize" << data_sets.size() << "ds_to_p"
  << datasets_to_process << "curr_ds" << current_dataset;
 US_DataIO::EditedData* edat=&data_sets[current_dataset]->run_data;
 int ks=edat->scanCount() - 10;
-int kr=edat->pointCount() - 10;
+int kp=edat->pointCount() - 10;
 int ss=ks/2;
-int rr=kr/2;
+int rr=kp/2;
 DbgLv(1) << " master loop-BOT: ds" << current_dataset+1 << "data l m h"
- << edat->value(10,10) << edat->value(ss,rr) << edat->value(ks,kr);
+ << edat->value(10,10) << edat->value(ss,rr) << edat->value(ks,kp);
          // Clean up mrecs of any empty-calculated-solutes records
          clean_mrecs( mrecs );
 
@@ -158,37 +160,11 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
          // Monte Carlo
          montecarlo_pcsa();
 
-         if ( mc_iterations > 1 )
-         {  // Recompute final fit to get simulation and residual
-            mc_iteration++;
-            wksim_vals           = simulation_values;
-            wksim_vals.solutes   = calculated_solutes[ 0 ]; 
-
-            calc_residuals( 0, data_sets.size(), wksim_vals );
-
-            qDebug() << "Base-Sim RMSD" << sqrt( simulation_values.variance )
-                     << "  Exp-Sim RMSD" << sqrt( wksim_vals.variance )
-                     << "  of MC_Iteration" << mc_iteration;
-            max_iterations              = 1;
-            simulation_values           = wksim_vals;
-
-            if ( mc_iteration < mc_iterations )
-            {
-               time_mc_iterations();
-
-               set_monteCarlo();
-            }
-         }
-
-         if ( ! job_queue.isEmpty() ) continue;
-
          if ( is_composite_job )
          {  // Composite job:  update outputs in TAR and bump dataset count
             QString tripleID = QString( data_sets[ current_dataset ]->model
                                .description ).section( ".", -3, -3 );
             current_dataset++;
-
-            update_outputs();
 
             if ( simulation_values.noisflag == 0 )
             {
@@ -207,14 +183,15 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
             {
                iterations      = 1;
                mc_iteration    = 0;
+               alpha           = 0.0;
+               mc_iterations   = 0;
+               max_iterations  = parameters[ "gfit_iterations" ].toInt();
+               kcurve          = 0;
 
                for ( int ii = 1; ii < gcores_count; ii++ )
                   worker_status[ ii ] = READY;
 
                fill_queue();
-
-               for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
-                  calculated_solutes[ ii ].clear();
 
                continue;
             }
@@ -225,19 +202,16 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
       }
 
       // Wait for worker to send a message
-//DbgTime() << "wait_for_worker";
-      int        size[ 4 ];
       MPI_Status status;
+      int        sizes[ 4 ];
 
-      MPI_Recv( &size, 
+      MPI_Recv( sizes, 
                 4, 
                 MPI_INT,
                 MPI_ANY_SOURCE,
                 MPI_ANY_TAG,
                 my_communicator,
                 &status);
-//DbgTime() << " worker_recv  worker" << status.MPI_SOURCE
-// << "tag" << status.MPI_TAG << MPI_Job::READY;
 
 //if ( max_depth > 0 )
 // DbgLv(1) << " master loop-BOTTOM:   status TAG" << status.MPI_TAG << MPI_Job::READY << MPI_Job::RESULTS
@@ -246,13 +220,15 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
       {
          case MPI_Job::READY:   // Ready for work
             worker                  = status.MPI_SOURCE;
+DbgLv(1) << " master loop-BOTTOM:  READY  worker" << worker;
             worker_status[ worker ] = READY;
             break;
 
          case MPI_Job::RESULTS: // Return solute data
             worker                  = status.MPI_SOURCE;
-            process_pcsa_results( worker, size );
-            work_rss[ worker ]      = size[ 3 ];
+DbgLv(1) << " master loop-BOTTOM:  RESULTS  worker" << worker;
+            process_pcsa_results( worker, sizes );
+            work_rss[ worker ]      = sizes[ 3 ];
             break;
 
          default:  // Should never happen
@@ -292,8 +268,6 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 DbgLv(1) << "  init_pcsa_sols: nkpts" << nkpts << "nkpto" << nkpto;
    double vbar20     = data_sets[ current_dataset ]->vbar20;
 DbgLv(1) << "  init_pcsa_sols: currds" << current_dataset << "vbar" << vbar20;
-//   int    gf_iters   = parameters[ "gfit_iterations" ].toInt();
-//   double thr_dr_rat = parameters[ "thr_deltr_ratio" ].toDouble();
    double pararry[ 15 ];
    double *parlims   = (double*)pararry;
    parlims[ 0 ]      = -1.0;
@@ -330,7 +304,6 @@ DbgLv(1) << "  init_pcsa_sols:  compute_sigmoids: mrecs sz" << mrecs.size();
    else if ( ctype == CTYPE_ALL )
    {
       nkpto            *= 3;
-      QVector< US_ModelRecord > mrecs2;
       int ctype1        = CTYPE_IS;
       int ctype2        = CTYPE_DS;
       double *parlims1  = parlims + 5;
@@ -355,7 +328,7 @@ DbgLv(1) << "  init_pcsa_sols:  compute_sigmoids: mrecs sz" << mrecs.size();
    }
 }
 
-/////////////////////
+// Submit a PCSA job
 void US_MPI_Analysis::submit_pcsa( Sa_Job& job, int worker )
 {
    job.mpi_job.command        = MPI_Job::PROCESS;
@@ -376,6 +349,8 @@ DbgLv(1) << "Mast: submit: len sol offs cnt"
  << job.mpi_job.dataset_count;
 
    // Tell worker that solutes are coming
+DbgLv(1) << " master loop-SEND PROCESS  worker" << worker
+ << "isolsiz" << job.mpi_job.length << "depth" << job.mpi_job.depth;
    MPI_Send( &job.mpi_job, 
        sizeof( MPI_Job ), 
        MPI_BYTE,
@@ -392,21 +367,24 @@ DbgLv(1) << "Mast: submit: send #1";
        MPI_Job::MASTER,
        my_communicator );
 DbgLv(1) << "Mast: submit: send #2";
+
+   worker_depth [ worker ] = job.mpi_job.depth;
+   worker_status[ worker ] = WORKING;
 }
 
 // Process the results from a just-completed worker task
-void US_MPI_Analysis::process_pcsa_results( const int worker, const int* size )
+void US_MPI_Analysis::process_pcsa_results( const int worker, const int* sizes )
 {
-   simulation_values.solutes.resize( size[ 0 ] );
+   simulation_values.solutes.resize( sizes[ 0 ] );
    simulation_values.variances.resize( datasets_to_process );
-   simulation_values.ti_noise.resize( size[ 1 ] );
-   simulation_values.ri_noise.resize( size[ 2 ] );
+   simulation_values.ti_noise.resize( sizes[ 1 ] );
+   simulation_values.ri_noise.resize( sizes[ 2 ] );
 
    MPI_Status status;
 
    // Get all simulation_values
    MPI_Recv( simulation_values.solutes.data(),
-             size[ 0 ] * solute_doubles,
+             sizes[ 0 ] * solute_doubles,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
@@ -430,7 +408,7 @@ void US_MPI_Analysis::process_pcsa_results( const int worker, const int* size )
              &status );
 
    MPI_Recv( simulation_values.ti_noise.data(),
-             size[ 1 ],
+             sizes[ 1 ],
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
@@ -438,17 +416,15 @@ void US_MPI_Analysis::process_pcsa_results( const int worker, const int* size )
              &status );
 
    MPI_Recv( simulation_values.ri_noise.data(),
-             size[ 2 ],
+             sizes[ 2 ],
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
              my_communicator,
              &status );
 
-   worker_status[ worker ] = INIT;
-
 DbgLv(1) << "Mast:  process_results:      worker" << worker
- << " solsize" << size[0];
+ << " solsize" << sizes[0];
    Result result;
    result.depth   = worker_depth[ worker ];
    result.worker  = worker;
@@ -538,9 +514,8 @@ DbgLv(1) << "pcsa:wrmr:  rtn wr_mr";
 
    QTextStream tsout( &filea );
    QString tripleID = edata->cell + edata->channel + edata->wavelength;
-   int run     = 1;
-   int mc_iter = ( mgroup_count < 2  ||  is_composite_job )
-                 ? ( mc_iteration + 1 ) : mc_iteration;
+   int mc_iter = mc_iterations;
+   int run     = ( mc_iter > 1 ) ? mc_iter : 1;
 
    if ( mc_iterations > 0 )
       run        = mc_iter;
@@ -575,7 +550,13 @@ DbgLv(1) << "iter_p: rmsd_c rmsd_l" << rmsd_curr << rmsd_last
  << "dr_rat thr_dr_rat" << dr_rat << thr_dr_rat;
 
       // If difference in iteration RMSD less than threshold, we are done
-      if ( dr_rat < thr_dr_rat )        return;
+      if ( dr_rat < thr_dr_rat )
+      {
+         qDebug() << "Virtually identical RMSDs of"
+                  << rmsd_last << rmsd_curr
+                  << "truncate iterations at" << iterations;
+         return;
+      }
    }
 
    // Set up to create a narrower set of model record curves
@@ -668,6 +649,7 @@ DbgLv(1) << "iter_p: parlims3"
 
    // Now reset original solutes and fill queue
    orig_solutes.clear();
+   orig_solutes.reserve( mrecs.size() );
 
    for ( int ii = 0; ii < mrecs.size(); ii++ )
    {
@@ -675,8 +657,6 @@ DbgLv(1) << "iter_p: parlims3"
    }
 
    fill_queue();
-//DbgTime() << "iter_pcsa  mrsz" << mrecs.size() << "oosz" << orig_solutes.size()
-// << "gccnt" << gcores_count << "jqcnt" << job_queue.size();
 
    for ( int ii = 1; ii < gcores_count; ii++ )
       worker_status[ ii ] = READY;
@@ -688,19 +668,15 @@ DbgLv(1) << "iter_p: parlims3"
 // Engineer Tikhonov Regularization for PCSA
 void US_MPI_Analysis::tikreg_pcsa()
 {
-   int tikreg          = parameters[ "tikreg_option"   ].toInt();
-DbgLv(0) << "tikr: tikreg" << tikreg;
+   int tikreg     = parameters[ "tikreg_option" ].toInt();
+DbgLv(1) << "tikr: tikreg" << tikreg;
 
-   if ( tikreg == 0 )  return;
+   if ( tikreg == 0 )
+      return;
 
-//*TEMP*
-//qDebug() << "Currently-unimplemented PCSA Tikhonov Regularization is skipped";
-//printf(  "Currently-unimplemented PCSA Tikhonov Regularization is skipped\n" );
-//*TEMP*
-   alpha               = parameters[ "tikreg_alpha" ].toDouble();
-
-   if ( tikreg == 2 )
-      alpha_scan();
+   alpha          = ( tikreg == 1 )
+                    ? parameters[ "tikreg_alpha" ].toDouble()
+                    : alpha_scan();
 
    wksim_vals          = simulation_values;
    wksim_vals.solutes  = mrecs[ 0 ].isolutes;
@@ -708,27 +684,27 @@ DbgLv(0) << "tikr: tikreg" << tikreg;
    wksim_vals.noisflag = 0;
    wksim_vals.ri_noise.clear();
    wksim_vals.ri_noise.clear();
-DbgLv(0) << "tikr: alpha" << alpha;
+DbgLv(1) << "tikr: alpha" << alpha;
 
    calc_residuals( current_dataset, 1, wksim_vals );
 
-   mrec                = mrecs[ 1 ];
-   mrec.csolutes       = wksim_vals.solutes;
-   mrec.variance       = wksim_vals.variance;
-   mrec.rmsd           = sqrt( mrec.variance );
-   mrec.sim_data       = wksim_vals.sim_data;
-   mrec.residuals      = wksim_vals.residuals;
-   mrecs[ 1 ]          = mrec;
+   mrec           = mrecs[ 1 ];
+   mrec.csolutes  = wksim_vals.solutes;
+   mrec.variance  = wksim_vals.variance;
+   mrec.rmsd      = sqrt( mrec.variance );
+   mrec.sim_data  = wksim_vals.sim_data;
+   mrec.residuals = wksim_vals.residuals;
+   mrecs[ 1 ]     = mrec;
 
    write_pcsa_aux_model( 0 );
 
    qDebug() << "Tikhonov Regularization RMSD" << mrec.rmsd;
-DbgLv(0) << "tikr: RMSD" << mrec.rmsd << "csol size" << mrec.csolutes.size();
+DbgLv(1) << "tikr: RMSD" << mrec.rmsd << "csol size" << mrec.csolutes.size();
 
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
-   QString tripleID    = edata->cell + edata->channel + edata->wavelength;
-   QString progress    =
-            "Regularization: " + QString::number( wksim_vals.alpha );
+   QString tripleID  = edata->cell + edata->channel + edata->wavelength;
+   QString progress  = "Regularization: "
+                       + QString::number( wksim_vals.alpha );
 
    if ( datasets_to_process > 1 )
       progress     += "; Datasets: "
@@ -746,38 +722,340 @@ DbgLv(0) << "tikr: RMSD" << mrec.rmsd << "csol size" << mrec.csolutes.size();
 // Engineer Monte Carlo for PCSA
 void US_MPI_Analysis::montecarlo_pcsa()
 {
-   mc_iterations     = parameters[ "mc_iterations" ].toInt();
+   int worker;
+   meniscus_value   = data_sets[ current_dataset ]->run_data.meniscus;
+   mc_iterations    = parameters[ "mc_iterations" ].toInt();
+   mc_iteration     = 1;
+   mrec             = mrecs[ 0 ];
+   US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
+   QString tripleID = edata->cell + edata->channel + edata->wavelength;
+   job_queue.clear();
 
    if ( mc_iterations < 2 )  return;
 
-   mc_iteration      = 1;
-//*TEMP*
-qDebug() << "Currently-unimplemented PCSA Monte Carlo iterations is skipped";
-printf(  "Currently-unimplemented PCSA Monte Carlo iterations is skipped\n" );
-//*TEMP*
-#if 0
-            mc_iteration++;
-            wksim_vals           = simulation_values;
-            wksim_vals.solutes   = calculated_solutes[ 0 ]; 
+   // Fill the job queue and worker status
+   for ( int ii = 1; ii <= mc_iterations; ii++ )
+   {
+      Sa_Job job;
+      job.solutes      = mrec.isolutes;
+      job.mpi_job.command         = MPI_Job::PROCESS_MC;
+      job.mpi_job.length          = job.solutes.size();
+      job.mpi_job.meniscus_value  = meniscus_value;
+      job.mpi_job.dataset_offset  = current_dataset;
+      job.mpi_job.dataset_count   = datasets_to_process;
+      job.mpi_job.depth           = ii;
+      job.mpi_job.solution        = ii;
 
-            calc_residuals( 0, data_sets.size(), wksim_vals );
+      job_queue << job;
+   }
 
-            qDebug() << "Base-Sim RMSD" << sqrt( simulation_values.variance )
-                     << "  Exp-Sim RMSD" << sqrt( wksim_vals.variance )
-                     << "  of MC_Iteration" << mc_iteration;
-            max_iterations              = 1;
-            simulation_values           = wksim_vals;
+   for ( int ii = 1; ii < gcores_count; ii++ )
+   {
+      worker_depth [ ii ] = ii;
+      worker_status[ ii ] = READY;
+   }
 
-            if ( mc_iteration < mc_iterations )
-            {
-               time_mc_iterations();
+   // Build composite simulation,residuals data array
+   int nscan        = edata->scanCount();
+   int npoint       = edata->pointCount();
+   int mcd_incr     = nscan * npoint;
+   int mcd_size     = mcd_incr * 2;
+   int kci_send     = 0;
+   int kci_recv     = 0;
+   mc_data.resize( mcd_size );
 
-               set_monteCarlo();
+   for ( int ii = 0; ii < nscan; ii++ )
+   {
+      int ks        = ii * npoint;
+      int kr        = ks + mcd_incr;
+
+      for ( int jj = 0; jj < npoint; jj++, ks++, kr++ )
+      {
+         mc_data[ ks ] = mrec.sim_data .scanData[ ii ].rvalues[ jj ];
+         mc_data[ kr ] = mrec.residuals.scanData[ ii ].rvalues[ jj ];
+      }
+   }
+
+   // Send simulation and residuals to the workers
+
+   for ( worker = 1; worker <= my_workers; worker++ )
+   {  // Tell each worker new data coming; worker expects a Send
+      MPI_Job mjob;
+      mjob.command        = MPI_Job::NEWDATA;
+      mjob.length         = mcd_size;
+      mjob.meniscus_value = meniscus_value;
+      mjob.dataset_offset = current_dataset;
+      mjob.dataset_count  = datasets_to_process;
+      mjob.depth          = worker;
+      mjob.solution       = 10000;
+
+      MPI_Send( &mjob,
+                sizeof( MPI_Job ),
+                MPI_BYTE,
+                worker,
+                MPI_Job::MASTER,
+                my_communicator );
+   }
+
+   MPI_Barrier( my_communicator );       // Get everybody synced up
+
+   MPI_Bcast( mc_data.data(),            // Send simulation,residuals data
+              mcd_size,
+              MPI_DOUBLE,
+              MPI_Job::MASTER,
+              my_communicator );
+
+   MPI_Barrier( my_communicator );       // Get everybody synced up
+
+   for ( int ii = 1; ii < gcores_count; ii++ )
+      worker_status[ ii ] = INIT;
+
+   worknext         = 1;
+
+   // Loop to submit and handle MC iteration jobs
+
+   while ( true )
+   {
+      int        mc_iter;
+      int        mc_iters;
+      int        sizes[ 4 ];
+      QString    progress;
+      MPI_Status status;
+
+      // Give the jobs to the workers
+      while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
+      {
+         kci_send++;
+         worker           = ready_worker();
+DbgLv(1) << " masterMC loop-ready_worker" << worker;
+         Sa_Job job       = job_queue.takeFirst();
+
+         job.mpi_job.command   = MPI_Job::PROCESS_MC;
+         job.mpi_job.depth     = kci_send;
+         job.mpi_job.solution  = kci_send;
+
+         // Tell worker that solutes are coming
+DbgLv(1) << " masterMC loop-SEND PROCESS_MC  worker" << worker
+ << "iter" << kci_send;
+         MPI_Send( &job.mpi_job,
+                   sizeof( MPI_Job ),
+                   MPI_BYTE,
+                   worker,
+                   MPI_Job::MASTER,
+                   my_communicator );
+
+         // Send solutes
+         MPI_Send( job.solutes.data(),
+                   job.mpi_job.length * solute_doubles,
+                   MPI_DOUBLE,
+                   worker,
+                   MPI_Job::MASTER,
+                   my_communicator );
+
+         worker_depth [ worker ] = job.mpi_job.depth;
+         worker_status[ worker ] = WORKING;
+      }
+
+      // All done with the pass if no jobs are ready or running
+      if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
+         break;           // Break out of MC iteration loop
+
+      // Wait for worker to send a message
+      MPI_Recv( sizes, 
+                4, 
+                MPI_INT,
+                MPI_ANY_SOURCE,
+                MPI_ANY_TAG,
+                my_communicator,
+                &status );
+
+      worker           = status.MPI_SOURCE;
+DbgLv(1) << " masterMC loop-BOTTOM:   status TAG" << status.MPI_TAG
+ << "  source" << status.MPI_SOURCE
+ << "sizes" << sizes[0] << sizes[1] << sizes[2] << sizes[3];
+      switch( status.MPI_TAG )
+      {
+         case MPI_Job::READY:   // Ready for work
+DbgLv(1) << " masterMC loop-RECV READY  worker" << worker;
+            worker_status[ worker ] = READY;
+            break;
+
+         case MPI_Job::RESULTS_MC: // Return solute data
+            kci_recv++;
+DbgLv(1) << " masterMC loop-RECV RESULTS_MC  worker" << worker << "kci_recv" << kci_recv;
+
+            // Process PCSA MC results
+            wksim_vals       = simulation_values;
+            wksim_vals.solutes  .resize( sizes[ 0 ] );
+            wksim_vals.variances.resize( datasets_to_process );
+
+            MPI_Recv( wksim_vals.solutes.data(),
+                      sizes[ 0 ] * solute_doubles,
+                      MPI_DOUBLE,
+                      worker,
+                      MPI_Job::TAG0,
+                      my_communicator,
+                      &status );
+
+            MPI_Recv( &wksim_vals.variance,
+                      1,
+                      MPI_DOUBLE,
+                      worker,
+                      MPI_Job::TAG0,
+                      my_communicator,
+                      &status );
+   
+            MPI_Recv( wksim_vals.variances.data(),
+                      datasets_to_process,
+                      MPI_DOUBLE,
+                      worker,
+                      MPI_Job::TAG0,
+                      my_communicator,
+                      &status );
+
+            work_rss[ worker ] = sizes[ 3 ];
+
+            // Output the temporary MC iteration model file
+            mc_iter          = worker_depth[ worker ];
+            mc_iters         = mc_iterations;
+            mc_iterations++;
+
+            write_pcsa_aux_model( mc_iter );
+
+            mc_iterations    = mc_iters;
+DbgLv(1) << " masterMC loop-RECV RESULTS_MC    mc_iter" << mc_iter << "of" << mc_iterations;
+
+            // Send a status message
+            if ( datasets_to_process > 1 )
+               progress      = "Datasets: "
+                               + QString::number( datasets_to_process );
+            else
+               progress      = "Dataset: "
+                               + QString::number( current_dataset + 1 )
+                               + " (" + tripleID + ")";
+
+            progress        += "; MonteCarlo: "
+                               + QString::number( mc_iter );
+
+            send_udp( progress );
+            break;
+
+         case MPI_Job::RESULTS: // Return solute data (unused worker?)
+DbgLv(1) << " masterMC loop-RECV RESULTS  worker" << worker << "wstat" << worker_status[worker];
+            {  // Receives just to consume messages
+               QVector< double > dwork;
+               int mxsiz     = qMax( sizes[ 0 ], sizes[ 1 ] );
+               mxsiz         = qMax( mxsiz, sizes[ 2 ] );
+               mxsiz         = qMax( mxsiz, datasets_to_process );
+               dwork.resize( mxsiz );
+               double* wbuf  = dwork.data();
+               MPI_Status status;
+
+               MPI_Recv( wbuf,
+                         sizes[ 0 ] * solute_doubles,
+                         MPI_DOUBLE,
+                         worker,
+                         MPI_Job::TAG0,
+                         my_communicator,
+                         &status );
+               MPI_Recv( wbuf,
+                         1,
+                         MPI_DOUBLE,
+                         worker,
+                         MPI_Job::TAG0,
+                         my_communicator,
+                         &status );
+               MPI_Recv( wbuf,
+                         datasets_to_process,
+                         MPI_DOUBLE,
+                         worker,
+                         MPI_Job::TAG0,
+                         my_communicator,
+                         &status );
+               MPI_Recv( wbuf,
+                         sizes[ 1 ],
+                         MPI_DOUBLE,
+                         worker,
+                         MPI_Job::TAG0,
+                         my_communicator,
+                         &status );
+               MPI_Recv( wbuf,
+                         sizes[ 2 ],
+                         MPI_DOUBLE,
+                         worker,
+                         MPI_Job::TAG0,
+                         my_communicator,
+                         &status );
             }
+            break;
 
-      write_pcsa_aux_model( mc_iteration );
+         default:  // Should never happen
+DbgLv(1) << " masterMC loop-RECV invalid  worker" << worker << "tag" << status.MPI_TAG;
+            progress      = "Master PCSA:  Received invalid status "
+                            + QString::number( status.MPI_TAG );
+            abort( progress );
+            break;
+      }
 
-#endif
+      max_rss();
+   }
+
+   // Update output with MC model
+   mc_iteration      = mc_iterations;
+
+   update_outputs();
+
+   // Update the MC entry of the mrecs vector
+   int mrx           = ( mrecs[ 2 ].taskx == mrecs[ 0 ].taskx ) ? 2 : 1;
+   mrec              = mrecs[ mrx ];
+   QString     mfilt = "*" + tripleID + "*.mcN*model.xml";
+   QStringList mfltl( mfilt );
+   QStringList mlist = QDir( "." ).entryList( mfltl, QDir::Files );
+   QString mfile;
+   int nmfile        = mlist.size();
+
+   if ( nmfile == 1 )
+   {
+      mfile             = mlist[ 0 ]; 
+   }
+   else if ( nmfile > 1 )
+   {
+      mfile             = mlist[ 0 ]; 
+      qDebug() << "*WARNING* More than 1" << mfilt << "file exists!";
+      QDateTime mtime   = QFileInfo( mfile ).lastModified();
+
+      for ( int jj = 1; jj < mlist.size(); jj++ )
+      {  // Find the last of multiple files created
+         QDateTime ftime   = QFileInfo( mlist[ 0 ] ).lastModified();
+         if ( ftime > mtime )
+         {
+            mtime          = ftime;
+            mfile          = mlist[ 0 ];
+         }
+      }
+   }
+   else
+   {
+      qDebug() << "*ERROR* No" << mfilt << "file exists!";
+      return;
+   }
+
+   wmodel.load( mfile );
+   mrec.csolutes.resize( wmodel.components.size() );
+   double vbar20     = mrecs[ 0 ].csolutes[ 0 ].v;
+
+   for ( int jj = 0; jj < wmodel.components.size(); jj++ )
+   {
+      mrec.csolutes[ jj ].s  = wmodel.components[ jj ].s;
+      mrec.csolutes[ jj ].k  = wmodel.components[ jj ].f_f0;
+      mrec.csolutes[ jj ].c  = wmodel.components[ jj ].signal_concentration;
+      mrec.csolutes[ jj ].v  = vbar20;
+   }
+
+   mrecs[ mrx ]      = mrec;
+
+   // Write the updated mrecs
+   write_mrecs();
 }
 
 // Filter model records by a specified curve type
@@ -815,7 +1093,7 @@ void US_MPI_Analysis::clean_mrecs( QVector< US_ModelRecord >& mrecs )
    if ( goodx == lmrec )
       return;
 
-DbgLv(0) << " master:clean_mrecs: goodx lmrec" << goodx << lmrec;
+DbgLv(1) << " master:clean_mrecs: goodx lmrec" << goodx << lmrec;
    if ( mrecs[ 0 ].v_ctype != CTYPE_ALL )
    {  // If records of one type, just duplicate solutes from last good
       for ( int ii = goodx + 1; ii < nmrec; ii++ )
@@ -886,8 +1164,6 @@ void US_MPI_Analysis::pcsa_best_model()
    US_Model mdummy;
    mrec              = mrecs[ 0 ];
    simulation_values.solutes  = mrec.isolutes;
-   //simulation_values.ti_noise = mrec.ti_noise;
-   //simulation_values.ri_noise = mrec.ri_noise;
    simulation_values.ti_noise.clear();
    simulation_values.ri_noise.clear();
 
@@ -901,14 +1177,14 @@ void US_MPI_Analysis::pcsa_best_model()
    mrec.residuals    = simulation_values.residuals;
    mrec.ti_noise     = simulation_values.ti_noise;
    mrec.ri_noise     = simulation_values.ri_noise;
-DbgLv(0) << "bestm: RMSD" << mrec.rmsd;
+DbgLv(1) << "bestm: RMSD" << mrec.rmsd;
 
    mrecs[ 0 ]        = mrec;
 
    int tikreg        = parameters[ "tikreg_option" ].toInt();
    mc_iterations     = parameters[ "mc_iterations" ].toInt();
    int noiflg        = simulation_values.noisflag;
-DbgLv(0) << "bestm: tikreg mciters" << tikreg << mc_iterations;
+DbgLv(1) << "bestm: tikreg mciters" << tikreg << mc_iterations;
 
    if ( tikreg != 0 )
    {
@@ -956,7 +1232,7 @@ DbgLv(0) << "bestm: tikreg mciters" << tikreg << mc_iterations;
       int npoint        = edata->pointCount();
       int rcount        = mrec.ti_noise.size();
       int scount        = mrec.ri_noise.size();
-DbgLv(0) << "bestm: noise apply ns np sc rc" << nscan << npoint << scount << rcount;
+DbgLv(1) << "bestm: noise apply ns np sc rc" << nscan << npoint << scount << rcount;
       npoint            = ( noiflg & 1 ) > 0 ? npoint : rcount;
       nscan             = ( noiflg & 2 ) > 0 ? nscan  : scount;
 
@@ -968,7 +1244,7 @@ DbgLv(0) << "bestm: noise apply ns np sc rc" << nscan << npoint << scount << rco
 
       if ( ( noiflg & 1 ) > 0 )
       {  // Apply ti noise
-DbgLv(0) << "bestm: noise flag" << noiflg << "TI_NOISE apply";
+DbgLv(1) << "bestm: noise flag" << noiflg << "TI_NOISE apply";
          for ( int jj = 0; jj < rcount; jj++ )
          {  // Get constant noise value for each reading and apply to scans
             vnoise            = -1.0 * mrec.ti_noise[ jj ];
@@ -981,7 +1257,7 @@ DbgLv(0) << "bestm: noise flag" << noiflg << "TI_NOISE apply";
 
       if ( ( noiflg & 2 ) > 0 )
       {  // Apply ri noise
-DbgLv(0) << "bestm: noise flag" << noiflg << "RI_NOISE apply";
+DbgLv(1) << "bestm: noise flag" << noiflg << "RI_NOISE apply";
          for ( int ii = 0; ii < scount; ii++ )
          {  // Get constant noise value for each scan and apply to readings
             vnoise            = -1.0 * mrec.ri_noise[ ii ];
@@ -1027,7 +1303,7 @@ void US_MPI_Analysis::write_pcsa_aux_model( int iter )
    mdesc               = runID + "." + tripID + "." + asysID + typeExt;
    wmodel.description  = mdesc;
    wmodel.components.clear();
-DbgLv(0) << "wraux: mdesc" << mdesc;
+DbgLv(1) << "wraux: mdesc" << mdesc;
 
    for ( int ii = 0; ii < wksim_vals.solutes.size(); ii++ )
    {
@@ -1075,7 +1351,7 @@ DbgLv(0) << "wraux: mdesc" << mdesc;
          << ";meniscus_value=" << meniscus_value
          << ";MC_iteration="   << iter
          << ";variance="       << wmodel.variance
-         << ";run= Run: 1"     << tripID << "\n";
+         << ";run=Run: 1 "     << tripID << "\n";
 
     fileo.close();
 
@@ -1088,7 +1364,7 @@ DbgLv(0) << "wraux: mdesc" << mdesc;
 }
 
 // Scan alphas
-void US_MPI_Analysis::alpha_scan()
+double US_MPI_Analysis::alpha_scan()
 {
    const double salpha   = 0.10;
    const double ealpha   = 0.90;
@@ -1221,7 +1497,7 @@ DbgLv(1) << "ASCN:H1:   sl" << slope << "in" << intcp << "sg" << sigma
    // Find the curve point nearest to the intersection point;
    //  then compute a line from intersection to nearest curve point.
    US_Math2::nearest_curve_point( xx, yy, nalpha, true, xlipt, ylipt,
-         &xcipt, &ycipt, alphas.data(), &alpha );
+         &xcipt, &ycipt, alphas.data(), &calpha );
 
    // Do a sanity check. If the intersection point is outside the
    // rectangle that encloses the curve, we likely have an aberrant curve.
@@ -1235,8 +1511,10 @@ DbgLv(1) << "ASCN:H1:   sl" << slope << "in" << intcp << "sg" << sigma
 DbgLv(1) << "ASCN:T4:   cv: x1,y1" << xcvp1 << ycvp1
  << "x2,y2" << xcvp2 << ycvp2 << " good_fit" << good_fit;
 
-   alpha         = (double)qRound( alpha / roundv ) * roundv;
-   alpha         = good_fit ? alpha : alphadef;
+   calpha        = (double)qRound( calpha / roundv ) * roundv;
+   calpha        = good_fit ? calpha : alphadef;
+
+   return calpha;
 }
 
 void US_MPI_Analysis::apply_alpha( const double alpha, QVector< double >* psv_nnls_a,

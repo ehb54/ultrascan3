@@ -678,9 +678,9 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
       }
 
       // Wait for worker to send a message
-      int        size[ 4 ];
+      int        sizes[ 4 ];
 
-      MPI_Recv( &size, 
+      MPI_Recv( sizes, 
                 4, 
                 MPI_INT,
                 MPI_ANY_SOURCE,
@@ -700,8 +700,8 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
             break;
 
          case MPI_Job::RESULTS: // Return solute data
-            process_results( worker, size );
-            work_rss[ worker ] = size[ 3 ];
+            process_results( worker, sizes );
+            work_rss[ worker ] = sizes[ 3 ];
             break;
 
          default:  // Should never happen
@@ -1318,9 +1318,9 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
       }
 
       // Wait for worker to send a message
-      int        size[ 4 ];
+      int        sizes[ 4 ];
 
-      MPI_Recv( &size, 
+      MPI_Recv( sizes, 
                 4, 
                 MPI_INT,
                 MPI_ANY_SOURCE,
@@ -1340,8 +1340,8 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
             break;
 
          case MPI_Job::RESULTS: // Return solute data
-            process_results( worker, size );
-            work_rss[ worker ] = size[ 3 ];
+            process_results( worker, sizes );
+            work_rss[ worker ] = sizes[ 3 ];
             break;
 
          default:  // Should never happen

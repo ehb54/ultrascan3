@@ -740,6 +740,8 @@ int US_MwlData::cellchannels( QStringList& celchns )
 // Populate the list of RawData objects from raw input MWL data
 int US_MwlData::build_rawData( QVector< US_DataIO::RawData >& allData )
 {
+   const double signif_dif=100.0;
+
    allData.clear();
 
    // Build the radius vector that is constant
@@ -921,7 +923,7 @@ DbgLv(1) << "BldRawD      scx" << scx << "jhx" << jhx
 
          if ( evers > 1.0 )
          {  // In newer data, a set_speed may differ from the average
-            if ( qAbs( rpm_avg - rpm_set ) > 10.0 )
+            if ( qAbs( rpm_avg - rpm_set ) > signif_dif )
             {
                QMessageBox::warning( 0,
                      tr( "Set/Average Speed Difference" ),

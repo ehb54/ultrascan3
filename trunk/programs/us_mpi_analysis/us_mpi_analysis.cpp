@@ -320,7 +320,7 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
       abort( "Meniscus fit is not compatible with Monte Carlo analysis" );
    }
 
-   bool noise = parameters[ "rinoise_option" ].toInt() > 0  ||
+   bool noise = parameters[ "tinoise_option" ].toInt() > 0  ||
                 parameters[ "rinoise_option" ].toInt() > 0;
 
    if ( mc_iterations > 1  &&  noise )

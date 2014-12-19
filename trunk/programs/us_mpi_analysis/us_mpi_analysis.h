@@ -420,7 +420,7 @@ class US_MPI_Analysis : public QObject
     void    filter_mrecs        ( const int, QVector< US_ModelRecord >&,
                                              QVector< US_ModelRecord >& );
     void    clean_mrecs         ( QVector< US_ModelRecord >& );
-    void    alpha_scan          ( void );
+    double  alpha_scan          ( void );
     void    apply_alpha( const double, QVector< double >*, QVector< double >*,
                          const int, const int, const int, double&, double& );
 

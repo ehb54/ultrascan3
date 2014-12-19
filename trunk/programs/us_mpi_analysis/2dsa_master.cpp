@@ -220,10 +220,10 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
       }
 
       // Wait for worker to send a message
-      int        size[ 4 ];
+      int        sizes[ 4 ];
       MPI_Status status;
 
-      MPI_Recv( &size, 
+      MPI_Recv( sizes, 
                 4, 
                 MPI_INT,
                 MPI_ANY_SOURCE,
@@ -242,9 +242,9 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
             break;
 
          case MPI_Job::RESULTS: // Return solute data
-            process_results( status.MPI_SOURCE, size );
+            process_results( status.MPI_SOURCE, sizes );
             worker = status.MPI_SOURCE;
-            work_rss[ worker ] = size[ 3 ];
+            work_rss[ worker ] = sizes[ 3 ];
             break;
 
          default:  // Should never happen
@@ -1568,12 +1568,19 @@ int US_MPI_Analysis::ready_worker( )
 {
    // Find next ready worker by searching status array
    int worker = worker_status.indexOf( READY, worknext );
+int w1=worker;
+int w1n=worknext;
    worker     = ( worker > 0 ) ? worker :
                 worker_status.indexOf( READY, 1 );
 
    // Set index to start with on next search
    worknext   = ( worker > 0 ) ? ( worker + 1 ) : 1;
    worknext   = ( worknext > my_workers ) ? 1 : worknext;
+DbgLv(1) << "ready_worker  w1 w1n worker worknext" << w1 << w1n << worker << worknext;
+if(w1<0)
+DbgLv(1) << "ready_worker  w1234...wmn"
+ << worker_status[1] << worker_status[2] << worker_status[3] << worker_status[4]
+ << worker_status[my_workers-1] << worker_status[my_workers];
 
    return worker;
 }
@@ -1627,7 +1634,7 @@ void US_MPI_Analysis::update_outputs( bool is_final )
 
    if ( files.size() == 1  &&  files[ 0 ] == "analysis-results.tar" )
    {  // If the tar file exists alone, do nothing here
-DbgLv(0) << my_rank << ": A single output file, the archive, already exists!!!";
+DbgLv(1) << my_rank << ": A single output file, the archive, already exists!!!";
       return;
    }
 
@@ -1688,25 +1695,30 @@ DbgLv(0) << my_rank << ": A single output file, the archive, already exists!!!";
          QString mftrip   = mtrips[ ii ];
          QString tripleID = QString( mftrip ).section( ".", -1, -1 );
          QStringList mfilt;
-         mfilt << mftrip + ".mc*";
+         mfilt << mftrip + ".mc0*";
          QStringList mtfiles = odir.entryList( mfilt, QDir::Files );
 
          // Build a composite model file and get its name
          QString cmfname  = US_Model::composite_mc_file( mtfiles, true );
-DbgLv(0) << my_rank << ": ii" << ii << "mftrip" << mftrip << "cmfname" << cmfname;
+DbgLv(1) << my_rank << ": ii" << ii << "mftrip" << mftrip << "cmfname" << cmfname;
+
+         if ( cmfname.isEmpty() )  continue;
 
          // Remove iteration (non-composite) files from the list
          for ( int jj = 0; jj < mtfiles.size(); jj++ )
          {
             if ( mtfiles[ jj ] != cmfname )
+            {
                files.removeOne( mtfiles[ jj ] );
+DbgLv(1) << my_rank << ": ii,jj" << ii << jj << "REMOVED from list:" << mtfiles[jj];
+            }
          }
 
          // Add the composite file name to the list if need be
          if ( ! files.contains( cmfname ) )
          {
             files << cmfname;
-DbgLv(0) << my_rank << ":     files.size" << files.size();
+DbgLv(1) << my_rank << ":     files.size" << files.size() << "after cmfname add";
          }
 
          // Add composite name to text file if need be
@@ -1716,16 +1728,22 @@ DbgLv(0) << my_rank << ":     files.size" << files.size();
               ( is_final  ||  f_iters == mc_iterations ) )
          {
             US_Model model2;
-DbgLv(0) << my_rank << ":      model2.load(" << cmfname;
+DbgLv(1) << my_rank << ":      model2.load(" << cmfname << ")";
             model2.load( cmfname );
-DbgLv(0) << my_rank << ":       model2.description" << model2.description;
+DbgLv(1) << my_rank << ":       model2.description" << model2.description;
             QString runstring = "Run: " + QString::number( ii + 1 )
                                 + " " + tripleID;
-            tsout <<  cmfname 
+            tsout << cmfname 
                   << ";meniscus_value=" << model2.meniscus
                   << ";MC_iteration="   << mc_iterations
                   << ";variance="       << model2.variance
                   << ";run="            << runstring << "\n";
+
+            if ( analysis_type.contains( "PCSA" ) )
+            {
+               int mrx          = mrecs[ 2 ].taskx == mrecs[ 0 ].taskx ? 2 : 1;
+               mrecs[ mrx ].modelGUID = model2.modelGUID;
+            }
          }
       }
 
@@ -1735,11 +1753,13 @@ DbgLv(0) << my_rank << ":       model2.description" << model2.description;
    // Create the archive file containing all outputs
    US_Tar tar;
    tar.create( "analysis-results.tar", files );
+for(int jf=0;jf<files.size();jf++)
+ DbgLv(1) << my_rank << "   tar file" << jf << ":" << files[jf];
 
    // If this is the final call, remove all but the archive file
    if ( is_final )
    {  // Remove the files we just put into the tar archive
-DbgLv(0) << my_rank << ": All output files except the archive are now removed.";
+DbgLv(1) << my_rank << ": All output files except the archive are now removed.";
       QString file;
       foreach( file, files ) odir.remove( file );
    }
