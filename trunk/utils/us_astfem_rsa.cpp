@@ -449,6 +449,8 @@ double dtsv=af_params.dt;
                af_params.simpoints = 1 +
                   (int)( lg_bm_rat / ( s_omg_fac * af_params.dt ) );
 DbgLv(1) << "RSA: ***CORRECTED dt:" << duration << dtsv << af_params.simpoints;
+DbgLv(1) << "RSA: ***CORRECTED dt: lg_bm_rat" << lg_bm_rat << "sc->s" << sc->s
+ << "omega_s" << af_params.omega_s << "omg_fac" << s_omg_fac;
             }
 
             if ( af_params.simpoints > 10000 )

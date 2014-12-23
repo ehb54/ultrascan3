@@ -1104,7 +1104,7 @@ DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
 void US_MPI_Analysis::pm_pcsa_cjmast( void )
 {
 DbgLv(1) << "master start 2DSA" << startTime;
-   init_solutes();
+   init_pcsa_solutes();
    fill_queue();
 
    work_rss.resize( gcores_count );
@@ -1112,8 +1112,12 @@ DbgLv(1) << "master start 2DSA" << startTime;
    current_dataset     = 0;
    datasets_to_process = 1;  // Process one dataset at a time for now
 
-   int super    = 0;
-   int iter     = current_dataset;
+   int super           = 0;
+   int kcurve          = 0;
+   int iter            = current_dataset;
+   alpha               = 0.0;
+   mc_iterations       = 0;
+   max_iterations      = parameters[ "gfit_iterations" ].toInt();
    MPI_Status status;
 
    // Get 1st dataset from supervisor
@@ -1142,88 +1146,90 @@ DbgLv(1) << "master start 2DSA" << startTime;
          worker    = ready_worker();
 
          Sa_Job job              = job_queue.takeFirst();
+         job.mpi_job.depth       = kcurve++;
 
-         submit( job, worker );
-
-         worker_depth [ worker ] = job.mpi_job.depth;
-         worker_status[ worker ] = WORKING;
+         submit_pcsa( job, worker );
       }
 
       // All done with the pass if no jobs are ready or running
       if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
       {
+         kcurve           = 0;
+         qSort( mrecs );
          US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
          QString tripleID = edata->cell + edata->channel + edata->wavelength;
-         int menisc_size  = meniscus_values.size();
+
+         simulation_values.variance   = mrecs[ 0 ].variance;
+         simulation_values.solutes    = mrecs[ 0 ].csolutes;
+         simulation_values.ti_noise   = mrecs[ 0 ].ti_noise;
+         simulation_values.ri_noise   = mrecs[ 0 ].ri_noise;
+
          QString progress = 
-            "Iteration: "    + QString::number( iterations ) +
-            "; Dataset: "    + QString::number( current_dataset + 1 ) +
-            " (" + tripleID + ")";
+            "Iteration: "   + QString::number( iterations );
+
+         if ( datasets_to_process > 1 )
+            progress     += "; Datasets: "
+                            + QString::number( datasets_to_process );
+         else
+            progress     += "; Dataset: "
+                            + QString::number( current_dataset + 1 )
+                            + " (" + tripleID + ")";
 
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "
                             + QString::number( mc_iteration + 1 );
 
-         else if ( menisc_size > 1 )
-            progress     += "; Meniscus: "
-               + QString::number( meniscus_value, 'f', 3 )
-               + tr( " (%1 of %2)" ).arg( meniscus_run + 1 )
-                                    .arg( menisc_size );
-
          else
             progress     += "; RMSD: "
-               + QString::number( sqrt( simulation_values.variance ) );
+                            + QString::number( mrecs[ 0 ].rmsd );
 
          send_udp( progress );
 
          // Iterative refinement
          if ( max_iterations > 1 )
          {
-            if ( iterations == 1 )
-               qDebug() << "  == Refinement Iterations for Dataset"
-                        << current_dataset + 1 << "==";
+            if ( data_sets.size() > 1  &&  iterations == 1 )
+            {
+               if ( datasets_to_process == 1 )
+               {
+                  qDebug() << "  == Grid-Fit Iterations for Dataset"
+                           << current_dataset + 1 << "==";
+               }
+               else
+               {
+                  qDebug() << "  == Grid-Fit Iterations for Datasets 1 to"
+                           << datasets_to_process << "==";
+               }
+            }
 
-            qDebug() << "Iterations:" << iterations << " Variance:"
-                     << simulation_values.variance << "RMSD:"
-                     << sqrt( simulation_values.variance );
+            qDebug() << "Iteration:" << iterations
+                     << " Variance:" << mrecs[ 0 ].variance
+                     << "RMSD:" << mrecs[ 0 ].rmsd;
 
-            iterate();
+            iterate_pcsa();
          }
 
          if ( ! job_queue.isEmpty() ) continue;
+
+         iterations     = 1;
+         max_iterations = 1;
+
+         // Clean up mrecs of any empty-calculated-solutes records
+         clean_mrecs( mrecs );
 
          // Write out the model and, possibly, noise(s)
-         max_rss();
-
          write_output();
 
-         // Fit meniscus
-         if ( ( meniscus_run + 1 ) < meniscus_values.size() )
-         {
-            set_meniscus();
-         }
-
          if ( ! job_queue.isEmpty() ) continue;
+
+         // Save information from best model
+         pcsa_best_model();
+
+         // Tikhonov Regularization
+         tikreg_pcsa();
 
          // Monte Carlo
-         if ( mc_iterations > 1 )
-         {  // Recompute final fit to get simulation and residual
-            mc_iteration++;
-
-            wksim_vals          = simulation_values;
-            wksim_vals.solutes  = calculated_solutes[ max_depth ];
-
-            calc_residuals( current_dataset, 1, wksim_vals );
-
-            simulation_values   = wksim_vals;
-
-            if ( mc_iteration < mc_iterations )
-            {
-               set_monteCarlo();
-            }
-         }
-
-         if ( ! job_queue.isEmpty() ) continue;
+         montecarlo_pcsa();
 
          ittest       = current_dataset + mgroup_count;
 
@@ -1296,22 +1302,21 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
                }
 
                current_dataset  = iter;
-               mc_iteration     = 0;
                iterations       = 1;
+               mc_iteration     = 0;
+               mc_iterations    = 0;
+               alpha            = 0.0;
+               max_iterations   = parameters[ "gfit_iterations" ].toInt();
+               kcurve           = 0;
+
+               fill_queue();
 
                for ( int ii = 1; ii < gcores_count; ii++ )
                   worker_status[ ii ] = READY;
 
-               fill_queue();
-
-               for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
-                  calculated_solutes[ ii ].clear();
-
                continue;
             }
          }
-
-         if ( ! job_queue.isEmpty() ) continue;
 
          shutdown_all();  // All done
          break;           // Break out of main loop.
@@ -1326,7 +1331,7 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
                 MPI_ANY_SOURCE,
                 MPI_ANY_TAG,
                 my_communicator,
-                &status);
+                &status );
 
       worker = status.MPI_SOURCE;
 
@@ -1340,7 +1345,7 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
             break;
 
          case MPI_Job::RESULTS: // Return solute data
-            process_results( worker, sizes );
+            process_pcsa_results( worker, sizes );
             work_rss[ worker ] = sizes[ 3 ];
             break;
 

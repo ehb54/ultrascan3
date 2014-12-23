@@ -188,10 +188,10 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
                max_iterations  = parameters[ "gfit_iterations" ].toInt();
                kcurve          = 0;
 
+               fill_queue();
+
                for ( int ii = 1; ii < gcores_count; ii++ )
                   worker_status[ ii ] = READY;
-
-               fill_queue();
 
                continue;
             }
@@ -555,6 +555,7 @@ DbgLv(1) << "iter_p: rmsd_c rmsd_l" << rmsd_curr << rmsd_last
          qDebug() << "Virtually identical RMSDs of"
                   << rmsd_last << rmsd_curr
                   << "truncate iterations at" << iterations;
+         max_iterations = iterations;
          return;
       }
    }
