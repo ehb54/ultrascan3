@@ -190,7 +190,7 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
 
                fill_queue();
 
-               for ( int ii = 1; ii < gcores_count; ii++ )
+               for ( int ii = 1; ii <= my_workers; ii++ )
                   worker_status[ ii ] = READY;
 
                continue;
@@ -659,7 +659,7 @@ DbgLv(1) << "iter_p: parlims3"
 
    fill_queue();
 
-   for ( int ii = 1; ii < gcores_count; ii++ )
+   for ( int ii = 1; ii <= my_workers; ii++ )
       worker_status[ ii ] = READY;
 
    rmsd_last         = rmsd_curr;
@@ -750,7 +750,7 @@ void US_MPI_Analysis::montecarlo_pcsa()
       job_queue << job;
    }
 
-   for ( int ii = 1; ii < gcores_count; ii++ )
+   for ( int ii = 1; ii <= my_workers; ii++ )
    {
       worker_depth [ ii ] = ii;
       worker_status[ ii ] = READY;

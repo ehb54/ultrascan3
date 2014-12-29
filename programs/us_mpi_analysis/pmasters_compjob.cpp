@@ -659,7 +659,7 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
                      meniscus_values[ ii ] = men_str + men_inc * ii;
                }
 
-               for ( int ii = 1; ii < gcores_count; ii++ )
+               for ( int ii = 1; ii <= my_workers; ii++ )
                   worker_status[ ii ] = READY;
 
                fill_queue();
@@ -1103,14 +1103,11 @@ DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
 // Parallel-masters version of group PCSA master
 void US_MPI_Analysis::pm_pcsa_cjmast( void )
 {
-DbgLv(1) << "master start 2DSA" << startTime;
-   init_pcsa_solutes();
-   fill_queue();
-
-   work_rss.resize( gcores_count );
-
+DbgLv(1) << my_rank << ": master start PCSA" << startTime;
    current_dataset     = 0;
    datasets_to_process = 1;  // Process one dataset at a time for now
+
+   work_rss.resize( gcores_count );
 
    int super           = 0;
    int kcurve          = 0;
@@ -1132,6 +1129,13 @@ DbgLv(1) << "master start 2DSA" << startTime;
    int tag      = status.MPI_TAG;
    int ittest   = current_dataset + mgroup_count;
 
+   init_pcsa_solutes();
+DbgLv(1) << my_rank << ": init sols return";
+   fill_queue();
+DbgLv(1) << my_rank << ": fill queue return";
+
+DbgLv(1) << my_rank << ": recvd ds" << current_dataset << "mgc ittest" << mgroup_count << ittest;
+
    while ( true )
    {
       int worker;
@@ -1144,6 +1148,7 @@ DbgLv(1) << "master start 2DSA" << startTime;
       while ( ! job_queue.isEmpty()  &&  worker_status.contains( READY ) )
       {
          worker    = ready_worker();
+DbgLv(1) << my_rank << ": submit worker" << worker;
 
          Sa_Job job              = job_queue.takeFirst();
          job.mpi_job.depth       = kcurve++;
@@ -1311,7 +1316,7 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
 
                fill_queue();
 
-               for ( int ii = 1; ii < gcores_count; ii++ )
+               for ( int ii = 1; ii <= my_workers; ii++ )
                   worker_status[ ii ] = READY;
 
                continue;
@@ -1336,8 +1341,8 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
       worker = status.MPI_SOURCE;
 
 //if ( max_depth > 0 )
-// DbgLv(1) << " PMG master loop-BOTTOM:   status TAG" << status.MPI_TAG
-//  << MPI_Job::READY << MPI_Job::RESULTS << "  source" << status.MPI_SOURCE;
+ DbgLv(1) << my_rank << ": PMG master loop-BOTTOM:   status TAG" << status.MPI_TAG
+  << MPI_Job::READY << MPI_Job::RESULTS << "  source" << status.MPI_SOURCE;
       switch( status.MPI_TAG )
       {
          case MPI_Job::READY:   // Ready for work

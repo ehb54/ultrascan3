@@ -302,7 +302,7 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
                ctype            = ( ctype == 1 ) ? CTYPE_IS : ctype;
                ctype            = ( ctype == 0 ) ? CTYPE_SL : ctype;
             }
-qDebug() << "STYPE" << s_type << "CTYPE" << ctype;
+//qDebug() << "STYPE" << s_type << "CTYPE" << ctype;
             smin             = attrs.value( "smin" ).toString().toDouble();
             smax             = attrs.value( "smax" ).toString().toDouble();
             kmin             = attrs.value( "kmin" ).toString().toDouble();
@@ -516,8 +516,8 @@ void US_ModelRecord::elite_limits( QVector< US_ModelRecord >& mrecs,
       m0p1h          = ( dif2 < -1e-8 ) ? m0p1 : 0.499;
       m0p2l          = ( dif3 > 1.e-8 ) ? m0p2 : 0.001;
       m0p2h          = ( dif4 < -1e-8 ) ? m0p2 : 0.999;
-qDebug() << " ElLim: ADJUST SIGM: m0p1 m0p1h" << m0p1 << m0p1h
-   << "m0p1<0.500" << (m0p1<0.500) << 0.500 << "(m0p1-0.5)" << (m0p1-0.5);
+//qDebug() << " ElLim: ADJUST SIGM: m0p1 m0p1h" << m0p1 << m0p1h
+//   << "m0p1<0.500" << (m0p1<0.500) << 0.500 << "(m0p1-0.5)" << (m0p1-0.5);
    }
 
    int nmrec      = mrecs.size();
@@ -527,12 +527,12 @@ qDebug() << " ElLim: ADJUST SIGM: m0p1 m0p1h" << m0p1 << m0p1h
    nelite         = qMin( nelite, maxel );          // At most half of all
    nelite         = qMax( nelite, minel );          // At least 4
    nelite        -= 2;                              // Less 2 for compare
-qDebug() << " ElLim: nmrec nelite" << nmrec << nelite;
-qDebug() << " ElLim: in minkv maxkv" << minkv << maxkv;
-qDebug() << " ElLim: in min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
-qDebug() << " ElLim: in m0p1 m0p2" << m0p1 << m0p2;
-qDebug() << " ElLim: in m0p1l,m0p1h,m0p2l,m0p2h" << m0p1l << m0p1h
- << m0p2l << m0p2h;
+//qDebug() << " ElLim: nmrec nelite" << nmrec << nelite;
+//qDebug() << " ElLim: in minkv maxkv" << minkv << maxkv;
+//qDebug() << " ElLim: in min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
+//qDebug() << " ElLim: in m0p1 m0p2" << m0p1 << m0p2;
+//qDebug() << " ElLim: in m0p1l,m0p1h,m0p2l,m0p2h" << m0p1l << m0p1h
+// << m0p2l << m0p2h;
 
    for ( int ii = 0; ii < nmrec; ii++ )
    {
@@ -540,9 +540,9 @@ qDebug() << " ElLim: in m0p1l,m0p1h,m0p2l,m0p2h" << m0p1l << m0p1h
       double end_k   = mrecs[ ii ].end_k;
       double par1    = ln_type ? str_k : mrecs[ ii ].par1;
       double par2    = ln_type ? end_k : mrecs[ ii ].par2;
-if(ii<3||(ii+4)>nelite)
-qDebug() << " ElLim:   ii" << ii << "par1 par2" << par1 << par2
- << "str_k end_k" << str_k << end_k << "rmsd" << mrecs[ii].rmsd;
+//if(ii<3||(ii+4)>nelite)
+//qDebug() << " ElLim:   ii" << ii << "par1 par2" << par1 << par2
+// << "str_k end_k" << str_k << end_k << "rmsd" << mrecs[ii].rmsd;
       minkv          = qMin( minkv, str_k );
       maxkv          = qMax( maxkv, str_k );
       minkv          = qMin( minkv, end_k );
@@ -556,17 +556,17 @@ qDebug() << " ElLim:   ii" << ii << "par1 par2" << par1 << par2
       // exceeds the elite count. But we continue in the loop if we have not
       // yet found min,max par1,par2 values that are at least a step
       // on either side of the par1,par2 values for the best model (m0).
-if(ii>nelite)
-qDebug() << " ElLim:    minp1 maxp1 m0p1" << minp1 << maxp1 << m0p1
- << "minp2 maxp2 m0p2" << minp2 << maxp2 << m0p2;
+//if(ii>nelite)
+//qDebug() << " ElLim:    minp1 maxp1 m0p1" << minp1 << maxp1 << m0p1
+// << "minp2 maxp2 m0p2" << minp2 << maxp2 << m0p2;
       if ( ii > nelite  &&
            minp1 < m0p1l  &&  maxp1 > m0p1h  &&
            minp2 < m0p2l  &&  maxp2 > m0p2h )
          break;
    }
 
-qDebug() << " ElLim: out minkv maxkv" << minkv << maxkv;
-qDebug() << " ElLim: out min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
+//qDebug() << " ElLim: out minkv maxkv" << minkv << maxkv;
+//qDebug() << " ElLim: out min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
 }
 
 // Static public function to recompute model records vector for new iteration
@@ -584,7 +584,7 @@ int US_ModelRecord::recompute_mrecs( int& ctype, double& smin, double& smax,
    double maxp1  = LnType ? maxkv : 0.001;
    double minp2  = LnType ? minkv : 1.0;
    double maxp2  = LnType ? maxkv : 0.0;
-qDebug() << "RF: 2)nmrec" << mrecs.size();
+//qDebug() << "RF: 2)nmrec" << mrecs.size();
 
    elite_limits( mrecs, ctype, minkv, maxkv, minp1, maxp1, minp2, maxp2 );
 
@@ -599,14 +599,14 @@ qDebug() << "RF: 2)nmrec" << mrecs.size();
    double p2inc  = p2rng / krng;
    double p1dif  = qRound( ( p1best - minp1 ) / p1inc ) * p1inc;
    double p2dif  = qRound( ( p2best - minp2 ) / p2inc ) * p2inc;
-qDebug() << "RF: rcomp: p12 rng" << p1rng << p2rng << "p12 inc"
- << p1inc << p2inc << "p12 dif" << p1dif << p2dif;
-qDebug() << "RF: rcomp: mmp1 mmp2" << minp1 << maxp1 << minp2 << maxp2;
+//qDebug() << "RF: rcomp: p12 rng" << p1rng << p2rng << "p12 inc"
+// << p1inc << p2inc << "p12 dif" << p1dif << p2dif;
+//qDebug() << "RF: rcomp: mmp1 mmp2" << minp1 << maxp1 << minp2 << maxp2;
    minp1         = p1best - p1dif;
    minp2         = p2best - p2dif;
    maxp1         = minp1 + p1inc * krng;
    maxp2         = minp2 + p2inc * krng;
-qDebug() << "RF: rcomp: nkpts" << nkpts;
+//qDebug() << "RF: rcomp: nkpts" << nkpts;
 
    mrecs    .clear();
 
@@ -616,10 +616,10 @@ qDebug() << "RF: rcomp: nkpts" << nkpts;
       parlims[ 1 ]  = qMin( kmax, maxp1 );
       parlims[ 2 ]  = qMax( kmin, minp2 );
       parlims[ 3 ]  = qMin( kmax, maxp2 );
-qDebug() << "RF: slin: mmp1 mmp2" << minp1 << maxp1 << minp2 << maxp2;
-qDebug() << "RF: slin:  p1,p2 best" << p1best << p2best;
-qDebug() << "RF: slin:    mnmx p1 p2" << parlims[0] << parlims[1]
- << parlims[2] << parlims[3] << "kmax" << kmax;
+//qDebug() << "RF: slin: mmp1 mmp2" << minp1 << maxp1 << minp2 << maxp2;
+//qDebug() << "RF: slin:  p1,p2 best" << p1best << p2best;
+//qDebug() << "RF: slin:    mnmx p1 p2" << parlims[0] << parlims[1]
+// << parlims[2] << parlims[3] << "kmax" << kmax;
 
       if ( ctype == CTYPE_SL )
       {
@@ -636,18 +636,18 @@ qDebug() << "RF: slin:    mnmx p1 p2" << parlims[0] << parlims[1]
 
    else if ( SgType )
    { // Determine models for sigmoid curves
-qDebug() << "RF: sigm:  mnmx p1 p2" << minp1 << maxp1 << minp2 << maxp2;
+//qDebug() << "RF: sigm:  mnmx p1 p2" << minp1 << maxp1 << minp2 << maxp2;
       parlims[ 0 ]  = qMax( 0.001, minp1 );
       parlims[ 1 ]  = qMin( 0.500, maxp1 );
       parlims[ 2 ]  = qMax( 0.000, minp2 );
       parlims[ 3 ]  = qMin( 1.000, maxp2 );
-qDebug() << "RF: sigm:  p1,p2 best" << p1best << p2best;
-qDebug() << "RF: sigm:    mnmx p1 p2" << parlims[0] << parlims[1]
- << parlims[2] << parlims[3];
+//qDebug() << "RF: sigm:  p1,p2 best" << p1best << p2best;
+//qDebug() << "RF: sigm:    mnmx p1 p2" << parlims[0] << parlims[1]
+// << parlims[2] << parlims[3];
 
       nmrec         = compute_sigmoids( ctype, smin, smax, kmin, kmax,
                                         nkpts, nlpts, parlims, mrecs );
-qDebug() << "RF: sigm: nmrec" << nmrec;
+//qDebug() << "RF: sigm: nmrec" << nmrec;
    }
 
    else if ( ctype == CTYPE_ALL )
