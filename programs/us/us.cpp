@@ -222,6 +222,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu( HELP_LICENSE, tr("UltraScan &License" ), help );
   addMenu( HELP_ABOUT  , tr("&About"             ), help );
   addMenu( HELP_CREDITS, tr("&Credits"           ), help );
+  addMenu( HELP_NOTICES, tr("Show &Notices"      ), help );
   
 #ifndef Q_WS_MAC
   QFont bfont = QFont( US_GuiSettings::fontFamily(),
@@ -637,6 +638,11 @@ void US_Win::help( int index )
             "E-mail: demeler@biochem.uthscsa.edu" ).arg( US_Version ).arg( REVISION ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
+      break;
+
+    case HELP_NOTICES:
+      ln_time    = ln_time.addYears( -1 );
+      notice_check();
       break;
 
     default:

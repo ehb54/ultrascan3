@@ -304,6 +304,7 @@ namespace US_WinData
     HELP_LICENSE,
     HELP_ABOUT,
     HELP_CREDITS,
+    HELP_NOTICES,
     HELP_END
   };
 
@@ -350,6 +351,8 @@ namespace US_WinData
     { HELP_ABOUT,   METHOD, QObject::tr( "About Ultrascan..." ),
        ""                                  },
     { HELP_CREDITS, METHOD, QObject::tr( "UltraScan Credits..." ),
+       ""                                  },
+    { HELP_NOTICES, METHOD, QObject::tr( "Show Notices..." ),
        ""                                  },
     { HELP_END,     METHOD, "",
        ""                                  }
