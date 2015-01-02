@@ -536,9 +536,6 @@ int US_Analyte::write_disk( const QString& filename )
             xml.writeAttribute( "type", "DNA" );
          else
             xml.writeAttribute( "type", "RNA" );
-
-         xml.writeAttribute( "type", ( type == US_Analyte::DNA ) ?
-                                     QString( "DNA" ) : QString( "RNA" ) );
          xml.writeAttribute( "stranded",
                                      US_Util::bool_string( doubleStranded ) );
          xml.writeAttribute( "complement_only",
