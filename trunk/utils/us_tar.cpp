@@ -231,7 +231,8 @@ void US_Tar::write_file( const QString& file )
    //char magic[6];      /* 257 */
    //char version[2];    /* 263 */
 
-   sprintf ( tar_header.header.magic, "ustar  " );
+   memcpy( tar_header.header.magic,   "ustar ", 6 );
+   memcpy( tar_header.header.version, " ",      2 );
 
 #ifndef WIN32
    // uid and gid are always zero on WIN32 systems
@@ -363,7 +364,8 @@ void US_Tar::write_long_filename( const QString& filename )
    //char magic[6];      /* 257 */
    //char version[2];    /* 263 */
 
-   sprintf ( tar_header.header.magic, "ustar  " );
+   memcpy( tar_header.header.magic,   "ustar ", 6 );
+   memcpy( tar_header.header.version, " ",      2 );
 
    //char uname[32];     /* 265 */
    //char gname[32];     /* 297 */
@@ -654,7 +656,8 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 
          // Update owner/group
          if ( geteuid() != 0 ) uid = (uid_t) -1;
-         chown( filename.toAscii(), uid, gid );
+         int choerr = chown( filename.toAscii(), uid, gid );
+         if ( choerr != 0 )    uid = (uid_t) -1;
 #endif
       }  // while ( true )
    }

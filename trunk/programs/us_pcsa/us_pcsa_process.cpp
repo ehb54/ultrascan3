@@ -904,9 +904,14 @@ DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
 void US_pcsaProcess::model_statistics( QVector< US_ModelRecord >& mrecs,
                                        QStringList&            modstats )
 {
-   const char* ctp[] = { "Straight Line",
+   const char* ctp[] = { "None",
+                         "Straight Line",
                          "Increasing Sigmoid",
+                         "Unknown-3",
                          "Decreasing Sigmoid",
+                         "Unknown-5",
+                         "Unknown-6",
+                         "All (SL+IS+DS)",
                          "Horizontal Line [ C(s) ]",
                          "?UNKNOWN?"
                        };
