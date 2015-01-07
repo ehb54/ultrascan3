@@ -633,6 +633,7 @@ int US_Model::load_stream( QXmlStreamReader& xml )
 
             if ( nmtag > 1 )
             {  // A second model tag:  return to handle multi-model stream
+               monteCarlo     = true;
                return US_DB2::NO_MODEL;
             }
 
@@ -846,6 +847,7 @@ int US_Model::load_multi_model( QTextStream& tsi )
    QString mdsc3 = QString( mdesc ).section( ".", -1, -1 );
    QString miter = QString().sprintf( "_mcN%03i", nmcixs );
    description   = mdsc1 + "." + mdsc2 + miter + "." + mdsc3;
+//qDebug() << "MDL:LMM: miter" << miter << "desc" << description;
 
    return result;
 }
@@ -1301,12 +1303,13 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
    if ( mc_iters < 1 )                  return cmfname;
 
    cmfname          = mcfiles[ 0 ];
-   bool name_desc   = cmfname.contains( ".mc" );
+   bool name_desc   = cmfname.contains( ".mc" ) || cmfname.contains( "_mc" );
+//qDebug() << "MDL:CMF: name_desc" << name_desc;
 
    // Return the name of an existing composite if it is all of the list
    if ( mc_iters == 1 )
    {
-      if ( cmfname.contains( ".mcN" ) )
+      if ( cmfname.contains( ".mcN" )  ||  cmfname.contains( "_mcN" ) )
                                         return cmfname;
       if ( ! name_desc )
       {  // If no ".mc" in file name, must check description in contents
@@ -1322,7 +1325,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          filei.close();
          int jj          = qMax( 0, mcont.indexOf( "description=" ) );
          QString mdesc   = QString( mcont ).mid( jj, 99 ).section( dquo, 1, 1 );
-         if ( mcont.contains( ".mcN" ) )
+         if ( mdesc.contains( "_mcN" ) )
                                         return cmfname;
       }
    }
@@ -1332,7 +1335,8 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
    {
       if ( name_desc )
       {  // Handle a file whose name tells that it is a composite
-         if ( mcfiles[ ii ].contains( ".mcN" ) )
+         if ( mcfiles[ ii ].contains( ".mcN" )  ||
+              mcfiles[ ii ].contains( "_mcN" ) )
          {  // For composite, bump composite count, decrement iters, save name
             mc_comps++;
             mc_iters--;
@@ -1349,11 +1353,12 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
          filei.close();
          int jj         = qMax( 0, mcont.indexOf( "description=" ) );
          QString mdesc  = QString( mcont ).mid( jj, 99 ).section( dquo, 1, 1 );
-         if ( mcont.contains( ".mcN" ) )
+         if ( mdesc.contains( "_mcN" ) )
          {  // For composite, bump composite count, decrement iters, save name
             mc_comps++;
             mc_iters--;
             cmfname          = mcfiles[ ii ];
+//qDebug() << "MDL:CMF: (A)cmfname" << cmfname;
          }
       }
    }
@@ -1365,7 +1370,10 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
                                         return empty_str;
    }
 
-   QString mditer   = QString().sprintf( ".mcN%03i", mc_iters );
+   QString mditer1  = QString().sprintf( ".mcN%03i", mc_iters );
+   QString mditer2  = QString( mditer1 ).replace( ".mcN", "_mcN" );
+   QString mditer   = mditer1;
+//qDebug() << "MDL:CMF: mditer1 mditer2" << mditer1 << mditer2;
 
    if ( mc_comps == 0 )
    {  // No composite exists, so create one from the iteration models
@@ -1395,13 +1403,21 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
             QString path     = QString( cmfname ).section( "/", 0, -2 );
             mcguid           = US_Util::new_guid();
             cmfname          = get_filename( path, mcguid, newFile );
+//qDebug() << "MDL:CMF: (B)cmfname" << cmfname;
          }
       }
 
       else
       {  // Description in name, so create a new name with iters count in it
-         cmfname          = QString( cmfname ).section( ".", 0, -4 )
-                            + mditer + ".model.xml";
+         int moix1        = cmfname.indexOf( ".mc" );
+         int moix2        = cmfname.indexOf( "_mc" );
+         int moix         = ( moix1 > 0 ) ? moix1 : qMax( 0, moix2 );
+         QString moiter   = QString( cmfname ).mid( moix, 7 );
+         mditer           = ( moix1 > 0 ) ? mditer1 : mditer2; 
+         cmfname          = cmfname.replace( moiter, mditer )
+                            .replace( ".mdl.tmp", ".model.xml" );
+//qDebug() << "MDL:CMF: moix1 moix2 moiter mditer" << moix1 << moix2 << moiter << mditer;
+//qDebug() << "MDL:CMF: (C)cmfname" << cmfname;
       }
 
       QFile fileo( cmfname );
@@ -1460,15 +1476,21 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
 
       if ( name_desc )
       {  // Name has description, so see if it needs to be renamed
-         QString moiter   = "." + QString( cmfname ).section( ".", -3, -3 );
+         int moix1        = cmfname.indexOf( ".mc" );
+         int moix2        = cmfname.indexOf( "_mc" );
+         int moix         = ( moix1 > 0 ) ? moix1 : qMax( 0, moix2 );
+         QString moiter   = QString( cmfname ).mid( moix, 7 );
          int mc_ittot     = QString( moiter ).mid( 4 ).toInt() + mc_iters;
-         mditer           = QString().sprintf( ".mcN%03i", mc_ittot );
+         mditer           = ( ( moix1 > 0 ) ? "." : "_" )
+                            + QString().sprintf( "mcN%03i", mc_ittot );
+//qDebug() << "MDL:CMF: (B)moix1 moix2 moiter mditer" << moix1 << moix2 << moiter << mditer;
+
          if ( moiter != mditer )
          {  // Iterations changes (almost always), so rename is necessary
-            cmfname          = QString( cmfname ).section( ".", 0, -4 )
-                             + mditer + "."
-                             + QString( cmfname ).section( ".", -2, -1 );
+            cmfname          = cmfname.replace( moiter, mditer )
+                               .replace( ".mdl.tmp", ".model.xml" );
             filei.rename( cmfname );
+//qDebug() << "MDL:CMF: (D)cmfname" << cmfname;
          }
          else
          {  // No name change (unlikely), so must delete and re-create
@@ -1530,7 +1552,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
       {  // If list has composite, name has description;  selectively delete
          for ( int ii = 0; ii < mcfiles.size(); ii++ )
          {  // Delete iteration files (not composite)
-            if ( ! mcfiles[ ii ].contains( ".mcN" ) )
+            if ( ! mcfiles[ ii ].contains( "mcN" ) )
                QFile( mcfiles[ ii ] ).remove();
          }
       }
@@ -1553,7 +1575,7 @@ QString US_Model::composite_mc_file( QStringList& mcfiles, const bool rmvi )
             filei.close();
             int jj         = qMax( 0, mcont.indexOf( "description=" ) );
             QString mdesc  = QString(mcont).mid( jj, 99 ).section( dquo, 1, 1 );
-            if ( ! mdesc.contains( ".mcN" ) )
+            if ( ! mdesc.contains( "_mcN" ) )
                QFile( mcfiles[ ii ] ).remove();
          }
       }

@@ -48,10 +48,6 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    setWindowTitle( tr( "Combine Pseudo-3D Distribution Overlays" ) );
    setPalette( US_GuiSettings::frameColor() );
-//   QPalette rbpal = US_GuiSettings::frameColor();
-//   rbpal.setColor( QPalette::ToolTipBase, QColor( Qt::black ) );
-//   rbpal.setColor( QPalette::ToolTipText, QColor( Qt::white ) );
-//   setPalette( rbpal );
 
    // primary layouts
    QHBoxLayout* main = new QHBoxLayout( this );
@@ -786,10 +782,13 @@ void US_Pseudo3D_Combine::load_distro()
       load_distro( models[ jj ], mdescs[ jj ] );
    }
 
-   curr_distr = 0;
+   curr_distr = system.size() - 1;
    need_save  = ck_savepl->isChecked()  &&  !cont_loop;
+   ct_curr_distr->setEnabled( true );
    ct_curr_distr->setValue( curr_distr + 1 );
    pb_rmvdist->setEnabled( models.count() > 0 );
+
+   update_curr_distr( (double)system.size() );
 }
 
 void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )

@@ -641,6 +641,9 @@ DbgLv(1) << "SV: MC models     write complete  mname" << mname;
       if ( dbP != NULL )
       {  // DB:  load, write to DB, delete
          model.load( tname );
+         model.description = QString( tname ).section( "/", -1, -1 )
+                             .replace( ".model.xml", ".model" )
+                             .replace( ".mdl.tmp",   ".model" );
          model.write( dbP );
          tfile.remove();
 DbgLv(1) << "SV: MC models     write DB from tname" << tname;
@@ -731,8 +734,9 @@ DbgLv(1) << "SV:  Post-sum rno" << ri_noise.values[0];
          ri_noise.sum_noise( noise_rmv, true );
       }
    }
-DbgLv(1) << "SV:  Post-write tno rno"
- << ti_noise.values[0] << ri_noise.values[0];
+tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
+rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
+DbgLv(1) << "SV:  Post-write tno rno" << tino << rino;
  
    if ( dbP != NULL )
    {

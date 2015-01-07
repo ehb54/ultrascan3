@@ -648,7 +648,10 @@ void US_AnalysisControlPc::save()
    US_pcsa* mainw = (US_pcsa*)parentw;
 DbgLv(1) << "AC:save: model components size" << model->components.size();
    *mw_mrecs       = mrecs;
-   *model          = mrecs[ 0 ].model;
+   if ( mw_mrecs_mc->size() == 0 )
+      *model          = mrecs[ 0 ].model;
+   else
+      *model          = mw_mrecs_mc->at( 0 ).model;
    mainw->analysis_done( 2 );         // Save in main
 }
 

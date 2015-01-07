@@ -323,7 +323,8 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    bool noise = parameters[ "tinoise_option" ].toInt() > 0  ||
                 parameters[ "rinoise_option" ].toInt() > 0;
 
-   if ( mc_iterations > 1  &&  noise )
+   if ( ! analysis_type.startsWith( "PCSA" )  &&
+        mc_iterations > 1  &&  noise )
    {
       abort( "Monte Carlo iteration is not compatible with noise computation" );
    }

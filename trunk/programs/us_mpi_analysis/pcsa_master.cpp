@@ -1296,6 +1296,7 @@ void US_MPI_Analysis::write_pcsa_aux_model( int iter )
    else
    {
       atype              += "-MC";
+      wmodel.monteCarlo   = true;
       iterID              = QString().sprintf( "mc%04d", iter );
       int jj              = ( mrecs[ 2 ].taskx == mrecs[ 0 ].taskx ) ? 2 : 1;
       mrecs[ jj ].modelGUID = wmodel.modelGUID;
