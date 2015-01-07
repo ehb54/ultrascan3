@@ -995,6 +995,22 @@ DbgLv(1) << "start_montecarlo";
              .arg( mciters ) );
    ksiters        = 0;
    kciters        = 0;
+   int nsol_m     = mrec.isolutes.size();
+   double par1_m  = mrec.par1;
+   double par2_m  = mrec.par2;
+   int nsol_p     = (int)ct_crpoints->value();
+   double par1_p  = ct_sigmpar1->value();
+   double par2_p  = ct_sigmpar2->value();
+
+   if ( nsol_p != nsol_m  ||  par1_m != par1_p  ||  par2_m != par2_p )
+   {
+      mrec.isolutes.resize( nsol_p );
+      mrec.par1      = par1_p;
+      mrec.par2      = par2_p;
+
+      curve_isolutes( mrec );
+   }
+
    mrecs_mc.clear();
    US_ModelRecord       mrec_mc = mrec;
    US_SolveSim::DataSet dset    = *dset0;
