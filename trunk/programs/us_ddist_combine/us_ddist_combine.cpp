@@ -1624,9 +1624,8 @@ int US_DDistr_Combine::envel_data(
    double  max_xval = 1.0e-6;
    double  min_xval = 1.0e+6;
    double  sed_bin  = xvals[ 0 ];
-   double  his_sum  = 0.0;
    double  env_sum  = 0.0;
-//   double  con_sum  = 0.0;
+   double  con_sum  = 0.0;
    double  div_scl  = (double)nsensit * (double)vCount * 0.01;
    double  max_step;
    double  sigma;
@@ -1640,7 +1639,7 @@ int US_DDistr_Combine::envel_data(
    {  // Get min,max of x values (e.g., sedimentation coefficients)
       max_xval         = qMax( max_xval, xv[ jj ] );
       min_xval         = qMin( min_xval, xv[ jj ] );
-//      con_sum         += yv[ jj ];
+      con_sum         += yv[ jj ];
    }
 
    // Calculate values based on range and sensitivity
@@ -1690,8 +1689,6 @@ DbgLv(1) << "ED:  sed_bin sigma" << sed_bin << sigma;
          }
       }
 
-      his_sum         += ( ysum * sed_bin );  // Bump histogram sum
-
       if ( kbin > 0 )
       {  // If non-empty bin, update envelope Y values
          double yfac      = ysum / ( sigma * pisqrt );
@@ -1702,8 +1699,8 @@ DbgLv(1) << "ED:  sed_bin sigma" << sed_bin << sigma;
             ye[ kk ]        += ( yfac * exp( -( xdif * xdif ) / 2.0 ) );
 DbgLv(2) << "ED:  kk" << kk << "xdif ysum ye[kk]" << xdif << ysum << ye[kk];
          }
+DbgLv(1) << "ED:    jj" << jj << "sval ysum" << sval << ysum;
       }
-DbgLv(1) << "ED:    jj" << jj << "sval his_sum" << sval << his_sum;
    }
 
    for ( int kk = 0; kk < arrsize; kk++ )
@@ -1711,18 +1708,16 @@ DbgLv(1) << "ED:    jj" << jj << "sval his_sum" << sval << his_sum;
       env_sum         += ye[ kk ];
    }
 
-   env_sum         *= xinc;                 // Sum times X increment
-   double scale     = his_sum / env_sum;    // Normalizing scale factor
-//   double scale     = 1.0 / env_sum;        // Normalizing scale factor
-//   con_sum         *= ( (double)arrsize / (double)vCount );
-//   double scale     = con_sum / env_sum;    // Normalizing scale factor
-//DbgLv(1) << "ED: csum esum scale " << con_sum << env_sum << scale;
-DbgLv(1) << "ED: hsum esum scale " << his_sum << env_sum << scale;
+   double scale     = con_sum / env_sum;    // Normalizing scale factor
+DbgLv(1) << "ED: csum esum scale " << con_sum << env_sum << scale;
 
+env_sum=0.0;
    for ( int kk = 0; kk < arrsize; kk++ )
    {  // Normalize Y values
       ye[ kk ]        *= scale;
+env_sum+=ye[kk];
    }
+DbgLv(1) << "ED: Final esum" << env_sum << "csum" << con_sum;
 
    return arrsize;                          // Return size of arrays
 }
