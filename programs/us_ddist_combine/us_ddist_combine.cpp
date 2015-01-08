@@ -67,6 +67,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 
    QLabel* lb_distrtype  = us_banner( tr( "Select Distribution Type(s):" ) );
    QLabel* lb_plottype   = us_banner( tr( "Select Plot Type:" ) );
+   QLabel* lb_plotctls   = us_banner( tr( "Plot Controls:"    ) );
    QLabel* lb_runinfo    = us_banner( tr( "Information for this Run:" ) );
    QLabel* lb_runid      = us_label ( tr( "Current Run ID:" ) );
    QLabel* lb_svproj     = us_label ( tr( "Save Plot under Project:" ) );
@@ -121,9 +122,35 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    sel_plt->addButton( rb_pltff0, 3 );
    sel_plt->addButton( rb_pltvb,  4 );
    sel_plt->addButton( rb_pltMWl, 5 );
+   QLayout* lo_envplot  = us_checkbox(
+         tr( "Envelope plots" ), ck_envplot, true  );
+   QLayout* lo_barplot  = us_checkbox(
+         tr( "Bar plots" ),      ck_barplot, false );
    QLayout* lo_mdltype  = us_checkbox(
          tr( "Use model descriptions for list and legend" ),
          ck_mdltype,  false );
+
+   QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( sfont );
+   int fwid      = fmet.maxWidth();
+   int nsensit   = 50;
+   int nsmooth   = 30;
+   lb_sensit     = us_label( tr( "Sensitivity: " ) );
+   ct_sensit     = us_counter( 2, 10, 100, 1 );
+   lb_smooth     = us_label( tr( "Smoothing:" ) );
+   ct_smooth     = us_counter( 2,  3, 100, 1 );
+   ct_sensit->setStep( 1.0 );
+   ct_sensit->setFont( sfont );
+   ct_sensit->setValue( (double)nsensit );
+   ct_smooth->setStep( 1.0 );
+   ct_smooth->setFont( sfont );
+   ct_smooth->setValue( (double)nsmooth );
+   int rhgt      = ct_sensit->height();
+   int csizw     = fwid * 3;
+   ct_sensit->setMinimumWidth( fwid );
+   ct_smooth->setMinimumWidth( fwid );
+   ct_sensit->resize( rhgt, csizw );
+   ct_smooth->resize( rhgt, csizw );
 
    le_runid      = us_lineedit( "(current run ID)", -1, true );
    cmb_svproj    = us_comboBox();
@@ -174,8 +201,8 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_dmgara,    row,   4, 1, 2 );
    leftLayout->addLayout( lo_dmgaramc,  row++, 6, 1, 2 );
    leftLayout->addLayout( lo_dmgagl,    row,   0, 1, 2 );
-   leftLayout->addLayout( lo_dmgaglmc,  row++, 2, 1, 6 );
-   leftLayout->addLayout( lo_dtall,     row++, 0, 1, 8 );
+   leftLayout->addLayout( lo_dmgaglmc,  row,   2, 1, 6 );
+   leftLayout->addLayout( lo_dtall,     row++, 6, 1, 8 );
 
    leftLayout->addWidget( lb_plottype,  row++, 0, 1, 8 );
    leftLayout->addLayout( lo_pltsw,     row,   0, 1, 2 );
@@ -184,6 +211,15 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_pltff0,    row++, 6, 1, 2 );
    leftLayout->addLayout( lo_pltvb,     row,   0, 1, 8 );
    leftLayout->addLayout( lo_pltMWl,    row++, 2, 1, 8 );
+
+   leftLayout->addWidget( lb_plotctls,  row++, 0, 1, 8 );
+   leftLayout->addLayout( lo_envplot,   row,   0, 1, 4 );
+   leftLayout->addLayout( lo_barplot,   row++, 4, 1, 4 );
+   leftLayout->addWidget( lb_sensit,    row,   0, 1, 2 );
+   leftLayout->addWidget( ct_sensit,    row,   2, 1, 2 );
+   leftLayout->addWidget( lb_smooth,    row,   4, 1, 2 );
+   leftLayout->addWidget( ct_smooth,    row++, 6, 1, 2 );
+
    leftLayout->addWidget( lb_runinfo,   row++, 0, 1, 8 );
    leftLayout->addWidget( lb_runid,     row,   0, 1, 3 );
    leftLayout->addWidget( le_runid,     row++, 3, 1, 5 );
@@ -285,6 +321,15 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
             this,        SLOT(   changedPlotX( bool ) ) );
    connect( rb_pltMWl,   SIGNAL( toggled     ( bool ) ),
             this,        SLOT(   changedPlotX( bool ) ) );
+
+   connect( ck_envplot,  SIGNAL( toggled     ( bool   ) ),
+            this,        SLOT(   envpltChange( bool   ) ) );
+   connect( ck_barplot,  SIGNAL( toggled     ( bool   ) ),
+            this,        SLOT(   barpltChange( bool   ) ) );
+   connect( ct_sensit,   SIGNAL( valueChanged( double ) ),
+            this,        SLOT(   envvalChange(        ) ) );
+   connect( ct_smooth,   SIGNAL( valueChanged( double ) ),
+            this,        SLOT(   envvalChange(        ) ) );
 
    connect( ck_mdltype,  SIGNAL( stateChanged( int  ) ),
             this,        SLOT(   ltypeChanged(      )  ) );
@@ -606,7 +651,10 @@ DbgLv(1) << "pDa:  titleX" << titleX;
    data_plot1->setAxisTitle( QwtPlot::yLeft,   titleY );
 
    for ( int ii = 0; ii < pdistrs.size(); ii++ )
+   {
+      setColor( pdistrs[ ii ], ii );
       plot_distr( pdistrs[ ii ], pdisIDs[ ii ] );
+   }
 }
 
 // Add a single distribution to the plot
@@ -615,13 +663,28 @@ void US_DDistr_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    int  ndispt = ddesc.xvals.size();
    double* xx  = ddesc.xvals.data();
    double* yy  = ddesc.yvals.data();
+   QVector< double > xenv;
+   QVector< double > yenv;
 DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 
    QwtPlotCurve* data_curv = us_curve( data_plot1, distrID );
 
+   if ( ck_envplot->isChecked() )
+   {
+      data_curv->setPen  ( QPen( QBrush( ddesc.color ), 2.0, Qt::SolidLine ) );
+      data_curv->setStyle( QwtPlotCurve::Lines );
+
+      ndispt    = envel_data( ddesc.xvals, ddesc.yvals, xenv, yenv );
+
+      xx        = xenv.data();
+      yy        = yenv.data();
+   }
+   else
+   {
+      data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
+      data_curv->setStyle( QwtPlotCurve::Sticks );
+   }
    data_curv->setData ( xx, yy, ndispt );
-   data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
-   data_curv->setStyle( QwtPlotCurve::Sticks );
    data_curv->setItemAttribute( QwtPlotItem::Legend, true );
 
    data_plot1->setAxisAutoScale( QwtPlot::xBottom );
@@ -1544,5 +1607,159 @@ bool US_DDistr_Combine::equivalent( double aa, double bb, double eps )
 {
    double dd       = ( aa != 0.0 ) ? aa : ( bb != 0.0 ? bb : 1.0 );
    return ( ( qAbs( aa - bb ) / dd ) <= eps );
+}
+
+// Generate envelope data
+int US_DDistr_Combine::envel_data( 
+      QVector< double >& xvals, QVector< double >& yvals,
+      QVector< double >& xenvs, QVector< double >& yenvs )
+{
+   const double pisqrt   = sqrt( M_PI * 2.0 );
+   int     arrsize  = 300;
+   int     steps;
+   int     nsensit  = ct_sensit->value();
+   int     nsmooth  = ct_smooth->value();
+   int     vCount   = xvals.size();
+   double  max_xval = 1.0e-6;
+   double  min_xval = 1.0e+6;
+   double  sed_bin  = xvals[ 0 ];
+   double  his_sum  = 0.0;
+   double  env_sum  = 0.0;
+   double  div_scl  = (double)nsensit * (double)vCount * 0.01;
+   double  max_step;
+   double  sigma;
+   double  sed_lo;
+   double  sed_hi;
+   double  sedc;
+   double* xv       = xvals.data();
+   double* yv       = yvals.data();
+
+   for ( int jj = 0; jj < vCount; jj++ )
+   {  // Get min,max of x values (e.g., sedimentation coefficients)
+      max_xval         = qMax( max_xval, xv[ jj ] );
+      min_xval         = qMin( min_xval, xv[ jj ] );
+   }
+
+   // Calculate values based on range and sensitivity
+   sed_bin          = ( max_xval - min_xval ) / div_scl;
+   max_step         = max_xval * 4.0 / 3.0;
+   steps            = (int)( max_step / sed_bin );
+DbgLv(1) << "ED:  steps" << steps << "sed_bin" << sed_bin;
+
+   if ( arrsize <= steps )
+   {  // Insure envelope array size bigger than histogram array size
+      arrsize      = steps + 1;
+   }
+
+   xenvs.fill( 0.0, arrsize );
+   yenvs.fill( 0.0, arrsize );
+   double* xe       = xenvs.data();
+   double* ye       = yenvs.data();
+   double  sval     = 0.0;
+   double  xinc     = max_step / (double)arrsize;
+DbgLv(1) << "ED:  max_step arrsize xinc" << max_step << arrsize << xinc;
+
+   for ( int jj = 0; jj < arrsize; jj++ )
+   {  // Initialize envelope values
+      xe[ jj ]         = xinc * (double)( jj );
+      ye[ jj ]         = 0.0;
+   }
+
+   sigma            = sed_bin * 0.02 * (double)nsmooth;
+DbgLv(1) << "ED:  sed_bin sigma" << sed_bin << sigma;
+
+   for ( int jj = 0; jj < steps; jj++ )
+   {  // Calculate histogram values and envelope values based on them
+      int kbin         = 0;
+      double ysum      = 0.0;
+      sed_lo           = sed_bin * (double)( jj );
+      sed_hi           = sed_lo + sed_bin;
+      sval             = ( sed_lo + sed_hi ) * 0.5;
+
+      for ( int ii = 0; ii < vCount; ii++ )
+      {  // Count sedcoeffs (or other X) within current step range
+         sedc             = xv[ ii ];
+
+         if ( sedc >= sed_lo  &&  sedc < sed_hi )
+         {
+            kbin++;
+            ysum            += yv[ ii ];
+         }
+      }
+
+      his_sum         += ( ysum * sed_bin );  // Bump histogram sum
+
+      if ( kbin > 0 )
+      {  // If non-empty bin, update envelope Y values
+         for ( int kk = 0; kk < arrsize; kk++ )
+         {
+            double xdif      = ( xe[ kk ] - sval ) / sigma;
+            ye[ kk ]        += ( ( ysum / ( sigma * pisqrt ) )
+                               * exp( -( xdif * xdif ) / 2.0 ) );
+DbgLv(2) << "ED:  kk" << kk << "xdif ysum ye[kk]" << xdif << ysum << ye[kk];
+         }
+      }
+DbgLv(1) << "ED:    jj" << jj << "sval his_sum" << sval << his_sum;
+   }
+
+   for ( int kk = 0; kk < arrsize; kk++ )
+   {  // Accumulate the envelope values sum
+      env_sum         += ye[ kk ];
+   }
+
+   env_sum         *= xinc;                 // Sum times X increment
+   double scale     = his_sum / env_sum;    // Normalizing scale factor
+//   double scale     = 1.0 / env_sum;        // Normalizing scale factor
+DbgLv(1) << "ED: hsum esum scale " << his_sum << env_sum << scale;
+
+   for ( int kk = 0; kk < arrsize; kk++ )
+   {  // Normalize Y values
+      ye[ kk ]        *= scale;
+   }
+
+   return arrsize;                          // Return size of arrays
+}
+
+// Slot for change in env plot check box
+void US_DDistr_Combine::envpltChange( bool echkd )
+{
+   // Switch check status of bar plot
+   bool bchkd    = !echkd;
+   ck_barplot->disconnect();
+   ck_barplot->setChecked( bchkd );
+   connect( ck_barplot,  SIGNAL( toggled     ( bool   ) ),
+            this,        SLOT(   barpltChange( bool   ) ) );
+
+   // Enable/disable envelope controls
+   ct_sensit ->setEnabled( echkd );
+   ct_smooth ->setEnabled( echkd );
+
+   // Plot data in changed form
+   plot_data();
+}
+
+// Slot for change in bar plot check box
+void US_DDistr_Combine::barpltChange( bool bchkd )
+{
+   // Switch check status of envelope plot
+   bool echkd    = !bchkd;
+   ck_envplot->disconnect();
+   ck_envplot->setChecked( echkd );
+   connect( ck_envplot,  SIGNAL( toggled     ( bool   ) ),
+            this,        SLOT(   envpltChange( bool   ) ) );
+
+   // Enable/disable envelope controls
+   ct_sensit ->setEnabled( echkd );
+   ct_smooth ->setEnabled( echkd );
+
+   // Plot data in changed form
+   plot_data();
+}
+
+// Slot for change in sensitivity or smooth value
+void US_DDistr_Combine::envvalChange( )
+{
+   // Plot data with changed sensitivity or smoothing
+   plot_data();
 }
 
