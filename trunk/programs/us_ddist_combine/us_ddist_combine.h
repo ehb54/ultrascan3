@@ -75,6 +75,11 @@ class US_DDistr_Combine : public US_Widgets
       QListWidget*   lw_runids;
       QListWidget*   lw_models;
 
+      QLabel*        lb_sensit;
+      QLabel*        lb_smooth;
+
+      QwtCounter*    ct_sensit;
+      QwtCounter*    ct_smooth;
       QCheckBox*     ck_2dsa;
       QCheckBox*     ck_2dsamc;
       QCheckBox*     ck_2dsamw;
@@ -109,6 +114,8 @@ class US_DDistr_Combine : public US_Widgets
       QCheckBox*     ck_dmgagl;
       QCheckBox*     ck_dmgaglmc;
       QCheckBox*     ck_dtall;
+      QCheckBox*     ck_envplot;
+      QCheckBox*     ck_barplot;
       QCheckBox*     ck_mdltype;
 
       QRadioButton*  rb_pltsw;
@@ -159,8 +166,13 @@ class US_DDistr_Combine : public US_Widgets
       void methodChanged     ( int );
       void list_distributions( void );
       void changedPlotX      ( bool );
+      void envpltChange      ( bool );
+      void barpltChange      ( bool );
+      void envvalChange      ( void );
       void ltypeChanged      ( void );
       bool equivalent        ( double, double, double );
+      int  envel_data( QVector< double >&, QVector< double >&,
+                       QVector< double >&, QVector< double >& );
 
       void help(      void )
       { showHelp.show_help( "ddist_combine.html" ); };
