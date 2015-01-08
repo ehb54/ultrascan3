@@ -123,9 +123,9 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    sel_plt->addButton( rb_pltvb,  4 );
    sel_plt->addButton( rb_pltMWl, 5 );
    QLayout* lo_envplot  = us_checkbox(
-         tr( "Envelope plots" ), ck_envplot, true  );
+         tr( "Envelope plots"           ), ck_envplot, true  );
    QLayout* lo_barplot  = us_checkbox(
-         tr( "Bar plots" ),      ck_barplot, false );
+         tr( "Discrete value Bar plots" ), ck_barplot, false );
    QLayout* lo_mdltype  = us_checkbox(
          tr( "Use model descriptions for list and legend" ),
          ck_mdltype,  false );
@@ -342,7 +342,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QBoxLayout* plot = new US_Plot( data_plot1,
          tr( "Discrete s20,W Distributions" ),
          tr( "Sedimentation Coefficient x 1e+13 (corr. for 20,W)" ),
-         tr( "Relative Concentration" ) );
+         tr( "Signal Concentration" ) );
 
    data_plot1->setMinimumSize( 560, 400 );
    data_plot1->setAxisScale( QwtPlot::xBottom, 1.0,  10.0 );
@@ -609,7 +609,7 @@ DbgLv(1) << "pDa:  xtype" << xtype;
    data_grid->setMinPen(
          QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
 
-   QString titleY = tr( "Relative Concentration" );
+   QString titleY = tr( "Signal Concentration" );
 DbgLv(1) << "pDa:  titleY" << titleY;
    QString titleP;
    QString titleX;
@@ -684,6 +684,7 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
       data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Sticks );
    }
+
    data_curv->setData ( xx, yy, ndispt );
    data_curv->setItemAttribute( QwtPlotItem::Legend, true );
 
@@ -1625,6 +1626,7 @@ int US_DDistr_Combine::envel_data(
    double  sed_bin  = xvals[ 0 ];
    double  his_sum  = 0.0;
    double  env_sum  = 0.0;
+//   double  con_sum  = 0.0;
    double  div_scl  = (double)nsensit * (double)vCount * 0.01;
    double  max_step;
    double  sigma;
@@ -1638,6 +1640,7 @@ int US_DDistr_Combine::envel_data(
    {  // Get min,max of x values (e.g., sedimentation coefficients)
       max_xval         = qMax( max_xval, xv[ jj ] );
       min_xval         = qMin( min_xval, xv[ jj ] );
+//      con_sum         += yv[ jj ];
    }
 
    // Calculate values based on range and sensitivity
@@ -1691,11 +1694,12 @@ DbgLv(1) << "ED:  sed_bin sigma" << sed_bin << sigma;
 
       if ( kbin > 0 )
       {  // If non-empty bin, update envelope Y values
+         double yfac      = ysum / ( sigma * pisqrt );
+
          for ( int kk = 0; kk < arrsize; kk++ )
          {
             double xdif      = ( xe[ kk ] - sval ) / sigma;
-            ye[ kk ]        += ( ( ysum / ( sigma * pisqrt ) )
-                               * exp( -( xdif * xdif ) / 2.0 ) );
+            ye[ kk ]        += ( yfac * exp( -( xdif * xdif ) / 2.0 ) );
 DbgLv(2) << "ED:  kk" << kk << "xdif ysum ye[kk]" << xdif << ysum << ye[kk];
          }
       }
@@ -1710,6 +1714,9 @@ DbgLv(1) << "ED:    jj" << jj << "sval his_sum" << sval << his_sum;
    env_sum         *= xinc;                 // Sum times X increment
    double scale     = his_sum / env_sum;    // Normalizing scale factor
 //   double scale     = 1.0 / env_sum;        // Normalizing scale factor
+//   con_sum         *= ( (double)arrsize / (double)vCount );
+//   double scale     = con_sum / env_sum;    // Normalizing scale factor
+//DbgLv(1) << "ED: csum esum scale " << con_sum << env_sum << scale;
 DbgLv(1) << "ED: hsum esum scale " << his_sum << env_sum << scale;
 
    for ( int kk = 0; kk < arrsize; kk++ )
