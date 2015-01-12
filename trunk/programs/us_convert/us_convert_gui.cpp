@@ -4517,7 +4517,7 @@ DbgLv(1) << "CGui:IOD:  isMwl" << isMwl << "c.count t.count"
    if ( isMwl )
    {  // If MWL, update speed steps
 DbgLv(1) << "CGui:IOD:   updSS call";
-      QVector< SP_SPEEDPROFILE > testss;
+      QVector< SP_SPEEDPROFILE > testss = speedsteps;
       int nstest    = mwl_data.update_speedsteps( testss );
       if ( nstest > 0 )
       {
@@ -4535,7 +4535,8 @@ DbgLv(1) << "CGui:IOD:   updSS call";
          resetAll();
       }
 DbgLv(1) << "CGui:IOD:    updSS nspeed nstest nspeedc"
- << nspeed << nstest << nspeedc;
+ << nspeed << nstest << nspeedc << "ss0  timf omgf"
+ << speedsteps[0].time_first << speedsteps[0].w2t_first;
    }
 
    else
