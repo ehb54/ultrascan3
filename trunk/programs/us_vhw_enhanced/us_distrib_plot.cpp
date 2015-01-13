@@ -166,21 +166,25 @@ void US_DistribPlot::show_plot( void )
 
    if ( plotType == DISTR )
    {
+      data_plot->setTitle( tr( "G(s) Distribution" ) );
       plot_distrib();
    }
 
    else if ( plotType == COMBO )
    {
+      data_plot->setTitle( tr( "g(s) Distribution" ) );
       plot_combined();
    }
 
    else if ( plotType == HISTO  ||  plotType == NONE )
    {
+      data_plot->setTitle( tr( "g(s) Distribution" ) );
       plot_histogram();
    }
 
    else if ( plotType == ENVEL )
    {
+      data_plot->setTitle( tr( "g(s) Distribution" ) );
       plot_envelope();
    }
 
@@ -277,9 +281,7 @@ void US_DistribPlot::change_smooth( double value )
 // plot distribution points
 void US_DistribPlot::plot_distrib( void )
 {
-   // Set up the titles and axes
-   data_plot->setTitle( 
-      tr( "Sedimentation Coefficient Distribution" ) );
+   // Set up the axes
    data_plot->setAxisTitle( QwtPlot::yLeft,
       tr( "Boundary Fraction" ) );
    data_plot->setAxisTitle( QwtPlot::xBottom,
@@ -340,9 +342,7 @@ void US_DistribPlot::plot_histogram( void )
    double  rngx;
    int     npoints;
 
-   // Set up the titles and axes
-   data_plot->setTitle( 
-      tr( "Sedimentation Coefficient Histogram" ) );
+   // Set up the axes
    data_plot->setAxisTitle( QwtPlot::yLeft,
       tr( "Relative Concentration" ) );
    data_plot->setAxisTitle( QwtPlot::xBottom,
@@ -431,9 +431,7 @@ void US_DistribPlot::plot_envelope( void )
    maxx     = maxx + rngx * 0.10;
 
    if ( plotType == ENVEL )
-   { // if envelope only, must set titles and axes (otherwise handled by histo)
-      data_plot->setTitle( 
-         tr( "Sedimentation Coefficient Histogram" ) );
+   { // if envelope only, must set up axes (otherwise handled by histo)
       data_plot->setAxisTitle( QwtPlot::yLeft,
          tr( "Relative Concentration" ) );
       data_plot->setAxisTitle( QwtPlot::xBottom,

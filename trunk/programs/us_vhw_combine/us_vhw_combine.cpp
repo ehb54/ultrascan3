@@ -436,6 +436,25 @@ void US_vHW_Combine::plot_data( void )
    grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
    grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
 
+   bool dplot       = ck_distrib ->isChecked();
+   bool eplot       = ck_envelope->isChecked();
+   QString ptitle   = tr( "G(s) Distributions" );
+
+   if ( dplot  &&  eplot )
+   {
+      ptitle           = tr( "G(s)/g(s) Distributions" );
+   }
+   else if ( dplot )
+   {
+      ptitle           = tr( "G(s) Distributions" );
+   }
+   else if ( eplot )
+   {
+      ptitle           = tr( "g(s) Distributions" );
+   }
+
+   data_plot1->setTitle( ptitle );
+
    for ( int ii = 0; ii < pdistrs.size(); ii++ )
       plot_distr( pdistrs[ ii ], pdisIDs[ ii ] );
 }
