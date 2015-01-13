@@ -1942,7 +1942,7 @@ DbgLv(1) << " KRELP" << krelp << "   slope intcp sigma"
 
    Swavg      = slope / ( -2.0 * omega * omega );  // Swavg func of slope
 	C0         = exp( intcp );                      // C0 func of intercept
-   total_conc = 0.0;
+   total_conc = C0;
 DbgLv(1) << "Swavg(c): " << Swavg*correc << " C0: " << C0 ;
 
    // Determine Cp for all the scans based on fitted line:
@@ -1958,11 +1958,11 @@ DbgLv(1) << "Swavg(c): " << Swavg*correc << " C0: " << C0 ;
       dscan->plateau = exp( tc * slope + intcp );
       scPlats[ ii ]  = dscan->plateau;
 DbgLv(1) << " jj scan plateau " << ii << ii+1 << scPlats[ii];
-      total_conc    += dscan->plateau;
    }
 //*TIMING
 kmsecs[3]+=sttime.msecsTo(QDateTime::currentDateTime());
 //*TIMING
+DbgLv(1) << "total_conc(fitted): " << total_conc;
    return true;
 }
 
@@ -2044,6 +2044,7 @@ DbgLv(1) << "Cpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
 //*TIMING
 kmsecs[4]+=sttime.msecsTo(QDateTime::currentDateTime());
 //*TIMING
+DbgLv(1) << "total_conc(model): " << total_conc;
    return true;
 }
 
