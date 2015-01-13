@@ -217,7 +217,7 @@ void US_vHW_Enhanced::distr_plot(  void )
       bfracs[ jj ] = pterm + bterm * (double)( jj );
    }
 
-   US_DistribPlot* dialog = new US_DistribPlot( bfracs, dseds );
+   US_DistribPlot* dialog = new US_DistribPlot( bfracs, dseds, total_conc );
    dialog->move( this->pos() + QPoint( 100, 100 ) );
    dialog->exec();
    delete dialog;
@@ -638,7 +638,7 @@ QDateTime time0=QDateTime::currentDateTime();
 
    if ( saved[ row ] == false )
    {  // If no plot dialog was opened for this triple, get files now
-      US_DistribPlot* dialog = new US_DistribPlot( bfracs, dseds );
+      US_DistribPlot* dialog = new US_DistribPlot( bfracs, dseds, total_conc );
 DbgLv(1) << "(P)PLOT ENV save: plot3File" << plot3File;
       dialog->save_plots( plot3File, plot4File );
 
@@ -1942,6 +1942,7 @@ DbgLv(1) << " KRELP" << krelp << "   slope intcp sigma"
 
    Swavg      = slope / ( -2.0 * omega * omega );  // Swavg func of slope
 	C0         = exp( intcp );                      // C0 func of intercept
+   total_conc = 0.0;
 DbgLv(1) << "Swavg(c): " << Swavg*correc << " C0: " << C0 ;
 
    // Determine Cp for all the scans based on fitted line:
@@ -1957,6 +1958,7 @@ DbgLv(1) << "Swavg(c): " << Swavg*correc << " C0: " << C0 ;
       dscan->plateau = exp( tc * slope + intcp );
       scPlats[ ii ]  = dscan->plateau;
 DbgLv(1) << " jj scan plateau " << ii << ii+1 << scPlats[ii];
+      total_conc    += dscan->plateau;
    }
 //*TIMING
 kmsecs[3]+=sttime.msecsTo(QDateTime::currentDateTime());
@@ -2010,6 +2012,7 @@ DbgLv(1) << "Cpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
    scPlats.fill( 0.0, lscnCount );
 	C0           = 0.0;
 	Swavg        = 0.0;
+   total_conc   = 0.0;
 
    for ( int ii = 0; ii < lscnCount; ii++ )
    {
@@ -2026,6 +2029,9 @@ DbgLv(1) << "Cpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
          double conc    = sc->signal_concentration;
          double sval    = sc->s;
          cplat         += ( conc * exp( oterm * sval ) );
+
+         if ( ii == 0 )
+            total_conc    += conc;
       }
 //DbgLv(1) << "Cpl:  scan" << ii << "cplat" << cplat;
 
