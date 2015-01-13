@@ -35,6 +35,7 @@ class US_vHW_Combine : public US_Widgets
             QVector< double >  efreqs;   // Envelope frequencies
             QwtSymbol          symbol;   // Curve symbol
             QColor             color;    // Curve color
+            double             totconc;  // Total concentration
       };
 
       QList< DistrDesc >  distros;     // All distributions

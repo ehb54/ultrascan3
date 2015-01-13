@@ -9,7 +9,7 @@
 #include <qwt_legend.h>
 
 US_DistribPlot::US_DistribPlot( QVector< double >& divfracs,
-   QVector< double >& divsedcs )
+   QVector< double >& divsedcs, const double tconc )
    : US_WidgetsDialog( 0, 0 ), bfracs( divfracs ), dsedcs( divsedcs )
 {
 
@@ -20,6 +20,7 @@ US_DistribPlot::US_DistribPlot( QVector< double >& divfracs,
    main->setSpacing        ( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
 
+   tot_conc  = tconc;
    plotType  = DISTR;
    plotTypeH = COMBO;
    divsCount = bfracs.size();
@@ -347,10 +348,21 @@ void US_DistribPlot::plot_histogram( void )
    data_plot->setAxisTitle( QwtPlot::xBottom,
       tr( "Sedimentation Coefficient" ) );
  
+   // Get scale from envelope data
+   npoints     = envel_data( xvec, yvec );
+   double* xx  = xvec.data();
+   double* yy  = yvec.data();
+   double esum = 0.0;
+
+   for ( int jj = 0; jj < npoints; jj++ )
+      esum    += yy[ jj ];
+
+   double  yscl = tot_conc / esum;
+ 
    // Calculate histogram data
    npoints  = histo_data( xvec, yvec );
-   double* xx = xvec.data();
-   double* yy = yvec.data();
+   xx         = xvec.data();
+   yy         = yvec.data();
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {
@@ -368,8 +380,17 @@ void US_DistribPlot::plot_histogram( void )
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
    data_plot->setAxisAutoScale( QwtPlot::xBottom );
 
+#if 0
+   double hsum = 0.0;
+   for ( int jj = 0; jj < npoints; jj++ )
+      hsum        += yy[ jj ];
+   yscl         = tot_conc / hsum;
+#endif
 DbgLv(2) << "HISTO_DAT:" << npoints;
 for(int jj=0;jj<npoints;jj++) DbgLv(2) << jj << xx[jj] << yy[jj];
+   // Scale Y points so envelope integration equals total concentration
+   for ( int jj = 0; jj < npoints; jj++ )
+      yy[ jj ]    *= yscl;
 
    // Draw curve of histogram sticks
    hcurve  = us_curve( data_plot, tr( "Histogram Bar" ) );
@@ -433,6 +454,17 @@ void US_DistribPlot::plot_envelope( void )
    npoints  = envel_data( xvec, yvec );
    xx       = xvec.data();
    yy       = yvec.data();
+
+   // Scale Y points so integration equals total concentration
+   double  esum = 0.0;
+
+   for ( int jj = 0; jj < npoints; jj++ )
+      esum    += yy[ jj ];
+
+   double  yscl = tot_conc / esum;
+
+   for ( int jj = 0; jj < npoints; jj++ )
+      yy[ jj ] *= yscl;
 
    // Draw a cyan line through points
    ecurve  = us_curve( data_plot, tr( "Envelope Line" ) );
@@ -640,16 +672,20 @@ DbgLv(1) << "SaveDat: file" << data2File << "nhpts nepts" << nhpts << nepts;
    QTextStream ts( &datf );
 
    ts << tr( "\"S-value(Envelope)\",\"Frequency(E)\","
-             "\"S-value(Histogram)\",\"Frequency(H)\"\n" );
+             "\"S-value(Histogram)\",\"Frequency(H)\","
+             "\"TotalConcentration\"\n" );
 
    for ( int ii = 0; ii < nepts; ii++ )
    {
       QString line;
       if ( ii < nhpts )
-         line = QString().sprintf( "\"%.6f\",\"%.6f\",\"%.6f\",\"%9.2f\"\n",
-                   eseds[ ii ], efrqs[ ii ], hseds[ ii ], hfrqs[ ii ] );
+         line = QString().sprintf(
+                   "\"%.6f\",\"%.6f\",\"%.6f\",\"%9.2f\",\"%9.2f\"\n",
+                   eseds[ ii ], efrqs[ ii ], hseds[ ii ], hfrqs[ ii ],
+                   tot_conc );
       else
-         line = QString().sprintf( "\"%.6f\",\"%.6f\",\"\",\"\"\n",
+         line = QString().sprintf(
+                   "\"%.6f\",\"%.6f\",\"\",\"\",\"\"\n",
                    eseds[ ii ], efrqs[ ii ] );
 
       line.replace( " ", "" );

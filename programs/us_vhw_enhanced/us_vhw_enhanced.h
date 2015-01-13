@@ -85,6 +85,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       double        sdiff;
       double        bdiff_coef;
       double        bdiff_sedc;
+      double        total_conc;
 
       int           row;
       int           run_id;

@@ -133,10 +133,12 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
          tr( "Sedimentation Coefficient x 1e+13 (corr. for 20,W)" ),
          tr( "Boundary Fraction (%)" ) );
 
-   QwtText qtitle( tr( "Relative Frequency" ) );
+//   QString etitle = tr( "Relative Frequency" );
+   QString etitle = tr( "Signal Concentration" );
+   QwtText qtitle( etitle );
    qtitle.setFont( QFont( US_GuiSettings::fontFamily(),
                           US_GuiSettings::fontSize(), QFont::Bold ) );
-   qtitle.setText( tr( "Relative Frequency" ) );
+   qtitle.setText( etitle );
 
    data_plot1->setMinimumSize( 640, 400 );
    data_plot1->enableAxis  ( QwtPlot::yRight,  true );
@@ -930,6 +932,7 @@ DbgLv(2) << "ED: hsum esum scale " << his_sum << env_sum << scale;
 
    ddesc.esedcs.resize( nepts );
    ddesc.efreqs.resize( nepts );
+   ddesc.totconc = 1.0;
 
    return nepts;                        // return arrays' size
 }
@@ -957,17 +960,17 @@ DbgLv(1) << "FID: fline0" << fline;
       ddesc.tdescr  = fline;
       fline = tsd.readLine();
    }
-	QString str;
+   QString str;
    while ( !tsd.atEnd() )
    {
       fline = tsd.readLine().simplified();
-		//double bound = str.section( ",", 0, 0).toDouble();
-		str = fline.section( ",", 0, 0);
-		double bound = str.remove("\"").toDouble();
-		str = fline.section( ",", 3, 3);
-		double sedc  = str.remove("\"").toDouble();
+      //double bound = str.section( ",", 0, 0).toDouble();
+      str = fline.section( ",", 0, 0);
+      double bound = str.remove("\"").toDouble();
+      str = fline.section( ",", 3, 3);
+      double sedc  = str.remove("\"").toDouble();
 
-		DbgLv(1) << "bound:" << bound << " sedc:" << sedc;
+      DbgLv(1) << "bound:" << bound << " sedc:" << sedc;
 
       ddesc.dsedcs << sedc;
       ddesc.bfracs << bound;
@@ -983,37 +986,70 @@ DbgLv(1) << "  kk sed frac" << ddesc.dsedcs[kk] << ddesc.bfracs[kk];
       fline = tse.readLine();
       int     fnz   = -1;
       int     lnz   = 0;
+      bool    fev   = true;
 
-		QString str;
+      QString str;
       while ( !tse.atEnd() )
       {
-         fline = tse.readLine().simplified();
-			str = fline.section( ",", 0, 0);
-			double sedc = str.remove("\"").toDouble();
-			str = fline.section( ",", 1, 1);
-			double freq  = str.remove("\"").toDouble();
+         fline        = tse.readLine().simplified();
+         str          = fline.section( ",", 0, 0 );
+         double sedc  = str.remove( "\"" ).toDouble();
+         str          = fline.section( ",", 1, 1 );
+         double freq  = str.remove( "\"" ).toDouble();
 
          if ( freq != 0.0 )
          {
-            lnz      = ddesc.esedcs.size();
-            if ( fnz < 0 ) fnz = lnz;
+            lnz           = ddesc.esedcs.size();
+            if ( fnz < 0 )
+            {
+               fnz           = lnz;
+            }
+         }
+
+         if ( fev )
+         {
+            fev           = false;
+            str           = fline.section( ",", 4, 4 );
+            double conc   = str.remove( "\"" ).toDouble();
+            ddesc.totconc = conc;
+DbgLv(1) << "TotConc" << ddesc.totconc << "str" << str;
+DbgLv(1) << "FLine" << fline;
+
+            if ( conc == 0.0 )
+            {
+               QMessageBox::warning( this,
+                  tr( "No Total Concentration" ),
+                  tr( "The Envelope CSV for Run %1 does not contain"
+                      " a Total Concentration value. The vHW application"
+                      " should be re-run to re-create this report." )
+                  .arg( ddesc.runID ) );
+            }
          }
 
          ddesc.esedcs << sedc;
          ddesc.efreqs << freq;
       }
 
-      int nepts = ddesc.esedcs.size();
-      fnz       = qMax( ( fnz - 2 ), 0 );
-      lnz       = qMin( ( lnz + 2 ), nepts );
-      nepts     = 0;
+      int nepts     = ddesc.esedcs.size();
+      fnz           = qMax( ( fnz - 2 ), 0 );
+      lnz           = qMin( ( lnz + 2 ), nepts );
+      nepts         = 0;
+      double ysum   = 0.0;
 
       for ( int jj = fnz; jj < lnz; jj++ )
       {  // Reduce array to Y's from first to last non-zero
          ddesc.esedcs[ nepts ] = ddesc.esedcs[ jj ];
          ddesc.efreqs[ nepts ] = ddesc.efreqs[ jj ];
+         // Accumulate sum of frequencies
+         ysum         += ddesc.efreqs[ jj ];
          nepts++;
       }
+
+      double sclf   = ( ddesc.totconc == 0.0 ) ? 1.0 : ( ddesc.totconc / ysum );
+
+      // Convert Ys from frequency to concentration
+      for ( int jj = 0; jj < nepts; jj++ )
+         ddesc.efreqs[ jj ] *= sclf;
 
       if ( nepts < ddesc.esedcs.size() )
       {

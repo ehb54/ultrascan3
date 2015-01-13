@@ -23,7 +23,8 @@ class US_DistribPlot : public US_WidgetsDialog
    public:
       //! \param divfracs Reference to a vector of division bdoundary fractions
       //! \param divsedcs Reference to a vector of division intercept sedcoeffs
-      US_DistribPlot( QVector< double >&, QVector< double >& );
+      //! \param tconc    Total concentration
+      US_DistribPlot( QVector< double >&, QVector< double >&, const double );
 
       //! \param plot1File The name of the distribution plot file
       //! \param plot2File The name of the histogram plot file
@@ -32,6 +33,7 @@ class US_DistribPlot : public US_WidgetsDialog
    private:
       QVector< double >& bfracs;    // boundary fractions for divisions
       QVector< double >& dsedcs;    // sed.coeff. intercepts for divisions
+      double        tot_conc;
       
       enum pType { DISTR, HISTO, ENVEL, COMBO, NONE };
 
