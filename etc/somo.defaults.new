@@ -340,8 +340,8 @@ results.name
 10		#saxs_options.xsr_looseness_weight     
 0.001		#saxs_options.xsr_temperature          
 1		#hydro.zeno_zeno             
-1		#hydro.zeno_interior         
-1		#hydro.zeno_surface          
+0		#hydro.zeno_interior         
+0		#hydro.zeno_surface          
 1000		#hydro.zeno_zeno_steps       
 1000		#hydro.zeno_interior_steps   
 1000		#hydro.zeno_surface_steps    
