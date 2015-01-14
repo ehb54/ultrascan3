@@ -13,14 +13,11 @@ US_Predict2::US_Predict2() : US_Widgets()
 {
    model = SED_DIFF;
 
-   temperature = NORMAL_TEMP;
    d.density   = DENS_20W;
    d.viscosity = VISC_20W;
    d.vbar20    = TYPICAL_VBAR;
-   d.vbar      = TYPICAL_VBAR + ( 4.25e-4 * ( temperature - 20.0 ) );
+   d.vbar      = d.vbar20;
 
-   US_Math2::data_correction( temperature, d );
-   
    setWindowTitle( tr( "Predict f and axial ratios for 4 basic shapes" ) );
    setPalette( US_GuiSettings::frameColor() );
 
@@ -33,28 +30,20 @@ US_Predict2::US_Predict2() : US_Widgets()
    QGridLayout* controls = new QGridLayout;
    int c_row = 0;
 
-   QPushButton* pb_solution = us_pushbutton( tr( "Select Solution" ) );
-   connect( pb_solution, SIGNAL( clicked() ), SLOT( get_solution() ) );
-   controls->addWidget( pb_solution, c_row++, 0, 1, 2 );
-
-   QPushButton* pb_density = us_pushbutton( tr( "Density" ) );
-   connect( pb_density, SIGNAL( clicked() ), SLOT( get_buffer() ) );
-   controls->addWidget( pb_density, c_row, 0 );
+   QLabel*      lb_density = us_label( tr( "Density (20w)" ) );
+   controls->addWidget( lb_density, c_row, 0 );
 
    le_density = us_lineedit();
    le_density->setText( QString::number( DENS_20W, 'f', 4 ) );
-   connect( le_density, SIGNAL( textChanged( const QString& ) ),
-                        SLOT  ( density    ( const QString& ) ) );
+   us_setReadOnly( le_density,   true );
    controls->addWidget( le_density, c_row++, 1 );
 
-   QPushButton* pb_viscosity = us_pushbutton( tr( "Viscosity" ) );
-   connect( pb_viscosity, SIGNAL( clicked() ), SLOT( get_buffer() ) );
-   controls->addWidget( pb_viscosity, c_row, 0 );
+   QLabel* lb_viscosity = us_label( tr( "Viscosity (20w)" ) );
+   controls->addWidget( lb_viscosity, c_row, 0 );
 
    le_viscosity = us_lineedit();
    le_viscosity->setText( QString::number( VISC_20W , 'f', 4 ) );
-   connect( le_viscosity, SIGNAL( textChanged( const QString& ) ), 
-                          SLOT  ( viscosity  ( const QString& ) ) );
+   us_setReadOnly( le_viscosity, true );
    controls->addWidget( le_viscosity, c_row++, 1 );
 
    QPushButton* pb_vbar = us_pushbutton( tr( "vbar (20 " ) + DEGC + ")" );
@@ -67,14 +56,12 @@ US_Predict2::US_Predict2() : US_Widgets()
                      SLOT  ( vbar       ( const QString& ) ) );
    controls->addWidget( le_vbar, c_row++, 1 );
 
-   QLabel* lb_temperature = us_label( 
-         tr( "Temperature (" ) + DEGC + "):" );
+   QLabel* lb_temperature = us_label( tr( "Temperature (" ) + DEGC + "):" );
    controls->addWidget( lb_temperature, c_row, 0 );
 
    QLineEdit* le_temperature = us_lineedit();
    le_temperature->setText( QString::number( NORMAL_TEMP, 'f', 1 ) );
-   connect( le_vbar, SIGNAL( textChanged( const QString& ) ), 
-                     SLOT  ( degC       ( const QString& ) ) );
+   us_setReadOnly( le_temperature, true );
    controls->addWidget( le_temperature, c_row++, 1 );
 
    QLabel* lb_info = us_label( tr( "Select a Parameter Combination:" ) );
@@ -119,15 +106,16 @@ US_Predict2::US_Predict2() : US_Widgets()
    main->addWidget( lb_prolate, row, 2 );
 
    le_prolate_a = us_lineedit();
-   le_prolate_a->setReadOnly( true );
+   us_setReadOnly( le_prolate_a, true );
    main->addWidget( le_prolate_a, row, 3 );
 
    le_prolate_b = us_lineedit();
-   le_prolate_b->setReadOnly( true );
+   us_setReadOnly( le_prolate_b, true );
+   main->addWidget( le_prolate_a, row, 3 );
    main->addWidget( le_prolate_b, row, 4 );
 
    le_prolate_ab = us_lineedit();
-   le_prolate_ab->setReadOnly( true );
+   us_setReadOnly( le_prolate_ab, true );
    main->addWidget( le_prolate_ab, row++, 5 );
 
    // Oblage
@@ -135,15 +123,15 @@ US_Predict2::US_Predict2() : US_Widgets()
    main->addWidget( lb_oblate, row, 2 );
 
    le_oblate_a = us_lineedit();
-   le_oblate_a->setReadOnly( true );
+   us_setReadOnly( le_oblate_a,  true );
    main->addWidget( le_oblate_a, row, 3 );
 
    le_oblate_b = us_lineedit();
-   le_oblate_b->setReadOnly( true );
+   us_setReadOnly( le_oblate_b,  true );
    main->addWidget( le_oblate_b, row, 4 );
 
    le_oblate_ab = us_lineedit();
-   le_oblate_ab->setReadOnly( true );
+   us_setReadOnly( le_oblate_ab, true );
    main->addWidget( le_oblate_ab, row++, 5 );
 
    // Long Rod
@@ -151,15 +139,15 @@ US_Predict2::US_Predict2() : US_Widgets()
    main->addWidget( lb_rod, row, 2 );
 
    le_rod_a = us_lineedit();
-   le_rod_a->setReadOnly( true );
+   us_setReadOnly( le_rod_a,  true );
    main->addWidget( le_rod_a, row, 3 );
 
    le_rod_b = us_lineedit();
-   le_rod_b->setReadOnly( true );
+   us_setReadOnly( le_rod_b,  true );
    main->addWidget( le_rod_b, row, 4 );
 
    le_rod_ab = us_lineedit();
-   le_rod_ab->setReadOnly( true );
+   us_setReadOnly( le_rod_ab, true );
    main->addWidget( le_rod_ab, row++, 5 );
 
    // Misc items
@@ -168,42 +156,42 @@ US_Predict2::US_Predict2() : US_Widgets()
    main->addWidget( lb_fCoef, row, 2 );
 
    le_fCoef = us_lineedit();
-   le_fCoef->setReadOnly( true );
+   us_setReadOnly( le_fCoef,  true );
    main->addWidget( le_fCoef, row, 3 );
 
    QLabel* lb_r0 = us_label( tr( "R0 (Sphere):" ) );
    main->addWidget( lb_r0, row, 4 );
 
    le_r0 = us_lineedit();
-   le_r0->setReadOnly( true );
+   us_setReadOnly( le_r0,     true );
    main->addWidget( le_r0, row++, 5 );
 
    lb_param3 = us_label( tr( "Molecular Weight:" ) );
    main->addWidget( lb_param3, row, 2 );
 
    le_param3 = us_lineedit();
-   le_param3->setReadOnly( true );
+   us_setReadOnly( le_param3, true );
    main->addWidget( le_param3, row, 3 );
 
    QLabel* lb_f0 = us_label( tr( "f0 (Sphere):" ) );
    main->addWidget( lb_f0, row, 4 );
 
    le_f0 = us_lineedit();
-   le_f0->setReadOnly( true );
+   us_setReadOnly( le_f0,     true );
    main->addWidget( le_f0, row++, 5 );
 
    QLabel* lb_volume = us_label( tr( "Volume (&Aring;<sup>3</sup>):" ) );
    main->addWidget( lb_volume, row, 2 );
 
    le_volume = us_lineedit();
-   le_volume->setReadOnly( true );
+   us_setReadOnly( le_volume, true );
    main->addWidget( le_volume, row, 3 );
 
    QLabel* lb_ff0 = us_label( tr( "f/f0:" ) );
    main->addWidget( lb_ff0, row, 4 );
 
    le_ff0 = us_lineedit();
-   le_ff0->setReadOnly( true );
+   us_setReadOnly( le_ff0,    true );
    main->addWidget( le_ff0, row++, 5 );
 
    // Button rows
@@ -332,7 +320,7 @@ void US_Predict2::update( void )
    double vol_per_molecule;
    double rad_sphere;
    double f0;
-   double frict_coeff;
+   double frict_coeff = 0.0;
 
    sc.vbar20      = d.vbar20;
    sc.mw          = 0.0;
@@ -398,7 +386,6 @@ void US_Predict2::update( void )
 
    if ( ! check_valid( ff0 ) )
    {
-      le_param3->clear();
       return;
    }
 
@@ -463,6 +450,21 @@ bool US_Predict2::check_valid( double f_f0 )
       le_param1->clear();
       le_param2->clear();
       */
+      le_prolate_a ->clear();
+      le_prolate_b ->clear();
+      le_prolate_ab->clear();
+      le_oblate_a  ->clear();
+      le_oblate_b  ->clear();
+      le_oblate_ab ->clear();
+      le_rod_a     ->clear();
+      le_rod_b     ->clear();
+      le_rod_ab    ->clear();
+      le_fCoef     ->clear();
+      le_f0        ->clear();
+      le_r0        ->clear();
+      le_volume    ->clear();
+      le_param3    ->clear();
+      le_ff0       ->setText( QString::number( f_f0, 'f', 4 ) + " !!!!" );
       
       return false;
    }
@@ -600,28 +602,25 @@ void US_Predict2::update_param2( const QString& s )
 void US_Predict2::density( const QString& s )
 {
    d.density = s.toDouble();
-   US_Math2::data_correction( temperature, d );
    update();
 }
 
 void US_Predict2::viscosity( const QString& s )
 {
    d.viscosity = s.toDouble();
-   US_Math2::data_correction( temperature, d );
    update();
 }
 
 void US_Predict2::vbar( const QString& s )
 {
-   d.vbar = s.toDouble();
-   US_Math2::data_correction( temperature, d );
+   d.vbar20    = s.toDouble();
+   d.vbar      = d.vbar;
    update();
 }
 
 void US_Predict2::degC( const QString& s )
 {
    temperature = s.toDouble();
-   US_Math2::data_correction( temperature, d );
    update();
 }
 
@@ -652,12 +651,12 @@ void US_Predict2::update_buffer( double density, double viscosity )
    le_density  ->setText( QString::number( density,   'f', 4 ) );
    le_viscosity->setText( QString::number( viscosity, 'f', 4 ) );
 
-   US_Math2::data_correction( temperature, d );
    update();
 }
 
 void US_Predict2::get_peptide( void )
 {
+#if 0
    if ( model == None  ||  le_param1->text().toDouble() == 0.0  
                        ||  le_param2->text().toDouble() == 0.0 )
    {
@@ -667,6 +666,7 @@ void US_Predict2::get_peptide( void )
                 "those parameters first.") );
       return;
    }
+#endif
 
    US_AnalyteGui* dialog = new US_AnalyteGui( true );
    connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
@@ -680,13 +680,11 @@ void US_Predict2::update_vbar( US_Analyte analyte )
    d.vbar   = analyte.vbar20;
    le_vbar  ->setText( QString::number( d.vbar, 'f', 4 ) );
 
-   US_Math2::data_correction( temperature, d );
    update();
 }
 
 void US_Predict2::get_solution( void )
 {
-   /*
    if ( model == None  ||  le_param1->text().toDouble() == 0.0  
                        ||  le_param2->text().toDouble() == 0.0 )
    {
@@ -696,7 +694,6 @@ void US_Predict2::get_solution( void )
                 "those parameters first.") );
       return;
    }
-   */
 
    US_SolutionGui* dialog = new US_SolutionGui( 1, 1, true );
    connect( dialog, SIGNAL( updateSolutionGuiSelection( US_Solution ) ),
@@ -746,7 +743,6 @@ void US_Predict2::update_solution( US_Solution solution )
       le_param1->setText( QString::number( analyte.mw, 'e', 4 ) ); 
    }
    
-   US_Math2::data_correction( temperature, d );
    update();
 }
 
