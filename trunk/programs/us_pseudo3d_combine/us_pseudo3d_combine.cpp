@@ -120,7 +120,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_kmin   = us_label( tr( "Plot Limit f/f0 Minimum:" ) );
    lb_plt_kmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_plt_kmin   = us_counter( 3, 1.0, 50.0, 1.0 );
+   ct_plt_kmin   = us_counter( 3, 0.5, 50.0, 1.0 );
    ct_plt_kmin->setStep( 1 );
    connect( ct_plt_kmin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_kmin( double ) ) );
