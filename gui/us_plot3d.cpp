@@ -1453,7 +1453,7 @@ void US_Plot3D::pick_data_co()
       tr( "Load Color Map File" ),
       US_Settings::etcDir(), filter, 0, 0 );
 #else
-   QFileDialog fd   = QFileDialog( this, tr( "Load Color Map File" ) );
+   QFileDialog fd( this, tr( "Load Color Map File" ) );
    fd.selectFile( US_Settings::etcDir() + "/myFile.txt" );
    fd.setFilter ( filter );
    QString mapfname = fd.getOpenFileName();
