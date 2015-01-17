@@ -1088,9 +1088,7 @@ QString US_DDistr_Combine::distribID( QString mdescr, QString ddescr )
    }
    else
    {  // Data-description list/legend type  (the default)
-      distrID      = ddescr + " ++ " + method + "_";
-      distrID     += ( iterID.contains( "local" ) ) ? andate : iterID;
-      distrID     += "." + runID;
+      distrID      = runID + " (" + triple + ", " + method + ") " + ddescr;
    }
 
    return distrID;

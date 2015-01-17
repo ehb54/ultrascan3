@@ -307,6 +307,7 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
    redrawWait = 50;
 
    setStandardView();
+   reset_colors();
 
    setVisible( true );
    resize( p1size );
@@ -1447,9 +1448,16 @@ void US_Plot3D::pick_data_co()
       + tr( "Any XML files (*.xml);;" )
       + tr( "Any files (*)" );
 
+#ifndef Q_WS_MAC
    QString mapfname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
       US_Settings::etcDir(), filter, 0, 0 );
+#else
+   QFileDialog fd   = QFileDialog( this, tr( "Load Color Map File" ) );
+   fd.selectFile( US_Settings::etcDir() + "/myFile.txt" );
+   fd.setFilter ( filter );
+   QString mapfname = fd.getOpenFileName();
+#endif
 
    if ( mapfname.isEmpty() )
       return;
@@ -1477,10 +1485,24 @@ void US_Plot3D::reset_colors()
    if ( !dataWidget )
       return;
 
+   const QString         dmapfn = US_Settings::etcDir()
+                                  + "/cm-w-green-blue-red-black.xml";
    const Qwt3D::RGBA     blackc = Qt2GL( QColor( Qt::black ) );
    const Qwt3D::RGBA     whitec = Qt2GL( QColor( Qt::white ) );
+   QList< QColor >       colorlist;
+   Qwt3D::ColorVector    colorvect;
+   Qwt3D::RGBA           rgb;
    Qwt3D::StandardColor* stdcol = new StandardColor( dataWidget );
 
+   US_ColorGradIO::read_color_gradient( dmapfn, colorlist );
+
+   for ( int ii = 0; ii < colorlist.size(); ii++ )
+   {
+      rgb   = Qt2GL( colorlist.at( ii ) );
+      colorvect.push_back( rgb );
+   }
+
+   stdcol    ->setColorVector( colorvect );
    dataWidget->coordinates()->setAxesColor(   blackc );
    dataWidget->coordinates()->setNumberColor( blackc );
    dataWidget->coordinates()->setLabelColor(  blackc );
