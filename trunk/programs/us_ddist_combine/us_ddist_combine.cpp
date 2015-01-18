@@ -1570,6 +1570,7 @@ DbgLv(1) << "  PX=Molec.Wt.log";
          ddist.iters  = pddist->iters;
          ddist.xtype  = xtype;
          ddist.model  = pddist->model;
+         ddist.ddescr = pddist->ddescr;
 
          wdistros << ddist;
       }
