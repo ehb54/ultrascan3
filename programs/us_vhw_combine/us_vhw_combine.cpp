@@ -688,8 +688,11 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
 DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
       if ( distros[ ii ].runID == runID )
       {
-         lw_triples->addItem( expandedTriple(
-            distros[ ii ].triple ) + " : " + distros[ ii ].tdescr );
+         DistrDesc ddesc = distros[ ii ];
+         QString distrID = ddesc.runID + " ("
+                           + ddesc.triple + ") : "
+                           + ddesc.tdescr;
+         lw_triples->addItem( distrID );
       }
    }
 
@@ -705,7 +708,7 @@ void US_vHW_Combine::triple_select( int row )
 DbgLv(1) << "TripleSel:row" << row;
    if ( row < 0 )  return;
    QListWidgetItem* item = lw_triples->item( row );
-   triple   = collapsedTriple( item->text().section( ":", 0, 0 ).simplified() );
+   triple   = item->text().section( ":", 0, 0 ).right( 7 ).mid( 0, 5 );
 DbgLv(1) << "TripleSel:triple" << triple;
 
    DistrDesc ddesc;
@@ -718,10 +721,13 @@ DbgLv(1) << "TripleSel:triple" << triple;
          break;
    }
 
-   QString distrID = ddesc.runID + "." + ddesc.triple + " : " + ddesc.tdescr;
+   QString distrID = ddesc.runID + " (" + ddesc.triple + ") : "
+                     + ddesc.tdescr;
 
+DbgLv(1) << "TripleSel:distrID" << distrID;
    if ( ! pdisIDs.contains( distrID ) )
    {
+DbgLv(1) << "TripleSel:distrID NEW TO LIST";
       pdistrs << ddesc;
       pdisIDs << distrID;
 
@@ -729,7 +735,10 @@ DbgLv(1) << "TripleSel:triple" << triple;
    }
 
    else
+   {
+DbgLv(1) << "TripleSel:distrID ALREADY IN LIST";
       plot_data();
+   }
 
    pb_saveda->setEnabled( true );
    pb_resetd->setEnabled( true );
