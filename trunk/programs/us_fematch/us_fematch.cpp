@@ -872,15 +872,18 @@ DbgLv(1) << "Sim plot scan count" << ii << count
       }
 
       rmsd       /= (double)kpts;
-DbgLv(1) << "     Sim plot rmsd kpts" << rmsd << kpts;
       le_variance->setText( QString::number( rmsd ) );
       rmsd        = sqrt( rmsd );
+DbgLv(1) << "     Sim plot rmsd kpts" << rmsd << kpts;
       le_rmsd    ->setText( QString::number( rmsd ) );
 //*DEBUG
 double vsum=0.0;
 for(int ii=0; ii<scanCount; ii++)
+{
+ if ( excludedScans.contains( ii ) ) continue;
  for(int jj=0; jj<points; jj++)
     vsum += sq(sdata->value(ii,jj));
+}
 DbgLv(1) << "VSUM=" << vsum;
 int hh=sdata->pointCount()/2;
 int ss=sdata->scanCount();
@@ -1786,6 +1789,7 @@ DbgLv(1) << "Fem:Adj: manual" << manual << solution.manual << solution_rec.buffe
 
    double scorrec  = solution.s20w_correction;
    double dcorrec  = solution.D20w_correction;
+   double mc_vbar  = model.components[ 0 ].vbar20;
    // Set constant-vbar and constant-ff0 flags
    cnstvb          = model.constant_vbar();
    cnstff          = model.constant_ff0();
@@ -1796,6 +1800,15 @@ DbgLv(1) << "Fem:Adj: manual" << manual << solution.manual << solution_rec.buffe
    sd.vbar20       = solution.vbar20;
    sd.vbar         = solution.vbar;
    sd.manual       = solution.manual;
+
+   if ( cnstvb  &&  mc_vbar != sd.vbar20  &&  mc_vbar != 0.0 )
+   {  // Use vbar from the model component, instead of from the solution
+      sd.vbar20    = mc_vbar;
+      sd.vbar      = US_Math2::adjust_vbar( sd.vbar20, avgTemp );
+      US_Math2::data_correction( avgTemp, sd );
+      scorrec      = sd.s20w_correction;
+      dcorrec      = sd.D20w_correction;
+   }
 
    // fill out components values and adjust s,D based on buffer
 
