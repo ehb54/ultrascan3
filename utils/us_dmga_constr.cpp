@@ -1019,12 +1019,12 @@ void US_dmGA_Constraints::constraints_from_base()
    for ( int ii = 0; ii < bmodel.components.size(); ii++ )
    {  // Scan constraints model components (solutes)
       US_Model::SimulationComponent* sc  = &bmodel.components[ ii ];
-      // Get component attribute values (non-zero are the selected ones)
+      // Get component attribute values (selected ones)
       attr.mcompx = ii;
-      attr.atype  = ATYPE_S;
-      attr.low    = sc->s;
+      attr.atype  = ATYPE_MW;
+      attr.low    = sc->mw;
       attr.high   = attr.low;
-      attribs << attr;                // Save s attribute constraint
+      attribs << attr;                // Save mw attribute constraint
 
       attr.atype  = ATYPE_FF0;
       attr.low    = sc->f_f0;
