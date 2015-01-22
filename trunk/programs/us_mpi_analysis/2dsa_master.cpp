@@ -1631,10 +1631,12 @@ void US_MPI_Analysis::update_outputs( bool is_final )
    // Get a list of output files, minus any TAR file
    QDir odir( "." );
    QStringList files = odir.entryList( QStringList( "*" ), QDir::Files );
+DbgLv(0) << my_rank << ": UpdOut : final" << is_final
+   << "files size" << files.size();
 
    if ( files.size() == 1  &&  files[ 0 ] == "analysis-results.tar" )
    {  // If the tar file exists alone, do nothing here
-DbgLv(1) << my_rank << ": A single output file, the archive, already exists!!!";
+DbgLv(0) << my_rank << ": A single output file, the archive, already exists!!!";
       return;
    }
 
@@ -1700,7 +1702,7 @@ DbgLv(1) << my_rank << ": A single output file, the archive, already exists!!!";
 
          // Build a composite model file and get its name
          QString cmfname  = US_Model::composite_mc_file( mtfiles, true );
-DbgLv(1) << my_rank << ": ii" << ii << "mftrip" << mftrip << "cmfname" << cmfname;
+DbgLv(0) << my_rank << ": ii" << ii << "mftrip" << mftrip << "cmfname" << cmfname;
 
          if ( cmfname.isEmpty() )  continue;
 
@@ -1710,7 +1712,7 @@ DbgLv(1) << my_rank << ": ii" << ii << "mftrip" << mftrip << "cmfname" << cmfnam
             if ( mtfiles[ jj ] != cmfname )
             {
                files.removeOne( mtfiles[ jj ] );
-DbgLv(1) << my_rank << ": ii,jj" << ii << jj << "REMOVED from list:" << mtfiles[jj];
+DbgLv(0) << my_rank << ": ii,jj" << ii << jj << "REMOVED from list:" << mtfiles[jj];
             }
          }
 
@@ -1718,7 +1720,7 @@ DbgLv(1) << my_rank << ": ii,jj" << ii << jj << "REMOVED from list:" << mtfiles[
          if ( ! files.contains( cmfname ) )
          {
             files << cmfname;
-DbgLv(1) << my_rank << ":     files.size" << files.size() << "after cmfname add";
+DbgLv(0) << my_rank << ":     files.size" << files.size() << "after cmfname add";
          }
 
          // Add composite name to text file if need be
@@ -1728,9 +1730,9 @@ DbgLv(1) << my_rank << ":     files.size" << files.size() << "after cmfname add"
               ( is_final  ||  f_iters == mc_iterations ) )
          {
             US_Model model2;
-DbgLv(1) << my_rank << ":      model2.load(" << cmfname << ")";
+DbgLv(0) << my_rank << ":      model2.load(" << cmfname << ")";
             model2.load( cmfname );
-DbgLv(1) << my_rank << ":       model2.description" << model2.description;
+DbgLv(0) << my_rank << ":       model2.description" << model2.description;
             QString runstring = "Run: " + QString::number( ii + 1 )
                                 + " " + tripleID;
             tsout << cmfname 
@@ -1754,12 +1756,12 @@ DbgLv(1) << my_rank << ":       model2.description" << model2.description;
    US_Tar tar;
    tar.create( "analysis-results.tar", files );
 for(int jf=0;jf<files.size();jf++)
- DbgLv(1) << my_rank << "   tar file" << jf << ":" << files[jf];
+ DbgLv(0) << my_rank << "   tar file" << jf << ":" << files[jf];
 
    // If this is the final call, remove all but the archive file
    if ( is_final )
    {  // Remove the files we just put into the tar archive
-DbgLv(1) << my_rank << ": All output files except the archive are now removed.";
+DbgLv(0) << my_rank << ": All output files except the archive are now removed.";
       QString file;
       foreach( file, files ) odir.remove( file );
    }
