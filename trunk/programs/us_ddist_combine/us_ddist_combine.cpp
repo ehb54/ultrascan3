@@ -355,6 +355,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 
    QwtLegend *legend = new QwtLegend;
    legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   legend->setFont( sfont );
    data_plot1->insertLegend( legend, QwtPlot::BottomLegend  ); 
 
    rightLayout->addLayout( plot );

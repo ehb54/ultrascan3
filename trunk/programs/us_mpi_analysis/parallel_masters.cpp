@@ -846,7 +846,6 @@ DbgLv(1) << "GaMast:  mc_iter iters" << mc_iteration << mc_iterations;
 
    }  // END:  MC iterations loop
 
-
    MPI_Job job;
 
    // Send finish to workers ( in the tag )
