@@ -801,10 +801,12 @@ DbgLv(1) << "2dMast:    mc_iter" << mc_iteration
          write_global();
       }
 
+#if 0
       if ( my_group == 0  &&  ( mc_iteration + mgroup_count ) < mc_iterations )
       {  // Update the tar file of outputs in case of an aborted run
          update_outputs();
       }
+#endif
 
       if ( mc_iteration < mc_iterations )
       {  // Before last iteration:  check if max is reset based on time limit
@@ -981,10 +983,12 @@ DbgLv(1) << "  MASTER: iter" << iter << "gr" << my_group << "tag" << tag;
          write_global();
       }
 
+#if 0
       if ( my_group == 0 )
       {  // Update the tar file of outputs in case of an aborted run
          update_outputs();
       }
+#endif
 
       if ( mc_iteration < mc_iterations )
       {  // Before last iteration:  check if max is reset based on time limit
