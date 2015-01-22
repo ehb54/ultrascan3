@@ -156,6 +156,8 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
 
    QwtLegend *legend = new QwtLegend;
    legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   legend->setFont( QFont( US_GuiSettings::fontFamily(),
+                           US_GuiSettings::fontSize() - 1 ) );
    data_plot1->insertLegend( legend, QwtPlot::BottomLegend  );
 
    rightLayout->addLayout( plot );

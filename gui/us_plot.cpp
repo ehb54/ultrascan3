@@ -138,6 +138,9 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    font.setPointSizeF( US_GuiSettings::fontSize() * 0.9 );
    plot->setAxisFont( QwtPlot::xBottom, font );
    plot->setAxisFont( QwtPlot::yLeft,   font );
+   plot->setAxisFont( QwtPlot::yRight,  font );
+   if ( plot->legend() != NULL )
+      plot->legend()->setFont( font );
   
    plot->setAutoFillBackground( true );
    plot->setPalette ( US_GuiSettings::plotColor() );
@@ -766,6 +769,12 @@ void US_PlotConfig::updateGrid( void )
    gridWidget->exec();
    qApp->processEvents();
    delete gridWidget;
+   gridWidget = NULL;
+#ifdef Q_WS_MAC
+   QMessageBox::information( this, tr( "Grid Config" ),
+      tr( "Grid Update Complete" ) );
+   qApp->processEvents();
+#endif
 }
 /*
 void US_PlotConfig::closeEvent( QCloseEvent* e )
@@ -1679,6 +1688,7 @@ US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot,
    
    plot = currentPlot;
    grid = NULL;
+   int ngrid = 0;
 
    // Keep out of the way
    //move( pos() + QPoint( plot->rect().width(), 0 ) );
@@ -1690,10 +1700,14 @@ US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot,
    {
       if ( list[i]->rtti() == QwtPlotItem::Rtti_PlotGrid )
       {
-         grid = dynamic_cast<QwtPlotGrid*>( list[ i ] );
-         break;
+         ngrid++;
+         if ( ngrid == 1 )
+            grid = dynamic_cast<QwtPlotGrid*>( list[ i ] );
+         else
+            list[ i ]->detach();
       }
    }
+qDebug() << "GRID COUNT" << ngrid;
 
    // Add an inactive grid if necessary
    if ( grid == NULL ) 
