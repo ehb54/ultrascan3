@@ -2831,7 +2831,7 @@ QString US_FeMatch::scan_info( void ) const
 }
 
 // Distribution information HTML string
-QString US_FeMatch::distrib_info() const
+QString US_FeMatch::distrib_info()
 {
    int ncomp      = model_loaded.components.size();
    
@@ -3022,6 +3022,234 @@ QString US_FeMatch::distrib_info() const
    }
 
    mstr += indent( 4 ) + "</table>\n";
+
+   QStringList xmls;
+   int nxmls      = 0;
+//   if ( mdla.contains( "_mcN" ) )
+   if ( mdla.contains( "_mcN" )  &&  mdla.contains( "DMGA" ) )
+   {  // Look for iteration models from DMGA-RA-MC model
+      US_Model *mp   = (US_Model*)&model_loaded;
+      nxmls          = mp->mc_iter_xmls( xmls );
+   }
+else
+DbgLv(1) << "FEM:WrRep: NOT DMGA-RA-MC";
+DbgLv(1) << "FEM:WrRep: nxmls" << nxmls;
+
+   if ( nxmls > 1 )
+   {  // Compute DMGA-MC statistics and add them to the report
+      QVector< US_Model > cmodels;
+      QVector< QVector< double > > mstats;
+      int ncomp      = 0;
+      int nasso      = 0;
+      int kcomp      = 0;
+      int kasso      = 0;
+      int niters     = 0;
+
+      for ( int ii = 0; ii < nxmls; ii++ )
+      {  // Build the individual iteration models
+         QString mxml   = xmls[ ii ];
+         int jj         = mxml.indexOf( "description=" );
+         QString mdesc  = QString( mxml ).mid( jj, 100 )
+                          .section( '"', 1, 1 );
+
+         US_Model cmodel;
+         cmodel.load_string( mxml );
+         kcomp          = cmodel.components.size();
+         kasso          = cmodel.associations.size();;
+DbgLv(1) << "FEM:WrRep:  ii" << ii << "xml.desc" << mdesc;
+DbgLv(1) << "FEM:WrRep:     ncomp" << kcomp << "nassoc" << kasso;
+
+         if ( ii == 0 )
+         {
+            ncomp          = kcomp;
+            nasso          = kasso;
+         }
+
+         if ( kcomp == ncomp  ||  kasso == nasso )
+         {
+            niters++;
+            cmodels << cmodel;
+         }
+         else
+DbgLv(0) << "FEM:WrRep: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
+
+      }
+
+      // Build statistics across iterations
+      int ntatt = build_model_stats( niters, kcomp, kasso, cmodels, mstats );
+
+      // Compose the summary statistics chart
+      mstr += tr( "<h3>Discrete Model GA-MC Summary Statistics:</h3>\n" );
+      mstr += indent( 4 ) + "<table>\n";
+      mstr += table_row( tr( "Component" ), tr( "Attribute" ),
+                         tr( "Mean_Value" ), tr( "99%_Confidence(low)"  ),
+                         tr( "99%_Confidence(high)" ) );
+      int kd         = 0;
+      QString fixd   = tr( "(Fixed)" );
+      QString blnk( "" );
+      QStringList atitl;
+      QStringList rtitl;
+      atitl << tr( "Concentration" )
+            << tr( "Vbar20" )
+            << tr( "Molecular Weight" )
+            << tr( "Sedimentation Coefficient" )
+            << tr( "Diffusion Coefficient" )
+            << tr( "Frictional Ratio" );
+      rtitl << tr( "K_dissociation" )
+            << tr( "K_off Rate" );
+
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {
+         QString compnum = QString().sprintf( "%2d", ii + 1 );
+         for ( int jj = 0; jj < 6; jj++ )
+         {
+            bool is_fixed   = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
+            QString strclo  = is_fixed ? fixd :
+                              QString().sprintf( "%10.4e", mstats[ kd ][11] );
+            QString strchi  = is_fixed ? blnk :
+                              QString().sprintf( "%10.4e", mstats[ kd ][12] );
+            mstr += table_row( compnum, atitl[ jj ],
+                               QString().sprintf( "%10.4e", mstats[ kd ][ 2] ),
+                               strclo, strchi );
+            kd++;
+         }
+      }
+
+      mstr += indent( 4 ) + "</table>\n";
+      mstr += indent( 4 ) + "<table>\n";
+      mstr += table_row( tr( "Reaction" ), tr( "Attribute" ),
+                         tr( "Mean_Value" ), tr( "99%_Confidence(low)"  ),
+                         tr( "99%_Confidence(high)" ) );
+      for ( int ii = 0; ii < nasso; ii++ )
+      {
+         QString reacnum = QString().sprintf( "%2d", ii + 1 );
+         bool is_fixed   = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
+         QString strclo  = is_fixed ? fixd :
+                            QString().sprintf( "%10.4e", mstats[ kd ][ 11 ] );
+         QString strchi  = is_fixed ? blnk :
+                            QString().sprintf( "%10.4e", mstats[ kd ][ 12 ] );
+         mstr += table_row( reacnum, tr( "K_dissociation" ),
+                            QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ),
+                            strclo, strchi );
+         kd++;
+         is_fixed        = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
+         strclo          = is_fixed ? fixd :
+                            QString().sprintf( "%10.4e", mstats[ kd ][ 11 ] );
+         strchi          = is_fixed ? blnk :
+                            QString().sprintf( "%10.4e", mstats[ kd ][ 12 ] );
+         mstr += table_row( reacnum, tr( "K_off Rate" ),
+                            QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ),
+                            strclo, strchi );
+         kd++;
+      }
+
+      mstr += indent( 4 ) + "</table>\n";
+
+      // Compose the details statistics entries
+      mstr += tr( "<h3>Discrete Model GA-MC Detailed Statistics:</h3>\n" );
+      int icomp       = 1;
+      int ireac       = 1;
+      int kdmax       = 6;
+      int kk          = 0;
+      for ( kd = 0; kd < ntatt; kd++ )
+      {
+         QString compnum = tr( "Component %1 " ).arg( icomp );
+         QString reacnum = tr( "Reaction %1 "  ).arg( ireac );
+         QString attrib  = compnum + atitl[ kk ];
+         mstr += "<h4>" + tr( "Details for " );
+
+         if ( icomp <= ncomp )
+         {  // Title for component detail
+            if ( cmodels[ 0 ].is_product( icomp - 1 )  &&  kk == 0 )
+               mstr += compnum + tr( "(Product) Total Concentration" )
+                     + ":</h4>\n";
+            else
+               mstr += compnum + atitl[ kk ] + ":</h4>\n";
+         }
+         else
+         {  // Title for reaction detail
+            mstr += reacnum + rtitl[ kk ] + ":</h4>\n";
+         }
+
+         mstr += indent( 4 ) + "<table>\n";
+         bool is_fixed   = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
+
+         if ( is_fixed )
+         {  // Fixed has limited lines
+            mstr += table_row( tr( "Minimum:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  0 ] ) );
+            mstr += table_row( tr( "Maximum:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  1 ] ) );
+            mstr += table_row( tr( "Mean:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ) );
+            mstr += table_row( tr( "Median (Fixed)" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  3 ] ) );
+         }
+
+         else
+         {  // Float has full set of statistics details
+            mstr += table_row( tr( "Minimum:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  0 ] ) );
+            mstr += table_row( tr( "Maximum:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  1 ] ) );
+            mstr += table_row( tr( "Mean:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ) );
+            mstr += table_row( tr( "Median:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  3 ] ) );
+            mstr += table_row( tr( "Skew:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  4 ] ) );
+            mstr += table_row( tr( "Kurtosis:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  5 ] ) );
+            mstr += table_row( tr( "Lower Mode:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  6 ] ) );
+            mstr += table_row( tr( "Upper Mode:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  7 ] ) );
+            mstr += table_row( tr( "Mode Center:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  8 ] ) );
+            mstr += table_row( tr( "95% Confidence Interval Low:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][  9 ] ) );
+            mstr += table_row( tr( "95% Confidence Interval High:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] ) );
+            mstr += table_row( tr( "99% Confidence Interval Low:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 11 ] ) );
+            mstr += table_row( tr( "99% Confidence Interval High:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 12 ] ) );
+            mstr += table_row( tr( "Standard Deviation:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 13 ] ) );
+            mstr += table_row( tr( "Standard Error:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 14 ] ) );
+            mstr += table_row( tr( "Variance:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 15 ] ) );
+            mstr += table_row( tr( "Correlation Coefficient:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 16 ] ) );
+            mstr += table_row( tr( "Number of Bins:" ),
+                    QString().sprintf( "%10.0f", mstats[ kd ][ 17 ] ) );
+            mstr += table_row( tr( "Distribution Area:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 18 ] ) );
+            mstr += table_row( tr( "95% Confidence Limit Low:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 19 ] ) );
+            mstr += table_row( tr( "95% Confidence Limit High:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 20 ] ) );
+            mstr += table_row( tr( "99% Confidence Limit Low:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 21 ] ) );
+            mstr += table_row( tr( "99% Confidence Limit High:" ),
+                    QString().sprintf( "%10.4e", mstats[ kd ][ 22 ] ) );
+         }
+
+         mstr += indent( 4 ) + "</table>\n";
+
+         if ( (++kk) >= kdmax )
+         {
+            kk              = 0;
+            icomp++;
+            if ( icomp > ncomp )
+            {
+               ireac           = icomp - ncomp;
+               kdmax           = 2;
+            }
+         }
+      }
+   }
 
    return mstr;
 }
@@ -3524,5 +3752,285 @@ void US_FeMatch::update_mc_model()
    else if ( rb_mode  ->isChecked() )
    {  // The model is the mode of all iteration models
    }
- }
+}
+
+// Build model attribute statistics
+int US_FeMatch::build_model_stats( const int mciters,
+      int& ncomp, int& nasso, QVector< US_Model >& cmodels,
+      QVector< QVector< double > >& mstats )
+{
+   QVector< double > concs;
+   QVector< double > vbars;
+   QVector< double > mwts;
+   QVector< double > scos;
+   QVector< double > dcos;
+   QVector< double > ff0s;
+   QVector< double > kds;
+   QVector< double > koffs;
+   const int ncatt  = 6;
+   const int naatt  = 2;
+   ncomp            = cmodels[ 0 ].components.size();
+   nasso            = cmodels[ 0 ].associations.size();
+   int ntatts       = ncomp * ncatt + nasso * naatt;
+   mstats.resize( ntatts );
+   int kt           = 0;
+
+   // Get statistics for each component
+   for ( int ii = 0; ii < ncomp; ii++ )
+   {
+      concs.fill( 0.0, mciters );
+      vbars.fill( 0.0, mciters );
+      mwts .fill( 0.0, mciters );
+      scos .fill( 0.0, mciters );
+      dcos .fill( 0.0, mciters );
+      ff0s .fill( 0.0, mciters );
+      int i0         = qMax( 0, ii - 1 );
+
+      for ( int jj = 0; jj < mciters; jj++ )
+      {
+         US_Model::SimulationComponent* sc = &cmodels[ jj ].components[ ii ];
+         US_Model::SimulationComponent* s0 = &cmodels[ jj ].components[ i0 ];
+         concs[ jj ]    = sc->signal_concentration > 0.0 ?
+                          sc->signal_concentration :
+                          s0->signal_concentration;
+         vbars[ jj ]    = sc->vbar20;
+         mwts [ jj ]    = sc->mw;
+         scos [ jj ]    = sc->s;
+         dcos [ jj ]    = sc->D;
+         ff0s [ jj ]    = sc->f_f0;
+      }
+
+      compute_statistics( mciters, concs, concs, mstats[ kt++ ] );
+      compute_statistics( mciters, vbars, concs, mstats[ kt++ ] );
+      compute_statistics( mciters, mwts , concs, mstats[ kt++ ] );
+      compute_statistics( mciters, scos , concs, mstats[ kt++ ] );
+      compute_statistics( mciters, dcos , concs, mstats[ kt++ ] );
+      compute_statistics( mciters, ff0s , concs, mstats[ kt++ ] );
+   }
+
+   // Get statistics for reactions
+   for ( int ii = 0; ii < nasso; ii++ )
+   {
+      US_Model::Association* as = &cmodels[ 0 ].associations[ ii ];
+      int nrcs        = as->rcomps.size();
+      int rc1         = as->rcomps[ 0 ];
+      int rc2         = as->rcomps[ 1 ];
+      //int stoi1       = as->stoichs[ 0 ];
+      //int stoi2       = as->stoichs[ 1 ];
+      //int stoi3       = ( nrcs == 2 ) ? stoi2 : as->stoichs[ 2 ];
+      concs.fill( 0.0, mciters );
+      kds  .fill( 0.0, mciters );
+      koffs.fill( 0.0, mciters );
+
+      if ( nrcs == 2 )
+      {  // Single reactant and a product
+         for ( int jj = 0; jj < mciters; jj++ )
+         {
+            US_Model::Association* as = &cmodels[ jj ].associations[ ii ];
+            US_Model::SimulationComponent* sc = &cmodels[ jj ].components[rc1];
+            concs[ jj ]    = sc->signal_concentration;
+            kds  [ jj ]    = as->k_d;
+            koffs[ jj ]    = as->k_off;
+         }
+
+         compute_statistics( mciters, kds,   concs, mstats[ kt++ ] );
+         compute_statistics( mciters, koffs, concs, mstats[ kt++ ] );
+      }
+
+      else
+      {  // Two reactants and a product (sum concentrations)
+         for ( int jj = 0; jj < mciters; jj++ )
+         {
+            US_Model::Association* as = &cmodels[ jj ].associations[ ii ];
+            US_Model::SimulationComponent* sc = &cmodels[ jj ].components[rc1];
+            US_Model::SimulationComponent* c2 = &cmodels[ jj ].components[rc2];
+            concs[ jj ]    = sc->signal_concentration
+                           + c2->signal_concentration;
+            kds  [ jj ]    = as->k_d;
+            koffs[ jj ]    = as->k_off;
+         }
+
+         compute_statistics( mciters, kds,   concs, mstats[ kt++ ] );
+         compute_statistics( mciters, koffs, concs, mstats[ kt++ ] );
+      }
+   }
+
+   return ntatts;
+}
+
+// Perform statistical analysis on a vector of values
+int US_FeMatch::compute_statistics( const int nvals,
+      QVector< double >& vals, QVector< double >& concs,
+      QVector< double >& stats )
+{
+   const int stsiz    = 23;
+   int fix_flag       = 1;                      // Default: fixed
+   int     nbins      = 50;
+   double  vsiz       = (double)nvals;
+   double  binsz      = 50.0;
+   double  vlo        = 9.9e30;
+   double  vhi        = -9.9e30;
+
+   QVector< double > xpvec( qMax( nvals, nbins ) );
+   QVector< double > ypvec( qMax( nvals, nbins ) );
+
+   double  *xplot     = xpvec.data();
+   double  *yplot     = ypvec.data();
+   double  vsum       = 0.0;
+   double  vm2        = 0.0;
+   double  vm3        = 0.0;
+   double  vm4        = 0.0;
+   double  vmean, vmedi;
+   double  mode_cen, mode_lo, mode_hi;
+   double  conf99lo, conf99hi, conf95lo, conf95hi;
+   double  clim99lo, clim99hi, clim95lo, clim95hi;
+   double  skew, kurto, slope, vicep, sigma;
+   double  corr, sdevi, sderr, vari, area;
+   double  bininc, val, conc;
+   double  vctot = 0.0;
+
+   stats.resize( stsiz );
+
+   // Get basic min,max,mean information
+
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+      val       = vals.at( jj );
+      conc      = concs.at( jj );
+      vsum     += ( val * conc );
+      vctot    += conc;
+      vlo       = qMin( vlo, val );
+      vhi       = qMax( vhi, val );
+      xplot[jj] = (double)jj;
+      yplot[jj] = val;
+   }
+
+   vmean     = vsum / vctot;
+   fix_flag  = ( vlo == vhi );
+
+   if ( fix_flag )
+   {  // Values are the same, special statistics for fixed attribute
+      vmedi     = vmean;
+      mode_cen  = vmean;
+      skew      = 0.0;
+      kurto     = 0.0;
+      mode_lo   = 0.0;
+      mode_hi   = 0.0;
+      conf95lo  = vmean;
+      conf95hi  = vmean;
+      conf99lo  = vmean;
+      conf99hi  = vmean;
+      clim95lo  = vmean;
+      clim95hi  = vmean;
+      clim99lo  = vmean;
+      clim99hi  = vmean;
+      vari      = 0.0;
+      corr      = 0.0;
+      sdevi     = 0.0;
+      sderr     = 0.0;
+      area      = 0.0;
+   }
+
+   else
+   {  // Values are not the same, so statistics need to be computed
+
+      for ( int jj = 0; jj < nvals; jj++ )
+      {  // Get difference information
+         val       = vals.at( jj );
+         double dif = val - vmean;
+         double dsq = dif * dif;
+         vm2      += dsq;           // diff squared
+         vm3      += ( dsq * dif ); // cubed
+         vm4      += ( dsq * dsq ); // to the 4th
+      }
+
+      vm2      /= vsiz;
+      vm3      /= vsiz;
+      vm4      /= vsiz;
+      skew      = vm3 / pow( vm2, 1.5 );
+      kurto     = vm4 / pow( vm2, 2.0 ) - 3.0;
+      vmedi     = ( vlo + vhi ) / 2.0;
+
+      // Do line fit (mainly for corr value)
+      US_Math2::linefit( &xplot, &yplot, &slope, &vicep, &sigma, &corr, nvals );
+
+      // Standard deviation and error
+      sdevi     = pow( vm2, 0.5 );
+      sderr     = sdevi / pow( vsiz, 0.5 );
+      vari      = vm2;
+      area      = 0.0;
+
+      bininc    = ( vhi - vlo ) / binsz;
+
+      // Mode and confidence
+      for ( int ii = 0; ii < nbins; ii++ )
+      {
+         xplot[ii] = vlo + bininc * (double)ii;
+         yplot[ii] = 0.0;
+
+         for ( int jj = 0; jj < nvals; jj++ )
+         {
+            val       = vals.at( jj );
+
+            if ( val >= xplot[ ii ]  &&  val < ( xplot[ ii ] + bininc ) )
+            {
+               yplot[ii] += ( concs.at( jj ) );
+            }
+         }
+
+         area     += yplot[ ii ] * bininc;
+      }
+
+      //double fvdif     = qAbs( ( vhi - vlo ) / vlo );
+      val       = -1.0;
+      int thisb = 0;
+
+      for ( int ii = 0; ii < nbins; ii++ )
+      {
+         if ( yplot[ii] > val )
+         {
+            val       = yplot[ ii ];
+            thisb     = ii;
+         }
+      }
+
+      mode_lo   = xplot[ thisb ];
+      mode_hi   = mode_lo + bininc;
+      mode_cen  = ( mode_lo + mode_hi ) * 0.5;
+      conf99lo  = vmean - 2.576 * sdevi;
+      conf99hi  = vmean + 2.576 * sdevi;
+      conf95lo  = vmean - 1.960 * sdevi;
+      conf95hi  = vmean + 1.960 * sdevi;
+      clim95lo  = conf95hi - mode_cen;
+      clim95hi  = mode_cen - conf95lo;
+      clim99lo  = conf99hi - mode_cen;
+      clim99hi  = mode_cen - conf99lo;
+   }
+
+   stats[  0 ]  = vlo;        // Minimum
+   stats[  1 ]  = vhi;        // Minimum
+   stats[  2 ]  = vmean;      // Mean
+   stats[  3 ]  = vmedi;      // Median
+   stats[  4 ]  = skew;       // Skew
+   stats[  5 ]  = kurto;      // Kurtosis
+   stats[  6 ]  = mode_lo;    // Lower Mode
+   stats[  7 ]  = mode_hi;    // Upper Mode
+   stats[  8 ]  = mode_cen;   // Mode Center
+   stats[  9 ]  = conf95lo;   // 95% Confidence Interval Low
+   stats[ 10 ]  = conf95hi;   // 95% Confidence Interval High
+   stats[ 11 ]  = conf99lo;   // 99% Confidence Interval Low
+   stats[ 12 ]  = conf99hi;   // 99% Confidence Interval High
+   stats[ 13 ]  = sdevi;      // Standard Deviation
+   stats[ 14 ]  = sderr;      // Standard Error
+   stats[ 15 ]  = vari;       // Variance
+   stats[ 16 ]  = corr;       // Correlation Coefficient
+   stats[ 17 ]  = binsz;      // Number of Bins
+   stats[ 18 ]  = area;       // Distribution Area
+   stats[ 19 ]  = clim95lo;   // 95% Confidence Limit Low
+   stats[ 20 ]  = clim95hi;   // 95% Confidence Limit High
+   stats[ 21 ]  = clim99lo;   // 99% Confidence Limit Low
+   stats[ 22 ]  = clim99hi;   // 99% Confidence Limit High
+
+   return fix_flag;
+}
 

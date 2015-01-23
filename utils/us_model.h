@@ -83,6 +83,11 @@ class US_UTIL_EXTERN US_Model
       //! \returns         - The \ref US_DB2 return code for the operation
       int load( const QString& );  
       
+      //! \brief A function to load a model from an XML string
+      //! \param mcont     The XML string model contents
+      //! \returns         - The \ref US_DB2 return code for the operation
+      int load_string( const QString& );  
+      
       //! A test for model equality
       bool operator== ( const US_Model& ) const;      
 

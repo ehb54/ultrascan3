@@ -607,6 +607,14 @@ int US_Model::load( const QString& filename )
    return result;
 }
 
+// Load a model from an XML string
+int US_Model::load_string( const QString& mcont )
+{
+   QXmlStreamReader xml( mcont );
+   int result = load_stream( xml );
+   return result;
+}
+
 // Load a model from an XML stream
 int US_Model::load_stream( QXmlStreamReader& xml )
 {
