@@ -5,6 +5,7 @@
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_math2.h"
+#include "us_memory.h"
 
 // Hold data read in and selected from a raw MWL data directory
 US_MwlData::US_MwlData( )
@@ -23,6 +24,7 @@ bool US_MwlData::import_data( QString& mwldir, QLineEdit* lestat )
    cur_dir      = mwldir;
    le_status    = lestat;
    evers        = 0.0;
+   is_absorb    = false;
 DbgLv(1) << "MwDa: cur_dir" << cur_dir;
 
    QDir ddir( cur_dir, "*", QDir::Name, QDir::Files | QDir::Readable );
@@ -30,7 +32,7 @@ DbgLv(1) << "MwDa: cur_dir" << cur_dir;
    if ( cur_dir.right( 1 ) != "/" )  cur_dir += "/";
 
    read_runxml( ddir, cur_dir );
-DbgLv(1) << "MwDa: evers" << evers;
+DbgLv(1) << "MwDa: evers" << evers << "is_absorb" << is_absorb;
 
    int kcelchn  = cellchans.count();
 
@@ -227,8 +229,10 @@ DbgLv(1) << "MwDa:   ri_readings CREATED size" << ri_readings.size();
 
 DbgLv(1) << "MwDa: wv0 wvm wvn" << ri_wavelns[0]
  << ri_wavelns[nlamb_i/2] << ri_wavelns[nlamb_i-1];
+#if 0
 DbgLv(1) << "MwDa: da20,40" << ri_readings[20][40] << "m+40 n-40"
  << ri_readings[20][npointt/2+40] << ri_readings[20][npointt-41];
+#endif
    if ( nlmb_dup == 0 )
    {
       le_status->setText( tr( "Initial MWL import from %1 files is complete." )
@@ -596,7 +600,10 @@ void US_MwlData::read_rdata( QDataStream& ds, QVector< double >& rvs,
 {
    char cbuf[ 4 ];
    int  kk      = scnx;
-   double rscl  = ( evers > 1.2 ) ? 1.0 : 0.001;  // Scale 1.0 or 1/1000
+   // Scale by 1.0 or 1/1000 depending on version
+   double rscl  = ( evers > 1.2 ) ? 1.0 : 0.001;
+   // In latest versions, scale by 1/10000 if Absorbance
+   rscl         = ( ( evers > 1.3 ) && is_absorb ) ? 0.0001 : 1.0;
 
    for ( int ii = 0; ii < npoint; ii++ )
    { // Pick up each 4-byte value, convert to double and possibly scale
@@ -741,6 +748,7 @@ int US_MwlData::cellchannels( QStringList& celchns )
 int US_MwlData::build_rawData( QVector< US_DataIO::RawData >& allData )
 {
    const double signif_dif=100.0;
+   const int    low_memApc=20;
 
    allData.clear();
 
@@ -768,7 +776,7 @@ DbgLv(1) << "BldRawD   xout size ntrip" << xout.size() << npoint << ntrip_i;
 
    // Build a raw data set for each triple
    char   dtype0   = 'R';
-   char   dtype1   = 'I';
+   char   dtype1   = is_absorb ? 'A' : 'I';
    int    ccx      = 0;
    int    wvx      = 0;
    int    hdx      = 0;
@@ -952,6 +960,17 @@ DbgLv(1) << "BldRawD     trx" << trx << " saving allData...";
          ccx++;
          wvx  = 0;
          hdx  = ccx * nscan;
+
+         // Free up some memory if it is getting tight
+         int memAv = US_Memory::memory_profile();
+
+         if ( memAv < low_memApc )
+         {
+            for ( int rr = ( trx - nlambda + 1 ); rr < ( trx + 1 ); rr++ )
+               ri_readings[ rr ].clear();
+int memAv2 = US_Memory::memory_profile();
+DbgLv(1) << "BldRawD  memfree %: 1memAV" << memAv << "2memAV" << memAv2;
+         }
       }
 DbgLv(1) << "BldRawD   ccx wvx hdx" << ccx << wvx << hdx << headers.size();
    } // END: triple loop
@@ -983,7 +1002,7 @@ QString US_MwlData::cc_description( QString celchn )
 void US_MwlData::run_values( QString& arunid, QString& aruntype )
 {
    arunid   = runID;
-   aruntype = "RI";
+   aruntype = is_absorb ? "RA" : "RI";
 }
 
 // Private slot to map counts and sizes
@@ -1071,9 +1090,15 @@ void US_MwlData::read_runxml( QDir ddir, QString curdir )
          {
             evers           = att.value( "version" ).toString().toDouble();
          }
+
+         else if ( xml.name() == "runID" )
+         {
+            is_absorb       = att.value( "take_intensity" ).toString() == "N";
+         }
       }
    }
 
+   is_absorb       = ( evers > 1.3 ) ? is_absorb : false;
    xfi.close();
 }
 

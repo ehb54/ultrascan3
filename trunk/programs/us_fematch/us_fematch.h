@@ -219,7 +219,7 @@ class US_FeMatch : public US_Widgets
       QString data_details  ( void )                      const;
       QString hydrodynamics ( void )                      const;
       QString scan_info     ( void )                      const;
-      QString distrib_info  ( void )                      const;
+      QString distrib_info  ( void );
       void    model_table   ( QString );
       void    set_progress  ( const QString );
       void    update_disk_db( bool );
@@ -236,6 +236,12 @@ class US_FeMatch : public US_Widgets
       void    modbtn_clicked ( bool );
       void    next_model     ( void );
       void    update_mc_model( void );
+      int     build_model_stats ( const int, int&, int&,
+                                  QVector< US_Model >&,
+                                  QVector< QVector< double > >& );
+      int     compute_statistics( const int, QVector< double >&,
+                                  QVector< double >&,
+                                  QVector< double >& );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };

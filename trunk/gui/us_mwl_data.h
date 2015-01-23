@@ -194,6 +194,8 @@ class US_GUI_EXTERN US_MwlData : public QObject
       int       elambda;             //!< Ending output lambda
       int       dbg_level;           //!< Debug level
 
+      bool      is_absorb;           //!< Flag if import is absorbance;
+
       double    evers;               //!< Experiment version number
 
       QString   cur_dir;             //!< Currently selected i/p data directory
