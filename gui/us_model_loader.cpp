@@ -248,6 +248,30 @@ qDebug() << "LdM:  model load rc" << rc;
       QString   filename = model_descriptions[ index ].filename;
 
       rc   = model.load( filename );
+qDebug() << "LdM:   Dk filename" << filename;
+   }
+qDebug() << "LdM:    description" << model_descriptions[index].description;
+
+   if ( do_single )
+   {  // If selecting single from MC composite, break it out now
+      US_Model model2    = model;
+      QString sdescr     = model_descriptions[ index].description;
+      QStringList xmls;
+      int nxmls          = model2.mc_iter_xmls( xmls );
+
+      for ( int jj = 0; jj < nxmls; jj++ )
+      {  // Loop through iteration contents looking for match
+         QString mcont      = xmls[ jj ];
+         int kk             = mcont.indexOf( "description=" );
+         QString mdescr     = QString( mcont ).mid( kk, 100 )
+                              .section( '"', 1, 1 );
+         if ( mdescr == sdescr )
+         {  // Found a matching description:  load the single and break
+            model.load_string( mcont );
+qDebug() << "LdM:     match at jj" << jj << "ncomp" << model.components.size();
+            break;
+         }
+      }
    }
 
    return rc;
@@ -586,6 +610,7 @@ qDebug() << "fname" << f_names[ii] << "do_manual" << do_manual;
                   QString runID    = QString( descript ).section( ".", 0, -4);
                   QString mCarl    = attr.value( "monteCarlo"  ).toString();
                   int iters        = mCarl.toInt();
+                  iters            = descript.contains( "mcN" ) ? 1 : iters;
 
                   // Skip save if filtering and edit/run mismatch
                   if ( ( do_edit  &&  edGUID != editGUID )  ||
@@ -667,7 +692,7 @@ qDebug() << "      kmmmod" << kmmmod << "kmmold" << kmmold;
                      int mcndx        = desc.description.indexOf( "_mc0" );
                      desc.description =
                           QString( desc.description ).left( mcndx )
-                        + QString().sprintf( "mcN%03i", nimods )
+                        + QString().sprintf( "_mcN%03i", nimods )
                         + QString( desc.description ).mid( mcndx + 7 );
                      desc.iterations  = nimods;
 
@@ -1176,6 +1201,8 @@ void US_ModelLoader::msearch( const QString& search_string )
 void US_ModelLoader::change_single( bool cksing )
 {
    do_single = cksing;
+   db_id1    = -2;  // flag re-list when list-single flag changes
+   db_id2    = -2;
 
    list_models();
 }
