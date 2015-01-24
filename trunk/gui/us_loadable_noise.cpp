@@ -112,7 +112,7 @@ DbgLv(2) << "LaNoi:allMod mID eID" << modIDs.at(ii) << modEdIDs.at(ii); }
 
       if ( kenois > 0 )
       {  // if we have 1 or 2 noises, add to noise-in-edit list
-         nenois    += kenois;
+         nenois    += qMin( 2, kenois );
          // adjust entry to have the right model-in-edit index
          lnoisGUID  = tmpGUIDs.at( 0 ).section( ":", 0, 1 )
             + ":" + modelIndx;
@@ -123,6 +123,7 @@ DbgLv(2) << "LaNoi:allMod mID eID" << modIDs.at(ii) << modEdIDs.at(ii); }
                + ":" + modelIndx;
             nieGUIDs << lnoisGUID;
          }
+DbgLv(2) << "LaNoi: kenois nenois niesz" << kenois << nenois << nieGUIDs.size();
 
          kk++;
       }
