@@ -1621,8 +1621,8 @@ int US_DDistr_Combine::envel_data(
    int     nsensit  = ct_sensit->value();
    int     nsmooth  = ct_smooth->value();
    int     vCount   = xvals.size();
-   double  max_xval = 1.0e-6;
-   double  min_xval = 1.0e+6;
+   double  max_xval = 1.0e-50;
+   double  min_xval = 1.0e+50;
    double  sed_bin  = xvals[ 0 ];
    double  env_sum  = 0.0;
    double  con_sum  = 0.0;
@@ -1647,6 +1647,11 @@ int US_DDistr_Combine::envel_data(
    max_step         = max_xval * 4.0 / 3.0;
    steps            = (int)( max_step / sed_bin );
 DbgLv(1) << "ED:  steps" << steps << "sed_bin" << sed_bin;
+   if ( steps < 1 )
+   {
+      steps         = 1;
+      max_step      = sed_bin;
+   }
 
    if ( arrsize <= steps )
    {  // Insure envelope array size bigger than histogram array size
