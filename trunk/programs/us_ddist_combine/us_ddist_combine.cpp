@@ -15,6 +15,7 @@
 #include "us_report.h"
 #include "us_util.h"
 #include "us_model.h"
+#include "us_math2.h"
 #include "qwt_legend.h"
 
 // Main program
@@ -133,23 +134,24 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );
    int fwid      = fmet.maxWidth();
-   int nsensit   = 50;
-   int nsmooth   = 30;
-   lb_sensit     = us_label( tr( "Sensitivity: " ) );
-   ct_sensit     = us_counter( 2, 10, 100, 1 );
-   lb_smooth     = us_label( tr( "Smoothing:" ) );
+   //int nsensit   = 50;
+   int nsmooth   = 10;
+   //lb_sensit     = us_label( tr( "Sensitivity: " ) );
+   //ct_sensit     = us_counter( 2, 10, 100, 1 );
+   //lb_smooth     = us_label( tr( "Smoothing:" ) );
+   lb_smooth     = us_label( tr( "Envelope Gaussian Smoothing:" ) );
    ct_smooth     = us_counter( 2,  3, 100, 1 );
-   ct_sensit->setStep( 1.0 );
-   ct_sensit->setFont( sfont );
-   ct_sensit->setValue( (double)nsensit );
+   //ct_sensit->setStep( 1.0 );
+   //ct_sensit->setFont( sfont );
+   //ct_sensit->setValue( (double)nsensit );
    ct_smooth->setStep( 1.0 );
    ct_smooth->setFont( sfont );
    ct_smooth->setValue( (double)nsmooth );
-   int rhgt      = ct_sensit->height();
+   int rhgt      = ct_smooth->height();
    int csizw     = fwid * 3;
-   ct_sensit->setMinimumWidth( fwid );
+   //ct_sensit->setMinimumWidth( fwid );
    ct_smooth->setMinimumWidth( fwid );
-   ct_sensit->resize( rhgt, csizw );
+   //ct_sensit->resize( rhgt, csizw );
    ct_smooth->resize( rhgt, csizw );
 
    le_runid      = us_lineedit( "(current run ID)", -1, true );
@@ -215,9 +217,12 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addWidget( lb_plotctls,  row++, 0, 1, 8 );
    leftLayout->addLayout( lo_envplot,   row,   0, 1, 4 );
    leftLayout->addLayout( lo_barplot,   row++, 4, 1, 4 );
+#if 0
    leftLayout->addWidget( lb_sensit,    row,   0, 1, 2 );
    leftLayout->addWidget( ct_sensit,    row,   2, 1, 2 );
    leftLayout->addWidget( lb_smooth,    row,   4, 1, 2 );
+#endif
+   leftLayout->addWidget( lb_smooth,    row,   0, 1, 6 );
    leftLayout->addWidget( ct_smooth,    row++, 6, 1, 2 );
 
    leftLayout->addWidget( lb_runinfo,   row++, 0, 1, 8 );
@@ -326,8 +331,8 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
             this,        SLOT(   envpltChange( bool   ) ) );
    connect( ck_barplot,  SIGNAL( toggled     ( bool   ) ),
             this,        SLOT(   barpltChange( bool   ) ) );
-   connect( ct_sensit,   SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   envvalChange(        ) ) );
+   //connect( ct_sensit,   SIGNAL( valueChanged( double ) ),
+   //         this,        SLOT(   envvalChange(        ) ) );
    connect( ct_smooth,   SIGNAL( valueChanged( double ) ),
             this,        SLOT(   envvalChange(        ) ) );
 
@@ -1154,6 +1159,7 @@ DbgLv(1) << "FID:  (3)ncomps" << ncomps;
 DbgLv(1) << "FID:   xtype" << xtype << "mxval.size" << mxvals.size();
    ddesc.xvals.fill( 0.0, ncomps );
    ddesc.yvals.fill( 0.0, ncomps );
+   int    kk         = 0;
    int    nn         = 1;
    double xval       = mxvals[ 0 ];
    double yval       = myvals[ 0 ];
@@ -1163,7 +1169,6 @@ DbgLv(1) << "FID:   xtype" << xtype << "mxval.size" << mxvals.size();
    // Sum y values where x values are effectively equivalent
    for ( int jj = 1; jj < ncomps; jj++ )
    {
-      int    kk         = nn - 1;
       double xvpr       = xval;
       double yvpr       = yval;
       xval              = mxvals[ jj ];
@@ -1178,25 +1183,26 @@ DbgLv(1) << "FID:   xtype" << xtype << "mxval.size" << mxvals.size();
 
       else
       {  // New x value:  save y value and bump count
+         kk                  = nn;
          ddesc.xvals[ nn   ] = xval;
          ddesc.yvals[ nn++ ] = yval;
       }
    }
 
-   nn                = 0;
+   kk                = 0;
 
    // Compress the vectors down to only non-zero-Y points
-   for ( int jj = 0; jj < ncomps; jj++ )
+   for ( int jj = 0; jj < nn; jj++ )
    {
       if ( ddesc.yvals[ jj ] != 0.0 )
       {  // Move point to next non-zero output location
-         ddesc.xvals[ nn   ] = ddesc.xvals[ jj ];
-         ddesc.yvals[ nn++ ] = ddesc.yvals[ jj ];
+         ddesc.xvals[ kk   ] = ddesc.xvals[ jj ];
+         ddesc.yvals[ kk++ ] = ddesc.yvals[ jj ];
       }
    }
 
-   ddesc.xvals.resize( nn );     // Resize to just the non-zero points
-   ddesc.yvals.resize( nn );
+   ddesc.xvals.resize( kk );     // Resize to just the non-zero points
+   ddesc.yvals.resize( kk );
 
    setColor( ddesc, distx );
 }
@@ -1615,23 +1621,13 @@ int US_DDistr_Combine::envel_data(
       QVector< double >& xvals, QVector< double >& yvals,
       QVector< double >& xenvs, QVector< double >& yenvs )
 {
-   const double pisqrt   = sqrt( M_PI * 2.0 );
    int     arrsize  = 300;
-   int     steps;
-   int     nsensit  = ct_sensit->value();
    int     nsmooth  = ct_smooth->value();
    int     vCount   = xvals.size();
-   double  max_xval = 1.0e-50;
    double  min_xval = 1.0e+50;
-   double  sed_bin  = xvals[ 0 ];
-   double  env_sum  = 0.0;
+   double  max_xval = -min_xval;
    double  con_sum  = 0.0;
-   double  div_scl  = (double)nsensit * (double)vCount * 0.01;
-   double  max_step;
-   double  sigma;
-   double  sed_lo;
-   double  sed_hi;
-   double  sedc;
+   double  env_sum  = 0.0;
    double* xv       = xvals.data();
    double* yv       = yvals.data();
 
@@ -1639,74 +1635,52 @@ int US_DDistr_Combine::envel_data(
    {  // Get min,max of x values (e.g., sedimentation coefficients)
       max_xval         = qMax( max_xval, xv[ jj ] );
       min_xval         = qMin( min_xval, xv[ jj ] );
-      con_sum         += yv[ jj ];
+      con_sum         += yv[ jj ];        // Accumulate total concentration
    }
 
-   // Calculate values based on range and sensitivity
-   sed_bin          = ( max_xval - min_xval ) / div_scl;
-   max_step         = max_xval * 4.0 / 3.0;
-   steps            = (int)( max_step / sed_bin );
-DbgLv(1) << "ED:  steps" << steps << "sed_bin" << sed_bin;
-   if ( steps < 1 )
-   {
-      steps         = 1;
-      max_step      = sed_bin;
-   }
+   // Calculate values based on range
+   double rng_xval  = max_xval - min_xval;
+   bool min_neg     = ( min_xval < 0.0 );
+   min_xval         = min_xval - ( rng_xval / 6.0 );
+   min_xval         = min_neg ? min_xval : qMax( 0.0, min_xval );
 
-   if ( arrsize <= steps )
-   {  // Insure envelope array size bigger than histogram array size
-      arrsize      = steps + 1;
-   }
-
+   // Initialize envelope arrays
    xenvs.fill( 0.0, arrsize );
    yenvs.fill( 0.0, arrsize );
    double* xe       = xenvs.data();
    double* ye       = yenvs.data();
-   double  sval     = 0.0;
-   double  xinc     = max_step / (double)arrsize;
-DbgLv(1) << "ED:  max_step arrsize xinc" << max_step << arrsize << xinc;
+   double  xinc     = rng_xval / (double)( arrsize - 1 );
+DbgLv(1) << "ED:  rng_xval arrsize xinc" << rng_xval << arrsize << xinc;
 
    for ( int jj = 0; jj < arrsize; jj++ )
    {  // Initialize envelope values
-      xe[ jj ]         = xinc * (double)( jj );
+      xe[ jj ]         = min_xval + xinc * (double)( jj );
       ye[ jj ]         = 0.0;
    }
 
-   sigma            = sed_bin * 0.02 * (double)nsmooth;
-DbgLv(1) << "ED:  sed_bin sigma" << sed_bin << sigma;
+   // Set initial non-zero Y values for envelope
+   for ( int ii = 0; ii < vCount; ii++ )
+   {
+      double xvali     = xv[ ii ];
+      double yvali     = yv[ ii ];
+      double xix       = ( xvali - min_xval ) / xinc;
+      int    ixx       = (int)xix;
+      double difix     = xix - (double)ixx;
+      int jj           = ii + 1;
 
-   for ( int jj = 0; jj < steps; jj++ )
-   {  // Calculate histogram values and envelope values based on them
-      int kbin         = 0;
-      double ysum      = 0.0;
-      sed_lo           = sed_bin * (double)( jj );
-      sed_hi           = sed_lo + sed_bin;
-      sval             = ( sed_lo + sed_hi ) * 0.5;
-
-      for ( int ii = 0; ii < vCount; ii++ )
-      {  // Count sedcoeffs (or other X) within current step range
-         sedc             = xv[ ii ];
-
-         if ( sedc >= sed_lo  &&  sedc < sed_hi )
-         {
-            kbin++;
-            ysum            += yv[ ii ];
-         }
+      if ( difix > 0.0001  &&  jj < vCount )
+      {  // Interpolate Y value from two closest
+         double xvalj     = xv[ jj ];
+         double yvalj     = yv[ jj ];
+         yvali            = yvali + ( ( yvalj - yvali ) * difix
+                            / ( xvali - xvalj ) );
       }
 
-      if ( kbin > 0 )
-      {  // If non-empty bin, update envelope Y values
-         double yfac      = ysum / ( sigma * pisqrt );
-
-         for ( int kk = 0; kk < arrsize; kk++ )
-         {
-            double xdif      = ( xe[ kk ] - sval ) / sigma;
-            ye[ kk ]        += ( yfac * exp( -( xdif * xdif ) / 2.0 ) );
-DbgLv(2) << "ED:  kk" << kk << "xdif ysum ye[kk]" << xdif << ysum << ye[kk];
-         }
-DbgLv(1) << "ED:    jj" << jj << "sval ysum" << sval << ysum;
-      }
+      ye[ ixx ]    += yvali;
    }
+
+   // Perform gaussian smoothing of envelope values
+   US_Math2::gaussian_smoothing( yenvs, nsmooth );
 
    for ( int kk = 0; kk < arrsize; kk++ )
    {  // Accumulate the envelope values sum
@@ -1717,12 +1691,17 @@ DbgLv(1) << "ED:    jj" << jj << "sval ysum" << sval << ysum;
 DbgLv(1) << "ED: csum esum scale " << con_sum << env_sum << scale;
 
 env_sum=0.0;
+double yemx=-1e+30;
+double xemx=-1e+30;
    for ( int kk = 0; kk < arrsize; kk++ )
-   {  // Normalize Y values
+   {  // Normalize Y values so integral is equal to total concentration
       ye[ kk ]        *= scale;
+if(ye[kk]>yemx) { yemx=ye[kk]; xemx=xe[kk]; }
 env_sum+=ye[kk];
    }
-DbgLv(1) << "ED: Final esum" << env_sum << "csum" << con_sum;
+DbgLv(1) << "ED: Final esum" << env_sum << "csum" << con_sum
+ << "xemx yemx" << xemx << yemx
+ << "smooth vcount" << nsmooth << vCount;
 
    return arrsize;                          // Return size of arrays
 }
@@ -1738,7 +1717,7 @@ void US_DDistr_Combine::envpltChange( bool echkd )
             this,        SLOT(   barpltChange( bool   ) ) );
 
    // Enable/disable envelope controls
-   ct_sensit ->setEnabled( echkd );
+   //ct_sensit ->setEnabled( echkd );
    ct_smooth ->setEnabled( echkd );
 
    // Plot data in changed form
@@ -1756,14 +1735,14 @@ void US_DDistr_Combine::barpltChange( bool bchkd )
             this,        SLOT(   envpltChange( bool   ) ) );
 
    // Enable/disable envelope controls
-   ct_sensit ->setEnabled( echkd );
+   //ct_sensit ->setEnabled( echkd );
    ct_smooth ->setEnabled( echkd );
 
    // Plot data in changed form
    plot_data();
 }
 
-// Slot for change in sensitivity or smooth value
+// Slot for change in smooth value
 void US_DDistr_Combine::envvalChange( )
 {
    // Plot data with changed sensitivity or smoothing

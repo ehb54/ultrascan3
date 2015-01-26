@@ -75,10 +75,10 @@ class US_DDistr_Combine : public US_Widgets
       QListWidget*   lw_runids;
       QListWidget*   lw_models;
 
-      QLabel*        lb_sensit;
+      //QLabel*        lb_sensit;
       QLabel*        lb_smooth;
 
-      QwtCounter*    ct_sensit;
+      //QwtCounter*    ct_sensit;
       QwtCounter*    ct_smooth;
       QCheckBox*     ck_2dsa;
       QCheckBox*     ck_2dsamc;
