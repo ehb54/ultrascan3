@@ -67,8 +67,8 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    pb_resetp->setEnabled( false );
 
    QLabel* lb_distrtype  = us_banner( tr( "Select Distribution Type(s):" ) );
-   QLabel* lb_plottype   = us_banner( tr( "Select Plot Type:" ) );
-   QLabel* lb_plotctls   = us_banner( tr( "Plot Controls:"    ) );
+   QLabel* lb_plottype   = us_banner( tr( "Plot Type and Control:" ) );
+   //QLabel* lb_plotctls   = us_banner( tr( "Plot Controls:"    ) );
    QLabel* lb_runinfo    = us_banner( tr( "Information for this Run:" ) );
    QLabel* lb_runid      = us_label ( tr( "Current Run ID:" ) );
    QLabel* lb_svproj     = us_label ( tr( "Save Plot under Project:" ) );
@@ -109,6 +109,46 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QLayout* lo_dmgagl   = us_checkbox( tr( "DMGA-GL" ),    ck_dmgagl,   false );
    QLayout* lo_dmgaglmc = us_checkbox( tr( "DMGA-GL-MC" ), ck_dmgaglmc, false );
    QLayout* lo_dtall    = us_checkbox( tr( "All" ),        ck_dtall,    false );
+   QFont cfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 2,
+                QFont::Bold );
+   ck_2dsa    ->setFont( cfont );
+   ck_2dsamc  ->setFont( cfont );
+   ck_2dsamw  ->setFont( cfont );
+   ck_2dsamcmw->setFont( cfont );
+   ck_2dsagl  ->setFont( cfont );
+   ck_2dsaglmc->setFont( cfont );
+   ck_2dsacg  ->setFont( cfont );
+   ck_2dsacgmc->setFont( cfont );
+   ck_2dsafm  ->setFont( cfont );
+   ck_ga      ->setFont( cfont );
+   ck_gamc    ->setFont( cfont );
+   ck_gamw    ->setFont( cfont );
+   ck_gamcmw  ->setFont( cfont );
+   ck_gagl    ->setFont( cfont );
+   ck_gaglmc  ->setFont( cfont );
+   ck_pcsais  ->setFont( cfont );
+   ck_pcsasl  ->setFont( cfont );
+   ck_pcsads  ->setFont( cfont );
+   ck_pcsahl  ->setFont( cfont );
+   ck_pcsaismc->setFont( cfont );
+   ck_pcsaslmc->setFont( cfont );
+   ck_pcsadsmc->setFont( cfont );
+   ck_pcsahlmc->setFont( cfont );
+   ck_pcsaistr->setFont( cfont );
+   ck_pcsasltr->setFont( cfont );
+   ck_pcsadstr->setFont( cfont );
+   ck_pcsahltr->setFont( cfont );
+   ck_dmga    ->setFont( cfont );
+   ck_dmgamc  ->setFont( cfont );
+   ck_dmgara  ->setFont( cfont );
+   ck_dmgaramc->setFont( cfont );
+   ck_dmgagl  ->setFont( cfont );
+   ck_dmgaglmc->setFont( cfont );
+   ck_dtall   ->setFont( cfont );
+   //ck_2dsagl  ->setVisible( false );
+   //ck_2dsaglmc->setVisible( false );
+   //ck_2dsamw  ->setVisible( false );
+   //ck_2dsamcmw->setVisible( false );
 
    QButtonGroup* sel_plt  = new QButtonGroup( this );
    QGridLayout* lo_pltsw  = us_radiobutton( tr( "s20,W" ), rb_pltsw,    true  );
@@ -123,10 +163,6 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    sel_plt->addButton( rb_pltff0, 3 );
    sel_plt->addButton( rb_pltvb,  4 );
    sel_plt->addButton( rb_pltMWl, 5 );
-   QLayout* lo_envplot  = us_checkbox(
-         tr( "Envelope plots"           ), ck_envplot, true  );
-   QLayout* lo_barplot  = us_checkbox(
-         tr( "Discrete value Bar plots" ), ck_barplot, false );
    QLayout* lo_mdltype  = us_checkbox(
          tr( "Use model descriptions for list and legend" ),
          ck_mdltype,  false );
@@ -134,24 +170,19 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );
    int fwid      = fmet.maxWidth();
-   //int nsensit   = 50;
-   int nsmooth   = 10;
-   //lb_sensit     = us_label( tr( "Sensitivity: " ) );
-   //ct_sensit     = us_counter( 2, 10, 100, 1 );
-   //lb_smooth     = us_label( tr( "Smoothing:" ) );
-   lb_smooth     = us_label( tr( "Envelope Gaussian Smoothing:" ) );
-   ct_smooth     = us_counter( 2,  3, 100, 1 );
-   //ct_sensit->setStep( 1.0 );
-   //ct_sensit->setFont( sfont );
-   //ct_sensit->setValue( (double)nsensit );
-   ct_smooth->setStep( 1.0 );
+   //int nsmooth   = 10;
+   //lb_smooth     = us_label( tr( "Envelope Gaussian Smoothing:" ) );
+   lb_smooth     = us_label( tr( "Envelope Gaussian Sigma:" ) );
+   //ct_smooth     = us_counter( 2,  0, 100, 1 );
+   //ct_smooth->setStep( 1.0 );
+   //ct_smooth->setValue( (double)nsmooth );
+   ct_smooth     = us_counter( 3,  0,  5, 1 );
+   ct_smooth->setStep( 0.001 );
    ct_smooth->setFont( sfont );
-   ct_smooth->setValue( (double)nsmooth );
+   ct_smooth->setValue( 0.05 );
    int rhgt      = ct_smooth->height();
-   int csizw     = fwid * 3;
-   //ct_sensit->setMinimumWidth( fwid );
+   int csizw     = fwid * 5;
    ct_smooth->setMinimumWidth( fwid );
-   //ct_sensit->resize( rhgt, csizw );
    ct_smooth->resize( rhgt, csizw );
 
    le_runid      = us_lineedit( "(current run ID)", -1, true );
@@ -166,26 +197,18 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( dkdb_cntrls,  row++, 0, 1, 8 );
    leftLayout->addWidget( pb_loadda,    row,   0, 1, 4 );
    leftLayout->addWidget( pb_saveda,    row++, 4, 1, 4 );
-   leftLayout->addWidget( pb_resetd,    row,   0, 1, 4 );
-   leftLayout->addWidget( pb_resetp,    row++, 4, 1, 4 );
+   leftLayout->addWidget( pb_resetd,    row,   0, 1, 2 );
+   leftLayout->addWidget( pb_resetp,    row,   2, 1, 2 );
    leftLayout->addWidget( pb_help,      row,   4, 1, 2 );
    leftLayout->addWidget( pb_close,     row++, 6, 1, 2 );
    leftLayout->addWidget( lb_distrtype, row++, 0, 1, 8 );
    leftLayout->addLayout( lo_2dsa,      row,   0, 1, 2 );
-   leftLayout->addLayout( lo_2dsamc,    row,   2, 1, 2 );
-   leftLayout->addLayout( lo_2dsamw,    row,   4, 1, 2 );
-   leftLayout->addLayout( lo_2dsamcmw,  row++, 6, 1, 2 );
-   leftLayout->addLayout( lo_2dsagl,    row,   0, 1, 2 );
-   leftLayout->addLayout( lo_2dsaglmc,  row,   2, 1, 2 );
-   leftLayout->addLayout( lo_2dsacg,    row,   4, 1, 2 );
-   leftLayout->addLayout( lo_2dsacgmc,  row++, 6, 1, 2 );
-   leftLayout->addLayout( lo_2dsafm,    row++, 0, 1, 8 );
+   leftLayout->addLayout( lo_2dsafm,    row,   2, 1, 2 );
+   leftLayout->addLayout( lo_2dsamc,    row,   4, 1, 2 );
+   leftLayout->addLayout( lo_2dsacg,    row++, 6, 1, 2 );
    leftLayout->addLayout( lo_ga,        row,   0, 1, 2 );
-   leftLayout->addLayout( lo_gamc,      row,   2, 1, 2 );
-   leftLayout->addLayout( lo_gamw,      row,   4, 1, 2 );
-   leftLayout->addLayout( lo_gamcmw,    row++, 6, 1, 2 );
-   leftLayout->addLayout( lo_gagl,      row,   0, 1, 2 );
-   leftLayout->addLayout( lo_gaglmc,    row++, 2, 1, 6 );
+   leftLayout->addLayout( lo_gamc,      row,   2, 1, 4 );
+   leftLayout->addLayout( lo_dtall,     row++, 6, 1, 2 );
    leftLayout->addLayout( lo_pcsais,    row,   0, 1, 2 );
    leftLayout->addLayout( lo_pcsasl,    row,   2, 1, 2 );
    leftLayout->addLayout( lo_pcsads,    row,   4, 1, 2 );
@@ -194,17 +217,33 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_pcsaslmc,  row,   2, 1, 2 );
    leftLayout->addLayout( lo_pcsadsmc,  row,   4, 1, 2 );
    leftLayout->addLayout( lo_pcsahlmc,  row++, 6, 1, 2 );
-   leftLayout->addLayout( lo_pcsaistr,  row,   0, 1, 2 );
-   leftLayout->addLayout( lo_pcsasltr,  row,   2, 1, 2 );
-   leftLayout->addLayout( lo_pcsadstr,  row,   4, 1, 2 );
-   leftLayout->addLayout( lo_pcsahltr,  row++, 6, 1, 2 );
    leftLayout->addLayout( lo_dmga,      row,   0, 1, 2 );
    leftLayout->addLayout( lo_dmgamc,    row,   2, 1, 2 );
    leftLayout->addLayout( lo_dmgara,    row,   4, 1, 2 );
    leftLayout->addLayout( lo_dmgaramc,  row++, 6, 1, 2 );
+   leftLayout->addLayout( lo_2dsacgmc,  row,   0, 1, 2 );
+   leftLayout->addLayout( lo_2dsamw,    row,   2, 1, 2 );
+   leftLayout->addLayout( lo_2dsamcmw,  row++, 4, 1, 4 );
+   leftLayout->addLayout( lo_2dsagl,    row,   0, 1, 2 );
+   leftLayout->addLayout( lo_2dsaglmc,  row++, 2, 1, 6 );
+   leftLayout->addLayout( lo_gamw,      row,   0, 1, 2 );
+   leftLayout->addLayout( lo_gamcmw,    row,   2, 1, 2 );
+   leftLayout->addLayout( lo_gagl,      row,   4, 1, 2 );
+   leftLayout->addLayout( lo_gaglmc,    row++, 6, 1, 2 );
+   leftLayout->addLayout( lo_pcsaistr,  row,   0, 1, 2 );
+   leftLayout->addLayout( lo_pcsasltr,  row,   2, 1, 2 );
+   leftLayout->addLayout( lo_pcsadstr,  row,   4, 1, 2 );
+   leftLayout->addLayout( lo_pcsahltr,  row++, 6, 1, 2 );
    leftLayout->addLayout( lo_dmgagl,    row,   0, 1, 2 );
-   leftLayout->addLayout( lo_dmgaglmc,  row,   2, 1, 6 );
-   leftLayout->addLayout( lo_dtall,     row++, 6, 1, 8 );
+   leftLayout->addLayout( lo_dmgaglmc,  row++, 2, 1, 6 );
+#if 0
+   ck_2dsacgmc->setVisible( false );
+   ck_2dsamw  ->setVisible( false );
+   ck_2dsamcmw->setVisible( false );
+   lo_2dsacgmc->setVisible( false );
+   lo_2dsamw  ->setVisible( false );
+   lo_2dsamcmw->setVisible( false );
+#endif
 
    leftLayout->addWidget( lb_plottype,  row++, 0, 1, 8 );
    leftLayout->addLayout( lo_pltsw,     row,   0, 1, 2 );
@@ -214,16 +253,13 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_pltvb,     row,   0, 1, 8 );
    leftLayout->addLayout( lo_pltMWl,    row++, 2, 1, 8 );
 
+#if 0
    leftLayout->addWidget( lb_plotctls,  row++, 0, 1, 8 );
    leftLayout->addLayout( lo_envplot,   row,   0, 1, 4 );
    leftLayout->addLayout( lo_barplot,   row++, 4, 1, 4 );
-#if 0
-   leftLayout->addWidget( lb_sensit,    row,   0, 1, 2 );
-   leftLayout->addWidget( ct_sensit,    row,   2, 1, 2 );
-   leftLayout->addWidget( lb_smooth,    row,   4, 1, 2 );
 #endif
-   leftLayout->addWidget( lb_smooth,    row,   0, 1, 6 );
-   leftLayout->addWidget( ct_smooth,    row++, 6, 1, 2 );
+   leftLayout->addWidget( lb_smooth,    row,   0, 1, 5 );
+   leftLayout->addWidget( ct_smooth,    row++, 5, 1, 3 );
 
    leftLayout->addWidget( lb_runinfo,   row++, 0, 1, 8 );
    leftLayout->addWidget( lb_runid,     row,   0, 1, 3 );
@@ -327,12 +363,12 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    connect( rb_pltMWl,   SIGNAL( toggled     ( bool ) ),
             this,        SLOT(   changedPlotX( bool ) ) );
 
+#if 0
    connect( ck_envplot,  SIGNAL( toggled     ( bool   ) ),
             this,        SLOT(   envpltChange( bool   ) ) );
    connect( ck_barplot,  SIGNAL( toggled     ( bool   ) ),
             this,        SLOT(   barpltChange( bool   ) ) );
-   //connect( ct_sensit,   SIGNAL( valueChanged( double ) ),
-   //         this,        SLOT(   envvalChange(        ) ) );
+#endif
    connect( ct_smooth,   SIGNAL( valueChanged( double ) ),
             this,        SLOT(   envvalChange(        ) ) );
 
@@ -375,12 +411,10 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 
    adjustSize();
    int hh  = lb_svproj->height();
-   //int ww  = lb_svproj->width() / 3;
    int ww  = lb_svproj->width() / 6;
    lw_runids  ->setMinimumHeight( hh * 2 );
    lw_runids  ->setMaximumHeight( hh * 4 );
    lw_models  ->setMinimumHeight( hh * 5 );
-   //cmb_svproj ->setMinimumWidth ( ww * 5 );
    cmb_svproj ->setMinimumWidth ( ww * 2 );
    for ( int ii = 0; ii < 8; ii++ )
       leftLayout ->setColumnMinimumWidth( ii, ww );
@@ -567,6 +601,15 @@ if(dbg_level>0)
    ck_dmgagl  ->setChecked( hv_dmgagl   );
    ck_dmgaglmc->setChecked( hv_dmgaglmc );
    ck_dtall   ->setChecked( hv_dtall    );
+
+   // Make visible/invisible based on presence of checks
+#if 0
+   bool visln1 = ( hv_2dsagl  ||  hv_2dsaglmc || hv_2dsamw  || hv_2dsamcmw );
+visln1=false;
+   ck_2dsacgmc->setVisible( visln1 );
+   ck_2dsamw  ->setVisible( visln1 );
+   ck_2dsamcmw->setVisible( visln1 );
+#endif
 }
 
 // Reset data: remove all loaded data and clear plots
@@ -675,7 +718,7 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 
    QwtPlotCurve* data_curv = us_curve( data_plot1, distrID );
 
-   if ( ck_envplot->isChecked() )
+   if ( ct_smooth->value() > 0.0 )
    {
       data_curv->setPen  ( QPen( QBrush( ddesc.color ), 2.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
@@ -1658,33 +1701,32 @@ DbgLv(1) << "ED:  rng_xval arrsize xinc" << rng_xval << arrsize << xinc;
       ye[ jj ]         = 0.0;
    }
 
-   // Set initial non-zero Y values for envelope
-   for ( int ii = 0; ii < vCount; ii++ )
-   {
-      double xvali     = xv[ ii ];
-      double yvali     = yv[ ii ];
-      double xix       = ( xvali - min_xval ) / xinc;
-      int    ixx       = (int)xix;
-      double difix     = xix - (double)ixx;
-      int jj           = ii + 1;
-
-      if ( difix > 0.0001  &&  jj < vCount )
-      {  // Interpolate Y value from two closest
-         double xvalj     = xv[ jj ];
-         double yvalj     = yv[ jj ];
-         yvali            = yvali + ( ( yvalj - yvali ) * difix
-                            / ( xvali - xvalj ) );
-      }
-
-      ye[ ixx ]    += yvali;
-   }
-
-   // Perform gaussian smoothing of envelope values
-   US_Math2::gaussian_smoothing( yenvs, nsmooth );
+   // Populate envelope Ys with gaussian sums
+   double pisqr     = sqrt( M_PI * 2.0 );
+   //double sigma     = ( rng_xval / (double)vCount ) * 0.2 * (double)nsmooth;
+   //double sigma     = 0.2 * (double)nsmooth;
+   double sigma     = ct_smooth->value();
+   sigma            = qMax( 0.0001, sigma );
+   double xterm     = 1.0 / ( sigma * rng_xval );
+   double zterm     = 1.0 / ( sigma * pisqr );
 
    for ( int kk = 0; kk < arrsize; kk++ )
-   {  // Accumulate the envelope values sum
-      env_sum         += ye[ kk ];
+   {  // Loop to compute envelope grid Y values
+      double xval_env  = xe[ kk ];                 // Envelope X value
+      double yval_env  = 0.0;                      // Initial envelope Y value
+
+      for ( int jj = 0; jj < vCount; jj++ )
+      {  // Accumulate Gaussian Y's from each solute
+         double xval_sol  = xv[ jj ];              // Solute X value
+         double yval_sol  = yv[ jj ];              // Solute Y value
+
+         double xdiff     = sq( ( xval_sol - xval_env ) * xterm );
+         double yfac      = exp( -0.5 * xdiff ) * zterm;
+         yval_env        += ( yfac * yval_sol );   // Sum envelope Y value
+      }
+
+      ye[ kk ]         = yval_env;                 // Store envelope Y value
+      env_sum         += ye[ kk ];                 // Build envelope sum
    }
 
    double scale     = con_sum / env_sum;    // Normalizing scale factor
@@ -1707,9 +1749,10 @@ DbgLv(1) << "ED: Final esum" << env_sum << "csum" << con_sum
 }
 
 // Slot for change in env plot check box
-void US_DDistr_Combine::envpltChange( bool echkd )
+void US_DDistr_Combine::envpltChange( bool /*echkd*/ )
 {
    // Switch check status of bar plot
+#if 0
    bool bchkd    = !echkd;
    ck_barplot->disconnect();
    ck_barplot->setChecked( bchkd );
@@ -1717,17 +1760,18 @@ void US_DDistr_Combine::envpltChange( bool echkd )
             this,        SLOT(   barpltChange( bool   ) ) );
 
    // Enable/disable envelope controls
-   //ct_sensit ->setEnabled( echkd );
    ct_smooth ->setEnabled( echkd );
+#endif
 
    // Plot data in changed form
    plot_data();
 }
 
 // Slot for change in bar plot check box
-void US_DDistr_Combine::barpltChange( bool bchkd )
+void US_DDistr_Combine::barpltChange( bool /*bchkd*/ )
 {
    // Switch check status of envelope plot
+#if 0
    bool echkd    = !bchkd;
    ck_envplot->disconnect();
    ck_envplot->setChecked( echkd );
@@ -1735,8 +1779,8 @@ void US_DDistr_Combine::barpltChange( bool bchkd )
             this,        SLOT(   envpltChange( bool   ) ) );
 
    // Enable/disable envelope controls
-   //ct_sensit ->setEnabled( echkd );
    ct_smooth ->setEnabled( echkd );
+#endif
 
    // Plot data in changed form
    plot_data();
