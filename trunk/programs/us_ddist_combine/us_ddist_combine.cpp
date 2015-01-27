@@ -354,10 +354,10 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 
    connect( ct_sigma,    SIGNAL( valueChanged( double ) ),
             this,        SLOT(   envvalChange(        ) ) );
-   connect( le_plxmin,   SIGNAL( textChanged ( const QString& ) ),
-            this,        SLOT(   envvalChange(                ) ) );
-   connect( le_plxmax,   SIGNAL( textChanged ( const QString& ) ),
-            this,        SLOT(   envvalChange(                ) ) );
+   connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+            this,        SLOT(   envvalChange(    ) ) );
+   connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+            this,        SLOT(   envvalChange(    ) ) );
 
    connect( ck_mdltype,  SIGNAL( stateChanged( int  ) ),
             this,        SLOT(   ltypeChanged(      )  ) );
@@ -702,10 +702,10 @@ DbgLv(1) << "pDa:  titleX" << titleX;
       le_plxmax->disconnect();
       le_plxmin->setText( QString::number( plxmin ) );
       le_plxmax->setText( QString::number( plxmax ) );
-      connect( le_plxmin,   SIGNAL( textChanged ( const QString& ) ),
-               this,        SLOT(   envvalChange(                ) ) );
-      connect( le_plxmax,   SIGNAL( textChanged ( const QString& ) ),
-               this,        SLOT(   envvalChange(                ) ) );
+      connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+               this,        SLOT(   envvalChange(    ) ) );
+      connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+               this,        SLOT(   envvalChange(    ) ) );
    }
 }
 
@@ -1649,10 +1649,10 @@ DbgLv(1) << "  PX=Molec.Wt.log";
       le_plxmin->disconnect();
       le_plxmin->setText( "0" );
       le_plxmax->setText( "0" );
-      connect( le_plxmin,   SIGNAL( textChanged ( const QString& ) ),
-               this,        SLOT(   envvalChange(                ) ) );
-      connect( le_plxmax,   SIGNAL( textChanged ( const QString& ) ),
-               this,        SLOT(   envvalChange(                ) ) );
+      connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+               this,        SLOT(   envvalChange(    ) ) );
+      connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+               this,        SLOT(   envvalChange(    ) ) );
 
       plot_data();
    }
@@ -1698,15 +1698,16 @@ int US_DDistr_Combine::envel_data(
    }
 
    // Calculate values based on range
-   double rng_xval  = max_xval - min_xval;
    bool min_neg     = ( min_xval < 0.0 );
-   min_xval         = min_xval - ( rng_xval / 6.0 );
+   double rng_xval  = max_xval - min_xval;
+   min_xval         = min_xval - ( rng_xval * 0.1 );
    min_xval         = min_neg ? min_xval : qMax( 0.0, min_xval );
    max_xval         = min_xval + rng_xval;
    double minx      = le_plxmin->text().toDouble();
    double maxx      = le_plxmax->text().toDouble();
    min_xval         = ( minx != 0.0 ) ? minx : min_xval;
    max_xval         = ( maxx != 0.0 ) ? maxx : max_xval;
+   rng_xval         = max_xval - min_xval;
 
    // Initialize envelope arrays
    xenvs.fill( 0.0, arrsize );
