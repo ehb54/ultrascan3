@@ -68,7 +68,6 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 
    QLabel* lb_distrtype  = us_banner( tr( "Select Distribution Type(s):" ) );
    QLabel* lb_plottype   = us_banner( tr( "Plot Type and Control:" ) );
-   //QLabel* lb_plotctls   = us_banner( tr( "Plot Controls:"    ) );
    QLabel* lb_runinfo    = us_banner( tr( "Information for this Run:" ) );
    QLabel* lb_runid      = us_label ( tr( "Current Run ID:" ) );
    QLabel* lb_svproj     = us_label ( tr( "Save Plot under Project:" ) );
@@ -170,20 +169,19 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );
    int fwid      = fmet.maxWidth();
-   //int nsmooth   = 10;
-   //lb_smooth     = us_label( tr( "Envelope Gaussian Smoothing:" ) );
-   lb_smooth     = us_label( tr( "Envelope Gaussian Sigma:" ) );
-   //ct_smooth     = us_counter( 2,  0, 100, 1 );
-   //ct_smooth->setStep( 1.0 );
-   //ct_smooth->setValue( (double)nsmooth );
-   ct_smooth     = us_counter( 3,  0,  5, 1 );
-   ct_smooth->setStep( 0.001 );
-   ct_smooth->setFont( sfont );
-   ct_smooth->setValue( 0.05 );
-   int rhgt      = ct_smooth->height();
+   lb_sigma      = us_label( tr( "Envelope Gaussian Sigma:" ) );
+   ct_sigma      = us_counter( 3,  0,  5, 1 );
+   ct_sigma->setStep( 0.001 );
+   ct_sigma->setFont( sfont );
+   ct_sigma->setValue( 0.05 );
+   int rhgt      = ct_sigma ->height();
    int csizw     = fwid * 5;
-   ct_smooth->setMinimumWidth( fwid );
-   ct_smooth->resize( rhgt, csizw );
+   ct_sigma->setMinimumWidth( fwid );
+   ct_sigma->resize( rhgt, csizw );
+   lb_plxmin     = us_label( tr( "Plot X Minimum:" ) );
+   lb_plxmax     = us_label( tr( "Plot X Maximum:" ) );
+   le_plxmin     = us_lineedit( "0" );
+   le_plxmax     = us_lineedit( "0" );
 
    le_runid      = us_lineedit( "(current run ID)", -1, true );
    cmb_svproj    = us_comboBox();
@@ -236,14 +234,6 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_pcsahltr,  row++, 6, 1, 2 );
    leftLayout->addLayout( lo_dmgagl,    row,   0, 1, 2 );
    leftLayout->addLayout( lo_dmgaglmc,  row++, 2, 1, 6 );
-#if 0
-   ck_2dsacgmc->setVisible( false );
-   ck_2dsamw  ->setVisible( false );
-   ck_2dsamcmw->setVisible( false );
-   lo_2dsacgmc->setVisible( false );
-   lo_2dsamw  ->setVisible( false );
-   lo_2dsamcmw->setVisible( false );
-#endif
 
    leftLayout->addWidget( lb_plottype,  row++, 0, 1, 8 );
    leftLayout->addLayout( lo_pltsw,     row,   0, 1, 2 );
@@ -253,13 +243,12 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_pltvb,     row,   0, 1, 8 );
    leftLayout->addLayout( lo_pltMWl,    row++, 2, 1, 8 );
 
-#if 0
-   leftLayout->addWidget( lb_plotctls,  row++, 0, 1, 8 );
-   leftLayout->addLayout( lo_envplot,   row,   0, 1, 4 );
-   leftLayout->addLayout( lo_barplot,   row++, 4, 1, 4 );
-#endif
-   leftLayout->addWidget( lb_smooth,    row,   0, 1, 5 );
-   leftLayout->addWidget( ct_smooth,    row++, 5, 1, 3 );
+   leftLayout->addWidget( lb_sigma,     row,   0, 1, 5 );
+   leftLayout->addWidget( ct_sigma,     row++, 5, 1, 3 );
+   leftLayout->addWidget( lb_plxmin,    row,   0, 1, 2 );
+   leftLayout->addWidget( le_plxmin,    row,   2, 1, 2 );
+   leftLayout->addWidget( lb_plxmax,    row,   4, 1, 2 );
+   leftLayout->addWidget( le_plxmax,    row++, 6, 1, 2 );
 
    leftLayout->addWidget( lb_runinfo,   row++, 0, 1, 8 );
    leftLayout->addWidget( lb_runid,     row,   0, 1, 3 );
@@ -363,14 +352,12 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    connect( rb_pltMWl,   SIGNAL( toggled     ( bool ) ),
             this,        SLOT(   changedPlotX( bool ) ) );
 
-#if 0
-   connect( ck_envplot,  SIGNAL( toggled     ( bool   ) ),
-            this,        SLOT(   envpltChange( bool   ) ) );
-   connect( ck_barplot,  SIGNAL( toggled     ( bool   ) ),
-            this,        SLOT(   barpltChange( bool   ) ) );
-#endif
-   connect( ct_smooth,   SIGNAL( valueChanged( double ) ),
+   connect( ct_sigma,    SIGNAL( valueChanged( double ) ),
             this,        SLOT(   envvalChange(        ) ) );
+   connect( le_plxmin,   SIGNAL( textChanged ( const QString& ) ),
+            this,        SLOT(   envvalChange(                ) ) );
+   connect( le_plxmax,   SIGNAL( textChanged ( const QString& ) ),
+            this,        SLOT(   envvalChange(                ) ) );
 
    connect( ck_mdltype,  SIGNAL( stateChanged( int  ) ),
             this,        SLOT(   ltypeChanged(      )  ) );
@@ -601,15 +588,6 @@ if(dbg_level>0)
    ck_dmgagl  ->setChecked( hv_dmgagl   );
    ck_dmgaglmc->setChecked( hv_dmgaglmc );
    ck_dtall   ->setChecked( hv_dtall    );
-
-   // Make visible/invisible based on presence of checks
-#if 0
-   bool visln1 = ( hv_2dsagl  ||  hv_2dsaglmc || hv_2dsamw  || hv_2dsamcmw );
-visln1=false;
-   ck_2dsacgmc->setVisible( visln1 );
-   ck_2dsamw  ->setVisible( visln1 );
-   ck_2dsamcmw->setVisible( visln1 );
-#endif
 }
 
 // Reset data: remove all loaded data and clear plots
@@ -698,11 +676,36 @@ DbgLv(1) << "pDa:  titleX" << titleX;
    data_plot1->setTitle    ( titleP );
    data_plot1->setAxisTitle( QwtPlot::xBottom, titleX );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   titleY );
+   double plxmin = 1e+30;
+   double plxmax = -1e+30;
 
    for ( int ii = 0; ii < pdistrs.size(); ii++ )
    {
       setColor( pdistrs[ ii ], ii );
       plot_distr( pdistrs[ ii ], pdisIDs[ ii ] );
+
+      for ( int jj = 0; jj < pdistrs[ ii ].xvals.size(); jj++ )
+      {
+         plxmin        = qMin( plxmin, pdistrs[ ii ].xvals[ jj ] );
+         plxmax        = qMax( plxmax, pdistrs[ ii ].xvals[ jj ] );
+      }
+   }
+
+   if ( le_plxmax->text().toDouble() == 0.0 )
+   {
+      double plxinc = ( plxmax - plxmin ) / 299.0;
+      int rpwr      = qRound( log10( plxinc ) );
+      plxinc        = pow( 10.0, rpwr - 3 );
+      plxmin        = (double)qFloor( plxmin / plxinc ) * plxinc;
+      plxmax        = (double)qRound( plxmax / plxinc ) * plxinc;
+      le_plxmin->disconnect();
+      le_plxmax->disconnect();
+      le_plxmin->setText( QString::number( plxmin ) );
+      le_plxmax->setText( QString::number( plxmax ) );
+      connect( le_plxmin,   SIGNAL( textChanged ( const QString& ) ),
+               this,        SLOT(   envvalChange(                ) ) );
+      connect( le_plxmax,   SIGNAL( textChanged ( const QString& ) ),
+               this,        SLOT(   envvalChange(                ) ) );
    }
 }
 
@@ -718,7 +721,7 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 
    QwtPlotCurve* data_curv = us_curve( data_plot1, distrID );
 
-   if ( ct_smooth->value() > 0.0 )
+   if ( ct_sigma->value() > 0.0 )
    {
       data_curv->setPen  ( QPen( QBrush( ddesc.color ), 2.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
@@ -737,7 +740,12 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
    data_curv->setData ( xx, yy, ndispt );
    data_curv->setItemAttribute( QwtPlotItem::Legend, true );
 
-   data_plot1->setAxisAutoScale( QwtPlot::xBottom );
+   double minx   = le_plxmin->text().toDouble();
+   double maxx   = le_plxmax->text().toDouble();
+   if ( maxx == 0.0 )
+      data_plot1->setAxisAutoScale( QwtPlot::xBottom );
+   else
+      data_plot1->setAxisScale(     QwtPlot::xBottom, minx, maxx );
    data_plot1->setAxisAutoScale( QwtPlot::yLeft );
    data_plot1->enableAxis      ( QwtPlot::xBottom, true );
    data_plot1->enableAxis      ( QwtPlot::yLeft,   true );
@@ -1637,6 +1645,15 @@ DbgLv(1) << "  PX=Molec.Wt.log";
          pdisIDs << distribID( pddist->mdescr, pddist->ddescr );
       }
 
+      le_plxmin->disconnect();
+      le_plxmin->disconnect();
+      le_plxmin->setText( "0" );
+      le_plxmax->setText( "0" );
+      connect( le_plxmin,   SIGNAL( textChanged ( const QString& ) ),
+               this,        SLOT(   envvalChange(                ) ) );
+      connect( le_plxmax,   SIGNAL( textChanged ( const QString& ) ),
+               this,        SLOT(   envvalChange(                ) ) );
+
       plot_data();
    }
 }
@@ -1665,7 +1682,6 @@ int US_DDistr_Combine::envel_data(
       QVector< double >& xenvs, QVector< double >& yenvs )
 {
    int     arrsize  = 300;
-   int     nsmooth  = ct_smooth->value();
    int     vCount   = xvals.size();
    double  min_xval = 1.0e+50;
    double  max_xval = -min_xval;
@@ -1686,6 +1702,11 @@ int US_DDistr_Combine::envel_data(
    bool min_neg     = ( min_xval < 0.0 );
    min_xval         = min_xval - ( rng_xval / 6.0 );
    min_xval         = min_neg ? min_xval : qMax( 0.0, min_xval );
+   max_xval         = min_xval + rng_xval;
+   double minx      = le_plxmin->text().toDouble();
+   double maxx      = le_plxmax->text().toDouble();
+   min_xval         = ( minx != 0.0 ) ? minx : min_xval;
+   max_xval         = ( maxx != 0.0 ) ? maxx : max_xval;
 
    // Initialize envelope arrays
    xenvs.fill( 0.0, arrsize );
@@ -1703,9 +1724,7 @@ DbgLv(1) << "ED:  rng_xval arrsize xinc" << rng_xval << arrsize << xinc;
 
    // Populate envelope Ys with gaussian sums
    double pisqr     = sqrt( M_PI * 2.0 );
-   //double sigma     = ( rng_xval / (double)vCount ) * 0.2 * (double)nsmooth;
-   //double sigma     = 0.2 * (double)nsmooth;
-   double sigma     = ct_smooth->value();
+   double sigma     = ct_sigma->value();
    sigma            = qMax( 0.0001, sigma );
    double xterm     = 1.0 / ( sigma * rng_xval );
    double zterm     = 1.0 / ( sigma * pisqr );
@@ -1743,53 +1762,15 @@ env_sum+=ye[kk];
    }
 DbgLv(1) << "ED: Final esum" << env_sum << "csum" << con_sum
  << "xemx yemx" << xemx << yemx
- << "smooth vcount" << nsmooth << vCount;
+ << "sigma  vcount" << sigma << vCount;
 
    return arrsize;                          // Return size of arrays
 }
 
-// Slot for change in env plot check box
-void US_DDistr_Combine::envpltChange( bool /*echkd*/ )
-{
-   // Switch check status of bar plot
-#if 0
-   bool bchkd    = !echkd;
-   ck_barplot->disconnect();
-   ck_barplot->setChecked( bchkd );
-   connect( ck_barplot,  SIGNAL( toggled     ( bool   ) ),
-            this,        SLOT(   barpltChange( bool   ) ) );
-
-   // Enable/disable envelope controls
-   ct_smooth ->setEnabled( echkd );
-#endif
-
-   // Plot data in changed form
-   plot_data();
-}
-
-// Slot for change in bar plot check box
-void US_DDistr_Combine::barpltChange( bool /*bchkd*/ )
-{
-   // Switch check status of envelope plot
-#if 0
-   bool echkd    = !bchkd;
-   ck_envplot->disconnect();
-   ck_envplot->setChecked( echkd );
-   connect( ck_envplot,  SIGNAL( toggled     ( bool   ) ),
-            this,        SLOT(   envpltChange( bool   ) ) );
-
-   // Enable/disable envelope controls
-   ct_smooth ->setEnabled( echkd );
-#endif
-
-   // Plot data in changed form
-   plot_data();
-}
-
-// Slot for change in smooth value
+// Slot for change in sigma value or plot min,max
 void US_DDistr_Combine::envvalChange( )
 {
-   // Plot data with changed sensitivity or smoothing
+   // Plot data with changed sigma
    plot_data();
 }
 

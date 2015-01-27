@@ -69,17 +69,20 @@ class US_DDistr_Combine : public US_Widgets
       QPushButton*   pb_resetp;
 
       QLineEdit*     le_runid;
+      QLineEdit*     le_plxmin;
+      QLineEdit*     le_plxmax;
 
       QComboBox*     cmb_svproj;
 
       QListWidget*   lw_runids;
       QListWidget*   lw_models;
 
-      //QLabel*        lb_sensit;
-      QLabel*        lb_smooth;
+      QLabel*        lb_sigma;
+      QLabel*        lb_plxmin;
+      QLabel*        lb_plxmax;
 
-      //QwtCounter*    ct_sensit;
-      QwtCounter*    ct_smooth;
+      QwtCounter*    ct_sigma;
+
       QCheckBox*     ck_2dsa;
       QCheckBox*     ck_2dsamc;
       QCheckBox*     ck_2dsamw;
@@ -164,8 +167,6 @@ class US_DDistr_Combine : public US_Widgets
       void methodChanged     ( int );
       void list_distributions( void );
       void changedPlotX      ( bool );
-      void envpltChange      ( bool );
-      void barpltChange      ( bool );
       void envvalChange      ( void );
       void ltypeChanged      ( void );
       bool equivalent        ( double, double, double );
