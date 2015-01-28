@@ -49,7 +49,7 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    QPushButton* pb_component = us_pushbutton( tr( "Next Component" ) );
    QPushButton* pb_showmodel = us_pushbutton( tr( "Show Model #"   ) );
 
-   ct_simpoints = us_counter( 3, 0, 10000,     1 );
+   ct_simpoints = us_counter( 3, 0, 10000,   1 );
    ct_bldvolume = us_counter( 3, 0,   1, 0.001 );
    ct_parameter = us_counter( 2, 1,  50,     1 );
    ct_modelnbr  = us_counter( 2, 1,  50,     1 );
@@ -76,20 +76,20 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
       tr( "Simulate data using parameters from model"
           " or from Monte Carlo statistics" ) );
    gb_modelsim->setFlat( true );
-   rb_curmod    = new QRadioButton( tr( "Current Model" ) );
-   rb_mode      = new QRadioButton( tr( "Mode"          ) );
    rb_mean      = new QRadioButton( tr( "Mean"          ) );
    rb_median    = new QRadioButton( tr( "Median"        ) );
+   rb_mode      = new QRadioButton( tr( "Mode"          ) );
+   rb_curmod    = new QRadioButton( tr( "Current Model" ) );
    gb_modelsim->setFont( pb_showmodel->font() );
    gb_modelsim->setPalette( US_GuiSettings::normalColor() );
    QHBoxLayout* mosbox = new QHBoxLayout();
-   mosbox->addWidget( rb_curmod );
-   mosbox->addWidget( rb_mode   );
    mosbox->addWidget( rb_mean   );
    mosbox->addWidget( rb_median );
+   mosbox->addWidget( rb_mode   );
+   mosbox->addWidget( rb_curmod );
    mosbox->setSpacing( 0 );
    gb_modelsim->setLayout( mosbox );
-   rb_curmod  ->setChecked( true );
+   rb_mean    ->setChecked( true );
    lowerLayout->addWidget( gb_modelsim );
 
    mainLayout ->addLayout( upperLayout );
