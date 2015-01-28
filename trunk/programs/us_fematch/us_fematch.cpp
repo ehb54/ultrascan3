@@ -395,7 +395,7 @@ us_setReadOnly( le_compress, true );
    adv_vals[ "modelnbr"  ] = "0";
    adv_vals[ "meshtype"  ] = "ASTFEM";
    adv_vals[ "gridtype"  ] = "Moving";
-   adv_vals[ "modelsim"  ] = "model";
+   adv_vals[ "modelsim"  ] = "mean";
 
    sdata          = &wsdata;
 
@@ -1393,7 +1393,7 @@ void US_FeMatch::distrib_plot_stick( int type )
    QwtPlotGrid*  data_grid = us_grid(  data_plot1 );
    QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
 
-   int     dsize  = model_loaded.components.size();
+   int     dsize  = model_used.components.size();
    QVector< double > vecx( dsize );
    QVector< double > vecy( dsize );
    double* xx     = vecx.data();
@@ -1408,10 +1408,10 @@ void US_FeMatch::distrib_plot_stick( int type )
 
    for ( int jj = 0; jj < dsize; jj++ )
    {
-      xval     = ( type == 0 ) ? model_loaded.components[ jj ].s :
-               ( ( type == 1 ) ? model_loaded.components[ jj ].mw :
-                                 model_loaded.components[ jj ].D );
-      yval     = model_loaded.components[ jj ].signal_concentration;
+      xval     = ( type == 0 ) ? model_used.components[ jj ].s :
+               ( ( type == 1 ) ? model_used.components[ jj ].mw :
+                                 model_used.components[ jj ].D );
+      yval     = model_used.components[ jj ].signal_concentration;
       xx[ jj ] = xval;
       yy[ jj ] = yval;
       xmin     = min( xval, xmin );
@@ -1507,7 +1507,7 @@ void US_FeMatch::distrib_plot_2d( int type )
    QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
    QwtSymbol     symbol;
 
-   int     dsize  = model_loaded.components.size();
+   int     dsize  = model_used.components.size();
    QVector< double > vecx( dsize );
    QVector< double > vecy( dsize );
    double* xx     = vecx.data();
@@ -1522,12 +1522,12 @@ void US_FeMatch::distrib_plot_2d( int type )
 
    for ( int jj = 0; jj < dsize; jj++ )
    {
-      xval     = ( ( type & 1 ) == 1 ) ? model_loaded.components[ jj ].s :
-                                         model_loaded.components[ jj ].mw;
+      xval     = ( ( type & 1 ) == 1 ) ? model_used.components[ jj ].s :
+                                         model_used.components[ jj ].mw;
 
-      if ( type < 5 )             yval = model_loaded.components[ jj ].f_f0;
-      else if ( type < 7 )        yval = model_loaded.components[ jj ].vbar20;
-      else                        yval = model_loaded.components[ jj ].D;
+      if ( type < 5 )             yval = model_used.components[ jj ].f_f0;
+      else if ( type < 7 )        yval = model_used.components[ jj ].vbar20;
+      else                        yval = model_used.components[ jj ].D;
 
       xx[ jj ] = xval;
       yy[ jj ] = yval;
@@ -1675,7 +1675,9 @@ void US_FeMatch::distrib_plot_resids( )
 // Open a dialog with advanced analysis parameters
 void US_FeMatch::advanced( )
 {
-   advdiag = new US_AdvancedFem( &model_loaded, adv_vals,
+   model_used   = model_loaded;
+
+   advdiag = new US_AdvancedFem( &model_used, adv_vals,
                                  (QWidget*)this );
    advdiag->show();
 }
@@ -1689,7 +1691,7 @@ void US_FeMatch::plot3d( )
       eplotcd->close();
    }
 
-   eplotcd = new US_PlotControlFem( this, &model_loaded );
+   eplotcd = new US_PlotControlFem( this, &model_used );
    eplotcd->move( epd_pos );
    eplotcd->show();
 }
@@ -1749,7 +1751,8 @@ DbgLv(1) << "post-Load m,e,r GUIDs" << model.modelGUID << model.editGUID
  << model.requestGUID;
 DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
 
-   model_loaded = model;   // save model exactly as loaded
+   model_loaded = model;   // Save model exactly as loaded
+   model_used   = model;   // Make that the working model
 
    if ( model.components.size() == 0 )
    {
@@ -1762,7 +1765,7 @@ DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
    ri_noise.count = 0;
 
    // see if there are any noise files to load
-   if ( ! model.editGUID.isEmpty() )
+   if ( ! model_used.editGUID.isEmpty() )
       load_noise();
 
    pb_advanced ->setEnabled( true );
@@ -1772,7 +1775,125 @@ DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
 // Adjust model components based on buffer, vbar, and temperature
 void US_FeMatch::adjust_model()
 {
-   model              = model_loaded;
+   model          = model_used;
+   QString smtype = adv_vals[ "modelsim" ];
+DbgLv(1) << "FEM:AdjMd:  smtype" << smtype;
+
+   if ( smtype != "model"  &&  model_used.monteCarlo  &&
+         model_used.description.contains( "DMGA" )  &&
+         model_used.description.contains( "_mcN" ) )
+   {  // Recompose model based on DMGA-MC statistics
+      QStringList xmls;
+      QVector< US_Model > cmodels;
+      QVector< QVector< double > > mstats;
+      int stx        = 2;                                 // Mean stats index
+      stx            = ( smtype == "median" ) ? 3 : stx;  // Median stats index
+      stx            = ( smtype == "mode"   ) ? 8 : stx;  // Mode stats index
+DbgLv(1) << "FEM:AdjMd:  stx" << stx;
+
+      US_Model *mp   = (US_Model*)&model_loaded;
+      int nxmls      = mp->mc_iter_xmls( xmls );
+      // Compute DMGA-MC statistics
+      int ncomp      = 0;
+      int nasso      = 0;
+      int kcomp      = 0;
+      int kasso      = 0;
+      int niters     = 0;
+
+      for ( int ii = 0; ii < nxmls; ii++ )
+      {  // Build the individual iteration models
+         QString mxml   = xmls[ ii ];
+         int jj         = mxml.indexOf( "description=" );
+         QString mdesc  = QString( mxml ).mid( jj, 100 )
+                          .section( '"', 1, 1 );
+
+         US_Model cmodel;
+         cmodel.load_string( mxml );
+         kcomp          = cmodel.components.size();
+         kasso          = cmodel.associations.size();;
+DbgLv(1) << "FEM:AdjMd:  ii" << ii << "xml.desc" << mdesc;
+DbgLv(1) << "FEM:AdjMd:     ncomp" << kcomp << "nassoc" << kasso;
+
+         if ( ii == 0 )
+         {
+            ncomp          = kcomp;
+            nasso          = kasso;
+         }
+
+         if ( kcomp == ncomp  ||  kasso == nasso )
+         {
+            niters++;
+            cmodels << cmodel;
+         }
+         else
+DbgLv(0) << "FEM:AdjMd: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
+
+      }
+
+      // Build statistics across iterations
+      build_model_stats( niters, kcomp, kasso, cmodels, mstats );
+
+      model.components  .resize( ncomp );
+      model.associations.resize( nasso );
+      int ks         = 0;
+
+      for ( int ii = 0; ii < ncomp; ii++ )
+      {  // Pick up mean|median|mode of any floating attributes
+         bool fltc      = ( mstats[ ks     ][ 0 ] != mstats[ ks     ][ 1 ] );
+         bool fltv      = ( mstats[ ks + 1 ][ 0 ] != mstats[ ks + 1 ][ 1 ] );
+         bool fltw      = ( mstats[ ks + 2 ][ 0 ] != mstats[ ks + 2 ][ 1 ] );
+         bool flts      = ( mstats[ ks + 3 ][ 0 ] != mstats[ ks + 3 ][ 1 ] );
+         bool fltd      = ( mstats[ ks + 4 ][ 0 ] != mstats[ ks + 4 ][ 1 ] );
+         bool fltf      = ( mstats[ ks + 5 ][ 0 ] != mstats[ ks + 5 ][ 1 ] );
+         double conc    = fltc ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
+         double vbar    = fltv ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
+         double mw      = fltw ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
+         double sedc    = flts ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
+         double difc    = fltd ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
+         double ff0     = fltf ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
+         conc           = model.is_product( ii ) ? 0.0 : conc;
+
+         model.components[ ii ]         = model_loaded.components[ ii ];
+         model.components[ ii ].signal_concentration = conc;
+         model.components[ ii ].vbar20  = vbar;
+         model.components[ ii ].mw      = mw;
+         model.components[ ii ].s       = 0.0;
+         model.components[ ii ].D       = 0.0;
+         model.components[ ii ].f_f0    = 0.0;
+         model.components[ ii ].f       = 0.0;
+
+         if ( flts )
+            model.components[ ii ].s       = sedc;
+         else if ( fltd )
+            model.components[ ii ].D       = difc;
+         else
+            model.components[ ii ].f_f0    = ff0;
+
+         model.calc_coefficients( model.components[ ii ] );
+DbgLv(0) << "FEM:AdjMd: Cii=" << ii << "c v w s k"
+ << model.components[ii].signal_concentration
+ << model.components[ii].vbar20
+ << model.components[ii].mw
+ << model.components[ii].s
+ << model.components[ii].f_f0 << "flts,d" << flts << fltd;
+      }
+
+      for ( int ii = 0; ii < nasso; ii++ )
+      {
+         bool fltd      = ( mstats[ ks     ][ 0 ] != mstats[ ks     ][ 1 ] );
+         bool flto      = ( mstats[ ks + 1 ][ 0 ] != mstats[ ks + 1 ][ 1 ] );
+         double k_d     = fltd ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
+         double k_off   = flto ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
+         model.associations[ ii ]         = model_loaded.associations[ ii ];
+         model.associations[ ii ].k_d     = k_d;
+         model.associations[ ii ].k_off   = k_off;
+DbgLv(0) << "FEM:AdjMd: Aii=" << ii << "d off"
+ << model.associations[ii].k_d << model.associations[ii].k_off;
+      }
+   }
+
+   // Save newly composed model for use in statistics
+   model_used         = model;
 
    // build model component correction factors
    double avgTemp     = edata->average_temperature();
@@ -2834,20 +2955,45 @@ QString US_FeMatch::scan_info( void ) const
 QString US_FeMatch::distrib_info()
 {
    int ncomp      = model_loaded.components.size();
+   //model_used     = model_loaded;
    
    if ( ncomp == 0 )
       return "";
 
-   QString mdla = model_loaded.description
+   QString msim   = adv_vals[ "modelsim" ];
+
+   if ( model_used.monteCarlo  &&
+        model_used.description.contains( "DMGA" )  &&
+        model_used.description.contains( "_mcN" ) )
+   {
+      if ( msim == "model" )
+      {  // Retain DMGA-MC model as is
+         msim           = "";
+      }
+      else
+      {  // Replace loaded model with mean|median|mode one
+         ncomp          = model_used.components.size();
+         msim           = "<b>&nbsp;&nbsp;( " + msim + " )</b>";
+      }
+   }
+   else
+   {  // Normal non-DMGA-MC model
+      msim           = "";
+      if ( model_used.monteCarlo  &&
+           ! model_used.description.contains( "_mcN" ) )
+         msim           = "<b>&nbsp;&nbsp;( single iteration )</b>";
+   }
+
+   QString mdla = model_used.description
                   .section( ".", -2, -2 ).section( "_", 1, -1 );
    if ( mdla.isEmpty() )
-      mdla         = model_loaded.description.section( ".", 0, -2 );
+      mdla         = model_used.description.section( ".", 0, -2 );
 
    QString mstr = "\n" + indent( 4 )
                   + tr( "<h3>Data Analysis Settings:</h3>\n" )
                   + indent( 4 ) + "<table>\n";
 
-   mstr += table_row( tr( "Model Analysis:" ), mdla );
+   mstr += table_row( tr( "Model Analysis:" ), mdla + msim );
    mstr += table_row( tr( "Number of Components:" ),
                       QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),
@@ -2866,13 +3012,13 @@ QString US_FeMatch::distrib_info()
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
-      double conc = model_loaded.components[ ii ].signal_concentration;
-      double kval = model_loaded.components[ ii ].f_f0;
-      double vval = model_loaded.components[ ii ].vbar20;
+      double conc = model_used.components[ ii ].signal_concentration;
+      double kval = model_used.components[ ii ].f_f0;
+      double vval = model_used.components[ ii ].vbar20;
       sum_c      += conc;
-      sum_mw     += ( model_loaded.components[ ii ].mw * conc );
-      sum_s      += ( model_loaded.components[ ii ].s  * conc );
-      sum_D      += ( model_loaded.components[ ii ].D  * conc );
+      sum_mw     += ( model_used.components[ ii ].mw * conc );
+      sum_s      += ( model_used.components[ ii ].s  * conc );
+      sum_D      += ( model_used.components[ ii ].D  * conc );
       sum_v      += ( vval * conc );
       sum_k      += ( kval * conc );
       mink        = qMin( kval, mink );
@@ -2916,21 +3062,21 @@ QString US_FeMatch::distrib_info()
 
       for ( int ii = 0; ii < ncomp; ii++ )
       {
-         double conc = model_loaded.components[ ii ].signal_concentration;
+         double conc = model_used.components[ ii ].signal_concentration;
          double perc = 100.0 * conc / sum_c;
          mstr       += table_row(
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].mw   ),
+                  model_used.components[ ii ].mw   ),
                QString().sprintf( "%10.4e",
                   model       .components[ ii ].s    ),
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].s    ),
+                  model_used.components[ ii ].s    ),
                QString().sprintf( "%10.4e",
                   model       .components[ ii ].D    ),
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].D    ),
+                  model_used.components[ ii ].D    ),
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].f_f0 ),
+                  model_used.components[ ii ].f_f0 ),
                QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
       }
    }
@@ -2944,21 +3090,21 @@ QString US_FeMatch::distrib_info()
 
       for ( int ii = 0; ii < ncomp; ii++ )
       {
-         double conc = model_loaded.components[ ii ].signal_concentration;
+         double conc = model_used.components[ ii ].signal_concentration;
          double perc = 100.0 * conc / sum_c;
          mstr       += table_row(
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].mw     ),
+                  model_used.components[ ii ].mw     ),
                QString().sprintf( "%10.4e",
                   model       .components[ ii ].s      ),
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].s      ),
+                  model_used.components[ ii ].s      ),
                QString().sprintf( "%10.4e",
                   model       .components[ ii ].D      ),
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].D      ),
+                  model_used.components[ ii ].D      ),
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].vbar20 ),
+                  model_used.components[ ii ].vbar20 ),
                QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
       }
    }
@@ -2972,27 +3118,27 @@ QString US_FeMatch::distrib_info()
 
       for ( int ii = 0; ii < ncomp; ii++ )
       {
-         double conc = model_loaded.components[ ii ].signal_concentration;
+         double conc = model_used.components[ ii ].signal_concentration;
          double perc = 100.0 * conc / sum_c;
          mstr       += table_row(
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].mw     ),
+                  model_used.components[ ii ].mw     ),
                QString().sprintf( "%10.4e",
                   model       .components[ ii ].s      ),
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].s      ),
+                  model_used.components[ ii ].s      ),
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].D      ),
+                  model_used.components[ ii ].D      ),
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].f_f0 ),
+                  model_used.components[ ii ].f_f0 ),
                QString().sprintf( "%10.4e",
-                  model_loaded.components[ ii ].vbar20 ),
+                  model_used.components[ ii ].vbar20 ),
                QString().sprintf( "%10.4e (%5.2f %%)", conc, perc ) );
       }
    }
 
    // Show associations information if present
-   if ( model_loaded.associations.size() > 0 )
+   if ( model_used.associations.size() > 0 )
    {
       mstr += indent( 4 ) + "</table>\n" + indent( 4 );
       mstr += tr( "<h3>Reversible Associations Information:</h3>\n" );
@@ -3001,7 +3147,7 @@ QString US_FeMatch::distrib_info()
                          tr( "Product"    ), tr( "K_dissociation"  ),
                          tr( "k_off Rate" ) );
 
-      for ( int ii = 0; ii < model_loaded.associations.size(); ii++ )
+      for ( int ii = 0; ii < model_used.associations.size(); ii++ )
       {
          US_Model::Association as1 = model.associations[ ii ];
          double k_d    = as1.k_d;
@@ -3025,6 +3171,10 @@ QString US_FeMatch::distrib_info()
 
    QStringList xmls;
    int nxmls      = 0;
+   mdla           = model_loaded.description
+                  .section( ".", -2, -2 ).section( "_", 1, -1 );
+   if ( mdla.isEmpty() )
+      mdla           = model_loaded.description.section( ".", 0, -2 );
 //   if ( mdla.contains( "_mcN" ) )
    if ( mdla.contains( "_mcN" )  &&  mdla.contains( "DMGA" ) )
    {  // Look for iteration models from DMGA-RA-MC model
@@ -3079,6 +3229,7 @@ DbgLv(0) << "FEM:WrRep: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
       int ntatt = build_model_stats( niters, kcomp, kasso, cmodels, mstats );
 
       // Compose the summary statistics chart
+      mstr += indent( 4 );
       mstr += tr( "<h3>Discrete Model GA-MC Summary Statistics:</h3>\n" );
       mstr += indent( 4 ) + "<table>\n";
       mstr += table_row( tr( "Component" ), tr( "Attribute" ),
@@ -3146,6 +3297,7 @@ DbgLv(0) << "FEM:WrRep: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
       mstr += indent( 4 ) + "</table>\n";
 
       // Compose the details statistics entries
+      mstr += indent( 4 );
       mstr += tr( "<h3>Discrete Model GA-MC Detailed Statistics:</h3>\n" );
       int icomp       = 1;
       int ireac       = 1;
@@ -3156,7 +3308,7 @@ DbgLv(0) << "FEM:WrRep: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
          QString compnum = tr( "Component %1 " ).arg( icomp );
          QString reacnum = tr( "Reaction %1 "  ).arg( ireac );
          QString attrib  = compnum + atitl[ kk ];
-         mstr += "<h4>" + tr( "Details for " );
+         mstr += indent( 4 ) + "<h4>" + tr( "Details for " );
 
          if ( icomp <= ncomp )
          {  // Title for component detail
@@ -3631,7 +3783,7 @@ DbgLv(1) << "THR COMPL thr" << thr << "thrdone" << thrdone;
 void US_FeMatch::model_table( QString mdtFile )
 {
    // Get the total concentration
-   int ncomp      = model_loaded.components.size();
+   int ncomp      = model_used.components.size();
    if ( ncomp == 0 )
       return;
    QFile mdt_f( mdtFile );
@@ -3641,7 +3793,7 @@ void US_FeMatch::model_table( QString mdtFile )
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {
-      double conc = model_loaded.components[ ii ].signal_concentration;
+      double conc = model_used.components[ ii ].signal_concentration;
       sum_c      += conc;
    }
 
@@ -3664,26 +3816,44 @@ void US_FeMatch::model_table( QString mdtFile )
 
    for ( int ii = 0; ii < ncomp; ii++ )
    {  // Write each component line
-      double conc = model_loaded.components[ ii ].signal_concentration;
+      double conc = model_used.components[ ii ].signal_concentration;
       double perc = 100.0 * conc / sum_c;
       ts << dquote + QString().sprintf( "%10.4e",
-               model_loaded.components[ ii ].mw   )   + dquote + comma +
+               model_used.components[ ii ].mw   )   + dquote + comma +
             dquote + QString().sprintf( "%10.4e",
                model       .components[ ii ].s    )   + dquote + comma +
             dquote + QString().sprintf( "%10.4e",
-               model_loaded.components[ ii ].s    )   + dquote + comma +
+               model_used.components[ ii ].s    )   + dquote + comma +
             dquote + QString().sprintf( "%10.4e",
                model       .components[ ii ].D    )   + dquote + comma +
             dquote + QString().sprintf( "%10.4e",
-               model_loaded.components[ ii ].D    )   + dquote + comma +
+               model_used.components[ ii ].D    )   + dquote + comma +
             dquote + QString().sprintf( "%10.4e",
-               model_loaded.components[ ii ].f_f0 )   + dquote + comma +
+               model_used.components[ ii ].f_f0 )   + dquote + comma +
             dquote + QString().sprintf( "%10.4e",
-               model_loaded.components[ ii ].vbar20 ) + dquote + comma +
+               model_used.components[ ii ].vbar20 ) + dquote + comma +
             dquote + QString().sprintf( "%10.4e",
                conc )                                 + dquote + comma +
             dquote + QString().sprintf( "%5.2f %%",
                perc )                                 + dquote + endln;
+   }
+
+   int nasso      = model_used.associations.size();
+   if ( nasso == 0 )
+      return;
+
+   // Write the header line
+   ts << dquote + "Reaction"       + dquote + comma
+       + dquote + "K_dissociation" + dquote + comma
+       + dquote + "k_off_Rate"     + dquote + endln;
+
+   for ( int ii = 0; ii < nasso; ii++ )
+   {  // Write each association line
+      double k_d   = model_used.associations[ ii ].k_d;
+      double k_off = model_used.associations[ ii ].k_off;
+      ts << dquote + QString().sprintf( "%4d",    ii    ) + dquote + comma
+          + dquote + QString().sprintf( "%10.4e", k_d   ) + dquote + comma
+          + dquote + QString().sprintf( "%10.4e", k_off ) + dquote + endln;
    }
 }
 
@@ -3774,6 +3944,8 @@ int US_FeMatch::build_model_stats( const int mciters,
    int ntatts       = ncomp * ncatt + nasso * naatt;
    mstats.resize( ntatts );
    int kt           = 0;
+DbgLv(1) << "FEM:BMs:  ncomp" << ncomp << "nasso" << nasso
+ << "ntatts" << ntatts << "mciters" << mciters;
 
    // Get statistics for each component
    for ( int ii = 0; ii < ncomp; ii++ )
@@ -3806,6 +3978,9 @@ int US_FeMatch::build_model_stats( const int mciters,
       compute_statistics( mciters, scos , concs, mstats[ kt++ ] );
       compute_statistics( mciters, dcos , concs, mstats[ kt++ ] );
       compute_statistics( mciters, ff0s , concs, mstats[ kt++ ] );
+DbgLv(1) << "FEM:BMs:   ii" << ii << "mean c v w s d k"
+ << mstats[kt-6][2] << mstats[kt-5][2] << mstats[kt-4][2]
+ << mstats[kt-3][2] << mstats[kt-2][2] << mstats[kt-1][2];
    }
 
    // Get statistics for reactions
@@ -3852,9 +4027,12 @@ int US_FeMatch::build_model_stats( const int mciters,
 
          compute_statistics( mciters, kds,   concs, mstats[ kt++ ] );
          compute_statistics( mciters, koffs, concs, mstats[ kt++ ] );
+DbgLv(1) << "FEM:BMs:   ii" << ii << "mean kd ko"
+ << mstats[kt-2][2] << mstats[kt-1][2];
       }
    }
 
+DbgLv(1) << "FEM:BMs: RETURN w ntatts" << ntatts;
    return ntatts;
 }
 

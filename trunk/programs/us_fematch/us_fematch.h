@@ -138,9 +138,7 @@ class US_FeMatch : public US_Widgets
 
       US_Model                    model;
       US_Model                    model_loaded;
-      US_Model                    model_mean;
-      US_Model                    model_median;
-      US_Model                    model_mode;
+      US_Model                    model_used;
       US_Noise                    ri_noise;
       US_Noise                    ti_noise;
       US_Solution                 solution_rec;
