@@ -3207,7 +3207,8 @@ DbgLv(1) << "FEM:WrRep: nxmls" << nxmls;
          kcomp          = cmodel.components.size();
          kasso          = cmodel.associations.size();;
 DbgLv(1) << "FEM:WrRep:  ii" << ii << "xml.desc" << mdesc;
-DbgLv(1) << "FEM:WrRep:     ncomp" << kcomp << "nassoc" << kasso;
+DbgLv(1) << "FEM:WrRep:     ncomp" << kcomp << "nassoc" << kasso
+ << "RMSD" << sqrt(cmodel.variance);
 
          if ( ii == 0 )
          {
@@ -3224,6 +3225,10 @@ DbgLv(1) << "FEM:WrRep:     ncomp" << kcomp << "nassoc" << kasso;
 DbgLv(0) << "FEM:WrRep: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
 
       }
+
+      // Build RMSD statistics across iterations
+      QVector< double > rstats;
+      build_rmsd_stats( niters, cmodels, rstats );
 
       // Build statistics across iterations
       int ntatt = build_model_stats( niters, kcomp, kasso, cmodels, mstats );
@@ -3249,6 +3254,13 @@ DbgLv(0) << "FEM:WrRep: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
       rtitl << tr( "K_dissociation" )
             << tr( "K_off Rate" );
 
+      // Show summary of RMSDs
+      mstr += table_row( tr( "(All)" ), tr( "RMSD" ),
+                         QString().sprintf( "%10.4e", rstats[ 2] ),
+                         QString().sprintf( "%10.4e", rstats[11] ),
+                         QString().sprintf( "%10.4e", rstats[12] ) );
+
+      // Show summary of component attributes
       for ( int ii = 0; ii < ncomp; ii++ )
       {
          QString compnum = QString().sprintf( "%2d", ii + 1 );
@@ -3271,6 +3283,7 @@ DbgLv(0) << "FEM:WrRep: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
       mstr += table_row( tr( "Reaction" ), tr( "Attribute" ),
                          tr( "Mean_Value" ), tr( "99%_Confidence(low)"  ),
                          tr( "99%_Confidence(high)" ) );
+      // Show summary of association attributes;
       for ( int ii = 0; ii < nasso; ii++ )
       {
          QString reacnum = QString().sprintf( "%2d", ii + 1 );
@@ -3303,6 +3316,59 @@ DbgLv(0) << "FEM:WrRep: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
       int ireac       = 1;
       int kdmax       = 6;
       int kk          = 0;
+
+      // First, the RMSDs
+      mstr += indent( 4 ) + tr( "<h4>Details for MC Iteration RMSDs:</h4>\n" );
+      mstr += indent( 4 ) + "<table>\n";
+      mstr += table_row( tr( "Minimum:" ),
+              QString().sprintf( "%10.4e", rstats[  0 ] ) );
+      mstr += table_row( tr( "Maximum:" ),
+              QString().sprintf( "%10.4e", rstats[  1 ] ) );
+      mstr += table_row( tr( "Mean:" ),
+              QString().sprintf( "%10.4e", rstats[  2 ] ) );
+      mstr += table_row( tr( "Median:" ),
+              QString().sprintf( "%10.4e", rstats[  3 ] ) );
+      mstr += table_row( tr( "Skew:" ),
+              QString().sprintf( "%10.4e", rstats[  4 ] ) );
+      mstr += table_row( tr( "Kurtosis:" ),
+              QString().sprintf( "%10.4e", rstats[  5 ] ) );
+      mstr += table_row( tr( "Lower Mode:" ),
+              QString().sprintf( "%10.4e", rstats[  6 ] ) );
+      mstr += table_row( tr( "Upper Mode:" ),
+              QString().sprintf( "%10.4e", rstats[  7 ] ) );
+      mstr += table_row( tr( "Mode Center:" ),
+              QString().sprintf( "%10.4e", rstats[  8 ] ) );
+      mstr += table_row( tr( "95% Confidence Interval Low:" ),
+              QString().sprintf( "%10.4e", rstats[  9 ] ) );
+      mstr += table_row( tr( "95% Confidence Interval High:" ),
+              QString().sprintf( "%10.4e", rstats[ 10 ] ) );
+      mstr += table_row( tr( "99% Confidence Interval Low:" ),
+              QString().sprintf( "%10.4e", rstats[ 11 ] ) );
+      mstr += table_row( tr( "99% Confidence Interval High:" ),
+              QString().sprintf( "%10.4e", rstats[ 12 ] ) );
+      mstr += table_row( tr( "Standard Deviation:" ),
+              QString().sprintf( "%10.4e", rstats[ 13 ] ) );
+      mstr += table_row( tr( "Standard Error:" ),
+              QString().sprintf( "%10.4e", rstats[ 14 ] ) );
+      mstr += table_row( tr( "Variance:" ),
+              QString().sprintf( "%10.4e", rstats[ 15 ] ) );
+      mstr += table_row( tr( "Correlation Coefficient:" ),
+              QString().sprintf( "%10.4e", rstats[ 16 ] ) );
+      mstr += table_row( tr( "Number of Bins:" ),
+              QString().sprintf( "%10.0f", rstats[ 17 ] ) );
+      mstr += table_row( tr( "Distribution Area:" ),
+              QString().sprintf( "%10.4e", rstats[ 18 ] ) );
+      mstr += table_row( tr( "95% Confidence Limit Low:" ),
+              QString().sprintf( "%10.4e", rstats[ 19 ] ) );
+      mstr += table_row( tr( "95% Confidence Limit High:" ),
+              QString().sprintf( "%10.4e", rstats[ 20 ] ) );
+      mstr += table_row( tr( "99% Confidence Limit Low:" ),
+              QString().sprintf( "%10.4e", rstats[ 21 ] ) );
+      mstr += table_row( tr( "99% Confidence Limit High:" ),
+              QString().sprintf( "%10.4e", rstats[ 22 ] ) );
+      mstr += indent( 4 ) + "</table>\n";
+
+      // Then, components and attributes
       for ( kd = 0; kd < ntatt; kd++ )
       {
          QString compnum = tr( "Component %1 " ).arg( icomp );
@@ -3924,6 +3990,30 @@ void US_FeMatch::update_mc_model()
    }
 }
 
+// Build rmsd statistics
+void US_FeMatch::build_rmsd_stats( const int mciters,
+      QVector< US_Model >& cmodels, QVector< double >& rstats )
+{
+   const int stsiz    = 23;
+   QVector< double > rmsds;
+   QVector< double > rconcs;
+
+   rstats.fill( 0.0, stsiz );
+
+   // Get statistics for RMSDs
+   for ( int jj = 0; jj < mciters; jj++ )
+   {
+      double vari      = cmodels[ jj ].variance;
+      double rmsd      = sqrt( vari );
+      rmsds << rmsd;
+      rconcs << 1.0;
+   }
+
+   compute_statistics( mciters, rmsds, rconcs, rstats );
+DbgLv(1) << "FEM:BRs:   iters" << mciters << "RMSD min max mean median"
+   << rstats[0] << rstats[1] << rstats[2] << rstats[3];
+}
+
 // Build model attribute statistics
 int US_FeMatch::build_model_stats( const int mciters,
       int& ncomp, int& nasso, QVector< US_Model >& cmodels,
@@ -3943,6 +4033,7 @@ int US_FeMatch::build_model_stats( const int mciters,
    nasso            = cmodels[ 0 ].associations.size();
    int ntatts       = ncomp * ncatt + nasso * naatt;
    mstats.resize( ntatts );
+
    int kt           = 0;
 DbgLv(1) << "FEM:BMs:  ncomp" << ncomp << "nasso" << nasso
  << "ntatts" << ntatts << "mciters" << mciters;
