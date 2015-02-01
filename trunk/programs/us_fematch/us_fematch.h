@@ -234,6 +234,8 @@ class US_FeMatch : public US_Widgets
       void    modbtn_clicked ( bool );
       void    next_model     ( void );
       void    update_mc_model( void );
+      void    build_rmsd_stats  ( const int, QVector< US_Model >&,
+                                  QVector< double >& );
       int     build_model_stats ( const int, int&, int&,
                                   QVector< US_Model >&,
                                   QVector< QVector< double > >& );
