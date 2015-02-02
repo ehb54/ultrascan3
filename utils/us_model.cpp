@@ -163,7 +163,6 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    double f0;               // f-zero
    double s20w;
    double buoyancyb;
-   US_Math2::SolutionData d; // data correction object
 
    // Ensure that we have a vbar we can use
    vbar           = component.vbar20;
@@ -187,13 +186,6 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
    f_f0           = component.f_f0;
    c              = component.signal_concentration;
    fv             = f;
-
-   d.vbar         = TYPICAL_VBAR;       // data correction for buoyancy
-   d.vbar20       = vbar;
-   d.density      = DENS_20W;
-   d.viscosity    = VISC_20W;
-
-   US_Math2::data_correction( NORMAL_TEMP, d );
 
    // Start with already calculated s if possible
    if ( s != 0.0 )
@@ -235,9 +227,9 @@ bool US_Model::calc_coefficients( SimulationComponent& component )
                                                  ///////////////
       else if ( mw != 0.0 )                      // s and mw
       {                                          ///////////////
-         D              = s * R * t / ( d.buoyancyb * mw );
+         D              = s * R * t / ( buoyancyb * mw );
          D             *= ssgn;
-         fv             = mw * d.buoyancyb / ( s20w * AVOGADRO );
+         fv             = mw * buoyancyb / ( s20w * AVOGADRO );
          fv            *= ssgn;
          volume         = vbar * mw / AVOGADRO;
          radius_sphere  = pow( volume * vol_fac, onethird );

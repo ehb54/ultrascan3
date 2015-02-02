@@ -1839,18 +1839,15 @@ DbgLv(0) << "FEM:AdjMd: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
 
       for ( int ii = 0; ii < ncomp; ii++ )
       {  // Pick up mean|median|mode of any floating attributes
-         bool fltc      = ( mstats[ ks     ][ 0 ] != mstats[ ks     ][ 1 ] );
-         bool fltv      = ( mstats[ ks + 1 ][ 0 ] != mstats[ ks + 1 ][ 1 ] );
-         bool fltw      = ( mstats[ ks + 2 ][ 0 ] != mstats[ ks + 2 ][ 1 ] );
-         bool flts      = ( mstats[ ks + 3 ][ 0 ] != mstats[ ks + 3 ][ 1 ] );
-         bool fltd      = ( mstats[ ks + 4 ][ 0 ] != mstats[ ks + 4 ][ 1 ] );
-         bool fltf      = ( mstats[ ks + 5 ][ 0 ] != mstats[ ks + 5 ][ 1 ] );
-         double conc    = fltc ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
-         double vbar    = fltv ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
-         double mw      = fltw ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
-         double sedc    = flts ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
-         double difc    = fltd ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
-         double ff0     = fltf ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
+         bool fixs      = ( mstats[ ks + 3 ][ 0 ] == mstats[ ks + 3 ][ 1 ] );
+         bool fixd      = ( mstats[ ks + 4 ][ 0 ] == mstats[ ks + 4 ][ 1 ] );
+         bool fixk      = ( mstats[ ks + 5 ][ 0 ] == mstats[ ks + 5 ][ 1 ] );
+         double conc    = mstats[ ks++ ][ stx ];
+         double vbar    = mstats[ ks++ ][ stx ];
+         double mw      = mstats[ ks++ ][ stx ];
+         double sedc    = mstats[ ks++ ][ stx ];
+         double difc    = mstats[ ks++ ][ stx ];
+         double ff0     = mstats[ ks++ ][ stx ];
          conc           = model.is_product( ii ) ? 0.0 : conc;
 
          model.components[ ii ]         = model_loaded.components[ ii ];
@@ -1862,21 +1859,62 @@ DbgLv(0) << "FEM:AdjMd: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
          model.components[ ii ].f_f0    = 0.0;
          model.components[ ii ].f       = 0.0;
 
-         if ( flts )
+         if ( fixk )
+            model.components[ ii ].f_f0    = ff0;
+         else if ( fixs )
             model.components[ ii ].s       = sedc;
-         else if ( fltd )
+         else if ( fixd )
             model.components[ ii ].D       = difc;
          else
             model.components[ ii ].f_f0    = ff0;
-
-         model.calc_coefficients( model.components[ ii ] );
-DbgLv(0) << "FEM:AdjMd: Cii=" << ii << "c v w s k"
+//*DEBUG*
+DbgLv(1) << "FEM:UajMd: Cii=" << ii << "c v w s d k"
  << model.components[ii].signal_concentration
  << model.components[ii].vbar20
  << model.components[ii].mw
  << model.components[ii].s
- << model.components[ii].f_f0 << "flts,d" << flts << fltd;
-      }
+ << model.components[ii].D
+ << model.components[ii].f_f0 << "fixs,d,k" << fixs << fixd << fixk;
+         model.calc_coefficients( model.components[ ii ] );
+DbgLv(1) << "FEM:AdjMd:  Cii=" << ii << "c v w s d k"
+ << model.components[ii].signal_concentration
+ << model.components[ii].vbar20
+ << model.components[ii].mw
+ << model.components[ii].s
+ << model.components[ii].D
+ << model.components[ii].f_f0;
+model.components[ii].D   =0.0;
+model.components[ii].f_f0=0.0;
+model.components[ii].f   =0.0;
+model.calc_coefficients(model.components[ii]);
+DbgLv(1) << "FEM:AdjMd:   fixS s d k" << model.components[ii].s
+ << model.components[ii].D << model.components[ii].f_f0;
+model.components[ii].s   =0.0;
+model.components[ii].f_f0=0.0;
+model.components[ii].f   =0.0;
+model.calc_coefficients(model.components[ii]);
+DbgLv(1) << "FEM:AdjMd:   fixD s d k" << model.components[ii].s
+ << model.components[ii].D << model.components[ii].f_f0;
+model.components[ii].s   =0.0;
+model.components[ii].D   =0.0;
+model.components[ii].f   =0.0;
+model.calc_coefficients(model.components[ii]);
+DbgLv(1) << "FEM:AdjMd:   fixK s d k" << model.components[ii].s
+ << model.components[ii].D << model.components[ii].f_f0;
+model.components[ii].mw  =0.0;
+model.components[ii].D   =0.0;
+model.components[ii].f   =0.0;
+model.calc_coefficients(model.components[ii]);
+DbgLv(1) << "FEM:AdjMd:   fixD w d k" << model.components[ii].mw
+ << model.components[ii].D << model.components[ii].f_f0;
+model.components[ii].s   =0.0;
+model.components[ii].mw  =0.0;
+model.components[ii].f   =0.0;
+model.calc_coefficients(model.components[ii]);
+DbgLv(1) << "FEM:AdjMd:   fixK s d w" << model.components[ii].s
+ << model.components[ii].D << model.components[ii].mw;
+//*DEBUG*
+      }  // END: components loop
 
       for ( int ii = 0; ii < nasso; ii++ )
       {
@@ -1887,10 +1925,10 @@ DbgLv(0) << "FEM:AdjMd: Cii=" << ii << "c v w s k"
          model.associations[ ii ]         = model_loaded.associations[ ii ];
          model.associations[ ii ].k_d     = k_d;
          model.associations[ ii ].k_off   = k_off;
-DbgLv(0) << "FEM:AdjMd: Aii=" << ii << "d off"
+DbgLv(1) << "FEM:AdjMd: Aii=" << ii << "d off"
  << model.associations[ii].k_d << model.associations[ii].k_off;
-      }
-   }
+      }  // END: associations loop
+   }  // END: DMGA-MC treatment
 
    // Save newly composed model for use in statistics
    model_used         = model;
@@ -1931,52 +1969,16 @@ DbgLv(1) << "Fem:Adj: manual" << manual << solution.manual << solution_rec.buffe
       dcorrec      = sd.D20w_correction;
    }
 
-   // fill out components values and adjust s,D based on buffer
+   // Convert to experiment space: adjust s,D based on buffer
 
    for ( int jj = 0; jj < model.components.size(); jj++ )
    {
       US_Model::SimulationComponent* sc = &model.components[ jj ];
 
-      if ( sc->vbar20 == 0.0 )
-         sc->vbar20  = vbar20;
- double s0_k = sc->f_f0;
- double s0_s = sc->s;
- double s0_D = sc->D;
- double s0_w = sc->mw;
- double s0_b = sc->vbar20;
-
-      sc->mw      = 0.0;
-      sc->f       = 0.0;
-      sc->D       = 0.0;
-
-      model.calc_coefficients( *sc );
-if ( dbg_level > 0 && jj < 2 ) {
- DbgLv(1) << "AdjMo: 0) s" << s0_s << "k" << s0_k << "D" << s0_D
-  << "mw" << s0_w << "vbar20" << s0_b << "  jj" << jj;
- double s1_k = sc->f_f0;
- double s1_s = sc->s;
- double s1_D = sc->D;
- double s1_w = sc->mw;
- double s1_b = sc->vbar20;
- DbgLv(1) << "AdjMo:  1) s" << s1_s << "k" << s1_k << "D" << s1_D
-  << "mw" << s1_w << "vbar20" << s1_b;
- double D20w = R * K20 / ( AVOGADRO * 18.0 * M_PI *
-   pow(s0_k * VISC_20W / 100.0, 3.0 / 2.0) * 
-   sqrt(qAbs(s0_s) * s1_b / (2.0 * (1.0 - s1_b * DENS_20W))));
- sc->mw = sc->f = sc->f_f0 = 0.0;
- sc->D = D20w;
- model.calc_coefficients( *sc );
-double s2_k = sc->f_f0;
-double s2_s = sc->s;
-double s2_D = sc->D;
-double s2_w = sc->mw;
-double s2_b = sc->vbar20;
- DbgLv(1) << "AdjMo:  2) s" << s2_s << "k" << s2_k << "D" << s2_D
-  << "mw" << s2_w << "vbar20" << s2_b;
-}
+      sc->vbar20  = ( sc->vbar20 == 0.0 ) ? vbar20 : sc->vbar20;
 
       if ( ! cnstvb )
-      {
+      {  // Set s,D corrections based on component vbar
          sd.vbar20   = sc->vbar20;
          sd.vbar     = US_Math2::adjust_vbar( sd.vbar20, avgTemp );
          US_Math2::data_correction( avgTemp, sd );
