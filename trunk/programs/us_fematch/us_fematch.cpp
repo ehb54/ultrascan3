@@ -4,6 +4,7 @@
 #include <QtSvg>
 
 #include "us_fematch.h"
+#include "us_adv_dmgamc.h"
 #include "us_thread_worker.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -194,12 +195,16 @@ US_FeMatch::US_FeMatch() : US_Widgets()
             this,         SLOT(   get_solution() ) );
 
    pb_advanced = us_pushbutton( tr( "Advanced Analysis Controls" ) );
+   pb_adv_dmga = us_pushbutton( tr( "Advanced DMGA-MC Controls" ) );
    pb_plot3d   = us_pushbutton( tr( "3D Plot"       ) );
    pb_plotres  = us_pushbutton( tr( "Residual Plot" ) );
    pb_advanced->setEnabled( false );
+   pb_adv_dmga->setEnabled( false );
 
    connect( pb_advanced, SIGNAL( clicked()  ),
             this,        SLOT(   advanced() ) );
+   connect( pb_adv_dmga, SIGNAL( clicked()  ),
+            this,        SLOT(   adv_dmga() ) );
    connect( pb_plot3d,   SIGNAL( clicked()  ),
             this,        SLOT(   plot3d()   ) );
    connect( pb_plotres,  SIGNAL( clicked()  ),
@@ -233,7 +238,8 @@ us_setReadOnly( le_compress, true );
    parameterLayout->addWidget( le_variance     , row,   1, 1, 1 );
    parameterLayout->addWidget( lb_rmsd         , row,   2, 1, 1 );
    parameterLayout->addWidget( le_rmsd         , row++, 3, 1, 1 );
-   parameterLayout->addWidget( pb_advanced     , row++, 0, 1, 4 );
+   parameterLayout->addWidget( pb_advanced     , row,   0, 1, 2 );
+   parameterLayout->addWidget( pb_adv_dmga     , row++, 2, 1, 2 );
    parameterLayout->addWidget( pb_plot3d       , row,   0, 1, 2 );
    parameterLayout->addWidget( pb_plotres      , row++, 2, 1, 2 );
 
@@ -686,6 +692,7 @@ bcomp="0.0";
    pb_simumodel->setEnabled( false );
    pb_distrib  ->setEnabled( false );
    pb_advanced ->setEnabled( false );
+   pb_adv_dmga ->setEnabled( false );
    pb_plot3d   ->setEnabled( false );
    pb_plotres  ->setEnabled( false );
    pb_distrib  ->setText   ( tr( "s20,W Distribution" ) );
@@ -1682,6 +1689,16 @@ void US_FeMatch::advanced( )
    advdiag->show();
 }
 
+// Open a dialog with advanced DMGA-MC analysis parameters
+void US_FeMatch::adv_dmga( )
+{
+   US_AdvDmgaMc* advddiag;
+
+   advddiag = new US_AdvDmgaMc( &model_used, imodels, adv_vals,
+                               (QWidget*)this );
+   advddiag->show();
+}
+
 // open 3d plot dialog
 void US_FeMatch::plot3d( )
 {
@@ -1745,14 +1762,15 @@ void US_FeMatch::load_model( )
 
    qApp->processEvents();
 
-//   if ( model.monteCarlo )
-//      adjust_mc_model();
 DbgLv(1) << "post-Load m,e,r GUIDs" << model.modelGUID << model.editGUID
  << model.requestGUID;
 DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
 
    model_loaded = model;   // Save model exactly as loaded
    model_used   = model;   // Make that the working model
+   is_dmga_mc   = ( model.monteCarlo  &&
+                    model.description.contains( "DMGA" )  &&
+                    model.description.contains( "_mcN" ) );
 
    if ( model.components.size() == 0 )
    {
@@ -1769,169 +1787,19 @@ DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
       load_noise();
 
    pb_advanced ->setEnabled( true );
+   pb_adv_dmga ->setEnabled( is_dmga_mc );
    pb_simumodel->setEnabled( true );
+
+   if ( is_dmga_mc )
+   {  // For DMGA-MC loaded model, build the vector of iteration models
+      US_DmgaMcStats::build_imodels( model_loaded, imodels );
+   }
 }
 
 // Adjust model components based on buffer, vbar, and temperature
 void US_FeMatch::adjust_model()
 {
-   model          = model_used;
-   QString smtype = adv_vals[ "modelsim" ];
-DbgLv(1) << "FEM:AdjMd:  smtype" << smtype;
-
-   if ( smtype != "model"  &&  model_used.monteCarlo  &&
-         model_used.description.contains( "DMGA" )  &&
-         model_used.description.contains( "_mcN" ) )
-   {  // Recompose model based on DMGA-MC statistics
-      QStringList xmls;
-      QVector< US_Model > cmodels;
-      QVector< QVector< double > > mstats;
-      int stx        = 2;                                 // Mean stats index
-      stx            = ( smtype == "median" ) ? 3 : stx;  // Median stats index
-      stx            = ( smtype == "mode"   ) ? 8 : stx;  // Mode stats index
-DbgLv(1) << "FEM:AdjMd:  stx" << stx;
-
-      US_Model *mp   = (US_Model*)&model_loaded;
-      int nxmls      = mp->mc_iter_xmls( xmls );
-      // Compute DMGA-MC statistics
-      int ncomp      = 0;
-      int nasso      = 0;
-      int kcomp      = 0;
-      int kasso      = 0;
-      int niters     = 0;
-
-      for ( int ii = 0; ii < nxmls; ii++ )
-      {  // Build the individual iteration models
-         QString mxml   = xmls[ ii ];
-         int jj         = mxml.indexOf( "description=" );
-         QString mdesc  = QString( mxml ).mid( jj, 100 )
-                          .section( '"', 1, 1 );
-
-         US_Model cmodel;
-         cmodel.load_string( mxml );
-         kcomp          = cmodel.components.size();
-         kasso          = cmodel.associations.size();;
-DbgLv(1) << "FEM:AdjMd:  ii" << ii << "xml.desc" << mdesc;
-DbgLv(1) << "FEM:AdjMd:     ncomp" << kcomp << "nassoc" << kasso;
-
-         if ( ii == 0 )
-         {
-            ncomp          = kcomp;
-            nasso          = kasso;
-         }
-
-         if ( kcomp == ncomp  ||  kasso == nasso )
-         {
-            niters++;
-            cmodels << cmodel;
-         }
-         else
-DbgLv(0) << "FEM:AdjMd: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
-
-      }
-
-      // Build statistics across iterations
-      build_model_stats( niters, kcomp, kasso, cmodels, mstats );
-
-      model.components  .resize( ncomp );
-      model.associations.resize( nasso );
-      int ks         = 0;
-
-      for ( int ii = 0; ii < ncomp; ii++ )
-      {  // Pick up mean|median|mode of any floating attributes
-         bool fixs      = ( mstats[ ks + 3 ][ 0 ] == mstats[ ks + 3 ][ 1 ] );
-         bool fixd      = ( mstats[ ks + 4 ][ 0 ] == mstats[ ks + 4 ][ 1 ] );
-         bool fixk      = ( mstats[ ks + 5 ][ 0 ] == mstats[ ks + 5 ][ 1 ] );
-         double conc    = mstats[ ks++ ][ stx ];
-         double vbar    = mstats[ ks++ ][ stx ];
-         double mw      = mstats[ ks++ ][ stx ];
-         double sedc    = mstats[ ks++ ][ stx ];
-         double difc    = mstats[ ks++ ][ stx ];
-         double ff0     = mstats[ ks++ ][ stx ];
-         conc           = model.is_product( ii ) ? 0.0 : conc;
-
-         model.components[ ii ]         = model_loaded.components[ ii ];
-         model.components[ ii ].signal_concentration = conc;
-         model.components[ ii ].vbar20  = vbar;
-         model.components[ ii ].mw      = mw;
-         model.components[ ii ].s       = 0.0;
-         model.components[ ii ].D       = 0.0;
-         model.components[ ii ].f_f0    = 0.0;
-         model.components[ ii ].f       = 0.0;
-
-         if ( fixk )
-            model.components[ ii ].f_f0    = ff0;
-         else if ( fixs )
-            model.components[ ii ].s       = sedc;
-         else if ( fixd )
-            model.components[ ii ].D       = difc;
-         else
-            model.components[ ii ].f_f0    = ff0;
-//*DEBUG*
-DbgLv(1) << "FEM:UajMd: Cii=" << ii << "c v w s d k"
- << model.components[ii].signal_concentration
- << model.components[ii].vbar20
- << model.components[ii].mw
- << model.components[ii].s
- << model.components[ii].D
- << model.components[ii].f_f0 << "fixs,d,k" << fixs << fixd << fixk;
-         model.calc_coefficients( model.components[ ii ] );
-DbgLv(1) << "FEM:AdjMd:  Cii=" << ii << "c v w s d k"
- << model.components[ii].signal_concentration
- << model.components[ii].vbar20
- << model.components[ii].mw
- << model.components[ii].s
- << model.components[ii].D
- << model.components[ii].f_f0;
-model.components[ii].D   =0.0;
-model.components[ii].f_f0=0.0;
-model.components[ii].f   =0.0;
-model.calc_coefficients(model.components[ii]);
-DbgLv(1) << "FEM:AdjMd:   fixS s d k" << model.components[ii].s
- << model.components[ii].D << model.components[ii].f_f0;
-model.components[ii].s   =0.0;
-model.components[ii].f_f0=0.0;
-model.components[ii].f   =0.0;
-model.calc_coefficients(model.components[ii]);
-DbgLv(1) << "FEM:AdjMd:   fixD s d k" << model.components[ii].s
- << model.components[ii].D << model.components[ii].f_f0;
-model.components[ii].s   =0.0;
-model.components[ii].D   =0.0;
-model.components[ii].f   =0.0;
-model.calc_coefficients(model.components[ii]);
-DbgLv(1) << "FEM:AdjMd:   fixK s d k" << model.components[ii].s
- << model.components[ii].D << model.components[ii].f_f0;
-model.components[ii].mw  =0.0;
-model.components[ii].D   =0.0;
-model.components[ii].f   =0.0;
-model.calc_coefficients(model.components[ii]);
-DbgLv(1) << "FEM:AdjMd:   fixD w d k" << model.components[ii].mw
- << model.components[ii].D << model.components[ii].f_f0;
-model.components[ii].s   =0.0;
-model.components[ii].mw  =0.0;
-model.components[ii].f   =0.0;
-model.calc_coefficients(model.components[ii]);
-DbgLv(1) << "FEM:AdjMd:   fixK s d w" << model.components[ii].s
- << model.components[ii].D << model.components[ii].mw;
-//*DEBUG*
-      }  // END: components loop
-
-      for ( int ii = 0; ii < nasso; ii++ )
-      {
-         bool fltd      = ( mstats[ ks     ][ 0 ] != mstats[ ks     ][ 1 ] );
-         bool flto      = ( mstats[ ks + 1 ][ 0 ] != mstats[ ks + 1 ][ 1 ] );
-         double k_d     = fltd ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
-         double k_off   = flto ? mstats[ ks++ ][ stx ] : mstats[ ks++ ][ 0 ];
-         model.associations[ ii ]         = model_loaded.associations[ ii ];
-         model.associations[ ii ].k_d     = k_d;
-         model.associations[ ii ].k_off   = k_off;
-DbgLv(1) << "FEM:AdjMd: Aii=" << ii << "d off"
- << model.associations[ii].k_d << model.associations[ii].k_off;
-      }  // END: associations loop
-   }  // END: DMGA-MC treatment
-
-   // Save newly composed model for use in statistics
-   model_used         = model;
+   model              = model_used;
 
    // build model component correction factors
    double avgTemp     = edata->average_temperature();
@@ -1995,70 +1863,7 @@ DbgLv(1) << "Fem:Adj: manual" << manual << solution.manual << solution_rec.buffe
 
 }
 
-// Compress and average monte carlo model components
-void US_FeMatch::adjust_mc_model()
-{
-   model_loaded       = model;
-   int ncomp          = model.components.size();
-DbgLv(1) << "AMM: ncomp" << ncomp;
-
-   QStringList mlistn;
-   QStringList mlistx;
-
-   // build a set of lists that will enable components sorted by s,k
-   for ( int ii = 0; ii < ncomp; ii++ )
-   {
-      double  sval = model.components[ ii ].s;
-      double  kval = model.components[ ii ].f_f0;
-      int     isv  = qRound( sval * 1.0e+19 );
-      int     ikv  = qRound( kval * 1.0e+06 );
-      QString amx  = QString().sprintf( "%09i:%09i:%04i", isv, ikv, ii );
-
-      mlistx << amx;
-      mlistn << amx.section( ':', 0, 1 );
-if ( ii<3 || (ncomp-ii)<4 )
-DbgLv(1) << "AMM:  ii" << ii << " amx" << amx;
-   }
-
-   // sort the lists
-   mlistn.sort();
-   mlistx.sort();
-   model.components.clear();
-
-   // re-order, compress, and average the model
-
-   for ( int ii = 0; ii < ncomp; ii++ )
-   {
-      int    jj    = mlistx[ ii ].section( ':', 2, 2 ).toInt();
-      int    kdup  = mlistn.count( mlistn[ ii ] );
-      US_Model::SimulationComponent mcomp = model_loaded.components[ jj ];
-
-      if ( kdup == 1 )
-      {  // if a single version of this component, output it as is
-         model.components << mcomp;
-      }
-
-      else
-      {  // for multiples find average concentration; use modified component
-         double cconc = mcomp.signal_concentration;
-DbgLv(1) << "AMM:  ii kdup" << ii << kdup << "  cconc0" << cconc;
-
-         for ( int cc = 1; cc < kdup; cc++ )
-         {
-            int    kk    = mlistx[ ++ii ].section( ':', 2, 2 ).toInt();
-            cconc       += model_loaded.components[ kk ].signal_concentration;
-         }
-
-         mcomp.signal_concentration = cconc / (double)kdup;
-DbgLv(1) << "AMM:      ii" << ii << " cconc" << cconc;
-
-         model.components << mcomp;
-      }
-   }
-DbgLv(1) << "AMM:  kcomp" << model.components.size();
-}
-
-// load noise record(s) if there are any and user so chooses
+// Load noise record(s) if there are any and user so chooses
 void US_FeMatch::load_noise( )
 {
    QStringList mieGUIDs;  // list of GUIDs of models-in-edit
@@ -2956,25 +2761,22 @@ QString US_FeMatch::scan_info( void ) const
 // Distribution information HTML string
 QString US_FeMatch::distrib_info()
 {
-   int ncomp      = model_loaded.components.size();
-   //model_used     = model_loaded;
+   int  ncomp     = model_used.components.size();
    
    if ( ncomp == 0 )
       return "";
 
    QString msim   = adv_vals[ "modelsim" ];
 
-   if ( model_used.monteCarlo  &&
-        model_used.description.contains( "DMGA" )  &&
-        model_used.description.contains( "_mcN" ) )
+   if ( is_dmga_mc )
    {
+
       if ( msim == "model" )
-      {  // Retain DMGA-MC model as is
-         msim           = "";
+      {  // Use DMGA-MC single-iteration model
+         msim           = "<b>&nbsp;&nbsp;( single iteration )</b>";
       }
       else
-      {  // Replace loaded model with mean|median|mode one
-         ncomp          = model_used.components.size();
+      {  // Use mean|median|mode model
          msim           = "<b>&nbsp;&nbsp;( " + msim + " )</b>";
       }
    }
@@ -3171,69 +2973,19 @@ QString US_FeMatch::distrib_info()
 
    mstr += indent( 4 ) + "</table>\n";
 
-   QStringList xmls;
-   int nxmls      = 0;
-   mdla           = model_loaded.description
-                  .section( ".", -2, -2 ).section( "_", 1, -1 );
-   if ( mdla.isEmpty() )
-      mdla           = model_loaded.description.section( ".", 0, -2 );
-//   if ( mdla.contains( "_mcN" ) )
-   if ( mdla.contains( "_mcN" )  &&  mdla.contains( "DMGA" ) )
-   {  // Look for iteration models from DMGA-RA-MC model
-      US_Model *mp   = (US_Model*)&model_loaded;
-      nxmls          = mp->mc_iter_xmls( xmls );
-   }
-else
-DbgLv(1) << "FEM:WrRep: NOT DMGA-RA-MC";
-DbgLv(1) << "FEM:WrRep: nxmls" << nxmls;
-
-   if ( nxmls > 1 )
+   if ( is_dmga_mc )
    {  // Compute DMGA-MC statistics and add them to the report
-      QVector< US_Model > cmodels;
-      QVector< QVector< double > > mstats;
-      int ncomp      = 0;
-      int nasso      = 0;
-      int kcomp      = 0;
-      int kasso      = 0;
-      int niters     = 0;
-
-      for ( int ii = 0; ii < nxmls; ii++ )
-      {  // Build the individual iteration models
-         QString mxml   = xmls[ ii ];
-         int jj         = mxml.indexOf( "description=" );
-         QString mdesc  = QString( mxml ).mid( jj, 100 )
-                          .section( '"', 1, 1 );
-
-         US_Model cmodel;
-         cmodel.load_string( mxml );
-         kcomp          = cmodel.components.size();
-         kasso          = cmodel.associations.size();;
-DbgLv(1) << "FEM:WrRep:  ii" << ii << "xml.desc" << mdesc;
-DbgLv(1) << "FEM:WrRep:     ncomp" << kcomp << "nassoc" << kasso
- << "RMSD" << sqrt(cmodel.variance);
-
-         if ( ii == 0 )
-         {
-            ncomp          = kcomp;
-            nasso          = kasso;
-         }
-
-         if ( kcomp == ncomp  ||  kasso == nasso )
-         {
-            niters++;
-            cmodels << cmodel;
-         }
-         else
-DbgLv(0) << "FEM:WrRep: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
-
-      }
+      QVector< double >             rstats;
+      QVector< QVector< double > >  mstats;
+      int niters     = imodels.size();
+      int ncomp      = imodels[ 0 ].components  .size();
+      int nreac      = imodels[ 0 ].associations.size();
 
       // Build RMSD statistics across iterations
-      QVector< double > rstats;
-      build_rmsd_stats( niters, cmodels, rstats );
+      US_DmgaMcStats::build_rmsd_stats( niters, imodels, rstats );
 
       // Build statistics across iterations
-      int ntatt = build_model_stats( niters, kcomp, kasso, cmodels, mstats );
+      int ntatt = US_DmgaMcStats::build_model_stats( niters, imodels, mstats );
 
       // Compose the summary statistics chart
       mstr += indent( 4 );
@@ -3285,8 +3037,8 @@ DbgLv(0) << "FEM:WrRep: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
       mstr += table_row( tr( "Reaction" ), tr( "Attribute" ),
                          tr( "Mean_Value" ), tr( "99%_Confidence(low)"  ),
                          tr( "99%_Confidence(high)" ) );
-      // Show summary of association attributes;
-      for ( int ii = 0; ii < nasso; ii++ )
+      // Show summary of reaction attributes;
+      for ( int ii = 0; ii < nreac; ii++ )
       {
          QString reacnum = QString().sprintf( "%2d", ii + 1 );
          bool is_fixed   = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
@@ -3380,7 +3132,7 @@ DbgLv(0) << "FEM:WrRep: ***ii=" << ii << "kcomp" << kcomp << "kassoc" << kasso;
 
          if ( icomp <= ncomp )
          {  // Title for component detail
-            if ( cmodels[ 0 ].is_product( icomp - 1 )  &&  kk == 0 )
+            if ( imodels[ 0 ].is_product( icomp - 1 )  &&  kk == 0 )
                mstr += compnum + tr( "(Product) Total Concentration" )
                      + ":</h4>\n";
             else
@@ -3740,6 +3492,7 @@ void US_FeMatch::reset( void )
    pb_save     ->setEnabled( false );
    pb_exclude  ->setEnabled( false );
    pb_advanced ->setEnabled( false );
+   pb_adv_dmga ->setEnabled( false );
    pb_plot3d   ->setEnabled( false );
    pb_plotres  ->setEnabled( false );
    le_id       ->setText( "" );
@@ -3906,8 +3659,8 @@ void US_FeMatch::model_table( QString mdtFile )
                perc )                                 + dquote + endln;
    }
 
-   int nasso      = model_used.associations.size();
-   if ( nasso == 0 )
+   int nreac      = model_used.associations.size();
+   if ( nreac == 0 )
       return;
 
    // Write the header line
@@ -3915,8 +3668,8 @@ void US_FeMatch::model_table( QString mdtFile )
        + dquote + "K_dissociation" + dquote + comma
        + dquote + "k_off_Rate"     + dquote + endln;
 
-   for ( int ii = 0; ii < nasso; ii++ )
-   {  // Write each association line
+   for ( int ii = 0; ii < nreac; ii++ )
+   {  // Write each reaction line
       double k_d   = model_used.associations[ ii ].k_d;
       double k_off = model_used.associations[ ii ].k_off;
       ts << dquote + QString().sprintf( "%4d",    ii    ) + dquote + comma
@@ -3990,318 +3743,5 @@ void US_FeMatch::update_mc_model()
    else if ( rb_mode  ->isChecked() )
    {  // The model is the mode of all iteration models
    }
-}
-
-// Build rmsd statistics
-void US_FeMatch::build_rmsd_stats( const int mciters,
-      QVector< US_Model >& cmodels, QVector< double >& rstats )
-{
-   const int stsiz    = 23;
-   QVector< double > rmsds;
-   QVector< double > rconcs;
-
-   rstats.fill( 0.0, stsiz );
-
-   // Get statistics for RMSDs
-   for ( int jj = 0; jj < mciters; jj++ )
-   {
-      double vari      = cmodels[ jj ].variance;
-      double rmsd      = sqrt( vari );
-      rmsds << rmsd;
-      rconcs << 1.0;
-   }
-
-   compute_statistics( mciters, rmsds, rconcs, rstats );
-DbgLv(1) << "FEM:BRs:   iters" << mciters << "RMSD min max mean median"
-   << rstats[0] << rstats[1] << rstats[2] << rstats[3];
-}
-
-// Build model attribute statistics
-int US_FeMatch::build_model_stats( const int mciters,
-      int& ncomp, int& nasso, QVector< US_Model >& cmodels,
-      QVector< QVector< double > >& mstats )
-{
-   QVector< double > concs;
-   QVector< double > vbars;
-   QVector< double > mwts;
-   QVector< double > scos;
-   QVector< double > dcos;
-   QVector< double > ff0s;
-   QVector< double > kds;
-   QVector< double > koffs;
-   const int ncatt  = 6;
-   const int naatt  = 2;
-   ncomp            = cmodels[ 0 ].components.size();
-   nasso            = cmodels[ 0 ].associations.size();
-   int ntatts       = ncomp * ncatt + nasso * naatt;
-   mstats.resize( ntatts );
-
-   int kt           = 0;
-DbgLv(1) << "FEM:BMs:  ncomp" << ncomp << "nasso" << nasso
- << "ntatts" << ntatts << "mciters" << mciters;
-
-   // Get statistics for each component
-   for ( int ii = 0; ii < ncomp; ii++ )
-   {
-      concs.fill( 0.0, mciters );
-      vbars.fill( 0.0, mciters );
-      mwts .fill( 0.0, mciters );
-      scos .fill( 0.0, mciters );
-      dcos .fill( 0.0, mciters );
-      ff0s .fill( 0.0, mciters );
-      int i0         = qMax( 0, ii - 1 );
-
-      for ( int jj = 0; jj < mciters; jj++ )
-      {
-         US_Model::SimulationComponent* sc = &cmodels[ jj ].components[ ii ];
-         US_Model::SimulationComponent* s0 = &cmodels[ jj ].components[ i0 ];
-         concs[ jj ]    = sc->signal_concentration > 0.0 ?
-                          sc->signal_concentration :
-                          s0->signal_concentration;
-         vbars[ jj ]    = sc->vbar20;
-         mwts [ jj ]    = sc->mw;
-         scos [ jj ]    = sc->s;
-         dcos [ jj ]    = sc->D;
-         ff0s [ jj ]    = sc->f_f0;
-      }
-
-      compute_statistics( mciters, concs, concs, mstats[ kt++ ] );
-      compute_statistics( mciters, vbars, concs, mstats[ kt++ ] );
-      compute_statistics( mciters, mwts , concs, mstats[ kt++ ] );
-      compute_statistics( mciters, scos , concs, mstats[ kt++ ] );
-      compute_statistics( mciters, dcos , concs, mstats[ kt++ ] );
-      compute_statistics( mciters, ff0s , concs, mstats[ kt++ ] );
-DbgLv(1) << "FEM:BMs:   ii" << ii << "mean c v w s d k"
- << mstats[kt-6][2] << mstats[kt-5][2] << mstats[kt-4][2]
- << mstats[kt-3][2] << mstats[kt-2][2] << mstats[kt-1][2];
-   }
-
-   // Get statistics for reactions
-   for ( int ii = 0; ii < nasso; ii++ )
-   {
-      US_Model::Association* as = &cmodels[ 0 ].associations[ ii ];
-      int nrcs        = as->rcomps.size();
-      int rc1         = as->rcomps[ 0 ];
-      int rc2         = as->rcomps[ 1 ];
-      //int stoi1       = as->stoichs[ 0 ];
-      //int stoi2       = as->stoichs[ 1 ];
-      //int stoi3       = ( nrcs == 2 ) ? stoi2 : as->stoichs[ 2 ];
-      concs.fill( 0.0, mciters );
-      kds  .fill( 0.0, mciters );
-      koffs.fill( 0.0, mciters );
-
-      if ( nrcs == 2 )
-      {  // Single reactant and a product
-         for ( int jj = 0; jj < mciters; jj++ )
-         {
-            US_Model::Association* as = &cmodels[ jj ].associations[ ii ];
-            US_Model::SimulationComponent* sc = &cmodels[ jj ].components[rc1];
-            concs[ jj ]    = sc->signal_concentration;
-            kds  [ jj ]    = as->k_d;
-            koffs[ jj ]    = as->k_off;
-         }
-
-         compute_statistics( mciters, kds,   concs, mstats[ kt++ ] );
-         compute_statistics( mciters, koffs, concs, mstats[ kt++ ] );
-      }
-
-      else
-      {  // Two reactants and a product (sum concentrations)
-         for ( int jj = 0; jj < mciters; jj++ )
-         {
-            US_Model::Association* as = &cmodels[ jj ].associations[ ii ];
-            US_Model::SimulationComponent* sc = &cmodels[ jj ].components[rc1];
-            US_Model::SimulationComponent* c2 = &cmodels[ jj ].components[rc2];
-            concs[ jj ]    = sc->signal_concentration
-                           + c2->signal_concentration;
-            kds  [ jj ]    = as->k_d;
-            koffs[ jj ]    = as->k_off;
-         }
-
-         compute_statistics( mciters, kds,   concs, mstats[ kt++ ] );
-         compute_statistics( mciters, koffs, concs, mstats[ kt++ ] );
-DbgLv(1) << "FEM:BMs:   ii" << ii << "mean kd ko"
- << mstats[kt-2][2] << mstats[kt-1][2];
-      }
-   }
-
-DbgLv(1) << "FEM:BMs: RETURN w ntatts" << ntatts;
-   return ntatts;
-}
-
-// Perform statistical analysis on a vector of values
-int US_FeMatch::compute_statistics( const int nvals,
-      QVector< double >& vals, QVector< double >& concs,
-      QVector< double >& stats )
-{
-   const int stsiz    = 23;
-   int fix_flag       = 1;                      // Default: fixed
-   int     nbins      = 50;
-   double  vsiz       = (double)nvals;
-   double  binsz      = 50.0;
-   double  vlo        = 9.9e30;
-   double  vhi        = -9.9e30;
-
-   QVector< double > xpvec( qMax( nvals, nbins ) );
-   QVector< double > ypvec( qMax( nvals, nbins ) );
-
-   double  *xplot     = xpvec.data();
-   double  *yplot     = ypvec.data();
-   double  vsum       = 0.0;
-   double  vm2        = 0.0;
-   double  vm3        = 0.0;
-   double  vm4        = 0.0;
-   double  vmean, vmedi;
-   double  mode_cen, mode_lo, mode_hi;
-   double  conf99lo, conf99hi, conf95lo, conf95hi;
-   double  clim99lo, clim99hi, clim95lo, clim95hi;
-   double  skew, kurto, slope, vicep, sigma;
-   double  corr, sdevi, sderr, vari, area;
-   double  bininc, val, conc;
-   double  vctot = 0.0;
-
-   stats.resize( stsiz );
-
-   // Get basic min,max,mean information
-
-   for ( int jj = 0; jj < nvals; jj++ )
-   {
-      val       = vals.at( jj );
-      conc      = concs.at( jj );
-      vsum     += ( val * conc );
-      vctot    += conc;
-      vlo       = qMin( vlo, val );
-      vhi       = qMax( vhi, val );
-      xplot[jj] = (double)jj;
-      yplot[jj] = val;
-   }
-
-   vmean     = vsum / vctot;
-   fix_flag  = ( vlo == vhi );
-
-   if ( fix_flag )
-   {  // Values are the same, special statistics for fixed attribute
-      vmedi     = vmean;
-      mode_cen  = vmean;
-      skew      = 0.0;
-      kurto     = 0.0;
-      mode_lo   = 0.0;
-      mode_hi   = 0.0;
-      conf95lo  = vmean;
-      conf95hi  = vmean;
-      conf99lo  = vmean;
-      conf99hi  = vmean;
-      clim95lo  = vmean;
-      clim95hi  = vmean;
-      clim99lo  = vmean;
-      clim99hi  = vmean;
-      vari      = 0.0;
-      corr      = 0.0;
-      sdevi     = 0.0;
-      sderr     = 0.0;
-      area      = 0.0;
-   }
-
-   else
-   {  // Values are not the same, so statistics need to be computed
-
-      for ( int jj = 0; jj < nvals; jj++ )
-      {  // Get difference information
-         val       = vals.at( jj );
-         double dif = val - vmean;
-         double dsq = dif * dif;
-         vm2      += dsq;           // diff squared
-         vm3      += ( dsq * dif ); // cubed
-         vm4      += ( dsq * dsq ); // to the 4th
-      }
-
-      vm2      /= vsiz;
-      vm3      /= vsiz;
-      vm4      /= vsiz;
-      skew      = vm3 / pow( vm2, 1.5 );
-      kurto     = vm4 / pow( vm2, 2.0 ) - 3.0;
-      vmedi     = ( vlo + vhi ) / 2.0;
-
-      // Do line fit (mainly for corr value)
-      US_Math2::linefit( &xplot, &yplot, &slope, &vicep, &sigma, &corr, nvals );
-
-      // Standard deviation and error
-      sdevi     = pow( vm2, 0.5 );
-      sderr     = sdevi / pow( vsiz, 0.5 );
-      vari      = vm2;
-      area      = 0.0;
-
-      bininc    = ( vhi - vlo ) / binsz;
-
-      // Mode and confidence
-      for ( int ii = 0; ii < nbins; ii++ )
-      {
-         xplot[ii] = vlo + bininc * (double)ii;
-         yplot[ii] = 0.0;
-
-         for ( int jj = 0; jj < nvals; jj++ )
-         {
-            val       = vals.at( jj );
-
-            if ( val >= xplot[ ii ]  &&  val < ( xplot[ ii ] + bininc ) )
-            {
-               yplot[ii] += ( concs.at( jj ) );
-            }
-         }
-
-         area     += yplot[ ii ] * bininc;
-      }
-
-      //double fvdif     = qAbs( ( vhi - vlo ) / vlo );
-      val       = -1.0;
-      int thisb = 0;
-
-      for ( int ii = 0; ii < nbins; ii++ )
-      {
-         if ( yplot[ii] > val )
-         {
-            val       = yplot[ ii ];
-            thisb     = ii;
-         }
-      }
-
-      mode_lo   = xplot[ thisb ];
-      mode_hi   = mode_lo + bininc;
-      mode_cen  = ( mode_lo + mode_hi ) * 0.5;
-      conf99lo  = vmean - 2.576 * sdevi;
-      conf99hi  = vmean + 2.576 * sdevi;
-      conf95lo  = vmean - 1.960 * sdevi;
-      conf95hi  = vmean + 1.960 * sdevi;
-      clim95lo  = conf95hi - mode_cen;
-      clim95hi  = mode_cen - conf95lo;
-      clim99lo  = conf99hi - mode_cen;
-      clim99hi  = mode_cen - conf99lo;
-   }
-
-   stats[  0 ]  = vlo;        // Minimum
-   stats[  1 ]  = vhi;        // Minimum
-   stats[  2 ]  = vmean;      // Mean
-   stats[  3 ]  = vmedi;      // Median
-   stats[  4 ]  = skew;       // Skew
-   stats[  5 ]  = kurto;      // Kurtosis
-   stats[  6 ]  = mode_lo;    // Lower Mode
-   stats[  7 ]  = mode_hi;    // Upper Mode
-   stats[  8 ]  = mode_cen;   // Mode Center
-   stats[  9 ]  = conf95lo;   // 95% Confidence Interval Low
-   stats[ 10 ]  = conf95hi;   // 95% Confidence Interval High
-   stats[ 11 ]  = conf99lo;   // 99% Confidence Interval Low
-   stats[ 12 ]  = conf99hi;   // 99% Confidence Interval High
-   stats[ 13 ]  = sdevi;      // Standard Deviation
-   stats[ 14 ]  = sderr;      // Standard Error
-   stats[ 15 ]  = vari;       // Variance
-   stats[ 16 ]  = corr;       // Correlation Coefficient
-   stats[ 17 ]  = binsz;      // Number of Bins
-   stats[ 18 ]  = area;       // Distribution Area
-   stats[ 19 ]  = clim95lo;   // 95% Confidence Limit Low
-   stats[ 20 ]  = clim95hi;   // 95% Confidence Limit High
-   stats[ 21 ]  = clim99lo;   // 99% Confidence Limit Low
-   stats[ 22 ]  = clim99hi;   // 99% Confidence Limit High
-
-   return fix_flag;
 }
 

@@ -33,7 +33,6 @@ class US_AdvancedFem : public US_WidgetsDialog
 
       QVBoxLayout*  mainLayout;
       QHBoxLayout*  upperLayout;
-      QHBoxLayout*  lowerLayout;
       QGridLayout*  analysisLayout;
       QGridLayout*  modelcomLayout;
 
@@ -42,7 +41,6 @@ class US_AdvancedFem : public US_WidgetsDialog
       QwtCounter*   ct_simpoints;
       QwtCounter*   ct_bldvolume;
       QwtCounter*   ct_parameter;
-      QwtCounter*   ct_modelnbr;
       QwtCounter*   ct_component;
 
       QLineEdit*    le_sedcoeff;
@@ -50,13 +48,6 @@ class US_AdvancedFem : public US_WidgetsDialog
       QLineEdit*    le_moweight;
       QLineEdit*    le_friratio;
       QLineEdit*    le_partconc;
-
-      QGroupBox*    gb_modelsim;
-
-      QRadioButton* rb_curmod;
-      QRadioButton* rb_mode;
-      QRadioButton* rb_mean;
-      QRadioButton* rb_median;
 
       QComboBox*    cb_mesh;
       QComboBox*    cb_grid;

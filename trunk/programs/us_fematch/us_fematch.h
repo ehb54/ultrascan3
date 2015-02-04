@@ -4,6 +4,7 @@
 #include "us_resids_bitmap.h"
 #include "us_plot_control_fem.h"
 #include "us_advanced_fem.h"
+#include "us_dmga_mc_stats.h"
 #include "us_noise_loader.h"
 #include "us_resplot_fem.h"
 #include "us_dataIO.h"
@@ -91,6 +92,7 @@ class US_FeMatch : public US_Widgets
       QPushButton*  pb_save;
       QPushButton*  pb_distrib;
       QPushButton*  pb_advanced;
+      QPushButton*  pb_adv_dmga;
       QPushButton*  pb_plot3d;
       QPushButton*  pb_plotres;
       QPushButton*  pb_reset;
@@ -117,6 +119,7 @@ class US_FeMatch : public US_Widgets
       bool          cnstvb;
       bool          cnstff;
       bool          exp_steps;
+      bool          is_dmga_mc;
 
       QString       run_name;
       QString       cell;
@@ -164,6 +167,7 @@ class US_FeMatch : public US_Widgets
       QList< US_DataIO::RawData >   tsimdats;
       QList< US_Model >             tmodels;
       US_SimulationParameters       simparams;
+      QVector< US_Model >           imodels;
 
    private slots:
 
@@ -173,6 +177,7 @@ class US_FeMatch : public US_Widgets
       void details(   void );
       void reset(     void );
       void advanced(  void );
+      void adv_dmga(  void );
       void plot3d(    void );
       void plotres(   void );
       void update(    int  );
@@ -182,7 +187,6 @@ class US_FeMatch : public US_Widgets
       void view_report(      void );
       void exclude   (       void );
       void adjust_model(     void );
-      void adjust_mc_model(  void );
       void reset_excludes(   void );
       void exclude_from(     double );
       void exclude_to  (     double );
@@ -234,14 +238,6 @@ class US_FeMatch : public US_Widgets
       void    modbtn_clicked ( bool );
       void    next_model     ( void );
       void    update_mc_model( void );
-      void    build_rmsd_stats  ( const int, QVector< US_Model >&,
-                                  QVector< double >& );
-      int     build_model_stats ( const int, int&, int&,
-                                  QVector< US_Model >&,
-                                  QVector< QVector< double > >& );
-      int     compute_statistics( const int, QVector< double >&,
-                                  QVector< double >&,
-                                  QVector< double >& );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };
