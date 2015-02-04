@@ -22,7 +22,6 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
 
    mainLayout      = new QVBoxLayout( this );
    upperLayout     = new QHBoxLayout();
-   lowerLayout     = new QHBoxLayout();
    analysisLayout  = new QGridLayout( );
    modelcomLayout  = new QGridLayout( );
 
@@ -47,12 +46,10 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    QLabel* lb_partconc  = us_label(  tr( "Partial Concentration:"     ) );
 
    QPushButton* pb_component = us_pushbutton( tr( "Next Component" ) );
-   QPushButton* pb_showmodel = us_pushbutton( tr( "Show Model #"   ) );
 
    ct_simpoints = us_counter( 3, 0, 10000,   1 );
    ct_bldvolume = us_counter( 3, 0,   1, 0.001 );
    ct_parameter = us_counter( 2, 1,  50,     1 );
-   ct_modelnbr  = us_counter( 2, 1,  50,     1 );
    ct_component = us_counter( 2, 1, 200,     1 );
 
    le_sedcoeff  = us_lineedit( "", -1, true );
@@ -72,28 +69,7 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    cb_grid->addItem( "Moving Time Grid"                  );
    cb_grid->addItem( "Constant Time Grid"                );
 
-   gb_modelsim  = new QGroupBox(
-      tr( "Simulate data using parameters from model"
-          " or from Monte Carlo statistics" ) );
-   gb_modelsim->setFlat( true );
-   rb_mean      = new QRadioButton( tr( "Mean"          ) );
-   rb_median    = new QRadioButton( tr( "Median"        ) );
-   rb_mode      = new QRadioButton( tr( "Mode"          ) );
-   rb_curmod    = new QRadioButton( tr( "Current Model" ) );
-   gb_modelsim->setFont( pb_showmodel->font() );
-   gb_modelsim->setPalette( US_GuiSettings::normalColor() );
-   QHBoxLayout* mosbox = new QHBoxLayout();
-   mosbox->addWidget( rb_mean   );
-   mosbox->addWidget( rb_median );
-   mosbox->addWidget( rb_mode   );
-   mosbox->addWidget( rb_curmod );
-   mosbox->setSpacing( 0 );
-   gb_modelsim->setLayout( mosbox );
-   rb_mean    ->setChecked( true );
-   lowerLayout->addWidget( gb_modelsim );
-
    mainLayout ->addLayout( upperLayout );
-   mainLayout ->addLayout( lowerLayout );
 
    QPushButton* pb_help    = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
@@ -107,8 +83,6 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    analysisLayout->addWidget( ct_bldvolume,  row++, 3, 1, 3 );
    analysisLayout->addWidget( lb_parameter,  row,   0, 1, 3 );
    analysisLayout->addWidget( ct_parameter,  row++, 3, 1, 3 );
-   analysisLayout->addWidget( pb_showmodel,  row,   0, 1, 3 );
-   analysisLayout->addWidget( ct_modelnbr,   row++, 3, 1, 3 );
    analysisLayout->addWidget( cb_mesh,       row++, 0, 1, 6 );
    analysisLayout->addWidget( cb_grid,       row++, 0, 1, 6 );
    analysisLayout->addWidget( pb_help,       row,   0, 1, 2 );
@@ -133,17 +107,12 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    ct_simpoints->setValue( 200   );
    ct_bldvolume->setValue( 0.015 );
    ct_parameter->setValue( 0     );
-   ct_modelnbr ->setValue( 0     );
    ct_component->setValue( 0     );
    ct_simpoints->setStep(     5 );
    ct_bldvolume->setStep( 0.001 );
    ct_parameter->setStep(     1 );
-   ct_modelnbr ->setStep(     1 );
    ct_component->setStep(     1 );
    ct_component->setMaxValue( model->components.size() );
-
-   pb_showmodel->setEnabled( false );
-   ct_modelnbr ->setEnabled( false );
 
    connect( pb_component, SIGNAL( clicked()        ),
             this,         SLOT(   next_component() ) );
@@ -162,7 +131,7 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
 qDebug() << "Pre-adjust size" << size();
    adjustSize();
 qDebug() << "Post-adjust size" << size();
-   resize( 700, 250 );
+   resize( 700, 150 );
 qDebug() << "Post-resize size" << size();
    qApp->processEvents();
 }
@@ -173,13 +142,8 @@ void US_AdvancedFem::done( void )
    parmap[ "simpoints" ] = QString::number( ct_simpoints->value() );
    parmap[ "bldvolume" ] = QString::number( ct_bldvolume->value() );
    parmap[ "parameter" ] = QString::number( ct_parameter->value() );
-   parmap[ "modelnbr"  ] = QString::number( ct_modelnbr ->value() );
    parmap[ "meshtype"  ] = cb_mesh->currentText();
    parmap[ "gridtype"  ] = cb_grid->currentText();
-   parmap[ "modelsim"  ] = rb_curmod->isChecked() ? "model"  :
-                         ( rb_mode  ->isChecked() ? "mode"   :
-                         ( rb_mean  ->isChecked() ? "mean"   :
-                         ( rb_median->isChecked() ? "median" : "" ) ) );
 
    accept();
 }
