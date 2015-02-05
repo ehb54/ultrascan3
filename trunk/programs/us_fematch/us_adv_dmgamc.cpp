@@ -4,6 +4,7 @@
 #include "us_fematch.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "qwt_legend.h"
 
 // constructor:  advanced analysis control widget
 US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
@@ -14,6 +15,7 @@ US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
    model          = amodel;
    parentw        = p;
    umodel         = *model;
+   lddesc         = umodel.description;
 
    setObjectName( "US_AdvDmgaMC" );
    setPalette( US_GuiSettings::frameColor() );
@@ -30,7 +32,6 @@ US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
                                   tr( "Frequency" ) );
 
    data_plot->setCanvasBackground( Qt::black );
-qDebug() << "AdvD:Msu: A";
 
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
@@ -50,7 +51,6 @@ qDebug() << "AdvD:Msu: A";
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_simulate = us_pushbutton( tr( "Simulate" ) );
    QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
-qDebug() << "AdvD:Msu: C";
 
    le_modtype           = us_lineedit( "", -1, true );
    QPalette mtpal       = le_modtype->palette();
@@ -61,7 +61,6 @@ qDebug() << "AdvD:Msu: C";
    QPushButton* pb_nextparm = us_pushbutton( tr( "Next Parameter >" ) );
    QPushButton* pb_prevparm = us_pushbutton( tr( "< Previous Parameter" ) );
    cb_params            = us_comboBox();
-qDebug() << "AdvD:Msu: D";
    ls_params .clear();
    ls_params << tr( "Component 1 Sedimentation Coefficient" );
    ls_params << tr( "Component 1 Diffusion Coefficient" );
@@ -76,29 +75,28 @@ qDebug() << "AdvD:Msu: D";
    ct_modelnbr  = us_counter( 2, 1,  50,     1 );
 
    QLabel* lb_ms_mean   = us_label(  tr( "Mean" ) );
-   QLabel* lb_ms_99lo   = us_label(  tr( "99% Conf.Low" ) );
-   QLabel* lb_ms_99hi   = us_label(  tr( "99% Conf.High" ) );
+   QLabel* lb_ms_95lo   = us_label(  tr( "95% Conf.Low" ) );
+   QLabel* lb_ms_95hi   = us_label(  tr( "95% Conf.High" ) );
    QLabel* lb_ms_medi   = us_label(  tr( "Median" ) );
    QLabel* lb_ms_mode   = us_label(  tr( "Mode" ) );
-   QLabel* lb_ms_iter   = us_label(  tr( "Iter. 25" ) );
+           lb_ms_iter   = us_label(  tr( "Iteration 25" ) );
    le_ms_mean   = us_lineedit( "", -1, true );
-   le_ms_99lo   = us_lineedit( "", -1, true );
-   le_ms_99hi   = us_lineedit( "", -1, true );
+   le_ms_95lo   = us_lineedit( "", -1, true );
+   le_ms_95hi   = us_lineedit( "", -1, true );
    le_ms_medi   = us_lineedit( "", -1, true );
    le_ms_mode   = us_lineedit( "", -1, true );
    le_ms_iter   = us_lineedit( "", -1, true );
-qDebug() << "AdvD:Msu: E";
 
    int row      = 0;
    paramLayout->addWidget( lb_ms_mean,   row,    0, 1,  2 );
-   paramLayout->addWidget( lb_ms_99lo,   row,    2, 1,  2 );
-   paramLayout->addWidget( lb_ms_99hi,   row,    4, 1,  2 );
+   paramLayout->addWidget( lb_ms_95lo,   row,    2, 1,  2 );
+   paramLayout->addWidget( lb_ms_95hi,   row,    4, 1,  2 );
    paramLayout->addWidget( lb_ms_medi,   row,    6, 1,  2 );
    paramLayout->addWidget( lb_ms_mode,   row,    8, 1,  2 );
    paramLayout->addWidget( lb_ms_iter,   row++, 10, 1,  2 );
    paramLayout->addWidget( le_ms_mean,   row,    0, 1,  2 );
-   paramLayout->addWidget( le_ms_99lo,   row,    2, 1,  2 );
-   paramLayout->addWidget( le_ms_99hi,   row,    4, 1,  2 );
+   paramLayout->addWidget( le_ms_95lo,   row,    2, 1,  2 );
+   paramLayout->addWidget( le_ms_95hi,   row,    4, 1,  2 );
    paramLayout->addWidget( le_ms_medi,   row,    6, 1,  2 );
    paramLayout->addWidget( le_ms_mode,   row,    8, 1,  2 );
    paramLayout->addWidget( le_ms_iter,   row++, 10, 1,  2 );
@@ -117,7 +115,6 @@ qDebug() << "AdvD:Msu: E";
    paramLayout->addWidget( pb_simulate,  row,    4, 1,  4 );
    paramLayout->addWidget( pb_close,     row++,  8, 1,  4 );
 
-qDebug() << "AdvD:Msu: H";
    mainLayout    ->addLayout( plotLayout  );
    mainLayout    ->addLayout( paramLayout );
 
@@ -126,13 +123,11 @@ qDebug() << "AdvD:Msu: H";
 
    pb_nextmodel->setEnabled( false );
    ct_modelnbr ->setEnabled( false );
-qDebug() << "AdvD:Msu: I";
 
    connect( pb_nextmodel, SIGNAL( clicked       ()         ),
             this,         SLOT  ( next_model    ()         ) );
    connect( ct_modelnbr,  SIGNAL( valueChanged  ( double ) ),
             this,         SLOT  ( change_model  ( double ) ) );
-qDebug() << "AdvD:Msu: J";
    connect( rb_mean,      SIGNAL( toggled       ( bool   ) ),
             this,         SLOT  ( set_model_type( bool   ) ) );
    connect( rb_median,    SIGNAL( toggled       ( bool   ) ),
@@ -141,7 +136,6 @@ qDebug() << "AdvD:Msu: J";
             this,         SLOT  ( set_model_type( bool   ) ) );
    connect( rb_curmod,    SIGNAL( toggled       ( bool   ) ),
             this,         SLOT  ( set_model_type( bool   ) ) );
-qDebug() << "AdvD:Msu: K";
    connect( pb_prevparm,  SIGNAL( clicked       ()         ),
             this,         SLOT  ( prev_param    ()         ) );
    connect( pb_nextparm,  SIGNAL( clicked       ()         ),
@@ -155,7 +149,6 @@ qDebug() << "AdvD:Msu: K";
             this,         SLOT  ( simulate() ) );
    connect( pb_close,     SIGNAL( clicked()  ),
             this,         SLOT  ( done()     ) );
-qDebug() << "AdvD:Msu: L";
 
    adjustSize();
    QFontMetrics fmet( QFont( US_GuiSettings::fontFamily(),
@@ -166,16 +159,15 @@ qDebug() << "AdvD:Msu: L";
    ct_modelnbr ->resize( csizw, rhgt );
    ct_modelnbr ->setMaximumWidth( csizw * 3 );
 
-qDebug() << "AdvD:Msu: M";
    US_DmgaMcStats::build_used_model( "mean", 0, imodels, umodel );
+
+   umodel.description = lddesc;
    int ncomp       = umodel.components.size();
    int nreac       = umodel.associations.size();
-qDebug() << "AdvD:Msu: N";
 
    le_modtype ->setText( tr( "Mean model, %1 components, %2 reaction(s)" )
                          .arg( ncomp ).arg( nreac ) );
 
-qDebug() << "AdvD:Msu: O";
    ls_params.clear();
   
    for ( int ii = 0; ii < ncomp; ii++ )
@@ -188,7 +180,6 @@ qDebug() << "AdvD:Msu: O";
       ls_params << comp + tr( "Vbar (20_W)" );
       ls_params << comp + tr( "Partial Concentration" );
    }
-qDebug() << "AdvD:Msu: P";
 
    for ( int ii = 0; ii < nreac; ii++ )
    {
@@ -196,13 +187,11 @@ qDebug() << "AdvD:Msu: P";
       ls_params << reac + tr( "k_Dissociation:" );
       ls_params << reac + tr( "k_off Rate:" );
    }
-qDebug() << "AdvD:Msu: Q";
 
    cb_params->clear();
    cb_params->addItems( ls_params );
    cb_params->setCurrentIndex( 0 );
-   lb_ms_iter->setText( tr( "Iter. %1" ).arg( imodels.size() / 2 ) );
-qDebug() << "AdvD:Msu: T";
+   lb_ms_iter->setText( tr( "Iteration 1" ) );
 
 qDebug() << "AdvD:Pre-adjust size" << size();
    adjustSize();
@@ -210,9 +199,7 @@ qDebug() << "AdvD:Post-adjust size" << size();
    resize( 720, 640 );
 qDebug() << "AdvD:Post-resize size" << size();
 
-qDebug() << "AdvD:Msu: W";
    plot_distrib();
-qDebug() << "AdvD:Msu: X";
 
    qApp->processEvents();
 }
@@ -259,7 +246,7 @@ void US_AdvDmgaMc::set_model_type( bool chekd )
    bool ck_mean    = rb_mean  ->isChecked();
    bool ck_medi    = rb_median->isChecked();
    bool ck_mode    = rb_mode  ->isChecked();
-   int iter        = ck_cmod ? ct_modelnbr->value() : 0;
+   int iter        = (int)ct_modelnbr->value();
 
    QString smtype  = ck_mean ? tr( "mean"   ) : "";
    smtype          = ck_medi ? tr( "median" ) : smtype;
@@ -268,6 +255,8 @@ void US_AdvDmgaMc::set_model_type( bool chekd )
 
    US_DmgaMcStats::build_used_model( smtype, iter, imodels, umodel );
 
+   if ( ! ck_cmod )
+      umodel.description    = lddesc;
    int ncomp       = umodel.components  .size();
    int nreac       = umodel.associations.size();
    QString mtlabl  = ck_mean ? tr( "Mean"   ) : "";
@@ -293,6 +282,7 @@ void US_AdvDmgaMc::plot_distrib()
    QVector< double > xvec_pl;
    QVector< double > yvec_pl;
 
+   int iter        = (int)ct_modelnbr->value();
    int nxi         = imodels.size();
    QString attrib  = cb_params->currentText();
    int jc          = attrib.section( " ", 1, 1 ).toInt() - 1;
@@ -302,7 +292,7 @@ void US_AdvDmgaMc::plot_distrib()
    QString xtitle  = attrib.section( " ", 2, -1 ).simplified();
    xvec_in.clear();
    double xvalcm   = 0.0;
-   int hx          = nxi / 2;
+   int hx          = iter - 1;
 
    for ( int ii = 0; ii < nxi; ii++ )
    {  // Accumulate the input model X distribution values
@@ -372,7 +362,7 @@ void US_AdvDmgaMc::plot_distrib()
    double* xvp     = xvec_pl.data();
    double* yvp     = yvec_pl.data();
    int nxyp        = xvec_pl.size();
-   xkmax          *= pad_hi;           // Add a slight pad to Y maximum
+   double ymax     = xkmax * pad_hi;   // Add a slight pad to Y maximum
 
    if ( nxyp < 3 )
    {  // If only 1 or 2 points, expand to center points in X
@@ -411,14 +401,13 @@ void US_AdvDmgaMc::plot_distrib()
    data_plot->setTitle        ( tr( "Distribution" ) );
    data_plot->setAxisTitle    ( QwtPlot::yLeft,   ytitle );
    data_plot->setAxisTitle    ( QwtPlot::xBottom, xtitle );
-   data_plot->setAxisScale    ( QwtPlot::yLeft, 0.0, xkmax );
+   data_plot->setAxisScale    ( QwtPlot::yLeft, 0.0, ymax );
    data_plot->setAxisAutoScale( QwtPlot::xBottom );
    us_grid( data_plot );
    QwtPlotCurve* curve  = us_curve( data_plot, tr( "Curve " ) + xtitle );
    curve->setPen  ( QPen( US_GuiSettings::plotCurve(), 2 ) );
    curve->setStyle( QwtPlotCurve::Sticks );
    curve->setData ( xvp, yvp, nxyp );
-   data_plot->replot();
 
    // Fill in the model statistics summary for the attribute
    QVector< QVector< double > >  mstats;
@@ -441,11 +430,82 @@ void US_AdvDmgaMc::plot_distrib()
    US_DmgaMcStats::build_model_stats( niters, imodels, mstats );
 
    le_ms_mean->setText( QString::number( mstats[ dx ][  2 ] ) );
-   le_ms_99lo->setText( QString::number( mstats[ dx ][ 11 ] ) );
-   le_ms_99hi->setText( QString::number( mstats[ dx ][ 12 ] ) );
+   le_ms_95lo->setText( QString::number( mstats[ dx ][  9 ] ) );
+   le_ms_95hi->setText( QString::number( mstats[ dx ][ 10 ] ) );
    le_ms_medi->setText( QString::number( mstats[ dx ][  3 ] ) );
    le_ms_mode->setText( QString::number( mstats[ dx ][  8 ] ) );
    le_ms_iter->setText( QString::number( xvalcm ) );
+
+   // Add single points and legend entries for Mean, Median, ...
+   QwtLegend*    legend  = new QwtLegend;
+   double xm[ 4 ];
+   double ym[ 4 ];
+   xm[ 0 ]         = mstats[ dx ][ 2 ];       
+   xm[ 1 ]         = mstats[ dx ][ 3 ];       
+   xm[ 2 ]         = mstats[ dx ][ 8 ];       
+   xm[ 3 ]         = xvalcm;
+   ym[ 0 ]         = xkmax * 1.015;
+   ym[ 1 ]         = xkmax * 1.025;
+   ym[ 2 ]         = xkmax * 1.035;
+   ym[ 3 ]         = xkmax * 1.045;
+   const QString cl_mean = tr( "Mean"     );
+   const QString cl_medi = tr( "Median"   );
+   const QString cl_mode = tr( "Mode"     );
+         QString cl_iter = tr( "Iteration %1" ).arg( iter );
+   lb_ms_iter->setText( cl_iter );
+   const QColor  co_bord ( Qt::blue  );
+   const QColor  co_mean ( Qt::cyan  );
+   const QColor  co_medi ( "orange"  );
+   const QColor  co_mode ( Qt::red   );
+   const QColor  co_iter ( "lime"    );
+   legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+   legend->setFont( QFont( US_GuiSettings::fontFamily(),
+                           US_GuiSettings::fontSize() - 2 ) );
+   data_plot->insertLegend( legend, QwtPlot::BottomLegend );
+   curve->setItemAttribute( QwtPlotItem::Legend, false );
+   QwtPlotCurve* curv_mean  = us_curve( data_plot, cl_mean );
+   QwtPlotCurve* curv_medi  = us_curve( data_plot, cl_medi );
+   QwtPlotCurve* curv_mode  = us_curve( data_plot, cl_mode );
+   QwtPlotCurve* curv_iter  = us_curve( data_plot, cl_iter );
+   QwtSymbol     sym_mean;
+   QwtSymbol     sym_medi;
+   QwtSymbol     sym_mode;
+   QwtSymbol     sym_iter;
+   sym_mean.setStyle( QwtSymbol::Ellipse   );
+   sym_mean.setPen  ( QPen  (  co_bord   ) );
+   sym_mean.setBrush( QBrush(  co_mean   ) );
+   sym_mean.setSize ( 6 );
+   curv_mean->setStyle( QwtPlotCurve::NoCurve );
+   curv_mean->setSymbol( sym_mean );
+   curv_mean->setItemAttribute( QwtPlotItem::Legend, true );
+   sym_medi.setStyle( QwtSymbol::Rect      );
+   sym_medi.setPen  ( QPen  (  co_bord   ) );
+   sym_medi.setBrush( QBrush(  co_medi   ) );
+   sym_medi.setSize ( 6 );
+   curv_medi->setStyle( QwtPlotCurve::NoCurve );
+   curv_medi->setSymbol( sym_medi );
+   curv_medi->setItemAttribute( QwtPlotItem::Legend, true );
+   sym_mode.setStyle( QwtSymbol::DTriangle );
+   sym_mode.setPen  ( QPen  (  co_bord   ) );
+   sym_mode.setBrush( QBrush(  co_mode   ) );
+   sym_mode.setSize ( 8 );
+   curv_mode->setStyle( QwtPlotCurve::NoCurve );
+   curv_mode->setSymbol( sym_mode );
+   curv_mode->setItemAttribute( QwtPlotItem::Legend, true );
+   sym_iter.setStyle( QwtSymbol::Cross     );
+   sym_iter.setPen  ( QPen  (  co_iter   ) );
+   sym_iter.setBrush( QBrush(  co_iter   ) );
+   sym_iter.setSize ( 8 );
+   curv_iter->setStyle( QwtPlotCurve::NoCurve );
+   curv_iter->setSymbol( sym_iter );
+   curv_iter->setItemAttribute( QwtPlotItem::Legend, true );
+   curv_mean->setData  ( xm    , ym    , 1 );
+   curv_medi->setData  ( xm + 1, ym + 1, 1 );
+   curv_mode->setData  ( xm + 2, ym + 2, 1 );
+   curv_iter->setData  ( xm + 3, ym + 3, 1 );
+
+   // Show the plot
+   data_plot->replot();
 }
 
 // Bump selected distribution parameter to the next one
@@ -481,6 +541,8 @@ void US_AdvDmgaMc::simulate()
                          ( rb_mode  ->isChecked() ? "mode"   :
                          ( rb_curmod->isChecked() ? "model"  : "" ) ) );
 
+   if ( ! rb_curmod->isChecked() )
+      umodel.description    = lddesc;
    *model                = umodel;
    US_FeMatch* fem_wind  = (US_FeMatch*)parentw;
 
