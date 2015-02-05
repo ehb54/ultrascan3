@@ -277,10 +277,16 @@ bool US_DmgaMcStats::compute_statistics( const int nvals,
       vm4      /= vsiz;
       skew      = vm3 / pow( vm2, 1.5 );
       kurto     = vm4 / pow( vm2, 2.0 ) - 3.0;
-      vmedi     = ( vlo + vhi ) / 2.0;
 
       // Do line fit (mainly for corr value)
       US_Math2::linefit( &xplot, &yplot, &slope, &vicep, &sigma, &corr, nvals );
+
+      // Sort Y values and determine median
+      qSort( ypvec );
+      int hx    = nvals / 2;
+      vmedi     = ypvec[ hx ];
+      if ( ( hx * 2 ) == nvals )
+         vmedi     = ( vmedi + ypvec[ hx - 1 ] ) * 0.5;
 
       // Standard deviation and error
       sdevi     = pow( vm2, 0.5 );

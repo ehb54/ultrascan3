@@ -34,6 +34,7 @@ class US_AdvDmgaMc : public US_WidgetsDialog
 
       QStringList   ls_params;
 
+      QString       lddesc;
       int           ncomp;
 
       QVBoxLayout*  mainLayout;
@@ -52,6 +53,8 @@ class US_AdvDmgaMc : public US_WidgetsDialog
       QPushButton*  pb_nextmodel;
       QPushButton*  pb_reaction;
 
+      QLabel*       lb_ms_iter;
+
       QwtCounter*   ct_modelnbr;
 
       QLineEdit*    le_modtype;
@@ -64,8 +67,8 @@ class US_AdvDmgaMc : public US_WidgetsDialog
       QLineEdit*    le_vbar20;
       QLineEdit*    le_partconc;
       QLineEdit*    le_ms_mean;
-      QLineEdit*    le_ms_99lo;
-      QLineEdit*    le_ms_99hi;
+      QLineEdit*    le_ms_95lo;
+      QLineEdit*    le_ms_95hi;
       QLineEdit*    le_ms_medi;
       QLineEdit*    le_ms_mode;
       QLineEdit*    le_ms_iter;

@@ -1693,6 +1693,7 @@ void US_FeMatch::advanced( )
 void US_FeMatch::adv_dmga( )
 {
    US_AdvDmgaMc* advddiag;
+   model_used   = model_loaded;
 
    advddiag = new US_AdvDmgaMc( &model_used, imodels, adv_vals,
                                (QWidget*)this );
@@ -2994,8 +2995,8 @@ QString US_FeMatch::distrib_info()
       mstr += tr( "<h3>Discrete Model GA-MC Summary Statistics:</h3>\n" );
       mstr += indent( 4 ) + "<table>\n";
       mstr += table_row( tr( "Component" ), tr( "Attribute" ),
-                         tr( "Mean_Value" ), tr( "99%_Confidence(low)"  ),
-                         tr( "99%_Confidence(high)" ) );
+                         tr( "Mean_Value" ), tr( "95%_Confidence(low)"  ),
+                         tr( "95%_Confidence(high)" ) );
       int kd         = 0;
       QString fixd   = tr( "(Fixed)" );
       QString blnk( "" );
@@ -3012,9 +3013,9 @@ QString US_FeMatch::distrib_info()
 
       // Show summary of RMSDs
       mstr += table_row( tr( "(All)" ), tr( "RMSD" ),
-                         QString().sprintf( "%10.4e", rstats[ 2] ),
-                         QString().sprintf( "%10.4e", rstats[11] ),
-                         QString().sprintf( "%10.4e", rstats[12] ) );
+                         QString().sprintf( "%10.4e", rstats[  2 ] ),
+                         QString().sprintf( "%10.4e", rstats[  9 ] ),
+                         QString().sprintf( "%10.4e", rstats[ 10 ] ) );
 
       // Show summary of component attributes
       for ( int ii = 0; ii < ncomp; ii++ )
@@ -3024,12 +3025,12 @@ QString US_FeMatch::distrib_info()
          {
             bool is_fixed   = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
             QString strclo  = is_fixed ? fixd :
-                              QString().sprintf( "%10.4e", mstats[ kd ][11] );
+                              QString().sprintf( "%10.4e", mstats[ kd ][  9 ] );
             QString strchi  = is_fixed ? blnk :
-                              QString().sprintf( "%10.4e", mstats[ kd ][12] );
+                              QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] );
             mstr += table_row( compnum, atitl[ jj ],
-                               QString().sprintf( "%10.4e", mstats[ kd ][ 2] ),
-                               strclo, strchi );
+                              QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ),
+                              strclo, strchi );
             kd++;
          }
       }
@@ -3037,26 +3038,26 @@ QString US_FeMatch::distrib_info()
       mstr += indent( 4 ) + "</table>\n";
       mstr += indent( 4 ) + "<table>\n";
       mstr += table_row( tr( "Reaction" ), tr( "Attribute" ),
-                         tr( "Mean_Value" ), tr( "99%_Confidence(low)"  ),
-                         tr( "99%_Confidence(high)" ) );
+                         tr( "Mean_Value" ), tr( "95%_Confidence(low)"  ),
+                         tr( "95%_Confidence(high)" ) );
       // Show summary of reaction attributes;
       for ( int ii = 0; ii < nreac; ii++ )
       {
          QString reacnum = QString().sprintf( "%2d", ii + 1 );
          bool is_fixed   = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
          QString strclo  = is_fixed ? fixd :
-                            QString().sprintf( "%10.4e", mstats[ kd ][ 11 ] );
+                            QString().sprintf( "%10.4e", mstats[ kd ][  9 ] );
          QString strchi  = is_fixed ? blnk :
-                            QString().sprintf( "%10.4e", mstats[ kd ][ 12 ] );
+                            QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] );
          mstr += table_row( reacnum, tr( "K_dissociation" ),
                             QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ),
                             strclo, strchi );
          kd++;
          is_fixed        = ( mstats[ kd ][ 0 ] == mstats[ kd ][ 1 ] );
          strclo          = is_fixed ? fixd :
-                            QString().sprintf( "%10.4e", mstats[ kd ][ 11 ] );
+                            QString().sprintf( "%10.4e", mstats[ kd ][  9 ] );
          strchi          = is_fixed ? blnk :
-                            QString().sprintf( "%10.4e", mstats[ kd ][ 12 ] );
+                            QString().sprintf( "%10.4e", mstats[ kd ][ 10 ] );
          mstr += table_row( reacnum, tr( "K_off Rate" ),
                             QString().sprintf( "%10.4e", mstats[ kd ][  2 ] ),
                             strclo, strchi );
