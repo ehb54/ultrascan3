@@ -73,7 +73,7 @@ class US_DmgaMcStats
                                       QVector< double >&, QVector< double >& );
 
       //! \brief Build used model of specified type from iteration models
-      //! \param umtype  Used model type ("model","mean","median","mode")
+      //! \param smtype  Used model type ("model","mean","median","mode")
       //! \param iter    Iteration number (1-niters) if "model" (iter.) used
       //! \param imodels Vector of iteration models
       //! \param umodel  Returned composed used model

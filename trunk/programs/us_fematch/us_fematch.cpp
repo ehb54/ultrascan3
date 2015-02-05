@@ -1793,6 +1793,8 @@ DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
    if ( is_dmga_mc )
    {  // For DMGA-MC loaded model, build the vector of iteration models
       US_DmgaMcStats::build_imodels( model_loaded, imodels );
+      // Default the used model to a "Mean" model
+      US_DmgaMcStats::build_used_model( "mean", 0, imodels, model_used );
    }
 }
 
@@ -3743,5 +3745,11 @@ void US_FeMatch::update_mc_model()
    else if ( rb_mode  ->isChecked() )
    {  // The model is the mode of all iteration models
    }
+}
+
+// Public slot that calls the private one to simulate a model
+void US_FeMatch::simulate()
+{
+   simulate_model();
 }
 

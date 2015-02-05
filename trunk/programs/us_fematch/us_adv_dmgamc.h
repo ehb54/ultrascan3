@@ -32,18 +32,13 @@ class US_AdvDmgaMc : public US_WidgetsDialog
       QMap< QString, QString >& parmap;
       US_Model                  umodel;
 
-      QStringList   ls_distrib;
+      QStringList   ls_params;
 
       int           ncomp;
 
       QVBoxLayout*  mainLayout;
-      QVBoxLayout*  lowerLayout;
-      QHBoxLayout*  upperLayout;
-      QGridLayout*  distrLayout;
-      QGridLayout*  mstatLayout;
-      QGridLayout*  utypeLayout;
-      QGridLayout*  analysisLayout;
-      QGridLayout*  modelcomLayout;
+
+      QGridLayout*  paramLayout;
       QGridLayout*  lo_mean;
       QGridLayout*  lo_median;
       QGridLayout*  lo_mode;
@@ -58,8 +53,6 @@ class US_AdvDmgaMc : public US_WidgetsDialog
       QPushButton*  pb_reaction;
 
       QwtCounter*   ct_modelnbr;
-      QwtCounter*   ct_reaction;
-      QwtCounter*   ct_component;
 
       QLineEdit*    le_modtype;
       QLineEdit*    le_kdissoc;
@@ -82,7 +75,7 @@ class US_AdvDmgaMc : public US_WidgetsDialog
       QRadioButton* rb_mode;
       QRadioButton* rb_curmod;
 
-      QComboBox*    cb_distrib;
+      QComboBox*    cb_params;
 
    protected:
       US_Help       showHelp;
@@ -90,15 +83,13 @@ class US_AdvDmgaMc : public US_WidgetsDialog
    private slots:
 
       void done          ( void );
-      void next_component( void );
-      void next_reaction ( void );
-      void set_component ( double );
-      void set_reaction  ( double );
       void next_model    ( void );
       void change_model  ( double );
       void set_model_type( bool );
       void plot_distrib  ( void );
-      void next_distrib  ( void );
+      void next_param    ( void );
+      void prev_param    ( void );
+      void simulate      ( void );
       void help          ( void )
       { showHelp.show_help( "fem_adv_dmgamc.html" ); };
 };

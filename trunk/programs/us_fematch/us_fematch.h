@@ -47,6 +47,7 @@ class US_FeMatch : public US_Widgets
    public slots:
       void    thread_progress( int, int );
       void    thread_complete( int );
+      void    simulate( void );
 
    private:
 
