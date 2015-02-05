@@ -29,25 +29,13 @@ class US_AdvancedFem : public US_WidgetsDialog
       US_Model*                 model;
       QMap< QString, QString >& parmap;
 
-      int           ncomp;
-
-      QVBoxLayout*  mainLayout;
-      QHBoxLayout*  upperLayout;
-      QGridLayout*  analysisLayout;
-      QGridLayout*  modelcomLayout;
+      QGridLayout*  mainLayout;
 
       QWidget*      parentw;
 
       QwtCounter*   ct_simpoints;
       QwtCounter*   ct_bldvolume;
       QwtCounter*   ct_parameter;
-      QwtCounter*   ct_component;
-
-      QLineEdit*    le_sedcoeff;
-      QLineEdit*    le_difcoeff;
-      QLineEdit*    le_moweight;
-      QLineEdit*    le_friratio;
-      QLineEdit*    le_partconc;
 
       QComboBox*    cb_mesh;
       QComboBox*    cb_grid;
@@ -58,8 +46,6 @@ class US_AdvancedFem : public US_WidgetsDialog
    private slots:
 
       void done(           void );
-      void next_component( void );
-      void set_component(  double );
       void help     ( void )
       { showHelp.show_help( "fe_match_adv.html" ); };
 };

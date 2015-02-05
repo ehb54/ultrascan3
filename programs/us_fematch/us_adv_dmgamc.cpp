@@ -23,18 +23,14 @@ US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
    setWindowTitle( tr( "DMGA-MC Advanced Controls" ) );
 
    mainLayout      = new QVBoxLayout( this );
-   utypeLayout     = new QGridLayout();
-   upperLayout     = new QHBoxLayout();
-   lowerLayout     = new QVBoxLayout();
-   analysisLayout  = new QGridLayout( );
-   modelcomLayout  = new QGridLayout( );
-   distrLayout     = new QGridLayout();
+   paramLayout     = new QGridLayout();
    plotLayout      = new US_Plot( data_plot,
                                   tr( "Attribute Distribution" ),
                                   tr( "Attribute Name" ),
                                   tr( "Frequency" ) );
-   mstatLayout     = new QGridLayout();
+
    data_plot->setCanvasBackground( Qt::black );
+qDebug() << "AdvD:Msu: A";
 
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
@@ -51,74 +47,33 @@ US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
    um_group->addButton( rb_median, 1 );
    um_group->addButton( rb_mode,   2 );
    um_group->addButton( rb_curmod, 3 );
-   QPushButton* pb_help    = us_pushbutton( tr( "Help" ) );
-   QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
-   QPushButton* pb_accept  = us_pushbutton( tr( "Accept" ) );
-   int row      = 0;
-   utypeLayout->addWidget( lb_modelsim, row++, 0, 1, 12 );
-   utypeLayout->addLayout( lo_mean,     row,   0, 1, 3 );
-   utypeLayout->addLayout( lo_median,   row,   3, 1, 3 );
-   utypeLayout->addLayout( lo_mode,     row,   6, 1, 3 );
-   utypeLayout->addLayout( lo_curmod,   row++, 9, 1, 3 );
-   utypeLayout->addWidget( pb_help,     row,   0, 1, 4 );
-   utypeLayout->addWidget( pb_cancel,   row,   4, 1, 4 );
-   utypeLayout->addWidget( pb_accept,   row++, 8, 1, 4 );
+   QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
+   QPushButton* pb_simulate = us_pushbutton( tr( "Simulate" ) );
+   QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
+qDebug() << "AdvD:Msu: C";
 
-   upperLayout->addLayout( analysisLayout  );
-   upperLayout->addLayout( modelcomLayout );
-   upperLayout->setStretchFactor( analysisLayout, 1 );
-   upperLayout->setStretchFactor( modelcomLayout, 1 );
-
-   QLabel* lb_modselect = us_banner( tr( "MC Used Model Selection" ) );
    le_modtype           = us_lineedit( "", -1, true );
    QPalette mtpal       = le_modtype->palette();
    mtpal.setColor( QPalette::Text, Qt::blue );
    le_modtype->setPalette( mtpal );
-   QLabel* lb_modreact  = us_banner( tr( "Model Reactions" ) );
-   QLabel* lb_kdissoc   = us_label(  tr( "k_Dissociation:" ) );
-   QLabel* lb_koffrate  = us_label(  tr( "k_off Rate:"     ) );
-   le_kdissoc           = us_lineedit( "", -1, true );
-   le_koffrate          = us_lineedit( "", -1, true );
-   pb_reaction          = us_pushbutton( tr( "Next Reaction" ) );
-   ct_reaction          = us_counter( 2, 1, 10,      1 );
 
-   QLabel* lb_modelcom  = us_banner( tr( "Model Components"           ) );
-   QLabel* lb_sedcoeff  = us_label(  tr( "Sedimentation Coefficient:" ) );
-   QLabel* lb_difcoeff  = us_label(  tr( "Diffusion Coefficient:"     ) );
-   QLabel* lb_moweight  = us_label(  tr( "Molecular Weight:"          ) );
-   QLabel* lb_friratio  = us_label(  tr( "Frictional Ratio (f/f0):"   ) );
-   QLabel* lb_vbar20    = us_label(  tr( "Vbar (20_W):"               ) );
-   QLabel* lb_partconc  = us_label(  tr( "Partial Concentration:"     ) );
-
-   QLabel* lb_distplot  = us_banner( tr( "Attribute Distribution Plot" ) );
-   QPushButton*
-      pb_component      = us_pushbutton( tr( "Next Component" ) );
-   pb_nextmodel         = us_pushbutton( tr( "Next Model"   ) );
-   QPushButton*
-      pb_nextdist       = us_pushbutton( tr( "Next Distribution" ) );
-   QPushButton*
-      pb_distrib        = us_pushbutton( tr( "Plot Distribution:" ) );
-   cb_distrib           = us_comboBox();
-   ls_distrib .clear();
-   ls_distrib << tr( "Component 1 Sedimentation Coefficient" );
-   ls_distrib << tr( "Component 1 Diffusion Coefficient" );
-   ls_distrib << tr( "Component 1 Molecular Weight" );
-   ls_distrib << tr( "Component 1 Frictional Ratio" );
-   ls_distrib << tr( "Component 1 Vbar (20_W)" );
-   ls_distrib << tr( "Component 1 Partial Concentration" );
-   ls_distrib << tr( "Reaction 1 k_Dissociation:" );
-   ls_distrib << tr( "Reaction 1 k_off Rate:" );
-   cb_distrib->addItems( ls_distrib );
+   pb_nextmodel             = us_pushbutton( tr( "Next Model"   ) );
+   QPushButton* pb_nextparm = us_pushbutton( tr( "Next Parameter >" ) );
+   QPushButton* pb_prevparm = us_pushbutton( tr( "< Previous Parameter" ) );
+   cb_params            = us_comboBox();
+qDebug() << "AdvD:Msu: D";
+   ls_params .clear();
+   ls_params << tr( "Component 1 Sedimentation Coefficient" );
+   ls_params << tr( "Component 1 Diffusion Coefficient" );
+   ls_params << tr( "Component 1 Molecular Weight" );
+   ls_params << tr( "Component 1 Frictional Ratio" );
+   ls_params << tr( "Component 1 Vbar (20_W)" );
+   ls_params << tr( "Component 1 Partial Concentration" );
+   ls_params << tr( "Reaction 1 k_Dissociation:" );
+   ls_params << tr( "Reaction 1 k_off Rate:" );
+   cb_params->addItems( ls_params );
 
    ct_modelnbr  = us_counter( 2, 1,  50,     1 );
-   ct_component = us_counter( 2, 1, 200,     1 );
-
-   le_sedcoeff  = us_lineedit( "", -1, true );
-   le_difcoeff  = us_lineedit( "", -1, true );
-   le_moweight  = us_lineedit( "", -1, true );
-   le_friratio  = us_lineedit( "", -1, true );
-   le_vbar20    = us_lineedit( "", -1, true );
-   le_partconc  = us_lineedit( "", -1, true );
 
    QLabel* lb_ms_mean   = us_label(  tr( "Mean" ) );
    QLabel* lb_ms_99lo   = us_label(  tr( "99% Conf.Low" ) );
@@ -132,84 +87,52 @@ US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
    le_ms_medi   = us_lineedit( "", -1, true );
    le_ms_mode   = us_lineedit( "", -1, true );
    le_ms_iter   = us_lineedit( "", -1, true );
+qDebug() << "AdvD:Msu: E";
 
-   row          = 0;
-   analysisLayout->addWidget( lb_modselect,  row++, 0, 1, 6 );
-   analysisLayout->addWidget( le_modtype,    row++, 0, 1, 6 );
-   analysisLayout->addWidget( pb_nextmodel,  row,   0, 1, 3 );
-   analysisLayout->addWidget( ct_modelnbr,   row++, 3, 1, 3 );
-   analysisLayout->addWidget( lb_modreact,   row++, 0, 1, 6 );
-   analysisLayout->addWidget( lb_kdissoc,    row,   0, 1, 3 );
-   analysisLayout->addWidget( le_kdissoc,    row++, 3, 1, 3 );
-   analysisLayout->addWidget( lb_koffrate,   row,   0, 1, 3 );
-   analysisLayout->addWidget( le_koffrate,   row++, 3, 1, 3 );
-   analysisLayout->addWidget( pb_reaction,   row,   0, 1, 3 );
-   analysisLayout->addWidget( ct_reaction,   row++, 3, 1, 3 );
+   int row      = 0;
+   paramLayout->addWidget( lb_ms_mean,   row,    0, 1,  2 );
+   paramLayout->addWidget( lb_ms_99lo,   row,    2, 1,  2 );
+   paramLayout->addWidget( lb_ms_99hi,   row,    4, 1,  2 );
+   paramLayout->addWidget( lb_ms_medi,   row,    6, 1,  2 );
+   paramLayout->addWidget( lb_ms_mode,   row,    8, 1,  2 );
+   paramLayout->addWidget( lb_ms_iter,   row++, 10, 1,  2 );
+   paramLayout->addWidget( le_ms_mean,   row,    0, 1,  2 );
+   paramLayout->addWidget( le_ms_99lo,   row,    2, 1,  2 );
+   paramLayout->addWidget( le_ms_99hi,   row,    4, 1,  2 );
+   paramLayout->addWidget( le_ms_medi,   row,    6, 1,  2 );
+   paramLayout->addWidget( le_ms_mode,   row,    8, 1,  2 );
+   paramLayout->addWidget( le_ms_iter,   row++, 10, 1,  2 );
+   paramLayout->addWidget( lb_modelsim,  row++,  0, 1, 12 );
+   paramLayout->addLayout( lo_mean,      row,    0, 1,  3 );
+   paramLayout->addLayout( lo_median,    row,    3, 1,  3 );
+   paramLayout->addLayout( lo_mode,      row,    6, 1,  3 );
+   paramLayout->addLayout( lo_curmod,    row++,  9, 1,  3 );
+   paramLayout->addWidget( le_modtype,   row,    0, 1,  6 );
+   paramLayout->addWidget( pb_nextmodel, row,    6, 1,  3 );
+   paramLayout->addWidget( ct_modelnbr,  row++,  9, 1,  3 );
+   paramLayout->addWidget( pb_prevparm,  row,    0, 1,  3 );
+   paramLayout->addWidget( pb_nextparm,  row,    3, 1,  3 );
+   paramLayout->addWidget( cb_params,    row++,  6, 1,  6 );
+   paramLayout->addWidget( pb_help,      row,    0, 1,  4 );
+   paramLayout->addWidget( pb_simulate,  row,    4, 1,  4 );
+   paramLayout->addWidget( pb_close,     row++,  8, 1,  4 );
 
-   row          = 0;
-   modelcomLayout->addWidget( lb_modelcom,   row++, 0, 1, 6 );
-   modelcomLayout->addWidget( lb_sedcoeff,   row,   0, 1, 3 );
-   modelcomLayout->addWidget( le_sedcoeff,   row++, 3, 1, 3 );
-   modelcomLayout->addWidget( lb_difcoeff,   row,   0, 1, 3 );
-   modelcomLayout->addWidget( le_difcoeff,   row++, 3, 1, 3 );
-   modelcomLayout->addWidget( lb_moweight,   row,   0, 1, 3 );
-   modelcomLayout->addWidget( le_moweight,   row++, 3, 1, 3 );
-   modelcomLayout->addWidget( lb_friratio,   row,   0, 1, 3 );
-   modelcomLayout->addWidget( le_friratio,   row++, 3, 1, 3 );
-   modelcomLayout->addWidget( lb_vbar20,     row,   0, 1, 3 );
-   modelcomLayout->addWidget( le_vbar20,     row++, 3, 1, 3 );
-   modelcomLayout->addWidget( lb_partconc,   row,   0, 1, 3 );
-   modelcomLayout->addWidget( le_partconc,   row++, 3, 1, 3 );
-   modelcomLayout->addWidget( pb_component,  row,   0, 1, 3 );
-   modelcomLayout->addWidget( ct_component,  row++, 3, 1, 3 );
-
-   row          = 0;
-   distrLayout   ->addWidget( lb_distplot,   row++, 0, 1, 4 );
-   distrLayout   ->addWidget( pb_nextdist,   row,   0, 1, 1 );
-   distrLayout   ->addWidget( pb_distrib,    row,   1, 1, 1 );
-   distrLayout   ->addWidget( cb_distrib,    row++, 2, 1, 2 );
-
-   row          = 0;
-   mstatLayout   ->addWidget( lb_ms_mean,    row,   0, 1, 1 );
-   mstatLayout   ->addWidget( lb_ms_99lo,    row,   1, 1, 1 );
-   mstatLayout   ->addWidget( lb_ms_99hi,    row,   2, 1, 1 );
-   mstatLayout   ->addWidget( lb_ms_medi,    row,   3, 1, 1 );
-   mstatLayout   ->addWidget( lb_ms_mode,    row,   4, 1, 1 );
-   mstatLayout   ->addWidget( lb_ms_iter,    row++, 5, 1, 1 );
-   mstatLayout   ->addWidget( le_ms_mean,    row,   0, 1, 1 );
-   mstatLayout   ->addWidget( le_ms_99lo,    row,   1, 1, 1 );
-   mstatLayout   ->addWidget( le_ms_99hi,    row,   2, 1, 1 );
-   mstatLayout   ->addWidget( le_ms_medi,    row,   3, 1, 1 );
-   mstatLayout   ->addWidget( le_ms_mode,    row,   4, 1, 1 );
-   mstatLayout   ->addWidget( le_ms_iter,    row,   5, 1, 1 );
-
-   lowerLayout   ->addLayout( distrLayout );
-   lowerLayout   ->addLayout( plotLayout  );
-   mainLayout    ->addLayout( utypeLayout );
-   mainLayout    ->addLayout( upperLayout );
-   mainLayout    ->addLayout( lowerLayout );
-   mainLayout    ->addLayout( mstatLayout );
+qDebug() << "AdvD:Msu: H";
+   mainLayout    ->addLayout( plotLayout  );
+   mainLayout    ->addLayout( paramLayout );
 
    ct_modelnbr ->setValue( 0     );
-   ct_component->setValue( 0     );
    ct_modelnbr ->setStep(     1 );
-   ct_component->setStep(     1 );
 
    pb_nextmodel->setEnabled( false );
    ct_modelnbr ->setEnabled( false );
+qDebug() << "AdvD:Msu: I";
 
-   connect( pb_component, SIGNAL( clicked       ()         ),
-            this,         SLOT  ( next_component()         ) );
-   connect( ct_component, SIGNAL( valueChanged  ( double ) ),
-            this,         SLOT  ( set_component ( double ) ) );
-   connect( pb_reaction,  SIGNAL( clicked       ()         ),
-            this,         SLOT  ( next_reaction ()         ) );
-   connect( ct_reaction,  SIGNAL( valueChanged  ( double ) ),
-            this,         SLOT  ( set_reaction  ( double ) ) );
    connect( pb_nextmodel, SIGNAL( clicked       ()         ),
             this,         SLOT  ( next_model    ()         ) );
    connect( ct_modelnbr,  SIGNAL( valueChanged  ( double ) ),
             this,         SLOT  ( change_model  ( double ) ) );
+qDebug() << "AdvD:Msu: J";
    connect( rb_mean,      SIGNAL( toggled       ( bool   ) ),
             this,         SLOT  ( set_model_type( bool   ) ) );
    connect( rb_median,    SIGNAL( toggled       ( bool   ) ),
@@ -218,91 +141,78 @@ US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
             this,         SLOT  ( set_model_type( bool   ) ) );
    connect( rb_curmod,    SIGNAL( toggled       ( bool   ) ),
             this,         SLOT  ( set_model_type( bool   ) ) );
-   connect( pb_distrib,   SIGNAL( clicked       ()         ),
+qDebug() << "AdvD:Msu: K";
+   connect( pb_prevparm,  SIGNAL( clicked       ()         ),
+            this,         SLOT  ( prev_param    ()         ) );
+   connect( pb_nextparm,  SIGNAL( clicked       ()         ),
+            this,         SLOT  ( next_param    ()         ) );
+   connect( cb_params,    SIGNAL( activated     ( int )    ),
             this,         SLOT  ( plot_distrib  ()         ) );
-   connect( pb_nextdist,  SIGNAL( clicked       ()         ),
-            this,         SLOT  ( next_distrib  ()         ) );
 
-   set_component( 1.0 );
-
-   connect( pb_help,    SIGNAL( clicked() ),
-            this,       SLOT  ( help()    ) );
-   connect( pb_cancel,  SIGNAL( clicked() ),
-            this,       SLOT  ( reject()  ) );
-   connect( pb_accept,  SIGNAL( clicked() ),
-            this,       SLOT  ( done()    ) );
+   connect( pb_help,      SIGNAL( clicked()  ),
+            this,         SLOT  ( help()     ) );
+   connect( pb_simulate,  SIGNAL( clicked()  ),
+            this,         SLOT  ( simulate() ) );
+   connect( pb_close,     SIGNAL( clicked()  ),
+            this,         SLOT  ( done()     ) );
+qDebug() << "AdvD:Msu: L";
 
    adjustSize();
    QFontMetrics fmet( QFont( US_GuiSettings::fontFamily(),
                              US_GuiSettings::fontSize() - 1 ) );
    int fwid        = fmet.maxWidth();
-   int rhgt        = lb_modselect->height();
+   int rhgt        = lb_modelsim->height();
    int csizw       = fwid * 2;
    ct_modelnbr ->resize( csizw, rhgt );
    ct_modelnbr ->setMaximumWidth( csizw * 3 );
 
+qDebug() << "AdvD:Msu: M";
    US_DmgaMcStats::build_used_model( "mean", 0, imodels, umodel );
    int ncomp       = umodel.components.size();
    int nreac       = umodel.associations.size();
+qDebug() << "AdvD:Msu: N";
 
    le_modtype ->setText( tr( "Mean model, %1 components, %2 reaction(s)" )
                          .arg( ncomp ).arg( nreac ) );
-   ct_component->setMaxValue( ncomp );
-   ct_reaction ->setMaxValue( nreac );
-   le_sedcoeff->setText( QString::number( umodel.components[ 0 ].s ) );
-   le_difcoeff->setText( QString::number( umodel.components[ 0 ].D ) );
-   le_moweight->setText( QString::number( umodel.components[ 0 ].mw ) );
-   le_friratio->setText( QString::number( umodel.components[ 0 ].f_f0 ) );
-   le_vbar20  ->setText( QString::number( umodel.components[ 0 ].vbar20 ) );
-   le_partconc->setText(
-      QString::number( umodel.components[ 0 ].signal_concentration ) );
 
-   if ( nreac > 0 )
-   {
-      le_kdissoc ->setText( QString::number( umodel.associations[ 0 ].k_d   ) );
-      le_koffrate->setText( QString::number( umodel.associations[ 0 ].k_off ) );
-   }
-
-   else
-   {
-      pb_reaction->setEnabled( false );
-      ct_reaction->setEnabled( false );
-      le_kdissoc ->setText( "0" );
-      le_koffrate->setText( "0" );
-   }
-  
-   ls_distrib.clear();
+qDebug() << "AdvD:Msu: O";
+   ls_params.clear();
   
    for ( int ii = 0; ii < ncomp; ii++ )
    {
       QString comp = tr( "Component %1 " ).arg( ii + 1 );
-      ls_distrib << comp + tr( "Sedimentation Coefficient" );
-      ls_distrib << comp + tr( "Diffusion Coefficient" );
-      ls_distrib << comp + tr( "Molecular Weight" );
-      ls_distrib << comp + tr( "Frictional Ratio" );
-      ls_distrib << comp + tr( "Vbar (20_W)" );
-      ls_distrib << comp + tr( "Partial Concentration" );
+      ls_params << comp + tr( "Sedimentation Coefficient" );
+      ls_params << comp + tr( "Diffusion Coefficient" );
+      ls_params << comp + tr( "Molecular Weight" );
+      ls_params << comp + tr( "Frictional Ratio" );
+      ls_params << comp + tr( "Vbar (20_W)" );
+      ls_params << comp + tr( "Partial Concentration" );
    }
+qDebug() << "AdvD:Msu: P";
 
    for ( int ii = 0; ii < nreac; ii++ )
    {
       QString reac = tr( "Reaction %1 " ).arg( ii + 1 );
-      ls_distrib << reac + tr( "k_Dissociation:" );
-      ls_distrib << reac + tr( "k_off Rate:" );
+      ls_params << reac + tr( "k_Dissociation:" );
+      ls_params << reac + tr( "k_off Rate:" );
    }
+qDebug() << "AdvD:Msu: Q";
 
-   cb_distrib->clear();
-   cb_distrib->addItems( ls_distrib );
-   cb_distrib->setCurrentIndex( 0 );
+   cb_params->clear();
+   cb_params->addItems( ls_params );
+   cb_params->setCurrentIndex( 0 );
    lb_ms_iter->setText( tr( "Iter. %1" ).arg( imodels.size() / 2 ) );
+qDebug() << "AdvD:Msu: T";
 
 qDebug() << "AdvD:Pre-adjust size" << size();
    adjustSize();
 qDebug() << "AdvD:Post-adjust size" << size();
-   resize( 720, 720 );
+   resize( 720, 640 );
 qDebug() << "AdvD:Post-resize size" << size();
 
+qDebug() << "AdvD:Msu: W";
    plot_distrib();
+qDebug() << "AdvD:Msu: X";
 
    qApp->processEvents();
 }
@@ -319,55 +229,6 @@ void US_AdvDmgaMc::done( void )
    *model                = umodel;
 
    accept();
-}
-
-// Private slot to advance to the next model component
-void US_AdvDmgaMc::next_component( void )
-{
-   int icomp = (int)ct_component->value();
-   int ncomp = umodel.components.size();
-
-   icomp     = ( icomp < ncomp ) ? ( icomp + 1 ) : 1;
-   ct_component->setValue( (double)icomp );
-}
-
-// Private slot to set the model component index and fill in the implied text
-void US_AdvDmgaMc::set_component( double compx )
-{
-   int icomp  = (int)compx - 1;
-
-   if ( icomp < 0 )
-      return;
-
-   le_sedcoeff->setText( QString::number( umodel.components[ icomp ].s ) );
-   le_difcoeff->setText( QString::number( umodel.components[ icomp ].D ) );
-   le_moweight->setText( QString::number( umodel.components[ icomp ].mw ) );
-   le_friratio->setText( QString::number( umodel.components[ icomp ].f_f0 ) );
-   le_vbar20  ->setText( QString::number( umodel.components[ icomp ].vbar20 ) );
-   le_partconc->setText(
-      QString::number( umodel.components[ icomp ].signal_concentration ) );
-}
-
-// Private slot to advance to the next model component
-void US_AdvDmgaMc::next_reaction( void )
-{
-   int ireac = (int)ct_reaction->value();
-   int nreac = umodel.associations.size();
-
-   ireac     = ( ireac < nreac ) ? ( ireac + 1 ) : 1;
-   ct_reaction->setValue( (double)ireac );
-}
-
-// Private slot to set the model component index and fill in the implied text
-void US_AdvDmgaMc::set_reaction( double reacx )
-{
-   int ireac  = (int)reacx - 1;
-
-   if ( ireac < 0 )
-      return;
-
-   le_sedcoeff->setText( QString::number( umodel.associations[ ireac ].k_d ) );
-   le_difcoeff->setText( QString::number( umodel.associations[ ireac ].k_off) );
 }
 
 // Private slot to advance to the next iteration model
@@ -394,52 +255,30 @@ void US_AdvDmgaMc::set_model_type( bool chekd )
 {
    if ( ! chekd )  return;
 
-   bool cur_mod    = rb_curmod->isChecked();
-   QString smtype  = tr( "model" );
-   int iter        = cur_mod ? ct_modelnbr->value() : 0;
-   smtype          = rb_mean  ->isChecked() ? tr( "mean"   ) : smtype;
-   smtype          = rb_median->isChecked() ? tr( "median" ) : smtype;
-   smtype          = rb_mode  ->isChecked() ? tr( "mode"   ) : smtype;
-   smtype          = cur_mod                ? tr( "model"  ) : smtype;
+   bool ck_cmod    = rb_curmod->isChecked();
+   bool ck_mean    = rb_mean  ->isChecked();
+   bool ck_medi    = rb_median->isChecked();
+   bool ck_mode    = rb_mode  ->isChecked();
+   int iter        = ck_cmod ? ct_modelnbr->value() : 0;
+
+   QString smtype  = ck_mean ? tr( "mean"   ) : "";
+   smtype          = ck_medi ? tr( "median" ) : smtype;
+   smtype          = ck_mode ? tr( "mode"   ) : smtype;
+   smtype          = ck_cmod ? tr( "model"  ) : smtype;
 
    US_DmgaMcStats::build_used_model( smtype, iter, imodels, umodel );
 
-   int ncomp       = umodel.components.size();
+   int ncomp       = umodel.components  .size();
    int nreac       = umodel.associations.size();
-   int cx          = (int)ct_component->value() - 1;
-   int rx          = (int)ct_reaction ->value() - 1;
+   QString mtlabl  = ck_mean ? tr( "Mean"   ) : "";
+   mtlabl          = ck_medi ? tr( "Median" ) : mtlabl;
+   mtlabl          = ck_mode ? tr( "Mode"   ) : mtlabl;
+   mtlabl          = ck_cmod ? tr( "Iteration %1" ).arg( iter ) : mtlabl;
+   le_modtype ->setText( mtlabl + tr( " model,  %1 components, %2 reaction(s)" )
+                                  .arg( ncomp ).arg( nreac ) );
 
-   QString mtlabl  = tr( "Mean" );
-   mtlabl          = rb_mean  ->isChecked() ? tr( "Mean"   ) : mtlabl;
-   mtlabl          = rb_median->isChecked() ? tr( "Median" ) : mtlabl;
-   mtlabl          = rb_mode  ->isChecked() ? tr( "Mode"   ) : mtlabl;
-   mtlabl          = cur_mod ? tr( "Iteration %1" ).arg( iter ) : mtlabl;
-   le_modtype ->setText( mtlabl + tr( " model, %1 components, %2 reaction(s)" )
-                         .arg( ncomp ).arg( nreac ) );
-   le_sedcoeff->setText( QString::number( umodel.components[ cx ].s ) );
-   le_difcoeff->setText( QString::number( umodel.components[ cx ].D ) );
-   le_moweight->setText( QString::number( umodel.components[ cx ].mw ) );
-   le_friratio->setText( QString::number( umodel.components[ cx ].f_f0 ) );
-   le_vbar20  ->setText( QString::number( umodel.components[ cx ].vbar20 ) );
-   le_partconc->setText(
-      QString::number( umodel.components[ 0 ].signal_concentration ) );
-
-   if ( nreac > 0 )
-   {
-      le_kdissoc ->setText( QString::number( umodel.associations[rx].k_d   ) );
-      le_koffrate->setText( QString::number( umodel.associations[rx].k_off ) );
-   }
-
-   else
-   {
-      pb_reaction->setEnabled( false );
-      ct_reaction->setEnabled( false );
-      le_kdissoc ->setText( "0" );
-      le_koffrate->setText( "0" );
-   }
-
-   pb_nextmodel->setEnabled( cur_mod );
-   ct_modelnbr ->setEnabled( cur_mod );
+   pb_nextmodel->setEnabled( ck_cmod );
+   ct_modelnbr ->setEnabled( ck_cmod );
 
    plot_distrib();
 }
@@ -455,7 +294,7 @@ void US_AdvDmgaMc::plot_distrib()
    QVector< double > yvec_pl;
 
    int nxi         = imodels.size();
-   QString attrib  = cb_distrib->currentText();
+   QString attrib  = cb_params->currentText();
    int jc          = attrib.section( " ", 1, 1 ).toInt() - 1;
    int jr          = jc;
    jc              = attrib.contains( tr( "Component" ) ) ? jc : -1;
@@ -584,7 +423,7 @@ void US_AdvDmgaMc::plot_distrib()
    // Fill in the model statistics summary for the attribute
    QVector< QVector< double > >  mstats;
    int niters      = imodels.size();
-   int dx          = cb_distrib->currentIndex();
+   int dx          = cb_params->currentIndex();
    int ncomp       = imodels[ 0 ].components.size();
 
    if ( dx < ( ncomp * 6 ) )
@@ -609,15 +448,42 @@ void US_AdvDmgaMc::plot_distrib()
    le_ms_iter->setText( QString::number( xvalcm ) );
 }
 
-// Bump selected distribution to the next one
-void US_AdvDmgaMc::next_distrib()
+// Bump selected distribution parameter to the next one
+void US_AdvDmgaMc::next_param()
 {
    // Bump distribute choice to the next one
-   int disx        = cb_distrib->currentIndex();
+   int disx        = cb_params->currentIndex();
    disx++;
-   disx            = ( disx < ls_distrib.size() ) ? disx : 0;
-   cb_distrib->setCurrentIndex( disx );
+   disx            = ( disx < ls_params.size() ) ? disx : 0;
+   cb_params->setCurrentIndex( disx );
 
    plot_distrib();
+}
+
+// Bump selected distribution parameter to the previous one
+void US_AdvDmgaMc::prev_param()
+{
+   // Bump distribute choice to the next one
+   int disx        = cb_params->currentIndex();
+   disx--;
+   disx            = ( disx < 0 ) ? ( ls_params.size() - 1 ) : disx;
+   cb_params->setCurrentIndex( disx );
+
+   plot_distrib();
+}
+
+// Signal main-window Simulate, after insuring parameter settings are saved
+void US_AdvDmgaMc::simulate()
+{
+   parmap[ "modelnbr"  ] = QString::number( ct_modelnbr ->value() );
+   parmap[ "modelsim"  ] = rb_mean  ->isChecked() ? "mean"   :
+                         ( rb_median->isChecked() ? "median" :
+                         ( rb_mode  ->isChecked() ? "mode"   :
+                         ( rb_curmod->isChecked() ? "model"  : "" ) ) );
+
+   *model                = umodel;
+   US_FeMatch* fem_wind  = (US_FeMatch*)parentw;
+
+   fem_wind->simulate();
 }
 

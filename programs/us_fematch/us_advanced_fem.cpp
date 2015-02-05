@@ -20,43 +20,19 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    // lay out the GUI
    setWindowTitle( tr( "FeMatch Advanced Controls" ) );
 
-   mainLayout      = new QVBoxLayout( this );
-   upperLayout     = new QHBoxLayout();
-   analysisLayout  = new QGridLayout( );
-   modelcomLayout  = new QGridLayout( );
+   mainLayout      = new QGridLayout( this );
 
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
-
-   upperLayout->addLayout( analysisLayout  );
-   upperLayout->addLayout( modelcomLayout );
-   upperLayout->setStretchFactor( analysisLayout, 1 );
-   upperLayout->setStretchFactor( modelcomLayout, 1 );
 
    QLabel* lb_analysis  = us_banner( tr( "Advanced Analysis"          ) );
    QLabel* lb_simpoints = us_label(  tr( "Simulation Points:"         ) );
    QLabel* lb_bldvolume = us_label(  tr( "Band-loading Volume:"       ) );
    QLabel* lb_parameter = us_label(  tr( "Parameter:"                 ) );
 
-   QLabel* lb_modelcom  = us_banner( tr( "Model Components"           ) );
-   QLabel* lb_sedcoeff  = us_label(  tr( "Sedimentation Coefficient:" ) );
-   QLabel* lb_difcoeff  = us_label(  tr( "Diffusion Coefficient:"     ) );
-   QLabel* lb_moweight  = us_label(  tr( "Molecular Weight (kD):"     ) );
-   QLabel* lb_friratio  = us_label(  tr( "Frictional Ratio (f/f0):"   ) );
-   QLabel* lb_partconc  = us_label(  tr( "Partial Concentration:"     ) );
-
-   QPushButton* pb_component = us_pushbutton( tr( "Next Component" ) );
-
    ct_simpoints = us_counter( 3, 0, 10000,   1 );
    ct_bldvolume = us_counter( 3, 0,   1, 0.001 );
    ct_parameter = us_counter( 2, 1,  50,     1 );
-   ct_component = us_counter( 2, 1, 200,     1 );
-
-   le_sedcoeff  = us_lineedit( "", -1, true );
-   le_difcoeff  = us_lineedit( "", -1, true );
-   le_moweight  = us_lineedit( "", -1, true );
-   le_friratio  = us_lineedit( "", -1, true );
-   le_partconc  = us_lineedit( "", -1, true );
 
    cb_mesh      = us_comboBox();
    cb_mesh->addItem( "Adaptive Space Time Mesh (ASTFEM)" );
@@ -69,57 +45,30 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    cb_grid->addItem( "Moving Time Grid"                  );
    cb_grid->addItem( "Constant Time Grid"                );
 
-   mainLayout ->addLayout( upperLayout );
-
    QPushButton* pb_help    = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_cancel  = us_pushbutton( tr( "Cancel" ) );
    QPushButton* pb_accept  = us_pushbutton( tr( "Accept" ) );
 
    int row      = 0;
-   analysisLayout->addWidget( lb_analysis,   row++, 0, 1, 6 );
-   analysisLayout->addWidget( lb_simpoints,  row,   0, 1, 3 );
-   analysisLayout->addWidget( ct_simpoints,  row++, 3, 1, 3 );
-   analysisLayout->addWidget( lb_bldvolume,  row,   0, 1, 3 );
-   analysisLayout->addWidget( ct_bldvolume,  row++, 3, 1, 3 );
-   analysisLayout->addWidget( lb_parameter,  row,   0, 1, 3 );
-   analysisLayout->addWidget( ct_parameter,  row++, 3, 1, 3 );
-   analysisLayout->addWidget( cb_mesh,       row++, 0, 1, 6 );
-   analysisLayout->addWidget( cb_grid,       row++, 0, 1, 6 );
-   analysisLayout->addWidget( pb_help,       row,   0, 1, 2 );
-   analysisLayout->addWidget( pb_cancel,     row,   2, 1, 2 );
-   analysisLayout->addWidget( pb_accept,     row++, 4, 1, 2 );
-
-   row          = 0;
-   modelcomLayout->addWidget( lb_modelcom,   row++, 0, 1, 6 );
-   modelcomLayout->addWidget( lb_sedcoeff,   row,   0, 1, 3 );
-   modelcomLayout->addWidget( le_sedcoeff,   row++, 3, 1, 3 );
-   modelcomLayout->addWidget( lb_difcoeff,   row,   0, 1, 3 );
-   modelcomLayout->addWidget( le_difcoeff,   row++, 3, 1, 3 );
-   modelcomLayout->addWidget( lb_moweight,   row,   0, 1, 3 );
-   modelcomLayout->addWidget( le_moweight,   row++, 3, 1, 3 );
-   modelcomLayout->addWidget( lb_friratio,   row,   0, 1, 3 );
-   modelcomLayout->addWidget( le_friratio,   row++, 3, 1, 3 );
-   modelcomLayout->addWidget( lb_partconc,   row,   0, 1, 3 );
-   modelcomLayout->addWidget( le_partconc,   row++, 3, 1, 3 );
-   modelcomLayout->addWidget( pb_component,  row,   0, 1, 3 );
-   modelcomLayout->addWidget( ct_component,  row++, 3, 1, 3 );
+   mainLayout->addWidget( lb_analysis,   row++, 0, 1, 6 );
+   mainLayout->addWidget( lb_simpoints,  row,   0, 1, 3 );
+   mainLayout->addWidget( ct_simpoints,  row++, 3, 1, 3 );
+   mainLayout->addWidget( lb_bldvolume,  row,   0, 1, 3 );
+   mainLayout->addWidget( ct_bldvolume,  row++, 3, 1, 3 );
+   mainLayout->addWidget( lb_parameter,  row,   0, 1, 3 );
+   mainLayout->addWidget( ct_parameter,  row++, 3, 1, 3 );
+   mainLayout->addWidget( cb_mesh,       row++, 0, 1, 6 );
+   mainLayout->addWidget( cb_grid,       row++, 0, 1, 6 );
+   mainLayout->addWidget( pb_help,       row,   0, 1, 2 );
+   mainLayout->addWidget( pb_cancel,     row,   2, 1, 2 );
+   mainLayout->addWidget( pb_accept,     row++, 4, 1, 2 );
 
    ct_simpoints->setValue( 200   );
    ct_bldvolume->setValue( 0.015 );
    ct_parameter->setValue( 0     );
-   ct_component->setValue( 0     );
-   ct_simpoints->setStep(     5 );
-   ct_bldvolume->setStep( 0.001 );
-   ct_parameter->setStep(     1 );
-   ct_component->setStep(     1 );
-   ct_component->setMaxValue( model->components.size() );
-
-   connect( pb_component, SIGNAL( clicked()        ),
-            this,         SLOT(   next_component() ) );
-   connect( ct_component, SIGNAL( valueChanged(  double ) ),
-            this,         SLOT(   set_component( double ) ) );
-
-   set_component( 1.0 );
+   ct_simpoints->setStep (     5 );
+   ct_bldvolume->setStep ( 0.001 );
+   ct_parameter->setStep (     1 );
 
    connect( pb_help,    SIGNAL( clicked() ),
             this,       SLOT(   help()    ) );
@@ -128,11 +77,11 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    connect( pb_accept,  SIGNAL( clicked() ),
             this,       SLOT(   done()    ) );
 
-qDebug() << "Pre-adjust size" << size();
+qDebug() << "AdvF:Pre-adjust size" << size();
    adjustSize();
-qDebug() << "Post-adjust size" << size();
-   resize( 700, 150 );
-qDebug() << "Post-resize size" << size();
+qDebug() << "AdvF:Post-adjust size" << size();
+   resize( 400, 150 );
+qDebug() << "AdvF:Post-resize size" << size();
    qApp->processEvents();
 }
 
@@ -146,32 +95,5 @@ void US_AdvancedFem::done( void )
    parmap[ "gridtype"  ] = cb_grid->currentText();
 
    accept();
-}
-
-// private slot to advance to the next model component
-void US_AdvancedFem::next_component( void )
-{
-   int icomp = (int)ct_component->value();
-   int ncomp = model->components.size();
-
-   icomp     = ( icomp < ncomp ) ? ( icomp + 1 ) : 1;
-   ct_component->setValue( (double)icomp );
-}
-
-// private slot to set the model component index and fill in the implied text
-void US_AdvancedFem::set_component( double compx )
-{
-   int icomp  = (int)compx - 1;
-
-   if ( icomp < 0 )
-      return;
-
-   le_sedcoeff->setText( QString::number( model->components[ icomp ].s ) );
-   le_difcoeff->setText( QString::number( model->components[ icomp ].D ) );
-   le_moweight->setText(
-      QString::number( model->components[ icomp ].mw / 1000.0 ) );
-   le_friratio->setText( QString::number( model->components[ icomp ].f_f0 ) );
-   le_partconc->setText(
-      QString::number( model->components[ icomp ].signal_concentration ) );
 }
 
