@@ -49,6 +49,7 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QCheckBox*    ck_modelpl;
       QCheckBox*    ck_vhw_enh;
       QCheckBox*    ck_manrepl;
+      QCheckBox*    ck_use_fed;
 
       US_Help       showHelp;
  
@@ -108,6 +109,9 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QString       workingDir;
       QString       runID;
       QString       editID;
+
+      QVector< US_DataIO::EditedData > dsimList;  // Simulation data
+      QVector< bool >                  have_sims; // Have-simulation flags
 
       QVector< double >            aseds;      // All division sedcoeff values
       QVector< double >            dseds;      // Division sedcoeff intercepts
@@ -179,6 +183,8 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       void live_scans          ( void );
       void init_partials       ( void );
       void update_mid_concs    ( void );
+      void create_simulation   ( void );
+      void plot_data2          ( void );
 
       void help     ( void )
       { showHelp.show_help( "vhw_enhanced.html" ); };

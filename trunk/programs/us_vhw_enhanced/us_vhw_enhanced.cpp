@@ -11,6 +11,7 @@
 #include "us_matrix.h"
 #include "us_passwd.h"
 #include "us_constants.h"
+#include "us_astfem_rsa.h"
 
 #define SEDC_NOVAL   -9999.0
 
@@ -46,6 +47,7 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    pb_replot->setEnabled( false );
    us_checkbox( tr( "Manual-only Replot" ), ck_manrepl, false );
    us_checkbox( tr( "Use Enhanced vHW" ),   ck_vhw_enh, true  );
+   us_checkbox( tr( "Use FE Data" ),        ck_use_fed, false );
 
    connect( pb_dstrpl,  SIGNAL( clicked()       ),
             this,       SLOT(   distr_plot()    ) );
@@ -57,6 +59,8 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
             this,       SLOT(   data_plot()     ) );
    connect( ck_vhw_enh, SIGNAL( toggled( bool ) ),
             this,       SLOT(   data_plot()     ) );
+   connect( ck_use_fed, SIGNAL( toggled( bool ) ),
+            this,       SLOT(   data_plot()     ) );
    connect( pb_save,    SIGNAL( clicked()       ),
             this,       SLOT(   save_data()     ) );
    connect( pb_view,    SIGNAL( clicked()       ),
@@ -64,9 +68,10 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
 
    int jr = 2;
    parameterLayout->addWidget( pb_dstrpl,  jr,   0, 1, 2 );
-   parameterLayout->addWidget( pb_selegr,  jr++, 2, 1, 2 );
-   parameterLayout->addWidget( ck_manrepl, jr,   0, 1, 2 );
-   parameterLayout->addWidget( pb_replot,  jr++, 2, 1, 2 );
+   parameterLayout->addWidget( pb_replot,  jr,   2, 1, 1 );
+   parameterLayout->addWidget( pb_selegr,  jr++, 3, 1, 1 );
+   parameterLayout->addWidget( ck_use_fed, jr,   0, 1, 2 );
+   parameterLayout->addWidget( ck_manrepl, jr++, 2, 1, 2 );
    parameterLayout->addWidget( ck_modelpl, jr,   0, 1, 2 );
    parameterLayout->addWidget( ck_vhw_enh, jr++, 2, 1, 2 );
 
@@ -130,6 +135,7 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    rightLayout->setStretchFactor( plotLayout2, 2 );
 
    setMaximumSize( qApp->desktop()->size() - QSize( 80, 80 ) );
+   resize( 100, 100 );
 }
 
 // load data
@@ -177,7 +183,7 @@ void US_vHW_Enhanced::load( void )
    int p2ht = mxht - p1ht;
    p1ht     = qMin( p1ht, 400 );
    p2ht     = qMin( p2ht, 250 );
-DbgLv(1) << "mxht p1ht p2ht" << mxht << p1ht << p2ht;
+DbgLv(1) << "vhw: mxht p1ht p2ht" << mxht << p1ht << p2ht;
    data_plot1->setMinimumSize( 600, p1ht );
    data_plot2->setMinimumSize( 600, p2ht );
    data_plot2->setAxisAutoScale( QwtPlot::yLeft );
@@ -195,9 +201,31 @@ DbgLv(1) << "mxht p1ht p2ht" << mxht << p1ht << p2ht;
    pb_replot->setEnabled( true );
    haveZone    = false;
 
-   saved.clear();
+   // Set saved flags; initialize simulations lists
+   saved    .clear();
+   have_sims.clear();
+   dsimList .clear();
    for ( int ii = 0; ii < triples.size(); ii++ )
+   {
       saved << false;
+      have_sims << false;
+      US_DataIO::RawData     simraw;
+      US_DataIO::EditedData  simdat;
+
+      simdat      = dataList[ ii ];
+DbgLv(1) << "vhw:   init: ii" << ii;
+      US_AstfemMath::initSimData( simraw, simdat, 0.0 );
+DbgLv(1) << "vhw:   init:   init'd simraw (s x p)"
+ << simraw.scanCount() << simraw.pointCount();
+DbgLv(1) << "vhw:   init:   copy'd simdat (s x p)"
+ << simdat.scanCount() << simdat.pointCount();
+
+      for ( int jj = 0; jj < simdat.scanCount(); jj++ )
+         for ( int kk = 0; kk < simdat.pointCount(); kk++ )
+            simdat.setValue( jj, kk, simraw.value( jj, kk ) );
+
+      dsimList << simdat;
+   }
 
    update( 0 );
 }
@@ -243,12 +271,22 @@ DbgLv(1) << " data_plot: dataLoaded" << dataLoaded << "vbar" << vbar;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    row        = lw_triples->currentRow();
    edata      = &dataList[ row ];
+   scanCount  = edata->scanCount();
+   valueCount = edata->pointCount();
+
+   if ( have_model()  &&  ck_use_fed->isChecked() )
+   {
+      if ( ! have_sims[ row ] )
+      {
+         create_simulation();
+      }
+
+      edata      = &dsimList[ row ];
+   }
 
    data_plot2->detachItems();
    data_plot2->setAxisAutoScale( QwtPlot::yLeft );
    data_plot2->setAxisAutoScale( QwtPlot::xBottom );
-   scanCount  = edata->scanCount();
-   valueCount = edata->pointCount();
    boundPct   = ct_boundaryPercent->value() / 100.0;
    positPct   = ct_boundaryPos    ->value() / 100.0;
    baseline   = calc_baseline();
@@ -286,8 +324,8 @@ DbgLv(1) << "  lscnCount" << lscnCount;
       fitted_plateaus();
    }
 
-   // Let AnalysisBase do the lower plot
-   US_AnalysisBase2::data_plot();
+   // Do the lower plot
+   plot_data2();
 
    // Then set up to handle the upper (vHW Extrapolation) plot.
    // Calculate the division-1 sedimentation coefficient intercept and,
@@ -1636,9 +1674,19 @@ DbgLv(1) << " update: vbar" << vbar;
    QString dmsg  = te_desc->toPlainText() + "\n";
 
    if ( have_model() )
+   {
       dmsg += tr( "A model IS implied for %1" ).arg( tripl );
+      ck_modelpl->setEnabled( true  );
+      ck_use_fed->setEnabled( true  );
+      ck_modelpl->setChecked( true  );
+   }
    else
+   {
       dmsg += tr( "NO model is implied for %1" ).arg( tripl );
+      ck_modelpl->setEnabled( false );
+      ck_use_fed->setEnabled( false );
+      ck_modelpl->setChecked( false );
+   }
 
    te_desc->setText( dmsg );
 
@@ -2074,6 +2122,7 @@ kcalls[5]+=1;QDateTime sttime=QDateTime::currentDateTime();
    divfac     = 1.0 / (double)divsCount;
 	C0         = 0.0;
 	Swavg      = 0.0;
+   edata      = ck_use_fed->isChecked() ? &dsimList[ row ] : &dataList[ row ];
 
    div_seds();
 
@@ -2146,6 +2195,7 @@ kcalls[6]+=1;QDateTime sttime=QDateTime::currentDateTime();
    double  eterm;
    double  oterm;
 
+   edata      = ck_use_fed->isChecked() ? &dsimList[ row ] : &dataList[ row ];
    scanCount  = edata->scanCount();
    valueCount = edata->pointCount();
    boundPct   = ct_boundaryPercent->value() / 100.0;
@@ -2363,7 +2413,7 @@ void US_vHW_Enhanced::exclude_from( double from )
    vert_exclude_lines();
    data_plot1->replot();
 
-   US_AnalysisBase2::data_plot();
+   plot_data2();
    skipPlot = false;
 }
 
@@ -2395,7 +2445,7 @@ DbgLv(1) << "(4)TO=" << to;
       vert_exclude_lines();
       data_plot1->replot();
 
-      US_AnalysisBase2::data_plot();
+      plot_data2();
       skipPlot = false;
 DbgLv(1) << "(5)TO=" << to;
    }
@@ -2498,5 +2548,200 @@ kcalls[10]+=1;QDateTime sttime=QDateTime::currentDateTime();
 //*TIMING
 kmsecs[10]+=sttime.msecsTo(QDateTime::currentDateTime());
 //*TIMING
+}
+
+// Create simulation for a data set (if possible)
+void US_vHW_Enhanced::create_simulation()
+{
+   row        = lw_triples->currentRow();
+   US_DataIO::EditedData*  edata = &dataList[ row ];
+   US_DataIO::EditedData*  sdata = &dsimList[ row ];
+   US_DataIO::RawData      simraw;
+   US_SimulationParameters simparams;
+   US_Passwd               pw;
+   US_DB2*                 dbP   = disk_controls->db()
+                                   ? new US_DB2( pw.getPasswd() ) : 0;
+DbgLv(1) << " cr.sim.: row dbP" << row << dbP;
+
+   simparams.initFromData( dbP, *edata, true );
+simparams.debug();
+   US_AstfemMath::initSimData( simraw, *edata, 0.0 );
+
+DbgLv(1) << " cr.sim.: new astfem";
+DbgLv(1) << " cr.sim.:  model:" << model.description;
+   US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
+DbgLv(1) << " cr.sim.:  astfem calc";
+   astfem_rsa->calculate( simraw );
+DbgLv(1) << " cr.sim.:  astfem calc RTN";
+int ll=edata->scanCount()-1;
+int nn=edata->pointCount()-1;
+int mm=nn/2;
+DbgLv(1) << " cr.sim.:  sd 00 0m 0n l0 lm ln"
+ << simraw.value( 0, 0)
+ << simraw.value( 0,mm)
+ << simraw.value( 0,nn)
+ << simraw.value(ll, 0)
+ << simraw.value(ll,mm)
+ << simraw.value(ll,nn);
+
+   for ( int jj = 0; jj < edata->scanCount(); jj++ )
+      for ( int kk = 0; kk < edata->pointCount(); kk++ )
+         sdata->setValue( jj, kk, simraw.value( jj, kk ) );
+
+   have_sims[ row ]  = true;
+}
+
+// Show lower data plot depending on "Use FE Data" setting
+void US_vHW_Enhanced::plot_data2()
+{
+   if ( ! ck_use_fed->isChecked()  ||  ! have_model() )
+   {  // Normal experimental data plot
+      US_AnalysisBase2::data_plot();
+      return;
+   }
+
+   // Plot of simulation data when Use FE Data is checked
+   int                     row  = lw_triples->currentRow();
+   US_DataIO::EditedData* dd    = &dsimList[ row ];
+
+   QString                        dataType = tr( "Absorbance" );
+   if ( dd->dataType == "RI" )    dataType = tr( "Intensity" );
+   if ( dd->dataType == "WI" )    dataType = tr( "Intensity" );
+   if ( dd->dataType == "IP" )    dataType = tr( "Interference" );
+   if ( dd->dataType == "FI" )    dataType = tr( "Fluorescence" );
+
+   QString header = tr( "Simulation Velocity Data for\n ") + dd->runID;
+   data_plot2->setTitle( header );
+
+   header = dataType + tr( " at " ) + dd->wavelength + tr( " nm" );
+   data_plot2->setAxisTitle( QwtPlot::yLeft, header );
+
+   header = tr( "Radius (cm) " );
+   data_plot2->setAxisTitle( QwtPlot::xBottom, header );
+
+   data_plot2->clear();
+   us_grid( data_plot2 );
+
+   int     scan_number = 0;
+   int     from        = (int)ct_from->value();
+   int     to          = (int)ct_to  ->value();
+
+   int     scanCount   = dd->scanCount();
+   int     points      = dd->pointCount();
+   double  boundaryPct = ct_boundaryPercent->value() / 100.0;
+   boundaryPct = ct_boundaryPercent->isEnabled() ? boundaryPct : 9.0;
+   double  positionPct = ct_boundaryPos    ->value() / 100.0;
+   double  baseline    = calc_baseline();
+
+   QVector< double > rvec( points );
+   QVector< double > vvec( points );
+   double* rr          = rvec.data();
+   double* vv          = vvec.data();
+
+   // Calculate basic parameters for other functions
+   time_correction    = US_Math2::time_correction( dsimList );
+
+   solution.density   = le_density  ->text().toDouble();
+   solution.viscosity = le_viscosity->text().toDouble();
+   solution.vbar20    = le_vbar     ->text().toDouble();
+   solution.manual    = manual;
+   double avgTemp     = dd->average_temperature();
+   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+
+   US_Math2::data_correction( avgTemp, solution );
+
+   // Draw curves
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {
+      if ( excludedScans.contains( ii ) ) continue;
+
+      scan_number++;
+      bool highlight = scan_number >= from  &&  scan_number <= to;
+
+      US_DataIO::Scan*  ss = &dd->scanData[ ii ];
+
+      double range       = ss->plateau - baseline;
+      double lower_limit = baseline    + range * positionPct;
+      double upper_limit = lower_limit + range * boundaryPct;
+
+      int jj    = 0;
+      int count = 0;
+
+      // Plot each scan in (up to) three segments: below, in, and above
+      // the specified boundaries
+      while (  jj < points  &&  ss->rvalues[ jj ] < lower_limit )
+      {
+         rr[ count ] = dd->xvalues[ jj ];
+         vv[ count ] = ss->rvalues[ jj ];
+         jj++;
+         count++;
+      }
+
+      QString       title; 
+      QwtPlotCurve* cc;
+
+      if ( count > 1 )
+      {
+         title = tr( "Curve " ) + QString::number( ii ) + tr( " below range" );
+         cc    = us_curve( data_plot2, title );
+
+         if ( highlight )
+            cc->setPen( QPen( Qt::red ) );
+         else
+            cc->setPen( QPen( Qt::cyan ) );
+         
+         cc->setData( rr, vv, count );
+      }
+
+      count = 0;
+
+      while ( jj < points && ss->rvalues[ jj ] < upper_limit )
+      {
+         rr[ count ] = dd->xvalues[ jj ];
+         vv[ count ] = ss->rvalues[ jj ];
+         jj++;
+         count++;
+      }
+
+      if ( count > 1 )
+      {
+         title = tr( "Curve " ) + QString::number( ii ) + tr( " in range" );
+         cc = us_curve( data_plot2, title );
+
+         if ( highlight )
+            cc->setPen( QPen( Qt::red ) );
+         else
+            cc->setPen( QPen( US_GuiSettings::plotCurve() ) );
+         
+         cc->setData( rr, vv, count );
+      }
+
+      count = 0;
+
+      while ( jj < points )
+      {
+         rr[ count ] = dd->xvalues[ jj ];
+         vv[ count ] = ss->rvalues[ jj ];
+         jj++;
+         count++;
+      }
+
+      if ( count > 1 )
+      {
+         title = tr( "Curve " ) + QString::number( ii ) + tr( " above range" );
+         cc = us_curve( data_plot2, title );
+
+         if ( highlight )
+            cc->setPen( QPen( Qt::red ) );
+         else
+            cc->setPen( QPen( Qt::cyan ) );
+        
+         cc->setData( rr, vv, count );
+      }
+   }
+
+   data_plot2->replot();
+
+   return;
 }
 
