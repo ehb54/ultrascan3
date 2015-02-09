@@ -135,7 +135,9 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    rightLayout->setStretchFactor( plotLayout2, 2 );
 
    setMaximumSize( qApp->desktop()->size() - QSize( 80, 80 ) );
-   resize( 100, 100 );
+   //resize( 100, 100 );
+   //resize( 900, 100 );
+   adjustSize();
 }
 
 // load data
@@ -211,6 +213,7 @@ DbgLv(1) << "vhw: mxht p1ht p2ht" << mxht << p1ht << p2ht;
       have_sims << false;
       US_DataIO::RawData     simraw;
       US_DataIO::EditedData  simdat;
+      US_Model               model;
 
       simdat      = dataList[ ii ];
 DbgLv(1) << "vhw:   init: ii" << ii;
@@ -221,10 +224,15 @@ DbgLv(1) << "vhw:   init:   copy'd simdat (s x p)"
  << simdat.scanCount() << simdat.pointCount();
 
       for ( int jj = 0; jj < simdat.scanCount(); jj++ )
+      {
          for ( int kk = 0; kk < simdat.pointCount(); kk++ )
+         {
             simdat.setValue( jj, kk, simraw.value( jj, kk ) );
+         }
+      }
 
       dsimList << simdat;
+      modlList << model;
    }
 
    update( 0 );
@@ -274,14 +282,16 @@ DbgLv(1) << " data_plot: dataLoaded" << dataLoaded << "vbar" << vbar;
    scanCount  = edata->scanCount();
    valueCount = edata->pointCount();
 
-   if ( have_model()  &&  ck_use_fed->isChecked() )
+   //if ( have_model()  &&  ck_use_fed->isChecked() )
+   if ( have_model() )
    {
       if ( ! have_sims[ row ] )
       {
          create_simulation();
       }
 
-      edata      = &dsimList[ row ];
+      //edata      = &dsimList[ row ];
+      edata      = ck_use_fed->isChecked() ? &dsimList[ row ] : edata;
    }
 
    data_plot2->detachItems();
@@ -371,9 +381,11 @@ DbgLv(1) << "  lscnCount" << lscnCount;
    data_plot1->clear();
    us_grid( data_plot1 );
 
-   data_plot1->setTitle( tr( "Run " ) + runID + tr( ": Cell " )
-         + edata->cell + " (" + edata->wavelength
-         + tr( " nm) - vHW Extrapolation Plot" ) );
+   QString ttrip = edata->cell + "/" + edata->channel
+                   + "/" + edata->wavelength;
+
+   data_plot1->setTitle( edata->runID + "  (" + ttrip + ")\n"
+                         + tr( "vHW Extrapolation Plot" ) );
 
    data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "(Time)^-0.5" ) );
    data_plot1->setAxisTitle( QwtPlot::yLeft  , 
@@ -2020,36 +2032,7 @@ bool US_vHW_Enhanced::model_plateaus()
 //*TIMING
 kcalls[4]+=1;QDateTime sttime=QDateTime::currentDateTime();
 //*TIMING
-   int n_ti_noi = ti_noise.values.size();
-   int n_ri_noi = ri_noise.values.size();
-   QString modelGUID;
-   QString mmodlGUID = model.modelGUID;
-
-   if ( ! ck_modelpl->isChecked() )
-      return false;
-
-   if ( n_ti_noi > 0 )
-      modelGUID = ti_noise.modelGUID;
-   else if ( n_ri_noi > 0 )
-      modelGUID = ri_noise.modelGUID;
-   else
-      return false;
-
-DbgLv(1) << "Cpl: MODEL_PLATEAUS: modelGUID" << modelGUID;
-   if ( ! modelGUID.isEmpty()  &&  modelGUID.length() == 36  &&
-        ( mmodlGUID.isEmpty()  ||  mmodlGUID != modelGUID ) )
-   {
-      bool    isDB = disk_controls->db();
-      US_Passwd pw;
-      US_DB2* db   = isDB ? new US_DB2( pw.getPasswd() ) : 0;
-
-      model.load( isDB, modelGUID, db );
-   }
-   else
-   {
-      DbgLv(1) << "Cpl:    MODEL empty   GUIDlen" << modelGUID.length()
-         << "modelGUID mmodlGUID" << modelGUID << mmodlGUID;
-   }
+   get_model();
 
    int    ncomp = model.components.size();
    double scorr = -2.0 / solution.s20w_correction;
@@ -2567,9 +2550,37 @@ DbgLv(1) << " cr.sim.: row dbP" << row << dbP;
 simparams.debug();
    US_AstfemMath::initSimData( simraw, *edata, 0.0 );
 
+   get_model();
+
+   US_Model amodel    = model;
+   solution.density   = le_density  ->text().toDouble();
+   solution.viscosity = le_viscosity->text().toDouble();
+   double avgTemp     = edata->average_temperature();
+   bool cnst_vbar     = model.constant_vbar();
+   bool vari_vbar     = ! cnst_vbar;
+
+   if ( cnst_vbar )
+   {
+      solution.vbar20    = le_vbar     ->text().toDouble();
+      solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+      US_Math2::data_correction( avgTemp, solution );
+   }
+
+   for ( int ii = 0; ii < amodel.components.size(); ii++ )
+   {
+      if ( vari_vbar )
+      {
+         solution.vbar20    = amodel.components[ ii ].vbar20;
+         solution.vbar      = US_Math2::adjust_vbar( solution.vbar20, avgTemp );
+         US_Math2::data_correction( avgTemp, solution );
+      }
+
+      amodel.components[ ii ].s  /= solution.s20w_correction;
+      amodel.components[ ii ].D  /= solution.D20w_correction;
+   }
 DbgLv(1) << " cr.sim.: new astfem";
 DbgLv(1) << " cr.sim.:  model:" << model.description;
-   US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
+   US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( amodel, simparams );
 DbgLv(1) << " cr.sim.:  astfem calc";
    astfem_rsa->calculate( simraw );
 DbgLv(1) << " cr.sim.:  astfem calc RTN";
@@ -2584,9 +2595,9 @@ DbgLv(1) << " cr.sim.:  sd 00 0m 0n l0 lm ln"
  << simraw.value(ll,mm)
  << simraw.value(ll,nn);
 
-   for ( int jj = 0; jj < edata->scanCount(); jj++ )
-      for ( int kk = 0; kk < edata->pointCount(); kk++ )
-         sdata->setValue( jj, kk, simraw.value( jj, kk ) );
+   for ( int ii = 0; ii < sdata->scanCount(); ii++ )
+      for ( int jj = 0; jj < sdata->pointCount(); jj++ )
+         sdata->setValue( ii, jj, simraw.value( ii, jj ) );
 
    have_sims[ row ]  = true;
 }
@@ -2602,7 +2613,8 @@ void US_vHW_Enhanced::plot_data2()
 
    // Plot of simulation data when Use FE Data is checked
    int                     row  = lw_triples->currentRow();
-   US_DataIO::EditedData* dd    = &dsimList[ row ];
+   US_DataIO::EditedData*  dd   = &dsimList[ row ];
+   US_DataIO::EditedData*  de   = &dataList[ row ];
 
    QString                        dataType = tr( "Absorbance" );
    if ( dd->dataType == "RI" )    dataType = tr( "Intensity" );
@@ -2610,7 +2622,8 @@ void US_vHW_Enhanced::plot_data2()
    if ( dd->dataType == "IP" )    dataType = tr( "Interference" );
    if ( dd->dataType == "FI" )    dataType = tr( "Fluorescence" );
 
-   QString header = tr( "Simulation Velocity Data for\n ") + dd->runID;
+   QString header = tr( "Simulation Velocity Data for\n ") + dd->runID
+         + "   (" +  dd->cell + "/" + dd->channel + "/" + dd->wavelength + ")";
    data_plot2->setTitle( header );
 
    header = dataType + tr( " at " ) + dd->wavelength + tr( " nm" );
@@ -2629,7 +2642,7 @@ void US_vHW_Enhanced::plot_data2()
    int     scanCount   = dd->scanCount();
    int     points      = dd->pointCount();
    double  boundaryPct = ct_boundaryPercent->value() / 100.0;
-   boundaryPct = ct_boundaryPercent->isEnabled() ? boundaryPct : 9.0;
+           boundaryPct = ct_boundaryPercent->isEnabled() ? boundaryPct : 9.0;
    double  positionPct = ct_boundaryPos    ->value() / 100.0;
    double  baseline    = calc_baseline();
 
@@ -2639,16 +2652,18 @@ void US_vHW_Enhanced::plot_data2()
    double* vv          = vvec.data();
 
    // Calculate basic parameters for other functions
-   time_correction    = US_Math2::time_correction( dsimList );
+   time_correction     = US_Math2::time_correction( dsimList );
 
-   solution.density   = le_density  ->text().toDouble();
-   solution.viscosity = le_viscosity->text().toDouble();
-   solution.vbar20    = le_vbar     ->text().toDouble();
-   solution.manual    = manual;
-   double avgTemp     = dd->average_temperature();
-   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+   solution.density    = le_density  ->text().toDouble();
+   solution.viscosity  = le_viscosity->text().toDouble();
+   solution.vbar20     = le_vbar     ->text().toDouble();
+   solution.manual     = manual;
+   double avgTemp      = dd->average_temperature();
+   solution.vbar       = US_Math2::calcCommonVbar( solution_rec, avgTemp );
 
    US_Math2::data_correction( avgTemp, solution );
+   US_DataIO::Scan* ss;
+   US_DataIO::Scan* se;
 
    // Draw curves
    for ( int ii = 0; ii < scanCount; ii++ )
@@ -2656,13 +2671,13 @@ void US_vHW_Enhanced::plot_data2()
       if ( excludedScans.contains( ii ) ) continue;
 
       scan_number++;
-      bool highlight = scan_number >= from  &&  scan_number <= to;
-
-      US_DataIO::Scan*  ss = &dd->scanData[ ii ];
-
-      double range       = ss->plateau - baseline;
+      bool   highlight   = ( scan_number >= from  &&  scan_number <= to );
+             ss          = &dd->scanData[ ii ];
+             se          = &de->scanData[ ii ];
+      double range       = se->plateau - baseline;
       double lower_limit = baseline    + range * positionPct;
       double upper_limit = lower_limit + range * boundaryPct;
+      QString curvname   = tr( "Curve %1 " ).arg( ii );
 
       int jj    = 0;
       int count = 0;
@@ -2682,8 +2697,8 @@ void US_vHW_Enhanced::plot_data2()
 
       if ( count > 1 )
       {
-         title = tr( "Curve " ) + QString::number( ii ) + tr( " below range" );
-         cc    = us_curve( data_plot2, title );
+         title       = curvname + tr( "below range" );
+         cc          = us_curve( data_plot2, title );
 
          if ( highlight )
             cc->setPen( QPen( Qt::red ) );
@@ -2695,7 +2710,7 @@ void US_vHW_Enhanced::plot_data2()
 
       count = 0;
 
-      while ( jj < points && ss->rvalues[ jj ] < upper_limit )
+      while ( jj < points  &&  ss->rvalues[ jj ] < upper_limit )
       {
          rr[ count ] = dd->xvalues[ jj ];
          vv[ count ] = ss->rvalues[ jj ];
@@ -2705,8 +2720,8 @@ void US_vHW_Enhanced::plot_data2()
 
       if ( count > 1 )
       {
-         title = tr( "Curve " ) + QString::number( ii ) + tr( " in range" );
-         cc = us_curve( data_plot2, title );
+         title       = curvname + tr( "in range" );
+         cc          = us_curve( data_plot2, title );
 
          if ( highlight )
             cc->setPen( QPen( Qt::red ) );
@@ -2728,8 +2743,8 @@ void US_vHW_Enhanced::plot_data2()
 
       if ( count > 1 )
       {
-         title = tr( "Curve " ) + QString::number( ii ) + tr( " above range" );
-         cc = us_curve( data_plot2, title );
+         title       = curvname + tr( "above range" );
+         cc          = us_curve( data_plot2, title );
 
          if ( highlight )
             cc->setPen( QPen( Qt::red ) );
@@ -2743,5 +2758,47 @@ void US_vHW_Enhanced::plot_data2()
    data_plot2->replot();
 
    return;
+}
+
+// Insure we get the model associated with the current noises
+void US_vHW_Enhanced::get_model()
+{
+   row          = lw_triples->currentRow();
+   int n_ti_noi = ti_noise.values.size();
+   int n_ri_noi = ri_noise.values.size();
+   model        = modlList[ row ];
+   QString mmodlGUID = model.modelGUID;
+   QString modelGUID;
+
+   if ( ! ck_modelpl->isChecked() )
+      return;
+
+   if ( n_ti_noi > 0 )
+      modelGUID = ti_noise.modelGUID;
+   else if ( n_ri_noi > 0 )
+      modelGUID = ri_noise.modelGUID;
+   else
+      return;
+
+DbgLv(1) << "gMo:  modelGUID" << modelGUID;
+   if ( ! modelGUID.isEmpty()  &&  modelGUID.length() == 36  &&
+        ( mmodlGUID.isEmpty()  ||  mmodlGUID != modelGUID ) )
+   {
+      bool    isDB = disk_controls->db();
+      US_Passwd pw;
+      US_DB2* db   = isDB ? new US_DB2( pw.getPasswd() ) : 0;
+
+      model.load( isDB, modelGUID, db );
+
+      mmodlGUID    = model.modelGUID;
+DbgLv(1) << "gMo:  loaded model: modelGUID" << modelGUID << mmodlGUID;
+   }
+   else
+   {
+      DbgLv(1) << "gMo:    MODEL empty   GUIDlen" << modelGUID.length()
+         << "modelGUID mmodlGUID" << modelGUID << mmodlGUID;
+   }
+
+   modlList[ row ] = model;
 }
 
