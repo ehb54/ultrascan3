@@ -421,7 +421,8 @@ void US_AnalysisBase2::data_plot( void )
    if ( d->dataType == "IP" )     dataType = tr( "Interference" );
    if ( d->dataType == "FI" )     dataType = tr( "Fluorescence" );
 
-   QString header = tr( "Velocity Data for ") + d->runID;
+   QString header = tr( "Velocity Data for\n") + d->runID + "  ("
+         + d->cell + "/" + d->channel + "/" + d->wavelength + ")";
    data_plot2->setTitle( header );
 
    header = dataType + tr( " at " ) + d->wavelength + tr( " nm" );
