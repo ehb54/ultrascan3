@@ -282,7 +282,6 @@ DbgLv(1) << " data_plot: dataLoaded" << dataLoaded << "vbar" << vbar;
    scanCount  = edata->scanCount();
    valueCount = edata->pointCount();
 
-   //if ( have_model()  &&  ck_use_fed->isChecked() )
    if ( have_model() )
    {
       if ( ! have_sims[ row ] )
@@ -290,7 +289,6 @@ DbgLv(1) << " data_plot: dataLoaded" << dataLoaded << "vbar" << vbar;
          create_simulation();
       }
 
-      //edata      = &dsimList[ row ];
       edata      = ck_use_fed->isChecked() ? &dsimList[ row ] : edata;
    }
 
@@ -2037,9 +2035,11 @@ kcalls[4]+=1;QDateTime sttime=QDateTime::currentDateTime();
    int    ncomp = model.components.size();
    double scorr = -2.0 / solution.s20w_correction;
 DbgLv(1) << "Cpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
-   edata        = &dataList[ row ];
-   valueCount   = edata->pointCount();
-   scanCount    = edata->scanCount();
+   expda        = &dataList[ row ];
+   simda        = &dsimList[ row ];
+   edata        = expda;
+   valueCount   = expda->pointCount();
+   scanCount    = expda->scanCount();
    scPlats.fill( 0.0, lscnCount );
 	C0           = 0.0;
 	Swavg        = 0.0;
@@ -2048,9 +2048,10 @@ DbgLv(1) << "Cpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
    for ( int ii = 0; ii < lscnCount; ii++ )
    {
       int js            = liveScans[ ii ];
-      dscan             = &edata->scanData[ js ];
+      expsc             = &expda->scanData[ js ];
+      simsc             = &simda->scanData[ js ];
       double   omega    = dscan->rpm * M_PI / 30.0;
-      double   oterm    = ( dscan->seconds - time_correction ) * omega * omega;
+      double   oterm    = ( expsc->seconds - time_correction ) * omega * omega;
                oterm   *= scorr;
       double   cplat    = 0.0;
 
@@ -2067,7 +2068,8 @@ DbgLv(1) << "Cpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
 //DbgLv(1) << "Cpl:  scan" << ii << "cplat" << cplat;
 
       scPlats[ ii ]  = cplat;
-      dscan->plateau = cplat;
+      expsc->plateau = cplat;
+      simsc->plateau = cplat;
       C0            += cplat;
    }
 
@@ -2105,7 +2107,8 @@ kcalls[5]+=1;QDateTime sttime=QDateTime::currentDateTime();
    divfac     = 1.0 / (double)divsCount;
 	C0         = 0.0;
 	Swavg      = 0.0;
-   edata      = ck_use_fed->isChecked() ? &dsimList[ row ] : &dataList[ row ];
+   edata      = ( ck_use_fed->isChecked()  &&  have_model() )
+                ? &dsimList[ row ] : &dataList[ row ];
 
    div_seds();
 
@@ -2178,7 +2181,8 @@ kcalls[6]+=1;QDateTime sttime=QDateTime::currentDateTime();
    double  eterm;
    double  oterm;
 
-   edata      = ck_use_fed->isChecked() ? &dsimList[ row ] : &dataList[ row ];
+   edata      = ( ck_use_fed->isChecked()  &&  have_model() )
+                ? &dsimList[ row ] : &dataList[ row ];
    scanCount  = edata->scanCount();
    valueCount = edata->pointCount();
    boundPct   = ct_boundaryPercent->value() / 100.0;
@@ -2537,39 +2541,44 @@ kmsecs[10]+=sttime.msecsTo(QDateTime::currentDateTime());
 void US_vHW_Enhanced::create_simulation()
 {
    row        = lw_triples->currentRow();
-   US_DataIO::EditedData*  edata = &dataList[ row ];
-   US_DataIO::EditedData*  sdata = &dsimList[ row ];
+   expda      = &dataList[ row ];
+   simda      = &dsimList[ row ];
+   edata      = simda;
    US_DataIO::RawData      simraw;
    US_SimulationParameters simparams;
-   US_Passwd               pw;
-   US_DB2*                 dbP   = disk_controls->db()
-                                   ? new US_DB2( pw.getPasswd() ) : 0;
+   US_Passwd pw;
+   US_DB2*   dbP = disk_controls->db() ? new US_DB2( pw.getPasswd() ) : 0;
 DbgLv(1) << " cr.sim.: row dbP" << row << dbP;
 
-   simparams.initFromData( dbP, *edata, true );
+   // Initialize simulation parameters and simulation data
+   simparams.initFromData( dbP, *expda, true );
 simparams.debug();
-   US_AstfemMath::initSimData( simraw, *edata, 0.0 );
+   US_AstfemMath::initSimData( simraw, *expda, 0.0 );
 
+   // Insure we have a model for the current triple
    get_model();
+DbgLv(1) << " cr.sim.:  model:" << model.description;
 
    US_Model amodel    = model;
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
-   double avgTemp     = edata->average_temperature();
+   double avgTemp     = expda->average_temperature();
    bool cnst_vbar     = model.constant_vbar();
    bool vari_vbar     = ! cnst_vbar;
 
    if ( cnst_vbar )
-   {
+   {  // Compute data corrections for constant vbar
       solution.vbar20    = le_vbar     ->text().toDouble();
       solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
       US_Math2::data_correction( avgTemp, solution );
    }
 
+   // Convert the model to experiment space
+
    for ( int ii = 0; ii < amodel.components.size(); ii++ )
-   {
+   { 
       if ( vari_vbar )
-      {
+      {  // Compute data corrections for varying vbar
          solution.vbar20    = amodel.components[ ii ].vbar20;
          solution.vbar      = US_Math2::adjust_vbar( solution.vbar20, avgTemp );
          US_Math2::data_correction( avgTemp, solution );
@@ -2578,8 +2587,9 @@ simparams.debug();
       amodel.components[ ii ].s  /= solution.s20w_correction;
       amodel.components[ ii ].D  /= solution.D20w_correction;
    }
+
+   // Compute simulation data for the current triple and its model
 DbgLv(1) << " cr.sim.: new astfem";
-DbgLv(1) << " cr.sim.:  model:" << model.description;
    US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( amodel, simparams );
 DbgLv(1) << " cr.sim.:  astfem calc";
    astfem_rsa->calculate( simraw );
@@ -2595,10 +2605,12 @@ DbgLv(1) << " cr.sim.:  sd 00 0m 0n l0 lm ln"
  << simraw.value(ll,mm)
  << simraw.value(ll,nn);
 
-   for ( int ii = 0; ii < sdata->scanCount(); ii++ )
-      for ( int jj = 0; jj < sdata->pointCount(); jj++ )
-         sdata->setValue( ii, jj, simraw.value( ii, jj ) );
+   // Set values in the editedData simulation
+   for ( int ii = 0; ii < simda->scanCount(); ii++ )
+      for ( int jj = 0; jj < simda->pointCount(); jj++ )
+         simda->setValue( ii, jj, simraw.value( ii, jj ) );
 
+   // Flag that the current triple has a simulation
    have_sims[ row ]  = true;
 }
 
@@ -2612,21 +2624,21 @@ void US_vHW_Enhanced::plot_data2()
    }
 
    // Plot of simulation data when Use FE Data is checked
-   int                     row  = lw_triples->currentRow();
-   US_DataIO::EditedData*  dd   = &dsimList[ row ];
-   US_DataIO::EditedData*  de   = &dataList[ row ];
+   int row             = lw_triples->currentRow();
+   simda               = &dsimList[ row ];
 
-   QString                        dataType = tr( "Absorbance" );
-   if ( dd->dataType == "RI" )    dataType = tr( "Intensity" );
-   if ( dd->dataType == "WI" )    dataType = tr( "Intensity" );
-   if ( dd->dataType == "IP" )    dataType = tr( "Interference" );
-   if ( dd->dataType == "FI" )    dataType = tr( "Fluorescence" );
+   QString                           dataType = tr( "Absorbance" );
+   if ( simda->dataType == "RI" )    dataType = tr( "Intensity" );
+   if ( simda->dataType == "WI" )    dataType = tr( "Intensity" );
+   if ( simda->dataType == "IP" )    dataType = tr( "Interference" );
+   if ( simda->dataType == "FI" )    dataType = tr( "Fluorescence" );
 
-   QString header = tr( "Simulation Velocity Data for\n ") + dd->runID
-         + "   (" +  dd->cell + "/" + dd->channel + "/" + dd->wavelength + ")";
+   QString header = tr( "Simulation Velocity Data for\n ") + simda->runID
+         + "   (" +  simda->cell + "/" + simda->channel
+         + "/" + simda->wavelength + ")";
    data_plot2->setTitle( header );
 
-   header = dataType + tr( " at " ) + dd->wavelength + tr( " nm" );
+   header = dataType + tr( " at " ) + simda->wavelength + tr( " nm" );
    data_plot2->setAxisTitle( QwtPlot::yLeft, header );
 
    header = tr( "Radius (cm) " );
@@ -2639,8 +2651,8 @@ void US_vHW_Enhanced::plot_data2()
    int     from        = (int)ct_from->value();
    int     to          = (int)ct_to  ->value();
 
-   int     scanCount   = dd->scanCount();
-   int     points      = dd->pointCount();
+   int     scanCount   = simda->scanCount();
+   int     points      = simda->pointCount();
    double  boundaryPct = ct_boundaryPercent->value() / 100.0;
            boundaryPct = ct_boundaryPercent->isEnabled() ? boundaryPct : 9.0;
    double  positionPct = ct_boundaryPos    ->value() / 100.0;
@@ -2658,12 +2670,10 @@ void US_vHW_Enhanced::plot_data2()
    solution.viscosity  = le_viscosity->text().toDouble();
    solution.vbar20     = le_vbar     ->text().toDouble();
    solution.manual     = manual;
-   double avgTemp      = dd->average_temperature();
+   double avgTemp      = simda->average_temperature();
    solution.vbar       = US_Math2::calcCommonVbar( solution_rec, avgTemp );
 
    US_Math2::data_correction( avgTemp, solution );
-   US_DataIO::Scan* ss;
-   US_DataIO::Scan* se;
 
    // Draw curves
    for ( int ii = 0; ii < scanCount; ii++ )
@@ -2672,9 +2682,8 @@ void US_vHW_Enhanced::plot_data2()
 
       scan_number++;
       bool   highlight   = ( scan_number >= from  &&  scan_number <= to );
-             ss          = &dd->scanData[ ii ];
-             se          = &de->scanData[ ii ];
-      double range       = se->plateau - baseline;
+             simsc       = &simda->scanData[ ii ];
+      double range       = simsc->plateau - baseline;
       double lower_limit = baseline    + range * positionPct;
       double upper_limit = lower_limit + range * boundaryPct;
       QString curvname   = tr( "Curve %1 " ).arg( ii );
@@ -2684,10 +2693,10 @@ void US_vHW_Enhanced::plot_data2()
 
       // Plot each scan in (up to) three segments: below, in, and above
       // the specified boundaries
-      while (  jj < points  &&  ss->rvalues[ jj ] < lower_limit )
+      while (  jj < points  &&  simsc->rvalues[ jj ] < lower_limit )
       {
-         rr[ count ] = dd->xvalues[ jj ];
-         vv[ count ] = ss->rvalues[ jj ];
+         rr[ count ] = simda->xvalues[ jj ];
+         vv[ count ] = simsc->rvalues[ jj ];
          jj++;
          count++;
       }
@@ -2710,10 +2719,10 @@ void US_vHW_Enhanced::plot_data2()
 
       count = 0;
 
-      while ( jj < points  &&  ss->rvalues[ jj ] < upper_limit )
+      while ( jj < points  &&  simsc->rvalues[ jj ] < upper_limit )
       {
-         rr[ count ] = dd->xvalues[ jj ];
-         vv[ count ] = ss->rvalues[ jj ];
+         rr[ count ] = simda->xvalues[ jj ];
+         vv[ count ] = simsc->rvalues[ jj ];
          jj++;
          count++;
       }
@@ -2735,8 +2744,8 @@ void US_vHW_Enhanced::plot_data2()
 
       while ( jj < points )
       {
-         rr[ count ] = dd->xvalues[ jj ];
-         vv[ count ] = ss->rvalues[ jj ];
+         rr[ count ] = simda->xvalues[ jj ];
+         vv[ count ] = simsc->rvalues[ jj ];
          jj++;
          count++;
       }
@@ -2770,35 +2779,26 @@ void US_vHW_Enhanced::get_model()
    QString mmodlGUID = model.modelGUID;
    QString modelGUID;
 
-   if ( ! ck_modelpl->isChecked() )
+   modelGUID    = ( n_ti_noi > 0 ) ?  ti_noise.modelGUID : modelGUID;
+   modelGUID    = ( n_ri_noi > 0 ) ?  ri_noise.modelGUID : modelGUID;
+
+DbgLv(1) << "gMo: modelGUID" << modelGUID;
+   if ( modelGUID.isEmpty()  ||  modelGUID.length() != 36  ||
+        ( ! mmodlGUID.isEmpty()  &&  mmodlGUID == modelGUID ) )
+   {  // No new model load if none exists or already loaded matches noise
+DbgLv(1) << "gMo:  MODEL empty/matches  IDln" << modelGUID.length()
+ << "modID" << modelGUID << "mmoID" << mmodlGUID;
       return;
-
-   if ( n_ti_noi > 0 )
-      modelGUID = ti_noise.modelGUID;
-   else if ( n_ri_noi > 0 )
-      modelGUID = ri_noise.modelGUID;
-   else
-      return;
-
-DbgLv(1) << "gMo:  modelGUID" << modelGUID;
-   if ( ! modelGUID.isEmpty()  &&  modelGUID.length() == 36  &&
-        ( mmodlGUID.isEmpty()  ||  mmodlGUID != modelGUID ) )
-   {
-      bool    isDB = disk_controls->db();
-      US_Passwd pw;
-      US_DB2* db   = isDB ? new US_DB2( pw.getPasswd() ) : 0;
-
-      model.load( isDB, modelGUID, db );
-
-      mmodlGUID    = model.modelGUID;
-DbgLv(1) << "gMo:  loaded model: modelGUID" << modelGUID << mmodlGUID;
-   }
-   else
-   {
-      DbgLv(1) << "gMo:    MODEL empty   GUIDlen" << modelGUID.length()
-         << "modelGUID mmodlGUID" << modelGUID << mmodlGUID;
    }
 
+   US_Passwd pw;
+   bool    isDB    = disk_controls->db();
+   US_DB2* db      = isDB ? new US_DB2( pw.getPasswd() ) : 0;
+
+   model.load( isDB, modelGUID, db );
+
+   mmodlGUID       = model.modelGUID;
    modlList[ row ] = model;
+DbgLv(1) << "gMo:  loaded model: modelGUID" << modelGUID << mmodlGUID;
 }
 
