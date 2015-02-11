@@ -133,7 +133,11 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       QList< GrpInfo >             groupdat;   // Selected group info structures
 
       US_DataIO::EditedData*       edata;      // Current triple edited data
+      US_DataIO::EditedData*       expda;      // Current triple edited data (exp.)
+      US_DataIO::EditedData*       simda;      // Current triple edited data (sim.)
       US_DataIO::Scan*             dscan;      // Current data scsan
+      US_DataIO::Scan*             expsc;      // Current data scsan (exp.)
+      US_DataIO::Scan*             simsc;      // Current data scsan (sim.)
 
       US_Model                     model;      // Current loaded model
 
