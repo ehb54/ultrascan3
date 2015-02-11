@@ -235,6 +235,11 @@ DbgLv(1) << "vhw:   init:   copy'd simdat (s x p)"
       modlList << model;
    }
 
+   ck_use_fed->disconnect();
+   ck_use_fed->setChecked( false );
+   connect( ck_use_fed, SIGNAL( toggled( bool ) ),
+            this,       SLOT(   data_plot()     ) );
+
    update( 0 );
 }
 
@@ -2034,7 +2039,7 @@ kcalls[4]+=1;QDateTime sttime=QDateTime::currentDateTime();
 
    int    ncomp = model.components.size();
    double scorr = -2.0 / solution.s20w_correction;
-DbgLv(1) << "Cpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
+DbgLv(1) << "Mpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
    expda        = &dataList[ row ];
    simda        = &dsimList[ row ];
    edata        = expda;
@@ -2050,7 +2055,7 @@ DbgLv(1) << "Cpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
       int js            = liveScans[ ii ];
       expsc             = &expda->scanData[ js ];
       simsc             = &simda->scanData[ js ];
-      double   omega    = dscan->rpm * M_PI / 30.0;
+      double   omega    = expsc->rpm * M_PI / 30.0;
       double   oterm    = ( expsc->seconds - time_correction ) * omega * omega;
                oterm   *= scorr;
       double   cplat    = 0.0;
@@ -2065,7 +2070,7 @@ DbgLv(1) << "Cpl:ncmp" << ncomp << "scorr" << scorr << solution.s20w_correction;
          if ( ii == 0 )
             total_conc    += conc;
       }
-//DbgLv(1) << "Cpl:  scan" << ii << "cplat" << cplat;
+//DbgLv(1) << "Mpl:  scan" << ii << "cplat" << cplat;
 
       scPlats[ ii ]  = cplat;
       expsc->plateau = cplat;
