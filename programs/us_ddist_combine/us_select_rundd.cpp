@@ -558,6 +558,29 @@ timer.start();
          mmDescs << mdesc;
          nmodel++;
       }
+DbgLv(1) << "ScMd: runid" << runid << "nmodel" << nmodel;
+
+      // Repeat the scan for "global-<run>%" variation
+      QString grunid   = "global-" + runid + "%";
+      query.clear();
+      query << "get_model_desc_by_runID" << invID << grunid;
+      db.query( query );
+
+      while( db.next() )
+      {
+         QString mdlid    = db.value( 0 ).toString();
+         QString mdlGid   = db.value( 1 ).toString();
+         QString mdesc    = db.value( 2 ).toString();
+         QString edtid    = db.value( 6 ).toString();
+         int     kk       = mdesc.lastIndexOf( ".model" );
+         mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
+         mmIDs   << mdlid;
+         mmGUIDs << mdlGid;
+         meIDs   << edtid;
+         mmDescs << mdesc;
+         nmodel++;
+      }
+DbgLv(1) << "ScMd:  runid" << runid << "nmodel" << nmodel;
    }
 DbgLv(1) << "ScMd:scan time(1)" << timer.elapsed();
 
@@ -629,8 +652,9 @@ void US_SelectRunDD::scan_local_models()
    {
       QString mdesc   = aDescrs[ mm ];
       QString runid   = mdesc.section( "\t", 0, 0 );
+      QString grunid  = "global-" + runid;
 
-      if ( runIDs.contains( runid ) )
+      if ( runIDs.contains( runid )  ||  runIDs.startsWith( grunid ) )
          wDescrs << mdesc;
    }
 DbgLv(1) << "ScMl:counts: aDescrs" << aDescrs.count() << "wDescrs" << wDescrs.count();
@@ -659,6 +683,10 @@ timer.start();
       query.clear();
       query << "count_models_by_runID" << invID << runid;
       int nrmods       = db.functionQuery( query );
+      QString grunid   = "global-" + runid + "%";
+      query.clear();
+      query << "count_models_by_runID" << invID << grunid;
+      nrmods          += db.functionQuery( query );
 
       rmodKnts << nrmods;
    }

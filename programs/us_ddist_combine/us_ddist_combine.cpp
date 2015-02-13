@@ -1011,11 +1011,13 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
    }
 
    lw_models ->clear();
+   QString grunID = "global-" + runID;
 
    for ( int ii = 0; ii < distros.size(); ii++ )
    {
 DbgLv(1) << "RunIDSel:  ii runID" << ii << distros[ii].runID;
-      if ( distros[ ii ].runID == runID )
+      if ( distros[ ii ].runID == runID  ||
+           distros[ ii ].runID.startsWith( grunID ) )
       {  // Only (possibly) add item with matching run ID
          QString mdesc = distros[ ii ].mdescr;
          QString ddesc = distros[ ii ].ddescr;
@@ -1126,6 +1128,7 @@ void US_DDistr_Combine::possibleColors()
 QString US_DDistr_Combine::distribID( QString mdescr, QString ddescr )
 {
    const int mxrch = 30;
+   int mdx         = 9999;
    QString distrID;
    QString runID   = mdescr.section( ".",  0, -3 );
            runID   = runID.length() <= mxrch ?
@@ -1148,13 +1151,23 @@ QString US_DDistr_Combine::distribID( QString mdescr, QString ddescr )
       distrID      = runID + " (" + triple + ", " + method + ") " + ddescr;
    }
 
+   for ( int ii = 0; ii < distros.size(); ii++ )
+   {  // Find index of full model description match as distinguishing suffix
+      if ( mdescr == distros[ ii ].mdescr )
+      {
+         mdx          = ii + 1;
+         break;
+      }
+   }
+
+   distrID     += "[" + QString::number( mdx ) + "]";
+
    return distrID;
 }
 
 // Reset Disk_DB control whenever data source is changed in any dialog
 void US_DDistr_Combine::update_disk_db( bool isDB )
-{
-   isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
+{ isDB ? dkdb_cntrls->set_db() : dkdb_cntrls->set_disk();
 DbgLv(1) << "Upd_Dk_Db isDB" << isDB;
 
    reset_data();
@@ -1428,7 +1441,8 @@ int US_DDistr_Combine::distro_by_descr( QString& mdesc )
 
    for ( int ii = 0; ii < distros.count(); ii++ )
    {
-      if ( mdesc == distribID( distros[ ii ].mdescr, distros[ ii ].ddescr ) )
+      if ( mdesc
+            == distribID( distros[ ii ].mdescr, distros[ ii ].ddescr ) )
       {
          index  = ii;
          break;

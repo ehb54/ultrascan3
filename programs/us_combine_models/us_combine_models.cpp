@@ -172,6 +172,7 @@ void US_CombineModels::reset()
 // Save
 void US_CombineModels::save()
 {
+   const int mxtotrl = 60;
    QStringList runIDs;
    int      nmodels = models.size();
 qDebug() << "SAVE:  nmodels" << nmodels;
@@ -266,29 +267,43 @@ qDebug() << "SAVE:     cmodel_name" << cmodel_name;
 
    if ( mbox.clickedButton() == pb_edit )
    {  // Open another dialog to get a modified runID
-      bool    ok;
-      QString msg2    = tr( "The default run ID for the output combined<br/>"
-                            "model is <b>" ) + runID + "</b>.<br/><br/>"
-         + tr( "You may modify this part of the model description.<br/>"
-               "Use alphanumeric characters, underscores, or hyphens<br/>"
-               "(no spaces). Enter 3 to 40 characters." );
-      runID           = QInputDialog::getText( this,
-            tr( "Modify Model Description RunID" ),
-            msg2,
-            QLineEdit::Normal,
-            runID,
-            &ok );
+      bool ok;
+      bool getruni  = true;
 
-      if ( !ok )  return;
+      while ( getruni )
+      {
+         int curriln   = runID.length();
+         QString msg2  = tr( "The default run ID for the output combined"
+                             " model is <br/><b>" ) + runID + "</b>.<br/><br/>"
+            + tr( "You may modify this part of the model description"
+                  " (currently %1 characters).<br/>"
+                  "Use alphanumeric characters, underscores, or hyphens"
+                  " (no spaces).<br/>"
+                  "Enter so the total is from 3 to %2 characters.<br/><br/>"
+                  "It is <b>strongly</b> recommended that you only"
+                  " <b>append</b> any descriptive string to the original<br/>"
+                  "runID in order to facilitate finding the model in"
+                  " subsequent model loader dialogs." )
+                  .arg( curriln ).arg( mxtotrl );
+         runID         = QInputDialog::getText( this,
+               tr( "Modify Global Model Description RunID" ),
+               msg2, QLineEdit::Normal, runID, &ok );
 
-      runID.remove( QRegExp( "[^\\w\\d_-]" ) );
-      int slen = runID.length();
+         if ( !ok )  return;
 
-      if ( slen < 3 )
-         runID += QString( "GLO" ).left( 3 - slen ); 
+         runID.remove( QRegExp( "[^\\w\\d_-]" ) );
+         int slen   = runID.length();
+         getruni    = false;
 
-      else if ( slen > 40 )
-         runID  = runID.left( 40 );
+         if ( slen < 3 )
+            runID     += QString( "GLO" ).left( 3 - slen ); 
+
+         else if ( slen > mxtotrl )
+         {
+            runID      = runID.left( mxtotrl );
+            getruni    = true;
+         }
+      }
 
       cmodel_name = runID + "." + odesc;
 qDebug() << "SAVE:     (2)cmodel_name" << cmodel_name;
