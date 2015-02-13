@@ -691,7 +691,7 @@ DbgLv(1) << "pDa:  titleX" << titleX;
       }
    }
 
-   if ( le_plxmax->text().toDouble() == 0.0 )
+   //if ( le_plxmax->text().toDouble() == 0.0 )
    {
       double plxinc = ( plxmax - plxmin ) / 299.0;
       int rpwr      = qRound( log10( plxinc ) );
@@ -1275,6 +1275,8 @@ DbgLv(1) << "FID:   xtype" << xtype << "mxval.size" << mxvals.size();
 void US_DDistr_Combine::write_data( QString& dataFile, QString& listFile,
       int& irun )
 {
+   int arrsize      = 300;
+
    if ( irun > 0 )
    {  // After first/only time:  just make a copy of the files
       QFile( dat1File ).copy( dataFile );
@@ -1298,47 +1300,101 @@ void US_DDistr_Combine::write_data( QString& dataFile, QString& listFile,
 
    QTextStream tsd( &dfile );
 
-   int nplots = pdistrs.size();
-   int maxnvl = 0;
-   line       = "";
-      
+   QVector< QVector< double > > peyvals;
+   QVector< double >  xenvs;
+   QVector< double >  yenvs;
+   QVector< double >* xvals;
+   QVector< double >* yvals;
+   int nplots       = pdistrs.size();
+   int lplot        = nplots - 1;
+   int maxnvl       = 0;
+   int nenvvl       = arrsize;
+   line             = "";
+
+   // Build header lines and accumulate envelope Y vectors for each plot
+
    for ( int ii = 0; ii < nplots; ii++ )
-   {  // Accumulate long descriptions and build header line
+   {
+      // Accumulate long descriptions and build header line
       maxnvl     = qMax( maxnvl, pdistrs[ ii ].xvals.size() );
       QString pd = pdisIDs[ ii ];
 
       pdlong << pdistrs[ ii ].mdescr;
 
 DbgLv(1) << "WrDa:  plot" << ii << "pd" << pd;
-      line      += pd + ".X " + pd + ".Y"; // X,Y header entries for contributor
-      if ( ii < ( nplots - 1 ) )
-         line     += "  ";
-      else
-         line     += "\n";
+      // X,Y header entries for contributor
+      line      += pd + ".raw.X "    + pd + ".raw.Y ";
+
+      // Compute envelope vectors and save the Y vector for each plot
+      envel_data( pdistrs[ ii ].xvals, pdistrs[ ii ].yvals, xenvs, yenvs );
+
+      peyvals << yenvs;
    }
+
+   // Add the single smooth X header string
+   line      += "envelopes.smooth.X ";
+
+   for ( int ii = 0; ii < nplots; ii++ )
+   {  // Add smooth Y header strings
+      line      += pdisIDs[ ii ] + ".smooth.Y";
+      line      += ( ( ii < lplot ) ? " " : "\n" );
+   }
+
    tsd << line;                             // Write header line
 
 DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
    char  valfm1[] = "%12.5f %10.5f";
    char  valfm2[] = "%13.4e %9.5f";
+   char  valfx1[] = "%12.5f";
+   char  valfy1[] = "%10.5f";
+   char  valfx2[] = "%13.4e";
+   char  valfy2[] = " %9.5f";
    char* valfmt   = valfm1;
+   char* valfmx   = valfx1;
+   char* valfmy   = valfy1;
+   int   leval    = nenvvl - 1;
+   double xemax   = xenvs[ leval ];
+   maxnvl         = qMax( maxnvl, nenvvl );
    if ( xtype == 1  ||  xtype == 2  || xtype == 5 )
+   {
          valfmt   = valfm2;                // Formatting for "MW"/"D"/"MWlog"
+         valfmx   = valfx2;
+         valfmy   = valfy2;
+   }
 
    for ( int jj = 0; jj < maxnvl; jj++ )
    {  // Build and write xvalue+concentration data line
       line       = "";
-      for ( int ii = 0; ii < nplots; ii++ )
-      {  // Add each X,Y data pair
-         int nvals   = pdistrs[ ii ].xvals.size();
-         double* xx  = pdistrs[ ii ].xvals.data();
-         double* yy  = pdistrs[ ii ].yvals.data();
-         int kk      = qMin( jj, ( nvals - 1 ) );
-         double xval = xx[ kk ];
-         double yval = yy[ kk ];
 
-         line       += QString().sprintf( valfmt, xval, yval );
+      // First add X,Y for raw plots
+      for ( int ii = 0; ii < nplots; ii++ )
+      {  // Add each pair of X,Y data pairs
+         xvals       = &pdistrs[ ii ].xvals;
+         yvals       = &pdistrs[ ii ].yvals;
+
+         // Get and add raw data to line
+         int lval    = xvals->size() - 1;
+         double xval = ( jj < lval ) ? xvals->at( jj ) : xemax;
+         double yval = ( jj < lval ) ? yvals->at( jj ) : 0.0;
+
+         line       += QString().sprintf( valfmt, xval, yval ) + " ";
+
+         // Get and add envelope (smoothed) data to line
       }
+
+      // Now add X for envelopes and the Y's for each plot
+      double xval = ( jj < leval ) ? xenvs[ jj ] : xemax;
+      line       += QString().sprintf( valfmx, xval ) + " ";
+
+      for ( int ii = 0; ii < nplots; ii++ )
+      {
+         double yval = ( jj < leval ) ? peyvals[ ii ][ jj ] : 0.0;
+         line       += QString().sprintf( valfmy, yval );
+
+         if ( ii < lplot )
+            line       += " ";
+      }
+
       line       += "\n";
       tsd << line;                           // Write data line
 //DbgLv(1) << "WrDa:   jj" << jj << " line written";
@@ -1714,9 +1770,11 @@ int US_DDistr_Combine::envel_data(
    // Calculate values based on range
    bool min_neg     = ( min_xval < 0.0 );
    double rng_xval  = max_xval - min_xval;
-   min_xval         = min_xval - ( rng_xval * 0.1 );
+   double xval_pad  = rng_xval * 0.1;
+   min_xval         = min_xval - xval_pad;
    min_xval         = min_neg ? min_xval : qMax( 0.0, min_xval );
-   max_xval         = min_xval + rng_xval;
+   //max_xval         = min_xval + rng_xval;
+   max_xval         = max_xval + xval_pad;
    double minx      = le_plxmin->text().toDouble();
    double maxx      = le_plxmax->text().toDouble();
    min_xval         = ( minx != 0.0 ) ? minx : min_xval;
@@ -1785,7 +1843,19 @@ DbgLv(1) << "ED: Final esum" << env_sum << "csum" << con_sum
 // Slot for change in sigma value or plot min,max
 void US_DDistr_Combine::envvalChange( )
 {
+   QString pmintxt  = le_plxmin->text();
+   QString pmaxtxt  = le_plxmax->text();
+
    // Plot data with changed sigma
    plot_data();
+
+   le_plxmin->disconnect();
+   le_plxmax->disconnect();
+   le_plxmin->setText( pmintxt );
+   le_plxmax->setText( pmaxtxt );
+   connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+            this,        SLOT(   envvalChange(    ) ) );
+   connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+            this,        SLOT(   envvalChange(    ) ) );
 }
 
