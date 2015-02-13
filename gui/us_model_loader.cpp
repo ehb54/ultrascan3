@@ -463,7 +463,7 @@ time1=QDateTime::currentDateTime();
             else if ( listedit  &&  can_run )
             {
                query << "get_model_desc_by_runID"
-                     << invID << runIDs[ ii ];
+                     << invID << "%" + runIDs[ ii ] + "%";
             }
 
             else if ( do_manual || do_unasgn )
