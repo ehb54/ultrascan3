@@ -493,8 +493,10 @@ DbgLv(1) << "sChg: count_models()";
       count_list   = rlabels.count();
       
 DbgLv(1) << "sChg: count_list" << count_list << "kseld" << kseld;
-      selitems       = lw_data->findItems( slabel, Qt::MatchFixedString );
-      lw_data->setCurrentItem( selitems[ 0 ] );
+      selitems     = lw_data->findItems( slabel, Qt::MatchFixedString );
+      kseld        = selitems.size();
+      if ( kseld > 0 )
+         lw_data->setCurrentItem( selitems[ 0 ] );
       connect( lw_data,  SIGNAL( itemSelectionChanged() ),
                this,     SLOT  ( selectionChanged()     ) );
    }

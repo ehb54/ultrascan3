@@ -1359,12 +1359,11 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
    char  valfy1[] = "\"%.5f\"";
    char  valfx2[] = "\"%.4e\"";
    char  valfy2[] = "\"%.5f\"";
+   QString dummy_pair( "\"\",\"\"," );
+   QString dummy_valu( "\"\"" );
    char* valfmt   = valfm1;
    char* valfmx   = valfx1;
    char* valfmy   = valfy1;
-   int   leval    = nenvvl - 1;
-   double xemax   = xenvs[ leval ];
-   double xtiny   = xemax - xenvs[ leval - 1 ];
    maxnvl         = qMax( maxnvl, nenvvl );
    if ( xtype == 1  ||  xtype == 2  || xtype == 5 )
    {
@@ -1384,24 +1383,28 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
          yvals       = &pdistrs[ ii ].yvals;
 
          // Get and add raw data to line
-         int nval    = xvals->size();
-         double xval = ( jj < nval ) ? xvals->at( jj ) : xemax;
-         xval        = ( jj == nval ) ? ( xvals->at( jj - 1 ) + xtiny ) : xval;
-         double yval = ( jj < nval ) ? yvals->at( jj ) : 0.0;
-
-         line       += QString().sprintf( valfmt, xval, yval ) + ",";
+         if ( jj < xvals->size() )
+            line       += QString().sprintf(
+                             valfmt, xvals->at( jj ), yvals->at( jj ) ) + ",";
+         else
+            line       += dummy_pair;
 
          // Get and add envelope (smoothed) data to line
       }
 
       // Now add X for envelopes and the Y's for each plot
-      double xval = ( jj <= leval ) ? xenvs[ jj ] : xemax;
-      line       += QString().sprintf( valfmx, xval ) + ",";
+      if ( jj < nenvvl )
+         line       += QString().sprintf( valfmx, xenvs[ jj ] ) + ",";
+      else
+         line       += dummy_valu + ",";
 
       for ( int ii = 0; ii < nplots; ii++ )
       {
-         double yval = ( jj <= leval ) ? peyvals[ ii ][ jj ] : 0.0;
-         line       += QString().sprintf( valfmy, yval );
+         if ( jj < nenvvl )
+            line       += QString().sprintf( valfmy, peyvals[ ii ][ jj ] );
+         else
+            line       += dummy_valu;
+
          line       += ( ii < lplot ) ? "," : "\n";
       }
 
