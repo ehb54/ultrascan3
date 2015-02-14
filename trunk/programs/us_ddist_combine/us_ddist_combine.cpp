@@ -809,7 +809,8 @@ void US_DDistr_Combine::save( void )
    }
    QString fnamsvg  = annode + "." + trnode + "." + sanode1 + ".svgz"; 
    QString fnampng  = annode + "." + trnode + "." + sanode1 + ".png"; 
-   QString fnamdat  = annode + "." + trnode + "." + sanode2 + ".dat"; 
+   //QString fnamdat  = annode + "." + trnode + "." + sanode2 + ".dat"; 
+   QString fnamdat  = annode + "." + trnode + "." + sanode2 + ".csv"; 
    QString fnamlst  = annode + "." + trnode + "." + sanode3 + ".rpt"; 
    QString plotFile = fdir + "/" + fnamsvg;
    QString dataFile = fdir + "/" + fnamdat;
@@ -1316,14 +1317,18 @@ void US_DDistr_Combine::write_data( QString& dataFile, QString& listFile,
    for ( int ii = 0; ii < nplots; ii++ )
    {
       // Accumulate long descriptions and build header line
-      maxnvl     = qMax( maxnvl, pdistrs[ ii ].xvals.size() );
-      QString pd = pdisIDs[ ii ];
+      maxnvl           = qMax( maxnvl, pdistrs[ ii ].xvals.size() );
+      QString mdescr   = pdistrs[ ii ].mdescr;
+      QString mdtrip   = mdescr.section( ".", -2, -2 );
+      QString mditer   = mdescr.section( ".", -1, -1 );
+      QString mdmeth   = mditer.section( "_",  2,  2 );
+      QString pd       = "\"" + mdtrip + "." + mdmeth + ".";
 
-      pdlong << pdistrs[ ii ].mdescr;
+      pdlong << mdescr;
 
 DbgLv(1) << "WrDa:  plot" << ii << "pd" << pd;
       // X,Y header entries for contributor
-      line      += pd + ".raw.X "    + pd + ".raw.Y ";
+      line            += pd + "raw-x\","    + pd + "raw-y\",";
 
       // Compute envelope vectors and save the Y vector for each plot
       envel_data( pdistrs[ ii ].xvals, pdistrs[ ii ].yvals, xenvs, yenvs );
@@ -1332,28 +1337,34 @@ DbgLv(1) << "WrDa:  plot" << ii << "pd" << pd;
    }
 
    // Add the single smooth X header string
-   line      += "envelopes.smooth.X ";
+   line            += "\"all.smooth-x\",";
 
    for ( int ii = 0; ii < nplots; ii++ )
    {  // Add smooth Y header strings
-      line      += pdisIDs[ ii ] + ".smooth.Y";
-      line      += ( ( ii < lplot ) ? " " : "\n" );
+      QString mdescr   = pdistrs[ ii ].mdescr;
+      QString mdtrip   = mdescr.section( ".", -2, -2 );
+      QString mditer   = mdescr.section( ".", -1, -1 );
+      QString mdmeth   = mditer.section( "_",  2,  2 );
+      QString pd       = "\"" + mdtrip + "." + mdmeth + ".";
+      line            += pd + "smooth-y\"";
+      line            += ( ( ii < lplot ) ? "," : "\n" );
    }
 
    tsd << line;                             // Write header line
 
 DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
-   char  valfm1[] = "%12.5f %10.5f";
-   char  valfm2[] = "%13.4e %9.5f";
-   char  valfx1[] = "%12.5f";
-   char  valfy1[] = "%10.5f";
-   char  valfx2[] = "%13.4e";
-   char  valfy2[] = " %9.5f";
+   char  valfm1[] = "\"%.5f\",\"%.5f\"";
+   char  valfm2[] = "\"%.4e\",\"%.5f\"";
+   char  valfx1[] = "\"%.5f\"";
+   char  valfy1[] = "\"%.5f\"";
+   char  valfx2[] = "\"%.4e\"";
+   char  valfy2[] = "\"%.5f\"";
    char* valfmt   = valfm1;
    char* valfmx   = valfx1;
    char* valfmy   = valfy1;
    int   leval    = nenvvl - 1;
    double xemax   = xenvs[ leval ];
+   double xtiny   = xemax - xenvs[ leval - 1 ];
    maxnvl         = qMax( maxnvl, nenvvl );
    if ( xtype == 1  ||  xtype == 2  || xtype == 5 )
    {
@@ -1373,29 +1384,27 @@ DbgLv(1) << "WrDa: maxnvl" << maxnvl << "nplots" << nplots;
          yvals       = &pdistrs[ ii ].yvals;
 
          // Get and add raw data to line
-         int lval    = xvals->size() - 1;
-         double xval = ( jj < lval ) ? xvals->at( jj ) : xemax;
-         double yval = ( jj < lval ) ? yvals->at( jj ) : 0.0;
+         int nval    = xvals->size();
+         double xval = ( jj < nval ) ? xvals->at( jj ) : xemax;
+         xval        = ( jj == nval ) ? ( xvals->at( jj - 1 ) + xtiny ) : xval;
+         double yval = ( jj < nval ) ? yvals->at( jj ) : 0.0;
 
-         line       += QString().sprintf( valfmt, xval, yval ) + " ";
+         line       += QString().sprintf( valfmt, xval, yval ) + ",";
 
          // Get and add envelope (smoothed) data to line
       }
 
       // Now add X for envelopes and the Y's for each plot
-      double xval = ( jj < leval ) ? xenvs[ jj ] : xemax;
-      line       += QString().sprintf( valfmx, xval ) + " ";
+      double xval = ( jj <= leval ) ? xenvs[ jj ] : xemax;
+      line       += QString().sprintf( valfmx, xval ) + ",";
 
       for ( int ii = 0; ii < nplots; ii++ )
       {
-         double yval = ( jj < leval ) ? peyvals[ ii ][ jj ] : 0.0;
+         double yval = ( jj <= leval ) ? peyvals[ ii ][ jj ] : 0.0;
          line       += QString().sprintf( valfmy, yval );
-
-         if ( ii < lplot )
-            line       += " ";
+         line       += ( ii < lplot ) ? "," : "\n";
       }
 
-      line       += "\n";
       tsd << line;                           // Write data line
 //DbgLv(1) << "WrDa:   jj" << jj << " line written";
    }
