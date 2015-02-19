@@ -42,11 +42,11 @@ class US_pcsaProcess : public QObject
       US_pcsaProcess( QList< US_SolveSim::DataSet* >&, QObject* = 0 );
 
       //! \brief Start the fit calculations
-      //! \param sll     s lower limit
-      //! \param sul     s upper limit
-      //! \param kll     k lower limit
-      //! \param kul     k upper limit
-      //! \param nkp     number of k points (variations)
+      //! \param xll     x lower limit
+      //! \param xul     x upper limit
+      //! \param yll     y lower limit
+      //! \param yul     y upper limit
+      //! \param nyp     number of y points (variations)
       //! \param res     resolution == line points count (model solutes)
       //! \param typ     curve type (0->straight lines)
       //! \param nth     number of threads
@@ -94,7 +94,7 @@ class US_pcsaProcess : public QObject
       //! \brief Clear memory in preparation for fit start
       void clear_memory(   void );
 
-      static const int solute_doubles = sizeof( US_Solute ) / sizeof( double );
+      static const int solute_doubles = sizeof( US_ZSolute ) / sizeof( double );
 
       // Static routines needed for Levenberg-Marquardt
       static double fit_function_SL( double, double* );
@@ -124,7 +124,7 @@ private:
 
       QVector< int >             wkstates;   // worker thread states
 
-      QList< QVector< US_Solute > > orig_sols;  // input solutes
+      QList< QVector< US_ZSolute > > orig_sols;  // input solutes
 
       QVector< double >          rmsds;      // gfit iteration RMSDs
       US_DataIO::EditedData*     edata;      // experimental data (mc_iter)
@@ -144,7 +144,7 @@ private:
       int        nthreads;     // number of worker threads
       int        cresolu;      // curve resolution (points on the line)
       int        curvtype;     // curve type flag (0->straight line)
-      int        nkpts;        // number of k points
+      int        nypts;        // number of y points
       int        nctotal;      // number of total compute-progress steps
       int        kcsteps;      // count of completed progress steps
       int        noisflag;     // noise out flag: 0(none), 1(ti), 2(ri), 3(both)
@@ -165,10 +165,10 @@ private:
       bool       lm_done;      // flag for L-M completion
       bool       alpha_scn;    // flag for alpha-scan only
 
-      double     slolim;       // s lower limit
-      double     suplim;       // s upper limit
-      double     klolim;       // k lower limit
-      double     kuplim;       // k upper limit
+      double     xlolim;       // x lower limit
+      double     xuplim;       // x upper limit
+      double     ylolim;       // y lower limit
+      double     yuplim;       // y upper limit
       double     cparam;       // additional curve parameter
       double     varimin;      // variance minimum
       double     alpha;        // Tikhonov regularization factor
@@ -184,7 +184,7 @@ private:
 
    private slots:
       void queue_task      ( WorkPacketPc&, double, double,
-                             int, int, QVector< US_Solute > );
+                             int, int, QVector< US_ZSolute > );
       int  slmodels        ( int, double, double, double, double, int, int );
       int  sigmodels       ( int, double, double, double, double, int, int );
       void process_job     ( WorkerThreadPc* );

@@ -79,6 +79,7 @@ US_SolveSim::Simulation::Simulation()
    ti_noise .clear();
    ri_noise .clear();
    solutes  .clear();
+   zsolutes .clear();
    dbg_level     = 0;
    dbg_timing    = false;
    noisflag      = 0;
@@ -158,6 +159,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    dbg_timing    = sim_vals.dbg_timing;           // Debug-timing flag
    noisflag      = sim_vals.noisflag;             // Noise-calculation flag
    int nsolutes  = sim_vals.solutes.size();       // Input solutes count
+   int nzsol     = sim_vals.zsolutes.size();      // Input zsolutes count
    calc_ti       = ( ( noisflag & 1 ) != 0 );     // Calculate-TI flag
    calc_ri       = ( ( noisflag & 2 ) != 0 );     // Calculate-RI flag
    startCalc     = QDateTime::currentDateTime();  // Start calc time for timings
@@ -167,6 +169,8 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    double alphad = sim_vals.alpha;                // Alpha for diagonal
    int lim_offs  = offset + dataset_count;        // Offset limit
    d_offs        = offset;                        // Initial data offset
+   bool use_zsol = ( nzsol > 0 );                 // Flag use ZSolutes
+   nsolutes      = use_zsol ? nzsol : nsolutes;   // Count of used solutes
 #if 0
 #ifdef NO_DB
    US_Settings::set_us_debug( dbg_level );
@@ -306,13 +310,21 @@ DbgLv(1) << "   CR:B fill kodl" << kodl;
    int    stype   = data_sets[ offset ]->solute_type;
 DbgLv(1) << "   CR:BF STYPE" << stype;
 
-   qSort( sim_vals.solutes );
+   if ( use_zsol )
+      qSort( sim_vals.zsolutes );
+   else
+      qSort( sim_vals.solutes );
 
    if ( stype == 0 )
    {  // Normal case of varying f/f0 with constant vbar
+      int attr_x     = 0;      // Default X is s
+      int attr_y     = 1;      // Default Y is f/f0
+      int attr_z     = 3;      // Default Z is vbar
+      int smask      = ( attr_x << 6 ) | ( attr_y << 3 ) | attr_z;
 DataSet* dset=data_sets[0];
 DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
  << dset->D20w_correction << dset->solution_rec.buffer.manual;
+
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
          if ( abort ) return;
@@ -328,9 +340,18 @@ DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
             zcomponent.vbar20          = dset->vbar20;
 
             // Set model with standard space s and k
-            model.components[ 0 ]      = zcomponent;
-            model.components[ 0 ].s    = sim_vals.solutes[ cc ].s;
-            model.components[ 0 ].f_f0 = sim_vals.solutes[ cc ].k;
+            if ( use_zsol )
+            {
+               US_ZSolute::set_mcomp_values( model.components[ 0 ],
+                                             sim_vals.zsolutes[ cc ], smask );
+            }
+            else
+            {
+               set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
+                              attr_x );
+               set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
+                              attr_y );
+            }
 
             // Fill in the missing component values
             model.update_coefficients();
@@ -448,7 +469,11 @@ DbgLv(1) << "CR: NNLS A filled";
       }
 DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype;
 
-      set_comp_attr( zcomponent, sim_vals.solutes[ 0 ], attr_z );
+      if ( use_zsol )
+         US_ZSolute::set_mcomp_values( zcomponent,
+                                       sim_vals.zsolutes[ 0 ], stype );
+      else
+         set_comp_attr( zcomponent, sim_vals.solutes[ 0 ], attr_z );
 
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
@@ -467,10 +492,18 @@ DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype;
             // Set model with standard space s and k  (or other 2 attributes)
             zcomponent.vbar20          = dset->vbar20;
             model.components[ 0 ]      = zcomponent;
-            set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
-                           attr_x );
-            set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
-                           attr_y );
+            if ( use_zsol )
+            {
+               US_ZSolute::set_mcomp_values( model.components[ 0 ],
+                                             sim_vals.zsolutes[ cc ], stype );
+            }
+            else
+            {
+               set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
+                              attr_x );
+               set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
+                              attr_y );
+            }
 
             // Fill in the missing component values
             model.update_coefficients();
@@ -551,6 +584,10 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
 
    else
    {  // Special case of custom grid
+      int attr_x     = 0;      // Set X is s
+      int attr_y     = 4;      // Set Y is D
+      int attr_z     = 3;      // Set Z is vbar
+      int smask      = ( attr_x << 6 ) | ( attr_y << 3 ) | attr_z;
 
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
@@ -567,9 +604,21 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
             int nscans     = edata->scanData.size();
             double avtemp  = dset->temperature;
             model.components[ 0 ]        = zcomponent;
-            model.components[ 0 ].s      = sim_vals.solutes[ cc ].s;
-            model.components[ 0 ].D      = sim_vals.solutes[ cc ].d;
-            model.components[ 0 ].vbar20 = sim_vals.solutes[ cc ].v;
+
+            if ( use_zsol )
+            {
+               US_ZSolute::set_mcomp_values( model.components[ 0 ],
+                                             sim_vals.zsolutes[ cc ], smask );
+            }
+            else
+            {
+               set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
+                              attr_x );
+               set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
+                              attr_y );
+               set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
+                              attr_z );
+            }
 
             // Fill in the missing component values
             model.update_coefficients();
@@ -881,16 +930,28 @@ DbgLv(2) << "   CR:231  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 int ss=nscans/2;
 int rr=npoints/2;
 if( thrnrank==1 ) {
-DbgLv(1) << "CR:   scnx ss rr" << scnx << ss << rr;
-DbgLv(1) << "CR:     s k v" << sim_vals.solutes[cc].s*1.0e+13
- << sim_vals.solutes[cc].k << sim_vals.solutes[cc].v << "sval" << soluval
- << "idat sdat" << idata->value(ss,rr) << sdata->value(ss,rr);
-if (soluval>100.0) {
- double drval=0.0; double dmax=0.0; double dsum=0.0;
- for ( int ss=0;ss<nscans;ss++ ) { for ( int rr=0; rr<npoints; rr++ ) {
-  drval=idata->value(ss,rr); dmax=qMax(dmax,drval); dsum+=drval; }}
- DbgLv(1) << "CR:B s k" << sim_vals.solutes[cc].s*1.0e+13
-  << sim_vals.solutes[cc].k << "sval" << soluval << "amax asum" << dmax << dsum; }
+ DbgLv(1) << "CR:   scnx ss rr" << scnx << ss << rr;
+ if(use_zsol) {
+ DbgLv(1) << "CR:     x y z" << sim_vals.zsolutes[cc].x*1.0e+13
+  << sim_vals.zsolutes[cc].y << sim_vals.zsolutes[cc].z << "sval" << soluval
+  << "idat sdat" << idata->value(ss,rr) << sdata->value(ss,rr);
+ if (soluval>100.0) {
+  double drval=0.0; double dmax=0.0; double dsum=0.0;
+  for ( int ss=0;ss<nscans;ss++ ) { for ( int rr=0; rr<npoints; rr++ ) {
+   drval=idata->value(ss,rr); dmax=qMax(dmax,drval); dsum+=drval; }}
+  DbgLv(1) << "CR:B x y" << sim_vals.zsolutes[cc].x*1.0e+13
+   << sim_vals.zsolutes[cc].y << "sval" << soluval << "amax asum" << dmax << dsum; }
+ } else {
+ DbgLv(1) << "CR:     s k v" << sim_vals.solutes[cc].s*1.0e+13
+  << sim_vals.solutes[cc].k << sim_vals.solutes[cc].v << "sval" << soluval
+  << "idat sdat" << idata->value(ss,rr) << sdata->value(ss,rr);
+ if (soluval>100.0) {
+  double drval=0.0; double dmax=0.0; double dsum=0.0;
+  for ( int ss=0;ss<nscans;ss++ ) { for ( int rr=0; rr<npoints; rr++ ) {
+   drval=idata->value(ss,rr); dmax=qMax(dmax,drval); dsum+=drval; }}
+  DbgLv(1) << "CR:B s k" << sim_vals.solutes[cc].s*1.0e+13
+   << sim_vals.solutes[cc].k << "sval" << soluval << "amax asum" << dmax << dsum; }
+ }
 }
 //*DEBUG*
          }
@@ -963,23 +1024,48 @@ DbgLv(1) << "CR:     kk variance" <<  sim_vals.variances[kk];
    // Store solutes for return
    kk        = 0;
 
-   for ( int cc = 0; cc < nsolutes; cc++ )
-   {
-      if ( nnls_x[ cc ] > 0.0 )
-      {  // Store solutes with non-zero concentrations
-         sim_vals.solutes[ cc ].c = nnls_x[ cc ];
-         sim_vals.solutes[ kk++ ] = sim_vals.solutes[ cc ];
+   if ( use_zsol )
+   {  // Use xyZ type solutes
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
+         if ( nnls_x[ cc ] > 0.0 )
+         {  // Store solutes with non-zero concentrations
+            sim_vals.zsolutes[ cc ].c = nnls_x[ cc ];
+            sim_vals.zsolutes[ kk++ ] = sim_vals.zsolutes[ cc ];
+         }
+      }
+   }
+   else
+   {  // Use old type solutes
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
+         if ( nnls_x[ cc ] > 0.0 )
+         {  // Store solutes with non-zero concentrations
+            sim_vals.solutes[ cc ].c = nnls_x[ cc ];
+            sim_vals.solutes[ kk++ ] = sim_vals.solutes[ cc ];
+         }
       }
    }
 DbgLv(2) << "   CR:310  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 
    // Truncate solutes at non-zero count
-   sim_vals.solutes.resize( qMax( kk, 1 ) );
 DbgLv(1) << "CR: out solutes size" << kk;
+   if ( use_zsol )
+   {
+      sim_vals.zsolutes.resize( qMax( kk, 1 ) );
+DbgLv(1) << "CR:   jj solute-c" << 0 << sim_vals.zsolutes[0].c;
+DbgLv(1) << "CR:   jj solute-c" << 1 << (kk>1?sim_vals.zsolutes[1].c:0.0);
+DbgLv(1) << "CR:   jj solute-c" << kk-2 << (kk>1?sim_vals.zsolutes[kk-2].c:0.0);
+DbgLv(1) << "CR:   jj solute-c" << kk-1 << (kk>0?sim_vals.zsolutes[kk-1].c:0.0);
+   }
+   else
+   {
+      sim_vals.solutes.resize( qMax( kk, 1 ) );
 DbgLv(1) << "CR:   jj solute-c" << 0 << sim_vals.solutes[0].c;
 DbgLv(1) << "CR:   jj solute-c" << 1 << (kk>1?sim_vals.solutes[1].c:0.0);
 DbgLv(1) << "CR:   jj solute-c" << kk-2 << (kk>1?sim_vals.solutes[kk-2].c:0.0);
 DbgLv(1) << "CR:   jj solute-c" << kk-1 << (kk>0?sim_vals.solutes[kk-1].c:0.0);
+   }
    if ( abort ) return;
 
    // Fill noise objects with any calculated vectors
@@ -990,12 +1076,15 @@ DbgLv(1) << "CR:   jj solute-c" << kk-1 << (kk>0?sim_vals.solutes[kk-1].c:0.0);
       sim_vals.ri_noise << rinvec;
 
    // Compute and return the xnorm-squared value of concentrations
-   nsolutes = sim_vals.solutes.size();
+   nsolutes = ( use_zsol ) ? sim_vals.zsolutes.size()
+                           : sim_vals.solutes.size();
 DbgLv(1) << "CR:     nsolutes" << nsolutes;
    double xnorm = 0.0;
    for ( int jj = 0; jj < nsolutes; jj++ )
    {
-      xnorm += sq( sim_vals.solutes[ jj ].c );
+      double cval = use_zsol ? sim_vals.zsolutes[ jj ].c
+                             : sim_vals.solutes [ jj ].c;
+      xnorm      += sq( cval );
    }
 DbgLv(2) << "   CR:320  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 

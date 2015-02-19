@@ -44,8 +44,8 @@ DbgLv(1) << "PC(WT):    Thread destroyed" << thrn;
 void WorkerThreadPc::define_work( WorkPacketPc& workin )
 {
    mutex.lock();
-   str_k       = workin.str_k;
-   end_k       = workin.end_k;
+   str_y       = workin.str_y;
+   end_y       = workin.end_y;
    par1        = workin.par1;
    par2        = workin.par2;
    thrn        = workin.thrn;
@@ -75,7 +75,7 @@ DbgLv(1) << phdr << "DefWk: sols size" << solutes_i.size(); }
    sim_vals.variance    = workin.sim_vals.variance;
    sim_vals.ti_noise    = workin.sim_vals.ti_noise;
    sim_vals.ri_noise    = workin.sim_vals.ti_noise;
-   sim_vals.solutes     = solutes_i;
+   sim_vals.zsolutes    = solutes_i;
    mutex.unlock();
 }
 
@@ -84,8 +84,8 @@ void WorkerThreadPc::get_result( WorkPacketPc& workout )
 {
    mutex.lock();
 DbgLv(1) << "PC(WT): get_result IN";
-   workout.str_k    = str_k;
-   workout.end_k    = end_k;
+   workout.str_y    = str_y;
+   workout.end_y    = end_y;
    workout.par1     = par1;
    workout.par2     = par2;
    workout.thrn     = thrn;
@@ -106,11 +106,11 @@ int ni=solutes_i.size();
 if(depth==0) {
 DbgLv(1) << "PC(WT): thr nn" << thrn << nn << "out sol0 solk soln"
  << workout.csolutes[0].c << workout.csolutes[kk].c << workout.csolutes[nn-1].c
- << "ni sol0 soln s" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
+ << "ni sol0 soln x" << ni << solutes_i[0].x*1.e13 << solutes_i[ni-1].x*1.e13
  << "c" << solutes_i[0].c << solutes_i[ni-1].c; }
 else {
 DbgLv(1) << "PC(WT): thr nn" << thrn << nn 
- << "ni sol0 soln s" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
+ << "ni sol0 soln x" << ni << solutes_i[0].x*1.e13 << solutes_i[ni-1].x*1.e13
  << "c" << solutes_i[0].c << solutes_i[ni-1].c; }
 //*DEBUG*
    mutex.unlock();
@@ -147,7 +147,7 @@ DbgLv(1) << phdr << "depth" << depth;
       solvesim            = new US_SolveSim( dsets, thrn, true );
 DbgLv(1) << phdr << " A)dsets size" << dsets.size();
 
-      sim_vals.solutes    = solutes_i;
+      sim_vals.zsolutes   = solutes_i;
       sim_vals.noisflag   = noisflag;
       sim_vals.dbg_level  = dbg_level;
       sim_vals.dbg_timing = US_Settings::debug_match( "pcsaTiming" );
@@ -155,7 +155,7 @@ DbgLv(1) << phdr << " B)sols_i size" << solutes_i.size();
 
       solvesim->calc_residuals( 0, 1, sim_vals );
 
-      solutes_c           = sim_vals.solutes;
+      solutes_c           = sim_vals.zsolutes;
 DbgLv(1) << phdr << " C)sols_c size" << solutes_c.size();
       ti_noise.values     = sim_vals.ti_noise;
       ri_noise.values     = sim_vals.ri_noise;

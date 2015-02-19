@@ -917,7 +917,10 @@ void US_pcsa::open_fitcntl()
 
    dset.requestID          = disk_controls->db() ? "DB" : "Disk";
    dset.run_data           = dataList[ drow ];
-   dset.solute_type        = 0;
+   int atrx                = 0;
+   int atry                = 1;
+   int atrz                = 3;
+   dset.solute_type        = ( atrx << 6 ) | ( atry << 3 ) | atrz;
    dset.viscosity          = viscosity;
    dset.density            = density;
    dset.manual             = manual;

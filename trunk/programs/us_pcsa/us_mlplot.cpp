@@ -333,8 +333,8 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
             klpts       = 2;
             xx[ 0 ]     = smin;
             xx[ 1 ]     = smax;
-            yy[ 0 ]     = mrecs[ ii ].str_k;
-            yy[ 1 ]     = mrecs[ ii ].end_k;
+            yy[ 0 ]     = mrecs[ ii ].str_y;
+            yy[ 1 ]     = mrecs[ ii ].end_y;
          }
 
          else
@@ -343,8 +343,8 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
 //DbgLv(1) << "RP:PD   isol size" << mrecs[ii].isolutes.size();
             for ( int kk = 0; kk < klpts; kk++ )
             {
-               xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].s * 1.e+13;
-               yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].k;
+               xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].x * 1.e+13;
+               yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].y;
             }
          }
 
@@ -370,8 +370,8 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
 
             for ( int kk = 0; kk < ncomp; kk++ )
             {
-               double xv   = mrecs[ ii ].csolutes[ kk ].s * 1.0e+13;
-               double yv   = mrecs[ ii ].csolutes[ kk ].k;
+               double xv   = mrecs[ ii ].csolutes[ kk ].x * 1.0e+13;
+               double yv   = mrecs[ ii ].csolutes[ kk ].y;
                double cv   = mrecs[ ii ].csolutes[ kk ].c;
                double cfra = cv / max_conc;
                int    szd  = qMax( szdmin, qRound( 9.0 * cfra ) );
@@ -400,8 +400,8 @@ DbgLv(1) << "RP:PD (5)smin smax" << smin << smax;
       {
          for ( int kk = 0; kk < nlpts; kk++ )
          { // Accumulate the curve points
-            xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].s * 1.e+13;
-            yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].k;
+            xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].x * 1.e+13;
+            yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].y;
          }
 
          title   = tr( "Curve " ) + QString::number( ii );

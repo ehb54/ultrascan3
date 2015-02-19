@@ -75,16 +75,16 @@ DbgLv(1) << "AA: define GUI elements";
    pb_accept    = us_pushbutton( tr( "Accept" ), false );
 
    // Define counters
-   double smin  = 1.0;
-   double smax  = 10.0;
-   double kmin  = 1.0;
-   double kmax  = 5.0;
-   ct_s_lower   = us_counter( 1, -1, 1000, smin );
-   ct_s_upper   = us_counter( 1, -1, 1000, smax );
-   ct_k_lower   = us_counter( 1,      1,     8, kmin );
-   ct_k_upper   = us_counter( 1,      1,   100, kmax );
-   ct_k_strpt   = us_counter( 3,      1,     8, kmin );
-   ct_k_endpt   = us_counter( 3,      1,   100, kmax );
+   double xmin  = 1.0;
+   double xmax  = 10.0;
+   double ymin  = 1.0;
+   double ymax  = 5.0;
+   ct_s_lower   = us_counter( 1, -1, 1000, xmin );
+   ct_s_upper   = us_counter( 1, -1, 1000, xmax );
+   ct_k_lower   = us_counter( 1,      1,     8, ymin );
+   ct_k_upper   = us_counter( 1,      1,   100, ymax );
+   ct_k_strpt   = us_counter( 3,      1,     8, ymin );
+   ct_k_endpt   = us_counter( 3,      1,   100, ymax );
    ct_sigmpar1  = us_counter( 3,  0.001,   0.5,  0.2 );
    ct_sigmpar2  = us_counter( 3,    0.0,   1.0,  0.1 );
    ct_crpoints  = us_counter( 2,     20,   501,  101 );
@@ -322,10 +322,10 @@ DbgLv(1) << "AA:Accept: mrs_new" << mrs_new << "p_mrecs" << p_mrecs;
    {  // If model records are new, return them to the caller
       *p_mrecs     = mrecs;
 DbgLv(1) << "AA:Accept: mr mnmx s k"
- << p_mrecs->at(0).smin
- << p_mrecs->at(0).smax
- << p_mrecs->at(0).kmin
- << p_mrecs->at(0).kmax;
+ << p_mrecs->at(0).xmin
+ << p_mrecs->at(0).xmax
+ << p_mrecs->at(0).ymin
+ << p_mrecs->at(0).ymax;
 DbgLv(1) << "AA:Accept: mr-size mr0-RMSD" << p_mrecs->size()
  << p_mrecs->at(9).rmsd;
    }
@@ -447,19 +447,19 @@ test_db_mrecs();
 
    // Re-generate curve points for every model record
    nmrecs           = mrecs.size();
-   double smin      = mrecs[ 0 ].smin;
-   double smax      = mrecs[ 0 ].smax;
-   double kmin      = mrecs[ 0 ].kmin;
-   double kmax      = mrecs[ 0 ].kmax;
-DbgLv(1) << "mrldDiag post-accept smin smax kmin kmax"
- << smin << smax << kmin << kmax << "nmrecs" << nmrecs;
+   double xmin      = mrecs[ 0 ].xmin;
+   double xmax      = mrecs[ 0 ].xmax;
+   double ymin      = mrecs[ 0 ].ymin;
+   double ymax      = mrecs[ 0 ].ymax;
+DbgLv(1) << "mrldDiag post-accept xmin xmax ymin ymax"
+ << xmin << xmax << ymin << ymax << "nmrecs" << nmrecs;
 
    for ( int mr = 0; mr < nmrecs; mr++ )
    {
-      mrecs[ mr ].smin = smin;
-      mrecs[ mr ].smax = smax;
-      mrecs[ mr ].kmin = kmin;
-      mrecs[ mr ].kmax = kmax;
+      mrecs[ mr ].xmin = xmin;
+      mrecs[ mr ].xmax = xmax;
+      mrecs[ mr ].ymin = ymin;
+      mrecs[ mr ].ymax = ymax;
 
       curve_isolutes( mrecs[ mr ] );
    }
@@ -551,15 +551,15 @@ else DbgLv(1) << "store_mrecs - FILE NAME *NOT* EMPTY" << store_file;
 
    // Write out the XML file
    ctype            = mrecs[ 0 ].v_ctype;
-   double smin      = mrecs[ 0 ].smin;
-   double smax      = mrecs[ 0 ].smax;
-   double kmin      = mrecs[ 0 ].kmin;
-   double kmax      = mrecs[ 0 ].kmax;
+   double xmin      = mrecs[ 0 ].xmin;
+   double xmax      = mrecs[ 0 ].xmax;
+   double ymin      = mrecs[ 0 ].ymin;
+   double ymax      = mrecs[ 0 ].ymax;
    QXmlStreamWriter xmlo( &fileo );
    QString mrdesc;
 
    US_ModelRecord::write_modelrecs( xmlo, mrecs, mrdesc,
-                                    ctype, smin, smax, kmin, kmax );
+                                    ctype, xmin, xmax, ymin, ymax );
    fileo.close();
 
    // Report on saved file
@@ -646,16 +646,16 @@ DbgLv(1) << "load_bfm";
             nisols           = xattrs.value( "curve_points" )
                                .toString().toInt();
             mrec.taskx       = xattrs.value( "taskx"   ).toString().toInt();
-            mrec.str_k       = xattrs.value( "start_k" ).toString().toDouble();
-            mrec.end_k       = xattrs.value( "end_k"   ).toString().toDouble();
+            mrec.str_y       = xattrs.value( "start_y" ).toString().toDouble();
+            mrec.end_y       = xattrs.value( "end_y"   ).toString().toDouble();
             mrec.par1        = xattrs.value( "par1"    ).toString().toDouble();
             mrec.par2        = xattrs.value( "par2"    ).toString().toDouble();
             mrec.rmsd        = xattrs.value( "rmsd"    ).toString().toDouble();
             mrec.ctype       = xattrs.value( "type" ).toString().toInt();
-            mrec.smin        = xattrs.value( "smin" ).toString().toDouble();
-            mrec.smax        = xattrs.value( "smax" ).toString().toDouble();
-            mrec.kmin        = xattrs.value( "kmin" ).toString().toDouble();
-            mrec.kmax        = xattrs.value( "kmax" ).toString().toDouble();
+            mrec.xmin        = xattrs.value( "xmin" ).toString().toDouble();
+            mrec.xmax        = xattrs.value( "xmax" ).toString().toDouble();
+            mrec.ymin        = xattrs.value( "ymin" ).toString().toDouble();
+            mrec.ymax        = xattrs.value( "ymax" ).toString().toDouble();
             mrec.isolutes.resize( nisols );
             mrec.csolutes.clear();
             ncsols           = 0;
@@ -664,11 +664,12 @@ DbgLv(1) << "load_bfm";
 
          else if ( xmlname == "c_solute" )
          {
-            US_Solute csolute;
-            csolute.s        = xattrs.value( "s" ).toString().toDouble();
-            csolute.k        = xattrs.value( "k" ).toString().toDouble();
+            US_ZSolute csolute;
+            csolute.x        = xattrs.value( "x" ).toString().toDouble();
+            csolute.y        = xattrs.value( "y" ).toString().toDouble();
+            csolute.z        = xattrs.value( "z" ).toString().toDouble();
             csolute.c        = xattrs.value( "c" ).toString().toDouble();
-            csolute.s       *= 1.e-13;
+            csolute.x       *= 1.e-13;
 
             mrec.csolutes << csolute;
             ncsols++;
@@ -779,10 +780,10 @@ DbgLv(1) << "store_bfm";
 //   int    nisols    = (int)ct_crpoints->value();
    int    kisols    = mrec.isolutes.size();
    int    ncsols    = mrec.csolutes.size();
-   double smin      = mrec.smin;
-   double smax      = mrec.smax;
-   double kmin      = mrec.kmin;
-   double kmax      = mrec.kmax;
+   double xmin      = mrec.xmin;
+   double xmax      = mrec.xmax;
+   double ymin      = mrec.ymin;
+   double ymax      = mrec.ymax;
    QXmlStreamWriter xmlo;
    xmlo.setDevice( &fileo );
    xmlo.setAutoFormatting( true );
@@ -792,14 +793,14 @@ DbgLv(1) << "store_bfm";
    xmlo.writeStartElement( "modelrecord" );
    xmlo.writeAttribute( "version",      "1.0" );
    xmlo.writeAttribute( "type",         QString::number( ctype      ) );
-   xmlo.writeAttribute( "smin",         QString::number( smin       ) ); 
-   xmlo.writeAttribute( "smax",         QString::number( smax       ) ); 
-   xmlo.writeAttribute( "kmin",         QString::number( kmin       ) ); 
-   xmlo.writeAttribute( "kmax",         QString::number( kmax       ) ); 
+   xmlo.writeAttribute( "xmin",         QString::number( xmin       ) ); 
+   xmlo.writeAttribute( "xmax",         QString::number( xmax       ) ); 
+   xmlo.writeAttribute( "ymin",         QString::number( ymin       ) ); 
+   xmlo.writeAttribute( "ymax",         QString::number( ymax       ) ); 
    xmlo.writeAttribute( "curve_points", QString::number( kisols     ) ); 
    xmlo.writeAttribute( "taskx",        QString::number( mrec.taskx ) );
-   xmlo.writeAttribute( "start_k",      QString::number( mrec.str_k ) );
-   xmlo.writeAttribute( "end_k",        QString::number( mrec.end_k ) );
+   xmlo.writeAttribute( "start_y",      QString::number( mrec.str_y ) );
+   xmlo.writeAttribute( "end_y",        QString::number( mrec.end_y ) );
    xmlo.writeAttribute( "par1",         QString::number( mrec.par1  ) );
    xmlo.writeAttribute( "par2",         QString::number( mrec.par2  ) );
    xmlo.writeAttribute( "rmsd",         QString::number( mrec.rmsd  ) );
@@ -807,9 +808,10 @@ DbgLv(1) << "store_bfm";
    for ( int cc = 0; cc < ncsols; cc++ )
    {
       xmlo.writeStartElement( "c_solute" );
-      double sval      = mrec.csolutes[ cc ].s * 1.e13;
-      xmlo.writeAttribute( "s", QString::number( sval ) );
-      xmlo.writeAttribute( "k", QString::number( mrec.csolutes[ cc ].k ) );
+      double sval      = mrec.csolutes[ cc ].x * 1.e13;
+      xmlo.writeAttribute( "x", QString::number( sval ) );
+      xmlo.writeAttribute( "y", QString::number( mrec.csolutes[ cc ].y ) );
+      xmlo.writeAttribute( "z", QString::number( mrec.csolutes[ cc ].z ) );
       xmlo.writeAttribute( "c", QString::number( mrec.csolutes[ cc ].c ) );
       xmlo.writeEndElement();
    }
@@ -900,37 +902,37 @@ DbgLv(1) << "build_bfm";
    ctype          = ( ctypex == 1 ) ? CTYPE_IS : ctype;
    ctype          = ( ctypex == 2 ) ? CTYPE_DS : ctype;
    ctype          = ( ctypex == 3 ) ? CTYPE_HL : ctype;
-   double smin    = ct_s_lower ->value();
-   double smax    = ct_s_upper ->value();
-   double kmin    = ct_k_lower ->value();
-   double kmax    = ct_k_upper ->value();
+   double xmin    = ct_s_lower ->value();
+   double xmax    = ct_s_upper ->value();
+   double ymin    = ct_k_lower ->value();
+   double ymax    = ct_k_upper ->value();
    mrec.ctype     = ctype;
-   mrec.smin      = smin;
-   mrec.smax      = smax;
-   mrec.kmin      = kmin;
-   mrec.kmax      = kmax;
+   mrec.xmin      = xmin;
+   mrec.xmax      = xmax;
+   mrec.ymin      = ymin;
+   mrec.ymax      = ymax;
 
    // Set parameters for the specific curve to use
    if ( ctype == CTYPE_SL )
    {
-      mrec.str_k     = ct_k_strpt ->value();
-      mrec.end_k     = ct_k_endpt ->value();
-      mrec.par1      = mrec.str_k;
-      mrec.par2      = ( mrec.str_k - mrec.end_k ) / ( smax - smin );
+      mrec.str_y     = ct_k_strpt ->value();
+      mrec.end_y     = ct_k_endpt ->value();
+      mrec.par1      = mrec.str_y;
+      mrec.par2      = ( mrec.str_y - mrec.end_y ) / ( xmax - xmin );
    }
    else if ( ctype == CTYPE_IS  ||  ctype == CTYPE_DS )
    {
-      mrec.str_k     = kmin;
-      mrec.end_k     = kmax;
+      mrec.str_y     = ymin;
+      mrec.end_y     = ymax;
       mrec.par1      = ct_sigmpar1->value();
       mrec.par2      = ct_sigmpar2->value();
    }
 
    else if ( ctype == CTYPE_HL )
    {
-      mrec.end_k     = ct_k_endpt ->value();
-      mrec.str_k     = mrec.end_k;
-      mrec.par1      = mrec.str_k;
+      mrec.end_y     = ct_k_endpt ->value();
+      mrec.str_y     = mrec.end_y;
+      mrec.par1      = mrec.str_y;
       mrec.par2      = 0.0;
    }
 
@@ -941,7 +943,7 @@ DbgLv(1) << "build_bfm";
    QList< US_SolveSim::DataSet* > dsets;
    dsets << dset0;
    US_SolveSim::Simulation sim_vals;
-   sim_vals.solutes       = mrec.isolutes;
+   sim_vals.zsolutes      = mrec.isolutes;
    sim_vals.ti_noise      = mrec.ti_noise;
    sim_vals.ri_noise      = mrec.ri_noise;
 
@@ -951,7 +953,7 @@ DbgLv(1) << "build_bfm";
 
    mrec.variance  = sim_vals.variance;
    mrec.rmsd      = sqrt( sim_vals.variance );
-   mrec.csolutes  = sim_vals.solutes;
+   mrec.csolutes  = sim_vals.zsolutes;
 
    ncsols         = mrec.csolutes.size();
 
@@ -1027,7 +1029,7 @@ DbgLv(1) << "start_montecarlo";
       {
          ksiters++;
          US_SolveSim::Simulation sim_vals;
-         sim_vals.solutes          = mrec.isolutes;
+         sim_vals.zsolutes         = mrec.isolutes;
          dsets[ 0 ]->run_data      = wdata;
 
          US_SolveSim* solvesim     = new US_SolveSim( dsets, 0, false );
@@ -1037,7 +1039,7 @@ DbgLv(1) << "start_montecarlo";
          kciters          = ksiters;
          mrec_mc.variance = sim_vals.variance;
          mrec_mc.rmsd     = sqrt( sim_vals.variance );
-         mrec_mc.csolutes = sim_vals.solutes;
+         mrec_mc.csolutes = sim_vals.zsolutes;
          ncsols           = mrec_mc.csolutes.size();
 DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
  << "ncsols" << ncsols;
@@ -1081,7 +1083,7 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
 
       // Do the first iteration computation and set gaussians
       US_SolveSim::Simulation sim_vals;
-      sim_vals.solutes          = mrec.isolutes;
+      sim_vals.zsolutes         = mrec.isolutes;
       dsets[ 0 ]->run_data      = wdata;
       ksiters++;
 
@@ -1092,7 +1094,7 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
       kciters          = ksiters;
       mrec_mc.variance = sim_vals.variance;
       mrec_mc.rmsd     = sqrt( sim_vals.variance );
-      mrec_mc.csolutes = sim_vals.solutes;
+      mrec_mc.csolutes = sim_vals.zsolutes;
       ncsols           = mrec_mc.csolutes.size();
 DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
  << "ncsols" << ncsols << "res tskx,thrn" << 1 << 0;
@@ -1108,8 +1110,8 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
       WorkPacketPc  wtbase;
       wtbase.par1      = mrec.par1;
       wtbase.par2      = mrec.par2;
-      wtbase.str_k     = mrec.str_k;
-      wtbase.end_k     = mrec.end_k;
+      wtbase.str_y     = mrec.str_y;
+      wtbase.end_y     = mrec.end_y;
       wtbase.isolutes  = mrec.isolutes;
       wtbase.csolutes.clear();
       wtbase.noisf     = 0;
@@ -1130,12 +1132,12 @@ DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
 
          WorkPacketPc wtask     = wtbase;
          US_SolveSim::Simulation        sim_vals;
-         sim_vals.solutes       = mrec.isolutes;
+         sim_vals.zsolutes      = mrec.isolutes;
 
          wtask.thrn             = jt + 1;
          wtask.taskx            = jt + 1;
-         wtask.str_k            = mrec.str_k;
-         wtask.end_k            = mrec.end_k;
+         wtask.str_y            = mrec.str_y;
+         wtask.end_y            = mrec.end_y;
          wtask.sim_vals         = sim_vals;
          wtask.dsets[ 0 ]       = &wkdsets[ jt ];
 
@@ -1236,7 +1238,7 @@ void US_AdvAnalysisPc::process_job( WorkerThreadPc* wthr )
    US_ModelRecord mrec_mc = mrecs_mc[ 0 ];
    mrec_mc.variance = wresult.sim_vals.variance;
    mrec_mc.rmsd     = sqrt( mrec_mc.variance );
-   mrec_mc.csolutes = wresult.sim_vals.solutes;
+   mrec_mc.csolutes = wresult.sim_vals.zsolutes;
    ncsols           = mrec_mc.csolutes.size();
 DbgLv(1) << "  kciters" << kciters << "rmsd" << mrec_mc.rmsd
  << "ncsols" << ncsols << "res tskx,thrn" << wresult.taskx << wresult.thrn;
@@ -1291,7 +1293,7 @@ void US_AdvAnalysisPc::montecarlo_done( void )
 DbgLv(1) << "==montecarlo_done()==";
    stat_bfm( tr( "Building MC models and final composite..." ), true );
    int     nccsol   = 0;
-   QVector< US_Solute > compsols;
+   QVector< US_ZSolute > compsols;
    QStringList sortlst;
    US_Model::SimulationComponent zcomponent;
    zcomponent.vbar20   = dset0->vbar20;
@@ -1300,32 +1302,35 @@ DbgLv(1) << "==montecarlo_done()==";
    for ( int jmc = 0; jmc < mciters; jmc++ )
    {
       mrec             = mrecs_mc[ jmc ];
-      QVector< US_Solute > csolutes = mrec.csolutes;
+      QVector< US_ZSolute > csolutes = mrec.csolutes;
       int     nsols    = csolutes.size();
       model.components.resize( nsols );
 
       for ( int cc = 0; cc < nsols; cc++ )
       {
          // Get component values and sorting string
-         double  sol_s    = csolutes[ cc ].s;
-         double  sol_k    = csolutes[ cc ].k;
+         double  sol_x    = csolutes[ cc ].x;
+         double  sol_y    = csolutes[ cc ].y;
+         double  sol_z    = csolutes[ cc ].z;
          double  sol_c    = csolutes[ cc ].c;
          QString sol_id   = QString().sprintf( "%.4f:%.4f:%d",
-            sol_s * 1.e13, sol_k, nccsol++ );
+            sol_x * 1.e13, sol_y, nccsol++ );
 DbgLv(1) << "MCD: cc" << cc << "sol_id" << sol_id;
 
          // Save unsorted/summed solute and sorting string
-         US_Solute compsol;
-         compsol.s        = sol_s;
-         compsol.k        = sol_k;
+         US_ZSolute compsol;
+         compsol.x        = sol_x;
+         compsol.y        = sol_y;
+         compsol.z        = sol_z;
          compsol.c        = sol_c;
          compsols << compsol;
          sortlst  << sol_id;
 
          // Build the model component
          model.components[ cc ]                       = zcomponent;
-         model.components[ cc ].s                     = sol_s;
-         model.components[ cc ].f_f0                  = sol_k;
+         model.components[ cc ].s                     = sol_x;
+         model.components[ cc ].f_f0                  = sol_y;
+         model.components[ cc ].vbar20                = sol_z;
          model.components[ cc ].signal_concentration  = sol_c;
          model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
          model.calc_coefficients( model.components[ cc ] );
@@ -1339,8 +1344,8 @@ DbgLv(1) << "MCD: cc" << cc << "sol_id" << sol_id;
 
    // Now sort the solute id strings to create sorted composite
    qSort( sortlst );
-   US_Solute pcompsol;
-   US_Solute ccompsol;
+   US_ZSolute pcompsol;
+   US_ZSolute ccompsol;
    QString pskmatch  = QString();
    mrec.csolutes.clear();
    double  cnorm     = 1.0 / (double)mciters;
@@ -1389,8 +1394,9 @@ DbgLv(1) << "MCD: cc ccin ncsols" << cc << ccin << ncsols;
    for ( int cc = 0; cc < ncsols; cc++ )
    {
       model.components[ cc ]                       = zcomponent;
-      model.components[ cc ].s                     = mrec.csolutes[ cc ].s;
-      model.components[ cc ].f_f0                  = mrec.csolutes[ cc ].k;
+      model.components[ cc ].s                     = mrec.csolutes[ cc ].x;
+      model.components[ cc ].f_f0                  = mrec.csolutes[ cc ].y;
+      model.components[ cc ].vbar20                = mrec.csolutes[ cc ].z;
       model.components[ cc ].signal_concentration  = mrec.csolutes[ cc ].c;
       model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
       model.calc_coefficients( model.components[ cc ] );
@@ -1462,83 +1468,83 @@ void US_AdvAnalysisPc::curve_isolutes( US_ModelRecord& mrec )
 {
    int    nisols  = mrec.isolutes.size();
    int    ctype   = mrec.ctype;
-   double smin    = mrec.smin;
-   double smax    = mrec.smax;
-   double kmin    = mrec.kmin;
-   double kmax    = mrec.kmax;
+   double xmin    = mrec.xmin;
+   double xmax    = mrec.xmax;
+   double ymin    = mrec.ymin;
+   double ymax    = mrec.ymax;
    double prng    = (double)( nisols - 1 );
-   double srng    = smax - smin;
-   double sinc    = srng / prng;
+   double xrng    = xmax - xmin;
+   double xinc    = xrng / prng;
    double par1    = mrec.par1;
    double par2    = mrec.par2;
-   double xinc    = 1.0 / prng;
-   double xval    = 0.0;
+   double xoinc   = 1.0 / prng;
+   double xoff    = 0.0;
 DbgLv(1) << "AA:CP: xinc" << xinc << "ctype" << ctype;
 
    if ( ctype == CTYPE_IS )       // Increasing Sigmoid
    {
-      double kdif    = kmax - kmin;
+      double ydif    = ymax - ymin;
       double p1rt    = sqrt( 2.0 * par1 );
 
       for ( int kk = 0; kk < nisols; kk++ )
       {
-         double sval    = smin + xval * srng;
-         double efac    = 0.5 * erf( ( xval - par2 ) / p1rt ) + 0.5;
-         double kval    = kmin + kdif * efac;
-         mrec.isolutes[ kk ].s = sval * 1.e-13;
-         mrec.isolutes[ kk ].k = kval;
-         xval          += xinc;
+         double xval    = xmin + xoff * xrng;
+         double efac    = 0.5 * erf( ( xoff - par2 ) / p1rt ) + 0.5;
+         double yval    = ymin + ydif * efac;
+         mrec.isolutes[ kk ].x = xval * 1.e-13;
+         mrec.isolutes[ kk ].y = yval;
+         xoff          += xoinc;
       }
    }
 
    else if ( ctype == CTYPE_SL )  // Straight Line
    {
-      double kval    = mrec.str_k;
-      double kinc    = ( mrec.end_k - mrec.str_k ) / prng;
-      double sval    = smin;
+      double yval    = mrec.str_y;
+      double yinc    = ( mrec.end_y - mrec.str_y ) / prng;
+      double xval    = xmin;
 
       for ( int kk = 0; kk < nisols; kk++ )
       {
-         mrec.isolutes[ kk ].s = sval * 1.e-13;
-         mrec.isolutes[ kk ].k = kval;
-         sval          += sinc;
-         kval          += kinc;
+         mrec.isolutes[ kk ].x = xval * 1.e-13;
+         mrec.isolutes[ kk ].y = yval;
+         xval          += xinc;
+         yval          += yinc;
       }
-DbgLv(1) << "AA:CP:  ni" << nisols << "last kv" << kval;
+DbgLv(1) << "AA:CP:  ni" << nisols << "last yv" << yval;
    }
 
    else if ( ctype == CTYPE_DS )  // Decreasing Sigmoid
    {
-      double kdif    = kmin - kmax;
+      double ydif    = ymin - ymax;
       double p1rt    = sqrt( 2.0 * par1 );
 
       for ( int kk = 0; kk < nisols; kk++ )
       {
-         double sval    = smin + xval * srng;
-         double efac    = 0.5 * erf( ( xval - par2 ) / p1rt ) + 0.5;
-         double kval    = kmax + kdif * efac;
-         mrec.isolutes[ kk ].s = sval * 1.e-13;
-         mrec.isolutes[ kk ].k = kval;
-         xval          += xinc;
+         double xval    = xmin + xoff * xrng;
+         double efac    = 0.5 * erf( ( xoff - par2 ) / p1rt ) + 0.5;
+         double yval    = ymax + ydif * efac;
+         mrec.isolutes[ kk ].x = xval * 1.e-13;
+         mrec.isolutes[ kk ].y = yval;
+         xoff          += xoinc;
       }
    }
 
    else if ( ctype == CTYPE_HL )  // Horizontal Line
    {
-      double kval    = mrec.end_k;
-      double sval    = smin;
+      double yval    = mrec.end_y;
+      double xval    = xmin;
 
       for ( int kk = 0; kk < nisols; kk++ )
       {
-         mrec.isolutes[ kk ].s = sval * 1.e-13;
-         mrec.isolutes[ kk ].k = kval;
-         sval          += sinc;
+         mrec.isolutes[ kk ].x = xval * 1.e-13;
+         mrec.isolutes[ kk ].y = yval;
+         xval          += xinc;
       }
-DbgLv(1) << "AA:CP:  ni" << nisols << "last kv" << kval;
+DbgLv(1) << "AA:CP:  ni" << nisols << "last yv" << yval;
    }
-DbgLv(1) << "AA:CP: sol0 s,k" << mrec.isolutes[0].s << mrec.isolutes[0].k;
+DbgLv(1) << "AA:CP: sol0 x,y" << mrec.isolutes[0].x << mrec.isolutes[0].y;
 int nn=nisols-1;
-DbgLv(1) << "AA:CP: soln s,k" << mrec.isolutes[nn].s << mrec.isolutes[nn].k;
+DbgLv(1) << "AA:CP: soln x,y" << mrec.isolutes[nn].x << mrec.isolutes[nn].y;
 }
 
 // Generate the model that goes with the BFM record
@@ -1561,8 +1567,8 @@ void US_AdvAnalysisPc::bfm_model( void )
    for ( int cc = 0; cc < ncsols; cc++ )
    {
       model.components[ cc ]        = zcomponent;
-      model.components[ cc ].s      = mrec.csolutes[ cc ].s;
-      model.components[ cc ].f_f0   = mrec.csolutes[ cc ].k;
+      model.components[ cc ].s      = mrec.csolutes[ cc ].x;
+      model.components[ cc ].f_f0   = mrec.csolutes[ cc ].y;
       model.components[ cc ].signal_concentration
                                     = mrec.csolutes[ cc ].c;
       model.components[ cc ].name   = QString().sprintf( "SC%04d", cc + 1 );
@@ -1680,35 +1686,35 @@ void US_AdvAnalysisPc::set_fittings( QVector< US_ModelRecord >& s_mrecs )
    nisols       = s_mrec.isolutes.size();
    nmrecs       = s_mrecs.size();
    int    ctype = s_mrec.ctype;
-   double smin  = s_mrec.smin;
-   double smax  = s_mrec.smax;
-   double kmin  = s_mrec.kmin;
-   double kmax  = s_mrec.kmax;
+   double xmin  = s_mrec.xmin;
+   double xmax  = s_mrec.xmax;
+   double ymin  = s_mrec.ymin;
+   double ymax  = s_mrec.ymax;
    ctype        = s_mrec.ctype;
-DbgLv(1) << "AA:SF: ctype s,k min,max" << ctype << smin << smax
- << kmin << kmax;
-   ct_k_strpt ->setValue( s_mrec.str_k );
-   ct_k_endpt ->setValue( s_mrec.end_k );
+DbgLv(1) << "AA:SF: ctype x,y min,max" << ctype << xmin << xmax
+ << ymin << ymax;
+   ct_k_strpt ->setValue( s_mrec.str_y );
+   ct_k_endpt ->setValue( s_mrec.end_y );
    ct_sigmpar1->setValue( s_mrec.par1 );
    ct_sigmpar2->setValue( s_mrec.par2 );
 
    for ( int ii = 0; ii < nmrecs; ii++ )
    {
       s_mrec       = s_mrecs[ ii ];
-      kmin         = qMin( kmin, s_mrec.str_k );
-      kmax         = qMax( kmax, s_mrec.end_k );
+      ymin         = qMin( ymin, s_mrec.str_y );
+      ymax         = qMax( ymax, s_mrec.end_y );
       nisols       = s_mrec.isolutes.size();
 
       for ( int jj = 0; jj < nisols; jj++ )
       {
-         double sval  = s_mrec.isolutes[ jj ].s * 1.e13;
-         double kval  = s_mrec.isolutes[ jj ].k;
-         smin         = qMin( smin, sval );
-         smax         = qMax( smax, sval );
-         kmin         = qMin( kmin, kval );
-         kmax         = qMax( kmax, kval );
-if(sval==0.0 || kval==0.0)
-DbgLv(1) << "AA:SF:   ii jj ni" << ii << jj << nisols << "s k" << sval << kval;
+         double xval  = s_mrec.isolutes[ jj ].x * 1.e13;
+         double yval  = s_mrec.isolutes[ jj ].y;
+         xmin         = qMin( xmin, xval );
+         xmax         = qMax( xmax, xval );
+         ymin         = qMin( ymin, yval );
+         ymax         = qMax( ymax, yval );
+if(xval==0.0 || yval==0.0)
+DbgLv(1) << "AA:SF:   ii jj ni" << ii << jj << nisols << "x y" << xval << yval;
       }
    }
 
@@ -1718,12 +1724,12 @@ DbgLv(1) << "AA:SF:   ii jj ni" << ii << jj << nisols << "s k" << sval << kval;
    ctypex       = ( ctype == CTYPE_DS ) ? 2 : ctypex;
    ctypex       = ( ctype == CTYPE_HL ) ? 3 : ctypex;
    cb_curvtype->setCurrentIndex( ctypex );
-   ct_s_lower ->setValue( smin );
-   ct_s_upper ->setValue( smax );
-   ct_k_lower ->setValue( kmin );
-   ct_k_upper ->setValue( kmax );
+   ct_s_lower ->setValue( xmin );
+   ct_s_upper ->setValue( xmax );
+   ct_k_lower ->setValue( ymin );
+   ct_k_upper ->setValue( ymax );
    ct_crpoints->setValue( nisols );
-DbgLv(1) << "AA:SF: (2) s,k min,max" << ctype << smin << smax << kmin << kmax;
+DbgLv(1) << "AA:SF: (2) x,y min,max" << ctype << xmin << xmax << ymin << ymax;
 }
 
 // Return a flag and possibly warn if operation requires valid mrecs
@@ -1755,23 +1761,23 @@ bool US_AdvAnalysisPc::bfm_incompat( QString fname )
    bool   inCompat  = false;
 
    int    ftype     = mrec.ctype;
-   double fsmin     = mrec.smin;
-   double fsmax     = mrec.smax;
-   double fkmin     = mrec.kmin;
-   double fkmax     = mrec.kmax;
+   double fxmin     = mrec.xmin;
+   double fxmax     = mrec.xmax;
+   double fymin     = mrec.ymin;
+   double fymax     = mrec.ymax;
    int    rtype     = mrecs[ 1 ].ctype;
-   double rsmin     = mrecs[ 1 ].smin;
-   double rsmax     = mrecs[ 1 ].smax;
-   double rkmin     = mrecs[ 1 ].kmin;
-   double rkmax     = mrecs[ 1 ].kmax;
+   double rxmin     = mrecs[ 1 ].xmin;
+   double rxmax     = mrecs[ 1 ].xmax;
+   double rymin     = mrecs[ 1 ].ymin;
+   double rymax     = mrecs[ 1 ].ymax;
 DbgLv(1) << "AA:BI: ftype rtype" << ftype << rtype << "fname" << fname;
 
    inCompat         = ( inCompat  ||  ( ftype != rtype ) );
 DbgLv(1) << "AA:BI:  (1)inCompat" << inCompat;
-   inCompat         = ( inCompat  ||  ( fsmin >  rsmax ) );
-   inCompat         = ( inCompat  ||  ( fsmax <  rsmin ) );
-   inCompat         = ( inCompat  ||  ( fkmin >  rkmax ) );
-   inCompat         = ( inCompat  ||  ( fkmax <  rkmin ) );
+   inCompat         = ( inCompat  ||  ( fxmin >  rxmax ) );
+   inCompat         = ( inCompat  ||  ( fxmax <  rxmin ) );
+   inCompat         = ( inCompat  ||  ( fymin >  rymax ) );
+   inCompat         = ( inCompat  ||  ( fymax <  rymin ) );
 DbgLv(1) << "AA:BI:  (5)inCompat" << inCompat;
 
    if ( inCompat )
@@ -1792,10 +1798,10 @@ DbgLv(1) << "AA:BI:  (5)inCompat" << inCompat;
       rtx              = ( rtype == CTYPE_HL ) ? 3 : rtx;
       QString fpars    = QString( ctps[ ftx ] )
          + tr( " ; s %1 to %2 ; f/f0 %3 to %4" )
-         .arg( fsmin ).arg( fsmax ).arg( fkmin ).arg( fkmax );
+         .arg( fxmin ).arg( fxmax ).arg( fymin ).arg( fymax );
       QString rpars    = QString( ctps[ rtx ] )
          + tr( " ; s %1 to %2 ; f/f0 %3 to %4" )
-         .arg( rsmin ).arg( rsmax ).arg( rkmin ).arg( rkmax );
+         .arg( rxmin ).arg( rxmax ).arg( rymin ).arg( rymax );
 
       QMessageBox::critical( this, tr( "Incompatible Final Model" ),
          tr( "File <b>%1</b> has fitting controls incompatible<br/>"

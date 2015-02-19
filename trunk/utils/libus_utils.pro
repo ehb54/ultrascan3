@@ -58,7 +58,8 @@ HEADERS      = us_analyte.h       \
                us_tar.h           \
                us_time_state.h    \
                us_util.h          \
-               us_vector.h
+               us_vector.h        \
+               us_zsolute.h
 
 SOURCES      = us_analyte.cpp       \
                us_astfem_math.cpp   \
@@ -97,7 +98,8 @@ SOURCES      = us_analyte.cpp       \
                us_tar.cpp           \
                us_time_state.cpp    \
                us_util.cpp          \
-               us_vector.cpp
+               us_vector.cpp        \
+               us_zsolute.cpp
 
 # Only include us_crypto when not on a supercomputer
 

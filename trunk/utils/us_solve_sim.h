@@ -9,6 +9,7 @@
 #include "us_simparms.h"
 #include "us_solution.h"
 #include "us_solute.h"
+#include "us_zsolute.h"
 #include "us_astfem_math.h"
 #include "us_astfem_rsa.h"
 
@@ -61,19 +62,20 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
 
          Simulation();
 
-         double               variance;    //!< Total variance
-         double               xnormsq;     //!< X-norm squared
-         double               alpha;       //!< Tikhonov regularization factor
-         QVector< double >    variances;   //!< Variances for data sets
-         QVector< double >    ti_noise;    //!< Time-invariant noise 
-         QVector< double >    ri_noise;    //!< Radially-invariant noise
-         QVector< US_Solute > solutes;     //!< Input/Output solutes
-         long int             maxrss;      //!< Running max rss memory in KB
-         int                  noisflag;    //!< Calculated-noise flag: 0-3
-         int                  dbg_level;   //!< Debug level
-         bool                 dbg_timing;  //!< Debug-timing-prints flag
-         US_DataIO::RawData   sim_data;    //!< Simulation data
-         US_DataIO::RawData   residuals;   //!< Residuals data (run-sim-noi)
+         double                variance;   //!< Total variance
+         double                xnormsq;    //!< X-norm squared
+         double                alpha;      //!< Tikhonov regularization factor
+         QVector< double >     variances;  //!< Variances for data sets
+         QVector< double >     ti_noise;   //!< Time-invariant noise 
+         QVector< double >     ri_noise;   //!< Radially-invariant noise
+         QVector< US_Solute >  solutes;    //!< Input/Output solutes
+         QVector< US_ZSolute > zsolutes;   //!< Input/Output solutes
+         long int              maxrss;     //!< Running max rss memory in KB
+         int                   noisflag;   //!< Calculated-noise flag: 0-3
+         int                   dbg_level;  //!< Debug level
+         bool                  dbg_timing; //!< Debug-timing-prints flag
+         US_DataIO::RawData    sim_data;   //!< Simulation data
+         US_DataIO::RawData    residuals;  //!< Residuals data (run-sim-noi)
     };
 
     //! Constructor for the SolveSim class
