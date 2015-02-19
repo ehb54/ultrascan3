@@ -223,14 +223,14 @@ qDebug() << " *ERROR* cannot open" << filepath;
 
    QXmlStreamReader xmlr( xmlstr );
    int ctype            = CTYPE_NONE;
-   double smin          = 0.0;
-   double smax          = 0.0;
-   double kmin          = 0.0;
-   double kmax          = 0.0;
+   double xmin          = 0.0;
+   double xmax          = 0.0;
+   double ymin          = 0.0;
+   double ymax          = 0.0;
 
 qDebug() << "  ==Call load_modelrecs==";
    nmrec   = US_ModelRecord::load_modelrecs( xmlr, mrecs, mrdesc,
-                                             ctype, smin, smax, kmin, kmax );
+                                             ctype, xmin, xmax, ymin, ymax );
    rc      = ( nmrec > 0 ) ? 0 : 1;
 qDebug() << "  ==load_modelrecs== rc" << rc << "nmrec" << nmrec;
 
@@ -753,16 +753,16 @@ qDebug() << "  sel_row" << sel_row << "mdx" << mdx;
          + tr( "\n  Model Global ID:   " ) + mrec.modelGUID
          + tr( "\n  Edit Global ID:    " ) + mrec.editGUID
          + tr( "\n  List Row:          " ) + QString::number( row + 1 )
-         + tr( "\n  Mrecs smin:        " ) + QString::number( mrec.smin )
-         + tr( "\n  Mrecs smax:        " ) + QString::number( mrec.smax )
-         + tr( "\n  Mrecs kmin:        " ) + QString::number( mrec.kmin )
-         + tr( "\n  Mrecs kmax:        " ) + QString::number( mrec.kmax )
+         + tr( "\n  Mrecs xmin:        " ) + QString::number( mrec.xmin )
+         + tr( "\n  Mrecs xmax:        " ) + QString::number( mrec.xmax )
+         + tr( "\n  Mrecs ymin:        " ) + QString::number( mrec.ymin )
+         + tr( "\n  Mrecs ymax:        " ) + QString::number( mrec.ymax )
          + tr( "\n  Mrecs count:       " ) + QString::number( mrecs.count() )
          + tr( "\n  Best Model Type:   " )
          +     US_ModelRecord::ctype_text( mrec.ctype )
          + tr( "\n  Best Model taskx:  " ) + QString::number( mrec.taskx )
-         + tr( "\n  Best Model str_k:  " ) + QString::number( mrec.str_k )
-         + tr( "\n  Best Model end_k:  " ) + QString::number( mrec.end_k )
+         + tr( "\n  Best Model str_y:  " ) + QString::number( mrec.str_y )
+         + tr( "\n  Best Model end_y:  " ) + QString::number( mrec.end_y )
          + tr( "\n  Best Model par1:   " ) + QString::number( mrec.par1 )
          + tr( "\n  Best Model par2:   " ) + QString::number( mrec.par2 )
          + tr( "\n  Best Model RMSD:   " ) + QString::number( mrec.rmsd )

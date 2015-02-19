@@ -328,6 +328,10 @@ void US_AnalysisControlPc::start()
    {
       need_fit    = true;
       need_final  = true;
+      int attr_x  = 0;
+      int attr_y  = 1;
+      int attr_z  = 3;
+      dsets[ 0 ]->solute_type = ( attr_x << 6 ) | ( attr_y << 3 ) | attr_z;
       processor   = new US_pcsaProcess( dsets, this );
    }
 
@@ -594,41 +598,41 @@ DbgLv(1) << "AC:advanced: get_results";
          nmtsks        = ( mrecs[ 1 ].taskx == mrecs[ 2 ].taskx )
                        ? ( nmrecs - 1 ) : nmrecs;
          int strec     = nmrecs - nmtsks;
-         nkpts         = ( v_ctype != CTYPE_ALL ) ? nmtsks : ( nmtsks / 3 );
-         nkpts         = ( ctype != CTYPE_HL )
-                       ? qRound( sqrt( (double)nkpts ) ) : nkpts;
+         nypts         = ( v_ctype != CTYPE_ALL ) ? nmtsks : ( nmtsks / 3 );
+         nypts         = ( ctype != CTYPE_HL )
+                       ? qRound( sqrt( (double)nypts ) ) : nypts;
          nlpts         = mrecs[ strec ].isolutes.size();
-         smin          = mrecs[ strec ].smin;
-         smax          = mrecs[ strec ].smax;
-         fmin          = mrecs[ strec ].kmin;
-         fmax          = mrecs[ strec ].kmax;
+         xmin          = mrecs[ strec ].xmin;
+         xmax          = mrecs[ strec ].xmax;
+         ymin          = mrecs[ strec ].ymin;
+         ymax          = mrecs[ strec ].ymax;
 
          for ( int ii = strec; ii < nmrecs; ii++ )
          {
-            QVector< US_Solute >* isolutes = &mrecs[ ii ].isolutes;
+            QVector< US_ZSolute >* isolutes = &mrecs[ ii ].isolutes;
             nlpts         = isolutes->size();
-            fmin          = qMin( fmin, mrecs[ ii ].str_k );
-            fmax          = qMax( fmax, mrecs[ ii ].end_k );
+            ymin          = qMin( ymin, mrecs[ ii ].str_y );
+            ymax          = qMax( ymax, mrecs[ ii ].end_y );
 
             for ( int jj = 0; jj < nlpts; jj++ )
             {
-               double sval   = (*isolutes)[ jj ].s * 1.e13;
-               double kval   = (*isolutes)[ jj ].k;
-               smin          = qMin( smin, sval );
-               smax          = qMax( smax, sval );
-               fmin          = qMin( fmin, kval );
-               fmax          = qMax( fmax, kval );
+               double xval   = (*isolutes)[ jj ].x * 1.e13;
+               double yval   = (*isolutes)[ jj ].y;
+               xmin          = qMin( xmin, xval );
+               xmax          = qMax( xmax, xval );
+               ymin          = qMin( ymin, yval );
+               ymax          = qMax( ymax, yval );
             }
          }
 
          fitpars_connect( false );
 
          cb_curvtype->setCurrentIndex( ctypes.indexOf( ctype ) );
-         ct_lolimits->setValue( smin  );
-         ct_uplimits->setValue( smax  );
-         ct_lolimitk->setValue( fmin  );
-         ct_uplimitk->setValue( fmax  );
-         ct_varcount->setValue( nkpts );
+         ct_lolimits->setValue( xmin  );
+         ct_uplimits->setValue( xmax  );
+         ct_lolimitk->setValue( ymin  );
+         ct_uplimitk->setValue( ymax  );
+         ct_varcount->setValue( nypts );
          ct_cresolu ->setValue( nlpts );
 
          fitpars       = fitpars_string();
@@ -908,31 +912,31 @@ void US_AnalysisControlPc::compute()
 
    ctypex  = cb_curvtype->currentIndex();
    ctype   = ctypes[ ctypex ];
-   smin    = ct_lolimits->value();
-   smax    = ct_uplimits->value();
-   fmin    = ct_lolimitk->value();
-   fmax    = ct_uplimitk->value();
-   nkpts   = (int)ct_varcount->value();
+   xmin    = ct_lolimits->value();
+   xmax    = ct_uplimits->value();
+   ymin    = ct_lolimitk->value();
+   ymax    = ct_uplimitk->value();
+   nypts   = (int)ct_varcount->value();
    nlpts   = (int)ct_cresolu ->value();
    mrecs.clear();
    parlims[ 0 ]   = -1.0;
-   int    nlmodl  = nkpts * nkpts;
+   int    nlmodl  = nypts * nypts;
 
    if ( ctype == CTYPE_SL )
    {
-      US_ModelRecord::compute_slines( smin, smax, fmin, fmax, nkpts, nlpts,
+      US_ModelRecord::compute_slines( xmin, xmax, ymin, ymax, nypts, nlpts,
             parlims, mrecs );
    }
    else if ( ctype == CTYPE_IS  ||  ctype == CTYPE_DS )
    {
-      US_ModelRecord::compute_sigmoids( ctype, smin, smax, fmin, fmax,
-            nkpts, nlpts, parlims, mrecs );
+      US_ModelRecord::compute_sigmoids( ctype, xmin, xmax, ymin, ymax,
+            nypts, nlpts, parlims, mrecs );
    }
    else if ( ctype == CTYPE_HL )
    {
-      nlmodl         = nkpts;
+      nlmodl         = nypts;
 
-      US_ModelRecord::compute_hlines( smin, smax, fmin, fmax, nkpts, nlpts,
+      US_ModelRecord::compute_hlines( xmin, xmax, ymin, ymax, nypts, nlpts,
             parlims, mrecs );
    }
 
@@ -941,7 +945,7 @@ void US_AnalysisControlPc::compute()
    if ( ctype != 8 )
    {
       amsg       += tr( " derived from the square of %1 variation points,\n" )
-                    .arg( nkpts );
+                    .arg( nypts );
    }
    amsg          += tr( " with each curve model consisting of %1 points." )
                     .arg( nlpts );
@@ -960,12 +964,12 @@ void US_AnalysisControlPc::plot_lines()
 {
    ctypex  = cb_curvtype->currentIndex();
    ctype   = ctypes[ ctypex ];
-   smin    = ct_lolimits->value();
-   smax    = ct_uplimits->value();
-   fmin    = ct_lolimitk->value();
-   fmax    = ct_uplimitk->value();
+   xmin    = ct_lolimits->value();
+   xmax    = ct_uplimits->value();
+   ymin    = ct_lolimitk->value();
+   ymax    = ct_uplimitk->value();
    nlpts   = (int)ct_cresolu ->value();
-   nkpts   = (int)ct_varcount->value();
+   nypts   = (int)ct_varcount->value();
 
    if ( mrecs[ 0 ].v_ctype == CTYPE_ALL )
       ctype   = CTYPE_ALL;
@@ -975,8 +979,8 @@ DbgLv(1) << "PL: mlnplotd" << mlnplotd;
       mlnplotd->close();
 DbgLv(1) << "PL:  mlnplotd closed";
 
-   mlnplotd = new US_MLinesPlot( fmin, fmax, smin, smax, ctype,
-                                 nkpts, nlpts, bmndx );
+   mlnplotd = new US_MLinesPlot( ymin, ymax, xmin, xmax, ctype,
+                                 nypts, nlpts, bmndx );
 
    connect( mlnplotd, SIGNAL( destroyed( QObject* ) ),
             this,     SLOT  ( closed   ( QObject* ) ) );
@@ -1141,79 +1145,79 @@ void US_AnalysisControlPc::recompute_mrec()
 int nn=mrec.isolutes.size()-1;
 int mm=mrec.isolutes.size()/2;
 DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
- << "s0 s,k" << mrec.isolutes[0].s << mrec.isolutes[0].k
- << "sm s,k" << mrec.isolutes[mm].s << mrec.isolutes[mm].k
- << "sn s,k" << mrec.isolutes[nn].s << mrec.isolutes[nn].k;
+ << "s0 x,y" << mrec.isolutes[0].x << mrec.isolutes[0].y
+ << "sm x,y" << mrec.isolutes[mm].x << mrec.isolutes[mm].y
+ << "sn x,y" << mrec.isolutes[nn].x << mrec.isolutes[nn].y;
    mrec.isolutes.clear();
-   US_Solute isol;
-   smin          = ct_lolimits->value();
-   smax          = ct_uplimits->value();
-   fmin          = ct_lolimitk->value();
-   fmax          = ct_uplimitk->value();
+   US_ZSolute isol;
+   xmin          = ct_lolimits->value();
+   xmax          = ct_uplimits->value();
+   ymin          = ct_lolimitk->value();
+   ymax          = ct_uplimitk->value();
    nlpts         = (int)ct_cresolu ->value();
    ctypex        = cb_curvtype->currentIndex();
    ctype         = ctypes[ ctypex ];
    mrec.ctype    = ctype;
-   mrec.smin     = smin;
-   mrec.smax     = smax;
-   mrec.kmin     = fmin;
-   mrec.kmax     = fmax;
-   double str_k  = mrec.str_k;
-   double end_k  = mrec.end_k;
+   mrec.xmin     = xmin;
+   mrec.xmax     = xmax;
+   mrec.ymin     = ymin;
+   mrec.ymax     = ymax;
+   double str_y  = mrec.str_y;
+   double end_y  = mrec.end_y;
    double par1   = mrec.par1;
    double par2   = mrec.par2;
    double prng   = (double)( nlpts - 1 );
-   double xrng   = smax - smin;
+   double xrng   = xmax - xmin;
 
    if ( ctype == CTYPE_SL )
    {
-      double xval   = smin;
+      double xval   = xmin;
       double xinc   = xrng / prng;
-      double kval   = str_k;
-      double kinc   = ( end_k - str_k ) / prng;
+      double yval   = str_y;
+      double yinc   = ( end_y - str_y ) / prng;
 
       for ( int kk = 0; kk < nlpts; kk++ )
       { // Loop over points on a line
-         isol.s      = xval * 1.e-13;
-         isol.k      = kval;
+         isol.x      = xval * 1.e-13;
+         isol.y      = yval;
          mrec.isolutes << isol;
          xval       += xinc;
-         kval       += kinc;
+         yval       += yinc;
       } // END: points-per-line loop
    }
 
    else if ( ctype == CTYPE_IS  ||  ctype == CTYPE_DS )
    {
-      double xrng   = smax - smin;
-      double kstr   = ( ctype == CTYPE_IS ) ? fmin : fmax;
-      double kdif   = fmax - fmin;
-      kdif          = ( ctype == CTYPE_IS ) ? kdif : -kdif;
-      double xval   = 0.0;
-      double xinc   = 1.0 / prng;
+      double xrng   = xmax - xmin;
+      double ystr   = ( ctype == CTYPE_IS ) ? ymin : ymax;
+      double ydif   = ymax - ymin;
+      ydif          = ( ctype == CTYPE_IS ) ? ydif : -ydif;
+      double xoff   = 0.0;
+      double xoinc  = 1.0 / prng;
       double p1rt   = sqrt( 2.0 * par1 );
 
       for ( int kk = 0; kk < nlpts; kk++ )
       { // Loop over points on a sigmoid curve
-         double sval  = smin + xval * xrng;
-         double efac  = 0.5 * erf( ( xval - par2 ) / p1rt ) + 0.5;
-         double kval  = kstr + kdif * efac;
-         isol.s       = sval * 1.e-13;
-         isol.k       = kval;
+         double xval  = xmin + xoff * xrng;
+         double efac  = 0.5 * erf( ( xoff - par2 ) / p1rt ) + 0.5;
+         double yval  = ystr + ydif * efac;
+         isol.x       = xval * 1.e-13;
+         isol.y       = yval;
          mrec.isolutes << isol;
-         xval        += xinc;
+         xoff        += xoinc;
       } // END: points-on-curve loop
    }
 
    else if ( ctype == CTYPE_HL )
    {
-      double xval   = smin;
+      double xval   = xmin;
       double xinc   = xrng / prng;
-      double kval   = end_k;
+      double yval   = end_y;
 
       for ( int kk = 0; kk < nlpts; kk++ )
       { // Loop over points on a line
-         isol.s      = xval * 1.e-13;
-         isol.k      = kval;
+         isol.x      = xval * 1.e-13;
+         isol.y      = yval;
          mrec.isolutes << isol;
          xval       += xinc;
       } // END: points-per-line loop
@@ -1223,9 +1227,9 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
 nn=mrec.isolutes.size()-1;
 mm=mrec.isolutes.size()/2;
 DbgLv(1) << "AC:RM: NEW mrec0 solsize" << mrec.isolutes.size()
- << "s0 s,k" << mrec.isolutes[0].s << mrec.isolutes[0].k
- << "sm s,k" << mrec.isolutes[mm].s << mrec.isolutes[mm].k
- << "sn s,k" << mrec.isolutes[nn].s << mrec.isolutes[nn].k;
+ << "s0 x,y" << mrec.isolutes[0].x << mrec.isolutes[0].y
+ << "sm x,y" << mrec.isolutes[mm].x << mrec.isolutes[mm].y
+ << "sn x,y" << mrec.isolutes[nn].x << mrec.isolutes[nn].y;
    if ( processor != 0 )
       processor->put_mrec( mrec );
 }

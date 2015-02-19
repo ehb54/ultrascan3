@@ -38,17 +38,17 @@ class US_AnalysisControlPc : public US_WidgetsDialog
       int           nctotal;
       int           grtype;
       int           bmndx;
-      int           nkpts;
+      int           nypts;
       int           nlpts;
       int           ctype;
       int           ctypex;
       int           nlmodl;
 
-      double        smin;
-      double        smax;
-      double        fmin;
-      double        fmax;
-      double        finc;
+      double        xmin;
+      double        xmax;
+      double        ymin;
+      double        ymax;
+      double        yinc;
       double        varimin;
 
       bool          need_fit;

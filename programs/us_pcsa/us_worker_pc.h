@@ -9,7 +9,7 @@
 #include "us_simparms.h"
 #include "us_model.h"
 #include "us_noise.h"
-#include "us_solute.h"
+#include "us_zsolute.h"
 #include "us_solve_sim.h"
 
 #ifndef DbgLv
@@ -25,13 +25,13 @@ typedef struct work_packet_pc_s
    int     state;      //!< state flag (0-3 for READY,RUNNING,COMPLETE,ABORTED)
    int     noisf;      //!< noise flag (0-3 for NONE,TI,RI,BOTH)
 
-   double  str_k;      //!< model start k value
-   double  end_k;      //!< model end   k value
+   double  str_y;      //!< model start y value
+   double  end_y;      //!< model end   y value
    double  par1;       //!< sigmoid model par1 value
    double  par2;       //!< sigmoid model par2 value
 
-   QVector< US_Solute >     isolutes;    //!< input solutes
-   QVector< US_Solute >     csolutes;    //!< computed solutes
+   QVector< US_ZSolute >    isolutes;    //!< input solutes
+   QVector< US_ZSolute >    csolutes;    //!< computed solutes
    QVector< double >        ti_noise;    //!< computed ti noise
    QVector< double >        ri_noise;    //!< computed ri noise
    QVector< double >*       psv_nnls_a;  //!< pointer to nnls A matrix
@@ -86,8 +86,8 @@ class WorkerThreadPc : public QThread
 
       long int maxrss;       // maximum rss memory used
 
-      double  str_k;         // start model k value
-      double  end_k;         // end   model k value
+      double  str_y;         // start model y value
+      double  end_y;         // end   model y value
       double  par1;          // task par1 value
       double  par2;          // task par1 value
 
@@ -119,8 +119,8 @@ class WorkerThreadPc : public QThread
       US_SolveSim*                   solvesim;  // object for calc_residuals()
       US_SolveSim::DataSet           dset_wk;   // local copy of data set
 
-      QVector< US_Solute >    solutes_i;   // solutes input
-      QVector< US_Solute >    solutes_c;   // solutes computed
+      QVector< US_ZSolute >   solutes_i;   // solutes input
+      QVector< US_ZSolute >   solutes_c;   // solutes computed
 
       QVector< double >*      psv_nnls_a;  // pointer to saved nnls A matrix
       QVector< double >*      psv_nnls_b;  // pointer to saved nnls B matrix

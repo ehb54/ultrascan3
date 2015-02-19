@@ -120,13 +120,13 @@ DbgLv(1) << "TRP:  csizw cminw" << csizw << cminw;
    pltctrlsLayout->addWidget( le_stattext, row++, 0, 1, 6 );
 //   row         += 7;
    QString ctype  = tr( "Increasing Sigmoid" );
-   if ( mrec.str_k == mrec.par1 )
+   if ( mrec.str_y == mrec.par1 )
    {
-      ctype          = mrec.str_k != mrec.end_k 
+      ctype          = mrec.str_y != mrec.end_y 
                      ? tr( "Straight Line" )
                      : tr( "Horizontal Line" );
    }
-   else if ( mrec.str_k > mrec.end_k )
+   else if ( mrec.str_y > mrec.end_y )
       ctype          = tr( "Decreasing Sigmoid" );
    le_mtype->setText( ctype );
 
@@ -178,8 +178,8 @@ DbgLv(1) << "TRP:  p1size" << p1size;
    adjustSize();
 DbgLv(1) << "TRP:   actual csizw" << ct_incalpha->width();
 DbgLv(1) << "TRP:  mrec.taskx" << mrec.taskx;
-DbgLv(1) << "TRP:  mrec.str_k" << mrec.str_k;
-DbgLv(1) << "TRP:  mrec.end_k" << mrec.end_k;
+DbgLv(1) << "TRP:  mrec.str_y" << mrec.str_y;
+DbgLv(1) << "TRP:  mrec.end_y" << mrec.end_y;
 DbgLv(1) << "TRP:  mrec.par1 " << mrec.par1;
 DbgLv(1) << "TRP:  mrec.par2 " << mrec.par2;
 DbgLv(1) << "TRP:  mrec.vari " << mrec.variance;
@@ -259,7 +259,7 @@ DbgLv(1) << "ASC:  nalpha" << nalpha << kalpha << "nthr" << nthr;
             sim_vals.alpha     = calpha;
             sim_vals.noisflag  = 0;
             sim_vals.dbg_level = 0;
-            sim_vals.solutes   = mrec.isolutes;
+            sim_vals.zsolutes  = mrec.isolutes;
 
             US_SolveSim* solvesim = new US_SolveSim( dsets, 0, false );
 
@@ -310,7 +310,7 @@ DbgLv(1) << "a v x" << calpha << v_vari << v_xnsq;
       sim_vals.alpha     = calpha;
       sim_vals.noisflag  = 0;
       sim_vals.dbg_level = 0;
-      sim_vals.solutes   = mrec.isolutes;
+      sim_vals.zsolutes  = mrec.isolutes;
 
       US_SolveSim* solvesim = new US_SolveSim( dsets, 0, false );
 
@@ -319,7 +319,7 @@ DbgLv(1) << "a v x" << calpha << v_vari << v_xnsq;
       v_vari        = sim_vals.variance;
       v_xnsq        = sim_vals.xnormsq;
 qDebug() << "A0: alpha" << calpha << "vari xnsq" << v_vari << v_xnsq
- << "ncsols" << sim_vals.solutes.size();;
+ << "ncsols" << sim_vals.zsolutes.size();;
       varias[ 0 ]   = v_vari;
       xnorms[ 0 ]   = v_xnsq;
       nasubm        = 1;
@@ -339,15 +339,15 @@ qDebug() << "A0: alpha" << calpha << "vari xnsq" << v_vari << v_xnsq
          sim_vals.alpha       = calpha;
          sim_vals.noisflag    = 0;
          sim_vals.dbg_level   = qMax( 0, ( dbg_level - 1 ) );
-         sim_vals.solutes     = mrec.isolutes;
+         sim_vals.zsolutes    = mrec.isolutes;
          wtask.thrn           = jt + 1;
          wtask.taskx          = nasubm;
-         wtask.str_k          = mrec.str_k;
-         wtask.end_k          = mrec.end_k;
+         wtask.str_y          = mrec.str_y;
+         wtask.end_y          = mrec.end_y;
          wtask.par1           = mrec.par1;
          wtask.par2           = mrec.par2;
          wtask.sim_vals       = sim_vals;
-         wtask.isolutes       = sim_vals.solutes;
+         wtask.isolutes       = sim_vals.zsolutes;
          wtask.dsets          = dsets;
          wtask.depth          = 1;
          wtask.state          = 0;
