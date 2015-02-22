@@ -422,7 +422,7 @@ void US_Pseudo3D_Combine::reset( void )
 
    plt_kmin   = 0.8;
    plt_kmax   = 4.2;
-   ct_plt_kmin->setRange( 0.1, 50, 0.01 );
+   ct_plt_kmin->setRange( 0.0, 50, 0.01 );
    ct_plt_kmin->setValue( plt_kmin );
    ct_plt_kmin->setEnabled( false );
    ct_plt_kmax->setRange( 1, 50, 0.01 );
@@ -1350,7 +1350,7 @@ qDebug() << "select-y: plot_y" << plot_y;
    lb_plt_kmax->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
                        + tr( " Maximum:" ) );
 qDebug() << "  ylab" << ylabs[plot_y];
-   ct_plt_kmin->setRange( 0.1, 50, 0.1 );
+   ct_plt_kmin->setRange( 0.0, 50, 0.1 );
    ct_plt_kmax->setRange( ymins[ plot_y ], ymaxs[ plot_y ], yincs[ plot_y ] );
    ct_plt_kmin->setValue( yvlos[ plot_y ] );
    ct_plt_kmax->setValue( yvhis[ plot_y ] );
