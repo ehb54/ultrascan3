@@ -137,12 +137,22 @@ DbgLv(1) << "MwDa: nscan ncell nchan" << nscan << ncell << nchan;
 
       if ( scn_lo != scn_hi )
       {
-         QMessageBox::warning( 0,
+         QApplication::restoreOverrideCursor();
+         QApplication::restoreOverrideCursor();
+
+         int response = QMessageBox::warning( 0,
                tr( "Varying Number of Scans" ),
                tr( "The number of scans in each cell varies"
-                   " from %1 to %2. Only the first %3 scans"
-                   " of each cell will be processed." )
-               .arg( scn_lo ).arg( scn_hi ).arg( scn_lo ) );
+                   " from %1 to %2.<br/><br/>Select <b>[ Cancel ]</b>"
+                   " to abort the import<br/>or <b>[ OK ]</b> to"
+                   " process only the first %3 scans of each cell." )
+               .arg( scn_lo ).arg( scn_hi ).arg( scn_lo ),
+               QMessageBox::Cancel|QMessageBox::Ok, QMessageBox::Ok );
+
+         if ( response == QMessageBox::Cancel )
+            return false;
+
+         QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
       }
       nscan       = scn_lo;
    }
@@ -650,7 +660,7 @@ void US_MwlData::read_rdata( QDataStream& ds, QVector< double >& rvs,
    // Scale by 1.0 or 1/1000 depending on version
    double rscl  = ( evers > 1.2 ) ? 1.0 : 0.001;
    // In latest versions, scale by 1/10000 if Absorbance
-   rscl         = ( ( evers > 1.3 ) && is_absorb ) ? 0.0001 : 1.0;
+   rscl         = ( ( evers > 1.3 ) && is_absorb ) ? 0.0001 : rscl;
 
    for ( int ii = 0; ii < npoint; ii++ )
    { // Pick up each 4-byte value, convert to double and possibly scale
@@ -659,13 +669,16 @@ void US_MwlData::read_rdata( QDataStream& ds, QVector< double >& rvs,
       double rvv   = (double)ival * rscl;
       rvs[ kk++ ]  = rvv;
    }
+//if(scnx<1)
+//DbgLv(1) << "MwDa:ReadRdata evers absorb" << evers << is_absorb
+// << "rscl ival rvv" << rscl << iword(cbuf) << rvs[kk-1];
 }
 
 // Set Lambda ranges for export
 int US_MwlData::set_lambdas( int start, int end, int ccx )
 {
    set_celchnx( ccx );
-DbgLv(1) << "SetLamb  s/e" << start << end;
+DbgLv(1) << "MwDa:SetLamb  s/e" << start << end;
    if ( ex_wavelns[ curccx ].count() == 0 )
    {  // If out list is empty, build from input
       slambda       = ( start > 0 ) ? start : ri_wavelns[ 0 ];
@@ -1126,6 +1139,9 @@ void US_MwlData::read_runxml( QDir ddir, QString curdir )
          if ( xml.name() == "runID" )
          {
             runID           = att.value( "name"    ).toString();
+            is_absorb       = att.value( "take_intensity" ).toString() == "N";
+DbgLv(1) << "MwDa:RdXML take_i" << att.value( "take_intensity" ).toString()
+ << "evers absorb" << evers << is_absorb;
          }
          else if ( xml.name() == "cell" )
          {
@@ -1147,11 +1163,6 @@ void US_MwlData::read_runxml( QDir ddir, QString curdir )
          else if ( xml.name() == "settings_mwrs_experiment" )
          {
             evers           = att.value( "version" ).toString().toDouble();
-         }
-
-         else if ( xml.name() == "runID" )
-         {
-            is_absorb       = att.value( "take_intensity" ).toString() == "N";
          }
       }
    }
