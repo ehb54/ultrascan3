@@ -64,11 +64,14 @@ DbgLv(1) << "MwDa: evers" << evers << "is_absorb" << is_absorb;
    QStringList mwrfs = ddir.entryList( QStringList( "*.mwrs" ),
          QDir::Files, QDir::Name );
    QStringList chans;
-   cells.clear();
+   QVector< int > ccscans;
+   cells    .clear();
+   cellchans.clear();
    nscan         = -1;
    int scnmin    = 99999;
    mwrfs.sort();
    nfile         = mwrfs.size();
+   ccscans.fill( 0, nfile );
    le_status->setText( QString( "%1 files from %2 ..." )
        .arg( nfile ).arg( runID ) );
    qApp->processEvents();
@@ -92,6 +95,17 @@ DbgLv(1) << "MwDa: nfile" << nfile;
 
       fnames << fname;
       fpaths << fpath;
+
+      QString celchn  = acell + "." + chann;
+
+      int      ccx    = cellchans.indexOf( celchn );
+      if ( ccx < 0 )
+      {
+         ccx             = cellchans.size();
+         cellchans << celchn;
+      }
+
+      ccscans[ ccx ]  = qMax( ccscans[ ccx ], scann );
    }
 
    nscan       = ( nscan - scnmin ) + 1;
@@ -105,6 +119,34 @@ DbgLv(1) << "MwDa: nscan ncell nchan" << nscan << ncell << nchan;
    }
    cells    .sort();
    chans    .sort();
+
+   if ( ( ncelchn * nscan ) != nfile )
+   {
+      qDebug() << "*** nfile" << nfile << "ncelchn*nscn" << ncelchn*nscan;
+      int scn_lo  = ccscans[ 0 ];
+      int scn_hi  = scn_lo;
+
+      for ( int ii = 1; ii < cellchans.size(); ii++ )
+      {
+         scn_lo      = qMin( scn_lo, ccscans[ ii ] );
+         scn_hi      = qMax( scn_hi, ccscans[ ii ] );
+      }
+
+      scn_lo      = ( scn_lo - scnmin ) + 1;
+      scn_hi      = ( scn_hi - scnmin ) + 1;
+
+      if ( scn_lo != scn_hi )
+      {
+         QMessageBox::warning( 0,
+               tr( "Varying Number of Scans" ),
+               tr( "The number of scans in each cell varies"
+                   " from %1 to %2. Only the first %3 scans"
+                   " of each cell will be processed." )
+               .arg( scn_lo ).arg( scn_hi ).arg( scn_lo ) );
+      }
+      nscan       = scn_lo;
+   }
+
    cellchans.clear();
    le_status->setText( QString( "%1 cells and %2 channels ..." )
        .arg( ncell ).arg( nchan ) );
@@ -124,6 +166,10 @@ DbgLv(1) << "MwDa: nscan ncell nchan" << nscan << ncell << nchan;
    {
       QString fname   = fnames[ ii ];
       QString fpath   = fpaths[ ii ];
+      QString ascan   = fname.section( ".", -2, -2 );
+      int scann       = ascan.toInt() + 1;
+
+      if ( scann > nscan )  continue;
 
       QFile fi( fpath );
       if ( ! fi.open( QIODevice::ReadOnly ) )
@@ -206,6 +252,7 @@ DbgLv(1) << "MwDa:   ri_readings CREATED size" << ri_readings.size();
       }
 
       int ccx    = hd.icell * nchan + hd.ichan;
+      ccscans[ ccx ] = ccscans[ ccx ] + 1;
       int tripx  = ccx * nlambda;
       int scnx   = ( fname.section( ".", -2, -2 ).toInt() - scnmin ) * npoint;
 //DbgLv(1) << "MwDa:  PREPARE rdata ccx tripx scnx" << ccx << tripx << scnx;
@@ -815,6 +862,8 @@ DbgLv(1) << "BldRawD      hdx" << hdx << "hdsize" << headers.size();
       for ( int scx = 0; scx < nscan; scx++ )
       {  // Set scan values
          US_DataIO::Scan scan;
+if(scx<3 || (scx+4)>nscan)
+DbgLv(1) << "BldRawD       scx" << scx << "jhx" << jhx << "wvx" << wvx;
          scan.temperature  = headers[ jhx ].temperature;
          rpm_setp          = rpm_set;
          rpm_set           = headers[ jhx ].set_speed;
@@ -829,6 +878,8 @@ DbgLv(1) << "BldRawD      hdx" << hdx << "hdsize" << headers.size();
          if ( scx > 0  &&  scan.rpm != r_rpms[ scx - 1 ] )
             kspstep++;
 
+if(scx<3 || (scx+4)>nscan)
+DbgLv(1) << "BldRawD        rpm_set rpm_setp" << rpm_set << rpm_setp;
          if ( rpm_set != rpm_setp )
          {  // A new speed step is reached, re-do speeds in the previous one
             nspstep++;
@@ -877,6 +928,10 @@ DbgLv(1) << "BldRawD      scx" << scx << "jhx" << jhx
          if ( trx == 0 )
             r_rpms << scan.rpm;
          jhx++;
+if(scx<3 || (scx+4)>nscan)
+DbgLv(1) << "BldRawD        trx jhx rdx" << trx << jhx << rdx;
+if(scx<3 || (scx+4)>nscan)
+DbgLv(1) << "BldRawD        riread[trx] size" << ri_readings[trx].size();
 
          for ( int kk = 0; kk < npoint; kk++ )
          {  // Set readings values
@@ -885,6 +940,7 @@ DbgLv(1) << "BldRawD      scx" << scx << "jhx" << jhx
 
          rdata.scanData << scan;      // Append a scan to a triple
       } // END: scan loop
+DbgLv(1) << "BldRawD         EoSl: trx rdx" << trx << rdx;
 
       if ( evers < 1.2 )
       {  // For an old data version, get the average of all scans
@@ -910,6 +966,7 @@ DbgLv(1) << "BldRawD      scx" << scx << "jhx" << jhx
       nspstep++;
       rpm_stdd          = 0.0;
       rpm_avg           = rpm_sum / (double)kscan;
+DbgLv(1) << "BldRawD        kscx" << kscx;
 
       for ( int scx = kscx; scx < nscan; scx++ )
       {
@@ -922,6 +979,7 @@ DbgLv(1) << "BldRawD      scx" << scx << "jhx" << jhx
 
       // Compute standard deviation of speeds and update step values
       rpm_stdd          = sqrt( rpm_stdd  ) / (double)kscan;
+DbgLv(1) << "BldRawD        rpm_stdd" << rpm_stdd;
 
       if ( trx == 0 )
       {
