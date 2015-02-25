@@ -24,6 +24,10 @@ US_AnalysisControlPc::US_AnalysisControlPc(
    mlnplotd       = 0;
    fitpars        = QString();
    ctypes << CTYPE_SL << CTYPE_IS << CTYPE_DS << CTYPE_HL << CTYPE_ALL;
+   attr_x         = 0;
+   attr_y         = 1;
+   attr_z         = 3;
+   sol_type       = ( attr_x << 6 ) + ( attr_y << 3 ) + attr_z;
 
    if ( parentw )
    {  // Get pointers to needed objects from the main
@@ -72,12 +76,14 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    mainLayout->addLayout( optimizeLayout  );
 
    QLabel* lb_fitting      = us_banner( tr( "Fitting Controls:" ) );
-   QLabel* lb_curvtype     = us_label(  tr( "Curve Type:" ) );
-   QLabel* lb_lolimits     = us_label(  tr( "Lower Limit (s x 1e-13):" ) );
-   QLabel* lb_uplimits     = us_label(  tr( "Upper Limit (s x 1e-13):" ) );
-           lb_lolimitk     = us_label(  tr( "Lower Limit (f/f0):" ) );
-           lb_uplimitk     = us_label(  tr( "Upper Limit (f/f0):" ) );
-           lb_varcount     = us_label(  tr( "Variations Count:" ) );
+   QLabel* lb_curvtype     = us_label(  tr( "Curve Type:"       ) );
+   QLabel* lb_x_type       = us_label(  tr( "X Axis Type:"      ) );
+   QLabel* lb_y_type       = us_label(  tr( "Y Axis Type:"      ) );
+   QLabel* lb_z_type       = us_label(  tr( "Z Axis Type:"      ) );
+   QLabel* lb_z_value      = us_label(  tr( "Z Value/Coeffs."   ) );
+   QLabel* lb_range_x      = us_label(  tr( "X range:"          ) );
+   QLabel* lb_range_y      = us_label(  tr( "Y range:"          ) );
+   QLabel* lb_varcount     = us_label(  tr( "Variations Count:" ) );
    QLabel* lb_gfiters      = us_label(  tr( "Grid Fit Iterations:" ) );
    QLabel* lb_gfthresh     = us_label(  tr( "Threshold Delta-RMSD Ratio:" ) );
    QLabel* lb_cresolu      = us_label(  tr( "Curve Resolution Points:" ) );
@@ -87,6 +93,32 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    QLabel* lb_minvari      = us_label(  tr( "Best Model Variance:" ) );
    QLabel* lb_minrmsd      = us_label(  tr( "Best Model RMSD:" ) );
    QLabel* lb_status       = us_label(  tr( "Status:" ) );
+           bg_x_axis       = new QButtonGroup( this );
+           bg_y_axis       = new QButtonGroup( this );
+   QGridLayout* gl_x_s     = us_radiobutton( tr( "s"    ), rb_x_s,    true  );
+   QGridLayout* gl_x_ff0   = us_radiobutton( tr( "f/f0" ), rb_x_ff0,  false );
+   QGridLayout* gl_x_mw    = us_radiobutton( tr( "mw"   ), rb_x_mw,   false );
+   QGridLayout* gl_x_vbar  = us_radiobutton( tr( "vbar" ), rb_x_vbar, false );
+   QGridLayout* gl_x_D     = us_radiobutton( tr( "D"    ), rb_x_D,    false );
+   QGridLayout* gl_y_s     = us_radiobutton( tr( "s"    ), rb_y_s,    false );
+   QGridLayout* gl_y_ff0   = us_radiobutton( tr( "f/f0" ), rb_y_ff0,  true  );
+   QGridLayout* gl_y_mw    = us_radiobutton( tr( "mw"   ), rb_y_mw,   false );
+   QGridLayout* gl_y_vbar  = us_radiobutton( tr( "vbar" ), rb_y_vbar, false );
+   QGridLayout* gl_y_D     = us_radiobutton( tr( "D"    ), rb_y_D,    false );
+   le_z_func    = us_lineedit( "0.0", -1, false );
+   bg_x_axis->addButton( rb_x_s,    ATTR_S );
+   bg_x_axis->addButton( rb_x_ff0,  ATTR_K );
+   bg_x_axis->addButton( rb_x_mw,   ATTR_W );
+   bg_x_axis->addButton( rb_x_vbar, ATTR_V );
+   bg_x_axis->addButton( rb_x_D,    ATTR_D );
+   bg_y_axis->addButton( rb_y_s,    ATTR_S );
+   bg_y_axis->addButton( rb_y_ff0,  ATTR_K );
+   bg_y_axis->addButton( rb_y_mw,   ATTR_W );
+   bg_y_axis->addButton( rb_y_vbar, ATTR_V );
+   bg_y_axis->addButton( rb_y_D,    ATTR_D );
+   rb_x_s   ->setChecked( true  );
+   rb_y_ff0 ->setChecked( true  );
+   rb_y_s   ->setEnabled( false );
 
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
 
@@ -117,10 +149,10 @@ DbgLv(1) << "AnaC: edata scans" << edata->scanData.size();
    int nthr     = US_Settings::threads();
    nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
 DbgLv(1) << "idealThrCout" << nthr;
-   ct_lolimits  = us_counter( 3, -10000, 10000,    1 );
-   ct_uplimits  = us_counter( 3, -10000, 10000,   10 );
-   ct_lolimitk  = us_counter( 3,      1,     8,    1 );
-   ct_uplimitk  = us_counter( 3,      1,   100,    5 );
+   ct_lolimitx  = us_counter( 2, -10000, 10000,    1 );
+   ct_uplimitx  = us_counter( 3, -10000, 10000,   10 );
+   ct_lolimity  = us_counter( 2,      1,     8,    1 );
+   ct_uplimity  = us_counter( 3,      1,   100,    5 );
    ct_varcount  = us_counter( 2,      3,   200,    6 );
    ct_gfiters   = us_counter( 2,      1,    20,    3 );
    ct_gfthresh  = us_counter( 3,  1.e-6, 1.e-2, 1e-4 );
@@ -128,10 +160,10 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_cresolu   = us_counter( 2,     20,   501,  100 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_tralpha   = us_counter( 3,      0,   100,    0 );
-   ct_lolimits->setStep(  0.1 );
-   ct_uplimits->setStep(  0.1 );
-   ct_lolimitk->setStep( 0.01 );
-   ct_uplimitk->setStep( 0.01 );
+   ct_lolimitx->setStep(  0.1 );
+   ct_uplimitx->setStep(  0.1 );
+   ct_lolimity->setStep( 0.01 );
+   ct_uplimity->setStep( 0.01 );
    ct_varcount->setStep(    1 );
    ct_gfiters ->setStep(    1 );
    ct_gfthresh->setStep( 1.e-6 );
@@ -145,6 +177,11 @@ DbgLv(1) << "idealThrCout" << nthr;
    cb_curvtype->addItem( "Decreasing Sigmoid" );
    cb_curvtype->addItem( "Horizontal Line [ C(s) ]" );
    cb_curvtype->setCurrentIndex( 1 );
+   cb_z_type   = us_comboBox();
+   cb_z_type  ->addItem( "vbar" );
+   cb_z_type  ->addItem( "f/f0" );
+   cb_z_type  ->addItem( "mw"   );
+   cb_z_type  ->setCurrentIndex( 0 );
 
    le_minvari   = us_lineedit( "0.000e-05", -1, true );
    le_minrmsd   = us_lineedit( "0.009000" , -1, true );
@@ -152,49 +189,63 @@ DbgLv(1) << "idealThrCout" << nthr;
    b_progress   = us_progressBar( 0, 100, 0 );
 
    int row       = 0;
-   controlsLayout->addWidget( lb_fitting,    row++, 0, 1, 4 );
+   controlsLayout->addWidget( lb_fitting,    row++, 0, 1, 6 );
    controlsLayout->addWidget( lb_curvtype,   row,   0, 1, 2 );
-   controlsLayout->addWidget( cb_curvtype,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_lolimits,   row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_lolimits,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_uplimits,   row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_uplimits,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_lolimitk,   row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_lolimitk,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_uplimitk,   row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_uplimitk,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_varcount,   row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_varcount,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_gfiters,    row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_gfiters,    row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_gfthresh,   row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_gfthresh,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_cresolu,    row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_cresolu,    row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_lmmxcall,   row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_lmmxcall,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_tralpha,    row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_tralpha,    row++, 2, 1, 2 );
-   controlsLayout->addWidget( lb_thrdcnt,    row,   0, 1, 2 );
-   controlsLayout->addWidget( ct_thrdcnt,    row++, 2, 1, 2 );
-   controlsLayout->addLayout( lo_lmalpha,    row,   0, 1, 2 );
-   controlsLayout->addWidget( pb_startfit,   row++, 2, 1, 2 );
-   controlsLayout->addLayout( lo_fxalpha,    row,   0, 1, 2 );
-   controlsLayout->addWidget( pb_stopfit,    row++, 2, 1, 2 );
-   controlsLayout->addLayout( lo_tinois,     row,   0, 1, 2 );
-   controlsLayout->addWidget( pb_scanregp,   row++, 2, 1, 2 );
-   controlsLayout->addLayout( lo_rinois,     row,   0, 1, 2 );
-   controlsLayout->addWidget( pb_finalmdl,   row++, 2, 1, 2 );
-   controlsLayout->addWidget( pb_plot,       row,   0, 1, 2 );
-   controlsLayout->addWidget( pb_save,       row++, 2, 1, 2 );
-   controlsLayout->addWidget( pb_advanaly,   row++, 0, 1, 4 );
+   controlsLayout->addWidget( cb_curvtype,   row++, 2, 1, 4 );
+   controlsLayout->addWidget( lb_x_type,     row,   0, 1, 1 );
+   controlsLayout->addLayout( gl_x_s,        row,   1, 1, 1 );
+   controlsLayout->addLayout( gl_x_ff0,      row,   2, 1, 1 );
+   controlsLayout->addLayout( gl_x_mw,       row,   3, 1, 1 );
+   controlsLayout->addLayout( gl_x_vbar,     row,   4, 1, 1 );
+   controlsLayout->addLayout( gl_x_D,        row++, 5, 1, 1 );
+   controlsLayout->addWidget( lb_y_type,     row,   0, 1, 1 );
+   controlsLayout->addLayout( gl_y_s,        row,   1, 1, 1 );
+   controlsLayout->addLayout( gl_y_ff0,      row,   2, 1, 1 );
+   controlsLayout->addLayout( gl_y_mw,       row,   3, 1, 1 );
+   controlsLayout->addLayout( gl_y_vbar,     row,   4, 1, 1 );
+   controlsLayout->addLayout( gl_y_D,        row++, 5, 1, 1 );
+   controlsLayout->addWidget( lb_z_type,     row,   0, 1, 1 );
+   controlsLayout->addWidget( cb_z_type,     row,   1, 1, 1 );
+   controlsLayout->addWidget( lb_z_value,    row,   2, 1, 2 );
+   controlsLayout->addWidget( le_z_func,     row++, 4, 1, 2 );
+   controlsLayout->addWidget( lb_range_x,    row,   0, 1, 1 );
+   controlsLayout->addWidget( ct_lolimitx,   row,   1, 1, 2 );
+   controlsLayout->addWidget( ct_uplimitx,   row++, 3, 1, 3 );
+   controlsLayout->addWidget( lb_range_y,    row,   0, 1, 1 );
+   controlsLayout->addWidget( ct_lolimity,   row,   1, 1, 2 );
+   controlsLayout->addWidget( ct_uplimity,   row++, 3, 1, 3 );
+   controlsLayout->addWidget( lb_varcount,   row,   0, 1, 3 );
+   controlsLayout->addWidget( ct_varcount,   row++, 3, 1, 3 );
+   controlsLayout->addWidget( lb_gfiters,    row,   0, 1, 3 );
+   controlsLayout->addWidget( ct_gfiters,    row++, 3, 1, 3 );
+   controlsLayout->addWidget( lb_gfthresh,   row,   0, 1, 3 );
+   controlsLayout->addWidget( ct_gfthresh,   row++, 3, 1, 3 );
+   controlsLayout->addWidget( lb_cresolu,    row,   0, 1, 3 );
+   controlsLayout->addWidget( ct_cresolu,    row++, 3, 1, 3 );
+   controlsLayout->addWidget( lb_lmmxcall,   row,   0, 1, 3 );
+   controlsLayout->addWidget( ct_lmmxcall,   row++, 3, 1, 3 );
+   controlsLayout->addWidget( lb_tralpha,    row,   0, 1, 3 );
+   controlsLayout->addWidget( ct_tralpha,    row++, 3, 1, 3 );
+   controlsLayout->addWidget( lb_thrdcnt,    row,   0, 1, 3 );
+   controlsLayout->addWidget( ct_thrdcnt,    row++, 3, 1, 3 );
+   controlsLayout->addLayout( lo_lmalpha,    row,   0, 1, 3 );
+   controlsLayout->addWidget( pb_startfit,   row++, 3, 1, 3 );
+   controlsLayout->addLayout( lo_fxalpha,    row,   0, 1, 3 );
+   controlsLayout->addWidget( pb_stopfit,    row++, 3, 1, 3 );
+   controlsLayout->addLayout( lo_tinois,     row,   0, 1, 3 );
+   controlsLayout->addWidget( pb_scanregp,   row++, 3, 1, 3 );
+   controlsLayout->addLayout( lo_rinois,     row,   0, 1, 3 );
+   controlsLayout->addWidget( pb_finalmdl,   row++, 3, 1, 3 );
+   controlsLayout->addWidget( pb_plot,       row,   0, 1, 3 );
+   controlsLayout->addWidget( pb_save,       row++, 3, 1, 3 );
+   controlsLayout->addWidget( pb_advanaly,   row++, 0, 1, 6 );
    controlsLayout->addWidget( pb_pltlines,   row,   0, 1, 2 );
-   controlsLayout->addWidget( pb_help,       row,   2, 1, 1 );
-   controlsLayout->addWidget( pb_close,      row++, 3, 1, 1 );
+   controlsLayout->addWidget( pb_help,       row,   2, 1, 2 );
+   controlsLayout->addWidget( pb_close,      row++, 4, 1, 2 );
    controlsLayout->addWidget( lb_status,     row,   0, 1, 1 );
-   controlsLayout->addWidget( b_progress,    row++, 1, 1, 3 );
+   controlsLayout->addWidget( b_progress,    row++, 1, 1, 5 );
    QLabel* lb_optspace1    = us_banner( "" );
-   controlsLayout->addWidget( lb_optspace1,  row,   0, 1, 4 );
+   controlsLayout->addWidget( lb_optspace1,  row,   0, 1, 6 );
    controlsLayout->setRowStretch( row, 2 );
 
    row           = 0;
@@ -208,27 +259,19 @@ DbgLv(1) << "idealThrCout" << nthr;
    te_status ->setMinimumWidth( lb_minrmsd->width()*4 );
    row    += 8;
 
+   edata         = &dsets[ 0 ]->run_data;
+   double vbar   = dsets[ 0 ]->vbar20;
+   le_z_func->setText( QString::number( vbar ) );
+
    QLabel* lb_optspace     = us_banner( "" );
    optimizeLayout->addWidget( lb_optspace,   row,   0, 1, 4 );
 
    optimize_options();
 
-   connect( cb_curvtype, SIGNAL( activated   ( int )    ),
-            this,        SLOT(   type_change()          ) );
-   connect( ct_lolimits, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   slim_change()          ) );
-   connect( ct_uplimits, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   slim_change()          ) );
-   connect( ct_lolimitk, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   klim_change()          ) );
-   connect( ct_uplimitk, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   klim_change()          ) );
-   connect( ct_varcount, SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   compute()              ) );
-   connect( ct_cresolu,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   reso_change()          ) );
+   fitpars_connect( true );
+
    connect( ct_tralpha,  SIGNAL( valueChanged( double ) ),
-            this,        SLOT(   set_alpha()            ) );
+            this,        SLOT(   set_alpha   ()         ) );
 
    connect( pb_pltlines, SIGNAL( clicked()    ),
             this,        SLOT(   plot_lines() ) );
@@ -251,30 +294,28 @@ DbgLv(1) << "idealThrCout" << nthr;
    connect( pb_close,    SIGNAL( clicked()    ),
             this,        SLOT(   close_all()  ) );
 
-   edata          = &dsets[ 0 ]->run_data;
-
    pb_pltlines->setEnabled( false );
    compute();
 
 //DbgLv(1) << "Pre-resize AC size" << size();
    int  fwidth   = fmet.maxWidth();
-   int  rheight  = ct_lolimits->height();
+   int  rheight  = ct_lolimitx->height();
    int  cminw    = fwidth * 7;
    int  csizw    = cminw + fwidth;
-   ct_lolimits->setMinimumWidth( cminw );
-   ct_uplimits->setMinimumWidth( cminw );
-   ct_lolimitk->setMinimumWidth( cminw );
-   ct_uplimitk->setMinimumWidth( cminw );
+   ct_lolimitx->setMinimumWidth( cminw );
+   ct_uplimitx->setMinimumWidth( cminw );
+   ct_lolimity->setMinimumWidth( cminw );
+   ct_uplimity->setMinimumWidth( cminw );
    ct_varcount->setMinimumWidth( cminw );
    ct_gfiters ->setMinimumWidth( cminw );
    ct_gfthresh->setMinimumWidth( cminw );
    ct_lmmxcall->setMinimumWidth( cminw );
    ct_cresolu ->setMinimumWidth( cminw );
    ct_thrdcnt ->setMinimumWidth( cminw );
-   ct_lolimits->resize( csizw, rheight );
-   ct_uplimits->resize( csizw, rheight );
-   ct_lolimitk->resize( csizw, rheight );
-   ct_uplimitk->resize( csizw, rheight );
+   ct_lolimitx->resize( csizw, rheight );
+   ct_uplimitx->resize( csizw, rheight );
+   ct_lolimity->resize( csizw, rheight );
+   ct_uplimity->resize( csizw, rheight );
    ct_varcount->resize( csizw, rheight );
    ct_gfiters ->resize( csizw, rheight );
    ct_gfthresh->resize( csizw, rheight );
@@ -311,8 +352,8 @@ void US_AnalysisControlPc::start()
    mainw->analysis_done( -1 );        // Reset counters to zero
 
    // Make sure that ranges are reasonable
-   if ( ( ct_uplimits->value() - ct_lolimits->value() ) < 0.0  ||
-        ( ct_uplimitk->value() - ct_lolimitk->value() ) < 0.0 )
+   if ( ( ct_uplimitx->value() - ct_lolimitx->value() ) < 0.0  ||
+        ( ct_uplimity->value() - ct_lolimity->value() ) < 0.0 )
    {
       QString msg = 
          tr( "The \"s\" or \"f/f0\" ranges are inconsistent.\n"
@@ -328,10 +369,14 @@ void US_AnalysisControlPc::start()
    {
       need_fit    = true;
       need_final  = true;
-      int attr_x  = 0;
-      int attr_y  = 1;
-      int attr_z  = 3;
-      dsets[ 0 ]->solute_type = ( attr_x << 6 ) | ( attr_y << 3 ) | attr_z;
+      dsets[ 0 ]->solute_type  = sol_type;
+      dsets[ 0 ]->zcoeffs[ 0 ] = le_z_func->text().section( " ", 0, 0 )
+                                                  .toDouble();
+      dsets[ 0 ]->zcoeffs[ 1 ] = 0.0;
+      dsets[ 0 ]->zcoeffs[ 2 ] = 0.0;
+      dsets[ 0 ]->zcoeffs[ 3 ] = 0.0;
+DbgLv(1) << "AnaC: (A)zcoeff0" << dsets[0]->zcoeffs[0];
+
       processor   = new US_pcsaProcess( dsets, this );
    }
 
@@ -356,10 +401,12 @@ void US_AnalysisControlPc::start()
       return;
 
    // Check implied grid size does not exceed limits
-   double       s_max  = ct_uplimits->value() * 1.0e-13;
-   QString      smsg;
+   set_solute_type();
+   QString smsg;
+   double s_max  = ct_uplimitx->value() * 1.0e-13;
 
-   if ( US_SolveSim::checkGridSize( dsets, s_max, smsg ) )
+   if ( attr_x == US_ZSolute::ATTR_S  &&
+        US_SolveSim::checkGridSize( dsets, s_max, smsg ) )
    {
       QMessageBox::critical( this,
          tr( "Implied Grid Size is Too Large!" ), smsg );
@@ -373,10 +420,10 @@ void US_AnalysisControlPc::start()
    le_minrmsd  ->setText( "0.0000" );
 
    int    typ    = ctypes[ cb_curvtype->currentIndex() ];
-   double slo    = ct_lolimits->value();
-   double sup    = ct_uplimits->value();
-   double klo    = ct_lolimitk->value();
-   double kup    = ct_uplimitk->value();
+   double slo    = ct_lolimitx->value();
+   double sup    = ct_uplimitx->value();
+   double klo    = ct_lolimity->value();
+   double kup    = ct_uplimity->value();
    int    nthr   = (int)ct_thrdcnt ->value();
    int    nvar   = (int)ct_varcount->value();
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
@@ -580,9 +627,18 @@ DbgLv(1) << "AC:adv:(4)rmsd" << mrecs[0].rmsd;
 
          if ( processor == 0 )
          {
+
             processor   = new US_pcsaProcess( dsets, this );
          }
 
+         dsets[ 0 ]->solute_type  = sol_type;
+         dsets[ 0 ]->zcoeffs[ 0 ] = le_z_func->text().section( " ", 0, 0 )
+                                                     .toDouble();
+         dsets[ 0 ]->zcoeffs[ 1 ] = 0.0;
+         dsets[ 0 ]->zcoeffs[ 2 ] = 0.0;
+         dsets[ 0 ]->zcoeffs[ 3 ] = 0.0;
+
+DbgLv(1) << "AC: (B)stype" << sol_type << "zcoeff0" << dsets[0]->zcoeffs[0];
 DbgLv(1) << "AC:advanced: put_mrecs";
 DbgLv(1) << "AC:adv:putm: rmsd" << mrecs[0].rmsd;
          processor->put_mrecs( mrecs );
@@ -606,6 +662,11 @@ DbgLv(1) << "AC:advanced: get_results";
          xmax          = mrecs[ strec ].xmax;
          ymin          = mrecs[ strec ].ymin;
          ymax          = mrecs[ strec ].ymax;
+         int stype     = mrecs[ 0 ].stype;
+         int attr_x    = ( stype >> 6 ) & 7;
+         int attr_y    = ( stype >> 3 ) & 7;
+         double xscl   = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e+13 : 1.0;
+         double yscl   = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e+13 : 1.0;
 
          for ( int ii = strec; ii < nmrecs; ii++ )
          {
@@ -616,8 +677,8 @@ DbgLv(1) << "AC:advanced: get_results";
 
             for ( int jj = 0; jj < nlpts; jj++ )
             {
-               double xval   = (*isolutes)[ jj ].x * 1.e13;
-               double yval   = (*isolutes)[ jj ].y;
+               double xval   = (*isolutes)[ jj ].x * xscl;
+               double yval   = (*isolutes)[ jj ].y * yscl;
                xmin          = qMin( xmin, xval );
                xmax          = qMax( xmax, xval );
                ymin          = qMin( ymin, yval );
@@ -628,10 +689,10 @@ DbgLv(1) << "AC:advanced: get_results";
          fitpars_connect( false );
 
          cb_curvtype->setCurrentIndex( ctypes.indexOf( ctype ) );
-         ct_lolimits->setValue( xmin  );
-         ct_uplimits->setValue( xmax  );
-         ct_lolimitk->setValue( ymin  );
-         ct_uplimitk->setValue( ymax  );
+         ct_lolimitx->setValue( xmin  );
+         ct_uplimitx->setValue( xmax  );
+         ct_lolimity->setValue( ymin  );
+         ct_uplimity->setValue( ymax  );
          ct_varcount->setValue( nypts );
          ct_cresolu ->setValue( nlpts );
 
@@ -678,15 +739,15 @@ void US_AnalysisControlPc::close()
    close_all();
 }
 
-// Adjust s-limit ranges when s-limit value changes
-void US_AnalysisControlPc::slim_change()
+// Adjust s-limit ranges when x-limit value changes
+void US_AnalysisControlPc::xlim_change()
 {
-   double loval  = ct_lolimits->value();
-   double upval  = ct_uplimits->value();
+   double loval  = ct_lolimitx->value();
+   double upval  = ct_uplimitx->value();
    double limlo  = -1.e6;
    double limup  = 1.e6;
    if ( loval > upval )   // Insure lower value less than upper
-      ct_lolimits->setValue( upval );
+      ct_lolimitx->setValue( upval );
 
    if ( loval < -1.e5  ||  upval > 1.e5 )
    {  // For larger magnitudes, adjust ranges
@@ -710,14 +771,14 @@ void US_AnalysisControlPc::slim_change()
       }
    }
 
-   ct_lolimits->setRange( limlo, upval );
-   ct_uplimits->setRange( loval, limup );
-   ct_lolimits->setStep( 0.1 );
-   ct_uplimits->setStep( 0.1 );
+   ct_lolimitx->setRange( limlo, upval );
+   ct_uplimitx->setRange( loval, limup );
+   ct_lolimitx->setStep( 0.1 );
+   ct_uplimitx->setStep( 0.1 );
 }
 
-// Set k-upper-limit to lower when k grid points == 1
-void US_AnalysisControlPc::klim_change()
+// Set k-upper-limit to lower when y grid points == 1
+void US_AnalysisControlPc::ylim_change()
 {
    compute();
 }
@@ -742,8 +803,6 @@ DbgLv(1) << "TYPE_CHANGE: ctypex" << ctypex << "ctype" << ctype;
       ct_varcount->setValue( 100 );
    else
       ct_varcount->setValue( 6 );
-
-   compute();
 }
 
 // Set regularization factor alpha
@@ -908,19 +967,25 @@ DbgLv(1) << "(1)pb_plot-Enabled" << pb_plot->isEnabled();
 // slot to compute model lines
 void US_AnalysisControlPc::compute()
 {
-   double parlims[ 4 ];
+   double parlims[ 9 ];
+
+   set_solute_type();
 
    ctypex  = cb_curvtype->currentIndex();
    ctype   = ctypes[ ctypex ];
-   xmin    = ct_lolimits->value();
-   xmax    = ct_uplimits->value();
-   ymin    = ct_lolimitk->value();
-   ymax    = ct_uplimitk->value();
+   xmin    = ct_lolimitx->value();
+   xmax    = ct_uplimitx->value();
+   ymin    = ct_lolimity->value();
+   ymax    = ct_uplimity->value();
    nypts   = (int)ct_varcount->value();
    nlpts   = (int)ct_cresolu ->value();
    mrecs.clear();
    parlims[ 0 ]   = -1.0;
+   parlims[ 4 ]   = sol_type;
+   parlims[ 5 ]   = le_z_func->text().section( " ", 0, 0 ).toDouble();
    int    nlmodl  = nypts * nypts;
+DbgLv(1) << "AC:CM: ctype" << ctype << "stype" << sol_type
+ << US_ModelRecord::stype_text(sol_type);
 
    if ( ctype == CTYPE_SL )
    {
@@ -939,6 +1004,9 @@ void US_AnalysisControlPc::compute()
       US_ModelRecord::compute_hlines( xmin, xmax, ymin, ymax, nypts, nlpts,
             parlims, mrecs );
    }
+DbgLv(1) << "AC:CM: mrecs0.sol0 x y z c"
+ << mrecs[0].isolutes[0].x << mrecs[0].isolutes[0].y
+ << mrecs[0].isolutes[0].z << mrecs[0].isolutes[0].c;
 
    QString amsg   =
       tr( "The number of test models is %1,\n" ).arg( nlmodl );
@@ -953,7 +1021,7 @@ void US_AnalysisControlPc::compute()
 
    bmndx          = -1;
    need_fit       = ( fitpars != fitpars_string() );
-DbgLv(1) << "CM: need_fit" << need_fit;
+DbgLv(1) << "AC:CM: need_fit" << need_fit;
    pb_pltlines->setEnabled( true );
    pb_scanregp->setEnabled( !need_fit );
    pb_finalmdl->setEnabled( !need_fit );
@@ -962,17 +1030,18 @@ DbgLv(1) << "CM: need_fit" << need_fit;
 // slot to launch a plot dialog showing model lines
 void US_AnalysisControlPc::plot_lines()
 {
-   ctypex  = cb_curvtype->currentIndex();
-   ctype   = ctypes[ ctypex ];
-   xmin    = ct_lolimits->value();
-   xmax    = ct_uplimits->value();
-   ymin    = ct_lolimitk->value();
-   ymax    = ct_uplimitk->value();
-   nlpts   = (int)ct_cresolu ->value();
-   nypts   = (int)ct_varcount->value();
+   ctypex   = cb_curvtype->currentIndex();
+   ctype    = ( mrecs[ 0 ].v_ctype == CTYPE_ALL )
+              ? CTYPE_ALL : ctypes[ ctypex ];
+   xmin     = ct_lolimitx->value();
+   xmax     = ct_uplimitx->value();
+   ymin     = ct_lolimity->value();
+   ymax     = ct_uplimity->value();
+   nlpts    = (int)ct_cresolu ->value();
+   nypts    = (int)ct_varcount->value();
+   sol_type = ( attr_x << 6 ) + ( attr_y << 3 ) + attr_z;
 
-   if ( mrecs[ 0 ].v_ctype == CTYPE_ALL )
-      ctype   = CTYPE_ALL;
+   mrecs[ 0 ].stype  = sol_type;
 
 DbgLv(1) << "PL: mlnplotd" << mlnplotd;
    if ( mlnplotd != 0 )
@@ -985,7 +1054,7 @@ DbgLv(1) << "PL:  mlnplotd closed";
    connect( mlnplotd, SIGNAL( destroyed( QObject* ) ),
             this,     SLOT  ( closed   ( QObject* ) ) );
 
-DbgLv(1) << "PL:  new mlnplotd" << mlnplotd;
+DbgLv(1) << "PL:  new mlnplotd" << mlnplotd << "sol_type" << sol_type;
 
    if ( bmndx >= 0 )
    {
@@ -1092,10 +1161,10 @@ DbgLv(1) << "AC:fo: klp nlp" << klpts << nlpts;
 QString US_AnalysisControlPc::fitpars_string()
 {
    int    typ    = cb_curvtype->currentIndex();
-   double slo    = ct_lolimits->value();
-   double sup    = ct_uplimits->value();
-   double klo    = ct_lolimitk->value();
-   double kup    = ct_uplimitk->value();
+   double slo    = ct_lolimitx->value();
+   double sup    = ct_uplimitx->value();
+   double klo    = ct_lolimity->value();
+   double kup    = ct_uplimity->value();
    int    nvar   = (int)ct_varcount->value();
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
@@ -1110,29 +1179,38 @@ void US_AnalysisControlPc::fitpars_connect( bool reconn )
 {
    if ( reconn )
    {  // Reconnect controls
-      connect( cb_curvtype, SIGNAL( activated  ( int )    ),
-               this,         SLOT(   compute()             ) );
-      connect( ct_lolimits, SIGNAL( valueChanged( double ) ),
-               this,        SLOT(   slim_change()          ) );
-      connect( ct_uplimits, SIGNAL( valueChanged( double ) ),
-               this,        SLOT(   slim_change()          ) );
-      connect( ct_lolimitk, SIGNAL( valueChanged( double ) ),
-               this,        SLOT(   klim_change()          ) );
-      connect( ct_uplimitk, SIGNAL( valueChanged( double ) ),
-               this,        SLOT(   klim_change()          ) );
-      connect( ct_varcount, SIGNAL( valueChanged( double ) ),
-               this,        SLOT(   compute()              ) );
-      connect( ct_cresolu,  SIGNAL( valueChanged( double ) ),
-               this,        SLOT(   reso_change()          ) );
+      connect( bg_x_axis,   SIGNAL( buttonReleased( int )    ),
+               this,        SLOT(   select_x_axis ( int )    ) );
+      connect( bg_y_axis,   SIGNAL( buttonReleased( int )    ),
+               this,        SLOT(   select_y_axis ( int )    ) );
+      connect( cb_curvtype, SIGNAL( activated     ( int )    ),
+               this,        SLOT(   type_change()            ) );
+      connect( ct_lolimitx, SIGNAL( valueChanged  ( double ) ),
+               this,        SLOT(   xlim_change()            ) );
+      connect( ct_uplimitx, SIGNAL( valueChanged  ( double ) ),
+               this,        SLOT(   xlim_change()            ) );
+      connect( ct_lolimity, SIGNAL( valueChanged  ( double ) ),
+               this,        SLOT(   ylim_change()            ) );
+      connect( ct_uplimity, SIGNAL( valueChanged  ( double ) ),
+               this,        SLOT(   ylim_change()            ) );
+      connect( cb_z_type,   SIGNAL( activated     ( int )    ),
+               this,        SLOT(   ztype_change  ( int )    ) );
+      connect( ct_varcount, SIGNAL( valueChanged  ( double ) ),
+               this,        SLOT(   compute()                ) );
+      connect( ct_cresolu,  SIGNAL( valueChanged  ( double ) ),
+               this,        SLOT(   reso_change()            ) );
    }
 
    else
    {  // Disconnect controls
+      bg_x_axis  ->disconnect();
+      bg_y_axis  ->disconnect();
       cb_curvtype->disconnect();
-      ct_lolimits->disconnect();
-      ct_uplimits->disconnect();
-      ct_lolimitk->disconnect();
-      ct_uplimitk->disconnect();
+      ct_lolimitx->disconnect();
+      ct_uplimitx->disconnect();
+      ct_lolimity->disconnect();
+      ct_uplimity->disconnect();
+      cb_z_type  ->disconnect();
       ct_varcount->disconnect();
       ct_cresolu ->disconnect();
    }
@@ -1150,10 +1228,10 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
  << "sn x,y" << mrec.isolutes[nn].x << mrec.isolutes[nn].y;
    mrec.isolutes.clear();
    US_ZSolute isol;
-   xmin          = ct_lolimits->value();
-   xmax          = ct_uplimits->value();
-   ymin          = ct_lolimitk->value();
-   ymax          = ct_uplimitk->value();
+   xmin          = ct_lolimitx->value();
+   xmax          = ct_uplimitx->value();
+   ymin          = ct_lolimity->value();
+   ymax          = ct_uplimity->value();
    nlpts         = (int)ct_cresolu ->value();
    ctypex        = cb_curvtype->currentIndex();
    ctype         = ctypes[ ctypex ];
@@ -1168,6 +1246,11 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
    double par2   = mrec.par2;
    double prng   = (double)( nlpts - 1 );
    double xrng   = xmax - xmin;
+   int stype     = mrec.stype;
+   int attr_x    = ( stype >> 6 ) & 7;
+   int attr_y    = ( stype >> 3 ) & 7;
+   double xscl   = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
+   double yscl   = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
 
    if ( ctype == CTYPE_SL )
    {
@@ -1178,8 +1261,8 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
 
       for ( int kk = 0; kk < nlpts; kk++ )
       { // Loop over points on a line
-         isol.x      = xval * 1.e-13;
-         isol.y      = yval;
+         isol.x      = xval * xscl;
+         isol.y      = yval * yscl;
          mrec.isolutes << isol;
          xval       += xinc;
          yval       += yinc;
@@ -1201,8 +1284,8 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
          double xval  = xmin + xoff * xrng;
          double efac  = 0.5 * erf( ( xoff - par2 ) / p1rt ) + 0.5;
          double yval  = ystr + ydif * efac;
-         isol.x       = xval * 1.e-13;
-         isol.y       = yval;
+         isol.x       = xval * xscl;
+         isol.y       = yval * yscl;
          mrec.isolutes << isol;
          xoff        += xoinc;
       } // END: points-on-curve loop
@@ -1216,10 +1299,10 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
 
       for ( int kk = 0; kk < nlpts; kk++ )
       { // Loop over points on a line
-         isol.x      = xval * 1.e-13;
-         isol.y      = yval;
+         isol.x        = xval * xscl;
+         isol.y        = yval * yscl;
          mrec.isolutes << isol;
-         xval       += xinc;
+         xval         += xinc;
       } // END: points-per-line loop
    }
 
@@ -1307,5 +1390,184 @@ DbgLv(1) << "MEMck: memtot,ava,use,safe,need" << memtot << memava << memuse
    }
 
    return status;
+}
+
+// Select the coordinate for the horizontal axis
+void US_AnalysisControlPc::select_x_axis( int ival )
+{
+qDebug() << "SelX: ival" << ival;
+   attr_x         = ival;
+   fitpars_connect( false );
+qDebug() << "SelX:  attr_x attr_y" << attr_x << attr_y;
+
+   if ( attr_x == attr_y )
+   {  // If new X same as current Y, change Y
+      attr_y         = ( attr_y < ATTR_D ) ? ( attr_y + 1 ) : ATTR_S;
+qDebug() << "SelX:  NEW attr_y" << attr_y;
+
+      if ( attr_y == ATTR_S )
+         rb_y_s   ->setChecked( true );
+      else if ( attr_y == ATTR_K )
+         rb_y_ff0 ->setChecked( true );
+      else if ( attr_y == ATTR_W )
+         rb_y_mw  ->setChecked( true );
+      else if ( attr_y == ATTR_V )
+         rb_y_vbar->setChecked( true );
+      else if ( attr_y == ATTR_D )
+         rb_y_D   ->setChecked( true );
+
+      adjust_xyz( 2 );
+   }
+
+   // Disable the Y that matches X
+   rb_y_s   ->setEnabled( attr_x != ATTR_S );
+   rb_y_ff0 ->setEnabled( attr_x != ATTR_K );
+   rb_y_mw  ->setEnabled( attr_x != ATTR_W );
+   rb_y_vbar->setEnabled( attr_x != ATTR_V );
+   rb_y_D   ->setEnabled( attr_x != ATTR_D );
+
+   // Change Z selection if it duplicates X or Y
+   if ( attr_z == attr_x  ||  attr_z == attr_y )
+   {
+      if ( attr_x != ATTR_V  &&  attr_y != ATTR_V )
+      {
+         cb_z_type  ->setCurrentIndex( 0 );
+         attr_z         = ATTR_V;
+      }
+      else if ( attr_x != ATTR_K  &&  attr_y != ATTR_K )
+      {
+         cb_z_type  ->setCurrentIndex( 1 );
+         attr_z         = ATTR_K;
+      }
+      else if ( attr_x != ATTR_W  &&  attr_y != ATTR_W )
+      {
+         cb_z_type  ->setCurrentIndex( 2 );
+         attr_z         = ATTR_W;
+      }
+
+      adjust_xyz( 0 );
+   }
+
+   // Adjust XYZ ranges and values
+   adjust_xyz( 1 );
+   fitpars_connect( true  );
+}
+
+// Select the coordinate for the vertical axis
+void US_AnalysisControlPc::select_y_axis( int ival )
+{
+qDebug() << "SelY: ival" << ival;
+   attr_y         = ival;
+   fitpars_connect( false );
+
+   // Change Z selection if it duplicates X or Y
+   if ( attr_z == attr_x  ||  attr_z == attr_y )
+   {
+      if ( attr_x != ATTR_V  &&  attr_y != ATTR_V )
+      {
+         cb_z_type  ->setCurrentIndex( 0 );
+         attr_z         = ATTR_V;
+      }
+      else if ( attr_x != ATTR_K  &&  attr_y != ATTR_K )
+      {
+         cb_z_type  ->setCurrentIndex( 1 );
+         attr_z         = ATTR_K;
+      }
+      else if ( attr_x != ATTR_W  &&  attr_y != ATTR_W )
+      {
+         cb_z_type  ->setCurrentIndex( 2 );
+         attr_z         = ATTR_W;
+      }
+
+      adjust_xyz( 0 );
+   }
+
+   // Adjust XYZ ranges and values
+   adjust_xyz( 2 );
+   fitpars_connect( true  );
+}
+
+// Set Z type
+void US_AnalysisControlPc::ztype_change( int newx )
+{
+   attr_z         = ATTR_V;
+   attr_z         = ( newx == 1 ) ? ATTR_K : attr_z;
+   attr_z         = ( newx == 2 ) ? ATTR_W : attr_z;
+
+   fitpars_connect( false );
+   adjust_xyz( 0 );
+   fitpars_connect( true  );
+}
+
+// Adjust X,Y,Z ranges and default values based on type
+void US_AnalysisControlPc::adjust_xyz( const int chg_ndx )
+{
+   //               Types:        "s", "f/f0",  "MW", "vbar", "D"
+   const double  vllos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8 };
+   const double  vlhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7 };
+   const double  vdefs[] = {      5.0,   1.5,   5e+4,  0.72, 5e-8 };
+   const double  vmins[] = { -10000.0,   1.0,    0.0,  0.01, 1e-9 };
+   const double  vmaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 1e-5 };
+   const double  vincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9 };
+
+   // Get X,Y,Z ranges and values
+   double xlow    = vllos[ attr_x ];
+   double xhigh   = vlhis[ attr_x ];
+   double xmin    = vmins[ attr_x ];
+   double xmax    = vmaxs[ attr_x ];
+   double xinc    = vincs[ attr_x ];
+   double ylow    = vllos[ attr_y ];
+   double yhigh   = vlhis[ attr_y ];
+   double ymin    = vmins[ attr_y ];
+   double ymax    = vmaxs[ attr_y ];
+   double yinc    = vincs[ attr_y ];
+
+   // Set ranges and values in GUI elements
+   ct_lolimitx->setRange( xmin, xmax, xinc );
+   ct_uplimitx->setRange( xmin, xmax, xinc );
+   ct_lolimity->setRange( ymin, ymax, yinc );
+   ct_uplimity->setRange( ymin, ymax, yinc );
+
+   if ( chg_ndx == 1 )
+   {  // X has just changed
+      ct_lolimitx->setValue( xlow  );
+      ct_uplimitx->setValue( xhigh );
+   }
+   else if ( chg_ndx == 2 )
+   {  // Y has just changed
+      ct_lolimity->setValue( ylow  );
+      ct_uplimity->setValue( yhigh );
+   }
+   else
+   {  // Z has just changed
+      double zdef    = ( attr_z == US_ZSolute::ATTR_V )
+                       ? dsets[ 0 ]->vbar20 
+                       : vdefs[ attr_z ];
+      le_z_func->setText( QString::number( zdef ) );
+   }
+
+   compute();
+}
+
+// Set attribute indecies and the composite solute type
+void US_AnalysisControlPc::set_solute_type()
+{
+   attr_x         = bg_x_axis->checkedId();
+   attr_y         = bg_y_axis->checkedId();
+   int zt_ndx     = cb_z_type->currentIndex();
+   attr_z         = ATTR_V;
+   attr_z         = ( zt_ndx == 1 ) ? ATTR_K : attr_z;
+   attr_z         = ( zt_ndx == 2 ) ? ATTR_W : attr_z;
+
+   sol_type       = ( attr_x << 6 ) + ( attr_y << 3 ) + attr_z;
+DbgLv(1) << "AC:SST: ztx x,y,z" << zt_ndx << attr_x << attr_y << attr_z
+ << "sol_type" << sol_type << US_ModelRecord::stype_text(sol_type);
+
+   dsets[ 0 ]->solute_type  = sol_type;
+   dsets[ 0 ]->zcoeffs[ 0 ] = le_z_func->text().section( " ", 0, 0 )
+                                               .toDouble();
+   dsets[ 0 ]->zcoeffs[ 1 ] = 0.0;
+   dsets[ 0 ]->zcoeffs[ 2 ] = 0.0;
+   dsets[ 0 ]->zcoeffs[ 3 ] = 0.0;
 }
 

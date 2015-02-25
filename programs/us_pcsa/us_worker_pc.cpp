@@ -68,8 +68,10 @@ DbgLv(1) << phdr << "DefWk: sols size" << solutes_i.size(); }
    dset_wk.model        = workin.dsets[ 0 ]->model;
    dset_wk.simparams    = workin.dsets[ 0 ]->simparams;
    dset_wk.solution_rec = workin.dsets[ 0 ]->solution_rec;
+   dset_wk.solute_type  = workin.dsets[ 0 ]->solute_type;
    dsets.clear();
    dsets << &dset_wk;                        // save its pointer
+DbgLv(1) << phdr << "DefWk:   stype" << dsets[0]->solute_type;
 
    sim_vals             = workin.sim_vals;
    sim_vals.variance    = workin.sim_vals.variance;
@@ -151,7 +153,13 @@ DbgLv(1) << phdr << " A)dsets size" << dsets.size();
       sim_vals.noisflag   = noisflag;
       sim_vals.dbg_level  = dbg_level;
       sim_vals.dbg_timing = US_Settings::debug_match( "pcsaTiming" );
-DbgLv(1) << phdr << " B)sols_i size" << solutes_i.size();
+int ns=solutes_i.size();
+DbgLv(1) << phdr << " B)sols_i size" << ns << "stype" << dsets[0]->solute_type;
+for(int js=0; js<ns; js++) {
+ if (js<4 || (js+5)>ns)
+  DbgLv(1) << phdr << "  soli: js" << js << " sol.x,y,z,c"
+    << solutes_i[js].x << solutes_i[js].y << solutes_i[js].z << solutes_i[js].c;
+}
 
       solvesim->calc_residuals( 0, 1, sim_vals );
 

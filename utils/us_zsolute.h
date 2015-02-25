@@ -61,7 +61,8 @@ class US_UTIL_EXTERN US_ZSolute
       }
 
       //! The types of attributes that map to XYZ
-      enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D };
+      enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D,
+                       ATTR_C=9 };
 
       //! A static function to put a model component attribute value
       //! \param comp   Model component in which to put value
@@ -95,8 +96,10 @@ class US_UTIL_EXTERN US_ZSolute
       //! \param comp   Model component in which to set values
       //! \param solute Solute from which to set values
       //! \param s_type Solute type mask
+      //! \param concv  Flag to copy concentration value, too
       static void set_mcomp_values ( US_Model::SimulationComponent&,
-                                     US_ZSolute&, const int );
+                                     US_ZSolute&, const int,
+                                     const bool = false );
 
       //! A static function to set solute attribute values
       //! \param comp   Model component from which to set values

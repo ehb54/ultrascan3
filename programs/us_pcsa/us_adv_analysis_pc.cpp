@@ -555,11 +555,12 @@ else DbgLv(1) << "store_mrecs - FILE NAME *NOT* EMPTY" << store_file;
    double xmax      = mrecs[ 0 ].xmax;
    double ymin      = mrecs[ 0 ].ymin;
    double ymax      = mrecs[ 0 ].ymax;
+   int stype        = mrecs[ 0 ].stype;
    QXmlStreamWriter xmlo( &fileo );
    QString mrdesc;
 
    US_ModelRecord::write_modelrecs( xmlo, mrecs, mrdesc,
-                                    ctype, xmin, xmax, ymin, ymax );
+                                    ctype, xmin, xmax, ymin, ymax, stype );
    fileo.close();
 
    // Report on saved file

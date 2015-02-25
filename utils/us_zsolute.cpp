@@ -33,6 +33,9 @@ void US_ZSolute::put_mcomp_attr( US_Model::SimulationComponent& comp,
       case ATTR_D:                 // Diffusion Coefficient
          comp.D       = aval;
          break;
+      case ATTR_C:                 // Concentrations
+         comp.signal_concentration  = aval;
+         break;
    }
 }
 
@@ -51,6 +54,9 @@ void US_ZSolute::put_solute_attr( US_ZSolute& solute,
          break;
       case 2:                      // Z value
          solute.z     = aval;
+         break;
+      case 9:                      // C value
+         solute.c     = aval;
          break;
    }
 }
@@ -77,6 +83,9 @@ void US_ZSolute::get_mcomp_attr( US_Model::SimulationComponent& comp,
       case ATTR_D:                 // Diffusion Coefficient
          aval         = comp.D;
          break;
+      case ATTR_C:                 // Concentration
+         aval         = comp.signal_concentration;
+         break;
    }
 }
 
@@ -96,12 +105,16 @@ void US_ZSolute::get_solute_attr( US_ZSolute& solute,
       case 2:                      // Z value
          aval         = solute.z;
          break;
+      case 9:                      // C value
+         aval         = solute.c;
+         break;
    }
 }
 
 // Public function to set model component values from a solute
 void US_ZSolute::set_mcomp_values( US_Model::SimulationComponent& comp,
-                                   US_ZSolute& solute, const int s_type )
+                                   US_ZSolute& solute, const int s_type,
+                                   const bool concv )
 {
    int attr_x   = ( s_type >> 6 ) & 7;
    int attr_y   = ( s_type >> 3 ) & 7;
@@ -109,13 +122,19 @@ void US_ZSolute::set_mcomp_values( US_Model::SimulationComponent& comp,
    double aval  = 0.0;
 
    get_solute_attr( solute, aval, 0 );
-   put_mcomp_attr ( comp, aval, attr_x );
+   put_mcomp_attr ( comp,   aval, attr_x );
 
    get_solute_attr( solute, aval, 1 );
-   put_mcomp_attr ( comp, aval, attr_y );
+   put_mcomp_attr ( comp,   aval, attr_y );
 
    get_solute_attr( solute, aval, 2 );
-   put_mcomp_attr ( comp, aval, attr_z );
+   put_mcomp_attr ( comp,   aval, attr_z );
+
+   if ( concv )
+   {  // Copy concentration value, too
+      get_solute_attr( solute, aval, 9 );
+      put_mcomp_attr ( comp,   aval, 9 );
+   }
 }
 
 // Public function to set solute values from a model component
@@ -127,14 +146,17 @@ void US_ZSolute::set_solute_values( US_Model::SimulationComponent& comp,
    int attr_z   = s_type & 7;
    double aval  = 0.0;
 
-   get_mcomp_attr ( comp, aval, attr_x );
+   get_mcomp_attr ( comp,   aval, attr_x );
    put_solute_attr( solute, aval, 0 );
 
-   get_mcomp_attr ( comp, aval, attr_y );
+   get_mcomp_attr ( comp,   aval, attr_y );
    put_solute_attr( solute, aval, 1 );
 
-   get_mcomp_attr ( comp, aval, attr_z );
+   get_mcomp_attr ( comp,   aval, attr_z );
    put_solute_attr( solute, aval, 2 );
+
+   get_mcomp_attr ( comp,   aval, 9 );
+   put_solute_attr( solute, aval, 9 );
 }
 
 // Public function to initialize grid solutes

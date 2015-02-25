@@ -196,8 +196,8 @@ if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mfac"
    for ( int ee = offset; ee < lim_offs; ee++ )
    {  // Count scan,point totals for all data sets
       DataSet* dset = data_sets[ ee ];
-      int npoints   = dset->run_data.xvalues.size();
-      int nscans    = dset->run_data.scanData.size();
+      int npoints   = dset->run_data.pointCount();
+      int nscans    = dset->run_data.scanCount();
       ntotal       += ( nscans * npoints );
       ntinois      += npoints;
       nrinois      += nscans;
@@ -258,8 +258,8 @@ DebugTime("BEG:calcres");
    {
       US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
       edata       = banddthr ? &wdata : edata;
-      int npoints = edata->xvalues.size();
-      int nscans  = edata->scanData.size();
+      int npoints = edata->pointCount();
+      int nscans  = edata->scanCount();
       double odlim = edata->ODlimit;
 
       for ( int ss = 0; ss < nscans; ss++ )
@@ -335,8 +335,8 @@ DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
             DataSet*               dset  = data_sets[ ee ];
             US_DataIO::EditedData* edata = banddthr ? &wdata : &dset->run_data;
             US_DataIO::RawData     simdat;
-            int npoints = edata->xvalues.size();
-            int nscans  = edata->scanData.size();
+            int npoints = edata->pointCount();
+            int nscans  = edata->scanCount();
             zcomponent.vbar20          = dset->vbar20;
 
             // Set model with standard space s and k
@@ -359,6 +359,10 @@ DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
             // Convert to experimental space
             model.components[ 0 ].s   /= dset->s20w_correction;
             model.components[ 0 ].D   /= dset->D20w_correction;
+//DbgLv(1) << "CR:   cc" << cc << "model s,k,w,v,d,c"
+// << model.components[0].s << model.components[0].f_f0
+// << model.components[0].mw << model.components[0].vbar20
+// << model.components[0].D << model.components[0].signal_concentration;
 
             // Initialize simulation data with the experiment's grid
 DbgLv(2) << "   CR:111  rss now" << US_Memory::rss_now() << "cc" << cc;
@@ -374,6 +378,32 @@ DbgLv(2) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
             astfem_rsa.set_debug_flag( dbg_level );
 
             astfem_rsa.calculate( simdat );
+//DbgLv(1) << "CR:     exp.space model s,k,w,v,d,c"
+// << model.components[0].s << model.components[0].f_f0
+// << model.components[0].mw << model.components[0].vbar20
+// << model.components[0].D << model.components[0].signal_concentration;
+
+            // Initialize simulation data with the experiment's grid
+            US_AstfemMath::initSimData( simdat, *edata, 0.0 );
+#if 0
+if (dbg_level>0 && thrnrank==1 && cc==0) {
+ model.debug(); dset->simparams.debug(); }
+DbgLv(1) << "CR:  simdat nsc npt" << simdat.scanCount() << simdat.pointCount();
+int nsc=simdat.scanCount();
+int npt=simdat.pointCount();
+int ms=nsc/2;
+int ls=nsc-1;
+int mp=npt/2;
+int lp=npt-1;
+DbgLv(1) << "CR: edat:"
+ << edata->value( 0, 0) << edata->value( 0,mp) << edata->value( 0,lp)
+ << edata->value(ms, 0) << edata->value(ms,mp) << edata->value(ms,lp)
+ << edata->value(ls, 0) << edata->value(ls,mp) << edata->value(ls,lp);
+DbgLv(1) << "CR: sdat:"
+ << simdat.value( 0, 0) << simdat.value( 0,mp) << simdat.value( 0,lp)
+ << simdat.value(ms, 0) << simdat.value(ms,mp) << simdat.value(ms,lp)
+ << simdat.value(ls, 0) << simdat.value(ls,mp) << simdat.value(ls,lp);
+#endif
 DbgLv(2) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
             if ( abort ) return;
 
@@ -389,7 +419,7 @@ DbgLv(2) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
 DbgLv(2) << "   CR:115  rss now" << US_Memory::rss_now() << "cc" << cc;
 
             // Populate the A matrix for the NNLS routine with simulation
-DbgLv(1) << "   CR: A fill kodl" << kodl;
+DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols;
 int ks=kk;
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
@@ -460,20 +490,23 @@ DbgLv(1) << "CR: NNLS A filled";
       int attr_x     = 0;      // Default X is s
       int attr_y     = 3;      // Default Y is vbar
       int attr_z     = 1;      // Default fixed is f/f0
+      int smask      = ( attr_x << 6 ) | ( attr_y << 3 ) | attr_z;
 
       if ( stype > 9 )
       {  // Explicitly given attribute types
           attr_x     = ( stype >> 6 ) & 7;
           attr_y     = ( stype >> 3 ) & 7;
           attr_z     =   stype        & 7;
+          smask      = stype;
       }
-DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype;
+DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype << smask
+ << "use_zsol" << use_zsol;
 
-      if ( use_zsol )
-         US_ZSolute::set_mcomp_values( zcomponent,
-                                       sim_vals.zsolutes[ 0 ], stype );
-      else
+      if ( ! use_zsol )
+      {
+         zcomponent.vbar20          = data_sets[ 0 ]->vbar20;
          set_comp_attr( zcomponent, sim_vals.solutes[ 0 ], attr_z );
+      }
 
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
@@ -486,16 +519,19 @@ DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype;
             DataSet*               dset  = data_sets[ ee ];
             US_DataIO::EditedData* edata = banddthr ? &wdata : &dset->run_data;
             US_DataIO::RawData     simdat;
-            int npoints    = edata->xvalues.size();
-            int nscans     = edata->scanData.size();
+            int npoints    = edata->pointCount();
+            int nscans     = edata->scanCount();
+            model.components[ 0 ]  = zcomponent;
 
-            // Set model with standard space s and k  (or other 2 attributes)
-            zcomponent.vbar20          = dset->vbar20;
-            model.components[ 0 ]      = zcomponent;
+            // Set model with standard space s,k,v  (or other 3 attributes)
             if ( use_zsol )
             {
                US_ZSolute::set_mcomp_values( model.components[ 0 ],
-                                             sim_vals.zsolutes[ cc ], stype );
+                                             sim_vals.zsolutes[ cc ], smask );
+//DbgLv(1) << "CR:   cc" << cc << "model s,k,w,v,d,c"
+// << model.components[0].s << model.components[0].f_f0
+// << model.components[0].mw << model.components[0].vbar20
+// << model.components[0].D << model.components[0].signal_concentration;
             }
             else
             {
@@ -519,11 +555,16 @@ DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype;
 
             model.components[ 0 ].s   /= sd.s20w_correction;
             model.components[ 0 ].D   /= sd.D20w_correction;
+//DbgLv(1) << "CR:     exp.space model s,k,w,v,d,c"
+// << model.components[0].s << model.components[0].f_f0
+// << model.components[0].mw << model.components[0].vbar20
+// << model.components[0].D << model.components[0].signal_concentration;
 
             // Initialize simulation data with the experiment's grid
             US_AstfemMath::initSimData( simdat, *edata, 0.0 );
 if (dbg_level>1 && thrnrank==1 && cc==0) {
  model.debug(); dset->simparams.debug(); }
+DbgLv(1) << "CR:  simdat nsc npt" << simdat.scanCount() << simdat.pointCount();
 
             // Calculate Astfem_RSA solution (Lamm equations)
             US_Astfem_RSA astfem_rsa( model, dset->simparams );
@@ -531,6 +572,22 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
             astfem_rsa.set_debug_flag( dbg_level );
 
             astfem_rsa.calculate( simdat );
+#if 0
+int nsc=simdat.scanCount();
+int npt=simdat.pointCount();
+int ms=nsc/2;
+int ls=nsc-1;
+int mp=npt/2;
+int lp=npt-1;
+DbgLv(1) << "CR: edat:"
+ << edata->value( 0, 0) << edata->value( 0,mp) << edata->value( 0,lp)
+ << edata->value(ms, 0) << edata->value(ms,mp) << edata->value(ms,lp)
+ << edata->value(ls, 0) << edata->value(ls,mp) << edata->value(ls,lp);
+DbgLv(1) << "CR: sdat:"
+ << simdat.value( 0, 0) << simdat.value( 0,mp) << simdat.value( 0,lp)
+ << simdat.value(ms, 0) << simdat.value(ms,mp) << simdat.value(ms,lp)
+ << simdat.value(ls, 0) << simdat.value(ls,mp) << simdat.value(ls,lp);
+#endif
             if ( abort ) return;
 
             if ( banddthr )
@@ -544,6 +601,8 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
             simulations << simdat;   // Save simulation (each datset,solute)
 
             // Populate the A matrix for the NNLS routine with simulation
+DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols;
+//int ks=kk;
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
                for ( int ss = 0; ss < nscans; ss++ )
@@ -563,6 +622,9 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
                   }
                }
             }
+//DbgLv(1) << "CR: ks kk" << ks << kk
+// << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[kk-2] << nnls_a[kk-1]
+// << "cc ee" << cc << ee << "kodl" << kodl;
 
             if ( tikreg )
             {  // For Tikhonov Regularization append to each column
@@ -600,8 +662,8 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
             DataSet*               dset   = data_sets[ ee ];
             US_DataIO::EditedData* edata  = banddthr ? &wdata : &dset->run_data;
             US_DataIO::RawData     simdat;
-            int npoints    = edata->xvalues.size();
-            int nscans     = edata->scanData.size();
+            int npoints    = edata->pointCount();
+            int nscans     = edata->scanCount();
             double avtemp  = dset->temperature;
             model.components[ 0 ]        = zcomponent;
 
@@ -696,7 +758,6 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
       }   // Each solute
    }
 
-DbgLv(1) << "   CR:BF nsol ksol" << nsolutes << ksols;
    nsolutes   = banddthr ? ksols : nsolutes;
 
    if ( signal_wanted  &&  kstep > 0 )  // If signals and steps done, report
@@ -847,7 +908,8 @@ if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR:  a0 a1 b0 b1"
 
    sim_vals.maxrss = US_Memory::rss_max( sim_vals.maxrss );
 //DbgLv(1) << "   CR:na  rss now,max" << US_Memory::rss_now() << sim_vals.maxrss;
-DbgLv(1) << "   CR:na  rss now,max" << US_Memory::rss_now() << sim_vals.maxrss << &sim_vals;
+DbgLv(1) << "   CR:na  rss now,max" << US_Memory::rss_now() << sim_vals.maxrss
+ << &sim_vals;
 
    nnls_a.clear();
    nnls_b.clear();
