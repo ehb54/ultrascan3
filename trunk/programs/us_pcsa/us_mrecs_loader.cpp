@@ -227,10 +227,11 @@ qDebug() << " *ERROR* cannot open" << filepath;
    double xmax          = 0.0;
    double ymin          = 0.0;
    double ymax          = 0.0;
+   int stype            = 11;
 
 qDebug() << "  ==Call load_modelrecs==";
-   nmrec   = US_ModelRecord::load_modelrecs( xmlr, mrecs, mrdesc,
-                                             ctype, xmin, xmax, ymin, ymax );
+   nmrec   = US_ModelRecord::load_modelrecs( xmlr, mrecs, mrdesc, ctype,
+                                             xmin, xmax, ymin, ymax, stype );
    rc      = ( nmrec > 0 ) ? 0 : 1;
 qDebug() << "  ==load_modelrecs== rc" << rc << "nmrec" << nmrec;
 

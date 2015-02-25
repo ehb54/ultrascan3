@@ -5,6 +5,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_math2.h"
+#include "us_zsolute.h"
 #include "us_colorgradIO.h"
 
 #include <qwt_legend.h>
@@ -220,11 +221,7 @@ DbgLv(1) << "RP:PD us_grid RTN";
 
    QString       title;
    QwtPlotCurve* curv;
-DbgLv(1) << "RP:PD smin smax" << smin << smax;
-   double srng   = smax - smin;
-   double xinc   = srng < 15.0 ? 1.0 : ( srng < 50.0 ? 2.0 : 5.0 );
-   data_plot1->setAxisScale( QwtPlot::xBottom, smin, smax, xinc );
-DbgLv(1) << "RP:PD AxisScale RTN";
+DbgLv(1) << "RP:PD smin smax" << smin << smax << "fmin fmax" << fmin << fmax;
 
    QVector< double > xvec( nlpts, 0.0 );
    QVector< double > yvec( nlpts, 0.0 );
@@ -233,7 +230,62 @@ DbgLv(1) << "RP:PD AxisScale RTN";
    double* yy    = yvec.data();
    int     nmodl = mrecs.size();
    QPen    pen_plot( US_GuiSettings::plotCurve(), 1 );
+   int     stype = mrecs[ 0 ].stype;
+   int attr_x    = ( stype >> 6 ) & 7;
+   int attr_y    = ( stype >> 3 ) & 7;
+   int attr_z    =   stype        & 7;
+   double xpscl  = ( attr_x == US_ZSolute::ATTR_S ) ? 1.e+13 : 1.0;
+   double ypscl  = ( attr_y == US_ZSolute::ATTR_S ) ? 1.e+13 : 1.0;
+DbgLv(1) << "RP:PD stype" << stype << "attr_x attr_y attr_z"
+ << attr_x << attr_y << attr_z;
+   QString xtitl = tr( "Sedimentation Coefficient (x 1e13)" );
+   QString ytitl = tr( "Frictional Ratio (f/f0)" );
+   xtitl         = ( attr_x == US_ZSolute::ATTR_S )
+                   ? tr( "Sedimentation Coefficient (x 1e13)" ) : xtitl;
+   xtitl         = ( attr_x == US_ZSolute::ATTR_K )
+                   ? tr( "Frictional Ratio (f/f0)" )            : xtitl;
+   xtitl         = ( attr_x == US_ZSolute::ATTR_W )
+                   ? tr( "Molecular Weight (Dalton)" )          : xtitl;
+   xtitl         = ( attr_x == US_ZSolute::ATTR_V )
+                   ? tr( "Specific Density (vbar_20W)" )        : xtitl;
+   xtitl         = ( attr_x == US_ZSolute::ATTR_D )
+                   ? tr( "Diffusion Coefficient" )              : xtitl;
+   ytitl         = ( attr_y == US_ZSolute::ATTR_S )
+                   ? tr( "Sedimentation Coefficient (x 1e13)" ) : ytitl;
+   ytitl         = ( attr_y == US_ZSolute::ATTR_K )
+                   ? tr( "Frictional Ratio (f/f0)" )            : ytitl;
+   ytitl         = ( attr_y == US_ZSolute::ATTR_W )
+                   ? tr( "Molecular Weight (Dalton)" )          : ytitl;
+   ytitl         = ( attr_y == US_ZSolute::ATTR_V )
+                   ? tr( "Specific Density (vbar_20W)" )        : ytitl;
+   ytitl         = ( attr_y == US_ZSolute::ATTR_D )
+                   ? tr( "Diffusion Coefficient" )              : ytitl;
 
+   double xrng   = smax - smin;
+   double yrng   = fmax - fmin;
+
+   if ( attr_x == US_ZSolute::ATTR_S )
+   {
+      double xinc   = xrng < 15.0 ? 1.0 : ( xrng < 50.0 ? 2.0 : 5.0 );
+      data_plot1->setAxisScale( QwtPlot::xBottom, smin, smax, xinc );
+   }
+   else
+   {
+      data_plot1->setAxisAutoScale( QwtPlot::xBottom );
+   }
+
+   if ( attr_y == US_ZSolute::ATTR_S )
+   {
+      double yinc   = yrng < 15.0 ? 1.0 : ( yrng < 50.0 ? 2.0 : 5.0 );
+      data_plot1->setAxisScale( QwtPlot::yLeft,   fmin, fmax, yinc );
+   }
+   else
+   {
+      data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
+   }
+
+   data_plot1->setAxisTitle( QwtPlot::xBottom, xtitl );
+   data_plot1->setAxisTitle( QwtPlot::yLeft,   ytitl );
 DbgLv(1) << "RP:PD   got_best" << got_best;
 DbgLv(1) << "RP:PD nmodel mrecs_size" << nmodel << nmodl;
 
@@ -343,8 +395,8 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
 //DbgLv(1) << "RP:PD   isol size" << mrecs[ii].isolutes.size();
             for ( int kk = 0; kk < klpts; kk++ )
             {
-               xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].x * 1.e+13;
-               yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].y;
+               xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].x * xpscl;
+               yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].y * ypscl;
             }
          }
 
@@ -370,8 +422,8 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
 
             for ( int kk = 0; kk < ncomp; kk++ )
             {
-               double xv   = mrecs[ ii ].csolutes[ kk ].x * 1.0e+13;
-               double yv   = mrecs[ ii ].csolutes[ kk ].y;
+               double xv   = mrecs[ ii ].csolutes[ kk ].x * xpscl;
+               double yv   = mrecs[ ii ].csolutes[ kk ].y * ypscl;
                double cv   = mrecs[ ii ].csolutes[ kk ].c;
                double cfra = cv / max_conc;
                int    szd  = qMax( szdmin, qRound( 9.0 * cfra ) );
@@ -394,14 +446,15 @@ DbgLv(1) << "RP:PD       ncomp" << ncomp << "x0 y0 xn yn"
       } // END: models loop
 DbgLv(1) << "RP:PD (5)smin smax" << smin << smax;
    }
+
    else
    { // Plot lines before any best-fit computations
       for ( int ii = 0; ii < nmodl; ii++ )
       {
          for ( int kk = 0; kk < nlpts; kk++ )
          { // Accumulate the curve points
-            xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].x * 1.e+13;
-            yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].y;
+            xx[ kk ]     = mrecs[ ii ].isolutes[ kk ].x * xpscl;
+            yy[ kk ]     = mrecs[ ii ].isolutes[ kk ].y * ypscl;
          }
 
          title   = tr( "Curve " ) + QString::number( ii );
@@ -420,7 +473,7 @@ void US_MLinesPlot::setModel( US_Model* a_model,
 {
    model   = a_model;
    mrecs   = mrs;
-DbgLv(1) << "RP:SM  bmndx" << bmndx;
+DbgLv(1) << "RP:SM  bmndx" << bmndx << "stype" << mrecs[0].stype;
 
    // Show or hide the color items based on presence of a model
    showColorItems( ( model != 0 ) );

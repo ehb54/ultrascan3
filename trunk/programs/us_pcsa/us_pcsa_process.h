@@ -13,11 +13,21 @@
 #include "us_noise.h"
 #include "us_db2.h"
 #include "us_solute.h"
+#include "us_zsolute.h"
 #include "us_worker_pc.h"
 #include "us_pcsa_modelrec.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+#ifndef US_ZS_ATTRIBS
+#define US_ZS_ATTRIBS
+#define ATTR_S US_ZSolute::ATTR_S
+#define ATTR_K US_ZSolute::ATTR_K
+#define ATTR_W US_ZSolute::ATTR_W
+#define ATTR_V US_ZSolute::ATTR_V
+#define ATTR_D US_ZSolute::ATTR_D
+#define ATTR_C US_ZSolute::ATTR_C
 #endif
 
 //! \brief PCSA Processor object
@@ -160,6 +170,10 @@ private:
       int        fi_iter;      // Fit iteration counter
       int        fi_itermax;   // Maximum fit iterations
       int        lmmxcall;     // L-M maximum calls
+      int        st_mask;      // Solute type mask
+      int        attr_x;       // Attribute X index
+      int        attr_y;       // Attribute Y index
+      int        attr_z;       // Attribute Z index
 
       bool       abort;        // flag used with stop_fit clicked
       bool       lm_done;      // flag for L-M completion
@@ -174,7 +188,7 @@ private:
       double     alpha;        // Tikhonov regularization factor
       double     alpha_fx;     // Alpha for fixed curves fits
       double     alpha_lm;     // Alpha for L-M fits
-      double     parlims[ 4 ]; // Par1,Par2 limits
+      double     parlims[ 9 ]; // Par1,Par2 limits and other constants
       double     pfi_rmsd;     // Previous fit iteration RMSD
       double     cfi_rmsd;     // Current fit iteration RMSD
       double     rd_frac;      // RMSD-difference fraction: (p-c)/p

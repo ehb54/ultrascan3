@@ -50,6 +50,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
             double            D20w_correction;    //!< D data correction
             double            rotor_stretch[ 2 ]; //!< Stretch coefficients
             double            centerpiece_bottom; //!< Base bottom
+            double            zcoeffs[ 4 ];       //!< Solute Z coefficients
 
             int               solute_type;        //!< Solute type (0,1,2)
             bool              manual;             //!< visc.,dens. manual

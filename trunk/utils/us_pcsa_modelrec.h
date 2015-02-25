@@ -37,6 +37,7 @@ class US_UTIL_EXTERN US_ModelRecord
 
       int                   taskx;      //!< Task index (submit order)
       int                   ctype;      //!< Curve type (1/2/4/8=>SL/IS/DS/HL)
+      int                   stype;      //!< Solute type xyz mask
       int                   mrecID;     //!< pcsa_modelrec DB ID
       int                   editID;     //!< editedData DB ID
       int                   modelID;    //!< best-model model DB ID (or 0)
@@ -123,10 +124,12 @@ class US_UTIL_EXTERN US_ModelRecord
       //! \param xmax    Ref. for x-value maximum
       //! \param ymin    Ref. for y-value minimum
       //! \param ymax    Ref. for y-value maximum
+      //! \param stype   Ref. for solute type flag (e.g., 0013 for s,k,v)
       //! \returns       Number of model line records generated
       static int load_modelrecs ( QXmlStreamReader& xml,
                                   QVector< US_ModelRecord >&, QString&,
-                                  int&, double&, double&, double&, double& );
+                                  int&, double&, double&, double&, double&,
+                                  int& );
 
       //! \brief Static public function to write model records to an XML stream
       //! \param xml     XML stream to which to write model records
@@ -137,10 +140,12 @@ class US_UTIL_EXTERN US_ModelRecord
       //! \param xmax    Ref. for x-value maximum
       //! \param ymin    Ref. for y-value minimum
       //! \param ymax    Ref. for y-value maximum
+      //! \param stype   Ref. for solute type flag (e.g., 0013 for s,k,v)
       //! \returns       Number of model line records generated
       static int write_modelrecs( QXmlStreamWriter& xml,
                                   QVector< US_ModelRecord >&, QString&,
-                                  int&, double&, double&, double&, double& );
+                                  int&, double&, double&, double&, double&,
+                                  int& );
 
       //! \brief Static public function to determine model records elite limits
       //! \param mrecs   Model records vector to scan
@@ -182,6 +187,17 @@ class US_UTIL_EXTERN US_ModelRecord
       //! \returns       String representation of curve type
       static QString ctype_text( const int );
 
+      //! \brief Static public function to return integer solute-type flag
+      //!        for given text (e.g., "013.skv")
+      //! \param s_stype String representation of solute type
+      //! \returns       Integer flag representation of solute type
+      static int stype_flag( const QString );
+
+      //! \brief Static public function to return solute-type text
+      //!        for given integer flag (e.g., 11 == o013)
+      //! \param i_stype Integer flag representation of solute type
+      //! \returns       String representation of curve solute
+      static QString stype_text( const int );
 
 };
 #endif

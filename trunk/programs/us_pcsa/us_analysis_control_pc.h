@@ -43,6 +43,10 @@ class US_AnalysisControlPc : public US_WidgetsDialog
       int           ctype;
       int           ctypex;
       int           nlmodl;
+      int           attr_x;
+      int           attr_y;
+      int           attr_z;
+      int           sol_type;
 
       double        xmin;
       double        xmax;
@@ -56,6 +60,10 @@ class US_AnalysisControlPc : public US_WidgetsDialog
       bool          resume;
 
       QString       fitpars;
+      QString       type_x;
+      QString       type_y;
+      QString       type_z;
+      QString       z_func;
 
       QHBoxLayout*  mainLayout;
       QGridLayout*  controlsLayout;
@@ -85,16 +93,10 @@ class US_AnalysisControlPc : public US_WidgetsDialog
       US_pcsaProcess*                  processor;
       US_MLinesPlot*                   mlnplotd;
 
-      QLabel*       lb_lolimitk;
-      QLabel*       lb_uplimitk;
-      QLabel*       lb_incremk;
-      QLabel*       lb_varcount;
-
-      QwtCounter*   ct_lolimits;
-      QwtCounter*   ct_uplimits;
-      QwtCounter*   ct_lolimitk;
-      QwtCounter*   ct_uplimitk;
-      QwtCounter*   ct_incremk;
+      QwtCounter*   ct_lolimitx;
+      QwtCounter*   ct_uplimitx;
+      QwtCounter*   ct_lolimity;
+      QwtCounter*   ct_uplimity;
       QwtCounter*   ct_varcount;
       QwtCounter*   ct_gfiters;
       QwtCounter*   ct_gfthresh;
@@ -104,14 +106,30 @@ class US_AnalysisControlPc : public US_WidgetsDialog
       QwtCounter*   ct_thrdcnt;
 
       QComboBox*    cb_curvtype;
+      QComboBox*    cb_z_type;
 
       QCheckBox*    ck_lmalpha;
       QCheckBox*    ck_fxalpha;
       QCheckBox*    ck_tinoise;
       QCheckBox*    ck_rinoise;
 
+      QButtonGroup* bg_x_axis;
+      QButtonGroup* bg_y_axis;
+
+      QRadioButton* rb_x_s;
+      QRadioButton* rb_x_ff0;
+      QRadioButton* rb_x_mw;
+      QRadioButton* rb_x_vbar;
+      QRadioButton* rb_x_D;;
+      QRadioButton* rb_y_s;
+      QRadioButton* rb_y_ff0;
+      QRadioButton* rb_y_mw;
+      QRadioButton* rb_y_vbar;
+      QRadioButton* rb_y_D;
+
       QLineEdit*    le_minvari;
       QLineEdit*    le_minrmsd;
+      QLineEdit*    le_z_func;
 
       QTextEdit*    te_status;
 
@@ -133,8 +151,8 @@ class US_AnalysisControlPc : public US_WidgetsDialog
    private slots:
       void optimize_options( void );
       void uncheck_optimize( int  );
-      void slim_change( void );
-      void klim_change( void );
+      void xlim_change( void );
+      void ylim_change( void );
       void reso_change( void );
       void type_change( void );
       void set_alpha  ( void );
@@ -149,11 +167,16 @@ class US_AnalysisControlPc : public US_WidgetsDialog
       void close_all  ( void );
       void compute    ( void );
       void plot_lines ( void );
+      void adjust_xyz ( const int = 0 );
       void recompute_mrec( void );
+      void select_x_axis ( int  );
+      void select_y_axis ( int  );
+      void ztype_change  ( int  );
       void closed     ( QObject* );
       void    fitpars_connect( bool );
       QString fitpars_string ( void );
       int     memory_check   ( void );
+      void    set_solute_type( void );
 
       void help       ( void )
       { showHelp.show_help( "pcsa_analys.html" ); };

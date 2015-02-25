@@ -19,12 +19,14 @@
 US_pcsaProcess::US_pcsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    QObject* parent /*=0*/ ) : QObject( parent ), dsets( dsets )
 {
-   edata            = &dsets[ 0 ]->run_data;  // pointer to  experiment data
+   // Pointer to  experiment data
+   edata            = &dsets[ 0 ]->run_data;
+   // Pointer to simulation parameters
+   simparms         = &dsets[ 0 ]->simparams;
    dbg_level        = US_Settings::us_debug();
    maxrss           = 0;              // max memory
 
    mrecs    .clear();                 // computed model records
-   simparms = &dsets[ 0 ]->simparams; // pointer to simulation parameters
 
    nscans           = edata->scanCount();
    npoints          = edata->pointCount();
@@ -35,8 +37,17 @@ US_pcsaProcess::US_pcsaProcess( QList< US_SolveSim::DataSet* >& dsets,
    kstask           = 0;
    varimin          = 9.e+9;
    minvarx          = 99999;
+   st_mask          = dsets[ 0 ]->solute_type;
+   attr_x           = ( st_mask >> 6 ) & 7;
+   attr_y           = ( st_mask >> 3 ) & 7;
+   attr_z           =   st_mask        & 7;
+   double zcurr     = dsets[ 0 ]->zcoeffs[ 0 ];
+   double vbar20    = dsets[ 0 ]->vbar20;
+   zcurr            = ( zcurr == 0.0 ) ? vbar20 : zcurr;
 
    parlims[ 0 ]     = -1.0;
+   parlims[ 4 ]     = st_mask;
+   parlims[ 5 ]     = zcurr;
 }
 
 // Get maximum used memory
@@ -69,7 +80,16 @@ DbgLv(1) << "PC(pcsaProc): start_fit()";
    fi_itermax  = gfits;
    rd_thresh   = gfthr;
    lmmxcall    = lmmxc;
-   parlims[ 0 ] = -1.0;
+   st_mask          = dsets[ 0 ]->solute_type;
+   attr_x           = ( st_mask >> 6 ) & 7;
+   attr_y           = ( st_mask >> 3 ) & 7;
+   attr_z           =   st_mask        & 7;
+   double vbar20    = dsets[ 0 ]->vbar20;
+   double zcurr     = dsets[ 0 ]->zcoeffs[ 0 ];
+   zcurr            = ( zcurr == 0.0 ) ? vbar20 : zcurr;
+   parlims[ 0 ]     = -1.0;
+   parlims[ 4 ]     = st_mask;
+   parlims[ 5 ]     = zcurr;
 
    if ( alpha < 0.0 )
    {  // Negative alpha acts as flag
@@ -311,9 +331,9 @@ void US_pcsaProcess::process_fxfinal( US_ModelRecord& mrec )
    }
 DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
 
-   US_SolveSim::DataSet* dset = dsets[ 0 ];
+   //US_SolveSim::DataSet* dset = dsets[ 0 ];
    int    nsolutes    = mrec.csolutes.size();
-   double vbar20      = dset->vbar20;
+   //double vbar20      = dset->vbar20;
    model.components.resize( nsolutes );
    qSort( mrec.csolutes );
 
@@ -322,14 +342,16 @@ DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
    {
       // Get standard-space solute values (20,W)
       US_Model::SimulationComponent mcomp;
+#if 0
       mcomp.vbar20 = vbar20;
       mcomp.s      = mrec.csolutes[ cc ].x;
       mcomp.D      = 0.0;
       mcomp.mw     = 0.0;
       mcomp.f      = 0.0;
       mcomp.f_f0   = mrec.csolutes[ cc ].y;
-      mcomp.signal_concentration
-                   = mrec.csolutes[ cc ].c;
+#endif
+      US_ZSolute::set_mcomp_values( mcomp, mrec.csolutes[ cc ],
+                                    st_mask, true );
 
       // Complete other coefficients in standard-space
       model.calc_coefficients( mcomp );
@@ -631,8 +653,7 @@ DbgLv(1) << "PROCESS_JOB thrn" << thrn << "taskx orecx" << taskx << orecx;
 if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
  if ( wresult.csolutes[mm].c > 100.0 ) {
    DbgLv(1) << "PJ:  CONC=" << wresult.csolutes[mm].c
-    << " s,ff0" << wresult.csolutes[mm].x*1.0e+13
-    << wresult.csolutes[mm].y; } }
+    << " x,y" << wresult.csolutes[mm].x << wresult.csolutes[mm].y; } }
 //DBG-CONC
    double variance = wresult.sim_vals.variance;
 
@@ -842,7 +863,7 @@ int US_pcsaProcess::slmodels( int ctp, double xlo, double xup,
 DbgLv(1) << "SLMO: xlo xup ylo yup nyp res" << xlo << xup << ylo << yup
    << nyp << res;
    int    nmodels  = 0;
-   double vbar20   = dsets[ 0 ]->vbar20;
+   //double vbar20   = dsets[ 0 ]->vbar20;
    orig_sols.clear();
 
    // Compute straight-line model records
@@ -856,6 +877,7 @@ DbgLv(1) << "SLMO: xlo xup ylo yup nyp res" << xlo << xup << ylo << yup
    // Update the solutes with vbar and add to task solutes list
    for ( int ii = 0; ii < nmodels; ii++ )
    {
+#if 0
       QVector< US_ZSolute >* isols = &mrecs[ ii ].isolutes;
 
       for ( int jj = 0; jj < isols->size(); jj++ )
@@ -864,6 +886,8 @@ DbgLv(1) << "SLMO: xlo xup ylo yup nyp res" << xlo << xup << ylo << yup
       }
 
       orig_sols << *isols;
+#endif
+      orig_sols << mrecs[ ii ].isolutes;
    }
 DbgLv(1) << "SLMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
 
@@ -876,7 +900,7 @@ int US_pcsaProcess::sigmodels( int ctp, double xlo, double xup,
 {
 DbgLv(1) << "SGMO: ctp xlo xup ylo yup nyp nlp" << ctp << xlo << xup
    << ylo << yup << nyp << nlpts;
-   double vbar20   = dsets[ 0 ]->vbar20;
+   //double vbar20   = dsets[ 0 ]->vbar20;
    orig_sols.clear();
 
    // Compute sigmoid model records
@@ -886,6 +910,7 @@ DbgLv(1) << "SGMO: ctp xlo xup ylo yup nyp nlp" << ctp << xlo << xup
    // Update the solutes with vbar and add to task solutes list
    for ( int ii = 0; ii < nmodels; ii++ )
    {
+#if 0
       QVector< US_ZSolute >* isols = &mrecs[ ii ].isolutes;
 
       for ( int jj = 0; jj < isols->size(); jj++ )
@@ -894,6 +919,8 @@ DbgLv(1) << "SGMO: ctp xlo xup ylo yup nyp nlp" << ctp << xlo << xup
       }
 
       orig_sols << *isols;
+#endif
+      orig_sols << mrecs[ ii ].isolutes;
    }
 DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
 
@@ -920,6 +947,7 @@ void US_pcsaProcess::model_statistics( QVector< US_ModelRecord >& mrecs,
    int    nbmods    = nmtasks / 5;
           nbmods    = qMin( nmtasks - 1, qMax( 3, nbmods ) );
    int    nlpts     = cresolu;
+   int    soltype   = dsets[ 0 ]->solute_type;
    double rmsdmin   = 99999.0;
    double rmsdmax   = 0.0;
    double rmsdavg   = 0.0;
@@ -967,7 +995,9 @@ DbgLv(1) << "PC:MS: nmtasks mrssiz nbmods" << nmtasks << mrecs.size() << nbmods;
 
    modstats << tr( "Curve Type:" )
             << QString( ctp[ curvtype ] );
-   modstats << tr( "s (x 1e13) Range:" )
+   modstats << tr( "Solute Type:" )
+            << US_ModelRecord::stype_text( soltype );
+   modstats << tr( "X Range:" )
             << QString().sprintf( "%10.4f  %10.4f", xlolim, xuplim );
    double str_y  = mrecs[ 0 ].str_y;
    double end_y  = mrecs[ 0 ].end_y;
@@ -976,10 +1006,10 @@ DbgLv(1) << "PC:MS: nmtasks mrssiz nbmods" << nmtasks << mrecs.size() << nbmods;
    {
       double slope  = ( end_y - str_y ) / ( xuplim - xlolim );
       double yincr  = ( yuplim - ylolim ) / (double)( nypts - 1 );
-      modstats << tr( "k (f/f0) Range + delta:" )
+      modstats << tr( "Y Range + delta:" )
                << QString().sprintf( "%10.4f  %10.4f  %10.4f",
                      ylolim, yuplim, yincr );
-      modstats << tr( "Best curve f/f0 end points + slope:" )
+      modstats << tr( "Best curve Y end points + slope:" )
                << QString().sprintf( "%10.4f  %10.4f  %10.4f",
                      str_y, end_y, slope );
 DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
@@ -993,11 +1023,11 @@ DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
       double par1   = exp( log( 0.001 )
                            + ( log( 0.5 ) - log( 0.001 ) ) * p1off );
       double par2   = (double)p2ndx / krng;
-      modstats << tr( "k (f/f0) Range:" )
+      modstats << tr( "Y Range:" )
                << QString().sprintf( "%10.4f  %10.4f", ylolim, yuplim );
       modstats << tr( "Best curve par1 and par2:" )
                << QString().sprintf( "%10.4f  %10.4f", par1, par2 );
-      modstats << tr( "Best curve f/f0 end points:" )
+      modstats << tr( "Best curve Y end points:" )
                << QString().sprintf( "%10.4f  %10.4f",
                      mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
    }
@@ -1041,7 +1071,7 @@ DbgLv(1) << "PC:MS:   RTN";
 double US_pcsaProcess::fit_function_SL( double t, double* par )
 {
    static int ffcall=0;          // Fit function call counter
-   static double epar[ 18 ];     // Static array for holding parameters
+   static double epar[ 20 ];     // Static array for holding parameters
    static const int nepar = sizeof( epar ) / sizeof( epar[ 0 ] );
 
    if ( t > 0.0 )
@@ -1084,6 +1114,10 @@ double US_pcsaProcess::fit_function_SL( double t, double* par )
    int    noisfl = (int)epar[ 12 ];
    int    dbg_lv = (int)epar[ 13 ];
    double alpha  = epar[ 14 ];
+   int    attr_x = (int)epar[ 16 ];
+   int    attr_y = (int)epar[ 17 ];
+   //int    attr_z = (int)epar[ 18 ];
+   //int    zbase  = epar[ 19 ];
    double ystart = par1;
    double yend   = ystart + par2 * ( xmax - xmin );
 
@@ -1116,6 +1150,20 @@ qDebug() << "ffSL: call" << ffcall << "par1 par2" << par1 << par2
    double vbar20 = dsets[ 0 ]->vbar20;
    double xcurr  = xmin;
    double ycurr  = ystart;
+   double zcurr  = dsets[ 0 ]->zcoeffs[ 0 ];
+   zcurr         = ( zcurr == 0.0 ) ? vbar20 : zcurr;
+qDebug() << "ffSL:  zcurr vb" << zcurr << vbar20;
+
+   if ( attr_x == ATTR_S )
+   {  // X is s:  scale by 1e-13
+      xcurr        *= 1e-13;
+      xinc         *= 1e-13;
+   }
+   if ( attr_y == ATTR_S )
+   {  // Y is s:  scale by 1e-13
+      ycurr        *= 1e-13;
+      yinc         *= 1e-13;
+   }
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisfl;
    sim_vals.dbg_level = dbg_lv;
@@ -1123,7 +1171,7 @@ qDebug() << "ffSL: call" << ffcall << "par1 par2" << par1 << par2
 
    for ( int ii = 0; ii < nlpts; ii++ )
    { // Fill the input solutes vector
-      sim_vals.zsolutes << US_ZSolute( xcurr * 1e-13, ycurr, vbar20, 0.0 );
+      sim_vals.zsolutes << US_ZSolute( xcurr, ycurr, zcurr, 0.0 );
       xcurr        += xinc;
       ycurr        += yinc;
    }
@@ -1194,6 +1242,10 @@ double US_pcsaProcess::fit_function_IS( double t, double* par )
    int    noisfl = (int)epar[ 12 ];
    int    dbg_lv = (int)epar[ 13 ];
    double alpha  = epar[ 14 ];
+   int    attr_x = (int)epar[ 16 ];
+   int    attr_y = (int)epar[ 17 ];
+   //int    attr_z = (int)epar[ 18 ];
+   //int    zbase  = epar[ 19 ];
    double ystr   = ymin;
    double ydif   = ymax - ymin;
    double xrange = xmax - xmin;
@@ -1229,6 +1281,19 @@ qDebug() << "ffIS: call" << ffcall << "par1 par2" << par1 << par2
    double vbar20 = dsets[ 0 ]->vbar20;
    double xcurr  = xmin;
    double ycurr  = ymin;
+   double zcurr  = dsets[ 0 ]->zcoeffs[ 0 ];
+   zcurr         = ( zcurr == 0.0 ) ? vbar20 : zcurr;
+qDebug() << "ffIS:  zcurr vb" << zcurr << vbar20;
+   if ( attr_x == ATTR_S )
+   {  // X is s:  scale by 1e-13
+      xmin         *= 1e-13;
+      xrange       *= 1e-13;
+   }
+   if ( attr_y == ATTR_S )
+   {  // Y is s:  scale by 1e-13
+      ymin         *= 1e-13;
+      ydif         *= 1e-13;
+   }
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisfl;
    sim_vals.dbg_level = dbg_lv;
@@ -1241,7 +1306,7 @@ qDebug() << "ffIS: call" << ffcall << "par1 par2" << par1 << par2
       double efac   = 0.5 * erf( ( xoff - par2 ) / p1fac ) + 0.5;
       xcurr         = xmin + xoff * xrange;
       ycurr         = ymin + ydif * efac;
-      sim_vals.zsolutes << US_ZSolute( xcurr * 1e-13, ycurr, vbar20, 0.0 );
+      sim_vals.zsolutes << US_ZSolute( xcurr, ycurr, zcurr, 0.0 );
       xoff         += xinc;
    }
 
@@ -1307,6 +1372,10 @@ double US_pcsaProcess::fit_function_DS( double t, double* par )
    int    noisfl = (int)epar[ 12 ];
    int    dbg_lv = (int)epar[ 13 ];
    double alpha  = epar[ 14 ];
+   int    attr_x = (int)epar[ 16 ];
+   int    attr_y = (int)epar[ 17 ];
+   //int    attr_z = (int)epar[ 18 ];
+   //int    zbase  = epar[ 19 ];
    double ystr   = ymax;
    double ydif   = ymin - ymax;
    double xrange = xmax - xmin;
@@ -1342,6 +1411,19 @@ qDebug() << "ffDS: call" << ffcall << "par1 par2" << par1 << par2
    double vbar20 = dsets[ 0 ]->vbar20;
    double xcurr  = xmin;
    double ycurr  = ymin;
+   double zcurr  = dsets[ 0 ]->zcoeffs[ 0 ];
+   zcurr         = ( zcurr == 0.0 ) ? vbar20 : zcurr;
+qDebug() << "ffDS:  zcurr vb" << zcurr << vbar20;
+   if ( attr_x == ATTR_S )
+   {  // X is s:  scale by 1e-13
+      xmin         *= 1e-13;
+      xrange       *= 1e-13;
+   }
+   if ( attr_y == ATTR_S )
+   {  // Y is s:  scale by 1e-13
+      ymin         *= 1e-13;
+      ydif         *= 1e-13;
+   }
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisfl;
    sim_vals.dbg_level = dbg_lv;
@@ -1417,6 +1499,10 @@ double US_pcsaProcess::fit_function_HL( double t, double* par )
    int    noisfl = (int)epar[ 12 ];
    int    dbg_lv = (int)epar[ 13 ];
    double alpha  = epar[ 14 ];
+   int    attr_x = (int)epar[ 16 ];
+   int    attr_y = (int)epar[ 17 ];
+   //int    attr_z = (int)epar[ 18 ];
+   //int    zbase  = epar[ 19 ];
    double yval   = par1;
 
    // After 1st few calls, test if parameters are within limits
@@ -1442,6 +1528,19 @@ qDebug() << "ffHL: call" << ffcall << "par1" << par1 << "yv" << yval
    double xinc   = ( xmax - xmin ) / prange;
    double vbar20 = dsets[ 0 ]->vbar20;
    double xcurr  = xmin;
+   double ycurr  = yval;
+   double zcurr  = dsets[ 0 ]->zcoeffs[ 0 ];
+   zcurr         = ( zcurr == 0.0 ) ? vbar20 : zcurr;
+qDebug() << "ffHL:  zcurr vb" << zcurr << vbar20;
+   if ( attr_x == ATTR_S )
+   {  // X is s:  scale by 1e-13
+      xcurr        *= 1e-13;
+      xinc         *= 1e-13;
+   }
+   if ( attr_y == ATTR_S )
+   {  // Y is s:  scale by 1e-13
+      ycurr        *= 1e-13;
+   }
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisfl;
    sim_vals.dbg_level = dbg_lv;
@@ -1449,7 +1548,7 @@ qDebug() << "ffHL: call" << ffcall << "par1" << par1 << "yv" << yval
 
    for ( int ii = 0; ii < nlpts; ii++ )
    { // Fill the input solutes vector
-      sim_vals.zsolutes << US_ZSolute( xcurr * 1e-13, yval, vbar20, 0.0 );
+      sim_vals.zsolutes << US_ZSolute( xcurr, ycurr, zcurr, 0.0 );
       xcurr        += xinc;
    }
 
@@ -1541,6 +1640,7 @@ maxp2=(maxp2+par2up)*0.5;
    double *par   = parray;
    void   **ppar = (void**)par;
    int    px     = ( sizeof( double ) / sizeof( void* ) ) * 2;
+   double zbase  = dsets[ 0 ]->zcoeffs[ 0 ];
    par[ 0 ]      = mrecs[ 0 ].par1;
    par[ 1 ]      = mrecs[ 0 ].par2;
 DbgLv(0) << "LMf:  par1 par2" << par[0] << par[1];
@@ -1561,6 +1661,10 @@ DbgLv(0) << "LMf:  par1 par2" << par[0] << par[1];
    par[ 15 ]     = dbg_level;
 //   par[ 15 ]     = 0;
    par[ 16 ]     = alpha_lm;
+   par[ 17 ]     = attr_x;
+   par[ 18 ]     = attr_y;
+   par[ 19 ]     = attr_z;
+   par[ 20 ]     = zbase;
 DbgLv(1) << "LMf:  ppar2" << ppar[4] << dsets[0] << curvtype << ppar[5];
 DbgLv(1) << "LMf:  alpha" << alpha_lm << par[14];
    timer.start();              // start a timer to measure run time
@@ -1740,10 +1844,13 @@ DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
    {
       // Insert calculated solutes into top model record
       US_ZSolute solute;
+#if 0
       solute.x   = model.components[ ii ].s;
       solute.y   = model.components[ ii ].f_f0;
       solute.z   = model.components[ ii ].vbar20;
       solute.c   = model.components[ ii ].signal_concentration;
+#endif
+      US_ZSolute::set_solute_values( model.components[ ii ], solute, st_mask );
       mrec.csolutes << solute;
 DbgLv(1) << "LMf:  ii" << ii << "x y c" << solute.x << solute.y << solute.c;
 
@@ -1983,14 +2090,19 @@ double US_pcsaProcess::evaluate_model( QList< US_SolveSim::DataSet* >& dsets,
    dset->model          = US_Model();
    dset->model.variance = sim_vals.variance;
    dset->model.components.clear();
+   int st_mask          = dsets[ 0 ]->solute_type;
 
    for ( int ii = 0; ii < sim_vals.zsolutes.size(); ii++ )
    {
       US_Model::SimulationComponent mcomp;
+#if 0
       mcomp.s      = sim_vals.zsolutes[ ii ].x;
       mcomp.f_f0   = sim_vals.zsolutes[ ii ].y;
       mcomp.vbar20 = sim_vals.zsolutes[ ii ].z;
       mcomp.signal_concentration = sim_vals.zsolutes[ ii ].c;
+#endif
+      US_ZSolute::set_mcomp_values( mcomp, sim_vals.zsolutes[ ii ],
+                                    st_mask, true );
 
       dset->model.components << mcomp;
    }
@@ -2095,10 +2207,13 @@ DbgLv(1) << "CFin:     nmsol nisol" << nmsol << nisol;
    {
       // Insert calculated solutes into top model record
       US_ZSolute solute;
+#if 0
       solute.x   = model.components[ ii ].s;
       solute.y   = model.components[ ii ].f_f0;
       solute.z   = model.components[ ii ].vbar20;
       solute.c   = model.components[ ii ].signal_concentration;
+#endif
+      US_ZSolute::set_solute_values( model.components[ ii ], solute, st_mask );
       mrec.csolutes << solute;
 DbgLv(1) << "CFin:  ii" << ii << "x y c" << solute.x << solute.y << solute.c;
 

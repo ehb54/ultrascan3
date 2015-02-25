@@ -7,6 +7,7 @@
 US_ModelRecord::US_ModelRecord( void )
 {
    taskx      = -1;
+   stype      = 11;
    ctype      = CTYPE_NONE;
    v_ctype    = CTYPE_NONE;
    mrecID     = 0;
@@ -56,7 +57,11 @@ int US_ModelRecord::compute_slines( double& xmin, double& xmax,
       double* parlims, QVector< US_ModelRecord >& mrecs )
 {
    US_ModelRecord mrec;
+   int    stype  = parlims[ 4 ];
+   int    attr_x = ( stype >> 6 ) & 7;
+   int    attr_y = ( stype >> 3 ) & 7;
    mrec.ctype    = CTYPE_SL;
+   mrec.stype    = stype;
 
    double  prng  = (double)( nlpts - 1 );
    double  yrng  = (double)( nypts - 1 );
@@ -69,15 +74,17 @@ int US_ModelRecord::compute_slines( double& xmin, double& xmax,
       parlims[ 2 ] = ymin;
       parlims[ 3 ] = ymax;
    }
+
    double  yslo  = parlims[ 0 ];
    double  yshi  = parlims[ 1 ];
    double  yelo  = parlims[ 2 ];
    double  yehi  = parlims[ 3 ];
-   double  vbar  = parlims[ 4 ];
+   double  zval  = parlims[ 5 ];
    double  ysinc = ( yshi - yslo ) / yrng;
    double  yeinc = ( yehi - yelo ) / yrng;
    double  ystr  = yslo;
-
+   double  xscl  = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
+   double  yscl  = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
    int     mndx  = mrecs.size();
    int     nmodl = nypts * nypts;
 
@@ -93,17 +100,18 @@ int US_ModelRecord::compute_slines( double& xmin, double& xmax,
          double yinc = ( yend - ystr ) / prng; 
 
          mrec.isolutes.clear();
-         US_ZSolute isol( 0.0, 0.0, vbar, 0.0 );
+         US_ZSolute isol( 0.0, 0.0, zval, 0.0 );
 
          for ( int kk = 0; kk < nlpts; kk++ )
          { // Loop over points on a line
-            isol.x      = xval * 1.e-13;
-            isol.y      = yval;
+            isol.x      = xval * xscl;
+            isol.y      = yval * yscl;
             mrec.isolutes << isol;
             xval       += xinc;
             yval       += yinc;
          } // END: points-per-line loop
 
+         mrec.stype     = stype;
          mrec.taskx     = mndx;
          mrec.str_y     = ystr;
          mrec.end_y     = yend;
@@ -139,10 +147,14 @@ int US_ModelRecord::compute_sigmoids( int& ctype, double& xmin, double& xmax,
    double  p1up = parlims[ 1 ];
    double  p2lo = parlims[ 2 ];
    double  p2up = parlims[ 3 ];
-   double  vbar = parlims[ 4 ];
+   int stype    = parlims[ 4 ];
+   double  zval = parlims[ 5 ];
 
    US_ModelRecord mrec;
+   int   attr_x = ( stype >> 6 ) & 7;
+   int   attr_y = ( stype >> 3 ) & 7;
    mrec.ctype   = ctype;
+   mrec.stype   = stype;
 
    double xrng  = xmax - xmin;
    double p1llg = log( p1lo );
@@ -152,6 +164,8 @@ int US_ModelRecord::compute_sigmoids( int& ctype, double& xmin, double& xmax,
    double p1inc = ( p1ulg - p1llg ) / yrng;
    double p2inc = ( p2up  - p2lo  ) / yrng;
    double xinc  = 1.0 / prng;
+   double xscl  = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
+   double yscl  = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
    double ystr  = ymin;               // Start,Diff of 'IS'
    double ydif  = ymax - ymin;
    if ( ctype == CTYPE_DS )
@@ -177,7 +191,7 @@ int US_ModelRecord::compute_sigmoids( int& ctype, double& xmin, double& xmax,
          double xval  = xmin;
 
          mrec.isolutes.clear();
-         US_ZSolute isol( 0.0, 0.0, vbar, 0.0 );
+         US_ZSolute isol( 0.0, 0.0, zval, 0.0 );
 
          for ( int kk = 0; kk < nlpts; kk++ )
          { // Loop over points on a curve
@@ -188,11 +202,12 @@ int US_ModelRecord::compute_sigmoids( int& ctype, double& xmin, double& xmax,
             if ( kk == 0 )
                yval0        = yval;
 
-            isol.x       = xval * 1.e-13;
-            isol.y       = yval;
+            isol.x       = xval * xscl;
+            isol.y       = yval * yscl;
             mrec.isolutes << isol;
          } // END: points-on-curve loop
 
+         mrec.stype   = stype;
          mrec.taskx   = mndx;
          mrec.str_y   = yval0;
          mrec.end_y   = yval;
@@ -221,6 +236,8 @@ int US_ModelRecord::compute_hlines( double& xmin, double& xmax,
    double  yrng  = (double)( nypts - 1 );
    double  prng  = (double)( nlpts - 1 );
    double  xinc  = ( xmax - xmin ) / prng;
+   int     stype = parlims[ 4 ];
+   mrec.stype    = stype;
 
    if ( parlims[ 0 ] < 0.0 )
    {
@@ -230,9 +247,13 @@ int US_ModelRecord::compute_hlines( double& xmin, double& xmax,
       parlims[ 3 ] = ymax;
    }
 
+   int   attr_x  = ( stype >> 6 ) & 7;
+   int   attr_y  = ( stype >> 3 ) & 7;
    double  yval  = parlims[ 0 ];
+   double  xscl  = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
+   double  yscl  = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
    double  yinc  = ( parlims[ 1 ] - yval ) / yrng;
-   double  vbar  = parlims[ 4 ];
+   double  zval  = parlims[ 5 ];
    int     mndx  = mrecs.size();
 
    // Generate horizontal lines
@@ -241,16 +262,17 @@ int US_ModelRecord::compute_hlines( double& xmin, double& xmax,
       double xval = xmin;
 
       mrec.isolutes.clear();
-      US_ZSolute isol( 0.0, 0.0, 0.0, vbar );
+      US_ZSolute isol( 0.0, 0.0, zval, 0.0 );
 
       for ( int kk = 0; kk < nlpts; kk++ )
       { // Loop over points on a line
-         isol.x      = xval * 1.e-13;
-         isol.y      = yval;
+         isol.x      = xval * xscl;
+         isol.y      = yval * yscl;
          mrec.isolutes << isol;
          xval       += xinc;
       } // END: points-per-line loop
 
+      mrec.stype  = stype;
       mrec.taskx  = mndx;
       mrec.str_y  = yval;
       mrec.end_y  = yval;
@@ -267,12 +289,16 @@ int US_ModelRecord::compute_hlines( double& xmin, double& xmax,
 
 // Static public function to load model records from an XML stream
 int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
-   QVector< US_ModelRecord >& mrecs, QString& descr,
-   int& ctype, double& xmin, double& xmax, double& ymin, double& ymax )
+   QVector< US_ModelRecord >& mrecs, QString& descr, int& ctype,
+   double& xmin, double& xmax, double& ymin, double& ymax, int& stype )
 {
    int nmrecs      = 0;
    int nisols      = 0;
    int ncsols      = 0;
+   int attr_x      = ( stype >> 6 ) & 7;
+   int attr_y      = ( stype >> 3 ) & 7;
+   double xscl     = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
+   double yscl     = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
    bool old_vers   = false;
    const double ov = 1.0;
    US_ModelRecord mrec;
@@ -293,7 +319,9 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
          {
             double vers      = attrs.value( "version" ).toString().toDouble();
             old_vers         = ( vers <= ov );
-            QString s_type   = attrs.value( "type" ).toString();
+            QString s_type1  = attrs.value( "type" ).toString();
+            QString s_type   = attrs.value( "curve_type" ).toString();
+            s_type           = s_type.isEmpty() ? s_type1 : s_type;
             ctype            = sctypes.contains( s_type ) ?
                                ctype_flag( s_type ) : s_type.toInt();
             if ( old_vers )
@@ -303,14 +331,16 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
                ctype            = ( ctype == 0 ) ? CTYPE_SL : ctype;
             }
 //qDebug() << "STYPE" << s_type << "CTYPE" << ctype;
-            QString xlo      = attrs.value( "xmin" ).toString();
-            QString xhi      = attrs.value( "xmin" ).toString();
-            QString ylo      = attrs.value( "ymin" ).toString();
-            QString yhi      = attrs.value( "ymin" ).toString();
-            QString slo      = attrs.value( "smin" ).toString();
-            QString shi      = attrs.value( "smin" ).toString();
-            QString klo      = attrs.value( "kmin" ).toString();
-            QString khi      = attrs.value( "kmin" ).toString();
+            QString xlo      = attrs.value( "xmin"  ).toString();
+            QString xhi      = attrs.value( "xmin"  ).toString();
+            QString ylo      = attrs.value( "ymin"  ).toString();
+            QString yhi      = attrs.value( "ymin"  ).toString();
+            QString slo      = attrs.value( "smin"  ).toString();
+            QString shi      = attrs.value( "smin"  ).toString();
+            QString klo      = attrs.value( "kmin"  ).toString();
+            QString khi      = attrs.value( "kmin"  ).toString();
+            QString s_stype  = attrs.value( "solute_type" ).toString();
+            stype            = stype_flag( s_stype );
             xlo              = xlo.isEmpty() ? slo : xlo;
             xhi              = xhi.isEmpty() ? shi : xhi;
             ylo              = ylo.isEmpty() ? klo : ylo;
@@ -326,6 +356,7 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
             mrec.xmax        = xmax;
             mrec.ymin        = ymin;
             mrec.ymax        = ymax;
+            mrec.stype       = stype;
             descr            = attrs.value( "description" ).toString();
             QString s_eID    = attrs.value( "editID"      ).toString();
             QString s_mID    = attrs.value( "modelID"     ).toString();
@@ -338,9 +369,9 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
 
          else if ( xmlname == "modelrecord" )
          {
-            QString s_type   = attrs.value( "type" ).toString();
-            mrec.ctype       = sctypes.contains( s_type ) ?
-                               ctype_flag( s_type ) : s_type.toInt();
+            QString s_ctype  = attrs.value( "type" ).toString();
+            mrec.ctype       = sctypes.contains( s_ctype ) ?
+                               ctype_flag( s_ctype ) : s_ctype.toInt();
             if ( old_vers )
             {
                mrec.ctype       = ( mrec.ctype == 2 ) ? CTYPE_DS : mrec.ctype;
@@ -397,7 +428,8 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
             xmax             = qMax( xmax, csolute.x );
             ymin             = qMin( ymin, csolute.y );
             ymax             = qMax( ymax, csolute.y );
-            csolute.x       *= 1.e-13;
+            csolute.x       *= xscl;
+            csolute.y       *= yscl;
 
             mrec.csolutes << csolute;
             ncsols++;
@@ -416,8 +448,8 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
 
 // Static public function to write model records to an XML stream
 int US_ModelRecord::write_modelrecs( QXmlStreamWriter& xml,
-   QVector< US_ModelRecord >& mrecs, QString& descr,
-   int& ctype, double& xmin, double& xmax, double& ymin, double& ymax )
+   QVector< US_ModelRecord >& mrecs, QString& descr, int& ctype,
+   double& xmin, double& xmax, double& ymin, double& ymax, int& stype )
 {
    int nmrecs      = mrecs.size();
    US_ModelRecord mrec;
@@ -429,6 +461,10 @@ int US_ModelRecord::write_modelrecs( QXmlStreamWriter& xml,
    ymin            = mrec.ymin;
    ymax            = mrec.ymax;
    int nisols      = mrec.isolutes.size();
+   int attr_x      = ( stype >> 6 ) & 7;
+   int attr_y      = ( stype >> 3 ) & 7;
+   double xscl     = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e+13 : 1.0;
+   double yscl     = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e+13 : 1.0;
    xml.setAutoFormatting( true );
    xml.writeStartDocument( "1.0" );
    xml.writeComment( "DOCTYPE PcsaModelRecords" );
@@ -436,12 +472,13 @@ int US_ModelRecord::write_modelrecs( QXmlStreamWriter& xml,
    xml.writeStartElement( "modelrecords" );
    xml.writeAttribute( "version",      "1.2" );
    xml.writeAttribute( "description",  descr );
-   xml.writeAttribute( "type",         ctype_text( v_ctype )     );
+   xml.writeAttribute( "curve_type",   ctype_text( v_ctype )     );
    xml.writeAttribute( "xmin",         QString::number( xmin )   );
    xml.writeAttribute( "xmax",         QString::number( xmax )   );
    xml.writeAttribute( "ymin",         QString::number( ymin )   );
    xml.writeAttribute( "ymax",         QString::number( ymax )   );
    xml.writeAttribute( "curve_points", QString::number( nisols ) );
+   xml.writeAttribute( "solute_type",  stype_text( stype )       );
    if ( mrec.editID > 0 )
       xml.writeAttribute( "editID",    QString::number( mrec.editID ) );
    if ( mrec.modelID > 0  )
@@ -487,9 +524,10 @@ int US_ModelRecord::write_modelrecs( QXmlStreamWriter& xml,
       for ( int cc = 0; cc < ncsols; cc++ )
       {
          xml.writeStartElement( "c_solute" );
-         double xval     = mrec.csolutes[ cc ].x * 1.e13;
+         double xval     = mrec.csolutes[ cc ].x * xscl;
+         double yval     = mrec.csolutes[ cc ].y * yscl;
          xml.writeAttribute( "x", QString::number( xval ) );
-         xml.writeAttribute( "y", QString::number( mrec.csolutes[ cc ].y ) );
+         xml.writeAttribute( "y", QString::number( yval ) );
          xml.writeAttribute( "z", QString::number( mrec.csolutes[ cc ].z ) );
          xml.writeAttribute( "c", QString::number( mrec.csolutes[ cc ].c ) );
          xml.writeEndElement();
@@ -710,5 +748,31 @@ QString US_ModelRecord::ctype_text( const int i_ctype )
    s_ctype         = ( i_ctype == CTYPE_ALL ) ? "All" : s_ctype;
 
    return s_ctype;
+}
+
+// Static public function to return integer solute-type flag for given string
+int US_ModelRecord::stype_flag( const QString s_stype )
+{
+   QString snum    = QString( s_stype ).section( ".", 0, 0 );
+   int i_stype     = ( snum.mid( 0, 1 ).toInt() << 6 )
+                   + ( snum.mid( 1, 1 ).toInt() << 3 )
+                   + ( snum.mid( 2, 1 ).toInt() );
+
+   return i_stype;
+}
+
+// Static public function to return solute-type text for given integer flag
+QString US_ModelRecord::stype_text( const int i_stype )
+{
+   const char atyp[] = { 's', 'k', 'w', 'v', 'd' };
+   int ixv         = ( i_stype >> 6 ) & 7;
+   int iyv         = ( i_stype >> 3 ) & 7;
+   int izv         =   i_stype        & 7;
+   QString s_stype = QString().sprintf( "%03o", i_stype ) + "."
+                   + QString( atyp[ ixv ] )
+                   + QString( atyp[ iyv ] )
+                   + QString( atyp[ izv ] );
+
+   return s_stype;
 }
 

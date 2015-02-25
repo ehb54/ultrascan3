@@ -17,6 +17,7 @@
 #include "us_run_details2.h"
 #include "us_buffer_gui.h"
 #include "us_analyte.h"
+#include "us_zsolute.h"
 #include "qwt_plot_marker.h"
 #include "us_analysis_base2.h"
 #ifdef Q_WS_WIN         // Include headers so getpid() works on Windows
@@ -34,6 +35,15 @@
 #endif
 #ifndef SS_DATASET
 #define SS_DATASET US_SolveSim::DataSet
+#endif
+#ifndef US_ZS_ATTRIBS
+#define US_ZS_ATTRIBS
+#define ATTR_S US_ZSolute::ATTR_S
+#define ATTR_K US_ZSolute::ATTR_K
+#define ATTR_W US_ZSolute::ATTR_W
+#define ATTR_V US_ZSolute::ATTR_V
+#define ATTR_D US_ZSolute::ATTR_D
+#define ATTR_C US_ZSolute::ATTR_C
 #endif
 
 class US_pcsa : public US_AnalysisBase2
