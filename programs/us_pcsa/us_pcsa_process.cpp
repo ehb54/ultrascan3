@@ -874,19 +874,9 @@ DbgLv(1) << "SLMO: xlo xup ylo yup nyp res" << xlo << xup << ylo << yup
       nmodels = US_ModelRecord::compute_hlines( xlo, xup, ylo, yup, nyp,
                                                 res, parlims, mrecs );
 
-   // Update the solutes with vbar and add to task solutes list
+   // Add model records solutes to task solutes list
    for ( int ii = 0; ii < nmodels; ii++ )
    {
-#if 0
-      QVector< US_ZSolute >* isols = &mrecs[ ii ].isolutes;
-
-      for ( int jj = 0; jj < isols->size(); jj++ )
-      {
-         (*isols)[ jj ].z    = vbar20;
-      }
-
-      orig_sols << *isols;
-#endif
       orig_sols << mrecs[ ii ].isolutes;
    }
 DbgLv(1) << "SLMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
@@ -907,19 +897,9 @@ DbgLv(1) << "SGMO: ctp xlo xup ylo yup nyp nlp" << ctp << xlo << xup
    int nmodels = US_ModelRecord::compute_sigmoids( ctp, xlo, xup, ylo, yup,
                                                 nyp, nlpts, parlims, mrecs );
 
-   // Update the solutes with vbar and add to task solutes list
+   // Add model records solutes to task solutes list
    for ( int ii = 0; ii < nmodels; ii++ )
    {
-#if 0
-      QVector< US_ZSolute >* isols = &mrecs[ ii ].isolutes;
-
-      for ( int jj = 0; jj < isols->size(); jj++ )
-      {
-         (*isols)[ jj ].z    = vbar20;
-      }
-
-      orig_sols << *isols;
-#endif
       orig_sols << mrecs[ ii ].isolutes;
    }
 DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
@@ -2252,7 +2232,6 @@ void US_pcsaProcess::restart_fit()
    maxrss        = 0;
    varimin       = 9.e+9;
    minvarx       = 99999;
-   double vbar20 = dsets[ 0 ]->vbar20;
 DbgLv(1) << "RF: nmr" << mrecs.size() << "cfi_rmsd" << cfi_rmsd;
 
    wkstates .resize(  nthreads );
@@ -2270,17 +2249,10 @@ DbgLv(1) << "RF: sll sul" << xlolim << xuplim
    US_ModelRecord::recompute_mrecs( curvtype, xlolim, xuplim, ylolim, yuplim,
                                     nypts, cresolu, parlims, mrecs );
 
-   // Update the solutes with vbar and add to task solutes list
+   // Update the solutes list from the newly recomputed model records
    for ( int ii = 0; ii < mrecs.size(); ii++ )
    {
-      QVector< US_ZSolute >* isols = &mrecs[ ii ].isolutes;
-
-      for ( int jj = 0; jj < isols->size(); jj++ )
-      {
-         (*isols)[ jj ].z    = vbar20;
-      }
-
-      orig_sols << *isols;
+      orig_sols << mrecs[ ii ].isolutes;
    }
 DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size()
  << "nmodels" << mrecs.size();

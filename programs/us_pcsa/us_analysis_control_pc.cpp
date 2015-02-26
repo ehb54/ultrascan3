@@ -797,6 +797,7 @@ void US_AnalysisControlPc::type_change()
 {
    ctypex  = cb_curvtype->currentIndex();
    ctype   = ctypes[ ctypex ];
+   bmndx   = -1;
 DbgLv(1) << "TYPE_CHANGE: ctypex" << ctypex << "ctype" << ctype;
 
    if ( ctype == CTYPE_HL )
@@ -1161,17 +1162,17 @@ DbgLv(1) << "AC:fo: klp nlp" << klpts << nlpts;
 QString US_AnalysisControlPc::fitpars_string()
 {
    int    typ    = cb_curvtype->currentIndex();
-   double slo    = ct_lolimitx->value();
-   double sup    = ct_uplimitx->value();
-   double klo    = ct_lolimity->value();
-   double kup    = ct_uplimity->value();
+   double xlo    = ct_lolimitx->value();
+   double xup    = ct_uplimitx->value();
+   double ylo    = ct_lolimity->value();
+   double yup    = ct_uplimity->value();
    int    nvar   = (int)ct_varcount->value();
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
 
 
-   return QString().sprintf( "%d %.5f %.5f %.5f %.5f %d %d",
-            typ, slo, sup, klo, kup, nvar, noif );
+   return QString().sprintf( "%d %.5e %.5e %.5e %.5e %d %d",
+            typ, xlo, xup, ylo, yup, nvar, noif );
 }
 
 // Re-Connect or disconnect fit parameters controls
@@ -1521,6 +1522,7 @@ void US_AnalysisControlPc::adjust_xyz( const int chg_ndx )
    double ymin    = vmins[ attr_y ];
    double ymax    = vmaxs[ attr_y ];
    double yinc    = vincs[ attr_y ];
+   bmndx          = -1;
 
    // Set ranges and values in GUI elements
    ct_lolimitx->setRange( xmin, xmax, xinc );

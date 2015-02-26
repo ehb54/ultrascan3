@@ -15,10 +15,10 @@
 #include <qwt_scale_draw.h>
 
 // constructor:  model lines plot widget
-US_MLinesPlot::US_MLinesPlot( double& flo, double& fhi, double& slo,
-      double& shi, int& typ, int& nkp, int& nlp, int& bmx )
-   : US_WidgetsDialog( 0, 0 ), fmin( flo ), fmax( fhi ), smin( slo ),
-   smax( shi ), ctype( typ ), nkpts( nkp ), nlpts( nlp ), bmndx( bmx )
+US_MLinesPlot::US_MLinesPlot( double& ylo, double& yhi, double& xlo,
+      double& xhi, int& typ, int& nkp, int& nlp, int& bmx )
+   : US_WidgetsDialog( 0, 0 ), ymin( ylo ), ymax( yhi ), xmin( xlo ),
+   xmax( xhi ), ctype( typ ), nkpts( nkp ), nlpts( nlp ), bmndx( bmx )
 {
    // lay out the GUI
    setObjectName( "US_MLinesPlot" );
@@ -221,7 +221,7 @@ DbgLv(1) << "RP:PD us_grid RTN";
 
    QString       title;
    QwtPlotCurve* curv;
-DbgLv(1) << "RP:PD smin smax" << smin << smax << "fmin fmax" << fmin << fmax;
+DbgLv(1) << "RP:PD xmin xmax" << xmin << xmax << "ymin ymax" << ymin << ymax;
 
    QVector< double > xvec( nlpts, 0.0 );
    QVector< double > yvec( nlpts, 0.0 );
@@ -261,23 +261,29 @@ DbgLv(1) << "RP:PD stype" << stype << "attr_x attr_y attr_z"
    ytitl         = ( attr_y == US_ZSolute::ATTR_D )
                    ? tr( "Diffusion Coefficient" )              : ytitl;
 
-   double xrng   = smax - smin;
-   double yrng   = fmax - fmin;
 
-   if ( attr_x == US_ZSolute::ATTR_S )
+   //if ( attr_x == US_ZSolute::ATTR_S )
+   if ( attr_x == US_ZSolute::ATTR_S  ||
+        attr_x == US_ZSolute::ATTR_K )
    {
-      double xinc   = xrng < 15.0 ? 1.0 : ( xrng < 50.0 ? 2.0 : 5.0 );
-      data_plot1->setAxisScale( QwtPlot::xBottom, smin, smax, xinc );
+      //double xrng   = xmax - xmin;
+      //double xinc   = xrng < 15.0 ? 1.0 : ( xrng < 50.0 ? 2.0 : 5.0 );
+      //data_plot1->setAxisScale( QwtPlot::xBottom, xmin, xmax, xinc );
+      data_plot1->setAxisScale( QwtPlot::xBottom, xmin, xmax );
    }
    else
    {
       data_plot1->setAxisAutoScale( QwtPlot::xBottom );
    }
 
-   if ( attr_y == US_ZSolute::ATTR_S )
+   //if ( attr_y == US_ZSolute::ATTR_S )
+   if ( attr_y == US_ZSolute::ATTR_S  ||
+        attr_y == US_ZSolute::ATTR_K )
    {
-      double yinc   = yrng < 15.0 ? 1.0 : ( yrng < 50.0 ? 2.0 : 5.0 );
-      data_plot1->setAxisScale( QwtPlot::yLeft,   fmin, fmax, yinc );
+      //double yrng   = ymax - ymin;
+      //double yinc   = yrng < 15.0 ? 1.0 : ( yrng < 50.0 ? 2.0 : 5.0 );
+      //data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax, yinc );
+      data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
    }
    else
    {
@@ -338,7 +344,7 @@ DbgLv(1) << "RP:PD mrecs size" << mrecs.size() << nmodl;
             max_conc     = qMax( max_conc, mrecs[ ii ].csolutes[ kk ].c );
          }
       }
-DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
+DbgLv(1) << "RP:PD (4)xmin xmax" << xmin << xmax;
 
       // Draw the lines and solute points
 
@@ -383,8 +389,8 @@ DbgLv(1) << "RP:PD (4)smin smax" << smin << smax;
          if ( ctype == CTYPE_SL  ||  ctype == CTYPE_HL )
          { // For straight line, just draw from start to end
             klpts       = 2;
-            xx[ 0 ]     = smin;
-            xx[ 1 ]     = smax;
+            xx[ 0 ]     = xmin;
+            xx[ 1 ]     = xmax;
             yy[ 0 ]     = mrecs[ ii ].str_y;
             yy[ 1 ]     = mrecs[ ii ].end_y;
          }
@@ -444,7 +450,7 @@ DbgLv(1) << "RP:PD       ncomp" << ncomp << "x0 y0 xn yn"
  << xx[0] << yy[0] << xx[ncomp-1] << yy[ncomp-1];
          }
       } // END: models loop
-DbgLv(1) << "RP:PD (5)smin smax" << smin << smax;
+DbgLv(1) << "RP:PD (5)xmin xmax" << xmin << xmax;
    }
 
    else
