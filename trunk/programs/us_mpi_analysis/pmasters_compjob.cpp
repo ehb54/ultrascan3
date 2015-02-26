@@ -500,7 +500,7 @@ DbgLv(1) << "master start 2DSA" << startTime;
          QString progress = 
             "Iteration: "    + QString::number( iterations ) +
             "; Dataset: "    + QString::number( current_dataset + 1 ) +
-            " (" + tripleID + ")";
+            " (" + tripleID + ") of " + QString::number( count_datasets );
 
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "
@@ -1178,7 +1178,8 @@ DbgLv(1) << my_rank << ": submit worker" << worker;
          else
             progress     += "; Dataset: "
                             + QString::number( current_dataset + 1 )
-                            + " (" + tripleID + ")";
+                            + " (" + tripleID + ") of "
+                            + QString::number( count_datasets );
 
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "

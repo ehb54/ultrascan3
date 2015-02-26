@@ -57,7 +57,8 @@ void US_MPI_Analysis::_2dsa_master( void )
          else
             progress     += "; Dataset: "
                             + QString::number( current_dataset + 1 )
-                            + " (" + tripleID + ")";
+                            + " (" + tripleID + ") of "
+                            + QString::number( count_datasets );
 
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "
