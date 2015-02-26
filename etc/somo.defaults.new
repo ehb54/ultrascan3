@@ -240,8 +240,8 @@ w		# solvent acronym
 633		# anaflex_options.run_mode_3_10_lambda
 1		# anaflex_options.run_mode_3_14_iii
 99999		# anaflex_options.run_mode_3_14_jjj
-0		# batch missing atom handling
-0		# batch missing residue handling
+2		# batch missing atom handling
+2		# batch missing residue handling
 1		# batch run somo
 0		# batch run grid
 1		# batch run hydro
