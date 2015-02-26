@@ -108,8 +108,8 @@ w		# solvent acronym
 1		# skip water molecules?
 1		# skip alternate conformations?
 0		# find SH groups?
-0		# how to handle missing residues
-0		# how to handle missing atoms
+2               # how to handle missing residues
+2		# how to handle missing atoms
 0.334		# Water electron density
 -0.3742		# H scattering length (*10^-12 cm)
 0.6671		# D scattering length (*10^-12 cm)
