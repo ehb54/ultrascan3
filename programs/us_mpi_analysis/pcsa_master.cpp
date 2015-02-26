@@ -83,7 +83,8 @@ DbgLv(1) << "final-mr0: ki kw kr" << ki << kw << kr << "km kg" << km << kg;
          else
             progress     += "; Dataset: "
                             + QString::number( current_dataset + 1 )
-                            + " (" + tripleID + ")";
+                            + " (" + tripleID + ") of "
+                            + QString::number( count_datasets );
 
          if ( mc_iterations > 1 )
             progress     += "; MonteCarlo: "
@@ -711,9 +712,9 @@ DbgLv(1) << "tikr: RMSD" << mrec.rmsd << "csol size" << mrec.csolutes.size();
       progress     += "; Datasets: "
                       + QString::number( datasets_to_process );
    else
-      progress     += "; Dataset: "
-                      + QString::number( current_dataset + 1 )
-                      + " (" + tripleID + ")";
+      progress     += "; Dataset: " + QString::number( current_dataset + 1 )
+                      + " (" + tripleID + ") of "
+                      + QString::number( count_datasets );
 
    progress     += "; RMSD: " + QString::number( mrec.rmsd );
 
@@ -933,7 +934,8 @@ DbgLv(1) << " masterMC loop-RECV RESULTS_MC    mc_iter" << mc_iter << "of" << mc
             else
                progress      = "Dataset: "
                                + QString::number( current_dataset + 1 )
-                               + " (" + tripleID + ")";
+                               + " (" + tripleID + ") of "
+                               + QString::number( count_datasets );
 
             progress        += "; MonteCarlo: "
                                + QString::number( mc_iter );

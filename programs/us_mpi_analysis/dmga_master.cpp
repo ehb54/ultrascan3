@@ -542,7 +542,8 @@ DbgLv(0) << "dmga_master start loop:  nfloatc max_same_count"
                {
                   if ( datasets_to_process == 1 )
                      progress += "; Dataset: "
-                              + QString::number( current_dataset + 1 );
+                              + QString::number( current_dataset + 1 )
+                              + " of " + QString::number( count_datasets );
                   else
                      progress += "; Datasets: "
                               + QString::number( datasets_to_process );

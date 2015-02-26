@@ -355,11 +355,15 @@ DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
 
             // Fill in the missing component values
             model.update_coefficients();
+//DbgLv(1) << "CR:   cc" << cc << "model s,k,w,v,d,c"
+// << model.components[0].s << model.components[0].f_f0
+// << model.components[0].mw << model.components[0].vbar20
+// << model.components[0].D << model.components[0].signal_concentration;
 
             // Convert to experimental space
             model.components[ 0 ].s   /= dset->s20w_correction;
             model.components[ 0 ].D   /= dset->D20w_correction;
-//DbgLv(1) << "CR:   cc" << cc << "model s,k,w,v,d,c"
+//DbgLv(1) << "CR:     exp.space model s,k,w,v,d,c"
 // << model.components[0].s << model.components[0].f_f0
 // << model.components[0].mw << model.components[0].vbar20
 // << model.components[0].D << model.components[0].signal_concentration;
@@ -378,13 +382,7 @@ DbgLv(2) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
             astfem_rsa.set_debug_flag( dbg_level );
 
             astfem_rsa.calculate( simdat );
-//DbgLv(1) << "CR:     exp.space model s,k,w,v,d,c"
-// << model.components[0].s << model.components[0].f_f0
-// << model.components[0].mw << model.components[0].vbar20
-// << model.components[0].D << model.components[0].signal_concentration;
 
-            // Initialize simulation data with the experiment's grid
-            US_AstfemMath::initSimData( simdat, *edata, 0.0 );
 #if 0
 if (dbg_level>0 && thrnrank==1 && cc==0) {
  model.debug(); dset->simparams.debug(); }
