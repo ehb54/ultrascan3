@@ -23,10 +23,10 @@ class US_MLinesPlot : public US_WidgetsDialog
 
    public:
       //! \brief Model Lines Plot constructor
-      //! \param flo   f/f0 low value
-      //! \param fhi   f/f0 high value
-      //! \param slo   s low value
-      //! \param shi   s high value
+      //! \param ylo   y low value
+      //! \param yhi   y high value
+      //! \param xlo   x low value
+      //! \param xhi   x high value
       //! \param typ   curve type flag (0-3 -> SL,IS,DS,HL)
       //! \param nkp   number of k points (variations)
       //! \param nlp   number of line curve points (model solutes)
@@ -38,10 +38,10 @@ class US_MLinesPlot : public US_WidgetsDialog
       void plot_data( void );
 
    private:
-      double&       fmin;
-      double&       fmax;
-      double&       smin;
-      double&       smax;
+      double&       ymin;
+      double&       ymax;
+      double&       xmin;
+      double&       xmax;
 
       int&          ctype;
       int&          nkpts;
