@@ -1414,14 +1414,14 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
    }
 
    // Determine which attribute is fixed
-   if ( equivalent( smin, smax, 0.001 ) )
-      attr_z    = ATTR_S;
+   if (      equivalent( vmin, vmax, 0.001 ) )
+      attr_z    = ATTR_V;
    else if ( equivalent( kmin, kmax, 0.001 ) )
       attr_z    = ATTR_K;
+   else if ( equivalent( smin, smax, 0.001 ) )
+      attr_z    = ATTR_S;
    else if ( equivalent( wmin, wmax, 0.001 ) )
       attr_z    = ATTR_W;
-   else if ( equivalent( vmin, vmax, 0.001 ) )
-      attr_z    = ATTR_V;
    else if ( equivalent( dmin, dmax, 0.001 ) )
       attr_z    = ATTR_D;
    else if ( equivalent( fmin, fmax, 0.001 ) )
