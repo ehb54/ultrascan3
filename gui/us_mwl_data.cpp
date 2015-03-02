@@ -176,8 +176,11 @@ DbgLv(1) << "MwDa: nscan ncell nchan" << nscan << ncell << nchan;
    {
       QString fname   = fnames[ ii ];
       QString fpath   = fpaths[ ii ];
+      QString acell   = fname.section( ".", -5, -5 );
+      QString chann   = fname.section( ".", -4, -4 );
       QString ascan   = fname.section( ".", -2, -2 );
-      int scann       = ascan.toInt() + 1;
+      int scann       = ascan.toInt() - scnmin + 1;
+      QString celchn  = acell + " / " + chann;
 
       if ( scann > nscan )  continue;
 
@@ -261,13 +264,16 @@ DbgLv(1) << "MwDa:   ri_readings CREATED size" << ri_readings.size();
          ds.skipRawData( nlamb_i * 2 );
       }
 
-      int ccx    = hd.icell * nchan + hd.ichan;
+      int ccx    = cellchans.indexOf( celchn );
+DbgLv(1) << "MwDa:  cell chann celchn ccx" << acell << chann << celchn << ccx;
+DbgLv(1) << "MwDa:   celchn size cc0 ccn" << cellchans.size()
+ << cellchans[0] << cellchans[cellchans.size()-1];
       ccscans[ ccx ] = ccscans[ ccx ] + 1;
       int tripx  = ccx * nlambda;
       int scnx   = ( fname.section( ".", -2, -2 ).toInt() - scnmin ) * npoint;
-//DbgLv(1) << "MwDa:  PREPARE rdata ccx tripx scnx" << ccx << tripx << scnx;
-//DbgLv(1) << "MwDa:  PREPARE   icell ichan nchan" << hd.icell << hd.ichan
-// << nchan << "channel" << hd.channel;
+DbgLv(1) << "MwDa:  PREPARE rdata ccx tripx scnx" << ccx << tripx << scnx;
+DbgLv(1) << "MwDa:  PREPARE   icell ichan nchan" << hd.icell << hd.ichan
+ << nchan << "channel" << hd.channel;
 
       // Read in the radius point data
       for ( int wavx = 0; wavx < nlamb_i; wavx++ )
