@@ -67,10 +67,10 @@ DbgLv(1) << "w:" << my_rank << ":Recv:PROCESS";
 
 //if(my_rank==1)
 DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
-               simulation_values.solutes.resize( job.length );
+               simulation_values.zsolutes.resize( job.length );
 
-               MPI_Recv( simulation_values.solutes.data(), // Get solutes
-                         job_length * solute_doubles,
+               MPI_Recv( simulation_values.zsolutes.data(), // Get solutes
+                         job_length * zsolut_doubles,
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
@@ -82,7 +82,7 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
 //if(dbg_level>0 && my_rank==1)
 //if(my_rank==1)
 {
- int nn = simulation_values.solutes.size() - 1;
+ int nn = simulation_values.zsolutes.size() - 1;
  int mm = nn/2;
  DbgLv(1) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count
   << "vbar s20wc bott"
@@ -90,9 +90,9 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
   << data_sets[offset]->s20w_correction
   << data_sets[offset]->centerpiece_bottom;
  DbgLv(1) << "w:" << my_rank << ": sol0 solm soln"
-  << simulation_values.solutes[0].s << simulation_values.solutes[0].k
-  << simulation_values.solutes[mm].s << simulation_values.solutes[mm].k
-  << simulation_values.solutes[nn].s << simulation_values.solutes[nn].k;
+  << simulation_values.zsolutes[0].x << simulation_values.zsolutes[0].y
+  << simulation_values.zsolutes[mm].x << simulation_values.zsolutes[mm].y
+  << simulation_values.zsolutes[nn].x << simulation_values.zsolutes[nn].y;
 }
 //*DEBUG*
 
@@ -101,17 +101,17 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
 //*DEBUG*
 //if(my_rank==1)
 {
- int nn = simulation_values.solutes.size() - 1;
+ int nn = simulation_values.zsolutes.size() - 1;
  int mm = nn/2;
  DbgLv(1) << "w:" << my_rank << ": nso"
-  << simulation_values.solutes.size() << "c:sol0 solm soln"
-  << simulation_values.solutes[0].s << simulation_values.solutes[0].k
-  << simulation_values.solutes[mm].s << simulation_values.solutes[mm].k
-  << simulation_values.solutes[nn].s << simulation_values.solutes[nn].k;
+  << simulation_values.zsolutes.size() << "c:sol0 solm soln"
+  << simulation_values.zsolutes[ 0].x << simulation_values.zsolutes[ 0].y
+  << simulation_values.zsolutes[mm].x << simulation_values.zsolutes[mm].y
+  << simulation_values.zsolutes[nn].x << simulation_values.zsolutes[nn].y;
 }
 //*DEBUG*
                // Tell master we are sending back results
-               int sizes[ 4 ] = { simulation_values.solutes.size(),
+               int sizes[ 4 ] = { simulation_values.zsolutes.size(),
                                   simulation_values.ti_noise.size(),
                                   simulation_values.ri_noise.size(),
                                   max_rss() };
@@ -132,8 +132,8 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << sizes[0]
                          my_communicator );
 
                // Send back to master all of simulation_values
-               MPI_Send( simulation_values.solutes.data(),
-                         simulation_values.solutes.size() * solute_doubles,
+               MPI_Send( simulation_values.zsolutes.data(),
+                         simulation_values.zsolutes.size() * zsolut_doubles,
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
@@ -183,8 +183,8 @@ DbgLv(1) << "w:" << my_rank << ":Recv:PROCESS_MC" << "mc_iter" << mc_iter;
 DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
                simulation_values.solutes.resize( job.length );
 
-               MPI_Recv( simulation_values.solutes.data(), // Get solutes
-                         job_length * solute_doubles,
+               MPI_Recv( simulation_values.zsolutes.data(), // Get solutes
+                         job_length * zsolut_doubles,
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,
@@ -215,7 +215,7 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
 //if(dbg_level>0 && my_rank==1)
 //if(my_rank==1)
 {
- int nn = simulation_values.solutes.size() - 1;
+ int nn = simulation_values.zsolutes.size() - 1;
  int mm = nn/2;
  DbgLv(1) << "w:" << my_rank << ": offs dscnt" << offset << dataset_count
   << "vbar s20wc bott"
@@ -223,9 +223,9 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
   << data_sets[offset]->s20w_correction
   << data_sets[offset]->centerpiece_bottom;
  DbgLv(1) << "w:" << my_rank << ": sol0 solm soln"
-  << simulation_values.solutes[0].s << simulation_values.solutes[0].k
-  << simulation_values.solutes[mm].s << simulation_values.solutes[mm].k
-  << simulation_values.solutes[nn].s << simulation_values.solutes[nn].k;
+  << simulation_values.zsolutes[ 0].x << simulation_values.zsolutes[ 0].y
+  << simulation_values.zsolutes[mm].x << simulation_values.zsolutes[mm].y
+  << simulation_values.zsolutes[nn].x << simulation_values.zsolutes[nn].y;
 }
 //*DEBUG*
 
@@ -237,17 +237,17 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
 //*DEBUG*
 //if(my_rank==1)
 {
- int nn = simulation_values.solutes.size() - 1;
+ int nn = simulation_values.zsolutes.size() - 1;
  int mm = nn/2;
  DbgLv(1) << "w:" << my_rank << ": nso"
-  << simulation_values.solutes.size() << "c:sol0 solm soln"
-  << simulation_values.solutes[0].s << simulation_values.solutes[0].k
-  << simulation_values.solutes[mm].s << simulation_values.solutes[mm].k
-  << simulation_values.solutes[nn].s << simulation_values.solutes[nn].k;
+  << simulation_values.zsolutes.size() << "c:sol0 solm soln"
+  << simulation_values.zsolutes[ 0].x << simulation_values.zsolutes[ 0].y
+  << simulation_values.zsolutes[mm].x << simulation_values.zsolutes[mm].y
+  << simulation_values.zsolutes[nn].x << simulation_values.zsolutes[nn].y;
 }
 //*DEBUG*
                // Tell master we are sending back results
-               int sizes[ 4 ] = { simulation_values.solutes.size(),
+               int sizes[ 4 ] = { simulation_values.zsolutes.size(),
                                  0,
                                  0,
                                  max_rss() };
@@ -270,8 +270,8 @@ DbgLv(1) << "w:" << my_rank << ":Send:RESULTS_MC  sizes"
                          my_communicator );
 
                // Send back to master all of simulation_values
-               MPI_Send( simulation_values.solutes.data(),
-                         sizes[ 0 ] * solute_doubles,
+               MPI_Send( simulation_values.zsolutes.data(),
+                         sizes[ 0 ] * zsolut_doubles,
                          MPI_DOUBLE,
                          MPI_Job::MASTER,
                          MPI_Job::TAG0,

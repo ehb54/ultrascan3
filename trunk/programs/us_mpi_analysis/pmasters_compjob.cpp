@@ -1165,7 +1165,7 @@ DbgLv(1) << my_rank << ": submit worker" << worker;
          QString tripleID = edata->cell + edata->channel + edata->wavelength;
 
          simulation_values.variance   = mrecs[ 0 ].variance;
-         simulation_values.solutes    = mrecs[ 0 ].csolutes;
+         simulation_values.zsolutes   = mrecs[ 0 ].csolutes;
          simulation_values.ti_noise   = mrecs[ 0 ].ti_noise;
          simulation_values.ri_noise   = mrecs[ 0 ].ri_noise;
 

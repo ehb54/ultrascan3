@@ -171,21 +171,25 @@ class US_MPI_Analysis : public QObject
 
     QList< QVector< US_Solute > >  orig_solutes;
     QVector< US_Solute >           ljob_solutes;
+    QList< QVector< US_ZSolute > > orig_zsolutes;
 
     class Sa_Job
     {
        public:
-          MPI_Job              mpi_job;
-          QVector< US_Solute > solutes;
+          MPI_Job               mpi_job;
+          QVector< US_Solute  > solutes;
+          QVector< US_ZSolute > zsolutes;
     };
 
     QList< Sa_Job >               job_queue;
 
-    static const double LARGE          = 1.e39;
-    static const int    solute_doubles = sizeof( US_Solute ) / sizeof( double );
-    QList< QVector< US_Solute > > calculated_solutes;
-    QList< QVector< US_Solute > > ds_calc_solutes;
-    QVector< US_Solute >          dset_calc_solutes;
+    static const double LARGE       = 1.e39;
+    static const int solute_doubles = sizeof( US_Solute  ) / sizeof( double );
+    static const int zsolut_doubles = sizeof( US_ZSolute ) / sizeof( double );
+    QList< QVector< US_Solute  > > calculated_solutes;
+    QList< QVector< US_Solute  > > ds_calc_solutes;
+    QVector< US_Solute >           dset_calc_solutes;
+    QList< QVector< US_ZSolute > > calculated_zsolutes;
 
     SIMULATION simulation_values;
     SIMULATION wksim_vals;
@@ -198,6 +202,7 @@ class US_MPI_Analysis : public QObject
           int                   depth;
           int                   worker;
           QVector< US_Solute >  solutes;
+          QVector< US_ZSolute > zsolutes;
     };
 
     QList< Result >             cached_results;
