@@ -54,15 +54,15 @@ DbgLv(1) << "pcsa_mast:   submit_pcsa kc" << kcurve;
          QString tripleID = edata->cell + edata->channel + edata->wavelength;
 
          simulation_values.variance   = mrecs[ 0 ].variance;
-         simulation_values.solutes    = mrecs[ 0 ].csolutes;
+         simulation_values.zsolutes   = mrecs[ 0 ].csolutes;
          simulation_values.ti_noise   = mrecs[ 0 ].ti_noise;
          simulation_values.ri_noise   = mrecs[ 0 ].ri_noise;
 //*DEBUG*
 wksim_vals          = simulation_values;
-wksim_vals.solutes  = mrecs[ 0 ].isolutes;
+wksim_vals.zsolutes = mrecs[ 0 ].isolutes;
 calc_residuals( current_dataset, 1, wksim_vals );
 DbgLv(1) << "final-mr0: variance1 variance2" << simulation_values.variance << wksim_vals.variance;
-DbgLv(1) << "final-mr0: csolsize1 csolsize2" << simulation_values.solutes.size() << wksim_vals.solutes.size();
+DbgLv(1) << "final-mr0: csolsize1 csolsize2" << simulation_values.zsolutes.size() << wksim_vals.zsolutes.size();
 DbgLv(1) << "final-mr0: worker_status" << worker_status;
 int ki=worker_status.count(INIT);
 int kw=worker_status.count(WORKING);
@@ -247,8 +247,8 @@ DbgLv(1) << " master loop-BOTTOM:  RESULTS  worker" << worker;
 void US_MPI_Analysis::init_pcsa_solutes( void )
 {
 DbgLv(1) << "  init_pcsa_sols: IN";
-   calculated_solutes.clear();
-   orig_solutes      .clear();
+   calculated_zsolutes.clear();
+   orig_zsolutes      .clear();
    simulation_values.noisflag    = parameters[ "tinoise_option" ].toInt() > 0 ?
                                    1 : 0;
    simulation_values.noisflag   += parameters[ "rinoise_option" ].toInt() > 0 ?
@@ -257,22 +257,27 @@ DbgLv(1) << "  init_pcsa_sols: IN";
    simulation_values.dbg_timing  = dbg_timing;
 DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
-   double s_min      = parameters[ "s_min"           ].toDouble();
-   double s_max      = parameters[ "s_max"           ].toDouble();
-   double ff0_min    = parameters[ "ff0_min"         ].toDouble();
-   double ff0_max    = parameters[ "ff0_max"         ].toDouble();
+   double x_min      = parameters[ "x_min"           ].toDouble();
+   double x_max      = parameters[ "x_max"           ].toDouble();
+   double y_min      = parameters[ "y_min"           ].toDouble();
+   double y_max      = parameters[ "y_max"           ].toDouble();
+   double zval       = parameters[ "z_value"         ].toDouble();
    QString s_ctyp    = parameters[ "curve_type" ];
    int    ctype      = US_ModelRecord::ctype_flag( s_ctyp );
+   QString s_styp    = parameters[ "solute_type" ];
+   int    stype      = US_ModelRecord::stype_flag( s_styp );
    int    nkpts      = parameters[ "vars_count"      ].toInt();
    int    nkpto      = sq( nkpts );
    int    nlpts      = parameters[ "curves_points"   ].toInt();
 DbgLv(1) << "  init_pcsa_sols: nkpts" << nkpts << "nkpto" << nkpto;
    double vbar20     = data_sets[ current_dataset ]->vbar20;
+   zval              = ( zval == 0.0 ) ? vbar20 : zval;
 DbgLv(1) << "  init_pcsa_sols: currds" << current_dataset << "vbar" << vbar20;
-   double pararry[ 15 ];
+   double pararry[ 27 ];
    double *parlims   = (double*)pararry;
    parlims[ 0 ]      = -1.0;
-   parlims[ 4 ]      = vbar20;
+   parlims[ 4 ]      = stype;
+   parlims[ 5 ]      = zval;
    mrecs.clear();
 DbgLv(1) << "  init_pcsa_sols: s_ctyp" << s_ctyp << "ctype" << ctype;
 
@@ -280,7 +285,7 @@ DbgLv(1) << "  init_pcsa_sols: s_ctyp" << s_ctyp << "ctype" << ctype;
    {
       mrecs.reserve( nkpto );
 DbgLv(1) << "  init_pcsa_sols: call compute_slines  nkpts" << nkpts;
-      US_ModelRecord::compute_slines( s_min, s_max, ff0_min, ff0_max,
+      US_ModelRecord::compute_slines( x_min, x_max, y_min, y_max,
             nkpts, nlpts, parlims, mrecs );
 DbgLv(1) << "  init_pcsa_sols:  compute_slines: mrecs sz" << mrecs.size();
    }
@@ -289,7 +294,7 @@ DbgLv(1) << "  init_pcsa_sols:  compute_slines: mrecs sz" << mrecs.size();
    {
       mrecs.reserve( nkpto );
 DbgLv(1) << "  init_pcsa_sols: call compute_sigmoids  nkpts" << nkpts;
-      US_ModelRecord::compute_sigmoids( ctype, s_min, s_max, ff0_min, ff0_max,
+      US_ModelRecord::compute_sigmoids( ctype, x_min, x_max, y_min, y_max,
             nkpts, nlpts, parlims, mrecs );
 DbgLv(1) << "  init_pcsa_sols:  compute_sigmoids: mrecs sz" << mrecs.size();
    }
@@ -298,7 +303,7 @@ DbgLv(1) << "  init_pcsa_sols:  compute_sigmoids: mrecs sz" << mrecs.size();
    {
       nkpto             = nkpts;
       mrecs.reserve( nkpto );
-      US_ModelRecord::compute_hlines( s_min, s_max, ff0_min, ff0_max,
+      US_ModelRecord::compute_hlines( x_min, x_max, y_min, y_max,
             nkpts, nlpts, parlims, mrecs );
    }
 
@@ -307,25 +312,27 @@ DbgLv(1) << "  init_pcsa_sols:  compute_sigmoids: mrecs sz" << mrecs.size();
       nkpto            *= 3;
       int ctype1        = CTYPE_IS;
       int ctype2        = CTYPE_DS;
-      double *parlims1  = parlims + 5;
-      double *parlims2  = parlims + 10;
+      double *parlims1  = parlims + 9;
+      double *parlims2  = parlims + 18;
       parlims1[ 0 ]     = parlims[ 0 ];
       parlims1[ 4 ]     = parlims[ 4 ];
+      parlims1[ 5 ]     = parlims[ 5 ];
       parlims2[ 0 ]     = parlims[ 0 ];
       parlims2[ 4 ]     = parlims[ 4 ];
+      parlims2[ 5 ]     = parlims[ 5 ];
       mrecs.reserve( nkpto );
 
-      US_ModelRecord::compute_slines( s_min, s_max, ff0_min, ff0_max,
+      US_ModelRecord::compute_slines( x_min, x_max, y_min, y_max,
             nkpts, nlpts, parlims,  mrecs );
-      US_ModelRecord::compute_sigmoids( ctype1, s_min, s_max, ff0_min, ff0_max,
+      US_ModelRecord::compute_sigmoids( ctype1, x_min, x_max, y_min, y_max,
             nkpts, nlpts, parlims1, mrecs );
-      US_ModelRecord::compute_sigmoids( ctype2, s_min, s_max, ff0_min, ff0_max,
+      US_ModelRecord::compute_sigmoids( ctype2, x_min, x_max, y_min, y_max,
             nkpts, nlpts, parlims2, mrecs );
    }
 
    for ( int ii = 0; ii < mrecs.size(); ii++ )
    {
-      orig_solutes << mrecs[ ii ].isolutes;
+      orig_zsolutes << mrecs[ ii ].isolutes;
    }
 }
 
@@ -333,7 +340,7 @@ DbgLv(1) << "  init_pcsa_sols:  compute_sigmoids: mrecs sz" << mrecs.size();
 void US_MPI_Analysis::submit_pcsa( Sa_Job& job, int worker )
 {
    job.mpi_job.command        = MPI_Job::PROCESS;
-   job.mpi_job.length         = job.solutes.size(); 
+   job.mpi_job.length         = job.zsolutes.size(); 
    job.mpi_job.meniscus_value = 0.0;
    job.mpi_job.solution       = mc_iteration;
    job.mpi_job.dataset_offset = current_dataset;
@@ -361,8 +368,8 @@ DbgLv(1) << " master loop-SEND PROCESS  worker" << worker
 DbgLv(1) << "Mast: submit: send #1";
 
    // Send solutes
-   MPI_Send( job.solutes.data(), 
-       job.mpi_job.length * solute_doubles, 
+   MPI_Send( job.zsolutes.data(), 
+       job.mpi_job.length * zsolut_doubles, 
        MPI_DOUBLE,   // Pass solute vector as hw independent values
        worker,       // to worker
        MPI_Job::MASTER,
@@ -376,7 +383,7 @@ DbgLv(1) << "Mast: submit: send #2";
 // Process the results from a just-completed worker task
 void US_MPI_Analysis::process_pcsa_results( const int worker, const int* sizes )
 {
-   simulation_values.solutes.resize( sizes[ 0 ] );
+   simulation_values.zsolutes.resize( sizes[ 0 ] );
    simulation_values.variances.resize( datasets_to_process );
    simulation_values.ti_noise.resize( sizes[ 1 ] );
    simulation_values.ri_noise.resize( sizes[ 2 ] );
@@ -384,8 +391,8 @@ void US_MPI_Analysis::process_pcsa_results( const int worker, const int* sizes )
    MPI_Status status;
 
    // Get all simulation_values
-   MPI_Recv( simulation_values.solutes.data(),
-             sizes[ 0 ] * solute_doubles,
+   MPI_Recv( simulation_values.zsolutes.data(),
+             sizes[ 0 ] * zsolut_doubles,
              MPI_DOUBLE,
              worker,
              MPI_Job::TAG0,
@@ -427,9 +434,9 @@ void US_MPI_Analysis::process_pcsa_results( const int worker, const int* sizes )
 DbgLv(1) << "Mast:  process_results:      worker" << worker
  << " solsize" << sizes[0];
    Result result;
-   result.depth   = worker_depth[ worker ];
-   result.worker  = worker;
-   result.solutes = simulation_values.solutes;
+   result.depth    = worker_depth[ worker ];
+   result.worker   = worker;
+   result.zsolutes = simulation_values.zsolutes;
 
    // Process the result solutes
    process_pcsa_solutes( result );
@@ -446,7 +453,7 @@ DbgLv(1) << "Mast:    process_solutes:      worker" << result.worker
    // Update the model record entry with calculated solutes and RMSD
    US_ModelRecord*
        cMr        = &mrecs[ jcurve ];
-   cMr->csolutes  = result.solutes;
+   cMr->csolutes  = result.zsolutes;
    cMr->variance  = simulation_values.variance;
    cMr->rmsd      = cMr->variance > 0.0 ? sqrt( cMr->variance ) : 0.0;
    int noiflg     = simulation_values.noisflag;
@@ -478,16 +485,19 @@ DbgLv(1) << "pcsa:wrmr:  editGUID=" << mrecs[0].editGUID
                            .replace( ".model", ".mrecs" );
    QString s_ctyp        = parameters[ "curve_type" ];
    int    ctype          = US_ModelRecord::ctype_flag( s_ctyp );
-   double s_min          = parameters[ "s_min"         ].toDouble();
-   double s_max          = parameters[ "s_max"         ].toDouble();
-   double ff0_min        = parameters[ "ff0_min"       ].toDouble();
-   double ff0_max        = parameters[ "ff0_max"       ].toDouble();
+   QString s_styp        = parameters[ "solute_type" ];
+   int    stype          = US_ModelRecord::stype_flag( s_styp );
+   double x_min          = parameters[ "x_min"   ].toDouble();
+   double x_max          = parameters[ "x_max"   ].toDouble();
+   double y_min          = parameters[ "y_min"   ].toDouble();
+   double y_max          = parameters[ "y_max"   ].toDouble();
+   double z_value        = parameters[ "z_value" ].toDouble();
    if ( ctype != CTYPE_ALL )
       mrecs[ 0 ].ctype      = ctype;
-   mrecs[ 0 ].smin       = s_min;
-   mrecs[ 0 ].smax       = s_max;
-   mrecs[ 0 ].kmin       = ff0_min;
-   mrecs[ 0 ].kmax       = ff0_max;
+   mrecs[ 0 ].xmin       = x_min;
+   mrecs[ 0 ].xmax       = x_max;
+   mrecs[ 0 ].ymin       = y_min;
+   mrecs[ 0 ].ymax       = y_max;
    QString fnameo        = s_desc + ".xml";
    QFile fileo( fnameo );
 
@@ -497,7 +507,7 @@ DbgLv(1) << "pcsa:wrmr:  editGUID=" << mrecs[0].editGUID
 
 DbgLv(1) << "pcsa:wrmr: call wr_mr: s_desc" << s_desc;
       US_ModelRecord::write_modelrecs( xmlo, mrecs, s_desc, ctype,
-                                       s_min, s_max, ff0_min, ff0_max );
+                                       x_min, x_max, y_min, y_max, stype );
 DbgLv(1) << "pcsa:wrmr:  rtn wr_mr";
 
       fileo.close();
@@ -562,19 +572,24 @@ DbgLv(1) << "iter_p: rmsd_c rmsd_l" << rmsd_curr << rmsd_last
    }
 
    // Set up to create a narrower set of model record curves
-   double s_min      = parameters[ "s_min"           ].toDouble();
-   double s_max      = parameters[ "s_max"           ].toDouble();
-   double ff0_min    = parameters[ "ff0_min"         ].toDouble();
-   double ff0_max    = parameters[ "ff0_max"         ].toDouble();
+   double x_min      = parameters[ "x_min"      ].toDouble();
+   double x_max      = parameters[ "x_max"      ].toDouble();
+   double y_min      = parameters[ "y_min"      ].toDouble();
+   double y_max      = parameters[ "y_max"      ].toDouble();
+   double zval       = parameters[ "z_value"    ].toDouble();
    QString s_ctyp    = parameters[ "curve_type" ];
    int    ctype      = US_ModelRecord::ctype_flag( s_ctyp );
+   QString s_styp    = parameters[ "solute_type" ];
+   int    stype      = US_ModelRecord::stype_flag( s_styp );
    int    nkpts      = parameters[ "vars_count"      ].toInt();
    int    nlpts      = parameters[ "curves_points"   ].toInt();
    double vbar20     = data_sets[ current_dataset ]->vbar20;
-   double pararry[ 15 ];
+   zval              = ( zval == 0.0 ) ? vbar20 : zval;
+   double pararry[ 27 ];
    double *parlims   = (double*)pararry;
    parlims[ 0 ]      = -1.0;
-   parlims[ 4 ]      = vbar20;
+   parlims[ 4 ]      = stype;
+   parlims[ 5 ]      = zval;
    int    ncurve     = sq( nkpts );
 DbgLv(1) << "iter_p: ncurve" << ncurve;
 
@@ -583,7 +598,7 @@ DbgLv(1) << "iter_p: ncurve" << ncurve;
    if ( ctype != CTYPE_ALL )
    {  // All non-combination records:  re-compute with narrower limits
 
-      US_ModelRecord::recompute_mrecs( ctype, s_min, s_max, ff0_min, ff0_max,
+      US_ModelRecord::recompute_mrecs( ctype, x_min, x_max, y_min, y_max,
                                        nkpts, nlpts, parlims, mrecs );
 DbgLv(1) << "iter_p: parlims"
  << parlims[0] << parlims[1] << parlims[2] << parlims[3] << parlims[4];
@@ -595,8 +610,8 @@ DbgLv(1) << "iter_p: parlims"
       QVector< US_ModelRecord > mrecs_is;
       QVector< US_ModelRecord > mrecs_ds;
       double* plims_sl  = parlims;
-      double* plims_is  = plims_sl + 5;
-      double* plims_ds  = plims_is + 5;
+      double* plims_is  = plims_sl + 9;
+      double* plims_ds  = plims_is + 18;
 
       // Separate entries by curve type
       filter_mrecs( CTYPE_SL, mrecs, mrecs_sl );
@@ -605,15 +620,15 @@ DbgLv(1) << "iter_p: parlims"
 
       // Recompute each curve type with narrower limits
       ctype             = CTYPE_SL;
-      US_ModelRecord::recompute_mrecs( ctype, s_min, s_max, ff0_min, ff0_max,
+      US_ModelRecord::recompute_mrecs( ctype, x_min, x_max, y_min, y_max,
                                        nkpts, nlpts, plims_sl, mrecs_sl );
 
       ctype             = CTYPE_IS;
-      US_ModelRecord::recompute_mrecs( ctype, s_min, s_max, ff0_min, ff0_max,
+      US_ModelRecord::recompute_mrecs( ctype, x_min, x_max, y_min, y_max,
                                        nkpts, nlpts, plims_is, mrecs_is );
 
       ctype             = CTYPE_DS;
-      US_ModelRecord::recompute_mrecs( ctype, s_min, s_max, ff0_min, ff0_max,
+      US_ModelRecord::recompute_mrecs( ctype, x_min, x_max, y_min, y_max,
                                        nkpts, nlpts, plims_ds, mrecs_ds );
 
       // Re-combine into a single vector
@@ -639,8 +654,8 @@ DbgLv(1) << "iter_p: parlims"
 
       ctype             = CTYPE_ALL;
       mrecs[0].v_ctype  = ctype;          // Vector curve type is "All"
-      plims_is[ 4 ]     = parlims[ 4 ];   // Set vbar20 for all types
-      plims_ds[ 4 ]     = parlims[ 4 ];
+      plims_is[ 5 ]     = parlims[ 5 ];   // Set z value for all types
+      plims_ds[ 5 ]     = parlims[ 5 ];
 DbgLv(1) << "iter_p: parlims"
  << parlims[0] << parlims[1] << parlims[2] << parlims[3] << parlims[4];
 DbgLv(1) << "iter_p: parlims2"
@@ -650,12 +665,12 @@ DbgLv(1) << "iter_p: parlims3"
    }  // END:  records a mix of SL,IS,DS
 
    // Now reset original solutes and fill queue
-   orig_solutes.clear();
-   orig_solutes.reserve( mrecs.size() );
+   orig_zsolutes.clear();
+   orig_zsolutes.reserve( mrecs.size() );
 
    for ( int ii = 0; ii < mrecs.size(); ii++ )
    {
-      orig_solutes << mrecs[ ii ].isolutes;
+      orig_zsolutes << mrecs[ ii ].isolutes;
    }
 
    fill_queue();
@@ -681,7 +696,7 @@ DbgLv(1) << "tikr: tikreg" << tikreg;
                     : alpha_scan();
 
    wksim_vals          = simulation_values;
-   wksim_vals.solutes  = mrecs[ 0 ].isolutes;
+   wksim_vals.zsolutes = mrecs[ 0 ].isolutes;
    wksim_vals.alpha    = alpha;
    wksim_vals.noisflag = 0;
    wksim_vals.ri_noise.clear();
@@ -691,7 +706,7 @@ DbgLv(1) << "tikr: alpha" << alpha;
    calc_residuals( current_dataset, 1, wksim_vals );
 
    mrec           = mrecs[ 1 ];
-   mrec.csolutes  = wksim_vals.solutes;
+   mrec.csolutes  = wksim_vals.zsolutes;
    mrec.variance  = wksim_vals.variance;
    mrec.rmsd      = sqrt( mrec.variance );
    mrec.sim_data  = wksim_vals.sim_data;
@@ -729,6 +744,7 @@ void US_MPI_Analysis::montecarlo_pcsa()
    mc_iterations    = parameters[ "mc_iterations" ].toInt();
    mc_iteration     = 1;
    mrec             = mrecs[ 0 ];
+   int stype        = mrec.stype;
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
    QString tripleID = edata->cell + edata->channel + edata->wavelength;
    job_queue.clear();
@@ -739,9 +755,9 @@ void US_MPI_Analysis::montecarlo_pcsa()
    for ( int ii = 1; ii <= mc_iterations; ii++ )
    {
       Sa_Job job;
-      job.solutes      = mrec.isolutes;
+      job.zsolutes                = mrec.isolutes;
       job.mpi_job.command         = MPI_Job::PROCESS_MC;
-      job.mpi_job.length          = job.solutes.size();
+      job.mpi_job.length          = job.zsolutes.size();
       job.mpi_job.meniscus_value  = meniscus_value;
       job.mpi_job.dataset_offset  = current_dataset;
       job.mpi_job.dataset_count   = datasets_to_process;
@@ -847,8 +863,8 @@ DbgLv(1) << " masterMC loop-SEND PROCESS_MC  worker" << worker
                    my_communicator );
 
          // Send solutes
-         MPI_Send( job.solutes.data(),
-                   job.mpi_job.length * solute_doubles,
+         MPI_Send( job.zsolutes.data(),
+                   job.mpi_job.length * zsolut_doubles,
                    MPI_DOUBLE,
                    worker,
                    MPI_Job::MASTER,
@@ -888,10 +904,10 @@ DbgLv(1) << " masterMC loop-RECV RESULTS_MC  worker" << worker << "kci_recv" << 
 
             // Process PCSA MC results
             wksim_vals       = simulation_values;
-            wksim_vals.solutes  .resize( sizes[ 0 ] );
+            wksim_vals.zsolutes .resize( sizes[ 0 ] );
             wksim_vals.variances.resize( datasets_to_process );
 
-            MPI_Recv( wksim_vals.solutes.data(),
+            MPI_Recv( wksim_vals.zsolutes.data(),
                       sizes[ 0 ] * solute_doubles,
                       MPI_DOUBLE,
                       worker,
@@ -1045,14 +1061,11 @@ DbgLv(1) << " masterMC loop-RECV invalid  worker" << worker << "tag" << status.M
 
    wmodel.load( mfile );
    mrec.csolutes.resize( wmodel.components.size() );
-   double vbar20     = mrecs[ 0 ].csolutes[ 0 ].v;
 
    for ( int jj = 0; jj < wmodel.components.size(); jj++ )
    {
-      mrec.csolutes[ jj ].s  = wmodel.components[ jj ].s;
-      mrec.csolutes[ jj ].k  = wmodel.components[ jj ].f_f0;
-      mrec.csolutes[ jj ].c  = wmodel.components[ jj ].signal_concentration;
-      mrec.csolutes[ jj ].v  = vbar20;
+      US_ZSolute::set_solute_values( wmodel.components[ jj ],
+                                     mrec.csolutes[ jj ], stype );
    }
 
    mrecs[ mrx ]      = mrec;
@@ -1166,13 +1179,13 @@ void US_MPI_Analysis::pcsa_best_model()
 {
    US_Model mdummy;
    mrec              = mrecs[ 0 ];
-   simulation_values.solutes  = mrec.isolutes;
+   simulation_values.zsolutes  = mrec.isolutes;
    simulation_values.ti_noise.clear();
    simulation_values.ri_noise.clear();
 
    calc_residuals( current_dataset, 1, simulation_values );
 
-   mrec.csolutes     = simulation_values.solutes;
+   mrec.csolutes     = simulation_values.zsolutes;
    mrec.variance     = simulation_values.variance;
    mrec.rmsd         = sqrt( mrec.variance );
    mrec.model        = data_sets[ current_dataset ]->model;
@@ -1308,16 +1321,15 @@ void US_MPI_Analysis::write_pcsa_aux_model( int iter )
    wmodel.description  = mdesc;
    wmodel.components.clear();
 DbgLv(1) << "wraux: mdesc" << mdesc;
+   QString s_styp      = parameters[ "solute_type" ];
+   int    stype        = US_ModelRecord::stype_flag( s_styp );
 
-   for ( int ii = 0; ii < wksim_vals.solutes.size(); ii++ )
+   for ( int ii = 0; ii < wksim_vals.zsolutes.size(); ii++ )
    {
-      const US_Solute* solute = &wksim_vals.solutes[ ii ];
       US_Model::SimulationComponent component;
-      component.s         = solute->s;
-      component.f_f0      = solute->k;
+      US_ZSolute::set_mcomp_values( component, wksim_vals.zsolutes[ ii ],
+                                    stype, true );
       component.name      = QString().sprintf( "SC%04d", ii + 1 );
-      component.vbar20    = vbar20;
-      component.signal_concentration = solute->c;
 
       US_Model::calc_coefficients( component );
 
@@ -1419,7 +1431,7 @@ double US_MPI_Analysis::alpha_scan()
       {  // For the first one do a full compute and save the A,B matrices
          US_SolveSim::Simulation sim_vals;
          sim_vals.alpha     = calpha;
-         sim_vals.solutes   = mrec.isolutes;
+         sim_vals.zsolutes  = mrec.isolutes;
 
          US_SolveSim* solvesim = new US_SolveSim( data_sets, 0, false );
 

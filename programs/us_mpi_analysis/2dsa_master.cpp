@@ -713,12 +713,12 @@ if(dbg_level>0)
  {
   DbgLv(1) << "M:wo: jj" << jj << "typ tx" << mrecs[jj].ctype << mrecs[jj].taskx << "isz csz"
    << mrecs[jj].isolutes.size() << mrecs[jj].csolutes.size() << "rmsd" << mrecs[jj].rmsd
-   << "sk ek" << mrecs[jj].str_k << mrecs[jj].end_k
+   << "sy ey" << mrecs[jj].str_y << mrecs[jj].end_y
    << "p1 p2" << mrecs[jj].par1 << mrecs[jj].par2;
  }
 }
 //*DEBUG*
-      sim.solutes  = mrecs[ 0 ].csolutes;
+      sim.zsolutes = mrecs[ 0 ].csolutes;
       mxdssz       = sim.solutes.size();
       sim.ti_noise = mrecs[ 0 ].ti_noise;
       sim.ri_noise = mrecs[ 0 ].ri_noise;
@@ -727,7 +727,7 @@ DbgLv(1) << "WrO: mxdssz" << mxdssz;
 
    if ( mxdssz == 0 )
    { // Handle the case of a zero-solute final model
-      int simssz   = simulation_values.solutes.size();
+      int simssz   = simulation_values.zsolutes.size();
       int dm1ssz   = max_depth > 0 ?
                      calculated_solutes[ max_depth - 1 ].size() : 0;
       DbgLv( 0 ) << "*WARNING* Final solutes size" << mxdssz
@@ -735,12 +735,12 @@ DbgLv(1) << "WrO: mxdssz" << mxdssz;
          << simssz << dm1ssz;
       if ( simssz > 0 )
       { // Use the last result solutes if there are some
-         sim.solutes  = simulation_values.solutes;
+         sim.zsolutes = simulation_values.zsolutes;
          DbgLv( 0 ) << "   SimValues solutes used";
       }
       else if ( dm1ssz > 0 )
       { // Else use the max-depth-minus-1 solutes if there are some
-         sim.solutes  = calculated_solutes[ max_depth - 1 ];
+         //sim.zsolutes = calculated_solutes[ max_depth - 1 ];
          DbgLv( 0 ) << "   CalcValue[mxdepth-1] solutes used";
       }
       else
@@ -1335,6 +1335,8 @@ DbgLv(1) << "wrMo:  model comps" << model.components.size();
    model.wavelength  = edata->wavelength.toDouble();
    model.modelGUID   = ( ! model.monteCarlo  ||  mc_iter == 1 )
                        ? US_Util::new_guid() : modelGUID;
+DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
+ << model.modelGUID;
    model.editGUID    = edata->editGUID;
    model.requestGUID = requestGUID;
    model.dataDescrip = edata->description;
@@ -1350,10 +1352,13 @@ DbgLv(1) << "wrMo:  model comps" << model.components.size();
       model.global      = US_Model::GLOBAL;
       if ( glob_sols )
          runID             = "Global-" + runID;
+      model.modelGUID   = US_Util::new_guid();
+      modelGUID         = model.modelGUID;
    }
 
    else
       model.global      = US_Model::NONE; 
+DbgLv(1) << "wrMo:  is_glob glob_sols" << is_global_fit << glob_sols;
 
    model.meniscus    = meniscus_value;
    model.variance    = sim.variance;
@@ -1421,13 +1426,13 @@ DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
 
    QString fext      = model.monteCarlo ? ".mdl.tmp" : ".model.xml";
    QString fileid    = "." + id + "." + mdlid + fext;
-   QString fn        = edata->runID + fileid;
+   QString fn        = runID + fileid;
    int lenfn         = fn.length();
 
    if ( lenfn > 99 )
    { // Insure a model file name less than 100 characters in length (tar limit)
-      int lenri         = edata->runID.length() + 99 - lenfn;
-      fn                = edata->runID.left( lenri ) + fileid;
+      int lenri         = runID.length() + 99 - lenfn;
+      fn                = runID.left( lenri ) + fileid;
    }
 
    // Output the model to a file

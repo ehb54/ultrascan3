@@ -77,6 +77,15 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
                attr_z         = ATTR_K;
             }
 
+            else if ( ! parameters[ "solute_type" ].isEmpty() )
+            {  // Flag explicit solute type
+               QString s_styp = parameters[ "solute_type" ];
+               d->solute_type = US_ModelRecord::stype_flag( s_styp );
+               attr_x         = ( d->solute_type >> 6 ) & 7;
+               attr_y         = ( d->solute_type >> 3 ) & 7;
+               attr_z         =   d->solute_type        & 7;
+            }
+
             else
             {  // Flag standard s,k model with fixed vbar
                d->solute_type = 0;
@@ -224,6 +233,15 @@ if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
                      parameters[ "ztype" ] = attr.value("fixedtype").toString();
                      ytype                 = parameters[ "ytype" ];
                   }
+
+                  else if ( name.startsWith( "s_m" )  ||
+                            name.startsWith( "ff0_m" ) )
+                  {
+                     name          = name.replace( "s_m",   "x_m" );
+                     name          = name.replace( "ff0_m", "y_m" );
+                     parameters[ name ]    = attr.value( "value" ).toString();
+                  }
+
                   else
                   {
                      parameters[ name ]    = attr.value( "value" ).toString();
@@ -232,6 +250,9 @@ if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
             }
          }
       }
+
+      if ( ! parameters.contains( "z_value" ) )
+         parameters[ "z_value" ]     = "0.0";
 
       if ( parameters.contains( "debug_level" ) )
          dbg_level  = parameters[ "debug_level" ].toInt();
