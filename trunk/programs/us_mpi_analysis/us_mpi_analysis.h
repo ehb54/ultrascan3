@@ -414,6 +414,7 @@ class US_MPI_Analysis : public QObject
     // PCSA Master
     void    pcsa_master         ( void );
     void    init_pcsa_solutes   ( void );
+    void    fill_pcsa_queue     ( void );
     void    process_pcsa_results( const int, const int* );
     void    process_pcsa_solutes( Result& );
     void    write_mrecs         ( void );
