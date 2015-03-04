@@ -1131,7 +1131,7 @@ DbgLv(1) << my_rank << ": master start PCSA" << startTime;
 
    init_pcsa_solutes();
 DbgLv(1) << my_rank << ": init sols return";
-   fill_queue();
+   fill_pcsa_queue();
 DbgLv(1) << my_rank << ": fill queue return";
 
 DbgLv(1) << my_rank << ": recvd ds" << current_dataset << "mgc ittest" << mgroup_count << ittest;

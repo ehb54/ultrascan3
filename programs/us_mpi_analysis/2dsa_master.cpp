@@ -719,7 +719,7 @@ if(dbg_level>0)
 }
 //*DEBUG*
       sim.zsolutes = mrecs[ 0 ].csolutes;
-      mxdssz       = sim.solutes.size();
+      mxdssz       = sim.zsolutes.size();
       sim.ti_noise = mrecs[ 0 ].ti_noise;
       sim.ri_noise = mrecs[ 0 ].ri_noise;
    }
@@ -752,7 +752,14 @@ DbgLv(1) << "WrO: mxdssz" << mxdssz;
 DbgLv(1) << "WrO: meniscus_run" << meniscus_run << "mvsz" << meniscus_values.size();
    meniscus_value  = meniscus_run < meniscus_values.size() 
                      ? meniscus_values[ meniscus_run ] : save_meniscus;
-   if ( mdl_type != US_Model::DMGA )
+
+   if ( mdl_type == US_Model::PCSA )
+   {
+DbgLv(1) << "WrO: qSort solutes  sssz" << sim.zsolutes.size();
+      qSort( sim.zsolutes );
+   }
+
+   else if ( mdl_type != US_Model::DMGA )
    {
 DbgLv(1) << "WrO: qSort solutes  sssz" << sim.solutes.size();
       qSort( sim.solutes );
@@ -1404,16 +1411,31 @@ DbgLv(1) << "wrMo: model descr" << model.description;
    // Save as class variable for later reference
    modelGUID         = model.modelGUID;
 
-   if ( type != US_Model::DMGA )
-   {  // For non-DMGA, construct the model from solutes
-      for ( int i = 0; i < sim.solutes.size(); i++ )
+   if ( type == US_Model::PCSA )
+   {  // For PCSA, construct the model from zsolutes
+      for ( int ii = 0; ii < sim.zsolutes.size(); ii++ )
       {
-         const US_Solute* solute = &sim.solutes[ i ];
+         US_ZSolute zsolute = sim.zsolutes[ ii ];
+
+         US_Model::SimulationComponent component;
+         US_ZSolute::set_mcomp_values( component, zsolute, stype, true );
+         component.name     = QString().sprintf( "SC%04d", ii + 1 );
+
+         US_Model::calc_coefficients( component );
+         model.components << component;
+      }
+   }
+
+   else if ( type != US_Model::DMGA )
+   {  // For other non-DMGA, construct the model from solutes
+      for ( int ii = 0; ii < sim.solutes.size(); ii++ )
+      {
+         const US_Solute* solute = &sim.solutes[ ii ];
 
          US_Model::SimulationComponent component;
          component.s       = solute->s;
          component.f_f0    = solute->k;
-         component.name    = QString().sprintf( "SC%04d", i + 1 );
+         component.name    = QString().sprintf( "SC%04d", ii + 1 );
          component.vbar20  = (attr_z == ATTR_V) ? vbar20 : solute->v;
          component.signal_concentration = solute->c;
 

@@ -15,8 +15,8 @@ void US_MPI_Analysis::pcsa_master( void )
 DbgLv(1) << "pcsa_mast: IN";
    init_pcsa_solutes();
 DbgLv(1) << "pcsa_mast: init complete";
-   fill_queue();
-DbgLv(1) << "pcsa_mast: fill_queue complete";
+   fill_pcsa_queue();
+DbgLv(1) << "pcsa_mast: fill_pcsa_queue complete";
 
    work_rss.resize( gcores_count );
 
@@ -189,7 +189,7 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
                max_iterations  = parameters[ "gfit_iterations" ].toInt();
                kcurve          = 0;
 
-               fill_queue();
+               fill_pcsa_queue();
 
                for ( int ii = 1; ii <= my_workers; ii++ )
                   worker_status[ ii ] = READY;
@@ -673,7 +673,7 @@ DbgLv(1) << "iter_p: parlims3"
       orig_zsolutes << mrecs[ ii ].isolutes;
    }
 
-   fill_queue();
+   fill_pcsa_queue();
 
    for ( int ii = 1; ii <= my_workers; ii++ )
       worker_status[ ii ] = READY;
@@ -1589,5 +1589,30 @@ void US_MPI_Analysis::apply_alpha( const double alpha, QVector< double >* psv_nn
 
    // Return computed variance and xnorm-sq
    variance    /= (double)ntotal;
+}
+
+// Fill the job queue, using the list of initial solutes
+void US_MPI_Analysis::fill_pcsa_queue( void )
+{
+   worker_status.resize( gcores_count );
+   worker_depth .resize( gcores_count );
+
+   worker_status.fill( INIT );
+   worker_depth .fill( 0 );
+   max_depth           = 0;
+   worknext            = 1;
+   max_experiment_size = min_experiment_size;
+
+   // Put all jobs in the queue
+   job_queue.clear();
+
+   for ( int i = 0; i < orig_zsolutes.size(); i++ )
+   {
+      max_experiment_size = qMax( max_experiment_size,
+                                  orig_zsolutes[ i ].size() );
+      Sa_Job job;
+      job.zsolutes        = orig_zsolutes[ i ];
+      job_queue << job;
+   }
 }
 

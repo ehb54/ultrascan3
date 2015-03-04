@@ -181,7 +181,7 @@ DbgLv(1) << "w:" << my_rank << ":Recv:PROCESS_MC" << "mc_iter" << mc_iter;
 
 //if(my_rank==1)
 DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
-               simulation_values.solutes.resize( job.length );
+               simulation_values.zsolutes.resize( job.length );
 
                MPI_Recv( simulation_values.zsolutes.data(), // Get solutes
                          job_length * zsolut_doubles,
