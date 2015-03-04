@@ -447,6 +447,7 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
 
    double  s_max = parameters[ "s_max" ].toDouble() * 1.0e-13;
    double  x_max = parameters[ "x_max" ].toDouble() * 1.0e-13;
+   s_max         = ( s_max == 0.0 ) ? x_max : s_max;
    double  y_max = 1e-39;
 
    // Check GA buckets
@@ -520,6 +521,8 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
    // Do a check of implied grid size
    QString smsg;
    double  zval     = parameters[ "bucket_fixed" ].toDouble();
+   if ( analysis_type.startsWith( "PCSA" ) )
+      zval             = parameters[ "z_value" ].toDouble();
 
    if ( attr_x != ATTR_S )
    {  // We will need to determine the maximum s value
@@ -527,10 +530,11 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
          s_max         = y_max * 1.0e-13;
       else if ( attr_z == ATTR_S )      // s_max may be fixed value
          s_max         = zval  * 1.0e-13;
-      else
+      else if ( analysis_type == "GA" )
       {                                 // s_max may need computing
          s_max         = 1e-39;
          zval          = ( attr_z == ATTR_V ) ? data_sets[ 0 ]->vbar20 : zval;
+         zval          = ( zval == 0.0      ) ? data_sets[ 0 ]->vbar20 : zval;
          US_Model::SimulationComponent zcomp;
          zcomp.s       = 0.0;
          zcomp.f_f0    = 0.0;
@@ -556,6 +560,8 @@ if (my_rank==0) DbgLv(0) << "ckGrSz:  buck" << jj << "xv yv zv"
       }
 
    }
+
+   s_max         = ( s_max == 0.0 ) ? 10e-13 : s_max;
 if (my_rank==0) DbgLv(0) << "ckGrSz: s_max" << s_max << "attr_x,y,z"
  << attr_x << attr_y << attr_z;
 

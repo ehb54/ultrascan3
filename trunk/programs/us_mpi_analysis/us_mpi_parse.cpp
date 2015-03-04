@@ -224,7 +224,7 @@ if (my_rank==0) DbgLv(0) << "PF:   rnd xymnmx" << b.x_min << b.x_max << b.y_min 
                   {
                      parameters[ name ]    = attr.value( "filename").toString();
 if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
-               }
+                  }
                   else if ( name == "bucket_fixed" )
                   {
                      parameters[ name ]    = attr.value( "value" ).toString();
@@ -237,9 +237,11 @@ if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
                   else if ( name.startsWith( "s_m" )  ||
                             name.startsWith( "ff0_m" ) )
                   {
+                     QString svalu = attr.value( "value" ).toString();
+                     parameters[ name ]    = svalu;
                      name          = name.replace( "s_m",   "x_m" );
                      name          = name.replace( "ff0_m", "y_m" );
-                     parameters[ name ]    = attr.value( "value" ).toString();
+                     parameters[ name ]    = svalu;
                   }
 
                   else
