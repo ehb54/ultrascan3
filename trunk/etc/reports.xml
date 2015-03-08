@@ -105,6 +105,7 @@
     <report name="statistics" label="Solute Integration Statistics" />
     <report name="combo-distrib" label="Sedimentation Coefficient Combo Distribution" />
     <report name="combo-sb-distrib" label="Combo Svalue-Boundary Data Table" />
+    <report name="combo-s-envelope" label="Combo Svalue-Envelope Data Table" />
     <report name="combo-list-include" label="Combo List of Included Sets" />
     <report name="pseudo3d_s_ff0" label="Pseudo3d s_vs_ff0 Distribution" />
     <report name="pseudo3d_s_MW" label="Pseudo3d s_vs_MW Distribution" />
