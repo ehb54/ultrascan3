@@ -38,6 +38,8 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    setWindowTitle( tr( "Combined van Holde - Weischet Distributions:" ) );
    setPalette( US_GuiSettings::frameColor() );
    dbg_level     = US_Settings::us_debug();
+   p3d_ctld      = NULL;
+   p3d_pltw      = NULL;
 
    QBoxLayout*  mainLayout   = new QHBoxLayout( this );
    QGridLayout* leftLayout   = new QGridLayout;
@@ -55,12 +57,14 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
                 pb_saveda  = us_pushbutton( tr( "Save Data"  ) );
                 pb_resetd  = us_pushbutton( tr( "Reset Data" ) );
                 pb_resetp  = us_pushbutton( tr( "Reset Plot" ) );
+                pb_plot3d  = us_pushbutton( tr( "Plot in 3D" ) );
    QPushButton* pb_help    = us_pushbutton( tr( "Help"       ) );
    QPushButton* pb_close   = us_pushbutton( tr( "Close"      ) );
 
    pb_saveda->setEnabled( false );
    pb_resetd->setEnabled( false );
    pb_resetp->setEnabled( false );
+   pb_plot3d->setEnabled( false );
 
    QLabel* lb_distrtype  = us_banner(
          tr( "Select Distribution Plot Type(s):" ) );
@@ -77,6 +81,7 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    cmb_svproj    = us_comboBox();
    lw_runids     = us_listwidget();
    lw_triples    = us_listwidget();
+   lw_runids->addItem( "" );
 
    int row = 0;
    leftLayout->addLayout( dkdb_cntrls,  row++, 0, 1, 8 );
@@ -84,6 +89,7 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    leftLayout->addWidget( pb_saveda,    row++, 4, 1, 4 );
    leftLayout->addWidget( pb_resetd,    row,   0, 1, 4 );
    leftLayout->addWidget( pb_resetp,    row++, 4, 1, 4 );
+   leftLayout->addWidget( pb_plot3d,    row,   0, 1, 4 );
    leftLayout->addWidget( pb_help,      row,   4, 1, 2 );
    leftLayout->addWidget( pb_close,     row++, 6, 1, 2 );
    leftLayout->addWidget( lb_distrtype, row++, 0, 1, 8 );
@@ -95,12 +101,13 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    leftLayout->addWidget( lb_svproj,    row,   0, 1, 3 );
    leftLayout->addWidget( cmb_svproj,   row++, 3, 1, 5 );
    leftLayout->addWidget( lb_runids,    row++, 0, 1, 8 );
-   leftLayout->addWidget( lw_runids,    row,   0, 3, 8 );
-   row    += 3;
-   leftLayout->addWidget( lb_triples,   row++, 0, 1, 8 );
-   leftLayout->addWidget( lw_triples,   row,   0, 5, 8 );
-   row    += 5;
+   leftLayout->addWidget( lw_runids,    row,   0, 1, 8 );
    leftLayout->setRowStretch( row, 1 );
+   row    += 1;
+   leftLayout->addWidget( lb_triples,   row++, 0, 1, 8 );
+   leftLayout->addWidget( lw_triples,   row,   0, 7, 8 );
+   leftLayout->setRowStretch( row, 7 );
+   row    += 7;
 
    connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
             this,    SLOT( update_disk_db( bool ) ) );
@@ -113,6 +120,8 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
             this,      SLOT(   reset_data() ) );
    connect( pb_resetp, SIGNAL( clicked()    ),
             this,      SLOT(   reset_plot() ) );
+   connect( pb_plot3d, SIGNAL( clicked()    ),
+            this,      SLOT(   plot_3d()    ) );
    connect( pb_help,   SIGNAL( clicked()    ),
             this,      SLOT(   help()       ) );
    connect( pb_close,  SIGNAL( clicked()    ),
@@ -173,14 +182,19 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    adjustSize();
    int hh  = lb_svproj->height();
    int ww  = lb_svproj->width() / 3;
-   lw_runids  ->setMinimumHeight( hh * 3 );
-   lw_triples ->setMinimumHeight( hh * 5 );
+   lw_runids  ->setMinimumHeight( hh * 2 );
+   lw_triples ->setMinimumHeight( hh * 7 );
    cmb_svproj ->setMinimumWidth ( ww * 5 );
    for ( int ii = 0; ii < 8; ii++ )
       leftLayout ->setColumnMinimumWidth( ii, ww );
    leftLayout ->setColumnStretch     ( 0, 1  );
    leftLayout ->setColumnStretch     ( 1, 1  );
    adjustSize();
+   ww      = lw_runids->width();
+   lw_runids  ->resize( ww, hh * 2 );
+   adjustSize();
+
+   reset_data();
 }
 
 // Load data
@@ -221,6 +235,8 @@ DbgLv(1) << " ii,runid,ntrip,dists" << ii << runid << ntripl << distx;
             QString trname = collapsedTriple( tripl->triple );
             int ndocs      = tripl->docs.count();
 DbgLv(1) << "   jj,ndocs" << jj << ndocs;
+            le_runid->setText( tr( "loading run %1, triple %2 of %3" )
+                               .arg( runid ).arg( jj + 1 ).arg( ntripl ) );
             bool havedis   = false;
             bool haveenv   = false;
             US_Report::ReportDocument* ddoc = NULL;
@@ -412,6 +428,7 @@ void US_vHW_Combine::reset_data( void )
 
    pb_resetd->setEnabled( false );
    pb_resetp->setEnabled( false );
+   pb_plot3d->setEnabled( false );
 }
 
 // Reset plot:  Clear plots and lists of plotted data
@@ -745,6 +762,7 @@ DbgLv(1) << "TripleSel:distrID ALREADY IN LIST";
    pb_saveda->setEnabled( true );
    pb_resetd->setEnabled( true );
    pb_resetp->setEnabled( true );
+   pb_plot3d->setEnabled( true );
 }
 
 // Assign symbol and color for a distribution
@@ -1000,7 +1018,7 @@ DbgLv(1) << "FID: fline0" << fline;
       str = fline.section( ",", 3, 3);
       double sedc  = str.remove("\"").toDouble();
 
-      DbgLv(1) << "bound:" << bound << " sedc:" << sedc;
+//DbgLv(1) << "bound:" << bound << " sedc:" << sedc;
 
       ddesc.dsedcs << sedc;
       ddesc.bfracs << bound;
@@ -1255,5 +1273,208 @@ int US_vHW_Combine::reportDocsFromFiles( QString& runID, QString& fdir,
 //*DEBUG*
 
    return ostat;
+}
+
+// Plot all data in 3D
+void US_vHW_Combine::plot_3d( void )
+{
+   bool eplot       = ck_envelope->isChecked();
+   QString wtitle   = tr( "Multiwavelength 3-Dimensional vHW Viewer" );
+   QString ptitle   = eplot ? tr( "g(s) Distributions" )
+                            : tr( "G(s) Distributions" );
+
+   QString xatitle  = tr( "Lambda(nm)" );
+   QString yatitle  = tr( "Sed.C.(*e13)" );
+   QString zatitle  = eplot ? tr( "Concen." )
+                            : tr( "B.Frac." );
+   double xmin      = 1e99;
+   double ymin      = 1e99;
+   double zmin      = 1e99;
+   double xmax      = -xmin;
+   double ymax      = -ymin;
+   double zmax      = -zmin;
+   int    ndist     = pdistrs.size();
+   int    nrow      = ndist;
+   int    ncol      = 0;
+   int    nxval     = 0;
+   int    nyval     = 0;
+   int    minpt     = 999999;
+   int    maxpt     = 0;
+
+   QList< double >       xvals;
+   QList< double >       yvals;
+   xvals.clear();
+   yvals.clear();
+
+   for ( int ii = 0; ii < ndist; ii++ )
+   {
+      DistrDesc ddesc = pdistrs[ ii ];
+      QString wvlen   = QString( ddesc.triple ).mid( 2 );
+      double xval  = wvlen.toDouble();
+      xmin         = qMin( xmin, xval );
+      xmax         = qMax( xmax, xval );
+      int  ndispt  = ddesc.bfracs.size();
+      int  nenvpt  = ddesc.efreqs.size();
+      double* xx   = ddesc.dsedcs.data();
+      double* zz   = ddesc.bfracs.data();
+      double* xs   = ddesc.esedcs.data();
+      double* zf   = ddesc.efreqs.data();
+
+      if ( ! xvals.contains( xval ) )
+      {
+         xvals << xval;
+         nxval++;
+      }
+
+      int  ndpts   = eplot ? nenvpt : ndispt;
+      xx           = eplot ? xs     : xx;
+      zz           = eplot ? zf     : zz;
+      ncol         = qMax( ncol, ndpts );
+      minpt        = qMin( minpt, ndpts );
+      maxpt        = qMax( maxpt, ndpts );
+
+      for ( int jj = 0; jj < ndpts; jj++ )
+      {
+         double yval  = xx[ jj ];
+         double zval  = zz[ jj ];
+         yval         = qRound( yval * 1.0e4 ) * 1.0e-4;
+
+         if ( ! yvals.contains( yval ) )
+         {
+            yvals << yval;
+            nyval++;
+         }
+
+         ymin         = qMin( ymin, yval );
+         ymax         = qMax( ymax, yval );
+         zmin         = qMin( zmin, zval );
+         zmax         = qMax( zmax, zval );
+
+         xyzdat << QVector3D( xval, yval, zval );
+         //xyzdat << QVector3D( yval, xval, zval );
+DbgLv(0) << "Raw:xyzd: ii jj" << ii << jj << "xyz" << xval << yval << zval;
+      }
+   }
+
+   nrow         = nxval;
+   ncol         = maxpt;
+DbgLv(0) << "  nrow ncol nxval nyval" << nrow << ncol << nxval << nyval;
+DbgLv(0) << "   xmin xmax" << xmin << xmax << "ymin ymax" << ymin << ymax
+ << "zmin zmax" << zmin << zmax << "xyzd size" << xyzdat.size();
+
+   if ( minpt != maxpt )
+   {  // Sed.Coeff. counts per wavelength vary:  create constant count
+      ncol         = minpt;
+      ymin         = qRound( ymin * 1.0e4 ) * 1.0e-4;
+      ymax         = qRound( ymax * 1.0e4 ) * 1.0e-4;
+      double yval  = ymin;
+      double xval  = xvals[ 0 ];
+      double yinc  = ( ymax - ymin ) / (double)ncol;
+      QVector< QVector3D > xyzold = xyzdat;
+      int kidpt    = xyzold.count();
+      int nrmv     = maxpt - minpt;
+      xyzdat.clear();
+      yvals .clear();
+DbgLv(0) << "    ymin yinc" << ymin << yinc << "xyzold count" << kidpt;
+
+      for ( int ii = 0; ii < ncol; ii++, yval += yinc )
+         yvals << yval;
+DbgLv(0) << "     yv0 yvn" << yvals[0] << yvals[ncol-1];
+
+      for ( int ii = 0; ii < nrow; ii++ )
+      {
+         QVector< double > yvsir;              // Y values in row
+         QVector< double > zvsir;              // Corresponding Zs in row
+         xval         = xvals[ ii ];
+         int krmv     = 0;
+         int kcol     = 0;
+DbgLv(0) << "   row" << ii << "xval" << xval;
+
+         for ( int jj = 0; jj < kidpt; jj++ )
+         {
+            double xvalo = xyzold[ jj ].x();
+
+            if ( xvalo == xval )
+            {
+               double yval  = xyzold[ jj ].y();
+               double zval  = xyzold[ jj ].z();
+
+               if ( zval == 0.0  &&  krmv < nrmv )
+               {
+                  krmv++;
+                  continue;
+               }
+
+               if ( kcol < ncol )
+               {
+                  yvsir << yval;
+                  zvsir << zval;
+                  kcol++;
+               }
+            }
+         }
+
+         int jcol     = yvsir.count();
+         double ylast = qMin( ymax, yvsir[ jcol - 1 ] + yinc );
+DbgLv(0) << "     jcol" << jcol << "ncol" << ncol
+ << "yv0,yvn" << yvsir[0] << yvsir[jcol-1];
+
+         for ( int jj = 0; jj < ncol; jj++ )
+         {
+            double yval  = ( jj < jcol ) ? yvsir[ jj ] : ylast;
+            double zval  = ( jj < jcol ) ? zvsir[ jj ] : 0.0;
+            xyzdat << QVector3D( xval, yval, zval );
+         }
+      }
+DbgLv(0) << "xyzd size" << xyzdat.size();
+   }
+
+#if 0
+   US_Plot3Dxyz* plt3dw = new US_Plot3Dxyz( this, &xyzdat );
+
+   plt3dw->setTitles    ( wtitle, ptitle, xatitle, yatitle, zatitle );
+   plt3dw->setParameters( ncol, nrow, rxscale, ryscale, zscale, alpha, beta );
+   plt3dw->replot       ();
+   plt3dw->setVisible   ( true );
+#endif
+#if 1
+   if ( p3d_ctld == 0 )
+   {
+      p3d_pltw     = NULL;
+      p3d_ctld     = new US_VhwCPlotControl( this, &xyzdat, eplot );
+
+      connect( p3d_ctld,  SIGNAL( has_closed()     ),
+               this,      SLOT  ( control_closed() ) ); 
+
+      // Position near upper right of the desktop
+      int cx       = qApp->desktop()->width() - p3d_ctld->width() - 40;
+      int cy       = 40;
+      p3d_ctld->move( cx, cy );
+   }
+   else
+   {
+      p3d_ctld->setFocus();
+      p3d_pltw     = p3d_ctld->widget_3dplot();
+
+      if ( p3d_pltw != NULL )
+      {
+         p3d_pltw->setTitles ( wtitle, ptitle, xatitle, yatitle, zatitle );
+         p3d_pltw->reloadData( &xyzdat );
+         p3d_pltw->replot();
+DbgLv(0) << "p3db: titles" << ptitle << xatitle << yatitle << zatitle;
+      }
+
+      p3d_ctld->do_3dplot();
+   }
+
+   p3d_ctld->show();
+#endif
+}
+
+// Mark plot control window closed
+void US_vHW_Combine::control_closed()
+{
+   p3d_ctld         = NULL;
+   p3d_pltw         = NULL;
 }
 
