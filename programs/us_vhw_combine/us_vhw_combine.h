@@ -5,6 +5,8 @@
 #include "us_math2.h"
 #include "us_run_details2.h"
 #include "us_buffer_gui.h"
+#include "us_plot3d_xyz.h"
+#include "us_vhwc_pltctl.h"
 #include "qwt_plot_marker.h"
 
 #define PA_POINTS 20     // plateau average points to left and right
@@ -46,12 +48,18 @@ class US_vHW_Combine : public US_Widgets
 
       US_Disk_DB_Controls*  dkdb_cntrls;  // Disk-or-DB controls
 
+      QVector< QVector3D >  xyzdat;    // XYZ data
+
+      QPointer< US_VhwCPlotControl > p3d_ctld; // Pointer to 3D control
+      QPointer< US_Plot3Dxyz >       p3d_pltw; // Pointer to 3D window
+
       QStringList    distIDs;          // All distribs. IDs
       QStringList    pdisIDs;          // Plotted distribs. IDs
 
       QPushButton*   pb_saveda;
       QPushButton*   pb_resetd;
       QPushButton*   pb_resetp;
+      QPushButton*   pb_plot3d;
 
       QLineEdit*     le_runid;
 
@@ -82,12 +90,14 @@ class US_vHW_Combine : public US_Widgets
       void reset_data     ( void );
       void reset_plot     ( void );
       void plot_data      ( void );
+      void plot_3d        ( void );
       void plot_distr     ( DistrDesc, QString );
       void runid_select   ( int );
       void triple_select  ( int );
       void setSymbol      ( DistrDesc&, int );
       int  envel_data     ( DistrDesc& );
       void possibleSymbols( void );
+      void control_closed ( void );
       void update_disk_db ( bool );
       void fill_in_desc   ( QTextStream&, QTextStream&, DistrDesc&,
                             bool, int );

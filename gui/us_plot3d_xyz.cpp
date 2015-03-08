@@ -421,14 +421,16 @@ DbgLv(1) << "P3D:sR:  zmin zmax" << zmin << zmax;
       powrz--;
    }
 
-DbgLv(1) << "P3D:sR: powx powy xnorm ynorm" << powrx << powry << x_norm << y_norm;
+DbgLv(1) << "P3D:sR: powx powy" << powrx << powry << "xnorm ynorm znorm"
+ << x_norm << y_norm << z_norm;
    xmax     *= x_norm;
    ymax     *= y_norm;
    xmin     *= x_norm;
    ymin     *= y_norm;
    zmin     *= z_norm;
    zmax     *= z_norm;
-DbgLv(1) << "P3D:sR: xmin xmax ymin ymax" << xmin << xmax << ymin << ymax;
+DbgLv(1) << "P3D:sR: nrm'd xmin xmax" << xmin << xmax << "ymin ymax"
+ << ymin << ymax << "zmin zmax" << zmin << zmax;
 #if 0
    xmin      = (double)( (int)( xmin * xround )     ) / xround;
    xmax      = (double)( (int)( xmax * xround ) + 1 ) / xround;
@@ -557,12 +559,42 @@ DbgLv(1) << "P3D:cC: tdata M" << tdata[0].size();
 void US_Plot3Dxyz::calculatePoints()
 {
    int    nidpt  = xyzdat->count();
+#if 0
+   int    krows  = nrows;
+   int    kcols  = ncols;
+
+   if ( nrows == 1  ||  ncols == 1 )
+   {
+      ncols         = (int)sqrt( (double)nidpt );
+   }
+
+   nrows         = nidpt / ncols;
+   nrows         = ( nrows * ncols ) < nidpt ? ( nrows + 1 ) : nrows;
+
+   if ( nrows != krows  ||  ncols != kcols )
+   {
+      clear_2dvect( zdata );
+      alloc_2dvect( zdata, ncols, nrows );
+   }
+#endif
+#if 1
+   int    kcols  = zdata.count();
+   int    krows  = ( kcols == 0 ) ? 0 : zdata[ 0 ].count();
+
+   if ( nrows != krows  ||  ncols != kcols )
+   {
+      clear_2dvect( zdata );
+      alloc_2dvect( zdata, ncols, nrows );
+   }
+#endif
+
    int    hixd   = ncols / 5;  // max raster radius is 5th of total extent
    int    hiyd   = nrows / 5;
    int    loxd   = 5;
    int    loyd   = 5;
    int    nxd    = hixd;
    int    nyd    = hiyd;
+DbgLv(1) << "cP: ncols nrows hixd hiyd" << ncols << nrows << hixd << hiyd;
    int    fx;
    int    lx;
    int    rx;
@@ -578,6 +610,8 @@ void US_Plot3Dxyz::calculatePoints()
    double xpinc  = (double)( nrows - 1 ) / xdif;  // xy points/value
    double ypinc  = (double)( ncols - 1 ) / ydif;
    double zfact  = zscale;
+DbgLv(1) << "cP:  dfac xdif ydif" << dfac << xdif << ydif
+ << "xpinc ypinc zfact" << xpinc << ypinc << zfact;
 
    // Calculate "nxd" and "nyd" the number of reasonable point differentials
    //   around any data point for which to calculate a decayed zvalue.
@@ -600,17 +634,17 @@ void US_Plot3Dxyz::calculatePoints()
           * beta / ( M_PI * 0.5 * sqrt( 2.0 ) );  // max xy-diff at small zpkf
    nxd  = qRound( xdif * xpinc );                 // reasonable x point radius
    nyd  = qRound( xdif * ypinc );                 // reasonable y point radius
-DbgLv(1) << " xdif nxd nyd" << xdif << nxd << nyd;
+DbgLv(1) << "cP: xdif nxd nyd" << xdif << nxd << nyd << "nidpt" << nidpt;
    nxd  = nxd * 2 + 2;                            // fudge each up a bit
    nyd  = nyd * 2 + 2;                            //  just to be extra careful
    nxd  = qMin( nxd, hixd );                      // at most, a 5th of extent
    nyd  = qMin( nyd, hiyd );
    nxd  = qMax( nxd, loxd );                      // at least 5 pixels
    nyd  = qMax( nyd, loyd );
-DbgLv(1) << "  nxd nyd" << nxd << nyd;
+DbgLv(1) << "cP:  nxd nyd" << nxd << nyd << "ncols nrows" << ncols << nrows;
    //double zval   = zmin;
    double zval   = qMin( zmin, 0.0 );
-   double beta_d = beta / (double)ncols;
+   //double beta_d = beta / (double)ncols;
 
    for ( int ii = 0; ii < ncols; ii++ )      // initialize raster to zmin
       for ( int jj = 0; jj < nrows; jj++ )
@@ -626,25 +660,29 @@ DbgLv(1) << "  nxd nyd" << nxd << nyd;
       fx         = rx - nxd;                  // range of x to work on
       lx         = rx + nxd;
       fx         = qMax( fx,     0 );
-      lx         = qMin( lx, ncols );
+      lx         = qMin( lx, nrows );
 
       ry         = (int)( yval * ypinc );     // raster index of y
       fy         = ry - nyd;                  // range of y to work on
       ly         = ry + nyd;
       fy         = qMax( fy,     0 );
-      ly         = qMin( ly, nrows );
+      ly         = qMin( ly, ncols );
 
-      for ( int ii = fy; ii < ly; ii++ )
+      //for ( int ii = fy; ii < ly; ii++ )
+      for ( int ii = fx; ii < lx; ii++ )
       {  // find square of difference of y-raster and y-data
-         //xdif       = sq( (double)ii / xpinc - xval );
-         ydif       = (double)sq( ( ii - ry ) );
+         xdif       = sq( (double)ii / xpinc - xval );
+         //ydif       = (double)sq( ( ii - ry ) );
 
-         for ( int jj = fx; jj < lx; jj++ )
+         //for ( int jj = fx; jj < lx; jj++ )
+         for ( int jj = fy; jj < ly; jj++ )
          {  // find square of difference of y-raster and y-data
-            //ydif       = sq( (double)jj / ypinc - yval );
-            xdif       = (double)sq( ( jj - rx ) );
+            ydif       = sq( (double)jj / ypinc - yval );
+            //xdif       = (double)sq( ( jj - rx ) );
             // distance of raster point from data point
             dist       = sqrt( xdif + ydif );
+//DbgLv(0) << "cP:tif:   kk ii jj" << kk << ii << jj << "dist beta_d"
+// << dist << beta_d;
 
             // If distance is within beta, calculate and sum in the z value
             // for this raster point. Here is what the following amounts to.
@@ -658,11 +696,15 @@ DbgLv(1) << "  nxd nyd" << nxd << nyd;
             //       Zfact, the user-specified Z scaling factor;
             //   Scale = Cosine( Dist * PI/2 / Beta ) raised to the Alpha power
             //   OutZ  = InZ + ( DataZ * Scale * Zfact )
-//            if ( dist <= beta )
-            if ( dist <= beta_d )
+            //if ( dist <= beta_d )
+            if ( dist <= beta )
             {
-               zdata[ ii ][ jj ] += ( ( zval *
+               //zdata[ ii ][ jj ] += ( ( zval *
+               zdata[ jj ][ ii ] += ( ( zval *
                      ( pow( cos( dist * dfac ), alpha ) ) ) * zfact );
+//DbgLv(0) << "cP:tif: ii jj" << ii << jj << "zval dist dfac alpha zfact beta_d"
+// << zval << dist << dfac << alpha << zfact << beta_d
+// << "zdataij" << zdata[ii][jj];
             }
 //else {DbgLv(3) << "  *dist>beta* dist beta iijj" << dist << beta << ii << jj;}
 //*DBG*
@@ -771,6 +813,7 @@ DbgLv(1) << "P3D:replot:  xmin xmax ycmin ycmax" << xmin << xmax
    else
    {
       wddat          = new double* [ ncols ];
+      zdmx           = zdata[ 0 ][ 0 ];
 
       for ( int ii = 0; ii < ncols; ii++ )
       {  // copy data to work 2D vector and get new z-max
@@ -788,14 +831,14 @@ if ((ii&63)==1&&(jj&63)==1) DbgLv(2) << "P3D:    rp: col" << jj
       }
 
       // scale back data to have same z-max as before
-      zfac  = zmax / zdmx;
+      zfac           = ( zdmx < 1e-20 ) ? zmax : ( zmax / zdmx );
 
       for ( int ii = 0; ii < ncols; ii++ )
          for ( int jj = 0; jj < nrows; jj++ )
             wddat[ ii ][ jj ] *= zfac;
 
 DbgLv(1) << "P3D:ld:  xmin xmax ycmin ycmax" << xmin << xmax
- << ycmin << ycmax;
+ << ycmin << ycmax << "zmin zmax zfac zdmx" << zmin << zmax << zfac << zdmx;
 
       // Load the widget raster data
       dataWidget->loadFromData( wddat, kcols, krows, xmin, xmax, ycmin, ycmax );
@@ -845,7 +888,8 @@ DbgLv(1) << "P3D:ld:  xmin xmax ycmin ycmax" << xmin << xmax
       zatitle  = zatitle + " * " + QString::number( z_norm );
 
 DbgLv(2) << "P3D:rP:  xmin xmax" << xmin << xmax
- << " ymin ymax" << ymin << ymax << " xscl yscl" << x_scale << y_scale;
+ << " ymin ymax" << ymin << ymax << " zmin zmax" << zmin << zmax
+ << " xscl yscl zscl" << x_scale << y_scale << z_scale;
 #if 0
    if ( x_scale > 4.0 )
    {
