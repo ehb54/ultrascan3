@@ -235,8 +235,9 @@ DbgLv(1) << " ii,runid,ntrip,dists" << ii << runid << ntripl << distx;
             QString trname = collapsedTriple( tripl->triple );
             int ndocs      = tripl->docs.count();
 DbgLv(1) << "   jj,ndocs" << jj << ndocs;
-            le_runid->setText( tr( "loading run %1, triple %2 of %3" )
-                               .arg( runid ).arg( jj + 1 ).arg( ntripl ) );
+            le_runid->setText( tr( "loading triple %1 of %2 from run %3" )
+                               .arg( jj + 1 ).arg( ntripl ).arg( runid ) );
+            qApp->processEvents();
             bool havedis   = false;
             bool haveenv   = false;
             US_Report::ReportDocument* ddoc = NULL;
@@ -540,15 +541,18 @@ void US_vHW_Combine::save( void )
    QString fnamsvg  = "vHW.0Z9999.combo-distrib.svgz";
    QString fnampng  = "vHW.0Z9999.combo-distrib.png";
    QString fnamdat  = "vHW.0Z9999.combo-sb-distrib.csv";
+   QString fnamenv  = "vHW.0Z9999.combo-s-envelope.csv";
    QString fnamlst  = "vHW.0Z9999.combo-list-include.rpt";
    QString plotFile = fdir + "/" + fnamsvg;
    QString dataFile = fdir + "/" + fnamdat;
+   QString denvFile = fdir + "/" + fnamenv;
    QString listFile = fdir + "/" + fnamlst;
    QStringList prunids;
    QList< int > prndxs;
    QString svmsg   = tr( "Saved:\n    " ) + fnampng + "\n    "
                                           + fnamsvg + "\n    "
                                           + fnamdat + "\n    "
+                                          + fnamenv + "\n    "
                                           + fnamlst + "\n";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
@@ -587,6 +591,7 @@ void US_vHW_Combine::save( void )
       // Save plot file as SVG and as PNG; write data and list files
       write_plot( plotFile, data_plot1 );
       write_data( dataFile, listFile, iruns );
+      write_denv( denvFile, iruns );
       svmsg += tr( "in directory:" ) + "\n    " + fdir + "\n";
 
       if ( dkdb_cntrls->db() )
@@ -658,7 +663,7 @@ DbgLv(1) << "SV: editID idEdit" << editID << idEdit << "  eeditID" << eeditID;
 
          // Add or update report documents in the database
          QStringList rfiles;
-         rfiles << fnamsvg << fnampng << fnamdat << fnamlst;
+         rfiles << fnamsvg << fnampng << fnamdat << fnamenv << fnamlst;
          int st = reportDocsFromFiles( runID, fdir, rfiles, &db,
                                        idEdit, trdesc );
 
@@ -681,6 +686,7 @@ DbgLv(1) << "SV:runID" << runID << "idEdit" << idEdit
       fdir          = US_Settings::reportDir() + "/" + runID;
       plotFile      = fdir + "/" + fnamsvg;
       dataFile      = fdir + "/" + fnamdat;
+      denvFile      = fdir + "/" + fnamenv;
       listFile      = fdir + "/" + fnamlst;
    }  // END:  runs loop
 
@@ -1209,6 +1215,79 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
    return;
 }
 
+// Write data envelope report file
+void US_vHW_Combine::write_denv( QString& denvFile, int& irun )
+{
+   if ( irun > 0 )
+   {  // After first/only time:  just make a copy of the file
+      QFile( env1File ).copy( denvFile );
+      return;
+   }
+
+   // First/only time through:  compute the data and create files
+   QStringList pdlong;
+   QString line;
+   env1File = denvFile;
+
+   QFile dfile( denvFile );
+
+   if ( ! dfile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      qDebug() << "***Error opening output file" << denvFile;
+      return;
+   }
+
+   QTextStream tsd( &dfile );
+
+   int nplots = pdistrs.size();
+   int lastp  = nplots - 1;
+   int maxnvl = 0;
+   line       = "";
+
+   for ( int ii = 0; ii < nplots; ii++ )
+   {  // Accumulate long descriptions and build header line
+      maxnvl     = qMax( maxnvl, pdistrs[ ii ].esedcs.size() );
+      QString pd = pdisIDs[ ii ];
+      pdlong << pd;
+      pd         = pd.section( ":", 0, 0 ).simplified();
+      line      += "\"" + pd + ".X\",\"" + pd + ".Y\""; // X,Y header entries for contributor
+
+      if ( ii < lastp )
+         line     += ",";
+      else
+         line     += "\n";
+   }
+   tsd << line;                             // Write header line
+
+   for ( int jj = 0; jj < maxnvl; jj++ )
+   {  // Build and write svalue+boundary data line
+      line       = "";
+      for ( int ii = 0; ii < nplots; ii++ )
+      {  // Add each X,Y data pair
+         int nvals   = pdistrs[ ii ].esedcs.size();
+         double* xx  = pdistrs[ ii ].esedcs.data();
+         double* yy  = pdistrs[ ii ].efreqs.data();
+         int kk      = qMin( jj, ( nvals - 1 ) );
+         double sval = xx[ kk ];
+         double eval = yy[ kk ];
+
+         QString dat = QString().sprintf( "\"%12.5f\",\"%10.5f\"", sval, eval );
+         dat.replace( " ", "" );
+         line       += dat;
+
+         if ( ii < lastp )
+            line     += ",";
+         else
+            line     += "\n";
+      }
+      tsd << line;                           // Write data line
+   }
+
+   dfile.close();
+
+   return;
+}
+
 // Save report documents from files
 int US_vHW_Combine::reportDocsFromFiles( QString& runID, QString& fdir,
    QStringList& files, US_DB2* db, int& idEdit, QString& trdesc )
@@ -1283,8 +1362,8 @@ void US_vHW_Combine::plot_3d( void )
    QString ptitle   = eplot ? tr( "g(s) Distributions" )
                             : tr( "G(s) Distributions" );
 
-   QString xatitle  = tr( "Lambda(nm)" );
-   QString yatitle  = tr( "Sed.C.(*e13)" );
+   QString xatitle  = tr( "Sed.C.(*e13)" );
+   QString yatitle  = tr( "Lambda(nm)" );
    QString zatitle  = eplot ? tr( "Concen." )
                             : tr( "B.Frac." );
    double xmin      = 1e99;
@@ -1310,9 +1389,9 @@ void US_vHW_Combine::plot_3d( void )
    {
       DistrDesc ddesc = pdistrs[ ii ];
       QString wvlen   = QString( ddesc.triple ).mid( 2 );
-      double xval  = wvlen.toDouble();
-      xmin         = qMin( xmin, xval );
-      xmax         = qMax( xmax, xval );
+      double yval  = wvlen.toDouble();
+      ymin         = qMin( ymin, yval );
+      ymax         = qMax( ymax, yval );
       int  ndispt  = ddesc.bfracs.size();
       int  nenvpt  = ddesc.efreqs.size();
       double* xx   = ddesc.dsedcs.data();
@@ -1320,33 +1399,32 @@ void US_vHW_Combine::plot_3d( void )
       double* xs   = ddesc.esedcs.data();
       double* zf   = ddesc.efreqs.data();
 
-      if ( ! xvals.contains( xval ) )
+      if ( ! yvals.contains( yval ) )
       {
-         xvals << xval;
-         nxval++;
+         yvals << yval;
+         nyval++;
       }
 
       int  ndpts   = eplot ? nenvpt : ndispt;
       xx           = eplot ? xs     : xx;
       zz           = eplot ? zf     : zz;
-      ncol         = qMax( ncol, ndpts );
       minpt        = qMin( minpt, ndpts );
       maxpt        = qMax( maxpt, ndpts );
 
       for ( int jj = 0; jj < ndpts; jj++ )
       {
-         double yval  = xx[ jj ];
+         double xval  = xx[ jj ];
          double zval  = zz[ jj ];
-         yval         = qRound( yval * 1.0e4 ) * 1.0e-4;
+         xval         = qRound( xval * 1.0e4 ) * 1.0e-4;
 
-         if ( ! yvals.contains( yval ) )
+         if ( ! xvals.contains( xval ) )
          {
-            yvals << yval;
-            nyval++;
+            xvals << xval;
+            nxval++;
          }
 
-         ymin         = qMin( ymin, yval );
-         ymax         = qMax( ymax, yval );
+         xmin         = qMin( xmin, xval );
+         xmax         = qMax( xmax, xval );
          zmin         = qMin( zmin, zval );
          zmax         = qMax( zmax, zval );
 
@@ -1356,47 +1434,47 @@ DbgLv(0) << "Raw:xyzd: ii jj" << ii << jj << "xyz" << xval << yval << zval;
       }
    }
 
-   nrow         = nxval;
-   ncol         = maxpt;
+   nrow         = maxpt;
+   ncol         = nyval;
 DbgLv(0) << "  nrow ncol nxval nyval" << nrow << ncol << nxval << nyval;
 DbgLv(0) << "   xmin xmax" << xmin << xmax << "ymin ymax" << ymin << ymax
  << "zmin zmax" << zmin << zmax << "xyzd size" << xyzdat.size();
 
    if ( minpt != maxpt )
    {  // Sed.Coeff. counts per wavelength vary:  create constant count
-      ncol         = minpt;
-      ymin         = qRound( ymin * 1.0e4 ) * 1.0e-4;
-      ymax         = qRound( ymax * 1.0e4 ) * 1.0e-4;
-      double yval  = ymin;
-      double xval  = xvals[ 0 ];
-      double yinc  = ( ymax - ymin ) / (double)ncol;
+      nrow         = minpt;
+      xmin         = qRound( xmin * 1.0e4 ) * 1.0e-4;
+      xmax         = qRound( xmax * 1.0e4 ) * 1.0e-4;
+      double xval  = xmin;
+      double yval  = yvals[ 0 ];
+      double xinc  = ( xmax - xmin ) / (double)nrow;
       QVector< QVector3D > xyzold = xyzdat;
       int kidpt    = xyzold.count();
       int nrmv     = maxpt - minpt;
       xyzdat.clear();
-      yvals .clear();
-DbgLv(0) << "    ymin yinc" << ymin << yinc << "xyzold count" << kidpt;
+      xvals .clear();
+DbgLv(0) << "    xmin xinc" << xmin << xinc << "xyzold count" << kidpt;
 
-      for ( int ii = 0; ii < ncol; ii++, yval += yinc )
-         yvals << yval;
-DbgLv(0) << "     yv0 yvn" << yvals[0] << yvals[ncol-1];
+      for ( int ii = 0; ii < nrow; ii++, xval += xinc )
+         xvals << xval;
+DbgLv(0) << "     xv0 xvn" << xvals[0] << xvals[nrow-1];
 
-      for ( int ii = 0; ii < nrow; ii++ )
+      for ( int ii = 0; ii < ncol; ii++ )
       {
-         QVector< double > yvsir;              // Y values in row
-         QVector< double > zvsir;              // Corresponding Zs in row
-         xval         = xvals[ ii ];
+         QVector< double > xvsic;              // X values in column
+         QVector< double > zvsic;              // Corresponding Zs in column
+         yval         = yvals[ ii ];
          int krmv     = 0;
-         int kcol     = 0;
-DbgLv(0) << "   row" << ii << "xval" << xval;
+         int krow     = 0;
+DbgLv(0) << "   col" << ii << "yval" << yval;
 
          for ( int jj = 0; jj < kidpt; jj++ )
          {
-            double xvalo = xyzold[ jj ].x();
+            double yvalo = xyzold[ jj ].y();
 
-            if ( xvalo == xval )
+            if ( yvalo == yval )
             {
-               double yval  = xyzold[ jj ].y();
+               double xval  = xyzold[ jj ].x();
                double zval  = xyzold[ jj ].z();
 
                if ( zval == 0.0  &&  krmv < nrmv )
@@ -1405,24 +1483,24 @@ DbgLv(0) << "   row" << ii << "xval" << xval;
                   continue;
                }
 
-               if ( kcol < ncol )
+               if ( krow < nrow )
                {
-                  yvsir << yval;
-                  zvsir << zval;
-                  kcol++;
+                  xvsic << xval;
+                  zvsic << zval;
+                  krow++;
                }
             }
          }
 
-         int jcol     = yvsir.count();
-         double ylast = qMin( ymax, yvsir[ jcol - 1 ] + yinc );
-DbgLv(0) << "     jcol" << jcol << "ncol" << ncol
- << "yv0,yvn" << yvsir[0] << yvsir[jcol-1];
+         int jrow     = xvsic.count();
+         double xlast = qMin( xmax, xvsic[ jrow - 1 ] + xinc );
+DbgLv(0) << "     jrow" << jrow << "nrow" << nrow
+ << "xv0,xvn" << xvsic[0] << xvsic[jrow-1];
 
-         for ( int jj = 0; jj < ncol; jj++ )
+         for ( int jj = 0; jj < nrow; jj++ )
          {
-            double yval  = ( jj < jcol ) ? yvsir[ jj ] : ylast;
-            double zval  = ( jj < jcol ) ? zvsir[ jj ] : 0.0;
+            double xval  = ( jj < jrow ) ? xvsic[ jj ] : xlast;
+            double zval  = ( jj < jrow ) ? zvsic[ jj ] : 0.0;
             xyzdat << QVector3D( xval, yval, zval );
          }
       }
