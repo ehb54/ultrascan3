@@ -49,9 +49,9 @@ qDebug() << "PCtrl: xyzdat count" << xyzdat->count();
    QPushButton* pb_close     = us_pushbutton( tr( "Close" ) );
 
    QLayout*     lo_yrevrs    = us_checkbox( tr( "Reverse Y"    ), ck_yrevrs,
-                                            true );
-   QLayout*     lo_contour   = us_checkbox( tr( "Contour Plot" ), ck_contour,
                                             false );
+   QLayout*     lo_contour   = us_checkbox( tr( "Contour Plot" ), ck_contour,
+                                            true );
 
                 ct_peaksmoo  = us_counter( 3,    1,  200,    1 );
                 ct_peakwid   = us_counter( 3, 0.01, 10.0, 0.01 );
@@ -146,9 +146,10 @@ void US_VhwCPlotControl::plot3_btn()
 qDebug() << "PCtrl:  plot3_btn";
    QString wtitle  = tr( "Multiwavelength 3-D vHW Viewer" );
    QString ptitle  = tr( "MWL 3-D Plot, vanHolde-Weischet Distributions" );
-   QString xatitle = tr( "Lambda(nm)" );
-   QString yatitle = tr( "Sed.C.(*e+13)" );
-   QString zatitle = envel ? tr( "Concen." ) : tr( "B.Frac." );
+   QString xatitle = tr( "Sed.C.(*e+13)" );
+   QString yatitle = tr( "Lambda(nm)" );
+//   QString zatitle = envel ? tr( "Concen." ) : tr( "B.Frac." );
+   QString zatitle = envel ? tr( "Concen." ) : tr( "BF*Conc." );
    zscale          = ct_zscalefac->value();
    rxscale         = ct_rxscale  ->value();
    ryscale         = ct_ryscale  ->value();
@@ -161,19 +162,19 @@ qDebug() << "PCtrl:  plot3_btn: smoo.." << pksmooth << pkwidth << gridres;
 
    int nidpt       = xyzdat->count();
 qDebug() << "PCtrl:  plot3_btn: nidpt" << nidpt;
-   QList< double > xvals;
+   QList< double > yvals;
 
    for ( int ii = 0; ii < nidpt; ii++ )
-   {  // Accumulate unique X values so that we can count rows
-      double xval     = xyzdat->at( ii ).x();
-      if ( ! xvals.contains( xval ) )
-         xvals << xval;
+   {  // Accumulate unique Y values so that we can count columns
+      double yval     = xyzdat->at( ii ).y();
+      if ( ! yvals.contains( yval ) )
+         yvals << yval;
    }
 
-   int nrow        = xvals.count();  // Row count is number of unique X's
-   int ncol        = nidpt / nrow;   // Column count is Total/Rows
-   gridres         = contour ? (int)ct_gridres  ->value() : ncol;
-qDebug() << "PCtrl:  ncol nrow" << ncol << nrow;
+   int ncol        = yvals.count();  // Column count is number of unique Y's
+   int nrow        = nidpt / ncol;   // Row count is Total/Columns
+   gridres         = contour ? (int)ct_gridres->value() : nrow;
+qDebug() << "PCtrl:  ncol nrow" << ncol << nrow << "gridres" << gridres;
 
    if ( plot3d_w == 0 )
    {  // If no 3-D plot window, bring it up now
@@ -199,9 +200,9 @@ qDebug() << "PCtrl:  ncol nrow" << ncol << nrow;
    ryscale        *= 100.0;
 #endif
 #if 1
-   zscale         *= 240.0;
-   rxscale        *= 10.0;
-   ryscale        *= 2.0;
+   zscale         *= 4.0;
+   rxscale        *= 0.2;
+   ryscale        *= 1.0;
 #endif
    plot3d_w->setTitles    ( wtitle, ptitle, xatitle, yatitle, zatitle );
    plot3d_w->setParameters( ncol, nrow, rxscale, ryscale, zscale,

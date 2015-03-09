@@ -76,6 +76,7 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
 
    QLayout* lo_distrib  = us_checkbox( tr( "Integral" ), ck_distrib,  true  );
    QLayout* lo_envelope = us_checkbox( tr( "Envelope" ), ck_envelope, false );
+   QLayout* lo_intconc  = us_checkbox( tr( "Integ.Conc." ), ck_intconc,  true );
 
    le_runid      = us_lineedit( "(current run ID)", -1, true );
    cmb_svproj    = us_comboBox();
@@ -93,8 +94,9 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    leftLayout->addWidget( pb_help,      row,   4, 1, 2 );
    leftLayout->addWidget( pb_close,     row++, 6, 1, 2 );
    leftLayout->addWidget( lb_distrtype, row++, 0, 1, 8 );
-   leftLayout->addLayout( lo_distrib,   row,   0, 1, 4 );
-   leftLayout->addLayout( lo_envelope,  row++, 4, 1, 4 );
+   leftLayout->addLayout( lo_distrib,   row,   0, 1, 3 );
+   leftLayout->addLayout( lo_envelope,  row,   3, 1, 3 );
+   leftLayout->addLayout( lo_intconc,   row++, 6, 1, 2 );
    leftLayout->addWidget( lb_runinfo,   row++, 0, 1, 8 );
    leftLayout->addWidget( lb_runid,     row,   0, 1, 3 );
    leftLayout->addWidget( le_runid,     row++, 3, 1, 5 );
@@ -220,6 +222,8 @@ DbgLv(1) << "Selected runIDs[0]" << runids[0] << "count" << nruns;
 
       QString      tmpdir = US_Settings::tmpDir();
       US_Report    freport;
+      le_runid->setText( tr( "starting data load ..." ) );
+      qApp->processEvents();
 
       for ( int ii = 0; ii < nruns; ii++ )
       {
@@ -1358,14 +1362,19 @@ int US_vHW_Combine::reportDocsFromFiles( QString& runID, QString& fdir,
 void US_vHW_Combine::plot_3d( void )
 {
    bool eplot       = ck_envelope->isChecked();
+   bool icflag      = ck_intconc ->isChecked();
    QString wtitle   = tr( "Multiwavelength 3-Dimensional vHW Viewer" );
    QString ptitle   = eplot ? tr( "g(s) Distributions" )
                             : tr( "G(s) Distributions" );
 
    QString xatitle  = tr( "Sed.C.(*e13)" );
    QString yatitle  = tr( "Lambda(nm)" );
+//   QString zatitle  = eplot ? tr( "Concen." )
+//                            : tr( "B.Frac." );
    QString zatitle  = eplot ? tr( "Concen." )
-                            : tr( "B.Frac." );
+                            : tr( "BF*Conc." );
+   zatitle          = icflag ? zatitle
+                             : tr( "Concen." );
    double xmin      = 1e99;
    double ymin      = 1e99;
    double zmin      = 1e99;
@@ -1408,13 +1417,20 @@ void US_vHW_Combine::plot_3d( void )
       int  ndpts   = eplot ? nenvpt : ndispt;
       xx           = eplot ? xs     : xx;
       zz           = eplot ? zf     : zz;
-      minpt        = qMin( minpt, ndpts );
-      maxpt        = qMax( maxpt, ndpts );
+      double zfscl = eplot ? 1.0    : ( ddesc.totconc * 0.01 );
+      zfscl        = icflag ? zfscl : 1.0;
+      //minpt        = qMin( minpt, ndpts );
+      //maxpt        = qMax( maxpt, ndpts );
+      int knzdp    = 0;
 
       for ( int jj = 0; jj < ndpts; jj++ )
       {
          double xval  = xx[ jj ];
-         double zval  = zz[ jj ];
+//         double zval  = zz[ jj ];
+         double zval  = zz[ jj ] * zfscl;
+
+         if ( zval == 0.0 )  continue;
+         knzdp++;
          xval         = qRound( xval * 1.0e4 ) * 1.0e-4;
 
          if ( ! xvals.contains( xval ) )
@@ -1432,6 +1448,9 @@ void US_vHW_Combine::plot_3d( void )
          //xyzdat << QVector3D( yval, xval, zval );
 DbgLv(0) << "Raw:xyzd: ii jj" << ii << jj << "xyz" << xval << yval << zval;
       }
+
+      minpt        = qMin( minpt, knzdp );
+      maxpt        = qMax( maxpt, knzdp );
    }
 
    nrow         = maxpt;
@@ -1442,7 +1461,7 @@ DbgLv(0) << "   xmin xmax" << xmin << xmax << "ymin ymax" << ymin << ymax
 
    if ( minpt != maxpt )
    {  // Sed.Coeff. counts per wavelength vary:  create constant count
-      nrow         = minpt;
+//      nrow         = minpt;
       xmin         = qRound( xmin * 1.0e4 ) * 1.0e-4;
       xmax         = qRound( xmax * 1.0e4 ) * 1.0e-4;
       double xval  = xmin;
@@ -1450,7 +1469,7 @@ DbgLv(0) << "   xmin xmax" << xmin << xmax << "ymin ymax" << ymin << ymax
       double xinc  = ( xmax - xmin ) / (double)nrow;
       QVector< QVector3D > xyzold = xyzdat;
       int kidpt    = xyzold.count();
-      int nrmv     = maxpt - minpt;
+//      int nrmv     = maxpt - minpt;
       xyzdat.clear();
       xvals .clear();
 DbgLv(0) << "    xmin xinc" << xmin << xinc << "xyzold count" << kidpt;
@@ -1464,7 +1483,7 @@ DbgLv(0) << "     xv0 xvn" << xvals[0] << xvals[nrow-1];
          QVector< double > xvsic;              // X values in column
          QVector< double > zvsic;              // Corresponding Zs in column
          yval         = yvals[ ii ];
-         int krmv     = 0;
+//         int krmv     = 0;
          int krow     = 0;
 DbgLv(0) << "   col" << ii << "yval" << yval;
 
@@ -1477,11 +1496,14 @@ DbgLv(0) << "   col" << ii << "yval" << yval;
                double xval  = xyzold[ jj ].x();
                double zval  = xyzold[ jj ].z();
 
+#if 0
                if ( zval == 0.0  &&  krmv < nrmv )
                {
                   krmv++;
                   continue;
                }
+#endif
+               if ( zval == 0.0 )  continue;
 
                if ( krow < nrow )
                {
@@ -1494,13 +1516,15 @@ DbgLv(0) << "   col" << ii << "yval" << yval;
 
          int jrow     = xvsic.count();
          double xlast = qMin( xmax, xvsic[ jrow - 1 ] + xinc );
+         double zlast = zvsic[ jrow - 1 ];
 DbgLv(0) << "     jrow" << jrow << "nrow" << nrow
  << "xv0,xvn" << xvsic[0] << xvsic[jrow-1];
 
          for ( int jj = 0; jj < nrow; jj++ )
          {
             double xval  = ( jj < jrow ) ? xvsic[ jj ] : xlast;
-            double zval  = ( jj < jrow ) ? zvsic[ jj ] : 0.0;
+//            double zval  = ( jj < jrow ) ? zvsic[ jj ] : 0.0;
+            double zval  = ( jj < jrow ) ? zvsic[ jj ] : zlast;
             xyzdat << QVector3D( xval, yval, zval );
          }
       }
@@ -1516,7 +1540,7 @@ DbgLv(0) << "xyzd size" << xyzdat.size();
    plt3dw->setVisible   ( true );
 #endif
 #if 1
-   if ( p3d_ctld == 0 )
+   if ( p3d_ctld == NULL )
    {
       p3d_pltw     = NULL;
       p3d_ctld     = new US_VhwCPlotControl( this, &xyzdat, eplot );
@@ -1528,6 +1552,12 @@ DbgLv(0) << "xyzd size" << xyzdat.size();
       int cx       = qApp->desktop()->width() - p3d_ctld->width() - 40;
       int cy       = 40;
       p3d_ctld->move( cx, cy );
+      p3d_pltw     = p3d_ctld->widget_3dplot();
+      if ( p3d_pltw != NULL )
+      {
+         p3d_pltw->setTitles ( wtitle, ptitle, xatitle, yatitle, zatitle );
+DbgLv(0) << "p3db:N: titles" << ptitle << xatitle << yatitle << zatitle;
+      }
    }
    else
    {
@@ -1539,7 +1569,7 @@ DbgLv(0) << "xyzd size" << xyzdat.size();
          p3d_pltw->setTitles ( wtitle, ptitle, xatitle, yatitle, zatitle );
          p3d_pltw->reloadData( &xyzdat );
          p3d_pltw->replot();
-DbgLv(0) << "p3db: titles" << ptitle << xatitle << yatitle << zatitle;
+DbgLv(0) << "p3db:E: titles" << ptitle << xatitle << yatitle << zatitle;
       }
 
       p3d_ctld->do_3dplot();
@@ -1552,6 +1582,7 @@ DbgLv(0) << "p3db: titles" << ptitle << xatitle << yatitle << zatitle;
 // Mark plot control window closed
 void US_vHW_Combine::control_closed()
 {
+DbgLv(1) << "VC: control_closed";
    p3d_ctld         = NULL;
    p3d_pltw         = NULL;
 }
