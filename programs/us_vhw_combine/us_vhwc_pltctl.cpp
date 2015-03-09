@@ -98,19 +98,32 @@ qDebug() << "PCtrl: xyzdat count" << xyzdat->count();
    ct_peaksmoo ->setStep(     1 );
    ct_peakwid  ->setStep(  0.01 );
    ct_gridres  ->setStep(    10 );
+   ct_peaksmoo ->setEnabled( !ck_contour->isChecked() );
+   ct_peakwid  ->setEnabled( !ck_contour->isChecked() );
+   ct_gridres  ->setEnabled( !ck_contour->isChecked() );
 
-   connect( pb_plot3d, SIGNAL( clicked()   ),
-            this,      SLOT  ( plot3_btn() ) );
-   connect( pb_help,   SIGNAL( clicked()   ),
-            this,      SLOT  ( help()      ) );
-   connect( pb_close,  SIGNAL( clicked()   ),
-            this,      SLOT  ( close_all() ) );
+   connect( pb_plot3d,   SIGNAL( clicked()   ),
+            this,        SLOT  ( plot3_btn() ) );
+   connect( ck_contour,  SIGNAL( toggled     ( bool ) ),
+            this,        SLOT  ( ptype_toggle( bool ) ) );
+   connect( pb_help,     SIGNAL( clicked()   ),
+            this,        SLOT  ( help()      ) );
+   connect( pb_close,    SIGNAL( clicked()   ),
+            this,        SLOT  ( close_all() ) );
 
    plot3d_w = 0;
 
    ct_zscalefac->setMinimumWidth( lb_zscalefac->width() );
    adjustSize();
 qDebug() << "PCtrl:  w size" << size();
+}
+
+// Make changes based on plot type (contour/point) toggled
+void US_VhwCPlotControl::ptype_toggle( bool chkd )
+{
+   ct_peaksmoo ->setEnabled( !chkd );
+   ct_peakwid  ->setEnabled( !chkd );
+   ct_gridres  ->setEnabled( !chkd );
 }
 
 // Return caller of plot_control
@@ -200,9 +213,9 @@ qDebug() << "PCtrl:  ncol nrow" << ncol << nrow << "gridres" << gridres;
    ryscale        *= 100.0;
 #endif
 #if 1
-   zscale         *= 4.0;
-   rxscale        *= 0.2;
-   ryscale        *= 1.0;
+   zscale         *= 5.00;
+   rxscale        *= 0.16;
+   ryscale        *= 1.00;
 #endif
    plot3d_w->setTitles    ( wtitle, ptitle, xatitle, yatitle, zatitle );
    plot3d_w->setParameters( ncol, nrow, rxscale, ryscale, zscale,

@@ -74,10 +74,11 @@ class US_VhwCPlotControl : public US_WidgetsDialog
       US_Help       showHelp;
 
    private slots:
-      void plot3_btn( void );
-      void close_all( void );
+      void ptype_toggle( bool );
+      void plot3_btn   ( void );
+      void close_all   ( void );
 
-      void help     ( void )
+      void help        ( void )
       { showHelp.show_help( "vhw_combine_pltctl.html" ); };
 };
 #endif
