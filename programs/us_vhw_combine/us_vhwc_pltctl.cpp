@@ -10,13 +10,14 @@
 
 // Constructor:  enhanced spectra plot control widget
 US_VhwCPlotControl::US_VhwCPlotControl( QWidget* p, QVector< QVector3D >* d,
-      bool a_envel )
+      int a_ptype )
    : US_WidgetsDialog( 0, 0 )
 {
 qDebug() << "PCtrl: IN";
    wparent        = p;
    xyzdat         = d;
-   envel          = a_envel;
+   p_type         = a_ptype;
+   envel          = ( p_type == 0 );
 qDebug() << "PCtrl: xyzdat count" << xyzdat->count();
 
    setObjectName( "US_VhwCPlotControl" );
@@ -53,12 +54,12 @@ qDebug() << "PCtrl: xyzdat count" << xyzdat->count();
    QLayout*     lo_contour   = us_checkbox( tr( "Contour Plot" ), ck_contour,
                                             true );
 
-                ct_peaksmoo  = us_counter( 3,    1,  200,    1 );
-                ct_peakwid   = us_counter( 3, 0.01, 10.0, 0.01 );
-                ct_gridres   = us_counter( 3,   50,  600,   10 );
-                ct_zscalefac = us_counter( 3, 0.01, 1000, 0.01 );
-                ct_rxscale   = us_counter( 3, 0.01, 1000, 0.01 );
-                ct_ryscale   = us_counter( 3, 0.01, 1000, 0.01 );
+   ct_peaksmoo  = us_counter( 3,    1,  200,    1 );
+   ct_peakwid   = us_counter( 3, 0.01, 10.0, 0.01 );
+   ct_gridres   = us_counter( 3,   50,  600,   10 );
+   ct_zscalefac = us_counter( 3, 0.01, 1000, 0.01 );
+   ct_rxscale   = us_counter( 3, 0.01, 1000, 0.01 );
+   ct_ryscale   = us_counter( 3, 0.01, 1000, 0.01 );
 
    int row = 0;
    controlsLayout->addWidget( lb_zscalefac, row,   0, 1, 2 );
@@ -158,11 +159,12 @@ void US_VhwCPlotControl::plot3_btn()
 {
 qDebug() << "PCtrl:  plot3_btn";
    QString wtitle  = tr( "Multiwavelength 3-D vHW Viewer" );
-   QString ptitle  = tr( "MWL 3-D Plot, vanHolde-Weischet Distributions" );
+   QString ptitle  = tr( "MWL 3-D Plot, vHW Distributions" );
    QString xatitle = tr( "Sed.C.(*e+13)" );
    QString yatitle = tr( "Lambda(nm)" );
-//   QString zatitle = envel ? tr( "Concen." ) : tr( "B.Frac." );
-   QString zatitle = envel ? tr( "Concen." ) : tr( "BF*Conc." );
+   QString zatitle = envel             ? tr( "Concen."  ) :
+                     ( ( p_type == 1 ) ? tr( "B.Frac."  ) :
+                                         tr( "BF*Conc." ) );
    zscale          = ct_zscalefac->value();
    rxscale         = ct_rxscale  ->value();
    ryscale         = ct_ryscale  ->value();
@@ -188,6 +190,8 @@ qDebug() << "PCtrl:  plot3_btn: nidpt" << nidpt;
    int nrow        = nidpt / ncol;   // Row count is Total/Columns
    gridres         = contour ? (int)ct_gridres->value() : nrow;
 qDebug() << "PCtrl:  ncol nrow" << ncol << nrow << "gridres" << gridres;
+   ncol            = contour ? ncol : gridres;
+   nrow            = contour ? nrow : gridres;
 
    if ( plot3d_w == 0 )
    {  // If no 3-D plot window, bring it up now
@@ -207,16 +211,19 @@ qDebug() << "PCtrl:  ncol nrow" << ncol << nrow << "gridres" << gridres;
    }
 
    // Set plot window parameters; do initial plot; and make it visible
-#if 0
-   zscale         *= 8000.0;
-   rxscale        *= 100.0;
-   ryscale        *= 100.0;
-#endif
-#if 1
-   zscale         *= 5.00;
-   rxscale        *= 0.16;
-   ryscale        *= 1.00;
-#endif
+   if ( contour )
+   {
+      zscale         *= ( envel ? 1.00 : 5.00 );
+      rxscale        *= ( envel ? 0.13 : 0.16 );
+      ryscale        *= ( envel ? 0.80 : 1.00 );
+   }
+   else
+   {
+      zscale         *= ( envel ? 0.15 : 0.03 );
+      rxscale        *= ( envel ? 0.20 : 1.20 );
+      ryscale        *= ( envel ? 1.30 : 1.20 );
+   }
+
    plot3d_w->setTitles    ( wtitle, ptitle, xatitle, yatitle, zatitle );
    plot3d_w->setParameters( ncol, nrow, rxscale, ryscale, zscale,
                             pksmooth, pkwidth );
