@@ -70,6 +70,7 @@ class US_vHW_Combine : public US_Widgets
 
       QCheckBox*     ck_distrib;
       QCheckBox*     ck_envelope;
+      QCheckBox*     ck_intconc;
 
       US_Help        showHelp;
  
