@@ -76,7 +76,8 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
 
    QLayout* lo_distrib  = us_checkbox( tr( "Integral" ), ck_distrib,  true  );
    QLayout* lo_envelope = us_checkbox( tr( "Envelope" ), ck_envelope, false );
-   QLayout* lo_intconc  = us_checkbox( tr( "Integ.Conc." ), ck_intconc,  true );
+   QLayout* lo_intconc  = us_checkbox( tr( "Use Integ.Concentrations" ),
+                                       ck_intconc,  true );
 
    le_runid      = us_lineedit( "(current run ID)", -1, true );
    cmb_svproj    = us_comboBox();
@@ -94,9 +95,9 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    leftLayout->addWidget( pb_help,      row,   4, 1, 2 );
    leftLayout->addWidget( pb_close,     row++, 6, 1, 2 );
    leftLayout->addWidget( lb_distrtype, row++, 0, 1, 8 );
-   leftLayout->addLayout( lo_distrib,   row,   0, 1, 3 );
-   leftLayout->addLayout( lo_envelope,  row,   3, 1, 3 );
-   leftLayout->addLayout( lo_intconc,   row++, 6, 1, 2 );
+   leftLayout->addLayout( lo_distrib,   row,   0, 1, 2 );
+   leftLayout->addLayout( lo_envelope,  row,   2, 1, 2 );
+   leftLayout->addLayout( lo_intconc,   row++, 4, 1, 4 );
    leftLayout->addWidget( lb_runinfo,   row++, 0, 1, 8 );
    leftLayout->addWidget( lb_runid,     row,   0, 1, 3 );
    leftLayout->addWidget( le_runid,     row++, 3, 1, 5 );
@@ -462,6 +463,7 @@ void US_vHW_Combine::plot_data( void )
 
    bool dplot       = ck_distrib ->isChecked();
    bool eplot       = ck_envelope->isChecked();
+   ck_intconc->setEnabled( dplot );
    QString ptitle   = tr( "G(s) Distributions" );
 
    if ( dplot  &&  eplot )
@@ -486,14 +488,17 @@ void US_vHW_Combine::plot_data( void )
 // Add a single distribution to the plot
 void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
 {
+   QVector< double > dconcs;
    bool dplot  = ck_distrib ->isChecked();
    bool eplot  = ck_envelope->isChecked();
+   bool dconc  = ck_intconc ->isChecked();
    int  ndispt = ddesc.bfracs.size();
    int  nenvpt = ddesc.efreqs.size();
    double* xx  = ddesc.dsedcs.data();
    double* yy  = ddesc.bfracs.data();
    double* xs  = ddesc.esedcs.data();
    double* yf  = ddesc.efreqs.data();
+   double fscl = dconc ? ( ddesc.totconc * 0.01 ) : 1.0;
 
    QString dcID = distrID + tr( " (integ.)" );
    QString ecID = distrID + tr( " (diff.)" );
@@ -502,7 +507,7 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    QPen    dlpen( QPen( Qt::yellow ) );
    QPen    elpen( QPen( QBrush( ddesc.color ), 3.0 ) );
 
-   if ( dplot )
+   if ( dplot  &&  !dconc )
    {  // Build curves for distribution plot
       dcurve        = us_curve( data_plot1, dcID );
       dcurve->setStyle ( QwtPlotCurve::Lines );
@@ -510,6 +515,23 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
       dcurve->setPen   ( dlpen );
       dcurve->setData  ( xx, yy, ndispt );
       dcurve->setYAxis ( QwtPlot::yLeft );
+   }
+
+   if ( dplot  &&  dconc )
+   {  // Build curves for integration/concentration plot
+      dconcs.clear();
+      dconcs.reserve( ndispt );
+
+      for ( int ii = 0; ii < ndispt; ii++ )
+         dconcs << ( yy[ ii ] * fscl );
+
+      double* yc    = dconcs.data();
+      dcurve        = us_curve( data_plot1, dcID );
+      dcurve->setStyle ( QwtPlotCurve::Lines );
+      dcurve->setSymbol( ddesc.symbol );
+      dcurve->setPen   ( dlpen );
+      dcurve->setData  ( xx, yc, ndispt );
+      dcurve->setYAxis ( QwtPlot::yRight );
    }
 
    if ( eplot )
@@ -529,8 +551,8 @@ DbgLv(2) << "   xsn yfn" << xs[kk-1] << yf[kk-1];
    data_plot1->setAxisAutoScale( QwtPlot::xBottom );
    data_plot1->setAxisAutoScale( QwtPlot::yLeft );
    data_plot1->setAxisAutoScale( QwtPlot::yRight );
-   data_plot1->enableAxis      ( QwtPlot::yLeft,  dplot );
-   data_plot1->enableAxis      ( QwtPlot::yRight, eplot );
+   data_plot1->enableAxis      ( QwtPlot::yLeft,  dplot && ! dconc );
+   data_plot1->enableAxis      ( QwtPlot::yRight, eplot || dconc );
 
    data_plot1->replot();
 }
@@ -1142,6 +1164,7 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
    QString line;
    dat1File = dataFile;
    lis1File = listFile;
+   bool dconc  = ck_intconc ->isChecked();
 
    QFile dfile( dataFile );
 
@@ -1178,12 +1201,13 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
       line       = "";
       for ( int ii = 0; ii < nplots; ii++ )
       {  // Add each X,Y data pair
+         double bscl = dconc ? ( pdistrs[ ii ].totconc * 0.01 ) : 1.0;
          int nvals   = pdistrs[ ii ].dsedcs.size();
          double* xx  = pdistrs[ ii ].dsedcs.data();
          double* yy  = pdistrs[ ii ].bfracs.data();
          int kk      = qMin( jj, ( nvals - 1 ) );
          double sval = xx[ kk ];
-         double boun = yy[ kk ];
+         double boun = yy[ kk ] * bscl;
 
          QString dat = QString().sprintf( "\"%12.5f\",\"%10.5f\"", sval, boun );
          dat.replace( " ", "" );
