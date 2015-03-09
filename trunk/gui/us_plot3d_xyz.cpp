@@ -320,7 +320,7 @@ void US_Plot3Dxyz::setTitles( QString wndt, QString pltt,
    const double VROUND = 10.0;
    const double MAX_ANNO = (99.9/VROUND);
 //   const double MAX_ANNO = (999.0/VROUND);
-#if 0
+#if 1
    const double VNEGOF = (1.0/VROUND);
    double xround = VROUND;
    double yround = VROUND;
@@ -381,7 +381,7 @@ DbgLv(2) << "P3D:sT: titles xyz" << xatitle << yatitle << zatitle;
    ymax     += yval;
 
    // determine a normalizing power-of-ten for x and y
-#if 0
+#if 1
    double xavg   = ( xmin + xmax ) * 0.5;
    double yavg   = ( ymin + ymax ) * 0.5;
    x_norm    = MAX_ANNO / xavg;
@@ -400,8 +400,12 @@ DbgLv(1) << "P3D:sR:  zmin zmax" << zmin << zmax;
    z_norm    = pow( 10.0, (double)powrz );
 #if 0
    x_norm    = MAX_ANNO / xavg;
+#endif
+#if 1
    x_norm   *= 0.1;
+#endif
 
+#if 1
    if ( ( xavg * x_norm ) > MAX_ANNO )
    {
       x_norm   *= 0.1;
@@ -431,7 +435,7 @@ DbgLv(1) << "P3D:sR: powx powy" << powrx << powry << "xnorm ynorm znorm"
    zmax     *= z_norm;
 DbgLv(1) << "P3D:sR: nrm'd xmin xmax" << xmin << xmax << "ymin ymax"
  << ymin << ymax << "zmin zmax" << zmin << zmax;
-#if 0
+#if 1
    xmin      = (double)( (int)( xmin * xround )     ) / xround;
    xmax      = (double)( (int)( xmax * xround ) + 1 ) / xround;
    xmin      = ( xmin < 0.0 ) ? ( xmin - VNEGOF ) : xmin;
@@ -559,25 +563,6 @@ DbgLv(1) << "P3D:cC: tdata M" << tdata[0].size();
 void US_Plot3Dxyz::calculatePoints()
 {
    int    nidpt  = xyzdat->count();
-#if 0
-   int    krows  = nrows;
-   int    kcols  = ncols;
-
-   if ( nrows == 1  ||  ncols == 1 )
-   {
-      ncols         = (int)sqrt( (double)nidpt );
-   }
-
-   nrows         = nidpt / ncols;
-   nrows         = ( nrows * ncols ) < nidpt ? ( nrows + 1 ) : nrows;
-
-   if ( nrows != krows  ||  ncols != kcols )
-   {
-      clear_2dvect( zdata );
-      alloc_2dvect( zdata, ncols, nrows );
-   }
-#endif
-#if 1
    int    kcols  = zdata.count();
    int    krows  = ( kcols == 0 ) ? 0 : zdata[ 0 ].count();
 
@@ -586,7 +571,6 @@ void US_Plot3Dxyz::calculatePoints()
       clear_2dvect( zdata );
       alloc_2dvect( zdata, ncols, nrows );
    }
-#endif
 
    int    hixd   = ncols / 5;  // max raster radius is 5th of total extent
    int    hiyd   = nrows / 5;
@@ -629,8 +613,8 @@ DbgLv(1) << "cP:  dfac xdif ydif" << dfac << xdif << ydif
    //   xdif = acos( pow( zpkf, 1.0/alpha ) ) / ( sqrt(2) * dfac );
    //   xdif = acos( pow( zpkf, 1.0/alpha ) ) / ( sqrt(2) * M_PI * 0.5 / beta );
 
-//   xdif = acos( pow( 1e-18, ( 1.0 / alpha) ) )
-   xdif = acos( pow( 1e-8, ( 1.0 / alpha) ) )
+   //xdif = acos( pow( 1e-8, ( 1.0 / alpha) ) )
+   xdif = acos( pow( 1e-18, ( 1.0 / alpha) ) )
           * beta / ( M_PI * 0.5 * sqrt( 2.0 ) );  // max xy-diff at small zpkf
    nxd  = qRound( xdif * xpinc );                 // reasonable x point radius
    nyd  = qRound( xdif * ypinc );                 // reasonable y point radius
@@ -642,8 +626,8 @@ DbgLv(1) << "cP: xdif nxd nyd" << xdif << nxd << nyd << "nidpt" << nidpt;
    nxd  = qMax( nxd, loxd );                      // at least 5 pixels
    nyd  = qMax( nyd, loyd );
 DbgLv(1) << "cP:  nxd nyd" << nxd << nyd << "ncols nrows" << ncols << nrows;
-   //double zval   = zmin;
-   double zval   = qMin( zmin, 0.0 );
+   double zval   = zmin;
+   //double zval   = qMin( zmin, 0.0 );
    //double beta_d = beta / (double)ncols;
 
    for ( int ii = 0; ii < ncols; ii++ )      // initialize raster to zmin
@@ -699,8 +683,8 @@ DbgLv(1) << "cP:  nxd nyd" << nxd << nyd << "ncols nrows" << ncols << nrows;
             //if ( dist <= beta_d )
             if ( dist <= beta )
             {
-               //zdata[ ii ][ jj ] += ( ( zval *
-               zdata[ jj ][ ii ] += ( ( zval *
+               //zdata[ jj ][ ii ] += ( ( zval *
+               zdata[ ii ][ jj ] += ( ( zval *
                      ( pow( cos( dist * dfac ), alpha ) ) ) * zfact );
 //DbgLv(0) << "cP:tif: ii jj" << ii << jj << "zval dist dfac alpha zfact beta_d"
 // << zval << dist << dfac << alpha << zfact << beta_d

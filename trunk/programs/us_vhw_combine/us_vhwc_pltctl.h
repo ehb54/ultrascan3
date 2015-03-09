@@ -20,9 +20,9 @@ class US_VhwCPlotControl : public US_WidgetsDialog
       //! \brief US_VhwCPlotControl constructor
       //! \param p  Pointer to the parent of this widget
       //! \param d  Pointer to the xyz data to be plotted
-      //! \param a_envel  Flag if data is envelope data
+      //! \param a_ptype  Plot type flag (0,1,2 -> envel, integ, integ+conc)
       US_VhwCPlotControl( QWidget* p = 0, QVector< QVector3D >* = 0,
-                          bool = false );
+                          int = 2 );
 
       //! \brief Function to return US_VhwCPlotControl's caller
       //! \returns Pointer to the QWidget that created this plot control
@@ -67,6 +67,7 @@ class US_VhwCPlotControl : public US_WidgetsDialog
       double        pkwidth;
 
       int           gridres;
+      int           p_type;
 
       bool          envel;
 

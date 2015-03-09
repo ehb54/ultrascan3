@@ -134,6 +134,8 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
             this,        SLOT(   plot_data()        ) );
    connect( ck_envelope, SIGNAL( stateChanged( int) ),
             this,        SLOT(   plot_data()        ) );
+   connect( ck_intconc,  SIGNAL( stateChanged( int) ),
+            this,        SLOT(   plot_data()        ) );
 
    connect( lw_runids,   SIGNAL( currentRowChanged( int ) ),
             this,        SLOT(   runid_select(      int ) ) );
@@ -1387,6 +1389,7 @@ void US_vHW_Combine::plot_3d( void )
 {
    bool eplot       = ck_envelope->isChecked();
    bool icflag      = ck_intconc ->isChecked();
+   int p_type       = eplot ? 0 : ( icflag ? 2 : 1 );
    QString wtitle   = tr( "Multiwavelength 3-Dimensional vHW Viewer" );
    QString ptitle   = eplot ? tr( "g(s) Distributions" )
                             : tr( "G(s) Distributions" );
@@ -1396,9 +1399,7 @@ void US_vHW_Combine::plot_3d( void )
 //   QString zatitle  = eplot ? tr( "Concen." )
 //                            : tr( "B.Frac." );
    QString zatitle  = eplot ? tr( "Concen." )
-                            : tr( "BF*Conc." );
-   zatitle          = icflag ? zatitle
-                             : tr( "Concen." );
+                            : ( icflag ? tr( "BF*Conc." ) : tr( "Concen." ) );
    double xmin      = 1e99;
    double ymin      = 1e99;
    double zmin      = 1e99;
@@ -1415,8 +1416,9 @@ void US_vHW_Combine::plot_3d( void )
 
    QList< double >       xvals;
    QList< double >       yvals;
-   xvals.clear();
-   yvals.clear();
+   xvals .clear();
+   yvals .clear();
+   xyzdat.clear();
 
    for ( int ii = 0; ii < ndist; ii++ )
    {
@@ -1450,7 +1452,6 @@ void US_vHW_Combine::plot_3d( void )
       for ( int jj = 0; jj < ndpts; jj++ )
       {
          double xval  = xx[ jj ];
-//         double zval  = zz[ jj ];
          double zval  = zz[ jj ] * zfscl;
 
          if ( zval == 0.0 )  continue;
@@ -1555,19 +1556,10 @@ DbgLv(0) << "     jrow" << jrow << "nrow" << nrow
 DbgLv(0) << "xyzd size" << xyzdat.size();
    }
 
-#if 0
-   US_Plot3Dxyz* plt3dw = new US_Plot3Dxyz( this, &xyzdat );
-
-   plt3dw->setTitles    ( wtitle, ptitle, xatitle, yatitle, zatitle );
-   plt3dw->setParameters( ncol, nrow, rxscale, ryscale, zscale, alpha, beta );
-   plt3dw->replot       ();
-   plt3dw->setVisible   ( true );
-#endif
-#if 1
    if ( p3d_ctld == NULL )
    {
       p3d_pltw     = NULL;
-      p3d_ctld     = new US_VhwCPlotControl( this, &xyzdat, eplot );
+      p3d_ctld     = new US_VhwCPlotControl( this, &xyzdat, p_type );
 
       connect( p3d_ctld,  SIGNAL( has_closed()     ),
                this,      SLOT  ( control_closed() ) ); 
@@ -1600,7 +1592,6 @@ DbgLv(0) << "p3db:E: titles" << ptitle << xatitle << yatitle << zatitle;
    }
 
    p3d_ctld->show();
-#endif
 }
 
 // Mark plot control window closed
