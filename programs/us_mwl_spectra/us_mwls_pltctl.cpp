@@ -8,6 +8,12 @@
 
 #include <qwt_legend.h>
 
+#ifndef ZSCAL_FACT
+#define ZSCAL_FACT 7.2
+#define RXSCL_FACT 3.2
+#define RYSCL_FACT 1.0
+#endif
+
 // Constructor:  enhanced spectra plot control widget
 US_MwlSPlotControl::US_MwlSPlotControl( QWidget* p, QVector< QVector3D >* d )
    : US_WidgetsDialog( 0, 0 )
@@ -159,9 +165,10 @@ qDebug() << "PCtrl:  plot3_btn: scales" << rxscale << ryscale << zscale;
    }
 
    // Set plot window parameters; do initial plot; and make it visible
-   zscale         *= 8000.0;
-   rxscale        *= 100.0;
-   ryscale        *= 100.0;
+   zscale         *= ZSCAL_FACT;
+   rxscale        *= RXSCL_FACT;
+   ryscale        *= RYSCL_FACT;
+
    plot3d_w->setTitles    ( wtitle, ptitle, xatitle, yatitle, zatitle );
    plot3d_w->setParameters( ncol, nrow, rxscale, ryscale, zscale );
    plot3d_w->replot       ( );
