@@ -1691,19 +1691,9 @@ DbgLv(1) << "Plt3D:  open MPC";
       p3d_pltw     = NULL;
       p3d_ctld     = new US_MwlPlotControl( this, &xyzdat );
       p3d_ctld->show();
-      // Position near one corner of the desktop
-      int mx       = x();
-      int my       = y();
-      int nmx      = width();
-      int nmy      = height();
-      int ndx      = qApp->desktop()->width();
-      int ndy      = qApp->desktop()->height();
-      int mmx      = mx + nmx / 2;
-      int mmy      = my + nmy / 2;
-      int ncx      = p3d_ctld->width();
-      int ncy      = p3d_ctld->height();
-      int cx       = ( mmx > ( ndx / 2 ) ) ? 20 : ( ndx - ncx - 20 );
-      int cy       = ( mmy > ( ndy / 2 ) ) ? 20 : ( ndy - ncy - 20 );
+      // Position near the upper right corner of the desktop
+      int cx       = qApp->desktop()->width() - p3d_ctld->width() - 40;
+      int cy       = 40;
       p3d_ctld->move( cx, cy );
       connect( p3d_ctld, SIGNAL( has_closed()     ),
                this,     SLOT  ( p3dctrl_closed() ) );

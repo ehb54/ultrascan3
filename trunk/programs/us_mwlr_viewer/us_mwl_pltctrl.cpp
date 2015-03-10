@@ -8,6 +8,12 @@
 
 #include <qwt_legend.h>
 
+#ifndef ZSCAL_FACT
+#define ZSCAL_FACT 0.008
+#define RXSCL_FACT 0.032
+#define RYSCL_FACT 0.900
+#endif
+
 // constructor:  enhanced plot control widget
 US_MwlPlotControl::US_MwlPlotControl( QWidget* p, QVector< QVector3D >* d )
    : US_WidgetsDialog( 0, 0 )
@@ -123,9 +129,9 @@ qDebug() << "PCtrl:  plot3_btn";
    QString xatitle = tr( "Radius(cm)" );
    QString yatitle = tr( "Lambda(nm)" );
    QString zatitle = tr( "Intensity" );
-   zscale          = ct_zscalefac->value();
-   rxscale         = ct_rxscale  ->value();
-   ryscale         = ct_ryscale  ->value();
+   zscale          = ct_zscalefac->value() * ZSCAL_FACT;
+   rxscale         = ct_rxscale  ->value() * RXSCL_FACT;
+   ryscale         = ct_ryscale  ->value() * RYSCL_FACT;
    ryscale         = ( ck_yrevrs->isChecked() ) ? -ryscale : ryscale;
 qDebug() << "PCtrl:  plot3_btn: scales" << rxscale << ryscale << zscale;
    int nidpt       = xyzdat->count();

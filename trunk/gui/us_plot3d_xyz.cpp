@@ -320,7 +320,7 @@ void US_Plot3Dxyz::setTitles( QString wndt, QString pltt,
    const double VROUND = 10.0;
    const double MAX_ANNO = (99.9/VROUND);
 //   const double MAX_ANNO = (999.0/VROUND);
-#if 1
+#if 0
    const double VNEGOF = (1.0/VROUND);
    double xround = VROUND;
    double yround = VROUND;
@@ -381,7 +381,7 @@ DbgLv(2) << "P3D:sT: titles xyz" << xatitle << yatitle << zatitle;
    ymax     += yval;
 
    // determine a normalizing power-of-ten for x and y
-#if 1
+#if 0
    double xavg   = ( xmin + xmax ) * 0.5;
    double yavg   = ( ymin + ymax ) * 0.5;
    x_norm    = MAX_ANNO / xavg;
@@ -405,7 +405,7 @@ DbgLv(1) << "P3D:sR:  zmin zmax" << zmin << zmax;
    x_norm   *= 0.1;
 #endif
 
-#if 1
+#if 0
    if ( ( xavg * x_norm ) > MAX_ANNO )
    {
       x_norm   *= 0.1;
@@ -435,7 +435,7 @@ DbgLv(1) << "P3D:sR: powx powy" << powrx << powry << "xnorm ynorm znorm"
    zmax     *= z_norm;
 DbgLv(1) << "P3D:sR: nrm'd xmin xmax" << xmin << xmax << "ymin ymax"
  << ymin << ymax << "zmin zmax" << zmin << zmax;
-#if 1
+#if 0
    xmin      = (double)( (int)( xmin * xround )     ) / xround;
    xmax      = (double)( (int)( xmax * xround ) + 1 ) / xround;
    xmin      = ( xmin < 0.0 ) ? ( xmin - VNEGOF ) : xmin;

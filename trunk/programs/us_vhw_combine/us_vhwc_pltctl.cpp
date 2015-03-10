@@ -8,6 +8,21 @@
 
 #include <qwt_legend.h>
 
+#ifndef ZSCLF_CE // Plot scale adjusts: Contour/Points Envel/Integ
+#define ZSCLF_CE  0.07
+#define XSCLF_CE  0.13
+#define YSCLF_CE  0.70
+#define ZSCLF_CI  0.50
+#define XSCLF_CI  0.16
+#define YSCLF_CI  0.80
+#define ZSCLF_PE  0.10
+#define XSCLF_PE  0.12
+#define YSCLF_PE  1.00
+#define ZSCLF_PI  0.45
+#define XSCLF_PI  0.16
+#define YSCLF_PI  1.00
+#endif
+
 // Constructor:  enhanced spectra plot control widget
 US_VhwCPlotControl::US_VhwCPlotControl( QWidget* p, QVector< QVector3D >* d,
       int a_ptype )
@@ -212,16 +227,16 @@ qDebug() << "PCtrl:  ncol nrow" << ncol << nrow << "gridres" << gridres;
 
    // Set plot window parameters; do initial plot; and make it visible
    if ( contour )
-   {
-      zscale         *= ( envel ? 1.00 : 5.00 );
-      rxscale        *= ( envel ? 0.13 : 0.16 );
-      ryscale        *= ( envel ? 0.80 : 1.00 );
+   {  // Contour plot scale adjustments Envel/Integ
+      zscale         *= ( envel ? ZSCLF_CE : ZSCLF_CI );
+      rxscale        *= ( envel ? XSCLF_CE : XSCLF_CI );
+      ryscale        *= ( envel ? YSCLF_CE : YSCLF_CI );
    }
    else
-   {
-      zscale         *= ( envel ? 0.15 : 0.03 );
-      rxscale        *= ( envel ? 0.20 : 1.20 );
-      ryscale        *= ( envel ? 1.30 : 1.20 );
+   {  // Points plot scale adjustments Envel/Integ
+      zscale         *= ( envel ? ZSCLF_PE : ZSCLF_PI );
+      rxscale        *= ( envel ? XSCLF_PE : XSCLF_PI );
+      ryscale        *= ( envel ? YSCLF_PE : YSCLF_PI );
    }
 
    plot3d_w->setTitles    ( wtitle, ptitle, xatitle, yatitle, zatitle );
