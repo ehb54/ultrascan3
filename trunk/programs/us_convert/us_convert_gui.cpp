@@ -4513,6 +4513,14 @@ DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
    isMwl            = ( all_chaninfo.count() != all_tripinfo.count() );
 DbgLv(1) << "CGui:IOD:  isMwl" << isMwl << "c.count t.count"
  << all_chaninfo.count() << all_tripinfo.count();
+   if ( isMwl  &&  ( all_tripinfo.count() / all_chaninfo.count() ) < 4 )
+   {  // If less than 4 wavelengths, treat as non-MWL
+      isMwl            = false;
+      all_chaninfo     = all_tripinfo;
+      out_chaninfo     = out_tripinfo;
+DbgLv(1) << "CGui:IOD:    isMwl" << isMwl << "c.count t.count"
+ << all_chaninfo.count() << all_tripinfo.count() << out_chaninfo.count();
+   }
 
    if ( isMwl )
    {  // If MWL, update speed steps
@@ -4544,6 +4552,7 @@ DbgLv(1) << "CGui:IOD:    updSS nspeed nstest nspeedc"
       for ( int trx = 0; trx < all_tripinfo.count(); trx++ )
       {
          QString triple = all_tripinfo[ trx ].tripleDesc;
+DbgLv(1) << "CGui:IOD:     trx" << trx << "triple" << triple;
          all_chaninfo[ trx ].tripleDesc = triple;
          out_chaninfo[ trx ].tripleDesc = triple;
       }
