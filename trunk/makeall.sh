@@ -34,6 +34,7 @@ do
   if [ $d == "programs/config2"         ]; then continue; fi
   if [ $d == "programs/us_1dsa"         ]; then continue; fi
   if [ $d == "programs/us_mpi_analysis" ]; then continue; fi
+  if [ $d == "programs/us_mwla_viewer"  ]; then continue; fi
   pushd $d
   sdir=`pwd`
   if [ $ISMAC -eq 0 ]; then
