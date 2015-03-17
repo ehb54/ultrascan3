@@ -623,6 +623,7 @@ void US_FeMatch::update( int drow )
    QString bmanu = manual ? "1" : "0";
    QString svbar = le_vbar     ->text();
    bool    bufvl = false;
+DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
 
    QString errmsg;
    US_Passwd pw;
@@ -633,6 +634,7 @@ void US_FeMatch::update( int drow )
 //Hardwire compressibility to zero, for now
 bcomp="0.0";
 
+DbgLv(1) << "Fem:Upd: bufvl" << bufvl << "svbar" << svbar;
    if ( bufvl )
    {
       buffLoaded  = false;
@@ -645,6 +647,7 @@ bcomp="0.0";
       viscosity   = bvisc.toDouble();
       compress    = bcomp.toDouble();
       manual      = ( !bmanu.isEmpty()  &&  bmanu == "1" );
+DbgLv(1) << "Fem:Upd: solID" << solID;
 
       if ( solID.isEmpty() )
       {
@@ -655,6 +658,7 @@ bcomp="0.0";
       else if ( solID.length() < 36  &&  dbP != NULL )
       {
          solution_rec.readFromDB( solID.toInt(), dbP );
+DbgLv(1) << "Fem:Upd: (1)svbar" << svbar;
       }
 
       else
@@ -663,9 +667,10 @@ bcomp="0.0";
       }
    
       le_solution ->setText( solution_rec.solutionDesc );
-      vbar          = US_Math2::calcCommonVbar( solution_rec, 20.0 );
+      vbar          = solution_rec.commonVbar20;
       svbar         = QString::number( vbar );
       le_vbar     ->setText( svbar );
+DbgLv(1) << "Fem:Upd: (9)svbar" << svbar;
    }
 
    else
@@ -776,7 +781,7 @@ void US_FeMatch::data_plot( void )
    solution.viscosity = le_viscosity->text().toDouble();
    solution.manual    = manual;
    solution.vbar20    = le_vbar     ->text().toDouble();
-   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+   solution.vbar      = US_Math2::adjust_vbar( solution.vbar20, avgTemp );
 
    US_Math2::data_correction( avgTemp, solution );
 
@@ -1812,7 +1817,7 @@ void US_FeMatch::adjust_model()
    solution.viscosity = le_viscosity->text().toDouble();
    solution.manual    = manual;
    solution.vbar20    = vbar20;
-   solution.vbar      = US_Math2::calcCommonVbar( solution_rec, avgTemp );
+   solution.vbar      = US_Math2::adjust_vbar( solution.vbar20, avgTemp );
 DbgLv(1) << "Fem:Adj: manual" << manual << solution.manual << solution_rec.buffer.manual;
 
    US_Math2::data_correction( avgTemp, solution );
@@ -1835,10 +1840,14 @@ DbgLv(1) << "Fem:Adj: manual" << manual << solution.manual << solution_rec.buffe
    {  // Use vbar from the model component, instead of from the solution
       sd.vbar20    = mc_vbar;
       sd.vbar      = US_Math2::adjust_vbar( sd.vbar20, avgTemp );
+DbgLv(1) << "Fem:Adj:  avgT" << avgTemp << "vb20 vb" << sd.vbar20 << sd.vbar;
       US_Math2::data_correction( avgTemp, sd );
       scorrec      = sd.s20w_correction;
       dcorrec      = sd.D20w_correction;
    }
+DbgLv(1) << "Fem:Adj: vbars (t,s,m,c,20) "
+   << vbar20 << solution.vbar20 << mc_vbar << sd.vbar << sd.vbar20
+   << "scorr dcorr" << scorrec << dcorrec;
 
    // Convert to experiment space: adjust s,D based on buffer
 
@@ -2694,8 +2703,7 @@ QString US_FeMatch::hydrodynamics( void ) const
    solution.viscosity = le_viscosity->text().toDouble();
    solution.manual    = manual;
    solution.vbar20    = le_vbar     ->text().toDouble();
-   solution.vbar      = US_Math2::calcCommonVbar( (US_Solution&)solution_rec,
-                                                  avgTemp );
+   solution.vbar      = US_Math2::adjust_vbar( solution.vbar20, avgTemp );
 
    US_Math2::data_correction( avgTemp, solution );
 
@@ -2765,6 +2773,8 @@ QString US_FeMatch::scan_info( void ) const
 QString US_FeMatch::distrib_info()
 {
    int  ncomp     = model_used.components.size();
+   double vari_m  = model_used.variance;
+   double rmsd_m  = ( vari_m == 0.0 ) ? 0.0 : sqrt( vari_m );
    
    if ( ncomp == 0 )
       return "";
@@ -2805,6 +2815,8 @@ QString US_FeMatch::distrib_info()
                       QString::number( ncomp ) );
    mstr += table_row( tr( "Residual RMS Deviation:" ),
                       le_rmsd->text()  );
+   mstr += table_row( tr( "Model-reported RMSD:"    ),
+                      ( rmsd_m > 0.0 ) ? QString::number( rmsd_m ) : "(none)" );
 
    double sum_mw  = 0.0;
    double sum_s   = 0.0;

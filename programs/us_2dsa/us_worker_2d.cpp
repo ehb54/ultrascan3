@@ -161,23 +161,24 @@ void WorkerThread2D::calc_resids_ratio()
 
    // Create a single model from the solutes
    int nsolutes  = solutes_i.size();
-DbgLv(1) << "WT:CRR nsolutes" << nsolutes;
+DbgLv(1) << "WT:CRR nsolutes" << nsolutes << "0vb" << solutes_i[0].v;
    US_Model wmodel;
    wmodel.components.resize( nsolutes );
 
    for ( int ii = 0; ii < nsolutes; ii++ )
    {
-      wmodel.components[ ii ].s    = solutes_i[ ii ].s;
-      wmodel.components[ ii ].f_f0 = solutes_i[ ii ].k;
+      wmodel.components[ ii ].s      = solutes_i[ ii ].s;
+      wmodel.components[ ii ].f_f0   = solutes_i[ ii ].k;
+      wmodel.components[ ii ].vbar20 = solutes_i[ ii ].v;
       wmodel.components[ ii ].signal_concentration = solutes_i[ ii ].c;
-      wmodel.components[ ii ].D    = 0.0;
-      wmodel.components[ ii ].mw   = 0.0;
-      wmodel.components[ ii ].f    = 0.0;
+      wmodel.components[ ii ].D      = 0.0;
+      wmodel.components[ ii ].mw     = 0.0;
+      wmodel.components[ ii ].f      = 0.0;
 
       wmodel.calc_coefficients( wmodel.components[ ii ] );
 
-      wmodel.components[ ii ].s   /= dset->s20w_correction;
-      wmodel.components[ ii ].D   /= dset->D20w_correction;
+      wmodel.components[ ii ].s     /= dset->s20w_correction;
+      wmodel.components[ ii ].D     /= dset->D20w_correction;
    }
 
    US_DataIO::EditedData* edata = &dset->run_data;
@@ -215,11 +216,12 @@ DbgLv(1) << "WT:CRR  CMULT" << cmult;
 
    for ( int ii = 0; ii < nsolutes; ii++ )
    {
-      wmodel.components[ ii ].s    = solutes_i[ ii ].s;
-      wmodel.components[ ii ].f_f0 = solutes_i[ ii ].k;
-      wmodel.components[ ii ].D    = 0.0;
-      wmodel.components[ ii ].mw   = 0.0;
-      wmodel.components[ ii ].f    = 0.0;
+      wmodel.components[ ii ].s      = solutes_i[ ii ].s;
+      wmodel.components[ ii ].f_f0   = solutes_i[ ii ].k;
+      wmodel.components[ ii ].vbar20 = solutes_i[ ii ].v;
+      wmodel.components[ ii ].D      = 0.0;
+      wmodel.components[ ii ].mw     = 0.0;
+      wmodel.components[ ii ].f      = 0.0;
 
       double cvali    = wmodel.components[ ii ].signal_concentration;
       double cval     = cvali * cmult;

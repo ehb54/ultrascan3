@@ -932,8 +932,8 @@ void US_2dsa::open_fitcntl()
    sd.vbar         = vbartb;
    sd.manual       = manual;
    US_Math2::data_correction( avTemp, sd );
-DbgLv(0) << "2DSA d_corr s,D,m" << sd.s20w_correction << sd.D20w_correction
- << sd.manual;
+DbgLv(0) << "2DSA s_corr D_corr" << sd.s20w_correction << sd.D20w_correction
+ << "manual" << sd.manual << "vbar20" << vbar20;
 DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
  << sd.viscosity_tb << sd.density << sd.density_wt << sd.density_tb;
 

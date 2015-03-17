@@ -322,8 +322,9 @@ DbgLv(1) << "   CR:BF STYPE" << stype;
       int attr_z     = 3;      // Default Z is vbar
       int smask      = ( attr_x << 6 ) | ( attr_y << 3 ) | attr_z;
 DataSet* dset=data_sets[0];
-DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
- << dset->D20w_correction << dset->solution_rec.buffer.manual;
+DbgLv(2) << "   CR:BF s20wcorr D20wcorr" << dset->s20w_correction
+ << dset->D20w_correction << "manual" << dset->solution_rec.buffer.manual
+ << "vbar20" << dset->vbar20;
 
       for ( int cc = 0; cc < nsolutes; cc++ )
       {  // Solve for each solute
@@ -337,7 +338,7 @@ DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
             US_DataIO::RawData     simdat;
             int npoints = edata->pointCount();
             int nscans  = edata->scanCount();
-            zcomponent.vbar20          = dset->vbar20;
+            zcomponent.vbar20     = dset->vbar20;
 
             // Set model with standard space s and k
             if ( use_zsol )
@@ -347,6 +348,7 @@ DbgLv(2) << "   CR:BF s20wcorr D20wcorr manual" << dset->s20w_correction
             }
             else
             {
+               model.components[ 0 ] = zcomponent;
                set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
                               attr_x );
                set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
