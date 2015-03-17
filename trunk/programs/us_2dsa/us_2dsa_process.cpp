@@ -180,6 +180,7 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
    double ssllim = slolim * 1.0e-13;
    double ssulim = suplim * 1.0e-13;
    int    ncomps = model.components.size();
+   double vbar20 = dsets[ 0 ]->vbar20;
 
    // Generate the original sub-grid solutes list
    if ( jgrefine > 0 )
@@ -187,6 +188,10 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
       US_Solute::init_solutes( ssllim, ssulim, nssteps,
                                klolim, kuplim, nksteps,
                                ngrefine, cnstff0, orig_sols );
+
+      for ( int ii = 0; ii < orig_sols.count(); ii++ )
+         for ( int jj = 0; jj < orig_sols[ ii ].count(); jj++ )
+            orig_sols[ ii ][ jj ].v  = vbar20;
    }
 
    else if ( jgrefine == (-1) )
