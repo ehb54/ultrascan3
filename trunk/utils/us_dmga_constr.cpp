@@ -115,6 +115,14 @@ DbgLv(1) << "dgC:upd_cns:   att" << fcx+2 << "flt" << attribs[fcx+2].floats;
       attribs.resize( nctot );
    }
 
+   else if ( ncompc == 0 )
+   {  // If no previous components of this type, just append
+      for ( int ii = 0; ii < nupdc; ii++ )
+         attribs << cnsv[ ii ];
+
+      nctot         += nupdc;
+   }
+
    else
    {  // Greater number of updates:  expand at the end, then replace
       int ncold      = nctot;
@@ -198,6 +206,8 @@ DbgLv(1) << "dgC:get_cmo:  rtn";
       *cmodelP       = cmodel;
       is_ok          = true;
    }
+else
+DbgLv(1) << "dgC: *EMPTY* model";
 
    return is_ok;
 }
