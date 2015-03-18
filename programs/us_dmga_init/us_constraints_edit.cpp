@@ -580,15 +580,24 @@ void US_ConstraintsEdit::set_molar( void )
 
 void US_ConstraintsEdit::acceptProp( void ) 
 {
-DbgLv(1) << "cnG:accept";
+DbgLv(1) << "cnG:aP:accept";
    QVector< C_CONSTRAINT > cnsv;
    save_comp_settings ( crow, cnsv );        // Save current page
+DbgLv(1) << "cnG:aP: svcs crow" << crow << "cnsv sz" << cnsv.count();
    constraints.update_constraints( cnsv );   // Update comp constraints
-   cnsv.clear();
-   save_assoc_settings( arow, cnsv );
-   constraints.update_constraints( cnsv );   // Update assoc constraints
+DbgLv(1) << "cnG:aP: upd_(c)cnst rtn";
+
+   if ( arow >= 0 )
+   {
+      cnsv.clear();
+      save_assoc_settings( arow, cnsv );
+DbgLv(1) << "cnG:aP: svas arow" << arow << "cnsv sz" << cnsv.count();
+      constraints.update_constraints( cnsv );   // Update assoc constraints
+DbgLv(1) << "cnG:aP: upd_(a)cnst rtn";
+   }
+
    constraints.get_constr_model( &cmodel );  // Get equivalent model
-DbgLv(1) << "cnG: get_cmo RTN";
+DbgLv(1) << "cnG:aP: get_cmo RTN";
 
    accept();
    close();
