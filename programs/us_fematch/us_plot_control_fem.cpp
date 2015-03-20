@@ -146,8 +146,8 @@ US_PlotControlFem::US_PlotControlFem( QWidget* p, US_Model* amodel )
 
    zscale   = 1.0;
    gridres  = 150.0;
-   pksmooth = 80.0;
-   pkwidth  = 0.1;
+   pksmooth = 130.0;
+   pkwidth  = 0.3;
    double xscl = 1.0;
    double yscl = 1.0;
    ct_zscalefac->setValue( zscale   );
