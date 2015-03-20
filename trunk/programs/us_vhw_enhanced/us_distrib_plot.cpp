@@ -24,8 +24,8 @@ US_DistribPlot::US_DistribPlot( QVector< double >& divfracs,
    plotType  = DISTR;
    plotTypeH = COMBO;
    divsCount = bfracs.size();
-   nSensit   = 50;
-   nSmooth   = 30;
+   nSensit   = 20;
+   nSmooth   = 100;
    dbg_level = US_Settings::us_debug();
 DbgLv(1) << "DisPl: divsCount" << divsCount;
 DbgLv(1) << "DisPl: isedsSize " << dsedcs.size() << divsedcs.size();
