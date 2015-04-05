@@ -130,9 +130,10 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
    controls->addWidget( pb_close ); 
    
    main->addLayout( controls );
+   QBoxLayout* rightSide = new QVBoxLayout;
 
    // Graph
-   plotLayout = new US_Plot( plot, 
+   plot1 = new US_Plot( plot, 
          tr( "Self-Association Profile for" ) + project,
          tr( "Total Concentration" ), 
          tr( "% of Total Concentration" ) );
@@ -149,8 +150,6 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
    connect( pick, SIGNAL( mouseUp  ( const QwtDoublePoint& ) ),
                   SLOT  ( mouseU   ( const QwtDoublePoint& ) ) );
 
-   QwtPlotGrid* grid = us_grid( plot );
-   grid->attach( plot );
    // Initialize x
    double       c   = 1.0e-10;  // Lower concentration range limit
    const double inc = 20.0;
@@ -213,10 +212,9 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
    le_species3->setReadOnly( true );
    legend->addWidget( le_conc, 1, 2, 1, 4 );
 
-   plotLayout->addLayout( legend );
-
-   main->addLayout( plotLayout );
-
+   rightSide->addLayout( plot1 );
+   rightSide->addLayout( legend);
+   main->addLayout( rightSide);
    status = ! status; // Avoid warning for now
 }
 
