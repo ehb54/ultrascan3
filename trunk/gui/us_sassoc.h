@@ -73,7 +73,7 @@ class US_GUI_EXTERN US_Sassoc : public US_Widgets
       QLineEdit*     le_equil1;
       QLineEdit*     le_equil2;
       
-      US_Plot*       plotLayout;
+      US_Plot*       plot1;
 
       US_Help        showHelp;
 
