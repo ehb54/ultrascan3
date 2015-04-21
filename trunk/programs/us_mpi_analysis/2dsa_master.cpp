@@ -181,6 +181,7 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
                         << " :  model/noise(s) were output.";
             }
 
+DbgLv(1) << " master loop-BOT:    cds kds" << current_dataset << count_datasets;
             if ( current_dataset < count_datasets )
             {
                meniscus_run    = 0;
@@ -202,12 +203,20 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
                   }
                   for ( int ii = 0; ii < meniscus_points; ii++ )
                      meniscus_values[ ii ] = men_str + men_inc * ii;
+DbgLv(1) << " master loop-BOT:     menpt" << meniscus_points << "mv0 mvn"
+ << meniscus_values[0] << meniscus_values[meniscus_points-1]
+ << "gcores_count" << gcores_count;
                }
+
+//               for ( int ii = 1; ii < gcores_count; ii++ )
+//                  worker_status[ ii ] = READY;
+
+               fill_queue();
 
                for ( int ii = 1; ii < gcores_count; ii++ )
                   worker_status[ ii ] = READY;
-
-               fill_queue();
+DbgLv(1) << " master loop-BOT:      wkst1 wkstn" << worker_status[1]
+ << worker_status[gcores_count-1];
 
                for ( int ii = 0; ii < calculated_solutes.size(); ii++ )
                   calculated_solutes[ ii ].clear();
@@ -232,19 +241,19 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
                 my_communicator,
                 &status);
 
-//if ( max_depth > 0 )
-// DbgLv(1) << " master loop-BOTTOM:   status TAG" << status.MPI_TAG << MPI_Job::READY << MPI_Job::RESULTS
-//    << "  source" << status.MPI_SOURCE;
+      worker = status.MPI_SOURCE;
+
+if ( max_depth > 0 )
+ DbgLv(1) << " master loop-BOTTOM:   status TAG" << status.MPI_TAG
+  << MPI_Job::READY << MPI_Job::RESULTS << "  source" << status.MPI_SOURCE;
       switch( status.MPI_TAG )
       {
          case MPI_Job::READY:   // Ready for work
-            worker = status.MPI_SOURCE;
             worker_status[ worker ] = READY;
             break;
 
          case MPI_Job::RESULTS: // Return solute data
-            process_results( status.MPI_SOURCE, sizes );
-            worker = status.MPI_SOURCE;
+            process_results( worker, sizes );
             work_rss[ worker ] = sizes[ 3 ];
             break;
 
