@@ -156,6 +156,11 @@ DbgLv(1) << "STR_STR: nowmem" << memmb << "kthr ksol" << nthreads << cresolu;
                                cresolu );
    }
 
+   else if ( curvtype == CTYPE_2O )
+   { // Determine models for 2nd-order power law curves
+      nmtasks     = pl2models( xlolim, xuplim, ylolim, yuplim, nypts, cresolu );
+   }
+
    else
       nmtasks     = 0;
 
@@ -600,8 +605,11 @@ DbgLv(1) << "PC:putMRs:  ctype v_ctype" << curvtype << v_ctype;
    nmtasks     = ( mrecs[ 1 ].taskx == mrecs[ 2 ].taskx )
                ? ( nmtasks - 1 ) : nmtasks;
    nypts       = ( v_ctype != CTYPE_ALL ) ? nmtasks : ( nmtasks / 3 );
-   nypts       = ( curvtype != CTYPE_HL )
+   nypts       = ( curvtype != CTYPE_HL  &&  curvtype != CTYPE_2O )
                ? ( qRound( sqrt( (double)nypts ) ) )
+               : nypts;
+   nypts       = ( curvtype == CTYPE_2O )
+               ? ( qRound( pow( (double)nypts, 0.3333333 ) ) )
                : nypts;
    alpha       = 0.0;
 DbgLv(1) << "PC:putMRs:  nypts nmtasks" << nypts << nmtasks;
@@ -821,6 +829,14 @@ QString US_pcsaProcess::pmessage_head()
                          "Unknown-6",
                          "All (SL+IS+DS)",
                          "Horizontal Line [ C(s) ]",
+                         "Unknown-9",
+                         "Unknown-10",
+                         "Unknown-11",
+                         "Unknown-12",
+                         "Unknown-13",
+                         "Unknown-14",
+                         "Unknown-15",
+                         "Second-order Power Law",
                          "?UNKNOWN?"
                        };
    QString ctype = QString( ctp[ curvtype ] );
@@ -907,6 +923,29 @@ DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
    return nmodels;
 }
 
+// Build all the 2nd-order power law models
+int US_pcsaProcess::pl2models( double xlo, double xup, double ylo, double yup,
+                               int nyp, int nlpts )
+{
+DbgLv(1) << "2OMO: xlo xup ylo yup nyp nlp" << xlo << xup
+   << ylo << yup << nyp << nlpts;
+   //double vbar20   = dsets[ 0 ]->vbar20;
+   orig_sols.clear();
+
+   // Compute 2nd-order model records
+   int nmodels = US_ModelRecord::compute_2ndorder( xlo, xup, ylo, yup,
+                                                nyp, nlpts, parlims, mrecs );
+
+   // Add model records solutes to task solutes list
+   for ( int ii = 0; ii < nmodels; ii++ )
+   {
+      orig_sols << mrecs[ ii ].isolutes;
+   }
+DbgLv(1) << "2OMO:  orig_sols size" << orig_sols.size() << "nmodels" << nmodels;
+
+   return nmodels;
+}
+
 // Generate the strings of model statistics for a report
 void US_pcsaProcess::model_statistics( QVector< US_ModelRecord >& mrecs,
                                        QStringList&            modstats )
@@ -920,8 +959,17 @@ void US_pcsaProcess::model_statistics( QVector< US_ModelRecord >& mrecs,
                          "Unknown-6",
                          "All (SL+IS+DS)",
                          "Horizontal Line [ C(s) ]",
+                         "Unknown-9",
+                         "Unknown-10",
+                         "Unknown-11",
+                         "Unknown-12",
+                         "Unknown-13",
+                         "Unknown-14",
+                         "Unknown-15",
+                         "Second-order Power Law",
                          "?UNKNOWN?"
                        };
+   const int lenctp  = sizeof( ctp ) / sizeof( ctp[ 0 ] );
 
    // Accumulate the statistics
    int    nbmods    = nmtasks / 5;
@@ -973,8 +1021,9 @@ DbgLv(1) << "PC:MS: nmtasks mrssiz nbmods" << nmtasks << mrecs.size() << nbmods;
 
    modstats.clear();
 
+   int curvtx       = qMin( curvtype, lenctp - 1 );
    modstats << tr( "Curve Type:" )
-            << QString( ctp[ curvtype ] );
+            << QString( ctp[ curvtx ] );
    modstats << tr( "Solute Type:" )
             << US_ModelRecord::stype_text( soltype );
    modstats << tr( "X Range:" )
@@ -994,7 +1043,7 @@ DbgLv(1) << "PC:MS: nmtasks mrssiz nbmods" << nmtasks << mrecs.size() << nbmods;
                      str_y, end_y, slope );
 DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
    }
-   else
+   else if ( curvtype == CTYPE_IS  ||  curvtype == CTYPE_DS )
    {
       int    p1ndx  = mrecs[ 0 ].taskx / nypts;
       int    p2ndx  = mrecs[ 0 ].taskx - ( p1ndx * nypts );
@@ -1007,6 +1056,17 @@ DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
                << QString().sprintf( "%10.4f  %10.4f", ylolim, yuplim );
       modstats << tr( "Best curve par1 and par2:" )
                << QString().sprintf( "%10.4f  %10.4f", par1, par2 );
+      modstats << tr( "Best curve Y end points:" )
+               << QString().sprintf( "%10.4f  %10.4f",
+                     mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
+   }
+   else
+   {
+      modstats << tr( "Y Range:" )
+               << QString().sprintf( "%10.4f  %10.4f", ylolim, yuplim );
+      modstats << tr( "Best curve par1 and par2:" )
+               << QString().sprintf( "%10.4f  %10.4f",
+                     mrecs[ 0 ].par1, mrecs[ 0 ].par2 );
       modstats << tr( "Best curve Y end points:" )
                << QString().sprintf( "%10.4f  %10.4f",
                      mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );

@@ -287,6 +287,186 @@ int US_ModelRecord::compute_hlines( double& xmin, double& xmax,
    return nypts;
 }
 
+// Static public function to compute Second-order Power Law curves
+int US_ModelRecord::compute_2ndorder( double& xmin, double& xmax,
+      double& ymin, double& ymax, int& nypts, int& nlpts,
+      double* parlims, QVector< US_ModelRecord >& mrecs )
+{
+   if ( parlims[ 0 ] < 0.0 )
+   {
+      parlims[ 0 ] = -1.0;
+      parlims[ 1 ] = -0.005;
+      parlims[ 2 ] = parlims[ 0 ];
+      parlims[ 3 ] = parlims[ 1 ];
+   }
+   double  p1lo = parlims[ 0 ];
+   double  p1up = parlims[ 1 ];
+   int stype    = parlims[ 4 ];
+   double  zval = parlims[ 5 ];
+
+   US_ModelRecord mrec;
+   int   attr_x = ( stype >> 6 ) & 7;
+   int   attr_y = ( stype >> 3 ) & 7;
+   mrec.stype   = stype;
+   mrec.ctype   = CTYPE_2O;
+
+   double xrng  = xmax - xmin;
+   double lprng = (double)( nlpts - 1 );
+   double yprng = (double)( nypts - 1 );
+   double p1inc = ( p1up - p1lo ) / yprng;
+   double xinc  = xrng / lprng;
+   double xscl  = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
+   double yscl  = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
+   double yrng  = ymax - ymin;
+   double yinc  = yrng / yprng;
+   double xterm = log10( 5.0 ) / log10( qMax( 1.00001, xrng * 0.5 ) );
+   double bmin  = p1lo * xterm;
+   double binc  = p1inc * xterm;
+   double amax  = pow( xmin, bmin ) * ( yrng - yinc );
+   double amin  = amax / yprng;
+   double ainc  = ( amax - amin ) / yprng;
+   double cmin  = ymin;
+   double cinc  = yinc;
+
+   if ( p1lo > 0.0 )
+   {  // Recomputing: new a and b range
+      amin         = p1lo;
+      amax         = p1up;
+      bmin         = parlims[ 2 ];
+      double bmax  = parlims[ 3 ];
+      ainc         = ( amax - amin ) / yprng;
+      binc         = ( bmax - bmin ) / yprng;
+   }
+
+   QVector< double > avec;
+   QVector< double > bvec;
+   QVector< double > cvec;
+   avec.resize( nypts );
+   bvec.resize( nypts );
+   cvec.resize( nypts );
+
+   for ( int jj = 0; jj < nypts; jj++ )
+   {
+      double poff  = (double)jj;
+      avec[ jj ]   = amin + ainc * poff;
+      bvec[ jj ]   = bmin + binc * poff;
+      cvec[ jj ]   = cmin + cinc * poff;
+   }
+
+   double* avals = avec.data();
+   double* bvals = bvec.data();
+   double* cvals = cvec.data();
+   parlims[ 2 ]  = bvals[ 0 ];
+   parlims[ 3 ]  = bvals[ nypts - 1 ];
+/***
+ * MathLab version of Second-order Power Law variations
+ *
+xmin = 1;             % lower limit of x
+xmax = 300;               % upper limit of x
+resolution = 1000;      % resolution of x
+
+x = linspace(xmin,xmax,resolution);    % vector of x
+
+ymin = 0.1;         % lower limit of y
+ymax = 0.5;         % upper limit of y
+
+var = 5;            % variations count of the three variables
+
+bmin = -1;                                          % lower reference limit of variable b
+bmax = -0.05;                                       % upper reference limit of variable b
+bvec = linspace(bmin,bmax,var);                     % reference vector of variable b
+
+for m = 1 : var                                     % transfer of reference vector b to any x-range
+    bvec(m) = bvec(m) * log10(5)/log10((xmax-xmin)/2); % (xmax - xmin)/2 has to be larger than 1!
+end
+
+%% remark: bmin is required for the calculation of avec
+
+amin = xmin^-min(bvec)*(((ymax - ymin) - (ymax - ymin) / var) / var);   % lower limit of variable a
+amax = xmin^-min(bvec)*(ymax - ymin - (ymax - ymin) / var);             % upper limit of variable a
+avec = linspace(amin,amax,var);                                         % vector of variable a
+
+cmin = ymin;                        % lower limit of variable c
+cmax = ymin+((ymax - ymin) / var);  % upper limit of variable c
+cvec = linspace(cmin,cmax,var);     % vector of variable c
+
+%% create figure
+figure(1)
+clf;
+xlabel('x')
+ylabel('y');
+
+%% perform parametrization
+for m = 1 : var % amin to amax:
+    for n = 1 : var % bmin to bmax:
+        for k = 1 : var % cmin to cmax:
+            for p = 1 : size(x) % xmin to xmax with resolution:
+				y = avec(m)*(x.^bvec(n))+cvec(k);
+                %% plot data
+                axis([0 max(x) 0 1])
+                hold on
+                plot(x,y)
+                hold off
+            end
+        end
+    end
+end
+
+% reference plot
+y = 0.2994 * x.^-0.4685 + 0.1765;
+hold on
+plot(x,y,'r--o')
+hold off
+ ***/
+   int    mndx  = mrecs.size();
+   int    nmodl = nypts * nypts * nypts;
+
+   for ( int ii = 0; ii < nypts; ii++ )
+   { // Loop over a values
+      double aval  = avals[ ii ];
+
+      for ( int jj = 0; jj < nypts; jj++ )
+      { // Loop over b values
+         double bval  = bvals[ jj ];
+
+         for ( int kk = 0; kk < nypts; kk++ )
+         { // Loop over c values
+            double cval  = cvals[ kk ];
+            double xval  = xmin;
+            double yval  = ymin;
+
+            mrec.isolutes.clear();
+            US_ZSolute isol( 0.0, 0.0, zval, 0.0 );
+qDebug() << "MR: a b c" << aval << bval << cval;
+
+            for ( int ll = 0; ll < nlpts; ll++ )
+            { // Loop over points on a curve
+               yval         = aval * pow( xval, bval ) + cval;
+qDebug() << "MR:   ll" << ll << "x y" << xval << yval;
+
+               isol.x       = xval * xscl;
+               isol.y       = yval * yscl;
+               mrec.isolutes << isol;
+
+               xval        += xinc;
+            } // END: points-on-curve loop
+
+            mrec.stype   = stype;
+            mrec.taskx   = mndx;
+            mrec.str_y   = aval * pow( xmin, bval ) + cvals[ 0 ];
+            mrec.end_y   = yval;
+            mrec.par1    = aval;
+            mrec.par2    = bval;
+            mrecs << mrec;
+
+            mndx++;
+         } // END: C values loop
+      } // END: B values loop
+   } // END: A values loop
+
+   return nmodl;
+}
+
 // Static public function to load model records from an XML stream
 int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
    QVector< US_ModelRecord >& mrecs, QString& descr, int& ctype,
@@ -714,6 +894,17 @@ int US_ModelRecord::recompute_mrecs( int& ctype, double& xmin, double& xmax,
 //qDebug() << "RF: sigm: nmrec" << nmrec;
    }
 
+   else if ( ctype == CTYPE_2O )
+   {
+      parlims[ 0 ]  = minp1;
+      parlims[ 1 ]  = maxp1;
+      parlims[ 2 ]  = minp2;
+      parlims[ 3 ]  = maxp2;
+
+      nmrec         = compute_2ndorder( xmin, xmax, ymin, ymax,
+                                        nypts, nlpts, parlims, mrecs );
+   }
+
    else if ( ctype == CTYPE_ALL )
    {
    }
@@ -733,6 +924,7 @@ int US_ModelRecord::ctype_flag( const QString s_ctype )
    i_ctype         = ( s_ctype == "DS"  ) ? CTYPE_DS  : i_ctype;
    i_ctype         = ( s_ctype == "HL"  ) ? CTYPE_HL  : i_ctype;
    i_ctype         = ( s_ctype == "All" ) ? CTYPE_ALL : i_ctype;
+   i_ctype         = ( s_ctype == "2O"  ) ? CTYPE_2O  : i_ctype;
 
    return i_ctype;
 }

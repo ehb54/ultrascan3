@@ -17,6 +17,7 @@
 #define CTYPE_IS   2
 #define CTYPE_DS   4
 #define CTYPE_HL   8
+#define CTYPE_2O   16
 #define CTYPE_ALL  7
 
 //! \brief US_ModelRecord object
@@ -113,6 +114,19 @@ class US_UTIL_EXTERN US_ModelRecord
       //! \param mrecs   Reference for generated model records vector
       //! \returns       Number of model line records generated
       static int compute_hlines( double&, double&, double&, double&, int&,
+            int&, double*, QVector< US_ModelRecord >& );
+
+      //! \brief Static public function to compute 2nd-order line model records
+      //! \param xmin    X-value minimum
+      //! \param xmax    X-value maximum
+      //! \param ymin    Y-value minimum
+      //! \param ymax    Y-value maximum
+      //! \param nypts   Number of y start and end point variations
+      //! \param nlpts   Number of line solute points
+      //! \param parlims Parameter limits array: yslo, yshi, yelo, yehi 
+      //! \param mrecs   Reference for generated model records vector
+      //! \returns       Number of model line records generated
+      static int compute_2ndorder( double&, double&, double&, double&, int&,
             int&, double*, QVector< US_ModelRecord >& );
 
       //! \brief Static public function to load model records from an XML stream

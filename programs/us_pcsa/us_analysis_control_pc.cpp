@@ -23,7 +23,8 @@ US_AnalysisControlPc::US_AnalysisControlPc(
    bmndx          = -1;
    mlnplotd       = 0;
    fitpars        = QString();
-   ctypes << CTYPE_SL << CTYPE_IS << CTYPE_DS << CTYPE_HL << CTYPE_ALL;
+   ctypes << CTYPE_SL << CTYPE_IS << CTYPE_DS << CTYPE_HL << CTYPE_2O
+          << CTYPE_ALL;
    attr_x         = 0;
    attr_y         = 1;
    attr_z         = 3;
@@ -176,6 +177,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    cb_curvtype->addItem( "Increasing Sigmoid" );
    cb_curvtype->addItem( "Decreasing Sigmoid" );
    cb_curvtype->addItem( "Horizontal Line [ C(s) ]" );
+   cb_curvtype->addItem( "Second-order Power Law" );
    cb_curvtype->setCurrentIndex( 1 );
    cb_z_type   = us_comboBox();
    cb_z_type  ->addItem( "vbar" );
@@ -655,8 +657,10 @@ DbgLv(1) << "AC:advanced: get_results";
                        ? ( nmrecs - 1 ) : nmrecs;
          int strec     = nmrecs - nmtsks;
          nypts         = ( v_ctype != CTYPE_ALL ) ? nmtsks : ( nmtsks / 3 );
-         nypts         = ( ctype != CTYPE_HL )
+         nypts         = ( ctype != CTYPE_HL  &&  ctype != CTYPE_2O )
                        ? qRound( sqrt( (double)nypts ) ) : nypts;
+         nypts         = ( ctype != CTYPE_2O ) ? nypts
+                       : qRound( pow( (double)nypts, 0.33333 ) );
          nlpts         = mrecs[ strec ].isolutes.size();
          xmin          = mrecs[ strec ].xmin;
          xmax          = mrecs[ strec ].xmax;
@@ -802,6 +806,8 @@ DbgLv(1) << "TYPE_CHANGE: ctypex" << ctypex << "ctype" << ctype;
 
    if ( ctype == CTYPE_HL )
       ct_varcount->setValue( 100 );
+   else if ( ctype == CTYPE_2O )
+      ct_varcount->setValue( 5 );
    else
       ct_varcount->setValue( 6 );
 }
@@ -1005,13 +1011,25 @@ DbgLv(1) << "AC:CM: ctype" << ctype << "stype" << sol_type
       US_ModelRecord::compute_hlines( xmin, xmax, ymin, ymax, nypts, nlpts,
             parlims, mrecs );
    }
+   else if ( ctype == CTYPE_2O )
+   {
+      nlmodl        *= nypts;
+
+      US_ModelRecord::compute_2ndorder( xmin, xmax, ymin, ymax,
+            nypts, nlpts, parlims, mrecs );
+   }
 DbgLv(1) << "AC:CM: mrecs0.sol0 x y z c"
  << mrecs[0].isolutes[0].x << mrecs[0].isolutes[0].y
  << mrecs[0].isolutes[0].z << mrecs[0].isolutes[0].c;
 
    QString amsg   =
       tr( "The number of test models is %1,\n" ).arg( nlmodl );
-   if ( ctype != 8 )
+   if ( ctype == CTYPE_2O )
+   {
+      amsg       += tr( " derived from the cube of %1 variation points,\n" )
+                    .arg( nypts );
+   }
+   else if ( ctype != 8 )
    {
       amsg       += tr( " derived from the square of %1 variation points,\n" )
                     .arg( nypts );
@@ -1304,6 +1322,13 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
          isol.y        = yval * yscl;
          mrec.isolutes << isol;
          xval         += xinc;
+      } // END: points-per-line loop
+   }
+
+   else if ( ctype == CTYPE_2O )
+   {
+      for ( int ll = 0; ll < nlpts; ll++ )
+      { // Loop over points on a sigmoid curve
       } // END: points-per-line loop
    }
 

@@ -201,6 +201,7 @@ private:
                              int, int, QVector< US_ZSolute > );
       int  slmodels        ( int, double, double, double, double, int, int );
       int  sigmodels       ( int, double, double, double, double, int, int );
+      int  pl2models       ( double, double, double, double, int, int );
       void process_job     ( WorkerThreadPc* );
       void process_fxfinal ( US_ModelRecord&  );
       void submit_job      ( WorkPacketPc&, int );
