@@ -470,6 +470,8 @@ DbgLv(1) << "SV: model_stats size" << model_stats.size();
       analysisType      = "PCSA-DS";
    else if ( curvType.contains( "Horizontal L" ) )
       analysisType      = "PCSA-HL";
+   else if ( curvType.contains( "Second-order" ) )
+      analysisType      = "PCSA-2O";
 
    if ( model.alphaRP != 0.0 )
       analysisType      = analysisType + "-TR";

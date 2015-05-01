@@ -65,6 +65,7 @@ US_MLinesPlot::US_MLinesPlot( double& ylo, double& yhi, double& xlo,
 
    nmodel       = ( ctype != CTYPE_HL  ) ? ( nkpts * nkpts ) : nkpts;
    nmodel       = ( ctype != CTYPE_ALL ) ? nmodel : nmodel * 3;
+   nmodel       = ( ctype != CTYPE_2O  ) ? nmodel : nmodel * nkpts;
    neline       = qMax( 2, nmodel / 10 );
    nsline       = qMax( 1, neline / 4  );
    nvline       = nmodel;
@@ -150,6 +151,7 @@ DbgLv(1) << "RP:  csizw cminw tsizw" << csizw << cminw << tsizw;
    else if ( ctype == CTYPE_DS )  s_type = tr( "Decreasing Sigmoid" );
    else if ( ctype == CTYPE_HL )  s_type = tr( "Horizontal Line [C(s)]" );
    else if ( ctype == CTYPE_ALL ) s_type = tr( "All (SL + IS + DS)" );
+   else if ( ctype == CTYPE_2O )  s_type = tr( "Second-order Power Law" );
    le_mtype->setText( s_type );
 
    // Hide the color items for now
