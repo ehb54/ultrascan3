@@ -519,7 +519,7 @@ DbgLv(1) << "AnaC: edata" << edata;
       QMessageBox::critical( this,
          tr( "Implied Grid Size is Too Large!" ),
          smsg );
-      return;
+//      return;
    }
 
 DbgLv(1) << "AnaC:St:MEM (1)rssnow,proc" << US_Memory::rss_now() << processor;

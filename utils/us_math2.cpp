@@ -7,6 +7,7 @@
 #include "us_constants.h"
 #include "us_dataIO.h"
 #include "us_matrix.h"
+#include "us_settings.h"
 
 /*  The function implements the Box-Muller algorithm for generating
  *  pairs of independent standard normally distributed (zero expectation, 
@@ -1363,11 +1364,19 @@ double US_Math2::calcCommonVbar( US_Solution& solution, double temperature )
 int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
 {
    const int min_grid = 10;   // Grid points at least 10
+   const int min_reps = 1;    // Repetitions at least 1
+#if 0
    const int max_grid = 200;  // Grid points at most 200
    const int min_subg = 40;   // Sub-grid size at least 40
    const int max_subg = 200;  // Sub-grid size at most 200
-   const int min_reps = 1;    // Repetitions at least 1
    const int max_reps = 40;   // Repetitions at most 40
+#endif
+#if 1
+   const int max_grid = 800;  // Grid points at most 800
+   const int min_subg = 10;   // Sub-grid size at least 10
+   const int max_subg = 800;  // Sub-grid size at most 800
+   const int max_reps = 160;   // Repetitions at most 160
+#endif
 
    // Insure grid points are within reasonable limits
    ngrid_s         = qMin( max_grid, qMax( min_grid, ngrid_s ) );
@@ -1375,6 +1384,19 @@ int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
 
    // Compute the initial best grid-repetitions value
    int    nreps_g  = qRound( pow( (double)( ngrid_s * ngrid_k ), 0.25 ) );
+#if 1
+//*DEBUG*
+   double grfact   = 1.0;
+   QStringList tgrfact=US_Settings::debug_text();
+
+   for ( int ii = 0; ii < tgrfact.count(); ii++ )
+   {
+      if ( tgrfact[ ii ].startsWith( "grfact=" ) )
+         grfact    = QString( tgrfact[ ii ]) .section( "=", 1, 1 ).toDouble();
+   }
+   nreps_g         = qRound( grfact * nreps_g );
+//*DEBUG*
+#endif
 
    // Compute the initial sub-grid point counts in each dimension,
    //  insuring the next highest integers are used.
