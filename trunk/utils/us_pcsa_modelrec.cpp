@@ -2,6 +2,7 @@
 
 #include "us_pcsa_modelrec.h"
 #include "us_solute.h"
+#include "us_settings.h"
 
 // Construct model record
 US_ModelRecord::US_ModelRecord( void )
@@ -56,6 +57,7 @@ int US_ModelRecord::compute_slines( double& xmin, double& xmax,
       double& ymin, double& ymax, int& nypts, int& nlpts,
       double* parlims, QVector< US_ModelRecord >& mrecs )
 {
+   //int dbg_level = US_Settings::us_debug();
    US_ModelRecord mrec;
    int    stype  = parlims[ 4 ];
    int    attr_x = ( stype >> 6 ) & 7;
@@ -117,7 +119,7 @@ int US_ModelRecord::compute_slines( double& xmin, double& xmax,
          mrec.end_y     = yend;
          mrec.par1      = ystr;
          mrec.par2      = ( yend - ystr ) / xrng;
-//qDebug() << "MR: ii jj" << ii << jj << "ys ye p1 p2" << ystr << yend
+//DbgLv(1) << "MR: ii jj" << ii << jj << "ys ye p1 p2" << ystr << yend
 // << mrec.par1 << mrec.par2;
          mrecs << mrec;
 
@@ -292,17 +294,24 @@ int US_ModelRecord::compute_2ndorder( double& xmin, double& xmax,
       double& ymin, double& ymax, int& nypts, int& nlpts,
       double* parlims, QVector< US_ModelRecord >& mrecs )
 {
-   if ( parlims[ 0 ] < 0.0 )
-   {
-      parlims[ 0 ] = -1.0;
-      parlims[ 1 ] = -0.005;
-      parlims[ 2 ] = parlims[ 0 ];
-      parlims[ 3 ] = parlims[ 1 ];
-   }
-   double  p1lo = parlims[ 0 ];
-   double  p1up = parlims[ 1 ];
+   int dbg_level  = US_Settings::us_debug();
+//   if ( parlims[ 0 ] < 0.0 )
+//   {
+//      parlims[ 0 ] = -1.0;
+//      parlims[ 1 ] = -0.005;
+//      parlims[ 2 ] = parlims[ 0 ];
+//      parlims[ 3 ] = parlims[ 1 ];
+//   }
+   double p1lo  = parlims[ 0 ];
+   double p1up  = parlims[ 1 ];
+   double amin  = parlims[ 0 ];
+   double amax  = parlims[ 1 ];
+   double bmin  = parlims[ 2 ];
+   double bmax  = parlims[ 3 ];
+   double cbest = parlims[ 3 ];
    int stype    = parlims[ 4 ];
    double  zval = parlims[ 5 ];
+   int lyptx    = nypts - 1;
 
    US_ModelRecord mrec;
    int   attr_x = ( stype >> 6 ) & 7;
@@ -311,32 +320,86 @@ int US_ModelRecord::compute_2ndorder( double& xmin, double& xmax,
    mrec.ctype   = CTYPE_2O;
 
    double xrng  = xmax - xmin;
+   double xterm = log10( 5.0 ) / log10( qMax( 1.00001, xrng * 0.5 ) );
    double lprng = (double)( nlpts - 1 );
-   double yprng = (double)( nypts - 1 );
-   double p1inc = ( p1up - p1lo ) / yprng;
+   double yprng = (double)( lyptx );
    double xinc  = xrng / lprng;
    double xscl  = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
    double yscl  = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
    double yrng  = ymax - ymin;
    double yinc  = yrng / yprng;
-   double xterm = log10( 5.0 ) / log10( qMax( 1.00001, xrng * 0.5 ) );
-   double bmin  = p1lo * xterm;
-   double binc  = p1inc * xterm;
-   double amax  = pow( xmin, bmin ) * ( yrng - yinc );
-   double amin  = amax / yprng;
-   double ainc  = ( amax - amin ) / yprng;
-   double cmin  = ymin;
-   double cinc  = yinc;
 
-   if ( p1lo > 0.0 )
-   {  // Recomputing: new a and b range
-      amin         = p1lo;
-      amax         = p1up;
-      bmin         = parlims[ 2 ];
-      double bmax  = parlims[ 3 ];
-      ainc         = ( amax - amin ) / yprng;
-      binc         = ( bmax - bmin ) / yprng;
+#if 0
+   if ( p1lo < 0.0 )
+   {
+      p1lo         = -1.0;
+      p1up         = -0.005;
+      bmin         = p1lo * xterm;
+      bmax         = p1up * xterm;
+      amax         = pow( xmin, bmin ) * ( yrng - yinc );
+      amin         = amax / yprng;
    }
+#endif
+#if 1
+   p1lo         = -1.0;
+   p1up         = -0.005;
+   bmin         = p1lo * xterm;
+   bmax         = p1up * xterm;
+   //amax         = pow( xmin, bmin ) * ( yrng - yinc );
+   amax         = pow( xmin, bmax ) * ( yrng - yinc );
+   amin         = amax / yprng;
+//amin = xmin^-max(bvec)*(((ymax - ymin) - (ymax - ymin) / var) / var);   % lower limit of variable a
+//amax = xmin^-max(bvec)*(ymax - ymin - (ymax - ymin) / var);             % upper limit of variable a
+#endif
+
+   double ainc  = ( amax - amin ) / yprng;
+   double binc  = ( bmax - bmin ) / yprng;
+   double cmin  = ymin;
+   double cmax  = ymin + yinc;
+   double cinc  = ( cmax - cmin ) / yprng;
+DbgLv(1) << "MR: p1l p1u" << p1lo << p1up;
+DbgLv(1) << "MR:  amin amax ainc" << amin << amax << ainc;
+DbgLv(1) << "MR:  bmin bmax binc" << bmin << bmax << binc;
+DbgLv(1) << "MR:  cmin cmax cinc" << cmin << cmax << cinc << "yrng" << yrng;
+
+#if 1
+   if ( parlims[ 0 ] > 0.0 )
+   {  // Recomputing: Adjust C range so previous best in on the grid
+      if ( cbest < cmin )
+      {
+         cmin         = cbest;
+         cinc         = ( cmax - cmin  ) / yprng;
+      }
+
+      double cbx   = ( cbest - cmin ) / cinc;
+      double cbi   = qFloor( cbx );
+      double cbf   = cbx - cbi;
+      if ( cbi == 0.0 )
+      {
+         cmin         = cbest - cinc;
+      }
+
+      else if ( cbf < 0.5 )
+      {
+         cmin         = cbest - cinc * cbi;
+      }
+
+      else
+      {
+         cmin         = cmin - cinc + cbf;
+      }
+
+#if 0
+      cmax         = cmin + yinc;
+      cinc         = ( cmax - cmin  ) / yprng;
+#endif
+#if 1
+      cmax         = cmin + cinc * yprng;
+#endif
+DbgLv(1) << "MR:  NEW cbest cbx cbi cbf" << cbest << cbx << cbi << cbf;
+DbgLv(1) << "MR:  NEW  cmin cmax cinc" << cmin << cmax << cinc;
+   }
+#endif
 
    QVector< double > avec;
    QVector< double > bvec;
@@ -356,14 +419,16 @@ int US_ModelRecord::compute_2ndorder( double& xmin, double& xmax,
    double* avals = avec.data();
    double* bvals = bvec.data();
    double* cvals = cvec.data();
-   parlims[ 2 ]  = bvals[ 0 ];
-   parlims[ 3 ]  = bvals[ nypts - 1 ];
+   parlims[ 0 ]  = avals[ 0 ];
+   parlims[ 1 ]  = avals[ lyptx ];
+   parlims[ 2 ]  = cvals[ 0 ];
+   parlims[ 3 ]  = cvals[ lyptx ];
 /***
  * MathLab version of Second-order Power Law variations
  *
-xmin = 1;             % lower limit of x
-xmax = 300;               % upper limit of x
-resolution = 1000;      % resolution of x
+xmin = 1;           % lower limit of x
+xmax = 300;         % upper limit of x
+resolution = 1000;  % resolution of x
 
 x = linspace(xmin,xmax,resolution);    % vector of x
 
@@ -372,18 +437,18 @@ ymax = 0.5;         % upper limit of y
 
 var = 5;            % variations count of the three variables
 
-bmin = -1;                                          % lower reference limit of variable b
-bmax = -0.05;                                       % upper reference limit of variable b
-bvec = linspace(bmin,bmax,var);                     % reference vector of variable b
+bmin = -1;                      % lower reference limit of variable b
+bmax = -0.05;                   % upper reference limit of variable b
+bvec = linspace(bmin,bmax,var); % reference vector of variable b
 
-for m = 1 : var                                     % transfer of reference vector b to any x-range
+for m = 1 : var                 % transfer of reference vector b to any x-range
     bvec(m) = bvec(m) * log10(5)/log10((xmax-xmin)/2); % (xmax - xmin)/2 has to be larger than 1!
 end
 
-%% remark: bmin is required for the calculation of avec
+%% remark: bmax is required for the calculation of avec
 
-amin = xmin^-min(bvec)*(((ymax - ymin) - (ymax - ymin) / var) / var);   % lower limit of variable a
-amax = xmin^-min(bvec)*(ymax - ymin - (ymax - ymin) / var);             % upper limit of variable a
+amin = xmin^-max(bvec)*(((ymax - ymin) - (ymax - ymin) / var) / var);   % lower limit of variable a
+amax = xmin^-max(bvec)*(ymax - ymin - (ymax - ymin) / var);             % upper limit of variable a
 avec = linspace(amin,amax,var);                                         % vector of variable a
 
 cmin = ymin;                        % lower limit of variable c
@@ -420,6 +485,8 @@ hold off
  ***/
    int    mndx  = mrecs.size();
    int    nmodl = nypts * nypts * nypts;
+   double yvmin = 1e+99;
+   double yvmax = -1e+99;
 
    for ( int ii = 0; ii < nypts; ii++ )
    { // Loop over a values
@@ -437,12 +504,14 @@ hold off
 
             mrec.isolutes.clear();
             US_ZSolute isol( 0.0, 0.0, zval, 0.0 );
-qDebug() << "MR: a b c" << aval << bval << cval;
+DbgLv(1) << "MR: a b c" << aval << bval << cval
+ << " ii jj kk" << ii << jj << kk;
 
             for ( int ll = 0; ll < nlpts; ll++ )
             { // Loop over points on a curve
                yval         = aval * pow( xval, bval ) + cval;
-qDebug() << "MR:   ll" << ll << "x y" << xval << yval;
+if(ll<4 || (ll+4)>nlpts)
+DbgLv(1) << "MR:   ll" << ll << "x y" << xval << yval;
 
                isol.x       = xval * xscl;
                isol.y       = yval * yscl;
@@ -453,16 +522,22 @@ qDebug() << "MR:   ll" << ll << "x y" << xval << yval;
 
             mrec.stype   = stype;
             mrec.taskx   = mndx;
-            mrec.str_y   = aval * pow( xmin, bval ) + cvals[ 0 ];
+            mrec.str_y   = aval * pow( xmin, bval ) + cval;
             mrec.end_y   = yval;
+            //mrec.str_y   = cval;
+            //mrec.end_y   = cval;
             mrec.par1    = aval;
-            mrec.par2    = bval;
+            mrec.par2    = cval;
             mrecs << mrec;
+
+            yvmin        = qMin( yvmin, qMin( mrec.str_y, mrec.end_y ) );
+            yvmax        = qMax( yvmax, qMax( mrec.str_y, mrec.end_y ) );
 
             mndx++;
          } // END: C values loop
       } // END: B values loop
    } // END: A values loop
+DbgLv(1) << "MR:    yvmin yvmax" << yvmin << yvmax;
 
    return nmodl;
 }
@@ -472,6 +547,7 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
    QVector< US_ModelRecord >& mrecs, QString& descr, int& ctype,
    double& xmin, double& xmax, double& ymin, double& ymax, int& stype )
 {
+//   int dbg_level   = US_Settings::us_debug();
    int nmrecs      = 0;
    int nisols      = 0;
    int ncsols      = 0;
@@ -510,7 +586,7 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
                ctype            = ( ctype == 1 ) ? CTYPE_IS : ctype;
                ctype            = ( ctype == 0 ) ? CTYPE_SL : ctype;
             }
-//qDebug() << "STYPE" << s_type << "CTYPE" << ctype;
+//DbgLv(1) << "STYPE" << s_type << "CTYPE" << ctype;
             QString xlo      = attrs.value( "xmin"  ).toString();
             QString xhi      = attrs.value( "xmin"  ).toString();
             QString ylo      = attrs.value( "ymin"  ).toString();
@@ -631,6 +707,7 @@ int US_ModelRecord::write_modelrecs( QXmlStreamWriter& xml,
    QVector< US_ModelRecord >& mrecs, QString& descr, int& ctype,
    double& xmin, double& xmax, double& ymin, double& ymax, int& stype )
 {
+//   int dbg_level   = US_Settings::us_debug();
    int nmrecs      = mrecs.size();
    US_ModelRecord mrec;
    mrec            = mrecs[ 0 ];
@@ -728,6 +805,7 @@ void US_ModelRecord::elite_limits( QVector< US_ModelRecord >& mrecs,
       int& ctype,    double& minyv, double& maxyv,
       double& minp1, double& maxp1, double& minp2, double& maxp2 )
 {
+   int dbg_level   = US_Settings::us_debug();
    const double efrac = 0.1;
    // Set up variables that help insure that the par1,par2 extents of elites
    // extend at least one step on either side of record 0's par1,par2
@@ -760,8 +838,16 @@ void US_ModelRecord::elite_limits( QVector< US_ModelRecord >& mrecs,
       m0p1h          = ( dif2 < -1e-8 ) ? m0p1 : 0.499;
       m0p2l          = ( dif3 > 1.e-8 ) ? m0p2 : 0.001;
       m0p2h          = ( dif4 < -1e-8 ) ? m0p2 : 0.999;
-//qDebug() << " ElLim: ADJUST SIGM: m0p1 m0p1h" << m0p1 << m0p1h
+//DbgLv(1) << " ElLim: ADJUST SIGM: m0p1 m0p1h" << m0p1 << m0p1h
 //   << "m0p1<0.500" << (m0p1<0.500) << 0.500 << "(m0p1-0.5)" << (m0p1-0.5);
+   }
+
+   if ( ctype == CTYPE_2O )
+   {  // Set 2nd-order par1,par2 limits so scan stops at elite cutoff point
+      m0p1l          =  1e+99;
+      m0p1h          = -1e+99;
+      m0p2l          =  1e+99;
+      m0p2h          = -1e+99;
    }
 
    int nmrec      = mrecs.size();
@@ -771,11 +857,11 @@ void US_ModelRecord::elite_limits( QVector< US_ModelRecord >& mrecs,
    nelite         = qMin( nelite, maxel );          // At most half of all
    nelite         = qMax( nelite, minel );          // At least 4
    nelite        -= 2;                              // Less 2 for compare
-//qDebug() << " ElLim: nmrec nelite" << nmrec << nelite;
-//qDebug() << " ElLim: in minyv maxyv" << minyv << maxyv;
-//qDebug() << " ElLim: in min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
-//qDebug() << " ElLim: in m0p1 m0p2" << m0p1 << m0p2;
-//qDebug() << " ElLim: in m0p1l,m0p1h,m0p2l,m0p2h" << m0p1l << m0p1h
+//DbgLv(1) << " ElLim: nmrec nelite" << nmrec << nelite;
+//DbgLv(1) << " ElLim: in minyv maxyv" << minyv << maxyv;
+//DbgLv(1) << " ElLim: in min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
+//DbgLv(1) << " ElLim: in m0p1 m0p2" << m0p1 << m0p2;
+//DbgLv(1) << " ElLim: in m0p1l,m0p1h,m0p2l,m0p2h" << m0p1l << m0p1h
 // << m0p2l << m0p2h;
 
    for ( int ii = 0; ii < nmrec; ii++ )
@@ -784,13 +870,11 @@ void US_ModelRecord::elite_limits( QVector< US_ModelRecord >& mrecs,
       double end_y   = mrecs[ ii ].end_y;
       double par1    = ln_type ? str_y : mrecs[ ii ].par1;
       double par2    = ln_type ? end_y : mrecs[ ii ].par2;
-//if(ii<3||(ii+4)>nelite)
-//qDebug() << " ElLim:   ii" << ii << "par1 par2" << par1 << par2
-// << "str_y end_y" << str_y << end_y << "rmsd" << mrecs[ii].rmsd;
-      minyv          = qMin( minyv, str_y );
-      maxyv          = qMax( maxyv, str_y );
-      minyv          = qMin( minyv, end_y );
-      maxyv          = qMax( maxyv, end_y );
+if(ii<3||(ii+4)>nelite)
+DbgLv(1) << " ElLim:   ii" << ii << "par1 par2" << par1 << par2
+ << "str_y end_y" << str_y << end_y << "rmsd" << mrecs[ii].rmsd;
+      minyv          = qMin( minyv, qMin( str_y, end_y ) );
+      maxyv          = qMax( maxyv, qMax( str_y, end_y ) );
       minp1          = qMin( minp1, par1  );
       maxp1          = qMax( maxp1, par1  );
       minp2          = qMin( minp2, par2  );
@@ -800,17 +884,18 @@ void US_ModelRecord::elite_limits( QVector< US_ModelRecord >& mrecs,
       // exceeds the elite count. But we continue in the loop if we have not
       // yet found min,max par1,par2 values that are at least a step
       // on either side of the par1,par2 values for the best model (m0).
-//if(ii>nelite)
-//qDebug() << " ElLim:    minp1 maxp1 m0p1" << minp1 << maxp1 << m0p1
-// << "minp2 maxp2 m0p2" << minp2 << maxp2 << m0p2;
+if(ii>nelite)
+DbgLv(1) << " ElLim:    minp1 maxp1 m0p1l m0p1h" << minp1 << maxp1 << m0p1l
+ << m0p1h << "minp2 maxp2 m0p2l m0p2h" << minp2 << maxp2 << m0p2l << m0p2h
+ << "minyv maxyv" << minyv << maxyv;
       if ( ii > nelite  &&
            minp1 < m0p1l  &&  maxp1 > m0p1h  &&
            minp2 < m0p2l  &&  maxp2 > m0p2h )
          break;
    }
 
-//qDebug() << " ElLim: out minyv maxyv" << minyv << maxyv;
-//qDebug() << " ElLim: out min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
+//DbgLv(1) << " ElLim: out minyv maxyv" << minyv << maxyv;
+//DbgLv(1) << " ElLim: out min/max p1/p2" << minp1 << maxp1 << minp2 << maxp2;
 }
 
 // Static public function to recompute model records vector for new iteration
@@ -818,17 +903,18 @@ int US_ModelRecord::recompute_mrecs( int& ctype, double& xmin, double& xmax,
       double& ymin, double& ymax, int& nypts, int& nlpts, double* parlims,
       QVector< US_ModelRecord >&mrecs )
 {
+   int dbg_level   = US_Settings::us_debug();
    int    nmrec  = mrecs.size();
    bool   LnType = ( ctype == CTYPE_SL  ||  ctype == CTYPE_HL );
    bool   SgType = ( ctype == CTYPE_IS  ||  ctype == CTYPE_DS );
 
    double minyv  = ymax;
    double maxyv  = ymin;
-   double minp1  = LnType ? minyv : 0.500;
-   double maxp1  = LnType ? maxyv : 0.001;
-   double minp2  = LnType ? minyv : 1.0;
-   double maxp2  = LnType ? maxyv : 0.0;
-//qDebug() << "RF: 2)nmrec" << mrecs.size();
+   double minp1  = LnType ? minyv : ( SgType ? 0.500 :  1e+99 );
+   double maxp1  = LnType ? maxyv : ( SgType ? 0.001 : -1e+99 );
+   double minp2  = LnType ? minyv : ( SgType ? 1.0   :  1e+99 );
+   double maxp2  = LnType ? maxyv : ( SgType ? 0.0   : -1e+99 );
+//DbgLv(1) << "RF: 2)nmrec" << mrecs.size();
 
    elite_limits( mrecs, ctype, minyv, maxyv, minp1, maxp1, minp2, maxp2 );
 
@@ -836,21 +922,23 @@ int US_ModelRecord::recompute_mrecs( int& ctype, double& xmin, double& xmax,
    //  on the new grid to be tested
    double p1best = LnType ? mrecs[ 0 ].str_y : mrecs[ 0 ].par1;
    double p2best = LnType ? mrecs[ 0 ].end_y : mrecs[ 0 ].par2;
-   double yrng   = (double)( nypts - 1 );
+   double ylbest = qMin( mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
+   double yubest = qMax( mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
+   double yprng  = (double)( nypts - 1 );
    double p1rng  = maxp1 - minp1;
    double p2rng  = maxp2 - minp2;
-   double p1inc  = p1rng / yrng;
-   double p2inc  = p2rng / yrng;
+   double p1inc  = p1rng / yprng;
+   double p2inc  = p2rng / yprng;
    double p1dif  = qRound( ( p1best - minp1 ) / p1inc ) * p1inc;
    double p2dif  = qRound( ( p2best - minp2 ) / p2inc ) * p2inc;
-//qDebug() << "RF: rcomp: p12 rng" << p1rng << p2rng << "p12 inc"
+//DbgLv(1) << "RF: rcomp: p12 rng" << p1rng << p2rng << "p12 inc"
 // << p1inc << p2inc << "p12 dif" << p1dif << p2dif;
-//qDebug() << "RF: rcomp: mmp1 mmp2" << minp1 << maxp1 << minp2 << maxp2;
+//DbgLv(1) << "RF: rcomp: mmp1 mmp2" << minp1 << maxp1 << minp2 << maxp2;
    minp1         = p1best - p1dif;
    minp2         = p2best - p2dif;
-   maxp1         = minp1 + p1inc * yrng;
-   maxp2         = minp2 + p2inc * yrng;
-//qDebug() << "RF: rcomp: nypts" << nypts;
+   maxp1         = minp1 + p1inc * yprng;
+   maxp2         = minp2 + p2inc * yprng;
+//DbgLv(1) << "RF: rcomp: nypts" << nypts;
 
    mrecs    .clear();
 
@@ -860,9 +948,9 @@ int US_ModelRecord::recompute_mrecs( int& ctype, double& xmin, double& xmax,
       parlims[ 1 ]  = qMin( ymax, maxp1 );
       parlims[ 2 ]  = qMax( ymin, minp2 );
       parlims[ 3 ]  = qMin( ymax, maxp2 );
-//qDebug() << "RF: slin: mmp1 mmp2" << minp1 << maxp1 << minp2 << maxp2;
-//qDebug() << "RF: slin:  p1,p2 best" << p1best << p2best;
-//qDebug() << "RF: slin:    mnmx p1 p2" << parlims[0] << parlims[1]
+//DbgLv(1) << "RF: slin: mmp1 mmp2" << minp1 << maxp1 << minp2 << maxp2;
+//DbgLv(1) << "RF: slin:  p1,p2 best" << p1best << p2best;
+//DbgLv(1) << "RF: slin:    mnmx p1 p2" << parlims[0] << parlims[1]
 // << parlims[2] << parlims[3] << "kmax" << kmax;
 
       if ( ctype == CTYPE_SL )
@@ -880,18 +968,16 @@ int US_ModelRecord::recompute_mrecs( int& ctype, double& xmin, double& xmax,
 
    else if ( SgType )
    { // Determine models for sigmoid curves
-//qDebug() << "RF: sigm:  mnmx p1 p2" << minp1 << maxp1 << minp2 << maxp2;
+//DbgLv(1) << "RF: sigm:  mnmx p1 p2" << minp1 << maxp1 << minp2 << maxp2;
       parlims[ 0 ]  = qMax( 0.001, minp1 );
       parlims[ 1 ]  = qMin( 0.500, maxp1 );
       parlims[ 2 ]  = qMax( 0.000, minp2 );
       parlims[ 3 ]  = qMin( 1.000, maxp2 );
-//qDebug() << "RF: sigm:  p1,p2 best" << p1best << p2best;
-//qDebug() << "RF: sigm:    mnmx p1 p2" << parlims[0] << parlims[1]
-// << parlims[2] << parlims[3];
+//DbgLv(1) << "RF: sigm:  p1,p2 best" << p1best << p2best;
 
       nmrec         = compute_sigmoids( ctype, xmin, xmax, ymin, ymax,
                                         nypts, nlpts, parlims, mrecs );
-//qDebug() << "RF: sigm: nmrec" << nmrec;
+//DbgLv(1) << "RF: sigm: nmrec" << nmrec;
    }
 
    else if ( ctype == CTYPE_2O )
@@ -899,10 +985,18 @@ int US_ModelRecord::recompute_mrecs( int& ctype, double& xmin, double& xmax,
       parlims[ 0 ]  = minp1;
       parlims[ 1 ]  = maxp1;
       parlims[ 2 ]  = minp2;
-      parlims[ 3 ]  = maxp2;
+      parlims[ 3 ]  = p2best;
+      double ypad   = ( maxyv - minyv ) * 0.1 / yprng;
+      ymin          = qMin( minyv, ylbest - ypad );
+      ymax          = qMax( maxyv, yubest + ypad );
+DbgLv(1) << "RF: 2ord: nmrec" << nmrec << "ymin ymax" << ymin << ymax
+ << "minp1 maxp1" << minp1 << maxp1 << "minp2 maxp2" << minp2 << maxp2
+ << "parlims0" << parlims[0];
 
       nmrec         = compute_2ndorder( xmin, xmax, ymin, ymax,
                                         nypts, nlpts, parlims, mrecs );
+DbgLv(1) << "RF:   2ord:  parlims1-4" << parlims[0] << parlims[1]
+ << parlims[2] << parlims[3];
    }
 
    else if ( ctype == CTYPE_ALL )

@@ -456,6 +456,14 @@ DbgLv(1) << "FIN_FIN: par1,par2" << mrec.par1 << mrec.par2;
               .arg( xlolim ).arg( mrec.str_y ).arg( xuplim ).arg( mrec.end_y );
    }
 
+   else if ( curvtype == CTYPE_2O )
+   {
+      pmsg += tr( "  the curve with par1=%1, par2=%2,\n"
+                  "           from x,y  %3, %4  to %5, %6." )
+              .arg( mrec.par1 ).arg( mrec.par2 )
+              .arg( xlolim ).arg( mrec.str_y ).arg( xuplim ).arg( mrec.end_y );
+   }
+
    // Signal final message
    emit message_update( pmessage_head() + pmsg, false );
 
