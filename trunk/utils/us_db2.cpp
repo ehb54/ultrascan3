@@ -114,6 +114,7 @@ bool US_DB2::test_secure_connection(
    if ( ! db )
    {
       error = QString( "Test secure connection allocation error" );
+      err   = error;
       return false;
    }
 
@@ -140,6 +141,7 @@ bool US_DB2::test_secure_connection(
    {
       error = QString( "Test secure connection open error\n" ) +
               mysql_error( db );
+      err   = mysql_error( db );
       return false;
    }
 
@@ -151,7 +153,8 @@ bool US_DB2::test_secure_connection(
 
    if ( db_errno != OK )
    {
-      err = error;
+      error = mysql_error( db );
+      err   = error;
       return false;
    }
    
