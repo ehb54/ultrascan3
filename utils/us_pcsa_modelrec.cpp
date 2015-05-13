@@ -342,7 +342,7 @@ int US_ModelRecord::compute_2ndorder( double& xmin, double& xmax,
 #endif
 #if 1
    p1lo         = -1.0;
-   p1up         = -0.005;
+   p1up         = -0.05;
    bmin         = p1lo * xterm;
    bmax         = p1up * xterm;
    //amax         = pow( xmin, bmin ) * ( yrng - yinc );

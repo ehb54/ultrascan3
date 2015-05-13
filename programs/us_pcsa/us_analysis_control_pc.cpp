@@ -1270,6 +1270,7 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
    int attr_y    = ( stype >> 3 ) & 7;
    double xscl   = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
    double yscl   = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
+   isol.z        = le_z_func->text().section( " ", 0, 0 ).toDouble();
 
    if ( ctype == CTYPE_SL )
    {
@@ -1327,8 +1328,20 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
 
    else if ( ctype == CTYPE_2O )
    {
+      double xval   = xmin;
+      double xinc   = xrng / prng;
+      double aval   = par1;
+      double cval   = par2;
+      double bval   = log10( ( end_y - cval ) / aval )
+                      / log10( qMax( 1.0001, xmax ) );
+
       for ( int ll = 0; ll < nlpts; ll++ )
-      { // Loop over points on a sigmoid curve
+      { // Loop over points on a power law curve
+         isol.x        = xval * xscl;
+         double yval   = aval * pow( xval, bval ) + cval;
+         isol.y        = yval * yscl;
+         mrec.isolutes << isol;
+         xval         += xinc;
       } // END: points-per-line loop
    }
 

@@ -105,6 +105,7 @@ DbgLv(1) << "AA: define GUI elements";
    cb_curvtype->addItem( tr( "Increasing Sigmoid" ) );
    cb_curvtype->addItem( tr( "Decreasing Sigmoid" ) );
    cb_curvtype->addItem( tr( "Horizontal Line [ C(s) ]" ) );
+   cb_curvtype->addItem( tr( "Second-order Power Law" ) );
    cb_curvtype->setCurrentIndex( 1 );
  
    // Define status text boxes and progress bar
@@ -903,6 +904,7 @@ DbgLv(1) << "build_bfm";
    ctype          = ( ctypex == 1 ) ? CTYPE_IS : ctype;
    ctype          = ( ctypex == 2 ) ? CTYPE_DS : ctype;
    ctype          = ( ctypex == 3 ) ? CTYPE_HL : ctype;
+   ctype          = ( ctypex == 4 ) ? CTYPE_2O : ctype;
    double xmin    = ct_s_lower ->value();
    double xmax    = ct_s_upper ->value();
    double ymin    = ct_k_lower ->value();
@@ -935,6 +937,14 @@ DbgLv(1) << "build_bfm";
       mrec.str_y     = mrec.end_y;
       mrec.par1      = mrec.str_y;
       mrec.par2      = 0.0;
+   }
+
+   else if ( ctype == CTYPE_2O )
+   {
+      mrec.str_y     = ymin;
+      mrec.end_y     = ymax;
+      mrec.par1      = ct_sigmpar1->value();
+      mrec.par2      = ct_sigmpar2->value();
    }
 
    // Generate the solute points on the curve

@@ -458,9 +458,11 @@ DbgLv(1) << "FIN_FIN: par1,par2" << mrec.par1 << mrec.par2;
 
    else if ( curvtype == CTYPE_2O )
    {
-      pmsg += tr( "  the curve with par1=%1, par2=%2,\n"
-                  "           from x,y  %3, %4  to %5, %6." )
-              .arg( mrec.par1 ).arg( mrec.par2 )
+      double bval   = log10( ( mrec.end_y - mrec.par2 ) / mrec.par1 )
+                      / log10( qMax( 1.0001, xuplim ) );
+      pmsg += tr( "  the curve with a=%1, b=%2, c=%3\n"
+                  "           from x,y  %4, %5  to %6, %7." )
+              .arg( mrec.par1 ).arg( bval ).arg( mrec.par2 )
               .arg( xlolim ).arg( mrec.str_y ).arg( xuplim ).arg( mrec.end_y );
    }
 
@@ -983,6 +985,7 @@ void US_pcsaProcess::model_statistics( QVector< US_ModelRecord >& mrecs,
    int    nbmods    = nmtasks / 5;
           nbmods    = qMin( nmtasks - 1, qMax( 3, nbmods ) );
    int    nlpts     = cresolu;
+   int    nblpts    = mrecs[ 0 ].isolutes.size();
    int    soltype   = dsets[ 0 ]->solute_type;
    double rmsdmin   = 99999.0;
    double rmsdmax   = 0.0;
@@ -1068,6 +1071,21 @@ DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
                << QString().sprintf( "%10.4f  %10.4f",
                      mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
    }
+   else if ( curvtype == CTYPE_2O )
+   {
+      double aval   = mrecs[ 0 ].par1;
+      double cval   = mrecs[ 0 ].par2;
+      double ymax   = mrecs[ 0 ].end_y;
+      double bval   = log10( ( ymax - cval ) / aval ) / log10( xuplim );
+      modstats << tr( "Y Range:" )
+               << QString().sprintf( "%10.4f  %10.4f", ylolim, yuplim );
+      modstats << tr( "Best curve A, B, C:" )
+               << QString().sprintf( "%10.4f  %10.4f  %10.4f",
+                     aval, bval, cval );
+      modstats << tr( "Best curve Y end points:" )
+               << QString().sprintf( "%10.4f  %10.4f",
+                     mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
+   }
    else
    {
       modstats << tr( "Y Range:" )
@@ -1085,6 +1103,9 @@ DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
             << QString().sprintf( "%5d", nypts );
    modstats << tr( "Solute points per curve:" )
             << QString().sprintf( "%5d", nlpts );
+   if ( nblpts != nlpts )
+      modstats << tr( "Best-curve points per curve:" )
+               << QString().sprintf( "%5d", nblpts );
    modstats << tr( "Index of best model:" )
             << QString().sprintf( "%5d", mrecs[ 0 ].taskx );
    modstats << tr( "Best curve calculated solutes:" )
@@ -2221,10 +2242,12 @@ DbgLv(1) << "CFin: alpha" << alpha << "mrecs size" << mrecs.size();
    model              = mrec.model;
    US_SolveSim::Simulation sim_vals;
    sim_vals.noisflag  = noisflag;
-//   sim_vals.dbg_level = dbg_level;
+   sim_vals.dbg_level = dbg_level;
    sim_vals.alpha     = alpha;
    sim_vals.zsolutes  = mrec.isolutes;
 DbgLv(1) << "CFin:  isolutes size" << sim_vals.zsolutes.size();
+DbgLv(1) << "CFin:   zsol0 x y z"
+ << sim_vals.zsolutes[0].x << sim_vals.zsolutes[0].y << sim_vals.zsolutes[0].z;
 
    // Evaluate the model
    US_SolveSim::DataSet* dset = dsets[ 0 ];
