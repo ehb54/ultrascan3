@@ -295,20 +295,9 @@ int US_ModelRecord::compute_2ndorder( double& xmin, double& xmax,
       double* parlims, QVector< US_ModelRecord >& mrecs )
 {
    int dbg_level  = US_Settings::us_debug();
-//   if ( parlims[ 0 ] < 0.0 )
-//   {
-//      parlims[ 0 ] = -1.0;
-//      parlims[ 1 ] = -0.005;
-//      parlims[ 2 ] = parlims[ 0 ];
-//      parlims[ 3 ] = parlims[ 1 ];
-//   }
-   double p1lo  = parlims[ 0 ];
-   double p1up  = parlims[ 1 ];
-   double amin  = parlims[ 0 ];
-   double amax  = parlims[ 1 ];
-   double bmin  = parlims[ 2 ];
-   double bmax  = parlims[ 3 ];
-   double cbest = parlims[ 3 ];
+   //double p1lo  = -1.0;
+   double p1lo  = -2.0;
+   double p1up  = -0.05;
    int stype    = parlims[ 4 ];
    double  zval = parlims[ 5 ];
    int lyptx    = nypts - 1;
@@ -329,42 +318,27 @@ int US_ModelRecord::compute_2ndorder( double& xmin, double& xmax,
    double yrng  = ymax - ymin;
    double yinc  = yrng / yprng;
 
-#if 0
-   if ( p1lo < 0.0 )
-   {
-      p1lo         = -1.0;
-      p1up         = -0.005;
-      bmin         = p1lo * xterm;
-      bmax         = p1up * xterm;
-      amax         = pow( xmin, bmin ) * ( yrng - yinc );
-      amin         = amax / yprng;
-   }
-#endif
-#if 1
-   p1lo         = -1.0;
-   p1up         = -0.05;
-   bmin         = p1lo * xterm;
-   bmax         = p1up * xterm;
-   //amax         = pow( xmin, bmin ) * ( yrng - yinc );
-   amax         = pow( xmin, bmax ) * ( yrng - yinc );
-   amin         = amax / yprng;
+   double bmin  = p1lo * xterm;
+   double bmax  = p1up * xterm;
+   double amax  = pow( xmin, bmax ) * ( yrng - yinc );
+   double amin  = amax / yprng;
+   double cmin  = ymin;
+   double cmax  = ymin + yinc;
 //amin = xmin^-max(bvec)*(((ymax - ymin) - (ymax - ymin) / var) / var);   % lower limit of variable a
 //amax = xmin^-max(bvec)*(ymax - ymin - (ymax - ymin) / var);             % upper limit of variable a
-#endif
 
    double ainc  = ( amax - amin ) / yprng;
    double binc  = ( bmax - bmin ) / yprng;
-   double cmin  = ymin;
-   double cmax  = ymin + yinc;
    double cinc  = ( cmax - cmin ) / yprng;
 DbgLv(1) << "MR: p1l p1u" << p1lo << p1up;
 DbgLv(1) << "MR:  amin amax ainc" << amin << amax << ainc;
 DbgLv(1) << "MR:  bmin bmax binc" << bmin << bmax << binc;
 DbgLv(1) << "MR:  cmin cmax cinc" << cmin << cmax << cinc << "yrng" << yrng;
 
-#if 1
    if ( parlims[ 0 ] > 0.0 )
    {  // Recomputing: Adjust C range so previous best in on the grid
+      double cbest = parlims[ 3 ];
+
       if ( cbest < cmin )
       {
          cmin         = cbest;
@@ -389,17 +363,10 @@ DbgLv(1) << "MR:  cmin cmax cinc" << cmin << cmax << cinc << "yrng" << yrng;
          cmin         = cmin - cinc + cbf;
       }
 
-#if 0
-      cmax         = cmin + yinc;
-      cinc         = ( cmax - cmin  ) / yprng;
-#endif
-#if 1
       cmax         = cmin + cinc * yprng;
-#endif
 DbgLv(1) << "MR:  NEW cbest cbx cbi cbf" << cbest << cbx << cbi << cbf;
 DbgLv(1) << "MR:  NEW  cmin cmax cinc" << cmin << cmax << cinc;
    }
-#endif
 
    QVector< double > avec;
    QVector< double > bvec;
@@ -588,13 +555,13 @@ int US_ModelRecord::load_modelrecs( QXmlStreamReader& xml,
             }
 //DbgLv(1) << "STYPE" << s_type << "CTYPE" << ctype;
             QString xlo      = attrs.value( "xmin"  ).toString();
-            QString xhi      = attrs.value( "xmin"  ).toString();
+            QString xhi      = attrs.value( "xmax"  ).toString();
             QString ylo      = attrs.value( "ymin"  ).toString();
-            QString yhi      = attrs.value( "ymin"  ).toString();
+            QString yhi      = attrs.value( "ymax"  ).toString();
             QString slo      = attrs.value( "smin"  ).toString();
-            QString shi      = attrs.value( "smin"  ).toString();
+            QString shi      = attrs.value( "smax"  ).toString();
             QString klo      = attrs.value( "kmin"  ).toString();
-            QString khi      = attrs.value( "kmin"  ).toString();
+            QString khi      = attrs.value( "kmax"  ).toString();
             QString s_stype  = attrs.value( "solute_type" ).toString();
             stype            = stype_flag( s_stype );
             xlo              = xlo.isEmpty() ? slo : xlo;
@@ -1017,8 +984,8 @@ int US_ModelRecord::ctype_flag( const QString s_ctype )
    i_ctype         = ( s_ctype == "IS"  ) ? CTYPE_IS  : i_ctype;
    i_ctype         = ( s_ctype == "DS"  ) ? CTYPE_DS  : i_ctype;
    i_ctype         = ( s_ctype == "HL"  ) ? CTYPE_HL  : i_ctype;
-   i_ctype         = ( s_ctype == "All" ) ? CTYPE_ALL : i_ctype;
    i_ctype         = ( s_ctype == "2O"  ) ? CTYPE_2O  : i_ctype;
+   i_ctype         = ( s_ctype == "All" ) ? CTYPE_ALL : i_ctype;
 
    return i_ctype;
 }
@@ -1031,6 +998,7 @@ QString US_ModelRecord::ctype_text( const int i_ctype )
    s_ctype         = ( i_ctype == CTYPE_IS  ) ? "IS"  : s_ctype;
    s_ctype         = ( i_ctype == CTYPE_DS  ) ? "DS"  : s_ctype;
    s_ctype         = ( i_ctype == CTYPE_HL  ) ? "HL"  : s_ctype;
+   s_ctype         = ( i_ctype == CTYPE_2O  ) ? "2O"  : s_ctype;
    s_ctype         = ( i_ctype == CTYPE_ALL ) ? "All" : s_ctype;
 
    return s_ctype;

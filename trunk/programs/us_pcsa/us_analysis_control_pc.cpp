@@ -177,7 +177,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    cb_curvtype->addItem( "Increasing Sigmoid" );
    cb_curvtype->addItem( "Decreasing Sigmoid" );
    cb_curvtype->addItem( "Horizontal Line [ C(s) ]" );
-   cb_curvtype->addItem( "Second-order Power Law" );
+   cb_curvtype->addItem( "Second-Order Power Law" );
    cb_curvtype->setCurrentIndex( 1 );
    cb_z_type   = us_comboBox();
    cb_z_type  ->addItem( "vbar" );

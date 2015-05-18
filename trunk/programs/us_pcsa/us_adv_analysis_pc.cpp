@@ -49,12 +49,12 @@ DbgLv(1) << "AA: define GUI elements";
    QLabel* lb_mrecctrl  = us_banner( tr( "Final & Model Records Controls:" ) );
    QLabel* lb_mrecstat  = us_banner( tr( "Model Records Status:" ) );
    QLabel* lb_curvtype  = us_label ( tr( "Curve Type:" ) );
-   QLabel* lb_s_range   = us_label ( tr( "s Range (x 1e-13):" ) );
-   QLabel* lb_k_range   = us_label ( tr( "f/f0 Range:" ) );
-           lb_sigmpar1  = us_label ( tr( "Sigmoid Par 1:" ) );
-           lb_sigmpar2  = us_label ( tr( "Sigmoid Par 2:" ) );
-           lb_k_strpt   = us_label ( tr( "Line f/f0 Start Point:" ) );
-           lb_k_endpt   = us_label ( tr( "Line f/f0 End Point:" ) );
+   QLabel* lb_x_range   = us_label ( tr( "X Range:" ) );
+   QLabel* lb_y_range   = us_label ( tr( "Y Range:" ) );
+           lb_sigmpar1  = us_label ( tr( "Par 1:" ) );
+           lb_sigmpar2  = us_label ( tr( "Par 2:" ) );
+           lb_y_strpt   = us_label ( tr( "Line Y Start Point:" ) );
+           lb_y_endpt   = us_label ( tr( "Line Y End Point:" ) );
    QLabel* lb_crpoints  = us_label ( tr( "Curve Resolution Points:" ) );
    QLabel* lb_mciters   = us_label ( tr( "Monte Carlo Iterations:" ) );
    QLabel* lb_progress  = us_label ( tr( "Progress:" ) );
@@ -75,28 +75,16 @@ DbgLv(1) << "AA: define GUI elements";
    pb_accept    = us_pushbutton( tr( "Accept" ), false );
 
    // Define counters
-   double xmin  = 1.0;
-   double xmax  = 10.0;
-   double ymin  = 1.0;
-   double ymax  = 5.0;
-   ct_s_lower   = us_counter( 1, -1, 1000, xmin );
-   ct_s_upper   = us_counter( 1, -1, 1000, xmax );
-   ct_k_lower   = us_counter( 1,      1,     8, ymin );
-   ct_k_upper   = us_counter( 1,      1,   100, ymax );
-   ct_k_strpt   = us_counter( 3,      1,     8, ymin );
-   ct_k_endpt   = us_counter( 3,      1,   100, ymax );
-   ct_sigmpar1  = us_counter( 3,  0.001,   0.5,  0.2 );
-   ct_sigmpar2  = us_counter( 3,    0.0,   1.0,  0.1 );
-   ct_crpoints  = us_counter( 2,     20,   501,  101 );
-   ct_mciters   = us_counter( 2,      1,   100,   20 );
-   ct_s_lower ->setStep(   0.1 );
-   ct_s_upper ->setStep(   0.1 );
-   ct_k_lower ->setStep(  0.01 );
-   ct_k_upper ->setStep(  0.01 );
-   ct_sigmpar1->setStep( 0.001 );
-   ct_sigmpar2->setStep( 0.001 );
-   ct_crpoints->setStep(     1 );
-   ct_mciters ->setStep(     1 );
+   le_x_lower   = us_lineedit( "1",   -1, true  );
+   le_x_upper   = us_lineedit( "10",  -1, true  );
+   le_y_lower   = us_lineedit( "1",   -1, false );
+   le_y_upper   = us_lineedit( "4",   -1, false );
+   le_y_strpt   = us_lineedit( "1",   -1, false );
+   le_y_endpt   = us_lineedit( "4",   -1, false );
+   le_sigmpar1  = us_lineedit( "1",   -1, false );
+   le_sigmpar2  = us_lineedit( "2",   -1, false );
+   le_crpoints  = us_lineedit( "100", -1, false );
+   le_mciters   = us_lineedit( "20",  -1, false );
 
    // Define combo box
    cb_curvtype  = us_comboBox();
@@ -105,8 +93,7 @@ DbgLv(1) << "AA: define GUI elements";
    cb_curvtype->addItem( tr( "Increasing Sigmoid" ) );
    cb_curvtype->addItem( tr( "Decreasing Sigmoid" ) );
    cb_curvtype->addItem( tr( "Horizontal Line [ C(s) ]" ) );
-   cb_curvtype->addItem( tr( "Second-order Power Law" ) );
-   cb_curvtype->setCurrentIndex( 1 );
+   cb_curvtype->addItem( tr( "Second-Order Power Law" ) );
  
    // Define status text boxes and progress bar
    te_bfmstat   = us_textedit();
@@ -123,24 +110,24 @@ DbgLv(1) << "AA: populate finmodelLayout";
    finmodelLayout->addWidget( lb_fitctrl,    row++, 0, 1, 6 );
    finmodelLayout->addWidget( lb_curvtype,   row,   0, 1, 3 );
    finmodelLayout->addWidget( cb_curvtype,   row++, 3, 1, 3 );
-   finmodelLayout->addWidget( lb_s_range,    row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_s_lower,    row,   3, 1, 1 );
-   finmodelLayout->addWidget( ct_s_upper,    row++, 4, 1, 1 );
-   finmodelLayout->addWidget( lb_k_range,    row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_k_lower,    row,   3, 1, 1 );
-   finmodelLayout->addWidget( ct_k_upper,    row++, 4, 1, 1 );
+   finmodelLayout->addWidget( lb_x_range,    row,   0, 1, 3 );
+   finmodelLayout->addWidget( le_x_lower,    row,   3, 1, 1 );
+   finmodelLayout->addWidget( le_x_upper,    row++, 4, 1, 1 );
+   finmodelLayout->addWidget( lb_y_range,    row,   0, 1, 3 );
+   finmodelLayout->addWidget( le_y_lower,    row,   3, 1, 1 );
+   finmodelLayout->addWidget( le_y_upper,    row++, 4, 1, 1 );
    finmodelLayout->addWidget( lb_sigmpar1,   row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_sigmpar1,   row++, 3, 1, 3 );
+   finmodelLayout->addWidget( le_sigmpar1,   row++, 3, 1, 3 );
    finmodelLayout->addWidget( lb_sigmpar2,   row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_sigmpar2,   row++, 3, 1, 3 );
-   finmodelLayout->addWidget( lb_k_strpt,    row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_k_strpt,    row++, 3, 1, 3 );
-   finmodelLayout->addWidget( lb_k_endpt,    row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_k_endpt,    row++, 3, 1, 3 );
+   finmodelLayout->addWidget( le_sigmpar2,   row++, 3, 1, 3 );
+   finmodelLayout->addWidget( lb_y_strpt,    row,   0, 1, 3 );
+   finmodelLayout->addWidget( le_y_strpt,    row++, 3, 1, 3 );
+   finmodelLayout->addWidget( lb_y_endpt,    row,   0, 1, 3 );
+   finmodelLayout->addWidget( le_y_endpt,    row++, 3, 1, 3 );
    finmodelLayout->addWidget( lb_crpoints,   row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_crpoints,   row++, 3, 1, 3 );
+   finmodelLayout->addWidget( le_crpoints,   row++, 3, 1, 3 );
    finmodelLayout->addWidget( lb_mciters,    row,   0, 1, 3 );
-   finmodelLayout->addWidget( ct_mciters,    row++, 3, 1, 3 );
+   finmodelLayout->addWidget( le_mciters,    row++, 3, 1, 3 );
 
    finmodelLayout->addWidget( lb_bfmstat,    row++, 0, 1, 6 );
    finmodelLayout->addWidget( te_bfmstat,    row,   0, 8, 6 );
@@ -172,22 +159,24 @@ DbgLv(1) << "AA: populate mreclistLayout";
    mreclistLayout->addWidget( lb_space2,     row,   0, 1, 6 );
 
    cb_curvtype->setEnabled( false );
-   ct_s_lower ->setEnabled( false );
-   ct_s_upper ->setEnabled( false );
-   ct_k_lower ->setEnabled( false );
-   ct_k_upper ->setEnabled( false );
+#if 0
+   le_x_lower ->setEnabled( false );
+   le_x_upper ->setEnabled( false );
+   le_y_lower ->setEnabled( false );
+   le_y_upper ->setEnabled( false );
+#endif
    int fwidth   = fmet.maxWidth();
-   int rheight  = ct_s_lower->height();
+   int rheight  = le_x_lower->height();
    int cminw    = fwidth * 4;
    int csizw    = cminw + fwidth;
-   ct_s_lower->setMinimumWidth( cminw );
-   ct_s_upper->setMinimumWidth( cminw );
-   ct_k_lower->setMinimumWidth( cminw );
-   ct_k_upper->setMinimumWidth( cminw );
-   ct_s_lower->resize( csizw, rheight );
-   ct_s_upper->resize( csizw, rheight );
-   ct_k_lower->resize( csizw, rheight );
-   ct_k_upper->resize( csizw, rheight );
+   le_x_lower->setMinimumWidth( cminw );
+   le_x_upper->setMinimumWidth( cminw );
+   le_y_lower->setMinimumWidth( cminw );
+   le_y_upper->setMinimumWidth( cminw );
+   le_x_lower->resize( csizw, rheight );
+   le_x_upper->resize( csizw, rheight );
+   le_y_lower->resize( csizw, rheight );
+   le_y_upper->resize( csizw, rheight );
 
    // Set defaults and status values based on the initial model records
    mrecs_mc.clear();
@@ -238,27 +227,30 @@ DbgLv(1) << "AA: nmrecs" << nmrecs << "ncsols" << ncsols;
       stat_mrecs(
          tr( "No initial model records list has been read" ) );
    }
+   ctype        = mrec.ctype;
 
    // Define connections
 DbgLv(1) << "AA: connect buttons";
    connect( cb_curvtype, SIGNAL( currentIndexChanged( int ) ),
             this,        SLOT(   curvtypeChanged    ( int ) ) );
 
-   connect( ct_s_lower,  SIGNAL( valueChanged ( double ) ),
+#if 0
+   connect( le_x_lower,  SIGNAL( textChanged( const QString& ) ),
             this,        SLOT(   slowerChanged( double ) ) );
-   connect( ct_s_upper,  SIGNAL( valueChanged ( double ) ),
+   connect( le_x_upper,  SIGNAL( textChanged( const QString& ) ),
             this,        SLOT(   supperChanged( double ) ) );
-   connect( ct_k_lower,  SIGNAL( valueChanged ( double ) ),
+   connect( le_y_lower,  SIGNAL( textChanged( const QString& ) ),
             this,        SLOT(   klowerChanged( double ) ) );
-   connect( ct_k_upper,  SIGNAL( valueChanged ( double ) ),
+   connect( le_y_upper,  SIGNAL( textChanged( const QString& ) ),
             this,        SLOT(   kupperChanged( double ) ) );
-   connect( ct_sigmpar1, SIGNAL( valueChanged ( double ) ),
+   connect( le_sigmpar1, SIGNAL( textChanged( const QString& ) ),
             this,        SLOT(   sipar1Changed( double ) ) );
-   connect( ct_sigmpar2, SIGNAL( valueChanged ( double ) ),
+   connect( le_sigmpar2, SIGNAL( textChanged( const QString& ) ),
             this,        SLOT(   sipar2Changed( double ) ) );
-   connect( ct_crpoints, SIGNAL( valueChanged ( double ) ),
+   connect( le_crpoints, SIGNAL( textChanged( const QString& ) ),
             this,        SLOT(   pointsChanged( double ) ) );
-   connect( ct_mciters,  SIGNAL( valueChanged ( double ) ),
+#endif
+   connect( le_mciters,  SIGNAL( textChanged( const QString& ) ),
             this,        SLOT(   mciterChanged( double ) ) );
 
    connect( pb_loadmrs,  SIGNAL( clicked()          ),
@@ -322,13 +314,11 @@ DbgLv(1) << "AA:Accept: mrs_new" << mrs_new << "p_mrecs" << p_mrecs;
    if ( mrs_new  &&  p_mrecs != 0 )
    {  // If model records are new, return them to the caller
       *p_mrecs     = mrecs;
-DbgLv(1) << "AA:Accept: mr mnmx s k"
- << p_mrecs->at(0).xmin
- << p_mrecs->at(0).xmax
- << p_mrecs->at(0).ymin
- << p_mrecs->at(0).ymax;
+DbgLv(1) << "AA:Accept: mr mnmx x y"
+ << p_mrecs->at(0).xmin << p_mrecs->at(0).xmax
+ << p_mrecs->at(0).ymin << p_mrecs->at(0).ymax;
 DbgLv(1) << "AA:Accept: mr-size mr0-RMSD" << p_mrecs->size()
- << p_mrecs->at(9).rmsd;
+ << p_mrecs->at(9).rmsd << "mr0-solsize" << p_mrecs->at(0).csolutes.size();
    }
 
    if ( ! mc_done )
@@ -360,21 +350,23 @@ DbgLv(1) << "curvtypeChanged" << ivalue;
    ctype          = ( ivalue == 1 ) ? CTYPE_IS : ctype;
    ctype          = ( ivalue == 2 ) ? CTYPE_DS : ctype;
    ctype          = ( ivalue == 3 ) ? CTYPE_HL : ctype;
+   ctype          = ( ivalue == 4 ) ? CTYPE_2O : ctype;
    bool is_sigm   = ( ctype == CTYPE_IS || ctype == CTYPE_DS );
    bool is_line   = ! is_sigm;
 
    lb_sigmpar1->setVisible( is_sigm );
-   ct_sigmpar1->setVisible( is_sigm );
+   le_sigmpar1->setVisible( is_sigm );
    lb_sigmpar2->setVisible( is_sigm );
-   ct_sigmpar2->setVisible( is_sigm );
-   lb_k_strpt ->setVisible( ctype == CTYPE_SL );
-   ct_k_strpt ->setVisible( ctype == CTYPE_SL );
-   lb_k_endpt ->setVisible( is_line );
-   ct_k_endpt ->setVisible( is_line );
+   le_sigmpar2->setVisible( is_sigm );
+   lb_y_strpt ->setVisible( ctype == CTYPE_SL );
+   le_y_strpt ->setVisible( ctype == CTYPE_SL );
+   lb_y_endpt ->setVisible( is_line );
+   le_y_endpt ->setVisible( is_line );
    if ( ctype == CTYPE_HL )
-      lb_k_endpt->setText( tr( "Line f/f0 End Points:" ) );
+      lb_y_endpt->setText( tr( "Line Y End Points:" ) );
 }
 
+#if 0
 // Slot to handle a change in S lower bound
 void US_AdvAnalysisPc::slowerChanged( double value )
 {
@@ -416,6 +408,7 @@ void US_AdvAnalysisPc::pointsChanged( double value )
 {
 DbgLv(1) << "pointsChanged" << value;
 }
+#endif
 
 // Slot to handle a change in monte carlo iterations
 void US_AdvAnalysisPc::mciterChanged( double value )
@@ -779,7 +772,7 @@ DbgLv(1) << "store_bfm";
 
    // Write out the XML file
    ctype            = mrec.ctype;
-//   int    nisols    = (int)ct_crpoints->value();
+//   int    nisols    = (int)le_crpoints->value();
    int    kisols    = mrec.isolutes.size();
    int    ncsols    = mrec.csolutes.size();
    double xmin      = mrec.xmin;
@@ -905,10 +898,10 @@ DbgLv(1) << "build_bfm";
    ctype          = ( ctypex == 2 ) ? CTYPE_DS : ctype;
    ctype          = ( ctypex == 3 ) ? CTYPE_HL : ctype;
    ctype          = ( ctypex == 4 ) ? CTYPE_2O : ctype;
-   double xmin    = ct_s_lower ->value();
-   double xmax    = ct_s_upper ->value();
-   double ymin    = ct_k_lower ->value();
-   double ymax    = ct_k_upper ->value();
+   double xmin    = le_x_lower ->text().toDouble();
+   double xmax    = le_x_upper ->text().toDouble();
+   double ymin    = le_y_lower ->text().toDouble();
+   double ymax    = le_y_upper ->text().toDouble();
    mrec.ctype     = ctype;
    mrec.xmin      = xmin;
    mrec.xmax      = xmax;
@@ -918,8 +911,8 @@ DbgLv(1) << "build_bfm";
    // Set parameters for the specific curve to use
    if ( ctype == CTYPE_SL )
    {
-      mrec.str_y     = ct_k_strpt ->value();
-      mrec.end_y     = ct_k_endpt ->value();
+      mrec.str_y     = le_y_strpt ->text().toDouble();
+      mrec.end_y     = le_y_endpt ->text().toDouble();
       mrec.par1      = mrec.str_y;
       mrec.par2      = ( mrec.str_y - mrec.end_y ) / ( xmax - xmin );
    }
@@ -927,13 +920,13 @@ DbgLv(1) << "build_bfm";
    {
       mrec.str_y     = ymin;
       mrec.end_y     = ymax;
-      mrec.par1      = ct_sigmpar1->value();
-      mrec.par2      = ct_sigmpar2->value();
+      mrec.par1      = le_sigmpar1->text().toDouble();
+      mrec.par2      = le_sigmpar2->text().toDouble();
    }
 
    else if ( ctype == CTYPE_HL )
    {
-      mrec.end_y     = ct_k_endpt ->value();
+      mrec.end_y     = le_y_endpt ->text().toDouble();
       mrec.str_y     = mrec.end_y;
       mrec.par1      = mrec.str_y;
       mrec.par2      = 0.0;
@@ -943,8 +936,8 @@ DbgLv(1) << "build_bfm";
    {
       mrec.str_y     = ymin;
       mrec.end_y     = ymax;
-      mrec.par1      = ct_sigmpar1->value();
-      mrec.par2      = ct_sigmpar2->value();
+      mrec.par1      = le_sigmpar1->text().toDouble();
+      mrec.par2      = le_sigmpar2->text().toDouble();
    }
 
    // Generate the solute points on the curve
@@ -1003,7 +996,7 @@ void US_AdvAnalysisPc::start_montecarlo()
 DbgLv(1) << "start_montecarlo";
    wdata          = dset0->run_data;
    edata          = &wdata;
-   mciters        = (int)ct_mciters->value();
+   mciters        = le_mciters->text().toInt();
    stat_bfm( tr( "%1 Monte Carlo iterations are being computed..." )
              .arg( mciters ) );
    ksiters        = 0;
@@ -1011,15 +1004,32 @@ DbgLv(1) << "start_montecarlo";
    int nsol_m     = mrec.isolutes.size();
    double par1_m  = mrec.par1;
    double par2_m  = mrec.par2;
-   int nsol_p     = (int)ct_crpoints->value();
-   double par1_p  = ct_sigmpar1->value();
-   double par2_p  = ct_sigmpar2->value();
+   double ymin_m  = mrec.ymin;
+   double ymax_m  = mrec.ymax;
+   int nsol_p     = le_crpoints->text().toInt();
+   double par1_p  = le_sigmpar1->text().toDouble();
+   double par2_p  = le_sigmpar2->text().toDouble();
+   double ymin_p  = le_y_lower ->text().toDouble();
+   double ymax_p  = le_y_upper ->text().toDouble();
+   double difp1   = qAbs( ( par1_m - par1_p ) / par1_m );
+   double difp2   = qAbs( ( par2_m - par2_p ) / par2_m );
+   double dymin   = qAbs( ( ymin_m - ymin_p ) / ymin_m );
+   double dymax   = qAbs( ( ymax_m - ymax_p ) / ymax_m );
 
-   if ( nsol_p != nsol_m  ||  par1_m != par1_p  ||  par2_m != par2_p )
+   if ( nsol_p != nsol_m  ||  difp1 > 1.0e-4  ||  difp2 > 1.0e-4   ||
+                              dymin > 1.0e-4  ||  dymin > 1.0e-4 )
    {
       mrec.isolutes.resize( nsol_p );
       mrec.par1      = par1_p;
       mrec.par2      = par2_p;
+      mrec.ymin      = ymin_p;
+      mrec.ymax      = ymax_p;
+DbgLv(1) << " MC reset curves: p1_m p2_m p1_p p2_p ns_m ns_p"
+ << par1_m << par2_m << par1_p << par2_p << nsol_m << nsol_p;
+DbgLv(1) << " MC reset curves:   dp1 dp2 sdp1 sdp2"
+ << difp1 << difp2 << (par1_m-par1_p) << (par2_m-par2_p);
+DbgLv(1) << " MC reset curves:   dyl dyh sdyl sdyh"
+ << dymin << dymax << (ymin_m-ymin_p) << (ymax_m-ymax_p);
 
       curve_isolutes( mrec );
    }
@@ -1303,23 +1313,47 @@ void US_AdvAnalysisPc::montecarlo_done( void )
 {
 DbgLv(1) << "==montecarlo_done()==";
    stat_bfm( tr( "Building MC models and final composite..." ), true );
+#if 0
    int     nccsol   = 0;
    QVector< US_ZSolute > compsols;
    QStringList sortlst;
+#endif
+#if 1
+   QStringList mfnames;
+   edata              = &dset0->run_data;
+   int ctype          = mrecs_mc[ 0 ].ctype;
+   int stype          = mrecs_mc[ 0 ].stype;
+   QString tmppath    = US_Settings::tmpDir() + "/";
+   QString runID      = edata->runID;
+   QString tripID     = edata->cell + edata->channel + edata->wavelength;
+   QString dates      = "e" + edata->editID + "_a"
+                        + QDateTime::currentDateTime().toUTC()
+                        .toString( "yyMMddhhmm" );
+   QString analysType = "PCSA-SL-MC";
+   analysType         = ( ctype == CTYPE_IS ) ? "PCSA-IS-MC" : analysType;
+   analysType         = ( ctype == CTYPE_DS ) ? "PCSA-DS-MC" : analysType;
+   analysType         = ( ctype == CTYPE_HL ) ? "PCSA-HL-MC" : analysType;
+   analysType         = ( ctype == CTYPE_2O ) ? "PCSA-2O-MC" : analysType;
+   QString analysID   = dates + "_" + analysType + "_local_";
+   QString base_mdesc = runID + "." + tripID + "." + analysID;
+   model.editGUID     = edata->editGUID;
+   model.monteCarlo   = true;
+#endif
    US_Model::SimulationComponent zcomponent;
-   zcomponent.vbar20   = dset0->vbar20;
+   zcomponent.vbar20  = dset0->vbar20;
 
    // Build individual models and append all solutes to one composite
    for ( int jmc = 0; jmc < mciters; jmc++ )
    {
-      mrec             = mrecs_mc[ jmc ];
+      mrec          = mrecs_mc[ jmc ];
       QVector< US_ZSolute > csolutes = mrec.csolutes;
-      int     nsols    = csolutes.size();
+      int nsols     = csolutes.size();
       model.components.resize( nsols );
 
       for ( int cc = 0; cc < nsols; cc++ )
       {
          // Get component values and sorting string
+#if 0
          double  sol_x    = csolutes[ cc ].x;
          double  sol_y    = csolutes[ cc ].y;
          double  sol_z    = csolutes[ cc ].z;
@@ -1344,16 +1378,29 @@ DbgLv(1) << "MCD: cc" << cc << "sol_id" << sol_id;
          model.components[ cc ].vbar20                = sol_z;
          model.components[ cc ].signal_concentration  = sol_c;
          model.components[ cc ].name = QString().sprintf( "SC%04d", cc + 1 );
+#endif
+#if 1
+         model.components[ cc ] = zcomponent;
+         US_ZSolute::set_mcomp_values( model.components[ cc ], csolutes[ cc ],
+                                       stype, true );
+#endif
          model.calc_coefficients( model.components[ cc ] );
       }
 
       // Save the individual MC model
-      model.monteCarlo = true;
       mrec.model       = model;
       mrecs_mc[ jmc ]  = mrec;
+
+      // Write the iteration model to a temp file and save its name
+      QString iterID    = QString().sprintf( "mc%04d", jmc + 1 );
+      model.description = base_mdesc + iterID + ".model";
+      QString mfname    = tmppath + model.description + ".tmp";
+      mfnames << mfname;
+      model.write( mfname );
    }
 
    // Now sort the solute id strings to create sorted composite
+#if 0
    qSort( sortlst );
    US_ZSolute pcompsol;
    US_ZSolute ccompsol;
@@ -1416,9 +1463,25 @@ DbgLv(1) << "MCD: cc ccin ncsols" << cc << ccin << ncsols;
       modela.components[ cc ].s                   *= sfactor;
       modela.components[ cc ].D                   *= dfactor;
    }
+#endif
+#if 1
+   // Create composite MC file and load the model
+   QString cmfname = US_Model::composite_mc_file( mfnames, true );
+   model.load( cmfname );
+   US_Model modela = model;                // Model for application (corrected)
+   ncsols          = model.components.size();
+   double sfactor  = 1.0 / dset0->s20w_correction;
+   double dfactor  = 1.0 / dset0->D20w_correction;
+
+   // Build the apply-model that goes along with the new composite model record
+   for ( int cc = 0; cc < ncsols; cc++ )
+   {
+      modela.components[ cc ].s *= sfactor;
+      modela.components[ cc ].D *= dfactor;
+   }
+#endif
 
    // Do a fit with the composite model and get the RMSD
-                       edata   = &dset0->run_data;
    US_DataIO::RawData* sdata   = &mrec.sim_data;
    US_AstfemMath::initSimData( *sdata, *edata, 0.0 );
 
@@ -1479,6 +1542,11 @@ void US_AdvAnalysisPc::curve_isolutes( US_ModelRecord& mrec )
 {
    int    nisols  = mrec.isolutes.size();
    int    ctype   = mrec.ctype;
+   int    stype   = mrec.stype;
+   int    attr_x  = ( stype >> 6 ) & 7;
+   int    attr_y  = ( stype >> 3 ) & 7;
+   double xscl    = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
+   double yscl    = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e-13 : 1.0;
    double xmin    = mrec.xmin;
    double xmax    = mrec.xmax;
    double ymin    = mrec.ymin;
@@ -1502,8 +1570,8 @@ DbgLv(1) << "AA:CP: xinc" << xinc << "ctype" << ctype;
          double xval    = xmin + xoff * xrng;
          double efac    = 0.5 * erf( ( xoff - par2 ) / p1rt ) + 0.5;
          double yval    = ymin + ydif * efac;
-         mrec.isolutes[ kk ].x = xval * 1.e-13;
-         mrec.isolutes[ kk ].y = yval;
+         mrec.isolutes[ kk ].x = xval * xscl;
+         mrec.isolutes[ kk ].y = yval * yscl;
          xoff          += xoinc;
       }
    }
@@ -1516,8 +1584,8 @@ DbgLv(1) << "AA:CP: xinc" << xinc << "ctype" << ctype;
 
       for ( int kk = 0; kk < nisols; kk++ )
       {
-         mrec.isolutes[ kk ].x = xval * 1.e-13;
-         mrec.isolutes[ kk ].y = yval;
+         mrec.isolutes[ kk ].x = xval * xscl;
+         mrec.isolutes[ kk ].y = yval * yscl;
          xval          += xinc;
          yval          += yinc;
       }
@@ -1534,8 +1602,8 @@ DbgLv(1) << "AA:CP:  ni" << nisols << "last yv" << yval;
          double xval    = xmin + xoff * xrng;
          double efac    = 0.5 * erf( ( xoff - par2 ) / p1rt ) + 0.5;
          double yval    = ymax + ydif * efac;
-         mrec.isolutes[ kk ].x = xval * 1.e-13;
-         mrec.isolutes[ kk ].y = yval;
+         mrec.isolutes[ kk ].x = xval * xscl;
+         mrec.isolutes[ kk ].y = yval * yscl;
          xoff          += xoinc;
       }
    }
@@ -1547,11 +1615,27 @@ DbgLv(1) << "AA:CP:  ni" << nisols << "last yv" << yval;
 
       for ( int kk = 0; kk < nisols; kk++ )
       {
-         mrec.isolutes[ kk ].x = xval * 1.e-13;
-         mrec.isolutes[ kk ].y = yval;
+         mrec.isolutes[ kk ].x = xval * xscl;
+         mrec.isolutes[ kk ].y = yval * yscl;
          xval          += xinc;
       }
 DbgLv(1) << "AA:CP:  ni" << nisols << "last yv" << yval;
+   }
+
+   else if ( ctype == CTYPE_2O )  // 2nd-Order Power Law
+   {
+      double xval    = xmin;
+      double aval    = par1;
+      double cval    = par2;
+      double bval    = log10( ( mrec.end_y - cval ) / qMax( 0.00001, aval ) );
+
+      for ( int kk = 0; kk < nisols; kk++ )
+      {
+         double yval           = aval * pow( xval, bval ) + cval;
+         mrec.isolutes[ kk ].x = xval * xscl;
+         mrec.isolutes[ kk ].y = yval * yscl;
+         xval          += xinc;
+      }
    }
 DbgLv(1) << "AA:CP: sol0 x,y" << mrec.isolutes[0].x << mrec.isolutes[0].y;
 int nn=nisols-1;
@@ -1697,6 +1781,13 @@ void US_AdvAnalysisPc::set_fittings( QVector< US_ModelRecord >& s_mrecs )
    nisols       = s_mrec.isolutes.size();
    nmrecs       = s_mrecs.size();
    int    ctype = s_mrec.ctype;
+#if 0
+   int    stype = s_mrec.stype;
+   int    attr_x  = ( stype >> 6 ) & 7;
+   int    attr_y  = ( stype >> 3 ) & 7;
+   double xscl    = ( attr_x == US_ZSolute::ATTR_S ) ? 1.0e13 : 1.0;
+   double yscl    = ( attr_y == US_ZSolute::ATTR_S ) ? 1.0e13 : 1.0;
+#endif
    double xmin  = s_mrec.xmin;
    double xmax  = s_mrec.xmax;
    double ymin  = s_mrec.ymin;
@@ -1704,11 +1795,12 @@ void US_AdvAnalysisPc::set_fittings( QVector< US_ModelRecord >& s_mrecs )
    ctype        = s_mrec.ctype;
 DbgLv(1) << "AA:SF: ctype x,y min,max" << ctype << xmin << xmax
  << ymin << ymax;
-   ct_k_strpt ->setValue( s_mrec.str_y );
-   ct_k_endpt ->setValue( s_mrec.end_y );
-   ct_sigmpar1->setValue( s_mrec.par1 );
-   ct_sigmpar2->setValue( s_mrec.par2 );
+   le_y_strpt ->setText( QString::number( s_mrec.str_y ) );
+   le_y_endpt ->setText( QString::number( s_mrec.end_y ) );
+   le_sigmpar1->setText( QString::number( s_mrec.par1 ) );
+   le_sigmpar2->setText( QString::number( s_mrec.par2 ) );
 
+#if 0
    for ( int ii = 0; ii < nmrecs; ii++ )
    {
       s_mrec       = s_mrecs[ ii ];
@@ -1718,8 +1810,8 @@ DbgLv(1) << "AA:SF: ctype x,y min,max" << ctype << xmin << xmax
 
       for ( int jj = 0; jj < nisols; jj++ )
       {
-         double xval  = s_mrec.isolutes[ jj ].x * 1.e13;
-         double yval  = s_mrec.isolutes[ jj ].y;
+         double xval  = s_mrec.isolutes[ jj ].x * xscl;
+         double yval  = s_mrec.isolutes[ jj ].y * yscl;
          xmin         = qMin( xmin, xval );
          xmax         = qMax( xmax, xval );
          ymin         = qMin( ymin, yval );
@@ -1728,18 +1820,20 @@ if(xval==0.0 || yval==0.0)
 DbgLv(1) << "AA:SF:   ii jj ni" << ii << jj << nisols << "x y" << xval << yval;
       }
    }
+#endif
 
    int ctypex   = 0;
    ctypex       = ( ctype == CTYPE_SL ) ? 0 : ctypex;
    ctypex       = ( ctype == CTYPE_IS ) ? 1 : ctypex;
    ctypex       = ( ctype == CTYPE_DS ) ? 2 : ctypex;
    ctypex       = ( ctype == CTYPE_HL ) ? 3 : ctypex;
+   ctypex       = ( ctype == CTYPE_2O ) ? 4 : ctypex;
    cb_curvtype->setCurrentIndex( ctypex );
-   ct_s_lower ->setValue( xmin );
-   ct_s_upper ->setValue( xmax );
-   ct_k_lower ->setValue( ymin );
-   ct_k_upper ->setValue( ymax );
-   ct_crpoints->setValue( nisols );
+   le_x_lower ->setText( QString::number( xmin ) );
+   le_x_upper ->setText( QString::number( xmax ) );
+   le_y_lower ->setText( QString::number( ymin ) );
+   le_y_upper ->setText( QString::number( ymax ) );
+   le_crpoints->setText( QString::number( nisols ) );
 DbgLv(1) << "AA:SF: (2) x,y min,max" << ctype << xmin << xmax << ymin << ymax;
 }
 

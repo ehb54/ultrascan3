@@ -23,6 +23,8 @@
       label="Parametrically Constrained Spectrum Analysis (Decreasing Sigmoid)" />
     <application name="PCSA-HL"
       label="Parametrically Constrained Spectrum Analysis (Horizontal Line)" />
+    <application name="PCSA-2O"
+      label="Parametrically Constrained Spectrum Analysis (2nd-Ord Power Law)" />
     <application name="PCSA-SL-MC"
       label="Parametrically Constrained Spectrum Analysis (Straight Line) - Monte Carlo" />
     <application name="PCSA-IS-MC"
@@ -31,6 +33,8 @@
       label="Parametrically Constrained Spectrum Analysis (Decreasing Sigmoid) - Monte Carlo" />
     <application name="PCSA-HL-MC"
       label="Parametrically Constrained Spectrum Analysis (Horizontal Line) - Monte Carlo" />
+    <application name="PCSA-2O-MC"
+      label="Parametrically Constrained Spectrum Analysis (2nd-Ord Power Law) - Monte Carlo" />
     <application name="PCSA-SL-TR"
       label="Parametrically Constrained Spectrum Analysis (Straight Line) - Tikhonov Regularization" />
     <application name="PCSA-IS-TR"
@@ -39,6 +43,8 @@
       label="Parametrically Constrained Spectrum Analysis (Decreasing Sigmoid) - Tikhonov Regularization" />
     <application name="PCSA-HL-TR"
       label="Parametrically Constrained Spectrum Analysis (Horizontal Line) - Tikhonov Regularization" />
+    <application name="PCSA-2O-TR"
+      label="Parametrically Constrained Spectrum Analysis (2nd-Ord Power Law) - Tikhonov Regularization" />
     <application name="2DSA-GL"
       label="2-D Spectrum Analysis - Global" />
     <application name="2DSA-GL-MC"
