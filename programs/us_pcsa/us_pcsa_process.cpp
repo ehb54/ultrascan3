@@ -846,7 +846,7 @@ QString US_pcsaProcess::pmessage_head()
                          "Unknown-13",
                          "Unknown-14",
                          "Unknown-15",
-                         "Second-order Power Law",
+                         "Second-Order Power Law",
                          "?UNKNOWN?"
                        };
    QString ctype = QString( ctp[ curvtype ] );
@@ -976,7 +976,7 @@ void US_pcsaProcess::model_statistics( QVector< US_ModelRecord >& mrecs,
                          "Unknown-13",
                          "Unknown-14",
                          "Unknown-15",
-                         "Second-order Power Law",
+                         "Second-Order Power Law",
                          "?UNKNOWN?"
                        };
    const int lenctp  = sizeof( ctp ) / sizeof( ctp[ 0 ] );

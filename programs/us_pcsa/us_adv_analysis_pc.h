@@ -86,19 +86,19 @@ class US_AdvAnalysisPc : public US_WidgetsDialog
 
       QLabel*       lb_sigmpar1;
       QLabel*       lb_sigmpar2;
-      QLabel*       lb_k_strpt;
-      QLabel*       lb_k_endpt;
+      QLabel*       lb_y_strpt;
+      QLabel*       lb_y_endpt;
 
-      QwtCounter*   ct_s_lower;
-      QwtCounter*   ct_s_upper;
-      QwtCounter*   ct_k_lower;
-      QwtCounter*   ct_k_upper;
-      QwtCounter*   ct_sigmpar1;
-      QwtCounter*   ct_sigmpar2;
-      QwtCounter*   ct_k_strpt;
-      QwtCounter*   ct_k_endpt;
-      QwtCounter*   ct_mciters;
-      QwtCounter*   ct_crpoints;
+      QLineEdit*    le_x_lower;
+      QLineEdit*    le_x_upper;
+      QLineEdit*    le_y_lower;
+      QLineEdit*    le_y_upper;
+      QLineEdit*    le_sigmpar1;
+      QLineEdit*    le_sigmpar2;
+      QLineEdit*    le_y_strpt;
+      QLineEdit*    le_y_endpt;
+      QLineEdit*    le_mciters;
+      QLineEdit*    le_crpoints;
 
       QPushButton*  pb_loadmrs;
       QPushButton*  pb_storemrs;
@@ -123,6 +123,7 @@ class US_AdvAnalysisPc : public US_WidgetsDialog
 
    private slots:
       void curvtypeChanged ( int );
+#if 0
       void slowerChanged   ( double );
       void supperChanged   ( double );
       void sipar1Changed   ( double );
@@ -130,6 +131,7 @@ class US_AdvAnalysisPc : public US_WidgetsDialog
       void klowerChanged   ( double );
       void kupperChanged   ( double );
       void pointsChanged   ( double );
+#endif
       void mciterChanged   ( double );
       void load_mrecs      ( void );
       void store_mrecs     ( void );
