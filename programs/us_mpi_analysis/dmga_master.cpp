@@ -550,6 +550,9 @@ DbgLv(0) << "dmga_master start loop:  nfloatc max_same_count"
                }
 
                progress += "; MonteCarlo: " + QString::number( mc_iter );
+               if ( best_overall_fitness != LARGE  &&  best_overall_fitness > 0.0 )
+                  progress += "; RMSD: "
+                            + QString::number( sqrt( best_overall_fitness ) );
 
                send_udp( progress );
             }
