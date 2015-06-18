@@ -45,8 +45,9 @@ class US_UTIL_EXTERN US_ModelRecord
       int                   v_ctype;    //!< overall vector curve type (7=>All)
       double                str_y;      //!< Start k value
       double                end_y;      //!< End k value
-      double                par1;       //!< Sigmoid par1 value
-      double                par2;       //!< Sigmoid par2 value
+      double                par1;       //!< Sigmoid/PL par1/A value
+      double                par2;       //!< Sigmoid/PL par2/B value
+      double                par3;       //!< Power Law  par3/C value
       double                variance;   //!< Variance value
       double                rmsd;       //!< RMSD value
       double                xmin;       //!< Minimum s value
@@ -73,7 +74,7 @@ class US_UTIL_EXTERN US_ModelRecord
       }
 
    public slots:
-      //! \brief A public slot to clear data vectors (sim_data, residuals, *noise)
+      //! \brief A public slot to clear data vectors (sim_data,residuals,noise)
       void clear_data( void );
 
       //! \brief Static public function to compute straight line model records
@@ -83,7 +84,7 @@ class US_UTIL_EXTERN US_ModelRecord
       //! \param ymax    Y-value maximum
       //! \param nypts   Number of y start and end point variations
       //! \param nlpts   Number of line solute points
-      //! \param parlims Parameter limits array: yslo, yshi, yelo, yehi 
+      //! \param parlims Parameter limits array: yslo, yshi, yelo, yehi, ... 
       //! \param mrecs   Reference for generated model records vector
       //! \returns       Number of model line records generated
       static int compute_slines( double&, double&, double&, double&, int&,
@@ -170,8 +171,10 @@ class US_UTIL_EXTERN US_ModelRecord
       //! \param maxp1   Ref. for par1 maximum
       //! \param minp2   Ref. for par2 minimum
       //! \param maxp2   Ref. for par2 maximum
+      //! \param minp3   Ref. for par3 minimum
+      //! \param maxp3   Ref. for par3 maximum
       static void elite_limits( QVector< US_ModelRecord >&, int&,
-                                double&, double&,
+                                double&, double&, double&, double&,
                                 double&, double&, double&, double& );
 
       //! \brief Static public function to recompute mod.recs. for new iteration

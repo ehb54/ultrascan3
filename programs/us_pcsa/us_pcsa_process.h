@@ -188,7 +188,7 @@ private:
       double     alpha;        // Tikhonov regularization factor
       double     alpha_fx;     // Alpha for fixed curves fits
       double     alpha_lm;     // Alpha for L-M fits
-      double     parlims[ 9 ]; // Par1,Par2 limits and other constants
+      double     parlims[ 12 ];// Par1,Par2 limits and other constants
       double     pfi_rmsd;     // Previous fit iteration RMSD
       double     cfi_rmsd;     // Current fit iteration RMSD
       double     rd_frac;      // RMSD-difference fraction: (p-c)/p
