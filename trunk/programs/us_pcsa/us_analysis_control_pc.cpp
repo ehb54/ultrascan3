@@ -974,7 +974,7 @@ DbgLv(1) << "(1)pb_plot-Enabled" << pb_plot->isEnabled();
 // slot to compute model lines
 void US_AnalysisControlPc::compute()
 {
-   double parlims[ 9 ];
+   double parlims[ 12 ];
 
    set_solute_type();
 
@@ -1077,14 +1077,18 @@ DbgLv(1) << "PL:  new mlnplotd" << mlnplotd << "sol_type" << sol_type;
 
    if ( bmndx >= 0 )
    {
+DbgLv(1) << "PL:    mlp: setModel bmndx" << bmndx;
       mlnplotd->setModel( model, mrecs );
    }
    else
    {
+DbgLv(1) << "PL:    mlp: setModel model=0";
       mlnplotd->setModel( 0, mrecs );
    }
 
+DbgLv(1) << "PL:    mlp: call plot_data";
    mlnplotd->plot_data();
+DbgLv(1) << "PL:    mlp:  rtn fr plot_data";
    mlnplotd->setVisible( true );
 
    QString filepath = US_Settings::tmpDir() + "/PCSA."
@@ -1263,6 +1267,7 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
    double end_y  = mrec.end_y;
    double par1   = mrec.par1;
    double par2   = mrec.par2;
+   double par3   = mrec.par3;
    double prng   = (double)( nlpts - 1 );
    double xrng   = xmax - xmin;
    int stype     = mrec.stype;
@@ -1330,15 +1335,11 @@ DbgLv(1) << "AC:RM: mrec0 solsize" << mrec.isolutes.size()
    {
       double xval   = xmin;
       double xinc   = xrng / prng;
-      double aval   = par1;
-      double cval   = par2;
-      double bval   = log10( ( end_y - cval ) / aval )
-                      / log10( qMax( 1.0001, xmax ) );
 
       for ( int ll = 0; ll < nlpts; ll++ )
       { // Loop over points on a power law curve
          isol.x        = xval * xscl;
-         double yval   = aval * pow( xval, bval ) + cval;
+         double yval   = par1 * pow( xval, par2 ) + par3;
          isol.y        = yval * yscl;
          mrec.isolutes << isol;
          xval         += xinc;

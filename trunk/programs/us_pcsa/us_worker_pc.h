@@ -29,6 +29,7 @@ typedef struct work_packet_pc_s
    double  end_y;      //!< model end   y value
    double  par1;       //!< sigmoid model par1 value
    double  par2;       //!< sigmoid model par2 value
+   double  par3;       //!< power law model par3 value
 
    QVector< US_ZSolute >    isolutes;    //!< input solutes
    QVector< US_ZSolute >    csolutes;    //!< computed solutes
@@ -89,7 +90,8 @@ class WorkerThreadPc : public QThread
       double  str_y;         // start model y value
       double  end_y;         // end   model y value
       double  par1;          // task par1 value
-      double  par2;          // task par1 value
+      double  par2;          // task par2 value
+      double  par3;          // task par3 value
 
       int     thrn;          // thread number (1,...)
       int     taskx;         // grid refinement task index

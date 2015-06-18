@@ -201,6 +201,7 @@ DbgLv(1) << "PC:MEM(1): pav" << mempav << "ava tot use"
       double endy = orig_sols[ ktask ][ mm ].y;
       wtask.par1  = mrecs[ ktask ].par1;
       wtask.par2  = mrecs[ ktask ].par2;
+      wtask.par3  = mrecs[ ktask ].par3;
       wtask.depth = 0;
 
       wtask.sim_vals.alpha = alpha_fx;
@@ -458,11 +459,9 @@ DbgLv(1) << "FIN_FIN: par1,par2" << mrec.par1 << mrec.par2;
 
    else if ( curvtype == CTYPE_2O )
    {
-      double bval   = log10( ( mrec.end_y - mrec.par2 ) / mrec.par1 )
-                      / log10( qMax( 1.0001, xuplim ) );
       pmsg += tr( "  the curve with a=%1, b=%2, c=%3\n"
                   "           from x,y  %4, %5  to %6, %7." )
-              .arg( mrec.par1 ).arg( bval ).arg( mrec.par2 )
+              .arg( mrec.par1 ).arg( mrec.par2 ).arg( mrec.par3 )
               .arg( xlolim ).arg( mrec.str_y ).arg( xuplim ).arg( mrec.end_y );
    }
 
@@ -682,6 +681,7 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
    mrec.end_y      = wresult.end_y;
    mrec.par1       = wresult.par1;
    mrec.par2       = wresult.par2;
+   mrec.par3       = wresult.par3;
    mrec.variance   = variance;
    mrec.rmsd       = ( variance > 0.0 ) ? sqrt( variance ) : 99.9;
    mrec.isolutes   = wresult.isolutes;
@@ -1073,15 +1073,11 @@ DbgLv(1) << "PC:MS:  best str_y,end_y" << str_y << end_y;
    }
    else if ( curvtype == CTYPE_2O )
    {
-      double aval   = mrecs[ 0 ].par1;
-      double cval   = mrecs[ 0 ].par2;
-      double ymax   = mrecs[ 0 ].end_y;
-      double bval   = log10( ( ymax - cval ) / aval ) / log10( xuplim );
       modstats << tr( "Y Range:" )
                << QString().sprintf( "%10.4f  %10.4f", ylolim, yuplim );
       modstats << tr( "Best curve A, B, C:" )
                << QString().sprintf( "%10.4f  %10.4f  %10.4f",
-                     aval, bval, cval );
+                     mrecs[ 0 ].par1, mrecs[ 0 ].par2, mrecs[ 0 ].par3 );
       modstats << tr( "Best curve Y end points:" )
                << QString().sprintf( "%10.4f  %10.4f",
                      mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
@@ -1666,6 +1662,8 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
    double maxp1  = LnType ? maxyv : 0.001;
    double minp2  = LnType ? minyv : 1.0;
    double maxp2  = LnType ? maxyv : 0.0;
+   double minp3  =  9.99e+22;
+   double maxp3  = -9.99e+22;
    int    npar   = ( curvtype != CTYPE_HL ) ? n_par : 1;
    control.maxcall      = lmmxcall / ( npar + 1 );
    lm_done       = false;
@@ -1678,6 +1676,7 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
    nctotal       = ( kctask + stepms / 2 ) / stepms;
    kctask        = nctotal * stepms;
    lmtm_id       = startTimer( stepms );
+   mrecs[ 0 ].variance = 0.1;
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    emit message_update( tr( "\nNow refining the best model with a "
@@ -1688,7 +1687,7 @@ DbgLv(1) << "LMf: n_par m_dat" << n_par << m_dat;
 #endif
 #if 1
    US_ModelRecord::elite_limits( mrecs, curvtype, minyv, maxyv,
-                                 minp1, maxp1, minp2, maxp2 );
+                                 minp1, maxp1, minp2, maxp2, minp3, maxp3 );
 #endif
 #if 0
 const double par1lo=0.001;
@@ -1890,6 +1889,7 @@ DbgLv(0) << "     lmcfit  LM time(ms):  estimated" << kctask
 
    mrec.par1      = par[ 0 ];
    mrec.par2      = par[ 1 ];
+   mrec.par3      = 0.0;
    mrec.variance  = dset->model.variance;
    mrec.rmsd      = rmsd;
    mrec.ctype     = curvtype;
@@ -2336,6 +2336,14 @@ DbgLv(1) << "RF: sll sul" << xlolim << xuplim
  << " type reso nth noi" << curvtype << cresolu << nthreads << noisflag;
 
    fi_iter++;
+   double elite_fact   = 0.1;
+
+   if ( curvtype == CTYPE_2O )
+   {
+      elite_fact          = (double)qMax( 1, ( 4 - fi_iter ) ) * 0.1;
+   }
+
+   mrecs[ 0 ].variance = elite_fact;
 
    US_ModelRecord::recompute_mrecs( curvtype, xlolim, xuplim, ylolim, yuplim,
                                     nypts, cresolu, parlims, mrecs );
@@ -2347,6 +2355,12 @@ DbgLv(1) << "RF: sll sul" << xlolim << xuplim
    }
 DbgLv(1) << "SGMO:  orig_sols size" << orig_sols.size()
  << "nmodels" << mrecs.size();
+
+   if ( curvtype == CTYPE_2O )
+   {
+      mrecs[ 0 ].ymin     = xlolim;
+      mrecs[ 0 ].ymax     = xuplim;
+   }
 
    kcsteps     = 0;
    nctotal     = nmtasks;
@@ -2369,6 +2383,7 @@ DbgLv(1) << "RF: (1)maxrss" << maxrss;
       double endy = orig_sols[ ktask ][ mm ].y;
       wtask.par1  = mrecs[ ktask ].par1;
       wtask.par2  = mrecs[ ktask ].par2;
+      wtask.par3  = mrecs[ ktask ].par3;
       wtask.depth = 0;
 
       wtask.sim_vals.alpha = alpha_fx;

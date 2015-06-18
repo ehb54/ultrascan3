@@ -48,6 +48,7 @@ void WorkerThreadPc::define_work( WorkPacketPc& workin )
    end_y       = workin.end_y;
    par1        = workin.par1;
    par2        = workin.par2;
+   par3        = workin.par3;
    thrn        = workin.thrn;
    taskx       = workin.taskx;
    noisflag    = workin.noisf;
@@ -90,6 +91,7 @@ DbgLv(1) << "PC(WT): get_result IN";
    workout.end_y    = end_y;
    workout.par1     = par1;
    workout.par2     = par2;
+   workout.par3     = par3;
    workout.thrn     = thrn;
    workout.taskx    = taskx;
    workout.noisf    = noisflag;

@@ -645,6 +645,7 @@ DbgLv(1) << "load_bfm";
             mrec.end_y       = xattrs.value( "end_y"   ).toString().toDouble();
             mrec.par1        = xattrs.value( "par1"    ).toString().toDouble();
             mrec.par2        = xattrs.value( "par2"    ).toString().toDouble();
+            mrec.par3        = xattrs.value( "par3"    ).toString().toDouble();
             mrec.rmsd        = xattrs.value( "rmsd"    ).toString().toDouble();
             mrec.ctype       = xattrs.value( "type" ).toString().toInt();
             mrec.xmin        = xattrs.value( "xmin" ).toString().toDouble();
@@ -798,6 +799,7 @@ DbgLv(1) << "store_bfm";
    xmlo.writeAttribute( "end_y",        QString::number( mrec.end_y ) );
    xmlo.writeAttribute( "par1",         QString::number( mrec.par1  ) );
    xmlo.writeAttribute( "par2",         QString::number( mrec.par2  ) );
+   xmlo.writeAttribute( "par3",         QString::number( mrec.par3  ) );
    xmlo.writeAttribute( "rmsd",         QString::number( mrec.rmsd  ) );
 
    for ( int cc = 0; cc < ncsols; cc++ )
@@ -938,6 +940,8 @@ DbgLv(1) << "build_bfm";
       mrec.end_y     = ymax;
       mrec.par1      = le_sigmpar1->text().toDouble();
       mrec.par2      = le_sigmpar2->text().toDouble();
+      if ( mrecs.size() > 0 )
+         mrec.par3      = mrecs[ 0 ].par3;
    }
 
    // Generate the solute points on the curve
@@ -1627,7 +1631,17 @@ DbgLv(1) << "AA:CP:  ni" << nisols << "last yv" << yval;
       double xval    = xmin;
       double aval    = par1;
       double cval    = par2;
-      double bval    = log10( ( mrec.end_y - cval ) / qMax( 0.00001, aval ) );
+      // y = a * x^b +c
+      // x^b = ( y - c ) / a
+      // x   = logb( ( y - c ) / a )
+      // x   = log10( ( y - c ) / a ) / log10( b )
+      // log10( b ) = log10( ( y - c ) / a ) / x
+      // b   = [ ( y - c ) / a ] - log10( x )
+      //
+//      double bval    = ( ( mrec.end_y - cval ) / qMax( 0.00001, aval ) )
+//                       - log10( xmin );
+      double bval    = ( ( mrec.str_y - cval ) / qMax( 0.00001, aval ) )
+                       - log10( xmin );
 
       for ( int kk = 0; kk < nisols; kk++ )
       {
