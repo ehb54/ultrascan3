@@ -995,6 +995,21 @@ int US_ModelRecord::recompute_mrecs( int& ctype, double& xmin, double& xmax,
 
    else if ( ctype == CTYPE_2O )
    {  // Determine models for 2nd-order Power Law curves
+      if ( minp1 == maxp1 )
+      {
+         minp1        *= 0.99;
+         maxp1        *= 1.01;
+      }
+      if ( minp2 == maxp2 )
+      {
+         minp2        *= 1.01;
+         maxp2        *= 0.99;
+      }
+      if ( minp3 == maxp3 )
+      {
+         minp3        *= 0.99;
+         maxp3        *= 1.01;
+      }
       parlims[ 0 ]  = minp1;
       parlims[ 1 ]  = maxp1;
       parlims[ 2 ]  = minp2;
@@ -1004,11 +1019,6 @@ int US_ModelRecord::recompute_mrecs( int& ctype, double& xmin, double& xmax,
       parlims[ 8 ]  = p1best;
       parlims[ 9 ]  = p2best;
       parlims[ 10 ] = p3best;
-//      double ylbest = qMin( mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
-//      double yubest = qMax( mrecs[ 0 ].str_y, mrecs[ 0 ].end_y );
-//      double ypad   = ( maxyv - minyv ) * 0.1 / yprng;
-//      ymin          = qMin( minyv, ylbest - ypad );
-//      ymax          = qMax( maxyv, yubest + ypad );
       ymin          = minyv;
       ymax          = maxyv;
 DbgLv(1) << "RF: 2ord: nmrec" << nmrec << "ymin ymax" << ymin << ymax
