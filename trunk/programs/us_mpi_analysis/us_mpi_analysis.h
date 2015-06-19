@@ -117,6 +117,7 @@ class US_MPI_Analysis : public QObject
     US_ModelRecord             mrec;     // Work PCSA model record
     QVector< US_ModelRecord >  mrecs;    // PCSA model records (curves)
     QStringList         cm_files;        // PCSA MC component models files
+    double              pararry[ 36 ];   // PCSA parlims array;
 
     QHostAddress        server;
     quint16             port;
