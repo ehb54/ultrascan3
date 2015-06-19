@@ -273,7 +273,6 @@ DbgLv(1) << "  init_pcsa_sols: nkpts" << nkpts << "nkpto" << nkpto;
    double vbar20     = data_sets[ current_dataset ]->vbar20;
    zval              = ( zval == 0.0 ) ? vbar20 : zval;
 DbgLv(1) << "  init_pcsa_sols: currds" << current_dataset << "vbar" << vbar20;
-   double pararry[ 27 ];
    double *parlims   = (double*)pararry;
    parlims[ 0 ]      = -1.0;
    parlims[ 4 ]      = stype;
@@ -312,8 +311,8 @@ DbgLv(1) << "  init_pcsa_sols:  compute_sigmoids: mrecs sz" << mrecs.size();
       nkpto            *= 3;
       int ctype1        = CTYPE_IS;
       int ctype2        = CTYPE_DS;
-      double *parlims1  = parlims + 9;
-      double *parlims2  = parlims + 18;
+      double *parlims1  = parlims + 12;
+      double *parlims2  = parlims + 24;
       parlims1[ 0 ]     = parlims[ 0 ];
       parlims1[ 4 ]     = parlims[ 4 ];
       parlims1[ 5 ]     = parlims[ 5 ];
@@ -328,6 +327,15 @@ DbgLv(1) << "  init_pcsa_sols:  compute_sigmoids: mrecs sz" << mrecs.size();
             nkpts, nlpts, parlims1, mrecs );
       US_ModelRecord::compute_sigmoids( ctype2, x_min, x_max, y_min, y_max,
             nkpts, nlpts, parlims2, mrecs );
+   }
+
+   else if ( ctype == CTYPE_2O )
+   {
+      nkpto            *= nkpts;
+DbgLv(1) << "  init_pcsa_sols: nkpts" << nkpts << "nkpto" << nkpto;
+      mrecs.reserve( nkpto );
+      US_ModelRecord::compute_2ndorder( x_min, x_max, y_min, y_max,
+            nkpts, nlpts, parlims, mrecs );
    }
 
    for ( int ii = 0; ii < mrecs.size(); ii++ )
@@ -491,7 +499,6 @@ DbgLv(1) << "pcsa:wrmr:  editGUID=" << mrecs[0].editGUID
    double x_max          = parameters[ "x_max"   ].toDouble();
    double y_min          = parameters[ "y_min"   ].toDouble();
    double y_max          = parameters[ "y_max"   ].toDouble();
-   double z_value        = parameters[ "z_value" ].toDouble();
    if ( ctype != CTYPE_ALL )
       mrecs[ 0 ].ctype      = ctype;
    mrecs[ 0 ].xmin       = x_min;
@@ -585,13 +592,11 @@ DbgLv(1) << "iter_p: rmsd_c rmsd_l" << rmsd_curr << rmsd_last
    int    nlpts      = parameters[ "curves_points"   ].toInt();
    double vbar20     = data_sets[ current_dataset ]->vbar20;
    zval              = ( zval == 0.0 ) ? vbar20 : zval;
-   double pararry[ 27 ];
    double *parlims   = (double*)pararry;
    parlims[ 0 ]      = -1.0;
    parlims[ 4 ]      = stype;
    parlims[ 5 ]      = zval;
-   int    ncurve     = sq( nkpts );
-DbgLv(1) << "iter_p: ncurve" << ncurve;
+DbgLv(1) << "iter_p: ctype" << ctype << s_ctyp;
 
    // Recompute mrecs to cover the range of the elite (top 10%) records
 
@@ -601,7 +606,8 @@ DbgLv(1) << "iter_p: ncurve" << ncurve;
       US_ModelRecord::recompute_mrecs( ctype, x_min, x_max, y_min, y_max,
                                        nkpts, nlpts, parlims, mrecs );
 DbgLv(1) << "iter_p: parlims"
- << parlims[0] << parlims[1] << parlims[2] << parlims[3] << parlims[4];
+ << parlims[0] << parlims[1] << parlims[2] << parlims[3] << parlims[4]
+ << parlims[5] << parlims[6] << parlims[7] << parlims[8] << parlims[9];
    }  // END: non-combo records
 
    else
@@ -610,8 +616,8 @@ DbgLv(1) << "iter_p: parlims"
       QVector< US_ModelRecord > mrecs_is;
       QVector< US_ModelRecord > mrecs_ds;
       double* plims_sl  = parlims;
-      double* plims_is  = plims_sl + 9;
-      double* plims_ds  = plims_is + 18;
+      double* plims_is  = plims_sl + 12;
+      double* plims_ds  = plims_is + 24;
 
       // Separate entries by curve type
       filter_mrecs( CTYPE_SL, mrecs, mrecs_sl );
@@ -633,6 +639,8 @@ DbgLv(1) << "iter_p: parlims"
 
       // Re-combine into a single vector
       int kk            = 0;
+      int ncurve        = sq( nkpts );
+DbgLv(1) << "iter_p: ncurve" << ncurve;
 
       for ( int ii = 0; ii < ncurve; ii++, kk++ )
       {
@@ -656,12 +664,12 @@ DbgLv(1) << "iter_p: parlims"
       mrecs[0].v_ctype  = ctype;          // Vector curve type is "All"
       plims_is[ 5 ]     = parlims[ 5 ];   // Set z value for all types
       plims_ds[ 5 ]     = parlims[ 5 ];
-DbgLv(1) << "iter_p: parlims"
- << parlims[0] << parlims[1] << parlims[2] << parlims[3] << parlims[4];
-DbgLv(1) << "iter_p: parlims2"
- << parlims[5] << parlims[6] << parlims[7] << parlims[8] << parlims[9];
-DbgLv(1) << "iter_p: parlims3"
- << parlims[10] << parlims[11] << parlims[12] << parlims[13] << parlims[14];
+DbgLv(1) << "iter_p: plims_sl"
+ << plims_sl[0] << plims_sl[1] << plims_sl[2] << plims_sl[3] << plims_sl[4];
+DbgLv(1) << "iter_p: plims_is"
+ << plims_is[0] << plims_is[1] << plims_is[2] << plims_is[3] << plims_is[4];
+DbgLv(1) << "iter_p: plims_ds"
+ << plims_ds[0] << plims_ds[1] << plims_ds[2] << plims_ds[3] << plims_ds[4];
    }  // END:  records a mix of SL,IS,DS
 
    // Now reset original solutes and fill queue
@@ -1289,7 +1297,6 @@ DbgLv(1) << "bestm: noise flag" << noiflg << "RI_NOISE apply";
 // Write a PCSA auxiliary (TR/MC) model and potentially model records
 void US_MPI_Analysis::write_pcsa_aux_model( int iter )
 {
-   double vbar20       = data_sets[ current_dataset ]->vbar20;
    wmodel              = mrecs[ 0 ].model;
    wmodel.modelGUID    = US_Util::new_guid();
    wmodel.variance     = wksim_vals.variance;
