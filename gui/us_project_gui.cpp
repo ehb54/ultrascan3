@@ -1066,10 +1066,8 @@ US_ProjectGuiNotes::US_ProjectGuiNotes( void ) : US_Widgets()
    connect( te_notes, SIGNAL( textChanged    () ), 
                       SIGNAL( notesTabChanged() ) );
    notes->addWidget( te_notes );
-   te_notes->setMinimumHeight( 200 );
    te_notes->setReadOnly( false );
 
-   notes -> addStretch( 1 );
    setLayout( notes );
 }
 
