@@ -33,7 +33,7 @@ US_ProjectGui::US_ProjectGui(
    if ( DB.isEmpty() ) DB << "Undefined";
 
    QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
-   lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+//   lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_DB );
 
    // Second row - tab widget
@@ -674,6 +674,9 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    QGridLayout* general      = new QGridLayout( this );
    general->setSpacing         ( 2 );
    general->setContentsMargins ( 2, 2, 2, 2 );
+   general->setColumnStretch(0, 0.0);
+   general->setColumnStretch(1, 0.5);
+   general->setColumnStretch(2, 0.5);
 
    int row = 0;
 
@@ -696,8 +699,6 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
 
    // Row 2 - Available projects
    QLabel* lb_banner2 = us_banner( tr( "Click on project to select" ), -2  );
-   lb_banner2->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
-   lb_banner2->setMinimumWidth( 400 );
    general->addWidget( lb_banner2, row, 0 );
 
    // Radio buttons
@@ -831,10 +832,7 @@ US_ProjectGuiGoals::US_ProjectGuiGoals( void ) : US_Widgets()
    connect( te_goals, SIGNAL( textChanged   () ), 
                       SIGNAL( goalsTabChanged() ) );
    goals->addWidget( te_goals );
-   te_goals->setMinimumHeight( 200 );
    te_goals->setReadOnly( false );
-
-   goals -> addStretch( 1 );
    setLayout( goals );
 }
 
@@ -861,10 +859,7 @@ US_ProjectGuiMolecules::US_ProjectGuiMolecules( void ) : US_Widgets()
    connect( te_molecules, SIGNAL( textChanged        () ), 
                           SIGNAL( moleculesTabChanged() ) );
    molecules->addWidget( te_molecules );
-   te_molecules->setMinimumHeight( 200 );
    te_molecules->setReadOnly( false );
-
-   molecules -> addStretch( 1 );
    setLayout( molecules );
 }
 
@@ -891,10 +886,7 @@ US_ProjectGuiPurity::US_ProjectGuiPurity( void ) : US_Widgets()
    connect( le_purity, SIGNAL( textChanged     ( const QString& ) ), 
                        SIGNAL( purityTabChanged( const QString& ) ) );
    purity->addWidget( le_purity );
-//   le_purity->setMinimumHeight( 200 );
    le_purity->setReadOnly( false );
-
-   purity -> addStretch( 1 );
    setLayout( purity );
 }
 
@@ -921,10 +913,7 @@ US_ProjectGuiExpense::US_ProjectGuiExpense( void ) : US_Widgets()
    connect( te_expense, SIGNAL( textChanged      () ), 
                         SIGNAL( expenseTabChanged() ) );
    expense->addWidget( te_expense );
-   te_expense->setMinimumHeight( 200 );
    te_expense->setReadOnly( false );
-
-   expense -> addStretch( 1 );
    setLayout( expense );
 }
 
@@ -951,10 +940,7 @@ US_ProjectGuiBufferComponents::US_ProjectGuiBufferComponents( void ) : US_Widget
    connect( te_bufferComponents, SIGNAL( textChanged               () ), 
                                  SIGNAL( bufferComponentsTabChanged() ) );
    bufferComponents->addWidget( te_bufferComponents );
-   te_bufferComponents->setMinimumHeight( 200 );
    te_bufferComponents->setReadOnly( false );
-
-   bufferComponents -> addStretch( 1 );
    setLayout( bufferComponents );
 }
 
@@ -980,10 +966,7 @@ US_ProjectGuiSaltInformation::US_ProjectGuiSaltInformation( void ) : US_Widgets(
    connect( te_saltInformation, SIGNAL( textChanged              () ), 
                                 SIGNAL( saltInformationTabChanged() ) );
    saltInformation->addWidget( te_saltInformation );
-   te_saltInformation->setMinimumHeight( 200 );
    te_saltInformation->setReadOnly( false );
-
-   saltInformation -> addStretch( 1 );
    setLayout( saltInformation );
 }
 
@@ -1009,10 +992,7 @@ US_ProjectGuiAUC_questions::US_ProjectGuiAUC_questions( void ) : US_Widgets()
    connect( te_auc_questions, SIGNAL( textChanged            () ), 
                               SIGNAL( AUC_questionsTabChanged() ) );
    auc_questions->addWidget( te_auc_questions );
-   te_auc_questions->setMinimumHeight( 200 );
    te_auc_questions->setReadOnly( false );
-
-   auc_questions -> addStretch( 1 );
    setLayout( auc_questions );
 }
 
@@ -1038,10 +1018,8 @@ US_ProjectGuiExpDesign::US_ProjectGuiExpDesign( void ) : US_Widgets()
    connect( te_exp_design, SIGNAL( textChanged        () ), 
                            SIGNAL( expDesignTabChanged() ) );
    exp_design->addWidget( te_exp_design );
-   te_exp_design->setMinimumHeight( 200 );
    te_exp_design->setReadOnly( false );
 
-   exp_design -> addStretch( 1 );
    setLayout( exp_design );
 }
 
