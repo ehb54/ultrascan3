@@ -2404,6 +2404,9 @@ QString US_FeMatch::text_model( US_Model model, int width )
             else if ( stitle.contains( "-HL" ) )
                title += tr( "(Horizontal Line)" );
 
+            else if ( stitle.contains( "-2O" ) )
+               title += tr( "(2nd-Order Power Law)" );
+
             break;
 
          case (int)US_Model::MANUAL:
