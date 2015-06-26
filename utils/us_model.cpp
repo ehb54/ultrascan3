@@ -418,6 +418,8 @@ QString US_Model::typeText( int subtype )
                   tdesc    = tdesc + "-DS";
                else if ( subtype == 8 )
                   tdesc    = tdesc + "-HL";
+               else if ( subtype == 16 )
+                  tdesc    = tdesc + "-2O";
                else
                   tdesc    = tdesc + "-IS";
             }
@@ -425,7 +427,7 @@ QString US_Model::typeText( int subtype )
             else
             {  // Append sub-type based on already-created description
                int kk   = description.indexOf( "_PCSA" );
-               if ( kk > 0 )  // Append "-SL"|"-IS"|"-DS"|"-HL"
+               if ( kk > 0 )  // Append "-SL"|"-IS"|"-DS"|"-HL"|"-2O"
                   tdesc    = tdesc + description.mid( kk + 5, 3 );
                else           // By default, assume "-IS"
                   tdesc    = tdesc + "-IS";
