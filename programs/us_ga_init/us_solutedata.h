@@ -1,6 +1,6 @@
 //! \file us_solutedata.h
-#ifndef US_SOLDAT_H
-#define US_SOLDAT_H
+#ifndef US_SOLUTEDATA_H
+#define US_SOLUTEDATA_H
 
 #include "us_spectrodata.h"
 

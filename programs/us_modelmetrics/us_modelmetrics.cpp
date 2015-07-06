@@ -22,6 +22,15 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
+// qSort LessThan method for S_Solute sort
+bool distro_lessthan( const S_Solute &solu1, const S_Solute &solu2 )
+{  // TRUE iff  (s1<s2) || (s1==s2 && k1<k2)
+   return ( solu1.s < solu2.s ) ||
+          ( ( solu1.s == solu2.s ) && ( solu1.k < solu2.k ) );
+}
+
+const double epsilon = 0.0005;   // equivalence magnitude ratio radius
+
 // Constructor
 US_ModelMetrics::US_ModelMetrics() : US_Widgets()
 {
@@ -71,6 +80,92 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    le_model = us_lineedit( "", 1, true );
    top->addWidget( le_model, row++, 1 );
 
+   QLabel* lbl_experiment = us_label( tr( "Edit + Model #: " ), -1 );
+   top->addWidget( lbl_experiment, row, 0 );
+
+   le_experiment= us_lineedit( "", 1, true );
+   top->addWidget( le_experiment, row++, 1 );
+
+   QLabel* lbl_param = us_label( tr( "Select Parameter: " ), -1 );
+   top->addWidget( lbl_param, row, 0 );
+
+   bg_hp = new QButtonGroup( this );
+   QGridLayout* gl_s = us_radiobutton( tr( "s"    ), rb_s, true  );
+   QGridLayout* gl_k = us_radiobutton( tr( "ff0"  ), rb_k, false );
+   QGridLayout* gl_m = us_radiobutton( tr( "mw"   ), rb_m, false );
+   QGridLayout* gl_v = us_radiobutton( tr( "vbar" ), rb_v, false );
+   QGridLayout* gl_d = us_radiobutton( tr( "D"    ), rb_d, false );
+   QGridLayout* gl_f = us_radiobutton( tr( "f"    ), rb_f, false );
+   bg_hp->addButton( rb_s, HPs );
+   bg_hp->addButton( rb_k, HPk );
+   bg_hp->addButton( rb_m, HPm );
+   bg_hp->addButton( rb_v, HPv );
+   bg_hp->addButton( rb_d, HPd );
+   bg_hp->addButton( rb_f, HPf );
+
+   rb_s->setChecked( true  );
+   rb_s->setToolTip( tr( "Select Sedimentation Coefficient" ));
+   rb_k->setToolTip( tr( "Select Frictional Ratio"          ));
+   rb_m->setToolTip( tr( "Select Molecular Weight"          ));
+   rb_v->setToolTip( tr( "Select Partial Specific Volume"   ));
+   rb_d->setToolTip( tr( "Select Diffusion Coefficient"     ));
+   rb_f->setToolTip( tr( "Select Frictional Coefficient"    ));
+   connect( bg_hp, SIGNAL( buttonReleased( int )),
+            this,  SLOT  ( select_hp     ( int )));
+
+   QHBoxLayout* hbl;
+   hbl = new QHBoxLayout();
+   hbl->addLayout(gl_s);
+   hbl->addLayout(gl_d);
+   hbl->addLayout(gl_m);
+   hbl->addLayout(gl_k);
+   hbl->addLayout(gl_f);
+   hbl->addLayout(gl_v);
+   top->addLayout(hbl, row++, 1);
+
+   QLabel* lbl_dval1 = us_label( tr( "D(1) value: " ), -1 );
+   QLabel* lbl_dval2 = us_label( tr( "D(2) value: " ), -1 );
+   QLabel* lbl_dval3 = us_label( tr( "D(3) value: " ), -1 );
+   QLabel* lbl_span  = us_label( tr( "Span ( D(3) - D(1) ) / D(2): " ), -1 );
+
+   le_dval1= us_lineedit( "", 1, true );
+   le_dval2= us_lineedit( "", 1, true );
+   le_dval3= us_lineedit( "", 1, true );
+   le_span = us_lineedit( "", 1, true );
+
+   ct_dval1 = us_counter( 3, 0.0, 100.0, 10.0 );
+   ct_dval1->setStep( 1 );
+   ct_dval1->setEnabled( true );
+   connect (ct_dval1, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
+
+   ct_dval2 = us_counter( 3, 0.0, 100.0, 50.0 );
+   ct_dval2->setStep( 1 );
+   ct_dval2->setEnabled( true );
+   connect (ct_dval2, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
+
+   ct_dval3 = us_counter( 3, 0.0, 100.0, 90.0 );
+   ct_dval3->setStep( 1 );
+   ct_dval3->setEnabled( true );
+   connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
+
+   QGridLayout* gl1;
+   gl1 = new QGridLayout();
+
+   gl1->addWidget(lbl_dval1, 0, 0, 1, 1);
+   gl1->addWidget(ct_dval1,  0, 1, 1, 1);
+   gl1->addWidget(le_dval1,  0, 2, 1, 1);
+   gl1->addWidget(lbl_dval2, 0, 3, 1, 1);
+   gl1->addWidget(ct_dval2,  0, 4, 1, 1);
+   gl1->addWidget(le_dval2,  0, 5, 1, 1);
+   gl1->addWidget(lbl_dval3, 1, 0, 1, 1);
+   gl1->addWidget(ct_dval3,  1, 1, 1, 1);
+   gl1->addWidget(le_dval3,  1, 2, 1, 1);
+   gl1->addWidget(lbl_span,  1, 3, 1, 2);
+   gl1->addWidget(le_span,   1, 5, 1, 1);
+
+   top->addLayout(gl1, row, 0, 2, 2);
+   row += 2;
+
    QPushButton* pb_write = us_pushbutton( tr( "Write Report" ) );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
    top->addWidget( pb_write, row, 0 );
@@ -86,6 +181,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
    top->addWidget( pb_accept, row, 1 );
+
 
    this->setMinimumWidth(640);
 
@@ -125,19 +221,8 @@ void US_ModelMetrics::load_model( void )
 {
    US_Model        model;
    QString         mdesc;
+   S_Solute        sol_sk;
    bool            loadDB = disk_controls->db();
-   double          smin   = 1e+39;
-   double          smax   = 1e-39;
-   double          kmin   = 1e+39;
-   double          kmax   = 1e-39;
-   double          wmin   = 1e+39;
-   double          wmax   = 1e-39;
-   double          vmin   = 1e+39;
-   double          vmax   = 1e-39;
-   double          dmin   = 1e+39;
-   double          dmax   = 1e-39;
-   double          fmin   = 1e+39;
-   double          fmax   = 1e-39;
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    US_ModelLoader dialog( loadDB, mfilter, model, mdesc, pfilts );
@@ -167,7 +252,6 @@ void US_ModelMetrics::load_model( void )
    {  // From disk:  use base file name
       mfnam     = QFileInfo( mfnam ).baseName();
    }
-   le_model->setText(mname);
 
    if ( model.components.size() < 1 )
    {
@@ -188,7 +272,7 @@ void US_ModelMetrics::load_model( void )
    run_name       = mdesc.section( ".",  0, -3 );
    QString asys   = mdesc.section( ".", -2, -2 );
    analysis_name  = asys.section( "_", 0, 1 ) + "_"
-                + asys.section( "_", 3, 4 );
+                  + asys.section( "_", 3, 4 );
 
    if ( method == "Manual"  ||  method == "CUSTOMGRID" )
    {
@@ -201,14 +285,12 @@ void US_ModelMetrics::load_model( void )
    monte_carlo  = model.monteCarlo;
    mc_iters     = monte_carlo ? aiters.toInt() : 1;
    editGUID     = model.editGUID;
-/*
+
    sk_distro.clear();
-   xy_distro.clear();
+   total_conc = 0.0;
 
-   resetSb();
-
-   QString tstr = run_name+ "\n" + analysis_name + "\n (" + method + ")";
-   data_plot->setTitle( tstr );
+   le_model->setText(run_name + " (" + method + ")");
+   le_experiment->setText( analysis_name );
 
    // read in and set distribution s,c,k,d values
    if ( model.analysis != US_Model::COFS )
@@ -224,22 +306,7 @@ void US_ModelMetrics::load_model( void )
          sol_sk.v  = model.components[ jj ].vbar20;
          sol_sk.d  = model.components[ jj ].D;
          sol_sk.f  = model.components[ jj ].f;
-
-         sol_xy    = sol_sk;
-         sol_xy.s  = ( attr_x == ATTR_S ) ? sol_sk.s : sol_xy.s;
-         sol_xy.s  = ( attr_x == ATTR_K ) ? sol_sk.k : sol_xy.s;
-         sol_xy.s  = ( attr_x == ATTR_W ) ? sol_sk.w : sol_xy.s;
-         sol_xy.s  = ( attr_x == ATTR_V ) ? sol_sk.v : sol_xy.s;
-         sol_xy.s  = ( attr_x == ATTR_D ) ? sol_sk.d : sol_xy.s;
-         sol_xy.s  = ( attr_x == ATTR_F ) ? sol_sk.f : sol_xy.s;
-         sol_xy.k  = ( attr_y == ATTR_S ) ? sol_sk.s : sol_xy.k;
-         sol_xy.k  = ( attr_y == ATTR_K ) ? sol_sk.k : sol_xy.k;
-         sol_xy.k  = ( attr_y == ATTR_W ) ? sol_sk.w : sol_xy.k;
-         sol_xy.k  = ( attr_y == ATTR_V ) ? sol_sk.v : sol_xy.k;
-         sol_xy.k  = ( attr_y == ATTR_D ) ? sol_sk.d : sol_xy.k;
-         sol_xy.k  = ( attr_y == ATTR_F ) ? sol_sk.f : sol_xy.k;
-         sol_xy.si = sol_sk.s;
-         sol_xy.ki = sol_sk.k;
+	 total_conc += sol_sk.c;
 
          smin      = qMin( smin, sol_sk.s );
          smax      = qMax( smax, sol_sk.s );
@@ -253,108 +320,48 @@ void US_ModelMetrics::load_model( void )
          dmax      = qMax( dmax, sol_sk.d );
          fmin      = qMin( fmin, sol_sk.f );
          fmax      = qMax( fmax, sol_sk.f );
-//DbgLv(2) << "Solute jj s w k c d" << jj << sol_s.s << sol_w.s << sol_s.k
-//   << sol_s.c << sol_s.d << " vb" << model.components[jj].vbar20;
+
+         DbgLv(2) << "Solute jj s w k c d" << jj << sol_sk.s << sol_sk.w << sol_sk.k
+                  << sol_sk.c << sol_sk.d << " vb" << model.components[jj].vbar20;
 
          sk_distro << sol_sk;
-         xy_distro << sol_xy;
       }
 
-      // sort and reduce distributions
-      sdistro   = &xy_distro;
-      psdsiz    = sdistro->size();
-      sort_distro( sk_distro, false );
-      sort_distro( xy_distro, true  );
-DbgLv(1) << "Solute psdsiz sdsiz xdsiz" << psdsiz << sk_distro.size()
- << xy_distro.size();
-for ( int jj=0;jj<sk_distro.size();jj++ ) {
- DbgLv(2) << " jj" << jj << " s k" << sk_distro[jj].s << sk_distro[jj].k
-    << " w v" << sk_distro[jj].w << sk_distro[jj].v; }
+      DbgLv(2) << "sk_distro.size() before reduction: " << sk_distro.size();
+      
+      // sort and reduce distribution
+      sort_distro( sk_distro, true );
+
+      DbgLv(2) << "sk_distro.size() after reduction: " << sk_distro.size();
+      for ( int jj=0;jj<sk_distro.size();jj++ ) 
+      {
+         DbgLv(2) << " jj" << jj << " s k" << sk_distro[jj].s << sk_distro[jj].k
+                  << " w v" << sk_distro[jj].w << sk_distro[jj].v; 
+      }
    }
 
    // Determine which attribute is fixed
-   if (      equivalent( vmin, vmax, 0.001 ) )
-      attr_z    = ATTR_V;
-   else if ( equivalent( kmin, kmax, 0.001 ) )
-      attr_z    = ATTR_K;
-   else if ( equivalent( smin, smax, 0.001 ) )
-      attr_z    = ATTR_S;
-   else if ( equivalent( wmin, wmax, 0.001 ) )
-      attr_z    = ATTR_W;
-   else if ( equivalent( dmin, dmax, 0.001 ) )
-      attr_z    = ATTR_D;
-   else if ( equivalent( fmin, fmax, 0.001 ) )
-      attr_z    = ATTR_F;
+   if      ( equivalent( vmin, vmax, 0.001 )) fixed = HPv;
+   else if ( equivalent( kmin, kmax, 0.001 )) fixed = HPk;
+   else if ( equivalent( smin, smax, 0.001 )) fixed = HPs;
+   else if ( equivalent( wmin, wmax, 0.001 )) fixed = HPm;
+   else if ( equivalent( dmin, dmax, 0.001 )) fixed = HPd;
+   else if ( equivalent( fmin, fmax, 0.001 )) fixed = HPf;
 
-   if ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V )
-   {  // No attribute is vbar, so use vbar as the default X or Y
-      int attrv = ATTR_V;
+   DbgLv(2) << "dmin, dmax: " << dmin << dmax;
+   DbgLv(2) << "kmin, kmax: " << kmin << kmax;
+   DbgLv(2) << "wmin, wmax: " << wmin << wmax;
+   DbgLv(2) << "vmin, vmax: " << vmin << vmax;
+   DbgLv(2) << "fmin, fmax: " << fmin << fmax;
 
-      if ( attr_y == attr_z )
-      {
-         rb_y_vbar->setChecked( true  );
-         select_y_axis( attrv );
-      }
-      else
-      {
-         rb_x_vbar->setChecked( true  );
-         select_x_axis( attrv );
-      }
-   }
-
-   QStringList attrs;
-   attrs << "s" << "f/f0" << "MW" << "vbar" << "D" << "f";
-   QString s_attr = attrs[ attr_z ];
-
-   if ( auto_lim )
-   {
-      set_limits();
-
-      ct_plymin->setEnabled( false );
-      ct_plymax->setEnabled( false );
-      ct_plxmin->setEnabled( false );
-      ct_plxmax->setEnabled( false );
-   }
-   else
-   {
-      plxmin    = ct_plxmin->value();
-      plxmax    = ct_plxmax->value();
-      plymin    = ct_plymin->value();
-      plymax    = ct_plymax->value();
-   }
-   data_plot->setAxisScale( QwtPlot::xBottom, plxmin, plxmax );
-   data_plot->setAxisScale( QwtPlot::yLeft,   plymin, plymax );
-
-   pb_resetsb->setEnabled( true );
-
-   nisols       = sdistro->size();
-   s_attr       = "\"" + s_attr + "\".";
-   dfilname     = "(" + mfnam + ") " + mdesc;
-   stdfline     = "  " + dfilname;
-   stfxline     = tr( "The components fixed attribute is " ) + s_attr;
-   stnpline     = tr( "The number of distribution points is %1" )
-                  .arg( nisols );
-   if ( nisols != psdsiz )
-      stnpline    += tr( "\n  (reduced from %1)" ).arg( psdsiz );
-
-   te_status->setText( stcmline + "\n" + stdiline + "\n"
-         + stdfline + "\n" + stfxline + "\n" + stnpline + "." );
-
-   replot_data();
-
-   soludata->setDistro( sdistro, attr_x, attr_y, attr_z );
-
-   nibuks       = 0;
-   wxbuck       = ( plxmax - plxmin ) / 20.0;
-   hybuck       = ( plymax - plymin ) / 20.0;
-   ct_wxbuck->setValue( wxbuck );
-   ct_hybuck->setValue( hybuck );
-   ct_nisols->setValue( double( nisols ) );
-   ct_wxbuck->setEnabled(  true );
-   ct_hybuck->setEnabled(  true );
-   pb_refresh->setEnabled( true );
-   pb_mandrsb->setEnabled( plot_dim != 1 );
-   */
+   if (HPs != fixed) rb_s->setEnabled( true );
+   if (HPd != fixed) rb_d->setEnabled( true );
+   if (HPk != fixed) rb_k->setEnabled( true );
+   if (HPf != fixed) rb_f->setEnabled( true );
+   if (HPm != fixed) rb_m->setEnabled( true );
+   if (HPv != fixed) rb_v->setEnabled( true );
+   DbgLv(0) << "Total concentration, array size original: " << total_conc << sk_distro.size();
+   calc();
 }
 
 // Select DB investigator
@@ -376,7 +383,29 @@ void US_ModelMetrics::sel_investigator( void )
 // Reset parameters to their defaults
 void US_ModelMetrics::reset( void )
 {
-   le_model     ->setText( "" );
+   smin   = 1e+39;
+   smax   = 1e-39;
+   kmin   = 1e+39;
+   kmax   = 1e-39;
+   wmin   = 1e+39;
+   wmax   = 1e-39;
+   vmin   = 1e+39;
+   vmax   = 1e-39;
+   dmin   = 1e+39;
+   dmax   = 1e-39;
+   fmin   = 1e+39;
+   fmax   = 1e-39;
+   rb_s->setChecked( true  );
+   rb_s->setEnabled( false );
+   rb_d->setEnabled( false );
+   rb_k->setEnabled( false );
+   rb_f->setEnabled( false );
+   rb_m->setEnabled( false );
+   rb_v->setEnabled( false );
+   calc_val = HPs; //calculate sedimentation distributions by default
+
+   le_model          ->setText( "" );
+   le_experiment     ->setText( "" );
 }
 
 // Select DB investigator// Private slot to update disk/db control with dialog changes it
@@ -402,3 +431,127 @@ void US_ModelMetrics::write( void )
    te->setMinimumWidth( 600 );
    te->show();
 }
+
+// Sort distribution solute list by s,k values and optionally reduce
+void US_ModelMetrics::sort_distro( QList< S_Solute >& listsols,
+      bool reduce )
+{
+   int sizi = listsols.size();
+
+   if ( sizi < 2 )
+      return;        // nothing need be done for 1-element list
+
+   // sort distro solute list by s,k values
+
+   qSort( listsols.begin(), listsols.end(), distro_lessthan );
+
+   // check reduce flag
+
+   if ( reduce )
+   {     // skip any duplicates in sorted list
+      S_Solute sol1;
+      S_Solute sol2;
+      QList< S_Solute > reduced;
+      sol1     = listsols.at( 0 );
+      reduced.append( sol1 );    // output first entry
+      int kdup = 0;
+      int jdup = 0;
+
+      for ( int jj = 1; jj < sizi; jj++ )
+      {     // loop to compare each entry to previous
+          sol2    = listsols.at( jj );  // solute entry
+
+          if ( sol1.s != sol2.s  ||  sol1.k != sol2.k )
+          {   // not a duplicate, so output to temporary list
+             reduced.append( sol2 );
+             jdup    = 0;
+          }
+
+          else
+          {   // duplicate:  sum c value
+DbgLv(1) << "DUP: sval svpr jj" << sol1.s << sol2.s << jj;
+             kdup    = max( kdup, ++jdup );
+             qreal f = (qreal)( jdup + 1 );
+             sol2.c += sol1.c;   // sum c value
+             sol2.s  = ( sol1.s * jdup + sol2.s ) / f;  // average s,k
+             sol2.k  = ( sol1.k * jdup + sol2.k ) / f;
+             reduced.replace( reduced.size() - 1, sol2 );
+          }
+
+          sol1    = sol2;        // save entry for next iteration
+      }
+
+      if ( reduced.size() < sizi )
+      {   // if some reduction happened, replace list with reduced version
+         //double sc = 1.0 / (double)( kdup + 1 );
+
+         //for ( int ii = 0; ii < reduced.size(); ii++ )
+         //   reduced[ ii ].c *= sc;
+
+         listsols = reduced;
+      }
+   }
+   return;
+}
+
+// Flag whether two values are effectively equal within a given epsilon
+bool US_ModelMetrics::equivalent( double a, double b, double eps )
+{
+	   return ( qAbs( ( a - b ) / a ) <= eps );
+}
+
+void US_ModelMetrics::select_hp( int button )
+{
+   calc_val = button;
+   calc();
+}
+
+void US_ModelMetrics::calc()
+{
+   HydroParm val1;
+   HydroParm val2;
+   hp_distro.clear();
+   double tc = 0.0;
+
+   if(calc_val == HPs)
+   val1.parm = sk_distro[0].s;
+   val1.conc = sk_distro[0].c;
+   hp_distro.append(val1);
+   tc += val1.conc;
+   for (int i=1; i<sk_distro.size(); i++)
+   {
+      val2.parm = sk_distro[i].s;
+      val2.conc = sk_distro[i].c;
+      if (val1.parm != val2.parm) //not a duplicate, so append
+      {
+         hp_distro.append(val2);
+	 tc += val2.conc;
+      }
+      else //a duplicate, so add concentrations
+      {
+         val2.conc = val1.conc + val2.conc;
+	 tc += val2.conc - val1.conc;
+         hp_distro.replace(hp_distro.size() - 1,  val2);
+      }
+      val1 = val2;
+   }
+   DbgLv(0) << "Distro size after reduction, total conc2: " << hp_distro.size() << tc;
+}
+
+void US_ModelMetrics::set_dval1( double val )
+{
+   dval1 = val;
+   calc();
+}
+void US_ModelMetrics::set_dval2( double val )
+{
+   dval2 = val;
+   calc();
+}
+void US_ModelMetrics::set_dval3( double val )
+{
+   dval3 = val;
+   calc();
+}
+
+
