@@ -5,12 +5,11 @@
 #include <QDomDocument>
 #include <QtGui>
 
+#include "us_spectrodata.h"
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_editor.h"
-#include "us_license_t.h"
-#include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_investigator.h"
@@ -22,6 +21,16 @@
 #include "us_model_loader.h"
 #include "us_select_runs.h"
 
+#include "us_license_t.h"
+#include "us_license.h"
+
+struct HydroParm
+{
+   double parm, conc;
+};
+
+//! \brief Less-than function for sorting S_Solute values
+bool distro_lessthan( const S_Solute&, const S_Solute& );
 
 class US_ModelMetrics : public US_Widgets
 {
@@ -29,16 +38,48 @@ class US_ModelMetrics : public US_Widgets
 
 	public:
       US_ModelMetrics();
+      enum hydro_parms { HPs, HPd, HPm, HPk, HPf, HPv };
+
 
 	private:
 
       int                dbg_level;
       int                mc_iters;
+      int                fixed;
+      int                calc_val;
+      double             smin;
+      double             smax;
+      double             kmin;
+      double             kmax;
+      double             wmin;
+      double             wmax;
+      double             vmin;
+      double             vmax;
+      double             dmin;
+      double             dmax;
+      double             fmin;
+      double             fmax;
+      double             dval1;
+      double             dval2;
+      double             dval3;
+      double             total_conc;
+      QList <HydroParm>  hp_distro;
       US_Help            showHelp;
       US_Editor*         te;
       US_Model*          model;      
       QPushButton*       pb_load_model;
       QPushButton*       pb_prefilter;
+
+      QwtCounter*        ct_dval1;
+      QwtCounter*        ct_dval2;
+      QwtCounter*        ct_dval3;
+      QButtonGroup*      bg_hp;
+      QRadioButton*      rb_s;
+      QRadioButton*      rb_d;
+      QRadioButton*      rb_f;
+      QRadioButton*      rb_k;
+      QRadioButton*      rb_m;
+      QRadioButton*      rb_v;
       QStringList        pfilts;
       QString            mfilter;
       QString            run_name;
@@ -49,6 +90,15 @@ class US_ModelMetrics : public US_Widgets
       QLineEdit*         le_model;
       QLineEdit*         le_investigator;
       QLineEdit*         le_prefilter;
+      QLineEdit*         le_experiment;
+      QLineEdit*         le_dval1;
+      QLineEdit*         le_dval2;
+      QLineEdit*         le_dval3;
+      QLineEdit*         le_span;
+      QList< S_Solute >  sk_distro;
+      QList< S_Solute >  xy_distro;
+      QList< S_Solute >* sdistro;
+
 
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
@@ -58,8 +108,14 @@ private slots:
 	void load_model           ( void );
 	void select_prefilter     ( void );
 	void reset                ( void );
+	void calc                 ( void );
+	void select_hp            ( int );
 	void write                ( void );
-
+        void sort_distro          ( QList< S_Solute >&, bool );
+	bool equivalent           ( double, double, double );
+	void set_dval1            ( double );
+	void set_dval2            ( double );
+	void set_dval3            ( double );
 	void help                 ( void )
         { showHelp.show_help( "manual/us_modelmetrics.html" ); };
 };
