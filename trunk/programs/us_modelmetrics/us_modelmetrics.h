@@ -24,9 +24,28 @@
 #include "us_license_t.h"
 #include "us_license.h"
 
-struct HydroParm
+class HydroParm
 {
+	public:
    double parm, conc;
+
+   HydroParm() {};
+   ~HydroParm() {};
+   bool operator==(const HydroParm& objIn)
+   {
+      return ( parm == objIn.parm );
+   }
+   bool operator!=(const HydroParm& objIn)
+   {
+      return ( parm != objIn.parm );
+   }
+   bool operator < (const HydroParm& objIn) const
+   {
+      if ( parm < objIn.parm ) 
+	      return (true);
+      else
+	      return (false);
+   }
 };
 
 //! \brief Less-than function for sorting S_Solute values
@@ -59,16 +78,20 @@ class US_ModelMetrics : public US_Widgets
       double             dmax;
       double             fmin;
       double             fmax;
-      double             dval1;
-      double             dval2;
-      double             dval3;
+      double             dval1, xval1;
+      double             dval2, xval2;
+      double             dval3, xval3;
       double             total_conc;
       QList <HydroParm>  hp_distro;
       US_Help            showHelp;
       US_Editor*         te;
-      US_Model*          model;      
+      US_Model*          model;
       QPushButton*       pb_load_model;
       QPushButton*       pb_prefilter;
+      QLabel*            lbl_dval1;
+      QLabel*            lbl_dval2;
+      QLabel*            lbl_dval3;
+      QLabel*            lbl_span;
 
       QwtCounter*        ct_dval1;
       QwtCounter*        ct_dval2;

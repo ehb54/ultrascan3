@@ -123,10 +123,10 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    hbl->addLayout(gl_v);
    top->addLayout(hbl, row++, 1);
 
-   QLabel* lbl_dval1 = us_label( tr( "D(1) value: " ), -1 );
-   QLabel* lbl_dval2 = us_label( tr( "D(2) value: " ), -1 );
-   QLabel* lbl_dval3 = us_label( tr( "D(3) value: " ), -1 );
-   QLabel* lbl_span  = us_label( tr( "Span ( D(3) - D(1) ) / D(2): " ), -1 );
+   lbl_dval1 = us_label( tr( "D10 value: " ), -1 );
+   lbl_dval2 = us_label( tr( "D50 value: " ), -1 );
+   lbl_dval3 = us_label( tr( "D90 value: " ), -1 );
+   lbl_span  = us_label( tr( "Span ( D90 - D10 ) / D50: " ), -1 );
 
    le_dval1= us_lineedit( "", 1, true );
    le_dval2= us_lineedit( "", 1, true );
@@ -141,12 +141,12 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    ct_dval2 = us_counter( 3, 0.0, 100.0, 50.0 );
    ct_dval2->setStep( 1 );
    ct_dval2->setEnabled( true );
-   connect (ct_dval2, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
+   connect (ct_dval2, SIGNAL(valueChanged(double)), this, SLOT(set_dval2(double)));
 
    ct_dval3 = us_counter( 3, 0.0, 100.0, 90.0 );
    ct_dval3->setStep( 1 );
    ct_dval3->setEnabled( true );
-   connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
+   connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval3(double)));
 
    QGridLayout* gl1;
    gl1 = new QGridLayout();
@@ -395,6 +395,9 @@ void US_ModelMetrics::reset( void )
    dmax   = 1e-39;
    fmin   = 1e+39;
    fmax   = 1e-39;
+   dval1  = 10.0;
+   dval2  = 50.0;
+   dval3  = 90.0;
    rb_s->setChecked( true  );
    rb_s->setEnabled( false );
    rb_d->setEnabled( false );
@@ -508,20 +511,93 @@ void US_ModelMetrics::select_hp( int button )
 
 void US_ModelMetrics::calc()
 {
+   int i;
+   QString str1, str2, str3;
+   lbl_dval1->setText( "D" + str1.setNum((int) dval1) + " value: ");
+   lbl_dval2->setText( "D" + str2.setNum((int) dval2) + " value: ");
+   lbl_dval3->setText( "D" + str3.setNum((int) dval3) + " value: ");
+   lbl_span->setText( "Span ( D" + str3.setNum((int) dval3) + " - D" 
+		                 + str1.setNum((int) dval1) + " ) / D" 
+				 + str2.setNum((int) dval2) + ": ");
    HydroParm val1;
    HydroParm val2;
-   hp_distro.clear();
+   QList <HydroParm> temp_list;
+   hp_distro.clear(); // contains the reduced array of desired parameter with 
+                      // concentrations of identical parameter values added together
+   temp_list.clear(); // contains the unreduced array of desired parameter
+   if (calc_val == HPs)
+   {
+      for (i=0; i<sk_distro.size(); i++)
+      {
+         val1.parm = sk_distro[i].s;
+	 val1.conc = sk_distro[i].c;
+	 temp_list.append(val1);
+      }
+   }
+   else if (calc_val == HPd)
+   {
+      for (i=0; i<sk_distro.size(); i++)
+      {
+         val1.parm = sk_distro[i].d;
+	 val1.conc = sk_distro[i].c;
+	 temp_list.append(val1);
+      }
+   }
+   else if (calc_val == HPm)
+   {
+      for (i=0; i<sk_distro.size(); i++)
+      {
+         val1.parm = sk_distro[i].w;
+	 val1.conc = sk_distro[i].c;
+	 temp_list.append(val1);
+      }
+   }
+   else if (calc_val == HPk)
+   {
+      for (i=0; i<sk_distro.size(); i++)
+      {
+         val1.parm = sk_distro[i].k;
+	 val1.conc = sk_distro[i].c;
+	 temp_list.append(val1);
+      }
+   }
+   else if (calc_val == HPf)
+   {
+      for (i=0; i<sk_distro.size(); i++)
+      {
+         val1.parm = sk_distro[i].f;
+	 val1.conc = sk_distro[i].c;
+	 temp_list.append(val1);
+      }
+   }
+   else if (calc_val == HPv)
+   {
+      for (i=0; i<sk_distro.size(); i++)
+      {
+         val1.parm = sk_distro[i].v;
+	 val1.conc = sk_distro[i].c;
+	 temp_list.append(val1);
+      }
+   }
+   qSort(temp_list.begin(), temp_list.end()); // sort the list so reduction works.
+
+   for (i=0; i<temp_list.size(); i++)
+   {
+      DbgLv(0) << temp_list[i].parm;
+   }
+
    double tc = 0.0;
 
-   if(calc_val == HPs)
-   val1.parm = sk_distro[0].s;
-   val1.conc = sk_distro[0].c;
+   val1.parm = temp_list[0].parm;
+   val1.conc = temp_list[0].conc;
    hp_distro.append(val1);
    tc += val1.conc;
-   for (int i=1; i<sk_distro.size(); i++)
+
+   DbgLv(0) << "after first value: " << tc;
+   for (i=1; i<temp_list.size(); i++)
    {
-      val2.parm = sk_distro[i].s;
-      val2.conc = sk_distro[i].c;
+      val2.parm = temp_list[i].parm;
+      val2.conc = temp_list[i].conc;
       if (val1.parm != val2.parm) //not a duplicate, so append
       {
          hp_distro.append(val2);
@@ -535,7 +611,46 @@ void US_ModelMetrics::calc()
       }
       val1 = val2;
    }
-   DbgLv(0) << "Distro size after reduction, total conc2: " << hp_distro.size() << tc;
+   int points = hp_distro.size();
+   DbgLv(0) << "Distro size after reduction, total conc2: " << points << tc;
+   double sum1=0.0, sum2, sum3;
+   QString str;
+   i=0;
+   while (sum1 < tc * dval1/100.0 && i < points)
+   {
+      sum1 += hp_distro[i].conc;
+      i++; 
+   }
+   xval1 = hp_distro[i-1].parm;
+   sum2 = sum1;
+   while (sum2 < tc * dval2/100.0 && i < points)
+   {
+      sum2 += hp_distro[i].conc;
+      i++; 
+   }
+   xval2 = hp_distro[i-1].parm;
+   sum3 = sum2;
+   while (sum3 < tc * dval3/100.0 && i < points)
+   {
+      sum3 += hp_distro[i].conc;
+      i++; 
+   }
+   xval3 = hp_distro[i-1].parm;
+   if (calc_val == HPs || calc_val == HPk)
+   {
+      le_dval1->setText(str.setNum(xval1, 'f', 3));
+      le_dval2->setText(str.setNum(xval2, 'f', 3));
+      le_dval3->setText(str.setNum(xval3, 'f', 3));
+      le_span->setText(str.setNum(((xval3-xval1)/xval2), 'e', 6));
+   }
+   else
+   {
+      le_dval1->setText(str.setNum(xval1, 'e', 6));
+      le_dval2->setText(str.setNum(xval2, 'e', 6));
+      le_dval3->setText(str.setNum(xval3, 'e', 6));
+      le_span->setText(str.setNum(((xval3-xval1)/xval2), 'e', 6));
+   }
+   DbgLv(0) << xval1 << xval2 << xval3 << dval1 << dval2 << dval3;
 }
 
 void US_ModelMetrics::set_dval1( double val )
