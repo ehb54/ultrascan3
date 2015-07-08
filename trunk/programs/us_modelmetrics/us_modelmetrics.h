@@ -95,6 +95,10 @@ class US_ModelMetrics : public US_Widgets
       QLabel*            lbl_minimum;
       QLabel*            lbl_maximum;
       QLabel*            lbl_mean;
+      QLabel*            lbl_mode;
+      QLabel*            lbl_median;
+      QLabel*            lbl_kurtosis;
+      QLabel*            lbl_skew;
 
       QwtCounter*        ct_dval1;
       QwtCounter*        ct_dval2;
@@ -124,6 +128,11 @@ class US_ModelMetrics : public US_Widgets
       QLineEdit*         le_minimum;
       QLineEdit*         le_maximum;
       QLineEdit*         le_mean;
+      QLineEdit*         le_mode;
+      QLineEdit*         le_median;
+      QLineEdit*         le_kurtosis;
+      QLineEdit*         le_skew;
+
       QList< S_Solute >  sk_distro;
       QList< S_Solute >  xy_distro;
       QList< S_Solute >* sdistro;

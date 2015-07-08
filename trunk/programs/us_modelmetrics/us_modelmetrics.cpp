@@ -148,57 +148,70 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    ct_dval3->setEnabled( false );
    connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval3(double)));
 
-   lbl_minimum = us_label( tr( "Minimum: " ), -1 );
-   lbl_maximum = us_label( tr( "Maximum: " ), -1 );
-   lbl_mean    = us_label( tr( "Mean: "    ), -1 );
+   lbl_minimum  = us_label( tr( "Minimum: " ), -1 );
+   lbl_maximum  = us_label( tr( "Maximum: " ), -1 );
+   lbl_mean     = us_label( tr( "Mean: "    ), -1 );
+   lbl_mode     = us_label( tr( "Mode: "    ), -1 );
+   lbl_median   = us_label( tr( "Median: "  ), -1 );
+   lbl_kurtosis = us_label( tr( "Kurtosis: "  ), -1 );
+   lbl_skew     = us_label( tr( "Skew: "  ), -1 );
 
-   le_minimum = us_lineedit( "", 1, true );
-   le_maximum = us_lineedit( "", 1, true );
-   le_mean    = us_lineedit( "", 1, true );
+   le_minimum  = us_lineedit( "", 1, true );
+   le_maximum  = us_lineedit( "", 1, true );
+   le_mean     = us_lineedit( "", 1, true );
+   le_mode     = us_lineedit( "", 1, true );
+   le_median   = us_lineedit( "", 1, true );
+   le_kurtosis = us_lineedit( "", 1, true );
+   le_skew     = us_lineedit( "", 1, true );
+
+   QPushButton* pb_write = us_pushbutton( tr( "Show Report" ) );
+   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
+
+   QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
+   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+
+   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
+   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+
+   QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
 
    QGridLayout* gl1;
    gl1 = new QGridLayout();
 
-   gl1->addWidget(lbl_dval1,   0, 0, 1, 1);
-   gl1->addWidget(ct_dval1,    0, 1, 1, 1);
-   gl1->addWidget(le_dval1,    0, 2, 1, 1);
-   gl1->addWidget(lbl_dval2,   0, 3, 1, 1);
-   gl1->addWidget(ct_dval2,    0, 4, 1, 1);
-   gl1->addWidget(le_dval2,    0, 5, 1, 1);
-   gl1->addWidget(lbl_dval3,   1, 0, 1, 1);
-   gl1->addWidget(ct_dval3,    1, 1, 1, 1);
-   gl1->addWidget(le_dval3,    1, 2, 1, 1);
-   gl1->addWidget(lbl_span,    1, 3, 1, 2);
-   gl1->addWidget(le_span,     1, 5, 1, 1);
-	gl1->addWidget(lbl_minimum, 2, 0, 1, 1);
-	gl1->addWidget(le_minimum,  2, 1, 1, 1);
-	gl1->addWidget(lbl_maximum, 2, 2, 1, 1);
-	gl1->addWidget(le_maximum,  2, 3, 1, 1);
-	gl1->addWidget(lbl_mean,    2, 4, 1, 1);
-	gl1->addWidget(le_mean,     2, 5, 1, 1);
+   gl1->addWidget(lbl_dval1,    0, 0, 1, 1);
+   gl1->addWidget(ct_dval1,     0, 1, 1, 1);
+   gl1->addWidget(le_dval1,     0, 2, 1, 1);
+   gl1->addWidget(lbl_dval2,    0, 3, 1, 1);
+   gl1->addWidget(ct_dval2,     0, 4, 1, 1);
+   gl1->addWidget(le_dval2,     0, 5, 1, 1);
+   gl1->addWidget(lbl_dval3,    1, 0, 1, 1);
+   gl1->addWidget(ct_dval3,     1, 1, 1, 1);
+   gl1->addWidget(le_dval3,     1, 2, 1, 1);
+   gl1->addWidget(lbl_span,     1, 3, 1, 2);
+   gl1->addWidget(le_span,      1, 5, 1, 1);
+   gl1->addWidget(lbl_minimum,  2, 0, 1, 1);
+   gl1->addWidget(le_minimum,   2, 1, 1, 1);
+   gl1->addWidget(lbl_mode,     2, 2, 1, 1);
+   gl1->addWidget(le_mode,      2, 3, 1, 1);
+   gl1->addWidget(lbl_skew,     2, 4, 1, 1);
+   gl1->addWidget(le_skew,      2, 5, 1, 1);
+   gl1->addWidget(lbl_maximum,  3, 0, 1, 1);
+   gl1->addWidget(le_maximum,   3, 1, 1, 1);
+   gl1->addWidget(lbl_median,   3, 2, 1, 1);
+   gl1->addWidget(le_median,    3, 3, 1, 1);
+   gl1->addWidget(lbl_kurtosis, 3, 4, 1, 1);
+   gl1->addWidget(le_kurtosis,  3, 5, 1, 1);
+   gl1->addWidget(lbl_mean,     4, 0, 1, 1);
+   gl1->addWidget(le_mean,      4, 1, 1, 1);
+   gl1->addWidget(pb_write,     4, 2, 1, 1);
+   gl1->addWidget(pb_reset,     4, 3, 1, 1);
+   gl1->addWidget(pb_help,      4, 4, 1, 1);
+   gl1->addWidget(pb_accept,    4, 5, 1, 1);
 
    top->addLayout(gl1, row, 0, 2, 2);
-   row += 2;
-
-   QPushButton* pb_write = us_pushbutton( tr( "Write Report" ) );
-   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
-   top->addWidget( pb_write, row, 0 );
-
-   QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
-   top->addWidget( pb_reset, row++, 1 );
-
-   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
-   top->addWidget( pb_help, row, 0 );
-
-   QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
-   top->addWidget( pb_accept, row, 1 );
-
 
    this->setMinimumWidth(640);
-
    reset();
 }
 
@@ -428,8 +441,19 @@ void US_ModelMetrics::reset( void )
    rb_v->setEnabled( false );
    calc_val = HPs; //calculate sedimentation distributions by default
 
-   le_model          ->setText( "" );
-   le_experiment     ->setText( "" );
+   le_model->     setText("");
+   le_experiment->setText("");
+   le_dval1->     setText("");
+   le_dval2->     setText("");
+   le_dval3->     setText("");
+   le_span->      setText("");
+   le_minimum->   setText("");
+   le_maximum->   setText("");
+   le_mean->      setText("");
+   le_mode->      setText("");
+   le_median->    setText("");
+   le_kurtosis->  setText("");
+   le_skew->      setText("");
 }
 
 // Select DB investigator// Private slot to update disk/db control with dialog changes it
@@ -634,7 +658,7 @@ void US_ModelMetrics::calc()
    }
    int points = hp_distro.size();
    DbgLv(0) << "Distro size after reduction, total conc2: " << points << tc;
-   double sum1=0.0, sum2, sum3;
+   double sum1=0.0, sum2, sum3, mode, median, skew, kurtosis;
    QString str;
    i=0;
    while (sum1 < tc * dval1/100.0 && i < points)
@@ -657,21 +681,40 @@ void US_ModelMetrics::calc()
       i++; 
    }
    xval3 = hp_distro[i-1].parm;
-	sum1 = 0.0;
-	for (i=0; i<points; i++)
-	{
+   median = 0.0;
+   i=0;
+   while (median < tc * 0.5 && i < points)
+   {
+      median += hp_distro[i].conc;
+      i++; 
+   }
+   median = hp_distro[i-1].parm;
+
+   sum1 = 0.0;
+   double mode_conc = 0.0;
+   mode = 0.0;
+   skew=0.0;
+   kurtosis=0.0;
+   for (i=0; i<points; i++)
+   {
       sum1 += hp_distro[i].parm * hp_distro[i].conc;
-	}
-	sum1 /= tc;
+      if(hp_distro[i].conc > mode_conc)
+      {
+         mode      = hp_distro[i].parm;
+         mode_conc = hp_distro[i].conc;
+      }
+   }
+   sum1 /= tc;
    if (calc_val == HPs || calc_val == HPk)
    {
-      le_dval1->setText(str.setNum(xval1, 'f', 3));
-      le_dval2->setText(str.setNum(xval2, 'f', 3));
-      le_dval3->setText(str.setNum(xval3, 'f', 3));
-      le_minimum->setText(str.setNum(hp_distro[0].parm, 'f', 3));
-		le_maximum->setText(str.setNum(hp_distro[points-1].parm, 'f', 3));
-      le_mean->setText(str.setNum(sum1, 'f', 3));
-      le_span->setText(str.setNum(((xval3-xval1)/xval2), 'e', 6));
+      le_dval1->setText(str.setNum(xval1, 'f', 5));
+      le_dval2->setText(str.setNum(xval2, 'f', 5));
+      le_dval3->setText(str.setNum(xval3, 'f', 5));
+      le_minimum->setText(str.setNum(hp_distro[0].parm, 'f', 5));
+      le_maximum->setText(str.setNum(hp_distro[points-1].parm, 'f', 5));
+      le_mean->setText(str.setNum(sum1, 'f', 5));
+      le_mode->setText(str.setNum(mode, 'f', 5));
+      le_median->setText(str.setNum(median, 'f', 5));
    }
    else
    {
@@ -679,10 +722,14 @@ void US_ModelMetrics::calc()
       le_dval2->setText(str.setNum(xval2, 'e', 6));
       le_dval3->setText(str.setNum(xval3, 'e', 6));
       le_minimum->setText(str.setNum(hp_distro[0].parm, 'e', 6));
-		le_maximum->setText(str.setNum(hp_distro[points-1].parm, 'e', 6));
+      le_maximum->setText(str.setNum(hp_distro[points-1].parm, 'e', 6));
       le_mean->setText(str.setNum(sum1, 'e', 6));
-      le_span->setText(str.setNum(((xval3-xval1)/xval2), 'e', 6));
+      le_mode->setText(str.setNum(mode, 'e', 3));
+      le_median->setText(str.setNum(median, 'e', 3));
    }
+   le_span->setText(str.setNum(((xval3-xval1)/xval2), 'f', 6));
+   le_skew->setText(str.setNum(skew, 'f', 6));
+   le_kurtosis->setText(str.setNum(kurtosis, 'f', 6));
    DbgLv(0) << xval1 << xval2 << xval3 << dval1 << dval2 << dval3;
 }
 
