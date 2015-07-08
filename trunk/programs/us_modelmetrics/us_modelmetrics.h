@@ -92,6 +92,9 @@ class US_ModelMetrics : public US_Widgets
       QLabel*            lbl_dval2;
       QLabel*            lbl_dval3;
       QLabel*            lbl_span;
+      QLabel*            lbl_minimum;
+      QLabel*            lbl_maximum;
+      QLabel*            lbl_mean;
 
       QwtCounter*        ct_dval1;
       QwtCounter*        ct_dval2;
@@ -118,6 +121,9 @@ class US_ModelMetrics : public US_Widgets
       QLineEdit*         le_dval2;
       QLineEdit*         le_dval3;
       QLineEdit*         le_span;
+      QLineEdit*         le_minimum;
+      QLineEdit*         le_maximum;
+      QLineEdit*         le_mean;
       QList< S_Solute >  sk_distro;
       QList< S_Solute >  xy_distro;
       QList< S_Solute >* sdistro;
