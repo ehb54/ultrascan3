@@ -2409,12 +2409,18 @@ QString US_FeMatch::text_model( US_Model model, int width )
 
             break;
 
+         case (int)US_Model::DMGA:
+            title = tr( "Discrete Model Genetic Algorithm" );
+            break;
+
          case (int)US_Model::MANUAL:
          default:
             title = tr( "2-Dimensional Spectrum Analysis" );
             break;
       }
 
+
+            if ( stitle.contains( "-SL" ) )
       if ( model.associations.size() > 1 )
          title = title + " (RA)";
 

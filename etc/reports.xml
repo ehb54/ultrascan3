@@ -53,6 +53,14 @@
       label="2-D Spectrum Analysis - Custom Grid" />
     <application name="2DSA-CG-MC"
       label="2-D Spectrum Analysis - Custom Grid, Monte Carlo" />
+    <application name="DMGA"
+      label="Discrete Model Genetic Algorithm" />
+    <application name="DMGA-MC"
+      label="Discrete Model Genetic Algorithm with Monte Carlo" />
+    <application name="DMGA-RA"
+      label="Discrete Model Genetic Algorithm - Reversible Associations" />
+    <application name="DMGA-RA-MC"
+      label="Discrete Model Genetic Algorithm - Reversible Associations, Monte Carlo" />
     <application name="dcdt" label="Time Derivative" />
     <application name="vHW" label="van Holde - Weischet Analysis" />
     <application name="GA" label="Genetic Algorithm Analysis" />
