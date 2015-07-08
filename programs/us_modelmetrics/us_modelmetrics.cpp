@@ -135,33 +135,47 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
 
    ct_dval1 = us_counter( 3, 0.0, 100.0, 10.0 );
    ct_dval1->setStep( 1 );
-   ct_dval1->setEnabled( true );
+   ct_dval1->setEnabled( false );
    connect (ct_dval1, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
 
    ct_dval2 = us_counter( 3, 0.0, 100.0, 50.0 );
    ct_dval2->setStep( 1 );
-   ct_dval2->setEnabled( true );
+   ct_dval2->setEnabled( false );
    connect (ct_dval2, SIGNAL(valueChanged(double)), this, SLOT(set_dval2(double)));
 
    ct_dval3 = us_counter( 3, 0.0, 100.0, 90.0 );
    ct_dval3->setStep( 1 );
-   ct_dval3->setEnabled( true );
+   ct_dval3->setEnabled( false );
    connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval3(double)));
+
+   lbl_minimum = us_label( tr( "Minimum: " ), -1 );
+   lbl_maximum = us_label( tr( "Maximum: " ), -1 );
+   lbl_mean    = us_label( tr( "Mean: "    ), -1 );
+
+   le_minimum = us_lineedit( "", 1, true );
+   le_maximum = us_lineedit( "", 1, true );
+   le_mean    = us_lineedit( "", 1, true );
 
    QGridLayout* gl1;
    gl1 = new QGridLayout();
 
-   gl1->addWidget(lbl_dval1, 0, 0, 1, 1);
-   gl1->addWidget(ct_dval1,  0, 1, 1, 1);
-   gl1->addWidget(le_dval1,  0, 2, 1, 1);
-   gl1->addWidget(lbl_dval2, 0, 3, 1, 1);
-   gl1->addWidget(ct_dval2,  0, 4, 1, 1);
-   gl1->addWidget(le_dval2,  0, 5, 1, 1);
-   gl1->addWidget(lbl_dval3, 1, 0, 1, 1);
-   gl1->addWidget(ct_dval3,  1, 1, 1, 1);
-   gl1->addWidget(le_dval3,  1, 2, 1, 1);
-   gl1->addWidget(lbl_span,  1, 3, 1, 2);
-   gl1->addWidget(le_span,   1, 5, 1, 1);
+   gl1->addWidget(lbl_dval1,   0, 0, 1, 1);
+   gl1->addWidget(ct_dval1,    0, 1, 1, 1);
+   gl1->addWidget(le_dval1,    0, 2, 1, 1);
+   gl1->addWidget(lbl_dval2,   0, 3, 1, 1);
+   gl1->addWidget(ct_dval2,    0, 4, 1, 1);
+   gl1->addWidget(le_dval2,    0, 5, 1, 1);
+   gl1->addWidget(lbl_dval3,   1, 0, 1, 1);
+   gl1->addWidget(ct_dval3,    1, 1, 1, 1);
+   gl1->addWidget(le_dval3,    1, 2, 1, 1);
+   gl1->addWidget(lbl_span,    1, 3, 1, 2);
+   gl1->addWidget(le_span,     1, 5, 1, 1);
+	gl1->addWidget(lbl_minimum, 2, 0, 1, 1);
+	gl1->addWidget(le_minimum,  2, 1, 1, 1);
+	gl1->addWidget(lbl_maximum, 2, 2, 1, 1);
+	gl1->addWidget(le_maximum,  2, 3, 1, 1);
+	gl1->addWidget(lbl_mean,    2, 4, 1, 1);
+	gl1->addWidget(le_mean,     2, 5, 1, 1);
 
    top->addLayout(gl1, row, 0, 2, 2);
    row += 2;
@@ -362,6 +376,10 @@ void US_ModelMetrics::load_model( void )
    if (HPv != fixed) rb_v->setEnabled( true );
    DbgLv(0) << "Total concentration, array size original: " << total_conc << sk_distro.size();
    calc();
+
+   ct_dval1->setEnabled( true );
+   ct_dval2->setEnabled( true );
+   ct_dval3->setEnabled( true );
 }
 
 // Select DB investigator
@@ -398,6 +416,9 @@ void US_ModelMetrics::reset( void )
    dval1  = 10.0;
    dval2  = 50.0;
    dval3  = 90.0;
+   ct_dval1->setEnabled( false );
+   ct_dval2->setEnabled( false );
+   ct_dval3->setEnabled( false );
    rb_s->setChecked( true  );
    rb_s->setEnabled( false );
    rb_d->setEnabled( false );
@@ -530,8 +551,8 @@ void US_ModelMetrics::calc()
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].s;
-	 val1.conc = sk_distro[i].c;
-	 temp_list.append(val1);
+         val1.conc = sk_distro[i].c;
+         temp_list.append(val1);
       }
    }
    else if (calc_val == HPd)
@@ -539,8 +560,8 @@ void US_ModelMetrics::calc()
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].d;
-	 val1.conc = sk_distro[i].c;
-	 temp_list.append(val1);
+         val1.conc = sk_distro[i].c;
+         temp_list.append(val1);
       }
    }
    else if (calc_val == HPm)
@@ -548,8 +569,8 @@ void US_ModelMetrics::calc()
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].w;
-	 val1.conc = sk_distro[i].c;
-	 temp_list.append(val1);
+         val1.conc = sk_distro[i].c;
+         temp_list.append(val1);
       }
    }
    else if (calc_val == HPk)
@@ -557,8 +578,8 @@ void US_ModelMetrics::calc()
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].k;
-	 val1.conc = sk_distro[i].c;
-	 temp_list.append(val1);
+         val1.conc = sk_distro[i].c;
+         temp_list.append(val1);
       }
    }
    else if (calc_val == HPf)
@@ -566,8 +587,8 @@ void US_ModelMetrics::calc()
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].f;
-	 val1.conc = sk_distro[i].c;
-	 temp_list.append(val1);
+         val1.conc = sk_distro[i].c;
+         temp_list.append(val1);
       }
    }
    else if (calc_val == HPv)
@@ -575,8 +596,8 @@ void US_ModelMetrics::calc()
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].v;
-	 val1.conc = sk_distro[i].c;
-	 temp_list.append(val1);
+         val1.conc = sk_distro[i].c;
+         temp_list.append(val1);
       }
    }
    qSort(temp_list.begin(), temp_list.end()); // sort the list so reduction works.
@@ -636,11 +657,20 @@ void US_ModelMetrics::calc()
       i++; 
    }
    xval3 = hp_distro[i-1].parm;
+	sum1 = 0.0;
+	for (i=0; i<points; i++)
+	{
+      sum1 += hp_distro[i].parm * hp_distro[i].conc;
+	}
+	sum1 /= tc;
    if (calc_val == HPs || calc_val == HPk)
    {
       le_dval1->setText(str.setNum(xval1, 'f', 3));
       le_dval2->setText(str.setNum(xval2, 'f', 3));
       le_dval3->setText(str.setNum(xval3, 'f', 3));
+      le_minimum->setText(str.setNum(hp_distro[0].parm, 'f', 3));
+		le_maximum->setText(str.setNum(hp_distro[points-1].parm, 'f', 3));
+      le_mean->setText(str.setNum(sum1, 'f', 3));
       le_span->setText(str.setNum(((xval3-xval1)/xval2), 'e', 6));
    }
    else
@@ -648,6 +678,9 @@ void US_ModelMetrics::calc()
       le_dval1->setText(str.setNum(xval1, 'e', 6));
       le_dval2->setText(str.setNum(xval2, 'e', 6));
       le_dval3->setText(str.setNum(xval3, 'e', 6));
+      le_minimum->setText(str.setNum(hp_distro[0].parm, 'e', 6));
+		le_maximum->setText(str.setNum(hp_distro[points-1].parm, 'e', 6));
+      le_mean->setText(str.setNum(sum1, 'e', 6));
       le_span->setText(str.setNum(((xval3-xval1)/xval2), 'e', 6));
    }
    DbgLv(0) << xval1 << xval2 << xval3 << dval1 << dval2 << dval3;
