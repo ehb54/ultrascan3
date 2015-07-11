@@ -20,7 +20,7 @@
 #include "us_model.h"
 #include "us_model_loader.h"
 #include "us_select_runs.h"
-
+#include <qwt_legend.h>
 #include "us_license_t.h"
 #include "us_license.h"
 
@@ -68,6 +68,8 @@ class US_ModelMetrics : public US_Widgets
       int                calc_val;
       double*            xx;
       double*            yy;
+      double             sigma;
+      double             tc;
       double             cmin;
       double             cmax;
       double             smin;
@@ -82,11 +84,13 @@ class US_ModelMetrics : public US_Widgets
       double             dmax;
       double             fmin;
       double             fmax;
+      double             xmin;
+      double             xmax;
       double             dval1, xval1;
       double             dval2, xval2;
       double             dval3, xval3;
       double             total_conc;
-      QList <HydroParm>  hp_distro;
+      QList <HydroParm>  hp_distro, orig_list;
       US_Help            showHelp;
       US_Editor*         te;
       US_Model*          model;
@@ -103,10 +107,12 @@ class US_ModelMetrics : public US_Widgets
       QLabel*            lbl_median;
       QLabel*            lbl_kurtosis;
       QLabel*            lbl_skew;
+      QLabel*            lbl_sigma;
 
       QwtCounter*        ct_dval1;
       QwtCounter*        ct_dval2;
       QwtCounter*        ct_dval3;
+      QwtCounter*        ct_sigma;
       QButtonGroup*      bg_hp;
       QRadioButton*      rb_s;
       QRadioButton*      rb_d;
@@ -152,6 +158,8 @@ private slots:
 	void select_prefilter     ( void );
 	void reset                ( void );
 	void calc                 ( void );
+	void plot_data            ( void );
+	void update_sigma         ( void );
 	void select_hp            ( int );
 	void write                ( void );
    void sort_distro          ( QList< S_Solute >&, bool );
@@ -159,6 +167,7 @@ private slots:
 	void set_dval1            ( double );
 	void set_dval2            ( double );
 	void set_dval3            ( double );
+	void set_sigma            ( double );
 	void help                 ( void )
       { showHelp.show_help( "manual/us_modelmetrics.html" ); };
 };
