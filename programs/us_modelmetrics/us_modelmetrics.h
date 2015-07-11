@@ -66,6 +66,10 @@ class US_ModelMetrics : public US_Widgets
       int                mc_iters;
       int                fixed;
       int                calc_val;
+      double*            xx;
+      double*            yy;
+      double             cmin;
+      double             cmax;
       double             smin;
       double             smax;
       double             kmin;
@@ -132,6 +136,7 @@ class US_ModelMetrics : public US_Widgets
       QLineEdit*         le_median;
       QLineEdit*         le_kurtosis;
       QLineEdit*         le_skew;
+      QwtPlot*           data_plot;
 
       QList< S_Solute >  sk_distro;
       QList< S_Solute >  xy_distro;
@@ -149,13 +154,13 @@ private slots:
 	void calc                 ( void );
 	void select_hp            ( int );
 	void write                ( void );
-        void sort_distro          ( QList< S_Solute >&, bool );
+   void sort_distro          ( QList< S_Solute >&, bool );
 	bool equivalent           ( double, double, double );
 	void set_dval1            ( double );
 	void set_dval2            ( double );
 	void set_dval3            ( double );
 	void help                 ( void )
-        { showHelp.show_help( "manual/us_modelmetrics.html" ); };
+      { showHelp.show_help( "manual/us_modelmetrics.html" ); };
 };
 #endif
 

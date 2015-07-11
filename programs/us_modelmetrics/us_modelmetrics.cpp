@@ -1,6 +1,8 @@
 //! \file us_modelmetrics.cpp
 
 #include "us_modelmetrics.h"
+#include <iostream>
+using namespace std;
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -49,7 +51,6 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
-   top->addWidget( pb_investigator, row, 0 );
 
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
@@ -59,35 +60,26 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
       QString::number( US_Settings::us_inv_ID() ) + ": "
       : "";
    le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 1, true );
-   le_investigator->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Preferred );
-   top->addWidget( le_investigator, row++, 1);
+//   le_investigator->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Preferred );
 
    disk_controls = new US_Disk_DB_Controls;
-   top->addLayout( disk_controls, row++, 0, 1, 2 );
 
    QPushButton* pb_prefilter= us_pushbutton( tr( "Select Prefilter" ) );
    connect( pb_prefilter, SIGNAL( clicked() ), SLOT( select_prefilter() ) );
-   top->addWidget( pb_prefilter, row, 0 );
 
    le_prefilter= us_lineedit( "", 1, true );
-   le_prefilter->setSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Preferred );
-   top->addWidget( le_prefilter, row++, 1 );
+//   le_prefilter->setSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Preferred );
 
    QPushButton* pb_load_model = us_pushbutton( tr( "Load Model" ) );
    connect( pb_load_model, SIGNAL( clicked() ), SLOT( load_model() ) );
-   top->addWidget( pb_load_model, row, 0 );
 
    le_model = us_lineedit( "", 1, true );
-   top->addWidget( le_model, row++, 1 );
 
    QLabel* lbl_experiment = us_label( tr( "Edit + Model #: " ), -1 );
-   top->addWidget( lbl_experiment, row, 0 );
 
    le_experiment= us_lineedit( "", 1, true );
-   top->addWidget( le_experiment, row++, 1 );
 
    QLabel* lbl_param = us_label( tr( "Select Parameter: " ), -1 );
-   top->addWidget( lbl_param, row, 0 );
 
    bg_hp = new QButtonGroup( this );
    QGridLayout* gl_s = us_radiobutton( tr( "s"    ), rb_s, true  );
@@ -113,37 +105,27 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    connect( bg_hp, SIGNAL( buttonReleased( int )),
             this,  SLOT  ( select_hp     ( int )));
 
-   QHBoxLayout* hbl;
-   hbl = new QHBoxLayout();
-   hbl->addLayout(gl_s);
-   hbl->addLayout(gl_d);
-   hbl->addLayout(gl_m);
-   hbl->addLayout(gl_k);
-   hbl->addLayout(gl_f);
-   hbl->addLayout(gl_v);
-   top->addLayout(hbl, row++, 1);
-
    lbl_dval1 = us_label( tr( "D10 value: " ), -1 );
    lbl_dval2 = us_label( tr( "D50 value: " ), -1 );
    lbl_dval3 = us_label( tr( "D90 value: " ), -1 );
-   lbl_span  = us_label( tr( "Span ( D90 - D10 ) / D50: " ), -1 );
+   lbl_span  = us_label( tr( "(D90-D10)/D50: " ), -1 );
 
    le_dval1= us_lineedit( "", 1, true );
    le_dval2= us_lineedit( "", 1, true );
    le_dval3= us_lineedit( "", 1, true );
    le_span = us_lineedit( "", 1, true );
 
-   ct_dval1 = us_counter( 3, 0.0, 100.0, 10.0 );
+   ct_dval1 = us_counter( 2, 0.0, 100.0, 10.0 );
    ct_dval1->setStep( 1 );
    ct_dval1->setEnabled( false );
    connect (ct_dval1, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
 
-   ct_dval2 = us_counter( 3, 0.0, 100.0, 50.0 );
+   ct_dval2 = us_counter( 2, 0.0, 100.0, 50.0 );
    ct_dval2->setStep( 1 );
    ct_dval2->setEnabled( false );
    connect (ct_dval2, SIGNAL(valueChanged(double)), this, SLOT(set_dval2(double)));
 
-   ct_dval3 = us_counter( 3, 0.0, 100.0, 90.0 );
+   ct_dval3 = us_counter( 2, 0.0, 100.0, 90.0 );
    ct_dval3->setStep( 1 );
    ct_dval3->setEnabled( false );
    connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval3(double)));
@@ -176,42 +158,100 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
 
+   QBoxLayout* plot = new US_Plot( data_plot,
+   tr( "Distribution Data" ), "Parameter Value", "Relative Concentration" );
+
+   data_plot->setAutoDelete( true );
+   data_plot->setMinimumSize( 500, 100 );
+
+   data_plot->enableAxis( QwtPlot::xBottom, true );
+   data_plot->enableAxis( QwtPlot::yLeft,   true );
+   data_plot->enableAxis( QwtPlot::yRight,  false );
+   data_plot->setAxisScale( QwtPlot::xBottom, 1.0, 40.0 );
+   data_plot->setAxisScale( QwtPlot::yLeft,   1.0,  4.0 );
+
+   data_plot->setCanvasBackground( Qt::black );
+
+
+   QGridLayout* gl0;
+   gl0 = new QGridLayout();
+
+   gl0->addLayout(gl_s, 0, 1, 1, 1);
+   gl0->addLayout(gl_d, 0, 2, 1, 1);
+   gl0->addLayout(gl_m, 0, 3, 1, 1);
+   gl0->addLayout(gl_k, 1, 1, 1, 1);
+   gl0->addLayout(gl_f, 1, 2, 1, 1);
+   gl0->addLayout(gl_v, 1, 3, 1, 1);
+
    QGridLayout* gl1;
    gl1 = new QGridLayout();
 
-   gl1->addWidget(lbl_dval1,    0, 0, 1, 1);
-   gl1->addWidget(ct_dval1,     0, 1, 1, 1);
-   gl1->addWidget(le_dval1,     0, 2, 1, 1);
-   gl1->addWidget(lbl_dval2,    0, 3, 1, 1);
-   gl1->addWidget(ct_dval2,     0, 4, 1, 1);
-   gl1->addWidget(le_dval2,     0, 5, 1, 1);
-   gl1->addWidget(lbl_dval3,    1, 0, 1, 1);
-   gl1->addWidget(ct_dval3,     1, 1, 1, 1);
-   gl1->addWidget(le_dval3,     1, 2, 1, 1);
-   gl1->addWidget(lbl_span,     1, 3, 1, 2);
-   gl1->addWidget(le_span,      1, 5, 1, 1);
-   gl1->addWidget(lbl_minimum,  2, 0, 1, 1);
-   gl1->addWidget(le_minimum,   2, 1, 1, 1);
-   gl1->addWidget(lbl_mode,     2, 2, 1, 1);
-   gl1->addWidget(le_mode,      2, 3, 1, 1);
-   gl1->addWidget(lbl_skew,     2, 4, 1, 1);
-   gl1->addWidget(le_skew,      2, 5, 1, 1);
-   gl1->addWidget(lbl_maximum,  3, 0, 1, 1);
-   gl1->addWidget(le_maximum,   3, 1, 1, 1);
-   gl1->addWidget(lbl_median,   3, 2, 1, 1);
-   gl1->addWidget(le_median,    3, 3, 1, 1);
-   gl1->addWidget(lbl_kurtosis, 3, 4, 1, 1);
-   gl1->addWidget(le_kurtosis,  3, 5, 1, 1);
-   gl1->addWidget(lbl_mean,     4, 0, 1, 1);
-   gl1->addWidget(le_mean,      4, 1, 1, 1);
-   gl1->addWidget(pb_write,     4, 2, 1, 1);
-   gl1->addWidget(pb_reset,     4, 3, 1, 1);
-   gl1->addWidget(pb_help,      4, 4, 1, 1);
-   gl1->addWidget(pb_accept,    4, 5, 1, 1);
+   gl1->addWidget(lbl_dval1, 0, 0, 1, 1);
+   gl1->addWidget(ct_dval1,  0, 1, 1, 1);
+   gl1->addWidget(le_dval1,  0, 2, 1, 1);
+   gl1->addWidget(lbl_dval2, 1, 0, 1, 1);
+   gl1->addWidget(ct_dval2,  1, 1, 1, 1);
+   gl1->addWidget(le_dval2,  1, 2, 1, 1);
+   gl1->addWidget(lbl_dval3, 2, 0, 1, 1);
+   gl1->addWidget(ct_dval3,  2, 1, 1, 1);
+   gl1->addWidget(le_dval3,  2, 2, 1, 1);
 
-   top->addLayout(gl1, row, 0, 2, 2);
+   QGridLayout* gl2;
+   gl2 = new QGridLayout();
 
-   this->setMinimumWidth(640);
+   gl2->addWidget(pb_investigator, row, 0, 1, 1);
+   gl2->addWidget(le_investigator, row, 1, 1, 1);
+   gl2->addLayout(plot,            row, 2, 20, 1);
+   row++;
+   gl2->addLayout(disk_controls,   row, 0, 1, 2);
+   row++;
+   gl2->addWidget(pb_prefilter,    row, 0, 1, 1);
+   gl2->addWidget(le_prefilter,    row, 1, 1, 1);
+   row++;
+   gl2->addWidget(pb_load_model,   row, 0, 1, 1);
+   gl2->addWidget(le_model,        row, 1, 1, 1);
+   row++;
+   gl2->addWidget(lbl_experiment,  row, 0, 1, 1);
+   gl2->addWidget(le_experiment,   row, 1, 1, 1);
+   row++;
+   gl2->addWidget(lbl_param,       row, 0, 2, 1);
+   gl2->addLayout(gl0,             row, 1, 2, 1);
+   row += 2;
+   gl2->addLayout(gl1,             row, 0, 3, 2);
+   row += 3;
+   gl2->addWidget(lbl_span,        row, 0, 1, 1);
+   gl2->addWidget(le_span,         row, 1, 1, 1);
+   row++;                          
+   gl2->addWidget(lbl_minimum,     row, 0, 1, 1);
+   gl2->addWidget(le_minimum,      row, 1, 1, 1);
+   row++;                          
+   gl2->addWidget(lbl_maximum,     row, 0, 1, 1);
+   gl2->addWidget(le_maximum,      row, 1, 1, 1);
+   row++;
+   gl2->addWidget(lbl_mean,        row, 0, 1, 1);
+   gl2->addWidget(le_mean,         row, 1, 1, 1);
+   row++;
+   gl2->addWidget(lbl_mode,        row, 0, 1, 1);
+   gl2->addWidget(le_mode,         row, 1, 1, 1);
+   row++;
+   gl2->addWidget(lbl_median,      row, 0, 1, 1);
+   gl2->addWidget(le_median,       row, 1, 1, 1);
+   row++;
+   gl2->addWidget(lbl_skew,        row, 0, 1, 1);
+   gl2->addWidget(le_skew,         row, 1, 1, 1);
+   row++;
+   gl2->addWidget(lbl_kurtosis,    row, 0, 1, 1);
+   gl2->addWidget(le_kurtosis,     row, 1, 1, 1);
+   row++;                          
+   gl2->addWidget(pb_write,        row, 0, 1, 1);
+   gl2->addWidget(pb_reset,        row, 1, 1, 1);
+   row++;
+   gl2->addWidget(pb_help,         row, 0, 1, 1);
+   gl2->addWidget(pb_accept,       row, 1, 1, 1);
+
+   top->addLayout(gl2, row, 0, 2, 2);
+
+//   this->setMinimumWidth(640);
    reset();
 }
 
@@ -233,14 +273,10 @@ void US_ModelMetrics::select_prefilter( void )
    if ( nruns == 0 )
       pfmsg = tr( "(none chosen)" );
 
-   else if ( nruns > 1 )
-      pfmsg = tr( "RunID prefilter - %1 run(s)" ).arg( nruns );
-
    else
-      pfmsg = tr( "RunID prefilter - 1 run: " ) +
-              QString( pfilts[ 0 ] ).left( 8 ) + "...";
+      pfmsg = QString( pfilts[ 0 ] );
 
-DbgLv(1) << "PreFilt: pfilts[0]" << ((nruns>0)?pfilts[0]:"(none)");
+// DbgLv(1) << "PreFilt: pfilts[0]" << ((nruns>0)?pfilts[0]:"(none)");
    le_prefilter->setText( pfmsg );
 }
 
@@ -333,8 +369,10 @@ void US_ModelMetrics::load_model( void )
          sol_sk.v  = model.components[ jj ].vbar20;
          sol_sk.d  = model.components[ jj ].D;
          sol_sk.f  = model.components[ jj ].f;
-	 total_conc += sol_sk.c;
+         total_conc += sol_sk.c;
 
+         cmin      = qMin( cmin, sol_sk.c );
+         cmax      = qMax( cmax, sol_sk.c );
          smin      = qMin( smin, sol_sk.s );
          smax      = qMax( smax, sol_sk.s );
          kmin      = qMin( kmin, sol_sk.k );
@@ -348,23 +386,23 @@ void US_ModelMetrics::load_model( void )
          fmin      = qMin( fmin, sol_sk.f );
          fmax      = qMax( fmax, sol_sk.f );
 
-         DbgLv(2) << "Solute jj s w k c d" << jj << sol_sk.s << sol_sk.w << sol_sk.k
-                  << sol_sk.c << sol_sk.d << " vb" << model.components[jj].vbar20;
+//         DbgLv(2) << "Solute jj s w k c d" << jj << sol_sk.s << sol_sk.w << sol_sk.k
+//                  << sol_sk.c << sol_sk.d << " vb" << model.components[jj].vbar20;
 
          sk_distro << sol_sk;
       }
 
-      DbgLv(2) << "sk_distro.size() before reduction: " << sk_distro.size();
+//      DbgLv(2) << "sk_distro.size() before reduction: " << sk_distro.size();
       
       // sort and reduce distribution
       sort_distro( sk_distro, true );
 
-      DbgLv(2) << "sk_distro.size() after reduction: " << sk_distro.size();
-      for ( int jj=0;jj<sk_distro.size();jj++ ) 
-      {
-         DbgLv(2) << " jj" << jj << " s k" << sk_distro[jj].s << sk_distro[jj].k
-                  << " w v" << sk_distro[jj].w << sk_distro[jj].v; 
-      }
+//      DbgLv(2) << "sk_distro.size() after reduction: " << sk_distro.size();
+//      for ( int jj=0;jj<sk_distro.size();jj++ ) 
+//      {
+//         DbgLv(2) << " jj" << jj << " s k" << sk_distro[jj].s << sk_distro[jj].k
+//                  << " w v" << sk_distro[jj].w << sk_distro[jj].v; 
+//      }
    }
 
    // Determine which attribute is fixed
@@ -375,11 +413,13 @@ void US_ModelMetrics::load_model( void )
    else if ( equivalent( dmin, dmax, 0.001 )) fixed = HPd;
    else if ( equivalent( fmin, fmax, 0.001 )) fixed = HPf;
 
+   /*
    DbgLv(2) << "dmin, dmax: " << dmin << dmax;
    DbgLv(2) << "kmin, kmax: " << kmin << kmax;
    DbgLv(2) << "wmin, wmax: " << wmin << wmax;
    DbgLv(2) << "vmin, vmax: " << vmin << vmax;
    DbgLv(2) << "fmin, fmax: " << fmin << fmax;
+   */
 
    if (HPs != fixed) rb_s->setEnabled( true );
    if (HPd != fixed) rb_d->setEnabled( true );
@@ -387,7 +427,7 @@ void US_ModelMetrics::load_model( void )
    if (HPf != fixed) rb_f->setEnabled( true );
    if (HPm != fixed) rb_m->setEnabled( true );
    if (HPv != fixed) rb_v->setEnabled( true );
-   DbgLv(0) << "Total concentration, array size original: " << total_conc << sk_distro.size();
+//   DbgLv(0) << "Total concentration, array size original: " << total_conc << sk_distro.size();
    calc();
 
    ct_dval1->setEnabled( true );
@@ -414,6 +454,8 @@ void US_ModelMetrics::sel_investigator( void )
 // Reset parameters to their defaults
 void US_ModelMetrics::reset( void )
 {
+   cmin   = 1e+39;
+   cmax   = 1e-39;
    smin   = 1e+39;
    smax   = 1e-39;
    kmin   = 1e+39;
@@ -517,7 +559,7 @@ void US_ModelMetrics::sort_distro( QList< S_Solute >& listsols,
 
           else
           {   // duplicate:  sum c value
-DbgLv(1) << "DUP: sval svpr jj" << sol1.s << sol2.s << jj;
+// DbgLv(1) << "DUP: sval svpr jj" << sol1.s << sol2.s << jj;
              kdup    = max( kdup, ++jdup );
              qreal f = (qreal)( jdup + 1 );
              sol2.c += sol1.c;   // sum c value
@@ -561,8 +603,8 @@ void US_ModelMetrics::calc()
    lbl_dval1->setText( "D" + str1.setNum((int) dval1) + " value: ");
    lbl_dval2->setText( "D" + str2.setNum((int) dval2) + " value: ");
    lbl_dval3->setText( "D" + str3.setNum((int) dval3) + " value: ");
-   lbl_span->setText( "Span ( D" + str3.setNum((int) dval3) + " - D" 
-		                 + str1.setNum((int) dval1) + " ) / D" 
+   lbl_span->setText( "(D" + str3.setNum((int) dval3) + "-D" 
+		                 + str1.setNum((int) dval1) + ")/D" 
 				 + str2.setNum((int) dval2) + ": ");
    HydroParm val1;
    HydroParm val2;
@@ -626,10 +668,12 @@ void US_ModelMetrics::calc()
    }
    qSort(temp_list.begin(), temp_list.end()); // sort the list so reduction works.
 
+/*
    for (i=0; i<temp_list.size(); i++)
    {
       DbgLv(0) << temp_list[i].parm;
    }
+*/
 
    double tc = 0.0;
 
@@ -638,7 +682,7 @@ void US_ModelMetrics::calc()
    hp_distro.append(val1);
    tc += val1.conc;
 
-   DbgLv(0) << "after first value: " << tc;
+//   DbgLv(0) << "after first value: " << tc;
    for (i=1; i<temp_list.size(); i++)
    {
       val2.parm = temp_list[i].parm;
@@ -646,52 +690,48 @@ void US_ModelMetrics::calc()
       if (val1.parm != val2.parm) //not a duplicate, so append
       {
          hp_distro.append(val2);
-	 tc += val2.conc;
+         tc += val2.conc;
       }
       else //a duplicate, so add concentrations
       {
          val2.conc = val1.conc + val2.conc;
-	 tc += val2.conc - val1.conc;
+         tc += val2.conc - val1.conc;
          hp_distro.replace(hp_distro.size() - 1,  val2);
       }
       val1 = val2;
    }
    int points = hp_distro.size();
-   DbgLv(0) << "Distro size after reduction, total conc2: " << points << tc;
+//   DbgLv(0) << "Distro size after reduction, total conc2: " << points << tc;
    double sum1=0.0, sum2, sum3, mode, median, skew, kurtosis;
    QString str;
    i=0;
-   while (sum1 < tc * dval1/100.0 && i < points)
+   while (sum1 <= tc * dval1/100.0 && i < points)
    {
       sum1 += hp_distro[i].conc;
       i++; 
    }
+   cout << i << endl;
    xval1 = hp_distro[i-1].parm;
+cout << "xval: " << xval1 << ", conc: " << hp_distro[i].conc << ", sum: " << sum1 << ", perc: " << 100*sum1/tc << endl;
    sum2 = sum1;
-   while (sum2 < tc * dval2/100.0 && i < points)
+   while (sum2 <= tc * dval2/100.0 && i < points)
    {
       sum2 += hp_distro[i].conc;
       i++; 
    }
    xval2 = hp_distro[i-1].parm;
    sum3 = sum2;
-   while (sum3 < tc * dval3/100.0 && i < points)
+   while (sum3 <= tc * dval3/100.0 && i < points)
    {
       sum3 += hp_distro[i].conc;
       i++; 
    }
-   xval3 = hp_distro[i-1].parm;
-   median = 0.0;
-   i=0;
-   while (median < tc * 0.5 && i < points)
-   {
-      median += hp_distro[i].conc;
-      i++; 
-   }
-   median = hp_distro[i-1].parm;
+   xval3  = hp_distro[i-1].parm;
+   median = hp_distro[points-1].parm -
+           (hp_distro[points-1].parm - hp_distro[0].parm)/2.0;
 
    sum1 = 0.0;
-   double mode_conc = 0.0;
+   double mode_conc=0.0, m2=0.0, m3=0.0, m4=0.0, tmp_val;
    mode = 0.0;
    skew=0.0;
    kurtosis=0.0;
@@ -704,7 +744,21 @@ void US_ModelMetrics::calc()
          mode_conc = hp_distro[i].conc;
       }
    }
-   sum1 /= tc;
+   sum1 /= tc;     // mean
+   for (i=0; i<points; i++)
+   {
+      sum2 = hp_distro[i].parm - sum1;
+      tmp_val = sum2 * sum2;
+      m2 += tmp_val;
+      m3 += tmp_val * sum2;
+      m4 += tmp_val * tmp_val;
+   }
+   m2 /= (double) points;
+   m3 /= (double) points;
+   m4 /= (double) points;
+   skew     = m3/pow(m2, 1.5);
+   kurtosis = m4/pow(m2, 2.0) - 3.0;
+
    if (calc_val == HPs || calc_val == HPk)
    {
       le_dval1->setText(str.setNum(xval1, 'f', 5));
@@ -730,7 +784,58 @@ void US_ModelMetrics::calc()
    le_span->setText(str.setNum(((xval3-xval1)/xval2), 'f', 6));
    le_skew->setText(str.setNum(skew, 'f', 6));
    le_kurtosis->setText(str.setNum(kurtosis, 'f', 6));
-   DbgLv(0) << xval1 << xval2 << xval3 << dval1 << dval2 << dval3;
+//   DbgLv(0) << xval1 << xval2 << xval3 << dval1 << dval2 << dval3;
+
+   QVector <double> xv;
+   QVector <double> yv;
+   xv.clear();
+   yv.clear();
+   double mxc=0.0;
+   for (i=0; i<points; i++)
+   {
+      xv.push_back(hp_distro[i].parm);
+      yv.push_back(hp_distro[i].conc);
+      mxc = qMax(mxc, hp_distro[i].conc);
+   }
+   xx = xv.data();
+   yy = yv.data();
+   double x1[2], x2[2], x3[2], y1[2], y2[2], y3[2];
+   x1[0] = xval1;
+   x2[0] = xval2;
+   x3[0] = xval3;
+   x1[1] = xval1;
+   x2[1] = xval2;
+   x3[1] = xval3;
+   y1[0] = 0;
+   y2[0] = 0;
+   y3[0] = 0;
+   y1[1] = mxc;
+   y2[1] = mxc;
+   y3[1] = mxc;
+   data_plot->clear();
+   data_plot->setAxisAutoScale( QwtPlot::yLeft );
+   data_plot->setAxisAutoScale( QwtPlot::xBottom );
+   QwtPlotCurve* curve1;
+   QwtPlotCurve* curve2;
+   QwtPlotCurve* curve3;
+   QwtPlotCurve* curve4;
+   curve1  = us_curve( data_plot, tr( "Distribution" ) );
+   curve2  = us_curve( data_plot, "D" + str1.setNum((int) dval1));
+   curve3  = us_curve( data_plot, "D" + str1.setNum((int) dval2));
+   curve4  = us_curve( data_plot, "D" + str1.setNum((int) dval3));
+   curve1->setStyle( QwtPlotCurve::Sticks );
+   curve2->setStyle( QwtPlotCurve::Sticks );
+   curve3->setStyle( QwtPlotCurve::Sticks );
+   curve4->setStyle( QwtPlotCurve::Sticks );
+   curve1->setPen( QPen( QBrush( Qt::yellow ), 4.0 ) );
+   curve2->setPen( QPen( QBrush( Qt::red), 2.0 ) );
+   curve3->setPen( QPen( QBrush( Qt::cyan ), 2.0 ) );
+   curve4->setPen( QPen( QBrush( Qt::green ), 2.0 ) );
+   curve1->setData( xx, yy, points );
+   curve2->setData( x1, y1, 2);
+   curve3->setData( x2, y2, 2);
+   curve4->setData( x3, y3, 2);
+   data_plot->replot();
 }
 
 void US_ModelMetrics::set_dval1( double val )
