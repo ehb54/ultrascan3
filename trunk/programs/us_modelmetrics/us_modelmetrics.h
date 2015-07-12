@@ -8,6 +8,7 @@
 #include "us_spectrodata.h"
 #include "us_extern.h"
 #include "us_widgets.h"
+#include "us_analysis_base2.h"
 #include "us_help.h"
 #include "us_editor.h"
 #include "us_settings.h"
@@ -48,10 +49,18 @@ class HydroParm
    }
 };
 
+struct reportItem
+{
+   QString investigator, runID, triple, analysis, iterations, edit, parameter;
+   QString sigma, d[3], x[3], span, minimum, maximum, mean, mode;
+   QString median, skew, kurtosis, span_label, filename;
+   QPixmap pixmap;
+};
+
 //! \brief Less-than function for sorting S_Solute values
 bool distro_lessthan( const S_Solute&, const S_Solute& );
 
-class US_ModelMetrics : public US_Widgets
+class US_ModelMetrics : public US_Widgets 
 {
 	Q_OBJECT
 
@@ -62,10 +71,15 @@ class US_ModelMetrics : public US_Widgets
 
 	private:
 
+      reportItem         report_entry;
+      QString            report;
+      QTextStream        report_ts;
+      QFile              report_file;
       int                dbg_level;
       int                mc_iters;
       int                fixed;
       int                calc_val;
+      int                model_count;
       double*            xx;
       double*            yy;
       double             sigma;
@@ -96,6 +110,8 @@ class US_ModelMetrics : public US_Widgets
       US_Model*          model;
       QPushButton*       pb_load_model;
       QPushButton*       pb_prefilter;
+      QPushButton*       pb_report;
+      QPushButton*       pb_write;
       QLabel*            lbl_dval1;
       QLabel*            lbl_dval2;
       QLabel*            lbl_dval3;
@@ -152,7 +168,15 @@ class US_ModelMetrics : public US_Widgets
       US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
 
 private slots:
+
+   QString table_row         ( const int, const QString &, const QString &,
+                               const QString &, const QString &) const;
+   QString table_row         ( const int, const QString &, const QString &,
+                               const QString &, const QString &,
+                               const QString &, const QString &) const;
+   QString indent            ( const int ) const;
 	void sel_investigator     ( void );
+	void addReportItem        ( void );
 	void update_disk_db       ( bool );
 	void load_model           ( void );
 	void select_prefilter     ( void );
@@ -161,7 +185,7 @@ private slots:
 	void plot_data            ( void );
 	void update_sigma         ( void );
 	void select_hp            ( int );
-	void write                ( void );
+	void write_report         ( void );
    void sort_distro          ( QList< S_Solute >&, bool );
 	bool equivalent           ( double, double, double );
 	void set_dval1            ( double );

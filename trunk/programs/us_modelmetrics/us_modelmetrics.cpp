@@ -77,8 +77,20 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
 
    le_experiment= us_lineedit( "", 1, true );
 
+
    QLabel* lbl_param = us_label( tr( "Select Parameter: " ), -1 );
    QLabel* lbl_sigma = us_label( tr( "Sigma: " ), -1 );
+
+   ct_sigma= us_counter( 2, 0.0, 1.0, 1.0 );
+   ct_sigma->setStep( 0.001 );
+   ct_sigma->setValue( 0.0 );
+   ct_sigma->setEnabled( false );
+   ct_sigma->setFixedSize(130, 25);
+   connect (ct_sigma, SIGNAL(valueChanged(double)), this, SLOT(set_sigma(double)));
+
+   pb_report = us_pushbutton( tr( "Save to Report" ) );
+   pb_report->setEnabled(false);
+   connect( pb_report, SIGNAL( clicked() ), SLOT( addReportItem() ) );
 
    bg_hp = new QButtonGroup( this );
    QGridLayout* gl_s = us_radiobutton( tr( "s"    ), rb_s, true  );
@@ -115,12 +127,6 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    le_dval3= us_lineedit( "", 1, true );
    le_span = us_lineedit( "", 1, true );
 
-   ct_sigma= us_counter( 3, 0.0, 1.0, 1.0 );
-   ct_sigma->setStep( 0.001 );
-   ct_sigma->setValue( 0.0 );
-   ct_sigma->setEnabled( false );
-   connect (ct_sigma, SIGNAL(valueChanged(double)), this, SLOT(set_sigma(double)));
-
    ct_dval1 = us_counter( 2, 0.0, 100.0, 10.0 );
    ct_dval1->setStep( 1 );
    ct_dval1->setEnabled( false );
@@ -155,8 +161,9 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    le_kurtosis = us_lineedit( "", 1, true );
    le_skew     = us_lineedit( "", 1, true );
 
-   QPushButton* pb_write = us_pushbutton( tr( "Show Report" ) );
-   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
+   pb_write = us_pushbutton( tr( "Show Report" ) );
+   pb_write->setEnabled( false );
+   connect( pb_write, SIGNAL( clicked() ), SLOT( write_report() ) );
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
@@ -168,7 +175,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
 
    QBoxLayout* plot = new US_Plot( data_plot,
-   tr( "Distribution Data" ), "Parameter Value", "Relative Concentration" );
+   tr( "" ), "Parameter Value", "Relative Concentration" );
 
    data_plot->setAutoDelete( true );
    data_plot->setMinimumSize( 500, 100 );
@@ -197,15 +204,18 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    gl1->setColumnStretch(1, 0);
    gl1->setColumnStretch(2, 1);
 
-   gl1->addWidget(lbl_dval1, 0, 0, 1, 1);
-   gl1->addWidget(ct_dval1,  0, 1, 1, 1);
-   gl1->addWidget(le_dval1,  0, 2, 1, 1);
-   gl1->addWidget(lbl_dval2, 1, 0, 1, 1);
-   gl1->addWidget(ct_dval2,  1, 1, 1, 1);
-   gl1->addWidget(le_dval2,  1, 2, 1, 1);
-   gl1->addWidget(lbl_dval3, 2, 0, 1, 1);
-   gl1->addWidget(ct_dval3,  2, 1, 1, 1);
-   gl1->addWidget(le_dval3,  2, 2, 1, 1);
+   gl1->addWidget(lbl_sigma, 0, 0, 1, 1);
+   gl1->addWidget(ct_sigma,  0, 1, 1, 1);
+   gl1->addWidget(pb_report, 0, 2, 1, 1);
+   gl1->addWidget(lbl_dval1, 1, 0, 1, 1);
+   gl1->addWidget(ct_dval1,  1, 1, 1, 1);
+   gl1->addWidget(le_dval1,  1, 2, 1, 1);
+   gl1->addWidget(lbl_dval2, 2, 0, 1, 1);
+   gl1->addWidget(ct_dval2,  2, 1, 1, 1);
+   gl1->addWidget(le_dval2,  2, 2, 1, 1);
+   gl1->addWidget(lbl_dval3, 3, 0, 1, 1);
+   gl1->addWidget(ct_dval3,  3, 1, 1, 1);
+   gl1->addWidget(le_dval3,  3, 2, 1, 1);
 
    QGridLayout* gl2;
    gl2 = new QGridLayout();
@@ -231,8 +241,6 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    gl2->addWidget(lbl_param,       row, 0, 2, 1);
    gl2->addLayout(gl0,             row, 1, 2, 1);
    row += 2;
-   gl2->addWidget(lbl_sigma,       row, 0, 1, 1);
-   gl2->addWidget(ct_sigma,        row, 1, 1, 1);
    row++;
    gl2->addLayout(gl1,             row, 0, 3, 2);
    row += 3;
@@ -267,6 +275,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    gl2->addWidget(pb_accept,       row, 1, 1, 1);
 
    top->addLayout(gl2, row, 0, 2, 2);
+
    reset();
 }
 
@@ -293,6 +302,7 @@ void US_ModelMetrics::select_prefilter( void )
 
 // DbgLv(1) << "PreFilt: pfilts[0]" << ((nruns>0)?pfilts[0]:"(none)");
    le_prefilter->setText( pfmsg );
+   load_model();
 }
 
 void US_ModelMetrics::load_model( void )
@@ -347,7 +357,8 @@ void US_ModelMetrics::load_model( void )
    method         = model.typeText();
    method         = mdesc.contains( "-CG" )
                     ? method.replace( "2DSA", "2DSA-CG" ) : method;
-   run_name       = mdesc.section( ".",  0, -3 );
+   run_name       = mdesc.section( ".",  0, -4 );
+   QString triple = mdesc.section( ".", -3, -3 );
    QString asys   = mdesc.section( ".", -2, -2 );
    analysis_name  = asys.section( "_", 0, 1 ) + "_"
                   + asys.section( "_", 3, 4 );
@@ -359,10 +370,26 @@ void US_ModelMetrics::load_model( void )
       run_name       = mdesc + ".0Z280";
       analysis_name  = "e00_a00_" + method + "_local";
    }
+   if (aiters == "" ) aiters = "1";
 
    monte_carlo  = model.monteCarlo;
    mc_iters     = monte_carlo ? aiters.toInt() : 1;
    editGUID     = model.editGUID;
+   QString wl   = triple.remove(0, 2);
+   QString cell = triple.at(0);
+   QString ch   = triple.at(1);
+   triple       = "Cell " + cell + ", Channel " + ch + ", " + wl + " nm";
+   report_entry.runID = run_name;
+   report_entry.triple = triple;
+   report_entry.analysis = method;
+   report_entry.iterations = aiters;
+   report_entry.edit = analysis_name;
+
+/*
+   DbgLv(0) << "monte_carlo:" << monte_carlo << "mc_iters:" << mc_iters << ", mdesc: " << mdesc;
+   DbgLv(0) << "aiters:" << aiters << "method:" << method << "run_name" << run_name;
+   DbgLv(0) << "asys:" << asys << "analysis_name:" << analysis_name << "Triple:" << triple;
+*/
 
    sk_distro.clear();
    total_conc = 0.0;
@@ -445,10 +472,11 @@ void US_ModelMetrics::load_model( void )
 //   DbgLv(0) << "Total concentration, array size original: " << total_conc << sk_distro.size();
    calc();
 
-   ct_dval1->setEnabled( true );
-   ct_dval2->setEnabled( true );
-   ct_dval3->setEnabled( true );
-   ct_sigma->setEnabled( true );
+   ct_dval1 ->setEnabled( true );
+   ct_dval2 ->setEnabled( true );
+   ct_dval3 ->setEnabled( true );
+   ct_sigma ->setEnabled( true );
+   pb_report->setEnabled( true );
 }
 
 // Select DB investigator
@@ -465,11 +493,15 @@ void US_ModelMetrics::sel_investigator( void )
                       +  US_Settings::us_inv_name();
 
    le_investigator->setText( inv_text );
+   report_entry.investigator = US_Settings::us_inv_name();
 }
 
 // Reset parameters to their defaults
 void US_ModelMetrics::reset( void )
 {
+   report_entry.investigator = US_Settings::us_inv_name();
+   model_count = 0;
+   QString str;
    tc     = 0.0;
    sigma  = 0.0;
    cmin   = 1e+39;
@@ -489,9 +521,18 @@ void US_ModelMetrics::reset( void )
    dval1  = 10.0;
    dval2  = 50.0;
    dval3  = 90.0;
-   ct_dval1->setEnabled( false );
-   ct_dval2->setEnabled( false );
-   ct_dval3->setEnabled( false );
+
+   report_entry.sigma = "0.0";
+   report_entry.sigma = str.setNum(sigma, 'f', 3);
+   report_entry.d[0] = str.setNum(dval1, 'f', 0);
+   report_entry.d[1] = str.setNum(dval2, 'f', 0);
+   report_entry.d[2] = str.setNum(dval3, 'f', 0);
+
+   pb_report->setEnabled( false );
+   pb_write ->setEnabled( false );
+   ct_dval1 ->setEnabled( false );
+   ct_dval2 ->setEnabled( false );
+   ct_dval3 ->setEnabled( false );
    rb_s->setChecked( true  );
    rb_s->setEnabled( false );
    rb_d->setEnabled( false );
@@ -514,6 +555,9 @@ void US_ModelMetrics::reset( void )
    le_median->    setText("");
    le_kurtosis->  setText("");
    le_skew->      setText("");
+   if (report != "") write_report(); //write any unsaved report items to disk
+   report = "";
+
 }
 
 // Select DB investigator// Private slot to update disk/db control with dialog changes it
@@ -525,16 +569,12 @@ void US_ModelMetrics::update_disk_db( bool isDB )
       disk_controls->set_disk();
 }
 
-void US_ModelMetrics::write( void )
+void US_ModelMetrics::write_report( void )
 {
-   QString str, str2;
-   te = new US_Editor( US_Editor::LOAD, true );
-   te->setWindowTitle("UltraScan Model Statistics Report:");
-   te->resize(700,600);
-   te->e->setFont( QFont( US_GuiSettings::fontFamily(),
-                          US_GuiSettings::fontSize() ) );
-   te->e->append("Details:");
-   te->show();
+   report += "</body>\n</html>";
+   report_ts << report;
+   report_file.close();
+   QDesktopServices::openUrl ( "file://" + US_Settings::tmpDir() + "/ModelStatistics.html" ) ;
 }
 
 // Sort distribution solute list by s,k values and optionally reduce
@@ -619,8 +659,8 @@ void US_ModelMetrics::calc()
    lbl_dval2->setText( "D" + str2.setNum((int) dval2) + " value: ");
    lbl_dval3->setText( "D" + str3.setNum((int) dval3) + " value: ");
    lbl_span->setText( "(D" + str3.setNum((int) dval3) + "-D" 
-		                 + str1.setNum((int) dval1) + ")/D" 
-				 + str2.setNum((int) dval2) + ": ");
+                           + str1.setNum((int) dval1) + ")/D" 
+                           + str2.setNum((int) dval2) + ": ");
    HydroParm val1;
    HydroParm val2;
    QList <HydroParm> temp_list;
@@ -630,6 +670,7 @@ void US_ModelMetrics::calc()
    temp_list.clear(); // contains the unreduced array of desired parameter
    if (calc_val == HPs)
    {
+      report_entry.parameter = "Sedimentation Coefficient Distribution";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].s;
@@ -641,6 +682,7 @@ void US_ModelMetrics::calc()
    }
    else if (calc_val == HPd)
    {
+      report_entry.parameter = "Diffusion Coefficient Distribution";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].d;
@@ -652,6 +694,7 @@ void US_ModelMetrics::calc()
    }
    else if (calc_val == HPm)
    {
+      report_entry.parameter = "Moleclular Weight Distribution";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].w;
@@ -663,6 +706,7 @@ void US_ModelMetrics::calc()
    }
    else if (calc_val == HPk)
    {
+      report_entry.parameter = "Frictional Ratio Distribution";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].k;
@@ -674,6 +718,7 @@ void US_ModelMetrics::calc()
    }
    else if (calc_val == HPf)
    {
+      report_entry.parameter = "Frictional Coefficient Distribution";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].f;
@@ -685,6 +730,7 @@ void US_ModelMetrics::calc()
    }
    else if (calc_val == HPv)
    {
+      report_entry.parameter = "Partial Specific Volume Distribution";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].v;
@@ -815,6 +861,20 @@ void US_ModelMetrics::plot_data()
    le_span->setText(str.setNum(((xval3-xval1)/xval2), 'f', 6));
    le_skew->setText(str.setNum(skew, 'f', 6));
    le_kurtosis->setText(str.setNum(kurtosis, 'f', 6));
+
+   report_entry.x[0] = le_dval1->text();
+   report_entry.x[1] = le_dval2->text();
+   report_entry.x[2] = le_dval3->text();
+   report_entry.span_label = lbl_span->text();
+   report_entry.span = le_span->text();
+   report_entry.minimum = le_minimum->text();
+   report_entry.maximum = le_maximum->text();
+   report_entry.mean = le_mean->text();
+   report_entry.mode = le_mode->text();
+   report_entry.median = le_median->text();
+   report_entry.skew = le_skew ->text();
+   report_entry.kurtosis = le_kurtosis->text();
+
    QVector <double> xv;
    QVector <double> yv;
    xv.clear();
@@ -932,6 +992,8 @@ void US_ModelMetrics::update_sigma( void )
    {
       hp_distro[i].conc *= tc/tmp_tc; // rescale everything to original total concentration
    }
+   QString str;
+   report_entry.sigma = str.setNum(sigma, 'g', 3);
    plot_data();
 }
 
@@ -966,4 +1028,103 @@ void US_ModelMetrics::set_sigma( double val )
       update_sigma();
    }
 }
+
+void US_ModelMetrics::addReportItem( void )
+{
+   QString str;
+   QString timestamp = QDateTime::currentDateTime().toUTC().toString("MMddyyhhmmss");
+   report_entry.filename = US_Settings::tmpDir() + "/" + timestamp + ".png";
+   if (!pb_write->isEnabled()) // open a new report file in ultrascan's tmp dir
+   {
+      report_file.setFileName(US_Settings::tmpDir() + "/ModelStatistics.html" );
+      if ( !report_file.open( QIODevice::WriteOnly | QIODevice::Text ) ) return;
+      report_ts.setDevice(&report_file);
+      QString title = "UltraScan Model Statistics Report";
+      pb_write->setEnabled( true );
+      report  = "<?xml version=\"1.0\"?>\n";
+      report += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+      report += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+             "/xhtml1-strict.dtd\">\n";
+      report += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+             " xml:lang=\"en\" lang=\"en\">\n";
+      report += "<head>\n";
+      report += "  <title> " + title + " </title>\n";
+      report += "  <meta http-equiv=\"Content-Type\" content="
+             "\"text/html; charset=iso-8859-1\"/>\n";
+      report += "  <style type=\"text/css\" >\n";
+      report += "    td { padding-right: 1em; }\n";
+      report += "    body { background-color: white; }\n";
+      report += "    .break { page-break-before: always; }\n";
+      report += "  </style>\n";
+      report += "</head>\n<body>\n  <center>\n";
+      report += "    <h1>" + title + "</h1>\n  </center>\n"; 
+   }
+   model_count++;
+   report += "  <center>\n    <table border='1' bgcolor=#CCCCCC cellpadding='5'>\n";
+   report += "      <tr><td colspan='4' bgcolor='#FFFFFF' align='center'><b>Information for Model " 
+             + str.setNum( model_count ) + ":</b></td></tr>\n";
+   report += "      <tr><td colspan='4' align='center' bgcolor='#FFFFFF'><img src='file:///" 
+             + report_entry.filename + "'></td></tr>\n";
+   report += table_row( 6, "Investigator:", report_entry.investigator, 
+                       "Distribution Type:",   report_entry.parameter);
+   if (report_entry.iterations == "1")
+   {
+      report += table_row( 6, "Experiment:", report_entry.runID,
+                          "Analysis Method:", report_entry.analysis );
+   }
+   else
+   {
+      report += table_row( 6, "Experiment:", report_entry.runID, 
+                          "Analysis Method:",   report_entry.analysis + 
+                          " (" + report_entry.iterations + " MC Iterations)");
+   }
+   report += table_row( 6, "Dataset:", report_entry.triple, 
+                         "Edit and Model name:",   report_entry.edit);
+   report += indent(6) + "<tr><td colspan='4' align='center' bgcolor='#FFFFFF'>"
+                       + "<b>Statistics:</b></td></tr>\n";
+   report += indent(6) + "<tr><td colspan='4' align='center' bgcolor='#FFFFFF'>\n";
+   report += indent(8) + "<table border='1' bgcolor=#CCCCCC cellpadding='5'>\n";
+
+   report += table_row( 10, "D" + report_entry.d[0], report_entry.x[0],
+                        "D" + report_entry.d[1], report_entry.x[1],
+                        "D" + report_entry.d[2], report_entry.x[2]);
+   report += table_row( 10, report_entry.span_label, report_entry.span,
+                       "Minimum:", report_entry.minimum, 
+                       "Maximum:", report_entry.maximum);
+   report += table_row( 10, "Mean:", report_entry.mean, 
+                       "Mode:",   report_entry.mode,
+                       "Median:", report_entry.median); 
+   report += table_row(10, "Sigma:",   report_entry.sigma,
+                       "Skew:", report_entry.skew, 
+                       "Kurtosis:",   report_entry.kurtosis);
+   report += indent(8) + "</table>\n" + indent(6) + "</td></tr>\n";
+   report += "    </table>\n  </center></p>\n  <p class=\"break\">\n";
+   write_plot( report_entry.filename, data_plot ); // write current image to tmp dir
+}
+
+QString US_ModelMetrics::table_row( const int spaces, const QString& s1, const QString& s2, 
+                                    const QString& s3, const QString& s4 ) const
+{
+      return ( indent(spaces) + "<tr><td bgcolor='#CCCCFC'><b>" + s1 
+                              + "</b></td><td>" + s2 + "</td>\n"  
+             + indent(spaces) + "<td bgcolor='#CCCCFC'><b>" + s3
+                              + "</b></td><td>" + s4 + "</td></tr>\n" );
+}
+QString US_ModelMetrics::table_row( const int spaces, const QString& s1, const QString& s2, 
+                                    const QString& s3, const QString& s4,
+                                    const QString& s5, const QString& s6) const
+{
+      return ( indent(spaces) + "<tr><td bgcolor='#CCCCFC'><b>" + s1 
+                              + "</b></td><td>" + s2 + "</td>\n"  
+             + indent(spaces) + "<td bgcolor='#CCCCFC'><b>" + s3
+                              + "</b></td><td>" + s4 + "</td>\n"  
+             + indent(spaces) + "<td bgcolor='#CCCCFC'><b>" + s5
+                              + "</b></td><td>" + s6 + "</td></tr>\n" );
+}
+
+QString US_ModelMetrics::indent( const int spaces ) const
+{
+      return QString( " " ).leftJustified( spaces, ' ' );
+}
+
 

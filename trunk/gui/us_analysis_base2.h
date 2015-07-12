@@ -151,6 +151,9 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       QString      indent       ( int )                            const;
 
       //! Return html header string
+      QString      html_header  ( const QString&, const QString&)  const;
+
+      //! Return html header string for reports including edited data
       QString      html_header  ( const QString&, const QString&,
                                   US_DataIO::EditedData* )         const;
 
