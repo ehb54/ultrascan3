@@ -991,6 +991,29 @@ QString US_AnalysisBase2::table_row( const QString& s1, const QString& s2,
 
 // Compose HTML header string
 QString US_AnalysisBase2::html_header( const QString& title,
+      const QString& head1 ) const
+{
+   QString ss = QString( "<?xml version=\"1.0\"?>\n" );
+   ss  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+   ss  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+          "/xhtml1-strict.dtd\">\n";
+   ss  += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+          " xml:lang=\"en\" lang=\"en\">\n";
+   ss  += "  <head>\n";
+   ss  += "    <title> " + title + " </title>\n";
+   ss  += "    <meta http-equiv=\"Content-Type\" content="
+          "\"text/html; charset=iso-8859-1\"/>\n";
+   ss  += "    <style type=\"text/css\" >\n";
+   ss  += "      td { padding-right: 1em; }\n";
+   ss  += "      body { background-color: white; }\n";
+   ss  += "    </style>\n";
+   ss  += "  </head>\n  <body>\n";
+   ss  += "    <h1>" + head1 + "</h1>\n";
+   return ss;
+}
+
+// Compose HTML header string
+QString US_AnalysisBase2::html_header( const QString& title,
       const QString& head1, US_DataIO::EditedData* edata ) const
 {
    QString ss = QString( "<?xml version=\"1.0\"?>\n" );
