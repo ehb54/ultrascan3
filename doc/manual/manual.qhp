@@ -26,55 +26,56 @@
         <!-- The keyword id attribute appears to be needed, although the
              documentation does not say so -->
         <keywords>
-            <keyword id="21" name="2dsa"          ref="2dsa.html"/>
-            <keyword id="22" name="grid-editor"   ref="grid_editor.html"/>
-            <keyword id="a1" name="analyte"       ref="analytes.html"/>
-            <keyword id="a2" name="associations"  ref="associations.html"/>
-            <keyword id="a3" name="astfem_sim"    ref="astfem_sim.html"/>
-            <keyword id="b1" name="buffer"        ref="us_buffer.html"/>
-            <keyword id="c1" name="components"    ref="components.html"/>
-            <keyword id="c2" name="configuration" ref="config.html"/>
-            <keyword id="c3" name="convert-data"  ref="convert.html"/>
-            <keyword id="d1" name="data-loader"   ref="data_loader.html"/>
-            <keyword id="d2" name="ddist-combine" ref="ddist_combine.html"/>
-            <keyword id="e1" name="edit"          ref="us_edit.html"/>
-            <keyword id="e2" name="equiltime"     ref="us_equiltime.html"/>
-            <keyword id="e3" name="experiment"    ref="convert-experiment.html"/>
-            <keyword id="e4" name="export-legacy" ref="export_legacy.html"/>
-            <keyword id="f1" name="fe-model"      ref="fe_match.html"/>
-            <keyword id="f2" name="fit-meniscus"  ref="fit_meniscus.html"/>
-            <keyword id="f3" name="fds-fileman"   ref="us_fds_filemanager.html"/>
-            <keyword id="g1" name="ga-initialize" ref="ga_initialize.html"/>
-            <keyword id="g2" name="global-model"  ref="combine_models.html"/>
-            <keyword id="g3" name="gradient"      ref="colorgradient.html"/>
-            <keyword id="i1" name="investigator"  ref="us_investigator.html"/>
-            <keyword id="l1" name="license"       ref="register.html"/>
-            <keyword id="l2" name="load-colormap" ref="load_colormap.html"/>
-            <keyword id="l3" name="load-raw-AUC"  ref="load_auc.html"/>
-            <keyword id="m1" name="manage-data"   ref="manage_data.html"/>
-            <keyword id="m2" name="model-editor"  ref="model_editor.html"/>
-            <keyword id="m3" name="model-loader"  ref="load_model_distrib.html"/>
-            <keyword id="m4" name="model-shapes"  ref="predict1.html"/>
-            <keyword id="m5" name="model-shapes2" ref="predict2.html"/>
-            <keyword id="m6" name="mwlr-viewer"   ref="mwlr_viewer.html"/>
-            <keyword id="n1" name="noise-loader"  ref="load_noise.html"/>
-            <keyword id="p1" name="password"      ref="master_pw.html"/>
-            <keyword id="p2" name="pcsa"          ref="pcsa.html"/>
-            <keyword id="p3" name="project"       ref="us_project.html"/>
+            <keyword id="21" name="2dsa"             ref="2dsa.html"/>
+            <keyword id="22" name="grid-editor"      ref="grid_editor.html"/>
+            <keyword id="a1" name="analyte"          ref="analytes.html"/>
+            <keyword id="a2" name="associations"     ref="associations.html"/>
+            <keyword id="a3" name="astfem_sim"       ref="astfem_sim.html"/>
+            <keyword id="b1" name="buffer"           ref="us_buffer.html"/>
+            <keyword id="c1" name="components"       ref="components.html"/>
+            <keyword id="c2" name="configuration"    ref="config.html"/>
+            <keyword id="c3" name="convert-data"     ref="convert.html"/>
+            <keyword id="d1" name="data-loader"      ref="data_loader.html"/>
+            <keyword id="d2" name="ddist-combine"    ref="ddist_combine.html"/>
+            <keyword id="e1" name="edit"             ref="us_edit.html"/>
+            <keyword id="e2" name="equiltime"        ref="us_equiltime.html"/>
+            <keyword id="e3" name="experiment"       ref="convert-experiment.html"/>
+            <keyword id="e4" name="export-legacy"    ref="export_legacy.html"/>
+            <keyword id="f1" name="fe-model"         ref="fe_match.html"/>
+            <keyword id="f4" name="us_modelmetrics"  ref="us_modelmetrics.html"/>
+            <keyword id="f2" name="fit-meniscus"     ref="fit_meniscus.html"/>
+            <keyword id="f3" name="fds-fileman"      ref="us_fds_filemanager.html"/>
+            <keyword id="g1" name="ga-initialize"    ref="ga_initialize.html"/>
+            <keyword id="g2" name="global-model"     ref="combine_models.html"/>
+            <keyword id="g3" name="gradient"         ref="colorgradient.html"/>
+            <keyword id="i1" name="investigator"     ref="us_investigator.html"/>
+            <keyword id="l1" name="license"          ref="register.html"/>
+            <keyword id="l2" name="load-colormap"    ref="load_colormap.html"/>
+            <keyword id="l3" name="load-raw-AUC"     ref="load_auc.html"/>
+            <keyword id="m1" name="manage-data"      ref="manage_data.html"/>
+            <keyword id="m2" name="model-editor"     ref="model_editor.html"/>
+            <keyword id="m3" name="model-loader"     ref="load_model_distrib.html"/>
+            <keyword id="m4" name="model-shapes"     ref="predict1.html"/>
+            <keyword id="m5" name="model-shapes2"    ref="predict2.html"/>
+            <keyword id="m6" name="mwlr-viewer"      ref="mwlr_viewer.html"/>
+            <keyword id="n1" name="noise-loader"     ref="load_noise.html"/>
+            <keyword id="p1" name="password"         ref="master_pw.html"/>
+            <keyword id="p2" name="pcsa"             ref="pcsa.html"/>
+            <keyword id="p3" name="project"          ref="us_project.html"/>
             <keyword id="p4" name="pseudo3d-combine" ref="pseudo3d_combine.html"/>
-            <keyword id="r1" name="register"      ref="register.html"/>
-            <keyword id="r2" name="reporter"      ref="reporter.html"/>
-            <keyword id="r3" name="rotor"         ref="rotor.html"/>
-            <keyword id="s1" name="save-colormap" ref="save_colormap.html"/>
-            <keyword id="s2" name="second-moment" ref="second_moment.html"/>
-            <keyword id="s3" name="select-edits"  ref="select_edits.html"/>
-            <keyword id="s4" name="select-runs"   ref="select_runs.html"/>
-            <keyword id="s5" name="select-triples" ref="convert-seltrip.html"/>
-            <keyword id="s6" name="solution"      ref="us_solution.html"/>
-            <keyword id="t1" name="time-derivative" ref="time_derivative.html"/>
-            <keyword id="v1" name="vhw-combine"   ref="vhw_combine.html"/>
+            <keyword id="r1" name="register"         ref="register.html"/>
+            <keyword id="r2" name="reporter"         ref="reporter.html"/>
+            <keyword id="r3" name="rotor"            ref="rotor.html"/>
+            <keyword id="s1" name="save-colormap"    ref="save_colormap.html"/>
+            <keyword id="s2" name="second-moment"    ref="second_moment.html"/>
+            <keyword id="s3" name="select-edits"     ref="select_edits.html"/>
+            <keyword id="s4" name="select-runs"      ref="select_runs.html"/>
+            <keyword id="s5" name="select-triples"   ref="convert-seltrip.html"/>
+            <keyword id="s6" name="solution"         ref="us_solution.html"/>
+            <keyword id="t1" name="time-derivative"  ref="time_derivative.html"/>
+            <keyword id="v1" name="vhw-combine"      ref="vhw_combine.html"/>
             <keyword id="v2" name="vhw-distrib-plot" ref="vhw_distrib_plot.html"/>
-            <keyword id="v3" name="vhw-enhanced"  ref="vhw_enhanced.html"/>
+            <keyword id="v3" name="vhw-enhanced"     ref="vhw_enhanced.html"/>
         </keywords>
         <files>
             <file>mainstyle.css</file>
@@ -195,6 +196,9 @@
             <file>images/fe_match_sim7.png</file>
             <file>images/fe_match_3dplot.png</file>
             <file>images/fe_match_resplot.png</file>
+
+            <file>us_modelmetrics.html</file>
+            <file>images/us_modelmetrics-0.png</file>
 
             <file>register.html</file>
             <file>images/register.png</file>

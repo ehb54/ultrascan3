@@ -53,7 +53,7 @@ struct reportItem
 {
    QString investigator, runID, triple, analysis, iterations, edit, parameter;
    QString sigma, d[3], x[3], span, minimum, maximum, mean, mode;
-   QString median, skew, kurtosis, span_label, filename;
+   QString median, skew, kurtosis, span_label, filename, integral, totalc;
    QPixmap pixmap;
 };
 
@@ -80,6 +80,8 @@ class US_ModelMetrics : public US_Widgets
       int                fixed;
       int                calc_val;
       int                model_count;
+      bool               monte_carlo;
+      bool               saved;
       double*            xx;
       double*            yy;
       double             sigma;
@@ -124,6 +126,7 @@ class US_ModelMetrics : public US_Widgets
       QLabel*            lbl_kurtosis;
       QLabel*            lbl_skew;
       QLabel*            lbl_sigma;
+      QLabel*            lbl_integral;
 
       QwtCounter*        ct_dval1;
       QwtCounter*        ct_dval2;
@@ -142,7 +145,6 @@ class US_ModelMetrics : public US_Widgets
       QString            method;
       QString            analysis_name;
       QString            editGUID;
-      bool               monte_carlo;
       QLineEdit*         le_model;
       QLineEdit*         le_investigator;
       QLineEdit*         le_prefilter;
@@ -158,6 +160,7 @@ class US_ModelMetrics : public US_Widgets
       QLineEdit*         le_median;
       QLineEdit*         le_kurtosis;
       QLineEdit*         le_skew;
+      QLineEdit*         le_integral;
       QwtPlot*           data_plot;
 
       QList< S_Solute >  sk_distro;
@@ -191,6 +194,7 @@ private slots:
 	void set_dval1            ( double );
 	void set_dval2            ( double );
 	void set_dval3            ( double );
+   void set_dval_labels      ( bool update=false );
 	void set_sigma            ( double );
 	void help                 ( void )
       { showHelp.show_help( "manual/us_modelmetrics.html" ); };

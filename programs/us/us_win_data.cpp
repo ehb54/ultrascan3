@@ -14,7 +14,8 @@ namespace US_WinData
     P_SECOND,       P_DCDT,                // Velocity Menu
     P_VHWE,         P_2DSA,         P_PCSA,
     P_GAINIT,       P_DMGAINIT,     P_FEMA,
-    P_PSEUDO3D,     P_GRIDEDIT,     P_RAMP,
+    P_FEMSTAT,      P_PSEUDO3D,     P_GRIDEDIT,
+    P_RAMP,
 
     P_EQGLOBFIT,                           // Equilibrium Menu
 
@@ -123,6 +124,11 @@ namespace US_WinData
     { P_FEMA,    0, 0, "us_fematch",
       QObject::tr( "Loading Finite Element Match" ),
       QObject::tr( "Finite Element Match Program" )
+    },
+    
+    { P_FEMSTAT, 0, 0, "us_modelmetrics",
+      QObject::tr( "Loading Finite Element Model Statistics" ),
+      QObject::tr( "Finite Element Model Statistics Program" )
     },
     
     { P_PSEUDO3D, 0, 0, "us_pseudo3d_combine",
