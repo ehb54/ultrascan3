@@ -38,6 +38,7 @@
       <li> <a href="second_moment.html">Second Moment</a> </li>
       <li> <a href="time_derivative.html">Time Derivative</a> </li>
       <li> <a href="fe_match.html">Finite Element Model Viewer</a> </li>
+      <li> <a href="us_modelmetrics.html">Finite Element Model Statistics</a> </li>
       <li> <a href="pseudo3d_combine.html">Combine Pseudo-3D Distributions</a> </li>
     </ul>
   </li>

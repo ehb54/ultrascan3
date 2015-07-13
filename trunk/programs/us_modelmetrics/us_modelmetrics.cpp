@@ -145,6 +145,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    ct_dval3->setFixedSize(130, 25);
    connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval3(double)));
 
+   lbl_integral = us_label( tr( "D10, D90 Integral: " ), -1 );
    lbl_minimum  = us_label( tr( "Minimum: " ), -1 );
    lbl_maximum  = us_label( tr( "Maximum: " ), -1 );
    lbl_mean     = us_label( tr( "Mean: "    ), -1 );
@@ -153,6 +154,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    lbl_kurtosis = us_label( tr( "Kurtosis: "  ), -1 );
    lbl_skew     = us_label( tr( "Skew: "  ), -1 );
 
+   le_integral = us_lineedit( "", 1, true );
    le_minimum  = us_lineedit( "", 1, true );
    le_maximum  = us_lineedit( "", 1, true );
    le_mean     = us_lineedit( "", 1, true );
@@ -225,7 +227,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
 
    gl2->addWidget(pb_investigator, row, 0, 1, 1);
    gl2->addWidget(le_investigator, row, 1, 1, 1);
-   gl2->addLayout(plot,            row, 2, 22, 1);
+   gl2->addLayout(plot,            row, 2, 23, 1);
    row++;
    gl2->addLayout(disk_controls,   row, 0, 1, 2);
    row++;
@@ -246,6 +248,9 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    row += 3;
    gl2->addWidget(lbl_span,        row, 0, 1, 1);
    gl2->addWidget(le_span,         row, 1, 1, 1);
+   row++;                          
+   gl2->addWidget(lbl_integral,    row, 0, 1, 1);
+   gl2->addWidget(le_integral,     row, 1, 1, 1);
    row++;                          
    gl2->addWidget(lbl_minimum,     row, 0, 1, 1);
    gl2->addWidget(le_minimum,      row, 1, 1, 1);
@@ -300,7 +305,7 @@ void US_ModelMetrics::select_prefilter( void )
    else
       pfmsg = QString( pfilts[ 0 ] );
 
-// DbgLv(1) << "PreFilt: pfilts[0]" << ((nruns>0)?pfilts[0]:"(none)");
+   DbgLv(2) << "PreFilt: pfilts[0]" << ((nruns>0)?pfilts[0]:"(none)");
    le_prefilter->setText( pfmsg );
    load_model();
 }
@@ -322,6 +327,20 @@ void US_ModelMetrics::load_model( void )
    QString         mname;
    QString         sep;
    QString         aiters;
+   cmin   = 1e+39;
+   cmax   = 1e-39;
+   smin   = 1e+39;
+   smax   = 1e-39;
+   kmin   = 1e+39;
+   kmax   = 1e-39;
+   wmin   = 1e+39;
+   wmax   = 1e-39;
+   vmin   = 1e+39;
+   vmax   = 1e-39;
+   dmin   = 1e+39;
+   dmax   = 1e-39;
+   fmin   = 1e+39;
+   fmax   = 1e-39;
 
    if ( dialog.exec() != QDialog::Accepted )
       return;
@@ -371,13 +390,12 @@ void US_ModelMetrics::load_model( void )
       analysis_name  = "e00_a00_" + method + "_local";
    }
    if (aiters == "" ) aiters = "1";
-
    monte_carlo  = model.monteCarlo;
    mc_iters     = monte_carlo ? aiters.toInt() : 1;
    editGUID     = model.editGUID;
-   QString wl   = triple.remove(0, 2);
    QString cell = triple.at(0);
    QString ch   = triple.at(1);
+   QString wl   = triple.remove(0, 2);
    triple       = "Cell " + cell + ", Channel " + ch + ", " + wl + " nm";
    report_entry.runID = run_name;
    report_entry.triple = triple;
@@ -385,16 +403,14 @@ void US_ModelMetrics::load_model( void )
    report_entry.iterations = aiters;
    report_entry.edit = analysis_name;
 
-/*
-   DbgLv(0) << "monte_carlo:" << monte_carlo << "mc_iters:" << mc_iters << ", mdesc: " << mdesc;
-   DbgLv(0) << "aiters:" << aiters << "method:" << method << "run_name" << run_name;
-   DbgLv(0) << "asys:" << asys << "analysis_name:" << analysis_name << "Triple:" << triple;
-*/
+   DbgLv(2) << "monte_carlo:" << monte_carlo << "mc_iters:" << mc_iters << ", mdesc: " << mdesc;
+   DbgLv(2) << "aiters:" << aiters << "method:" << method << "run_name" << run_name;
+   DbgLv(2) << "asys:" << asys << "analysis_name:" << analysis_name << "Triple:" << triple;
 
    sk_distro.clear();
    total_conc = 0.0;
 
-   le_model->setText(run_name + " (" + method + ")");
+   le_model->setText( cell + "/" + ch + "/" + wl + " (" + method + ")");
    le_experiment->setText( analysis_name );
 
    // read in and set distribution s,c,k,d values
@@ -428,23 +444,25 @@ void US_ModelMetrics::load_model( void )
          fmin      = qMin( fmin, sol_sk.f );
          fmax      = qMax( fmax, sol_sk.f );
 
-//         DbgLv(2) << "Solute jj s w k c d" << jj << sol_sk.s << sol_sk.w << sol_sk.k
-//                  << sol_sk.c << sol_sk.d << " vb" << model.components[jj].vbar20;
+         DbgLv(2) << "Solute jj s w k c d" << jj << sol_sk.s << sol_sk.w << sol_sk.k
+                  << sol_sk.c << sol_sk.d << " vb" << model.components[jj].vbar20;
 
          sk_distro << sol_sk;
       }
 
-//      DbgLv(2) << "sk_distro.size() before reduction: " << sk_distro.size();
+      DbgLv(2) << "sk_distro.size() before reduction: " << sk_distro.size();
       
       // sort and reduce distribution
       sort_distro( sk_distro, true );
 
-//      DbgLv(2) << "sk_distro.size() after reduction: " << sk_distro.size();
-//      for ( int jj=0;jj<sk_distro.size();jj++ ) 
-//      {
-//         DbgLv(2) << " jj" << jj << " s k" << sk_distro[jj].s << sk_distro[jj].k
-//                  << " w v" << sk_distro[jj].w << sk_distro[jj].v; 
-//      }
+/*
+      DbgLv(2) << "sk_distro.size() after reduction: " << sk_distro.size();
+      for ( int jj=0;jj<sk_distro.size();jj++ ) 
+      {
+         DbgLv(2) << " jj" << jj << " s k" << sk_distro[jj].s << sk_distro[jj].k
+                  << " w v" << sk_distro[jj].w << sk_distro[jj].v; 
+      }
+*/
    }
 
    // Determine which attribute is fixed
@@ -469,7 +487,7 @@ void US_ModelMetrics::load_model( void )
    if (HPf != fixed) rb_f->setEnabled( true );
    if (HPm != fixed) rb_m->setEnabled( true );
    if (HPv != fixed) rb_v->setEnabled( true );
-//   DbgLv(0) << "Total concentration, array size original: " << total_conc << sk_distro.size();
+   DbgLv(2) << "Total concentration, array size original: " << total_conc << sk_distro.size();
    calc();
 
    ct_dval1 ->setEnabled( true );
@@ -521,6 +539,7 @@ void US_ModelMetrics::reset( void )
    dval1  = 10.0;
    dval2  = 50.0;
    dval3  = 90.0;
+   set_dval_labels(true);
 
    report_entry.sigma = "0.0";
    report_entry.sigma = str.setNum(sigma, 'f', 3);
@@ -533,6 +552,7 @@ void US_ModelMetrics::reset( void )
    ct_dval1 ->setEnabled( false );
    ct_dval2 ->setEnabled( false );
    ct_dval3 ->setEnabled( false );
+   ct_sigma ->setEnabled( false );
    rb_s->setChecked( true  );
    rb_s->setEnabled( false );
    rb_d->setEnabled( false );
@@ -548,6 +568,7 @@ void US_ModelMetrics::reset( void )
    le_dval2->     setText("");
    le_dval3->     setText("");
    le_span->      setText("");
+   le_integral->  setText("");
    le_minimum->   setText("");
    le_maximum->   setText("");
    le_mean->      setText("");
@@ -555,9 +576,11 @@ void US_ModelMetrics::reset( void )
    le_median->    setText("");
    le_kurtosis->  setText("");
    le_skew->      setText("");
-   if (report != "") write_report(); //write any unsaved report items to disk
+   if (report != "" && !saved) write_report(); //write any unsaved report items to disk
    report = "";
-
+   data_plot->clear();
+   data_plot->replot();
+   saved = false;
 }
 
 // Select DB investigator// Private slot to update disk/db control with dialog changes it
@@ -574,7 +597,8 @@ void US_ModelMetrics::write_report( void )
    report += "</body>\n</html>";
    report_ts << report;
    report_file.close();
-   QDesktopServices::openUrl ( "file://" + US_Settings::tmpDir() + "/ModelStatistics.html" ) ;
+   QDesktopServices::openUrl ( "file://" + US_Settings::tmpDir() + "/ModelStatistics.html" );
+   saved = true;
 }
 
 // Sort distribution solute list by s,k values and optionally reduce
@@ -614,7 +638,7 @@ void US_ModelMetrics::sort_distro( QList< S_Solute >& listsols,
 
           else
           {   // duplicate:  sum c value
-// DbgLv(1) << "DUP: sval svpr jj" << sol1.s << sol2.s << jj;
+ DbgLv(2) << "DUP: sval svpr jj" << sol1.s << sol2.s << jj;
              kdup    = max( kdup, ++jdup );
              qreal f = (qreal)( jdup + 1 );
              sol2.c += sol1.c;   // sum c value
@@ -655,12 +679,6 @@ void US_ModelMetrics::calc()
 {
    int i;
    QString str1, str2, str3;
-   lbl_dval1->setText( "D" + str1.setNum((int) dval1) + " value: ");
-   lbl_dval2->setText( "D" + str2.setNum((int) dval2) + " value: ");
-   lbl_dval3->setText( "D" + str3.setNum((int) dval3) + " value: ");
-   lbl_span->setText( "(D" + str3.setNum((int) dval3) + "-D" 
-                           + str1.setNum((int) dval1) + ")/D" 
-                           + str2.setNum((int) dval2) + ": ");
    HydroParm val1;
    HydroParm val2;
    QList <HydroParm> temp_list;
@@ -740,6 +758,7 @@ void US_ModelMetrics::calc()
       xmin = vmin;
       xmax = vmax;
    }
+   DbgLv(2) << "In calc: xmin: " << xmin << "xmax" << xmax;
    qSort(temp_list.begin(), temp_list.end()); // sort the list so reduction works.
    tc = 0.0;
    val1.parm = temp_list[0].parm;
@@ -778,11 +797,40 @@ void US_ModelMetrics::calc()
    }
 }
 
+void US_ModelMetrics::set_dval_labels( bool update )
+{
+   QString str1, str2, str3;
+   lbl_dval1->setText( "D" + str1.setNum((int) dval1) + " value: ");
+   lbl_dval2->setText( "D" + str1.setNum((int) dval2) + " value: ");
+   lbl_dval3->setText( "D" + str1.setNum((int) dval3) + " value: ");
+   lbl_span->setText( "(D" + str1.setNum((int) dval3) + "-D" 
+                           + str2.setNum((int) dval1) + ")/D" 
+                           + str3.setNum((int) dval2) + ": ");
+   lbl_integral->setText( "D" + str1.setNum((int) dval1) + ", D" 
+                           + str2.setNum((int) dval3) + " Integral: ");
+   if (update)
+   {
+      disconnect(ct_dval1);
+      disconnect(ct_dval2);
+      disconnect(ct_dval3);
+      disconnect(ct_sigma);
+      ct_dval1->setValue(dval1);
+      ct_dval2->setValue(dval2);
+      ct_dval3->setValue(dval3);
+      ct_sigma->setValue(sigma);
+      connect (ct_dval1, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
+      connect (ct_dval2, SIGNAL(valueChanged(double)), this, SLOT(set_dval2(double)));
+      connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval3(double)));
+      connect (ct_sigma, SIGNAL(valueChanged(double)), this, SLOT(set_sigma(double)));
+   }
+}
+
 void US_ModelMetrics::plot_data()
 {
+   QString str1, str2, str3;
    int points = hp_distro.size(), i;
-   double sum1=0.0, sum2, sum3, mode, median, skew, kurtosis;
-   QString str;
+   double sum1=0.0, sum2, sum3, mode, median, skew, kurtosis, percentage, integral;
+   set_dval_labels();
    i=0;
    while (sum1 <= tc * dval1/100.0 && i < points)
    {
@@ -803,6 +851,8 @@ void US_ModelMetrics::plot_data()
       sum3 += hp_distro[i].conc;
       i++; 
    }
+   integral = sum3 - sum1;
+   percentage = 100.0*integral/total_conc;
    xval3  = hp_distro[i-1].parm;
    median = hp_distro[points-1].parm -
            (hp_distro[points-1].parm - hp_distro[0].parm)/2.0;
@@ -838,42 +888,48 @@ void US_ModelMetrics::plot_data()
 
    if (calc_val == HPs || calc_val == HPk)
    {
-      le_dval1->setText(str.setNum(xval1, 'f', 5));
-      le_dval2->setText(str.setNum(xval2, 'f', 5));
-      le_dval3->setText(str.setNum(xval3, 'f', 5));
-      le_minimum->setText(str.setNum(hp_distro[0].parm, 'f', 5));
-      le_maximum->setText(str.setNum(hp_distro[points-1].parm, 'f', 5));
-      le_mean->setText(str.setNum(sum1, 'f', 5));
-      le_mode->setText(str.setNum(mode, 'f', 5));
-      le_median->setText(str.setNum(median, 'f', 5));
+      le_dval1->setText(str1.setNum(xval1, 'f', 3));
+      le_dval2->setText(str1.setNum(xval2, 'f', 3));
+      le_dval3->setText(str1.setNum(xval3, 'f', 3));
+      le_integral->setText(str1.setNum(integral, 'f', 3) + " (" + 
+            str2.setNum(percentage, 'f', 3)  + "\%)");
+      le_minimum->setText(str1.setNum(hp_distro[0].parm, 'f', 3));
+      le_maximum->setText(str1.setNum(hp_distro[points-1].parm, 'f', 3));
+      le_mean->setText(str1.setNum(sum1, 'f', 3));
+      le_mode->setText(str1.setNum(mode, 'f', 3));
+      le_median->setText(str1.setNum(median, 'f', 3));
    }
    else
    {
-      le_dval1->setText(str.setNum(xval1, 'e', 6));
-      le_dval2->setText(str.setNum(xval2, 'e', 6));
-      le_dval3->setText(str.setNum(xval3, 'e', 6));
-      le_minimum->setText(str.setNum(hp_distro[0].parm, 'e', 6));
-      le_maximum->setText(str.setNum(hp_distro[points-1].parm, 'e', 6));
-      le_mean->setText(str.setNum(sum1, 'e', 6));
-      le_mode->setText(str.setNum(mode, 'e', 3));
-      le_median->setText(str.setNum(median, 'e', 3));
+      le_dval1->setText(str1.setNum(xval1, 'e', 3));
+      le_dval2->setText(str1.setNum(xval2, 'e', 3));
+      le_dval3->setText(str1.setNum(xval3, 'e', 3));
+      le_integral->setText(str1.setNum(integral, 'e', 3) + " (" + 
+            str2.setNum(percentage, 'f', 3)  + "\%)");
+      le_minimum->setText(str1.setNum(hp_distro[0].parm, 'e', 3));
+      le_maximum->setText(str1.setNum(hp_distro[points-1].parm, 'e', 3));
+      le_mean->setText(str1.setNum(sum1, 'e', 3));
+      le_mode->setText(str1.setNum(mode, 'e', 3));
+      le_median->setText(str1.setNum(median, 'e', 3));
    }
-   le_span->setText(str.setNum(((xval3-xval1)/xval2), 'f', 6));
-   le_skew->setText(str.setNum(skew, 'f', 6));
-   le_kurtosis->setText(str.setNum(kurtosis, 'f', 6));
+   le_span->setText(str1.setNum(((xval3-xval1)/xval2), 'f', 3));
+   le_skew->setText(str1.setNum(skew, 'f', 3));
+   le_kurtosis->setText(str1.setNum(kurtosis, 'f', 3));
 
-   report_entry.x[0] = le_dval1->text();
-   report_entry.x[1] = le_dval2->text();
-   report_entry.x[2] = le_dval3->text();
+   report_entry.x[0]       = le_dval1->text();
+   report_entry.x[1]       = le_dval2->text();
+   report_entry.x[2]       = le_dval3->text();
    report_entry.span_label = lbl_span->text();
-   report_entry.span = le_span->text();
-   report_entry.minimum = le_minimum->text();
-   report_entry.maximum = le_maximum->text();
-   report_entry.mean = le_mean->text();
-   report_entry.mode = le_mode->text();
-   report_entry.median = le_median->text();
-   report_entry.skew = le_skew ->text();
-   report_entry.kurtosis = le_kurtosis->text();
+   report_entry.span       = le_span->text();
+   report_entry.integral   = le_integral->text();
+   report_entry.totalc     = str1.setNum(total_conc, 'f', 3);
+   report_entry.minimum    = le_minimum->text();
+   report_entry.maximum    = le_maximum->text();
+   report_entry.mean       = le_mean->text();
+   report_entry.mode       = le_mode->text();
+   report_entry.median     = le_median->text();
+   report_entry.skew       = le_skew ->text();
+   report_entry.kurtosis   = le_kurtosis->text();
 
    QVector <double> xv;
    QVector <double> yv;
@@ -917,9 +973,9 @@ void US_ModelMetrics::plot_data()
    QwtPlotCurve* curve3;
    QwtPlotCurve* curve4;
    curve1  = us_curve( data_plot, tr( "Distribution" ) );
-   curve2  = us_curve( data_plot, "D" + str.setNum((int) dval1));
-   curve3  = us_curve( data_plot, "D" + str.setNum((int) dval2));
-   curve4  = us_curve( data_plot, "D" + str.setNum((int) dval3));
+   curve2  = us_curve( data_plot, "D" + str1.setNum((int) dval1));
+   curve3  = us_curve( data_plot, "D" + str1.setNum((int) dval2));
+   curve4  = us_curve( data_plot, "D" + str1.setNum((int) dval3));
    if (ct_sigma->value() > 0.0)
    {
       curve1->setPen( QPen( QBrush( Qt::yellow ), 2.0 ) );
@@ -953,6 +1009,8 @@ void US_ModelMetrics::update_sigma( void )
    t_xmax = xmax;
    range = t_xmax - t_xmin;
    t_xmin -= range/5.0; // add 20% to the range
+   DbgLv(2) << "In update_sigma: xmin: " << xmin << "t_xmin" << t_xmin
+      << "xmax:" << xmax << "t_xmax:" << t_xmax << "range:" << range;
    if (t_xmin < 0.0) t_xmin = 0.0;
    t_xmax += range/5.0;
    range = t_xmax - t_xmin;
@@ -1033,6 +1091,7 @@ void US_ModelMetrics::addReportItem( void )
 {
    QString str;
    QString timestamp = QDateTime::currentDateTime().toUTC().toString("MMddyyhhmmss");
+   saved = false;
    report_entry.filename = US_Settings::tmpDir() + "/" + timestamp + ".png";
    if (!pb_write->isEnabled()) // open a new report file in ultrascan's tmp dir
    {
@@ -1091,6 +1150,9 @@ void US_ModelMetrics::addReportItem( void )
    report += table_row( 10, report_entry.span_label, report_entry.span,
                        "Minimum:", report_entry.minimum, 
                        "Maximum:", report_entry.maximum);
+   report += table_row( 10, "D" + report_entry.d[0] + ", " + "D" + report_entry.d[2] +
+                       " Integral:", report_entry.integral, "Total Concentration:", 
+                       report_entry.totalc, "", "");
    report += table_row( 10, "Mean:", report_entry.mean, 
                        "Mode:",   report_entry.mode,
                        "Median:", report_entry.median); 
