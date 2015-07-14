@@ -488,6 +488,7 @@ DbgLv(1) << " drow chann" << drow << chann;
    for ( int drow = 0; drow < ntriples; drow++ )
    {  // Output a set of files for each input triple
       rdata  = &rawList [ drow ];               // Current data
+      nscan  = rdata->scanCount();
       ddesc  = rdata->description + "\n";
       hcell  = rdata->cell;
       fext   = "." + rawDtype + QString::number( hcell );
@@ -534,6 +535,8 @@ DbgLv(1) << "OFNAME" << ofname;
          ts << oline;                           // Write header line
 DbgLv(1) << "  LINE:" << QString(ddesc).replace("\n","");
 DbgLv(1) << "  LINE:" << QString(oline).replace("\n","");
+//DbgLv(1) << "  LINE: nv ii sizes" << nvalu << ii << rdata->scanCount()
+//   << rdata->pointCount() << "nscan" << nscan;
 
          for ( int jj = 0; jj < nvalu; jj++ )
          {  // Output a line for each data point
@@ -600,6 +603,7 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
    for ( int drow = 0; drow < ntriples; drow++ )
    {  // Output a set of files for each input triple
       rdata  = &rawList [ drow ];
+      nscan  = rdata->scanCount();
       ddesc  = rdata->description + "\n";
       hcell  = rdata->cell;
       fext   = "." + rawDtype + QString::number( hcell );
@@ -722,6 +726,7 @@ DbgLv(1) << "rawDtype" << rawDtype << "htype" << htype;
    for ( int drow = 0; drow < ntriples; drow++ )
    {  // Output a set of files for each input triple
       rdata  = &rawList [ drow ];
+      nscan  = rdata->scanCount();
       ddesc  = rdata->description + "\n";
       hcell  = rdata->cell;
       fext   = "." + rawDtype + QString::number( hcell );
