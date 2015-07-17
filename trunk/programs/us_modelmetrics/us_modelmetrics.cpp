@@ -145,14 +145,15 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    ct_dval3->setFixedSize(130, 25);
    connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval3(double)));
 
-   lbl_integral = us_label( tr( "D10, D90 Integral: " ), -1 );
-   lbl_minimum  = us_label( tr( "Minimum: " ), -1 );
-   lbl_maximum  = us_label( tr( "Maximum: " ), -1 );
-   lbl_mean     = us_label( tr( "Mean: "    ), -1 );
-   lbl_mode     = us_label( tr( "Mode: "    ), -1 );
-   lbl_median   = us_label( tr( "Median: "  ), -1 );
-   lbl_kurtosis = us_label( tr( "Kurtosis: "  ), -1 );
-   lbl_skew     = us_label( tr( "Skew: "  ), -1 );
+   lbl_integral = us_label( tr( "D10, D90 Integral: "  ), -1 );
+   lbl_minimum  = us_label( tr( "Minimum: "            ), -1 );
+   lbl_maximum  = us_label( tr( "Maximum: "            ), -1 );
+   lbl_mean     = us_label( tr( "Mean: "               ), -1 );
+   lbl_mode     = us_label( tr( "Mode: "               ), -1 );
+   lbl_median   = us_label( tr( "Median: "             ), -1 );
+   lbl_skew     = us_label( tr( "Skew: "               ), -1 );
+   lbl_kurtosis = us_label( tr( "Kurtosis: "           ), -1 );
+   lbl_name     = us_label( tr( "Model Description: "  ), -1 );
 
    le_integral = us_lineedit( "", 1, true );
    le_minimum  = us_lineedit( "", 1, true );
@@ -160,8 +161,11 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    le_mean     = us_lineedit( "", 1, true );
    le_mode     = us_lineedit( "", 1, true );
    le_median   = us_lineedit( "", 1, true );
-   le_kurtosis = us_lineedit( "", 1, true );
    le_skew     = us_lineedit( "", 1, true );
+   le_kurtosis = us_lineedit( "", 1, true );
+   le_name     = us_lineedit( "", 1, false);
+   connect (le_name, SIGNAL( textChanged(const QString &)), this,
+                     SLOT (update_name(const QString &)));
 
    pb_write = us_pushbutton( tr( "Show Report" ) );
    pb_write->setEnabled( false );
@@ -272,6 +276,9 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    row++;
    gl2->addWidget(lbl_kurtosis,    row, 0, 1, 1);
    gl2->addWidget(le_kurtosis,     row, 1, 1, 1);
+   row++;
+   gl2->addWidget(lbl_name,        row, 0, 1, 1);
+   gl2->addWidget(le_name,         row, 1, 1, 1);
    row++;                          
    gl2->addWidget(pb_write,        row, 0, 1, 1);
    gl2->addWidget(pb_reset,        row, 1, 1, 1);
@@ -574,8 +581,9 @@ void US_ModelMetrics::reset( void )
    le_mean->      setText("");
    le_mode->      setText("");
    le_median->    setText("");
-   le_kurtosis->  setText("");
    le_skew->      setText("");
+   le_kurtosis->  setText("");
+   le_name->      setText("");
    if (report != "" && !saved) write_report(); //write any unsaved report items to disk
    report = "";
    data_plot->clear();
@@ -930,6 +938,7 @@ void US_ModelMetrics::plot_data()
    report_entry.median     = le_median->text();
    report_entry.skew       = le_skew ->text();
    report_entry.kurtosis   = le_kurtosis->text();
+   report_entry.sigma      = str1.setNum(sigma, 'f', 3);
 
    QVector <double> xv;
    QVector <double> yv;
@@ -997,6 +1006,11 @@ void US_ModelMetrics::plot_data()
    curve3->setData( x2, y2, 2);
    curve4->setData( x3, y3, 2);
    data_plot->replot();
+}
+
+void US_ModelMetrics::update_name( const QString & text )
+{
+   report_entry.name = text;
 }
 
 void US_ModelMetrics::update_sigma( void )
@@ -1092,7 +1106,8 @@ void US_ModelMetrics::addReportItem( void )
    QString str;
    QString timestamp = QDateTime::currentDateTime().toUTC().toString("MMddyyhhmmss");
    saved = false;
-   report_entry.filename = US_Settings::tmpDir() + "/" + timestamp + ".png";
+   //report_entry.filename = US_Settings::tmpDir() + "/" + timestamp + ".png";
+   report_entry.filename = timestamp + ".png";
    if (!pb_write->isEnabled()) // open a new report file in ultrascan's tmp dir
    {
       report_file.setFileName(US_Settings::tmpDir() + "/ModelStatistics.html" );
@@ -1121,8 +1136,8 @@ void US_ModelMetrics::addReportItem( void )
    model_count++;
    report += "  <center>\n    <table border='1' bgcolor=#CCCCCC cellpadding='5'>\n";
    report += "      <tr><td colspan='4' bgcolor='#FFFFFF' align='center'><b>Information for Model " 
-             + str.setNum( model_count ) + ":</b></td></tr>\n";
-   report += "      <tr><td colspan='4' align='center' bgcolor='#FFFFFF'><img src='file:///" 
+             + str.setNum( model_count ) + " (" + report_entry.name + "):</b></td></tr>\n";
+   report += "      <tr><td colspan='4' align='center' bgcolor='#FFFFFF'><img src='" 
              + report_entry.filename + "'></td></tr>\n";
    report += table_row( 6, "Investigator:", report_entry.investigator, 
                        "Distribution Type:",   report_entry.parameter);
@@ -1160,8 +1175,8 @@ void US_ModelMetrics::addReportItem( void )
                        "Skew:", report_entry.skew, 
                        "Kurtosis:",   report_entry.kurtosis);
    report += indent(8) + "</table>\n" + indent(6) + "</td></tr>\n";
-   report += "    </table>\n  </center></p>\n  <p class=\"break\">\n";
-   write_plot( report_entry.filename, data_plot ); // write current image to tmp dir
+   report += "    </table>\n  </center>\n  <p class=\"break\">\n";
+   write_plot( US_Settings::tmpDir() + "/" + report_entry.filename, data_plot ); // write current image to tmp dir
 }
 
 QString US_ModelMetrics::table_row( const int spaces, const QString& s1, const QString& s2, 
