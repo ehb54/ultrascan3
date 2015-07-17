@@ -53,7 +53,7 @@ struct reportItem
 {
    QString investigator, runID, triple, analysis, iterations, edit, parameter;
    QString sigma, d[3], x[3], span, minimum, maximum, mean, mode;
-   QString median, skew, kurtosis, span_label, filename, integral, totalc;
+   QString median, skew, kurtosis, span_label, filename, integral, totalc, name;
    QPixmap pixmap;
 };
 
@@ -127,6 +127,7 @@ class US_ModelMetrics : public US_Widgets
       QLabel*            lbl_skew;
       QLabel*            lbl_sigma;
       QLabel*            lbl_integral;
+      QLabel*            lbl_name;
 
       QwtCounter*        ct_dval1;
       QwtCounter*        ct_dval2;
@@ -161,6 +162,7 @@ class US_ModelMetrics : public US_Widgets
       QLineEdit*         le_kurtosis;
       QLineEdit*         le_skew;
       QLineEdit*         le_integral;
+      QLineEdit*         le_name;
       QwtPlot*           data_plot;
 
       QList< S_Solute >  sk_distro;
@@ -187,7 +189,8 @@ private slots:
 	void calc                 ( void );
 	void plot_data            ( void );
 	void update_sigma         ( void );
-	void select_hp            ( int );
+	void update_name          ( const QString & );
+	void select_hp            ( int  );
 	void write_report         ( void );
    void sort_distro          ( QList< S_Solute >&, bool );
 	bool equivalent           ( double, double, double );
