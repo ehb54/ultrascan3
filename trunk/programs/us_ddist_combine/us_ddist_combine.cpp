@@ -390,11 +390,11 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    data_plot1->setMinimumSize( 560, 400 );
    data_plot1->setAxisScale( QwtPlot::xBottom, 1.0,  10.0 );
    data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, 100.0 );
-   QwtPlotGrid* grid = us_grid( data_plot1 );
-   grid->enableXMin( true );
-   grid->enableYMin( true );
-   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
+   data_grid = us_grid( data_plot1 );
+   data_grid->enableXMin( true );
+   data_grid->enableYMin( true );
+   data_grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   data_grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
 
    QwtLegend *legend = new QwtLegend;
    legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
@@ -636,30 +636,31 @@ DbgLv(1) << "main size" << size();
 // Reset plot:  Clear plots and lists of plotted data
 void US_DDistr_Combine::reset_plot( void )
 {
-   data_plot1->detachItems();
    data_plot1->clear();
    data_plot1->replot();
-
    pdistrs.clear();
    pdisIDs.clear();
    pb_saveda->setEnabled( false );
 
    lw_models  ->setCurrentRow( -1 );
+   le_plxmin->disconnect();
+   le_plxmax->disconnect();
+   QString smin = "0";
+   QString smax = "0";
+   le_plxmin->setText( smin );
+   le_plxmax->setText( smax );
+   connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+      this, SLOT( envvalChange() ) );
+   connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+      this, SLOT( envvalChange() ) );
+
 }
 
 // Plot all data
 void US_DDistr_Combine::plot_data( void )
 {
 DbgLv(1) << "pDa:  xtype" << xtype;
-   data_plot1->detachItems();
-   data_grid = us_grid ( data_plot1 );
-   data_grid->enableXMin( true );
-   data_grid->enableYMin( true );
-   data_grid->setMajPen(
-         QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   data_grid->setMinPen(
-         QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
-
+   data_plot1->clear();
    QString titleY = tr( "Signal Concentration" );
 DbgLv(1) << "pDa:  titleY" << titleY;
    QString titleP;
@@ -688,7 +689,7 @@ DbgLv(1) << "pDa:  titleY" << titleY;
    else if ( rb_pltvb->isChecked() )
    {
       titleP = tr( "Discrete Vbar Distributions" );
-      titleX = tr( "Vbar (Specific Density)" );
+      titleX = tr( "Partial Specific Volume (vbar)" );
    }
    else if ( rb_pltMWl->isChecked() )
    {
@@ -714,23 +715,14 @@ DbgLv(1) << "pDa:  titleX" << titleX;
          plxmax        = qMax( plxmax, pdistrs[ ii ].xvals[ jj ] );
       }
    }
-
-   //if ( le_plxmax->text().toDouble() == 0.0 )
-   {
-      double plxinc = ( plxmax - plxmin ) / 299.0;
-      int rpwr      = qRound( log10( plxinc ) );
-      plxinc        = pow( 10.0, rpwr - 3 );
-      plxmin        = (double)qFloor( plxmin / plxinc ) * plxinc;
-      plxmax        = (double)qRound( plxmax / plxinc ) * plxinc;
-      le_plxmin->disconnect();
-      le_plxmax->disconnect();
-      le_plxmin->setText( QString::number( plxmin ) );
-      le_plxmax->setText( QString::number( plxmax ) );
-      connect( le_plxmin,   SIGNAL( editingFinished( ) ),
-               this,        SLOT(   envvalChange(    ) ) );
-      connect( le_plxmax,   SIGNAL( editingFinished( ) ),
-               this,        SLOT(   envvalChange(    ) ) );
-   }
+   le_plxmin->disconnect();
+   le_plxmax->disconnect();
+   le_plxmin->setText( QString::number( plxmin ) );
+   le_plxmax->setText( QString::number( plxmax ) );
+   connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+      this, SLOT(envvalChange( ) ) );
+   connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+      this, SLOT(envvalChange( ) ) );
 }
 
 // Add a single distribution to the plot
@@ -741,6 +733,8 @@ void US_DDistr_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    double* yy  = ddesc.yvals.data();
    QVector< double > xenv;
    QVector< double > yenv;
+   QString str;
+   double minx=1e99, maxx=-1e99;
 DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 
    QwtPlotCurve* data_curv = us_curve( data_plot1, distrID );
@@ -754,38 +748,47 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 
       xx        = xenv.data();
       yy        = yenv.data();
+      for (int i=0; i<xenv.size(); i++)
+      {
+         minx = qMin(minx, xenv[i]);
+         maxx = qMax(maxx, xenv[i]);
+      }
    }
    else
    {
       data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Sticks );
+      for (int i=0; i<ddesc.xvals.size(); i++)
+      {
+         minx = qMin(minx, ddesc.xvals[i]);
+         maxx = qMax(maxx, ddesc.xvals[i]);
+      }
    }
 
    data_curv->setData ( xx, yy, ndispt );
    data_curv->setItemAttribute( QwtPlotItem::Legend, true );
-
-   double minx   = le_plxmin->text().toDouble();
-   double maxx   = le_plxmax->text().toDouble();
-   if ( maxx == 0.0 )
-      data_plot1->setAxisAutoScale( QwtPlot::xBottom );
-   else
-      data_plot1->setAxisScale(     QwtPlot::xBottom, minx, maxx );
+   if (le_plxmin->text().toDouble() < minx) 
+   {
+      minx = le_plxmin->text().toDouble();
+   }
+   if (le_plxmax->text().toDouble() > maxx) 
+   {
+      maxx = le_plxmax->text().toDouble();
+   }
+   le_plxmin->disconnect();
+   le_plxmax->disconnect();
+   le_plxmin->setText(str.setNum(minx));
+   le_plxmax->setText(str.setNum(maxx));
+   connect( le_plxmin,   SIGNAL( editingFinished( ) ),
+      this, SLOT(envvalChange() ) );
+   connect( le_plxmax,   SIGNAL( editingFinished( ) ),
+      this, SLOT(envvalChange() ) );
+   data_plot1->setAxisScale( QwtPlot::xBottom, minx, maxx );
    data_plot1->setAxisAutoScale( QwtPlot::yLeft );
    data_plot1->enableAxis      ( QwtPlot::xBottom, true );
    data_plot1->enableAxis      ( QwtPlot::yLeft,   true );
-
-   if ( pdistrs.size() < 2 )
-   {  // Set up grid if first distribution in plot
-      data_grid = us_grid ( data_plot1 );
-      data_grid->enableXMin( true );
-      data_grid->enableYMin( true );
-      data_grid->setMajPen(
-            QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-      data_grid->setMinPen(
-            QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
-   }
-
    data_plot1->replot();
+
 }
 
 // Save the plot data
@@ -1758,7 +1761,7 @@ DbgLv(1) << "  PX=Molec.Wt.log";
       }
 
       le_plxmin->disconnect();
-      le_plxmin->disconnect();
+      le_plxmax->disconnect();
       le_plxmin->setText( "0" );
       le_plxmax->setText( "0" );
       connect( le_plxmin,   SIGNAL( editingFinished( ) ),
