@@ -660,6 +660,15 @@ void US_DistribPlot::save_data_file( QString data2File )
 
    int nhpts  = histo_data( hseds, hfrqs );
    int nepts  = envel_data( eseds, efrqs );
+   double tconc = tot_conc;
+
+   if ( tconc < 0.01 )
+   {  // If concentration too small, bump it to 1.0e0 range
+      double tcpwr = qFloor( log10( tconc ) );
+      tconc        = tconc * pow( 10.0, -tcpwr );
+DbgLv(1) << "SaveDat: tot_conc tconc" << tot_conc << tconc
+ << "tcpwr" << tcpwr;
+   }
 DbgLv(1) << "SaveDat: file" << data2File << "nhpts nepts" << nhpts << nepts;
 
    QFile datf( data2File );
@@ -680,7 +689,7 @@ DbgLv(1) << "SaveDat: file" << data2File << "nhpts nepts" << nhpts << nepts;
          line = QString().sprintf(
                    "\"%.6f\",\"%.6f\",\"%.6f\",\"%9.2f\",\"%9.2f\"\n",
                    eseds[ ii ], efrqs[ ii ], hseds[ ii ], hfrqs[ ii ],
-                   tot_conc );
+                   tconc );
       else
          line = QString().sprintf(
                    "\"%.6f\",\"%.6f\",\"\",\"\",\"\"\n",
