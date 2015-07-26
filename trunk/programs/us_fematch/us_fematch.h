@@ -120,6 +120,7 @@ class US_FeMatch : public US_Widgets
       bool          cnstvb;
       bool          cnstff;
       bool          exp_steps;
+      bool          dat_steps;
       bool          is_dmga_mc;
 
       QString       run_name;

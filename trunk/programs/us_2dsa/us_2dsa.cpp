@@ -302,23 +302,41 @@ DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
       }
    }
 
-   exp_steps  = ( speed_steps.count() > 0 );  // Flag any multi-step experiment
-int nesc=edata->scanData.size();
-int etm1=edata->scanData[0].seconds;
-double eom1=edata->scanData[0].omega2t;
-int etm2=edata->scanData[nesc-1].seconds;
-double eom2=edata->scanData[nesc-1].omega2t;
-int nssp=speed_steps.count();
-int nssc=(nssp<1)?0:speed_steps[nssp-1].scans;
-DbgLv(1) << "LD:sp: nesc nssp nssc" << nesc << nssp << nssc;
-DbgLv(1) << "LD:sp:  etm1 etm2 eom1 eom2" << etm1 << etm2 << eom1 << eom2;
-if(nssp>0) {
- int stm1=speed_steps[nssp-1].time_first;
- double som1=speed_steps[nssp-1].w2t_first;
- int stm2=speed_steps[nssp-1].time_last;
- double som2=speed_steps[nssp-1].w2t_last;
- DbgLv(1) << "LD:sp:  stm1 stm2 som1 som2" << stm1 << stm2 << som1 << som2; }
+   int nssp      = speed_steps.count();
+   int nssc      = ( nssp < 1 ) ? 0 : speed_steps[ nssp - 1 ].scans;
+DbgLv(1) << "LD:sp: nssp nssc" << nssp << nssc;
+   for ( int ds = 0; ds < lw_triples->count(); ds++ )
+   {
+      edata         = &dataList[ ds ];
+      int nesc      = edata->scanData.size();
+      int etm1      = edata->scanData[        0 ].seconds;
+      int etm2      = edata->scanData[ nesc - 1 ].seconds;
+      double eom1   = edata->scanData[        0 ].omega2t;
+      double eom2   = edata->scanData[ nesc - 1 ].omega2t;
+DbgLv(1) << "LD:sp:  etm1 etm2 eom1 eom2" << etm1 << etm2 << eom1 << eom2
+ << "nesc" << nesc << "ds" << ds;
 
+      if ( nssp > 0 )
+      {
+         int stm1      = speed_steps[ nssp - 1 ].time_first;
+         int stm2      = speed_steps[ nssp - 1 ].time_last;
+         double som1   = speed_steps[ nssp - 1 ].w2t_first;
+         double som2   = speed_steps[ nssp - 1 ].w2t_last;
+
+         if ( etm1 < stm1  ||  etm2 > stm2 )
+         {
+            nssp          = 0;
+            speed_steps.clear();
+            break;
+         }
+DbgLv(1) << "LD:sp:  stm1 stm2 som1 som2" << stm1 << stm2 << som1 << som2
+ << "nssp" << nssp;
+      }
+   }
+
+   exp_steps     = ( nssp > 0 );      // Flag use of experiment speed steps
+   edata         = &dataList[ 0 ];    // Point to first loaded data
+DbgLv(1) << "LD:sp:    exp_steps" << exp_steps;
 }
 
 // plot the data

@@ -385,6 +385,7 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    minimize_opt            = parameters[ "minimize_opt"   ].toInt();
 minimize_opt=(minimize_opt==0?2:minimize_opt);
    total_points            = 0;
+   bool redo_ss            = false;     // By default, accept speed step as is
 
    // Calculate s, D corrections for calc_residuals; simulation parameters
    for ( int ee = 0; ee < data_sets.size(); ee++ )
@@ -413,9 +414,28 @@ if ( my_rank == 0 )
 
       // Set up simulation parameters for the data set
  
-      bool incl_speed     = ( ds->simparams.speed_step.count() < 1 );
+      int nssp            = ds->simparams.speed_step.count();
+      bool incl_speed     = ( nssp < 1 );
       ds->simparams.initFromData( NULL, *edata, incl_speed );
+if ( my_rank == 0 )
+ DbgLv(0) << "incl_speed" << incl_speed << "nssp" << nssp;
  
+      if ( ! incl_speed &&  ! redo_ss )
+      {  // If experiment speed step used, test against data set times
+         int stm1            = ds->simparams.speed_step[        0 ].time_first;
+         int stm2            = ds->simparams.speed_step[ nssp - 1 ].time_last;
+         int nesc            = edata->scanData.size();
+         int etm1            = edata->scanData[        0 ].seconds;
+         int etm2            = edata->scanData[ nesc - 1 ].seconds;
+if ( my_rank == 0 )
+ DbgLv(0) << "etm1 stm1" << etm1 << stm1 << "stm2 etm2" << stm2 << etm2;
+
+         if ( etm1 < stm1  ||  etm2 > stm2 )
+         {  // If data time range outside that of speed step, flag it
+            redo_ss             = true;
+         }
+      }
+
       ds->simparams.rotorcoeffs[ 0 ]  = ds->rotor_stretch[ 0 ];
       ds->simparams.rotorcoeffs[ 1 ]  = ds->rotor_stretch[ 1 ];
       ds->simparams.bottom_position   = ds->centerpiece_bottom;
@@ -443,6 +463,28 @@ if ( my_rank == 0 )
 DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
 
       maxods << odmax;
+   }
+
+if ( my_rank == 0 )
+ DbgLv(0) << "rank" << my_rank << "redo_ss" << redo_ss;
+   if ( redo_ss )
+   {  // If speed step re-do flagged, set all speed steps from data
+      for ( int ee = 0; ee < data_sets.size(); ee++ )
+      {
+         US_SolveSim::DataSet*  ds    = data_sets[ ee ];
+
+         ds->simparams.computeSpeedSteps( &ds->run_data.scanData,
+                                          ds->simparams.speed_step );
+if ( my_rank == 0 )
+ DbgLv(0) << "rank" << my_rank << "ee" << ee << "speed_step RE-DONE from data";
+int nssp= ds->simparams.speed_step.count();
+int stm1= ds->simparams.speed_step[     0].time_first;
+int stm2= ds->simparams.speed_step[nssp-1].time_last;
+if ( my_rank == 0 )
+ DbgLv(0) << my_rank << ": stm1" << stm1 << "stm2" << stm2;
+if ( my_rank == 0 )
+ ds->simparams.debug();
+      }
    }
 
    double  s_max = parameters[ "s_max" ].toDouble() * 1.0e-13;
