@@ -761,8 +761,10 @@ void US_vHW_Combine::triple_select( int row )
 DbgLv(1) << "TripleSel:row" << row;
    if ( row < 0 )  return;
    QListWidgetItem* item = lw_triples->item( row );
-   triple   = item->text().section( ":", 0, 0 ).right( 7 )
-                          .section( "(", 1, 1 ).section( ")", 0, 0 );
+   triple   = item->text().section( ":",  0,  0 ).simplified()
+                          .section( " ", -1, -1 )
+                          .section( "(",  1,  1 )
+                          .section( ")",  0,  0 );
 DbgLv(1) << "TripleSel:triple" << triple;
 
    DistrDesc ddesc;
