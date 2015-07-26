@@ -528,14 +528,38 @@ DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
       }
    }
 
-   exp_steps  = ( speed_steps.count() > 0 );  // Flag any multi-step experiment
+   int nssp       = speed_steps.count();
+   int ntriples   = triples.size();
+
+   if ( nssp > 0 )
+   {
+      int stm1   = speed_steps[ nssp - 1 ].time_first;
+      int stm2   = speed_steps[ nssp - 1 ].time_last;
+
+      for ( int ds = 0; ds < ntriples; ds++ )
+      {  // Scan data time ranges and compare to experiment speed steps
+         edata      = &dataList[ ds ];
+         int lesc   = edata->scanCount() - 1;
+         int etm1   = edata->scanData[    0 ].seconds;
+         int etm2   = edata->scanData[ lesc ].seconds;
+
+         if ( etm1 < stm1  ||  etm2 > stm2 )
+         {  // Data times beyond speed step ranges, so flag use of data ranges
+            nssp       = 0;
+            speed_steps.clear();
+            break;
+         }
+      }
+   }
+
+   exp_steps  = ( nssp > 0 );        // Flag use of experiment speed steps
+   dat_steps  = ! exp_steps;         // Flag use of each data speed steps
 
    qApp->processEvents();
 
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm( font );
    int fontHeight = fm.lineSpacing();
-   int ntriples   = triples.size();
    lw_triples->setMaximumHeight( fontHeight * min( ntriples, 4 ) + 12 );
 
    for ( int ii = 0; ii < ntriples; ii++ )
@@ -543,7 +567,8 @@ DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
 
    allExcls.fill( excludedScans, ntriples );
 
-   scanCount = edata->scanData.size();
+   edata      = &dataList[ 0 ];
+   scanCount  = edata->scanData.size();
    double avgTemp = edata->average_temperature();
 
    // set ID, description, and avg temperature text
@@ -2010,7 +2035,7 @@ DbgLv(1) << " baseline plateau" << edata->baseline << edata->plateau;
    US_Passwd pw;
    US_DB2* dbP = dkdb_cntrls->db() ? new US_DB2( pw.getPasswd() ) : NULL;     
 
-   simparams.initFromData( dbP, *edata, !exp_steps );
+   simparams.initFromData( dbP, *edata, dat_steps );
 DbgLv(1) << " initFrDat rotorCalID coeffs" << simparams.rotorCalID
    << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 simparams.simpoints = adv_vals[ "simpoints" ].toInt();

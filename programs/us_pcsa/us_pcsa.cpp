@@ -289,7 +289,32 @@ DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
       }
    }
 
-   exp_steps  = ( speed_steps.count() > 0 );  // Flag any multi-step experiment
+   int ntriples  = triples.count();
+   int nssp      = speed_steps.count();
+
+   if ( nssp > 0 )
+   {
+      int stm1      = speed_steps[ nssp - 1 ].time_first;
+      int stm2      = speed_steps[ nssp - 1 ].time_last;
+
+      for ( int ds = 0; ds < ntriples; ds++ )
+      {  // Scan data time ranges and compare to experiment speed steps
+         edata         = &dataList[ ds ];
+         int lesc      = edata->scanCount() - 1;
+         int etm1      = edata->scanData[    0 ].seconds;
+         int etm2      = edata->scanData[ lesc ].seconds;
+
+         if ( etm1 < stm1  ||  etm2 > stm2 )
+         {  // Data times beyond speed step ranges, so flag use of data ranges
+            nssp          = 0;
+            speed_steps.clear();
+            break;
+         }
+      }
+   }
+
+   exp_steps  = ( nssp > 0 );    // Flag use of experiment speed steps
+   dat_steps  = ! exp_steps;     // Flag use of each data's speed steps
 }
 
 // plot the data
@@ -912,7 +937,7 @@ void US_pcsa::open_fitcntl()
    US_Passwd pw;
    US_DB2* dbP     = disk_controls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
 
-   dset.simparams.initFromData( dbP, dataList[ drow ], !exp_steps );
+   dset.simparams.initFromData( dbP, dataList[ drow ], dat_steps );
 
    if ( exp_steps )
       dset.simparams.speed_step  = speed_steps;
