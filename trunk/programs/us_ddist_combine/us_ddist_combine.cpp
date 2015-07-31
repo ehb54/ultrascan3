@@ -44,7 +44,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    xtype         = 0;
 
    QBoxLayout*  mainLayout   = new QHBoxLayout( this );
-   QGridLayout* leftLayout   = new QGridLayout;
+                leftLayout   = new QGridLayout;
    QVBoxLayout* rightLayout  = new QVBoxLayout;
    mainLayout ->setSpacing        ( 2 );
    mainLayout ->setContentsMargins( 2, 2, 2, 2 );
@@ -206,6 +206,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addWidget( pb_help,      row,   4, 1, 2 );
    leftLayout->addWidget( pb_close,     row++, 6, 1, 2 );
    leftLayout->addWidget( lb_distrtype, row++, 0, 1, 8 );
+   fckrow  = row;           // First checkbox row
    leftLayout->addLayout( lo_2dsa,      row,   0, 1, 2 );
    leftLayout->addLayout( lo_2dsafm,    row,   2, 1, 2 );
    leftLayout->addLayout( lo_2dsamc,    row,   4, 1, 2 );
@@ -243,6 +244,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_pcsa2otr,  row++, 4, 1, 4 );
    leftLayout->addLayout( lo_dmgagl,    row,   0, 1, 2 );
    leftLayout->addLayout( lo_dmgaglmc,  row++, 2, 1, 6 );
+   lckrow  = row;           // Last checkbox row
 
    leftLayout->addWidget( lb_plottype,  row++, 0, 1, 8 );
    leftLayout->addLayout( lo_pltsw,     row,   0, 1, 2 );
@@ -427,6 +429,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    adjustSize();
    resize( 1180, 580 );
    reset_data();
+
 }
 
 // Load data
@@ -612,6 +615,63 @@ if(dbg_level>0)
    ck_dmgagl  ->setChecked( hv_dmgagl   );
    ck_dmgaglmc->setChecked( hv_dmgaglmc );
    ck_dtall   ->setChecked( hv_dtall    );
+
+   // Hide rows that have no enabled check boxes
+   int nllcol = leftLayout->columnCount();
+
+   for ( int ii = fckrow; ii < lckrow; ii++ )
+   {  // Examine the leftLayout rows with checkboxes for row we can hide
+      int nenab  = 0;             // Number of enabled checkboxes in row
+      QList< QWidget* > rwidgs;   // List of row widgets (checkboxes)
+
+      for ( int jj = 0; jj < nllcol; jj++ )
+      {  // Examine columns in the row for widgets
+         QLayoutItem* litem = leftLayout->itemAtPosition( ii, jj );
+DbgLv(1) << "LL lay item ii,jj" << ii << jj << "itemP" << litem;
+
+         if ( litem != NULL )
+         {  // Check a layout for a widget child
+            QGridLayout* layo   = (QGridLayout*)litem->layout();
+            QWidget*     widg0  = litem->widget();
+            QWidget*     widg1;
+DbgLv(1) << " layo" << layo << "widg" << widg0;
+
+            if ( layo != NULL  &&  widg0 == NULL  &&  layo->count()>1 )
+            {  // Item is a layout:  check that its child is a widget
+DbgLv(1) << "  layo count" << layo->count();
+               widg0       = layo->itemAt( 0 )->widget();
+               widg1       = layo->itemAt( 1 )->widget();
+
+               if ( widg1 != NULL )
+               {  // Save widget and test if it is enabled
+                  rwidgs << widg0;                  // Save widgets in list
+                  rwidgs << widg1;
+                  bool enab   = widg1->isEnabled(); // Test if widget enabled
+DbgLv(1) << "    widg" << widg1 << "enab" << enab;
+                  if ( enab )  nenab++;             // Bump count of enabled
+               }  // END: item child is a widget
+            }  // END: item is a layout
+         }  // END: non-null item in row
+      }  // END: columns-in-row loop
+
+      if ( nenab == 0 )
+      {  // If this row had no enabled checkboxes, hide the row
+DbgLv(1) << "  HIDE ALL,  row" << ii;
+         for ( int jj = 0; jj < rwidgs.count(); jj++ )
+         {  // Hide each widget in the row
+            rwidgs[ jj ]->setVisible(false);
+         }
+      }
+   }  // END: checkboxes row loop
+
+   int wx   = x();           // Adjust height based on newly hidden rows
+   int wy   = y();
+   int wid  = width();
+   adjustSize();
+   resize( 10, wid );
+   adjustSize();
+   move( wx, wy );
+   qApp->processEvents();
 }
 
 // Reset data: remove all loaded data and clear plots

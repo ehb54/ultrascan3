@@ -1737,6 +1737,9 @@ DbgLv(0) << my_rank << ": A single output file, the archive, already exists!!!";
          mfilt << mftrip + ".mc0*";
          QStringList mtfiles = odir.entryList( mfilt, QDir::Files );
 
+         // Skip composite build if not yet enough triple mc iteration models
+         if ( mtfiles.count() < mc_iterations )  continue;
+
          // Build a composite model file and get its name
          QString cmfname  = US_Model::composite_mc_file( mtfiles, true );
 DbgLv(0) << my_rank << ": ii" << ii << "mftrip" << mftrip << "cmfname" << cmfname;
