@@ -1303,7 +1303,7 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
 
                else if ( tag != STARTITER )
                {
-                  DbgLv(0) << "Unexpected tag in PMG 2DSA Master" << tag;
+                  DbgLv(0) << "Unexpected tag in PMG PCSA Master" << tag;
                   continue;
                }
 
@@ -1315,7 +1315,7 @@ DbgLv(1) << "CJ_MAST Recv tag" << tag << "iter" << iter;
                max_iterations   = parameters[ "gfit_iterations" ].toInt();
                kcurve           = 0;
 
-               fill_queue();
+               fill_pcsa_queue();
 
                for ( int ii = 1; ii <= my_workers; ii++ )
                   worker_status[ ii ] = READY;

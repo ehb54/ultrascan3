@@ -64,6 +64,8 @@ class US_DDistr_Combine : public US_Widgets
       QStringList    pdisIDs;          // Plotted distribution IDs
       QStringList    aDescrs;          // All model description strings
 
+      QGridLayout*   leftLayout;       // Layout with checkboxes
+
       QPushButton*   pb_saveda;
       QPushButton*   pb_resetd;
       QPushButton*   pb_resetp;
@@ -143,6 +145,8 @@ class US_DDistr_Combine : public US_Widgets
 
       int            xtype;
       int            dbg_level;
+      int            fckrow;              // First checkbox row
+      int            lckrow;              // Last checkbox row
 
    private slots:
 
