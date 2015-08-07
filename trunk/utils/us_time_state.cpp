@@ -124,15 +124,14 @@ int US_TimeState::set_keys( QStringList& fkeys, QStringList& ffmts )
 {
    int status  = 0;
 
-   nvalues     = keys.count();
+   int kvalues = fkeys.count();
 
-   if ( ffmts.count() != nvalues )
+   if ( ffmts.count() != kvalues )
    {
-      nvalues     = 0;
       return set_error( 102 );
    }
 
-   for ( int jj = 0; jj < nvalues; jj++ )
+   for ( int jj = 0; jj < kvalues; jj++ )
    {
       status      = set_key( fkeys[ jj ], ffmts[ jj ] );
       if ( status != 0 )
@@ -408,13 +407,13 @@ int US_TimeState::open_read_data( QString fpath )
 {
    int status  = 0;
    file_size   = (qint64)0;
-   filei       = new QFile( filepath );
+   filei       = new QFile( fpath );
 
    if ( ! filei->open( QIODevice::ReadOnly ) )
    {  // Error opening file for read
       status     = 500;
       set_error( status );
-      error_msg += filepath;
+      error_msg += fpath;
       return status;
    }
 
@@ -1225,6 +1224,9 @@ int US_TimeState::key_parameters( const QString key,
       status       = 901;
       set_error( status );
       error_msg   += key + QString().sprintf( " %d %d %d", rfmt, rlen, roff );
+DbgLv(1) << "DtsF:       message" << error_msg;
+DbgLv(1) << "DtsF: keyx" << keyx << "fmt" << fmt << "ftst" << ftst
+ << "keys sz" << keys.count() << "fmts sz" << fmts.count();
    }
 
    if ( rfmtP != NULL )  *rfmtP = rfmt;
