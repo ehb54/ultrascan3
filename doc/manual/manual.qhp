@@ -32,9 +32,10 @@
             <keyword id="a2" name="associations"     ref="associations.html"/>
             <keyword id="a3" name="astfem_sim"       ref="astfem_sim.html"/>
             <keyword id="b1" name="buffer"           ref="us_buffer.html"/>
-            <keyword id="c1" name="components"       ref="components.html"/>
-            <keyword id="c2" name="configuration"    ref="config.html"/>
-            <keyword id="c3" name="convert-data"     ref="convert.html"/>
+            <keyword id="c1" name="CFA-viewer"       ref="cfa_viewer.html"/>
+            <keyword id="c2" name="components"       ref="components.html"/>
+            <keyword id="c3" name="configuration"    ref="config.html"/>
+            <keyword id="c4" name="convert-data"     ref="convert.html"/>
             <keyword id="d1" name="data-loader"      ref="data_loader.html"/>
             <keyword id="d2" name="ddist-combine"    ref="ddist_combine.html"/>
             <keyword id="e1" name="edit"             ref="us_edit.html"/>
@@ -362,6 +363,13 @@
             <file>images/mwlr_view_load.png</file>
             <file>images/mwlr_view_pltctrl.png</file>
             <file>images/mwlr_view_3dplot.png</file>
+
+            <file>cfa_viewer.html</file>
+            <file>images/cfa_view-main.png</file>
+            <file>images/cfa_view-statsraw.png</file>
+            <file>images/cfa_view-statsauc.png</file>
+            <file>images/cfa_view-loadraw.png</file>
+            <file>images/cfa_view-loadauc.png</file>
 
         </files>
     </filterSection>

@@ -73,6 +73,7 @@
       <li> <a href="ddist_combine.html">Combine Discrete Distributions</a> </li>
       <li> <a href="combine_models.html">Create Global Model</a> </li>
       <li> <a href="mwlr_viewer.html">Multi-Wavelength Raw Viewer</a> </li>
+      <li> <a href="cfa_viewer.html">CFA Raw Viewer and Converter</a> </li>
     </ul>
   </li>
   

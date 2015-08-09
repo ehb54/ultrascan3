@@ -2562,9 +2562,9 @@ void US_ConvertGui::PseudoCalcAvg( void )
    }
 
    US_DataIO::RawData* referenceData = outData[ tripDatax ];
-   int ref_size = referenceData->xvalues.size();
+   int ref_size = referenceData->pointCount();
 
-   for ( int ss = 0; ss < referenceData->scanData.size(); ss++ )
+   for ( int ss = 0; ss < referenceData->scanCount(); ss++ )
    {
       US_DataIO::Scan* scan = &referenceData->scanData[ ss ];
 
@@ -2620,15 +2620,18 @@ void US_ConvertGui::PseudoCalcAvg( void )
    }
 
    // Now calculate the pseudo-absorbance
+   int ndxmax    = ExpData.RIProfile.size() - 1;
+
    for ( int trx = 0; trx < outData.size(); trx++ )
    {
       US_DataIO::RawData* currentData = outData[ trx ];
+      int kcpoint   = currentData->pointCount();
 
-      for ( int ss = 0; ss < currentData->scanData.size(); ss++ )
+      for ( int ss = 0; ss < currentData->scanCount(); ss++ )
       {
          US_DataIO::Scan* scan = &currentData->scanData[ ss ];
 
-         for ( int rr = 0; rr < scan->rvalues.size(); rr++ )
+         for ( int rr = 0; rr < kcpoint; rr++ )
          {
             double rvalue = scan->rvalues[ rr ];
 
@@ -2637,9 +2640,10 @@ void US_ConvertGui::PseudoCalcAvg( void )
             if ( rvalue < 1.0 ) rvalue = 1.0;
 
             // Check for boundary condition
-            int ndx = ( ss < ExpData.RIProfile.size() )
-                    ? ss : ExpData.RIProfile.size() - 1;
-            scan->rvalues[ rr ] = log10( ExpData.RIProfile[ ndx ] / rvalue );
+            int ndx       = qMin( ss, ndxmax );
+            double prval  = ExpData.RIProfile[ ndx ];
+            scan->rvalues[ rr ] = ( prval != 0.0 ) ?
+                                  log10( prval ) / rvalue : 0.0;
          }
       }
 
@@ -2650,7 +2654,7 @@ void US_ConvertGui::PseudoCalcAvg( void )
 
    // Enable intensity plot
    referenceDefined = true;
-DbgLv(1) << "CGui: (7)referDef=" << referenceDefined;
+DbgLv(1) << "CGui:PCA: (7)referDef=" << referenceDefined;
    pb_intensity->setEnabled( true );
    pb_reference->setEnabled( false );
    pb_cancelref->setEnabled( true );
@@ -2753,13 +2757,15 @@ void US_ConvertGui::cancel_reference( void )
       }
 
       wvoff       *= rscans;
+      int kpoint   = currentData->pointCount();
+      int kscan    = currentData->scanCount();
 
-      for ( int jj = 0; jj < currentData->scanData.size(); jj++ )
+      for ( int jj = 0; jj < kscan; jj++ )
       {
          US_DataIO::Scan* scan  = &currentData->scanData[ jj ];
          double           rppro = ExpData.RIProfile[ jj + wvoff ];
 
-         for ( int kk = 0; kk < scan->rvalues.size(); kk++ )
+         for ( int kk = 0; kk < kpoint; kk++ )
          {
             double rvalue = scan->rvalues[ kk ];
 
@@ -3719,26 +3725,27 @@ DbgLv(1) << "CGui:CV: IN";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    US_Convert::convertLegacyData( legacyData, allData, all_tripinfo,
                                   runType, tolerance );
-DbgLv(1) << "CGui:CV: ndat ntrip runType" << allData.size()
- << all_tripinfo.size() << runType;
+   int kadata       = allData     .size();
+   int katrip       = all_tripinfo.size();
+DbgLv(1) << "CGui:CV: kadata katrip runType" << kadata << katrip << runType;
    QApplication::restoreOverrideCursor();
 
-   if ( allData.size() == 0 ) return( false );
+   if ( kadata == 0 ) return( false );
 
    le_description->setText( allData[ 0 ].description );
    saveDescription = QString( allData[ 0 ].description );
 
    // Now let's show the user the first one
    tripListx = -1;
-   for ( int i = 0; i < all_tripinfo.size(); i++ )
+   for ( int ii = 0; ii < katrip; ii++ )
    {
-      if ( all_tripinfo[ i ].excluded ) continue;
+      if ( all_tripinfo[ ii ].excluded ) continue;
 
-      if ( tripListx == -1 ) tripListx = i;
-DbgLv(1) << "CGui:CV:  i, trip" << i << all_tripinfo[i].tripleDesc;
+      if ( tripListx == -1 ) tripListx = ii;
+DbgLv(1) << "CGui:CV:  ii, trip" << ii << all_tripinfo[ii].tripleDesc;
    }
 
-DbgLv(1) << "CGui:CV: RTN tLx" << tripListx << "ntrip" << all_tripinfo.size();
+DbgLv(1) << "CGui:CV: RTN tLx" << tripListx << "katrip" << katrip;
    return( true );
 }
 
@@ -3847,7 +3854,6 @@ DbgLv(1) << " PlCur:  tDx szoutD" << tripDatax << outData.count();
    if ( currentData.scanData.empty() ) return;
 
    plot_titles();
-DbgLv(1) << " PlCur: PlTit RTN";
 
    // Plot current data for cell / channel / wavelength triple
    plot_all();
@@ -3935,56 +3941,57 @@ DbgLv(1) << "  PlTit: dataType" << dataType;
 
 void US_ConvertGui::plot_all( void )
 {
+DbgLv(1) << "PlAll: tripDx" << tripDatax << "oD size" << outData.count();
    US_DataIO::RawData* currentData = outData[ tripDatax ];
 
    data_plot->detachItems();
-   grid = us_grid( data_plot );
+   grid        = us_grid( data_plot );
+   int kcpoint = currentData->pointCount();
+   int kcscan  = currentData->scanCount();
 
-   int size = currentData->xvalues.size();
+   QVector< double > rvec( kcpoint );
+   QVector< double > vvec( kcpoint );
 
-   QVector< double > rvec( size );
-   QVector< double > vvec( size );
-
-   double* r = rvec.data();
-   double* v = vvec.data();
+   double* rr  = rvec.data();
+   double* vv  = vvec.data();
 
    double maxR = -1.0e99;
    double minR =  1.0e99;
    double maxV = -1.0e99;
    double minV =  1.0e99;
 
-   for ( int i = 0; i < currentData->scanData.size(); i++ )
+   for ( int ii = 0; ii < kcscan; ii++ )
    {
       US_Convert::Excludes currentExcludes = allExcludes[ tripDatax ];
-      if ( currentExcludes.contains( i ) ) continue;
-      US_DataIO::Scan* s = &currentData->scanData[ i ];
+      if ( currentExcludes.contains( ii ) ) continue;
+      US_DataIO::Scan* scan = &currentData->scanData[ ii ];
 
-      for ( int j = 0; j < size; j++ )
+      for ( int jj = 0; jj < kcpoint; jj++ )
       {
-         r[ j ] = currentData->radius( j );
-         v[ j ] = s->rvalues[ j ];
+         rr[ jj ]    = currentData->radius( jj );
+         vv[ jj ]    = scan->rvalues[ jj ];
 
-         if ( v[ j ] > 1.0e99 || isnan( v[ j ] ) )
+         if ( vv[ jj ] > 1.0e99 || isnan( vv[ jj ] ) )
          {
-            // For some reason v[j] is going off the scale
+            // For some reason vv[jj] is going off the scale
             // Don't know why, but filter out for now
-            qDebug() << "(r, v) = ( " << r[j] << ", " << v[j] << ")"
+            qDebug() << "(rr, vv) = ( " << rr[jj] << ", " << vv[jj] << ")"
                << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
                << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
             continue;
          }
 
-         maxR = max( maxR, r[ j ] );
-         minR = min( minR, r[ j ] );
-         maxV = max( maxV, v[ j ] );
-         minV = min( minV, v[ j ] );
+         maxR = qMax( maxR, rr[ jj ] );
+         minR = qMin( minR, rr[ jj ] );
+         maxV = qMax( maxV, vv[ jj ] );
+         minV = qMin( minV, vv[ jj ] );
       }
 
       QString title = tr( "Raw Data at " )
-         + QString::number( s->seconds ) + tr( " seconds" );
+         + QString::number( scan->seconds ) + tr( " seconds" );
 
-      QwtPlotCurve* c = us_curve( data_plot, title );
-      c->setData( r, v, size );
+      QwtPlotCurve* curv = us_curve( data_plot, title );
+      curv->setData( rr, vv, kcpoint );
 
    }
 
