@@ -24,6 +24,7 @@
 #include "us_gui_util.h"
 #include "us_util.h"
 #include "us_images.h"
+#include "us_tmst_plot.h"
 
 #ifdef WIN32
 #include <float.h>
@@ -129,8 +130,11 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    pb_editRuninfo    = us_pushbutton( tr( "Edit Run Information" ) );
    pb_editRuninfo->setEnabled( false );
 
-   // load US3 data ( that perhaps has been done offline )
+   // Load US3 data ( that perhaps has been done offline )
    pb_loadUS3        = us_pushbutton( tr( "Load US3 OpenAUC Run" ), true );
+
+   // Show TimeState
+   pb_showTmst       = us_pushbutton( tr( "Show TimeState" ), false );
 
    // Run details
    pb_details        = us_pushbutton( tr( "Run Details" ), false );
@@ -241,7 +245,8 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    settings ->addWidget( pb_import,       row,   0, 1, 2 );
    settings ->addWidget( pb_editRuninfo,  row++, 2, 1, 2 );
    settings ->addWidget( pb_loadUS3,      row,   0, 1, 2 );
-   settings ->addWidget( pb_details,      row++, 2, 1, 2 );
+   settings ->addWidget( pb_showTmst,     row,   2, 1, 1 );
+   settings ->addWidget( pb_details,      row++, 3, 1, 1 );
    settings ->addWidget( lb_tolerance,    row,   0, 1, 2 );
    settings ->addWidget( ct_tolerance,    row++, 2, 1, 2 );
    settings ->addWidget( lb_mwlctrl,      row++, 0, 1, 4 );
@@ -332,14 +337,16 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
                                 SLOT(   sel_investigator() ) );
    connect( disk_controls,  SIGNAL( changed       ( bool ) ),
                             SLOT  ( source_changed( bool ) ) );
-   connect( pb_import,      SIGNAL( clicked()     ),
-                            SLOT(   import()      ) );
-   connect( pb_editRuninfo, SIGNAL( clicked()     ),
-                            SLOT(   editRuninfo() ) );
-   connect( pb_loadUS3,     SIGNAL( clicked()     ),
-                            SLOT(   loadUS3()     ) );
-   connect( pb_details,     SIGNAL( clicked()     ),
-                            SLOT(   runDetails()  ) );
+   connect( pb_import,      SIGNAL( clicked()       ),
+                            SLOT(   import()        ) );
+   connect( pb_editRuninfo, SIGNAL( clicked()       ),
+                            SLOT(   editRuninfo()   ) );
+   connect( pb_loadUS3,     SIGNAL( clicked()       ),
+                            SLOT(   loadUS3()       ) );
+   connect( pb_showTmst,    SIGNAL( clicked()       ),
+                            SLOT(   showTimeState() ) );
+   connect( pb_details,     SIGNAL( clicked()       ),
+                            SLOT(   runDetails()    ) );
    connect( ct_tolerance,   SIGNAL( valueChanged         ( double ) ),
                             SLOT  ( toleranceValueChanged( double ) ) );
    connect( le_description, SIGNAL( textEdited( QString )      ),
@@ -421,6 +428,7 @@ void US_ConvertGui::reset( void )
    pb_loadUS3    ->setEnabled( true  );
    pb_exclude    ->setEnabled( false );
    pb_include    ->setEnabled( false );
+   pb_showTmst   ->setEnabled( false );
    pb_details    ->setEnabled( false );
    pb_intensity  ->setEnabled( false );
    pb_cancelref  ->setEnabled( false );
@@ -626,6 +634,7 @@ DbgLv(1) << "CGui:IMP: IN";
    le_status->setText( tr( "Importing experimental data ..." ) );
 
    success = read();                // Read the legacy data
+DbgLv(1) << "CGui:IMP:  read() success" << success;
 
    if ( ! success ) return;
 
@@ -637,11 +646,13 @@ DbgLv(1) << "CGui:IMP: IN";
 
    // Figure out all the triple combinations and convert data
    success = convert();
+DbgLv(1) << "CGui:IMP:  convert() success" << success;
 
    if ( ! success ) return;
 
    // Initialize export data pointers vector
    success = init_output_data();
+DbgLv(1) << "CGui:IMP:  init_output_data() success" << success;
 
    if ( ! success ) return;
 
@@ -960,6 +971,7 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
    }
 
    le_status->setText( tr( "AUC simulation data import IS COMPLETE." ) );
+   pb_showTmst->setEnabled( ! tmst_fnamei.isEmpty() );
 }
 
 // Enable the common dialog controls when there is data
@@ -972,6 +984,7 @@ void US_ConvertGui::enableControls( void )
    {
 DbgLv(1) << "CGui: enabCtl: have-data" << allData.size() << all_tripinfo.size();
       // Ok to enable some buttons now
+      pb_showTmst    ->setEnabled( ! tmst_fnamei.isEmpty() );
       pb_details     ->setEnabled( true );
       pb_solution    ->setEnabled( true );
       cb_centerpiece ->setEnabled( true );
@@ -1999,6 +2012,16 @@ void US_ConvertGui::tripleApplyAll( void )
    enableControls();
 }
 
+// Slot to handle click of Show TimeState
+void US_ConvertGui::showTimeState( void )
+{
+DbgLv(1) << "shTmSt: TS fpath" << tmst_fnamei;
+   US_TmstPlot* tsdiag = new US_TmstPlot( this, tmst_fnamei );
+
+   tsdiag->exec();
+}
+
+// Slot to handle click of Run Details
 void US_ConvertGui::runDetails( void )
 {
    // Create data structures for US_RunDetails2

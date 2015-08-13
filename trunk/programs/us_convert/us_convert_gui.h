@@ -114,6 +114,7 @@ class US_ConvertGui : public US_Widgets
       QPushButton*  pb_dropChan;
       QPushButton*  pb_dropCelch;
       QPushButton*  pb_saveUS3;
+      QPushButton*  pb_showTmst;
 
       US_SelectBox*  cb_centerpiece;
 
@@ -226,6 +227,7 @@ class US_ConvertGui : public US_Widgets
       void cancelSolutionInfo( void );
       void tripleApplyAll    ( void );
       void runDetails        ( void );
+      void showTimeState     ( void );
       void changeDescription ( void );
       void changeTriple      ( void );
       void getCenterpieceIndex( int );
