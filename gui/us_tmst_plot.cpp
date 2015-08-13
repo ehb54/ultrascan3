@@ -162,7 +162,8 @@ void US_TmstPlot::plot_kdata()
    data_plot1->setAxisTitle( QwtPlot::yLeft, ytitle ); 
    us_grid( data_plot1 );
    US_PlotPicker* pick = new US_PlotPicker( data_plot1 );
-   pick->setSelectionFlags( QwtPicker::PointSelection );
+   pick->setSelectionFlags( QwtPicker::PointSelection
+                          | QwtPicker::DragSelection );
 
    int kx       = dkeys.indexOf( "Scan" );     // X data index
    int ky       = dkeys.indexOf( pkey );       // Y data index
@@ -351,12 +352,13 @@ void US_TmstPlot::details()
    // Compose the details text
 
    QString dtext    = tr( "Time State Details:\n\n" );
-   dtext += tr( "Run ID:  %1\n" ).arg( runID );
-   dtext += tr( "TMST Directory:  %1\n" ).arg( dat_dir );
-   dtext += tr( "TMST File Name:  %1\n" ).arg( tsfname );
-   dtext += tr( "Def. File Name:  %1\n\n" ).arg( xdfname );
-   dtext += tr( "Data Key Count:  %1\n" ).arg( ndkeys - 1 );
-   dtext += tr( "Time Value Count:  %1\n" ).arg( ntimes );
+   dtext += tr( "Run ID:            %1\n"   ).arg( runID );
+   dtext += tr( "TMST Directory:    %1\n"   ).arg( dat_dir );
+   dtext += tr( "TMST File Name:    %1\n"   ).arg( tsfname );
+   dtext += tr( "Def. File Name:    %1\n\n" ).arg( xdfname );
+   dtext += tr( "Field Key Count:   %1\n"   ).arg( nfkeys );
+   dtext += tr( "Data Key Count:    %1\n"   ).arg( ndkeys );
+   dtext += tr( "Time Value Count:  %1\n"   ).arg( ntimes );
    int jl = ntimes - 1;
    int jm = ntimes / 2;
 
@@ -364,12 +366,12 @@ void US_TmstPlot::details()
    {  // Compose a brief summary for each key
       QString dkey = dkeys[ jk ];
       dtext += tr( "\n(%1) Key \"%2\"\n" ).arg( jk + 1 ).arg( dkey );
-      dtext += tr( "  Minimum: %1\n" ).arg( dmins[ dkey ] );
-      dtext += tr( "  Maximum: %1\n" ).arg( dmaxs[ dkey ] );
-      dtext += tr( "  Average: %1\n" ).arg( davgs[ dkey ] );
-      dtext += tr( "  First:   %1\n" ).arg( dvals[ jk ][  0 ] );
-      dtext += tr( "  Middle:  %1\n" ).arg( dvals[ jk ][ jm ] );
-      dtext += tr( "  Last:    %1\n" ).arg( dvals[ jk ][ jl ] );
+      dtext += tr( "  Minimum:   %1\n" ).arg( dmins[ dkey ] );
+      dtext += tr( "  Maximum:   %1\n" ).arg( dmaxs[ dkey ] );
+      dtext += tr( "  Average:   %1\n" ).arg( davgs[ dkey ] );
+      dtext += tr( "  First:     %1\n" ).arg( dvals[ jk ][  0 ] );
+      dtext += tr( "  Middle:    %1\n" ).arg( dvals[ jk ][ jm ] );
+      dtext += tr( "  Last:      %1\n" ).arg( dvals[ jk ][ jl ] );
    }
 
    // Pop up a text dialog with the details content
