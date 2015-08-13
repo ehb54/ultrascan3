@@ -61,6 +61,7 @@ HEADERS      = \
                us_solution_gui.h        \
                us_spectrodata.h         \
                us_table.h               \
+               us_tmst_plot.h           \
                us_widgets.h             \
                us_widgets_dialog.h      \
                us_window_message.h
@@ -104,6 +105,7 @@ SOURCES      = \
                us_solution_gui.cpp        \
                us_spectrodata.cpp         \
                us_table.cpp               \
+               us_tmst_plot.cpp           \
                us_widgets.cpp             \
                us_widgets_dialog.cpp      \
                us_window_message.cpp
