@@ -64,8 +64,7 @@ DbgLv(1) << "TP:mn:   xdpath" << xdpath;
    ctrlsLayout->addWidget( pb_prev,     row,   0,  1, 2 );
    ctrlsLayout->addWidget( pb_next,     row++, 2,  1, 2 );
    ctrlsLayout->addWidget( lb_info,     row++, 0,  1, 4 );
-   ctrlsLayout->addWidget( lw_datinfo,  row++, 0, 18, 4 );
-   row      += 18;
+   ctrlsLayout->addWidget( lw_datinfo,  row++, 0, 20, 4 );
 
    buttonsLayout ->addWidget( pb_detail );
    buttonsLayout ->addWidget( pb_close  );
@@ -95,7 +94,7 @@ DbgLv(1) << "TP:mn:   xdpath" << xdpath;
 
    mainLayout->addLayout( leftLayout  );
    mainLayout->addLayout( rightLayout );
-   mainLayout->setStretchFactor( leftLayout,  2 );
+   mainLayout->setStretchFactor( leftLayout,  1 );
    mainLayout->setStretchFactor( rightLayout, 4 );
 
    connect( cb_pltkey, SIGNAL( currentIndexChanged( int ) ),
@@ -110,13 +109,7 @@ DbgLv(1) << "TP:mn:   xdpath" << xdpath;
             this,      SLOT  ( close()     ) );
 
    adjustSize();
-   int ww    = lw_datinfo->width();
-   int hh    = lb_pltkey ->height();
-   int hhmin = hh * 12;
-   int hhsiz = hh * 18;
-   lw_datinfo->setMinimumHeight( hhmin );
-   lw_datinfo->resize( ww, hhsiz );
-DbgLv(1) << "TP:mn:   lw size" << ww << hhsiz;
+   lw_datinfo->setMinimumHeight( lb_pltkey ->height() * 16 );
 
    data_plot1->resize( p1size );
    data_plot2->resize( p2size );
@@ -130,8 +123,7 @@ DbgLv(1) << "TP:mn:   p1size" << p1size << "p2size" << p2size;
 
    resize( p2size );
    adjustSize();
-DbgLv(1) << "TP:mn:   resized" << size();
-DbgLv(1) << "TP:mn:   lw size" << lw_datinfo->size() << QSize(ww,hhsiz);
+DbgLv(1) << "TP:mn:   resized" << size() << "lw size" << lw_datinfo->size();
 }
 
 // Plot the data (both key-specific and combined)
@@ -160,10 +152,9 @@ void US_TmstPlot::plot_kdata()
       ytitle         = ytitle + "  (C)";
 
    data_plot1->setAxisTitle( QwtPlot::yLeft, ytitle ); 
-   us_grid( data_plot1 );
-   US_PlotPicker* pick = new US_PlotPicker( data_plot1 );
-   pick->setSelectionFlags( QwtPicker::PointSelection
-                          | QwtPicker::DragSelection );
+   us_grid( data_plot1 );                                  // Grid
+   US_PlotPicker* pick = new US_PlotPicker( data_plot1 );  // Annotated cursor
+   pick->setRubberBand( QwtPicker::RectRubberBand );
 
    int kx       = dkeys.indexOf( "Scan" );     // X data index
    int ky       = dkeys.indexOf( pkey );       // Y data index
@@ -190,17 +181,14 @@ void US_TmstPlot::plot_kdata()
       data_plot1->setAxisScale( QwtPlot::yLeft, ymin, ymax );
    }
 
-   QwtPlotCurve* curv;
-   QPen          pen_plot( US_GuiSettings::plotCurve(), 2 );
-
    for ( int jt = 0; jt < ntimes; jt++ )
    {  // Accumulate curve X,Y points
       xx[ jt ]     = dvals[ kx ][ jt ];
       yy[ jt ]     = dvals[ ky ][ jt ];
    }
 
-   curv         = us_curve( data_plot1, "Curve 1" ); // Create the single curve
-   curv->setPen( pen_plot );
+   QwtPlotCurve* curv = us_curve( data_plot1, pkey );  // Create a single curve
+   curv->setPen ( QPen( US_GuiSettings::plotCurve(), 2 ) );
    curv->setData( xx, yy, ntimes );
 
    data_plot1->replot();
@@ -209,7 +197,7 @@ void US_TmstPlot::plot_kdata()
 // Plot the combined data
 void US_TmstPlot::plot_cdata()
 {
-   const QColor pcolors[] = {   // Plot curve colors that differ by key
+   const QColor ccolors[] = {   // Curve colors that differ by key
       QColor( 255,   0,   0 ),
       QColor(   0, 255,   0 ),
       QColor(   0,   0, 255 ),
@@ -229,99 +217,82 @@ void US_TmstPlot::plot_cdata()
       QColor(  40, 255,  40 ),
       QColor(  40,  40, 255 ),
       QColor(  80,  80,  80 ),
-      QColor( 255, 255, 255 ) };
+      QColor( 122, 122, 122 ) };
 
    data_plot2->detachItems();
    data_plot2->clear();
-   us_grid( data_plot2 );
-   US_PlotPicker* pick = new US_PlotPicker( data_plot2 );
-   pick->setSelectionFlags( QwtPicker::PointSelection );
-   QwtLegend* legend = new QwtLegend;
+   us_grid( data_plot2 );                                     // Grid
+
+   US_PlotPicker* pick = new US_PlotPicker( data_plot2 );     // Annotate cursor
+   pick->setRubberBand( QwtPicker::RectRubberBand );
+
+   QwtLegend* legend   = new QwtLegend;                       // Legend
    legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
    legend->setFont( QFont( US_GuiSettings::fontFamily(),
                            US_GuiSettings::fontSize() - 1 ) );
    data_plot2->insertLegend( legend, QwtPlot::BottomLegend );
 
-   QVector< double > xvec( ntimes, 0.0 );
+   QVector< double > xvec( ntimes, 0.0 );                     // Plox xy vectors
    QVector< double > yvec( ntimes, 0.0 );
    double* xx   = xvec.data();
    double* yy   = yvec.data();
+   int kx       = dkeys.indexOf( "Scan" );                    // X key index
 
-   // Do a one-time set-up of X vector
-   int kx       = dkeys.indexOf( "Scan" );
-
+   // Do a one-time set-up of the X vector (scan numbers)
    for ( int jt = 0; jt < ntimes; jt++ )
    {
       xx[ jt ]     = dvals[ kx ][ jt ];
    }
 
-   // Determine the time range for later Y adjustments
-   double tmin  = dmins[ "Time" ];
-   double tmax  = dmaxs[ "Time" ];
-   double trng  = tmax - tmin;
-   double trng2 = trng * 0.95;
-   double tbias = trng * 0.01;
-   int ncolrs   = sizeof( pcolors ) / sizeof( pcolors[0] );
-DbgLv(1) << "TP:plcd: t rng" << tmin << tmax << "nc nk" << ncolrs << ndkeys
- << "pk size" << pkeys.count();
-   double smin  = dmins[ "Scan" ];
+   // Set axes scales and title
+   int ncolrs   = sizeof( ccolors ) / sizeof( ccolors[0] );   // Colors count
+   int npkeys   = pkeys.count();                              // Plot key count
+DbgLv(1) << "TP:plcd: ncolrs ndkeys npkeys" << ncolrs << ndkeys << npkeys;
+   double smin  = dmins[ "Scan" ];   // Get scan number range; scale X
    double smax  = dmaxs[ "Scan" ];
-   data_plot2->setAxisScale    ( QwtPlot::xBottom, smin, smax );
-   data_plot2->setAxisAutoScale( QwtPlot::yLeft );
-   data_plot2->setAxisTitle    ( QwtPlot::yLeft,   tr( "Time  (mins.)" ) );
+   data_plot2->setAxisScale( QwtPlot::xBottom, smin, smax );
+   data_plot2->setAxisTitle( QwtPlot::yLeft, tr( "Y percent + K offset" ) );
 
    // Create a curve for each key
-   for ( int jk = 0; jk < pkeys.count(); jk++ )
+   for ( int jk = 0; jk < npkeys; jk++ )
    {
-      QString pkey = pkeys[ jk ];
-      int jc       = ( jk < ncolrs ) ? jk : ( jk % ncolrs );
-      QColor  pcol = pcolors[ jc ];
-      int ky       = dkeys.indexOf( pkey );
-      double ymin  = dmins[ pkey ];
-      double ymax  = dmaxs[ pkey ];
+      QString pkey = pkeys[ jk ];                             // Plot key
+      int jc       = ( jk < ncolrs ) ? jk : ( jk % ncolrs );  // Color index
+      QColor ccolr = ccolors[ jc ];                           // Curve color
+      int ky       = dkeys.indexOf( pkey );                   // Data key index
+      double ymin  = dmins[ pkey ];                           // Data Y min
+      double ymax  = dmaxs[ pkey ];                           // Data Y max
 DbgLv(1) << "TP:plcd:   jk jc ky" << jk << jc << ky
- << "color key" << pcol << pkey;
+ << "color" << ccolr << "key" << pkey;
 
-      if ( ymin >= ymax )
+      if ( ymin == ymax )
       {  // Adjust the range when Y is constant
          ymin         = ( ymin > 0.0 ) ? ( ymin * 0.95 ) : ( ymin * 1.05 );
          ymax         = ( ymax > 0.0 ) ? ( ymax * 1.05 ) : ( ymax * 0.95 );
       }
 
-      double yrng  = ymax - ymin;
-      double yscl  = trng / yrng;
-      double ybias = tmin - ymin * yscl;
+      // Scale Y range to 100% percent and offset by 10% x key index
+      double yrng  = ymax - ymin;                      // Y range
+      double yscl  = 100.0 / yrng;                     // Scale to percent
+      double yoffs = (double)jk * 10.0 - ymin * yscl;  // Offset by key index
+DbgLv(1) << "TP:plcd:   " << pkey << ccolr << "  ymin ymax" << ymin << ymax
+ << "yoffs" << yoffs << "yscl" << yscl;
 
-      if ( pkey == "Time" )
-      {  // No scaling to time range is needed if this is Time
-         ymin         = tmin;
-         ymax         = tmax;
-         yrng         = trng;
-         yscl         = 1.0;
-         ybias        = 0.0;
-      }
-      else
-      {  // Not Time, so bias and scale to fit in time Y range
-         yscl         = trng2 / yrng;
-         ybias        = tmin + ( tbias * jk ) - ( ymin * yscl );
-      }
-DbgLv(1) << "TP:plcd:   " << pkey << pcol << "  ymin ymax" << ymin << ymax
- << "ybias" << ybias << "yscl" << yscl;
-
-      // Bias and scale each Y point to fit in common Y axis
+      // Scale and offset each Y point to fit in common Y axis
       for ( int jt = 0; jt < ntimes; jt++ )
       {
-         yy[ jt ]     = ybias + dvals[ ky ][ jt ] * yscl;
+         yy[ jt ]     = yoffs + dvals[ ky ][ jt ] * yscl;
       }
 DbgLv(1) << "TP:plcd:       yy0 yyn" << yy[0] << yy[ntimes-1];
 
-      QwtPlotCurve* curv;
-      curv         = us_curve( data_plot2, pkey );
-      curv->setPen( QPen( pcol, 2 ) );
+      // Create the colored curve for the current key value type; add to legend
+      QwtPlotCurve* curv = us_curve( data_plot2, pkey );
+      curv->setPen ( QPen( ccolr, 2 ) );
       curv->setData( xx, yy, ntimes );
       curv->setItemAttribute( QwtPlotItem::Legend, true );
    }
 
+   data_plot2->setAxisScale( QwtPlot::yLeft, 0.0, 90.0 + 10.0 * npkeys );
    data_plot2->replot();
 }
 
