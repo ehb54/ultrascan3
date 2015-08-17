@@ -2666,7 +2666,7 @@ void US_ConvertGui::PseudoCalcAvg( void )
             int ndx       = qMin( ss, ndxmax );
             double prval  = ExpData.RIProfile[ ndx ];
             scan->rvalues[ rr ] = ( prval != 0.0 ) ?
-                                  log10( prval ) / rvalue : 0.0;
+                                  log10( prval / rvalue ) : 0.0;
          }
       }
 
