@@ -505,7 +505,8 @@ DbgLv(1) << "pcsa:wrmr:  editGUID=" << mrecs[0].editGUID
    mrecs[ 0 ].xmax       = x_max;
    mrecs[ 0 ].ymin       = y_min;
    mrecs[ 0 ].ymax       = y_max;
-   QString fnameo        = s_desc + ".xml";
+   QString fnameo        = shorter_filename( s_desc + ".xml" );
+DbgLv(0) << "pcsa:wrmr:  fnameo=" << fnameo << "  fn length" << fnameo.size();
    QFile fileo( fnameo );
 
    if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -1621,5 +1622,60 @@ void US_MPI_Analysis::fill_pcsa_queue( void )
       job.zsolutes        = orig_zsolutes[ i ];
       job_queue << job;
    }
+}
+
+// Insure a filename does not exceed 99 characters in length
+QString US_MPI_Analysis::shorter_filename( const QString fnamei )
+{
+   QString fnameo     = fnamei;
+   int fnlen          = fnameo.size();
+
+   if ( fnlen > 99 )
+   {  // Name too long:  break it down and shorten parts where possible
+      QStringList parts  = fnamei.split( "." );
+      int nparts         = parts.count();
+      int nchrmv         = fnlen - 99;
+      int lnpm1          = parts[ nparts - 1 ].length();
+      int lnpm2          = parts[ nparts - 2 ].length();
+
+      if ( parts[ nparts - 2 ] == "mrecs"  &&  nchrmv < 11 )
+      {  // If mrecs name, try to shorten analysis description part
+         QString anapart    = parts[ nparts - 3 ];
+         QString anap0      = anapart.section( "_", 0, 0 );
+         QString anap1      = anapart.section( "_", 1, 1 );
+         QString anap2      = anapart.section( "_", 2, 2 );
+         QString anap3      = anapart.section( "_", 3, 3 );
+         QString anap4      = anapart.section( "_", 4, 4 );
+         
+         if ( nchrmv < 9 )
+         {  // Remove hhmm part of edit and analysis parts (- 8 chars.)
+            anapart            = anap0.left( 7 ) + "_"
+                               + anap1.left( 7 ) + "_"
+                               + anap2 + "_" + anap3 + "_" + anap4;
+         }
+
+         else
+         {  // Remove the edit part of the analysis section (- 11 chars.)
+            anapart            = anap1 + "_"
+                               + anap2 + "_" + anap3 + "_" + anap4;
+         }
+
+         fnameo             = fnamei.section( ".",  0, -4 ) + "."
+                              + anapart + "."
+                              + fnamei.section( ".", -2, -1 );
+      }
+
+      else
+      {  // Otherwise, just do brute-force name shortening
+         fnameo             = QString( fnamei ).section( ".", 0, -3 );
+         int kk             = 97 - lnpm1 - lnpm2;
+         kk                 = fnameo[ kk - 1 ] == '.' ? ( kk - 1 ) : kk;
+         fnameo             = fnameo.left( kk ) + "." + parts[ nparts - 2 ]
+                              + "." + parts[ nparts - 1 ];
+      }
+
+   }
+
+   return fnameo;
 }
 

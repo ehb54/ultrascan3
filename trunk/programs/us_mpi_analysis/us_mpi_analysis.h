@@ -430,6 +430,7 @@ class US_MPI_Analysis : public QObject
     double  alpha_scan          ( void );
     void    apply_alpha( const double, QVector< double >*, QVector< double >*,
                          const int, const int, const int, double&, double& );
+    QString shorter_filename    ( const QString );
 
 
     // PCSA Worker
