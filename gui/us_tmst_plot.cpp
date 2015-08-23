@@ -272,16 +272,16 @@ DbgLv(1) << "TP:plcd:   jk jc ky" << jk << jc << ky
       }
 
       // Scale Y range to 100% percent and offset by 10% x key index
-      double yrng  = ymax - ymin;                      // Y range
-      double yscl  = 100.0 / yrng;                     // Scale to percent
-      double yoffs = (double)jk * 10.0 - ymin * yscl;  // Offset by key index
+      double yrng  = ymax - ymin;                       // Y range
+      double yscl  = 100.0 / yrng;                      // Scale to percent
+      double yoff  = (double)jk * 100.0 - ymin * yscl;  // Offset by key index
 DbgLv(1) << "TP:plcd:   " << pkey << ccolr << "  ymin ymax" << ymin << ymax
- << "yoffs" << yoffs << "yscl" << yscl;
+ << "yoff" << yoff << "yscl" << yscl;
 
       // Scale and offset each Y point to fit in common Y axis
       for ( int jt = 0; jt < ntimes; jt++ )
       {
-         yy[ jt ]     = yoffs + dvals[ ky ][ jt ] * yscl;
+         yy[ jt ]     = yoff + dvals[ ky ][ jt ] * yscl;
       }
 DbgLv(1) << "TP:plcd:       yy0 yyn" << yy[0] << yy[ntimes-1];
 
@@ -292,7 +292,7 @@ DbgLv(1) << "TP:plcd:       yy0 yyn" << yy[0] << yy[ntimes-1];
       curv->setItemAttribute( QwtPlotItem::Legend, true );
    }
 
-   data_plot2->setAxisScale( QwtPlot::yLeft, 0.0, 90.0 + 10.0 * npkeys );
+   data_plot2->setAxisScale( QwtPlot::yLeft, 0.0, 100.0 * npkeys );
    data_plot2->replot();
 }
 
