@@ -1781,6 +1781,8 @@ DbgLv(0) << my_rank << ":       model2.description" << model2.description;
                   << ";variance="       << model2.variance
                   << ";run="            << runstring << "\n";
 
+            tfiles << cmfname;
+
             if ( analysis_type.contains( "PCSA" ) )
             {
                int mrx          = mrecs[ 2 ].taskx == mrecs[ 0 ].taskx ? 2 : 1;
