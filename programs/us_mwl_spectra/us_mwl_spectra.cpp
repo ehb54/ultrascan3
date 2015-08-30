@@ -317,6 +317,8 @@ void US_MwlSpectra::resetAll( void )
    reset();
 
    runID           = "";
+   m_tpart         = "";
+   m_apart         = "";
    data_plot->setTitle( tr( "S Record Spectrum Data"
                             "\nS (x 10^13) :  1.00" ) );
 }
@@ -543,7 +545,9 @@ void US_MwlSpectra::load_distro( const US_Model model, const QString mdescr )
 
    if ( runID.isEmpty() )
    {
-      runID         = mdesc.section( ".", -4, -4 );
+      runID         = mdesc.section( ".",  0, -4 );
+      m_tpart       = mdesc.section( ".", -3, -3 );
+      m_apart       = mdesc.section( ".", -2, -2 );
    }
 
    double waveln = (double)lambda;
@@ -1566,6 +1570,81 @@ void US_MwlSpectra::save_data()
    if ( lambdas.count() < 1 )
       return;
 
+   // Compose a default CSV file name, based on Sedcoeff range
+   QString tpart = m_tpart;   // Model description triple part
+   QString apart = m_apart;   // Model description analysis part
+   lmb_start     = cb_lstart ->currentText().toInt();     // Lambda start
+   lmb_end       = cb_lend   ->currentText().toInt();     // Lambda end
+   sed_start     = cb_sstart ->currentText().toDouble();  // Sedcoeff start
+   sed_end       = cb_send   ->currentText().toDouble();  // Sedcoeff end
+   tpart         = tpart.left( 2 ) + QString( "%1-%2" )
+                   .arg( lmb_start ).arg( lmb_end );
+   int sedstr    = qRound( sed_start );
+   int sedend    = qRound( sed_end   );
+   QString spart = QString( "_S%1-%2" ).arg( sedstr ).arg( sedend );
+   apart         = apart.section( "_", -3, -3 );
+   QString dname = "wavelen-srangesum" + spart + "." + tpart + "."
+                   + apart + ".csv";
+DbgLv(1) << "SvD: dname" << dname;
+   QString rdir  = US_Settings::resultDir().replace( "\\", "/" )
+                   + "/" + runID + "/";
+
+   // Open a dialog to allow the file name to be modified
+   QString ename = dname;
+   bool ok;
+
+   QMessageBox mbox;
+   QString msg   = tr( "In the results/run directory<br/>"
+                       "&nbsp;&nbsp;%1 ,<br/><br/>"
+                       "a new CSV Wavelength-SRangeSum file"
+                       " will be created.<br/>You may customize its name"
+                       " or use the default provided.<br/>" )
+                   .arg( rdir );
+   ename         = QInputDialog::getText( this,
+         tr( "File Name: Wavelength-vs-SRangeSum CSV" ),
+         msg, QLineEdit::Normal, ename, &ok );
+
+   if ( ok  &&  ename != dname )
+   {
+      dname         = ename.remove( QRegExp( "[^\\w\\d._-]" ) );
+   }
+
+   QString dpath = rdir + dname;
+DbgLv(1) << "SvD: dpath" << dpath;
+   QDir().mkpath( rdir );
+
+   // Now create and write the Wavelength-vs-SRangeSum CSV file
+   QFile csvo_f( dpath );
+   if ( ! csvo_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      QMessageBox::critical( this, tr( "CSV File Open ERROR" ),
+                             tr( "Output open error:\n%1" ).arg( dpath ) );
+DbgLv(1) << "SvD:  *ERROR* out file open failed.";
+      return;
+   }
+
+   double* rr   = pltxvals.data();
+   double* vv   = pltyvals.data();
+   int nwavln   = pltxvals.count();
+DbgLv(1) << "SvD:  nwaveln" << nwavln << "x0, y0" << rr[0] << vv[0];
+   QTextStream ts( &csvo_f );
+   const QString dquote( "\"" );
+   const QString comma( "," );
+   const QString endln( "\n" );
+   ts << dquote + "Wavelength(nm)" + dquote + comma
+       + dquote + "S-Range-Concentration_Sum" + dquote + endln;
+
+   for ( int ii = 0; ii < nwavln; ii++ )
+   {
+      ts << dquote + QString().sprintf( "%d", (int)rr[ ii ] ) + dquote + comma
+          + dquote + QString().sprintf( "%10.4e", vv[ ii ] ) + dquote + endln;
+   }
+
+   csvo_f.close();
+
+   QMessageBox::information( this, tr( "CSV File Saved" ),
+                             tr( "%1 wavelength/concentration lines written\n"
+                             "to file %2 ." ).arg( nwavln ).arg( dname ) );
    return;
 }
 
