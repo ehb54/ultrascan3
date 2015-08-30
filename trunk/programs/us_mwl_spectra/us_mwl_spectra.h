@@ -56,6 +56,8 @@ class US_MwlSpectra : public US_Widgets
      QComboBox*     cb_lend;
      QComboBox*     cb_pltrec;
 
+     QCheckBox*     ck_srngsum;
+
      QwtCounter*    ct_smooth;
      QwtCounter*    ct_delay;
 
@@ -65,6 +67,7 @@ class US_MwlSpectra : public US_Widgets
      QPushButton*   pb_details;
      QPushButton*   pb_prev;
      QPushButton*   pb_next;
+     QPushButton*   pb_svdata;
      QPushButton*   pb_plot2d;
      QPushButton*   pb_movie2d;
      QPushButton*   pb_plot3d;
@@ -145,6 +148,8 @@ class US_MwlSpectra : public US_Widgets
      int    dvec_index     ( QVector< double >&, const double );
      bool   dvirt_equal    ( const double, const double );
      void   p3dctrl_closed ( void );
+     void   sum_check      ( void );
+     void   save_data      ( void );
      void   bld_stats      ( double, double, double, QVector< int >&,
                              QVector< double >&, QVector< double >&,
                              QVector< double >&, QVector< double >& );
