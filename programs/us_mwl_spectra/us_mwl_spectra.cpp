@@ -108,6 +108,9 @@ US_MwlSpectra::US_MwlSpectra() : US_Widgets()
 
    // Advanced Plotting controls
    QLabel*      lb_advplot  = us_banner( tr( "Advanced Plotting Control" ) );
+   QLayout*     lo_srngsum  = us_checkbox  ( tr( "S Range Sum" ),
+                                             ck_srngsum, false );
+                pb_svdata   = us_pushbutton( tr( "Save Data"       ) );
                 pb_plot2d   = us_pushbutton( tr( "Refresh 2D Plot" ) );
                 pb_movie2d  = us_pushbutton( tr( "Show 2D Movie"   ) );
                 pb_plot3d   = us_pushbutton( tr( "Plot 3D"         ) );
@@ -157,6 +160,10 @@ US_MwlSpectra::US_MwlSpectra() : US_Widgets()
             this,         SLOT  ( prevPlot() ) );
    connect( pb_next,      SIGNAL( clicked()  ),
             this,         SLOT  ( nextPlot() ) );
+   connect( ck_srngsum,   SIGNAL( clicked()       ),
+            this,         SLOT  ( sum_check()     ) );
+   connect( pb_svdata,    SIGNAL( clicked()       ),
+            this,         SLOT  ( save_data()     ) );
    connect( pb_plot2d,    SIGNAL( clicked()       ),
             this,         SLOT  ( changeRecord()  ) );
    connect( pb_movie2d,   SIGNAL( clicked()       ),
@@ -196,6 +203,8 @@ US_MwlSpectra::US_MwlSpectra() : US_Widgets()
    settings->addWidget( pb_prev,       row,   4, 1, 2 );
    settings->addWidget( pb_next,       row++, 6, 1, 2 );
    settings->addWidget( lb_advplot,    row++, 0, 1, 8 );
+   settings->addLayout( lo_srngsum,    row,   0, 1, 4 );
+   settings->addWidget( pb_svdata,     row++, 4, 1, 4 );
    settings->addWidget( pb_plot2d,     row,   0, 1, 4 );
    settings->addWidget( pb_movie2d,    row++, 4, 1, 4 );
    settings->addWidget( pb_plot3d,     row,   0, 1, 4 );
@@ -263,6 +272,8 @@ void US_MwlSpectra::reset( void )
    pb_prev   ->setEnabled( false );
    pb_next   ->setEnabled( false );
    pb_reset  ->setEnabled( false );
+   ck_srngsum->setEnabled( false );
+   pb_svdata ->setEnabled( false );
    pb_plot2d ->setEnabled( false );
    pb_movie2d->setEnabled( false );
    pb_plot3d ->setEnabled( false );
@@ -333,6 +344,8 @@ void US_MwlSpectra::enableControls( void )
    cb_pltrec ->setEnabled( true );
    pb_prev   ->setEnabled( true );
    pb_next   ->setEnabled( true );
+   ck_srngsum->setEnabled( true );
+   pb_svdata ->setEnabled( true );
    pb_plot2d ->setEnabled( true );
    pb_movie2d->setEnabled( true );
    pb_plot3d ->setEnabled( true );
@@ -996,6 +1009,11 @@ DbgLv(1) << "PltA: last_xmin" << last_xmin;
       data_plot->setAxisScale( QwtPlot::yLeft  , last_ymin, last_ymax );
    }
 
+   if ( ck_srngsum->isChecked() )
+   {
+      data_plot->setAxisAutoScale( QwtPlot::yLeft );
+   }
+
    // Draw the plot
    data_plot->replot();
 
@@ -1063,8 +1081,12 @@ DbgLv(1) << "chgRec: recx" << recx;
    // Update status text (if not part of movie save) and set prev/next arrows
    if ( plt_one )
       le_status->setText( lb_pltrec->text() + " " + cb_pltrec->currentText() );
-   pb_prev  ->setEnabled( ( recx > 0 ) );
-   pb_next  ->setEnabled( ( recx < ( cb_pltrec->count() - 1 ) ) );
+
+   if ( ! ck_srngsum->isChecked() )
+   {
+      pb_prev  ->setEnabled( ( recx > 0 ) );
+      pb_next  ->setEnabled( ( recx < ( cb_pltrec->count() - 1 ) ) );
+   }
 }
 
 // Slot to handle a click to go to the previous record
@@ -1157,9 +1179,31 @@ DbgLv(1) << "cmpR:  sS sE sxS sxE" << sed_start << sed_end << sedxs << sedxe
    for ( int ii = lmbxs; ii < lmbxe; ii++ )
       pltxvals << (double)lambdas[ ii ];
 
-   // Get concentrations from current sedcoeff record, in current lambda range
-   for ( int ii = lmbxs; ii < lmbxe; ii++ )
-      pltyvals << concdat[ sedxp ][ ii ];
+   if ( ! ck_srngsum->isChecked() )
+   {  // Get concentrations from current sedcoeff record, current lambda range
+      for ( int ii = lmbxs; ii < lmbxe; ii++ )
+         pltyvals << concdat[ sedxp ][ ii ];
+   }
+
+   else
+   {  // Get sum of concentrations in sedcoeff range, current lambda range
+      double ssum;
+
+      for ( int ii = lmbxs; ii < lmbxe; ii++ )
+      {
+         sedxs      = dvec_index( sedcoes, sed_start );
+         sedxe      = dvec_index( sedcoes, sed_end   ) + 1;
+         sed_plot   = ( sed_start + sed_end ) * 0.5;
+         ssum       = 0.0;
+
+         for ( int jj = sedxs; jj < sedxe; jj++ )
+         {
+            ssum      += concdat[ jj ][ ii ];
+         }
+
+         pltyvals << ssum;
+      }
+   }
 
    have_rngs  = true;                                  // Mark ranges computed
 }
@@ -1366,21 +1410,25 @@ DbgLv(1) << "Save 2D Movie";
 // Utility to find an index in a QVector<double> to a value epsilon match
 int US_MwlSpectra::dvec_index( QVector< double >& dvec, const double dval )
 {
-   const double eps   = 1.e-4;
-
    int indx    = dvec.indexOf( dval );   // Try to find an exact match
 
    if ( indx < 0 )
    {  // If no exact match was found, look for a match within epsilon
+      double dmin = dval;
 
       for ( int jj = 0; jj < dvec.size(); jj++ )
       {  // Search doubles vector
-         double ddif     = qAbs( dvec[ jj ] - dval );
-
-         if ( ddif < eps )
+         if ( dvirt_equal( dvec[ jj ], dval ) )
          {  // If vector value matches within epsilon, break and return
             indx            = jj;
             break;
+         }
+
+         double ddif = qAbs( dvec[ jj ] - dval );
+         if ( ddif < dmin )
+         {  // Save index to closest match so far, as a back-up
+            indx            = jj;
+            dmin            = ddif;
          }
       }
    }
@@ -1467,5 +1515,57 @@ void US_MwlSpectra::final_stats( QVector< int >& istats,
    dstats[ 7 ]        = lwlns[ lwlns.count() / 2 ];
    dstats[ 8 ]        = lseds[ lseds.count() / 2 ];
    dstats[ 9 ]        = lcons[ lcons.count() / 2 ];
+}
+
+// Slot for change in S Range Sum check box state
+void US_MwlSpectra::sum_check()
+{
+   if ( lambdas.count() < 1 )
+      return;
+
+   // Enable/Disable elements as related to S Range Sum
+   bool sumchkd       = ck_srngsum->isChecked();
+   bool notsmck       = ! sumchkd;
+
+   cb_pltrec ->setEnabled( notsmck );
+   pb_prev   ->setEnabled( notsmck );
+   pb_next   ->setEnabled( notsmck );
+   pb_svdata ->setEnabled( sumchkd );
+   pb_movie2d->setEnabled( notsmck );
+   pb_plot3d ->setEnabled( notsmck );
+   ct_delay  ->setEnabled( notsmck );
+   pb_svmovie->setEnabled( notsmck );
+
+   if ( sumchkd )
+   {  // Set S value to plot to midway point between S limits
+      sed_start  = cb_sstart ->currentText().toDouble();
+      sed_end    = cb_send   ->currentText().toDouble();
+      sed_plot   = ( sed_start + sed_end ) * 0.5;
+      sedxs      = dvec_index( sedcoes, sed_start );
+      sedxe      = dvec_index( sedcoes, sed_end   );
+      sedxp      = dvec_index( sedcoes, sed_plot  );
+      sed_plot   = ( sedxp < 0 ) ? sed_plot : sedcoes[ sedxp ]; 
+      sedxp      = ( sedxp < 0 ) ? ( ( sedxs + sedxe ) / 2 ) : sedxp;
+      cb_pltrec->disconnect();
+      cb_pltrec->setCurrentIndex( sedxp );
+      connect( cb_pltrec,    SIGNAL( currentIndexChanged( int ) ),
+               this,         SLOT  ( changeRecord( )            ) );
+      le_status->setText( lb_pltrec->text() + "  "
+            + tr( "sum for S from %1 to %2" )
+            .arg( sed_start ).arg( sed_end ) );
+   }
+
+   plot_current();
+
+   return;
+}
+
+// Slot for Save Data button clicked
+void US_MwlSpectra::save_data()
+{
+   if ( lambdas.count() < 1 )
+      return;
+
+   return;
 }
 
