@@ -79,6 +79,8 @@ class US_MwlSpectra : public US_Widgets
 
      QString        currentDir;
      QString        runID;
+     QString        m_tpart;
+     QString        m_apart;
      QString        mfilter;
 
      int            nsedcos;
