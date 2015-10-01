@@ -66,7 +66,7 @@ class US_ModelMetrics : public US_Widgets
 
 	public:
       US_ModelMetrics();
-      enum hydro_parms { HPs, HPd, HPm, HPk, HPf, HPv };
+      enum hydro_parms { HPs, HPd, HPm, HPk, HPf, HPv, HPr };
 
 
 	private:
@@ -102,6 +102,8 @@ class US_ModelMetrics : public US_Widgets
       double             fmax;
       double             xmin;
       double             xmax;
+      double             rmin;
+      double             rmax;
       double             dval1, xval1;
       double             dval2, xval2;
       double             dval3, xval3;
@@ -140,6 +142,7 @@ class US_ModelMetrics : public US_Widgets
       QRadioButton*      rb_k;
       QRadioButton*      rb_m;
       QRadioButton*      rb_v;
+      QRadioButton*      rb_r;
       QStringList        pfilts;
       QString            mfilter;
       QString            run_name;
