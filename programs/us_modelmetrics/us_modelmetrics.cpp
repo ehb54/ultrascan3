@@ -78,7 +78,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    le_experiment= us_lineedit( "", 1, true );
 
 
-   QLabel* lbl_param = us_label( tr( "Select Parameter: " ), -1 );
+   QLabel* lbl_param = us_label( tr( "Select\nParameter: " ), -1 );
    QLabel* lbl_sigma = us_label( tr( "Sigma: " ), -1 );
 
    ct_sigma= us_counter( 2, 0.0, 1.0, 1.0 );
@@ -99,6 +99,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    QGridLayout* gl_v = us_radiobutton( tr( "vbar" ), rb_v, false );
    QGridLayout* gl_d = us_radiobutton( tr( "D"    ), rb_d, false );
    QGridLayout* gl_f = us_radiobutton( tr( "f"    ), rb_f, false );
+   QGridLayout* gl_r = us_radiobutton( tr( "Rh"   ), rb_r, false );
 
    bg_hp->addButton( rb_s, HPs );
    bg_hp->addButton( rb_k, HPk );
@@ -106,6 +107,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    bg_hp->addButton( rb_v, HPv );
    bg_hp->addButton( rb_d, HPd );
    bg_hp->addButton( rb_f, HPf );
+   bg_hp->addButton( rb_r, HPr );
 
    rb_s->setChecked( true  );
    rb_s->setToolTip( tr( "Select Sedimentation Coefficient" ));
@@ -114,6 +116,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    rb_v->setToolTip( tr( "Select Partial Specific Volume"   ));
    rb_d->setToolTip( tr( "Select Diffusion Coefficient"     ));
    rb_f->setToolTip( tr( "Select Frictional Coefficient"    ));
+   rb_r->setToolTip( tr( "Select Hydrodynamic Radius"       ));
    connect( bg_hp, SIGNAL( buttonReleased( int )),
             this,  SLOT  ( select_hp     ( int )));
 
@@ -197,12 +200,13 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    QGridLayout* gl0;
    gl0 = new QGridLayout();
 
-   gl0->addLayout(gl_s, 0, 1, 1, 1);
-   gl0->addLayout(gl_d, 0, 2, 1, 1);
-   gl0->addLayout(gl_m, 0, 3, 1, 1);
-   gl0->addLayout(gl_k, 1, 1, 1, 1);
-   gl0->addLayout(gl_f, 1, 2, 1, 1);
-   gl0->addLayout(gl_v, 1, 3, 1, 1);
+   gl0->addLayout(gl_s, 0, 0, 1, 1);
+   gl0->addLayout(gl_d, 0, 1, 1, 1);
+   gl0->addLayout(gl_m, 0, 2, 1, 1);
+   gl0->addLayout(gl_k, 0, 3, 1, 1);
+   gl0->addLayout(gl_f, 1, 0, 1, 1);
+   gl0->addLayout(gl_v, 1, 1, 1, 1);
+   gl0->addLayout(gl_r, 1, 2, 1, 1);
 
    QGridLayout* gl1;
    gl1 = new QGridLayout();
@@ -210,18 +214,20 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    gl1->setColumnStretch(1, 0);
    gl1->setColumnStretch(2, 1);
 
-   gl1->addWidget(lbl_sigma, 0, 0, 1, 1);
-   gl1->addWidget(ct_sigma,  0, 1, 1, 1);
-   gl1->addWidget(pb_report, 0, 2, 1, 1);
-   gl1->addWidget(lbl_dval1, 1, 0, 1, 1);
-   gl1->addWidget(ct_dval1,  1, 1, 1, 1);
-   gl1->addWidget(le_dval1,  1, 2, 1, 1);
-   gl1->addWidget(lbl_dval2, 2, 0, 1, 1);
-   gl1->addWidget(ct_dval2,  2, 1, 1, 1);
-   gl1->addWidget(le_dval2,  2, 2, 1, 1);
-   gl1->addWidget(lbl_dval3, 3, 0, 1, 1);
-   gl1->addWidget(ct_dval3,  3, 1, 1, 1);
-   gl1->addWidget(le_dval3,  3, 2, 1, 1);
+   gl1->addWidget(lbl_param, 0, 0, 2, 1);
+   gl1->addLayout(gl0,       0, 1, 2, 2);
+   gl1->addWidget(lbl_sigma, 2, 0, 1, 1);
+   gl1->addWidget(ct_sigma,  2, 1, 1, 1);
+   gl1->addWidget(pb_report, 2, 2, 1, 1);
+   gl1->addWidget(lbl_dval1, 3, 0, 1, 1);
+   gl1->addWidget(ct_dval1,  3, 1, 1, 1);
+   gl1->addWidget(le_dval1,  3, 2, 1, 1);
+   gl1->addWidget(lbl_dval2, 4, 0, 1, 1);
+   gl1->addWidget(ct_dval2,  4, 1, 1, 1);
+   gl1->addWidget(le_dval2,  4, 2, 1, 1);
+   gl1->addWidget(lbl_dval3, 5, 0, 1, 1);
+   gl1->addWidget(ct_dval3,  5, 1, 1, 1);
+   gl1->addWidget(le_dval3,  5, 2, 1, 1);
 
    QGridLayout* gl2;
    gl2 = new QGridLayout();
@@ -243,10 +249,6 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    row++;
    gl2->addWidget(lbl_experiment,  row, 0, 1, 1);
    gl2->addWidget(le_experiment,   row, 1, 1, 1);
-   row++;
-   gl2->addWidget(lbl_param,       row, 0, 2, 1);
-   gl2->addLayout(gl0,             row, 1, 2, 1);
-   row += 2;
    row++;
    gl2->addLayout(gl1,             row, 0, 3, 2);
    row += 3;
@@ -323,6 +325,7 @@ void US_ModelMetrics::load_model( void )
    QString         mdesc;
    S_Solute        sol_sk;
    bool            loadDB = disk_controls->db();
+   double tmpval1;
 
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
    US_ModelLoader dialog( loadDB, mfilter, model, mdesc, pfilts );
@@ -348,6 +351,8 @@ void US_ModelMetrics::load_model( void )
    dmax   = 1e-39;
    fmin   = 1e+39;
    fmax   = 1e-39;
+   rmin   = 1e+39;
+   rmax   = 1e-39;
 
    if ( dialog.exec() != QDialog::Accepted )
       return;
@@ -434,6 +439,7 @@ void US_ModelMetrics::load_model( void )
          sol_sk.v  = model.components[ jj ].vbar20;
          sol_sk.d  = model.components[ jj ].D;
          sol_sk.f  = model.components[ jj ].f;
+         tmpval1   = model.components[ jj ].f/(6.0*M_PI*1.00194);
          total_conc += sol_sk.c;
 
          cmin      = qMin( cmin, sol_sk.c );
@@ -450,6 +456,8 @@ void US_ModelMetrics::load_model( void )
          dmax      = qMax( dmax, sol_sk.d );
          fmin      = qMin( fmin, sol_sk.f );
          fmax      = qMax( fmax, sol_sk.f );
+         rmin      = qMin( rmin, tmpval1  );
+         rmax      = qMax( rmax, tmpval1  );
 
          DbgLv(2) << "Solute jj s w k c d" << jj << sol_sk.s << sol_sk.w << sol_sk.k
                   << sol_sk.c << sol_sk.d << " vb" << model.components[jj].vbar20;
@@ -479,6 +487,7 @@ void US_ModelMetrics::load_model( void )
    else if ( equivalent( wmin, wmax, 0.001 )) fixed = HPm;
    else if ( equivalent( dmin, dmax, 0.001 )) fixed = HPd;
    else if ( equivalent( fmin, fmax, 0.001 )) fixed = HPf;
+   else if ( equivalent( rmin, rmax, 0.001 )) fixed = HPr;
 
    /*
    DbgLv(2) << "dmin, dmax: " << dmin << dmax;
@@ -494,6 +503,7 @@ void US_ModelMetrics::load_model( void )
    if (HPf != fixed) rb_f->setEnabled( true );
    if (HPm != fixed) rb_m->setEnabled( true );
    if (HPv != fixed) rb_v->setEnabled( true );
+   if (HPr != fixed) rb_r->setEnabled( true );
    DbgLv(2) << "Total concentration, array size original: " << total_conc << sk_distro.size();
    calc();
 
@@ -567,6 +577,7 @@ void US_ModelMetrics::reset( void )
    rb_f->setEnabled( false );
    rb_m->setEnabled( false );
    rb_v->setEnabled( false );
+   rb_r->setEnabled( false );
    calc_val = HPs; //calculate sedimentation distributions by default
 
    le_model->     setText("");
@@ -765,6 +776,18 @@ void US_ModelMetrics::calc()
       }
       xmin = vmin;
       xmax = vmax;
+   }
+   else if (calc_val == HPr)
+   {
+      report_entry.parameter = "Hydrodynamic Radius Distribution (m)";
+      for (i=0; i<sk_distro.size(); i++)
+      {
+         val1.parm = sk_distro[i].f/(6.0*M_PI*1.00194);
+         val1.conc = sk_distro[i].c;
+         temp_list.append(val1);
+      }
+      xmin = rmin;
+      xmax = rmax;
    }
    DbgLv(2) << "In calc: xmin: " << xmin << "xmax" << xmax;
    qSort(temp_list.begin(), temp_list.end()); // sort the list so reduction works.
