@@ -222,11 +222,35 @@ DbgLv(1) << "GaMast: EOML: fitness sorted  bfx" << best_fitness[0].index
 
       if ( minimize_opt == 2 )
       {  // If gradient search method for all terminations, minimize now
+         double aval;
          in_gsm         = TRUE;
          double fitness = bfit->fitness;
          dgene          = best_dgenes[ bfit->index ];
+         int nlim       = 0;
 
          bfit->fitness  = minimize_dmga( dgene, fitness );
+
+         for ( int ii = 0; ii < nfloatc; ii++ )
+         {  // Insure all the new gene attribute values are inside range
+            US_dmGA_Constraints::AttribType
+                 atype    = cns_flt[ ii ].atype;
+            int  mcompx   = cns_flt[ ii ].mcompx;
+            double vmin   = cns_flt[ ii ].low;
+            double vmax   = cns_flt[ ii ].high;
+            fetch_attr_value( aval, dgene, atype, mcompx );
+
+            if ( aval < vmin  ||  aval > vmax )
+            {
+               aval          = qMax( vmin, qMin( vmax, aval ) );
+               store_attr_value( aval, dgene, atype, mcompx );
+               nlim++;
+            }
+         }
+
+         if ( nlim > 0 )
+         {  // If adjustments due to limits, recompute fitness
+            bfit->fitness  = get_fitness_dmga( dgene );
+         }
 
          DbgLv(0) << "Post-minimization RMSD" << sqrt( bfit->fitness );
          best_dgenes[ bfit->index ] = dgene;
@@ -1079,7 +1103,7 @@ void US_MPI_Analysis::model_from_dgene( US_Model& model, DGene& dgene )
 
    model.update_coefficients();    // Compute missing coefficients
 //*DEBUG*
-if(my_rank<1) {
+if(group_rank<1) {
 DbgLv(2) << my_rank << "MFG:g-comp1 s,k,w,d,f"
  << dgene.components[0].s
  << dgene.components[0].f_f0
@@ -1109,7 +1133,7 @@ DbgLv(2) << my_rank << "MFG:m-comp1 s,k,w,d,f"
       int stp       = qAbs( as->stoichs[ rpx ] );
       double ff0p   = qMax( 1.0, model.components[ rcp ].f_f0 );
       model.components[ rcp ] = dgene.components[ rcp ]; // Raw product comp
-if(my_rank<2)
+if(group_rank<2)
 DbgLv(1) << my_rank << "MFG: ii" << ii << "nrco,rc1,rc2,rcp"
  << nrco << rc1 << rc2 << rcp << "st1,st2,stp" << st1 << st2 << stp;
 
@@ -1118,7 +1142,7 @@ DbgLv(1) << my_rank << "MFG: ii" << ii << "nrco,rc1,rc2,rcp"
       model.components[ rc2 ].signal_concentration  = cval;
       //model.components[ rcp ].signal_concentration  = cval;
       model.components[ rcp ].signal_concentration  = 0.0;
-if(my_rank<2)
+if(group_rank<2)
 DbgLv(1) << my_rank << "MFG:   orig cval wval vval" << cval
  << model.components[rcp].mw << model.components[rcp].vbar20;
 
@@ -1146,7 +1170,7 @@ DbgLv(1) << my_rank << "MFG:   orig cval wval vval" << cval
 
       // Recompute coefficients with specified vbar,mw,f/f0
       model.calc_coefficients( model.components[ rcp ] );
-if(my_rank<2)
+if(group_rank<2)
 DbgLv(1) << my_rank << "MFG:     rcp" << rcp << "c.s c.k c.mw c.vb"
  << model.components[rcp].s << model.components[rcp].f_f0
  << model.components[rcp].mw << model.components[rcp].vbar20;

@@ -119,6 +119,8 @@ DbgLv(0) << "CmdArg: jxmlfili" << jxmlfili;
 
    if ( my_rank == 0 )
    {
+DbgLv(0) << "wkdir=" << wkdir;
+DbgLv(0) << "work_dir=" << work_dir;
       DbgLv(0) << "Us_Mpi_Analysis  " << REVISION;
 
       // Unpack the input tarfile

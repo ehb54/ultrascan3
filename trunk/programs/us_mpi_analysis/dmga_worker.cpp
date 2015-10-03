@@ -30,7 +30,7 @@ void US_MPI_Analysis::dmga_worker( void )
    QString s_grinc     = par_key_value( dbgtext, "g_redo_inc" );
    base_sig            = s_bsig .isEmpty() ? BASE_SIG : s_bsig .toDouble();
    g_redo_inc          = s_grinc.isEmpty() ? GR_INCR  : s_grinc.toInt();
-if(my_rank==1)
+if(group_rank==1)
 DbgLv(0) << my_rank << "dmga_worker: base_sig" << base_sig
  << "g_redo_inc" << g_redo_inc;
 
@@ -55,7 +55,7 @@ DbgLv(0) << my_rank << "dmga_worker: base_sig" << base_sig
       simulation_values.sim_data .scanData.resize( ntscan );
       simulation_values.residuals.scanData.resize( ntscan );
    }
-//if(my_rank>=0)
+//if(group_rank>=0)
 //abort( "DMGA_WORKER not yet implemented" );
 
    // Read in the constraints model and build constraints
@@ -109,7 +109,7 @@ DbgLv(1) << my_rank << "dmga_worker: nfloatc nfvari do_astfem"
                 FINISHED,
                 my_communicator );
 DbgLv(1) << my_rank << "dmgw: FIN sent";
-if(my_rank<2) {
+if(group_rank<2) {
 DbgLv(1) << my_rank << "lfvari  n" << nfvari << lfvari.size();
 for (int ii=0; ii<nfvari; ii++ )
  DbgLv(1) << my_rank << "  smask" << ii + 1 << "count" << lfvari[ii]; }
@@ -407,6 +407,7 @@ DbgLv(1) << "gw:" << my_rank << ": fitness sorted";
          dgene        = dgenes[ fitness[ 0 ].index ];
          old_genes[0] = dgene;
          double aval;
+         int nlim     = 0;
 
          for ( int ii = 0; ii < nfloatc; ii++ )
          {  // Insure all the new gene attribute values are inside range
@@ -419,19 +420,29 @@ DbgLv(1) << "gw:" << my_rank << ": fitness sorted";
 
             if ( aval < vmin  ||  aval > vmax )
             {
-if((my_rank%10)==1)
+if((group_rank%10)==1)
 DbgLv(0) << "gw:" << my_rank << ": re-do : ii" << ii
  << "aval vmin vmax" << aval << vmin << vmax;
                aval          = qMax( vmin, qMin( vmax, aval ) );
                store_attr_value( aval, dgene, atype, mcompx );
+               nlim++;
             }
+         }
+
+         if ( nlim > 0 )
+         {  // If adjustments due to limits, recompute fitness
+            fit1         = get_fitness_dmga( dgene );
+if((group_rank%10)==1)
+DbgLv(0) << "gw:" << my_rank << ": re-do :     fit1a fit1b"
+ << fitness[ 0 ].fitness  << fit1;
+            fitness[ 0 ].fitness = fit1;
          }
 
          p_mutate     = p_plague;
 
          for ( int gg = 0; gg < population; gg++ )
             old_genes[ gg ] = dgene;
-if((my_rank%10)==1)
+if((group_rank%10)==1)
 DbgLv(0) << "gw:" << my_rank << ": re-do genes at gen" << generation
  << "gen fitness" << fit0 << "post-min fitness" << fit1;
 
@@ -1163,7 +1174,7 @@ void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
          model.components[ cc ].s  /= sd.s20w_correction;
          model.components[ cc ].D  /= sd.D20w_correction;
       }
-if(my_rank<2 && dbg_level>0) {
+if(group_rank<2 && dbg_level>0) {
 DbgLv(1) << my_rank << "CR: SIMPARAMS DUMP";
 dset->simparams.debug();
 DbgLv(1) << my_rank << "CR: dens visc scorr dcorr"
@@ -1178,7 +1189,7 @@ model.debug(); }
          US_Astfem_RSA astfem_rsa( model, dset->simparams );
          astfem_rsa.set_debug_flag( my_rank < 2 ? dbg_level : (-1) );
 //*DEBUG
-if(my_rank<1) {
+if(group_rank<1) {
 int dbg_flg=in_gsm?(-1):dbg_level;
 //DbgLv(0) << my_rank << "CR: call ASTFEM CALC";
 astfem_rsa.set_debug_flag(dbg_flg);
@@ -1243,7 +1254,7 @@ astfem_rsa.set_debug_flag(dbg_flg);
    }
 
    sim_vals.variance = variance / (double)total_points;
-if(my_rank==0)
+if(group_rank==0)
 DbgLv(1) << my_rank << "CR: variance" << sim_vals.variance << variance << total_points;
 }
 
@@ -1254,7 +1265,7 @@ QString US_MPI_Analysis::par_key_value( const QString kvtext, const QString key 
    int keyx   = kvtext.indexOf( key );
    value      = ( keyx < 0 ) ? value
                 : QString( kvtext ).mid( keyx ).section( " ", 1, 1 );
-if(my_rank<2)
+if(group_rank<2)
 DbgLv(0) << my_rank << ": p_k_v  key" << key << "value" << value << "kvtext" << kvtext;
 
    return value;
