@@ -3704,12 +3704,13 @@ DbgLv(1) << "CGui:gI: ntotf" << ntotf;
       else
          nother++;
    }
-DbgLv(1) << "CGui:gI: nmwrs nauc nother" << nmwrs << nauc << nother;
+DbgLv(1) << "CGui:gI: nmwrs nauc ntxml ntmst nother"
+ << nmwrs << nauc << ntxml << ntmst << nother;
 
-   if ( nmwrs > nother )
+   if ( nmwrs > 0 )
       impType     = 1;             // Flag import of MWL data
 
-   else if ( nauc > nother )
+   else if ( nauc > 0 )
       impType     = 2;             // Flag import of AUC data
 
    else
