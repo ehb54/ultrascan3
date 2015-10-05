@@ -43,13 +43,20 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
 
    QBoxLayout*  mainLayout   = new QHBoxLayout( this );
    QGridLayout* leftLayout   = new QGridLayout;
+   QVBoxLayout* lfullLayout  = new QVBoxLayout;
    QVBoxLayout* rightLayout  = new QVBoxLayout;
    mainLayout ->setSpacing        ( 2 );
    mainLayout ->setContentsMargins( 2, 2, 2, 2 );
    leftLayout ->setSpacing        ( 0 );
    leftLayout ->setContentsMargins( 0, 1, 0, 1 );
+   lfullLayout->setSpacing        ( 0 );
+   lfullLayout->setContentsMargins( 0, 1, 0, 1 );
    rightLayout->setSpacing        ( 0 );
    rightLayout->setContentsMargins( 0, 1, 0, 1 );
+   QFrame* frMidLeft         = new QFrame();
+   QFrame* frBotLeft         = new QFrame();
+   QVBoxLayout* frmlLayout   = new QVBoxLayout( frMidLeft );
+   QVBoxLayout* frblLayout   = new QVBoxLayout( frBotLeft );
 
    dkdb_cntrls             = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
@@ -103,14 +110,18 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    leftLayout->addWidget( le_runid,     row++, 3, 1, 5 );
    leftLayout->addWidget( lb_svproj,    row,   0, 1, 3 );
    leftLayout->addWidget( cmb_svproj,   row++, 3, 1, 5 );
-   leftLayout->addWidget( lb_runids,    row++, 0, 1, 8 );
-   leftLayout->addWidget( lw_runids,    row,   0, 1, 8 );
-   leftLayout->setRowStretch( row, 1 );
-   row    += 1;
-   leftLayout->addWidget( lb_triples,   row++, 0, 1, 8 );
-   leftLayout->addWidget( lw_triples,   row,   0, 7, 8 );
-   leftLayout->setRowStretch( row, 7 );
-   row    += 7;
+
+   frmlLayout ->addWidget( lb_runids );
+   frmlLayout ->addWidget( lw_runids );
+   frblLayout ->addWidget( lb_triples );
+   frblLayout ->addWidget( lw_triples );
+
+   QSplitter* spl1      = new QSplitter( Qt::Vertical, this );
+   spl1->addWidget( frMidLeft );
+   spl1->addWidget( frBotLeft );
+
+   lfullLayout->addLayout( leftLayout  );
+   lfullLayout->addWidget( spl1        );
 
    connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
             this,    SLOT( update_disk_db( bool ) ) );
@@ -147,7 +158,6 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
          tr( "Sedimentation Coefficient x 1e+13 (corr. for 20,W)" ),
          tr( "Boundary Fraction (%)" ) );
 
-//   QString etitle = tr( "Relative Frequency" );
    QString etitle = tr( "Signal Concentration" );
    QwtText qtitle( etitle );
    qtitle.setFont( QFont( US_GuiSettings::fontFamily(),
@@ -176,10 +186,10 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
 
    rightLayout->addLayout( plot );
 
-   mainLayout ->addLayout( leftLayout     );
-   mainLayout ->addLayout( rightLayout    );
-   mainLayout ->setStretchFactor( leftLayout,  2 );
-   mainLayout ->setStretchFactor( rightLayout, 5 );
+   mainLayout ->addLayout( lfullLayout );
+   mainLayout ->addLayout( rightLayout );
+   mainLayout ->setStretchFactor( lfullLayout, 2 );
+   mainLayout ->setStretchFactor( rightLayout, 3 );
 
    le_runid   ->setText( "(current run ID)" );
    cmb_svproj ->addItem( "(project name for plot save)" );
@@ -188,12 +198,15 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    int hh  = lb_svproj->height();
    int ww  = lb_svproj->width() / 3;
    lw_runids  ->setMinimumHeight( hh * 2 );
-   lw_triples ->setMinimumHeight( hh * 7 );
+   lw_triples ->setMinimumHeight( hh * 3 );
    cmb_svproj ->setMinimumWidth ( ww * 5 );
+
    for ( int ii = 0; ii < 8; ii++ )
+   {
       leftLayout ->setColumnMinimumWidth( ii, ww );
-   leftLayout ->setColumnStretch     ( 0, 1  );
-   leftLayout ->setColumnStretch     ( 1, 1  );
+      leftLayout ->setColumnStretch     ( ii, 1  );
+   }
+
    adjustSize();
    ww      = lw_runids->width();
    lw_runids  ->resize( ww, hh * 2 );
@@ -1524,13 +1537,6 @@ DbgLv(0) << "   col" << ii << "yval" << yval;
                double xval  = xyzold[ jj ].x();
                double zval  = xyzold[ jj ].z();
 
-#if 0
-               if ( zval == 0.0  &&  krmv < nrmv )
-               {
-                  krmv++;
-                  continue;
-               }
-#endif
                if ( zval == 0.0 )  continue;
 
                if ( krow < nrow )
